@@ -1,15 +1,55 @@
 2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
 
-	* po/stamp-po: Removed since it's generated.
+        * po/stamp-po: Removed since it's generated.
 
-	* std_hooks.lua (ignore_file): Corrected name of Subversion's
-	administrative directory.
-	* work.hh: Ditto.
-	* monotone.texi (Hook Reference): Updated default definition of
-	ignore_file.
+        * std_hooks.lua (ignore_file): Corrected name of Subversion's
+        administrative directory.
+        * work.hh: Ditto.
+        * monotone.texi (Hook Reference): Updated default definition of
+        ignore_file.
 
-	* cert.cc (get_branch_heads): Remove disapproved head candidates
-	correctly.
+2004-04-28  Christof Petig <christof@petig-baender.de>
+
+	* command.cc (heads):
+		show date and author certificates for each head
+
+2004-04-28  Christof Petig <christof@petig-baender.de>
+
+	* configure.ac:
+		default to using the bundled SQLite
+
+2004-04-28  Christof Petig <christof@petig-baender.de>
+
+	* command.cc (log):
+		support optional file argument to show change log for
+		e.g. monotone log [ID] cert.cc
+
+2004-04-26  Christof Petig <christof@petig-baender.de>
+
+	* rcs_import.cc (process branch):
+		insert dummy cvs_edge to mark newly added file 
+		as previously non existant
+
+2004-04-23  Christof Petig <christof@petig-baender.de>
+
+	* rcs_import.cc (build_parent_state, build_child_state):
+		remove dying files from manifest
+	* rcs_import.cc (cvs_file_edge, note_file_edge):
+		calculate state and remember it (alive or dead)
+
+2004-04-23  Christof Petig <christof@petig-baender.de>
+
+	* rcs_import.cc (import_rcs_file_with_cvs): 
+		do not include dead files in head_manifest
+
+2004-04-22  Christof Petig <christof@petig-baender.de>
+
+	* rcs_file.cc, rcs_file.hh: read and remember 'state' of revision
+	* rcs_import.cc: remove Attic/ part from path
+
+2004-04-21  Christof Petig <christof@petig-baender.de>
+
+	* configure.ac: enable use of installed SQLite library
 
 2004-04-20  graydon hoare  <graydon@pobox.com>
 

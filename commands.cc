@@ -1580,10 +1580,35 @@ CMD(heads, "tree", "", "show unmerged heads of branch")
   else
     cout << "branch '" << app.branch_name << "' is currently unmerged:" << endl;
 
+  cert_name author_name(author_cert_name);
+  cert_name date_name(date_cert_name);
+
   for (set<manifest_id>::const_iterator i = heads.begin(); 
        i != heads.end(); ++i)
     {
-      cout << i->inner()() << endl;
+      cout << i->inner()(); 
+
+      // print authors and date of this head
+      vector< manifest<cert> > tmp;
+      app.db.get_manifest_certs(*i, author_name, tmp);
+      erase_bogus_certs(tmp, app);
+      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+      {
+	 cert_value tv;
+	 decode_base64(j->inner().value, tv);
+	 cout << " " << tv;
+      }
+      app.db.get_manifest_certs(*i, date_name, tmp);
+      erase_bogus_certs(tmp, app);
+      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+      {
+	 cert_value tv;
+	 decode_base64(j->inner().value, tv);
+	 cout << " " << tv;
+      }
+      cout << endl;
     }
 }
 
@@ -1933,18 +1958,30 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
   guard.commit();
 }
 
-CMD(log, "informative", "[ID]", "print log history in reverse order")
+CMD(log, "informative", "[ID] [file]", "print log history in reverse order (which affected file)")
 {
   manifest_map m;
   manifest_id m_id;
   set<manifest_id> frontier, cycles;
+  file_path file;
 
-  if (args.size() > 1)
+  if (args.size() > 2)
     throw usage(name);
-  
-  if (args.size() == 1)
-    {
-      complete(app, idx(args, 0)(), m_id);
+
+  if (args.size() == 2)
+  {  complete(app, idx(args, 0)(), m_id);
+     file=file_path(idx(args, 1)());
+  }  
+  else if (args.size() == 1)
+    { std::string arg=idx(args, 0)();
+      if (arg.find_first_not_of(constants::legal_id_bytes) == string::npos
+          && arg.size()<=constants::idlen)
+         complete(app, arg, m_id);
+      else
+      {  file=file_path(arg);
+         get_manifest_map(m);
+         calculate_ident (m, m_id);
+      }
     }
   else
     {
@@ -1961,20 +1998,58 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
   cert_name comment_name(comment_cert_name);
   cert_name tag_name(tag_cert_name);
 
-  set<file_id> no_comments;
-
   while(! frontier.empty())
     {
       set<manifest_id> next_frontier;
       for (set<manifest_id>::const_iterator i = frontier.begin();
 	   i != frontier.end(); ++i)
-	{
+	{ bool print_this=file().empty(); // (file==file_path());
+	  vector< manifest<cert> > tmp;
+	  file_id current_file_id;
+	  
+	  if (!print_this)
+	  {  manifest_data dat;
+	     app.db.get_manifest_version(*i,dat);
+	     manifest_map mp;
+	     read_manifest_map(dat,mp);
+	     L(F("Looking for %s in %s, found %s\n") % file % *i % mp[file]);
+	     current_file_id=mp[file];
+	  }
+
+	  app.db.get_manifest_certs(*i, ancestor_name, tmp);
+	  erase_bogus_certs(tmp, app);
+	  if (tmp.empty())
+	  {  if (!print_this && !(current_file_id==file_id()))
+	  	print_this=true;
+	  }
+	  else for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+	    {
+	      cert_value tv;
+	      decode_base64(j->inner().value, tv);
+	      manifest_id id(tv());
+	      if (!print_this)
+	      {  manifest_data dat;
+	         app.db.get_manifest_version(id,dat);
+	         manifest_map mp;
+	         read_manifest_map(dat,mp);
+	         L(F("Looking for %s in %s, found %s\n") % file % *i % mp[file]);
+	         print_this=!(current_file_id==mp[file]);
+	      }
+	      if (cycles.find(id) == cycles.end())
+		{
+		  next_frontier.insert(id);
+		  cycles.insert(id);
+		}
+	    }
+
+	  if (print_this)
+	  {
 	  cout << "-----------------------------------------------------------------"
 	       << endl;
 	  cout << "Version: " << *i << endl;
 
 	  cout << "Author:";
-	  vector< manifest<cert> > tmp;
 	  app.db.get_manifest_certs(*i, author_name, tmp);
 	  erase_bogus_certs(tmp, app);
 	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
@@ -2038,21 +2113,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 		}	  
 	      cout << endl;
 	    }
-	  
-	  app.db.get_manifest_certs(*i, ancestor_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      manifest_id id(tv());
-	      if (cycles.find(id) == cycles.end())
-		{
-		  next_frontier.insert(id);
-		  cycles.insert(id);
-		}
-	    }
+	  }
 	}
       frontier = next_frontier;
     }
