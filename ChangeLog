@@ -4,6 +4,17 @@
 	* path_component.{hh,cc}: ...these new files.
 	* Makefile.am: Add them.
 
+2005-03-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* txt2c.cc: add --no-static option
+	* Makefile.am, package_revision.h, package_full_revision.h:
+	create revision info files as standalone .c files to speed
+	compilation (mt_version.cc doesn't need to recompile each time)
+
+2005-03-17  Derek Scherger  <derek@echologic.com>
+
+	* INSTALL: add note about creating a ./configure script
+
 2005-03-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* UPGRADE: Finish, hopefully.
@@ -34,7 +45,7 @@
 	
 2005-03-15  Matt Johnston  <matt@ucc.asn.au>
 
-        * commands.cc, monotone.texi, monotone.1: mention that agraph
+	* commands.cc, monotone.texi, monotone.1: mention that agraph
           output is in VCG format.
 
 2005-03-14  Nathaniel Smith  <njs@codesourcery.com>
