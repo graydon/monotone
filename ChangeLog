@@ -1,3 +1,7 @@
+2004-10-12  graydon hoare  <graydon@pobox.com>
+
+	* unix/read_password.cc: Don't force echo on.
+
 2004-10-10  graydon hoare  <graydon@pobox.com>
 
 	merge a batch of changes from trunk, see below.

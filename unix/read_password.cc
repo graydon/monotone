@@ -14,7 +14,6 @@
 static void 
 echo_on(struct termios & save_term)
 {
-   save_term.c_lflag |= ECHO | ECHOE | ECHOK;
    tcsetattr(0, TCSANOW, &save_term);
 }
 
