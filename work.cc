@@ -49,12 +49,6 @@ void addition_builder::visit_file(file_path const & path)
       return;
     }
 
-  if (man.find(path) != man.end())
-    {
-      P("skipping %s, already present in manifest\n", path().c_str());
-      return;
-    }
-  
   if (work.adds.find(path) != work.adds.end())
     {
       P("skipping %s, already present in working copy add set\n", path().c_str());
@@ -66,6 +60,11 @@ void addition_builder::visit_file(file_path const & path)
       P("removing %s from working copy delete set\n", path().c_str());
       work.dels.erase(path);
       rewrite_work = true;
+    }
+  else if (man.find(path) != man.end())
+    {
+      P("skipping %s, already present in manifest\n", path().c_str());
+      return;
     }
   else
     {
@@ -118,12 +117,6 @@ void deletion_builder::visit_file(file_path const & path)
       return;
     }
 
-  if (man.find(path) == man.end())
-    {
-      P("skipping %s, does not exist in manifest\n", path().c_str());
-      return;
-    }
-  
   if (work.dels.find(path) != work.dels.end())
     {
       P("skipping %s, already present in working copy delete set\n", path().c_str());
@@ -135,6 +128,11 @@ void deletion_builder::visit_file(file_path const & path)
       P("removing %s from working copy add set\n", path().c_str());
       work.adds.erase(path);
       rewrite_work = true;
+    }
+  else if (man.find(path) == man.end())
+    {
+      P("skipping %s, does not exist in manifest\n", path().c_str());
+      return;
     }
   else
     {

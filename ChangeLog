@@ -6,6 +6,29 @@
 	* commands.cc, database.cc, database.hh: Implement id completion
 	command, and general id completion in all other commands.
 
+2003-09-12  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (revert): A deleted file always appears in the
+	manifest.
+	* tests/t_revert.at: Check reverting a change plus a delete; also
+	test reverting by file name.
+
+	* work.cc (deletion_builder::visit_file): Check for file in
+	working add set before looking in manifest.
+	* tests/t_drop.at: Added add-then-drop test.
+
+	* testsuite.at: Include t_drop.at.
+	* tests/t_drop.at: New test.
+	* work.cc (visit_file): Check for file in working delete set
+	before looking in manifest.
+
+2003-09-12  Tom Tromey  <tromey@redhat.com>
+
+	* Makefile.am ($(srcdir)/testsuite): tests/atconfig and
+	tests/atlocal are not in srcdir.
+
+	* Makefile.am (TESTS): unit_tests is not in srcdir.
+
 2003-09-11  graydon hoare  <graydon@redhat.com>
 
 	* commands.cc: Check for MT directory in status.

@@ -1206,19 +1206,21 @@ CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working cop
 		pip.path()().c_str());
 	      app.db.get_file_version(pip.ident(), dat);
 	      write_data(pip.path(), dat.inner());	      
+
+	      // a deleted file will always appear in the manifest
+	      if (work.dels.find(args[i]) != work.dels.end())
+		{
+		  L("also removing deletion for %s\n",
+		    args[i].c_str());
+		  work.dels.erase(args[i]);
+		}
 	    }
-	  else if (work.adds.find(args[i]) != work.adds.end())
+	  else
 	    {
+	      I (work.adds.find(args[i]) != work.adds.end());
 	      L("removing addition for %s\n",
 		args[i].c_str());
 	      work.adds.erase(args[i]);
-	    }
-	  else 
-	    {
-	      I (work.dels.find(args[i]) != work.dels.end());
-	      L("removing deletion for %s\n",
-		args[i].c_str());
-	      work.dels.erase(args[i]);
 	    }
 	}
       // race
