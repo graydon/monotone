@@ -2363,6 +2363,13 @@ apply_change_set(manifest_map const & old_man,
   build_pure_addition_change_set(old_man, a);
   concatenate_change_sets(a, cs, b);
 
+  // If the composed change_set still has renames or deletions in it, then
+  // they referred to things that weren't in the original manifest, and this
+  // change_set should never have been applied to this manifest in the first
+  // place.
+  I(b.rearrangement.deleted_files.empty());
+  I(b.rearrangement.renamed_files.empty());
+
   new_man.clear();
   for (std::set<file_path>::const_iterator i = b.rearrangement.added_files.begin();
        i != b.rearrangement.added_files.end(); ++i)
