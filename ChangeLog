@@ -1,3 +1,13 @@
+2005-02-21  Derek Scherger  <derek@echologic.com>
+
+	* Makefile.am: add fsck.{cc,hh}
+	* commands.cc(check_db): move to ...
+	* fsck.{cc,hh}: here and do lots more checking
+	* database.{cc,hh}(get_ids): new method
+	(get_file_ids,get_manifest_ids,get_revision_ids): more new methods
+	* tests/t_fsck.at: new test
+	* testsuite.at: call it
+	
 2005-02-19  Derek Scherger  <derek@echologic.com>
 
 	* automate.cc (automate_heads): remove bogus call to 

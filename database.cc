@@ -455,7 +455,7 @@ database::rehash()
       }
   }
 
-{
+  {
     // rehash all privkeys
     results res;
     fetch(res, 2, any_rows, "SELECT id, keydata FROM private_keys");
@@ -788,6 +788,19 @@ database::count(string const & table)
         "SELECT COUNT(*) FROM '%q'", 
         table.c_str());
   return lexical_cast<int>(res[0][0]);  
+}
+
+void
+database::get_ids(string const & table, set< hexenc<id> > & ids) 
+{
+  results res;
+
+  fetch(res, one_col, any_rows, "SELECT id FROM %q", table.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      ids.insert(hexenc<id>(res[i][0]));
+    }
 }
 
 void 
@@ -1162,6 +1175,34 @@ database::revision_exists(revision_id const & id)
   return exists(id.inner(), "revisions");
 }
 
+void 
+database::get_file_ids(set<file_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("files", tmp);
+  get_ids("file_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_manifest_ids(set<manifest_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("manifests", tmp);
+  get_ids("manifest_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_revision_ids(set<revision_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("revisions", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
 
 void 
 database::get_file_version(file_id const & id,
