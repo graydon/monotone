@@ -9,6 +9,8 @@
 #include <set>
 #include <string>
 
+#include <boost/shared_ptr.hpp>
+
 #include "app_state.hh"
 #include "change_set.hh"
 #include "vocab.hh"
@@ -52,7 +54,7 @@
 
 extern std::string revision_file_name;
 
-typedef std::map<revision_id, std::pair<manifest_id, change_set> > 
+typedef std::map<revision_id, std::pair<manifest_id, boost::shared_ptr<change_set> > > 
 edge_map;
 
 typedef edge_map::value_type
@@ -96,13 +98,13 @@ edge_old_manifest(edge_map::const_iterator i)
 inline change_set const & 
 edge_changes(edge_entry const & e) 
 { 
-  return e.second.second; 
+  return *(e.second.second); 
 }
 
 inline change_set const & 
 edge_changes(edge_map::const_iterator i) 
 { 
-  return i->second.second; 
+  return *(i->second.second); 
 }
 
 void 
