@@ -143,6 +143,12 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 	   content != contents.end(); ++content)
 	postbody.append(*content);
 
+      if (postbody == "")
+	{
+	  P("no packets to post\n");
+	  return;
+	}
+
       bool posted_ok = false;
       
       if (proto == "http")
