@@ -336,10 +336,10 @@ find_least_common_ancestor(revision_id const & left,
         {
           L(F("found node %d, ancestor of left %s and right %s\n")
             % anc % left % right);
-          return true;
         }
     }
 //      dump_bitset_map("ancestors", ancestors);
+//      dump_bitset_map("dominators", dominators);
 //      dump_bitset_map("parents", parents);
   return false;
 }
@@ -693,6 +693,7 @@ read_revision_set(data const & dat,
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_revision(pars, rev);
+  I(src.lookahead == EOF);
 }
 
 void 

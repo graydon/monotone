@@ -1,3 +1,12 @@
+2004-12-12  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc: Fix bug reported in t_attr.at
+	* tests/t_attr.at: Remove xfail.
+	* change_set.cc: Change unit tests syntax.
+	(read_change_set): Assert complete read.
+	* revision_ser.cc (read_revision_set): Likewise.
+	* os_specific.hh: Drop obsolete file.
+
 2004-12-12  Joel Rosdahl  <joel@rosdahl.net>
 
 	* revision.cc (find_least_common_ancestor): New function for

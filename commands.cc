@@ -2017,6 +2017,22 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
       attrs[path][idx(args, 2)()] = idx(args, 3)();
       write_attr_map(attr_data, attrs);
       write_data(attr_path, attr_data);
+
+      {
+        // check to make sure .mt-attr exists in 
+        // current manifest.
+        manifest_map man;
+        calculate_base_manifest(app, man);
+        if (man.find(attr_path) == man.end())
+          {
+            P(F("registering %s file in working copy\n") % attr_path);
+              change_set::path_rearrangement work;  
+              get_path_rearrangement(work);
+              build_addition(attr_path, man, app, work);
+              put_path_rearrangement(work);
+          }        
+      }
+
     }
   else if (idx(args, 0)() == "get")
     {
