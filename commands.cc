@@ -1814,7 +1814,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
   
   if (args.size() == 1)
     {
-      complete(app, args[1], m_id);
+      complete(app, args[0], m_id);
     }
   else
     {
