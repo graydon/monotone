@@ -1,5 +1,12 @@
 2003-11-10  graydon hoare  <graydon@pobox.com>
 
+	* commands.cc (find_oldest_ancestors): New function.
+	(queue): New "addtree" subcommand.
+	* monotone.texi: Document it.
+	* monotone.1: Document it.
+
+2003-11-10  graydon hoare  <graydon@pobox.com>
+
 	* file_io.cc (walk_tree_recursive): Ignore MT/
 
 2003-11-09  graydon hoare  <graydon@pobox.com>

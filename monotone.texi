@@ -2459,7 +2459,7 @@ by @code{monotone queue list}.
 Note that any commands which alter the queue will invalidate target
 and packet numbers.
 
-@item monotone queue @var{url}
+@item monotone queue add @var{url}
 
 This command reads data from standard input, and adds it to the
 outgoing network queue. The data is queued for transmission to the
@@ -2467,6 +2467,16 @@ target denoted by @var{url}.
 
 Note that any commands which alter the queue will invalidate target
 and packet numbers.
+
+@item monotone --branch=@var{branchname} queue addtree @var{url}
+@itemx monotone queue addtree @var{url} @var{id} @var{...}
+
+This command queues the complete ancesty graph between @var{id} and
+its greatest known ancestor. This is typically used to queue an
+imported CVS tree for transmission to a depot.
+
+If no @var{id} is provided, this command will queue the heads of the
+@var{branchname}, which you must provide instead.
 
 @end ftable
 
@@ -3428,6 +3438,10 @@ Delete packet from outgoing network queue
 
 @item @b{queue add} @i{<url>}
 Queue contents of standard input to transmit to @i{<url>} 
+@comment TROFF INPUT: .TP
+
+@item @b{queue addtree} @i{<url>} @i{[id]}
+Queue history of @i{id} to transmit to @i{<url>} 
 @comment TROFF INPUT: .TP
 
 @item @b{fcerts} @i{<id>}

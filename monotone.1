@@ -66,7 +66,7 @@ List files in working directory, but not in manifest or work list.
 \fBlist ignored\fP
 List files intentionally ignored due to the ignore_file hook.
 .TP
-\fBfetch\fP \fI[URL] [groupname]\fP
+\fBfetch\fP \fI[URL]\fP
 Fetch recent packets from network servers. Does not read public
 or private key packets; use the \fBread\fP command instead.
 .TP
@@ -82,8 +82,11 @@ Print packet in outgoing network queue.
 \fBqueue delete\fP \fI<target> <packet>\fP
 Delete packet from outgoing network queue
 .TP
-\fBqueue add\fP \fI<url> <group>\fP
-Queue contents of standard input to transmit to \fI<url>\fP and \fI<group>\fP
+\fBqueue add\fP \fI<url>\fP
+Queue contents of standard input to transmit to \fI<url>\fP
+.TP
+\fBqueue addtree\fP \fI<url> [id]\fP
+Queue history of \fIid\fP to transmit to \fI<url>\fP
 .TP
 \fBfcerts\fP \fI<id>\fP
 Write file cert packets to stdout.

@@ -395,6 +395,36 @@ static void complete(app_state & app,
 }
 
 
+static void find_oldest_ancestors (manifest_id const & child, 
+				   set<manifest_id> & ancs,
+				   app_state & app)
+{
+  cert_name tn(ancestor_cert_name);
+  ancs.insert(child);  
+  while (true)
+    {
+      set<manifest_id> next_frontier;
+      for (set<manifest_id>::const_iterator i = ancs.begin();
+	   i != ancs.end(); ++i)
+	{
+	  vector< manifest<cert> > tmp;
+	  app.db.get_manifest_certs(*i, tn, tmp);
+	  erase_bogus_certs(tmp, app);
+	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+	    {
+	      cert_value tv;
+	      decode_base64(j->inner().value, tv);
+	      manifest_id anc_id (tv());
+	      next_frontier.insert(anc_id);
+	    }
+	}
+      if (next_frontier.empty())
+	break;
+      else
+	ancs = next_frontier;
+    }
+}
 
 // the goal here is to look back through the ancestry of the provided
 // child, checking to see the least ancestor it has which we received from
@@ -2119,7 +2149,7 @@ static void ls_queue (string name, app_state & app)
 }
 
 
-CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL",
+CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\naddtree URL [ID...]",
     "list, print, delete, or add items to network queue")
 {
   if (args.size() == 0)
@@ -2172,6 +2202,44 @@ CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL"
       ui.inform(F("queueing %d bytes for %s\n") % s.size() % u);
       app.db.queue_posting(u, s);
     }  
+
+  else if (idx(args, 0) == "addtree")
+    {
+      if (args.size() < 2)
+	throw usage(name);
+
+      url u(idx(args,1));
+      set<manifest_id> roots;
+
+      if (args.size() == 2)
+	{
+	  N(app.branch_name != "", F("need --branch argument for addtree"));
+	  get_branch_heads(app.branch_name, app, roots);
+	}
+      else
+	{
+	  for (size_t i = 2; i < args.size(); ++i)
+	    {
+	      roots.insert(manifest_id(idx(args,i)));
+	    }
+	}
+
+      set<url> targets;
+      targets.insert (u);
+      queueing_packet_writer qpw(app, targets);
+
+      for (set<manifest_id>::const_iterator i = roots.begin();
+	   i != roots.end(); ++i)
+	{
+	  set<manifest_id> ancs;
+	  find_oldest_ancestors (*i, ancs, app);
+	  for (set<manifest_id>::const_iterator j = ancs.begin();
+	       j != ancs.end(); ++j)
+	    {
+	      write_ancestry_paths(*j, *i, app, qpw);
+	    }
+	}
+    }
 }
 
 CMD(list, "informative", 
