@@ -667,6 +667,33 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   return true;
 }
 
+static bool 
+migrate_client_to_revisions(sqlite * sql, 
+			   char ** errmsg)
+{
+  int res;
+
+  // FIXME: build all the revision tables in here. ugh.
+
+  res = sqlite_exec_printf(sql, "DROP TABLE posting_queue;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = sqlite_exec_printf(sql, "DROP TABLE incoming_queue;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = sqlite_exec_printf(sql, "DROP TABLE sequence_numbers;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = sqlite_exec_printf(sql, "DROP TABLE file_certs;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = sqlite_exec_printf(sql, "DROP TABLE netserver_manifests;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  
+  return true;
+}
+
 void 
 migrate_depot_schema(sqlite *sql)
 {  

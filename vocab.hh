@@ -108,9 +108,11 @@ std::ostream & operator<<(std::ostream &, ty const &);
 // most of the time you want to use these typedefs and forget
 // about the stuff in vocab_terms.hh
 
+typedef  revision< hexenc<id> >   revision_id;
 typedef manifest< hexenc<id> >  manifest_id;
 typedef     file< hexenc<id> >      file_id;
 
+typedef  revision< base64< gzip<data> > >    revision_data;
 typedef manifest< base64< gzip<data> > >   manifest_data;
 typedef     file< base64< gzip<data> > >       file_data;
 
@@ -128,6 +130,7 @@ namespace fs = boost::filesystem;
 // kludge: certs are derived types. what else can we do?
 #ifndef __CERT_HH__
 #include "cert.hh"
+extern template class revision<cert>;
 extern template class manifest<cert>;
 extern template class file<cert>;
 #endif

@@ -16,9 +16,10 @@ struct cert;
 #include <boost/filesystem/path.hpp>
 
 #include "commands.hh"
-#include "manifest.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
+
+struct revision_set;
 
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
@@ -166,6 +167,7 @@ public:
   unsigned long get_statistic(std::string const & query);
   void set_filename(fs::path const & file);
   void initialize();
+  void install_functions(app_state * app);
   void debug(std::string const & sql, std::ostream & out);
   void dump(std::ostream &);
   void load(std::istream &);
@@ -177,6 +179,7 @@ public:
   
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
+  bool revision_exists(revision_id const & id);
   
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist)
@@ -221,6 +224,24 @@ public:
 			     manifest_id const & old_id,
 			     manifest_data const & m_new,
 			     manifest_data & m_old);
+
+  void get_revision_parents(revision_id const & id,
+			   std::set<revision_id> & parents);
+
+  void get_revision_manifest(revision_id const & cid,
+			    manifest_id & mid);
+
+  void get_revision(revision_id const & id,
+		   revision_set & cs);
+
+  void get_revision(revision_id const & id,
+		   revision_data & dat);
+
+  void put_revision(revision_id const & new_id,
+		   revision_set const & cs);
+
+  void put_revision(revision_id const & new_id,
+		   revision_data const & dat);
   
 
   // crypto key / cert operations
@@ -266,27 +287,34 @@ public:
 
   bool manifest_cert_exists(manifest<cert> const & cert);
   bool manifest_cert_exists(hexenc<id> const & hash);
-
   void put_manifest_cert(manifest<cert> const & cert);
 
-  void get_manifest_certs(cert_name const & name, 
-			 std::vector< manifest<cert> > & certs);
+  bool revision_cert_exists(manifest<cert> const & cert);
+  bool revision_cert_exists(hexenc<id> const & hash);
 
-  void get_manifest_certs(manifest_id const & id, 
+  void put_revision_cert(revision<cert> const & cert);
+
+  void get_revision_certs(cert_name const & name, 
+			 std::vector< revision<cert> > & certs);
+
+  void get_revision_certs(revision_id const & id, 
 			 cert_name const & name, 
-			 std::vector< manifest<cert> > & certs);
+			 std::vector< revision<cert> > & certs);
 
-  void get_manifest_certs(cert_name const & name,
+  void get_revision_certs(cert_name const & name,
 			 base64<cert_value> const & val, 
-			 std::vector< manifest<cert> > & certs);
+			 std::vector< revision<cert> > & certs);
 
-  void get_manifest_certs(manifest_id const & id, 
+  void get_revision_certs(revision_id const & id, 
 			 cert_name const & name, 
 			 base64<cert_value> const & value,
-			 std::vector< manifest<cert> > & certs);
+			 std::vector< revision<cert> > & certs);
 
-  void get_manifest_certs(manifest_id const & id, 
-			 std::vector< manifest<cert> > & certs);
+  void get_revision_certs(revision_id const & id, 
+			 std::vector< revision<cert> > & certs);
+
+  void get_revision_cert(hexenc<id> const & hash,
+			revision<cert> & cert);
 
   void get_manifest_cert(hexenc<id> const & hash,
 			 manifest<cert> & cert);

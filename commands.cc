@@ -218,6 +218,13 @@ get_work_path(local_path & w_path)
 }
 
 static void 
+get_revision_path(local_path & m_path)
+{
+  m_path = (mkpath(book_keeping_dir) / mkpath(revision_file_name)).string();
+  L(F("revision path is %s\n") % m_path);
+}
+
+static void 
 get_manifest_map(manifest_map & m)
 {
   ensure_bookdir();
@@ -248,6 +255,37 @@ put_manifest_map(manifest_map const & m)
   write_manifest_map(m, m_data);
   write_data(m_path, m_data.inner());
   L(F("wrote %d manifest entries\n") % m.size());
+}
+
+static void 
+get_revision_id(revision_id & c)
+{
+  c = revision_id();
+  ensure_bookdir();
+  local_path c_path;
+  get_revision_path(c_path);
+  if(file_exists(c_path))
+    {
+      data c_data;
+      L(F("loading revision id from %s\n") % c_path);
+      read_data(c_path, c_data);
+      c = revision_id(c_data());
+    }
+  else
+    {
+      L(F("no revision id file %s\n") % c_path);
+    }
+}
+
+static void 
+put_revision_id(revision_id & rev)
+{
+  local_path c_path;
+  get_revision_path(c_path);
+  L(F("writing revision id to %s\n") % c_path);
+  ensure_bookdir();
+  data c_data(rev.inner()());
+  write_data(c_path, c_data);
 }
 
 static void 
@@ -317,18 +355,24 @@ update_any_attrs(app_state & app)
   apply_attributes(app, attr);
 }
 
-static void 
-calculate_new_manifest_map(manifest_map const & m_old, 
-			   manifest_map & m_new,
-			   rename_set & renames,
-			   app_state & app)
+static void
+calculate_current_revision(app_state & app, 
+			   revision_set & rev,
+			   manifest_map & m_old,
+			   manifest_map & m_new)
 {
-  path_set paths;
   work_set work;
+  path_set paths;
+
+  m_old.clear();
+  m_new.clear();
+
+  get_manifest_map(m_old);
   extract_path_set(m_old, paths);
+
   get_work_set(work);
   if (work.dels.size() > 0)
-    L(F("removing %d dead files from manifest\n") %
+    L(F("removing %d dropped files from manifest\n") %
       work.dels.size());
   if (work.adds.size() > 0)
     L(F("adding %d files to manifest\n") % 
@@ -338,17 +382,75 @@ calculate_new_manifest_map(manifest_map const & m_old,
       work.renames.size());
   apply_work_set(work, paths);
   build_manifest_map(paths, m_new, app);
-  renames = work.renames;
-}
 
+  rev.edges.clear();
 
-static void 
-calculate_new_manifest_map(manifest_map const & m_old, 
-			   manifest_map & m_new,
-			   app_state & app)
-{
-  rename_set dummy;
-  calculate_new_manifest_map (m_old, m_new, dummy, app);
+  manifest_id new_manifest;
+  manifest_id old_manifest;
+  revision_id old_revision;
+  change_set cs;
+
+  calculate_ident(m_new, new_manifest);
+  calculate_ident(m_old, old_manifest);
+  get_revision_id(old_revision);
+
+  if (! old_revision.inner()().empty())
+    {
+      manifest_id tmp;
+      I(app.db.revision_exists(old_revision));
+      app.db.get_revision_manifest(old_revision, tmp);
+      I(tmp == old_manifest);
+    }
+
+  // reify adds
+  for (path_set::const_iterator add = work.adds.begin(); 
+       add != work.adds.end(); ++add)
+    {
+      I(m_old.find(*add) == m_old.end());
+      I(work.dels.find(*add) == work.dels.end());
+      manifest_map::const_iterator entry = m_new.find(*add);
+      I(entry != m_new.end());
+      cs.adds.insert(addition_entry(manifest_entry_path(entry),
+				    manifest_entry_id(entry)));
+    }
+
+  // reify dels
+  for (path_set::const_iterator del = work.dels.begin();
+       del != work.dels.end(); ++del)
+  {
+    I(m_old.find(*del) != m_old.end());
+    I(m_new.find(*del) == m_old.end());
+    I(work.adds.find(*del) == work.adds.end());
+    cs.dels.insert(*del);
+  }
+
+  // reify renames
+  for (rename_set::const_iterator ren = work.renames.begin();
+       ren != work.renames.end(); ++ren)
+    {
+      I(m_old.find(ren->first) != m_old.end());
+      I(m_new.find(ren->second) != m_new.end());
+      cs.renames.insert(rename_entry(ren->first, ren->second));
+    }
+
+  // reify deltas
+  for (manifest_map::const_iterator entry = m_new.begin();
+       entry != m_new.end(); ++entry)
+    {
+      I(work.adds.find(manifest_entry_path(entry)) == work.adds.end());
+      I(work.dels.find(manifest_entry_path(entry)) == work.adds.end());
+      manifest_map::const_iterator old_entry = m_old.find(manifest_entry_path(entry));
+      I(old_entry != m_old.end());
+      if (manifest_entry_id(entry) == manifest_entry_id(old_entry))
+	continue;
+
+      cs.deltas.insert(make_pair(manifest_entry_path(entry),
+				 make_pair(manifest_entry_id(old_entry),
+					   manifest_entry_id(entry))));
+    }
+  
+  rev.edges.insert(edge_entry(old_revision,
+			      make_pair(old_manifest, cs)));
 }
 
 
@@ -366,19 +468,17 @@ get_stdin()
 }
 
 static void 
-get_log_message(patch_set const & ps, 
+get_log_message(revision_set const & cs, 
 		app_state & app,
 		string & log_message)
 {
   string commentary;
-  string summary;
-  stringstream ss;
-  patch_set_to_text_summary(ps, ss);
-  summary = ss.str();
+  data summary;
+  write_revision_set(cs, summary);
   commentary += "----------------------------------------------------------------------\n";
   commentary += "Enter Log.  Lines beginning with `MT:' are removed automatically\n";
   commentary += "\n";
-  commentary += summary;
+  commentary += summary();
   commentary += "----------------------------------------------------------------------\n";
   N(app.lua.hook_edit_comment(commentary, log_message),
     F("edit of log message failed"));
@@ -624,8 +724,8 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 
   manifest_id ident;
   complete(app, idx(args, 0)(), ident);
-  vector< manifest<cert> > ts;
-  app.db.get_manifest_certs(ident, ts);
+  vector< revision<cert> > ts;
+  app.db.get_revision_certs(ident, ts);
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
 
@@ -744,6 +844,65 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
   guard.commit();
 }
 
+
+// conversion to revisions:
+//
+// DONE
+// ------
+// genkey
+// cert
+// vcheck
+// tag
+// testresult
+// approve
+// disapprove
+// comment
+// add
+// drop
+// rename
+// commit
+// cat
+// checkout
+// heads
+// fload
+// complete
+// status
+// reindex
+// push
+// pull
+// sync
+// serve
+// list
+//
+// mdelta
+// fdelta
+// mdata
+// fdata
+// mcerts
+// fcerts
+// pubkey
+// privkey
+//
+// read
+// rcs_import
+// cvs_import
+// debug
+// db
+//
+// NOT-DONE
+// --------
+// update
+// revert
+// merge
+// propagate
+// diff
+// log
+//
+// agraph
+
+
+
+
 CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
 {
   if (args.size() != 1)
@@ -766,8 +925,8 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   guard.commit();
 }
 
-CMD(cert, "key and cert", "ID CERTNAME [CERTVAL]",
-    "create a cert for a manifest")
+CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
+    "create a cert for a revision")
 {
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
@@ -802,17 +961,17 @@ CMD(cert, "key and cert", "ID CERTNAME [CERTVAL]",
   
   packet_db_writer dbw(app);
   calculate_cert(app, t);
-  dbw.consume_manifest_cert(manifest<cert>(t));
+  dbw.consume_revision_cert(revision<cert>(t));
   guard.commit();
 }
 
-CMD(vcheck, "key and cert", "create [MANIFEST]\ncheck [MANIFEST]", 
+CMD(vcheck, "key and cert", "create [REVISION]\ncheck [REVISION]", 
     "create or check a cryptographic version-check certificate")
 {
   if (args.size() < 1 || args.size() > 2)
     throw usage(name);
 
-  set<manifest_id> ids;
+  set<revision_id> ids;
   if (args.size() == 1)
     {
       N(app.branch_name() != "", F("need --branch argument for branch-based vcheck"));
@@ -829,18 +988,18 @@ CMD(vcheck, "key and cert", "create [MANIFEST]\ncheck [MANIFEST]",
     }
 
   if (idx(args, 0)() == "create")
-    for (set<manifest_id>::const_iterator i = ids.begin();
+    for (set<revision_id>::const_iterator i = ids.begin();
 	 i != ids.end(); ++i)
     {
       packet_db_writer dbw(app);
-      cert_manifest_vcheck(*i, app, dbw); 
+      cert_revision_vcheck(*i, app, dbw); 
     }
 
   else if (idx(args, 0)() == "check")
-    for (set<manifest_id>::const_iterator i = ids.begin();
+    for (set<revision_id>::const_iterator i = ids.begin();
 	 i != ids.end(); ++i)
     {
-      check_manifest_vcheck(*i, app); 
+      check_revision_vcheck(*i, app); 
     }
 
   else 
@@ -848,57 +1007,55 @@ CMD(vcheck, "key and cert", "create [MANIFEST]\ncheck [MANIFEST]",
 }
 
 
-CMD(tag, "certificate", "ID TAGNAME", 
-    "put a symbolic tag cert on a manifest version")
+CMD(tag, "certificate", "REVISION TAGNAME", 
+    "put a symbolic tag cert on a revision version")
 {
   if (args.size() != 2)
     throw usage(name);
-  manifest_id m;
-  complete(app, idx(args, 0)(), m);
+  revision_id c;
+  complete(app, idx(args, 0)(), c);
   packet_db_writer dbw(app);
-  cert_manifest_tag(m, idx(args, 1)(), app, dbw);
+  cert_revision_tag(c, idx(args, 1)(), app, dbw);
 }
 
-CMD(testresult, "certificate", "ID (true|false)", 
+CMD(testresult, "certificate", "MANIFEST (true|false)", 
     "note the results of running a test on a manifest")
 {
   if (args.size() != 2)
     throw usage(name);
-  manifest_id m;
+  revision_id m;
   complete(app, idx(args, 0)(), m);
   packet_db_writer dbw(app);
   cert_manifest_testresult(m, idx(args, 1)(), app, dbw);
 }
 
-CMD(approve, "certificate", "ID1 ID2", 
-    "approve of a manifest change")
+CMD(approve, "certificate", "REVISION", 
+    "approve of a particular revision")
 {
-  if (args.size() != 2)
+  if (args.size() != 1)
     throw usage(name);  
 
-  manifest_id m1, m2;
-  complete(app, idx(args, 0)(), m1);
-  complete(app, idx(args, 1)(), m2);
+  revision_id c;
+  complete(app, idx(args, 0)(), c);
   packet_db_writer dbw(app);
-  cert_manifest_approval(m1, m2, true, app, dbw);
+  cert_revision_approval(c, true, app, dbw);
 }
 
-CMD(disapprove, "certificate", "ID1 ID2", 
-    "disapprove of a manifest change")
+CMD(disapprove, "certificate", "REVISION", 
+    "disapprove of a particular revision")
 {
-  if (args.size() != 2)
+  if (args.size() != 1)
     throw usage(name);
 
-  manifest_id m1, m2;
-  complete(app, idx(args, 0)(), m1);
-  complete(app, idx(args, 1)(), m2);
+  revision_id c;
+  complete(app, idx(args, 0)(), c);
   packet_db_writer dbw(app);
-  cert_manifest_approval(m1, m2, false, app, dbw);
+  cert_revision_approval(c, false, app, dbw);
 }
 
 
-CMD(comment, "certificate", "ID [COMMENT]",
-    "comment on a manifest version")
+CMD(comment, "certificate", "REVISION [COMMENT]",
+    "comment on a particular revision")
 {
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);
@@ -913,10 +1070,10 @@ CMD(comment, "certificate", "ID [COMMENT]",
   N(comment.find_first_not_of(" \r\t\n") != string::npos, 
     F("empty comment"));
 
-  manifest_id m;
-  complete(app, idx(args, 0)(), m);
+  revision_id r;
+  complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
-  cert_manifest_comment(m, comment, app, dbw);
+  cert_revision_comment(r, comment, app, dbw);
 }
 
 
@@ -989,153 +1146,140 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
 CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 {
   string log_message("");
+  revision_set rs;
+  revision_id rid;
   manifest_map m_old, m_new;
-  patch_set ps;
-
-  rename_edge renames;
-
-  get_manifest_map(m_old);
-  calculate_new_manifest_map(m_old, m_new, renames.mapping, app);
-  manifest_id old_id, new_id;
-  calculate_ident(m_old, old_id);
-  calculate_ident(m_new, new_id);
-  renames.parent = old_id;
-  renames.child = new_id;
 
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
 
+  calculate_current_revision(app, rs, m_old, m_new);
+  calculate_ident(rs, rid);
+
   cert_value branchname;
   guess_branch (old_id, app, branchname);
-    
-  P(F("committing %s\n") % new_id);
-  P(F("committing to branch %s\n") % branchname);
   app.set_branch(branchname());
-
-  manifests_to_patch_set(m_old, m_new, renames, app, ps);
+    
+  P(F("beginning commit\n"));
+  P(F("manifest %s\n") % rs.m_id);
+  P(F("revision %s\n") % rid);
+  P(F("branch %s\n") % branchname);
 
   // get log message
   if (args.size() == 1)
     log_message = idx(args, 0)();
   else
-    get_log_message(ps, app, log_message);
+    get_log_message(rs, app, log_message);
 
   N(log_message.find_first_not_of(" \r\t\n") != string::npos,
     F("empty log message"));
 
   {
     transaction_guard guard(app.db);
+    packet_db_writer dbw(app);
 
-    // process manifest delta or new manifest
-    if (app.db.manifest_version_exists(ps.m_new))
+    I(rs.edges.size() == 1);
+    edge e = *(rs.edges.begin());
+
+    if (app.db.revision_exists(rid))
       {
-	L(F("skipping manifest %s, already in database\n") % ps.m_new);
+	L(F("revision %s already in database\n") % rid);
       }
     else
       {
-	if (app.db.manifest_version_exists(ps.m_old))
-	  {
-	    L(F("inserting manifest delta %s -> %s\n") % ps.m_old % ps.m_new);
-	    manifest_data m_old_data, m_new_data;
-	    base64< gzip<delta> > del;
-	    diff(m_old, m_new, del);
-	    app.db.put_manifest_version(ps.m_old, ps.m_new, manifest_delta(del));
-	  }
-	else
-	  {
-	    L(F("inserting full manifest %s\n") % ps.m_new);
-	    manifest_data m_new_data;
-	    write_manifest_map(m_new, m_new_data);
-	    app.db.put_manifest(ps.m_new, m_new_data);
-	  }
-      }
+	// new revision
+	L(F("inserting edge to new revision %s\n") % rid);
 
-    // process file deltas
-    for (set<patch_delta>::const_iterator i = ps.f_deltas.begin();
-	 i != ps.f_deltas.end(); ++i)
-      {
-	if (app.db.file_version_exists(i->id_new))
+	// process manifest delta or new manifest
+	if (app.db.manifest_version_exists(rs.m_id))
 	  {
-	    L(F("skipping file delta %s, already in database\n") % i->id_new);
+	    L(F("skipping manifest %s, already in database\n") % ps.m_id);
 	  }
 	else
 	  {
-	    if (app.db.file_version_exists(i->id_old))
+	    if (app.db.manifest_version_exists(e.m_old))
 	      {
-		L(F("inserting delta %s -> %s\n") % i->id_old % i->id_new);
-		file_data old_data;
-		base64< gzip<data> > new_data;
-		app.db.get_file_version(i->id_old, old_data);
-		read_localized_data(i->path, new_data, app.lua);
+		L(F("inserting manifest delta %s -> %s\n") % e.m_old % rs.m_id);
 		base64< gzip<delta> > del;
-		diff(old_data.inner(), new_data, del);
-		app.db.put_file_version(i->id_old, i->id_new, file_delta(del));
+		diff(m_old, m_new, del);
+		dbw.consume_manifest_delta(e.m_old, rs.m_id, manifest_delta(del));
 	      }
 	    else
 	      {
-		L(F("inserting full version %s\n") % i->id_old);
+		L(F("inserting full manifest %s\n") % ps.m_new);
+		manifest_data m_new_data;
+		write_manifest_map(m_new, m_new_data);
+		dbw.consume_manifest_data(rs.m_id, m_new_data);
+	      }
+	  }
+	
+	// process file deltas
+	for (set<delta_entry>::const_iterator i = e.deltas.begin();
+	     i != e.deltas.end(); ++i)
+	  {
+	    if (app.db.file_version_exists(i->id_new))
+	      {
+		L(F("skipping file delta %s, already in database\n") % i->id_new);
+	      }
+	    else
+	      {
+		if (app.db.file_version_exists(i->id_old))
+		  {
+		    L(F("inserting delta %s -> %s\n") % i->id_old % i->id_new);
+		    file_data old_data;
+		    base64< gzip<data> > new_data;
+		    app.db.get_file_version(i->id_old, old_data);
+		    read_localized_data(i->path, new_data, app.lua);
+		    base64< gzip<delta> > del;
+		    diff(old_data.inner(), new_data, del);
+		    dbw.consume_file_delta(i->id_old, i->id_new, file_delta(del));
+		  }
+		else
+		  {
+		    L(F("inserting full version %s\n") % i->id_old);
+		    base64< gzip<data> > new_data;
+		    read_localized_data(i->path, new_data, app.lua);
+		    // sanity check
+		    hexenc<id> tid;
+		    calculate_ident(new_data, tid);
+		    I(tid == i->id_new.inner());
+		    dbw.consume_file_data(i->id_new, file_data(new_data));
+		  }
+	      }
+	  }
+  
+	// process file adds
+	for (set<addition_entry>::const_iterator i = e.adds.begin();
+	     i != e.adds.end(); ++i)
+	  {
+	    if (app.db.file_version_exists(i->ident))
+	      {
+		L(F("skipping file %s %s, already in database\n") 
+		  % i->path % i->ident);
+	      }
+	    else
+	      {
+		// it's a new file
+		L(F("inserting new file %s %s\n") % i->path % i->ident);
 		base64< gzip<data> > new_data;
 		read_localized_data(i->path, new_data, app.lua);
-		// sanity check
-		hexenc<id> tid;
-		calculate_ident(new_data, tid);
-		I(tid == i->id_new.inner());
-		app.db.put_file(i->id_new, file_data(new_data));
+		dbw.consume_file_data(i->ident, file_data(new_data));
 	      }
 	  }
       }
-  
-    // process file adds
-    for (set<patch_addition>::const_iterator i = ps.f_adds.begin();
-	 i != ps.f_adds.end(); ++i)
-      {
-	if (app.db.file_version_exists(i->ident))
-	  {
-	    L(F("skipping file %s %s, already in database\n") 
-	      % i->path % i->ident);
-	  }
-	else
-	  {
-	    // it's a new file
-	    L(F("inserting new file %s %s\n") % i->path % i->ident);
-	    base64< gzip<data> > new_data;
-	    read_localized_data(i->path, new_data, app.lua);
-	    app.db.put_file(i->ident, new_data);
-	  }
-      }
 
-    packet_db_writer dbw(app);
-
-    if (! m_old.empty())
-      cert_manifest_ancestor(ps.m_old, ps.m_new, app, dbw);
-
-    cert_manifest_in_branch(ps.m_new, branchname, app, dbw); 
-    cert_manifest_date_now(ps.m_new, app, dbw);
-    cert_manifest_author_default(ps.m_new, app, dbw);
-    cert_manifest_changelog(ps.m_new, log_message, app, dbw);
-    
-    if (! (ps.f_moves.empty() && renames.mapping.empty()))
-      {
-	for (set<patch_move>::const_iterator mv = ps.f_moves.begin();
-	     mv != ps.f_moves.end(); ++mv)
-	  {
-	    rename_set::const_iterator rn = renames.mapping.find(mv->path_old);
-	    if (rn != renames.mapping.end())
-	      I(rn->second == mv->path_new);
-	    else
-	      renames.mapping.insert(make_pair(mv->path_old, mv->path_new));
-	  }
-	renames.parent = ps.m_old;
-	renames.child = ps.m_new;
-	cert_manifest_rename(ps.m_new, renames, app, dbw);
-      }    
-    
+    cert_revision_in_branch(rid, branchname, app, dbw); 
+    cert_revision_date_now(rid, app, dbw);
+    cert_revision_author_default(rid, app, dbw);
+    cert_revision_changelog(rid, log_message, app, dbw);
+        
     guard.commit();
   }
   // small race condition here...
   remove_work_set();
+  put_revision_id(rid);
   put_manifest_map(m_new);
-  P(F("committed %s\n") % ps.m_new);
+  P(F("committed %s\n") % rs.m_id);
 
   update_any_attrs(app);
   app.write_options();
@@ -1146,16 +1290,16 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
     // list. if the user *really* cares about cert validity, multiple certs
     // with same name, etc.  they can inquire further, later.
     map<cert_name, cert_value> certs;
-    vector< manifest<cert> > ctmp;
-    app.db.get_manifest_certs(ps.m_new, ctmp);
-    for (vector< manifest<cert> >::const_iterator i = ctmp.begin();
+    vector< revision<cert> > ctmp;
+    app.db.get_revision_certs(rid, ctmp);
+    for (vector< revision<cert> >::const_iterator i = ctmp.begin();
 	 i != ctmp.end(); ++i)
       {
 	cert_value vtmp;
 	decode_base64(i->inner().value, vtmp);
 	certs.insert(make_pair(i->inner().name, vtmp));
       }
-    app.lua.hook_note_commit(ps.m_new, certs);
+    app.lua.hook_note_commit(rid, certs);
   }
 }
 
@@ -1265,7 +1409,8 @@ CMD(update, "working copy", "", "update working copy")
   app.write_options();
 }
 
-CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy")
+CMD(revert, "working copy", "[FILE]...", 
+    "revert file(s) or entire working copy")
 {
   manifest_map m_old;
 
@@ -1277,15 +1422,15 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 	{
 	  path_id_pair pip(*i);
 
-	  N(app.db.file_version_exists(pip.ident()),
+	  N(app.db.file_version_exists(manifest_entry_id(i)),
 	    F("no file version %s found in database for %s")
-	    % pip.ident() % pip.path());
+	    % manifest_entry_id(i) % manifest_entry_path(i));
       
 	  file_data dat;
 	  L(F("writing file %s to %s\n") %
-	    pip.ident() % pip.path());
-	  app.db.get_file_version(pip.ident(), dat);
-	  write_localized_data(pip.path(), dat.inner(), app.lua);
+	    % manifest_entry_id(i) % manifest_entry_path(i));
+	  app.db.get_file_version(manifest_entry_id(i), dat);
+	  write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
 	}
       remove_work_set();
     }
@@ -1327,19 +1472,19 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 
 	  if (m_old.find(arg) != m_old.end())
 	    {
-	      path_id_pair pip(m_old.find(arg));
+	      manifest_entry entry = m_old.find(arg);
 	      L(F("reverting %s to %s\n") %
-		pip.path() % pip.ident());
-
+		manifest_entry_path(entry) % manifest_entry_id(entry));
+	      
 	      N(app.db.file_version_exists(pip.ident()),
 		F("no file version %s found in database for %s")
-		% pip.ident() % pip.path());
+		manifest_entry_id(entry) % manifest_entry_path(entry));
 	      
 	      file_data dat;
 	      L(F("writing file %s to %s\n") %
-		pip.ident() % pip.path());
-	      app.db.get_file_version(pip.ident(), dat);
-	      write_localized_data(pip.path(), dat.inner(), app.lua);
+		manifest_entry_id(entry) % manifest_entry_path(entry));
+	      app.db.get_file_version(manifest_entry_id(entry), dat);
+	      write_localized_data(manifest_entry_path(entry), dat.inner(), app.lua);
 
 	      // a deleted file will always appear in the manifest
 	      if (work.dels.find(arg) != work.dels.end())
@@ -1368,26 +1513,8 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
   app.write_options();
 }
 
-CMD(bump, "tree", "", "advance current tree state by updating nonce")
-{
-  string nonce;
-  work_set work;
-  manifest_map m_old, m_new;
-  get_manifest_map(m_old);
-  calculate_new_manifest_map(m_old, m_new, app);
-  make_nonce(app, nonce);
-  write_data(local_path(nonce_file_name), data(nonce));
-  P(F("updating %s with new random bytes\n") % nonce_file_name);
-  if (m_new.find(file_path(nonce_file_name)) == m_new.end())
-    {
-      bool rewrite_work;
-      build_addition(file_path(nonce_file_name), app, work, m_new, rewrite_work);
-      if (rewrite_work)
-	put_work_set(work);
-    }
-}
-
-CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to stdout")
+CMD(cat, "tree", "(file|manifest|revision) ID", 
+    "write file, manifest, or revision from database to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1425,6 +1552,21 @@ CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to 
       unpack(dat.inner(), unpacked);
       cout.write(unpacked().data(), unpacked().size());
     }
+  else if (idx(args, 0)() == "revision")
+    {
+      revision_data dat;
+      revision_id ident;
+      complete(app, idx(args, 1)(), ident);
+
+      N(app.db.revision_exists(ident),
+	F("no revision %s found in database") % ident);
+
+      L(F("dumping revision %s\n") % ident);
+      app.db.get_revision(ident, dat);
+      data unpacked;
+      unpack(dat.inner(), unpacked);
+      cout.write(unpacked().data(), unpacked().size());
+    }
   else 
     throw usage(name);
 
@@ -1432,10 +1574,11 @@ CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to 
 }
 
 
-CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state from database into directory")
+CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY", 
+    "check out revision from database into directory")
 {
 
-  manifest_id ident;
+  revision_id ident;
   string dir;
 
   if (args.size() != 1 && args.size() != 2)
@@ -1443,7 +1586,7 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state 
 
   if (args.size() == 1)
     {
-      set<manifest_id> heads;
+      set<revision_id> heads;
       N(app.branch_name() != "", F("need --branch argument for branch-based checkout"));
       get_branch_heads(app.branch_name(), app, heads);
       N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
@@ -1468,30 +1611,35 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state 
   transaction_guard guard(app.db);
     
   file_data data;
+  revision_set rs;
   manifest_map m;
 
-  N(app.db.manifest_version_exists(ident),
-    F("no manifest version %s found in database") % ident);
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+
+  app.db.get_revision(ident, rs);
+  put_revision_id(ident);
+
+  N(app.db.manifest_version_exists(rs.m_id),
+    F("no manifest %s found in database") % ident);
   
-  L(F("checking out manifest %s to directory %s\n") % ident % dir);
+  L(F("checking out revision %s to directory %s\n") % ident % dir);
   manifest_data m_data;
-  app.db.get_manifest_version(ident, m_data);
+  app.db.get_manifest_version(rs.m_id, m_data);
   read_manifest_map(m_data, m);      
   put_manifest_map(m);
   
   for (manifest_map::const_iterator i = m.begin(); i != m.end(); ++i)
     {
-      path_id_pair pip(*i);
-      
-      N(app.db.file_version_exists(pip.ident()),
-	F("no file version %s found in database for %s")
-	% pip.ident() % pip.path());
+      N(app.db.file_version_exists(manifest_entry_id(i)),
+	F("no file %s found in database for %s")
+	% manifest_entry_id(i) % manifest_entry_path(i));
       
       file_data dat;
       L(F("writing file %s to %s\n") %
-	pip.ident() % pip.path());
-      app.db.get_file_version(pip.ident(), dat);
-      write_localized_data(pip.path(), dat.inner(), app.lua);
+	% manifest_entry_id(i) % manifest_entry_path(i));
+      app.db.get_file_version(manifest_entry_id(i), dat);
+      write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
     }
   remove_work_set();
   guard.commit();
@@ -1499,52 +1647,49 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state 
   app.write_options();
 }
 
-ALIAS(co, checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY",
-      "check out tree state from database; alias for checkout")
+ALIAS(co, checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
+      "check out revision from database; alias for checkout")
 
-CMD(heads, "tree", "", "show unmerged heads of branch")
+CMD(heads, "tree", "", "show unmerged head revisions of branch")
 {
-  set<manifest_id> heads;
+  set<revision_id> heads;
   if (args.size() != 0)
     throw usage(name);
-
-  if (app.branch_name() == "")
-    {
-      cout << "please specify a branch, with --branch=BRANCH" << endl;
-      return;
-    }
+  
+  N(app.branch_name() != "",
+    P(F("please specify a branch, with --branch=BRANCH")));
 
   get_branch_heads(app.branch_name(), app, heads);
 
   if (heads.size() == 0)
-    cout << "branch '" << app.branch_name << "' is empty" << endl;
+    P(F("branch '%s' is empty\n") % app.branch_name);
   else if (heads.size() == 1)
-    cout << "branch '" << app.branch_name << "' is currently merged:" << endl;
+    P(F("branch '%s' is currently merged:\n") % app.branch_name);
   else
-    cout << "branch '" << app.branch_name << "' is currently unmerged:" << endl;
-
+    P(F("branch '%s' is currently unmerged:\n") % app.branch_name);
+  
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);
 
-  for (set<manifest_id>::const_iterator i = heads.begin(); 
+  for (set<revision_id>::const_iterator i = heads.begin(); 
        i != heads.end(); ++i)
     {
       cout << i->inner()(); 
 
       // print authors and date of this head
-      vector< manifest<cert> > tmp;
-      app.db.get_manifest_certs(*i, author_name, tmp);
+      vector< revision<cert> > tmp;
+      app.db.get_revision_certs(*i, author_name, tmp);
       erase_bogus_certs(tmp, app);
-      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
+      for (vector< revision<cert> >::const_iterator j = tmp.begin();
+	   j != tmp.end(); ++j)
       {
 	 cert_value tv;
 	 decode_base64(j->inner().value, tv);
 	 cout << " " << tv;
       }
-      app.db.get_manifest_certs(*i, date_name, tmp);
+      app.db.get_revision_certs(*i, date_name, tmp);
       erase_bogus_certs(tmp, app);
-      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+      for (vector< revision<cert> >::const_iterator j = tmp.begin();
 	       j != tmp.end(); ++j)
       {
 	 cert_value tv;
@@ -1563,56 +1708,43 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   if (args.size() != 0)
     throw usage(name);
 
-  if (app.branch_name() == "")
-    {
-      cout << "please specify a branch, with --branch=BRANCH" << endl;
-      return;
-    }
+  N(app.branch_name() != "",
+    P(F("please specify a branch, with --branch=BRANCH")));
 
   get_branch_heads(app.branch_name(), app, heads);
 
-  if (heads.size() == 0)
-    {
-      cout << "branch '" << app.branch_name << "' is empty" << endl;
-      return;
-    }
-  else if (heads.size() == 1)
-    {
-      cout << "branch '" << app.branch_name << "' is merged" << endl;
-      return;
-    }
-  else
-    {
-      set<manifest_id>::const_iterator i = heads.begin();
-      manifest_id left = *i;
-      manifest_id ancestor;
-      size_t count = 1;
-      for (++i; i != heads.end(); ++i, ++count)
-	{
-	  manifest_id right = *i;
-	  P(F("merging with manifest %d / %d: %s <-> %s\n")
-	    % count % heads.size() % left % right);
+  N(heads.size() != 0, F("branch '%s' is empty\n") % app.branch_name);
+  N(heads.size() != 1, F("branch '%s' is merged\n") % app.branch_name);
 
-	  manifest_id merged;
-	  transaction_guard guard(app.db);
-	  try_one_merge (left, right, merged, app);
+  set<manifest_id>::const_iterator i = heads.begin();
+  manifest_id left = *i;
+  manifest_id ancestor;
+  size_t count = 1;
+  for (++i; i != heads.end(); ++i, ++count)
+    {
+      manifest_id right = *i;
+      P(F("merging with manifest %d / %d: %s <-> %s\n")
+	% count % heads.size() % left % right);
+
+      manifest_id merged;
+      transaction_guard guard(app.db);
+      try_one_merge (left, right, merged, app);
 	  	  
-	  // merged 1 edge; now we commit this, update merge source and
-	  // try next one
+      // merged 1 edge; now we commit this, update merge source and
+      // try next one
 
-	  packet_db_writer dbw(app);
-	  cert_manifest_in_branch(merged, app.branch_name(), app, dbw);
+      packet_db_writer dbw(app);
+      cert_manifest_in_branch(merged, app.branch_name(), app, dbw);
 
-	  string log = (F("merge of %s\n"
-			  "     and %s\n") % left % right).str();
-	  cert_manifest_changelog(merged, log, app, dbw);
+      string log = (F("merge of %s\n"
+		      "     and %s\n") % left % right).str();
+      cert_manifest_changelog(merged, log, app, dbw);
 	  
-	  guard.commit();
-	  P(F("[source] %s\n") % left);
-	  P(F("[source] %s\n") % right);
-	  P(F("[merged] %s\n") % merged);
-	  left = merged;
-	}
+      guard.commit();
+      P(F("[source] %s\n") % left);
+      P(F("[source] %s\n") % right);
+      P(F("[merged] %s\n") % merged);
+      left = merged;
     }
 
   app.write_options();
@@ -1639,11 +1771,11 @@ CMD(fload, "tree", "", "load file contents into db")
   dbw.consume_file_data(f_id, f_data);  
 }
 
-  CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result")
-  {
+CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result")
+{
   if (args.size() != 3)
-  throw usage(name);
-
+    throw usage(name);
+  
   file_id anc_id(idx(args, 0)()), left_id(idx(args, 1)()), right_id(idx(args, 2)());
   file_data anc, left, right;
   data anc_unpacked, left_unpacked, right_unpacked;
@@ -1672,8 +1804,8 @@ CMD(fload, "tree", "", "load file contents into db")
   split_into_lines(right_unpacked(), right_lines);
   N(merge3(anc_lines, left_lines, right_lines, merged_lines), F("merge failed"));
   copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
-
-  }
+  
+}
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
     "merge from one branch to another asymmetrically")
@@ -1708,55 +1840,48 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   get_branch_heads(idx(args, 0)(), app, src_heads);
   get_branch_heads(idx(args, 1)(), app, dst_heads);
 
-  if (src_heads.size() == 0)
-    {
-      P(F("branch '%s' is empty\n") % idx(args, 0)());
-      return;
-    }
-  else if (src_heads.size() != 1)
-    {
-      P(F("branch '%s' is not merged\n") % idx(args, 0)());
-      return;
-    }
-  else if (dst_heads.size() == 0)
-    {
-      P(F("branch '%s' is empty\n") % idx(args, 1)());
-      return;
-    }
-  else if (dst_heads.size() != 1)
-    {
-      P(F("branch '%s' is not merged\n") % idx(args, 1)());
-      return;
-    }
-  else
-    {
-      set<manifest_id>::const_iterator src_i = src_heads.begin();
-      set<manifest_id>::const_iterator dst_i = dst_heads.begin();
+  N(src_heads.size() != 0, F("branch '%s' is empty\n") % idx(args, 0)());
+  N(src_heads.size() == 1, F("branch '%s' is not merged\n") % idx(args, 0)());
 
-      manifest_id merged;
-      transaction_guard guard(app.db);
-      try_one_merge (*src_i, *dst_i, merged, app);      
+  N(dst_heads.size() != 0, F("branch '%s' is empty\n") % idx(args, 1)());
+  N(dst_heads.size() == 1, F("branch '%s' is not merged\n") % idx(args, 1)());
 
-      packet_db_writer dbw(app);
-
-      cert_manifest_in_branch(merged, idx(args, 1)(), app, dbw);
-
-      string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
-                     % (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
-
-      cert_manifest_changelog(merged, log, app, dbw);
-
-      guard.commit();      
-    }
+  set<manifest_id>::const_iterator src_i = src_heads.begin();
+  set<manifest_id>::const_iterator dst_i = dst_heads.begin();
+  
+  manifest_id merged;
+  transaction_guard guard(app.db);
+  try_one_merge (*src_i, *dst_i, merged, app);      
+  
+  packet_db_writer dbw(app);
+  
+  cert_manifest_in_branch(merged, idx(args, 1)(), app, dbw);
+  
+  string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
+		% (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
+  
+  cert_manifest_changelog(merged, log, app, dbw);
+  
+  guard.commit();      
 }
 
 
-CMD(complete, "informative", "(manifest|file) PARTIAL-ID", "complete partial id")
+CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete partial id")
 {
   if (args.size() != 2)
     throw usage(name);
 
-  if (idx(args, 0)() == "manifest")
+  if (idx(args, 0)() == "revision")
+    {      
+      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
+	F("non-hex digits in partial id"));
+      set<revision_id> completions;
+      app.db.complete(idx(args, 1)(), completions);
+      for (set<revision_id>::const_iterator i = completions.begin();
+	   i != completions.end(); ++i)
+	cout << i->inner()() << endl;
+    }
+  else if (idx(args, 0)() == "manifest")
     {      
       N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
 	F("non-hex digits in partial id"));
@@ -1912,19 +2037,22 @@ CMD(log, "informative", "[ID] [file]", "print log history in reverse order (whic
     throw usage(name);
 
   if (args.size() == 2)
-  {  complete(app, idx(args, 0)(), m_id);
-     file=file_path(idx(args, 1)());
+  {  
+    complete(app, idx(args, 0)(), m_id);
+    file=file_path(idx(args, 1)());
   }  
   else if (args.size() == 1)
-    { std::string arg=idx(args, 0)();
+    { 
+      std::string arg=idx(args, 0)();
       if (arg.find_first_not_of(constants::legal_id_bytes) == string::npos
-          && arg.size()<=constants::idlen)
-         complete(app, arg, m_id);
+          && arg.size() <= constants::idlen)
+	complete(app, arg, m_id);
       else
-      {  file=file_path(arg);
-         get_manifest_map(m);
-         calculate_ident (m, m_id);
-      }
+	{  
+	  file = file_path(arg);
+	  get_manifest_map(m);
+	  calculate_ident (m, m_id);
+	}
     }
   else
     {
@@ -1946,38 +2074,43 @@ CMD(log, "informative", "[ID] [file]", "print log history in reverse order (whic
       set<manifest_id> next_frontier;
       for (set<manifest_id>::const_iterator i = frontier.begin();
 	   i != frontier.end(); ++i)
-	{ bool print_this=file().empty(); // (file==file_path());
+	{ 
+	  bool print_this = file().empty(); // (file==file_path());
 	  vector< manifest<cert> > tmp;
 	  file_id current_file_id;
 	  
 	  if (!print_this)
-	  {  manifest_data dat;
-	     app.db.get_manifest_version(*i,dat);
-	     manifest_map mp;
-	     read_manifest_map(dat,mp);
-	     L(F("Looking for %s in %s, found %s\n") % file % *i % mp[file]);
-	     current_file_id=mp[file];
+	  {  
+	    manifest_data dat;
+	    app.db.get_manifest_version(*i,dat);
+	    manifest_map mp;
+	    read_manifest_map(dat,mp);
+	    L(F("Looking for %s in %s, found %s\n") % file % *i % mp[file]);
+	    current_file_id=mp[file];
 	  }
 
 	  app.db.get_manifest_certs(*i, ancestor_name, tmp);
 	  erase_bogus_certs(tmp, app);
 	  if (tmp.empty())
-	  {  if (!print_this && !(current_file_id==file_id()))
-	  	print_this=true;
+	  {  
+	    if (!print_this && !(current_file_id==file_id()))
+	      print_this=true;
 	  }
+
 	  else for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
+		    j != tmp.end(); ++j)
 	    {
 	      cert_value tv;
 	      decode_base64(j->inner().value, tv);
 	      manifest_id id(tv());
 	      if (!print_this)
-	      {  manifest_data dat;
-	         app.db.get_manifest_version(id,dat);
-	         manifest_map mp;
-	         read_manifest_map(dat,mp);
-	         L(F("Looking for %s in %s, found %s\n") % file % *i % mp[file]);
-	         print_this=!(current_file_id==mp[file]);
+	      {  
+		manifest_data dat;
+		app.db.get_manifest_version(id,dat);
+		manifest_map mp;
+		read_manifest_map(dat,mp);
+		L(F("Looking for %s in %s, found %s\n") % file % *i % mp[file]);
+		print_this=!(current_file_id==mp[file]);
 	      }
 	      if (cycles.find(id) == cycles.end())
 		{
@@ -2064,35 +2197,21 @@ CMD(log, "informative", "[ID] [file]", "print log history in reverse order (whic
 
 CMD(status, "informative", "", "show status of working copy")
 {
+  revision_set rs;
   manifest_map m_old, m_new;
-  manifest_id old_id, new_id;
-  patch_set ps1;
-  rename_edge renames;
+  data tmp;
 
-  N(bookdir_exists(),
-    F("no monotone book-keeping directory '%s' found") 
-    % book_keeping_dir);
-
-  transaction_guard guard(app.db);
-  get_manifest_map(m_old);
-  calculate_ident(m_old, old_id);
-  calculate_new_manifest_map(m_old, m_new, renames.mapping, app);
-  calculate_ident(m_new, new_id);
-
-  renames.parent = old_id;
-  renames.child = new_id;
-  manifests_to_patch_set(m_old, m_new, renames, app, ps1);
-  patch_set_to_text_summary(ps1, cout);
-
-  guard.commit();
+  calculate_current_revision(rs, m_old, m_new);
+  write_revision_set(rs, tmp);
+  cout << tmp;
 }
 
 static void 
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
   transaction_guard guard(app.db);
-  vector< manifest<cert> > certs;
-  app.db.get_manifest_certs(branch_cert_name, certs);
+  vector< revision<cert> > certs;
+  app.db.get_revision_certs(branch_cert_name, certs);
 
   vector<string> names;
   for (size_t i = 0; i < certs.size(); ++i)
@@ -2282,7 +2401,7 @@ ALIAS(ls, list, "informative",
       "missing", "show certs, keys, or branches")
 
 
-  CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
+CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -2302,8 +2421,11 @@ ALIAS(ls, list, "informative",
   app.db.get_manifest_version(m_new_id, m_new_data);
   read_manifest_map(m_old_data, m_old);
   read_manifest_map(m_new_data, m_new);
-  manifests_to_patch_set(m_old, m_new, app, ps);
-  patch_set_to_packets(ps, app, pw);  
+
+  base64< gzip<delta> > del;
+  diff(m_old, m_new, del);
+  cons.consume_manifest_delta(m_old_id, m_new_id, 
+			      manifest_delta(del));
   guard.commit();
 }
 

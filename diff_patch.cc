@@ -499,7 +499,6 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   vector<long> left_suffix, right_suffix;  
   vector<extent> left_extents, right_extents;
   vector<long> merged_interned;
-  vector<long> lcs;
   interner<long> in;
 
   //   for (int i = 0; i < std::min(std::min(left.size(), right.size()), ancestor.size()); ++i)
@@ -528,7 +527,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   edit_script(anc_interned.begin(), anc_interned.end(),
 	      left_interned.begin(), left_interned.end(),
 	      std::min(ancestor.size(), left.size()),
-	      left_edits, back_inserter(lcs));
+	      left_edits);
   
   L(F("calculating right edit script on %d -> %d lines\n")
     % anc_interned.size() % right_interned.size());
@@ -536,7 +535,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   edit_script(anc_interned.begin(), anc_interned.end(),
 	      right_interned.begin(), right_interned.end(),
 	      std::min(ancestor.size(), right.size()),
-	      right_edits, back_inserter(lcs));
+	      right_edits);
 
   L(F("calculating left extents on %d edits\n") % left_edits.size());
   calculate_extents(left_edits, left_interned, 
@@ -934,9 +933,9 @@ static void infer_directory_moves(manifest_map const & ancestor,
 
 // this is a 3-way merge algorithm on manifests.
 
-bool merge3(manifest_map const & ancestor,
-	    manifest_map const & left,
-	    manifest_map const & right,
+bool merge3( const & ancestor,
+	    edge const & left_edge,
+	    edge const & right_edge,
 	    app_state & app,
 	    file_merge_provider & file_merger,
 	    manifest_map & merged,
@@ -946,7 +945,7 @@ bool merge3(manifest_map const & ancestor,
   // in phase #1 we make a bunch of indexes of the changes we saw on each
   // edge.
 
-  patch_set left_edge, right_edge, merged_edge;
+  edge left_edge, right_edge, merged_edge;
   manifests_to_patch_set(ancestor, left, app, left_edge);
   manifests_to_patch_set(ancestor, right, app, right_edge);
 

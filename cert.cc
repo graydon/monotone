@@ -374,7 +374,6 @@ check_cert(app_state & app, cert const & t)
 
 // "special certs"
 
-string const ancestor_cert_name("ancestor");
 string const branch_cert_name("branch");
 
 bool 
@@ -407,7 +406,7 @@ guess_default_key(rsa_keypair_id & key,
 }
 
 void 
-guess_branch(manifest_id const & id,
+guess_branch(revision_id const & id,
 	     app_state & app,
 	     cert_value & branchname)
 {
@@ -419,7 +418,7 @@ guess_branch(manifest_id const & id,
     {
       vector< manifest<cert> > certs;
       cert_name branch(branch_cert_name);
-      app.db.get_manifest_certs(id, branch, certs);
+      app.db.get_revision_certs(id, branch, certs);
       erase_bogus_certs(certs, app);
 
       N(certs.size() != 0, 
@@ -465,6 +464,20 @@ put_simple_manifest_cert(manifest_id const & id,
   pc.consume_manifest_cert(cc);
 }
 
+
+static void 
+put_simple_revision_cert(revision_id const & id,
+			cert_name const & nm,
+			cert_value const & val,
+			app_state & app,
+			packet_consumer & pc)
+{
+  cert t;
+  make_simple_cert(id.inner(), nm, val, app, t);
+  revision<cert> cc(t);
+  pc.consume_manifest_cert(cc);
+}
+
 static void 
 put_simple_file_cert(file_id const & id,
 		     cert_name const & nm,
@@ -479,236 +492,46 @@ put_simple_file_cert(file_id const & id,
 }
 
 void 
-cert_manifest_in_branch(manifest_id const & man, 
-			cert_value const & branchname,
-			app_state & app,
-			packet_consumer & pc)
+cert_revision_in_branch(revision_id const & rev, 
+		       cert_value const & branchname,
+		       app_state & app,
+		       packet_consumer & pc)
 {
-  put_simple_manifest_cert (man, branch_cert_name,
-			    branchname, app, pc);
+  put_simple_revision_cert (rev, branch_cert_name,
+			   branchname, app, pc);
 }
-
-
-static void 
-get_parents(manifest_id const & child,
-	    set<manifest_id> & parents,
-	    app_state & app)
-{
-  vector< manifest<cert> > certs;
-  parents.clear();
-  app.db.get_manifest_certs(child, ancestor_cert_name, certs);
-  erase_bogus_certs(certs, app);
-  for(vector< manifest<cert> >::const_iterator i = certs.begin();
-      i != certs.end(); ++i)
-    {
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
-      manifest_id parent(tv());
-      vector< manifest<cert> > disapprove_certs;
-      app.db.get_manifest_certs(child, disapproval_cert_name, 
-				i->inner().value, disapprove_certs);
-      erase_bogus_certs(disapprove_certs, app);
-      if (disapprove_certs.empty())      
-	parents.insert(parent);
-    }
-}
-
-
-static bool 
-find_relevant_edges(manifest_id const & ancestor,
-		    manifest_id const & child,
-		    app_state & app,
-		    multimap <manifest_id, manifest_id> & relevant_edges,
-		    set<manifest_id> & visited_nodes)
-{
-  if (ancestor == child)
-    return true;
- 
-  visited_nodes.insert(child);
- 
-  set<manifest_id> parents;
-  get_parents(child, parents, app);
-  if (parents.size() == 0)
-    return false;
-
-  bool relevant_child = false;    
-
-  for(set<manifest_id>::const_iterator i = parents.begin();
-      i != parents.end(); ++i)
-    {
-      if (relevant_edges.find(*i) != relevant_edges.end())
-	{
-	  // edge was already deemed relevant; don't re-traverse!
-	  relevant_child = true;
-	}
-      else if (visited_nodes.find(*i) != visited_nodes.end())
-	{
-	  // node was visited (and presumably deemed irrelevant);
-	  // don't re-traverse!
-	}
-      else if (find_relevant_edges(ancestor, *i, app, 
-				   relevant_edges, visited_nodes))
-	{	  
-	  relevant_child = true;
-	  relevant_edges.insert(make_pair(child, *i));
-	}
-    }  
-
-  return relevant_child;
-}
-
-
-void 
-write_ancestry_paths(manifest_id const & ancestor,
-		     manifest_id const & begin,
-		     app_state & app,
-		     packet_consumer & pc)
-{
-
-  typedef multimap < manifest_id, manifest_id > emap;
-  typedef pair< shared_ptr<data>, shared_ptr<manifest_map> > frontier_entry;
-  typedef map<manifest_id, frontier_entry> fmap;
-
-  shared_ptr<fmap> frontier(new fmap());
-  shared_ptr<fmap> next_frontier(new fmap());
-  emap relevant_edges;
-  set<manifest_id> visited;
-
-  find_relevant_edges(ancestor, begin, app, relevant_edges, visited);
-
-  shared_ptr<data> begin_data(new data());
-  shared_ptr<manifest_map> begin_map(new manifest_map());
-  {
-    manifest_data mdat;
-    app.db.get_manifest_version(begin, mdat);
-    unpack(mdat.inner(), *begin_data);
-  }
-  read_manifest_map(*begin_data, *begin_map);
-
-  P(F("writing %d historical edges\n") % relevant_edges.size());
-  ticker n_edges("edges");
-
-  frontier->insert(make_pair(begin, make_pair(begin_data, begin_map)));
-
-  while (!frontier->empty())
-    {
-      for (fmap::const_iterator child = frontier->begin();
-	   child != frontier->end(); ++child)
-	{
-	  manifest_id child_id = child->first;
-
-	  pair<emap::const_iterator, emap::const_iterator> range;
-	  shared_ptr<data> child_data = child->second.first;
-	  shared_ptr<manifest_map> child_map = child->second.second;
-
-	  range = relevant_edges.equal_range(child_id);
-
-	  for (emap::const_iterator edge = range.first; 
-	       edge != range.second; ++edge)
-	    {
-	      manifest_id parent_id = edge->second;
-
-	      L(F("queueing edge %s -> %s\n") % parent_id % child_id);
-
-	      // queue all the certs for this parent
-	      vector< manifest<cert> > certs;
-	      app.db.get_manifest_certs(parent_id, certs);
-	      for(vector< manifest<cert> >::const_iterator cert = certs.begin();
-		  cert != certs.end(); ++cert)
-		pc.consume_manifest_cert(*cert);
-
-	      // construct the parent
-	      shared_ptr<data> parent_data(new data());
-	      shared_ptr<manifest_map> parent_map(new manifest_map());
-
-	      if (app.db.manifest_delta_exists(child_id, parent_id))
-		app.db.compute_older_version(child_id, parent_id,
-					     *child_data, *parent_data);
-	      else
-		{
-		  manifest_data mdata;
-		  app.db.get_manifest_version(parent_id, mdata);
-		  unpack(mdata.inner(), *parent_data);
-		}
-	      
-	      ++n_edges;
-
-	      read_manifest_map(*parent_data, *parent_map);
-
-	      // queue the delta to the parent
-	      patch_set ps;	  
-	      manifests_to_patch_set(*parent_map, *child_map, app, ps);
-	      patch_set_to_packets(ps, app, pc);
-
-	      // store the parent for the next cycle
-	      next_frontier->insert
-		(make_pair(parent_id, make_pair(parent_data, parent_map)));	      
-	    }
-	}
-      swap(frontier, next_frontier);
-      next_frontier->clear();
-    }
-}
-
-// nb: "heads" only makes sense in the context of manifests (at the
-// moment). we'll see if anyone cares to try branch certs on files. it
-// doesn't sound terribly useful, but who knows.
 
 void 
 get_branch_heads(cert_value const & branchname,
 		 app_state & app,
-		 set<manifest_id> & heads)
+		 set<revision_id> & heads)
 {
   heads.clear();
 
-  vector< manifest<cert> > 
-    branch_certs, 
-    ancestor_certs, 
-    disapproval_certs;
-
-  set< pair<hexenc<id>, base64<cert_value> > > disapproved;
-
+  vector< revision<cert> > branch_certs;
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
 
   P(F("fetching heads of branch '%s'\n") % branchname);
 
-  app.db.get_head_candidates(branch_encoded(), 
-			     branch_certs, 
-			     ancestor_certs, 
-			     disapproval_certs);
+  app.db.get_head_candidates(branch_encoded(), branch_certs);
 
   L(F("erasing bogus certs on '%s'\n") % branchname);
 
   erase_bogus_certs(branch_certs, app);
-  erase_bogus_certs(ancestor_certs, app);
-  erase_bogus_certs(disapproval_certs, app);
 
-  for (vector< manifest<cert> >::const_iterator i = branch_certs.begin();
+  for (vector< revision<cert> >::const_iterator i = branch_certs.begin();
        i != branch_certs.end(); ++i)
     {
       heads.insert(i->inner().ident);
     }
 
-  for (vector< manifest<cert> >::const_iterator i = disapproval_certs.begin();
-       i != disapproval_certs.end(); ++i)
-    {
-      disapproved.insert(make_pair(i->inner().ident,
-				   i->inner().value));
-    }
-
   L(F("began with %d candidate heads\n") % heads.size());
 
   // Remove every manifest with descendents.
-  for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
+  for (vector< revision<cert> >::const_iterator i = ancestor_certs.begin();
        i != ancestor_certs.end(); ++i)
     {      
-      // skip those invalidated by a specific disapproval
-      if (disapproved.find(make_pair(i->inner().ident,
-				     i->inner().value)) 
-	  != disapproved.end())
-	continue;
-
       cert_value tv;
       decode_base64(i->inner().value, tv);
       manifest_id parent(tv());
@@ -719,47 +542,7 @@ get_branch_heads(cert_value const & branchname,
 	}
     }
 
-
-  // Calculate a disapproval attribute of a version: this is true for a
-  // version iff every ancestry edge into the version is disapproved.
-  //
-  // FIXME: this is slightly weird; it means that a disapproved edge
-  // vanishes whereas a lone (no-edge) version which is a branch member
-  // can't really be disapproved, and a disapproval doesn't completely mask
-  // an edge if there are multiple ways into it. possibly we need to extend
-  // disapproval to cover both versions and edges.
-
-  map<manifest_id, bool> disapproved_version;
-  for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
-       i != ancestor_certs.end(); ++i)
-    {
-      manifest_id child(i->inner().ident);
-      if (heads.find(child) == heads.end())
-	continue;
-
-      if (disapproved.find(make_pair(i->inner().ident,
-				     i->inner().value)) 
-	  != disapproved.end())
-	{
-	  if (disapproved_version.find(child) == disapproved_version.end())
-	    disapproved_version[child] = true;
-	  else	    
-	    disapproved_version[child] = disapproved_version[child] && true;
-	}
-      else
-	disapproved_version[child] = false;
-    }
-  
-  // remove those remaining heads which are disapproved *versions*
-  for (map<manifest_id, bool>::const_iterator i = disapproved_version.begin();
-       i != disapproved_version.end(); ++i)
-    {
-      if (i->second)
-	heads.erase(i->first);
-    }
-
   L(F("reduced to %d heads\n") % heads.size());
-
 }
 		   
 void 
@@ -802,7 +585,7 @@ cert_manifest_ancestor(manifest_id const & parent,
 // set of edits while discarding another; not exactly what you want a
 // version control tool to do.
 //
-// a conservative approximation, is what we'll call a "subgraph recurring"
+// a conservative approximation is what we'll call a "subgraph recurring"
 // LCA algorithm. this is somewhat like locating the least common dominator
 // node, but not quite. it is actually just a vanilla LCA search, except
 // that any time there's a fork (a historical merge looks like a fork from
@@ -820,76 +603,80 @@ cert_manifest_ancestor(manifest_id const & parent,
 // when doing a merge, is the least node which dominates one side of the
 // merge and is an ancestor of the other.
 
+typedef unsigned long ctx;
+typedef dynamic_bitset<> bitmap;
+typedef shared_ptr<bitmap> shared_bitmap;
+
 static void 
-ensure_parents_loaded(unsigned long man,
-		      map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents,
-		      interner<unsigned long> & intern,
+ensure_parents_loaded(ctx child,
+		      map<ctx, shared_bitmap> & parents,
+		      interner<ctx> & intern,
 		      app_state & app)
 {
-  if (parents.find(man) != parents.end())
+  if (parents.find(child) != parents.end())
     return;
 
-  L(F("loading parents for node %d\n") % man);
+  L(F("loading parents for node %d\n") % child);
 
-  set<manifest_id> imm_parents;
-  get_parents(manifest_id(intern.lookup(man)), imm_parents, app);
-
-  shared_ptr< dynamic_bitset<> > bits = 
-    shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>(parents.size()));
+  set<revision_id> imm_parents;
+  app.db.get_revision_parents(revision_id(intern.lookup(child)), imm_parents);
+  shared_bitmap bits = shared_bitmap(new bitmap(parents.size()));
   
-  for (set<manifest_id>::const_iterator p = imm_parents.begin();
+  for (set<revision_id>::const_iterator p = imm_parents.begin();
        p != imm_parents.end(); ++p)
     {
-      unsigned long pn = intern.intern(p->inner()());
+      ctx pn = intern.intern(p->inner()());
       L(F("parent %s -> node %d\n") % *p % pn);
       if (pn >= bits->size()) 
 	bits->resize(pn+1);
       bits->set(pn);
     }
     
-  parents.insert(make_pair(man, bits));
+  parents.insert(make_pair(child, bits));
 }
 
 static bool 
-expand_dominators(map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents,
-		  map< unsigned long, shared_ptr< dynamic_bitset<> > > & dominators,
-		  interner<unsigned long> & intern,
+expand_dominators(map<ctx, shared_bitmap> & parents,
+		  map<ctx, shared_bitmap> & dominators,
+		  interner<ctx> & intern,
 		  app_state & app)
 {
   bool something_changed = false;
-  vector<unsigned long> nodes;
+  vector<ctx> nodes;
 
   nodes.reserve(dominators.size());
 
   // pass 1, pull out all the node numbers we're going to scan this time around
-  for (map< unsigned long, shared_ptr< dynamic_bitset<> > >::const_iterator e = dominators.begin(); 
+  for (map<ctx, shared_bitmap>::const_iterator e = dominators.begin(); 
        e != dominators.end(); ++e)
     nodes.push_back(e->first);
   
   // pass 2, update any of the dominator entries we can
-  for (vector<unsigned long>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
+  for (vector<ctx>::const_iterator n = nodes.begin(); 
+       n != nodes.end(); ++n)
     {
-      shared_ptr< dynamic_bitset<> > bits = dominators[*n];
-      dynamic_bitset<> saved(*bits);
+      shared_bitmap bits = dominators[*n];
+      bitmap saved(*bits);
       if (bits->size() <= *n)
 	bits->resize(*n + 1);
       bits->set(*n);
       
       ensure_parents_loaded(*n, parents, intern, app);
-      shared_ptr< dynamic_bitset<> > n_parents = parents[*n];
+      shared_bitmap n_parents = parents[*n];
       
-      dynamic_bitset<> intersection(bits->size());
+      bitmap intersection(bits->size());
       
       bool first = true;
-      for (unsigned long parent = 0; parent != n_parents->size(); ++parent)
+      for (unsigned long parent = 0; 
+	   parent != n_parents->size(); ++parent)
 	{
 	  if (! n_parents->test(parent))
 	    continue;
 
 	  if (dominators.find(parent) == dominators.end())
 	    dominators.insert(make_pair(parent, 
-					shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>())));
-	  shared_ptr< dynamic_bitset<> > pbits = dominators[parent];
+					shared_bitmap(new bitmap())));
+	  shared_bitmap pbits = dominators[parent];
 
 	  if (bits->size() > pbits->size())
 	    pbits->resize(bits->size());
@@ -915,33 +702,33 @@ expand_dominators(map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents
 
 
 static bool 
-expand_ancestors(map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents,
-		 map< unsigned long, shared_ptr< dynamic_bitset<> > > & ancestors,
-		 interner<unsigned long> & intern,
+expand_ancestors(map<ctx, shared_bitmap> & parents,
+		 map<ctx, shared_bitmap> & ancestors,
+		 interner<ctx> & intern,
 		 app_state & app)
 {
   bool something_changed = false;
-  vector<unsigned long> nodes;
+  vector<ctx> nodes;
 
   nodes.reserve(ancestors.size());
 
   // pass 1, pull out all the node numbers we're going to scan this time around
-  for (map< unsigned long, shared_ptr< dynamic_bitset<> > >::const_iterator e = ancestors.begin(); 
+  for (map<ctx, shared_bitmap>::const_iterator e = ancestors.begin(); 
        e != ancestors.end(); ++e)
     nodes.push_back(e->first);
   
   // pass 2, update any of the ancestor entries we can
-  for (vector<unsigned long>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
+  for (vector<ctx>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
     {
-      shared_ptr< dynamic_bitset<> > bits = ancestors[*n];
-      dynamic_bitset<> saved(*bits);
+      shared_bitmap bits = ancestors[*n];
+      bitmap saved(*bits);
       if (bits->size() <= *n)
 	bits->resize(*n + 1);
       bits->set(*n);
 
       ensure_parents_loaded(*n, parents, intern, app);
-      shared_ptr< dynamic_bitset<> > n_parents = parents[*n];
-      for (unsigned long parent = 0; parent != n_parents->size(); ++parent)
+      shared_bitmap n_parents = parents[*n];
+      for (ctx parent = 0; parent != n_parents->size(); ++parent)
 	{
 	  if (! n_parents->test(parent))
 	    continue;
@@ -952,8 +739,8 @@ expand_ancestors(map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents,
 
 	  if (ancestors.find(parent) == ancestors.end())
 	    ancestors.insert(make_pair(parent, 
-					shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>())));
-	  shared_ptr< dynamic_bitset<> > pbits = ancestors[parent];
+					shared_bitmap(new bitmap())));
+	  shared_bitmap pbits = ancestors[parent];
 
 	  if (bits->size() > pbits->size())
 	    pbits->resize(bits->size());
@@ -970,26 +757,26 @@ expand_ancestors(map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents,
 }
 
 static bool 
-find_intersecting_node(dynamic_bitset<> & fst, 
-		       dynamic_bitset<> & snd, 
-		       interner<unsigned long> const & intern, 
-		       manifest_id & anc)
+find_intersecting_node(bitmap & fst, 
+		       bitmap & snd, 
+		       interner<ctx> const & intern, 
+		       revision_id & anc)
 {
-
+  
   if (fst.size() > snd.size())
     snd.resize(fst.size());
   else if (snd.size() > fst.size())
     fst.resize(snd.size());
-
-  dynamic_bitset<> intersection = fst & snd;
+  
+  bitmap intersection = fst & snd;
   if (intersection.any())
     {
       L(F("found %d intersecting nodes") % intersection.count());
-      for (unsigned long i = 0; i < intersection.size(); ++i)
+      for (ctx i = 0; i < intersection.size(); ++i)
 	{
 	  if (intersection.test(i))
 	    {
-	      anc = manifest_id(intern.lookup(i));
+	      anc = revision_id(intern.lookup(i));
 	      return true;
 	    }
 	}
@@ -999,10 +786,10 @@ find_intersecting_node(dynamic_bitset<> & fst,
 
 //  static void
 //  dump_bitset_map(string const & hdr,
-//  		map< unsigned long, shared_ptr< dynamic_bitset<> > > const & mm)
+//  		map< ctx, shared_bitmap > const & mm)
 //  {
 //    L(F("dumping [%s] (%d entries)\n") % hdr % mm.size());
-//    for (map< unsigned long, shared_ptr< dynamic_bitset<> > >::const_iterator i = mm.begin();
+//    for (map< ctx, shared_bitmap >::const_iterator i = mm.begin();
 //         i != mm.end(); ++i)
 //      {
 //        L(F("dump [%s]: %d -> %s\n") % hdr % i->first % (*(i->second)));
@@ -1010,22 +797,22 @@ find_intersecting_node(dynamic_bitset<> & fst,
 //  }
 
 bool 
-find_common_ancestor(manifest_id const & left,
-		     manifest_id const & right,
-		     manifest_id & anc,
+find_common_ancestor(revision_id const & left,
+		     revision_id const & right,
+		     revision_id & anc,
 		     app_state & app)
 {
-  interner<unsigned long> intern;
-  map< unsigned long, shared_ptr< dynamic_bitset<> > > 
+  interner<ctx> intern;
+  map< ctx, shared_bitmap > 
     parents, ancestors, dominators;
   
-  unsigned long ln = intern.intern(left.inner()());
-  unsigned long rn = intern.intern(right.inner()());
+  ctx ln = intern.intern(left.inner()());
+  ctx rn = intern.intern(right.inner()());
   
-  shared_ptr< dynamic_bitset<> > lanc = shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>());
-  shared_ptr< dynamic_bitset<> > ranc = shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>());
-  shared_ptr< dynamic_bitset<> > ldom = shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>());
-  shared_ptr< dynamic_bitset<> > rdom = shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>());
+  shared_bitmap lanc = shared_bitmap(new bitmap());
+  shared_bitmap ranc = shared_bitmap(new bitmap());
+  shared_bitmap ldom = shared_bitmap(new bitmap());
+  shared_bitmap rdom = shared_bitmap(new bitmap());
   
   ancestors.insert(make_pair(ln, lanc));
   ancestors.insert(make_pair(rn, ranc));
@@ -1144,84 +931,32 @@ compose_rename_edges(rename_edge const & a,
     }
 }
 
-static void 
-write_rename_edge(rename_edge const & edge,
-		  string & val)
-{
-  ostringstream oss;
-  gzip<data> compressed;
-  oss << edge.parent << "\n";
-  for (rename_set::const_iterator i = edge.mapping.begin();
-       i != edge.mapping.end(); ++i)
-    {
-      oss << i->first << "\n" << i->second << "\n";
-    }
-  encode_gzip(data(oss.str()), compressed);
-  val = compressed();
-}
-
-static void 
-read_rename_edge(hexenc<id> const & node,
-		 base64<cert_value> const & val,
-		 rename_edge & edge)
-{
-  edge.child = manifest_id(node);
-  cert_value decoded;
-  data decompressed_data;
-  string decompressed;
-  decode_base64(val, decoded);
-  decode_gzip(gzip<data>(decoded()), decompressed_data);
-  decompressed = decompressed_data();
-
-  vector<string> lines;
-  split_into_lines(decompressed, lines);
-
-  N(lines.size() >= 1 && lines.size() % 2 == 1, 
-    F("malformed rename cert"));
-
-  edge.parent = manifest_id(idx(lines, 0));
-  set<file_path> rename_targets;
-
-  for (size_t i = 1; i+1 < lines.size(); ++i)
-    {
-    std::string src(idx(lines, i));
-    ++i;
-    std::string dst(idx(lines, i));
-    N(edge.mapping.find(file_path(src)) == edge.mapping.end(), 
-      F("duplicate rename src entry for %s") % src);
-    N(rename_targets.find(file_path(dst)) == rename_targets.end(),
-      F("duplicate rename dst entry for %s") % dst);
-    rename_targets.insert(file_path(dst));      
-    edge.mapping.insert(make_pair(file_path(src), file_path(dst)));    
-    }
-}
-
-/* 
- * The idea with this algorithm is to walk from child up to ancestor,
- * recursively, accumulating all the rename_edges associated with
- * intermediate nodes into *one big rename_edge*. don't confuse an ancestry
- * edge with a rename edge here: when we get_parents, that's loading
- * ancestry edges. rename edges are a secondary graph overlaid on some --
- * but not all -- edges in the ancestry graph. I know, it's a real party.
- *
- * clever readers will realize this is an overlapping-subproblem type
- * situation (as is the relevant_edges algorithm later on) and thus needs
- * to keep a dynamic programming map to keep itself in linear complexity.
- *
- * in fact, we keep two: one which maps to computed results (partial_edges)
- * and one which just keeps a set of all nodes we traversed
- * (visited_nodes). in theory it could be one map with an extra bool stuck
- * on each entry, but I think that would make it even less readable. it's
- * already atrocious.
- */
+// 
+// The idea with this algorithm is to walk from child up to ancestor,
+// recursively, accumulating all the rename_edges associated with
+// intermediate nodes into *one big rename_edge*. don't confuse an ancestry
+// edge with a rename edge here: when we get "parents", that's loading
+// ancestry edges. rename edges are a secondary graph overlaid on some --
+// but not all -- edges in the ancestry graph. I know, it's a real party.
+//
+// clever readers will realize this is an overlapping-subproblem type
+// situation and thus needs to keep a dynamic programming map to keep
+// itself in linear complexity.
+//
+// in fact, we keep two: one which maps to computed results (partial_edges)
+// and one which just keeps a set of all nodes we traversed
+// (visited_nodes). in theory it could be one map with an extra bool stuck
+// on each entry, but I think that would make it even less readable. it's
+// already atrocious.
+//
 
 static bool 
-calculate_renames_recursive(manifest_id const & ancestor,
-			    manifest_id const & child,
+calculate_renames_recursive(revision_id const & ancestor,
+			    revision_id const & child,
 			    app_state & app,
 			    rename_edge & edge,
-			    map<manifest_id, shared_ptr<rename_edge> > & partial_edges,
-			    set<manifest_id> & visited_nodes)
+			    map<revision_id, shared_ptr<rename_edge> > & partial_edges,
+			    set<revision_id> & visited_nodes)
 {
 
   if (ancestor == child)
@@ -1229,40 +964,46 @@ calculate_renames_recursive(manifest_id const & ancestor,
 
   visited_nodes.insert(child);
 
-  set<manifest_id> parents;
-  get_parents(child, parents, app);
+  set<revision_id> parents;
+  app.db.get_revision_parents(child, parents);
   bool relevant_child = false;
 
   edge.child = child;
-  map<manifest_id, rename_edge> incident_edges;
+  map<revision_id, rename_edge> incident_edges;
 
-  rename_edge child_edge;
-  vector< manifest<cert> > certs;
-  app.db.get_manifest_certs(child, cert_name(rename_cert_name), certs);
-  erase_bogus_certs(certs, app);
-
-  L(F("found %d incident rename edges at node %s\n")
-    % certs.size() % child);
-  
-  for(vector< manifest<cert> >::const_iterator j = certs.begin();
-      j != certs.end(); ++j)
-    {
-      rename_edge curr_child_edge;
-      read_rename_edge(j->inner().ident, j->inner().value, curr_child_edge);
-      incident_edges.insert(make_pair(curr_child_edge.parent, curr_child_edge));
-      relevant_child = true;
-    }
+  {
+    // this step really just copies out of the revision and into a rename
+    // edge which is slightly more convenient in organization.
+    revision_set rev;
+    app.db.get_revision(child, rev);
+    
+    L(F("found %d incident edges at node %s\n")
+      % rev.edges.size() % child);
+    
+    for(set<edge>::const_iterator edge = rev.edges.begin();
+	edge != rev.edges.end(); ++edge)
+      {	
+	rename_edge curr_child_edge;
+	for(set<patch_move>::const_iterator j = edge->changes.f_moves.begin();
+	    j != edge->changes.f_moves.end(); ++j)
+	  {
+	    curr_child_edge.insert(make_pair(j->path_old, j->path_new));
+	  }
+	incident_edges.insert(make_pair(edge->ancestor, curr_child_edge));
+	relevant_child = true;
+      }
+  }
 
   L(F("exploring renames from parents of %s, seeking towards %s\n")
     % child % ancestor);
 
-  for(set<manifest_id>::const_iterator i = parents.begin();
+  for(set<revision_id>::const_iterator i = parents.begin();
       i != parents.end(); ++i)
     {
 
       bool relevant_parent = false;
       rename_edge curr_parent_edge;
-      map<manifest_id, shared_ptr<rename_edge> >::const_iterator 
+      map<revision_id, shared_ptr<rename_edge> >::const_iterator 
 	j = partial_edges.find(*i);
       if (j != partial_edges.end()) 
 	{
@@ -1285,7 +1026,7 @@ calculate_renames_recursive(manifest_id const & ancestor,
 
       if (relevant_parent)
 	{
-	  map<manifest_id, rename_edge>::const_iterator inc = incident_edges.find(*i);
+	  map<revision_id, rename_edge>::const_iterator inc = incident_edges.find(*i);
 	  if (inc != incident_edges.end())
 	    {
 	      L(F("ancestor edge %s -> %s is relevant, composing with edge %s -> %s\n") 
@@ -1306,7 +1047,7 @@ calculate_renames_recursive(manifest_id const & ancestor,
     }
 
   // copy any remaining incident edges  
-  for (map<manifest_id, rename_edge>::const_iterator i = incident_edges.begin();
+  for (map<revision_id, rename_edge>::const_iterator i = incident_edges.begin();
        i != incident_edges.end(); ++i)
     {
       relevant_child = true;
@@ -1325,14 +1066,14 @@ calculate_renames_recursive(manifest_id const & ancestor,
 }
 
 void 
-calculate_renames(manifest_id const & ancestor,
-		  manifest_id const & child,
+calculate_renames(revision_id const & ancestor,
+		  revision_id const & child,
 		  app_state & app,
 		  rename_edge & edge)
 {
   // it's ok if we can't find any paths
-  set<manifest_id> visited;
-  map<manifest_id, shared_ptr<rename_edge> > partial;
+  set<revision_id> visited;
+  map<revision_id, shared_ptr<rename_edge> > partial;
   calculate_renames_recursive(ancestor, child, app, edge, partial, visited);
 }
 
@@ -1344,24 +1085,23 @@ string const author_cert_name = "author";
 string const tag_cert_name = "tag";
 string const changelog_cert_name = "changelog";
 string const comment_cert_name = "comment";
-string const disapproval_cert_name = "disapproval";
 string const testresult_cert_name = "testresult";
 string const rename_cert_name = "rename";
 string const vcheck_cert_name = "vcheck";
 
 
 static void 
-cert_manifest_date(manifest_id const & m, 
+cert_revision_date(revision_id const & m, 
 		   boost::posix_time::ptime t,
 		   app_state & app,
 		   packet_consumer & pc)
 {
   string val = boost::posix_time::to_iso_extended_string(t);
-  put_simple_manifest_cert(m, date_cert_name, val, app, pc);
+  put_simple_revision_cert(m, date_cert_name, val, app, pc);
 }
 
 void 
-cert_manifest_date_time(manifest_id const & m, 
+cert_revision_date_time(revision_id const & m, 
 			time_t t,
 			app_state & app,
 			packet_consumer & pc)
@@ -1369,28 +1109,29 @@ cert_manifest_date_time(manifest_id const & m,
   // make sure you do all your CVS conversions by 2038!
   boost::posix_time::ptime tmp(boost::gregorian::date(1970,1,1), 
 			       boost::posix_time::seconds(static_cast<long>(t)));
-  cert_manifest_date(m, tmp, app, pc);
+  cert_revision_date(m, tmp, app, pc);
 }
 
 void 
-cert_manifest_date_now(manifest_id const & m, 
+cert_revision_date_now(revision_id const & m, 
 		       app_state & app,
 		       packet_consumer & pc)
 {
-  cert_manifest_date(m, boost::posix_time::second_clock::universal_time(), app, pc);
+  cert_revision_date(m, boost::posix_time::second_clock::universal_time(), app, pc);
 }
 
 void 
-cert_manifest_author(manifest_id const & m, 
+cert_revision_author(revision_id const & m, 
 		     string const & author,
 		     app_state & app,
 		     packet_consumer & pc)
 {
-  put_simple_manifest_cert(m, author_cert_name, author, app, pc);  
+  put_simple_revision_cert(m, author_cert_name, 
+			   author, app, pc);  
 }
 
 void 
-cert_manifest_author_default(manifest_id const & m, 
+cert_revision_author_default(revision_id const & m, 
 			     app_state & app,
 			     packet_consumer & pc)
 {
@@ -1399,29 +1140,33 @@ cert_manifest_author_default(manifest_id const & m,
     {
       rsa_keypair_id key;
       N(guess_default_key(key, app),
-	F("no default author name for branch '%s'") % app.branch_name);
+	F("no default author name for branch '%s'") 
+	% app.branch_name);
       author = key();
     }
-  put_simple_manifest_cert(m, author_cert_name, author, app, pc);
+  put_simple_revision_cert(m, author_cert_name, 
+			   author, app, pc);
 }
 
 void 
-cert_manifest_tag(manifest_id const & m, 
+cert_revision_tag(revision_id const & m, 
 		  string const & tagname,
 		  app_state & app,
 		  packet_consumer & pc)
 {
-  put_simple_manifest_cert(m, tag_cert_name, tagname, app, pc);  
+  put_simple_revision_cert(m, tag_cert_name, 
+			   tagname, app, pc);  
 }
 
 
 void 
-cert_manifest_changelog(manifest_id const & m, 
+cert_revision_changelog(revision_id const & m, 
 			string const & changelog,
 			app_state & app,
 			packet_consumer & pc)
 {
-  put_simple_manifest_cert(m, changelog_cert_name, changelog, app, pc);  
+  put_simple_revision_cert(m, changelog_cert_name, 
+			   changelog, app, pc);  
 }
 
 void 
@@ -1430,42 +1175,18 @@ cert_file_comment(file_id const & f,
 		  app_state & app,
 		  packet_consumer & pc)
 {
-  put_simple_file_cert(f, comment_cert_name, comment, app, pc);  
+  put_simple_file_cert(f, comment_cert_name, 
+		       comment, app, pc);  
 }
 
 void 
-cert_manifest_comment(manifest_id const & m, 
+cert_revision_comment(revision_id const & m, 
 		      string const & comment,
 		      app_state & app,
 		      packet_consumer & pc)
 {
-  put_simple_manifest_cert(m, comment_cert_name, comment, app, pc);  
-}
-
-void 
-cert_file_approval(file_id const & f1, 
-		   file_id const & f2, 
-		   bool const approval,
-		   app_state & app,
-		   packet_consumer & pc)
-{
-  if (approval)
-    put_simple_file_cert(f2, ancestor_cert_name, f1.inner()(), app, pc);
-  else
-    put_simple_file_cert(f2, disapproval_cert_name, f1.inner()(), app, pc);
-}
-
-void 
-cert_manifest_approval(manifest_id const & m1, 
-		       manifest_id const & m2, 
-		       bool const approval,
-		       app_state & app,
-		       packet_consumer & pc)
-{
-  if (approval)
-    put_simple_manifest_cert(m2, ancestor_cert_name, m1.inner()(), app, pc);
-  else
-    put_simple_manifest_cert(m2, disapproval_cert_name, m1.inner()(), app, pc);
+  put_simple_revision_cert(m, comment_cert_name, 
+			   comment, app, pc);  
 }
 
 void 
@@ -1486,17 +1207,6 @@ cert_manifest_testresult(manifest_id const & m,
   put_simple_manifest_cert(m, testresult_cert_name, lexical_cast<string>(passed), app, pc); 
 }
 
-void 
-cert_manifest_rename(manifest_id const & m, 
-		     rename_edge const & re,
-		     app_state & app,
-		     packet_consumer & pc)
-{
-  string val;
-  write_rename_edge(re, val);
-  put_simple_manifest_cert(m, rename_cert_name, val, app, pc);
-}
-
 			  
 static void 
 calculate_vcheck_mac(manifest_id const & m, 
@@ -1513,8 +1223,9 @@ calculate_vcheck_mac(manifest_id const & m,
   for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
     {
       path_id_pair pip(i);
-      N(app.db.file_version_exists(pip.ident()),
-	F("missing file version %s for %s") % pip.ident() % pip.path());
+      N(app.db.file_version_exists(manifest_entry_id(i)),
+	F("missing file version %s for %s") 
+	% manifest_entry_id(i) % manifest_entry_path(i));
 
       file_data fdat;
       data dat;

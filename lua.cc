@@ -603,18 +603,16 @@ lua_hooks::hook_non_blocking_rng_ok()
   return exec_ok && ok;
 }
 
-bool 
-lua_hooks::hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
-					hexenc<id> const & id,
-					cert_name const & name,
-					cert_value const & val)
+static inline bool
+shared_trust_function_body(Lua & ll,
+			   std::set<rsa_keypair_id> const & signers,
+			   hexenc<id> const & id,
+			   cert_name const & name,
+			   cert_value const & val)
 {
-  Lua ll(st);
-  ll
-    .push_str("get_manifest_cert_trust")
-    .get_fn()
+  ll.get_fn() 
     .push_table();
-
+  
   int k = 0;
   for (set<rsa_keypair_id>::const_iterator v = signers.begin();
        v != signers.end(); ++v)
@@ -633,8 +631,30 @@ lua_hooks::hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers
     .call(4, 1)
     .extract_bool(ok)
     .ok();
-
+  
   return exec_ok && ok;
+}
+
+bool 
+lua_hooks::hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
+				       hexenc<id> const & id,
+				       cert_name const & name,
+				       cert_value const & val)
+{
+  Lua ll(st);
+  ll.push_str("get_revision_cert_trust");  
+  return shared_trust_function_body(ll, signers, id, name, val);
+}
+
+bool 
+lua_hooks::hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
+					hexenc<id> const & id,
+					cert_name const & name,
+					cert_value const & val)
+{
+  Lua ll(st);
+  ll.push_str("get_manifest_cert_trust");
+  return shared_trust_function_body(ll, signers, id, name, val);
 }
 
 bool 
@@ -644,31 +664,8 @@ lua_hooks::hook_get_file_cert_trust(std::set<rsa_keypair_id> const & signers,
 				    cert_value const & val)
 {
   Lua ll(st);
-  ll
-    .push_str("get_file_cert_trust")
-    .get_fn()
-    .push_table();
-
-  int k = 0;
-  for (set<rsa_keypair_id>::const_iterator v = signers.begin();
-       v != signers.end(); ++v)
-    {
-      ll.push_int(k);
-      ll.push_str((*v)());
-      ll.set_table();
-      ++k;
-    }
-
-  bool ok;
-  bool exec_ok = ll
-    .push_str(id())
-    .push_str(name())
-    .push_str(val())
-    .call(4, 1)
-    .extract_bool(ok)
-    .ok();
-
-  return exec_ok && ok;
+  ll.push_str("get_file_cert_trust");
+  return shared_trust_function_body(ll, signers, id, name, val);
 }
 
 bool 
@@ -872,7 +869,7 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
 }
 
 bool 
-lua_hooks::hook_note_commit(manifest_id const & new_id,
+lua_hooks::hook_note_commit(revision_id const & new_id,
 			    map<cert_name, cert_value> const & certs)
 {
   Lua ll(st);

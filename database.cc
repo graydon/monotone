@@ -947,6 +947,13 @@ database::manifest_version_exists(manifest_id const & id)
     || exists(id.inner(), "manifests");
 }
 
+bool 
+database::revision_exists(revision_id const & id)
+{
+  return exists(id.inner(), "revisions");
+}
+
+
 void 
 database::get_file_version(file_id const & id,
 			   file_data & dat)
@@ -1031,6 +1038,234 @@ database::put_manifest_version(manifest_id const & old_id,
   put_version(old_id.inner(), new_id.inner(), del.inner(), 
 	      "manifests", "manifest_deltas");
 }
+
+void 
+database::get_revision_parents(revision_id const & id,
+			      set<revision_id> & parents)
+{
+  results res;
+  fetch(res, one_col, any_rows, 
+	"SELECT parent FROM ancestry WHERE child = '%q'",
+	id.inner()().c_str());
+  for (size_t i = 0; i < res.size(); ++i)
+    parents.insert(revision_id(res[i][0]));
+}
+
+void 
+database::get_revision_manifest(revision_id const & cid,
+			       manifest_id & mid)
+{
+  results res;
+  fetch(res, one_col, one_row, 
+	"SELECT manifest FROM revisions "
+	"WHERE id = '%q'",
+	cid.inner()().c_str());
+  mid = manifest_id(res[0][0]);
+}
+
+void 
+database::get_revision(revision_id const & id,
+		       revision_set & rev)
+{
+  rev.new_manifest = manifest_id();
+  rev.edges.clear();
+
+  set<revision_id> parents;
+  get_revision_parents(id, parents);
+  I(! parents.empty());
+
+  // get the manifest ID
+  get_revision_manifest(id, rev.new_manifest);
+  
+  // get the edges
+  for (set<revision_id>::const_iterator parent = parents.begin();
+       parent != parents.end(); ++parent)
+    {
+      manifest_id old_manifest;
+      revision_id old_revision;
+      change_set cs;
+
+      old_revision = *parent;
+      get_revision_manifest(*parent, old_manifest);
+
+      // get the adds
+      {
+	results res;
+	fetch(res, 2, any_rows, 
+	      "SELECT path, data FROM changeset_adds "
+	      "WHERE parent = '%q' AND child = '%q'",
+	      parent->inner()().c_str(),
+	      id.inner()().c_str());
+	for (size_t i = 0; i < res.size(); ++i)
+	  cs.adds.insert(addition_entry(file_path(res[i][0]),
+					file_id(res[i][1])));
+      }
+
+      // get the deletes
+      {
+	results res;
+	fetch(res, one_col, any_rows, 
+	      "SELECT path FROM changeset_deletes "
+	      "WHERE parent = '%q' AND child = '%q'",
+	      parent->inner()().c_str(),
+	      id.inner()().c_str());
+	for (size_t i = 0; i < res.size(); ++i)
+	  cs.dels.insert(file_path(res[i][0]));
+      }
+
+      // get the renames
+      {
+	results res;
+	fetch(res, 2, any_rows, 
+	      "SELECT src, dst FROM changeset_renames "
+	      "WHERE parent = '%q' AND child = '%q'",
+	      parent->inner()().c_str(),
+	      id.inner()().c_str());
+	for (size_t i = 0; i < res.size(); ++i)
+	  cs.renames.insert(rename_entry(file_path(res[i][0]),
+					 file_path(res[i][1])));
+      }
+
+      // get the deltas
+      {
+	results res;
+	fetch(res, 3, any_rows, 
+	      "SELECT path, src, dst FROM changeset_deltas "
+	      "WHERE parent = '%q' AND child = '%q'",
+	      parent->inner()().c_str(),
+	      id.inner()().c_str());
+	for (size_t i = 0; i < res.size(); ++i)
+	  cs.deltas.insert(delta_entry(file_path(res[i][0]),
+				       make_pair(file_id(res[i][1]),
+						 file_id(res[i][2]))));
+      }
+      rev.edges.insert(edge_entry(old_revision,
+				  make_pair(old_manifest, cs)));
+    }
+
+  // verify that we got a piece of content which has the right id
+  {
+    revision_id tmp;
+    calculate_ident(rev, tmp);
+    I(id == tmp);
+  }
+}
+
+void 
+database::get_revision(revision_id const & id,
+		       revision_data & dat)
+{
+  revision_set rev;
+  get_revision(id, rev);
+  write_revision_set(rev, dat);
+}
+
+void 
+database::put_revision(revision_id const & new_id,
+		       revision_set const & rev)
+{
+
+  I(!revision_exists(new_id));
+
+  // verify that we are putting the revision under the right id
+  {
+    revision_id tmp;
+    calculate_ident(rev, tmp);
+    I(new_id == tmp);
+  }
+
+  transaction_guard guard(*this);
+  execute("INSERT INTO revisions VALUES('%q', '%q')", 
+	  new_id.inner()().c_str(), 
+	  rev.new_manifest.inner()().c_str());
+
+  for (edge_map::const_iterator edge = rev.edges.begin();
+       edge != rev.edges.end(); ++edge)
+    {
+      // make sure the parent revision exists w/ manifest
+      if (revision_exists(edge_old_revision(edge)))
+	{
+	  manifest_id tmp;
+	  get_revision_manifest(edge_old_revision(edge), tmp);
+	  I(tmp == edge_old_manifest(edge));
+	}
+      else
+	{
+	  I(!edge_old_revision(edge).inner()().empty());
+	  I(!edge_old_manifest(edge).inner()().empty());
+	  execute("INSERT INTO revisions VALUES('%q', '%q')", 
+		  edge_old_revision(edge).inner()().c_str(), 
+		  edge_old_manifest(edge).inner()().c_str());
+	}
+
+      // insert the adds
+
+      change_set const & cs = edge_changes(edge);
+
+      for (addition_map::const_iterator add = cs.adds.begin();
+	   add != cs.adds.end(); ++add)
+	{
+	  execute("INSERT INTO edge_adds "
+		  "VALUES('%q', '%q', '%q', '%q')", 
+		  edge_old_revision(edge).inner()().c_str(), 
+		  new_id.inner()().c_str(),
+		  addition_path(add)().c_str(),
+		  addition_id(add).inner()().c_str());
+	}
+
+      // insert the deletes
+      for (deletion_set::const_iterator del = cs.dels.begin();
+	   del != cs.dels.end(); ++del)
+	{
+	  execute("INSERT INTO edge_deletes "
+		  "VALUES('%q', '%q', '%q')", 
+		  edge_old_revision(edge).inner()().c_str(), 
+		  new_id.inner()().c_str(),
+		  (*del)().c_str());
+	}
+
+      // insert the renames
+      for (rename_map::const_iterator ren = cs.renames.begin();
+	   ren != cs.renames.end(); ++ren)
+	{
+	  execute("INSERT INTO edge_renames "
+		  "VALUES('%q', '%q', '%q', '%q')", 
+		  edge_old_revision(edge).inner()().c_str(), 
+		  new_id.inner()().c_str(),
+		  rename_src(ren)().c_str(),
+		  rename_dst(ren)().c_str());
+	}
+
+
+      // insert the deltas
+      for (delta_map::const_iterator delta = cs.deltas.begin();
+	   delta != cs.deltas.end(); ++delta)
+	{
+	  execute("INSERT INTO edge_deltas "
+		  "VALUES('%q', '%q', '%q', '%q', '%q')", 
+		  edge_old_manifest(edge).inner()().c_str(), 
+		  new_id.inner()().c_str(),
+		  delta_path(delta)().c_str(),
+		  delta_src_id(delta).inner()().c_str(),
+		  delta_dst_id(delta).inner()().c_str());
+	}      
+    }
+
+  guard.commit();
+}
+
+void 
+database::put_revision(revision_id const & new_id,
+		       revision_data const & dat)
+{
+  revision_set rev;
+  read_revision_set(dat, rev);
+  revision_id tmp;
+  calculate_ident(rev, tmp);
+  I(tmp == new_id);
+  put_revision(new_id, rev);
+}
+
 
 // crypto key management
 
@@ -1242,6 +1477,150 @@ database::results_to_certs(results const & res,
 	      base64<rsa_sha1_signature>(res[i][4]));
       certs.push_back(t);
     }
+}
+
+
+struct valid_certs
+{
+  set<rsa_keypair_id> valid_signers;
+  hexenc<id> ident;
+  cert_name name;
+  base64<cert_value> val;
+  string signature_type;
+
+  valid_certs(string const & ty) 
+    : signature_type(ty) 
+  {
+    L(F("constructing validity checker for %s certs\n") % ty);
+  }
+
+  bool check_signer_trust(app_state & app)
+  {
+    bool trusted = false;
+
+    L(F("checking %d signer %s cert trust set\n") 
+      % valid_signers.size() % signature_type);
+    try
+      {
+	cert_value v;
+	decode_base64(val, v);
+	// FIXME: lame string-makes-the-mode argument
+	if (signature_type == "revision")
+	  trusted = app.lua.hook_get_revision_cert_trust(valid_signers,
+							ident, name, v);
+	else if (signature_type == "manifest")
+	  trusted = app.lua.hook_get_manifest_cert_trust(valid_signers,
+							 ident, name, v);
+	else if (signature_type == "file")
+	  trusted = app.lua.hook_get_file_cert_trust(valid_signers,
+						     ident, name, v);
+	else
+	  I(false); // should be illegal
+      }
+    catch (...)
+      {
+	W(F("exception in sqlite valid_certs::check_set_trust\n"));
+      }
+    
+    if (trusted)
+      L(F("trust function liked %d %s signers\n") 
+	% valid_signers.size() % signature_type);
+    else
+      L(F("trust function disliked %d %s signers\n") 
+	% valid_signers.size() % signature_type);
+    
+    return trusted;
+  }
+
+  void check_single_signer(app_state & app,
+			   int argc, 
+			   char const ** argv)
+  {
+    try
+      {
+	cert tmp = cert(hexenc<id>(argv[0]), 
+			cert_name(argv[1]),
+			base64<cert_value>(argv[2]),
+			rsa_keypair_id(argv[3]),
+			base64<rsa_sha1_signature>(argv[4]));
+	I(ident == tmp.ident);
+	I(name == tmp.name);
+	I(val == tmp.value);
+	L(F("examining '%s' %s cert from %s\n") 
+	  % name % signature_type % ident);
+	switch (check_cert(app, tmp))
+	  {
+	  case cert_ok:
+	    L(F("ok '%s' %s cert from %s\n") 
+	      % name % signature_type % ident);
+	    valid_signers.insert(tmp.key);
+	    break;
+	  case cert_unknown:
+	    L(F("unknown '%s' %s cert from %s\n") 
+	      % name % signature_type % ident);
+	    break;
+	  case cert_bad:
+	    W(F("bad '%s' %s cert from %s\n") 
+	      % name % signature_type % ident);
+	    break;
+	  }
+      }
+    catch (...)
+      {
+	W(F("exception in sqlite valid_certs::check_single_signer\n"));
+      }
+  }
+};
+
+extern "C"
+{
+
+static void
+trusted_step_callback(sqlite_func * fn_ctx, 
+		      int argc, 
+		      char const ** argv)
+{
+  app_state * app = NULL; 
+  valid_certs ** vpp;
+
+  I(fn_ctx);
+  I(argc == 7);
+  I(argv);
+  for (size_t i = 0; i < 7; ++i)
+    I(argv[i]);
+
+  app = static_cast<app_state *>(sqlite_user_data(fn_ctx));
+  I(app);
+  vpp = static_cast<valid_certs **>(sqlite_aggregate_context(fn_ctx, sizeof(valid_certs *)));
+  I(vpp);
+  if (! (*vpp))
+    *vpp = new valid_certs(string(argv[0]));
+  I(*vpp);
+  (*vpp)->check_single_signer(*app, argc-1, argv+1);  
+}
+
+static void
+trusted_finalize_callback(sqlite_func * fn_ctx)
+{
+  app_state * app = NULL; 
+  valid_certs ** vpp;
+  app = static_cast<app_state *>(sqlite_user_data(fn_ctx));
+  I(app);
+  vpp = static_cast<valid_certs **>(sqlite_aggregate_context(fn_ctx, sizeof(valid_certs *)));
+  I(vpp);
+  I(*vpp);
+  delete (*vpp);
+}
+}
+
+
+void
+database::install_functions(app_state * app)
+{
+  I(sqlite_create_aggregate(sql(), "trusted", 7, 
+			    &trusted_step_callback,
+			    &trusted_finalize_callback,
+			    app) == SQLITE_OK);
 }
 
 void 
@@ -1482,57 +1861,87 @@ database::get_file_cert(hexenc<id> const & hash,
 
 
 void 
-database::get_manifest_certs(cert_name const & name, 
-			     vector< manifest<cert> > & ts)
+database::get_revision_certs(cert_name const & name, 
+			    vector< revision<cert> > & ts)
 {
   vector<cert> certs;
-  get_certs(name, certs, "manifest_certs");
+  get_certs(name, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
 void 
-database::get_manifest_certs(manifest_id const & id, 
-			     cert_name const & name, 
-			     vector< manifest<cert> > & ts)
+database::get_revision_certs(revision_id const & id, 
+			    cert_name const & name, 
+			    vector< revision<cert> > & ts)
 {
   vector<cert> certs;
-  get_certs(id.inner(), name, certs, "manifest_certs");
+  get_certs(id.inner(), name, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
 void 
-database::get_manifest_certs(manifest_id const & id, 
-			     cert_name const & name,
-			     base64<cert_value> const & val, 
-			     vector< manifest<cert> > & ts)
+database::get_revision_certs(revision_id const & id, 
+			    cert_name const & name,
+			    base64<cert_value> const & val, 
+			    vector< revision<cert> > & ts)
 {
   vector<cert> certs;
-  get_certs(id.inner(), name, val, certs, "manifest_certs");
+  get_certs(id.inner(), name, val, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
 void 
-database::get_manifest_certs(cert_name const & name,
-			     base64<cert_value> const & val, 
-			     vector< manifest<cert> > & ts)
+database::get_revision_certs(cert_name const & name,
+			    base64<cert_value> const & val, 
+			    vector< revision<cert> > & ts)
 {
   vector<cert> certs;
-  get_certs(name, val, certs, "manifest_certs");
+  get_certs(name, val, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
 void 
-database::get_manifest_certs(manifest_id const & id, 
-			     vector< manifest<cert> > & ts)
+database::get_revision_certs(revision_id const & id, 
+			    vector< revision<cert> > & ts)
 { 
   vector<cert> certs;
-  get_certs(id.inner(), certs, "manifest_certs"); 
+  get_certs(id.inner(), certs, "revision_certs"); 
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+}
+
+void 
+database::get_revision_cert(hexenc<id> const & hash,
+			   revision<cert> & c)
+{
+  results res;
+  vector<cert> certs;
+  fetch(res, 5, one_row, 
+	"SELECT id, name, value, keypair, signature "
+	"FROM revision_certs "
+	"WHERE hash = '%q'", 
+	hash().c_str());
+  results_to_certs(res, certs);
+  I(certs.size() == 1);
+  c = revision<cert>(certs[0]);
+}
+
+bool 
+database::revision_cert_exists(hexenc<id> const & hash)
+{
+  results res;
+  vector<cert> certs;
+  fetch(res, one_col, any_rows, 
+	"SELECT id "
+	"FROM revision_certs "
+	"WHERE hash = '%q'", 
+	hash().c_str());
+  I(res.size() == 0 || res.size() == 1);
+  return (res.size() == 1);
 }
 
 bool 

@@ -56,7 +56,7 @@ manifest_map_builder::visit_file(file_path const & path)
   hexenc<id> ident;
   L(F("scanning file %s\n") % path);
   calculate_ident(path, ident, app.lua);
-  man.insert(entry(path, file_id(ident)));
+  man.insert(manifest_entry(path, file_id(ident)));
 }
 
 void 
@@ -92,15 +92,8 @@ build_manifest_map(path_set const & paths,
 	F("file disappeared but exists in manifest: %s") % (*i)());
       hexenc<id> ident;
       calculate_ident(*i, ident, app.lua);
-      man.insert(entry(*i, file_id(ident)));
+      man.insert(manifest_entry(*i, file_id(ident)));
     }
-}
-
-void 
-append_manifest_map(manifest_map const & m1,
-		    manifest_map & m2)
-{
-  copy(m1.begin(), m1.end(), inserter(m2, m2.begin()));
 }
 
 
@@ -116,7 +109,7 @@ add_to_manifest_map
     std::string ident(res[1].first, res[1].second);
     std::string path(res[2].first, res[2].second);
     file_path pth(path);
-    man.insert(entry(pth, hexenc<id>(ident)));
+    man.insert(manifest_entry(pth, hexenc<id>(ident)));
     return true;
   }
 };
@@ -145,10 +138,9 @@ read_manifest_map(manifest_data const & dat,
 // writing manifest_maps
 
 std::ostream & 
-operator<<(std::ostream & out, entry const & e)
+operator<<(std::ostream & out, manifest_entry const & e)
 {
-  path_id_pair pip(e);
-  return (out << pip.ident().inner()() << "  " << pip.path()() << "\n");
+  return (out << manifest_entry_id(e) << "  " << manifest_entry_path(e) << "\n");
 }
 
 
@@ -159,7 +151,7 @@ write_manifest_map(manifest_map const & man,
   ostringstream sstr;
   copy(man.begin(),
        man.end(),
-       ostream_iterator<entry>(sstr));
+       ostream_iterator<manifest_entry>(sstr));
 
   data raw;
   gzip<data> compressed;
@@ -183,49 +175,3 @@ write_manifest_map(manifest_map const & man,
 }
 
 
-// manifest_maps are set-theoretic enough objects that we can use our
-// friendly <algorithm> routines
-
-void 
-calculate_manifest_changes(manifest_map const & a,
-			   manifest_map const & b,
-			   manifest_changes & chg)
-{  
-  chg.adds.clear();
-  chg.dels.clear();
-  set_difference(a.begin(), a.end(), b.begin(), b.end(), 
-		 inserter(chg.dels, chg.dels.begin()));
-  set_difference(b.begin(), b.end(), a.begin(), a.end(), 
-		 inserter(chg.adds, chg.adds.begin()));
-}
-
-
-void 
-apply_manifest_changes(manifest_map const & a,
-		       manifest_changes const & chg,
-		       manifest_map & b)
-{
-  set<entry> tmp, deleted;
-  copy(a.begin(), a.end(), inserter(tmp, tmp.begin()));
-  set_difference(tmp.begin(), tmp.end(), 
-		 chg.dels.begin(), chg.dels.end(), 
-		 inserter(deleted, deleted.begin()));
-  b.clear();
-  set_union(deleted.begin(), deleted.end(), 
-	    chg.adds.begin(), chg.adds.end(), 
-	    inserter(b, b.begin()));
-}
-
-void 
-write_manifest_changes(manifest_changes const & changes, 
-		       data & dat)
-{
-  ostringstream out;
-  for (set<entry>::const_iterator i = changes.dels.begin();
-       i != changes.dels.end(); ++i)
-    out << "- " << *i;
-  for (set<entry>::const_iterator i = changes.adds.begin();
-       i != changes.adds.end(); ++i)
-    out << "+ " << *i;
-  dat = out.str();  
-}

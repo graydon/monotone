@@ -919,6 +919,12 @@ packet_db_writer::consume_constructable_manifest_delta(manifest_id const & old_i
 }
 
 void 
+packet_db_writer::consume_revision_data(revision_id const & ident, 
+				       revision_data const & dat)
+{
+}
+
+void 
 packet_db_writer::consume_manifest_cert(manifest<cert> const & t)
 {
   transaction_guard guard(pimpl->app.db);
@@ -1043,6 +1049,15 @@ packet_writer::consume_manifest_delta(manifest_id const & old_id,
 }
 
 void 
+packet_writer::consume_revision_data(revision_id const & ident, 
+				    revision_data const & dat)
+{
+  ost << "[revision " << ident.inner()() << "]" << endl
+      << trim_ws(dat()) << endl
+      << "[end]" << endl;
+}
+
+void 
 packet_writer::consume_manifest_cert(manifest<cert> const & t)
 {
   ost << "[mcert " << t.inner().ident() << endl
@@ -1102,6 +1117,9 @@ feed_packet_consumer
 	else if (head == "fdata")
 	  cons.consume_file_data(file_id(hexenc<id>(ident)), 
 				 file_data(body));
+	else if (head == "revision")
+	  cons.consume_revision_data(revision_id(hexenc<id>(ident)), 
+				    revision_data(body));
 	else
 	  throw oops("matched impossible data packet with head '" + head + "'");
       }
@@ -1186,7 +1204,7 @@ extract_packets(string const & s, packet_consumer & cons)
   string const bra("\\[");
   string const ket("\\]");
   string const certhead("(mcert|fcert)");
-  string const datahead("(mdata|fdata)");
+  string const datahead("(mdata|fdata|revision)");
   string const deltahead("(mdelta|fdelta)");
   string const keyhead("(pubkey|privkey)");
   string const key("([-a-zA-Z0-9\\.@]+)");

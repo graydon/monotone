@@ -2,22 +2,22 @@ AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
 MOST_SOURCES =								\
-	 app_state.cc commands.cc diff_patch.cc lua.cc patch_set.cc	\
+	 app_state.cc commands.cc diff_patch.cc lua.cc          	\
          transforms.cc update.cc work.cc cert.cc database.cc file_io.cc	\
          keys.cc manifest.cc packet.cc sanity.cc vocab.cc rcs_file.cc	\
          rcs_import.cc xdelta.cc ui.cc schema_migration.cc		\
-         constants.cc netsync.cc netcmd.cc merkle_tree.cc nonce.cc	\
-         mkstemp.cc                                                     \
+         constants.cc netsync.cc netcmd.cc merkle_tree.cc        	\
+         mkstemp.cc lcs.cc revision.cc                                  \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
 	 packet_types.hh transforms.hh vocab.hh				\
-	 cleanup.hh diff_patch.hh lua.hh patch_set.hh			\
+	 cleanup.hh diff_patch.hh lua.hh           			\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
-	 numeric_vocab.hh nonce.hh                                      \
+	 numeric_vocab.hh revision.hh                                   \
          mkstemp.hh
 
 NETXX_SOURCES =									\

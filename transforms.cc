@@ -280,6 +280,26 @@ calculate_ident(manifest_data const & dat,
   ident = tmp;
 }
 
+
+void calculate_ident(revision_data const & dat,
+		     revision_id & ident)
+{
+  hexenc<id> tmp;
+  data unpacked;
+  calculate_ident(dat.inner(), tmp);
+  ident = tmp;
+}
+
+void calculate_ident(revision_set const & cs,
+		     revision_id & ident)
+{
+  data tmp;
+  hexenc<id> tid;
+  write_revision_set(cs, tmp);
+  calculate_ident(tmp, tid);
+  ident = tid;
+}
+
 // this might reasonably go in file_io.cc too..
 void 
 calculate_ident(file_path const & file,

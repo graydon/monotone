@@ -1,3 +1,18 @@
+2004-07-10  graydon hoare  <graydon@pobox.com>
+
+	* lcs.{hh,cc}: Move lcs.hh body into lcs.cc.
+	* diff_patch.cc: Modify to compensate.
+	* revision.{hh,cc}: New files.
+	* Makefile.am: Update
+	* patch_set.{hh,cc}: Remove.
+	* {cert,database,lua,packets}.{hh,cc}, commands.cc: 
+	Modify partially (incomplete) to use revisions.
+	* manifest.{hh,cc}: Cleanup, remove dead code.
+	* schema.sql: Declare new revision tables.
+	* schema_migration.cc: Incomplete migrator.
+	* {transforms.{hh,cc}, vocab{,_terms}.hh:
+	Infrastructure for revisions.
+
 2004-05-20  graydon hoare  <graydon@pobox.com>
 
 	* NEWS: Note 0.13 release.
@@ -17,8 +32,8 @@
 
 2004-05-14  Joel Rosdahl  <joel@rosdahl.net>
 
-        * std_hooks.lua (ignore_file): Quote dots in .svn patterns.
-        * monotone.texi: Updated ignore_file hook example.
+	* std_hooks.lua (ignore_file): Quote dots in .svn patterns.
+	* monotone.texi: Updated ignore_file hook example.
 
 2004-05-16  graydon hoare  <graydon@pobox.com>
 
@@ -196,24 +211,24 @@
 2004-04-28  Christof Petig <christof@petig-baender.de>
 
 	* command.cc (heads):
-		show date and author certificates for each head
+	show date and author certificates for each head
 
 2004-04-28  Christof Petig <christof@petig-baender.de>
 
 	* configure.ac:
-		default to using the bundled SQLite
+	default to using the bundled SQLite
 
 2004-04-28  Christof Petig <christof@petig-baender.de>
 
-	* command.cc (log):
-		support optional file argument to show change log for
-		e.g. monotone log [ID] cert.cc
+	* commands.cc (log):
+	support optional file argument to show change log for
+	e.g. monotone log [ID] cert.cc
 
 2004-04-26  Christof Petig <christof@petig-baender.de>
 
 	* rcs_import.cc (process branch):
-		insert dummy cvs_edge to mark newly added file 
-		as previously non existant
+	insert dummy cvs_edge to mark newly added file 
+	as previously non existant
 
 2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
 
@@ -227,14 +242,14 @@
 2004-04-23  Christof Petig <christof@petig-baender.de>
 
 	* rcs_import.cc (build_parent_state, build_child_state):
-		remove dying files from manifest
+	remove dying files from manifest
 	* rcs_import.cc (cvs_file_edge, note_file_edge):
-		calculate state and remember it (alive or dead)
+	calculate state and remember it (alive or dead)
 
 2004-04-23  Christof Petig <christof@petig-baender.de>
 
 	* rcs_import.cc (import_rcs_file_with_cvs): 
-		do not include dead files in head_manifest
+	do not include dead files in head_manifest
 
 2004-04-22  Christof Petig <christof@petig-baender.de>
 
