@@ -1,5 +1,9 @@
 2004-03-29  graydon hoare  <graydon@pobox.com>
 
+	* monotone.spec: Update for 0.11 release.
+
+2004-03-29  graydon hoare  <graydon@pobox.com>
+
 	* Makefile.am (DISTCHECK_CONFIGURE_FLAGS): Set.
 	* commands.cc: Tidy up / narrow output width.
 	* patch_set.cc: Likewise.

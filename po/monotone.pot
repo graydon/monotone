@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: monotone-devel@nongnu.org\n"
-"POT-Creation-Date: 2004-03-28 15:04-0500\n"
+"POT-Creation-Date: 2004-03-29 11:53-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -399,403 +399,415 @@ msgstr ""
 
 #: commands.cc:412
 #, c-format
-msgid "expanded partial id '%s' to '%s'\n"
+msgid "expanding partial id '%s'\n"
 msgstr ""
 
-#: commands.cc:492
+#: commands.cc:413
+#, c-format
+msgid "expanded to '%s'\n"
+msgstr ""
+
+#: commands.cc:493
 #, c-format
 msgid "looking for parent %s of %s on server\n"
 msgstr ""
 
-#: commands.cc:496
+#: commands.cc:497
 #, c-format
 msgid "found parent %s on server\n"
 msgstr ""
 
-#: commands.cc:590
+#: commands.cc:591
 #, c-format
 msgid "common ancestor %s found, trying 3-way merge\n"
 msgstr ""
 
-#: commands.cc:595
+#: commands.cc:596
 #, c-format
 msgid "failed to 3-way merge manifests %s and %s via ancestor %s"
 msgstr ""
 
-#: commands.cc:600
+#: commands.cc:601
 msgid "no common ancestor found, trying 2-way merge\n"
 msgstr ""
 
-#: commands.cc:602
+#: commands.cc:603
 #, c-format
 msgid "failed to 2-way merge manifests %s and %s"
 msgstr ""
 
-#: commands.cc:702
+#: commands.cc:703
 #, c-format
 msgid "warning: no public key '%s' found in database\n"
 msgstr ""
 
-#: commands.cc:799
+#: commands.cc:807
 #, c-format
 msgid "warning: no keys found matching '%s'\n"
 msgstr ""
 
-#: commands.cc:814
+#: commands.cc:822
 #, c-format
 msgid "key '%s' already exists in database"
 msgstr ""
 
-#: commands.cc:818
+#: commands.cc:826
 #, c-format
 msgid "generating key-pair '%s'\n"
 msgstr ""
 
-#: commands.cc:820
+#: commands.cc:828
 #, c-format
 msgid "storing key-pair '%s' in database\n"
 msgstr ""
 
-#: commands.cc:858
+#: commands.cc:866
 msgid "no unique private key found, and no key specified"
 msgstr ""
 
-#: commands.cc:909
+#: commands.cc:917
 msgid "need --branch argument for branch-based vcheck"
 msgstr ""
 
-#: commands.cc:1005 commands.cc:1041 commands.cc:1074
+#: commands.cc:1013 commands.cc:1049 commands.cc:1082
 msgid "need --branch argument for posting"
 msgstr ""
 
-#: commands.cc:1064
+#: commands.cc:1072
 msgid "edit comment failed"
 msgstr ""
 
-#: commands.cc:1067
+#: commands.cc:1075
 msgid "empty comment"
 msgstr ""
 
-#: commands.cc:1187
+#: commands.cc:1195
 #, c-format
-msgid "committing %s to branch %s\n"
+msgid "committing %s\n"
 msgstr ""
 
-#: commands.cc:1199
+#: commands.cc:1196
+#, c-format
+msgid "committing to branch %s\n"
+msgstr ""
+
+#: commands.cc:1208
 msgid "empty log message"
 msgstr ""
 
-#: commands.cc:1207
+#: commands.cc:1216
 #, c-format
 msgid "skipping manifest %s, already in database\n"
 msgstr ""
 
-#: commands.cc:1213
+#: commands.cc:1222
 #, c-format
 msgid "inserting manifest delta %s -> %s\n"
 msgstr ""
 
-#: commands.cc:1221
+#: commands.cc:1230
 #, c-format
 msgid "inserting full manifest %s\n"
 msgstr ""
 
-#: commands.cc:1234
+#: commands.cc:1243
 #, c-format
 msgid "skipping file delta %s, already in database\n"
 msgstr ""
 
-#: commands.cc:1240
+#: commands.cc:1249
 #, c-format
 msgid "inserting delta %s -> %s\n"
 msgstr ""
 
-#: commands.cc:1251
+#: commands.cc:1260
 #, c-format
 msgid "inserting full version %s\n"
 msgstr ""
 
-#: commands.cc:1269
+#: commands.cc:1278
 #, c-format
 msgid "skipping file %s %s, already in database\n"
 msgstr ""
 
-#: commands.cc:1275
+#: commands.cc:1284
 #, c-format
 msgid "inserting new file %s %s\n"
 msgstr ""
 
-#: commands.cc:1336
+#: commands.cc:1345
 #, c-format
 msgid "committed %s\n"
 msgstr ""
 
-#: commands.cc:1357
+#: commands.cc:1366
 #, c-format
 msgid "already up to date at %s\n"
 msgstr ""
 
-#: commands.cc:1360
+#: commands.cc:1369
 #, c-format
 msgid "selected update target %s\n"
 msgstr ""
 
-#: commands.cc:1368
+#: commands.cc:1377
 msgid "manifest merge failed, no update performed"
 msgstr ""
 
-#: commands.cc:1370
+#: commands.cc:1379
 msgid "calculating patchset for update\n"
 msgstr ""
 
-#: commands.cc:1374
+#: commands.cc:1383
 #, c-format
 msgid "applying %d deletions to files in tree\n"
 msgstr ""
 
-#: commands.cc:1378
+#: commands.cc:1387
 #, c-format
 msgid "deleting %s\n"
 msgstr ""
 
-#: commands.cc:1382
+#: commands.cc:1391
 #, c-format
 msgid "applying %d moves to files in tree\n"
 msgstr ""
 
-#: commands.cc:1386
+#: commands.cc:1395
 #, c-format
 msgid "moving %s -> %s\n"
 msgstr ""
 
-#: commands.cc:1391
+#: commands.cc:1400
 #, c-format
 msgid "applying %d additions to tree\n"
 msgstr ""
 
-#: commands.cc:1395
+#: commands.cc:1404
 #, c-format
 msgid "adding %s as %s\n"
 msgstr ""
 
-#: commands.cc:1406
+#: commands.cc:1415
 #, c-format
 msgid "applying %d deltas to tree\n"
 msgstr ""
 
-#: commands.cc:1410
+#: commands.cc:1419
 #, c-format
 msgid "updating file %s: %s -> %s\n"
 msgstr ""
 
-#: commands.cc:1435
+#: commands.cc:1444
 msgid "update successful\n"
 msgstr ""
 
-#: commands.cc:1442
+#: commands.cc:1451
 #, c-format
 msgid "updated to base version %s\n"
 msgstr ""
 
-#: commands.cc:1461 commands.cc:1515 commands.cc:1649
+#: commands.cc:1470 commands.cc:1524 commands.cc:1658
 #, c-format
 msgid "no file version %s found in database for %s"
 msgstr ""
 
-#: commands.cc:1465 commands.cc:1519 commands.cc:1653
+#: commands.cc:1474 commands.cc:1528 commands.cc:1662
 #, c-format
 msgid "writing file %s to %s\n"
 msgstr ""
 
-#: commands.cc:1506
+#: commands.cc:1515
 #, c-format
 msgid "nothing known about %s"
 msgstr ""
 
-#: commands.cc:1511
+#: commands.cc:1520
 #, c-format
 msgid "reverting %s to %s\n"
 msgstr ""
 
-#: commands.cc:1527
+#: commands.cc:1536
 #, c-format
 msgid "also removing deletion for %s\n"
 msgstr ""
 
-#: commands.cc:1533
+#: commands.cc:1542
 #, c-format
 msgid "removing rename for %s\n"
 msgstr ""
 
-#: commands.cc:1539
+#: commands.cc:1548
 #, c-format
 msgid "removing addition for %s\n"
 msgstr ""
 
-#: commands.cc:1566
+#: commands.cc:1575
 #, c-format
 msgid "no file version %s found in database"
 msgstr ""
 
-#: commands.cc:1568
+#: commands.cc:1577
 #, c-format
 msgid "dumping file %s\n"
 msgstr ""
 
-#: commands.cc:1582 commands.cc:1636
+#: commands.cc:1591 commands.cc:1645
 #, c-format
 msgid "no manifest version %s found in database"
 msgstr ""
 
-#: commands.cc:1584
+#: commands.cc:1593
 #, c-format
 msgid "dumping manifest %s\n"
 msgstr ""
 
-#: commands.cc:1609
+#: commands.cc:1618
 msgid "need --branch argument for branch-based checkout"
 msgstr ""
 
-#: commands.cc:1611
+#: commands.cc:1620
 #, c-format
 msgid "branch %s is empty"
 msgstr ""
 
-#: commands.cc:1612
+#: commands.cc:1621
 #, c-format
 msgid "branch %s has multiple heads"
 msgstr ""
 
-#: commands.cc:1638
+#: commands.cc:1647
 #, c-format
 msgid "checking out manifest %s to directory %s\n"
 msgstr ""
 
-#: commands.cc:1733
+#: commands.cc:1742
 #, c-format
 msgid "merging with manifest %d / %d: %s <-> %s\n"
 msgstr ""
 
-#: commands.cc:1748
+#: commands.cc:1757
 #, c-format
-msgid "merge of %s and %s\n"
+msgid ""
+"merge of %s\n"
+"     and %s\n"
 msgstr ""
 
-#: commands.cc:1753 commands.cc:1754
+#: commands.cc:1763 commands.cc:1764
 #, c-format
 msgid "[source] %s\n"
 msgstr ""
 
-#: commands.cc:1755
+#: commands.cc:1765
 #, c-format
 msgid "[merged] %s\n"
 msgstr ""
 
-#: commands.cc:1794
+#: commands.cc:1804
 msgid "ancestor file id does not exist"
 msgstr ""
 
-#: commands.cc:1797
+#: commands.cc:1807
 msgid "left file id does not exist"
 msgstr ""
 
-#: commands.cc:1800
+#: commands.cc:1810
 msgid "right file id does not exist"
 msgstr ""
 
-#: commands.cc:1815
+#: commands.cc:1825
 msgid "merge failed"
 msgstr ""
 
-#: commands.cc:1858 commands.cc:1868
+#: commands.cc:1868 commands.cc:1878
 #, c-format
 msgid "branch '%s' is empty\n"
 msgstr ""
 
-#: commands.cc:1863 commands.cc:1873
+#: commands.cc:1873 commands.cc:1883
 #, c-format
 msgid "branch '%s' is not merged\n"
 msgstr ""
 
-#: commands.cc:1894
+#: commands.cc:1904
 #, c-format
 msgid "propagate of %s and %s from branch '%s' to '%s'\n"
 msgstr ""
 
-#: commands.cc:1913 commands.cc:1923
+#: commands.cc:1923 commands.cc:1933
 msgid "non-hex digits in partial id"
 msgstr ""
 
-#: commands.cc:2010
+#: commands.cc:2020
 #, c-format
 msgid "--- %s\n"
 msgstr ""
 
-#: commands.cc:2011
+#: commands.cc:2021
 #, c-format
 msgid "+++ %s\n"
 msgstr ""
 
-#: commands.cc:2012
+#: commands.cc:2022
 #, c-format
 msgid "@@ -0,0 +1,%d @@\n"
 msgstr ""
 
-#: commands.cc:2230
+#: commands.cc:2240
 #, c-format
 msgid "no monotone book-keeping directory '%s' found"
 msgstr ""
 
-#: commands.cc:2355 commands.cc:2384 commands.cc:2399 commands.cc:2432
+#: commands.cc:2365 commands.cc:2394 commands.cc:2409 commands.cc:2442
 msgid "could not guess default signing key"
 msgstr ""
 
-#: commands.cc:2370
+#: commands.cc:2380
 msgid "doing anonymous pull\n"
 msgstr ""
 
-#: commands.cc:2464
+#: commands.cc:2474
 #, c-format
 msgid "target number %d out of range"
 msgstr ""
 
-#: commands.cc:2470
+#: commands.cc:2480
 #, c-format
 msgid "packet number %d out of range for target %d"
 msgstr ""
 
-#: commands.cc:2482
+#: commands.cc:2492
 #, c-format
 msgid "deleting %d byte posting for %s\n"
 msgstr ""
 
-#: commands.cc:2495
+#: commands.cc:2505
 #, c-format
 msgid "queueing %d bytes for %s\n"
 msgstr ""
 
-#: commands.cc:2510
+#: commands.cc:2520
 msgid "need --branch argument for addtree"
 msgstr ""
 
-#: commands.cc:2753
+#: commands.cc:2763
 msgid "no packets found on stdin"
 msgstr ""
 
-#: commands.cc:2755
+#: commands.cc:2765
 msgid "read 1 packet\n"
 msgstr ""
 
-#: commands.cc:2757
+#: commands.cc:2767
 #, c-format
 msgid "read %d packets\n"
 msgstr ""
 
-#: commands.cc:2831
+#: commands.cc:2841
 msgid "fetching from all known URLs\n"
 msgstr ""
 
-#: commands.cc:2853
+#: commands.cc:2863
 msgid "no URL provided, posting all queued targets\n"
 msgstr ""
 

@@ -1,6 +1,6 @@
 Summary: monotone is a distributed version control tool
 Name: monotone
-Version: 0.10
+Version: 0.11
 Release: 1
 License: GPL
 Group: Development/Version Control
@@ -23,8 +23,10 @@ functions to client-side RSA certificates.
 ./configure --prefix=$RPM_BUILD_ROOT/usr \
             --infodir=$RPM_BUILD_ROOT%{_infodir} \
             --mandir=$RPM_BUILD_ROOT%{_mandir} \
-	    CFLAGS='-O2 -msse2 -fno-strict-aliasing' \
-	    CXXFLAGS='-O2 -msse2 -fno-strict-aliasing'
+            --with-bundled-adns \
+            --with-bundled-sqlite \
+            --with-bundled-lua \
+            --enable-static-boost 
 make
 
 %install
@@ -58,6 +60,9 @@ fi
 
 
 %changelog
+* Mon Mar 29 2004 graydon hoare <graydon@pobox.com>
+- 0.11 release
+
 * Mon Mar 1 2004 graydon hoare <graydon@pobox.com>
 - 0.10 release
 
