@@ -2303,10 +2303,9 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   guess_branch (edge_old_revision(rs.edges.begin()), app, branchname);
   app.set_branch(branchname());
     
-  P(F("beginning commit\n"));
-  P(F("manifest %s\n") % rs.new_manifest);
-  P(F("revision %s\n") % rid);
-  P(F("branch %s\n") % branchname);
+  P(F("beginning commit on branch '%s'\n") % branchname);
+  L(F("new manifest %s\n") % rs.new_manifest);
+  L(F("new revision %s\n") % rid);
 
   // get log message
   if (app.message().length() > 0)
@@ -2323,7 +2322,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   
     if (app.db.revision_exists(rid))
       {
-        L(F("revision %s already in database\n") % rid);
+        W(F("revision %s already in database\n") % rid);
       }
     else
       {
