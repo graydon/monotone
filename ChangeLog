@@ -1,3 +1,9 @@
+2004-01-12  Nathaniel Smith  <njs@codesourcery.com>
+
+	* configure.ac: Remove check for -lpthread.
+	Add check for pthread_mutex_lock and ACX_PTHREAD.
+	* m4/acx_pthread.m4: New file.
+
 2004-01-07  graydon hoare  <graydon@pobox.com>
 
 	* Makefile.am:

@@ -58,6 +58,23 @@ fi
 
 # check various C++ libs which confuse autoconf
 
+# We don't use threads, but some Boost libraries make locking calls
+# anyway.  So we need to ensure that these symbols are available.  But
+# It's okay if they're just stubs.
+AC_CHECK_FUNC([pthread_mutex_lock], [],
+# But if there isn't even a stub, find the real threading library...
+              [ACX_PTHREAD(
+# ...if it doesn't exist, oh well.
+                           [],
+# ...but if it does, use it.
+                           [LIBS="$PTHREAD_LIBS $LIBS"
+                            CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS"])])
+# This is technically incorrect if Boost is for some reason compiled
+# without threads on a system that does provide threads.  But oh
+# well.
+
+# Now check for Boost libraries proper.
+
 OLD_LIBS=$LIBS
 LIBS="-lboost_prg_exec_monitor $OLD_LIBS"
 AC_MSG_CHECKING(libboost_prg_exec_monitor library)
@@ -144,7 +161,6 @@ fi
 # simple library checks 
 AC_CHECK_LIB([dl], [dlsym])
 AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_FAILURE([popt is required]))
-AC_CHECK_LIB([pthread], [pthread_attr_init])
 AC_CHECK_LIB([resolv], [inet_aton])
 AC_CHECK_LIB([socket], [accept])
 AC_CHECK_LIB([nsl], [inet_ntoa])
