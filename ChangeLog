@@ -1,5 +1,9 @@
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_cleanup_empty_dir.at: Shorten name.
+
+2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
+
 	* Makefile.am (BUILT_SOURCES): List package_*version.{h,txt}.
 	(package_{full_,}version.txt: Work when blddir != srcdir.
 
