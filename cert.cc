@@ -16,7 +16,6 @@
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/dynamic_bitset.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
