@@ -28,13 +28,12 @@
 	* database.{cc,hh}: More netsync speed tweaks.
 	* netsync.cc: Likewise.
 
-2005-01-27  Derek Scherger  <derek@echologic.com>
 2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_restrictions_warn_on_unknown.at: New test.
 	* testsuite.at: Add it.
 
-2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
+2005-01-27  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (attr): adjust for subdir; ensure files exist
 	* tests/t_attr.at: improve setup description
