@@ -4,13 +4,13 @@
 // see the file COPYING for details
 
 #include <stdio.h>             // for rename(2)
+#include <fstream>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
-#include "cryptopp/filters.h"
-#include "cryptopp/files.h"
+#include "botan/botan.h"
 
 #include "file_io.hh"
 #include "lua.hh"
@@ -329,11 +329,14 @@ read_data_impl(fs::path const & p,
   
   ifstream file(p.string().c_str(),
 		ios_base::in | ios_base::binary);
-  string in;
   if (!file)
     throw oops(string("cannot open file ") + p.string() + " for reading");
-  CryptoPP::FileSource f(file, true, new CryptoPP::StringSink(in));
-  dat = in;
+
+  Botan::Pipe pipe;
+  pipe.start_msg();
+  file >> pipe;
+  pipe.end_msg();
+  dat = pipe.read_all_as_string();
 }
 
 void 
@@ -436,7 +439,8 @@ write_data_impl(fs::path const & p,
 		  ios_base::out | ios_base::trunc | ios_base::binary);
     if (!file)
       throw oops(string("cannot open file ") + tmp.string() + " for writing");    
-    CryptoPP::StringSource s(dat(), true, new CryptoPP::FileSink(file));
+    Botan::Pipe pipe(new Botan::DataSink_Stream(file));
+    pipe.process_msg(dat());
     // data.tmp closes
   }
 
