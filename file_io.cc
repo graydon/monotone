@@ -4,6 +4,7 @@
 // see the file COPYING for details
 
 #include <stdio.h>             // for rename(2)
+#include <iostream.h>
 #include <fstream>
 
 #include <boost/filesystem/path.hpp>
@@ -393,9 +394,11 @@ read_data_stdin(data & dat)
   static bool have_consumed_stdin = false;
   N(!have_consumed_stdin, F("Cannot read standard input multiple times"));
   have_consumed_stdin = true;
-  string in;
-  CryptoPP::FileSource f(cin, true, new CryptoPP::StringSink(in));
-  dat = in;
+  Botan::Pipe pipe;
+  pipe.start_msg();
+  cin >> pipe;
+  pipe.end_msg();
+  dat = pipe.read_all_as_string();
 }
 
 void 

@@ -1,3 +1,8 @@
+2005-04-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* file_io.cc (read_data_stdin): make it use botan
+	* mkstemp.cc: merge cleanup (missed something up the manual merge)
+
 2005-04-04  Nathaniel Smith  <njs@codesourcery.com>
 
 	* contrib/ciabot_monotone.py (config): Genericize again, so lazy
