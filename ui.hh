@@ -70,6 +70,7 @@ public:
   void inform(boost::format const & fmt) { inform(fmt.str()); }
   void set_tick_trailer(std::string const & trailer);
   void set_tick_writer(tick_writer * t_writer);
+  void ensure_clean_line();
 
 private:  
   std::set<std::string> issued_warnings;  

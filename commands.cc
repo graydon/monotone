@@ -35,6 +35,7 @@
 #include "update.hh"
 #include "vocab.hh"
 #include "work.hh"
+#include "automate.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -1179,7 +1180,7 @@ CMD(tag, "review", "REVISION TAGNAME",
 }
 
 
-CMD(testresult, "review", "ID (true|false)", 
+CMD(testresult, "review", "ID (pass|fail|true|false|yes|no|1|0)", 
     "note the results of running a test on a revision")
 {
   if (args.size() != 2)
@@ -2672,6 +2673,10 @@ void do_diff(const string & name,
       revision_id r_old_id, r_new_id;
       manifest_id m_new_id;
 
+      // don't support pathnames or restrictions in this form
+      if (args.size() != 0)
+        throw usage(name);
+
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       complete(app, idx(app.revision_selectors, 1)(), r_new_id);
 
@@ -3663,6 +3668,21 @@ CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
   put_revision_id(null);
 }
 
+CMD(automate, "automation",
+    "heads BRANCH\n"
+    "interface_version\n",
+    "automation interface")
+{
+  if (args.size() == 0)
+    throw usage(name);
+
+  vector<utf8>::const_iterator i = args.begin();
+  utf8 cmd = *i;
+  ++i;
+  vector<utf8> cmd_args(i, args.end());
+
+  automate_command(cmd, cmd_args, name, app, cout);
+}
 
 
 }; // namespace commands

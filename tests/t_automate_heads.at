@@ -1,0 +1,46 @@
+AT_SETUP([automate heads])
+MONOTONE_SETUP
+
+ADD_FILE(foo, [blah
+])
+COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
+
+ADD_FILE(1, [1
+])
+COMMIT(testbranch)
+ONE_R=`BASE_REVISION`
+
+REVERT_TO($BASE_R)
+ADD_FILE(2, [2
+])
+COMMIT(testbranch)
+TWO_R=`BASE_REVISION`
+
+REVERT_TO($BASE_R)
+ADD_FILE(3, [3
+])
+COMMIT(testbranch)
+THREE_R=`BASE_REVISION`
+
+REVERT_TO($BASE_R)
+ADD_FILE(4, [4
+])
+COMMIT(testbranch)
+FOUR_R=`BASE_REVISION`
+
+AT_CHECK(echo $ONE_R >wanted_heads_unsorted)
+AT_CHECK(echo $TWO_R >>wanted_heads_unsorted)
+AT_CHECK(echo $THREE_R >>wanted_heads_unsorted)
+AT_CHECK(echo $FOUR_R >>wanted_heads_unsorted)
+
+AT_CHECK(sort wanted_heads_unsorted >wanted_heads)
+
+AT_CHECK(MONOTONE --branch=otherbranch automate heads testbranch, [], [stdout], [ignore])
+AT_CHECK(cmp wanted_heads stdout)
+
+AT_CHECK(MONOTONE automate heads nosuchbranch, [], [stdout], [ignore])
+AT_DATA(empty, [])
+AT_CHECK(cmp empty stdout)
+
+AT_CLEANUP
