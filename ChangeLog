@@ -1,3 +1,16 @@
+2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_netsync_diffbranch.at: Add priority, add description of
+	problem and solution.
+	Also, XFAIL it.
+	* tests/t_netsync_unrelated.at: Add reference to discussion.
+	* tests/t_cmdline_options.at: Remove priority marking from
+	non-bug.
+	* tests/t_checkout_dir.at: XFAIL when run as root.
+
+	* tests/t_netsync_nocerts.at: New test.
+	* testsuite.at: Call it.
+	
 2005-1-3  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_netsync_diffbranch.at: add a new test for pulling a branch
