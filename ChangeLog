@@ -1,5 +1,8 @@
 2003-09-26  Tom Tromey  <tromey@redhat.com>
 
+	* commands.cc (tag): Use all-caps for meta-syntactic variables.
+	(comment, add, cat, complete, mdelta, fdata): Likewise.
+
 	* monotone.1: There's no default database.
 	* monotone.texi (OPTIONS): There's no default database.
 

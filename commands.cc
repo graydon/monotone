@@ -775,7 +775,7 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
 }
 
 
-CMD(tag, "certificate", "<id> <tagname>", 
+CMD(tag, "certificate", "ID TAGNAME", 
     "put a symbolic tag cert on a manifest version")
 {
   if (args.size() != 2)
@@ -833,7 +833,7 @@ CMD(disapprove, "certificate", "(file|manifest) ID",
 }
 
 
-CMD(comment, "certificate", "(file|manifest) <id> [comment]", 
+CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
     "comment on a file or manifest version")
 {
   if (args.size() != 2 && args.size() != 3)
@@ -867,7 +867,7 @@ CMD(comment, "certificate", "(file|manifest) <id> [comment]",
 
 
 
-CMD(add, "working copy", "<pathname> [...]", "add files to working copy")
+CMD(add, "working copy", "PATHNAME...", "add files to working copy")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -1286,7 +1286,7 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 }
 
 
-CMD(cat, "tree", "(file|manifest) <id>", "write file or manifest from database to stdout")
+CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1605,7 +1605,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
 }
 
 
-CMD(complete, "informative", "(manifest|file) <partial-id>", "complete partial id")
+CMD(complete, "informative", "(manifest|file) PARTIAL-ID", "complete partial id")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1853,7 +1853,7 @@ ALIAS(ls, list, "informative",
       "ignored", "show certs, keys, or branches")
 
 
-CMD(mdelta, "packet i/o", "<oldid> <newid>", "write manifest delta packet to stdout")
+CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1919,7 +1919,7 @@ CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
 }
 
 
-CMD(fdata, "packet i/o", "<id>", "write file data packet to stdout")
+CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
