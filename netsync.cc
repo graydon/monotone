@@ -2339,19 +2339,7 @@ session::process_data_cmd(netcmd_item_type type,
       break;
 
     case mcert_item:
-      if (this->app.db.manifest_cert_exists(hitem))
-        L(F("manifest cert '%s' already exists in our database\n")  % hitem);
-      else
-        {
-          cert c;
-          read_cert(dat, c);
-          hexenc<id> tmp;
-          cert_hash_code(c, tmp);
-          if (! (tmp == hitem))
-            throw bad_decode(F("hash check failed for manifest cert '%s'")  % hitem);
-          this->dbw.consume_manifest_cert(manifest<cert>(c));
-          update_merkle_trees(mcert_item, tmp, true);
-        }
+      L(F("ignoring manifest cert '%s'\n") % hitem);
       break;
 
     case rcert_item:
@@ -2377,19 +2365,7 @@ session::process_data_cmd(netcmd_item_type type,
       break;
 
     case fcert_item:
-      if (this->app.db.file_cert_exists(hitem))
-        L(F("file cert '%s' already exists in our database\n")  % hitem);
-      else
-        {
-          cert c;
-          read_cert(dat, c);
-          hexenc<id> tmp;
-          cert_hash_code(c, tmp);
-          if (! (tmp == hitem))
-            throw bad_decode(F("hash check failed for file cert '%s'")  % hitem);
-          this->dbw.consume_file_cert(file<cert>(c));
-          update_merkle_trees(fcert_item, tmp, true);
-        }
+      L(F("ignoring file cert '%s'\n") % hitem);
       break;
 
     case revision_item:

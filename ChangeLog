@@ -1,5 +1,15 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc (process_data_cmd): Ignore file/manifest certs.
+
+	* database.cc (struct valid_certs): Don't support file certs.
+	(rehash): No file certs.
+	(file_cert_exists): Remove.
+	(put_file_cert): Remove.
+	(get_file_certs): Remove.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* packet.cc (class delayed_manifest_cert_packet):
 	(class delayed_file_cert_packet): Remove.
 	(packet_db_writer::consume_file_cert, consume_manifest_cert) 
