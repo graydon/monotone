@@ -251,6 +251,7 @@ AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_FAILURE([popt is required]))
 AC_SEARCH_LIBS([inet_aton], [resolv])
 AC_SEARCH_LIBS([accept], [socket])
 AC_SEARCH_LIBS([inet_ntoa], [nsl])
+AC_CHECK_LIB([z], [deflate], , AC_MSG_FAILURE([zlib is required]))
 
 
 ##########
