@@ -1153,7 +1153,7 @@ concatenate_change_sets(change_set const & a,
             % delta_entry_path(del) 
             % delta_entry_src(existing) 
             % delta_entry_dst(existing)
-	    % delta_entry_src(del)
+            % delta_entry_src(del)
             % delta_entry_dst(del));
           I(delta_entry_dst(existing) == delta_entry_src(del));
           std::pair<file_id, file_id> fused = std::make_pair(delta_entry_src(existing),
@@ -1183,6 +1183,7 @@ concatenate_change_sets(change_set const & a,
 static void
 extend_renumbering_via_added_files(path_analysis const & a, 
                                    path_analysis const & b, 
+                                   state_renumbering & existing_renumbering,
                                    state_renumbering & renumbering)
 {
   directory_map a_second_map;
@@ -1197,14 +1198,17 @@ extend_renumbering_via_added_files(path_analysis const & a,
           path_state::const_iterator j = b.second.find(path_state_tid(i));
           I(j != b.second.end());
           file_path leaf_name(path_item_name(path_state_item(j)));
+
           I(path_item_type(path_state_item(j)) == ptype_file);
           if (! null_name(leaf_name))
             {
               tid added_parent_tid = path_item_parent(path_state_item(j));
+              state_renumbering::const_iterator ren = existing_renumbering.find(added_parent_tid);
+              if (ren != existing_renumbering.end())
+                added_parent_tid = ren->second;
               directory_map::const_iterator dirent = a_second_map.find(added_parent_tid);
               if (dirent != a_second_map.end())
                 {
-                  
                   boost::shared_ptr<directory_node> node = dirent->second;
                   directory_node::const_iterator entry = node->find(leaf_name);
                   if (entry != node->end() && directory_entry_type(entry) == ptype_file)
@@ -1523,7 +1527,7 @@ merge_disjoint_analyses(path_analysis const & a,
 
   {
     state_renumbering aux_renumbering;
-    extend_renumbering_via_added_files(a_tmp, b_tmp, aux_renumbering);
+    extend_renumbering_via_added_files(a_tmp, b_tmp, renumbering, aux_renumbering);
     for (state_renumbering::const_iterator i = aux_renumbering.begin(); 
          i != aux_renumbering.end(); ++i)
       {
@@ -1573,15 +1577,15 @@ merge_disjoint_analyses(path_analysis const & a,
 
 static void
 merge_deltas(file_path const & anc_path, 
-	     file_path const & left_path, 
-	     file_path const & right_path, 
-	     file_path const & path_in_merged, 
-	     std::map<file_path, file_id> & merge_finalists,
-	     file_id const & anc,
-	     file_id const & left,
-	     file_id const & right,
-	     file_id & finalist, 
-	     merge_provider & merger)
+             file_path const & left_path, 
+             file_path const & right_path, 
+             file_path const & path_in_merged, 
+             std::map<file_path, file_id> & merge_finalists,
+             file_id const & anc,
+             file_id const & left,
+             file_id const & right,
+             file_id & finalist, 
+             merge_provider & merger)
 {
   std::map<file_path, file_id>::const_iterator i = merge_finalists.find(path_in_merged);
   if (i != merge_finalists.end())
@@ -1594,14 +1598,14 @@ merge_deltas(file_path const & anc_path,
     {
       if (null_id(anc))
         {
-          N(merger.try_to_merge_files(path_in_merged, left, right, finalist),
+          N(merger.try_to_merge_files(left_path, right_path, path_in_merged, left, right, finalist),
             F("merge of '%s' : '%s' vs. '%s' (no common ancestor) failed")
             % path_in_merged % left % right);
         }
       else
         {
           N(merger.try_to_merge_files(anc_path, left_path, right_path, path_in_merged, 
-				      anc, left, right, finalist),
+                                      anc, left, right, finalist),
             F("merge of '%s' : '%s' -> '%s' vs '%s' failed") 
             % path_in_merged % anc % left % right);
         }
@@ -1647,11 +1651,11 @@ project_missing_deltas(change_set const & a,
 
       // first work out what the path in a.first == b.first is
       reconstruct_path(delta_entry_path(i), a_second_map, 
-		       a_analysis.first, path_in_anc);
+                       a_analysis.first, path_in_anc);
 
       // first work out what the path in b.second is
       reconstruct_path(path_in_anc, b_first_map, 
-		       b_analysis.second, path_in_b_second);
+                       b_analysis.second, path_in_b_second);
 
       // then work out what the path in merged is
       reconstruct_path(delta_entry_path(i), a_merged_first_map, 
@@ -2367,7 +2371,9 @@ disjoint_merge_test(std::string const & ab_str,
   read_change_set(data(ab_str), ab);
   read_change_set(data(ac_str), ac);
 
-  merge_provider merger(app);
+  manifest_map dummy;
+
+  merge_provider merger(app, dummy, dummy, dummy);
   merge_change_sets(ab, ac, bm, cm, merger, app);
 
   dump_change_set("ab", ab);

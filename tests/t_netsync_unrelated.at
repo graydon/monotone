@@ -1,4 +1,4 @@
-AT_SETUP([netsync on partially unrelated revisions])
+AT_SETUP([(normal) netsync on partially unrelated revisions])
 AT_KEYWORDS([netsync])
 MONOTONE_SETUP
 

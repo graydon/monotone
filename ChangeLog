@@ -3,6 +3,166 @@
 	* Makefile.am (package_full_revision.txt): Silence error messages
 	when deducing full package revision.
 
+2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (log): Synopsize optional 'file' argument, and
+	describe both arguments in help description.
+
+2004-12-09  Derek Scherger  <derek@echologic.com>
+
+	* .mt-nonce: delete obsolete file	
+	* change_set.cc (merge_deltas): add file paths in call to
+	try_to_merge_files
+	* commands.cc (propagate): add progress logging similar to merge
+	* diff_patch.{cc,hh} (try_to_merge_files): add file paths to
+	merge2 and merge3 hooks; add logging of paths before calling merge
+	hooks
+	* lua.{cc,hh} (hook_merge2, hook_merge3): add file paths to merge
+	hooks
+	* std_hooks.lua (merge2, merge3, merge2_xxdiff_cmd,
+	merge3_xxdiff_cmd): pass file paths to xxdiff for use as titles
+	* testsuite.at (MONOTONE_SETUP): add paths to merge2 hook
+
+2004-12-09  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (BUILT_SOURCES_NOCLEAN): add 'S'.
+	
+	* netsync.cc (session): Make ticker pointers into auto_ptr's.  Add
+	cert and revision tickers.
+	(session::session): Initialize new tickers.
+	(session::note_item_sent): New method.  Increment tickers.
+	(session::note_item_arrived): Increment tickers.
+	(session::read_some): Adjust for auto_ptr.
+	(session::write_some): Likewise.
+	(call_server): Conditionally initialize cert and revision
+	tickers.
+	(queue_data_cmd): Call 'note_item_sent'.
+	(queue_delta_cmd): Call 'note_item_sent'.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_patch_vs_drop_add.at: 
+	* tests/t_patch_drop_add.at: 
+	* tests/t_netsync_unrelated.at: 
+	* tests/t_merge_add_del.at: 
+	* tests/t_merge2_add_drop_add.at: 
+	* tests/t_merge_1.at: 
+	* tests/t_heads_discontinuous_branch.at: 
+	* tests/t_cleanup_empty_dir.at: 
+	* tests/t_checkout_options.at: 
+	* tests/t_ambig_update.at: 
+	* tests/t_add_patch_drop_add.at:
+	* tests/t_add_drop_add.at: 
+	* tests/t_add_dot.at: Add (importance) markers to all bug report
+	tests.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* app_state.hh (write_options): Add 'force' option.
+	* app_state.cc: Remove tabs.
+	(write_options): Implement.
+	* commands.cc (checkout): Pass force=true to 'write_options'.
+
+	* tests/t_checkout_options.at: New test.
+	* testsuite.at: Define RAW_MONOTONE.
+	(t_checkout_options.at): Call it.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* update.hh (pick_update_target): Rename to...
+	(pick_update_candidates): ...this.  Return a set of candidates,
+	rather than a single best.
+	* update.cc (pick_update_candidates): Likewise.  Remove logic
+	checking for unique candidate.
+	* commands.cc (describe_revision): New function.
+	(heads): Use it.
+	(update): Use new 'pick_update_candidates' function.  Add logic
+	checking for unique candidate.  On non-unique candidate, print all
+	candidates, using 'describe_revision'.
+
+	* tests/t_ambig_update.at: Check that failure messages describe
+	the candidate set.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* update.cc: Remove tabs.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_ambig_update.at: Also check that update fails when one
+	candidate edge is deeper than the other.
+
+2004-12-09  graydon hoare  <graydon@pobox.com>
+
+	* ROADMAP: Add file.
+
+2004-12-08  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc (extend_renumbering_via_added_files): 
+	Look up parent tid in existing renumbering.
+	* commands.cc (attr): Check index for "set" subcommand.
+	(lca): New diagnostic command.
+	(log): Tidy up output formatting a bit.
+	* po/monotone.pot: Regenerate.
+	* tests/t_add_edge.at: New test to catch add failure.
+	* testsuite.at: Call it.
+
+2004-12-07  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: Keep package_*revision.{txt,h}, so they are saved
+	as part of a distribution, and thereby make as sure as possible
+	people who download monotone get historical information on where
+	their copy of monotone came from.
+
+2004-12-06  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Add a hint on how to use --ticker.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_ambig_update.at: New test.
+	* testsuite.at: Add it.
+
+	* tests/t_explicit_merge.at: Add, having forgotten to last time.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_explicit_merge.at: New test.
+	* testsuite.at: Add it.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* testsuite.at: Remove duplicate line created by merge.
+	* ChangeLog: Re-sort after merges.
+
+	* commands.cc (explicit_merge): Remove stray space.  Print id of
+	merge result.
+	(complete_command): Add back "}" deleted by merge.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Remove tabs.
+	* diff_patch.cc: Likewise.
+
+	* commands.cc (explicit_merge): New command.
+
+2004-12-08  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc (extend_renumbering_via_added_files): 
+	Look up parent tid in existing renumbering.
+	* commands.cc (attr): Check index for "set" subcommand.
+	(lca): New diagnostic command.
+	(log): Tidy up output formatting a bit.
+	* po/monotone.pot: Regenerate.
+	* tests/t_add_edge.at: New test to catch add failure.
+	* testsuite.at: Call it.
+
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (ls_certs): Sort the certs before printing.
+	* tests/t_netsync_repeated.at: Actually check that certs were
+	transferred correctly.
+
 2004-12-06  graydon hoare  <graydon@pobox.com>
 
 	* unix/get_system_flavour.cc:
@@ -21,34 +181,25 @@
 	* netsync.cc:
 	* commands.cc: Clean up from merge.
 
-2004-12-05  graydon hoare  <graydon@pobox.com>
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
 
-        * Makefile.am (package_full_revision.txt): Use top_builddir
-        to locate monotone executable.
+	* tests/t_add_patch_drop_add.at: New test.
+	* tests/t_merge2_add_drop_add.at: New test.
+	* tests/t_patch_drop_add.at: New test.
+	* tests/t_patch_vs_drop_add.at: New test.
+	* testsuite.at: Add them.
+	
+	* tests/t_add_drop_add.at: Fix to test what it was supposed to.
+	
+	* tests/t_merge2_data.at: Remove extraneous [stdout].
 
-2004-12-04  graydon hoare  <graydon@pobox.com>
+	* tests/t_merge_add_del.at: Fix description.
+	XFAIL it.
 
-        * commands.cc (fcommit): New command.
-        (update): Finish off merge of update command.
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
 
-2004-12-04  Derek Scherger  <derek@echologic.com>
-
-        * commands.cc: (complete_command): New function.
-        (explain_usage/process): Use it.
-
-2004-12-01  graydon hoare  <graydon@pobox.com>
-
-	* {unix,win32}/get_system_flavour.cc: New files.
-	* basic_io.{cc,hh}: Give names to input sources.
-	* monotone.cc: Move app_state ctor inside try.
-	* platform.hh (get_system_flavour): Declare.
-	* revision.cc: Name input source "revision".
-	* sanity.cc: Log flavour on startup.
-	* tests/t_attributes.at: Use new syntax.
-	* transforms.{cc,hh} (split_into_lines): New variant, and rewrite.
-	* work.{cc,hh}: Rewrite attributes to use basic_io.
-	(get_attribute_from_db):
-	(get_attribute_from_working_copy): New functions.
+	* tests/t_add_drop_add.at: New test.
+	* testsuite.at: Add it.
 
 2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -61,6 +212,46 @@
 	* testsuite.at: added the new test
 	* configure.ac: bumped the prequisite version to 2.58 since
 	  some tests use AT_XFAIL_IF
+
+2004-12-05  graydon hoare  <graydon@pobox.com>
+
+        * Makefile.am (package_full_revision.txt): Use top_builddir
+        to locate monotone executable.
+
+2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_merge_add_del: Shorten name for better display.
+
+2004-12-05  Matt Johnston <matt@ucc.asn.au>
+
+	* tests/t_merge_add_del: added a new test for merging
+	  branches where a file is added then removed.
+	* testsuite.at: added the new test
+	* configure.ac: bumped the prequisite version to 2.58 since
+	  some tests use AT_XFAIL_IF
+
+2004-12-04  graydon hoare  <graydon@pobox.com>
+
+        * commands.cc (fcommit): New command.
+        (update): Finish off merge of update command.
+
+2004-12-04  Derek Scherger  <derek@echologic.com>
+
+        * commands.cc: (complete_command): New function.
+        (explain_usage/process): Use it.
+
+2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (merge_deltas): Call correct variant of
+	try_to_merge_files depending on whether ancestor is available.
+	* diff_patch.cc (try_to_merge_files -- merge3 version): Add
+	assertions about ids.
+	(try_to_merge_files -- merge2 version): Likewise.
+
+	* testsuite.at: Add a trivial working merge2 hook.
+	* tests/t_related_merge2_data.at: Update to use.
+	Mark as expected to PASS.
+	* tests/t_merge2_data.at: Likewise.
 
 2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -79,6 +270,25 @@
 
 	* change_set.cc: Remove tabs.
 	* diff_patch.cc: Likewise.
+
+2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Remove tabs.
+	* diff_patch.cc: Likewise.
+
+2004-12-01  graydon hoare  <graydon@pobox.com>
+
+	* {unix,win32}/get_system_flavour.cc: New files.
+	* basic_io.{cc,hh}: Give names to input sources.
+	* monotone.cc: Move app_state ctor inside try.
+	* platform.hh (get_system_flavour): Declare.
+	* revision.cc: Name input source "revision".
+	* sanity.cc: Log flavour on startup.
+	* tests/t_attributes.at: Use new syntax.
+	* transforms.{cc,hh} (split_into_lines): New variant, and rewrite.
+	* work.{cc,hh}: Rewrite attributes to use basic_io.
+	(get_attribute_from_db):
+	(get_attribute_from_working_copy): New functions.
 
 2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
 

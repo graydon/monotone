@@ -55,7 +55,7 @@ struct poptOption options[] =
     {"branch", 0, POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, "print detailed version number, then exit", NULL},
-    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style", NULL},
+    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot) [count]", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
 

@@ -601,9 +601,9 @@ bool merge3(vector<string> const & ancestor,
 
 
 merge_provider::merge_provider(app_state & app, 
-			       manifest_map const & anc_man,
-			       manifest_map const & left_man, 
-			       manifest_map const & right_man)
+                               manifest_map const & anc_man,
+                               manifest_map const & left_man, 
+                               manifest_map const & right_man)
   : app(app), anc_man(anc_man), left_man(left_man), right_man(right_man)
 {}
 
@@ -633,7 +633,7 @@ void merge_provider::get_version(file_path const & path,
 }
 
 std::string merge_provider::get_file_encoding(file_path const & path,
-					      manifest_map const & man)
+                                              manifest_map const & man)
 {
   std::string enc;
   if (get_attribute_from_db(path, encoding_attribute, man, enc, app))
@@ -643,9 +643,9 @@ std::string merge_provider::get_file_encoding(file_path const & path,
 }
 
 bool merge_provider::try_to_merge_files(file_path const & anc_path,
-					file_path const & left_path,
-					file_path const & right_path,
-					file_path const & merged_path,
+                                        file_path const & left_path,
+                                        file_path const & right_path,
+                                        file_path const & merged_path,
                                         file_id const & ancestor_id,                                    
                                         file_id const & left_id,
                                         file_id const & right_id,
@@ -709,8 +709,16 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
 
       return true;
     }
-  else if (app.lua.hook_merge3(ancestor_unpacked, left_unpacked, 
-                               right_unpacked, merged_unpacked))
+
+  P(F("help required for 3-way merge\n"));
+  P(F("[ancestor] %s\n") % anc_path);
+  P(F("[    left] %s\n") % left_path);
+  P(F("[   right] %s\n") % right_path);
+  P(F("[  merged] %s\n") % merged_path);
+
+  if (app.lua.hook_merge3(anc_path, left_path, right_path, merged_path,
+                          ancestor_unpacked, left_unpacked, 
+                          right_unpacked, merged_unpacked))
     {
       hexenc<id> tmp_id;
       base64< gzip<data> > packed_merge;
@@ -729,7 +737,9 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
   return false;
 }
 
-bool merge_provider::try_to_merge_files(file_path const & path,
+bool merge_provider::try_to_merge_files(file_path const & left_path,
+                                        file_path const & right_path,
+                                        file_path const & merged_path,
                                         file_id const & left_id,
                                         file_id const & right_id,
                                         file_id & merged_id)
@@ -750,13 +760,19 @@ bool merge_provider::try_to_merge_files(file_path const & path,
       return true;      
     }  
 
-  this->get_version(path, left_id, left_data);
-  this->get_version(path, right_id, right_data);
+  this->get_version(left_path, left_id, left_data);
+  this->get_version(right_path, right_id, right_data);
     
   unpack(left_data.inner(), left_unpacked);
   unpack(right_data.inner(), right_unpacked);
 
-  if (app.lua.hook_merge2(left_unpacked, right_unpacked, merged_unpacked))
+  P(F("help required for 2-way merge\n"));
+  P(F("[    left] %s\n") % left_path);
+  P(F("[   right] %s\n") % right_path);
+  P(F("[  merged] %s\n") % merged_path);
+
+  if (app.lua.hook_merge2(left_path, right_path, merged_path, 
+                          left_unpacked, right_unpacked, merged_unpacked))
     {
       hexenc<id> tmp_id;
       base64< gzip<data> > packed_merge;
@@ -781,9 +797,9 @@ bool merge_provider::try_to_merge_files(file_path const & path,
 // and we only record the merges in a transient, in-memory table.
 
 update_merge_provider::update_merge_provider(app_state & app,
-					     manifest_map const & anc_man,
-					     manifest_map const & left_man, 
-					     manifest_map const & right_man) 
+                                             manifest_map const & anc_man,
+                                             manifest_map const & left_man, 
+                                             manifest_map const & right_man) 
   : merge_provider(app, anc_man, left_man, right_man) {}
 
 void update_merge_provider::record_merge(file_id const & left_id, 
@@ -820,7 +836,7 @@ void update_merge_provider::get_version(file_path const & path,
 }
 
 std::string update_merge_provider::get_file_encoding(file_path const & path,
-						     manifest_map const & man)
+                                                     manifest_map const & man)
 {
   std::string enc;
   if (get_attribute_from_working_copy(path, encoding_attribute, enc))
