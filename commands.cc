@@ -1458,9 +1458,9 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state 
 
   if (dir != string("."))
     {
-      local_path lp(dir);
-      mkdir_p(lp);
-      chdir(dir.c_str());
+      fs::path co_dir(dir);
+      mkdir_p(co_dir);
+      chdir(co_dir.c_str());
     }
 
   transaction_guard guard(app.db);
