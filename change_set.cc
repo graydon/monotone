@@ -611,6 +611,20 @@ dnode(directory_map & dir, tid t)
 }
 
 
+// This function takes a vector of path components and joins them into a
+// single file_path.  Valid input may be a single-element vector whose sole
+// element is the empty path component (""); this represents the null path,
+// which we use to represent non-existent files.  Alternatively, input may be
+// a multi-element vector, in which case all elements of the vector are
+// required to be non-null.  The following are valid inputs (with strings
+// replaced by their interned version, of course):
+//    - [""]
+//    - ["foo"]
+//    - ["foo", "bar"]
+// The following are not:
+//    - []
+//    - ["foo", ""]
+//    - ["", "bar"]
 static void 
 compose_path(std::vector<path_component> const & names,
              file_path & path)
@@ -621,8 +635,13 @@ compose_path(std::vector<path_component> const & names,
       I(i != names.end());
       fs::path p = mkpath(the_path_component_maker.lookup(*i));
       ++i;
+      if (names.size() > 1)
+          I(!null_name(*i));
       for ( ; i != names.end(); ++i)
-        p /= mkpath(the_path_component_maker.lookup(*i));
+        {
+          I(!null_name(*i));
+          p /= mkpath(the_path_component_maker.lookup(*i));
+        }
       path = file_path(p.string());
     }
   catch (std::runtime_error &e)
