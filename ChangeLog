@@ -1,5 +1,9 @@
 2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
 
+	* file_io.hh: Remove tabs.
+
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.cc (cpp_main): Actually remove newline.
 
 2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
