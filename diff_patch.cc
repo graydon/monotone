@@ -120,8 +120,14 @@ void walk_hunk_consumer(vector<string> lcs,
 	  while(b < lines2.size())
 	    cons.insert_at(b++);
 	}
+      if (a < lines1.size())
+	{
+	  cons.advance_to(a);
+	  while(a < lines1.size())
+	    cons.delete_at(a++);
+	}
       cons.flush_hunk(a);
-    }  
+    }
 }
 
 
@@ -130,7 +136,8 @@ void walk_hunk_consumer(vector<string> lcs,
 struct hunk_offset_calculator : public hunk_consumer
 {
   vector<size_t> & leftpos;
-  size_t curr;
+  size_t apos;
+  size_t lpos;
   size_t final;
   hunk_offset_calculator(vector<size_t> & lp, size_t fin);
   virtual void flush_hunk(size_t pos);
@@ -141,58 +148,46 @@ struct hunk_offset_calculator : public hunk_consumer
 };
 
 hunk_offset_calculator::hunk_offset_calculator(vector<size_t> & off, size_t fin) 
-  : leftpos(off), curr(0), final(fin)
+  : leftpos(off), apos(0), lpos(0), final(fin)
 {}
 
 hunk_offset_calculator::~hunk_offset_calculator()
 {
-  //   L("destructing.. filling out to past-the-end: %d\n", final);
-  size_t end = leftpos.empty() ? 0 : leftpos.back();
   while(leftpos.size() < final)
-    leftpos.push_back(++end);
-
-  //    for (size_t i = 0; i < leftpos.size(); ++i)
-  //      {
-  //        L("leftpos[%d] == %d\n", i, leftpos[i]);
-  //      }
+    leftpos.push_back(leftpos.back());
 }
 
-void hunk_offset_calculator::flush_hunk(size_t pos)
+void hunk_offset_calculator::flush_hunk(size_t ap)
 {
-  I(curr >= 0);
-  this->advance_to(pos);
+  this->advance_to(ap);
 }
 
-void hunk_offset_calculator::advance_to(size_t newpos)
+void hunk_offset_calculator::advance_to(size_t ap)
 {
-  while(curr < newpos)
+  while(apos < ap)
     {
-      //       L("advance to %d: curr=%d -> curr=%d\n", newpos, curr, curr+1);
-      I(curr >= 0);
-      leftpos.push_back(curr++);
+      //       L("advance to %d: [%d,%d] -> [%d,%d] (sz=%d)\n", 
+      //         ap, apos, lpos, apos+1, lpos+1, leftpos.size());
+      apos++;
+      leftpos.push_back(lpos++);
     }
 }
 
-void hunk_offset_calculator::insert_at(size_t b_pos)
+void hunk_offset_calculator::insert_at(size_t lp)
 {
-  //   L("insert at %d: curr=%d -> curr=%d\n", b_pos, curr, curr+2);
-  //
-  //   REVISIT: I don't know why this invariant was here in the
-  //            first place. I'm sketchy on this whole algorithm.
-  //            I've had to disable it due to some test cases
-  //            which clearly invalidate it, but it seems like, er,
-  //            rather important if it's supposed to be true.
-  //   I(curr == b_pos);
-  I(curr >= 0);
-  curr++;
-  leftpos.push_back(curr++);
+  //   L("insert at %d: [%d,%d] -> [%d,%d] (sz=%d)\n", 
+  //     lp, apos, lpos, apos, lpos+1, leftpos.size());
+  I(lpos == lp);
+  lpos++;
 }
 
-void hunk_offset_calculator::delete_at(size_t a_pos)
+void hunk_offset_calculator::delete_at(size_t ap)
 {
-  // L("delete at %d: curr=%d -> curr=%d\n", a_pos, curr, curr+1);
-  I(curr >= 0);
-  leftpos.push_back(curr);
+  //   L("delete at %d: [%d,%d] -> [%d,%d] (sz=%d)\n", 
+  //      ap, apos, lpos, apos+1, lpos, leftpos.size());
+  I(apos == ap);
+  apos++;
+  leftpos.push_back(lpos);
 }
 
 void calculate_hunk_offsets(vector<string> const & ancestor,
@@ -216,9 +211,10 @@ struct hunk_merger : public hunk_consumer
   vector<string> const & left;
   vector<string> const & ancestor;
   vector<string> const & right;
-  vector<size_t> const & leftpos;
+  vector<size_t> const & ancestor_to_leftpos_map;
   vector<string> & merged;
-  size_t curr_apos;
+  size_t apos; 
+  size_t lpos; 
   hunk_merger(vector<string> const & lft,
 	      vector<string> const & anc,
 	      vector<string> const & rght,
@@ -228,7 +224,7 @@ struct hunk_merger : public hunk_consumer
   virtual void advance_to(size_t apos);
   virtual void insert_at(size_t rpos);
   virtual void delete_at(size_t apos);
-  virtual ~hunk_merger() {}
+  virtual ~hunk_merger();
 };
 
 struct conflict {};
@@ -239,89 +235,201 @@ hunk_merger::hunk_merger(vector<string> const & lft,
 			 vector<size_t> const & lpos,
 			 vector<string> & mrgd)
   : left(lft), ancestor(anc), right(rght), 
-    leftpos(lpos), merged(mrgd),
-    curr_apos(0)
+    ancestor_to_leftpos_map(lpos), merged(mrgd),
+    apos(0), lpos(0)
 {
   merged.clear();
 }
 
-void hunk_merger::flush_hunk(size_t apos)
+hunk_merger::~hunk_merger()
 {
-  advance_to(apos);
-}
-
-void hunk_merger::advance_to(size_t apos)
-{
-  //   L("advancing merger to ancestor pos %d (curr_apos = %d)\n", apos, curr_apos);
-  I(apos >= 0);
-  I(curr_apos >= 0);
-  if (apos < leftpos.size())
+  while (lpos < left.size())
     {
-      // advancing to something which had a coord in the ancestor
-      I(curr_apos <= apos);
-      size_t curr_left = leftpos[curr_apos];
-      while(curr_left < leftpos[apos])
-	{
-	  // 	  L("copying from curr_left == %d\n", curr_left);
-	  merged.push_back(left[curr_left++]);
-	}
-      curr_apos = apos;
-    }
-  else
-    {
-      // advancing to something which didn't (i.e. the end of the descendent)
-      size_t curr_left = leftpos.empty() ? 0 : leftpos.back();
-      while(curr_left < left.size())
-	{
-	  // 	  L("copying tail from curr_left == %d\n", curr_left);
-	  merged.push_back(left[curr_left++]);
-	}
+      //       L("filling in final segment %d : '%s'\n", lpos, left.at(lpos).c_str());
+      merged.push_back(left.at(lpos++));
     }
 }
 
-void hunk_merger::insert_at(size_t rpos)
+void hunk_merger::flush_hunk(size_t ap)
 {
-  //   L("insertion at right pos %d / %d (curr_apos == %d)\n", rpos, right.size(), curr_apos);
-  I(rpos < right.size());
-  I(curr_apos < leftpos.size());
-  if (curr_apos > 0 && leftpos[curr_apos] > 0)
-    {
-      // nonzero apos means we might be on a line which was, itself, an insertion. we must
-      // check to see if it was, and if so whether it was the same as what we're inserting
-      // presently from the right side. this is the first kind of conflict.
-      if (ancestor[curr_apos] != left[leftpos[curr_apos-1]+1])
-	{
-	  // aha! by backing up 1 apos, mapping to left, and advancing, we do *not*
-	  // stay still. therefore there was an insert here too. check to see if it is
-	  // identical.
+  advance_to(ap);
+}
 
-	  // 	  if (left[leftpos[curr_apos-1]+1] != right[rpos])
-	  // 	    L("insert conflict: ancestor[%d] != left[%d] and also != right[%d]\n", 
-	  // 	      curr_apos, leftpos[curr_apos-1]+1, rpos);
+// notes: 
+//
+// we are processing diff(ancestor,right), and applying the results
+// to positions in left.
+//
+// advancing to 'ap' means that *nothing changed* in ancestor->right,
+// between apos and ap, so you should copy all the lines between
+// translated(apos) and translated(ap), from left to merged.
+
+void hunk_merger::advance_to(size_t ap)
+{
+
+  I(ap <= ancestor_to_leftpos_map.size());
+
+  size_t lend = 0;
+  if (!ancestor_to_leftpos_map.empty())
+    {
+      if (ap == ancestor_to_leftpos_map.size())
+	lend = left.size();
+      else
+	lend = ancestor_to_leftpos_map.at(ap);
+    }
+
+  //    L("advance to %d / %d (lpos = %d / %d -> %d / %d)\n", 
+  //      ap, ancestor.size(), lpos, left.size(),
+  //      lend, left.size());
+
+  I(lpos <= lend);
+  I(lend <= left.size());
+
+  while (lpos < lend)
+    merged.push_back(left.at(lpos++));
+
+  apos = ap;
+  if (apos > ancestor_to_leftpos_map.size())
+    apos = ancestor_to_leftpos_map.size();
+}
+
+// notes: 
+//
+// we are processing diff(ancestor,right), and applying the results
+// to positions in left.
+//
+// inserting at 'rp' means that the value at right[rp] was inserted here
+// (where "here" means "at lpos"). our job is to figure out whether that
+// insert is a conflict, or can be repeated.
+//
+// there are 4 cases:
+//
+// 1: a->l contained no change here
+// 2: a->l contained a delete here
+// 3: a->l contained an insert here
+//  3.1: the insert was identical to ours
+//  3.2: the insert was different from ours
+//
+// our interpretation of these cases is as follows:
+//
+//  1: insert our data, leave apos as is
+//  2: conflict
+//  3.1: ignore our (duplicate) insert
+//  3.2: conflict
+
+void hunk_merger::insert_at(size_t rp)
+{
+  //   L("insert at %d (lpos = %d)\n", rp, lpos);
+  I(ancestor.size() == ancestor_to_leftpos_map.size());
+  I(rp < right.size());
+  I(apos <= ancestor_to_leftpos_map.size());
+
+  if (apos > 0 && 
+      apos + 1 < ancestor_to_leftpos_map.size())
+    {
+
+      bool insert_here = (ancestor_to_leftpos_map.at(apos - 1) + 1 < 
+			  ancestor_to_leftpos_map.at(apos));
+      
+      bool delete_here = (ancestor_to_leftpos_map.at(apos + 1) == 
+			  ancestor_to_leftpos_map.at(apos));
+
+      if (! (insert_here || delete_here))
+	merged.push_back(right.at(rp));
+      
+      else if (delete_here)
+	{
+	  L("insert conflict type 1 -- delete "
+	    "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
+	    apos, lpos, 
+	    ancestor_to_leftpos_map.at(apos),
+	    ancestor_to_leftpos_map.at(apos+1));
 	  throw conflict();
 	}
+
+      else if (insert_here)
+	{
+	  if (left.at(lpos) == right.at(rp))
+	    return;
+
+	  else
+	    {
+	      L("insert conflict type 2 -- insert "
+		"(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
+		apos, lpos, 
+		ancestor_to_leftpos_map.at(apos),
+		ancestor_to_leftpos_map.at(apos+1));
+	      L("trying to insert '%s', with '%s' conflicting\n",
+		right.at(rp).c_str(), left.at(lpos).c_str());
+	      throw conflict();
+	    }
+	}
     }
-  merged.push_back(right[rpos]);
+  else
+    merged.push_back(right.at(rp));
 }
 
-void hunk_merger::delete_at(size_t apos)
+// notes: 
+//
+// we are processing diff(ancestor,right), and applying the results
+// to positions in left.
+//
+// deleting at 'ap' means that the value at ancestor[ap] was removed on
+// edge a->r, and is not present here in right (where "here" means "at
+// lpos"). our job is to figure out whether that delete is a conflict, or
+// can be repeated.
+//
+// there are 3 cases:
+//
+// 1: a->l contained no change here
+// 2: a->l contained a delete here
+//  2.1: there was no skew
+//  2.2: there was skew
+// 3: a->l contained an insert here
+//
+// our interpretation of these cases is as follows:
+//
+//  1: "delete" the line (increment apos) 
+//  2.1: do nothing, the line's already "missing" in the translation of apos
+//  2.2: conflict
+//  3: conflict
+
+void hunk_merger::delete_at(size_t ap)
 {
-  
-  //   L("deletion at ancestor pos %d\n", apos);
-  I(apos < leftpos.size());
-  //   L("  == left pos %d / %d, leftpos[curr_apos] == %d\n", leftpos[apos], left.size(), leftpos[curr_apos]);
-  I(leftpos[curr_apos] < left.size());
-  I(curr_apos == apos);
-  if (ancestor[apos] != left[leftpos[curr_apos]])
+  //   L("delete at %d (apos = %d)\n", ap, apos);
+  I(ancestor.size() == ancestor_to_leftpos_map.size());
+  I(ap < ancestor_to_leftpos_map.size());
+  I(ancestor_to_leftpos_map.at(ap) == lpos);
+
+  if (ap > 0 &&
+      ap + 1 < ancestor_to_leftpos_map.size())
     {
-      // the second kind of conflict is when you are processing a delete from the right hand
-      // edge, and you find that the context on the left hand edge wasn't constant from ancestor 
-      // to left. this means you're not safe to delete it.
-      //       L("delete conflict: ancestor[%d] != left[%d]\n", apos, leftpos[apos]);
-      throw conflict();
+
+      bool insert_here = (ancestor_to_leftpos_map.at(apos - 1) + 1 <
+			  ancestor_to_leftpos_map.at(apos));
+      
+      bool delete_here = (ancestor_to_leftpos_map.at(apos + 1) == 
+			  ancestor_to_leftpos_map.at(apos));
+
+      if (!(insert_here || delete_here))
+	{apos++; lpos++;}
+
+      else if (delete_here)
+	{
+	  if (ancestor.at(ap) == left.at(lpos))
+	    {apos++; lpos++;}
+
+	  else
+	    throw conflict();
+	}
+      
+      else
+	throw conflict();
     }
-  curr_apos++;
+  else
+    {apos++; lpos++;}
 }
+
 
 
 void merge_hunks_via_offsets(vector<string> const & left,
@@ -350,6 +458,18 @@ bool merge3(vector<string> const & ancestor,
       L("calculating offsets from ancestor:[%d..%d) to left:[%d..%d)\n",
 	0, ancestor.size(), 0, left.size());
       calculate_hunk_offsets(ancestor, left, leftpos);
+
+      L("sanity-checking offset table (sz=%d, ancestor=%d)\n",
+	leftpos.size(), ancestor.size());
+      I(leftpos.size() == ancestor.size());
+      for(size_t i = 0; i < ancestor.size(); ++i)
+	{
+	  if (leftpos.at(i) > left.size())
+	    L("weird offset table: leftpos[%d] = %d (left.size() = %d)\n", 
+	      i, leftpos.at(i), left.size());
+	  I(leftpos.at(i) <= left.size());
+	}
+      
       L("merging differences from ancestor:[%d..%d) to right:[%d..%d)\n",
 	0, ancestor.size(), 0, right.size());
       merge_hunks_via_offsets(left, ancestor, right, leftpos, merged);
@@ -951,6 +1071,35 @@ void unidiff(string const & filename1,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 #include "transforms.hh"
+#include <boost/lexical_cast.hpp>
+#include "randomfile.hh"
+
+using boost::lexical_cast;
+
+static void dump_incorrect_merge(vector<string> const & expected,
+				 vector<string> const & got,
+				 string const & prefix)
+{
+  size_t mx = expected.size();
+  if (mx < got.size())
+    mx = got.size();
+  for (size_t i = 0; i < mx; ++i)
+    {
+      cerr << "bad merge: " << i << " [" << prefix << "]\t";
+      
+      if (i < expected.size())
+	cerr << "[" << expected[i] << "]\t";
+      else
+	cerr << "[--nil--]\t";
+      
+      if (i < got.size())
+	cerr << "[" << got[i] << "]\t";
+      else
+	cerr << "[--nil--]\t";
+      
+      cerr << endl;
+    }
+}
 
 // regression blockers go here
 static void unidiff_append_test()
@@ -1006,6 +1155,92 @@ static void unidiff_append_test()
   BOOST_CHECK(sst.str() == ud);  
 }
 
+
+// high tech randomizing test
+
+static void randomizing_merge_test()
+{
+  for (int i = 0; i < 30; ++i)
+    {
+      vector<string> anc, d1, d2, m1, m2, gm;
+
+      file_randomizer::build_random_fork(anc, d1, d2, gm,
+					 i * 1023, (10 + 2 * i));      
+
+      BOOST_CHECK(merge3(anc, d1, d2, m1));
+      if (gm != m1)
+	dump_incorrect_merge (gm, m1, "random_merge 1");
+      BOOST_CHECK(gm == m1);
+
+      BOOST_CHECK(merge3(anc, d2, d1, m2));
+      if (gm != m2)
+	dump_incorrect_merge (gm, m2, "random_merge 2");
+      BOOST_CHECK(gm == m2);
+    }
+}
+
+
+// old boring tests
+
+static void merge_prepend_test()
+{
+  vector<string> anc, d1, d2, m1, m2, gm;
+  for (int i = 10; i < 20; ++i)
+    {
+      d2.push_back(lexical_cast<string>(i));
+      gm.push_back(lexical_cast<string>(i));
+    }
+
+  for (int i = 0; i < 10; ++i)
+    {
+      anc.push_back(lexical_cast<string>(i));
+      d1.push_back(lexical_cast<string>(i));
+      d2.push_back(lexical_cast<string>(i));
+      gm.push_back(lexical_cast<string>(i));
+    }
+
+  BOOST_CHECK(merge3(anc, d1, d2, m1));
+  if (gm != m1)
+    dump_incorrect_merge (gm, m1, "merge_prepend 1");
+  BOOST_CHECK(gm == m1);
+
+
+  BOOST_CHECK(merge3(anc, d2, d1, m2));
+  if (gm != m2)
+    dump_incorrect_merge (gm, m2, "merge_prepend 2");
+  BOOST_CHECK(gm == m2);
+}
+
+
+static void merge_append_test()
+{
+  vector<string> anc, d1, d2, m1, m2, gm;
+  for (int i = 0; i < 10; ++i)
+      anc.push_back(lexical_cast<string>(i));
+
+  d1 = anc;
+  d2 = anc;
+  gm = anc;
+
+  for (int i = 10; i < 20; ++i)
+    {
+      d2.push_back(lexical_cast<string>(i));
+      gm.push_back(lexical_cast<string>(i));
+    }
+
+  BOOST_CHECK(merge3(anc, d1, d2, m1));
+  if (gm != m1)
+    dump_incorrect_merge (gm, m1, "merge_append 1");
+  BOOST_CHECK(gm == m1);
+
+  BOOST_CHECK(merge3(anc, d2, d1, m2));
+  if (gm != m2)
+    dump_incorrect_merge (gm, m2, "merge_append 2");
+  BOOST_CHECK(gm == m2);
+
+
+}
+
 static void merge_additions_test()
 {
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
@@ -1013,8 +1248,7 @@ static void merge_additions_test()
   string confl("I like oatmeal\nI don't like tuna\nI like orange juice\nI like toast");
   string desc2("I like oatmeal\nI like orange juice\nI don't like tuna\nI like toast");
   string good_merge("I like oatmeal\nI don't like spam\nI like orange juice\nI don't like tuna\nI like toast");
-
-  vector<string> anc, d1, cf, d2, m, gm;
+  vector<string> anc, d1, cf, d2, m1, m2, gm;
 
   split_into_lines(ancestor, anc);
   split_into_lines(desc1, d1);
@@ -1022,25 +1256,41 @@ static void merge_additions_test()
   split_into_lines(desc2, d2);
   split_into_lines(good_merge, gm);
   
-  BOOST_CHECK(merge3(anc, d1, d2, m));
-  BOOST_CHECK(gm == m);
-  BOOST_CHECK(!merge3(anc, d1, cf, m));
+  BOOST_CHECK(merge3(anc, d1, d2, m1));
+  if (gm != m1)
+    dump_incorrect_merge (gm, m1, "merge_addition 1");
+  BOOST_CHECK(gm == m1);
+
+  BOOST_CHECK(merge3(anc, d2, d1, m2));
+  if (gm != m2)
+    dump_incorrect_merge (gm, m2, "merge_addition 2");
+  BOOST_CHECK(gm == m2);
+
+  BOOST_CHECK(!merge3(anc, d1, cf, m1));
 }
+
 
 static void merge_deletions_test()
 {
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
-  string desc1("I like oatmeal\nI like orange juice\nI like toast");
   string desc2("I like oatmeal\nI like toast");
 
-  vector<string> anc, d1, d2, m;
+  vector<string> anc, d1, d2, m1, m2, gm;
 
   split_into_lines(ancestor, anc);
-  split_into_lines(desc1, d1);
   split_into_lines(desc2, d2);
-  
-  BOOST_CHECK(merge3(anc, d1, d2, m));
-  BOOST_CHECK(d2 == m);
+  d1 = anc;
+  gm = d2;
+
+  BOOST_CHECK(merge3(anc, d1, d2, m1));
+  if (gm != m1)
+    dump_incorrect_merge (gm, m1, "merge_deletion 1");
+  BOOST_CHECK(gm == m1);
+
+  BOOST_CHECK(merge3(anc, d2, d1, m2));
+  if (gm != m2)
+    dump_incorrect_merge (gm, m2, "merge_deletion 2");
+  BOOST_CHECK(gm == m2);
 }
 
 
@@ -1048,8 +1298,11 @@ void add_diff_patch_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&unidiff_append_test));
+  suite->add(BOOST_TEST_CASE(&merge_prepend_test));
+  suite->add(BOOST_TEST_CASE(&merge_append_test));
   suite->add(BOOST_TEST_CASE(&merge_additions_test));
   suite->add(BOOST_TEST_CASE(&merge_deletions_test));
+  suite->add(BOOST_TEST_CASE(&randomizing_merge_test));
 }
 
 
