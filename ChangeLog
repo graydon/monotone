@@ -1,3 +1,8 @@
+2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_add_dot.at: New test.
+	* testsuite.at: Call it.
+
 2004-11-22  Joel Rosdahl  <joel@rosdahl.net>
 
 	* testsuite.at (NEED_UNB64): Check that python knows how to decode
