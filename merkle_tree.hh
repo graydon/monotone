@@ -105,9 +105,9 @@ insert_into_merkle_tree(merkle_table & tab,
                         id const & leaf,
                         size_t level);
 
-// recalculates the hashes in the given tree must be called after
-// insert_into_merkle_tree, before using tree (but you can batch up multiple
-// calls to insert_into_merkle_tree and then only call this once).
+// recalculates the hashes in the given tree.  must be called after
+// insert_into_merkle_tree, and before using tree (but you can batch up
+// multiple calls to insert_into_merkle_tree and then only call this once).
 
 id 
 recalculate_merkle_codes(merkle_table & tab,

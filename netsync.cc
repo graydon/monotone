@@ -236,7 +236,6 @@ session
        boost::shared_ptr<merkle_table> > merkle_tables;
 
   map< id, std::pair<cert_value, epoch_id> > id_to_epoch;
-  map<cert_value, epoch_id> epochs;
 
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
@@ -370,6 +369,8 @@ session
 
   void rebuild_merkle_trees(app_state & app,
                             utf8 const & collection);
+
+  void load_epoch(cert_value const & branchname, epoch_id const & epoch);
   
   bool dispatch_payload(netcmd const & cmd);
   void begin_service();
@@ -1715,6 +1716,22 @@ load_data(netcmd_item_type type,
   encode_hexenc(item, hitem);
   switch (type)
     {
+    case epoch_item:
+      {
+        std::map<id, std::pair<cert_value, epoch_id> >::const_iterator
+          i = id_to_epoch.find(item);
+        if (i == id_to_epoch.end())
+          throw bad_decode(F("no epoch with hash '%s' in our database") % hitem);
+        cert_value branchname = i->second.first;
+        hexenc<id> epoch_encoded = i->second.second.inner();
+        id raw_epoch;
+        decode_hexenc(epoch_encoded, raw_epoch);
+        // format is <branchname: vstr> <epoch: 20 bytes id>
+        insert_variable_length_string(branchname(), out);
+        I(raw_epoch().size() == constants::merkle_hash_length_in_bytes);
+        out += raw_epoch();
+      }
+      break;
     case key_item:
       if (app.db.public_key_exists(hitem))
         {
@@ -2285,12 +2302,53 @@ session::process_data_cmd(netcmd_item_type type,
 
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
-  // FIXME: what does the above comment mean?  note_item_arrived does require
-  // that the item passed to it have been requested...
   note_item_arrived(type, item);
                            
   switch (type)
     {
+    case epoch_item:
+      if (id_to_epoch.find(id) != id_to_epoch.end())
+        L(F("epoch '%s' already exists in our database\n") % hitem);
+      else
+        {
+          std::string raw_branch;
+          id raw_epoch;
+          size_t pos = 0;
+          extract_variable_length_string(dat, raw_branch, pos, "epoch data, branch name");
+          raw_epoch = id(extract_substring(dat, pos,
+                                           constants::merkle_hash_length_in_bytes,
+                                           "epoch data, epoch value"));
+          assert_end_of_buffer(in, pos, "epoch data payload");
+          cert_value branch(raw_branch);
+          hexenc<id> tmpid;
+          encode_hexenc(raw_epoch, tmpid);
+          epoch_id epoch(tmpid);
+          L(F("received epoch %s for branch %s\n") % epoch % branch);
+          // okay, we have a (branch, epoch) pair, and it's not a pair that we
+          // already have.  So we need to make sure that it doesn't contradict
+          // any of the ones that we already have, and then absorb it.
+          std::map<cert_value, epoch_id> epochs;
+          app.db.get_epochs(epochs);
+          std::map<cert_value, epoch_id>::const_iterator i = epochs.find(branch);
+          if (i == epochs.end())
+            {
+              L(F("branch %s has no epoch; saving epoch\n") % branch);
+              app.db.set_epoch(branch, epoch);
+            }
+          else
+            {
+              L(F("branch %s already has an epoch; checking\n") % branch);
+              // this should always fail, because if we had the same
+              // branch/epoch pair, we'd already have the hash, and the
+              // data_exists check above would have failed.
+              N(i->second == epoch,
+                F("Mismatched epoch on branch %s.  We have '%s', they have '%s'.\n")
+                % branch % i->second % epoch);
+              I(false);
+            }
+        }
+      break;
+      
     case key_item:
       if (this->app.db.public_key_exists(hitem))
         L(F("public key '%s' already exists in our database\n")  % hitem);
@@ -2386,7 +2444,7 @@ session::process_data_cmd(netcmd_item_type type,
       break;
 
     }
-      return true;
+  return true;
 }
 
 bool 
@@ -3153,6 +3211,23 @@ make_root_node(session & sess,
 }
 
 
+// BROKEN
+void
+session::load_epoch(cert_value const & branchname, epoch_id const & epoch)
+{
+  // hash is of concat(branch name, raw epoch id).  This is unique, because
+  // the latter has a fixed length.
+  std::string tmp(branchname());
+  id raw_epoch;
+  decode_hexenc(epoch.inner(), raw_epoch);
+  tmp += raw_epoch();
+  data tdat(tmp);
+  hexenc<id> out;
+  calculate_ident(tdat, out);
+  id raw_hash;
+  decode_hexenc(out, raw_hash);
+}
+
 void 
 session::rebuild_merkle_trees(app_state & app,
                               utf8 const & collection)
@@ -3188,8 +3263,10 @@ session::rebuild_merkle_trees(app_state & app,
       }
     
     {
-      // set to zero any epoch which is not yet set    
+      map<cert_value, epoch_id> epochs;
       app.db.get_epochs(epochs);
+
+      // set to zero any epoch which is not yet set    
       epoch_id epoch_zero(std::string(constants::idlen, '0'));
       for (std::set<string>::const_iterator i = branchnames.begin();
            i != branchnames.end(); ++i)
