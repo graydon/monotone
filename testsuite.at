@@ -14,7 +14,7 @@ AT_TESTED([monotone])
 
 # some command abbreviations to make life easier
 
-# Set PREEXECUTE in your environment to run monotonen under, e.g., valgrind.
+# Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
 m4_define([MONOTONE], [$PREEXECUTE monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net])
 m4_define([RAW_MONOTONE], [$PREEXECUTE monotone])
 m4_define([SHA1], [monotone identify $1])
@@ -410,6 +410,7 @@ m4_include(tests/t_subdir_add.at)
 m4_include(tests/t_subdir_drop.at)
 m4_include(tests/t_subdir_revert.at)
 m4_include(tests/t_subdir_rename.at)
+m4_include(tests/t_subdir_attr.at)
 m4_include(tests/t_lca_1.at)
 m4_include(tests/t_update_2.at)
 m4_include(tests/t_rename_dir_cross_level.at)

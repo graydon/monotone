@@ -2267,10 +2267,11 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
       read_attr_map(attr_data, attrs);
     }
   
-  file_path path;
+  file_path path = app.prefix(idx(args,1)());
+  N(file_exists(path), F("file '%s' not found") % path);
+
   if (idx(args, 0)() == "set")
     {
-      path = file_path(idx(args, 1)());
       if (args.size() != 4)
         throw usage(name);
       attrs[path][idx(args, 2)()] = idx(args, 3)();
@@ -2295,7 +2296,6 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
     }
   else if (idx(args, 0)() == "get")
     {
-      path = idx(args, 1)();
       if (args.size() != 2 && args.size() != 3)
         throw usage(name);
 

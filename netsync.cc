@@ -3181,35 +3181,39 @@ session::rebuild_merkle_trees(app_state & app,
           }
       }
 
-    app.db.get_revision_certs(certs);
+    typedef std::vector< std::pair<hexenc<id>,
+      std::pair<revision_id, rsa_keypair_id> > > rcert_idx;
+
+    rcert_idx idx;
+    app.db.get_revision_cert_index(idx);
 
     // insert all certs and keys reachable via these revisions
-    for (size_t i = 0; i < certs.size(); ++i)
+    for (rcert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
       {
-        if (revision_ids.find(revision_id(idx(certs,i).inner().ident)) 
-            == revision_ids.end())
+        hexenc<id> const & hash = i->first;
+        revision_id const & ident = i->second.first;
+        rsa_keypair_id const & key = i->second.second;
+
+        if (revision_ids.find(ident) == revision_ids.end())
           continue;
         
-        hexenc<id> certhash;
-        id raw_id;
-        cert_hash_code(idx(certs, i).inner(), certhash);
-        decode_hexenc(certhash, raw_id);
-        insert_into_merkle_tree(*rtab, rcert_item, true, raw_id(), 0);
+        id raw_hash;
+        decode_hexenc(hash, raw_hash);
+        insert_into_merkle_tree(*rtab, rcert_item, true, raw_hash(), 0);
         ++rcerts;
-        rsa_keypair_id const & k = idx(certs, i).inner().key;
-        if (inserted_keys.find(k) == inserted_keys.end())
+        if (inserted_keys.find(key) == inserted_keys.end())
           {
-            if (app.db.public_key_exists(k))
+            if (app.db.public_key_exists(key))
               {
                 base64<rsa_pub_key> pub_encoded;
-                app.db.get_key(k, pub_encoded);
+                app.db.get_key(key, pub_encoded);
                 hexenc<id> keyhash;
-                key_hash_code(k, pub_encoded, keyhash);
-                decode_hexenc(keyhash, raw_id);
-                insert_into_merkle_tree(*ktab, key_item, true, raw_id(), 0);
+                key_hash_code(key, pub_encoded, keyhash);
+                decode_hexenc(keyhash, raw_hash);
+                insert_into_merkle_tree(*ktab, key_item, true, raw_hash(), 0);
                 ++keys;
               }
-            inserted_keys.insert(k);
+            inserted_keys.insert(key);
           }
       }
   }  

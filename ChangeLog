@@ -1,3 +1,18 @@
+2005-01-28  graydon hoare  <graydon@pobox.com>
+
+	* database.{cc,hh}: More netsync speed tweaks.
+	* netsync.cc: Likewise.
+
+2005-01-27  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (attr): adjust for subdir; ensure files exist
+	* tests/t_attr.at: improve setup description
+	* tests/t_attributes.at: improve setup description so that
+	testsuite -k attr runs this test; check for attributes on missing
+	files
+	* tests/t_subdir_attr.at: new test
+	* testsuite.at: fix dutch spelling of monotone; call new test
+
 2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.hh (null_id): New function.
@@ -80,6 +95,13 @@
 	* testsuite.at: Add them.
 	(MONOTONE): Prefix command line with $PREEXECUTE to e.g. support
 	running under Valgrind.
+
+2005-01-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* cert.cc: ignore whitespace when comparing private keys
+	from the database and with the lua hook
+	* tests/t_lua_privkey.at: new test
+	* testsuite.at: run it
 
 2005-01-23  Derek Scherger  <derek@echologic.com>
 
@@ -478,7 +500,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Mi�Å�kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
