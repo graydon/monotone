@@ -3700,12 +3700,12 @@ automatically use a certain passphrase for a given key using the
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
 
-@item monotone delkey @var{keyid}
+@item monotone dropkey @var{keyid}
 
-This command deletes the public and/or private key. If both exist,
-both are deleted, if only one exists, the one that does is deleted.
-This command should be used with caution as changes are irreversible
-without a backup of the key(s) that were removed.
+This command drops the public and/or private key. If both exist, both
+are dropped, if only one exists, it is dropped. This command should
+be used with caution as changes are irreversible without a backup of
+the key(s) that were dropped.
 
 @item monotone chkeypass @var{id}
 
@@ -5652,8 +5652,8 @@ from stdin if no value given on command line.
 Generate an @sc{rsa} key-pair and store it in the database.
 @comment TROFF INPUT: .TP
 
-@item @b{delkey} @i{<keyid>}
-Delete a public and/or private key.
+@item @b{dropkey} @i{<keyid>}
+Drop a public and/or private key.
 @comment TROFF INPUT: .TP
 
 @item @b{chkeypass} @i{<keyid>}
