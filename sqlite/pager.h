@@ -20,7 +20,7 @@
 ** The default size of a database page.
 */
 #ifndef SQLITE_DEFAULT_PAGE_SIZE
-# define SQLITE_DEFAULT_PAGE_SIZE 1024
+# define SQLITE_DEFAULT_PAGE_SIZE 8192
 #endif
 
 /* Maximum page size.  The upper bound on this value is 65536 (a limit
@@ -31,7 +31,7 @@
 ** one may wish to chose a smaller value for the maximum page size.
 */
 #ifndef SQLITE_MAX_PAGE_SIZE
-# define SQLITE_MAX_PAGE_SIZE 8192
+# define SQLITE_MAX_PAGE_SIZE 65536
 #endif
 
 /*

@@ -3,6 +3,7 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <fstream>
 #include <iterator>
 #include <list>
 #include <set>
@@ -137,6 +138,29 @@ database::set_app(app_state * app)
   __app = app;
 }
 
+static void 
+check_sqlite_format_version(fs::path filename)
+{
+  if (fs::exists(filename))
+    {
+      // sqlite 3 files begin with this constant string
+      // (version 2 files begin with a different one)
+      std::string version_string("SQLite format 3");
+
+      std::ifstream file(filename.string().c_str());
+      N(file, F("unable to probe database version in file %s") % filename.string());
+      for (std::string::const_iterator i = version_string.begin();
+           i != version_string.end(); ++i)
+        {
+          char c;
+          file.get(c);
+          N(c == *i, F("database is not an sqlite version 3 file, "
+                       "try dump and reload"));            
+        }
+    }
+}
+
+
 struct sqlite3 * 
 database::sql(bool init)
 {
@@ -152,6 +176,7 @@ database::sql(bool init)
         }
       N(filename.string() != "",
         F("need database name"));
+      check_sqlite_format_version(filename.string());
       int error;
       error = sqlite3_open(filename.string().c_str(), &__sql);
       if (error)

@@ -3172,7 +3172,7 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
   string log = (F("explicit_merge of %s\n"
                   "              and %s\n"
                   "   using ancestor %s\n"
-                  "to branch '%s'\n")
+                  "        to branch '%s'\n")
                 % left % right % ancestor % branch).str();
   
   cert_revision_changelog(merged, log, app, dbw);
