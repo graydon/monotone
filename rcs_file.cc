@@ -398,7 +398,7 @@ struct parser
 	num(d.num);
 	expect("date"); num(d.date); semi();
 	expect("author"); sym(d.author); semi();
-	expect("state"); if (symp()) sym(); semi();
+	expect("state"); if (symp()) sym(d.state); semi();
 	expect("branches"); 
 	while(nump()) 
 	  { 

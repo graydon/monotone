@@ -116,14 +116,14 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
 					       get<1>(i->first),
 					       decoded_value))
 	{
-	  L(F("trust function liked %d signers of cert '%s'='%s' on manifest '%s'\n")
-	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  L(F("trust function liked %d signers of %s cert on manifest %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
 	  tmp_certs.push_back(*(i->second.second));
 	}
       else
 	{
-	  L(F("trust function disliked %d signers of cert '%s'='%s' on manifest '%s'\n")
-	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  W(F("trust function disliked %d signers of %s cert on manifest %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
 	}
     }
   certs = tmp_certs;
@@ -169,14 +169,14 @@ erase_bogus_certs(vector< file<cert> > & certs,
 					       get<1>(i->first),
 					       decoded_value))
 	{
-	  L(F("trust function liked %d signers of cert '%s'='%s' on file '%s'\n")
-	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  L(F("trust function liked %d signers of %s cert on file %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
 	  tmp_certs.push_back(*(i->second.second));
 	}
       else
 	{
-	  L(F("trust function disliked %d signers of cert '%s'='%s' on file '%s'\n")
-	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  W(F("trust function disliked %d signers of %s cert on file %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
 	}
     }
   certs = tmp_certs;
@@ -718,8 +718,48 @@ get_branch_heads(cert_value const & branchname,
 	  heads.erase(j);
 	}
     }
+
+
+  // Calculate a disapproval attribute of a version: this is true for a
+  // version iff every ancestry edge into the version is disapproved.
+  //
+  // FIXME: this is slightly weird; it means that a disapproved edge
+  // vanishes whereas a lone (no-edge) version which is a branch member
+  // can't really be disapproved, and a disapproval doesn't completely mask
+  // an edge if there are multiple ways into it. possibly we need to extend
+  // disapproval to cover both versions and edges.
+
+  map<manifest_id, bool> disapproved_version;
+  for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
+       i != ancestor_certs.end(); ++i)
+    {
+      manifest_id child(i->inner().ident);
+      if (heads.find(child) == heads.end())
+	continue;
+
+      if (disapproved.find(make_pair(i->inner().ident,
+				     i->inner().value)) 
+	  != disapproved.end())
+	{
+	  if (disapproved_version.find(child) == disapproved_version.end())
+	    disapproved_version[child] = true;
+	  else	    
+	    disapproved_version[child] = disapproved_version[child] && true;
+	}
+      else
+	disapproved_version[child] = false;
+    }
   
+  // remove those remaining heads which are disapproved *versions*
+  for (map<manifest_id, bool>::const_iterator i = disapproved_version.begin();
+       i != disapproved_version.end(); ++i)
+    {
+      if (i->second)
+	heads.erase(i->first);
+    }
+
   L(F("reduced to %d heads\n") % heads.size());
+
 }
 		   
 void 

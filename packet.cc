@@ -20,8 +20,75 @@ using namespace boost;
 using namespace std;
 
 // --- packet db writer --
+//
+// the packet_db_writer::impl class (see below) manages writes to the
+// database. it also ensures that those writes follow the semantic
+// dependencies implied by the objects being written.
+//
+// an incoming manifest delta has three states:
+//
+// when it is first received, it is (probably) "non-constructable".
+// this means that we do not have a way of building its preimage from either
+// the database or from the memory cache of deltas we keep in this class
+// 
+// a non-constructable manifest delta is given a prerequisite of
+// constructibility on its preimage.
+//
+// when the preimage becomes constructable, the manifest delta (probably)
+// changes to "non-writable" state. this means that we have a way to build
+// the manifest, we haven't received all the files which depend on it yet,
+// so we won't write it to the database.
+//
+// when a manifest becomes constructable (but not necessarily writable) we
+// call an analyzer back, if we have one, with the pre- and post-states of
+// the delta.  this happens in order to give the netsync layer a chance to
+// request all the file deltas which accompany the manifest delta.
+// 
+// a non-writable manifest delta is given prerequisites on all its
+// non-existing underlying files, and delayed again.
+//
+// when all the files arrive, a non-writable manifest is written to the
+// database.
+//
+// files are delayed to depend on their preimage, like non-constructable
+// manifests. however, once they are constructable they are immediately
+// written to the database.
+//
+// manifest certs are delayed to depend on their manifest being writable.
+// 
+// file certs are delayed to depend on their files being writable.
+//
+/////////////////////////////////////////////////////////////////
+//
+// how it's done:
+//
+// each manifest or file has a companion class called a "prerequisite". a
+// prerequisite has a set of delayed packets which depend on it. these
+// delayed packets are also called dependents. a prerequisite can either be
+// "unsatisfied" or "satisfied". when it is first constructed, it is
+// unsatisfied. when it is satisfied, it calls all its dependents to inform
+// them that it has become satisfied.
+//
+// when all the prerequisites of a given dependent is satisfied, the
+// dependent writes itself back to the db writer. the dependent is then
+// dead, and the prerequisite will forget about it.
+//
+// dependents' lifetimes are managed by prerequisites. when all
+// prerequisites forget about their dependents, the dependent is destroyed
+// (it is reference counted with a shared pointer). similarly, the
+// packet_db_writer::impl holds references to prerequisites, and when
+// a prerequisite no longer has any dependents, it is dropped from the
+// packet_db_writer::impl, destroying it.
+// 
 
-typedef enum {prereq_file, prereq_manifest} prereq_type;
+typedef enum 
+  {
+    prereq_file, 
+    prereq_manifest_constructable,
+    prereq_manifest_writable 
+  } 
+prereq_type;
+
 class delayed_packet;
 
 class 
@@ -175,6 +242,23 @@ public:
 };
 
 class 
+delayed_nonconstructable_manifest_delta_packet
+  : public delayed_packet
+{
+  manifest_id old_id;
+  manifest_id new_id;
+  manifest_delta del;
+public:
+  delayed_nonconstructable_manifest_delta_packet(manifest_id const & oi, 
+						 manifest_id const & ni,
+						 manifest_delta const & md) 
+    : old_id(oi), new_id(ni), del(md)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_nonconstructable_manifest_delta_packet();
+};
+
+class 
 delayed_file_cert_packet 
   : public delayed_packet
 {
@@ -205,13 +289,27 @@ delayed_manifest_delta_packet::apply_delayed_packet(packet_db_writer & pw)
 {
   L(F("writing delayed manifest delta packet for %s -> %s\n") 
     % old_id % new_id);
-  pw.consume_manifest_delta(old_id, new_id, del);
+  pw.consume_constructable_manifest_delta(old_id, new_id, del);
 }
 
 delayed_manifest_delta_packet::~delayed_manifest_delta_packet()
 {
   if (!all_prerequisites_satisfied())
     W(F("discarding manifest delta packet with unmet dependencies\n"));
+}
+
+void 
+delayed_nonconstructable_manifest_delta_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed non-constructable manifest delta packet for %s -> %s\n") 
+    % old_id % new_id);
+  pw.consume_manifest_delta(old_id, new_id, del);
+}
+
+delayed_nonconstructable_manifest_delta_packet::~delayed_nonconstructable_manifest_delta_packet()
+{
+  if (!all_prerequisites_satisfied())
+    W(F("discarding non-constructable manifest delta packet with unmet dependencies\n"));
 }
 
 void 
@@ -262,16 +360,37 @@ struct packet_db_writer::impl
   manifest_edge_analyzer * analyzer;
 
   map<file_id, shared_ptr<prerequisite> > file_prereqs;
-  map<manifest_id, shared_ptr<prerequisite> > manifest_prereqs;
-  map<manifest_id, bool> existing_manifest_cache;
-  map<file_id, bool> existing_file_cache;
-  bool manifest_version_exists(manifest_id const & m);
-  bool file_version_exists(file_id const & f);
+  map<manifest_id, shared_ptr<prerequisite> > manifest_construction_prereqs;
+  map<manifest_id, shared_ptr<prerequisite> > manifest_write_prereqs;
+  set<manifest_id> analyzed_manifests;
+
+  map<manifest_id, shared_ptr< map<manifest_id, manifest_delta> > > manifest_delta_cache;
+  set<manifest_id> existing_manifest_cache;
+  set<manifest_id> manifest_constructable_cache;
+  set<file_id> existing_file_cache;
+
+  // this is essential for making cascading reconstruction happen fast
+  manifest_id cached_id;
+  manifest_data cached_mdata;
+
+  bool manifest_version_constructable(manifest_id const & m);
+  void construct_manifest_version(manifest_id const & m, manifest_data & mdat);
+
+  bool manifest_version_exists_in_db(manifest_id const & m);
+  bool file_version_exists_in_db(file_id const & f);
+
   void get_file_prereq(file_id const & file, shared_ptr<prerequisite> & p);
-  void get_manifest_prereq(manifest_id const & manifest, shared_ptr<prerequisite> & p);
+  void get_manifest_constructable_prereq(manifest_id const & manifest, shared_ptr<prerequisite> & p);
+  void get_manifest_writable_prereq(manifest_id const & manifest, shared_ptr<prerequisite> & p);
+
   void accepted_file(file_id const & f, packet_db_writer & dbw);
-  void accepted_manifest(manifest_id const & m, packet_db_writer & dbw);
+  void accepted_manifest_constructable(manifest_id const & m, 
+				       manifest_id const & pred,
+				       manifest_delta const & del,
+				       packet_db_writer & dbw);
+  void accepted_manifest_writable(manifest_id const & m, packet_db_writer & dbw);
   void accepted_manifest_cert_on(manifest_id const & m, packet_db_writer & dbw);
+
   impl(app_state & app, bool take_keys, manifest_edge_analyzer * ana) 
     : app(app), take_keys(take_keys), count(0), analyzer(ana)
   {}
@@ -285,32 +404,130 @@ packet_db_writer::packet_db_writer(app_state & app, bool take_keys, manifest_edg
 packet_db_writer::~packet_db_writer() 
 {}
 
-bool 
-packet_db_writer::impl::manifest_version_exists(manifest_id const & m)
+static bool
+recursive_constructable(manifest_id const & m,
+			packet_db_writer::impl & impl,
+			set<manifest_id> & protector)
 {
-  map<manifest_id, bool>::const_iterator i = existing_manifest_cache.find(m);
-  if (i == existing_manifest_cache.end())
+  if (impl.manifest_version_exists_in_db(m))
+    return true;
+  else if (impl.manifest_constructable_cache.find(m) != impl.manifest_constructable_cache.end())
+    return true;
+  else
     {
-      bool exists = app.db.manifest_version_exists(m);
-      existing_manifest_cache.insert(make_pair(m, exists));
-      return exists;
+      map<manifest_id, shared_ptr< map<manifest_id, manifest_delta> > >::const_iterator i;
+      i = impl.manifest_delta_cache.find(m);
+      if (i != impl.manifest_delta_cache.end())
+	{
+	  shared_ptr< map<manifest_id, manifest_delta> > preds = i->second;	  
+	  for (map<manifest_id, manifest_delta>::const_iterator j = preds->begin(); 
+	       j != preds->end(); ++j)
+	    {
+	      if (protector.find(j->first) != protector.end())
+		continue;
+	      protector.insert(j->first);
+	      if (recursive_constructable(j->first, impl, protector))
+		{
+		  impl.manifest_constructable_cache.insert(m);
+		  return true;
+		}
+	      protector.erase(j->first);
+	    }
+	}
+    }
+  return false;
+}
+
+bool
+packet_db_writer::impl::manifest_version_constructable(manifest_id const & m)
+{
+  set<manifest_id> protector;
+  return recursive_constructable(m, *this, protector);
+}
+
+static void
+recursive_construct(manifest_id const & m,
+		    manifest_data & mdat,
+		    packet_db_writer::impl & impl,
+		    set<manifest_id> & protector)
+{
+  I(impl.manifest_version_constructable(m));
+  if (impl.cached_id == m)
+    {
+      mdat = impl.cached_mdata;
+    }
+  else if (impl.manifest_version_exists_in_db(m))
+    {
+      impl.app.db.get_manifest_version(m, mdat);
+      impl.cached_id = m;
+      impl.cached_mdata = mdat;
     }
   else
-    return i->second;
+    {
+      map<manifest_id, shared_ptr< map<manifest_id, manifest_delta> > >::const_iterator i;
+      i = impl.manifest_delta_cache.find(m);
+      I(i != impl.manifest_delta_cache.end());      
+      shared_ptr< map<manifest_id, manifest_delta> > preds = i->second;
+      for (map<manifest_id, manifest_delta>::const_iterator j = preds->begin(); 
+	   j != preds->end(); ++j)
+	{
+	  if (protector.find(j->first) != protector.end())
+	    continue;
+	  if (impl.manifest_version_constructable(j->first))
+	    {
+	      manifest_data mtmp;
+	      protector.insert(j->first);
+	      recursive_construct(j->first, mtmp, impl, protector);
+	      protector.erase(j->first);
+	      base64< gzip<data> > new_data;
+	      patch(mtmp.inner(), j->second.inner(), new_data);
+	      mdat = manifest_data(new_data);
+	      impl.cached_id = m;
+	      impl.cached_mdata = mdat;
+	      return;
+	    }
+	}
+      // you should not be able to get here
+      I(false);
+    }
+}
+
+void 
+packet_db_writer::impl::construct_manifest_version(manifest_id const & m, 
+						   manifest_data & mdat)
+{
+  set<manifest_id> protector;
+  recursive_construct(m, mdat, *this, protector);
 }
 
 bool 
-packet_db_writer::impl::file_version_exists(file_id const & f)
+packet_db_writer::impl::manifest_version_exists_in_db(manifest_id const & m)
 {
-  map<file_id, bool>::const_iterator i = existing_file_cache.find(f);
-  if (i == existing_file_cache.end())
+  set<manifest_id>::const_iterator i = existing_manifest_cache.find(m);
+  if (i != existing_manifest_cache.end())
+    return true;
+  else
     {
-      bool exists = app.db.file_version_exists(f);
-      existing_file_cache.insert(make_pair(f, exists));
+      bool exists = app.db.manifest_version_exists(m);
+      if (exists)
+	existing_manifest_cache.insert(m);
       return exists;
     }
+}
+
+bool 
+packet_db_writer::impl::file_version_exists_in_db(file_id const & f)
+{
+  set<file_id>::const_iterator i = existing_file_cache.find(f);
+  if (i != existing_file_cache.end())
+    return true;
   else
-    return i->second;
+    {
+      bool exists = app.db.file_version_exists(f);
+      if (exists)
+	existing_file_cache.insert(f);
+      return exists;
+    }
 }
 
 void 
@@ -329,41 +546,107 @@ packet_db_writer::impl::get_file_prereq(file_id const & file,
 }
 
 void
-packet_db_writer::impl::get_manifest_prereq(manifest_id const & man, 
-					    shared_ptr<prerequisite> & p)
+packet_db_writer::impl::get_manifest_constructable_prereq(manifest_id const & man, 
+							  shared_ptr<prerequisite> & p)
 {
   map<manifest_id, shared_ptr<prerequisite> >::const_iterator i;
-  i = manifest_prereqs.find(man);
-  if (i != manifest_prereqs.end())
+  i = manifest_construction_prereqs.find(man);
+  if (i != manifest_construction_prereqs.end())
     p = i->second;
   else
     {
-      p = shared_ptr<prerequisite>(new prerequisite(man.inner(), prereq_manifest));
-      manifest_prereqs.insert(make_pair(man, p));
+      p = shared_ptr<prerequisite>(new prerequisite(man.inner(), prereq_manifest_constructable));
+      manifest_construction_prereqs.insert(make_pair(man, p));
+    }
+}
+
+void
+packet_db_writer::impl::get_manifest_writable_prereq(manifest_id const & man, 
+						     shared_ptr<prerequisite> & p)
+{
+  map<manifest_id, shared_ptr<prerequisite> >::const_iterator i;
+  i = manifest_write_prereqs.find(man);
+  if (i != manifest_write_prereqs.end())
+    p = i->second;
+  else
+    {
+      p = shared_ptr<prerequisite>(new prerequisite(man.inner(), prereq_manifest_writable));
+      manifest_write_prereqs.insert(make_pair(man, p));
     }
 }
 
 void 
 packet_db_writer::impl::accepted_file(file_id const & f, packet_db_writer & dbw)
 {
-  existing_file_cache[f] = true;
+  existing_file_cache.insert(f);
   map<file_id, shared_ptr<prerequisite> >::iterator i = file_prereqs.find(f);  
-  if (i == file_prereqs.end())
-    return;
-  i->second->satisfy(i->second, dbw);
-  file_prereqs.erase(i);
+  if (i != file_prereqs.end())
+    {
+      shared_ptr<prerequisite> prereq = i->second;
+      file_prereqs.erase(i);
+      prereq->satisfy(prereq, dbw);
+    }
 }
 
 void 
-packet_db_writer::impl::accepted_manifest(manifest_id const & m, packet_db_writer & dbw)
+packet_db_writer::impl::accepted_manifest_writable(manifest_id const & m, packet_db_writer & dbw)
 {
-  existing_manifest_cache[m] = true;
-  map<manifest_id, shared_ptr<prerequisite> >::iterator i = manifest_prereqs.find(m);
-  if (i == manifest_prereqs.end())
-    return;
-  i->second->satisfy(i->second, dbw);
-  manifest_prereqs.erase(i);
+  existing_manifest_cache.insert(m);
+  manifest_delta_cache.erase(m);
+  // fire anything waiting for writability
+  map<manifest_id, shared_ptr<prerequisite> >::iterator i = manifest_write_prereqs.find(m);
+  if (i != manifest_write_prereqs.end())
+    {
+      L(F("noting writability of %s in accept_manifest_writable\n") % m);
+      shared_ptr<prerequisite> prereq = i->second;
+      manifest_write_prereqs.erase(i);
+      prereq->satisfy(prereq, dbw);
+    }
+
+  // fire anything writing for constructability
+  map<manifest_id, shared_ptr<prerequisite> >::iterator j = manifest_construction_prereqs.find(m);
+  if (j != manifest_construction_prereqs.end())
+    {
+      L(F("noting constructability of %s in accept_manifest_writable\n") % m);
+      shared_ptr<prerequisite> prereq = j->second;
+      manifest_construction_prereqs.erase(j);   
+      prereq->satisfy(prereq, dbw);
+    }
+
 }
+
+void 
+packet_db_writer::impl::accepted_manifest_constructable(manifest_id const & m, 
+							manifest_id const & pred,
+							manifest_delta const & del,
+							packet_db_writer & dbw)
+{
+  // first stash the delta for future use
+  map<manifest_id, shared_ptr< map<manifest_id, manifest_delta> > >::const_iterator i;
+  i = manifest_delta_cache.find(m);
+  shared_ptr< map<manifest_id, manifest_delta> > preds;
+  if (i == manifest_delta_cache.end())
+    {
+      preds = shared_ptr< map<manifest_id, manifest_delta> >(new map<manifest_id, manifest_delta>());
+      manifest_delta_cache.insert(make_pair(m, preds));
+    }
+  else
+    preds = i->second;
+
+  if (preds->find(pred) == preds->end())
+    preds->insert(make_pair(pred,  del));
+
+  // fire anything writing for constructability
+  map<manifest_id, shared_ptr<prerequisite> >::iterator j = manifest_construction_prereqs.find(m);
+  if (j != manifest_construction_prereqs.end())
+    {
+      L(F("noting constructability of %s in accept_manifest_constructable\n") % m);
+      shared_ptr<prerequisite> prereq = j->second;
+      manifest_construction_prereqs.erase(j);   
+      prereq->satisfy(prereq, dbw);
+    }
+}
+
 
 void 
 packet_db_writer::impl::accepted_manifest_cert_on(manifest_id const & m, packet_db_writer & dbw)
@@ -375,7 +658,7 @@ packet_db_writer::consume_file_data(file_id const & ident,
 				    file_data const & dat)
 {
   transaction_guard guard(pimpl->app.db);
-  if (! pimpl->file_version_exists(ident))
+  if (! pimpl->file_version_exists_in_db(ident))
     {
       pimpl->app.db.put_file(ident, dat);
       pimpl->accepted_file(ident, *this);
@@ -392,9 +675,9 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
 				     file_delta const & del)
 {
   transaction_guard guard(pimpl->app.db);
-  if (! pimpl->file_version_exists(new_id))
+  if (! pimpl->file_version_exists_in_db(new_id))
     {
-      if (pimpl->file_version_exists(old_id))
+      if (pimpl->file_version_exists_in_db(old_id))
 	{
 	  file_id confirm;
 	  file_data old_dat;
@@ -436,7 +719,7 @@ packet_db_writer::consume_file_cert(file<cert> const & t)
   transaction_guard guard(pimpl->app.db);
   if (! pimpl->app.db.file_cert_exists(t))
     {
-      if (pimpl->file_version_exists(file_id(t.inner().ident)))
+      if (pimpl->file_version_exists_in_db(file_id(t.inner().ident)))
 	{
 	  pimpl->app.db.put_file_cert(t);
 	}
@@ -466,7 +749,7 @@ packet_db_writer::consume_manifest_data(manifest_id const & ident,
 					manifest_data const & dat)
 {
   transaction_guard guard(pimpl->app.db);
-  if (! pimpl->manifest_version_exists(ident))
+  if (! pimpl->manifest_version_exists_in_db(ident))
     {
       manifest_map mm;
       read_manifest_map(dat, mm);
@@ -474,13 +757,13 @@ packet_db_writer::consume_manifest_data(manifest_id const & ident,
       for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
 	{
 	  path_id_pair pip(i);
-	  if (! pimpl->file_version_exists(pip.ident()))
+	  if (! pimpl->file_version_exists_in_db(pip.ident()))
 	    unsatisfied_files.insert(pip.ident());
 	}
       if (unsatisfied_files.empty())
 	{
 	  pimpl->app.db.put_manifest(ident, dat);
-	  pimpl->accepted_manifest(ident, *this);
+	  pimpl->accepted_manifest_writable(ident, *this);
 	}
       else
 	{
@@ -509,92 +792,117 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
 					 manifest_id const & new_id,
 					 manifest_delta const & del)
 {
-  transaction_guard guard(pimpl->app.db);
-  if (! pimpl->manifest_version_exists(new_id))
+  L(F("consume_manifest_delta %s -> %s\n") % old_id % new_id);
+  if (pimpl->manifest_version_constructable(old_id))
     {
-      if (pimpl->manifest_version_exists(old_id))
+      manifest_data old_dat;
+      base64< gzip<data> > tdat;
+      L(F("preimage %s is constructable\n") % old_id);
+      consume_constructable_manifest_delta(old_id, new_id, del);
+      pimpl->construct_manifest_version(old_id, old_dat);      
+      patch(old_dat.inner(), del.inner(), tdat);
+      pimpl->cached_id = new_id;
+      pimpl->cached_mdata = manifest_data(tdat);
+      pimpl->accepted_manifest_constructable(new_id, old_id, del, *this);  
+    }
+  else
+    {
+      L(F("delaying manifest delta %s -> %s for preimage\n") % old_id % new_id);
+      shared_ptr<delayed_packet> dp;
+      dp = shared_ptr<delayed_packet>(new delayed_nonconstructable_manifest_delta_packet(old_id, new_id, del));
+      shared_ptr<prerequisite> fp;
+      pimpl->get_manifest_constructable_prereq(old_id, fp); 
+      dp->add_prerequisite(fp);
+      fp->add_dependent(dp);
+    }
+}
+
+void 
+packet_db_writer::consume_constructable_manifest_delta(manifest_id const & old_id, 
+						       manifest_id const & new_id,
+						       manifest_delta const & del)
+{
+  manifest_map mm;
+
+  L(F("consume_constructable_manifest_delta %s -> %s\n") % old_id % new_id);
+  if (pimpl->manifest_version_exists_in_db(new_id))
+    {
+      L(F("skipping delta to existing manifest version %s\n") % new_id);  
+      return;
+    }
+
+  I(pimpl->manifest_version_constructable(old_id));
+
+  manifest_data old_dat;
+  pimpl->construct_manifest_version(old_id, old_dat);      
+  base64< gzip<data> > tdat;
+  patch(old_dat.inner(), del.inner(), tdat);
+  manifest_data new_dat(tdat);
+  read_manifest_map(new_dat, mm);
+
+  {
+    // check constructed new map
+    manifest_id confirm;
+    calculate_ident(mm, confirm);
+    if (! (confirm == new_id))
+      {
+	W(F("reconstructed manifest from delta '%s' -> '%s' has wrong id '%s'\n") 
+	  % old_id % new_id % confirm);
+	return;
+      }
+  }
+
+  // maybe analyze the edge
+  if (pimpl->analyzer != NULL
+      && (pimpl->analyzed_manifests.find(new_id) 
+	  == pimpl->analyzed_manifests.end()))
+    {
+      L(F("analyzing manifest edge %s -> %s\n") % old_id % new_id);
+      manifest_map mm_old;
+      read_manifest_map(manifest_data(old_dat), mm_old);
+      pimpl->analyzer->analyze_manifest_edge(mm_old, mm);
+      pimpl->analyzed_manifests.insert(new_id);
+    }
+
+  transaction_guard guard(pimpl->app.db);
+
+  // now check to see if we can write it, or if we need to delay for files
+  set<file_id> unsatisfied_files;
+  for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
+    {
+      path_id_pair pip(i);
+      if (! pimpl->file_version_exists_in_db(pip.ident()))
+	unsatisfied_files.insert(pip.ident());
+    }
+  if (unsatisfied_files.empty() &&
+      pimpl->manifest_version_exists_in_db(old_id))
+    {
+      L(F("manifest %s is satisfied\n") % new_id);
+      pimpl->app.db.put_manifest_version(old_id, new_id, del);
+      pimpl->accepted_manifest_writable(new_id, *this);
+    }
+  else
+    {
+      L(F("delaying manifest delta packet %s -> %s for %d files\n") 
+	% old_id % new_id % unsatisfied_files.size());
+      shared_ptr<delayed_packet> dp;
+      shared_ptr<prerequisite> fp;
+      dp = shared_ptr<delayed_packet>(new delayed_manifest_delta_packet(old_id, new_id, del));
+      for (set<file_id>::const_iterator i = unsatisfied_files.begin();
+	   i != unsatisfied_files.end(); ++i)
 	{
-	  manifest_data old_dat;
-	  base64< gzip<data> > new_dat;
-	  manifest_map mm;
-	  pimpl->app.db.get_manifest_version(old_id, old_dat);
-	  patch(old_dat.inner(), del.inner(), new_dat);
-	  read_manifest_map(manifest_data(new_dat), mm);
-
-	  // callback to a listener, yuck.
-	  //
-	  // FIXME: doing this under the guard ot "manifest_version_exists"
-	  // is a bit pessimistic; it means that we will only analyze the
-	  // manifest edge when its preimage has been *written* to the db,
-	  // and the preimage is only written when all its files have
-	  // arrived. you'll notice a very empty protocol pipeline
-	  // currently due to this "lock-stepness".
-	  // 
-	  // what we *should* be doing here is analyznig the edge when the
-	  // preimage arrives, period. that will require spending a bit of
-	  // complexity differentiating the "no preimage" prerequisite
-	  // condidition from the "missing some files" prerequisite
-	  // condition. it's late so I'm kinda out of energy to do this
-	  // now. it's at least "correct" at the moment.
-
-	  if (pimpl->analyzer != NULL)
-	    {
-	      manifest_map mm_old;
-	      read_manifest_map(manifest_data(old_dat), mm_old);
-	      pimpl->analyzer->analyze_manifest_edge(mm_old, mm);
-	    }
-	  
-	  set<file_id> unsatisfied_files;
-	  for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
-	    {
-	      path_id_pair pip(i);
-	      if (! pimpl->file_version_exists(pip.ident()))
-		unsatisfied_files.insert(pip.ident());
-	    }
-	  if (unsatisfied_files.empty())
-	    {
-	      manifest_id confirm;
-	      calculate_ident(mm, confirm);
-	      if (confirm == new_id)
-		{
-		  pimpl->app.db.put_manifest_version(old_id, new_id, del);
-		  pimpl->accepted_manifest(new_id, *this);
-		}
-	      else
-		{
-		  W(F("reconstructed manifest from delta '%s' -> '%s' has wrong id '%s'\n") 
-		    % old_id % new_id % confirm);
-		}
-	    }
-	  else
-	    {
-	      L(F("delaying manifest delta packet %s -> %s for %d files\n") 
-		% old_id % new_id % unsatisfied_files.size());
-	      shared_ptr<delayed_packet> dp;
-	      dp = shared_ptr<delayed_packet>(new delayed_manifest_delta_packet(old_id, new_id, del));
-	      for (set<file_id>::const_iterator i = unsatisfied_files.begin();
-		   i != unsatisfied_files.end(); ++i)
-		{
-		  shared_ptr<prerequisite> fp;
-		  pimpl->get_file_prereq(*i, fp); 
-		  dp->add_prerequisite(fp);
-		  fp->add_dependent(dp);
-		}
-	    }  
+	  pimpl->get_file_prereq(*i, fp); 
+	  dp->add_prerequisite(fp);
+	  fp->add_dependent(dp);
 	}
-      else
+      if (!pimpl->manifest_version_exists_in_db(old_id))
 	{
-	  L(F("delaying manifest delta %s -> %s for preimage\n") % old_id % new_id);
-	  shared_ptr<delayed_packet> dp;
-	  dp = shared_ptr<delayed_packet>(new delayed_manifest_delta_packet(old_id, new_id, del));
-	  shared_ptr<prerequisite> fp;
-	  pimpl->get_manifest_prereq(old_id, fp); 
+	  // P(F("adding write of preimage to prerequisites\n"));
+	  pimpl->get_manifest_writable_prereq(old_id, fp); 
 	  dp->add_prerequisite(fp);
 	  fp->add_dependent(dp);
 	}
     }
-  else
-    L(F("skipping delta to existing manifest version %s\n") % new_id);  
   ++(pimpl->count);
   guard.commit();
 }
@@ -605,7 +913,7 @@ packet_db_writer::consume_manifest_cert(manifest<cert> const & t)
   transaction_guard guard(pimpl->app.db);
   if (! pimpl->app.db.manifest_cert_exists(t))
     {
-      if (pimpl->manifest_version_exists(manifest_id(t.inner().ident)))
+      if (pimpl->manifest_version_exists_in_db(manifest_id(t.inner().ident)))
 	{
 	  pimpl->app.db.put_manifest_cert(t);
 	  pimpl->accepted_manifest_cert_on(manifest_id(t.inner().ident), *this);
@@ -616,7 +924,7 @@ packet_db_writer::consume_manifest_cert(manifest<cert> const & t)
 	  shared_ptr<delayed_packet> dp;
 	  dp = shared_ptr<delayed_packet>(new delayed_manifest_cert_packet(t));
 	  shared_ptr<prerequisite> fp;
-	  pimpl->get_manifest_prereq(manifest_id(t.inner().ident), fp); 
+	  pimpl->get_manifest_writable_prereq(manifest_id(t.inner().ident), fp); 
 	  dp->add_prerequisite(fp);
 	  fp->add_dependent(dp);
 	}

@@ -1,3 +1,75 @@
+2004-04-29  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc (get_branch_heads): Calculate a "disapproved version"
+	attribute which culls a version with only disapproved ancestry
+	edges.
+	* monotone.texi: Fix some ascii-art diagrams.
+
+2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
+
+        * po/stamp-po: Removed since it's generated.
+
+        * std_hooks.lua (ignore_file): Corrected name of Subversion's
+        administrative directory.
+        * work.hh: Ditto.
+        * monotone.texi (Hook Reference): Updated default definition of
+        ignore_file.
+
+2004-04-28  Christof Petig <christof@petig-baender.de>
+
+	* command.cc (heads):
+		show date and author certificates for each head
+
+2004-04-28  Christof Petig <christof@petig-baender.de>
+
+	* configure.ac:
+		default to using the bundled SQLite
+
+2004-04-28  Christof Petig <christof@petig-baender.de>
+
+	* command.cc (log):
+		support optional file argument to show change log for
+		e.g. monotone log [ID] cert.cc
+
+2004-04-26  Christof Petig <christof@petig-baender.de>
+
+	* rcs_import.cc (process branch):
+		insert dummy cvs_edge to mark newly added file 
+		as previously non existant
+
+2004-04-23  Christof Petig <christof@petig-baender.de>
+
+	* rcs_import.cc (build_parent_state, build_child_state):
+		remove dying files from manifest
+	* rcs_import.cc (cvs_file_edge, note_file_edge):
+		calculate state and remember it (alive or dead)
+
+2004-04-23  Christof Petig <christof@petig-baender.de>
+
+	* rcs_import.cc (import_rcs_file_with_cvs): 
+		do not include dead files in head_manifest
+
+2004-04-22  Christof Petig <christof@petig-baender.de>
+
+	* rcs_file.cc, rcs_file.hh: read and remember 'state' of revision
+	* rcs_import.cc: remove Attic/ part from path
+
+2004-04-21  Christof Petig <christof@petig-baender.de>
+
+	* configure.ac: enable use of installed SQLite library
+
+2004-04-20  graydon hoare  <graydon@pobox.com>
+
+	* lua.hh, lua.cc (hook_note_commit): New hook.
+	* commands.cc (commit): Call it.
+
+2004-04-19  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc: Make trust messages nicer.
+	* merkle_tree.cc: Clarify logging messages.
+	* netsync.cc: Reorganize tickers, put client in txn.
+	* packet.cc, packet.hh: Teach about constructability.
+
 2004-04-16  graydon hoare  <graydon@pobox.com>
 
 	* netsync.cc (session::extra_manifests): New member.

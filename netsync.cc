@@ -228,6 +228,8 @@ session :
   bool authenticated;
 
   time_t last_io_time;
+  ticker * in_ticker;
+  ticker * out_ticker;
 
   map<netcmd_item_type, done_marker> done_refinements;
   set< pair<netcmd_item_type, id> > requested_items;
@@ -264,12 +266,13 @@ session :
   void request_manifests_recursive(id const & i, set<id> & visited);
 
   Netxx::Probe::ready_type which_events() const;
-  bool read_some(ticker * t = NULL);
-  bool write_some(ticker * t = NULL);
+  bool read_some();
+  bool write_some();
   void update_merkle_trees(netcmd_item_type type,
 			   hexenc<id> const & hident,
 			   bool live_p);
 
+  void write_netcmd_and_try_flush(netcmd const & cmd);
   void queue_bye_cmd();
   void queue_error_cmd(string const & errmsg);
   void queue_done_cmd(size_t level, netcmd_item_type type);
@@ -386,6 +389,8 @@ session::session(protocol_role role,
   remote_peer_key_hash(""),
   authenticated(false),
   last_io_time(::time(NULL)),
+  in_ticker(NULL),
+  out_ticker(NULL),
   saved_nonce(""),
   received_goodbye(false),
   sent_goodbye(false),
@@ -461,6 +466,16 @@ always_true_version_check :
     return true;
   }
 };
+
+void 
+session::write_netcmd_and_try_flush(netcmd const & cmd)
+{
+  write_netcmd(cmd, outbuf);
+  // FIXME: this helps keep the protocol pipeline full but it seems to
+  // interfere with initial and final sequences. disable for now.
+  //   write_some();
+  //   read_some();
+}
 
 void 
 session::analyze_manifest_edge(manifest_map const & parent,
@@ -651,7 +666,7 @@ session::which_events() const
 }
 
 bool 
-session::read_some(ticker * tick)
+session::read_some()
 {
   I(inbuf.size() < constants::netcmd_maxsz);
   char tmp[constants::bufsz];
@@ -661,8 +676,8 @@ session::read_some(ticker * tick)
       L(F("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
       inbuf.append(string(tmp, tmp + count));
       mark_recent_io();
-      if (tick != NULL)
-	(*tick) += count;
+      if (in_ticker != NULL)
+	(*in_ticker) += count;
       return true;
     }
   else
@@ -670,7 +685,7 @@ session::read_some(ticker * tick)
 }
 
 bool 
-session::write_some(ticker * tick)
+session::write_some()
 {
   I(!outbuf.empty());    
   Netxx::signed_size_type count = str.write(outbuf.data(), 
@@ -681,8 +696,8 @@ session::write_some(ticker * tick)
       L(F("wrote %d bytes to fd %d (peer %s), %d remain in output buffer\n") 
 	% count % fd % peer_id % outbuf.size());
       mark_recent_io();
-      if (tick != NULL)
-	(*tick) += count;
+      if (out_ticker != NULL)
+	(*out_ticker) += count;
       return true;
     }
   else
@@ -697,7 +712,7 @@ session::queue_bye_cmd()
   L(F("queueing 'bye' command\n"));
   netcmd cmd;
   cmd.cmd_code = bye_cmd;
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
   this->sent_goodbye = true;
 }
 
@@ -708,7 +723,7 @@ session::queue_error_cmd(string const & errmsg)
   netcmd cmd;
   cmd.cmd_code = error_cmd;
   write_error_cmd_payload(errmsg, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 void 
@@ -721,7 +736,7 @@ session::queue_done_cmd(size_t level,
   netcmd cmd;
   cmd.cmd_code = done_cmd;
   write_done_cmd_payload(level, type, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 void 
@@ -731,7 +746,7 @@ session::queue_hello_cmd(id const & server,
   netcmd cmd;
   cmd.cmd_code = hello_cmd;
   write_hello_cmd_payload(server, nonce, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 void 
@@ -742,7 +757,7 @@ session::queue_anonymous_cmd(protocol_role role,
   netcmd cmd;
   cmd.cmd_code = anonymous_cmd;
   write_anonymous_cmd_payload(role, collection, nonce2, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 void 
@@ -758,7 +773,7 @@ session::queue_auth_cmd(protocol_role role,
   write_auth_cmd_payload(role, collection, client, 
 			 nonce1, nonce2, signature, 
 			 cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 void 
@@ -767,7 +782,7 @@ session::queue_confirm_cmd(string const & signature)
   netcmd cmd;
   cmd.cmd_code = confirm_cmd;
   write_confirm_cmd_payload(signature, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 void 
@@ -782,7 +797,7 @@ session::queue_refine_cmd(merkle_node const & node)
   netcmd cmd;
   cmd.cmd_code = refine_cmd;
   write_refine_cmd_payload(node, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 void 
@@ -814,7 +829,7 @@ session::queue_send_data_cmd(netcmd_item_type type,
   netcmd cmd;
   cmd.cmd_code = send_data_cmd;
   write_send_data_cmd_payload(type, item, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
   this->requested_items.insert(make_pair(type, item));
 }
     
@@ -852,7 +867,7 @@ session::queue_send_delta_cmd(netcmd_item_type type,
   netcmd cmd;
   cmd.cmd_code = send_delta_cmd;
   write_send_delta_cmd_payload(type, base, ident, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
   this->requested_items.insert(make_pair(type, ident));
 }
 
@@ -878,7 +893,7 @@ session::queue_data_cmd(netcmd_item_type type,
   netcmd cmd;
   cmd.cmd_code = data_cmd;
   write_data_cmd_payload(type, item, dat, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 void
@@ -908,7 +923,7 @@ session::queue_delta_cmd(netcmd_item_type type,
   netcmd cmd;
   cmd.cmd_code = delta_cmd;  
   write_delta_cmd_payload(type, base, ident, del, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 void 
@@ -931,7 +946,7 @@ session::queue_nonexistant_cmd(netcmd_item_type type,
   netcmd cmd;
   cmd.cmd_code = nonexistant_cmd;
   write_nonexistant_cmd_payload(type, item, cmd.payload);
-  write_netcmd(cmd, outbuf);
+  write_netcmd_and_try_flush(cmd);
 }
 
 // processors
@@ -2342,6 +2357,8 @@ call_server(protocol_role role,
 	       address(), server.get_socketfd(), timeout);
 
   ticker input("bytes in"), output("bytes out");
+  sess.in_ticker = &input;
+  sess.out_ticker = &output;
 
   while (true)
     {       
@@ -2371,7 +2388,7 @@ call_server(protocol_role role,
       
       if (event & Netxx::Probe::ready_read)
 	{
-	  if (sess.read_some(&input))
+	  if (sess.read_some())
 	    {
 	      try 
 		{
@@ -2396,7 +2413,7 @@ call_server(protocol_role role,
       
       if (event & Netxx::Probe::ready_write)
 	{
-	  if (! sess.write_some(&output))
+	  if (! sess.write_some())
 	    {
 	      if (sess.sent_goodbye)
 		P(F("write on fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
@@ -2734,6 +2751,7 @@ rebuild_merkle_trees(app_state & app,
   {
     // get all matching branch names
     vector< manifest<cert> > certs;
+    set<string> branchnames;
     app.db.get_manifest_certs(branch_cert_name, certs);
     for (size_t i = 0; i < certs.size(); ++i)
       {
@@ -2741,6 +2759,9 @@ rebuild_merkle_trees(app_state & app,
 	decode_base64(idx(certs, i).inner().value, name);
 	if (name().find(collection()) == 0)
 	  {
+	    if (branchnames.find(name()) == branchnames.end())
+	      P(F("including branch %s\n") % name());
+	    branchnames.insert(name());
 	    manifest_ids.insert(manifest_id(idx(certs, i).inner().ident));
 	  }
       }
@@ -2852,9 +2873,11 @@ run_netsync_protocol(protocol_voice voice,
       else    
 	{
 	  I(voice == client_voice);
+	  transaction_guard guard(app.db);
 	  call_server(role, collections, all_collections, app, 
 		      addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
 		      static_cast<unsigned long>(constants::netsync_timeout_seconds));
+	  guard.commit();
 	}
     }
   catch (Netxx::Exception & e)

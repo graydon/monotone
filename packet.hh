@@ -113,6 +113,9 @@ struct packet_db_writer : public packet_consumer
   virtual void consume_manifest_delta(manifest_id const & id_old, 
 				      manifest_id const & id_new,
 				      manifest_delta const & del);
+  void consume_constructable_manifest_delta(manifest_id const & id_old, 
+					    manifest_id const & id_new,
+					    manifest_delta const & del);
   virtual void consume_manifest_cert(manifest<cert> const & t);  
 
   virtual void consume_public_key(rsa_keypair_id const & ident,

@@ -45,9 +45,9 @@ function ignore_file(name)
    if (string.find(name, "%~$")) then return true end
    if (string.find(name, "/core$")) then return true end
    if (string.find(name, "^CVS/")) then return true end
-   if (string.find(name, "^SVN/")) then return true end
    if (string.find(name, "/CVS/")) then return true end
-   if (string.find(name, "/SVN/")) then return true end
+   if (string.find(name, "^.svn/")) then return true end
+   if (string.find(name, "/.svn/")) then return true end
    if (string.find(name, "^SCCS/")) then return true end
    if (string.find(name, "/SCCS/")) then return true end
    return false;
@@ -86,6 +86,7 @@ function edit_comment(basetext)
    os.remove(tname)
    return res
 end
+
 
 function non_blocking_rng_ok()
    return true
