@@ -12,13 +12,10 @@ function temp_file()
 end
 
 function execute(path, ...)   
-   local pid = posix.fork()
+   local pid
    local ret = -1
-   if pid == 0 then
-      posix.exec(path, unpack(arg))
-   else
-      ret, pid = posix.wait(pid)
-   end
+   pid = spawn(path, unpack(arg))
+   ret, pid = wait(pid)
    return ret
 end
 
@@ -39,7 +36,7 @@ end
 attr_functions["execute"] = 
    function(filename, value) 
       if (value == "true") then
-         posix.chmod(filename, "u+x")
+         make_executable(filename)
       end
    end
 
@@ -240,7 +237,7 @@ function read_contents_of_file(filename)
 end
 
 function program_exists_in_path(program)
-   return execute("which", program) == 0
+   return existsonpath(program) == 0
 end
 
 function merge2(left_path, right_path, merged_path, left, right)

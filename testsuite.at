@@ -241,7 +241,13 @@ fi
 # Poor man's logging:
 AT_CHECK(echo $UNB64_COMMAND, [], [ignore], [ignore])
 ])
-m4_define([UNB64], [AT_CHECK(eval $UNB64_COMMAND <$1 >$2)])
+m4_define([UNB64], [AT_CHECK(
+if test "$OSTYPE" == "msys"; then
+  mimencode -u -o $2 $1
+else
+  eval $UNB64_COMMAND <$1 >$2
+fi
+)])
 
 # Usage: NEED_UNGZ will cancel the test (reporting success) if we
 # can't decode gzipped text.
@@ -258,7 +264,12 @@ fi
 # Poor man's logging:
 AT_CHECK(echo $UNGZ_COMMAND, [], [ignore], [ignore])
 ])
-m4_define([UNGZ], [AT_CHECK(eval $UNGZ_COMMAND <$1 >$2)])
+m4_define([UNGZ], [AT_CHECK(
+eval $UNGZ_COMMAND <$1 >$2
+if test "$OSTYPE" == "msys"; then
+  dos2unix -q -o $2
+fi
+)])
 
 # Usage: NEED_UNGZB64 will XFAIL the test if we can't decode base64'ed
 # gzipped text.
@@ -482,6 +493,11 @@ m4_include(tests/t_merge_3.at)
 m4_include(tests/t_merge_4.at)
 m4_include(tests/t_db_missing.at)
 m4_include(tests/t_fsck.at)
+m4_include(tests/t_add_owndb.at)
+m4_include(tests/t_can_execute.at)
+m4_include(tests/t_diff_binary.at)
+m4_include(tests/t_command_completion.at)
+m4_include(tests/t_merge_rename_file_and_rename_dir.at)
 m4_include(tests/t_epoch.at)
 m4_include(tests/t_epoch_server.at)
 m4_include(tests/t_epoch_unidirectional.at)

@@ -149,9 +149,9 @@ stringprep_convert (const char *str,
     return NULL;
 
   p = (char *) malloc (strlen (str) + 1);
-  strcpy (p, str);
   if (p == NULL)
     return NULL;
+  strcpy (p, str);
   len = strlen (p);
   startp = p;
   inbytes_remaining = len;

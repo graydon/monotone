@@ -1,0 +1,21 @@
+AT_SETUP([can execute things])
+MONOTONE_SETUP
+
+AT_DATA(testfile, [blah blah
+])
+
+AT_DATA(cphook.lua, [function note_commit(new_id, certs)
+	local pid
+	local ret = -1
+	pid = spawn("cp", "testfile", "testfile.copied")
+	if (pid == -1) then
+		return nil
+	end
+	ret, pid = wait(pid)
+end
+])
+AT_CHECK(MONOTONE add cphook.lua, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=cphook.lua commit --message 'test', [], [ignore], [ignore])
+AT_CHECK(test -f testfile.copied, [], [ignore], [ignore])
+
+AT_CLEANUP

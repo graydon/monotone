@@ -14,6 +14,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <signal.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -27,6 +28,7 @@ extern "C" {
 #include "mkstemp.hh"
 #include "sanity.hh"
 #include "vocab.hh"
+#include "platform.hh"
 
 // defined in {std,test}_hooks.lua, converted
 #include "test_hooks.h"
@@ -84,6 +86,74 @@ extern "C"
     else
       return 2;
   }
+
+  static int
+  monotone_existsonpath_for_lua(lua_State *L)
+  {
+    const char *exe = lua_tostring(L, -1);
+    lua_pushnumber(L, existsonpath(exe));
+    return 1;
+  }
+
+  static int
+  monotone_make_executable_for_lua(lua_State *L)
+  {
+    const char *path = lua_tostring(L, -1);
+    lua_pushnumber(L, make_executable(path));
+    return 1;
+  }
+
+  static int
+  monotone_spawn_for_lua(lua_State *L)
+  {
+    int n = lua_gettop(L);
+    const char *path = lua_tostring(L, -n);
+    char **argv = (char**)malloc((n+1)*sizeof(char*));
+    int ret, i;
+    if (argv==NULL)
+      return 0;
+    argv[0] = (char*)path;
+    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(n - i));
+    argv[i] = NULL;
+    ret = process_spawn(argv);
+    free(argv);
+    lua_pushnumber(L, ret);
+    return 1;
+  }
+
+  static int
+  monotone_wait_for_lua(lua_State *L)
+  {
+    int pid = (int)lua_tonumber(L, -1);
+    int res;
+    int ret;
+    ret = process_wait(pid, &res);
+    lua_pushnumber(L, res);
+    lua_pushnumber(L, ret);
+    return 2;
+  }
+
+  static int
+  monotone_kill_for_lua(lua_State *L)
+  {
+    int n = lua_gettop(L);
+    int pid = (int)lua_tonumber(L, -2);
+    int sig;
+    if (n>1)
+      sig = (int)lua_tonumber(L, -1);
+    else
+      sig = SIGTERM;
+    lua_pushnumber(L, process_kill(pid, sig));
+    return 1;
+  }
+
+  static int
+  monotone_sleep_for_lua(lua_State *L)
+  {
+    int seconds = (int)lua_tonumber(L, -1);
+    lua_pushnumber(L, process_sleep(seconds));
+    return 1;
+  }
 }
 
 
@@ -101,10 +171,15 @@ lua_hooks::lua_hooks()
   luaopen_math(st);
   luaopen_table(st);
   luaopen_debug(st);
-  luaopen_posix(st);
 
   // add monotone-specific functions
   lua_register(st, "mkstemp", monotone_mkstemp_for_lua);
+  lua_register(st, "existsonpath", monotone_existsonpath_for_lua);
+  lua_register(st, "make_executable", monotone_make_executable_for_lua);
+  lua_register(st, "spawn", monotone_spawn_for_lua);
+  lua_register(st, "wait", monotone_wait_for_lua);
+  lua_register(st, "kill", monotone_kill_for_lua);
+  lua_register(st, "sleep", monotone_sleep_for_lua);
 }
 
 lua_hooks::~lua_hooks()

@@ -126,7 +126,7 @@ write_revision_set(revision_set const & rev,
 // sanity checking
 
 void
-check_sane_history(revision_id const & child_id, int depth, database & db);
+check_sane_history(revision_id const & child_id, int depth, app_state & app);
 
 // graph walking
 

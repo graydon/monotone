@@ -95,8 +95,20 @@ revision_set::operator=(revision_set const & other)
 void
 check_sane_history(revision_id const & child_id,
                    int depth,
-                   database & db)
+                   app_state & app)
 {
+  // We are, unfortunately, still quite slow.  So we want to give at least a
+  // little feedback.  Let's print exactly one warning, on the _second_ time
+  // we are called within one run -- just checking one revision isn't too
+  // slow, so no need to print anything on "commit", but usually if we're
+  // checking 2 revisions we're checking a lot more.
+  // FIXME: make sanity checking faster, so we can remove this kluge
+  // altogether...
+  static int num_checked = 0;
+  ++num_checked;
+  if (num_checked == 2)
+    P(F("verifying new revisions (this may take a while)\n"));
+
   L(F("Verifying revision %s has sane history (to depth %i)\n")
     % child_id % depth);
 
@@ -105,13 +117,15 @@ check_sane_history(revision_id const & child_id,
   std::map<revision_id, shared_cs> changesets;
   
   manifest_id m_child_id;
-  db.get_revision_manifest(child_id, m_child_id);
+  app.db.get_revision_manifest(child_id, m_child_id);
   manifest_map m_child;
-  db.get_manifest(m_child_id, m_child);
+  app.db.get_manifest(m_child_id, m_child);
 
   std::set<revision_id> frontier;
   frontier.insert(child_id);
     
+  // FIXME: if we don't check the LCA already, check it.
+
   while (depth-- > 0)
     {
       std::set<revision_id> next_frontier;
@@ -122,7 +136,7 @@ check_sane_history(revision_id const & child_id,
         {
           revision_id current_id = *i;
           revision_set current;
-          db.get_revision(current_id, current);
+          app.db.get_revision(current_id, current);
           // and the parents's manifests to the manifests
           // and the change_set's to the parents to the changesets
           for (edge_map::const_iterator j = current.edges.begin();
@@ -170,7 +184,7 @@ check_sane_history(revision_id const & child_id,
                   // The null revision has empty manifest, which is the
                   // default.
                   if (!null_id(old_id))
-                    db.get_manifest(m_old_id, purported_m_child);
+                    app.db.get_manifest(m_old_id, purported_m_child);
                   apply_change_set(*old_to_child_changes_p, purported_m_child);
                   I(purported_m_child == m_child);
                 }
@@ -178,8 +192,58 @@ check_sane_history(revision_id const & child_id,
         }
       frontier = next_frontier;
     }
+
+  // Finally, there's a danger that if we have a long divergence, then after a
+  // merge, the common ancestor will be far back enough that the above
+  // depth-limited search won't have any idea whether the ancestry invariants
+  // are actually preserved.  So do an additional check on merge revisions, to
+  // make sure that the paths to both ways going back to their parents's
+  // common ancestor give the same change_set (i.e., this is a valid merge at
+  // all).
+  if (!global_sanity.relaxed)
+    {
+      revision_set child_rev;
+      app.db.get_revision(child_id, child_rev);
+      // Nothing inherently impossible about having more than 2 parents, but if
+      // you come up with some case where it should be possible then you'll
+      // have to also adjust the code below to figure out what "common
+      // ancestor" means.
+      I(child_rev.edges.size() <= 2);
+      if (child_rev.edges.size() != 2)
+        return;
+      edge_map::const_iterator i = child_rev.edges.begin();
+      revision_id parent_left = edge_old_revision(i);
+      change_set left_edge = edge_changes(i);
+      ++i;
+      revision_id parent_right = edge_old_revision(i);
+      change_set right_edge = edge_changes(i);
+      ++i;
+      I(i == child_rev.edges.end());
+      revision_id lca;
+      if (!find_least_common_ancestor(parent_left, parent_right, lca, app))
+        {
+          L(F("%s and %s have no common ancestor, so done\n")
+            % parent_left % parent_right);
+          return;
+        }
+      if (changesets.find(lca) != changesets.end())
+        {
+          L(F("already checked common ancestor, so done\n"));
+          return;
+        }
+      L(F("%s is a merge; verifying paths to common ancestor %s are sane\n")
+        % child_id % lca);
+      // we have a merge node, with an lca sufficiently far back in history
+      // that we haven't yet figured out whether this is a valid merge or
+      // not.  so find out.
+      change_set cs_parent_left, cs_parent_right, cs_left, cs_right;
+      calculate_composite_change_set(lca, parent_left, app, cs_parent_left);
+      calculate_composite_change_set(lca, parent_right, app, cs_parent_right);
+      concatenate_change_sets(cs_parent_left, left_edge, cs_left);
+      concatenate_change_sets(cs_parent_right, right_edge, cs_right);
+      I(cs_left == cs_right);
+    }
 }
-      
 
 // calculating least common ancestors is a delicate thing.
 // 
@@ -839,6 +903,7 @@ static void
 analyze_manifest_changes(app_state & app,
                          manifest_id const & parent, 
                          manifest_id const & child, 
+                         std::set<file_path> const & need_history_splitting,
                          change_set & cs)
 {
   manifest_map m_parent, m_child;
@@ -854,15 +919,24 @@ analyze_manifest_changes(app_state & app,
   for (manifest_map::const_iterator i = m_parent.begin(); 
        i != m_parent.end(); ++i)
     {
-      manifest_map::const_iterator j = m_child.find(manifest_entry_path(i));
+      file_path f = manifest_entry_path(i);
+      manifest_map::const_iterator j = m_child.find(f);
       if (j == m_child.end())
-        cs.delete_file(manifest_entry_path(i));
+        {
+          cs.delete_file(f);
+        }
+      else if (need_history_splitting.find(f) != need_history_splitting.end())
+        {
+          P(F("splitting ancestry for file %s\n") % f);
+          cs.delete_file(f);
+          cs.add_file(f, manifest_entry_id(j));
+        }
       else if (! (manifest_entry_id(i) == manifest_entry_id(j)))
         {
           cs.apply_delta(manifest_entry_path(i),
                          manifest_entry_id(i), 
                          manifest_entry_id(j));
-        }       
+        }
     }
   for (manifest_map::const_iterator i = m_child.begin(); 
        i != m_child.end(); ++i)
@@ -909,6 +983,7 @@ struct anc_graph
   
   void add_node_ancestry(u64 child, u64 parent);  
   void write_certs();
+  void kluge_for_3_ancestor_nodes();
   void rebuild_ancestry();
   void get_node_manifest(u64 node, manifest_id & man);
   u64 add_node_for_old_manifest(manifest_id const & man);
@@ -989,8 +1064,94 @@ void anc_graph::write_certs()
 }
 
 void
+anc_graph::kluge_for_3_ancestor_nodes()
+{
+  // This method is, as the name suggests, a kluge.  It exists because in the
+  // 0.17 timeframe, monotone's ancestry graph has several nodes with 3
+  // parents.  This isn't, in principle, necessarily a bad thing; having 3
+  // parents is reasonably well defined, I don't know of much code that is
+  // dependent on revisions having only 2 parents, etc.  But it is a very
+  // weird thing, that we would never under any circumstances create today,
+  // and it only exists as a side-effect of the pre-changeset days.  In the
+  // future we may decide to allow 3+-parent revisions; we may decide to
+  // disallow it.  Right now, I'd rather keep options open.
+  // We remove only edges that are "redundant" (i.e., already weird...).
+  // These are also something that we currently refuse to produce -- when a
+  // node has more than one parent, and one parent is an ancestor of another.
+  // These edges, again, only exist because of weirdnesses in the
+  // pre-changeset days, and are not particularly meaningful.  Again, we may
+  // decide in the future to use them for some things, but...
+  // FIXME: remove this method eventually, since it is (mildly) destructive on
+  // history, and isn't really doing anything that necessarily needs to happen
+  // anyway.
+  P(F("scanning for nodes with 3+ parents\n"));
+  std::set<u64> manyparents;
+  for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
+       i != ancestry.end(); ++i)
+    {
+      if (ancestry.count(i->first) > 2)
+        manyparents.insert(i->first);
+    }
+  for (std::set<u64>::const_iterator i = manyparents.begin();
+       i != manyparents.end(); ++i)
+    {
+      std::set<u64> indirect_ancestors;
+      std::set<u64> parents;
+      std::vector<u64> to_examine;
+      for (std::multimap<u64, u64>::const_iterator j = ancestry.lower_bound(*i);
+           j != ancestry.upper_bound(*i); ++j)
+        {
+          to_examine.push_back(j->second);
+          parents.insert(j->second);
+        }
+      I(!to_examine.empty());
+      while (!to_examine.empty())
+        {
+          u64 current = to_examine.back();
+          to_examine.pop_back();
+          for (std::multimap<u64, u64>::const_iterator j = ancestry.lower_bound(current);
+               j != ancestry.upper_bound(current); ++j)
+            {
+              if (indirect_ancestors.find(j->second) == indirect_ancestors.end())
+                {
+                  to_examine.push_back(j->second);
+                  indirect_ancestors.insert(j->second);
+                }
+            }
+        }
+      size_t killed = 0;
+      for (std::set<u64>::const_iterator p = parents.begin();
+           p != parents.end(); ++p)
+        {
+          if (indirect_ancestors.find(*p) != indirect_ancestors.end())
+            {
+              P(F("optimizing out redundant edge %i -> %i\n") % (*p) % (*i));
+              // sometimes I hate STL.  or at least my incompetence at using it.
+              size_t old_size = ancestry.size();
+              for (std::multimap<u64, u64>::iterator e = ancestry.lower_bound(*i);
+                   e != ancestry.upper_bound(*i); ++e)
+                {
+                  I(e->first == *i);
+                  if (e->second == *p)
+                    {
+                      ancestry.erase(e);
+                      break;
+                    }
+                }
+              I(old_size - 1 == ancestry.size());
+              ++killed;
+            }
+        }
+      I(killed < parents.size());
+      I(ancestry.find(*i) != ancestry.end());
+    }
+}
+
+void
 anc_graph::rebuild_ancestry()
 {
+  kluge_for_3_ancestor_nodes();
+
   P(F("rebuilding %d nodes\n") % max_node);
   {
     transaction_guard guard(app.db);
@@ -1125,38 +1286,110 @@ anc_graph::construct_revision_from_ancestry(u64 child)
       revision_id null_rid;
       manifest_id null_mid;
       boost::shared_ptr<change_set> cs(new change_set());
-      analyze_manifest_changes(app, null_mid, child_man, *cs);
+      std::set<file_path> blah;
+      analyze_manifest_changes(app, null_mid, child_man, blah, *cs);
       rev.edges.insert(std::make_pair(null_rid,
                                       std::make_pair(null_mid, cs)));
     }
+  else if (std::distance(range.first, range.second) == 1)
+    {
+      I(child == range.first->first);
+      u64 parent = range.first->second;
+      if (node_to_new_rev.find(parent) == node_to_new_rev.end())
+        construct_revision_from_ancestry(parent);
+      revision_id parent_rid = node_to_new_rev.find(parent)->second;
+      L(F("parent node %d = revision %s\n") % parent % parent_rid);      
+      manifest_id parent_man;
+      get_node_manifest(parent, parent_man);
+      boost::shared_ptr<change_set> cs(new change_set());
+      std::set<file_path> need_killing_files;
+      analyze_manifest_changes(app, parent_man, child_man, need_killing_files,
+                               *cs);
+      rev.edges.insert(std::make_pair(parent_rid,
+                                      std::make_pair(parent_man, cs)));
+    }
   else
     {
-      for (ci i = range.first; i != range.second; ++i)
+      // this section has lots and lots of rigmorale, in order to handle the
+      // following case: A -> B -> D, A -> C -> D.  File "foo" exists in
+      // manifests A, C, and D only.  (I.e., it was deleted and then re-added
+      // along the B path, and left alone along the C path.)  The problem here
+      // is that we have to synthesize a delete/add pair on the C -> D edge,
+      // to make sure that the A -> D changeset is path invariant -- we have
+      // to make sure that no matter how you go from A to D, we will learn
+      // that A's "foo" and D's "foo" are actually logically distinct files.
+      //
+      // In order to do this, before we generate the changeset for any merged
+      // revision, we calculate the changeset through from the parents's
+      // common ancestor to the _other_ parent, which will tell us which files
+      // have been deleted since then.  We also calculate the changeset
+      // through from the parents's common ancestor to the current parent,
+      // which tells us which files have already been deleted on our side, and
+      // so don't need to be deleted again.
+      //
+      // Finally, we feed the list of deleted files to analyze_manifest, which
+      // uses that information to break file ancestries when necessary.
+      // 
+      // we only know how to preserve file ids when there are exactly two
+      // parents, so assert that there are.
+      std::vector<u64> parents, others;
+      {
+        u64 left_p, right_p;
+        ci i = range.first;
+        I(child == i->first);
+        left_p = i->second;
+        ++i;
+        I(child == i->first);
+        right_p = i->second;
+        ++i;
+        I(i == range.second);
+        parents.push_back(left_p);
+        others.push_back(right_p);
+        parents.push_back(right_p);
+        others.push_back(left_p);
+      }
+      // make sure our parents are all saved.
+      for (std::vector<u64>::const_iterator i = parents.begin(); i != parents.end(); ++i)
         {
-          I(child == i->first);
-          u64 parent(i->second);
+          if (node_to_new_rev.find(*i) == node_to_new_rev.end())
+            construct_revision_from_ancestry(*i);
+          I(node_to_new_rev.find(*i) != node_to_new_rev.end());
+        }
+      // actually process the two nodes
+      for (int i = 0; i != 2; ++i)
+        {
+          u64 parent = idx(parents, i);
+          u64 other_parent = idx(others, i);
           L(F("processing edge from child %d -> parent %d\n") % child % parent);
 
-          revision_id parent_rid;
-          std::map<u64, revision_id>::const_iterator
-            j = node_to_new_rev.find(parent);
-
-          if (j != node_to_new_rev.end())
-            parent_rid = j->second;
-          else
+          revision_id parent_rid = node_to_new_rev.find(parent)->second;
+          revision_id other_parent_rid = node_to_new_rev.find(other_parent)->second;
+          // this is stupidly inefficient, in that we do this whole expensive
+          // changeset finding thing twice in a row.  oh well.
+          revision_id lca;
+          std::set<file_path> need_killing_files;
+          if (find_least_common_ancestor(parent_rid, other_parent_rid, lca, app))
             {
-              parent_rid = construct_revision_from_ancestry(parent);
-              node_to_new_rev.insert(std::make_pair(parent, parent_rid));
+              change_set parent_cs, other_parent_cs;
+              calculate_composite_change_set(lca, other_parent_rid, app, other_parent_cs);
+              calculate_composite_change_set(lca, parent_rid, app, parent_cs);
+              std::set_difference(other_parent_cs.rearrangement.deleted_files.begin(),
+                                  other_parent_cs.rearrangement.deleted_files.end(),
+                                  parent_cs.rearrangement.deleted_files.begin(),
+                                  parent_cs.rearrangement.deleted_files.end(),
+                                  std::inserter(need_killing_files,
+                                                need_killing_files.begin()));
             }
 
           L(F("parent node %d = revision %s\n") % parent % parent_rid);      
           manifest_id parent_man;
           get_node_manifest(parent, parent_man);
           boost::shared_ptr<change_set> cs(new change_set());
-          analyze_manifest_changes(app, parent_man, child_man, *cs);
+          analyze_manifest_changes(app, parent_man, child_man, need_killing_files,
+                                   *cs);
           rev.edges.insert(std::make_pair(parent_rid,
                                           std::make_pair(parent_man, cs)));
-        } 
+        }
     }
 
   revision_id rid;

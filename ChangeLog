@@ -154,6 +154,277 @@
 
 	* constants.cc (constants): Bump netsync protocol version.
 
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.cc (monotone_spawn_for_lua): Minimal change to get arguments
+	in right order.  Still needs hygienic cleanups...
+	* tests/t_can_execute.at: Run 'cp' instead of 'touch', because cp
+	will actually notice if we pass arguments out of order.
+	* testsuite.at: Remove mysterious blank line.
+	
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* unix/process.cc (process_spawn): Log command line before
+	executing.
+
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (kill_redundant_edges): Rename back to...
+	(kluge_for_3_ancestor_nodes): ...this.  Go back to only cleaning
+	up parents of 3+ parent nodes.
+	(analyze_manifest_changes): Take a third argument, of files whose
+	ancestry needs splitting.
+	(construct_revision_from_ancestry): Make more more complex, in
+	order to properly track file identity in merges.
+
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (check_sane_history): Typo.
+	
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.hh (check_sane_history): Take an app_state instead of a
+	database as an argument.
+	* database.cc: Pass an app_state instead of a database as its
+	argument. 
+	* revision.cc (check_sane_history): Update accordingly.  Add a new
+	check for merges, that they are creating consistent changesets
+	(even when the common ancestor is outside of the usual
+	paranoia-checking search depth).
+
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (kluge_for_3_ancestor_nodes): Rename to...
+	(kill_redundant_edges): ...this.  Kill all redundant edges, not
+	just ones on nodes with 3+ parents.  Also, make it actually work.
+	
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (kluge_for_3_ancestor_nodes): New method.
+	(rebuild_ancestry): Call it.
+
+2005-03-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (check_sane_history): Print a warning to let the
+	user know why things like 'pull' can take so long.
+	* netsync.cc: Remove a few tabs.
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Now takes 
+	const char * const argv[]
+	* unix/process.cc (process_spawn): Ditto.  Cast for call to
+	execvp
+	(existsonpath): Initialise args in a const way
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Now takes 
+	char * const argv[]
+	* platform.hh (process_spawn): Ditto
+	* unix/process.cc (process_spawn): Ditto
+	* lua.cc (monotone_spawn_for_lua): Remove debug code
+	* General: Beginning to hate C++'s const rules
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Now takes 
+	const char * const *
+	* platform.hh (process_spawn): Ditto
+	* unix/process.cc (process_spawn): Ditto
+	* General: Sorry about all these commits, I'm syncing back and
+	forth between Linux and Win32
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Now takes char * const *
+	* platform.hh (process_spawn): Ditto
+	* unix/process.cc (process_spawn): Ditto
+	(existsonpath): argv now const char*[]
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc: Added forgotten file
+	* unix/process.cc: Include stat.h, (process_*) fix compilation
+	errors
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* unix/process.cc: Added forgotten file
+
+2005-03-03  Jon Bright  <jon@siliconcircus.com>
+	* lposix.c: Deleted
+	* win32/process.cc: Created, added Win32 versions of functions
+	existsonpath, make_executable, process_spawn, process_wait,
+	process_kill, process_sleep
+	* unix/process.cc: Ditto, for the Unix versions.
+	* lua.cc: Add LUA wrappers for the above functions, register
+	them with LUA
+	* std_hooks.lua (execute, attr_functions->execute, 
+	program_exists_in_path): Use the new functions instead of posix
+	functions
+	* t_can_execute.at (touchhook.lua): Ditto
+
+2005-03-01  Derek Scherger  <derek@echologic.com>
+
+	* app_state.cc (set_restriction): actually ignore ignored files
+	rather than trying to validate them
+
+2005-03-01  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_diff_binary.at: new test (bug report)
+	* tests/t_command_completion.at: new test
+	* tests/t_merge_rename_file_and_rename_dir.at: new test
+	* testsuite.at: include new tests
+	
+2005-02-28  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (BUILT_SOURCES_CLEAN): Moved mt-stding.h from here...
+	(DISTCLEANFILES): ... to here.  Since mt-stding.h is created by
+	config.status, it should only be removed by the distclean target.
+
+2005-02-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua: posix.iswin32() == 1, rather than plain boolean
+	comparison (0 doesn't compare as false in lua it seems).
+
+2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	* lposix.c (win32 Pspawn): Search the path
+	(win32 Pexistsonpath): Added.  'which' isn't easily available,
+	and not available at all from a normal Win32 command shell
+	(Piswin32): Added a function for both Unix and Win32 to detect
+	if running on Windows
+	* std_hooks.lua (program_exists_in_path): Now calls 
+	posix.iswin32.  If win32, calls posix.existsonpath, otherwise
+	calls which as it always did.
+
+2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	* lposix.c (win32 Pspawn): Remove dumb strlen bug resulting in
+	AVs on commit.
+
+2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	* t_can_execute.at: Test to see if hooks can execute things
+	* testsuite.at: Add t_can_execute
+
+2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	* lposix.c (win32 Pspawn): Ensure the command string is always
+	NUL-terminated.  Also, allocate enough memory for the quotes
+	around the command string.
+
+2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	* xdelta.cc (unittests): Define BOOST_STDC_NO_NAMESPACE, needed
+	to compile with the latest MinGW which uses gcc 3.4.2
+	* vocab.cc (verify(local_path)): Catch fs::filesystem_error too
+	and rethrow this as an informative_failure, thereby fixing the
+	Win32 unit tests without disabling anything
+	* idna/toutf8.c (stringprep_convert): Fix a potential segfault
+	when memory allocation fails.  Potentially security-relevant.
+	* tests/t_i18n_file.at: Add a SET_FUNNY_FILENAME macro, which 
+	gets a platform-appropriate funny filename (with/without 
+	colon).  
+	Change references to utf8 to utf-8, iso88591 to iso-8859-1, and
+	eucjp to euc-jp, on the grounds that MinGW's iconv knows all
+	of the latter and none of the former, but Linux iconv knows all
+	of them.  Test now passes one Win32.  I'm presuming we weren't
+	deliberately using non-standard names for charsets here.
+	* tests/t_i18n_changelog.at: Same charset name changes.
+	* tests/t_dump_load.at: Canonicalise dump before loading it
+	* tests/t_load_into_existing.at: Ditto
+	* tests/t_fmerge.at: Canonicalise fmerge output
+	* tests/t_merge_normalization_edge_case.at: Ditto
+	* tests/t_unidiff.at: Canonicalise diff output
+	* tests/t_largish_file.at: Instead of using dd, which MinGW
+	doesn't have, I've generated the file with dd on a nearby Linux
+	box, then gziped and b64ed it, and the test case now generates
+	it with UNGZB64
+	* testsuite.at: Add a comment every 10 tests with the test
+	number.  Useful if you're trying to locate which test number
+	you're trying to run and only have the filename.  If people 
+	hate this, though, please do delete.
+	(UNB64_COMMAND) Do special handling for Win32 to avoid
+	having to canonicalise the file.
+	(UNGZ_COMMAND) Canonicalise the file after ungzipping it.
+	* lposix.c: (Pfork, Pexec) Removed, on the grounds that we only
+	really want to support fork+exec as a single operation.  fork()
+	without exec() could be risky with a child process also having
+	our sqlite handles, etc.  exec() could be risky since we 
+	wouldn't be exiting gracefully, just dying in the middle of a
+	hook.
+	(Pspawn) Implemented for both Win32 and Unix.  Does fork/exec
+	for Unix, CreateProcess for Win32.  Returns -1 on error, pid on
+	success in both cases.
+	(Pwait, Pkill, Psleep) Implemented for Win32.  Note that pid is
+	not optional for Pwait on Win32.
+	* std_hooks.lua: (execute) Now uses spawn()
+
+2005-02-25  Jon Bright  <jon@siliconcircus.com>
+	* ChangeLog: Add all my previous changes.
+	* tests/t_add_owndb.at: Add test for trying to add the db to
+	itself.
+	* testsuite.at: Call it
+	* tests/t_automate_heads.at: Canonicalise stdout output.
+	* tests/t_automate_version.at: Use arithmetic comparison against
+	wc output instead of string comparison, to avoid problems with
+	MinGW's wc, which outputs with initial space-padding
+	* tests/t_change_empty_file.at: Canonicalise stdout output 
+	and compare manually instead of letting autotest check it
+	* tests/t_fmerge_normalize.at: Canonicalise stdout output.
+	* tests/t_netsync_single.at: Use NETSYNC_KILLHARD instead of 
+	killall, as for the NETSYNC functions in testsuite.at
+
+2005-02-27  Matt Johnston  <matt@ucc.asn.au>
+
+        * main.cc: ignore SIGPIPE so that monotone won't be killed
+        unexpectedly upon remote disconnection for netsync
+
+2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* idna/idn-int.h: Oops, really add this time.
+
+2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Corey Halpin.
+	
+	* idna/idn-int.h: New file (don't generate from configure anymore,
+	but just ship).
+	* configure.ac: Don't generate idna/idn-int.h.  Do generate
+	mt-stdint.h.
+	* Makefile.am: Adjust for idna/idn-int.h and mt-stdint.h.
+	* acinclude.m4: Remove AX_CREATE_STDINT_H, ACX_PTHREAD,
+	AC_COMPILE_CHECK_SIZEOF (let aclocal pick them up from m4/
+	instead).
+	* m4/ax_create_stdint_h.m4:
+	* m4/acx_pthread.m4: Update from http://autoconf-archive.cryp.to/
+	
+	* numeric_vocab.hh: Instead of dancing around which header to
+	include, include mt-stdint.h.
+	
+	* app_state.cc (restriction_includes, set_restriction): Move
+	global static 'dot' into these functions, because file_path
+	depends on global book_keeping_dir being initialized already, and
+	there is no guaranteed order of initialization of C++ statics.
+	(Bug reported by Matt Johnston.)
+	
+2005-02-27  Corey Halpin  <chalpin@cs.wisc.edu>
+
+	* numeric_vocab.hh: Try both stdint.h and inttypes.h.
+	* main.cc: OpenBSD has Unix signals too.
+
+2005-02-26  Derek Scherger  <derek@echologic.com>
+
+	* file_io.cc (absolutify): normalize fs::path to remove ..'s
+	* tests/t_db_with_dots.at: ensure database path in MT/options
+	doesn't contain ..'s
+
+2005-02-25  Jon Bright  <jon@siliconcircus.com>
+	* ChangeLog: Add all my previous changes.
+	* tests/t_add_owndb.at: Add test for trying to add the db to
+	itself.
+	* testsuite.at: Call it
+	* tests/t_automate_heads.at: Canonicalise stdout output.
+	* tests/t_automate_version.at: Use arithmetic comparison against
+	wc output instead of string comparison, to avoid problems with
+	MinGW's wc, which outputs with initial space-padding
+	* tests/t_change_empty_file.at: Canonicalise stdout output 
+	and compare manually instead of letting autotest check it
+	* tests/t_fmerge_normalize.at: Canonicalise stdout output.
+	* tests/t_netsync_single.at: Use NETSYNC_KILLHARD instead of 
+	killall, as for the NETSYNC functions in testsuite.at
+
 2005-02-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* vocab.cc (test_file_path_verification): Re-enable some tests
@@ -168,6 +439,33 @@
 	* AUTHORS: Fix gettext.h copyright note, to not be in the middle
 	of libidn copyright note.
 	Add Jon Bright.
+
+2005-02-24  Jon Bright  <jon@siliconcircus.com>
+
+	* app_state.cc (prefix): Use string() instead of 
+	native_directory_string().  For Unix, these should be equivalent.
+	For Win32, I believe string()'s correct (since we compare 
+	everywhere against normalized paths with / characters, but 
+	native_directory_string produces paths with \ characters on Win32.
+	* rcs_file.cc (file_source): Map the map, not the mapping.
+	* tests/t_i18n_file.at: Remove colon from filename with symbols.
+	I need to return to this and add a proper test for Win32, so we
+	only use the colon on non-Win32.
+	* testsuite.at: Add a CANONICALISE function, which does nothing
+	on Unix and strips out carriage returns from files on Win32.  This
+	is useful for being able to compare Monotone's stdout output to
+	files on disk.  Add NETSYNC_KILL and NETSYNC_KILLHARD functions,
+	to deal with MinGW not having killall (Unix still uses killall,
+	though).
+	* tests/t_import.at: Add CANONICALISE calls before comparing
+	stdout output.
+	* tests/t_netsync.at: Likewise
+	* tests/t_netsync_single.at: Likewise
+	* tests/t_scan.at: Likewise
+	* tests/t_versions.at: Likewise
+	* tests/t_ls_missing.at: Likewise.  Also, generate missingfoo and
+	missingbar files with expected output from ls missing for these
+	files being missing and compare against those.
 
 2005-02-24  Derek Scherger  <derek@echologic.com>
 
@@ -192,6 +490,24 @@
 	* commands.cc (ls_missing): replace duplicated code with call to
 	calculate_base_revision
 
+2005-02-23  Jon Bright  <jon@siliconcircus.com>
+	* vocab.cc (test_file_path_verification): Disable foo//nonsense
+	test for Win32, add tests for UNC paths.  This was the only
+	failing unit test on Win32.
+
+2005-02-23  Jon Bright  <jon@siliconcircus.com>
+
+	* txt2c.cc (main): Don't claim the file was generated from 
+	--strip-trailing if that option's used.
+
+2005-02-23  Jon Bright  <jon@siliconcircus.com>
+
+	* app_state.cc: Add include of io.h for Win32, for chdir()
+	* file_io.cc (get_homedir): Correct assertion (remove bracket)
+	* lua/lposix.c, lua/modemuncher.c: Remove all references to
+	functions and modes that don't exist on Win32.
+	* monotone.cc: Include libintl.h on Win32
+	
 2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* file_io.cc (get_homedir): Add more comments and logging to Win32

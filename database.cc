@@ -1415,7 +1415,7 @@ database::put_revision(revision_id const & new_id,
               new_id.inner()().c_str());
     }
 
-  check_sane_history(new_id, constants::verify_depth, *this);
+  check_sane_history(new_id, constants::verify_depth, *__app);
 
   guard.commit();
 }
