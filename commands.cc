@@ -92,10 +92,52 @@ namespace commands
   }
 
 
+  string complete_command(string const & cmd) 
+  {
+    if (cmd.length() == 0 || cmds.find(cmd) != cmds.end()) return cmd;
+
+    P(F("expanding command '%s'\n") % cmd);
+
+    vector<string> matched;
+
+    for (map<string,command *>::const_iterator i = cmds.begin();
+         i != cmds.end(); ++i) 
+      {
+        if (cmd.length() < i->first.length()) 
+          {
+            string prefix(i->first, 0, cmd.length());
+            if (cmd == prefix) matched.push_back(i->first);
+          }
+      }
+
+    if (matched.size() == 1) 
+      {
+      string completed = *matched.begin();
+      P(F("expanded command to '%s'\n") %  completed);  
+      return completed;
+      }
+    else if (matched.size() > 1) 
+      {
+      string err = (F("command '%s' has multiple ambiguous expansions: \n") % cmd).str();
+      for (vector<string>::iterator i = matched.begin();
+           i != matched.end(); ++i)
+        err += (*i + "\n");
+      W(boost::format(err));
+    }
+
+    return cmd;
+
+
   void explain_usage(string const & cmd, ostream & out)
   {
     map<string,command *>::const_iterator i;
-    i = cmds.find(cmd);
+
+    string completed = complete_command(cmd);
+
+    // try to get help on a specific command
+
+    i = cmds.find(completed);
+
     if (i != cmds.end())
       {
 	string params = i->second->params;
@@ -159,10 +201,12 @@ namespace commands
 
   int process(app_state & app, string const & cmd, vector<utf8> const & args)
   {
-    if (cmds.find(cmd) != cmds.end())
+    string completed = complete_command(cmd);
+
+    if (cmds.find(completed) != cmds.end())
       {
-	L(F("executing %s command\n") % cmd);
-	cmds[cmd]->exec(app, args);
+	L(F("executing %s command\n") % completed);
+	cmds[completed]->exec(app, args);
 	return 0;
       }
     else

@@ -162,6 +162,11 @@
 	* lua.cc: Fixes for g++ 3.4 from Michael Scherer.
 	* AUTHORS: Mention Michael.
 
+2004-05-30  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: (complete_command): New function.
+	(explain_usage/process): Use it.
+
 2004-05-28  graydon hoare  <graydon@pobox.com>
 
 	* tests/t_movedel.at: New test.
@@ -497,7 +502,6 @@
 	set bundling to true by default.
 	* INSTALL: describe changes to bundling.
 	* Makefile.am: Remove vestiges of depot.
-
 2004-04-07  graydon hoare  <graydon@pobox.com>
 
 	* adns/*: 
