@@ -295,10 +295,10 @@ make_signature(lua_hooks & lua,           // to hook for phrase
           decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
                                decoded_key().size());
           get_passphrase(lua, id, phrase, false, force);
-          do_arc4(phrase, decrypted_key);
           
           try 
             {
+              do_arc4(phrase, decrypted_key);
               L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
               StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
               signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
@@ -309,11 +309,14 @@ make_signature(lua_hooks & lua,           // to hook for phrase
               if (i >= 2)
                 throw informative_failure("failed to decrypt private RSA key, "
                                           "probably incorrect passphrase");
+              // don't use the cache bad one next time
               force = true;
+              continue;
             }
           
           if (persist_phrase)
             signers.insert(make_pair(id,signer));
+          break;
         }
     }
 
