@@ -8,7 +8,6 @@
 
 #include <time.h>
 
-#include <boost/dynamic_bitset.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
@@ -2802,7 +2801,7 @@ call_server(protocol_role role,
 	  if (!sess.process())
 	    {
 	      P(F("terminated exchange with %s\n") 
-		% fd % sess.peer_id);
+		% sess.peer_id);
 	      return;
 	    }
 	}
@@ -2810,7 +2809,7 @@ call_server(protocol_role role,
       if (sess.sent_goodbye && sess.outbuf.empty() && sess.received_goodbye)
 	{
 	  P(F("successful exchange with %s\n") 
-	    % fd % sess.peer_id);
+	    % sess.peer_id);
 	  return;
 	}	  
     }  

@@ -150,7 +150,7 @@ merkle_node::set_hex_slot(size_t slot, hexenc<id> const & val)
 
 void 
 merkle_node::extended_prefix(size_t slot, 
-			     dynamic_bitset<char> & extended) const
+			     dynamic_bitset<unsigned char> & extended) const
 {
   // remember, in a dynamic_bitset, bit size()-1 is most significant
   check_invariants();
@@ -164,7 +164,7 @@ void
 merkle_node::extended_raw_prefix(size_t slot, 
 				 prefix & extended) const
 {
-  dynamic_bitset<char> ext;
+  dynamic_bitset<unsigned char> ext;
   extended_prefix(slot, ext);
   ostringstream oss;
   to_block_range(ext, ostream_iterator<char>(oss));
@@ -369,7 +369,7 @@ void
 pick_slot_and_prefix_for_value(id const & val, 
 			       size_t level, 
 			       size_t & slotnum, 
-			       dynamic_bitset<char> & pref)
+			       dynamic_bitset<unsigned char> & pref)
 {
   pref.resize(val().size() * 8);
   from_block_range(val().begin(), val().end(), pref);
@@ -407,7 +407,7 @@ insert_into_merkle_tree(app_state & app,
   encode_hexenc(leaf, hleaf);
 
   size_t slotnum;
-  dynamic_bitset<char> pref;
+  dynamic_bitset<unsigned char> pref;
   pick_slot_and_prefix_for_value(leaf, level, slotnum, pref);
 
   ostringstream oss;

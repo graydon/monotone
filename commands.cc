@@ -767,6 +767,28 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   guard.commit();
 }
 
+CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key")
+{
+  if (args.size() != 1)
+    throw usage(name);
+
+  transaction_guard guard(app.db);
+  rsa_keypair_id ident;
+  internalize_rsa_keypair_id(idx(args, 0), ident);
+
+  N(app.db.key_exists(ident),
+    F("key '%s' does not exist in database") % ident);
+
+  base64< arc4<rsa_priv_key> > key;
+  app.db.get_key(ident, key);
+  change_key_passphrase(app.lua, ident, key);
+  app.db.delete_private_key(ident);
+  app.db.put_key(ident, key);
+  P(F("passphrase changed\n"));
+
+  guard.commit();
+}
+
 CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
     "create a cert for a revision")
 {

@@ -116,7 +116,31 @@ parent and the child. We may draw the relationship between parent and
 child using a graph, where the arrow in the graph indicates the
 direction of the edit, from parent to child.
 
+@ifinfo
+@smallexample
+@group
+     +----------------+
+     |                |
+     | parent version |
+     | of file.txt    |
+     |                |
+     +----------------+
+              |
+              |
+             \|/
+              V
+     +----------------+
+     |                |
+     | child version  |
+     | of file.txt    |
+     |                |
+     +----------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/parent-child}
+@end ifnotinfo
 
 We may want to identify the parent and the child precisely, for sake
 of reference. To do so, we will compute a @i{cryptographic hash
@@ -131,7 +155,31 @@ graph does not refer to some ``abstract'' parent and child, but rather
 to the exact edit we performed between a specific parent and a
 specific child.
 
+@ifinfo
+@smallexample
+@group
+     +---------------------------------------------------+
+     | parent version                                    |
+     | of file.txt                                       |
+     |                                                   |
+     | SHA1 = 65f1bde1f38262034e7c3457301e8f736ba6381b   |
+     +---------------------------------------------------+
+              |
+              |
+             \|/
+              V
+     +---------------------------------------------------+
+     | child version                                     |
+     | of file.txt                                       |
+     |                                                   |
+     | SHA1 = a91566316d208dc405795904f8d67ae3a0e765cb   |
+     +---------------------------------------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/parent-child-names-hashes}
+@end ifnotinfo
 
 When dealing with versions of files, we will dispense with writing out
 ``file names'', and identify versions @i{purely} by their @sc{sha1}
@@ -140,7 +188,27 @@ alone will often help us accommodate the fact that people often wish
 to call files by different names. So now our graph of parent and child
 is just a relationship between two versions, only identified by ID.
 
+@ifinfo
+@smallexample
+@group
+     +---------------------------------------------------+
+     | parent version                                    |
+     | SHA1 = 65f1bde1f38262034e7c3457301e8f736ba6381b   |
+     +---------------------------------------------------+
+              |
+              |
+             \|/
+              V
+     +---------------------------------------------------+
+     | child version                                     |
+     | SHA1 = a91566316d208dc405795904f8d67ae3a0e765cb   |
+     +---------------------------------------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/parent-child-hashes}
+@end ifnotinfo
 
 Version control systems, such as monotone, are principally concerned
 with the storage and management of @i{multiple} versions of some
@@ -149,7 +217,27 @@ save a separate @i{complete} copy of the file, every time you make a
 change. When necessary, monotone will save complete copies of your
 files in their, compressed with the @command{zlib} compression format.
 
+@ifinfo
+@smallexample
+@group
+   +--------------+  +--------------+  +--------------+
+   |              |  |              |  |              |
+   | Hello        |  | Hello,       |  | Why, Hello   |
+   |              |  | world!       |  | there world, |    . . .
+   |              |  |              |  | how do you   |
+   |              |  |              |  | do?          |
+   |              |  |              |  |              |
+   +--------------+  +--------------+  +--------------+
+
+   \______  ______/  \______  ______/  \______  ______/
+          \/                \/                \/
+      1st version       2nd version      3rd version
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/three-versions}
+@end ifnotinfo
 
 Often we find that successive versions of a file are very similar to
 one another, so storing multiple complete copies is a waste of
@@ -167,7 +255,30 @@ when possible monotone stores deltas, using a modified @command{xdelta}
 format. The details of this format are beyond the scope of this
 document.
 
+@ifinfo
+@smallexample
+@group
+                        difference
+                     between versions
+                       _____/\____
+   +--------------+   /           \    +--------------+
+   |              |                    |              |
+   | Hello        |    +[, world!]     | Hello,       |
+   |              |                    | world!       |
+   |              |                    |              |
+   |              |                    |              |
+   |              |                    |              |
+   +--------------+                    +--------------+
+
+   \______  ______/                    \______  ______/
+          \/                                  \/
+     1st version                         2nd version
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/difference-between-versions}
+@end ifnotinfo
 
 @page
 @node    Versions of trees
@@ -188,7 +299,32 @@ column we write the ID of a file in your tree, and in the second
 column we write the path to the file, from the root of our tree to the
 filename.
 
+@ifinfo
+@smallexample
+@group
++--------------------------------------------------------------+
+|                                                              |
+|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
+|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
+|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
+|  ddc2686e000e97f670180c60a3066989e56a11a3  fs/open.c         |
+|  295d276e6c9ce64846d309a8e39507bcb0a14248  fs/namespace.c    |
+|  71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc  fs/namei.c        |
+|  1112c0f8054cebc9978aa77384e3e45c0f3b6472  fs/iobuf.c        |
+|  8ddcfcc568f33db6205316d072825d2e5c123275  fs/inode.c        |
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                          an example
+                         manifest file
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/manifest}
+@end ifnotinfo
 
 Now we note that a manifest is itself a file. Therefore a manifest can
 serve as input to the @sc{sha1} function, and thus every manifest has
@@ -199,7 +335,41 @@ and file names of every file in our tree, combined. So we may treat
 manifests and their IDs as @i{snapshots} of a tree of files, though
 lacking the actual contents of the files themselves.
 
+@ifinfo
+@smallexample
+@group
+  +--------------------------+
+  |   int readdir(...) @{     |
+  |     ...                  |
+  |   @}                      |
+  +--------------------------+
+
+  \____________  ___________/
+               \/
+              SHA1
+               ||
++--------------||----------------------------------------------+
+|              \/                                              |
+|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
+|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
+|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
+|                   . . .                       . . .          |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
+                              ||
+                              \/
+                         manifest ID:
+           a2eeaa28574141a7d48fa1cc2802070150b93ec4
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/file-id-manifest-id}
+@end ifnotinfo
 
 As with versions of files, we may decide to store manifests in their
 entirety, or else we may store only a compact description of changes
@@ -223,7 +393,28 @@ changes -- monotone builds a special composite file called a
 are ordinary text files which can be passed through the @sc{sha1}
 function and thus assigned a @dfn{revision ID}.
 
+@ifinfo
+@smallexample
+@group
++--------------------------------------------------------------+
+|                                                              |
+|                 ... content of revision ...                  |
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
+                              \/
+                         revision ID:
+           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/revision}
+@end ifnotinfo
 
 The content of a revision makes reference to file IDs, in describing
 a changeset, and manifest IDs, in describing tree states ``before and
@@ -237,34 +428,87 @@ return to a previously-visited manifest ID during the course of your
 edits, each revision will incorporate the ID of its predecessor, thus
 forming a new unique ID for each point in history.
 
+@ifinfo
+@smallexample
+@group
+                              ||
++-----------------------------||-------------------------------+
+|                             \/                               |
+|  old_revision: 86d06a095529dca003ad62715dc2be7873edade0      |
+|    change_set:           .  .  .                             |
+|  old_manifest: 1b24ba8b8dc3ff9c87b5198315eced1b279dc74e  <----- manifest ID 
+|  new_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
++-----------------------------||-------------------------------+
+|                             \/                               |
+|  old_revision: f45add3bfb21cb459d99b6a9c0111df75f6d9f85      |
+|    change_set:           .  .  .                             |
+|  old_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
+|  new_manifest: 8a05c60422770bbf49a3192c2367ddaa066538ca  <----- manifest ID 
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
+                              \/
+                         revision ID:
+           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/revision-chaining}
+@end ifnotinfo
 
 @page
 @node    Certificates
 @section Certificates
 
 Often, you will wish to make a @i{statement} about a revision, such as
-stating the reason that you made some changes, or stating the fact
-that you approve of the changes which were made, or stating the time
-at which you made the changes. Statements such as these can be thought
-of, generally, as a bundle of information with three parts:
+stating the reason that you made some changes, or stating the time at
+which you made the changes, or stating that the revision passes a test
+suite. Statements such as these can be thought of, generally, as a
+bundle of information with three parts:
 
 @itemize
 @item
 an @i{ID}, indicating which revision you are making a statement about
 @item
 a @i{name} indicating the type of statement you are making, such as
-``changelog'', ``date'' or ``disapproval''
+``changelog'', ``date'' or ``testresult''
 @item
 a @i{value} indicating the remaining detail of the statement, such as
-``fixed a bug'', ``March 9th'' or ``approved for shipping''
+``fixed a bug'', ``March 9th'' or ``1''
 @end itemize
 
 
 For example, if you want to say that a particular revision was
 composed on April 4, 2003, you might make a statement like this:
 
+@ifinfo
+@smallexample
+@group
+      +------------------------------------------------------+
+      |  revision ID                                         |
+      |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
+      +--------------------------+---------------------------+
+      |  statement name          |  statement value          |
+      |  "date"                  |  "2003-04-04T07:39:51"    |
+      +--------------------------+---------------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/statement}
+@end ifnotinfo
 
 In an ideal world, these are all the parts of a statement we would
 need in order to go about our work. In the real world, however, there
@@ -287,7 +531,25 @@ a secure fashion. The security of the signature in a cert is derived
 from the @sc{rsa} cryptography system, the details of which are beyond
 the scope of this document.
 
+@ifinfo
+@smallexample
+@group
+      +------------------------------------------------------+
+      |  revision ID                                         |
+      |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
+      +--------------------------+---------------------------+
+      |  cert name               |  cert value               |
+      |  "date"                  |  "2003-04-04T07:39:51"    |
+      +--------------------------+---------------------------+
+      |  signed by key           |  signature                |
+      |  "jrh@@somewhere.com"     |  "a02380def....0983fe90"  |
+      +--------------------------+---------------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/cert}
+@end ifnotinfo
 
 Monotone uses certs extensively. Any ``extra'' information which needs
 to be stored, transmitted or retrieved --- above and beyond files,
@@ -336,7 +598,30 @@ not move information directly between a working copy and a remote
 database, or between working copies. Your local database is always
 the ``switching point'' for communication.
 
+@ifinfo
+@smallexample
+@group
+             pull, push, sync
+       (untrusted network exchanges)
+            _________/\________
+           /                   \
+
+    +-------------+      +------------+      +--------------+
+    |             |      |            |      |              |
+    |  remote db  | <==> |  local db  | <==> | working copy |
+    |             |      |            |      |              |
+    +-------------+      +------------+      +--------------+
+
+                                \________  _______/
+                                         \/
+                                  commit, update
+                            (certified local exchanges)
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/general-workflow}
+@end ifnotinfo
 
 A @dfn{working copy} is a tree of files in your file system, arranged
 according to the list of file paths and IDs in a particular
@@ -360,7 +645,24 @@ and @dfn{update} a working copy to receive changes that have arrived
 in a database. Committing and updating take place purely between a
 database and a working copy; the network is not involved.
 
+@ifinfo
+@smallexample
+@group
+   -----------------     check out,      working copy
+  (                 )    or update      +----------------
+   -----------------     ---------->    |
+  |                 |                   |  src/func.c
+  |      local      |   <----------     |  src/func.h
+  |     database    |    add,           |  src/main.c
+  |                 |    or commit      |  Makefile
+  \_________________/                   |  MT/
+                                        |
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/local-workflow}
+@end ifnotinfo
 
 A @dfn{database} is a single, regular file. You can copy or back it up
 using standard methods. Typically you keep a database in your home
@@ -389,7 +691,23 @@ the destination is copied. The netsync protocol calculates the data to
 send ``on the fly'' by exchanging partial hash values of each
 database.
 
+@ifinfo
+@smallexample
+@group
+  -----------------                    ----------------- 
+ (                 )                  (                 )
+  -----------------    --- pull --->   -----------------       
+ |                 |                  |                 |
+ |      remote     |  <--- sync --->  |      local      |
+ |     database    |                  |     database    |
+ |                 |  <--- push ---   |                 |
+ \_________________/                  \_________________/
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/network-workflow}
+@end ifnotinfo
 
 In general, work flow with monotone involves 3 distinct stages:
 
@@ -441,7 +759,28 @@ So far we have been talking about revisions as though each logically
 follows exactly one revision before it, in a simple sequence of
 revisions.
 
+@ifinfo
+@smallexample
+@group
+       +-----------------------+
+       |  parent revision      |
+       +-----------------------+
+                |
+                |
+       +-----------------------+
+       |  child revision       |
+       +-----------------------+
+                |
+                |
+       +-----------------------+
+       |  grandchild revision  |
+       +-----------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/linear-history}
+@end ifnotinfo
 
 This is a rosy picture, but sometimes it does not work out this
 way. Sometimes when you make new revisions, other people are
@@ -457,7 +796,24 @@ child}. In a large collection of revisions with many people editing
 files, especially on many different computers spread all around the
 world, forks are a common occurrence.
 
+@ifinfo
+@smallexample
+@group
+             +-----------------+
+             | parent revision |
+             +-----------------+
+                    |   |
+           +--------+   +---------+
+           |                      |
+     +-------------+     +--------------+
+     | left child  |     | right child  |
+     +-------------+     +--------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/fork}
+@end ifnotinfo
 
 If we analyze the changes in each child revision, we will often find
 that the changeset between the parent and the left child are unrelated
@@ -465,7 +821,30 @@ to the changeset between the parent and the right child. When this
 happens, we can usually @dfn{merge} the fork, producing a common
 grandchild revision which contains both changesets.
 
+@ifinfo
+@smallexample
+@group
+             +-----------------+
+             | parent revision |
+             +-----------------+
+                    |   |
+           +--------+   +---------+
+           |                      |
+     +-------------+     +--------------+
+     | left child  |     | right child  |
+     +-------------+     +--------------+
+           |                      |
+           +--------+   +---------+
+                    |   |
+             +-----------------+
+             | merged revision |
+             +-----------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/merge}
+@end ifnotinfo
 
 @page
 @node    Branches
@@ -504,7 +883,42 @@ be merged. However, the @code{wobbler-stable} and
 @code{wobbler-unstable} branches will not be merged together, despite
 having a common ancestor.
 
+@ifinfo
+@smallexample
+@group
+                   +--------------------------+
+                   | common ancestor revision |
+                   +--------------------------+
+                          |          |
+                +---------+          +---------+
+                |                              |
+       +-----------------+            +-------------------+           
+       | stable revision |            | unstable revision |           
+       +-----------------+            +-------------------+           
+              | |                               | |                   
+      +-------+ +-------+               +-------+ +-------+           
+      |                 |               |                 |           
++-------------+ +--------------+  +---------------+ +----------------+
+| left stable | | right stable |  | left unstable | | right unstable |
+|   child     | |     child    |  |   child       | |     child      |
++-------------+ +--------------+  +---------------+ +----------------+
+      |                  |              |                  |          
+      +-------+ +--------+              +-------+ +--------+          
+              | |                               | |                   
+       +----------------+                +------------------+         
+       | merged stable  |                | merged unstable  |         
+       |   revision     |                |     revision     |         
+       +----------------+                +------------------+ 
+
+\_____________  _______________/  \_______________  _________________/
+              \/                                  \/
+         stable branch                     unstable branch
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/two-branches}
+@end ifnotinfo
 
 For each branch, the set of revisions with @emph{no children} is
 called the @dfn{heads} of the branch. Monotone can automatically
@@ -518,7 +932,38 @@ left grandchild, since those revisions are the heads of the branch. It
 will not merge the left child with the right child, because the left
 child is not a member of the heads.
 
+@ifinfo
+@smallexample
+@group
+               +-----------------+
+               | parent revision |
+               +-----------------+
+                      |       |
+             +--------+       |
+             |                |
+       +-------------+        |
+       | left child  |        |
+       +-------------+        |
+             |                |         
+*************|****************|************
+*            |                |           *
+*  +-----------------+  +-------------+   *
+*  | left grandchild |  | right child |   *  the heads of the branch
+*  +-----------------+  +-------------+   *    (before the merge)
+*            |                |           *
+*************|****************|************
+             |                |         
+             +--------+   +---+
+                      |   |
+               +-----------------+
+               | merged revision |
+               +-----------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/branch-heads}
+@end ifnotinfo
 
 When there is only one revision in the heads of a branch, we say that
 @i{the heads are merged}, or more generally that @i{the branch is
@@ -1025,17 +1470,20 @@ $ monotone --db=jim.db diff
 @node    Committing Work
 @section Committing Work
 
-Satisfied with the work he's done, Jim then commits his working copy,
-which causes monotone to process the @file{MT/work} file and record
-the file contents, manifest, and revision into the database.
+Satisfied with the work he's done, Jim wants to save his changes. He
+chooses @code{jp.co.juicebot.jb7} as a branch name. (See @ref{Naming
+Conventions} for more information about appropriate branch names.) He
+then commits his working copy, which causes monotone to process the
+@file{MT/work} file and record the file contents, manifest, and revision
+into the database.
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 commit 'initial checkin of project'
+$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit 'initial checkin of project'
 monotone: beginning commit
 monotone: manifest 2098eddbe833046174de28172a813150a6cbda7b
 monotone: revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
@@ -1086,7 +1534,7 @@ $ monotone ls certs 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 Key   : jim@@juicebot.co.jp
 Sig   : ok
 Name  : branch
-Value : co.jp.juicebot.jb7
+Value : jp.co.juicebot.jb7
 -----------------------------------------------------------------
 Key   : jim@@juicebot.co.jp
 Sig   : ok
@@ -1130,13 +1578,13 @@ command, which lists all the head revisions in the branch:
 @smallexample
 @group
 $ monotone heads
-branch 'co.jp.juicebot.jb7' is currently merged:
+branch 'jp.co.juicebot.jb7' is currently merged:
 2e24d49a48adf9acf3a1b6391a080008cbef9c21 jim@@juicebot.co.jp 2004-10-26T02:53:08
 @end group
 @end smallexample
 
 The output of this command tells us that there is only one current
-``head'' revision in the branch @code{co.jp.juicebot.jb7}, and it is
+``head'' revision in the branch @code{jp.co.juicebot.jb7}, and it is
 the revision Jim just committed. A head revision is one without any
 descendents. Since Jim has not committed any changes to this revision
 yet, it has no descendents.
@@ -1178,22 +1626,22 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
 @end group
 @end smallexample
 
 This command sets up a single listener loop on the host
 @code{jim-laptop.juicebot.co.jp}, serving the
-@code{co.jp.juicebot.jb7} collection. This collection will naturally
-include the @code{co.jp.juicebot.jb7} branch, and any sub-branches.
+@code{jp.co.juicebot.jb7} collection. This collection will naturally
+include the @code{jp.co.juicebot.jb7} branch, and any sub-branches.
 
 Now Abe decides he wishes to fetch Jim's code. To do this he issues
 the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone --db=abe.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1226,12 +1674,12 @@ automatically as clients access them and trade with one another.
 Abe decides to do some work on his part of the code. He has a copy of
 Jim's database contents, but cannot edit any of that data yet.  He
 begins his editing by checking out the head of the
-@code{co.jp.juicebot.jb7} branch into a working copy, so he can edit
+@code{jp.co.juicebot.jb7} branch into a working copy, so he can edit
 it:
 
 @smallexample
 @group
-$ monotone --db=abe.db --branch=co.jp.juicebot.jb7 checkout .
+$ monotone --db=abe.db --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1283,7 +1731,7 @@ $ monotone commit
 monotone: beginning commit
 monotone: manifest b33cb337dccf21d6673f462d677a6010b60699d1
 monotone: revision 70decb4b31a8227a629c0e364495286c5c75f979
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 @end group
 @end smallexample
 
@@ -1325,13 +1773,13 @@ monotone: committed revision 70decb4b31a8227a629c0e364495286c5c75f979
 @end group
 @end smallexample
 
-Abe then sens his new revision back to Jim:
+Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
 $ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
-monotone: including branch co.jp.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 2] [rcerts: 8] 
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 630] [bytes out: 2844] 
@@ -1339,28 +1787,28 @@ monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
-Beth does a similar sequence, First she syncs her database with
+Beth does a similar sequence. First she syncs her database with
 Jim's:
 
 @smallexample
 @group
-monotone --db=beth.db sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone --db=beth.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
-Checks out a copy of the tree from her database:
+She checks out a copy of the tree from her database:
 
 @smallexample
 @group
-$ monotone --db=beth.db --branch=co.jp.juicebot.jb7 checkout .
+$ monotone --db=beth.db --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
-Edits the file @file{src/banana.c}:
+She edits the file @file{src/banana.c}:
 
 @smallexample
 @group
@@ -1369,7 +1817,7 @@ $ vi src/banana.c
 @end group
 @end smallexample
 
-Commits her work:
+She commits her work:
 
 @smallexample
 @group
@@ -1377,18 +1825,18 @@ $ monotone commit 'polling implementation of src/banana.c'
 monotone: beginning commit
 monotone: manifest eaebc3c558d9e30db6616ef543595a5a64cc6d5f
 monotone: revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 monotone: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
 @end group
 @end smallexample
 
-And syncs with Jim again:
+And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
-monotone: including branch co.jp.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 3] [rcerts: 12] 
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 630] [bytes out: 2844] 
@@ -1456,7 +1904,7 @@ Beth finishes and examines her changes:
 
 @smallexample
 @group
-$ monotone --db=beth.db diff
+$ monotone diff
 # 
 # patch "src/banana.c"
 #  from [7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a]
@@ -1487,7 +1935,7 @@ $ monotone --db=beth.db diff
 @end group
 @end smallexample
 
-Commits her work:
+She commits her work:
 
 @smallexample
 @group
@@ -1495,16 +1943,16 @@ $ monotone commit 'interrupt implementation of src/banana.c'
 monotone: beginning commit
 monotone: manifest de81e46acb24b2950effb18572d5166f83af3881
 monotone: revision 8b41b5399a564494993063287a737d26ede3dee4
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
 @end smallexample
 
-And syncs with Jim:
+And she syncs with Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
 @end group
 @end smallexample
 
@@ -1535,7 +1983,7 @@ he has new work to contribute, however, he now syncs:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
 @end group
 @end smallexample
 
@@ -1545,8 +1993,8 @@ the branch:
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 heads
-monotone: branch 'co.jp.juicebot.jb7' is currently unmerged:
+$ monotone heads
+monotone: branch 'jp.co.juicebot.jb7' is currently unmerged:
 39969614e5a14316c7ffefc588771f491c709152 abe@@juicebot.co.jp 2004-10-26T02:53:16
 8b41b5399a564494993063287a737d26ede3dee4 beth@@juicebot.co.jp 2004-10-26T02:53:15
 @end group
@@ -1560,7 +2008,7 @@ conflicts Jim does so himself:
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 merge
+$ monotone merge
 monotone: merging with revision 1 / 2
 monotone: [source] 39969614e5a14316c7ffefc588771f491c709152
 monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
@@ -1576,6 +2024,34 @@ revision. This happened automatically, because the changes between the
 common ancestor and heads did not conflict. If there had been a
 conflict, monotone would have invoked an external merging tool to help
 resolve it.
+
+After merging, the branch has a single head again, and Jim updates
+his working copy. 
+
+@smallexample
+@group
+$ monotone update
+monotone: selected update target da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+monotone: updating src/apple.c to f088e24beb43ab1468d7243e36ce214a559bdc96
+monotone: updating src/banana.c to 5e6622cf5c8805bcbd50921ce7db86dad40f2ec6
+monotone: updated to base revision da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+@end group
+@end smallexample
+
+The update command selected an update target --- in this case the newly merged
+head --- and performed an in-memory merge between Jim's working copy
+and the chosen target. The result was then written to Jim's working copy. If
+Jim's working copy had any uncommitted changes in it, they would have been
+merged with the update in exactly the same manner as the merge of multiple
+committed heads. 
+
+Monotone makes very little distinction between a ``pre-commit'' merge
+(an update) and a ``post-commit'' merge. Both sorts of merge use the
+exact same algorithm. The major difference concerns the recoverability
+of the pre-merge state: if you commit your work first, and merge after
+committing, the merge can fail (due to difficulty in a manual merge
+step) and your committed state is still safe. It is therefore
+recommended that you commit your work @emph{first}, before merging.
 
 @node    Advanced Uses
 @chapter Advanced Uses
@@ -1858,7 +2334,7 @@ This cert's value is the name of a branch. A @code{branch} cert
 associates a revision with a branch. The revision is said to be ``in
 the branch'' named by the cert. The cert is generated when you commit
 a revision, either directly with the @code{commit} command or
-indirectly with the @code{merge} or @code{propagage} commands. The
+indirectly with the @code{merge} or @code{propagate} commands. The
 @code{branch} certs are read and directly interpreted by @emph{many}
 monotone commands, and play a fundamental role in organizing work in
 any monotone database.
@@ -2358,6 +2834,17 @@ If no @var{id} is provided, as in the latter two commands, you
 @var{id} as the unique head of @var{branchname} if it exists.
 
 
+@item monotone disapprove @var{id}
+
+This command records a disapproval of the changes between @var{id}'s
+ancestor and @var{id}. It does this by committing the @i{inverse}
+changes as a new revision descending from @var{id}. The new revision
+will show up as a new head and thus a subsequent @command{merge} will
+incorporate the inverse of the disapproved changes in the other head(s).
+
+Note that this command only works if @var{id} has exactly one ancestor.
+
+
 @item monotone heads --branch=@var{branchname}
 This command lists the ``heads'' of @var{branchname}. 
 
@@ -2769,6 +3256,11 @@ automatically use a certain passphrase for a given key using the
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
 
+@item monotone chkeypass @var{id}
+
+This command lets you change the passphrase of the private half of the
+key @var{id}.
+
 @item monotone cert @var{id} @var{certname} 
 @itemx monotone cert @var{id} @var{certname} @var{certval}
 
@@ -2778,9 +3270,9 @@ the value of the certificate.  Otherwise the certificate value is read
 from @code{stdin}.
 
 @item monotone --branch=@var{branchname} vcheck create 
-@item monotone vcheck create @var{id}
-@item monotone --branch=@var{branchname} vcheck check
-@item monotone vcheck check @var{id}
+@itemx monotone vcheck create @var{id}
+@itemx monotone --branch=@var{branchname} vcheck check
+@itemx monotone vcheck check @var{id}
 
 These commands produce or check @code{vcheck} certs for the given
 manifest @var{id}. A @code{vcheck} cert on a manifest simply reduces
@@ -2800,15 +3292,12 @@ If you omit the @var{id}, these commands operate on the heads of
 @section Certificate
 
 @ftable @command
-@item monotone approve @var{id1} @var{id2}
+@item monotone approve @var{id}
 
-This command is a synonym for
-@code{monotone cert @var{id2} ancestor @var{id1}}
-
-@item monotone disapprove @var{id1} @var{id2}
-
-This command is a synonym for
-@code{monotone cert @var{id2} disapproval @var{id1}}
+This command is a synonym for @code{monotone cert @var{id} branch
+@var{branchname}} where @var{branchname} is the current branch name
+(either deduced from the working copy or from the @option{--branch}
+option).
 
 
 @item monotone comment @var{id}
@@ -2825,7 +3314,7 @@ This command is a synonym for @code{monotone cert @var{id} tag
 @var{tagname}}.
 
 @item monotone testresult @var{id} 0
-@item monotone testresult @var{id} 1
+@itemx monotone testresult @var{id} 1
 
 These commands are synonyms for @code{monotone cert @var{id}
 testresult 0} or @code{monotone cert @var{id} testresult 1}.
@@ -3855,12 +4344,10 @@ LDH, '@@' and '.' characters, as required for key and cert names.
 ASCII codes 0x0D (CR), 0x0A (LF), 0x09 (HT), and 0x20 (SP). 
 @end itemize
 
-@heading Explicit rename certs, @file{MT/work} and @file{.mt-attrs}
+@heading The @file{.mt-attrs} file
 
-Incompatible change: these formats were changed, incompatibly, from
-earlier versions of monotone which used 0x20 (ASCII SP) as a
-delimiter. The files now use 0x0A (ASCII LF) as a delimiter, to permit
-0x20 in filenames.
+Now uses 0x0A (ASCII LF) as a delimiter, to permit 0x20 in
+filenames. This may change in the future.
 
 
 @page
@@ -4119,11 +4606,11 @@ monotone} command, or online).
 Write a comment cert for a revision.
 @comment TROFF INPUT: .TP
 
-@item @b{approve} @i{<id1>}
+@item @b{approve} @i{<id>}
 Make a ``branch'' cert approving of a revision's membership in a branch.
 @comment TROFF INPUT: .TP
 
-@item @b{disapprove} @i{<id1>}
+@item @b{disapprove} @i{<id>}
 Disapprove of a revision, committing the inverse changes as as a
 descendant of the disapproved revision.
 @comment TROFF INPUT: .TP
@@ -4150,7 +4637,7 @@ Show status of working copy.
 
 @item @b{log} @i{[id]}
 Show historical log of revisions, starting from working copy
-base version, or @i{[id]} if given.
+base revision, or @i{[id]} if given.
 @comment TROFF INPUT: .TP
 
 @item @b{cert} @i{<id> <certname> [certval]}
@@ -4164,6 +4651,10 @@ Produce or check @code{vcheck} certs for the given manifest @i{[id]}.
 
 @item @b{genkey} @i{<keyid>}
 Generate an @sc{rsa} key-pair and store it in the database.
+@comment TROFF INPUT: .TP
+
+@item @b{chkeypass} @i{<keyid>}
+Change passphrase of the private half of a key.
 @comment TROFF INPUT: .TP
 
 @item @b{list certs} @i{<id>}
