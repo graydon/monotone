@@ -1486,43 +1486,21 @@ database::install_functions(app_state * app)
 }
 
 void 
-database::get_head_candidates(string const & branch_encoded,
-			      vector< manifest<cert> > & branch_certs,
-			      vector< manifest<cert> > & ancestry_certs,
-			      vector< manifest<cert> > & disapproval_certs)
+database::get_heads(base64<cert_value> const & branch,
+		    std::set<revision_id> & heads)
 {
   results res;
-  fetch(res, 5, any_rows,
-	"SELECT id, name, value, keypair, signature "
-	"FROM manifest_certs "
-	"WHERE (name = 'ancestor' OR name = 'branch' OR name = 'disapproval') "
-	"AND id IN "
-	"("
-	"SELECT id FROM manifest_certs WHERE name = 'branch' "
-	"AND value = '%q'"
-	")",
-	branch_encoded.c_str());
-
-  branch_certs.clear();
-  ancestry_certs.clear();
-  disapproval_certs.clear();
+  fetch(res, one_col, any_rows,
+	"SELECT id "
+	"FROM branch_heads "
+	"WHERE value = '%q'",
+	branch().c_str());
+  heads.clear();
   for (size_t i = 0; i < res.size(); ++i)
     {
-      manifest<cert> t;
-      t = manifest<cert>(cert(hexenc<id>(res[i][0]), 
-			      cert_name(res[i][1]),
-			      base64<cert_value>(res[i][2]),
-			      rsa_keypair_id(res[i][3]),
-			      base64<rsa_sha1_signature>(res[i][4])));
-      if (res[i][1] == "branch")	
-	branch_certs.push_back(t);
-      else if (res[i][1] == "ancestor")
-	ancestry_certs.push_back(t);
-      else
-	disapproval_certs.push_back(t);
+      heads.insert(revision_id(res[i][0]));
     }
 }
-
 
 void 
 database::get_certs(hexenc<id> const & ident, 
@@ -1834,6 +1812,17 @@ database::get_manifest_cert(hexenc<id> const & hash,
   results_to_certs(res, certs);
   I(certs.size() == 1);
   c = manifest<cert>(certs[0]);
+}
+
+void 
+database::get_manifest_certs(manifest_id const & id, 
+			     cert_name const & name, 
+			     vector< manifest<cert> > & ts)
+{
+  vector<cert> certs;
+  get_certs(id.inner(), name, certs, "manifest_certs");
+  ts.clear();
+  copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
 

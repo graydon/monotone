@@ -31,7 +31,8 @@
 using namespace std;
 using namespace boost;
 
-// cert destroyer!
+// FIXME: the bogus-cert family of functions is ridiculous
+// and needs to be replaced, or at least factored.
 
 struct 
 bogus_cert_p
@@ -62,6 +63,11 @@ bogus_cert_p
 	W(F("ignoring unknown signature by '%s' on '%s'\n") % c.key() % txt);
 	return true;
       }
+  }
+
+  bool operator()(revision<cert> const & c) const 
+  {
+    return cert_is_bogus(c.inner());
   }
 
   bool operator()(manifest<cert> const & c) const 
@@ -130,6 +136,59 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
 }
 
 void 
+erase_bogus_certs(vector< revision<cert> > & certs,
+		  app_state & app)
+{
+  typedef vector< revision<cert> >::iterator it;
+  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
+  certs.erase(e, certs.end());
+
+  vector< revision<cert> > tmp_certs;
+
+  // sorry, this is a crazy data structure
+  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
+  trust_map trust;
+
+  for (it i = certs.begin(); i != certs.end(); ++i)
+    {
+      trust_key key = trust_key(i->inner().ident, i->inner().name, i->inner().value);
+      trust_map::iterator j = trust.find(key);
+      shared_ptr< set<rsa_keypair_id> > s;
+      if (j == trust.end())
+	{
+	  s.reset(new set<rsa_keypair_id>());
+	  trust.insert(make_pair(key, make_pair(s, i)));
+	}
+      else
+	s = j->second.first;
+      s->insert(i->inner().key);
+    }
+
+  for (trust_map::const_iterator i = trust.begin();
+       i != trust.end(); ++i)
+    {
+      cert_value decoded_value;
+      decode_base64(get<2>(i->first), decoded_value);
+      if (app.lua.hook_get_revision_cert_trust(*(i->second.first),
+					       get<0>(i->first),
+					       get<1>(i->first),
+					       decoded_value))
+	{
+	  L(F("trust function liked %d signers of %s cert on revision %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+	  tmp_certs.push_back(*(i->second.second));
+	}
+      else
+	{
+	  W(F("trust function disliked %d signers of %s cert on revision %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+	}
+    }
+  certs = tmp_certs;
+}
+
+void 
 erase_bogus_certs(vector< file<cert> > & certs,
 		  app_state & app)
 {
@@ -164,10 +223,10 @@ erase_bogus_certs(vector< file<cert> > & certs,
     {
       cert_value decoded_value;
       decode_base64(get<2>(i->first), decoded_value);
-      if (app.lua.hook_get_manifest_cert_trust(*(i->second.first),
-					       get<0>(i->first),
-					       get<1>(i->first),
-					       decoded_value))
+      if (app.lua.hook_get_file_cert_trust(*(i->second.first),
+					   get<0>(i->first),
+					   get<1>(i->first),
+					   decoded_value))
 	{
 	  L(F("trust function liked %d signers of %s cert on file %s\n")
 	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
@@ -208,11 +267,11 @@ cert::operator<(cert const & other) const
 {
   return (ident < other.ident)
     || ((ident == other.ident) && name < other.name)
-    || (((ident == other.ident) && name < other.name) 
+    || (((ident == other.ident) && name == other.name) 
 	&& value < other.value)    
-    || ((((ident == other.ident) && name < other.name) 
+    || ((((ident == other.ident) && name == other.name) 
 	 && value == other.value) && key < other.key)
-    || (((((ident == other.ident) && name < other.name) 
+    || (((((ident == other.ident) && name == other.name) 
 	  && value == other.value) && key == other.key) && sig < other.sig);
 }
 
@@ -416,7 +475,7 @@ guess_branch(revision_id const & id,
     }
   else
     {
-      vector< manifest<cert> > certs;
+      vector< revision<cert> > certs;
       cert_name branch(branch_cert_name);
       app.db.get_revision_certs(id, branch, certs);
       erase_bogus_certs(certs, app);
@@ -475,7 +534,7 @@ put_simple_revision_cert(revision_id const & id,
   cert t;
   make_simple_cert(id.inner(), nm, val, app, t);
   revision<cert> cc(t);
-  pc.consume_manifest_cert(cc);
+  pc.consume_revision_cert(cc);
 }
 
 static void 
@@ -507,574 +566,9 @@ get_branch_heads(cert_value const & branchname,
 		 set<revision_id> & heads)
 {
   heads.clear();
-
-  vector< revision<cert> > branch_certs;
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
-
-  P(F("fetching heads of branch '%s'\n") % branchname);
-
-  app.db.get_head_candidates(branch_encoded(), branch_certs);
-
-  L(F("erasing bogus certs on '%s'\n") % branchname);
-
-  erase_bogus_certs(branch_certs, app);
-
-  for (vector< revision<cert> >::const_iterator i = branch_certs.begin();
-       i != branch_certs.end(); ++i)
-    {
-      heads.insert(i->inner().ident);
-    }
-
-  L(F("began with %d candidate heads\n") % heads.size());
-
-  // Remove every manifest with descendents.
-  for (vector< revision<cert> >::const_iterator i = ancestor_certs.begin();
-       i != ancestor_certs.end(); ++i)
-    {      
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
-      manifest_id parent(tv());
-      set<manifest_id>::const_iterator j = heads.find(parent);
-      if (j != heads.end())
-	{
-	  heads.erase(j);
-	}
-    }
-
-  L(F("reduced to %d heads\n") % heads.size());
-}
-		   
-void 
-cert_file_ancestor(file_id const & parent, 
-		   file_id const & child,
-		   app_state & app,
-		   packet_consumer & pc)
-{
-  if (parent == child)
-    {
-      W(F("parent file %d is same as child, skipping edge\n") % parent);
-      return;
-    }
-  put_simple_file_cert (child, ancestor_cert_name,
-			parent.inner()(), app, pc);
-}
-
-void 
-cert_manifest_ancestor(manifest_id const & parent, 
-		       manifest_id const & child,
-		       app_state & app,
-		       packet_consumer & pc)
-{
-  if (parent == child)
-    {
-      W(F("parent manifest %d is same as child, skipping edge\n") % parent);
-      return;
-    }
-  put_simple_manifest_cert (child, ancestor_cert_name,
-			    parent.inner()(), app, pc);
-}
-
-
-// calculating least common ancestors is a delicate thing.
-// 
-// it turns out that we cannot choose the simple "least common ancestor"
-// for purposes of a merge, because it is possible that there are two
-// equally reachable common ancestors, and this produces ambiguity in the
-// merge. the result -- in a pathological case -- is silently accepting one
-// set of edits while discarding another; not exactly what you want a
-// version control tool to do.
-//
-// a conservative approximation is what we'll call a "subgraph recurring"
-// LCA algorithm. this is somewhat like locating the least common dominator
-// node, but not quite. it is actually just a vanilla LCA search, except
-// that any time there's a fork (a historical merge looks like a fork from
-// our perspective, working backwards from children to parents) it reduces
-// the fork to a common parent via a sequence of pairwise recursive calls
-// to itself before proceeding. this will always resolve to a common parent
-// with no ambiguity, unless it falls off the root of the graph.
-//
-// unfortunately the subgraph recurring algorithm sometimes goes too far
-// back in history -- for example if there is an unambiguous propagate from
-// one branch to another, the entire subgraph preceeding the propagate on
-// the recipient branch is elided, since it is a merge.
-//
-// our current hypothesis is that the *exact* condition we're looking for,
-// when doing a merge, is the least node which dominates one side of the
-// merge and is an ancestor of the other.
-
-typedef unsigned long ctx;
-typedef dynamic_bitset<> bitmap;
-typedef shared_ptr<bitmap> shared_bitmap;
-
-static void 
-ensure_parents_loaded(ctx child,
-		      map<ctx, shared_bitmap> & parents,
-		      interner<ctx> & intern,
-		      app_state & app)
-{
-  if (parents.find(child) != parents.end())
-    return;
-
-  L(F("loading parents for node %d\n") % child);
-
-  set<revision_id> imm_parents;
-  app.db.get_revision_parents(revision_id(intern.lookup(child)), imm_parents);
-  shared_bitmap bits = shared_bitmap(new bitmap(parents.size()));
-  
-  for (set<revision_id>::const_iterator p = imm_parents.begin();
-       p != imm_parents.end(); ++p)
-    {
-      ctx pn = intern.intern(p->inner()());
-      L(F("parent %s -> node %d\n") % *p % pn);
-      if (pn >= bits->size()) 
-	bits->resize(pn+1);
-      bits->set(pn);
-    }
-    
-  parents.insert(make_pair(child, bits));
-}
-
-static bool 
-expand_dominators(map<ctx, shared_bitmap> & parents,
-		  map<ctx, shared_bitmap> & dominators,
-		  interner<ctx> & intern,
-		  app_state & app)
-{
-  bool something_changed = false;
-  vector<ctx> nodes;
-
-  nodes.reserve(dominators.size());
-
-  // pass 1, pull out all the node numbers we're going to scan this time around
-  for (map<ctx, shared_bitmap>::const_iterator e = dominators.begin(); 
-       e != dominators.end(); ++e)
-    nodes.push_back(e->first);
-  
-  // pass 2, update any of the dominator entries we can
-  for (vector<ctx>::const_iterator n = nodes.begin(); 
-       n != nodes.end(); ++n)
-    {
-      shared_bitmap bits = dominators[*n];
-      bitmap saved(*bits);
-      if (bits->size() <= *n)
-	bits->resize(*n + 1);
-      bits->set(*n);
-      
-      ensure_parents_loaded(*n, parents, intern, app);
-      shared_bitmap n_parents = parents[*n];
-      
-      bitmap intersection(bits->size());
-      
-      bool first = true;
-      for (unsigned long parent = 0; 
-	   parent != n_parents->size(); ++parent)
-	{
-	  if (! n_parents->test(parent))
-	    continue;
-
-	  if (dominators.find(parent) == dominators.end())
-	    dominators.insert(make_pair(parent, 
-					shared_bitmap(new bitmap())));
-	  shared_bitmap pbits = dominators[parent];
-
-	  if (bits->size() > pbits->size())
-	    pbits->resize(bits->size());
-
-	  if (pbits->size() > bits->size())
-	    bits->resize(pbits->size());
-
-	  if (first)
-	    {
-	      intersection = (*pbits);
-	      first = false;
-	    }
-	  else
-	    intersection &= (*pbits);
-	}
-
-      (*bits) |= intersection;
-      if (*bits != saved)
-	something_changed = true;
-    }
-  return something_changed;
-}
-
-
-static bool 
-expand_ancestors(map<ctx, shared_bitmap> & parents,
-		 map<ctx, shared_bitmap> & ancestors,
-		 interner<ctx> & intern,
-		 app_state & app)
-{
-  bool something_changed = false;
-  vector<ctx> nodes;
-
-  nodes.reserve(ancestors.size());
-
-  // pass 1, pull out all the node numbers we're going to scan this time around
-  for (map<ctx, shared_bitmap>::const_iterator e = ancestors.begin(); 
-       e != ancestors.end(); ++e)
-    nodes.push_back(e->first);
-  
-  // pass 2, update any of the ancestor entries we can
-  for (vector<ctx>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
-    {
-      shared_bitmap bits = ancestors[*n];
-      bitmap saved(*bits);
-      if (bits->size() <= *n)
-	bits->resize(*n + 1);
-      bits->set(*n);
-
-      ensure_parents_loaded(*n, parents, intern, app);
-      shared_bitmap n_parents = parents[*n];
-      for (ctx parent = 0; parent != n_parents->size(); ++parent)
-	{
-	  if (! n_parents->test(parent))
-	    continue;
-
-	  if (bits->size() <= parent)
-	    bits->resize(parent + 1);
-	  bits->set(parent);
-
-	  if (ancestors.find(parent) == ancestors.end())
-	    ancestors.insert(make_pair(parent, 
-					shared_bitmap(new bitmap())));
-	  shared_bitmap pbits = ancestors[parent];
-
-	  if (bits->size() > pbits->size())
-	    pbits->resize(bits->size());
-
-	  if (pbits->size() > bits->size())
-	    bits->resize(pbits->size());
-
-	  (*bits) |= (*pbits);
-	}
-      if (*bits != saved)
-	something_changed = true;
-    }
-  return something_changed;
-}
-
-static bool 
-find_intersecting_node(bitmap & fst, 
-		       bitmap & snd, 
-		       interner<ctx> const & intern, 
-		       revision_id & anc)
-{
-  
-  if (fst.size() > snd.size())
-    snd.resize(fst.size());
-  else if (snd.size() > fst.size())
-    fst.resize(snd.size());
-  
-  bitmap intersection = fst & snd;
-  if (intersection.any())
-    {
-      L(F("found %d intersecting nodes") % intersection.count());
-      for (ctx i = 0; i < intersection.size(); ++i)
-	{
-	  if (intersection.test(i))
-	    {
-	      anc = revision_id(intern.lookup(i));
-	      return true;
-	    }
-	}
-    }
-  return false;
-}
-
-//  static void
-//  dump_bitset_map(string const & hdr,
-//  		map< ctx, shared_bitmap > const & mm)
-//  {
-//    L(F("dumping [%s] (%d entries)\n") % hdr % mm.size());
-//    for (map< ctx, shared_bitmap >::const_iterator i = mm.begin();
-//         i != mm.end(); ++i)
-//      {
-//        L(F("dump [%s]: %d -> %s\n") % hdr % i->first % (*(i->second)));
-//      }
-//  }
-
-bool 
-find_common_ancestor(revision_id const & left,
-		     revision_id const & right,
-		     revision_id & anc,
-		     app_state & app)
-{
-  interner<ctx> intern;
-  map< ctx, shared_bitmap > 
-    parents, ancestors, dominators;
-  
-  ctx ln = intern.intern(left.inner()());
-  ctx rn = intern.intern(right.inner()());
-  
-  shared_bitmap lanc = shared_bitmap(new bitmap());
-  shared_bitmap ranc = shared_bitmap(new bitmap());
-  shared_bitmap ldom = shared_bitmap(new bitmap());
-  shared_bitmap rdom = shared_bitmap(new bitmap());
-  
-  ancestors.insert(make_pair(ln, lanc));
-  ancestors.insert(make_pair(rn, ranc));
-  dominators.insert(make_pair(ln, ldom));
-  dominators.insert(make_pair(rn, rdom));
-  
-  L(F("searching for common ancestor, left=%s right=%s\n") % left % right);
-  
-  while (expand_ancestors(parents, ancestors, intern, app) ||
-	 expand_dominators(parents, dominators, intern, app))
-    {
-      L(F("common ancestor scan [par=%d,anc=%d,dom=%d]\n") % 
-	parents.size() % ancestors.size() % dominators.size());
-
-      if (find_intersecting_node(*lanc, *rdom, intern, anc))
-	{
-	  L(F("found node %d, ancestor of left %s and dominating right %s\n")
-	    % anc % left % right);
-	  return true;
-	}
-      
-      else if (find_intersecting_node(*ranc, *ldom, intern, anc))
-	{
-	  L(F("found node %d, ancestor of right %s and dominating left %s\n")
-	    % anc % right % left);
-	  return true;
-	}
-    }
-//      dump_bitset_map("ancestors", ancestors);
-//      dump_bitset_map("dominators", dominators);
-//      dump_bitset_map("parents", parents);
-  return false;
-}
-
-
-// stuff for handling rename certs / rename edges
-
-// rename edges associate a particular name mapping with a particular edge
-// in the ancestry graph. they assist the algorithm in patch_set.cc in
-// determining which add/del pairs count as moves.
-
-rename_edge::rename_edge(rename_edge const & other)
-{
-  parent = other.parent;
-  child = other.child;
-  mapping = other.mapping;
-}
-
-static void 
-include_rename_edge(rename_edge const & in, 
-		    rename_edge & out)
-{
-  L(F("merging rename edge %s -> %s with %s -> %s\n")
-    % in.parent % in.child % out.parent % out.child);
-
-  set<file_path> rename_targets;
-  for (rename_set::const_iterator i = out.mapping.begin();
-       i != out.mapping.end(); ++i)
-    {
-      I(rename_targets.find(i->second) == rename_targets.end());
-      rename_targets.insert(i->second);
-    }
-
-  for (rename_set::const_iterator i = in.mapping.begin();
-       i != in.mapping.end(); ++i)
-    {
-      rename_set::const_iterator other = out.mapping.find(i->first);
-      if (other == out.mapping.end())
-	I(rename_targets.find(i->second) == rename_targets.end());
-      else      
-	N(other->second == i->second,
-	  F("impossible historical record of renames: %s renamed to both %s and %s")
-	  % i->first % i->second % other->second);
-
-      L(F("merged in rename of %s -> %s\n")
-	% i->first % i->second);
-      rename_targets.insert(i->second);
-      out.mapping.insert(*i);
-    }  
-}
-
-static void 
-compose_rename_edges(rename_edge const & a,
-		     rename_edge const & b,
-		     rename_edge & out)
-{
-  I(a.child == b.parent);
-  out.mapping.clear();
-  out.parent = a.parent;
-  out.child = b.child;
-  set<file_path> rename_targets;
-
-  L(F("composing rename edges %s -> %s and %s -> %s\n")
-    % a.parent % a.child % b.parent % b.child);
-
-  for (rename_set::const_iterator i = a.mapping.begin();
-       i != a.mapping.end(); ++i)
-    {
-      I(rename_targets.find(i->second) == rename_targets.end());
-      I(out.mapping.find(i->first) == out.mapping.end());
-      rename_targets.insert(i->second);
-
-      rename_set::const_iterator j = b.mapping.find(i->second);
-      if (j != b.mapping.end())
-	{
-	  L(F("composing rename %s -> %s with %s -> %s\n")
-	    % i->first % i->second % j->first % j->second);
-	  out.mapping.insert(make_pair(i->first, j->second));
-	}
-      else
-	{
-	  L(F("composing lone rename %s -> %s\n")
-	    % i->first % i->second);
-	  out.mapping.insert(*i);
-	}
-    }
-}
-
-// 
-// The idea with this algorithm is to walk from child up to ancestor,
-// recursively, accumulating all the rename_edges associated with
-// intermediate nodes into *one big rename_edge*. don't confuse an ancestry
-// edge with a rename edge here: when we get "parents", that's loading
-// ancestry edges. rename edges are a secondary graph overlaid on some --
-// but not all -- edges in the ancestry graph. I know, it's a real party.
-//
-// clever readers will realize this is an overlapping-subproblem type
-// situation and thus needs to keep a dynamic programming map to keep
-// itself in linear complexity.
-//
-// in fact, we keep two: one which maps to computed results (partial_edges)
-// and one which just keeps a set of all nodes we traversed
-// (visited_nodes). in theory it could be one map with an extra bool stuck
-// on each entry, but I think that would make it even less readable. it's
-// already atrocious.
-//
-
-static bool 
-calculate_renames_recursive(revision_id const & ancestor,
-			    revision_id const & child,
-			    app_state & app,
-			    rename_edge & edge,
-			    map<revision_id, shared_ptr<rename_edge> > & partial_edges,
-			    set<revision_id> & visited_nodes)
-{
-
-  if (ancestor == child)
-    return false;
-
-  visited_nodes.insert(child);
-
-  set<revision_id> parents;
-  app.db.get_revision_parents(child, parents);
-  bool relevant_child = false;
-
-  edge.child = child;
-  map<revision_id, rename_edge> incident_edges;
-
-  {
-    // this step really just copies out of the revision and into a rename
-    // edge which is slightly more convenient in organization.
-    revision_set rev;
-    app.db.get_revision(child, rev);
-    
-    L(F("found %d incident edges at node %s\n")
-      % rev.edges.size() % child);
-    
-    for(set<edge>::const_iterator edge = rev.edges.begin();
-	edge != rev.edges.end(); ++edge)
-      {	
-	rename_edge curr_child_edge;
-	for(set<patch_move>::const_iterator j = edge->changes.f_moves.begin();
-	    j != edge->changes.f_moves.end(); ++j)
-	  {
-	    curr_child_edge.insert(make_pair(j->path_old, j->path_new));
-	  }
-	incident_edges.insert(make_pair(edge->ancestor, curr_child_edge));
-	relevant_child = true;
-      }
-  }
-
-  L(F("exploring renames from parents of %s, seeking towards %s\n")
-    % child % ancestor);
-
-  for(set<revision_id>::const_iterator i = parents.begin();
-      i != parents.end(); ++i)
-    {
-
-      bool relevant_parent = false;
-      rename_edge curr_parent_edge;
-      map<revision_id, shared_ptr<rename_edge> >::const_iterator 
-	j = partial_edges.find(*i);
-      if (j != partial_edges.end()) 
-	{
-	  // a recursive call has traversed this parent before and found an
-	  // existing rename edge. just reuse that rather than re-traversing
-	  curr_parent_edge = *(j->second);
-	  relevant_parent = true;
-	}
-      else if (visited_nodes.find(*i) != visited_nodes.end())
-	{
-	  // a recursive call has traversed this parent, but there was no
-	  // rename edge on it, so the parent is irrelevant. skip.
-	  relevant_parent = false;
-	}
-      else
-	relevant_parent = calculate_renames_recursive(ancestor, *i, app, 
-						      curr_parent_edge, 
-						      partial_edges,
-						      visited_nodes);
-
-      if (relevant_parent)
-	{
-	  map<revision_id, rename_edge>::const_iterator inc = incident_edges.find(*i);
-	  if (inc != incident_edges.end())
-	    {
-	      L(F("ancestor edge %s -> %s is relevant, composing with edge %s -> %s\n") 
-		% curr_parent_edge.parent % curr_parent_edge.child 
-		% inc->second.parent % inc->second.child);
-	      rename_edge tmp;
-	      compose_rename_edges(curr_parent_edge, inc->second, tmp);
-	      include_rename_edge(tmp, edge);
-	      incident_edges.erase(*i);
-	    }
-	  else
-	    {				    
-	      L(F("ancestor edge %s -> %s is relevant, merging with current\n") % (*i) % child);
-	      include_rename_edge(curr_parent_edge, edge);
-	    }
-	  relevant_child = true;
-	}
-    }
-
-  // copy any remaining incident edges  
-  for (map<revision_id, rename_edge>::const_iterator i = incident_edges.begin();
-       i != incident_edges.end(); ++i)
-    {
-      relevant_child = true;
-      L(F("adding lone incident edge %s -> %s\n") 
-	% i->second.parent % i->second.child);
-      include_rename_edge(i->second, edge);
-    }
-
-  // store the partial edge from ancestor -> child, so that if anyone
-  // re-traverses this edge they'll just fetch from the partial_edges
-  // cache.
-  if (relevant_child)
-    partial_edges.insert(make_pair(child, shared_ptr<rename_edge>(new rename_edge(edge))));
-
-  return relevant_child;
-}
-
-void 
-calculate_renames(revision_id const & ancestor,
-		  revision_id const & child,
-		  app_state & app,
-		  rename_edge & edge)
-{
-  // it's ok if we can't find any paths
-  set<revision_id> visited;
-  map<revision_id, shared_ptr<rename_edge> > partial;
-  calculate_renames_recursive(ancestor, child, app, edge, partial, visited);
+  app.db.get_heads(branch_encoded, heads);
 }
 
 
@@ -1222,7 +716,6 @@ calculate_vcheck_mac(manifest_id const & m,
   read_manifest_map(mdat, mm);
   for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
     {
-      path_id_pair pip(i);
       N(app.db.file_version_exists(manifest_entry_id(i)),
 	F("missing file version %s for %s") 
 	% manifest_entry_id(i) % manifest_entry_path(i));
@@ -1231,11 +724,12 @@ calculate_vcheck_mac(manifest_id const & m,
       data dat;
       string fmac;
 
-      app.db.get_file_version(pip.ident(), fdat);
+      app.db.get_file_version(manifest_entry_id(i), fdat);
       unpack(fdat.inner(), dat);
       calculate_mac(seed, dat(), fmac); 
-      mm_mac.insert(make_pair(pip.path(), file_id(fmac)));
-      L(F("mac of %s (seed=%s, id=%s) is %s\n") % pip.path() % seed % pip.ident() % fmac);
+      mm_mac.insert(make_pair(manifest_entry_path(i), file_id(fmac)));
+      L(F("mac of %s (seed=%s, id=%s) is %s\n") % 
+	manifest_entry_path(i) % seed % manifest_entry_id(i) % fmac);
     }
   
   data dat;

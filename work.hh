@@ -10,8 +10,9 @@
 #include <set>
 #include <map>
 
-#include "vocab.hh"
+#include "change_set.hh"
 #include "manifest.hh"
+#include "vocab.hh"
 
 //
 // this file defines structures to deal with the "working copy" of a tree
@@ -25,65 +26,38 @@
 //
 // MT/manifest       -- the check-out manifest, as defined in manifest.hh
 // MT/work           -- (optional) a set of added, deleted or moved pathnames
+//                      this file is, syntactically, a path_rearrangement
 //
 // as work proceeds, the files in the working directory either change their
 // sha1 fingerprints from those listed in the manifest file, or else are
 // added or deleted (and the paths of those changes recorded in 'MT/work').
 // 
-// when it comes time to commit, the change set is calculated by building a
-// path set from the old manifest, deleting old path elements, adding new
-// path elements, calculating the sha1 of each entry in the resulting path
-// set, and calculating a manifest delta (see manifest.hh) between the
-// check-out manifest and the new one.
-//
-// this is *completely decoupled* from the issue of importing appropriate 
-// versions of files into the database. if the files already exist in the db,
-// there is no reason to import them anew.
+// when it comes time to commit, the change_set is calculated by applying
+// the path_rearrangement to the manifest and then calculating the
+// delta_set between the modified manifest and the files in the working
+// copy.
 //
 
 typedef std::set<file_path> path_set;
-typedef std::map<file_path,file_path> rename_set;
 
 extern std::string const work_file_name;
-
-struct work_set
-{
-  // imprecise, uncommitted work record
-  path_set adds;
-  path_set dels;
-  rename_set renames;
-};
-
-void read_work_set(data const & dat,
-		   work_set & work);
-
-void write_work_set(data & dat,
-		    work_set const & work);
 
 void extract_path_set(manifest_map const & man,
 		      path_set & paths);
 
-void apply_work_set(work_set const & work,
-		    path_set & paths);
+void 
+build_addition(file_path const & path,
+	       app_state & app,
+	       change_set::path_rearrangement & pr);
 
-void build_addition(file_path const & path,
-		    app_state & app,
-		    work_set & work,
-		    manifest_map const & man,
- 		    bool & rewrite_work);
+void 
+build_deletion(file_path const & path,
+	       change_set::path_rearrangement & pr);
 
-void build_deletion(file_path const & path,
-		    app_state & app,
-		    work_set & work,
-		    manifest_map const & man,
- 		    bool & rewrite_work);
-
-void build_rename(file_path const & src,
-		  file_path const & dst,
-		  app_state & app,
-		  work_set & work,
-		  manifest_map const & man,
-		  bool & rewrite_work);
+void 
+build_rename(file_path const & src,
+	     file_path const & dst,
+	     change_set::path_rearrangement & pr);
 
 
 // the "options map" is another administrative file, stored in

@@ -64,6 +64,7 @@ namespace basic_io
     void print_val(char c, std::string const & s);
     void print_hex(std::string const & s);
     void print_str(std::string const & s);
+    void print_sym(std::string const & s, bool eol = false);
     void print_key(std::string const & s, bool eol = false);
   };
 

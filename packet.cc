@@ -919,12 +919,6 @@ packet_db_writer::consume_constructable_manifest_delta(manifest_id const & old_i
 }
 
 void 
-packet_db_writer::consume_revision_data(revision_id const & ident, 
-				       revision_data const & dat)
-{
-}
-
-void 
 packet_db_writer::consume_manifest_cert(manifest<cert> const & t)
 {
   transaction_guard guard(pimpl->app.db);
@@ -969,7 +963,13 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
   if (! pimpl->app.db.public_key_exists(ident))
     pimpl->app.db.put_key(ident, k);
   else
-    L(F("skipping existing public key %s\n") % ident);
+    {
+      base64<rsa_pub_key> tmp;
+      pimpl->app.db.get_key(ident, tmp);
+      if (!(tmp() == k()))
+	W(F("key '%s' is not equal to key '%s' in database\n") % ident % ident);
+      L(F("skipping existing public key %s\n") % ident);
+    }
   ++(pimpl->count);
   guard.commit();
 }
@@ -1038,6 +1038,15 @@ packet_writer::consume_manifest_data(manifest_id const & ident,
 }
 
 void 
+packet_writer::consume_revision_data(revision_id const & ident, 
+				     revision_data const & dat)
+{
+  ost << "[rdata " << ident.inner()() << "]" << endl 
+      << trim_ws(dat.inner()()) << endl
+      << "[end]" << endl;
+}
+
+void 
 packet_writer::consume_manifest_delta(manifest_id const & old_id, 
 				      manifest_id const & new_id,
 				      manifest_delta const & del)
@@ -1049,18 +1058,20 @@ packet_writer::consume_manifest_delta(manifest_id const & old_id,
 }
 
 void 
-packet_writer::consume_revision_data(revision_id const & ident, 
-				    revision_data const & dat)
+packet_writer::consume_manifest_cert(manifest<cert> const & t)
 {
-  ost << "[revision " << ident.inner()() << "]" << endl
-      << trim_ws(dat()) << endl
+  ost << "[mcert " << t.inner().ident() << endl
+      << "       " << t.inner().name() << endl
+      << "       " << t.inner().key() << endl
+      << "       " << trim_ws(t.inner().value()) << "]" << endl
+      << trim_ws(t.inner().sig()) << endl
       << "[end]" << endl;
 }
 
 void 
-packet_writer::consume_manifest_cert(manifest<cert> const & t)
+packet_writer::consume_revision_cert(revision<cert> const & t)
 {
-  ost << "[mcert " << t.inner().ident() << endl
+  ost << "[rcert " << t.inner().ident() << endl
       << "       " << t.inner().name() << endl
       << "       " << t.inner().key() << endl
       << "       " << trim_ws(t.inner().value()) << "]" << endl
@@ -1111,15 +1122,15 @@ feed_packet_consumer
 	string head(res[1].first, res[1].second);
 	string ident(res[2].first, res[2].second);
 	string body(trim_ws(string(res[3].first, res[3].second)));
-	if (head == "mdata")
+	if (head == "rdata")
+	  cons.consume_revision_data(revision_id(hexenc<id>(ident)), 
+				     revision_data(body));
+	else if (head == "mdata")
 	  cons.consume_manifest_data(manifest_id(hexenc<id>(ident)), 
 				     manifest_data(body));
 	else if (head == "fdata")
 	  cons.consume_file_data(file_id(hexenc<id>(ident)), 
 				 file_data(body));
-	else if (head == "revision")
-	  cons.consume_revision_data(revision_id(hexenc<id>(ident)), 
-				    revision_data(body));
 	else
 	  throw oops("matched impossible data packet with head '" + head + "'");
       }
@@ -1165,7 +1176,9 @@ feed_packet_consumer
 		      base64<cert_value>(canonical_base64(val)),
 		      rsa_keypair_id(key),
 		      base64<rsa_sha1_signature>(canonical_base64(body)));
-	if (head == "mcert")
+	if (head == "rcert")
+	  cons.consume_revision_cert(revision<cert>(t));
+	else if (head == "mcert")
 	  cons.consume_manifest_cert(manifest<cert>(t));
 	else if (head == "fcert")
 	  cons.consume_file_cert(file<cert>(t));
@@ -1203,8 +1216,8 @@ extract_packets(string const & s, packet_consumer & cons)
   string const sp("[[:space:]]+");
   string const bra("\\[");
   string const ket("\\]");
-  string const certhead("(mcert|fcert)");
-  string const datahead("(mdata|fdata|revision)");
+  string const certhead("(mcert|fcert|rcert)");
+  string const datahead("(mdata|fdata|rdata)");
   string const deltahead("(mdelta|fdelta)");
   string const keyhead("(pubkey|privkey)");
   string const key("([-a-zA-Z0-9\\.@]+)");

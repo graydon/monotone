@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "app_state.hh"
+#include "change_set.hh"
 #include "file_io.hh"
 #include "sanity.hh"
 #include "vocab.hh"
@@ -24,15 +25,11 @@ addition_builder
   : public tree_walker
 {
   app_state & app;
-  work_set & work;
-  manifest_map const & man;
-  bool & rewrite_work;
+  boost::shared_ptr<path_edit_consumer> pc;
 public:
   addition_builder(app_state & a, 
-		   work_set & w, 
-		   manifest_map const & m, 
-		   bool & rw) : 
-    app(a), work(w), man(m), rewrite_work(rw)
+		   boost::shared_ptr<path_edit_consumer> pc)
+    : app(a), pc(pc)
   {};
   virtual void visit_file(file_path const & path);
 };
@@ -45,319 +42,68 @@ addition_builder::visit_file(file_path const & path)
       P(F("skipping ignorable file %s\n") % path);
       return;
     }
-
-  N(work.renames.find(path) == work.renames.end(),
-    F("adding file %s, also scheduled for source of rename") % path);
-
-  for (rename_set::const_iterator i = work.renames.begin();
-       i != work.renames.end(); ++i)
-    N(!(path == i->second),
-      F("adding file %s, also scheduled for target of rename") % path);
-
-  if (work.adds.find(path) != work.adds.end())
-    {
-      P(F("skipping %s, already present in working copy add set\n") % path);
-      return;
-    }
-  
-  if (work.dels.find(path) != work.dels.end())
-    {
-      P(F("removing %s from working copy delete set\n") % path);
-      work.dels.erase(path);
-      rewrite_work = true;
-    }
-  else if (man.find(path) != man.end())
-    {
-      P(F("skipping %s, already present in manifest\n") % path);
-      return;
-    }
-  else
-    {
-      P(F("adding %s to working copy add set\n") % path);
-      work.adds.insert(path);
-      rewrite_work = true;
-    }
+  pc->add_file(path);
 }
 
 void 
 build_addition(file_path const & path,
 	       app_state & app,
-	       work_set & work,
-	       manifest_map const & man,
-	       bool & rewrite_work)
+	       change_set::path_rearrangement & pr)
 {
-  addition_builder build(app, work, man, rewrite_work);
-  walk_tree(path, build);
-}
+  boost::shared_ptr<path_edit_consumer> pc = new_rearrangement_builder(pr);
 
+  N(directory_exists(path) || file_exists(path),
+    F("path %s does not exist") % path);
 
-
-class 
-deletion_builder 
-  : public tree_walker
-{
-  app_state & app;
-  work_set & work;
-  manifest_map const & man;
-  bool & rewrite_work;
-public:
-  deletion_builder(app_state & a, 
-		   work_set & w, 
-		   manifest_map const & m, 
-		   bool & rw) : 
-    app(a), work(w), man(m), rewrite_work(rw)
-  {};
-  virtual void visit_file(file_path const & path);
-};
-
-void 
-deletion_builder::visit_file(file_path const & path)
-{
-  if (app.lua.hook_ignore_file(path))
+  if (directory_exists(path))
     {
-      P(F("skipping ignorable file %s\n") % path);
-      return;
+      addition_builder build(app, pc);
+      walk_tree(path, build);
     }
-
-  N(work.renames.find(path) == work.renames.end(),
-    F("deleting file %s, also scheduled for source of rename") % path);
-
-  for (rename_set::const_iterator i = work.renames.begin();
-       i != work.renames.end(); ++i)
-    N(!(path == i->second),
-      F("deleting file %s, also scheduled for target of rename") % path);
-
-  if (work.dels.find(path) != work.dels.end())
+  else 
     {
-      P(F("skipping %s, already present in working copy delete set\n") % path);
-      return;
-    }
-  
-  if (work.adds.find(path) != work.adds.end())
-    {
-      P(F("removing %s from working copy add set\n") % path);
-      work.adds.erase(path);
-      rewrite_work = true;
-    }
-  else if (man.find(path) == man.end())
-    {
-      P(F("skipping %s, does not exist in manifest\n") % path);
-      return;
-    }
-  else
-    {
-      P(F("adding %s to working copy delete set\n") % path);
-      work.dels.insert(path);
-      rewrite_work = true;
+      I(file_exists(path));
+      pc->add_file(path);
     }
 }
 
 void 
 build_deletion(file_path const & path,
-	       app_state & app,
-	       work_set & work,
-	       manifest_map const & man,
-	       bool & rewrite_work)
+	       change_set::path_rearrangement & pr)
 {
-  deletion_builder build(app, work, man, rewrite_work);
-  walk_tree(path, build, false);
+  boost::shared_ptr<path_edit_consumer> pc = new_rearrangement_builder(pr);
+
+  N(directory_exists(path) || file_exists(path),
+    F("path %s does not exist") % path);
+
+  if (directory_exists(path))
+    pc->delete_dir(path);
+  else 
+    {
+      I(file_exists(path));
+      pc->delete_file(path);
+    }
 }
-
-
-class 
-rename_builder 
-  : public tree_walker
-{
-  file_path const & src;
-  file_path const & dst;
-  app_state & app;
-  work_set & work;
-  manifest_map const & man;
-  bool & rewrite_work;
-public:
-  rename_builder(file_path const & s,
-		 file_path const & d,
-		 app_state & a, 
-		 work_set & w, 
-		 manifest_map const & m, 
-		 bool & rw) : 
-    src(s), dst(d),
-    app(a), work(w), man(m), rewrite_work(rw)
-  {}
-  file_path pathsub(file_path const & in);
-  virtual void visit_file(file_path const & path);
-};
-
-
-file_path 
-rename_builder::pathsub(file_path const & in)
-{
-  fs::path sp = mkpath(src());
-  fs::path dp = mkpath(dst());
-  fs::path ip = mkpath(in());
-  
-  fs::path::iterator i = ip.begin();
-  for (fs::path::iterator s = sp.begin();
-       s != sp.end(); ++s, ++i)
-    I(i != ip.end());
-
-  fs::path res = dp;
-
-  while (i != ip.end())
-    res /= *i++;
-  
-  return file_path(res.string());
-}
-
-
-void 
-rename_builder::visit_file(file_path const & path)
-{
-  if (app.lua.hook_ignore_file(path))
-    {
-      P(F("skipping ignorable file %s\n") % path);
-      return;
-    }
-
-  file_path targ = pathsub(path);
-
-  N(work.dels.find(path) == work.dels.end(),
-    F("moving file %s, also scheduled for deletion") % path);
-
-  N(work.adds.find(path) == work.adds.end(),
-    F("moving file %s, also scheduled for addition") % path);
-
-  for (rename_set::iterator i = work.renames.begin();
-       i != work.renames.end(); ++i)
-    {
-      if (path == i->second)
-        {
-          file_path rensrc = i->first;
-          file_path rendst = i->second;
-          P(F("removing %s -> %s from working copy rename set\n")
-            % rensrc % rendst);
-          work.renames.erase(i);
-          if (!(targ == rensrc))
-            {
-              P(F("adding %s -> %s to working copy rename set\n")
-                % rensrc % targ);
-              work.renames.insert(make_pair(rensrc, targ));
-            }
-          rewrite_work = true;
-          return;
-        }
-    }
-
-  if (work.renames.find(path) != work.renames.end())
-    {
-      P(F("skipping %s, already present in working copy rename set\n") % path);
-      return;
-    }
-
-  if (man.find(path) == man.end())
-    {
-      P(F("skipping %s, does not exist in manifest\n") % path);
-      return;
-    }
-
-  P(F("adding %s -> %s to working copy rename set\n") % path % targ);
-  work.renames.insert(make_pair(path, targ));
-  rewrite_work = true;
-}
-
 
 void 
 build_rename(file_path const & src,
 	     file_path const & dst,
-	     app_state & app,
-	     work_set & work,
-	     manifest_map const & man,
-	     bool & rewrite_work)
+	     change_set::path_rearrangement & pr)
 {
-  rename_builder build(src, dst, app, work, man, rewrite_work);
-  walk_tree(src, build, false);
+  boost::shared_ptr<path_edit_consumer> pc = new_rearrangement_builder(pr);
+
+  N(directory_exists(src) || file_exists(src),
+    F("path %s does not exist") % src);
+
+  if (directory_exists(src))
+    pc->rename_dir(src, dst);
+  else 
+    {
+      I(file_exists(src));
+      pc->rename_file(src, dst);
+    }
 }
 
-
-struct 
-add_to_work_set
-{    
-  work_set & work;
-  explicit add_to_work_set(work_set & w) : work(w) {}
-  bool operator()(match_results<std::string::const_iterator> const & res) 
-  {
-    std::string action(res[1].first, res[1].second);
-    I(res.size() == 3 || res.size() == 4);
-    file_path path = file_path(std::string(res[2].first, res[2].second));
-    I(work.adds.find(path) == work.adds.end());
-    I(work.dels.find(path) == work.dels.end());
-    I(work.renames.find(path) == work.renames.end());
-    
-    if (action == "add")
-      {
-	N(res.size() == 3, F("extra junk on work entry for add of %s") % path);
-	work.adds.insert(path);
-      }
-    else if (action == "drop")
-      {
-	N(res.size() == 3, F("extra junk on work entry for drop of %s") % path);
-	work.dels.insert(path);
-      }
-    else if (action == "rename")
-      {
-	N(res.size() == 4, F("missing rename target for %s in work set") % path);
-	file_path dst = file_path(std::string(res[3].first, res[3].second));
-
-	for (path_set::const_iterator a = work.adds.begin();
-	     a != work.adds.end(); ++a)
-	  I(!(*a == dst));
-
-	for (path_set::const_iterator d = work.dels.begin();
-	     d != work.dels.end(); ++d)
-	  I(!(*d == dst));
-
-	for (rename_set::const_iterator r = work.renames.begin();
-	     r != work.renames.end(); ++r)
-	  I(!(r->second == dst));
-	    
-	work.renames.insert(make_pair(path, dst));
-      }
-    else 
-      throw oops("unknown action in work set: " + action);
-
-    return true;
-  }
-};
-
-void 
-read_work_set(data const & dat,
-	      work_set & work)
-{
-  regex expr("^(add|drop)\n ([^[:space:]].*)$");
-  regex_grep(add_to_work_set(work), dat(), expr, match_not_dot_newline);    
-  regex expr2("^(rename)\n ([^[:space:]].*)\n ([^[:space:]].*)$");
-  regex_grep(add_to_work_set(work), dat(), expr2, match_not_dot_newline);
-}
-
-void 
-write_work_set(data & dat,
-	       work_set const & work)
-{
-  ostringstream tmp;
-  for (path_set::const_iterator i = work.dels.begin();
-       i != work.dels.end(); ++i)
-    tmp << "drop\n " << (*i) << endl;
-
-  for (path_set::const_iterator i = work.adds.begin();
-       i != work.adds.end(); ++i)
-    tmp << "add\n " << (*i) << endl;
-
-  for (rename_set::const_iterator i = work.renames.begin();
-       i != work.renames.end(); ++i)
-    tmp << "rename\n " << i->first << "\n " << i->second << endl;
-
-  dat = tmp.str();
-}
 
 void 
 extract_path_set(manifest_map const & man,
@@ -366,36 +112,7 @@ extract_path_set(manifest_map const & man,
   paths.clear();
   for (manifest_map::const_iterator i = man.begin();
        i != man.end(); ++i)
-    paths.insert(path_id_pair(*i).path());
-}
-
-void 
-apply_work_set(work_set const & work,
-	       path_set & paths)
-{
-  for (path_set::const_iterator i = work.dels.begin();
-       i != work.dels.end(); ++i)
-    {
-      I(paths.find(*i) != paths.end());
-      paths.erase(*i);
-    }
-
-  for (path_set::const_iterator i = work.adds.begin();
-       i != work.adds.end(); ++i)
-    {
-      I(paths.find(*i) == paths.end());
-      paths.insert(*i);
-    }
-
-  for (rename_set::const_iterator i = work.renames.begin();
-       i != work.renames.end(); ++i)
-    {
-      I(paths.find(i->first) != paths.end());
-      I(paths.find(i->second) == paths.end());
-      paths.erase(i->first);
-      paths.insert(i->second);
-    }
-
+    paths.insert(manifest_entry_path(i));
 }
 
 // options map file

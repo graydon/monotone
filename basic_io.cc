@@ -167,11 +167,11 @@ void basic_io::printer::print_bra()
 
 void basic_io::printer::print_ket()
 {
+  I(offset >= step);
+  offset -= step;
   print_indent(); 
   out.put('}'); 
   out.put('\n');
-  I(offset >= step);
-  offset -= step;
 }
 
 void basic_io::printer::print_val(char c, std::string const & s)
@@ -203,6 +203,12 @@ void basic_io::printer::print_key(std::string const & s, bool eol)
   out.put(eol ? '\n' : ' ');
 }
 
+void basic_io::printer::print_sym(std::string const & s, bool eol)
+{
+  out.write(s.data(), s.size());
+  out.put(eol ? '\n' : ' ');
+}
+
 basic_io::scope::scope(basic_io::printer & p) 
   : cp(p)
 {
@@ -218,7 +224,9 @@ basic_io::scope::~scope()
 
 basic_io::parser::parser(tokenizer & t) 
   : tok(t) 
-{}
+{
+  advance();
+}
 
 void basic_io::parser::advance()
 {

@@ -9,7 +9,10 @@
 #include <map>
 #include <string>
 
+#include <boost/shared_ptr.hpp>
+
 #include "interner.hh"
+#include "manifest.hh"
 #include "vocab.hh"
 
 // a change_set is a text object. It has a precise, normalizable serial form
@@ -61,6 +64,7 @@ change_set
     path_item(tid p, ptype t, file_path const & n);
     path_item(path_item const & other);
     path_item const & operator=(path_item const & other);
+    bool operator==(path_item const & other) const;
   };
 
   typedef std::map<tid, path_item> path_state;
@@ -70,6 +74,26 @@ change_set
   path_rearrangement rearrangement;
   delta_map deltas;
 };
+
+struct
+path_edit_consumer
+{
+  virtual void add_file(file_path const & a) = 0;
+  virtual void delete_file(file_path const & d) = 0;
+  virtual void delete_dir(file_path const & d) = 0;
+  virtual void rename_file(file_path const & a, file_path const & b) = 0;
+  virtual void rename_dir(file_path const & a, file_path const & b) = 0;
+  virtual ~path_edit_consumer() {}
+};
+
+boost::shared_ptr<path_edit_consumer> 
+new_rearrangement_builder(change_set::path_rearrangement & pr);
+
+void
+play_back_rearrangement(change_set::path_rearrangement const & pr,
+			path_edit_consumer & pc);
+
+// merging and concatenating 
 
 void
 merge_change_sets(change_set const & a,
@@ -90,6 +114,16 @@ read_change_set(data const & dat,
 void
 write_change_set(change_set const & cs,
 		 data & dat);
+
+void
+apply_path_rearrangement(path_set const & old_ps,
+			 change_set::path_rearrangement const & pr,
+			 path_set & new_ps);
+
+void
+apply_change_set(manifest_map const & old_man,
+		 change_set const & cs,
+		 manifest_map & new_man);
 
 
 // basic_io access to printers and parsers

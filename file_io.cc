@@ -149,6 +149,13 @@ directory_exists(local_path const & p)
 }
 
 bool 
+directory_exists(file_path const & p) 
+{ 
+  return fs::exists(localized(p())) &&
+    fs::is_directory(localized(p())); 
+}
+
+bool 
 file_exists(file_path const & p) 
 { 
   return fs::exists(localized(p())); 

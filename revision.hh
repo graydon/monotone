@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 
+#include "app_state.hh"
 #include "change_set.hh"
 #include "vocab.hh"
 
@@ -64,37 +65,37 @@ revision_set
   edge_map edges;
 };
 
-revision_id const & 
+inline revision_id const & 
 edge_old_revision(edge_entry const & e) 
 { 
   return e.first; 
 }
 
-revision_id const & 
+inline revision_id const & 
 edge_old_revision(edge_map::const_iterator i) 
 { 
   return i->first; 
 }
 
-manifest_id const & 
+inline manifest_id const & 
 edge_old_manifest(edge_entry const & e) 
 { 
   return e.second.first; 
 }
 
-manifest_id const & 
+inline manifest_id const & 
 edge_old_manifest(edge_map::const_iterator i) 
 { 
   return i->second.first; 
 }
 
-change_set const & 
+inline change_set const & 
 edge_changes(edge_entry const & e) 
 { 
   return e.second.second; 
 }
 
-change_set const & 
+inline change_set const & 
 edge_changes(edge_map::const_iterator i) 
 { 
   return i->second.second; 
@@ -115,6 +116,20 @@ write_revision_set(revision_set const & rev,
 void
 write_revision_set(revision_set const & rev,
 		   revision_data & dat);
+
+// graph walking
+
+bool 
+find_common_ancestor(revision_id const & left,
+		     revision_id const & right,
+		     revision_id & anc,
+		     app_state & app);
+
+void 
+calculate_composite_change_set(revision_id const & ancestor,
+			       revision_id const & child,
+			       app_state & app,
+			       change_set & composed);
 
 
 // basic_io access to printers and parsers

@@ -280,10 +280,8 @@ public:
 
   // note: this section is ridiculous. please do something about it.
 
-  void get_head_candidates(std::string const & branch_encoded,
-			   std::vector< manifest<cert> > & branch_certs,
-			   std::vector< manifest<cert> > & ancestry_certs,
-			   std::vector< manifest<cert> > & disapproval_certs);
+  void get_heads(base64<cert_value> const & branch,
+		 std::set<revision_id> & heads);
 
   bool manifest_cert_exists(manifest<cert> const & cert);
   bool manifest_cert_exists(hexenc<id> const & hash);
@@ -314,8 +312,12 @@ public:
 			 std::vector< revision<cert> > & certs);
 
   void get_revision_cert(hexenc<id> const & hash,
-			revision<cert> & cert);
-
+			 revision<cert> & cert);
+  
+  void get_manifest_certs(manifest_id const & id, 
+			  cert_name const & name, 
+			  std::vector< manifest<cert> > & certs);
+  
   void get_manifest_cert(hexenc<id> const & hash,
 			 manifest<cert> & cert);
 

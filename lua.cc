@@ -748,7 +748,7 @@ lua_hooks::hook_merge3(data const & ancestor,
 
 bool 
 lua_hooks::hook_get_problem_solution(problem const & problem,
-				     std::string & solution)
+				     std::string & soln)
 {
   Lua ll(st);
 
@@ -769,7 +769,7 @@ lua_hooks::hook_get_problem_solution(problem const & problem,
 
   return 
     ll.call(2, 1)
-    .extract_str(solution)
+    .extract_str(soln)
     .ok();
 }
 

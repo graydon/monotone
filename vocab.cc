@@ -225,6 +225,7 @@ ostream & operator<<(ostream & o, dec<INNER> const & d)  \
 #undef ATOMIC
 #undef DECORATE
 
+template class revision<cert>;
 template class manifest<cert>;
 template class file<cert>;
 

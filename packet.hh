@@ -28,7 +28,7 @@
 // terminal or inclusion in an email / netnews post. they can be edited with
 // vi, filtered with grep, and concatenated with cat. 
 //
-// there are currently 9 types of packets, though this can grow without hurting
+// there are currently 8 types of packets, though this can grow without hurting
 // anyone's feelings. if there's a backwards compatibility problem, just introduce
 // a new packet type.
 
@@ -50,8 +50,9 @@ struct packet_consumer
   virtual void consume_manifest_cert(manifest<cert> const & t) = 0;  
 
   virtual void consume_revision_data(revision_id const & ident, 
-				    revision_data const & dat) = 0;
-  
+				     revision_data const & dat) = 0;
+  virtual void consume_revision_cert(revision<cert> const & t) = 0;  
+
   virtual void consume_public_key(rsa_keypair_id const & ident,
 				  base64< rsa_pub_key > const & k) = 0;  
   virtual void consume_private_key(rsa_keypair_id const & ident,
@@ -80,7 +81,8 @@ struct packet_writer : public packet_consumer
   virtual void consume_manifest_cert(manifest<cert> const & t);
 
   virtual void consume_revision_data(revision_id const & ident, 
-				    revision_data const & dat);
+				     revision_data const & dat);
+  virtual void consume_manifest_cert(revision<cert> const & t);
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
 				  base64< rsa_pub_key > const & k);
@@ -122,11 +124,11 @@ struct packet_db_writer : public packet_consumer
   void consume_constructable_manifest_delta(manifest_id const & id_old, 
 					    manifest_id const & id_new,
 					    manifest_delta const & del);
+  virtual void consume_manifest_cert(manifest<cert> const & t);  
 
   virtual void consume_revision_data(revision_id const & ident, 
-				    revision_data const & dat);
-
-  virtual void consume_manifest_cert(manifest<cert> const & t);  
+				     revision_data const & dat);
+  virtual void consume_manifest_cert(revision<cert> const & t);
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
 				  base64< rsa_pub_key > const & k);

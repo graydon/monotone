@@ -51,6 +51,7 @@ extern std::string const book_keeping_dir;
 bool book_keeping_file(local_path const & path);
 
 bool directory_exists(local_path const & path);
+bool directory_exists(file_path const & path);
 bool file_exists(local_path const & path);
 bool file_exists(file_path const & path);
 

@@ -123,34 +123,6 @@ CREATE VIEW trusted_revision_certs AS
 	WHERE trust == 1
 	;
 
-CREATE VIEW manifest_certs_with_trust AS
-	SELECT 
-		id, name, value, 
-		trusted("manifest", hash, id, name, value, keypair, signature) as trust
-	FROM manifest_certs
-	GROUP BY id, name, value
-	;
-
-CREATE VIEW trusted_manifest_certs AS
-	SELECT id, name, value 
-	FROM manifest_certs_with_trust
-	WHERE trust == 1
-	;
-
-CREATE VIEW file_certs_with_trust AS
-	SELECT 
-		id, name, value, 
-		trusted("file", hash, id, name, value, keypair, signature) as trust
-	FROM file_certs
-	GROUP BY id, name, value
-	;
-
-CREATE VIEW trusted_file_certs AS
-	SELECT id, name, value 
-	FROM file_certs_with_trust
-	WHERE trust == 1
-	;
-
 CREATE VIEW trusted_parents_in_branch AS
 	SELECT id, value
 	FROM trusted_revision_certs

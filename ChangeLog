@@ -1,3 +1,19 @@
+2004-08-28  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (unit_tests): Split out working parts.
+	* basic_io.{cc,hh}: Minor fixes. 
+	* cert.{cc,hh}: Fixes, remove major algorithms.
+	* revision.{cc,hh}: Rewrite algorithms from cert.cc.
+	* change_set.{cc,hh}: Extensive surgery, unit tests.
+	* database.{cc,hh}: Minor fixes.
+	* file_io.{cc,hh}: Likewise.
+	* lua.cc: Likewise.
+	* packet.{cc,hh}: Teach about revisions.
+	* schema.sql: Drop some optimistic tables.
+	* unit_tests.{cc,hh}: Add revision, change_set tests.
+	* vocab.cc: Instantiate revision<cert>.
+	* work.{cc,hh}: Rewrite in terms of path_rearrangement.
+
 2004-08-17  graydon hoare  <graydon@pobox.com>
 
 	* database.cc: Simplified.
