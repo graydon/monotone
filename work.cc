@@ -70,9 +70,9 @@ build_addition(file_path const & path,
   change_set::path_rearrangement pr_new, pr_concatenated;
   change_set cs_new;
 
-  path_set tmp, ps;
-  extract_path_set(man, tmp);
-  apply_path_rearrangement(tmp, pr, ps);    
+  path_set ps;
+  extract_path_set(man, ps);
+  apply_path_rearrangement(pr, ps);    
 
   addition_builder build(app, pr_new, ps);
   walk_tree(path, build);
@@ -88,9 +88,9 @@ known_preimage_path(file_path const & p,
                     change_set::path_rearrangement const & pr,
                     bool & path_is_directory)
 {
-  path_set tmp, ps;
-  extract_path_set(m, tmp);
-  apply_path_rearrangement(tmp, pr, ps);    
+  path_set ps;
+  extract_path_set(m, ps);
+  apply_path_rearrangement(pr, ps);    
 
   std::string path_as_dir = p() + "/";
   for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)

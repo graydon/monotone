@@ -166,14 +166,12 @@ check_sane_history(revision_id const & child_id,
                   changesets.insert(std::make_pair(old_id, old_to_child_changes_p));
                   // and check that it works:
 
-                  manifest_map m_old;
-                  if (!null_id(old_id))
-                    db.get_manifest(m_old_id, m_old);
+                  manifest_map purported_m_child;
                   // The null revision has empty manifest, which is the
                   // default.
-                  manifest_map purported_m_child;
-                  apply_change_set(m_old, *old_to_child_changes_p,
-                                   purported_m_child);
+                  if (!null_id(old_id))
+                    db.get_manifest(m_old_id, purported_m_child);
+                  apply_change_set(*old_to_child_changes_p, purported_m_child);
                   I(purported_m_child == m_child);
                 }
             }
@@ -1278,7 +1276,7 @@ void
 parse_edge(basic_io::parser & parser,
            edge_map & es)
 {
-  change_set cs;
+  boost::shared_ptr<change_set> cs(new change_set());
   manifest_id old_man;
   revision_id old_rev;
   std::string tmp;
@@ -1291,7 +1289,7 @@ parse_edge(basic_io::parser & parser,
   parser.hex(tmp);
   old_man = manifest_id(tmp);
   
-  parse_change_set(parser, cs);
+  parse_change_set(parser, *cs);
 
   es.insert(std::make_pair(old_rev, std::make_pair(old_man, cs)));
 }

@@ -84,7 +84,7 @@ init_match_table(string const & a,
 }
 
 
-static inline void 
+static inline bool
 find_match(match_table const & matches, 
 	   vector<insn> & delta,
 	   adler32 const & rolling, 
@@ -100,7 +100,7 @@ find_match(match_table const & matches,
 
   // maybe we haven't seen it at all?
   if (e == matches.end())
-      return;
+      return false;
 
   string::size_type tpos = e->second.first;
   string::size_type tlen = e->second.second;
@@ -110,7 +110,7 @@ find_match(match_table const & matches,
 
   // maybe it's a false match?
   if (memcmp(a.data() + tpos, b.data() + bpos, tlen) != 0)
-    return;
+    return false;
   
   apos = tpos;
   alen = tlen;
@@ -154,7 +154,7 @@ find_match(match_table const & matches,
     }
   
   I(memcmp(a.data() + apos, b.data() + bpos, alen) == 0);
-  return;
+  return true;
 }
 
 static inline void 
@@ -200,18 +200,21 @@ compute_delta_insns(string const & a,
     {
       string::size_type apos = 0, alen = 1, badvance = 1;
 
-      find_match(matches, delta, rolling, a, b, lo, apos, alen, badvance);
+      bool found_match = find_match(matches, delta, rolling, a, b, lo, apos, alen, badvance);
 
-      if (alen < blocksz && 
-	  (apos + alen < a.size()))
-	{
-	  I(alen == 1);
-	  I(lo >= 0);
-	  I(lo < b.size());
+      if (found_match)
+        {
+	  copy_insn(delta, apos, alen);
+        }
+      else
+	{ 
+          I(apos + alen <= a.size());
+          I(alen == 1);
+          I(alen < blocksz);
+          I(lo >= 0);
+          I(lo < b.size());
 	  insert_insn(delta, b[lo]);
 	}
-      else
-	  copy_insn(delta, apos, alen);
 
       string::size_type next = lo;
       for (; next < lo + badvance; ++next)

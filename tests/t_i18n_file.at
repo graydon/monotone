@@ -12,14 +12,14 @@ JAPANESE_EUC_JP=`printf "\xA4\xC6\xA4\xB9\xA4\xC8"`
 
 AT_CHECK(mkdir tmp)
 AT_CHECK(touch "tmp/file name with spaces", [], [ignore], [ignore])
-AT_CHECK(touch "tmp/file+name-with_funny@symbols%etc:", [], [ignore], [ignore])
+AT_CHECK(touch "tmp/file+name-with_funny@symbols%etc", [], [ignore], [ignore])
 AT_CHECK(touch "tmp/$EUROPEAN_UTF8", [], [ignore], [ignore])
 AT_CHECK(touch "tmp/$JAPANESE_UTF8", [], [ignore], [ignore])
 AT_CHECK(touch "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
 AT_CHECK(touch "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE add "tmp/file name with spaces", [], [ignore], [ignore])
-AT_CHECK(MONOTONE add "tmp/file+name-with_funny@symbols%etc:", [], [ignore], [ignore])
+AT_CHECK(MONOTONE add "tmp/file+name-with_funny@symbols%etc", [], [ignore], [ignore])
 
 # add some files with UTF8 names
 export LANG=en_US.utf8

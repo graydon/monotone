@@ -231,11 +231,17 @@ used to compare a working copy with a specific revision or to compare
 two specific revisions. It will likely apply to other commands in the
 future.
 .TP
-\fB--message=<log message>\fP
+\fB--message=\fI<log message>\fP
 Use the given message as the changelog when committing a new revision
 rather than invoking the log message editor. Currently this option only
 applies to the commit command but it may also apply to the comment
 command in the future.
+.TP
+\fB--root=\fI<root dir>\fP
+Stop the search for a working copy (containing the @file{MT} directory)
+at the specified root directory rather than at the physical root of the
+filesystem.
+
 .SH ENVIRONMENT
 .TP
 \fBEDITOR\fP

@@ -33,22 +33,25 @@ public:
   bool rcfiles;
   options_map options;
   utf8 message;
+  utf8 search_root;
   std::vector<utf8> revision_selectors;
   std::vector<utf8> extra_rcfiles;
   path_set restrictions;
   file_path relative_directory;
+  bool found_working_copy;
 
-  void initialize(bool working_copy);
-  void initialize(std::string const & dir);
+  void allow_working_copy();
+  void require_working_copy();
+  void create_working_copy(std::string const & dir);
 
   file_path prefix(utf8 const & path);
-  void add_restriction(utf8 const & path);
+  void set_restriction(path_set const & valid_paths, std::vector<utf8> const & paths);
   bool restriction_includes(file_path const & path);
 
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
-
+  void set_root(utf8 const & root);
   void set_message(utf8 const & message);
   void add_revision(utf8 const & selector);
 

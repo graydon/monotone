@@ -1,12 +1,6 @@
-AT_SETUP([(normal) warn on bad restriction])
+AT_SETUP([warn on bad restriction])
 MONOTONE_SETUP
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
-AT_CHECK(MONOTONE diff bogusdir1 bogusdir2, [], [ignore], [stderr])
-AT_CHECK(grep -q bogusdir1 stderr)
-AT_CHECK(grep -q bogusdir2 stderr)
-AT_CHECK(grep -q bogusdir3 stderr, [1])
+AT_CHECK(MONOTONE diff bogusdir1 bogusdir2, [1], [ignore], [stderr])
 
 AT_CLEANUP

@@ -15,11 +15,16 @@ AT_TESTED([monotone])
 # some command abbreviations to make life easier
 
 # Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
-m4_define([MONOTONE], [$PREEXECUTE monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net])
-m4_define([RAW_MONOTONE], [$PREEXECUTE monotone])
-m4_define([SHA1], [monotone identify $1])
+m4_define([MONOTONE], [$PREEXECUTE monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net --root=$_ROOT_DIR])
+m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
+m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
-m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
+m4_define([WORKING_REVISION], [monotone --norc cat revision | monotone --norc identify])
+m4_define([CANONICALISE], [
+if test "$OSTYPE" == "msys"; then
+  dos2unix -q -o $1
+fi
+])
 
 # the MONOTONE_SETUP macro deploys the standard lua hooks and loads the 
 # standard testing key, which we use for further tests.
@@ -27,7 +32,7 @@ m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
 m4_define([MONOTONE_SETUP], [
 
 # Save the PWD so MONOTONE macro can refer back to it
-_ROOT_DIR=$PWD
+_ROOT_DIR=`pwd -P`
 
 AT_DATA(test_keys, [@<:@pubkey tester@test.net@:>@
 MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
@@ -291,17 +296,33 @@ end
 m4_define([MONOTONE2], MONOTONE --db=test2.db)
 m4_define([MONOTONE3], MONOTONE --db=test3.db)
 
+m4_define([NETSYNC_KILL], [
+if test "$OSTYPE" == "msys"; then
+  ps |awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill " $a);}'
+  # MinGW has no killall.  The weird a=1 thing is to avoid autotest treating $1 as its own parameter
+else
+  killall monotone 2>/dev/null
+fi
+])
+m4_define([NETSYNC_KILLHARD], [
+if test "$OSTYPE" == "msys"; then
+  ps |awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL " $a);}'
+else
+  killall -KILL monotone 2>/dev/null
+fi
+])
+
 # run as NETSYNC_SERVE_START(collection name)
 m4_define([NETSYNC_SERVE_START], [
-killall -KILL monotone 2> /dev/null
+NETSYNC_KILLHARD
 MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $1 &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
 m4_define([NETSYNC_SERVE_STOP], [
-killall monotone 2> /dev/null
+NETSYNC_KILL
 sleep 1
-killall -KILL monotone 2> /dev/null
+NETSYNC_KILLHARD
 ])
 # run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name)
 # first argument chooses whether to use the 2nd or 3rd database
@@ -429,6 +450,7 @@ m4_include(tests/t_rename_dir_patch.at)
 m4_include(tests/t_delete_dir_patch.at)
 m4_include(tests/t_revert_dirs.at)
 m4_include(tests/t_revert_rename.at)
+m4_include(tests/t_revert_unchanged.at)
 m4_include(tests/t_cdiff.at)
 m4_include(tests/t_no_rename_overwrite.at)
 m4_include(tests/t_checkout_noop_on_fail.at)
@@ -442,6 +464,17 @@ m4_include(tests/t_need_mt_revision.at)
 m4_include(tests/t_update_null_revision.at)
 m4_include(tests/t_branch_checkout.at)
 m4_include(tests/t_load_into_existing.at)
+m4_include(tests/t_automate_version.at)
+m4_include(tests/t_automate_heads.at)
+m4_include(tests/t_merge_normalization_edge_case.at)
+m4_include(tests/t_undo_update.at)
+m4_include(tests/t_change_empty_file.at)
+m4_include(tests/t_largish_file.at)
+m4_include(tests/t_add_intermediate_MT_path.at)
+m4_include(tests/t_merge_3.at)
+m4_include(tests/t_merge_4.at)
+m4_include(tests/t_db_missing.at)
+m4_include(tests/t_fsck.at)
 m4_include(tests/t_automate_version.at)
 m4_include(tests/t_automate_heads.at)
 m4_include(tests/t_merge_normalization_edge_case.at)

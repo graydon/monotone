@@ -97,6 +97,8 @@ class database
 
   int count(std::string const & table);
 
+  void get_ids(std::string const & table, std::set< hexenc<id> > & ids); 
+
   void get(hexenc<id> const & new_id,
            base64< gzip<data> > & dat,
            std::string const & table);
@@ -191,6 +193,11 @@ public:
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
   bool revision_exists(revision_id const & id);
+
+  void get_file_ids(std::set<file_id> & ids);
+  void get_manifest_ids(std::set<manifest_id> & ids);
+  void get_revision_ids(std::set<revision_id> & ids);
+
   void set_app(app_state * app);
   
   // get plain version if it exists, or reconstruct version

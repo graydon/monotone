@@ -1187,7 +1187,7 @@ $ monotone --db=~/jim.db list keys
 @end group
 @end smallexample
 
-The hexidecimal string printed out before each key name is a
+The hexadecimal string printed out before each key name is a
 @emph{fingerprint} of the key, and can be used to verify that the key
 you have stored under a given name is the one you intended to
 store. Monotone will never permit one database to store two keys with
@@ -1204,13 +1204,18 @@ need to repeatedly be prompted for it:
 
 @smallexample
 @group
-$ cat >~/.monotonerc
+$ cat >>~/.monotonerc
 function get_passphrase(keypair_id)
   return "jimsekret"
 end
 ^D
 @end group
 @end smallexample
+
+Note that we are appending the new hook to the (possibly existing) file.
+We do this to avoid loosing other changes by mistake; therefore, be sure
+to check that no other @code{get_passphrase} function appears in the
+configuration file.
 
 Abe and Beth do the same, with their secret passphrases.
 
@@ -2140,7 +2145,7 @@ familiarize yourself with its operation.
 @section Selectors
 
 Revisions can be specified on the monotone command line, precisely, by
-entering the entire 40-character hexidecimal @sc{sha1} code. This can
+entering the entire 40-character hexadecimal @sc{sha1} code. This can
 be cumbersome, so monotone also allows a more general syntax called
 ``selectors'' which is less precise but more ``human friendly''. Any
 command which expects a precise revision ID can also accept a selector
@@ -2307,19 +2312,19 @@ working copy. Because of this, a search is done to find the @file{MT}
 directory in case a command is executed from within a subdirectory of a
 working copy. Before a command is executed, the search for a working
 copy directory is done by traversing parent directories until an
-@file{MT} directory is found. Upon finding an @file{MT} directory, the
-@file{MT/options} file is read for default options.
+@file{MT} directory is found or the filesystem root is reached. Upon
+finding an @file{MT} directory, the @file{MT/options} file is read for
+default options. The @option{--root} option may be used to stop the 
+search early, before reaching the root of the physical filesystem.
 
 Many monotone commands don't require a working copy and will simply
 proceed with no default options if no @file{MT} directory is found.
 However, some monotone commands do require a working copy and will fail
 if no @file{MT} directory can be found.
 
-The @command{checkout} and @command{setup} commands currently do not
-search for a working copy. These commands create a @i{new working copy}
-and initialize the @file{MT/options} file based on their command line
-options. These commands may be changed to search for a working copy and
-read default options in the future.
+The @command{checkout} and @command{setup} commands create a @i{new
+working copy} and initialize a new @file{MT/options} file based on their
+current option settings.
 
 
 @page
@@ -5394,6 +5399,11 @@ Use the given message as the changelog when committing a new revision
 rather than invoking the log message editor. Currently this option only
 applies to the commit command but it may also apply to the comment
 command in the future.
+
+@item @b{--root=}@i{<root dir>}
+Stop the search for a working copy (containing the @file{MT} directory)
+at the specified root directory rather than at the physical root of the
+filesystem.
 
 @comment TROFF INPUT: .SH ENVIRONMENT
 

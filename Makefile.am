@@ -8,7 +8,7 @@ MOST_SOURCES =								\
          xdelta.cc ui.cc schema_migration.cc				\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
-	 change_set.cc mt_version.cc automate.cc			\
+	 change_set.cc mt_version.cc automate.cc fsck.cc		\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -19,7 +19,8 @@ MOST_SOURCES =								\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
-         mkstemp.hh mt_version.hh automate.hh
+	 mkstemp.hh mt_version.hh automate.hh fsck.hh smap.hh		\
+	 gettext.h
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -134,7 +135,7 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 # flags
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -Wall 
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -Wall $(SQLITE_CPPFLAGS)
 AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
 AM_LDFLAGS = 
 
@@ -167,7 +168,7 @@ if STATIC_BOOST
                      @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
 else
   monotone_LDADD = lib3rdparty.a
-  unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
+  unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework$(BOOST_SUFFIX)
 endif
 
 monotone_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)

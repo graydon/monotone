@@ -111,7 +111,7 @@ verify(local_path & val)
         F("empty path component in '%s'") % val);
 
       N((*i != ".."),
-	F("prohibited path component '%s' in '%s'") % *i % val);
+        F("prohibited path component '%s' in '%s'") % *i % val);
 
       string::size_type pos = i->find_first_of(constants::illegal_path_bytes);
       N(pos == string::npos,
@@ -127,9 +127,6 @@ verify(local_path & val)
   
   val.ok = true;
 }
-
-// fwd declare..
-bool book_keeping_file(local_path const & path);
 
 static inline void 
 verify(file_path & val)
@@ -237,12 +234,14 @@ static void test_file_path_verification()
 {
   char const * baddies [] = {"../escape",
                              "foo/../../escape",
-                             "foo//nonsense",
                              "/rooted",
+                             "foo//nonsense",
 #ifdef _WIN32
                              "c:\\windows\\rooted",
                              "c:/windows/rooted",
                              "c:thing",
+                             "//unc/share",
+                             "//unc",
 #endif
                              0 };
   
@@ -258,13 +257,13 @@ static void test_file_path_verification()
     }
   
   char const * goodies [] = {"unrooted", 
-			     "unrooted.txt",
-			     "fun_with_underscore.png",
-			     "fun-with-hyphen.tiff", 
- 			     "unrooted/../unescaping",
-			     "unrooted/general/path",
+                             "unrooted.txt",
+                             "fun_with_underscore.png",
+                             "fun-with-hyphen.tiff", 
+                             "unrooted/../unescaping",
+                             "unrooted/general/path",
                              "here/..",
-			     0 };
+                             0 };
 
   for (char const ** c = goodies; *c; ++c)
     BOOST_CHECK_NOT_THROW(file_path p(*c), informative_failure);

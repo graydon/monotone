@@ -1,0 +1,31 @@
+AT_SETUP([largish file])
+MONOTONE_SETUP
+
+# Check that we can handle a 15 meg file in the database
+
+# This is only 'largish" -- we should check for >4 gigabytes too, for
+# a real "large file", but that would be kind of rude from the test
+# suite.
+
+AT_CHECK(dd if=/dev/zero of=largish bs=1000 count=15000, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE add largish, [], [ignore], [ignore])
+COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
+
+AT_CHECK(mv largish largish.orig)
+
+AT_CHECK(echo foo > largish)
+AT_CHECK(cat largish.orig >>largish)
+AT_CHECK(echo bar >>largish)
+COMMIT(testbranch)
+MOD_R=`BASE_REVISION`
+
+AT_CHECK(mv largish largish.modified)
+
+AT_CHECK(MONOTONE checkout $BASE_R base, [], [ignore], [ignore])
+AT_CHECK(cmp largish.orig base/largish)
+AT_CHECK(MONOTONE checkout $MOD_R modified, [], [ignore], [ignore])
+AT_CHECK(cmp largish.modified modified/largish)
+
+AT_CLEANUP

@@ -153,6 +153,19 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
+static void
+sqlite3_unpack_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
+{
+  if (nargs != 1)
+    {
+      sqlite3_result_error(f, "need exactly 1 arg to unpack()", -1);
+      return;
+    }
+  data unpacked;
+  unpack(base64< gzip<data> >(string(sqlite3_value_text_s(args[0]))), unpacked);
+  sqlite3_result_blob(f, unpacked().c_str(), unpacked().size(), SQLITE_TRANSIENT);
+}
+
 void 
 database::set_app(app_state * app)
 {
@@ -164,19 +177,23 @@ check_sqlite_format_version(fs::path const & filename)
 {
   if (fs::exists(filename))
     {
+      N(!fs::is_directory(filename), 
+        F("database %s is a directory\n") % filename.string());
+ 
       // sqlite 3 files begin with this constant string
       // (version 2 files begin with a different one)
       std::string version_string("SQLite format 3");
 
       std::ifstream file(filename.string().c_str());
       N(file, F("unable to probe database version in file %s") % filename.string());
+
       for (std::string::const_iterator i = version_string.begin();
            i != version_string.end(); ++i)
         {
           char c;
           file.get(c);
-          N(c == *i, F("database is not an sqlite version 3 file, "
-                       "try dump and reload"));            
+          N(c == *i, F("database %s is not an sqlite version 3 file, "
+                       "try dump and reload") % filename.string());            
         }
     }
 }
@@ -187,16 +204,16 @@ database::sql(bool init)
 {
   if (! __sql)
     {
+      N(!filename.empty(), F("no database specified"));
+
       if (! init)
         {
-          if (filename.string() == "")
-            throw informative_failure(string("no database specified"));
-          else if (! fs::exists(filename))
-            throw informative_failure(string("database ") + filename.string() +
-                                      string(" does not exist"));
+          N(fs::exists(filename), 
+            F("database %s does not exist") % filename.string());
+          N(!fs::is_directory(filename), 
+            F("database %s is a directory") % filename.string());
         }
-      N(filename.string() != "",
-        F("need database name"));
+
       check_sqlite_format_version(filename);
       int error;
       error = sqlite3_open(filename.string().c_str(), &__sql);
@@ -417,7 +434,6 @@ database::rehash()
 {
   transaction_guard guard(*this);
   ticker mcerts("mcerts", "m", 1);
-  ticker fcerts("fcerts", "f", 1);
   ticker pubkeys("pubkeys", "+", 1);
   ticker privkeys("privkeys", "!", 1);
   
@@ -452,7 +468,7 @@ database::rehash()
       }
   }
 
-{
+  {
     // rehash all privkeys
     results res;
     fetch(res, 2, any_rows, "SELECT id, keydata FROM private_keys");
@@ -787,6 +803,19 @@ database::count(string const & table)
   return lexical_cast<int>(res[0][0]);  
 }
 
+void
+database::get_ids(string const & table, set< hexenc<id> > & ids) 
+{
+  results res;
+
+  fetch(res, one_col, any_rows, "SELECT id FROM %q", table.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      ids.insert(hexenc<id>(res[i][0]));
+    }
+}
+
 void 
 database::get(hexenc<id> const & ident,
               base64< gzip<data> > & dat,
@@ -835,7 +864,6 @@ database::put(hexenc<id> const & ident,
   execute("INSERT INTO '%q' VALUES('%q', '%q')", 
           table.c_str(), ident().c_str(), dat().c_str());
 }
-
 void 
 database::put_delta(hexenc<id> const & ident,
                     hexenc<id> const & base,
@@ -1051,6 +1079,16 @@ database::get_version(hexenc<id> const & ident,
             }
 
 
+          if (!vcache.exists(curr))
+            {
+              string tmp;
+              base64< gzip<data> > tmp_packed;
+              app->finish(tmp);
+              pack(data(tmp), tmp_packed);
+              vcache.put(curr, tmp_packed);
+            }
+
+
           L(F("following delta %s -> %s\n") % curr % nxt);
           base64< gzip<delta> > del_packed;
           get_delta(nxt, curr, del_packed, delta_table);
@@ -1159,6 +1197,34 @@ database::revision_exists(revision_id const & id)
   return exists(id.inner(), "revisions");
 }
 
+void 
+database::get_file_ids(set<file_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("files", tmp);
+  get_ids("file_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_manifest_ids(set<manifest_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("manifests", tmp);
+  get_ids("manifest_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_revision_ids(set<revision_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("revisions", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
 
 void 
 database::get_file_version(file_id const & id,
@@ -1597,6 +1663,12 @@ database::install_functions(app_state * app)
   I(sqlite3_create_function(sql(), "unbase64", -1, 
                            SQLITE_UTF8, NULL,
                            &sqlite3_unbase64_fn, 
+                           NULL, NULL) == 0);
+
+
+  I(sqlite3_create_function(sql(), "unpack", -1, 
+                           SQLITE_UTF8, NULL,
+                           &sqlite3_unpack_fn, 
                            NULL, NULL) == 0);
 }
 
