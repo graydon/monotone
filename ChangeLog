@@ -1,3 +1,9 @@
+2004-11-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_initfork.at: Remove file; redundant with
+	t_merge2_add.at.
+	* testsuite.at: Don't call it.
+
 2004-11-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Committing Work): Remove mistakenly added
