@@ -14,7 +14,7 @@
 ** Most of the code in this file may be omitted by defining the
 ** SQLITE_OMIT_VACUUM macro.
 **
-** $Id: vacuum.c,v 1.33 2004/10/30 20:23:09 drh Exp $
+** $Id: vacuum.c,v 1.35 2004/11/22 13:35:41 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -97,7 +97,6 @@ int sqlite3RunVacuum(char **pzErrMsg, sqlite3 *db){
   const char *zFilename;  /* full pathname of the database file */
   int nFilename;          /* number of characters  in zFilename[] */
   char *zTemp = 0;        /* a temporary file in same directory as zFilename */
-  int i;                  /* Loop counter */
   Btree *pMain;           /* The database being vacuumed */
   Btree *pTemp;
   char *zSql = 0;
@@ -129,11 +128,19 @@ int sqlite3RunVacuum(char **pzErrMsg, sqlite3 *db){
     goto end_of_vacuum;
   }
   strcpy(zTemp, zFilename);
-  i = 0;
+
+  /* The randomName() procedure in the following loop uses an excellent
+  ** source of randomness to generate a name from a space of 1.3e+31 
+  ** possibilities.  So unless the directory already contains on the order
+  ** of 1.3e+31 files, the probability that the following loop will
+  ** run more than once or twice is vanishingly small.  We are certain
+  ** enough that this loop will always terminate (and terminate quickly)
+  ** that we don't even bother to set a maximum loop count.
+  */
   do {
     zTemp[nFilename] = '-';
     randomName((unsigned char*)&zTemp[nFilename+1]);
-  } while( i<10 && sqlite3OsFileExists(zTemp) );
+  } while( sqlite3OsFileExists(zTemp) );
 
   /* Attach the temporary database as 'vacuum_db'. The synchronous pragma
   ** can be set to 'off' for this file, as it is not recovered if a crash
@@ -168,14 +175,17 @@ int sqlite3RunVacuum(char **pzErrMsg, sqlite3 *db){
   */
   rc = execExecSql(db, 
       "SELECT 'CREATE TABLE vacuum_db.' || substr(sql,14,100000000) "
-      "  FROM sqlite_master WHERE type='table' "
-      "UNION ALL "
-      "SELECT 'CREATE INDEX vacuum_db.' || substr(sql,14,100000000) "
-      "  FROM sqlite_master WHERE sql LIKE 'CREATE INDEX %' "
-      "UNION ALL "
+      "  FROM sqlite_master WHERE type='table'");
+  if( rc!=SQLITE_OK ) goto end_of_vacuum;
+  rc = execExecSql(db, 
+      "SELECT 'CREATE INDEX vacuum_db.' || substr(sql,14,100000000)"
+      "  FROM sqlite_master WHERE sql LIKE 'CREATE INDEX %' ");
+  if( rc!=SQLITE_OK ) goto end_of_vacuum;
+  rc = execExecSql(db, 
       "SELECT 'CREATE UNIQUE INDEX vacuum_db.' || substr(sql,21,100000000) "
-      "  FROM sqlite_master WHERE sql LIKE 'CREATE UNIQUE INDEX %'"
-      "UNION ALL "
+      "  FROM sqlite_master WHERE sql LIKE 'CREATE UNIQUE INDEX %'");
+  if( rc!=SQLITE_OK ) goto end_of_vacuum;
+  rc = execExecSql(db, 
       "SELECT 'CREATE VIEW vacuum_db.' || substr(sql,13,100000000) "
       "  FROM sqlite_master WHERE type='view'"
   );

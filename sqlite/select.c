@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.214 2004/11/16 15:50:20 danielk1977 Exp $
+** $Id: select.c,v 1.217 2004/11/23 01:47:30 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -298,7 +298,6 @@ void sqlite3SelectDelete(Select *p){
   sqlite3ExprDelete(p->pHaving);
   sqlite3ExprListDelete(p->pOrderBy);
   sqlite3SelectDelete(p->pPrior);
-  sqliteFree(p->zSelect);
   sqliteFree(p);
 }
 
@@ -2276,6 +2275,12 @@ int sqlite3Select(
   /* If there is are a sequence of queries, do the earlier ones first.
   */
   if( p->pPrior ){
+#ifndef SQLITE_OMIT_CURSOR
+    if( p->pFetch ){
+      sqlite3ErrorMsg(pParse, "cursors cannot be used on compound queries");
+      goto select_end;
+    }
+#endif
     return multiSelect(pParse, p, eDest, iParm, aff);
   }
 #endif
@@ -2359,6 +2364,26 @@ int sqlite3Select(
   ){
     goto select_end;
   }
+
+  /* We cannot use a SQL cursor on a join or on a DISTINCT query
+  */
+#ifndef SQLITE_OMIT_CURSOR
+  if( p->pFetch ){
+    if( p->isDistinct ){
+      sqlite3ErrorMsg(pParse, "cursors cannot be used on DISTINCT queries");
+      goto select_end;
+    }
+    if( pTabList->nSrc>0 ){
+      sqlite3ErrorMsg(pParse, "cursors cannot be used on joins");
+      goto select_end;
+    }
+    if( pTabList->a[0].pSelect ){
+      sqlite3ErrorMsg(pParse, "cursor cannot be used with nested queries "
+          "or views");
+      goto select_end;
+    }
+  }
+#endif
 
   /* Begin generating code.
   */
@@ -2522,8 +2547,8 @@ int sqlite3Select(
 
   /* Begin the database scan
   */
-  pWInfo = sqlite3WhereBegin(pParse, pTabList, pWhere, 0, 
-                            pGroupBy ? 0 : &pOrderBy, -1);
+  pWInfo = sqlite3WhereBegin(pParse, pTabList, pWhere, 0,
+                             pGroupBy ? 0 : &pOrderBy, p->pFetch);
   if( pWInfo==0 ) goto select_end;
 
   /* Use the standard inner loop if we are not dealing with

@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.170 2004/11/12 03:56:15 drh Exp $
+** $Id: expr.c,v 1.175 2004/12/07 15:41:49 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -179,7 +179,7 @@ static int codeCompare(
 ** for this node is obtained from sqliteMalloc().  The calling function
 ** is responsible for making sure the node eventually gets freed.
 */
-Expr *sqlite3Expr(int op, Expr *pLeft, Expr *pRight, Token *pToken){
+Expr *sqlite3Expr(int op, Expr *pLeft, Expr *pRight, const Token *pToken){
   Expr *pNew;
   pNew = sqliteMalloc( sizeof(Expr) );
   if( pNew==0 ){
@@ -220,6 +220,9 @@ Expr *sqlite3RegisterExpr(Parse *pParse, Token *pToken){
     return 0;
   }
   p = sqlite3Expr(TK_REGISTER, 0, 0, pToken);
+  if( p==0 ){
+    return 0;  /* Malloc failed */
+  }
   depth = atoi(&pToken->z[1]);
   if( depth>=0 ){
     p->iTable = pParse->nMem++;
@@ -389,7 +392,7 @@ Expr *sqlite3ExprDup(Expr *p){
   if( pNew==0 ) return 0;
   memcpy(pNew, p, sizeof(*pNew));
   if( p->token.z!=0 ){
-    pNew->token.z = sqliteStrDup(p->token.z);
+    pNew->token.z = sqliteStrNDup(p->token.z, p->token.n);
     pNew->token.dyn = 1;
   }else{
     assert( pNew->token.z==0 );
@@ -500,10 +503,10 @@ Select *sqlite3SelectDup(Select *p){
   pNew->pPrior = sqlite3SelectDup(p->pPrior);
   pNew->nLimit = p->nLimit;
   pNew->nOffset = p->nOffset;
-  pNew->zSelect = 0;
   pNew->iLimit = -1;
   pNew->iOffset = -1;
   pNew->ppOpenTemp = 0;
+  pNew->pFetch = 0;
   return pNew;
 }
 
@@ -1541,6 +1544,31 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
       }
     }
     break;
+  }
+}
+
+/*
+** Generate code that evalutes the given expression and leaves the result
+** on the stack.  See also sqlite3ExprCode().
+**
+** This routine might also cache the result and modify the pExpr tree
+** so that it will make use of the cached result on subsequent evaluations
+** rather than evaluate the whole expression again.  Trivial expressions are
+** not cached.  If the expression is cached, its result is stored in a 
+** memory location.
+*/
+void sqlite3ExprCodeAndCache(Parse *pParse, Expr *pExpr){
+  Vdbe *v = pParse->pVdbe;
+  int iMem;
+  int addr1, addr2;
+  if( v==0 ) return;
+  addr1 = sqlite3VdbeCurrentAddr(v);
+  sqlite3ExprCode(pParse, pExpr);
+  addr2 = sqlite3VdbeCurrentAddr(v);
+  if( addr2>addr1+1 || sqlite3VdbeGetOp(v, addr1)->opcode==OP_Function ){
+    iMem = pExpr->iTable = pParse->nMem++;
+    sqlite3VdbeAddOp(v, OP_MemStore, iMem, 0);
+    pExpr->op = TK_REGISTER;
   }
 }
 

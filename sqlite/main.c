@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.265 2004/11/14 21:56:30 drh Exp $
+** $Id: main.c,v 1.268 2004/11/22 19:12:20 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -500,6 +500,13 @@ int sqlite3_close(sqlite3 *db){
     sqlite3ValueFree(db->pErr);
   }
 
+#ifndef SQLITE_OMIT_CURSOR
+  for(j=0; j<db->nSqlCursor; j++){
+    sqlite3CursorDelete(db->apSqlCursor[j]);
+  }
+  sqliteFree(db->apSqlCursor);
+#endif
+
   db->magic = SQLITE_MAGIC_ERROR;
   sqliteFree(db);
   return SQLITE_OK;
@@ -553,7 +560,7 @@ const char *sqlite3ErrStr(int rc){
     case SQLITE_NOLFS:      z = "kernel lacks large file support";       break;
     case SQLITE_AUTH:       z = "authorization denied";                  break;
     case SQLITE_FORMAT:     z = "auxiliary database format error";       break;
-    case SQLITE_RANGE:      z = "bind index out of range";               break;
+    case SQLITE_RANGE:      z = "bind or column index out of range";     break;
     case SQLITE_NOTADB:     z = "file is encrypted or is not a database";break;
     default:                z = "unknown error";                         break;
   }
@@ -842,6 +849,7 @@ int sqlite3BtreeFactory(
 #if TEMP_STORE==0
     /* Do nothing */
 #endif
+#ifndef SQLITE_OMIT_MEMORYDB
 #if TEMP_STORE==1
     if( db->temp_store==2 ) zFilename = ":memory:";
 #endif
@@ -851,6 +859,7 @@ int sqlite3BtreeFactory(
 #if TEMP_STORE==3
     zFilename = ":memory:";
 #endif
+#endif /* SQLITE_OMIT_MEMORYDB */
   }
 
   rc = sqlite3BtreeOpen(zFilename, ppBtree, btree_flags);

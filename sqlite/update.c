@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle UPDATE statements.
 **
-** $Id: update.c,v 1.95 2004/11/16 15:50:20 danielk1977 Exp $
+** $Id: update.c,v 1.99 2004/12/07 15:41:49 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -52,9 +52,7 @@ void sqlite3Update(
 
 #ifndef SQLITE_OMIT_TRIGGER
   int isView;                  /* Trying to update a view */
-  int before_triggers;         /* True if there are any BEFORE triggers */
-  int after_triggers;          /* True if there are any AFTER triggers */
-  int row_triggers_exist = 0;  /* True if any row triggers exist */
+  int triggers_exist = 0;      /* True if any row triggers exist */
 #endif
 
   int newIdx      = -1;  /* index of trigger "new" temp table       */
@@ -74,16 +72,10 @@ void sqlite3Update(
   ** updated is a view
   */
 #ifndef SQLITE_OMIT_TRIGGER
-  before_triggers = sqlite3TriggersExist(pParse, pTab->pTrigger, 
-                         TK_UPDATE, TK_BEFORE, TK_ROW, pChanges);
-  after_triggers = sqlite3TriggersExist(pParse, pTab->pTrigger, 
-                         TK_UPDATE, TK_AFTER, TK_ROW, pChanges);
-  row_triggers_exist = before_triggers || after_triggers;
+  triggers_exist = sqlite3TriggersExist(pParse, pTab, TK_UPDATE, pChanges);
   isView = pTab->pSelect!=0;
 #else
-# define before_triggers 0
-# define after_triggers 0
-# define row_triggers_exist 0
+# define triggers_exist 0
 # define isView 0
 #endif
 #ifdef SQLITE_OMIT_VIEW
@@ -91,7 +83,7 @@ void sqlite3Update(
 # define isView 0
 #endif
 
-  if( sqlite3IsReadOnly(pParse, pTab, before_triggers) ){
+  if( sqlite3IsReadOnly(pParse, pTab, triggers_exist) ){
     goto update_cleanup;
   }
   if( isView ){
@@ -106,7 +98,7 @@ void sqlite3Update(
   /* If there are FOR EACH ROW triggers, allocate cursors for the
   ** special OLD and NEW tables
   */
-  if( row_triggers_exist ){
+  if( triggers_exist ){
     newIdx = pParse->nTab++;
     oldIdx = pParse->nTab++;
   }
@@ -235,7 +227,7 @@ void sqlite3Update(
 
   /* Begin the database scan
   */
-  pWInfo = sqlite3WhereBegin(pParse, pTabList, pWhere, 1, 0, -1);
+  pWInfo = sqlite3WhereBegin(pParse, pTabList, pWhere, 1, 0, 0);
   if( pWInfo==0 ) goto update_cleanup;
 
   /* Remember the index of every item to be updated.
@@ -252,7 +244,7 @@ void sqlite3Update(
     sqlite3VdbeAddOp(v, OP_Integer, 0, 0);
   }
 
-  if( row_triggers_exist ){
+  if( triggers_exist ){
     /* Create pseudo-tables for NEW and OLD
     */
     sqlite3VdbeAddOp(v, OP_OpenPseudo, oldIdx, 0);
@@ -284,11 +276,11 @@ void sqlite3Update(
     /* Generate the NEW table
     */
     if( chngRecno ){
-      sqlite3ExprCode(pParse, pRecnoExpr);
+      sqlite3ExprCodeAndCache(pParse, pRecnoExpr);
     }else{
       sqlite3VdbeAddOp(v, OP_Recno, iCur, 0);
     }
-    for(i=0; i<pTab->nCol; i++){ /* TODO: Factor out this loop as common code */
+    for(i=0; i<pTab->nCol; i++){
       if( i==pTab->iPKey ){
         sqlite3VdbeAddOp(v, OP_String8, 0, 0);
         continue;
@@ -297,7 +289,7 @@ void sqlite3Update(
       if( j<0 ){
         sqlite3VdbeAddOp(v, OP_Column, iCur, i);
       }else{
-        sqlite3ExprCode(pParse, pChanges->a[j].pExpr);
+        sqlite3ExprCodeAndCache(pParse, pChanges->a[j].pExpr);
       }
     }
     sqlite3VdbeAddOp(v, OP_MakeRecord, pTab->nCol, 0);
@@ -312,7 +304,7 @@ void sqlite3Update(
 
     /* Fire the BEFORE and INSTEAD OF triggers
     */
-    if( sqlite3CodeRowTrigger(pParse, TK_UPDATE, pChanges, TK_BEFORE, pTab, 
+    if( sqlite3CodeRowTrigger(pParse, TK_UPDATE, pChanges, TRIGGER_BEFORE, pTab,
           newIdx, oldIdx, onError, addr) ){
       goto update_cleanup;
     }
@@ -354,7 +346,7 @@ void sqlite3Update(
     ** Also, the old data is needed to delete the old index entires.
     ** So make the cursor point at the old record.
     */
-    if( !row_triggers_exist ){
+    if( !triggers_exist ){
       sqlite3VdbeAddOp(v, OP_ListRewind, 0, 0);
       addr = sqlite3VdbeAddOp(v, OP_ListRead, 0, 0);
       sqlite3VdbeAddOp(v, OP_Dup, 0, 0);
@@ -414,7 +406,7 @@ void sqlite3Update(
   /* If there are triggers, close all the cursors after each iteration
   ** through the loop.  The fire the after triggers.
   */
-  if( row_triggers_exist ){
+  if( triggers_exist ){
     if( !isView ){
       for(i=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, i++){
         if( openAll || aIdxUsed[i] )
@@ -422,7 +414,7 @@ void sqlite3Update(
       }
       sqlite3VdbeAddOp(v, OP_Close, iCur, 0);
     }
-    if( sqlite3CodeRowTrigger(pParse, TK_UPDATE, pChanges, TK_AFTER, pTab, 
+    if( sqlite3CodeRowTrigger(pParse, TK_UPDATE, pChanges, TRIGGER_AFTER, pTab, 
           newIdx, oldIdx, onError, addr) ){
       goto update_cleanup;
     }
@@ -436,7 +428,7 @@ void sqlite3Update(
   sqlite3VdbeAddOp(v, OP_ListReset, 0, 0);
 
   /* Close all tables if there were no FOR EACH ROW triggers */
-  if( !row_triggers_exist ){
+  if( !triggers_exist ){
     for(i=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, i++){
       if( openAll || aIdxUsed[i] ){
         sqlite3VdbeAddOp(v, OP_Close, iCur+i+1, 0);

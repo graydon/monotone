@@ -16,7 +16,7 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.88 2004/11/17 16:41:30 danielk1977 Exp $
+** $Id: func.c,v 1.91 2004/11/19 05:14:55 danielk1977 Exp $
 */
 #include <ctype.h>
 #include <math.h>
@@ -372,7 +372,7 @@ static int patternCompare(
         }
         zPattern++;
       }
-      if( c && sqlite3ReadUtf8(&zPattern[1])==esc ){
+      if( c && esc && sqlite3ReadUtf8(&zPattern[1])==esc ){
         u8 const *zTemp = &zPattern[1];
         sqliteNextChar(zTemp);
         c = *zTemp;
@@ -433,7 +433,7 @@ static int patternCompare(
       if( c2==0 || (seen ^ invert)==0 ) return 0;
       sqliteNextChar(zString);
       zPattern++;
-    }else if( !prevEscape && sqlite3ReadUtf8(zPattern)==esc){
+    }else if( esc && !prevEscape && sqlite3ReadUtf8(zPattern)==esc){
       prevEscape = 1;
       sqliteNextChar(zPattern);
     }else{
@@ -552,29 +552,111 @@ static void altertableFunc(
   int argc,
   sqlite3_value **argv
 ){
-  char const *zSql = sqlite3_value_text(argv[0]);
-  char const *zTableName = sqlite3_value_text(argv[1]);
+  unsigned char const *zSql = sqlite3_value_text(argv[0]);
+  unsigned char const *zTableName = sqlite3_value_text(argv[1]);
 
+  int token;
+  Token tname;
   char const *zCsr = zSql;
-  char const *zPrev;
-  char *zRet = 0;
-  int tokenType = 0;
-  int len;
+  int len = 0;
+  char *zRet;
 
-  assert( argc==2 );
+  /* The principle used to locate the table name in the CREATE TABLE 
+  ** statement is that the table name is the first token that is immediatedly
+  ** followed by a left parenthesis - TK_LP.
+  */
   if( zSql ){
-    while( tokenType!=TK_LP ){
-      zPrev = zCsr-len;
-      len = sqlite3GetToken(zCsr, &tokenType);
-      zCsr += len;
-    }
+    do {
+      /* Store the token that zCsr points to in tname. */
+      tname.z = zCsr;
+      tname.n = len;
 
-    zRet = sqlite3MPrintf("%.*s%Q(%s", zPrev-zSql, zSql, zTableName, zCsr);
-    sqlite3_result_text(context, zRet, -1, SQLITE_TRANSIENT);
-    sqliteFree(zRet);
+      /* Advance zCsr to the next token. Store that token type in 'token',
+      ** and it's length in 'len' (to be used next iteration of this loop).
+      */
+      do {
+        zCsr += len;
+        len = sqlite3GetToken(zCsr, &token);
+      } while( token==TK_SPACE );
+      assert( len>0 );
+    } while( token!=TK_LP );
+
+    zRet = sqlite3MPrintf("%.*s%Q%s", tname.z - zSql, zSql, 
+       zTableName, tname.z+tname.n);
+    sqlite3_result_text(context, zRet, -1, sqlite3FreeX);
   }
 }
 #endif
+
+#ifndef SQLITE_OMIT_ALTERTABLE
+#ifndef SQLITE_OMIT_TRIGGER
+/* This function is used by SQL generated to implement the ALTER TABLE
+** ALTER TABLE command. The first argument is the text of a CREATE TRIGGER 
+** statement. The second is a table name. The table name in the CREATE 
+** TRIGGER statement is replaced with the second argument and the result 
+** returned. This is analagous to altertableFunc() above, except for CREATE
+** TRIGGER, not CREATE INDEX and CREATE TABLE.
+*/
+static void altertriggerFunc(
+  sqlite3_context *context,
+  int argc,
+  sqlite3_value **argv
+){
+  unsigned char const *zSql = sqlite3_value_text(argv[0]);
+  unsigned char const *zTableName = sqlite3_value_text(argv[1]);
+
+  int token;
+  Token tname;
+  int dist = 3;
+  char const *zCsr = zSql;
+  int len = 0;
+  char *zRet;
+
+  /* The principle used to locate the table name in the CREATE TRIGGER 
+  ** statement is that the table name is the first token that is immediatedly
+  ** preceded by either TK_ON or TK_DOT and immediatedly followed by one
+  ** of TK_WHEN, TK_BEGIN or TK_FOR.
+  */
+  if( zSql ){
+    do {
+      /* Store the token that zCsr points to in tname. */
+      tname.z = zCsr;
+      tname.n = len;
+
+      /* Advance zCsr to the next token. Store that token type in 'token',
+      ** and it's length in 'len' (to be used next iteration of this loop).
+      */
+      do {
+        zCsr += len;
+        len = sqlite3GetToken(zCsr, &token);
+      }while( token==TK_SPACE );
+      assert( len>0 );
+
+      /* Variable 'dist' stores the number of tokens read since the most
+      ** recent TK_DOT or TK_ON. This means that when a WHEN, FOR or BEGIN 
+      ** token is read and 'dist' equals 2, the condition stated above
+      ** to be met.
+      **
+      ** Note that ON cannot be a database, table or column name, so
+      ** there is no need to worry about syntax like 
+      ** "CREATE TRIGGER ... ON ON.ON BEGIN ..." etc.
+      */
+      dist++;
+      if( token==TK_DOT || token==TK_ON ){
+        dist = 0;
+      }
+    } while( dist!=2 || (token!=TK_WHEN && token!=TK_FOR && token!=TK_BEGIN) );
+
+    /* Variable tname now contains the token that is the old table-name
+    ** in the CREATE TRIGGER statement.
+    */
+    zRet = sqlite3MPrintf("%.*s%Q%s", tname.z - zSql, zSql, 
+       zTableName, tname.z+tname.n);
+    sqlite3_result_text(context, zRet, -1, sqlite3FreeX);
+  }
+}
+#endif   /* !SQLITE_OMIT_TRIGGER */
+#endif   /* !SQLITE_OMIT_ALTERTABLE */
 
 /*
 ** EXPERIMENTAL - This is not an official function.  The interface may
@@ -1028,6 +1110,9 @@ void sqlite3RegisterBuiltinFunctions(sqlite3 *db){
     { "total_changes",      0, 1, SQLITE_UTF8,    0, total_changes },
 #ifndef SQLITE_OMIT_ALTERTABLE
     { "sqlite_alter_table", 2, 0, SQLITE_UTF8,    0, altertableFunc},
+#ifndef SQLITE_OMIT_TRIGGER
+    { "sqlite_alter_trigger", 2, 0, SQLITE_UTF8,  0, altertriggerFunc},
+#endif
 #endif
 #ifdef SQLITE_SOUNDEX
     { "soundex",            1, 0, SQLITE_UTF8, 0, soundexFunc},

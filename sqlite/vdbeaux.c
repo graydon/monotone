@@ -699,9 +699,8 @@ void freeAggElem(AggElem *pElem, Agg *pAgg){
       ctx.s.flags = MEM_Null;
       ctx.pAgg = pMem->z;
       ctx.cnt = pMem->i;
-      ctx.isStep = 0;
       ctx.isError = 0;
-      (*pAgg->apFunc[i]->xFinalize)(&ctx);
+      (*ctx.pFunc->xFinalize)(&ctx);
       pMem->z = ctx.pAgg;
       if( pMem->z!=0 && pMem->z!=pMem->zShort ){
         sqliteFree(pMem->z);
@@ -784,7 +783,11 @@ int sqlite3VdbeAggReset(sqlite3 *db, Agg *pAgg, KeyInfo *pKeyInfo){
   if( db ){
     if( !pAgg->pBtree ){
       assert( pAgg->nTab==0 );
+#ifndef SQLITE_OMIT_MEMORYDB
       rc = sqlite3BtreeFactory(db, ":memory:", 0, TEMP_PAGES, &pAgg->pBtree);
+#else
+      rc = sqlite3BtreeFactory(db, 0, 0, TEMP_PAGES, &pAgg->pBtree);
+#endif
       if( rc!=SQLITE_OK ) return rc;
       sqlite3BtreeBeginTrans(pAgg->pBtree, 1);
       rc = sqlite3BtreeCreateTable(pAgg->pBtree, &pAgg->nTab, 0);

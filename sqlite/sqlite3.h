@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h.in,v 1.122 2004/11/12 15:53:37 danielk1977 Exp $
+** @(#) $Id: sqlite.h.in,v 1.125 2004/12/07 02:14:51 drh Exp $
 */
 #ifndef _SQLITE3_H_
 #define _SQLITE3_H_
@@ -429,6 +429,7 @@ int sqlite3_set_authorizer(
 #define SQLITE_ATTACH               24   /* Filename        NULL            */
 #define SQLITE_DETACH               25   /* Database Name   NULL            */
 #define SQLITE_ALTER_TABLE          26   /* Database Name   Table Name      */
+#define SQLITE_REINDEX              27   /* Index Name      NULL            */
 
 
 /*
@@ -449,8 +450,8 @@ void *sqlite3_trace(sqlite3*, void(*xTrace)(void*,const char*), void*);
 /*
 ** This routine configures a callback function - the progress callback - that
 ** is invoked periodically during long running calls to sqlite3_exec(),
-** sqlite3_step() and sqlite3_get_table(). An example use for this API is to keep
-** a GUI updated during a large query.
+** sqlite3_step() and sqlite3_get_table(). An example use for this API is to 
+** keep a GUI updated during a large query.
 **
 ** The progress callback is invoked once for every N virtual machine opcodes,
 ** where N is the second argument to this function. The progress callback
@@ -607,14 +608,19 @@ typedef struct Mem sqlite3_value;
 
 /*
 ** In the SQL strings input to sqlite3_prepare() and sqlite3_prepare16(),
-** one or more literals can be replace by a wildcard "?" or ":N:" where
-** N is an integer.  These value of these wildcard literals can be set
-** using the routines listed below.
+** one or more literals can be replace by parameters "?" or ":AAA" or
+** "$VVV" where AAA is an identifer and VVV is a variable name according
+** to the syntax rules of the TCL programming language.
+** The value of these parameters (also called "host parameter names") can
+** be set using the routines listed below.
 **
 ** In every case, the first parameter is a pointer to the sqlite3_stmt
 ** structure returned from sqlite3_prepare().  The second parameter is the
-** index of the wildcard.  The first "?" has an index of 1.  ":N:" wildcards
-** use the index N.
+** index of the parameter.  The first parameter as an index of 1.  For
+** named parameters (":AAA" or "$VVV") you can use 
+** sqlite3_bind_parameter_index() to get the correct index value given
+** the parameters name.  If the same named parameter occurs more than
+** once, it is assigned the same index each time.
 **
 ** The fifth parameter to sqlite3_bind_blob(), sqlite3_bind_text(), and
 ** sqlite3_bind_text16() is a destructor used to dispose of the BLOB or
@@ -625,8 +631,8 @@ typedef struct Mem sqlite3_value;
 ** own private copy of the data.
 **
 ** The sqlite3_bind_* routine must be called before sqlite3_step() after
-** an sqlite3_prepare() or sqlite3_reset().  Unbound wildcards are interpreted
-** as NULL.
+** an sqlite3_prepare() or sqlite3_reset().  Unbound parameterss are
+** interpreted as NULL.
 */
 int sqlite3_bind_blob(sqlite3_stmt*, int, const void*, int n, void(*)(void*));
 int sqlite3_bind_double(sqlite3_stmt*, int, double);
@@ -638,16 +644,16 @@ int sqlite3_bind_text16(sqlite3_stmt*, int, const void*, int, void(*)(void*));
 int sqlite3_bind_value(sqlite3_stmt*, int, const sqlite3_value*);
 
 /*
-** Return the number of wildcards in a compiled SQL statement.  This
+** Return the number of parameters in a compiled SQL statement.  This
 ** routine was added to support DBD::SQLite.
 */
 int sqlite3_bind_parameter_count(sqlite3_stmt*);
 
 /*
-** Return the name of the i-th parameter.  Ordinary wildcards "?" are
-** nameless and a NULL is returned.  For wildcards of the form :N or
-** $vvvv the complete text of the wildcard is returned.
-** NULL is returned if the index is out of range.
+** Return the name of the i-th parameter.  Ordinary parameters "?" are
+** nameless and a NULL is returned.  For parameters of the form :AAA or
+** $VVV the complete text of the parameter name is returned, including
+** the initial ":" or "$".  NULL is returned if the index is out of range.
 */
 const char *sqlite3_bind_parameter_name(sqlite3_stmt*, int);
 

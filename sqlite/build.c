@@ -22,7 +22,7 @@
 **     COMMIT
 **     ROLLBACK
 **
-** $Id: build.c,v 1.279 2004/11/13 03:48:07 drh Exp $
+** $Id: build.c,v 1.289 2004/12/07 12:29:18 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -136,6 +136,9 @@ void sqlite3NestedParse(Parse *pParse, const char *zFormat, ...){
   va_start(ap, zFormat);
   zSql = sqlite3VMPrintf(zFormat, ap);
   va_end(ap);
+  if( zSql==0 ){
+    return;   /* A malloc must have failed */
+  }
   pParse->nested++;
   memcpy(saveBuf, &pParse->nVar, SAVE_SZ);
   memset(&pParse->nVar, 0, SAVE_SZ);
@@ -516,17 +519,22 @@ void sqlite3OpenMasterTable(Vdbe *v, int iDb){
 ** does not exist.
 */
 int findDb(sqlite3 *db, Token *pName){
-  int i;
-  Db *pDb;
-  char *zName = sqlite3NameFromToken(pName);
-  int n = strlen(zName);
-  for(pDb=db->aDb, i=0; i<db->nDb; i++, pDb++){
-    if( n==strlen(pDb->zName) && 0==sqlite3StrICmp(pDb->zName, zName) ){
-      sqliteFree(zName);
-      return i;
+  int i;         /* Database number */
+  int n;         /* Number of characters in the name */
+  Db *pDb;       /* A database whose name space is being searched */
+  char *zName;   /* Name we are searching for */
+
+  zName = sqlite3NameFromToken(pName);
+  if( zName ){
+    n = strlen(zName);
+    for(pDb=db->aDb, i=0; i<db->nDb; i++, pDb++){
+      if( n==strlen(pDb->zName) && 0==sqlite3StrICmp(pDb->zName, zName) ){
+        sqliteFree(zName);
+        return i;
+      }
     }
+    sqliteFree(zName);
   }
-  sqliteFree(zName);
   return -1;
 }
 
@@ -1694,7 +1702,7 @@ static void destroyRootPage(Parse *pParse, int iTable, int iDb){
 #ifndef SQLITE_OMIT_AUTOVACUUM
   /* OP_Destroy pushes an integer onto the stack. If this integer
   ** is non-zero, then it is the root page number of a table moved to
-  ** location iTable. The following code modifis the sqlite_master table to
+  ** location iTable. The following code modifies the sqlite_master table to
   ** reflect this.
   **
   ** The "#0" in the SQL is a special constant that means whatever value
@@ -1840,6 +1848,20 @@ void sqlite3DropTable(Parse *pParse, SrcList *pName, int isView){
       pTrigger = pTrigger->pNext;
     }
 
+#ifndef SQLITE_OMIT_AUTOINCREMENT
+    /* Remove any entries of the sqlite_sequence table associated with
+    ** the table being dropped. This is done before the table is dropped
+    ** at the btree level, in case the sqlite_sequence table needs to
+    ** move as a result of the drop (can happen in auto-vacuum mode).
+    */
+    if( pTab->autoInc ){
+      sqlite3NestedParse(pParse,
+        "DELETE FROM %s.sqlite_sequence WHERE name=%Q",
+        pDb->zName, pTab->zName
+      );
+    }
+#endif
+
     /* Drop all SQLITE_MASTER table and index entries that refer to the
     ** table. The program name loops through the master table and deletes
     ** every row that refers to a table of the same name as the one being
@@ -1853,17 +1875,6 @@ void sqlite3DropTable(Parse *pParse, SrcList *pName, int isView){
     if( !isView ){
       destroyTable(pParse, pTab);
     }
-
-#ifndef SQLITE_OMIT_AUTOINCREMENT
-    /* Remove any entries of the sqlite_sequence table associated with
-    ** the table being dropped */
-    if( pTab->autoInc ){
-      sqlite3NestedParse(pParse,
-        "DELETE FROM %s.sqlite_sequence WHERE name=%Q",
-        pDb->zName, pTab->zName
-      );
-    }
-#endif
 
     /* Remove the table entry from SQLite's internal schema
     */
@@ -2027,6 +2038,13 @@ static void sqlite3RefillIndex(Parse *pParse, Index *pIndex, int memRootPage){
   int tnum;                      /* Root page of index */
   Vdbe *v;                       /* Generate code into this virtual machine */
   int isUnique;                  /* True for a unique index */
+
+#ifndef SQLITE_OMIT_AUTHORIZATION
+  if( sqlite3AuthCheck(pParse, SQLITE_REINDEX, pIndex->zName, 0,
+      pParse->db->aDb[pIndex->iDb].zName ) ){
+    return;
+  }
+#endif
 
   v = sqlite3GetVdbe(pParse);
   if( v==0 ) return;
@@ -2931,17 +2949,20 @@ void sqlite3AlterRenameTable(
   char *zWhere = 0;         /* Where clause of schema elements to reparse */
   sqlite3 *db = pParse->db; /* Database connection */
   Vdbe *v;
+#ifndef SQLITE_OMIT_TRIGGER
+  char *zTempTrig = 0;      /* Where clause to locate temp triggers */
+#endif
   
   assert( pSrc->nSrc==1 );
 
   pTab = sqlite3LocateTable(pParse, pSrc->a[0].zName, pSrc->a[0].zDatabase);
-  if( !pTab ) return;
+  if( !pTab ) goto exit_alter_table;
   iDb = pTab->iDb;
   zDb = db->aDb[iDb].zName;
 
   /* Get a NULL terminated version of the new table name. */
   zName = sqlite3NameFromToken(pName);
-  if( !zName ) return;
+  if( !zName ) goto exit_alter_table;
 
   /* Check that a table or index named 'zName' does not already exist
   ** in database iDb. If so, this is an error.
@@ -2949,15 +2970,24 @@ void sqlite3AlterRenameTable(
   if( sqlite3FindTable(db, zName, zDb) || sqlite3FindIndex(db, zName, zDb) ){
     sqlite3ErrorMsg(pParse, 
         "there is already another table or index with this name: %s", zName);
-    sqliteFree(zName);
-    return;
+    goto exit_alter_table;
+  }
+
+  /* Make sure it is not a system table being altered, or a reserved name
+  ** that the table is being renamed to.
+  */
+  if( strlen(pTab->zName)>6 && 0==sqlite3StrNICmp(pTab->zName, "sqlite_", 7) ){
+    sqlite3ErrorMsg(pParse, "table %s may not be altered", pTab->zName);
+    goto exit_alter_table;
+  }
+  if( SQLITE_OK!=sqlite3CheckObjectName(pParse, zName) ){
+    goto exit_alter_table;
   }
 
 #ifndef SQLITE_OMIT_AUTHORIZATION
   /* Invoke the authorization callback. */
   if( sqlite3AuthCheck(pParse, SQLITE_ALTER_TABLE, zDb, pTab->zName, 0) ){
-    sqliteFree(zName);
-    return;
+    goto exit_alter_table;
   }
 #endif
 
@@ -2967,8 +2997,7 @@ void sqlite3AlterRenameTable(
   */
   v = sqlite3GetVdbe(pParse);
   if( v==0 ){
-    sqliteFree(zName);
-    return;
+    goto exit_alter_table;
   }
   sqlite3BeginWriteOperation(pParse, 0, iDb);
   sqlite3ChangeCookie(db, v, iDb);
@@ -2976,27 +3005,96 @@ void sqlite3AlterRenameTable(
   /* Modify the sqlite_master table to use the new table name. */
   sqlite3NestedParse(pParse,
       "UPDATE %Q.%s SET "
+#ifdef SQLITE_OMIT_TRIGGER
           "sql = sqlite_alter_table(sql, %Q), "
+#else
+          "sql = CASE "
+            "WHEN type = 'trigger' THEN sqlite_alter_trigger(sql, %Q)"
+            "ELSE sqlite_alter_table(sql, %Q) END, "
+#endif
           "tbl_name = %Q, "
           "name = CASE "
             "WHEN type='table' THEN %Q "
             "WHEN name LIKE 'sqlite_autoindex%%' AND type='index' THEN "
               "'sqlite_autoindex_' || %Q || substr(name, %d+18,10) "
             "ELSE name END "
-      "WHERE tbl_name=%Q AND type IN ('table', 'index');", 
-      db->aDb[iDb].zName, SCHEMA_TABLE(iDb), zName, zName, zName, 
+      "WHERE tbl_name=%Q AND type IN ('table', 'index', 'trigger');", 
+      zDb, SCHEMA_TABLE(iDb), zName, zName, zName, 
+#ifndef SQLITE_OMIT_TRIGGER
+zName,
+#endif
       zName, strlen(pTab->zName), pTab->zName
   );
+
+#ifndef SQLITE_OMIT_AUTOINCREMENT
+  /* If the sqlite_sequence table exists in this database, then update 
+  ** it with the new table name.
+  */
+  if( sqlite3FindTable(db, "sqlite_sequence", zDb) ){
+    sqlite3NestedParse(pParse,
+        "UPDATE %Q.sqlite_sequence set name = %Q WHERE name = %Q",
+        zDb, zName, pTab->zName);
+  }
+#endif
+
+#ifndef SQLITE_OMIT_TRIGGER
+  /* If there are TEMP triggers on this table, modify the sqlite_temp_master
+  ** table. Don't do this if the table being ALTERed is itself located in
+  ** the temp database.
+  */
+  if( iDb!=1 ){
+    Trigger *pTrig;
+    char *tmp = 0;
+    for( pTrig=pTab->pTrigger; pTrig; pTrig=pTrig->pNext ){
+      if( pTrig->iDb==1 ){
+        if( !zTempTrig ){
+          zTempTrig = 
+              sqlite3MPrintf("type = 'trigger' AND name IN(%Q", pTrig->name);
+        }else{
+          tmp = zTempTrig;
+          zTempTrig = sqlite3MPrintf("%s, %Q", zTempTrig, pTrig->name);
+          sqliteFree(tmp);
+        }
+      }
+    }
+    if( zTempTrig ){
+      tmp = zTempTrig;
+      zTempTrig = sqlite3MPrintf("%s)", zTempTrig);
+      sqliteFree(tmp);
+      sqlite3NestedParse(pParse, 
+          "UPDATE sqlite_temp_master SET "
+              "sql = sqlite_alter_trigger(sql, %Q), "
+              "tbl_name = %Q "
+              "WHERE %s;", zName, zName, zTempTrig);
+    }
+  }
+#endif
 
   /* Drop the elements of the in-memory schema that refered to the table
   ** renamed and load the new versions from the database.
   */
   if( pParse->nErr==0 ){
+#ifndef SQLITE_OMIT_TRIGGER
+    Trigger *pTrig;
+    for( pTrig=pTab->pTrigger; pTrig; pTrig=pTrig->pNext ){
+      assert( pTrig->iDb==iDb || pTrig->iDb==1 );
+      sqlite3VdbeOp3(v, OP_DropTrigger, pTrig->iDb, 0, pTrig->name, 0);
+    }
+#endif
     sqlite3VdbeOp3(v, OP_DropTable, iDb, 0, pTab->zName, 0);
     zWhere = sqlite3MPrintf("tbl_name=%Q", zName);
     sqlite3VdbeOp3(v, OP_ParseSchema, iDb, 0, zWhere, P3_DYNAMIC);
+#ifndef SQLITE_OMIT_TRIGGER
+    if( zTempTrig ){
+      sqlite3VdbeOp3(v, OP_ParseSchema, 1, 0, zTempTrig, P3_DYNAMIC);
+    }
+  }else{
+    sqliteFree(zTempTrig);
+#endif
   }
 
+exit_alter_table:
+  sqlite3SrcListDelete(pSrc);
   sqliteFree(zName);
 }
 #endif

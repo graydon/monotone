@@ -18,7 +18,7 @@
 ** file simultaneously, or one process from reading the database while
 ** another is writing.
 **
-** @(#) $Id: pager.c,v 1.177 2004/11/10 15:27:38 danielk1977 Exp $
+** @(#) $Id: pager.c,v 1.179 2004/11/24 01:16:43 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -1005,6 +1005,7 @@ static int pager_delmaster(const char *zMaster){
         ** so, return without deleting the master journal file.
         */
         OsFile journal;
+        int c;
 
         memset(&journal, 0, sizeof(journal));
         rc = sqlite3OsOpenReadOnly(zJournal, &journal);
@@ -1018,7 +1019,9 @@ static int pager_delmaster(const char *zMaster){
           goto delmaster_out;
         }
 
-        if( zMasterPtr && !strcmp(zMasterPtr, zMaster) ){
+        c = zMasterPtr!=0 && strcmp(zMasterPtr, zMaster)==0;
+        sqliteFree(zMasterPtr);
+        if( c ){
           /* We have a match. Do not delete the master journal file. */
           goto delmaster_out;
         }
@@ -3315,6 +3318,7 @@ int sqlite3pager_movepage(Pager *pPager, void *pData, Pgno pgno){
     needSyncPgno = pPg->pgno;
     assert( pPg->inJournal );
     assert( pPg->dirty );
+    assert( pPager->needSync );
   }
 
   /* Unlink pPg from it's hash-chain */
@@ -3334,6 +3338,7 @@ int sqlite3pager_movepage(Pager *pPager, void *pData, Pgno pgno){
       assert( pPgOld->inJournal );
       pPg->inJournal = 1;
       pPg->needSync = 1;
+      assert( pPager->needSync );
     }
   }
 
@@ -3357,11 +3362,16 @@ int sqlite3pager_movepage(Pager *pPager, void *pData, Pgno pgno){
     ** Currently, no such page exists in the page-cache and the 
     ** Pager.aInJournal bit has been set. This needs to be remedied by loading
     ** the page into the pager-cache and setting the PgHdr.needSync flag.
+    **
+    ** The sqlite3pager_get() call may cause the journal to sync. So make
+    ** sure the Pager.needSync flag is set too.
     */
     int rc;
     void *pNeedSync;
+    assert( pPager->needSync );
     rc = sqlite3pager_get(pPager, needSyncPgno, &pNeedSync);
     if( rc!=SQLITE_OK ) return rc;
+    pPager->needSync = 1;
     DATA_TO_PGHDR(pNeedSync)->needSync = 1;
     DATA_TO_PGHDR(pNeedSync)->inJournal = 1;
     DATA_TO_PGHDR(pNeedSync)->dirty = 1;

@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.220 2004/11/17 10:22:03 danielk1977 Exp $
+** $Id: btree.c,v 1.225 2004/11/23 09:06:56 danielk1977 Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** For a detailed discussion of BTrees, refer to
@@ -344,16 +344,6 @@ struct CellInfo {
 ** A cursor is a pointer to a particular entry in the BTree.
 ** The entry is identified by its MemPage and the index in
 ** MemPage.aCell[] of the entry.
-**
-** Normally, the BtCursor.delShift variable is 0. If non-zero, this
-** indicates that the entry to which the cursor logically points 
-** was deleted (by a BtreeDelete() call). If this is the case, the
-** BtreeKeySize() and BtreeDataSize() calls both return 0. 
-
-** If BtCursor.delShift is +1, then do not move the cursor for a 
-** BtreeNext() operation (it was already advanced when the entry the
-** cursor logically points to was deleted). If BtCursor.delShift is
-** -1, then ignore the next BtreePrevious() call.
 */
 struct BtCursor {
   Btree *pBt;               /* The Btree to which this cursor belongs */
@@ -367,7 +357,6 @@ struct BtCursor {
   u8 wrFlag;                /* True if writable */
   u8 isValid;               /* TRUE if points to a valid entry */
   u8 status;                /* Set to SQLITE_ABORT if cursors is invalidated */
-  int delShift;             /* See above. */
 };
 
 /*
@@ -413,10 +402,10 @@ static void put4byte(unsigned char *p, u32 v){
 
 #ifndef SQLITE_OMIT_AUTOVACUUM
 /*
-** These two macros define the location of the pointer-map entry for a 
-** database page. The first argument to each is the page size used 
-** by the database (often 1024). The second is the page number to look
-** up in the pointer map.
+** These macros define the location of the pointer-map entry for a 
+** database page. The first argument to each is the number of usable
+** bytes on each page of the database (often 1024). The second is the
+** page number to look up in the pointer map.
 **
 ** PTRMAP_PAGENO returns the database page number of the pointer-map
 ** page that stores the required pointer. PTRMAP_PTROFFSET returns
@@ -476,12 +465,12 @@ static int ptrmapPut(Btree *pBt, Pgno key, u8 eType, Pgno pgno){
   int rc;
 
   assert( key!=0 );
-  iPtrmap = PTRMAP_PAGENO(pBt->pageSize, key);
+  iPtrmap = PTRMAP_PAGENO(pBt->usableSize, key);
   rc = sqlite3pager_get(pBt->pPager, iPtrmap, (void **)&pPtrmap);
   if( rc!=SQLITE_OK ){
     return rc;
   }
-  offset = PTRMAP_PTROFFSET(pBt->pageSize, key);
+  offset = PTRMAP_PTROFFSET(pBt->usableSize, key);
 
   if( eType!=pPtrmap[offset] || get4byte(&pPtrmap[offset+1])!=pgno ){
     rc = sqlite3pager_write(pPtrmap);
@@ -509,13 +498,13 @@ static int ptrmapGet(Btree *pBt, Pgno key, u8 *pEType, Pgno *pPgno){
   int offset;        /* Offset of entry in pointer map */
   int rc;
 
-  iPtrmap = PTRMAP_PAGENO(pBt->pageSize, key);
+  iPtrmap = PTRMAP_PAGENO(pBt->usableSize, key);
   rc = sqlite3pager_get(pBt->pPager, iPtrmap, (void **)&pPtrmap);
   if( rc!=0 ){
     return rc;
   }
 
-  offset = PTRMAP_PTROFFSET(pBt->pageSize, key);
+  offset = PTRMAP_PTROFFSET(pBt->usableSize, key);
   if( pEType ) *pEType = pPtrmap[offset];
   if( pPgno ) *pPgno = get4byte(&pPtrmap[offset+1]);
 
@@ -1210,7 +1199,17 @@ int sqlite3BtreeOpen(
     pBt->minEmbedFrac = 32;   /* 12.5% */
     pBt->minLeafFrac = 32;    /* 12.5% */
 #ifndef SQLITE_OMIT_AUTOVACUUM
+    /* If the magic name ":memory:" will create an in-memory database, then
+    ** do not set the auto-vacuum flag, even if SQLITE_DEFAULT_AUTOVACUUM
+    ** is true. On the other hand, if SQLITE_OMIT_MEMORYDB has been defined,
+    ** then ":memory:" is just a regular file-name. Respect the auto-vacuum
+    ** default in this case.
+    */
+#ifndef SQLITE_OMIT_MEMORYDB
     if( zFilename && strcmp(zFilename,":memory:") ){
+#else
+    if( zFilename ){
+#endif
       pBt->autoVacuum = SQLITE_DEFAULT_AUTOVACUUM;
     }
 #endif
@@ -1774,7 +1773,7 @@ static int autoVacuumCommit(Btree *pBt, Pgno *nTrunc){
   finSize = origSize - nFreeList - nPtrMap;
   if( origSize>PENDING_BYTE_PAGE(pBt) && finSize<=PENDING_BYTE_PAGE(pBt) ){
     finSize--;
-    if( PTRMAP_ISPAGE(pBt->pageSize, finSize) ){
+    if( PTRMAP_ISPAGE(pBt->usableSize, finSize) ){
       finSize--;
     }
   }
@@ -2115,7 +2114,6 @@ int sqlite3BtreeCursor(
   pBt->pCursor = pCur;
   pCur->isValid = 0;
   pCur->status = SQLITE_OK;
-  pCur->delShift = 0;
   *ppCur = pCur;
   return SQLITE_OK;
 
@@ -2214,7 +2212,7 @@ static void getCellInfo(BtCursor *pCur){
 ** itself, not the number of bytes in the key.
 */
 int sqlite3BtreeKeySize(BtCursor *pCur, i64 *pSize){
-  if( !pCur->isValid || pCur->delShift ){
+  if( !pCur->isValid ){
     *pSize = 0;
   }else{
     getCellInfo(pCur);
@@ -2231,7 +2229,7 @@ int sqlite3BtreeKeySize(BtCursor *pCur, i64 *pSize){
 ** the database is empty) then *pSize is set to 0.
 */
 int sqlite3BtreeDataSize(BtCursor *pCur, u32 *pSize){
-  if( !pCur->isValid || pCur->delShift ){
+  if( !pCur->isValid ){
     /* Not pointing at a valid entry - set *pSize to 0. */
     *pSize = 0;
   }else{
@@ -2342,7 +2340,7 @@ static int getPayload(
 ** the available payload.
 */
 int sqlite3BtreeKey(BtCursor *pCur, u32 offset, u32 amt, void *pBuf){
-  if( !pCur->isValid || pCur->delShift ){
+  if( !pCur->isValid ){
     return pCur->status;
   }
   assert( pCur->pPage!=0 );
@@ -2361,7 +2359,7 @@ int sqlite3BtreeKey(BtCursor *pCur, u32 offset, u32 amt, void *pBuf){
 ** the available payload.
 */
 int sqlite3BtreeData(BtCursor *pCur, u32 offset, u32 amt, void *pBuf){
-  if( !pCur->isValid || pCur->delShift ){
+  if( !pCur->isValid ){
     return pCur->status ? pCur->status : SQLITE_INTERNAL;
   }
   assert( pCur->pPage!=0 );
@@ -2549,7 +2547,6 @@ static int moveToRoot(BtCursor *pCur){
     rc = moveToChild(pCur, subpage);
   }
   pCur->isValid = pCur->pPage->nCell>0;
-  pCur->delShift = 0;
   return rc;
 }
 
@@ -2787,15 +2784,6 @@ int sqlite3BtreeNext(BtCursor *pCur, int *pRes){
   assert( pPage->isInit );
   assert( pCur->idx<pPage->nCell );
 
-  /* If BtCursor.delShift is 1, the cursor has already been advanced. */
-  if( pCur->delShift==1 ){
-    *pRes = 0;
-    pCur->delShift = 0;
-    return SQLITE_OK;
-  }else{
-    pCur->delShift = 0;
-  }
-
   pCur->idx++;
   pCur->info.nSize = 0;
   if( pCur->idx>=pPage->nCell ){
@@ -2846,15 +2834,6 @@ int sqlite3BtreePrevious(BtCursor *pCur, int *pRes){
     return SQLITE_OK;
   }
 
-  /* If BtCursor.delShift is -1, the cursor has already been advanced. */
-  if( pCur->delShift==-1 ){
-    *pRes = 0;
-    pCur->delShift = 0;
-    return SQLITE_OK;
-  }else{
-    pCur->delShift = 0;
-  }
-
   pPage = pCur->pPage;
   assert( pPage->isInit );
   assert( pCur->idx>=0 );
@@ -2875,7 +2854,7 @@ int sqlite3BtreePrevious(BtCursor *pCur, int *pRes){
     }
     pCur->idx--;
     pCur->info.nSize = 0;
-    if( pPage->leafData ){
+    if( pPage->leafData && !pPage->leaf ){
       rc = sqlite3BtreePrevious(pCur, pRes);
     }else{
       rc = SQLITE_OK;
@@ -3091,7 +3070,7 @@ static int allocatePage(
     *pPgno = sqlite3pager_pagecount(pBt->pPager) + 1;
 
 #ifndef SQLITE_OMIT_AUTOVACUUM
-    if( pBt->autoVacuum && PTRMAP_ISPAGE(pBt->pageSize, *pPgno) ){
+    if( pBt->autoVacuum && PTRMAP_ISPAGE(pBt->usableSize, *pPgno) ){
       /* If *pPgno refers to a pointer-map page, allocate two new pages
       ** at the end of the file instead of one. The first allocated page
       ** becomes a new pointer-map page, the second is used by the caller.
@@ -3646,7 +3625,6 @@ static int balance_nonroot(MemPage *pPage){
   int *szCell;                 /* Local size of all cells in apCell[] */
   u8 *aCopy[NB];               /* Space for holding data of apCopy[] */
   u8 *aSpace;                  /* Space to hold copies of dividers cells */
-  BtCursor *pCur;
 
   /* 
   ** Find the parent page.
@@ -3895,6 +3873,16 @@ static int balance_nonroot(MemPage *pPage){
     zeroPage(pNew, pageFlags);
   }
 
+  /* Free any old pages that were not reused as new pages.
+  */
+  while( i<nOld ){
+    rc = freePage(apOld[i]);
+    if( rc ) goto balance_cleanup;
+    releasePage(apOld[i]);
+    apOld[i] = 0;
+    i++;
+  }
+
   /*
   ** Put the new pages in accending order.  This helps to
   ** keep entries in the disk file in order so that a scan
@@ -3938,95 +3926,6 @@ static int balance_nonroot(MemPage *pPage){
     nNew>=3 ? pgnoNew[2] : 0, nNew>=3 ? szNew[2] : 0,
     nNew>=4 ? pgnoNew[3] : 0, nNew>=4 ? szNew[3] : 0,
     nNew>=5 ? pgnoNew[4] : 0, nNew>=5 ? szNew[4] : 0));
-
-  /* If there are other cursors that refer to one of the pages involved
-  ** in the balancing, then adjust these cursors so that they still
-  ** point to the same cells.
-  */
-  for(pCur=pBt->pCursor; pCur; pCur=pCur->pNext){
-    int nCellCnt = 0;
-    int iCell = -1;
-    Pgno pgno = pCur->pPage->pgno;
-
-    /* If the cursor is not valid, do not do anything with it. */
-    if( !pCur->isValid ) continue;
-
-    /* If the cursor pointed to one of the cells moved around during the
-    ** balancing, then set variable iCell to the index of the cell in apCell.
-    ** This is used by the block below to figure out where the cell was
-    ** moved to, and adjust the cursor appropriately.
-    **
-    ** If the cursor points to the parent page, but the cell was not involved
-    ** in the balance, then declare the cache of the cell-parse invalid, as a
-    ** defragmentation may of occured during  the balance. Also, if the index
-    ** of the cell is greater than that of the divider cells, then it may
-    ** need to be adjusted (in case there are now more or less divider cells
-    ** than there were before the balancing).
-    */
-    for(i=0; iCell<0 && i<nOld; i++){
-      if( pgno==apCopy[i]->pgno ){
-        iCell = nCellCnt + pCur->idx;
-        break;
-      }
-      nCellCnt += (apCopy[i]->nCell + apCopy[i]->nOverflow) + (leafData?0:1);
-    }
-    if( pgno==pParent->pgno ){
-      assert( !leafData );
-      assert( iCell==-1 );
-      if( pCur->idx>=nxDiv && pCur->idx<(nxDiv+nOld-1) ){
-        for(i=0; i<=(pCur->idx-nxDiv); i++){
-          iCell += (apCopy[i]->nCell + apCopy[i]->nOverflow + 1);
-        }
-      }
-      if( pCur->idx>=(nxDiv+nOld-1) ){
-        TRACE(("BALANCE: Cursor %p migrates from %d,%d to %d,%d\n", 
-            pCur, pgno, pCur->idx, pgno, pCur->idx+(nNew-nOld)));
-        pCur->idx += (nNew-nOld);
-      }
-      pCur->info.nSize = 0;
-    }
-
-    /* If iCell is greater than or equal to zero, then pCur points at a
-    ** cell that was moved around during the balance. Figure out where
-    ** the cell was moved to and adjust pCur to match.
-    */
-    if( iCell>=0 ){
-      int idxNew;
-      Pgno pgnoNew;
-      int x = 0;
-
-      assert( iCell<nCell );
-      while( cntNew[x]<=iCell ) x++;
-      if( x>0 && !leafData && cntNew[x-1]==iCell ){
-        /* The cell that pCur points to is a divider cell in pParent. */
-        pgnoNew = pParent->pgno;
-        idxNew = nxDiv + x-1;
-      }else{
-        /* The cell that pCur points to is on page apNew[x]. */
-        idxNew = iCell-(x>0?cntNew[x-1]:0)-((leafData||x==0)?0:1);
-        pgnoNew = apNew[x]->pgno;
-      }
-
-      TRACE(("BALANCE: Cursor %p migrates from %d,%d to %d,%d\n", 
-          pCur, pgno, pCur->idx, pgnoNew, idxNew));
-
-      pCur->idx = idxNew;
-      releasePage(pCur->pPage);
-      rc = getPage(pBt, pgnoNew, &pCur->pPage);
-      assert( rc==SQLITE_OK );
-      assert( pCur->pPage->isInit );
-      pCur->info.nSize = 0;
-    }
-  }
-
-  /* Free any old pages that were not reused as new pages.
-  */
-  for(i=nNew; i<nOld; i++){
-    rc = freePage(apOld[i]);
-    if( rc ) goto balance_cleanup;
-    releasePage(apOld[i]);
-    apOld[i] = 0;
-  }
 
   /*
   ** Evenly distribute the data in apCell[] across the new pages.
@@ -4171,35 +4070,23 @@ static int balance_shallower(MemPage *pPage){
         /* The child information will fit on the root page, so do the
         ** copy */
         int i;
-        BtCursor *pCur;
         zeroPage(pPage, pChild->aData[0]);
         for(i=0; i<pChild->nCell; i++){
           apCell[i] = findCell(pChild,i);
           szCell[i] = cellSizePtr(pChild, apCell[i]);
         }
         assemblePage(pPage, pChild->nCell, apCell, szCell);
+        /* Copy the right-pointer of the child to the parent. */
+        put4byte(&pPage->aData[pPage->hdrOffset+8], 
+            get4byte(&pChild->aData[pChild->hdrOffset+8]));
         freePage(pChild);
         TRACE(("BALANCE: child %d transfer to page 1\n", pChild->pgno));
-        /* If there were cursors pointing at this page, point them at the 
-        ** new page instead. Decrement the reference count for the old 
-        ** page and increment it for the new one.
-        */
-        for(pCur=pBt->pCursor; pCur; pCur=pCur->pNext){
-          if( pCur->pPage==pChild ){
-            TRACE(("BALANCE: Cursor %p migrates from %d,%d to %d,%d\n", 
-                pCur, pPage->pgno, pCur->idx, pPage->pgno, pCur->idx));
-            releasePage(pCur->pPage);
-            rc = getPage(pBt, 1,  &pCur->pPage);
-            assert( rc==SQLITE_OK );
-          }
-        }
       }else{
         /* The child has more information that will fit on the root.
         ** The tree is already balanced.  Do nothing. */
         TRACE(("BALANCE: child %d will not fit on page 1\n", pChild->pgno));
       }
     }else{
-      BtCursor *pCur;
       memcpy(pPage->aData, pChild->aData, pPage->pBt->usableSize);
       pPage->isInit = 0;
       pPage->pParent = 0;
@@ -4208,15 +4095,6 @@ static int balance_shallower(MemPage *pPage){
       freePage(pChild);
       TRACE(("BALANCE: transfer child %d into root %d\n",
               pChild->pgno, pPage->pgno));
-      for(pCur=pBt->pCursor; pCur; pCur=pCur->pNext){
-        if( pCur->pPage==pChild ){
-          TRACE(("BALANCE: Cursor %p migrates from %d,%d to %d,%d\n", 
-              pCur, pChild->pgno, pCur->idx, pPage->pgno, pCur->idx));
-          releasePage(pCur->pPage);
-          rc = getPage(pBt, pPage->pgno,  &pCur->pPage);
-          assert( rc==SQLITE_OK );
-        }
-      }
     }
     rc = reparentChildPages(pPage);
     if( rc!=SQLITE_OK ) goto end_shallow_balance;
@@ -4247,7 +4125,6 @@ static int balance_deeper(MemPage *pPage){
   u8 *cdata;          /* Content of the child page */
   int hdr;            /* Offset to page header in parent */
   int brk;            /* Offset to content of first cell in parent */
-  BtCursor *pCur;
 
   assert( pPage->pParent==0 );
   assert( pPage->nOverflow>0 );
@@ -4274,21 +4151,6 @@ static int balance_deeper(MemPage *pPage){
   zeroPage(pPage, pChild->aData[0] & ~PTF_LEAF);
   put4byte(&pPage->aData[pPage->hdrOffset+8], pgnoChild);
   TRACE(("BALANCE: copy root %d into %d\n", pPage->pgno, pChild->pgno));
-
-  /* If there were cursors pointing at this page, point them at the new
-  ** page instead. Decrement the reference count for the old page and
-  ** increment it for the new one.
-  */
-  for(pCur=pBt->pCursor; pCur; pCur=pCur->pNext){
-    if( pCur->pPage==pPage ){
-      TRACE(("BALANCE: Cursor %p migrates from %d,%d to %d,%d\n", 
-          pCur, pPage->pgno, pCur->idx, pChild->pgno, pCur->idx));
-      releasePage(pCur->pPage);
-      rc = getPage(pBt, pChild->pgno,  &pCur->pPage);
-      assert( rc==SQLITE_OK );
-    }
-  }
-
   rc = balance_nonroot(pChild);
   releasePage(pChild);
   return rc;
@@ -4321,8 +4183,24 @@ static int balance(MemPage *pPage){
 ** wrFlag==0 then this routine returns SQLITE_LOCKED.  If all
 ** cursors that point to pgnoRoot were opened with wrFlag==1
 ** then this routine returns SQLITE_OK.
+**
+** In addition to checking for read-locks (where a read-lock 
+** means a cursor opened with wrFlag==0) this routine also moves
+** all cursors other than pExclude so that they are pointing to the 
+** first Cell on root page.  This is necessary because an insert 
+** or delete might change the number of cells on a page or delete
+** a page entirely and we do not want to leave any cursors 
+** pointing to non-existant pages or cells.
 */
 static int checkReadLocks(Btree *pBt, Pgno pgnoRoot, BtCursor *pExclude){
+  BtCursor *p;
+  for(p=pBt->pCursor; p; p=p->pNext){
+    if( p->pgnoRoot!=pgnoRoot || p==pExclude ) continue;
+    if( p->wrFlag==0 ) return SQLITE_LOCKED;
+    if( p->pPage->pgno!=p->pgnoRoot ){
+      moveToRoot(p);
+    }
+  }
   return SQLITE_OK;
 }
 
@@ -4347,7 +4225,6 @@ int sqlite3BtreeInsert(
   Btree *pBt = pCur->pBt;
   unsigned char *oldCell;
   unsigned char *newCell = 0;
-  BtCursor *pCur2;
 
   if( pCur->status ){
     return pCur->status;  /* A rollback destroyed this cursor */
@@ -4399,30 +4276,13 @@ int sqlite3BtreeInsert(
     assert( pPage->leaf );
   }
   rc = insertCell(pPage, pCur->idx, newCell, szNew, 0);
-  pCur->isValid = 1;
-
-  /* If there are other cursors pointing at this page with a BtCursor.idx
-  ** field greater than or equal to 'i', then the cell they refer to
-  ** has been modified or moved within the page. Fix the cursor.
-  */
-  for(pCur2=pPage->pBt->pCursor; pCur2; pCur2 = pCur2->pNext){
-    if( pCur2->pPage==pPage ){
-      if( pCur2->idx>=pCur->idx && pCur!=pCur2 && loc!=0 ){
-	/* The cell pointed to by pCur2 was shifted one to the right on it's
-	** page by this Insert(). 
-        */
-        TRACE(("INSERT: Cursor %p migrates from %d,%d to %d,%d\n", 
-            pCur2, pPage->pgno, pCur2->idx, pPage->pgno, pCur2->idx+1));
-        pCur2->idx++;
-      }
-      pCur2->info.nSize = 0;
-    }
-  }
-
   if( rc!=SQLITE_OK ) goto end_insert;
   rc = balance(pPage);
   /* sqlite3BtreePageDump(pCur->pBt, pCur->pgnoRoot, 1); */
   /* fflush(stdout); */
+  if( rc==SQLITE_OK ){
+    moveToRoot(pCur);
+  }
 end_insert:
   sqliteFree(newCell);
   return rc;
@@ -4438,8 +4298,6 @@ int sqlite3BtreeDelete(BtCursor *pCur){
   int rc;
   Pgno pgnoChild = 0;
   Btree *pBt = pCur->pBt;
-  int idx;                /* Index of the cell to delete */
-  BtCursor *pCur2;        /* Iterator variable for the pBt.pCursor link-list */
 
   assert( pPage->isInit );
   if( pCur->status ){
@@ -4462,50 +4320,11 @@ int sqlite3BtreeDelete(BtCursor *pCur){
   rc = sqlite3pager_write(pPage->aData);
   if( rc ) return rc;
 
-  /* Set index to the index in pPage that contains the cell to delete. Also
-  ** increment the reference count for pPage. This allows us to move the
-  ** cursor pCur before the delete takes place.
-  */
-  idx = pCur->idx;
-  rc = getPage(pBt, pPage->pgno, &pPage);
-  if( rc ) return rc;
-  assert( pPage==pCur->pPage );
-
-  /* If there are any cursors that point to the cell being deleted, 
-  ** move them to the next or previous entry in the table. It is preferable
-  ** to move the cursor to the 'next' location, rather than the 'previous'
-  ** one, as most table scans are done in the forward direction (also, code
-  ** below depends on this). If neither entry exists, declare the cursor
-  ** invalid.
-  */ 
-  for(pCur2=pBt->pCursor; pCur2; pCur2 = pCur2->pNext){
-    if( pCur2->pPage==pPage && pCur2->idx==idx && pCur2->isValid ){
-      int res;
-      pCur2->delShift = 0;
-      rc = sqlite3BtreeNext(pCur2, &res);
-      if( rc ) goto delete_out;
-      if( res ){
-        /* If the next tree entry cannot be found, then the cursor must
-        ** already point to the last table entry. So point it to the
-        ** second last by calling BtreeLast(), BtreePrevious().
-        */
-        rc = sqlite3BtreeLast(pCur2, &res);
-        if( rc ) goto delete_out;
-        assert( res==0 );
-        rc = sqlite3BtreePrevious(pCur2, &res);
-        if( rc ) goto delete_out;
-        pCur2->delShift = -1;
-      }else{
-        pCur2->delShift = 1;
-      }
-    }
-  }
-
   /* Locate the cell within it's page and leave pCell pointing to the
   ** data. The clearCell() call frees any overflow pages associated with the
   ** cell. The cell itself is still intact.
   */
-  pCell = findCell(pPage, idx);
+  pCell = findCell(pPage, pCur->idx);
   if( !pPage->leaf ){
     pgnoChild = get4byte(pCell);
   }
@@ -4517,120 +4336,48 @@ int sqlite3BtreeDelete(BtCursor *pCur){
     ** do something we will leave a hole on an internal page.
     ** We have to fill the hole by moving in a cell from a leaf.  The
     ** next Cell after the one to be deleted is guaranteed to exist and
-    ** to be a leaf so we can use it. Conveniantly, pCur now points
-    ** at this cell (because it was advanced above).
+    ** to be a leaf so we can use it.
     */
     BtCursor leafCur;
     unsigned char *pNext;
     int szNext;
+    int notUsed;
     unsigned char *tempCell;
     assert( !pPage->leafData );
-
-    /* Make a copy of *pCur in leafCur. leafCur now points to the cell 
-    ** that will be moved into the space left by the cell being deleted.
-    */
-    assert( pCur->delShift==1 );
-    assert( pCur->isValid );
     getTempCursor(pCur, &leafCur);
+    rc = sqlite3BtreeNext(&leafCur, &notUsed);
     if( rc!=SQLITE_OK ){
       if( rc!=SQLITE_NOMEM ){
         rc = SQLITE_CORRUPT;  /* bkpt-CORRUPT */
       }
-      goto delete_out;
+      return rc;
     }
     rc = sqlite3pager_write(leafCur.pPage->aData);
-    if( rc ) goto delete_out;
-    TRACE(("DELETE: table=%d delete internal from %d,%d replace "
-        "from leaf %d,%d\n", pCur->pgnoRoot, pPage->pgno, idx, 
-        leafCur.pPage->pgno, leafCur.idx));
-
-    /* Drop the cell from the internal page. Make a copy of the cell from
-    ** the leaf page into memory obtained from malloc(). Insert it into
-    ** the internal page, at the position vacated by the delete. There
-    ** are now two copies of the leaf-cell in the tree.
-    */
-    dropCell(pPage, idx, cellSizePtr(pPage, pCell));
+    if( rc ) return rc;
+    TRACE(("DELETE: table=%d delete internal from %d replace from leaf %d\n",
+       pCur->pgnoRoot, pPage->pgno, leafCur.pPage->pgno));
+    dropCell(pPage, pCur->idx, cellSizePtr(pPage, pCell));
     pNext = findCell(leafCur.pPage, leafCur.idx);
     szNext = cellSizePtr(leafCur.pPage, pNext);
     assert( MX_CELL_SIZE(pBt)>=szNext+4 );
     tempCell = sqliteMallocRaw( MX_CELL_SIZE(pBt) );
-    if( tempCell==0 ){
-       rc = SQLITE_NOMEM;
-       goto delete_out;
-    }
-    rc = insertCell(pPage, idx, pNext-4, szNext+4, tempCell);
-    if( rc!=SQLITE_OK ) goto delete_out;
-    put4byte(findOverflowCell(pPage, idx), pgnoChild);
-    pPage->idxShift = 0;
-
-    /* If there are any cursors that point to the leaf-cell, move them
-    ** so that they point at internal cell. This is easiest done by
-    ** calling BtreePrevious().
-    **
-    ** Also, any cursors that point to the internal page have their
-    ** cached parses invalidated, as the insertCell() above may have 
-    ** caused a defragmation.
-    */
-    for(pCur2=pBt->pCursor; pCur2; pCur2 = pCur2->pNext){
-      if( pCur2->pPage==leafCur.pPage && pCur2->idx==leafCur.idx ){
-        int res;
-        int delShiftSave = pCur2->delShift; 
-        assert( leafCur.idx==0 );
-        pCur2->delShift = 0;
-        rc = sqlite3BtreePrevious(pCur2, &res);
-        if( rc ) goto delete_out;
-        assert( res==0 );
-        assert( pCur2->pPage==pPage );
-        assert( pCur2->idx==idx );
-        pCur2->delShift = delShiftSave;
-      }
-      if( pCur2->pPage==pPage ){
-        pCur2->info.nSize = 0;
-      }
-    }
-
-    /* Balance the internal page. Free the memory allocated for the 
-    ** copy of the leaf cell. Then delete the cell from the leaf page.
-    */
+    if( tempCell==0 ) return SQLITE_NOMEM;
+    rc = insertCell(pPage, pCur->idx, pNext-4, szNext+4, tempCell);
+    if( rc!=SQLITE_OK ) return rc;
+    put4byte(findOverflowCell(pPage, pCur->idx), pgnoChild);
     rc = balance(pPage);
     sqliteFree(tempCell);
-    if( rc ) goto delete_out;
+    if( rc ) return rc;
     dropCell(leafCur.pPage, leafCur.idx, szNext);
-
-    for(pCur2=pBt->pCursor; pCur2; pCur2 = pCur2->pNext){
-      if( pCur2->pPage==leafCur.pPage && pCur2->idx>leafCur.idx ){
-        TRACE(("DELETE: Cursor %p migrates from %d,%d to %d,%d\n", pCur2, 
-            leafCur.pPage->pgno,pCur2->idx,leafCur.pPage->pgno, pCur2->idx-1));
-        pCur2->idx--;
-        pCur2->info.nSize = 0;
-      }
-    }
-
     rc = balance(leafCur.pPage);
     releaseTempCursor(&leafCur);
   }else{
-    TRACE(("DELETE: table=%d delete %d from leaf %d\n",
-       pCur->pgnoRoot, idx, pPage->pgno));
-    dropCell(pPage, idx, cellSizePtr(pPage, pCell));
-
-    /* If there were cursors pointing to cells on pPage with index values
-    ** greater than idx, decrement the index values now.
-    */
-    for(pCur2=pBt->pCursor; pCur2; pCur2 = pCur2->pNext){
-      assert( !pCur2->isValid || pCur2->pPage!=pPage || pCur2->idx!=idx );
-      if( pCur2->pPage==pPage && pCur2->idx>idx ){
-        TRACE(("DELETE: Cursor %p migrates from %d,%d to %d,%d\n", 
-            pCur2, pPage->pgno, pCur2->idx, pPage->pgno, pCur2->idx-1));
-        pCur2->idx--;
-        pCur2->info.nSize = 0;
-      }
-    }
-
+    TRACE(("DELETE: table=%d delete from leaf %d\n",
+       pCur->pgnoRoot, pPage->pgno));
+    dropCell(pPage, pCur->idx, cellSizePtr(pPage, pCell));
     rc = balance(pPage);
   }
-
-delete_out:
-  releasePage(pPage);
+  moveToRoot(pCur);
   return rc;
 }
 
@@ -4685,7 +4432,7 @@ int sqlite3BtreeCreateTable(Btree *pBt, int *piTable, int flags){
     /* The new root-page may not be allocated on a pointer-map page, or the
     ** PENDING_BYTE page.
     */
-    if( pgnoRoot==PTRMAP_PAGENO(pBt->pageSize, pgnoRoot) ||
+    if( pgnoRoot==PTRMAP_PAGENO(pBt->usableSize, pgnoRoot) ||
         pgnoRoot==PENDING_BYTE_PAGE(pBt) ){
       pgnoRoot++;
     }
@@ -4929,7 +4676,7 @@ int sqlite3BtreeDropTable(Btree *pBt, int iTable, int *piMoved){
       if( maxRootPgno==PENDING_BYTE_PAGE(pBt) ){
         maxRootPgno--;
       }
-      if( maxRootPgno==PTRMAP_PAGENO(pBt->pageSize, maxRootPgno) ){
+      if( maxRootPgno==PTRMAP_PAGENO(pBt->usableSize, maxRootPgno) ){
         maxRootPgno--;
       }
       assert( maxRootPgno!=PENDING_BYTE_PAGE(pBt) );
@@ -5536,7 +5283,7 @@ char *sqlite3BtreeIntegrityCheck(Btree *pBt, int *aRoot, int nRoot){
   }
   sCheck.anRef = sqliteMallocRaw( (sCheck.nPage+1)*sizeof(sCheck.anRef[0]) );
   for(i=0; i<=sCheck.nPage; i++){ sCheck.anRef[i] = 0; }
-  i = PENDING_BYTE/pBt->pageSize + 1;
+  i = PENDING_BYTE_PAGE(pBt);
   if( i<=sCheck.nPage ){
     sCheck.anRef[i] = 1;
   }
@@ -5571,11 +5318,11 @@ char *sqlite3BtreeIntegrityCheck(Btree *pBt, int *aRoot, int nRoot){
     ** references to pointer-map pages.
     */
     if( sCheck.anRef[i]==0 && 
-       (PTRMAP_PAGENO(pBt->pageSize, i)!=i || !pBt->autoVacuum) ){
+       (PTRMAP_PAGENO(pBt->usableSize, i)!=i || !pBt->autoVacuum) ){
       checkAppendMsg(&sCheck, 0, "Page %d is never used", i);
     }
     if( sCheck.anRef[i]!=0 && 
-       (PTRMAP_PAGENO(pBt->pageSize, i)==i && pBt->autoVacuum) ){
+       (PTRMAP_PAGENO(pBt->usableSize, i)==i && pBt->autoVacuum) ){
       checkAppendMsg(&sCheck, 0, "Pointer map page %d is referenced", i);
     }
 #endif

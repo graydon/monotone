@@ -43,7 +43,7 @@
 ** in this file for details.  If in doubt, do not deviate from existing
 ** commenting and indentation practices when changing or adding code.
 **
-** $Id: vdbe.c,v 1.430 2004/11/18 02:10:55 drh Exp $
+** $Id: vdbe.c,v 1.433 2004/12/07 14:06:13 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -380,7 +380,7 @@ void sqlite3VdbeMemPrettyPrint(Mem *pMem, char *zBuf, int nBuf){
 #ifdef VDBE_PROFILE
 /*
 ** The following routine only works on pentium-class processors.
-** It uses the RDTSC opcode to read cycle count value out of the
+** It uses the RDTSC opcode to read the cycle count value out of the
 ** processor and returns that value.  This can be used for high-res
 ** profiling.
 */
@@ -1156,7 +1156,6 @@ case OP_Function: {
   ctx.s.z = 0;
   ctx.s.xDel = 0;
   ctx.isError = 0;
-  ctx.isStep = 0;
   if( ctx.pFunc->needCollSeq ){
     assert( pOp>p->aOp );
     assert( pOp[-1].p3type==P3_COLLSEQ );
@@ -3644,7 +3643,7 @@ case OP_IdxIsNull: {
 ** value of the root page that moved - its value before the move occurred -
 ** is pushed onto the stack.  If no page movement was required (because
 ** the table being dropped was already the last one in the database) then
-** a zero is pushed onto the stack.  If AUTOVACUUM is disabled at 
+** a zero is pushed onto the stack.  If AUTOVACUUM is disabled
 ** then a zero is pushed onto the stack.
 **
 ** See also: Clear
@@ -4241,7 +4240,6 @@ case OP_AggFunc: {
   ctx.pAgg = pMem->z;
   ctx.cnt = ++pMem->i;
   ctx.isError = 0;
-  ctx.isStep = 1;
   ctx.pColl = 0;
   if( ctx.pFunc->needCollSeq ){
     assert( pOp>p->aOp );
@@ -4404,7 +4402,6 @@ case OP_AggNext: {
       ctx.s.z = pMem->zShort;
       ctx.pAgg = (void*)pMem->z;
       ctx.cnt = pMem->i;
-      ctx.isStep = 0;
       ctx.pFunc = pFunc;
       pFunc->xFinalize(&ctx);
       pMem->z = ctx.pAgg;
@@ -4432,6 +4429,56 @@ case OP_Vacuum: {
   if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;
   break;
 }
+
+#ifndef SQLITE_OMIT_CURSOR
+/* Opcode: CursorStore P1 P2 *
+**
+** The implementation of SQL cursors (not to be confused with VDBE cursors
+** or B-tree cursors) stores information in the SQLite database connection
+** structure (the sqlite3* pointer) that identifies the row
+** in a table that an SQL cursor is pointing to.  This opcode is
+** used to store that information.  P1 is an index of an SQL cursor.
+** P2 is the index of a memory slot within that SQL cursor.  This opcode
+** pops the top of the stack and stores it in the SQL cursor.
+*/
+case OP_CursorStore: {
+  SqlCursor *pCursor;
+  assert( pTos>=p->aStack );
+  assert( pOp->p1>=0 && pOp->p1<db->nSqlCursor );
+  pCursor = db->apSqlCursor[pOp->p1];
+  assert( pCursor!=0 );
+  assert( pOp->p2>=0 && pOp->p2<2 );  
+  rc = sqlite3VdbeMemMove(&pCursor->aPtr[pOp->p1], pTos);
+  pTos--;
+  break;
+}
+
+/* Opcode: CursorLoad P1 P2 *
+**
+** The implementation of SQL cursors (not to be confused with VDBE cursors
+** or B-tree cursors) stores information in the SQLite database connection
+** structure (the sqlite3* pointer) that effectively records the current
+** location in a table that an SQL cursor is pointing to.  This opcode is
+** used to recover that information.  P1 is an index of an SQL cursor.
+** P2 is the index of a memory slot within that SQL cursor.  This opcode
+** pushes a new value onto the stack which is a copy of the information
+** obtained from entry P2 of cursor P1.
+*/
+case OP_CursorLoad: {
+  SqlCursor *pCursor;
+  int i = pOp->p1;
+  assert( pTos>=p->aStack );
+  assert( pOp->p1>=0 && pOp->p1<db->nSqlCursor );
+  pCursor = db->apSqlCursor[pOp->p1];
+  assert( pCursor!=0 );
+  assert( pOp->p2>=0 && pOp->p2<2 );  
+  pTos++;
+  sqlite3VdbeMemShallowCopy(pTos, &pCursor->aPtr[i], MEM_Ephem);
+  break;
+}
+#endif /* SQLITE_OMIT_CURSOR */
+
+
 
 /* An other opcode is illegal...
 */
