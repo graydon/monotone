@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([merging with addition and deletion of the same file])
+AT_SETUP([merging "add a" with "add a; drop a"])
 
 MONOTONE_SETUP
 

@@ -1,3 +1,7 @@
+2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_merge_add_del: Shorten name for better display.
+
 2004-12-05  Matt Johnston <matt@ucc.asn.au>
 
 	* tests/t_merge_add_del: added a new test for merging
