@@ -1,3 +1,10 @@
+2004-08-16  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{hh,cc}: Simplified, finished i/o.
+	* revision.{hh,cc}: Fix to match, redo i/o.
+	* basic_io.cc (basic_io::parser::key): Print trailing colon.
+	* vocab.hh: Whitespace tweak.
+
 2004-08-09  graydon hoare  <graydon@pobox.com>
 
 	* change_set.{hh,cc}: New files.

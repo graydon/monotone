@@ -287,4 +287,5 @@ void basic_io::parser::key(std::string const & val)
   sym(s);
   if (s != val)
     err("expected symbol " + val + ", got " + s);
+  colon();
 }

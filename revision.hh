@@ -9,7 +9,6 @@
 #include <set>
 #include <string>
 
-#include "patch_set.hh"
 #include "vocab.hh"
 
 // a revision is a text object. It has a precise, normalizable serial form
@@ -18,7 +17,7 @@
 // call for it). a grammar (aside from the parsing code) for the serialized
 // form will show up here eventually. until then, here is an example.
 //
-// change_set:
+// revision:
 // {
 //   new_manifest: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
 //   edge:
@@ -27,7 +26,7 @@
 //     old_manifest: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
 //     change_set:
 //     {
-//       path_edits:
+//       paths:
 //       {
 //          rename_file:
 //          {
@@ -50,7 +49,6 @@
 // }
 
 extern std::string revision_file_name;
-
 
 typedef std::map<revision_id, std::pair<manifest_id, change_set> > 
 edge_map;
@@ -103,10 +101,12 @@ edge_changes(edge_map::const_iterator i)
 
 void 
 read_revision_set(data const & dat,
+		  change_set::tid_source & ts,
 		  revision_set & rev);
 
 void 
 read_revision_set(revision_data const & dat,
+		  change_set::tid_source & ts,
 		  revision_set & rev);
 
 void
@@ -116,5 +116,28 @@ write_revision_set(revision_set const & rev,
 void
 write_revision_set(revision_set const & rev,
 		   revision_data & dat);
+
+
+// basic_io access to printers and parsers
+
+namespace basic_io { struct printer; struct parser; }
+
+void 
+print_revision(basic_io::printer & printer,
+	       revision_set const & rev);
+
+void 
+parse_revision(basic_io::parser & parser,
+	       change_set::tid_source & ts,
+	       revision_set & rev);
+
+void 
+print_edge(basic_io::printer & printer,
+	   edge_entry const & e);
+
+void 
+parse_edge(basic_io::parser & parser,
+	   change_set::tid_source & ts,
+	   edge_map & es);
 
 #endif // __REVISION_HH__
