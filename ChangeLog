@@ -1,3 +1,13 @@
+2004-11-18  Christof Petig <christof@petig-baender.de>
+
+	- sqlite/*: SQLite 3.0.8 CVS import
+	- database.*, schema_migration.*: convert to use the SQLite3 API
+
+	This does not yet use any of the more sophisticated API features
+	of SQLite3 (query parameters, BLOBs), so there is plenty of room 
+	for optimization. This also does not change the schema (i.e.
+	still uses base64 encoded values in tables)
+
 2004-11-16  Christof Petig <christof@petig-baender.de>
 
 	merge "monotone diff f225171baf37281d463a8547def213475dde2305

@@ -35,6 +35,13 @@ using namespace std;
 
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
+extern "C" {
+// some wrappers to ease migration
+  int sqlite3_exec_printf(sqlite3*,const char *sqlFormat,sqlite3_callback,
+      void *,char **errmsg,...);
+  const char *sqlite3_value_text_s(sqlite3_value *v);
+}
+
 static string 
 lowercase(string const & in)
 {
@@ -86,36 +93,36 @@ is_ws
 };
 
 static void 
-sqlite_sha1_fn(sqlite3_context *f, int nargs, char const ** args)
+sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 {
   string tmp, sha;
   if (nargs <= 1)
     {
-      sqlite_result_error(f, "need at least 1 arg to sha1()", -1);
+      sqlite3_result_error(f, "need at least 1 arg to sha1()", -1);
       return;
     }
 
   if (nargs == 1)
     {
-      string s = (args[0]);
+      string s = (sqlite3_value_text_s(args[0]));
       s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
       tmp = s;
     }
   else
     {
-      string sep = string(args[0]);
-      string s = (args[1]);
+      string sep = string(sqlite3_value_text_s(args[0]));
+      string s = (sqlite3_value_text_s(args[1]));
       s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
       tmp = s;
       for (int i = 2; i < nargs; ++i)
 	{
-	  s = string(args[i]);
+	  s = string(sqlite3_value_text_s(args[i]));
 	  s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
 	  tmp += sep + s;
 	}
     }
   calculate_id(tmp, sha);
-  sqlite_result_text(f,sha.c_str(),sha.size(),SQLITE_TRANSIENT);
+  sqlite3_result_text(f,sha.c_str(),sha.size(),SQLITE_TRANSIENT);
 }
 
 int 
@@ -181,7 +188,8 @@ migrator
     if (sql == NULL)
       throw runtime_error("NULL sqlite object given to migrate");
 
-    if (sqlite_create_function(sql, "sha1", -1, &sqlite_sha1_fn, NULL))
+    if (sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
+            &sqlite_sha1_fn, NULL, NULL))
       throw runtime_error("error registering sha1 function with sqlite");
 
     bool migrating = false;

@@ -54,14 +54,14 @@ int const any_rows = -1;
 int const any_cols = -1;
 
 extern "C" {
-  // strangely this isn't declared, even though it's present in my sqlite.
-//  char *sqlite3_vmprintf(const char *zFormat, va_list);
+// some wrappers to ease migration
   int sqlite3_exec_printf(sqlite3*,const char *sqlFormat,sqlite3_callback,
       void *,char **errmsg,...);
   int sqlite3_exec_vprintf(sqlite3*,const char *sqlFormat,sqlite3_callback,
       void *,char **errmsg,va_list ap);
   int sqlite3_get_table_vprintf(sqlite3*,const char *sqlFormat,char ***resultp,
       int *nrow,int *ncolumn,char **errmsg,va_list ap);
+  const char *sqlite3_value_text_s(sqlite3_value *v);
 }
 
 int sqlite3_exec_printf(sqlite3*db,const char *sqlFormat,sqlite3_callback cb,
@@ -70,6 +70,22 @@ int sqlite3_exec_printf(sqlite3*db,const char *sqlFormat,sqlite3_callback cb,
   va_start(ap,errmsg);
   int result=sqlite3_exec_vprintf(db,sqlFormat,cb,user_data,errmsg,ap);
   va_end(ap);
+  return result;
+}
+
+int sqlite3_exec_vprintf(sqlite3 *db,const char *sqlFormat,sqlite3_callback cb,
+      void *user_data,char **errmsg,va_list ap)
+{ char * formatted = sqlite3_vmprintf(sqlFormat, ap);
+  int result=sqlite3_exec(db,formatted,cb,user_data,errmsg);
+  sqlite3_free(formatted);
+  return result;
+}
+
+int sqlite3_get_table_vprintf(sqlite3 *db,const char *sqlFormat,char ***resultp,
+      int *nrow,int *ncolumn,char **errmsg,va_list ap)
+{ char * formatted = sqlite3_vmprintf(sqlFormat, ap);
+  int result=sqlite3_get_table(db,formatted,resultp,nrow,ncolumn,errmsg);
+  sqlite3_free(formatted);
   return result;
 }
 
@@ -98,7 +114,7 @@ database::check_schema()
 
 // sqlite3_value_text gives a const unsigned char * but most of the time
 // we need a signed char
-static const char *sqlite3_value_text_s(sqlite3_value *v)
+const char *sqlite3_value_text_s(sqlite3_value *v)
 {  return (const char *)(sqlite3_value_text(v));
 }
 
