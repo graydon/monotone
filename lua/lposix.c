@@ -432,6 +432,7 @@ static int Pspawn(lua_State *L)			/** spawn(path,[args]) */
 	for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, i+1);
 	argv[i] = NULL;
 	for (i=0; i<n; i++) totlen += strlen(argv[i]+1);
+	totlen += 2; /* The quotes around the command */
 	cmdline = malloc(totlen);
 	if (cmdline==NULL) luaL_error(L,"not enough memory");
 	totlen = 0;
@@ -441,7 +442,10 @@ static int Pspawn(lua_State *L)			/** spawn(path,[args]) */
 		strcpy(cmdline+totlen, argv[i]);
 		totlen += strlen(argv[i]);
 		if (i==0)
+		{
 			cmdline[totlen++] = '\"';
+			cmdline[totlen] = '\0';
+		}
 		if (i<n-1)
 			cmdline[totlen++] = ' ';
 	}

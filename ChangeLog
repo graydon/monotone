@@ -1,4 +1,9 @@
-2005-02-26  Jon Bright  <jon@siliconcircus.com>
+2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	* lposix.c: (win32 Pspawn) Ensure the command string is always
+	NUL-terminated.  Also, allocate enough memory for the quotes
+	around the command string.
+
+2005-02-27  Jon Bright  <jon@siliconcircus.com>
 	* xdelta.cc (unittests): Define BOOST_STDC_NO_NAMESPACE, needed
 	to compile with the latest MinGW which uses gcc 3.4.2
 	* vocab.cc (verify(local_path)): Catch fs::filesystem_error too
