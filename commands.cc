@@ -167,6 +167,12 @@ static cmd_ ## C C ## _cmd;                       \
 void cmd_ ## C::exec(app_state & app,             \
                      vector<string> const & args) \
 
+#define ALIAS(C, realcommand, group, params, desc)	\
+CMD(C, group, params, desc)				\
+{							\
+  process(app, string(#realcommand), args);		\
+}
+
 
 static void ensure_bookdir()
 {
@@ -1158,6 +1164,9 @@ CMD(checkout, "tree", "<manifest-id>", "check out tree state from database")
 
   guard.commit();
 }
+
+ALIAS(co, checkout, "tree", "<manifest-id>",
+      "check out tree state from database; alias for checkout")
 
 CMD(heads, "tree", "", "show unmerged heads of branch")
 {

@@ -1875,6 +1875,7 @@ or convert ancestry edges.
 @comment TROFF INPUT: .TP
 
 @item @b{checkout} @i{<manifest-id>}
+@itemx @b{co} @i{<manifest-id>}
 Check out tree state from database.
 @comment TROFF INPUT: .TP
 
