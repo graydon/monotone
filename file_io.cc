@@ -95,6 +95,13 @@ void move_file(file_path const & old_path,
 
 void mkdir_p(local_path const & p) { fs::create_directories(fs::path(p())); }
 void mkdir_p(file_path const & p) { fs::create_directories(fs::path(p())); }
+void make_dir_for(file_path const & p) { 
+  fs::path tmp(p());
+  if (tmp.has_branch_path())
+    {
+      fs::create_directories(tmp.branch_path()); 
+    }
+}
 
 
 static void read_data_impl(fs::path const & p,

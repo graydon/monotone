@@ -1,3 +1,18 @@
+2003-10-21  graydon hoare  <graydon@pobox.com>
+
+	* diff_patch.cc (merge_deltas): New function.
+	(check_map_inclusion): New function.
+	(check_no_intersect): New function.
+	(merge3): Rewrite completely. 
+	* tests/t_rename.at: New test.
+	* testsuite.at: Call it.
+	* file_io.cc, file_io.hh (make_dir_for): New function.
+	* commands.cc (update): Call make_dir_for on update.
+
+2003-10-20  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc: Replace [] with idx() everywhere.
+
 2003-10-20  graydon hoare  <graydon@pobox.com>
 
 	* cert.cc (get_branch_heads): Fix dumb bug.

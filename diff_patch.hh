@@ -67,7 +67,7 @@ struct simple_merge_provider : public file_merge_provider
 			    file_id const & merged_ident,
 			    file_data const & left_data, 
 			    file_data const & merged_data);
-  virtual void get_right_version(path_id_pair const & pip, file_data & dat);
+  virtual void get_version(path_id_pair const & pip, file_data & dat);
 
 };
 
@@ -80,7 +80,7 @@ struct update_merge_provider : public simple_merge_provider
 			    file_id const & merged_ident,
 			    file_data const & left_data, 
 			    file_data const & merged_data);
-  virtual void get_right_version(path_id_pair const & pip, file_data & dat);
+  virtual void get_version(path_id_pair const & pip, file_data & dat);
   virtual ~update_merge_provider() {}
 };
 

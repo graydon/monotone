@@ -129,22 +129,22 @@ namespace commands
     size_t col2 = 0;
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-	col2 = col2 > sorted[i]->cmdgroup.size() ? col2 : sorted[i]->cmdgroup.size();
+	col2 = col2 > idx(sorted, i)->cmdgroup.size() ? col2 : idx(sorted, i)->cmdgroup.size();
       }
 
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-	if (sorted[i]->cmdgroup != curr_group)
+	if (idx(sorted, i)->cmdgroup != curr_group)
 	  {
-	    curr_group = sorted[i]->cmdgroup;
+	    curr_group = idx(sorted, i)->cmdgroup;
 	    out << endl;
-	    out << "  " << sorted[i]->cmdgroup;
-	    col = sorted[i]->cmdgroup.size() + 2;
+	    out << "  " << idx(sorted, i)->cmdgroup;
+	    col = idx(sorted, i)->cmdgroup.size() + 2;
 	    while (col++ < (col2 + 3))
 	      out << ' ';
 	  }
-	out << " " << sorted[i]->name;
-	col += sorted[i]->name.size() + 1;
+	out << " " << idx(sorted, i)->name;
+	col += idx(sorted, i)->name.size() + 1;
 	if (col >= 70)
 	  {
 	    out << endl;
@@ -596,23 +596,23 @@ static void ls_certs (string name, app_state & app, vector<string> const & args)
 
   transaction_guard guard(app.db);
 
-  if (args[0] == "manifest")
+  if (idx(args, 0) == "manifest")
     {
       manifest_id ident;
-      complete(app, args[1], ident);
+      complete(app, idx(args, 1), ident);
       vector< manifest<cert> > ts;
       app.db.get_manifest_certs(ident, ts);
       for (size_t i = 0; i < ts.size(); ++i)
-	certs.push_back(ts[i].inner());
+	certs.push_back(idx(ts, i).inner());
     }
-  else if (args[0] == "file")
+  else if (idx(args, 0) == "file")
     {
       file_id ident;
-      complete(app, args[1], ident);
+      complete(app, idx(args, 1), ident);
       vector< file<cert> > ts;
       app.db.get_file_certs(ident, ts);
       for (size_t i = 0; i < ts.size(); ++i)
-	certs.push_back(ts[i].inner());
+	certs.push_back(idx(ts, i).inner());
     }
   else
     throw usage(name);
@@ -621,19 +621,19 @@ static void ls_certs (string name, app_state & app, vector<string> const & args)
     set<rsa_keypair_id> checked;      
     for (size_t i = 0; i < certs.size(); ++i)
       {
-	if (checked.find(certs[i].key) == checked.end() &&
-	    !app.db.public_key_exists(certs[i].key))
+	if (checked.find(idx(certs, i).key) == checked.end() &&
+	    !app.db.public_key_exists(idx(certs, i).key))
 	  P(F("warning: no public key '%s' found in database\n")
-	    % certs[i].key);
-	checked.insert(certs[i].key);
+	    % idx(certs, i).key);
+	checked.insert(idx(certs, i).key);
       }
   }
 	
   for (size_t i = 0; i < certs.size(); ++i)
     {
-      bool ok = check_cert(app, certs[i]);
+      bool ok = check_cert(app, idx(certs, i));
       cert_value tv;      
-      decode_base64(certs[i].value, tv);
+      decode_base64(idx(certs, i).value, tv);
       string washed;
       if (guess_binary(tv()))
 	{
@@ -644,15 +644,15 @@ static void ls_certs (string name, app_state & app, vector<string> const & args)
 	  washed = tv();
 	}
       string head = string(ok ? "ok sig from " : "bad sig from ")
-	+ "[" + certs[i].key() + "] : " 
-	+ "[" + certs[i].name() + "] = [";
+	+ "[" + idx(certs, i).key() + "] : " 
+	+ "[" + idx(certs, i).name() + "] = [";
       string pad(head.size(), ' ');
       vector<string> lines;
       split_into_lines(washed, lines);
       I(lines.size() > 0);
-      cout << head << lines[0] ;
+      cout << head << idx(lines, 0) ;
       for (size_t i = 1; i < lines.size(); ++i)
-	cout << endl << pad << lines[i];
+	cout << endl << pad << idx(lines, i);
       cout << "]" << endl;
     }  
   guard.commit();
@@ -668,7 +668,7 @@ static void ls_keys (string name, app_state & app, vector<string> const & args)
   if (args.size() == 0)
     app.db.get_key_ids("", pubkeys, privkeys);
   else if (args.size() == 1)
-    app.db.get_key_ids(args[0], pubkeys, privkeys);
+    app.db.get_key_ids(idx(args, 0), pubkeys, privkeys);
   else
     throw usage(name);
   
@@ -676,7 +676,7 @@ static void ls_keys (string name, app_state & app, vector<string> const & args)
     {
       cout << endl << "[public keys]" << endl;
       for (size_t i = 0; i < pubkeys.size(); ++i)
-	cout << pubkeys[i]() << endl;
+	cout << idx(pubkeys, i)() << endl;
       cout << endl;
     }
 
@@ -684,13 +684,13 @@ static void ls_keys (string name, app_state & app, vector<string> const & args)
     {
       cout << endl << "[private keys]" << endl;
       for (size_t i = 0; i < privkeys.size(); ++i)
-	cout << privkeys[i]() << endl;
+	cout << idx(privkeys, i)() << endl;
       cout << endl;
     }
 
   if (pubkeys.size() == 0 &&
       privkeys.size() == 0)
-    P(F("warning: no keys found matching '%s'\n") % args[0]);
+    P(F("warning: no keys found matching '%s'\n") % idx(args, 0));
 
   guard.commit();
 }
@@ -701,7 +701,7 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
     throw usage(name);
   
   transaction_guard guard(app.db);
-  rsa_keypair_id ident(args[0]);
+  rsa_keypair_id ident(idx(args, 0));
 
   N(! app.db.key_exists(ident),
     F("key '%s' already exists in database") % ident);
@@ -725,22 +725,22 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
   transaction_guard guard(app.db);
 
   hexenc<id> ident;
-  if (args[0] == "manifest")
+  if (idx(args, 0) == "manifest")
     {
       manifest_id mid;
-      complete(app, args[1], mid);
+      complete(app, idx(args, 1), mid);
       ident = mid.inner();
     }
-  else if (args[0] == "file")
+  else if (idx(args, 0) == "file")
     {
       file_id fid;
-      complete(app, args[1], fid);
+      complete(app, idx(args, 1), fid);
       ident = fid.inner();
     }
   else
     throw usage(this->name);
 
-  cert_name name(args[2]);
+  cert_name name(idx(args, 2));
 
   rsa_keypair_id key;
   if (app.signing_key() != "")
@@ -751,7 +751,7 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
   
   cert_value val;
   if (args.size() == 4)
-    val = cert_value(args[3]);
+    val = cert_value(idx(args, 3));
   else
     val = cert_value(get_stdin());
 
@@ -771,13 +771,13 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
   // nb: we want to throw usage on mis-use *before* asking for a
   // passphrase.
   
-  if (args[0] == "file")
+  if (idx(args, 0) == "file")
     {
       calculate_cert(app, t);  
       dbw.consume_file_cert(file<cert>(t));
       qpw.consume_file_cert(file<cert>(t));
     }
-  else if (args[0] == "manifest")
+  else if (idx(args, 0) == "manifest")
     {
       calculate_cert(app, t);
       dbw.consume_manifest_cert(manifest<cert>(t));
@@ -796,7 +796,7 @@ CMD(tag, "certificate", "ID TAGNAME",
   if (args.size() != 2)
     throw usage(name);
   manifest_id m;
-  complete(app, args[0], m);
+  complete(app, idx(args, 0), m);
   packet_db_writer dbw(app);
 
   vector< pair<url,group> > targets;
@@ -805,8 +805,8 @@ CMD(tag, "certificate", "ID TAGNAME",
   app.lua.hook_get_post_targets(branchname(), targets);  
 
   queueing_packet_writer qpw(app, targets);
-  cert_manifest_tag(m, args[1], app, dbw);
-  cert_manifest_tag(m, args[1], app, qpw);
+  cert_manifest_tag(m, idx(args, 1), app, dbw);
+  cert_manifest_tag(m, idx(args, 1), app, qpw);
 }
 
 CMD(approve, "certificate", "(file|manifest) ID", 
@@ -815,10 +815,10 @@ CMD(approve, "certificate", "(file|manifest) ID",
   if (args.size() != 2)
     throw usage(name);
 
-  if (args[0] == "manifest")
+  if (idx(args, 0) == "manifest")
     {
       manifest_id m;
-      complete(app, args[1], m);
+      complete(app, idx(args, 1), m);
       vector< pair<url,group> > targets;
       cert_value branchname;
       guess_branch (m, app, branchname);
@@ -828,11 +828,11 @@ CMD(approve, "certificate", "(file|manifest) ID",
       cert_manifest_approval(m, true, app, dbw);
       cert_manifest_approval(m, true, app, qpw);
     }
-  else if (args[0] == "file")
+  else if (idx(args, 0) == "file")
     {
       packet_db_writer dbw(app);
       file_id f;
-      complete(app, args[1], f);
+      complete(app, idx(args, 1), f);
       vector< pair<url,group> > targets;
       N(app.branch_name != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name), targets); 
@@ -850,10 +850,10 @@ CMD(disapprove, "certificate", "(file|manifest) ID",
   if (args.size() != 2)
     throw usage(name);
 
-  if (args[0] == "manifest")
+  if (idx(args, 0) == "manifest")
     {
       manifest_id m;
-      complete(app, args[1], m);
+      complete(app, idx(args, 1), m);
       vector< pair<url,group> > targets;
       cert_value branchname;
       guess_branch (m, app, branchname);
@@ -863,10 +863,10 @@ CMD(disapprove, "certificate", "(file|manifest) ID",
       cert_manifest_approval(m, false, app, dbw);
       cert_manifest_approval(m, false, app, qpw);
     }
-  else if (args[0] == "file")
+  else if (idx(args, 0) == "file")
     {
       file_id f;;
-      complete(app, args[1], f);
+      complete(app, idx(args, 1), f);
       vector< pair<url,group> > targets;
       N(app.branch_name != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name), targets); 
@@ -888,7 +888,7 @@ CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
 
   string comment;
   if (args.size() == 3)
-    comment = args[2];
+    comment = idx(args, 2);
   else
     N(app.lua.hook_edit_comment("", comment), 
       F("edit comment failed"));
@@ -896,10 +896,10 @@ CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
   N(comment.find_first_not_of(" \r\t\n") != string::npos, 
     F("empty comment"));
 
-  if (args[0] == "file")
+  if (idx(args, 0) == "file")
     {
       file_id f;
-      complete(app, args[1], f);
+      complete(app, idx(args, 1), f);
       vector< pair<url,group> > targets;
       N(app.branch_name != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name), targets); 
@@ -908,10 +908,10 @@ CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
       cert_file_comment(f, comment, app, dbw); 
       cert_file_comment(f, comment, app, qpw); 
     }
-  else if (args[0] == "manifest")
+  else if (idx(args, 0) == "manifest")
     {
       manifest_id m;
-      complete(app, args[1], m);
+      complete(app, idx(args, 1), m);
       vector< pair<url,group> > targets;
       cert_value branchname;
       guess_branch (m, app, branchname);
@@ -981,7 +981,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   get_work_set(work);
   bool rewrite_work = false;
 
-  build_rename(file_path(args[0]), file_path(args[1]), app, work, 
+  build_rename(file_path(idx(args, 0)), file_path(idx(args, 1)), app, work, 
 	       man, rewrite_work);
   
   if (rewrite_work)
@@ -1017,7 +1017,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 
   // get log message
   if (args.size() == 1)
-    log_message = args[0];
+    log_message = idx(args, 0);
   else
     get_log_message(ps, app, log_message);
 
@@ -1190,6 +1190,7 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
        i != ps.f_moves.end(); ++i)
     {
       L(F("moving %s -> %s\n") % i->path_old % i->path_new);
+      make_dir_for(i->path_new);
       move_file(i->path_old, i->path_new);
     }
   
@@ -1284,14 +1285,14 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
       vector<string> work_args (args.begin(), args.end());
       for (size_t i = 0; i < work_args.size(); ++i)
 	{
-	  if (directory_exists(work_args[i]))
+	  if (directory_exists(idx(work_args, i)))
 	    {
 	      // simplest is to just add all files from that
 	      // directory.
-	      string dir = work_args[i];
-	      int off = work_args[i].find_last_not_of('/');
+	      string dir = idx(work_args, i);
+	      int off = idx(work_args, i).find_last_not_of('/');
 	      if (off != -1)
-		dir = work_args[i].substr(0, off + 1);
+		dir = idx(work_args, i).substr(0, off + 1);
 	      dir += '/';
 	      for (manifest_map::const_iterator i = m_old.begin();
 		   i != m_old.end(); ++i)
@@ -1303,15 +1304,15 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 	      continue;
 	    }
 
-	  N((m_old.find(work_args[i]) != m_old.end()) ||
-	    (work.adds.find(work_args[i]) != work.adds.end()) ||
-	    (work.dels.find(work_args[i]) != work.dels.end()) ||
-	    (work.renames.find(work_args[i]) != work.renames.end()),
-	    F("nothing known about %s") % work_args[i]);
+	  N((m_old.find(idx(work_args, i)) != m_old.end()) ||
+	    (work.adds.find(idx(work_args, i)) != work.adds.end()) ||
+	    (work.dels.find(idx(work_args, i)) != work.dels.end()) ||
+	    (work.renames.find(idx(work_args, i)) != work.renames.end()),
+	    F("nothing known about %s") % idx(work_args, i));
 
-	  if (m_old.find(work_args[i]) != m_old.end())
+	  if (m_old.find(idx(work_args, i)) != m_old.end())
 	    {
-	      path_id_pair pip(m_old.find(work_args[i]));
+	      path_id_pair pip(m_old.find(idx(work_args, i)));
 	      L(F("reverting %s to %s\n") %
 		pip.path() % pip.ident());
 
@@ -1326,23 +1327,23 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 	      write_data(pip.path(), dat.inner());	      
 
 	      // a deleted file will always appear in the manifest
-	      if (work.dels.find(work_args[i]) != work.dels.end())
+	      if (work.dels.find(idx(work_args, i)) != work.dels.end())
 		{
 		  L(F("also removing deletion for %s\n") %
-		    work_args[i]);
-		  work.dels.erase(work_args[i]);
+		    idx(work_args, i));
+		  work.dels.erase(idx(work_args, i));
 		}
 	    }
-	  else if (work.renames.find(work_args[i]) != work.renames.end())
+	  else if (work.renames.find(idx(work_args, i)) != work.renames.end())
 	    {
-	      L(F("removing rename for %s\n") % work_args[i]);
-	      work.renames.erase(work_args[i]);
+	      L(F("removing rename for %s\n") % idx(work_args, i));
+	      work.renames.erase(idx(work_args, i));
 	    }
 	  else
 	    {
-	      I (work.adds.find(work_args[i]) != work.adds.end());
-	      L(F("removing addition for %s\n") % work_args[i]);
-	      work.adds.erase(work_args[i]);
+	      I (work.adds.find(idx(work_args, i)) != work.adds.end());
+	      L(F("removing addition for %s\n") % idx(work_args, i));
+	      work.adds.erase(idx(work_args, i));
 	    }
 	}
       // race
@@ -1361,11 +1362,11 @@ CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to 
 
   transaction_guard guard(app.db);
 
-  if (args[0] == "file")
+  if (idx(args, 0) == "file")
     {
       file_data dat;
       file_id ident;
-      complete(app, args[1], ident);
+      complete(app, idx(args, 1), ident);
 
       N(app.db.file_version_exists(ident),
 	F("no file version %s found in database") % ident);
@@ -1377,11 +1378,11 @@ CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to 
       cout.write(unpacked().data(), unpacked().size());
 
     }
-  else if (args[0] == "manifest")
+  else if (idx(args, 0) == "manifest")
     {
       manifest_data dat;
       manifest_id ident;
-      complete(app, args[1], ident);
+      complete(app, idx(args, 1), ident);
 
       N(app.db.manifest_version_exists(ident),
 	F("no manifest version %s found in database") % ident);
@@ -1406,22 +1407,22 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY", "check out tree state from databa
 
   transaction_guard guard(app.db);
 
-  if (args[1] != string("."))
+  if (idx(args, 1) != string("."))
     {
-      local_path lp(args[1]);
+      local_path lp(idx(args, 1));
       mkdir_p(lp);
-      chdir(args[1].c_str());
+      chdir(idx(args, 1).c_str());
     }
     
   file_data data;
   manifest_id ident;
-  complete(app, args[0], ident);
+  complete(app, idx(args, 0), ident);
   manifest_map m;
 
   N(app.db.manifest_version_exists(ident),
     F("no manifest version %s found in database") % ident);
   
-  L(F("checking out manifest %s to directory %s\n") % ident % args[1]);
+  L(F("checking out manifest %s to directory %s\n") % ident % idx(args, 1));
   manifest_data m_data;
   app.db.get_manifest_version(ident, m_data);
   read_manifest_map(m_data, m);      
@@ -1510,11 +1511,11 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
       vector< pair<url,group> > targets;
       app.lua.hook_get_post_targets(app.branch_name, targets);
 
-      manifest_id left = heads[0];
+      manifest_id left = idx(heads, 0);
       manifest_id ancestor;
       for (size_t i = 1; i < heads.size(); ++i)
 	{
-	  manifest_id right = heads[i];
+	  manifest_id right = idx(heads, i);
 	  P(F("merging with manifest %d / %d: %s <-> %s\n")
 	    % i % heads.size() % left % right);
 
@@ -1571,7 +1572,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   if (args.size() != 3)
   throw usage(name);
 
-  file_id anc_id(args[0]), left_id(args[1]), right_id(args[2]);
+  file_id anc_id(idx(args, 0)), left_id(idx(args, 1)), right_id(idx(args, 2));
   file_data anc, left, right;
   data anc_unpacked, left_unpacked, right_unpacked;
 
@@ -1636,48 +1637,48 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   if (args.size() != 2)
     throw usage(name);
 
-  get_branch_heads(args[0], app, src_heads);
-  get_branch_heads(args[1], app, dst_heads);
+  get_branch_heads(idx(args, 0), app, src_heads);
+  get_branch_heads(idx(args, 1), app, dst_heads);
 
   if (src_heads.size() == 0)
     {
-      cout << "branch " << args[0] << "is empty" << endl;
+      cout << "branch " << idx(args, 0) << "is empty" << endl;
       return;
     }
   else if (src_heads.size() != 1)
     {
-      cout << "branch " << args[0] << "is not merged" << endl;
+      cout << "branch " << idx(args, 0) << "is not merged" << endl;
       return;
     }
   else if (dst_heads.size() == 0)
     {
-      cout << "branch " << args[1] << "is empty" << endl;
+      cout << "branch " << idx(args, 1) << "is empty" << endl;
       return;
     }
   else if (dst_heads.size() != 1)
     {
-      cout << "branch " << args[1] << "is not merged" << endl;
+      cout << "branch " << idx(args, 1) << "is not merged" << endl;
       return;
     }
   else
     {
       vector< pair<url,group> > targets;
-      app.lua.hook_get_post_targets(args[1], targets);
+      app.lua.hook_get_post_targets(idx(args, 1), targets);
 
       manifest_id merged;
       transaction_guard guard(app.db);
-      try_one_merge (src_heads[0], dst_heads[0], merged, app, targets);      
+      try_one_merge (idx(src_heads, 0), idx(dst_heads, 0), merged, app, targets);      
 
       queueing_packet_writer qpw(app, targets);
       cert_manifest_in_branch(merged, app.branch_name, app, qpw);
       cert_manifest_changelog(merged, 
 			      "propagate of " 
-			      + src_heads[0].inner()() 
+			      + idx(src_heads, 0).inner()() 
 			      + " and " 
-			      + dst_heads[0].inner()()
+			      + idx(dst_heads, 0).inner()()
 			      + "\n"
 			      + "from branch " 
-			      + args[0] + " to " + args[1] + "\n", 
+			      + idx(args, 0) + " to " + idx(args, 1) + "\n", 
 			      app, qpw);	  
       guard.commit();      
     }
@@ -1689,22 +1690,22 @@ CMD(complete, "informative", "(manifest|file) PARTIAL-ID", "complete partial id"
   if (args.size() != 2)
     throw usage(name);
 
-  if (args[0] == "manifest")
+  if (idx(args, 0) == "manifest")
     {      
-      N(args[1].find_first_not_of("abcdef0123456789") == string::npos,
+      N(idx(args, 1).find_first_not_of("abcdef0123456789") == string::npos,
 	F("non-hex digits in partial id"));
       set<manifest_id> completions;
-      app.db.complete(args[1], completions);
+      app.db.complete(idx(args, 1), completions);
       for (set<manifest_id>::const_iterator i = completions.begin();
 	   i != completions.end(); ++i)
 	cout << i->inner()() << endl;
     }
-  else if (args[0] == "file")
+  else if (idx(args, 0) == "file")
     {
-      N(args[1].find_first_not_of("abcdef0123456789") == string::npos,
+      N(idx(args, 1).find_first_not_of("abcdef0123456789") == string::npos,
 	F("non-hex digits in partial id"));
       set<file_id> completions;
-      app.db.complete(args[1], completions);
+      app.db.complete(idx(args, 1), completions);
       for (set<file_id>::const_iterator i = completions.begin();
 	   i != completions.end(); ++i)
 	cout << i->inner()() << endl;
@@ -1730,7 +1731,7 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
   else if (args.size() == 1)
     {
       manifest_id m_old_id;
-      complete(app, args[0], m_old_id);
+      complete(app, idx(args, 0), m_old_id);
       manifest_data m_old_data;
       app.db.get_manifest_version(m_old_id, m_old_data);
       read_manifest_map(m_old_data, m_old);
@@ -1744,8 +1745,8 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
     {
       manifest_id m_old_id, m_new_id;
 
-      complete(app, args[0], m_old_id);
-      complete(app, args[1], m_new_id);
+      complete(app, idx(args, 0), m_old_id);
+      complete(app, idx(args, 1), m_new_id);
 
       manifest_data m_old_data, m_new_data;
       app.db.get_manifest_version(m_old_id, m_old_data);
@@ -1814,7 +1815,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
   
   if (args.size() == 1)
     {
-      complete(app, args[0], m_id);
+      complete(app, idx(args, 0), m_id);
     }
   else
     {
@@ -1997,14 +1998,14 @@ static void ls_branches (string name, app_state & app, vector<string> const & ar
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_value name;
-      decode_base64(certs[i].inner().value, name);
+      decode_base64(idx(certs, i).inner().value, name);
       names.push_back(name());
     }
 
   sort(names.begin(), names.end());
   names.erase(std::unique(names.begin(), names.end()), names.end());
   for (size_t i = 0; i < names.size(); ++i)
-    cout << names[i] << endl;
+    cout << idx(names, i) << endl;
 
   guard.commit();
 }
@@ -2062,15 +2063,15 @@ CMD(list, "informative",
   vector<string>::const_iterator i = args.begin();
   ++i;
   vector<string> removed (i, args.end());
-  if (args[0] == "certs")
+  if (idx(args, 0) == "certs")
     ls_certs(name, app, removed);
-  else if (args[0] == "keys")
+  else if (idx(args, 0) == "keys")
     ls_keys(name, app, removed);
-  else if (args[0] == "branches")
+  else if (idx(args, 0) == "branches")
     ls_branches(name, app, removed);
-  else if (args[0] == "unknown")
+  else if (idx(args, 0) == "unknown")
     ls_unknown(app);
-  else if (args[0] == "ignored")
+  else if (idx(args, 0) == "ignored")
     ls_ignored(app);
   else
     throw usage(name);
@@ -2097,8 +2098,8 @@ ALIAS(ls, list, "informative",
   manifest_map m_old, m_new;
   patch_set ps;      
 
-  complete(app, args[0], m_old_id);
-  complete(app, args[1], m_new_id);
+  complete(app, idx(args, 0), m_old_id);
+  complete(app, idx(args, 1), m_new_id);
 
   app.db.get_manifest_version(m_old_id, m_old_data);
   app.db.get_manifest_version(m_new_id, m_new_data);
@@ -2120,8 +2121,8 @@ CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
   file_id f_old_id, f_new_id;
   file_data f_old_data, f_new_data;
 
-  complete(app, args[0], f_old_id);
-  complete(app, args[1], f_new_id);
+  complete(app, idx(args, 0), f_old_id);
+  complete(app, idx(args, 1), f_new_id);
 
   app.db.get_file_version(f_old_id, f_old_data);
   app.db.get_file_version(f_new_id, f_new_data);
@@ -2142,7 +2143,7 @@ CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
   manifest_id m_id;
   manifest_data m_data;
 
-  complete(app, args[0], m_id);
+  complete(app, idx(args, 0), m_id);
 
   app.db.get_manifest_version(m_id, m_data);
   pw.consume_manifest_data(m_id, m_data);  
@@ -2161,7 +2162,7 @@ CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
   file_id f_id;
   file_data f_data;
 
-  complete(app, args[0], f_id);
+  complete(app, idx(args, 0), f_id);
 
   app.db.get_file_version(f_id, f_data);
   pw.consume_file_data(f_id, f_data);  
@@ -2179,11 +2180,11 @@ CMD(mcerts, "packet i/o", "ID", "write manifest cert packets to stdout")
   manifest_id m_id;
   vector< manifest<cert> > certs;
 
-  complete(app, args[0], m_id);
+  complete(app, idx(args, 0), m_id);
 
   app.db.get_manifest_certs(m_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
-    pw.consume_manifest_cert(certs[i]);
+    pw.consume_manifest_cert(idx(certs, i));
   guard.commit();
 }
 
@@ -2198,11 +2199,11 @@ CMD(fcerts, "packet i/o", "ID", "write file cert packets to stdout")
   file_id f_id;
   vector< file<cert> > certs;
 
-  complete(app, args[0], f_id);
+  complete(app, idx(args, 0), f_id);
 
   app.db.get_file_certs(f_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
-    pw.consume_file_cert(certs[i]);
+    pw.consume_file_cert(idx(certs, i));
   guard.commit();
 }
 
@@ -2213,7 +2214,7 @@ CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
 
   transaction_guard guard(app.db);
   packet_writer pw(cout);
-  rsa_keypair_id ident(args[0]);
+  rsa_keypair_id ident(idx(args, 0));
   base64< rsa_pub_key > key;
   app.db.get_key(ident, key);
   pw.consume_public_key(ident, key);
@@ -2227,7 +2228,7 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
 
   transaction_guard guard(app.db);
   packet_writer pw(cout);
-  rsa_keypair_id ident(args[0]);
+  rsa_keypair_id ident(idx(args, 0));
   base64< arc4<rsa_priv_key> > key;
   app.db.get_key(ident, key);
   pw.consume_private_key(ident, key);
@@ -2299,8 +2300,8 @@ CMD(fetch, "network", "[URL] [GROUPNAME]", "fetch recent changes from network")
   else
     {
       N(args.size() == 2, F("need URL and groupname"));
-      sources.push_back(make_pair(url(args[0]),
-				  group(args[1])));
+      sources.push_back(make_pair(url(idx(args, 0)),
+				  group(idx(args, 1))));
     }
   
   fetch_queued_blobs_from_network(sources, app);
@@ -2328,8 +2329,8 @@ CMD(post, "network", "[URL] [GROUPNAME]", "post queued changes to network")
   else
     {
       N(args.size() == 2, F("need URL and groupname"));
-      targets.push_back(make_pair(url(args[0]),
-				  group(args[1])));
+      targets.push_back(make_pair(url(idx(args, 0)),
+				  group(idx(args, 1))));
     }
 
   post_queued_blobs_to_network(targets, app);
@@ -2363,20 +2364,20 @@ CMD(debug, "debug", "SQL", "issue SQL queries directly (dangerous)")
 {
   if (args.size() != 1)
     throw usage(name);
-  app.db.debug(args[0], cout);
+  app.db.debug(idx(args, 0), cout);
 }
 
 CMD(db, "database", "init\ninfo\nversion\nmigrate", "manipulate database state")
 {
   if (args.size() != 1)
     throw usage(name);
-  if (args[0] == "init")
+  if (idx(args, 0) == "init")
     app.db.initialize();
-  else if (args[0] == "info")
+  else if (idx(args, 0) == "info")
     app.db.info(cout);
-  else if (args[0] == "version")
+  else if (idx(args, 0) == "version")
     app.db.version(cout);
-  else if (args[0] == "migrate")
+  else if (idx(args, 0) == "migrate")
     app.db.migrate();
   else
     throw usage(name);
