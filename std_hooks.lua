@@ -137,16 +137,16 @@ end
 
 -- merger support
 
-function merge2_emacs_cmd(lfile, rfile, outfile)
+function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
    local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
-   local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-   return string.format(cmd_fmt, lfile, rfile, outfile)
+   local cmd_fmt = "%s -no-init-file -eval " .. elisp
+   return string.format(cmd_fmt, emacs, lfile, rfile, outfile)
 end
 
-function merge3_emacs_cmd(lfile, afile, rfile, outfile)
+function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "'(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")'"
-   local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-   return string.format(cmd_fmt, lfile, rfile, afile, outfile)
+   local cmd_fmt = "%s -no-init-file -eval " .. elisp
+   return string.format(cmd_fmt, emacs, lfile, rfile, afile, outfile)
 end
 
 function merge2_xxdiff_cmd(lfile, rfile, outfile)
@@ -161,6 +161,11 @@ function merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
    return string.format(cmd_fmt .. cmd_opts, lfile, afile, rfile, outfile)
 end
 
+function merge3_merge_cmd(lfile, afile, rfile, outfile)
+   local cmd_fmt = "merge -p -L left -L ancestor -L right %s %s %s > %s"
+   return string.format(cmd_fmt, lfile, afile, rfile, outfile)
+end
+   
 function write_to_temporary_file(data)
    tmp, filename = temp_file()
    if (tmp == nil) then 
@@ -203,7 +208,9 @@ function merge2(left, right)
       if program_exists_in_path("xxdiff") then
 	 cmd = merge2_xxdiff_cmd(lfile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
-	 cmd = merge2_emacs_cmd(lfile, rfile, outfile)
+	 cmd = merge2_emacs_cmd("emacs", lfile, rfile, outfile)
+      elseif program_exists_in_path("xemacs") then
+	 cmd = merge2_emacs_cmd("xemacs", lfile, rfile, outfile)
       end
 
       if cmd ~= nil
@@ -211,6 +218,8 @@ function merge2(left, right)
 	 io.write(string.format("executing external 2-way merge command: %s\n", cmd))
 	 os.execute(cmd)
 	 data = read_contents_of_file(outfile)
+      else
+	 io.write("no external 2-way merge command found")
       end
    end
    
@@ -239,10 +248,14 @@ function merge3(ancestor, left, right)
       outfile ~= nil 
    then 
       local cmd = nil
-      if program_exists_in_path("xxdiff") then
+      if program_exists_in_path("merge") then 
+         cmd = merge3_merge_cmd(lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("xxdiff") then
 	 cmd = merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
-	 cmd = merge3_emacs_cmd(lfile, afile, rfile, outfile)
+	 cmd = merge3_emacs_cmd("emacs", lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("xemacs") then
+	 cmd = merge3_emacs_cmd("xemacs", lfile, afile, rfile, outfile)
       end
 
       if cmd ~= nil
@@ -250,6 +263,8 @@ function merge3(ancestor, left, right)
 	 io.write(string.format("executing external 3-way merge command: %s\n", cmd))
 	 os.execute(cmd)
 	 data = read_contents_of_file(outfile)
+      else
+	 io.write("no external 3-way merge command found")
       end
    end
    
