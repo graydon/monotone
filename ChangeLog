@@ -1,3 +1,9 @@
+2004-05-12  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Rename Netxx back to netxx. Really, look in 
+	the manifest; it's been renamed!
+	* configure.ac: Remove prg_exec_monitor checks.
+
 2004-05-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* testsuite.at (test_hooks.lua): Add a 'test_attr' attribute
