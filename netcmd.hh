@@ -11,6 +11,7 @@
 
 #include "merkle_tree.hh"
 #include "numeric_vocab.hh"
+#include "vocab.hh"
 
 typedef enum 
   { 
@@ -19,7 +20,6 @@ typedef enum
     source_and_sink_role = 3
   }
 protocol_role;
-
 
 typedef enum 
   { 
@@ -61,24 +61,24 @@ bool read_netcmd(std::string & inbuf, netcmd & out);
 
 // i/o functions for each type of command payload
 void read_hello_cmd_payload(std::string const & in, 
-			    std::string & server, 
-			    std::string & nonce);
-void write_hello_cmd_payload(std::string const & server, 
-			     std::string const & nonce, 
+			    id & server, 
+			    id & nonce);
+void write_hello_cmd_payload(id const & server, 
+			     id const & nonce, 
 			     std::string & out);
 
 void read_auth_cmd_payload(std::string const & in, 
 			   protocol_role & role, 
 			   std::string & collection,
-			   std::string & client, 
-			   std::string & nonce1, 
-			   std::string & nonce2,
+			   id & client, 
+			   id & nonce1, 
+			   id & nonce2,
 			   std::string & signature);
 void write_auth_cmd_payload(protocol_role role, 
 			    std::string const & collection, 
-			    std::string const & client,
-			    std::string const & nonce1, 
-			    std::string const & nonce2, 
+			    id const & client,
+			    id const & nonce1, 
+			    id const & nonce2, 
 			    std::string const & signature, 
 			    std::string & out);
 
@@ -88,47 +88,57 @@ void write_confirm_cmd_payload(std::string const & signature, std::string & out)
 void read_refine_cmd_payload(std::string const & in, merkle_node & node);
 void write_refine_cmd_payload(merkle_node const & node, std::string & out);
 
-void read_done_cmd_payload(std::string const & in, u8 & level);
-void write_done_cmd_payload(u8 level, std::string & out);
+void read_done_cmd_payload(std::string const & in, u8 & level, netcmd_item_type & type);
+void write_done_cmd_payload(u8 level, netcmd_item_type type, std::string & out);
 
-void read_describe_cmd_payload(std::string const & in, std::string & id);
-void write_describe_cmd_payload(std::string const & id, std::string & out);
+void read_describe_cmd_payload(std::string const & in, netcmd_item_type & type, id & item);
+void write_describe_cmd_payload(netcmd_item_type type, id const & item, std::string & out);
 
 void read_description_cmd_payload(std::string const & in, 
-				  std::string & head, 
+				  netcmd_item_type & type,
+				  id & item, 
 				  u64 & len,
-				  std::vector<std::string> & predecessors);
-void write_description_cmd_payload(std::string const & head, 
+				  std::vector<id> & predecessors);
+void write_description_cmd_payload(netcmd_item_type type,
+				   id const & item, 
 				   u64 len,
-				   std::vector<std::string> const & predecessors,
+				   std::vector<id> const & predecessors,
 				   std::string & out);
 
 void read_send_data_cmd_payload(std::string const & in, 
-				std::string & head,
+				netcmd_item_type & type,
+				id & item,
 				std::vector<std::pair<u64, u64> > & fragments);
-void write_send_data_cmd_payload(std::string const & head,
+void write_send_data_cmd_payload(netcmd_item_type type,
+				 id const & item,
 				 std::vector<std::pair<u64, u64> > const & fragments,
 				 std::string & out);
 
 void read_send_delta_cmd_payload(std::string const & in, 
-				 std::string & head,
-				 std::string & base);
-void write_send_delta_cmd_payload(std::string const & head,
-				  std::string const & base,
+				 netcmd_item_type & type,
+				 id & head,
+				 id & base);
+void write_send_delta_cmd_payload(netcmd_item_type type,
+				  id const & head,
+				  id const & base,
 				  std::string & out);
 
 void read_data_cmd_payload(std::string const & in,
-			   std::string & id,
+			   netcmd_item_type & type,
+			   id & item,
 			   std::vector< std::pair<std::pair<u64,u64>,std::string> > & fragments);
-void write_data_cmd_payload(std::string const & id,
+void write_data_cmd_payload(netcmd_item_type type,
+			    id const & item,
 			    std::vector< std::pair<std::pair<u64,u64>,std::string> > const & fragments,
 			    std::string & out);
 
 void read_delta_cmd_payload(std::string const & in, 
-			    std::string & src, std::string & dst, 
-			    u64 & src_len, std::string & del);
-void write_delta_cmd_payload(std::string const & src, std::string const & dst, 
-			     u64 src_len, std::string const & del,
+			    netcmd_item_type & type,
+			    id & src, id & dst, 
+			    u64 & src_len, delta & del);
+void write_delta_cmd_payload(netcmd_item_type & type,
+			     id const & src, id const & dst, 
+			     u64 src_len, delta const & del,
 			     std::string & out);
 
 #endif // __NETCMD_HH__

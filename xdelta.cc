@@ -27,8 +27,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include "adler32.hh"
-#include "xdelta.hh"
+#include "numeric_vocab.hh"
 #include "sanity.hh"
+#include "xdelta.hh"
 
 using namespace std;
 using namespace __gnu_cxx;
@@ -431,6 +432,30 @@ apply_delta(string const & a,
 }
 
 
+struct size_accumulating_delta_applicator :
+  public delta_applicator
+{
+  u64 & sz;
+  size_accumulating_delta_applicator(u64 & s) : sz(s) {}
+  virtual void begin(std::string const & base) {}
+  virtual void next() {}
+  virtual void finish(std::string & out) {}
+
+  virtual void copy(std::string::size_type pos, 
+		    std::string::size_type len) 
+  { sz += len; }
+  virtual void insert(std::string const & str) 
+  { sz += str.size(); }
+};
+
+
+u64 measure_delta_target_size(std::string const & delta)
+{
+  u64 sz = 0;
+  boost::shared_ptr<delta_applicator> da(new size_accumulating_delta_applicator(sz));
+  apply_delta(da, delta);
+  return sz;
+}
 
 
 

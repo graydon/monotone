@@ -16,6 +16,7 @@ struct cert;
 #include <boost/filesystem/path.hpp>
 
 #include "manifest.hh"
+#include "numeric_vocab.hh"
 #include "vocab.hh"
 
 // this file defines a public, typed interface to the database.
@@ -99,7 +100,10 @@ class database
 		   base64< gzip<data> > & dat,
 		   std::string const & data_table,
 		   std::string const & delta_table);
-  
+  u64 get_version_size(hexenc<id> const & ident,
+		       std::string const & data_table,
+		       std::string const & delta_table);
+
   void put(hexenc<id> const & new_id,
 	   base64< gzip<data> > const & dat,
 	   std::string const & table);
@@ -182,6 +186,9 @@ public:
   void get_file_version(file_id const & id,
 			file_data & dat);
 
+  // get the size of the file version
+  u64 get_file_version_size(file_id const & id);
+
   // put file w/o predecessor into db
   void put_file(file_id const & new_id,
 		file_data const & dat);
@@ -195,6 +202,9 @@ public:
   // from deltas (if they exist). 
   void get_manifest_version(manifest_id const & id,
 			    manifest_data & dat);
+
+  // get the size of the manifest version
+  u64 get_manifest_version_size(manifest_id const & id);
 
   // put manifest w/o predecessor into db
   void put_manifest(manifest_id const & new_id,

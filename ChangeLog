@@ -1,3 +1,18 @@
+2004-02-09  Ben Elliston  <bje@wasabisystems.com>
+
+	* monotone.texi: Spelling corrections.
+
+2004-02-09  graydon hoare  <graydon@pobox.com>
+
+	* database.cc, database.hh 
+	(get_version_size)
+	(get_file_version_size)
+	(get_manifest_version_size): New functions.
+	* xdelta.cc, xdelta.hh (measure_delta_target_size): New function.
+	* merkle_tree.cc, merkle_tree.hh, netcmd.cc, netcmd.hh: 
+	Cleanup and typesafety.
+	* netsync.cc: Cleanup, typesafety, implement refine phase.
+
 2004-02-01  graydon hoare  <graydon@pobox.com>
 
 	* netsync.cc: Remove a lot of stuff, implement auth phase.

@@ -101,29 +101,31 @@ bool read_netcmd(string & inbuf, netcmd & out)
   return true;    
 }
 
-void read_hello_cmd_payload(string const & in, string & server, string & nonce)
+void read_hello_cmd_payload(string const & in, id & server, id & nonce)
 {
   size_t pos = 0;
   // syntax is <server:20 bytes sha1> <nonce:20 random bytes>
-  server = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "hello netcmd, server identifier");
-  nonce = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "hello netcmd, nonce");
+  server = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+				"hello netcmd, server identifier"));
+  nonce = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+			       "hello netcmd, nonce"));
   assert_end_of_buffer(in, pos, "hello netcmd payload");
 }
 
-void write_hello_cmd_payload(string const & server, string const & nonce, string & out)
+void write_hello_cmd_payload(id const & server, id const & nonce, string & out)
 {
-  I(server.size() == constants::merkle_hash_length_in_bytes);
-  I(nonce.size() == constants::merkle_hash_length_in_bytes);
-  out += server;
-  out += nonce;
+  I(server().size() == constants::merkle_hash_length_in_bytes);
+  I(nonce().size() == constants::merkle_hash_length_in_bytes);
+  out += server();
+  out += nonce();
 }
 
 void read_auth_cmd_payload(string const & in, 
 			   protocol_role & role, 
 			   string & collection,
-			   string & client, 
-			   string & nonce1, 
-			   string & nonce2,
+			   id & client, 
+			   id & nonce1, 
+			   id & nonce2,
 			   string & signature)
 {
   size_t pos = 0;
@@ -138,9 +140,12 @@ void read_auth_cmd_payload(string const & in,
   role = static_cast<protocol_role>(role_byte);
   u32 coll_len = extract_datum_msb<u32>(in, pos, "auth netcmd, collection name length");
   collection = extract_substring(in, pos, coll_len, "auth netcmd, collection name");
-  client = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "auth netcmd, client identifier");
-  nonce1 = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "auth netcmd, nonce1");
-  nonce2 = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "auth netcmd, nonce2");
+  client = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+				"auth netcmd, client identifier"));
+  nonce1 = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+				"auth netcmd, nonce1"));
+  nonce2 = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+				"auth netcmd, nonce2"));
   u32 sig_len = extract_datum_msb<u32>(in, pos, "auth netcmd, signature length");
   signature = extract_substring(in, pos, sig_len, "auth netcmd, signature");
   assert_end_of_buffer(in, pos, "auth netcmd payload");
@@ -148,21 +153,21 @@ void read_auth_cmd_payload(string const & in,
 
 void write_auth_cmd_payload(protocol_role role, 
 			    string const & collection, 
-			    string const & client,
-			    string const & nonce1, 
-			    string const & nonce2, 
+			    id const & client,
+			    id const & nonce1, 
+			    id const & nonce2, 
 			    string const & signature, 
 			    string & out)
 {
-  I(client.size() == constants::merkle_hash_length_in_bytes);
-  I(nonce1.size() == constants::merkle_hash_length_in_bytes);
-  I(nonce2.size() == constants::merkle_hash_length_in_bytes);
+  I(client().size() == constants::merkle_hash_length_in_bytes);
+  I(nonce1().size() == constants::merkle_hash_length_in_bytes);
+  I(nonce2().size() == constants::merkle_hash_length_in_bytes);
   out += static_cast<char>(role);
   write_datum_msb<u32>(collection.size(), out);
   out += collection;
-  out += client;
-  out += nonce1;
-  out += nonce2;
+  out += client();
+  out += nonce1();
+  out += nonce2();
   write_datum_msb<u32>(signature.size(), out);
   out += signature;
 }
@@ -194,79 +199,98 @@ void write_refine_cmd_payload(merkle_node const & node, string & out)
   write_node(node, out);
 }
 
-void read_done_cmd_payload(string const & in, u8 & level)
+void read_done_cmd_payload(string const & in, u8 & level, netcmd_item_type & type)
 {
   size_t pos = 0;
-  // syntax is: <level: 1 byte>
+  // syntax is: <level: 1 byte> <type: 1 byte>
   level = extract_datum_msb<u8>(in, pos, "done netcmd, level number");
+  type = static_cast<netcmd_item_type>(extract_datum_msb<u8>(in, pos, 
+							     "done netcmd, item type"));
   assert_end_of_buffer(in, pos, "done netcmd payload");
 }
 
-void write_done_cmd_payload(u8 level, string & out)
+void write_done_cmd_payload(u8 level, netcmd_item_type type, string & out)
 {
   out += static_cast<char>(level);
+  out += static_cast<char>(type);
 }
 
-void read_describe_cmd_payload(string const & in, string & id)
+void read_describe_cmd_payload(string const & in, netcmd_item_type & type, id & item)
 {
   size_t pos = 0;
-  // syntax is: <id: 20 bytes sha1>
-  id = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "describe netcmd, item identifier");
+  // syntax is: <type: 1 byte> <id: 20 bytes sha1>
+  type = static_cast<netcmd_item_type>(extract_datum_msb<u8>(in, pos, 
+							     "describe netcmd, item type"));
+  item = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+			      "describe netcmd, item identifier"));
   assert_end_of_buffer(in, pos, "describe netcmd payload");
 }
 
-void write_describe_cmd_payload(string const & id, string & out)
+void write_describe_cmd_payload(netcmd_item_type type, id const & item, string & out)
 {
-  I(id.size() == constants::merkle_hash_length_in_bytes);
-  out += id;
+  I(item().size() == constants::merkle_hash_length_in_bytes);
+  out += static_cast<char>(type);
+  out += item();
 }
 
 void read_description_cmd_payload(string const & in, 
-				  string & head, 
+				  netcmd_item_type & type,
+				  id & item, 
 				  u64 & len,
-				  vector<string> & predecessors)
+				  vector<id> & predecessors)
 {
   size_t pos = 0;
-  // syntax is: <id: 20 bytes sha1> <len: 8 bytes> 
+  // syntax is: <type: 1 byte> <id: 20 bytes sha1> <len: 8 bytes> 
   //            <npred: 1 byte> <pred1: 20 bytes sha1> ... <predN>
-  head = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "description netcmd, item identifier");
+  type = static_cast<netcmd_item_type>(extract_datum_msb<u8>(in, pos, 
+							     "description netcmd, item type"));
+  item = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+			      "description netcmd, item identifier"));
   len = extract_datum_msb<u64>(in, pos, "description netcmd, data length");
   u8 npred = extract_datum_msb<u8>(in, pos, "description netcmd, number of predecessors");
+  predecessors.clear();
   predecessors.reserve(npred);
   for (u8 i = 0; i < npred; ++i)
     {
-      string tmp = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "description netcmd, predecessor identifier");
-      predecessors.push_back(tmp);
+      string tmp = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+				     "description netcmd, predecessor identifier");
+      predecessors.push_back(id(tmp));
     }
   assert_end_of_buffer(in, pos, "description netcmd payload");
 }
 
-void write_description_cmd_payload(string const & head, 
+void write_description_cmd_payload(netcmd_item_type type,
+				   id const & item, 
 				   u64 len,
-				   vector<string> const & predecessors,
+				   vector<id> const & predecessors,
 				   string & out)
 {
-  I(head.size() == constants::merkle_hash_length_in_bytes);
+  I(item().size() == constants::merkle_hash_length_in_bytes);
   I(predecessors.size() <= 0xff);
-  out += head;
+  out += static_cast<char>(type);
+  out += item();
   write_datum_msb<u64>(len, out);
   out += static_cast<char>(predecessors.size());
-  for (vector<string>::const_iterator i = predecessors.begin();
+  for (vector<id>::const_iterator i = predecessors.begin();
        i != predecessors.end(); ++i)
     {
-      I(i->size() == constants::merkle_hash_length_in_bytes);
-      out += *i;
+      I((*i)().size() == constants::merkle_hash_length_in_bytes);
+      out += (*i)();
     }
 }
 
 void read_send_data_cmd_payload(string const & in, 
-				string & head,
+				netcmd_item_type & type,
+				id & item,
 				vector<pair<u64, u64> > & fragments)
 {
   size_t pos = 0;
-  // syntax is: <id: 20 bytes sha1> <nfrag: 1 byte> 
+  // syntax is: <type: 1 byte> <id: 20 bytes sha1> <nfrag: 1 byte> 
   //            <pos1: 8 bytes> <len1: 8 bytes> ... <posN: 8 bytes> <lenN: 8 bytes>
-  head = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "send_data netcmd, item identifier");
+  type = static_cast<netcmd_item_type>(extract_datum_msb<u8>(in, pos, 
+							     "send_data netcmd, item type"));
+  item = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+			      "send_data netcmd, item identifier"));
   u8 nfrag = extract_datum_msb<u8>(in, pos, "send_data netcmd, fragment count");
   fragments.reserve(nfrag);
   for (u8 i = 0; i < nfrag; ++i)
@@ -278,13 +302,15 @@ void read_send_data_cmd_payload(string const & in,
   assert_end_of_buffer(in, pos, "send_data netcmd payload");
 }
 
-void write_send_data_cmd_payload(string const & head,
+void write_send_data_cmd_payload(netcmd_item_type type,
+				 id const & item,
 				 vector<pair<u64, u64> > const & fragments,
 				 string & out)
 {
-  I(head.size() == constants::merkle_hash_length_in_bytes);
+  I(item().size() == constants::merkle_hash_length_in_bytes);
   I(fragments.size() <= 0xff);
-  out += head;
+  out += static_cast<char>(type);
+  out += item();
   out += static_cast<char>(fragments.size());
   for(vector<pair<u64, u64> >::const_iterator i = fragments.begin();
       i != fragments.end(); ++i)
@@ -295,39 +321,50 @@ void write_send_data_cmd_payload(string const & head,
 }
 
 void read_send_delta_cmd_payload(string const & in, 
-				 string & head,
-				 string & base)
+				 netcmd_item_type & type,
+				 id & head,
+				 id & base)
 {
   size_t pos = 0;
-  // syntax is: <src: 20 bytes sha1> <dst: 20 bytes sha1>
-  head = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "send_delta netcmd, head item identifier");
-  base = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "send_delta netcmd, base item identifier");
+  // syntax is: <type: 1 byte> <src: 20 bytes sha1> <dst: 20 bytes sha1>
+  type = static_cast<netcmd_item_type>(extract_datum_msb<u8>(in, pos, 
+							     "send_delta netcmd, item type"));
+  head = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+			      "send_delta netcmd, head item identifier"));
+  base = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+			      "send_delta netcmd, base item identifier"));
   assert_end_of_buffer(in, pos, "send_delta netcmd payload");
 }
 
-void write_send_delta_cmd_payload(string const & head,
-				  string const & base,
+void write_send_delta_cmd_payload(netcmd_item_type type,
+				  id const & head,
+				  id const & base,
 				  string & out)
 {
-  I(head.size() == constants::merkle_hash_length_in_bytes);
-  I(base.size() == constants::merkle_hash_length_in_bytes);
-  out += head;
-  out += base;
+  I(head().size() == constants::merkle_hash_length_in_bytes);
+  I(base().size() == constants::merkle_hash_length_in_bytes);
+  out += static_cast<char>(type);
+  out += head();
+  out += base();
 }
 
 void read_data_cmd_payload(string const & in,
-			   string & id,
+			   netcmd_item_type & type,
+			   id & item,
 			   vector< pair<pair<u64,u64>,string> > & fragments)
 {
   size_t pos = 0;
-  // syntax is: <id: 20 bytes sha1> <nfrag: 1 byte> 
+  // syntax is: <type: 1 byte> <id: 20 bytes sha1> <nfrag: 1 byte> 
   //            <pos1: 8 bytes> <len1: 8 bytes> 
   //            <compressed_p1: 1 byte> <clen1? 4 bytes> <dat1: len1 or clen1 bytes>
   //            ...
   //            <posN: 8 bytes> <lenN: 8 bytes> 
   //            <compressed_pN: 1 byte> <clenN? 4 bytes if compressed> <datN: lenN or clenN bytes>
-    
-  id = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "data netcmd, item identifier");
+
+  type = static_cast<netcmd_item_type>(extract_datum_msb<u8>(in, pos, 
+							     "data netcmd, item type"));    
+  item = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+			      "data netcmd, item identifier"));
   u8 nfrag = extract_datum_msb<u8>(in, pos, "data netcmd, fragment count");
     
   fragments.reserve(nfrag);
@@ -354,13 +391,15 @@ void read_data_cmd_payload(string const & in,
   assert_end_of_buffer(in, pos, "data netcmd payload");
 }
 
-void write_data_cmd_payload(string const & id,
+void write_data_cmd_payload(netcmd_item_type type,
+			    id const & item,
 			    vector< pair<pair<u64,u64>,string> > const & fragments,
 			    string & out)
 {
-  I(id.size() == constants::merkle_hash_length_in_bytes);
+  I(item().size() == constants::merkle_hash_length_in_bytes);
   I(fragments.size() <= 0xff);
-  out += id;
+  out += static_cast<char>(type);
+  out += item();
   out += static_cast<char>(fragments.size());
   for (vector< pair<pair<u64,u64>,string> >::const_iterator i = fragments.begin();
        i != fragments.end(); ++i)
@@ -389,36 +428,43 @@ void write_data_cmd_payload(string const & id,
 
 
 void read_delta_cmd_payload(string const & in, 
-			    string & src, string & dst, 
-			    u64 & src_len, string & del)
+			    netcmd_item_type & type,
+			    id & src, id & dst, 
+			    u64 & src_len, delta & del)
 {
   size_t pos = 0;
-  // syntax is: <src: 20 bytes sha1> <dst: 20 bytes sha1> <src_len: 8 bytes> 
+  // syntax is: <type: 1 byte> <src: 20 bytes sha1> <dst: 20 bytes sha1> <src_len: 8 bytes> 
   //            <compressed_p: 1 byte> <clen: 4 bytes> <dat: clen bytes>    
-  src = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "delta netcmd, source identifier");
-  dst = extract_substring(in, pos, constants::merkle_hash_length_in_bytes, "delta netcmd, destination identifier");
+  type = static_cast<netcmd_item_type>(extract_datum_msb<u8>(in, pos, 
+							     "delta netcmd, item type"));    
+  src = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+			     "delta netcmd, source identifier"));
+  dst = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+			     "delta netcmd, destination identifier"));
   src_len = extract_datum_msb<u64>(in, pos, "delta netcmd, source length");
   u8 compressed_p = extract_datum_msb<u8>(in, pos, "delta netcmd, compression flag");
   u32 clen = extract_datum_msb<u32>(in, pos, "delta netcmd, compressed delta length");
   string tmp_del = extract_substring(in, pos, clen, "delta netcmd, delta content");
   if (compressed_p == 0)
-    del = tmp_del;
+    del = delta(tmp_del);
   else
-    del = xform<CryptoPP::Gunzip>(tmp_del);
+    del = delta(xform<CryptoPP::Gunzip>(tmp_del));
   assert_end_of_buffer(in, pos, "delta netcmd payload");
 }
 
-void write_delta_cmd_payload(string const & src, string const & dst, 
-			     u64 src_len, string const & del,
+void write_delta_cmd_payload(netcmd_item_type & type,
+			     id const & src, id const & dst, 
+			     u64 src_len, delta const & del,
 			     string & out)
 {
-  I(src.size() == constants::merkle_hash_length_in_bytes);
-  I(dst.size() == constants::merkle_hash_length_in_bytes);
-  out += src;
-  out += dst;
+  I(src().size() == constants::merkle_hash_length_in_bytes);
+  I(dst().size() == constants::merkle_hash_length_in_bytes);
+  out += static_cast<char>(type);
+  out += src();
+  out += dst();
   write_datum_msb<u64>(src_len, out);
 
-  string tmp = del;
+  string tmp = del();
 
   if (tmp.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
@@ -449,7 +495,7 @@ void test_netcmd_functions()
 
       // bye_cmd
       {
-	L(F("checking i/o round trip on bye_cmd\n"));
+	L(F("checking i/o round trip on bye_cmd\n"));	
 	netcmd out_cmd, in_cmd;
 	string buf;
 	out_cmd.cmd_code = bye_cmd;
@@ -464,7 +510,7 @@ void test_netcmd_functions()
 	L(F("checking i/o round trip on hello_cmd\n"));
 	netcmd out_cmd, in_cmd;
 	string buf;
-	string out_server(raw_sha1("happy server day")), out_nonce(raw_sha1("nonce it up")), in_server, in_nonce;
+	id out_server(raw_sha1("happy server day")), out_nonce(raw_sha1("nonce it up")), in_server, in_nonce;
 	out_cmd.cmd_code = hello_cmd;
 	write_hello_cmd_payload(out_server, out_nonce, out_cmd.payload);
 	write_netcmd(out_cmd, buf);
@@ -482,10 +528,11 @@ void test_netcmd_functions()
 	netcmd out_cmd, in_cmd;
 	protocol_role out_role = source_and_sink_role, in_role;
 	string buf;
-	string out_client(raw_sha1("happy client day")), out_nonce1(raw_sha1("nonce me amadeus")), 
-	  out_nonce2(raw_sha1("nonce start my heart")), out_collection("radishes galore!"), 
-	  out_signature(raw_sha1("burble") + raw_sha1("gorby")),
-	  in_client, in_nonce1, in_nonce2, in_collection, in_signature;
+	id out_client(raw_sha1("happy client day")), out_nonce1(raw_sha1("nonce me amadeus")), 
+	  out_nonce2(raw_sha1("nonce start my heart")), 
+	  in_client, in_nonce1, in_nonce2;
+	string out_signature(raw_sha1("burble") + raw_sha1("gorby")), out_collection("radishes galore!"), 
+	  in_signature, in_collection;
 
 	out_cmd.cmd_code = auth_cmd;
 	write_auth_cmd_payload(out_role, out_collection, out_client, out_nonce1, 
@@ -493,7 +540,7 @@ void test_netcmd_functions()
 	write_netcmd(out_cmd, buf);
 	read_netcmd(buf, in_cmd);
 	read_auth_cmd_payload(in_cmd.payload, in_role, in_collection, in_client,
-				     in_nonce1, in_nonce2, in_signature);
+			      in_nonce1, in_nonce2, in_signature);
 	BOOST_CHECK(in_cmd == out_cmd);
 	BOOST_CHECK(in_client == out_client);
 	BOOST_CHECK(in_nonce1 == out_nonce1);
@@ -527,10 +574,10 @@ void test_netcmd_functions()
 	string buf;
 	merkle_node out_node, in_node;
 
-	out_node.slots[0] = raw_sha1("The police pulled Kris Kringle over");
-	out_node.slots[3] = raw_sha1("Kris Kringle tried to escape from the police");
-	out_node.slots[8] = raw_sha1("He was arrested for auto theft");
-	out_node.slots[15] = raw_sha1("He was whisked away to jail");
+	out_node.set_raw_slot(0, id(raw_sha1("The police pulled Kris Kringle over")));
+	out_node.set_raw_slot(3, id(raw_sha1("Kris Kringle tried to escape from the police")));
+	out_node.set_raw_slot(8, id(raw_sha1("He was arrested for auto theft")));
+	out_node.set_raw_slot(15, id(raw_sha1("He was whisked away to jail")));
 	out_node.set_slot_state(0, subtree_state);
 	out_node.set_slot_state(3, live_leaf_state);
 	out_node.set_slot_state(8, dead_leaf_state);
@@ -551,14 +598,16 @@ void test_netcmd_functions()
 	L(F("checking i/o round trip on done_cmd\n"));
 	netcmd out_cmd, in_cmd;
 	u8 out_level(12), in_level;
+	netcmd_item_type out_type(key_item), in_type(manifest_item);
 	string buf;
 
 	out_cmd.cmd_code = done_cmd;
-	write_done_cmd_payload(out_level, out_cmd.payload);
+	write_done_cmd_payload(out_level, out_type, out_cmd.payload);
 	write_netcmd(out_cmd, buf);
 	read_netcmd(buf, in_cmd);
-	read_done_cmd_payload(in_cmd.payload, in_level);
+	read_done_cmd_payload(in_cmd.payload, in_level, in_type);
 	BOOST_CHECK(in_level == out_level);
+	BOOST_CHECK(in_type == out_type);
 	L(F("done_cmd test done, buffer was %d bytes\n") % buf.size());	
       }
 
@@ -566,15 +615,17 @@ void test_netcmd_functions()
       {
 	L(F("checking i/o round trip on describe_cmd\n"));
 	netcmd out_cmd, in_cmd;
-	string out_id(raw_sha1("pickles are yummy")), in_id;
+	id out_id(raw_sha1("pickles are yummy")), in_id;
+	netcmd_item_type out_type(key_item), in_type(manifest_item);
 	string buf;
 
 	out_cmd.cmd_code = describe_cmd;
-	write_describe_cmd_payload(out_id, out_cmd.payload);
+	write_describe_cmd_payload(out_type, out_id, out_cmd.payload);
 	write_netcmd(out_cmd, buf);
 	read_netcmd(buf, in_cmd);
-	read_describe_cmd_payload(in_cmd.payload, in_id);
+	read_describe_cmd_payload(in_cmd.payload, in_type, in_id);
 	BOOST_CHECK(in_id == out_id);
+	BOOST_CHECK(in_type == out_type);
 	L(F("describe_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
@@ -582,22 +633,24 @@ void test_netcmd_functions()
       {
 	L(F("checking i/o round trip on description_cmd\n"));
 	netcmd out_cmd, in_cmd;
-	string out_id(raw_sha1("tuna is not yummy")), in_id;
+	id out_id(raw_sha1("tuna is not yummy")), in_id;
+	netcmd_item_type out_type(file_item), in_type(key_item);
 	u64 out_len(8273423), in_len;
-	vector<string> out_preds, in_preds;
+	vector<id> out_preds, in_preds;
 	string buf;
 
-	out_preds.push_back(raw_sha1("question"));
-	out_preds.push_back(raw_sha1("what is ankh?"));
-	out_preds.push_back(raw_sha1("*ding*"));
-	out_preds.push_back(raw_sha1("that is the name"));
-	out_preds.push_back(raw_sha1("of the item"));
+	out_preds.push_back(id(raw_sha1("question")));
+	out_preds.push_back(id(raw_sha1("what is ankh?")));
+	out_preds.push_back(id(raw_sha1("*ding*")));
+	out_preds.push_back(id(raw_sha1("that is the name")));
+	out_preds.push_back(id(raw_sha1("of the item")));
 
 	out_cmd.cmd_code = description_cmd;
-	write_description_cmd_payload(out_id, out_len, out_preds, out_cmd.payload);
+	write_description_cmd_payload(out_type, out_id, out_len, out_preds, out_cmd.payload);
 	write_netcmd(out_cmd, buf);
 	read_netcmd(buf, in_cmd);
-	read_description_cmd_payload(in_cmd.payload, in_id, in_len, in_preds);
+	read_description_cmd_payload(in_cmd.payload, in_type, in_id, in_len, in_preds);
+	BOOST_CHECK(in_type == out_type);
 	BOOST_CHECK(in_id == out_id);
 	BOOST_CHECK(in_len == out_len);
 	BOOST_CHECK(in_preds == out_preds);
@@ -608,7 +661,8 @@ void test_netcmd_functions()
       {
 	L(F("checking i/o round trip on send_data_cmd\n"));
 	netcmd out_cmd, in_cmd;
-	string out_id(raw_sha1("avocado is the yummiest")), in_id;
+	netcmd_item_type out_type(file_item), in_type(key_item);
+	id out_id(raw_sha1("avocado is the yummiest")), in_id;
 	vector< pair<u64,u64> > out_frags, in_frags;
 	string buf;
 
@@ -618,10 +672,11 @@ void test_netcmd_functions()
 	out_frags.push_back(make_pair(0,0xffffffffffffffffULL));
 
 	out_cmd.cmd_code = send_data_cmd;
-	write_send_data_cmd_payload(out_id, out_frags, out_cmd.payload);
+	write_send_data_cmd_payload(out_type, out_id, out_frags, out_cmd.payload);
 	write_netcmd(out_cmd, buf);
 	read_netcmd(buf, in_cmd);
-	read_send_data_cmd_payload(in_cmd.payload, in_id, in_frags);
+	read_send_data_cmd_payload(in_cmd.payload, in_type, in_id, in_frags);
+	BOOST_CHECK(in_type == out_type);
 	BOOST_CHECK(in_id == out_id);
 	BOOST_CHECK(in_frags == out_frags);
 	L(F("send_data_cmd test done, buffer was %d bytes\n") % buf.size());
@@ -631,15 +686,17 @@ void test_netcmd_functions()
       {
 	L(F("checking i/o round trip on send_delta_cmd\n"));
 	netcmd out_cmd, in_cmd;
-	string out_head(raw_sha1("when you board an airplane")), in_head;
-	string out_base(raw_sha1("always check the exit locations")), in_base;
+	netcmd_item_type out_type(file_item), in_type(key_item);
+	id out_head(raw_sha1("when you board an airplane")), in_head;
+	id out_base(raw_sha1("always check the exit locations")), in_base;
 	string buf;
 
 	out_cmd.cmd_code = send_delta_cmd;
-	write_send_delta_cmd_payload(out_head, out_base, out_cmd.payload);
+	write_send_delta_cmd_payload(out_type, out_head, out_base, out_cmd.payload);
 	write_netcmd(out_cmd, buf);
 	read_netcmd(buf, in_cmd);
-	read_send_delta_cmd_payload(in_cmd.payload, in_head, in_base);
+	read_send_delta_cmd_payload(in_cmd.payload, in_type, in_head, in_base);
+	BOOST_CHECK(in_type == out_type);
 	BOOST_CHECK(in_head == out_head);
 	BOOST_CHECK(in_base == out_base);
 	L(F("send_delta_cmd test done, buffer was %d bytes\n") % buf.size());
@@ -649,7 +706,8 @@ void test_netcmd_functions()
       {
 	L(F("checking i/o round trip on data_cmd\n"));
 	netcmd out_cmd, in_cmd;
-	string out_id(raw_sha1("tuna is not yummy")), in_id;
+	netcmd_item_type out_type(file_item), in_type(key_item);
+	id out_id(raw_sha1("tuna is not yummy")), in_id;
 	vector< pair<pair<u64,u64>,string> > out_frags, in_frags;
 	string buf;
 
@@ -662,10 +720,10 @@ void test_netcmd_functions()
 	out_frags.push_back(make_pair(make_pair(999,20), "with smoke detectors"));
 
 	out_cmd.cmd_code = data_cmd;
-	write_data_cmd_payload(out_id, out_frags, out_cmd.payload);
+	write_data_cmd_payload(out_type, out_id, out_frags, out_cmd.payload);
 	write_netcmd(out_cmd, buf);
 	read_netcmd(buf, in_cmd);
-	read_data_cmd_payload(in_cmd.payload, in_id, in_frags);
+	read_data_cmd_payload(in_cmd.payload, in_type, in_id, in_frags);
 	BOOST_CHECK(in_id == out_id);
 	BOOST_CHECK(in_frags == out_frags);
 	L(F("data_cmd test done, buffer was %d bytes\n") % buf.size());
@@ -675,17 +733,19 @@ void test_netcmd_functions()
       {
 	L(F("checking i/o round trip on delta_cmd\n"));
 	netcmd out_cmd, in_cmd;
-	string out_head(raw_sha1("your seat cusion can be reused")), in_head;
-	string out_base(raw_sha1("as a floatation device")), in_base;
+	netcmd_item_type out_type(file_item), in_type(key_item);
+	id out_head(raw_sha1("your seat cusion can be reused")), in_head;
+	id out_base(raw_sha1("as a floatation device")), in_base;
 	u64 out_src_len(0xffff), in_src_len;
-	string out_delta("goodness, this is not an xdelta"), in_delta;
+	delta out_delta("goodness, this is not an xdelta"), in_delta;
 	string buf;
 
 	out_cmd.cmd_code = delta_cmd;
-	write_delta_cmd_payload(out_head, out_base, out_src_len, out_delta, out_cmd.payload);
+	write_delta_cmd_payload(out_type, out_head, out_base, out_src_len, out_delta, out_cmd.payload);
 	write_netcmd(out_cmd, buf);
 	read_netcmd(buf, in_cmd);
-	read_delta_cmd_payload(in_cmd.payload, in_head, in_base, in_src_len, in_delta);
+	read_delta_cmd_payload(in_cmd.payload, in_type, in_head, in_base, in_src_len, in_delta);
+	BOOST_CHECK(in_type == out_type);
 	BOOST_CHECK(in_head == out_head);
 	BOOST_CHECK(in_base == out_base);
 	BOOST_CHECK(in_src_len == out_src_len);

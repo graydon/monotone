@@ -632,6 +632,46 @@ void database::put_delta(hexenc<id> const & ident,
 	  ident().c_str(), base().c_str(), del().c_str());
 }
 
+u64 database::get_version_size(hexenc<id> const & ident,
+			       string const & data_table,
+			       string const & delta_table)
+{
+  I(ident() != "");
+  if (exists(ident, data_table))
+    {
+      base64< gzip<data> > dat;
+      data dat_unpacked;
+      get(ident, dat, data_table);
+      unpack(dat, dat_unpacked);
+      return dat_unpacked().size();
+    }
+  else
+    {
+      I(delta_exists(ident, delta_table));
+      results res;
+      base64< gzip<delta> > del_packed;
+      fetch(res, one_col, any_rows,
+	    "SELECT delta FROM '%q' WHERE id = '%q' ", 
+	    delta_table.c_str(), ident().c_str());
+      size_t outsz = 0;
+      I(res.size() > 0);
+      for (size_t i = 0; i < res.size(); ++i)
+	{
+	  // we loop here to confirm that all paths to this ID
+	  // indicate a target with the *same* size. if not there
+	  // is corruption in the database.
+	  del_packed = res[i][0]; 
+	  delta del;
+	  unpack(del_packed, del);
+	  size_t tmp = measure_delta_target_size(del());
+	  if (i > 0)
+	    I(tmp == outsz);
+	  outsz = tmp;
+	}
+      return outsz;
+    }
+}
+
 void database::get_version(hexenc<id> const & ident,
 			   base64< gzip<data> > & dat,
 			   string const & data_table,
@@ -831,12 +871,22 @@ void database::get_file_version(file_id const & id,
   dat = tmp;
 }
 
+u64 database::get_file_version_size(file_id const & id)
+{
+  return get_version_size(id.inner(), "files", "file_deltas");
+}
+
 void database::get_manifest_version(manifest_id const & id,
 				    manifest_data & dat)
 {
   base64< gzip<data> > tmp;
   get_version(id.inner(), tmp, "manifests", "manifest_deltas");
   dat = tmp;
+}
+
+u64 database::get_manifest_version_size(manifest_id const & id)
+{
+  return get_version_size(id.inner(), "manifests", "manifest_deltas");
 }
 
 bool database::manifest_delta_exists(manifest_id const & new_id,

@@ -84,9 +84,9 @@ Complete table of contents
 @node    Concepts
 @chapter Concepts
 
-This chapter should familliarize you with the concepts, terminology,
+This chapter should familiarize you with the concepts, terminology,
 and behavior described in the remainder of the user manual. Please
-take a moment to read it, as later sections will assume familliarity
+take a moment to read it, as later sections will assume familiarity
 with these terms.
 
 @menu
@@ -134,7 +134,7 @@ direction of the edit, from parent to child.
 
 We may want to identify the parent and the child precisely, for sake
 of reference. To do so, we will compute a @i{cryptographic hash
-function}, called @sc{sha1}, of each version. The deails of this
+function}, called @sc{sha1}, of each version. The details of this
 function are beyond the scope of this document; in summary, the @sc{sha1}
 function takes a version of a file and produces a short string of 20
 bytes, which we will use to uniquely identify the version@footnote{we
@@ -248,7 +248,7 @@ document.
 
 After you have made many different files, you may wish to capture a
 ``snapshot'' of the versions of all the files in a particular collection.
-Since files are typically collected into @i{trees} in a filesystem,
+Since files are typically collected into @i{trees} in a file system,
 we say that you want to capture a @i{version of your tree}. Doing
 so will permit you to undo changes to multiple files at once, or send
 your friend a @i{set} of changes to many files at once.
@@ -406,7 +406,7 @@ files and manifests --- is kept in the form of certs. This includes
 ancestry information, change logs, time and date records, and
 more. When monotone makes a decision about storing, transmitting, or
 recovering some files or manifests, the decision is based on certs it
-has seen, and the trustworthyness you assign to those certs.
+has seen, and the trustworthiness you assign to those certs.
 
 The @sc{rsa} cryptography system --- and therefore monotone itself ---
 requires that you exchange special ``public'' numbers with your
@@ -426,9 +426,9 @@ types of storage:
 
 @itemize
 @item
-a @i{working copy} in the local filesystem
+a @i{working copy} in the local file system
 @item
-a @i{database} in the local filesystem
+a @i{database} in the local file system
 @item
 a @i{web, mail or news server} on the network
 @end itemize
@@ -458,7 +458,7 @@ network server.
                             (certified local exchanges)
 @end example
 
-A @dfn{working copy} is a tree of files in your filesystem, arranged
+A @dfn{working copy} is a tree of files in your file system, arranged
 according to the paths and version codes in a particular manifest.
 A special directory called @file{MT} exists in the root of any
 working copy. Monotone keeps some special files in the @file{MT}
@@ -555,7 +555,7 @@ has received along with the changes, and decides which particular
 changes are safe and desirable to apply to your working copy.
 
 You can always adjust the criteria monotone uses to judge the
-trustworthyness and desirability of changes in your database. But keep
+trustworthiness and desirability of changes in your database. But keep
 in mind that it always uses @emph{some} criteria; receiving changes
 from the network is a @emph{different} activity than applying changes
 to a working copy. Sometimes you may receive changes which monotone
@@ -1043,7 +1043,7 @@ you do not want to manage the file with monotone, you can remove that
 line of the manifest.
 
 We can also check to see which certificates monotone generated when we
-commited our work, using the @code{list certs} command. Note that we
+committed our work, using the @code{list certs} command. Note that we
 only need to mention the first few digits of the manifest version we
 wish to inspect, and monotone completes the version code for us:
 
@@ -1563,9 +1563,9 @@ phase.
 
 One interesting feature of the update operation is that you can
 override or extend the logic monotone uses to sort update candidates,
-with lua hook functions. This feature is still partially unfinished,
+with Lua hook functions. This feature is still partially unfinished,
 but in the future you should be able to transparently filter out
-versions lacking sufficient approval from code reviewrs, with
+versions lacking sufficient approval from code reviewers, with
 testsuite results showing regressions, or similar ``quality control''
 orderings expressed as custom certs.
 
@@ -1737,7 +1737,7 @@ end
 @end example
 
 We have written two hook functions. The first takes a branch name and
-returns a lua table of values. You may return different results
+returns a Lua table of values. You may return different results
 depending on the branch name provided, but for this example we ignore
 the branch name and always return the same table. Each value in the
 table is a URL, including the path to our depot CGI and a @dfn{logical
@@ -1763,12 +1763,12 @@ you use to sign certificates.
 This chapter covers special topics which are of interest to some users
 of monotone, though possibly not all. We assume that you have read
 through the taxonomy and tutorial, and possibly spent some time
-playing with the program to familliarize yourself with its operation.
+playing with the program to familiarize yourself with its operation.
 
 @menu
 * Hash Integrity::         Notes on probability and failure.
 * Quality Assurance::      Integrating testing and review with development.
-* Internationalization::   Using monotone in non-english locales.
+* Internationalization::   Using monotone in non-English locales.
 * Reserved Certs::         Certificate names with special meanings.
 * Naming Conventions::     Choosing appropriate names for keys and branches.
 * File Attributes::        Marking files as executable, or other attributes.
@@ -1848,7 +1848,7 @@ valid approximation of its collision probability.
 The paper's characterization of risk when hashing ``non-random
 inputs'' is similarly deceptive. It presents a fanciful case of a
 program which is @emph{storing} every possible 2kb block in a
-filesystem addressed by @sc{sha1} (the program is trying to find a
+file system addressed by @sc{sha1} (the program is trying to find a
 @sc{sha1} collision). While this scenario @emph{will} very likely
 encounter a collision @emph{somewhere} in the course of storing all
 such blocks, the paper neglects to mention that we only expect it to
@@ -1923,7 +1923,7 @@ warning is printed if such a check fails.
 
 @subheading Collision attacks
 
-A successful collision attack on @sc{sha1}, as mentionned, does not
+A successful collision attack on @sc{sha1}, as mentioned, does not
 disrupt the @emph{probability} features of @sc{sha1} on benign
 blocks. So if, at any time, you believe @sc{sha1} is ``broken'', it
 does @emph{not} mean that you cannot use it for your work with
@@ -1960,7 +1960,7 @@ users to ignore, or filter-out, versions which do not meet their
 criteria for quality. This section describes the way monotone
 represents and reasons about quality information.
 
-Monotone often views the collection of manifest @code{ancestor} cert
+Monotone often views the collection of manifest @code{ancestor} certs
 as a directed graph, in which manifest versions are the nodes and the
 @code{ancestor} certificates are the edges. We call this graph the
 @dfn{ancestry graph}. The ancestry graph has a number of important
@@ -1972,9 +1972,9 @@ Many of monotone's operations involve searching the ancestry graph for
 the ancestors or descendants of a particular manifest, or extracting
 the ``heads'' of a subgraph, which is the subgraph's set of nodes with
 no descendants. For example, when you run the @code{update} command,
-monotone searches the subgraph of descendants of base version of the
-current working copy, trying to locate a unique head to update the
-base version to.
+monotone searches the subgraph consisting of descendants of the base
+version of the current working copy, trying to locate a unique head to
+update the base version to.
 
 Monotone's quality assurance mechanisms are mostly based on
 restricting the subgraph each command operates on. There are three
@@ -2037,7 +2037,7 @@ do so.
 @item
 File path names in the working copy are converted to the locale's
 character set (determined via the LANG or CHARSET environment
-variables) before monotone interacts with the filesystem. If you are
+variables) before monotone interacts with the file system. If you are
 accustomed to being able to use file names in your locale's character
 set, this should ``just work'' with monotone.
 
@@ -2064,19 +2064,19 @@ internationalization behavior.
 @item Character set conversion
 The process of mapping a string of bytes representing wide characters
 from one encoding to another. Per-file character set conversions are
-specified by a lua hook @code{get_charset_conv} which takes a filename
+specified by a Lua hook @code{get_charset_conv} which takes a filename
 and returns a table of two strings: the first represents the
 "internal" (database) charset, the second represents the "external"
-(filesystem) charset.
+(file system) charset.
 
 @item Line ending conversion
 The process of converting platform-dependent end-of-line codes
 (@code{0x0D}, @code{0x0A}, or the pair @code{0x0D 0x0A}) from one
 convention to another. Per-file line ending conversion is specified by
-a lua hook @code{get_linesep_conv} which takes a filename and returns
+a Lua hook @code{get_linesep_conv} which takes a filename and returns
 a table of two strings: the first represents the "internal" (database)
 line ending convention, the second represents the "external"
-(filesystem) line ending convention. each string should be one of the
+(file system) line ending convention. each string should be one of the
 three strings "CR", "LF", or "CRLF".
 
 Note that Line ending conversion is always performed on the internal
@@ -2094,7 +2094,7 @@ the environment, using the various locale environment variables. The
 system line ending form can be additionally specialized using the
 @code{get_system_linesep} hook. No hooks exist for adjusting the
 system character set, since the system character set must be known
-during command-line argument processing, before any lua hooks are
+during command-line argument processing, before any Lua hooks are
 loaded.
 
 Monotone's normal form is the UTF-8 character set and the @code{0x0A}
@@ -2439,7 +2439,7 @@ properly addressed by generating packet streams: instead, you must use
 The @command{monotone db migrate} command is used to alter the SQL
 schema of a database. The schema of a monotone database is identified
 by a special hash of its generating SQL, which is stored in the
-database's auxilliary tables. Each version of monotone knows which
+database's auxiliary tables. Each version of monotone knows which
 schema version it is able to work with, and it will refuse to operate
 on databases with different schemas. When you run the
 @command{migrate} command, monotone looks in an internal list of SQL
@@ -2553,7 +2553,7 @@ $ monotone post
 @end multitable
 
 As with other networking commands, the communication step with
-monotone is explicit: commiting changes only queues them for
+monotone is explicit: committing changes only queues them for
 transmission. A separate command, @command{post}, sends the changes to
 their destinations on network servers.
 
@@ -2787,7 +2787,7 @@ The purpose of @command{propagate} is to copy all the changes on
 @var{sourcebranch}, since the last @command{propagate}, to
 @var{destbranch}. This command supports the idea of making separate
 branches for medium-length development activities, such as
-maintainance branches for stable software releases, trivial bug fix
+maintenance branches for stable software releases, trivial bug fix
 branches, public contribution branches, or branches devoted to the
 development of a single module within a larger project.
 @end ftable
@@ -2862,7 +2862,7 @@ A @code{date} cert, indicating when the new version was created.
 @item
 A @code{changelog} cert, containing the ``log message'' for these
 changes.  If you provided @var{logmsg} on the command line, this text
-will be used, otherwise @command{commit} will run the lua hook
+will be used, otherwise @command{commit} will run the Lua hook
 @code{edit_comment (@var{commentary})}, which typically invokes an
 external editor program, in which you can compose a log message for
 the change.
@@ -2980,7 +2980,7 @@ and packet numbers.
 @item monotone --branch=@var{branchname} queue addtree @var{url}
 @itemx monotone queue addtree @var{url} @var{id} @var{...}
 
-This command queues the complete ancesty graph between @var{id} and
+This command queues the complete ancestry graph between @var{id} and
 its greatest known ancestor. This is typically used to queue an
 imported CVS tree for transmission to a depot.
 
@@ -3658,7 +3658,7 @@ operator. There are 3 pre-defined sort operator names:
 @item
 ``string'', which sorts certificate values in ascending lexicographic ASCII order
 @item
-``integer'', which sorts certificate values which apear to be integers in ascending integer order
+``integer'', which sorts certificate values which appear to be integers in ascending integer order
 @item
 ``bitset'', which sorts certificate values which appear to be packed bitsets according to a 
 superset relation (supersets sort higher than subsets)
@@ -3953,7 +3953,7 @@ on the command.
 
 @subsection Note
 
-This manpage is a summary of some of the features and commands of
+This man page is a summary of some of the features and commands of
 @b{monotone}, but it is not the most detailed source of information
 available. For a complete discussion of the concepts and a tutorial on
 its use, please refer to the texinfo manual (via the @b{info
@@ -4111,7 +4111,7 @@ trust assigned to keys.
 
 @item @b{cvs_import} @i{<cvsroot>}
 Import all versions in CVS repository. Reconstructs ancestry edges and
-converts metadata to certificates. A private signing key must alreay
+converts metadata to certificates. A private signing key must already
 exist in the database.
 @comment TROFF INPUT: .TP
 
@@ -4209,15 +4209,15 @@ an error occurs, in which case failure log is dumped.
 @comment TROFF INPUT: .TP
 
 @item @b{--nostd}
-Do not evaluate "standard" lua hooks compiled into @b{monotone}.
+Do not evaluate "standard" Lua hooks compiled into @b{monotone}.
 @comment TROFF INPUT: .TP
 
 @item @b{--norc}
-Do not load lua hooks from user's @b{~/.monotonerc} file.
+Do not load Lua hooks from user's @b{~/.monotonerc} file.
 @comment TROFF INPUT: .TP
 
 @item @b{--rcfile=}@i{<file>}
-Load extra lua hooks from @i{file} (may be given multiple times).
+Load extra Lua hooks from @i{file} (may be given multiple times).
 @comment TROFF INPUT: .TP
 
 @item @b{--db=}@i{<file>}
@@ -4273,7 +4273,7 @@ Used in preference to @b{EDITOR}, if set.
 @c ---------------------------------------------------------------------
 @table @code
 @item @b{$HOME/.monotonerc}
-A lua script, used as a customization file.
+A Lua script, used as a customization file.
 @comment TROFF INPUT: .SH NOTES
 
 @end table
@@ -4288,7 +4288,7 @@ A lua script, used as a customization file.
 @comment TROFF INPUT: .IP \(bu
 
 Command line options override environment variables and
-settings in lua scripts (such as @b{.monotonerc})
+settings in Lua scripts (such as @b{.monotonerc})
 
 @comment TROFF INPUT: .SH "SEE ALSO"
 

@@ -33,6 +33,18 @@
 
 typedef enum
   {
+    manifest_item = 1,
+    file_item = 2,
+    mcert_item = 3,
+    fcert_item = 4,
+    key_item = 5    
+  }
+netcmd_item_type;
+
+void netcmd_item_type_to_string(netcmd_item_type t, std::string & typestr);
+
+typedef enum
+  {
     empty_state,
     live_leaf_state,
     dead_leaf_state,
@@ -43,15 +55,29 @@ slot_state;
 struct merkle_node
 {    
   u8 level;
-  boost::dynamic_bitset<char> prefix;
+  boost::dynamic_bitset<char> pref;
   u64 total_num_leaves;
   boost::dynamic_bitset<char> bitmap;
-  std::map<size_t, std::string> slots;
+  std::vector<id> slots;
+  netcmd_item_type type;
 
   merkle_node();
   bool operator==(merkle_node const & other) const;
-  std::string node_identifier() const;
-  boost::dynamic_bitset<char> extended_prefix(size_t subtree) const;
+  void check_invariants() const;
+
+  void get_raw_prefix(prefix & pref) const;
+  void get_hex_prefix(hexenc<prefix> & hpref) const;
+
+  void get_raw_slot(size_t slot, id & val) const;
+  void get_hex_slot(size_t slot, hexenc<id> & val) const;
+
+  void set_raw_slot(size_t slot, id const & val);
+  void set_hex_slot(size_t slot, hexenc<id> const & val);
+
+  void extended_prefix(size_t slot, boost::dynamic_bitset<char> & extended) const;
+  void extended_raw_prefix(size_t slot, prefix & extended) const;
+  void extended_hex_prefix(size_t slot, hexenc<prefix> & extended) const;
+
   slot_state get_slot_state(size_t n) const;
   void set_slot_state(size_t n, slot_state st);
 };
@@ -66,7 +92,7 @@ std::string raw_sha1(std::string const & in);
 // these operate against the database
  
 void load_merkle_node(app_state & app,
-		      std::string const & type,
+		      netcmd_item_type type,
 		      utf8 const & collection,			
 		      size_t level,
 		      hexenc<prefix> const & hpref,
@@ -75,20 +101,22 @@ void load_merkle_node(app_state & app,
 // returns the first hashsz bytes of the serialized node, which is 
 // the hash of its contents.
 
-std::string store_merkle_node(app_state & app,
-			      std::string const & type,
-			      utf8 const & collection,
-			      merkle_node & node);
+id store_merkle_node(app_state & app,
+		     utf8 const & collection,
+		     merkle_node const & node);
+
+void pick_slot_and_prefix_for_value(id const & val, size_t level, 
+				    size_t & slotnum, boost::dynamic_bitset<char> & pref);
 
 // this inserts a leaf into the appropriate position in a merkle
 // tree, writing it to the db and updating any other nodes in the
 // tree which are affected by the insertion.
 
-std::string insert_into_merkle_tree(app_state & app,
-				    bool live_p,
-				    std::string const & type,
-				    utf8 const & collection,
-				    std::string const & leaf,
-				    size_t level);
+id insert_into_merkle_tree(app_state & app,
+			   bool live_p,
+			   netcmd_item_type type,
+			   utf8 const & collection,
+			   id const & leaf,
+			   size_t level);
 
 #endif // __MERKLE_TREE_HH__

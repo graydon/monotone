@@ -91,6 +91,7 @@
 // node is as follows:
 //
 //      20 bytes       - hash of the remaining bytes in the node
+//       1 byte        - type of this node (manifest, file, key, mcert, fcert)
 //       1 byte        - level of this node in the tree (0 == "root")
 //    0-20 bytes       - the prefix of this node, 4 bits * level, 
 //                       rounded up to a byte
@@ -98,7 +99,7 @@
 //       4 bytes       - slot-state bitmap of the node
 //   0-320 bytes       - between 0 and 16 live slots in the node
 //
-// so, in the worst case such a node is 373 bytes, with these parameters.
+// so, in the worst case such a node is 374 bytes, with these parameters.
 //
 //
 // protocol
@@ -210,12 +211,13 @@ struct session
 
   protocol_phase phase;
   utf8 collection;
-  string remote_peer_key_hash;
+  id remote_peer_key_hash;
   bool authenticated;
 
   time_t last_io_time;
   netcmd_code previous_cmd;
-  string saved_nonce;
+  id saved_nonce;
+  bool sent_goodbye;
   boost::scoped_ptr<CryptoPP::AutoSeededRandomPool> prng;
 
   session(protocol_role role,
@@ -226,65 +228,76 @@ struct session
 	  socket_type sock, 
 	  Timeout const & to);
 
-  string mk_nonce();
+  id mk_nonce();
   void mark_recent_io();
   Probe::ready_type which_events() const;
-  bool read_some();
-  bool write_some();
+  bool read_some(ticker * t = NULL);
+  bool write_some(ticker * t = NULL);
 
   void queue_bye_cmd();
-  void queue_done_cmd(u8 level);
-  void queue_hello_cmd(string const & server, 
-		       string const & nonce);
+  void queue_done_cmd(u8 level, netcmd_item_type type);
+  void queue_hello_cmd(id const & server, 
+		       id const & nonce);
   void queue_auth_cmd(protocol_role role, 
 		      string const & collection, 
-		      string const & client, 
-		      string const & nonce1, 
-		      string const & nonce2, 
+		      id const & client, 
+		      id const & nonce1, 
+		      id const & nonce2, 
 		      string const & signature);
   void queue_confirm_cmd(string const & signature);
   void queue_refine_cmd(merkle_node const & node);
-  void queue_describe_cmd(string const & head);
-  void queue_description_cmd(string const & head, 
+  void queue_describe_cmd(netcmd_item_type type, 
+			  id const & item);
+  void queue_description_cmd(netcmd_item_type type, 
+			     id const & item, 
 			     u64 len, 
-			     vector<string> const & predecessors);
-  void queue_send_data_cmd(string const & head, 
+			     vector<id> const & predecessors);
+  void queue_send_data_cmd(netcmd_item_type type, 
+			   id const & item, 
 			   vector<pair<u64, u64> > const & fragments);
-  void queue_send_delta_cmd(string const & head, 
-			    string const & base);
-  void queue_data_cmd(string const & id, 
+  void queue_send_delta_cmd(netcmd_item_type type, 
+			    id const & head, 
+			    id const & base);
+  void queue_data_cmd(netcmd_item_type type, 
+		      id const & item, 
 		      vector< pair<pair<u64,u64>,string> > const & fragments);
-  void queue_delta_cmd(string const & src, 
-		       string const & dst, 
+  void queue_delta_cmd(netcmd_item_type type, 
+		       id const & src, 
+		       id const & dst, 
 		       u64 src_len, 
-		       string const & del);
+		       delta const & del);
 
   bool process_bye_cmd();
-  bool process_done_cmd(u8 level);
-  bool process_hello_cmd(string const & server, 
-			 string const & nonce);
+  bool process_done_cmd(u8 level, netcmd_item_type type);
+  bool process_hello_cmd(id const & server, 
+			 id const & nonce);
   bool process_auth_cmd(protocol_role role, 
 			string const & collection, 
-			string const & client, 
-			string const & nonce1, 
-			string const & nonce2, 
+			id const & client, 
+			id const & nonce1, 
+			id const & nonce2, 
 			string const & signature);
   bool process_confirm_cmd(string const & signature);
   bool process_refine_cmd(merkle_node const & node);
-  bool process_describe_cmd(string const & head);
-  bool process_description_cmd(string const & head, 
+  bool process_describe_cmd(netcmd_item_type type, id const & item);
+  bool process_description_cmd(netcmd_item_type type, 
+			       id const & item, 
 			       u64 len, 
-			       vector<string> const & predecessors);
-  bool process_send_data_cmd(string const & head, 
+			       vector<id> const & predecessors);
+  bool process_send_data_cmd(netcmd_item_type type,
+			     id const & item, 
 			     vector<pair<u64, u64> > const & fragments);
-  bool process_send_delta_cmd(string const & head, 
-			      string const & base);
-  bool process_data_cmd(string const & id, 
+  bool process_send_delta_cmd(netcmd_item_type type,
+			      id const & head, 
+			      id const & base);
+  bool process_data_cmd(netcmd_item_type type,
+			id const & item, 
 			vector< pair<pair<u64,u64>,string> > const & fragments);
-  bool process_delta_cmd(string const & src, 
-			 string const & dst, 
+  bool process_delta_cmd(netcmd_item_type type,
+			 id const & src, 
+			 id const & dst, 
 			 u64 src_len, 
-			 string const & del);
+			 delta const & del);
 
   
   bool dispatch_payload(netcmd const & cmd);
@@ -292,6 +305,10 @@ struct session
   bool process();
 };
 
+static inline string tohex(string const & s)
+{
+  return lowercase(xform<CryptoPP::HexEncoder>(s));
+}
 
   
 session::session(protocol_role role,
@@ -308,9 +325,16 @@ session::session(protocol_role role,
   peer_id(peer),
   fd(sock),
   stream(sock, to),
+  inbuf(""),
+  outbuf(""),
   phase(authentication_phase),
+  collection(""),
+  remote_peer_key_hash(""),
+  authenticated(false),
   last_io_time(::time(NULL)),
-  previous_cmd(bye_cmd)
+  previous_cmd(bye_cmd),
+  saved_nonce(""),
+  sent_goodbye(false)
 {
   if (voice == client_voice)
     {
@@ -333,13 +357,13 @@ session::session(protocol_role role,
   prng.reset(new CryptoPP::AutoSeededRandomPool(request_blocking_rng));
 }
 
-string session::mk_nonce()
+id session::mk_nonce()
 {
-  I(this->saved_nonce.size() == 0);
+  I(this->saved_nonce().size() == 0);
   char buf[constants::merkle_hash_length_in_bytes];
   prng->GenerateBlock(reinterpret_cast<byte *>(buf), constants::merkle_hash_length_in_bytes);
-  this->saved_nonce = string(buf);
-  I(this->saved_nonce.size() == constants::merkle_hash_length_in_bytes);
+  this->saved_nonce = string(buf, buf + constants::merkle_hash_length_in_bytes);
+  I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
   return this->saved_nonce;
 }
 
@@ -352,21 +376,21 @@ Probe::ready_type session::which_events() const
 {    
   if (outbuf.empty())
     {
-      if (inbuf.size() < constants::netcmd_maxsz)
+      if (inbuf.size() < constants::netcmd_maxsz && !this->sent_goodbye)
 	return Probe::ready_read | Probe::ready_oobd;
       else
 	return Probe::ready_oobd;
     }
   else
     {
-      if (inbuf.size() < constants::netcmd_maxsz)
+      if (inbuf.size() < constants::netcmd_maxsz && !this->sent_goodbye)
 	return Probe::ready_write | Probe::ready_read | Probe::ready_oobd;
       else
 	return Probe::ready_write | Probe::ready_oobd;
     }	    
 }
 
-bool session::read_some()
+bool session::read_some(ticker * tick)
 {
   I(inbuf.size() < constants::netcmd_maxsz);
   char tmp[constants::bufsz];
@@ -375,14 +399,16 @@ bool session::read_some()
     {
       L(F("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
       inbuf.append(string(tmp, tmp + count));
-	mark_recent_io();
-	return true;
+      mark_recent_io();
+      if (tick != NULL)
+	(*tick) += count;
+      return true;
     }
   else
     return false;
 }
 
-bool session::write_some()
+bool session::write_some(ticker * tick)
 {
   I(!outbuf.empty());    
   signed_size_type count = stream.write(outbuf.data(), outbuf.size());
@@ -391,6 +417,8 @@ bool session::write_some()
       L(F("wrote %d bytes to fd %d (peer %s)\n") % count % fd % peer_id);
       outbuf.erase(0, count);
       mark_recent_io();
+      if (tick != NULL)
+	(*tick) += count;
       return true;
     }
   else
@@ -404,18 +432,19 @@ void session::queue_bye_cmd()
   netcmd cmd;
   cmd.cmd_code = bye_cmd;
   write_netcmd(cmd, outbuf);
+  this->sent_goodbye = true;
 }
 
-void session::queue_done_cmd(u8 level) 
+void session::queue_done_cmd(u8 level, netcmd_item_type type) 
 {
   netcmd cmd;
   cmd.cmd_code = done_cmd;
-  write_done_cmd_payload(level, cmd.payload);
+  write_done_cmd_payload(level, type, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_hello_cmd(string const & server, 
-			      string const & nonce) 
+void session::queue_hello_cmd(id const & server, 
+			      id const & nonce) 
 {
   netcmd cmd;
   cmd.cmd_code = hello_cmd;
@@ -425,9 +454,9 @@ void session::queue_hello_cmd(string const & server,
 
 void session::queue_auth_cmd(protocol_role role, 
 			     string const & collection, 
-			     string const & client, 
-			     string const & nonce1, 
-			     string const & nonce2, 
+			     id const & client, 
+			     id const & nonce1, 
+			     id const & nonce2, 
 			     string const & signature)
 {
   netcmd cmd;
@@ -448,65 +477,114 @@ void session::queue_confirm_cmd(string const & signature)
 
 void session::queue_refine_cmd(merkle_node const & node)
 {
+  string typestr;
+  hexenc<prefix> hpref;
+  node.get_hex_prefix(hpref);
+  netcmd_item_type_to_string(node.type, typestr);
+  L(F("queueing request for refinement of %s node '%s', level %d\n")
+    % typestr % hpref % static_cast<int>(node.level));
   netcmd cmd;
   cmd.cmd_code = refine_cmd;
   write_refine_cmd_payload(node, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_describe_cmd(string const & head)
+void session::queue_describe_cmd(netcmd_item_type type, 
+				 id const & item)
 {
+  // never *ask* for something if we are in pure source role
+  if (this->role == source_role)
+    {
+      L(F("avoiding transmit of describe cmd since we are in source role\n"));
+      return;
+    }
+
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(F("queueing request for description of %s item '%s'\n")
+    % typestr % tohex(item()));
   netcmd cmd;
   cmd.cmd_code = describe_cmd;
-  write_describe_cmd_payload(head, cmd.payload);
+  write_describe_cmd_payload(type, item, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_description_cmd(string const & head, 
+void session::queue_description_cmd(netcmd_item_type type,
+				    id const & item, 
 				    u64 len, 
-				    vector<string> const & predecessors)
+				    vector<id> const & predecessors)
 {
+  // never describe something if we are in pure sink role
+  if (this->role == sink_role)
+    {
+      L(F("avoiding transmit of description cmd since we are in sink role\n"));
+      return;
+    }
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(F("queueing description of %s item '%s'\n")
+    % typestr % tohex(item()));
   netcmd cmd;
   cmd.cmd_code = description_cmd;
-  write_description_cmd_payload(head, len, predecessors, cmd.payload);
+  write_description_cmd_payload(type, item, len, predecessors, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_send_data_cmd(string const & head, 
+void session::queue_send_data_cmd(netcmd_item_type type,
+				  id const & item, 
 				  vector<pair<u64, u64> > const & fragments)
 {
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(F("queueing request for data of %s item '%s'\n")
+    % typestr % tohex(item()));
   netcmd cmd;
   cmd.cmd_code = send_data_cmd;
-  write_send_data_cmd_payload(head, fragments, cmd.payload);
+  write_send_data_cmd_payload(type, item, fragments, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
     
-void session::queue_send_delta_cmd(string const & head, 
-				   string const & base)
+void session::queue_send_delta_cmd(netcmd_item_type type,
+				   id const & head, 
+				   id const & base)
 {
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(F("queueing request for contents of %s delta '%s' -> '%s'\n")
+    % typestr % tohex(head()) % tohex(head()));
   netcmd cmd;
   cmd.cmd_code = send_delta_cmd;
-  write_send_delta_cmd_payload(head, base, cmd.payload);
+  write_send_delta_cmd_payload(type, head, base, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_data_cmd(string const & id, 
+void session::queue_data_cmd(netcmd_item_type type,
+			     id const & item, 
 			     vector< pair<pair<u64,u64>,string> > const & fragments)
 {
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(F("queueing %d %s data fragments in item '%s'\n")
+    % fragments.size() % typestr % tohex(item()));
   netcmd cmd;
   cmd.cmd_code = data_cmd;
-  write_data_cmd_payload(id, fragments, cmd.payload);
+  write_data_cmd_payload(type, item, fragments, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_delta_cmd(string const & src, 
-			      string const & dst, 
+void session::queue_delta_cmd(netcmd_item_type type,
+			      id const & src, 
+			      id const & dst, 
 			      u64 src_len, 
-			      string const & del)
+			      delta const & del)
 {
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(F("queueing %s delta '%s' -> '%s'\n")
+    % typestr % tohex(src()) % tohex(dst()));
   netcmd cmd;
   cmd.cmd_code = delta_cmd;
-  write_delta_cmd_payload(src, dst, src_len, del, cmd.payload);
+  write_delta_cmd_payload(type, src, dst, src_len, del, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
 
@@ -514,11 +592,11 @@ void session::queue_delta_cmd(string const & src,
 
 bool session::process_bye_cmd() 
 {
-  L(F("received 'bye' netcmd, shutting down\n"));
+  L(F("received 'bye' netcmd\n"));
   return false;
 }
 
-bool session::process_done_cmd(u8 level) 
+bool session::process_done_cmd(u8 level, netcmd_item_type type) 
 {      
   if (previous_cmd == level || level >= 0xff)
     {
@@ -529,21 +607,21 @@ bool session::process_done_cmd(u8 level)
   else 
     {
       L(F("received 'done' level %d, replying with 'done' %d\n") % level % (level + 1));
-      queue_done_cmd(level + 1);
+      queue_done_cmd(level + 1, type);
     }
   return true;
 }
 
-bool session::process_hello_cmd(string const & server, 
-				string const & nonce) 
+bool session::process_hello_cmd(id const & server, 
+				id const & nonce) 
 {
-  I(this->remote_peer_key_hash.size() == 0);
-  I(this->saved_nonce.size() == 0);
+  I(this->remote_peer_key_hash().size() == 0);
+  I(this->saved_nonce().size() == 0);
   
   hexenc<id> hnonce;
-  encode_hexenc(id(nonce), hnonce);
+  encode_hexenc(nonce, hnonce);
   hexenc<id> their_key_hash;
-  encode_hexenc(id(server), their_key_hash);
+  encode_hexenc(server, their_key_hash);
   
   L(F("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
     % their_key_hash % hnonce);
@@ -566,37 +644,36 @@ bool session::process_hello_cmd(string const & server,
       rsa_sha1_signature sig_raw;
       base64< arc4<rsa_priv_key> > our_priv;
       app.db.get_key(app.signing_key, our_priv);
-      make_signature(app.lua, app.signing_key,
-		     our_priv, nonce, sig);
+      make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
       decode_base64(sig, sig_raw);
       
       // make a new nonce of our own and send off the 'auth'
-      queue_auth_cmd(this->role, this->collection(), our_key_hash_raw(), 
+      queue_auth_cmd(this->role, this->collection(), our_key_hash_raw, 
 		     nonce, mk_nonce(), sig_raw());
       return true;
     }
   else
     {
-      L(F("unknown server key, disconnecting\n"));
+      W(F("unknown server key\n"));
     }
   return false;
 }
 
 bool session::process_auth_cmd(protocol_role role, 
 			       string const & collection, 
-			       string const & client, 
-			       string const & nonce1, 
-			       string const & nonce2, 
+			       id const & client, 
+			       id const & nonce1, 
+			       id const & nonce2, 
 			       string const & signature)
 {
-  I(this->remote_peer_key_hash.size() == 0);
-  I(this->saved_nonce.size() == constants::merkle_hash_length_in_bytes);
+  I(this->remote_peer_key_hash().size() == 0);
+  I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
   
   hexenc<id> hnonce1, hnonce2;
-  encode_hexenc(id(nonce1), hnonce1);
-  encode_hexenc(id(nonce2), hnonce2);
+  encode_hexenc(nonce1, hnonce1);
+  encode_hexenc(nonce2, hnonce2);
   hexenc<id> their_key_hash;
-  encode_hexenc(id(client), their_key_hash);
+  encode_hexenc(client, their_key_hash);
   
   L(F("received 'auth' netcmd from client '%s' for collection '%s' "
       "in %s mode with nonce1 '%s' and nonce2 '%s'\n")
@@ -605,10 +682,10 @@ bool session::process_auth_cmd(protocol_role role,
     % hnonce1 % hnonce2);
   
   // check that they replied with the nonce we asked for
-  if (nonce1 != this->saved_nonce)
+  if (!(nonce1 == this->saved_nonce))
     {
-      L(F("detected replay attack in auth netcmd, disconnecting\n"));
-      this->saved_nonce.clear();
+      W(F("detected replay attack in auth netcmd\n"));
+      this->saved_nonce = id("");
       return false;
     }
   
@@ -625,20 +702,32 @@ bool session::process_auth_cmd(protocol_role role,
     }
   if (!collection_ok)
     {
-      L(F("not currently serving requested collection '%s', disconnecting\n") % collection);
-      this->saved_nonce.clear();
+      W(F("not currently serving requested collection '%s'\n") % collection);
+      this->saved_nonce = id("");
       return false;	  
     }
-  
+
+  //
+  // internally netsync thinks in terms of sources and sinks. users like
+  // thinking of repositories as "readonly", "readwrite", or "writeonly".
+  //
+  // we therefore use the read/write terminology when dealing with the UI:
+  // if the user asks to run a "read only" service, this means they are
+  // willing to be a source but not a sink.
+  //
   // nb: the "role" here is the role the *client* wants to play
+  //     so we need to check that the opposite role is allowed for us,
+  //     in our this->role field.
+  //
+
   if (role == sink_role || role == source_and_sink_role)
     {
       if (! ((this->role == source_role || this->role == source_and_sink_role)
 	     && app.lua.hook_get_netsync_read_permitted(collection, 
 							their_key_hash())))
 	{
-	  L(F("read permission on '%s' denied by lua hook, disconnecting\n") % collection);
-	  this->saved_nonce.clear();
+	  W(F("read permission denied for '%s'\n") % collection);
+	  this->saved_nonce = id("");
 	  return false;
 	}
     }
@@ -649,8 +738,8 @@ bool session::process_auth_cmd(protocol_role role,
 	     && app.lua.hook_get_netsync_write_permitted(collection, 
 							 their_key_hash())))
 	{
-	  L(F("write permission on '%s' denied by lua hook, disconnecting\n") % collection);
-	  this->saved_nonce.clear();
+	  W(F("write permission denied for '%s'\n") % collection);
+	  this->saved_nonce = id("");
 	  return false;
 	}
     }
@@ -667,7 +756,7 @@ bool session::process_auth_cmd(protocol_role role,
       app.db.get_pubkey(their_key_hash, their_id, their_key);
       base64<rsa_sha1_signature> sig;
       encode_base64(rsa_sha1_signature(signature), sig);
-      if (check_signature(app.lua, their_id, their_key, nonce1, sig))
+      if (check_signature(app.lua, their_id, their_key, nonce1(), sig))
 	{
 	  // get our private key and sign back
 	  L(F("client signature OK, transitioning to refinement phase\n"));
@@ -675,29 +764,30 @@ bool session::process_auth_cmd(protocol_role role,
 	  rsa_sha1_signature sig_raw;
 	  base64< arc4<rsa_priv_key> > our_priv;
 	  app.db.get_key(app.signing_key, our_priv);
-	  make_signature(app.lua, app.signing_key,
-			 our_priv, nonce2, sig);
+	  make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
 	  decode_base64(sig, sig_raw);
 	  queue_confirm_cmd(sig_raw());
+	  this->collection = collection;
+	  this->authenticated = true;
 	  this->phase = refinement_phase;
 	  return true;
 	}
       else
 	{
-	  L(F("bad client signature, disconnecting\n"));	      
+	  W(F("bad client signature\n"));	      
 	}
     }
   else
     {
-      L(F("unknown client key, disconnecting\n"));
+      L(F("unknown client key\n"));
     }
   return false;
 }
 
 bool session::process_confirm_cmd(string const & signature)
 {
-  I(this->remote_peer_key_hash.size() == constants::merkle_hash_length_in_bytes);
-  I(this->saved_nonce.size() == constants::merkle_hash_length_in_bytes);
+  I(this->remote_peer_key_hash().size() == constants::merkle_hash_length_in_bytes);
+  I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
   
   hexenc<id> their_key_hash;
   encode_hexenc(id(remote_peer_key_hash), their_key_hash);
@@ -716,67 +806,485 @@ bool session::process_confirm_cmd(string const & signature)
       app.db.get_pubkey(their_key_hash, their_id, their_key);
       base64<rsa_sha1_signature> sig;
       encode_base64(rsa_sha1_signature(signature), sig);
-      if (check_signature(app.lua, their_id, their_key, this->saved_nonce, sig))
+      if (check_signature(app.lua, their_id, their_key, this->saved_nonce(), sig))
 	{
 	  L(F("server signature OK, transitioning to refinement phase\n"));
+	  this->authenticated = true;
 	  this->phase = refinement_phase;
 	  merkle_node root;
-	  load_merkle_node(app, "manifest", this->collection, 
+	  load_merkle_node(app, manifest_item, this->collection, 
 			   0, hexenc<prefix>(), root);
 	  queue_refine_cmd(root);
 	  return true;
 	}
       else
 	{
-	  L(F("bad server signature, disconnecting\n"));	      
+	  W(F("bad server signature\n"));	      
 	}
     }
   else
     {
-      L(F("unknown server key, disconnecting\n"));
+      W(F("unknown server key\n"));
     }
   return false;
 }
 
-bool session::process_refine_cmd(merkle_node const & node)
+static void build_description(netcmd_item_type type,
+			      hexenc<id> const & item,
+			      u64 & sz,
+			      vector<id> & preds,
+			      app_state & app)
 {
-  return false;
+  preds.clear();
+  sz = static_cast<u64>(0);
+  
+  switch (type)
+    {
+    case file_item:
+      {
+	file_id fid(item);
+	I(app.db.file_version_exists(fid));
+	sz = app.db.get_file_version_size(fid);
+	// FIXME: grab preds in here too
+      }
+      break;
+    case manifest_item:
+      {
+	manifest_id mid(item);
+	I(app.db.manifest_version_exists(mid));
+	sz = app.db.get_manifest_version_size(mid);
+	// FIXME: grab preds in here too
+      }
+      break;
+    case key_item:
+      {
+	rsa_keypair_id id;
+	base64<rsa_pub_key> pub_encoded;
+	rsa_pub_key pub;
+	app.db.get_pubkey(item, id, pub_encoded); 
+	decode_base64(pub_encoded, pub);
+	sz = pub().size();
+      }
+    case mcert_item:    
+      // FIXME: work out a canonical cert "length" here
+      break;
+    case fcert_item:    
+      // FIXME: work out a canonical cert "length" here
+      break;
+    }
 }
 
-bool session::process_describe_cmd(string const & head)
+bool session::process_refine_cmd(merkle_node const & their_node)
 {
+  hexenc<prefix> hpref;
+  their_node.get_hex_prefix(hpref);
+  string typestr;
+
+  netcmd_item_type_to_string(their_node.type, typestr);
+  size_t lev = static_cast<size_t>(their_node.level);
+  
+  L(F("received 'refine' netcmd on %s node '%s', level %d\n") 
+    % typestr % hpref % lev);
+  
+  if (!app.db.merkle_node_exists(typestr, this->collection, 
+				 their_node.level, hpref))
+    {
+      L(F("no corresponding %s merkle node for prefix '%s', level %d\n")
+	% typestr % hpref % lev);
+
+      for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
+	{
+	  switch (their_node.get_slot_state(slot))
+	    {
+	    case empty_state:
+	      {
+		// we agree, this slot is empty
+		L(F("(#0) they have an empty slot %d (in a %s node '%s', level %d, we do not have)\n")
+		  % slot % typestr % hpref % lev);
+		continue;
+	      }
+	      break;
+	    case live_leaf_state:
+	      {
+		// we want what *they* have
+		id slotval;
+		hexenc<id> hslotval;
+		their_node.get_raw_slot(slot, slotval);
+		their_node.get_hex_slot(slot, hslotval);
+		L(F("(#0) they have a live leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
+		  % slot % typestr % hpref % lev);
+		L(F("(#0) requesting description of their %s leaf %s\n") 
+		  % typestr % hslotval);
+		queue_describe_cmd(their_node.type, slotval);
+	      }
+	      break;
+	    case dead_leaf_state:
+	      {
+		// we cannot ask for what they have, it is dead
+		L(F("(#0) they have a dead leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
+		  % slot % typestr % hpref % lev);
+		continue;
+	      }
+	      break;
+	    case subtree_state:
+	      {
+		// they have a subtree; might as well ask for that
+		L(F("(#0) they have a subtree at slot %d (in a %s node '%s', level %d, we do not have)\n")
+		  % slot % typestr % hpref % lev);
+		merkle_node our_fake_subtree;
+		their_node.extended_prefix(slot, our_fake_subtree.pref);
+		our_fake_subtree.level = their_node.level + 1;
+		our_fake_subtree.type = their_node.type;
+		queue_refine_cmd(our_fake_subtree);
+	      }
+	      break;
+	    }
+	}
+    }
+  else
+    {
+      // we have a corresponding merkle node. there are 16 branches
+      // to the following switch condition. it is awful. sorry.
+      L(F("found corresponding %s merkle node for prefix '%s', level %d\n")
+	% typestr % hpref % lev);
+      merkle_node our_node;
+      load_merkle_node(app, their_node.type, this->collection, 
+		       their_node.level, hpref, our_node);
+      for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
+	{	  
+	  switch (their_node.get_slot_state(slot))
+	    {
+	    case empty_state:
+	      switch (our_node.get_slot_state(slot))
+		{
+
+		case empty_state:
+		  // 1: theirs == empty, ours == empty 
+		  L(F("(#1) they have an empty slot %d in %s node '%s', level %d, and so do we\n")
+		    % slot % typestr % hpref % lev);
+		  continue;
+		  break;
+
+		case live_leaf_state:
+		  // 2: theirs == empty, ours == live 
+		  L(F("(#2) they have an empty slot %d in %s node '%s', level %d, we have a live leaf\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    I(their_node.type == our_node.type);
+		    u64 sz; 
+		    vector<id> preds;
+		    id our_slotval;
+		    our_node.get_raw_slot(slot, our_slotval);
+		    build_description(our_node.type, our_slotval, sz, preds, this->app);
+		    queue_description_cmd(their_node.type, our_slotval, sz, preds);
+		  }
+		  break;
+
+		case dead_leaf_state:
+		  // 3: theirs == empty, ours == dead 
+		  L(F("(#3) they have an empty slot %d in %s node '%s', level %d, we have a dead leaf\n")
+		    % slot % typestr % hpref % lev);
+		  continue;
+		  break;
+
+		case subtree_state:
+		  // 4: theirs == empty, ours == subtree 
+		  L(F("(#4) they have an empty slot %d in %s node '%s', level %d, we have a subtree\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    hexenc<prefix> subprefix;
+		    our_node.extended_hex_prefix(slot, subprefix);
+		    merkle_node our_subtree;
+		    I(our_node.type == their_node.type);
+		    load_merkle_node(app, their_node.type, this->collection, 
+				     our_node.level + 1, subprefix, our_subtree);
+		    I(our_node.type == our_subtree.type);
+		    queue_refine_cmd(our_subtree);
+		  }
+		  break;
+
+		}
+	      break;
+
+
+	    case live_leaf_state:
+	      switch (our_node.get_slot_state(slot))
+		{
+
+		case empty_state:
+		  // 5: theirs == live, ours == empty 
+		  L(F("(#5) they have a live leaf at slot %d in %s node '%s', level %d, we have nothing\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    id slotval;
+		    their_node.get_raw_slot(slot, slotval);
+		    queue_describe_cmd(their_node.type, slotval);
+		  }
+		  break;
+
+		case live_leaf_state:
+		  // 6: theirs == live, ours == live 
+		  L(F("(#6) they have a live leaf at slot %d in %s node '%s', and so do we\n")
+		    % slot % typestr % hpref);
+		  {
+		    id our_slotval, their_slotval;
+		    their_node.get_raw_slot(slot, their_slotval);
+		    our_node.get_raw_slot(slot, our_slotval);		    
+		    if (their_slotval == our_slotval)
+		      {
+			hexenc<id> hslotval;
+			their_node.get_hex_slot(slot, hslotval);
+			L(F("(#6) we both have live %s leaf '%s'\n") % typestr % hslotval);
+			continue;
+		      }
+		    else
+		      {
+			I(their_node.type == our_node.type);
+			u64 sz; 
+			vector<id> preds;
+			id our_slotval, their_slotval;
+			hexenc<id> hslotval;
+			our_node.get_hex_slot(slot, hslotval);
+			our_node.get_raw_slot(slot, our_slotval);
+			our_node.get_raw_slot(slot, their_slotval);
+			build_description(our_node.type, hslotval, sz, preds, this->app);
+			queue_description_cmd(our_node.type, our_slotval, sz, preds);
+			queue_describe_cmd(their_node.type, their_slotval);
+		      }
+		  }
+		  break;
+
+		case dead_leaf_state:
+		  // 7: theirs == live, ours == dead 
+		  L(F("(#7) they have a live leaf at slot %d in %s node %s, level %d, we have a dead one\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    id our_slotval, their_slotval;
+		    our_node.get_raw_slot(slot, our_slotval);
+		    their_node.get_raw_slot(slot, their_slotval);
+		    if (their_slotval == our_slotval)
+		      {
+			hexenc<id> hslotval;
+			their_node.get_hex_slot(slot, hslotval);
+			L(F("(#7) it's the same %s leaf '%s', but ours is dead\n") 
+			  % typestr % hslotval);
+			continue;
+		      }
+		    else
+		      {
+			queue_describe_cmd(their_node.type, their_slotval);
+		      }
+		  }
+		  break;
+
+		case subtree_state:
+		  // 8: theirs == live, ours == subtree 
+		  L(F("(#8) they have a live leaf in slot %d of %s node '%s', level %d, we have a subtree\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    hexenc<prefix> subprefix;
+		    our_node.extended_hex_prefix(slot, subprefix);
+		    merkle_node our_subtree;
+		    load_merkle_node(app, our_node.type, this->collection, 
+				     our_node.level + 1, subprefix, our_subtree);
+		    queue_refine_cmd(our_subtree);
+		  }
+		  break;
+		}
+	      break;
+
+
+	    case dead_leaf_state:
+	      switch (our_node.get_slot_state(slot))
+		{
+		case empty_state:
+		  // 9: theirs == dead, ours == empty 
+		  L(F("(#9) they have a dead leaf at slot %d in %s node '%s', level %d, we have nothing\n")
+		    % slot % typestr % hpref % lev);
+		  continue;
+		  break;
+
+		case live_leaf_state:
+		  // 10: theirs == dead, ours == live 
+		  L(F("(#10) they have a dead leaf at slot %d in %s node '%s', level %d, we have a live one\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    id our_slotval, their_slotval;
+		    their_node.get_raw_slot(slot, their_slotval);
+		    our_node.get_raw_slot(slot, our_slotval);
+		    hexenc<id> hslotval;
+		    our_node.get_hex_slot(slot, hslotval);
+		    if (their_slotval == our_slotval)
+		      {
+			L(F("(#10) we both have %s leaf %s, theirs is dead\n") 
+			  % typestr % hslotval);
+			continue;
+		      }
+		    else
+		      {
+			I(their_node.type == our_node.type);
+			u64 sz; 
+			vector<id> preds;
+			build_description(our_node.type, hslotval, sz, preds, this->app);
+			queue_describe_cmd(our_node.type, our_slotval);
+		      }
+		  }
+		  break;
+
+		case dead_leaf_state:
+		  // 11: theirs == dead, ours == dead 
+		  L(F("(#11) they have a dead leaf at slot %d in %s node '%s', level %d, so do we\n")
+		    % slot % typestr % hpref % lev);
+		  continue;
+		  break;
+
+		case subtree_state:
+		  // theirs == dead, ours == subtree 
+		  L(F("(#12) they have a dead leaf in slot %d of %s node '%s', we have a subtree\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    hexenc<prefix> subprefix;
+		    our_node.extended_hex_prefix(slot, subprefix);
+		    merkle_node our_subtree;
+		    load_merkle_node(app, our_node.type, this->collection, 
+				     our_node.level + 1, subprefix, our_subtree);
+		    queue_refine_cmd(our_subtree);
+		  }
+		  break;
+		}
+	      break;
+
+
+	    case subtree_state:
+	      switch (our_node.get_slot_state(slot))
+		{
+		case empty_state:
+		  // 13: theirs == subtree, ours == empty 
+		  L(F("(#13) they have a subtree at slot %d in %s node '%s', level %d, we have nothing\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    merkle_node our_fake_subtree;
+		    their_node.extended_prefix(slot, our_fake_subtree.pref);
+		    our_fake_subtree.level = their_node.level + 1;
+		    our_fake_subtree.type = their_node.type;
+		    queue_refine_cmd(our_fake_subtree);
+		  }
+		  break;
+
+		case live_leaf_state:
+		  // 14: theirs == subtree, ours == live 
+		  L(F("(#14) they have a subtree at slot %d in %s node '%s', level %d, we have a live leaf\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    size_t subslot;
+		    id our_slotval;
+		    merkle_node our_fake_subtree;
+		    our_node.get_raw_slot(slot, our_slotval);
+		    pick_slot_and_prefix_for_value(our_slotval, our_node.level + 1, subslot, 
+						   our_fake_subtree.pref);
+		    our_fake_subtree.type = their_node.type;
+		    our_fake_subtree.level = our_node.level + 1;
+		    our_fake_subtree.set_raw_slot(subslot, our_slotval);
+		    our_fake_subtree.set_slot_state(subslot, our_node.get_slot_state(slot));
+		    queue_refine_cmd(our_fake_subtree);
+		  }
+		  break;
+
+		case dead_leaf_state:
+		  // 15: theirs == subtree, ours == dead 
+		  L(F("(#15) they have a subtree at slot %d in %s node '%s', level %d, we have a dead leaf\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    size_t subslot;
+		    id our_slotval;
+		    merkle_node our_fake_subtree;
+		    our_node.get_raw_slot(slot, our_slotval);
+		    pick_slot_and_prefix_for_value(our_slotval, our_node.level + 1, subslot, 
+						   our_fake_subtree.pref);
+		    our_fake_subtree.type = their_node.type;
+		    our_fake_subtree.level = our_node.level + 1;
+		    our_fake_subtree.set_raw_slot(subslot, our_slotval);
+		    our_fake_subtree.set_slot_state(subslot, our_node.get_slot_state(slot));
+		    queue_refine_cmd(our_fake_subtree);    
+		  }
+		  break;
+
+		case subtree_state:
+		  // 16: theirs == subtree, ours == subtree 
+		  L(F("(#16) they have a subtree at slot %d in %s node '%s', level %d, and so do we\n")
+		    % slot % typestr % hpref % lev);
+		  {
+		    id our_slotval, their_slotval;
+		    hexenc<id> hslotval;
+		    their_node.get_raw_slot(slot, their_slotval);
+		    our_node.get_raw_slot(slot, our_slotval);
+		    our_node.get_hex_slot(slot, hslotval);
+		    if (their_slotval == our_slotval)
+		      {
+			L(F("(#16) we both have %s subtree '%s'\n") % typestr % hslotval);
+			continue;
+		      }
+		    else
+		      {
+			L(F("(#16) %s subtrees at slot %d differ, refining ours\n") % typestr % slot);
+			hexenc<prefix> subprefix;
+			our_node.extended_hex_prefix(slot, subprefix);
+			merkle_node our_subtree;
+			load_merkle_node(app, our_node.type, this->collection, 
+					 our_node.level + 1, subprefix, our_subtree);
+			queue_refine_cmd(our_subtree);
+		      }
+		  }
+		  break;
+		}
+	      break;
+	    }
+	}
+    }
   return true;
 }
 
-bool session::process_description_cmd(string const & head, 
+bool session::process_describe_cmd(netcmd_item_type type, id const & item)
+{
+  L(F("received 'describe' netcmd on object '%s'\n") % tohex(item()));
+  return true;
+}
+
+bool session::process_description_cmd(netcmd_item_type type, 
+				      id const & item, 
 				      u64 len, 
-				      vector<string> const & predecessors)
+				      vector<id> const & predecessors)
 {
+  L(F("received 'description' netcmd on object '%s'\n") % tohex(item()));
   return true;
 }
 
-bool session::process_send_data_cmd(string const & head, 
+bool session::process_send_data_cmd(netcmd_item_type type,
+				    id const & item, 
 				    vector<pair<u64, u64> > const & fragments)
 {
   return true;
 }
 
-bool session::process_send_delta_cmd(string const & head, 
-				     string const & base)
+bool session::process_send_delta_cmd(netcmd_item_type type,
+				     id const & head, 
+				     id const & base)
 {
   return true;
 }
 
-bool session::process_data_cmd(string const & id, 
+bool session::process_data_cmd(netcmd_item_type type,
+			       id const & item, 
 			       vector< pair<pair<u64,u64>,string> > const & fragments)
 {
   return true;
 }
 
-bool session::process_delta_cmd(string const & src, 
-				string const & dst, 
+bool session::process_delta_cmd(netcmd_item_type type,
+				id const & src, 
+				id const & dst, 
 				u64 src_len, 
-				string const & del)
+				delta const & del)
 {
   return true;
 }
@@ -798,7 +1306,7 @@ bool session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "hello netcmd received in client voice");
       require(phase == authentication_phase, "hello netcmd received in auth phase");
       {
-	string server, nonce;
+	id server, nonce;
 	read_hello_cmd_payload(cmd.payload, server, nonce);
 	return process_hello_cmd(server, nonce);
       }
@@ -810,7 +1318,8 @@ bool session::dispatch_payload(netcmd const & cmd)
       require(phase == authentication_phase, "auth netcmd received in auth phase");
       {
 	protocol_role role;
-	string collection, client, nonce1, nonce2, signature;
+	string collection, signature;
+	id client, nonce1, nonce2;
 	read_auth_cmd_payload(cmd.payload, role, collection, client, nonce1, nonce2, signature);
 	return process_auth_cmd(role, collection, client, nonce1, nonce2, signature);
       }
@@ -842,8 +1351,9 @@ bool session::dispatch_payload(netcmd const & cmd)
       require(phase == refinement_phase, "done netcmd received in refinement phase");
       {
 	u8 level;
-	read_done_cmd_payload(cmd.payload, level);
-	return process_done_cmd(level);
+	netcmd_item_type type;
+	read_done_cmd_payload(cmd.payload, level, type);
+	return process_done_cmd(level, type);
       }
       break;
 
@@ -854,9 +1364,10 @@ bool session::dispatch_payload(netcmd const & cmd)
 	      role == source_and_sink_role, 
 	      "describe netcmd received in source or source/sink role");
       {
-	string id;
-	read_describe_cmd_payload(cmd.payload, id);
-	return process_describe_cmd(id);
+	id item;
+	netcmd_item_type type;
+	read_describe_cmd_payload(cmd.payload, type, item);
+	return process_describe_cmd(type, item);
       }
       break;
 
@@ -867,11 +1378,12 @@ bool session::dispatch_payload(netcmd const & cmd)
 	      role == source_and_sink_role, 
 	      "description netcmd received in sink or source/sink role");
       {
-	string head;
+	id item;
+	netcmd_item_type type;
 	u64 len;
-	vector<string> predecessors;
-	read_description_cmd_payload(cmd.payload, head, len, predecessors);
-	return process_description_cmd(head, len, predecessors);
+	vector<id> predecessors;
+	read_description_cmd_payload(cmd.payload, type, item, len, predecessors);
+	return process_description_cmd(type, item, len, predecessors);
       }
       break;
 
@@ -882,10 +1394,11 @@ bool session::dispatch_payload(netcmd const & cmd)
 	      role == source_and_sink_role, 
 	      "send_data netcmd received in source or source/sink role");
       {
-	string head;
+	netcmd_item_type type;
+	id item;
 	vector<pair<u64, u64> > fragments;
-	read_send_data_cmd_payload(cmd.payload, head, fragments);
-	return process_send_data_cmd(head, fragments);
+	read_send_data_cmd_payload(cmd.payload, type, item, fragments);
+	return process_send_data_cmd(type, item, fragments);
       }
       break;
 
@@ -896,9 +1409,10 @@ bool session::dispatch_payload(netcmd const & cmd)
 	      role == source_and_sink_role, 
 	      "send_delta netcmd received in source or source/sink role");
       {
-	string head, base;
-	read_send_delta_cmd_payload(cmd.payload, head, base);
-	return process_send_delta_cmd(head, base);
+	netcmd_item_type type;
+	id head, base;
+	read_send_delta_cmd_payload(cmd.payload, type, head, base);
+	return process_send_delta_cmd(type, head, base);
       }
 
     case data_cmd:
@@ -908,10 +1422,11 @@ bool session::dispatch_payload(netcmd const & cmd)
 	      role == source_and_sink_role, 
 	      "data netcmd received in source or source/sink role");
       {
-	string id;
+	netcmd_item_type type;
+	id item;
 	vector< pair<pair<u64,u64>,string> > fragments;
-	read_data_cmd_payload(cmd.payload, id, fragments);
-	return process_data_cmd(id, fragments);
+	read_data_cmd_payload(cmd.payload, type, item, fragments);
+	return process_data_cmd(type, item, fragments);
       }
       break;
 
@@ -922,10 +1437,12 @@ bool session::dispatch_payload(netcmd const & cmd)
 	      role == source_and_sink_role, 
 	      "delta netcmd received in source or source/sink role");
       {
-	string src, dst, del;
+	netcmd_item_type type;
+	id src, dst;
+	delta del;
 	u64 src_len;
-	read_delta_cmd_payload(cmd.payload, src, dst, src_len, del);
-	return process_delta_cmd(src, dst, src_len, del);
+	read_delta_cmd_payload(cmd.payload, type, src, dst, src_len, del);
+	return process_delta_cmd(type, src, dst, src_len, del);
       }
       break;	  
     }
@@ -950,14 +1467,15 @@ bool session::process()
     {
       netcmd cmd;
       L(F("processing %d byte input buffer from peer %s\n") % inbuf.size() % peer_id);
-      if (read_netcmd(inbuf, cmd))
+      while (read_netcmd(inbuf, cmd))
 	{
 	  inbuf.erase(0, cmd.encoded_size());
 	  bool continue_processing = dispatch_payload(cmd);
 	  if (continue_processing)
 	    previous_cmd = cmd.cmd_code;
-	  return continue_processing;
-	}	  
+	  else
+	    return continue_processing;
+	}
       if (inbuf.size() >= constants::netcmd_maxsz)
 	{
 	  W(F("input buffer for peer %s is overfull after netcmd dispatch\n") % peer_id);
@@ -989,7 +1507,9 @@ static void call_server(protocol_role role,
   Stream server(address().c_str(), default_port, timeout); 
   session sess(role, client_voice, collections, app, 
 	       address(), server.get_socketfd(), timeout);
-    
+
+  ticker input("bytes in"), output("bytes out");
+
   while (true)
     { 
       probe.clear();
@@ -1007,7 +1527,7 @@ static void call_server(protocol_role role,
 
       if (event & Probe::ready_read)
 	{
-	  if (sess.read_some())
+	  if (sess.read_some(&input))
 	    {
 	      if (!sess.process())
 		{
@@ -1024,7 +1544,7 @@ static void call_server(protocol_role role,
       
       if (event & Probe::ready_write)
 	{
-	  if (! sess.write_some())
+	  if (! sess.write_some(&output))
 	    {
 	      P(F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
 	      return;
@@ -1157,6 +1677,7 @@ static void serve_connections(protocol_role role,
 	}
 	
       // kill any clients which haven't done any i/o inside the timeout period
+      // or who have said goodbye and flushed their output buffers
       set<socket_type> dead_clients;
       time_t now = ::time(NULL);
       for (map<socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
@@ -1166,6 +1687,12 @@ static void serve_connections(protocol_role role,
 	      < static_cast<unsigned long>(now))
 	    {
 	      P(F("fd %d (peer %s) has been idle too long, disconnecting\n") 
+		% i->first % i->second->peer_id);
+	      dead_clients.insert(i->first);
+	    }
+	  if (i->second->sent_goodbye && i->second->outbuf.empty())
+	    {
+	      P(F("fd %d (peer %s) sent goodbye and flushed output, disconnecting\n") 
 		% i->first % i->second->peer_id);
 	      dead_clients.insert(i->first);
 	    }
@@ -1226,7 +1753,7 @@ static void rebuild_merkle_trees(app_state & app,
       {
 	id raw_id;
 	decode_hexenc(man->inner(), raw_id);
-	insert_into_merkle_tree(app, true, "manifest", collection, raw_id(), 0);
+	insert_into_merkle_tree(app, true, manifest_item, collection, raw_id(), 0);
 	++manifests;
 	app.db.get_manifest_certs(*man, certs);
 	for (size_t i = 0; i < certs.size(); ++i)
@@ -1234,7 +1761,7 @@ static void rebuild_merkle_trees(app_state & app,
 	    hexenc<id> certhash;
 	    cert_hash_code(idx(certs, i).inner(), certhash);
 	    decode_hexenc(certhash, raw_id);
-	    insert_into_merkle_tree(app, true, "mcert", collection, raw_id(), 0);
+	    insert_into_merkle_tree(app, true, mcert_item, collection, raw_id(), 0);
 	    ++mcerts;
 	    rsa_keypair_id const & k = idx(certs, i).inner().key;
 	    if (inserted_keys.find(k) == inserted_keys.end())
@@ -1246,7 +1773,7 @@ static void rebuild_merkle_trees(app_state & app,
 		    hexenc<id> keyhash;
 		    key_hash_code(k, pub_encoded, keyhash);
 		    decode_hexenc(keyhash, raw_id);
-		    insert_into_merkle_tree(app, true, "key", collection, raw_id(), 0);
+		    insert_into_merkle_tree(app, true, key_item, collection, raw_id(), 0);
 		    ++keys;
 		  }
 		inserted_keys.insert(k);
