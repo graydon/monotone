@@ -1,0 +1,21 @@
+AT_SETUP([can execute things])
+MONOTONE_SETUP
+
+if test "$OSTYPE" == "msys"; then
+  pushd `which touch |awk -F / -- '{for(i=2;i<NF;i++)printf("/" $i);}'` && export TOUCH=`pwd -W`/touch.exe && popd
+else
+  export TOUCH=`which touch`
+fi
+echo $TOUCH
+AT_DATA(touchhook.lua, [function note_commit(new_id, certs)
+	local pid
+	local ret = -1
+	pid = posix.spawn(posix.getenv("TOUCH"),"test.touched")
+	ret, pid = posix.wait(pid)
+end
+])
+AT_CHECK(MONOTONE add touchhook.lua, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=touchhook.lua commit --message 'test', [], [ignore], [ignore])
+AT_CHECK(test -f test.touched, [], [ignore], [ignore])
+
+AT_CLEANUP

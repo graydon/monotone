@@ -492,3 +492,5 @@ m4_include(tests/t_db_missing.at)
 m4_include(tests/t_fsck.at)
 #130
 m4_include(tests/t_add_owndb.at)
+m4_include(tests/t_can_execute.at)
+
