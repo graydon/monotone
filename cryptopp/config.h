@@ -100,7 +100,7 @@ typedef unsigned char byte;     // moved outside namespace for Borland C++Builde
 NAMESPACE_BEGIN(CryptoPP)
 
 typedef unsigned short word16;
-#if defined(__alpha) && !defined(_MSC_VER)
+#if ( defined(__alpha) || defined(__x86_64) ) && !defined(_MSC_VER)
 	typedef unsigned int word32;
 #else
 	typedef unsigned long word32;
@@ -117,14 +117,14 @@ typedef unsigned short word16;
 #endif
 
 // defined this if your CPU is not 64-bit
-#if defined(WORD64_AVAILABLE) && !defined(__alpha)
+#if defined(WORD64_AVAILABLE) && !defined(__alpha) && !defined(__x86_64)
 #	define SLOW_WORD64
 #endif
 
 // word should have the same size as your CPU registers
 // dword should be twice as big as word
 
-#if (defined(__GNUC__) && !defined(__alpha)) || defined(__MWERKS__)
+#if (defined(__GNUC__) && !defined(__alpha)) && !defined(__x86_64) || defined(__MWERKS__)
 	typedef unsigned long __attribute__((__may_alias__)) word;
 	typedef unsigned long long __attribute__((__may_alias__)) dword;
 #elif defined(_MSC_VER) || defined(__BCPLUSPLUS__)
