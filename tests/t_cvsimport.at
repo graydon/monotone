@@ -52,4 +52,10 @@ AT_CHECK(MONOTONE cat file $TSHA1, [], [ignore])
 AT_CHECK(MONOTONE cat file $TSHA2, [], [ignore])
 AT_CHECK(MONOTONE cat file $TSHA3, [], [ignore])
 
+# also check that history is okay -- has a unique head, and it's the
+# right one.
+
+AT_CHECK(MONOTONE checkout --branch=testbranch mtcodir, [], [ignore], [ignore])
+AT_CHECK(cmp importme.3 mtcodir/importme)
+
 AT_CLEANUP

@@ -971,21 +971,17 @@ public:
 
 
 static void 
-store_edge(revision_id const & rid,
-           revision_set const & rev,
-           manifest_map const & parent,
-           manifest_map const & child,
-           manifest_id const & parent_mid,
-           manifest_id const & child_mid,
-           app_state & app,
-           cvs_history & cvs,
-           unsigned long depth,
-           bool head_manifest_p)
+store_manifest_edge(manifest_map const & parent,
+                    manifest_map const & child,
+                    manifest_id const & parent_mid,
+                    manifest_id const & child_mid,
+                    app_state & app,
+                    cvs_history & cvs,
+                    unsigned long depth,
+                    bool head_manifest_p)
 {
 
-  L(F("storing revision %s\n") % rid);
-  if (! app.db.revision_exists(rid))
-    app.db.put_revision(rid, rev);
+  L(F("storing manifest %s (base %s)\n") % parent_mid % child_mid);
 
   if (depth == 0 && head_manifest_p)
     {
@@ -1141,6 +1137,7 @@ import_states_recursive(ticker & n_edges,
                         manifest_map parent_map,
                         cvs_history & cvs,
                         app_state & app,
+                        vector< pair<cvs_key, revision_set> > & revisions,
                         unsigned long depth);
 
 static void 
@@ -1152,6 +1149,7 @@ import_states_by_branch(ticker & n_edges,
                         manifest_map const & parent_map,
                         cvs_history & cvs,
                         app_state & app,
+                        vector< pair<cvs_key, revision_set> > & revisions,
                         unsigned long depth)
 {
   set<cvs_branchname> branches;
@@ -1167,7 +1165,7 @@ import_states_by_branch(ticker & n_edges,
     {
       import_states_recursive(n_edges, n_branches, state, *branch, 
                               parent_rid, parent_mid, parent_map, 
-                              cvs, app, depth);
+                              cvs, app, revisions, depth);
     }
 }
 
@@ -1181,6 +1179,7 @@ import_states_recursive(ticker & n_edges,
                         manifest_map parent_map,
                         cvs_history & cvs,
                         app_state & app,
+                        vector< pair<cvs_key, revision_set> > & revisions,
                         unsigned long depth)
 {
   if (state->substates.size() > 0)
@@ -1221,17 +1220,16 @@ import_states_recursive(ticker & n_edges,
       rev.edges.insert(make_pair(parent_rid, make_pair(parent_mid, cs)));
       calculate_ident(rev, child_rid);
 
-      store_edge(child_rid, rev, 
-                 parent_map, child_map, 
-                 parent_mid, child_mid, 
-                 app, cvs, depth, i == newest_branch_state);
+      revisions.push_back(make_pair(i->first, rev));
 
-      store_auxiliary_certs(i->first, child_rid, app, cvs);
+      store_manifest_edge(parent_map, child_map, 
+                          parent_mid, child_mid, 
+                          app, cvs, depth, i == newest_branch_state);
 
       if (i->second->substates.size() > 0)
         import_states_by_branch(n_edges, n_branches, i->second, 
                                 child_rid, child_mid, child_map, 
-                                cvs, app, depth+1);
+                                cvs, app, revisions, depth+1);
 
       // now apply same change set to parent_map, making parent_map == child_map
       apply_change_set(cs, parent_map);
@@ -1287,6 +1285,7 @@ import_cvs_repo(fs::path const & cvsroot,
   I(cvs.stk.size() == 1);
   shared_ptr<cvs_state> state = cvs.stk.top();
 
+  vector< pair<cvs_key, revision_set> > revisions;
   {
     ticker n_branches("finished branches", "b", 1);
     ticker n_edges("finished edges", "e", 1);
@@ -1298,8 +1297,26 @@ import_cvs_repo(fs::path const & cvsroot,
     calculate_ident(root_manifest, root_mid);
     import_states_by_branch(n_edges, n_branches, state, 
                             root_rid, root_mid,
-                            root_manifest, cvs, app, 0);
+                            root_manifest, cvs, app, revisions, 0);
     P(F("phase 2 (ancestry reconstruction) complete\n"));
+    guard.commit();
+  }
+  
+  {
+    ticker n_revisions("written revisions", "r", 1);
+    ui.set_tick_trailer("");
+    transaction_guard guard(app.db);
+    for (vector< pair<cvs_key, revision_set> >::const_iterator
+           i = revisions.begin(); i != revisions.end(); ++i)
+      {
+        revision_id rid;
+        calculate_ident(i->second, rid);
+        if (! app.db.revision_exists(rid))
+          app.db.put_revision(rid, i->second);
+        store_auxiliary_certs(i->first, rid, app, cvs);
+        ++n_revisions;
+      }
+    P(F("phase 3 (writing revisions) complete\n"));
     guard.commit();
   }
 }

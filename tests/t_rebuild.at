@@ -1,4 +1,4 @@
-AT_SETUP([db rebuild])
+AT_SETUP([(IMP) db rebuild])
 MONOTONE_SETUP
 
 # This test is a bug report.

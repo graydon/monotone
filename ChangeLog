@@ -1,3 +1,19 @@
+2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_rebuild.at: Add priority tag.
+	
+	* tests/t_cvsimport.at: Be more thorough.
+
+	* rcs_import.cc (store_edge): Rename to...
+	(store_manifest_edge): ...this.  Remove revision arguments, and
+	remove storing of revision.
+	(import_states_recursive): Update accordingly.
+	Add 'revisions' argument; update it instead of trying to write
+	revisions now.
+	(import_states_by_branch): Add 'revisions' argument.
+	(import_cvs_repo): Add a stage 3 that writes out the revisions
+	accumulated in the 'revisions' vector.
+	
 2005-01-26  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_rebuild.at: New test.
