@@ -168,9 +168,9 @@ file_source
     map = CreateFileMapping(fd, NULL, PAGE_READONLY, 0, 0, NULL);
     if (map==NULL)
       throw oops("CreateFileMapping of " + filename + " failed");
-    mapping = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, len);
+    mapping = MapViewOfFile(map, FILE_MAP_READ, 0, 0, len);
     if (mapping==NULL)
-      throw oops("MapViewOFFile of " + filename + " failed");
+      throw oops("MapViewOfFile of " + filename + " failed");
   }
   ~file_source()
   {

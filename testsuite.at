@@ -20,6 +20,11 @@ m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
 m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
 m4_define([WORKING_REVISION], [monotone --norc cat revision | monotone --norc identify])
+m4_define([CANONICALISE], [
+if test "$OSTYPE" == "msys"; then
+  dos2unix -q -o $1
+fi
+])
 
 # the MONOTONE_SETUP macro deploys the standard lua hooks and loads the 
 # standard testing key, which we use for further tests.
@@ -282,17 +287,33 @@ end
 m4_define([MONOTONE2], MONOTONE --db=test2.db)
 m4_define([MONOTONE3], MONOTONE --db=test3.db)
 
+m4_define([NETSYNC_KILL], [
+if test "$OSTYPE" == "msys"; then
+  ps |awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill " $a);}'
+  # MinGW has no killall.  The weird a=1 thing is to avoid autotest treating $1 as its own parameter
+else
+  killall monotone 2>/dev/null
+fi
+])
+m4_define([NETSYNC_KILLHARD], [
+if test "$OSTYPE" == "msys"; then
+  ps |awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL " $a);}'
+else
+  killall -KILL monotone 2>/dev/null
+fi
+])
+
 # run as NETSYNC_SERVE_START(collection name)
 m4_define([NETSYNC_SERVE_START], [
-killall -KILL monotone 2> /dev/null
+NETSYNC_KILLHARD
 MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $1 &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
 m4_define([NETSYNC_SERVE_STOP], [
-killall monotone 2> /dev/null
+NETSYNC_KILL
 sleep 1
-killall -KILL monotone 2> /dev/null
+NETSYNC_KILLHARD
 ])
 # run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name)
 # first argument chooses whether to use the 2nd or 3rd database

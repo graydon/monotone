@@ -8,12 +8,16 @@ AT_CHECK(mkdir foo)
 AT_CHECK(mkdir foo/bar)
 AT_DATA(testfile0, [version 0 of first test file
 ])
+AT_CHECK(CANONICALISE(testfile0))
+# Needed if this file (t_scan.at) was checked out using CR+LF
 
 AT_DATA(foo/testfile1, [version 0 of second test file
 ])
+AT_CHECK(CANONICALISE(foo/testfile1))
 
 AT_DATA(foo/bar/testfile2, [version 0 of third test file
 ])
+AT_CHECK(CANONICALISE(foo/bar/testfile2))
 
 AT_DATA(manifest, [85d521304e3660f05bbb458b05d0efc6e981f832  foo/bar/testfile2
 14c5b672e2181377e41e6d8c5ce21457d8342667  foo/testfile1
@@ -23,6 +27,7 @@ AT_DATA(manifest, [85d521304e3660f05bbb458b05d0efc6e981f832  foo/bar/testfile2
 AT_CHECK(MONOTONE add testfile0 foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
 AT_CHECK(MONOTONE cat manifest, [], [stdout]) 
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp stdout manifest, [], [ignore]) 
 
 AT_CLEANUP
