@@ -1,5 +1,10 @@
 2003-11-24  graydon hoare  <graydon@pobox.com>
 
+	* std_hooks.lua (get_http_proxy): Return nil when no ENV var.
+	* monotone.texi (get_http_proxY): Document change.
+
+2003-11-24  graydon hoare  <graydon@pobox.com>
+
 	* tests/t_proxy.at: Add a test for proxying with tinyproxy.
 	* testsuite.at: Call it.
 	* lua.cc: Fix dumb error breaking proxying.
