@@ -521,32 +521,32 @@ Print a brief help message and exit.
 
 Print the manual page and exit.
 
-=item B<--db>=database
+=item B<--db>=I<database>
 
 Sets which database to use.  If not given, the database given in MT/options
 is used.
 
-=item B<--branch>=branch
+=item B<--branch>=I<branch>
 
 Sets a branch that should be checked.  Can be used multiple times to set
 several branches.  If not given at all, all available branches are used.
 
-=item B<--workdir>=path
+=item B<--workdir>=I<path>
 
 Sets the working directory to use for temporary files.  This working
 directory should be empty to avoid having files overwritten.  When
 B<--debug> is used and unless B<--mail> is given, there will be a file
 called C<Notify.debug> left in the work directory.
 
-The default working directory is C</var/tmp/monotone_motify.work.$$>,
+The default working directory is F</var/tmp/monotone_motify.work.$$>,
 and will be removed automatically unless Notify.debug is left in it.
 
-=item B<--from>=from
+=item B<--from>=I<from>
 
 Sets the sender address to be used when creating the emails.  There is
 no default, so this is a required option.
 
-=item B<--to>=to
+=item B<--to>=I<to>
 
 Sets the recipient address to be used when creating the emails.  There
 is no default, so this is a required option.
@@ -586,5 +586,53 @@ Have the change summary and the output of 'monotone diff' in the body of
 the email, separated by lines of dashes.
 
 =back
+
+=head1 BUGS
+
+Tons, I'm sure...
+
+=head1 SEE ALSO
+
+L<monotone(1)>
+
+=head1 AUTHOR
+
+Richard Levitte, <richard@levitte.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2005 by Richard Levitte <richard@levitte.org>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+=over 3
+
+=item 1.
+
+Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+=item 2.
+
+Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+=back
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =cut
