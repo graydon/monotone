@@ -1,3 +1,7 @@
+2004-10-12  graydon hoare  <graydon@pobox.com>
+
+	* unix/read_password.cc: Don't force echo on.
+
 2004-08-12  graydon hoare  <graydon@pobox.com>
 
 	fix bug 9884
