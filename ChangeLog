@@ -1,5 +1,9 @@
 2005-02-18  graydon hoare  <graydon@pobox.com>
 
+	* Makefile.am (MOST_SOURCES): Add smap.hh.
+
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
 	* basic_io.{cc,hh}: Inline some stuff.
 	* change_set.cc: Use smap various places, reduce to 32-bit tids.
 	* commands.cc: Use shared_ptr<change_set> everywhere.
