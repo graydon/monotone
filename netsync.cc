@@ -210,7 +210,7 @@ struct PipeStream : Netxx::Stream
   Netxx::signed_size_type write(const void *buffer, Netxx::size_type length);
   Netxx::signed_size_type read (void *buffer, Netxx::size_type length);
   Netxx::socket_type get_writefd() const { return fd_write; }
-  bool is_pipe() const { return get_writefd()==-1; }
+  bool is_pipe() const { return get_writefd()==Netxx::socket_type(-1); }
   void close();
   const Netxx::ProbeInfo* get_probe_info() const;
 // ctors
