@@ -1,5 +1,14 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Reserved Certs): Remove 'vcheck'.
+	(Key and Cert): Remove 'vcheck'.
+	(Accidental collision): Likewise.
+	(Commands): Likewise.
+	* tests/t_vcheck.at: Add note about manual having useful stuff for
+	when vcheck is re-added.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* mac.hh: 
 	* cert.cc (vcheck_cert_name):
 	(calculate_vcheck_mac): 

@@ -20,8 +20,9 @@ AT_XFAIL(true)
 # were removed, and never quite did the right thing anyway.  (It only
 # applied to manifests, in particular.)  It may be useful to reference
 # the code, though: see, say,
-# 727d28b35f1fcbc91c0183fca2a6cabbe7cf21d7, or t:monotone-0.16.
-# In particular, mac.hh should be useful.
+# 727d28b35f1fcbc91c0183fca2a6cabbe7cf21d7, or t:monotone-0.16.  In
+# particular, mac.hh should be useful.  Note also the section
+# "Accidental collision" in monotone.texi.
 
 # There are a few ways to re-add this.  The simplest is probably to
 # have a cert on revisions that contains
