@@ -99,8 +99,6 @@ class database
 
   void get_ids(std::string const & table, std::set< hexenc<id> > & ids); 
 
-  void get_ids(std::string const & table, std::set< hexenc<id> > & ids); 
-
   void get(hexenc<id> const & new_id,
            base64< gzip<data> > & dat,
            std::string const & table);
