@@ -3825,7 +3825,6 @@ hook is only intended as an aid for integrating monotone with informal
 commit-notification systems such as mailing lists or news services. It
 should not perform any security-critical operations.
 
-@ftable @code
 @item get_branch_key (@var{branchname})
 
 Returns a string which is the name of an @sc{rsa} private key used to sign
