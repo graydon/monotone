@@ -1,5 +1,9 @@
 2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* schema_migration.cc: Remove tabs.
+
+2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_check_same_db_contents.at: Uncapitalize title to unbreak
 	testsuite.
 
