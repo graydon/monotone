@@ -49,6 +49,7 @@ bool file_exists(file_path const & path);
 
 void mkdir_p(local_path const & path);
 void mkdir_p(file_path const & path);
+void make_dir_for(file_path const & p);
 
 void delete_file(local_path const & path);
 void delete_file(file_path const & path);

@@ -59,6 +59,6 @@ second line of the file
 an insertion between second and third
 third line of the file
 ])
-AT_DATA(cmp testfile probe, [], [ignore])
+AT_CHECK(cmp testfile probe, [], [ignore])
 
 AT_CLEANUP

@@ -592,14 +592,120 @@ bool merge2(manifest_map const & left,
 }
 
 
-// this version does a merge3 on manifests. it's somewhat easier than the
-// line-oriented version because manifests are set-theoretic. though, since
-// it's "easier" we put it all in one function, and the funtion is thereby
-// somewhat long-winded. at least it's not spread across 4 classes :)
-//
-// nb: I totally made this algorithm up. there's no reason to believe
-// it's the best way of merging manifests. you can do more clever things
-// wrt. detecting moves of files 
+void check_no_intersect(set<file_path> const & a,
+			set<file_path> const & b,
+			string const & a_name,
+			string const & b_name)
+{
+  set<file_path> tmp;
+  set_intersection(a.begin(), a.end(), b.begin(), b.end(),
+		   inserter(tmp, tmp.begin()));
+  if (tmp.empty())
+    {
+      L(F("file sets '%s' and '%s' do not intersect\n")
+	% a_name % b_name);      
+    }
+  else
+    {
+      L(F("conflict: file sets '%s' and '%s' intersect\n")
+	% a_name % b_name);
+      throw conflict();
+    }
+}
+
+template <typename K, typename V>
+void check_map_inclusion(map<K,V> const & a,
+			 map<K,V> const & b,
+			 string const & a_name,
+			 string const & b_name)
+{
+  for (typename map<K, V>::const_iterator self = a.begin();
+       self != a.end(); ++self)
+    {
+      typename map<K, V>::const_iterator other =
+	b.find(self->first);
+
+      if (other == b.end())
+	{
+	  L(F("map '%s' has unique entry for %s -> %s\n")
+	    % a_name % self->first % self->second);
+	}
+      
+      else if (other->second == self->second)
+	{
+	  L(F("maps '%s' and '%s' agree on %s -> %s\n")
+	    % a_name % b_name % self->first % self->second);
+	}
+
+      else
+	{
+	  L(F("conflict: maps %s and %s disagree: %s -> %s and %s\n") 
+	    % a_name % b_name
+	    % self->first % self->second % other->second);
+	  throw conflict();
+	}
+    }  
+}
+
+
+void merge_deltas (map<file_path, patch_delta> const & self_map,
+		   map<file_path, patch_delta> & other_map,
+		   file_merge_provider & file_merger,
+		   patch_set & merged_edge)
+{
+  for (map<file_path, patch_delta>::const_iterator delta = self_map.begin();
+       delta != self_map.end(); ++delta)
+    {
+      
+      map<file_path, patch_delta>::const_iterator other = 
+	other_map.find(delta->first);
+
+      if (other == other_map.end())
+	{
+	  merged_edge.f_deltas.insert(patch_delta(delta->second.id_old,
+						  delta->second.id_new,
+						  delta->first));
+	}
+      else
+	{
+	  // concurrent deltas! into the file merger we go..
+	  I(other->second.id_old == delta->second.id_old);
+	  I(other->second.path == delta->second.path);
+	  L(F("attempting to merge deltas on %s : %s -> %s and %s\n")
+	    % delta->first 
+	    % delta->second.id_old 
+	    % delta->second.id_new
+	    % other->second.id_new);
+	  
+	  path_id_pair a_pip = path_id_pair(make_pair(delta->second.path, 
+						      delta->second.id_old));
+	  path_id_pair l_pip = path_id_pair(make_pair(delta->first,
+						      delta->second.id_new));
+	  path_id_pair r_pip = path_id_pair(make_pair(delta->first,
+						      other->second.id_new));
+	  path_id_pair m_pip;
+	  if (file_merger.try_to_merge_files(a_pip, l_pip, r_pip, m_pip))
+	    {
+	      L(F("concurrent deltas on %s merged to %s OK\n")
+		% delta->first % m_pip.ident());
+	      I(m_pip.path() == delta->first);
+	      other_map.erase(delta->first);
+	      merged_edge.f_deltas.insert(patch_delta(delta->second.id_old,
+						      m_pip.ident(),
+						      m_pip.path()));
+	    }
+	  else
+	    {
+	      L(F("conflicting deltas on %s, merge failed\n")
+		% delta->first);
+	      throw conflict();
+	    }	  
+	}
+    }  
+}
+
+
+// this is a 3-way merge algorithm on manifests.
 
 bool merge3(manifest_map const & ancestor,
 	    manifest_map const & left,
@@ -608,200 +714,271 @@ bool merge3(manifest_map const & ancestor,
 	    file_merge_provider & file_merger,
 	    manifest_map & merged)
 {
+  // in phase #1 we make a bunch of indexes of the changes we saw on each
+  // edge.
 
-  copy(right.begin(), right.end(), inserter(merged, merged.begin()));
+  patch_set left_edge, right_edge, merged_edge;
+  manifests_to_patch_set(ancestor, left, app, left_edge);
+  manifests_to_patch_set(ancestor, right, app, right_edge);
 
-  patch_set ps;
-  manifests_to_patch_set(ancestor, left, app, ps);
+  // this is an unusual map of deltas, in that the "path" field of the
+  // patch_delta is used to store the ancestral path of the delta, and the
+  // key of this map is used to store the merged path of the delta (in
+  // cases where the delta happened along with a merge, these differ)
+  map<file_path, patch_delta> 
+    left_delta_map, right_delta_map;
 
-  ///////////////////////////
-  // STAGE 1: process deletes
-  ///////////////////////////
+  map<file_path, file_path> 
+    left_move_map, right_move_map;
 
-  for (set<file_path>::const_iterator del = ps.f_dels.begin();
-       del != ps.f_dels.end(); ++del)
+  map<file_path, file_id> 
+    left_add_map, right_add_map;
+
+  set<file_path> 
+    left_adds, right_adds,
+    left_move_srcs, right_move_srcs,
+    left_move_dsts, right_move_dsts,
+    left_deltas, right_deltas;
+
+
+  for(set<patch_addition>::const_iterator a = left_edge.f_adds.begin(); 
+      a != left_edge.f_adds.end(); ++a)
+    left_adds.insert(a->path);
+
+  for(set<patch_addition>::const_iterator a = right_edge.f_adds.begin(); 
+      a != right_edge.f_adds.end(); ++a)
+    right_adds.insert(a->path);
+
+  for(set<patch_move>::const_iterator m = left_edge.f_moves.begin(); 
+      m != left_edge.f_moves.end(); ++m)
     {
-      L(F("merging delete %s...") % (*del));
-      merged.erase(*del);
-      L(F("OK\n"));
+      left_move_srcs.insert(m->path_old);
+      left_move_dsts.insert(m->path_new);
+      left_move_map.insert(make_pair(m->path_old, m->path_new));
     }
 
-  if (ps.f_dels.size() > 0)
-    L(F("merged %d deletes\n") % ps.f_dels.size());
+  for(set<patch_move>::const_iterator m = right_edge.f_moves.begin(); 
+      m != right_edge.f_moves.end(); ++m)
+    {
+      right_move_srcs.insert(m->path_old);
+      right_move_dsts.insert(m->path_new);
+      right_move_map.insert(make_pair(m->path_old, m->path_new));
+    }
 
-  /////////////////////////
-  // STAGE 2: process moves
-  /////////////////////////
+  for(set<patch_delta>::const_iterator d = left_edge.f_deltas.begin();
+      d != left_edge.f_deltas.end(); ++d)
+    {
+      left_deltas.insert(d->path);
+      left_delta_map.insert(make_pair(d->path, *d));
+    }
 
-  for (set<patch_move>::const_iterator mov = ps.f_moves.begin();
-       mov != ps.f_moves.end(); ++mov)
+  for(set<patch_delta>::const_iterator d = right_edge.f_deltas.begin();
+      d != right_edge.f_deltas.end(); ++d)
+    {
+      right_deltas.insert(d->path);
+      right_delta_map.insert(make_pair(d->path, *d));
+    }
+
+
+  // phase #2 is a sort of "pre-processing" phase, in which we handle
+  // "interesting" move cases:
+  // 
+  //   - locating any moves between non-equal ids. these are move+edit
+  //     events, so we degrade them to a move + an edit (on the move target).
+  //     note that in the rest of this function, moves *must* therefore be
+  //     applied before edits. just in this function (specifically phase #6)
+  //
+  //   - locating any moves which moved *directories* and modifying any adds
+  //     in the opposing edge which have the source directory as input, to go
+  //     to the target directory (not yet implemented)
+  //     
+
+  // split edit part off of left move+edits 
+  for (map<file_path, file_path>::const_iterator mov = left_move_map.begin();
+       mov != left_move_map.end(); ++mov)
+    {
+      manifest_map::const_iterator 
+	anc = ancestor.find(mov->first),
+	lf = left.find(mov->second);
+
+      if (anc != ancestor.end() && lf != left.end()
+	  && ! (anc->second == lf->second))
+	{
+	  I(left_delta_map.find(lf->first) == left_delta_map.end());
+	  left_delta_map.insert
+	    (make_pair
+	     (lf->first, patch_delta(anc->second, lf->second, anc->first)));
+	}
+    }
+
+  // split edit part off of right move+edits 
+  for (map<file_path, file_path>::const_iterator mov = right_move_map.begin();
+       mov != right_move_map.end(); ++mov)
+    {
+      manifest_map::const_iterator 
+	anc = ancestor.find(mov->first),
+	rt = right.find(mov->second);
+
+      if (anc != ancestor.end() && rt != right.end()
+	  && ! (anc->second == rt->second))
+	{
+	  I(right_delta_map.find(rt->first) == right_delta_map.end());
+	  right_delta_map.insert
+	    (make_pair
+	     (rt->first, patch_delta(anc->second, rt->second, anc->first)));
+	}
+    }
+
+  // phase #3 detects conflicts. any conflicts here -- including those
+  // which were a result of the actions taken in phase #2 -- result in an
+  // early return.
+
+  try 
+    {
+
+      // no adding and deleting the same file
+      check_no_intersect (left_adds, right_edge.f_dels, 
+			  "left adds", "right dels");
+      check_no_intersect (left_edge.f_dels, right_adds, 
+			  "left dels", "right adds");
+
+
+      // no fiddling with the source of a move
+      check_no_intersect (left_move_srcs, right_adds, 
+			  "left move sources", "right adds");
+      check_no_intersect (left_adds, right_move_srcs, 
+			  "left adds", "right move sources");
+
+      check_no_intersect (left_move_srcs, right_edge.f_dels, 
+			  "left move sources", "right dels");
+      check_no_intersect (left_edge.f_dels, right_move_srcs, 
+			  "left dels", "right move sources");
+
+      check_no_intersect (left_move_srcs, right_deltas, 
+			  "left move sources", "right deltas");
+      check_no_intersect (left_deltas, right_move_srcs, 
+			  "left deltas", "right move sources");
+
+
+      // no fiddling with the destinations of a move
+      check_no_intersect (left_move_dsts, right_adds, 
+			  "left move destinations", "right adds");
+      check_no_intersect (left_adds, right_move_dsts, 
+			  "left adds", "right move destinations");
+
+      check_no_intersect (left_move_dsts, right_edge.f_dels, 
+			  "left move destinations", "right dels");
+      check_no_intersect (left_edge.f_dels, right_move_dsts, 
+			  "left dels", "right move destinations");
+
+      check_no_intersect (left_move_dsts, right_deltas, 
+			  "left move destinations", "right deltas");
+      check_no_intersect (left_deltas, right_move_dsts, 
+			  "left deltas", "right move destinations");
+
+
+      // we're not going to do anything clever like chaining moves together
+      check_no_intersect (left_move_srcs, right_move_dsts, 
+			  "left move sources", "right move destinations");
+      check_no_intersect (left_move_dsts, right_move_srcs, 
+			  "left move destinations", "right move sources");
+
+      // check specific add-map conflicts
+      check_map_inclusion (left_add_map, right_add_map,
+			   "left add map", "right add map");
+      check_map_inclusion (right_add_map, left_add_map,
+			   "right add map", "left add map");
+
+      // check specific move-map conflicts
+      check_map_inclusion (left_move_map, right_move_map,
+			   "left move map", "right move map");
+      check_map_inclusion (right_move_map, left_move_map,
+			   "right move map", "left move map");
+
+
+    }
+  catch (conflict & c)
+    {
+      merged.clear();
+      return false;
+    }
+
+  // in phase #4 we union all the (now non-conflicting) deletes, adds, and
+  // moves into a "merged" edge
+
+  set_union(left_edge.f_adds.begin(), left_edge.f_adds.end(),
+	    right_edge.f_adds.begin(), right_edge.f_adds.end(), 
+	    inserter(merged_edge.f_adds, merged_edge.f_adds.begin()));
+
+  set_union(left_edge.f_dels.begin(), left_edge.f_dels.end(),
+	    right_edge.f_dels.begin(), right_edge.f_dels.end(), 
+	    inserter(merged_edge.f_dels, merged_edge.f_dels.begin()));
+
+  set_union(left_edge.f_moves.begin(), left_edge.f_moves.end(),
+	    right_edge.f_moves.begin(), right_edge.f_moves.end(), 
+	    inserter(merged_edge.f_moves, merged_edge.f_moves.begin()));
+
+  // in phase #5 we run 3-way file merges on all the files which have 
+  // a delta on both edges, and union the results of the 3-way merges with
+  // all the deltas which only happen on one edge, and dump all this into
+  // the merged edge too.
+
+  try 
     {      
-      if (merged.find(mov->path_old) != merged.end())
-	{
-	  L(F("merging move %s -> %s...") 
-	    % mov->path_old % mov->path_new);
-	  file_id ident = merged[mov->path_old];
-	  merged.erase(mov->path_old);
-	  merged.insert(make_pair(mov->path_new, ident));
-	  L(F("OK\n"));
-	}
-      else
-	{
-	  // file to move is not where it should be. maybe they moved it
-	  // the same way, too?
-	  if (merged.find(mov->path_new) != merged.end())
-	    {
-	      if (merged.find(mov->path_new)->second 
-		  == left.find(mov->path_new)->second)
-		{
-		  // they moved it to the same destination, no problem.
-		  L(F("skipping duplicate move %s -> %s\n")
-		    % mov->path_old % mov->path_new);
-		}
-	      else
-		{
-		  // they moved it to a different file at the same destination. try to merge.
- 		  L(F("attempting to merge conflicting moves of %s -> %s\n")
-		    % mov->path_old % mov->path_new);
+      merge_deltas (left_delta_map, right_delta_map, 
+		    file_merger, merged_edge);
 
-		  path_id_pair a_pip = path_id_pair(ancestor.find(mov->path_old()));
-		  path_id_pair l_pip = path_id_pair(left.find(mov->path_new()));
-		  path_id_pair r_pip = path_id_pair(merged.find(mov->path_new()));
-		  path_id_pair m_pip;
-		  if (file_merger.try_to_merge_files(a_pip, l_pip, r_pip, m_pip))
-		    {
-		      L(F("conflicting moves of %s -> %s merged OK\n")
-			% mov->path_old % mov->path_new);
-		      merged[mov->path_new()] = m_pip.ident();
-		    }
-		  else
-		    {
-		      L(F("conflicting moves of %s -> %s, merge failed\n")
-			% mov->path_old % mov->path_new);
-		      merged.clear();
-		      return false;
-		    }
-		}
-	    }
-	  else
-	    {
-	      // no, they moved it somewhere else, or deleted it. either
-	      // way, this is a conflict.
-	      L(F("conflicting move %s -> %s: no source file present\n")
-		% mov->path_old %  mov->path_new);
-	      merged.clear();
-	      return false;
-	    }
-	}
+      merge_deltas (right_delta_map, left_delta_map, 
+		    file_merger, merged_edge);
     }
-
-  if (ps.f_moves.size() > 0)
-    L(F("merged %d moves\n") % ps.f_moves.size());
-
-
-  ////////////////////////
-  // STAGE 3: process adds
-  ////////////////////////
-
-  for(set<patch_addition>::const_iterator add = ps.f_adds.begin();
-      add != ps.f_adds.end(); ++add)
+  catch (conflict & c)
     {
-      if (merged.find(add->path()) == merged.end())
-	{
-	  L(F("merging addition %s...") % add->path);
-	  merged.insert(make_pair(add->path(), add->ident.inner()()));
-	  L("OK\n");
-	}
-      else
-	{
-	  // there's already a file there.
-	  if (merged[add->path()] == add->ident)
-	    {
-	      // it's ok, they added the same file
-	      L(F("skipping duplicate add of %s\n") % add->path);
-	    }
-	  else
-	    {
-	      // it's not the same file. try to merge (nb: no ancestor)
-	      L(F("attempting to merge conflicting adds of %s\n") % 
-		add->path);
-
-	      path_id_pair l_pip = path_id_pair(left.find(add->path));
-	      path_id_pair r_pip = path_id_pair(merged.find(add->path));
-	      path_id_pair m_pip;
-	      if (file_merger.try_to_merge_files(l_pip, r_pip, m_pip))
-		{
-		  L(F("conflicting adds of %s merged OK\n") % add->path);
-		  merged[add->path()] = m_pip.ident();
-		}
-	      else
-		{
-		  L(F("conflicting adds of %s, merge failed\n") % add->path);
-		  merged.clear();
-		  return false;
-		}
-	    }
-	}
+      merged.clear();
+      return false;
     }
 
-  if (ps.f_adds.size() > 0)
-    L(F("merged %d adds\n") % ps.f_adds.size());
+  // in phase #6 (finally) we copy ancestor into our result, and apply the
+  // merged edge to it, mutating it into the merged manifest.
 
-  //////////////////////////
-  // STAGE 4: process deltas
-  //////////////////////////
+  copy(ancestor.begin(), ancestor.end(), inserter(merged, merged.begin()));
 
-  for (set<patch_delta>::const_iterator delta = ps.f_deltas.begin();
-       delta != ps.f_deltas.end(); ++delta)
+  for (set<file_path>::const_iterator del = merged_edge.f_dels.begin();
+       del != merged_edge.f_dels.end(); ++del)
     {
-      if (merged.find(delta->path) != merged.end())
-	{
-	  if (merged[delta->path] == delta->id_old)
-	    {
-	      // they did not edit this file, and we did. no problem.
-	      L(F("merging delta on %s %s -> %s...")
-		% delta->path % delta->id_old % delta->id_new);
-	      merged[delta->path] = delta->id_new;
-	      L("OK\n");
-	    }
-	  else if (merged[delta->path] == delta->id_new)
-	    {
-	      // they edited this file and miraculously made the same
-	      // change we did (or we're processing fused edges). no
-	      // problem.
-	      L(F("ignoring duplicate delta on %s %s -> %s.")
-		% delta->path % delta->id_old % delta->id_new);
-	    }
-	  else
-	    {
-	      // damn, they modified it too, differently..
-	      L(F("attempting to merge conflicting deltas on %s\n") % 
-		delta->path);
-
-	      path_id_pair a_pip = path_id_pair(ancestor.find(delta->path()));
-	      path_id_pair l_pip = path_id_pair(left.find(delta->path()));
-	      path_id_pair r_pip = path_id_pair(merged.find(delta->path()));
-	      path_id_pair m_pip;
-	      if (file_merger.try_to_merge_files(a_pip, l_pip, r_pip, m_pip))
-		{
-		  L(F("conflicting deltas on %s merged OK\n")
-		    % delta->path);
-		  merged[delta->path()] = m_pip.ident();
-		}
-	      else
-		{
-		  L(F("conflicting deltas on %s, merge failed\n")
-		    % delta->path);
-		  merged.clear();
-		  return false;
-		}
-
-	    }
-	}
+      L(F("applying merged delete of file %s\n") % *del);
+      I(merged.find(*del) != merged.end());
+      merged.erase(*del);
+    }
+  
+  for (set<patch_move>::const_iterator mov = merged_edge.f_moves.begin();
+       mov != merged_edge.f_moves.end(); ++mov)
+    {
+      L(F("applying merged move of file %s -> %s\n")
+	% mov->path_old % mov->path_new);
+      I(merged.find(mov->path_new) == merged.end());
+      file_id fid = merged[mov->path_old];
+      merged.erase(mov->path_old);
+      merged.insert(make_pair(mov->path_new, fid));
     }
 
-  if (ps.f_deltas.size() > 0)
-    L(F("merged %d deltas\n") % ps.f_deltas.size());
+  for (set<patch_addition>::const_iterator add = merged_edge.f_adds.begin();
+       add != merged_edge.f_adds.end(); ++add)
+    {
+      L(F("applying merged addition of file %s: %s\n")
+	% add->path % add->ident);
+      I(merged.find(add->path) == merged.end());
+      merged.insert(make_pair(add->path, add->ident));
+    }
+
+  for (set<patch_delta>::const_iterator delta = merged_edge.f_deltas.begin();
+       delta != merged_edge.f_deltas.end(); ++delta)
+    {
+      L(F("applying merged delta to file %s: %s -> %s\n")
+	% delta->path % delta->id_old % delta->id_old);
+      I(merged.find(delta->path) != merged.end());
+      I(merged[delta->path] == delta->id_old);
+      merged[delta->path] = delta->id_new;
+    }
 
   return true;
 }
@@ -830,9 +1007,9 @@ void simple_merge_provider::record_merge(file_id const & left_ident,
   guard.commit();
 }
 
-void simple_merge_provider::get_right_version(path_id_pair const & pip, file_data & dat)
+void simple_merge_provider::get_version(path_id_pair const & pip, file_data & dat)
 {
-  app.db.get_file_version(pip.ident(),dat);
+  app.db.get_file_version(pip.ident(), dat);
 }
 
 bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
@@ -891,10 +1068,9 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
   vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
 
-  app.db.get_file_version(left.ident(), left_data);
-  app.db.get_file_version(ancestor.ident(), ancestor_data);
-  // virtual call; overridden later in the "update" command
-  this->get_right_version(right, right_data);
+  this->get_version(left, left_data);
+  this->get_version(ancestor, ancestor_data);
+  this->get_version(right, right_data);
     
   unpack(left_data.inner(), left_unpacked);
   unpack(ancestor_data.inner(), ancestor_unpacked);
@@ -919,6 +1095,7 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
       file_id merged_fid(merged_id);
       pack(data(tmp), packed_merge);
 
+      merged.path(left.path());
       merged.ident(merged_fid);
       record_merge(left.ident(), right.ident(), merged_fid, 
 		   left_data, packed_merge);
@@ -936,6 +1113,7 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
       file_id merged_fid(merged_id);
       pack(merged_unpacked, packed_merge);
 
+      merged.path(left.path());
       merged.ident(merged_fid);
       record_merge(left.ident(), right.ident(), merged_fid, 
 		   left_data, packed_merge);
@@ -963,9 +1141,8 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & left,
       return true;      
     }  
 
-  app.db.get_file_version(left.ident(), left_data);
-  // virtual call; overridden later in the "update" command
-  this->get_right_version(right, right_data);
+  this->get_version(left, left_data);
+  this->get_version(right, right_data);
     
   unpack(left_data.inner(), left_unpacked);
   unpack(right_data.inner(), right_unpacked);
@@ -980,6 +1157,7 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & left,
       file_id merged_fid(merged_id);
       pack(merged_unpacked, packed_merge);
       
+      merged.path(left.path());
       merged.ident(merged_fid);
       record_merge(left.ident(), right.ident(), merged_fid, 
 		   left_data, packed_merge);
@@ -1009,11 +1187,23 @@ void update_merge_provider::record_merge(file_id const & left_ident,
   temporary_store.insert(make_pair(merged_ident, merged_data));
 }
 
-void update_merge_provider::get_right_version(path_id_pair const & pip, file_data & dat)
+void update_merge_provider::get_version(path_id_pair const & pip, file_data & dat)
 {
-  base64< gzip<data> > tmp;
-  read_data(pip.path(), tmp);
-  dat = tmp;
+  if (app.db.file_version_exists(pip.ident()))
+      app.db.get_file_version(pip.ident(), dat);
+  else
+    {
+      base64< gzip<data> > tmp;
+      file_id fid;
+      N(file_exists (pip.path()),
+	F("file %s does not exist in working copy") % pip.path());
+      read_data(pip.path(), tmp);
+      calculate_ident(tmp, fid);
+      N(fid == pip.ident(),
+	F("file %s in working copy has id %s, wanted %s")
+	% pip.path() % fid % pip.ident());
+      dat = tmp;
+    }
 }
 
 
