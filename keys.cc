@@ -19,6 +19,7 @@
 #include "keys.hh"
 #include "lua.hh"
 #include "netio.hh"
+#include "platform.hh"
 #include "transforms.hh"
 #include "sanity.hh"
 
@@ -44,13 +45,11 @@ do_arc4(SecByteBlock & phrase,
   a4.ProcessString(payload.data(), payload.size());
 }
 
-
-/* used to read passphrase for existing keys */
-/* may cache the password within one run */
 static void 
 get_passphrase(lua_hooks & lua,
-		rsa_keypair_id const & keyid,
-		SecByteBlock & phrase)
+	       rsa_keypair_id const & keyid,
+	       SecByteBlock & phrase,
+	       bool confirm_phrase = false)
 {
   string lua_phrase;
 
@@ -68,7 +67,6 @@ get_passphrase(lua_hooks & lua,
       return;
     }
 
-
   if (lua.hook_get_passphrase(keyid, lua_phrase))
     {
       // user is being a slob and hooking lua to return his passphrase
@@ -77,29 +75,50 @@ get_passphrase(lua_hooks & lua,
     }
   else
     { 
-      /* get user password from terminal */
-      char *pass;
-
-      pass = read_password(keyid());
+      char pass1[constants::maxpasswd];
+      char pass2[constants::maxpasswd];
+      for (int i = 0; i < 3; ++i)
+	{
+	  memset(pass1, 0, constants::maxpasswd);
+	  memset(pass2, 0, constants::maxpasswd);
+	  read_password(string("enter passphrase for key ID [") + keyid() + "]: ", 
+			pass1, constants::maxpasswd);
+	  cout << endl;
+	  if (confirm_phrase)
+	    {
+	      read_password(string("confirm passphrase for key ID [") + keyid() + "]: ",
+			    pass2, constants::maxpasswd);
+	      cout << endl;
+	      if (strcmp(pass1, pass2) == 0)
+		break;
+	      else
+		{
+		  W(F("passwords do not match, try again\n"));
+		  N(i < 2, F("too many failed passphrases\n"));
+		}
+	    }
+	  else
+	    break;
+	}
 
       try 
 	{
-	  phrase.Assign(reinterpret_cast<byte const *>(pass), strlen(pass));
+	  phrase.Assign(reinterpret_cast<byte const *>(pass1), strlen(pass1));
 
 	  // permit security relaxation. maybe.
 	  if (persist_phrase)
 	    {
-	      phrases.insert(make_pair(keyid,string(pass)));
+	      phrases.insert(make_pair(keyid,string(pass1)));
 	    }
 	} 
       catch (...)
 	{
-	  memset(pass, 0, strlen(pass));
-	  cout << endl;
+	  memset(pass1, 0, constants::maxpasswd);
+	  memset(pass2, 0, constants::maxpasswd);
 	  throw;
 	}
-      cout << endl;
-      memset(pass, 0, strlen(pass));
+      memset(pass1, 0, constants::maxpasswd);
+      memset(pass2, 0, constants::maxpasswd);
     }
 }  
 
@@ -138,7 +157,6 @@ generate_key_pair(lua_hooks & lua,           // to hook for phrase
 		  base64<rsa_pub_key> & pub_out,
 		  base64< arc4<rsa_priv_key> > & priv_out)
 {
-  int pass_count = 3; /* maximal retries for entering password */
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
   bool request_blocking_rng = false;
@@ -160,35 +178,7 @@ generate_key_pair(lua_hooks & lua,           // to hook for phrase
   RSAES_OAEP_SHA_Decryptor priv(rng, constants::keylen);
   write_der(priv, privkey);
 
-  /* don't use get_passphrase, as it could cache passwords.
-   * and that's not senseful for creating a new key
-   * give the user three tries to enter two matching passwords. 
-   * After that we'll die */
-  
-  char *pass_1, *pass_2;
-  while(
-  get_passphrase(lua, id, phrase);
-
-      try 
-	{
-	  phrase.Assign(reinterpret_cast<byte const *>(pass), strlen(pass));
-
-	  // permit security relaxation. maybe.
-	  if (persist_phrase)
-	    {
-	      phrases.insert(make_pair(keyid,string(pass)));
-	    }
-	} 
-      catch (...)
-	{
-	  memset(pass, 0, strlen(pass));
-	  cout << endl;
-	  throw;
-	}
-      cout << endl;
-      memset(pass, 0, strlen(pass));
-
-
+  get_passphrase(lua, id, phrase, true);
   do_arc4(phrase, privkey); 
   raw_priv_key = string(reinterpret_cast<char const *>(privkey.data()), 
 			privkey.size());
@@ -240,34 +230,37 @@ make_signature(lua_hooks & lua,           // to hook for phrase
   bool persist_phrase = (!signers.empty()) || lua.hook_persist_phrase_ok();
 
   shared_ptr<RSASSA_PKCS1v15_SHA_Signer> signer;
-  if (persist_phrase 
-      && signers.find(id) != signers.end())
+  if (persist_phrase && signers.find(id) != signers.end())
     signer = signers[id];
 
   else
     {
-      L(F("base64-decoding %d-byte private key\n") % priv().size());
-      decode_base64(priv, decoded_key);
-      decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
-			   decoded_key().size());
-      get_passphrase(lua, id, phrase);
-      do_arc4(phrase, decrypted_key);
-
-      try 
+      for (int i = 0; i < 3; ++i)
 	{
-	  L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
-	  StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
-	  signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
-	    (new RSASSA_PKCS1v15_SHA_Signer(keysource));
+	  L(F("base64-decoding %d-byte private key\n") % priv().size());
+	  decode_base64(priv, decoded_key);
+	  decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
+			       decoded_key().size());
+	  get_passphrase(lua, id, phrase);
+	  do_arc4(phrase, decrypted_key);
+	  
+	  try 
+	    {
+	      L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
+	      StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
+	      signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
+		(new RSASSA_PKCS1v15_SHA_Signer(keysource));
+	    }
+	  catch (...)
+	    {
+	      if (i >= 2)
+		throw informative_failure("failed to decrypt private RSA key, "
+					  "probably incorrect passphrase");
+	    }
+	  
+	  if (persist_phrase)
+	    signers.insert(make_pair(id,signer));
 	}
-      catch (...)
-	{
-	  throw informative_failure("failed to decrypt private RSA key, "
-				    "probably incorrect passphrase");
-	}
-
-      if (persist_phrase)
-	signers.insert(make_pair(id,signer));
     }
 
   StringSource tmp(tosign, true, 

@@ -1,5 +1,13 @@
 2004-05-16  graydon hoare  <graydon@pobox.com>
 
+	* keys.cc (get_passphrase): Reimplement.
+	* unix/read_password.c: Remove.
+	* {unix,win32}/read_password.cc: Add.
+	* constants.{hh,cc} (maxpasswd): New constant.
+	* Makefile.am: Teach about platform specific stuff.
+
+2004-05-16  graydon hoare  <graydon@pobox.com>
+
 	* diff_patch.cc (merge2): Don't discard files on one side.
 	* std_hooks.lua (merge2_xxdiff_cmd): Specify merge filename.
 

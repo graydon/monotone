@@ -100,6 +100,11 @@ IDNA_SOURCES = \
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
+UNIX_PLATFORM_SOURCES = \
+	unix/read_password.cc
+
+WIN32_PLATFORM_SOURCES = \
+	win32/read_password.cc
 
 # primaries
 
@@ -111,7 +116,8 @@ monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
 txt2c_SOURCES = txt2c.cc
 
-noinst_LIBRARIES = lib3rdparty.a 
+noinst_LIBRARIES = libplatform.a lib3rdparty.a 
+libplatform_a_SOURCES = platform.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(CRYPTOPP_SOURCES) \
 			$(IDNA_SOURCES) \
@@ -156,9 +162,15 @@ else
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
 endif
 
+monotone_LDADD += libplatform.a
+unit_tests_LDADD += libplatform.a
+
 if WIN32_PLATFORM
+  libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
   monotone_LDADD += -lws2_32 -lintl -liconv -liphlpapi
   unit_tests_LDADD += -lws2_32 -lintl -liconv -liphlpapi
+else
+  libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
 endif
 
 if MISSING_INET_PTON
