@@ -1,3 +1,9 @@
+2004-12-22  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Verify that the key identifier passed to the pubkey
+	and privkey commands exists in the database.  Otherwise exit with
+	an informational message instead of an exception.
+
 2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* testsuite.at:
