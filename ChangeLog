@@ -1,3 +1,8 @@
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_delete_dir.at: New bug report.
+	* testsuite.at: Call it.
+
 2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* commands.cc: Homogenize help message for 'ls' with the one shown
