@@ -1,5 +1,11 @@
 2005-02-06  Nathaniel Smith  <njs@codesourcery.com>
-	
+
+	* ui.hh (ensure_clean_line): New method.
+	* ui.cc (inform): Use it.
+	* keys.cc (get_passphrase): Call it before prompting for passphrase.
+
+2005-02-06  Nathaniel Smith  <njs@codesourcery.com>
+
 	* database.cc (info): Report more statistics.
 
 	* ROADMAP: Remove finished items.
