@@ -179,7 +179,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	} >$(srcdir)/package.m4
 
 $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
-                     $(srcdir)/package.m4 $(srcdir)/tests/atconfig $(srcdir)/tests/atlocal
+                     $(srcdir)/package.m4 tests/atconfig tests/atlocal
 	autom4te --language=Autotest -I $(srcdir) $< -o $@.tmp
 	mv $@.tmp $@
 

@@ -1,5 +1,8 @@
 2003-09-12  Tom Tromey  <tromey@redhat.com>
 
+	* Makefile.am ($(srcdir)/testsuite): tests/atconfig and
+	tests/atlocal are not in srcdir.
+
 	* Makefile.am (TESTS): unit_tests is not in srcdir.
 
 2003-09-11  graydon hoare  <graydon@redhat.com>
