@@ -49,7 +49,10 @@ static void
 get_passphrase(lua_hooks & lua,
 	       rsa_keypair_id const & keyid,
 	       SecByteBlock & phrase,
-	       bool confirm_phrase = false)
+	       bool confirm_phrase = false,
+	       string prompt_beginning = "enter passphrase",
+	       bool enable_hook_lookup = true,
+	       bool enable_phrase_caching = true)
 {
   string lua_phrase;
 
@@ -57,7 +60,7 @@ get_passphrase(lua_hooks & lua,
   // they permit it) through the life of a program run. this helps when
   // you're making a half-dozen certs during a commit or merge or
   // something.
-  bool persist_phrase = lua.hook_persist_phrase_ok();;
+  bool persist_phrase = enable_phrase_caching && lua.hook_persist_phrase_ok();
   static std::map<rsa_keypair_id, string> phrases;
   
   if (persist_phrase && phrases.find(keyid) != phrases.end())
@@ -67,7 +70,7 @@ get_passphrase(lua_hooks & lua,
       return;
     }
 
-  if (lua.hook_get_passphrase(keyid, lua_phrase))
+  if (enable_hook_lookup && lua.hook_get_passphrase(keyid, lua_phrase))
     {
       // user is being a slob and hooking lua to return his passphrase
       phrase.Assign(reinterpret_cast<const byte *>(lua_phrase.data()), 
@@ -83,7 +86,7 @@ get_passphrase(lua_hooks & lua,
 	{
 	  memset(pass1, 0, constants::maxpasswd);
 	  memset(pass2, 0, constants::maxpasswd);
-	  read_password(string("enter passphrase for key ID [") + keyid() + "]: ", 
+	  read_password(prompt_beginning + " for key ID [" + keyid() + "]: ",
 			pass1, constants::maxpasswd);
 	  cout << endl;
 	  if (confirm_phrase)
@@ -201,6 +204,42 @@ generate_key_pair(lua_hooks & lua,           // to hook for phrase
   encode_base64(raw_pub_key, pub_out);
   L(F("generated %d-byte public key\n") % pub_out().size());
   L(F("generated %d-byte (encrypted) private key\n") % priv_out().size());
+}
+
+void
+change_key_passphrase(lua_hooks & lua,
+		      rsa_keypair_id const & id,
+		      base64< arc4<rsa_priv_key> > & encoded_key)
+{
+  SecByteBlock phrase;
+  get_passphrase(lua, id, phrase, false, "enter old passphrase", false, false);
+
+  arc4<rsa_priv_key> decoded_key;
+  SecByteBlock key_block;
+  decode_base64(encoded_key, decoded_key);
+  key_block.Assign(reinterpret_cast<byte const *>(decoded_key().data()),
+		   decoded_key().size());
+  do_arc4(phrase, key_block);
+
+  try
+    {
+      L(F("building signer from %d-byte decrypted private key\n") % key_block.size());
+      StringSource keysource(key_block.data(), key_block.size(), true);
+      shared_ptr<RSASSA_PKCS1v15_SHA_Signer> signer;
+      signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
+	(new RSASSA_PKCS1v15_SHA_Signer(keysource));
+    }
+  catch (...)
+    {
+      throw informative_failure("failed to decrypt private RSA key, "
+				"probably incorrect passphrase");
+    }
+
+  get_passphrase(lua, id, phrase, true, "enter new passphrase", false, false);
+  do_arc4(phrase, key_block);
+  decoded_key = string(reinterpret_cast<char const *>(key_block.data()),
+		       key_block.size());
+  encode_base64(decoded_key, encoded_key);
 }
 
 void 

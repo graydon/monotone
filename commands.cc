@@ -767,6 +767,28 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   guard.commit();
 }
 
+CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key")
+{
+  if (args.size() != 1)
+    throw usage(name);
+
+  transaction_guard guard(app.db);
+  rsa_keypair_id ident;
+  internalize_rsa_keypair_id(idx(args, 0), ident);
+
+  N(app.db.key_exists(ident),
+    F("key '%s' does not exist in database") % ident);
+
+  base64< arc4<rsa_priv_key> > key;
+  app.db.get_key(ident, key);
+  change_key_passphrase(app.lua, ident, key);
+  app.db.delete_private_key(ident);
+  app.db.put_key(ident, key);
+  P(F("passphrase changed\n"));
+
+  guard.commit();
+}
+
 CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
     "create a cert for a revision")
 {
@@ -2159,10 +2181,14 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
 
   vector<string> lines;
   split_into_lines(summary(), lines);
-  cout << "# " << endl;
+  if (lines.size() > 0) {
+    cout << "# " << endl;
+  }
   for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
     cout << "# " << *i << endl;
-  cout << "# " << endl;
+  if (lines.size() > 0) {
+    cout << "# " << endl;
+  }
 
   dump_diffs(composite.deltas, app, new_is_archived);
 }
@@ -2266,13 +2292,16 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, "working copy", "", "update working copy")
+CMD(update, "working copy", "\nREVISION", "update working copy to be based off another revision")
 {
   manifest_map m_old, m_working;
   revision_set r_old, r_working, r_new;
   revision_id r_old_id, r_chosen_id;
   change_set old_to_chosen, update;
   update_merge_provider merger(app);
+
+  if (args.size() != 0 && args.size() != 1)
+    throw usage(name);
 
   calculate_current_revision(app, r_working, m_old, m_working);
   
@@ -2282,7 +2311,11 @@ CMD(update, "working copy", "", "update working copy")
       r_old_id = edge_old_revision(r_working.edges.begin());
     }
 
-  pick_update_target(r_old_id, app, r_chosen_id);
+  if (args.size() == 0) {
+    pick_update_target(r_old_id, app, r_chosen_id);
+  } else {
+    complete(app, idx(args, 0)(), r_chosen_id);
+  }
   if (r_old_id == r_chosen_id)
     {
       P(F("already up to date at %s\n") % r_old_id);
@@ -2290,7 +2323,42 @@ CMD(update, "working copy", "", "update working copy")
     }
 
   P(F("selected update target %s\n") % r_chosen_id);
-  calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+
+  if (args.size() == 0) {
+    calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+  } else {
+    revision_id r_ancestor_id;
+
+    N(find_common_ancestor(r_old_id, r_chosen_id, r_ancestor_id, app),
+      F("no common ancestor for %s and %s\n") % r_old_id % r_chosen_id);
+    L(F("old is %s\n") % r_old_id);
+    L(F("chosen is %s\n") % r_chosen_id);
+    L(F("common ancestor is %s\n") % r_ancestor_id);
+
+    if (r_ancestor_id == r_old_id) {
+      calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+    } else if (r_ancestor_id == r_chosen_id) {
+      change_set chosen_to_old;
+      manifest_id m_chosen_id;
+      manifest_map m_chosen;
+      app.db.get_revision_manifest(r_chosen_id, m_chosen_id);
+      app.db.get_manifest(m_chosen_id, m_chosen);
+      calculate_composite_change_set(r_chosen_id, r_old_id, app, chosen_to_old);
+      invert_change_set(chosen_to_old, m_chosen, old_to_chosen);
+    } else {
+      change_set ancestor_to_old;
+      change_set old_to_ancestor;
+      change_set ancestor_to_chosen;
+      manifest_id m_ancestor_id;
+      manifest_map m_ancestor;
+      app.db.get_revision_manifest(r_ancestor_id, m_ancestor_id);
+      app.db.get_manifest(m_ancestor_id, m_ancestor);
+      calculate_composite_change_set(r_ancestor_id, r_old_id, app, ancestor_to_old);
+      invert_change_set(ancestor_to_old, m_ancestor, old_to_ancestor);
+      calculate_composite_change_set(r_ancestor_id, r_chosen_id, app, ancestor_to_chosen);
+      concatenate_change_sets(old_to_ancestor, ancestor_to_chosen, old_to_chosen);
+    }
+  }
 
   I(r_working.edges.size() == 1 || r_working.edges.size() == 0);
 

@@ -152,6 +152,19 @@ AT_CHECK(MONOTONE --branch=$1 commit blah-blah, [], [ignore],
 [ignore])
 ])
 
+# Some tests want to include data files.
+# Usage: NEED_UNB64 will cancel the test (reporting success) if we
+# can't decode base64'ed text.
+# After calling NEED_UNB64, you can use UNB64(infile, outfile) to
+# decode base64'ed text.
+m4_define([NEED_UNB64], [
+MIMENCODE=`which mimencode 2>/dev/null`
+if test -z "$MIMENCODE"; then
+  exit 77
+fi
+])
+m4_define([UNB64], [AT_CHECK($MIMENCODE -u $1 -o $2)])
+
 # netsync helpers
 # NETSYNC_SETUP sets up 2 databases; RUN_NETSYNC netsyncs between
 # them, MONOTONE2 operates on the second one.
@@ -230,6 +243,10 @@ m4_include(tests/t_movepatch.at)
 m4_include(tests/t_movedel.at)
 m4_include(tests/t_remerge.at)
 m4_include(tests/t_update_missing.at)
+m4_include(tests/t_chkeypass.at)
+m4_include(tests/t_diff_added_file.at)
+m4_include(tests/t_update_to_revision.at)
 m4_include(tests/t_heads.at)
 m4_include(tests/t_heads_discontinuous_branch.at)
+m4_include(tests/t_merge_1.at)
 m4_include(tests/t_tags.at)
