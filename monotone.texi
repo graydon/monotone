@@ -2621,7 +2621,7 @@ copy. Each working copy has a base version. When the working copy is
 committed, the base version is considered to be the ancestor of the
 committed version.
 @item MT/options
-Contains ``sticky'' command-line options such as @option{--database} or 
+Contains ``sticky'' command-line options such as @option{--db} or 
 @option{--branch}, such that you do not need to enter them repeatedly
 after checking out a particular working copy.
 @item MT/work
