@@ -1,3 +1,11 @@
+2005-02-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_add_intermediate_MT_path.at: Tighten up.
+	
+	* tests/t_merge_3.at: New test.
+	* tests/t_merge_4.at: Likewise.
+	* testsuite.at: Add them.
+
 2005-02-19  Ole Dalgaard  <josua+monotone@giraffen.dk>
 
 	* configure.ac: Check for 64-bit versions of Boost static
