@@ -1,3 +1,8 @@
+2004-12-29  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* monotone.cc: Verify that the command line is syntactically correct
+	as regards to options (based on error codes from popt).
+
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
         * tests/t_drop_rename_patch.at: A test to check that deltas on

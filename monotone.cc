@@ -240,6 +240,12 @@ cpp_main(int argc, char ** argv)
             }
         }
 
+      // verify that there are no errors in the command line
+
+      N(opt == -1,
+        F("syntax error near the \"%s\" option: %s") %
+          poptBadOption(ctx(), POPT_BADOPTION_NOALIAS) % poptStrerror(opt));
+
       // stop here if they asked for help
 
       if (requested_help)
