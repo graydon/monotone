@@ -1,3 +1,18 @@
+2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_netsync_absorbs.at: New test.
+	* testsuite.at: Add it.
+
+	* netcmd.{cc,hh} (read_hello_cmd_payload): Properly type
+	arguments.
+	* netsync.cc (dispatch_payload): Adjust accordingly.  Move some
+	logic into process_hello_cmd.
+	(known_servers_domain): New constant.
+	(process_hello_cmd): Tweak arguments appropriately.  Include logic
+	formerly in dispatch_payload.  Cleanup.
+
+	No semantic changes.
+	
 2005-03-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Starting a New Project): Tweak phrasing.
