@@ -349,8 +349,6 @@ static void get_log_message(patch_set const & ps,
   commentary += "----------------------------------------------------------------------\n";
   commentary += "Enter Log.  Lines beginning with `MT:' are removed automatically\n";
   commentary += "\n";
-  commentary += "Summary of changes:\n";
-  commentary += "\n";
   commentary += summary;
   commentary += "----------------------------------------------------------------------\n";
   N(app.lua.hook_edit_comment(commentary, log_message),
@@ -1767,7 +1765,6 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
       
   manifests_to_patch_set(m_old, m_new, app, ps);
 
-  cout << "# Summary of changes:" << endl;
   stringstream summary;
   patch_set_to_text_summary(ps, summary);
   vector<string> lines;
@@ -1975,19 +1972,8 @@ CMD(status, "informative", "", "show status of working copy")
   calculate_new_manifest_map(m_old, m_new);
   calculate_manifest_map_ident(m_new, new_id);
 
-  cout << "base manifest: " << old_id.inner()() << endl;
-  cout << "curr manifest: " << new_id.inner()() << endl;
-
-  if (old_id.inner()() != new_id.inner()())
-    {
-      cout << "changes:" << endl;
-      manifests_to_patch_set(m_old, m_new, app, ps1);
-      patch_set_to_text_summary(ps1, cout);
-    }
-  else
-    {
-      cout << "no changes" << endl;
-    }
+  manifests_to_patch_set(m_old, m_new, app, ps1);
+  patch_set_to_text_summary(ps1, cout);
 
   guard.commit();
 }

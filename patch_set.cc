@@ -296,6 +296,17 @@ void manifests_to_patch_set(manifest_map const & m_old,
 void patch_set_to_text_summary(patch_set const & ps, 
 			       ostream & str)
 {
+  str << "Old manifest: " << ps.m_old.inner()() << endl;
+  str << "New manifest: " << ps.m_new.inner()() << endl;
+  str << "Summary of changes:" << endl;
+
+  if (ps.f_dels.empty() && ps.f_adds.empty()
+      && ps.f_moves.empty() && ps.f_deltas.empty())
+    {
+      str << "  no changes" << endl;
+      return;
+    }
+
   for (set<file_path>::const_iterator i = ps.f_dels.begin();
        i != ps.f_dels.end(); ++i)
     str << "  delete " << (*i)() << endl;
