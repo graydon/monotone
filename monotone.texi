@@ -1779,7 +1779,7 @@ databases over a TCP connection. Monotone can behave as either a
 client or server for netsync. No additional server software is
 required.
 
-@subsection Setting up the server
+@section Setting up the server
 
 To illustrate netsync's use, we consider the branch containing
 monotone development itself: @code{net.venge.monotone}. Suppose we
@@ -1829,7 +1829,7 @@ operator's keyboard. If you want to run a monotone server permanently,
 it is a good idea to run it under a supervision program such as
 @uref{http://cr.yp.to/daemontools.html, daemontools}. 
 
-@subsection Pulling from a server to a client
+@section Pulling from a server to a client
 
 In order to connect to a monotone server, a client needs to know the
 server's public key. This involves reading the key packet generated
@@ -1869,7 +1869,7 @@ described the indexing process on the local database, connected,
 exchanged data, and disconnected from the remote database. Most
 netsync operations look like this from the client side.
 
-@subsection Pushing from a client to a server
+@section Pushing from a client to a server
 
 Later, we may want to start sending data to our server. To do this, we
 need to configure the server to accept connections from us. We do this
@@ -1898,12 +1898,12 @@ can read and write to the server:
 $ cat >>permissions.lua
 
 function get_netsync_read_permitted (collection, identity)
-  if (identity == client@@somewhere.net) then return true end
+  if (identity == "client@@somewhere.net") then return true end
   return false
 end
 
 function get_netsync_write_permitted (collection, identity)
-  if (identity == client@@somewhere.net) then return true end
+  if (identity == "client@@somewhere.net") then return true end
   return false
 end
 ^D
@@ -1932,7 +1932,7 @@ monotone: read from fd 5 (peer off.net) closed OK after goodbye
 @end group
 @end smallexample
 
-@subsection Syncing and multiple servers
+@section Syncing and multiple servers
 
 We can combine a @code{push} and @code{pull} operation against a
 single server with a @code{sync}. It requires nothing new since we've

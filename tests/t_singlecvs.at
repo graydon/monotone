@@ -26,19 +26,9 @@ AT_CHECK(cvs -d $CVSROOT add testdir, [], [ignore], [ignore])
 AT_CHECK(cvs -d $CVSROOT add testdir/importme, [], [ignore], [ignore])
 AT_CHECK(cvs -d $CVSROOT commit -m 'commit 0' testdir/importme, [], [ignore], [ignore])
 
-# import into monotone and get a packet stream
+# import into monotone and check presence of file
 
-AT_CHECK(cp test.db test2.db)
 AT_CHECK(MONOTONE --branch=testbranch cvs_import $CVSROOT/testdir, [], [ignore], [ignore])
 AT_CHECK(MONOTONE cat file $TSHA0, [], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch queue addtree http://www.nothing.com/depot.cgi/test, [], [ignore], [ignore])
-AT_CHECK(MONOTONE debug 'select content from posting_queue', [], [stdout], [ignore])
-AT_CHECK(cp stdout import-packets)
-
-# load results into secondary db and check
-
-AT_CHECK(MONOTONE --db=test2.db read <import-packets, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --db=test2.db cat file $TSHA0, [], [stdout], [ignore])
-AT_CHECK(cmp importme.0 stdout)
 
 AT_CLEANUP

@@ -29,7 +29,6 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "sanity.hh"
-#include "url.hh"
 #include "xdelta.hh"
 
 using namespace std;
@@ -489,161 +488,6 @@ utf8_to_ace(utf8 const & utf, ace & a)
   free(out);
 }
 
-void 
-utf8_to_urlenc(utf8 const & utf, urlenc & u)
-{
-  string tmp;
-  string ok_bytes(constants::legal_url_bytes);
-  string ut = utf();
-  for (string::const_iterator i = ut.begin(); i != ut.end(); ++i)
-    {
-      if (ok_bytes.find(*i) == string::npos)
-	tmp += (F("%%%2.2x") % (0xff & static_cast<unsigned long>(*i))).str();
-      else
-	tmp += *i;
-    }
-  u = tmp;
-}
-
-void 
-urlenc_to_utf8(urlenc const & u, utf8 & utf)
-{
-  istringstream iss(u());
-  string ok_bytes(constants::legal_url_bytes);
-  char c = 0;
-  string tmp;
-
-  while (iss.get(c), iss.gcount() != 0)
-    {
-      if (c == '%')
-	{
-	  unsigned long val = 0;
-	  iss >> std::hex >> val;
-	  N(val > 0 && val <= 0xff,
-	    F("bad URL-encoding escape value '%%%x'") % val);
-	  tmp += static_cast<char>(val);
-	}
-      else
-	{
-	  N(ok_bytes.find(c) != string::npos,
-	    F("bad char 0x%x in URL-encoded string") % static_cast<unsigned long>(c));
-	  tmp += c;
-	}
-    }
-  utf = tmp;
-}
-
-
-// specific internal / external conversions for various vocab terms
-
-void
-internalize_url(utf8 const & utf, url & u)
-{
-  utf8 proto, user, host, path, group;
-  unsigned long port;
-  N(parse_utf8_url(utf, proto, user, host, path, group, port),
-    F("UTF8-URL parse failed"));
-  
-  if (proto() == "mailto")
-    {
-      ace ace_user, ace_host;
-      utf8_to_ace(user, ace_user);
-      utf8_to_ace(host, ace_host);
-      u = (F("mailto:%s@%s:%d") % ace_user % ace_host % port).str();
-    }
-  else if (proto() == "http")
-    {
-      urlenc urlenc_path;
-      ace ace_host, ace_group;
-      utf8_to_urlenc(path, urlenc_path);
-      utf8_to_ace(host, ace_host);
-      utf8_to_ace(group, ace_group);
-      u = (F("http://%s:%d%s/%s") % ace_host % port % urlenc_path % ace_group).str();
-    }
-  else if (proto() == "nntp")
-    {
-      ace ace_host, ace_group;
-      utf8_to_ace(host, ace_host);
-      utf8_to_ace(group, ace_group);
-      u = (F("nntp://%s:%d/%s") % ace_host % port % ace_group).str();
-    }
-  else
-    {
-      throw informative_failure("unknown URL protocol '" + proto() + "'");
-    }
-  
-  {
-    ace auser, ahost, agroup;
-    urlenc upath;
-    string sproto;
-    L(F("checking internalized URL '%s'\n") % u);
-    N(parse_url(u, sproto, auser, ahost, upath, agroup, port),
-      F("confirmation parse of internalized URL '%s' failed") % u);
-  }
-}
-
-void 
-internalize_url(external const & ext, url & u)
-{
-  utf8 utf;
-  system_to_utf8(ext, utf);
-  internalize_url(utf, u);
-}
-
-
-void 
-externalize_url(url const & u, utf8 & utf)
-{
-  ace user, host, group;
-  urlenc path;
-  string proto;
-  unsigned long port;
-
-  L(F("externalizing URL '%s'\n") % u);
-  N(parse_url(u(), proto, user, host, path, group, port),
-    F("URL parse failed on '%s'") % u);
-  
-  if (proto == "mailto")
-    {
-      utf8 utf_user, utf_host;
-      ace_to_utf8(user, utf_user);
-      ace_to_utf8(host, utf_host);
-      utf = (F("mailto:%s@%s:%d") % utf_user % utf_host % port).str();
-    }
-  else if (proto == "http")
-    {
-      utf8 utf_path, utf_host, utf_group;
-      urlenc_to_utf8(path, utf_path);
-      ace_to_utf8(host, utf_host);
-      ace_to_utf8(group, utf_group);
-      utf = (F("http://%s:%d%s/%s") % utf_host % port % utf_path % utf_group).str();
-    }
-  else if (proto == "nntp")
-    {
-      utf8 utf_path, utf_host, utf_group;
-      ace_to_utf8(host, utf_host);
-      ace_to_utf8(group, utf_group);
-      utf = (F("nntp://%s:%d/%s") % utf_host % port % utf_group).str();
-    }
-  else
-    {
-      throw informative_failure("unknown URL protocol '" + proto + "'");
-    }
-
-  {
-    utf8 uproto, uuser, uhost, upath, ugroup;
-    N(parse_utf8_url(utf, uproto, uuser, uhost, upath, ugroup, port),
-      F("confirmation parse of UTF8-URL failed"));
-  }
-}
-
-void 
-externalize_url(url const & u, external & ext)
-{
-  utf8 utf;
-  externalize_url(u, utf);
-  utf8_to_system(utf, ext);
-}
 
 void 
 internalize_cert_name(utf8 const & utf, cert_name & c)
@@ -1031,57 +875,11 @@ check_idna_encoding()
       BOOST_CHECK(lowercase(a()) == lowercase(tace()));
       ace_to_utf8(a, tutf);
       BOOST_CHECK(lowercase(utf()) == lowercase(tutf()));
-
-      external tmp_external;      
-      url tmp_url;
-
-      external utf_host_url("http://" + utf() + ":80/depot.cgi/path.to.group");
-      url ace_host_url("http://" + a() + ":80/depot.cgi/path.to.group");
-
-      internalize_url(utf_host_url, tmp_url);
-      L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tmp_url());
-      BOOST_CHECK(lowercase(ace_host_url()) == lowercase(tmp_url()));
-      externalize_url(ace_host_url, tmp_external);
-      BOOST_CHECK(lowercase(tmp_external()) == lowercase(utf_host_url()));
-
-      external utf_group_url("http://www.gurgle.com:80/depot.cgi/" + utf());
-      url ace_group_url("http://www.gurgle.com:80/depot.cgi/" + a());
-
-      internalize_url(utf_group_url, tmp_url);
-      L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tmp_url());
-      BOOST_CHECK(lowercase(ace_group_url()) == lowercase(tmp_url()));
-      externalize_url(ace_group_url, tmp_external);
-      BOOST_CHECK(lowercase(tmp_external()) == lowercase(utf_group_url()));
     }
-}
-
-static void 
-check_url_encoding(string const & dec, string const & enc)
-{
-  urlenc tu;
-  utf8 tutf;
-  utf8_to_urlenc(dec, tu);
-  L(F("URL-encoded to '%s'\n") % tu());
-  BOOST_CHECK(enc == tu());
-  urlenc_to_utf8(tu, tutf);
-  BOOST_CHECK(tutf == dec);
 }
 
 static void encode_test()
 {
-  check_url_encoding("hello\xF1there", "hello%f1there");
-  check_url_encoding("hello\xF2there", "hello%f2there");
-  check_url_encoding("hello\xF3there", "hello%f3there");
-  check_url_encoding("hello\xF4there", "hello%f4there");
-  check_url_encoding("hello\xF5there", "hello%f5there");
-  check_url_encoding("hello\xF6there", "hello%f6there");
-  check_url_encoding("hello\xE6there", "hello%e6there");
-  check_url_encoding("hello\xD6there", "hello%d6there");
-  check_url_encoding("hello\xC6there", "hello%c6there");
-  check_url_encoding("\xC6there", "%c6there");
-  check_url_encoding("hello\xC6", "hello%c6");
-  check_url_encoding("hello\xC6\xA9there", "hello%c6%a9there");
-  check_url_encoding("hello\xC6\xA9\xD4there", "hello%c6%a9%d4there");
   check_idna_encoding();
 }
 

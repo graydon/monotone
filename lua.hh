@@ -52,26 +52,6 @@ public:
 				     std::map<rsa_keypair_id, bool> const & new_results);
 
   // network hooks
-  bool hook_get_news_sender(url const & serv, std::string & sender);
-  bool hook_get_mail_sender(url const & serv, std::string & sender);
-  bool hook_get_mail_hostname(url const & serv, std::string & sender);
-  bool hook_get_http_auth(url const & serv, rsa_keypair_id & pubkey);
-  bool hook_get_post_targets(cert_value const & branchname, 
-			     std::set<url> & targets);
-  bool hook_get_fetch_sources(cert_value const & branchname, 
-			      std::set<url> & sources);
-
-  bool hook_get_connect_addr(std::string const & proto,
-			     std::string const & host, 
-			     unsigned long port,
-			     std::string & host_out,
-			     unsigned long & port_out);
-
-  bool hook_get_http_proxy(std::string const & host, 
-			   unsigned long port,
-			   std::string & host_out,
-			   unsigned long & port_out);
-
   bool hook_get_netsync_read_permitted(std::string const & collection, 
 				       rsa_keypair_id const & identity);
   bool hook_get_netsync_anonymous_read_permitted(std::string const & collection);

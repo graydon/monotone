@@ -53,9 +53,6 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   if (t.empty() || t.find("packet") != t.end())
     add_packet_tests(suite);
   
-  if (t.empty() || t.find("url") != t.end())
-    add_url_tests(suite);
-  
   if (t.empty() || t.find("diff_patch") != t.end())
     add_diff_patch_tests(suite);
 

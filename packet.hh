@@ -6,11 +6,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include <iostream>
-#include <set>
-#include <map>
-
-#include <boost/optional.hpp>
+#include <iosfwd>
+#include <memory>
 
 #include "app_state.hh"
 #include "ui.hh"
@@ -58,42 +55,6 @@ struct packet_consumer
 				   base64< arc4<rsa_priv_key> > const & k) = 0;  
 };
 
-// this writer queues packets to be sent to the network
-
-struct queueing_packet_writer : public packet_consumer
-{
-  app_state & app;
-  std::set<url> targets;
-  boost::optional<reverse_queue> rev;
-
-  ticker n_bytes;
-  ticker n_packets;
-  
-  queueing_packet_writer(app_state & a, std::set<url> const & t);
-  virtual ~queueing_packet_writer() {}
-
-  void queue_blob_for_network(std::string const & str);
-
-  virtual void consume_file_data(file_id const & ident, 
-				 file_data const & dat);
-  virtual void consume_file_delta(file_id const & id_old, 
-				  file_id const & id_new,
-				  file_delta const & del);
-  virtual void consume_file_cert(file<cert> const & t);
-  
-  virtual void consume_manifest_data(manifest_id const & ident, 
-				     manifest_data const & dat);
-  virtual void consume_manifest_delta(manifest_id const & id_old, 
-				      manifest_id const & id_new,
-				      manifest_delta const & del);
-  virtual void consume_manifest_cert(manifest<cert> const & t);
-
-  virtual void consume_public_key(rsa_keypair_id const & ident,
-				  base64< rsa_pub_key > const & k);
-  virtual void consume_private_key(rsa_keypair_id const & ident,
-				   base64< arc4<rsa_priv_key> > const & k);
-};
-
 // this writer writes packets into a stream
 
 struct packet_writer : public packet_consumer
@@ -123,16 +84,23 @@ struct packet_writer : public packet_consumer
 
 // this writer injects packets it receives to the database.
 
+struct manifest_edge_analyzer
+{
+  virtual void analyze_manifest_edge(manifest_map const & mm_old, 
+				     manifest_map const & mm_new)
+  {
+  }
+};
+
 struct packet_db_writer : public packet_consumer
 {
-  app_state & app;
-  bool take_keys;
-  size_t count;
+  struct impl;
+  std::auto_ptr<impl> pimpl;
 
-  boost::optional<url> server;
-
-  packet_db_writer(app_state & app, bool take_keys = false);
-  virtual ~packet_db_writer() {}
+  packet_db_writer(app_state & app, 
+		   bool take_keys = false, 
+		   manifest_edge_analyzer * ana = NULL);
+  virtual ~packet_db_writer();
   virtual void consume_file_data(file_id const & ident, 
 				 file_data const & dat);
   virtual void consume_file_delta(file_id const & id_old, 

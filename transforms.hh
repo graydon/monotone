@@ -161,14 +161,8 @@ void system_to_utf8(external const & system, utf8 & utf);
 void utf8_to_system(utf8 const & utf, external & system);
 void ace_to_utf8(ace const & ac, utf8 & utf);
 void utf8_to_ace(utf8 const & utf, ace & a);
-void utf8_to_urlenc(utf8 const & utf, urlenc & u);
-void urlenc_to_utf8(urlenc const & u, utf8 & utf);
 
 // specific internal / external conversions for various vocab terms
-void internalize_url(utf8 const & utf, url & u);
-void internalize_url(external const & ext, url & u);
-void externalize_url(url const & u, utf8 & utf);
-void externalize_url(url const & u, external & ext);
 void internalize_cert_name(utf8 const & utf, cert_name & c);
 void internalize_cert_name(external const & ext, cert_name & c);
 void externalize_cert_name(cert_name const & c, utf8 & utf);

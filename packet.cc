@@ -11,7 +11,6 @@
 #include <boost/lexical_cast.hpp>
 
 #include "app_state.hh"
-#include "network.hh"
 #include "packet.hh"
 #include "sanity.hh"
 #include "transforms.hh"
@@ -21,19 +20,369 @@ using namespace std;
 
 // --- packet db writer --
 
-packet_db_writer::packet_db_writer(app_state & app, bool take_keys) 
-  : app(app), take_keys(take_keys), count(0)
+typedef enum {prereq_file, prereq_manifest} prereq_type;
+class delayed_packet;
+
+class 
+prerequisite
+{
+  hexenc<id> ident;
+  prereq_type type;
+  set< shared_ptr<delayed_packet> > delayed;
+public:
+  prerequisite(hexenc<id> const & i, prereq_type pt) 
+    : ident(i), type(pt)
+  {}
+  void add_dependent(shared_ptr<delayed_packet> p);
+  bool has_live_dependents();
+  void satisfy(shared_ptr<prerequisite> self,
+	       packet_db_writer & pw);
+  bool operator<(prerequisite const & other)
+  {
+    return type < other.type ||
+      (type == other.type && ident < other.ident);
+  }  
+};
+
+class 
+delayed_packet
+{
+  set< shared_ptr<prerequisite> > unsatisfied_prereqs;
+  set< shared_ptr<prerequisite> > satisfied_prereqs;
+public:
+  void add_prerequisite(shared_ptr<prerequisite> p);
+  bool all_prerequisites_satisfied();
+  void prerequisite_satisfied(shared_ptr<prerequisite> p, 
+			      packet_db_writer & pw);
+  virtual void apply_delayed_packet(packet_db_writer & pw) = 0;
+  virtual ~delayed_packet() {}
+};
+
+void 
+prerequisite::add_dependent(shared_ptr<delayed_packet> d)
+{
+  delayed.insert(d);
+}
+
+void
+prerequisite::satisfy(shared_ptr<prerequisite> self,
+		      packet_db_writer & pw)
+{
+  set< shared_ptr<delayed_packet> > dead;
+  for (set< shared_ptr<delayed_packet> >::const_iterator i = delayed.begin();
+       i != delayed.end(); ++i)
+    {
+      (*i)->prerequisite_satisfied(self, pw);
+      if ((*i)->all_prerequisites_satisfied())
+	dead.insert(*i);
+    }
+  for (set< shared_ptr<delayed_packet> >::const_iterator i = dead.begin();
+       i != dead.end(); ++i)
+    {
+      delayed.erase(*i);
+    }
+}
+
+void 
+delayed_packet::add_prerequisite(shared_ptr<prerequisite> p)
+{
+  unsatisfied_prereqs.insert(p);
+}
+
+bool 
+delayed_packet::all_prerequisites_satisfied()
+{
+  return unsatisfied_prereqs.empty();
+}
+
+void 
+delayed_packet::prerequisite_satisfied(shared_ptr<prerequisite> p, 
+				       packet_db_writer & pw)
+{
+  I(unsatisfied_prereqs.find(p) != unsatisfied_prereqs.end());
+  unsatisfied_prereqs.erase(p);
+  satisfied_prereqs.insert(p);
+  if (all_prerequisites_satisfied())
+    {
+      apply_delayed_packet(pw);
+    }
+}
+
+
+// concrete delayed packets
+
+class 
+delayed_manifest_data_packet 
+  : public delayed_packet
+{
+  manifest_id ident;
+  manifest_data dat;
+public:
+  delayed_manifest_data_packet(manifest_id const & i, 
+			       manifest_data const & md) 
+    : ident(i), dat(md)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_manifest_data_packet();
+};
+
+class 
+delayed_file_delta_packet 
+  : public delayed_packet
+{
+  file_id old_id;
+  file_id new_id;
+  file_delta del;
+public:
+  delayed_file_delta_packet(file_id const & oi, 
+			    file_id const & ni,
+			    file_delta const & md) 
+    : old_id(oi), new_id(ni), del(md)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_file_delta_packet();
+};
+
+class 
+delayed_manifest_delta_packet 
+  : public delayed_packet
+{
+  manifest_id old_id;
+  manifest_id new_id;
+  manifest_delta del;
+public:
+  delayed_manifest_delta_packet(manifest_id const & oi, 
+				manifest_id const & ni,
+				manifest_delta const & md) 
+    : old_id(oi), new_id(ni), del(md)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_manifest_delta_packet();
+};
+
+class 
+delayed_manifest_cert_packet 
+  : public delayed_packet
+{
+  manifest<cert> c;
+public:
+  delayed_manifest_cert_packet(manifest<cert> const & c) 
+    : c(c)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_manifest_cert_packet();
+};
+
+class 
+delayed_file_cert_packet 
+  : public delayed_packet
+{
+  file<cert> c;
+public:
+  delayed_file_cert_packet(file<cert> const & c) 
+    : c(c)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_file_cert_packet();
+};
+
+void 
+delayed_manifest_data_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed manifest data packet for %s\n") % ident);
+  pw.consume_manifest_data(ident, dat);
+}
+
+delayed_manifest_data_packet::~delayed_manifest_data_packet()
+{
+  if (!all_prerequisites_satisfied())
+    W(F("discarding manifest data packet with unmet dependencies\n"));
+}
+
+void 
+delayed_manifest_delta_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed manifest delta packet for %s -> %s\n") 
+    % old_id % new_id);
+  pw.consume_manifest_delta(old_id, new_id, del);
+}
+
+delayed_manifest_delta_packet::~delayed_manifest_delta_packet()
+{
+  if (!all_prerequisites_satisfied())
+    W(F("discarding manifest delta packet with unmet dependencies\n"));
+}
+
+void 
+delayed_file_delta_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed file delta packet for %s -> %s\n") 
+    % old_id % new_id);
+  pw.consume_file_delta(old_id, new_id, del);
+}
+
+delayed_file_delta_packet::~delayed_file_delta_packet()
+{
+  if (!all_prerequisites_satisfied())
+    W(F("discarding file delta packet with unmet dependencies\n"));
+}
+
+void 
+delayed_manifest_cert_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed manifest cert on %s\n") % c.inner().ident);
+  pw.consume_manifest_cert(c);
+}
+
+delayed_manifest_cert_packet::~delayed_manifest_cert_packet()
+{
+  if (!all_prerequisites_satisfied())
+    W(F("discarding manifest cert packet with unmet dependencies\n"));
+}
+
+void 
+delayed_file_cert_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed file cert on %s\n") % c.inner().ident);
+  pw.consume_file_cert(c);
+}
+
+delayed_file_cert_packet::~delayed_file_cert_packet()
+{
+  if (!all_prerequisites_satisfied())
+    W(F("discarding file cert packet with unmet dependencies\n"));
+}
+
+struct packet_db_writer::impl
+{
+  app_state & app;
+  bool take_keys;
+  size_t count;
+  manifest_edge_analyzer * analyzer;
+
+  map<file_id, shared_ptr<prerequisite> > file_prereqs;
+  map<manifest_id, shared_ptr<prerequisite> > manifest_prereqs;
+  map<manifest_id, bool> existing_manifest_cache;
+  map<file_id, bool> existing_file_cache;
+  bool manifest_version_exists(manifest_id const & m);
+  bool file_version_exists(file_id const & f);
+  void get_file_prereq(file_id const & file, shared_ptr<prerequisite> & p);
+  void get_manifest_prereq(manifest_id const & manifest, shared_ptr<prerequisite> & p);
+  void accepted_file(file_id const & f, packet_db_writer & dbw);
+  void accepted_manifest(manifest_id const & m, packet_db_writer & dbw);
+  void accepted_manifest_cert_on(manifest_id const & m, packet_db_writer & dbw);
+  impl(app_state & app, bool take_keys, manifest_edge_analyzer * ana) 
+    : app(app), take_keys(take_keys), count(0), analyzer(ana)
+  {}
+};
+
+
+packet_db_writer::packet_db_writer(app_state & app, bool take_keys, manifest_edge_analyzer * ana) 
+  : pimpl(new impl(app, take_keys, ana))
 {}
+
+packet_db_writer::~packet_db_writer() 
+{}
+
+bool 
+packet_db_writer::impl::manifest_version_exists(manifest_id const & m)
+{
+  map<manifest_id, bool>::const_iterator i = existing_manifest_cache.find(m);
+  if (i == existing_manifest_cache.end())
+    {
+      bool exists = app.db.manifest_version_exists(m);
+      existing_manifest_cache.insert(make_pair(m, exists));
+      return exists;
+    }
+  else
+    return i->second;
+}
+
+bool 
+packet_db_writer::impl::file_version_exists(file_id const & f)
+{
+  map<file_id, bool>::const_iterator i = existing_file_cache.find(f);
+  if (i == existing_file_cache.end())
+    {
+      bool exists = app.db.file_version_exists(f);
+      existing_file_cache.insert(make_pair(f, exists));
+      return exists;
+    }
+  else
+    return i->second;
+}
+
+void 
+packet_db_writer::impl::get_file_prereq(file_id const & file, 
+					shared_ptr<prerequisite> & p)
+{
+  map<file_id, shared_ptr<prerequisite> >::const_iterator i;
+  i = file_prereqs.find(file);
+  if (i != file_prereqs.end())
+    p = i->second;
+  else
+    {
+      p = shared_ptr<prerequisite>(new prerequisite(file.inner(), prereq_file));
+      file_prereqs.insert(make_pair(file, p));
+    }
+}
+
+void
+packet_db_writer::impl::get_manifest_prereq(manifest_id const & man, 
+					    shared_ptr<prerequisite> & p)
+{
+  map<manifest_id, shared_ptr<prerequisite> >::const_iterator i;
+  i = manifest_prereqs.find(man);
+  if (i != manifest_prereqs.end())
+    p = i->second;
+  else
+    {
+      p = shared_ptr<prerequisite>(new prerequisite(man.inner(), prereq_manifest));
+      manifest_prereqs.insert(make_pair(man, p));
+    }
+}
+
+void 
+packet_db_writer::impl::accepted_file(file_id const & f, packet_db_writer & dbw)
+{
+  existing_file_cache[f] = true;
+  map<file_id, shared_ptr<prerequisite> >::iterator i = file_prereqs.find(f);  
+  if (i == file_prereqs.end())
+    return;
+  i->second->satisfy(i->second, dbw);
+  file_prereqs.erase(i);
+}
+
+void 
+packet_db_writer::impl::accepted_manifest(manifest_id const & m, packet_db_writer & dbw)
+{
+  existing_manifest_cache[m] = true;
+  map<manifest_id, shared_ptr<prerequisite> >::iterator i = manifest_prereqs.find(m);
+  if (i == manifest_prereqs.end())
+    return;
+  i->second->satisfy(i->second, dbw);
+  manifest_prereqs.erase(i);
+}
+
+void 
+packet_db_writer::impl::accepted_manifest_cert_on(manifest_id const & m, packet_db_writer & dbw)
+{
+}
 
 void 
 packet_db_writer::consume_file_data(file_id const & ident, 
 				    file_data const & dat)
 {
-  if (!app.db.file_version_exists(ident))
-    app.db.put_file(ident, dat);
+  transaction_guard guard(pimpl->app.db);
+  if (! pimpl->file_version_exists(ident))
+    {
+      pimpl->app.db.put_file(ident, dat);
+      pimpl->accepted_file(ident, *this);
+    }
   else
     L(F("skipping existing file version %s\n") % ident);
-  ++count;
+  ++(pimpl->count);
+  guard.commit();
 }
 
 void 
@@ -41,46 +390,117 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
 				     file_id const & new_id,
 				     file_delta const & del)
 {
-  if (!app.db.file_version_exists(new_id))
+  transaction_guard guard(pimpl->app.db);
+  if (! pimpl->file_version_exists(new_id))
     {
-      if (app.db.file_version_exists(old_id))
-	app.db.put_file_version(old_id, new_id, del);
+      if (pimpl->file_version_exists(old_id))
+	{
+	  file_id confirm;
+	  file_data old_dat;
+	  base64< gzip<data> > new_dat;
+	  pimpl->app.db.get_file_version(old_id, old_dat);
+	  patch(old_dat.inner(), del.inner(), new_dat);
+	  calculate_ident(file_data(new_dat), confirm);
+	  if (confirm == new_id)
+	    {
+	      pimpl->app.db.put_file_version(old_id, new_id, del);
+	      pimpl->accepted_file(new_id, *this);
+	    }
+	  else
+	    {
+	      W(F("reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n") 
+		% old_id % new_id % confirm);
+	    }
+	}
       else
-	W(F("warning: file delta pre-image '%s' not found in database\n")
-	  % old_id); 
+	{
+	  L(F("delaying file delta %s -> %s for preimage\n") % old_id % new_id);
+	  shared_ptr<delayed_packet> dp;
+	  dp = shared_ptr<delayed_packet>(new delayed_file_delta_packet(old_id, new_id, del));
+	  shared_ptr<prerequisite> fp;
+	  pimpl->get_file_prereq(old_id, fp); 
+	  dp->add_prerequisite(fp);
+	  fp->add_dependent(dp);
+	}
     }
   else
     L(F("skipping delta to existing file version %s\n") % new_id);
-  ++count;
+  ++(pimpl->count);
+  guard.commit();
 }
 
 void 
 packet_db_writer::consume_file_cert(file<cert> const & t)
 {
-  if (!app.db.file_cert_exists(t))
-    app.db.put_file_cert(t);
+  transaction_guard guard(pimpl->app.db);
+  if (! pimpl->app.db.file_cert_exists(t))
+    {
+      if (pimpl->file_version_exists(file_id(t.inner().ident)))
+	{
+	  pimpl->app.db.put_file_cert(t);
+	}
+      else
+	{
+	  L(F("delaying file cert on %s\n") % t.inner().ident);
+	  shared_ptr<delayed_packet> dp;
+	  dp = shared_ptr<delayed_packet>(new delayed_file_cert_packet(t));
+	  shared_ptr<prerequisite> fp;
+	  pimpl->get_file_prereq(file_id(t.inner().ident), fp); 
+	  dp->add_prerequisite(fp);
+	  fp->add_dependent(dp);
+	}
+    }
   else
     {
       string s;
       cert_signable_text(t.inner(), s);
       L(F("skipping existing file cert %s\n") % s);
     }
-  ++count;
+  ++(pimpl->count);
+  guard.commit();
 }
 
 void 
 packet_db_writer::consume_manifest_data(manifest_id const & ident, 
 					manifest_data const & dat)
 {
-  if (!app.db.manifest_version_exists(ident))
-    app.db.put_manifest(ident, dat);
+  transaction_guard guard(pimpl->app.db);
+  if (! pimpl->manifest_version_exists(ident))
+    {
+      manifest_map mm;
+      read_manifest_map(dat, mm);
+      set<file_id> unsatisfied_files;
+      for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
+	{
+	  path_id_pair pip(i);
+	  if (! pimpl->file_version_exists(pip.ident()))
+	    unsatisfied_files.insert(pip.ident());
+	}
+      if (unsatisfied_files.empty())
+	{
+	  pimpl->app.db.put_manifest(ident, dat);
+	  pimpl->accepted_manifest(ident, *this);
+	}
+      else
+	{
+	  L(F("delaying manifest data packet %s for %d files\n") 
+	    % ident % unsatisfied_files.size());
+	  shared_ptr<delayed_packet> dp;
+	  dp = shared_ptr<delayed_packet>(new delayed_manifest_data_packet(ident, dat));
+	  for (set<file_id>::const_iterator i = unsatisfied_files.begin();
+	       i != unsatisfied_files.end(); ++i)
+	    {
+	      shared_ptr<prerequisite> fp;
+	      pimpl->get_file_prereq(*i, fp); 
+	      dp->add_prerequisite(fp);
+	      fp->add_dependent(dp);
+	    }	  
+	}
+    }
   else
-    L(F("skipping existing manifest version %s\n") % ident);
-
-  ++count;
-
-  if (server)
-    app.db.note_manifest_on_netserver (*server, ident);  
+    L(F("skipping existing manifest version %s\n") % ident);  
+  ++(pimpl->count);
+  guard.commit();
 }
 
 void 
@@ -88,70 +508,162 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
 					 manifest_id const & new_id,
 					 manifest_delta const & del)
 {
-  if (!app.db.manifest_version_exists(new_id))
+  transaction_guard guard(pimpl->app.db);
+  if (! pimpl->manifest_version_exists(new_id))
     {
-      if (app.db.manifest_version_exists(old_id))
-	app.db.put_manifest_version(old_id, new_id, del);
+      if (pimpl->manifest_version_exists(old_id))
+	{
+	  manifest_data old_dat;
+	  base64< gzip<data> > new_dat;
+	  manifest_map mm;
+	  pimpl->app.db.get_manifest_version(old_id, old_dat);
+	  patch(old_dat.inner(), del.inner(), new_dat);
+	  read_manifest_map(manifest_data(new_dat), mm);
+
+	  // callback to a listener, yuck.
+	  //
+	  // FIXME: doing this under the guard ot "manifest_version_exists"
+	  // is a bit pessimistic; it means that we will only analyze the
+	  // manifest edge when its preimage has been *written* to the db,
+	  // and the preimage is only written when all its files have
+	  // arrived. you'll notice a very empty protocol pipeline
+	  // currently due to this "lock-stepness".
+	  // 
+	  // what we *should* be doing here is analyznig the edge when the
+	  // preimage arrives, period. that will require spending a bit of
+	  // complexity differentiating the "no preimage" prerequisite
+	  // condidition from the "missing some files" prerequisite
+	  // condition. it's late so I'm kinda out of energy to do this
+	  // now. it's at least "correct" at the moment.
+
+	  if (pimpl->analyzer != NULL)
+	    {
+	      manifest_map mm_old;
+	      read_manifest_map(manifest_data(old_dat), mm_old);
+	      pimpl->analyzer->analyze_manifest_edge(mm_old, mm);
+	    }
+	  
+	  set<file_id> unsatisfied_files;
+	  for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
+	    {
+	      path_id_pair pip(i);
+	      if (! pimpl->file_version_exists(pip.ident()))
+		unsatisfied_files.insert(pip.ident());
+	    }
+	  if (unsatisfied_files.empty())
+	    {
+	      manifest_id confirm;
+	      calculate_ident(mm, confirm);
+	      if (confirm == new_id)
+		{
+		  pimpl->app.db.put_manifest_version(old_id, new_id, del);
+		  pimpl->accepted_manifest(new_id, *this);
+		}
+	      else
+		{
+		  W(F("reconstructed manifest from delta '%s' -> '%s' has wrong id '%s'\n") 
+		    % old_id % new_id % confirm);
+		}
+	    }
+	  else
+	    {
+	      L(F("delaying manifest delta packet %s -> %s for %d files\n") 
+		% old_id % new_id % unsatisfied_files.size());
+	      shared_ptr<delayed_packet> dp;
+	      dp = shared_ptr<delayed_packet>(new delayed_manifest_delta_packet(old_id, new_id, del));
+	      for (set<file_id>::const_iterator i = unsatisfied_files.begin();
+		   i != unsatisfied_files.end(); ++i)
+		{
+		  shared_ptr<prerequisite> fp;
+		  pimpl->get_file_prereq(*i, fp); 
+		  dp->add_prerequisite(fp);
+		  fp->add_dependent(dp);
+		}
+	    }  
+	}
       else
-	W(F("manifest delta pre-image '%s' not found in database\n")
-	  % old_id); 
+	{
+	  L(F("delaying manifest delta %s -> %s for preimage\n") % old_id % new_id);
+	  shared_ptr<delayed_packet> dp;
+	  dp = shared_ptr<delayed_packet>(new delayed_manifest_delta_packet(old_id, new_id, del));
+	  shared_ptr<prerequisite> fp;
+	  pimpl->get_manifest_prereq(old_id, fp); 
+	  dp->add_prerequisite(fp);
+	  fp->add_dependent(dp);
+	}
     }
   else
-    L(F("skipping delta to existing manifest version %s\n") % new_id);
-  
-  ++count;
-
-  if (server)
-    {
-      app.db.note_manifest_on_netserver (*server, old_id);
-      app.db.note_manifest_on_netserver (*server, new_id);
-    }
+    L(F("skipping delta to existing manifest version %s\n") % new_id);  
+  ++(pimpl->count);
+  guard.commit();
 }
 
 void 
 packet_db_writer::consume_manifest_cert(manifest<cert> const & t)
 {
-  if (!app.db.manifest_cert_exists(t))
-    app.db.put_manifest_cert(t);
+  transaction_guard guard(pimpl->app.db);
+  if (! pimpl->app.db.manifest_cert_exists(t))
+    {
+      if (pimpl->manifest_version_exists(manifest_id(t.inner().ident)))
+	{
+	  pimpl->app.db.put_manifest_cert(t);
+	  pimpl->accepted_manifest_cert_on(manifest_id(t.inner().ident), *this);
+	}
+      else
+	{
+	  L(F("delaying manifest cert on %s\n") % t.inner().ident);
+	  shared_ptr<delayed_packet> dp;
+	  dp = shared_ptr<delayed_packet>(new delayed_manifest_cert_packet(t));
+	  shared_ptr<prerequisite> fp;
+	  pimpl->get_manifest_prereq(manifest_id(t.inner().ident), fp); 
+	  dp->add_prerequisite(fp);
+	  fp->add_dependent(dp);
+	}
+    }
   else
     {
       string s;
       cert_signable_text(t.inner(), s);
       L(F("skipping existing manifest cert %s\n") % s);
     }
-  ++count;
+  ++(pimpl->count);
+  guard.commit();
 }
 
 void 
 packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
 				     base64< rsa_pub_key > const & k)
 {
-  if (!take_keys) 
+  transaction_guard guard(pimpl->app.db);
+  if (! pimpl->take_keys) 
     {
       W(F("skipping prohibited public key %s\n") % ident);
       return;
     }
-  if (!app.db.public_key_exists(ident))
-    app.db.put_key(ident, k);
+  if (! pimpl->app.db.public_key_exists(ident))
+    pimpl->app.db.put_key(ident, k);
   else
     L(F("skipping existing public key %s\n") % ident);
-  ++count;
+  ++(pimpl->count);
+  guard.commit();
 }
 
 void 
 packet_db_writer::consume_private_key(rsa_keypair_id const & ident,
 				      base64< arc4<rsa_priv_key> > const & k)
 {
-  if (!take_keys) 
+  transaction_guard guard(pimpl->app.db);
+  if (! pimpl->take_keys) 
     {
       W(F("skipping prohibited private key %s\n") % ident);
       return;
     }
-  if (!app.db.private_key_exists(ident))
-    app.db.put_key(ident, k);
+  if (! pimpl->app.db.private_key_exists(ident))
+    pimpl->app.db.put_key(ident, k);
   else
     L(F("skipping existing private key %s\n") % ident);
-  ++count;
+  ++(pimpl->count);
+  guard.commit();
 }
 
 
@@ -239,114 +751,6 @@ packet_writer::consume_private_key(rsa_keypair_id const & ident,
       << "[end]" << endl;
 }
 
-
-// --- packet writer ---
-
-queueing_packet_writer::queueing_packet_writer(app_state & a, set<url> const & t) :
-  app(a), targets(t), n_bytes("bytes"), n_packets("packets")
-{
-  for (set<url>::const_iterator targ = targets.begin();
-       targ != targets.end(); ++targ)
-    {
-      P(F("queueing packets for target %s\n") % *targ);
-    }
-}
-
-
-void 
-queueing_packet_writer::queue_blob_for_network(string const & str)
-{
-  ++n_packets;
-  n_bytes += str.size();
-  for (set<url>::const_iterator targ = targets.begin();
-       targ != targets.end(); ++targ)
-    {
-      if (rev)
-	rev->reverse_queue_posting(*targ, str);
-      else
-	app.db.queue_posting(*targ, str);
-    }  
-}
-
-void 
-queueing_packet_writer::consume_file_data(file_id const & ident, 
-					  file_data const & dat)
-{
-  ostringstream oss;
-  packet_writer pw(oss);
-  pw.consume_file_data(ident, dat);
-  queue_blob_for_network(oss.str());
-}
-
-void 
-queueing_packet_writer::consume_file_delta(file_id const & old_id, 
-					   file_id const & new_id,
-					   file_delta const & del)
-{
-  ostringstream oss;
-  packet_writer pw(oss);
-  pw.consume_file_delta(old_id, new_id, del);
-  queue_blob_for_network(oss.str());
-}
-
-void 
-queueing_packet_writer::consume_file_cert(file<cert> const & t)
-{
-  ostringstream oss;
-  packet_writer pw(oss);
-  pw.consume_file_cert(t);
-  queue_blob_for_network(oss.str());
-}
-
-void 
-queueing_packet_writer::consume_manifest_data(manifest_id const & ident, 
-					      manifest_data const & dat)
-{
-  ostringstream oss;
-  packet_writer pw(oss);
-  pw.consume_manifest_data(ident, dat);
-  queue_blob_for_network(oss.str());
-}
-
-void 
-queueing_packet_writer::consume_manifest_delta(manifest_id const & old_id, 
-					       manifest_id const & new_id,
-					       manifest_delta const & del)
-{
-  ostringstream oss;
-  packet_writer pw(oss);
-  pw.consume_manifest_delta(old_id, new_id, del);
-  queue_blob_for_network(oss.str());
-}
-
-void 
-queueing_packet_writer::consume_manifest_cert(manifest<cert> const & t)
-{
-  ostringstream oss;
-  packet_writer pw(oss);
-  pw.consume_manifest_cert(t);
-  queue_blob_for_network(oss.str());
-}
-
-void 
-queueing_packet_writer::consume_public_key(rsa_keypair_id const & ident,
-					   base64< rsa_pub_key > const & k)
-{
-  ostringstream oss;
-  packet_writer pw(oss);
-  pw.consume_public_key(ident, k);
-  queue_blob_for_network(oss.str());
-}
-
-void 
-queueing_packet_writer::consume_private_key(rsa_keypair_id const & ident,
-					    base64< arc4<rsa_priv_key> > const & k)
-{
-  ostringstream oss;
-  packet_writer pw(oss);
-  pw.consume_private_key(ident, k);
-  queue_blob_for_network(oss.str());
-}
 
 // -- remainder just deals with the regexes for reading packets off streams
 

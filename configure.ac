@@ -174,27 +174,6 @@ AC_CHECK_LIB([nsl], [inet_ntoa])
 
 
 ##########
-# Checks for external adns library, revert to bundled version if not found
-# or user gives --with-bundled-adns.
-AC_ARG_WITH([bundled-adns],
-   AC_HELP_STRING(
-      [--with-bundled-adns],
-      [Force use of bundled version of adns (default=no)]
-   ), , [bundled_adns=no]
-)
-
-if test "x$bundled_adns" = "xno" ; then
-   bundled_adns=yes
-   AC_CHECK_HEADER([adns.h],
-      AC_CHECK_LIB([adns], [adns_init],
-         [LIBS="$LIBS -ladns" ; bundled_adns=no]
-      )
-   )
-fi
-
-AM_CONDITIONAL(BUNDLED_ADNS, test "x$bundled_adns" != "xno")
-
-##########
 # Checks for external lua library, revert to bundled version if not found or
 # user gives --with-bundled-lua.
 AC_ARG_WITH([bundled-lua],

@@ -1,3 +1,32 @@
+2004-04-07  graydon hoare  <graydon@pobox.com>
+
+	* adns/*: 
+	* network.{cc,hh}:
+	* proto_machine.{cc,hh}:
+	* {http,smtp,nntp}_tasks.{cc,hh}:
+	* tests/t_{http,smtp,nntp,proxy}.at:
+	* url.{cc,hh}:
+	* depot.cc:
+	Delete files.
+	* commands.cc:
+	* lua.{cc,hh}:
+	* database.{cc,hh}: Remove network/queue stuff.
+	* configure.ac: 
+	* constants.{cc,hh}:
+	* tests/t_{netsync,singlecvs,cvsimport}.at:
+	* testsuite.at:
+	* transforms.{cc,hh}:
+	* unit_tests.{cc,hh}:
+	* vocab_terms.hh:
+	* vocab.{cc,hh}:
+	* Makefile.am: Adjust for deletions.
+	* app_state.hh: Cleanup.
+	* monotone.texi: Fix some typos.
+	* packet.{cc,hh}: Implement database ordering.
+	* netsync.cc: Massage to use new packet logic.
+	* commands.cc:
+	* std_hooks.lua: Add initial selector stuff.
+
 2004-03-29  graydon hoare  <graydon@pobox.com>
 
 	* monotone.spec: Update for 0.11 release.

@@ -278,3 +278,60 @@ function merge3(ancestor, left, right)
    
    return data
 end
+
+
+-- expansion of values used in selector completion
+
+function expand_selector(str)
+
+   -- simple date patterns
+   if string.find(str, "19%d%d-%d%d.*")
+      or string.find(str, "20%d%d-%d%d.*")
+   then
+      return ("d:" .. str)
+   end
+
+   -- something which looks like an email address
+   if string.find(str, "[%w%-_]+@[%w%-_]+")
+   then
+      return ("a:" .. str)
+   end
+
+   -- something which looks like a branch name
+   if string.find(str, "[%w%-]+%.[%w%-]+")
+   then
+      return ("b:" .. str)
+   end
+
+   -- a sequence of nothing but hex digits
+   if string.find(str, "^%x+$")
+   then
+      return ("i:" .. str)
+   end
+
+   -- "yesterday", the source of all hangovers
+   if str == "yesterday"
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("d:%F", t - 86400)
+   end
+   
+   -- "CVS style" relative dates such as "3 weeks ago"
+   local trans = { 
+      minute = 60; 
+      hour = 3600; 
+      day = 86400; 
+      week = 604800; 
+      month = 2678400; 
+      year = 31536000 
+   }
+   local pos, len, n, type = string.find(str, "(%d+) ([minutehordaywk]+)s? ago")
+   print(pos, len, n, type)
+   if trans[type] ~= nil
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("d:%F", t - (n * trans[type]))
+   end
+
+   return nil
+end

@@ -9,8 +9,6 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "commands.hh"
@@ -22,7 +20,6 @@
 #include "keys.hh"
 #include "manifest.hh"
 #include "netsync.hh"
-#include "network.hh"
 #include "packet.hh"
 #include "patch_set.hh"
 #include "rcs_import.hh"
@@ -413,166 +410,129 @@ complete(app_state & app,
   P(F("expanded to '%s'\n") %  completion);
 }
 
+/*
 
-static void 
-find_oldest_ancestors(manifest_id const & child, 
-		      set<manifest_id> & ancs,
-		      app_state & app)
+FIXME: finish this stuff.
+
+static void
+complete_selector(string const & orig_sel,
+		  vector<pair<selector_type, string> > const & limit,		  
+		  selector_type & type,
+		  set<string> & completions,
+		  app_state & app)
 {
-  cert_name tn(ancestor_cert_name);
-  ancs.insert(child);  
-  set<manifest_id> seen;
-  while (true)
-    {
-      set<manifest_id> next_frontier;
-      for (set<manifest_id>::const_iterator i = ancs.begin();
-	   i != ancs.end(); ++i)
-	{
-	  if (seen.find(*i) != seen.end())
-	    continue;
-	  vector< manifest<cert> > tmp;
-	  app.db.get_manifest_certs(*i, tn, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      manifest_id anc_id (tv());
-	      next_frontier.insert(anc_id);
-	    }
-	  seen.insert(*i);
-	}
+  
+  I(type == sel_unknown);
+  string sel = orig_sel;
 
-      if (next_frontier.empty())
-	break;
-      else
-	ancs = next_frontier;
+  L(F("completing selector '%s'\n") % sel);
+
+  // stage 1: call user hook to expand selectors
+  if (sel.size < 2 || sel[1] != ':')
+    {
+      string tmp;
+      N(app.lua.hook_expand_selector(sel, tmp),
+	F("expansion of selector '%s' failed") % sel);
+      P(F("expanded selector '%s' -> '%s'\n") % sel % tmp);
+      sel = tmp;
+    }
+  
+  // stage 2: decode the selector
+  if (sel.size >= 2 && sel[1] == ':')
+    {
+      switch (sel[0])
+	{
+	case 'a': 
+	  type = sel_author;
+	  break;
+	case 'b':
+	  type = sel_branch;
+	  break;
+	case 'd':
+	  type = sel_date;
+	  break;
+	case 'i':
+	  type = sel_ident;
+	  break;
+	case 't':
+	  type = sel_tag;
+	  break;
+	default:	  
+	  W(F("unknown selector type: %c\n") % sel[0]);
+	  break;
+	}
+      sel.erase(0,2);
+    }
+
+  // stage 3: either we've decided what the thing is, or we're going to
+  // do a generic "word" completion over authors, tags, and branches.
+
+  cert_name cname;
+  cert_value cval(sel);
+  vector<cert_value> ctmp;
+
+  switch (type)
+    {
+    case sel_author:
+      app.db.complete_cert_value(author_cert_name, cval, limit, ctmp);
+      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
+      break;
+
+    case sel_branch:
+      app.db.complete_cert_value(branch_cert_name, cval, limit, ctmp);
+      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
+      break;
+
+    case sel_date:
+      app.db.complete_cert_value(date_cert_name, cval, limit, ctmp);
+      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
+      break;
+
+    case sel_tag:
+      app.db.complete_cert_value(tag_cert_name, cval, limit, ctmp);
+      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
+      break;
+
+    case sel_ident:
+      app.db.complete_cert_value(author_cert_name, cval, limit, ctmp);
+      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
+      break;
+
+    case sel_unknown:
+      app.db.complete_cert_value(author_cert_name, cval, limit, ctmp);
+      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
+
+      app.db.complete_cert_value(tag_cert_name, cval, limit, ctmp);
+      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
+
+      app.db.complete_cert_value(branch_cert_name, cval, limit, ctmp);
+      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
+      break;
     }
 }
 
-// the goal here is to look back through the ancestry of the provided
-// child, checking to see the least ancestor it has which we received from
-// the given network url.
-//
-// we use the ancestor as the source manifest when building a patchset to
-// send to that url.
-
-static bool 
-find_ancestor_on_netserver (manifest_id const & child, 
-			    url const & u,
-			    manifest_id & anc,
-			    app_state & app)
+static void
+complete(string const & sels)
 {
-  set<manifest_id> frontier;
-  cert_name tn(ancestor_cert_name);
-  frontier.insert(child);
-
-  while (!frontier.empty())
-    {
-      set<manifest_id> next_frontier;
-      for (set<manifest_id>::const_iterator i = frontier.begin();
-	   i != frontier.end(); ++i)
-	{
-	  vector< manifest<cert> > tmp;
-	  app.db.get_manifest_certs(*i, tn, tmp);
-	  erase_bogus_certs(tmp, app);
-
-	  // we go through this vector backwards because we would prefer to
-	  // hit more recently-queued ancestors (such as intermediate nodes
-	  // in a multi-node merge) rather than older ancestors. but of
-	  // course, any ancestor will do.
-
-	  for (vector< manifest<cert> >::reverse_iterator j = tmp.rbegin();
-	       j != tmp.rend(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      manifest_id anc_id (tv());
-
-	      L(F("looking for parent %s of %s on server\n") % (*i) % anc_id);
-
-	      if (app.db.manifest_exists_on_netserver (u, anc_id))
-		{
-		  L(F("found parent %s on server\n") % anc_id);
-		  anc = anc_id;
-		  return true;
-		}
-	      else
-		next_frontier.insert(anc_id);
-	    }	  
-	}
-
-      frontier = next_frontier;
-    }
-
-  return false;
+  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  boost::char_separator<char> slash("/");
+  tokenizer tokens(sels, slash);
+  vector<string> selectors;
+  copy(tokens.begin(), tokens.end(), back_inserter(selectors));
 }
 
+*/
 
-static void 
-queue_edge_for_target_ancestor(url const & targ,
-			       manifest_id const & child_id,
-			       manifest_map const & child_map,
-			       app_state & app)
-{  
-  // now here is an interesting thing: we *might* be sending data to a
-  // depot, or someone with indeterminate pre-existing state (say the first
-  // time we post to netnews), therefore we cannot just "send the edge" we
-  // just constructed in a merge or commit, we need to send an edge from a
-  // parent which we know to be present in the depot (or else an edge from
-  // the empty map -- full contents of all files). what is sent therefore
-  // changes on a depot-by-depot basis. this function calculates the
-  // appropriate thing to send.
-  //
-  // nb: this has no direct relation to what we store in our own
-  // database. we always store the edge from our parent, and we always know
-  // when we have a parent.
-
-  set<url> one_target;
-  one_target.insert(targ);
-  queueing_packet_writer qpw(app, one_target);
-  
-  manifest_id targ_ancestor_id;
-  
-  if (find_ancestor_on_netserver (child_id, 
-				  targ,
-				  targ_ancestor_id, 
-				  app))
-    {
-      // write everything from there to here
-      reverse_queue rq(app.db);
-      qpw.rev.reset(rq);
-      write_ancestry_paths(targ_ancestor_id, child_id, app, qpw);
-      qpw.rev.reset();
-    }
-  else
-    {
-      // or just write a complete version of "here"
-      manifest_map empty_manifest;
-      patch_set ps;
-      manifests_to_patch_set(empty_manifest, child_map, app, ps);
-      patch_set_to_packets(ps, app, qpw);
-    }
-
-  // now that we've queued the data, we can note this new child
-  // node as existing (well .. soon-to-exist) on the server
-  app.db.note_manifest_on_netserver (targ, child_id);
-
-}
 
 
 // this helper tries to produce merge <- mergeN(left,right), possibly
-// merge3 if it can find an ancestor, otherwise merge2. it also queues the
-// appropriate edges from known ancestors to the new merge node, to be
-// transmitted to each of the targets provided.
+// merge3 if it can find an ancestor, otherwise merge2. 
 
 static void 
 try_one_merge(manifest_id const & left,
 	      manifest_id const & right,
 	      manifest_id & merged,
-	      app_state & app, 
-	      set<url> const & targets)
+	      app_state & app)
 {
   manifest_data left_data, right_data, ancestor_data, merged_data;
   manifest_map left_map, right_map, ancestor_map, merged_map;
@@ -640,23 +600,7 @@ try_one_merge(manifest_id const & left,
     right_renames.child = merged;
     cert_manifest_rename(merged, left_renames, app, dbw);
     cert_manifest_rename(merged, right_renames, app, dbw);
-    
-    // make sure the appropriate edges get queued for the network.
-    for (set<url>::const_iterator targ = targets.begin();
-	 targ != targets.end(); ++targ)
-      {
-	queue_edge_for_target_ancestor (*targ, merged, merged_map, app);
-      }
-    
-    // throw in all available certs for good measure
-    queueing_packet_writer qpw(app, targets);
-    vector< manifest<cert> > certs;
-    app.db.get_manifest_certs(merged, certs);
-    for(vector< manifest<cert> >::const_iterator i = certs.begin();
-	i != certs.end(); ++i)
-      qpw.consume_manifest_cert(*i);
   }
-
 }			  
 
 
@@ -876,12 +820,6 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
 
   cert t(ident, name, val_encoded, key);
   
-  set<url> targets;
-  cert_value branchname;
-  guess_branch (manifest_id(ident), app, branchname);
-  app.lua.hook_get_post_targets(branchname(), targets);  
-
-  queueing_packet_writer qpw(app, targets);
   packet_db_writer dbw(app);
 
   // nb: we want to throw usage on mis-use *before* asking for a
@@ -891,13 +829,11 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
     {
       calculate_cert(app, t);  
       dbw.consume_file_cert(file<cert>(t));
-      qpw.consume_file_cert(file<cert>(t));
     }
   else if (idx(args, 0)() == "manifest")
     {
       calculate_cert(app, t);
       dbw.consume_manifest_cert(manifest<cert>(t));
-      qpw.consume_manifest_cert(manifest<cert>(t));
     }
   else
     throw usage(this->name);
@@ -955,15 +891,7 @@ CMD(tag, "certificate", "ID TAGNAME",
   manifest_id m;
   complete(app, idx(args, 0)(), m);
   packet_db_writer dbw(app);
-
-  set<url> targets;
-  cert_value branchname;
-  guess_branch(m, app, branchname);
-  app.lua.hook_get_post_targets(branchname(), targets);  
-
-  queueing_packet_writer qpw(app, targets);
   cert_manifest_tag(m, idx(args, 1)(), app, dbw);
-  cert_manifest_tag(m, idx(args, 1)(), app, qpw);
 }
 
 CMD(testresult, "certificate", "ID (true|false)", 
@@ -973,14 +901,8 @@ CMD(testresult, "certificate", "ID (true|false)",
     throw usage(name);
   manifest_id m;
   complete(app, idx(args, 0)(), m);
-  set<url> targets;
-  cert_value branchname;
-  guess_branch(m, app, branchname);
-  app.lua.hook_get_post_targets(branchname(), targets);  
-  queueing_packet_writer qpw(app, targets);
   packet_db_writer dbw(app);
   cert_manifest_testresult(m, idx(args, 1)(), app, dbw);
-  cert_manifest_testresult(m, idx(args, 1)(), app, qpw);
 }
 
 CMD(approve, "certificate", "(file|manifest) ID1 ID2", 
@@ -994,14 +916,8 @@ CMD(approve, "certificate", "(file|manifest) ID1 ID2",
       manifest_id m1, m2;
       complete(app, idx(args, 1)(), m1);
       complete(app, idx(args, 2)(), m2);
-      set<url> targets;
-      cert_value branchname;
-      guess_branch (m1, app, branchname);
-      app.lua.hook_get_post_targets(branchname(), targets);  
-      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_manifest_approval(m1, m2, true, app, dbw);
-      cert_manifest_approval(m1, m2, true, app, qpw);
     }
   else if (idx(args, 0)() == "file")
     {
@@ -1009,12 +925,7 @@ CMD(approve, "certificate", "(file|manifest) ID1 ID2",
       file_id f1, f2;
       complete(app, idx(args, 1)(), f1);
       complete(app, idx(args, 2)(), f2);
-      set<url> targets;
-      N(app.branch_name() != "", F("need --branch argument for posting"));
-      app.lua.hook_get_post_targets(cert_value(app.branch_name()), targets); 
-      queueing_packet_writer qpw(app, targets);
       cert_file_approval(f1, f2, true, app, dbw);
-      cert_file_approval(f1, f2, true, app, qpw);
     }
   else
     throw usage(name);
@@ -1031,27 +942,16 @@ CMD(disapprove, "certificate", "(file|manifest) ID1 ID2",
       manifest_id m1, m2;
       complete(app, idx(args, 1)(), m1);
       complete(app, idx(args, 2)(), m2);
-      set<url> targets;
-      cert_value branchname;
-      guess_branch(m1, app, branchname);
-      app.lua.hook_get_post_targets(branchname(), targets);  
-      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_manifest_approval(m1, m2, false, app, dbw);
-      cert_manifest_approval(m1, m2, false, app, qpw);
     }
   else if (idx(args, 0)() == "file")
     {
       file_id f1, f2;
       complete(app, idx(args, 1)(), f1);
       complete(app, idx(args, 2)(), f2);
-      set<url> targets;
-      N(app.branch_name() != "", F("need --branch argument for posting"));
-      app.lua.hook_get_post_targets(cert_value(app.branch_name()), targets); 
-      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_file_approval(f1, f2, false, app, dbw);
-      cert_file_approval(f1, f2, false, app, qpw);
     }
   else
     throw usage(name);
@@ -1078,26 +978,15 @@ CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
     {
       file_id f;
       complete(app, idx(args, 1)(), f);
-      set<url> targets;
-      N(app.branch_name() != "", F("need --branch argument for posting"));
-      app.lua.hook_get_post_targets(cert_value(app.branch_name()), targets); 
-      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_file_comment(f, comment, app, dbw); 
-      cert_file_comment(f, comment, app, qpw); 
     }
   else if (idx(args, 0)() == "manifest")
     {
       manifest_id m;
       complete(app, idx(args, 1)(), m);
-      set<url> targets;
-      cert_value branchname;
-      guess_branch (m, app, branchname);
-      app.lua.hook_get_post_targets(branchname(), targets);  
-      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_manifest_comment(m, comment, app, dbw);
-      cert_manifest_comment(m, comment, app, qpw);
     }
   else
     throw usage(name);
@@ -1313,29 +1202,6 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 	renames.child = ps.m_new;
 	cert_manifest_rename(ps.m_new, renames, app, dbw);
       }    
-
-    // commit done, now queue diff for sending
-
-    if (app.db.manifest_version_exists(ps.m_new))
-      {
-	set<url> targets;
-	app.lua.hook_get_post_targets(branchname, targets);
-	
-	// make sure the appropriate edges get queued for the network.
-	for (set<url>::const_iterator targ = targets.begin();
-	     targ != targets.end(); ++targ)
-	  {
-	    queue_edge_for_target_ancestor (*targ, ps.m_new, m_new, app);
-	  }
-	
-	// throw in all available certs for good measure
-	queueing_packet_writer qpw(app, targets);
-	vector< manifest<cert> > certs;
-	app.db.get_manifest_certs(ps.m_new, certs);
-	for(vector< manifest<cert> >::const_iterator i = certs.begin();
-	    i != certs.end(); ++i)
-	  qpw.consume_manifest_cert(*i);
-      } 
     
     guard.commit();
   }
@@ -1729,9 +1595,6 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
     }
   else
     {
-      set<url> targets;
-      app.lua.hook_get_post_targets(app.branch_name(), targets);
-
       set<manifest_id>::const_iterator i = heads.begin();
       manifest_id left = *i;
       manifest_id ancestor;
@@ -1744,20 +1607,17 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 
 	  manifest_id merged;
 	  transaction_guard guard(app.db);
-	  try_one_merge (left, right, merged, app, targets);
+	  try_one_merge (left, right, merged, app);
 	  	  
 	  // merged 1 edge; now we commit this, update merge source and
 	  // try next one
 
 	  packet_db_writer dbw(app);
-	  queueing_packet_writer qpw(app, targets);
 	  cert_manifest_in_branch(merged, app.branch_name(), app, dbw);
-	  cert_manifest_in_branch(merged, app.branch_name(), app, qpw);
 
 	  string log = (F("merge of %s\n"
 			  "     and %s\n") % left % right).str();
 	  cert_manifest_changelog(merged, log, app, dbw);
-	  cert_manifest_changelog(merged, log, app, qpw);
 	  
 	  guard.commit();
 	  P(F("[source] %s\n") % left);
@@ -1850,9 +1710,6 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   4. save the results as the delta (N2,M), the ancestry edges (N1,M)
   and (N2,M), and the cert (N2,dst).
 
-  5. queue the resulting packets to send to the url for dst-branch, not
-  src-branch.
-
   */
 
   set<manifest_id> src_heads, dst_heads;
@@ -1885,26 +1742,20 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
     }
   else
     {
-      set<url> targets;
-      app.lua.hook_get_post_targets(idx(args, 1)(), targets);
-
       set<manifest_id>::const_iterator src_i = src_heads.begin();
       set<manifest_id>::const_iterator dst_i = dst_heads.begin();
 
       manifest_id merged;
       transaction_guard guard(app.db);
-      try_one_merge (*src_i, *dst_i, merged, app, targets);      
+      try_one_merge (*src_i, *dst_i, merged, app);      
 
       packet_db_writer dbw(app);
-      queueing_packet_writer qpw(app, targets);
 
       cert_manifest_in_branch(merged, idx(args, 1)(), app, dbw);
-      cert_manifest_in_branch(merged, idx(args, 1)(), app, qpw);
 
       string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
                      % (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
 
-      cert_manifest_changelog(merged, log, app, qpw);
       cert_manifest_changelog(merged, log, app, dbw);
 
       guard.commit();      
@@ -2167,48 +2018,6 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 		}	  
 	      cout << endl;
 	    }
-
-	  // pull any file-specific comments
-	  if (app.db.manifest_version_exists(*i))
-	    {
-	      manifest_data mdata;
-	      manifest_map mtmp;
-	      app.db.get_manifest_version(*i, mdata);
-	      read_manifest_map(mdata, mtmp);
-	      bool wrote_headline = false;
-	      for (manifest_map::const_iterator mi = mtmp.begin();
-		   mi != mtmp.end(); ++mi)
-		{
-		  path_id_pair pip(mi);
-		  if (no_comments.find(pip.ident()) != no_comments.end())
-		    continue;
-		  
-		  vector< file<cert> > ftmp;
-		  app.db.get_file_certs(pip.ident(), comment_name, ftmp);
-		  erase_bogus_certs(ftmp, app);
-		  if (!ftmp.empty())
-		    {
-		      if (!wrote_headline)
-			{
-			  cout << "File Comments:" << endl << endl;
-			  wrote_headline = true;
-			}
-		      
-		      cout << "  " << pip.path() << endl;
-		      for (vector< file<cert> >::const_iterator j = ftmp.begin();
-			   j != ftmp.end(); ++j)
-			{
-			  cert_value tv;
-			  decode_base64(j->inner().value, tv);
-			  cout << "    " << j->inner().key << ": " << tv << endl;
-			}	  
-		    }
-		  else
-		    no_comments.insert(pip.ident());
-		}
-	      if (wrote_headline)
-		cout << endl;
-	    }
 	  
 	  app.db.get_manifest_certs(*i, ancestor_name, tmp);
 	  erase_bogus_certs(tmp, app);
@@ -2314,30 +2123,6 @@ ls_unknown (app_state & app, bool want_ignored)
   walk_tree(u);
 }
 
-static void
-ls_queue (string const& /* name */, app_state & app)
-{
-  set<url> target_set;
-  app.db.get_queued_targets(target_set);
-  vector<url> targets;
-  copy(target_set.begin(), target_set.end(), back_inserter(targets));
-
-  for (size_t i = 0; i < targets.size(); ++i)
-    {
-      size_t queue_count;
-      string content;
-      cout << "target " << i << ": " 
-	   << idx(targets, i) << endl;
-      app.db.get_queue_count(idx(targets, i), queue_count);
-      for (size_t j = 0; j < queue_count; ++j)
-	{
-	  app.db.get_queued_content(idx(targets, i), j, content);
-	  cout << "    target " << i << ", packet " << j 
-	       << ": " << content.size() << " bytes" << endl;
-	}      
-    }
-}
-
 CMD(reindex, "network", "COLLECTION...", 
     "rebuild the hash-tree indices used to sync COLLECTION over the network")
 {
@@ -2356,7 +2141,7 @@ CMD(reindex, "network", "COLLECTION...",
 }
 
 CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
-    "alias for 'netsync client readonly'")
+    "push COLLECTION to netsync server at ADDRESS")
 {
   if (args.size() < 2)
     throw usage(name);
@@ -2371,7 +2156,7 @@ CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
 }
 
 CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
-    "alias for 'netsync client writeonly'")
+    "pull COLLECTION from netsync server at ADDRESS")
 {
   if (args.size() < 2)
     throw usage(name);
@@ -2385,7 +2170,7 @@ CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
 }
 
 CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
-    "alias for 'netsync client readwrite'")
+    "sync COLLECTION with netsync server at ADDRESS")
 {
   if (args.size() < 2)
     throw usage(name);
@@ -2400,7 +2185,7 @@ CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
 }
 
 CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
-    "alias for 'netsync server readwrite'")
+    "listen on ADDRESS and serve COLLECTION to connecting clients")
 {
   if (args.size() < 2)
     throw usage(name);
@@ -2414,161 +2199,9 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
 }
 
-CMD(netsync, "network", "(client|server) (readonly|readwrite|writeonly) ADDRESS[:PORTNUMBER] COLLECTION...",
-    "run synchronization for a given set of collections")
-{
-  if (args.size() < 4)
-    throw usage(name);
-
-  protocol_voice voice = client_voice;
-  protocol_role role = source_role;
-
-  if (idx(args,0)() == "client")
-    voice  = client_voice;
-  else if (idx(args,0)() == "server")
-    voice = server_voice;
-  else
-    throw usage(name);
-
-  if (idx(args,1)() == "readonly")
-    role = source_role;
-  else if (idx(args,1)() == "readwrite")
-    role = source_and_sink_role;
-  else if (idx(args,1)() == "writeonly")
-    role = sink_role;
-  else throw usage(name);
-
-  rsa_keypair_id key;
-  N(guess_default_key(key, app), F("could not guess default signing key"));
-  app.signing_key = key;
-
-  utf8 addr(idx(args,2));
-  vector<utf8> collections(args.begin() + 3, args.end());
-  run_netsync_protocol(voice, role, addr, collections, app);
-}
-
-
-
-CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\naddtree URL [ID...]",
-    "list, print, delete, or add items to network queue")
-{
-  if (args.size() == 0)
-    throw usage(name);
-
-  if (idx(args, 0)() == "list")
-    ls_queue(name, app);
-
-  else if (idx(args, 0)() == "print" 
-	   || idx(args, 0)() == "delete")
-    {
-      if (args.size() != 3)
-	throw usage(name);
-      size_t target = boost::lexical_cast<size_t>(idx(args,1));
-      size_t packet = boost::lexical_cast<size_t>(idx(args,2));
-
-      set<url> target_set;      
-      app.db.get_queued_targets(target_set);
-      vector<url> targets;
-      copy(target_set.begin(), target_set.end(), back_inserter(targets));
-      N(target < targets.size(),
-	F("target number %d out of range") % target);
-
-      size_t queue_count;
-      app.db.get_queue_count(idx(targets, target), queue_count);
-
-      N(packet < queue_count,
-	F("packet number %d out of range for target %d")
-	% packet % target);
-      
-      string content;
-      app.db.get_queued_content(idx(targets, target), packet, content);
-      
-      if (idx(args, 0)() == "print")
-	{
-	  cout << content;
-	}
-      else
-	{
-	  ui.inform(F("deleting %d byte posting for %s\n") 
-		    % content.size() % idx(targets, target));
-	  app.db.delete_posting(idx(targets, target), packet);
-	}
-    }
-
-  else if (idx(args, 0)() == "add")
-    {
-      if (args.size() != 2)
-	throw usage(name);
-      url u;
-      internalize_url(idx(args,1), u);
-      string s = get_stdin();
-      ui.inform(F("queueing %d bytes for %s\n") % s.size() % u);
-      app.db.queue_posting(u, s);
-    }  
-
-  else if (idx(args, 0)() == "addtree")
-    {
-      if (args.size() < 2)
-	throw usage(name);
-
-      url u;
-      internalize_url(idx(args,1), u);
-      set<manifest_id> roots;
-
-      if (args.size() == 2)
-	{
-	  N(app.branch_name() != "", F("need --branch argument for addtree"));
-	  get_branch_heads(app.branch_name(), app, roots);
-	}
-      else
-	{
-	  for (size_t i = 2; i < args.size(); ++i)
-	    {
-	      roots.insert(manifest_id(idx(args,i)()));
-	    }
-	}
-
-      set<url> targets;
-      targets.insert (u);
-      queueing_packet_writer qpw(app, targets);
-
-      transaction_guard guard(app.db);
-
-      for (set<manifest_id>::const_iterator i = roots.begin();
-	   i != roots.end(); ++i)
-	{
-	  set<manifest_id> ancs;
-	  find_oldest_ancestors (*i, ancs, app);
-	  for (set<manifest_id>::const_iterator j = ancs.begin();
-	       j != ancs.end(); ++j)
-	    {
-	      manifest_map empty, mm;
-	      manifest_data dat;
-	      patch_set ps;
-  
-	      // queue the ancestral state
-	      app.db.get_manifest_version(*j, dat);
-	      read_manifest_map(dat, mm);
-	      manifests_to_patch_set(empty, mm, app, ps);
-	      patch_set_to_packets(ps, app, qpw);
-	      
-	      // queue everything between here and there
-	      reverse_queue rq(app.db);
-	      qpw.rev.reset(rq);
-	      write_ancestry_paths(*j, *i, app, qpw);
-	      qpw.rev.reset();
-	    }
-	}
-      guard.commit();
-    }
-  else 
-    throw usage(name);
-}
-
 CMD(list, "informative", 
     "certs (file|manifest) ID\n"
     "keys [PATTERN]\n"
-    "queue\n"
     "branches\n"
     "unknown\n"
     "ignored", 
@@ -2584,8 +2217,6 @@ CMD(list, "informative",
     ls_certs(name, app, removed);
   else if (idx(args, 0)() == "keys")
     ls_keys(name, app, removed);
-  else if (idx(args, 0)() == "queue")
-    ls_queue(name, app);
   else if (idx(args, 0)() == "branches")
     ls_branches(name, app, removed);
   else if (idx(args, 0)() == "unknown")
@@ -2825,52 +2456,6 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
     }
   cout << "}" << endl << endl; // close graph
   guard.commit();
-}
-
-CMD(fetch, "network", "[URL]", "fetch recent changes from network")
-{
-  if (args.size() > 1)
-    throw usage(name);
-
-  set<url> sources;
-
-  if (args.size() == 0)
-    {
-      if (! app.lua.hook_get_fetch_sources(app.branch_name(), sources))
-	{
-	  P(F("fetching from all known URLs\n"));
-	  app.db.get_all_known_sources(sources);
-	}
-    }
-  else
-    {
-      url u;
-      internalize_url(idx(args, 0), u);
-      sources.insert(u);
-    }
-  
-  fetch_queued_blobs_from_network(sources, app);
-}
-
-CMD(post, "network", "[URL]", "post queued changes to network")
-{
-  if (args.size() > 1)
-    throw usage(name);
-
-  set<url> targets;
-  if (args.size() == 0)
-    {
-      P(F("no URL provided, posting all queued targets\n"));
-      app.db.get_queued_targets(targets);
-    }  
-  else
-    {
-      url u;
-      internalize_url(idx(args, 0), u);
-      targets.insert(u);
-    }
-
-  post_queued_blobs_to_network(targets, app);
 }
 
 

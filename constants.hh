@@ -57,9 +57,6 @@ namespace constants
   // all the ASCII characters (bytes) which are legal in a SHA1 hex id
   extern char const * const legal_id_bytes;
 
-  // all the ASCII characters (bytes) which can occur in URLs
-  extern char const * const legal_url_bytes;
-
   // all the ASCII characters (bytes) which can occur in cert names
   extern char const * const legal_cert_name_bytes;
 

@@ -59,7 +59,6 @@ struct cert;
 // the program. I don't know if there's any way to make it clearer.
 
 class transaction_guard;
-class reverse_queue;
 struct posting;
 
 class database
@@ -150,7 +149,6 @@ class database
   void commit_transaction();
   void rollback_transaction();
   friend class transaction_guard;
-  friend class reverse_queue;
   friend void rcs_put_raw_file_edge(hexenc<id> const & old_id,
 				    hexenc<id> const & new_id,
 				    base64< gzip<delta> > const & del,
@@ -320,39 +318,6 @@ public:
   void get_file_cert(hexenc<id> const & hash,
 		     file<cert> & cert);
 
-  // network stuff
-
-  void get_queued_targets(std::set<url> & targets);
-
-  void get_queue_count(url const & u, size_t & num_packets);
-
-  void get_queued_content(url const & u, 
-			  size_t const & queue_pos,
-			  std::string & content);
-  
-  void get_sequences(url const & u, 
-		     unsigned long & maj, 
-		     unsigned long & min);
-
-  void get_all_known_sources(std::set<url> & sources);
-
-  void put_sequences(url const & u, 
-		     unsigned long maj, 
-		     unsigned long min);
-  
-  void queue_posting(url const & u,
-		     std::string const & contents);
-
-  void delete_posting(url const & u,
-		      size_t const & queue_pos);
-
-
-  bool manifest_exists_on_netserver (url const & u, 
-				     manifest_id const & m);
-
-  void note_manifest_on_netserver (url const & u, 
-				   manifest_id const & m);
-
   // merkle tree stuff
 
   bool merkle_node_exists(std::string const & type,
@@ -401,20 +366,6 @@ public:
   void commit();
 };
 
-// a reverse_queue is an object which creates a temporary table for
-// postings, and then queues the postings (in reverse) to its database when
-// it is destroyed, and deletes the table.
-
-class reverse_queue
-{
-  database & db;
-public:
-  reverse_queue(database & d);
-  reverse_queue(reverse_queue const & other);
-  void reverse_queue_posting(url const & u,
-			     std::string const & contents);
-  ~reverse_queue();
-};
 
 
 #endif // __DATABASE_HH__

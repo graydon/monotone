@@ -7,7 +7,7 @@
 // see the file COPYING for details
 
 #include <string>
-#include <iostream>
+#include <iosfwd>
 
 // the purpose of this file is to wrap things which are otherwise strings
 // in a bit of typesafety, set up enumerations and tuple-types, and

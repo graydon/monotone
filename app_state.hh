@@ -9,8 +9,6 @@
 class app_state;
 class lua_hooks;
 
-#include <string>
-
 #include "database.hh"
 #include "lua.hh"
 #include "work.hh"

@@ -4,14 +4,13 @@
 // see the file COPYING for details
 
 #include <string>
+#include <iostream>
 #include <boost/filesystem/path.hpp>
 #include <boost/version.hpp>
 
 #include "constants.hh"
 #include "file_io.hh"
-#include "network.hh"
 #include "sanity.hh"
-#include "url.hh"
 #include "vocab.hh"
 
 // verifiers for various types of data
@@ -54,18 +53,6 @@ verify(ace & val)
   val.ok = true;
 }
 
-static inline void 
-verify(urlenc & val)
-{
-  if (val.ok)
-    return;
-
-  string::size_type pos = val().find_first_not_of(constants::legal_url_bytes);
-  N(pos == string::npos,
-    F("bad character '%c' in URL-encoded string '%s'") % val().at(pos) % val);
-
-  val.ok = true;
-}
 
 static inline void 
 verify(cert_name & val)
@@ -89,30 +76,6 @@ verify(rsa_keypair_id & val)
   string::size_type pos = val().find_first_not_of(constants::legal_key_name_bytes);
   N(pos == string::npos,
     F("bad character '%c' in key name '%s'") % val().at(pos) % val);
-
-  val.ok = true;
-}
-
-
-static inline void 
-verify(url & val)
-{
-  if (val.ok)
-    return;
-
-  if (val() == "")
-    return;
-
-  string::size_type pos = val().find_first_not_of(constants::legal_url_bytes);
-  N(pos == string::npos,
-    F("bad character '%c' in URL name '%s'") % val().at(pos) % val);
-
-  ace user, host, group;
-  urlenc path;
-  string proto;
-  unsigned long port;
-  N(parse_url(val, proto, user, host, path, group, port),
-    F("malformed URL: '%s'") % val);
 
   val.ok = true;
 }

@@ -2,23 +2,21 @@ AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
 MOST_SOURCES =								\
-	 app_state.cc commands.cc diff_patch.cc lua.cc			\
-	 nntp_tasks.cc patch_set.cc transforms.cc update.cc work.cc	\
-	 cert.cc database.cc file_io.cc keys.cc manifest.cc		\
-         proto_machine.cc packet.cc sanity.cc vocab.cc			\
-         rcs_file.cc rcs_import.cc xdelta.cc network.cc			\
-         http_tasks.cc ui.cc schema_migration.cc smtp_tasks.cc		\
-         constants.cc url.cc netsync.cc netcmd.cc merkle_tree.cc        \
+	 app_state.cc commands.cc diff_patch.cc lua.cc patch_set.cc	\
+         transforms.cc update.cc work.cc cert.cc database.cc file_io.cc	\
+         keys.cc manifest.cc packet.cc sanity.cc vocab.cc rcs_file.cc	\
+         rcs_import.cc xdelta.cc ui.cc schema_migration.cc		\
+         constants.cc netsync.cc netcmd.cc merkle_tree.cc		\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
-	 proto_machine.hh packet_types.hh transforms.hh vocab.hh	\
-	 cleanup.hh diff_patch.hh lua.hh nntp_tasks.hh patch_set.hh	\
+	 packet_types.hh transforms.hh vocab.hh				\
+	 cleanup.hh diff_patch.hh lua.hh patch_set.hh			\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
-         lcs.hh network.hh http_tasks.hh constants.hh ui.hh		\
-         schema_migration.hh smtp_tasks.hh quick_alloc.hh mac.hh url.hh \
-	 netsync.hh netcmd.hh netio.hh merkle_tree.hh numeric_vocab.hh
+         lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
+	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
+	 numeric_vocab.hh
 
 if HAVE_INET_PTON 
   IPV6 =
@@ -74,14 +72,6 @@ BOOST_SANDBOX_SOURCES = \
 	boost/circular_buffer_fwd.hpp \
 	boost/circular_buffer.hpp
 
-# warning: we're *not* currently building on win32. we'll figure out
-# how to do that someday, I suspect, but not today.
-#
-# BOOST_SANDBOX_WIN32_SOURCES = \
-# 	boost/socket/src/impl/win32/default_asynch_socket_impl.cpp \
-# 	boost/socket/src/impl/win32/default_socket_proactor.cpp 
-
-
 SQLITE_SOURCES = \
         sqlite/attach.c sqlite/auth.c sqlite/btree.c sqlite/btree_rb.c \
         sqlite/build.c sqlite/copy.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
@@ -106,24 +96,18 @@ LUA_SOURCES = \
 	lua/ltablib.c lua/ltests.c lua/ltm.c lua/ltm.h lua/lua.h lua/lualib.h \
 	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h
 
-ADNS_SOURCES = \
-	adns/adns.h adns/check.c adns/config.h adns/dlist.h adns/event.c \
-	adns/general.c adns/internal.h adns/parse.c adns/poll.c adns/query.c \
-	adns/reply.c adns/setup.c adns/transmit.c adns/tvarith.h adns/types.c 
-
 IDNA_SOURCES = \
 	idna/gunibreak.h idna/gunidecomp.h idna/idna.h idna/nfkc.c	\
 	idna/punycode.c idna/rfc3454.c idna/stringprep.h idna/version.c \
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
-bin_PROGRAMS = monotone depot.cgi
+bin_PROGRAMS = monotone
 check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
 
 monotone_SOURCES = $(MOST_SOURCES) monotone.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
-depot_cgi_SOURCES = constants.cc schema_migration.cc depot.cc 
 txt2c_SOURCES = txt2c.cc
 
 noinst_LIBRARIES = lib3rdparty.a 
@@ -133,11 +117,6 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(NETXX_SOURCES)
 
 AM_CPPFLAGS =
-
-if BUNDLED_ADNS
-lib3rdparty_a_SOURCES += $(ADNS_SOURCES)
-AM_CPPFLAGS += -I$(top_srcdir)/adns
-endif
 
 if BUNDLED_LUA
 lib3rdparty_a_SOURCES += $(LUA_SOURCES)

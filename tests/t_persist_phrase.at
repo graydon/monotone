@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([calculation of unidiffs])
+AT_SETUP([persistence of passphrase])
 
 MONOTONE_SETUP
 

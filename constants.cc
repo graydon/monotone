@@ -78,23 +78,7 @@ namespace constants
   // label separators
   ".@"
   ;
-  
-  // all the ASCII characters (bytes) which can occur in URLs
-  char const * const legal_url_bytes =
-  // alphanumerics
-  "abcdefghijklmnopqrstuvwxyz"
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  "0123456789"
-  // mark chars
-  "-_.!~*'()"
-  // extra path chars
-  ":@&=+$,"
-  // path separator
-  "/"
-  // escape char
-  "%"
-  ;
-  
+    
   // all the ASCII characters (bytes) which can occur in cert names
   char const * const legal_cert_name_bytes =
   // LDH characters

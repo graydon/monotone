@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([communicating with another monotone via netsync])
+AT_SETUP([exchanging work via netsync])
 
 MONOTONE_SETUP
 AT_CHECK(cp test.db test2.db)
@@ -29,9 +29,9 @@ F_VER1=`SHA1(testfile)`
 VER1=`SHA1(MT/manifest)`
 
 killall -q -KILL monotone
-
-         MONOTONE --rcfile=netsync.lua               netsync server readonly 127.0.0.1:5555 testbranch  >/dev/null 2>&1 &
-AT_CHECK(MONOTONE --rcfile=netsync.lua --db=test2.db netsync client writeonly 127.0.0.1:5555 testbranch, [], [ignore], [ignore])
+         MONOTONE --rcfile=netsync.lua               serve 127.0.0.1:5555 testbranch &
+AT_CHECK(MONOTONE --rcfile=netsync.lua --db=test2.db pull 127.0.0.1:5555 testbranch, [], [ignore], [ignore])
+killall -q -KILL monotone
 
 AT_CHECK(MONOTONE --db=test2.db ls certs manifest $VER0, [], [stdout])
 AT_CHECK(mv stdout certs, [], [ignore])
@@ -71,7 +71,5 @@ INFO1=`SHA1(stdout)`
 AT_CHECK(MONOTONE --db=test2.db db info, [], [stdout])
 INFO2=`SHA1(stdout)`
 AT_CHECK(test $INFO1 == $INFO2)
-
-killall -q -QUIT monotone
 
 AT_CLEANUP

@@ -10,7 +10,6 @@
 ATOMIC(external);             // "external" string in unknown system charset
 ATOMIC(utf8);                 // unknown string in UTF8 charset
 ATOMIC(ace);                  // unknown string in ACE form
-ATOMIC(urlenc);               // unknown string in URL-encoded form
 
 ATOMIC(id);                   // hash of data
 ATOMIC(data);                 // meaningless blob
@@ -26,8 +25,6 @@ ATOMIC(rsa_keypair_id);       // keyname@domain.you.own
 ATOMIC(rsa_pub_key);          // some nice numbers
 ATOMIC(rsa_priv_key);         // some nice numbers
 ATOMIC(rsa_sha1_signature);   // some other nice numbers
-
-ATOMIC(url);                  // URL of news server / depot / email list
 
 DECORATE(manifest);           // thing associated with a manifest
 DECORATE(file);               // thing associated with a file

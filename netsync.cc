@@ -22,6 +22,7 @@
 #include "netio.hh"
 #include "netsync.hh"
 #include "numeric_vocab.hh"
+#include "packet.hh"
 #include "patch_set.hh"
 #include "sanity.hh"
 #include "transforms.hh"
@@ -203,7 +204,8 @@ done_marker
 };
 
 struct 
-session
+session :
+  public manifest_edge_analyzer
 {
   protocol_role role;
   protocol_voice const voice;
@@ -237,6 +239,8 @@ session
   bool sent_goodbye;
   boost::scoped_ptr<CryptoPP::AutoSeededRandomPool> prng;
 
+  packet_db_writer dbw;
+
   session(protocol_role role,
 	  protocol_voice voice,
 	  vector<utf8> const & collections,
@@ -246,6 +250,8 @@ session
 	  socket_type sock, 
 	  Timeout const & to);
 
+  virtual ~session() {}
+
   id mk_nonce();
   void mark_recent_io();
   bool done_all_refinements();
@@ -253,8 +259,8 @@ session
   void maybe_say_goodbye();
   void analyze_ancestry_graph();
   void analyze_manifest(manifest_map const & man);
-  void analyze_manifest_edge(manifest_map const & parent,
-			     manifest_map const & child);
+  virtual void analyze_manifest_edge(manifest_map const & parent,
+				     manifest_map const & child);
   void request_manifests_recursive(id const & i, set<id> & visited);
 
   Probe::ready_type which_events() const;
@@ -382,7 +388,8 @@ session::session(protocol_role role,
   last_io_time(::time(NULL)),
   saved_nonce(""),
   received_goodbye(false),
-  sent_goodbye(false)
+  sent_goodbye(false),
+  dbw(app, true, this)
 {
   if (voice == client_voice)
     {
@@ -1930,7 +1937,7 @@ session::process_data_cmd(netcmd_item_type type,
 	    throw bad_decode(F("hash check failed for public key '%s' (%s);"
 			       " wanted '%s' got '%s'")  
 			     % hitem % keyid % hitem % tmp);
-	  this->app.db.put_key(keyid, pub);
+	  this->dbw.consume_public_key(keyid, pub);
 	  update_merkle_trees(key_item, tmp, true);
 	}
       break;
@@ -1946,7 +1953,7 @@ session::process_data_cmd(netcmd_item_type type,
 	  cert_hash_code(c, tmp);
 	  if (! (tmp == hitem))
 	    throw bad_decode(F("hash check failed for manifest cert '%s'")  % hitem);
-	  this->app.db.put_manifest_cert(manifest<cert>(c));
+	  this->dbw.consume_manifest_cert(manifest<cert>(c));
 	  update_merkle_trees(mcert_item, tmp, true);
 	  if (c.name == ancestor_cert_name)
 	    {
@@ -1975,7 +1982,7 @@ session::process_data_cmd(netcmd_item_type type,
 	  cert_hash_code(c, tmp);
 	  if (! (tmp == hitem))
 	    throw bad_decode(F("hash check failed for file cert '%s'")  % hitem);
-	  this->app.db.put_file_cert(file<cert>(c));
+	  this->dbw.consume_file_cert(file<cert>(c));
 	  update_merkle_trees(fcert_item, tmp, true);
 	}
       break;
@@ -1989,7 +1996,7 @@ session::process_data_cmd(netcmd_item_type type,
 	  {
 	    base64< gzip<data> > packed_dat;
 	    pack(data(dat), packed_dat);
-	    this->app.db.put_manifest(mid, manifest_data(packed_dat));
+	    this->dbw.consume_manifest_data(mid, manifest_data(packed_dat));
 	    manifest_map man;
 	    read_manifest_map(data(dat), man);
 	    analyze_manifest(man);
@@ -2006,7 +2013,7 @@ session::process_data_cmd(netcmd_item_type type,
 	  {
 	    base64< gzip<data> > packed_dat;
 	    pack(data(dat), packed_dat);
-	    this->app.db.put_file(fid, file_data(packed_dat));
+	    this->dbw.consume_file_data(fid, file_data(packed_dat));
 	  }
       }
       break;
@@ -2036,73 +2043,23 @@ session::process_delta_cmd(netcmd_item_type type,
     case manifest_item:
       {
 	manifest_id old_manifest(hbase), new_manifest(hident);
-	if (! this->app.db.manifest_version_exists(old_manifest))
-	  L(F("manifest delta base '%s' does not exist in our database\n") 
-	    % hbase);
-	else if (this->app.db.manifest_version_exists(new_manifest))
-	  L(F("manifest delta head '%s' already exists in our database\n") 
-	    % hident);
-	else
-	  {
-	    manifest_data old_dat;
-	    this->app.db.get_manifest_version(old_manifest, old_dat);
-	    data old_unpacked;
-	    unpack(old_dat.inner(), old_unpacked);
-	    string tmp;
-	    apply_delta(old_unpacked(), del(), tmp);
-	    hexenc<id> confirm;
-	    calculate_ident(data(tmp), confirm);
-	    if (!(confirm == hident))
-	      {
-		L(F("reconstructed manifest from delta '%s' -> '%s' has wrong id '%s'\n") 
-		  % hbase % hident % confirm);
-	      }
-	    else
-	      {
-		base64< gzip<delta> > packed_del;
-		pack(del, packed_del);		
-		this->app.db.put_manifest_version(old_manifest, new_manifest, 
-						  manifest_delta(packed_del));
-		manifest_map parent_man, child_man;
-		read_manifest_map(old_unpacked, parent_man);
-		read_manifest_map(data(tmp), child_man);
-		analyze_manifest_edge(parent_man, child_man);
-	      }					      
-	  }
+	base64< gzip<delta> > packed_del;
+	pack(del, packed_del);
+	this->dbw.consume_manifest_delta(old_manifest, 
+					 new_manifest,
+					 manifest_delta(packed_del));
+	
       }
       break;
 
     case file_item:
       {
 	file_id old_file(hbase), new_file(hident);
-	if (! this->app.db.file_version_exists(old_file))
-	  L(F("file delta base '%s' does not exist in our database\n") 
-	    % hbase);
-	else if (this->app.db.file_version_exists(new_file))
-	  L(F("file delta head '%s' already exists in our database\n") 
-	    % hident);
-	else
-	  {
-	    file_data old_dat;
-	    this->app.db.get_file_version(old_file, old_dat);
-	    data old_unpacked;
-	    unpack(old_dat.inner(), old_unpacked);
-	    string tmp;
-	    apply_delta(old_unpacked(), del(), tmp);
-	    hexenc<id> confirm;
-	    calculate_ident(data(tmp), confirm);
-	    if (!(confirm == hident))
-	      {
-		L(F("reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n") 
-		  % hbase % hident % confirm);
-	      }
-	    else
-	      {
-		base64< gzip<delta> > packed_del;
-		pack(del, packed_del);		
-		this->app.db.put_file_version(old_file, new_file, file_delta(packed_del));
-	      }					      
-	  }
+	base64< gzip<delta> > packed_del;
+	pack(del, packed_del);
+	this->dbw.consume_file_delta(old_file, 
+				     new_file,
+				     file_delta(packed_del));
       }
       break;
       
