@@ -12,6 +12,7 @@ ADD_FILE(baz, [8303
 ADD_FILE(quux, [booga booga
 ])
 COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
 
 AT_CHECK(mv quux renamed-quux)
 AT_CHECK(MONOTONE rename quux renamed-quux, [], [ignore], [ignore])
@@ -23,12 +24,39 @@ COMMIT(testbranch)
 AT_CHECK(cp baz baz.original)
 SET_FILE(baz, [otherstuff
 ])
+AT_CHECK(cp baz baz.otherbranch)
 COMMIT(otherbranch)
+
+REVERT_TO($BASE_R)
+
+ADD_FILE(stuffstuff, [lalalalala
+])
+AT_CHECK(cp foo foo.original)
+SET_FILE(foo, [thingiethingie
+])
+COMMIT(testbranch)
+NEW_BASE_R=`BASE_REVISION`
+
+AT_CHECK(MONOTONE merge --branch=testbranch, [], [ignore], [ignore])
+# get renamed-quux out of the way for update
+AT_CHECK(mv renamed-quux orig-renamed-quux)
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(test $NEW_BASE_R != `BASE_REVISION`)
+
+AT_CHECK(MONOTONE complete manifest "", [], [stdout], [ignore])
+AT_CHECK(mv stdout old.manifests)
+AT_CHECK(MONOTONE complete revision "", [], [stdout], [ignore])
+AT_CHECK(mv stdout old.revisions)
 
 # Rebuild
 AT_CHECK(MONOTONE db rebuild, [], [ignore], [ignore])
 
 # Verify stuff is the same
+AT_CHECK(MONOTONE complete manifest "", [], [stdout], [ignore])
+AT_CHECK(cmp stdout old.manifests)
+AT_CHECK(MONOTONE complete revision "", [], [stdout], [ignore])
+AT_CHECK(test `wc -l <stdout` = `wc -l <old.revisions`)
+
 AT_CHECK(MONOTONE checkout --branch=testbranch tb, [], [ignore], [ignore])
 
 AT_CHECK(cmp foo tb/foo)
@@ -39,9 +67,9 @@ AT_CHECK(cmp otherthingie tb/otherthingie)
 
 AT_CHECK(MONOTONE checkout --branch=otherbranch ob, [], [ignore], [ignore])
 
-AT_CHECK(cmp foo ob/foo)
+AT_CHECK(cmp foo.original ob/foo)
 AT_CHECK(test ! -e ob/bar)
-AT_CHECK(cmp baz ob/baz)
+AT_CHECK(cmp baz.otherbranch ob/baz)
 AT_CHECK(cmp renamed-quux ob/renamed-quux)
 AT_CHECK(cmp otherthingie ob/otherthingie)
 

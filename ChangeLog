@@ -1,3 +1,8 @@
+2005-02-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_rebuild.at: Beef up test in response to possible
+	problems reported by Derek Scherger.
+
 2005-01-31  Nathaniel Smith  <njs@codesourcery.com>
 
 	* rcs_import.cc (store_manifest_edge): Don't try to store deltas
