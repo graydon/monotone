@@ -4,9 +4,6 @@ AT_SETUP([disapproving of a revision])
 
 MONOTONE_SETUP
 
-# for the time being, skip this test
-exit 77
-
 AT_DATA(testfile, [first line of the file
 second line of the file
 third line of the file
