@@ -1,3 +1,9 @@
+2005-03-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Add some missing @sc{}'s.
+	* cryptopp/config.h: Use "mt-stdint.h", not <stdint.h>, for
+	portability.
+
 2005-03-19  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (EXTRA_DIST): Add UPGRADE and README.changesets.

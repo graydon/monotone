@@ -3769,35 +3769,35 @@ detected:
 @itemize
 
 @item missing files 
-that are referenced by their sha1 hash from some manifest but do not
+that are referenced by their @sc{sha1} hash from some manifest but do not
 exist in the database.  This is a serious problem; it means that your
 history is not fully reconstructible.  You can fix it by finding the
 file with the given hash, and loading it into your database with
 @command{fload}.
 
 @item unreferenced files
-that exist in the database but are not referenced by their sha1 hash
-from any existing manifest.  In itself, this only indicates some wasted
-space, and is not a problem; it's possible it could arise under normal
-use (for instance, in some strange corner cases following an incomplete
-netsync).  It could also arise, though, as a symptom of some other
-more serious problem.
+that exist in the database but are not referenced by their @sc{sha1}
+hash from any existing manifest.  In itself, this only indicates some
+wasted space, and is not a problem; it's possible it could arise under
+normal use (for instance, in some strange corner cases following an
+incomplete netsync).  It could also arise, though, as a symptom of some
+other more serious problem.
 
 @item missing manifests
-that are referenced by their sha1 hash from some revision but do not
-exist in the database.  This is a serious problem; it means that your
-history is not fully reconstructible.  You can fix it by finding a
+that are referenced by their @sc{sha1} hash from some revision but do
+not exist in the database.  This is a serious problem; it means that
+your history is not fully reconstructible.  You can fix it by finding a
 database containing the manifest, and using @command{mdata} on that
 database to create a manifest data packet, which can be loaded into your
 database with @command{read}.
 
 @item unreferenced manifests
-that exist in the database but are not referenced by their sha1 hash
-from any existing revision.  In itself, this only indicates some wasted
-space, and is not a problem; it's possible it could arise under normal
-use (for instance, in some strange corner cases following an incomplete
-netsync).  It could also arise, though, as a symptom of some other
-more serious problem.
+that exist in the database but are not referenced by their @sc{sha1}
+hash from any existing revision.  In itself, this only indicates some
+wasted space, and is not a problem; it's possible it could arise under
+normal use (for instance, in some strange corner cases following an
+incomplete netsync).  It could also arise, though, as a symptom of some
+other more serious problem.
 
 @item incomplete manifests
 that exist in the database but contain references to files that do not
@@ -3805,7 +3805,7 @@ exist in the database.  For diagnosis and solution, see ``missing
 files'' above.
 
 @item missing revisions
-that are referenced by their sha1 hash from some other revision or
+that are referenced by their @sc{sha1} hash from some other revision or
 revision cert but do not exist in the database.  This may be a serious
 problem; it may indicate that your history is not fully reconstructible
 (if the reference is from another revision) or that someone is creating

@@ -1,7 +1,7 @@
 #ifndef CRYPTOPP_CONFIG_H
 #define CRYPTOPP_CONFIG_H
 
-#include <stdint.h>
+#include "mt-stdint.h"
 
 // ***************** Important Settings ********************
 
