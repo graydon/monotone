@@ -23,7 +23,6 @@
 #include "netsync.hh"
 #include "numeric_vocab.hh"
 #include "packet.hh"
-#include "patch_set.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"

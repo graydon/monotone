@@ -11,7 +11,6 @@
 #include "mac.hh"
 #include "netio.hh"
 #include "sanity.hh"
-#include "patch_set.hh"
 #include "transforms.hh"
 #include "ui.hh"
 

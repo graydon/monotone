@@ -2007,6 +2007,53 @@ apply_change_set(manifest_map const & old_man,
     }
 }
 
+// quick, optimistic and destructive version for log walker
+file_path
+apply_change_set_inverse(change_set const & cs,
+			 file_path const & file_in_second)
+{
+  tid_source ts;
+  path_analysis analysis;
+  directory_map second_dmap;
+  file_path file_in_first;
+
+  analyze_rearrangement(cs.rearrangement, analysis, ts);
+  build_directory_map(analysis.second, second_dmap);
+  reconstruct_path(file_in_second, second_dmap, analysis.first, file_in_first);
+  return file_in_first;
+}
+
+// quick, optimistic and destructive version for rcs importer
+void
+apply_change_set(change_set const & cs,
+		 manifest_map & man)
+{
+  if (cs.rearrangement.renamed_files.empty() 
+      && cs.rearrangement.renamed_dirs.empty()
+      && cs.rearrangement.deleted_dirs.empty())
+    {
+      // fast path for simple drop/add/delta file operations
+      for (std::set<file_path>::const_iterator i = cs.rearrangement.deleted_files.begin();
+	   i != cs.rearrangement.deleted_files.end(); ++i)
+	{
+	  man.erase(*i);
+	}
+      for (change_set::delta_map::const_iterator i = cs.deltas.begin(); 
+	   i != cs.deltas.end(); ++i)
+	{
+	  if (!null_id(delta_entry_dst(i)))
+	    man[delta_entry_path(i)] = delta_entry_dst(i);
+	}
+    }
+  else
+    {
+      // fall back to the slow way
+      manifest_map tmp;
+      apply_change_set(man, cs, tmp);
+      man = tmp;
+    }
+}
+
 
 // i/o stuff
 

@@ -2492,6 +2492,185 @@ CMD(revert, "working copy", "[FILE]...",
 }
 
 
+CMD(rcs_import, "rcs", "RCSFILE...", "import all versions in RCS files")
+{
+  if (args.size() < 1)
+    throw usage(name);
+  
+  transaction_guard guard(app.db);
+  for (vector<utf8>::const_iterator i = args.begin();
+       i != args.end(); ++i)
+    {
+      import_rcs_file(mkpath((*i)()), app.db);
+    }
+  guard.commit();
+}
+
+
+CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
+{
+  if (args.size() != 1)
+    throw usage(name);
+
+  import_cvs_repo(mkpath(idx(args, 0)()), app);
+}
+
+CMD(log, "informative", "[ID]", "print log history in reverse order (which affected file)")
+{
+  revision_set rev;
+  revision_id rid;
+  set< pair<file_path, revision_id> > frontier;
+  file_path file;
+
+  if (args.size() > 2)
+    throw usage(name);
+
+  if (args.size() == 2)
+  {  
+    complete(app, idx(args, 0)(), rid);
+    file=file_path(idx(args, 1)());
+  }  
+  else if (args.size() == 1)
+    { 
+      std::string arg=idx(args, 0)();
+      if (arg.find_first_not_of(constants::legal_id_bytes) == string::npos
+          && arg.size() <= constants::idlen)
+	complete(app, arg, rid);
+      else
+	{  
+	  file = file_path(arg);
+	  get_revision_id(rid);
+	}
+    }
+  else
+    {
+      get_revision_id(rid);
+    }
+
+  frontier.insert(make_pair(file, rid));
+  
+  cert_name author_name(author_cert_name);
+  cert_name date_name(date_cert_name);
+  cert_name changelog_name(changelog_cert_name);
+  cert_name comment_name(comment_cert_name);
+  cert_name tag_name(tag_cert_name);
+
+  while(! frontier.empty())
+    {
+      set< pair<file_path, revision_id> > next_frontier;
+      for (set< pair<file_path, revision_id> >::const_iterator i = frontier.begin();
+	   i != frontier.end(); ++i)
+	{ 
+	  file = i->first;
+	  rid = i->second;
+
+	  bool print_this = file().empty();
+	  set<  revision<id> > parents;
+	  vector< revision<cert> > tmp;
+
+	  if (!app.db.revision_exists(rid))
+	    {
+	      L(F("revision %s does not exist in db, skipping\n") % rid);
+	      continue;
+	    }
+
+	  app.db.get_revision(rid, rev);
+	  
+	  for (edge_map::const_iterator e = rev.edges.begin();
+	       e != rev.edges.end(); ++e)
+	    {
+	      change_set const & cs = edge_changes(e);
+	      if (! file().empty())
+		{
+		  file_path old_file = apply_change_set_inverse(cs, file);
+		  L(F("revision '%s' in '%s' maps to '%s' in %s\n")
+		    % rid % file % old_file % edge_old_revision(e));
+		  if (!(old_file == file) || cs.deltas.find(file) != cs.deltas.end())
+		    {
+		      file = old_file;
+		      print_this = true;
+		    }
+		}
+	      next_frontier.insert(std::make_pair(file, edge_old_revision(e)));
+	    }
+	  
+	  if (print_this)
+	  {
+	  cout << "-----------------------------------------------------------------"
+	       << endl;
+	  cout << "Version: " << rid << endl;
+
+	  cout << "Author:";
+	  app.db.get_revision_certs(rid, author_name, tmp);
+	  erase_bogus_certs(tmp, app);
+	  for (vector< revision<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+	    {
+	      cert_value tv;
+	      decode_base64(j->inner().value, tv);
+	      cout << " " << tv;
+	    }	  
+	  cout << endl;
+
+	  cout << "Date:";
+	  app.db.get_revision_certs(rid, date_name, tmp);
+	  erase_bogus_certs(tmp, app);
+	  for (vector< revision<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+	    {
+	      cert_value tv;
+	      decode_base64(j->inner().value, tv);
+	      cout << " " << tv;
+	    }	  
+	  cout << endl;
+
+	  app.db.get_revision_certs(rid, tag_name, tmp);
+	  erase_bogus_certs(tmp, app);
+	  if (!tmp.empty())
+	    {
+	      for (vector< revision<cert> >::const_iterator j = tmp.begin();
+		   j != tmp.end(); ++j)
+		{
+		  cert_value tv;
+		  decode_base64(j->inner().value, tv);
+		  cout << "Tag: " << tv << endl;
+		}	  
+	      cout << endl;
+	    }
+
+	  cout << "ChangeLog:" << endl << endl;
+	  app.db.get_revision_certs(rid, changelog_name, tmp);
+	  erase_bogus_certs(tmp, app);
+	  for (vector< revision<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+	    {
+	      cert_value tv;
+	      decode_base64(j->inner().value, tv);
+	      cout << " " << tv << endl;
+	    }	  
+	  cout << endl;
+
+	  app.db.get_revision_certs(rid, comment_name, tmp);
+	  erase_bogus_certs(tmp, app);
+	  if (!tmp.empty())
+	    {
+	      cout << "Revision Comments:" << endl << endl;
+	      for (vector< revision<cert> >::const_iterator j = tmp.begin();
+		   j != tmp.end(); ++j)
+		{
+		  cert_value tv;
+		  decode_base64(j->inner().value, tv);
+		  cout << j->inner().key << ": " << tv << endl;
+		}	  
+	      cout << endl;
+	    }
+	  }
+	}
+      frontier = next_frontier;
+    }
+}
+
+
 /*
 
 // actual commands follow
@@ -2504,8 +2683,6 @@ CMD(revert, "working copy", "[FILE]...",
 // cert
 // vcheck
 // tag
-// approve
-// disapprove
 // comment
 // add
 // drop
@@ -2540,13 +2717,15 @@ CMD(revert, "working copy", "[FILE]...",
 // read
 // debug
 // db
+// rcs_import
+// cvs_import
+// revert
 //
 // NOT-DONE
 // --------
-// revert
+// approve
+// disapprove
 // log
-// rcs_import
-// cvs_import
 //
 // agraph
 
@@ -2577,205 +2756,7 @@ CMD(disapprove, "certificate", "REVISION",
   packet_db_writer dbw(app);
   cert_revision_approval(c, false, app, dbw);
 }
+*/
 
-
-CMD(log, "informative", "[ID] [file]", "print log history in reverse order (which affected file)")
-{
-  manifest_map m;
-  manifest_id m_id;
-  set<manifest_id> frontier, cycles;
-  file_path file;
-
-  if (args.size() > 2)
-    throw usage(name);
-
-  if (args.size() == 2)
-  {  
-    complete(app, idx(args, 0)(), m_id);
-    file=file_path(idx(args, 1)());
-  }  
-  else if (args.size() == 1)
-    { 
-      std::string arg=idx(args, 0)();
-      if (arg.find_first_not_of(constants::legal_id_bytes) == string::npos
-          && arg.size() <= constants::idlen)
-	complete(app, arg, m_id);
-      else
-	{  
-	  file = file_path(arg);
-	  get_manifest_map(m);
-	  calculate_ident (m, m_id);
-	}
-    }
-  else
-    {
-      get_manifest_map(m);
-      calculate_ident (m, m_id);
-    }
-
-  frontier.insert(m_id);
-  
-  cert_name ancestor_name(ancestor_cert_name);
-  cert_name author_name(author_cert_name);
-  cert_name date_name(date_cert_name);
-  cert_name changelog_name(changelog_cert_name);
-  cert_name comment_name(comment_cert_name);
-  cert_name tag_name(tag_cert_name);
-
-  while(! frontier.empty())
-    {
-      set<manifest_id> next_frontier;
-      for (set<manifest_id>::const_iterator i = frontier.begin();
-	   i != frontier.end(); ++i)
-	{ 
-	  bool print_this = file().empty(); // (file==file_path());
-	  vector< manifest<cert> > tmp;
-	  file_id current_file_id;
-	  
-	  if (!print_this)
-	  {  
-	    manifest_data dat;
-	    app.db.get_manifest_version(*i,dat);
-	    manifest_map mp;
-	    read_manifest_map(dat,mp);
-	    L(F("Looking for %s in %s, found %s\n") % file % *i % mp[file]);
-	    current_file_id=mp[file];
-	  }
-
-	  app.db.get_manifest_certs(*i, ancestor_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  if (tmp.empty())
-	  {  
-	    if (!print_this && !(current_file_id==file_id()))
-	      print_this=true;
-	  }
-
-	  else for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-		    j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      manifest_id id(tv());
-	      if (!print_this)
-	      {  
-		manifest_data dat;
-		app.db.get_manifest_version(id,dat);
-		manifest_map mp;
-		read_manifest_map(dat,mp);
-		L(F("Looking for %s in %s, found %s\n") % file % *i % mp[file]);
-		print_this=!(current_file_id==mp[file]);
-	      }
-	      if (cycles.find(id) == cycles.end())
-		{
-		  next_frontier.insert(id);
-		  cycles.insert(id);
-		}
-	    }
-
-	  if (print_this)
-	  {
-	  cout << "-----------------------------------------------------------------"
-	       << endl;
-	  cout << "Version: " << *i << endl;
-
-	  cout << "Author:";
-	  app.db.get_manifest_certs(*i, author_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      cout << " " << tv;
-	    }	  
-	  cout << endl;
-
-	  cout << "Date:";
-	  app.db.get_manifest_certs(*i, date_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      cout << " " << tv;
-	    }	  
-	  cout << endl;
-
-	  app.db.get_manifest_certs(*i, tag_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  if (!tmp.empty())
-	    {
-	      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-		   j != tmp.end(); ++j)
-		{
-		  cert_value tv;
-		  decode_base64(j->inner().value, tv);
-		  cout << "Tag: " << tv << endl;
-		}	  
-	      cout << endl;
-	    }
-
-	  cout << "ChangeLog:" << endl << endl;
-	  app.db.get_manifest_certs(*i, changelog_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      cout << " " << tv << endl;
-	    }	  
-	  cout << endl;
-
-	  app.db.get_manifest_certs(*i, comment_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  if (!tmp.empty())
-	    {
-	      cout << "Manifest Comments:" << endl << endl;
-	      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
-		   j != tmp.end(); ++j)
-		{
-		  cert_value tv;
-		  decode_base64(j->inner().value, tv);
-		  cout << j->inner().key << ": " << tv << endl;
-		}	  
-	      cout << endl;
-	    }
-	  }
-	}
-      frontier = next_frontier;
-    }
-}
-
-
-
-
-
-
-CMD(rcs_import, "rcs", "RCSFILE...", "import all versions in RCS files")
-{
-  if (args.size() < 1)
-    throw usage(name);
-  
-  transaction_guard guard(app.db);
-  for (vector<utf8>::const_iterator i = args.begin();
-       i != args.end(); ++i)
-    {
-      import_rcs_file(mkpath((*i)()), app.db);
-    }
-  guard.commit();
-}
-
-
-CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  import_cvs_repo(mkpath(idx(args, 0)()), app);
-}
-
- */
 
 }; // namespace commands

@@ -14,7 +14,6 @@
 #include "lcs.hh"
 #include "manifest.hh"
 #include "packet.hh"
-#include "patch_set.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "vocab.hh"

@@ -1,3 +1,19 @@
+2004-10-04  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am: Re-enable rcs stuff.
+	* cert.{cc,hh}: Bug fixes.
+	* change_set.{cc,hh} (apply_change_set)
+	(apply_change_set_inverse): New helper functions.
+	* commands.cc (log)
+	(rcs_import)
+	(cvs_import): Teach about revisions.
+	* database.cc (get_version): Block reconstruction loops.
+	* diff_patch.cc:
+	* lua.cc:
+	* netsync.cc: Remove references to obsolete includes.
+	* rcs_file.cc: Pick up bug fix from trunk.
+	* rcs_import.cc: Teach about revisions.
+
 2004-10-03  graydon hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh}: Lots of little bug fixes.

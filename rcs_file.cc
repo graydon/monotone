@@ -380,7 +380,7 @@ struct parser
       { 
 	std::string stmp, ntmp;
 	sym(stmp); colon(); num(ntmp); 
-	r.admin.symbols.insert(make_pair(stmp, ntmp));
+	r.admin.symbols.insert(make_pair(ntmp, stmp));
       } 
     semi();
     expect("locks"); while(symp()) { sym(); colon(); num(); } semi();

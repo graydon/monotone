@@ -73,6 +73,14 @@ cvs_key
     return true;
   }
 
+  inline bool operator==(cvs_key const & other) const
+  {
+    return branch == other.branch &&
+      changelog == other.changelog &&
+      author == other.author &&
+      time == other.time;
+  }
+
   inline bool operator<(cvs_key const & other) const
   {
     // nb: this must sort as > to construct the edges in the right direction
@@ -176,7 +184,7 @@ cvs_history
 
   state_stack stk;
   file_path curr_file;
-  manifest_map head_manifest;
+  
   string base_branch;
 
   ticker n_versions;
@@ -274,7 +282,7 @@ piece_store::index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
 }
 
 
-void 
+static void 
 process_one_hunk(vector< piece > const & source,
 		 vector< piece > & dest,
 		 vector< piece >::const_iterator & i,
@@ -357,7 +365,13 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
 		      base64< gzip<delta> > const & del,
 		      database & db)
 {
-  if (db.delta_exists(old_id, "file_deltas"))
+  if (old_id == new_id)
+    {
+      L(F("skipping identity file edge\n"));
+      return;
+    }
+
+  if (db.file_version_exists(old_id))
     {
       // we already have a way to get to this old version,
       // no need to insert another reconstruction path
@@ -377,7 +391,13 @@ rcs_put_raw_manifest_edge(hexenc<id> const & old_id,
 			  base64< gzip<delta> > const & del,
 			  database & db)
 {
-  if (db.delta_exists(old_id, "manifest_deltas"))
+  if (old_id == new_id)
+    {
+      L(F("skipping identity manifest edge\n"));
+      return;
+    }
+
+  if (db.manifest_version_exists(old_id))
     {
       // we already have a way to get to this old version,
       // no need to insert another reconstruction path
@@ -385,8 +405,6 @@ rcs_put_raw_manifest_edge(hexenc<id> const & old_id,
     }
   else
     {
-      I(db.exists(new_id, "manifests")
-	|| db.delta_exists(new_id, "manifest_deltas"));
       db.put_delta(old_id, new_id, del, "manifest_deltas");
     }
 }
@@ -463,9 +481,12 @@ process_branch(string const & begin_version,
             cvs_key k;
             shared_ptr<cvs_state> s;
             cvs.find_key_and_state(r, curr_version, k, s);
+	    I(r.deltas.find(curr_version) != r.deltas.end());
+	    bool live_p = r.deltas.find(curr_version)->second->state != "dead";
             s->in_edges.insert(cvs_file_edge(curr_id, cvs.curr_file, false,
-            				curr_id, cvs.curr_file, false,
+            				curr_id, cvs.curr_file, live_p,
             				cvs));
+	    ++cvs.n_versions;
          }
       }
 
@@ -505,7 +526,7 @@ process_branch(string const & begin_version,
 } 
 
 
-void 
+static void 
 import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & cvs)
 {
   rcs_file r;
@@ -516,6 +537,7 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
   {
     vector< piece > head_lines;  
     I(r.deltatexts.find(r.admin.head) != r.deltatexts.end());
+    I(r.deltas.find(r.admin.head) != r.deltas.end());
 
     hexenc<id> id; 
     base64< gzip<data> > packed;
@@ -531,24 +553,15 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
 	file_data fdat = packed;
 	db.put_file(fid, fdat);	
       }
-    
-    
+        
     {
       // create the head state in case it is a loner
       cvs_key k;
       shared_ptr<cvs_state> s;
       L(F("noting head version %s : %s\n") % cvs.curr_file % r.admin.head);
       cvs.find_key_and_state (r, r.admin.head, k, s);
-
-      // add this file and youngest version to the head manifest
-      I(cvs.head_manifest.find(cvs.curr_file) ==  cvs.head_manifest.end());
-      if (r.deltas[r.admin.head]->state != "dead")
-          cvs.head_manifest.insert(make_pair(cvs.curr_file, fid));
-      else
-         L(F("not adding %s to manifest since state is '%s'\n")
-         	% cvs.curr_file % r.deltas[r.admin.head]->state);
     }
-
+    
     global_pieces.reset();
     global_pieces.index_deltatext(r.deltatexts.find(r.admin.head)->second, head_lines);
     process_branch(r.admin.head, head_lines, dat, id, r, db, cvs);
@@ -622,7 +635,7 @@ cvs_file_edge::cvs_file_edge (file_id const & pv, file_path const & pp, bool pl,
 }
 
 
-string 
+static string 
 find_branch_for_version(multimap<string,string> const & symbols,
 			string const & version,
 			string const & base)
@@ -892,9 +905,9 @@ cvs_history::note_file_edge(rcs_file const & r,
       L(F("noting trunk edge %s : %s -> %s\n") % curr_file
 	% next_rcs_version_num
 	% prev_rcs_version_num);
-      find_key_and_state (r, next_rcs_version_num, k, s); // just to create it if necessary
+      find_key_and_state (r, next_rcs_version_num, k, s); // just to create it if necessary      
       find_key_and_state (r, prev_rcs_version_num, k, s);
-      
+
       s->in_edges.insert(cvs_file_edge(next_version, curr_file, next_alive,
 				       prev_version, curr_file, prev_alive,
 				       *this));
@@ -948,39 +961,91 @@ public:
 };
 
 
-// this is for a branch edge, in which the ancestry is the opposite
-// direction as the storage delta. nb: the terms 'parent' and 'child' are
-// *always* ancestry terms; we refer to 'old' and 'new' for storage system
-// terms (where, perhaps confusingly, old versions are those constructed by
-// applying deltas from new versions, so in fact we are successively
-// creating older and older versions here. 'old' and 'new' do not refer to
-// the execution time of this program, but rather the storage system's view
-// of time.
-
-void 
-store_branch_manifest_edge(manifest_map const & parent,
-			   manifest_map const & child,
-			   manifest_id const & parent_id,
-			   manifest_id const & child_id,
-			   app_state & app,
-			   cvs_history & cvs)
+static void 
+store_edge(revision_id const & rid,
+	   revision_set const & rev,
+	   manifest_map const & parent,
+	   manifest_map const & child,
+	   manifest_id const & parent_mid,
+	   manifest_id const & child_mid,
+	   app_state & app,
+	   cvs_history & cvs,
+	   unsigned long depth,
+	   bool head_manifest_p)
 {
 
-  unsigned long p, c;
-  p = cvs.manifest_version_interner.intern(parent_id.inner()());
-  c = cvs.manifest_version_interner.intern(child_id.inner()());
+  L(F("storing revision %s\n") % rid);
+  if (! app.db.revision_exists(rid))
+    app.db.put_revision(rid, rev);
 
-  if (cvs.manifest_cycle_detector.edge_makes_cycle(p,c))
+  if (depth == 0 && head_manifest_p)
     {
-      L(F("skipping cyclical branch edge %s -> %s\n")
-	% parent_id % child_id);
+      L(F("storing trunk head %s\n") % child_mid);
+      // the trunk branch has one very important manifest: the head.
+      // this is the "newest" of all manifests within the import, and
+      // we store it in its entirety.
+      if (! app.db.manifest_version_exists(child_mid))
+	{
+	  manifest_data mdat;
+	  write_manifest_map(child, mdat);
+	  app.db.put_manifest(child_mid, mdat);
+	}
+    }
+
+  unsigned long p, c;
+  p = cvs.manifest_version_interner.intern(parent_mid.inner()());
+  c = cvs.manifest_version_interner.intern(child_mid.inner()());
+  if (cvs.manifest_cycle_detector.edge_makes_cycle(p,c))	
+    {
+      L(F("skipping cyclical trunk manifest delta %s -> %s\n") 
+	% parent_mid % child_mid);
+      if (depth == 0)
+	{
+	  // if this is on the trunk, we are potentially breaking the chain
+	  // one would use to get to p. we need to make sure p exists.
+	  if (!app.db.manifest_version_exists(parent_mid))
+	    {
+	      manifest_data mdat;
+	      write_manifest_map(parent, mdat);
+	      app.db.put_manifest(parent_mid, mdat);
+	    }
+	}
+      else
+	{
+	  // if this is on the trunk, we are potentially breaking the chain
+	  // one would use to get to c. we need to make sure c exists.
+	  if (!app.db.manifest_version_exists(child_mid))
+	    {
+	      manifest_data mdat;
+	      write_manifest_map(child, mdat);
+	      app.db.put_manifest(child_mid, mdat);
+	    }
+	}	
+      return;
+    }
+  
+  cvs.manifest_cycle_detector.put_edge(p,c);        
+  if (depth == 0)
+    {
+      L(F("storing trunk manifest delta %s -> %s\n") 
+	% child_mid % parent_mid);
+      
+      // in this case, the ancestry-based 'child' is on a trunk, so it is
+      // a 'new' version as far as the storage system is concerned; that
+      // is to say that the ancestry-based 'parent' is a temporally older
+      // tree version, which can be constructed from the 'newer' child. so
+      // the delta should run from child (new) -> parent (old).
+      
+      base64< gzip<delta> > del;	      
+      diff(child, parent, del);
+      rcs_put_raw_manifest_edge(parent_mid.inner(),
+				child_mid.inner(),
+				del, app.db);
     }
   else
     {
-      L(F("storing branch manifest edge %s -> %s\n") 
-	% parent_id % child_id);
-
-      cvs.manifest_cycle_detector.put_edge(p,c);
+      L(F("storing branch manifest delta %s -> %s\n") 
+	% parent_mid % child_mid);
       
       // in this case, the ancestry-based 'child' is on a branch, so it is
       // an 'old' version as far as the storage system is concerned; that
@@ -989,149 +1054,96 @@ store_branch_manifest_edge(manifest_map const & parent,
       // child. remember that the storage system assumes that all deltas go
       // from temporally new -> temporally old. so the delta should go from
       // parent (new) -> child (old)
-
+      
       base64< gzip<delta> > del;	      
       diff(parent, child, del);
-      rcs_put_raw_manifest_edge(child_id.inner(),
-				parent_id.inner(),				
+      rcs_put_raw_manifest_edge(child_mid.inner(),
+				parent_mid.inner(),				
 				del, app.db);
-      packet_db_writer dbw(app);
-      cert_manifest_ancestor(parent_id, child_id, app, dbw);
     }  
 }
 
-// this is for a trunk edge, in which the ancestry is the
-// same direction as the storage delta
-void 
-store_trunk_manifest_edge(manifest_map const & parent,
-			  manifest_map const & child,
-			  manifest_id const & parent_id,
-			  manifest_id const & child_id,
-			  app_state & app,
-			  cvs_history & cvs)
-{
 
-  unsigned long p, c;
-  p = cvs.manifest_version_interner.intern(parent_id.inner()());
-  c = cvs.manifest_version_interner.intern(child_id.inner()());
-
-  if (cvs.manifest_cycle_detector.edge_makes_cycle(p,c))
-    {
-      L(F("skipping cyclical trunk edge %s -> %s\n")
-	% parent_id % child_id);
-    }
-  else if (parent.empty())
-    { L(F("not storing edge to empty manifest %s -> %s\n")
-	% parent_id % child_id);
-    }
-  else
-    {
-      L(F("storing trunk manifest edge %s -> %s\n") 
-	% parent_id % child_id);
-
-      cvs.manifest_cycle_detector.put_edge(p,c);
-
-      // in this case, the ancestry-based 'child' is on a trunk, so it is
-      // a 'new' version as far as the storage system is concerned; that
-      // is to say that the ancestry-based 'parent' is a temporally older
-      // tree version, which can be constructed from the 'newer' child. so
-      // the delta should run from child (new) -> parent (old).
-
-      base64< gzip<delta> > del;	      
-      diff(child, parent, del);
-      rcs_put_raw_manifest_edge(parent_id.inner(),
-				child_id.inner(),
-				del, app.db);
-      packet_db_writer dbw(app);
-      cert_manifest_ancestor(parent_id, child_id, app, dbw);
-    }  
-}
-
-void 
+static void 
 store_auxiliary_certs(cvs_key const & key, 
-		      manifest_id const & id, 
+		      revision_id const & id, 
 		      app_state & app, 
 		      cvs_history const & cvs)
 {
   packet_db_writer dbw(app);
-  cert_manifest_in_branch(id, cert_value(cvs.branch_interner.lookup(key.branch)), app, dbw); 
-  cert_manifest_author(id, cvs.author_interner.lookup(key.author), app, dbw); 
-  cert_manifest_changelog(id, cvs.changelog_interner.lookup(key.changelog), app, dbw);
-  cert_manifest_date_time(id, key.time, app, dbw);
+  cert_revision_in_branch(id, cert_value(cvs.branch_interner.lookup(key.branch)), app, dbw); 
+  cert_revision_author(id, cvs.author_interner.lookup(key.author), app, dbw); 
+  cert_revision_changelog(id, cvs.changelog_interner.lookup(key.changelog), app, dbw);
+  cert_revision_date_time(id, key.time, app, dbw);
 }
 
-// we call this when we're going child -> parent, i.e. when we're walking
-// up the trunk.
-void 
-build_parent_state(shared_ptr<cvs_state> state,
-		   manifest_map & state_map,
-		   cvs_history & cvs)
+static void 
+build_change_set(shared_ptr<cvs_state> state,
+		 manifest_map const & state_map,
+		 cvs_history & cvs,
+		 change_set & cs)
 {
-  for (set<cvs_file_edge>::const_iterator f = state->in_edges.begin();
-       f != state->in_edges.end(); ++f)
-    {
-      file_id fid(cvs.file_version_interner.lookup(f->parent_version));
-      file_path pth(cvs.path_interner.lookup(f->parent_path));
-      L(F("File delta %s %d %d->%d\n") % pth % f->parent_version 
-      		% f->parent_live_p % f->child_live_p);
-      if (!f->parent_live_p)
-      {  manifest_map::iterator elem=state_map.find(pth);
-         if (elem != state_map.end())
-            state_map.erase(elem);
-         else 
-            L(F("could not find file %s for removal from manifest\n") 
-            	% pth);
-      }
-      else 
-         state_map[pth] = fid;
-    }  
-  L(F("logical changeset from child -> parent has %d file deltas\n")
-    % state->in_edges.size());
-}
+  change_set empty;
+  cs = empty;
 
-// we call this when we're going parent -> child, i.e. when we're walking
-// down a branch.
-void 
-build_child_state(shared_ptr<cvs_state> state,
-		  manifest_map & state_map,
-		  cvs_history & cvs)
-{
   for (set<cvs_file_edge>::const_iterator f = state->in_edges.begin();
        f != state->in_edges.end(); ++f)
     {
       file_id fid(cvs.file_version_interner.lookup(f->child_version));
       file_path pth(cvs.path_interner.lookup(f->child_path));
       if (!f->child_live_p)
-      {  manifest_map::iterator elem=state_map.find(pth);
-         if (elem != state_map.end())
-            state_map.erase(elem);
-         else 
-            L(F("could not find file %s for removal from manifest\n") 
-            	% pth);
+      {  
+	L(F("deleting entry state '%s' on '%s'\n") % fid % pth);	      
+	cs.delete_file(pth);
       }
       else 
-         state_map[pth] = fid;
-    }  
-  L(F("logical changeset from parent -> child has %d file deltas\n") 
+	{
+	  manifest_map::const_iterator i = state_map.find(pth);
+	  if (i == state_map.end())
+	    {
+	      L(F("adding entry state '%s' on '%s'\n") % fid % pth);	      
+	      cs.add_file(pth, fid);	      
+	    }
+	  else if (manifest_entry_id(i) == fid)
+	    {
+	      L(F("skipping preserved entry state '%s' on '%s'\n")
+		% fid % pth);	      
+	    }
+	  else
+	    {
+	      L(F("applying state delta on '%s' : '%s' -> '%s'\n") 
+		% pth % manifest_entry_id(i) % fid);	      
+	      cs.apply_delta(pth, manifest_entry_id(i), fid);
+	    }
+	}  
+    }
+  L(F("logical changeset from parent -> child has %d file state changes\n") 
     % state->in_edges.size());
 }
 
-void
-import_substates(ticker & n_edges, 
-		 ticker & n_branches,
-		 shared_ptr<cvs_state> state,
-		 cvs_branchname branch_filter,
-		 manifest_map parent_map,
-		 cvs_history & cvs,
-		 app_state & app);
 
-void 
-import_substates_by_branch(ticker & n_edges, 
-			   ticker & n_branches,
-			   shared_ptr<cvs_state> state,
-			   manifest_map const & parent_map,
-			   cvs_history & cvs,
-			   app_state & app)
+static void 
+import_states_recursive(ticker & n_edges, 
+			ticker & n_branches,
+			shared_ptr<cvs_state> state,
+			cvs_branchname branch_filter,
+			revision_id parent_rid,
+			manifest_id parent_mid,
+			manifest_map parent_map,
+			cvs_history & cvs,
+			app_state & app,
+			unsigned long depth);
+
+static void 
+import_states_by_branch(ticker & n_edges, 
+			ticker & n_branches,
+			shared_ptr<cvs_state> state,
+			revision_id const & parent_rid,
+			manifest_id const & parent_mid,
+			manifest_map const & parent_map,
+			cvs_history & cvs,
+			app_state & app,
+			unsigned long depth)
 {
   set<cvs_branchname> branches;
 
@@ -1144,50 +1156,81 @@ import_substates_by_branch(ticker & n_edges,
   for (set<cvs_branchname>::const_iterator branch = branches.begin();
        branch != branches.end(); ++branch)
     {
-      import_substates(n_edges, n_branches, state, *branch, parent_map, cvs, app);
+      import_states_recursive(n_edges, n_branches, state, *branch, 
+			      parent_rid, parent_mid, parent_map, 
+			      cvs, app, depth);
     }
 }
 
-
-void 
-import_substates(ticker & n_edges, 
-		 ticker & n_branches,
-		 shared_ptr<cvs_state> state,
-		 cvs_branchname branch_filter,
-		 manifest_map parent_map,
-		 cvs_history & cvs,
-		 app_state & app)
+static void 
+import_states_recursive(ticker & n_edges, 
+			ticker & n_branches,
+			shared_ptr<cvs_state> state,
+			cvs_branchname branch_filter,
+			revision_id parent_rid,
+			manifest_id parent_mid,
+			manifest_map parent_map,
+			cvs_history & cvs,
+			app_state & app,
+			unsigned long depth)
 {
-  manifest_id parent_id;
-  calculate_ident(parent_map, parent_id);
-  manifest_map child_map = parent_map;
-
   if (state->substates.size() > 0)
     ++n_branches;
 
+  manifest_id child_mid;
+  revision_id child_rid;
+  manifest_map child_map = parent_map;
+  
+  string branchname = cvs.branch_interner.lookup(branch_filter);
+  ui.set_tick_trailer("building branch " + branchname);
+
   // these are all sub-branches, so we look through them temporally
   // *backwards* from oldest to newest
+  map< cvs_key, shared_ptr<cvs_state> >::reverse_iterator newest_branch_state;
+  for (map< cvs_key, shared_ptr<cvs_state> >::reverse_iterator i = state->substates.rbegin();
+       i != state->substates.rend(); ++i)
+    {
+      if (i->first.branch != branch_filter)
+	continue;
+      newest_branch_state = i;
+    }
+
   for (map< cvs_key, shared_ptr<cvs_state> >::reverse_iterator i = state->substates.rbegin();
        i != state->substates.rend(); ++i)
     {
       if (i->first.branch != branch_filter)
 	continue;
 
-      manifest_id child_id;
-      build_child_state(i->second, child_map, cvs);
-      calculate_ident(child_map, child_id);
-      store_branch_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
-      store_auxiliary_certs(i->first, child_id, app, cvs);
-      if (i->second->substates.size() > 0)
-	import_substates_by_branch(n_edges, n_branches, i->second, child_map, cvs, app);
+      revision_set rev;
+      change_set cs;
+      build_change_set(i->second, parent_map, cvs, cs);
 
-      // now apply the edge to the parent, too, making parent = child
-      build_child_state(i->second, parent_map, cvs);
-      parent_id = child_id;
+      apply_change_set(cs, child_map);
+      calculate_ident(child_map, child_mid);
+
+      rev.new_manifest = child_mid;
+      rev.edges.insert(make_pair(parent_rid, make_pair(parent_mid, cs)));
+      calculate_ident(rev, child_rid);
+
+      store_edge(child_rid, rev, 
+		 parent_map, child_map, 
+		 parent_mid, child_mid, 
+		 app, cvs, depth, i == newest_branch_state);
+
+      store_auxiliary_certs(i->first, child_rid, app, cvs);
+
+      if (i->second->substates.size() > 0)
+	import_states_by_branch(n_edges, n_branches, i->second, 
+				child_rid, child_mid, child_map, 
+				cvs, app, depth+1);
+
+      // now apply same change set to parent_map, making parent_map == child_map
+      apply_change_set(cs, parent_map);
+      parent_mid = child_mid;
+      parent_rid = child_rid;
       ++n_edges;
     }
 }
-
 
 void 
 import_cvs_repo(fs::path const & cvsroot, 
@@ -1234,45 +1277,19 @@ import_cvs_repo(fs::path const & cvsroot,
 
   I(cvs.stk.size() == 1);
   shared_ptr<cvs_state> state = cvs.stk.top();
-  manifest_map child_map = cvs.head_manifest;
-  manifest_map parent_map = child_map;
-  manifest_id child_id;
-  calculate_ident (child_map, child_id);
-
 
   {
     ticker n_branches("finished branches", 1), n_edges("finished edges", 1);
     transaction_guard guard(app.db);
-    
-    // write the trunk head version
-    if (!app.db.manifest_version_exists (child_id))
-      {
-	manifest_data child_data;
-	write_manifest_map(child_map, child_data);
-	app.db.put_manifest(child_id, child_data);
-      }
+    manifest_map root_manifest;
+    manifest_id root_mid;
+    revision_id root_rid; 
 
-    // these are all versions on the main trunk, so we look through them from
-    // newest to oldest
-    for (map< cvs_key, shared_ptr<cvs_state> >::const_iterator i = state->substates.begin();
-	 i != state->substates.end(); ++i)
-      {
-	manifest_id parent_id;
-	build_parent_state(i->second, parent_map, cvs);
-	calculate_ident(parent_map, parent_id);
-	store_trunk_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
-	store_auxiliary_certs(i->first, child_id, app, cvs);
-	if (i->second->substates.size() > 0)
-	  import_substates_by_branch(n_edges, n_branches, i->second, parent_map, cvs, app);
-
-	// now apply the edge to the child, too, making child = parent
-	build_parent_state(i->second, child_map, cvs);
-	child_id = parent_id;
-	++n_edges;
-      }
-    
+    calculate_ident(root_manifest, root_mid);
+    import_states_by_branch(n_edges, n_branches, state, 
+			    root_rid, root_mid,
+			    root_manifest, cvs, app, 0);
     P(F("phase 2 (ancestry reconstruction) complete\n"));
-
     guard.commit();
   }
 }

@@ -810,6 +810,8 @@ database::get_version(hexenc<id> const & ident,
 	  set< hexenc<id> > next_frontier;
 	  shared_ptr<edgemap> frontier_map(new edgemap());
 
+	  I(!frontier.empty());
+
 	  for (set< hexenc<id> >::const_iterator i = frontier.begin();
 	       i != frontier.end(); ++i)
 	    {

@@ -24,7 +24,6 @@ extern "C" {
 #include "file_io.hh"
 #include "lua.hh"
 #include "mkstemp.hh"
-#include "predicament.hh"
 #include "sanity.hh"
 #include "vocab.hh"
 

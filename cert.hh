@@ -140,7 +140,7 @@ cert_revision_date_now(revision_id const & m,
 		      packet_consumer & pc);
 
 void 
-cert_manifest_date_time(revision_id const & m, 
+cert_revision_date_time(revision_id const & m, 
 			time_t time,
 			app_state & app,
 			packet_consumer & pc);
