@@ -1,3 +1,19 @@
+2005-03-31  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* monotone.texi: Tutorial updated to include example of
+	  editing/committing with MT/log
+	* work.cc (has_contents_user_log) Added
+	* work.hh (has_contents_user_log) Added
+	* commands.cc (CMD(commit)): Checks to ensure both MT/log and the
+	  --message option does not exist during commit.
+	* transforms.hh (prefix_lines_with): Added
+	* transforms.cc (prefix_lines_with): Added
+	* sanity.cc (naughty_failure): Made use of prefix_lines_with()
+	* ui.cc (inform): now handles messages w/embedded newlines
+	* tests/t_commit_log_3.at: Created to test new functionality
+	  added to CMD(commit)
+	* testsuite.at: Added above test
+
 2005-03-31  Richard Levitte  <richard@levitte.org>
 
 	* monotone.cc: Add the --depth option...

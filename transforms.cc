@@ -415,6 +415,25 @@ join_lines(vector<string> const & in,
   join_lines(in, out, "\n");
 }
 
+void
+prefix_lines_with(string const & prefix, string const & lines, string & out)
+{
+  std::vector<std::string> msgs;
+  split_into_lines(lines, msgs);
+
+  ostringstream oss;
+  for (std::vector<string>::const_iterator i = msgs.begin();
+       i != msgs.end();)
+    {
+      oss << prefix << *i;
+      i++;
+      if (i != msgs.end())
+        oss << endl;
+    }
+  
+  out = oss.str();
+}
+
 string 
 remove_ws(string const & s)
 {

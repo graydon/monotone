@@ -1793,10 +1793,11 @@ monotone: branch jp.co.juicebot.jb7
 @end smallexample
 
 Abe neglected to provide a @option{--message} option specifying the
-change log on the command line.  Monotone therefore invokes an external
-``log message editor'' --- typically an editor like @command{vi} ---
-with an explanation of the changes being committed and the opportunity
-to enter a log message.
+change log on the command line and the file @file{MT/log} is empty
+because he did not document his changes there.  Monotone therefore
+invokes an external ``log message editor'' --- typically an editor
+like @command{vi} --- with an explanation of the changes being
+committed and the opportunity to enter a log message.
 
 @smallexample
 @group
@@ -1875,11 +1876,21 @@ $ vi src/banana.c
 @end group
 @end smallexample
 
+and logs her changes in @file{MT/log} right away so she does not
+forget what she has done like Abe.
+
+@small example
+@group
+$ vi MT/log
+* src/banana.c: Added polling implementation
+@end group
+@end smallexample
+
 She commits her work:
 
 @smallexample
 @group
-$ monotone commit --message='polling implementation of src/banana.c'
+$ monotone commit
 monotone: beginning commit
 monotone: manifest eaebc3c558d9e30db6616ef543595a5a64cc6d5f
 monotone: revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb

@@ -79,6 +79,8 @@ void read_user_log(data & dat);
 
 void blank_user_log();
 
+bool has_contents_user_log();
+
 // the "options map" is another administrative file, stored in
 // MT/options. it keeps a list of name/value pairs which are considered
 // "persistent options", associated with a particular the working copy and
