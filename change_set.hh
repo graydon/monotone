@@ -166,9 +166,12 @@ play_back_change_set(change_set const & cs,
 
 // merging and concatenating 
 
+struct merge_provider;
+
 void
 merge_change_sets(change_set const & a,
 		  change_set const & b,
+		  merge_provider & file_merger,
 		  change_set & merged);
 
 void

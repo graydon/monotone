@@ -239,6 +239,8 @@ public:
 				    manifest_delta const & del);
 
 
+  void get_revision_ancestry(std::set<std::pair<revision_id, revision_id> > & graph);
+
   void get_revision_parents(revision_id const & id,
 			   std::set<revision_id> & parents);
 

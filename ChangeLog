@@ -1,3 +1,15 @@
+2004-09-13  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Implement delta renaming and merging.
+	* commands.cc 
+	(update): Teach about revisions.
+	(agraph): Likewise.
+	* diff_patch.{cc,hh}: Tidy up interface a bit.
+	* database.{cc,hh} (get_revision_ancestry): New helper.
+	* file_io.{cc,hh}
+	(move_dir): New function.
+	(delete_dir_recursive): New function.	
+
 2004-09-10  graydon hoare  <graydon@pobox.com>
 
 	* basic_io.{cc,hh}: Move to more "normal" looking

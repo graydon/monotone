@@ -600,10 +600,10 @@ bool merge3(vector<string> const & ancestor,
 }
 
 
-simple_merge_provider::simple_merge_provider(app_state & app) 
+merge_provider::merge_provider(app_state & app) 
   : app(app) {}
 
-void simple_merge_provider::record_merge(file_id const & left_ident, 
+void merge_provider::record_merge(file_id const & left_ident, 
 					 file_id const & right_ident, 
 					 file_id const & merged_ident,
 					 file_data const & left_data, 
@@ -621,21 +621,18 @@ void simple_merge_provider::record_merge(file_id const & left_ident,
   guard.commit();
 }
 
-void simple_merge_provider::get_version(file_path const & path,
-					file_id const & ident,
-					file_data & dat)
+void merge_provider::get_version(file_path const & path,
+				 file_id const & ident,
+				 file_data & dat)
 {
   app.db.get_file_version(ident, dat);
 }
 
-bool simple_merge_provider::try_to_merge_files(file_id const & ancestor_id,
-					       file_id const & left_id,
-					       file_id const & right_id,
-					       file_path const & ancestor_path,
-					       file_path const & left_path,
-					       file_path const & right_path,
-					       file_id & merged_id,
-					       file_path & merged_path)
+bool merge_provider::try_to_merge_files(file_path const & path,
+					file_id const & ancestor_id,					
+					file_id const & left_id,
+					file_id const & right_id,
+					file_id & merged_id)
 {
   
   L(F("trying to merge %s <-> %s (ancestor: %s)\n")
@@ -645,7 +642,6 @@ bool simple_merge_provider::try_to_merge_files(file_id const & ancestor_id,
     {
       L(F("files are identical\n"));
       merged_id = left_id;
-      merged_path = left_path;
       return true;      
     }  
 
@@ -653,9 +649,9 @@ bool simple_merge_provider::try_to_merge_files(file_id const & ancestor_id,
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
   vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
 
-  this->get_version(left_path, left_id, left_data);
-  this->get_version(ancestor_path, ancestor_id, ancestor_data);
-  this->get_version(right_path, right_id, right_data);
+  this->get_version(path, left_id, left_data);
+  this->get_version(path, ancestor_id, ancestor_data);
+  this->get_version(path, right_id, right_data);
     
   unpack(left_data.inner(), left_unpacked);
   unpack(ancestor_data.inner(), ancestor_unpacked);
@@ -680,7 +676,6 @@ bool simple_merge_provider::try_to_merge_files(file_id const & ancestor_id,
       file_id merged_fid(tmp_id);
       pack(data(tmp), packed_merge);
 
-      merged_path = left_path;
       merged_id = merged_fid;
       record_merge(left_id, right_id, merged_fid, 
 		   left_data, packed_merge);
@@ -698,7 +693,6 @@ bool simple_merge_provider::try_to_merge_files(file_id const & ancestor_id,
       file_id merged_fid(tmp_id);
       pack(merged_unpacked, packed_merge);
 
-      merged_path = left_path;
       merged_id = merged_fid;
       record_merge(left_id, right_id, merged_fid, 
 		   left_data, packed_merge);
@@ -708,12 +702,10 @@ bool simple_merge_provider::try_to_merge_files(file_id const & ancestor_id,
   return false;
 }
 
-bool simple_merge_provider::try_to_merge_files(file_id const & left_id,
-					       file_id const & right_id,
-					       file_path const & left_path,
-					       file_path const & right_path,
-					       file_id & merged_id,
-					       file_path & merged_path)
+bool merge_provider::try_to_merge_files(file_path const & path,
+					file_id const & left_id,
+					file_id const & right_id,
+					file_id & merged_id)
 {
   file_data left_data, right_data;
   data left_unpacked, right_unpacked, merged_unpacked;
@@ -725,12 +717,11 @@ bool simple_merge_provider::try_to_merge_files(file_id const & left_id,
     {
       L(F("files are identical\n"));
       merged_id = left_id;
-      merged_path = left_path;
       return true;      
     }  
 
-  this->get_version(left_path, left_id, left_data);
-  this->get_version(right_path, right_id, right_data);
+  this->get_version(path, left_id, left_data);
+  this->get_version(path, right_id, right_data);
     
   unpack(left_data.inner(), left_unpacked);
   unpack(right_data.inner(), right_unpacked);
@@ -745,7 +736,6 @@ bool simple_merge_provider::try_to_merge_files(file_id const & left_id,
       file_id merged_fid(tmp_id);
       pack(merged_unpacked, packed_merge);
       
-      merged_path = left_path;
       merged_id = merged_fid;
       record_merge(left_id, right_id, merged_fid, 
 		   left_data, packed_merge);
@@ -761,7 +751,7 @@ bool simple_merge_provider::try_to_merge_files(file_id const & left_id,
 // and we only record the merges in a transient, in-memory table.
 
 update_merge_provider::update_merge_provider(app_state & app) 
-  : simple_merge_provider(app) {}
+  : merge_provider(app) {}
 
 void update_merge_provider::record_merge(file_id const & left_id, 
 					 file_id const & right_id,

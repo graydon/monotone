@@ -1044,6 +1044,19 @@ database::put_manifest_reverse_version(manifest_id const & new_id,
 		      "manifests", "manifest_deltas");
 }
 
+
+void 
+database::get_revision_ancestry(std::set<std::pair<revision_id, revision_id> > & graph)
+{
+  results res;
+  graph.clear();
+  fetch(res, 2, any_rows, 
+	"SELECT parent,child FROM revision_ancestry");
+  for (size_t i = 0; i < res.size(); ++i)
+    graph.insert(std::make_pair(revision_id(res[i][0]),
+				revision_id(res[i][1])));
+}
+
 void 
 database::get_revision_parents(revision_id const & id,
 			      set<revision_id> & parents)

@@ -6,11 +6,15 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
+#include <list>
+#include <vector>
+
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "basic_io.hh"
 #include "change_set.hh"
+#include "diff_patch.hh"
 #include "file_io.hh"
 #include "interner.hh"
 #include "sanity.hh"
@@ -494,6 +498,12 @@ play_back_change_set(change_set const & cs,
 typedef std::map<file_path, std::pair<change_set::ptype,change_set::tid> > directory_node;
 typedef std::map<change_set::tid, boost::shared_ptr<directory_node> > directory_map;
 
+static change_set::ptype
+directory_entry_type(directory_node::const_iterator const & i)
+{
+  return i->second.first;
+}
+
 static change_set::tid
 directory_entry_tid(directory_node::const_iterator const & i)
 {
@@ -545,6 +555,8 @@ split_path(file_path const & p,
   prefix.pop_back();
 }
 
+/*
+
 static bool
 lookup_path(std::vector<file_path> const & pth,
 	    directory_map const & dir,
@@ -579,6 +591,60 @@ lookup_path(file_path const & pth,
   std::copy(tmp.begin(), tmp.end(), std::inserter(vec, vec.begin()));
   return lookup_path(vec, dir, t);
 }
+*/
+
+// this takes a path in the path space defined by input_dir and rebuilds it
+// in the path space defined by output_space, including any changes to
+// parents in the path (rather than directly to the path leaf name).  it
+// therefore *always* succeeds; sometimes it does nothing if there's no
+// affected parent, but you always get a rebuilt path in the output space.
+
+static void
+reconstruct_path(file_path const & input,
+		 directory_map const & input_dir,
+		 change_set::path_state const & output_space,
+		 file_path & output)
+{
+  std::vector<file_path> vec;
+  std::vector<file_path> rebuilt;
+
+  L(F("reconstructing path '%s' under rearrangement\n") % input);
+  
+  fs::path tmp = mkpath(input());
+  std::copy(tmp.begin(), tmp.end(), std::inserter(vec, vec.begin()));
+
+  change_set::tid t = root_tid;
+  std::vector<file_path>::const_iterator pth = vec.begin();
+  while (pth != vec.end())
+    {	  
+      directory_map::const_iterator dirent = input_dir.find(t);
+      if (dirent == input_dir.end())
+	break;
+      
+      boost::shared_ptr<directory_node> node = dirent->second;
+      directory_node::const_iterator entry = node->find(*pth);
+      if (entry == node->end() 
+	  || directory_entry_type(entry) != change_set::ptype_directory)
+	break;
+      
+      L(F("resolved directory '%s' in reconstruction\n") % *pth);
+      ++pth;
+      t = directory_entry_tid(entry);
+    }
+      
+  get_full_path(output_space, t, rebuilt);
+  
+  while(pth != vec.end())
+    {
+      L(F("copying tail entry '%s' in reconstruction\n") % *pth);
+      rebuilt.push_back(*pth);
+      ++pth;
+    }
+
+  compose_path(rebuilt, output);
+  L(F("reconstructed path '%s' as '%s'\n") % input % output);
+}
+
 
 static void
 build_directory_map(change_set::path_state const & state,
@@ -1104,18 +1170,119 @@ normalize_change_set(change_set & norm)
 }
 
 
+static void
+rename_deltas_under_merge(change_set const & a, 
+			  change_set const & merged, 
+			  change_set::delta_map & a_deltas_renamed)
+{
+  directory_map a_dst_map, merged_src_map;
+
+  build_directory_map(a.rearrangement.second, a_dst_map);
+  build_directory_map(merged.rearrangement.first, merged_src_map);
+
+  a_deltas_renamed.clear();
+
+  for (change_set::delta_map::const_iterator i = a.deltas.begin(); 
+       i != a.deltas.end(); ++i)
+    {
+      file_path a_dst_path = delta_entry_path(i);
+      file_path src_path, merged_dst_path;
+
+      reconstruct_path(a_dst_path, a_dst_map, a.rearrangement.first, src_path);
+      reconstruct_path(src_path, merged_src_map, merged.rearrangement.second, merged_dst_path);
+      a_deltas_renamed.insert(std::make_pair(merged_dst_path,
+					     std::make_pair(delta_entry_src(i),
+							    delta_entry_dst(i))));      
+    }
+}
+
 void
 merge_change_sets(change_set const & a,
 		  change_set const & b,
+		  merge_provider & file_merger,
 		  change_set & merged)
 {
   merged = a;
   path_edit_merger mer(merged.rearrangement);
   play_back_rearrangement(b.rearrangement, mer);
 
-  // FIXME: need to actually merge deltas here
-  //  delta_renamer dn(merged.deltas);
-  // play_back_rearrangement(b.rearrangement, dn);  
+  //
+  // a is a change from X->Y,
+  // b is a change from X->Z,
+  //
+  // merged is a change from X->M
+  // 
+  // we take each delta d in a and look up its tid p in Y, map it (via a)
+  // to path q in X, then map that to tid r in M (via merged). that is the
+  // merged path for d.
+  //
+  // we do the same thing for deltas coming from b. this process yields two
+  // "renamed" delta maps. we then reconcile them: if two deltas occur on
+  // the same path we resolve it via the file merger, otherwise we copy the
+  // delta over to the result.
+  // 
+
+  change_set::delta_map a_deltas_renamed, b_deltas_renamed;
+  rename_deltas_under_merge(a, merged, a_deltas_renamed);
+  rename_deltas_under_merge(b, merged, b_deltas_renamed);
+
+  for (change_set::delta_map::const_iterator i = a_deltas_renamed.begin(); 
+       i != a_deltas_renamed.end(); ++i)
+    {
+      change_set::delta_map::const_iterator j = b_deltas_renamed.find(delta_entry_path(i));
+      if (j != b_deltas_renamed.end())
+	{
+	  L(F("found simultaneous deltas '%s' -> '%s' and '%s' -> '%s' on '%s'\n") 
+	    % delta_entry_src(i)
+	    % delta_entry_dst(i)
+	    % delta_entry_src(j)
+	    % delta_entry_dst(j)
+	    % delta_entry_path(i));
+	  I(delta_entry_src(i) == delta_entry_src(j));
+	  if (delta_entry_dst(i) == delta_entry_dst(j))
+	    {
+	      L(F("simultaneous deltas are identical: '%s' -> '%s'\n")
+		% delta_entry_src(i) % delta_entry_dst(i));
+	      merged.deltas.insert(*i);
+	      b_deltas_renamed.erase(delta_entry_path(i));
+	    }
+	  else
+	    {
+	      L(F("simultaneous deltas differ: '%s' -> '%s' and '%s'\n")
+		% delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
+	      file_id merged_id;
+	      N(file_merger.try_to_merge_files(delta_entry_path(i),
+					       delta_entry_src(i),
+					       delta_entry_dst(i),
+					       delta_entry_dst(j),
+					       merged_id),
+		F("merge3 failed: %s -> %s and %s on %s\n")
+		% delta_entry_src(i) 
+		% delta_entry_dst(i) 
+		% delta_entry_dst(j) 
+		% delta_entry_path(i));
+	      merged.deltas.insert(std::make_pair(delta_entry_path(i),
+						  std::make_pair(delta_entry_src(i),
+								 merged_id)));
+	      b_deltas_renamed.erase(delta_entry_path(i));
+	    }
+	}
+      else
+	{
+	  L(F("copying delta '%s' -> '%s' on '%s' from first changeset\n")
+	    % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_path(i));
+	  merged.deltas.insert(*i);
+	}
+    }
+
+  // copy all remaining deltas from b as well
+  for (change_set::delta_map::const_iterator i = b_deltas_renamed.begin(); 
+       i != b_deltas_renamed.end(); ++i)
+    {
+      L(F("copying delta '%s' -> '%s' on '%s' from second changeset\n")
+	% delta_entry_src(i) % delta_entry_dst(i) % delta_entry_path(i));
+      merged.deltas.insert(*i);
+    }
 
   normalize_change_set(merged);
 }
@@ -1145,25 +1312,14 @@ concatenate_change_sets(change_set const & a,
   for (change_set::delta_map::const_iterator del = a.deltas.begin();
        del != a.deltas.end(); ++del)
     {
-      change_set::tid b_tid;
+      file_path new_pth;
       L(F("processing delta on %s\n") % delta_entry_path(del));
-      if (lookup_path(delta_entry_path(del), b_src_map, b_tid))
-	{	  
-	  file_path new_pth;
-	  L(F("file %s has tid %d in second changeset\n") % delta_entry_path(del) % b_tid);
-	  get_full_path(b.rearrangement.second, b_tid, new_pth);
-	  L(F("delta on %s in first changeset renamed to %s\n")
-	    % delta_entry_path(del) % new_pth);
-	  concatenated.deltas.insert(std::make_pair(new_pth,
-						    std::make_pair(delta_entry_src(del),
-								   delta_entry_dst(del))));
-	}
-      else
-	{
-	  L(F("delta on %s in first changeset copied forward\n")
-	    % delta_entry_path(del));
-	  concatenated.deltas.insert(*del);
-	}
+      reconstruct_path(delta_entry_path(del), b_src_map, b.rearrangement.second, new_pth);
+      L(F("delta on %s in first changeset renamed to %s\n")
+	% delta_entry_path(del) % new_pth);
+      concatenated.deltas.insert(std::make_pair(new_pth,
+						std::make_pair(delta_entry_src(del),
+							       delta_entry_dst(del))));
     }
 
   // next fuse any deltas id1->id2 and id2->id3 to id1->id3

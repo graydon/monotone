@@ -170,19 +170,48 @@ file_exists(local_path const & p)
 void 
 delete_file(local_path const & p) 
 { 
+  N(file_exists(p), 
+    F("file to delete '%s' does not exist") % p);
   fs::remove(localized(p())); 
 }
 
 void 
 delete_file(file_path const & p) 
 { 
+  N(file_exists(p), 
+    F("file to delete '%s' does not exist") % p);
   fs::remove(localized(p())); 
 }
+
+void 
+delete_dir_recursive(file_path const & p) 
+{ 
+  N(directory_exists(p), 
+    F("directory to delete '%s' does not exist") % p);
+  fs::remove_all(localized(p())); 
+}
+
 
 void 
 move_file(file_path const & old_path,
 	  file_path const & new_path) 
 { 
+  N(file_exists(old_path), 
+    F("rename source file '%s' does not exist") % old_path);
+  N(! file_exists(new_path), 
+    F("rename target file '%s' already exists") % new_path);
+  fs::rename(localized(old_path()), 
+	     localized(new_path()));
+}
+
+void 
+move_dir(file_path const & old_path,
+	 file_path const & new_path) 
+{ 
+  N(directory_exists(old_path), 
+    F("rename source dir '%s' does not exist") % old_path);
+  N(!directory_exists(new_path), 
+    F("rename target dir '%s' already exists") % new_path);
   fs::rename(localized(old_path()), 
 	     localized(new_path()));
 }

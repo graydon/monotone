@@ -1938,6 +1938,202 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
 }
 
 
+CMD(agraph, "debug", "", "dump ancestry graph to stdout")
+{
+  set<revision_id> nodes;
+  multimap<revision_id,string> branches;
+
+  set<pair<revision_id, revision_id> > edges;
+
+  app.db.get_revision_ancestry(edges);
+  for (set<pair<revision_id, revision_id> >::const_iterator i = edges.begin();
+       i != edges.end(); ++i)
+    {
+      nodes.insert(i->first);
+      nodes.insert(i->second);
+    }
+
+  vector< revision<cert> > certs;
+  app.db.get_revision_certs(branch_cert_name, certs);
+  for(vector< revision<cert> >::iterator i = certs.begin();
+      i != certs.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      revision_id tmp(i->inner().ident);
+      nodes.insert(tmp); // in case no edges were connected
+      branches.insert(make_pair(tmp, tv()));
+    }  
+
+
+  cout << "graph: " << endl << "{" << endl; // open graph
+  for (set<revision_id>::iterator i = nodes.begin(); i != nodes.end();
+       ++i)
+    {
+      cout << "node: { title : \"" << *i << "\"\n"
+	   << "        label : \"\\fb" << *i;
+      pair<multimap<revision_id,string>::const_iterator,
+	multimap<revision_id,string>::const_iterator> pair =
+	branches.equal_range(*i);
+      for (multimap<revision_id,string>::const_iterator j = pair.first;
+	   j != pair.second; ++j)
+	{
+	  cout << "\\n\\fn" << j->second;
+	}
+      cout << "\"}" << endl;
+    }
+  for (set<pair<revision_id, revision_id> >::iterator i = edges.begin(); i != edges.end();
+       ++i)
+    {
+      cout << "edge: { sourcename : \"" << i->first << "\"" << endl
+	   << "        targetname : \"" << i->second << "\" }" << endl;
+    }
+  cout << "}" << endl << endl; // close graph
+}
+
+struct
+update_writer : public change_set_consumer
+{
+  app_state & app;
+  update_merge_provider & merger;
+  update_writer(app_state & app,
+		update_merge_provider & merger)
+    : app(app), merger(merger)
+  {}
+
+  void write_file_from_store(file_path const & pth,
+			     file_id const & ident)
+  {
+    L(F("writing %s to %s\n") % ident % pth);
+    file_data tmp;
+    if (file_exists(pth))
+      {
+	base64< gzip<data> > dtmp;
+	hexenc<id> dtmp_id;
+	read_localized_data(pth, dtmp, app.lua);
+	calculate_ident(dtmp, dtmp_id);
+	if (ident.inner() == dtmp_id)
+	  {
+	    L(F("file '%s' on disk already has id %s\n") % pth % ident);
+	    return;
+	  }
+      }
+
+    I(app.db.file_version_exists(ident)
+      || merger.temporary_store.find(ident) != merger.temporary_store.end());
+
+    if (app.db.file_version_exists(ident))
+      app.db.get_file_version(ident, tmp);
+    else if (merger.temporary_store.find(ident) != merger.temporary_store.end())
+      tmp = merger.temporary_store[ident];    
+    app.db.get_file_version(ident, tmp);
+    write_localized_data(pth, tmp.inner(), app.lua);
+  }
+  
+  virtual void add_file(file_path const & pth, 
+			file_id const & ident) 
+  {
+    P(F("processing add_file(%s,%s)\n") % pth % ident);
+    write_file_from_store(pth, ident);
+  }
+
+  virtual void apply_delta(file_path const & path, 
+			   file_id const & src, 
+			   file_id const & dst)
+  {
+    P(F("processing apply_delta(%s,%s,%s)\n") % path % src % dst);    
+    write_file_from_store(path, dst);
+  }
+
+  virtual void delete_file(file_path const & d) 
+  {
+    P(F("processing delete_file(%s)\n") % d);
+    ::delete_file(d);
+  }
+
+  virtual void delete_dir(file_path const & d) 
+  {
+    P(F("processing delete_dir(%s)\n") % d);
+    ::delete_dir_recursive(d);
+  }
+
+  virtual void rename_file(file_path const & a, file_path const & b) 
+  {
+    P(F("processing rename_file(%s,%s)\n") % a % b);
+    ::make_dir_for(b);
+    ::move_file(a, b);
+  }
+
+  virtual void rename_dir(file_path const & a, file_path const & b) 
+  {
+    P(F("processing rename_dir(%s,%s)\n") % a % b);
+    ::make_dir_for(b);
+    ::move_dir(a, b);
+  }
+
+  virtual ~update_writer() {}
+};
+
+
+CMD(update, "working copy", "", "update working copy")
+{
+  manifest_map m_old, m_working;
+  revision_set r_old, r_working, r_new;
+  revision_id r_old_id, r_chosen_id;
+  change_set old_to_chosen, merged;
+  update_merge_provider merger(app);
+
+  calculate_current_revision(app, r_working, m_old, m_working);
+  
+  I(r_working.edges.size() == 1 || r_working.edges.size() == 0);
+  if (r_working.edges.size() == 1)
+    {
+      r_old_id = edge_old_revision(r_working.edges.begin());
+    }
+
+  pick_update_target(r_old_id, app, r_chosen_id);
+  if (r_old_id == r_chosen_id)
+    {
+      P(F("already up to date at %s\n") % r_old_id);
+      return;
+    }
+
+  P(F("selected update edge %s -> %s\n") % r_old_id % r_chosen_id);
+  calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+
+  I(r_working.edges.size() == 1 || r_working.edges.size() == 0);
+  if (r_working.edges.size() == 0)
+    {
+      P(F("updating along chosen edge %s -> %s\n") 
+	% r_old_id % r_chosen_id);
+      merged = old_to_chosen;
+    }
+  else
+    {      
+      P(F("merging working copy with chosen edge %s -> %s\n") 
+	% r_old_id % r_chosen_id);
+      merge_change_sets(old_to_chosen,
+			edge_changes(r_working.edges.begin()),
+			merger, merged);
+      L(F("updating to merged revision\n"));
+    }
+  
+  update_writer updater(app, merger);
+  play_back_change_set(merged, updater);
+  
+  L(F("update successful\n"));
+
+  // small race condition here...
+  // nb: we write out r_chosen, not r_new, because the revision-on-disk
+  // is the basis of the working copy, not the working copy itself.
+  put_revision_id(r_chosen_id);
+  P(F("updated to base version %s\n") % r_chosen_id);
+
+  update_any_attrs(app);
+  app.write_options();
+}
+
+
 /*
 
 // this helper tries to produce merge <- mergeN(left,right), possibly
@@ -2107,111 +2303,6 @@ CMD(disapprove, "certificate", "REVISION",
 
 
 
-CMD(update, "working copy", "", "update working copy")
-{
-  manifest_data m_chosen_data;
-  manifest_map m_old, m_working, m_chosen, m_new;
-  manifest_id m_old_id, m_chosen_id;
-
-  transaction_guard guard(app.db);
-
-  get_manifest_map(m_old);
-  calculate_ident(m_old, m_old_id);
-  calculate_new_manifest_map(m_old, m_working, app);
-  
-  pick_update_target(m_old_id, app, m_chosen_id);
-  if (m_old_id == m_chosen_id)
-    {
-      P(F("already up to date at %s\n") % m_old_id);
-      return;
-    }
-  P(F("selected update target %s\n") % m_chosen_id);
-  app.db.get_manifest_version(m_chosen_id, m_chosen_data);
-  read_manifest_map(m_chosen_data, m_chosen);
-
-  rename_edge left_renames, right_renames;
-  update_merge_provider merger(app);
-  N(merge3(m_old, m_chosen, m_working, app, merger, m_new, 
-	   left_renames.mapping, right_renames.mapping),
-    F("manifest merge failed, no update performed"));
-
-  P(F("calculating patchset for update\n"));
-  patch_set ps;
-  manifests_to_patch_set(m_working, m_new, app, ps);
-
-  L(F("applying %d deletions to files in tree\n") % ps.f_dels.size());
-  for (set<file_path>::const_iterator i = ps.f_dels.begin();
-       i != ps.f_dels.end(); ++i)
-    {
-      L(F("deleting %s\n") % (*i));
-      delete_file(*i);
-    }
-
-  L(F("applying %d moves to files in tree\n") % ps.f_moves.size());
-  for (set<patch_move>::const_iterator i = ps.f_moves.begin();
-       i != ps.f_moves.end(); ++i)
-    {
-      L(F("moving %s -> %s\n") % i->path_old % i->path_new);
-      make_dir_for(i->path_new);
-      move_file(i->path_old, i->path_new);
-    }
-  
-  L(F("applying %d additions to tree\n") % ps.f_adds.size());
-  for (set<patch_addition>::const_iterator i = ps.f_adds.begin();
-       i != ps.f_adds.end(); ++i)
-    {
-      L(F("adding %s as %s\n") % i->ident % i->path);
-      file_data tmp;
-      if (app.db.file_version_exists(i->ident))
-	app.db.get_file_version(i->ident, tmp);
-      else if (merger.temporary_store.find(i->ident) != merger.temporary_store.end())
-	tmp = merger.temporary_store[i->ident];
-      else
-	I(false); // trip assert. this should be impossible.
-      write_localized_data(i->path, tmp.inner(), app.lua);
-    }
-
-  L(F("applying %d deltas to tree\n") % ps.f_deltas.size());
-  for (set<patch_delta>::const_iterator i = ps.f_deltas.begin();
-       i != ps.f_deltas.end(); ++i)
-    {
-      P(F("updating file %s: %s -> %s\n") 
-	% i->path % i->id_old % i->id_new);
-      
-      // sanity check
-      {
-	base64< gzip<data> > dtmp;
-	hexenc<id> dtmp_id;
-	read_localized_data(i->path, dtmp, app.lua);
-	calculate_ident(dtmp, dtmp_id);
-	I(dtmp_id == i->id_old.inner());
-      }
-
-      // ok, replace with new version
-      {
-	file_data tmp;
-	if (app.db.file_version_exists(i->id_new))
-	  app.db.get_file_version(i->id_new, tmp);
-	else if (merger.temporary_store.find(i->id_new) != merger.temporary_store.end())
-	  tmp = merger.temporary_store[i->id_new];
-	else
-	  I(false); // trip assert. this should be impossible.
-	write_localized_data(i->path, tmp.inner(), app.lua);
-      }
-    }
-  
-  L(F("update successful\n"));
-  guard.commit();
-
-  // small race condition here...
-  // nb: we write out m_chosen, not m_new, because the manifest-on-disk
-  // is the basis of the working copy, not the working copy itself.
-  put_manifest_map(m_chosen);
-  P(F("updated to base version %s\n") % m_chosen_id);
-
-  update_any_attrs(app);
-  app.write_options();
-}
 
 CMD(revert, "working copy", "[FILE]...", 
     "revert file(s) or entire working copy")
@@ -2635,63 +2726,6 @@ CMD(log, "informative", "[ID] [file]", "print log history in reverse order (whic
 
 
 
-CMD(agraph, "debug", "", "dump ancestry graph to stdout")
-{
-  transaction_guard guard(app.db);
-
-  set<string> nodes;
-  multimap<string,string> branches;
-  vector< pair<string, string> > edges;
-
-  vector< manifest<cert> > certs;
-  app.db.get_manifest_certs(ancestor_cert_name, certs);
-
-  for(vector< manifest<cert> >::iterator i = certs.begin();
-      i != certs.end(); ++i)
-    {
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
-      nodes.insert(tv());
-      nodes.insert(i->inner().ident());
-      edges.push_back(make_pair(tv(), i->inner().ident()));
-    }
-
-  app.db.get_manifest_certs(branch_cert_name, certs);
-  for(vector< manifest<cert> >::iterator i = certs.begin();
-      i != certs.end(); ++i)
-    {
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
-      nodes.insert(i->inner().ident()); // in case no edges were connected
-      branches.insert(make_pair(i->inner().ident(), tv()));
-    }  
-
-
-  cout << "graph: " << endl << "{" << endl; // open graph
-  for (set<string>::iterator i = nodes.begin(); i != nodes.end();
-       ++i)
-    {
-      cout << "node: { title : \"" << *i << "\"\n"
-	   << "        label : \"\\fb" << *i;
-      pair<multimap<string,string>::const_iterator,
-	multimap<string,string>::const_iterator> pair =
-	branches.equal_range(*i);
-      for (multimap<string,string>::const_iterator j = pair.first;
-	   j != pair.second; ++j)
-	{
-	  cout << "\\n\\fn" << j->second;
-	}
-      cout << "\"}" << endl;
-    }
-  for (vector< pair<string,string> >::iterator i = edges.begin(); i != edges.end();
-       ++i)
-    {
-      cout << "edge: { sourcename : \"" << i->first << "\"" << endl
-	   << "        targetname : \"" << i->second << "\" }" << endl;
-    }
-  cout << "}" << endl << endl; // close graph
-  guard.commit();
-}
 
 
 CMD(rcs_import, "rcs", "RCSFILE...", "import all versions in RCS files")

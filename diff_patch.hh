@@ -32,63 +32,36 @@ bool merge3(std::vector<std::string> const & ancestor,
 	    std::vector<std::string> const & right,
 	    std::vector<std::string> & merged);
 
-
-struct file_merge_provider
-{
-  // merge3 on a file (line by line)
-  virtual bool try_to_merge_files(file_id const & ancestor_id,
-				  file_id const & left_id,
-				  file_id const & right,
-				  file_path const & ancestor_path,
-				  file_path const & left_path,
-				  file_path const & right_path,
-				  file_id & merged_id,
-				  file_path & merged_path) = 0;
-
-  // merge2 on a file (line by line)
-  virtual bool try_to_merge_files(file_id const & left_id,
-				  file_id const & right_id,
-				  file_path const & left_path,
-				  file_path const & right_path,
-				  file_id & merged,
-				  file_path & merged_path) = 0;
-};
-
-struct simple_merge_provider : public file_merge_provider
+struct merge_provider
 {
   app_state & app;
-  simple_merge_provider(app_state & app);
+  merge_provider(app_state & app);
   // merge3 on a file (line by line)
-  virtual bool try_to_merge_files(file_id const & ancestor_id,
+  virtual bool try_to_merge_files(file_path const & path,
+				  file_id const & ancestor_id,
 				  file_id const & left_id,
 				  file_id const & right,
-				  file_path const & ancestor_path,
-				  file_path const & left_path,
-				  file_path const & right_path,
-				  file_id & merged_id,
-				  file_path & merged_path) = 0;
+				  file_id & merged_id);
 
   // merge2 on a file (line by line)
-  virtual bool try_to_merge_files(file_id const & left_id,
+  virtual bool try_to_merge_files(file_path const & path,
+				  file_id const & left_id,
 				  file_id const & right_id,
-				  file_path const & left_path,
-				  file_path const & right_path,
-				  file_id & merged,
-				  file_path & merged_path) = 0;
+				  file_id & merged);
 
   virtual void record_merge(file_id const & left_ident, 
 			    file_id const & right_ident, 
 			    file_id const & merged_ident,
 			    file_data const & left_data, 
 			    file_data const & merged_data);
-
+  
   virtual void get_version(file_path const & path,
 			   file_id const & ident,			   
 			   file_data & dat);
 
 };
 
-struct update_merge_provider : public simple_merge_provider
+struct update_merge_provider : public merge_provider
 {
   std::map<file_id, file_data> temporary_store;
   update_merge_provider(app_state & app);

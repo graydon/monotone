@@ -59,11 +59,15 @@ void mkdir_p(local_path const & path);
 void mkdir_p(file_path const & path);
 void make_dir_for(file_path const & p);
 
-void delete_file(local_path const & path);
 void delete_file(file_path const & path);
+void delete_file(local_path const & path);
+void delete_dir_recursive(file_path const & path);
 
 void move_file(file_path const & old_path,
 	       file_path const & new_path);
+
+void move_dir(file_path const & old_path,
+	      file_path const & new_path);
 
 void read_data(local_path const & path, data & data);
 void read_data(local_path const & path, base64< gzip<data> > & data);
