@@ -1,5 +1,16 @@
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* app_state.hh (write_options): Add 'force' option.
+	* app_state.cc: Remove tabs.
+	(write_options): Implement.
+	* commands.cc (checkout): Pass force=true to 'write_options'.
+
+	* tests/t_checkout_options.at: New test.
+	* testsuite.at: Define RAW_MONOTONE.
+	(t_checkout_options.at): Call it.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* update.hh (pick_update_target): Rename to...
 	(pick_update_candidates): ...this.  Return a set of candidates,
 	rather than a single best.

@@ -1464,7 +1464,7 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
   remove_path_rearrangement();
   guard.commit();
   update_any_attrs(app);
-  app.write_options();
+  app.write_options(true);
 }
 
 ALIAS(co, checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
