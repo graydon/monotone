@@ -3840,10 +3840,13 @@ to use a private key.
 
 @item get_author (@var{branchname})
 
-Returns a string which is used as a value for automatically generated 
-@code{author} certificates when you commit changes to @var{branchname}.
+Returns a string which is used as a value for automatically generated
+@code{author} certificates when you commit changes to
+@var{branchname}.  Generally this hook remains undefined, and monotone
+selects your signing key name for the author certificate. You can use
+this hook to override that choice, if you like.
 
-The default definition of this hook looks is:
+This hook has no default definition, but a possible definition might be:
 @smallexample
 @group
 function get_author(branchname)
@@ -4004,8 +4007,10 @@ function ignore_file(name)
    if (string.find(name, "/core$")) then return true end
    if (string.find(name, "^CVS/")) then return true end
    if (string.find(name, "/CVS/")) then return true end
-   if (string.find(name, "^.svn/")) then return true end
-   if (string.find(name, "/.svn/")) then return true end
+   if (string.find(name, "^%.svn/")) then return true end
+   if (string.find(name, "/%.svn/")) then return true end
+   if (string.find(name, "^SCCS/")) then return true end
+   if (string.find(name, "/SCCS/")) then return true end
    return false;
 end
 @end group
@@ -4128,18 +4133,20 @@ function merge2(left, right)
    then 
       local cmd = nil
       if program_exists_in_path("xxdiff") then
-	 cmd = merge2_xxdiff_cmd(lfile, rfile, outfile)
+         cmd = merge2_xxdiff_cmd(lfile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
-	 cmd = merge2_emacs_cmd(lfile, rfile, outfile)
+         cmd = merge2_emacs_cmd("emacs", lfile, rfile, outfile)
+      elseif program_exists_in_path("xemacs") then
+         cmd = merge2_emacs_cmd("xemacs", lfile, rfile, outfile)
       end
 
       if cmd ~= nil
       then
-	 io.write(string.format("executing external 2-way merge command: %s\n", cmd))
-	 if os.execute(cmd) == 0 
-	 then
-	    data = read_contents_of_file(outfile)
-	 end
+         io.write(string.format("executing external 2-way merge command: %s\n", cmd))
+         os.execute(cmd)
+         data = read_contents_of_file(outfile)
+      else
+         io.write("no external 2-way merge command found")
       end
    end
    
@@ -4182,18 +4189,20 @@ function merge3(ancestor, left, right)
    then 
       local cmd = nil
       if program_exists_in_path("xxdiff") then
-	 cmd = merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
+         cmd = merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
-	 cmd = merge3_emacs_cmd(lfile, afile, rfile, outfile)
+         cmd = merge3_emacs_cmd("emacs", lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("xemacs") then
+         cmd = merge3_emacs_cmd("xemacs", lfile, afile, rfile, outfile)
       end
 
       if cmd ~= nil
       then
-	 io.write(string.format("executing external 3-way merge command: %s\n", cmd))
-	 if os.execute(cmd) == 0 
-	 then
-	    data = read_contents_of_file(outfile)
-	 end
+         io.write(string.format("executing external 3-way merge command: %s\n", cmd))
+         os.execute(cmd)
+         data = read_contents_of_file(outfile)
+      else
+         io.write("no external 3-way merge command found")
       end
    end
    

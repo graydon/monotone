@@ -79,16 +79,6 @@ AC_CHECK_FUNC([pthread_mutex_lock], [],
 
 # Now check for Boost libraries proper.
 
-OLD_LIBS=$LIBS
-LIBS="-lboost_prg_exec_monitor $OLD_LIBS"
-AC_MSG_CHECKING(libboost_prg_exec_monitor library)
-AC_LINK_IFELSE([AC_LANG_SOURCE([[
-int cpp_main(int argc, char ** argv)
-{}
-]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_prg_exec_monitor failure])])
-
 LIBS="-lboost_unit_test_framework $OLD_LIBS"
 AC_MSG_CHECKING(libboost_unit_test_framework library)
 AC_LINK_IFELSE([AC_LANG_SOURCE([[

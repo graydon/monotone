@@ -13,25 +13,21 @@ building and installation process for monotone
   * software prerequisites:
 
     - a supported C++ compiler: g++ 3.2 or 3.3.
-    - an installed copy of boost 1.30.2 or 1.31.0.
+    - an installed copy of boost 1.31.0.
     - gnome popt, an option processing library.
 
         on debian: 
 
-           apt-get install libboost-date-time1.30.2
            apt-get install libboost-date-time-dev
-           apt-get install libboost-regex1.30.2
+           apt-get install libboost-filesystem-dev
            apt-get install libboost-regex-dev
-           apt-get install libboost-test1.30.2
            apt-get install libboost-test-dev
            apt-get install libboost-dev
            apt-get install g++
-           apt-get install libpopt0
            apt-get install libpopt-dev
 
         on fedora: 
 
-           apt-get install boost 
            apt-get install boost-devel 
            apt-get install g++
            apt-get install popt
