@@ -2124,6 +2124,7 @@ familiarize yourself with its operation.
 @menu
 * Selectors::              Selecting revisions by certificate.
 * Restrictions::           Limit working copy changes to specified files.
+* Scripting::              Running monotone from other programs.
 * Quality Assurance::      Integrating testing and review with development.
 * Reserved Files::         File names with special meanings.
 * Reserved Certs::         Certificate names with special meanings.
@@ -2320,6 +2321,31 @@ and initialize the @file{MT/options} file based on their command line
 options. These commands may be changed to search for a working copy and
 read default options in the future.
 
+
+@page
+@node    Scripting
+@section Scripting
+
+People often want to write programs that call monotone --- for example,
+to create a graphical interface to monotone's functionality, or to
+automate some task.  For most programs, if you want to do this sort of
+thing, you just call the command line interface, and do some sort of
+parsing of the output.  Monotone's output, however, is designed for
+humans: it's localized, it tries to prompt the user with helpful
+information depending on their request, if it detects that something
+unusual is happening it may give different output in an attempt to make
+this clear to the user, and so on.  As a result, it is not particularly
+suitable for programs to parse.
+
+Rather than trying to design output to work for both humans and
+computers, and serving neither audience well, we elected to create a
+separate interface to make programmatically extracting information from
+monotone easier.  The command line interface has a command
+@code{automate}; this command has subcommands that print various sorts
+of information on standard output, in simple, consistent, and easily
+parseable form.
+
+For details of this interface, see @ref{Automation}.
 
 @page
 @node    Quality Assurance
@@ -2959,6 +2985,7 @@ all, commands are grouped into logical categories.
 * Certificate::      Special operations on certificates
 * Packet I/O::       Production or consumption of packets
 * Database::         Manipulation of your database as a whole
+* Automation::       Running monotone from other programs
 * RCS::              Importing legacy version control files
 @end menu
 
@@ -3724,6 +3751,84 @@ help diagnose failures.
 
 
 @page
+@node    Automation
+@section Automation
+
+This section contains subcommands of the @code{monotone automate}
+command, used for scripting monotone.  All give output on stdout; they
+may also give useful chatter on stderr, including warnings and error
+messages.
+
+@ftable @command
+@item monotone automate interface_version
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.0
+
+@item Purpose:
+
+Prints version of the automation interface.  Major number increments
+whenever a backwards incompatible change is made to the @code{automate}
+command; minor number increments whenever any change is made (but is
+reset when major number increments).
+
+@item Sample output:
+
+1.2
+
+@item Output format:
+
+A decimal number, followed by ``.'' (full stop/period), followed by a
+decimal number, followed by a newline, followed by end-of-file.  The
+first decimal number is the major version, the second is the minor version.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+@item monotone automate heads @var{branch}
+
+@table @strong
+@item Arguments:
+
+One argument @var{branch}, a branch name.
+
+@item Added in:
+
+0.0
+
+@item Purpose:
+
+Prints the heads of branch @var{branch}.
+
+@item Sample output:
+
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+
+@item Output format:
+
+Zero or more lines, each giving the id of one head of the given branch.
+Each line consists of a revision id, in hexadecimal, followed by a
+newline.  The lines are printed in sorted order.
+
+@item Error conditions:
+
+If the given branch contains no members, then no lines are printed.
+
+@end table
+
+@end ftable
+
+@page
 @node    RCS
 @section RCS
 
@@ -3733,7 +3838,8 @@ help diagnose failures.
 This command imports all the file versions in each RCS file listed in
 @var{filename...}.  These files should be raw RCS files, ending in
 @code{,v}. Monotone parses them directly and inserts them into your
-database.
+database.  Note that this does not do any revision reconstruction, and
+is only useful for debugging.
 
 @item monotone cvs_import @var{pathname...}
 

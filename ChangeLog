@@ -1,3 +1,14 @@
+2005-02-15  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc: Add "Error conditions" to the standard comment
+	sections.
+	
+	* monotone.texi (Scripting): New section.
+	(Automation): New section.
+	
+	* tests/t_automate_heads.at: Test behavior with nonexistent
+	branch.
+
 2005-02-14  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_merge_normalization_edge_case.at: New test.

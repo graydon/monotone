@@ -10,7 +10,7 @@
 #include "app_state.hh"
 #include "commands.hh"
 
-// Name: automate_version
+// Name: interface_version
 // Arguments: none
 // Added in: 0.0
 // Purpose: Prints version of automation interface.  Major number increments
@@ -18,6 +18,7 @@
 //   whenever any change is made (but is reset when major number increments).
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
+// Error conditions: None.
 static std::string const interface_version = "0.0";
 static void
 automate_interface_version(std::vector<utf8> args,
@@ -37,7 +38,9 @@ automate_interface_version(std::vector<utf8> args,
 // Added in: 0.0
 // Purpose: Prints the heads of the given branch.
 // Output format: A list of revision ids, in hexadecimal, each followed by a
-//   newline. Revision ids are sorted.
+//   newline. Revision ids are sorted.  If the branch does not exist, then 
+// Error conditions: If the branch does not exist, prints nothing.  (There are
+//   no heads.)
 static void
 automate_heads(std::vector<utf8> args,
                std::string const & help_name,
