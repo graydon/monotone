@@ -109,10 +109,21 @@ string
 get_homedir()
 {
 #ifdef WIN32
+  char * home;
+  home = getenv("MONOTONE_HOME");
+  if (home != NULL)
+    return string(home);
+  home = getenv("HOME");
+  if (home != NULL)
+    return string(home);
+  home = getenv("USERPROFILE");
+  if (home != NULL)
+    return string(home);
   char * homedrive = getenv("HOMEDRIVE");
   char * homepath = getenv("HOMEPATH");
-  N((homedrive!=NULL && homepath!=NULL), F("could not find home directory"));
-  return string(homedrive)+string(homepath);
+  if (homedrive != NULL && homepath != NULL)
+    return string(homedrive) + string(homepath);
+  N((false, F("could not find home directory (tried MONOTONE_HOME, HOME, USERPROFILE, HOMEDRIVE/HOMEPATH"));
 #else
   char * home = getenv("HOME");
   if (home != NULL)
