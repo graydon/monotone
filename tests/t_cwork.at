@@ -9,12 +9,12 @@ AT_DATA(testfile0, [version 0 of first test file
 AT_DATA(testfile1, [version 1 of second test file
 ])
 
-AT_CHECK(MONOTONE add testfile0, [], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore])
+AT_CHECK(MONOTONE add testfile0, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
 V1=`SHA1(MT/manifest)`
-AT_CHECK(MONOTONE add testfile1, [], [ignore])
+AT_CHECK(MONOTONE add testfile1, [], [ignore], [ignore])
 AT_CHECK(test -e MT/work, [], [ignore])
-AT_CHECK(MONOTONE checkout $V1 ., [], [ignore])
+AT_CHECK(MONOTONE checkout $V1 ., [], [ignore], [ignore])
 AT_CHECK(test ! -e MT/work, [], [ignore])
 
 AT_CLEANUP

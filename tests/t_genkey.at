@@ -7,7 +7,7 @@ MONOTONE_SETUP
 TKEY=happy@bogus.com
 
 # generate a new key
-AT_CHECK(MONOTONE genkey $TKEY, [], [ignore])
+AT_CHECK(MONOTONE genkey $TKEY, [], [ignore], [ignore])
 
 # check key exists
 AT_CHECK(MONOTONE lskeys, [], [stdout])
@@ -18,7 +18,7 @@ AT_CHECK(MONOTONE lskeys happy\*, [], [stdout])
 AT_CHECK(grep $TKEY stdout, [], [ignore])
 
 # check globbing on bogus name misses key
-AT_CHECK(MONOTONE lskeys burp, [], [stdout])
+AT_CHECK(MONOTONE lskeys burp\*, [], [stdout], [ignore])
 AT_CHECK(grep $TKEY stdout, [1], [])
 
 
@@ -28,16 +28,16 @@ AT_DATA(input.txt, [blah blah blah
 ])
 
 TSHA=`SHA1(input.txt)`
-AT_CHECK(MONOTONE add input.txt, [], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore])
-AT_CHECK(MONOTONE --key=$TKEY cert file $TSHA color pink, [], [ignore])
+AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --key=$TKEY cert file $TSHA color pink, [], [ignore], [ignore])
 AT_CHECK(MONOTONE lscerts file $TSHA, [], [stdout])
 AT_CHECK(grep pink stdout, [], [ignore])
 
 AT_DATA(cert-data, [yellow
 ])
-AT_CHECK(MONOTONE --key=$TKEY cert file $TSHA color < cert-data, [], [ignore])
-AT_CHECK(MONOTONE lscerts file $TSHA, [], [stdout])
+AT_CHECK(MONOTONE --key=$TKEY cert file $TSHA color < cert-data, [], [ignore], [ignore])
+AT_CHECK(MONOTONE lscerts file $TSHA, [], [stdout], [ignore])
 AT_CHECK(grep pink stdout, [], [ignore])
 AT_CHECK(grep yellow stdout, [], [ignore])
 

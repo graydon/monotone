@@ -24,13 +24,13 @@ end
 
 AT_DATA(testfile, [version 0 of test file
 ])
-AT_CHECK(MONOTONE add testfile, [], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch --rcfile=nntp.lua commit blah-blah, [], [ignore])
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=nntp.lua commit blah-blah, [], [ignore], [ignore])
 VER0=`SHA1(MT/manifest)`
 
 AT_DATA(testfile, [version 1 of test file
 ])
-AT_CHECK(MONOTONE --rcfile=nntp.lua commit blah-blah, [], [ignore])
+AT_CHECK(MONOTONE --rcfile=nntp.lua commit blah-blah, [], [ignore], [ignore])
 VER1=`SHA1(MT/manifest)`
 
 
@@ -63,7 +63,7 @@ killall -q -TERM nntp-test-tcpserver
 ./nntp-test-tcpserver $HOST $PORT snntpd >/dev/null 2>&1 &
 sleep 2
 
-AT_CHECK(MONOTONE --rcfile=nntp.lua post, [], [ignore])
+AT_CHECK(MONOTONE --rcfile=nntp.lua post, [], [ignore], [ignore])
 AT_CHECK(sncat $GROUP, [], [stdout])
 AT_CHECK(grep mdata stdout, [], [stdout])
 AT_CHECK(grep $VER0 stdout, [], [ignore])
@@ -75,7 +75,7 @@ AT_CHECK(grep $VER0 stdout, [], [ignore])
 AT_CHECK(sncat $GROUP, [], [stdout])
 AT_CHECK(grep $VER1 stdout, [], [ignore])
 
-AT_CHECK(MONOTONE --db=test2.db --rcfile=nntp.lua fetch nntp://127.0.0.1:8119 monotone.test.packets, [], [ignore])
+AT_CHECK(MONOTONE --db=test2.db --rcfile=nntp.lua fetch nntp://127.0.0.1:8119 monotone.test.packets, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE --db=test2.db cat manifest $VER0, [], [stdout])
 AT_CHECK(grep testfile stdout, [], [ignore])

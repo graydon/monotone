@@ -9,8 +9,8 @@ AT_DATA(importme, [version 0 of test file
 
 TSHA=`SHA1(importme)`
 
-AT_CHECK(MONOTONE add importme, [], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore])
+AT_CHECK(MONOTONE add importme, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
 AT_CHECK(MONOTONE cat file $TSHA, [], [stdout])
 AT_CHECK(cmp importme stdout, [], [ignore])
 

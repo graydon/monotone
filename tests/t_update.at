@@ -12,8 +12,8 @@ AT_DATA(testfile, [first line of the file
 second line of the file
 third line of the file
 ])
-AT_CHECK(MONOTONE add testfile, [], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore])
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
 ROOT_M_SHA=`SHA1(MT/manifest)`
 ROOT_F_SHA=`SHA1(testfile)`
 
@@ -23,7 +23,7 @@ second line of the file
 third line of the file
 ])
 
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore])
+AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
 LEFT_M_SHA=`SHA1(MT/manifest)`
 LEFT_F_SHA=`SHA1(testfile)`
 AT_CHECK(test $LEFT_M_SHA != $ROOT_M_SHA)
@@ -37,7 +37,7 @@ an insertion between second and third
 third line of the file
 ])
 
-AT_CHECK(MONOTONE update, [], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 
 # files should now be merged
 

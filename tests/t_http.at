@@ -24,13 +24,13 @@ end
 
 AT_DATA(testfile, [version 0 of test file
 ])
-AT_CHECK(MONOTONE add testfile, [], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch --rcfile=http.lua commit blah-blah, [], [ignore])
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=http.lua commit blah-blah, [], [ignore], [ignore])
 VER0=`SHA1(MT/manifest)`
 
 AT_DATA(testfile, [version 1 of test file
 ])
-AT_CHECK(MONOTONE --rcfile=http.lua commit blah-blah, [], [ignore])
+AT_CHECK(MONOTONE --rcfile=http.lua commit blah-blah, [], [ignore], [ignore])
 VER1=`SHA1(MT/manifest)`
 
 DEPOT=`which depot.cgi`
@@ -74,7 +74,7 @@ sleep 2
 AT_DATA(dumpit.sql, [.dump
 ])
 
-AT_CHECK(MONOTONE --rcfile=http.lua post, [], [ignore])
+AT_CHECK(MONOTONE --rcfile=http.lua post, [], [ignore], [ignore])
 AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
 AT_CHECK(grep mdata stdout, [], [stdout])
 AT_CHECK(grep $VER0 stdout, [], [ignore])
@@ -86,7 +86,7 @@ AT_CHECK(grep $VER0 stdout, [], [ignore])
 AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
 AT_CHECK(grep $VER1 stdout, [], [ignore])
 
-AT_CHECK(MONOTONE --db=test2.db --rcfile=http.lua fetch http://127.0.0.1:8080/user/depot.cgi packets, [], [ignore])
+AT_CHECK(MONOTONE --db=test2.db --rcfile=http.lua fetch http://127.0.0.1:8080/user/depot.cgi packets, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE --db=test2.db cat manifest $VER0, [], [stdout])
 AT_CHECK(grep testfile stdout, [], [ignore])
