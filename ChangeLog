@@ -1,3 +1,10 @@
+2005-01-27  Matt Johnston  <matt@ucc.asn.au>
+
+	(compile fixes for Linux/gcc 3.3.4)
+	* botan/{util.cpp,primes.cpp}: give large constants ULL
+	suffixes
+	* botan/{gzip.cpp}: fix type for std::max() comparison
+
 2005-01-23  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (restrict_rename_set): include renames if either

@@ -56,10 +56,10 @@ u32bit reverse_bytes(u32bit input)
 
 u64bit reverse_bytes(u64bit input)
    {
-   input = ((input & 0xFF00FF00FF00FF00) >>  8) |
-           ((input & 0x00FF00FF00FF00FF) <<  8);
-   input = ((input & 0xFFFF0000FFFF0000) >> 16) |
-           ((input & 0x0000FFFF0000FFFF) << 16);
+   input = ((input & 0xFF00FF00FF00FF00ULL) >>  8) |
+           ((input & 0x00FF00FF00FF00FFULL) <<  8);
+   input = ((input & 0xFFFF0000FFFF0000ULL) >> 16) |
+           ((input & 0x0000FFFF0000FFFFULL) << 16);
    return rotate_left(input, 32);
    }
 
@@ -91,12 +91,12 @@ u32bit reverse_bits(u32bit input)
 
 u64bit reverse_bits(u64bit input)
    {
-   input = ((input & 0xAAAAAAAAAAAAAAAA) >> 1) |
-           ((input & 0x5555555555555555) << 1);
-   input = ((input & 0xCCCCCCCCCCCCCCCC) >> 2) |
-           ((input & 0x3333333333333333) << 2);
-   input = ((input & 0xF0F0F0F0F0F0F0F0) >> 4) |
-           ((input & 0x0F0F0F0F0F0F0F0F) << 4);
+   input = ((input & 0xAAAAAAAAAAAAAAAAULL) >> 1) |
+           ((input & 0x5555555555555555ULL) << 1);
+   input = ((input & 0xCCCCCCCCCCCCCCCCULL) >> 2) |
+           ((input & 0x3333333333333333ULL) << 2);
+   input = ((input & 0xF0F0F0F0F0F0F0F0ULL) >> 4) |
+           ((input & 0x0F0F0F0F0F0F0F0FULL) << 4);
    return reverse_bytes(input);
    }
 

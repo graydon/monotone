@@ -272,7 +272,7 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
    // Check the gzip header
    if (pos < sizeof(GZIP::GZIP_HEADER))
       {
-      u32bit len = std::min(sizeof(GZIP::GZIP_HEADER)-pos, (unsigned long)length);
+      u32bit len = std::min((u32bit)sizeof(GZIP::GZIP_HEADER)-pos, length);
       u32bit cmplen = len;
       // The last byte is the OS flag - we don't care about that
       if (pos + len - 1 >= GZIP::HEADER_POS_OS)
