@@ -235,6 +235,8 @@ session
   map< std::pair<utf8, netcmd_item_type>, 
        boost::shared_ptr<merkle_table> > merkle_tables;
 
+  map<cert_value, epoch_id> epochs;
+
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
   map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestry;
@@ -337,7 +339,8 @@ session
                         id const & nonce1, 
                         id const & nonce2, 
                         string const & signature);
-  bool process_confirm_cmd(string const & signature);
+  bool process_confirm_cmd(string const & signature,
+                           map<string, id> const & server_epochs);
   bool process_refine_cmd(merkle_node const & node);
   bool process_send_data_cmd(netcmd_item_type type,
                              id const & item);
@@ -1070,7 +1073,16 @@ session::queue_hello_cmd(id const & server,
 {
   netcmd cmd;
   cmd.cmd_code = hello_cmd;
-  write_hello_cmd_payload(server, nonce, cmd.payload);
+  hexenc<id> server_encoded;
+  encode_hexenc(server, server_encoded);
+  
+  rsa_keypair_id key_name;
+  base64<rsa_pub_key> pub_encoded;
+  rsa_pub_key pub;
+
+  app.db.get_pubkey(server_encoded, key_name, pub_encoded);
+  decode_base64(pub_encoded, pub);
+  write_hello_cmd_payload(key_name(), pub(), nonce, cmd.payload);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1106,7 +1118,15 @@ session::queue_confirm_cmd(string const & signature)
 {
   netcmd cmd;
   cmd.cmd_code = confirm_cmd;
-  write_confirm_cmd_payload(signature, cmd.payload);
+  map<string, id> tmp_epochs;
+  for (map<cert_value, epoch_id>::const_iterator i = epochs.begin(); 
+       i != epochs.end(); ++i)
+    {
+      id epoch;
+      decode_hexenc(i->second.inner(), epoch);
+      tmp_epochs.insert(make_pair(i->first(), epoch));
+    }
+  write_confirm_cmd_payload(signature, tmp_epochs, cmd.payload);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1610,7 +1630,8 @@ session::process_auth_cmd(protocol_role role,
 }
 
 bool 
-session::process_confirm_cmd(string const & signature)
+session::process_confirm_cmd(string const & signature,
+                             map<string, id> const & server_epochs)
 {
   I(this->remote_peer_key_hash().size() == constants::merkle_hash_length_in_bytes);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
@@ -1636,6 +1657,30 @@ session::process_confirm_cmd(string const & signature)
         {
           L(F("server signature OK, accepting authentication\n"));
           this->authenticated = true;
+
+          // check, and possibly absorb, their epochs
+          for (map<string, id>::const_iterator e = server_epochs.begin(); 
+               e != server_epochs.end(); ++e)
+            {
+              cert_value branch(e->first);
+              hexenc<id> tmpid;
+              encode_hexenc(e->second, tmpid);
+              epoch_id epoch(tmpid);
+              map<cert_value, epoch_id>::const_iterator ours = epochs.find(branch);
+              if (ours == epochs.end())
+                {                  
+                  L(F("accepting server epoch %s for branch %s\n") % epoch % branch);
+                  app.db.set_epoch(branch, epoch);                  
+                  epochs.insert(make_pair(branch, epoch));
+                }
+              else
+                {
+                  N(ours->second == epoch, 
+                    (F("Mismatched epoch on branch %s. Server has %s, client has %s.\n") 
+                     % branch % epoch % ours->second));
+                }
+            }
+
           merkle_ptr root;
           load_merkle_node(key_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
@@ -2508,7 +2553,26 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "hello netcmd received in client voice");
       {
         id server, nonce;
-        read_hello_cmd_payload(cmd.payload, server, nonce);
+        hexenc<id> server_encoded;
+        rsa_keypair_id server_keyname;
+        rsa_pub_key server_key;
+        base64<rsa_pub_key> server_key_encoded;
+        string skn, sk;
+        
+        read_hello_cmd_payload(cmd.payload, skn, sk, nonce);
+        server_keyname = skn;
+        server_key = sk;
+
+        encode_base64(server_key, server_key_encoded);
+        key_hash_code(server_keyname, server_key_encoded, server_encoded);
+        if (!app.db.public_key_exists(server_encoded))
+          {
+            W(F("inserting public %s key for %s into database\n") 
+              % server_encoded % server_keyname);
+            app.db.put_key(server_keyname, server_key_encoded);
+          }
+
+        decode_hexenc(server_encoded, server);
         return process_hello_cmd(server, nonce);
       }
       break;
@@ -2545,8 +2609,9 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "confirm netcmd received in client voice");
       {
         string signature;
-        read_confirm_cmd_payload(cmd.payload, signature);
-        return process_confirm_cmd(signature);
+        map<string,id> server_epochs;
+        read_confirm_cmd_payload(cmd.payload, signature, server_epochs);
+        return process_confirm_cmd(signature, server_epochs);
       }
       break;
 
@@ -3144,6 +3209,24 @@ session::rebuild_merkle_trees(app_state & app,
             revision_ids.insert(revision_id(idx(certs, i).inner().ident));
           }
       }
+    
+    {
+      // set to zero any epoch which is not yet set    
+      app.db.get_epochs(epochs);
+      epoch_id epoch_zero(std::string(constants::idlen, '0'));
+      for (std::set<string>::const_iterator i = branchnames.begin();
+           i != branchnames.end(); ++i)
+        {
+          cert_value branch(*i);
+          std::map<cert_value, epoch_id>::const_iterator j = epochs.find(branch);
+          if (j == epochs.end())
+            {
+              L(F("setting epoch on %s to zero\n") % branch);
+              epochs.insert(std::make_pair(branch, epoch_zero));
+              app.db.set_epoch(branch, epoch_zero);
+            }
+        }
+    }
 
     typedef std::vector< std::pair<hexenc<id>,
       std::pair<revision_id, rsa_keypair_id> > > cert_idx;

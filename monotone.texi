@@ -4584,52 +4584,69 @@ Obviously, we hope neither of these things will happen, and we've taken
 lots of precautions against the first recurring; but it is better to be
 prepared.
 
-If either of these things does happen, we will provide migration
-commands and explain how to use them for the given situation; this part
+If either of these events occur, we will provide migration commands
+and explain how to use them for the situation in question; this much
 is necessarily somewhat unpredictable.  In the past we've used the
 @code{db rebuild} command, which extracts the ancestry graph from the
 database and then recreates revisions from the manifests only --- this
 preserves the contents of each snapshot, but breaks tracking of file
-identity across renames -- and then reissues all existing certs that you
-trust, signed with your key.@footnote{Regardless of who originally
+identity across renames --- and then reissues all existing certs that
+you trust, signed with your key.@footnote{Regardless of who originally
 signed the certs, after the rebuild they will be signed by you.  This
 means you should be somewhat careful when rebuilding, but it is
 unavoidable --- if you could sign with other people's keys, that would
 be a rather serious security problem!}
 
-So that's nice, we know how to actually rebuild the ancestry when
-necessary, but there are still some practical problems.  In particular,
-suppose Jim and Beth are working on a project when it turns out that
-they need to rebuild their ancestry.  Jim bites the bullet and does so,
-and sends Beth an email telling her that he has --- but the email gets
-caught by Beth's spam filter, she doesn't see it, and she blithely syncs
-her database with Jim's.  Now there's a problem: they've combined the
-pre-rebuild and post-rebuild databases.  Their databases now contain two
-complete, parallel (but possibly overlapping) copies of their project's
-ancestry.  And the bad revisions that they were trying to get rid of are
-still there.  It's a mess.
+While the @code{db rebuild} command can reconstruct the ancestry graph
+in @emph{your} database, there are practical problems which arise when
+working in a distributed work group.  For example, suppose our group
+consists of the fictional developers Jim and Beth, and they need to
+rebuild their ancestry graph. Jim performs a rebuild, and sends Beth
+an email telling her that he has done so, but the email gets caught by
+Beth's spam filter, she doesn't see it, and she blithely syncs her
+database with Jim's. This creates a problem: Jim and Beth have
+combined the pre-rebuild and post-rebuild databases.  Their databases
+now contain two complete, parallel (but possibly overlapping) copies
+of their project's ancestry.  The ``bad'' old revisions that they were
+trying to get rid of are still there, mixed up with the ``good'' new
+revisions.
 
-To prevent this, each database keeps a table of branch @dfn{epochs}.  An
-epoch is just a unique hunk of bits.  Epochs matter in two cases.
-Firstly, branches start out in the all-zeros epoch, and whenever we
-rebuild ancestry, we generate a new epoch for all affected branches.
-Secondly, whenever we netsync with anyone else, we check to make sure
-that all branches included in the netsync have the same epochs.  If any
-epochs differ, then the netsync is aborted with no changes made to
-either database.  The first time we fetch a branch, we save the remote
-side's epoch for it.
+To prevent such messy situations, monotone keeps a table of branch
+@dfn{epochs} in each database. An epoch is just a large bit string
+associated with a branch. Initially each branch's epoch is zero. Most
+monotone commands ignore epochs; they are relevant in only two
+circumstances:
 
-The effect is that epochs mark out connected components of the graph of
-netsync servers; changes can only spread within these components.
-Because epochs operate at the branch level, different projects can share
-a netsync server without trouble, and can rebuild independently of each
-other.  Within a project, though, rebuilding cuts you off from everyone
-else until you can convince them to fetch from you into a fresh
-database.  If Jim and Beth had epochs, Jim's rebuild would have bumped
-the epochs in his database.  Then it wouldn't have mattered if Beth
-didn't get his email: when she went to sync with him, she would have
-gotten a message telling her that a rebuild had happened, and she could
-have gone to out of band means to figure out what was going on.
+@itemize
+
+@item 
+When monotone rebuilds ancestry, it generates a new @emph{random}
+epoch for each branch in the database.
+
+@item 
+When monotone runs netsync between databases, it checks to make sure
+that all branches involved in the synchronization have the same
+epochs. If any epochs differ, the netsync is aborted with no changes
+made to either database. If either side is seeing a branch for the
+first time, it adopts the epoch of the other side.
+
+@end itemize
+
+Thus, when a user rebuilds their ancestry graph, they select a new
+epoch and thus effectively disassociate with the group of colleagues
+they had previously been communicating with. Other members of that
+group can then decide whether to follow the rebuild user into a new
+group --- by pulling the newly rebuilt ancestry --- or to remain
+behind in the old group.
+
+In our example, if Jim and Beth have epochs, Jim's rebuild creates a
+new epoch for their branch, in his database.  This causes monotone to
+reject netsync operations between Jim and Beth; it doesn't matter if
+Beth loses Jim's email. When she tries to synchronize with him, she
+receives an error message indicating that the epoch does not
+match. She must then discuss the matter with Jim and settle on a new
+course of action --- probably pulling Jim's database into a fresh
+database on Beth's end -- before future synchronizations will succeed.
 
 @heading Best practices
 
@@ -4637,29 +4654,29 @@ The previous section described the theory and rationale behind rebuilds
 and epochs.  Here we discuss the practical consequences of that
 discussion.
 
-If your project learns that it has become necessary to perform a rebuild
---- generally by announcement from the monotone developers --- the
-first thing to do is get everyone to sync their changes with the central
-server; if people have unshared changes when the database is rebuilt,
-they will have trouble sharing them afterwards.  
+If you decide you must rebuild your ancestry graph --- generally by
+announcement of a bug from the monotone developers --- the first thing
+to do is get everyone to sync their changes with the central server;
+if people have unshared changes when the database is rebuilt, they
+will have trouble sharing them afterwards.
 
-Then, the project should pick a designated person to take down the
-netsync server, rebuild their database, and put the server back up with
-the rebuilt ancestry in it.  Everybody else should then pull this
+Next, the project should pick a designated person to take down the
+netsync server, rebuild their database, and put the server back up
+with the rebuilt ancestry in it.  Everybody else should then pull this
 history into a fresh database, check out again from this database, and
 continue working as normal.
 
 In complicated situations, where people have private branches, or
-ancestries cross organizational boundaries, all this gets a little bit
-more, well, complicated.  The basic approach is to do a local rebuild,
-then after carefully examining the new revision IDs to convince yourself
-that the rebuilt graph is the same as the upstream subgraph, use the
-special @code{db epoch} commands to force your local epochs to match the
-upstream ones.  (You may also want to do some fiddling with certs, to
-avoid getting duplicate copies of all of them; if this situation ever
-arises in real life we'll figure out how exactly that should work.)  Be
-very careful when doing this; you're explicitly telling monotone to let
-you shoot yourself in the foot, and it will let you.
+ancestries cross organizational boundaries, matters are more complex.
+The basic approach is to do a local rebuild, then after carefully
+examining the new revision IDs to convince yourself that the rebuilt
+graph is the same as the upstream subgraph, use the special @code{db
+epoch} commands to force your local epochs to match the upstream ones.
+(You may also want to do some fiddling with certs, to avoid getting
+duplicate copies of all of them; if this situation ever arises in real
+life we'll figure out how exactly that should work.)  Be very careful
+when doing this; you're explicitly telling monotone to let you shoot
+yourself in the foot, and it will let you.
 
 Fortunately, this process should be extremely rare; with luck, it will
 never happen at all.  But this way we're prepared.

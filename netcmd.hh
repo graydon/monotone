@@ -67,9 +67,11 @@ void write_error_cmd_payload(std::string const & errmsg,
 			     std::string & out);
 
 void read_hello_cmd_payload(std::string const & in, 
-			    id & server, 
+                            std::string & server_keyname,
+                            std::string & server_key,
 			    id & nonce);
-void write_hello_cmd_payload(id const & server, 
+void write_hello_cmd_payload(std::string const & server_keyname,
+                             std::string const & server_key,
 			     id const & nonce, 
 			     std::string & out);
 
@@ -97,8 +99,12 @@ void write_auth_cmd_payload(protocol_role role,
 			    std::string const & signature, 
 			    std::string & out);
 
-void read_confirm_cmd_payload(std::string const & in, std::string & signature);
-void write_confirm_cmd_payload(std::string const & signature, std::string & out);
+void read_confirm_cmd_payload(std::string const & in, 
+                              std::string & signature, 
+                              std::map<std::string, id> & epochs);
+void write_confirm_cmd_payload(std::string const & signature, 
+                               std::map<std::string, id> const & epochs,
+                               std::string & out);
 
 void read_refine_cmd_payload(std::string const & in, merkle_node & node);
 void write_refine_cmd_payload(merkle_node const & node, std::string & out);

@@ -2018,7 +2018,7 @@ database::set_epoch(cert_value const & branch, epoch_id const & epo)
 {
   base64<cert_value> encoded;
   encode_base64(branch, encoded);
-  execute("INSERT OR UPDATE INTO branch_epochs VALUES('%q', '%q')", 
+  execute("INSERT OR REPLACE INTO branch_epochs VALUES('%q', '%q')", 
           encoded().c_str(), epo.inner()().c_str());
 }
 

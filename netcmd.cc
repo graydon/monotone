@@ -160,26 +160,28 @@ write_error_cmd_payload(std::string const & errmsg,
 
 void 
 read_hello_cmd_payload(string const & in, 
-                       id & server, 
+                       string & server_keyname,
+                       string & server_key,
                        id & nonce)
 {
   size_t pos = 0;
-  // syntax is: <server:20 bytes sha1> <nonce:20 random bytes>
-  server = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
-                                "hello netcmd, server identifier"));
+  // syntax is: <server keyname:vstr> <server pubkey:vstr> <nonce:20 random bytes>
+  extract_variable_length_string(in, server_keyname, pos, "hello netcmd, server key name");
+  extract_variable_length_string(in, server_key, pos, "hello netcmd, server key");
   nonce = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
                                "hello netcmd, nonce"));
   assert_end_of_buffer(in, pos, "hello netcmd payload");
 }
 
 void 
-write_hello_cmd_payload(id const & server, 
+write_hello_cmd_payload(string const & server_keyname,
+                        string const & server_key,
                         id const & nonce, 
                         string & out)
 {
-  I(server().size() == constants::merkle_hash_length_in_bytes);
   I(nonce().size() == constants::merkle_hash_length_in_bytes);
-  out += server();
+  insert_variable_length_string(server_keyname, out);
+  insert_variable_length_string(server_key, out);
   out += nonce();
 }
 
@@ -268,18 +270,44 @@ write_auth_cmd_payload(protocol_role role,
                          
 
 void 
-read_confirm_cmd_payload(string const & in, string & signature)
+read_confirm_cmd_payload(string const & in, 
+                         string & signature,
+                         map<string, id> & epochs)
 {
   size_t pos = 0;
-  // syntax is: <signature: vstr>
+  size_t n_epochs = 0;
+  epochs.clear();
+
+  // syntax is: <signature: vstr> <n_epochs: uleb128> 
+  //            (<branch: vstr> <epoch: 20 bytes id>){n_epochs} 
   extract_variable_length_string(in, signature, pos, "confirm netcmd, signature");
+  n_epochs = extract_datum_uleb128<size_t>(in, pos, "confirm netcmd, number of epochs");
+  for (size_t i = 0; i < n_epochs; ++i)
+    {
+      string branch;
+      id epoch;
+      extract_variable_length_string(in, branch, pos, "confirm netcmd, branch name");
+      epoch = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+                                   "confirm netcmd, epoch"));
+      epochs.insert(std::make_pair(branch, epoch));
+    }  
   assert_end_of_buffer(in, pos, "confirm netcmd payload");
 }
   
 void 
-write_confirm_cmd_payload(string const & signature, string & out)
+write_confirm_cmd_payload(string const & signature, 
+                          map<string, id> const & epochs, 
+                          string & out)
 {
   insert_variable_length_string(signature, out);
+  insert_datum_uleb128<size_t>(epochs.size(), out);
+  for (map<string, id>::const_iterator i = epochs.begin(); 
+       i != epochs.end(); ++i)
+    {
+      insert_variable_length_string(i->first, out);
+      I(i->second().size() == constants::merkle_hash_length_in_bytes);
+      out += i->second();      
+    }
 }
   
 void 
@@ -533,14 +561,19 @@ test_netcmd_functions()
         L(F("checking i/o round trip on hello_cmd\n"));
         netcmd out_cmd, in_cmd;
         string buf;
-        id out_server(raw_sha1("happy server day")), out_nonce(raw_sha1("nonce it up")), in_server, in_nonce;
+        string 
+          out_server_key("9387938749238792874"), 
+          out_server_keyname("server@there"),
+          in_server_key, in_server_keyname;
+        id out_nonce(raw_sha1("nonce it up")), in_nonce;
         out_cmd.cmd_code = hello_cmd;
-        write_hello_cmd_payload(out_server, out_nonce, out_cmd.payload);
+        write_hello_cmd_payload(out_server_keyname, out_server_key, out_nonce, out_cmd.payload);
         write_netcmd(out_cmd, buf);
         BOOST_CHECK(read_netcmd(buf, in_cmd));
-        read_hello_cmd_payload(in_cmd.payload, in_server, in_nonce);
+        read_hello_cmd_payload(in_cmd.payload, in_server_keyname, in_server_key, in_nonce);
         BOOST_CHECK(in_cmd == out_cmd);
-        BOOST_CHECK(in_server == out_server);
+        BOOST_CHECK(in_server_keyname == out_server_keyname);
+        BOOST_CHECK(in_server_key == out_server_key);
         BOOST_CHECK(in_nonce == out_nonce);
         L(F("hello_cmd test done, buffer was %d bytes\n") % buf.size());
       }
@@ -600,13 +633,17 @@ test_netcmd_functions()
         string buf;
         string out_signature(raw_sha1("egg") + raw_sha1("tomago")), in_signature;
 
+        map<string,id> out_map, in_map;
+        out_map.insert(make_pair("hello there", raw_sha1("whee")));
+
         out_cmd.cmd_code = confirm_cmd;
-        write_confirm_cmd_payload(out_signature, out_cmd.payload);
+        write_confirm_cmd_payload(out_signature, out_map, out_cmd.payload);
         write_netcmd(out_cmd, buf);
         BOOST_CHECK(read_netcmd(buf, in_cmd));
-        read_confirm_cmd_payload(in_cmd.payload, in_signature);
+        read_confirm_cmd_payload(in_cmd.payload, in_signature, in_map);
         BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_signature == out_signature);
+        BOOST_CHECK(in_map == out_map);
         L(F("confirm_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 

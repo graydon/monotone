@@ -1,3 +1,15 @@
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
+	* database.cc (set_epoch): Fix SQL.
+	* monotone.texi (Rebuilding ancestry): Reword a bit.
+	* netcmd.{cc,hh} 
+	({read,write}_hello_cmd_payload): Transfer server key with hello.
+	({read,write}_confirm_cmd_payload): Transfer epoch list with confirm.
+	* netsync.cc: Adapt to changes in netcmd.
+	(rebuild_merkle_trees): Set nonexistent epochs to zero before sync.
+	* revision.cc (anc_graph): Randomize epochs on rebuild.
+	* tests/t_epoch.at: Fix up to test slightly new semantics.
+
 2005-02-07  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.1: Add more db commands.
