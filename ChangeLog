@@ -1,5 +1,10 @@
 2005-02-26  Nathaniel Smith  <njs@codesourcery.com>
 
+	* merkle_tree.hh: Fix comment.
+	Remove prototypes for non-existing functions.
+
+2005-02-26  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_epoch_unidirectional.at: New test.
 	* testsuite.at: Add it.
 
