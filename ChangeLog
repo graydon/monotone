@@ -8,6 +8,37 @@
 	* diff_patch.cc (normalize_extents): Add warning for anyone who
 	manages to trigger the untested part of the normalization code.
 
+2005-01-14  Christian Kollee <stuka@pestilenz.org>
+
+	* search for and link with sqlite3 when --bundle-sqlite=no
+
+2005-01-12  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_ambig_update.at: add comments from discussion on irc
+	* tests/t_status_missing.at: new test
+	* testsuite.at: include it
+
+2005-01-10  graydon hoare  <graydon@pboox.com>
+
+	* commands.cc (explicit_merge): Tweak merge message.
+	* database.cc (check_sqlite_format_version): New function.
+	(database::sql): Call it.
+	* sqlite/pager.hh (SQLITE_DEFAULT_PAGE_SIZE): Adjust to 8192.
+	(SQLITE_MAX_PAGE_SIZE): Adjust to 65536.
+	* schema_migration.cc: Post-merge cleanup.
+	* Makefile.am: Likewise.
+
+2005-01-10  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: SQLite 3.0.8 CVS import
+	* database.{cc,hh}:
+	* schema_migration.{cc,hh}: convert to use the SQLite3 API
+	
+	This does not yet use any of the more sophisticated API features
+	of SQLite3 (query parameters, BLOBs), so there is plenty of room 
+	for optimization. This also does not change the schema (i.e.
+	still uses base64 encoded values in tables)
+
 2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_migrate_schema.at: Switch to using pre-dumped db's, make
@@ -121,6 +152,13 @@
 	* tests/t_netsync_diffbranch.at: add a new test for pulling a branch
 	with a parent from a different branch.
 	* testsuite.at: add it
+
+2005-01-02  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (log_certs): new function
+	(log) add Ancestor: and Branch: entries to output; use above new
+	function
+	* tests/t_cross.at: update to work with changesets
 
 2004-12-30  graydon hoare  <graydon@pobox.com>
 

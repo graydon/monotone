@@ -12,7 +12,7 @@
 
 #include <boost/tokenizer.hpp>
 
-#include <sqlite.h>
+#include <sqlite3.h>
 
 #include "schema_migration.hh"
 #include "cryptopp/filters.h"
@@ -35,6 +35,13 @@
 using namespace std;
 
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+
+extern "C" {
+// some wrappers to ease migration
+  int sqlite3_exec_printf(sqlite3*,const char *sqlFormat,sqlite3_callback,
+      void *,char **errmsg,...);
+  const char *sqlite3_value_text_s(sqlite3_value *v);
+}
 
 static string 
 lowercase(string const & in)
@@ -87,36 +94,36 @@ is_ws
 };
 
 static void 
-sqlite_sha1_fn(sqlite_func *f, int nargs, char const ** args)
+sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 {
   string tmp, sha;
   if (nargs <= 1)
     {
-      sqlite_set_result_error(f, "need at least 1 arg to sha1()", -1);
+      sqlite3_result_error(f, "need at least 1 arg to sha1()", -1);
       return;
     }
 
   if (nargs == 1)
     {
-      string s = (args[0]);
+      string s = (sqlite3_value_text_s(args[0]));
       s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
       tmp = s;
     }
   else
     {
-      string sep = string(args[0]);
-      string s = (args[1]);
+      string sep = string(sqlite3_value_text_s(args[0]));
+      string s = (sqlite3_value_text_s(args[1]));
       s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
       tmp = s;
       for (int i = 2; i < nargs; ++i)
         {
-          s = string(args[i]);
+          s = string(sqlite3_value_text_s(args[i]));
           s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
           tmp += sep + s;
         }
     }
   calculate_id(tmp, sha);
-  sqlite_set_result_string(f,sha.c_str(),sha.size());
+  sqlite3_result_text(f,sha.c_str(),sha.size(),SQLITE_TRANSIENT);
 }
 
 int 
@@ -144,25 +151,25 @@ append_sql_stmt(void * vp,
 }
 
 void 
-calculate_schema_id(sqlite *sql, string & id)
+calculate_schema_id(sqlite3 *sql, string & id)
 {
   id.clear();
   string tmp, tmp2;
-  int res = sqlite_exec_printf(sql, 
+  int res = sqlite3_exec_printf(sql, 
                                "SELECT sql FROM sqlite_master "
                                "WHERE type = 'table' "
                                "ORDER BY name", 
                                &append_sql_stmt, &tmp, NULL);
   if (res != SQLITE_OK)
     {
-      sqlite_exec(sql, "ROLLBACK", NULL, NULL, NULL);
+      sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
       throw runtime_error("failure extracting schema from sqlite_master");
     }
   massage_sql_tokens(tmp, tmp2);
   calculate_id(tmp2, id);
 }
 
-typedef bool (*migrator_cb)(sqlite *, char **);
+typedef bool (*migrator_cb)(sqlite3 *, char **);
 
 struct 
 migrator
@@ -174,7 +181,7 @@ migrator
     migration_events.push_back(make_pair(schema_id, cb));
   }
 
-  void migrate(sqlite *sql, string target_id)
+  void migrate(sqlite3 *sql, string target_id)
   {
     string init;
     calculate_schema_id(sql, init);
@@ -182,7 +189,8 @@ migrator
     if (sql == NULL)
       throw runtime_error("NULL sqlite object given to migrate");
 
-    if (sqlite_create_function(sql, "sha1", -1, &sqlite_sha1_fn, NULL))
+    if (sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
+            &sqlite_sha1_fn, NULL, NULL))
       throw runtime_error("error registering sha1 function with sqlite");
 
     bool migrating = false;
@@ -192,7 +200,7 @@ migrator
 
         if (i->first == init)
           {
-            if (sqlite_exec(sql, "BEGIN", NULL, NULL, NULL) != SQLITE_OK)
+            if (sqlite3_exec(sql, "BEGIN", NULL, NULL, NULL) != SQLITE_OK)
               throw runtime_error("error at transaction BEGIN statement");          
             migrating = true;
           }
@@ -206,13 +214,13 @@ migrator
             if (curr != i->first)
               {
                 if (migrating)
-                  sqlite_exec(sql, "ROLLBACK", NULL, NULL, NULL);
+                  sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
                 throw runtime_error("mismatched pre-state to migration step");
               }
 
             if (i->second == NULL)
               {
-                sqlite_exec(sql, "ROLLBACK", NULL, NULL, NULL);
+                sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
                 throw runtime_error("NULL migration specifier");
               }
 
@@ -222,7 +230,7 @@ migrator
                 string e("migration step failed");
                 if (errmsg != NULL)
                   e.append(string(": ") + errmsg);
-                sqlite_exec(sql, "ROLLBACK", NULL, NULL, NULL);
+                sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
                 throw runtime_error(e);
               }     
           }
@@ -235,11 +243,11 @@ migrator
         calculate_schema_id(sql, curr);
         if (curr != target_id)
           {
-            sqlite_exec(sql, "ROLLBACK", NULL, NULL, NULL);
+            sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
             throw runtime_error("mismatched result of migration, "
                                 "got " + curr + ", wanted " + target_id);
           }
-        if (sqlite_exec(sql, "COMMIT", NULL, NULL, NULL) != SQLITE_OK)
+        if (sqlite3_exec(sql, "COMMIT", NULL, NULL, NULL) != SQLITE_OK)
           {
             throw runtime_error("failure on COMMIT");
           }
@@ -247,25 +255,25 @@ migrator
   }
 };
 
-static bool move_table(sqlite *sql, char **errmsg, 
+static bool move_table(sqlite3 *sql, char **errmsg, 
                        char const * srcname,
                        char const * dstname,
                        char const * dstschema)
 {
   int res = 
-    sqlite_exec_printf(sql, "CREATE TABLE %s %s", NULL, NULL, errmsg,
+    sqlite3_exec_printf(sql, "CREATE TABLE %s %s", NULL, NULL, errmsg,
                        dstname, dstschema);
   if (res != SQLITE_OK)
     return false;
   
   res = 
-    sqlite_exec_printf(sql, "INSERT INTO %s SELECT * FROM %s",
+    sqlite3_exec_printf(sql, "INSERT INTO %s SELECT * FROM %s",
                        NULL, NULL, errmsg, dstname, srcname);
   if (res != SQLITE_OK)
     return false;
   
   res = 
-    sqlite_exec_printf(sql, "DROP TABLE %s",
+    sqlite3_exec_printf(sql, "DROP TABLE %s",
                        NULL, NULL, errmsg, srcname);
   if (res != SQLITE_OK)
     return false;
@@ -275,7 +283,7 @@ static bool move_table(sqlite *sql, char **errmsg,
 
 
 static bool 
-migrate_client_merge_url_and_group(sqlite * sql, 
+migrate_client_merge_url_and_group(sqlite3 * sql, 
                                    char ** errmsg)
 {
 
@@ -290,7 +298,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
                   ")"))
     return false;
 
-  int res = sqlite_exec_printf(sql, "CREATE TABLE posting_queue "
+  int res = sqlite3_exec_printf(sql, "CREATE TABLE posting_queue "
                                "("
                                "url not null, -- URL we are going to send this to\n"
                                "content not null -- the packets we're going to send\n"
@@ -298,7 +306,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "INSERT INTO posting_queue "
+  res = sqlite3_exec_printf(sql, "INSERT INTO posting_queue "
                            "SELECT "
                            "(url || '/' || groupname), "
                            "content "
@@ -306,7 +314,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -322,7 +330,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
                   ")"))
     return false;
 
-  res = sqlite_exec_printf(sql, "CREATE TABLE incoming_queue "
+  res = sqlite3_exec_printf(sql, "CREATE TABLE incoming_queue "
                            "("
                            "url not null, -- URL we got this bundle from\n"
                            "content not null -- the packets we're going to read\n"
@@ -330,7 +338,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "INSERT INTO incoming_queue "
+  res = sqlite3_exec_printf(sql, "INSERT INTO incoming_queue "
                            "SELECT "
                            "(url || '/' || groupname), "
                            "content "
@@ -338,7 +346,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -357,7 +365,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
                   ))
     return false;
   
-  res = sqlite_exec_printf(sql, "CREATE TABLE sequence_numbers "
+  res = sqlite3_exec_printf(sql, "CREATE TABLE sequence_numbers "
                            "("
                            "url primary key, -- URL to read from\n"
                            "major not null, -- 0 in news servers, may be higher in depots\n"
@@ -366,7 +374,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "INSERT INTO sequence_numbers "
+  res = sqlite3_exec_printf(sql, "INSERT INTO sequence_numbers "
                            "SELECT "
                            "(url || '/' || groupname), "
                            "major, "
@@ -375,7 +383,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -393,7 +401,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
                   ))
     return false;
   
-  res = sqlite_exec_printf(sql, "CREATE TABLE netserver_manifests "
+  res = sqlite3_exec_printf(sql, "CREATE TABLE netserver_manifests "
                            "("
                            "url not null, -- url of some server\n"
                            "manifest not null, -- manifest which exists on url\n"
@@ -402,7 +410,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "INSERT INTO netserver_manifests "
+  res = sqlite3_exec_printf(sql, "INSERT INTO netserver_manifests "
                            "SELECT "
                            "(url || '/' || groupname), "
                            "manifest "
@@ -410,7 +418,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
   
@@ -418,7 +426,7 @@ migrate_client_merge_url_and_group(sqlite * sql,
 }
 
 static bool 
-migrate_client_add_hashes_and_merkle_trees(sqlite * sql, 
+migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql, 
                                            char ** errmsg)
 {
 
@@ -436,7 +444,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
                   ")"))
     return false;
 
-  int res = sqlite_exec_printf(sql, "CREATE TABLE manifest_certs\n"
+  int res = sqlite3_exec_printf(sql, "CREATE TABLE manifest_certs\n"
                                "(\n"
                                "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                                "id not null,            -- joins with manifests.id or manifest_deltas.id\n"
@@ -449,7 +457,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "INSERT INTO manifest_certs "
+  res = sqlite3_exec_printf(sql, "INSERT INTO manifest_certs "
                            "SELECT "
                            "sha1(':', id, name, value, keypair, signature), "
                            "id, name, value, keypair, signature "
@@ -457,7 +465,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -475,7 +483,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
                   ")"))
     return false;
 
-  res = sqlite_exec_printf(sql, "CREATE TABLE file_certs\n"
+  res = sqlite3_exec_printf(sql, "CREATE TABLE file_certs\n"
                            "(\n"
                            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                            "id not null,            -- joins with files.id or file_deltas.id\n"
@@ -488,7 +496,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "INSERT INTO file_certs "
+  res = sqlite3_exec_printf(sql, "INSERT INTO file_certs "
                            "SELECT "
                            "sha1(':', id, name, value, keypair, signature), "
                            "id, name, value, keypair, signature "
@@ -496,7 +504,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -510,7 +518,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
                   ")"))
     return false;
 
-  res = sqlite_exec_printf(sql, "CREATE TABLE public_keys\n"
+  res = sqlite3_exec_printf(sql, "CREATE TABLE public_keys\n"
                            "(\n"
                            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                            "id primary key,         -- key identifier chosen by user\n"
@@ -519,7 +527,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "INSERT INTO public_keys "
+  res = sqlite3_exec_printf(sql, "INSERT INTO public_keys "
                            "SELECT "
                            "sha1(':', id, keydata), "
                            "id, keydata "
@@ -527,7 +535,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -541,7 +549,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
                   ")"))
     return false;
 
-  res = sqlite_exec_printf(sql, "CREATE TABLE private_keys\n"
+  res = sqlite3_exec_printf(sql, "CREATE TABLE private_keys\n"
                            "(\n"
                            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                            "id primary key,         -- as in public_keys (same identifiers, in fact)\n"
@@ -550,7 +558,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "INSERT INTO private_keys "
+  res = sqlite3_exec_printf(sql, "INSERT INTO private_keys "
                            "SELECT "
                            "sha1(':', id, keydata), "
                            "id, keydata "
@@ -558,13 +566,13 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
   // add the merkle tree stuff
 
-  res = sqlite_exec_printf(sql, 
+  res = sqlite3_exec_printf(sql, 
                            "CREATE TABLE merkle_nodes\n"
                            "(\n"
                            "type not null,                -- \"key\", \"mcert\", \"fcert\", \"manifest\"\n"
@@ -581,40 +589,40 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
 }
 
 static bool 
-migrate_client_to_revisions(sqlite * sql, 
+migrate_client_to_revisions(sqlite3 * sql, 
                            char ** errmsg)
 {
   int res;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE schema_version;", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE schema_version;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE posting_queue;", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE posting_queue;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE incoming_queue;", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE incoming_queue;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE sequence_numbers;", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE sequence_numbers;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE file_certs;", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE file_certs;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE netserver_manifests;", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE netserver_manifests;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
+  res = sqlite3_exec_printf(sql, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, 
+  res = sqlite3_exec_printf(sql, 
                            "CREATE TABLE merkle_nodes\n"
                            "(\n"
                            "type not null,                -- \"key\", \"mcert\", \"fcert\", \"rcert\"\n"
@@ -627,7 +635,7 @@ migrate_client_to_revisions(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "CREATE TABLE revision_certs\n"
+  res = sqlite3_exec_printf(sql, "CREATE TABLE revision_certs\n"
                            "(\n"
                            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                            "id not null,            -- joins with revisions.id\n"
@@ -640,7 +648,7 @@ migrate_client_to_revisions(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "CREATE TABLE revisions\n"
+  res = sqlite3_exec_printf(sql, "CREATE TABLE revisions\n"
                            "(\n"
                            "id primary key,      -- SHA1(text of revision)\n"
                            "data not null        -- compressed, encoded contents of a revision\n"
@@ -648,7 +656,7 @@ migrate_client_to_revisions(sqlite * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite_exec_printf(sql, "CREATE TABLE revision_ancestry\n"
+  res = sqlite3_exec_printf(sql, "CREATE TABLE revision_ancestry\n"
                            "(\n"
                            "parent not null,     -- joins with revisions.id\n"
                            "child not null,      -- joins with revisions.id\n"
@@ -662,7 +670,7 @@ migrate_client_to_revisions(sqlite * sql,
 
 
 void 
-migrate_monotone_schema(sqlite *sql)
+migrate_monotone_schema(sqlite3 *sql)
 {
 
   migrator m;
@@ -682,7 +690,7 @@ migrate_monotone_schema(sqlite *sql)
 
   m.migrate(sql, "c1e86588e11ad07fa53e5d294edc043ce1d4005a");
   
-  if (sqlite_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
+  if (sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
     throw runtime_error("error vacuuming after migration");
 
 }

@@ -1,0 +1,19 @@
+AT_SETUP([(normal) status with missing files])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+ADD_FILE(testfile, [foo
+])
+COMMIT(testbranch)
+
+AT_CHECK(rm -f testfile)
+
+# status should successfully report on the status of things regardless
+# of the status of those things -- i.e. it should report missing files
+# as such rather than failing on them.
+
+AT_CHECK(MONOTONE status, [0], [ignore], [ignore])
+
+AT_CLEANUP
