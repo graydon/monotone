@@ -35,7 +35,9 @@
 // value in *other* parts of the code. this file contains stuff which is so
 // low level we can't mostly know whether what's being asked for is legal.
 
+void save_initial_path();
 std::string get_homedir();
+std::string absolutify(std::string const & path);
 std::string tilde_expand(std::string const & path);
 
 extern std::string const book_keeping_dir;

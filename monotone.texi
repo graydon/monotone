@@ -68,6 +68,7 @@ version control tools.
 @menu
 * Concepts::            Taxonomy of monotone
 * Getting Started::     Simple use of monotone
+* Special Topics::      Extra explanations and details
 * CVS Phrasebook::      Transitional guide for CVS users
 * Command Reference::   Details of each monotone command
 * Hook Reference::      Functions which extend monotone
@@ -429,15 +430,15 @@ a @i{working copy} in the local filesystem
 @item
 a @i{database} in the local filesystem
 @item
-a @i{web or news server} on the network
+a @i{web, mail or news server} on the network
 @end itemize
 
 All information passes @emph{through} a database, en route to some
 other destination. For example, when changes are made in a working
 copy, you may save those changes to a database, and later you may send
-those changes from a database to a web or news server. Monotone will
-not move information directly between a working copy and a network
-server.
+those changes from a database to a web, mail or news server. Monotone
+will not move information directly between a working copy and a
+network server.
 
 @example
                  post, fetch
@@ -1627,7 +1628,7 @@ configuration file specifying which URLs we would like to fetch from:
 @example
 $ cat >>~/.monotonerc
 function get_fetch_sources(branchname)
-        return @{ "http://www.myisp.com/~me/depot.cgi/helloworld"         @} 
+        return @{ "http://www.myisp.com/~me/depot.cgi/helloworld" @} 
 end
 @end example
 
@@ -1730,7 +1731,7 @@ variables based on some parameters (or, in rare cases, no parameters):
 @example
 $ cat >~/.monotonerc
 function get_post_targets(branchname)
-        return @{"http://www.myisp.com/~me/depot.cgi/helloworld"         @} 
+        return @{ "http://www.myisp.com/~me/depot.cgi/helloworld" @} 
 end
 
 function get_http_auth(url)
@@ -1760,6 +1761,159 @@ transmissions to the depot. This will generally be the name of the key
 you use to sign certificates.
 
 
+@node    Special Topics
+@chapter Special Topics
+
+This chapter covers special topics which are of interest to some users
+of monotone, though possibly not all. We assume that you have read
+through the taxonomy and tutorial, and possibly spent some time
+playing with the program to familliarize yourself with its operation.
+
+@menu
+* Reserved Certs::       Certificate names with special meanings.
+* Naming Conventions::   Choosing appropriate names for keys and branches.
+* File Attributes::      Marking files as executable, or other attributes.
+@end menu
+
+@node    Reserved Certs
+@section Reserved Certs
+
+Certain certificate names are @emph{reserved}. This means that
+monotone has a special interpretation of the values of certificates
+with these names. Usually monotone is also responsible for
+@emph{generating} these certificates, so you should generally have no
+cause to make them yourself. They are described here to help you
+understand monotone's operation, and prevent you from accidentally
+using them for your own purposes.
+
+The reserved certificate names are:
+
+@table @code
+@item ancestor
+This cert's value is interpreted as the @sc{sha1} of another manifest,
+and monotone interprets such a cert as an assertion that manifest
+identified by the value if the cert is an ancestor of the manifest the
+cert applies to. This cert controls the merging and updating algorithms.
+@item author
+This cert's value is the name of a person who committed the manifest
+the cert is attached to. The cert is generated when you commit a
+version. It is displayed by the @code{log} command.
+@item changelog
+This cert's value is the change log message you provide when you commit a version.
+It is displayed by the @code{log} command.
+@item comment
+This cert's value is an additional comment, usually provided after committing, 
+about a version. Certs with the name @code{comment} can be applied to files as
+well, and will be shown by the @code{log} command.
+@item date
+This cert's value is an ISO date string indicating the time at which a manifest
+was committed. It is displayed by the @code{log} command, and may be used as an
+additional heuristic or selection criterion in other commands in the future.
+@item rename
+This cert's value is a specially formatted string which describes the
+set of rename actions (if any) which occurred between some other
+manifest and the one the cert is attached to. These certs are
+synthesized by monotone during @code{commit}, @code{merge}, and
+@code{propagate} commands. The value is used as a hint to the patch
+set analysis algorithm, when comparing manifests. If @code{rename}
+certs are damaged or missing, the analysis of rename events can
+potentially degrade, and monotone might consider a renamed file to be
+two different files (one deleted and one added). Otherwise the absence
+of these certificates is harmless.
+@item tag
+This cert's value is a symbolic name given to a version, which may be used
+in the future as a way of selecting versions for @code{checkout}.
+@item approval
+@itemx testresult
+These certs' values are in development; they may be used in the future
+to control @code{update} commands in more detail than the general
+sorting technique currently available.
+
+
+@end table
+
+@node    Naming Conventions
+@section Naming Conventions
+
+Some names in monotone are private to your work, such as filenames. Other names
+are potentially visible outside your project, such as @sc{rsa} key identifiers
+or branch names. It is possible that if you choose such names carelessly, you will
+choose a name which someone else in the world is using, and subsequently you may
+cause confusion when your work and their is received simultaneously by some third
+party.
+
+We therefore recommend two naming conventions:
+
+@itemize
+@item 
+For @sc{rsa} keys, use the name of an active email address you
+own. This will minimize conflicts, and also serves as a mnemonic to
+associate your personal @emph{identity} with signatures made with your
+key. For example, monotone's primary author uses the key identifier
+@code{graydon@@pobox.com}.
+
+@item
+For branch names, select any name you like but prefix it with the
+``inverted domain name'' of a DNS domain you control or are otherwise
+authorized to use. This behavior mimics the package naming convention
+in the java programming language. For example, monotone itself is
+developed within the @code{net.venge.monotone} branch, because the
+author owns the DNS domain @code{venge.net}.
+@end itemize
+
+@node    File Attributes
+@section File Attributes
+
+Monotone contains a mechanism for storing @dfn{persistent file
+attributes}.  These differ from file certificates in an important way:
+attributes are associated with a path name in your working copy,
+rather than a particular version of a file. Otherwise they are
+similar: a file attribute associates a simple name/value pair with a
+file in your working copy.
+
+The attribute mechanism is motivated by the fact that some people like
+to store executable programs in version control systems, and would like
+the programs to remain executable when they check out a working copy.
+For example, the @code{configure} shell script commonly shipped with
+many programs should be executable. 
+
+Similarly, some people would like to store devices, symbolic links,
+read-only files, and all manner of extra attributes of a file, not
+directly related to a file's data content. 
+
+Rather than try to extend the manifest file to accomodate attributes,
+monotone requires that you place your attributes in a specially named
+file in the root of your working copy. The file is called
+@file{.mt-attrs}, and it has a simple 3-column format, for example:
+
+@example
+src/configure   execute      true
+autogen.sh      execute      true
+@end example
+
+Each line of an @file{.mt-attrs} file assigns an attribute to a file
+in your working copy. The first column of each line contains the path
+within the working copy to which the attribute will be applied. The
+second column is the name of the attribute, and the third column is
+the value of the attribute.
+
+Every time your working copy is written to, monotone will look for an
+@file{.mt-attrs} file, and if it finds one, run the corresponding
+hooks registered for each attribute found in the file. This way, you
+can extend the vocabulary of attributes understood by monotone simply
+by writing new hooks. 
+
+For more information on defining hooks for new attributes, see the
+@code{attr_functions} entry in @ref{Hook Reference}.
+
+Aside from its special interpretation, the @file{.mt-attrs} file is a
+normal text file. If you want other people to see your attributes, you
+should @code{add} and @code{commit} the @file{.mt-attrs} file in your
+working copy. If you make changes to it which conflict with changes
+other people make, you will have to resolve those conflicts, as plain
+text, just as with any other text file in your working copy.
+
+
 @node    CVS Phrasebook
 @chapter CVS Phrasebook
 
@@ -1777,7 +1931,7 @@ $ cvs checkout -d :pserver:cvs.foo.com/wobbler -r 1.2
 @tab
 @example
 $ monotone fetch http://www.foo.com/depot.cgi/wobbler
-$ monotone checkout fe37 ./wobbler-checkout
+$ monotone checkout fe37 wobbler-checkout
 @end example
 @end multitable
 
@@ -2726,6 +2880,21 @@ sender address) of an email message, to be used when monotone is
 posting email messages to @var{url}. This hook is only called when
 posting to @code{mailto} URLs. This hook has no default definition.
 
+@item get_mail_hostname (@var{url})
+
+Returns a string which is the host name used to identify ourselves as
+in the opening @code{HELO} exchange, when speaking SMTP to an MX
+server responsible for the mail destination identified by
+@var{url}. This hook is only called when posting to @code{mailto}
+URLs.
+
+The default definition of this hook is:
+@example
+function get_mail_hostname(url)
+	return os.getenv("HOSTNAME")
+end
+@end example
+
 @item get_http_auth (@var{url})
 
 Returns a string which is the name of a private @sc{rsa} key you wish
@@ -3308,10 +3477,10 @@ Use database in @i{file}.
 @comment TROFF INPUT: .TP
 
 @item @b{--key=}@i{<keyid>}
-Use @i{keyid} for operations which produce @sc{rsa} signatures. Default
-is inferred from presence of unique private key in database. Can also
-be set with environment variable @b{MT@t{_}KEY} or customized on a per-branch
-basis with hook function @b{get@t{_}branch@t{_}key(branchname)}.
+Use @i{keyid} for operations which produce @sc{rsa}
+signatures. Default is inferred from presence of unique private key in
+database. Can also be customized on a per-branch basis with hook
+function @b{get@t{_}branch@t{_}key(branchname)}.
 @comment TROFF INPUT: .TP
 
 @item @b{--branch=}@i{<branchname>}
@@ -3333,20 +3502,6 @@ with environment variable @b{MT@t{_}BRANCH}.
 
 @c ---------------------------------------------------------------------
 @table @code
-@item @b{MT@t{_}DB}
-Database file to use
-(same as @b{--db} option).
-@comment TROFF INPUT: .TP
-
-@item @b{MT@t{_}KEY}
-Key to use for operations which produce @sc{rsa} signatures
-(same as @b{--key} option).
-@comment TROFF INPUT: .TP
-
-@item @b{MT@t{_}BRANCH}
-Branch name to use for operations on a branch
-(same as --branch option).
-@comment TROFF INPUT: .TP
 
 @item @b{EDITOR}
 Used to edit comments, log messages, etc.
@@ -3384,11 +3539,9 @@ A lua script, used as a customization file.
 
 @comment TROFF INPUT: .IP \(bu
 
-Command line options override environment variables.
-@comment TROFF INPUT: .IP \(bu
+Command line options override environment variables and
+settings in lua scripts (such as @b{.monotonerc})
 
-Settings in lua scripts (such as @b{.monotonerc})
-override command line options and environment variables.
 @comment TROFF INPUT: .SH "SEE ALSO"
 
 @node SEE ALSO
@@ -3404,7 +3557,7 @@ override command line options and environment variables.
 @section BUGS
 @c DEBUG: print_menu("BUGS")
 
-None known, please report any found.
+see http://savannah.nongnu.org/bugs/?group=monotone
 @comment TROFF INPUT: .SH AUTHOR
 
 @node AUTHOR

@@ -17,7 +17,11 @@ function get_fetch_sources(groupname)
 	return { "mailto:test@127.0.0.1:8025" } 
 end
 
-function get_mail_sender(url, group)
+function get_mail_hostname(url)
+	return "self"
+end
+
+function get_mail_sender(url)
 	return "tester@test.net"
 end
 ])

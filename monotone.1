@@ -194,17 +194,13 @@ Use database in \fIfile\fP.
 \fB--key=\fP\fI<keyid>\fP
 Use \fIkeyid\fP for operations which produce RSA signatures. Default
 is inferred from presence of unique private key in database. Can also
-be set with environment variable \fBMT_KEY\fP or customized on a per-branch
-basis with hook function \fBget_branch_key(branchname)\fP.
+be customized on a per-branch basis with hook function 
+\fBget_branch_key(branchname)\fP.
 .TP
 \fB--branch=\fP\fI<branchname>\fP
 Use \fIbranchname\fP for operations on a branch. Default is inferred
 in operations on existing branches (commit, update, etc).
 .SH ENVIRONMENT
-.TP
-\fBMT_KEY\fP
-Key to use for operations which produce RSA signatures 
-(same as \fB--key\fP option).
 .TP
 \fBEDITOR\fP
 Used to edit comments, log messages, etc.
@@ -217,13 +213,11 @@ Used in preference to \fBEDITOR\fP, if set.
 A lua script, used as a customization file.
 .SH NOTES
 .IP \(bu
-Command line options override environment variables.
-.IP \(bu
-Settings in lua scripts (such as \fB.monotonerc\fP)
-override command line options and environment variables.
+Command line options override environment variables and
+settings in lua scripts (such as \fB.monotonerc\fP)
 .SH "SEE ALSO"
 \fBinfo monotone\fP
 .SH BUGS
-None known, please report any found.
+see http://savannah.nongnu.org/bugs/?group=monotone
 .SH AUTHOR
 graydon hoare <graydon@pobox.com>

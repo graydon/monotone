@@ -29,6 +29,11 @@ string const book_keeping_dir("MT");
 #include <pwd.h>
 #include <sys/types.h>
 
+void save_initial_path()
+{
+  fs::initial_path();
+}
+
 string get_homedir()
 {
   char * home = getenv("HOME");
@@ -38,6 +43,15 @@ string get_homedir()
   struct passwd * pw = getpwuid(getuid());  
   N(pw != NULL, F("could not find home directory for uid %d") % getuid());
   return string(pw->pw_dir);
+}
+
+string absolutify(string const & path)
+{
+  fs::path tmp(path);
+  if (! tmp.has_root_path())
+    tmp = fs::initial_path() / tmp;
+  I(tmp.has_root_path());
+  return tmp.string();
 }
 
 string tilde_expand(string const & path)

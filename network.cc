@@ -55,8 +55,11 @@ bool lookup_address(string const & dns_name,
   if (dns_name.size() == 0)
     return false;
 
+  L(F("resolving name %s\n") % dns_name);
+
   if (isdigit(dns_name[0]))
     {
+      L(F("%s considered a raw IP address, returning\n") % dns_name);
       ip4 = dns_name;
       return true;
     }
@@ -65,25 +68,29 @@ bool lookup_address(string const & dns_name,
   if (adns_synchronous(st, dns_name.c_str(), adns_r_a, 
 		       (adns_queryflags)0, &answer) != 0)
     {
+      L(F("IP sync lookup returned false\n"));
       adns_finish(st);
       return false;
     }
 
   if (answer->status != adns_s_ok)
     {
+      L(F("IP sync lookup returned status %d\n") % answer->status);
       free(answer);
       adns_finish(st);
       return false;
     }
 
   ip4 = string(inet_ntoa(*(answer->rrs.inaddr)));
+  L(F("name %s resolved to IP %s\n") % dns_name % ip4);
+
   free(answer);
   adns_finish(st);
   return true;
 }
 
 bool lookup_mxs(string const & dns_name,
-		set<string> mx_names)
+		set<string> & mx_names)
 {
   adns_state st;
   adns_answer *answer;
@@ -91,8 +98,11 @@ bool lookup_mxs(string const & dns_name,
   if (dns_name.size() == 0)
     return false;
 
+  L(F("searching for MX records for %s\n") % dns_name);
+
   if (isdigit(dns_name[0]))
     {
+      L(F("%s considered a raw IP address, returning\n") % dns_name);
       mx_names.insert(dns_name);
       return true;
     }
@@ -101,18 +111,26 @@ bool lookup_mxs(string const & dns_name,
   if (adns_synchronous(st, dns_name.c_str(), adns_r_mx_raw, 
 		       (adns_queryflags)0, &answer) != 0)
     {
+      L(F("MX sync lookup returned false\n"));
       adns_finish(st);
       return false;
     }
 
   if (answer->status != adns_s_ok)
     {
+      L(F("MX sync lookup returned status %d\n") % answer->status);
       free(answer);
       adns_finish(st);
       return false;
     }
+  
+  L(F("MX sync lookup returned %d results\n") % answer->nrrs);
   for (int i = 0; i < answer->nrrs; ++i)
-    mx_names.insert(string(answer->rrs.intstr[i].str));
+    {
+      string mx = string(answer->rrs.intstr[i].str);
+      L(F("MX %s : %s\n") % dns_name % mx );
+      mx_names.insert(mx);
+    }
 
   free(answer);
   adns_finish(st);
@@ -310,9 +328,13 @@ void post_queued_blobs_to_network(set<url> const & targets,
 
       else if (proto == "mailto")
 	{
-	  string sender;
+	  string sender, self_hostname;
+
 	  N(app.lua.hook_get_mail_sender(*targ, sender),
 	    F("missing sender address for '%s'") % *targ);
+
+	  N(app.lua.hook_get_mail_hostname(*targ, self_hostname),
+	    F("missing self hostname for '%s'") % *targ);
 
 	  N(user != "",
 	    F("empty recipient in mailto: URL %s") % *targ);
@@ -322,7 +344,10 @@ void post_queued_blobs_to_network(set<url> const & targets,
 	      set<string> mxs;
 	      lookup_mxs (host, mxs);
 	      if (mxs.empty())
-		mxs.insert(host);
+		{
+		  L(F("MX lookup is empty, using hostname %s\n") % host);
+		  mxs.insert(host);
+		}
 
 	      bool found_working_mx = false;
 	      boost::socket::connector<>::data_connection_t connection;
@@ -332,7 +357,7 @@ void post_queued_blobs_to_network(set<url> const & targets,
 		{
 		  try 
 		    {		      
-		      open_connection(host, port, connection, stream);
+		      open_connection(*mx, port, connection, stream);
 		      found_working_mx = true;
 		      break;
 		    }
@@ -344,7 +369,7 @@ void post_queued_blobs_to_network(set<url> const & targets,
 	      
 	      // FIXME: maybe hook to modify envelope params?
 	      if (found_working_mx)
-		posted_ok = post_smtp_article(host, 
+		posted_ok = post_smtp_article(self_hostname, 
 					      sender, user + "@" + host,
 					      sender, user + "@" + host,
 					      "[MT] packets",

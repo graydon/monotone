@@ -28,7 +28,7 @@ app_state::app_state()
       read_data(o_path, dat);
       read_options_map(dat, options);
 
-      string dbname = options[database_option];
+      string dbname = absolutify(options[database_option]);
       if (dbname != "")
 	db.set_filename(dbname);
       branch_name = options[branch_option];
@@ -41,7 +41,7 @@ app_state::~app_state()
 
 void app_state::set_database(string filename)
 {
-  options[database_option] = filename;
+  options[database_option] = absolutify(filename);
   db.set_filename(filename);
   options_changed = true;
 }

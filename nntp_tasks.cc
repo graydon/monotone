@@ -76,25 +76,25 @@ struct stat_state : public proto_state
 };
 
 
-struct postlines_state : public proto_state
+struct nntp_postlines_state : public proto_state
 {
   string const & group;
   string const & from;
   string const & subject;
   string const & body;
-  explicit postlines_state(string const & grp, 
-			   string const & frm, 
-			   string const & subj,
-			   string const & bod)
+  explicit nntp_postlines_state(string const & grp, 
+				string const & frm, 
+				string const & subj,
+				string const & bod)
     : group(grp), from(frm), subject(subj), body(bod)
   {}
-  virtual ~postlines_state() {}
+  virtual ~nntp_postlines_state() {}
   virtual proto_edge drive(iostream & net, proto_edge const & e)
   {
     vector<string> lines, split;
-    lines.push_back("from: " + from);
-    lines.push_back("subject: " + subject);
-    lines.push_back("newsgroups: " + group);
+    lines.push_back("From: " + from);
+    lines.push_back("Subject: " + subject);
+    lines.push_back("Newsgroups: " + group);
     lines.push_back("");
     split_into_lines(body, split);
     copy(split.begin(), split.end(), back_inserter(lines));
@@ -131,7 +131,7 @@ bool post_nntp_article(string const & group_name,
   // build state machine nodes
   cmd_state              mode_reader("MODE READER");
   cmd_state              post("POST");
-  postlines_state        postlines(group_name, from, subject, article);
+  nntp_postlines_state   postlines(group_name, from, subject, article);
   cmd_state              quit("QUIT");
 
   mode_reader.add_edge(200, &post); // posting ok

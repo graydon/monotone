@@ -2423,16 +2423,8 @@ CMD(post, "network", "[URL]", "post queued changes to network")
   set<url> targets;
   if (args.size() == 0)
     {
-      if (app.branch_name == "")
-	{
-	  P(F("no branch name provided, posting all queued targets\n"));
-	  app.db.get_queued_targets(targets);
-	}
-      else
-	{
-	  N(app.lua.hook_get_post_targets(app.branch_name, targets),
-	    F("no URL / group pairs found for branch %s") % app.branch_name); 
-	}
+      P(F("no URL provided, posting all queued targets\n"));
+      app.db.get_queued_targets(targets);
     }  
   else
     {

@@ -547,6 +547,17 @@ bool lua_hooks::hook_get_mail_sender(url const & u, string & sender)
     .ok();
 }
 
+bool lua_hooks::hook_get_mail_hostname(url const & u, string & hostname)
+{
+  return Lua(st)
+    .push_str("get_mail_hostname")
+    .get_fn()
+    .push_str(u())
+    .call(1,1)
+    .extract_str(hostname)
+    .ok();
+}
+
 bool lua_hooks::hook_get_http_auth(url const & u, rsa_keypair_id & pubkey)
 {
   string res;

@@ -44,6 +44,7 @@ public:
   // network hooks
   bool hook_get_news_sender(url const & serv, std::string & sender);
   bool hook_get_mail_sender(url const & serv, std::string & sender);
+  bool hook_get_mail_hostname(url const & serv, std::string & sender);
   bool hook_get_http_auth(url const & serv, rsa_keypair_id & pubkey);
   bool hook_get_post_targets(cert_value const & branchname, 
 			     std::set<url> & targets);

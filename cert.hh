@@ -125,8 +125,7 @@ void guess_branch(manifest_id const & id,
 
 extern std::string const date_cert_name;
 extern std::string const author_cert_name;
-extern std::string const petname_cert_name;
-extern std::string const release_cert_name;
+extern std::string const tag_cert_name;
 extern std::string const changelog_cert_name;
 extern std::string const comment_cert_name;
 extern std::string const approval_cert_name;

@@ -85,7 +85,7 @@ void dumper()
  
 int cpp_main(int argc, char ** argv)
 {
-
+  
   putenv("BOOST_PRG_MON_CONFIRM=no");
   clean_shutdown = false;
   atexit(&dumper);
@@ -93,7 +93,8 @@ int cpp_main(int argc, char ** argv)
   cleanup_ptr<poptContext, poptContext> 
     ctx(poptGetContext(NULL, argc, (char const **) argv, options, 0),
 	&poptFreeContext);
-      
+
+  save_initial_path();
   app_state app;
 
   // process main program options
@@ -101,15 +102,8 @@ int cpp_main(int argc, char ** argv)
   int ret = 0;
   int opt;
   bool stdhooks = true, rcfile = true;
-  char * envstr;
 
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
-
-  // initialize entries from $ENV
-
-  if ((envstr = getenv("MT_KEY")) != NULL)
-    app.signing_key = string(envstr);
-
 
   // read command options
 
@@ -138,11 +132,11 @@ int cpp_main(int argc, char ** argv)
 	      break;
 
 	    case OPT_RCFILE:
-	      extra_rcfiles.push_back(tilde_expand(string(argstr)));
+	      extra_rcfiles.push_back(absolutify(tilde_expand(string(argstr))));
 	      break;
 
 	    case OPT_DB_NAME:
-	      app.set_database(tilde_expand(string(argstr)));
+	      app.set_database(absolutify(tilde_expand(string(argstr))));
 	      break;
 
 	    case OPT_KEY_NAME:

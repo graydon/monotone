@@ -4,25 +4,25 @@
 -- production. just overrides some of the std hooks.
 
 function get_passphrase(keyid)
-	return keyid;
+	return keyid
 end
 
 function non_blocking_rng_ok()
-	return true;
+	return true
 end
 
 function persist_phrase_ok()
-	return true;
+	return true
 end
 
 function get_post_targets(groupname)
-	return { {"nntp://127.0.0.1:8119", "monotone.test.packets"} } ;
+	return { "nntp://127.0.0.1:8119/monotone.test.packets" } 
 end
 
 function get_fetch_sources(groupname)
-	return { {"nntp://127.0.0.1:8119", "monotone.test.packets"} } ;
+	return { "nntp://127.0.0.1:8119/monotone.test.packets" }
 end
 
 function get_news_sender(url, group)
-	return "tester@test.com";
+	return "tester@test.com"
 end

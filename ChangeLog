@@ -1,3 +1,17 @@
+2003-11-02  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (post): Post everything if no URL given; don't base
+	decision off branch name presence.	
+	* app_state.cc, monotone.cc, file_io.cc, file_io.hh: Support
+	absolutifying args.
+	* lua.hh, lua.cc, std_hooks.lua (hook_get_mail_hostname): New hook.
+	* monotone.texi: Document it.
+	* monotone.texi, monotone.1: Minor corrections, new sections.
+	* monotone.cc: Don't look in $ENV at all.
+	* network.cc: Correct MX logic.
+	* nntp_tasks.cc, smtp_tasks.cc: Separate postlines state.
+	* smtp_tasks.cc: Correct some SMTP logic.
+
 2003-11-01  graydon hoare  <graydon@pobox.com>
 
 	* http_tasks.cc: Drop extra leading slashes in HTTP messages.

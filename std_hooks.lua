@@ -90,6 +90,9 @@ function persist_phrase_ok()
 	return true
 end
 
+function get_mail_hostname(url)
+	return os.getenv("HOSTNAME")
+end
 
 function get_author(branchname)
         local user = os.getenv("USER")
