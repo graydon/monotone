@@ -16,14 +16,14 @@ its use, please refer to the texinfo manual (via the \fBinfo
 monotone\fP command, or online).
 .SS Commands
 .TP 
-\fBcomment\fP \fI(file|manifest) <id>\fP
-Write a comment cert for a file or manifest version.
+\fBcomment\fP \fI<id>\fP
+Write a comment cert for a manifest version.
 .TP
-\fBapprove\fP \fI(file|manifest) <id1> <id2>\fP
-Make a cert approving of a file or manifest change.
+\fBapprove\fP \fI<id1> <id2>\fP
+Make a cert approving of a manifest change.
 .TP
-\fBdisapprove\fP \fI(file|manifest) <id1> <id2>\fP
-Make a cert disapproving of a file or manifest change.
+\fBdisapprove\fP \fI<id1> <id2>\fP
+Make a cert disapproving of a manifest change.
 .TP
 \fBtag\fP \fI<id> <tagname>\fP
 Put a symbolic tag cert on a manifest version.
@@ -44,8 +44,8 @@ Show status of working copy.
 Show historical log of manifests, starting from working copy
 base version, or \fI[id]\fP if given.
 .TP
-\fBcert\fP \fI(file|manifest) <id> <certname> [certval]\fP
-Create a custom cert for a file or manifest. Reads cert value
+\fBcert\fP \fI<id> <certname> [certval]\fP
+Create a custom cert for a manifest. Reads cert value
 from stdin if no value given on command line.
 .TP
 \fBvcheck\fP \fI(create|check) [id]\fP
@@ -54,8 +54,8 @@ Produce or check \fBvcheck\fP certs for the given manifest \fI[id]\fP.
 \fBgenkey\fP \fI<keyid>\fP
 Generate an RSA key-pair and store it in the database.
 .TP
-\fBlist certs\fP \fI(file|manifest) <id>\fP
-List certs associated with manifest or file.
+\fBlist certs\fP \fI<id>\fP
+List certs associated with manifest.
 .TP
 \fBlist keys\fP \fI[partial-id]\fP
 List keys matching glob, or list all keys if no glob given.

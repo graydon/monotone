@@ -3446,11 +3446,10 @@ differences between manifests in lines proceeding the diff. These
 lines begin with a single hash mark @code{#}, and should be ignored by
 a program processing the diff, such as @command{patch}.
 
-@item monotone list certs file @var{id}
-@itemx monotone list certs manifest @var{id}
+@item monotone list certs @var{id}
 
 These commands will print out a list of certificates associated with
-a particular file or manifest @var{id}. Each line of the print out will
+a particular manifest @var{id}. Each line of the print out will
 indicate:
 @itemize
 @item
@@ -3567,16 +3566,13 @@ automatically use a certain passphrase for a given key using the
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
 
-@item monotone cert file @var{id} @var{certname} 
-@itemx monotone cert file @var{id} @var{certname} @var{certval}
-@itemx monotone cert manifest @var{id} @var{certname} 
-@itemx monotone cert manifest @var{id} @var{certname} @var{certval}
+@item monotone cert @var{id} @var{certname} 
+@itemx monotone cert @var{id} @var{certname} @var{certval}
 
-These commands create a new certificate with name @var{certname},
-either for a @code{file} or a @code{manifest} with version
-@var{id}. If @var{certval} is provided, it is the value of the
-certificate.  Otherwise the certificate value is read from
-@code{stdin}.
+These commands create a new certificate with name @var{certname}, for
+a manifest with version @var{id}. If @var{certval} is provided, it is
+the value of the certificate.  Otherwise the certificate value is read
+from @code{stdin}.
 
 @item monotone --branch=@var{branchname} vcheck create 
 @item monotone vcheck create @var{id}
@@ -3600,42 +3596,35 @@ If you omit the @var{id}, these commands operate on the heads of
 @section Certificate
 
 @ftable @command
-@item monotone approve file @var{id1} @var{id2}
-@itemx monotone approve manifest @var{id1} @var{id2}
+@item monotone approve @var{id1} @var{id2}
 
-These commands are synonyms for
-@code{monotone cert file @var{id2} ancestor @var{id1}} or 
-@code{monotone cert manifest @var{id2} ancestor @var{id1}}
+This command is a synonym for
+@code{monotone cert @var{id2} ancestor @var{id1}}
 
-@item monotone disapprove file @var{id1} @var{id2}
-@itemx monotone disapprove manifest @var{id1} @var{id2}
+@item monotone disapprove @var{id1} @var{id2}
 
-These commands are synonyms for
-@code{monotone cert file @var{id2} disapproval @var{id1}} or 
-@code{monotone cert manifest @var{id2} disapproval @var{id1}}
+This command is a synonym for
+@code{monotone cert @var{id2} disapproval @var{id1}}
 
 
-@item monotone comment file @var{id}
-@itemx monotone comment file @var{id} @var{comment}
-@itemx monotone comment manifest @var{id}
-@itemx monotone comment manifest @var{id} @var{comment}
+@item monotone comment @var{id}
+@itemx monotone comment @var{id} @var{comment}
 
-These commands are synonyms for @code{monotone cert file @var{id}
-comment @var{comment}} or @code{monotone cert manifest @var{id}
+These commands are synonyms for @code{monotone cert @var{id}
 comment @var{comment}}. If @var{comment} is not provided, it is read
 from @code{stdin}.
 
 
 @item monotone tag @var{id} @var{tagname}
 
-This command is a synonym for @code{monotone cert manifest @var{id}
-tag @var{tagname}}. 
+This command is a synonym for @code{monotone cert @var{id} tag
+@var{tagname}}.
 
 @item monotone testresult @var{id} 0
 @item monotone testresult @var{id} 1
 
-These commands are synonyms for @code{monotone cert manifest @var{id}
-testresult 0} or @code{monotone cert manifest @var{id} testresult 1}.
+These commands are synonyms for @code{monotone cert @var{id}
+testresult 0} or @code{monotone cert @var{id} testresult 1}.
 
 @end ftable
 
@@ -4451,16 +4440,16 @@ monotone} command, or online).
 
 @c ---------------------------------------------------------------------
 @table @code
-@item @b{comment} @i{(file|manifest) <id>}
-Write a comment cert for a file or manifest version.
+@item @b{comment} @i{<id>}
+Write a comment cert for a manifest version.
 @comment TROFF INPUT: .TP
 
-@item @b{approve} @i{(file|manifest) <id1> <id2>}
-Make a cert approving of a file or manifest change.
+@item @b{approve} @i{<id1> <id2>}
+Make a cert approving of a manifest change.
 @comment TROFF INPUT: .TP
 
-@item @b{disapprove} @i{(file|manifest) <id1> <id2>}
-Make a cert disapproving of a file or manifest change.
+@item @b{disapprove} @i{<id1> <id2>}
+Make a cert disapproving of a manifest change.
 @comment TROFF INPUT: .TP
 
 @item @b{tag} @i{<id> <tagname>}
@@ -4488,8 +4477,8 @@ Show historical log of manifests, starting from working copy
 base version, or @i{[id]} if given.
 @comment TROFF INPUT: .TP
 
-@item @b{cert} @i{(file|manifest) <id> <certname> [certval]}
-Create a custom cert for a file or manifest. Reads cert value
+@item @b{cert} @i{<id> <certname> [certval]}
+Create a custom cert for a manifest. Reads cert value
 from stdin if no value given on command line.
 @comment TROFF INPUT: .TP
 
@@ -4501,9 +4490,9 @@ Produce or check @code{vcheck} certs for the given manifest @i{[id]}.
 Generate an @sc{rsa} key-pair and store it in the database.
 @comment TROFF INPUT: .TP
 
-@item @b{list certs} @i{(file|manifest) <id>}
-@itemx @b{ls certs} @i{(file|manifest) <id>}
-List certs associated with manifest or file.
+@item @b{list certs} @i{<id>}
+@itemx @b{ls certs} @i{ <id>}
+List certs associated with manifest.
 @comment TROFF INPUT: .TP
 
 @item @b{list keys} @i{[partial-id]}
