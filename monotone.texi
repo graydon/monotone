@@ -1840,8 +1840,8 @@ in any case can be arbitrarily long); the collision probability being
 measured is of @emph{output space}. On output space, the hash is
 designed to produce uniformly random spread, even given nearly
 identical inputs. In other words, it is @emph{a primary design
-criteria} of such a hash that a birthday paradox probability is a
-valid approximation its collision probability.
+criterion} of such a hash that a birthday paradox probability is a
+valid approximation of its collision probability.
 
 The paper's characterization of risk when hashing ``non-random
 inputs'' is similarly deceptive. It presents a fanciful case of a
@@ -1867,15 +1867,15 @@ Setting aside accidental collisions, then, the paper's underlying
 theme of vulnerability rests on the assertion that someone will break
 @sc{sha1}. Breaking a cryptographic hash usually means finding a way
 to collide it trivially. While we note that @sc{sha1} has in fact
-resisted attempts at breaking for nearly 10 years already, we cannot
-say that it will last forever. Someone might break it. We can say,
-however, that finding a way to trivially collide it only changes the
-resistance to @emph{active attack}, rather than the behavior of the
-hash on benign inputs.
+resisted attempts at breaking for 8 years already, we cannot say that
+it will last forever. Someone might break it. We can say, however,
+that finding a way to trivially collide it only changes the resistance
+to @emph{active attack}, rather than the behavior of the hash on
+benign inputs.
 
 Therefore the vulnerability is not that the hash might suddenly cease
 to address benign blocks well, but merely that additional security
-precautions are might become a requirement to ensure that blocks are
+precautions might become a requirement to ensure that blocks are
 benign, rather than malicious. The paper fails to make this
 distinction, suggesting that a hash becomes ``unusable'' when it is
 broken. This is plainly not true, as a number of systems continue to
@@ -1902,8 +1902,8 @@ cert identifies your tree again, with a ``different'' variant of
 
 If you have the @sc{sha1} of your manifest and a @code{vcheck} cert,
 the probability of a collision involving that manifest drops from
-@math{2^-160} to @math{2^-240}. If you have two @code{vcheck} certs,
-it drops to @math{2^-360}, and so on. You can issue as many
+@math{2^-160} to @math{2^-320}. If you have two @code{vcheck} certs,
+it drops to @math{2^-480}, and so on. You can issue as many
 @code{vcheck} certs as you like until your personal level of paranoia
 is met. Each @code{vcheck} cert has its own random seed, usually 128
 bits, so after you've issued about @math{2^64} @code{vcheck} certs on
