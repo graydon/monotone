@@ -323,7 +323,7 @@ static int
 main_with_many_flavours_of_exception(char argc, char **argv)
 {
   
-#if defined(MS_STRUCTURED_EXCEPTION_HANDLING) && !defined(__BORLANDC__)
+#if defined(MS_STRUCTURED_EXCEPTION_HANDLING) && !defined(__BORLANDC__) && !defined(__MINGW32__)
   _set_se_translator(ms_se_trans_func);
 #endif
   
@@ -431,7 +431,7 @@ main_with_many_flavours_of_exception(char argc, char **argv)
 #if defined(MS_STRUCTURED_EXCEPTION_HANDLING)
     catch(ms_se_exception const & ex)
       { 
-	report_ms_se_error(exception_id); 
+	report_ms_se_error(ex.exception_id); 
       }
 
 #elif defined(UNIX_STYLE_SIGNAL_HANDLING)
