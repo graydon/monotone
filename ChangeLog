@@ -1,5 +1,10 @@
 2005-02-26  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_epoch_unidirectional.at: New test.
+	* testsuite.at: Add it.
+
+2005-02-26  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_epoch.at: Even more paranoid.
 	* tests/t_epoch_server.at: New test.
 	* testsuite.at: Add it.
