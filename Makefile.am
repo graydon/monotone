@@ -152,7 +152,7 @@ EXTRA_DIST = $(man1_MANS) \
 
 # testsuite stuff (could this possibly be more ugly?)
 
-TESTS = $(srcdir)/unit_tests $(srcdir)/testsuite
+TESTS = unit_tests $(srcdir)/testsuite
 
 MOSTLYCLEANFILES = \
 	testsuite.dir/at-check-line \

@@ -1,3 +1,7 @@
+2003-09-12  Tom Tromey  <tromey@redhat.com>
+
+	* Makefile.am (TESTS): unit_tests is not in srcdir.
+
 2003-09-11  graydon hoare  <graydon@redhat.com>
 
 	* commands.cc: Check for MT directory in status.
