@@ -21,6 +21,10 @@ NEED_UNB64
 #             base64< gzip<data> > & dat,
 #             std::string const & table);
 
+# This seems to be a really nasty testcase somehow.  monotone and
+# merge(1) give identical, incorrect output.  diff3(1) reports a
+# conflict.  xxdiff merges cleanly, and, AFAICT, correctly.
+
 AT_DATA(parent.b64, [
 I2lmbmRlZiBfX0RBVEFCQVNFX0hIX18KI2RlZmluZSBfX0RBVEFCQVNFX0hIX18KCi8vIGNvcHly
 aWdodCAoQykgMjAwMiwgMjAwMyBncmF5ZG9uIGhvYXJlIDxncmF5ZG9uQHBvYm94LmNvbT4KLy8g

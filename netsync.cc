@@ -1458,12 +1458,13 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       W(F("saving public key for %s to database\n") % their_keyname);
       app.db.put_key(their_keyname, their_key_encoded);
     }
-
-  hexenc<id> hnonce;
-  encode_hexenc(nonce, hnonce);
   
-  L(F("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
-    % their_key_hash % hnonce);
+  {
+    hexenc<id> hnonce;
+    encode_hexenc(nonce, hnonce);
+    L(F("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
+      % their_key_hash % hnonce);
+  }
   
   I(app.db.public_key_exists(their_key_hash));
   
