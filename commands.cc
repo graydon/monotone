@@ -831,6 +831,80 @@ CMD(tag, "certificate", "REVISION TAGNAME",
 }
 
 
+CMD(testresult, "certificate", "ID (true|false)", 
+    "note the results of running a test on a revision")
+{
+  if (args.size() != 2)
+    throw usage(name);
+  revision_id r;
+  complete(app, idx(args, 0)(), r);
+  packet_db_writer dbw(app);
+  cert_revision_testresult(r, idx(args, 1)(), app, dbw);
+}
+
+CMD(approve, "certificate", "REVISION", 
+    "approve of a particular revision")
+{
+  if (args.size() != 1)
+    throw usage(name);  
+
+  revision_id r;
+  complete(app, idx(args, 0)(), r);
+  packet_db_writer dbw(app);
+  cert_value branchname;
+  guess_branch (r, app, branchname);
+  app.set_branch(branchname());
+  N(app.branch_name() != "", F("need --branch argument for approval"));  
+  cert_revision_in_branch(r, app.branch_name(), app, dbw);
+}
+
+
+CMD(disapprove, "certificate", "REVISION", 
+    "disapprove of a particular revision")
+{
+  if (args.size() != 1)
+    throw usage(name);
+
+  revision_id r;
+  revision_set rev, rev_inverse;
+  change_set cs_inverse;
+  complete(app, idx(args, 0)(), r);
+  app.db.get_revision(r, rev);
+
+  N(rev.edges.size() == 1, 
+    F("revision %s has %d changesets, cannot invert\n") % r % rev.edges.size());
+
+  cert_value branchname;
+  guess_branch (r, app, branchname);
+  app.set_branch(branchname());
+  N(app.branch_name() != "", F("need --branch argument for disapproval"));  
+  
+  edge_entry const & old_edge (*rev.edges.begin());
+  rev_inverse.new_manifest = edge_old_manifest(old_edge);
+  manifest_map m_old;
+  app.db.get_manifest(edge_old_manifest(old_edge), m_old);
+  invert_change_set(edge_changes(old_edge), m_old, cs_inverse);
+  rev_inverse.edges.insert(make_pair(r, make_pair(rev.new_manifest, cs_inverse)));
+
+  {
+    transaction_guard guard(app.db);
+    packet_db_writer dbw(app);
+
+    revision_id inv_id;
+    revision_data rdat;
+
+    write_revision_set(rev_inverse, rdat);
+    calculate_ident(rdat, inv_id);
+    dbw.consume_revision_data(inv_id, rdat);
+    
+    cert_revision_in_branch(inv_id, branchname, app, dbw); 
+    cert_revision_date_now(inv_id, app, dbw);
+    cert_revision_author_default(inv_id, app, dbw);
+    cert_revision_changelog(inv_id, (F("disapproval of revision %s") % r).str(), app, dbw);
+    guard.commit();
+  }
+}
+
 CMD(comment, "certificate", "REVISION [COMMENT]",
     "comment on a particular revision")
 {
@@ -1271,10 +1345,32 @@ static void
 ls_missing (app_state & app)
 {
   revision_set rev;
-  manifest_map m_old, m_new;
+  revision_id rid;
+  manifest_id mid;
+  manifest_map man, man_rearranged;
+  change_set cs;
   path_set paths;
-  calculate_current_revision(app, rev, m_old, m_new);
-  extract_path_set(m_new, paths);
+
+  get_revision_id(rid);
+  if (! rid.inner()().empty())
+    {
+      N(app.db.revision_exists(rid),
+	F("base revision %s does not exist in database\n") % rid);
+      
+      app.db.get_revision_manifest(rid, mid);
+      L(F("old manifest is %s\n") % mid);
+      
+      N(app.db.manifest_version_exists(mid),
+	F("base manifest %s does not exist in database\n") % mid);
+      
+      app.db.get_manifest(mid, man);
+    }
+
+  L(F("old manifest has %d entries\n") % man.size());
+
+  get_path_rearrangement(cs.rearrangement);  
+  apply_path_rearrangement(man, cs.rearrangement, man_rearranged);
+  extract_path_set(man_rearranged, paths);
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
@@ -2670,93 +2766,6 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
     }
 }
 
-
-/*
-
-// actual commands follow
-
-// conversion to revisions:
-//
-// DONE
-// ------
-// genkey
-// cert
-// vcheck
-// tag
-// comment
-// add
-// drop
-// rename
-// commit
-// cat
-// checkout
-// heads
-// fload
-// complete
-// status
-// reindex
-// push
-// pull
-// sync
-// serve
-// list
-//
-// mdelta
-// fdelta
-// mdata
-// fdata
-// mcerts
-// fcerts
-// pubkey
-// privkey
-// diff
-// update
-// merge
-// propagate
-//
-// read
-// debug
-// db
-// rcs_import
-// cvs_import
-// revert
-//
-// NOT-DONE
-// --------
-// approve
-// disapprove
-// log
-//
-// agraph
-
-
-
-
-
-CMD(approve, "certificate", "REVISION", 
-    "approve of a particular revision")
-{
-  if (args.size() != 1)
-    throw usage(name);  
-
-  revision_id r;
-  complete(app, idx(args, 0)(), r);
-  packet_db_writer dbw(app);
-  cert_revision_approval(r, true, app, dbw);
-}
-
-CMD(disapprove, "certificate", "REVISION", 
-    "disapprove of a particular revision")
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  revision_id c;
-  complete(app, idx(args, 0)(), c);
-  packet_db_writer dbw(app);
-  cert_revision_approval(c, false, app, dbw);
-}
-*/
 
 
 }; // namespace commands

@@ -187,7 +187,7 @@ cert_revision_comment(revision_id const & m,
 		     packet_consumer & pc);
 
 void 
-cert_manifest_testresult(manifest_id const & m, 
+cert_revision_testresult(revision_id const & m, 
 			 std::string const & results,
 			 app_state & app,
 			 packet_consumer & pc);

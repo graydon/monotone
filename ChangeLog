@@ -1,3 +1,14 @@
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* cert.{cc,hh} (cert_revision_manifest): Bug fixes.
+	* commands.cc (approve)
+	(disapprove)
+	(testresult): Teach about revisions.
+	* tests/t_disapprove.at:
+	* tests/t_i18n_file.at:
+	* tests/t_ls_missing.at:
+	* tests/t_testresult.at: Bug fixes.
+
 2004-10-09  graydon hoare  <graydon@pobox.com>
 
 	* netsync.cc: 
