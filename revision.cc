@@ -10,6 +10,7 @@
 #include <queue>
 #include <set>
 #include <sstream>
+#include <stack>
 #include <string>
 
 #include <boost/lexical_cast.hpp>
@@ -451,45 +452,72 @@ add_bitset_to_union(shared_bitmap src,
   *dst |= *src;
 }
 
+
 static void 
 calculate_ancestors_from_graph(interner<ctx> & intern,
-			       revision_id const & rev,
+			       revision_id const & init,
 			       std::set<revision_id> const & legal, 
 			       std::multimap<revision_id, revision_id> const & graph, 
 			       std::map< ctx, shared_bitmap > & ancestors,
 			       shared_bitmap & total_union)
 {
   typedef std::multimap<revision_id, revision_id>::const_iterator gi;
+  std::stack<ctx> stk;
 
-  shared_bitmap b = shared_bitmap(new bitmap());
-  ctx us = intern.intern(rev.inner()());
-  std::pair<gi,gi> parents = graph.equal_range(rev);
+  stk.push(intern.intern(init.inner()()));
 
-  for (gi i = parents.first; i != parents.second; ++i)
+  while (! stk.empty())
     {
-      ctx parent = intern.intern(i->second.inner()());
+      ctx us = stk.top();
+      revision_id rev(hexenc<id>(intern.lookup(us)));
 
-      // set any the parent which is a members of the underlying legal set
-      if (legal.find(i->second) != legal.end())
+      std::pair<gi,gi> parents = graph.equal_range(rev);
+      bool pushed = false;
+
+      // first make sure all parents are done
+      for (gi i = parents.first; i != parents.second; ++i)
         {
-          if (b->size() <= parent)
-            b->resize(parent + 1);
-          b->set(parent);
+          ctx parent = intern.intern(i->second.inner()());
+          if (ancestors.find(parent) == ancestors.end())
+            {
+              stk.push(parent);
+              pushed = true;
+              break;
+            }
         }
 
-      // first ensure all parents are loaded into the ancestor map
-      if (ancestors.find(parent) == ancestors.end())
-	calculate_ancestors_from_graph(intern, i->second, legal, graph, 
-                                       ancestors, total_union);
+      // if we pushed anything we stop now. we'll come back later when all
+      // the parents are done.
+      if (pushed)
+        continue;
 
-      // then union them into our map
-      std::map< ctx, shared_bitmap >::const_iterator j = ancestors.find(parent);
-      I(j != ancestors.end());
-      add_bitset_to_union(j->second, b);
+      shared_bitmap b = shared_bitmap(new bitmap());
+
+      for (gi i = parents.first; i != parents.second; ++i)
+        {
+          ctx parent = intern.intern(i->second.inner()());
+
+          // set any parent which is a member of the underlying legal set
+          if (legal.find(i->second) != legal.end())
+            {
+              if (b->size() <= parent)
+                b->resize(parent + 1);
+              b->set(parent);
+            }
+
+          // ensure all parents are loaded into the ancestor map
+          I(ancestors.find(parent) != ancestors.end());
+
+          // union them into our map
+          std::map< ctx, shared_bitmap >::const_iterator j = ancestors.find(parent);
+          I(j != ancestors.end());
+          add_bitset_to_union(j->second, b);
+        }
+
+      add_bitset_to_union(b, total_union);
+      ancestors.insert(std::make_pair(us, b));
+      stk.pop();
     }
-
-  add_bitset_to_union(b, total_union);
-  ancestors.insert(std::make_pair(us, b));
 }
 
 // This function looks at a set of revisions, and for every pair A, B in that

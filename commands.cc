@@ -1542,17 +1542,17 @@ CMD(cat, "tree", "(file|manifest|revision) [ID]",
 }
 
 
-CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY", 
+CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n", 
     "check out revision from database into directory")
 {
 
   revision_id ident;
   string dir;
 
-  if (args.size() != 1 && args.size() != 2)
+  if (args.size() > 2)
     throw usage(name);
 
-  if (args.size() == 1)
+  if (args.size() == 0 || args.size() == 1)
     {
       set<revision_id> heads;
       N(app.branch_name() != "", F("need --branch argument for branch-based checkout"));
@@ -1560,9 +1560,12 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
       N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
       N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
       ident = *(heads.begin());
-      dir = idx(args, 0)();
+      // if no checkout dir specified, use branch name
+      if (args.size() == 0)
+          dir = app.branch_name();
+      else
+          dir = idx(args, 0)();
     }
-
   else
     {
       complete(app, idx(args, 0)(), ident);
@@ -2396,7 +2399,8 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 static void 
 dump_diffs(change_set::delta_map const & deltas,
            app_state & app,
-           bool new_is_archived)
+           bool new_is_archived,
+           diff_type type)
 {
   
   for (change_set::delta_map::const_iterator i = deltas.begin();
@@ -2469,15 +2473,16 @@ dump_diffs(change_set::delta_map const & deltas,
             {
               split_into_lines(decompressed_old(), old_lines);
               split_into_lines(decompressed_new(), new_lines);
-              unidiff(delta_entry_path(i)(), 
-                      delta_entry_path(i)(), 
-                      old_lines, new_lines, cout);
+              make_diff(delta_entry_path(i)(), 
+                        delta_entry_path(i)(), 
+                        old_lines, new_lines,
+                        cout, type);
             }
         }
     }
 }
 
-CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout")
+void do_diff(const string & name, app_state & app, vector<utf8> const & args, diff_type type)
 {
   revision_set r_old, r_new;
   manifest_map m_new;
@@ -2608,9 +2613,18 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
     cout << "# " << endl;
   }
 
-  dump_diffs(composite.deltas, app, new_is_archived);
+  dump_diffs(composite.deltas, app, new_is_archived, type);
 }
 
+CMD(cdiff, "informative", "[REVISION [REVISION]]", "show current context diffs on stdout")
+{
+  do_diff(name, app, args, context_diff);
+}
+
+CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout")
+{
+  do_diff(name, app, args, unified_diff);
+}
 
 CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor")
 {

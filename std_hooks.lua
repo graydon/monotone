@@ -132,6 +132,17 @@ end
 
 -- merger support
 
+function merge2_meld_cmd(lfile, rfile)
+   local cmd_fmt = "meld %s %s"
+   return string.format(cmd_fmt, lfile, rfile)
+end
+
+function merge3_meld_cmd(lfile, afile, rfile)
+   local cmd_fmt = "meld %s %s %s" 
+   return string.format(cmd_fmt, lfile, afile, rfile)
+end
+
+
 function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
    local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
    local cmd_fmt = "%s -no-init-file -eval " .. elisp
@@ -194,6 +205,7 @@ function merge2(left_path, right_path, merged_path, left, right)
    local rfile = nil
    local outfile = nil
    local data = nil
+   local meld_exists = false
 
    lfile = write_to_temporary_file(left)
    rfile = write_to_temporary_file(right)
@@ -204,7 +216,13 @@ function merge2(left_path, right_path, merged_path, left, right)
       outfile ~= nil 
    then 
       local cmd = nil
-      if program_exists_in_path("xxdiff") then
+      if program_exists_in_path("meld") then
+         meld_exists = true
+         io.write(string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n" .. 
+				"You should merge all changes to *LEFT* file due to limitation of program\n" ..
+				   "arguments.\n\n"))
+         cmd = merge2_meld_cmd(lfile, rfile) 
+      elseif program_exists_in_path("xxdiff") then
          cmd = merge2_xxdiff_cmd(left_path, right_path, merged_path, 
                                  lfile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
@@ -217,7 +235,11 @@ function merge2(left_path, right_path, merged_path, left, right)
       then
          io.write(string.format("executing external 2-way merge command: %s\n", cmd))
          os.execute(cmd)
-         data = read_contents_of_file(outfile)
+	 if meld_exists then
+            data = read_contents_of_file(lfile)
+         else
+            data = read_contents_of_file(outfile)
+         end
 	 if string.len(data) == 0 
 	 then 
 	    data = nil
@@ -240,6 +262,7 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
    local rfile = nil
    local outfile = nil
    local data = nil
+   local meld_exists = false
 
    lfile = write_to_temporary_file(left)
    afile = write_to_temporary_file(ancestor)
@@ -252,7 +275,13 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
       outfile ~= nil 
    then 
       local cmd = nil
-      if program_exists_in_path("xxdiff") then
+      if program_exists_in_path("meld") then
+         meld_exists = true
+         io.write(string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n" .. 
+				"You should merge all changes to *CENTER* file due to limitation of program\n" ..
+				   "arguments.\n\n"))
+         cmd = merge3_meld_cmd(lfile, afile, rfile)
+      elseif program_exists_in_path("xxdiff") then
          cmd = merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path, 
                                  lfile, afile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
@@ -260,12 +289,16 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
       elseif program_exists_in_path("xemacs") then
          cmd = merge3_emacs_cmd("xemacs", lfile, afile, rfile, outfile)
       end
-
+      
       if cmd ~= nil
       then
          io.write(string.format("executing external 3-way merge command: %s\n", cmd))
          os.execute(cmd)
-         data = read_contents_of_file(outfile)
+         if meld_exists then
+            data = read_contents_of_file(afile)
+         else
+            data = read_contents_of_file(outfile)
+         end
 	 if string.len(data) == 0 
 	 then 
 	    data = nil

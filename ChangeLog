@@ -1,5 +1,25 @@
 2005-01-17  graydon hoare  <graydon@pobox.com>
 
+	* AUTHORS: Mention Wojciech and Neil.
+	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
+
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+
+	* std_hooks.lua: Teach about meld.
+
+2005-01-17  Neil Conway  <neilc@samurai.com>
+
+	* diff_patch.cc: add a new context diff hunk consumer. Rename
+	unidiff() to make_diff().
+	* diff_patch.hh: Rename unidiff() to make_diff().
+	* command.cc: Add new "cdiff" command, and refactor "diff" to
+	invoke a common subroutine that is parameterized on the diff
+	type. Unrelated change: make a branch-based checkout default to
+	using the same directory name as the branch name, unless a
+	branch is specified.
+
+2005-01-17  graydon hoare  <graydon@pobox.com>
+
 	* cryptopp/osrng.cpp (NonblockingRng::GenerateBlock): 
 	Bring forward patch lost in cryptopp 5.2 upgrade.
 	* revision.cc (add_bitset_to_union)
@@ -16,7 +36,7 @@
 	* commands.cc: Adapt to using multimap for ancestry.
 	* AUTHORS: Mention Faheem and Christian.
 
-2005-01-17  Faheem Mitha <faheem@email.unc.edu>
+2005-01-17  Faheem Mitha  <faheem@email.unc.edu>
 
 	* debian/control: Fix up build depends.
 
@@ -25,7 +45,7 @@
 	* acinclude.m4 (AC_CHECK_INADDR_NONE): Fix quoting.
 	* Makefile.am (EXTRA_DIST): Add sqlite/keywordhash.c.
 
-2005-01-14  Christian Kollee <stuka@pestilenz.org>
+2005-01-14  Christian Kollee  <stuka@pestilenz.org>
 
 	* search for and link with sqlite3 when --bundle-sqlite=no
 
@@ -45,7 +65,7 @@
 	* schema_migration.cc: Post-merge cleanup.
 	* Makefile.am: Likewise.
 
-2005-01-10  Christof Petig <christof@petig-baender.de>
+2005-01-10  Christof Petig  <christof@petig-baender.de>
 
 	* sqlite/*: SQLite 3.0.8 CVS import
 	* database.{cc,hh}:
