@@ -1,3 +1,56 @@
+2003-09-22  graydon hoare  <graydon@pobox.com>
+
+	* depot_schema.sql, schema_migration.cc, 
+	schema_migration.hh: Add.
+	* database.cc, depot.cc: Implement schema migration.
+	* database.cc, commands.cc: Change to db ... cmd.
+	* monotone.texi, monotone.1: Document command change.
+	* depot.cc: Fix various query bugs.
+
+2003-09-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* depot.cc (depot_schema): Remove unique constraint on (contents),
+	replace with unique constraint on (groupname, contents).
+	
+2003-09-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (diff): Take manifest ids as arguments.  Add
+	explanatory text on files added, removed, modified.
+
+2003-09-19  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (genkey): Use all-caps for meta-syntactic variable.
+	(cert, tag, approve, disapprove, comment, add, drop, commit,
+	update, revert, cat, checkout, co, propagate, complete, list, ls,
+	mdelta, fdelta, mdata, fdata, mcerts, fcerts, pubkey, privkey,
+	fetch, post, rcs_import, rcs): Likewise.
+	(explain_usage): Indent explanatory text past the command names.
+
+2003-09-17  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (list): Don't compute or use "subname".
+
+	* commands.cc (revert): Handle case where argument is a
+	directory.
+	* tests/t_revert.at: Test for revert of directory.
+
+	* testsuite.at (MONOTONE_SETUP): Use "monotone initdb".
+	* monotone.1: Document "initdb".
+	* monotone.texi (Commands): Document initdb.
+	(Creating a Database): New node.
+	(Getting Started): Refer to it.
+	* commands.cc (initdb): New command.
+	* database.cc (database::sql): New argument `init'.
+	(database::initialize): New method.
+	* database.hh (database::initalize): Declare.
+	(database::sql): New argument `init'.
+
+2003-09-17  Tom Tromey  <tromey@redhat.com>
+
+	* tests/t_persist_phrase.at: Use "ls certs".
+	* tests/t_nntp.at: Use "ls certs".
+	* tests/t_genkey.at: Use "ls keys" and "ls certs".
+
 2003-09-16  Tom Tromey  <tromey@redhat.com>
 
 	* monotone.1: Document "list branches".

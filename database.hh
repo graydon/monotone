@@ -65,7 +65,7 @@ class database
   void check_schema();
 
   struct sqlite * __sql;
-  struct sqlite * sql();
+  struct sqlite * sql(bool init = false);
   int transaction_level;
 
   typedef vector< vector<string> > results;
@@ -159,7 +159,14 @@ public:
 
   database(fs::path const & file);
 
+  unsigned long get_statistic(string const & query);
   void set_filename(fs::path const & file);
+  void initialize();
+  void dump(ostream &);
+  void load(istream &);
+  void info(ostream &);
+  void version(ostream &);
+  void migrate();
   void ensure_open();
   
   bool file_version_exists(file_id const & id);

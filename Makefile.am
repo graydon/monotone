@@ -6,7 +6,7 @@ MOST_SOURCES = \
 	 cert.cc database.cc file_io.cc keys.cc manifest.cc         \
          nntp_machine.cc packet.cc sanity.cc vocab.cc               \
          rcs_file.cc rcs_import.cc xdelta.cc network.cc             \
-         http_tasks.cc ui.cc                                        \
+         http_tasks.cc ui.cc schema_migration.cc                    \
                                                                     \
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh  \
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh    \
@@ -14,7 +14,7 @@ MOST_SOURCES = \
 	 cleanup.hh diff_patch.hh lua.hh nntp_tasks.hh patch_set.hh \
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh \
          rcs_file.hh rcs_import.hh xdelta.hh adler32.hh             \
-         network.hh http_tasks.hh constants.hh ui.hh
+         network.hh http_tasks.hh constants.hh ui.hh schema_migration.hh 
 
 CRYPTOPP_SOURCES = \
         cryptopp/algebra.cpp cryptopp/algparam.cpp cryptopp/arc4.cpp \
@@ -134,7 +134,7 @@ unit_tests_LDFLAGS =
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
 
 depot_cgi_LDFLAGS = 
-depot_cgi_LDADD = lib3rdparty.a
+depot_cgi_LDADD = schema_migration.o lib3rdparty.a
 
 AM_CFLAGS = -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
 AM_LDFLAGS = -static 
@@ -143,7 +143,8 @@ AM_CXXFLAGS = -DNDEBUG -DBOOST_DISABLE_THREADS -Wall
 man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
-	     schema.sql std_hooks.lua test_hooks.lua \
+	     schema.sql depot_schema.sql \
+	     std_hooks.lua test_hooks.lua \
 	     testsuite.at testsuite \
 	     $(wildcard tests/t_*.at) \
              tests/atconfig.in \
@@ -185,7 +186,7 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES = std_hooks.h test_hooks.h schema.h
+BUILT_SOURCES = std_hooks.h test_hooks.h schema.h depot_schema.h
 CLEANFILES = $(BUILT_SOURCES)
 
 txt2c: txt2c.cc Makefile

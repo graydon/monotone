@@ -71,6 +71,7 @@ end
 
 ])
 
+AT_CHECK(MONOTONE db init, [], [ignore], [ignore])
 AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
 ])

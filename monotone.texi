@@ -897,6 +897,7 @@ arguments in the first example.
 We are now ready to explore some version control tasks.
 
 @menu
+* Creating a Database::   Create a new database.
 * Generating Keys::       Generate an RSA public/private key pair
 * Adding Files::          Import the state of the tree to the database
 * Making Changes::        Edit a file and examine work
@@ -908,10 +909,24 @@ We are now ready to explore some version control tasks.
 @end menu
 
 
+@node    Creating a Database
+@section Creating a Database
+
+The first step is to create a new database.  Monotone requires this as
+an explicit step to prevent spurious creation of databases when an
+invalid @option{--db} option is given.
+
+This is easily done using the special @code{monotone db init} command:
+
+@example
+$ monotone db init --db=$HOME/test.db
+@end example
+
+
 @node    Generating Keys
 @section Generating Keys
 
-The first step is to generate an RSA key pair for ourselves. This step requires
+Now we must generate an RSA key pair for ourselves. This step requires
 choosing a key identifier. Typical key identifiers are similar to email addresses,
 possibly modified with some prefix or suffix to distinguish multiple keys held by
 the same owner. We will use the key identifier ``testkey@@nodomain.org''. When we
@@ -1917,6 +1932,10 @@ merely removed from the manifest.
 
 @item @b{update} @i{[sort keys...]}
 Update working copy, relative to sorting keys.
+@comment TROFF INPUT: .SH DESCRIPTION
+
+@item @b{db} @i{(init|dump|load|info|version|migrate)}
+Manipulate database state.
 @comment TROFF INPUT: .SH DESCRIPTION
 
 @end table

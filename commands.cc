@@ -111,7 +111,7 @@ void explain_usage(string const & cmd, ostream & out)
       out << "     " << i->second->name
 	  << " " << params.substr(old, j - old)
 	  << endl
-	  << "     " << i->second->desc << endl << endl;
+	  << "       " << i->second->desc << endl << endl;
       return;
     }
 
@@ -676,7 +676,7 @@ static void ls_keys (string name, app_state & app, vector<string> const & args)
   guard.commit();
 }
 
-CMD(genkey, "key and cert", "<keyid>", "generate an RSA key-pair")
+CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -697,7 +697,7 @@ CMD(genkey, "key and cert", "<keyid>", "generate an RSA key-pair")
   guard.commit();
 }
 
-CMD(cert, "key and cert", "(file|manifest) <id> <certname> [certval]", 
+CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
                         "create a cert for a file or manifest")
 {
   if ((args.size() != 4) && (args.size() != 3))
@@ -772,7 +772,7 @@ CMD(tag, "certificate", "<id> <tagname>",
   cert_manifest_tag(m, args[1], app, dbw);
 }
 
-CMD(approve, "certificate", "(file|manifest) <id>", 
+CMD(approve, "certificate", "(file|manifest) ID", 
     "approve of a manifest or file version")
 {
   if (args.size() != 2)
@@ -795,7 +795,7 @@ CMD(approve, "certificate", "(file|manifest) <id>",
     throw usage(name);
 }
 
-CMD(disapprove, "certificate", "(file|manifest) <id>", 
+CMD(disapprove, "certificate", "(file|manifest) ID", 
     "disapprove of a manifest or file version")
 {
   if (args.size() != 2)
@@ -878,7 +878,7 @@ CMD(add, "working copy", "<pathname> [...]", "add files to working copy")
   app.write_options();
 }
 
-CMD(drop, "working copy", "<pathname> [...]", "drop files from working copy")
+CMD(drop, "working copy", "FILE...", "drop files from working copy")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -903,7 +903,7 @@ CMD(drop, "working copy", "<pathname> [...]", "drop files from working copy")
   app.write_options();
 }
 
-CMD(commit, "working copy", "[log message]", "commit working copy to database")
+CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 {
   string log_message("");
   manifest_map m_old, m_new;
@@ -1086,7 +1086,7 @@ CMD(commit, "working copy", "[log message]", "commit working copy to database")
   app.write_options();
 }
 
-CMD(update, "working copy", "[sort keys...]", "update working copy, relative to sorting keys")
+CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to sorting keys")
 {
 
   manifest_data m_chosen_data;
@@ -1187,7 +1187,7 @@ CMD(update, "working copy", "[sort keys...]", "update working copy, relative to 
   app.write_options();
 }
 
-CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working copy")
+CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy")
 {
   manifest_map m_old;
 
@@ -1219,18 +1219,38 @@ CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working cop
       work_set work;
       get_manifest_map(m_old);
       get_work_set(work);
-      
-      // revert some specific files
-      for (size_t i = 0; i < args.size(); ++i)
-	{
-	  N((m_old.find(args[i]) != m_old.end()) ||
-	    (work.adds.find(args[i]) != work.adds.end()) ||
-	    (work.dels.find(args[i]) != work.dels.end()),
-	    "nothing known about " + args[i]);
 
-	  if (m_old.find(args[i]) != m_old.end())
+      // revert some specific files
+      vector<string> work_args (args.begin(), args.end());
+      for (size_t i = 0; i < work_args.size(); ++i)
+	{
+	  if (directory_exists(work_args[i]))
 	    {
-	      path_id_pair pip(m_old.find(args[i]));
+	      // simplest is to just add all files from that
+	      // directory.
+	      string dir = work_args[i];
+	      int off = work_args[i].find_last_not_of('/');
+	      if (off != -1)
+		dir = work_args[i].substr(0, off + 1);
+	      dir += '/';
+	      for (manifest_map::const_iterator i = m_old.begin();
+		   i != m_old.end(); ++i)
+		{
+		  file_path p = i->first;
+		  if (! p().compare(0, dir.length(), dir))
+		    work_args.push_back(p());
+		}
+	      continue;
+	    }
+
+	  N((m_old.find(work_args[i]) != m_old.end()) ||
+	    (work.adds.find(work_args[i]) != work.adds.end()) ||
+	    (work.dels.find(work_args[i]) != work.dels.end()),
+	    "nothing known about " + work_args[i]);
+
+	  if (m_old.find(work_args[i]) != m_old.end())
+	    {
+	      path_id_pair pip(m_old.find(work_args[i]));
 	      L("reverting %s to %s\n",
 		pip.path()().c_str(),
 		pip.ident().inner()().c_str());
@@ -1249,19 +1269,19 @@ CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working cop
 	      write_data(pip.path(), dat.inner());	      
 
 	      // a deleted file will always appear in the manifest
-	      if (work.dels.find(args[i]) != work.dels.end())
+	      if (work.dels.find(work_args[i]) != work.dels.end())
 		{
 		  L("also removing deletion for %s\n",
-		    args[i].c_str());
-		  work.dels.erase(args[i]);
+		    work_args[i].c_str());
+		  work.dels.erase(work_args[i]);
 		}
 	    }
 	  else
 	    {
-	      I (work.adds.find(args[i]) != work.adds.end());
+	      I (work.adds.find(work_args[i]) != work.adds.end());
 	      L("removing addition for %s\n",
-		args[i].c_str());
-	      work.adds.erase(args[i]);
+		work_args[i].c_str());
+	      work.adds.erase(work_args[i]);
 	    }
 	}
       // race
@@ -1317,7 +1337,7 @@ CMD(cat, "tree", "(file|manifest) <id>", "write file or manifest from database t
 }
 
 
-CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from database into directory")
+CMD(checkout, "tree", "MANIFEST-ID DIRECTORY", "check out tree state from database into directory")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1367,7 +1387,7 @@ CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from da
   app.write_options();
 }
 
-ALIAS(co, checkout, "tree", "<manifest-id>",
+ALIAS(co, checkout, "tree", "MANIFEST-ID DIRECTORY",
       "check out tree state from database; alias for checkout")
 
 CMD(heads, "tree", "", "show unmerged heads of branch")
@@ -1510,7 +1530,7 @@ CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result"
 }
 */
 
-CMD(propagate, "tree", "<src-branch> <dst-branch>", 
+CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
     "merge from one branch to another asymmetrically")
 {
   /*  
@@ -1620,16 +1640,62 @@ CMD(complete, "informative", "(manifest|file) <partial-id>", "complete partial i
     throw usage(name);  
 }
 
-CMD(diff, "informative", "", "show current diffs on stdout")
+CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on stdout")
 {
   manifest_map m_old, m_new;
   patch_set ps;
+  bool new_is_archived;
 
   transaction_guard guard(app.db);
 
-  get_manifest_map(m_old);
-  calculate_new_manifest_map(m_old, m_new);
+  if (args.size() == 0)
+    {
+      get_manifest_map(m_old);
+      calculate_new_manifest_map(m_old, m_new);
+      new_is_archived = false;
+    }
+  else if (args.size() == 1)
+    {
+      manifest_id m_old_id;
+      complete(app, args[0], m_old_id);
+      manifest_data m_old_data;
+      app.db.get_manifest_version(m_old_id, m_old_data);
+      read_manifest_map(m_old_data, m_old);
+
+      manifest_map parent;
+      get_manifest_map(parent);
+      calculate_new_manifest_map(parent, m_new);
+      new_is_archived = false;
+    }
+  else if (args.size() == 2)
+    {
+      manifest_id m_old_id, m_new_id;
+
+      complete(app, args[0], m_old_id);
+      complete(app, args[1], m_new_id);
+
+      manifest_data m_old_data, m_new_data;
+      app.db.get_manifest_version(m_old_id, m_old_data);
+      app.db.get_manifest_version(m_new_id, m_new_data);
+
+      read_manifest_map(m_old_data, m_old);
+      read_manifest_map(m_new_data, m_new);
+      new_is_archived = true;
+    }
+  else
+    {
+      throw usage(name);
+    }
+      
   manifests_to_patch_set(m_old, m_new, app, ps);
+
+  cout << "# Summary of changes:" << endl;
+  stringstream summary;
+  patch_set_to_text_summary(ps, summary);
+  vector<string> lines;
+  split_into_lines(summary.str(), lines);
+  for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
+    cout << "# " << *i << endl;
 
   for (set<patch_delta>::const_iterator i = ps.f_deltas.begin();
        i != ps.f_deltas.end(); ++i)
@@ -1643,7 +1709,18 @@ CMD(diff, "informative", "", "show current diffs on stdout")
       decode_base64(f_old.inner(), decoded_old);
       decode_gzip(decoded_old, decompressed_old);
 
-      read_data(i->path, decompressed_new);
+      if (new_is_archived)
+        {
+          file_data f_new;
+          gzip<data> decoded_new;
+          app.db.get_file_version(i->id_new, f_new);
+          decode_base64(f_new.inner(), decoded_new);
+          decode_gzip(decoded_new, decompressed_new);
+        }
+      else
+        {
+          read_data(i->path, decompressed_new);
+        }
 
       split_into_lines(decompressed_old(), old_lines);
       split_into_lines(decompressed_new(), new_lines);
@@ -1707,7 +1784,7 @@ static void ls_branches (string name, app_state & app, vector<string> const & ar
   guard.commit();
 }
 
-CMD(list, "informative", "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranches", "show certs, keys, or branches")
+CMD(list, "informative", "certs (file|manifest) ID\nkeys [PATTERN]\nbranches", "show certs, keys, or branches")
 {
   if (args.size() == 0)
     throw usage(name);
@@ -1715,18 +1792,17 @@ CMD(list, "informative", "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranc
   vector<string>::const_iterator i = args.begin();
   ++i;
   vector<string> removed (i, args.end());
-  string subname = name + " " + args[0];
   if (args[0] == "certs")
-    ls_certs(subname, app, removed);
+    ls_certs(name, app, removed);
   else if (args[0] == "keys")
-    ls_keys(subname, app, removed);
+    ls_keys(name, app, removed);
   else if (args[0] == "branches")
-    ls_branches(subname, app, removed);
+    ls_branches(name, app, removed);
   else
-    throw usage(subname);
+    throw usage(name);
 }
 
-ALIAS(ls, list, "informative",  "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranches", "show certs, keys, or branches")
+ALIAS(ls, list, "informative",  "certs (file|manifest) ID\nkeys [PATTERN]\nbranches", "show certs, keys, or branches")
 
 
 CMD(mdelta, "packet i/o", "<oldid> <newid>", "write manifest delta packet to stdout")
@@ -1754,7 +1830,7 @@ CMD(mdelta, "packet i/o", "<oldid> <newid>", "write manifest delta packet to std
   guard.commit();
 }
 
-CMD(fdelta, "packet i/o", "<oldid> <newid>", "write file delta packet to stdout")
+CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1776,7 +1852,7 @@ CMD(fdelta, "packet i/o", "<oldid> <newid>", "write file delta packet to stdout"
   guard.commit();
 }
 
-CMD(mdata, "packet i/o", "<id>", "write manifest data packet to stdout")
+CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1813,7 +1889,7 @@ CMD(fdata, "packet i/o", "<id>", "write file data packet to stdout")
   guard.commit();
 }
 
-CMD(mcerts, "packet i/o", "<id>", "write manifest cert packets to stdout")
+CMD(mcerts, "packet i/o", "ID", "write manifest cert packets to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1832,7 +1908,7 @@ CMD(mcerts, "packet i/o", "<id>", "write manifest cert packets to stdout")
   guard.commit();
 }
 
-CMD(fcerts, "packet i/o", "<id>", "write file cert packets to stdout")
+CMD(fcerts, "packet i/o", "ID", "write file cert packets to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1851,7 +1927,7 @@ CMD(fcerts, "packet i/o", "<id>", "write file cert packets to stdout")
   guard.commit();
 }
 
-CMD(pubkey, "packet i/o", "<id>", "write public key packet to stdout")
+CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1865,7 +1941,7 @@ CMD(pubkey, "packet i/o", "<id>", "write public key packet to stdout")
   guard.commit();
 }
 
-CMD(privkey, "packet i/o", "<id>", "write private key packet to stdout")
+CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1926,7 +2002,7 @@ CMD(agraph, "graph visualization", "", "dump ancestry graph to stdout")
   guard.commit();
 }
 
-CMD(fetch, "network", "[URL] [groupname]", "fetch recent changes from network")
+CMD(fetch, "network", "[URL] [GROUPNAME]", "fetch recent changes from network")
 {
   if (args.size() > 2)
     throw usage(name);
@@ -1956,7 +2032,7 @@ CMD(fetch, "network", "[URL] [groupname]", "fetch recent changes from network")
   fetch_queued_blobs_from_network(sources, app);
 }
 
-CMD(post, "network", "[URL] [groupname]", "post queued changes to network")
+CMD(post, "network", "[URL] [GROUPNAME]", "post queued changes to network")
 {
   if (args.size() > 2)
     throw usage(name);
@@ -1986,7 +2062,7 @@ CMD(post, "network", "[URL] [groupname]", "post queued changes to network")
 }
 
 
-CMD(rcs_import, "rcs", "<rcsfile> ...", "import all versions in RCS files")
+CMD(rcs_import, "rcs", "RCSFILE...", "import all versions in RCS files")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -2001,12 +2077,33 @@ CMD(rcs_import, "rcs", "<rcsfile> ...", "import all versions in RCS files")
 }
 
 
-CMD(cvs_import, "rcs", "<cvsroot>", "import all versions in CVS repository")
+CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
 {
   if (args.size() != 1)
     throw usage(name);
 
   import_cvs_repo(fs::path(args.at(0)), app);
+}
+
+
+CMD(db, "database", "(init|dump|load|info|version|migrate)", "manipulate database state")
+{
+  if (args.size() != 1)
+    throw usage(name);
+  if (args[0] == "init")
+    app.db.initialize();
+  else if (args[0] == "dump")
+    app.db.dump(cout);
+  else if (args[0] == "load")
+    app.db.load(cin);
+  else if (args[0] == "info")
+    app.db.info(cout);
+  else if (args[0] == "version")
+    app.db.version(cout);
+  else if (args[0] == "migrate")
+    app.db.migrate();
+  else
+    throw usage(name);
 }
 
 

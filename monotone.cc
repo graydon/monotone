@@ -79,7 +79,7 @@ static bool clean_shutdown;
 void dumper() 
 {
   if (!clean_shutdown)
-	global_sanity.dump_buffer();    
+    global_sanity.dump_buffer();    
 }
 
  
