@@ -3531,6 +3531,11 @@ either ignoring or knows nothing about.
 This command lists all files in your working copy that monotone is 
 intentionally ignoring, due to the results of the @code{ignore_file (@var{filename})} hook.
 
+@item monotone list missing
+
+This command lists all files in your manifest which are not present
+in the working copy. 
+
 @end ftable
 
 
@@ -4519,6 +4524,11 @@ List files in working directory, but not in manifest or work list.
 @item @b{list ignored}
 @itemx @b{ls ignored}
 List files intentionally ignored due to the ignore_file hook.
+@comment TROFF INPUT: .TP
+
+@item @b{list missing}
+@itemx @b{ls missing}
+List files in manifest, but not in working directory.
 @comment TROFF INPUT: .TP
 
 @item @b{fcerts} @i{<id>}

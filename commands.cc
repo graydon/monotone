@@ -2204,6 +2204,19 @@ ls_unknown (app_state & app, bool want_ignored)
   walk_tree(u);
 }
 
+static void
+ls_missing (app_state & app)
+{
+  manifest_map m;
+  get_manifest_map(m);
+  for (manifest_map::const_iterator i = m.begin(); i != m.end(); ++i)
+    {
+      path_id_pair pip(i);
+      if (!file_exists(pip.path()))	
+	cout << pip.path() << endl;
+    }
+}
+
 CMD(reindex, "network", "COLLECTION...", 
     "rebuild the hash-tree indices used to sync COLLECTION over the network")
 {
@@ -2285,8 +2298,9 @@ CMD(list, "informative",
     "keys [PATTERN]\n"
     "branches\n"
     "unknown\n"
-    "ignored", 
-    "show certs, keys, branches, unknown or intentionally ignored files")
+    "ignored\n"
+    "missing", 
+    "show certs, keys, branches, unknown, intentionally ignored, or missing files")
 {
   if (args.size() == 0)
     throw usage(name);
@@ -2304,6 +2318,8 @@ CMD(list, "informative",
     ls_unknown(app, false);
   else if (idx(args, 0)() == "ignored")
     ls_unknown(app, true);
+  else if (idx(args, 0)() == "missing")
+    ls_missing(app);
   else
     throw usage(name);
 }
@@ -2313,7 +2329,8 @@ ALIAS(ls, list, "informative",
       "keys [PATTERN]\n"
       "branches\n"
       "unknown\n"
-      "ignored", "show certs, keys, or branches")
+      "ignored\n"
+      "missing", "show certs, keys, or branches")
 
 
   CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
