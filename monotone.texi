@@ -95,7 +95,6 @@ with these terms.
 * Versions of trees::         Tracking changes to collections of files
 * Certificates::              Tracking extended information
 * Storage and workflow::      Saving, sending, and receiving changes
-* Packets::                   How databases and network servers relate
 * Ancestry::                  Relating versions to each other
 * Forks and merges::          Managing divergence of code
 * Branches::                  Intentional divergence and automatic merging
@@ -422,34 +421,35 @@ secure key exchange techniques are beyond the scope of this document.
 @node    Storage and workflow
 @section Storage and workflow
 
-Monotone moves information in and out of three different
-types of storage:
+Monotone moves information in and out of three different types of
+storage:
 
 @itemize
 @item
 a @i{working copy} in the local file system
 @item
-a @i{database} in the local file system
+a @i{local database} in the local file system
 @item
-a @i{web, mail or news server} on the network
+a @i{remote database} elsewhere on the internet
 @end itemize
 
-All information passes @emph{through} a database, en route to some
-other destination. For example, when changes are made in a working
-copy, you may save those changes to a database, and later you may send
-those changes from a database to a web, mail or news server. Monotone
-will not move information directly between a working copy and a
-network server.
+All information passes @emph{through} your local database, en route to
+some other destination. For example, when changes are made in a
+working copy, you may save those changes to your database, and later
+you may synchronize your database with someone else's. Monotone will
+not move information directly between a working copy and a remote
+database, or between working copies. Your local database is always
+the ``switching point'' for communication.
 
 @example
-                 post, fetch
+             pull, push, sync
        (untrusted network exchanges)
             _________/\________
            /                   \
 
     +-------------+      +------------+      +--------------+
     |             |      |            |      |              |
-    |  net server | <==> |  database  | <==> | working copy |
+    |  remote db  | <==> |  local db  | <==> | working copy |
     |             |      |            |      |              |
     +-------------+      +------------+      +--------------+
 
@@ -473,13 +473,13 @@ files, remove files, or move files within your working copy, you may
 need to tell monotone explicitly what you are doing, as these actions
 cannot always be deduced.
 
-If you do not yet have a working copy, you can ``check out'' a working
-copy from a database, or construct one from scratch and ``add'' it
-into a database. As you work, you will occasionally ``commit'' changes
-you have made in a working copy to a database, and ``update'' a
-working copy to receive changes that have arrived in a
-database. Committing and updating take place purely between a database
-and a working copy; the network is not involved.
+If you do not yet have a working copy, you can @dfn{check out} a
+working copy from a database, or construct one from scratch and
+@dfn{add} it into a database. As you work, you will occasionally
+@dfn{commit} changes you have made in a working copy to a database,
+and @dfn{update} a working copy to receive changes that have arrived
+in a database. Committing and updating take place purely between a
+database and a working copy; the network is not involved.
 
 @example
    -----------------     check out,      working copy
@@ -508,134 +508,69 @@ false. It is a collection of information received from network servers,
 working copies, and other databases. You can inspect and modify your
 databases without affecting your working copies, and vice-versa.
 
-Monotone knows how to exchange information in your database with
-various sorts of @dfn{network servers}. It supports three common
-networking protocols: HTTP, NNTP and SMTP. Monotone can communicate
-natively with web, news and mail servers using these protocols. If you
-have access to a web server which can run CGI programs, you can use
-the HTTP transport easily with very little setup. See the tutorial
-section for more details.
+Monotone knows how to exchange information in your database with other
+remote databases, using an interactive protocol called @dfn{netsync}.
+It supports three modes of exchange: pushing, pulling, and
+synchronizing. A @dfn{pull} operation copies data from a remote
+database to your local database. A @dfn{push} operation copies data
+from your local database to a remote database. A @dfn{sync} operation
+copies data both directions. In each case, only the data missing from
+the destination is copied. The netsync protocol calculates the data to
+send ``on the fly'' by exchanging partial hash values of each
+database.
 
 @example
-                                        -----------------
-  \\\             ///                  (                 )
-   +---------------+       fetch        -----------------
-   |               |    ----------->   |                 |
-   |    network    |                   |      local      |
-   |    server     |   <-----------    |     database    |
-   |               |        post       |                 |
-   +---------------+                   \_________________/
-  ///             \\\
+  -----------------                    ----------------- 
+ (                 )                  (                 )
+  -----------------    --- pull --->   -----------------       
+ |                 |                  |                 |
+ |      remote     |  <--- sync --->  |      local      |
+ |     database    |                  |     database    |
+ |                 |  <--- push ---   |                 |
+ \_________________/                  \_________________/
 @end example
 
-Communication with network servers is quite flexible, but the usual
-work pattern has 4 distinct stages:
+In general, work flow with monotone involves 3 distinct stages:
 
 @itemize
 @item
-when you ``commit'' changes from your working copy to your database,
-monotone also makes a note in the database to queue the changes for
-transmission to a network server.
+When you @i{commit} changes from your working copy to your database,
+your database stores the changes but does not communicate with the
+network. Your commits happen immediately, without consulting any other
+party, and do not require network connectivity.
+
 @item
-when you ``post'' to a network server, monotone sends all changes queued
-in your database to the network server.
+When you are ready to @i{exchange} work with someone else, you can
+push, pull, or sync with other databases on the network. When you talk
+to other servers on the network, your database may change, but your
+working copy will not. In fact, you do not need a working copy at all
+when exchanging work.
+
 @item
-when you ``fetch'' from a network server, monotone copies any new changes
-from the network server into your database.
-@item
-when you ``update'' your working copy, @i{some} of the changes which
-have arrived in your database from a network server are applied to your
-working copy.
+When you @i{update} your working copy, some (but not all) of the
+changes which your database received from the network are applied to
+your working copy. The network is not consulted during updates.
 @end itemize
 
-The last stage is worth clarifying: monotone does @emph{not} blindly
-apply all changes it receives from a network server to your working copy.
-Doing so would be very dangerous, because network servers are not
-trustworthy systems. Rather, monotone evaluates the certificates it
-has received along with the changes, and decides which particular
-changes are safe and desirable to apply to your working copy.
+The last stage of workflow is worth clarifying: monotone does
+@emph{not} blindly apply all changes it receives from a remote
+database to your working copy.  Doing so would be very dangerous,
+because remote databases are not always trustworthy systems. Rather,
+monotone evaluates the certificates it has received along with the
+changes, and decides which particular changes are safe and desirable
+to apply to your working copy.
 
 You can always adjust the criteria monotone uses to judge the
 trustworthiness and desirability of changes in your database. But keep
 in mind that it always uses @emph{some} criteria; receiving changes
-from the network is a @emph{different} activity than applying changes
-to a working copy. Sometimes you may receive changes which monotone
-judges to be untrusted or bad; such changes may stay in your database
-but will @emph{not} be applied to your working copy.
+from a remote server is a @emph{different} activity than applying
+changes to a working copy. Sometimes you may receive changes which
+monotone judges to be untrusted or bad; such changes may stay in your
+database but will @emph{not} be applied to your working copy.
 
-@node    Packets
-@section Packets
-
-When monotone sends information to network servers, it converts the
-data stored in your database to a more convenient form, called
-@dfn{packets}. Each packet is a sequence of lines of ASCII text,
-beginning with a header (enclosed in square brackets) and ending with
-the single line ``[end]''. The first word in the header of a packet
-indicates the packet type. For example, a packet containing some
-manifest data might look like this:
-
-@example
-[mdata 8d4d10a037ab2f814c96fbf88002473afbfb7b75]
-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
-[end]
-@end example
-
-The contents of this packet is a gzipped, base64-encoded copy of a
-manifest. Other packets have slightly different contents, but
-packets have two very important properties:
-
-@itemize
-@item 
-Packets are @emph{informative}. A packet represents only a piece of
-information, not a conversation or a promise to do anything. Transmitting
-a packet does not require or imply any sort of promise about actions
-taken by the sender or receiver. Packets can always be ignored or deleted.
-No packet carries any obligation to act with it.
-@item
-Packets describe database state @emph{completely}. No matter how else
-a monotone database chooses to store data, all of its state is
-captured in a dump of packets, and can be reconstructed by reading
-through the packets.
-@end itemize
-
-Because of these strong properties, the network servers used by
-monotone act as @emph{dumb transports}. A network server is only used
-to move packets between various monotone clients; servers do
-@emph{not} interpret packets when they exchange them. 
+Remote databases, in other words, are just untrusted ``buckets'' of
+data, which you can trade with promiscuously. There is no trust
+implied in communication.
 
 @node    Ancestry
 @section Ancestry
@@ -929,7 +864,7 @@ We are now ready to explore some version control tasks.
 * Checking Out::          Move to a different version of a tree
 * Forking and Merging::   Make multiple changes from the same base version
 * Updating::              Moving a working copy to a ``newer'' version
-* Transmitting Changes::  Post your work to a network server
+* Transmitting Changes::  Exchange your work with another database
 @end menu
 
 
@@ -1100,23 +1035,22 @@ we just imported. A head version is one without any descendents. Since
 we have not committed any changes to this manifest yet, it has no
 descendents. 
 
-Finally, if we wanted to manually transmit the manifest to someone
-else, we could issue the following command:
+Finally, if we wanted to print out the manifest and inspect it, we
+could issue the following command:
 
 @example
-$ monotone mdata 577c21252290d4b66240efb1f917a9f3c4136fe5
-[mdata 577c21252290d4b66240efb1f917a9f3c4136fe5]
-H4sIAAAAAAAAAC3MWwoCMQxA0f9ZRVegkzbNYxEuIk1SRiwKivtXwd8D9wpm9bZb7QwjqLKC
-RGZCEkGLhkloVbOUi91yXlduTmCzJnEOHQKJ1DqP0Rx3NbXejD2mUynXu6935PnItR6nY1P+
-+QycKBRTu5CE9IHfDSjvgJbVBEt5Pf1f+fYBPkTTgaMAAAA=
-[end]
+$ monotone cat manifest 577c
+monotone: expanded partial id '577c' to '577c21252290d4b66240efb1f917a9f3c4136fe5'
+84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
+c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
+97dfc6fd4f486df95868d85b4b81197014ae2a84  src/hello.c
 @end example
 
-This command produces an @code{mdata} packet, which is short for
-``manifest data''. The @code{mdata} packet does not contain the files
-or the certs. The body of the @code{mdata} packet is a base64 encoded,
-gzipped copy of the manifest found in @file{MT/manifest}. We will see
-in later sections how to transmit more packet types.
+This command accesses our database directly, printing out the manifest
+identified as the head of our branch. This command @emph{not} read the
+manifest from the working copy. We could safely erase our working
+copy, as the manifest (and its files) are stored in our database. We will
+not erase it, however, because there is more left to explore.
 
 @node    Making Changes
 @section Making Changes
@@ -1168,9 +1102,12 @@ changes:
 @end example
 
 The output of this command tells us that our edits, so far, constitute
-only a simple edit to a single file. If we would like to see that edit
-in closer detail, we can also print out a difference listing in GNU
-``unified diff'' format:
+only a simple edit to a single file. This command accessed our working
+copy alone: monotone read the @file{MT/manifest} file and compared it
+to the @sc{sha1} values of all the files found in the working copy,
+then listed the differences it found. If we would like to see those
+differences in closer detail, we can also print out a difference
+listing in GNU ``unified diff'' format:
 
 @example
 $ monotone diff
@@ -1190,6 +1127,14 @@ $ monotone diff
  int main()
 @end example
 
+This command accessed our database and our working copy: as in the
+previous command, monotone compared the @file{MT/manifest} file to the
+working copy. Once monotone found a difference, it consulted the
+database consulted to construct the previous file version (97dfc6...),
+and ran a line-oriented diff algorithm between the old version of the
+file, from the database, and the new version of the file, in the
+working copy.
+
 Suppose now we would also like to move our @code{say_hello}
 function to a secondary source file, and modify our @file{Makefile} to
 build it separately. We can make these changes directly:
@@ -1208,14 +1153,14 @@ We must then add the new file to monotone's working record:
 $ monotone add src/say-hello.c
 @end example
 
-This command does not modify the @file{MT/manifest} file, but rather
-makes a note in a persistent log file @file{MT/work}, stating that you
+This command did not modify the @file{MT/manifest} file, but rather
+made a note in a persistent log file @file{MT/work}, stating that we
 wish to add the file @file{src/say-hello.c}. The @file{MT/work} file
-is processed when you commit your work. Before we commit anything, We
-can show the current status of our working copy once more, which will 
-include any changes between the @file{MT/manifest} file and the files
-in our working copy, as well as any additions or deletions written in
-the @file{MT/work} file: 
+will be processed when we commit our work. Before we commit anything,
+we can show the current status of our working copy once more, which
+will include any changes between the @file{MT/manifest} file and the
+files in our working copy, as well as any additions or deletions
+written in the @file{MT/work} file:
 
 @example
 $ monotone status
@@ -1262,9 +1207,9 @@ $ monotone diff
 @section Committing Changes
 
 Now that we have made changes, we can commit them to the
-database. Doing so will replace the ``head'' version of our branch with
-the new, changed version, and store the older version as a reverse
-delta from the new version.
+database. Doing so will replace the ``head'' version of our branch
+with the new, changed version, and store the older version as a
+reverse delta from the new version.
 
 @example
 $ monotone commit
@@ -1291,7 +1236,8 @@ MT:
 We have entered a single line above the explanatory message, saying
 ``example commit log''. We then save the file and quit the
 editor. Monotone will delete all the lines beginning with ``MT:'' and
-leave only our message. Returning to the shell, we are prompted for our passphrase.
+leave only our message. Returning to the shell, we are prompted for
+our passphrase.
 
 @example
 monotone: committing 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e to branch testbranch
@@ -1339,7 +1285,8 @@ edge: @{ sourcename : "577c21252290d4b66240efb1f917a9f3c4136fe5"
 @section Checking Out
 
 Now that we have committed one version, the @file{MT/manifest} file
-has been updated to reflect the current contents of the files we are working on:
+has been updated to reflect the current contents of the files we are
+working on:
 
 @example
 $ cat MT/manifest
@@ -1541,15 +1488,16 @@ void say_goodbye()
 @}
 @end example
 
-An update actually consists of three distinct phases.
+An update actually consists of 3 distinct phases.
 
 @itemize
 
 @item
 In the @dfn{select phase}, monotone selects all descendants of the
 manifest version the current working copy is based on, and sorts them
-based on ancestry, as well as any user-specified certs. This
-sorting should select an ideal ``new base version'' for your working
+by ancestry, excluding ancestry edges which do not meet user-specified
+criteria for quality assurance, such as code review or testing. This
+phase should select an ideal ``new base version'' for your working
 copy. If the select phase does not arrive at a @emph{unique} new base
 version, the update stops.
 
@@ -1573,212 +1521,39 @@ relative to your previous parent are moved forward during the merge
 phase.
 
 One interesting feature of the update operation is that you can
-override or extend the logic monotone uses to sort update candidates,
-with Lua hook functions. This feature is still partially unfinished,
-but in the future you should be able to transparently filter out
-versions lacking sufficient approval from code reviewers, with
-testsuite results showing regressions, or similar ``quality control''
-orderings expressed as custom certs.
+override or extend the logic monotone uses to filter update
+candidates, with Lua hook functions. @xref{Quality Assurance}, for
+details.
 
 
 @node    Transmitting Changes
 @section Transmitting Changes
 
 After doing some work, typically we want to send these changes to
-other users. We have seen previously that monotone can produce
-sequences of ``packets'' which encode, in a safe and portable manner,
-any type of work recorded in its database. To make life easier, we can
-ask monotone to send sequences of packets to directly to a network
-server, after we commit work. Monotone supports three kinds of network
-servers: news servers, mail servers, and web servers. We will use a
-web server in this example. To use a web server with monotone, we must
-install a program on the web server called @dfn{depot}, which is a CGI
-program. The @code{depot} program contains a subset of the
-functionality of a news server, just enough to exchange packets.
+other users. Monotone contains a built-in protocol which can directly
+synchronize your database with another over TCP/IP. Supposing we set
+up a monotone ``server'', then synchronizing with it will ``send'' our
+work to the server, and ``receive'' any work the server has which we
+have not yet seen.
 
-To make our depot work, we need to do two things:
-
-@menu
-* Set up a Depot::        Prepare a web server to receive packets
-* Configure the Client::  Edit our @file{.monotonerc} to use the depot
-@end menu
-
-Once we have a working depot that monotone knows about, when we make a
-change, monotone will queue network transmissions to the appropriate
-server. Supposing we had set up our @file{.monotonerc} file earlier,
-our most recent commit would result in the following messages:
-
-@example
-$ monotone commit
-monotone: committing a2f12ab893e7e40feb83e19f4e707ec6a2841601 to branch testbranch
-enter passphrase for key ID [testkey@@nodomain.org] :@i{<enter your passphrase here>}
-monotone: queueing packets for target http://www.myisp.com/~me/depot.cgi/helloworld
-monotone: [bytes 1566] [packets 6]
-monotone: committed a2f12ab893e7e40feb83e19f4e707ec6a2841601
-@end example
-
-This commit is similar to the previous one, but each cert and delta
-which was previously committed to the database has also been
-@i{queued} for transmission to our depot. Later, when we are connected
-to the network and ready to send our work, we can issue a separate
-posting command to communicate with the network servers:
-
-@example
-$ monotone post
-monotone: posted 6 / 6 packets ok
-@end example
-
-Elsewhere, we may wish to receive changes from a network server. This
-is also quite straightforward. We add another hook function to our
-configuration file specifying which URLs we would like to fetch from:
-
-@example
-$ cat >>~/.monotonerc
-function get_fetch_sources(branchname)
-        return @{ "http://www.myisp.com/~me/depot.cgi/helloworld" @} 
-end
-@end example
-
-Then we can fetch depot postings and integrate them into our database
-directly.
-
-@example
-$ monotone fetch 
-monotone: fetching packets from group helloworld at http://www.myisp.com/~me/depot.cgi
-monotone: [packet: 6] 
-monotone: http fetch complete
-monotone: fetched 6 packets
-@end example
-
-Monotone remembers ``sequence numbers'' for each URL and logical group
-name, so that it can fetch only unseen packets.
-
-It is worth noting that the packets transmitted are the @i{smallest}
-patch-set that monotone could compose at the time of
-transmission. Therefore files which were ``added'' may wind up being
-transmitted as deltas, and files which were committed as deltas but
-which subsequently had their ancestors erased may wind up being
-transmitted as full files. If a recipient is unhappy with a particular
-type of packet they receive from a network server, they can always
-request a personal retransmission, via email for example.
-
-@node       Set up a Depot
-@subsection Set up a Depot
-
-The first step in setting up a depot is to extract our @sc{rsa} public key
-packet from our monotone database. This will enable us to communicate
-securely with the depot. We will extract the key to the file
-@file{key-packet.txt}:
-
-@example
-$ monotone pubkey testkey@@nodomain.org >key-packet.txt
-@end example
-
-The packet generated is a plain text encoding of an @sc{rsa} public key
-number. It looks pretty much like any other packet:
-
-@example
-$ cat key-packet.txt
-[pubkey testkey@@nodomain.org]
-MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQDDEs10/X6ZDYKB7snQuESSgoAxwsk8b0au
-rBroCig2qz14oIHX9DIvTlfPfiSjncnBS/zQ+seLjqEmhcegU9d/dsIEIvWlfXHlwBEkCKKL
-VP0cx6WFpq1xPfrRCn6MJ1/NxYbgIFeuoNkCJR9GTM3WLV/1CaWSYGVEX+aIooRYRwIBEQ==
-[end]
-@end example
-
-Next we need to set up a CGI program on a web server somewhere. For
-this example, we say we will put the CGI at the (nonexistant) URL
-@code{http://www.myisp.com/~me/depot.cgi}. Your URL will obviously be
-different, depending on where you host your web server.
-
-We copy the @file{depot.cgi} program to our web server, along with the
-packet file @file{key-packet.txt}, and configure our web server to
-execute CGI programs on our behalf. The CGI configuration step is
-beyond the scope of this tutorial, but it is well documented
-elsewhere.
-
-One important point, when configuring a writable depot, is that the
-directory the depot is contained in must be writable by the user which
-will execute CGI programs. On some web servers this is the user owning
-the directory, and on others it is a special user such as @code{www},
-@code{cgi} or @code{nobody}.
-
-Next we run an initialization command to build a small database file
-for the depot program, then add the public key packet to the database
-as an authorized uploader.
-
-@example
-$ ./depot.cgi initdb
-$ ./depot.cgi adduser <key-packet.txt
-@end example
-
-Now one key --- @code{testkey@@nodomain.org} --- is authorized to
-upload packets to the database, and anyone can download packets from
-it. We are finished on the web server. To check that the depot is
-ready to accept packets, we can load a status URL in a standard web
-client, from our client site.
-
-@example
-$ wget -O - http://www.myisp.com/~me/depot.cgi?q=status
-depot operational with 0 packets.
-@end example
-
-
-@node       Configure the Client
-@subsection Configure the Client
-
-For monotone to fetch from our newly created depot, we must edit our
-@file{.monotonerc} file, which is a collection of functions written in
-the @uref{http://www.lua.org, Lua} programming language. We will write
-some entries which tell monotone which network URL to post to, and
-which user name we would like to post as. Configuration in monotone is
-always done as @i{hook functions}, which calculate configuration
-variables based on some parameters (or, in rare cases, no parameters):
-
-@example
-$ cat >~/.monotonerc
-function get_post_targets(branchname)
-        return @{ "http://www.myisp.com/~me/depot.cgi/helloworld" @} 
-end
-
-function get_http_auth(url)
-        return "testkey@@nodomain.org"
-end
-^D
-@end example
-
-We have written two hook functions. The first takes a branch name and
-returns a Lua table of values. You may return different results
-depending on the branch name provided, but for this example we ignore
-the branch name and always return the same table. Each value in the
-table is a URL, including the path to our depot CGI and a @dfn{logical
-group name} as the URL's path info. Logical group names are analogous
-to newsgroups on news servers: they collect some subset of the data on
-the depot --- perhaps multiple branches, perhaps all your work ---
-into a collection that can be requested by name.
-
-Usually you will post all your data to a single logical group name on
-a given depot, but you may occasionally wish to have more than one, if
-your depot is carrying many different sorts of data, and you want to
-be able to fetch only part of the data at a time.
-
-The second hook function takes a URL and returns the name of an
-@sc{rsa} keypair in your database, to use for authenticating
-transmissions to the depot. This will generally be the name of the key
-you use to sign certificates.
+Setting up a remote server is the subject of the next chapter, which
+includes some examples illustrating the use of a client and
+server. This concludes the initial tutorial.
 
 
 @node    Network Service
 @chapter Network Service
 
 @emph{Note:} Monotone's networking system changed between release 0.9
-and 0.10. The old system is depricated and will be removed. Please
+and 0.10. The old system is depricated and will be
+removed. Documentation for it has already been removed. Please
 familiarize yourself with the new system.
 
-Monotone's networking protocol is called 'netsync'. It is a pipelined,
-bidirectional protocol which synchronizes monotone databases over a
-TCP connection. Monotone can behave as either a client or server for
-netsync. No additional server software is required.
+Monotone's networking protocol is called @dfn{netsync}. It is a
+pipelined, bidirectional protocol which synchronizes monotone
+databases over a TCP connection. Monotone can behave as either a
+client or server for netsync. No additional server software is
+required.
 
 @subsection Setting up the server
 
@@ -1811,7 +1586,7 @@ operator's keyboard. If you want to run a monotone server permanently,
 it is a good idea to run it under a supervision program such as
 @uref{http://cr.yp.to/daemontools.html, daemontools}. 
 
-@subsection Connecting from a client
+@subsection Pulling from a server to a client
 
 In order to connect to a monotone server, a client needs to know the
 server's public key. This involves reading the key packet generated
@@ -1819,16 +1594,101 @@ in the previous step.
 
 @example
 $ monotone --db=client.db read <server-key.txt
+monotone: read 1 packet
 @end example
 
 Netsync clients can then pull, push, or sync with a given server. Sync
-simply means ``push and pull'', but it is performed in a single
-connection. The server may accept or refuse connections depending on
-configuration. 
+simply means ``push and pull at the same time'', but it is performed
+in a single connection. The server may accept or refuse connections
+depending on configuration.
+
+So, returning to our example, suppose we wish to retrieve data as a
+client from the server we started on off.net. Then we can use the
+@code{pull} command, providing an empty key to authenticate
+anonymously with the server:
 
 @example 
- $ monotone --db=client.db pull off.net net.venge.monotone
+$ monotone --key="" --db=client.db pull off.net net.venge.monotone
+monotone: warning: doing anonymous pull
+monotone: rebuilding merkle trees for collection net.venge.monotone
+monotone: [keys: 1] [mcerts: 1] 
+monotone: connecting to off.net
+monotone: [bytes in: 2387498] [bytes out: 498739] 
+monotone: read from fd 5 (peer off.net) closed OK after goodbye
 @end example
+
+Here monotone has warned us that it is doing an anonymous pull,
+described the indexing process on the local database, connected,
+exchanged data, and disconnected from the remote database. Most
+netsync operations look like this from the client side.
+
+@subsection Pushing from a client to a server
+
+Later, we may want to start sending data to our server. To do this, we
+need to configure the server to accept connections from us. We do this
+by first exporting the client key into a text file:
+
+@example
+$ monotone --db=client.db pubkey client@@somewhere.net >client-key.txt
+@end example
+
+Then loading the client key into the server database:
+
+@example
+$ monotone --db=server.db read <client-key.txt
+monotone: read 1 packet
+@end example
+
+And and writing a small lua hook which defines the list of keys which
+can read and write to the server:
+
+@example
+$ cat >permissions.lua
+
+function get_netsync_read_permitted (collection, identity)
+  if (identity == client@@somewhere.net) then return true end
+  return false
+end
+
+function get_netsync_write_permitted (collection, identity)
+  if (identity == client@@somewhere.net) then return true end
+  return false
+end
+^D
+@end example
+
+We can then restart the server with this new set of permissions:
+
+@example
+$ monotone --db=server.db --rcfile=permissions.lua \
+           serve off.net net.venge.monotone
+@end example
+
+And then the client can push changes to the server:
+
+@example
+$ monotone --db=client.db push off.net net.venge.monotone
+monotone: rebuilding merkle trees for collection net.venge.monotone
+monotone: [keys: 5] [mcerts: 704] 
+monotone: connecting to off.net
+monotone: [bytes in: 221] [bytes out: 782] 
+monotone: read from fd 5 (peer off.net) closed OK after goodbye
+@end example
+
+@subsection Syncing and multiple servers
+
+We can combine a @code{push} and @code{pull} operation against a
+single server with a @code{sync}. It requires nothing new since we've
+configured the server to permit reads and writes from the client.
+
+It is important to point out that there is no coupling between our
+client and any particular server. If the server on off.net vanished or
+was taken offline, we could sync with any other database, without
+having to re-exchange any history or adjust our understanding of
+branches. Indeed, if there are no firewalls in the way, we can skip
+the use of servers altogether and synchronize @emph{between clients}
+directly, in a ``peer to peer'' fashion.
+
 
 @node    Special Topics
 @chapter Special Topics
@@ -2029,7 +1889,7 @@ relatively simple to change it to use some other algorithm.
 
 Monotone was constructed to serve both as a version control tool and
 as a quality assurance tool. The quality assurance features permit
-users to ignore, or filter-out, versions which do not meet their
+users to ignore, or ``filter out'', versions which do not meet their
 criteria for quality. This section describes the way monotone
 represents and reasons about quality information.
 
@@ -2083,14 +1943,16 @@ selecting update candidates, and is passed a pair of tables describing
 the @code{testresult} certs present on the source and proposed
 destination of an update. Only if the change in test results are
 deemed ``acceptable'' does monotone actually select an update target
-to merge into your working copy.
+to merge into your working copy. 
+
+For details on these hooks, see the @ref{Hook Reference}.
 
 
 @node    Internationalization
 @section Internationalization
 
 Monotone initially dealt with only ASCII characters, in file path
-names, certificate names, key names, URLs, and packets. Some
+names, certificate names, key names, and packets. Some
 conservative extensions are provided to permit internationalized
 use. These extensions can be summarized as follows:
 
@@ -2104,8 +1966,8 @@ infrastructure is present to add them.
 @item
 All command-line arguments are mapped from your local character set to
 UTF-8 before processing. This means that monotone can @emph{only}
-handle key names, file names, certificate names and URLs which map
-cleanly into UTF-8.
+handle key names, file names and certificate names which map cleanly
+into UTF-8.
 
 @item
 Monotone's control files are stored in UTF-8. This includes: manifest
@@ -2123,12 +1985,12 @@ accustomed to being able to use file names in your locale's character
 set, this should ``just work'' with monotone.
 
 @item
-Key and cert names, URLs, and similar ``name-like'' entities are
-subject to some cleaning and normalization, and conversion into
-network-safe subsets of ASCII (ACE or URL-encoding, depending on
-context). Generally, you should be able to use ``sensible'' strings in
-your locale's character set as names, but they may appear mangled or
-escaped in certain contexts such as network transmission.
+Key and cert names, and similar ``name-like'' entities are subject to
+some cleaning and normalization, and conversion into network-safe
+subsets of ASCII (typically ACE). Generally, you should be able to use
+``sensible'' strings in your locale's character set as names, but they
+may appear mangled or escaped in certain contexts such as network
+transmission.
 
 @item
 Monotone's transmission and storage forms are otherwise
@@ -2282,36 +2144,16 @@ file.
 
 UI messages are displayed via calls to @code{gettext()}. 
 
+@heading Host names
 
-@heading URLs
+Host names are read on the command-line and subject to normal form
+conversion. Host names are then split at @code{0x2E} (ASCII '.'), each
+component is subject to IDNA encoding, and the components are
+rejoined.
 
-URLs are read on the command-line and subject to normal form
-conversion. Each component of a URL is then subject to a different
-further normalization or conversion:
-
-@table @asis
-
-@item Host names 
-Split at '.', each component subject to IDNA encoding, rejoined.
-
-@item Path components in HTTP URL
-All ASCII control codes (@code{0x0..0x1F} and @code{0x7F}) and code
-@code{0x20} (ASCII SP) are prohibited; 10 reserved ";/?:@@&=+$,"
-characters and all other UTF-8 codes outside the unreserved class of
-72 chars (62 alphanum, 9 mark "-_.!~*'()" and one escape "%") are
-escaped into (%xx) hex form. Behavior roughly follows RFC 2396.
-
-@item Email addresses and NNTP group names
-Split at '.' and '@@', each component subject to IDNA encoding, and
-rejoined. Behavior roughly follows suggested procedure in
-draft-faerber-i18n-email-netnews-names-00.txt.
-
-@end table
-
-After these processing stages, URLs are stored internally as ASCII.
-The invariant is that a URL inside monotone contains only the 72
-non-reserved bytes and the 3 reserved bytes "/@@." described in RFC
-2396.
+After processing, host names are stored internally as ASCII. The
+invariant is that a host name inside monotone contains only sequences
+of LDH separated by @code{0x2E}.
 
 @heading Cert names
 
@@ -2335,7 +2177,8 @@ the normal form, except @code{0x0A} (ASCII LF).
 Read on the command line and subject to normal form conversion and
 IDNA encoding as an email address (split and joined at '.' and '@@'
 characters). The invariant is that a key name inside monotone contains
-only LDH, '.' and '@@' characters.
+only LDH, @code{0x2E} (ASCII '.') and @code{0x40} (ASCII '@@')
+characters.
 
 @heading Packets
 
@@ -2628,20 +2471,20 @@ $ cvs checkout -d :pserver:cvs.foo.com/wobbler -r 1.2
 @end example
 @tab
 @example
-$ monotone fetch http://www.foo.com/depot.cgi/wobbler
+$ monotone pull www.foo.com com.foo.wobbler
 $ monotone checkout fe37 wobbler-checkout
 @end example
 @end multitable
 
 The CVS command contacts a network server, retrieves a version, and
 stores it in your working copy. There are two cosmetic differences
-with the monotone command: network servers are denoted by URLs and
-versions are denoted by @sc{sha1} values (or unambiguous prefixes
-thereof).
+with the monotone command: remote databases are specified by hostnames
+and collections, and versions are denoted by @sc{sha1} values (or
+unambiguous prefixes thereof).
 
-There is also one deep difference: fetching versions into your
-database is a separate step from checking out a single version; after
-you have fetched from a network server, your database will contain
+There is also one deep difference: pulling versions into your database
+is a separate step from checking out a single version; after you have
+pulled from a network server, your database will contain
 @emph{several} versions, possibly the entire history of a
 project. Checking out is a separate step, after communication, which
 only copies a particular version out of your database and into a named
@@ -2657,14 +2500,14 @@ $ cvs commit -m 'log message'
 @tab
 @example
 $ monotone commit 'log message'
-$ monotone post
+$ monotone push www.foo.com com.foo.wobbler
 @end example
 @end multitable
 
 As with other networking commands, the communication step with
-monotone is explicit: committing changes only queues them for
-transmission. A separate command, @command{post}, sends the changes to
-their destinations on network servers.
+monotone is explicit: committing changes only saves them to the local
+database. A separate command, @command{push}, sends the changes to a
+remote database.
 
 @heading Incorporating New Changes
 
@@ -2675,7 +2518,7 @@ $ cvs update -d
 @end example
 @tab
 @example
-$ monotone fetch
+$ monotone pull www.foo.com com.foo.wobbler
 $ monotone merge
 $ monotone update
 @end example
@@ -2872,8 +2715,7 @@ reliable, so monotone usually ignores time.
 This command merges the ``heads'' of @var{branchname}, if there are
 multiple heads, and commits the results to the database, marking the
 resulting manifest as a member of @var{branchname} and connecting it
-via ancestry certificates to each of its inputs. The command may also
-queue the results for posting, depending on configuration.
+via ancestry certificates to each of its inputs. 
 
 Merging is performed by repeated pairwise merges: two heads are
 selected, then their least common ancestor is located in the ancestry
@@ -2888,7 +2730,7 @@ the result of each previous merge as an input to the next.
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
 ancestor of the two heads for a 3-way merge. The resulting manifest is
-committed to @var{destbranch}, and possibly queued for posting. If
+committed to @var{destbranch}. If
 either @var{sourcebranch} or @var{destbranch} has multiple heads,
 @command{propagate} aborts, doing nothing.
 
@@ -2952,9 +2794,7 @@ the files in your tree, subject to the additions and deletions in your
 
 Once the changes are recorded in you database, @command{commit}
 overwrites the @file{MT/manifest} file with the changed manifest, and
-deletes the @file{MT/work} file. Depending on your configuration,
-@command{commit} will also queue the changes for posting to a network
-server.
+deletes the @file{MT/work} file.
 
 The @command{commit} command also synthesizes a number of
 certificates, which it attaches to the new manifest version and copies
@@ -3021,11 +2861,10 @@ copy.
 @itemx monotone sync @var{address} @var{collection}
 
 These commands operate the ``netsync'' protocol built into
-monotone. This is an experimental, custom protocol for rapidly
-synchronizing two monotone databases using a hash tree index. The
-protocol is ``peer to peer'', but requires one peer to listen for
-incoming connections (the server) and the other peer (the client) to
-connect to the server.
+monotone. This is a custom protocol for rapidly synchronizing two
+monotone databases using a hash tree index. The protocol is ``peer to
+peer'', but requires one peer to listen for incoming connections (the
+server) and the other peer (the client) to connect to the server.
 
 The network @var{address} specified in each case should be the same: a
 host name to listen on, or connect to, optionally followed by a colon
@@ -3178,11 +3017,6 @@ names of public and private keys you have on hand.
 If @var{pattern} is provided, it is used as a glob to limit the keys
 listed. Otherwise all keys in your database are listed.
 
-@item monotone list queue
-
-This command lists the contents of the outgoing network queue. It is a
-synonym for @command{monotone queue list}.
-
 @item monotone list branches
 
 This command lists all known branches in your database.
@@ -3289,7 +3123,7 @@ from @code{stdin}.
 
 @item monotone tag @var{id} @var{tagname}
 
-This command is a synonyms for @code{monotone cert manifest @var{id}
+This command is a synonym for @code{monotone cert manifest @var{id}
 tag @var{tagname}}. 
 
 @item monotone testresult @var{id} 0
@@ -3304,6 +3138,21 @@ testresult 0} or @code{monotone cert manifest @var{id} testresult 1}.
 
 @node    Packet I/O
 @section Packet I/O
+
+Monotone can produce and consume data in a convenient, portable form
+called @dfn{packets}. A packet is a sequence of ASCII text, wrapped at
+70-columns and easily sent through email or other transports. If you
+wish to manually transmit a piece of information -- for example a
+public key -- from one monotone database to another, it is often
+convenient to read and write packets.
+
+@emph{Note:} earlier versions of monotone queued and replayed packet
+streams for their networking system. This older networking system is
+depricated and will be removed in a future version, as the netsync
+protocol has several properties which make it advantageous as a
+communication system. However, the packet i/o facility will remain in
+monotone as a utility for moving individual data items around
+manually.
 
 @ftable @command
 @item monotone fcerts @var{id}
@@ -3342,8 +3191,7 @@ private keys safely between monotone databases.
 @item monotone read
 
 This command reads packets from @code{stdin} and applies them to your
-database. Unlike fetching from a network, it will also insert public
-and private keys. Be careful which keys you accept.
+database. 
 
 @end ftable
 
@@ -4049,11 +3897,6 @@ List certs associated with manifest or file.
 List keys matching glob, or list all keys if no glob given.
 @comment TROFF INPUT: .TP
 
-@item @b{list queue}
-@itemx @b{ls queue}
-List contents of outgoing network queue.
-@comment TROFF INPUT: .TP
-
 @item @b{list branches}
 @itemx @b{ls branches}
 List all branches.
@@ -4098,11 +3941,9 @@ Write public key packet to stdout.
 @comment TROFF INPUT: .TP
 
 @item @b{read}
-Read packets from stdin. This is the only way of reading cryptographic
-key packets; the @b{fetch} command will not read public or private
-keys from the network. It is very important to @b{only read keys from
-trusted sources}; all other trust relationships are built out of the
-trust assigned to keys.
+Read packets from stdin. It is very important to @b{only read keys
+from trusted sources}; all other trust relationships are built out of
+the trust assigned to keys.
 @comment TROFF INPUT: .TP
 
 @item @b{cvs_import} @i{<cvsroot>}
@@ -4155,6 +3996,22 @@ Rename files from @i{<src>} to @i{<dst>} in working copy.
 
 @item @b{update} 
 Update working copy.
+@comment TROFF INPUT: .SH DESCRIPTION
+
+@item @b{push} @i{<host> <collection>}
+Push contents of @i{<collection>} to database on @i{<host>}
+@comment TROFF INPUT: .SH DESCRIPTION
+
+@item @b{pull} @i{<host> <collection>}
+Pull contents of @i{<collection>} from database on @i{<host>}
+@comment TROFF INPUT: .SH DESCRIPTION
+
+@item @b{sync} @i{<host> <collection>}
+Sync contents of @i{<collection>} with database on @i{<host>}
+@comment TROFF INPUT: .SH DESCRIPTION
+
+@item @b{serve} @i{<host> <collection>}
+Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
 @item @b{db} @i{(init|info|version|dump|load|migrate)}

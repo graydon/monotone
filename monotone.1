@@ -60,9 +60,6 @@ List certs associated with manifest or file.
 \fBlist keys\fP \fI[partial-id]\fP
 List keys matching glob, or list all keys if no glob given.
 .TP
-\fBlist queue\fP
-List contents of outgoing network queue.
-.TP
 \fBlist branches\fP
 List all branches.
 .TP
@@ -71,28 +68,6 @@ List files in working directory, but not in manifest or work list.
 .TP
 \fBlist ignored\fP
 List files intentionally ignored due to the ignore_file hook.
-.TP
-\fBfetch\fP \fI[URL]\fP
-Fetch recent packets from network servers. Does not read public
-or private key packets; use the \fBread\fP command instead.
-.TP
-\fBpost\fP
-Post queued packets to network servers.
-.TP
-\fBqueue list\fP
-List contents of outgoing network queue.
-.TP
-\fBqueue print\fP \fI<target> <packet>\fP
-Print packet in outgoing network queue.
-.TP
-\fBqueue delete\fP \fI<target> <packet>\fP
-Delete packet from outgoing network queue
-.TP
-\fBqueue add\fP \fI<url>\fP
-Queue contents of standard input to transmit to \fI<url>\fP
-.TP
-\fBqueue addtree\fP \fI<url> [id]\fP
-Queue history of \fIid\fP to transmit to \fI<url>\fP
 .TP
 \fBfcerts\fP \fI<id>\fP
 Write file cert packets to stdout.
@@ -116,11 +91,7 @@ Write private key packet to stdout.
 Write public key packet to stdout.
 .TP
 \fBread\fP
-Read packets from stdin. This is the only way of reading cryptographic
-key packets; the \fBfetch\fP command will not read public or private
-keys from the network. It is very important to \fBonly read keys from
-trusted sources\fP; all other trust relationships are built out of the
-trust assigned to keys.
+Read packets from stdin. 
 .TP
 \fBcvs_import\fP \fI<cvsroot>\fP
 import all versions in CVS repository
@@ -161,6 +132,18 @@ Rename files from \fI<src> \fP to \fI<dst> \fP in working copy.
 .TP
 \fBupdate\fP 
 Update working copy.
+.TP
+\fBpush\fP \fI<host> <collection>\fP 
+Push contents of \fI<collection>\fP to database on \fI<host>\fP 
+.TP
+\fBpull\fP \fI<host> <collection>\fP 
+Push contents of \fI<collection>\fP from database on \fI<host>\fP 
+.TP
+\fBsync\fP \fI<host> <collection>\fP 
+Sync contents of \fI<collection>\fP with database on \fI<host>\fP 
+.TP
+\fBserve\fP \fI<host> <collection>\fP 
+Serve contents of \fI<collection>\fP at network address \fI<host>\fP 
 .TP
 \fBdb\fP \fI(init|info|version|migrate)\fP
 Manipulate database state.

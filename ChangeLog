@@ -1,3 +1,8 @@
+2004-03-27  graydon hoare  <graydon@pobox.com>
+
+	* monotone.texi: Flesh out netsync stuff, remove old network stuff.
+	* monotone.1: Likewise.
+
 2004-03-27  Robert Helgesson  <rycee@home.se>
 
 	* Makefile.am:
