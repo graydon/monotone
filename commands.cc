@@ -2260,7 +2260,7 @@ CMD(db, "database",
     "load\n"
     "migrate\n"
     "execute\n"
-    "fsck\n"
+    "check\n"
     "changesetify\n"
     "rebuild\n"
     "set_epoch BRANCH EPOCH\n", 
