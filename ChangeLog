@@ -1,3 +1,8 @@
+2004-11-21  Joel Rosdahl  <joel@rosdahl.net>
+
+	* testsuite.at (NEED_UNB64): Find more programs for decoding
+	base64.
+
 2004-11-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_merge_1.at: New test.

@@ -158,12 +158,19 @@ AT_CHECK(MONOTONE --branch=$1 commit blah-blah, [], [ignore],
 # After calling NEED_UNB64, you can use UNB64(infile, outfile) to
 # decode base64'ed text.
 m4_define([NEED_UNB64], [
-MIMENCODE=`which mimencode 2>/dev/null`
-if test -z "$MIMENCODE"; then
+if which mimencode 2>/dev/null; then
+  UNB64_COMMAND="mimencode -u"
+elif which recode 2>/dev/null; then
+  UNB64_COMMAND="recode /Base64"
+elif perl -MMIME::Base64 -e 1 2>/dev/null; then
+  UNB64_COMMAND="perl -MMIME::Base64 -ne 'print decode_base64(\$_)'"
+elif which python 2>/dev/null; then
+  UNB64_COMMAND="python -c 'import sys;sys.stdout.write(sys.stdin.read().decode("'"'"base64"'"'"))'"
+else
   exit 77
 fi
 ])
-m4_define([UNB64], [AT_CHECK($MIMENCODE -u $1 -o $2)])
+m4_define([UNB64], [AT_CHECK(eval $UNB64_COMMAND <$1 >$2)])
 
 # netsync helpers
 # NETSYNC_SETUP sets up 2 databases; RUN_NETSYNC netsyncs between
