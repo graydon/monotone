@@ -1,3 +1,17 @@
+2003-12-07  Eric Kidd  <eric.kidd@pobox.com>
+
+	* commands.cc (agraph): Handle repositories with a single version.
+	* database.cc (get_head_candidates): Handle heads with no ancestors.
+	* cert.cc (get_branch_heads): Handle heads with no ancestors.
+
+2003-12-06  Eric Kidd  <eric.kidd@pobox.com>
+
+	* update.hh, update.cc (pick_update_target): Return current
+	version if no better update candidates available.
+	* update.cc (pick_update_target): Always do branch filtering.
+	* commands.cc (update): Notice when we're already up-to-date.
+	* commands.cc (propagate): Assign branch name correctly when merging.
+
 2003-12-16  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (ls_ignored, ignored_itemizer): Fold in as subcases of unknown.

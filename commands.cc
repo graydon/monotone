@@ -1273,6 +1273,11 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
   calculate_new_manifest_map(m_old, m_working);
   
   pick_update_target(m_old_id, args, app, m_chosen_id);
+  if (m_old_id == m_chosen_id)
+    {
+      P(F("already up to date at %s\n") % m_old_id);
+      return;
+    }
   P(F("selected update target %s\n") % m_chosen_id);
   app.db.get_manifest_version(m_chosen_id, m_chosen_data);
   read_manifest_map(m_chosen_data, m_chosen);
@@ -1801,17 +1806,23 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
       transaction_guard guard(app.db);
       try_one_merge (*src_i, *dst_i, merged, app, targets);      
 
+      packet_db_writer dbw(app);
       queueing_packet_writer qpw(app, targets);
-      cert_manifest_in_branch(merged, app.branch_name, app, qpw);
-      cert_manifest_changelog(merged, 
-			      "propagate of " 
-			      + src_i->inner()() 
-			      + " and " 
-			      + dst_i->inner()()
-			      + "\n"
-			      + "from branch " 
-			      + idx(args, 0) + " to " + idx(args, 1) + "\n", 
-			      app, qpw);	  
+
+      cert_manifest_in_branch(merged, idx(args, 1), app, dbw);
+      cert_manifest_in_branch(merged, idx(args, 1), app, qpw);
+
+      string log = ("propagate of " 
+                    + src_i->inner()()
+                    + " and " 
+                    + dst_i->inner()()
+                    + "\n"
+                    + "from branch "
+                    + idx(args, 0) + " to " + idx(args, 1) + "\n");
+
+      cert_manifest_changelog(merged, log, app, dbw);
+      cert_manifest_changelog(merged, log, app, qpw);
+
       guard.commit();      
     }
 }
@@ -2540,6 +2551,7 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
     {
       cert_value tv;
       decode_base64(i->inner().value, tv);
+      nodes.insert(i->inner().ident()); // in case no edges were connected
       branches.insert(make_pair(i->inner().ident(), tv()));
     }  
 

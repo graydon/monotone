@@ -293,19 +293,17 @@ void pick_update_target(manifest_id const & base_ident,
     }
   
   find_descendents(base_ident, app, candidates);
-  if (candidates.size() == 0 &&
-      app.db.manifest_version_exists(base_ident))
+  if (app.db.manifest_version_exists(base_ident))
+    // We can almost always "update" to what we're starting with.
     candidates.insert(base_ident);
   
-  if (candidates.size() > 1
-      && (app.branch_name != ""))
-    {
-      set<manifest_id> branch;
-      filter_by_branch(app, candidates, branch);
-      N(branch.size() != 0,
-	F("no update candidates after selecting branch"));
-      candidates = branch;
-    }
+  N(app.branch_name != "",
+    F("cannot determine branch for update"));
+  set<manifest_id> branch;
+  filter_by_branch(app, candidates, branch);
+  N(branch.size() != 0,
+    F("no update candidates after selecting branch"));
+  candidates = branch;
     
   if (candidates.size() > 1)
     {

@@ -453,7 +453,6 @@ void get_branch_heads(cert_value const & branchname,
 {
   heads.clear();
   vector< manifest<cert> > branch_certs, ancestor_certs;
-  set<manifest_id> candidates;
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
 
@@ -462,40 +461,32 @@ void get_branch_heads(cert_value const & branchname,
   app.db.get_head_candidates(branch_encoded(), branch_certs, ancestor_certs);
   bogus_cert_p bogus(app);
 
-  for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
-       i != ancestor_certs.end(); ++i)
+  for (vector< manifest<cert> >::const_iterator i = branch_certs.begin();
+       i != branch_certs.end(); ++i)
     {
-      candidates.insert(i->inner().ident);
+      if (!bogus(*i))
+	{
+	  heads.insert(i->inner().ident);
+	}      
     }
 
-  L(F("began with %d candidate heads\n") % candidates.size());
+  L(F("began with %d candidate heads\n") % heads.size());
 
+  // Remove every manifest with descendents.
   for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
        i != ancestor_certs.end(); ++i)
     {
       cert_value tv;
       decode_base64(i->inner().value, tv);
       manifest_id parent(tv());
-      set<manifest_id>::const_iterator j = candidates.find(parent);
-      if (j != candidates.end() && !bogus(*i))
+      set<manifest_id>::const_iterator j = heads.find(parent);
+      if (j != heads.end() && !bogus(*i))
 	{
-	  candidates.erase(j);
+	  heads.erase(j);
 	}
     }
 
-  L(F("reduced to %d candidate heads\n") % candidates.size());
-
-  for (vector< manifest<cert> >::const_iterator i = branch_certs.begin();
-       i != branch_certs.end(); ++i)
-    {
-      set<manifest_id>::const_iterator j = candidates.find(i->inner().ident);
-      if (j != candidates.end() && !bogus(*i))
-	{
-	  heads.insert(*j);
-	}      
-    }
-
-  L(F("finalized %d heads\n") % heads.size());
+  L(F("reduced to %d heads\n") % heads.size());
 }
 		   
 void cert_file_ancestor(file_id const & parent, 

@@ -1074,8 +1074,6 @@ void database::get_head_candidates(string const & branch_encoded,
 	"WHERE (name = 'ancestor' OR name = 'branch') "
 	"AND id IN "
 	"("
-	"SELECT id FROM manifest_certs WHERE name = 'ancestor' "
-	"INTERSECT "
 	"SELECT id FROM manifest_certs WHERE name = 'branch' "
 	"AND value = '%q'"
 	")",
