@@ -34,13 +34,20 @@
 ** between formats.
 */
 int sqlite3VdbeChangeEncoding(Mem *pMem, int desiredEnc){
+  int rc;
   if( !(pMem->flags&MEM_Str) || pMem->enc==desiredEnc ){
     return SQLITE_OK;
   }
 #ifdef SQLITE_OMIT_UTF16
   return SQLITE_ERROR;
 #else
-  return sqlite3VdbeMemTranslate(pMem, desiredEnc);
+  rc = sqlite3VdbeMemTranslate(pMem, desiredEnc);
+  if( rc==SQLITE_NOMEM ){
+    sqlite3VdbeMemRelease(pMem);
+    pMem->flags = MEM_Null;
+    pMem->z = 0;
+  }
+  return rc;
 #endif
 }
 
@@ -394,6 +401,8 @@ int sqlite3VdbeMemSetStr(
   pMem->type = enc==0 ? SQLITE_BLOB : SQLITE_TEXT;
   pMem->n = n;
 
+  assert( enc==0 || enc==SQLITE_UTF8 || enc==SQLITE_UTF16LE 
+      || enc==SQLITE_UTF16BE );
   switch( enc ){
     case 0:
       pMem->flags |= MEM_Blob;
@@ -418,11 +427,7 @@ int sqlite3VdbeMemSetStr(
       if( sqlite3VdbeMemHandleBom(pMem) ){
         return SQLITE_NOMEM;
       }
-      break;
 #endif /* SQLITE_OMIT_UTF16 */
-
-    default:
-      assert(0);
   }
   if( pMem->flags&MEM_Ephem ){
     return sqlite3VdbeMemMakeWriteable(pMem);
