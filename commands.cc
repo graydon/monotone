@@ -1369,16 +1369,20 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 CMD(bump, "tree", "", "advance current tree state by updating nonce")
 {
   string nonce;
-  bool rewrite_work;
   work_set work;
   manifest_map m_old, m_new;
   get_manifest_map(m_old);
   calculate_new_manifest_map(m_old, m_new, app);
   make_nonce(app, nonce);
   write_data(local_path(nonce_file_name), data(nonce));
-  build_addition(file_path(nonce_file_name), app, work, m_new, rewrite_work);
-  if (rewrite_work)
-    put_work_set(work);
+  P(F("updating %s with new random bytes\n") % nonce_file_name);
+  if (m_new.find(file_path(nonce_file_name)) == m_new.end())
+    {
+      bool rewrite_work;
+      build_addition(file_path(nonce_file_name), app, work, m_new, rewrite_work);
+      if (rewrite_work)
+	put_work_set(work);
+    }
 }
 
 CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to stdout")
