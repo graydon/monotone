@@ -1,3 +1,10 @@
+2005-02-12  Derek Scherger  <derek@echologic.com>
+
+	* database.cc (sqlite3_unpack_fn): new function for viewing
+	base64, gzipped data
+	(install_functions): install it
+	(rehash): remove unused obsolete fcerts ticker
+
 2005-02-10  Derek Scherger  <derek@echologic.com>
 
 	* monotone.1: update for restrictions
