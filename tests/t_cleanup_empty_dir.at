@@ -1,4 +1,4 @@
-AT_SETUP([update cleans newly empty directories])
+AT_SETUP([(minor) update cleans emptied directories])
 
 # This test is a bug report.
 AT_XFAIL_IF(true)

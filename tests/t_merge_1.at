@@ -1,4 +1,4 @@
-AT_SETUP([test a merge])
+AT_SETUP([(URGENT) test a merge])
 MONOTONE_SETUP
 
 NEED_UNB64

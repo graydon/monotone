@@ -1,4 +1,4 @@
-AT_SETUP([monotone add .])
+AT_SETUP([(minor) monotone add .])
 MONOTONE_SETUP
 
 # This test is a bug report.

@@ -1,4 +1,4 @@
-AT_SETUP([checkout creates MT/options])
+AT_SETUP([(minor) checkout creates right MT/options])
 MONOTONE_SETUP
 
 ADD_FILE(testfile, [foo

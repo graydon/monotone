@@ -1,4 +1,4 @@
-AT_SETUP([update with multiple candidates])
+AT_SETUP([(normal) update with multiple candidates])
 MONOTONE_SETUP
 
 # This test is a bug report.

@@ -1,5 +1,22 @@
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_patch_vs_drop_add.at: 
+	* tests/t_patch_drop_add.at: 
+	* tests/t_netsync_unrelated.at: 
+	* tests/t_merge_add_del.at: 
+	* tests/t_merge2_add_drop_add.at: 
+	* tests/t_merge_1.at: 
+	* tests/t_heads_discontinuous_branch.at: 
+	* tests/t_cleanup_empty_dir.at: 
+	* tests/t_checkout_options.at: 
+	* tests/t_ambig_update.at: 
+	* tests/t_add_patch_drop_add.at:
+	* tests/t_add_drop_add.at: 
+	* tests/t_add_dot.at: Add (importance) markers to all bug report
+	tests.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* app_state.hh (write_options): Add 'force' option.
 	* app_state.cc: Remove tabs.
 	(write_options): Implement.

@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([merging <add a> with <add a, drop a>])
+AT_SETUP([(imp) merging <add a> with <add a, drop a>])
 
 # This test is a bug report.
 AT_XFAIL_IF(true)
