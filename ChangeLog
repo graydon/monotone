@@ -1,3 +1,11 @@
+2005-03-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* schema.sql (branch_epochs): Add 'hash' field.
+	* schema_migration.cc: Fixup for.
+	* database.cc (database): Change schemas.
+	* tests/t_migrate_schema.at: Replace epoch db test case with one
+	with new schema.
+
 2005-03-03  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc (session::id_to_epoch): New variable.

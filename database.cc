@@ -116,7 +116,7 @@ database::database(fs::path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("fe7da30aaf2bc761d0a8e202a4a699b154fbd359"),
+  schema("40369a7bda66463c5785d160819ab6398b9d44f4"),
   __sql(NULL),
   transaction_level(0)
 {}
