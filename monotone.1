@@ -264,10 +264,13 @@ Stop the search for a working copy (containing the @file{MT} directory)
 at the specified root directory rather than at the physical root of the
 filesystem.
 .TP
-\fB-@=\fI<file>\fP
+\fB-xargs=\fI<file>\fP
 Inject the contents of the file in place among the command line
 arguments.  This may be useful in case the command line would
 otherwise become too long for your system.
+.TP
+\fB-@ \fI<file>\fP
+An alias for \fB--xargs=\fI<file>\fP
 
 .SH ENVIRONMENT
 .TP

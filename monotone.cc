@@ -72,7 +72,7 @@ struct poptOption options[] =
     {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
     {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
-    {0, '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "take extract command line arguments from the given file", NULL},
+    {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "take extract command line arguments from the given file", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
 
