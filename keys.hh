@@ -1,7 +1,7 @@
 #ifndef __KEYS_HH__
 #define __KEYS_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
+// copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
@@ -32,6 +32,11 @@ bool check_signature(lua_hooks & lua,
 		     base64<rsa_pub_key> const & pub,
 		     std::string const & alleged_text,
 		     base64<rsa_sha1_signature> const & signature);
+
+void require_password(lua_hooks & lua,
+		      rsa_keypair_id const & id,
+		      base64<rsa_pub_key> const & pubkey,
+		      base64< arc4<rsa_priv_key> > const & privkey);
 
 // netsync stuff
 

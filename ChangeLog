@@ -1,3 +1,10 @@
+2004-04-14  Tom Tromey  <tromey@redhat.com>
+
+	* rcs_import.cc (import_cvs_repo): Use require_password.
+	Include keys.hh.
+	* keys.hh (require_password): Declare.
+	* keys.cc (require_password): New function.
+
 2004-04-29  graydon hoare  <graydon@pobox.com>
 
 	* configure.ac: Fix up windows probe and bundling checks.

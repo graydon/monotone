@@ -25,7 +25,7 @@
 #include "transforms.hh"
 #include "sanity.hh"
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
+// copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
@@ -130,7 +130,7 @@ template <typename T>
 static void 
 write_der(T & val, SecByteBlock & sec)
 {
-  // FIXME: this helper is *wrong*. I don't see now to DER-encode into a
+  // FIXME: this helper is *wrong*. I don't see how to DER-encode into a
   // SecByteBlock, so we may well wind up leaving raw key bytes in malloc
   // regions if we're not lucky. but we want to. maybe muck with
   // AllocatorWithCleanup<T>?  who knows..  please fix!
@@ -230,7 +230,7 @@ make_signature(lua_hooks & lua,           // to hook for phrase
   // something.
 
   static std::map<rsa_keypair_id, shared_ptr<RSASSA_PKCS1v15_SHA_Signer> > signers;
-  bool persist_phrase = (!signers.empty()) || lua.hook_persist_phrase_ok();;
+  bool persist_phrase = (!signers.empty()) || lua.hook_persist_phrase_ok();
 
   shared_ptr<RSASSA_PKCS1v15_SHA_Signer> signer;
   if (persist_phrase 
@@ -377,6 +377,21 @@ key_hash_code(rsa_keypair_id const & id,
   calculate_ident(tdat, out);
 }
 
+void
+require_password(lua_hooks & lua,
+		 rsa_keypair_id const & key,
+		 base64<rsa_pub_key> const & pubkey,
+		 base64< arc4<rsa_priv_key> > const & privkey)
+{
+  if (lua.hook_persist_phrase_ok())
+    {
+      string plaintext("hi maude");
+      base64<rsa_sha1_signature> sig;
+      make_signature(lua, key, privkey, plaintext, sig);
+      N(check_signature(lua, key, pubkey, plaintext, sig),
+	F("passphrase for '%s' is incorrect") % key);
+    }
+}
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"

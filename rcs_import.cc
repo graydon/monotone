@@ -1,4 +1,4 @@
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
+// copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
@@ -31,6 +31,7 @@
 #include "cycle_detector.hh"
 #include "database.hh"
 #include "file_io.hh"
+#include "keys.hh"
 #include "interner.hh"
 #include "manifest.hh"
 #include "packet.hh"
@@ -1200,6 +1201,15 @@ import_cvs_repo(fs::path const & cvsroot,
       F("no unique private key for cert construction"));
     N(app.db.private_key_exists(key),
       F("no private key '%s' found in database") % key);
+    // Require the password early on, so that we don't do lots of work
+    // and then die.
+    N(app.db.public_key_exists(key),
+      F("no public key '%s' found in database") % key);
+    base64<rsa_pub_key> pub;
+    app.db.get_key(key, pub);
+    base64< arc4<rsa_priv_key> > priv;
+    app.db.get_key(key, priv);
+    require_password(app.lua, key, pub, priv);
   }
 
   cvs_history cvs;

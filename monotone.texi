@@ -30,7 +30,7 @@ See the file COPYING for details
 
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 2003 Graydon Hoare
+Copyright @copyright{} 2003, 2004 Graydon Hoare
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -881,17 +881,15 @@ copy, so ordinarily once you have checked out a project, you will not
 need to specify them again.  We will therefore only mention these
 arguments in the first example.
 
-@subsection Version Codes
+@subsection Version Selectors
 Many commands require you to supply 40-character @sc{sha1} values as
 arguments, which we refer to as @i{versions}. These are tedious to
-type, so monotone permits you to supply @i{unambiguous prefixes} of
-versions, rather than complete versions. For example, you may type
-@code{4e20} rather than
-@code{4e20554acfe16dbdaaba11d5a97b05ec15d8d689}, assuming that no
-other versions in your database begin with @code{4e20}. If you supply
-an ambiguous prefix, monotone will list all possible completions of
-the prefix, and exit. You must then try again with a longer prefix.
-
+type, so monotone permits you to supply ``version selectors'' rather
+than complete versions. Selectors are a more ``human friendly'' way of
+specifying versions by combining certificate values into unique
+identifiers. This ``selector'' mechanism can be used anywhere a
+version code would normally be used. For details on selector syntax,
+see @ref{Selectors}.
 
 We are now ready to explore some version control tasks.
 
@@ -1101,7 +1099,7 @@ We can check status of our branch with the following command:
 @group
 $ monotone heads
 branch 'testbranch' is currently merged:
-577c21252290d4b66240efb1f917a9f3c4136fe5
+577c21252290d4b66240efb1f917a9f3c4136fe5 jrh@@nodomain.org 2003-04-04T07:39:51
 @end group
 @end smallexample
 
@@ -1567,8 +1565,8 @@ other words, it has an unresolved fork:
 @group
 $ monotone heads
 branch 'testbranch' is currently unmerged:
-0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
-57d3afae9e806b930130a674befec2a52bd85cd1
+0b34c61bd098a9c37cece9cbf7b765cc4d7b587e jrh@@nodomain.org 2003-04-04T07:44:54
+57d3afae9e806b930130a674befec2a52bd85cd1 jrh@@nodomain.org 2003-04-04T07:46:02
 @end group
 @end smallexample
 
@@ -1671,7 +1669,7 @@ one merged copy remains.
 @group
 $ monotone heads
 branch 'testbranch' is currently merged:
-ecec7c49374ab9a7706a500339a2a0d6157372f1
+ecec7c49374ab9a7706a500339a2a0d6157372f1 jrh@@nodomain.org 2003-04-04T08:00:09
 @end group
 @end smallexample
 
@@ -1956,15 +1954,114 @@ through the taxonomy and tutorial, and possibly spent some time
 playing with the program to familiarize yourself with its operation.
 
 @menu
+* Selectors::              Selecting versions by certificate.
 * Hash Integrity::         Notes on probability and failure.
 * Quality Assurance::      Integrating testing and review with development.
 * Internationalization::   Using monotone in non-English locales.
+* Reserved Files::         File names with special meanings.
 * Reserved Certs::         Certificate names with special meanings.
 * Naming Conventions::     Choosing appropriate names for keys and branches.
 * File Attributes::        Marking files as executable, or other attributes.
 * Migrating and Dumping::  Changing the underlying storage system.
 * Importing from CVS::     Building a monotone database from a CVS repository.
 @end menu
+
+@node    Selectors
+@section Selectors
+
+Version codes can be specified on the monotone command line,
+precisely, by entering the entire 40-character hexidecimal @sc{sha1}
+code. This can be cumbersome, so monotone also a more general syntax
+called ``selectors'' which is less precise but more ``human
+friendly''. Any command which expects a precise version identifier can
+also accept a selector in its place; in fact a version identifier is
+just a special type of selector which is very precise.
+
+@heading Simple examples
+
+Some selector examples are helpful in clarifying the idea:
+
+@table @code
+@item a432
+Version codes beginning with the string @code{a432}
+@item graydon@@pobox.com/2004-04
+Versions written by @code{graydon@@pobox.com} in April 2004.
+@item 'jrh@@nodomain.org/2 weeks ago'
+Versions written by @code{jrh@@nodomain.org} 2 weeks ago.
+@item graydon/net.venge.monotone.win32/yesterday
+Versions in the @code{net.venge.monotone.win32} branch, written by
+@code{graydon}, yesterday.
+@end table
+
+A moment's examination reveals that these specifications are ``fuzzy''
+and indeed may return multiple values, or may be ambiguous. When
+ambiguity arises, monotone will inform you that more detail is
+required, and list various possibilities. The precise specification
+of selectors follows.
+
+
+@heading Selectors in detail
+
+A selector is a combination of a selector type, which is a single
+ASCII character, followed by a @code{:} character and a selector
+value. The value is matched against identifiers or certs, depending on
+its type, in an attempt to match a single version. Selectors are
+matched as prefixes. The current set of selection types are:
+
+@table @asis
+@item Author selection
+Uses selector type @code{a}. For example, @code{a:graydon} matches
+@code{author} certs where the cert value begins with @code{graydon}.
+@item Branch selection
+Uses selector type @code{b}. For example, @code{b:net.venge} matches
+@code{branch} certs where the cert value begins with @code{net.venge}.
+@item Date selection
+Uses selector type @code{d}. For example, @code{d:2004-04} matches
+@code{date} certs where the cert value begins with @code{2004-04}.
+@item Identifier selection
+Uses selector type @code{i}. For example, @code{i:0f3a} matches
+version identifiers which begin with @code{0f3a}.
+@item Tag selection
+Uses selector type @code{t}. For example, @code{t:monotone-0.11}
+matches @code{tag} certs where the cert value begins with
+@code{monotone-0.11}.
+@end table
+
+Further selector types may be added in the future. 
+
+@heading Composite selectors
+
+Selectors may be combined with the @code{/} character. The combination
+acts as database intersection (or logical @code{and}). For example,
+the selector @code{a:graydon/d:2004-04} can be used to select a
+version which has an @code{author} cert beginning with @code{graydon}
+@emph{as well as} a @code{date} cert beginning with @code{2004-04}.
+
+@heading Selector expansion
+
+Before selectors are passed to the database, they are expanded using a
+lua hook: @code{expand_selector}. The default definition of this hook
+attempts to guess a number of common forms for selection, allowing you
+to omit selector types in many cases. For example, the hook guesses
+that the typeless selector @code{jrh@@nodomain.org} is an author
+selector, due to its syntactic form, so modifies it to read
+@code{a:jrh@@nodomain.org}. This hook will generally assign a selector
+type to values which ``look like'' partial hex strings, email
+addresses, branch names, or date specifications. For the complete
+source code of the hook, see @ref{Hook Reference}.
+
+@heading Typeless selection
+
+If, after expansion, a selector still has no type, it is matched as a
+special ``unknown'' selector type, which will match either a tag, an
+author, or a branch. This costs slightly more database access, but
+often permits simple selection using an author's login name and a
+date. For example, the selector
+@code{graydon/net.venge.monotone.win32/yesterday} would pass through
+the selector @code{graydon} as an unknown selector; so long as there
+are no branches or tags beginning with the string @code{graydon} this
+is just as effective as specifying @code{a:graydon}.
+
 
 @node    Hash Integrity
 @section Hash Integrity
@@ -2465,6 +2562,74 @@ delimiter. The files now use 0x0A (ASCII LF) as a delimiter, to permit
 0x20 in filenames.
 
 
+@node    Reserved Files
+@section Reserved Files
+
+A monotone working copy consists of control files and non-control
+files. Each type of file can be versioned or non-versioned. These
+classifications lead to four groups of files:
+
+@itemize
+@item versioned control files
+@item non-versioned control files
+@item versioned non-control files
+@item non-versioned non-control files
+@end itemize
+
+Control files contain special content formatted for use by
+monotone. Versioned files are recorded in a monotone database and have
+their state tracked as they are modified. 
+
+If a control file is versioned, it is considered @emph{part of} the
+state of the working copy, and will be recorded as a manifest
+entry. If a control file is not versioned, it is used to @emph{manage}
+the state of the working copy, but it not considered an intrinsic part
+of it.
+
+Most files you manage with monotone will be versioned non-control
+files. For example, if you keep source code or documents in a monotone
+database, they are versioned non-control files. Non-versioned,
+non-control files in your working copy are generally temporary or junk
+files, such as backups made by editors or object files made by
+compilers. Such files are ignored by monotone.
+
+@heading Identifying control files
+
+Control files are identified by their names. Non-control files can
+have any name @emph{except} the names reserved for control files. The
+names of control files follow a regular pattern:
+
+@table @asis
+@item Versioned control files
+Any file name beginning with @file{.mt-}
+@item Non-versioned control files
+Any file in the directory @file{MT/}
+@end table
+
+@heading Existing control files
+
+The following control files are currently used. More control files may be added
+in the future, but they will follow the patterns given above.
+
+@table @file
+@item .mt-attrs
+Contains versioned attributes of files, associated with the files'
+pathnames.
+@item MT/manifest
+Contains the manifest file describing the base version of the working
+copy. Each working copy has a base version. When the working copy is
+committed, the base version is considered to be the ancestor of the
+committed version.
+@item MT/options
+Contains ``sticky'' command-line options such as @option{--database} or 
+@option{--branch}, such that you do not need to enter them repeatedly
+after checking out a particular working copy.
+@item MT/work
+Contains a list of additions, deletions, and renames which have occurred
+in the current working copy, relative to the base version. 
+@end table
+
+
 @node    Reserved Certs
 @section Reserved Certs
 
@@ -2748,7 +2913,7 @@ The CVS command contacts a network server, retrieves a version, and
 stores it in your working copy. There are two cosmetic differences
 with the monotone command: remote databases are specified by hostnames
 and collections, and versions are denoted by @sc{sha1} values (or
-unambiguous prefixes thereof).
+selectors).
 
 There is also one deep difference: pulling versions into your database
 is a separate step from checking out a single version; after you have
@@ -3644,6 +3809,21 @@ The remainder of this section documents the existing hook functions
 and their default definitions. 
 
 @ftable @code
+@item note_commit (@var{new_id}, @var{certs})
+
+Called by monotone after the version @var{new_id} is committed. The
+second parameter, @var{certs}, is a lua table containing the set of
+certificate names and values committed along with this version. There
+is no default definition for this hook. 
+
+Note that since the @var{certs} table does not contain cryptographic
+or trust information, and only contains one entry per cert name, it is
+an incomplete source of information about the committed version. This
+hook is only intended as an aid for integrating monotone with informal
+commit-notification systems such as mailing lists or news services. It
+should not perform any security-critical operations.
+
+
 @item get_branch_key (@var{branchname})
 
 Returns a string which is the name of an @sc{rsa} private key used to sign
@@ -4031,6 +4211,76 @@ function merge3(ancestor, left, right)
 end
 @end group
 @end smallexample
+
+
+@item expand_selector (@var{str})
+
+Attempts to expand @var{str} as a selector. Expansion generally means
+providing a type prefix for the selector, such as @code{a:} for
+authors or @code{d:} for dates. Expansion may also mean recognizing
+and interpreting special words such as @code{yesterday} or @code{6
+months ago} and converting them into well formed selectors. For more
+detail on the use of selectors, see @ref{Selectors}. The default
+definition of this hook is:
+
+@smallexample
+@group
+function expand_selector(str)
+
+   -- simple date patterns
+   if string.find(str, "^19%d%d%-%d%d")
+      or string.find(str, "^20%d%d%-%d%d")
+   then
+      return ("d:" .. str)
+   end
+
+   -- something which looks like an email address
+   if string.find(str, "[%w%-_]+@@[%w%-_]+")
+   then
+      return ("a:" .. str)
+   end
+
+   -- something which looks like a branch name
+   if string.find(str, "[%w%-]+%.[%w%-]+")
+   then
+      return ("b:" .. str)
+   end
+
+   -- a sequence of nothing but hex digits
+   if string.find(str, "^%x+$")
+   then
+      return ("i:" .. str)
+   end
+
+   -- "yesterday", the source of all hangovers
+   if str == "yesterday"
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("d:%F", t - 86400)
+   end
+   
+   -- "CVS style" relative dates such as "3 weeks ago"
+   local trans = @{ 
+      minute = 60; 
+      hour = 3600; 
+      day = 86400; 
+      week = 604800; 
+      month = 2678400; 
+      year = 31536000 
+   @}
+   local pos, len, n, type = string.find(str, "(%d+) ([minutehordaywk]+)s? ago")
+   if trans[type] ~= nil
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("d:%F", t - (n * trans[type]))
+   end
+
+   return nil
+end
+@end group
+@end smallexample
+
+
 
 @item get_system_linesep ()
 

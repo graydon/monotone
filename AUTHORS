@@ -115,7 +115,7 @@ notice and this notice are preserved.
 
 ---
 
-The files in Netxx/* are copies of the NetXX library, which is
+The files in netxx/* are copies of the NetXX library, which is
 Copyright (C) 2001-2003 Peter J Jones (pjones@pmade.org), and
 distributed under a BSD-like license. The license terms are reproduced
 in the files, and do not require that they be reproduced here.
