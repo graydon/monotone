@@ -1,5 +1,9 @@
 2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
 
+	* lua.hh: Remove tabs.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi: Document explicit_merge.
 	
 2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
