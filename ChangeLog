@@ -1,3 +1,8 @@
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
+        * testsuite.at, tests/t_netsync_single.at: don't use -q with
+        killall since it isn't portable.
+
 2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* commands.cc: Make the 'log' command show all affected files
