@@ -1,5 +1,11 @@
 2005-01-25  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_checkout_noop_on_fail.at: New test.
+	* testsuite.at: Add it.
+	(RAW_MONOTONE): Add $PREEXECUTE to definition.
+
+2005-01-25  Nathaniel Smith  <njs@codesourcery.com>
+
 	* change_set.cc (extend_renumbering_from_path_identities): Add
 	invariant.
 	(extend_renumbering_via_added_files): Likewise.

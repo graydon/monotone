@@ -16,7 +16,7 @@ AT_TESTED([monotone])
 
 # Set PREEXECUTE in your environment to run monotonen under, e.g., valgrind.
 m4_define([MONOTONE], [$PREEXECUTE monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net])
-m4_define([RAW_MONOTONE], [monotone])
+m4_define([RAW_MONOTONE], [$PREEXECUTE monotone])
 m4_define([SHA1], [monotone identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
 m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
@@ -420,3 +420,4 @@ m4_include(tests/t_delete_dir_patch.at)
 m4_include(tests/t_revert_dirs.at)
 m4_include(tests/t_cdiff.at)
 m4_include(tests/t_no_rename_overwrite.at)
+m4_include(tests/t_checkout_noop_on_fail.at)
