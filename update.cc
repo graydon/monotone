@@ -126,24 +126,15 @@ find_deepest_acceptable_descendent(revision_id const & base,
     }
 }
 
-void pick_update_target(revision_id const & base_ident,
-                        app_state & app,
-                        revision_id & chosen)
+void pick_update_candidates(revision_id const & base_ident,
+                            app_state & app,
+                            set<revision_id> & candidates)
 {
-  set<revision_id> chosen_set;
   N(app.branch_name() != "",
     F("cannot determine branch for update"));
 
   find_deepest_acceptable_descendent(base_ident, cert_value(app.branch_name()),
-                                     app, chosen_set);
-
-  N(chosen_set.size() != 0,
-    F("no candidates remain after selection"));
-
-  N(chosen_set.size() == 1,
-    F("multiple candidates remain after selection"));
-  
-  chosen = *(chosen_set.begin());
+                                     app, candidates);
 }
   
 

@@ -479,6 +479,42 @@ get_log_message(revision_set const & cs,
     F("edit of log message failed"));
 }
 
+static string
+describe_revision(app_state & app, revision_id const & id)
+{
+  cert_name author_name(author_cert_name);
+  cert_name date_name(date_cert_name);
+
+  string description;
+
+  description += id.inner()();
+
+  // append authors and date of this revision
+  vector< revision<cert> > tmp;
+  app.db.get_revision_certs(id, author_name, tmp);
+  erase_bogus_certs(tmp, app);
+  for (vector< revision<cert> >::const_iterator i = tmp.begin();
+       i != tmp.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      description += " ";
+      description += tv();
+    }
+  app.db.get_revision_certs(id, date_name, tmp);
+  erase_bogus_certs(tmp, app);
+  for (vector< revision<cert> >::const_iterator i = tmp.begin();
+       i != tmp.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      description += " ";
+      description += tv();
+    }
+
+  return description;
+}
+
 static void
 decode_selector(string const & orig_sel,
                 selector_type & type,
@@ -1452,36 +1488,9 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch")
   else
     P(F("branch '%s' is currently unmerged:\n") % app.branch_name);
   
-  cert_name author_name(author_cert_name);
-  cert_name date_name(date_cert_name);
-
   for (set<revision_id>::const_iterator i = heads.begin(); 
        i != heads.end(); ++i)
-    {
-      cout << i->inner()(); 
-
-      // print authors and date of this head
-      vector< revision<cert> > tmp;
-      app.db.get_revision_certs(*i, author_name, tmp);
-      erase_bogus_certs(tmp, app);
-      for (vector< revision<cert> >::const_iterator j = tmp.begin();
-           j != tmp.end(); ++j)
-      {
-         cert_value tv;
-         decode_base64(j->inner().value, tv);
-         cout << " " << tv;
-      }
-      app.db.get_revision_certs(*i, date_name, tmp);
-      erase_bogus_certs(tmp, app);
-      for (vector< revision<cert> >::const_iterator j = tmp.begin();
-               j != tmp.end(); ++j)
-      {
-         cert_value tv;
-         decode_base64(j->inner().value, tv);
-         cout << " " << tv;
-      }
-      cout << endl;
-    }
+    cout << describe_revision(app, *i) << endl;
 }
 
 static void 
@@ -2520,7 +2529,20 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
     }
 
   if (args.size() == 0) {
-    pick_update_target(r_old_id, app, r_chosen_id);
+    set<revision_id> candidates;
+    pick_update_candidates(r_old_id, app, candidates);
+    N(candidates.size() != 0,
+      F("no candidates remain after selection"));
+    if (candidates.size() != 1)
+      {
+        P(F("multiple update candidates:\n"));
+        for (set<revision_id>::const_iterator i = candidates.begin();
+             i != candidates.end(); ++i)
+          P(F("  %s\n") % describe_revision(app, *i));
+        P(F("choose one with 'monotone update <id>'\n"));
+        N(false, F("multiple candidates remain after selection"));
+      }
+    r_chosen_id = *(candidates.begin());
   } else {
     complete(app, idx(args, 0)(), r_chosen_id);
   }

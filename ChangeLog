@@ -1,5 +1,21 @@
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* update.hh (pick_update_target): Rename to...
+	(pick_update_candidates): ...this.  Return a set of candidates,
+	rather than a single best.
+	* update.cc (pick_update_candidates): Likewise.  Remove logic
+	checking for unique candidate.
+	* commands.cc (describe_revision): New function.
+	(heads): Use it.
+	(update): Use new 'pick_update_candidates' function.  Add logic
+	checking for unique candidate.  On non-unique candidate, print all
+	candidates, using 'describe_revision'.
+
+	* tests/t_ambig_update.at: Check that failure messages describe
+	the candidate set.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* update.cc: Remove tabs.
 
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
