@@ -44,7 +44,7 @@ class HMAC : public MessageAuthenticationCodeTemplate<HMAC_Base<T> >
 public:
 	HMAC() {}
 	HMAC(const byte *key, unsigned int length=HMAC_Base<T>::DEFAULT_KEYLENGTH)
-		{SetKey(key, length);}
+		{this->SetKey(key, length);}
 };
 
 template <class T>
