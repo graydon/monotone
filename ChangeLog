@@ -1,3 +1,7 @@
+2004-12-09  graydon hoare  <graydon@pobox.com>
+
+	* ROADMAP: Add file.
+
 2004-12-08  graydon hoare  <graydon@pobox.com>
 
 	* change_set.cc (extend_renumbering_via_added_files): 
