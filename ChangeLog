@@ -1,3 +1,16 @@
+2005-04-01  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* tests/t_dropkey_2.at: Updated to test dropkey instead of delkey
+	* tests/t_dropkey_1.at: Updated to test dropkey instead of delkey
+	* monotone.texi (Key and Cert): Changed references to delkey
+	  to dropkey
+	  (Commands): Changed references to delkey to dropkey
+	* testsuite.at: changed references from t_delkey* to t_dropkey*
+	* t_delkey_1.at: renamed to t_dropkey_1.at
+	* t_delkey_2.at: renamed to t_dropkey_2.at
+	* commands.cc (CMD(delkey)): renamed to dropkey to maintain
+	  command consistency (with existing drop command)
+
 2005-04-01  Richard Levitte  <richard@levitte.org>
 
 	* monotone.cc (my_poptStuffArgFile): An argument file might be
@@ -2207,7 +2220,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

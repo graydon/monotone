@@ -1162,7 +1162,7 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   guard.commit();
 }
 
-CMD(delkey, "key and cert", "KEYID", "delete a public and private key")
+CMD(dropkey, "key and cert", "KEYID", "drop a public and private key")
 {
   bool key_deleted = false;
   
@@ -1173,14 +1173,14 @@ CMD(delkey, "key and cert", "KEYID", "delete a public and private key")
   rsa_keypair_id ident(idx(args, 0)());
   if (app.db.public_key_exists(ident))
     {
-      P(F("deleting public key '%s' from database\n") % ident);
+      P(F("dropping public key '%s' from database\n") % ident);
       app.db.delete_public_key(ident);
       key_deleted = true;
     }
 
   if (app.db.private_key_exists(ident))
     {
-      P(F("deleting private key '%s' from database\n") % ident);
+      P(F("dropping private key '%s' from database\n") % ident);
       app.db.delete_private_key(ident);
       key_deleted = true;
     }

@@ -1,6 +1,6 @@
 # -*- Autoconf -*-
 
-AT_SETUP([delete a public and private key])
+AT_SETUP([drop a public and private key])
 
 MONOTONE_SETUP
 
@@ -31,7 +31,7 @@ AT_CHECK(MONOTONE privkey john@doe.com, [], [stdout], [ignore])
 
 AT_CHECK(grep -q 'john@doe.com' stdout, [])
 
-AT_CHECK(MONOTONE delkey john@doe.com, [], [ignore], [ignore])
+AT_CHECK(MONOTONE dropkey john@doe.com, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE privkey john@doe.com, [1], [ignore], [stderr])
 
