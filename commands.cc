@@ -2086,11 +2086,13 @@ ALIAS(ls, list, "informative",
       "certs ID\n"
       "keys [PATTERN]\n"
       "branches\n"
+      "epochs [BRANCH [...]]\n"
       "tags\n"
+      "vars [DOMAIN]\n"
       "unknown\n"
       "ignored\n"
       "missing",
-      "show certs, keys, branches, unknown, intentionally ignored, or missing files; alias for list")
+      "show database objects, or unknown, intentionally ignored, or missing state files; alias for list")
 
 
 CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")

@@ -28,6 +28,13 @@
 	(Automation): Likewise.  Also, clarify for each command whether
 	its output is alphabetically or topologically sorted.
 	
+2005-03-29  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(ls)): Update with the same information as
+	CMD(list)
+
+	* monotone.texi (Automation): Make the sample output verbatim
+
 2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
 
 	* automate.cc (automate_erase_ancestors): New function.

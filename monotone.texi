@@ -4041,7 +4041,9 @@ reset when major number increments).
 
 @item Sample output:
 
+@verbatim
 1.2
+@end verbatim
 
 @item Output format:
 
@@ -4072,8 +4074,10 @@ Prints the heads of branch @var{branch}.
 
 @item Sample output:
 
+@verbatim
 28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
 75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
 
 @item Output format:
 
@@ -4104,8 +4108,10 @@ Prints the descendents of one or more revisions.
 
 @item Sample output:
 
+@verbatim
 28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
 75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
 
 @item Output format:
 
@@ -4146,8 +4152,10 @@ branch branch, then we would print the heads of that branch.
 
 @item Sample output:
 
+@verbatim
 28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
 75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
 
 @item Output format:
 
