@@ -1,5 +1,9 @@
 2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netcmd.cc: Remove tabs.
+
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
 	* merkle_tree.cc: Remove tabs.
 
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
