@@ -82,6 +82,12 @@ null_id(file_id const & i)
 }
 
 inline bool 
+null_id(manifest_id const & i)
+{
+  return i.inner()().empty();
+}
+
+inline bool 
 null_id(revision_id const & i)
 {
   return i.inner()().empty();

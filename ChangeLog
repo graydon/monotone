@@ -1,5 +1,11 @@
 2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
 
+	* change_set.hh (null_id): New function.
+	* revision.cc (analyze_manifest_changes): Fix typo, use null_id.
+	* tests/t_rebuild.at: Un-XFAIL.
+
+2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_rebuild.at: Add priority tag.
 	
 	* tests/t_cvsimport.at: Be more thorough.
