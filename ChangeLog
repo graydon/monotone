@@ -1,3 +1,13 @@
+2004-10-12  graydon hoare  <graydon@pobox.com>
+
+	* unix/read_password.cc: Don't force echo on.
+
+2004-09-01  Derek Scherger  <derek@echologic.com>
+
+	* lua.{cc,hh} (hook_ignore_branch): new hook
+	* commands.cc (ls_branches): call it
+	* monotone.texi (Hook Reference): describe it
+
 2004-09-02  Richard Levitte  <richard@levitte.org>
 
 	fix bug 8715 and more

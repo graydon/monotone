@@ -2119,7 +2119,8 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
     {
       cert_value name;
       decode_base64(idx(certs, i).inner().value, name);
-      names.push_back(name());
+      if (!app.lua.hook_ignore_branch(name()))
+        names.push_back(name());
     }
 
   sort(names.begin(), names.end());
