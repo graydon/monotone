@@ -1,3 +1,21 @@
+2005-03-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Add Derek Scherger to the copyright list.
+	Various tweaks.
+	(Starting a New Project): Rewrite to clarify that only Jim runs
+	"setup", and explain why.
+	(Network Service): Add a note that most people do use a central
+	server, since people on the mailing list seem to perhaps be
+	getting the wrong idea.
+	(Making Changes): Expand a little on what the "." in "checkout ."
+	means, since people seem to accidentally checkout stuff into real
+	directories.
+	(db check): Add much verbiage on the implications
+	of various problems, and how to fix them.  Also clarify some
+	wording.
+	* NEWS: Small tweaks.
+	* UPGRADE: More instructions, not done yet...
+	
 2005-03-08  Derek Scherger  <derek@echologic.com>
 
 	* Makefile.am: adjust for fsck rename

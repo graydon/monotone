@@ -3,7 +3,7 @@ upgrading monotone to 0.17
 
 if you are upgrading from:
   - 0.14 or earlier: see file README.changesets
-  - 0.15 or later: see below.
+  - 0.15 or later: see below
 
 upgrading from 0.15 or 0.16
 ---------------------------
@@ -14,14 +14,47 @@ great deal more coordinated effort put into stopping any such thing
 from sneaking in again, but... we have to do something about the
 badness that's already there.
 
-the solution is, another rebuild, like in the 0.15 -> 0.16
-transition.  
+the solution is, another rebuild, like we did for the 0.15 -> 0.16
+transition.  this is still obnoxious, still loses a little bit of
+history information (every revision remains exactly reconstructable,
+but rename information and information on who signed which certs are
+both lost), and still requires coordination among your whole team to
+pull of smoothly.  we're sorry.  we'll try not to do this again.
 
-first, you need to dump your database to SQL text, and then reload it;
-this is because we upgraded to SQLite 3 (from SQLite 2), which allows
-arbitrary sized files, but uses a different on-disk format.  this
-requires the use of your old 
+just in case we _do_ have to do it again, though, and to help make
+this time smoother, we've added support for "epochs".  there's a whole
+new section in the manual about all this, but basically, epochs are a
+way to let monotone keep track of who's done a rebuild, so you can't
+accidentally mix together pre-rebuild and post-rebuild databases.
+(epochs will also come in handy when it's time to migrate away from
+SHA1, for instance.)  this means you have more of a safety net than
+last time, though you still have to coordinate within your team...
 
-if you've been tracking the pre-0.17 development mainline, then you
-should do the same thing, except skipping the dump/load (because you
-did it already, when we merged in sqlite3 support).
+so, the basic procedure is: one designated person gets to perform the
+rebuild, and deal with any missing files (see below).  everyone else
+gets to 1) make sure the designated person has sync'ed with everyone,
+because anything that's not in the designated person's database will
+be lost, or at least, hard to deal with, 2) take a break, so the
+designated person can rebuild and test and such without having to deal
+with new commits.
+
+if you're the designated person, then you should:
+  1) make sure you have everyone's changes, and that they know they
+     shouldn't make any more changes until you give the all-clear
+  2) make a backup copy of your database.  seriously, do this.
+        $ cp my.db my.db-backup
+     if something goes wrong, and you don't have a backup, there may
+     not be much we can do to help...
+  3) dump your database to SQL text using your old version of
+     monotone, and then reload it using your 0.17 version of
+     monotone.  (this will migrate you from SQLite 2 to SQLite 3,
+     which have different on-disk formats.)
+        $ old-monotone --db=my.db db dump > my-db.dumped
+        $ monotone --db=new.db db load < my-db.dumped
+     (if you've been tracking the 0.17 development mainline, you can
+     skip this step.  you still need to do all the others.)
+  4) do the usual 'db migrate' command, for migrating a database to a
+     later version:
+        $ monotone --db=new.db db migrate
+     (this will create the new tables needed for epoch support)
+  5) 

@@ -22,8 +22,8 @@
                   their actions to
                 - monotone can now be run from anywhere in the working
                   directory (not just the root)
-                - new command "monotone setup" to initialize an empty
-                  working dir for a new project
+                - new command "monotone setup" required to create a
+                  working directory for a new project
         - important security fix -- don't use shell when calling
           external merge commands.
         - format change for "MT/options", ".mt-attrs"; you may have to
@@ -38,8 +38,9 @@
         - 60+ new integration tests.
         - many portability fixes
                 - in particular, major win32 cleanups, thanks to Jon
-                  Bright <jon@siliconcircus.com>.
-        - many assorted bug fixes.
+                  Bright <jon@siliconcircus.com>.  win32 is once again
+                  fully and natively supported.
+        - many bug fixes
 
                 - several incompatible changes: see file UPGRADE for
                   migration information
