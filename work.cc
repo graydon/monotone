@@ -194,14 +194,17 @@ read_options_map(data const & dat, options_map & options)
   basic_io::tokenizer tok(src);
   basic_io::parser parser(tok);
 
-  options.clear();
+  // don't clear the options which will have settings from the command line
+  // options.clear(); 
 
   std::string opt, val;
   while (parser.symp())
     {
       parser.sym(opt);
       parser.str(val);
-      options[opt] = val;      
+      // options[opt] = val;      
+      // use non-replacing insert verses replacing with options[opt] = val;
+      options.insert(make_pair(opt, val)); 
     }
 }
 

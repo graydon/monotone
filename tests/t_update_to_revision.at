@@ -40,17 +40,17 @@ a new fourth line
 # Create root revision.
 AT_CHECK(cp root testfile)
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message blah-blah, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 
 # Create middle revision based off root.
 AT_CHECK(cp middle testfile)
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message blah-blah, [], [ignore], [ignore])
 MIDDLE_R_SHA=`BASE_REVISION`
 
 # Create leaf revision based off middle.
 AT_CHECK(cp left-leaf testfile)
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])g
+AT_CHECK(MONOTONE commit --message blah-blah, [], [ignore], [ignore])g
 LEFT_LEAF_R_SHA=`BASE_REVISION`
 
 # Test going backward in the revision tree.
@@ -64,7 +64,7 @@ AT_CHECK(cmp testfile middle, [], [ignore])
 
 # Create a fork from middle.
 AT_CHECK(cp right-leaf testfile)
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message blah-blah, [], [ignore], [ignore])
 RIGHT_LEAF_R_SHA=`BASE_REVISION`
 
 # Test going from the right left to the left leaf via the common ancestor.

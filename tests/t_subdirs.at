@@ -1,0 +1,63 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([subdirectory restrictions])
+
+MONOTONE_SETUP
+
+AT_CHECK(mkdir foo bar)
+
+AT_DATA(foo/foo.txt, [file foo.txt in dir foo
+])
+AT_DATA(bar/bar.txt, [file bar.txt in dir bar
+])
+
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add bar, [], [ignore], [ignore])
+
+# should have tests for 
+# add, drop, rename, revert
+#       - which use prefixing
+# ls unknown, ignored, missing
+#       - which use add_restriction and in_restriction directly
+# commit, diff, status 
+#       - which use add_restriction and in_restriction through 
+#         restrict_patch_set
+
+AT_CHECK(MONOTONE status, [], [stdout], [])
+AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
+AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
+
+ROOT=`pwd`
+m4_define([MONOTONE_SUB], [monotone --rcfile=$ROOT/test_hooks.lua --nostd --norc --db=$ROOT/test.db --key=tester@test.net])
+
+cd foo
+AT_CHECK(MONOTONE_SUB status, [], [stdout], [])
+AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
+AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE_SUB status ., [], [stdout], [])
+AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
+AT_CHECK(grep 'bar/bar' stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE_SUB status .., [], [stdout], [])
+AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
+AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
+cd ..
+
+cd bar
+AT_CHECK(MONOTONE_SUB status, [], [stdout], [])
+AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
+AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE_SUB status ., [], [stdout], [])
+AT_CHECK(grep 'foo/foo' stdout, [1], [ignore])
+AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE_SUB status .., [], [stdout], [])
+AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
+AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
+cd ..
+
+# TODO: test a.c a.h a/foo.c a/foo.h from inside and outside of a
+
+AT_CLEANUP

@@ -1,0 +1,31 @@
+AT_SETUP([revert in subdirs])
+MONOTONE_SETUP
+
+AT_CHECK(mkdir subdir)
+AT_CHECK(mkdir subdir/anotherdir)
+AT_DATA(subdir/foo, [data data
+])
+AT_DATA(subdir/anotherdir/bar, [more data
+])
+AT_CHECK(MONOTONE add ., [], [ignore], [ignore])
+COMMIT(testbranch)
+REV=`BASE_REVISION`
+
+# Create a checkout we can play with
+AT_CHECK(MONOTONE checkout $REV codir, [], [ignore], [ignore])
+
+# Write to the checked out files
+AT_DATA(codir/subdir/foo, [other data
+])
+AT_DATA(codir/subdir/anotherdir/bar, [more other data
+])
+
+# Revert them
+AT_CHECK( (cd codir/subdir && MONOTONE revert foo), [], [ignore], [ignore])
+AT_CHECK( (cd codir/subdir && MONOTONE revert anotherdir), [], [ignore], [ignore])
+
+# Check them
+AT_CHECK(cmp subdir/foo codir/subdir/foo)
+AT_CHECK(cmp subdir/anotherdir/bar codir/subdir/anotherdir/bar)
+
+AT_CLEANUP

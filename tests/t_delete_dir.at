@@ -1,15 +1,67 @@
-AT_SETUP([(normal) deleting directories])
+AT_SETUP([(imp) deleting directories])
 MONOTONE_SETUP
 
-# This test is a "bug report" -- the bug is that there is no test that
-# exercises directory deletion!  Write such a test here.
+# This test is a bug report
 AT_XFAIL_IF(true)
 
+# Directory deletion is currently completely broken.
 
+# Question: what _should_ happen to rename-out here?  I have it
+# supposed to survive, but I don't think it's actually possible to
+# express that with changesets -- we have no way to say "file
+# revived", and so we have no way to come up with a changeset from
+# $DIR_DELETE_R to the merged revision that preserves rename-out.
+# This might be a problem...
 
-# This Space For Test
-AT_CHECK(false)
+# After fixing this; t_subdir_drop.at should start passing.
 
+AT_CHECK(mkdir groundzero)
+ADD_FILE(groundzero/preexisting, [1
+])
+ADD_FILE(groundzero/rename-out, [2
+])
+ADD_FILE(rename-in, [3
+])
+ADD_FILE(groundzero/double-kill, [4
+])
+ADD_FILE(bystander1, [5
+])
+COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
 
+ADD_FILE(bystander2, [6
+])
+ADD_FILE(groundzero/new-file, [7
+])
+AT_CHECK(mv rename-in groundzero/rename-in)
+AT_CHECK(MONOTONE rename rename-in groundzero/rename-in, [], [ignore], [ignore])
+AT_CHECK(mv  groundzero/rename-out rename-out)
+AT_CHECK(MONOTONE rename groundzero/rename-out rename-out, [], [ignore], [ignore])
+AT_CHECK(MONOTONE drop groundzero/double-kill, [], [ignore], [ignore])
+COMMIT(testbranch)
+OTHER_OPS_R=`BASE_REVISION`
+
+REVERT_TO($BASE_R)
+
+# Boom.
+AT_CHECK(MONOTONE drop groundzero, [], [ignore], [ignore])
+COMMIT(testbranch)
+DIR_DELETE_R=`BASE_REVISION`
+
+AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE checkout $BASE_R clean, [], [ignore], [ignore])
+AT_CHECK(cd clean && MONOTONE --branch=testbranch update, [], [ignore], [ignore])
+
+AT_CHECK(test -f clean/rename-out)
+AT_CHECK(test -f clean/bystander1)
+AT_CHECK(test -f clean/bystander2)
+AT_CHECK(test -f clean/groundzero/rename-in, [1])
+AT_CHECK(test -f clean/groundzero/preexisting, [1])
+AT_CHECK(test -f clean/groundzero/double-kill, [1])
+AT_CHECK(test -f clean/groundzero/new-file, [1])
+# Just in case:
+AT_CHECK(test -f clean/rename-in, [1])
+AT_CHECK(test -f clean/groundzero/rename-out, [1])
 
 AT_CLEANUP

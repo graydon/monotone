@@ -46,7 +46,7 @@ AT_CHECK(grep -q $PRIVKEY stdout, [1])
 # now it does get transferred.
 SET_FILE(testfile, [version 1 of test file
 ])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah --key=foo@test.example.com, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message blah-blah --key=foo@test.example.com, [], [ignore], [ignore])
 
 RUN_NETSYNC(pull, testbranch)
 

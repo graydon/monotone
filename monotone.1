@@ -49,9 +49,6 @@ base revision, or \fI[id]\fP if given.
 Create a custom cert for a revision. Reads cert value
 from stdin if no value given on command line.
 .TP
-\fBvcheck\fP \fI(create|check) [id]\fP
-Produce or check \fBvcheck\fP certs for the given manifest \fI[id]\fP.
-.TP
 \fBgenkey\fP \fI<keyid>\fP
 Generate an RSA key-pair and store it in the database.
 .TP
@@ -77,17 +74,11 @@ List files intentionally ignored due to the ignore_file hook.
 \fBlist missing\fP
 List files in revision's manifest, but not in working directory.
 .TP
-\fBfcerts\fP \fI<id>\fP
-Write file cert packets to stdout.
-.TP
 \fBfdata\fP \fI<id>\fP
 Write file data packet to stdout.
 .TP
 \fBfdelta\fP \fI<oldid> <newid>\fP
 Write file delta packet to stdout.
-.TP
-\fBmcerts\fP \fI<id>\fP
-Write manifest cert packets to stdout.
 .TP
 \fBmdata\fP \fI<id>\fP
 Write manifest data packet to stdout.
@@ -95,7 +86,7 @@ Write manifest data packet to stdout.
 \fBmdelta\fP \fI<oldid> <newid>\fP
 Write manifest delta packet to stdout.
 .TP
-\fBrcerts\fP \fI<id>\fP
+\fBcerts\fP \fI<id>\fP
 Write revision cert packets to stdout.
 .TP
 \fBrdata\fP \fI<id>\fP

@@ -7,6 +7,7 @@ COMMIT(testbranch)
 LEFT=`BASE_REVISION`
 
 AT_CHECK(rm -rf MT)
+AT_CHECK(MONOTONE setup .)
 
 ADD_FILE(testfile2, [This is test file 2
 ])

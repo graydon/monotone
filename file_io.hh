@@ -38,6 +38,7 @@
 struct lua_hooks;
 
 void save_initial_path();
+bool find_working_copy(fs::path & working_copy_root, fs::path & working_copy_restriction);
 
 fs::path mkpath(std::string const & s);
 

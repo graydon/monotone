@@ -14,7 +14,7 @@ AT_TESTED([monotone])
 
 # some command abbreviations to make life easier
 
-m4_define([MONOTONE], [monotone --rcfile=test_hooks.lua --nostd --norc --db=test.db --key=tester@test.net])
+m4_define([MONOTONE], [monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net])
 m4_define([RAW_MONOTONE], [monotone])
 m4_define([SHA1], [monotone identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
@@ -24,6 +24,9 @@ m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
 # standard testing key, which we use for further tests.
 
 m4_define([MONOTONE_SETUP], [
+
+# Save the PWD so MONOTONE macro can refer back to it
+_ROOT_DIR=$PWD
 
 AT_DATA(test_keys, [@<:@pubkey tester@test.net@:>@
 MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
@@ -122,6 +125,7 @@ attr_functions[["test_attr"]] =
 
 ])
 
+AT_CHECK(MONOTONE setup ., [], [ignore], [ignore])
 AT_CHECK(MONOTONE db init, [], [ignore], [ignore])
 AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
@@ -160,9 +164,11 @@ done
 
 # run as PROBE_NODE(filename, rsha, fsha)
 m4_define([PROBE_NODE], [ 
-AT_CHECK(rm MT/revision)
+AT_CHECK(rm -rf MT.old)
+AT_CHECK(mv  MT MT.old)
 AT_CHECK(rm $1)
 AT_CHECK(MONOTONE checkout $2 ., [], [ignore])
+AT_CHECK(mv MT.old/options MT)
 PROBE_R_SHA=`BASE_REVISION`
 PROBE_F_SHA=`SHA1($1)`
 AT_CHECK(test $PROBE_R_SHA = $2)
@@ -171,7 +177,10 @@ AT_CHECK(test $PROBE_F_SHA = $3)
 
 # run as REVERT_TO(rsha)
 m4_define([REVERT_TO], [ 
+AT_CHECK(rm -rf MT.old)
+AT_CHECK(mv  MT MT.old)
 AT_CHECK(MONOTONE checkout $1 ., [], [ignore])
+AT_CHECK(mv MT.old/options MT)
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
 ])
@@ -189,7 +198,7 @@ AT_DATA($1, $2)
 
 # run as COMMIT(branch)
 m4_define([COMMIT], [
-AT_CHECK(MONOTONE --branch=$1 commit blah-blah, [], [ignore],
+AT_CHECK(MONOTONE --branch=$1 commit --message blah-blah, [], [ignore],
 [ignore])
 ])
 
@@ -344,6 +353,8 @@ m4_include(tests/t_singlecvs.at)
 m4_include(tests/t_ls_missing.at)
 m4_include(tests/t_attributes.at)
 m4_include(tests/t_single_char_filenames.at)
+m4_include(tests/t_restrictions.at)
+m4_include(tests/t_subdirs.at)
 m4_include(tests/t_movepatch.at)
 m4_include(tests/t_movedel.at)
 m4_include(tests/t_remerge.at)
@@ -394,3 +405,7 @@ m4_include(tests/t_persistent_server_keys_2.at)
 m4_include(tests/t_update_1.at)
 m4_include(tests/t_vcheck.at)
 m4_include(tests/t_db_with_dots.at)
+m4_include(tests/t_subdir_add.at)
+m4_include(tests/t_subdir_drop.at)
+m4_include(tests/t_subdir_revert.at)
+m4_include(tests/t_subdir_rename.at)
