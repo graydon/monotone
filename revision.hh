@@ -156,6 +156,11 @@ calculate_composite_change_set(revision_id const & ancestor,
                                app_state & app,
                                change_set & composed);
 
+void
+calculate_arbitrary_change_set(revision_id const & start,
+                               revision_id const & end,
+                               app_state & app,
+                               change_set & composed);
 
 void 
 build_changesets_from_manifest_ancestry(app_state & app);

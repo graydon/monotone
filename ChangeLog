@@ -16,6 +16,60 @@
 	* NEWS: Small tweaks.
 	* UPGRADE: More instructions, not done yet...
 	
+2005-03-15  Matt Johnston  <matt@ucc.asn.au>
+
+        * commands.cc, monotone.texi, monotone.1: mention that agraph
+          output is in VCG format.
+
+2005-03-14  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (cat): 'cat file REV PATH'.
+	* monotone.texi: Mention it.
+	* tests/t_cat_file_by_name.at: New test.
+	* testsuite.at: Add it.
+
+2005-03-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_heads): Remove app.initialize call.
+	* revision.cc, revision.hh (calculate_arbitrary_change_set): New
+	function.
+	(calculate_composite_change_set): Touch more sanity checking.
+
+	* commands.cc (update): Use it.
+
+2005-03-10  Derek Scherger  <derek@echologic.com>
+
+	* app_state.cc (set_restriction): adjust bad path error message
+	* commands.cc (get_valid_paths): refactor into ...
+	(extract_rearranged_paths): ... this
+	(extract_delta_paths): ... this
+	(extract_changed_paths): ... this
+	(add_intermediate_paths): ... and this
+	(restrict_delta_map): new function
+	(calculate_restricted_change_set): new function
+	(calculate_restricted_revision):
+	(ls_missing):
+	(revert): rework using new valid path functions
+	(do_diff): adjust --revision variants to work with restrictions
+	* tests/t_diff_restrict.at: un-XFAIL
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* win32/monotone.iss: Install the many-files version of the
+	docs, install the figures, create a start-menu icon for the
+	docs.
+	* Makefile.am: Make docs generation work with MinGW
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* win32/monotone.iss: Monotone -> monotone
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* win32/monotone.iss: Added an Inno Setup script for 
+	generating a Windows installer.  Inno Setup is GPLed, see
+	http://www.jrsoftware.org for download
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* t_diff_binary.at: binary.bz.b64 -> binary.gz.b64
+
 2005-03-08  Derek Scherger  <derek@echologic.com>
 
 	* Makefile.am: adjust for fsck rename

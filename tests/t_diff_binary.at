@@ -7,7 +7,7 @@ AT_XFAIL_IF(true)
 
 # diff should probably not display the contents of binary files
 
-AT_DATA(binary.bz.b64, 
+AT_DATA(binary.gz.b64, 
 [H4sICIXmI0IAA2JpbmFyeQCdk9suA1EUhte0U6Y0lGpRwQgapIeEJgQRQZ1Vm4zzuUrapOEC
 iTv1EC68gCfxEH0Bb9EL/5pZTSejLljJl3+v9e+9V/fe05fU9qqiKFQLF7mJs8V3VUtCfRHL
 S5JOXhqjPgpTk5mDMuYAHVMYD2oqcAMDufGqakwAeUA8RTADa5nPkEIMrye/5Zu1D4/G5LFh

@@ -353,8 +353,11 @@ monotone.html: monotone.texi texinfo.css
 	makeinfo --no-split --no-headers --output $@ --html $<
 	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
 
+# The .perlbak thing is needed, otherwise the perl executions fails on MinGW
+
 html: monotone.texi texinfo.css
 	mkdir -p html
 	makeinfo --number-sections --html --output html $<
-	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
+	rm -f html/*.perlbak
 	cp texinfo.css html
