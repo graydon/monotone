@@ -1,5 +1,9 @@
 2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* database.cc: Remove hard tabs.
+
+2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (dump_diffs): Fetch delta destination, not source,
 	on new files.
 
