@@ -1,3 +1,8 @@
+2005-03-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/base64.h: Change default break value so that
+	output is split into 72 col lines.
+
 2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
 
 	* vocab_terms.hh: Declare base64<var_name>.
@@ -5681,4 +5686,5 @@
 2003-04-06  graydon hoare  <graydon@pobox.com>
 
 	* initial release.
+2004
 
