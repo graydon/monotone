@@ -18,7 +18,8 @@ then
 	CXXFLAGS="-O2 -fno-strict-aliasing"
 	# we have some sse2 code in cryptopp which is worth
 	# enabling if we're on a system which can build it
-	AC_CHECK_HEADERS(emmintrin.h, [CXXFLAGS="$CXXFLAGS -msse2"])
+	# FIXME: this is broken at the moment :(
+	# AC_CHECK_HEADERS(emmintrin.h, [CXXFLAGS="$CXXFLAGS -msse2"])
 fi
 
 test "z$CFLAGS" = "z" && CFLAGS="-O2 -fno-strict-aliasing"
