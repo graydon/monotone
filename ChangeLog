@@ -1372,6 +1372,13 @@
 	(import_states_by_branch): Add 'revisions' argument.
 	(import_cvs_repo): Add a stage 3 that writes out the revisions
 	accumulated in the 'revisions' vector.
+	
+2005-01-27  Matt Johnston  <matt@ucc.asn.au>
+
+	(compile fixes for Linux/gcc 3.3.4)
+	* botan/{util.cpp,primes.cpp}: give large constants ULL
+	suffixes
+	* botan/{gzip.cpp}: fix type for std::max() comparison
 
 2005-01-27  graydon hoare  <graydon@pobox.com>
 
@@ -1788,6 +1795,11 @@
 	informative.
 	(rcs_import): Also add more details to help text.
 
+2005-01-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* file_io.cc: re-add accidentally removed #include
+	* botan/gzip.cc: improved comments, removed unused code
+
 2005-01-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* diff_patch.cc (normalize_extents): Add missing ')'.
@@ -2031,6 +2043,18 @@
 	(log) add Ancestor: and Branch: entries to output; use above new
 	function
 	* tests/t_cross.at: update to work with changesets
+
+2005-1-1  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/base64.cpp: Include a terminating newline in all cases for
+	compatibility with cryptopp
+
+2005-1-1  Matt Johnston  <matt@ucc.asn.au>
+
+	* keys.cc: fix merge issues propagating 0.16 to net.venge.monotone.botan
+	* botan/config.h: add it
+	* botan/{aes,des,dh,dsa,elgamal,lion,lubyrack,nr,rw,openpgp}*: removed
+	unused files.
 
 2004-12-30  graydon hoare  <graydon@pobox.com>
 
@@ -2909,6 +2933,10 @@
 	* change_set.cc (merge_disjoint_analyses): Prevent duplicated
 	tids being used.
 	(merge_disjoint_analyses): Fix typo (s/a_tmp/b_tmp/)
+
+2004-11-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* Replaced cryptopp with botan
 
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 

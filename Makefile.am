@@ -40,34 +40,48 @@ NETXX_SOURCES =									\
 	netxx/probeinfo.h netxx/sockopt.h netxx/stream.h netxx/streambase.h	\
 	netxx/streamserver.h netxx/timeout.h netxx/types.h
 
-
-CRYPTOPP_SOURCES = \
-        cryptopp/algebra.cpp cryptopp/algparam.cpp cryptopp/arc4.cpp \
-        cryptopp/asn.cpp cryptopp/base64.cpp cryptopp/basecode.cpp \
-        cryptopp/crc.cpp cryptopp/cryptlib.cpp cryptopp/des.cpp cryptopp/dessp.cpp \
-        cryptopp/dll.cpp cryptopp/eprecomp.cpp cryptopp/files.cpp cryptopp/filters.cpp \
-        cryptopp/fips140.cpp cryptopp/gzip.cpp cryptopp/hex.cpp cryptopp/hmac.cpp \
-        cryptopp/integer.cpp cryptopp/iterhash.cpp cryptopp/misc.cpp \
-        cryptopp/modes.cpp cryptopp/mqueue.cpp cryptopp/nbtheory.cpp \
-        cryptopp/oaep.cpp cryptopp/osrng.cpp cryptopp/pch.cpp cryptopp/pkcspad.cpp \
-        cryptopp/pssr.cpp cryptopp/pubkey.cpp cryptopp/queue.cpp \
-        cryptopp/randpool.cpp cryptopp/rng.cpp cryptopp/rsa.cpp cryptopp/sha.cpp \
-        cryptopp/strciphr.cpp cryptopp/trdlocal.cpp cryptopp/zdeflate.cpp \
-        cryptopp/zinflate.cpp \
-	\
-        cryptopp/algebra.h cryptopp/algparam.h cryptopp/arc4.h cryptopp/argnames.h \
-        cryptopp/asn.h cryptopp/base64.h cryptopp/basecode.h cryptopp/config.h \
-        cryptopp/crc.h cryptopp/cryptlib.h cryptopp/des.h cryptopp/dll.h cryptopp/eprecomp.h \
-        cryptopp/files.h cryptopp/filters.h cryptopp/fips140.h cryptopp/fltrimpl.h \
-        cryptopp/gzip.h cryptopp/hex.h cryptopp/integer.h cryptopp/iterhash.h \
-        cryptopp/mdc.h cryptopp/misc.h cryptopp/modarith.h cryptopp/modes.h \
-        cryptopp/mqueue.h cryptopp/nbtheory.h cryptopp/oaep.h cryptopp/oids.h \
-        cryptopp/osrng.h cryptopp/pch.h cryptopp/pkcspad.h cryptopp/pssr.h \
-        cryptopp/pubkey.h cryptopp/queue.h cryptopp/randpool.h cryptopp/rng.h \
-        cryptopp/rsa.h cryptopp/secblock.h cryptopp/seckey.h cryptopp/sha.h \
-        cryptopp/simple.h cryptopp/smartptr.h cryptopp/stdcpp.h cryptopp/strciphr.h \
-        cryptopp/trdlocal.h cryptopp/words.h cryptopp/zdeflate.h \
-        cryptopp/zinflate.h cryptopp/hmac.h
+BOTAN_SOURCES =                                                                    \
+        botan/aes.cpp botan/aes_tab.cpp botan/algolist.cpp botan/allocate.cpp      \
+        botan/arc4.cpp botan/asn1_alg.cpp botan/asn1_alt.cpp botan/asn1_att.cpp    \
+        botan/asn1_dn.cpp botan/asn1_ext.cpp botan/asn1_ku.cpp                     \
+        botan/asn1_oid.cpp botan/asn1_str.cpp botan/asn1_tm.cpp                    \
+        botan/barrett.cpp botan/base.cpp botan/base64.cpp botan/basefilt.cpp       \
+        botan/ber_code.cpp botan/ber_dec.cpp botan/big_base.cpp                    \
+        botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp                     \
+        botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp                     \
+        botan/buf_filt.cpp botan/cbc.cpp botan/certstore.cpp botan/cfb.cpp         \
+        botan/charset.cpp botan/conf.cpp botan/crc32.cpp botan/crl_ent.cpp         \
+        botan/ctr.cpp botan/cts.cpp botan/data_snk.cpp botan/data_src.cpp          \
+        botan/def_eng.cpp botan/def_ops.cpp botan/defalloc.cpp                     \
+        botan/der_code.cpp botan/der_enc.cpp \
+        botan/divide.cpp botan/dl_algo.cpp botan/dl_get.cpp           \
+        botan/dl_group.cpp botan/dl_param.cpp botan/dlies.cpp \
+        botan/eax.cpp botan/ecb.cpp botan/eme1.cpp               \
+        botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp botan/emsa3.cpp         \
+        botan/emsa4.cpp botan/emsa_raw.cpp botan/eng_base.cpp botan/engine.cpp     \
+        botan/es_file.cpp botan/exceptn.cpp botan/filter.cpp botan/filters.cpp     \
+        botan/fips140.cpp botan/fips_rng.cpp botan/fused.cpp botan/get_algo.cpp    \
+        botan/get_enc.cpp botan/get_pbe.cpp botan/gzip.cpp botan/hash_id.cpp       \
+        botan/hex.cpp botan/hmac.cpp botan/if_algo.cpp botan/inifile.cpp           \
+        botan/init.cpp botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp           \
+        botan/lookup.cpp botan/make_prm.cpp botan/mdx_hash.cpp                     \
+        botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp botan/mod_exp.cpp        \
+        botan/mode_pad.cpp botan/modebase.cpp botan/mp_comba.cpp                   \
+        botan/mp_core.cpp botan/mp_fkmul.cpp botan/mp_misc.cpp botan/mp_mul.cpp    \
+        botan/mp_shift.cpp botan/mp_smul.cpp botan/mutex.cpp \
+        botan/numthry.cpp botan/ofb.cpp botan/oids.cpp \
+        botan/parse.cpp botan/pbes1.cpp botan/pbes2.cpp botan/pem.cpp              \
+        botan/pipe.cpp botan/pipe_io.cpp botan/pipe_rw.cpp botan/pk_algs.cpp       \
+        botan/pk_core.cpp botan/pk_filts.cpp botan/pk_keys.cpp                     \
+        botan/pk_util.cpp botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp        \
+        botan/pow_mod.cpp botan/prf_ssl3.cpp botan/prf_tls.cpp                     \
+        botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp botan/randpool.cpp    \
+        botan/reducer.cpp botan/rng.cpp botan/rsa.cpp \
+        botan/s2k.cpp botan/secqueue.cpp botan/sha160.cpp botan/symkey.cpp         \
+        botan/timers.cpp botan/ui.cpp botan/util.cpp botan/x509_ca.cpp             \
+        botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp                   \
+        botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp                    \
+        botan/x509self.cpp botan/x509stor.cpp botan/x917_rng.cpp
 
 BOOST_SANDBOX_SOURCES = \
         boost/circular_buffer_adaptor.hpp \
@@ -130,7 +144,7 @@ txt2c_SOURCES = txt2c.cc
 noinst_LIBRARIES = libplatform.a lib3rdparty.a 
 libplatform_a_SOURCES = platform.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
-			$(CRYPTOPP_SOURCES) \
+			$(BOTAN_SOURCES) \
 			$(IDNA_SOURCES) \
 			$(NETXX_SOURCES)
 
@@ -180,6 +194,8 @@ if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
   monotone_LDADD += -lws2_32 -lintl -liconv -liphlpapi
   unit_tests_LDADD += -lws2_32 -lintl -liconv -liphlpapi
+  lib3rdparty_a_CPPFLAGS += -DWIN32
+  lib3rdparty_a_SOURCES += botan/es_capi.cpp
 else
   libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
 endif
