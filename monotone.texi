@@ -1388,9 +1388,9 @@ void say_goodbye()
 We can view our differences, as before:
 
 @example
+$ monotone diff
 # Summary of changes:
 #   patch src/hello.c 97dfc6fd4f486df95868d85b4b81197014ae2a84 -> bdcf3d335db02a8a944b8945357c0e080b40f1b4
-$ monotone diff
 --- src/hello.c
 +++ src/hello.c
 @@@@ -9,3 +9,8 @@@@
