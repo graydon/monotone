@@ -1,5 +1,15 @@
 2005-03-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* UPGRADE: Finish, hopefully.
+	* monotone.texi (db check): Be more clear about what is normally
+	checked, and when 'db check' is useful.
+
+2005-03-16  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+
+	* monotone.texi (Hook Reference): Typo.
+
+2005-03-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi: Add Derek Scherger to the copyright list.
 	Various tweaks.
 	(Starting a New Project): Rewrite to clarify that only Jim runs
