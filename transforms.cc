@@ -592,9 +592,14 @@ line_end_convert(string const & linesep, string const & src, string & dst)
   else if (linesep == "LF"|| linesep == "\n")
     linesep_str = "\n";
 
+  L(F("doing linesep conversion to %s\n") % linesep);  
   vector<string> tmp;
   split_into_lines(src, tmp);
   join_lines(tmp, dst, linesep_str);
+  if (src.size() >= 1 &&
+      (src[src.size() - 1] == '\r' ||
+       src[src.size() - 1] == '\n'))
+    dst += linesep_str;
 }
 
 #ifdef BUILD_UNIT_TESTS

@@ -1,7 +1,7 @@
 # -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.56)
 AC_INIT(monotone, 0.11, graydon@pobox.com)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
@@ -161,6 +161,45 @@ then
    fi
 fi
 
+AC_CACHE_CHECK([if this is Windows],
+       ac_win32, [
+       AC_TRY_RUN([
+#ifdef WIN32
+#include <windows.h>
+int main(void)
+{
+  return 0;
+}
+#else
+__wont_compile_
+#endif
+],
+   AM_CONDITIONAL(WIN32_PLATFORM, true),
+   AM_CONDITIONAL(WIN32_PLATFORM, true),
+   AM_CONDITIONAL(WIN32_PLATFORM, true)
+)])
+
+
+AC_CACHE_CHECK([presence of IPv6],
+       ac_inet6, [
+       AC_TRY_RUN([
+#if defined(WIN32)
+# include <winsock2.h>
+#else
+# include <sys/types.h>
+# include <sys/socket.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+#endif
+int main(void)
+{
+  sockaddr_in6 sa_in6;
+}
+],
+   AM_CONDITIONAL(MISSING_INET6, false),
+   AM_CONDITIONAL(MISSING_INET6, true),
+   AM_CONDITIONAL(MISSING_INET6, true) 
+)])
 
 # simple library checks 
 AC_CHECK_LIB([dl], [dlsym])
@@ -234,7 +273,15 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_STAT
 AC_CHECK_FUNCS([atexit gethostbyaddr gethostbyname inet_ntoa memset setenv socket])
 
-AC_CHECK_FUNC(inet_pton, [AM_CONDITIONAL(HAVE_INET_PTON, true)], [AM_CONDITIONAL(HAVE_INET_PTON, false)])
+AC_CHECK_FUNC(inet_pton, [AM_CONDITIONAL(MISSING_INET_PTON, false)], 
+			 [AM_CONDITIONAL(MISSING_INET_PTON, true)])
+
+AC_CHECK_FUNC(inet_ntop, [AM_CONDITIONAL(MISSING_INET_NTOP, false)], 
+			 [AM_CONDITIONAL(MISSING_INET_NTOP, true)])
+
+AC_CHECK_FUNC(getaddrinfo, [AM_CONDITIONAL(MISSING_GETADDRINFO, false)], 
+			   [AM_CONDITIONAL(MISSING_GETADDRINFO, true)])
+
 
 AC_CONFIG_FILES([Makefile tests/atlocal po/Makefile.in])
 AC_OUTPUT

@@ -1,4 +1,3 @@
-#include <termios.h>
 #include <iostream>
 
 #include "app_state.hh"

@@ -2,7 +2,9 @@
 #include <string>
 #include <map>
 
+#ifndef WIN32
 #include <termios.h>
+#endif
 #include <unistd.h>
 #include <string.h>
 
@@ -84,16 +86,20 @@ read_passphrase(lua_hooks & lua,
       cout << "enter passphrase for key ID [" << keyid() <<  "] : ";
       cout.flush();
       
+#ifndef WIN32
       int cin_fd = 0;
       struct termios t, t_saved;
       tcgetattr(cin_fd, &t);
       t_saved = t;
       t.c_lflag &= ~ECHO;
       tcsetattr(cin_fd, TCSANOW, &t);
+#endif
 
       try 
 	{
+#ifndef WIN32
 	  tcsetattr(cin_fd, TCSANOW, &t);
+#endif
 	  cin.getline(buf, bufsz, '\n');
 	  phrase.Assign(reinterpret_cast<byte const *>(buf), strlen(buf));
 
@@ -106,13 +112,17 @@ read_passphrase(lua_hooks & lua,
       catch (...)
 	{
 	  memset(buf, 0, bufsz);
+#ifndef WIN32
 	  tcsetattr(cin_fd, TCSANOW, &t_saved);
+#endif
 	  cout << endl;
 	  throw;
 	}
       cout << endl;
       memset(buf, 0, bufsz);
+#ifndef WIN32
       tcsetattr(cin_fd, TCSANOW, &t_saved);
+#endif
     }
 }  
 

@@ -18,25 +18,21 @@ MOST_SOURCES =								\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh
 
-if HAVE_INET_PTON 
-  IPV6 =
-else
-  IPV6 = Netxx/inet6.cxx Netxx/inet6.h
-endif
+NETXX_SOURCES =									\
+	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
+	netxx/common.h netxx/compat.h netxx/datagram.cxx			\
+	netxx/datagramserver.cxx netxx/osutil.cxx netxx/osutil.h		\
+	netxx/peer.cxx netxx/probe.cxx netxx/probe_impl.h			\
+	netxx/probe_select.cxx netxx/recvfrom.cxx netxx/recvfrom.h		\
+	netxx/resolve.h netxx/serverbase.cxx netxx/serverbase.h			\
+        netxx/sockaddr.cxx netxx/sockaddr.h netxx/socket.cxx			\
+	netxx/socket.h netxx/sockopt.cxx netxx/stream.cxx			\
+	netxx/streambase.cxx netxx/streamserver.cxx				\
+	netxx/address.h netxx/datagram.h netxx/datagramserver.h			\
+	netxx/netbuf.h netxx/netxx.h netxx/peer.h netxx/probe.h			\
+	netxx/probeinfo.h netxx/sockopt.h netxx/stream.h netxx/streambase.h	\
+	netxx/streamserver.h netxx/timeout.h netxx/types.h
 
-NETXX_SOURCES = \
-	Netxx/Accept.cxx Netxx/Accept.h Netxx/Address.cxx Netxx/Address.h          \
-	Netxx/common.h Netxx/compat.h Netxx/Datagram.cxx Netxx/Datagram.h          \
-	Netxx/DatagramServer.cxx Netxx/DatagramServer.h $(IPV6)                    \
-	Netxx/Netbuf.h Netxx/OSError.cxx Netxx/OSError.h                           \
-	Netxx/Peer.cxx Netxx/Peer.h Netxx/Probe.cxx Netxx/Probe.h                  \
-	Netxx/Probe_impl.h Netxx/ProbeInfo.h Netxx/Probe_select.cxx                \
-	Netxx/RecvFrom.cxx Netxx/RecvFrom.h Netxx/Resolve_gethostbyname.cxx        \
-	Netxx/Resolve_getservbyname.cxx Netxx/Resolve.h Netxx/ServerBase.cxx       \
-	Netxx/ServerBase.h Netxx/SockAddr.cxx Netxx/SockAddr.h Netxx/Socket.cxx    \
-	Netxx/Socket.h Netxx/SockOpt.cxx Netxx/SockOpt.h Netxx/StreamBase.cxx      \
-	Netxx/StreamBase.h Netxx/Stream.cxx Netxx/Stream.h Netxx/StreamServer.cxx  \
-	Netxx/StreamServer.h Netxx/Timeout.h Netxx/Types.h
 
 CRYPTOPP_SOURCES = \
         cryptopp/algebra.cpp cryptopp/algparam.cpp cryptopp/arc4.cpp \
@@ -102,6 +98,9 @@ IDNA_SOURCES = \
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
+
+# primaries
+
 bin_PROGRAMS = monotone
 check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
@@ -116,26 +115,14 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(IDNA_SOURCES) \
 			$(NETXX_SOURCES)
 
+# flags
+
 AM_CPPFLAGS =
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
+AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
+AM_LDFLAGS = 
 
-if BUNDLED_LUA
-lib3rdparty_a_SOURCES += $(LUA_SOURCES)
-AM_CPPFLAGS += -I$(top_srcdir)/lua
-endif
-
-if BUNDLED_SQLITE
-lib3rdparty_a_SOURCES += $(SQLITE_SOURCES)
-AM_CPPFLAGS += -I$(top_srcdir)/sqlite
-endif
-
-if STATIC_BOOST
-BOOSTLIBS=@BOOST_LIBDIR@/libboost_filesystem.a @BOOST_LIBDIR@/libboost_date_time.a @BOOST_LIBDIR@/libboost_regex.a
-monotone_LDADD = lib3rdparty.a $(BOOSTLIBS) @BOOST_LIBDIR@/libboost_prg_exec_monitor.a
-unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) @BOOST_LIBDIR@/libboost_unit_test_framework.a
-else
-monotone_LDADD = lib3rdparty.a -lboost_prg_exec_monitor
-unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
-endif
+lib3rdparty_a_CPPFLAGS =
 
 monotone_LDFLAGS = 
 monotone_CPPFLAGS = 
@@ -143,14 +130,64 @@ monotone_CPPFLAGS =
 unit_tests_LDFLAGS = 
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
 
-AM_CFLAGS = -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
-AM_LDFLAGS = 
-AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
+# conditionals from configury
+
+if BUNDLED_LUA
+  lib3rdparty_a_SOURCES += $(LUA_SOURCES)
+  AM_CPPFLAGS += -I$(top_srcdir)/lua
+endif
+
+if BUNDLED_SQLITE
+  lib3rdparty_a_SOURCES += $(SQLITE_SOURCES)
+  AM_CPPFLAGS += -I$(top_srcdir)/sqlite
+endif
+
+if STATIC_BOOST
+  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem.a \
+              @BOOST_LIBDIR@/libboost_date_time.a \
+              @BOOST_LIBDIR@/libboost_regex.a
+  monotone_LDADD = lib3rdparty.a $(BOOSTLIBS) \
+                   @BOOST_LIBDIR@/libboost_prg_exec_monitor.a
+  unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
+                     @BOOST_LIBDIR@/libboost_unit_test_framework.a
+else
+  monotone_LDADD = lib3rdparty.a -lboost_prg_exec_monitor
+  unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
+endif
+
+if WIN32_PLATFORM
+  monotone_LDADD += -lws2_32 -lintl -liconv -liphlpapi
+  unit_tests_LDADD += -lws2_32 -lintl -liconv -liphlpapi
+endif
+
+if MISSING_INET_PTON
+  lib3rdparty_a_SOURCES += netxx/inet_pton.cxx netxx/inet_pton.h
+  lib3rdparty_a_CPPFLAGS += -DNETXX_NO_PTON
+endif    
+
+if MISSING_INET_NTOP
+  lib3rdparty_a_SOURCES += netxx/inet_ntop.cxx netxx/inet_ntop.h
+  lib3rdparty_a_CPPFLAGS += -DNETXX_NO_NTOP
+endif    
+
+if MISSING_GETADDRINFO
+  lib3rdparty_a_SOURCES += netxx/resolve_gethostbyname.cxx netxx/resolve_getservbyname.cxx
+else
+  lib3rdparty_a_SOURCES += netxx/resolve_getaddrinfo.cxx
+endif    
+
+if MISSING_INET6
+  lib3rdparty_a_CPPFLAGS += -DNETXX_NO_INET6
+endif
+
+# i18n support
 
 SUBDIRS = po
 datadir = @datadir@
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
+
+# extra files
 
 man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi
@@ -216,7 +253,7 @@ CLEANFILES = $(BUILT_SOURCES)
 
 txt2c: txt2c.cc Makefile
 	$(CXX) -Wall -o $@ $<
-	chmod 0755 $@
+	chmod 0755 $@$(EXEEXT)
 
 %.h: %.sql txt2c Makefile
 	./txt2c $< $(*F) >$@

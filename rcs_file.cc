@@ -8,10 +8,18 @@
 #include <string>
 #include <vector>
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
+#ifdef HAVE_MMAP
 #include <sys/mman.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #ifdef HAVE_FCNTL
 #include <fcntl.h>
 #endif
@@ -91,7 +99,89 @@ struct file_source
       throw oops("munmapping " + filename + " failed, after reading RCS file");
   }
 };
+#elif defined(WIN32)
+struct 
+file_handle
+{
+  std::string const & filename;
+  off_t length;
+  HANDLE fd;
+  file_handle(std::string const & fn) : 
+    filename(fn), 
+    length(0),
+    fd(NULL)
+    {
+      struct stat st;
+      if (stat(fn.c_str(), &st) == -1)
+	throw oops("stat of " + filename + " failed");
+      length = st.st_size;
+      fd = CreateFile(fn.c_str(),
+		      GENERIC_READ, 
+		      FILE_SHARE_READ,
+		      NULL,
+		      OPEN_EXISTING, 0, NULL);
+      if (fd == NULL)
+	throw oops("open of " + filename + " failed");
+    }
+  ~file_handle() 
+    {
+      if (CloseHandle(fd)==0)
+	throw oops("close of " + filename + " failed");
+    }
+};
+
+struct
+file_source
+{
+  std::string const & filename;
+  HANDLE fd,map;
+  off_t length;
+  off_t pos;
+  void * mapping;
+  bool good()
+  {
+    return pos < length;
+  }
+  int peek()
+  {
+    if (pos >= length)
+      return EOF;
+    else
+      return reinterpret_cast<char const *>(mapping)[pos];
+  }
+  bool get(char & c)
+  {
+    c = peek();
+    if (good())
+      ++pos;
+    return good();
+  }
+  file_source(std::string const & fn,
+	      HANDLE f,
+	      off_t len) :
+    filename(fn),
+    fd(f),
+    length(len),
+    pos(0),
+    mapping(NULL)
+  {
+    map = CreateFileMapping(fd, NULL, PAGE_READONLY, 0, 0, NULL);
+    if (map==NULL)
+      throw oops("CreateFileMapping of " + filename + " failed");
+    mapping = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, len);
+    if (mapping==NULL)
+      throw oops("MapViewOFFile of " + filename + " failed");
+  }
+  ~file_source()
+  {
+    if (UnmapViewOfFile(mapping)==0)
+      throw oops("UnmapViewOfFile of " + filename + " failed");
+    if (CloseHandle(map)==0)
+      throw oops("CloseHandle of " + filename + " failed");
+  }
+};
 #else
+// no mmap at all
 typedef std::istream file_source;
 #endif
 
@@ -355,7 +445,7 @@ struct parser
 void
 parse_rcs_file(std::string const & filename, rcs_file & r)
 {
-#ifdef HAVE_MMAP
+#if defined(HAVE_MMAP) || defined(WIN32)
       file_handle handle(filename);
       file_source ifs(filename, handle.fd, handle.length);
 #else
