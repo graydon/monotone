@@ -210,7 +210,7 @@ tilde_expand(string const & path)
 #else
           struct passwd * pw;
           pw = getpwnam(i->substr(1).c_str());
-          N(pw != NULL, F("could not find home directory user %s") % i->substr(1));
+          N(pw != NULL, F("could not find home directory for user %s") % i->substr(1));
           res /= mkpath(string(pw->pw_dir));
 #endif
           ++i;

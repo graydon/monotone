@@ -52,18 +52,12 @@ extern "C"
     int fd = -1;
     FILE **pf = NULL;
     char const *filename = lua_tostring (L, -1);
-    char *dup = strdup(filename);
-    
-    if (dup == NULL)
-      return 0;
+    std::string dup(filename);
     
     fd = monotone_mkstemp(dup);
     
     if (fd == -1)
-      {
-        free(dup);
-        return 0;
-      }
+      return 0;
     
     // this magic constructs a lua object which the lua io library
     // will enjoy working with
@@ -73,8 +67,7 @@ extern "C"
     lua_rawget(L, LUA_REGISTRYINDEX);
     lua_setmetatable(L, -2);  
     
-    lua_pushstring(L, dup);
-    free(dup);
+    lua_pushstring(L, dup.c_str());
     
     if (*pf == NULL) 
       {
@@ -113,7 +106,7 @@ extern "C"
     if (argv==NULL)
       return 0;
     argv[0] = (char*)path;
-    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(i));
+    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(n - i));
     argv[i] = NULL;
     ret = process_spawn(argv);
     free(argv);
