@@ -1,0 +1,141 @@
+#  -*- Autoconf -*-
+
+# this script uses the 'boa' HTTP server and the 'tinyproxy' HTTP
+# proxy, if you don't have them the test will fail.
+
+AT_SETUP([communicating with a depot through an http proxy])
+
+MONOTONE_SETUP
+AT_CHECK(cp test.db test2.db)
+
+AT_DATA(http.lua, [
+function get_post_targets(branchname)
+	return { "http://127.0.0.1:8080/user/depot.cgi/packets" } 
+end
+
+function get_fetch_sources(branchname)
+	return { "http://127.0.0.1:8080/user/depot.cgi/packets" } 
+end
+
+function get_http_proxy(host, port)
+	 return { "127.0.0.1", "8888" }
+end
+
+function get_http_auth(url)
+	return "tester@test.net"
+end
+])
+
+AT_DATA(testfile, [version 0 of test file
+])
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=http.lua commit blah-blah, [], [ignore], [ignore])
+VER0=`SHA1(MT/manifest)`
+
+AT_DATA(testfile, [version 1 of test file
+])
+AT_CHECK(MONOTONE --rcfile=http.lua commit blah-blah, [], [ignore], [ignore])
+VER1=`SHA1(MT/manifest)`
+
+PATH=/usr/local/sbin:$PATH
+DEPOT=`which depot.cgi`
+BOA=`which boa`
+TINYPROXY=`which tinyproxy`
+
+# if no boa, tinyproxy or depot.cgi, skip the test
+if test -z "$BOA" || test -z "$DEPOT" || test -z "$TINYPROXY"; then
+  exit 77
+fi
+
+AT_CHECK(test -x $BOA)
+AT_CHECK(test -x $DEPOT)
+AT_CHECK(test -x $TINYPROXY)
+AT_CHECK(mkdir -p http_root)
+AT_CHECK(mkdir -p http_root/docroot/user)
+AT_DATA(http_root/boa.conf, [
+Port 8080
+Listen 127.0.0.1
+ErrorLog errors
+MimeTypes mime.types
+AccessLog access
+DocumentRoot docroot
+])
+AT_DATA(http_root/mime.types, [application/x-httpd-cgi cgi
+])
+AT_DATA(http_root/tinyproxy.conf, [
+PidFile "PWD/http_root/tinyproxy.pid"
+Logfile "PWD/http_root/tinyproxy.log"
+Port 8888
+Timeout 600
+Listen 127.0.0.1
+Allow 127.0.0.1
+MinSpareServers 1
+MaxSpareServers 1
+StartServers 1
+MaxClients 1
+LogLevel Info
+])
+
+HERE=`pwd`
+AT_CHECK(perl -i -pe "s@PWD@$HERE@g" http_root/tinyproxy.conf)
+AT_CHECK(cp $DEPOT ./http_root/docroot/user/depot.cgi)
+AT_CHECK(chmod 0755 ./http_root/docroot/user/depot.cgi)
+AT_CHECK(./http_root/docroot/user/depot.cgi initdb)
+AT_CHECK(MONOTONE pubkey tester@test.net | ./http_root/docroot/user/depot.cgi adduser)
+AT_CHECK(mv depot.db ./http_root/docroot/user)
+AT_CHECK(chmod 0777 ./http_root/docroot/user/depot.db)
+
+# autotest knows no way of doing background processes
+
+AT_CHECK(cp $BOA ./proxy-test-boa)
+AT_CHECK(cp $TINYPROXY ./proxy-test-tinyproxy)
+AT_CHECK(chmod 0755 ./proxy-test-boa)
+AT_CHECK(chmod 0755 ./proxy-test-tinyproxy)
+killall -q -KILL proxy-test-boa proxy-test-tinyproxy
+./proxy-test-boa -c ./http_root >/dev/null 2>&1 &
+./proxy-test-tinyproxy -c ./http_root/tinyproxy.conf >/dev/null 2>&1 &
+sleep 2
+
+AT_DATA(dumpit.sql, [.dump
+])
+
+AT_CHECK(MONOTONE --rcfile=http.lua post, [], [ignore], [ignore])
+AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
+AT_CHECK(grep mdata stdout, [], [stdout])
+AT_CHECK(grep $VER0 stdout, [], [ignore])
+
+AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
+AT_CHECK(grep mdelta stdout, [], [stdout])
+AT_CHECK(grep $VER0 stdout, [], [ignore])
+
+AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
+AT_CHECK(grep $VER1 stdout, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db --rcfile=http.lua fetch http://127.0.0.1:8080/user/depot.cgi/packets, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db cat manifest $VER0, [], [stdout])
+AT_CHECK(grep testfile stdout, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db cat manifest $VER1, [], [stdout])
+AT_CHECK(grep testfile stdout, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db ls certs manifest $VER0, [], [stdout])
+AT_CHECK(mv stdout certs, [], [ignore])
+AT_CHECK(grep date certs, [], [ignore])
+AT_CHECK(grep author certs, [], [ignore])
+AT_CHECK(grep branch certs, [], [ignore])
+AT_CHECK(grep changelog certs, [], [ignore])
+AT_CHECK(grep bad certs, [1], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db ls certs manifest $VER1, [], [stdout])
+AT_CHECK(mv stdout certs, [], [ignore])
+AT_CHECK(grep date certs, [], [ignore])
+AT_CHECK(grep author certs, [], [ignore])
+AT_CHECK(grep branch certs, [], [ignore])
+AT_CHECK(grep changelog certs, [], [ignore])
+AT_CHECK(grep ancestor certs, [], [ignore])
+AT_CHECK(grep bad certs, [1], [ignore])
+
+killall -q -TERM proxy-test-boa proxy-test-tinyproxy
+
+AT_CLEANUP

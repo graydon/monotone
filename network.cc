@@ -511,11 +511,15 @@ void open_connection(string const & proto_name,
   // check for tunnels
   string host_name = host_name_in;
   unsigned long port_num = port_num_in;
-  if (! app.lua.hook_get_connect_addr(proto_name,
-				      host_name_in, 
-				      port_num_in,
-				      host_name,
-				      port_num))
+  if (app.lua.hook_get_connect_addr(proto_name,
+				    host_name_in, 
+				    port_num_in,
+				    host_name,
+				    port_num))
+    {
+      P(F("directing connection to %s:%d\n") % host_name % port_num);
+    }
+  else
     {
       host_name = host_name_in;
       port_num = port_num_in;
@@ -590,6 +594,7 @@ static void post_http_blob(url const & targ,
 				      connect_host_name, 
 				      connect_port_num))
 	{
+	  P(F("using proxy at %s:%d\n") % connect_host_name % connect_port_num);
 	  is_proxy = true;
 	}
       else
@@ -808,6 +813,7 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
 					  connect_host_name, 
 					  connect_port_num))
 	    {
+	      P(F("using proxy at %s:%d\n") % connect_host_name % connect_port_num);
 	      is_proxy = true;
 	    }
 	  else

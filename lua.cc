@@ -637,11 +637,11 @@ bool lua_hooks::hook_get_connect_addr(string const & proto,
     .begin();
   
   ll.next();
-  ll.extract_str(host_out);
+  ll.extract_str(host_out).pop();
 
   ll.next();
   int tmp;
-  ll.extract_int(tmp);
+  ll.extract_int(tmp).pop();
   if (ll.ok()) port_out = tmp;
   
   return ll.ok();
@@ -663,11 +663,11 @@ bool lua_hooks::hook_get_http_proxy(string const & host,
     .begin();
   
   ll.next();
-  ll.extract_str(host_out);
+  ll.extract_str(host_out).pop();
 
   ll.next();
   int tmp;
-  ll.extract_int(tmp);
+  ll.extract_int(tmp).pop();
   if (ll.ok()) port_out = tmp;
   
   return ll.ok();
