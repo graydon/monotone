@@ -175,6 +175,10 @@ CMD(C, group, params, desc)				\
   process(app, string(#realcommand), args);		\
 }
 
+static bool bookdir_exists()
+{
+  return directory_exists(local_path(book_keeping_dir));
+}
 
 static void ensure_bookdir()
 {
@@ -245,6 +249,14 @@ static void get_work_set(work_set & w)
     }
 }
 
+static void remove_work_set()
+{
+  local_path w_path;
+  get_work_path(w_path);
+  if (file_exists(w_path))
+    delete_file(w_path);
+}
+  
 static void put_work_set(work_set & w)
 {
   local_path w_path;
@@ -975,9 +987,7 @@ CMD(commit, "working copy", "[log message]", "commit working copy to database")
     guard.commit();
   }
   // small race condition here...
-  local_path w_path;
-  get_work_path(w_path);
-  delete_file(w_path);
+  remove_work_set();
   put_manifest_map(m_new);
   P("committed %s\n", ps.m_new.inner()().c_str());
 }
@@ -1126,11 +1136,18 @@ CMD(cat, "tree", "(file|manifest) <id>", "write file or manifest from database t
 }
 
 
-CMD(checkout, "tree", "<manifest-id>", "check out tree state from database")
+CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from database into directory")
 {
-  if (args.size() != 1)
+  if (args.size() != 2)
     throw usage(name);
 
+  if (args[1] != string("."))
+    {
+      local_path lp(args[1]);
+      mkdir_p(lp);
+      chdir(args[1].c_str());
+    }
+    
   transaction_guard guard(app.db);
 
   file_data data;
@@ -1164,7 +1181,7 @@ CMD(checkout, "tree", "<manifest-id>", "check out tree state from database")
       app.db.get_file_version(pip.ident(), dat);
       write_data(pip.path(), dat.inner());
     }
-
+  remove_work_set();
   guard.commit();
 }
 
@@ -1386,6 +1403,9 @@ CMD(status, "informative", "", "show status of working copy")
 {
   manifest_map m_old, m_new;
   patch_set ps;
+
+  N(bookdir_exists(),
+    "no monotone book-keeping directory '" + book_keeping_dir + "' found");
 
   transaction_guard guard(app.db);
   get_manifest_map(m_old);

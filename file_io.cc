@@ -30,6 +30,11 @@ bool book_keeping_file(local_path const & p)
   return false;
 }
 
+bool directory_exists(local_path const & p) 
+{ 
+  return fs::exists(fs::path(p())) &&
+    fs::is_directory(fs::path(p())); 
+}
 bool file_exists(file_path const & p) { return fs::exists(fs::path(p())); }
 bool file_exists(local_path const & p) { return fs::exists(fs::path(p())); }
 

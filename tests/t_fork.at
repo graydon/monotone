@@ -22,6 +22,9 @@ LEFT_F_SHA=`SHA1(testfile)`
 AT_CHECK(test $LEFT_M_SHA != $ROOT_M_SHA)
 AT_CHECK(test $LEFT_F_SHA != $ROOT_F_SHA)
 
+AT_CHECK(MONOTONE --branch=testbranch heads, [], [stdout])
+AT_CHECK(grep empty stdout, [1], [ignore])
+
 PROBE_NODE(testfile, $ROOT_M_SHA, $ROOT_F_SHA)
 
 AT_DATA(testfile, [right version of fork
