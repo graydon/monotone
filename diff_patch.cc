@@ -934,10 +934,19 @@ bool merge3(manifest_map const & ancestor,
       if (anc != ancestor.end() && lf != left.end()
 	  && ! (anc->second == lf->second))
 	{
-	  I(left_delta_map.find(lf->first) == left_delta_map.end());
-	  left_delta_map.insert
-	    (make_pair
-	     (lf->first, patch_delta(anc->second, lf->second, anc->first)));
+	  // it's possible this one has already been split by patch_set.cc
+	  map<file_path, patch_delta>::const_iterator left_patch;
+	  left_patch = left_delta_map.find(lf->first);
+	  if (left_patch != left_delta_map.end())
+	    {
+	      I(left_patch->second.id_new == lf->second);
+	    }
+	  else
+	    {
+	      left_delta_map.insert
+		(make_pair
+		 (lf->first, patch_delta(anc->second, lf->second, anc->first)));
+	    }	    
 	}
     }
 
@@ -952,10 +961,19 @@ bool merge3(manifest_map const & ancestor,
       if (anc != ancestor.end() && rt != right.end()
 	  && ! (anc->second == rt->second))
 	{
-	  I(right_delta_map.find(rt->first) == right_delta_map.end());
-	  right_delta_map.insert
-	    (make_pair
-	     (rt->first, patch_delta(anc->second, rt->second, anc->first)));
+	  // it's possible this one has already been split by patch_set.cc
+	  map<file_path, patch_delta>::const_iterator right_patch;
+	  right_patch = right_delta_map.find(rt->first);
+	  if (right_patch != right_delta_map.end())
+	    {
+	      I(right_patch->second.id_new == rt->second);
+	    }
+	  else
+	    {
+	      right_delta_map.insert
+		(make_pair
+		 (rt->first, patch_delta(anc->second, rt->second, anc->first)));
+	    }
 	}
     }
 

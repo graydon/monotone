@@ -1022,6 +1022,8 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   manifest_id old_id, new_id;
   calculate_ident(m_old, old_id);
   calculate_ident(m_new, new_id);
+  renames.parent = old_id;
+  renames.child = new_id;
 
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
@@ -1032,7 +1034,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   P(F("committing %s to branch %s\n") % new_id % branchname);
   app.set_branch(branchname());
 
-  manifests_to_patch_set(m_old, m_new, app, ps);
+  manifests_to_patch_set(m_old, m_new, renames, app, ps);
 
   // get log message
   if (args.size() == 1)
@@ -1999,6 +2001,7 @@ CMD(status, "informative", "", "show status of working copy")
   manifest_map m_old, m_new;
   manifest_id old_id, new_id;
   patch_set ps1;
+  rename_edge renames;
 
   N(bookdir_exists(),
     F("no monotone book-keeping directory '%s' found") 
@@ -2007,10 +2010,12 @@ CMD(status, "informative", "", "show status of working copy")
   transaction_guard guard(app.db);
   get_manifest_map(m_old);
   calculate_ident(m_old, old_id);
-  calculate_new_manifest_map(m_old, m_new);
+  calculate_new_manifest_map(m_old, m_new, renames.mapping);
   calculate_ident(m_new, new_id);
 
-  manifests_to_patch_set(m_old, m_new, app, ps1);
+  renames.parent = old_id;
+  renames.child = new_id;
+  manifests_to_patch_set(m_old, m_new, renames, app, ps1);
   patch_set_to_text_summary(ps1, cout);
 
   guard.commit();

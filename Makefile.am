@@ -4,18 +4,18 @@ MOST_SOURCES =								\
 	 app_state.cc commands.cc diff_patch.cc lua.cc			\
 	 nntp_tasks.cc patch_set.cc transforms.cc update.cc work.cc	\
 	 cert.cc database.cc file_io.cc keys.cc manifest.cc		\
-         nntp_machine.cc packet.cc sanity.cc vocab.cc			\
+         proto_machine.cc packet.cc sanity.cc vocab.cc			\
          rcs_file.cc rcs_import.cc xdelta.cc network.cc			\
-         http_tasks.cc ui.cc schema_migration.cc			\
+         http_tasks.cc ui.cc schema_migration.cc smtp_tasks.cc		\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
-	 nntp_machine.hh packet_types.hh transforms.hh vocab.hh		\
+	 proto_machine.hh packet_types.hh transforms.hh vocab.hh	\
 	 cleanup.hh diff_patch.hh lua.hh nntp_tasks.hh patch_set.hh	\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
          lcs.hh network.hh http_tasks.hh constants.hh ui.hh		\
-         schema_migration.hh 
+         schema_migration.hh smtp_tasks.hh
 
 CRYPTOPP_SOURCES = \
         cryptopp/algebra.cpp cryptopp/algparam.cpp cryptopp/arc4.cpp \

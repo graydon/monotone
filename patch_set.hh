@@ -59,6 +59,12 @@ struct patch_set
 
 void manifests_to_patch_set(manifest_map const & m_old,
 			    manifest_map const & m_new,
+			    rename_edge const & renames,
+			    app_state & app,
+			    patch_set & ps);
+
+void manifests_to_patch_set(manifest_map const & m_old,
+			    manifest_map const & m_new,
 			    app_state & app,
 			    patch_set & ps);
 

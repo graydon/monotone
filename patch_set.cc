@@ -245,22 +245,48 @@ static void classify_dels(set<entry> const & in_dels,
     }
 }
 
-
 void manifests_to_patch_set(manifest_map const & m_old,
 			    manifest_map const & m_new,
 			    app_state & app,
 			    patch_set & ps)
 {
-  ps.m_old = hexenc<id>();
-  ps.m_new = hexenc<id>();
+  rename_edge renames;
+  manifest_id old_id, new_id;
+  calculate_ident(m_old, old_id);
+  calculate_ident(m_new, new_id);  
+  calculate_renames (old_id, new_id, app, renames);
+
+  if (renames.parent.inner()() == "")
+    renames.parent = old_id;
+  else
+    I(renames.parent == old_id); 
+
+  if (renames.child.inner()() == "")
+    renames.child = new_id;
+  else
+    I(renames.child == new_id);
+
+  manifests_to_patch_set(m_old, m_new, renames, app, ps);
+}
+
+void manifests_to_patch_set(manifest_map const & m_old,
+			    manifest_map const & m_new,
+			    rename_edge const & renames,
+			    app_state & app,
+			    patch_set & ps)
+
+{
+  ps.m_old = renames.parent;
+  ps.m_new = renames.child;
   ps.f_adds.clear();
   ps.f_deltas.clear();
   ps.f_moves.clear();
   ps.f_dels.clear();
 
+  I(renames.parent.inner()() != ""); 
+  I(renames.child.inner()() != "");
+
   // calculate ids
-  calculate_ident(m_old, ps.m_old);
-  calculate_ident(m_new, ps.m_new);  
   L(F("building patch set %s -> %s\n") % ps.m_old % ps.m_new);
 
   // calculate manifest_changes structure
@@ -276,9 +302,8 @@ void manifests_to_patch_set(manifest_map const & m_old,
   classify_dels(changes.dels, add_mapping, app,
 		ps.f_dels, ps.f_moves, ps.f_deltas);  
 
-  // pick up any explicit renames we might have seen floating around
-  rename_edge renames;
-  calculate_renames (ps.m_old, ps.m_new, app, renames);
+  size_t move_and_edits = 0;
+  // incorporate explicit renames we might have got
   for (rename_set::const_iterator i = renames.mapping.begin();
        i != renames.mapping.end(); ++i)
     {
@@ -289,7 +314,19 @@ void manifests_to_patch_set(manifest_map const & m_old,
 	  file_id fid = add_mapping.get(i->second);
 	  add_mapping.del (make_pair(i->second, fid));
 	  ps.f_moves.insert (patch_move (i->first, i->second));
-	  L(F("found historical move %s -> %s\n") % i->first % i->second);
+	  L(F("found explicit move %s -> %s\n") % i->first % i->second);
+	  manifest_map::const_iterator old_entry = m_old.find(i->first);
+	  I(old_entry != m_old.end());
+	  file_id old_fid = old_entry->second;
+	  if (! (old_fid == fid))
+	    {
+	      L(F("explicit move %s -> %s accompanied by delta %s -> %s\n")
+		% i->first % i->second % old_fid % fid);
+	      patch_delta delta(old_fid, fid, i->second);
+	      I(ps.f_deltas.find(delta) == ps.f_deltas.end());
+	      ps.f_deltas.insert(delta);
+	      ++move_and_edits;
+	    }
 	}
     }
   
@@ -305,8 +342,10 @@ void manifests_to_patch_set(manifest_map const & m_old,
     L(F("matched %d del/add pairs as deltas\n") % ps.f_deltas.size());  
   if (ps.f_moves.size() > 0)
     L(F("matched %d del/add pairs as moves\n") % ps.f_moves.size());
-  I(ps.f_dels.size() + ps.f_moves.size() + ps.f_deltas.size() == changes.dels.size());
-  I(ps.f_adds.size() + ps.f_moves.size() + ps.f_deltas.size() == num_add_candidates);
+  I(ps.f_dels.size() + ps.f_moves.size() 
+    + ps.f_deltas.size() - move_and_edits == changes.dels.size());
+  I(ps.f_adds.size() + ps.f_moves.size() 
+    + ps.f_deltas.size() - move_and_edits == num_add_candidates);
 }
 
 

@@ -6,17 +6,18 @@
 #include <string> 
 #include <iostream> 
 #include <vector>
+#include <sstream>
 #include <algorithm>
 #include <iterator>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 
-#include "nntp_machine.hh"
+#include "proto_machine.hh"
 #include "sanity.hh"
 
-// this file describes the interface to netnews in terms
-// of NNTP protocol state machines.
+// this file describes the interface to a network stream 
+// in terms of NNTP / SMTP protocol state machines.
 
 using namespace std;
 
@@ -106,16 +107,16 @@ void write_lines(ostream & out,
 
 void read_line(istream & in, string & result)
 {
-  result.clear();
-  char c(0), prev(0);
-  while(in.good()) {
-    in.get(c);
-    if (prev == '\r' && c == '\n')
-      return;
-    if (prev != 0)
-      result += prev;
-    prev = c;
-  }
+  ostringstream oss;
+  in.get(*oss.rdbuf(), '\n');
+
+  if (in.good())
+    in.ignore(1);
+
+  result = oss.str();
+  if (result.size() > 0 &&
+      result.at(result.size() - 1) == '\r')
+    result.resize(result.size() - 1);
 }
 
 void read_lines(istream & in,
@@ -132,6 +133,7 @@ void read_lines(istream & in,
     }
   if (tmp != ".")
     throw oops("stream closed before '.' terminating body response. last line was '" + tmp + "'");
+  result.reserve(tvec.size());
   transform<dot_unescaper>(tvec, back_inserter(result));
 }
 
@@ -142,7 +144,7 @@ void read_status_response(istream & in,
 {
   string tmp;
   read_line(in, tmp);
-  L(F("NNTP <- %s\n") % tmp);
+  L(F("RECV <- %s\n") % tmp);
 
   stringstream ss(tmp);
 
@@ -155,13 +157,13 @@ void read_status_response(istream & in,
 
 // next layer are protocol-state objects you can wire together into state machines
 
-nntp_edge::nntp_edge(nntp_state * t, int c, string const & m, 
-		     vector<string> const & l) :
+proto_edge::proto_edge(proto_state * t, int c, string const & m, 
+		       vector<string> const & l) :
   targ(t), code(c), msg(m), lines(l) 
 {}
 
 
-nntp_edge nntp_state::handle_response(istream & net)
+proto_edge proto_state::handle_response(istream & net)
 {
 
   string res;
@@ -172,50 +174,50 @@ nntp_edge nntp_state::handle_response(istream & net)
   // we might end...
   if (codes.find(res_code) == codes.end())
     {
-      return nntp_edge(NULL, res_code, res, res_lines);
+      return proto_edge(NULL, res_code, res, res_lines);
     }
   
   // or we might want a message...
   if (codes[res_code].first)
     {
       read_lines(net, res_lines);
-      L(F("NNTP <- %d lines\n") % res_lines.size());
+      L(F("RECV <- %d lines\n") % res_lines.size());
     }
   
   // and, in any event, we're at an edge!
-  return nntp_edge(codes[res_code].second, res_code, res, res_lines);
+  return proto_edge(codes[res_code].second, res_code, res, res_lines);
 }
 
 
-nntp_edge nntp_state::step_lines(iostream & net, 
-				 vector<string> const & send_lines)
+proto_edge proto_state::step_lines(iostream & net, 
+				   vector<string> const & send_lines)
 {
   if (send_lines.size() > 0)
     {
       write_lines(net, send_lines);  
-      L(F("NNTP -> %d lines\n") % send_lines.size());
+      L(F("SEND -> %d lines\n") % send_lines.size());
     }
   return handle_response(net);
 }
 
-nntp_edge nntp_state::step_cmd(iostream & net, 
-			       string const & cmd,
-			       vector<string> const & args)
+proto_edge proto_state::step_cmd(iostream & net, 
+				 string const & cmd,
+				 vector<string> const & args)
 {
   write_command(net, string(cmd), args);
   stringstream ss;
   write_command(ss, string(cmd), args);
-  L(F("NNTP -> %s") % ss.str());
+  L(F("SEND -> %s") % ss.str());
   net.flush();
   return handle_response(net);
 }
 
-void nntp_state::add_edge(int code, nntp_state * targ, bool read_lines)
+void proto_state::add_edge(int code, proto_state * targ, bool read_lines)
 {
-  codes[code] = pair<bool,nntp_state *>(read_lines, targ);
+  codes[code] = pair<bool,proto_state *>(read_lines, targ);
 }
 
-nntp_state::~nntp_state() {}
+proto_state::~proto_state() {}
   
 
 cmd_state::cmd_state(string const & c) : 
@@ -237,29 +239,29 @@ cmd_state::cmd_state(string const & c,
   args.push_back(arg2);
 }
 
-nntp_edge cmd_state::drive(iostream & net, 
-			   nntp_edge const & e)
+proto_edge cmd_state::drive(iostream & net, 
+			    proto_edge const & e)
 {
   return step_cmd(net, cmd, args);
 }
 
 cmd_state::~cmd_state() {}
 
-void run_nntp_state_machine(nntp_state * machine,
-			    iostream & link)
+void run_proto_state_machine(proto_state * machine,
+			     iostream & link)
 {
 
   if (!machine)
-    throw oops("null NNTP state machine given");
+    throw oops("null protocol state machine given");
 
   string res;
   int res_code;
   vector<string> no_lines;
 
-  // NNTP sessions start with a greet from their end
+  // NNTP / SMTP sessions start with a greet from their end
   read_status_response(link, res_code, res);
 
-  nntp_edge edge(machine, res_code, res, no_lines);
+  proto_edge edge(machine, res_code, res, no_lines);
   while(edge.targ != NULL)
     edge = edge.targ->drive(link, edge);      
 

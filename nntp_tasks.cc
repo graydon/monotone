@@ -6,7 +6,7 @@
 #include "transforms.hh"
 #include "network.hh"
 #include "nntp_tasks.hh"
-#include "nntp_machine.hh"
+#include "proto_machine.hh"
 #include "sanity.hh"
 #include "ui.hh"
 
@@ -14,7 +14,7 @@
 #include <boost/lexical_cast.hpp>
  
 // this file contains simple functions which build up NNTP state
-// machines and run them using the infrastructure in nntp_machine.{cc,hh}
+// machines and run them using the infrastructure in proto_machine.{cc,hh}
 
 using namespace std;
 using boost::lexical_cast;
@@ -37,7 +37,7 @@ struct cursor_state : public cmd_state
     : cmd_state(cmd), seq_number(seq)
   {}
   virtual ~cursor_state() {}
-  virtual nntp_edge drive(iostream & net, nntp_edge const & e)
+  virtual proto_edge drive(iostream & net, proto_edge const & e)
   {
     vector<string> response_args;
     ws_split(e.msg, response_args);
@@ -48,14 +48,14 @@ struct cursor_state : public cmd_state
 };
 
 
-struct stat_state : public nntp_state
+struct stat_state : public proto_state
 {
   unsigned long & seq_number;
   explicit stat_state(unsigned long & seq)
     : seq_number(seq)
   {}
   virtual ~stat_state() {}
-  virtual nntp_edge drive(iostream & net, nntp_edge const & e)
+  virtual proto_edge drive(iostream & net, proto_edge const & e)
   {
     vector<string> response_args;
     vector<string> my_args;
@@ -71,12 +71,12 @@ struct stat_state : public nntp_state
     if (low > seq_number)
       seq_number = low;
     my_args.push_back(lexical_cast<string>(seq_number));
-    return nntp_state::step_cmd(net, "STAT", my_args);
+    return proto_state::step_cmd(net, "STAT", my_args);
   }  
 };
 
 
-struct postlines_state : public nntp_state
+struct postlines_state : public proto_state
 {
   string const & group;
   string const & from;
@@ -89,7 +89,7 @@ struct postlines_state : public nntp_state
     : group(grp), from(frm), subject(subj), body(bod)
   {}
   virtual ~postlines_state() {}
-  virtual nntp_edge drive(iostream & net, nntp_edge const & e)
+  virtual proto_edge drive(iostream & net, proto_edge const & e)
   {
     vector<string> lines, split;
     lines.push_back("from: " + from);
@@ -98,7 +98,7 @@ struct postlines_state : public nntp_state
     lines.push_back("");
     split_into_lines(body, split);
     copy(split.begin(), split.end(), back_inserter(lines));
-    return nntp_state::step_lines(net, lines);
+    return proto_state::step_lines(net, lines);
   }  
 };
 
@@ -110,7 +110,7 @@ struct feedlines_state : public cmd_state
     : cmd_state("NEXT"), count("packet"), consumer(cons)
   {}
   virtual ~feedlines_state() {}
-  virtual nntp_edge drive(iostream & net, nntp_edge const & e)
+  virtual proto_edge drive(iostream & net, proto_edge const & e)
   {
     string joined;
     join_lines(e.lines, joined);
@@ -145,7 +145,7 @@ bool post_nntp_article(string const & group_name,
   postlines.add_edge(440, &quit);   // posting not allowed
   postlines.add_edge(441, &quit);   // posting failed
 
-  run_nntp_state_machine(&mode_reader, stream);  
+  run_proto_state_machine(&mode_reader, stream);  
   return (postlines.get_res_code() == 240);
 }
 
@@ -189,6 +189,6 @@ void fetch_nntp_articles(string const & group_name,
   body.add_edge(430, &quit);         // no such article
 
   // run it
-  run_nntp_state_machine(&mode_reader, stream);  
+  run_proto_state_machine(&mode_reader, stream);  
   P("nntp fetch complete\n");
 }

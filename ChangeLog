@@ -1,5 +1,17 @@
 2003-10-31  graydon hoare  <graydon@pobox.com>
 
+	* patch_set.cc (manifests_to_patch_set): Second form with explicit renames.
+	(manifests_to_patch_set): Split edit+rename events when we see them.
+	* commands.cc (status, commit): Include explicit rename set.
+	* diff_patch.cc (merge3): Accept edit+rename events split by patch_set.cc.
+	* smtp_tasks.hh, smtp_tasks.cc: New files.
+	* nntp_machine.hh, nntp_machine.cc: Rename to proto_machine.{hh,cc} (woo!)
+	* nntp_tasks.cc: Adjust to use proto_ prefix in various places.
+	* proto_machine.cc (read_line): get() into streambuf.
+	* Makefile.am: Cover renames and adds.
+
+2003-10-31  graydon hoare  <graydon@pobox.com>
+
 	* diff_patch.cc (merge3): Extract renames.
 	* commands.cc (calculate_new_manifest_map): Extract renames.
 	(try_one_merge): Extract renames, propagate to merge target.
