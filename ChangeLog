@@ -1,5 +1,11 @@
 2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (File Attributes): Document how restricted format
+	of .mt-attrs currently is.  Also talk about 'the' .mt-attrs file
+	instead of 'an', in response to confusion.
+
+2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
+
 	* work.cc (build_deletion): Add missing newline.
 	(build_rename): Likewise.
 	(build_rename): Likewise.
