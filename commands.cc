@@ -652,8 +652,6 @@ get_stdin()
   return tmp;
 }
 
-std::string const user_log_file_name("MT/log");
-
 static void 
 get_log_message(revision_set const & cs, 
                 app_state & app,

@@ -1,5 +1,10 @@
 2005-03-25  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (user_log_file_name): Remove unused variable
+	again.  Hopefully it will take this time...
+
+2005-03-25  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (user_log_file_name): Remove unused variable.
 
 2005-03-25  Matt Johnston  <matt@ucc.asn.au>
