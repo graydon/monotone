@@ -3812,14 +3812,6 @@ by at least one of three ``trusted'' keys, unless it is an
 ancestry assertions go through an extra ``reviewer'' before they are
 accepted.
 
-@item get_manifest_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
-@itemx get_file_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
-
-These hooks are identical to the hook @code{get_revision_cert_trust},
-except they is called for manifest or file certificates rather than
-revision certificates. See the documentation for that hook for more
-details.
-
 @item accept_testresult_change (@var{old_results}, @var{new_results})
 
 This hook is used by the update algorithm to determine whether a

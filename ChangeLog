@@ -1,5 +1,12 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* cert.hh (erase_bogus_certs): Re-add manifest cert version.
+
+	* monotone.texi (Hook Reference): Remove documentation of
+	get_{file,manifest}_cert_trust.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* cert.cc (erase_bogus_certs): Re-add manifest cert version.
 	(bogus_cert_p): Likewise.
 

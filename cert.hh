@@ -67,6 +67,9 @@ void make_simple_cert(hexenc<id> const & id,
 void erase_bogus_certs(std::vector< revision<cert> > & certs,
                        app_state & app);
 
+void erase_bogus_certs(std::vector< manifest<cert> > & certs,
+                       app_state & app);
+
 // special certs -- system won't work without them
 
 extern std::string const branch_cert_name;
