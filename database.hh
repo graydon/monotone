@@ -306,6 +306,13 @@ public:
 				   group const & g,
 				   manifest_id const & m);
 
+  // completion stuff
+
+  void complete(string const & partial,
+		set<manifest_id> & completions);
+  
+  void complete(string const & partial,
+		set<file_id> & completions);
   
   ~database();
 

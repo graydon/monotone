@@ -1,3 +1,11 @@
+2003-09-12  graydon hoare  <graydon@redhat.com>
+
+	* update.cc (pick_update_target): Only insert base rev as update
+	candidate if it actually exists in db.
+
+	* commands.cc, database.cc, database.hh: Implement id completion
+	command, and general id completion in all other commands.
+
 2003-09-11  graydon hoare  <graydon@redhat.com>
 
 	* commands.cc: Check for MT directory in status.

@@ -1166,6 +1166,54 @@ void database::note_manifest_on_netserver (url const & u,
 	    u().c_str(), g().c_str(), m.inner()().c_str());
 }
 
+// completions
+
+void database::complete(string const & partial,
+			set<manifest_id> & completions)
+{
+  results res;
+  completions.clear();
+
+  fetch(res, 1, any_rows,
+	"SELECT id FROM manifests WHERE id GLOB '%q*'",
+	partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(manifest_id(res[i][0]));  
+  
+  res.clear();
+
+  fetch(res, 1, any_rows,
+	"SELECT id FROM manifest_deltas WHERE id GLOB '%q*'",
+	partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(manifest_id(res[i][0]));  
+}
+
+void database::complete(string const & partial,
+			set<file_id> & completions)
+{
+  results res;
+  completions.clear();
+
+  fetch(res, 1, any_rows,
+	"SELECT id FROM files WHERE id GLOB '%q*'",
+	partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(file_id(res[i][0]));  
+  
+  res.clear();
+
+  fetch(res, 1, any_rows,
+	"SELECT id FROM file_deltas WHERE id GLOB '%q*'",
+	partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(file_id(res[i][0]));  
+}
+
 
 // transaction guards
 

@@ -302,7 +302,8 @@ void pick_update_target(manifest_id const & base_ident,
     }
   
   find_descendents(base_ident, app, candidates);
-  if (candidates.size() == 0)
+  if (candidates.size() == 0 &&
+      app.db.manifest_version_exists(base_ident))
     candidates.insert(base_ident);
   
   if (candidates.size() > 1
@@ -323,6 +324,9 @@ void pick_update_target(manifest_id const & base_ident,
 	"no update candidates after sorting");
       candidates = sorted;
     }
+
+  N(candidates.size() != 0,
+    "no candidates remain after selection");
 
   N(candidates.size() == 1,
     "multiple candidates remain after selection");

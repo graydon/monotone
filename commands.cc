@@ -324,6 +324,34 @@ static void get_log_message(patch_set const & ps,
     "edit of log message failed");
 }
 
+template <typename ID>
+static void complete(app_state & app, 
+		     string const & str, 
+		     ID & completion)
+{
+  N(str.find_first_not_of("abcdef0123456789") == string::npos,
+    "non-hex digits in id");
+  if (str.size() == 40)
+    {
+      completion = ID(str);
+      return;
+    }
+  set<ID> completions;
+  app.db.complete(str, completions);
+  N(completions.size() != 0,
+    "partial id '" + str + "' does not have a unique expansion");
+  if (completions.size() > 1)
+    {
+      string err = "partial id '" + str + "' has multiple ambiguous expansions: ";
+      for (typename set<ID>::const_iterator i = completions.begin();
+	   i != completions.end(); ++i)
+	err += (i->inner()() + "\n");
+      N(completions.size() == 1, err);
+    }
+  completion = *(completions.begin());  
+}
+
+
 
 // the goal here is to look back through the ancestry of the provided
 // child, checking to see the least ancestor it has which we received from
@@ -522,6 +550,7 @@ static void try_one_merge(manifest_id const & left,
 
 // actual commands follow
 
+
 CMD(lscerts, "key and cert", "(file|manifest) <id>", 
     "list certs associated with manifest or file")
 {
@@ -534,7 +563,8 @@ CMD(lscerts, "key and cert", "(file|manifest) <id>",
 
   if (args[0] == "manifest")
     {
-      manifest_id ident(args[1]);
+      manifest_id ident;
+      complete(app, args[1], ident);
       vector< manifest<cert> > ts;
       app.db.get_manifest_certs(ident, ts);
       for (size_t i = 0; i < ts.size(); ++i)
@@ -542,7 +572,8 @@ CMD(lscerts, "key and cert", "(file|manifest) <id>",
     }
   else if (args[0] == "file")
     {
-      file_id ident(args[1]);
+      file_id ident;
+      complete(app, args[1], ident);
       vector< file<cert> > ts;
       app.db.get_file_certs(ident, ts);
       for (size_t i = 0; i < ts.size(); ++i)
@@ -642,7 +673,22 @@ CMD(cert, "key and cert", "(file|manifest) <id> <certname> [certval]",
 
   transaction_guard guard(app.db);
 
-  hexenc<id> ident(args[1]);
+  hexenc<id> ident;
+  if (args[0] == "manifest")
+    {
+      manifest_id mid;
+      complete(app, args[1], mid);
+      ident = mid.inner();
+    }
+  else if (args[0] == "file")
+    {
+      file_id fid;
+      complete(app, args[1], fid);
+      ident = fid.inner();
+    }
+  else
+    throw usage(this->name);
+
   cert_name name(args[2]);
 
   rsa_keypair_id key;
@@ -688,7 +734,8 @@ CMD(tag, "certificate", "<id> <tagname>",
 {
   if (args.size() != 2)
     throw usage(name);
-  manifest_id m(args[0]);
+  manifest_id m;
+  complete(app, args[0], m);
   packet_db_writer dbw(app);
   cert_manifest_tag(m, args[1], app, dbw);
 }
@@ -700,14 +747,16 @@ CMD(approve, "certificate", "(file|manifest) <id>",
     throw usage(name);
   if (args[0] == "manifest")
     {
-      manifest_id m(args[1]);
+      manifest_id m;
+      complete(app, args[1], m);
       packet_db_writer dbw(app);
       cert_manifest_approval(m, true, app, dbw);
     }
   else if (args[0] == "file")
     {
       packet_db_writer dbw(app);
-      file_id f(args[1]);
+      file_id f;
+      complete(app, args[1], f);
       cert_file_approval(f, true, app, dbw);
     }
   else
@@ -721,13 +770,15 @@ CMD(disapprove, "certificate", "(file|manifest) <id>",
     throw usage(name);
   if (args[0] == "manifest")
     {
-      manifest_id m(args[1]);
+      manifest_id m;
+      complete(app, args[1], m);
       packet_db_writer dbw(app);
       cert_manifest_approval(m, false, app, dbw);
     }
   else if (args[0] == "file")
     {
-      file_id f(args[1]);
+      file_id f;;
+      complete(app, args[1], f);
       packet_db_writer dbw(app);
       cert_file_approval(f, false, app, dbw);
     }
@@ -752,13 +803,17 @@ CMD(comment, "certificate", "(file|manifest) <id> [comment]",
 
   if (args[0] == "file")
     {
+      file_id f;
+      complete(app, args[1], f);
       packet_db_writer dbw(app);
-      cert_file_comment(file_id(args[1]), comment, app, dbw); 
+      cert_file_comment(f, comment, app, dbw); 
     }
   else if (args[0] == "manifest")
     {
+      manifest_id m;
+      complete(app, args[1], m);
       packet_db_writer dbw(app);
-      cert_manifest_comment(manifest_id(args[1]), comment, app, dbw);
+      cert_manifest_comment(m, comment, app, dbw);
     }
   else
     throw usage(name);
@@ -1182,7 +1237,8 @@ CMD(cat, "tree", "(file|manifest) <id>", "write file or manifest from database t
   if (args[0] == "file")
     {
       file_data dat;
-      file_id ident(args[1]);
+      file_id ident;
+      complete(app, args[1], ident);
 
       N(app.db.file_version_exists(ident),
 	(string("no file version ") + ident.inner()() + " found in database"));
@@ -1197,7 +1253,8 @@ CMD(cat, "tree", "(file|manifest) <id>", "write file or manifest from database t
   else if (args[0] == "manifest")
     {
       manifest_data dat;
-      manifest_id ident(args[1]);
+      manifest_id ident;
+      complete(app, args[1], ident);
 
       N(app.db.manifest_version_exists(ident),
 	(string("no file version ") + ident.inner()() + " found in database"));
@@ -1230,7 +1287,8 @@ CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from da
   transaction_guard guard(app.db);
 
   file_data data;
-  manifest_id ident(args[0]);
+  manifest_id ident;
+  complete(app, args[0], ident);
   manifest_map m;
 
   N(app.db.manifest_version_exists(ident),
@@ -1485,6 +1543,34 @@ CMD(propagate, "tree", "<src-branch> <dst-branch>",
 }
 
 
+CMD(complete, "informative", "(manifest|file) <partial-id>", "complete partial id")
+{
+  if (args.size() != 2)
+    throw usage(name);
+
+  if (args[0] == "manifest")
+    {      
+      N(args[1].find_first_not_of("abcdef0123456789") == string::npos,
+	"non-hex digits in partial id");
+      set<manifest_id> completions;
+      app.db.complete(args[1], completions);
+      for (set<manifest_id>::const_iterator i = completions.begin();
+	   i != completions.end(); ++i)
+	cout << i->inner()() << endl;
+    }
+  else if (args[0] == "file")
+    {
+      N(args[1].find_first_not_of("abcdef0123456789") == string::npos,
+	"non-hex digits in partial id");
+      set<file_id> completions;
+      app.db.complete(args[1], completions);
+      for (set<file_id>::const_iterator i = completions.begin();
+	   i != completions.end(); ++i)
+	cout << i->inner()() << endl;
+    }
+  else
+    throw usage(name);  
+}
 
 CMD(diff, "informative", "", "show current diffs on stdout")
 {
@@ -1564,8 +1650,10 @@ CMD(mdelta, "packet i/o", "<oldid> <newid>", "write manifest delta packet to std
   manifest_data m_old_data, m_new_data;
   manifest_map m_old, m_new;
   patch_set ps;      
-  m_old_id = hexenc<id>(args[0]); 
-  m_new_id = hexenc<id>(args[1]);
+
+  complete(app, args[0], m_old_id);
+  complete(app, args[1], m_new_id);
+
   app.db.get_manifest_version(m_old_id, m_old_data);
   app.db.get_manifest_version(m_new_id, m_new_data);
   read_manifest_map(m_old_data, m_old);
@@ -1585,8 +1673,10 @@ CMD(fdelta, "packet i/o", "<oldid> <newid>", "write file delta packet to stdout"
 
   file_id f_old_id, f_new_id;
   file_data f_old_data, f_new_data;
-  f_old_id = hexenc<id>(args[0]);
-  f_new_id = hexenc<id>(args[1]);     
+
+  complete(app, args[0], f_old_id);
+  complete(app, args[1], f_new_id);
+
   app.db.get_file_version(f_old_id, f_old_data);
   app.db.get_file_version(f_new_id, f_new_data);
   base64< gzip<delta> > del;
@@ -1605,7 +1695,9 @@ CMD(mdata, "packet i/o", "<id>", "write manifest data packet to stdout")
 
   manifest_id m_id;
   manifest_data m_data;
-  m_id = hexenc<id>(args[0]);
+
+  complete(app, args[0], m_id);
+
   app.db.get_manifest_version(m_id, m_data);
   pw.consume_manifest_data(m_id, m_data);  
   guard.commit();
@@ -1622,7 +1714,9 @@ CMD(fdata, "packet i/o", "<id>", "write file data packet to stdout")
 
   file_id f_id;
   file_data f_data;
-  f_id = hexenc<id>(args[0]);
+
+  complete(app, args[0], f_id);
+
   app.db.get_file_version(f_id, f_data);
   pw.consume_file_data(f_id, f_data);  
   guard.commit();
@@ -1639,7 +1733,8 @@ CMD(mcerts, "packet i/o", "<id>", "write manifest cert packets to stdout")
   manifest_id m_id;
   vector< manifest<cert> > certs;
 
-  m_id = hexenc<id>(args[0]);
+  complete(app, args[0], m_id);
+
   app.db.get_manifest_certs(m_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_manifest_cert(certs[i]);
@@ -1657,7 +1752,8 @@ CMD(fcerts, "packet i/o", "<id>", "write file cert packets to stdout")
   file_id f_id;
   vector< file<cert> > certs;
 
-  f_id = hexenc<id>(args[0]);
+  complete(app, args[0], f_id);
+
   app.db.get_file_certs(f_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_file_cert(certs[i]);
