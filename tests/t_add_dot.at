@@ -1,0 +1,29 @@
+AT_SETUP([(minor) monotone add .])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+AT_DATA(testfile1, [foo
+])
+AT_DATA(testfile2, [bar
+])
+AT_CHECK(mkdir testdir1)
+AT_DATA(testdir1/subfile1, [baz
+])
+AT_DATA(testdir1/subfile2, [quux
+])
+
+AT_CHECK(MONOTONE add ., [], [ignore], [ignore])
+
+COMMIT(test-branch)
+
+AT_CHECK(rm -r testfile1 testfile2 testdir1)
+AT_CHECK(MONOTONE revert)
+
+AT_CHECK(test -f testfile1)
+AT_CHECK(test -f testfile2)
+AT_CHECK(test -f testdir1/subfile1)
+AT_CHECK(test -f testdir1/subfile2)
+
+AT_CLEANUP

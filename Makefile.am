@@ -8,7 +8,7 @@ MOST_SOURCES =								\
          xdelta.cc ui.cc schema_migration.cc				\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
-	 change_set.cc							\
+	 change_set.cc mt_version.cc					\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -19,7 +19,7 @@ MOST_SOURCES =								\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
-         mkstemp.hh
+         mkstemp.hh mt_version.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -116,10 +116,10 @@ IDNA_SOURCES = \
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
 UNIX_PLATFORM_SOURCES = \
-	unix/read_password.cc
+	unix/read_password.cc unix/get_system_flavour.cc
 
 WIN32_PLATFORM_SOURCES = \
-	win32/read_password.cc
+	win32/read_password.cc win32/get_system_flavour.cc
 
 # primaries
 
@@ -167,19 +167,19 @@ if BUNDLED_SQLITE
 endif
 
 if STATIC_BOOST
-  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem.a \
-              @BOOST_LIBDIR@/libboost_date_time.a \
-              @BOOST_LIBDIR@/libboost_regex.a
+  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem$(BOOST_SUFFIX).a \
+              @BOOST_LIBDIR@/libboost_date_time$(BOOST_SUFFIX).a \
+              @BOOST_LIBDIR@/libboost_regex$(BOOST_SUFFIX).a
   monotone_LDADD = lib3rdparty.a $(BOOSTLIBS)
   unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
-                     @BOOST_LIBDIR@/libboost_unit_test_framework.a
+                     @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
 else
   monotone_LDADD = lib3rdparty.a
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
 endif
 
-monotone_LDADD += libplatform.a
-unit_tests_LDADD += libplatform.a
+monotone_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
+unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
@@ -249,6 +249,7 @@ EXTRA_DIST = $(man1_MANS) \
              tests/atconfig.in \
              tests/atlocal.in  \
 	     package.m4 \
+	     package_revision.txt package_full_revision_dist.txt \
              $(wildcard m4/*.m4)
 
 MAKEINFOFLAGS=-I $(top_builddir)
@@ -272,21 +273,15 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 
 TESTS = unit_tests $(srcdir)/testsuite
 
-MOSTLYCLEANFILES = \
-	testsuite.dir/at-check-line \
-        testsuite.dir/at-status \
-	testsuite.dir/at-stdout \
-	testsuite.dir/at-stder1 \
-	testsuite.dir/at-stderr \
-	testsuite.dir/at-times \
-	testsuite.log
+mostlyclean-local:
+	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
 
 DISTCLEANFILES = tests/atconfig \
                  idna/idn-int.h 
 
 # distcheck stuff
 
-DISTCHECK_CONFIGURE_FLAGS = --with-bundled-adns \
+DISTCHECK_CONFIGURE_FLAGS = \
 			 --with-bundled-sqlite \
 			 --with-bundled-lua \
 			 --enable-static-boost
@@ -312,8 +307,12 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES = std_hooks.h test_hooks.h schema.h views.h
-CLEANFILES = $(BUILT_SOURCES) $(EPS_FIGURES)
+BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
+                      package_revision.h \
+                      package_full_revision.txt package_full_revision.h
+BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
+BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
+CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
 
 txt2c: txt2c.cc Makefile
 	$(CXX) -Wall -o $@ $<
@@ -324,6 +323,31 @@ txt2c: txt2c.cc Makefile
 
 %.h: %.lua txt2c Makefile
 	./txt2c $< $(*F) >$@
+
+# A fake target so we can use MT/revision as a prerequisite, yet not
+# crash if MT/revision does not exist.
+$(srcdir)/MT/revision:
+	true
+package_revision.txt: $(srcdir)/MT/revision
+	if [ -f $< ]; then cp $< $@; fi
+	if [ ! -f $@ ]; then echo "unknown" > $@; fi
+package_revision.h: package_revision.txt txt2c Makefile
+	./txt2c --strip-trailing $< package_revision >$@
+
+.PHONY: package_full_revision.txt
+package_full_revision.txt:
+	REAL_BLDDIR=$$PWD/$(top_builddir); \
+	(cd $(srcdir) && $$REAL_BLDDIR/monotone status) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && monotone status) 2>/dev/null >$@ \
+	|| (cp $(srcdir)/package_full_revision_dist.txt 2>/dev/null $@) \
+	|| (echo "unknown" >$@)
+package_full_revision_dist.txt: package_full_revision.txt
+	cp $< $@
+	(echo ''; \
+	 echo '  Generated from data cached in the distribution;'; \
+	 echo '  further changes may have been made.') >> $@
+package_full_revision.h: package_full_revision.txt txt2c Makefile
+	./txt2c $< package_full_revision >$@
 
 # automake doesn't build html docs
 

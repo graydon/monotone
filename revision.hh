@@ -61,6 +61,10 @@ edge_entry;
 struct 
 revision_set
 {
+  void check_sane() const;
+  revision_set() {}
+  revision_set(revision_set const & other);
+  revision_set const & operator=(revision_set const & other);
   manifest_id new_manifest;
   edge_map edges;
 };
@@ -120,10 +124,21 @@ write_revision_set(revision_set const & rev,
 // graph walking
 
 bool 
-find_common_ancestor(revision_id const & left,
-		     revision_id const & right,
-		     revision_id & anc,
-		     app_state & app);
+find_common_ancestor_for_merge(revision_id const & left,
+			       revision_id const & right,
+			       revision_id & anc,
+			       app_state & app);
+
+bool 
+find_least_common_ancestor(revision_id const & left,
+			   revision_id const & right,
+			   revision_id & anc,
+			   app_state & app);
+
+bool
+is_ancestor(revision_id const & ancestor,
+	    revision_id const & descendent,
+	    app_state & app);
 
 void 
 calculate_composite_change_set(revision_id const & ancestor,
@@ -133,7 +148,10 @@ calculate_composite_change_set(revision_id const & ancestor,
 
 
 void 
-build_changesets(app_state & app);
+build_changesets_from_manifest_ancestry(app_state & app);
+
+void 
+build_changesets_from_existing_revs(app_state & app);
 
 // basic_io access to printers and parsers
 

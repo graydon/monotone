@@ -1,0 +1,35 @@
+AT_SETUP([merging adds])
+MONOTONE_SETUP
+
+ADD_FILE(irrelevantfile, [this is just a file
+])
+COMMIT(testbranch)
+ANC=`BASE_REVISION`
+
+ADD_FILE(testfile1, [This is test file 1
+])
+COMMIT(testbranch)
+LEFT=`BASE_REVISION`
+
+REVERT_TO($ANC)
+
+ADD_FILE(testfile2, [This is test file 2
+])
+COMMIT(testbranch)
+RIGHT=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+
+AT_DATA(expected_irrelevant, [this is just a file
+])
+AT_DATA(expected_data1, [This is test file 1
+])
+AT_DATA(expected_data2, [This is test file 2
+])
+
+AT_CHECK(cmp irrelevantfile expected_irrelevant, [], [ignore])
+AT_CHECK(cmp testfile1 expected_data1, [], [ignore])
+AT_CHECK(cmp testfile2 expected_data2, [], [ignore])
+
+AT_CLEANUP

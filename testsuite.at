@@ -15,6 +15,7 @@ AT_TESTED([monotone])
 # some command abbreviations to make life easier
 
 m4_define([MONOTONE], [monotone --rcfile=test_hooks.lua --nostd --norc --db=test.db --key=tester@test.net])
+m4_define([RAW_MONOTONE], [monotone])
 m4_define([SHA1], [monotone identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
 m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
@@ -58,8 +59,19 @@ function non_blocking_rng_ok()
 	return true
 end
 
+-- Everything alice signs is trusted, nothing mallory signs is
+-- trusted.  For certs signed by other people, everything is
+-- trusted except for one particular cert...
+-- For use of t_trusted.at.
 function get_revision_cert_trust(signers, id, name, val)
-   return true
+   for k, v in pairs(signers) do
+      if v == "alice@trusted.com" then return true end
+      if v == "mallory@evil.com" then return false end
+   end
+   if (id == "0000000000000000000000000000000000000000"
+       and name == "bad-cert" and val == "bad-val")
+   then return false end
+   return true             
 end
 
 function get_manifest_cert_trust(signers, id, name, val)
@@ -95,6 +107,11 @@ function ignore_file(name)
 	return false
 end
 
+function merge2(left_path, right_path, merged_path, left, right)
+	io.write("running merge2 hook\n") 
+	return left
+end
+
 if (attr_functions == nil) then
   attr_functions = {}
 end
@@ -110,6 +127,13 @@ AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
 ])
 
+# run as CHECK_SAME_STDOUT(command1, command2)
+m4_define([CHECK_SAME_STDOUT], [
+AT_CHECK($1, [], [stdout], [ignore])
+AT_CHECK(mv stdout expout)
+AT_CHECK($2, [], [expout], [ignore])
+])
+
 # run as PROBE_NODE(filename, rsha, fsha)
 m4_define([PROBE_NODE], [ 
 AT_CHECK(rm MT/revision)
@@ -117,16 +141,107 @@ AT_CHECK(rm $1)
 AT_CHECK(MONOTONE checkout $2 ., [], [ignore])
 PROBE_R_SHA=`BASE_REVISION`
 PROBE_F_SHA=`SHA1($1)`
-AT_CHECK(test $PROBE_R_SHA == $2)
-AT_CHECK(test $PROBE_F_SHA == $3)
+AT_CHECK(test $PROBE_R_SHA = $2)
+AT_CHECK(test $PROBE_F_SHA = $3)
 ])
 
 # run as REVERT_TO(rsha)
 m4_define([REVERT_TO], [ 
 AT_CHECK(MONOTONE checkout $1 ., [], [ignore])
 PROBE_R_SHA=`BASE_REVISION`
-AT_CHECK(test $PROBE_R_SHA == $1)
+AT_CHECK(test $PROBE_R_SHA = $1)
 ])
+
+# run as ADD_FILE(filename, data)
+m4_define([ADD_FILE], [
+AT_DATA($1, $2)
+AT_CHECK(MONOTONE add $1, [], [ignore], [ignore])
+])
+
+# run as SET_FILE(filename, data)
+m4_define([SET_FILE], [
+AT_DATA($1, $2)
+])
+
+# run as COMMIT(branch)
+m4_define([COMMIT], [
+AT_CHECK(MONOTONE --branch=$1 commit blah-blah, [], [ignore],
+[ignore])
+])
+
+# Some tests want to include data files.
+# Usage: NEED_UNB64 will cancel the test (reporting success) if we
+# can't decode base64'ed text.
+# After calling NEED_UNB64, you can use UNB64(infile, outfile) to
+# decode base64'ed text.
+m4_define([NEED_UNB64], [
+if which mimencode 2>/dev/null; then
+  UNB64_COMMAND="mimencode -u"
+elif which recode 2>/dev/null; then
+  UNB64_COMMAND="recode /Base64"
+elif perl -MMIME::Base64 -e 1 2>/dev/null; then
+  UNB64_COMMAND="perl -MMIME::Base64 -ne 'print decode_base64(\$_)'"
+elif python -c 'import sys;sys.exit(not hasattr("", "decode"))' 2>/dev/null; then
+  UNB64_COMMAND="python -c 'import sys;sys.stdout.write(sys.stdin.read().decode("'"'"base64"'"'"))'"
+else
+  exit 77
+fi
+])
+m4_define([UNB64], [AT_CHECK(eval $UNB64_COMMAND <$1 >$2)])
+
+# netsync helpers
+# NETSYNC_SETUP sets up 2 databases; RUN_NETSYNC netsyncs between
+# them, MONOTONE2 operates on the second one.
+
+m4_define([NETSYNC_SETUP], [
+
+AT_CHECK(cp test.db test2.db)
+AT_CHECK(cp test.db test3.db)
+AT_DATA(netsync.lua, [
+function get_netsync_read_permitted(collection, identity)
+	return true
+end
+
+function get_netsync_write_permitted(collection, identity)
+	return true
+end
+])
+
+])
+
+m4_define([MONOTONE2], MONOTONE --db=test2.db)
+m4_define([MONOTONE3], MONOTONE --db=test3.db)
+
+# run as NETSYNC_SERVE_START(collection name)
+m4_define([NETSYNC_SERVE_START], [
+killall -KILL monotone 2> /dev/null
+MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $1 &
+sleep 4
+])
+# run as NETSYNC_SERVE_STOP
+m4_define([NETSYNC_SERVE_STOP], [
+killall monotone 2> /dev/null
+sleep 1
+killall -KILL monotone 2> /dev/null
+])
+# run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name)
+# first argument chooses whether to use the 2nd or 3rd database
+m4_define([NETSYNC_CLIENT_N_RUN], [
+AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 127.0.0.1:5555 $3, [], [ignore], [ignore])
+])
+# run as NETSYNC_CLIENT_RUN(push|pull|sync, collection name)
+m4_define([NETSYNC_CLIENT_RUN], [
+NETSYNC_CLIENT_N_RUN(2, $1, $2)
+])
+# run as RUN_NETSYNC(push|pull|sync, collection name)
+# It is the second database that is always the client; take this into
+# account when choosing push|pull|sync.
+m4_define([RUN_NETSYNC], [
+NETSYNC_SERVE_START($2)
+NETSYNC_CLIENT_RUN($1, $2)
+NETSYNC_SERVE_STOP
+])
+
 
 
 # include all the sub-tests we're going to use
@@ -141,6 +256,10 @@ m4_include(tests/t_versions.at)
 m4_include(tests/t_fork.at)
 m4_include(tests/t_update.at)
 m4_include(tests/t_merge.at)
+m4_include(tests/t_merge_add.at)
+m4_include(tests/t_related_merge2_data.at)
+m4_include(tests/t_merge2_add.at)
+m4_include(tests/t_merge2_data.at)
 m4_include(tests/t_unidiff2.at)
 m4_include(tests/t_cwork.at)
 m4_include(tests/t_revert.at)
@@ -155,10 +274,13 @@ m4_include(tests/t_cvsimport.at)
 m4_include(tests/t_i18n_file.at)
 m4_include(tests/t_fmerge.at)
 m4_include(tests/t_netsync.at)
+m4_include(tests/t_netsync_single.at)
+m4_include(tests/t_netsync_pubkey.at)
+m4_include(tests/t_netsync_repeated.at)
+m4_include(tests/t_netsync_unrelated.at)
 m4_include(tests/t_disapprove.at)
 m4_include(tests/t_testresult.at)
 m4_include(tests/t_singlecvs.at)
-m4_include(tests/t_singlenetsync.at)
 m4_include(tests/t_ls_missing.at)
 m4_include(tests/t_attributes.at)
 m4_include(tests/t_single_char_filenames.at)
@@ -166,3 +288,38 @@ m4_include(tests/t_movepatch.at)
 m4_include(tests/t_movedel.at)
 m4_include(tests/t_remerge.at)
 m4_include(tests/t_update_missing.at)
+m4_include(tests/t_chkeypass.at)
+m4_include(tests/t_diff_added_file.at)
+m4_include(tests/t_update_to_revision.at)
+m4_include(tests/t_heads.at)
+m4_include(tests/t_heads_discontinuous_branch.at)
+m4_include(tests/t_merge_1.at)
+m4_include(tests/t_merge_2.at)
+m4_include(tests/t_tags.at)
+m4_include(tests/t_add_dot.at)
+m4_include(tests/t_cleanup_empty_dir.at)
+m4_include(tests/t_merge_add_del.at)
+m4_include(tests/t_add_edge.at)
+m4_include(tests/t_patch_drop_add.at)
+m4_include(tests/t_add_drop_add.at)
+m4_include(tests/t_merge2_add_drop_add.at)
+m4_include(tests/t_add_patch_drop_add.at)
+m4_include(tests/t_patch_vs_drop_add.at)
+m4_include(tests/t_explicit_merge.at)
+m4_include(tests/t_ambig_update.at)
+m4_include(tests/t_checkout_dir.at)
+m4_include(tests/t_checkout_options.at)
+m4_include(tests/t_trusted.at)
+m4_include(tests/t_attr.at)
+m4_include(tests/t_rcfile_required.at)
+m4_include(tests/t_persistent_server_revision.at)
+m4_include(tests/t_persistent_server_keys.at)
+m4_include(tests/t_fmerge_normalize.at)
+m4_include(tests/t_delete_dir.at)
+m4_include(tests/t_migrate_schema.at)
+m4_include(tests/t_dump_load.at)
+m4_include(tests/t_no_change_deltas.at)
+m4_include(tests/t_drop_rename_patch.at)
+m4_include(tests/t_cmdline_options.at)
+m4_include(tests/t_log_nonexistent.at)
+m4_include(tests/t_crlf.at)

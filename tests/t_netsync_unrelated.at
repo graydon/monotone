@@ -1,0 +1,46 @@
+AT_SETUP([(normal) netsync on partially unrelated revisions])
+AT_KEYWORDS([netsync])
+MONOTONE_SETUP
+
+# This tests netsync'ing
+#
+#   A   B
+#    \ /
+#     C
+#
+# where A starts out shared, but B and C do not.
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+NETSYNC_SETUP
+
+ADD_FILE(testfile1, [This is test file 1
+])
+COMMIT(testbranch)
+BASE=`BASE_REVISION`
+
+RUN_NETSYNC(pull, testbranch)
+
+CHECK_SAME_STDOUT(MONOTONE agraph, MONOTONE2 agraph)
+CHECK_SAME_STDOUT(MONOTONE ls certs $BASE, MONOTONE ls certs $BASE)
+
+AT_CHECK(rm -rf MT)
+
+ADD_FILE(testfile2, [This is test file 2
+])
+COMMIT(testbranch)
+UNRELATED=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+MERGE=`BASE_REVISION`
+
+RUN_NETSYNC(pull, testbranch)
+
+CHECK_SAME_STDOUT(MONOTONE agraph, MONOTONE2 agraph)
+CHECK_SAME_STDOUT(MONOTONE ls certs $BASE, MONOTONE ls certs $BASE)
+CHECK_SAME_STDOUT(MONOTONE ls certs $UNRELATED, MONOTONE ls certs $UNRELATED)
+CHECK_SAME_STDOUT(MONOTONE ls certs $MERGE, MONOTONE ls certs $MERGE)
+
+AT_CLEANUP

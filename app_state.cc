@@ -32,7 +32,7 @@ app_state::app_state()
 
       string dbname = absolutify(options[database_option]());
       if (dbname != "")
-	db.set_filename(mkpath(dbname));
+        db.set_filename(mkpath(dbname));
       branch_name = options[branch_option];
       internalize_rsa_keypair_id(options[key_option], signing_key);
     }
@@ -70,9 +70,9 @@ app_state::set_signing_key(utf8 const & key)
 }
 
 void 
-app_state::write_options()
+app_state::write_options(bool force)
 {
-  if (options_changed)
+  if (options_changed || force)
     {
       local_path o_path;
       get_options_path(o_path);

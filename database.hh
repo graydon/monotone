@@ -270,8 +270,9 @@ public:
 		   revision_set const & cs);
 
   void put_revision(revision_id const & new_id,
-		   revision_data const & dat);
+                    revision_data const & dat);
   
+  void delete_existing_revs_and_certs();
 
   // crypto key / cert operations
 
@@ -306,6 +307,8 @@ public:
   void put_key_pair(rsa_keypair_id const & pub_id, 
 		    base64<rsa_pub_key> const & pub_encoded,
 		    base64< arc4<rsa_priv_key> > const & priv_encoded);
+
+  void delete_private_key(rsa_keypair_id const & pub_id);
 
   // note: this section is ridiculous. please do something about it.
 

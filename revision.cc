@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <queue>
 #include <set>
 #include <sstream>
 #include <string>
@@ -18,10 +19,53 @@
 #include "basic_io.hh"
 #include "change_set.hh"
 #include "constants.hh"
+#include "numeric_vocab.hh"
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "ui.hh"
 #include "vocab.hh"
+
+
+void revision_set::check_sane() const
+{
+  manifest_map fragment;
+  for (edge_map::const_iterator i = edges.begin(); i != edges.end(); ++i)
+    {
+      change_set const & cs = edge_changes(i);
+      cs.check_sane();
+      for (change_set::delta_map::const_iterator j = cs.deltas.begin(); j != cs.deltas.end(); ++j)
+        {
+          manifest_map::const_iterator k = fragment.find(delta_entry_path(j));
+          if (k == fragment.end())
+            fragment.insert(std::make_pair(delta_entry_path(j),
+                                           delta_entry_dst(j)));
+          else
+            {
+              if (!global_sanity.relaxed)
+                {                  
+                  I(delta_entry_dst(j) == manifest_entry_id(k));
+                }
+            }
+        }
+    }
+}
+
+revision_set::revision_set(revision_set const & other)
+{
+  other.check_sane();
+  new_manifest = other.new_manifest;
+  edges = other.edges;
+}
+
+revision_set const & 
+revision_set::operator=(revision_set const & other)
+{
+  other.check_sane();
+  new_manifest = other.new_manifest;
+  edges = other.edges;
+  return *this;
+}
 
 
 // calculating least common ancestors is a delicate thing.
@@ -57,9 +101,9 @@ typedef boost::shared_ptr<bitmap> shared_bitmap;
 
 static void 
 ensure_parents_loaded(ctx child,
-		      std::map<ctx, shared_bitmap> & parents,
-		      interner<ctx> & intern,
-		      app_state & app)
+                      std::map<ctx, shared_bitmap> & parents,
+                      interner<ctx> & intern,
+                      app_state & app)
 {
   if (parents.find(child) != parents.end())
     return;
@@ -68,6 +112,16 @@ ensure_parents_loaded(ctx child,
 
   std::set<revision_id> imm_parents;
   app.db.get_revision_parents(revision_id(intern.lookup(child)), imm_parents);
+
+  // The null revision is not a parent for purposes of finding common
+  // ancestors.
+  for (std::set<revision_id>::iterator p = imm_parents.begin();
+       p != imm_parents.end(); ++p)
+    {
+      if (null_id(*p))
+        imm_parents.erase(p);
+    }
+              
   shared_bitmap bits = shared_bitmap(new bitmap(parents.size()));
   
   for (std::set<revision_id>::const_iterator p = imm_parents.begin();
@@ -76,7 +130,7 @@ ensure_parents_loaded(ctx child,
       ctx pn = intern.intern(p->inner()());
       L(F("parent %s -> node %d\n") % *p % pn);
       if (pn >= bits->size()) 
-	bits->resize(pn+1);
+        bits->resize(pn+1);
       bits->set(pn);
     }
     
@@ -85,9 +139,9 @@ ensure_parents_loaded(ctx child,
 
 static bool 
 expand_dominators(std::map<ctx, shared_bitmap> & parents,
-		  std::map<ctx, shared_bitmap> & dominators,
-		  interner<ctx> & intern,
-		  app_state & app)
+                  std::map<ctx, shared_bitmap> & dominators,
+                  interner<ctx> & intern,
+                  app_state & app)
 {
   bool something_changed = false;
   std::vector<ctx> nodes;
@@ -106,7 +160,7 @@ expand_dominators(std::map<ctx, shared_bitmap> & parents,
       shared_bitmap bits = dominators[*n];
       bitmap saved(*bits);
       if (bits->size() <= *n)
-	bits->resize(*n + 1);
+        bits->resize(*n + 1);
       bits->set(*n);
       
       ensure_parents_loaded(*n, parents, intern, app);
@@ -116,34 +170,34 @@ expand_dominators(std::map<ctx, shared_bitmap> & parents,
       
       bool first = true;
       for (unsigned long parent = 0; 
-	   parent != n_parents->size(); ++parent)
-	{
-	  if (! n_parents->test(parent))
-	    continue;
+           parent != n_parents->size(); ++parent)
+        {
+          if (! n_parents->test(parent))
+            continue;
 
-	  if (dominators.find(parent) == dominators.end())
-	    dominators.insert(std::make_pair(parent, 
-					     shared_bitmap(new bitmap())));
-	  shared_bitmap pbits = dominators[parent];
+          if (dominators.find(parent) == dominators.end())
+            dominators.insert(std::make_pair(parent, 
+                                             shared_bitmap(new bitmap())));
+          shared_bitmap pbits = dominators[parent];
 
-	  if (bits->size() > pbits->size())
-	    pbits->resize(bits->size());
+          if (bits->size() > pbits->size())
+            pbits->resize(bits->size());
 
-	  if (pbits->size() > bits->size())
-	    bits->resize(pbits->size());
+          if (pbits->size() > bits->size())
+            bits->resize(pbits->size());
 
-	  if (first)
-	    {
-	      intersection = (*pbits);
-	      first = false;
-	    }
-	  else
-	    intersection &= (*pbits);
-	}
+          if (first)
+            {
+              intersection = (*pbits);
+              first = false;
+            }
+          else
+            intersection &= (*pbits);
+        }
 
       (*bits) |= intersection;
       if (*bits != saved)
-	something_changed = true;
+        something_changed = true;
     }
   return something_changed;
 }
@@ -151,9 +205,9 @@ expand_dominators(std::map<ctx, shared_bitmap> & parents,
 
 static bool 
 expand_ancestors(std::map<ctx, shared_bitmap> & parents,
-		 std::map<ctx, shared_bitmap> & ancestors,
-		 interner<ctx> & intern,
-		 app_state & app)
+                 std::map<ctx, shared_bitmap> & ancestors,
+                 interner<ctx> & intern,
+                 app_state & app)
 {
   bool something_changed = false;
   std::vector<ctx> nodes;
@@ -171,44 +225,44 @@ expand_ancestors(std::map<ctx, shared_bitmap> & parents,
       shared_bitmap bits = ancestors[*n];
       bitmap saved(*bits);
       if (bits->size() <= *n)
-	bits->resize(*n + 1);
+        bits->resize(*n + 1);
       bits->set(*n);
 
       ensure_parents_loaded(*n, parents, intern, app);
       shared_bitmap n_parents = parents[*n];
       for (ctx parent = 0; parent != n_parents->size(); ++parent)
-	{
-	  if (! n_parents->test(parent))
-	    continue;
+        {
+          if (! n_parents->test(parent))
+            continue;
 
-	  if (bits->size() <= parent)
-	    bits->resize(parent + 1);
-	  bits->set(parent);
+          if (bits->size() <= parent)
+            bits->resize(parent + 1);
+          bits->set(parent);
 
-	  if (ancestors.find(parent) == ancestors.end())
-	    ancestors.insert(make_pair(parent, 
-					shared_bitmap(new bitmap())));
-	  shared_bitmap pbits = ancestors[parent];
+          if (ancestors.find(parent) == ancestors.end())
+            ancestors.insert(make_pair(parent, 
+                                        shared_bitmap(new bitmap())));
+          shared_bitmap pbits = ancestors[parent];
 
-	  if (bits->size() > pbits->size())
-	    pbits->resize(bits->size());
+          if (bits->size() > pbits->size())
+            pbits->resize(bits->size());
 
-	  if (pbits->size() > bits->size())
-	    bits->resize(pbits->size());
+          if (pbits->size() > bits->size())
+            bits->resize(pbits->size());
 
-	  (*bits) |= (*pbits);
-	}
+          (*bits) |= (*pbits);
+        }
       if (*bits != saved)
-	something_changed = true;
+        something_changed = true;
     }
   return something_changed;
 }
 
 static bool 
 find_intersecting_node(bitmap & fst, 
-		       bitmap & snd, 
-		       interner<ctx> const & intern, 
-		       revision_id & anc)
+                       bitmap & snd, 
+                       interner<ctx> const & intern, 
+                       revision_id & anc)
 {
   
   if (fst.size() > snd.size())
@@ -221,20 +275,20 @@ find_intersecting_node(bitmap & fst,
     {
       L(F("found %d intersecting nodes\n") % intersection.count());
       for (ctx i = 0; i < intersection.size(); ++i)
-	{
-	  if (intersection.test(i))
-	    {
-	      anc = revision_id(intern.lookup(i));
-	      return true;
-	    }
-	}
+        {
+          if (intersection.test(i))
+            {
+              anc = revision_id(intern.lookup(i));
+              return true;
+            }
+        }
     }
   return false;
 }
 
 //  static void
-//  dump_bitset_map(string const & hdr,
-//  		std::map< ctx, shared_bitmap > const & mm)
+//  dump_bitset_map(std::string const & hdr,
+//              std::map< ctx, shared_bitmap > const & mm)
 //  {
 //    L(F("dumping [%s] (%d entries)\n") % hdr % mm.size());
 //    for (std::map< ctx, shared_bitmap >::const_iterator i = mm.begin();
@@ -245,10 +299,10 @@ find_intersecting_node(bitmap & fst,
 //  }
 
 bool 
-find_common_ancestor(revision_id const & left,
-		     revision_id const & right,
-		     revision_id & anc,
-		     app_state & app)
+find_common_ancestor_for_merge(revision_id const & left,
+                               revision_id const & right,
+                               revision_id & anc,
+                               app_state & app)
 {
   interner<ctx> intern;
   std::map< ctx, shared_bitmap > 
@@ -270,28 +324,108 @@ find_common_ancestor(revision_id const & left,
   L(F("searching for common ancestor, left=%s right=%s\n") % left % right);
   
   while (expand_ancestors(parents, ancestors, intern, app) ||
-	 expand_dominators(parents, dominators, intern, app))
+         expand_dominators(parents, dominators, intern, app))
     {
       L(F("common ancestor scan [par=%d,anc=%d,dom=%d]\n") % 
-	parents.size() % ancestors.size() % dominators.size());
+        parents.size() % ancestors.size() % dominators.size());
 
       if (find_intersecting_node(*lanc, *rdom, intern, anc))
-	{
-	  L(F("found node %d, ancestor of left %s and dominating right %s\n")
-	    % anc % left % right);
-	  return true;
-	}
+        {
+          L(F("found node %d, ancestor of left %s and dominating right %s\n")
+            % anc % left % right);
+          return true;
+        }
       
       else if (find_intersecting_node(*ranc, *ldom, intern, anc))
-	{
-	  L(F("found node %d, ancestor of right %s and dominating left %s\n")
-	    % anc % right % left);
-	  return true;
-	}
+        {
+          L(F("found node %d, ancestor of right %s and dominating left %s\n")
+            % anc % right % left);
+          return true;
+        }
     }
 //      dump_bitset_map("ancestors", ancestors);
 //      dump_bitset_map("dominators", dominators);
 //      dump_bitset_map("parents", parents);
+  return false;
+}
+
+
+bool
+find_least_common_ancestor(revision_id const & left,
+                           revision_id const & right,
+                           revision_id & anc,
+                           app_state & app)
+{
+  interner<ctx> intern;
+  std::map< ctx, shared_bitmap >
+    parents, ancestors;
+
+  ctx ln = intern.intern(left.inner()());
+  ctx rn = intern.intern(right.inner()());
+
+  shared_bitmap lanc = shared_bitmap(new bitmap());
+  shared_bitmap ranc = shared_bitmap(new bitmap());
+
+  ancestors.insert(make_pair(ln, lanc));
+  ancestors.insert(make_pair(rn, ranc));
+
+  L(F("searching for least common ancestor, left=%s right=%s\n") % left % right);
+
+  while (expand_ancestors(parents, ancestors, intern, app))
+    {
+      L(F("least common ancestor scan [par=%d,anc=%d]\n") %
+        parents.size() % ancestors.size());
+
+      if (find_intersecting_node(*lanc, *ranc, intern, anc))
+        {
+          L(F("found node %d, ancestor of left %s and right %s\n")
+            % anc % left % right);
+          return true;
+        }
+    }
+//      dump_bitset_map("ancestors", ancestors);
+//      dump_bitset_map("parents", parents);
+  return false;
+}
+
+
+bool
+is_ancestor(revision_id const & ancestor_id,
+            revision_id const & descendent_id,
+            app_state & app)
+{
+  L(F("checking whether %s is an ancestor of %s\n") % ancestor_id % descendent_id);
+
+  std::set<revision_id> visited;
+  std::queue<revision_id> queue;
+
+  queue.push(descendent_id);
+
+  while (!queue.empty())
+    {
+      revision_id current_id = queue.front();
+      queue.pop();
+
+      if (current_id == ancestor_id)
+        return true;
+      else
+        {
+          revision_set rev;
+          app.db.get_revision(current_id, rev);
+
+          for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
+            {
+              revision_id parent = edge_old_revision(i);
+              if (!parent.inner()().empty() &&
+                  visited.find(parent) == visited.end())
+                {
+                  queue.push(parent);
+                  visited.insert(parent);
+                }
+            }
+        }
+    }
+
   return false;
 }
 
@@ -314,15 +448,19 @@ find_common_ancestor(revision_id const & left,
 
 static bool 
 calculate_change_sets_recursive(revision_id const & ancestor,
-				revision_id const & child,
-				app_state & app,
-				change_set & cumulative_cset,
-				std::map<revision_id, boost::shared_ptr<change_set> > & partial_csets,
-				std::set<revision_id> & visited_nodes)
+                                revision_id const & child,
+                                app_state & app,
+                                change_set & cumulative_cset,
+                                std::map<revision_id, boost::shared_ptr<change_set> > & partial_csets,
+                                std::set<revision_id> & visited_nodes,
+                                std::set<revision_id> const & subgraph)
 {
 
   if (ancestor == child)
     return true;
+
+  if (subgraph.find(child) == subgraph.end())
+    return false;
 
   visited_nodes.insert(child);
 
@@ -340,43 +478,44 @@ calculate_change_sets_recursive(revision_id const & ancestor,
       revision_id curr_parent = edge_old_revision(i);
 
       if (curr_parent.inner()().empty())
-	continue;
+        continue;
 
       change_set cset_to_curr_parent;
 
       L(F("considering parent %s of %s\n") % curr_parent % child);
 
       std::map<revision_id, boost::shared_ptr<change_set> >::const_iterator j = 
-	partial_csets.find(curr_parent);
+        partial_csets.find(curr_parent);
       if (j != partial_csets.end()) 
-	{
-	  // a recursive call has traversed this parent before and built an
-	  // existing cset. just reuse that rather than re-traversing
-	  cset_to_curr_parent = *(j->second);
-	  relevant_parent = true;
-	}
+        {
+          // a recursive call has traversed this parent before and built an
+          // existing cset. just reuse that rather than re-traversing
+          cset_to_curr_parent = *(j->second);
+          relevant_parent = true;
+        }
       else if (visited_nodes.find(curr_parent) != visited_nodes.end())
-	{
-	  // a recursive call has traversed this parent, but there was no
-	  // path from it to the root, so the parent is irrelevant. skip.
-	  relevant_parent = false;
-	}
+        {
+          // a recursive call has traversed this parent, but there was no
+          // path from it to the root, so the parent is irrelevant. skip.
+          relevant_parent = false;
+        }
       else
-	relevant_parent = calculate_change_sets_recursive(ancestor, curr_parent, app, 
-							  cset_to_curr_parent, 
-							  partial_csets,
-							  visited_nodes);
+        relevant_parent = calculate_change_sets_recursive(ancestor, curr_parent, app, 
+                                                          cset_to_curr_parent, 
+                                                          partial_csets,
+                                                          visited_nodes,
+                                                          subgraph);
 
       if (relevant_parent)
-	{
-	  L(F("revision %s is relevant, composing with edge to %s\n") 
-	    % curr_parent % child);
-	  concatenate_change_sets(cset_to_curr_parent, edge_changes(i), cumulative_cset);
-	  relevant_child = true;
-	  break;
-	}
+        {
+          L(F("revision %s is relevant, composing with edge to %s\n") 
+            % curr_parent % child);
+          concatenate_change_sets(cset_to_curr_parent, edge_changes(i), cumulative_cset);
+          relevant_child = true;
+          break;
+        }
       else
-	L(F("parent %s of %s is not relevant\n") % curr_parent % child);
+        L(F("parent %s of %s is not relevant\n") % curr_parent % child);
     }
 
   // store the partial edge from ancestor -> child, so that if anyone
@@ -384,114 +523,174 @@ calculate_change_sets_recursive(revision_id const & ancestor,
   // cache.
   if (relevant_child)
     partial_csets.insert(std::make_pair(child, 
-					boost::shared_ptr<change_set>
-					(new change_set(cumulative_cset))));
+                                        boost::shared_ptr<change_set>
+                                        (new change_set(cumulative_cset))));
   
   return relevant_child;
 }
 
+// this finds (by breadth-first search) the set of nodes you'll have to
+// walk over in calculate_change_sets_recursive, to build the composite
+// changeset. this is to prevent the recursive algorithm from going way
+// back in history on an unlucky guess of parent.
+
+static void
+find_subgraph_for_composite_search(revision_id const & ancestor,
+                                   revision_id const & child,
+                                   app_state & app,
+                                   std::set<revision_id> & subgraph)
+{
+  std::set<revision_id> frontier;
+  frontier.insert(child);
+  subgraph.insert(child);
+  while (!frontier.empty())
+    {
+      std::set<revision_id> next_frontier;      
+      for (std::set<revision_id>::const_iterator i = frontier.begin();
+           i != frontier.end(); ++i)
+        {
+          revision_set rev;
+          app.db.get_revision(*i, rev);
+          L(F("adding parents of %s to subgraph\n") % *i);
+          
+          for(edge_map::const_iterator j = rev.edges.begin(); j != rev.edges.end(); ++j)
+            {
+              revision_id curr_parent = edge_old_revision(j);
+              subgraph.insert(curr_parent);
+              if (curr_parent == ancestor)
+                {
+                  L(F("found parent %s of %s\n") % curr_parent % *i);
+                  return;
+                }
+              else
+                L(F("adding parent %s to next frontier\n") % curr_parent);
+                next_frontier.insert(curr_parent);
+            }
+        }
+      frontier = next_frontier;
+    }
+}
+
 void 
 calculate_composite_change_set(revision_id const & ancestor,
-			       revision_id const & child,
-			       app_state & app,
-			       change_set & composed)
+                               revision_id const & child,
+                               app_state & app,
+                               change_set & composed)
 {
   L(F("calculating composite changeset between %s and %s\n")
     % ancestor % child);
   std::set<revision_id> visited;
+  std::set<revision_id> subgraph;
   std::map<revision_id, boost::shared_ptr<change_set> > partial;
-  calculate_change_sets_recursive(ancestor, child, app, composed, partial, visited);
+  find_subgraph_for_composite_search(ancestor, child, app, subgraph);
+  calculate_change_sets_recursive(ancestor, child, app, composed, partial, 
+                                  visited, subgraph);
 }
 
-// migration stuff
-//
-// FIXME: these are temporary functions, once we've done the migration to
-// revisions / changesets, we can remove them.
+
+// Stuff related to rebuilding the revision graph. Unfortunately this is a
+// real enough error case that we need support code for it.
+
 
 static void 
 analyze_manifest_changes(app_state & app,
-			 manifest_id const & parent, 
-			 manifest_id const & child, 
-			 change_set & cs)
+                         manifest_id const & parent, 
+                         manifest_id const & child, 
+                         change_set & cs)
 {
   manifest_map m_parent, m_child;
-  app.db.get_manifest(parent, m_parent);
-  app.db.get_manifest(child, m_child);
+
+  if (!parent.inner()().empty())
+    app.db.get_manifest(parent, m_parent);
+
+  if (!parent.inner()().empty())
+    app.db.get_manifest(child, m_child);
+
+  L(F("analyzing manifest changes from '%s' -> '%s'\n") % parent % child);
 
   for (manifest_map::const_iterator i = m_parent.begin(); 
        i != m_parent.end(); ++i)
     {
       manifest_map::const_iterator j = m_child.find(manifest_entry_path(i));
       if (j == m_child.end())
-	cs.delete_file(manifest_entry_path(i));
+        cs.delete_file(manifest_entry_path(i));
       else if (! (manifest_entry_id(i) == manifest_entry_id(j)))
-	{
-	  cs.apply_delta(manifest_entry_path(i),
-			 manifest_entry_id(i), 
-			 manifest_entry_id(j));
-	}	
+        {
+          cs.apply_delta(manifest_entry_path(i),
+                         manifest_entry_id(i), 
+                         manifest_entry_id(j));
+        }       
     }
   for (manifest_map::const_iterator i = m_child.begin(); 
        i != m_child.end(); ++i)
     {
       manifest_map::const_iterator j = m_parent.find(manifest_entry_path(i));
       if (j == m_parent.end())
-	cs.add_file(manifest_entry_path(i),
-		    manifest_entry_id(i));
+        cs.add_file(manifest_entry_path(i),
+                    manifest_entry_id(i));
     }
 }
 
-static revision_id
-construct_revisions(app_state & app,
-		    manifest_id const & child,
-		    std::multimap< manifest_id, manifest_id > const & ancestry,
-		    std::map<manifest_id, revision_id> & mapped)
+
+struct anc_graph
 {
-  revision_set rev;
-  typedef std::multimap< manifest_id, manifest_id >::const_iterator ci;
-  std::pair<ci,ci> range = ancestry.equal_range(child);
-  for (ci i = range.first; i != range.second; ++i)
-    {
-      manifest_id parent(i->second);
-      revision_id parent_rid;
-      std::map<manifest_id, revision_id>::const_iterator j = mapped.find(parent);
+  anc_graph(bool existing, app_state & a) : 
+    existing_graph(existing),
+    app(a), 
+    max_node(0), 
+    n_nodes("nodes", "n", 1),
+    n_certs_in("certs in", "c", 1),
+    n_revs_out("revs out", "r", 1),
+    n_certs_out("certs out", "C", 1)
+  {}
+  
+  bool existing_graph;
+  app_state & app;
+  u64 max_node;
 
-      if (j != mapped.end())
-	parent_rid = j->second;
-      else
-	{
-	  parent_rid = construct_revisions(app, parent, ancestry, mapped);
-	  P(F("inserting mapping %d : %s -> %s\n") % mapped.size() % parent % parent_rid);;
-	  mapped.insert(std::make_pair(parent, parent_rid));
-	}
-      
-      change_set cs;
-      analyze_manifest_changes(app, parent, child, cs);
-      rev.edges.insert(std::make_pair(parent_rid,
-				      std::make_pair(parent, cs)));
-    } 
+  ticker n_nodes;
+  ticker n_certs_in;
+  ticker n_revs_out;
+  ticker n_certs_out;
 
-  revision_id rid;
-  if (rev.edges.empty())
-    {
-      P(F("ignoring empty revision for manifest %s\n") % child);  
-      return rid;
-    }
+  std::map<u64,manifest_id> node_to_old_man;
+  std::map<manifest_id,u64> old_man_to_node;
 
-  rev.new_manifest = child;
-  calculate_ident(rev, rid);
+  std::map<u64,revision_id> node_to_old_rev;
+  std::map<revision_id,u64> old_rev_to_node;
 
-  if (!app.db.revision_exists (rid))
-    {
-      P(F("mapping manifest %s to revision %s\n") % child % rid);
-      app.db.put_revision(rid, rev);
-    }
-  else
-    {
-      P(F("skipping additional path to revision %s\n") % rid);
-    }
+  std::map<u64,revision_id> node_to_new_rev;
+  std::multimap<u64, std::pair<cert_name, cert_value> > certs;
+  std::multimap<u64, u64> ancestry;
+  std::set<u64> heads;
+  
+  void add_node_ancestry(u64 child, u64 parent);  
+  void write_certs();
+  void rebuild_from_heads();
+  void get_node_manifest(u64 node, manifest_id & man);
+  u64 add_node_for_old_manifest(manifest_id const & man);
+  u64 add_node_for_old_revision(revision_id const & rev);                     
+  revision_id construct_revision_from_ancestry(u64 child);
+};
 
-  // now hoist all the interesting certs up to the revision
+
+void anc_graph::add_node_ancestry(u64 child, u64 parent)
+{
+  L(F("noting ancestry from child %d -> parent %d\n") % child % parent);
+  ancestry.insert(std::make_pair(child, parent));
+  heads.insert(child);
+  heads.erase(parent);
+}
+
+void anc_graph::get_node_manifest(u64 node, manifest_id & man)
+{
+  std::map<u64,manifest_id>::const_iterator i = node_to_old_man.find(node);
+  I(i != node_to_old_man.end());
+  man = i->second;
+}
+
+void anc_graph::write_certs()
+{
   std::set<cert_name> cnames;
   cnames.insert(cert_name(branch_cert_name));
   cnames.insert(cert_name(date_cert_name));
@@ -501,36 +700,224 @@ construct_revisions(app_state & app,
   cnames.insert(cert_name(comment_cert_name));
   cnames.insert(cert_name(testresult_cert_name));
 
-  std::vector< manifest<cert> > tmp;
-  app.db.get_manifest_certs(child, tmp);
-  erase_bogus_certs(tmp, app);      
-  for (std::vector< manifest<cert> >::const_iterator i = tmp.begin();
-       i != tmp.end(); ++i)
+  typedef std::multimap<u64, std::pair<cert_name, cert_value> >::const_iterator ci;
+    
+  for (std::map<u64,revision_id>::const_iterator i = node_to_new_rev.begin();
+       i != node_to_new_rev.end(); ++i)
     {
-      if (cnames.find(i->inner().name) == cnames.end())
-	continue;
-      cert new_cert;
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
-      make_simple_cert(rid.inner(), i->inner().name, tv, app, new_cert);
-      if (! app.db.revision_cert_exists(revision<cert>(new_cert)))
-	app.db.put_revision_cert(revision<cert>(new_cert));
+      revision_id rev(i->second);
+
+      std::pair<ci,ci> range = certs.equal_range(i->first);
+        
+      for (ci j = range.first; j != range.second; ++j)
+        {
+          cert_name name(j->second.first);
+          cert_value val(j->second.second);
+
+          if (cnames.find(name) == cnames.end())
+            continue;
+
+          cert new_cert;
+          make_simple_cert(rev.inner(), name, val, app, new_cert);
+          revision<cert> rcert(new_cert);
+          if (! app.db.revision_cert_exists(rcert))
+            {
+              ++n_certs_out;
+              app.db.put_revision_cert(rcert);
+            }
+        }        
+    }    
+}
+
+void
+anc_graph::rebuild_from_heads()
+{
+  P(F("rebuilding %d nodes\n") % max_node);
+  {
+    transaction_guard guard(app.db);
+    if (existing_graph)
+      app.db.delete_existing_revs_and_certs();
+    
+    for (std::set<u64>::const_iterator i = heads.begin();
+         i != heads.end(); ++i)
+      {
+        construct_revision_from_ancestry(*i);
+      }
+    write_certs();
+    guard.commit();
+  }
+}
+
+u64 anc_graph::add_node_for_old_manifest(manifest_id const & man)
+{
+  I(!existing_graph);
+  u64 node = 0;
+  if (old_man_to_node.find(man) == old_man_to_node.end())
+    {
+      node = max_node++;
+      ++n_nodes;
+      P(F("node %d = manifest %s\n") % node % man);
+      old_man_to_node.insert(std::make_pair(man, node));
+      node_to_old_man.insert(std::make_pair(node, man));
+      
+      // load certs
+      std::vector< manifest<cert> > mcerts;
+      app.db.get_manifest_certs(man, mcerts);
+      erase_bogus_certs(mcerts, app);      
+      for(std::vector< manifest<cert> >::const_iterator i = mcerts.begin();
+          i != mcerts.end(); ++i)
+        {
+          L(F("loaded '%s' manifest cert for node %s\n") % i->inner().name % node);
+          cert_value tv;
+          decode_base64(i->inner().value, tv);
+          ++n_certs_in;
+          certs.insert(std::make_pair(node, 
+                                      std::make_pair(i->inner().name, tv)));
+        }
     }
+  else
+    {
+      node = old_man_to_node[man];
+    }
+  return node;
+}
+
+u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
+{
+  I(existing_graph);
+  u64 node = 0;
+  if (old_rev_to_node.find(rev) == old_rev_to_node.end())
+    {
+      node = max_node++;
+      ++n_nodes;
+      
+      manifest_id man;
+      if (!rev.inner()().empty())
+        app.db.get_revision_manifest(rev, man);
+      
+      L(F("node %d = revision %s = manifest %s\n") % node % rev % man);
+      old_rev_to_node.insert(std::make_pair(rev, node));
+      node_to_old_rev.insert(std::make_pair(node, rev));
+      node_to_old_man.insert(std::make_pair(node, man));
+
+      // load certs
+      std::vector< revision<cert> > rcerts;
+      app.db.get_revision_certs(rev, rcerts);
+      erase_bogus_certs(rcerts, app);      
+      for(std::vector< revision<cert> >::const_iterator i = rcerts.begin();
+          i != rcerts.end(); ++i)
+        {
+          L(F("loaded '%s' revision cert for node %s\n") % i->inner().name % node);
+          cert_value tv;
+          decode_base64(i->inner().value, tv);
+          ++n_certs_in;
+          certs.insert(std::make_pair(node, 
+                                      std::make_pair(i->inner().name, tv)));
+        }
+    }
+  else
+    {
+      node = old_rev_to_node[rev];
+    }
+
+  return node;
+}
+
+revision_id
+anc_graph::construct_revision_from_ancestry(u64 child)
+{
+  manifest_id child_man;
+  get_node_manifest(child, child_man);
+
+  revision_set rev;
+  rev.new_manifest = child_man;
+
+  typedef std::multimap<u64, u64>::const_iterator ci;
+  std::pair<ci,ci> range = ancestry.equal_range(child);
+  L(F("processing node %d\n") % child);
+  for (ci i = range.first; i != range.second; ++i)
+    {
+      I(child == i->first);
+      u64 parent(i->second);
+      L(F("processing edge from child %d -> parent %d\n") % child % parent);
+      
+      revision_id parent_rid;
+      std::map<u64, revision_id>::const_iterator j = node_to_new_rev.find(parent);
+      
+      if (j != node_to_new_rev.end())
+        parent_rid = j->second;
+      else
+        {
+          parent_rid = construct_revision_from_ancestry(parent);
+          node_to_new_rev.insert(std::make_pair(parent, parent_rid));
+        }
+      
+      L(F("parent node %d = revision %s\n") % parent % parent_rid);      
+      manifest_id parent_man;
+      get_node_manifest(parent, parent_man);
+      change_set cs;
+      analyze_manifest_changes(app, parent_man, child_man, cs);
+      rev.edges.insert(std::make_pair(parent_rid,
+                                      std::make_pair(parent_man, cs)));
+    } 
+
+  revision_id rid;
+  if (rev.edges.empty())
+    {
+      L(F("ignoring empty revision for node %d\n") % child);  
+      return rid;
+    }
+
+  calculate_ident(rev, rid);
+  node_to_new_rev.insert(std::make_pair(child, rid));
+
+  if (!app.db.revision_exists (rid))
+    {
+      L(F("mapped node %d to revision %s\n") % child % rid);
+      app.db.put_revision(rid, rev);
+      ++n_revs_out;
+    }
+  else
+    {
+      L(F("skipping additional path to revision %s\n") % rid);
+    }
+
   return rid;  
+}
+
+void 
+build_changesets_from_existing_revs(app_state & app)
+{
+  global_sanity.set_relaxed(true);
+  anc_graph graph(true, app);
+
+  P(F("rebuilding revision graph from existing graph\n"));
+  std::set<std::pair<revision_id, revision_id> > existing_graph;
+
+  app.db.get_revision_ancestry(existing_graph);
+  for (std::set<std::pair<revision_id, revision_id> >::const_iterator i = existing_graph.begin();
+       i != existing_graph.end(); ++i)
+    {
+      u64 parent_node = graph.add_node_for_old_revision(i->first);
+      u64 child_node = graph.add_node_for_old_revision(i->second);
+      graph.add_node_ancestry(child_node, parent_node);
+    }
+
+  global_sanity.set_relaxed(false);
+  graph.rebuild_from_heads();
 }
 
 
 void 
-build_changesets(app_state & app)
+build_changesets_from_manifest_ancestry(app_state & app)
 {
+  anc_graph graph(false, app);
+
+  P(F("rebuilding revision graph from manifest certs\n"));
   std::vector< manifest<cert> > tmp;
   app.db.get_manifest_certs(cert_name("ancestor"), tmp);
   erase_bogus_certs(tmp, app);
 
-  std::multimap< manifest_id, manifest_id > ancestry;
-  std::set<manifest_id> heads;
-  std::set<manifest_id> total;
-  
   for (std::vector< manifest<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -539,23 +926,13 @@ build_changesets(app_state & app)
       manifest_id child, parent;
       child = i->inner().ident;
       parent = hexenc<id>(tv());
-      heads.insert(child);
-      heads.erase(parent);
-      total.insert(child);
-      total.insert(parent);
-      ancestry.insert(std::make_pair(child, parent));
+
+      u64 parent_node = graph.add_node_for_old_manifest(parent);
+      u64 child_node = graph.add_node_for_old_manifest(child);
+      graph.add_node_ancestry(child_node, parent_node);
     }
   
-  P(F("found a total of %d manifests\n") % total.size());
-
-  transaction_guard guard(app.db);
-  std::map<manifest_id, revision_id> mapped;
-  for (std::set<manifest_id>::const_iterator i = heads.begin();
-       i != heads.end(); ++i)
-    {
-      construct_revisions(app, *i, ancestry, mapped);
-    }
-  guard.commit();
+  graph.rebuild_from_heads();
 }
 
 
@@ -576,7 +953,7 @@ namespace
 
 void 
 print_edge(basic_io::printer & printer,
-	   edge_entry const & e)
+           edge_entry const & e)
 {       
   basic_io::stanza st;
   st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner()());
@@ -588,8 +965,9 @@ print_edge(basic_io::printer & printer,
 
 void 
 print_revision(basic_io::printer & printer,
-	       revision_set const & rev)
+               revision_set const & rev)
 {
+  rev.check_sane();
   basic_io::stanza st; 
   st.push_hex_pair(syms::new_manifest, rev.new_manifest.inner()());
   printer.print_stanza(st);
@@ -601,7 +979,7 @@ print_revision(basic_io::printer & printer,
 
 void 
 parse_edge(basic_io::parser & parser,
-	   edge_map & es)
+           edge_map & es)
 {
   change_set cs;
   manifest_id old_man;
@@ -624,7 +1002,7 @@ parse_edge(basic_io::parser & parser,
 
 void 
 parse_revision(basic_io::parser & parser,
-	       revision_set & rev)
+               revision_set & rev)
 {
   rev.edges.clear();
   std::string tmp;
@@ -633,32 +1011,37 @@ parse_revision(basic_io::parser & parser,
   rev.new_manifest = manifest_id(tmp);
   while (parser.symp(syms::old_revision))
     parse_edge(parser, rev.edges);
+  rev.check_sane();
 }
 
 void 
 read_revision_set(data const & dat,
-		  revision_set & rev)
+                  revision_set & rev)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss);
+  basic_io::input_source src(iss, "revision");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_revision(pars, rev);
+  I(src.lookahead == EOF);
+  rev.check_sane();
 }
 
 void 
 read_revision_set(revision_data const & dat,
-		  revision_set & rev)
+                  revision_set & rev)
 {
   data unpacked;
   unpack(dat.inner(), unpacked);
   read_revision_set(unpacked, rev);
+  rev.check_sane();
 }
 
 void
 write_revision_set(revision_set const & rev,
-		   data & dat)
+                   data & dat)
 {
+  rev.check_sane();
   std::ostringstream oss;
   basic_io::printer pr(oss);
   print_revision(pr, rev);
@@ -667,8 +1050,9 @@ write_revision_set(revision_set const & rev,
 
 void
 write_revision_set(revision_set const & rev,
-		   revision_data & dat)
+                   revision_data & dat)
 {
+  rev.check_sane();
   data d;
   write_revision_set(rev, d);
   base64< gzip<data> > packed;

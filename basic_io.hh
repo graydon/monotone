@@ -32,9 +32,10 @@ namespace basic_io
   {
     size_t line, col;
     std::istream & in;
+    std::string name;
     int lookahead;
     char c;
-    input_source(std::istream & i);
+    input_source(std::istream & i, std::string const & nm);
     void peek();
     void eat();
     void advance();

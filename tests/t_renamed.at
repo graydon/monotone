@@ -19,7 +19,7 @@ ROOT_F_SHA=`SHA1(foo/foo)`
 
 # produce move edge
 AT_CHECK(MONOTONE rename foo bar, [], [ignore], [ignore])
-AT_CHECK(cp -ar foo bar)
+AT_CHECK(cp -pr foo bar)
 AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
 
 # revert to root

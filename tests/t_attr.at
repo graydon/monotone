@@ -1,0 +1,23 @@
+AT_SETUP([attr command])
+MONOTONE_SETUP
+
+# This test is a bug report.
+# Specifically, 'attr set' should automatically do an 'add .mt-attrs'
+# if .mt-attrs did not previously exist.
+
+ADD_FILE(testfile, [foo bar
+])
+AT_CHECK(MONOTONE attr set testfile unique_key unique_value, [], [ignore], [ignore])
+AT_CHECK(MONOTONE attr get testfile, [], [stdout], [ignore])
+AT_CHECK(grep -q unique_key stdout)
+AT_CHECK(grep -q unique_value stdout)
+AT_CHECK(MONOTONE attr get testfile unique_key, [], [stdout], [ignore])
+AT_CHECK(grep -q unique_value stdout)
+
+COMMIT(testbranch)
+REV=`BASE_REVISION`
+
+AT_CHECK(MONOTONE checkout $REV testdir, [], [ignore], [ignore])
+AT_CHECK(test -f testdir/.mt-attrs)
+
+AT_CLEANUP

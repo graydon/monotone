@@ -7,9 +7,11 @@
 #include <sstream>
 
 #include "app_state.hh"
+#include "basic_io.hh"
 #include "change_set.hh"
 #include "file_io.hh"
 #include "sanity.hh"
+#include "transforms.hh"
 #include "vocab.hh"
 #include "work.hh"
 
@@ -25,13 +27,13 @@ addition_builder
   : public tree_walker
 {
   app_state & app;
-  change_set & cs;
+  change_set::path_rearrangement & pr;
   path_set ps;
 public:
   addition_builder(app_state & a, 
-		   change_set & cs,
-		   path_set & p)
-    : app(a), cs(cs), ps(p)
+                   change_set::path_rearrangement & pr,
+                   path_set & p)
+    : app(a), pr(pr), ps(p)
   {}
   virtual void visit_file(file_path const & path);
 };
@@ -53,38 +55,38 @@ addition_builder::visit_file(file_path const & path)
 
   P(F("adding %s to working copy add set\n") % path);
   ps.insert(path);
-  cs.add_file(path);
+  pr.added_files.insert(path);
 }
 
 void 
 build_addition(file_path const & path,
-	       manifest_map const & man,
-	       app_state & app,
-	       change_set::path_rearrangement & pr)
+               manifest_map const & man,
+               app_state & app,
+               change_set::path_rearrangement & pr)
 {
   N(directory_exists(path) || file_exists(path),
-    F("path %s does not exist") % path);
+    F("path %s does not exist\n") % path);
 
-  change_set cs_new, cs_old, cs_concatenated;
-  cs_old.rearrangement = pr;
+  change_set::path_rearrangement pr_new, pr_concatenated;
+  change_set cs_new;
 
   path_set tmp, ps;
   extract_path_set(man, tmp);
   apply_path_rearrangement(tmp, pr, ps);    
 
-  addition_builder build(app, cs_new, ps);
+  addition_builder build(app, pr_new, ps);
   walk_tree(path, build);
 
-  normalize_change_set(cs_new);
-  concatenate_change_sets(cs_old, cs_new, cs_concatenated);
-  pr = cs_concatenated.rearrangement;
+  normalize_path_rearrangement(pr_new);
+  concatenate_rearrangements(pr, pr_new, pr_concatenated);
+  pr = pr_concatenated;
 }
 
 static bool
 known_preimage_path(file_path const & p,
-		    manifest_map const & m,
-		    change_set::path_rearrangement const & pr,
-		    bool & path_is_directory)
+                    manifest_map const & m,
+                    change_set::path_rearrangement const & pr,
+                    bool & path_is_directory)
 {
   path_set tmp, ps;
   extract_path_set(m, tmp);
@@ -94,26 +96,25 @@ known_preimage_path(file_path const & p,
   for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       if (*i == p) 
-	{
-	  path_is_directory = false;
-	  return true;
-	}
+        {
+          path_is_directory = false;
+          return true;
+        }
       else if ((*i)().find(path_as_dir) == 0)
-	{
-	  path_is_directory = true;
-	  return true;
-	}
+        {
+          path_is_directory = true;
+          return true;
+        }
     }
   return false;
 }
 
 void 
 build_deletion(file_path const & path,
-	       manifest_map const & man,
-	       change_set::path_rearrangement & pr)
+               manifest_map const & man,
+               change_set::path_rearrangement & pr)
 {
-  change_set cs_new, cs_old, cs_concatenated;
-  cs_old.rearrangement = pr;
+  change_set::path_rearrangement pr_new, pr_concatenated;
 
   bool dir_p = false;
   
@@ -126,47 +127,46 @@ build_deletion(file_path const & path,
   P(F("adding %s to working copy delete set\n") % path);
 
   if (dir_p) 
-    cs_new.delete_dir(path);
+    pr_new.deleted_dirs.insert(path);
   else 
-    cs_new.delete_file(path);
+    pr_new.deleted_files.insert(path);
   
-  normalize_change_set(cs_new);
-  concatenate_change_sets(cs_old, cs_new, cs_concatenated);
-  pr = cs_concatenated.rearrangement;
+  normalize_path_rearrangement(pr_new);
+  concatenate_rearrangements(pr, pr_new, pr_concatenated);
+  pr = pr_concatenated;
 }
 
 void 
 build_rename(file_path const & src,
-	     file_path const & dst,
-	     manifest_map const & man,
-	     change_set::path_rearrangement & pr)
+             file_path const & dst,
+             manifest_map const & man,
+             change_set::path_rearrangement & pr)
 {
-  change_set cs_new, cs_old, cs_concatenated;
-  cs_old.rearrangement = pr;
+  change_set::path_rearrangement pr_new, pr_concatenated;
 
   bool dir_p = false;
 
   if (! known_preimage_path(src, man, pr, dir_p))
     {
-      P(F("skipping %s, not currently tracked") % src);
+      P(F("skipping %s, not currently tracked\n") % src);
       return;
     }
 
   P(F("adding %s -> %s to working copy rename set\n") % src % dst);
   if (dir_p)
-    cs_new.rename_dir(src, dst);
+    pr_new.renamed_dirs.insert(std::make_pair(src, dst));
   else 
-    cs_new.rename_file(src, dst);
+    pr_new.renamed_files.insert(std::make_pair(src, dst));
 
-  normalize_change_set(cs_new);
-  concatenate_change_sets(cs_old, cs_new, cs_concatenated);
-  pr = cs_concatenated.rearrangement;
+  normalize_path_rearrangement(pr_new);
+  concatenate_rearrangements(pr, pr_new, pr_concatenated);
+  pr = pr_concatenated;
 }
 
 
 void 
 extract_path_set(manifest_map const & man,
-		 path_set & paths)
+                 path_set & paths)
 {
   paths.clear();
   for (manifest_map::const_iterator i = man.begin();
@@ -178,20 +178,6 @@ extract_path_set(manifest_map const & man,
 
 string const options_file_name("options");
 
-struct 
-add_to_options_map
-{
-  options_map & options;
-  explicit add_to_options_map(options_map & m): options(m) {}
-  bool operator()(match_results<std::string::const_iterator> const & res) 
-  {
-    utf8 value;
-    std::string key(res[1].first, res[1].second);
-    value = std::string(res[2].first, res[2].second);
-    options[key] = value;
-    return true;
-  }
-};
 
 void 
 get_options_path(local_path & o_path)
@@ -203,39 +189,41 @@ get_options_path(local_path & o_path)
 void 
 read_options_map(data const & dat, options_map & options)
 {
-  regex expr("^([^[:space:]]+)[[:blank:]]+([^[:space:]]+)$");
-  regex_grep(add_to_options_map(options), dat(), expr, match_not_dot_newline);
+  std::istringstream iss(dat());
+  basic_io::input_source src(iss, "MT/options");
+  basic_io::tokenizer tok(src);
+  basic_io::parser parser(tok);
+
+  options.clear();
+
+  std::string opt, val;
+  while (parser.symp())
+    {
+      parser.sym(opt);
+      parser.str(val);
+      options[opt] = val;      
+    }
 }
 
 void 
 write_options_map(data & dat, options_map const & options)
 {
-  ostringstream tmp;
+  std::ostringstream oss;
+  basic_io::printer pr(oss);
+
+  basic_io::stanza st;
   for (options_map::const_iterator i = options.begin();
        i != options.end(); ++i)
-    tmp << i->first << " " << i->second << endl;
-  dat = tmp.str();
+    st.push_str_pair(i->first, i->second());
+
+  pr.print_stanza(st);
+  dat = oss.str();
 }
 
 
 // attribute map file
 
 string const attr_file_name(".mt-attrs");
-
-struct 
-add_to_attr_map
-{
-  attr_map & attr;
-  explicit add_to_attr_map(attr_map & m): attr(m) {}
-  bool operator()(match_results<std::string::const_iterator> const & res) 
-  {
-    std::string key(res[1].first, res[1].second);
-    std::string value(res[2].first, res[2].second);
-    std::string file(res[3].first, res[3].second);
-    attr[make_pair(file_path(file), key)] = value;
-    return true;
-  }
-};
 
 void 
 get_attr_path(file_path & a_path)
@@ -244,23 +232,62 @@ get_attr_path(file_path & a_path)
   L(F("attribute map path is %s\n") % a_path);
 }
 
+namespace
+{
+  namespace syms
+  {
+    std::string const file("file");
+  }
+}
+
 void 
 read_attr_map(data const & dat, attr_map & attr)
 {
-  regex expr("^([^[:space:]]+) ([^[:space:]]+) ([^[:space:]].*)$");
-  regex_grep(add_to_attr_map(attr), dat(), expr, match_not_dot_newline);
+  std::istringstream iss(dat());
+  basic_io::input_source src(iss, ".mt-attrs");
+  basic_io::tokenizer tok(src);
+  basic_io::parser parser(tok);
+
+  std::string file, name, value;
+
+  attr.clear();
+
+  while (parser.symp(syms::file))
+    {
+      parser.sym();
+      parser.str(file);
+      file_path fp(file);
+
+      while (parser.symp() && 
+	     !parser.symp(syms::file)) 
+	{
+	  parser.sym(name);
+	  parser.str(value);
+	  attr[fp][name] = value;
+	}
+    }
 }
 
 void 
 write_attr_map(data & dat, attr_map const & attr)
 {
-  ostringstream tmp;
+  std::ostringstream oss;
+  basic_io::printer pr(oss);
+  
   for (attr_map::const_iterator i = attr.begin();
        i != attr.end(); ++i)
-    tmp << i->first.second << " "    // key
-	<< i->second << " "          // value
-	<< i->first.first << endl;   // file
-  dat = tmp.str();
+    {
+      basic_io::stanza st;
+      st.push_str_pair(syms::file, i->first());
+
+      for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
+	   j != i->second.end(); ++j)
+	  st.push_str_pair(j->first, j->second);	  
+
+      pr.print_stanza(st);
+    }
+
+  dat = oss.str();
 }
 
 
@@ -269,7 +296,73 @@ apply_attributes(app_state & app, attr_map const & attr)
 {
   for (attr_map::const_iterator i = attr.begin();
        i != attr.end(); ++i)
-    app.lua.hook_apply_attribute (i->first.second, 
-				  i->first.first,
-				  i->second);
+      for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
+	   j != i->second.end(); ++j)
+	app.lua.hook_apply_attribute (j->first,
+				      i->first, 
+				      j->second);
+}
+
+string const encoding_attribute("encoding");
+string const binary_encoding("binary");
+string const default_encoding("default");
+
+static bool find_in_attr_map(attr_map const & attr,
+			     file_path const & file,
+			     std::string const & attr_key,
+			     std::string & attr_val)
+{
+  attr_map::const_iterator f = attr.find(file);
+  if (f == attr.end())
+    return false;
+
+  std::map<std::string, std::string>::const_iterator a = f->second.find(attr_key);
+  if (a == f->second.end())
+    return false;
+
+  attr_val = a->second;
+  return true;
+}
+
+bool get_attribute_from_db(file_path const & file,
+			   std::string const & attr_key,
+			   manifest_map const & man,
+			   std::string & attr_val,
+			   app_state & app)
+{
+  file_path fp;
+  get_attr_path(fp);
+  manifest_map::const_iterator i = man.find(fp);
+  if (i == man.end())
+    return false;
+
+  file_id fid = manifest_entry_id(i);
+  if (!app.db.file_version_exists(fid))
+    return false;
+
+  file_data attr_data;
+  app.db.get_file_version(fid, attr_data);
+
+  attr_map attr;
+  read_attr_map(data(attr_data.inner()()), attr);
+
+  return find_in_attr_map(attr, file, attr_key, attr_val);
+}
+
+bool get_attribute_from_working_copy(file_path const & file,
+				     std::string const & attr_key,
+				     std::string & attr_val)
+{
+  file_path fp;
+  get_attr_path(fp);
+  if (!file_exists(fp))
+    return false;
+  
+  data attr_data;
+  read_data(fp, attr_data);
+
+  attr_map attr;
+  read_attr_map(attr_data, attr);
+
+  return find_in_attr_map(attr, file, attr_key, attr_val);
 }
