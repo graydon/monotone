@@ -46,8 +46,8 @@ function ignore_file(name)
    if (string.find(name, "/core$")) then return true end
    if (string.find(name, "^CVS/")) then return true end
    if (string.find(name, "/CVS/")) then return true end
-   if (string.find(name, "^.svn/")) then return true end
-   if (string.find(name, "/.svn/")) then return true end
+   if (string.find(name, "^%.svn/")) then return true end
+   if (string.find(name, "/%.svn/")) then return true end
    if (string.find(name, "^SCCS/")) then return true end
    if (string.find(name, "/SCCS/")) then return true end
    return false;
