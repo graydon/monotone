@@ -4787,6 +4787,7 @@ UNB64(secondfile.b64, secondfile)
 # calculate diff to second file using monotone
 AT_CHECK(cp secondfile testfile, [], [ignore])
 AT_CHECK(MONOTONE diff, [], [stdout])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout monodiff, [], [ignore])
 
 # see if patch likes that

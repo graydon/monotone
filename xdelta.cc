@@ -705,6 +705,9 @@ new_piecewise_applicator()
 #ifdef BUILD_UNIT_TESTS
 
 #include "unit_tests.hh"
+#ifdef WIN32
+#define BOOST_NO_STDC_NAMESPACE
+#endif
 #include <boost/random.hpp>
 
 boost::mt19937 xdelta_prng;

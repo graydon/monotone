@@ -12,13 +12,10 @@ function temp_file()
 end
 
 function execute(path, ...)   
-   local pid = posix.fork()
+   local pid
    local ret = -1
-   if pid == 0 then
-      posix.exec(path, unpack(arg))
-   else
-      ret, pid = posix.wait(pid)
-   end
+   pid = posix.spawn(path, unpack(arg))
+   ret, pid = posix.wait(pid)
    return ret
 end
 
@@ -240,7 +237,11 @@ function read_contents_of_file(filename)
 end
 
 function program_exists_in_path(program)
-   return execute("which", program) == 0
+   if (posix.iswin32()) then
+      return posix.existsonpath(program) == 0
+   else   
+      return execute("which", program) == 0
+   end
 end
 
 function merge2(left_path, right_path, merged_path, left, right)

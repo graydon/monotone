@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/exception.hpp>
 #include <boost/version.hpp>
 
 #include "constants.hh"
@@ -97,9 +98,13 @@ verify(local_path & val)
       p = p.normalize();
 #endif
     }
-  catch (std::runtime_error &e)
+  catch (std::runtime_error &re)
     {
-      throw informative_failure(e.what());
+      throw informative_failure(re.what());
+    }
+  catch (fs::filesystem_error &fse)
+    {
+      throw informative_failure(fse.what());
     }
 
   N(! (p.has_root_path() || p.has_root_name() || p.has_root_directory()),

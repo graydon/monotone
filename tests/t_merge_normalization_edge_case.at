@@ -182,6 +182,7 @@ AT_CHECK(MONOTONE fload <left, [], [ignore], [ignore])
 AT_CHECK(MONOTONE fload <right, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE fmerge $PARENT $LEFT $RIGHT, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout merge.monotone, [], [ignore], [ignore])
 
 AT_CHECK(diff3 -E --merge left parent right, [], [stdout], [ignore])
