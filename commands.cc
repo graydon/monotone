@@ -204,8 +204,8 @@ namespace commands
     
     if (cmds.find(completed) != cmds.end())
       {
- 	L(F("executing %s command\n") % completed);
- 	cmds[completed]->exec(app, args);
+        L(F("executing %s command\n") % completed);
+        cmds[completed]->exec(app, args);
         return 0;
       }
     else
@@ -1144,7 +1144,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
   app.db.get_file_version(old_fid, old_fdata);
   diff(old_fdata.inner(), new_fdata.inner(), gz_del);    
   dbw.consume_file_delta(old_fid, new_fid, 
-			 file_delta(gz_del));
+                         file_delta(gz_del));
 
   // diff and store the manifest edge
   new_man = old_man;
@@ -1152,13 +1152,13 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
   calculate_ident(new_man, new_mid);
   diff(old_man, new_man, gz_del);
   dbw.consume_manifest_delta(old_mid, new_mid, 
-			     manifest_delta(gz_del));
+                             manifest_delta(gz_del));
 
   // build and store a changeset and revision
   cs.apply_delta(pth, old_fid, new_fid);
   rev.new_manifest = new_mid;
   rev.edges.insert(std::make_pair(old_rid, 
-				  std::make_pair(old_mid, cs)));
+                                  std::make_pair(old_mid, cs)));
   calculate_ident(rev, new_rid);
   write_revision_set(rev, rdata);
   dbw.consume_revision_data(new_rid, rdata);
@@ -1975,28 +1975,28 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
     {
       path = idx(args, 1)();
       if (args.size() != 2 && args.size() != 3)
-	throw usage(name);
+        throw usage(name);
 
       attr_map::const_iterator i = attrs.find(path);
       if (i == attrs.end())
-	cout << "no attributes for " << path << endl;
+        cout << "no attributes for " << path << endl;
       else
-	{
-	  if (args.size() == 2)
-	    {
-	      for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
-		   j != i->second.end(); ++j)
-		cout << path << " : " << j->first << "=" << j->second << endl;
-	    }
-	  else
-	    {	    
-	      std::map<std::string, std::string>::const_iterator j = i->second.find(idx(args, 2)());
-	      if (j == i->second.end())
-		cout << "no attribute " << idx(args, 2)() << " on file " << path << endl;
-	      else
-		cout << path << " : " << j->first << "=" << j->second << endl;
-	    }
-	}
+        {
+          if (args.size() == 2)
+            {
+              for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
+                   j != i->second.end(); ++j)
+                cout << path << " : " << j->first << "=" << j->second << endl;
+            }
+          else
+            {       
+              std::map<std::string, std::string>::const_iterator j = i->second.find(idx(args, 2)());
+              if (j == i->second.end())
+                cout << "no attribute " << idx(args, 2)() << " on file " << path << endl;
+              else
+                cout << path << " : " << j->first << "=" << j->second << endl;
+            }
+        }
     }
   else 
     throw usage(name);
@@ -2796,6 +2796,37 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   
   string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
                 % (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
+  
+  cert_revision_changelog(merged, log, app, dbw);
+  
+  guard.commit();      
+}
+
+CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH", 
+    "merge two explicitly given revisions, placing result in given branch")
+{
+  revision_id left, right;
+  string branch;
+
+  if (args.size() != 3)
+    throw usage(name);
+
+  complete(app, idx(args, 0)(), left);
+  complete(app, idx(args, 1)(), right);
+  branch = idx(args, 2)();
+  
+  revision_id merged;
+  transaction_guard guard(app.db);
+  try_one_merge (left, right, merged, app);    
+  
+  packet_db_writer dbw(app);
+  
+  cert_revision_in_branch(merged, branch, app, dbw);
+  
+  string log = (F("explicit_merge of %s\n"
+                  "              and %s\n"
+                  " to branch '%s'\n")
+                % left % right % branch).str();
   
   cert_revision_changelog(merged, log, app, dbw);
   

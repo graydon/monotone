@@ -1,3 +1,10 @@
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Remove tabs.
+	* diff_patch.cc: Likewise.
+
+	* commands.cc (explicit_merge): New command.
+
 2004-12-08  graydon hoare  <graydon@pobox.com>
 
 	* change_set.cc (extend_renumbering_via_added_files): 

@@ -1153,7 +1153,7 @@ concatenate_change_sets(change_set const & a,
             % delta_entry_path(del) 
             % delta_entry_src(existing) 
             % delta_entry_dst(existing)
-	    % delta_entry_src(del)
+            % delta_entry_src(del)
             % delta_entry_dst(del));
           I(delta_entry_dst(existing) == delta_entry_src(del));
           std::pair<file_id, file_id> fused = std::make_pair(delta_entry_src(existing),
@@ -1577,15 +1577,15 @@ merge_disjoint_analyses(path_analysis const & a,
 
 static void
 merge_deltas(file_path const & anc_path, 
-	     file_path const & left_path, 
-	     file_path const & right_path, 
-	     file_path const & path_in_merged, 
-	     std::map<file_path, file_id> & merge_finalists,
-	     file_id const & anc,
-	     file_id const & left,
-	     file_id const & right,
-	     file_id & finalist, 
-	     merge_provider & merger)
+             file_path const & left_path, 
+             file_path const & right_path, 
+             file_path const & path_in_merged, 
+             std::map<file_path, file_id> & merge_finalists,
+             file_id const & anc,
+             file_id const & left,
+             file_id const & right,
+             file_id & finalist, 
+             merge_provider & merger)
 {
   std::map<file_path, file_id>::const_iterator i = merge_finalists.find(path_in_merged);
   if (i != merge_finalists.end())
@@ -1605,7 +1605,7 @@ merge_deltas(file_path const & anc_path,
       else
         {
           N(merger.try_to_merge_files(anc_path, left_path, right_path, path_in_merged, 
-				      anc, left, right, finalist),
+                                      anc, left, right, finalist),
             F("merge of '%s' : '%s' -> '%s' vs '%s' failed") 
             % path_in_merged % anc % left % right);
         }
@@ -1651,11 +1651,11 @@ project_missing_deltas(change_set const & a,
 
       // first work out what the path in a.first == b.first is
       reconstruct_path(delta_entry_path(i), a_second_map, 
-		       a_analysis.first, path_in_anc);
+                       a_analysis.first, path_in_anc);
 
       // first work out what the path in b.second is
       reconstruct_path(path_in_anc, b_first_map, 
-		       b_analysis.second, path_in_b_second);
+                       b_analysis.second, path_in_b_second);
 
       // then work out what the path in merged is
       reconstruct_path(delta_entry_path(i), a_merged_first_map, 

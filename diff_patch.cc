@@ -601,9 +601,9 @@ bool merge3(vector<string> const & ancestor,
 
 
 merge_provider::merge_provider(app_state & app, 
-			       manifest_map const & anc_man,
-			       manifest_map const & left_man, 
-			       manifest_map const & right_man)
+                               manifest_map const & anc_man,
+                               manifest_map const & left_man, 
+                               manifest_map const & right_man)
   : app(app), anc_man(anc_man), left_man(left_man), right_man(right_man)
 {}
 
@@ -633,7 +633,7 @@ void merge_provider::get_version(file_path const & path,
 }
 
 std::string merge_provider::get_file_encoding(file_path const & path,
-					      manifest_map const & man)
+                                              manifest_map const & man)
 {
   std::string enc;
   if (get_attribute_from_db(path, encoding_attribute, man, enc, app))
@@ -643,9 +643,9 @@ std::string merge_provider::get_file_encoding(file_path const & path,
 }
 
 bool merge_provider::try_to_merge_files(file_path const & anc_path,
-					file_path const & left_path,
-					file_path const & right_path,
-					file_path const & merged_path,
+                                        file_path const & left_path,
+                                        file_path const & right_path,
+                                        file_path const & merged_path,
                                         file_id const & ancestor_id,                                    
                                         file_id const & left_id,
                                         file_id const & right_id,
@@ -781,9 +781,9 @@ bool merge_provider::try_to_merge_files(file_path const & path,
 // and we only record the merges in a transient, in-memory table.
 
 update_merge_provider::update_merge_provider(app_state & app,
-					     manifest_map const & anc_man,
-					     manifest_map const & left_man, 
-					     manifest_map const & right_man) 
+                                             manifest_map const & anc_man,
+                                             manifest_map const & left_man, 
+                                             manifest_map const & right_man) 
   : merge_provider(app, anc_man, left_man, right_man) {}
 
 void update_merge_provider::record_merge(file_id const & left_id, 
@@ -820,7 +820,7 @@ void update_merge_provider::get_version(file_path const & path,
 }
 
 std::string update_merge_provider::get_file_encoding(file_path const & path,
-						     manifest_map const & man)
+                                                     manifest_map const & man)
 {
   std::string enc;
   if (get_attribute_from_working_copy(path, encoding_attribute, enc))
