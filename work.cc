@@ -29,8 +29,8 @@ addition_builder
   path_set ps;
 public:
   addition_builder(app_state & a, 
-		   change_set & cs,
-		   path_set & p)
+                   change_set & cs,
+                   path_set & p)
     : app(a), cs(cs), ps(p)
   {}
   virtual void visit_file(file_path const & path);
@@ -58,9 +58,9 @@ addition_builder::visit_file(file_path const & path)
 
 void 
 build_addition(file_path const & path,
-	       manifest_map const & man,
-	       app_state & app,
-	       change_set::path_rearrangement & pr)
+               manifest_map const & man,
+               app_state & app,
+               change_set::path_rearrangement & pr)
 {
   N(directory_exists(path) || file_exists(path),
     F("path %s does not exist") % path);
@@ -82,9 +82,9 @@ build_addition(file_path const & path,
 
 static bool
 known_preimage_path(file_path const & p,
-		    manifest_map const & m,
-		    change_set::path_rearrangement const & pr,
-		    bool & path_is_directory)
+                    manifest_map const & m,
+                    change_set::path_rearrangement const & pr,
+                    bool & path_is_directory)
 {
   path_set tmp, ps;
   extract_path_set(m, tmp);
@@ -94,23 +94,23 @@ known_preimage_path(file_path const & p,
   for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       if (*i == p) 
-	{
-	  path_is_directory = false;
-	  return true;
-	}
+        {
+          path_is_directory = false;
+          return true;
+        }
       else if ((*i)().find(path_as_dir) == 0)
-	{
-	  path_is_directory = true;
-	  return true;
-	}
+        {
+          path_is_directory = true;
+          return true;
+        }
     }
   return false;
 }
 
 void 
 build_deletion(file_path const & path,
-	       manifest_map const & man,
-	       change_set::path_rearrangement & pr)
+               manifest_map const & man,
+               change_set::path_rearrangement & pr)
 {
   change_set cs_new, cs_old, cs_concatenated;
   cs_old.rearrangement = pr;
@@ -137,9 +137,9 @@ build_deletion(file_path const & path,
 
 void 
 build_rename(file_path const & src,
-	     file_path const & dst,
-	     manifest_map const & man,
-	     change_set::path_rearrangement & pr)
+             file_path const & dst,
+             manifest_map const & man,
+             change_set::path_rearrangement & pr)
 {
   change_set cs_new, cs_old, cs_concatenated;
   cs_old.rearrangement = pr;
@@ -166,7 +166,7 @@ build_rename(file_path const & src,
 
 void 
 extract_path_set(manifest_map const & man,
-		 path_set & paths)
+                 path_set & paths)
 {
   paths.clear();
   for (manifest_map::const_iterator i = man.begin();
@@ -258,8 +258,8 @@ write_attr_map(data & dat, attr_map const & attr)
   for (attr_map::const_iterator i = attr.begin();
        i != attr.end(); ++i)
     tmp << i->first.second << " "    // key
-	<< i->second << " "          // value
-	<< i->first.first << endl;   // file
+        << i->second << " "          // value
+        << i->first.first << endl;   // file
   dat = tmp.str();
 }
 
@@ -270,6 +270,6 @@ apply_attributes(app_state & app, attr_map const & attr)
   for (attr_map::const_iterator i = attr.begin();
        i != attr.end(); ++i)
     app.lua.hook_apply_attribute (i->first.second, 
-				  i->first.first,
-				  i->second);
+                                  i->first.first,
+                                  i->second);
 }
