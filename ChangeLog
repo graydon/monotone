@@ -1,5 +1,10 @@
 2005-03-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_vars.at: New test.
+	* testsuite.at: Add it.
+
+2005-03-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	* schema.sql (db_vars): New table.
 	* database.cc (database::database): Update schema id.
 	* schema_migration.cc (migrate_client_to_vars): New function.
