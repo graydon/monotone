@@ -170,9 +170,19 @@ __wont_compile_
 )])
 
 
+# Check for IPv6.  Let the user enable or disable it manually using a
+# three-state (yes|no|auto) --enable argument.
+AC_ARG_ENABLE(ipv6,
+   [  --enable-ipv6               enable IPv6 support (default=auto)], ,
+   enable_ipv6=auto
+)
 AC_CACHE_CHECK([presence of IPv6],
-       ac_inet6, [
-       AC_TRY_RUN([
+   ac_inet6,
+   [
+      ac_inet6=no
+      if test x"${enable_ipv6}" = x"auto" || test x"${enable_ipv6}" = x"yes"
+      then
+         AC_TRY_RUN([
 #if defined(WIN32)
 # include <winsock2.h>
 #else
@@ -186,10 +196,17 @@ int main(void)
   sockaddr_in6 sa_in6;
 }
 ],
-   AM_CONDITIONAL(MISSING_INET6, false),
-   AM_CONDITIONAL(MISSING_INET6, true),
-   AM_CONDITIONAL(MISSING_INET6, true) 
-)])
+            ac_inet6=yes
+         )
+
+         if test x"${enable_ipv6}" = x"yes" && test x"${ac_inet6}" = x"no"
+         then
+            AC_MSG_ERROR([IPv6 explicitly requested but it could not be found])
+         fi
+      fi
+   ]
+)
+AM_CONDITIONAL(MISSING_INET6, test x"${ac_inet6}" = x"no")
 
 # simple library checks 
 AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))
