@@ -1,7 +1,48 @@
+2005-02-03  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_i18n_changelog.at: New test.
+	* testsuite.at: Run it.
+	* lua/lposix.c: New file.
+	* lua/modemuncher.c: New file
+	* lua.cc: Load posix library.
+	* lua/liolib.c: Disable execute and popen.
+	* std_hooks.lua: Remove io.execute uses.
+	* AUTHORS: Update to mention lposix.c, modemuncher.c.
+	* Makefile.am: Likewise.
+
+2005-02-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_rebuild.at: Beef up test in response to possible
+	problems reported by Derek Scherger.
+
+2005-01-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (store_manifest_edge): Don't try to store deltas
+	to the null manifest.
+	(import_cvs_repo): Root revision has null manifest, not empty
+	manifest.
+	* revision.cc (check_sane): More invariants.
+
+2005-01-28  graydon hoare  <graydon@pobox.com>
+
+	* database.{cc,hh}: More netsync speed tweaks.
+	* netsync.cc: Likewise.
+
+2005-01-27  Derek Scherger  <derek@echologic.com>
 2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_restrictions_warn_on_unknown.at: New test.
 	* testsuite.at: Add it.
+
+2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (attr): adjust for subdir; ensure files exist
+	* tests/t_attr.at: improve setup description
+	* tests/t_attributes.at: improve setup description so that
+	testsuite -k attr runs this test; check for attributes on missing
+	files
+	* tests/t_subdir_attr.at: new test
+	* testsuite.at: fix dutch spelling of monotone; call new test
 
 2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -85,6 +126,13 @@
 	* testsuite.at: Add them.
 	(MONOTONE): Prefix command line with $PREEXECUTE to e.g. support
 	running under Valgrind.
+
+2005-01-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* cert.cc: ignore whitespace when comparing private keys
+	from the database and with the lua hook
+	* tests/t_lua_privkey.at: new test
+	* testsuite.at: run it
 
 2005-01-23  Derek Scherger  <derek@echologic.com>
 

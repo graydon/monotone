@@ -134,10 +134,13 @@ in the files, and do not require that they be reproduced here.
 ---
 
 
-The files in lua/* are copies of the lua 5.0 source distribution, from
-Tecgraf PUC-Rio. The lua distribution can be retrieved from
-www.lua.org. The files are provided under an MIT-like license,
-reproduced here:
+The files in lua/*, except lposix.c and modemuncher.c, are copies of
+the lua 5.0 source distribution, from Tecgraf PUC-Rio. lposix.c and
+modemuncher.c are from Claudio Terra and Luiz Henrique de Figueiredo,
+both of Tecgraf PUC-Rio, but as near as I can tell those two files are
+declared to be in the public domain. The lua distribution can be
+retrieved from www.lua.org. The files are provided under an MIT-like
+license, reproduced here:
 
 ---
 

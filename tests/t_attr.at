@@ -1,4 +1,4 @@
-AT_SETUP([attr command])
+AT_SETUP([attr set adds .mt-attrs])
 MONOTONE_SETUP
 
 # This test is a bug report.

@@ -1627,18 +1627,22 @@ database::put_revision_cert(revision<cert> const & cert)
   put_cert(cert.inner(), "revision_certs"); 
 }
 
-void 
-database::get_revision_certs(vector< revision<cert> > & ts)
+void database::get_revision_cert_index(std::vector< std::pair<hexenc<id>,
+                                       std::pair<revision_id, rsa_keypair_id> > > & idx)
 {
   results res;
-  vector<cert> certs;
-  fetch(res, 5, any_rows, 
-        "SELECT id, name, value, keypair, signature "
+  fetch(res, 3, any_rows, 
+        "SELECT hash, id, keypair "
         "FROM 'revision_certs'");
-  results_to_certs(res, certs);
 
-  ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));  
+  idx.clear();
+  idx.resize(res.size());
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    {
+      idx.push_back(std::make_pair(hexenc<id>((*i)[0]), 
+                                   std::make_pair(revision_id((*i)[1]),
+                                                  rsa_keypair_id((*i)[2]))));
+    }
 }
 
 void 
