@@ -1,3 +1,10 @@
+2003-09-13  Tom Tromey  <tromey@redhat.com>
+
+	* tests/t_nntp.at: If we can't find tcpserver or snntpd, skip the
+	test.
+	* tests/t_http.at: If we can't find boa or depot.cgi, skip the
+	test.
+
 2003-09-12  graydon hoare  <graydon@redhat.com>
 
 	* update.cc (pick_update_target): Only insert base rev as update

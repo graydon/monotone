@@ -35,6 +35,12 @@ VER1=`SHA1(MT/manifest)`
 
 DEPOT=`which depot.cgi`
 BOA=`which boa`
+
+# if no boa or depot.cgi, skip the test
+if test -z "$BOA" || test -z "$DEPOT"; then
+  exit 77
+fi
+
 AT_CHECK(test -x $BOA)
 AT_CHECK(test -x $DEPOT)
 AT_CHECK(mkdir -p http_root)

@@ -45,6 +45,11 @@ GROUP=monotone.test.packets
 TCPSERVER=`which tcpserver`
 SNNTPD=`which snntpd`
 
+# if no tcpserver or snntpd, skip the test
+if test -z "$TCPSERVER" || test -z "$SNNTPD"; then
+  exit 77
+fi
+
 AT_CHECK(test -x $TCPSERVER)
 AT_CHECK(test -x $SNNTPD)
 AT_CHECK(mkdir -p $SNROOT)
