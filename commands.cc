@@ -4,7 +4,9 @@
 // see the file COPYING for details
 
 #include <map>
+#include <cerrno>
 #include <cstdio>
+#include <cstring>
 #include <set>
 #include <vector>
 #include <algorithm>
@@ -13,6 +15,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/convenience.hpp>
+#include <boost/filesystem/exception.hpp>
 
 #include "commands.hh"
 #include "constants.hh"
@@ -1461,8 +1464,20 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
   if (dir != string("."))
     {
       fs::path co_dir = mkpath(dir);
-      fs::create_directories(co_dir);
-      chdir(co_dir.native_directory_string().c_str());
+      try
+        {
+          fs::create_directories(co_dir);
+        }
+      catch (fs::filesystem_error & err)
+        {
+          throw informative_failure(string("could not create directory \"") +
+                                           dir + string("\": ") +
+                                           string(strerror(errno)));
+        }
+      if (chdir(co_dir.native_directory_string().c_str()) == -1)
+        throw informative_failure(string("could not change directory to \"") +
+                                         dir + string("\": ") +
+                                         string(strerror(errno)));
     }
 
   transaction_guard guard(app.db);
