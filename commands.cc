@@ -2059,15 +2059,10 @@ CMD(fetch, "network", "[URL] [GROUPNAME]", "fetch recent changes from network")
 
   if (args.size() == 0)
     {
-      if (app.branch_name == "")
+      if (! app.lua.hook_get_fetch_sources(app.branch_name, sources))
 	{
-	  P("no branch name provided, fetching from all known URLs\n");
+	  P("fetching from all known URLs\n");
 	  app.db.get_all_known_sources(sources);
-	}
-      else
-	{
-	  N(app.lua.hook_get_fetch_sources(app.branch_name, sources),
-	    ("no URL / group pairs found for branch " + app.branch_name)); 
 	}
     }
   else

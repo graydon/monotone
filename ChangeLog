@@ -1,3 +1,8 @@
+2003-09-27  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (fetch): Always try lua hook; then default to all
+	known URLs.
+
 2003-09-26  Tom Tromey  <tromey@redhat.com>
 
 	* commands.cc (tag): Use all-caps for meta-syntactic variables.
