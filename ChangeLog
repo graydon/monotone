@@ -1,7 +1,13 @@
+2003-11-28  Tom Tromey  <tromey@redhat.com>
+
+	* http_tasks.cc (check_received_bytes): Allow "-" as well.
+	* depot.cc (execute_post_query): Allow "-" as well.
+
 2003-11-30  graydon hoare  <graydon@pobox.com>
 
 	* network.cc (post_queued_blobs_to_network): Fail when posted_ok is false.
 	* database.cc (initialize): Fail when -journal file exists.
+	* keys.cc (make_signature): Nicer message when privkey decrypt fails.
 
 2003-11-28  graydon hoare  <graydon@pobox.com>
 

@@ -140,7 +140,7 @@ static void check_received_bytes(string const & tmp)
   size_t pos = tmp.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
 				     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 				     "0123456789"
-				     "+/=_.@[] \n\t");
+				     "-+/=_.@[] \n\t");
   N(pos == string::npos, 
     F("Bad char from network: pos %d, char '%d'\n")
     % pos % static_cast<int>(tmp.at(pos)));

@@ -229,11 +229,19 @@ void make_signature(lua_hooks & lua,           // to hook for phrase
 			   decoded_key().size());
       read_passphrase(lua, id, phrase);
       do_arc4(phrase, decrypted_key);
-      
-      L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
-      StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
-      signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
-	(new RSASSA_PKCS1v15_SHA_Signer(keysource));
+
+      try 
+	{
+	  L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
+	  StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
+	  signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
+	    (new RSASSA_PKCS1v15_SHA_Signer(keysource));
+	}
+      catch (...)
+	{
+	  throw informative_failure("failed to decrypt private RSA key, "
+				    "probably incorrect passphrase");
+	}
 
       if (persist_phrase)
 	signers.insert(make_pair(id,signer));
