@@ -210,6 +210,30 @@
 
 	* commands.cc (user_log_file_name): Remove unused variable.
 
+2005-03-25  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* monotone.texi: Added a bit more documentation about MT/log
+	  Updated edit_comment hook and addded delkey docs
+	* commands.cc: Added delkey command
+	* t_delkey_1.at: Tests delkey command on public key
+	* t_delkey_2.at: Tests delkey command on public and private key
+	* testsuite.at: Added above tests
+	* std_hooks.lua: Transposed the MT: lines and user_log_contents,
+	  user_log_contents now appears first.
+
+2005-03-25  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* t_setup_creates_log.at: Ensures that MT/log is created
+	  on setup
+	* t_checkout_creates_log.at: Ensures that MT/log is created
+	  on checkout
+	* t_commit_log_1.at: Ensures that:
+	  1. Read and entered as the ChangeLog message
+	  2. Is blanked after a successful commit
+	* t_commit_log_2.at: Ensures that commit works w/o MT/log being
+	  present
+	* testsuite.at: Added the above tests.
+
 2005-03-25  Matt Johnston  <matt@ucc.asn.au>
 
         * {unix,win32}/platform_netsync.cc, platform.hh, Makefile.am: new
@@ -326,6 +350,15 @@
 	* tests/t_merge_5.at: new test for a merge which ends up with
 	duplicate lines.
 	* testsuite.at: add it
+
+2005-03-22  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* AUTHORS: Added my name
+	* app_state.cc, commands.cc, lua.cc, lua.hh, monotone.texi,
+	  std_hooks.lua, work.cc, work.hh: Added functionality to
+	  read the MT/log file for commit logs. In this revision
+	  tests are not yet complete nor is documenation complete
+	  but the reading, blanking and creating of MT/log is.
 
 2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
 
