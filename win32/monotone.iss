@@ -1,8 +1,8 @@
 [Setup]
-AppName=Monotone
-AppVerName=Monotone 0.17rc1
+AppName=monotone
+AppVerName=monotone 0.17rc1
 AppCopyright=Copyright © 2002-2005 Graydon Hoare et al.
-DefaultDirName={pf}\Monotone
+DefaultDirName={pf}\monotone
 DefaultGroupName=SinoPrice
 MinVersion=0,5.0
 OutputDir=.
@@ -18,7 +18,8 @@ LicenseFile="..\COPYING"
 [Files]
 Source: "..\monotone.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\monotone.html"; DestDir: "{app}"; Flags: ignoreversion
-Source: "\mingw\bin\libiconv-2.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
+Source: "\mingw\bin\libiconv-2.dll"; DestDir: "{app}"
 
 [Tasks]
 Name: initdb; Description: "Initialise a new database"; GroupDescription: "Get up and running"; Check: DBDoesntExist

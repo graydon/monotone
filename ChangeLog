@@ -1,4 +1,7 @@
 2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* win32/monotone.iss: Monotone -> monotone
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
 	* win32/monotone.iss: Added an Inno Setup script for 
 	generating a Windows installer.  Inno Setup is GPLed, see
 	http://www.jrsoftware.org for download
