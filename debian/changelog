@@ -1,3 +1,9 @@
+monotone (0.5-1) unstable; urgency=low
+
+  * 0.5 Release.
+
+ -- graydon hoare <graydon@pobox.com>  Sat, 27 Sep 2003 13:41:02 -0400
+
 monotone (0.4-1) unstable; urgency=low
 
   * Initial Release.
