@@ -164,7 +164,7 @@ elif which recode 2>/dev/null; then
   UNB64_COMMAND="recode /Base64"
 elif perl -MMIME::Base64 -e 1 2>/dev/null; then
   UNB64_COMMAND="perl -MMIME::Base64 -ne 'print decode_base64(\$_)'"
-elif which python 2>/dev/null; then
+elif python -c 'import sys;sys.exit(not hasattr("", "decode"))' 2>/dev/null; then
   UNB64_COMMAND="python -c 'import sys;sys.stdout.write(sys.stdin.read().decode("'"'"base64"'"'"))'"
 else
   exit 77
