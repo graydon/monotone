@@ -2640,20 +2640,17 @@ apply_path_rearrangement(change_set::path_rearrangement const & pr,
                          path_set & ps)
 {
   pr.check_sane();
-  if (pr.renamed_files.empty() 
+  if (pr.added_files.empty()
+      && pr.renamed_files.empty() 
       && pr.renamed_dirs.empty()
       && pr.deleted_dirs.empty())
     {
-      // fast path for simple drop/add file operations
+      // fast path for simple drop-or-nothing file operations
       for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
            i != pr.deleted_files.end(); ++i)
         {
+          I(ps.find(*i) != ps.end());
           ps.erase(*i);
-        }
-      for (std::set<file_path>::const_iterator i = pr.added_files.begin(); 
-           i != pr.added_files.end(); ++i)
-        {
-          ps.insert(*i);
         }
     }
   else
@@ -2688,11 +2685,12 @@ apply_change_set(change_set const & cs,
                  manifest_map & man)
 {
   cs.check_sane();
-  if (cs.rearrangement.renamed_files.empty() 
+  if (cs.rearrangement.added_files.empty() 
+      && cs.rearrangement.renamed_files.empty() 
       && cs.rearrangement.renamed_dirs.empty()
       && cs.rearrangement.deleted_dirs.empty())
     {
-      // fast path for simple drop/add/delta file operations
+      // fast path for simple drop/delta file operations
       for (std::set<file_path>::const_iterator i = cs.rearrangement.deleted_files.begin();
            i != cs.rearrangement.deleted_files.end(); ++i)
         {
