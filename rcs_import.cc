@@ -114,6 +114,19 @@ cvs_file_edge
   bool child_live_p;
   inline bool operator<(cvs_file_edge const & other) const
   {
+#if 0
+    return (parent_path < other.parent_path) 
+                       || ((parent_path == other.parent_path) 
+       && ((parent_version < other.parent_version) 
+                       || ((parent_version == other.parent_version) 
+       && ((parent_live_p < other.parent_live_p) 
+                       || ((parent_live_p == other.parent_live_p) 
+       && ((child_path < other.child_path) 
+                       || ((child_path == other.child_path) 
+       && ((child_version < other.child_version) 
+                       || ((child_version == other.child_version) 
+       && (child_live_p < other.child_live_p) )))))))));
+#else
     return (parent_path < other.parent_path) 
     			|| ((parent_path == other.parent_path) 
     	&& ((parent_version < other.parent_version) 
@@ -125,6 +138,7 @@ cvs_file_edge
     	&& ((child_version < other.child_version) 
     			|| ((child_version == other.child_version) 
     	&& (child_live_p < other.child_live_p) )))))))));
+#endif
   }
 };
 
@@ -838,6 +852,9 @@ cvs_history::note_file_edge(rcs_file const & r,
   I(next_delta!=r.deltas.end());
   bool prev_alive = prev_delta->second->state!="dead";
   bool next_alive = next_delta->second->state!="dead";
+  
+  L(F("note_file_edge %s %d -> %s %d\n") % prev_rcs_version_num % prev_alive
+  		% next_rcs_version_num % next_alive);
 
   // we always aggregate in-edges in children, but we will also create
   // parents as we encounter them.
@@ -1027,6 +1044,9 @@ build_parent_state(shared_ptr<cvs_state> state,
       {  manifest_map::iterator elem=state_map.find(pth);
          if (elem != state_map.end())
             state_map.erase(elem);
+         else 
+            L(F("could not find file %s for removal from manifest\n") 
+            	% pth);
       }
       else 
          state_map[pth] = fid;
@@ -1051,6 +1071,9 @@ build_child_state(shared_ptr<cvs_state> state,
       {  manifest_map::iterator elem=state_map.find(pth);
          if (elem != state_map.end())
             state_map.erase(elem);
+         else 
+            L(F("could not find file %s for removal from manifest\n") 
+            	% pth);
       }
       else 
          state_map[pth] = fid;
