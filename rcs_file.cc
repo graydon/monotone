@@ -30,6 +30,10 @@ struct rcs_delta_closure :
   boost::spirit::closure<rcs_delta_closure, rcs_delta>
 { member1 val; };
 
+struct rcs_symbol_closure : 
+  boost::spirit::closure<rcs_symbol_closure, rcs_symbol>
+{ member1 val; };
+
 struct rcs_desc_closure : 
   boost::spirit::closure<rcs_desc_closure, string>
 { member1 val; };
@@ -78,25 +82,26 @@ struct rcsfile_grammar :
     // phrases with closures
     subrule<0, rcs_file_closure      ::context_t> rcstext;
     subrule<1, rcs_admin_closure     ::context_t> admin;    
-    subrule<2, rcs_desc_closure      ::context_t> desc;
-    subrule<3, rcs_delta_closure     ::context_t> delta;
-    subrule<4, rcs_deltatext_closure ::context_t> deltatext;
+    subrule<2, rcs_symbol_closure    ::context_t> symbol;
+    subrule<3, rcs_desc_closure      ::context_t> desc;
+    subrule<4, rcs_delta_closure     ::context_t> delta;
+    subrule<5, rcs_deltatext_closure ::context_t> deltatext;
 
     // tokens we want to record in strings
-    subrule<5, string_closure        ::context_t> str;
-    subrule<6, string_closure        ::context_t> sym; 
-    subrule<7, string_closure        ::context_t> num;
-    subrule<8, string_closure        ::context_t> id; 
-    subrule<9, string_closure        ::context_t> word;
+    subrule<6,  string_closure        ::context_t> str;
+    subrule<7,  string_closure        ::context_t> sym; 
+    subrule<8,  string_closure        ::context_t> num;
+    subrule<9,  string_closure        ::context_t> id; 
+    subrule<10, string_closure        ::context_t> word;
 
     // non-recorded tokens
-    subrule<10> semi;
-    subrule<11> col;
-    subrule<12> newphrase;
+    subrule<11> semi;
+    subrule<12> col;
+    subrule<13> newphrase;
 
     // lexemes
-    subrule<13> idchar;
-    subrule<14> numchs;
+    subrule<14> idchar;
+    subrule<15> numchs;
 
     // the root node
     rule<ScannerT> top;    
@@ -121,11 +126,14 @@ struct rcsfile_grammar :
 	 str_p("head")         >>  num [bind(&rcs_admin::head   )(admin.val) = arg1]  >> semi  >>
 	 !(str_p("branch")     >>  num [bind(&rcs_admin::branch )(admin.val) = arg1]  >> semi) >>
 	 str_p("access")       >> *(id [bind(&rcs_admin::access )(admin.val) = arg1]) >> semi  >>
-	 str_p("symbols")      >> *(sym >> col >> num) >> semi  >>
+	 str_p("symbols")      >> *(symbol [bind(&rcs_admin::push_symbol)(admin.val,arg1)]) >> semi  >>
 	 str_p("locks")        >> *(id  >> col >> num) >> semi  >> 
 	                            !(str_p("strict")  >> semi) >>
 	 !(str_p("comment")    >> str [bind(&rcs_admin::comment )(admin.val) = arg1] >> semi) >>
 	 !(str_p("expand")     >> str [bind(&rcs_admin::expand  )(admin.val) = arg1] >> semi),
+
+	 symbol = sym[bind(&rcs_symbol::name   )(symbol.val) = arg1] >> col
+	       >> num[bind(&rcs_symbol::version)(symbol.val) = arg1],
 	 
 	 delta = 
 	 num                       [bind(&rcs_delta::num)   (delta.val) = arg1]       >>

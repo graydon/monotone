@@ -1435,29 +1435,47 @@ CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to 
 }
 
 
-CMD(checkout, "tree", "MANIFEST-ID DIRECTORY", "check out tree state from database into directory")
+CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state from database into directory")
 {
-  if (args.size() != 2)
+
+  manifest_id ident;
+  string dir;
+
+  if (args.size() != 1 && args.size() != 2)
     throw usage(name);
 
-  transaction_guard guard(app.db);
-
-  if (idx(args, 1) != string("."))
+  if (args.size() == 1)
     {
-      local_path lp(idx(args, 1));
-      mkdir_p(lp);
-      chdir(idx(args, 1).c_str());
+      set<manifest_id> heads;
+      N(app.branch_name != "", F("need --branch argument for branch-based checkout"));
+      get_branch_heads(app.branch_name, app, heads);
+      N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
+      ident = *(heads.begin());
+      dir = idx(args, 0);
     }
+
+  else
+    {
+      complete(app, idx(args, 0), ident);
+      dir = idx(args, 1);
+    }
+
+  if (dir != string("."))
+    {
+      local_path lp(dir);
+      mkdir_p(lp);
+      chdir(dir.c_str());
+    }
+
+  transaction_guard guard(app.db);
     
   file_data data;
-  manifest_id ident;
-  complete(app, idx(args, 0), ident);
   manifest_map m;
 
   N(app.db.manifest_version_exists(ident),
     F("no manifest version %s found in database") % ident);
   
-  L(F("checking out manifest %s to directory %s\n") % ident % idx(args, 1));
+  L(F("checking out manifest %s to directory %s\n") % ident % dir);
   manifest_data m_data;
   app.db.get_manifest_version(ident, m_data);
   read_manifest_map(m_data, m);      
@@ -1483,7 +1501,7 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY", "check out tree state from databa
   app.write_options();
 }
 
-ALIAS(co, checkout, "tree", "MANIFEST-ID DIRECTORY",
+ALIAS(co, checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY",
       "check out tree state from database; alias for checkout")
 
 CMD(heads, "tree", "", "show unmerged heads of branch")
@@ -2362,11 +2380,15 @@ CMD(read, "packet i/o", "", "read packets from stdin")
 
 CMD(agraph, "debug", "", "dump ancestry graph to stdout")
 {
-  vector< manifest<cert> > certs;
   transaction_guard guard(app.db);
-  app.db.get_manifest_certs(ancestor_cert_name, certs);
+
   set<string> nodes;
+  multimap<string,string> branches;
   vector< pair<string, string> > edges;
+
+  vector< manifest<cert> > certs;
+  app.db.get_manifest_certs(ancestor_cert_name, certs);
+
   for(vector< manifest<cert> >::iterator i = certs.begin();
       i != certs.end(); ++i)
     {
@@ -2376,11 +2398,32 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
       nodes.insert(i->inner().ident());
       edges.push_back(make_pair(tv(), i->inner().ident()));
     }
+
+  app.db.get_manifest_certs(branch_cert_name, certs);
+  for(vector< manifest<cert> >::iterator i = certs.begin();
+      i != certs.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      branches.insert(make_pair(i->inner().ident(), tv()));
+    }  
+
+
   cout << "graph: " << endl << "{" << endl; // open graph
   for (set<string>::iterator i = nodes.begin(); i != nodes.end();
        ++i)
     {
-      cout << "node: { title : \"" << *i << "\"}" << endl;
+      cout << "node: { title : \"" << *i << "\"\n"
+	   << "        label : \"\\fb" << *i;
+      pair<multimap<string,string>::const_iterator,
+	multimap<string,string>::const_iterator> pair =
+	branches.equal_range(*i);
+      for (multimap<string,string>::const_iterator j = pair.first;
+	   j != pair.second; ++j)
+	{
+	  cout << "\\n\\fn" << j->second;
+	}
+      cout << "\"}" << endl;
     }
   for (vector< pair<string,string> >::iterator i = edges.begin(); i != edges.end();
        ++i)

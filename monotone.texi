@@ -2129,6 +2129,8 @@ inspect a version without checking it out into your working copy.
 
 @item monotone checkout @var{id} @var{directory}
 @itemx monotone co @var{id} @var{directory}
+@itemx monotone --branch=@var{branchname} checkout @var{directory}
+@itemx monotone --branch=@var{branchname} co @var{directory}
 
 This command copies a manifest version @var{id} out of your database
 and into @file{@var{directory}/MT/manifest}. Then it copies every file
@@ -2151,6 +2153,10 @@ Then the following files are created:
 If you wish to @command{checkout} in the current directory, you can
 supply the special name @file{.} (a single period) for
 @var{directory}.
+
+If no @var{id} is provided, you must provide a @var{branchname};
+monotone will attempt to infer @var{id} as the unique head of
+@var{branchname} if it exists.
 
 
 @item monotone heads --branch=@var{branchname}
@@ -3372,8 +3378,8 @@ Import all versions in RCS files. Does not reconstruct ancestry edges
 or convert ancestry edges.
 @comment TROFF INPUT: .TP
 
-@item @b{checkout} @i{<manifest-id>} @i{<directory>}
-@itemx @b{co} @i{<manifest-id>} @i{<directory>}
+@item @b{checkout} @i{[manifest-id]} @i{<directory>}
+@itemx @b{co} @i{[manifest-id]} @i{<directory>}
 Check out tree state from database, into directory.
 @comment TROFF INPUT: .TP
 

@@ -1,5 +1,17 @@
 2003-11-09  graydon hoare  <graydon@pobox.com>
 
+	* rcs_file.hh (rcs_symbol): New structure.
+	* rcs_file.cc (symbol): New rule.
+	* rcs_import.cc (find_branch_for_version): New function.
+	(cvs_key::branch): New field.
+	(store_auxilliary_certs): Cert branch tag.
+	* cycle_detector.hh: Fix bugs, don't use quick_alloc.
+	* commands.cc (checkout): Add --branch based version.
+	* monotone.texi: Document new command variant.
+	* monotone.1: Ditto.
+
+2003-11-09  graydon hoare  <graydon@pobox.com>
+
 	* quick_alloc.hh: New file.
 	* Makefile.am: Add it.
 	* cycle_detector.hh: Rewrite.

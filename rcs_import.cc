@@ -43,6 +43,7 @@ using boost::scoped_ptr;
 
 // cvs history recording stuff
 
+typedef unsigned long cvs_branchname;
 typedef unsigned long cvs_author;
 typedef unsigned long cvs_changelog;
 typedef unsigned long cvs_version;
@@ -71,10 +72,21 @@ struct cvs_key
   {
     // nb: this must sort as > to construct the edges in the right direction
     return time > other.time ||
-      (time == other.time && author > other.author) ||
-      (time == other.time && author == other.author && changelog > other.changelog);
+
+      (time == other.time 
+       && author > other.author) ||
+
+      (time == other.time 
+       && author == other.author 
+       && changelog > other.changelog) ||
+
+      (time == other.time 
+       && author == other.author 
+       && changelog == other.changelog
+       && branch > other.branch);
   }
 
+  cvs_branchname branch;
   cvs_changelog changelog;
   cvs_author author;
   time_t time;
@@ -114,6 +126,7 @@ struct cvs_state
 struct cvs_history
 {
 
+  interner<unsigned long> branch_interner;
   interner<unsigned long> author_interner;
   interner<unsigned long> changelog_interner;
   interner<unsigned long> file_version_interner;
@@ -132,6 +145,7 @@ struct cvs_history
   state_stack stk;
   file_path curr_file;
   manifest_map head_manifest;
+  string base_branch;
 
   ticker n_versions;
   ticker n_tree_branches;
@@ -527,6 +541,63 @@ cvs_file_edge::cvs_file_edge (file_id const & pv, file_path const & pp,
 }
 
 
+string find_branch_for_version(multimap<string,string> const & symbols,
+			       string const & version,
+			       string const & base)
+{
+  typedef multimap<string,string>::const_iterator ity;
+  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+
+  L(F("looking up branch name for %s\n") % version);
+
+  boost::char_separator<char> sep(".");
+  tokenizer tokens(version, sep);
+  vector<string> components;
+  copy(tokens.begin(), tokens.end(), back_inserter(components));
+
+  if (components.size() < 4)
+    {
+      L(F("version %s has too few components, using branch %s\n")
+	% version % base);
+      return base;
+    }
+  
+  string branch_version;
+  components[components.size() - 1] = components[components.size() - 2];
+  components[components.size() - 2] = "0";
+  for (size_t i = 0; i < components.size(); ++i)
+    {
+      if (i != 0)
+	branch_version += ".";
+      branch_version += components[i];
+    }
+
+  pair<ity,ity> range = symbols.equal_range(branch_version);
+  if (range.first == symbols.end())
+    {
+      L(F("no branch %s found, using base '%s'\n") 
+	% branch_version % base);
+      return base;
+    }
+  else
+    {
+      string res = base;
+      res += ".";
+      res += range.first->second;
+      int num_results = 0;
+      while (range.first != range.second)
+	{ range.first++; num_results++; }
+
+      if (num_results > 1)
+	W(F("multiple entries (%d) for branch %s found, using: '%s'\n")
+	  % num_results % branch_version % res);
+      else
+	L(F("unique entry for branch %s found: '%s'\n") 
+	  % branch_version % res);
+      return res;
+    }
+}
+
 cvs_key::cvs_key(rcs_file const & r, string const & version,
 		 cvs_history & cvs) 
 {
@@ -546,6 +617,10 @@ cvs_key::cvs_key(rcs_file const & r, string const & version,
     time=mktime(&t);
   }
 
+  string branch_name = find_branch_for_version(r.admin.symbols, 
+					       version, 
+					       cvs.base_branch);
+  branch = cvs.branch_interner.intern(branch_name);
   changelog = cvs.changelog_interner.intern(deltatext->second->log);
   author = cvs.author_interner.intern(delta->second->author);
 }
@@ -814,6 +889,7 @@ void store_auxilliary_certs(cvs_key const & key,
 			    cvs_history const & cvs)
 {
   packet_db_writer dbw(app);
+  cert_manifest_in_branch(id, cert_value(cvs.branch_interner.lookup(key.branch)), app, dbw); 
   cert_manifest_author(id, cvs.author_interner.lookup(key.author), app, dbw); 
   cert_manifest_changelog(id, cvs.changelog_interner.lookup(key.changelog), app, dbw);
   cert_manifest_date_time(id, key.time, app, dbw);
@@ -901,6 +977,9 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
   }
 
   cvs_history cvs;
+  N(app.branch_name != "", F("need base --branch argument for importing"));
+  cvs.base_branch = app.branch_name;
+
   {
     transaction_guard guard(app.db);
     cvs_tree_walker walker(cvs, app.db);
