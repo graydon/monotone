@@ -38,17 +38,14 @@ netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
     case file_item:
       typestr = "file";
       break;
-    case rcert_item:
-      typestr = "rcert";
-      break;
-    case mcert_item:
-      typestr = "mcert";
-      break;
-    case fcert_item:
-      typestr = "fcert";
+    case cert_item:
+      typestr = "cert";
       break;
     case key_item:
       typestr = "key";
+      break;
+    case epoch_item:
+      typestr = "epoch";
       break;
     }
   I(!typestr.empty());

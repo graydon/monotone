@@ -11,6 +11,7 @@ struct cert;
 
 #include <vector>
 #include <set>
+#include <map>
 #include <string>
 
 #include <boost/filesystem/path.hpp>
@@ -367,29 +368,18 @@ public:
   void get_manifest_cert(hexenc<id> const & hash,
                          manifest<cert> & cert);
 
+  // epochs 
+
+  void get_epochs(std::map<cert_value, epoch_data> & epochs);
+
+  void get_epoch(epoch_id const & eid, cert_value & branch, epoch_data & epo);
   
-  // merkle tree stuff
+  bool epoch_exists(epoch_id const & eid);
 
-  bool merkle_node_exists(std::string const & type,
-                          utf8 const & collection, 
-                          size_t level,
-                          hexenc<prefix> const & prefix);
-  
-  void get_merkle_node(std::string const & type,
-                       utf8 const & collection, 
-                       size_t level,
-                       hexenc<prefix> const & prefix,
-                       base64<merkle> & node);
+  void set_epoch(cert_value const & branch, epoch_data const & epo);  
 
-  void put_merkle_node(std::string const & type,
-                       utf8 const & collection, 
-                       size_t level,
-                       hexenc<prefix> const & prefix,
-                       base64<merkle> const & node);
-
-  void erase_merkle_nodes(std::string const & type,
-                          utf8 const & collection);
-
+  void clear_epoch(cert_value const & branch);
+ 
   // completion stuff
 
   void complete(std::string const & partial,

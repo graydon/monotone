@@ -38,6 +38,7 @@
 #include "update.hh"
 #include "vocab.hh"
 #include "work.hh"
+#include "automate.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -324,7 +325,7 @@ put_path_rearrangement(change_set::path_rearrangement & w)
 
 static void
 get_valid_paths(path_set const & old_paths, change_set::path_rearrangement const & work, 
-		path_set & valid_paths)
+                path_set & valid_paths)
 {
   // collect paths from old manifest and work set into valid_paths
 
@@ -953,7 +954,6 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
       else
         W(F("no keys found matching '%s'\n") % idx(args, 0)());
     }
-  guard.commit();
 }
 
 // The changes_summary structure holds a list all of files and directories
@@ -1764,7 +1764,6 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch")
 static void 
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
-  transaction_guard guard(app.db);
   vector< revision<cert> > certs;
   app.db.get_revision_certs(branch_cert_name, certs);
 
@@ -1781,14 +1780,37 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
   names.erase(std::unique(names.begin(), names.end()), names.end());
   for (size_t i = 0; i < names.size(); ++i)
     cout << idx(names, i) << endl;
+}
 
-  guard.commit();
+static void 
+ls_epochs(string name, app_state & app, vector<utf8> const & args)
+{
+  std::map<cert_value, epoch_data> epochs;
+  app.db.get_epochs(epochs);
+
+  if (args.size() == 0)
+    {
+      for (std::map<cert_value, epoch_data>::const_iterator i = epochs.begin();
+           i != epochs.end(); ++i)
+        {
+          cout << i->second << " " << i->first << endl;
+        }
+    }
+  else
+    {
+      for (vector<utf8>::const_iterator i = args.begin(); i != args.end();
+           ++i)
+        {
+          std::map<cert_value, epoch_data>::const_iterator j = epochs.find(cert_value((*i)()));
+          N(j != epochs.end(), F("no epoch for branch %s\n") % *i);
+          cout << j->second << " " << j->first << endl;
+        }
+    }  
 }
 
 static void 
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
-  transaction_guard guard(app.db);
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
 
@@ -1800,8 +1822,6 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
            << idx(certs,i).inner().ident  << " "
            << idx(certs,i).inner().key  << endl;
     }
-
-  guard.commit();
 }
 
 struct unknown_itemizer : public tree_walker
@@ -1878,11 +1898,12 @@ CMD(list, "informative",
     "certs ID\n"
     "keys [PATTERN]\n"
     "branches\n"
+    "epochs [BRANCH [...]]\n"
     "tags\n"
     "unknown\n"
     "ignored\n"
     "missing", 
-    "show certs, keys, branches, unknown, intentionally ignored, or missing files")
+    "show database objects, or unknown, intentionally ignored, or missing state files")
 {
   if (args.size() == 0)
     throw usage(name);
@@ -1896,6 +1917,8 @@ CMD(list, "informative",
     ls_keys(name, app, removed);
   else if (idx(args, 0)() == "branches")
     ls_branches(name, app, removed);
+  else if (idx(args, 0)() == "epochs")
+    ls_epochs(name, app, removed);
   else if (idx(args, 0)() == "tags")
     ls_tags(name, app, removed);
   else if (idx(args, 0)() == "unknown")
@@ -2156,7 +2179,20 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
 }
 
-CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipulate database state")
+
+CMD(db, "database", 
+    "init\n"
+    "info\n"
+    "version\n"
+    "dump\n"
+    "load\n"
+    "migrate\n"
+    "execute\n"
+    "fsck\n"
+    "changesetify\n"
+    "rebuild\n"
+    "set_epoch BRANCH EPOCH\n", 
+    "manipulate database state")
 {
   if (args.size() == 1)
     {
@@ -2185,6 +2221,16 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipu
     {
       if (idx(args, 0)() == "execute")
         app.db.debug(idx(args, 1)(), cout);
+      else if (idx(args, 0)() == "clear_epoch")
+        app.db.clear_epoch(cert_value(idx(args, 1)()));
+      else
+        throw usage(name);
+    }
+  else if (args.size() == 3)
+    {
+      if (idx(args, 0)() == "set_epoch")
+        app.db.set_epoch(cert_value(idx(args, 1)()),
+                         epoch_data(idx(args,2)()));
       else
         throw usage(name);
     }

@@ -96,15 +96,9 @@ CREATE TABLE revision_certs
 	unique(name, id, value, keypair, signature)
 	);
 
--- merkle nodes
-
-CREATE TABLE merkle_nodes
+CREATE TABLE branch_epochs
 	(
-	type not null,                -- "key", "mcert", "fcert", "rcert"
-	collection not null,          -- name chosen by user
-	level not null,               -- tree level this prefix encodes
-	prefix not null,              -- label identifying node in tree
-	body not null,                -- binary, base64'ed node contents
-	unique(type, collection, level, prefix)
+	hash not null unique,         -- hash of remaining fields separated by ":"
+	branch not null unique,       -- joins with revision_certs.value
+	epoch not null                -- random hex-encoded id
 	);
-

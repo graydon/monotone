@@ -32,6 +32,7 @@
 #include "ui.hh"
 #include "vocab.hh"
 #include "xdelta.hh"
+#include "epoch.hh"
 
 // defined in schema.sql, converted to header:
 #include "schema.h"
@@ -116,7 +117,7 @@ database::database(fs::path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("c1e86588e11ad07fa53e5d294edc043ce1d4005a"),
+  schema("40369a7bda66463c5785d160819ab6398b9d44f4"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -399,7 +400,17 @@ void
 database::version(ostream & out)
 {
   string id;
-  calculate_schema_id(sql(), id);
+  N(filename.string() != "",
+    F("need database name"));
+  int error = sqlite3_open(filename.string().c_str(), &__sql);
+  if (error)
+    {
+      sqlite3_close(__sql);
+      throw oops(string("could not open database: ") + filename.string() + 
+                 (": " + string(sqlite3_errmsg(__sql))));
+    }
+  calculate_schema_id(__sql, id);
+  sqlite3_close(__sql);
   out << "database schema version: " << id << endl;
 }
 
@@ -410,8 +421,11 @@ database::migrate()
     F("need database name"));
   int error = sqlite3_open(filename.string().c_str(), &__sql);
   if (error)
-    throw oops(string("could not open database: ") + filename.string() + 
-               (": " + string(sqlite3_errmsg(__sql))));
+    {
+      sqlite3_close(__sql);
+      throw oops(string("could not open database: ") + filename.string() + 
+                 (": " + string(sqlite3_errmsg(__sql))));
+    }
   migrate_monotone_schema(__sql);
   sqlite3_close(__sql);
 }
@@ -851,7 +865,6 @@ database::put(hexenc<id> const & ident,
   execute("INSERT INTO '%q' VALUES('%q', '%q')", 
           table.c_str(), ident().c_str(), dat().c_str());
 }
-
 void 
 database::put_delta(hexenc<id> const & ident,
                     hexenc<id> const & base,
@@ -1056,6 +1069,16 @@ database::get_version(hexenc<id> const & ident,
           shared_ptr<edgemap> i = *p;
           I(i->find(curr) != i->end());
           hexenc<id> const nxt = i->find(curr)->second;
+
+          if (!vcache.exists(curr))
+            {
+              string tmp;
+              base64< gzip<data> > tmp_packed;
+              app->finish(tmp);
+              pack(data(tmp), tmp_packed);
+              vcache.put(curr, tmp_packed);
+            }
+
 
           if (!vcache.exists(curr))
             {
@@ -2133,70 +2156,71 @@ void database::complete(selector_type ty,
     }
 }
 
+// epochs 
 
-// merkle nodes
+void 
+database::get_epochs(std::map<cert_value, epoch_data> & epochs)
+{
+  epochs.clear();
+  results res;
+  fetch(res, 2, any_rows, "SELECT branch, epoch FROM branch_epochs");
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    {      
+      base64<cert_value> encoded(idx(*i, 0));
+      cert_value decoded;
+      decode_base64(encoded, decoded);
+      I(epochs.find(decoded) == epochs.end());
+      epochs.insert(std::make_pair(decoded, epoch_data(idx(*i, 1))));
+    }
+}
 
-bool 
-database::merkle_node_exists(string const & type,
-                             utf8 const & collection, 
-                             size_t level,
-                             hexenc<prefix> const & prefix)
+void
+database::get_epoch(epoch_id const & eid,
+                    cert_value & branch, epoch_data & epo)
+{
+  I(epoch_exists(eid));
+  results res;
+  fetch(res, 2, any_rows,
+        "SELECT branch, epoch FROM branch_epochs"
+        " WHERE hash = '%q'",
+        eid.inner()().c_str());
+  I(res.size() == 1);
+  base64<cert_value> encoded(idx(idx(res, 0), 0));
+  decode_base64(encoded, branch);
+  epo = epoch_data(idx(idx(res, 0), 1));
+}
+
+bool
+database::epoch_exists(epoch_id const & eid)
 {
   results res;
-  fetch(res, one_col, one_row, 
-        "SELECT COUNT(*) "
-        "FROM merkle_nodes "
-        "WHERE type = '%q' "
-        "AND collection = '%q' "
-        "AND level = %d "
-        "AND prefix = '%q' ",
-        type.c_str(), collection().c_str(), level, prefix().c_str());
-  size_t n_nodes = lexical_cast<size_t>(res[0][0]);
-  I(n_nodes == 0 || n_nodes == 1);
-  return n_nodes == 1;
+  fetch(res, one_col, any_rows,
+        "SELECT hash FROM branch_epochs WHERE hash = '%q'",
+        eid.inner()().c_str());
+  I(res.size() == 1 || res.size() == 0);
+  return res.size() == 1;
 }
 
 void 
-database::get_merkle_node(string const & type,
-                          utf8 const & collection, 
-                          size_t level,
-                          hexenc<prefix> const & prefix,
-                          base64<merkle> & node)
+database::set_epoch(cert_value const & branch, epoch_data const & epo)
 {
-  results res;
-  fetch(res, one_col, one_row, 
-        "SELECT body "
-        "FROM merkle_nodes "
-        "WHERE type = '%q' "
-        "AND collection = '%q' "
-        "AND level = %d "
-        "AND prefix = '%q'",
-        type.c_str(), collection().c_str(), level, prefix().c_str());
-  node = res[0][0];
+  epoch_id eid;
+  base64<cert_value> encoded;
+  encode_base64(branch, encoded);
+  epoch_hash_code(branch, epo, eid);
+  I(epo.inner()().size() == constants::epochlen);
+  execute("INSERT OR REPLACE INTO branch_epochs VALUES('%q', '%q', '%q')", 
+          eid.inner()().c_str(), encoded().c_str(), epo.inner()().c_str());
 }
 
 void 
-database::put_merkle_node(string const & type,
-                          utf8 const & collection, 
-                          size_t level,
-                          hexenc<prefix> const & prefix,                                       
-                          base64<merkle> const & node)
+database::clear_epoch(cert_value const & branch)
 {
-  execute("INSERT OR REPLACE "
-          "INTO merkle_nodes "
-          "VALUES ('%q', '%q', %d, '%q', '%q')",
-          type.c_str(), collection().c_str(), level, prefix().c_str(), node().c_str());
+  base64<cert_value> encoded;
+  encode_base64(branch, encoded);
+  execute("DELETE FROM branch_epochs WHERE branch = '%q'", encoded().c_str());
 }
 
-void 
-database::erase_merkle_nodes(string const & type,
-                             utf8 const & collection)
-{
-  execute("DELETE FROM merkle_nodes "
-          "WHERE type = '%q' "
-          "AND collection = '%q'",
-          type.c_str(), collection().c_str());
-}
 
 // transaction guards
 

@@ -21,6 +21,12 @@ namespace constants
   // number of characters in a SHA1 id
   size_t const idlen = 40;
 
+  // number of characters in an epoch_data
+  size_t const epochlen = idlen;
+
+  // number of characters in an epoch_data
+  size_t const epochlen_bytes = epochlen / 2;
+
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
   size_t const cvs_window = 3600 * 3; 
@@ -136,7 +142,7 @@ namespace constants
   BOOST_STATIC_ASSERT(merkle_bitmap_length_in_bits > 0);
   BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
 
-  u8 const netcmd_current_protocol_version = 3;
+  u8 const netcmd_current_protocol_version = 4;
   size_t const netcmd_minsz = (1     // version
                                + 1   // cmd code
                                + 1   // smallest uleb possible

@@ -1,5 +1,184 @@
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc (encountered_error, error): New variable and method.
+	(session::session): Initialize encountered_error.
+	(write_netcmd_and_try_flush, read_some, write_some): Check it.
+	(queue_error_cmd): Consider it like sending a goodbye.
+	(process_error_cmd): Throw an exception instead of considering it
+	a goodbye.
+	(process_data_cmd): Call error() if epochs don't match.
+	* tests/t_epoch.at, tests/t_epoch_server.at: More minor tweaks.
+	Expect failed pulls to exit with status 0.  This isn't really
+	correct, but looks complicated to fix...
+
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* testsuite.at (NETSYNC_SERVE_N_START): New macro.
+	* tests/t_epoch_server.at: Misc. fixes.
+
+	* netsync.cc (session::session): Don't open valve yet.
+	(maybe_note_epochs_finished): New method to open
+	valve.
+	(process_done_cmd, process_data_cmd): Call it.
+	(rebuild_merkle_trees): Actually calculate hashes for epoch merkle
+	trees.  Also, only include epochs that meet the branch mask.
+	(session): Remove unused id_to_epoch map.
+	
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc (read_netcmd_item_type): Handle epoch_item.
+	(test_netcmd_functions): Update for new confirm_cmd_payload
+	format.
+	* netsync.cc (process_confirm_cmd): Cut and paste error.
+
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* constants.{cc,hh}: Add new epochlen, epochlen_bytes constants.
+	* vocab_terms.hh, vocab.hh: Add new epoch_data type.  Add predeclarations
+	for it.
+	* commands.cc (ls_epochs):
+	* revision.cc (
+	* database.hh:
+	* database.cc: Update for epoch_data.  Add get_epoch, epoch_exists
+	methods.
+	* epoch.{cc,hh}: New files.
+	* netsync.cc: Actually implement epochs-via-merkle code.
+
+2005-03-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* schema.sql (branch_epochs): Add 'hash' field.
+	* schema_migration.cc: Fixup for.
+	* database.cc (database): Change schemas.
+	* tests/t_migrate_schema.at: Replace epoch db test case with one
+	with new schema.
+
+2005-03-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (session::id_to_epoch): New variable.
+	(session::session): Create refinement and requested item tables
+	for epochs.
+	(rebuild_merkle_trees): Fill epoch merkle tree and id_to_epoch
+	table.
+
+	* netsync.cc (queue_confirm_cmd, process_confirm_cmd) 
+	(dispatch_payload, rebuild_merkle_trees): 
+	* netcmd.hh:
+	* netcmd.cc (read_confirm_cmd_payload, write_confirm_cmd_payload):
+	Remove epochs.
+
+2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* constants.cc:
+	* revision.cc:
+	* testsuite.at: 
+	* commands.cc:
+	* ChangeLog: Fixup after merge.
+
+2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* merkle_tree.hh (netcmd_item_type): Add epoch_item.
+	* merkle_tree.cc (netcmd_item_type_to_string): Handle epoch_item.
+
+	* packet.hh, packet.cc (struct packet_db_valve): New class.
+	* netsync.cc (session): Use a valved writer.
+
+2005-02-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* merkle_tree.hh: Fix comment.
+	Remove prototypes for non-existing functions.
+
+2005-02-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_epoch_unidirectional.at: New test.
+	* testsuite.at: Add it.
+
+2005-02-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_epoch.at: Even more paranoid.
+	* tests/t_epoch_server.at: New test.
+	* testsuite.at: Add it.
+	
+2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_epoch.at: Check that netsync only sends relevant
+	epochs, and be a little more paranoid.
+
+2005-02-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (struct anc_graph): Fixup after merge.
+
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
+	* database.cc (set_epoch): Fix SQL.
+	* monotone.texi (Rebuilding ancestry): Reword a bit.
+	* netcmd.{cc,hh} 
+	({read,write}_hello_cmd_payload): Transfer server key with hello.
+	({read,write}_confirm_cmd_payload): Transfer epoch list with confirm.
+	* netsync.cc: Adapt to changes in netcmd.
+	(rebuild_merkle_trees): Set nonexistent epochs to zero before sync.
+	* revision.cc (anc_graph): Randomize epochs on rebuild.
+	* tests/t_epoch.at: Fix up to test slightly new semantics.
+
+2005-02-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.1: Add more db commands.
+	* monotone.texi: Document db rebuild.  Add section on rebuilding
+	ancestry and epochs.
+
+2005-02-06  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (db): Add epoch commands.
+	(list): Likewise.
+	Also remove some unneeded transaction guards.
+	* database.{cc,hh} (get_epochs): New function.
+	(set_epoch): Likewise.
+	(clear_epoch): Likewise.
+	Also remove all persistent merkle trie stuff.
+	* schema.sql: Add epochs, remove tries.
+	* schema_migration.cc: Update.
+	* tests/t_epoch.at: New test.
+	* tests/t_migrate_schema.at: Update.
+	* testsuite.at: Add some new helpers, call t_epoch.at.
+	* vocab.hh (epoch_id): Define.
+	* vocab_terms.hh (epoch): Define.
+
+2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* merkle_tree.hh: Remove mcert_item and fcert_item, rename
+	rcert_item to cert_item, renumber to remove gaps left.
+	* merkle_tree.cc (netcmd_item_type_to_string):
+	* netcmd.cc (read_netcmd_item_type): 
+	* netsync.cc: Adjust accordingly.
+	
+2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* constants.cc (constants): Bump netsync protocol version.
+
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.cc (monotone_spawn_for_lua): Minimal change to get arguments
+	in right order.  Still needs hygienic cleanups...
+	* tests/t_can_execute.at: Run 'cp' instead of 'touch', because cp
+	will actually notice if we pass arguments out of order.
+	* testsuite.at: Remove mysterious blank line.
+	
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* unix/process.cc (process_spawn): Log command line before
+	executing.
+
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (kill_redundant_edges): Rename back to...
+	(kluge_for_3_ancestor_nodes): ...this.  Go back to only cleaning
+	up parents of 3+ parent nodes.
+	(analyze_manifest_changes): Take a third argument, of files whose
+	ancestry needs splitting.
+	(construct_revision_from_ancestry): Make more more complex, in
+	order to properly track file identity in merges.
+
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* revision.cc (check_sane_history): Typo.
 	
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>

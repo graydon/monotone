@@ -13,6 +13,7 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include <ext/hash_map>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>

@@ -23,6 +23,8 @@ using namespace std;
 
 // --- packet db writer --
 //
+// FIXME: this comment is out of date, and untrustworthy.
+// 
 // the packet_db_writer::impl class (see below) manages writes to the
 // database. it also ensures that those writes follow the semantic
 // dependencies implied by the objects being written.
@@ -78,6 +80,12 @@ using namespace std;
 // a prerequisite no longer has any dependents, it is dropped from the
 // packet_db_writer::impl, destroying it.
 //
+/////////////////////////////////////////////////////////////////
+// 
+// this same machinery is also re-used for the "valved" packet writer, as a
+// convenient way to queue up commands in memory while the valve is closed.
+// in this usage, we simply never add any prerequisites to any packet, and
+// just call apply_delayed_packet when the valve opens.
 
 typedef enum 
   {
@@ -208,6 +216,21 @@ public:
 };
 
 class 
+delayed_file_data_packet 
+  : public delayed_packet
+{
+  file_id ident;
+  file_data dat;
+public:
+  delayed_file_data_packet(file_id const & i, 
+                           file_data const & fd) 
+    : ident(i), dat(fd)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_file_data_packet();
+};
+
+class 
 delayed_file_delta_packet 
   : public delayed_packet
 {
@@ -258,6 +281,36 @@ public:
   virtual ~delayed_revision_cert_packet();
 };
 
+class 
+delayed_public_key_packet 
+  : public delayed_packet
+{
+  rsa_keypair_id id;
+  base64<rsa_pub_key> key;
+public:
+  delayed_public_key_packet(rsa_keypair_id const & id,
+                            base64<rsa_pub_key> key)
+    : id(id), key(key)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_public_key_packet();
+};
+
+class 
+delayed_private_key_packet 
+  : public delayed_packet
+{
+  rsa_keypair_id id;
+  base64< arc4<rsa_priv_key> > key;
+public:
+  delayed_private_key_packet(rsa_keypair_id const & id,
+                             base64< arc4<rsa_priv_key> > key)
+    : id(id), key(key)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_private_key_packet();
+};
+
 void 
 delayed_revision_data_packet::apply_delayed_packet(packet_db_writer & pw)
 {
@@ -282,6 +335,19 @@ delayed_manifest_data_packet::~delayed_manifest_data_packet()
 {
   if (!all_prerequisites_satisfied())
     W(F("discarding manifest data packet with unmet dependencies\n"));
+}
+
+void 
+delayed_file_data_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed file data packet for %s\n") % ident);
+  pw.consume_file_data(ident, dat);
+}
+
+delayed_file_data_packet::~delayed_file_data_packet()
+{
+  // files have no prerequisites
+  I(all_prerequisites_satisfied());
 }
 
 void 
@@ -332,7 +398,34 @@ delayed_revision_cert_packet::apply_delayed_packet(packet_db_writer & pw)
 delayed_revision_cert_packet::~delayed_revision_cert_packet()
 {
   if (!all_prerequisites_satisfied())
-    W(F("discarding revision cert packet with unmet dependencies\n"));
+    W(F("discarding revision cert packet %s with unmet dependencies\n")
+      % c.inner().ident);
+}
+
+void 
+delayed_public_key_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed public key %s\n") % id());
+  pw.consume_public_key(id, key);
+}
+
+delayed_public_key_packet::~delayed_public_key_packet()
+{
+  // keys don't have dependencies
+  I(all_prerequisites_satisfied());
+}
+
+void 
+delayed_private_key_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed private key %s\n") % id());
+  pw.consume_private_key(id, key);
+}
+
+delayed_private_key_packet::~delayed_private_key_packet()
+{
+  // keys don't have dependencies
+  I(all_prerequisites_satisfied());
 }
 
 struct packet_db_writer::impl
@@ -647,7 +740,7 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
 
 void
 packet_db_writer::consume_manifest_reverse_delta(manifest_id const & new_id,
-                                                 manifest_id const & old_id,                                             
+                                                 manifest_id const & old_id,
                                                  manifest_delta const & del)
 {
   transaction_guard guard(pimpl->app.db);
@@ -849,6 +942,128 @@ packet_db_writer::consume_private_key(rsa_keypair_id const & ident,
   guard.commit();
 }
 
+
+// --- valved packet writer ---
+
+struct packet_db_valve::impl
+{
+  packet_db_writer writer;
+  std::vector< boost::shared_ptr<delayed_packet> > packets;
+  bool valve_is_open;
+  impl(app_state & app, bool take_keys)
+    : writer(app, take_keys),
+      valve_is_open(false)
+  {}
+  void do_packet(boost::shared_ptr<delayed_packet> packet)
+  {
+    if (valve_is_open)
+      packet->apply_delayed_packet(writer);
+    else
+      packets.push_back(packet);
+  }
+};
+
+packet_db_valve::packet_db_valve(app_state & app, bool take_keys)
+  : pimpl(new impl(app, take_keys))
+{}
+    
+packet_db_valve::~packet_db_valve()
+{}
+
+void
+packet_db_valve::open_valve()
+{
+  L(F("packet valve opened\n"));
+  pimpl->valve_is_open = true;
+  int written = 0;
+  for (std::vector< boost::shared_ptr<delayed_packet> >::reverse_iterator
+         i = pimpl->packets.rbegin();
+       i != pimpl->packets.rend();
+       ++i)
+    {
+      pimpl->do_packet(*i);
+      ++written;
+    }
+  pimpl->packets.clear();
+  L(F("wrote %i queued packets\n") % written);
+}
+
+#define DOIT(x) pimpl->do_packet(boost::shared_ptr<delayed_packet>(new x));
+
+void
+packet_db_valve::consume_file_data(file_id const & ident, 
+                                   file_data const & dat)
+{
+  DOIT(delayed_file_data_packet(ident, dat));
+}
+
+void
+packet_db_valve::consume_file_delta(file_id const & id_old, 
+                                    file_id const & id_new,
+                                    file_delta const & del)
+{
+  DOIT(delayed_file_delta_packet(id_old, id_new, del, true));
+}
+
+void
+packet_db_valve::consume_file_reverse_delta(file_id const & id_new,
+                                            file_id const & id_old,
+                                            file_delta const & del)
+{
+  DOIT(delayed_file_delta_packet(id_old, id_new, del, false));
+}
+
+void
+packet_db_valve::consume_manifest_data(manifest_id const & ident, 
+                                       manifest_data const & dat)
+{
+  DOIT(delayed_manifest_data_packet(ident, dat));
+}
+
+void
+packet_db_valve::consume_manifest_delta(manifest_id const & id_old, 
+                                        manifest_id const & id_new,
+                                        manifest_delta const & del)
+{
+  DOIT(delayed_manifest_delta_packet(id_old, id_new, del, true));
+}
+
+void
+packet_db_valve::consume_manifest_reverse_delta(manifest_id const & id_new,
+                                                manifest_id const & id_old,
+                                                manifest_delta const & del)
+{
+  DOIT(delayed_manifest_delta_packet(id_old, id_new, del, false));
+}
+
+void
+packet_db_valve::consume_revision_data(revision_id const & ident, 
+                                       revision_data const & dat)
+{
+  DOIT(delayed_revision_data_packet(ident, dat));
+}
+
+void
+packet_db_valve::consume_revision_cert(revision<cert> const & t)
+{
+  DOIT(delayed_revision_cert_packet(t));
+}
+
+void
+packet_db_valve::consume_public_key(rsa_keypair_id const & ident,
+                                    base64< rsa_pub_key > const & k)
+{
+  DOIT(delayed_public_key_packet(ident, k));
+}
+
+void
+packet_db_valve::consume_private_key(rsa_keypair_id const & ident,
+                                     base64< arc4<rsa_priv_key> > const & k)
+{
+  DOIT(delayed_private_key_packet(ident, k));
+}
+
+#undef DOIT
 
 // --- packet writer ---
 
