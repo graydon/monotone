@@ -76,9 +76,9 @@ namespace commands
     string params;
     string desc;
     command(string const & n,
-	    string const & g,
-	    string const & p,
-	    string const & d) : name(n), cmdgroup(g), params(p), desc(d) 
+            string const & g,
+            string const & p,
+            string const & d) : name(n), cmdgroup(g), params(p), desc(d) 
     { cmds[n] = this; }
     virtual ~command() {}
     virtual void exec(app_state & app, vector<utf8> const & args) = 0;
@@ -87,7 +87,7 @@ namespace commands
   bool operator<(command const & self, command const & other)
   {
     return ((self.cmdgroup < other.cmdgroup)
-	    || ((self.cmdgroup == other.cmdgroup) && (self.name < other.name)));
+            || ((self.cmdgroup == other.cmdgroup) && (self.name < other.name)));
   }
 
 
@@ -97,29 +97,29 @@ namespace commands
     i = cmds.find(cmd);
     if (i != cmds.end())
       {
-	string params = i->second->params;
-	int old = 0;
-	int j = params.find('\n');
-	while (j != -1)
-	  {
-	    out << "     " << i->second->name
-		<< " " << params.substr(old, j - old)
-		<< endl;
-	    old = j + 1;
-	    j = params.find('\n', old);
-	  }
-	out << "     " << i->second->name
-	    << " " << params.substr(old, j - old)
-	    << endl
-	    << "       " << i->second->desc << endl << endl;
-	return;
+        string params = i->second->params;
+        int old = 0;
+        int j = params.find('\n');
+        while (j != -1)
+          {
+            out << "     " << i->second->name
+                << " " << params.substr(old, j - old)
+                << endl;
+            old = j + 1;
+            j = params.find('\n', old);
+          }
+        out << "     " << i->second->name
+            << " " << params.substr(old, j - old)
+            << endl
+            << "       " << i->second->desc << endl << endl;
+        return;
       }
 
     vector<command *> sorted;
     out << "commands:" << endl;
     for (i = cmds.begin(); i != cmds.end(); ++i)
       {
-	sorted.push_back(i->second);
+        sorted.push_back(i->second);
       }
   
     sort(sorted.begin(), sorted.end(), std::greater<command *>());
@@ -129,29 +129,29 @@ namespace commands
     size_t col2 = 0;
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-		col2 = col2 > idx(sorted, i)->cmdgroup.size() ? col2 : idx(sorted, i)->cmdgroup.size();
+                col2 = col2 > idx(sorted, i)->cmdgroup.size() ? col2 : idx(sorted, i)->cmdgroup.size();
       }
 
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-	if (idx(sorted, i)->cmdgroup != curr_group)
-	  {
-	    curr_group = idx(sorted, i)->cmdgroup;
-	    out << endl;
-	    out << "  " << idx(sorted, i)->cmdgroup;
-	    col = idx(sorted, i)->cmdgroup.size() + 2;
-	    while (col++ < (col2 + 3))
-	      out << ' ';
-	  }
-	out << " " << idx(sorted, i)->name;
-	col += idx(sorted, i)->name.size() + 1;
-	if (col >= 70)
-	  {
-	    out << endl;
-	    col = 0;
-	    while (col++ < (col2 + 3))
-	      out << ' ';
-	  }
+        if (idx(sorted, i)->cmdgroup != curr_group)
+          {
+            curr_group = idx(sorted, i)->cmdgroup;
+            out << endl;
+            out << "  " << idx(sorted, i)->cmdgroup;
+            col = idx(sorted, i)->cmdgroup.size() + 2;
+            while (col++ < (col2 + 3))
+              out << ' ';
+          }
+        out << " " << idx(sorted, i)->name;
+        col += idx(sorted, i)->name.size() + 1;
+        if (col >= 70)
+          {
+            out << endl;
+            col = 0;
+            while (col++ < (col2 + 3))
+              out << ' ';
+          }
       }
     out << endl << endl;
   }
@@ -160,14 +160,14 @@ namespace commands
   {
     if (cmds.find(cmd) != cmds.end())
       {
-	L(F("executing %s command\n") % cmd);
-	cmds[cmd]->exec(app, args);
-	return 0;
+        L(F("executing %s command\n") % cmd);
+        cmds[cmd]->exec(app, args);
+        return 0;
       }
     else
       {
-	ui.inform(F("unknown command '%s'\n") % cmd);
-	return 1;
+        ui.inform(F("unknown command '%s'\n") % cmd);
+        return 1;
       }
   }
 
@@ -183,10 +183,10 @@ static cmd_ ## C C ## _cmd;                      \
 void cmd_ ## C::exec(app_state & app,            \
                      vector<utf8> const & args)  \
 
-#define ALIAS(C, realcommand, group, params, desc)	\
-CMD(C, group, params, desc)				\
-{							\
-  process(app, string(#realcommand), args);		\
+#define ALIAS(C, realcommand, group, params, desc)      \
+CMD(C, group, params, desc)                             \
+{                                                       \
+  process(app, string(#realcommand), args);             \
 }
 
 static void 
@@ -278,7 +278,7 @@ put_path_rearrangement(change_set::path_rearrangement & w)
   if (w.empty())
     {
       if (file_exists(w_path))
-	delete_file(w_path);
+        delete_file(w_path);
     }
   else
     {
@@ -307,10 +307,10 @@ update_any_attrs(app_state & app)
 
 static void
 calculate_base_revision(app_state & app, 
-			revision_id & rid,
-			revision_set & rev,
-			manifest_id & mid,
-			manifest_map & man)
+                        revision_id & rid,
+                        revision_set & rev,
+                        manifest_id & mid,
+                        manifest_map & man)
 {
   rev.edges.clear();
   man.clear();
@@ -321,13 +321,13 @@ calculate_base_revision(app_state & app,
     {
 
       N(app.db.revision_exists(rid),
-	F("base revision %s does not exist in database\n") % rid);
+        F("base revision %s does not exist in database\n") % rid);
       
       app.db.get_revision_manifest(rid, mid);
       L(F("old manifest is %s\n") % mid);
       
       N(app.db.manifest_version_exists(mid),
-	F("base manifest %s does not exist in database\n") % mid);
+        F("base manifest %s does not exist in database\n") % mid);
       
       app.db.get_manifest(mid, man);
     }
@@ -337,8 +337,8 @@ calculate_base_revision(app_state & app,
 
 static void
 calculate_base_revision(app_state & app, 
-			revision_set & rev,
-			manifest_map & man)
+                        revision_set & rev,
+                        manifest_map & man)
 {
   revision_id rid;
   manifest_id mid;
@@ -347,7 +347,7 @@ calculate_base_revision(app_state & app,
 
 static void
 calculate_base_manifest(app_state & app, 
-			manifest_map & man)
+                        manifest_map & man)
 {
   revision_id rid;
   manifest_id mid;
@@ -357,9 +357,9 @@ calculate_base_manifest(app_state & app,
 
 static void
 calculate_current_revision(app_state & app, 
-			   revision_set & rev,
-			   manifest_map & m_old,
-			   manifest_map & m_new)
+                           revision_set & rev,
+                           manifest_map & m_old,
+                           manifest_map & m_new)
 {
   manifest_id old_manifest_id;
   revision_id old_revision_id;    
@@ -372,8 +372,8 @@ calculate_current_revision(app_state & app,
   m_new.clear();
 
   calculate_base_revision(app, 
-			  old_revision_id, rev, 
-			  old_manifest_id, m_old);
+                          old_revision_id, rev, 
+                          old_manifest_id, m_old);
 
   get_path_rearrangement(cs.rearrangement);
   
@@ -387,22 +387,22 @@ calculate_current_revision(app_state & app,
     {
       I(manifest_entry_path(i) == manifest_entry_path(j));
       if (! (manifest_entry_id(i) == manifest_entry_id(j)))
-	{
-	  L(F("noted delta %s -> %s on %s\n") 
-	    % manifest_entry_id(i) 
-	    % manifest_entry_id(j) 
-	    % manifest_entry_path(i));
-	  cs.deltas.insert(make_pair(manifest_entry_path(i),
-				     make_pair(manifest_entry_id(i),
-					       manifest_entry_id(j))));
-	}
+        {
+          L(F("noted delta %s -> %s on %s\n") 
+            % manifest_entry_id(i) 
+            % manifest_entry_id(j) 
+            % manifest_entry_path(i));
+          cs.deltas.insert(make_pair(manifest_entry_path(i),
+                                     make_pair(manifest_entry_id(i),
+                                               manifest_entry_id(j))));
+        }
     }
   
   calculate_ident(m_new, rev.new_manifest);
   L(F("new manifest is %s\n") % rev.new_manifest);
 
   rev.edges.insert(make_pair(old_revision_id,
-			     make_pair(old_manifest_id, cs)));
+                             make_pair(old_manifest_id, cs)));
 }
 
 static string 
@@ -420,8 +420,8 @@ get_stdin()
 
 static void 
 get_log_message(revision_set const & cs, 
-		app_state & app,
-		string & log_message)
+                app_state & app,
+                string & log_message)
 {
   string commentary;
   data summary;
@@ -437,9 +437,9 @@ get_log_message(revision_set const & cs,
 
 static void
 decode_selector(string const & orig_sel,
-		selector_type & type,
-		string & sel,
-		app_state & app)
+                selector_type & type,
+                string & sel,
+                app_state & app)
 {
   sel = orig_sel;
 
@@ -449,49 +449,49 @@ decode_selector(string const & orig_sel,
     {
       string tmp;
       if (!app.lua.hook_expand_selector(sel, tmp))
-	{
-	  L(F("expansion of selector '%s' failed\n") % sel);
-	}
+        {
+          L(F("expansion of selector '%s' failed\n") % sel);
+        }
       else
-	{
-	  P(F("expanded selector '%s' -> '%s'\n") % sel % tmp);
-	  sel = tmp;
-	}
+        {
+          P(F("expanded selector '%s' -> '%s'\n") % sel % tmp);
+          sel = tmp;
+        }
     }
   
   if (sel.size() >= 2 && sel[1] == ':')
     {
       switch (sel[0])
-	{
-	case 'a': 
-	  type = sel_author;
-	  break;
-	case 'b':
-	  type = sel_branch;
-	  break;
-	case 'd':
-	  type = sel_date;
-	  break;
-	case 'i':
-	  type = sel_ident;
-	  break;
-	case 't':
-	  type = sel_tag;
-	  break;
-	default:	  
-	  W(F("unknown selector type: %c\n") % sel[0]);
-	  break;
-	}
+        {
+        case 'a': 
+          type = sel_author;
+          break;
+        case 'b':
+          type = sel_branch;
+          break;
+        case 'd':
+          type = sel_date;
+          break;
+        case 'i':
+          type = sel_ident;
+          break;
+        case 't':
+          type = sel_tag;
+          break;
+        default:          
+          W(F("unknown selector type: %c\n") % sel[0]);
+          break;
+        }
       sel.erase(0,2);
     }
 }
 
 static void
 complete_selector(string const & orig_sel,
-		  vector<pair<selector_type, string> > const & limit,		  
-		  selector_type & type,
-		  set<string> & completions,
-		  app_state & app)
+                  vector<pair<selector_type, string> > const & limit,             
+                  selector_type & type,
+                  set<string> & completions,
+                  app_state & app)
 {  
   string sel;
   decode_selector(orig_sel, type, sel, app);
@@ -501,8 +501,8 @@ complete_selector(string const & orig_sel,
 
 static void 
 complete(app_state & app, 
-	 string const & str, 
-	 revision_id & completion)
+         string const & str, 
+         revision_id & completion)
 {
 
   // this rule should always be enabled, even if the user specifies
@@ -543,8 +543,8 @@ complete(app_state & app,
     {
       string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
       for (set<string>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	err += (*i + "\n");
+           i != completions.end(); ++i)
+        err += (*i + "\n");
       N(completions.size() == 1, boost::format(err));
     }
   completion = revision_id(*(completions.begin()));  
@@ -553,8 +553,8 @@ complete(app_state & app,
 
 static void 
 complete(app_state & app, 
-	 string const & str, 
-	 manifest_id & completion)
+         string const & str, 
+         manifest_id & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
     F("non-hex digits in id"));
@@ -571,8 +571,8 @@ complete(app_state & app,
     {
       string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
       for (set<manifest_id>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	err += (i->inner()() + "\n");
+           i != completions.end(); ++i)
+        err += (i->inner()() + "\n");
       N(completions.size() == 1, boost::format(err));
     }
   completion = *(completions.begin());  
@@ -582,8 +582,8 @@ complete(app_state & app,
 
 static void 
 complete(app_state & app, 
-	 string const & str, 
-	 file_id & completion)
+         string const & str, 
+         file_id & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
     F("non-hex digits in id"));
@@ -600,8 +600,8 @@ complete(app_state & app,
     {
       string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
       for (set<file_id>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	err += (i->inner()() + "\n");
+           i != completions.end(); ++i)
+        err += (i->inner()() + "\n");
       N(completions.size() == 1, boost::format(err));
     }
   completion = *(completions.begin());  
@@ -630,14 +630,14 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
     set<rsa_keypair_id> checked;      
     for (size_t i = 0; i < certs.size(); ++i)
       {
-	if (checked.find(idx(certs, i).key) == checked.end() &&
-	    !app.db.public_key_exists(idx(certs, i).key))
-	  P(F("warning: no public key '%s' found in database\n")
-	    % idx(certs, i).key);
-	checked.insert(idx(certs, i).key);
+        if (checked.find(idx(certs, i).key) == checked.end() &&
+            !app.db.public_key_exists(idx(certs, i).key))
+          P(F("warning: no public key '%s' found in database\n")
+            % idx(certs, i).key);
+        checked.insert(idx(certs, i).key);
       }
   }
-	
+        
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_status status = check_cert(app, idx(certs, i));
@@ -645,41 +645,41 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       decode_base64(idx(certs, i).value, tv);
       string washed;
       if (guess_binary(tv()) 
-	  || idx(certs, i).name == rename_cert_name)
-	{
-	  washed = "<binary data>";
-	}
+          || idx(certs, i).name == rename_cert_name)
+        {
+          washed = "<binary data>";
+        }
       else
-	{
-	  washed = tv();
-	}
+        {
+          washed = tv();
+        }
 
       string stat;
       switch (status)
-	{
-	case cert_ok:
-	  stat = "ok";
-	  break;
-	case cert_bad:
-	  stat = "bad";
-	  break;
-	case cert_unknown:
-	  stat = "unknown";
-	  break;
-	}
+        {
+        case cert_ok:
+          stat = "ok";
+          break;
+        case cert_bad:
+          stat = "bad";
+          break;
+        case cert_unknown:
+          stat = "unknown";
+          break;
+        }
 
       vector<string> lines;
       split_into_lines(washed, lines);
       I(lines.size() > 0);
 
       cout << "-----------------------------------------------------------------" << endl
-	   << "Key   : " << idx(certs, i).key() << endl
-	   << "Sig   : " << stat << endl	   
-	   << "Name  : " << idx(certs, i).name() << endl	   
-	   << "Value : " << idx(lines, 0) << endl;
+           << "Key   : " << idx(certs, i).key() << endl
+           << "Sig   : " << stat << endl           
+           << "Name  : " << idx(certs, i).name() << endl           
+           << "Value : " << idx(lines, 0) << endl;
       
       for (size_t i = 1; i < lines.size(); ++i)
-	cout << "      : " << idx(lines, i) << endl;
+        cout << "      : " << idx(lines, i) << endl;
     }  
 
   if (certs.size() > 0)
@@ -707,15 +707,15 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
     {
       cout << endl << "[public keys]" << endl;
       for (size_t i = 0; i < pubkeys.size(); ++i)
-	{
-	  rsa_keypair_id keyid = idx(pubkeys, i)();
-	  base64<rsa_pub_key> pub_encoded;
-	  hexenc<id> hash_code;
+        {
+          rsa_keypair_id keyid = idx(pubkeys, i)();
+          base64<rsa_pub_key> pub_encoded;
+          hexenc<id> hash_code;
 
-	  app.db.get_key(keyid, pub_encoded); 
-	  key_hash_code(keyid, pub_encoded, hash_code);
-	  cout << hash_code << " " << keyid << endl;
-	}
+          app.db.get_key(keyid, pub_encoded); 
+          key_hash_code(keyid, pub_encoded, hash_code);
+          cout << hash_code << " " << keyid << endl;
+        }
       cout << endl;
     }
 
@@ -723,14 +723,14 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
     {
       cout << endl << "[private keys]" << endl;
       for (size_t i = 0; i < privkeys.size(); ++i)
-	{
-	  rsa_keypair_id keyid = idx(privkeys, i)();
-	  base64< arc4<rsa_priv_key> > priv_encoded;
-	  hexenc<id> hash_code;
-	  app.db.get_key(keyid, priv_encoded); 
-	  key_hash_code(keyid, priv_encoded, hash_code);
-	  cout << hash_code << " " << keyid << endl;
-	}
+        {
+          rsa_keypair_id keyid = idx(privkeys, i)();
+          base64< arc4<rsa_priv_key> > priv_encoded;
+          hexenc<id> hash_code;
+          app.db.get_key(keyid, priv_encoded); 
+          key_hash_code(keyid, priv_encoded, hash_code);
+          cout << hash_code << " " << keyid << endl;
+        }
       cout << endl;
     }
 
@@ -738,9 +738,9 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
       privkeys.size() == 0)
     {
       if (args.size() == 0)
-	P(F("no keys found\n"));
+        P(F("no keys found\n"));
       else
-	W(F("no keys found matching '%s'\n") % idx(args, 0)());
+        W(F("no keys found matching '%s'\n") % idx(args, 0)());
     }
   guard.commit();
 }
@@ -842,27 +842,27 @@ CMD(vcheck, "key and cert", "create [REVISION]\ncheck [REVISION]",
       N(app.branch_name() != "", F("need --branch argument for branch-based vcheck"));
       get_branch_heads(app.branch_name(), app, rids);      
       for (set<revision_id>::const_iterator i = rids.begin(); i != rids.end(); ++i)
-	{
-	  manifest_id mid;
-	  app.db.get_revision_manifest(*i, mid);
-	  ids.insert(mid);
-	}
+        {
+          manifest_id mid;
+          app.db.get_revision_manifest(*i, mid);
+          ids.insert(mid);
+        }
     }
   else
     {
       for (size_t i = 1; i < args.size(); ++i)
-	{
-	  manifest_id mid;
-	  revision_id rid;
-	  complete(app, idx(args, i)(), rid);
-	  app.db.get_revision_manifest(rid, mid);
-	  ids.insert(mid);
-	}
+        {
+          manifest_id mid;
+          revision_id rid;
+          complete(app, idx(args, i)(), rid);
+          app.db.get_revision_manifest(rid, mid);
+          ids.insert(mid);
+        }
     }
 
   if (idx(args, 0)() == "create")
     for (set<manifest_id>::const_iterator i = ids.begin();
-	 i != ids.end(); ++i)
+         i != ids.end(); ++i)
     {
       packet_db_writer dbw(app);
       cert_manifest_vcheck(*i, app, dbw); 
@@ -870,7 +870,7 @@ CMD(vcheck, "key and cert", "create [REVISION]\ncheck [REVISION]",
 
   else if (idx(args, 0)() == "check")
     for (set<manifest_id>::const_iterator i = ids.begin();
-	 i != ids.end(); ++i)
+         i != ids.end(); ++i)
     {
       check_manifest_vcheck(*i, app); 
     }
@@ -1151,14 +1151,14 @@ CMD(cat, "tree", "(file|manifest|revision) [ID]",
   if (idx(args, 0)() == "file")
     {
       if (args.size() == 1)
-	throw usage(name);
+        throw usage(name);
 
       file_data dat;
       file_id ident;
       complete(app, idx(args, 1)(), ident);
 
       N(app.db.file_version_exists(ident),
-	F("no file version %s found in database") % ident);
+        F("no file version %s found in database") % ident);
 
       L(F("dumping file %s\n") % ident);
       app.db.get_file_version(ident, dat);
@@ -1173,20 +1173,20 @@ CMD(cat, "tree", "(file|manifest|revision) [ID]",
       manifest_id ident;
 
       if (args.size() == 1)
-	{
-	  revision_set rev;
-	  manifest_map m_old, m_new;
-	  calculate_current_revision(app, rev, m_old, m_new);
-	  calculate_ident(m_new, ident);
-	  write_manifest_map(m_new, dat);
-	}
+        {
+          revision_set rev;
+          manifest_map m_old, m_new;
+          calculate_current_revision(app, rev, m_old, m_new);
+          calculate_ident(m_new, ident);
+          write_manifest_map(m_new, dat);
+        }
       else
-	{
-	  complete(app, idx(args, 1)(), ident);
-	  N(app.db.manifest_version_exists(ident),
-	    F("no manifest version %s found in database") % ident);
-	  app.db.get_manifest_version(ident, dat);
-	}
+        {
+          complete(app, idx(args, 1)(), ident);
+          N(app.db.manifest_version_exists(ident),
+            F("no manifest version %s found in database") % ident);
+          app.db.get_manifest_version(ident, dat);
+        }
 
       L(F("dumping manifest %s\n") % ident);
       data unpacked;
@@ -1200,20 +1200,20 @@ CMD(cat, "tree", "(file|manifest|revision) [ID]",
       revision_id ident;
 
       if (args.size() == 1)
-	{
-	  revision_set rev;
-	  manifest_map m_old, m_new;
-	  calculate_current_revision(app, rev, m_old, m_new);
-	  calculate_ident(rev, ident);
-	  write_revision_set(rev, dat);
-	}
+        {
+          revision_set rev;
+          manifest_map m_old, m_new;
+          calculate_current_revision(app, rev, m_old, m_new);
+          calculate_ident(rev, ident);
+          write_revision_set(rev, dat);
+        }
       else
-	{
-	  complete(app, idx(args, 1)(), ident);
-	  N(app.db.revision_exists(ident),
-	    F("no revision %s found in database") % ident);
-	  app.db.get_revision(ident, dat);
-	}
+        {
+          complete(app, idx(args, 1)(), ident);
+          N(app.db.revision_exists(ident),
+            F("no revision %s found in database") % ident);
+          app.db.get_revision(ident, dat);
+        }
 
       L(F("dumping revision %s\n") % ident);
       data unpacked;
@@ -1282,12 +1282,12 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
   for (manifest_map::const_iterator i = m.begin(); i != m.end(); ++i)
     {
       N(app.db.file_version_exists(manifest_entry_id(i)),
-	F("no file %s found in database for %s")
-	% manifest_entry_id(i) % manifest_entry_path(i));
+        F("no file %s found in database for %s")
+        % manifest_entry_id(i) % manifest_entry_path(i));
       
       file_data dat;
       L(F("writing file %s to %s\n")
-	% manifest_entry_id(i) % manifest_entry_path(i));
+        % manifest_entry_id(i) % manifest_entry_path(i));
       app.db.get_file_version(manifest_entry_id(i), dat);
       write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
     }
@@ -1331,20 +1331,20 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch")
       app.db.get_revision_certs(*i, author_name, tmp);
       erase_bogus_certs(tmp, app);
       for (vector< revision<cert> >::const_iterator j = tmp.begin();
-	   j != tmp.end(); ++j)
+           j != tmp.end(); ++j)
       {
-	 cert_value tv;
-	 decode_base64(j->inner().value, tv);
-	 cout << " " << tv;
+         cert_value tv;
+         decode_base64(j->inner().value, tv);
+         cout << " " << tv;
       }
       app.db.get_revision_certs(*i, date_name, tmp);
       erase_bogus_certs(tmp, app);
       for (vector< revision<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
+               j != tmp.end(); ++j)
       {
-	 cert_value tv;
-	 decode_base64(j->inner().value, tv);
-	 cout << " " << tv;
+         cert_value tv;
+         decode_base64(j->inner().value, tv);
+         cout << " " << tv;
       }
       cout << endl;
     }
@@ -1405,15 +1405,15 @@ struct unknown_itemizer : public tree_walker
     if (man.find(path) == man.end())
       {
       if (want_ignored)
-	{
-	  if (app.lua.hook_ignore_file(path))
-	    cout << path() << endl;
-	}
+        {
+          if (app.lua.hook_ignore_file(path))
+            cout << path() << endl;
+        }
       else
-	{
-	  if (!app.lua.hook_ignore_file(path))
-	    cout << path() << endl;
-	}
+        {
+          if (!app.lua.hook_ignore_file(path))
+            cout << path() << endl;
+        }
       }
   }
 };
@@ -1443,13 +1443,13 @@ ls_missing (app_state & app)
   if (! rid.inner()().empty())
     {
       N(app.db.revision_exists(rid),
-	F("base revision %s does not exist in database\n") % rid);
+        F("base revision %s does not exist in database\n") % rid);
       
       app.db.get_revision_manifest(rid, mid);
       L(F("old manifest is %s\n") % mid);
       
       N(app.db.manifest_version_exists(mid),
-	F("base manifest %s does not exist in database\n") % mid);
+        F("base manifest %s does not exist in database\n") % mid);
       
       app.db.get_manifest(mid, man);
     }
@@ -1462,8 +1462,8 @@ ls_missing (app_state & app)
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      if (!file_exists(*i))	
-	cout << *i << endl;
+      if (!file_exists(*i))     
+        cout << *i << endl;
     }
 }
 
@@ -1531,7 +1531,7 @@ CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout"
   base64< gzip<delta> > del;
   diff(m_old, m_new, del);
   pw.consume_manifest_delta(m_old_id, m_new_id, 
-			    manifest_delta(del));
+                            manifest_delta(del));
 }
 
 CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
@@ -1787,28 +1787,28 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipu
   if (args.size() == 1)
     {
       if (idx(args, 0)() == "init")
-	app.db.initialize();
+        app.db.initialize();
       else if (idx(args, 0)() == "info")
-	app.db.info(cout);
+        app.db.info(cout);
       else if (idx(args, 0)() == "version")
-	app.db.version(cout);
+        app.db.version(cout);
       else if (idx(args, 0)() == "dump")
-	app.db.dump(cout);
+        app.db.dump(cout);
       else if (idx(args, 0)() == "load")
-	app.db.load(cin);
+        app.db.load(cin);
       else if (idx(args, 0)() == "migrate")
-	app.db.migrate();
+        app.db.migrate();
       else if (idx(args, 0)() == "changesetify")
-	build_changesets(app);
+        build_changesets(app);
       else
-	throw usage(name);
+        throw usage(name);
     }
   else if (args.size() == 2)
     {
       if (idx(args, 0)() == "execute")
-	app.db.debug(idx(args, 1)(), cout);
+        app.db.debug(idx(args, 1)(), cout);
       else
-	throw usage(name);
+        throw usage(name);
     }
   else
     throw usage(name);
@@ -1857,82 +1857,82 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   
     if (app.db.revision_exists(rid))
       {
-	L(F("revision %s already in database\n") % rid);
+        L(F("revision %s already in database\n") % rid);
       }
     else
       {
-	// new revision
-	L(F("inserting new revision %s\n") % rid);
+        // new revision
+        L(F("inserting new revision %s\n") % rid);
       
-	I(rs.edges.size() == 1);
-	edge_map::const_iterator edge = rs.edges.begin();
-	I(edge != rs.edges.end());
+        I(rs.edges.size() == 1);
+        edge_map::const_iterator edge = rs.edges.begin();
+        I(edge != rs.edges.end());
       
-	// process manifest delta or new manifest
-	if (app.db.manifest_version_exists(rs.new_manifest))
-	  {
-	    L(F("skipping manifest %s, already in database\n") % rs.new_manifest);
-	  }
-	else if (app.db.manifest_version_exists(edge_old_manifest(edge)))
-	  {
-	    L(F("inserting manifest delta %s -> %s\n") 
-	      % edge_old_manifest(edge) 
-	      % rs.new_manifest);
-	    base64< gzip<delta> > del;
-	    diff(m_old, m_new, del);
-	    dbw.consume_manifest_delta(edge_old_manifest(edge), 
-				       rs.new_manifest, 
-				       manifest_delta(del));
-	  }
-	else
-	  {
-	    L(F("inserting full manifest %s\n") % rs.new_manifest);
-	    manifest_data m_new_data;
-	    write_manifest_map(m_new, m_new_data);
-	    dbw.consume_manifest_data(rs.new_manifest, m_new_data);
-	  }
+        // process manifest delta or new manifest
+        if (app.db.manifest_version_exists(rs.new_manifest))
+          {
+            L(F("skipping manifest %s, already in database\n") % rs.new_manifest);
+          }
+        else if (app.db.manifest_version_exists(edge_old_manifest(edge)))
+          {
+            L(F("inserting manifest delta %s -> %s\n") 
+              % edge_old_manifest(edge) 
+              % rs.new_manifest);
+            base64< gzip<delta> > del;
+            diff(m_old, m_new, del);
+            dbw.consume_manifest_delta(edge_old_manifest(edge), 
+                                       rs.new_manifest, 
+                                       manifest_delta(del));
+          }
+        else
+          {
+            L(F("inserting full manifest %s\n") % rs.new_manifest);
+            manifest_data m_new_data;
+            write_manifest_map(m_new, m_new_data);
+            dbw.consume_manifest_data(rs.new_manifest, m_new_data);
+          }
       
-	// process file deltas or new files
-	for (change_set::delta_map::const_iterator i = edge_changes(edge).deltas.begin();
-	     i != edge_changes(edge).deltas.end(); ++i)
-	  {
-	    if (! delta_entry_src(i).inner()().empty() && 
-		app.db.file_version_exists(delta_entry_dst(i)))
-	      {
-		L(F("skipping file delta %s, already in database\n") 
-		  % delta_entry_dst(i));
-	      }
-	    else if (! delta_entry_src(i).inner()().empty() && 
-		     app.db.file_version_exists(delta_entry_src(i)))
-	      {
-		L(F("inserting delta %s -> %s\n") 
-		  % delta_entry_src(i) % delta_entry_dst(i));
-		file_data old_data;
-		base64< gzip<data> > new_data;
-		app.db.get_file_version(delta_entry_src(i), old_data);
-		read_localized_data(delta_entry_path(i), new_data, app.lua);
-		// sanity check
-		hexenc<id> tid;
-		calculate_ident(new_data, tid);
-		I(tid == delta_entry_dst(i).inner());
-		base64< gzip<delta> > del;
-		diff(old_data.inner(), new_data, del);
-		dbw.consume_file_delta(delta_entry_src(i), 
-				       delta_entry_dst(i), 
-				       file_delta(del));
-	      }
-	    else
-	      {
-		L(F("inserting full version %s\n") % delta_entry_dst(i));
-		base64< gzip<data> > new_data;
-		read_localized_data(delta_entry_path(i), new_data, app.lua);
-		// sanity check
-		hexenc<id> tid;
-		calculate_ident(new_data, tid);
-		I(tid == delta_entry_dst(i).inner());
-		dbw.consume_file_data(delta_entry_dst(i), file_data(new_data));
-	      }
-	  }
+        // process file deltas or new files
+        for (change_set::delta_map::const_iterator i = edge_changes(edge).deltas.begin();
+             i != edge_changes(edge).deltas.end(); ++i)
+          {
+            if (! delta_entry_src(i).inner()().empty() && 
+                app.db.file_version_exists(delta_entry_dst(i)))
+              {
+                L(F("skipping file delta %s, already in database\n") 
+                  % delta_entry_dst(i));
+              }
+            else if (! delta_entry_src(i).inner()().empty() && 
+                     app.db.file_version_exists(delta_entry_src(i)))
+              {
+                L(F("inserting delta %s -> %s\n") 
+                  % delta_entry_src(i) % delta_entry_dst(i));
+                file_data old_data;
+                base64< gzip<data> > new_data;
+                app.db.get_file_version(delta_entry_src(i), old_data);
+                read_localized_data(delta_entry_path(i), new_data, app.lua);
+                // sanity check
+                hexenc<id> tid;
+                calculate_ident(new_data, tid);
+                I(tid == delta_entry_dst(i).inner());
+                base64< gzip<delta> > del;
+                diff(old_data.inner(), new_data, del);
+                dbw.consume_file_delta(delta_entry_src(i), 
+                                       delta_entry_dst(i), 
+                                       file_delta(del));
+              }
+            else
+              {
+                L(F("inserting full version %s\n") % delta_entry_dst(i));
+                base64< gzip<data> > new_data;
+                read_localized_data(delta_entry_path(i), new_data, app.lua);
+                // sanity check
+                hexenc<id> tid;
+                calculate_ident(new_data, tid);
+                I(tid == delta_entry_dst(i).inner());
+                dbw.consume_file_data(delta_entry_dst(i), file_data(new_data));
+              }
+          }
       }
 
     revision_data rdat;
@@ -1964,11 +1964,11 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
     vector< revision<cert> > ctmp;
     app.db.get_revision_certs(rid, ctmp);
     for (vector< revision<cert> >::const_iterator i = ctmp.begin();
-	 i != ctmp.end(); ++i)
+         i != ctmp.end(); ++i)
       {
-	cert_value vtmp;
-	decode_base64(i->inner().value, vtmp);
-	certs.insert(make_pair(i->inner().name, vtmp));
+        cert_value vtmp;
+        decode_base64(i->inner().value, vtmp);
+        certs.insert(make_pair(i->inner().name, vtmp));
       }
     app.lua.hook_note_commit(rid, certs);
   }
@@ -1977,85 +1977,85 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 
 static void 
 dump_diffs(change_set::delta_map const & deltas,
-	   app_state & app,
-	   bool new_is_archived)
+           app_state & app,
+           bool new_is_archived)
 {
   
   for (change_set::delta_map::const_iterator i = deltas.begin();
        i != deltas.end(); ++i)
     {
       if (null_id(delta_entry_src(i)))
-	{
-	  data unpacked;
-	  vector<string> lines;
-	  
-	  if (new_is_archived)
-	    {
-	      file_data dat;
-	      app.db.get_file_version(delta_entry_dst(i), dat);
-	      unpack(dat.inner(), unpacked);
-	    }
-	  else
-	    {
-	      read_localized_data(delta_entry_path(i), 
-				  unpacked, app.lua);
-	    }
-	  
-	  if (guess_binary(unpacked()))
-	    cout << "# " << delta_entry_path(i) << " is binary\n";
-	  else
-	    {	  
-	      split_into_lines(unpacked(), lines);
-	      if (! lines.empty())
-		{
-		  cout << (F("--- %s\n") % delta_entry_path(i))
-		       << (F("+++ %s\n") % delta_entry_path(i))
-		       << (F("@@ -0,0 +1,%d @@\n") % lines.size());
-		  for (vector<string>::const_iterator j = lines.begin();
-		       j != lines.end(); ++j)
-		    {
-		      cout << "+" << *j << endl;
-		    }
-		}
-	    }
-	}
+        {
+          data unpacked;
+          vector<string> lines;
+          
+          if (new_is_archived)
+            {
+              file_data dat;
+              app.db.get_file_version(delta_entry_dst(i), dat);
+              unpack(dat.inner(), unpacked);
+            }
+          else
+            {
+              read_localized_data(delta_entry_path(i), 
+                                  unpacked, app.lua);
+            }
+          
+          if (guess_binary(unpacked()))
+            cout << "# " << delta_entry_path(i) << " is binary\n";
+          else
+            {     
+              split_into_lines(unpacked(), lines);
+              if (! lines.empty())
+                {
+                  cout << (F("--- %s\n") % delta_entry_path(i))
+                       << (F("+++ %s\n") % delta_entry_path(i))
+                       << (F("@@ -0,0 +1,%d @@\n") % lines.size());
+                  for (vector<string>::const_iterator j = lines.begin();
+                       j != lines.end(); ++j)
+                    {
+                      cout << "+" << *j << endl;
+                    }
+                }
+            }
+        }
       else
-	{
-	  file_data f_old;
-	  gzip<data> decoded_old;
-	  data decompressed_old, decompressed_new;
-	  vector<string> old_lines, new_lines;
-	  
-	  app.db.get_file_version(delta_entry_src(i), f_old);
-	  decode_base64(f_old.inner(), decoded_old);
-	  decode_gzip(decoded_old, decompressed_old);
-	  
-	  if (new_is_archived)
-	    {
-	      file_data f_new;
-	      gzip<data> decoded_new;
-	      app.db.get_file_version(delta_entry_dst(i), f_new);
-	      decode_base64(f_new.inner(), decoded_new);
-	      decode_gzip(decoded_new, decompressed_new);
-	    }
-	  else
-	    {
-	      read_localized_data(delta_entry_path(i), 
-				  decompressed_new, app.lua);
-	    }
+        {
+          file_data f_old;
+          gzip<data> decoded_old;
+          data decompressed_old, decompressed_new;
+          vector<string> old_lines, new_lines;
+          
+          app.db.get_file_version(delta_entry_src(i), f_old);
+          decode_base64(f_old.inner(), decoded_old);
+          decode_gzip(decoded_old, decompressed_old);
+          
+          if (new_is_archived)
+            {
+              file_data f_new;
+              gzip<data> decoded_new;
+              app.db.get_file_version(delta_entry_dst(i), f_new);
+              decode_base64(f_new.inner(), decoded_new);
+              decode_gzip(decoded_new, decompressed_new);
+            }
+          else
+            {
+              read_localized_data(delta_entry_path(i), 
+                                  decompressed_new, app.lua);
+            }
 
-	  if (guess_binary(decompressed_new()) || 
-	      guess_binary(decompressed_old()))
-	    cout << "# " << delta_entry_path(i) << " is binary\n";
-	  else
-	    {
-	      split_into_lines(decompressed_old(), old_lines);
-	      split_into_lines(decompressed_new(), new_lines);
-	      unidiff(delta_entry_path(i)(), 
-		      delta_entry_path(i)(), 
-		      old_lines, new_lines, cout);
-	    }
-	}
+          if (guess_binary(decompressed_new()) || 
+              guess_binary(decompressed_old()))
+            cout << "# " << delta_entry_path(i) << " is binary\n";
+          else
+            {
+              split_into_lines(decompressed_old(), old_lines);
+              split_into_lines(decompressed_new(), new_lines);
+              unidiff(delta_entry_path(i)(), 
+                      delta_entry_path(i)(), 
+                      old_lines, new_lines, cout);
+            }
+        }
     }
 }
 
@@ -2073,7 +2073,7 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
       calculate_current_revision(app, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       if (r_new.edges.size() == 1)
-	composite = edge_changes(r_new.edges.begin());
+        composite = edge_changes(r_new.edges.begin());
       new_is_archived = false;
     }
   else if (args.size() == 1)
@@ -2082,7 +2082,7 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
       manifest_map m_old;
       complete(app, idx(args, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
-	F("revision %s does not exist") % r_old_id);
+        F("revision %s does not exist") % r_old_id);
       app.db.get_revision(r_old_id, r_old);
       calculate_current_revision(app, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
@@ -2098,11 +2098,11 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
       complete(app, idx(args, 1)(), r_new_id);
 
       N(app.db.revision_exists(r_old_id),
-	F("revision %s does not exist") % r_old_id);
+        F("revision %s does not exist") % r_old_id);
       app.db.get_revision(r_old_id, r_old);
 
       N(app.db.revision_exists(r_new_id),
-	F("revision %s does not exist") % r_new_id);
+        F("revision %s does not exist") % r_new_id);
       app.db.get_revision(r_new_id, r_new);
 
       app.db.get_revision_manifest(r_new_id, m_new_id);
@@ -2123,56 +2123,56 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
       calculate_ident(r_old, src_id);
       calculate_ident(r_new, new_id);
       if (new_is_archived)
-	dst_id = new_id;
+        dst_id = new_id;
       else
-	{
-	  I(r_new.edges.size() == 1);
-	  dst_id = edge_old_revision(r_new.edges.begin());
-	}
+        {
+          I(r_new.edges.size() == 1);
+          dst_id = edge_old_revision(r_new.edges.begin());
+        }
 
       N(find_common_ancestor(src_id, dst_id, anc_id, app),
-	F("no common ancestor for %s and %s") % src_id % dst_id);
+        F("no common ancestor for %s and %s") % src_id % dst_id);
 
       if (src_id == anc_id)
-	{
-	  calculate_composite_change_set(src_id, dst_id, app, composite);
-	  L(F("calculated diff via direct analysis\n"));
-	}
+        {
+          calculate_composite_change_set(src_id, dst_id, app, composite);
+          L(F("calculated diff via direct analysis\n"));
+        }
 
       else if (!(src_id == anc_id) && dst_id == anc_id)
-	{
-	  change_set tmp;
-	  calculate_composite_change_set(dst_id, src_id, app, tmp);
-	  invert_change_set(tmp, m_new, composite);
-	  L(F("calculated diff via inverted direct analysis\n"));
-	}
+        {
+          change_set tmp;
+          calculate_composite_change_set(dst_id, src_id, app, tmp);
+          invert_change_set(tmp, m_new, composite);
+          L(F("calculated diff via inverted direct analysis\n"));
+        }
 
       else
-	{
-	  change_set anc_to_src, src_to_anc, anc_to_dst;
-	  manifest_id anc_m_id;
-	  manifest_map m_anc;
+        {
+          change_set anc_to_src, src_to_anc, anc_to_dst;
+          manifest_id anc_m_id;
+          manifest_map m_anc;
 
-	  I(!(src_id == anc_id || dst_id == anc_id));
+          I(!(src_id == anc_id || dst_id == anc_id));
 
-	  app.db.get_revision_manifest(anc_id, anc_m_id);
-	  app.db.get_manifest(anc_m_id, m_anc);
+          app.db.get_revision_manifest(anc_id, anc_m_id);
+          app.db.get_manifest(anc_m_id, m_anc);
 
-	  calculate_composite_change_set(anc_id, src_id, app, anc_to_src);
-	  invert_change_set(anc_to_src, m_anc, src_to_anc);
-	  calculate_composite_change_set(anc_id, dst_id, app, anc_to_dst);
-	  concatenate_change_sets(src_to_anc, anc_to_dst, composite);
-	  L(F("calculated diff via common ancestor %s\n") % anc_id);
-	}
+          calculate_composite_change_set(anc_id, src_id, app, anc_to_src);
+          invert_change_set(anc_to_src, m_anc, src_to_anc);
+          calculate_composite_change_set(anc_id, dst_id, app, anc_to_dst);
+          concatenate_change_sets(src_to_anc, anc_to_dst, composite);
+          L(F("calculated diff via common ancestor %s\n") % anc_id);
+        }
 
       if (!new_is_archived)
-	{
-	  L(F("concatenating un-committed changeset to composite\n"));
-	  change_set tmp;
-	  I(r_new.edges.size() == 1);
-	  concatenate_change_sets(composite, edge_changes(r_new.edges.begin()), tmp);
-	  composite = tmp;
-	}
+        {
+          L(F("concatenating un-committed changeset to composite\n"));
+          change_set tmp;
+          I(r_new.edges.size() == 1);
+          concatenate_change_sets(composite, edge_changes(r_new.edges.begin()), tmp);
+          composite = tmp;
+        }
 
     }
 
@@ -2227,22 +2227,22 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
        ++i)
     {
       cout << "node: { title : \"" << *i << "\"\n"
-	   << "        label : \"\\fb" << *i;
+           << "        label : \"\\fb" << *i;
       pair<multimap<revision_id,string>::const_iterator,
-	multimap<revision_id,string>::const_iterator> pair =
-	branches.equal_range(*i);
+        multimap<revision_id,string>::const_iterator> pair =
+        branches.equal_range(*i);
       for (multimap<revision_id,string>::const_iterator j = pair.first;
-	   j != pair.second; ++j)
-	{
-	  cout << "\\n\\fn" << j->second;
-	}
+           j != pair.second; ++j)
+        {
+          cout << "\\n\\fn" << j->second;
+        }
       cout << "\"}" << endl;
     }
   for (set<pair<revision_id, revision_id> >::iterator i = edges.begin(); i != edges.end();
        ++i)
     {
       cout << "edge: { sourcename : \"" << i->first << "\"" << endl
-	   << "        targetname : \"" << i->second << "\" }" << endl;
+           << "        targetname : \"" << i->second << "\" }" << endl;
     }
   cout << "}" << endl << endl; // close graph
 }
@@ -2250,8 +2250,8 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
 
 static void
 write_file_targets(change_set const & cs,
-		   update_merge_provider & merger,
-		   app_state & app)
+                   update_merge_provider & merger,
+                   app_state & app)
 {
 
   manifest_map files_to_write;
@@ -2262,30 +2262,30 @@ write_file_targets(change_set const & cs,
       file_id ident(delta_entry_dst(i));
       
       if (file_exists(pth))
-	{
-	  hexenc<id> tmp_id;
-	  calculate_ident(pth, tmp_id, app.lua);
-	  if (tmp_id == ident.inner())
-	    continue;
-	}
+        {
+          hexenc<id> tmp_id;
+          calculate_ident(pth, tmp_id, app.lua);
+          if (tmp_id == ident.inner())
+            continue;
+        }
       
       P(F("updating %s to %s\n") % pth % ident);
       
       I(app.db.file_version_exists(ident)
-	|| merger.temporary_store.find(ident) != merger.temporary_store.end());
+        || merger.temporary_store.find(ident) != merger.temporary_store.end());
       
       file_data tmp;
       if (app.db.file_version_exists(ident))
-	app.db.get_file_version(ident, tmp);
+        app.db.get_file_version(ident, tmp);
       else if (merger.temporary_store.find(ident) != merger.temporary_store.end())
-	tmp = merger.temporary_store[ident];    
+        tmp = merger.temporary_store[ident];    
       write_localized_data(pth, tmp.inner(), app.lua);
     }
 }
   
 
 // static void dump_change_set(string const & name,
-// 			    change_set & cs)
+//                          change_set & cs)
 // {
 //   data dat;
 //   write_change_set(cs, dat);
@@ -2366,24 +2366,24 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
     {
       // working copy has no changes
       L(F("updating along chosen edge %s -> %s\n") 
-	% r_old_id % r_chosen_id);
+        % r_old_id % r_chosen_id);
       update = old_to_chosen;
     }
   else
     {      
       change_set 
-	old_to_working(edge_changes(r_working.edges.begin())),
-	working_to_merged, 
-	chosen_to_merged;
+        old_to_working(edge_changes(r_working.edges.begin())),
+        working_to_merged, 
+        chosen_to_merged;
 
       L(F("merging working copy with chosen edge %s -> %s\n") 
-	% r_old_id % r_chosen_id);
+        % r_old_id % r_chosen_id);
 
       merge_change_sets(old_to_chosen, 
-			old_to_working, 
-			chosen_to_merged, 
-			working_to_merged, 
-			merger, app);
+                        old_to_working, 
+                        chosen_to_merged, 
+                        working_to_merged, 
+                        merger, app);
       // dump_change_set("chosen to merged", chosen_to_merged);
       // dump_change_set("working to merged", working_to_merged);
 
@@ -2420,9 +2420,9 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
 
 static void 
 try_one_merge(revision_id const & left_id,
-	      revision_id const & right_id,
-	      revision_id & merged_id,
-	      app_state & app)
+              revision_id const & right_id,
+              revision_id & merged_id,
+              app_state & app)
 {
   revision_id anc_id;
   revision_set left_rev, right_rev, anc_rev, merged_rev;
@@ -2443,7 +2443,7 @@ try_one_merge(revision_id const & left_id,
   app.db.get_manifest(left_rev.new_manifest, left_man);
   
   if(find_common_ancestor(left_id, right_id, anc_id, app))
-    {	  
+    {     
       P(F("common ancestor %s found\n") % anc_id); 
       P(F("trying 3-way merge\n"));
       
@@ -2461,8 +2461,8 @@ try_one_merge(revision_id const & left_id,
     }
   
   merge_change_sets(anc_to_left, anc_to_right, 
-		    left_to_merged, right_to_merged, 
-		    merger, app);
+                    left_to_merged, right_to_merged, 
+                    merger, app);
   
   {
     // we have to record *some* route to this manifest. we pick the
@@ -2476,25 +2476,25 @@ try_one_merge(revision_id const & left_id,
     diff(right_man, merged_man, right_mdelta);
     if (left_mdelta().size() < right_mdelta().size())
       dbw.consume_manifest_delta(left_rev.new_manifest, 
-				 merged_rev.new_manifest, left_mdelta);
+                                 merged_rev.new_manifest, left_mdelta);
     else
       dbw.consume_manifest_delta(right_rev.new_manifest, 
-				 merged_rev.new_manifest, right_mdelta);
+                                 merged_rev.new_manifest, right_mdelta);
   }
   
   merged_rev.edges.insert(std::make_pair(left_id,
-					 std::make_pair(left_rev.new_manifest,
-							left_to_merged)));
+                                         std::make_pair(left_rev.new_manifest,
+                                                        left_to_merged)));
   merged_rev.edges.insert(std::make_pair(right_id,
-					 std::make_pair(right_rev.new_manifest,
-							right_to_merged)));
+                                         std::make_pair(right_rev.new_manifest,
+                                                        right_to_merged)));
   revision_data merged_data;
   write_revision_set(merged_rev, merged_data);
   calculate_ident(merged_data, merged_id);
   dbw.consume_revision_data(merged_id, merged_data);
   cert_revision_date_now(merged_id, app, dbw);
   cert_revision_author_default(merged_id, app, dbw);
-}			  
+}                         
 
 
 CMD(merge, "tree", "", "merge unmerged heads of branch")
@@ -2526,7 +2526,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
       revision_id merged;
       transaction_guard guard(app.db);
       try_one_merge (left, right, merged, app);
-	  	  
+                  
       // merged 1 edge; now we commit this, update merge source and
       // try next one
 
@@ -2534,9 +2534,9 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
       cert_revision_in_branch(merged, app.branch_name(), app, dbw);
 
       string log = (F("merge of %s\n"
-		      "     and %s\n") % left % right).str();
+                      "     and %s\n") % left % right).str();
       cert_revision_changelog(merged, log, app, dbw);
-	  
+          
       guard.commit();
       P(F("[merged] %s\n") % merged);
       left = merged;
@@ -2592,7 +2592,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
   
   string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
-		% (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
+                % (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
   
   cert_revision_changelog(merged, log, app, dbw);
   
@@ -2607,32 +2607,32 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
   if (idx(args, 0)() == "revision")
     {      
       N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-	F("non-hex digits in partial id"));
+        F("non-hex digits in partial id"));
       set<revision_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<revision_id>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	cout << i->inner()() << endl;
+           i != completions.end(); ++i)
+        cout << i->inner()() << endl;
     }
   else if (idx(args, 0)() == "manifest")
     {      
       N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-	F("non-hex digits in partial id"));
+        F("non-hex digits in partial id"));
       set<manifest_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<manifest_id>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	cout << i->inner()() << endl;
+           i != completions.end(); ++i)
+        cout << i->inner()() << endl;
     }
   else if (idx(args, 0)() == "file")
     {
       N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-	F("non-hex digits in partial id"));
+        F("non-hex digits in partial id"));
       set<file_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<file_id>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	cout << i->inner()() << endl;
+           i != completions.end(); ++i)
+        cout << i->inner()() << endl;
     }
   else
     throw usage(name);  
@@ -2651,18 +2651,18 @@ CMD(revert, "working copy", "[FILE]...",
     {
       // revert the whole thing
       for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
-	{
+        {
 
-	  N(app.db.file_version_exists(manifest_entry_id(i)),
-	    F("no file version %s found in database for %s")
-	    % manifest_entry_id(i) % manifest_entry_path(i));
+          N(app.db.file_version_exists(manifest_entry_id(i)),
+            F("no file version %s found in database for %s")
+            % manifest_entry_id(i) % manifest_entry_path(i));
       
-	  file_data dat;
-	  L(F("writing file %s to %s\n")
-	    % manifest_entry_id(i) % manifest_entry_path(i));
-	  app.db.get_file_version(manifest_entry_id(i), dat);
-	  write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
-	}
+          file_data dat;
+          L(F("writing file %s to %s\n")
+            % manifest_entry_id(i) % manifest_entry_path(i));
+          app.db.get_file_version(manifest_entry_id(i), dat);
+          write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
+        }
       remove_path_rearrangement();
     }
   else
@@ -2673,81 +2673,81 @@ CMD(revert, "working copy", "[FILE]...",
       // revert some specific files
       vector<utf8> work_args (args.begin(), args.end());
       for (size_t i = 0; i < work_args.size(); ++i)
-	{
-	  string arg(idx(work_args, i)());
-	  if (directory_exists(file_path(arg)))
-	    {
-	      // simplest is to just add all files from that
-	      // directory.
-	      string dir = fs::path(arg).string();
-	      for (manifest_map::const_iterator i = m_old.begin();
-		   i != m_old.end(); ++i)
-		{
-		  file_path p = i->first;
-		  if (fs::path(p()).branch_path().string() == dir)
-		    work_args.push_back(p());
-		}
-	    }
+        {
+          string arg(idx(work_args, i)());
+          if (directory_exists(file_path(arg)))
+            {
+              // simplest is to just add all files from that
+              // directory.
+              string dir = fs::path(arg).string();
+              for (manifest_map::const_iterator i = m_old.begin();
+                   i != m_old.end(); ++i)
+                {
+                  file_path p = i->first;
+                  if (fs::path(p()).branch_path().string() == dir)
+                    work_args.push_back(p());
+                }
+            }
 
-	  N(directory_exists(file_path(arg)) ||
-	    (m_old.find(arg) != m_old.end()) ||
-	    (work.added_files.find(arg) != work.added_files.end()) ||
-	    (work.deleted_dirs.find(arg) != work.deleted_dirs.end()) ||
-	    (work.deleted_files.find(arg) != work.deleted_files.end()) ||
-	    (work.deleted_dirs.find(arg) != work.deleted_dirs.end()) ||
-	    (work.renamed_files.find(arg) != work.renamed_files.end()),
-	    F("nothing known about %s") % arg);
+          N(directory_exists(file_path(arg)) ||
+            (m_old.find(arg) != m_old.end()) ||
+            (work.added_files.find(arg) != work.added_files.end()) ||
+            (work.deleted_dirs.find(arg) != work.deleted_dirs.end()) ||
+            (work.deleted_files.find(arg) != work.deleted_files.end()) ||
+            (work.deleted_dirs.find(arg) != work.deleted_dirs.end()) ||
+            (work.renamed_files.find(arg) != work.renamed_files.end()),
+            F("nothing known about %s") % arg);
 
-	  manifest_map::const_iterator entry = m_old.find(file_path(arg));
-	  if (entry != m_old.end())
-	    {
-	      
-	      L(F("reverting %s to %s\n") %
-		manifest_entry_path(entry) % manifest_entry_id(entry));
-	      
-	      N(app.db.file_version_exists(manifest_entry_id(entry)),
-		F("no file version %s found in database for %s")
-		% manifest_entry_id(entry) % manifest_entry_path(entry));
-	      
-	      file_data dat;
-	      L(F("writing file %s to %s\n") %
-		manifest_entry_id(entry) % manifest_entry_path(entry));
-	      app.db.get_file_version(manifest_entry_id(entry), dat);
-	      write_localized_data(manifest_entry_path(entry), dat.inner(), app.lua);
+          manifest_map::const_iterator entry = m_old.find(file_path(arg));
+          if (entry != m_old.end())
+            {
+              
+              L(F("reverting %s to %s\n") %
+                manifest_entry_path(entry) % manifest_entry_id(entry));
+              
+              N(app.db.file_version_exists(manifest_entry_id(entry)),
+                F("no file version %s found in database for %s")
+                % manifest_entry_id(entry) % manifest_entry_path(entry));
+              
+              file_data dat;
+              L(F("writing file %s to %s\n") %
+                manifest_entry_id(entry) % manifest_entry_path(entry));
+              app.db.get_file_version(manifest_entry_id(entry), dat);
+              write_localized_data(manifest_entry_path(entry), dat.inner(), app.lua);
 
-	      // a deleted file will always appear in the manifest
-	      if (work.deleted_files.find(arg) != work.deleted_files.end())
-		{
-		  L(F("also removing deletion for %s\n") % arg);
-		  work.deleted_files.erase(arg);
-		}
-	    }
-	  else if (work.deleted_dirs.find(arg) != work.deleted_dirs.end())
-	    {
-	      L(F("removing delete for %s\n") % arg);
-	      work.deleted_dirs.erase(arg);
-	    }
-	  else if (work.deleted_files.find(arg) != work.deleted_files.end())
-	    {
-	      L(F("removing delete for %s\n") % arg);
-	      work.deleted_files.erase(arg);
-	    }
-	  else if (work.renamed_dirs.find(arg) != work.renamed_dirs.end())
-	    {
-	      L(F("removing rename for %s\n") % arg);
-	      work.renamed_dirs.erase(arg);
-	    }
-	  else if (work.renamed_files.find(arg) != work.renamed_files.end())
-	    {
-	      L(F("removing rename for %s\n") % arg);
-	      work.renamed_files.erase(arg);
-	    }
-	  else if (work.added_files.find(arg) != work.added_files.end())
-	    {
-	      L(F("removing addition for %s\n") % arg);
-	      work.added_files.erase(arg);
-	    }
-	}
+              // a deleted file will always appear in the manifest
+              if (work.deleted_files.find(arg) != work.deleted_files.end())
+                {
+                  L(F("also removing deletion for %s\n") % arg);
+                  work.deleted_files.erase(arg);
+                }
+            }
+          else if (work.deleted_dirs.find(arg) != work.deleted_dirs.end())
+            {
+              L(F("removing delete for %s\n") % arg);
+              work.deleted_dirs.erase(arg);
+            }
+          else if (work.deleted_files.find(arg) != work.deleted_files.end())
+            {
+              L(F("removing delete for %s\n") % arg);
+              work.deleted_files.erase(arg);
+            }
+          else if (work.renamed_dirs.find(arg) != work.renamed_dirs.end())
+            {
+              L(F("removing rename for %s\n") % arg);
+              work.renamed_dirs.erase(arg);
+            }
+          else if (work.renamed_files.find(arg) != work.renamed_files.end())
+            {
+              L(F("removing rename for %s\n") % arg);
+              work.renamed_files.erase(arg);
+            }
+          else if (work.added_files.find(arg) != work.added_files.end())
+            {
+              L(F("removing addition for %s\n") % arg);
+              work.added_files.erase(arg);
+            }
+        }
       // race
       put_path_rearrangement(work);
     }
@@ -2800,12 +2800,12 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
       std::string arg=idx(args, 0)();
       if (arg.find_first_not_of(constants::legal_id_bytes) == string::npos
           && arg.size() <= constants::idlen)
-	complete(app, arg, rid);
+        complete(app, arg, rid);
       else
-	{  
-	  file = file_path(arg);
-	  get_revision_id(rid);
-	}
+        {  
+          file = file_path(arg);
+          get_revision_id(rid);
+        }
     }
   else
     {
@@ -2826,118 +2826,118 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
     {
       set< pair<file_path, revision_id> > next_frontier;
       for (set< pair<file_path, revision_id> >::const_iterator i = frontier.begin();
-	   i != frontier.end(); ++i)
-	{ 
-	  file = i->first;
-	  rid = i->second;
+           i != frontier.end(); ++i)
+        { 
+          file = i->first;
+          rid = i->second;
 
-	  bool print_this = file().empty();
-	  set<  revision<id> > parents;
-	  vector< revision<cert> > tmp;
+          bool print_this = file().empty();
+          set<  revision<id> > parents;
+          vector< revision<cert> > tmp;
 
-	  if (!app.db.revision_exists(rid))
-	    {
-	      L(F("revision %s does not exist in db, skipping\n") % rid);
-	      continue;
-	    }
+          if (!app.db.revision_exists(rid))
+            {
+              L(F("revision %s does not exist in db, skipping\n") % rid);
+              continue;
+            }
 
-	  if (seen.find(rid) != seen.end())
-	    continue;
+          if (seen.find(rid) != seen.end())
+            continue;
 
-	  seen.insert(rid);
+          seen.insert(rid);
 
-	  app.db.get_revision(rid, rev);
-	  
-	  for (edge_map::const_iterator e = rev.edges.begin();
-	       e != rev.edges.end(); ++e)
-	    {
-	      change_set const & cs = edge_changes(e);
-	      if (! file().empty())
-		{
-		  file_path old_file = apply_change_set_inverse(cs, file);
-		  L(F("revision '%s' in '%s' maps to '%s' in %s\n")
-		    % rid % file % old_file % edge_old_revision(e));
-		  if (!(old_file == file) || cs.deltas.find(file) != cs.deltas.end())
-		    {
-		      file = old_file;
-		      print_this = true;
-		    }
-		}
-	      next_frontier.insert(std::make_pair(file, edge_old_revision(e)));
-	    }
-	  
-	  if (print_this)
-	  {
-	  cout << "-----------------------------------------------------------------"
-	       << endl;
-	  cout << "Version: " << rid << endl;
+          app.db.get_revision(rid, rev);
+          
+          for (edge_map::const_iterator e = rev.edges.begin();
+               e != rev.edges.end(); ++e)
+            {
+              change_set const & cs = edge_changes(e);
+              if (! file().empty())
+                {
+                  file_path old_file = apply_change_set_inverse(cs, file);
+                  L(F("revision '%s' in '%s' maps to '%s' in %s\n")
+                    % rid % file % old_file % edge_old_revision(e));
+                  if (!(old_file == file) || cs.deltas.find(file) != cs.deltas.end())
+                    {
+                      file = old_file;
+                      print_this = true;
+                    }
+                }
+              next_frontier.insert(std::make_pair(file, edge_old_revision(e)));
+            }
+          
+          if (print_this)
+          {
+          cout << "-----------------------------------------------------------------"
+               << endl;
+          cout << "Version: " << rid << endl;
 
-	  cout << "Author:";
-	  app.db.get_revision_certs(rid, author_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for (vector< revision<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      cout << " " << tv;
-	    }	  
-	  cout << endl;
+          cout << "Author:";
+          app.db.get_revision_certs(rid, author_name, tmp);
+          erase_bogus_certs(tmp, app);
+          for (vector< revision<cert> >::const_iterator j = tmp.begin();
+               j != tmp.end(); ++j)
+            {
+              cert_value tv;
+              decode_base64(j->inner().value, tv);
+              cout << " " << tv;
+            }     
+          cout << endl;
 
-	  cout << "Date:";
-	  app.db.get_revision_certs(rid, date_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for (vector< revision<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      cout << " " << tv;
-	    }	  
-	  cout << endl;
+          cout << "Date:";
+          app.db.get_revision_certs(rid, date_name, tmp);
+          erase_bogus_certs(tmp, app);
+          for (vector< revision<cert> >::const_iterator j = tmp.begin();
+               j != tmp.end(); ++j)
+            {
+              cert_value tv;
+              decode_base64(j->inner().value, tv);
+              cout << " " << tv;
+            }     
+          cout << endl;
 
-	  app.db.get_revision_certs(rid, tag_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  if (!tmp.empty())
-	    {
-	      for (vector< revision<cert> >::const_iterator j = tmp.begin();
-		   j != tmp.end(); ++j)
-		{
-		  cert_value tv;
-		  decode_base64(j->inner().value, tv);
-		  cout << "Tag: " << tv << endl;
-		}	  
-	      cout << endl;
-	    }
+          app.db.get_revision_certs(rid, tag_name, tmp);
+          erase_bogus_certs(tmp, app);
+          if (!tmp.empty())
+            {
+              for (vector< revision<cert> >::const_iterator j = tmp.begin();
+                   j != tmp.end(); ++j)
+                {
+                  cert_value tv;
+                  decode_base64(j->inner().value, tv);
+                  cout << "Tag: " << tv << endl;
+                }         
+              cout << endl;
+            }
 
-	  cout << "ChangeLog:" << endl << endl;
-	  app.db.get_revision_certs(rid, changelog_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for (vector< revision<cert> >::const_iterator j = tmp.begin();
-	       j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      cout << " " << tv << endl;
-	    }	  
-	  cout << endl;
+          cout << "ChangeLog:" << endl << endl;
+          app.db.get_revision_certs(rid, changelog_name, tmp);
+          erase_bogus_certs(tmp, app);
+          for (vector< revision<cert> >::const_iterator j = tmp.begin();
+               j != tmp.end(); ++j)
+            {
+              cert_value tv;
+              decode_base64(j->inner().value, tv);
+              cout << " " << tv << endl;
+            }     
+          cout << endl;
 
-	  app.db.get_revision_certs(rid, comment_name, tmp);
-	  erase_bogus_certs(tmp, app);
-	  if (!tmp.empty())
-	    {
-	      cout << "Revision Comments:" << endl << endl;
-	      for (vector< revision<cert> >::const_iterator j = tmp.begin();
-		   j != tmp.end(); ++j)
-		{
-		  cert_value tv;
-		  decode_base64(j->inner().value, tv);
-		  cout << j->inner().key << ": " << tv << endl;
-		}	  
-	      cout << endl;
-	    }
-	  }
-	}
+          app.db.get_revision_certs(rid, comment_name, tmp);
+          erase_bogus_certs(tmp, app);
+          if (!tmp.empty())
+            {
+              cout << "Revision Comments:" << endl << endl;
+              for (vector< revision<cert> >::const_iterator j = tmp.begin();
+                   j != tmp.end(); ++j)
+                {
+                  cert_value tv;
+                  decode_base64(j->inner().value, tv);
+                  cout << j->inner().key << ": " << tv << endl;
+                }         
+              cout << endl;
+            }
+          }
+        }
       frontier = next_frontier;
     }
 }
