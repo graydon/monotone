@@ -638,6 +638,10 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       }
   }
         
+  // Make the output deterministic; this is useful for the test suite, in
+  // particular.
+  sort(certs.begin(), certs.end());
+
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_status status = check_cert(app, idx(certs, i));

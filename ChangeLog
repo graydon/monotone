@@ -1,5 +1,11 @@
 2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (ls_certs): Sort the certs before printing.
+	* tests/t_netsync_repeated.at: Actually check that certs were
+	transferred correctly.
+
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_add_patch_drop_add.at: New test.
 	* tests/t_merge2_add_drop_add.at: New test.
 	* tests/t_patch_drop_add.at: New test.
