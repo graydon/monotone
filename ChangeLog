@@ -1,5 +1,12 @@
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netcmd.cc (read_netcmd_item_type): Handle epoch_item.
+	(test_netcmd_functions): Update for new confirm_cmd_payload
+	format.
+	* netsync.cc (process_confirm_cmd): Cut and paste error.
+	
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* constants.{cc,hh}: Add new epochlen, epochlen_bytes constants.
 	* vocab_terms.hh, vocab.hh: Add new epoch_data type.  Add predeclarations
 	for it.
@@ -10,7 +17,7 @@
 	methods.
 	* epoch.{cc,hh}: New files.
 	* netsync.cc: Actually implement epochs-via-merkle code.
-	
+
 2005-03-04  Nathaniel Smith  <njs@codesourcery.com>
 
 	* schema.sql (branch_epochs): Add 'hash' field.

@@ -38,6 +38,8 @@ read_netcmd_item_type(string const & in,
       return cert_item;
     case static_cast<u8>(key_item):
       return key_item;      
+    case static_cast<u8>(epoch_item):
+      return epoch_item;      
     default:
       throw bad_decode(F("unknown item type 0x%x for '%s'") 
                        % static_cast<int>(tmp) % name);
@@ -610,17 +612,13 @@ test_netcmd_functions()
         string buf;
         string out_signature(raw_sha1("egg") + raw_sha1("tomago")), in_signature;
 
-        map<string,id> out_map, in_map;
-        out_map.insert(make_pair("hello there", raw_sha1("whee")));
-
         out_cmd.cmd_code = confirm_cmd;
-        write_confirm_cmd_payload(out_signature, out_map, out_cmd.payload);
+        write_confirm_cmd_payload(out_signature, out_cmd.payload);
         write_netcmd(out_cmd, buf);
         BOOST_CHECK(read_netcmd(buf, in_cmd));
-        read_confirm_cmd_payload(in_cmd.payload, in_signature, in_map);
+        read_confirm_cmd_payload(in_cmd.payload, in_signature);
         BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_signature == out_signature);
-        BOOST_CHECK(in_map == out_map);
         L(F("confirm_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 

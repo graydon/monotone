@@ -1659,7 +1659,7 @@ session::process_confirm_cmd(string const & signature)
           merkle_ptr root;
           load_merkle_node(epoch_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
-          queue_done_cmd(0, cert_item);
+          queue_done_cmd(0, epoch_item);
 
           load_merkle_node(key_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
