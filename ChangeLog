@@ -1,3 +1,9 @@
+2005-02-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.1: Add more db commands.
+	* monotone.texi: Document db rebuild.  Add section on rebuilding
+	ancestry and epochs.
+
 2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* merkle_tree.hh: Remove mcert_item and fcert_item, rename
