@@ -257,7 +257,7 @@ database::dump(ostream & out)
   req.sql = sql();
   out << "BEGIN TRANSACTION;\n";
   int res = sqlite3_exec(req.sql,
-			"SELECT name, type, sql FROM sqlite3_master "
+			"SELECT name, type, sql FROM sqlite_master "
 			"WHERE type='table' AND sql NOT NULL "
 			"ORDER BY substr(type,2,1), name",
 			dump_table_cb, &req, NULL);
@@ -1618,7 +1618,7 @@ database::install_views()
   // delete any existing views
   results res;
   fetch(res, one_col, any_rows,
-	"SELECT name FROM sqlite3_master WHERE type='view'");
+	"SELECT name FROM sqlite_master WHERE type='view'");
   for (size_t i = 0; i < res.size(); ++i)
     {
       execute("DROP VIEW '%q'", res[i][0].c_str());
