@@ -1,3 +1,10 @@
+2004-04-19  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc: Make trust messages nicer.
+	* merkle_tree.cc: Clarify logging messages.
+	* netsync.cc: Reorganize tickers, put client in txn.
+	* packet.cc, packet.hh: Teach about constructability.
+
 2004-04-16  graydon hoare  <graydon@pobox.com>
 
 	* netsync.cc (session::extra_manifests): New member.

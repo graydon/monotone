@@ -116,14 +116,14 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
 					       get<1>(i->first),
 					       decoded_value))
 	{
-	  L(F("trust function liked %d signers of cert '%s'='%s' on manifest '%s'\n")
-	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  L(F("trust function liked %d signers of %s cert on manifest %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
 	  tmp_certs.push_back(*(i->second.second));
 	}
       else
 	{
-	  L(F("trust function disliked %d signers of cert '%s'='%s' on manifest '%s'\n")
-	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  W(F("trust function disliked %d signers of %s cert on manifest %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
 	}
     }
   certs = tmp_certs;
@@ -169,14 +169,14 @@ erase_bogus_certs(vector< file<cert> > & certs,
 					       get<1>(i->first),
 					       decoded_value))
 	{
-	  L(F("trust function liked %d signers of cert '%s'='%s' on file '%s'\n")
-	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  L(F("trust function liked %d signers of %s cert on file %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
 	  tmp_certs.push_back(*(i->second.second));
 	}
       else
 	{
-	  L(F("trust function disliked %d signers of cert '%s'='%s' on file '%s'\n")
-	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  W(F("trust function disliked %d signers of %s cert on file %s\n")
+	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
 	}
     }
   certs = tmp_certs;

@@ -409,6 +409,9 @@ insert_into_merkle_tree(app_state & app,
   hexenc<prefix> hpref;
   encode_hexenc(prefix(oss.str()), hpref);
 
+  if (level == 0)
+    L(F("-- beginning top level insert --\n"));
+	
   L(F("inserting %s leaf %s into slot 0x%x at %s node with prefix %s, level %d\n") 
     % (live_p ? "live" : "dead") % hleaf % slotnum % typestr % hpref % level);
   
@@ -468,7 +471,7 @@ insert_into_merkle_tree(app_state & app,
 
 	case subtree_state:
 	  {
-	    L(F("placing leaf %s in previously empty slot 0x%x of %s node %s, level %d\n")
+	    L(F("taking %s to subtree in slot 0x%x of %s node %s, level %d\n")
 	      % hleaf % slotnum % typestr % hpref % level);
 	    id subtree_hash = insert_into_merkle_tree(app, live_p, type, collection, leaf, level+1);
 	    hexenc<id> hsub;
@@ -492,5 +495,9 @@ insert_into_merkle_tree(app_state & app,
       node.set_slot_state(slotnum, (live_p ? live_leaf_state : dead_leaf_state));
       node.set_raw_slot(slotnum, leaf);
     }
+
+  if (level == 0)
+      L(F("-- finished top level insert --\n"));
+
   return store_merkle_node(app, collection, node);
 }
