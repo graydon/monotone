@@ -1948,7 +1948,7 @@ dump_diffs(change_set::delta_map const & deltas,
 	  if (new_is_archived)
 	    {
 	      file_data dat;
-	      app.db.get_file_version(delta_entry_src(i), dat);
+	      app.db.get_file_version(delta_entry_dst(i), dat);
 	      unpack(dat.inner(), unpacked);
 	    }
 	  else

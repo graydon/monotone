@@ -1,3 +1,8 @@
+2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (dump_diffs): Fetch delta destination, not source,
+	on new files.
+
 2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_heads.at: New test.
