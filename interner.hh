@@ -11,21 +11,22 @@
 
 #include "sanity.hh"
 
+template <typename T>
 struct interner 
 {
-  map<string, unsigned long> fwd;
-  map<unsigned long, string> rev;    
-  unsigned long max;
+  map<string, T> fwd;
+  map<T, string> rev;    
+  T max;
   interner() : max(0) {}
-  string lookup (unsigned long in) const
+  string lookup (T in) const
   {
-    map<unsigned long, string>::const_iterator i = rev.find(in);
+    typename map<T, string>::const_iterator i = rev.find(in);
     I(i != rev.end());
     return i->second;
   }
-  unsigned long intern(string const & s) 
+  T intern(string const & s) 
   {
-    map<string, unsigned long>::const_iterator i = fwd.find(s);
+    typename map<string, T>::const_iterator i = fwd.find(s);
     if (i == fwd.end())
       {
 	++max;

@@ -9,9 +9,9 @@
 #include <string>
 #include <iostream>
 
-#include "boost/sequence_algo/longest_common_subsequence.hpp"
-
 #include "diff_patch.hh"
+#include "interner.hh"
+#include "lcs.hh"
 #include "manifest.hh"
 #include "packet.hh"
 #include "patch_set.hh"
@@ -84,9 +84,9 @@ struct hunk_consumer
   virtual ~hunk_consumer() {}
 };
 
-void walk_hunk_consumer(vector<string> lcs,
-			vector<string> const & lines1,
-			vector<string> const & lines2,			
+void walk_hunk_consumer(vector<long> const & lcs,
+			vector<long> const & lines1,
+			vector<long> const & lines2,			
 			hunk_consumer & cons)
 {
 
@@ -104,19 +104,9 @@ void walk_hunk_consumer(vector<string> lcs,
   else
     {
       // normal case: files have something in common
-      for (vector<string>::iterator i = lcs.begin();
+      for (vector<long>::const_iterator i = lcs.begin();
 	   i != lcs.end(); ++i, ++a, ++b)
-	{      
-	  // FIXME: *weird* sometimes, lcs finds a slightly -worse- than
-	  // least common subsequence (i.e. there is actually some
-	  // commonality it doesn't notice). you will probably need to dig
-	  // into the lcs implementation to fix this, bleh.
-	  if(a < lines1.size() &&
-	     b < lines2.size() && 
-	     lines1[a] == lines2[b] &&
-	     lines1[a] != *i)
-	    { a++; b++; continue; }
-	  
+	{      	  
 	  if (lines1[a] == *i && lines2[b] == *i)
 	    continue;
 
@@ -206,13 +196,31 @@ void calculate_hunk_offsets(vector<string> const & ancestor,
 			    vector<string> const & left,
 			    vector<size_t> & leftpos)
 {
-  vector<string> lcs;  
-  boost::longest_common_subsequence<size_t>(ancestor.begin(), ancestor.end(),
-					    left.begin(), left.end(),
-					    back_inserter(lcs));
+
+  vector<long> anc_interned;  
+  vector<long> left_interned;  
+  vector<long> lcs;  
+
+  interner<long> in;
+
+  anc_interned.reserve(ancestor.size());
+  for (vector<string>::const_iterator i = ancestor.begin();
+       i != ancestor.end(); ++i)
+    anc_interned.push_back(in.intern(*i));
+
+  left_interned.reserve(left.size());
+  for (vector<string>::const_iterator i = left.begin();
+       i != left.end(); ++i)
+    left_interned.push_back(in.intern(*i));
+
+  longest_common_subsequence(anc_interned.begin(), anc_interned.end(),
+			     left_interned.begin(), left_interned.end(),
+			     std::max(ancestor.size(), left.size()),
+			     back_inserter(lcs));
+
   leftpos.clear();
   hunk_offset_calculator calc(leftpos, ancestor.size());
-  walk_hunk_consumer(lcs, ancestor, left, calc);
+  walk_hunk_consumer(lcs, anc_interned, left_interned, calc);
 }
 
 
@@ -469,12 +477,34 @@ void merge_hunks_via_offsets(vector<string> const & left,
 			     vector<size_t> const & leftpos,
 			     vector<string> & merged)
 {
-  vector<string> lcs;  
-  boost::longest_common_subsequence<size_t>(ancestor.begin(), ancestor.end(),
-					    right.begin(), right.end(),
-					    back_inserter(lcs));
+  vector<long> anc_interned;  
+  vector<long> left_interned;  
+  vector<long> right_interned;  
+  vector<long> lcs;  
+
+  interner<long> in;
+
+  anc_interned.reserve(ancestor.size());
+  for (vector<string>::const_iterator i = ancestor.begin();
+       i != ancestor.end(); ++i)
+    anc_interned.push_back(in.intern(*i));
+
+  left_interned.reserve(left.size());
+  for (vector<string>::const_iterator i = left.begin();
+       i != left.end(); ++i)
+    left_interned.push_back(in.intern(*i));
+
+  right_interned.reserve(right.size());
+  for (vector<string>::const_iterator i = right.begin();
+       i != right.end(); ++i)
+    right_interned.push_back(in.intern(*i));
+
+  longest_common_subsequence(anc_interned.begin(), anc_interned.end(),
+			     right_interned.begin(), right_interned.end(),
+			     std::max(ancestor.size(), right.size()),
+			     back_inserter(lcs));
   hunk_merger merger(left, ancestor, right, leftpos, merged);
-  walk_hunk_consumer(lcs, ancestor, right, merger);
+  walk_hunk_consumer(lcs, anc_interned, right_interned, merger);
 }
 
 
@@ -1090,12 +1120,30 @@ void unidiff(string const & filename1,
 {
   ost << "--- " << filename1 << endl;
   ost << "+++ " << filename2 << endl;  
-  vector<string> lcs;  
-  boost::longest_common_subsequence<size_t>(lines1.begin(), lines1.end(),
-					    lines2.begin(), lines2.end(),
-					    back_inserter(lcs));
+
+  vector<long> left_interned;  
+  vector<long> right_interned;  
+  vector<long> lcs;  
+
+  interner<long> in;
+
+  left_interned.reserve(lines1.size());
+  for (vector<string>::const_iterator i = lines1.begin();
+       i != lines1.end(); ++i)
+    left_interned.push_back(in.intern(*i));
+
+  right_interned.reserve(lines2.size());
+  for (vector<string>::const_iterator i = lines2.begin();
+       i != lines2.end(); ++i)
+    right_interned.push_back(in.intern(*i));
+
+  longest_common_subsequence(left_interned.begin(), left_interned.end(),
+			     right_interned.begin(), right_interned.end(),
+			     std::max(lines1.size(), lines2.size()),
+			     back_inserter(lcs));
+
   unidiff_hunk_writer hunks(lines1, lines2, 3, ost);
-  walk_hunk_consumer(lcs, lines1, lines2, hunks);
+  walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
 }
 
 

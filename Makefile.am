@@ -13,7 +13,7 @@ MOST_SOURCES = \
 	 nntp_machine.hh packet_types.hh transforms.hh vocab.hh     \
 	 cleanup.hh diff_patch.hh lua.hh nntp_tasks.hh patch_set.hh \
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh \
-         rcs_file.hh rcs_import.hh xdelta.hh adler32.hh             \
+         rcs_file.hh rcs_import.hh xdelta.hh adler32.hh lcs.hh      \
          network.hh http_tasks.hh constants.hh ui.hh schema_migration.hh 
 
 CRYPTOPP_SOURCES = \
@@ -89,8 +89,6 @@ BOOST_SANDBOX_SOURCES = \
         boost/socket/ip4/address.hpp \
         boost/socket/ip4/protocol.hpp \
         boost/socket/src/impl/win32/overlapped.hpp \
-        boost/sequence_algo/detail/lcs_detail.hpp \
-        boost/sequence_algo/longest_common_subsequence.hpp \
         boost/io/streambuf_wrapping.hpp 
 
 # warning: we're *not* currently building on win32. we'll figure out
