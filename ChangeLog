@@ -1,3 +1,7 @@
+2004-12-28  Jordi Vilalta Prat  <jvprat@wanadoo.es>
+
+	* monotone.texi: Fix a typo: "not not" should be "not".
+
 2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* commands.cc: Make the 'log' command show all affected files
