@@ -965,6 +965,41 @@ adjust_deltas_under_renames(set<file_path> & deltas,
     }
 }
 
+void 
+adjust_deletes_under_renames(set<file_path> & deletes,
+			     set<file_path> const & deltas,
+			     set<file_path> const & adds,
+			     map<file_path, file_path> const & move_map)
+{
+  set<file_path> initial_dels = deletes;
+  for (set<file_path>::const_iterator del_path = initial_dels.begin();
+       del_path != initial_dels.end(); ++del_path)
+    {
+      map<file_path, file_path>::const_iterator i = move_map.find(*del_path);
+      
+      if (i != move_map.end())
+	{
+	  I(*del_path == i->first);
+	  if (deltas.find(i->second) != deltas.end())
+	    {
+	      L(F("delete moved from %s to %s conflicts with existing patch\n")
+		% i->first % i->second);
+	      throw conflict();
+	    }
+	  if (adds.find(i->second) != adds.end())
+	    {
+	      L(F("delete moved from %s to %s conflicts with existing addition\n")
+		% i->first % i->second);
+	      throw conflict();
+	    }
+	 
+	  deletes.erase(i->first);
+	  deletes.insert(i->second);
+	}
+    }
+}
+
+
 // this is a 3-way merge algorithm on manifests.
 
 bool merge3(manifest_map const & ancestor,
@@ -1169,8 +1204,17 @@ bool merge3(manifest_map const & ancestor,
       // targets on right and vice versa, provided there is not already a
       // delta on the target.
 
-      adjust_deltas_under_renames(left_deltas, left_delta_map, right_move_map);
-      adjust_deltas_under_renames(right_deltas, right_delta_map, left_move_map);
+      adjust_deltas_under_renames (left_deltas, left_delta_map, right_move_map);
+      adjust_deltas_under_renames (right_deltas, right_delta_map, left_move_map);
+
+      // intermediate phase #3.2 tries to move deletes on left to their
+      // targets on right and vice versa, provided there is not already a
+      // delete (or add / patch) on the target.
+
+      adjust_deletes_under_renames (left_edge.f_dels, left_deltas, 
+				    left_adds, right_move_map);
+      adjust_deletes_under_renames (right_edge.f_dels, right_deltas, 
+				    right_adds, left_move_map);
 
       // no remaining fiddling with the source of a move
       check_no_intersect (left_move_srcs, right_adds, 
@@ -1268,14 +1312,6 @@ bool merge3(manifest_map const & ancestor,
   // merged edge to it, mutating it into the merged manifest.
 
   copy(ancestor.begin(), ancestor.end(), inserter(merged, merged.begin()));
-
-  for (set<file_path>::const_iterator del = merged_edge.f_dels.begin();
-       del != merged_edge.f_dels.end(); ++del)
-    {
-      L(F("applying merged delete of file %s\n") % *del);
-      I(merged.find(*del) != merged.end());
-      merged.erase(*del);
-    }
   
   for (set<patch_move>::const_iterator mov = merged_edge.f_moves.begin();
        mov != merged_edge.f_moves.end(); ++mov)
@@ -1286,6 +1322,14 @@ bool merge3(manifest_map const & ancestor,
       file_id fid = merged[mov->path_old];
       merged.erase(mov->path_old);
       merged.insert(make_pair(mov->path_new, fid));
+    }
+
+  for (set<file_path>::const_iterator del = merged_edge.f_dels.begin();
+       del != merged_edge.f_dels.end(); ++del)
+    {
+      L(F("applying merged delete of file %s\n") % *del);
+      I(merged.find(*del) != merged.end());
+      merged.erase(*del);
     }
 
   for (set<patch_addition>::const_iterator add = merged_edge.f_adds.begin();

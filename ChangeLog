@@ -1,4 +1,11 @@
-2004-05-27  Graydon Hoare  <graydon@redhat.com>
+2004-05-28  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_movedel.at: New test.
+	* testsuite.at: Call it.
+	* diff_patch.cc (adjust_deletes_under_renames): New function.
+	(merge3): Use it.
+
+2004-05-27  graydon hoare  <graydon@pobox.com>
 
 	* tests/t_movepatch.at: New test.
 	* testsuite.at: Call it.
