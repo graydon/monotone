@@ -1920,9 +1920,6 @@ session::process_refine_cmd(merkle_node const & their_node)
 		      {
 			I(their_node.type == our_node.type);
 			string tmp;
-			id our_slotval, their_slotval;
-			our_node.get_raw_slot(slot, our_slotval);
-			our_node.get_raw_slot(slot, their_slotval);			
 			load_data(our_node.type, our_slotval, this->app, tmp);
 			queue_send_data_cmd(their_node.type, their_slotval);
 			queue_data_cmd(our_node.type, our_slotval, tmp);
@@ -1958,6 +1955,23 @@ session::process_refine_cmd(merkle_node const & their_node)
 		  L(F("(#8) they have a live leaf in slot %d of %s node '%s', level %d, we have a subtree\n")
 		    % slot % typestr % hpref % lev);
 		  {
+
+		    id their_slotval;
+		    hexenc<id> their_hval;
+		    their_node.get_raw_slot(slot, their_slotval);
+		    encode_hexenc(their_slotval, their_hval);
+		    if (data_exists(their_node.type, their_slotval, app))
+		      L(F("(#8) we have a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
+			% their_hval % slot % typestr % hpref % lev);
+		    else
+		      {
+			L(F("(#8) requesting a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
+			  % their_hval % slot % typestr % hpref % lev);
+			queue_send_data_cmd(their_node.type, their_slotval);
+		      }
+		    
+		    L(F("(#8) sending our subtree for refinement, in slot %d of %s node '%s', level %d\n")
+		      % slot % typestr % hpref % lev);
 		    hexenc<prefix> subprefix;
 		    our_node.extended_hex_prefix(slot, subprefix);
 		    merkle_node our_subtree;
@@ -2055,8 +2069,13 @@ session::process_refine_cmd(merkle_node const & their_node)
 		    id our_slotval;
 		    merkle_node our_fake_subtree;
 		    our_node.get_raw_slot(slot, our_slotval);
+		    hexenc<id> hslotval;
+		    encode_hexenc(our_slotval, hslotval);
+		    
 		    pick_slot_and_prefix_for_value(our_slotval, our_node.level + 1, subslot, 
 						   our_fake_subtree.pref);
+		    L(F("(#14) pushed our leaf '%s' into fake subtree slot %d, level %d\n")
+		      % hslotval % subslot % (lev + 1));
 		    our_fake_subtree.type = their_node.type;
 		    our_fake_subtree.level = our_node.level + 1;
 		    our_fake_subtree.set_raw_slot(subslot, our_slotval);

@@ -1019,12 +1019,9 @@ these files.
 @smallexample
 @group
 $ cat MT/work
-add 
- Makefile
-add
- include/hello.h
-add
- src/hello.c
+add_file: ``Makefile''
+add_file: ``include/hello.h''
+add_file: ``src/hello.c''
 @end group
 @end smallexample
 

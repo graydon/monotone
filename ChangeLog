@@ -1,5 +1,12 @@
 2004-10-17  graydon hoare  <graydon@pobox.com>
 
+	* merkle_tree.cc: Fix bad logging.
+	* netsync.cc: Fix transmission bugs.
+	* work.cc: Add some progress messages back in.
+	* monotone.texi: Change contents of MT/work in example.
+
+2004-10-17  graydon hoare  <graydon@pobox.com>
+
 	* commands.cc (log): Keep a seen list, mask frontier by it.
 	* monotone.texi: Updates to cover revision terminology.
 

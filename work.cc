@@ -42,6 +42,7 @@ addition_builder::visit_file(file_path const & path)
       P(F("skipping ignorable file %s\n") % path);
       return;
     }
+  L(F("adding %s to working copy add set\n") % path);
   cs.add_file(path);
 }
 
@@ -64,6 +65,7 @@ build_addition(file_path const & path,
   else 
     {
       I(file_exists(path));
+      L(F("adding %s to working copy add set\n") % path);
       cs_new.add_file(path);
     }
   normalize_change_set(cs_new);
@@ -81,8 +83,9 @@ build_deletion(file_path const & path,
   N(directory_exists(path) || file_exists(path),
     F("path %s does not exist") % path);
   
-  if (directory_exists(path))
-    cs_new.delete_dir(path);
+  P(F("adding %s to working copy delete set\n") % path);
+  if (directory_exists(path)) 
+      cs_new.delete_dir(path);
   else 
     {
       I(file_exists(path));
@@ -105,6 +108,7 @@ build_rename(file_path const & src,
   N(directory_exists(src) || file_exists(src),
     F("path %s does not exist") % src);
 
+  P(F("adding %s -> %s to working copy rename set\n") % src % dst);
   if (directory_exists(src))
     cs_new.rename_dir(src, dst);
   else 

@@ -452,8 +452,10 @@ insert_into_merkle_tree(app_state & app,
 	      }
 	    else
 	      {
+		hexenc<id> existing_hleaf;
+		encode_hexenc(slotval, existing_hleaf);
 		L(F("pushing existing leaf %s in slot 0x%x of %s node %s, level %d into subtree\n")
-		  % hleaf % slotnum % typestr % hpref % level);
+		  % existing_hleaf % slotnum % typestr % hpref % level);
 		insert_into_merkle_tree(app, (st == live_leaf_state ? true : false),
 					type, collection, slotval, level+1);
 		id subtree_hash = insert_into_merkle_tree(app, live_p, type, collection, leaf, level+1);
