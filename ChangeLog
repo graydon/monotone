@@ -1,5 +1,7 @@
 2003-09-06  Tom Tromey  <tromey@redhat.com>
 
+	* txt2c.cc: Added missing file.
+
 	* texinfo.tex, INSTALL, Makefile.in, aclocal.m4, compile, depcomp,
 	install-sh, missing, mkinstalldirs: Removed generated files.
 
