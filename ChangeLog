@@ -1,3 +1,10 @@
+2003-10-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* patch_set.cc (patch_set_to_text_summary): Give more detailed
+	output.
+	* commands.cc (get_log_message, status, diff): Use
+	patch_set_to_text_summary for complete description.
+
 2003-10-19  graydon hoare  <graydon@pobox.com>
 
 	* AUTHORS: Mention Tecgraf PUC-Rio and their
