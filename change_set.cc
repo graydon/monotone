@@ -497,6 +497,9 @@ change_set::check_sane() const
           I(!null_name(delta_entry_path(i)));
           I(!null_id(delta_entry_dst(i)));
           I(!(delta_entry_src(i) == delta_entry_dst(i)));
+          if (null_id(delta_entry_src(i)))
+            I(rearrangement.added_files.find(delta_entry_path(i))
+              != rearrangement.added_files.end());
         }
     }
 
@@ -3314,6 +3317,13 @@ bad_concatenate_change_tests()
     t.combine();
     t.add_file(in_a, "target/subfile");
     t.apply_delta(in_b, "target", fid_null, fid1);
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.add_file(in_a, "target/subfile");
+    t.apply_delta(in_b, "target", fid1, fid2);
     t.run_both();
   }
   // Deltas must be consistent
