@@ -183,12 +183,16 @@ apply_change_set(manifest_map const & old_man,
                  change_set const & cs,
                  manifest_map & new_man);
 
-// utility for log walker
+// quick, optimistic and destructive versions
+
+void
+apply_path_rearrangement(change_set::path_rearrangement const & pr,
+                         path_set & ps);
+
 file_path
-apply_change_set_inverse(change_set const & cs,
+apply_change_set_inverse(change_set const & cs, 
                          file_path const & file_in_second);
 
-// quick, optimistic and destructive version for rcs importer
 void
 apply_change_set(change_set const & cs,
                  manifest_map & man);

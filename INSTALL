@@ -124,6 +124,12 @@ building and installation process for monotone
        achieve maximum binary compatibility with old systems.  this option
        has no effect when --with-bundled-sqlite=no is also given.
 
+     --disable-large-file
+
+       this will disable large file support from the builtin sqlite, to
+       achieve maximum binary compatibility with old systems.  this option
+       has no effect when --with-bundled-sqlite=no is also given.
+
      BOOST_SUFFIX=string
 
        this variable, to be set on configure's command line, can be used

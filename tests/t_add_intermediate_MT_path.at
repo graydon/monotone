@@ -1,0 +1,34 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([add file with intermediate MT path element])
+
+MONOTONE_SETUP
+
+AT_CHECK(mkdir -p dir/MT)
+
+# this test is a bug report. files with intermediate MT path elements 
+# should be allowed
+
+AT_XFAIL_IF(true)
+
+# since this path doesn't *start* with MT it should be allowed
+
+AT_DATA(dir/MT/testfile, [testfile
+])
+
+AT_CHECK(MONOTONE add dir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+
+# recursive add with an intermediate MT path element
+# seems to stop and cause this to fail
+
+AT_CHECK(grep testfile stdout, [1], [ignore], [ignore])
+
+# explicit intermediate MT path element is rejected
+
+AT_CHECK(MONOTONE add dir/MT/testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+
+AT_CHECK(grep testfile stdout, [1], [ignore], [ignore])
+
+AT_CLEANUP

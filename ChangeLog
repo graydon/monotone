@@ -1,5 +1,23 @@
 2005-02-18  graydon hoare  <graydon@pobox.com>
 
+	* automate.cc (automate_heads): Fix initialize() call.  
+	* change_set.{cc,hh} 
+	(apply_path_rearrangement): Add quick version.
+	* revision.cc 
+	(check_sane_history): Use quick version of apply_change_set.  
+	* work.cc 
+	(build_addition): Use quick version of apply_path_rearrangement.
+	(known_preimage_path): Likewise.
+	* testsuite.at: Fix definitions of _ROOT_DIR, add --norc some
+	places.
+	* AUTHORS: Mention Daniel.
+
+2005-02-18  Daniel Berlin  <dberlin@dberlin.org>
+
+	* xdelta.cc (compute_delta_insns): Correct 1-byte-source bug.
+
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
 	* Makefile.am (MOST_SOURCES): Add smap.hh.
 
 2005-02-18  graydon hoare  <graydon@pobox.com>
@@ -17,6 +35,11 @@
 	* INSTALL:
 	* configure.ac: Improve Boost detection by trying several possible
 	library suffixes before aborting.
+
+2005-02-17  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_add_intermediate_MT_path.at: new test
+	* testsuite.at: call it
 
 2005-02-17  Julio M. Merino Vidal  <jmmv@menta.net>
 
@@ -863,7 +886,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÃÂÃÂkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

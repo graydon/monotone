@@ -164,14 +164,12 @@ check_sane_history(revision_id const & child_id,
                   changesets.insert(std::make_pair(old_id, old_to_child_changes_p));
                   // and check that it works:
 
-                  manifest_map m_old;
-                  if (!null_id(old_id))
-                    db.get_manifest(m_old_id, m_old);
+                  manifest_map purported_m_child;
                   // The null revision has empty manifest, which is the
                   // default.
-                  manifest_map purported_m_child;
-                  apply_change_set(m_old, *old_to_child_changes_p,
-                                   purported_m_child);
+                  if (!null_id(old_id))
+                    db.get_manifest(m_old_id, purported_m_child);
+                  apply_change_set(*old_to_child_changes_p, purported_m_child);
                   I(purported_m_child == m_child);
                 }
             }

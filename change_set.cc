@@ -2634,7 +2634,38 @@ apply_change_set(manifest_map const & old_man,
     }
 }
 
-// quick, optimistic and destructive version for log walker
+// quick, optimistic and destructive version
+void
+apply_path_rearrangement(change_set::path_rearrangement const & pr,
+                         path_set & ps)
+{
+  pr.check_sane();
+  if (pr.renamed_files.empty() 
+      && pr.renamed_dirs.empty()
+      && pr.deleted_dirs.empty())
+    {
+      // fast path for simple drop/add file operations
+      for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
+           i != pr.deleted_files.end(); ++i)
+        {
+          ps.erase(*i);
+        }
+      for (std::set<file_path>::const_iterator i = pr.added_files.begin(); 
+           i != pr.added_files.end(); ++i)
+        {
+          ps.insert(*i);
+        }
+    }
+  else
+    {
+      // fall back to the slow way
+      path_set tmp;
+      apply_path_rearrangement(ps, pr, tmp);
+      ps = tmp;
+    }
+}
+
+// quick, optimistic and destructive version
 file_path
 apply_change_set_inverse(change_set const & cs,
                          file_path const & file_in_second)
@@ -2651,7 +2682,7 @@ apply_change_set_inverse(change_set const & cs,
   return file_in_first;
 }
 
-// quick, optimistic and destructive version for rcs importer
+// quick, optimistic and destructive version 
 void
 apply_change_set(change_set const & cs,
                  manifest_map & man)
