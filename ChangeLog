@@ -1,5 +1,10 @@
 2005-02-15  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.1: Add cursory note about "automate".
+	* monotone.texi: Synchronize with manpage.
+
+2005-02-15  Nathaniel Smith  <njs@codesourcery.com>
+
 	* automate.cc: Add "Error conditions" to the standard comment
 	sections.
 	

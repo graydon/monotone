@@ -5146,6 +5146,9 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
+@item @b{automate} @i{(interface_version|heads)}
+Scripting interface.
+
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}
 Manipulate database state.
 @comment TROFF INPUT: .SH DESCRIPTION
