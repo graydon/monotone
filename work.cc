@@ -219,16 +219,34 @@ rename_builder::visit_file(file_path const & path)
       return;
     }
 
+  file_path targ = pathsub(path);
+
   N(work.dels.find(path) == work.dels.end(),
     F("moving file %s, also scheduled for deletion") % path);
 
   N(work.adds.find(path) == work.adds.end(),
     F("moving file %s, also scheduled for addition") % path);
 
-  for (rename_set::const_iterator i = work.renames.begin();
+  for (rename_set::iterator i = work.renames.begin();
        i != work.renames.end(); ++i)
-    N(!(path == i->second),
-      F("renaming file %s, existing target of rename") % path);
+    {
+      if (path == i->second)
+        {
+          file_path rensrc = i->first;
+          file_path rendst = i->second;
+          P(F("removing %s -> %s from working copy rename set\n")
+            % rensrc % rendst);
+          work.renames.erase(i);
+          if (!(targ == rensrc))
+            {
+              P(F("adding %s -> %s to working copy rename set\n")
+                % rensrc % targ);
+              work.renames.insert(make_pair(rensrc, targ));
+            }
+          rewrite_work = true;
+          return;
+        }
+    }
 
   if (work.renames.find(path) != work.renames.end())
     {
@@ -242,7 +260,6 @@ rename_builder::visit_file(file_path const & path)
       return;
     }
 
-  file_path targ = pathsub(path);
   P(F("adding %s -> %s to working copy rename set\n") % path % targ);
   work.renames.insert(make_pair(path, targ));
   rewrite_work = true;

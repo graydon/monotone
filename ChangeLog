@@ -1,5 +1,13 @@
 2004-05-02  Joel Rosdahl  <joel@rosdahl.net>
 
+	Made it possible to rename a rename target and to undo a rename.
+	I.e.: Given a rename set A -> B, "monotone rename B C" gives the
+	rename set A -> C and "monotone rename B A" gives the empty rename
+	set.
+	* work.cc (visit_file): Implement new behavior.
+	* tests/t_rename.at: Added test cases for new behavior.
+	* monotone.texi: Note that a rename can be undone.
+
 	Fix bug #8458:
 	* file_io.hh, file_io.cc (walk_tree): Added require_existing_path
 	parameter.

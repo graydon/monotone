@@ -3082,7 +3082,9 @@ from your working copy's manifest.
 This command renames paths in your manifest from @var{src} to
 @var{dst}.  If @var{src} is a file, it is renamed to @var{dst}.  If
 @var{src} is a directory, all files found in @var{src} have the
-@var{src} component of their pathname replaced with @var{dst}.
+@var{src} component of their pathname replaced with @var{dst}.  If you
+have renamed a path from @var{a} to @var{b}, you can undo the rename
+by renaming @var{b} to @var{a}.
 
 You should run @command{monotone rename} @emph{before} you rename a
 file or directory in your source tree. Monotone will complain if it
