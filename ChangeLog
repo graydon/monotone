@@ -1,5 +1,18 @@
 2004-12-29  graydon hoare  <graydon@pobox.com>
 
+	* AUTHORS: Add Jordi.
+	* change_set.{cc,hh}: Make sanity helpers const.
+	(normalize_change_set): Drop a->a deltas.
+	(merge_change_sets): Call normalize.
+	(invert_change_set): Likewise.
+	* revision.cc 
+	(find_subgraph_for_composite_search): New fn.
+	(calculate_composite_change_set): Call it.
+	(calculate_change_sets_recursive): Use results.
+	* tests/t_no_change_deltas.at: Fix.
+
+2004-12-29  graydon hoare  <graydon@pobox.com>
+
 	* change_set.cc: Fix unit tests to satisfy sanity checks.
 	* std_hooks.lua: Fix status checking on external merges.
 

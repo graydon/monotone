@@ -1,8 +1,6 @@
-AT_SETUP([(imp) no-change deltas disappear])
+AT_SETUP([no-change deltas disappear])
 MONOTONE_SETUP
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
 
 # If we have a changeset representing a reversion, like
 #    changeset_1:   patch "a" [id1] -> [id2]
@@ -28,6 +26,7 @@ SET_FILE(testfile, [version 1
 ])
 ADD_FILE(end_file, [end file
 ])
+AT_CHECK(MONOTONE drop start_file, [], [stdout], [ignore])
 COMMIT(testbranch)
 NEW=`BASE_REVISION`
 NEW_F_SHA=`SHA1(testfile)`

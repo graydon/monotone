@@ -452,11 +452,15 @@ calculate_change_sets_recursive(revision_id const & ancestor,
                                 app_state & app,
                                 change_set & cumulative_cset,
                                 std::map<revision_id, boost::shared_ptr<change_set> > & partial_csets,
-                                std::set<revision_id> & visited_nodes)
+                                std::set<revision_id> & visited_nodes,
+                                std::set<revision_id> const & subgraph)
 {
 
   if (ancestor == child)
     return true;
+
+  if (subgraph.find(child) == subgraph.end())
+    return false;
 
   visited_nodes.insert(child);
 
@@ -499,7 +503,8 @@ calculate_change_sets_recursive(revision_id const & ancestor,
         relevant_parent = calculate_change_sets_recursive(ancestor, curr_parent, app, 
                                                           cset_to_curr_parent, 
                                                           partial_csets,
-                                                          visited_nodes);
+                                                          visited_nodes,
+                                                          subgraph);
 
       if (relevant_parent)
         {
@@ -524,6 +529,48 @@ calculate_change_sets_recursive(revision_id const & ancestor,
   return relevant_child;
 }
 
+// this finds (by breadth-first search) the set of nodes you'll have to
+// walk over in calculate_change_sets_recursive, to build the composite
+// changeset. this is to prevent the recursive algorithm from going way
+// back in history on an unlucky guess of parent.
+
+static void
+find_subgraph_for_composite_search(revision_id const & ancestor,
+                                   revision_id const & child,
+                                   app_state & app,
+                                   std::set<revision_id> & subgraph)
+{
+  std::set<revision_id> frontier;
+  frontier.insert(child);
+  subgraph.insert(child);
+  while (!frontier.empty())
+    {
+      std::set<revision_id> next_frontier;      
+      for (std::set<revision_id>::const_iterator i = frontier.begin();
+           i != frontier.end(); ++i)
+        {
+          revision_set rev;
+          app.db.get_revision(*i, rev);
+          L(F("adding parents of %s to subgraph\n") % *i);
+          
+          for(edge_map::const_iterator j = rev.edges.begin(); j != rev.edges.end(); ++j)
+            {
+              revision_id curr_parent = edge_old_revision(j);
+              subgraph.insert(curr_parent);
+              if (curr_parent == ancestor)
+                {
+                  L(F("found parent %s of %s\n") % curr_parent % *i);
+                  return;
+                }
+              else
+                L(F("adding parent %s to next frontier\n") % curr_parent);
+                next_frontier.insert(curr_parent);
+            }
+        }
+      frontier = next_frontier;
+    }
+}
+
 void 
 calculate_composite_change_set(revision_id const & ancestor,
                                revision_id const & child,
@@ -533,8 +580,11 @@ calculate_composite_change_set(revision_id const & ancestor,
   L(F("calculating composite changeset between %s and %s\n")
     % ancestor % child);
   std::set<revision_id> visited;
+  std::set<revision_id> subgraph;
   std::map<revision_id, boost::shared_ptr<change_set> > partial;
-  calculate_change_sets_recursive(ancestor, child, app, composed, partial, visited);
+  find_subgraph_for_composite_search(ancestor, child, app, subgraph);
+  calculate_change_sets_recursive(ancestor, child, app, composed, partial, 
+                                  visited, subgraph);
 }
 
 

@@ -168,19 +168,19 @@ change_set::path_rearrangement::empty() const
 }
 
 bool
-change_set::path_rearrangement::has_added_file(file_path const & file)
+change_set::path_rearrangement::has_added_file(file_path const & file) const
 {
   return added_files.find(file) != added_files.end();
 }
 
 bool
-change_set::path_rearrangement::has_deleted_file(file_path const & file)
+change_set::path_rearrangement::has_deleted_file(file_path const & file) const
 {
   return deleted_files.find(file) != deleted_files.end();
 }
 
 bool
-change_set::path_rearrangement::has_renamed_file_dst(file_path const & file)
+change_set::path_rearrangement::has_renamed_file_dst(file_path const & file) const
 {
   // FIXME: this is inefficient, but improvements would require a different
   // structure for renamed_files (or perhaps a second reverse map). For now
@@ -1134,6 +1134,13 @@ void
 normalize_change_set(change_set & norm)
 {  
   normalize_path_rearrangement(norm.rearrangement);
+  change_set::delta_map tmp = norm.deltas;
+  for (change_set::delta_map::const_iterator i = tmp.begin();
+       i != tmp.end(); ++i)
+    {
+      if (delta_entry_src(i) == delta_entry_dst(i))
+        norm.deltas.erase(delta_entry_path(i));
+    }
 }
 
 
@@ -2044,6 +2051,9 @@ merge_change_sets(change_set const & a,
     I(a_check == b_check);
   }
 
+  normalize_change_set(a_merged);
+  normalize_change_set(b_merged);
+
   a_merged.check_sane();
   b_merged.check_sane();
 
@@ -2134,6 +2144,7 @@ invert_change_set(change_set const & a2b,
                                        std::make_pair(delta_entry_dst(del),
                                                       delta_entry_src(del))));
     }
+  normalize_change_set(b2a);
   b2a.check_sane();
 }
 
