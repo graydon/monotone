@@ -1,3 +1,11 @@
+2005-02-14  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_merge_normalization_edge_case.at: New test.
+	* testsuite.at: Add it.
+
+	* diff_patch.cc (normalize_extents): Soften the warning message
+	now that we have one test case.
+
 2005-02-14  Matthew A. Nicholson  <mnicholson@digium.com>
 
 	* std_hooks.lua: Add vimdiff merge hooks.
