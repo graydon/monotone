@@ -1,3 +1,17 @@
+2004-05-10  graydon hoare  <graydon@pobox.com>
+
+	* nonce.cc, nonce.hh: New files.
+	* Makefile.am: Note new files.
+	* lua.cc, lua.hh (hook_get_nonce): New hook.
+	* commands.cc (bump): New command.
+	* commands.cc: Remove "(file|manifest)" args most places.
+	* tests/t_disapprove.at
+	* tests/t_genkey.at
+	* tests/t_singlenetsync.at
+	* tests/t_netsync.at
+	* tests/t_persist_phrase.at: Adjust to compensate.
+	* work.cc, work.hh: Constify some arguments.
+
 2004-05-09  graydon hoare  <graydon@pobox.com>
 
 	* diff_patch.cc: Remove recording of file merge ancestry.

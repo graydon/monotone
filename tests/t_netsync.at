@@ -33,7 +33,7 @@ killall -q -KILL monotone
 AT_CHECK(MONOTONE --rcfile=netsync.lua --db=test2.db pull 127.0.0.1:5555 testbranch, [], [ignore], [ignore])
 killall -q -KILL monotone
 
-AT_CHECK(MONOTONE --db=test2.db ls certs manifest $VER0, [], [stdout])
+AT_CHECK(MONOTONE --db=test2.db ls certs $VER0, [], [stdout])
 AT_CHECK(mv stdout certs, [], [ignore])
 AT_CHECK(grep date certs, [], [ignore])
 AT_CHECK(grep author certs, [], [ignore])
@@ -41,7 +41,7 @@ AT_CHECK(grep branch certs, [], [ignore])
 AT_CHECK(grep changelog certs, [], [ignore])
 AT_CHECK(grep bad certs, [1], [ignore])
 
-AT_CHECK(MONOTONE --db=test2.db ls certs manifest $VER1, [], [stdout])
+AT_CHECK(MONOTONE --db=test2.db ls certs $VER1, [], [stdout])
 AT_CHECK(mv stdout certs, [], [ignore])
 AT_CHECK(grep date certs, [], [ignore])
 AT_CHECK(grep author certs, [], [ignore])

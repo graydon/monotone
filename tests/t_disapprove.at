@@ -47,7 +47,7 @@ third line of the file
 ])
 
 
-AT_CHECK(MONOTONE disapprove manifest $LEFT_GOOD_M_SHA $LEFT_BAD_M_SHA, [], [ignore], [ignore])
+AT_CHECK(MONOTONE disapprove $LEFT_GOOD_M_SHA $LEFT_BAD_M_SHA, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 
 # files should now be merged

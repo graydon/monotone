@@ -27,17 +27,17 @@ AT_CHECK(grep $TKEY stdout, [1], [])
 AT_DATA(input.txt, [blah blah blah
 ])
 
-TSHA=`SHA1(input.txt)`
 AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
-AT_CHECK(MONOTONE --key=$TKEY cert file $TSHA color pink, [], [ignore], [ignore])
-AT_CHECK(MONOTONE ls certs file $TSHA, [], [stdout])
+TSHA=`SHA1(MT/manifest)`
+AT_CHECK(MONOTONE --key=$TKEY cert $TSHA color pink, [], [ignore], [ignore])
+AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout])
 AT_CHECK(grep pink stdout, [], [ignore])
 
 AT_DATA(cert-data, [yellow
 ])
-AT_CHECK(MONOTONE --key=$TKEY cert file $TSHA color < cert-data, [], [ignore], [ignore])
-AT_CHECK(MONOTONE ls certs file $TSHA, [], [stdout], [ignore])
+AT_CHECK(MONOTONE --key=$TKEY cert $TSHA color < cert-data, [], [ignore], [ignore])
+AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout], [ignore])
 AT_CHECK(grep pink stdout, [], [ignore])
 AT_CHECK(grep yellow stdout, [], [ignore])
 

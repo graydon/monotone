@@ -578,6 +578,17 @@ lua_hooks::hook_ignore_file(file_path const & p)
   return exec_ok && ignore_it;
 }
 
+bool 
+lua_hooks::hook_get_nonce(std::string & n)
+{
+  return Lua(st)
+    .push_str("get_nonce")
+    .get_fn()
+    .call(0,1)
+    .extract_str(n)
+    .ok();
+}
+
 
 bool 
 lua_hooks::hook_non_blocking_rng_ok()

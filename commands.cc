@@ -21,6 +21,7 @@
 #include "keys.hh"
 #include "manifest.hh"
 #include "netsync.hh"
+#include "nonce.hh"
 #include "packet.hh"
 #include "patch_set.hh"
 #include "rcs_import.hh"
@@ -612,33 +613,19 @@ try_one_merge(manifest_id const & left,
 static void 
 ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 {
-  if (args.size() != 2)
+  if (args.size() != 1)
     throw usage(name);
 
   vector<cert> certs;
 
   transaction_guard guard(app.db);
 
-  if (idx(args, 0)() == "manifest")
-    {
-      manifest_id ident;
-      complete(app, idx(args, 1)(), ident);
-      vector< manifest<cert> > ts;
-      app.db.get_manifest_certs(ident, ts);
-      for (size_t i = 0; i < ts.size(); ++i)
-	certs.push_back(idx(ts, i).inner());
-    }
-  else if (idx(args, 0)() == "file")
-    {
-      file_id ident;
-      complete(app, idx(args, 1)(), ident);
-      vector< file<cert> > ts;
-      app.db.get_file_certs(ident, ts);
-      for (size_t i = 0; i < ts.size(); ++i)
-	certs.push_back(idx(ts, i).inner());
-    }
-  else
-    throw usage(name);
+  manifest_id ident;
+  complete(app, idx(args, 0)(), ident);
+  vector< manifest<cert> > ts;
+  app.db.get_manifest_certs(ident, ts);
+  for (size_t i = 0; i < ts.size(); ++i)
+    certs.push_back(idx(ts, i).inner());
 
   {
     set<rsa_keypair_id> checked;      
@@ -777,32 +764,21 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   guard.commit();
 }
 
-CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
-    "create a cert for a file or manifest")
+CMD(cert, "key and cert", "ID CERTNAME [CERTVAL]",
+    "create a cert for a manifest")
 {
-  if ((args.size() != 4) && (args.size() != 3))
+  if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
 
   transaction_guard guard(app.db);
 
   hexenc<id> ident;
-  if (idx(args, 0)() == "manifest")
-    {
-      manifest_id mid;
-      complete(app, idx(args, 1)(), mid);
-      ident = mid.inner();
-    }
-  else if (idx(args, 0)() == "file")
-    {
-      file_id fid;
-      complete(app, idx(args, 1)(), fid);
-      ident = fid.inner();
-    }
-  else
-    throw usage(this->name);
-
+  manifest_id mid;
+  complete(app, idx(args, 0)(), mid);
+  ident = mid.inner();
+  
   cert_name name;
-  internalize_cert_name(idx(args, 2), name);
+  internalize_cert_name(idx(args, 1), name);
 
   rsa_keypair_id key;
   if (app.signing_key() != "")
@@ -812,8 +788,8 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
       F("no unique private key found, and no key specified"));
   
   cert_value val;
-  if (args.size() == 4)
-    val = cert_value(idx(args, 3)());
+  if (args.size() == 3)
+    val = cert_value(idx(args, 2)());
   else
     val = cert_value(get_stdin());
 
@@ -823,23 +799,8 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
   cert t(ident, name, val_encoded, key);
   
   packet_db_writer dbw(app);
-
-  // nb: we want to throw usage on mis-use *before* asking for a
-  // passphrase.
-  
-  if (idx(args, 0)() == "file")
-    {
-      calculate_cert(app, t);  
-      dbw.consume_file_cert(file<cert>(t));
-    }
-  else if (idx(args, 0)() == "manifest")
-    {
-      calculate_cert(app, t);
-      dbw.consume_manifest_cert(manifest<cert>(t));
-    }
-  else
-    throw usage(this->name);
-
+  calculate_cert(app, t);
+  dbw.consume_manifest_cert(manifest<cert>(t));
   guard.commit();
 }
 
@@ -907,68 +868,42 @@ CMD(testresult, "certificate", "ID (true|false)",
   cert_manifest_testresult(m, idx(args, 1)(), app, dbw);
 }
 
-CMD(approve, "certificate", "(file|manifest) ID1 ID2", 
-    "approve of a manifest or file change")
+CMD(approve, "certificate", "ID1 ID2", 
+    "approve of a manifest change")
 {
-  if (args.size() != 3)
-    throw usage(name);
+  if (args.size() != 2)
+    throw usage(name);  
 
-  if (idx(args, 0)() == "manifest")
-    {
-      manifest_id m1, m2;
-      complete(app, idx(args, 1)(), m1);
-      complete(app, idx(args, 2)(), m2);
-      packet_db_writer dbw(app);
-      cert_manifest_approval(m1, m2, true, app, dbw);
-    }
-  else if (idx(args, 0)() == "file")
-    {
-      packet_db_writer dbw(app);
-      file_id f1, f2;
-      complete(app, idx(args, 1)(), f1);
-      complete(app, idx(args, 2)(), f2);
-      cert_file_approval(f1, f2, true, app, dbw);
-    }
-  else
-    throw usage(name);
+  manifest_id m1, m2;
+  complete(app, idx(args, 0)(), m1);
+  complete(app, idx(args, 1)(), m2);
+  packet_db_writer dbw(app);
+  cert_manifest_approval(m1, m2, true, app, dbw);
 }
 
-CMD(disapprove, "certificate", "(file|manifest) ID1 ID2", 
-    "disapprove of a manifest or file change")
+CMD(disapprove, "certificate", "ID1 ID2", 
+    "disapprove of a manifest change")
 {
-  if (args.size() != 3)
+  if (args.size() != 2)
     throw usage(name);
 
-  if (idx(args, 0)() == "manifest")
-    {
-      manifest_id m1, m2;
-      complete(app, idx(args, 1)(), m1);
-      complete(app, idx(args, 2)(), m2);
-      packet_db_writer dbw(app);
-      cert_manifest_approval(m1, m2, false, app, dbw);
-    }
-  else if (idx(args, 0)() == "file")
-    {
-      file_id f1, f2;
-      complete(app, idx(args, 1)(), f1);
-      complete(app, idx(args, 2)(), f2);
-      packet_db_writer dbw(app);
-      cert_file_approval(f1, f2, false, app, dbw);
-    }
-  else
-    throw usage(name);
+  manifest_id m1, m2;
+  complete(app, idx(args, 0)(), m1);
+  complete(app, idx(args, 1)(), m2);
+  packet_db_writer dbw(app);
+  cert_manifest_approval(m1, m2, false, app, dbw);
 }
 
 
-CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
-    "comment on a file or manifest version")
+CMD(comment, "certificate", "ID [COMMENT]",
+    "comment on a manifest version")
 {
-  if (args.size() != 2 && args.size() != 3)
+  if (args.size() != 1 && args.size() != 2)
     throw usage(name);
 
   string comment;
-  if (args.size() == 3)
-    comment = idx(args, 2)();
+  if (args.size() == 2)
+    comment = idx(args, 1)();
   else
     N(app.lua.hook_edit_comment("", comment), 
       F("edit comment failed"));
@@ -976,22 +911,10 @@ CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
   N(comment.find_first_not_of(" \r\t\n") != string::npos, 
     F("empty comment"));
 
-  if (idx(args, 0)() == "file")
-    {
-      file_id f;
-      complete(app, idx(args, 1)(), f);
-      packet_db_writer dbw(app);
-      cert_file_comment(f, comment, app, dbw); 
-    }
-  else if (idx(args, 0)() == "manifest")
-    {
-      manifest_id m;
-      complete(app, idx(args, 1)(), m);
-      packet_db_writer dbw(app);
-      cert_manifest_comment(m, comment, app, dbw);
-    }
-  else
-    throw usage(name);
+  manifest_id m;
+  complete(app, idx(args, 0)(), m);
+  packet_db_writer dbw(app);
+  cert_manifest_comment(m, comment, app, dbw);
 }
 
 
@@ -1443,6 +1366,20 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
   app.write_options();
 }
 
+CMD(bump, "tree", "", "advance current tree state by updating nonce")
+{
+  string nonce;
+  bool rewrite_work;
+  work_set work;
+  manifest_map m_old, m_new;
+  get_manifest_map(m_old);
+  calculate_new_manifest_map(m_old, m_new, app);
+  make_nonce(app, nonce);
+  write_data(local_path(nonce_file_name), data(nonce));
+  build_addition(file_path(nonce_file_name), app, work, m_new, rewrite_work);
+  if (rewrite_work)
+    put_work_set(work);
+}
 
 CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to stdout")
 {
@@ -2300,7 +2237,7 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
 }
 
 CMD(list, "informative", 
-    "certs (file|manifest) ID\n"
+    "certs ID\n"
     "keys [PATTERN]\n"
     "branches\n"
     "unknown\n"
@@ -2331,7 +2268,7 @@ CMD(list, "informative",
 }
 
 ALIAS(ls, list, "informative",  
-      "certs (file|manifest) ID\n"
+      "certs ID\n"
       "keys [PATTERN]\n"
       "branches\n"
       "unknown\n"

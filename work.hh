@@ -69,20 +69,20 @@ void apply_work_set(work_set const & work,
 void build_addition(file_path const & path,
 		    app_state & app,
 		    work_set & work,
-		    manifest_map & man,
+		    manifest_map const & man,
  		    bool & rewrite_work);
 
 void build_deletion(file_path const & path,
 		    app_state & app,
 		    work_set & work,
-		    manifest_map & man,
+		    manifest_map const & man,
  		    bool & rewrite_work);
 
 void build_rename(file_path const & src,
 		  file_path const & dst,
 		  app_state & app,
 		  work_set & work,
-		  manifest_map & man,
+		  manifest_map const & man,
 		  bool & rewrite_work);
 
 

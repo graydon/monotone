@@ -17,7 +17,7 @@
 using namespace boost;
 using namespace std;
 
-string const work_file_name("work");
+std::string const work_file_name("work");
 
 class 
 addition_builder 
@@ -25,12 +25,12 @@ addition_builder
 {
   app_state & app;
   work_set & work;
-  manifest_map & man;
+  manifest_map const & man;
   bool & rewrite_work;
 public:
   addition_builder(app_state & a, 
 		   work_set & w, 
-		   manifest_map & m, 
+		   manifest_map const & m, 
 		   bool & rw) : 
     app(a), work(w), man(m), rewrite_work(rw)
   {};
@@ -83,7 +83,7 @@ void
 build_addition(file_path const & path,
 	       app_state & app,
 	       work_set & work,
-	       manifest_map & man,
+	       manifest_map const & man,
 	       bool & rewrite_work)
 {
   addition_builder build(app, work, man, rewrite_work);
@@ -98,12 +98,12 @@ deletion_builder
 {
   app_state & app;
   work_set & work;
-  manifest_map & man;
+  manifest_map const & man;
   bool & rewrite_work;
 public:
   deletion_builder(app_state & a, 
 		   work_set & w, 
-		   manifest_map & m, 
+		   manifest_map const & m, 
 		   bool & rw) : 
     app(a), work(w), man(m), rewrite_work(rw)
   {};
@@ -156,7 +156,7 @@ void
 build_deletion(file_path const & path,
 	       app_state & app,
 	       work_set & work,
-	       manifest_map & man,
+	       manifest_map const & man,
 	       bool & rewrite_work)
 {
   deletion_builder build(app, work, man, rewrite_work);
@@ -172,14 +172,14 @@ rename_builder
   file_path const & dst;
   app_state & app;
   work_set & work;
-  manifest_map & man;
+  manifest_map const & man;
   bool & rewrite_work;
 public:
   rename_builder(file_path const & s,
 		 file_path const & d,
 		 app_state & a, 
 		 work_set & w, 
-		 manifest_map & m, 
+		 manifest_map const & m, 
 		 bool & rw) : 
     src(s), dst(d),
     app(a), work(w), man(m), rewrite_work(rw)
@@ -271,7 +271,7 @@ build_rename(file_path const & src,
 	     file_path const & dst,
 	     app_state & app,
 	     work_set & work,
-	     manifest_map & man,
+	     manifest_map const & man,
 	     bool & rewrite_work)
 {
   rename_builder build(src, dst, app, work, man, rewrite_work);
