@@ -1,5 +1,10 @@
 2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
 
+	* commands.cc: Homogenize help message for 'ls' with the one shown
+	by 'list'.
+
+2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+
         * ChangeLog: Add missing entries for several modifications I did
         in December 6th and 3rd.
 
