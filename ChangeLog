@@ -1,5 +1,10 @@
 2005-04-04  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_sql_unpack.at: New test.
+	* testsuite.at: Add it.
+
+2005-04-04  Nathaniel Smith  <njs@codesourcery.com>
+
 	* contrib/ciabot_monotone.py (config): Genericize again, so lazy
 	people using it won't start sending commits for monotone.
 	* .mt-attrs: Make it executable.
