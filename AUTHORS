@@ -194,6 +194,15 @@ files in boost/ related to circular buffers:
 // provided the above notices are retained, and a notice that the code was
 // modified is included with the above copyright notice.
 
+---
+
+The files in popt/* are copies of the original popt 1.7 as provided by
+Debian (their own version number is 1.7-5).  According to the README
+(reproduced as popt/README), it was written by a (former?) RedHat
+employee using the address ewt@redhat.com.  popt is licensed with the
+X Consortium public license, nowadays called the "X.Net, Inc. License".
+It's reproduced in popt/COPYING.
+
 
 copyright status:
 -----------------

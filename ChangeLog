@@ -1,5 +1,7 @@
 2005-04-03  Richard Levitte  <richard@levitte.org>
 
+	* AUTHORS: Add information about popt.
+
 	* monotone.cc (my_poptStuffArgFile): Include the bundled popt.h.
 	Since we now have a working popt, we can remove the restrictions
 	on the use of -@.
