@@ -1,3 +1,20 @@
+2004-11-16  Christof Petig <christof@petig-baender.de>
+
+	merge "monotone diff f225171baf37281d463a8547def213475dde2305
+	 4609d78a317ad3ca9b8644f2900ca719962664d9" into changeset head
+
+2004-06-18  Christof Petig <christof@petig-baender.de>
+
+	* netsync.cc: (struct PipeStream): New Stream that can handle two
+		filedescriptors (one for reading, one for writing)
+	(struct session): use PipeStream, pair of sockets
+	(pipe_and_fork): new helper function for creating a pipe to/from
+		a command (pipe,fork,dup,close)
+	(find_wordend,parse_ssh_url): helper functions to parse an URL
+	(call_server): recognize ssh: and file: URLs
+	(serve_stdio): variant of serve_connections for stdio
+	(run_netsync_protocol): call serve_stdio if address is -
+
 2004-11-08  graydon hoare  <graydon@pobox.com>
 
 	* monotone.texi: Some minor cleanups.
