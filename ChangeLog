@@ -1,3 +1,7 @@
+2004-11-14  Matt Johnston <matt@ucc.asn.au>
+
+	* tests/t_initfork.at: New test for merging two ancestor-less heads.
+
 2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi: Fix various typos.
