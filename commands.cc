@@ -2266,13 +2266,16 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, "working copy", "", "update working copy")
+CMD(update, "working copy", "\nREVISION", "update working copy to be based off another revision")
 {
   manifest_map m_old, m_working;
   revision_set r_old, r_working, r_new;
   revision_id r_old_id, r_chosen_id;
   change_set old_to_chosen, update;
   update_merge_provider merger(app);
+
+  if (args.size() != 0 && args.size() != 1)
+    throw usage(name);
 
   calculate_current_revision(app, r_working, m_old, m_working);
   
@@ -2282,7 +2285,11 @@ CMD(update, "working copy", "", "update working copy")
       r_old_id = edge_old_revision(r_working.edges.begin());
     }
 
-  pick_update_target(r_old_id, app, r_chosen_id);
+  if (args.size() == 0) {
+    pick_update_target(r_old_id, app, r_chosen_id);
+  } else {
+    complete(app, idx(args, 0)(), r_chosen_id);
+  }
   if (r_old_id == r_chosen_id)
     {
       P(F("already up to date at %s\n") % r_old_id);
@@ -2290,7 +2297,42 @@ CMD(update, "working copy", "", "update working copy")
     }
 
   P(F("selected update target %s\n") % r_chosen_id);
-  calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+
+  if (args.size() == 0) {
+    calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+  } else {
+    revision_id r_ancestor_id;
+
+    N(find_common_ancestor(r_old_id, r_chosen_id, r_ancestor_id, app),
+      F("no common ancestor for %s and %s\n") % r_old_id % r_chosen_id);
+    L(F("old is %s\n") % r_old_id);
+    L(F("chosen is %s\n") % r_chosen_id);
+    L(F("common ancestor is %s\n") % r_ancestor_id);
+
+    if (r_ancestor_id == r_old_id) {
+      calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+    } else if (r_ancestor_id == r_chosen_id) {
+      change_set chosen_to_old;
+      manifest_id m_chosen_id;
+      manifest_map m_chosen;
+      app.db.get_revision_manifest(r_chosen_id, m_chosen_id);
+      app.db.get_manifest(m_chosen_id, m_chosen);
+      calculate_composite_change_set(r_chosen_id, r_old_id, app, chosen_to_old);
+      invert_change_set(chosen_to_old, m_chosen, old_to_chosen);
+    } else {
+      change_set ancestor_to_old;
+      change_set old_to_ancestor;
+      change_set ancestor_to_chosen;
+      manifest_id m_ancestor_id;
+      manifest_map m_ancestor;
+      app.db.get_revision_manifest(r_ancestor_id, m_ancestor_id);
+      app.db.get_manifest(m_ancestor_id, m_ancestor);
+      calculate_composite_change_set(r_ancestor_id, r_old_id, app, ancestor_to_old);
+      invert_change_set(ancestor_to_old, m_ancestor, old_to_ancestor);
+      calculate_composite_change_set(r_ancestor_id, r_chosen_id, app, ancestor_to_chosen);
+      concatenate_change_sets(old_to_ancestor, ancestor_to_chosen, old_to_chosen);
+    }
+  }
 
   I(r_working.edges.size() == 1 || r_working.edges.size() == 0);
 

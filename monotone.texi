@@ -2635,6 +2635,29 @@ omit the @command{merge} step if you only want @command{update} to
 examine descendants of your base revision, and ignore other heads on
 your branch.
 
+@heading Moving Working Copy to Another Revision
+
+@multitable @columnfractions .4 .4
+@item
+@smallexample
+@group
+$ cvs update -r FOO_TAG -d
+@end group
+@end smallexample
+@tab
+@smallexample
+@group
+$ monotone update 830ac1a5f033825ab364f911608ec294fe37f7bc
+$ monotone update t:FOO_TAG
+@end group
+@end smallexample
+@end multitable
+
+With a revision parameter, the @command{update} command operates
+similarly in monotone and CVS. One difference is that a subsequent
+@command{commit} will be based off the chosen revision in monotone,
+while a @command{commit} in the CVS case is not possible without going
+back to the branch head again.
 
 @heading Viewing Differences
 
@@ -2989,10 +3012,11 @@ of the entirety of your working copy.
 
 
 @item monotone update
-This command incorporates ``recent'' changes found in your database
-into your working copy. It does this by performing 3 separate
-stages. If any of these stages fails, the update aborts, doing
-nothing. The stages are:
+@itemx monotone update @var{revision}
+Without a @var{revision} argument, this command incorporates ``recent''
+changes found in your database into your working copy. It does this by
+performing 3 separate stages. If any of these stages fails, the update
+aborts, doing nothing. The stages are:
 
 @itemize
 @item
@@ -3008,9 +3032,11 @@ Merge the target of the update with the working copy, in memory, and
 if the merge is successful, write the result over top of the working
 copy.
 @end itemize
+
+With an explicit @var{revision} argument, the command uses that revision
+as the update target instead of finding an acceptable candidate.
+
 @end ftable
-
-
 
 @page
 @node    Network
@@ -4782,7 +4808,7 @@ merely noted as removals in the work list.
 Rename files from @i{<src>} to @i{<dst>} in working copy.
 @comment TROFF INPUT: .TP
 
-@item @b{update} 
+@item @b{update} @i{[revision]}
 Update working copy.
 @comment TROFF INPUT: .SH DESCRIPTION
 

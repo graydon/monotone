@@ -1,3 +1,17 @@
+2004-11-17  Joel Rosdahl  <joel@rosdahl.net>
+
+	Fix bugs #8714 "monotone update working copy to previous version"
+	and #9069 "update with multiple candidates":
+	* commands.cc (update): Let the update command take an optional
+	revision target parameter. Without an explicit revision target,
+	the current branch head is used just like before. Added logic for
+	updating to an older revision or another revision reachable via a
+	common ancestor.
+	* tests/t_update_to_revision.at: Add regression tests for new
+	update logic.
+	* testsuite.at: Add new test.
+	* monotone.texi: Document new update argument.
+
 2004-11-15  Joel Rosdahl  <joel@rosdahl.net>
 
 	* tests/t_diff_added_file.at: Added testcase exposing a bug in
