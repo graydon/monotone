@@ -208,6 +208,13 @@ MOSTLYCLEANFILES = \
 DISTCLEANFILES = tests/atconfig \
                  idna/idn-int.h 
 
+# distcheck stuff
+
+DISTCHECK_CONFIGURE_FLAGS = --with-bundled-adns \
+			 --with-bundled-sqlite \
+			 --with-bundled-lua \
+			 --enable-static-boost
+
 # note: these targets are all in srcdir; they are *not* built during
 # the VPATH build part of distcheck (with non-writable source
 # directory) but only during the initial dist stage.

@@ -409,7 +409,8 @@ complete(app_state & app,
       N(completions.size() == 1, boost::format(err));
     }
   completion = *(completions.begin());  
-  P(F("expanded partial id '%s' to '%s'\n") % str % completion);
+  P(F("expanding partial id '%s'\n") % str);
+  P(F("expanded to '%s'\n") %  completion);
 }
 
 
@@ -720,31 +721,38 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 	{
 	  washed = tv();
 	}
-      string head;
+
+      string stat;
       switch (status)
 	{
 	case cert_ok:
-	  head = "ok sig from";
+	  stat = "ok";
 	  break;
 	case cert_bad:
-	  head = "bad sig from";
+	  stat = "bad";
 	  break;
 	case cert_unknown:
-	  head = "unknown sig from";
+	  stat = "unknown";
 	  break;
 	}
-      head = head 
-	+ "[" + idx(certs, i).key() + "] : " 
-	+ "[" + idx(certs, i).name() + "] = [";
-      string pad(head.size(), ' ');
+
       vector<string> lines;
       split_into_lines(washed, lines);
       I(lines.size() > 0);
-      cout << head << idx(lines, 0) ;
+
+      cout << "-----------------------------------------------------------------" << endl
+	   << "Key   : " << idx(certs, i).key() << endl
+	   << "Sig   : " << stat << endl	   
+	   << "Name  : " << idx(certs, i).name() << endl	   
+	   << "Value : " << idx(lines, 0) << endl;
+      
       for (size_t i = 1; i < lines.size(); ++i)
-	cout << endl << pad << idx(lines, i);
-      cout << "]" << endl;
+	cout << "      : " << idx(lines, i) << endl;
     }  
+
+  if (certs.size() > 0)
+    cout << endl;
+
   guard.commit();
 }
 
@@ -1184,7 +1192,8 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   cert_value branchname;
   guess_branch (old_id, app, branchname);
     
-  P(F("committing %s to branch %s\n") % new_id % branchname);
+  P(F("committing %s\n") % new_id);
+  P(F("committing to branch %s\n") % branchname);
   app.set_branch(branchname());
 
   manifests_to_patch_set(m_old, m_new, renames, app, ps);
@@ -1745,7 +1754,8 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 	  cert_manifest_in_branch(merged, app.branch_name(), app, dbw);
 	  cert_manifest_in_branch(merged, app.branch_name(), app, qpw);
 
-	  string log = (F("merge of %s and %s\n") % left % right).str();
+	  string log = (F("merge of %s\n"
+			  "     and %s\n") % left % right).str();
 	  cert_manifest_changelog(merged, log, app, dbw);
 	  cert_manifest_changelog(merged, log, app, qpw);
 	  

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: monotone-devel@nongnu.org\n"
-"POT-Creation-Date: 2004-03-20 14:29-0500\n"
+"POT-Creation-Date: 2004-03-28 15:04-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,280 +16,290 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: cert.cc:46
+#: cert.cc:47
 msgid "cert ok\n"
 msgstr ""
 
-#: cert.cc:53
+#: cert.cc:54
 #, c-format
-msgid "bad signature by '%s' on '%s'\n"
+msgid "ignoring bad signature by '%s' on '%s'\n"
 msgstr ""
 
-#: cert.cc:110
+#: cert.cc:62
+#, c-format
+msgid "ignoring unknown signature by '%s' on '%s'\n"
+msgstr ""
+
+#: cert.cc:119
 #, c-format
 msgid "trust function liked %d signers of cert '%s'='%s' on manifest '%s'\n"
 msgstr ""
 
-#: cert.cc:116
+#: cert.cc:125
 #, c-format
 msgid "trust function disliked %d signers of cert '%s'='%s' on manifest '%s'\n"
 msgstr ""
 
-#: cert.cc:163
+#: cert.cc:172
 #, c-format
 msgid "trust function liked %d signers of cert '%s'='%s' on file '%s'\n"
 msgstr ""
 
-#: cert.cc:169
+#: cert.cc:178
 #, c-format
 msgid "trust function disliked %d signers of cert '%s'='%s' on file '%s'\n"
 msgstr ""
 
-#: cert.cc:253
+#: cert.cc:262
 #, c-format
 msgid "calculated cert hash '%s' does not match '%s'"
 msgstr ""
 
-#: cert.cc:286
+#: cert.cc:295
 #, c-format
 msgid "[%s@%s:%s]"
 msgstr ""
 
-#: cert.cc:287
+#: cert.cc:296
 #, c-format
 msgid "cert: signable text %s\n"
 msgstr ""
 
-#: cert.cc:320 rcs_import.cc:1011
+#: cert.cc:329 rcs_import.cc:1110
 #, c-format
 msgid "no private key '%s' found in database"
 msgstr ""
 
-#: cert.cc:409
+#: cert.cc:421
 #, c-format
 msgid "no branch certs found for manifest %s, please provide a branch name"
 msgstr ""
 
-#: cert.cc:413
+#: cert.cc:425
 #, c-format
 msgid ""
 "multiple branch certs found for manifest %s, please provide a branch name"
 msgstr ""
 
-#: cert.cc:429 rcs_import.cc:1009
+#: cert.cc:441 rcs_import.cc:1108
 msgid "no unique private key for cert construction"
 msgstr ""
 
-#: cert.cc:571
+#: cert.cc:583
 #, c-format
 msgid "writing %d historical edges\n"
 msgstr ""
 
-#: cert.cc:594
+#: cert.cc:606
 #, c-format
 msgid "queueing edge %s -> %s\n"
 msgstr ""
 
-#: cert.cc:650
+#: cert.cc:669
 #, c-format
 msgid "fetching heads of branch '%s'\n"
 msgstr ""
 
-#: cert.cc:662
+#: cert.cc:676
+#, c-format
+msgid "erasing bogus certs on '%s'\n"
+msgstr ""
+
+#: cert.cc:695
 #, c-format
 msgid "began with %d candidate heads\n"
 msgstr ""
 
-#: cert.cc:686
+#: cert.cc:717
 #, c-format
 msgid "reduced to %d heads\n"
 msgstr ""
 
-#: cert.cc:697
+#: cert.cc:728
 #, c-format
 msgid "parent file %d is same as child, skipping edge\n"
 msgstr ""
 
-#: cert.cc:712
+#: cert.cc:743
 #, c-format
 msgid "parent manifest %d is same as child, skipping edge\n"
 msgstr ""
 
-#: cert.cc:756
+#: cert.cc:787
 #, c-format
 msgid "loading parents for node %d\n"
 msgstr ""
 
-#: cert.cc:768
+#: cert.cc:799
 #, c-format
 msgid "parent %s -> node %d\n"
 msgstr ""
 
-#: cert.cc:911
+#: cert.cc:942
 #, c-format
 msgid "found %d intersecting nodes"
 msgstr ""
 
-#: cert.cc:959
+#: cert.cc:990
 #, c-format
 msgid "searching for common ancestor, left=%s right=%s\n"
 msgstr ""
 
-#: cert.cc:964
+#: cert.cc:995
 #, c-format
 msgid "common ancestor scan [par=%d,anc=%d,dom=%d]\n"
 msgstr ""
 
-#: cert.cc:969
+#: cert.cc:1000
 #, c-format
 msgid "found node %d, ancestor of left %s and dominating right %s\n"
 msgstr ""
 
-#: cert.cc:976
+#: cert.cc:1007
 #, c-format
 msgid "found node %d, ancestor of right %s and dominating left %s\n"
 msgstr ""
 
-#: cert.cc:1005
+#: cert.cc:1036
 #, c-format
 msgid "merging rename edge %s -> %s with %s -> %s\n"
 msgstr ""
 
-#: cert.cc:1024
+#: cert.cc:1055
 #, c-format
 msgid "impossible historical record of renames: %s renamed to both %s and %s"
 msgstr ""
 
-#: cert.cc:1027
+#: cert.cc:1058
 #, c-format
 msgid "merged in rename of %s -> %s\n"
 msgstr ""
 
-#: cert.cc:1045
+#: cert.cc:1076
 #, c-format
 msgid "composing rename edges %s -> %s and %s -> %s\n"
 msgstr ""
 
-#: cert.cc:1058
+#: cert.cc:1089
 #, c-format
 msgid "composing rename %s -> %s with %s -> %s\n"
 msgstr ""
 
-#: cert.cc:1064
+#: cert.cc:1095
 #, c-format
 msgid "composing lone rename %s -> %s\n"
 msgstr ""
 
-#: cert.cc:1104
+#: cert.cc:1135
 msgid "malformed rename cert"
 msgstr ""
 
-#: cert.cc:1115
+#: cert.cc:1146
 #, c-format
 msgid "duplicate rename src entry for %s"
 msgstr ""
 
-#: cert.cc:1117
+#: cert.cc:1148
 #, c-format
 msgid "duplicate rename dst entry for %s"
 msgstr ""
 
-#: cert.cc:1168
+#: cert.cc:1199
 #, c-format
 msgid "found %d incident rename edges at node %s\n"
 msgstr ""
 
-#: cert.cc:1180
+#: cert.cc:1211
 #, c-format
 msgid "exploring renames from parents of %s, seeking towards %s\n"
 msgstr ""
 
-#: cert.cc:1215
+#: cert.cc:1246
 #, c-format
 msgid "ancestor edge %s -> %s is relevant, composing with edge %s -> %s\n"
 msgstr ""
 
-#: cert.cc:1225
+#: cert.cc:1256
 #, c-format
 msgid "ancestor edge %s -> %s is relevant, merging with current\n"
 msgstr ""
 
-#: cert.cc:1237
+#: cert.cc:1268
 #, c-format
 msgid "adding lone incident edge %s -> %s\n"
 msgstr ""
 
-#: cert.cc:1323
+#: cert.cc:1354
 #, c-format
 msgid "no default author name for branch '%s'"
 msgstr ""
 
-#: cert.cc:1426
+#: cert.cc:1457
 #, c-format
 msgid "calculating vcheck cert on %s with seed %s\n"
 msgstr ""
 
-#: cert.cc:1436
+#: cert.cc:1467
 #, c-format
 msgid "missing file version %s for %s"
 msgstr ""
 
-#: cert.cc:1446
+#: cert.cc:1477
 #, c-format
 msgid "mac of %s (seed=%s, id=%s) is %s\n"
 msgstr ""
 
-#: cert.cc:1452
+#: cert.cc:1483
 #, c-format
 msgid "mac of %d entry mac-manifest is %s\n"
 msgstr ""
 
-#: cert.cc:1463
+#: cert.cc:1494
 #, c-format
 msgid "calculating vcheck packet for %s with seed %s\n"
 msgstr ""
 
-#: cert.cc:1478
+#: cert.cc:1509
 #, c-format
 msgid "missing non-bogus vcheck certs on %s"
 msgstr ""
 
-#: cert.cc:1491
+#: cert.cc:1522
 #, c-format
 msgid "malformed vcheck cert on %s: %s"
 msgstr ""
 
-#: cert.cc:1497
+#: cert.cc:1528
 #, c-format
 msgid "confirming vcheck packet on %s from %s (%d bit seed)\n"
 msgstr ""
 
-#: cert.cc:1504
+#: cert.cc:1535
 #, c-format
 msgid "vcheck FAILED: key %s, id %s\n"
 msgstr ""
 
-#: cert.cc:1505
+#: cert.cc:1536
 #, c-format
 msgid "seed: %s\n"
 msgstr ""
 
-#: cert.cc:1506
+#: cert.cc:1537
 #, c-format
 msgid "their mac: %s\n"
 msgstr ""
 
-#: cert.cc:1507
+#: cert.cc:1538
 #, c-format
 msgid "our mac: %s\n"
 msgstr ""
 
-#: cert.cc:1508
+#: cert.cc:1539
 #, c-format
 msgid "you should investigate the contents of manifest %s immediately\n"
 msgstr ""
 
-#: cert.cc:1511
+#: cert.cc:1542
 #, c-format
 msgid "vcheck OK: key %s, id %s\n"
 msgstr ""
@@ -426,362 +436,366 @@ msgstr ""
 msgid "warning: no public key '%s' found in database\n"
 msgstr ""
 
-#: commands.cc:786
+#: commands.cc:799
 #, c-format
 msgid "warning: no keys found matching '%s'\n"
 msgstr ""
 
-#: commands.cc:801
+#: commands.cc:814
 #, c-format
 msgid "key '%s' already exists in database"
 msgstr ""
 
-#: commands.cc:805
+#: commands.cc:818
 #, c-format
 msgid "generating key-pair '%s'\n"
 msgstr ""
 
-#: commands.cc:807
+#: commands.cc:820
 #, c-format
 msgid "storing key-pair '%s' in database\n"
 msgstr ""
 
-#: commands.cc:845
+#: commands.cc:858
 msgid "no unique private key found, and no key specified"
 msgstr ""
 
-#: commands.cc:896
+#: commands.cc:909
 msgid "need --branch argument for branch-based vcheck"
 msgstr ""
 
-#: commands.cc:992 commands.cc:1028 commands.cc:1061
+#: commands.cc:1005 commands.cc:1041 commands.cc:1074
 msgid "need --branch argument for posting"
 msgstr ""
 
-#: commands.cc:1051
+#: commands.cc:1064
 msgid "edit comment failed"
 msgstr ""
 
-#: commands.cc:1054
+#: commands.cc:1067
 msgid "empty comment"
 msgstr ""
 
-#: commands.cc:1174
+#: commands.cc:1187
 #, c-format
 msgid "committing %s to branch %s\n"
 msgstr ""
 
-#: commands.cc:1186
+#: commands.cc:1199
 msgid "empty log message"
 msgstr ""
 
-#: commands.cc:1194
+#: commands.cc:1207
 #, c-format
 msgid "skipping manifest %s, already in database\n"
 msgstr ""
 
-#: commands.cc:1200
+#: commands.cc:1213
 #, c-format
 msgid "inserting manifest delta %s -> %s\n"
 msgstr ""
 
-#: commands.cc:1208
+#: commands.cc:1221
 #, c-format
 msgid "inserting full manifest %s\n"
 msgstr ""
 
-#: commands.cc:1221
+#: commands.cc:1234
 #, c-format
 msgid "skipping file delta %s, already in database\n"
 msgstr ""
 
-#: commands.cc:1227
+#: commands.cc:1240
 #, c-format
 msgid "inserting delta %s -> %s\n"
 msgstr ""
 
-#: commands.cc:1238
+#: commands.cc:1251
 #, c-format
 msgid "inserting full version %s\n"
 msgstr ""
 
-#: commands.cc:1256
+#: commands.cc:1269
 #, c-format
 msgid "skipping file %s %s, already in database\n"
 msgstr ""
 
-#: commands.cc:1262
+#: commands.cc:1275
 #, c-format
 msgid "inserting new file %s %s\n"
 msgstr ""
 
-#: commands.cc:1323
+#: commands.cc:1336
 #, c-format
 msgid "committed %s\n"
 msgstr ""
 
-#: commands.cc:1344
+#: commands.cc:1357
 #, c-format
 msgid "already up to date at %s\n"
 msgstr ""
 
-#: commands.cc:1347
+#: commands.cc:1360
 #, c-format
 msgid "selected update target %s\n"
 msgstr ""
 
-#: commands.cc:1355
+#: commands.cc:1368
 msgid "manifest merge failed, no update performed"
 msgstr ""
 
-#: commands.cc:1357
+#: commands.cc:1370
 msgid "calculating patchset for update\n"
 msgstr ""
 
-#: commands.cc:1361
+#: commands.cc:1374
 #, c-format
 msgid "applying %d deletions to files in tree\n"
 msgstr ""
 
-#: commands.cc:1365
+#: commands.cc:1378
 #, c-format
 msgid "deleting %s\n"
 msgstr ""
 
-#: commands.cc:1369
+#: commands.cc:1382
 #, c-format
 msgid "applying %d moves to files in tree\n"
 msgstr ""
 
-#: commands.cc:1373
+#: commands.cc:1386
 #, c-format
 msgid "moving %s -> %s\n"
 msgstr ""
 
-#: commands.cc:1378
+#: commands.cc:1391
 #, c-format
 msgid "applying %d additions to tree\n"
 msgstr ""
 
-#: commands.cc:1382
+#: commands.cc:1395
 #, c-format
 msgid "adding %s as %s\n"
 msgstr ""
 
-#: commands.cc:1393
+#: commands.cc:1406
 #, c-format
 msgid "applying %d deltas to tree\n"
 msgstr ""
 
-#: commands.cc:1397
+#: commands.cc:1410
 #, c-format
 msgid "updating file %s: %s -> %s\n"
 msgstr ""
 
-#: commands.cc:1422
+#: commands.cc:1435
 msgid "update successful\n"
 msgstr ""
 
-#: commands.cc:1429
+#: commands.cc:1442
 #, c-format
 msgid "updated to base version %s\n"
 msgstr ""
 
-#: commands.cc:1448 commands.cc:1502 commands.cc:1636
+#: commands.cc:1461 commands.cc:1515 commands.cc:1649
 #, c-format
 msgid "no file version %s found in database for %s"
 msgstr ""
 
-#: commands.cc:1452 commands.cc:1506 commands.cc:1640
+#: commands.cc:1465 commands.cc:1519 commands.cc:1653
 #, c-format
 msgid "writing file %s to %s\n"
 msgstr ""
 
-#: commands.cc:1493
+#: commands.cc:1506
 #, c-format
 msgid "nothing known about %s"
 msgstr ""
 
-#: commands.cc:1498
+#: commands.cc:1511
 #, c-format
 msgid "reverting %s to %s\n"
 msgstr ""
 
-#: commands.cc:1514
+#: commands.cc:1527
 #, c-format
 msgid "also removing deletion for %s\n"
 msgstr ""
 
-#: commands.cc:1520
+#: commands.cc:1533
 #, c-format
 msgid "removing rename for %s\n"
 msgstr ""
 
-#: commands.cc:1526
+#: commands.cc:1539
 #, c-format
 msgid "removing addition for %s\n"
 msgstr ""
 
-#: commands.cc:1553
+#: commands.cc:1566
 #, c-format
 msgid "no file version %s found in database"
 msgstr ""
 
-#: commands.cc:1555
+#: commands.cc:1568
 #, c-format
 msgid "dumping file %s\n"
 msgstr ""
 
-#: commands.cc:1569 commands.cc:1623
+#: commands.cc:1582 commands.cc:1636
 #, c-format
 msgid "no manifest version %s found in database"
 msgstr ""
 
-#: commands.cc:1571
+#: commands.cc:1584
 #, c-format
 msgid "dumping manifest %s\n"
 msgstr ""
 
-#: commands.cc:1596
+#: commands.cc:1609
 msgid "need --branch argument for branch-based checkout"
 msgstr ""
 
-#: commands.cc:1598
+#: commands.cc:1611
 #, c-format
 msgid "branch %s is empty"
 msgstr ""
 
-#: commands.cc:1599
+#: commands.cc:1612
 #, c-format
 msgid "branch %s has multiple heads"
 msgstr ""
 
-#: commands.cc:1625
+#: commands.cc:1638
 #, c-format
 msgid "checking out manifest %s to directory %s\n"
 msgstr ""
 
-#: commands.cc:1720
+#: commands.cc:1733
 #, c-format
 msgid "merging with manifest %d / %d: %s <-> %s\n"
 msgstr ""
 
-#: commands.cc:1735
+#: commands.cc:1748
 #, c-format
 msgid "merge of %s and %s\n"
 msgstr ""
 
-#: commands.cc:1740 commands.cc:1741
+#: commands.cc:1753 commands.cc:1754
 #, c-format
 msgid "[source] %s\n"
 msgstr ""
 
-#: commands.cc:1742
+#: commands.cc:1755
 #, c-format
 msgid "[merged] %s\n"
 msgstr ""
 
-#: commands.cc:1781
+#: commands.cc:1794
 msgid "ancestor file id does not exist"
 msgstr ""
 
-#: commands.cc:1784
+#: commands.cc:1797
 msgid "left file id does not exist"
 msgstr ""
 
-#: commands.cc:1787
+#: commands.cc:1800
 msgid "right file id does not exist"
 msgstr ""
 
-#: commands.cc:1802
+#: commands.cc:1815
 msgid "merge failed"
 msgstr ""
 
-#: commands.cc:1845 commands.cc:1855
+#: commands.cc:1858 commands.cc:1868
 #, c-format
 msgid "branch '%s' is empty\n"
 msgstr ""
 
-#: commands.cc:1850 commands.cc:1860
+#: commands.cc:1863 commands.cc:1873
 #, c-format
 msgid "branch '%s' is not merged\n"
 msgstr ""
 
-#: commands.cc:1881
+#: commands.cc:1894
 #, c-format
 msgid "propagate of %s and %s from branch '%s' to '%s'\n"
 msgstr ""
 
-#: commands.cc:1900 commands.cc:1910
+#: commands.cc:1913 commands.cc:1923
 msgid "non-hex digits in partial id"
 msgstr ""
 
-#: commands.cc:1997
+#: commands.cc:2010
 #, c-format
 msgid "--- %s\n"
 msgstr ""
 
-#: commands.cc:1998
+#: commands.cc:2011
 #, c-format
 msgid "+++ %s\n"
 msgstr ""
 
-#: commands.cc:1999
+#: commands.cc:2012
 #, c-format
 msgid "@@ -0,0 +1,%d @@\n"
 msgstr ""
 
-#: commands.cc:2202
+#: commands.cc:2230
 #, c-format
 msgid "no monotone book-keeping directory '%s' found"
 msgstr ""
 
-#: commands.cc:2342
+#: commands.cc:2355 commands.cc:2384 commands.cc:2399 commands.cc:2432
+msgid "could not guess default signing key"
+msgstr ""
+
+#: commands.cc:2370
 msgid "doing anonymous pull\n"
 msgstr ""
 
-#: commands.cc:2436
+#: commands.cc:2464
 #, c-format
 msgid "target number %d out of range"
 msgstr ""
 
-#: commands.cc:2442
+#: commands.cc:2470
 #, c-format
 msgid "packet number %d out of range for target %d"
 msgstr ""
 
-#: commands.cc:2454
+#: commands.cc:2482
 #, c-format
 msgid "deleting %d byte posting for %s\n"
 msgstr ""
 
-#: commands.cc:2467
+#: commands.cc:2495
 #, c-format
 msgid "queueing %d bytes for %s\n"
 msgstr ""
 
-#: commands.cc:2482
+#: commands.cc:2510
 msgid "need --branch argument for addtree"
 msgstr ""
 
-#: commands.cc:2725
+#: commands.cc:2753
 msgid "no packets found on stdin"
 msgstr ""
 
-#: commands.cc:2727
+#: commands.cc:2755
 msgid "read 1 packet\n"
 msgstr ""
 
-#: commands.cc:2729
+#: commands.cc:2757
 #, c-format
 msgid "read %d packets\n"
 msgstr ""
 
-#: commands.cc:2803
+#: commands.cc:2831
 msgid "fetching from all known URLs\n"
 msgstr ""
 
-#: commands.cc:2825
+#: commands.cc:2853
 msgid "no URL provided, posting all queued targets\n"
 msgstr ""
 
@@ -1082,17 +1096,17 @@ msgstr ""
 msgid "rename of %s to %s failed"
 msgstr ""
 
-#: file_io.cc:414
+#: file_io.cc:416
 #, c-format
 msgid "caught runtime error %s constructing file path for %s\n"
 msgstr ""
 
-#: http_tasks.cc:62 http_tasks.cc:239
+#: http_tasks.cc:62 http_tasks.cc:238
 #, c-format
 msgid "HTTP -> '%s'\n"
 msgstr ""
 
-#: http_tasks.cc:65 http_tasks.cc:242
+#: http_tasks.cc:65 http_tasks.cc:241
 #, c-format
 msgid "HTTP -> 'Host: %s'\n"
 msgstr ""
@@ -1102,7 +1116,7 @@ msgstr ""
 msgid "HTTP -> 'Content-Length: %d'\n"
 msgstr ""
 
-#: http_tasks.cc:71 http_tasks.cc:248
+#: http_tasks.cc:71 http_tasks.cc:247
 msgid "HTTP -> 'Connection: close'\n"
 msgstr ""
 
@@ -1121,83 +1135,83 @@ msgstr ""
 msgid "HTTP ERROR: '%s'\n"
 msgstr ""
 
-#: http_tasks.cc:145
+#: http_tasks.cc:144
 #, c-format
 msgid "Bad char from network: pos %d, char '%d'\n"
 msgstr ""
 
-#: http_tasks.cc:162
+#: http_tasks.cc:161
 msgid "malformed chunk, stream closed after nonzero chunk size"
 msgstr ""
 
-#: http_tasks.cc:164
+#: http_tasks.cc:163
 #, c-format
 msgid "malformed chunk, no leading CR (got %d)"
 msgstr ""
 
-#: http_tasks.cc:165
+#: http_tasks.cc:164
 msgid "malformed chunk, stream closed after leading CR"
 msgstr ""
 
-#: http_tasks.cc:166
+#: http_tasks.cc:165
 #, c-format
 msgid "malformed chunk, no leading LF (got %d)"
 msgstr ""
 
-#: http_tasks.cc:167
+#: http_tasks.cc:166
 msgid "malformed chunk, stream closed after leading LF"
 msgstr ""
 
-#: http_tasks.cc:174
+#: http_tasks.cc:173
 msgid "long chunked read from server"
 msgstr ""
 
-#: http_tasks.cc:183
+#: http_tasks.cc:182
 #, c-format
 msgid "malformed chunk, no trailing CR (got %d)"
 msgstr ""
 
-#: http_tasks.cc:184
+#: http_tasks.cc:183
 msgid "malformed chunk, stream closed after reailing CR"
 msgstr ""
 
-#: http_tasks.cc:185
+#: http_tasks.cc:184
 #, c-format
 msgid "malformed chunk, no trailing LF (got %d)"
 msgstr ""
 
-#: http_tasks.cc:196
+#: http_tasks.cc:195
 msgid "long read from server"
 msgstr ""
 
-#: http_tasks.cc:245
+#: http_tasks.cc:244
 msgid "HTTP -> 'Content-Length: 0'\n"
 msgstr ""
 
-#: http_tasks.cc:269
+#: http_tasks.cc:268
 msgid "long header response line from server"
 msgstr ""
 
-#: http_tasks.cc:277
+#: http_tasks.cc:276
 msgid "reading response as chunked encoding\n"
 msgstr ""
 
-#: http_tasks.cc:281
+#: http_tasks.cc:280
 #, c-format
 msgid "HTTP <- header %d bytes: '%s'\n"
 msgstr ""
 
-#: http_tasks.cc:303
+#: http_tasks.cc:302
 #, c-format
 msgid "got sequence numbers %lu, %lu\n"
 msgstr ""
 
-#: http_tasks.cc:313
+#: http_tasks.cc:312
 #, c-format
 msgid "%d trailing bytes from http\n"
 msgstr ""
 
-#: http_tasks.cc:319
+#: http_tasks.cc:318
 msgid "http fetch complete\n"
 msgstr ""
 
@@ -1329,6 +1343,10 @@ msgstr ""
 
 #: lua.cc:409
 msgid "no good\n"
+msgstr ""
+
+#: lua.cc:412
+msgid "ok\n"
 msgstr ""
 
 #: lua.cc:415
@@ -1502,6 +1520,10 @@ msgstr ""
 msgid "errors occurred during fetches\n"
 msgstr ""
 
+#: nntp_tasks.cc:200
+msgid "nntp fetch complete\n"
+msgstr ""
+
 #: packet.cc:35
 #, c-format
 msgid "skipping existing file version %s\n"
@@ -1648,180 +1670,185 @@ msgstr ""
 msgid "matched %d del/add pairs as moves\n"
 msgstr ""
 
-#: proto_machine.cc:158
+#: proto_machine.cc:170
 #, c-format
 msgid "RECV <- %s\n"
 msgstr ""
 
-#: proto_machine.cc:196
+#: proto_machine.cc:208
 #, c-format
 msgid "RECV <- %d lines\n"
 msgstr ""
 
-#: proto_machine.cc:211
+#: proto_machine.cc:223
 #, c-format
 msgid "SEND -> %d lines\n"
 msgstr ""
 
-#: proto_machine.cc:224
+#: proto_machine.cc:236
 #, c-format
 msgid "SEND -> %s"
 msgstr ""
 
-#: rcs_import.cc:332 rcs_import.cc:352
+#: rcs_import.cc:344 rcs_import.cc:364
 #, c-format
 msgid "existing path to %s found, skipping\n"
 msgstr ""
 
-#: rcs_import.cc:407
+#: rcs_import.cc:419
 #, c-format
 msgid "version %s has %d lines\n"
 msgstr ""
 
-#: rcs_import.cc:411
+#: rcs_import.cc:423
 #, c-format
 msgid "following RCS edge %s -> %s\n"
 msgstr ""
 
-#: rcs_import.cc:414
+#: rcs_import.cc:426
 #, c-format
 msgid "constructed RCS version %s, inserting into database\n"
 msgstr ""
 
-#: rcs_import.cc:428
+#: rcs_import.cc:440
 #, c-format
 msgid "following RCS branch %s\n"
 msgstr ""
 
-#: rcs_import.cc:443
+#: rcs_import.cc:455
 #, c-format
 msgid "finished RCS branch %s\n"
 msgstr ""
 
-#: rcs_import.cc:460
+#: rcs_import.cc:472
 #, c-format
 msgid "parsing RCS file %s\n"
 msgstr ""
 
-#: rcs_import.cc:462
+#: rcs_import.cc:474
 #, c-format
 msgid "parsed RCS file %s OK\n"
 msgstr ""
 
-#: rcs_import.cc:488
+#: rcs_import.cc:500
 #, c-format
 msgid "noting head version %s : %s\n"
 msgstr ""
 
-#: rcs_import.cc:575
+#: rcs_import.cc:587
 #, c-format
 msgid "looking up branch name for %s\n"
 msgstr ""
 
-#: rcs_import.cc:584
+#: rcs_import.cc:596
 #, c-format
 msgid "version %s has too few components, using branch %s\n"
 msgstr ""
 
-#: rcs_import.cc:602
+#: rcs_import.cc:614
 #, c-format
 msgid "no branch %s found, using base '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:616
+#: rcs_import.cc:628
 #, c-format
 msgid "multiple entries (%d) for branch %s found, using: '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:619
+#: rcs_import.cc:631
 #, c-format
 msgid "unique entry for branch %s found: '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:665
+#: rcs_import.cc:677
 #, c-format
 msgid "importing file '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:731
+#: rcs_import.cc:753
 #, c-format
-msgid "pushing existing branch for %s : %s\n"
+msgid "beginning branch %s at %s : %s\n"
 msgstr ""
 
-#: rcs_import.cc:737
+#: rcs_import.cc:763
 #, c-format
-msgid "pushing new branch for %s : %s\n"
+msgid "moving branch %s back to %s : %s\n"
 msgstr ""
 
-#: rcs_import.cc:762
+#: rcs_import.cc:785
+#, c-format
+msgid "using existing branchpoint for %s at %s : %s\n"
+msgstr ""
+
+#: rcs_import.cc:824
 #, c-format
 msgid "noting trunk edge %s : %s -> %s\n"
 msgstr ""
 
-#: rcs_import.cc:774
+#: rcs_import.cc:836
 #, c-format
 msgid "noting branch edge %s : %s -> %s\n"
 msgstr ""
 
-#: rcs_import.cc:814
+#: rcs_import.cc:876
 #, c-format
 msgid "skipping non-RCS file %s\n"
 msgstr ""
 
-#: rcs_import.cc:844
+#: rcs_import.cc:906
 #, c-format
 msgid "skipping cyclical branch edge %s -> %s\n"
 msgstr ""
 
-#: rcs_import.cc:849
+#: rcs_import.cc:911
 #, c-format
 msgid "storing branch manifest edge %s -> %s\n"
 msgstr ""
 
-#: rcs_import.cc:889
+#: rcs_import.cc:951
 #, c-format
 msgid "skipping cyclical trunk edge %s -> %s\n"
 msgstr ""
 
-#: rcs_import.cc:894
+#: rcs_import.cc:956
 #, c-format
 msgid "storing trunk manifest edge %s -> %s\n"
 msgstr ""
 
-#: rcs_import.cc:942
+#: rcs_import.cc:1004
 #, c-format
 msgid "logical changeset from child -> parent has %d file deltas\n"
 msgstr ""
 
-#: rcs_import.cc:960
+#: rcs_import.cc:1022
 #, c-format
 msgid "logical changeset from parent -> child has %d file deltas\n"
 msgstr ""
 
-#: rcs_import.cc:1015
+#: rcs_import.cc:1114
 msgid "need base --branch argument for importing"
 msgstr ""
 
-#: rcs_import.cc:1022
+#: rcs_import.cc:1121
 #, c-format
 msgid "path %s does not exist"
 msgstr ""
 
-#: rcs_import.cc:1024
+#: rcs_import.cc:1123
 #, c-format
 msgid "path %s is not a directory"
 msgstr ""
 
-#: rcs_import.cc:1027
+#: rcs_import.cc:1126
 #, c-format
 msgid "could not change directory to %s"
 msgstr ""
 
-#: rcs_import.cc:1032
+#: rcs_import.cc:1131
 msgid "phase 1 (version import) complete\n"
 msgstr ""
 
-#: rcs_import.cc:1073
+#: rcs_import.cc:1172
 msgid "phase 2 (ancestry reconstruction) complete\n"
 msgstr ""
 
@@ -1961,72 +1988,72 @@ msgstr ""
 msgid "trying to parse %s\n"
 msgstr ""
 
-#: vocab.cc:35
+#: vocab.cc:36
 #, c-format
 msgid "hex encoded ID '%s' size != %d"
 msgstr ""
 
-#: vocab.cc:38
+#: vocab.cc:39
 #, c-format
 msgid "bad character '%c' in id name '%s'"
 msgstr ""
 
-#: vocab.cc:51
+#: vocab.cc:52
 #, c-format
 msgid "bad character '%c' in ace string '%s'"
 msgstr ""
 
-#: vocab.cc:64
+#: vocab.cc:65
 #, c-format
 msgid "bad character '%c' in URL-encoded string '%s'"
 msgstr ""
 
-#: vocab.cc:77
+#: vocab.cc:78
 #, c-format
 msgid "bad character '%c' in cert name '%s'"
 msgstr ""
 
-#: vocab.cc:90
+#: vocab.cc:91
 #, c-format
 msgid "bad character '%c' in key name '%s'"
 msgstr ""
 
-#: vocab.cc:107
+#: vocab.cc:108
 #, c-format
 msgid "bad character '%c' in URL name '%s'"
 msgstr ""
 
-#: vocab.cc:114
+#: vocab.cc:115
 #, c-format
 msgid "malformed URL: '%s'"
 msgstr ""
 
-#: vocab.cc:139
+#: vocab.cc:143
 #, c-format
 msgid "prohibited absolute path '%s'"
 msgstr ""
 
-#: vocab.cc:144
+#: vocab.cc:148
 #, c-format
 msgid "empty path component in '%s'"
 msgstr ""
 
-#: vocab.cc:147
+#: vocab.cc:151
 #, c-format
 msgid "prohibited path component '%s' in '%s'"
 msgstr ""
 
-#: vocab.cc:151
+#: vocab.cc:155
 #, c-format
 msgid "bad character '%d' in path component '%s' of '%s'"
 msgstr ""
 
-#: vocab.cc:157
+#: vocab.cc:161
 #, c-format
 msgid "null byte in path component '%s' of '%s'"
 msgstr ""
 
-#: vocab.cc:176
+#: vocab.cc:180
 #, c-format
 msgid "prohibited book-keeping path in '%s'"
 msgstr ""
@@ -2151,16 +2178,24 @@ msgstr ""
 msgid "attribute map path is %s\n"
 msgstr ""
 
-#: xdelta.cc:786
+#: xdelta.cc:343
+msgid "computing binary delta instructions\n"
+msgstr ""
+
+#: xdelta.cc:345
+msgid "computed binary delta instructions\n"
+msgstr ""
+
+#: xdelta.cc:798
 #, c-format
 msgid "src %d, dst %d, fdel %d, rdel %d\n"
 msgstr ""
 
-#: xdelta.cc:790
+#: xdelta.cc:802
 msgid "confirming src == dst and rdel == 0\n"
 msgstr ""
 
-#: xdelta.cc:798
+#: xdelta.cc:810
 #, c-format
 msgid "confirming dst1 %d, dst2 %d\n"
 msgstr ""

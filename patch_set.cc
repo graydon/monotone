@@ -409,19 +409,29 @@ patch_set_to_text_summary(patch_set const & ps,
 
   for (set<file_path>::const_iterator i = ps.f_dels.begin();
        i != ps.f_dels.end(); ++i)
-    str << "  delete " << (*i)() << endl;
+    str << endl 
+	<< "  delete " << (*i)() << endl;
 
   for (set<patch_addition >::const_iterator i = ps.f_adds.begin();
        i != ps.f_adds.end(); ++i)
-    str << "  add " << i->path() << " as " << i->ident.inner()() << endl;
+    str << endl
+	<< "  add " << i->path() << endl
+	<< "   as " << i->ident.inner()() << endl;
 
   for (set<patch_move>::const_iterator i = ps.f_moves.begin();
        i != ps.f_moves.end(); ++i)
-    str << "  move " << i->path_old() << " -> " << i->path_new() << endl;
+    str << endl
+	<< "  move " << i->path_old() << endl
+	<< "    to " << i->path_new() << endl;
 
   for (set<patch_delta>::const_iterator i = ps.f_deltas.begin();
        i != ps.f_deltas.end(); ++i)
-    str << "  patch " << i->path() << " " << i->id_old.inner()() << " -> " << i->id_new.inner()() << endl;
+    str << endl
+	<< "  patch " << i->path() << endl
+	<< "   from " << i->id_old.inner()() << endl
+	<< "     to " << i->id_new.inner()() << endl;
+
+  str << endl;
 }
 
 
