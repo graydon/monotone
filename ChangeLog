@@ -1,3 +1,7 @@
+2004-12-06  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Add a hint on how to use --ticker.
+
 2004-12-06  graydon hoare  <graydon@pobox.com>
 
 	* unix/get_system_flavour.cc:
