@@ -3,13 +3,14 @@ Name: monotone
 Version: 0.17
 Release: 1
 License: GPL
-Group: Development/Version Control
+Group: Development/Tools
 URL: http://www.venge.net/monotone
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+BuildRequires: boost-devel >= 1.31.0, popt
 
 %description
-monotone is a free, distributed version control system. it provides
+monotone is a free, distributed version control system. It provides
 fully disconnected operation, manages complete tree versions, keeps
 its state in a local transactional database, supports overlapping
 branches and extensible metadata, exchanges work over plain network
@@ -51,7 +52,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc AUTHORS COPYING NEWS README
+%doc AUTHORS COPYING NEWS README README.changesets UPGRADE
 %{_bindir}/monotone
 %{_mandir}/man1/monotone.1.gz
 %{_infodir}/*.info*.gz
