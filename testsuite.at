@@ -214,15 +214,15 @@ m4_define([MONOTONE3], MONOTONE --db=test3.db)
 
 # run as NETSYNC_SERVE_START(collection name)
 m4_define([NETSYNC_SERVE_START], [
-killall -q -KILL monotone
+killall -KILL monotone 2> /dev/null
 MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $1 &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
 m4_define([NETSYNC_SERVE_STOP], [
-killall -q monotone
+killall monotone 2> /dev/null
 sleep 1
-killall -q -KILL monotone
+killall -KILL monotone 2> /dev/null
 ])
 # run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name)
 # first argument chooses whether to use the 2nd or 3rd database

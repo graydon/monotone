@@ -3,6 +3,45 @@
 	* change_set.cc: Fix unit tests to satisfy sanity checks.
 	* std_hooks.lua: Fix status checking on external merges.
 
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
+        * change_set.{cc,hh}: Take account of files which are the
+        destination of a rename_file operation, when examining
+        file deletions. Added helper methods to clean up related code.
+
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
+        * change_set.cc: added a sanity check for deltas with same src/dst,
+        and deleted files with deltas.
+
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
+        * testsuite.at, tests/t_netsync_single.at: don't use -q with
+        killall since it isn't portable.
+
+2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Make the 'log' command show all affected files
+	in each revision in a nice format (easier to read than what
+	'cat revision' shows).
+
+2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Change the order used by the 'log' command to show
+	affected files so that it matches the order in which these changes
+	really happen.  Otherwise, a sequence like "rm foo; mv bar foo;
+	patch foo" could be difficult to understand by the reader.
+
+2004-12-28  Jordi Vilalta Prat  <jvprat@wanadoo.es>
+
+	* monotone.texi: Fix a typo: "not not" should be "not".
+
+2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Make the 'log' command show all affected files
+	in each revision in a nice format (easier to read than what
+	'cat revision' shows).
+
 2004-12-28  graydon hoare  <graydon@pobox.com>
 
 	* AUTHORS: Add various recent authors.
