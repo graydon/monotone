@@ -1,5 +1,9 @@
 2003-09-12  Tom Tromey  <tromey@redhat.com>
 
+	* work.cc (deletion_builder::visit_file): Check for file in
+	working add set before looking in manifest.
+	* tests/t_drop.at: Added add-then-drop test.
+
 	* testsuite.at: Include t_drop.at.
 	* tests/t_drop.at: New test.
 	* work.cc (visit_file): Check for file in working delete set
