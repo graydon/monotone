@@ -93,7 +93,7 @@ revision_set::operator=(revision_set const & other)
 void
 check_sane_history(revision_id const & child_id,
                    int depth,
-                   database & db)
+                   app_state & app)
 {
   // We are, unfortunately, still quite slow.  So we want to give at least a
   // little feedback.  Let's print exactly one warning, on the _second_ time
@@ -115,13 +115,15 @@ check_sane_history(revision_id const & child_id,
   std::map<revision_id, shared_cs> changesets;
   
   manifest_id m_child_id;
-  db.get_revision_manifest(child_id, m_child_id);
+  app.db.get_revision_manifest(child_id, m_child_id);
   manifest_map m_child;
-  db.get_manifest(m_child_id, m_child);
+  app.db.get_manifest(m_child_id, m_child);
 
   std::set<revision_id> frontier;
   frontier.insert(child_id);
     
+  // FIXME: if we don't check the LCA already, check it.
+
   while (depth-- > 0)
     {
       std::set<revision_id> next_frontier;
@@ -132,7 +134,7 @@ check_sane_history(revision_id const & child_id,
         {
           revision_id current_id = *i;
           revision_set current;
-          db.get_revision(current_id, current);
+          app.db.get_revision(current_id, current);
           // and the parents's manifests to the manifests
           // and the change_set's to the parents to the changesets
           for (edge_map::const_iterator j = current.edges.begin();
@@ -180,7 +182,7 @@ check_sane_history(revision_id const & child_id,
                   // The null revision has empty manifest, which is the
                   // default.
                   if (!null_id(old_id))
-                    db.get_manifest(m_old_id, purported_m_child);
+                    app.db.get_manifest(m_old_id, purported_m_child);
                   apply_change_set(*old_to_child_changes_p, purported_m_child);
                   I(purported_m_child == m_child);
                 }
@@ -188,8 +190,58 @@ check_sane_history(revision_id const & child_id,
         }
       frontier = next_frontier;
     }
+
+  // Finally, there's a danger that if we have a long divergence, then after a
+  // merge, the common ancestor will be far back enough that the above
+  // depth-limited search won't have any idea whether the ancestry invariants
+  // are actually preserved.  So do an additional check on merge revisions, to
+  // make sure that the paths to both ways going back to their parents's
+  // common ancestor give the same change_set (i.e., this is a valid merge at
+  // all).
+  if (!global_sanity.relaxed)
+    {
+      revision_set child_rev;
+      app.db.get_revision(child_id, child_rev);
+      // Nothing inherently impossible about having more than 2 parents, but if
+      // you come up with some case where it should be possible then you'll
+      // have to also adjust the code below to figure out what "common
+      // ancestor" means.
+      I(child_rev.edges.size() <= 2);
+      if (child_rev.edges.size() != 2)
+        return;
+      edge_map::const_iterator i = child_rev.edges.begin();
+      revision_id parent_left = edge_old_revision(i);
+      change_set left_edge = edge_changes(i);
+      ++i;
+      revision_id parent_right = edge_old_revision(i);
+      change_set right_edge = edge_changes(i);
+      ++i;
+      I(i == child_rev.edges.end());
+      revision_id lca;
+      if (!find_least_common_ancestor(parent_left, parent_right, lca, app))
+        {
+          L(F("%s and %s have no common ancestor, so done\n")
+            % parent_left % parent_right);
+          return;
+        }
+      if (changesets.find(lca) == changesets.end())
+        {
+          L(F("already checked common ancestor, so done\n"));
+          return;
+        }
+      L(F("%s is a merge; verifying paths to common ancestor %s are sane\n")
+        % child_id % lca);
+      // we have a merge node, with an lca sufficiently far back in history
+      // that we haven't yet figured out whether this is a valid merge or
+      // not.  so find out.
+      change_set cs_parent_left, cs_parent_right, cs_left, cs_right;
+      calculate_composite_change_set(lca, parent_left, app, cs_parent_left);
+      calculate_composite_change_set(lca, parent_right, app, cs_parent_right);
+      concatenate_change_sets(cs_parent_left, left_edge, cs_left);
+      concatenate_change_sets(cs_parent_right, right_edge, cs_right);
+      I(cs_left == cs_right);
+    }
 }
-      
 
 // calculating least common ancestors is a delicate thing.
 // 

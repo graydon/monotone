@@ -1,5 +1,16 @@
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* revision.hh (check_sane_history): Take an app_state instead of a
+	database as an argument.
+	* database.cc: Pass an app_state instead of a database as its
+	argument. 
+	* revision.cc (check_sane_history): Update accordingly.  Add a new
+	check for merges, that they are creating consistent changesets
+	(even when the common ancestor is outside of the usual
+	paranoia-checking search depth).
+
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* revision.cc (kluge_for_3_ancestor_nodes): Rename to...
 	(kill_redundant_edges): ...this.  Kill all redundant edges, not
 	just ones on nodes with 3+ parents.  Also, make it actually work.
