@@ -1,3 +1,10 @@
+2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Fix various typos.
+	(Committing Work): Add missing command line argument.
+	(Branch Names): New section.
+	Add me to the copyright block.
+
 2004-11-08  graydon hoare  <graydon@pobox.com>
 
 	* monotone.texi: Some minor cleanups.
@@ -50,6 +57,16 @@
 
 	* figures/*: New figures.
 	* monotone.texi: Rewrite much of the tutorial.
+
+2004-10-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (process_hello_cmd): Make clear that when the
+	server's key is unknown, we abort the connection.
+
+2004-10-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sanity.cc (dump_buffer): Wrap bare string in call to string(),
+	to disambiguate conversions (required by Boost 1.30).
 
 2004-10-26  graydon hoare  <graydon@pobox.com>
 

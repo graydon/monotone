@@ -49,7 +49,7 @@ sanity::dump_buffer()
 	ui.inform("failed to write debugging log to " + filename + "\n");
     }
   else
-    ui.inform("discarding debug log\n");
+    ui.inform(string("discarding debug log\n"));
 }
 
 void 
