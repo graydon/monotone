@@ -679,61 +679,6 @@ bool lua_hooks::hook_get_http_proxy(string const & host,
   return ll.ok();
 }
 
-// connect addrs are for *pure tunnels*
-bool lua_hooks::hook_get_connect_addr(string const & proto,
-				      string const & host, 
-				      unsigned long port,
-				      string & host_out,
-				      unsigned long & port_out)
-{
-  Lua ll(st);
-  ll
-    .push_str("get_connect_addr")
-    .get_fn()
-    .push_str(proto)
-    .push_str(host)
-    .push_int(static_cast<int>(port))
-    .call(3,1)
-    .begin();
-  
-  ll.next();
-  ll.extract_str(host_out).pop();
-
-  ll.next();
-  int tmp;
-  ll.extract_int(tmp).pop();
-  if (ll.ok()) port_out = tmp;
-  
-  return ll.ok();
-}
-
-// http proxies are a special case, alas
-bool lua_hooks::hook_get_http_proxy(string const & host, 
-				    unsigned long port,
-				    string & host_out,
-				    unsigned long & port_out)
-{
-  Lua ll(st);
-  ll
-    .push_str("get_http_proxy")
-    .get_fn()
-    .push_str(host)
-    .push_int(static_cast<int>(port))
-    .call(2,1)
-    .begin();
-  
-  ll.next();
-  ll.extract_str(host_out).pop();
-
-  ll.next();
-  int tmp;
-  ll.extract_int(tmp).pop();
-  if (ll.ok()) port_out = tmp;
-  
-  return ll.ok();
-}
-
-
 bool lua_hooks::hook_apply_attribute(string const & attr, 
 				     file_path const & filename, 
 				     string const & value)

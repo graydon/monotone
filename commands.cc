@@ -1814,7 +1814,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
       cert_manifest_in_branch(merged, idx(args, 1), app, dbw);
       cert_manifest_in_branch(merged, idx(args, 1), app, qpw);
 
-      string log = F("propagate of %s and %s from branch '%s' to '%s'\n")
+      string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
                      % (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
 
       cert_manifest_changelog(merged, log, app, qpw);
