@@ -1,3 +1,7 @@
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* merkle_tree.cc: Remove tabs.
+
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi: Undocument mcerts, fcerts; rename rcerts to
