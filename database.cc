@@ -1646,20 +1646,6 @@ void database::get_revision_cert_index(std::vector< std::pair<hexenc<id>,
 }
 
 void 
-database::get_revision_certs(vector< revision<cert> > & ts)
-{
-  results res;
-  vector<cert> certs;
-  fetch(res, 5, any_rows, 
-        "SELECT id, name, value, keypair, signature "
-        "FROM 'revision_certs'");
-  results_to_certs(res, certs);
-
-  ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));  
-}
-
-void 
 database::get_revision_certs(cert_name const & name, 
                             vector< revision<cert> > & ts)
 {
