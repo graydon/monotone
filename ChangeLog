@@ -1,5 +1,10 @@
 2005-03-01  Derek Scherger  <derek@echologic.com>
 
+	* app_state.cc (set_restriction): actually ignore ignored files
+	rather than trying to validate them
+
+2005-03-01  Derek Scherger  <derek@echologic.com>
+
 	* tests/t_diff_binary.at: new test (bug report)
 	* tests/t_command_completion.at: new test
 	* tests/t_merge_rename_file_and_rename_dir.at: new test

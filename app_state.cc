@@ -144,6 +144,12 @@ app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & pa
     {
       file_path p = prefix(*i);
 
+      if (lua.hook_ignore_file(p)) 
+        {
+          L(F("'%s' ignored by restricted path set\n") % p());
+          continue;
+        }
+
       N(p == dot || valid_paths.find(p) != valid_paths.end(),
         F("path '%s' not found in base manifest or current work set\n") % p());
 
