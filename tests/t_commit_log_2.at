@@ -1,0 +1,20 @@
+# -*- Autoconf -*-
+
+AT_SETUP([commit w/o MT/log being present])
+
+MONOTONE_SETUP
+
+AT_CHECK(rm -f MT/log)
+
+AT_DATA(input.txt, [version 0 of the file
+])
+
+AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --branch=testbranch commit --message="Log entry", [], [ignore], [ignore])
+
+TSHA=`BASE_REVISION`
+AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout], [ignore])
+AT_CHECK(grep -q 'Log entry' stdout, [])
+
+AT_CLEANUP
