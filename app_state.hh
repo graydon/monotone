@@ -9,6 +9,8 @@
 class app_state;
 class lua_hooks;
 
+#include <string>
+
 #include "database.hh"
 #include "lua.hh"
 #include "work.hh"
@@ -23,14 +25,14 @@ class app_state
 {
 public:
   rsa_keypair_id signing_key;
-  string branch_name;
+  std::string branch_name;
   database db;
   lua_hooks lua;
   bool options_changed;
   options_map options;
 
-  void set_branch(string name);
-  void set_database(string filename);
+  void set_branch(std::string name);
+  void set_database(std::string filename);
   void write_options();
 
   explicit app_state();

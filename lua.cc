@@ -30,7 +30,7 @@ extern "C" {
 #include "test_hooks.h"
 #include "std_hooks.h"
 
-using std::string;
+using namespace std;
 using boost::lexical_cast;
 
 /*

@@ -11,26 +11,24 @@
 #include "packet.hh"
 #include "vocab.hh"
 
-using namespace std;
-
 // this file contains simple functions which talk through HTTP to
 // a depot.
 
-bool post_http_packets(string const & group_name,
-		       string const & user,
-		       string const & signature,
-		       string const & packets,
-		       string const & http_host,
-		       string const & http_path,
+bool post_http_packets(std::string const & group_name,
+		       std::string const & user,
+		       std::string const & signature,
+		       std::string const & packets,
+		       std::string const & http_host,
+		       std::string const & http_path,
 		       unsigned long port,
 		       std::iostream & stream);
   
-void fetch_http_packets(string const & group_name,
+void fetch_http_packets(std::string const & group_name,
 			unsigned long & maj_number,
 			unsigned long & min_number,
 			packet_consumer & consumer,
-			string const & http_host,
-			string const & http_path,
+			std::string const & http_host,
+			std::string const & http_path,
 			unsigned long port,
 			std::iostream & stream);
 

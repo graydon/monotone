@@ -7,6 +7,8 @@
 // see the file COPYING for details
 
 #include "vocab.hh"
+#include "manifest.hh"
+
 #include <vector>
 
 // this file contans various sorts of string transformations. each
@@ -23,13 +25,13 @@ namespace CryptoPP {
   class Gunzip;
 }
 
-template<typename XFM> string xform(string const &);
-extern template string xform<CryptoPP::Base64Encoder>(string const &);
-extern template string xform<CryptoPP::Base64Decoder>(string const &);
-extern template string xform<CryptoPP::HexEncoder>(string const &);
-extern template string xform<CryptoPP::HexDecoder>(string const &);
-extern template string xform<CryptoPP::Gzip>(string const &);
-extern template string xform<CryptoPP::Gunzip>(string const &);
+template<typename XFM> std::string xform(std::string const &);
+extern template std::string xform<CryptoPP::Base64Encoder>(std::string const &);
+extern template std::string xform<CryptoPP::Base64Decoder>(std::string const &);
+extern template std::string xform<CryptoPP::HexEncoder>(std::string const &);
+extern template std::string xform<CryptoPP::HexDecoder>(std::string const &);
+extern template std::string xform<CryptoPP::Gzip>(std::string const &);
+extern template std::string xform<CryptoPP::Gunzip>(std::string const &);
 
 // base64 encoding
 
@@ -44,8 +46,8 @@ void decode_base64(base64<T> const & in, T & out)
 
 // hex encoding
 
-string uppercase(string const & in);
-string lowercase(string const & in);
+std::string uppercase(std::string const & in);
+std::string lowercase(std::string const & in);
 
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)
@@ -92,6 +94,10 @@ void diff(data const & olddata,
 	  data const & newdata,
 	  base64< gzip<delta> > & del);
 
+void diff(manifest_map const & oldman,
+	  manifest_map const & newman,
+	  base64< gzip<delta> > & del);
+
 void diff(base64< gzip<data> > const & old_data,
 	  base64< gzip<data> > const & new_data,
 	  base64< gzip<delta> > & delta);
@@ -118,24 +124,28 @@ void calculate_ident(file_data const & dat,
 void calculate_ident(manifest_data const & dat,
 		     manifest_id & ident);
 
+void calculate_ident(manifest_map const & mm,
+		     manifest_id & ident);
+
+
 // quick streamy variant which doesn't load the whole file
 
 void calculate_ident(file_path const & file,
 		     hexenc<id> & ident);
 
-void split_into_lines(string const & in,
-		      vector<string> & out);
+void split_into_lines(std::string const & in,
+		      std::vector<std::string> & out);
 
-void join_lines(vector<string> const & in,
-		string & out);
+void join_lines(std::vector<std::string> const & in,
+		std::string & out);
 
 // remove all whitespace
-string remove_ws(string const & s);
+std::string remove_ws(std::string const & s);
 
 // remove leading and trailing whitespace
-string trim_ws(string const & s);
+std::string trim_ws(std::string const & s);
 
 // canonicalize base64 encoding
-string canonical_base64(string const & s);
+std::string canonical_base64(std::string const & s);
 
 #endif // __TRANSFORMS_HH__

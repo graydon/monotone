@@ -37,10 +37,10 @@
 // have only one entry for each pathname. the same sha1 can occur multiple
 // times in a manifest.
 
-typedef set<file_path> path_set;
-extern string const manifest_file_name;
-typedef map<file_path, file_id> manifest_map;
-typedef pair<file_path, file_id> entry;
+typedef std::set<file_path> path_set;
+extern std::string const manifest_file_name;
+typedef std::map<file_path, file_id> manifest_map;
+typedef std::pair<file_path, file_id> entry;
 
 // this helper exists solely to save us writing ->first and ->second all
 // over the place when dealing with entries / members of manifest_maps. they're
@@ -66,8 +66,8 @@ public:
 // analyzed changes to a manifest_map (not just blob-delta)
 struct manifest_changes
 {
-  set<entry> adds;
-  set<entry> dels;
+  std::set<entry> adds;
+  std::set<entry> dels;
 };
 
 void calculate_manifest_changes(manifest_map const & a,
@@ -81,7 +81,7 @@ void apply_manifest_changes(manifest_map const & a,
 void write_manifest_changes(manifest_changes const & changes, 
 			    data & dat);
 
-ostream & operator<<(ostream & out, entry const & e);
+std::ostream & operator<<(std::ostream & out, entry const & e);
 
 class app_state;
 
@@ -108,9 +108,5 @@ void write_manifest_map(manifest_map const & man,
 
 void write_manifest_map(manifest_map const & man, 
 			data & dat);
-
-void calculate_manifest_map_ident(manifest_map const & m,
-				  manifest_id & ident);
-
 
 #endif // __MANIFEST_HH__

@@ -55,8 +55,25 @@ struct cvs_key
   cvs_key(rcs_file const & r, 
 	  string const & version, 
 	  cvs_history & cvs);
-  bool similar_enough(cvs_key const & other) const;  
-  bool operator<(cvs_key const & other) const;
+
+  inline bool similar_enough(cvs_key const & other) const
+  {
+    if (changelog != other.changelog)
+      return false;
+    if (author != other.author)
+      return false;
+    if (labs(time - other.time) > cvs_window)
+      return false;
+    return true;
+  }
+
+  inline bool operator<(cvs_key const & other) const
+  {
+    // nb: this must sort as > to construct the edges in the right direction
+    return time > other.time ||
+      (time == other.time && author > other.author) ||
+      (time == other.time && author == other.author && changelog > other.changelog);
+  }
 
   cvs_changelog changelog;
   cvs_author author;
@@ -74,7 +91,18 @@ struct cvs_file_edge
   cvs_path parent_path;
   cvs_version child_version;
   cvs_path child_path;
-  bool operator<(cvs_file_edge const & other) const;
+  inline bool operator<(cvs_file_edge const & other) const
+  {
+    return (parent_path < other.parent_path) ||
+      
+      ((parent_path == other.parent_path) && (parent_version < other.parent_version)) ||
+      
+      ((parent_path == other.parent_path) && (parent_version == other.parent_version) && 
+       (child_path < other.child_path)) ||
+      
+      ((parent_path == other.parent_path) && (parent_version == other.parent_version) && 
+       (child_path == other.child_path) && (child_version < other.child_version));
+  }
 };
 
 struct cvs_state
@@ -431,6 +459,7 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
     global_pieces.reset();
     global_pieces.index_deltatext(r.deltatexts.find(r.admin.head)->second, head_lines);
     process_branch(r.admin.head, head_lines, dat, id, r, db, cvs);
+    global_pieces.reset();
   }
 
   ui.set_tick_trailer("");
@@ -497,19 +526,6 @@ cvs_file_edge::cvs_file_edge (file_id const & pv, file_path const & pp,
 {
 }
 
-bool cvs_file_edge::operator<(cvs_file_edge const & other) const
-{
-  return (parent_path < other.parent_path) ||
-
-    ((parent_path == other.parent_path) && (parent_version < other.parent_version)) ||
-
-    ((parent_path == other.parent_path) && (parent_version == other.parent_version) && 
-     (child_path < other.child_path)) ||
-
-    ((parent_path == other.parent_path) && (parent_version == other.parent_version) && 
-     (child_path == other.child_path) && (child_version < other.child_version));
-}
-
 
 cvs_key::cvs_key(rcs_file const & r, string const & version,
 		 cvs_history & cvs) 
@@ -534,24 +550,6 @@ cvs_key::cvs_key(rcs_file const & r, string const & version,
   author = cvs.author_interner.intern(delta->second->author);
 }
 
-bool cvs_key::similar_enough(cvs_key const & other) const
-{  
-  if (changelog != other.changelog)
-    return false;
-  if (author != other.author)
-    return false;
-  if (labs(time - other.time) > cvs_window)
-    return false;
-  return true;
-}
-
-// nb: this must sort as > to construct the edges in the right direction
-bool cvs_key::operator<(cvs_key const & other) const
-{
-  return time > other.time ||
-    (time == other.time && author > other.author) ||
-    (time == other.time && author == other.author && changelog > other.changelog);
-}
 
 cvs_history::cvs_history() :
   n_versions("versions"),
@@ -581,8 +579,28 @@ bool cvs_history::find_key_and_state(rcs_file const & r,
   I(stk.size() > 0);
   map< cvs_key, shared_ptr<cvs_state> > & substates = stk.top()->substates;
   cvs_key nk(r, version, *this);
-  for (map< cvs_key, shared_ptr<cvs_state> >::const_iterator i = substates.begin();
-       i != substates.end(); ++i)
+
+  // key+(window/2) is in the future, key-(window/2) is in the past. the
+  // past is considered "greater than" the future in this map, so we take:
+  // 
+  //  - new, the lower bound of key+(window/2) in the map
+  //  - old, the upper bound of key-(window/2) in the map
+  //
+  // and search all the nodes inside this section, from new to old bound.
+
+  map< cvs_key, shared_ptr<cvs_state> >::const_iterator i_new, i_old, i;
+  cvs_key k_new(nk), k_old(nk);
+
+  if (static_cast<time_t>(k_new.time + cvs_window / 2) > k_new.time)
+    k_new.time += cvs_window / 2;
+
+  if (static_cast<time_t>(k_old.time - cvs_window / 2) < k_old.time)
+    k_old.time -= cvs_window / 2;
+  
+  i_new = substates.lower_bound(k_new);
+  i_old = substates.upper_bound(k_old);
+
+  for (i = i_new; i != i_old; ++i)
     {
       if (i->first.similar_enough(nk))
 	{
@@ -713,7 +731,6 @@ void store_branch_manifest_edge(manifest_map const & parent,
 				app_state & app,
 				cvs_history & cvs)
 {
-  data parent_data, child_data;
 
   unsigned long p, c;
   p = cvs.manifest_version_interner.intern(parent_id.inner()());
@@ -730,9 +747,6 @@ void store_branch_manifest_edge(manifest_map const & parent,
 	% parent_id % child_id);
 
       cvs.manifest_cycle_detector.put_edge(p,c);
-
-      write_manifest_map(parent, parent_data);
-      write_manifest_map(child, child_data);
       
       // in this case, the ancestry-based 'child' is on a branch, so it is
       // an 'old' version as far as the storage system is concerned; that
@@ -743,7 +757,7 @@ void store_branch_manifest_edge(manifest_map const & parent,
       // parent (new) -> child (old)
 
       base64< gzip<delta> > del;	      
-      diff(parent_data, child_data, del);
+      diff(parent, child, del);
       rcs_put_raw_manifest_edge(child_id.inner(),
 				parent_id.inner(),				
 				del, app.db);
@@ -761,7 +775,6 @@ void store_trunk_manifest_edge(manifest_map const & parent,
 			       app_state & app,
 			       cvs_history & cvs)
 {
-  data parent_data, child_data;
 
   unsigned long p, c;
   p = cvs.manifest_version_interner.intern(parent_id.inner()());
@@ -779,9 +792,6 @@ void store_trunk_manifest_edge(manifest_map const & parent,
 
       cvs.manifest_cycle_detector.put_edge(p,c);
 
-      write_manifest_map(parent, parent_data);
-      write_manifest_map(child, child_data);
-
       // in this case, the ancestry-based 'child' is on a trunk, so it is
       // a 'new' version as far as the storage system is concerned; that
       // is to say that the ancestry-based 'parent' is a temporally older
@@ -789,7 +799,7 @@ void store_trunk_manifest_edge(manifest_map const & parent,
       // the delta should run from child (new) -> parent (old).
 
       base64< gzip<delta> > del;	      
-      diff(child_data, parent_data, del);
+      diff(child, parent, del);
       rcs_put_raw_manifest_edge(parent_id.inner(),
 				child_id.inner(),
 				del, app.db);
@@ -813,48 +823,34 @@ void store_auxilliary_certs(cvs_key const & key,
 // up the trunk.
 void build_parent_state(shared_ptr<cvs_state> state,
 			manifest_map & state_map,
-			cvs_history & cvs,
-			app_state & app)
+			cvs_history & cvs)
 {
-  manifest_id child_id, state_id;
-  calculate_manifest_map_ident(state_map, child_id);
-
   for (set<cvs_file_edge>::const_iterator f = state->in_edges.begin();
        f != state->in_edges.end(); ++f)
     {
       file_id fid(cvs.file_version_interner.lookup(f->parent_version));
       file_path pth(cvs.path_interner.lookup(f->parent_path));
       state_map[pth] = fid;
-    }
-  
-  calculate_manifest_map_ident(state_map, state_id);
-  
-  L(F("logical changeset from %s -> %s has %d file deltas\n")
-    % child_id % state_id % state->in_edges.size());  
+    }  
+  L(F("logical changeset from child -> parent has %d file deltas\n")
+    % state->in_edges.size());
 }
 
 // we call this when we're going parent -> child, i.e. when we're walking
 // down a branch.
 void build_child_state(shared_ptr<cvs_state> state,
 		       manifest_map & state_map,
-		       cvs_history & cvs,
-		       app_state & app)
+		       cvs_history & cvs)
 {
-  manifest_id parent_id, state_id;
-  calculate_manifest_map_ident(state_map, parent_id);
-
   for (set<cvs_file_edge>::const_iterator f = state->in_edges.begin();
        f != state->in_edges.end(); ++f)
     {
       file_id fid(cvs.file_version_interner.lookup(f->child_version));
       file_path pth(cvs.path_interner.lookup(f->child_path));
       state_map[pth] = fid;
-    }
-
-  calculate_manifest_map_ident(state_map, state_id);
-
-  L(F("logical changeset from %s -> %s has %d file deltas\n")
-    % parent_id % state_id % state->in_edges.size());
+    }  
+  L(F("logical changeset from parent -> child has %d file deltas\n") 
+    % state->in_edges.size());
 }
 
 void import_substates(ticker & n_edges, 
@@ -865,7 +861,7 @@ void import_substates(ticker & n_edges,
 		      app_state & app)
 {
   manifest_id parent_id;
-  calculate_manifest_map_ident(parent_map, parent_id);
+  calculate_ident(parent_map, parent_id);
   manifest_map child_map = parent_map;
 
   if (state->substates.size() > 0)
@@ -877,13 +873,15 @@ void import_substates(ticker & n_edges,
        i != state->substates.rend(); ++i)
     {
       manifest_id child_id;
-      build_child_state(i->second, child_map, cvs, app);
-      calculate_manifest_map_ident(child_map, child_id);
+      build_child_state(i->second, child_map, cvs);
+      calculate_ident(child_map, child_id);
       store_branch_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
       store_auxilliary_certs(i->first, child_id, app, cvs);
       if (i->second->substates.size() > 0)
 	import_substates(n_edges, n_branches, i->second, child_map, cvs, app);
-      parent_map = child_map;
+
+      // now apply the edge to the parent, too, making parent = child
+      build_child_state(i->second, parent_map, cvs);
       parent_id = child_id;
       ++n_edges;
     }
@@ -924,7 +922,7 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
   manifest_map child_map = cvs.head_manifest;
   manifest_map parent_map = child_map;
   manifest_id child_id;
-  calculate_manifest_map_ident (child_map, child_id);
+  calculate_ident (child_map, child_id);
 
 
   {
@@ -945,13 +943,15 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 	 i != state->substates.end(); ++i)
       {
 	manifest_id parent_id;
-	build_parent_state(i->second, parent_map, cvs, app);
-	calculate_manifest_map_ident(parent_map, parent_id);
+	build_parent_state(i->second, parent_map, cvs);
+	calculate_ident(parent_map, parent_id);
 	store_trunk_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
 	store_auxilliary_certs(i->first, child_id, app, cvs);
 	if (i->second->substates.size() > 0)
 	  import_substates(n_edges, n_branches, i->second, parent_map, cvs, app);
-	child_map = parent_map;
+
+	// now apply the edge to the child, too, making child = parent
+	build_parent_state(i->second, child_map, cvs);
 	child_id = parent_id;
 	++n_edges;
       }

@@ -16,13 +16,11 @@
 
 struct lua_State;
 
-using std::string;
-
 class lua_hooks
 {
   struct lua_State * st;
   template <typename RES>
-  pair<bool,RES> call_hook(char const * name, int nargs, ...);
+  std::pair<bool,RES> call_hook(char const * name, int nargs, ...);
 
 public:
   lua_hooks();
@@ -36,27 +34,27 @@ public:
 
   // cert hooks
   bool hook_get_branch_key(cert_value const & branchname, rsa_keypair_id & k);
-  bool hook_get_passphrase(rsa_keypair_id const & k, string & phrase);
-  bool hook_get_author(cert_value const & branchname, string & author);
-  bool hook_edit_comment(string const & commentary, string & result);  
+  bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
+  bool hook_get_author(cert_value const & branchname, std::string & author);
+  bool hook_edit_comment(std::string const & commentary, std::string & result);  
   bool hook_persist_phrase_ok();
   bool hook_non_blocking_rng_ok();
 
 
   // network hooks
   bool hook_get_news_sender(url const & serv, group const & grp, 
-			    string & sender);
+			    std::string & sender);
   bool hook_get_http_auth(url const & serv, group const & grp, 
 			  rsa_keypair_id & pubkey);
   bool hook_get_post_targets(cert_value const & branchname, 
-			     vector< pair<url,group> > & targets);
+			     std::vector< std::pair<url,group> > & targets);
   bool hook_get_fetch_sources(cert_value const & branchname, 
-			      vector< pair<url,group> > & sources);
+			      std::vector< std::pair<url,group> > & sources);
 
 
   // local repo hooks
   bool hook_ignore_file(file_path const & p);
-  bool hook_get_sorter(string const & certname, string & sort_type);
+  bool hook_get_sorter(std::string const & certname, std::string & sort_type);
   bool hook_merge2(data const & left, 
 		   data const & right, 
 		   data & result);
@@ -66,9 +64,9 @@ public:
 		   data & result);
 
   // attribute hooks
-  bool hook_apply_attribute(string const & attr, 
+  bool hook_apply_attribute(std::string const & attr, 
 			    file_path const & filename, 
-			    string const & value);
+			    std::string const & value);
     
 
 };

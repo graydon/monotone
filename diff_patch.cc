@@ -19,6 +19,8 @@
 #include "transforms.hh"
 #include "vocab.hh"
 
+using namespace std;
+
 bool guess_binary(string const & s)
 {
   // these do not occur in text files

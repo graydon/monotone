@@ -218,13 +218,15 @@ static int io_tmpfile (lua_State *L) {
 
 // this function added for monotone
 static int io_mkstemp (lua_State *L) {
+  int fd;
+  FILE **pf;
   char const *filename = lua_tostring (L, -1);
   char *dup = strdup(filename);
 
   if (dup == NULL)
     return 0;
 
-  int fd = mkstemp(dup);  
+  fd = mkstemp(dup);
 
   if (fd == -1)
     {
@@ -232,7 +234,7 @@ static int io_mkstemp (lua_State *L) {
       return 0;
     }
 
-  FILE **pf = newfile(L);
+  pf = newfile(L);
   *pf = fdopen(fd, "r+");  
 
   lua_pushstring(L, dup);

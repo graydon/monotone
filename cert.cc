@@ -13,14 +13,18 @@
 #include "transforms.hh"
 #include "ui.hh"
 
+#include <boost/regex.hpp>
+
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/dynamic_bitset.hpp>
 
 #include <string>
 #include <vector>
+#include <sstream>
 
-using std::string;
+using namespace std;
+using namespace boost;
 
 // cert destroyer!
 
@@ -514,6 +518,181 @@ bool find_common_ancestor(manifest_id const & left,
   return find_common_ancestor_recursive (left, right, anc, app, 256);
 }
 
+
+// stuff for handling rename certs / rename edges
+
+// rename edges associate a particular name mapping with a particular edge
+// in the ancestry graph. they assist the algorithm in patch_set.cc in
+// determining which add/del pairs count as moves.
+
+static void include_rename_edge(rename_edge const & in, 
+				rename_edge & out)
+{
+  I(in.child == out.child);
+  set<file_path> rename_targets;
+  for (rename_map::const_iterator i = out.mapping.begin();
+       i != out.mapping.end(); ++i)
+    {
+      I(rename_targets.find(i->second) == rename_targets.end());
+      rename_targets.insert(i->second);
+    }
+
+  for (rename_map::const_iterator i = in.mapping.begin();
+       i != in.mapping.end(); ++i)
+    {
+      I(out.mapping.find(i->first) == out.mapping.end());
+      I(rename_targets.find(i->second) == rename_targets.end());
+      rename_targets.insert(i->second);
+      out.mapping.insert(*i);
+    }  
+}
+
+static void compose_rename_edges(rename_edge const & a,
+				  rename_edge const & b,
+				  rename_edge & out)
+{
+  I(a.child == b.parent);
+  out.mapping.clear();
+  out.parent = a.parent;
+  out.child = b.child;
+  set<file_path> rename_targets;
+
+  for (rename_map::const_iterator i = a.mapping.begin();
+       i != a.mapping.end(); ++i)
+    {
+      I(rename_targets.find(i->second) == rename_targets.end());
+      I(out.mapping.find(i->first) == out.mapping.end());
+      rename_targets.insert(i->second);
+
+      rename_map::const_iterator j = b.mapping.find(i->second);
+      if (j != b.mapping.end())
+	out.mapping.insert(make_pair(i->first, j->second));
+      else
+	out.mapping.insert(*i);
+    }
+}
+
+static void write_rename_edge(rename_edge const & edge,
+			      string & val)
+{
+  ostringstream oss;
+  gzip<data> compressed;
+  oss << edge.parent << "\n";
+  for (rename_map::const_iterator i = edge.mapping.begin();
+       i != edge.mapping.end(); ++i)
+    {
+      oss << i->first << " " << i->second << "\n";
+    }
+  encode_gzip(data(oss.str()), compressed);
+  val = compressed();
+}
+
+struct add_to_rename_map
+{    
+  rename_map & m;
+  set<file_path> rename_targets;
+  explicit add_to_rename_map(rename_map & mm) : m(mm) {}
+  bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
+  {
+    std::string src(res[1].first, res[1].second);
+    std::string dst(res[2].first, res[2].second);
+    N(m.find(file_path(src)) == m.end(), 
+      F("duplicate rename src entry for %s") % src);
+    N(rename_targets.find(file_path(dst)) == rename_targets.end(),
+      F("duplicate rename dst entry for %s") % dst);
+    rename_targets.insert(file_path(dst));      
+    m.insert(make_pair(file_path(src), file_path(dst)));
+    return true;
+  }
+};
+
+static void read_rename_edge(hexenc<id> const & node,
+			     base64<cert_value> const & val,
+			     rename_edge & edge)
+{
+  edge.child = manifest_id(node);
+  cert_value decoded;
+  data decompressed_data;
+  string decompressed;
+  decode_base64(val, decoded);
+  decode_gzip(gzip<data>(decoded()), decompressed_data);
+  decompressed = decompressed_data();
+
+  string::size_type off = decompressed.find('\n');
+  N(off != string::npos, F("rename edge without initial EOL"));
+  edge.parent = manifest_id(decompressed.substr(0, off));
+  decompressed = decompressed.substr(off);
+  
+  regex expr("^[[:blank:]]*([^[:space:]]+)[[:blank:]]+([^[:space:]]+)");
+  regex_grep(add_to_rename_map(edge.mapping), decompressed, expr, match_not_dot_newline);
+}
+
+
+static bool calculate_renames_recursive(manifest_id const & ancestor,
+					manifest_id const & child,
+					app_state & app,
+					rename_edge & edge)
+{
+
+  if (ancestor == child)
+    return true;
+
+  set<manifest_id> parents;
+  get_parents(child, parents, app);
+  if (parents.size() == 0)
+    return false;
+
+  L(F("exploring renames from parents of %s, seeking towards %s\n")
+    % child % ancestor);
+
+  bool relevant_child = false;
+  rename_edge all_parents_edge;
+
+  for(set<manifest_id>::const_iterator i = parents.begin();
+      i != parents.end(); ++i)
+    {
+      rename_edge curr_parent_edge;
+      if (calculate_renames_recursive(ancestor, *i, app, curr_parent_edge))
+	{
+	  L(F("edge %s -> %s is relevant, joining renames\n") % (*i) % child);
+	  include_rename_edge(curr_parent_edge, all_parents_edge);
+	  relevant_child = true;
+	}
+    }
+
+  if (relevant_child)
+    {
+      rename_edge child_edge;
+      vector< manifest<cert> > certs;
+      app.db.get_manifest_certs(child, cert_name(rename_cert_name), certs);
+      erase_bogus_certs(certs, app);
+
+      for(vector< manifest<cert> >::const_iterator j = certs.begin();
+	  j != certs.end(); ++j)
+	{
+	  rename_edge curr_child_edge;
+	  read_rename_edge(j->inner().ident, j->inner().value, curr_child_edge);
+	  include_rename_edge(curr_child_edge, child_edge);
+	}
+
+      compose_rename_edges(all_parents_edge, 
+			   child_edge, 
+			   edge);
+    }
+  
+  return relevant_child;
+}
+
+void calculate_renames(manifest_id const & ancestor,
+		       manifest_id const & child,
+		       app_state & app,
+		       rename_edge & edge)
+{
+  N(calculate_renames_recursive(ancestor, child, app, edge), 
+    F("no path found between ancestor %s and child %s") % ancestor % child);
+}
+
+
 // "standard certs"
 
 string const date_cert_name = "date";
@@ -523,6 +702,7 @@ string const changelog_cert_name = "changelog";
 string const comment_cert_name = "comment";
 string const approval_cert_name = "approval";
 string const testresult_cert_name = "testresult";
+string const rename_cert_name = "rename";
 
 
 static
@@ -633,6 +813,15 @@ void cert_manifest_testresult(manifest_id const & m,
   put_simple_manifest_cert(m, testresult_cert_name, results, app, pc); 
 }
 
+void cert_manifest_rename(manifest_id const & m, 
+			  rename_edge const & re,
+			  app_state & app,
+			  packet_consumer & pc)
+{
+  string val;
+  write_rename_edge(re, val);
+  put_simple_manifest_cert(m, rename_cert_name, val, app, pc);
+}
 
 
 #ifdef BUILD_UNIT_TESTS

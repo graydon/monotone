@@ -35,10 +35,10 @@
 // value in *other* parts of the code. this file contains stuff which is so
 // low level we can't mostly know whether what's being asked for is legal.
 
-string get_homedir();
-string tilde_expand(string const & path);
+std::string get_homedir();
+std::string tilde_expand(std::string const & path);
 
-extern string const book_keeping_dir;
+extern std::string const book_keeping_dir;
 
 //   - file is inside the private MT/ directory
 bool book_keeping_file(local_path const & path);

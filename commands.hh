@@ -22,9 +22,8 @@ struct usage
 };
 
 namespace commands {
-  using namespace std;
-  void explain_usage(string const & cmd, ostream & out);
-  int process(app_state & app, string const & cmd, vector<string> const & args);
+  void explain_usage(std::string const & cmd, std::ostream & out);
+  int process(app_state & app, std::string const & cmd, std::vector<std::string> const & args);
 };
 
 #endif

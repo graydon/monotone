@@ -222,6 +222,90 @@ compute_delta_insns(string const & a,
 }
 
 
+// specialized form for manifest maps, which
+// are sorted, so have far more structure
+
+static void 
+flush_copy(ostringstream & oss, u32 & pos, u32 & len)
+{
+  if (len != 0)
+    {
+      // flush any copy which is going on
+      oss << insn(pos, len);
+      pos = pos + len;
+      len = 0;
+    }
+}
+
+void 
+compute_delta(manifest_map const & a,
+	      manifest_map const & b,
+	      string & delta)
+{
+  delta.clear();
+  ostringstream oss;
+
+  manifest_map::const_iterator i = a.begin();
+  manifest_map::const_iterator j = b.begin();
+
+  u32 pos = 0;
+  u32 len = 0;
+  while (j != b.end())
+    {      
+      size_t isz = 0;
+
+      if (i != a.end())
+	  isz = i->first().size() + 2 + i->second.inner()().size() + 1;
+
+      if (i != a.end() && i->first == j->first)
+	{
+	  if (i->second == j->second)
+	    {
+	      // this line was copied
+	      len += isz;
+	    }
+	  else
+	    {
+	      // this line was changed, but the *entry* remained, so we
+	      // treat it as a simultaneous delete + insert. that means
+	      // advance pos over what used to be here, set len to 0, and
+	      // copy the new data.
+	      flush_copy(oss, pos, len);
+	      pos += isz;
+	      ostringstream ss;
+	      ss << *j;
+	      oss << insn(ss.str());	      
+	    }
+	  ++i; ++j;
+	}
+      else 	
+	{
+
+	  flush_copy(oss, pos, len);
+	  
+	  if (i != a.end() && i->first < j->first)
+	    {	      
+	      // this line was deleted	      
+	      ++i;
+	      pos += isz;
+	    }
+	  
+	  else
+	    {
+	      // this line was added
+	      ostringstream ss;
+	      ss << *j;
+	      oss << insn(ss.str());
+	      ++j;
+	    }
+	}
+    }
+
+  flush_copy(oss,pos,len);
+  delta = oss.str();
+}
+
+
 void 
 compute_delta(string const & a,
 	      string const & b,
@@ -470,9 +554,9 @@ apply_copy(version_spec const & in, version_spec & out,
     dst_vpos = out.back().vpos + out.back().len;
   version_pos dst_final = dst_vpos + src_len;
   version_spec::const_iterator lo = lower_bound(in.begin(), 
-					   in.end(), 
-					   src_vpos, 
-					   chunk_less_than());
+						in.end(), 
+						src_vpos, 
+						chunk_less_than());
   for ( ; src_len > 0; ++lo)
     {
       I(lo != in.end());

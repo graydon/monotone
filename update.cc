@@ -30,6 +30,8 @@ using boost::dynamic_bitset;
 using boost::lexical_cast;
 using boost::shared_ptr;
 
+using namespace std;
+
 static void find_descendents(manifest_id const & ident,
 			     app_state & app,
 			     set<manifest_id> & descendents)

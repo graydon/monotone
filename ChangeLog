@@ -1,3 +1,26 @@
+2003-10-30  graydon hoare  <graydon@pobox.com>
+
+	* patch_set.cc (operator<): s/a/b/ in a few places, yikes!
+	* cert.cc: Add machinery for rename edge certs.
+	* commands.cc: Call diff(manifest,manifest) directly.
+	* tests/t_nntp.at: Kill tcpserver DNS lookups on nntp test.
+	* network.cc (parse_url): Character class typo fix, from 
+	Johannes Winkelmann.
+	* app_state.hh, cert.hh, commands.hh, cycle_detector.hh, 
+	database.hh, diff_patch.cc, diff_patch.hh, http_tasks.hh,
+	interner.hh, keys.hh, lua.hh, manifest.hh, network.hh, 
+	nntp_machine.hh, nntp_tasks.hh, packet.hh, patch_set.hh, 
+	transforms.hh, update.hh, vocab.hh, work.hh, xdelta.hh: 
+	fix use of std:: prefix / "using namespace" pollution.	
+
+2003-10-27  graydon hoare  <graydon@pobox.com>
+
+	* lua/liolib.c (io_mkstemp): Portability fix
+	from Ian Main.
+	* xdelta.cc,hh (compute_delta): New manifest-specific variant.
+	* transforms.cc,hh (diff): Same.
+	* rcs_import.cc: Various speedups to cvs import.
+
 2003-10-26  graydon hoare  <graydon@pobox.com>
 
 	* cert.cc (get_parents): New function.
@@ -110,6 +133,8 @@
 	cache comment-less file IDs.
 	* monotone.spec: Don't specify install-info args,
 	do build with optimization on RHL.
+
+	Release point (v 0.6).
 
 2003-10-19  Matt Kraai  <kraai@ftbfs.org>
 

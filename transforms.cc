@@ -117,6 +117,15 @@ void patch(data const & olddata,
   newdata = result;
 }
 
+void diff(manifest_map const & oldman,
+	  manifest_map const & newman,
+	  base64< gzip<delta> > & del)
+{
+  string xd;
+  compute_delta(oldman, newman, xd);
+  pack(delta(xd), del);
+}
+
 void diff(base64< gzip<data> > const & olddata,
 	  base64< gzip<data> > const & newdata,
 	  base64< gzip<delta> > & del)
@@ -180,6 +189,55 @@ void calculate_ident(file_data const & dat,
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
   ident = tmp;
+}
+
+void calculate_ident(manifest_map const & m,
+		     manifest_id & ident)
+{
+  CryptoPP::SHA hash;
+  size_t sz = 0;
+  static size_t bufsz = 0;
+  static char *buf = NULL;
+
+  for (manifest_map::const_iterator i = m.begin();
+       i != m.end(); ++i)
+    {
+      sz += i->second.inner()().size();
+      sz += i->first().size();
+      sz += 3;      
+    }
+
+  if (sz > bufsz)
+    {
+      bufsz = sz;
+      buf = static_cast<char *>(realloc(buf, bufsz));
+      I(buf);
+    }
+  
+  // this has to go quite fast, for cvs importing
+  char *c = buf;
+  for (manifest_map::const_iterator i = m.begin();
+       i != m.end(); ++i)
+    {
+      memcpy(c, i->second.inner()().data(), i->second.inner()().size());
+      c += i->second.inner()().size();
+      *c++ = ' '; 
+      *c++ = ' '; 
+      memcpy(c, i->first().data(), i->first().size());
+      c += i->first().size();
+      *c++ = '\n'; 
+    }
+  
+  hash.Update(reinterpret_cast<byte const *>(buf), 
+	      static_cast<unsigned int>(sz));
+
+  char digest[CryptoPP::SHA::DIGESTSIZE];
+  hash.Final(reinterpret_cast<byte *>(digest));
+  string out(digest, CryptoPP::SHA::DIGESTSIZE);
+  id ident_decoded(out);
+  hexenc<id> raw_ident;
+  encode_hexenc(ident_decoded, raw_ident);  
+  ident = manifest_id(raw_ident);    
 }
 
 void calculate_ident(manifest_data const & dat,

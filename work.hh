@@ -6,7 +6,10 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <string>
 #include <set>
+#include <map>
+
 #include "vocab.hh"
 #include "manifest.hh"
 
@@ -38,10 +41,10 @@
 // there is no reason to import them anew.
 //
 
-typedef set<file_path> path_set;
-typedef map<file_path,file_path> rename_set;
+typedef std::set<file_path> path_set;
+typedef std::map<file_path,file_path> rename_set;
 
-extern string const work_file_name;
+extern std::string const work_file_name;
 
 struct work_set
 {
@@ -89,7 +92,7 @@ void build_rename(file_path const & src,
 // implied unless overridden on the command line. the main ones are
 // --branch and --db, although some others may follow in the future.
 
-typedef map<string, string> options_map;
+typedef std::map<std::string, std::string> options_map;
 
 void get_options_path(local_path & o_path);
 
@@ -111,7 +114,7 @@ void write_options_map(data & dat,
 // intrinsic properties of the files, but not actually part of the file's
 // data stream. so they're kept here.
 
-typedef map<pair<file_path, string>, string > attr_map;
+typedef std::map<std::pair<file_path, std::string>, std::string > attr_map;
 
 void get_attr_path(file_path & a_path);
 

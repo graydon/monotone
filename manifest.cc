@@ -23,8 +23,9 @@
 // of each file reside at which path location in a given tree.
 
 using namespace boost;
+using namespace std;
 
-std::string const manifest_file_name("manifest");
+string const manifest_file_name("manifest");
 
 // building manifest_maps
 
@@ -158,18 +159,6 @@ void write_manifest_map(manifest_map const & man,
        i != man.end(); ++i)
     sstr << *i;
   dat = sstr.str();
-}
-
-void calculate_manifest_map_ident(manifest_map const & m,
-				  manifest_id & ident)
-{
-  ostringstream sstr;
-  for (manifest_map::const_iterator i = m.begin();
-       i != m.end(); ++i)
-    sstr << *i;
-  hexenc<id> tid;
-  calculate_ident(data(sstr.str()), tid);
-  ident = manifest_id(tid);
 }
 
 

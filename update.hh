@@ -19,7 +19,7 @@
 // actions.
 
 void pick_update_target(manifest_id const & base_ident,
-			vector<string> const & sort_certs,
+			std::vector<std::string> const & sort_certs,
 			app_state & app,
 			manifest_id & chosen);
 

@@ -51,10 +51,10 @@ struct patch_set
 {
   manifest_id m_old;
   manifest_id m_new;
-  set<patch_addition> f_adds;
-  set<patch_delta> f_deltas;
-  set<patch_move> f_moves;
-  set<file_path> f_dels;
+  std::set<patch_addition> f_adds;
+  std::set<patch_delta> f_deltas;
+  std::set<patch_move> f_moves;
+  std::set<file_path> f_dels;
 };
 
 void manifests_to_patch_set(manifest_map const & m_old,
@@ -63,7 +63,7 @@ void manifests_to_patch_set(manifest_map const & m_old,
 			    patch_set & ps);
 
 void patch_set_to_text_summary(patch_set const & ps, 
-			       ostream & str);
+			       std::ostream & str);
 
 void patch_set_to_packets(patch_set const & ps, 
 			  app_state & app,

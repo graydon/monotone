@@ -8,6 +8,7 @@
 
 #include "vocab.hh"
 #include <set>
+#include <map>
 #include <vector>
 #include <time.h>
 
@@ -42,7 +43,7 @@ struct cert
 };
 
 void cert_signable_text(cert const & t,
-		       string & out);
+			std::string & out);
 
 bool check_cert(app_state & app, cert const & t);
 void calculate_cert(app_state & app, cert & t);
@@ -52,16 +53,16 @@ void make_simple_cert(hexenc<id> const & id,
 		      app_state & app,
 		      cert & c);
 
-void erase_bogus_certs(vector< manifest<cert> > & certs,
+void erase_bogus_certs(std::vector< manifest<cert> > & certs,
 		       app_state & app);
 
-void erase_bogus_certs(vector< file<cert> > & certs,
+void erase_bogus_certs(std::vector< file<cert> > & certs,
 		       app_state & app);
 
 // special certs -- system won't work without them
 
-extern string const ancestor_cert_name;
-extern string const branch_cert_name;
+extern std::string const ancestor_cert_name;
+extern std::string const branch_cert_name;
 
 void cert_manifest_in_branch(manifest_id const & manifest, 
 			     cert_value const & branchname,
@@ -70,7 +71,7 @@ void cert_manifest_in_branch(manifest_id const & manifest,
 
 void get_branch_heads(cert_value const & branchname,
 		      app_state & app,
-		      set<manifest_id> & heads);
+		      std::set<manifest_id> & heads);
 
 void cert_file_ancestor(file_id const & parent, 
 			file_id const & child,
@@ -93,6 +94,22 @@ bool find_common_ancestor(manifest_id const & left,
 			  app_state & app);
 
 
+// stuff for dealing with rename certs / rename maps
+
+typedef std::map<file_path, file_path> rename_map;
+struct rename_edge
+{
+  manifest_id parent;
+  manifest_id child;
+  rename_map mapping;  
+};
+
+void calculate_renames(manifest_id const & ancestor,
+		       manifest_id const & child,
+		       app_state & app,
+		       rename_edge & edge);
+
+
 // we also define some common cert types, to help establish useful
 // conventions. you should use these unless you have a compelling
 // reason not to.
@@ -104,14 +121,15 @@ void guess_branch(manifest_id const & id,
 		  app_state & app,
 		  cert_value & branchname);
 
-extern string const date_cert_name;
-extern string const author_cert_name;
-extern string const petname_cert_name;
-extern string const release_cert_name;
-extern string const changelog_cert_name;
-extern string const comment_cert_name;
-extern string const approval_cert_name;
-extern string const testresult_cert_name;
+extern std::string const date_cert_name;
+extern std::string const author_cert_name;
+extern std::string const petname_cert_name;
+extern std::string const release_cert_name;
+extern std::string const changelog_cert_name;
+extern std::string const comment_cert_name;
+extern std::string const approval_cert_name;
+extern std::string const testresult_cert_name;
+extern std::string const rename_cert_name;
 
 void cert_manifest_date_now(manifest_id const & m, 
 			    app_state & app,
@@ -123,7 +141,7 @@ void cert_manifest_date_time(manifest_id const & m,
 			     packet_consumer & pc);
 
 void cert_manifest_author(manifest_id const & m, 
-			  string const & author,
+			  std::string const & author,
 			  app_state & app,
 			  packet_consumer & pc);
 
@@ -132,22 +150,22 @@ void cert_manifest_author_default(manifest_id const & m,
 				  packet_consumer & pc);
 
 void cert_manifest_tag(manifest_id const & m, 
-		       string const & tagname,
+		       std::string const & tagname,
 		       app_state & app,
 		       packet_consumer & pc);
 
 void cert_manifest_changelog(manifest_id const & m, 
-			     string const & changelog,
+			     std::string const & changelog,
 			     app_state & app,
 			     packet_consumer & pc);
 
 void cert_file_comment(file_id const & m, 
-		       string const & comment,
+		       std::string const & comment,
 		       app_state & app,
 		       packet_consumer & pc);
 
 void cert_manifest_comment(manifest_id const & m, 
-			   string const & comment,
+			   std::string const & comment,
 			   app_state & app,
 			   packet_consumer & pc);
 
@@ -162,10 +180,15 @@ void cert_manifest_approval(manifest_id const & m,
 			    packet_consumer & pc);
 
 void cert_manifest_testresult(manifest_id const & m, 
-			      string const & suitename,
-			      istream const & results,
+			      std::string const & suitename,
+			      std::istream const & results,
 			      app_state & app,
 			      packet_consumer & pc);
+
+void cert_manifest_rename(manifest_id const & m, 
+			  rename_edge const & re,
+			  app_state & app,
+			  packet_consumer & pc);
 
 
 

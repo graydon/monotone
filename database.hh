@@ -10,6 +10,8 @@ struct sqlite;
 struct cert;
 
 #include <vector>
+#include <set>
+#include <string>
 
 #include <boost/filesystem/path.hpp>
 
@@ -61,14 +63,14 @@ struct posting;
 class database
 {
   fs::path filename;
-  string const schema;
+  std::string const schema;
   void check_schema();
 
   struct sqlite * __sql;
   struct sqlite * sql(bool init = false);
   int transaction_level;
 
-  typedef vector< vector<string> > results;
+  typedef std::vector< std::vector<std::string> > results;
   void execute(char const * query, ...);
   void fetch(results & res, 
 	     int const want_cols, 
@@ -76,71 +78,71 @@ class database
 	     char const * query, ...);
 
   bool exists(hexenc<id> const & ident, 
-	      string const & table);
+	      std::string const & table);
   bool delta_exists(hexenc<id> const & ident,
-		    string const & table);
+		    std::string const & table);
   bool delta_exists(hexenc<id> const & ident,
 		    hexenc<id> const & base,
-		    string const & table);
+		    std::string const & table);
 
-  int count(string const & table);
+  int count(std::string const & table);
 
   void get(hexenc<id> const & new_id,
 	   base64< gzip<data> > & dat,
-	   string const & table);
+	   std::string const & table);
   void get_delta(hexenc<id> const & ident,
 		 hexenc<id> const & base,
 		 base64< gzip<delta> > & del,
-		 string const & table);
+		 std::string const & table);
   void get_version(hexenc<id> const & id,
 		   base64< gzip<data> > & dat,
-		   string const & data_table,
-		   string const & delta_table);
+		   std::string const & data_table,
+		   std::string const & delta_table);
   
   void put(hexenc<id> const & new_id,
 	   base64< gzip<data> > const & dat,
-	   string const & table);
+	   std::string const & table);
   void drop(hexenc<id> const & base,
-	    string const & table);
+	    std::string const & table);
   void put_delta(hexenc<id> const & id,
 		 hexenc<id> const & base,
 		 base64< gzip<delta> > const & del,
-		 string const & table);
+		 std::string const & table);
   void put_version(hexenc<id> const & old_id,
 		   hexenc<id> const & new_id,
 		   base64< gzip<delta> > const & del,
-		   string const & data_table,
-		   string const & delta_table);
+		   std::string const & data_table,
+		   std::string const & delta_table);
 
   bool cert_exists(cert const & t,
-		  string const & table);
-  void put_cert(cert const & t, string const & table);  
+		  std::string const & table);
+  void put_cert(cert const & t, std::string const & table);  
   void results_to_certs(results const & res,
-		       vector<cert> & certs);
+		       std::vector<cert> & certs);
 
   void get_certs(hexenc<id> const & id, 
-		vector< cert > & certs,
-		string const & table);  
+		std::vector< cert > & certs,
+		std::string const & table);  
 
   void get_certs(cert_name const & name, 	      
-		vector< cert > & certs,
-		string const & table);
+		std::vector< cert > & certs,
+		std::string const & table);
 
   void get_certs(hexenc<id> const & id,
 		cert_name const & name,
-		vector< cert > & certs,
-		string const & table);  
+		std::vector< cert > & certs,
+		std::string const & table);  
 
   void get_certs(hexenc<id> const & id,
 		cert_name const & name,
 		base64<cert_value> const & val, 
-		vector< cert > & certs,
-		string const & table);  
+		std::vector< cert > & certs,
+		std::string const & table);  
 
   void get_certs(cert_name const & name,
 		base64<cert_value> const & val, 
-		vector<cert> & certs,
-		string const & table);
+		std::vector<cert> & certs,
+		std::string const & table);
 
   void begin_transaction();
   void commit_transaction();
@@ -159,14 +161,14 @@ public:
 
   database(fs::path const & file);
 
-  unsigned long get_statistic(string const & query);
+  unsigned long get_statistic(std::string const & query);
   void set_filename(fs::path const & file);
   void initialize();
-  void debug(string const & sql, ostream & out);
-  void dump(ostream &);
-  void load(istream &);
-  void info(ostream &);
-  void version(ostream &);
+  void debug(std::string const & sql, std::ostream & out);
+  void dump(std::ostream &);
+  void load(std::istream &);
+  void info(std::ostream &);
+  void version(std::ostream &);
   void migrate();
   void ensure_open();
   
@@ -204,11 +206,11 @@ public:
 
   // crypto key / cert operations
 
-  void get_key_ids(string const & pattern,
-		   vector<rsa_keypair_id> & pubkeys,
-		   vector<rsa_keypair_id> & privkeys);
+  void get_key_ids(std::string const & pattern,
+		   std::vector<rsa_keypair_id> & pubkeys,
+		   std::vector<rsa_keypair_id> & privkeys);
 
-  void get_private_keys(vector<rsa_keypair_id> & privkeys);
+  void get_private_keys(std::vector<rsa_keypair_id> & privkeys);
 
   bool key_exists(rsa_keypair_id const & id);
   bool public_key_exists(rsa_keypair_id const & id);
@@ -237,23 +239,23 @@ public:
   void put_manifest_cert(manifest<cert> const & cert);
 
   void get_manifest_certs(cert_name const & name, 
-			 vector< manifest<cert> > & certs);
+			 std::vector< manifest<cert> > & certs);
 
   void get_manifest_certs(manifest_id const & id, 
 			 cert_name const & name, 
-			 vector< manifest<cert> > & certs);
+			 std::vector< manifest<cert> > & certs);
 
   void get_manifest_certs(cert_name const & name,
 			 base64<cert_value> const & val, 
-			 vector< manifest<cert> > & certs);
+			 std::vector< manifest<cert> > & certs);
 
   void get_manifest_certs(manifest_id const & id, 
 			 cert_name const & name, 
 			 base64<cert_value> const & value,
-			 vector< manifest<cert> > & certs);
+			 std::vector< manifest<cert> > & certs);
 
   void get_manifest_certs(manifest_id const & id, 
-			 vector< manifest<cert> > & certs);
+			 std::vector< manifest<cert> > & certs);
 
   
   bool file_cert_exists(file<cert> const & cert);
@@ -261,38 +263,38 @@ public:
   void put_file_cert(file<cert> const & cert);
 
   void get_file_certs(file_id const & id, 
-		     vector< file<cert> > & certs);
+		     std::vector< file<cert> > & certs);
 
   void get_file_certs(cert_name const & name, 
-		     vector< file<cert> > & ts);
+		     std::vector< file<cert> > & ts);
 
   void get_file_certs(file_id const & id, 
 		     cert_name const & name, 
-		     vector< file<cert> > & ts);
+		     std::vector< file<cert> > & ts);
 
   void get_file_certs(file_id const & id, 
 		     cert_name const & name,
 		     base64<cert_value> const & val, 
-		     vector< file<cert> > & ts);
+		     std::vector< file<cert> > & ts);
 
   void get_file_certs(cert_name const & name,
 		     base64<cert_value> const & val, 
-		     vector< file<cert> > & certs);
+		     std::vector< file<cert> > & certs);
 
   // network stuff
 
-  void get_queued_targets(vector< pair<url,group> > & targets);
+  void get_queued_targets(std::vector< std::pair<url,group> > & targets);
 
   void get_queued_contents(url const & u, 
 			   group const & g, 
-			   vector<string> & contents);
+			   std::vector<std::string> & contents);
   
   void get_sequences(url const & u, 
 		     group const & g, 
 		     unsigned long & maj, 
 		     unsigned long & min);
 
-  void get_all_known_sources(vector< pair<url,group> > & sources);
+  void get_all_known_sources(std::vector< std::pair<url,group> > & sources);
 
   void put_sequences(url const & u, 
 		     group const & g, 
@@ -300,10 +302,10 @@ public:
 		     unsigned long min);
   
   void queue_posting(url const & u, group const & g, 
-		     string const & contents);
+		     std::string const & contents);
 
   void delete_posting(url const & u, group const & g, 
-		      string const & contents);
+		      std::string const & contents);
 
 
   bool manifest_exists_on_netserver (url const & u, 
@@ -316,11 +318,11 @@ public:
 
   // completion stuff
 
-  void complete(string const & partial,
-		set<manifest_id> & completions);
+  void complete(std::string const & partial,
+		std::set<manifest_id> & completions);
   
-  void complete(string const & partial,
-		set<file_id> & completions);
+  void complete(std::string const & partial,
+		std::set<file_id> & completions);
   
   ~database();
 

@@ -14,19 +14,19 @@
 template <typename T>
 struct interner 
 {
-  map<string, T> fwd;
-  map<T, string> rev;    
+  std::map<std::string, T> fwd;
+  std::map<T, std::string> rev;    
   T max;
   interner() : max(0) {}
-  string lookup (T in) const
+  std::string lookup (T in) const
   {
-    typename map<T, string>::const_iterator i = rev.find(in);
+    typename std::map<T, std::string>::const_iterator i = rev.find(in);
     I(i != rev.end());
     return i->second;
   }
-  T intern(string const & s) 
+  T intern(std::string const & s) 
   {
-    typename map<string, T>::const_iterator i = fwd.find(s);
+    typename std::map<std::string, T>::const_iterator i = fwd.find(s);
     if (i == fwd.end())
       {
 	++max;

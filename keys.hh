@@ -9,8 +9,6 @@
 #include "vocab.hh"
 #include <string>
 
-using std::string;
-
 // keys.{hh,cc} does all the "delicate" crypto (meaning: that which needs
 // to read passphrases and manipulate raw, decrypted private keys). it 
 // could in theory be in transforms.cc too, but that file's already kinda
@@ -26,11 +24,11 @@ void generate_key_pair(lua_hooks & lua,           // to hook for phrase
 void make_signature(lua_hooks & lua,           // to hook for phrase
 		    rsa_keypair_id const & id, // to prompting user for phrase
 		    base64< arc4<rsa_priv_key> > const & priv,
-		    string const & tosign,
+		    std::string const & tosign,
 		    base64<rsa_sha1_signature> & signature);
 
 bool check_signature(base64<rsa_pub_key> const & pub,
-		     string const & alleged_text,
+		     std::string const & alleged_text,
 		     base64<rsa_sha1_signature> const & signature);
 
 #endif // __KEYS_HH__

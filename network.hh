@@ -14,12 +14,10 @@
 
 #include "vocab.hh"
 
-using namespace std;
-
 bool parse_url(url const & u,
-	       string & proto,
-	       string & host,	       
-	       string & path,
+	       std::string & proto,
+	       std::string & host,	       
+	       std::string & path,
 	       unsigned long & port);
 
 void open_connection(std::string const & host,
@@ -28,17 +26,17 @@ void open_connection(std::string const & host,
 
 void queue_aggregated_merge(manifest_id const & ancestor, 
 			    manifest_id const & merged, 
-			    vector<manifest_id> const & heads, 
+			    std::vector<manifest_id> const & heads, 
 			    app_state & app);
 
-void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
+void post_queued_blobs_to_network(std::vector< std::pair<url,group> > const & targets,
 				  app_state & app);
 
-void fetch_queued_blobs_from_network(vector< pair<url,group> > const & sources,
+void fetch_queued_blobs_from_network(std::vector< std::pair<url,group> > const & sources,
 				     app_state & app);
 
-void queue_blob_for_network(vector< pair<url,group> > const & targets,
-			    string const & blob,
+void queue_blob_for_network(std::vector< std::pair<url,group> > const & targets,
+			    std::string const & blob,
 			    app_state & app);
 
 #endif // __NETWORK_HH__

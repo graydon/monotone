@@ -96,7 +96,7 @@ bool parse_url(url const & u,
   rule<> prot = (str_p("http") | str_p("nntp"))[assign(proto)];
   rule<> hst = (list_p(+chset<>("a-zA-Z0-9_-"), ch_p('.')))[assign(host)];
   rule<> prt = (ch_p(':') >> uint_p[assign(port)]);
-  rule<> pth = (ch_p('/') >> (+chset<>("a-zA-Z0-9_-.~/"))[assign(path)]);
+  rule<> pth = (ch_p('/') >> (+chset<>("a-zA-Z0-9_.~/-"))[assign(path)]);
   rule<> r = prot >> str_p("://") >> hst >> !prt >> !pth;
   
   bool parsed_ok = parse(u().c_str(), r).full;

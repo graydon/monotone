@@ -12,7 +12,7 @@
 template <typename T>
 struct cycle_detector
 {
-  typedef multimap <T, T> edge_map;
+  typedef std::multimap <T, T> edge_map;
   edge_map edges;
 
   void put_edge (T const & src, T const & dst)
@@ -20,14 +20,14 @@ struct cycle_detector
     edges.insert(make_pair(src, dst));
   }
 
-  bool dfs_cycle(set<T> & parents, T const & curr)
+  bool dfs_cycle(std::set<T> & parents, T const & curr)
   {
     if (parents.find(curr) != parents.end())
       return true;
     else
       {
 	parents.insert(curr);
-	pair<
+	std::pair<
 	  typename edge_map::const_iterator, 
 	  typename edge_map::const_iterator > 
 	  range = edges.equal_range (curr);
@@ -48,7 +48,7 @@ struct cycle_detector
     if (src == dst)
       return true;
     
-    set<T> seen;
+    std::set<T> seen;
     seen.insert(src);
     return dfs_cycle (seen, dst);
   }

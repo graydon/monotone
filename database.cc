@@ -40,6 +40,7 @@
 
 using boost::shared_ptr;
 using boost::lexical_cast;
+using namespace std;
 
 int const one_row = 1;
 int const one_col = 1;

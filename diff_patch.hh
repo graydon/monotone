@@ -17,18 +17,18 @@
 // this file is to contain some stripped down, in-process implementations
 // of GNU-diffutils-like things (diff, diff3, maybe patch..)
 
-bool guess_binary(string const & s);
+bool guess_binary(std::string const & s);
 
-void unidiff(string const & filename1,
-	     string const & filename2,
-	     vector<string> const & lines1,
-	     vector<string> const & lines2,
-	     ostream & ost);
+void unidiff(std::string const & filename1,
+	     std::string const & filename2,
+	     std::vector<std::string> const & lines1,
+	     std::vector<std::string> const & lines2,
+	     std::ostream & ost);
 
-bool merge3(vector<string> const & ancestor,
-	    vector<string> const & left,
-	    vector<string> const & right,
-	    vector<string> & merged);
+bool merge3(std::vector<std::string> const & ancestor,
+	    std::vector<std::string> const & left,
+	    std::vector<std::string> const & right,
+	    std::vector<std::string> & merged);
 
 
 
@@ -73,7 +73,7 @@ struct simple_merge_provider : public file_merge_provider
 
 struct update_merge_provider : public simple_merge_provider
 {
-  map<file_id, file_data> temporary_store;
+  std::map<file_id, file_data> temporary_store;
   update_merge_provider(app_state & app);
   virtual void record_merge(file_id const & left_ident, 
 			    file_id const & right_ident, 

@@ -7,6 +7,9 @@
 // see the file COPYING for details
 
 #include <iostream>
+#include <vector>
+#include <map>
+
 #include <boost/optional.hpp>
 
 #include "vocab.hh"
@@ -59,8 +62,8 @@ struct packet_consumer
 struct queueing_packet_writer : public packet_consumer
 {
   app_state & app;
-  vector< pair<url,group> > targets;
-  queueing_packet_writer(app_state & a, vector< pair<url,group> > const & t);
+  std::vector< std::pair<url,group> > targets;
+  queueing_packet_writer(app_state & a, std::vector< std::pair<url,group> > const & t);
   virtual ~queueing_packet_writer() {}
   virtual void consume_file_data(file_id const & ident, 
 				 file_data const & dat);
@@ -86,8 +89,8 @@ struct queueing_packet_writer : public packet_consumer
 
 struct packet_writer : public packet_consumer
 {
-  ostream & ost;
-  explicit packet_writer(ostream & o);
+  std::ostream & ost;
+  explicit packet_writer(std::ostream & o);
   virtual ~packet_writer() {}
   virtual void consume_file_data(file_id const & ident, 
 				 file_data const & dat);
@@ -117,7 +120,7 @@ struct packet_db_writer : public packet_consumer
   bool take_keys;
   size_t count;
 
-  boost::optional< pair<url, group> > server;
+  boost::optional< std::pair<url, group> > server;
 
   packet_db_writer(app_state & app, bool take_keys = false);
   virtual ~packet_db_writer() {}
@@ -141,6 +144,6 @@ struct packet_db_writer : public packet_consumer
 				   base64< arc4<rsa_priv_key> > const & k);
 };
 
-size_t read_packets(istream & in, packet_consumer & cons);
+size_t read_packets(std::istream & in, packet_consumer & cons);
 
 #endif

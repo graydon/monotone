@@ -7,8 +7,7 @@
 // see the file COPYING for details
 
 #include <string>
-
-using namespace std;
+#include <iostream>
 
 // the purpose of this file is to wrap things which are otherwise strings
 // in a bit of typesafety, set up enumerations and tuple-types, and
@@ -21,7 +20,8 @@ template<typename INNER>                               \
 class enc;                                             \
                                                        \
 template <typename INNER>                              \
-ostream & operator<<(ostream &, enc<INNER> const &);   \
+std::ostream & operator<<(std::ostream &,              \
+                          enc<INNER> const &);         \
                                                        \
 template<typename INNER>                               \
 class enc {                                            \
@@ -29,10 +29,10 @@ class enc {                                            \
 public:                                                \
   bool ok;                                             \
   enc() : ok(false) {}                                 \
-  enc(string const & s);                               \
+  enc(std::string const & s);                          \
   enc(INNER const & inner);                            \
   enc(enc<INNER> const & other);                       \
-  string const & operator()() const                    \
+  std::string const & operator()() const               \
     { return i(); }                                    \
   bool operator<(enc<INNER> const & x) const           \
     { return i() < x(); }                              \
@@ -40,7 +40,7 @@ public:                                                \
   operator=(enc<INNER> const & other);                 \
   bool operator==(enc<INNER> const & x) const          \
     { return i() == x(); }                             \
-  friend ostream & operator<< <>(ostream &,            \
+  friend std::ostream & operator<< <>(std::ostream &,  \
                                  enc<INNER> const &);  \
 };
 
@@ -51,7 +51,8 @@ template<typename INNER>                               \
 class dec;                                             \
                                                        \
 template <typename INNER>                              \
-ostream & operator<<(ostream &, dec<INNER> const &);   \
+std::ostream & operator<<(std::ostream &,              \
+                          dec<INNER> const &);         \
                                                        \
 template<typename INNER>                               \
 class dec {                                            \
@@ -69,29 +70,30 @@ public:                                                \
   operator=(dec<INNER> const & other);                 \
   bool operator==(dec<INNER> const & x) const          \
     { return i == x.i; }                               \
-  friend ostream & operator<< <>(ostream &,            \
+  friend std::ostream & operator<< <>(std::ostream &,  \
                                  dec<INNER> const &);  \
 };
 
 
 #define ATOMIC(ty)                                     \
 class ty {                                             \
-  string s;                                            \
+  std::string s;                                       \
 public:                                                \
   bool ok;                                             \
   ty() : s(""), ok(false) {}                           \
-  ty(string const & str);                              \
+  ty(std::string const & str);                         \
   ty(ty const & other);                                \
-  string const & operator()() const                    \
+  std::string const & operator()() const               \
     { return s; }                                      \
   bool operator<(ty const & other) const               \
     { return s < other(); }                            \
   ty const & operator=(ty const & other);              \
   bool operator==(ty const & other) const              \
     { return s == other(); }                           \
-  friend ostream & operator<<(ostream &, ty const &);  \
+  friend std::ostream & operator<<(std::ostream &,     \
+                                   ty const &);        \
 };                                                     \
-ostream & operator<<(ostream &, ty const &);
+std::ostream & operator<<(std::ostream &, ty const &);
 
 
 #define EXTERN extern

@@ -60,7 +60,7 @@ AT_CHECK(snnewgroup $GROUP, [], [ignore], [ignore])
 AT_CHECK(cp $TCPSERVER ./nntp-test-tcpserver)
 AT_CHECK(chmod 0755 ./nntp-test-tcpserver)
 killall -q -TERM nntp-test-tcpserver
-./nntp-test-tcpserver $HOST $PORT snntpd >/dev/null 2>&1 &
+./nntp-test-tcpserver -H -R -P -l 0 $HOST $PORT snntpd >/dev/null 2>&1 &
 sleep 2
 
 AT_CHECK(MONOTONE --rcfile=nntp.lua post, [], [ignore], [ignore])

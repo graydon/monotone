@@ -533,7 +533,7 @@ static void try_one_merge(manifest_id const & left,
     }
   
   write_manifest_map(merged_map, merged_data);
-  calculate_manifest_map_ident(merged_map, merged);	  
+  calculate_ident(merged_map, merged);	  
   
   base64< gzip<delta> > left_edge;
   diff(left_data.inner(), merged_data.inner(), left_edge);
@@ -997,8 +997,8 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   get_manifest_map(m_old);
   calculate_new_manifest_map(m_old, m_new);
   manifest_id old_id, new_id;
-  calculate_manifest_map_ident(m_old, old_id);
-  calculate_manifest_map_ident(m_new, new_id);
+  calculate_ident(m_old, old_id);
+  calculate_ident(m_new, new_id);
 
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
@@ -1034,10 +1034,8 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 	  {
 	    L(F("inserting manifest delta %s -> %s\n") % ps.m_old % ps.m_new);
 	    manifest_data m_old_data, m_new_data;
-	    app.db.get_manifest_version(ps.m_old, m_old_data);
-	    write_manifest_map(m_new, m_new_data);
 	    base64< gzip<delta> > del;
-	    diff(m_old_data.inner(), m_new_data.inner(), del);
+	    diff(m_old, m_new, del);
 	    app.db.put_manifest_version(ps.m_old, ps.m_new, manifest_delta(del));
 	  }
 	else
@@ -1157,7 +1155,7 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
   transaction_guard guard(app.db);
 
   get_manifest_map(m_old);
-  calculate_manifest_map_ident(m_old, m_old_id);
+  calculate_ident(m_old, m_old_id);
   calculate_new_manifest_map(m_old, m_working);
   
   pick_update_target(m_old_id, args, app, m_chosen_id);
@@ -1819,7 +1817,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
   else
     {
       get_manifest_map(m);
-      calculate_manifest_map_ident (m, m_id);
+      calculate_ident (m, m_id);
     }
 
   frontier.insert(m_id);
@@ -1967,9 +1965,9 @@ CMD(status, "informative", "", "show status of working copy")
 
   transaction_guard guard(app.db);
   get_manifest_map(m_old);
-  calculate_manifest_map_ident(m_old, old_id);
+  calculate_ident(m_old, old_id);
   calculate_new_manifest_map(m_old, m_new);
-  calculate_manifest_map_ident(m_new, new_id);
+  calculate_ident(m_new, new_id);
 
   manifests_to_patch_set(m_old, m_new, app, ps1);
   patch_set_to_text_summary(ps1, cout);

@@ -13,10 +13,10 @@
 
 // working copy / book-keeping file code
 
-string const work_file_name("work");
-
 using namespace boost;
+using namespace std;
 
+string const work_file_name("work");
 
 class addition_builder : public tree_walker
 {

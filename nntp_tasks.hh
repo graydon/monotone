@@ -11,18 +11,16 @@
 #include "packet.hh"
 #include "vocab.hh"
 
-using namespace std;
-
 // this file contains simple functions which build up NNTP state
 // machines and run them using the infrastructure in nntp_machine.{cc,hh}
 
-bool post_nntp_article(string const & group_name,
-		       string const & from,
-		       string const & subject,
-		       string const & article,
+bool post_nntp_article(std::string const & group_name,
+		       std::string const & from,
+		       std::string const & subject,
+		       std::string const & article,
 		       std::iostream & stream);
 
-void fetch_nntp_articles(string const & group_name,
+void fetch_nntp_articles(std::string const & group_name,
 			 unsigned long & seq_number,
 			 packet_consumer & consumer,
 			 std::iostream & stream);

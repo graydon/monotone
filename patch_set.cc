@@ -36,6 +36,8 @@
 // we then packetize or summarize the data for our users
 //
 
+using namespace std;
+
 bool operator<(const patch_move & a, 
 	       const patch_move & b)
 {
@@ -55,8 +57,8 @@ bool operator<(const patch_delta & a,
 {
   return 
     (a.path < b.path) 
-    || ((a.path == a.path) && a.id_new < a.id_new)
-    || (((a.path == a.path) && a.id_new == a.id_new) && a.id_old < b.id_old);
+    || ((a.path == b.path) && a.id_new < b.id_new)
+    || (((a.path == b.path) && a.id_new == b.id_new) && a.id_old < b.id_old);
 }
 
 patch_delta::patch_delta(file_id const & o, 
@@ -257,8 +259,8 @@ void manifests_to_patch_set(manifest_map const & m_old,
   ps.f_dels.clear();
 
   // calculate ids
-  calculate_manifest_map_ident(m_old, ps.m_old);
-  calculate_manifest_map_ident(m_new, ps.m_new);  
+  calculate_ident(m_old, ps.m_old);
+  calculate_ident(m_new, ps.m_new);  
   L(F("building patch set %s -> %s\n") % ps.m_old % ps.m_new);
 
   // calculate manifest_changes structure
