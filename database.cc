@@ -320,6 +320,8 @@ database::load(istream & in)
 
   N(filename.string() != "",
     F("need database name"));
+  N(!fs::exists(filename),
+    F("cannot create %s; it already exists\n") % filename.string());
   int error = sqlite3_open(filename.string().c_str(), &__sql);
   if (error)
     throw oops(string("could not open database: ") + filename.string() + 

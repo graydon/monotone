@@ -1,5 +1,11 @@
 2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* database.cc (load): Check for existence of target database.
+	* tests/t_load_into_existing.at: New test.
+	* testsuite.at: Add it.
+
+2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_checkout_dir.at: Also check that checkout to unwriteable
 	directory fails.
 	* tests/t_branch_checkout.at: New test.
