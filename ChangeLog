@@ -1,3 +1,9 @@
+2004-08-12  graydon hoare  <graydon@pobox.com>
+
+	fix bug 9884
+	* tests/t_singlenetsync.at: sleep 5
+	* tests/t_netsync.at: sleep 5 
+
 2004-08-05  Richard Levitte  <richard@levitte.org>
 
 	* commands.cc (CMD(db)): Check the number of arguments correctly.
