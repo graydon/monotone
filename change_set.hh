@@ -73,8 +73,8 @@ change_set
   void add_file(file_path const & a);
   void add_file(file_path const & a, file_id const & ident);
   void apply_delta(file_path const & path, 
-		   file_id const & src, 
-		   file_id const & dst);
+                   file_id const & src, 
+                   file_id const & dst);
   void delete_file(file_path const & d);
   void delete_dir(file_path const & d);
   void rename_file(file_path const & a, file_path const & b);
@@ -113,7 +113,7 @@ delta_entry_dst(change_set::delta_map::const_iterator i)
 
 void
 apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
-				  local_path const & temporary_root);
+                                  local_path const & temporary_root);
 
 
 // merging and concatenating 
@@ -123,70 +123,70 @@ normalize_change_set(change_set & n);
 
 void
 concatenate_change_sets(change_set const & a,
-			change_set const & b,
-			change_set & concatenated);
+                        change_set const & b,
+                        change_set & concatenated);
 
 struct merge_provider;
 
 void
 merge_change_sets(change_set const & a,
-		  change_set const & b,
-		  change_set & a_merged,
-		  change_set & b_merged,
-		  merge_provider & merger,
-		  app_state & app);
+                  change_set const & b,
+                  change_set & a_merged,
+                  change_set & b_merged,
+                  merge_provider & merger,
+                  app_state & app);
 
 // value-oriented access to printers and parsers
 
 void
 read_path_rearrangement(data const & dat,
-			change_set::path_rearrangement & re);
+                        change_set::path_rearrangement & re);
 
 void
 write_path_rearrangement(change_set::path_rearrangement const & re,
-			 data & dat);
+                         data & dat);
 
 void
 read_change_set(data const & dat,
-		change_set & cs);
+                change_set & cs);
 
 void
 write_change_set(change_set const & cs,
-		 data & dat);
+                 data & dat);
 
 void
 apply_path_rearrangement(path_set const & old_ps,
-			 change_set::path_rearrangement const & pr,
-			 path_set & new_ps);
+                         change_set::path_rearrangement const & pr,
+                         path_set & new_ps);
 
 void
 apply_path_rearrangement(manifest_map const & old_m,
-			 change_set::path_rearrangement const & pr,
-			 manifest_map & old_m_rearranged);
+                         change_set::path_rearrangement const & pr,
+                         manifest_map & old_m_rearranged);
 
 void
 build_pure_addition_change_set(manifest_map const & man,
-			       change_set & cs);
+                               change_set & cs);
 
 void
 apply_change_set(manifest_map const & old_man,
-		 change_set const & cs,
-		 manifest_map & new_man);
+                 change_set const & cs,
+                 manifest_map & new_man);
 
 // utility for log walker
 file_path
 apply_change_set_inverse(change_set const & cs,
-			 file_path const & file_in_second);
+                         file_path const & file_in_second);
 
 // quick, optimistic and destructive version for rcs importer
 void
 apply_change_set(change_set const & cs,
-		 manifest_map & man);
+                 manifest_map & man);
 
 void 
 invert_change_set(change_set const & a2b,
-		  manifest_map const & a_map,
-		  change_set & b2a);
+                  manifest_map const & a_map,
+                  change_set & b2a);
 
 
 // basic_io access to printers and parsers
@@ -195,18 +195,18 @@ namespace basic_io { struct printer; struct parser; }
 
 void 
 print_change_set(basic_io::printer & printer,
-		 change_set const & cs);
+                 change_set const & cs);
 
 void 
 parse_change_set(basic_io::parser & parser,
-		 change_set & cs);
+                 change_set & cs);
 
 void 
 print_path_rearrangement(basic_io::printer & basic_printer,
-			 change_set::path_rearrangement const & pr);
+                         change_set::path_rearrangement const & pr);
 
 void 
 parse_path_rearrangement(basic_io::parser & pa,
-			 change_set::path_rearrangement & pr);
+                         change_set::path_rearrangement & pr);
 
 #endif // __CHANGE_SET_HH__

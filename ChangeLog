@@ -1,3 +1,8 @@
+2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc: Remove hard tabs.
+	* change_set.hh: Likewise.
+
 2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_heads.at: Replace last tricky case with a less tricky case.
