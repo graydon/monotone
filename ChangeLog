@@ -1,3 +1,8 @@
+2004-11-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Committing Work): Remove mistakenly added
+	redundant command line argument.
+
 2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc (request_fwd_revisions): Rename 'first_attached_edge'

@@ -1493,7 +1493,7 @@ of all the files referenced by the revision he committed:
 
 @smallexample
 @group
-$ monotone cat manifest 2098eddbe833046174de28172a813150a6cbda7b
+$ monotone cat manifest
 3b12b2d0b31439bd50976633db1895cff8b19da0  include/jb.h
 2650ffc660dd00a08b659b883b65a060cac7e560  src/apple.c
 e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f  src/banana.c
