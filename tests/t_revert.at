@@ -47,6 +47,20 @@ AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep testfile0 stdout, [1], [ignore])
 
 
+# check reverting a change and a delete
+
+AT_CHECK(echo 'liver and maude' >> testfile0, [], [ignore])
+AT_CHECK(MONOTONE drop testfile0, [0], [ignore])
+AT_CHECK(grep testfile0 MT/work, [0], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep testfile0 stdout, [0], [ignore])
+AT_CHECK(MONOTONE revert testfile0, [], [ignore])
+AT_CHECK(test ! -e MT/work, [], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep testfile0 stdout, [1], [ignore])
+V3=`SHA1(testfile0)`
+AT_CHECK(test $V1 == $V3)
+
 # check reverting an add
 
 AT_DATA(testfile1, [squirrils monkeys dingos
