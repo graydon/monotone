@@ -1,3 +1,11 @@
+2005-04-03  Richard Levitte  <richard@levitte.org>
+
+	* popt/CHANGES, popt/COPYING, popt/README, popt/findme.c,
+	  popt/findme.h, popt/popt.c, popt/poptconfig.c, popt/popt.h,
+	  popt/popthelp.c, popt/poptint.h, popt/poptparse.c,
+	  popt/system.h, popt/test1.c, popt/test2.c, popt/test3.c: Bundle
+	  popt 1.7.
+
 2005-04-01  Richard Levitte  <richard@levitte.org>
 
 	* contrib/Notify.pl: Complete rewrite.  Among other things, it
