@@ -1,0 +1,23 @@
+AT_SETUP([ambiguous update fails])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [foo
+])
+COMMIT(testbranch)
+ANC=`BASE_REVISION`
+
+ADD_FILE(file1, [bar
+])
+COMMIT(testbranch)
+
+REVERT_TO($ANC)
+
+ADD_FILE(file1, [baz
+])
+COMMIT(testbranch)
+
+REVERT_TO($ANC)
+
+AT_CHECK(MONOTONE update, [1], [ignore], [ignore])
+
+AT_CLEANUP

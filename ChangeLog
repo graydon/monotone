@@ -1,5 +1,12 @@
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_ambig_update.at: New test.
+	* testsuite.at: Add it.
+
+	* tests/t_explicit_merge.at: Add, having forgotten to last time.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_explicit_merge.at: New test.
 	* testsuite.at: Add it.
 	
