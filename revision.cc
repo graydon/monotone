@@ -95,6 +95,18 @@ check_sane_history(revision_id const & child_id,
                    int depth,
                    database & db)
 {
+  // We are, unfortunately, still quite slow.  So we want to give at least a
+  // little feedback.  Let's print exactly one warning, on the _second_ time
+  // we are called within one run -- just checking one revision isn't too
+  // slow, so no need to print anything on "commit", but usually if we're
+  // checking 2 revisions we're checking a lot more.
+  // FIXME: make sanity checking faster, so we can remove this kluge
+  // altogether...
+  static int num_checked = 0;
+  ++num_checked;
+  if (num_checked == 2)
+    P(F("verifying new revisions (this may take a while)\n"));
+
   L(F("Verifying revision %s has sane history (to depth %i)\n")
     % child_id % depth);
 

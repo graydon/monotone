@@ -1,3 +1,9 @@
+2005-03-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (check_sane_history): Print a warning to let the
+	user know why things like 'pull' can take so long.
+	* netsync.cc: Remove a few tabs.
+
 2005-03-01  Derek Scherger  <derek@echologic.com>
 
 	* app_state.cc (set_restriction): actually ignore ignored files

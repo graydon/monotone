@@ -355,12 +355,12 @@ session
                                id const & item);
 
   bool merkle_node_exists(netcmd_item_type type,
-                          utf8 const & collection,			
+                          utf8 const & collection,                      
                           size_t level,
                           prefix const & pref);
 
   void load_merkle_node(netcmd_item_type type,
-                        utf8 const & collection,			
+                        utf8 const & collection,                        
                         size_t level,
                         prefix const & pref,
                         merkle_ptr & node);
@@ -2485,7 +2485,7 @@ session::process_nonexistant_cmd(netcmd_item_type type,
 
 bool
 session::merkle_node_exists(netcmd_item_type type,
-                            utf8 const & collection,			
+                            utf8 const & collection,                    
                             size_t level,
                             prefix const & pref)
 {
@@ -2500,7 +2500,7 @@ session::merkle_node_exists(netcmd_item_type type,
 
 void 
 session::load_merkle_node(netcmd_item_type type,
-                          utf8 const & collection,			
+                          utf8 const & collection,                      
                           size_t level,
                           prefix const & pref,
                           merkle_ptr & node)
