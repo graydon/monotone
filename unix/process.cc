@@ -5,6 +5,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -13,7 +14,7 @@
 
 int existsonpath(const char *exe)
 {
-	char args[3];
+	char *args[3];
 	int pid;
 	int res;
 	args[0] = "which";
@@ -42,7 +43,6 @@ int make_executable(const char *path)
 
 int process_spawn(char **argv)
 {
-	int i;
 	pid_t pid;
 	pid = fork();
 	switch (pid)
@@ -70,7 +70,7 @@ int process_wait(int pid, int *res)
 
 int process_kill(int pid, int signal)
 {
-	return kill((pid_t)pid, sig);
+	return kill((pid_t)pid, signal);
 }
 
 int process_sleep(unsigned int seconds)

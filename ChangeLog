@@ -1,4 +1,9 @@
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc: Added forgotten file
+	* unix/process.cc: Include stat.h, (process_*) fix compilation
+	errors
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
 	* unix/process.cc: Added forgotten file
 
 2005-03-03  Jon Bright  <jon@siliconcircus.com>
