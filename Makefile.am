@@ -111,10 +111,10 @@ IDNA_SOURCES = \
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
 UNIX_PLATFORM_SOURCES = \
-	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc
+	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/have_smart_terminal.cc
 
 WIN32_PLATFORM_SOURCES = \
-	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc
+	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/have_smart_terminal.cc
 
 # primaries
 

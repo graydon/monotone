@@ -1,5 +1,15 @@
 2005-03-23  Derek Scherger  <derek@echologic.com>
 
+	* Makefile.am UNIX_PLATFORM_SOURCES:
+	WIN32_PLATFORM_SOURCES: add have_smart_terminal.cc
+	* platform.hh (have_smart_terminal): prototype
+	* ui.cc (user_interface): set ticker to dot/count based on
+	have_smart_terminal
+	* unix/have_smart_terminal.cc: 
+	* win32/have_smart_terminal.cc: new file
+	
+2005-03-23  Derek Scherger  <derek@echologic.com>
+
 	* commands.cc (add): pass list of prefixed file_path's to
 	build_additions
 	(drop): pass list of prefixed file_path's to build_deletions

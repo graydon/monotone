@@ -1,6 +1,7 @@
 #include "config.h"
-#include "ui.hh"
+#include "platform.hh"
 #include "sanity.hh"
+#include "ui.hh"
 
 #include <iostream>
 #include <boost/lexical_cast.hpp>
@@ -160,7 +161,10 @@ user_interface::user_interface() :
 {
   clog.sync_with_stdio(false);
   clog.unsetf(ios_base::unitbuf);
-  set_tick_writer(new tick_write_count);
+  if (have_smart_terminal()) 
+    set_tick_writer(new tick_write_count);
+  else
+    set_tick_writer(new tick_write_dot);
 }
 
 user_interface::~user_interface()
