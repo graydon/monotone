@@ -2470,7 +2470,12 @@ Contains ``sticky'' command-line options such as @option{--db} or
 after checking out a particular working copy.
 @item MT/work
 Contains a list of additions, deletions, and renames which have occurred
-in the current working copy, relative to the base version. 
+in the current working copy, relative to the base version.
+@item MT/log
+Contains log messages to append to the ``changelog'' cert upon
+commit. The user may add content to this file while they work.  Upon a
+successful commit monotone will empty the file making it ready for the
+next edit/commit cycle.
 @end table
 
 
@@ -3191,6 +3196,14 @@ command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{commit}
 to files changed within the current subdirectory of the working copy.
 
+The @file{MT/log} file can be edited by the user during their daily work
+to record the changes made to the working copy. When running the
+@command{commit} command without a @var{logmsg} supplied, the contents
+of the @file{MT/log} file will be read and passed to the Lua hook
+@code{edit_comment} as a second parameter named @var{user_log_content}.
+If the commit is successful, the @file{MT/log} file is cleared of
+all content making it ready for another edit/commit cycle.
+
 The @command{commit} command also synthesizes a number of
 certificates, which it attaches to the new manifest version and copies
 into your database:
@@ -3207,9 +3220,9 @@ A @code{date} cert, indicating when the new revision was created.
 A @code{changelog} cert, containing the ``log message'' for these
 changes.  If you provided @var{logmsg} on the command line, this text
 will be used, otherwise @command{commit} will run the Lua hook
-@code{edit_comment (@var{commentary})}, which typically invokes an
-external editor program, in which you can compose a log message for
-the change.
+@code{edit_comment (@var{commentary}, @var{user_log_content})}, which
+typically invokes an external editor program, in which you can compose
+and/or review your log message for the change.
 @end itemize
 
 

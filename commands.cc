@@ -651,20 +651,23 @@ get_stdin()
   return tmp;
 }
 
+std::string const user_log_file_name("MT/log");
+
 static void 
 get_log_message(revision_set const & cs, 
                 app_state & app,
                 string & log_message)
 {
   string commentary;
-  data summary;
+  data summary, user_log_message;
   write_revision_set(cs, summary);
+  read_user_log(user_log_message);
   commentary += "----------------------------------------------------------------------\n";
   commentary += "Enter Log.  Lines beginning with `MT:' are removed automatically\n";
   commentary += "\n";
   commentary += summary();
   commentary += "----------------------------------------------------------------------\n";
-  N(app.lua.hook_edit_comment(commentary, log_message),
+  N(app.lua.hook_edit_comment(commentary, user_log_message(), log_message),
     F("edit of log message failed"));
 }
 
@@ -1359,7 +1362,7 @@ CMD(comment, "review", "REVISION [COMMENT]",
   if (args.size() == 2)
     comment = idx(args, 1)();
   else
-    N(app.lua.hook_edit_comment("", comment), 
+    N(app.lua.hook_edit_comment("", "", comment), 
       F("edit comment failed"));
   
   N(comment.find_first_not_of(" \r\t\n") != string::npos, 
@@ -2477,7 +2480,9 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   put_path_rearrangement(excluded_work);
   put_revision_id(rid);
   P(F("committed revision %s\n") % rid);
-
+  
+  blank_user_log();
+  
   update_any_attrs(app);
 
   {

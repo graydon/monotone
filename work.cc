@@ -174,6 +174,38 @@ extract_path_set(manifest_map const & man,
     paths.insert(manifest_entry_path(i));
 }
 
+// user log file
+
+string const user_log_file_name("log");
+
+void
+get_user_log_path(local_path & ul_path)
+{
+  ul_path = (mkpath(book_keeping_dir) / mkpath(user_log_file_name)).string();
+  L(F("user log path is %s\n") % ul_path);
+}
+
+void
+read_user_log(data & dat)
+{
+  local_path ul_path;
+  get_user_log_path(ul_path);
+
+  if (file_exists(ul_path))
+    {
+      read_data(ul_path, dat);
+    }
+}
+
+void
+blank_user_log()
+{
+  data empty;
+  local_path ul_path;
+  get_user_log_path(ul_path);
+  write_data(ul_path, empty);
+}
+
 // options map file
 
 string const options_file_name("options");

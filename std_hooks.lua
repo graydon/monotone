@@ -63,7 +63,7 @@ function ignore_file(name)
 end
 
 
-function edit_comment(basetext)
+function edit_comment(basetext, user_log_message)
    local exe = "vi"
    local visual = os.getenv("VISUAL")
    if (visual ~= nil) then exe = visual end
@@ -74,6 +74,7 @@ function edit_comment(basetext)
    if (tmp == nil) then return nil end
    basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ") .. "\n"
    tmp:write(basetext)
+   tmp:write(user_log_message)
    io.close(tmp)
 
    if (execute(exe, tname) ~= 0) then

@@ -27,7 +27,8 @@
 // MT/revision       -- contains the id of the checked out revision
 // MT/work           -- (optional) a set of added, deleted or moved pathnames
 //                      this file is, syntactically, a path_rearrangement
-// MT/options        -- the database, branch and key options currently in use 
+// MT/options        -- the database, branch and key options currently in use
+// MT/log            -- user edited log file
 //
 // as work proceeds, the files in the working directory either change their
 // sha1 fingerprints from those listed in the revision's manifest, or else are
@@ -64,6 +65,18 @@ build_rename(file_path const & src,
              manifest_map const & m_old,
              change_set::path_rearrangement & pr);
 
+
+// the "user log" is a file the user can edit as they program to record
+// changes they make to their source code. Upon commit the file is read
+// and passed to the edit_comment lua hook. If the commit is a success,
+// the user log is then blanked. If the commit does not succeed, no
+// change is made to the user log file.
+
+void get_user_log_path(local_path & ul_path);
+
+void read_user_log(data & dat);
+
+void blank_user_log();
 
 // the "options map" is another administrative file, stored in
 // MT/options. it keeps a list of name/value pairs which are considered

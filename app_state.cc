@@ -122,6 +122,8 @@ app_state::create_working_copy(std::string const & dir)
 
   write_options();
 
+  blank_user_log();
+
   load_rcfiles();
 }
 
