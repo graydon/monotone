@@ -712,6 +712,7 @@ void post_queued_blobs_to_network(set<url> const & targets,
 {
 
   L(F("found %d targets for posting\n") % targets.size());
+  bool exception_during_posts = false;
 
   ticker n_bytes("bytes");
   ticker n_packets("packets");
@@ -719,127 +720,148 @@ void post_queued_blobs_to_network(set<url> const & targets,
   for (set<url>::const_iterator targ = targets.begin();
        targ != targets.end(); ++targ)
     {
-      string proto, user, host, path, group;
-      unsigned long port;
-      N(parse_url(*targ, proto, user, host, path, group, port),
-	F("cannot parse url '%s'") % *targ);
-
-      N((proto == "http" || proto == "nntp" || proto == "mailto"),
-	F("unknown protocol '%s', only know nntp, http and mailto") % proto);
-
-      size_t queue_count = 0;
-      app.db.get_queue_count(*targ, queue_count);
-      
-      while (queue_count != 0)
+      try 
 	{
-	  L(F("found %d packets for %s\n") % queue_count % *targ);
-	  string postbody;
-	  vector<string> packets;
-	  while (postbody.size() < postsz 
-		 && packets.size() < queue_count)
-	    {
-	      string tmp;
-	      app.db.get_queued_content(*targ, packets.size(), tmp);
-	      packets.push_back(tmp);
-	      postbody.append(tmp);
-	    }
-	  
-	  if (postbody != "")
-	    {
-	      bool posted_ok = false;
+	  string proto, user, host, path, group;
+	  unsigned long port;
+	  N(parse_url(*targ, proto, user, host, path, group, port),
+	    F("cannot parse url '%s'") % *targ);
 
-	      L(F("posting %d packets for %s\n") % packets.size() % *targ);
-	      
-	      if (proto == "http")
-		post_http_blob(*targ, postbody, group, host, port, path, app, posted_ok);
-	      else if (proto == "nntp")
-		post_nntp_blob(*targ, postbody, group, host, port, app, posted_ok);
-	      else if (proto == "mailto")
-		post_smtp_blob(*targ, postbody, user, host, port, app, posted_ok);
-	      
-	      if (posted_ok)
-		{
-		  n_packets += packets.size();
-		  n_bytes += postbody.size();
-		  for (size_t i = 0; i < packets.size(); ++i)
-		    app.db.delete_posting(*targ, 0);
-		}
-	    }
+	  N((proto == "http" || proto == "nntp" || proto == "mailto"),
+	    F("unknown protocol '%s', only know nntp, http and mailto") % proto);
+
+	  size_t queue_count = 0;
 	  app.db.get_queue_count(*targ, queue_count);
+      
+	  while (queue_count != 0)
+	    {
+	      L(F("found %d packets for %s\n") % queue_count % *targ);
+	      string postbody;
+	      vector<string> packets;
+	      while (postbody.size() < postsz 
+		     && packets.size() < queue_count)
+		{
+		  string tmp;
+		  app.db.get_queued_content(*targ, packets.size(), tmp);
+		  packets.push_back(tmp);
+		  postbody.append(tmp);
+		}
+	  
+	      if (postbody != "")
+		{
+		  bool posted_ok = false;
+
+		  L(F("posting %d packets for %s\n") % packets.size() % *targ);
+	      
+		  if (proto == "http")
+		    post_http_blob(*targ, postbody, group, host, port, path, app, posted_ok);
+		  else if (proto == "nntp")
+		    post_nntp_blob(*targ, postbody, group, host, port, app, posted_ok);
+		  else if (proto == "mailto")
+		    post_smtp_blob(*targ, postbody, user, host, port, app, posted_ok);
+	      
+		  if (posted_ok)
+		    {
+		      n_packets += packets.size();
+		      n_bytes += postbody.size();
+		      for (size_t i = 0; i < packets.size(); ++i)
+			app.db.delete_posting(*targ, 0);
+		    }
+		}
+	      app.db.get_queue_count(*targ, queue_count);
+	    }
+	} 
+      catch (informative_failure & i)
+	{
+	  W(F("%s\n") %  i.what);
+	  exception_during_posts = true;
 	}
     }
+  if (exception_during_posts)
+    W(F("errors occurred during posts\n"));
 }
 
 void fetch_queued_blobs_from_network(set<url> const & sources,
 				     app_state & app)
 {
 
+  bool exception_during_fetches = false;
   packet_db_writer dbw(app);
 
   for(set<url>::const_iterator src = sources.begin();
       src != sources.end(); ++src)
     {
-      string proto, user, host, path, group;
-      unsigned long port;            
-      N(parse_url(*src, proto, user, host, path, group, port),
-	F("cannot parse url '%s'") % *src);
-      
-      N((proto == "http" || proto == "nntp" || proto == "mailto"),
-	F("unknown protocol '%s', only know nntp, http and mailto") % proto);
-
-      if (proto == "mailto")
+      try
 	{
-	  P(F("cannot fetch from mailto url %s, skipping\n") % *src);
-	  continue;
-	}
 
-      P(F("fetching packets from group %s\n") % *src);
-
-      dbw.server.reset(*src);
-      transaction_guard guard(app.db);
+	  string proto, user, host, path, group;
+	  unsigned long port;            
+	  N(parse_url(*src, proto, user, host, path, group, port),
+	    F("cannot parse url '%s'") % *src);
       
-      if (proto == "http")
-	{
-	  unsigned long maj, min;
-	  app.db.get_sequences(*src, maj, min);
-	  monotone_connection connection;
-	  boost::shared_ptr<iostream> stream;
+	  N((proto == "http" || proto == "nntp" || proto == "mailto"),
+	    F("unknown protocol '%s', only know nntp, http and mailto") % proto);
 
-	  bool is_proxy = false;
-	  string connect_host_name = host;
-	  unsigned long connect_port_num = port;
-	  if (app.lua.hook_get_http_proxy(host, port,
-					  connect_host_name, 
-					  connect_port_num))
+	  if (proto == "mailto")
 	    {
-	      P(F("using proxy at %s:%d\n") % connect_host_name % connect_port_num);
-	      is_proxy = true;
-	    }
-	  else
-	    {
-	      connect_host_name = host;
-	      connect_port_num = port;
+	      P(F("cannot fetch from mailto url %s, skipping\n") % *src);
+	      continue;
 	    }
 
-	  open_connection("http", connect_host_name, connect_port_num, 
-			  connection, stream, app);
-	  fetch_http_packets(group, maj, min, dbw, host, path, port, 
-			     is_proxy, *stream);
-	  app.db.put_sequences(*src, maj, min);
-	}
+	  P(F("fetching packets from group %s\n") % *src);
 
-      else if (proto == "nntp")
-	{
-	  unsigned long maj, min;
-	  app.db.get_sequences(*src, maj, min);
-	  monotone_connection connection;
-	  boost::shared_ptr<iostream> stream;
-	  open_connection("nntp", host, port, connection, stream, app);
-	  fetch_nntp_articles(group, min, dbw, *stream);
-	  app.db.put_sequences(*src, maj, min);
+	  dbw.server.reset(*src);
+	  transaction_guard guard(app.db);
+	  if (proto == "http")
+	    {
+	      unsigned long maj, min;
+	      app.db.get_sequences(*src, maj, min);
+	      monotone_connection connection;
+	      boost::shared_ptr<iostream> stream;
+
+	      bool is_proxy = false;
+	      string connect_host_name = host;
+	      unsigned long connect_port_num = port;
+	      if (app.lua.hook_get_http_proxy(host, port,
+					      connect_host_name, 
+					      connect_port_num))
+		{
+		  P(F("using proxy at %s:%d\n") % connect_host_name % connect_port_num);
+		  is_proxy = true;
+		}
+	      else
+		{
+		  connect_host_name = host;
+		  connect_port_num = port;
+		}
+
+	      open_connection("http", connect_host_name, connect_port_num, 
+			      connection, stream, app);
+	      fetch_http_packets(group, maj, min, dbw, host, path, port, 
+				 is_proxy, *stream);
+	      app.db.put_sequences(*src, maj, min);
+	    }
+
+	  else if (proto == "nntp")
+	    {
+	      unsigned long maj, min;
+	      app.db.get_sequences(*src, maj, min);
+	      monotone_connection connection;
+	      boost::shared_ptr<iostream> stream;
+	      open_connection("nntp", host, port, connection, stream, app);
+	      fetch_nntp_articles(group, min, dbw, *stream);
+	      app.db.put_sequences(*src, maj, min);
+	    }
+	  guard.commit();
 	}
-      guard.commit();
+      catch (informative_failure & i)
+	{
+	  W(F("%s\n") %  i.what);
+	  exception_during_fetches = true;
+	}
     }
   P(F("fetched %d packets\n") % dbw.count);
+  if (exception_during_fetches)
+    W(F("errors occurred during fetches\n"));
 }
   

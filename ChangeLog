@@ -1,5 +1,10 @@
 2003-11-24  graydon hoare  <graydon@pobox.com>
 
+	* network.cc: Continue fetch, post loops even if one target has
+	an exception.
+
+2003-11-24  graydon hoare  <graydon@pobox.com>
+
 	* database.hh, database.cc (delete_posting): Change to take queue
 	sequence numbers.	
 	* commands.cc (queue): Use new API.
