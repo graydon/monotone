@@ -1675,9 +1675,9 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 	  cert_manifest_changelog(merged, log, app, qpw);
 	  
 	  guard.commit();
-	  P(F("[source] %s") % left);
-	  P(F("[source] %s") % right);
-	  P(F("[merged] %s") % merged);
+	  P(F("[source] %s\n") % left);
+	  P(F("[source] %s\n") % right);
+	  P(F("[merged] %s\n") % merged);
 	  left = merged;
 	}
     }

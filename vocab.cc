@@ -145,7 +145,7 @@ static inline void verify(local_path & val)
       N(!(*i == "." || *i == ".."),
 	F("prohibited path component '%s' in '%s'") % *i % val);
 
-      string::size_type pos = val().find_first_of(constants::illegal_path_bytes);
+      string::size_type pos = i->find_first_of(constants::illegal_path_bytes);
       N(pos == string::npos,
 	F("bad character '%d' in path component '%s' of '%s'") 
 	% static_cast<int>(i->at(pos)) % *i % val);

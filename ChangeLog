@@ -1,3 +1,8 @@
+2004-01-05  Christof Petig <christof@petig-baender.de>
+
+	* vocab.cc (verify<local_path>) Fix use of val() / iterator.
+	* constants.cc (illegal_path_bytes): NUL-terminate.
+
 2004-01-02  graydon hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (normalize_extents): Improve to handle an odd case. 
