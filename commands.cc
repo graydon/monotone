@@ -1965,6 +1965,8 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
   if (idx(args, 0)() == "set")
     {
       path = file_path(idx(args, 1)());
+      if (args.size() != 4)
+        throw usage(name);
       attrs[path][idx(args, 2)()] = idx(args, 3)();
       write_attr_map(attr_data, attrs);
       write_data(attr_path, attr_data);
@@ -2377,6 +2379,22 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
   }
 
   dump_diffs(composite.deltas, app, new_is_archived);
+}
+
+CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
+{
+  if (args.size() != 2)
+    throw usage(name);
+
+  revision_id anc, left, right;
+
+  complete(app, idx(args, 0)(), left);
+  complete(app, idx(args, 1)(), right);
+
+  if (find_common_ancestor(left, right, anc, app))
+    std::cout << anc << std::endl;
+  else
+    std::cout << "no common ancestor/dominator found" << std::endl;
 }
 
 
@@ -3055,9 +3073,8 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
           {
           cout << "-----------------------------------------------------------------"
                << endl;
-          cout << "Version: " << rid << endl;
+          cout << "Revision: " << rid << endl;
 
-          cout << "Author:";
           app.db.get_revision_certs(rid, author_name, tmp);
           erase_bogus_certs(tmp, app);
           for (vector< revision<cert> >::const_iterator j = tmp.begin();
@@ -3065,11 +3082,10 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
             {
               cert_value tv;
               decode_base64(j->inner().value, tv);
-              cout << " " << tv;
+              cout << "Author: " << tv;
             }     
           cout << endl;
 
-          cout << "Date:";
           app.db.get_revision_certs(rid, date_name, tmp);
           erase_bogus_certs(tmp, app);
           for (vector< revision<cert> >::const_iterator j = tmp.begin();
@@ -3077,7 +3093,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
             {
               cert_value tv;
               decode_base64(j->inner().value, tv);
-              cout << " " << tv;
+              cout << "Date: " << tv;
             }     
           cout << endl;
 
@@ -3095,7 +3111,6 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
               cout << endl;
             }
 
-          cout << "ChangeLog:" << endl << endl;
           app.db.get_revision_certs(rid, changelog_name, tmp);
           erase_bogus_certs(tmp, app);
           for (vector< revision<cert> >::const_iterator j = tmp.begin();
@@ -3103,7 +3118,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
             {
               cert_value tv;
               decode_base64(j->inner().value, tv);
-              cout << " " << tv << endl;
+              cout << "ChangeLog:" << endl << endl << tv << endl;
             }     
           cout << endl;
 

@@ -1183,6 +1183,7 @@ concatenate_change_sets(change_set const & a,
 static void
 extend_renumbering_via_added_files(path_analysis const & a, 
                                    path_analysis const & b, 
+                                   state_renumbering & existing_renumbering,
                                    state_renumbering & renumbering)
 {
   directory_map a_second_map;
@@ -1197,14 +1198,17 @@ extend_renumbering_via_added_files(path_analysis const & a,
           path_state::const_iterator j = b.second.find(path_state_tid(i));
           I(j != b.second.end());
           file_path leaf_name(path_item_name(path_state_item(j)));
+
           I(path_item_type(path_state_item(j)) == ptype_file);
           if (! null_name(leaf_name))
             {
               tid added_parent_tid = path_item_parent(path_state_item(j));
+              state_renumbering::const_iterator ren = existing_renumbering.find(added_parent_tid);
+              if (ren != existing_renumbering.end())
+                added_parent_tid = ren->second;
               directory_map::const_iterator dirent = a_second_map.find(added_parent_tid);
               if (dirent != a_second_map.end())
                 {
-                  
                   boost::shared_ptr<directory_node> node = dirent->second;
                   directory_node::const_iterator entry = node->find(leaf_name);
                   if (entry != node->end() && directory_entry_type(entry) == ptype_file)
@@ -1523,7 +1527,7 @@ merge_disjoint_analyses(path_analysis const & a,
 
   {
     state_renumbering aux_renumbering;
-    extend_renumbering_via_added_files(a_tmp, b_tmp, aux_renumbering);
+    extend_renumbering_via_added_files(a_tmp, b_tmp, renumbering, aux_renumbering);
     for (state_renumbering::const_iterator i = aux_renumbering.begin(); 
          i != aux_renumbering.end(); ++i)
       {
@@ -2367,7 +2371,9 @@ disjoint_merge_test(std::string const & ab_str,
   read_change_set(data(ab_str), ab);
   read_change_set(data(ac_str), ac);
 
-  merge_provider merger(app);
+  manifest_map dummy;
+
+  merge_provider merger(app, dummy, dummy, dummy);
   merge_change_sets(ab, ac, bm, cm, merger, app);
 
   dump_change_set("ab", ab);
