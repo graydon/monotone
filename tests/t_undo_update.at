@@ -1,4 +1,4 @@
-AT_CHECK([(todo) undo_update command])
+AT_SETUP([(todo) undo_update command])
 
 # This test is a bug report.
 AT_XFAIL_IF(true)

@@ -5,6 +5,65 @@
 	creates a patch revision rather than an add/delete sequence.  The
 	incorrect behavior was reported in bug #9964.
 
+2005-02-17  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (app_state): initialize search root
+	(initialize): boolean signature variant renamed to ...
+	(allow_working_copy): this; add explicit search root; move
+	requirement for working copy to ...
+	(require_working_copy): this new method
+	(initialize): string signature variant renamed to ...
+	(create_working_copy): this
+	(set_root): new method
+	* commands.cc: remove app.initialize(false) calls; replace
+	app.initialize(true) with app.require_working_copy(); replace
+	app.initialize(dir) with app.create_working_copy(dir)
+	(checkout): ensure revision is member of specified branch
+	* file_io.{cc,hh} (find_working_copy): stop search at --root if
+	specified
+	* monotone.cc (OPT_ROOT): new option
+	(cpp_main): call app.allow_working_copy() before executing
+	commands to always read default options
+	* monotone.1: add --root option
+	* monotone.texi: add --root option
+	* tests/t_checkout_noop_on_fail.at: un-XFAIL
+	* tests/t_checkout_options.at: un-XFAIL, add check for specified
+	revision not in specified branch
+	* testsuite.at: add --root option to MONOTONE to prevent searching
+	above test dir
+	* vocab.cc: remove redundant forward declaration
+	
+2005-02-16  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (revert): don't rewrite unchanged files
+	* tests/t_revert_unchanged.at: new test
+	* testsuite.at: call it
+
+2005-02-12  Derek Scherger  <derek@echologic.com>
+
+	* database.cc (sqlite3_unpack_fn): new function for viewing
+	base64, gzipped data
+	(install_functions): install it
+	(rehash): remove unused obsolete fcerts ticker
+
+2005-02-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* debian/changelog: s/graydon@mogo/graydon@pobox.com/, to make
+	lintian happy.
+	* debian/rules (config.status): Remove --with-bundled-adns.
+	* debian/control (Build-Depends): Don't Build-Depend on libpopt,
+	only libpopt-dev.
+	* .mt-attrs (debian/control): Make executable.
+	
+2005-02-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_undo_update.at: Stupid typo.
+	* tests/t_largish_file.at: New test.
+	* testsuite.at: Add it.
+	
+	* commands.cc (push, pull, sync): Remove misleading "..." from
+	help text.
+
 2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* Makefile.am: Append $(BOOST_SUFFIX) to -lboost_unit_test_framework
@@ -784,7 +843,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÃÂkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

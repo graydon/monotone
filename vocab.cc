@@ -128,9 +128,6 @@ verify(local_path & val)
   val.ok = true;
 }
 
-// fwd declare..
-bool book_keeping_file(local_path const & path);
-
 static inline void 
 verify(file_path & val)
 {

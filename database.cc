@@ -153,6 +153,19 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
+static void
+sqlite3_unpack_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
+{
+  if (nargs != 1)
+    {
+      sqlite3_result_error(f, "need exactly 1 arg to unpack()", -1);
+      return;
+    }
+  data unpacked;
+  unpack(base64< gzip<data> >(string(sqlite3_value_text_s(args[0]))), unpacked);
+  sqlite3_result_blob(f, unpacked().c_str(), unpacked().size(), SQLITE_TRANSIENT);
+}
+
 void 
 database::set_app(app_state * app)
 {
@@ -170,6 +183,7 @@ check_sqlite_format_version(fs::path const & filename)
 
       std::ifstream file(filename.string().c_str());
       N(file, F("unable to probe database version in file %s") % filename.string());
+
       for (std::string::const_iterator i = version_string.begin();
            i != version_string.end(); ++i)
         {
@@ -404,7 +418,6 @@ database::rehash()
 {
   transaction_guard guard(*this);
   ticker mcerts("mcerts", "m", 1);
-  ticker fcerts("fcerts", "f", 1);
   ticker pubkeys("pubkeys", "+", 1);
   ticker privkeys("privkeys", "!", 1);
   
@@ -1584,6 +1597,12 @@ database::install_functions(app_state * app)
   I(sqlite3_create_function(sql(), "unbase64", -1, 
                            SQLITE_UTF8, NULL,
                            &sqlite3_unbase64_fn, 
+                           NULL, NULL) == 0);
+
+
+  I(sqlite3_create_function(sql(), "unpack", -1, 
+                           SQLITE_UTF8, NULL,
+                           &sqlite3_unpack_fn, 
                            NULL, NULL) == 0);
 }
 
