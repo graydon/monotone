@@ -1273,8 +1273,9 @@ editor. Monotone will delete all the lines beginning with ``MT:'' and
 leave only our message. Returning to the shell, we are prompted for our passphrase.
 
 @example
+monotone: committing 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e to branch testbranch
 enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter your passphrase here>}
-committed 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
+monotone: committed 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
 @end example
 
 A commit typically involves making several certs, as well as storing
@@ -1399,8 +1400,9 @@ the command line as a third argument to the @command{commit} command.
 
 @example
 $ monotone commit "a fork"
+monotone: committing 57d3afae9e806b930130a674befec2a52bd85cd1 to branch testbranch
 enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter your passphrase here>}
-committed 57d3afae9e806b930130a674befec2a52bd85cd1
+monotone: committed 57d3afae9e806b930130a674befec2a52bd85cd1
 @end example
 
 Monotone does not prohibit us from making a fork. However, if we check
@@ -1587,13 +1589,14 @@ our most recent commit would result in the following messages:
 
 @example
 $ monotone commit
+monotone: committing a2f12ab893e7e40feb83e19f4e707ec6a2841601 to branch testbranch
 enter passphrase for key ID [testkey@@nodomain.org] :@i{<enter your passphrase here>}
-monotone: 149 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-monotone: 116 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-monotone: 300 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-monotone: 288 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-monotone: 287 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-monotone: 298 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+monotone: 149 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
+monotone: 116 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
+monotone: 300 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
+monotone: 288 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
+monotone: 287 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
+monotone: 298 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
 monotone: committed a2f12ab893e7e40feb83e19f4e707ec6a2841601
 @end example
 
@@ -1616,7 +1619,7 @@ like to fetch from:
 @example
 $ cat >>~/.monotonerc
 function get_fetch_sources(branchname)
-	return @{ @{"http://www.myisp.com/~me/depot", "helloworld"         @} @} 
+	return @{ @{"http://www.myisp.com/~me/depot.cgi", "helloworld"         @} @} 
 end
 @end example
 
@@ -1625,7 +1628,10 @@ directly.
 
 @example
 $ monotone fetch 
-fetched 6 packets
+monotone: fetching packets from group helloworld at http://www.myisp.com/~me/depot.cgi
+monotone: [packet: 6] 
+monotone: http fetch complete
+monotone: fetched 6 packets
 @end example
 
 Monotone remembers ``sequence numbers'' for each URL and logical group
@@ -1717,7 +1723,7 @@ no parameters):
 @example
 $ cat >~/.monotonerc
 function get_post_targets(branchname)
-	return @{ @{"http://www.myisp.com/~me/depot", "helloworld"         @} @} 
+	return @{ @{"http://www.myisp.com/~me/depot.cgi", "helloworld"         @} @} 
 end
 
 function get_http_auth(url, group)
