@@ -306,7 +306,7 @@ write_data_impl(fs::path const & p,
   if (fs::exists(p) && fs::is_directory(p))
     throw oops("file '" + p.string() + "' cannot be over-written as data; it is a directory");
 
-  fs::create_directories(p.branch_path().string());
+  fs::create_directories(mkpath(p.branch_path().string()));
   
   // we write, non-atomically, to MT/data.tmp.
   // nb: no mucking around with multiple-writer conditions. we're a
@@ -464,7 +464,7 @@ walk_tree(file_path const & path,
       if (require_existing_path)
 	{
 	  N(false,
-	    F("no such file or directory: %s\n") % path());
+	    F("no such file or directory: %s") % path());
 	}
       else
 	{

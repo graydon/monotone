@@ -1,3 +1,83 @@
+2004-05-18  graydon hoare  <graydon@pobox.com>
+
+	* diff_patch.cc (apply_directory_moves): Fix fs::path use.
+	* file_io.cc (write_data_impl): Likewise.
+	* packet.cc: Use explicit true/false maps in caches.
+	* sanity.cc (dump_buffer): Write to clog (buffered).
+
+2004-05-14  Joel Rosdahl  <joel@rosdahl.net>
+
+        * std_hooks.lua (ignore_file): Quote dots in .svn patterns.
+        * monotone.texi: Updated ignore_file hook example.
+
+2004-05-16  graydon hoare  <graydon@pobox.com>
+
+	* keys.cc (get_passphrase): Reimplement.
+	* unix/read_password.c: Remove.
+	* {unix,win32}/read_password.cc: Add.
+	* constants.{hh,cc} (maxpasswd): New constant.
+	* Makefile.am: Teach about platform specific stuff.
+
+2004-05-16  graydon hoare  <graydon@pobox.com>
+
+	* diff_patch.cc (merge2): Don't discard files on one side.
+	* std_hooks.lua (merge2_xxdiff_cmd): Specify merge filename.
+
+2004-05-12  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Rename Netxx back to netxx. Really, look in 
+	the manifest; it's been renamed!
+	* configure.ac: Remove prg_exec_monitor checks.
+
+2004-05-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* testsuite.at (test_hooks.lua): Add a 'test_attr' attribute
+	hook.  Add tests t_attributes and t_single_char_filenames.
+	* tests/t_attributes.at: New test.
+	* tests/t_single_char_filenames.at: New test.
+	* manifest.cc (read_manifest_map): Replace ".+" with ".*" to
+	support single-character filenames.
+	* work.cc (read_work_set): Likewise.
+	(read_attr_map): Likewise.
+
+2004-05-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Hook Reference): Update documented default
+	definitions of 'merge2' and 'merge3'.
+
+2004-05-12  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Remove discussion of adns, since we no longer
+	distribute it.  Fix capitalization of "Netxx".
+
+2004-05-12  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (merge2): Support xemacs.  Add error message
+	if no merge tool is found.
+	(merge3): Likewise.  Also add (disabled) hook to use CVS
+	'merge' command, as a demonstration of how to.
+
+2004-05-12  graydon hoare  <graydon@pobox.com>
+
+	* std_hooks.lua (get_author): Remove standard definition.
+	* monotone.texi: Document change.
+
+2004-05-12  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc (cert_manifest_author_default): Use default signing key
+	name for default author, if lua hook fails.
+
+2004-05-12  Joel Rosdahl  <joel@rosdahl.net>
+
+	* file_io.cc (walk_tree): Removed extraneous newline in error
+	message.
+
+	* std_hooks.lua (edit_comment): Added missing newline in log
+	message template.
+
+	* tests/t_ls_missing.at: New test case.
+	* testsuite.at: Added t_ls_missing.at.
+
 2004-05-10  graydon hoare  <graydon@pobox.com>
 
 	* nonce.cc, nonce.hh: New files.

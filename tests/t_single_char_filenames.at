@@ -1,0 +1,39 @@
+#  -*- Autoconf -*-
+
+# Check that add, drop, rename can handle single character filenames.
+# This bug actually existed at once point...
+
+AT_SETUP([single character filename support])
+
+MONOTONE_SETUP
+
+AT_DATA(a, [some data
+])
+
+AT_CHECK(MONOTONE add a, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+A_M_SHA1=`SHA1(MT/manifest)`
+
+AT_CHECK(MONOTONE rename a b, [], [ignore], [ignore])
+AT_CHECK(mv a b)
+AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+B_M_SHA1=`SHA1(MT/manifest)`
+
+AT_CHECK(MONOTONE drop b, [], [ignore], [ignore])
+AT_CHECK(rm -f b)
+AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+NULL_M_SHA1=`SHA1(MT/manifest)`
+
+AT_CHECK(MONOTONE checkout $A_M_SHA1 a-dir, [], [ignore], [ignore])
+AT_CHECK(test -e a-dir/a, [], [ignore])
+AT_CHECK(test ! -e a-dir/b, [], [ignore])
+
+AT_CHECK(MONOTONE checkout $B_M_SHA1 b-dir, [], [ignore], [ignore])
+AT_CHECK(test ! -e b-dir/a, [], [ignore])
+AT_CHECK(test -e b-dir/b, [], [ignore])
+
+AT_CHECK(MONOTONE checkout $NULL_M_SHA1 null-dir, [], [ignore], [ignore])
+AT_CHECK(test ! -e null-dir/a, [], [ignore])
+AT_CHECK(test ! -e null-dir/b, [], [ignore])
+
+AT_CLEANUP

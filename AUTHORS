@@ -54,14 +54,6 @@ work here; I am merely using several public domain files from it. You
 can find the original code at http://www.cryptopp.com.
 
 
-The files in adns/* are copies of the core portion of the "adns"
-library. Copyright 1997-2001 Ian Jackson, Copyright 1999-2000 Tony
-Finch, and Copyright (C) 1991 Massachusetts Institute of
-Technology. They are licensed under the GNU GPL version 2 or greater.
-The original sources for adns can be retrieved from
-http://www.chiark.greenend.org.uk/~ian/adns/
-
-
 The files in idna/* are copies of the core portion of the "GNU libidn"
 library. Copyright (C) 2002, 2003 Simon Josefsson. They are licensed
 under the GNU LGPL version 2.1. The original sources for libidn can be

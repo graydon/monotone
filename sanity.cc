@@ -37,7 +37,7 @@ sanity::~sanity()
 void 
 sanity::dump_buffer()
 {
-  copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(cerr));
+  copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(clog));
 }
 
 void 

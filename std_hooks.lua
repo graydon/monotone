@@ -27,7 +27,7 @@ end
 attr_functions["execute"] = 
    function(filename, value) 
       if (value == "true") then
-	 os.execute(string.format("chmod +x %s", filename))
+         os.execute(string.format("chmod +x %s", filename))
       end
    end
 
@@ -46,8 +46,8 @@ function ignore_file(name)
    if (string.find(name, "/core$")) then return true end
    if (string.find(name, "^CVS/")) then return true end
    if (string.find(name, "/CVS/")) then return true end
-   if (string.find(name, "^.svn/")) then return true end
-   if (string.find(name, "/.svn/")) then return true end
+   if (string.find(name, "^%.svn/")) then return true end
+   if (string.find(name, "/%.svn/")) then return true end
    if (string.find(name, "^SCCS/")) then return true end
    if (string.find(name, "/SCCS/")) then return true end
    return false;
@@ -63,7 +63,7 @@ function edit_comment(basetext)
 
    local tmp, tname = temp_file()
    if (tmp == nil) then return nil end
-   basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ")
+   basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ") .. "\n"
    tmp:write(basetext)
    io.close(tmp)
 
@@ -78,7 +78,7 @@ function edit_comment(basetext)
    local line = tmp:read()
    while(line ~= nil) do 
       if (not string.find(line, "^MT:")) then
-	 res = res .. line .. "\n"
+         res = res .. line .. "\n"
       end
       line = tmp:read()
    end
@@ -95,17 +95,6 @@ end
 
 function persist_phrase_ok()
    return true
-end
-
-function get_mail_hostname(url)
-   return os.getenv("HOSTNAME")
-end
-
-function get_author(branchname)
-   local user = os.getenv("USER")
-   local host = os.getenv("HOSTNAME")
-   if ((user == nil) or (host == nil)) then return nil end
-   return string.format("%s@%s", user, host)
 end
 
 -- trust evaluation hooks
@@ -131,7 +120,7 @@ function accept_testresult_change(old_results, new_results)
    do
       if res == true and new_results[test] ~= true
       then
-	 return false
+         return false
       end
    end
    return true
@@ -139,20 +128,20 @@ end
 
 -- merger support
 
-function merge2_emacs_cmd(lfile, rfile, outfile)
+function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
    local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
-   local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-   return string.format(cmd_fmt, lfile, rfile, outfile)
+   local cmd_fmt = "%s -no-init-file -eval " .. elisp
+   return string.format(cmd_fmt, emacs, lfile, rfile, outfile)
 end
 
-function merge3_emacs_cmd(lfile, afile, rfile, outfile)
+function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "'(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")'"
-   local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-   return string.format(cmd_fmt, lfile, rfile, afile, outfile)
+   local cmd_fmt = "%s -no-init-file -eval " .. elisp
+   return string.format(cmd_fmt, emacs, lfile, rfile, afile, outfile)
 end
 
 function merge2_xxdiff_cmd(lfile, rfile, outfile)
-   local cmd_fmt = "xxdiff %s %s " 
+   local cmd_fmt = "xxdiff %s %s --merged-filename %s "
    local cmd_opts = " --title1 left --title2 right" 
    return string.format(cmd_fmt .. cmd_opts, lfile, rfile, outfile)
 end
@@ -163,6 +152,14 @@ function merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
    return string.format(cmd_fmt .. cmd_opts, lfile, afile, rfile, outfile)
 end
 
+-- For CVS-style merging.  Disabled by default.  You almost certainly
+-- don't want to use this!  But it is here as documentation, because
+-- it may become useful in the future.
+function merge3_merge_cmd(lfile, afile, rfile, outfile)
+   local cmd_fmt = "merge -p -L left -L ancestor -L right %s %s %s > %s"
+   return string.format(cmd_fmt, lfile, afile, rfile, outfile)
+end
+   
 function write_to_temporary_file(data)
    tmp, filename = temp_file()
    if (tmp == nil) then 
@@ -203,16 +200,20 @@ function merge2(left, right)
    then 
       local cmd = nil
       if program_exists_in_path("xxdiff") then
-	 cmd = merge2_xxdiff_cmd(lfile, rfile, outfile)
+         cmd = merge2_xxdiff_cmd(lfile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
-	 cmd = merge2_emacs_cmd(lfile, rfile, outfile)
+         cmd = merge2_emacs_cmd("emacs", lfile, rfile, outfile)
+      elseif program_exists_in_path("xemacs") then
+         cmd = merge2_emacs_cmd("xemacs", lfile, rfile, outfile)
       end
 
       if cmd ~= nil
       then
-	 io.write(string.format("executing external 2-way merge command: %s\n", cmd))
-	 os.execute(cmd)
-	 data = read_contents_of_file(outfile)
+         io.write(string.format("executing external 2-way merge command: %s\n", cmd))
+         os.execute(cmd)
+         data = read_contents_of_file(outfile)
+      else
+         io.write("no external 2-way merge command found")
       end
    end
    
@@ -242,16 +243,20 @@ function merge3(ancestor, left, right)
    then 
       local cmd = nil
       if program_exists_in_path("xxdiff") then
-	 cmd = merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
+         cmd = merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
-	 cmd = merge3_emacs_cmd(lfile, afile, rfile, outfile)
+         cmd = merge3_emacs_cmd("emacs", lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("xemacs") then
+         cmd = merge3_emacs_cmd("xemacs", lfile, afile, rfile, outfile)
       end
 
       if cmd ~= nil
       then
-	 io.write(string.format("executing external 3-way merge command: %s\n", cmd))
-	 os.execute(cmd)
-	 data = read_contents_of_file(outfile)
+         io.write(string.format("executing external 3-way merge command: %s\n", cmd))
+         os.execute(cmd)
+         data = read_contents_of_file(outfile)
+      else
+         io.write("no external 3-way merge command found")
       end
    end
    

@@ -333,9 +333,9 @@ void
 read_work_set(data const & dat,
 	      work_set & work)
 {
-  regex expr("^(add|drop)\n ([^[:space:]].+)$");
+  regex expr("^(add|drop)\n ([^[:space:]].*)$");
   regex_grep(add_to_work_set(work), dat(), expr, match_not_dot_newline);    
-  regex expr2("^(rename)\n ([^[:space:]].+)\n ([^[:space:]].+)$");
+  regex expr2("^(rename)\n ([^[:space:]].*)\n ([^[:space:]].*)$");
   regex_grep(add_to_work_set(work), dat(), expr2, match_not_dot_newline);
 }
 
@@ -471,7 +471,7 @@ get_attr_path(file_path & a_path)
 void 
 read_attr_map(data const & dat, attr_map & attr)
 {
-  regex expr("^([^[:space:]]+) ([^[:space:]]+) ([^[:space:]].+)$");
+  regex expr("^([^[:space:]]+) ([^[:space:]]+) ([^[:space:]].*)$");
   regex_grep(add_to_attr_map(attr), dat(), expr, match_not_dot_newline);
 }
 
