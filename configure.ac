@@ -157,6 +157,10 @@ then
    AC_MSG_CHECKING([location of static boost libraries])
    for i in ${static_boost_prefixes}
    do
+	if test -e $i/lib64/libboost_regex${BOOST_SUFFIX}.a
+	then
+		BOOST_LIBDIR=$i/lib64
+	fi
 	if test -e $i/lib/libboost_regex${BOOST_SUFFIX}.a 
 	then
 		BOOST_LIBDIR=$i/lib

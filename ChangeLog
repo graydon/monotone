@@ -1,3 +1,8 @@
+2005-02-19  Ole Dalgaard  <josua+monotone@giraffen.dk>
+
+	* configure.ac: Check for 64-bit versions of Boost static
+	libraries.
+
 2005-02-18  graydon hoare  <graydon@pobox.com>
 
 	* automate.cc (automate_heads): Fix initialize() call.  
