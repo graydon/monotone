@@ -71,4 +71,13 @@ void build_deletion(file_path const & path,
 		    manifest_map & man,
  		    bool & rewrite_work);
 
+typedef map<string, string> options_map;
+
+void get_options_path(local_path & o_path);
+
+void read_options_map(data const & dat, options_map & options);
+
+void write_options_map(data & dat,
+		       options_map const & options);
+
 #endif // __WORK_HH__

@@ -861,6 +861,8 @@ CMD(add, "working copy", "<pathname> [...]", "add files to working copy")
   // small race here
   if (rewrite_work)
     put_work_set(work);
+
+  app.write_options();
 }
 
 CMD(drop, "working copy", "<pathname> [...]", "drop files from working copy")
@@ -884,6 +886,8 @@ CMD(drop, "working copy", "<pathname> [...]", "drop files from working copy")
   // small race here
   if (rewrite_work)
     put_work_set(work);
+
+  app.write_options();
 }
 
 CMD(commit, "working copy", "[log message]", "commit working copy to database")
@@ -925,7 +929,7 @@ CMD(commit, "working copy", "[log message]", "commit working copy to database")
     
   L("committing %s to branch %s\n", 
     new_id.inner()().c_str(), branchname().c_str());
-  app.branch_name = branchname();
+  app.set_branch(branchname());
 
   manifests_to_patch_set(m_old, m_new, app, ps);
 
@@ -1064,6 +1068,8 @@ CMD(commit, "working copy", "[log message]", "commit working copy to database")
   remove_work_set();
   put_manifest_map(m_new);
   P("committed %s\n", ps.m_new.inner()().c_str());
+
+  app.write_options();
 }
 
 CMD(update, "working copy", "[sort keys...]", "update working copy, relative to sorting keys")
@@ -1163,6 +1169,8 @@ CMD(update, "working copy", "[sort keys...]", "update working copy, relative to 
   // is the basis of the working copy, not the working copy itself.
   put_manifest_map(m_chosen);
   P("updated to base version %s\n", m_chosen_id.inner()().c_str());
+
+  app.write_options();
 }
 
 CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working copy")
@@ -1245,6 +1253,8 @@ CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working cop
       // race
       put_work_set(work);
     }
+
+  app.write_options();
 }
 
 
@@ -1340,6 +1350,7 @@ CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from da
     }
   remove_work_set();
   guard.commit();
+  app.write_options();
 }
 
 ALIAS(co, checkout, "tree", "<manifest-id>",
@@ -1437,7 +1448,9 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 	    merged.inner()().c_str());
 	  left = merged;
 	}
-    }  
+    }
+
+  app.write_options();
 }
 
 

@@ -103,20 +103,12 @@ int cpp_main(int argc, char ** argv)
   bool stdhooks = true, rcfile = true;
   char * envstr;
 
-  app.db.set_filename("monotone.db");
-
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
 
   // initialize entries from $ENV
 
   if ((envstr = getenv("MT_KEY")) != NULL)
     app.signing_key = string(envstr);
-
-  if ((envstr = getenv("MT_DB")) != NULL)
-    app.db.set_filename(string(envstr));
-
-  if ((envstr = getenv("MT_BRANCH")) != NULL)
-    app.branch_name = string(envstr);
 
 
   // read command options
@@ -150,7 +142,7 @@ int cpp_main(int argc, char ** argv)
 	      break;
 
 	    case OPT_DB_NAME:
-	      app.db.set_filename(argstr);
+	      app.set_database(argstr);
 	      break;
 
 	    case OPT_KEY_NAME:
@@ -158,7 +150,7 @@ int cpp_main(int argc, char ** argv)
 	      break;
 
 	    case OPT_BRANCH_NAME:
-	      app.branch_name = argstr;
+	      app.set_branch(string(argstr));
 	      break;
 
 	    case OPT_VERSION:
@@ -237,7 +229,7 @@ int cpp_main(int argc, char ** argv)
       clean_shutdown = true;
       throw;
     }
-  
+
   clean_shutdown = true;
   return ret;
 }

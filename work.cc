@@ -214,3 +214,41 @@ void apply_work_set(work_set const & work,
        i != work.adds.end(); ++i)
     paths.insert(*i);
 }
+
+// read options file
+
+string const options_file_name("options");
+
+struct add_to_options_map
+{
+  options_map & options;
+  explicit add_to_options_map(options_map & m): options(m) {}
+  bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
+  {
+    std::string key(res[1].first, res[1].second);
+    std::string value(res[2].first, res[2].second);
+    options[key] = value;
+    return true;
+  }
+};
+
+void get_options_path(local_path & o_path)
+{
+  o_path = (fs::path(book_keeping_dir) / fs::path(options_file_name)).string();
+  L("options path is %s\n", o_path().c_str());
+}
+
+void read_options_map(data const & dat, options_map & options)
+{
+  regex expr("^([^[:space:]]+)[[:space:]]+([^[:space:]]+)");
+  regex_grep(add_to_options_map(options), dat(), expr, match_not_dot_newline);
+}
+
+void write_options_map(data & dat, options_map const & options)
+{
+  ostringstream tmp;
+  for (options_map::const_iterator i = options.begin();
+       i != options.end(); ++i)
+    tmp << i->first << " " << i->second << endl;
+  dat = tmp.str();
+}

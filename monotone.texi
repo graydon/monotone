@@ -881,20 +881,16 @@ Before operating monotone, two options should be explained.
 @itemize
 @item
 most commands operate on a @i{database}, which is selected with
-the @option{--db} option, or the @var{MT_DB} environment variable.
+the @option{--db} option.
 @item
 many commands operate on a subset of the database, called a
-@i{branch}, which is selected with the @option{--branch} option, or
-the @var{MT_BRANCH} environment variable.
+@i{branch}, which is selected with the @option{--branch} option.
 @end itemize
 
-We therefore begin our tutorial by exporting two environment
-variables, which we will assume remain active throughout the tutorial.
-
-@example
-$ export MT_DB=~/test.db
-$ export MT_BRANCH=testbranch
-@end example
+monotone will cache the settings for these options in your working
+copy, so ordinarily once you have checked out a project, you will not
+need to specify them again.  We will therefore only mention these
+arguments in the first example.
 
 We are now ready to explore some version control tasks.
 
@@ -955,7 +951,7 @@ or filenames; monotone will recursively scan any directories we
 mention.
 
 @example
-$ monotone add Makefile include src
+$ monotone --branch=testbranch --db=$HOME/test.db add Makefile include src
 adding Makefile to working copy add set
 adding include/hello.h to working copy add set
 adding src/hello.c to working copy add set

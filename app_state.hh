@@ -11,6 +11,7 @@ class lua_hooks;
 
 #include "database.hh"
 #include "lua.hh"
+#include "work.hh"
 
 // this class is supposed to hold all (or.. well, most) of the state of the
 // application, barring some unfortunate static objects like the debugging /
@@ -25,6 +26,13 @@ public:
   string branch_name;
   database db;
   lua_hooks lua;
+  bool options_changed;
+  options_map options;
+
+  void set_branch(string name);
+  void set_database(string filename);
+  void write_options();
+
   explicit app_state();
   ~app_state();
 private:

@@ -1,3 +1,27 @@
+2003-09-15  Tom Tromey  <tromey@redhat.com>
+
+	* monotone.texi (Getting Started): Don't mention MT_DB or
+	MT_BRANCH.
+	(Adding Files): Explicitly use --db and --branch.
+	* app_state.hh (app_state): New fields options, options_changed.
+	Declare new methods.  Include work.hh.
+	* work.cc (work_file_name): New constant.
+	(add_to_options_map): New structure.
+	(get_options_path): New function.
+	(read_options_map, write_options_map): Likewise.
+	* work.hh (options_map): New type.
+	(get_options_path, read_options_map, write_options_map): Declare.
+	* commands.cc (add, drop, commit, update, revert, checkout,
+	merge): Write options file.
+	* app_state.cc (database_option, branch_option): New constants.
+	(app_state::app_state): Read options file.
+	(app_state::set_database): New method.
+	(app_state::set_branch): Likewise.
+	(app_state::write_options): Likewise.
+	Include work.hh.
+	* monotone.cc (cpp_main): Don't set initial database name on
+	app.  Use new settor methods.  Don't look at MT_BRANCH or MT_DB.
+
 2003-09-14  graydon hoare  <graydon@pobox.com>
 
 	* vocab.cc, vocab.hh: Add streamers for vocab terms in preparation
