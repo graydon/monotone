@@ -2082,10 +2082,10 @@ CMD(read, "packet i/o", "", "read packets from stdin")
 }
 
 
-CMD(reindex, "network", "COLLECTION...", 
-    "rebuild the hash-tree indices used to sync COLLECTION over the network")
+CMD(reindex, "network", "", 
+    "rebuild the indices used to sync over the network")
 {
-  if (args.size() < 1)
+  if (args.size() > 0)
     throw usage(name);
 
   app.initialize(false);
@@ -2093,11 +2093,6 @@ CMD(reindex, "network", "COLLECTION...",
   transaction_guard guard(app.db);
   ui.set_tick_trailer("rehashing db");
   app.db.rehash();
-  for (size_t i = 0; i < args.size(); ++i)
-    {
-      ui.set_tick_trailer(string("rebuilding hash-tree indices for ") + idx(args,i)());
-      rebuild_merkle_trees(app, idx(args,i));
-    }
   guard.commit();
 }
 

@@ -454,6 +454,11 @@ confirm_proper_tree(path_state const & ps)
               curr = path_item_parent(item);
               path_state::const_iterator j = ps.find(curr);
               I(j != ps.end());
+
+              // if we're null, our parent must also be null
+              if (null_name(item.name))
+                I(null_name(path_state_item(j).name));
+
               item = path_state_item(j);
               I(path_item_type(item) == ptype_directory);
             }
@@ -786,6 +791,21 @@ ensure_entry(directory_map & dmap,
              tid_source & ts)
 {
   I(! null_name(entry));
+
+  if (dir_tid != root_tid)
+    {
+      path_state::const_iterator parent = state.find(dir_tid);      
+      I( parent != state.end());
+
+      // if our parent is null, we immediately become null too, and attach to
+      // the root node (where all null entries reside)
+      if (null_name(path_item_name(path_state_item(parent))))
+        {
+          tid new_tid = ts.next();
+          state.insert(std::make_pair(new_tid, path_item(root_tid, entry_ty, null_path)));
+          return new_tid;
+        }        
+    }
 
   boost::shared_ptr<directory_node> node = dnode(dmap, dir_tid);
   directory_node::const_iterator node_entry = node->find(entry);
@@ -1170,11 +1190,11 @@ index_entries(path_state const & state,
       switch (path_item_type(item))
         {
         case ptype_directory:
-          files.insert(std::make_pair(full, path_state_tid(i)));
+          dirs.insert(std::make_pair(full, path_state_tid(i)));
           break;
 
         case ptype_file:
-          dirs.insert(std::make_pair(full, path_state_tid(i)));
+          files.insert(std::make_pair(full, path_state_tid(i)));
           break;
         }
     }  
