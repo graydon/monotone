@@ -1,6 +1,12 @@
 AT_SETUP([diff respects restrictions])
 MONOTONE_SETUP
 
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+# Currently, if any --revision argument is passed to monotone, diff
+# ignores restrictions.
+
 ADD_FILE(file1, [1: data 1
 ])
 ADD_FILE(file2, [2: data 1
@@ -21,15 +27,19 @@ AT_DATA(file2, [2: data 3
 ])
 
 AT_CHECK(MONOTONE diff file1, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
 AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
 
 AT_CHECK(MONOTONE diff --revision=$REV0 file1, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
 AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
 
 AT_CHECK(MONOTONE diff --revision=$REV0 --revision=$REV1 file1, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
 AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
 
 AT_CHECK(MONOTONE diff --revision=$REV1 --revision=$REV0 file1, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
 AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
 
 AT_CLEANUP

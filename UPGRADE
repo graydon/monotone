@@ -1,0 +1,27 @@
+upgrading monotone to 0.17
+==========================
+
+if you are upgrading from:
+  - 0.14 or earlier: see file README.changesets
+  - 0.15 or later: see below.
+
+upgrading from 0.15 or 0.16
+---------------------------
+
+there was still some residual badness in the revision graph code in
+0.16.  we think we've caught it all now (we hope!), and there is now a
+great deal more coordinated effort put into stopping any such thing
+from sneaking in again, but... we have to do something about the
+badness that's already there.
+
+the solution is, another rebuild, like in the 0.15 -> 0.16
+transition.  
+
+first, you need to dump your database to SQL text, and then reload it;
+this is because we upgraded to SQLite 3 (from SQLite 2), which allows
+arbitrary sized files, but uses a different on-disk format.  this
+requires the use of your old 
+
+if you've been tracking the pre-0.17 development mainline, then you
+should do the same thing, except skipping the dump/load (because you
+did it already, when we merged in sqlite3 support).

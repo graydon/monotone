@@ -1,3 +1,46 @@
+????????????????????????????
+
+        0.17 release. bug fixes and features.
+
+        - many, many robustness improvements
+                - more careful checking everywhere
+                - much more thorough test suite
+                - all revisions subject to careful checks before
+                  entering database
+                        - not yet fully optimized; "pull" may be very
+                          slow and use lots of cpu
+                - support for "epochs", to safely manage future
+                  rebuilds, hash migration, etc.
+                - new "db check" command, thanks to Derek Scherger
+                  <derek@echologic.com>.
+        - now uses sqlite3, thanks to Christof Petig
+          <christof@petig-baender.de>.
+                - removes most former size limitations
+        - "restrictions" support, thanks to Derek Scherger
+          <derek@echologic.com>.
+                - most commands now take a list of files to limit
+                  their actions to
+                - monotone can now be run from anywhere in the working
+                  directory (not just the root)
+                - new command "monotone setup" to initialize an empty
+                  working dir for a new project
+        - important security fix -- don't use shell when calling
+          external merge commands.
+        - builds merkle tries in-memory -- netsync starts up many
+          times faster
+        - start of new "automate" interface, for shell scripts and
+          others.
+        - new command "cdiff": generates context diffs.
+        - remove most of now-obsolete manifest/file cert support.
+        - 60+ new integration tests.
+        - many portability fixes
+                - in particular, major win32 cleanups, thanks to Jon
+                  Bright <jon@siliconcircus.com>.
+        - many assorted bug fixes.
+
+                - several incompatible changes: see file UPGRADE for
+                  migration information
+
 Thu Dec 30 01:37:54 EST 2004
 
 	0.16 release. bug fixes.
