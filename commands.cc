@@ -3397,13 +3397,24 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
               change_set const & cs = edge_changes(e);
               if (! file().empty())
                 {
-                  file_path old_file = apply_change_set_inverse(cs, file);
-                  L(F("revision '%s' in '%s' maps to '%s' in %s\n")
-                    % rid % file % old_file % edge_old_revision(e));
-                  if (!(old_file == file) || cs.deltas.find(file) != cs.deltas.end())
+                  if (cs.rearrangement.has_deleted_file(file) ||
+                      cs.rearrangement.has_renamed_file_src(file))
                     {
-                      file = old_file;
-                      print_this = true;
+                      print_this = false;
+                      next_frontier.clear();
+                      break;
+                    }
+                  else
+                    {
+                      file_path old_file = apply_change_set_inverse(cs, file);
+                      L(F("revision '%s' in '%s' maps to '%s' in %s\n")
+                        % rid % file % old_file % edge_old_revision(e));
+                      if (!(old_file == file) ||
+                          cs.deltas.find(file) != cs.deltas.end())
+                        {
+                          file = old_file;
+                          print_this = true;
+                        }
                     }
                 }
               next_frontier.insert(std::make_pair(file, edge_old_revision(e)));

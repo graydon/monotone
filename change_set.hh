@@ -44,6 +44,7 @@ change_set
     bool has_added_file(file_path const & file) const;
     bool has_deleted_file(file_path const & file) const;
     bool has_renamed_file_dst(file_path const & file) const;
+    bool has_renamed_file_src(file_path const & file) const;
   };
 
   typedef std::map<file_path, std::pair<file_id, file_id> > delta_map;

@@ -1,3 +1,15 @@
+2004-12-30  Julio M. Merino Vidal  <jmmv@menta.net>
+
+        * change_set.{cc,hh}: Add the has_renamed_file_src function in
+	change_set::path_rearrangement.
+	* commands.cc: Make the 'log' command show nothing for renamed or
+        deleted files (when asked to do so) and stop going backwards in
+        history when such condition is detected; they don't exist any more,
+        so there is no point in showing history (and could drive to incorrect
+	logs anyway).
+	* tests/t_log_nonexistent.at: New check to verify previous.
+	* testsuite.at: Add it.
+
 2004-12-30  graydon hoare  <graydon@pobox.com>
 
 	* Makefile.am: Clean full testsuite directory and full-version.
