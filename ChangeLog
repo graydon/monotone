@@ -1,5 +1,11 @@
 2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (merge): Improve merge chatter.
+	(do_diff): Don't print anything when there are no
+	changes.
+
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_db_with_dots.at: New test.
 	* testsuite.at: Add it.
 
