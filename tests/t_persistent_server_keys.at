@@ -1,11 +1,6 @@
 AT_SETUP([(imp) persistent netsync server - keys])
 AT_KEYWORDS([netsync])
 
-# This test is a bug report -- public keys loaded into a running
-# netsync server do not get sent out again until the server is
-# restarted.
-AT_XFAIL_IF(true)
-
 MONOTONE_SETUP
 NETSYNC_SETUP
 
@@ -27,7 +22,7 @@ AT_CHECK(grep -q foo@foo stdout, [1])
 
 AT_DATA(testfile, [stuffty stuffty
 ])
-AT_CHECK(MONOTONE2 commit --branch=testbranch foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 commit --branch=testbranch foo --key=foo@foo, [], [ignore], [ignore])
 
 NETSYNC_CLIENT_N_RUN(2, push, testbranch)
 NETSYNC_CLIENT_N_RUN(3, pull, testbranch)

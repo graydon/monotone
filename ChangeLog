@@ -1,6 +1,12 @@
 2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_persistent_server_keys.at: Actually test what it's
+	supposed to.  Also, un-XFAIL it, since now it seems to pass.
+	
+2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_persistent_server_keys.at: New test.
+
 	* testsuite.at: Call it.
 	* tests/t_persistent_server_revision.at: Fix typo.
 
