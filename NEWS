@@ -1,3 +1,19 @@
+Sun Nov  7 14:06:03 EST 2004
+
+	0.15 release. major changes.
+
+	- overhauled the internal representation of changes. see 
+	  README.changesets for details
+	- fixed bugs in merkle trie synchronization code 
+	- fixed echoing and progress UI bugs 
+	  (helps when using in emacs)
+	- upgraded cryptopp to 5.2.1
+	- fixed bug 8715, diff hunk coordinate reporting
+	- added figures, new tutorial to manual
+	- improve accuracy of log command
+	- several build, configure, and linkage fixes
+	- some OSX / PPC portability fixes
+
 Sat Jul 31 15:38:02 EDT 2004
 
 	0.14 release. bug fixes.

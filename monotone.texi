@@ -114,7 +114,31 @@ parent and the child. We may draw the relationship between parent and
 child using a graph, where the arrow in the graph indicates the
 direction of the edit, from parent to child.
 
+@ifinfo
+@smallexample
+@group
+     +----------------+
+     |                |
+     | parent version |
+     | of file.txt    |
+     |                |
+     +----------------+
+              |
+              |
+             \|/
+              V
+     +----------------+
+     |                |
+     | child version  |
+     | of file.txt    |
+     |                |
+     +----------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/parent-child}
+@end ifnotinfo
 
 We may want to identify the parent and the child precisely, for sake
 of reference. To do so, we will compute a @i{cryptographic hash
@@ -129,7 +153,31 @@ graph does not refer to some ``abstract'' parent and child, but rather
 to the exact edit we performed between a specific parent and a
 specific child.
 
+@ifinfo
+@smallexample
+@group
+     +---------------------------------------------------+
+     | parent version                                    |
+     | of file.txt                                       |
+     |                                                   |
+     | SHA1 = 65f1bde1f38262034e7c3457301e8f736ba6381b   |
+     +---------------------------------------------------+
+              |
+              |
+             \|/
+              V
+     +---------------------------------------------------+
+     | child version                                     |
+     | of file.txt                                       |
+     |                                                   |
+     | SHA1 = a91566316d208dc405795904f8d67ae3a0e765cb   |
+     +---------------------------------------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/parent-child-names-hashes}
+@end ifnotinfo
 
 When dealing with versions of files, we will dispense with writing out
 ``file names'', and identify versions @i{purely} by their @sc{sha1}
@@ -138,7 +186,27 @@ alone will often help us accommodate the fact that people often wish
 to call files by different names. So now our graph of parent and child
 is just a relationship between two versions, only identified by ID.
 
+@ifinfo
+@smallexample
+@group
+     +---------------------------------------------------+
+     | parent version                                    |
+     | SHA1 = 65f1bde1f38262034e7c3457301e8f736ba6381b   |
+     +---------------------------------------------------+
+              |
+              |
+             \|/
+              V
+     +---------------------------------------------------+
+     | child version                                     |
+     | SHA1 = a91566316d208dc405795904f8d67ae3a0e765cb   |
+     +---------------------------------------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/parent-child-hashes}
+@end ifnotinfo
 
 Version control systems, such as monotone, are principally concerned
 with the storage and management of @i{multiple} versions of some
@@ -147,7 +215,27 @@ save a separate @i{complete} copy of the file, every time you make a
 change. When necessary, monotone will save complete copies of your
 files in their, compressed with the @command{zlib} compression format.
 
+@ifinfo
+@smallexample
+@group
+   +--------------+  +--------------+  +--------------+
+   |              |  |              |  |              |
+   | Hello        |  | Hello,       |  | Why, Hello   |
+   |              |  | world!       |  | there world, |    . . .
+   |              |  |              |  | how do you   |
+   |              |  |              |  | do?          |
+   |              |  |              |  |              |
+   +--------------+  +--------------+  +--------------+
+
+   \______  ______/  \______  ______/  \______  ______/
+          \/                \/                \/
+      1st version       2nd version      3rd version
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/three-versions}
+@end ifnotinfo
 
 Often we find that successive versions of a file are very similar to
 one another, so storing multiple complete copies is a waste of
@@ -165,7 +253,30 @@ when possible monotone stores deltas, using a modified @command{xdelta}
 format. The details of this format are beyond the scope of this
 document.
 
+@ifinfo
+@smallexample
+@group
+                        difference
+                     between versions
+                       _____/\____
+   +--------------+   /           \    +--------------+
+   |              |                    |              |
+   | Hello        |    +[, world!]     | Hello,       |
+   |              |                    | world!       |
+   |              |                    |              |
+   |              |                    |              |
+   |              |                    |              |
+   +--------------+                    +--------------+
+
+   \______  ______/                    \______  ______/
+          \/                                  \/
+     1st version                         2nd version
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/difference-between-versions}
+@end ifnotinfo
 
 @page
 @node    Versions of trees
@@ -186,7 +297,32 @@ column we write the ID of a file in your tree, and in the second
 column we write the path to the file, from the root of our tree to the
 filename.
 
+@ifinfo
+@smallexample
+@group
++--------------------------------------------------------------+
+|                                                              |
+|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
+|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
+|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
+|  ddc2686e000e97f670180c60a3066989e56a11a3  fs/open.c         |
+|  295d276e6c9ce64846d309a8e39507bcb0a14248  fs/namespace.c    |
+|  71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc  fs/namei.c        |
+|  1112c0f8054cebc9978aa77384e3e45c0f3b6472  fs/iobuf.c        |
+|  8ddcfcc568f33db6205316d072825d2e5c123275  fs/inode.c        |
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                          an example
+                         manifest file
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/manifest}
+@end ifnotinfo
 
 Now we note that a manifest is itself a file. Therefore a manifest can
 serve as input to the @sc{sha1} function, and thus every manifest has
@@ -197,7 +333,41 @@ and file names of every file in our tree, combined. So we may treat
 manifests and their IDs as @i{snapshots} of a tree of files, though
 lacking the actual contents of the files themselves.
 
+@ifinfo
+@smallexample
+@group
+  +--------------------------+
+  |   int readdir(...) @{     |
+  |     ...                  |
+  |   @}                      |
+  +--------------------------+
+
+  \____________  ___________/
+               \/
+              SHA1
+               ||
++--------------||----------------------------------------------+
+|              \/                                              |
+|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
+|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
+|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
+|                   . . .                       . . .          |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
+                              ||
+                              \/
+                         manifest ID:
+           a2eeaa28574141a7d48fa1cc2802070150b93ec4
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/file-id-manifest-id}
+@end ifnotinfo
 
 As with versions of files, we may decide to store manifests in their
 entirety, or else we may store only a compact description of changes
@@ -221,7 +391,28 @@ changes -- monotone builds a special composite file called a
 are ordinary text files which can be passed through the @sc{sha1}
 function and thus assigned a @dfn{revision ID}.
 
+@ifinfo
+@smallexample
+@group
++--------------------------------------------------------------+
+|                                                              |
+|                 ... content of revision ...                  |
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
+                              \/
+                         revision ID:
+           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/revision}
+@end ifnotinfo
 
 The content of a revision makes reference to file IDs, in describing
 a changeset, and manifest IDs, in describing tree states ``before and
@@ -235,7 +426,45 @@ return to a previously-visited manifest ID during the course of your
 edits, each revision will incorporate the ID of its predecessor, thus
 forming a new unique ID for each point in history.
 
+@ifinfo
+@smallexample
+@group
+                              ||
++-----------------------------||-------------------------------+
+|                             \/                               |
+|  old_revision: 86d06a095529dca003ad62715dc2be7873edade0      |
+|    change_set:           .  .  .                             |
+|  old_manifest: 1b24ba8b8dc3ff9c87b5198315eced1b279dc74e  <----- manifest ID 
+|  new_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
++-----------------------------||-------------------------------+
+|                             \/                               |
+|  old_revision: f45add3bfb21cb459d99b6a9c0111df75f6d9f85      |
+|    change_set:           .  .  .                             |
+|  old_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
+|  new_manifest: 8a05c60422770bbf49a3192c2367ddaa066538ca  <----- manifest ID 
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
+                              \/
+                         revision ID:
+           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/revision-chaining}
+@end ifnotinfo
 
 @page
 @node    Certificates
@@ -262,7 +491,22 @@ a @i{value} indicating the remaining detail of the statement, such as
 For example, if you want to say that a particular revision was
 composed on April 4, 2003, you might make a statement like this:
 
+@ifinfo
+@smallexample
+@group
+      +------------------------------------------------------+
+      |  revision ID                                         |
+      |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
+      +--------------------------+---------------------------+
+      |  statement name          |  statement value          |
+      |  "date"                  |  "2003-04-04T07:39:51"    |
+      +--------------------------+---------------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/statement}
+@end ifnotinfo
 
 In an ideal world, these are all the parts of a statement we would
 need in order to go about our work. In the real world, however, there
@@ -285,7 +529,25 @@ a secure fashion. The security of the signature in a cert is derived
 from the @sc{rsa} cryptography system, the details of which are beyond
 the scope of this document.
 
+@ifinfo
+@smallexample
+@group
+      +------------------------------------------------------+
+      |  revision ID                                         |
+      |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
+      +--------------------------+---------------------------+
+      |  cert name               |  cert value               |
+      |  "date"                  |  "2003-04-04T07:39:51"    |
+      +--------------------------+---------------------------+
+      |  signed by key           |  signature                |
+      |  "jrh@@somewhere.com"     |  "a02380def....0983fe90"  |
+      +--------------------------+---------------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/cert}
+@end ifnotinfo
 
 Monotone uses certs extensively. Any ``extra'' information which needs
 to be stored, transmitted or retrieved --- above and beyond files,
@@ -334,7 +596,30 @@ not move information directly between a working copy and a remote
 database, or between working copies. Your local database is always
 the ``switching point'' for communication.
 
+@ifinfo
+@smallexample
+@group
+             pull, push, sync
+       (untrusted network exchanges)
+            _________/\________
+           /                   \
+
+    +-------------+      +------------+      +--------------+
+    |             |      |            |      |              |
+    |  remote db  | <==> |  local db  | <==> | working copy |
+    |             |      |            |      |              |
+    +-------------+      +------------+      +--------------+
+
+                                \________  _______/
+                                         \/
+                                  commit, update
+                            (certified local exchanges)
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/general-workflow}
+@end ifnotinfo
 
 A @dfn{working copy} is a tree of files in your file system, arranged
 according to the list of file paths and IDs in a particular
@@ -358,7 +643,24 @@ and @dfn{update} a working copy to receive changes that have arrived
 in a database. Committing and updating take place purely between a
 database and a working copy; the network is not involved.
 
+@ifinfo
+@smallexample
+@group
+   -----------------     check out,      working copy
+  (                 )    or update      +----------------
+   -----------------     ---------->    |
+  |                 |                   |  src/func.c
+  |      local      |   <----------     |  src/func.h
+  |     database    |    add,           |  src/main.c
+  |                 |    or commit      |  Makefile
+  \_________________/                   |  MT/
+                                        |
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/local-workflow}
+@end ifnotinfo
 
 A @dfn{database} is a single, regular file. You can copy or back it up
 using standard methods. Typically you keep a database in your home
@@ -387,7 +689,23 @@ the destination is copied. The netsync protocol calculates the data to
 send ``on the fly'' by exchanging partial hash values of each
 database.
 
+@ifinfo
+@smallexample
+@group
+  -----------------                    ----------------- 
+ (                 )                  (                 )
+  -----------------    --- pull --->   -----------------       
+ |                 |                  |                 |
+ |      remote     |  <--- sync --->  |      local      |
+ |     database    |                  |     database    |
+ |                 |  <--- push ---   |                 |
+ \_________________/                  \_________________/
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/network-workflow}
+@end ifnotinfo
 
 In general, work flow with monotone involves 3 distinct stages:
 
@@ -439,7 +757,28 @@ So far we have been talking about revisions as though each logically
 follows exactly one revision before it, in a simple sequence of
 revisions.
 
+@ifinfo
+@smallexample
+@group
+       +-----------------------+
+       |  parent revision      |
+       +-----------------------+
+                |
+                |
+       +-----------------------+
+       |  child revision       |
+       +-----------------------+
+                |
+                |
+       +-----------------------+
+       |  grandchild revision  |
+       +-----------------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/linear-history}
+@end ifnotinfo
 
 This is a rosy picture, but sometimes it does not work out this
 way. Sometimes when you make new revisions, other people are
@@ -455,7 +794,24 @@ child}. In a large collection of revisions with many people editing
 files, especially on many different computers spread all around the
 world, forks are a common occurrence.
 
+@ifinfo
+@smallexample
+@group
+             +-----------------+
+             | parent revision |
+             +-----------------+
+                    |   |
+           +--------+   +---------+
+           |                      |
+     +-------------+     +--------------+
+     | left child  |     | right child  |
+     +-------------+     +--------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/fork}
+@end ifnotinfo
 
 If we analyze the changes in each child revision, we will often find
 that the changeset between the parent and the left child are unrelated
@@ -463,7 +819,30 @@ to the changeset between the parent and the right child. When this
 happens, we can usually @dfn{merge} the fork, producing a common
 grandchild revision which contains both changesets.
 
+@ifinfo
+@smallexample
+@group
+             +-----------------+
+             | parent revision |
+             +-----------------+
+                    |   |
+           +--------+   +---------+
+           |                      |
+     +-------------+     +--------------+
+     | left child  |     | right child  |
+     +-------------+     +--------------+
+           |                      |
+           +--------+   +---------+
+                    |   |
+             +-----------------+
+             | merged revision |
+             +-----------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/merge}
+@end ifnotinfo
 
 @page
 @node    Branches
@@ -502,7 +881,42 @@ be merged. However, the @code{wobbler-stable} and
 @code{wobbler-unstable} branches will not be merged together, despite
 having a common ancestor.
 
+@ifinfo
+@smallexample
+@group
+                   +--------------------------+
+                   | common ancestor revision |
+                   +--------------------------+
+                          |          |
+                +---------+          +---------+
+                |                              |
+       +-----------------+            +-------------------+           
+       | stable revision |            | unstable revision |           
+       +-----------------+            +-------------------+           
+              | |                               | |                   
+      +-------+ +-------+               +-------+ +-------+           
+      |                 |               |                 |           
++-------------+ +--------------+  +---------------+ +----------------+
+| left stable | | right stable |  | left unstable | | right unstable |
+|   child     | |     child    |  |   child       | |     child      |
++-------------+ +--------------+  +---------------+ +----------------+
+      |                  |              |                  |          
+      +-------+ +--------+              +-------+ +--------+          
+              | |                               | |                   
+       +----------------+                +------------------+         
+       | merged stable  |                | merged unstable  |         
+       |   revision     |                |     revision     |         
+       +----------------+                +------------------+ 
+
+\_____________  _______________/  \_______________  _________________/
+              \/                                  \/
+         stable branch                     unstable branch
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/two-branches}
+@end ifnotinfo
 
 For each branch, the set of revisions with @emph{no children} is
 called the @dfn{heads} of the branch. Monotone can automatically
@@ -516,7 +930,38 @@ left grandchild, since those revisions are the heads of the branch. It
 will not merge the left child with the right child, because the left
 child is not a member of the heads.
 
+@ifinfo
+@smallexample
+@group
+               +-----------------+
+               | parent revision |
+               +-----------------+
+                      |       |
+             +--------+       |
+             |                |
+       +-------------+        |
+       | left child  |        |
+       +-------------+        |
+             |                |         
+*************|****************|************
+*            |                |           *
+*  +-----------------+  +-------------+   *
+*  | left grandchild |  | right child |   *  the heads of the branch
+*  +-----------------+  +-------------+   *    (before the merge)
+*            |                |           *
+*************|****************|************
+             |                |         
+             +--------+   +---+
+                      |   |
+               +-----------------+
+               | merged revision |
+               +-----------------+
+@end group
+@end smallexample
+@end ifinfo
+@ifnotinfo
 @image{figures/branch-heads}
+@end ifnotinfo
 
 When there is only one revision in the heads of a branch, we say that
 @i{the heads are merged}, or more generally that @i{the branch is
@@ -3826,12 +4271,10 @@ LDH, '@@' and '.' characters, as required for key and cert names.
 ASCII codes 0x0D (CR), 0x0A (LF), 0x09 (HT), and 0x20 (SP). 
 @end itemize
 
-@heading Explicit rename certs, @file{MT/work} and @file{.mt-attrs}
+@heading The @file{.mt-attrs} file
 
-Incompatible change: these formats were changed, incompatibly, from
-earlier versions of monotone which used 0x20 (ASCII SP) as a
-delimiter. The files now use 0x0A (ASCII LF) as a delimiter, to permit
-0x20 in filenames.
+Now uses 0x0A (ASCII LF) as a delimiter, to permit 0x20 in
+filenames. This may change in the future.
 
 
 @page
@@ -4121,7 +4564,7 @@ Show status of working copy.
 
 @item @b{log} @i{[id]}
 Show historical log of revisions, starting from working copy
-base version, or @i{[id]} if given.
+base revision, or @i{[id]} if given.
 @comment TROFF INPUT: .TP
 
 @item @b{cert} @i{<id> <certname> [certval]}

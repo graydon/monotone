@@ -1,3 +1,10 @@
+2004-11-07  graydon hoare  <graydon@pobox.com>
+
+	* figures/*.txt: Drop.
+	* monotone.texi: Pull ASCII figures back in conditionally.
+	* NEWS, AUTHORS, monotone.spec: Update for 0.15.
+	* monotone.1: Update.
+
 2004-11-06  graydon hoare  <graydon@pobox.com>
 
 	* README.changesets: New file.
