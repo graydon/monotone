@@ -20,7 +20,7 @@ MOST_SOURCES =								\
 	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
 	 mkstemp.hh mt_version.hh automate.hh database_check.hh smap.hh	\
-	 gettext.h
+	 gettext.h package_revision.c package_full_revision.c
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -298,8 +298,8 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
-                      package_revision.h \
-                      package_full_revision.txt package_full_revision.h
+                      package_revision.c \
+                      package_full_revision.txt package_full_revision.c
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
 CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
@@ -325,8 +325,8 @@ $(srcdir)/MT/revision:
 package_revision.txt: $(srcdir)/MT/revision
 	if [ -f $< ]; then cp $< $@; fi
 	if [ ! -f $@ ]; then echo "unknown" > $@; fi
-package_revision.h: package_revision.txt txt2c Makefile
-	./txt2c --strip-trailing $< package_revision >$@.tmp
+package_revision.c: package_revision.txt txt2c Makefile
+	./txt2c --strip-trailing --no-static $< package_revision >$@.tmp
 	cmp $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
@@ -342,8 +342,8 @@ package_full_revision_dist.txt: package_full_revision.txt
 	(echo ''; \
 	 echo '  Generated from data cached in the distribution;'; \
 	 echo '  further changes may have been made.') >> $@
-package_full_revision.h: package_full_revision.txt txt2c Makefile
-	./txt2c $< package_full_revision >$@.tmp
+package_full_revision.c: package_full_revision.txt txt2c Makefile
+	./txt2c --no-static $< package_full_revision >$@.tmp
 	cmp $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
