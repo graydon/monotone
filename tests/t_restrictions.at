@@ -37,7 +37,7 @@ AT_CHECK(MONOTONE add work/file3, [], [ignore], [ignore])
 AT_CHECK(MONOTONE ls unknown, [], [stdout], [ignore])
 AT_CHECK(grep work/file4 stdout, [0], [ignore])
 
-AT_CHECK(MONOTONE ls unknown work/file4, [], [stdout], [ignore])
+AT_CHECK(MONOTONE ls unknown work, [], [stdout], [ignore])
 AT_CHECK(grep work/file4 stdout, [0], [ignore])
 
 AT_CHECK(mv work/file2 work/filex2)
@@ -53,7 +53,7 @@ AT_CHECK(mv work/filex2 work/file2)
 AT_CHECK(MONOTONE ls ignored --rcfile=ignored.lua, [], [stdout], [ignore])
 AT_CHECK(grep work/foo.o stdout, [0], [ignore])
 
-AT_CHECK(MONOTONE ls ignored --rcfile=ignored.lua work/foo.o, [], [stdout], [ignore])
+AT_CHECK(MONOTONE ls ignored --rcfile=ignored.lua work, [], [stdout], [ignore])
 AT_CHECK(grep work/foo.o stdout, [0], [ignore])
 
 # initial commit

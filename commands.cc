@@ -323,6 +323,52 @@ put_path_rearrangement(change_set::path_rearrangement & w)
 }
 
 static void
+get_valid_paths(path_set const & old_paths, change_set::path_rearrangement const & work, 
+		path_set & valid_paths)
+{
+  // collect paths from old manifest and work set into valid_paths
+
+  valid_paths.clear();
+  valid_paths.insert(old_paths.begin(), old_paths.end());
+  valid_paths.insert(work.deleted_files.begin(), work.deleted_files.end());
+  valid_paths.insert(work.deleted_dirs.begin(), work.deleted_dirs.end());
+
+  // only add the new names for renamed files and dirs
+  // the old names should come from the old manifest
+
+  for (map<file_path, file_path>::const_iterator i = work.renamed_files.begin(); 
+       i != work.renamed_files.end(); ++i) 
+      valid_paths.insert(i->second); 
+
+  for (map<file_path, file_path>::const_iterator i = work.renamed_dirs.begin(); 
+       i != work.renamed_dirs.end(); ++i) 
+      valid_paths.insert(i->second); 
+
+  valid_paths.insert(work.added_files.begin(), work.added_files.end());
+
+  // add intermediate directories to valid paths
+
+  path_set added_dirs;
+
+  for (path_set::const_iterator i = valid_paths.begin(); i != valid_paths.end();
+       ++i)
+    {
+      fs::path p = mkpath((*i)());
+      while (p.has_branch_path())
+        {
+          p = p.branch_path();
+          file_path dir(p.string());
+          // once we his a that exists or has been added we're done.
+          if (valid_paths.find(dir) != valid_paths.end()) break;
+          if (added_dirs.find(dir) != added_dirs.end()) break;
+          added_dirs.insert(dir);
+        }
+    }
+
+  valid_paths.insert(added_dirs.begin(), added_dirs.end());
+}
+
+static void
 restrict_path_set(string const & type,
                   path_set const & paths, 
                   path_set & included, 
@@ -386,16 +432,6 @@ restrict_path_rearrangement(change_set::path_rearrangement const & work,
 
   restrict_path_set("add file", work.added_files, 
                     included.added_files, excluded.added_files, app);
-}
-
-static void 
-get_path_rearrangement(change_set::path_rearrangement & included,
-                       change_set::path_rearrangement & excluded,
-                       app_state & app)
-{
-  change_set::path_rearrangement work;
-  get_path_rearrangement(work);
-  restrict_path_rearrangement(work, included, excluded, app);
 }
 
 static void 
@@ -486,6 +522,7 @@ calculate_current_revision(app_state & app,
 
 static void
 calculate_restricted_revision(app_state & app, 
+                              vector<utf8> const & args,
                               revision_set & rev,
                               manifest_map & m_old,
                               manifest_map & m_new,
@@ -494,7 +531,8 @@ calculate_restricted_revision(app_state & app,
   manifest_id old_manifest_id;
   revision_id old_revision_id;    
   boost::shared_ptr<change_set> cs(new change_set());
-  path_set old_paths, new_paths;
+  path_set old_paths, new_paths, valid_paths;
+  change_set::path_rearrangement work, included, excluded;
 
   rev.edges.clear();
   m_old.clear();
@@ -504,11 +542,14 @@ calculate_restricted_revision(app_state & app,
                           old_revision_id,
                           old_manifest_id, m_old);
 
-  change_set::path_rearrangement included, excluded;
-
-  get_path_rearrangement(included, excluded, app);
-
+  get_path_rearrangement(work);
   extract_path_set(m_old, old_paths);
+  get_valid_paths(old_paths, work, valid_paths);
+
+  app.set_restriction(valid_paths, args); 
+
+  restrict_path_rearrangement(work, included, excluded, app);
+
   apply_path_rearrangement(old_paths, included, new_paths);
 
   cs->rearrangement = included;
@@ -524,16 +565,17 @@ calculate_restricted_revision(app_state & app,
                              make_pair(old_manifest_id, cs)));
 }
 
-
 static void
 calculate_restricted_revision(app_state & app, 
+                              vector<utf8> const & args,
                               revision_set & rev,
                               manifest_map & m_old,
                               manifest_map & m_new)
 {
   change_set::path_rearrangement work;
-  calculate_restricted_revision(app, rev, m_old, m_new, work);
+  calculate_restricted_revision(app, args, rev, m_old, m_new, work);
 }
+
 
 static string 
 get_stdin()
@@ -1484,10 +1526,7 @@ CMD(status, "informative", "[PATH]...", "show status of working copy")
 
   app.require_working_copy();
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    app.add_restriction((*i)());
-
-  calculate_restricted_revision(app, rs, m_old, m_new);
+  calculate_restricted_revision(app, args, rs, m_old, m_new);
 
   write_revision_set(rs, tmp);
   cout << endl << tmp << endl;
@@ -1796,12 +1835,9 @@ ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 {
   app.require_working_copy();
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    app.add_restriction((*i)());
-
   revision_set rev;
   manifest_map m_old, m_new;
-  calculate_restricted_revision(app, rev, m_old, m_new);
+  calculate_restricted_revision(app, args, rev, m_old, m_new);
   unknown_itemizer u(app, m_new, want_ignored);
   walk_tree(u);
 }
@@ -1813,33 +1849,21 @@ ls_missing (app_state & app, vector<utf8> const & args)
   revision_id rid;
   manifest_id mid;
   manifest_map man;
-  change_set::path_rearrangement included, excluded;
-  path_set old_paths, new_paths;
+  change_set::path_rearrangement work, included, excluded;
+  path_set old_paths, new_paths, valid_paths;
 
   app.require_working_copy();
 
-  get_revision_id(rid);
-  if (! rid.inner()().empty())
-    {
-      N(app.db.revision_exists(rid),
-        F("base revision %s does not exist in database\n") % rid);
-      
-      app.db.get_revision_manifest(rid, mid);
-      L(F("old manifest is %s\n") % mid);
-      
-      N(app.db.manifest_version_exists(mid),
-        F("base manifest %s does not exist in database\n") % mid);
-      
-      app.db.get_manifest(mid, man);
-    }
+  calculate_base_revision(app, rid, mid, man);
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    app.add_restriction((*i)());
-
-  L(F("old manifest has %d entries\n") % man.size());
-
-  get_path_rearrangement(included, excluded, app);
+  get_path_rearrangement(work);
   extract_path_set(man, old_paths);
+  get_valid_paths(old_paths, work, valid_paths);
+
+  app.set_restriction(valid_paths, args); 
+
+  restrict_path_rearrangement(work, included, excluded, app);
+
   apply_path_rearrangement(old_paths, included, new_paths);
 
   for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
@@ -2253,12 +2277,9 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   
   app.require_working_copy();
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    app.add_restriction((*i)());
-
   // preserve excluded work for future commmits
   change_set::path_rearrangement excluded_work;
-  calculate_restricted_revision(app, rs, m_old, m_new, excluded_work);
+  calculate_restricted_revision(app, args, rs, m_old, m_new, excluded_work);
   calculate_ident(rs, rid);
 
   N(!(rs.edges.size() == 0 || 
@@ -2511,15 +2532,12 @@ void do_diff(const string & name,
   else if (app.revision_selectors.size() == 1)
     app.require_working_copy();
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    app.add_restriction((*i)());
-
   transaction_guard guard(app.db);
 
   if (app.revision_selectors.size() == 0)
     {
       manifest_map m_old;
-      calculate_restricted_revision(app, r_new, m_old, m_new);
+      calculate_restricted_revision(app, args, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       if (r_new.edges.size() == 1)
         composite = edge_changes(r_new.edges.begin());
@@ -2533,7 +2551,7 @@ void do_diff(const string & name,
       N(app.db.revision_exists(r_old_id),
         F("revision %s does not exist") % r_old_id);
       app.db.get_revision(r_old_id, r_old);
-      calculate_restricted_revision(app, r_new, m_old, m_new);
+      calculate_restricted_revision(app, args, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       N(r_new.edges.size() == 1, F("current revision has no ancestor"));
       new_is_archived = false;
@@ -3284,18 +3302,22 @@ CMD(revert, "working copy", "[PATH]...",
   manifest_map m_old;
   revision_id old_revision_id;
   manifest_id old_manifest_id;
-  change_set::path_rearrangement included, excluded;
+  change_set::path_rearrangement work, included, excluded;
+  path_set old_paths, valid_paths;
  
   app.require_working_copy();
-
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    app.add_restriction((*i)());
 
   calculate_base_revision(app, 
                           old_revision_id,
                           old_manifest_id, m_old);
 
-  get_path_rearrangement(included, excluded, app);
+  get_path_rearrangement(work);
+  extract_path_set(m_old, old_paths);
+  get_valid_paths(old_paths, work, valid_paths);
+  
+  app.set_restriction(valid_paths, args);
+
+  restrict_path_rearrangement(work, included, excluded, app);
 
   for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
     {

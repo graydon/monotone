@@ -13,6 +13,29 @@
 	of libidn copyright note.
 	Add Jon Bright.
 
+2005-02-24  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (add_restriction): rename to ...
+	(set_restriction) this; and add path validation
+	* commands.cc (get_valid_paths): new function
+	(get_path_rearrangement) remove restricted include/exclude variant
+	(calculate_restricted_revision) get valid paths and use to set up
+	restriction
+	(status, ls_unknown, commit, do_diff) pass args to
+	calculate_restricted_revision to valid restriction paths
+	(ls_missing, revert) get valid paths and use to set up restriction
+	* tests/t_checkout_options.at: remove bug report priority (it's
+	fixed!)
+	* tests/t_diff_added_file.at: add --revision options to diff
+	* tests/t_restrictions.at: remove invalid paths from ls unknown
+	and ls ignored
+	* tests/t_restrictions_warn_on_unknown.at: un-XFAIL
+	
+2005-02-23  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (ls_missing): replace duplicated code with call to
+	calculate_base_revision
+
 2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* file_io.cc (get_homedir): Add more comments and logging to Win32
