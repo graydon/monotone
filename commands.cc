@@ -111,7 +111,7 @@ void explain_usage(string const & cmd, ostream & out)
       out << "     " << i->second->name
 	  << " " << params.substr(old, j - old)
 	  << endl
-	  << "     " << i->second->desc << endl << endl;
+	  << "       " << i->second->desc << endl << endl;
       return;
     }
 
@@ -676,7 +676,7 @@ static void ls_keys (string name, app_state & app, vector<string> const & args)
   guard.commit();
 }
 
-CMD(genkey, "key and cert", "<keyid>", "generate an RSA key-pair")
+CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -697,7 +697,7 @@ CMD(genkey, "key and cert", "<keyid>", "generate an RSA key-pair")
   guard.commit();
 }
 
-CMD(cert, "key and cert", "(file|manifest) <id> <certname> [certval]", 
+CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
                         "create a cert for a file or manifest")
 {
   if ((args.size() != 4) && (args.size() != 3))
@@ -761,7 +761,7 @@ CMD(cert, "key and cert", "(file|manifest) <id> <certname> [certval]",
 }
 
 
-CMD(tag, "certificate", "<id> <tagname>", 
+CMD(tag, "certificate", "ID TAGNAME", 
     "put a symbolic tag cert on a manifest version")
 {
   if (args.size() != 2)
@@ -772,7 +772,7 @@ CMD(tag, "certificate", "<id> <tagname>",
   cert_manifest_tag(m, args[1], app, dbw);
 }
 
-CMD(approve, "certificate", "(file|manifest) <id>", 
+CMD(approve, "certificate", "(file|manifest) ID", 
     "approve of a manifest or file version")
 {
   if (args.size() != 2)
@@ -795,7 +795,7 @@ CMD(approve, "certificate", "(file|manifest) <id>",
     throw usage(name);
 }
 
-CMD(disapprove, "certificate", "(file|manifest) <id>", 
+CMD(disapprove, "certificate", "(file|manifest) ID", 
     "disapprove of a manifest or file version")
 {
   if (args.size() != 2)
@@ -819,7 +819,7 @@ CMD(disapprove, "certificate", "(file|manifest) <id>",
 }
 
 
-CMD(comment, "certificate", "(file|manifest) <id> [comment]", 
+CMD(comment, "certificate", "(file|manifest) ID [COMMENT]", 
     "comment on a file or manifest version")
 {
   if (args.size() != 2 && args.size() != 3)
@@ -853,7 +853,7 @@ CMD(comment, "certificate", "(file|manifest) <id> [comment]",
 
 
 
-CMD(add, "working copy", "<pathname> [...]", "add files to working copy")
+CMD(add, "working copy", "FILE...", "add files to working copy")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -878,7 +878,7 @@ CMD(add, "working copy", "<pathname> [...]", "add files to working copy")
   app.write_options();
 }
 
-CMD(drop, "working copy", "<pathname> [...]", "drop files from working copy")
+CMD(drop, "working copy", "FILE...", "drop files from working copy")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -903,7 +903,7 @@ CMD(drop, "working copy", "<pathname> [...]", "drop files from working copy")
   app.write_options();
 }
 
-CMD(commit, "working copy", "[log message]", "commit working copy to database")
+CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 {
   string log_message("");
   manifest_map m_old, m_new;
@@ -1086,7 +1086,7 @@ CMD(commit, "working copy", "[log message]", "commit working copy to database")
   app.write_options();
 }
 
-CMD(update, "working copy", "[sort keys...]", "update working copy, relative to sorting keys")
+CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to sorting keys")
 {
 
   manifest_data m_chosen_data;
@@ -1187,7 +1187,7 @@ CMD(update, "working copy", "[sort keys...]", "update working copy, relative to 
   app.write_options();
 }
 
-CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working copy")
+CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy")
 {
   manifest_map m_old;
 
@@ -1292,7 +1292,7 @@ CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working cop
 }
 
 
-CMD(cat, "tree", "(file|manifest) <id>", "write file or manifest from database to stdout")
+CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1337,7 +1337,7 @@ CMD(cat, "tree", "(file|manifest) <id>", "write file or manifest from database t
 }
 
 
-CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from database into directory")
+CMD(checkout, "tree", "MANIFEST-ID DIRECTORY", "check out tree state from database into directory")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1387,7 +1387,7 @@ CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from da
   app.write_options();
 }
 
-ALIAS(co, checkout, "tree", "<manifest-id>",
+ALIAS(co, checkout, "tree", "MANIFEST-ID DIRECTORY",
       "check out tree state from database; alias for checkout")
 
 CMD(heads, "tree", "", "show unmerged heads of branch")
@@ -1530,7 +1530,7 @@ CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result"
 }
 */
 
-CMD(propagate, "tree", "<src-branch> <dst-branch>", 
+CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
     "merge from one branch to another asymmetrically")
 {
   /*  
@@ -1611,7 +1611,7 @@ CMD(propagate, "tree", "<src-branch> <dst-branch>",
 }
 
 
-CMD(complete, "informative", "(manifest|file) <partial-id>", "complete partial id")
+CMD(complete, "informative", "(manifest|file) PARTIAL-ID", "complete partial id")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1727,7 +1727,7 @@ static void ls_branches (string name, app_state & app, vector<string> const & ar
   guard.commit();
 }
 
-CMD(list, "informative", "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranches", "show certs, keys, or branches")
+CMD(list, "informative", "certs (file|manifest) ID\nkeys [PATTERN]\nbranches", "show certs, keys, or branches")
 {
   if (args.size() == 0)
     throw usage(name);
@@ -1745,10 +1745,10 @@ CMD(list, "informative", "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranc
     throw usage(name);
 }
 
-ALIAS(ls, list, "informative",  "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranches", "show certs, keys, or branches")
+ALIAS(ls, list, "informative",  "certs (file|manifest) ID\nkeys [PATTERN]\nbranches", "show certs, keys, or branches")
 
 
-CMD(mdelta, "packet i/o", "<oldid> <newid>", "write manifest delta packet to stdout")
+CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1773,7 +1773,7 @@ CMD(mdelta, "packet i/o", "<oldid> <newid>", "write manifest delta packet to std
   guard.commit();
 }
 
-CMD(fdelta, "packet i/o", "<oldid> <newid>", "write file delta packet to stdout")
+CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1795,7 +1795,7 @@ CMD(fdelta, "packet i/o", "<oldid> <newid>", "write file delta packet to stdout"
   guard.commit();
 }
 
-CMD(mdata, "packet i/o", "<id>", "write manifest data packet to stdout")
+CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1814,7 +1814,7 @@ CMD(mdata, "packet i/o", "<id>", "write manifest data packet to stdout")
 }
 
 
-CMD(fdata, "packet i/o", "<id>", "write file data packet to stdout")
+CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1832,7 +1832,7 @@ CMD(fdata, "packet i/o", "<id>", "write file data packet to stdout")
   guard.commit();
 }
 
-CMD(mcerts, "packet i/o", "<id>", "write manifest cert packets to stdout")
+CMD(mcerts, "packet i/o", "ID", "write manifest cert packets to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1851,7 +1851,7 @@ CMD(mcerts, "packet i/o", "<id>", "write manifest cert packets to stdout")
   guard.commit();
 }
 
-CMD(fcerts, "packet i/o", "<id>", "write file cert packets to stdout")
+CMD(fcerts, "packet i/o", "ID", "write file cert packets to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1870,7 +1870,7 @@ CMD(fcerts, "packet i/o", "<id>", "write file cert packets to stdout")
   guard.commit();
 }
 
-CMD(pubkey, "packet i/o", "<id>", "write public key packet to stdout")
+CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1884,7 +1884,7 @@ CMD(pubkey, "packet i/o", "<id>", "write public key packet to stdout")
   guard.commit();
 }
 
-CMD(privkey, "packet i/o", "<id>", "write private key packet to stdout")
+CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1945,7 +1945,7 @@ CMD(agraph, "graph visualization", "", "dump ancestry graph to stdout")
   guard.commit();
 }
 
-CMD(fetch, "network", "[URL] [groupname]", "fetch recent changes from network")
+CMD(fetch, "network", "[URL] [GROUPNAME]", "fetch recent changes from network")
 {
   if (args.size() > 2)
     throw usage(name);
@@ -1975,7 +1975,7 @@ CMD(fetch, "network", "[URL] [groupname]", "fetch recent changes from network")
   fetch_queued_blobs_from_network(sources, app);
 }
 
-CMD(post, "network", "[URL] [groupname]", "post queued changes to network")
+CMD(post, "network", "[URL] [GROUPNAME]", "post queued changes to network")
 {
   if (args.size() > 2)
     throw usage(name);
@@ -2005,7 +2005,7 @@ CMD(post, "network", "[URL] [groupname]", "post queued changes to network")
 }
 
 
-CMD(rcs_import, "rcs", "<rcsfile> ...", "import all versions in RCS files")
+CMD(rcs_import, "rcs", "RCSFILE...", "import all versions in RCS files")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -2020,7 +2020,7 @@ CMD(rcs_import, "rcs", "<rcsfile> ...", "import all versions in RCS files")
 }
 
 
-CMD(cvs_import, "rcs", "<cvsroot>", "import all versions in CVS repository")
+CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
 {
   if (args.size() != 1)
     throw usage(name);

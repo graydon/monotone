@@ -1,3 +1,12 @@
+2003-09-19  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (genkey): Use all-caps for meta-syntactic variable.
+	(cert, tag, approve, disapprove, comment, add, drop, commit,
+	update, revert, cat, checkout, co, propagate, complete, list, ls,
+	mdelta, fdelta, mdata, fdata, mcerts, fcerts, pubkey, privkey,
+	fetch, post, rcs_import, rcs): Likewise.
+	(explain_usage): Indent explanatory text past the command names.
+
 2003-09-17  Tom Tromey  <tromey@redhat.com>
 
 	* commands.cc (list): Don't compute or use "subname".
