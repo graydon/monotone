@@ -1,5 +1,17 @@
 2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* views.sql (trusted_parents_in_branch): Remove.
+	(trusted_children_in_branch): Remove.
+	(trusted_branch_members): New view.
+	(trusted_branch_parents): New view.
+	(branch_heads): Use the new views, not the removed ones.
+	
+	* database.cc (get_heads): Column name in 'branch_heads'
+	unavoidably changed from 'id' to 'parent'; adjust SELECT statement
+	to use new name.
+
+2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* database.cc: Remove hard tabs.
 
 2004-11-16  Nathaniel Smith  <njs@codesourcery.com>

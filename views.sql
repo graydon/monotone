@@ -45,22 +45,25 @@ CREATE VIEW trusted_revision_certs AS
 	WHERE trust == 1
 	;
 
-CREATE VIEW trusted_parents_in_branch AS
-	SELECT id, value
-	FROM trusted_revision_certs
-	WHERE name = "branch" AND id IN
-		(SELECT parent FROM revision_ancestry)
-	;
+CREATE VIEW trusted_branch_members AS 
+        SELECT id, value FROM trusted_revision_certs
+        WHERE name = "branch"
+        ;
 
-CREATE VIEW trusted_children_in_branch AS
-	SELECT id, value
-	FROM trusted_revision_certs
-	WHERE name = "branch" AND id IN
-		(SELECT child FROM revision_ancestry)
-	;
+-- (id, value) in this table means that id is the parent of some child
+-- that is in branch 'value'.  It does not mean anything about the
+-- branch that 'id' is in!
+CREATE VIEW trusted_branch_parents AS
+        SELECT parent, value FROM trusted_branch_members, revision_ancestry
+        WHERE child = id
+        ;
 
+-- Because sqlite 2 does not support naming the columns in a view,
+-- this view has columns (parent, value).  This is confusing and
+-- should be fixed when sqlite starts supporting 'CREATE VIEW name (columns)'
+-- syntax.
 CREATE VIEW branch_heads AS
-	SELECT id, value FROM trusted_children_in_branch
-	EXCEPT
-	SELECT id, value FROM trusted_parents_in_branch
-	;
+        SELECT id, value FROM trusted_branch_members
+        EXCEPT
+        SELECT parent, value FROM trusted_branch_parents
+        ;

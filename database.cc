@@ -1589,7 +1589,7 @@ database::get_heads(base64<cert_value> const & branch,
 {
   results res;
   fetch(res, one_col, any_rows,
-        "SELECT id "
+        "SELECT parent "
         "FROM branch_heads "
         "WHERE value = '%q'",
         branch().c_str());
