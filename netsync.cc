@@ -210,13 +210,13 @@ struct PipeStream : Netxx::Stream
   Netxx::signed_size_type write(const void *buffer, Netxx::size_type length);
   Netxx::signed_size_type read (void *buffer, Netxx::size_type length);
   Netxx::socket_type get_writefd() const { return fd_write; }
-  bool is_pipe() const { return get_writefd()==Netxx::socket_type(-1); }
+  bool is_pipe() const { return get_writefd()!=Netxx::socket_type(-1); }
   void close();
   const Netxx::ProbeInfo* get_probe_info() const;
 // ctors
   explicit PipeStream (Netxx::socket_type socketfd, Netxx::socket_type writefd, const Netxx::Timeout &timeout=Netxx::Timeout())
     : Netxx::Stream(socketfd,timeout), fd_write(writefd)
-  {  if (!is_pipe())
+  {  if (is_pipe())
      {  pi_.add_socket(get_socketfd());
         pi_.add_socket(get_writefd());
      }
@@ -229,15 +229,15 @@ struct PipeStream : Netxx::Stream
 
 // pass them through ... for now
 Netxx::signed_size_type PipeStream::write(const void *buffer, Netxx::size_type length)
-{  if (is_pipe()) return Parent::write(buffer,length);
+{  if (!is_pipe()) return Parent::write(buffer,length);
    else return ::write(fd_write, buffer, length);
 }
 Netxx::signed_size_type PipeStream::read (void *buffer, Netxx::size_type length) 
-{  if (is_pipe()) return Parent::read(buffer,length);
+{  if (!is_pipe()) return Parent::read(buffer,length);
    else return ::read(get_socketfd(), buffer, length);
 }
 void PipeStream::close()
-{  if (!is_pipe()) ::close(fd_write);
+{  if (is_pipe()) ::close(fd_write);
    Parent::close();
 }
 const Netxx::ProbeInfo* PipeStream::get_probe_info() const
