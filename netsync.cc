@@ -27,6 +27,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "xdelta.hh"
+#include "epoch.hh"
 
 #include "cryptopp/osrng.h"
 
@@ -1700,6 +1701,8 @@ data_exists(netcmd_item_type type,
       return app.db.revision_exists(revision_id(hitem));
     case cert_item:
       return app.db.revision_cert_exists(hitem);
+    case epoch_item:
+      return app.db.epoch_exists(epoch_id(hitem));
     }
   return false;
 }
@@ -1716,23 +1719,20 @@ load_data(netcmd_item_type type,
   encode_hexenc(item, hitem);
   switch (type)
     {
-      // BROKEN
-//     case epoch_item:
-//       {
-//         std::map<id, std::pair<cert_value, epoch_id> >::const_iterator
-//           i = id_to_epoch.find(item);
-//         if (i == id_to_epoch.end())
-//           throw bad_decode(F("no epoch with hash '%s' in our database") % hitem);
-//         cert_value branchname = i->second.first;
-//         hexenc<id> epoch_encoded = i->second.second.inner();
-//         id raw_epoch;
-//         decode_hexenc(epoch_encoded, raw_epoch);
-//         // format is <branchname: vstr> <epoch: 20 bytes id>
-//         insert_variable_length_string(branchname(), out);
-//         I(raw_epoch().size() == constants::merkle_hash_length_in_bytes);
-//         out += raw_epoch();
-//       }
-//       break;
+    case epoch_item:
+      if (app.db.epoch_exists(epoch_id(hitem)))
+      {
+        cert_value branch;
+        epoch_data epoch;
+        app.db.get_epoch(epoch_id(hitem), branch, epoch);
+        write_epoch(branch, epoch, out);
+      }
+      else
+        {
+          throw bad_decode(F("epoch with hash '%s' does not exist in our database")
+                           % hitem);
+        }
+      break;
     case key_item:
       if (app.db.public_key_exists(hitem))
         {
@@ -2307,49 +2307,40 @@ session::process_data_cmd(netcmd_item_type type,
                            
   switch (type)
     {
-      // BROKEN
-//     case epoch_item:
-//       if (id_to_epoch.find(id) != id_to_epoch.end())
-//         L(F("epoch '%s' already exists in our database\n") % hitem);
-//       else
-//         {
-//           std::string raw_branch;
-//           id raw_epoch;
-//           size_t pos = 0;
-//           extract_variable_length_string(dat, raw_branch, pos, "epoch data, branch name");
-//           raw_epoch = id(extract_substring(dat, pos,
-//                                            constants::merkle_hash_length_in_bytes,
-//                                            "epoch data, epoch value"));
-//           assert_end_of_buffer(in, pos, "epoch data payload");
-//           cert_value branch(raw_branch);
-//           hexenc<id> tmpid;
-//           encode_hexenc(raw_epoch, tmpid);
-//           epoch_id epoch(tmpid);
-//           L(F("received epoch %s for branch %s\n") % epoch % branch);
-//           // okay, we have a (branch, epoch) pair, and it's not a pair that we
-//           // already have.  So we need to make sure that it doesn't contradict
-//           // any of the ones that we already have, and then absorb it.
-//           std::map<cert_value, epoch_id> epochs;
-//           app.db.get_epochs(epochs);
-//           std::map<cert_value, epoch_id>::const_iterator i = epochs.find(branch);
-//           if (i == epochs.end())
-//             {
-//               L(F("branch %s has no epoch; saving epoch\n") % branch);
-//               app.db.set_epoch(branch, epoch);
-//             }
-//           else
-//             {
-//               L(F("branch %s already has an epoch; checking\n") % branch);
-//               // this should always fail, because if we had the same
-//               // branch/epoch pair, we'd already have the hash, and the
-//               // data_exists check above would have failed.
-//               N(i->second == epoch,
-//                 F("Mismatched epoch on branch %s.  We have '%s', they have '%s'.\n")
-//                 % branch % i->second % epoch);
-//               I(false);
-//             }
-//         }
-//       break;
+    case epoch_item:
+      if (this->app.db.epoch_exists(epoch_id(hitem)))
+        {
+          L(F("epoch '%s' already exists in our database\n") % hitem);
+        }
+      else
+        {
+          cert_value branch;
+          epoch_data epoch;
+          read_epoch(dat, branch, epoch);
+          L(F("received epoch %s for branch %s\n") % epoch % branch);
+          std::map<cert_value, epoch_data> epochs;
+          app.db.get_epochs(epochs);
+          std::map<cert_value, epoch_data>::const_iterator i;
+          i = epochs.find(branch);
+          if (i == epochs.end())
+            {
+              L(F("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
+              app.db.set_epoch(branch, epoch);
+            }
+          else
+            {
+              L(F("branch %s already has an epoch; checking\n") % branch);
+              N(i->second == epoch,
+                F("Mismatched epoch on branch %s.  We have '%s', they have '%s'.\n")
+                % branch % i->second % epoch);
+              // Can't get here, unless something's wrong with our hashing
+              // (because the if(epoch_exists()) branch should have triggered
+              // if we actually had the same epoch).  Getting epochs wrong is
+              // dangerous, so play it safe.
+              I(false);
+            }
+        }
+      break;
       
     case key_item:
       if (this->app.db.public_key_exists(hitem))
@@ -3265,16 +3256,16 @@ session::rebuild_merkle_trees(app_state & app,
       }
     
     {
-      map<cert_value, epoch_id> epochs;
+      map<cert_value, epoch_data> epochs;
       app.db.get_epochs(epochs);
 
       // set to zero any epoch which is not yet set    
-      epoch_id epoch_zero(std::string(constants::idlen, '0'));
+      epoch_data epoch_zero(std::string(constants::epochlen, '0'));
       for (std::set<string>::const_iterator i = branchnames.begin();
            i != branchnames.end(); ++i)
         {
           cert_value branch(*i);
-          std::map<cert_value, epoch_id>::const_iterator j = epochs.find(branch);
+          std::map<cert_value, epoch_data>::const_iterator j = epochs.find(branch);
           if (j == epochs.end())
             {
               L(F("setting epoch on %s to zero\n") % branch);
@@ -3284,22 +3275,14 @@ session::rebuild_merkle_trees(app_state & app,
         }
 
       // hash all epochs and load them into their merkle tree
-      for (std::map<cert_value, epoch_id>::const_iterator i = epochs.begin();
+      for (std::map<cert_value, epoch_data>::const_iterator i = epochs.begin();
            i != epochs.end(); ++i)
         {
-          // hash is of concat(branch name, raw epoch representation).  This
-          // is unique, because epochs have a fixed length.
-          std::string tmp(i->first());
-          id raw_epoch;
-          decode_hexenc(i->second.inner(), raw_epoch);
-          tmp += raw_epoch();
-          data tdat(tmp);
-          hexenc<id> out;
-          calculate_ident(tdat, out);
+          epoch_id eid;
+          epoch_hash_code(i->first, i->second, eid);
           id raw_hash;
-          decode_hexenc(out, raw_hash);
+          decode_hexenc(eid.inner(), raw_hash);
           insert_into_merkle_tree(*etab, epoch_item, true, raw_hash(), 0);
-          id_to_epoch.insert(std::make_pair(raw_hash, *i));
         }
     }
 

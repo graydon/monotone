@@ -948,11 +948,11 @@ void anc_graph::write_certs()
     
     for (std::set<std::string>::const_iterator i = branches.begin(); i != branches.end(); ++i)
       {
-        char buf[constants::idlen];
-        prng.GenerateBlock(reinterpret_cast<byte *>(buf), constants::merkle_hash_length_in_bytes);
-        hexenc<id> hexid;
-        encode_hexenc(id(std::string(buf, buf + constants::merkle_hash_length_in_bytes)), hexid);
-        epoch_id new_epoch(hexid);
+        char buf[constants::epochlen_bytes];
+        prng.GenerateBlock(reinterpret_cast<byte *>(buf), constants::epochlen_bytes);
+        hexenc<data> hexdata;
+        encode_hexenc(data(std::string(buf, buf + constants::epochlen_bytes)), hexdata);
+        epoch_data new_epoch(hexdata);
         L(F("setting epoch for %s to %s\n") % *i % new_epoch);
         app.db.set_epoch(cert_value(*i), new_epoch);
       }

@@ -1785,12 +1785,12 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 static void 
 ls_epochs(string name, app_state & app, vector<utf8> const & args)
 {
-  std::map<cert_value, epoch_id> epochs;
+  std::map<cert_value, epoch_data> epochs;
   app.db.get_epochs(epochs);
 
   if (args.size() == 0)
     {
-      for (std::map<cert_value, epoch_id>::const_iterator i = epochs.begin();
+      for (std::map<cert_value, epoch_data>::const_iterator i = epochs.begin();
            i != epochs.end(); ++i)
         {
           cout << i->second << " " << i->first << endl;
@@ -1801,7 +1801,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
       for (vector<utf8>::const_iterator i = args.begin(); i != args.end();
            ++i)
         {
-          std::map<cert_value, epoch_id>::const_iterator j = epochs.find(cert_value((*i)()));
+          std::map<cert_value, epoch_data>::const_iterator j = epochs.find(cert_value((*i)()));
           N(j != epochs.end(), F("no epoch for branch %s\n") % *i);
           cout << j->second << " " << j->first << endl;
         }
@@ -2230,7 +2230,7 @@ CMD(db, "database",
     {
       if (idx(args, 0)() == "set_epoch")
         app.db.set_epoch(cert_value(idx(args, 1)()),
-                         epoch_id(idx(args,2)()));
+                         epoch_data(idx(args,2)()));
       else
         throw usage(name);
     }

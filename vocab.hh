@@ -112,6 +112,7 @@ typedef revision< hexenc<id> >  revision_id;
 typedef manifest< hexenc<id> >  manifest_id;
 typedef     file< hexenc<id> >      file_id;
 typedef    epoch< hexenc<id> >     epoch_id;
+typedef    epoch< hexenc<data> > epoch_data;
 
 typedef revision< base64< gzip<data> > >   revision_data;
 typedef manifest< base64< gzip<data> > >   manifest_data;

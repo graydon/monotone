@@ -32,6 +32,7 @@
 #include "ui.hh"
 #include "vocab.hh"
 #include "xdelta.hh"
+#include "epoch.hh"
 
 // defined in schema.sql, converted to header:
 #include "schema.h"
@@ -2158,28 +2159,58 @@ void database::complete(selector_type ty,
 // epochs 
 
 void 
-database::get_epochs(std::map<cert_value, epoch_id> & epochs)
+database::get_epochs(std::map<cert_value, epoch_data> & epochs)
 {
   epochs.clear();
   results res;
   fetch(res, 2, any_rows, "SELECT branch, epoch FROM branch_epochs");
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {      
-      base64<cert_value> encoded((*i)[0]);
+      base64<cert_value> encoded(idx(*i, 0));
       cert_value decoded;
       decode_base64(encoded, decoded);
       I(epochs.find(decoded) == epochs.end());
-      epochs.insert(std::make_pair(decoded, epoch_id((*i)[1])));
+      epochs.insert(std::make_pair(decoded, epoch_data(idx(*i, 1))));
     }
 }
 
-void 
-database::set_epoch(cert_value const & branch, epoch_id const & epo)
+void
+database::get_epoch(epoch_id const & eid,
+                    cert_value & branch, epoch_data & epo)
 {
+  I(epoch_exists(eid));
+  results res;
+  fetch(res, 2, any_rows,
+        "SELECT branch, epoch FROM branch_epochs"
+        " WHERE hash = '%q'",
+        eid.inner()().c_str());
+  I(res.size() == 1);
+  base64<cert_value> encoded(idx(idx(res, 0), 0));
+  decode_base64(encoded, branch);
+  epo = epoch_data(idx(idx(res, 0), 1));
+}
+
+bool
+database::epoch_exists(epoch_id const & eid)
+{
+  results res;
+  fetch(res, one_col, any_rows,
+        "SELECT hash FROM branch_epochs WHERE hash = '%q'",
+        eid.inner()().c_str());
+  I(res.size() == 1 || res.size() == 0);
+  return res.size() == 1;
+}
+
+void 
+database::set_epoch(cert_value const & branch, epoch_data const & epo)
+{
+  epoch_id eid;
   base64<cert_value> encoded;
   encode_base64(branch, encoded);
-  execute("INSERT OR REPLACE INTO branch_epochs VALUES('%q', '%q')", 
-          encoded().c_str(), epo.inner()().c_str());
+  epoch_hash_code(branch, epo, eid);
+  I(epo.inner()().size() == constants::epochlen);
+  execute("INSERT OR REPLACE INTO branch_epochs VALUES('%q', '%q', '%q')", 
+          eid.inner()().c_str(), encoded().c_str(), epo.inner()().c_str());
 }
 
 void 
