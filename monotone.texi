@@ -1872,7 +1872,7 @@ Beth finishes and examines her changes:
 
 @smallexample
 @group
-$ monotone --db=beth.db diff
+$ monotone diff
 # 
 # patch "src/banana.c"
 #  from [7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a]
@@ -1961,7 +1961,7 @@ the branch:
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 heads
+$ monotone heads
 monotone: branch 'co.jp.juicebot.jb7' is currently unmerged:
 39969614e5a14316c7ffefc588771f491c709152 abe@@juicebot.co.jp 2004-10-26T02:53:16
 8b41b5399a564494993063287a737d26ede3dee4 beth@@juicebot.co.jp 2004-10-26T02:53:15
@@ -1976,7 +1976,7 @@ conflicts Jim does so himself:
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 merge
+$ monotone merge
 monotone: merging with revision 1 / 2
 monotone: [source] 39969614e5a14316c7ffefc588771f491c709152
 monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
@@ -1992,6 +1992,34 @@ revision. This happened automatically, because the changes between the
 common ancestor and heads did not conflict. If there had been a
 conflict, monotone would have invoked an external merging tool to help
 resolve it.
+
+After merging, the branch has a single head again, and Jim updates
+his working copy. 
+
+@smallexample
+@group
+$ monotone update
+monotone: selected update target da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+monotone: updating src/apple.c to f088e24beb43ab1468d7243e36ce214a559bdc96
+monotone: updating src/banana.c to 5e6622cf5c8805bcbd50921ce7db86dad40f2ec6
+monotone: updated to base revision da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+@end group
+@end smallexample
+
+The update command selected an update target --- in this case the newly merged
+head --- and performed an in-memory merge between Jim's working copy
+and the chosen target. The result was then written to Jim's working copy. If
+Jim's working copy had any uncommitted changes in it, they would have been
+merged with the update in exactly the same manner as the merge of multiple
+committed heads. 
+
+Monotone makes very little distinction between a ``pre-commit'' merge
+(an update) and a ``post-commit'' merge. Both sorts of merge use the
+exact same algorithm. The major difference concerns the recoverability
+of the pre-merge state: if you commit your work first, and merge after
+committing, the merge can fail (due to difficulty in a manual merge
+step) and your committed state is still safe. It is therefore
+recommended that you commit your work @emph{first}, before merging.
 
 @node    Advanced Uses
 @chapter Advanced Uses

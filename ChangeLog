@@ -1,3 +1,8 @@
+2004-11-08  graydon hoare  <graydon@pobox.com>
+
+	* monotone.texi: Some minor cleanups.
+	* netsync.cc: Fix a formatter.
+
 2004-11-07  graydon hoare  <graydon@pobox.com>
 
 	* figures/*.txt: Drop.
@@ -13,7 +18,7 @@
 	* cert.cc, netsync.cc: Remove include.
 	* configure.ac: Bump version number.
 	* merkle_tree.{cc,hh}: Use unsigned char in dynamic_bitset.
-	* po/POTFILES>in: Update to remove os_specific.hh.
+	* po/POTFILES.in: Update to remove os_specific.hh.
 	* po/monotone.pot: Regenerate.
 
 2004-11-05  graydon hoare  <graydon@pobox.com>
