@@ -67,6 +67,14 @@ app_state::allow_working_copy()
           relative_directory = file_path(current.native_directory_string());
           L(F("relative directory is '%s'\n") % relative_directory());
         }
+
+      if (global_sanity.filename == "")
+        {
+          local_path dump_path;
+          get_local_dump_path(dump_path);
+          L(F("setting dump path to %s\n") % dump_path);
+          global_sanity.filename = dump_path();
+        }
     }
   load_rcfiles();
 }

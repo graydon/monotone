@@ -2526,6 +2526,9 @@ after checking out a particular working copy.
 @item MT/work
 Contains a list of additions, deletions, and renames which have occurred
 in the current working copy, relative to the base version. 
+@item MT/debug
+If monotone detects a bug in itself or crashes, then before exiting it
+dumps a log of its recent activity to this file, to aid in debugging.
 @end table
 
 
@@ -3330,9 +3333,9 @@ applied.
 
 @ftable @command
 @item monotone serve @var{address} @var{collection}
-@itemx monotone pull @var{address} @var{collection}
-@itemx monotone push @var{address} @var{collection}
-@itemx monotone sync @var{address} @var{collection}
+@itemx monotone pull [@var{address} [@var{collection}]]
+@itemx monotone push [@var{address} [@var{collection}]]
+@itemx monotone sync [@var{address} [@var{collection}]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -3346,10 +3349,10 @@ and a port number. The @var{collection} parameter indicates a set of
 branches to exchange; every branch for which @var{collection} is a
 prefix will be indexed and made available for synchronization.
 
-For example, supposing bob and alice wish to synchronize their
+For example, supposing Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
-branches. Supposing alice's computer has hostname
-@code{alice.someisp.com}, then alice might run:
+branches. Supposing Alice's computer has hostname
+@code{alice.someisp.com}, then Alice might run:
 
 @smallexample
 @group
@@ -3357,7 +3360,7 @@ $ monotone serve alice.someisp.com net.venge.monotone
 @end group
 @end smallexample
 
-And bob might run
+And Bob might run
 
 @smallexample
 @group
@@ -3366,8 +3369,28 @@ $ monotone sync alice.someisp.com net.venge.monotone
 @end smallexample
 
 When the operation completes, all branches beginning with
-@code{net.venge.monotone} will be synchronized between alice and bob's
+@code{net.venge.monotone} will be synchronized between Alice and Bob's
 databases.
+
+The @command{pull}, @command{push}, and @command{sync} commands only
+require you pass @var{address} and @var{collection} the first time you
+use one of them; monotone will memorize this use and in the future
+default to the same server and collection.  For instance, if Bob wants
+to @command{sync} with Alice again, he can simply run:
+
+@smallexample
+@group
+$ monotone sync
+@end group
+@end smallexample
+
+Of course, he can still @command{sync} with other people and other
+branches by passing an address or address plus collection on the command
+line; this will not affect his default affinity for Alice.  If you ever
+do want to change your defaults, use @code{monotone unset database
+default-server} or @code{monotone unset database default-collection};
+these will clear your defaults, and cause them to be reset to the next
+person you netsync with.
 
 @end ftable
 

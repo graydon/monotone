@@ -223,6 +223,15 @@ write_options_map(data & dat, options_map const & options)
   dat = oss.str();
 }
 
+// local dump file
+
+string const local_dump_file_name("debug");
+
+void get_local_dump_path(local_path & d_path)
+{
+  d_path = (mkpath(book_keeping_dir) / mkpath(local_dump_file_name)).string();
+  L(F("local dump path is %s\n") % d_path);
+}
 
 // attribute map file
 

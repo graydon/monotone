@@ -80,6 +80,11 @@ void read_options_map(data const & dat, options_map & options);
 void write_options_map(data & dat,
                        options_map const & options);
 
+// the "local dump file' is a debugging file, stored in MT/debug.  if we
+// crash, we save some debugging information here.
+
+void get_local_dump_path(local_path & d_path);
+
 // the "attribute map" is part of a working copy. it is *not* stored in MT,
 // because its contents are considered part of the "content" of a tree of
 // files. it is therefore stored in .mt-attrs, in the root of your

@@ -1,5 +1,20 @@
 2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.cc (cpp_main): Remove the special code to dump before
+	printing exception information, since we no longer dump to the
+	screen, so it's always better to have the little status message
+	saying what happened to the log buffer at the end of everything.
+	* sanity.cc (dump_buffer): Give a hint on how to get debug
+	information, when discarding it.
+	* work.{hh,cc} (get_local_dump_path): New function.
+	* app_state.cc (allow_working_copy): Use it for default
+	global_sanity dump path.
+	* monotone.texi (Reserved Files): Document MT/debug.
+	(Network): Capitalize Bob and Alice (sorry graydon).
+	Document new defaulting behavior.
+
+2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
+
 	* work.cc, sanity.cc: Remove tabs.
 
 2005-03-23  Nathaniel Smith  <njs@codesourcery.com>

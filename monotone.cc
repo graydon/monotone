@@ -327,16 +327,6 @@ cpp_main(int argc, char ** argv)
       clean_shutdown = true;
       return 1;
     }
-  catch (...)
-    {
-      // nb: we dump here because it's nicer to get the log dump followed
-      // by the exception printout, when possible. this does *not* mean you
-      // can remove the atexit() hook above, since it dumps when the
-      // execution monitor traps sigsegv / sigabrt etc.
-      global_sanity.dump_buffer();
-      clean_shutdown = true;
-      throw;
-    }
 
   clean_shutdown = true;
   return ret;
