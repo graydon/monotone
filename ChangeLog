@@ -1,5 +1,7 @@
 2005-04-04  Richard Levitte  <richard@levitte.org>
 
+	* Makefile.am (EXTRA_DIST): Add the extra popt files.
+
 	* popt/popt.3, popt/popt.ps, popt/testit.sh: Include a few more
 	  files from popt, mostly to have documentation on hand.  post.ps
 	  is mentioned in popt/README.
