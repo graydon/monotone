@@ -240,7 +240,7 @@ void get_options_path(local_path & o_path)
 
 void read_options_map(data const & dat, options_map & options)
 {
-  regex expr("^([^[:space:]]+)[[:space:]]+([^[:space:]]+)");
+  regex expr("^([^[:space:]]+)[[:blank:]]+([^[:space:]]+)$");
   regex_grep(add_to_options_map(options), dat(), expr, match_not_dot_newline);
 }
 

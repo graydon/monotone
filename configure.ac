@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(monotone, 0.4, graydon@pobox.com)
+AC_INIT(monotone, 0.5, graydon@pobox.com)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -13,8 +13,8 @@ AM_CONFIG_HEADER([config.h])
 # spirit-based programs. we turn it off here unless the user turned it
 # on themselves.
 
-test "z$CXXFLAGS" = "z" && CXXFLAGS="-O2"
-test "z$CFLAGS" = "z" && CFLAGS="-O2"
+test "z$CXXFLAGS" = "z" && CXXFLAGS="-O0"
+test "z$CFLAGS" = "z" && CFLAGS="-O0"
 
 # Checks for programs.
 AC_PROG_CXX

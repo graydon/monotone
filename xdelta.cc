@@ -242,7 +242,7 @@ compute_delta(string const & a,
     }
 
   if (a.size() == 0 && b.size() != 0)
-    delta_insns.push_back(insn(a));
+    delta_insns.push_back(insn(b));
   else if (a.size() != 0 && b.size() == 0)
     delta_insns.push_back(insn(0, 0));
   else

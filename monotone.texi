@@ -878,21 +878,34 @@ include/hello.h
 Makefile
 @end example
 
+@subsection Important Options
 Before operating monotone, two options should be explained.
 
 @itemize
 @item
-most commands operate on a @i{database}, which is selected with
+Most commands operate on a @i{database}, which is selected with
 the @option{--db} option.
 @item
-many commands operate on a subset of the database, called a
+Many commands operate on a subset of the database, called a
 @i{branch}, which is selected with the @option{--branch} option.
 @end itemize
 
-monotone will cache the settings for these options in your working
+Monotone will cache the settings for these options in your working
 copy, so ordinarily once you have checked out a project, you will not
 need to specify them again.  We will therefore only mention these
 arguments in the first example.
+
+@subsection Version Codes
+Many commands require you to supply 40-character SHA1 values as
+arguments, which we refer to as @i{versions}. These are tedious to
+type, so monotone permits you to supply @i{unambiguous prefixes} of
+versions, rather than complete versions. For example, you may type
+@code{4e20} rather than
+@code{4e20554acfe16dbdaaba11d5a97b05ec15d8d689}, assuming that no
+other versions in your database begin with @code{4e20}. If you supply
+an ambiguous prefix, monotone will list all possible completions of
+the prefix, and exit. You must then try again with a longer prefix.
+
 
 We are now ready to explore some version control tasks.
 
@@ -934,9 +947,10 @@ ask for a key to be generated, monotone will ask us for a passphrase. This phras
 is used to encrypt the key when storing it on disk, as a security measure.
 
 @example
-$ monotone genkey testkey@@nodomain.org
+$ monotone --db=$HOME/test.db genkey testkey@@nodomain.org
 enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter passphrase here>}
-storing key-pair 'testkey@@nodomain.org' in database
+monotone: generating key-pair 'testkey@@nodomain.org'
+monotone: storing key-pair 'testkey@@nodomain.org' in database
 @end example
 
 We have now generated a key pair and placed it in the database
@@ -944,7 +958,7 @@ We have now generated a key pair and placed it in the database
 correct key was generated.
 
 @example
-$ monotone list keys
+$ monotone --db=$HOME/test.db list keys
 
 [public keys]
 testkey@@nodomain.org
@@ -969,9 +983,9 @@ mention.
 
 @example
 $ monotone --branch=testbranch --db=$HOME/test.db add Makefile include src
-adding Makefile to working copy add set
-adding include/hello.h to working copy add set
-adding src/hello.c to working copy add set
+monotone: adding Makefile to working copy add set
+monotone: adding include/hello.h to working copy add set
+monotone: adding src/hello.c to working copy add set
 @end example
 
 This command has now added our files to the @dfn{work list}, as
@@ -995,8 +1009,9 @@ message'' for our commit as an argument on the command line.
 
 @example
 $ monotone commit 'initial addition of files'
+monotone: committing 577c21252290d4b66240efb1f917a9f3c4136fe5 to branch testbranch
 enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter your passphrase here>}
-committed 577c21252290d4b66240efb1f917a9f3c4136fe5
+monotone: committed 577c21252290d4b66240efb1f917a9f3c4136fe5
 @end example
 
 Now we can check to see that monotone is tracking these files in the
@@ -1017,11 +1032,14 @@ manipulated with standard tools. If a file appears in a manifest, and
 you do not want to manage the file with monotone, you can remove that
 line of the manifest.
 
-We can also check to see which certificates monotone generated when
-we commited our work, using the @code{list certs} command:
+We can also check to see which certificates monotone generated when we
+commited our work, using the @code{list certs} command. Note that we
+only need to mention the first few digits of the manifest version we
+wish to inspect, and monotone completes the version code for us:
 
 @example
-$ monotone list certs manifest 577c21252290d4b66240efb1f917a9f3c4136fe5
+$ monotone list certs manifest 577c
+monotone: expanded partial id '577c' to '577c21252290d4b66240efb1f917a9f3c4136fe5'
 ok sig from [testkey@@nodomain.org] : [author] = [jrh@@nodomain.org]
 ok sig from [testkey@@nodomain.org] : [branch] = [testbranch]
 ok sig from [testkey@@nodomain.org] : [changelog] = [initial addition of files]
@@ -1122,6 +1140,9 @@ we can use the following command:
 
 @example
 $ monotone status
+base manifest: 577c21252290d4b66240efb1f917a9f3c4136fe5
+curr manifest: 86975f57ad571a61eb653371a2ffd12b96a301ed
+changes:
   patch src/hello.c 97dfc6fd4f486df95868d85b4b81197014ae2a84 -> 8574638d5f34493e05e62d9e48b3c338169e7558
 @end example
 
@@ -1132,6 +1153,8 @@ in closer detail, we can also print out a difference listing in GNU
 
 @example
 $ monotone diff
+# Summary of changes:
+#   patch src/hello.c 97dfc6fd4f486df95868d85b4b81197014ae2a84 -> 8574638d5f34493e05e62d9e48b3c338169e7558
 --- src/hello.c
 +++ src/hello.c
 @@@@ -1,8 +1,8 @@@@
@@ -1184,6 +1207,10 @@ And, as before, we can view the full difference listing:
 
 @example
 $ monotone diff
+# Summary of changes:
+#   add src/say-hello.c as 84afbb102eca7e5f802ce381987ad7100ff7a1a9
+#   patch Makefile 84e2c30a2571bd627918deee1e6613d34e64a29e -> b506d36ac5a6ea0fd588acacf1ebaa0317601abe
+#   patch src/hello.c 97dfc6fd4f486df95868d85b4b81197014ae2a84 -> eac552f8ee3d29198884368d592de67db5cb77e2
 --- Makefile
 +++ Makefile
 @@@@ -1,2 +1,6 @@@@
@@ -1255,7 +1282,8 @@ new versions of files and the manifest in the database. We can show the
 certs produced, using the @command{list certs} command.
 
 @example
-$ monotone list certs manifest 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
+$ monotone list certs manifest 0b34
+monotone: expanded partial id '0b34' to '0b34c61bd098a9c37cece9cbf7b765cc4d7b587e'
 ok sig from [testkey@@nodomain.org] : [ancestor] = [577c21252290d4b66240efb1f917a9f3c4136fe5]
 ok sig from [testkey@@nodomain.org] : [author] = [jrh@@nodomain.org]
 ok sig from [testkey@@nodomain.org] : [branch] = [testbranch]
@@ -1304,7 +1332,8 @@ we can feel free to ``checkout'' previous versions from the database,
 without fear of losing our work:
 
 @example
-$ monotone checkout 577c21252290d4b66240efb1f917a9f3c4136fe5 .
+$ monotone checkout 577c .
+monotone: expanded partial id '577c' to '577c21252290d4b66240efb1f917a9f3c4136fe5'
 $ cat MT/manifest
 84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
 c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
@@ -1349,6 +1378,8 @@ void say_goodbye()
 We can view our differences, as before:
 
 @example
+# Summary of changes:
+#   patch src/hello.c 97dfc6fd4f486df95868d85b4b81197014ae2a84 -> bdcf3d335db02a8a944b8945357c0e080b40f1b4
 $ monotone diff
 --- src/hello.c
 +++ src/hello.c
@@ -1408,7 +1439,8 @@ this can be overridden if you prefer some other tool. If we
 investigate the resulting manifest, we see the following.
 
 @example
-$ monotone list certs manifest ecec7c49374ab9a7706a500339a2a0d6157372f1
+$ monotone list certs manifest ecec
+monotone: expanded partial id 'ecec' to 'ecec7c49374ab9a7706a500339a2a0d6157372f1'
 ok sig from [testkey@@nodomain.org] [ancestor] = [57d3afae9e806b930130a674befec2a52bd85cd1]
 ok sig from [testkey@@nodomain.org] [ancestor] = [0b34c61bd098a9c37cece9cbf7b765cc4d7b587e]
 ok sig from [testkey@@nodomain.org] [author] = [jrh@@nodomain.org]
@@ -1465,7 +1497,7 @@ case.
 
 @example
 $ monotone update
-updated to base version ecec7c49374ab9a7706a500339a2a0d6157372f1
+monotone: updated to base version ecec7c49374ab9a7706a500339a2a0d6157372f1
 @end example
 
 If we check our version of @file{src/hello.c}, we now see we have a
@@ -1556,13 +1588,13 @@ our most recent commit would result in the following messages:
 @example
 $ monotone commit
 enter passphrase for key ID [testkey@@nodomain.org] :@i{<enter your passphrase here>}
-149 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-116 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-300 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-288 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-287 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-298 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
-committed a2f12ab893e7e40feb83e19f4e707ec6a2841601
+monotone: 149 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+monotone: 116 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+monotone: 300 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+monotone: 288 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+monotone: 287 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+monotone: 298 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+monotone: committed a2f12ab893e7e40feb83e19f4e707ec6a2841601
 @end example
 
 This commit is similar to the previous one, but each cert and delta
@@ -1573,7 +1605,7 @@ posting command to communicate with the network servers:
 
 @example
 $ monotone post
-posted 6 / 6 packets ok
+monotone: posted 6 / 6 packets ok
 @end example
 
 Elsewhere, we may wish to receive changes from a network server. This

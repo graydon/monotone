@@ -1,5 +1,13 @@
 2003-09-27  graydon hoare  <graydon@pobox.com>
 
+	* AUTHORS, NEWS, configure.ac: Update for 0.5 release.
+	* monotone.texi: Various updates.	
+	* xdelta.cc (compute_delta): Fix handling of empty data.
+	* database.cc (sql): Require --db for init.
+	* work.cc (read_options_map): Fix options regex.
+
+2003-09-27  graydon hoare  <graydon@pobox.com>
+
 	* lcs.hh: New jaffer LCS algorithm.
 	* interner.hh, rcs_import.cc: Templatize interner.
 	* diff_patch.hh: Use interner, new LCS.

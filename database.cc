@@ -85,6 +85,8 @@ struct sqlite * database::sql(bool init)
 	    throw oops(string("database ") + filename.string() +
 		       string(" does not exist"));
 	}
+      N(filename.string() != "",
+	"need database name");
       char * errmsg = NULL;
       __sql = sqlite_open(filename.string().c_str(), 0755, &errmsg);
       if (! __sql)

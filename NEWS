@@ -1,3 +1,13 @@
+Sat Sep 27 11:50:08 EDT 2003
+
+	0.5 release. stability and bug fixing. many UI issues
+	addressed, including SHA1 completion, persistent options, new
+	revert command and new diff modes. database migration,
+	inspection and debugging interfaces added. LCS algorithm and
+	line-merger overhauled. several multi-depot bugs
+	fixed. existing depot databases should be migrated (depot.cgi
+	migratedb).
+
 Thu Sep  4 15:40:07 EDT 2003
 
 	0.4 release. monotone is now self-hosting. database
