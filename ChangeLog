@@ -11,12 +11,12 @@
 
 2004-12-30  Julio M. Merino Vidal  <jmmv@menta.net>
 
-        * change_set.{cc,hh}: Add the has_renamed_file_src function in
+	* change_set.{cc,hh}: Add the has_renamed_file_src function in
 	change_set::path_rearrangement.
 	* commands.cc: Make the 'log' command show nothing for renamed or
-        deleted files (when asked to do so) and stop going backwards in
-        history when such condition is detected; they don't exist any more,
-        so there is no point in showing history (and could drive to incorrect
+	deleted files (when asked to do so) and stop going backwards in
+	history when such condition is detected; they don't exist any more,
+	so there is no point in showing history (and could drive to incorrect
 	logs anyway).
 	* tests/t_log_nonexistent.at: New check to verify previous.
 	* testsuite.at: Add it.
@@ -41,10 +41,10 @@
 
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
-        * tests/t_drop_rename_patch.at: A test to check that deltas on
-        renamed files are included in concatenate_change_sets, if there was a
-        deletion of a file with the same name as the rename src.
-        * testsuite.at: add it
+	* tests/t_drop_rename_patch.at: A test to check that deltas on
+	renamed files are included in concatenate_change_sets, if there was a
+	deletion of a file with the same name as the rename src.
+	* testsuite.at: add it
 
 2004-12-29  graydon hoare  <graydon@pobox.com>
 
@@ -66,19 +66,19 @@
 
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
-        * change_set.{cc,hh}: Take account of files which are the
-        destination of a rename_file operation, when examining
-        file deletions. Added helper methods to clean up related code.
+	* change_set.{cc,hh}: Take account of files which are the
+	destination of a rename_file operation, when examining
+	file deletions. Added helper methods to clean up related code.
 
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
-        * change_set.cc: added a sanity check for deltas with same src/dst,
-        and deleted files with deltas.
+	* change_set.cc: added a sanity check for deltas with same src/dst,
+	and deleted files with deltas.
 
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
-        * testsuite.at, tests/t_netsync_single.at: don't use -q with
-        killall since it isn't portable.
+	* testsuite.at, tests/t_netsync_single.at: don't use -q with
+	killall since it isn't portable.
 
 2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
 
@@ -144,13 +144,13 @@
 
 2004-12-20  Matt Johnston  <matt@ucc.asn.au>
 
-        * keys.cc: don't cache bad passphrases, so prompt for a correct
-        password if the first ones fail.
+	* keys.cc: don't cache bad passphrases, so prompt for a correct
+	password if the first ones fail.
 
 2004-12-19  Matt Johnston  <matt@ucc.asn.au>
 
-        * commands.cc: print out author/date next to ambiguous revision
-        lists from selectors.
+	* commands.cc: print out author/date next to ambiguous revision
+	lists from selectors.
 
 2004-12-22  Julio M. Merino Vidal  <jmmv@menta.net>
 
@@ -213,8 +213,8 @@
 
 2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
 
-        * ChangeLog: Add missing entries for several modifications I did
-        in December 6th and 3rd.
+	* ChangeLog: Add missing entries for several modifications I did
+	in December 6th and 3rd.
 
 2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
 
@@ -446,9 +446,9 @@
 
 2004-12-10  Matt Johnston  <matt@ucc.asn.au>
 
-        * cert.cc: Added priv_key_exists() function
-        * commands.cc, rcs_import.cc: use new privkey functions
-        * netsync.cc: change some bits that were missed
+	* cert.cc: Added priv_key_exists() function
+	* commands.cc, rcs_import.cc: use new privkey functions
+	* netsync.cc: change some bits that were missed
 
 2004-12-09  Derek Scherger  <derek@echologic.com>
 
@@ -467,20 +467,20 @@
 
 2004-12-09  Matt Johnston  <matt@ucc.asn.au>
 
-        * cert.cc, cert.hh, lua.cc, lua.hh, netsync.cc:
-        Added a new get_priv_key(keyid) lua hook to retrieve
-        a private key from ~/.monotonerc
+	* cert.cc, cert.hh, lua.cc, lua.hh, netsync.cc:
+	Added a new get_priv_key(keyid) lua hook to retrieve
+	a private key from ~/.monotonerc
 
 2004-12-09  Matt Johnston  <matt@ucc.asn.au>
 
-        * change_set.cc: Don't include patch deltas on files which
-        are being deleted in changesets. (partial fix for bug
-        invoked by t_merge_add_del.at)
+	* change_set.cc: Don't include patch deltas on files which
+	are being deleted in changesets. (partial fix for bug
+	invoked by t_merge_add_del.at)
 
 2004-12-09  Matt Johnston  <matt@ucc.asn.au>
 
-        * configure.ac,Makefile.am: Fix iconv and intl
-        handling so that the libraries are used (required for OS X).
+	* configure.ac,Makefile.am: Fix iconv and intl
+	handling so that the libraries are used (required for OS X).
 
 2004-12-09  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -695,8 +695,8 @@
 
 2004-12-05  graydon hoare  <graydon@pobox.com>
 
-        * Makefile.am (package_full_revision.txt): Use top_builddir
-        to locate monotone executable.
+	* Makefile.am (package_full_revision.txt): Use top_builddir
+	to locate monotone executable.
 
 2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -712,13 +712,13 @@
 
 2004-12-04  graydon hoare  <graydon@pobox.com>
 
-        * commands.cc (fcommit): New command.
-        (update): Finish off merge of update command.
+	* commands.cc (fcommit): New command.
+	(update): Finish off merge of update command.
 
 2004-12-04  Derek Scherger  <derek@echologic.com>
 
-        * commands.cc: (complete_command): New function.
-        (explain_usage/process): Use it.
+	* commands.cc: (complete_command): New function.
+	(explain_usage/process): Use it.
 
 2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -857,9 +857,9 @@
 
 2004-11-30  Matt Johnston  <matt@ucc.asn.au>
 
-        * change_set.cc (merge_disjoint_analyses): Prevent duplicated
-        tids being used.
-        (merge_disjoint_analyses): Fix typo (s/a_tmp/b_tmp/)
+	* change_set.cc (merge_disjoint_analyses): Prevent duplicated
+	tids being used.
+	(merge_disjoint_analyses): Fix typo (s/a_tmp/b_tmp/)
 
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 
