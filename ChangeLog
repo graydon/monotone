@@ -1,5 +1,11 @@
 2004-12-09  Matt Johnston  <matt@ucc.asn.au>
 
+        * change_set.cc: Don't include patch deltas on files which
+        are being deleted in changesets. (partial fix for bug
+        invoked by t_merge_add_del.at)
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
         * configure.ac,Makefile.am: Fix iconv and intl
         handling so that the libraries are used (required for OS X).
 
