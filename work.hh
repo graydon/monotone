@@ -19,7 +19,7 @@
 
 //
 // working copy book-keeping files are stored in a directory called MT, off
-// the root of the working copy source tree (analogous to the CVS or SVN
+// the root of the working copy source tree (analogous to the CVS or .svn
 // directories). there is no hierarchy of MT directories; only one exists,
 // and it is always at the root. it contains the following files:
 //

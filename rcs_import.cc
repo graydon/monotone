@@ -693,8 +693,15 @@ cvs_key::cvs_key(rcs_file const & r, string const & version,
   {    
     struct tm t;
     char const * dp = delta->second->date.c_str();
+#ifdef WIN32
+    I(sscanf(dp, "%d.%d.%d.%d.%d.%d", &(t.tm_year), &(t.tm_mon), 
+	     &(t.tm_mday), &(t.tm_hour), &(t.tm_min), &(t.tm_sec))==6);
+    t.tm_mon--;
+    t.tm_year-=1900;
+#else
     if (strptime(dp, "%y.%m.%d.%H.%M.%S", &t) == NULL)
       I(strptime(dp, "%Y.%m.%d.%H.%M.%S", &t) != NULL);
+#endif
     time=mktime(&t);
   }
 

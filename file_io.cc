@@ -27,7 +27,9 @@ string const book_keeping_dir("MT");
 
 #include <stdlib.h>
 #include <unistd.h>
-#include <pwd.h>
+#ifndef WIN32
+ #include <pwd.h>
+#endif
 #include <sys/types.h>
 
 void 
@@ -46,6 +48,12 @@ mkpath(string const & s)
 string 
 get_homedir()
 {
+#ifdef WIN32
+  char * homedrive = getenv("HOMEDRIVE");
+  char * homepath = getenv("HOMEPATH");
+  N((homedrive!=NULL && homepath!=NULL), F("could not find home directory"));
+  return string(homedrive)+string(homepath);
+#else
   char * home = getenv("HOME");
   if (home != NULL)
     return string(home);
@@ -53,6 +61,7 @@ get_homedir()
   struct passwd * pw = getpwuid(getuid());  
   N(pw != NULL, F("could not find home directory for uid %d") % getuid());
   return string(pw->pw_dir);
+#endif
 }
 
 
@@ -93,11 +102,15 @@ tilde_expand(string const & path)
 	  ++i;
 	}
       else if (i->size() > 1 && i->at(0) == '~')
-	{	  
+	{
+#ifdef WIN32
+	  res /= mkpath(get_homedir());
+#else
 	  struct passwd * pw;
 	  pw = getpwnam(i->substr(1).c_str());
 	  N(pw != NULL, F("could not find home directory user %s") % i->substr(1));
 	  res /= mkpath(string(pw->pw_dir));
+#endif
 	  ++i;
 	}
       while (i != tmp.end())
@@ -199,7 +212,8 @@ read_data_impl(fs::path const & p,
   if (fs::is_directory(p))
     throw oops("file '" + p.string() + "' cannot be read as data; it is a directory");
   
-  ifstream file(p.string().c_str());
+  ifstream file(p.string().c_str(),
+		ios_base::in | ios_base::binary);
   string in;
   if (!file)
     throw oops(string("cannot open file ") + p.string() + " for reading");
@@ -303,7 +317,8 @@ write_data_impl(fs::path const & p,
 
   {
     // data.tmp opens
-    ofstream file(tmp.string().c_str());
+    ofstream file(tmp.string().c_str(),
+		  ios_base::out | ios_base::trunc | ios_base::binary);
     if (!file)
       throw oops(string("cannot open file ") + tmp.string() + " for writing");    
     CryptoPP::StringSource s(dat(), true, new CryptoPP::FileSink(file));
@@ -311,6 +326,9 @@ write_data_impl(fs::path const & p,
   }
 
   // god forgive my portability sins
+  if (fs::exists(p))
+    N(unlink(p.string().c_str()) == 0,
+      F("unlinking %s failed") % p.string());
   N(rename(tmp.string().c_str(), p.string().c_str()) == 0,
     F("rename of %s to %s failed") % tmp.string() % p.string());
 }

@@ -222,20 +222,41 @@ static int io_mkstemp (lua_State *L) {
   FILE **pf;
   char const *filename = lua_tostring (L, -1);
   char *dup = strdup(filename);
+#ifdef WIN32
+  int sl;
+  static int mkstmpcnt = 0;
+#endif
 
   if (dup == NULL)
     return 0;
 
+#ifdef WIN32
+  sl = strlen(dup);
+  if (sl<6)
+    {
+      free(dup);
+      return 0;
+    }
+  if (strcmp(dup+sl-6,"XXXXXX"))
+    {
+      free(dup);
+      return 0;
+    }
+  sprintf(dup+sl-6,"%06d",mkstmpcnt++);
+  pf = newfile(L);
+  *pf = fopen(dup, "r+");
+#else
   fd = mkstemp(dup);
-
+  
   if (fd == -1)
     {
       free(dup);
       return 0;
     }
-
+  
   pf = newfile(L);
   *pf = fdopen(fd, "r+");  
+#endif
 
   lua_pushstring(L, dup);
   free(dup);

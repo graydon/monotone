@@ -31,13 +31,13 @@
 
 #include "cryptopp/osrng.h"
 
-#include "Netxx/Address.h"
-#include "Netxx/Peer.h"
-#include "Netxx/Probe.h"
-#include "Netxx/Stream.h"
-#include "Netxx/StreamServer.h"
-#include "Netxx/Timeout.h"
-#include "Netxx/Types.h"
+#include "netxx/address.h"
+#include "netxx/peer.h"
+#include "netxx/probe.h"
+#include "netxx/socket.h"
+#include "netxx/stream.h"
+#include "netxx/streamserver.h"
+#include "netxx/timeout.h"
 
 //
 // this is the "new" network synchronization (netsync) system in
@@ -181,7 +181,6 @@
 // material that you wouldn't have a hope of typing in manually anyways)
 //
 
-using namespace Netxx;
 using namespace boost;
 using namespace std;
 
@@ -214,8 +213,8 @@ session :
   app_state & app;
 
   string peer_id;
-  socket_type fd;
-  Stream stream;  
+  Netxx::socket_type fd;
+  Netxx::Stream str;  
 
   string inbuf; 
   string outbuf;
@@ -250,8 +249,8 @@ session :
 	  set<string> const & all_collections,
 	  app_state & app,
 	  string const & peer,
-	  socket_type sock, 
-	  Timeout const & to);
+	  Netxx::socket_type sock, 
+	  Netxx::Timeout const & to);
 
   virtual ~session() {}
 
@@ -266,7 +265,7 @@ session :
 				     manifest_map const & child);
   void request_manifests_recursive(id const & i, set<id> & visited);
 
-  Probe::ready_type which_events() const;
+  Netxx::Probe::ready_type which_events() const;
   bool read_some();
   bool write_some();
   void update_merkle_trees(netcmd_item_type type,
@@ -373,8 +372,8 @@ session::session(protocol_role role,
 		 set<string> const & all_coll,
 		 app_state & app,
 		 string const & peer,
-		 socket_type sock, 
-		 Timeout const & to) : 
+		 Netxx::socket_type sock, 
+		 Netxx::Timeout const & to) : 
   role(role),
   voice(voice),
   collections(collections),
@@ -382,7 +381,7 @@ session::session(protocol_role role,
   app(app),
   peer_id(peer),
   fd(sock),
-  stream(sock, to),
+  str(sock, to),
   inbuf(""),
   outbuf(""),
   armed(false),
@@ -647,22 +646,22 @@ session::analyze_ancestry_graph()
     }
 }
 
-Probe::ready_type 
+Netxx::Probe::ready_type 
 session::which_events() const
 {    
   if (outbuf.empty())
     {
       if (inbuf.size() < constants::netcmd_maxsz)
-	return Probe::ready_read | Probe::ready_oobd;
+	return Netxx::Probe::ready_read | Netxx::Probe::ready_oobd;
       else
-	return Probe::ready_oobd;
+	return Netxx::Probe::ready_oobd;
     }
   else
     {
       if (inbuf.size() < constants::netcmd_maxsz)
-	return Probe::ready_write | Probe::ready_read | Probe::ready_oobd;
+	return Netxx::Probe::ready_write | Netxx::Probe::ready_read | Netxx::Probe::ready_oobd;
       else
-	return Probe::ready_write | Probe::ready_oobd;
+	return Netxx::Probe::ready_write | Netxx::Probe::ready_oobd;
     }	    
 }
 
@@ -671,7 +670,7 @@ session::read_some()
 {
   I(inbuf.size() < constants::netcmd_maxsz);
   char tmp[constants::bufsz];
-  signed_size_type count = stream.read(tmp, sizeof(tmp));
+  Netxx::signed_size_type count = str.read(tmp, sizeof(tmp));
   if(count > 0)
     {
       L(F("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
@@ -689,8 +688,8 @@ bool
 session::write_some()
 {
   I(!outbuf.empty());    
-  signed_size_type count = stream.write(outbuf.data(), 
-					std::min(outbuf.size(), constants::bufsz));
+  Netxx::signed_size_type count = str.write(outbuf.data(), 
+					    std::min(outbuf.size(), constants::bufsz));
   if(count > 0)
     {
       outbuf.erase(0, count);
@@ -1876,8 +1875,7 @@ session::process_send_delta_cmd(netcmd_item_type type,
 	  }
 	else
 	  {
-	    queue_nonexistant_cmd(type, ident);
-	    return true;
+	    return process_send_data_cmd(type, ident);
 	  }
       }
       break;
@@ -1901,8 +1899,7 @@ session::process_send_delta_cmd(netcmd_item_type type,
 	  }
 	else
 	  {
-	    queue_nonexistant_cmd(type, ident);
-	    return true;
+	    return process_send_data_cmd(type, ident);
 	  }
       }
       break;
@@ -2346,16 +2343,16 @@ call_server(protocol_role role,
 	    set<string> const & all_collections,
 	    app_state & app,
 	    utf8 const & address,
-	    port_type default_port,
+	    Netxx::port_type default_port,
 	    unsigned long timeout_seconds)
 {
-  Probe probe;
-  Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
+  Netxx::Probe probe;
+  Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
 
   // FIXME: split into labels and convert to ace here.
 
   P(F("connecting to %s\n") % address());
-  Stream server(address().c_str(), default_port, timeout); 
+  Netxx::Stream server(address().c_str(), default_port, timeout); 
   session sess(role, client_voice, collections, all_collections, app, 
 	       address(), server.get_socketfd(), timeout);
 
@@ -2378,10 +2375,10 @@ call_server(protocol_role role,
 	}
 
       probe.clear();
-      probe.add(sess.stream, sess.which_events());
-      Probe::result_type res = probe.ready(armed ? instant : timeout);
-      Probe::ready_type event = res.second;
-      socket_type fd = res.first;
+      probe.add(sess.str, sess.which_events());
+      Netxx::Probe::result_type res = probe.ready(armed ? instant : timeout);
+      Netxx::Probe::ready_type event = res.second;
+      Netxx::socket_type fd = res.first;
       
       if (fd == -1 && !armed) 
 	{
@@ -2389,7 +2386,7 @@ call_server(protocol_role role,
 	  return;
 	}
       
-      if (event & Probe::ready_read)
+      if (event & Netxx::Probe::ready_read)
 	{
 	  if (sess.read_some())
 	    {
@@ -2414,7 +2411,7 @@ call_server(protocol_role role,
 	    }
 	}
       
-      if (event & Probe::ready_write)
+      if (event & Netxx::Probe::ready_write)
 	{
 	  if (! sess.write_some())
 	    {
@@ -2426,7 +2423,7 @@ call_server(protocol_role role,
 	    }
 	}
       
-      if (event & Probe::ready_oobd)
+      if (event & Netxx::Probe::ready_oobd)
 	{
 	  P(F("got OOB data on fd %d (peer %s), disconnecting\n") 
 	    % fd % sess.peer_id);
@@ -2453,12 +2450,13 @@ call_server(protocol_role role,
 }
 
 static void 
-arm_sessions_and_calculate_probe(Probe & probe,
-				 map<socket_type, shared_ptr<session> > & sessions,
-				 set<socket_type> & armed_sessions)
+arm_sessions_and_calculate_probe(Netxx::Probe & probe,
+				 map<Netxx::socket_type, shared_ptr<session> > & sessions,
+				 set<Netxx::socket_type> & armed_sessions)
 {
-  set<socket_type> arm_failed;
-  for (map<socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
+  set<Netxx::socket_type> arm_failed;
+  for (map<Netxx::socket_type, 
+	 shared_ptr<session> >::const_iterator i = sessions.begin();
        i != sessions.end(); ++i)
     {
       try 
@@ -2468,7 +2466,7 @@ arm_sessions_and_calculate_probe(Probe & probe,
 	      L(F("fd %d is armed\n") % i->first);
 	      armed_sessions.insert(i->first);
 	    }
-	  probe.add(i->second->stream, i->second->which_events());
+	  probe.add(i->second->str, i->second->which_events());
 	}
       catch (bad_decode & bd)
 	{
@@ -2477,7 +2475,7 @@ arm_sessions_and_calculate_probe(Probe & probe,
 	  arm_failed.insert(i->first);
 	}	  
     }
-  for (set<socket_type>::const_iterator i = arm_failed.begin();
+  for (set<Netxx::socket_type>::const_iterator i = arm_failed.begin();
        i != arm_failed.end(); ++i)
     {
       sessions.erase(*i);
@@ -2485,18 +2483,18 @@ arm_sessions_and_calculate_probe(Probe & probe,
 }
 
 static void
-handle_new_connection(Address & addr,
-		      StreamServer & server,
-		      Timeout & timeout,
+handle_new_connection(Netxx::Address & addr,
+		      Netxx::StreamServer & server,
+		      Netxx::Timeout & timeout,
 		      protocol_role role,
 		      vector<utf8> const & collections,
 		      set<string> const & all_collections,		      
-		      map<socket_type, shared_ptr<session> > & sessions,
+		      map<Netxx::socket_type, shared_ptr<session> > & sessions,
 		      app_state & app)
 {
   L(F("accepting new connection on %s : %d\n") 
     % addr.get_name() % addr.get_port());
-  Peer client = server.accept_connection();
+  Netxx::Peer client = server.accept_connection();
   
   if (!client) 
     {
@@ -2515,10 +2513,10 @@ handle_new_connection(Address & addr,
 }
 
 static void 
-handle_read_available(socket_type fd,
+handle_read_available(Netxx::socket_type fd,
 		      shared_ptr<session> sess,
-		      map<socket_type, shared_ptr<session> > & sessions,
-		      set<socket_type> & armed_sessions,
+		      map<Netxx::socket_type, shared_ptr<session> > & sessions,
+		      set<Netxx::socket_type> & armed_sessions,
 		      bool & live_p)
 {
   if (sess->read_some())
@@ -2547,9 +2545,9 @@ handle_read_available(socket_type fd,
 
 
 static void 
-handle_write_available(socket_type fd,
+handle_write_available(Netxx::socket_type fd,
 		       shared_ptr<session> sess,
-		       map<socket_type, shared_ptr<session> > & sessions,
+		       map<Netxx::socket_type, shared_ptr<session> > & sessions,
 		       bool & live_p)
 {
   if (! sess->write_some())
@@ -2562,19 +2560,19 @@ handle_write_available(socket_type fd,
 }
 
 static void
-process_armed_sessions(map<socket_type, shared_ptr<session> > & sessions,
-		       set<socket_type> & armed_sessions)
+process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
+		       set<Netxx::socket_type> & armed_sessions)
 {
-  for (set<socket_type>::const_iterator i = armed_sessions.begin();
+  for (set<Netxx::socket_type>::const_iterator i = armed_sessions.begin();
        i != armed_sessions.end(); ++i)
     {
-      map<socket_type, shared_ptr<session> >::iterator j;
+      map<Netxx::socket_type, shared_ptr<session> >::iterator j;
       j = sessions.find(*i);
       if (j == sessions.end())
 	continue;
       else
 	{
-	  socket_type fd = j->first;
+	  Netxx::socket_type fd = j->first;
 	  shared_ptr<session> sess = j->second;
 	  if (!sess->process())
 	    {
@@ -2587,14 +2585,14 @@ process_armed_sessions(map<socket_type, shared_ptr<session> > & sessions,
 }
 
 static void
-reap_dead_sessions(map<socket_type, shared_ptr<session> > & sessions,
+reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
 		   unsigned long timeout_seconds)
 {
   // kill any clients which haven't done any i/o inside the timeout period
   // or who have said goodbye and flushed their output buffers
-  set<socket_type> dead_clients;
+  set<Netxx::socket_type> dead_clients;
   time_t now = ::time(NULL);
-  for (map<socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
+  for (map<Netxx::socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
        i != sessions.end(); ++i)
     {
       if (static_cast<unsigned long>(i->second->last_io_time + timeout_seconds) 
@@ -2611,7 +2609,7 @@ reap_dead_sessions(map<socket_type, shared_ptr<session> > & sessions,
 	  dead_clients.insert(i->first);
 	}
     }
-  for (set<socket_type>::const_iterator i = dead_clients.begin();
+  for (set<Netxx::socket_type>::const_iterator i = dead_clients.begin();
        i != dead_clients.end(); ++i)
     {
       sessions.erase(*i);
@@ -2624,25 +2622,26 @@ serve_connections(protocol_role role,
 		  set<string> const & all_collections,
 		  app_state & app,
 		  utf8 const & address,
-		  port_type default_port,
+		  Netxx::port_type default_port,
 		  unsigned long timeout_seconds,
 		  unsigned long session_limit)
 {
-  Probe probe;  
+  Netxx::Probe probe;  
 
-  Timeout 
+  Netxx::Timeout 
     forever, 
     timeout(static_cast<long>(timeout_seconds)), 
     instant(0,1);
 
-  Address addr(address().c_str(), default_port, true);
-  StreamServer server(addr, timeout);
-  
-  map<socket_type, shared_ptr<session> > sessions;
-  set<socket_type> armed_sessions;
+  Netxx::Address addr(address().c_str(), default_port, true);
 
   P(F("beginning service on %s : %d\n") 
     % addr.get_name() % addr.get_port());
+
+  Netxx::StreamServer server(addr, timeout);
+  
+  map<Netxx::socket_type, shared_ptr<session> > sessions;
+  set<Netxx::socket_type> armed_sessions;
   
   while (true)
     {      
@@ -2657,11 +2656,11 @@ serve_connections(protocol_role role,
       arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
 
       L(F("i/o probe with %d armed\n") % armed_sessions.size());      
-      Probe::result_type res = probe.ready(sessions.empty() ? forever 
+      Netxx::Probe::result_type res = probe.ready(sessions.empty() ? forever 
 					   : (armed_sessions.empty() ? timeout 
 					      : instant));
-      Probe::ready_type event = res.second;
-      socket_type fd = res.first;
+      Netxx::Probe::ready_type event = res.second;
+      Netxx::socket_type fd = res.first;
       
       if (fd == -1)
 	{
@@ -2678,7 +2677,7 @@ serve_connections(protocol_role role,
       // or an existing session woke up
       else
 	{
-	  map<socket_type, shared_ptr<session> >::iterator i;
+	  map<Netxx::socket_type, shared_ptr<session> >::iterator i;
 	  i = sessions.find(fd);
 	  if (i == sessions.end())
 	    {
@@ -2689,13 +2688,13 @@ serve_connections(protocol_role role,
 	      shared_ptr<session> sess = i->second;
 	      bool live_p = true;
 
-	      if (event & Probe::ready_read)
+	      if (event & Netxx::Probe::ready_read)
 		handle_read_available(fd, sess, sessions, armed_sessions, live_p);
 		
-	      if (live_p && (event & Probe::ready_write))
+	      if (live_p && (event & Netxx::Probe::ready_write))
 		handle_write_available(fd, sess, sessions, live_p);
 		
-	      if (live_p && (event & Probe::ready_oobd))
+	      if (live_p && (event & Netxx::Probe::ready_oobd))
 		{
 		  P(F("got some OOB data on fd %d (peer %s), disconnecting\n") 
 		    % fd % sess->peer_id);
@@ -2868,7 +2867,7 @@ run_netsync_protocol(protocol_voice voice,
       if (voice == server_voice)
 	{
 	  serve_connections(role, collections, all_collections, app,
-			    addr, static_cast<port_type>(constants::netsync_default_port), 
+			    addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
 			    static_cast<unsigned long>(constants::netsync_timeout_seconds), 
 			    static_cast<unsigned long>(constants::netsync_connection_limit));
 	}
@@ -2877,7 +2876,7 @@ run_netsync_protocol(protocol_voice voice,
 	  I(voice == client_voice);
 	  transaction_guard guard(app.db);
 	  call_server(role, collections, all_collections, app, 
-		      addr, static_cast<port_type>(constants::netsync_default_port), 
+		      addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
 		      static_cast<unsigned long>(constants::netsync_timeout_seconds));
 	  guard.commit();
 	}
