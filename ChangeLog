@@ -29,6 +29,16 @@
 	* acinclude.m4 (AC_CHECK_INADDR_NONE): Fix quoting.
 	* Makefile.am (EXTRA_DIST): Add sqlite/keywordhash.c.
 
+2005-01-14  Christian Kollee <stuka@pestilenz.org>
+
+	* search for and link with sqlite3 when --bundle-sqlite=no
+
+2005-01-12  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_ambig_update.at: add comments from discussion on irc
+	* tests/t_status_missing.at: new test
+	* testsuite.at: include it
+
 2005-01-10  graydon hoare  <graydon@pboox.com>
 
 	* commands.cc (explicit_merge): Tweak merge message.
@@ -49,6 +59,21 @@
 	of SQLite3 (query parameters, BLOBs), so there is plenty of room 
 	for optimization. This also does not change the schema (i.e.
 	still uses base64 encoded values in tables)
+
+2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_migrate_schema.at: Switch to using pre-dumped db's, make
+	it work, un-XFAIL it.
+
+2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_keys_2.at: XFAIL it, add commentary on
+	solution.
+	
+2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_keys_2.at: New test.
+	* testsuite.at: Add it.
 
 2005-01-06  Nathaniel Smith  <njs@codesourcery.com>
 
