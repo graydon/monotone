@@ -1,9 +1,16 @@
+2005-03-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (EXTRA_DIST): Add UPGRADE and README.changesets.
+	* debian/files: Auto-updated by dpkg-buildpackage.
+
+	* This is the 0.17 release.
+	
 2005-03-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (MOST_SOURCES): Add package_{full_,}revision.h.
 	* NEWS: Fill in date.
 	* debian/copyright: Update from AUTHORS.
-	* configure.ac: Bump version number.
+	* configure.ac: Bump version number to 0.17.
 	* debian/changelog, monotone.spec: Update for release.
 	* po/monotone.pot: Auto-updated by distcheck.
 

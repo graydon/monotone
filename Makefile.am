@@ -231,6 +231,8 @@ info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
 	     $(PDF_FIGURES) \
              INSTALL \
+             README.changesets \
+             UPGRADE \
              monotone.spec \
              monotone.html \
              texinfo.css \
