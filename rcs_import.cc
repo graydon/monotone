@@ -1023,10 +1023,44 @@ build_child_state(shared_ptr<cvs_state> state,
     % state->in_edges.size());
 }
 
+void
+import_substates(ticker & n_edges, 
+		 ticker & n_branches,
+		 shared_ptr<cvs_state> state,
+		 cvs_branchname branch_filter,
+		 manifest_map parent_map,
+		 cvs_history & cvs,
+		 app_state & app);
+
+void 
+import_substates_by_branch(ticker & n_edges, 
+			   ticker & n_branches,
+			   shared_ptr<cvs_state> state,
+			   manifest_map const & parent_map,
+			   cvs_history & cvs,
+			   app_state & app)
+{
+  set<cvs_branchname> branches;
+
+  // collect all the branches
+  for (map< cvs_key, shared_ptr<cvs_state> >::reverse_iterator i = state->substates.rbegin();
+       i != state->substates.rend(); ++i)
+    branches.insert(i->first.branch);
+
+  // walk each sub-branch in order
+  for (set<cvs_branchname>::const_iterator branch = branches.begin();
+       branch != branches.end(); ++branch)
+    {
+      import_substates(n_edges, n_branches, state, *branch, parent_map, cvs, app);
+    }
+}
+
+
 void 
 import_substates(ticker & n_edges, 
 		 ticker & n_branches,
 		 shared_ptr<cvs_state> state,
+		 cvs_branchname branch_filter,
 		 manifest_map parent_map,
 		 cvs_history & cvs,
 		 app_state & app)
@@ -1043,13 +1077,16 @@ import_substates(ticker & n_edges,
   for (map< cvs_key, shared_ptr<cvs_state> >::reverse_iterator i = state->substates.rbegin();
        i != state->substates.rend(); ++i)
     {
+      if (i->first.branch != branch_filter)
+	continue;
+
       manifest_id child_id;
       build_child_state(i->second, child_map, cvs);
       calculate_ident(child_map, child_id);
       store_branch_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
       store_auxiliary_certs(i->first, child_id, app, cvs);
       if (i->second->substates.size() > 0)
-	import_substates(n_edges, n_branches, i->second, child_map, cvs, app);
+	import_substates_by_branch(n_edges, n_branches, i->second, child_map, cvs, app);
 
       // now apply the edge to the parent, too, making parent = child
       build_child_state(i->second, parent_map, cvs);
@@ -1124,7 +1161,7 @@ import_cvs_repo(fs::path const & cvsroot,
 	store_trunk_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
 	store_auxiliary_certs(i->first, child_id, app, cvs);
 	if (i->second->substates.size() > 0)
-	  import_substates(n_edges, n_branches, i->second, parent_map, cvs, app);
+	  import_substates_by_branch(n_edges, n_branches, i->second, parent_map, cvs, app);
 
 	// now apply the edge to the child, too, making child = parent
 	build_parent_state(i->second, child_map, cvs);

@@ -1,5 +1,10 @@
 2004-03-24  graydon hoare  <graydon@pobox.com>
 
+	* rcs_import.cc (import_substates): Filter by branch.
+	* xdelta.cc: Minor bits of insulation.
+
+2004-03-24  graydon hoare  <graydon@pobox.com>
+
 	* AUTHORS: Mention Robert.
 	* configure.ac: Enable sse2 stuff.
 	* monotone.spec: Adjust CFLAGS and CXXFLAGS

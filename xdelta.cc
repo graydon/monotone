@@ -703,37 +703,47 @@ new_piecewise_applicator()
 #include <boost/random.hpp>
 
 boost::mt19937 xdelta_prng;
+
+#if (BOOST_VERSION / 100 % 1000) > 30
 boost::uniform_smallint<char> xdelta_chargen('a', 'z');
 boost::uniform_smallint<size_t> xdelta_sizegen(1024, 65536);
 boost::uniform_smallint<size_t> xdelta_editgen(3, 10);
 boost::uniform_smallint<size_t> xdelta_lengen(1, 256);
+#define PRNG xdelta_prng
+#else
+boost::uniform_smallint<boost::mt19937, char> xdelta_chargen(xdelta_prng, 'a', 'z');
+boost::uniform_smallint<boost::mt19937, size_t> xdelta_sizegen(xdelta_prng, 1024, 65536);
+boost::uniform_smallint<boost::mt19937, size_t> xdelta_editgen(xdelta_prng, 3, 10);
+boost::uniform_smallint<boost::mt19937, size_t> xdelta_lengen(xdelta_prng, 1, 256);
+#define PRNG 
+#endif
 
 void 
 xdelta_random_string(string & str)
 {
-  size_t sz = xdelta_sizegen(xdelta_prng);
+  size_t sz = xdelta_sizegen(PRNG);
   str.clear();
   str.reserve(sz);   
   while(sz-- > 0)
     {
-      str += xdelta_chargen(xdelta_prng);
+      str += xdelta_chargen(PRNG);
     }
 }
 
 void 
 xdelta_randomly_insert(string & str)
 {
-  size_t nedits = xdelta_editgen(xdelta_prng);
+  size_t nedits = xdelta_editgen(PRNG);
   while (nedits > 0)
     {
-      size_t pos = xdelta_sizegen(xdelta_prng) % str.size();
-      size_t len = xdelta_lengen(xdelta_prng);
+      size_t pos = xdelta_sizegen(PRNG) % str.size();
+      size_t len = xdelta_lengen(PRNG);
       if (pos+len >= str.size())
 	continue;
       string tmp;
       tmp.reserve(len);
       for (size_t i = 0; i < len; ++i)
-	tmp += xdelta_chargen(xdelta_prng);
+	tmp += xdelta_chargen(PRNG);
 	str.insert(pos, tmp);
       nedits--;
     }
@@ -742,15 +752,15 @@ xdelta_randomly_insert(string & str)
 void 
 xdelta_randomly_change(string & str)
 {
-  size_t nedits = xdelta_editgen(xdelta_prng);
+  size_t nedits = xdelta_editgen(PRNG);
   while (nedits > 0)
     {
-      size_t pos = xdelta_sizegen(xdelta_prng) % str.size();
-      size_t len = xdelta_lengen(xdelta_prng);
+      size_t pos = xdelta_sizegen(PRNG) % str.size();
+      size_t len = xdelta_lengen(PRNG);
       if (pos+len >= str.size())
 	continue;
       for (size_t i = 0; i < len; ++i)
-	str[pos+i] = xdelta_chargen(xdelta_prng);
+	str[pos+i] = xdelta_chargen(PRNG);
       nedits--;
     }
 }
@@ -758,11 +768,11 @@ xdelta_randomly_change(string & str)
 void 
 xdelta_randomly_delete(string & str)
 {
-  size_t nedits = xdelta_editgen(xdelta_prng);
+  size_t nedits = xdelta_editgen(PRNG);
   while (nedits > 0)
     {
-      size_t pos = xdelta_sizegen(xdelta_prng) % str.size();
-      size_t len = xdelta_lengen(xdelta_prng);
+      size_t pos = xdelta_sizegen(PRNG) % str.size();
+      size_t len = xdelta_lengen(PRNG);
       if (pos+len >= str.size())
 	continue;
       str.erase(pos, len);
