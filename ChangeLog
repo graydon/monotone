@@ -1,3 +1,14 @@
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.cc (cpp_main): Remove now-unneccessary newline.
+	
+	* commands.cc (commit): Fix typo.
+	
+	* monotone.texi (Making Changes): Don't claim that writing to
+	MT/log prevents the editor from starting.  Clarify later that
+	having written to MT/log still means the editor will pop up
+	later.
+
 2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_log_depth.at: Cleanupy tweaks.
