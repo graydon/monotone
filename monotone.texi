@@ -4135,7 +4135,7 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
-@item monotone automate erase_ancestors @var{rev1} [@var{rev2} [...]]
+@item monotone automate erase_ancestors [@var{rev1} [@var{rev2} [...]]]
 
 @table @strong
 @item Arguments:
@@ -4152,7 +4152,8 @@ Prints all arguments, except those that are an ancestor of some other
 argument.  One way to think about this is that it prints the minimal
 elements of the given set, under the ordering imposed by the ``child
 of'' relation.  Another way to think of it is if the arguments formed a
-branch branch, then we would print the heads of that branch.
+branch branch, then we would print the heads of that branch.  If there
+are no arguments, prints nothing.
 
 @item Sample output:
 

@@ -1,8 +1,6 @@
 AT_SETUP([automate erase_ancestors])
 MONOTONE_SETUP
 
-AT_CHECK(MONOTONE automate erase_ancestors c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
-
 #   A
 #  / \
 # B   C
@@ -48,6 +46,10 @@ AT_CHECK(test $REV_F != $REV_D)
 AT_CHECK(test $REV_F != $REV_E)
 
 # Now do some checks
+
+AT_CHECK(MONOTONE automate erase_ancestors c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate erase_ancestors, [], [], [ignore])
 
 CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_A, echo $REV_A)
 CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_B, echo $REV_B)

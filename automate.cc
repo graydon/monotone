@@ -108,7 +108,7 @@ automate_descendents(std::vector<utf8> args,
 
 // Name: erase_ancestors
 // Arguments:
-//   1 or more: revision ids
+//   0 or more: revision ids
 // Added in: 0.1
 // Purpose: Prints all arguments, except those that are an ancestor of some
 //   other argument.  One way to think about this is that it prints the
@@ -125,9 +125,6 @@ automate_erase_ancestors(std::vector<utf8> args,
                          app_state & app,
                          std::ostream & output)
 {
-  if (args.size() == 0)
-    throw usage(help_name);
-
   std::set<revision_id> revs;
   for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
