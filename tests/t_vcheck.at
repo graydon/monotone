@@ -1,4 +1,4 @@
-AT_SETUP([(minor) vcheck])
+AT_SETUP([(todo) vcheck])
 MONOTONE_SETUP
 
 # This test is a bug report.
@@ -31,9 +31,11 @@ AT_XFAIL_IF(true)
 #   - a MAC of the revision's manifest
 #   - a MAC of each file within that revision.
 # possibly the last should just be "a MAC of every file mentioned in
-# the text of the revision", so people creating mulitple vcheck certs
-# aren't checking the same unchanging files over and over again.  This
-# reduces space overhead, too.
+# that revision's list of diff's", so people creating multiple vcheck
+# certs aren't checking the same unchanging files over and over again.
+# This reduces space overhead, too, since certs's space usage adds up,
+# and does so for project members who aren't worried about SHA1
+# collisions too...
 
 AT_CHECK(false)
 
