@@ -92,7 +92,7 @@ void write_options_map(data & dat,
 // intrinsic properties of the files, but not actually part of the file's
 // data stream. so they're kept here.
 
-typedef std::map<std::pair<file_path, std::string>, std::string> attr_map;
+typedef std::map<file_path, std::map<std::string, std::string> > attr_map;
 
 void get_attr_path(file_path & a_path);
 
@@ -104,5 +104,19 @@ void write_attr_map(data & dat,
 void apply_attributes(app_state & app, 
 		      attr_map const & attr);
 
+extern std::string const encoding_attribute;
+
+bool get_attribute_from_db(file_path const & file,
+			   std::string const & attr_key,
+			   manifest_map const & man,
+			   std::string & attr_val,
+			   app_state & app); 
+
+bool get_attribute_from_working_copy(file_path const & file,
+				     std::string const & attr_key,
+				     std::string & attr_val); 
+
+extern std::string const binary_encoding;
+extern std::string const default_encoding;
 
 #endif // __WORK_HH__

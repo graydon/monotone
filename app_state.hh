@@ -48,6 +48,7 @@ public:
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
+  
 
   void set_message(utf8 const & message);
   void add_revision(utf8 const & selector);

@@ -154,7 +154,6 @@ cpp_main(int argc, char ** argv)
   // decode all argv values into a UTF-8 array
 
   save_initial_path();
-  app_state app;
   utf8_argv uv(argc, argv);
 
   // prepare for arg parsing
@@ -173,6 +172,9 @@ cpp_main(int argc, char ** argv)
 
   try 
     {      
+
+      app_state app;
+
       while ((opt = poptGetNextOpt(ctx())) > 0)
         {
           switch(opt)

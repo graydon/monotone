@@ -583,7 +583,7 @@ session::analyze_attachment(revision_id const & i,
     return;
 
   visited.insert(i);
-
+  
   bool curr_attached = false;
 
   if (app.db.revision_exists(i))
@@ -652,7 +652,7 @@ session::request_rev_revisions(revision_id const & init,
         {
           if (is_attached(*i, attached))
             continue;
-
+          
           if (visited.find(*i) != visited.end())
             continue;
 
@@ -661,7 +661,7 @@ session::request_rev_revisions(revision_id const & init,
           ancestryT::const_iterator j = ancestry.find(*i);
           if (j != ancestry.end())
             {
-
+              
               for (edge_map::const_iterator k = j->second->second.edges.begin();
                    k != j->second->second.edges.end(); ++k)
                 {

@@ -951,6 +951,857 @@
 	* diff_patch.cc (adjust_deltas_under_renames): New function.
 	(merge3): Use it.
 
+2004-12-06  graydon hoare  <graydon@pobox.com>
+
+	* unix/get_system_flavour.cc:
+	* win32/get_system_flavour.cc: Add missing files.
+
+2004-12-06  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (merge): Add newline in output.
+	* change_set.cc (project_missing_deltas): Fix very bad
+	delta-renaming bug.
+
+2004-12-06  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc:
+	* tests/t_merge_add_del.at:
+	* netsync.cc:
+	* commands.cc: Clean up from merge.
+
+2004-12-05  graydon hoare  <graydon@pobox.com>
+
+        * Makefile.am (package_full_revision.txt): Use top_builddir
+        to locate monotone executable.
+
+2004-12-04  graydon hoare  <graydon@pobox.com>
+
+        * commands.cc (fcommit): New command.
+        (update): Finish off merge of update command.
+
+2004-12-04  Derek Scherger  <derek@echologic.com>
+
+        * commands.cc: (complete_command): New function.
+        (explain_usage/process): Use it.
+
+2004-12-01  graydon hoare  <graydon@pobox.com>
+
+	* {unix,win32}/get_system_flavour.cc: New files.
+	* basic_io.{cc,hh}: Give names to input sources.
+	* monotone.cc: Move app_state ctor inside try.
+	* platform.hh (get_system_flavour): Declare.
+	* revision.cc: Name input source "revision".
+	* sanity.cc: Log flavour on startup.
+	* tests/t_attributes.at: Use new syntax.
+	* transforms.{cc,hh} (split_into_lines): New variant, and rewrite.
+	* work.{cc,hh}: Rewrite attributes to use basic_io.
+	(get_attribute_from_db):
+	(get_attribute_from_working_copy): New functions.
+
+2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_merge_add_del: Shorten name for better display.
+
+2004-12-05  Matt Johnston <matt@ucc.asn.au>
+
+	* tests/t_merge_add_del: added a new test for merging
+	  branches where a file is added then removed.
+	* testsuite.at: added the new test
+	* configure.ac: bumped the prequisite version to 2.58 since
+	  some tests use AT_XFAIL_IF
+
+2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (merge_deltas): Call correct variant of
+	try_to_merge_files depending on whether ancestor is available.
+	* diff_patch.cc (try_to_merge_files -- merge3 version): Add
+	assertions about ids.
+	(try_to_merge_files -- merge2 version): Likewise.
+
+	* testsuite.at: Add a trivial working merge2 hook.
+	* tests/t_related_merge2_data.at: Update to use.
+	Mark as expected to PASS.
+	* tests/t_merge2_data.at: Likewise.
+
+2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Remove tabs.
+	* diff_patch.cc: Likewise.
+
+2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* keys.cc (get_passphrase): Simplify arguments.
+	(generate_key_pair): Force new passphrases to come from the user.
+	Adapt to new 'get_passphrase' arguments.
+	(change_key_passphrase): Likewise.
+	(generate_key_pair): Add argument specifying passphrase, for
+	exclusive use of the unit tests.
+	(signature_round_trip_test): Use it.
+	* keys.hh (generate_key_pair): Adjust prototype correspondingly.
+
+	* tests/t_genkey.at: Test that 'genkey' requires the passphrase to
+	be entered.
+	* tests/t_chkeypass.at: Check that 'chkeypass' fails if no
+	passphrase is given.
+
+2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* keys.hh: Remove tabs.
+	* keys.cc: Likewise.
+
+2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Hook Reference): Clarify description of
+	'get_passphrase', following confusion on IRC.
+
+2004-11-30  Joel Rosdahl  <joel@rosdahl.net>
+
+	* ui.cc (fatal): Added missing newlines in fatal message.
+
+2004-11-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Add more details to documentation of 'update
+	<revision>' command.
+
+	* ui.cc (fatal): Typo in previous commit.
+	
+2004-11-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ui.cc (fatal): On suggestion of Zack Weinberg, add a note to
+	fatal error messages 1) telling the user that it's a bug (i.e.,
+	not their fault), and 2) requesting a bug report.
+
+2004-11-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ui.cc: Remove tabs.
+
+2004-11-30  Matt Johnston  <matt@ucc.asn.au>
+
+        * change_set.cc (merge_disjoint_analyses): Prevent duplicated
+        tids being used.
+        (merge_disjoint_analyses): Fix typo (s/a_tmp/b_tmp/)
+
+2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_cleanup_empty_dir.at: Shorten name.
+
+2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (BUILT_SOURCES): List package_*version.{h,txt}.
+	* package_{full_,}version.txt: Work when blddir != srcdir.
+
+2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* mt_version.hh: New file.
+	* mt_version.cc: New file.
+	* monotone.cc (package_revision.h): Don't include it.
+	(mt_version.hh): Include it.
+	(OPT_FULL_VERSION): New option.
+	(options): Add it.
+	(cpp_main): Implement --version and --full-version in terms of
+	mt_version.hh.
+
+	* Makefile.am (package_full_revision.h): Build it.
+	(MOST_SOURCES): Add mt_version.{cc,hh}.
+
+2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* txt2c.cc (main): Add "--skip-trailing" option to skip trailing
+	whitespace.
+	* Makefile.am (package_revision.h): Generate it.
+	* monotone.cc (package_revision.h): Include it.
+	(cpp_main): Print it as part of --version.
+
+2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_cleanup_empty_dir.at: New test.
+	* testsuite.at: Call it.
+	
+2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (File Attributes): Document how restricted format
+	of .mt-attrs currently is.  Also talk about 'the' .mt-attrs file
+	instead of 'an', in response to confusion.
+
+2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc (build_deletion): Add missing newline.
+	(build_rename): Likewise.
+	(build_rename): Likewise.
+
+2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc: Remove tabs.
+
+2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc: Remove tabs.
+
+2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_add_dot.at: New test.
+	* testsuite.at: Call it.
+
+2004-11-22  Joel Rosdahl  <joel@rosdahl.net>
+
+	* testsuite.at (NEED_UNB64): Check that python knows how to decode
+	strings before using it.
+
+2004-11-21  Joel Rosdahl  <joel@rosdahl.net>
+
+	* testsuite.at (NEED_UNB64): Find more programs for decoding
+	base64.
+
+2004-11-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_merge_1.at: New test.
+	* testsuite.at: Add it.
+	(NEED_UNB64): New macro.
+	(UNB64): Likewise.
+	* tests/t_unidiff.at: Use them.
+	* tests/t_unidiff2.at: Likewise.
+
+2004-11-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_initfork.at: Remove file; redundant with
+	t_merge2_add.at.
+	* testsuite.at: Don't call it.
+
+2004-11-18  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (list tags): new command.
+	* monotone.1: update.
+	* monotone.texi: update.
+	* std_hooks.lua: remove unused get_problem_solution hook.
+	* test/t_tags.at: new test.
+	* testsuite.at: call it.
+
+2004-11-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Committing Work): Remove mistakenly added
+	redundant command line argument.
+
+2004-11-17  Joel Rosdahl  <joel@rosdahl.net>
+
+	* commands.cc (diff): Don't print hashes around diff output if
+	there is no diff to print.
+
+	Fix bugs #8714 "monotone update working copy to previous version"
+	and #9069 "update with multiple candidates":
+	* commands.cc (update): Let the update command take an optional
+	revision target parameter. Without an explicit revision target,
+	the current branch head is used just like before. Added logic for
+	updating to an older revision or another revision reachable via a
+	common ancestor.
+	* tests/t_update_to_revision.at: Add regression tests for new
+	update logic.
+	* testsuite.at: Add new test.
+	* monotone.texi: Document new update argument.
+
+2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (request_fwd_revisions): Rename 'first_attached_edge'
+	to 'an_attached_edge', because it does not represent the first
+	attached edge.  Likewise for 'first_attached_cset'.
+	(analyze_attachment): Remove early exit from loop; we want to
+	analyze the entire graph, not just some linear subgraphs.
+
+	* revision.cc (ensure_parents_loaded): Filter out the null
+	revision when calculating parents.
+	* change_set.hh (null_id): Define for 'revision_id's.
+
+	* tests/t_merge2_add.at: New test.
+	* tests/t_merge2_data.at: New test.
+	* tests/t_related_merge2_data.at: New test.
+	* tests/t_merge_add.at: New test.
+	* tests/t_netsync_pubkey.at: New test.
+	* tests/t_netsync_repeated.at: New test.
+	* tests/t_netsync_unrelated.at: New test.
+
+
+	* testsuite.at: Add new tests.
+	(NETSYNC_SETUP): New macro.
+	(MONOTONE2): New macro.
+	(RUN_NETSYNC): New macro.
+	(ADD_FILE): New macro.
+	(SET_FILE): New macro.
+	(COMMIT): New macro.
+	* tests/t_netsync.at: Use them.
+
+	* tests/t_singlenetsync.at: Add 'netsync' keyword'.  Rename to...
+	* tests/t_netsync_single.at: ...this.
+
+	* tests/t_heads_discontinuous_branch.at: XFAIL it.
+
+2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Remove hard tabs.
+
+2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc: Remove hard tabs.
+	* change_set.hh: Likewise.
+
+2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_heads.at: Replace last tricky case with a less tricky case.
+	* tests/t_heads_discontinuous_branch.at: New test for the really
+	tricky case.
+	* testsuite.at: Run it.
+
+2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* views.sql (trusted_parents_in_branch): Remove.
+	(trusted_children_in_branch): Remove.
+	(trusted_branch_members): New view.
+	(trusted_branch_parents): New view.
+	(branch_heads): Use the new views, not the removed ones.
+	
+	* database.cc (get_heads): Column name in 'branch_heads'
+	unavoidably changed from 'id' to 'parent'; adjust SELECT statement
+	to use new name.
+
+2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* database.cc: Remove hard tabs.
+
+2004-11-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (dump_diffs): Fetch delta destination, not source,
+	on new files.
+
+2004-11-15  Joel Rosdahl  <joel@rosdahl.net>
+
+	* tests/t_diff_added_file.at: Added testcase exposing a bug in
+	"monotone diff x y" where x is an ancestor of y and y adds a new
+	file.
+	* testsuite.at: Add new test.
+
+2004-11-14  Joel Rosdahl  <joel@rosdahl.net>
+
+	Fix bug #9092 "add command to change passphrase":
+	* commands.cc (chkeypass): New command.
+	* keys.cc (get_passphrase): Added parameters for prompt beginning and
+	disabling hook lookup and passphrase caching.
+	* keys.hh, keys.cc (change_key_passphrase): New function.
+	* database.hh, database.cc (delete_private_key): New function.
+	* monotone.texi (Key and Cert): Document command.
+	* tests/t_chkeypass.at: Testcase for the command.
+	* testsuite.at: Added new testcase.
+
+2004-11-14  Matt Johnston <matt@ucc.asn.au>
+
+	* tests/t_initfork.at: New test for merging two ancestor-less heads.
+
+2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_heads.at: New test.
+	* testsuite.at: Add it.
+	
+2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Fix various typos.
+	(Committing Work): Add missing command line argument.
+	(Branch Names): New section.
+	Add me to the copyright block.
+
+2004-11-12  Joel Rosdahl  <joel@rosdahl.net>
+
+	* monotone.texi: Fix documentation of the approve and disapprove
+	commands. Fix jp.co.juicebot.jb7 branch name in examples. Other
+	minor fixes.
+
+2004-11-11  Joel Rosdahl  <joel@rosdahl.net>
+
+	* monotone.texi: Fix typos.
+
+2004-11-08  graydon hoare  <graydon@pobox.com>
+
+	* monotone.texi: Some minor cleanups.
+	* netsync.cc: Fix a formatter.
+
+2004-11-07  graydon hoare  <graydon@pobox.com>
+
+	* figures/*.txt: Drop.
+	* monotone.texi: Pull ASCII figures back in conditionally.
+	* NEWS, AUTHORS, monotone.spec: Update for 0.15.
+	* monotone.1: Update.
+
+2004-11-06  graydon hoare  <graydon@pobox.com>
+
+	* README.changesets: New file.
+	* config.guess, config.sub: Remove.
+	* Makefile.am: Improve document-building brains.
+	* cert.cc, netsync.cc: Remove include.
+	* configure.ac: Bump version number.
+	* merkle_tree.{cc,hh}: Use unsigned char in dynamic_bitset.
+	* po/POTFILES.in: Update to remove os_specific.hh.
+	* po/monotone.pot: Regenerate.
+
+2004-11-05  graydon hoare  <graydon@pobox.com>
+
+	* constants.cc: Up timeout, connection limit.
+	* monotone.texi: Various cleanups.
+
+2004-11-05  Ulrich Drepper  <drepper@redhat.com>
+
+	* configure.ac: Reduce dependencies.
+	* lua/lua.h: Include config.h.
+	* mkstemp.{cc,hh}: Use system variant when found.
+	* netxx/resolve_getaddrinfo.cxx: Check for AI_ADDRCONFIG
+	definition.
+	* po/POTFILES.in: Update to mention changes.
+	* Makefile.am (EXTRA_DIST): Include spec file.
+	* commands.cc (diff): No output if empty diff.
+
+2004-10-31  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (diff): Use guess_binary.
+	Fix up some messages to fit on single lines.
+	* Makefile.am: Make monotone.pdf depend on figures.
+	* change_set.cc: Make inversion drop "delete deltas".
+	* texinfo.css: Make images align nicely.
+	* netsync.cc: Fix up some messages to be clearer.
+
+2004-10-30  graydon hoare  <graydon@pobox.com>
+
+	* figures/*: New figures.
+	* monotone.texi: Rewrite much of the tutorial.
+
+2004-10-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (process_hello_cmd): Make clear that when the
+	server's key is unknown, we abort the connection.
+
+2004-10-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sanity.cc (dump_buffer): Wrap bare string in call to string(),
+	to disambiguate conversions (required by Boost 1.30).
+
+2004-10-26  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_update_missing.at: New test from Bruce Stephens
+	* testsuite.at: Call it.
+	* change_set.cc: Fix the error exposed by it.
+
+2004-10-26  graydon hoare  <graydon@pobox.com>
+
+	* work.{cc,hh}: Comply with Derek's new tests.
+	* commands.cc: Likewise.
+
+2004-10-28  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_rename.at: add test for renaming a file after it has
+	been moved rather than before
+	* tests/t_revert.at: add test for reverting a missing file
+
+2004-10-28  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_drop_missing.at: New test.
+	* testsuite.at: Call it.
+
+2004-10-28  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_add.at: New test.
+	* testsuite.at: Call it.
+
+2004-10-26  graydon hoare  <graydon@pobox.com>
+
+	* basic_io.{cc,hh}: Rework to use indented stanzas.
+	* change_set.cc, revision.cc: Likewise.
+	* change_set.cc: Fix formatter bug.
+	* commands.cc: Sanity check file ID on delta commit.
+	* work.cc: Chatter a bit more on add/drop.
+
+2004-10-17  graydon hoare  <graydon@pobox.com>
+
+	* merkle_tree.cc: Fix bad logging.
+	* netsync.cc: Fix transmission bugs.
+	* work.cc: Add some progress messages back in.
+	* monotone.texi: Change contents of MT/work in example.
+
+2004-10-17  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (log): Keep a seen list, mask frontier by it.
+	* monotone.texi: Updates to cover revision terminology.
+
+	Also various further merges from trunk, see below.
+
+2004-10-17  Derek Scherger  <derek@echologic.com>
+
+	* lua.{cc,hh} (hook_ignore_branch): new hook
+	* commands.cc (ls_branches): call it
+	* monotone.texi (Hook Reference): describe it
+
+2004-10-17  Richard Levitte  <richard@levitte.org>
+
+	fix bug 8715 and more
+	* diff_patch.cc (struct unidiff_hunk_writer,
+	unidiff_hunk_writer::flush_hunk): the skew is not just the
+	size difference between added and deleted lines in the current
+	hunk, it's the size difference between /all/ added and deleted
+	lines so far.  Therefore, the skew needs to be a member of the
+	struct rather than being something calculated for each hunk.
+	Furthermore, we need to add trailing context even if the change
+	only consisted of one line.
+
+2004-10-17  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Working Copy): Change the description of
+	'monotone revert' to explain what happens when there are
+	arguments.
+
+2004-10-17  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (OPTIONS): Add a description of --ticker.
+
+	* ui.cc, ui.hh: Rethink the writing conditions as the ticks being
+	"dirty" when they have changed since the last print.  That way,
+	it's very easy to see when they need being printed.  This fixes a
+	small bug where, in some cases, the exact same tick output is
+	produced twice, once before a separate message, and once after,
+	when a ticker is actually being removed.
+	(tick_write_dot::write_ticks): Add a line that describes the
+	ticks, including the amount of each tick per short name.
+
+2004-10-17  Richard Levitte  <richard@levitte.org>
+
+	fix bug 8733
+	* ui.cc, ui.hh: Define a separate tick writer struct, and two
+	subclasses, one that write counters, and one that writes progress
+	characters.  As a consequence, move the count to the ticker class
+	itself, and have the user interface contain a map of pointers to
+	tickers instead of a map of counters, so data is easier to expand
+	and access in a consistent manner.  Finally, correct a few errors
+	in the checks for when ticks should be written, and make sure the
+	final value gets written when the tickers are removed.
+
+	* cert.cc (write_ancestry_paths):
+	* database.cc (rehash):
+	* netsync.cc (call_server, rebuild_merkle_trees):
+	* rcs_import.cc (import_cvs_repo, cvs_history): Adapt to the new
+	tickers.
+
+	* monotone.cc: Add the option '--ticker' which takes the values
+	"dot" or "count" to express which type of tick writer to use.  As
+	a result, set the tick writer to be the progress dot kind or the
+	counting type.
+
+2004-10-15  graydon hoare  <graydon@pobox.com>
+
+	* std_hooks.lua (get_revision_cert_trust): Add.
+
+2004-10-14  graydon hoare  <graydon@pobox.com>
+
+	* main.cc (UNIX_STYLE_SIGNAL_HANDLING): Enable on OSX.
+	* cryptopp/*: Upgrade to 5.2.1
+	* Makefile.am: Adjust for a couple new files.
+
+2004-10-13  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc (__STDC_CONSTANT_MACROS): Further hammering.
+	* commands.cc (changesetify): New subcommand to db.
+	* database.{cc,hh} (sql): Install views.
+	(install_views): New function.
+	(get_manifest_certs): Restore old variant.
+	* numeric_vocab.hh: Use stdint.h.
+	* revision.{cc,hh} (analyze_manifest_changes)
+	(construct_revisions)
+	(build_changesets): New functions.
+	* schema.sql: Remove views stuff.
+	* views.sql: Put views here.
+	* schema_migration.cc: Add migration code for revisions.
+	* Makefile.am: Mention views.sql.
+
+2004-10-12  graydon hoare  <graydon@pobox.com>
+
+	* unix/read_password.cc: Don't force echo on.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	merge a batch of changes from trunk, see below.
+	* monotone.spec: Bump to 0.14.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	fix bug 9884
+	* tests/t_singlenetsync.at: sleep 5
+	* tests/t_netsync.at: sleep 5 
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Mention Richard Levitte.
+	* Makefile.am: Remove nonce stuff.
+	* NEWS: Describe changes from last release.
+	* cert.cc (cert_manifest_testresult): Teach about other ways
+	of writing a boolean value.
+	* commands.cc (commit): Don't commit when no change.
+	(debug): Rename to "db execute".
+	(serve): Require passphrase on startup.
+	(bump): Remove command.
+	(ls keys): Handle no keys.
+	* configure.ac: Bump version number.
+	* keys.cc (get_passphrase): Reject empty passphrase nicely,
+	from user and from hook.
+	* lua.{cc,hh} (hook_get_sorter): Dead code, remove.
+	* main.cc (main_with_many_flavours_of_exception): s/char/int/.
+	* monotone.cc (OPT_DUMP): New option.
+	(OPT_VERBOSE): Rename as OPT_DEBUG.
+	* monotone.{texi,1}: Document changes, s/rdiff/xdelta/.
+	* nonce.{cc,hh}: Drop.
+	* sanity.hh (sanity::filename): New field.
+	* sanity.cc (dump_buffer): Dump to file or be silent.
+	* testsuite.at (persist_phrase_ok): Define as true.
+	* tests/t_null.at: Adjust for new option names.
+	* unit_tests.cc: Set debug, not verbose.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_remerge.at: New test.
+	* testsuite.at: Call it.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* cryptopp/algebra.cpp:
+	* cryptopp/asn.h:
+	* cryptopp/hmac.h:
+	* cryptopp/iterhash.h:
+	* cryptopp/mdc.h:
+	* cryptopp/modes.h:
+	* cryptopp/osrng.h:
+	* cryptopp/pubkey.h:
+	* cryptopp/seckey.h:
+	* cryptopp/simple.h:
+	* cryptopp/smartptr.h:
+	* cryptopp/strciphr.cpp:
+	* cryptopp/strciphr.h:
+	* lcs.cc:
+	* lua.cc: Fixes for g++ 3.4 from Michael Scherer.
+	* AUTHORS: Mention Michael.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_movedel.at: New test.
+	* testsuite.at: Call it.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_movepatch.at: New test.
+	* testsuite.at: Call it.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc:
+	* file_io.{cc,hh}: Bug Fixes.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* cert.{cc,hh} (cert_revision_manifest): Bug fixes.
+	* commands.cc (approve)
+	(disapprove)
+	(testresult): Teach about revisions.
+	* tests/t_disapprove.at:
+	* tests/t_i18n_file.at:
+	* tests/t_ls_missing.at:
+	* tests/t_testresult.at: Bug fixes.
+
+2004-10-09  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc: 
+	* packet.cc: 
+	* tests/t_i18n_file.at:
+	* tests/t_netsync.at:
+	* tests/t_single_char_filenames.at:
+	* tests/t_singlenetsync.at: Bug fixes.
+
+2004-10-04  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am: Re-enable rcs stuff.
+	* cert.{cc,hh}: Bug fixes.
+	* change_set.{cc,hh} (apply_change_set)
+	(apply_change_set_inverse): New helper functions.
+	* commands.cc (log)
+	(rcs_import)
+	(cvs_import): Teach about revisions.
+	* database.cc (get_version): Block reconstruction loops.
+	* diff_patch.cc:
+	* lua.cc:
+	* netsync.cc: Remove references to obsolete includes.
+	* rcs_file.cc: Pick up bug fix from trunk.
+	* rcs_import.cc: Teach about revisions.
+
+2004-10-03  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Lots of little bug fixes.
+	* commands.cc: Likewise.
+	* database.cc: Comment some chatter.
+	* file_io.{cc,hh}: Bug fixes, remove unlink / hardlink stuff.
+	* netcmd.cc: Bug fixes.
+	* netsync.cc: Likewise.
+	* tests/t_*.at: Teach about revisions.
+	* testsuite.at: Likewise.
+	* work.cc: Bug fixes.
+
+2004-09-30  graydon hoare  <graydon@pobox.com>
+
+	* app_state.cc: Inform db of app.
+	* change_set.cc: Bug fixes.
+	* commands.cc: Use delete_file not unlink.
+	* database.{cc,hh}: Bug fixes in trust function machinery.
+	* revisions.cc: Skip consideration of empty parents.
+	* file_io.{cc,hh}: Remove unlink function.
+	* schema.sql: Pass pubkey data into trust call.
+
+2004-09-29  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Various bug fixes, merge unit tests.
+
+2004-09-26  graydon hoare  <graydon@pobox.com>
+
+	* predicament.{cc,hh}: Remove.
+	* Makefile.am: Update.
+	* change_set.{cc,hh}: Compilation fixes.
+	* commands.cc: Likewise.
+	* file_io.{cc,hh}: Likewise, and implement link/unlink.
+	* lua.{cc,hh}: Implement conflict resolver hooks.
+
+2004-09-25  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Rewrite entirely.
+	* work.cc: Adjust to compensate.
+	* commands.cc: Likewise.
+	* numeric_vocab.hh: Ask for C99 constant ctor macros.
+
+2004-09-19  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: More bug fixes.
+	* basic_io.cc: Improve error reporting.
+	* commands.cc (complete): Teach about revisions.
+	* database.{cc,hh}: Add complete variant for revisions.
+
+2004-09-19  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Add a unit test, fix some bugs.
+
+2004-09-18  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh} (subtract_change_sets): New function.
+	(build_pure_addition_change_set): New function.
+	* commands.cc (try_one_merge): Teach about revisions
+	(merge): Likewise.
+	(propagate): Likewise.
+	(update): Change from changeset inversion to negation.
+	* database.{cc,hh} (get_manifest): New function.
+	* cert.cc: Use it.
+
+2004-09-13  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Bug fixes.
+	* commands.cc: Likewise.
+
+2004-09-13  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Implement delta renaming and merging.
+	* commands.cc 
+	(update): Teach about revisions.
+	(agraph): Likewise.
+	* diff_patch.{cc,hh}: Tidy up interface a bit.
+	* database.{cc,hh} (get_revision_ancestry): New helper.
+	* file_io.{cc,hh}
+	(move_dir): New function.
+	(delete_dir_recursive): New function.	
+
+2004-09-10  graydon hoare  <graydon@pobox.com>
+
+	* basic_io.{cc,hh}: Move to more "normal" looking
+	quoted output.
+	* change_set.{cc,hh}: Extend, bugfix.
+	* commands.cc (diff): Teach about revisions.
+	* revision.{cc,hh}: Extend, bugfix.
+
+2004-09-06  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am: Revise,
+	* cert.{cc,hh}: Minor bug fixes.
+	* change_set.{cc,hh} 
+	(apply_path_rearrangement): New variant.
+	(read_path_rearrangement): New function.
+	(write_path_rearrangement): New function.
+	* commands.cc: Partially teach about revisions.
+	* database.{cc,hh}: Bug fixes.
+	* revision.cc: Print new manifest as hex.
+	* schema.sql: Fix typos.
+	* update.{cc,hh}: Teach about revisions.
+
+2004-09-06  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (unit_tests): Revise.
+	* change_set.{cc,hh}: Move accessors to header.
+	* constants.cc (netcmd_current_protocol_version): Bump.
+	(netcmd_minimum_bytes_to_bother_with_gzip): Expand to 0xfff.
+	* database.{cc,hh}: Teach about reverse deltas, bug fixes.
+	* diff_patch.{cc,hh}: Remove dead code.
+	* merkle_tree.{cc,hh}: Teach about revisions.
+	* netsync.cc: Teach about revisions, reverse deltas.
+	* packet.{cc,hh}: Likewise.
+	* unit_tests.{cc,hh}: Reactivate tests.
+
+2004-08-28  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (unit_tests): Split out working parts.
+	* basic_io.{cc,hh}: Minor fixes. 
+	* cert.{cc,hh}: Fixes, remove major algorithms.
+	* revision.{cc,hh}: Rewrite algorithms from cert.cc.
+	* change_set.{cc,hh}: Extensive surgery, unit tests.
+	* database.{cc,hh}: Minor fixes.
+	* file_io.{cc,hh}: Likewise.
+	* lua.cc: Likewise.
+	* packet.{cc,hh}: Teach about revisions.
+	* schema.sql: Drop some optimistic tables.
+	* unit_tests.{cc,hh}: Add revision, change_set tests.
+	* vocab.cc: Instantiate revision<cert>.
+	* work.{cc,hh}: Rewrite in terms of path_rearrangement.
+
+2004-08-17  graydon hoare  <graydon@pobox.com>
+
+	* database.cc: Simplified.
+	* schema.sql: Simplified.
+	* transforms.cc: Fixed bug.
+	* revision.{hh,cc}: Stripped out tid_source.
+	* change_set.{cc,hh}: Oops, never committed!
+
+2004-08-16  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{hh,cc}: Simplified, finished i/o.
+	* revision.{hh,cc}: Fix to match, redo i/o.
+	* basic_io.cc (basic_io::parser::key): Print trailing colon.
+	* vocab.hh: Whitespace tweak.
+
+2004-08-09  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{hh,cc}: New files.
+	* basic_io.{hh,cc}: New files.
+	* predicament.{hh,cc}: New files.
+	* revision.{hh,cc}: Break completely, need to fix.
+	* diff_patch.{hh,cc}: Minor touchups.
+	* lua.{hh,cc}, std_hooks.lua: Model predicaments.
+	* Makefile.am: Update.
+
+2004-07-10  graydon hoare  <graydon@pobox.com>
+
+	* lcs.{hh,cc}: Move lcs.hh body into lcs.cc.
+	* diff_patch.cc: Modify to compensate.
+	* revision.{hh,cc}: New files.
+	* Makefile.am: Update
+	* patch_set.{hh,cc}: Remove.
+	* {cert,database,lua,packets}.{hh,cc}, commands.cc: 
+	Modify partially (incomplete) to use revisions.
+	* manifest.{hh,cc}: Cleanup, remove dead code.
+	* schema.sql: Declare new revision tables.
+	* schema_migration.cc: Incomplete migrator.
+	* {transforms.{hh,cc}, vocab{,_terms}.hh:
+	Infrastructure for revisions.
+
 2004-05-20  graydon hoare  <graydon@pobox.com>
 
 	* NEWS: Note 0.13 release.

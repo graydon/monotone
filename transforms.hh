@@ -135,6 +135,12 @@ void calculate_ident(revision_data const & dat,
 void calculate_ident(revision_set const & cs,
 		     revision_id & ident);
 
+void calculate_ident(revision_data const & dat,
+		     revision_id & ident);
+
+void calculate_ident(revision_set const & cs,
+		     revision_id & ident);
+
 
 // quick streamy variant which doesn't necessarily load the whole file
 
@@ -143,6 +149,10 @@ void calculate_ident(file_path const & file,
 		     lua_hooks & lua);
 
 void split_into_lines(std::string const & in,
+		      std::vector<std::string> & out);
+
+void split_into_lines(std::string const & in,
+		      std::string const & encoding,
 		      std::vector<std::string> & out);
 
 void join_lines(std::vector<std::string> const & in,

@@ -1149,12 +1149,13 @@ concatenate_change_sets(change_set const & a,
         concatenated.deltas.find(delta_entry_path(del));
       if (existing != concatenated.deltas.end())
         {
-          I(delta_entry_dst(existing) == delta_entry_src(del));
-          L(F("fusing deltas on %s : %s -> %s -> %s\n")
+          L(F("fusing deltas on %s : %s -> %s and %s -> %s\n")
             % delta_entry_path(del) 
             % delta_entry_src(existing) 
             % delta_entry_dst(existing)
+	    % delta_entry_src(del)
             % delta_entry_dst(del));
+          I(delta_entry_dst(existing) == delta_entry_src(del));
           std::pair<file_id, file_id> fused = std::make_pair(delta_entry_src(existing),
                                                              delta_entry_dst(del));      
           concatenated.deltas.erase(delta_entry_path(del));
@@ -1571,13 +1572,16 @@ merge_disjoint_analyses(path_analysis const & a,
 }
 
 static void
-merge_deltas(file_path const & path_in_merged, 
-             std::map<file_path, file_id> & merge_finalists,
-             file_id const & anc,
-             file_id const & left,
-             file_id const & right,
-             file_id & finalist, 
-             merge_provider & merger)
+merge_deltas(file_path const & anc_path, 
+	     file_path const & left_path, 
+	     file_path const & right_path, 
+	     file_path const & path_in_merged, 
+	     std::map<file_path, file_id> & merge_finalists,
+	     file_id const & anc,
+	     file_id const & left,
+	     file_id const & right,
+	     file_id & finalist, 
+	     merge_provider & merger)
 {
   std::map<file_path, file_id>::const_iterator i = merge_finalists.find(path_in_merged);
   if (i != merge_finalists.end())
@@ -1596,7 +1600,8 @@ merge_deltas(file_path const & path_in_merged,
         }
       else
         {
-          N(merger.try_to_merge_files(path_in_merged, anc, left, right, finalist),
+          N(merger.try_to_merge_files(anc_path, left_path, right_path, path_in_merged, 
+				      anc, left, right, finalist),
             F("merge of '%s' : '%s' -> '%s' vs '%s' failed") 
             % path_in_merged % anc % left % right);
         }
@@ -1626,16 +1631,27 @@ project_missing_deltas(change_set const & a,
   for (change_set::delta_map::const_iterator i = a.deltas.begin(); 
        i != a.deltas.end(); ++i)
     {
-      tid t;
-      file_path path_in_merged, path_in_b_second;
+      file_path path_in_merged, path_in_anc, path_in_b_second;
+
+      // we have a fork like this:
+      //
+      //
+      //            +--> [a2]
+      //     [a1==b1]
+      //            +--> [b2]
+      //
+      // and we have a delta applied to a file in a2. we want to
+      // figure out what to call this delta's path in b2. this means
+      // reconstructing it in a1==b1, then reconstructing it *again*
+      // in b2.
+
+      // first work out what the path in a.first == b.first is
+      reconstruct_path(delta_entry_path(i), a_second_map, 
+		       a_analysis.first, path_in_anc);
 
       // first work out what the path in b.second is
-      if (lookup_path(delta_entry_path(i), a_second_map, t) 
-          && b_analysis.second.find(t) != b_analysis.second.end())
-        get_full_path(b_analysis.second, t, path_in_b_second);
-      else
-        reconstruct_path(delta_entry_path(i), b_first_map, 
-                         b_analysis.second, path_in_b_second);
+      reconstruct_path(path_in_anc, b_first_map, 
+		       b_analysis.second, path_in_b_second);
 
       // then work out what the path in merged is
       reconstruct_path(delta_entry_path(i), a_merged_first_map, 
@@ -1687,11 +1703,15 @@ project_missing_deltas(change_set const & a,
               L(F("merging delta '%s' : '%s' -> '%s' vs. '%s'\n") 
                 % path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
               file_id finalist;
-              merge_deltas(path_in_merged, 
+
+              merge_deltas(path_in_anc,
+                           delta_entry_path(i), // left_path
+                           delta_entry_path(j), // right_path
+                           path_in_merged, 
                            merge_finalists,
-                           delta_entry_src(i),
-                           delta_entry_dst(i),
-                           delta_entry_dst(j),
+                           delta_entry_src(i), // anc
+                           delta_entry_dst(i), // left
+                           delta_entry_dst(j), // right
                            finalist, merger);
               L(F("resolved merge to '%s' : '%s' -> '%s'\n")
                 % path_in_merged % delta_entry_src(i) % finalist);
@@ -2260,7 +2280,7 @@ read_path_rearrangement(data const & dat,
                         change_set::path_rearrangement & re)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss);
+  basic_io::input_source src(iss, "path_rearrangement");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   change_set cs;
@@ -2273,7 +2293,7 @@ read_change_set(data const & dat,
                 change_set & cs)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss);
+  basic_io::input_source src(iss, "change_set");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_change_set(pars, cs);

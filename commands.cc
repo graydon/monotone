@@ -91,10 +91,52 @@ namespace commands
   }
 
 
+  string complete_command(string const & cmd) 
+  {
+    if (cmd.length() == 0 || cmds.find(cmd) != cmds.end()) return cmd;
+
+    P(F("expanding command '%s'\n") % cmd);
+
+    vector<string> matched;
+
+    for (map<string,command *>::const_iterator i = cmds.begin();
+         i != cmds.end(); ++i) 
+      {
+        if (cmd.length() < i->first.length()) 
+          {
+            string prefix(i->first, 0, cmd.length());
+            if (cmd == prefix) matched.push_back(i->first);
+          }
+      }
+
+    if (matched.size() == 1) 
+      {
+      string completed = *matched.begin();
+      P(F("expanded command to '%s'\n") %  completed);  
+      return completed;
+      }
+    else if (matched.size() > 1) 
+      {
+      string err = (F("command '%s' has multiple ambiguous expansions: \n") % cmd).str();
+      for (vector<string>::iterator i = matched.begin();
+           i != matched.end(); ++i)
+        err += (*i + "\n");
+      W(boost::format(err));
+    }
+
+    return cmd;
+  }
+
   void explain_usage(string const & cmd, ostream & out)
   {
     map<string,command *>::const_iterator i;
-    i = cmds.find(cmd);
+
+    string completed = complete_command(cmd);
+
+    // try to get help on a specific command
+
+    i = cmds.find(completed);
+
     if (i != cmds.end())
       {
         string params = i->second->params;
@@ -158,10 +200,12 @@ namespace commands
 
   int process(app_state & app, string const & cmd, vector<utf8> const & args)
   {
-    if (cmds.find(cmd) != cmds.end())
+    string completed = complete_command(cmd);
+    
+    if (cmds.find(completed) != cmds.end())
       {
-        L(F("executing %s command\n") % cmd);
-        cmds[cmd]->exec(app, args);
+ 	L(F("executing %s command\n") % completed);
+ 	cmds[completed]->exec(app, args);
         return 0;
       }
     else
@@ -1194,9 +1238,95 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
 }
 
 
-// fload and fmerge are simple commands for debugging the line merger.
-// most of the time, leave them commented out. they can be helpful for certain
-// cases, though.
+// fload and fmerge are simple commands for debugging the line
+// merger. fcommit is a helper for making single-file commits to monotone
+// (such as automated processes might want to do).
+
+CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]", 
+    "commit change to a single file")
+{
+  if (args.size() != 2 && args.size() != 3)
+    throw usage(name);
+
+  file_id old_fid, new_fid;
+  revision_id old_rid, new_rid;
+  manifest_id old_mid, new_mid;
+  manifest_map old_man, new_man;
+  file_data old_fdata, new_fdata;
+  cert_value branchname;
+  revision_data rdata;
+  revision_set rev;
+  change_set cs;
+
+  string log_message("");
+  base64< gzip< data > > gz_dat;
+  base64< gzip< delta > > gz_del;
+  file_path pth(idx(args, 1)());
+
+  transaction_guard guard(app.db);
+  packet_db_writer dbw(app);
+  
+  complete(app, idx(args, 0)(), old_rid);
+
+  // find the old rev, manifest and file
+  app.db.get_revision_manifest(old_rid, old_mid);
+  app.db.get_manifest(old_mid, old_man);
+  manifest_map::const_iterator i = old_man.find(pth);
+  N(i != old_man.end(), 
+    F("cannot find file %s revision %s") 
+    % pth % old_rid);
+
+  // fetch the new file input
+  string s = get_stdin();
+  pack(data(s), gz_dat);    
+  new_fdata = file_data(gz_dat);  
+  calculate_ident(new_fdata, new_fid);
+
+  // diff and store the file edge
+  old_fid = manifest_entry_id(i);
+  app.db.get_file_version(old_fid, old_fdata);
+  diff(old_fdata.inner(), new_fdata.inner(), gz_del);    
+  dbw.consume_file_delta(old_fid, new_fid, 
+			 file_delta(gz_del));
+
+  // diff and store the manifest edge
+  new_man = old_man;
+  new_man[pth] = new_fid;
+  calculate_ident(new_man, new_mid);
+  diff(old_man, new_man, gz_del);
+  dbw.consume_manifest_delta(old_mid, new_mid, 
+			     manifest_delta(gz_del));
+
+  // build and store a changeset and revision
+  cs.apply_delta(pth, old_fid, new_fid);
+  rev.new_manifest = new_mid;
+  rev.edges.insert(std::make_pair(old_rid, 
+				  std::make_pair(old_mid, cs)));
+  calculate_ident(rev, new_rid);
+  write_revision_set(rev, rdata);
+  dbw.consume_revision_data(new_rid, rdata);
+
+  // take care of any extra certs
+  guess_branch (old_rid, app, branchname);
+  app.set_branch(branchname());
+
+  if (args.size() == 3)
+    log_message = idx(args, 2)();
+  else
+    get_log_message(rev, app, log_message);
+
+  N(log_message.find_first_not_of(" \r\t\n") != string::npos,
+    F("empty log message"));
+
+  cert_revision_in_branch(new_rid, branchname, app, dbw); 
+  cert_revision_date_now(new_rid, app, dbw);
+  cert_revision_author_default(new_rid, app, dbw);
+  cert_revision_changelog(new_rid, log_message, app, dbw);
+
+  // finish off
+  guard.commit();
+}
+
 
 CMD(fload, "tree", "", "load file contents into db")
 {
@@ -1251,6 +1381,7 @@ CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result"
   split_into_lines(right_unpacked(), right_lines);
   N(merge3(anc_lines, left_lines, right_lines, merged_lines), F("merge failed"));
   copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
+  
 }
 
 CMD(status, "informative", "[PATH]...", "show status of working copy")
@@ -2014,14 +2145,69 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipu
     throw usage(name);
 }
 
+CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]", 
+    "get or set file attributes")
 CMD(commit, "working copy", "[--message=STRING] [PATH]...", 
     "commit working copy to database")
 {
   app.initialize(true);
+  if (args.size() < 2 || args.size() > 4)
+    throw usage(name);
 
+  data attr_data;
+  file_path attr_path;
+  attr_map attrs;
+  get_attr_path(attr_path);
+
+  if (file_exists(attr_path))
+    {
+      read_data(attr_path, attr_data);
+      read_attr_map(attr_data, attrs);
+    }
+  
+  file_path path;
+  if (idx(args, 0)() == "set")
+    {
+      path = file_path(idx(args, 1)());
+      attrs[path][idx(args, 2)()] = idx(args, 3)();
+      write_attr_map(attr_data, attrs);
+      write_data(attr_path, attr_data);
+    }
+  else if (idx(args, 0)() == "get")
+    {
+      path = idx(args, 1)();
+      if (args.size() != 2 && args.size() != 3)
+	throw usage(name);
+
+      attr_map::const_iterator i = attrs.find(path);
+      if (i == attrs.end())
+	cout << "no attributes for " << path << endl;
+      else
+	{
+	  if (args.size() == 2)
+	    {
+	      for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
+		   j != i->second.end(); ++j)
+		cout << path << " : " << j->first << "=" << j->second << endl;
+	    }
+	  else
+	    {	    
+	      std::map<std::string, std::string>::const_iterator j = i->second.find(idx(args, 2)());
+	      if (j == i->second.end())
+		cout << "no attribute " << idx(args, 2)() << " on file " << path << endl;
+	      else
+		cout << path << " : " << j->first << "=" << j->second << endl;
+	    }
+	}
+    }
+  else 
+    throw usage(name);
+}
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     app.add_restriction((*i)());
 
+CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
+{
   string log_message("");
   revision_set rs;
   revision_id rid;
@@ -2520,11 +2706,11 @@ write_file_targets(change_set const & cs,
 
 CMD(update, "working copy", "\nREVISION", "update working copy to be based off another revision")
 {
-  manifest_map m_old, m_working;
+  manifest_map m_old, m_ancestor, m_working, m_chosen;
+  manifest_id m_ancestor_id, m_chosen_id;
   revision_set r_old, r_working, r_new;
   revision_id r_old_id, r_chosen_id;
   change_set old_to_chosen, update;
-  update_merge_provider merger(app);
 
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
@@ -2550,9 +2736,12 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
     }
 
   P(F("selected update target %s\n") % r_chosen_id);
+  app.db.get_revision_manifest(r_chosen_id, m_chosen_id);
+  app.db.get_manifest(m_chosen_id, m_chosen);
 
   if (args.size() == 0) {
     calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+    m_ancestor = m_old;
   } else {
     revision_id r_ancestor_id;
 
@@ -2562,24 +2751,19 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
     L(F("chosen is %s\n") % r_chosen_id);
     L(F("common ancestor is %s\n") % r_ancestor_id);
 
+    app.db.get_revision_manifest(r_ancestor_id, m_ancestor_id);
+    app.db.get_manifest(m_ancestor_id, m_ancestor);
+
     if (r_ancestor_id == r_old_id) {
       calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
     } else if (r_ancestor_id == r_chosen_id) {
       change_set chosen_to_old;
-      manifest_id m_chosen_id;
-      manifest_map m_chosen;
-      app.db.get_revision_manifest(r_chosen_id, m_chosen_id);
-      app.db.get_manifest(m_chosen_id, m_chosen);
       calculate_composite_change_set(r_chosen_id, r_old_id, app, chosen_to_old);
       invert_change_set(chosen_to_old, m_chosen, old_to_chosen);
     } else {
       change_set ancestor_to_old;
       change_set old_to_ancestor;
       change_set ancestor_to_chosen;
-      manifest_id m_ancestor_id;
-      manifest_map m_ancestor;
-      app.db.get_revision_manifest(r_ancestor_id, m_ancestor_id);
-      app.db.get_manifest(m_ancestor_id, m_ancestor);
       calculate_composite_change_set(r_ancestor_id, r_old_id, app, ancestor_to_old);
       invert_change_set(ancestor_to_old, m_ancestor, old_to_ancestor);
       calculate_composite_change_set(r_ancestor_id, r_chosen_id, app, ancestor_to_chosen);
@@ -2587,7 +2771,7 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
     }
   }
 
-  I(r_working.edges.size() == 1 || r_working.edges.size() == 0);
+  update_merge_provider merger(app, m_ancestor, m_chosen, m_working);
 
   if (r_working.edges.size() == 0)
     {
@@ -2656,7 +2840,6 @@ try_one_merge(revision_id const & left_id,
   app.db.get_revision(left_id, left_rev);
   app.db.get_revision(right_id, right_rev);
   
-  merge_provider merger(app);
   packet_db_writer dbw(app);    
     
   manifest_map anc_man, left_man, right_man, merged_man;
@@ -2685,6 +2868,8 @@ try_one_merge(revision_id const & left_id,
       build_pure_addition_change_set(left_man, anc_to_left);
       build_pure_addition_change_set(right_man, anc_to_right);
     }
+  
+  merge_provider merger(app, anc_man, left_man, right_man);
   
   merge_change_sets(anc_to_left, anc_to_right, 
                     left_to_merged, right_to_merged, 
@@ -2746,7 +2931,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   for (++i; i != heads.end(); ++i, ++count)
     {
       revision_id right = *i;
-      P(F("merging with revision %d / %d") % count % heads.size());
+      P(F("merging with revision %d / %d\n") % count % heads.size());
       P(F("[source] %s\n") % left);
       P(F("[source] %s\n") % right);
 

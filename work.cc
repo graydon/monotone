@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "app_state.hh"
+#include "basic_io.hh"
 #include "change_set.hh"
 #include "file_io.hh"
 #include "sanity.hh"
@@ -204,39 +205,41 @@ get_options_path(local_path & o_path)
 void 
 read_options_map(data const & dat, options_map & options)
 {
-  regex expr("^([^[:space:]]+)[[:blank:]]+([^[:space:]]+)$");
-  regex_grep(add_to_options_map(options), dat(), expr, match_not_dot_newline);
+  std::istringstream iss(dat());
+  basic_io::input_source src(iss, "MT/options");
+  basic_io::tokenizer tok(src);
+  basic_io::parser parser(tok);
+
+  options.clear();
+
+  std::string opt, val;
+  while (parser.symp())
+    {
+      parser.sym(opt);
+      parser.str(val);
+      options[opt] = val;      
+    }
 }
 
 void 
 write_options_map(data & dat, options_map const & options)
 {
-  ostringstream tmp;
+  std::ostringstream oss;
+  basic_io::printer pr(oss);
+
+  basic_io::stanza st;
   for (options_map::const_iterator i = options.begin();
        i != options.end(); ++i)
-    tmp << i->first << " " << i->second << endl;
-  dat = tmp.str();
+    st.push_str_pair(i->first, i->second());
+
+  pr.print_stanza(st);
+  dat = oss.str();
 }
 
 
 // attribute map file
 
 string const attr_file_name(".mt-attrs");
-
-struct 
-add_to_attr_map
-{
-  attr_map & attr;
-  explicit add_to_attr_map(attr_map & m): attr(m) {}
-  bool operator()(match_results<std::string::const_iterator> const & res) 
-  {
-    std::string key(res[1].first, res[1].second);
-    std::string value(res[2].first, res[2].second);
-    std::string file(res[3].first, res[3].second);
-    attr[make_pair(file_path(file), key)] = value;
-    return true;
-  }
-};
 
 void 
 get_attr_path(file_path & a_path)
@@ -245,23 +248,62 @@ get_attr_path(file_path & a_path)
   L(F("attribute map path is %s\n") % a_path);
 }
 
+namespace
+{
+  namespace syms
+  {
+    std::string const file("file");
+  }
+}
+
 void 
 read_attr_map(data const & dat, attr_map & attr)
 {
-  regex expr("^([^[:space:]]+) ([^[:space:]]+) ([^[:space:]].*)$");
-  regex_grep(add_to_attr_map(attr), dat(), expr, match_not_dot_newline);
+  std::istringstream iss(dat());
+  basic_io::input_source src(iss, ".mt-attrs");
+  basic_io::tokenizer tok(src);
+  basic_io::parser parser(tok);
+
+  std::string file, name, value;
+
+  attr.clear();
+
+  while (parser.symp(syms::file))
+    {
+      parser.sym();
+      parser.str(file);
+      file_path fp(file);
+
+      while (parser.symp() && 
+	     !parser.symp(syms::file)) 
+	{
+	  parser.sym(name);
+	  parser.str(value);
+	  attr[fp][name] = value;
+	}
+    }
 }
 
 void 
 write_attr_map(data & dat, attr_map const & attr)
 {
-  ostringstream tmp;
+  std::ostringstream oss;
+  basic_io::printer pr(oss);
+  
   for (attr_map::const_iterator i = attr.begin();
        i != attr.end(); ++i)
-    tmp << i->first.second << " "    // key
-        << i->second << " "          // value
-        << i->first.first << endl;   // file
-  dat = tmp.str();
+    {
+      basic_io::stanza st;
+      st.push_str_pair(syms::file, i->first());
+
+      for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
+	   j != i->second.end(); ++j)
+	  st.push_str_pair(j->first, j->second);	  
+
+      pr.print_stanza(st);
+    }
+
+  dat = oss.str();
 }
 
 
@@ -270,7 +312,73 @@ apply_attributes(app_state & app, attr_map const & attr)
 {
   for (attr_map::const_iterator i = attr.begin();
        i != attr.end(); ++i)
-    app.lua.hook_apply_attribute (i->first.second, 
-                                  i->first.first,
-                                  i->second);
+      for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
+	   j != i->second.end(); ++j)
+	app.lua.hook_apply_attribute (j->first,
+				      i->first, 
+				      j->second);
+}
+
+string const encoding_attribute("encoding");
+string const binary_encoding("binary");
+string const default_encoding("default");
+
+static bool find_in_attr_map(attr_map const & attr,
+			     file_path const & file,
+			     std::string const & attr_key,
+			     std::string & attr_val)
+{
+  attr_map::const_iterator f = attr.find(file);
+  if (f == attr.end())
+    return false;
+
+  std::map<std::string, std::string>::const_iterator a = f->second.find(attr_key);
+  if (a == f->second.end())
+    return false;
+
+  attr_val = a->second;
+  return true;
+}
+
+bool get_attribute_from_db(file_path const & file,
+			   std::string const & attr_key,
+			   manifest_map const & man,
+			   std::string & attr_val,
+			   app_state & app)
+{
+  file_path fp;
+  get_attr_path(fp);
+  manifest_map::const_iterator i = man.find(fp);
+  if (i == man.end())
+    return false;
+
+  file_id fid = manifest_entry_id(i);
+  if (!app.db.file_version_exists(fid))
+    return false;
+
+  file_data attr_data;
+  app.db.get_file_version(fid, attr_data);
+
+  attr_map attr;
+  read_attr_map(data(attr_data.inner()()), attr);
+
+  return find_in_attr_map(attr, file, attr_key, attr_val);
+}
+
+bool get_attribute_from_working_copy(file_path const & file,
+				     std::string const & attr_key,
+				     std::string & attr_val)
+{
+  file_path fp;
+  get_attr_path(fp);
+  if (!file_exists(fp))
+    return false;
+  
+  data attr_data;
+  read_data(fp, attr_data);
+
+  attr_map attr;
+  read_attr_map(attr_data, attr);
+
+  return find_in_attr_map(attr, file, attr_key, attr_val);
 }

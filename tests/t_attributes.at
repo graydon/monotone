@@ -10,8 +10,11 @@ AT_DATA(foo, [some data
 AT_DATA(a, [some data
 ])
 AT_DATA(.mt-attrs,
-[test_attr true foo
-test_attr 1 a
+[file "foo"
+ test_attr "true"
+
+ file "a"
+ test_attr "1"
 ])
 
 AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
@@ -19,7 +22,9 @@ AT_CHECK(MONOTONE add .mt-attrs, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 CO_R_SHA1=`BASE_REVISION`
 
-AT_DATA(.mt-attrs, [test_attr 2 a
+AT_DATA(.mt-attrs, [
+file "a"
+test_attr "2"
 ])
 AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 UPDATE_R_SHA1=`BASE_REVISION`

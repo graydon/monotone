@@ -2080,7 +2080,7 @@ familiarize yourself with its operation.
 
 Revisions can be specified on the monotone command line, precisely, by
 entering the entire 40-character hexidecimal @sc{sha1} code. This can
-be cumbersome, so monotone also a more general syntax called
+be cumbersome, so monotone also allows a more general syntax called
 ``selectors'' which is less precise but more ``human friendly''. Any
 command which expects a precise revision ID can also accept a selector
 in its place; in fact a revision ID is just a special type of selector
@@ -3029,10 +3029,10 @@ aborts, doing nothing. The stages are:
 @item
 Examine the ancestry graph of revisions in your database, and (subject
 to trust evaluation) select the set of all descendents of your working
-copy's base revision.  Call this set the ``candidates'' of the update.
+copy's base revision. Call this set the ``candidates'' of the update.
 @item
 Remove any candidates which lack acceptable testresult
-certificates.  From the remaining candidates, select the deepest child
+certificates. From the remaining candidates, select the deepest child
 by ancestry and call it the ``target'' of the update.
 @item 
 Merge the target of the update with the working copy, in memory, and
