@@ -1,13 +1,3 @@
-2004-12-18  Richard Levitte  <richard@levitte.org>
-
-	* diff_patch.cc (struct unidiff_hunk_writer,
-	  unidiff_hunk_writer::flush_hunk, unidiff): Move the printing of
-	  the two first lines in the diff (the lines with the file names)
-	  to flush_hunk, so they are only written if the diff contains any
-	  hunks.  This avoids printing a diff with no difference in cases
-	  where a file has been merely touched, or had a change removed
-	  instead of reverting the file.
-
 2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* diff_patch.cc (struct hunk_offset_calculator): Remove dead
