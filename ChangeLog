@@ -1,3 +1,9 @@
+2005-02-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* vocab.cc (test_file_path_verification): Re-enable some tests
+	disabled by Jon Bright, following discussion on IRC concluding
+	that they were catching a real bug.
+
 2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* file_io.cc (get_homedir): Add more comments and logging to Win32

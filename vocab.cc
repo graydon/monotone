@@ -111,7 +111,7 @@ verify(local_path & val)
         F("empty path component in '%s'") % val);
 
       N((*i != ".."),
-	F("prohibited path component '%s' in '%s'") % *i % val);
+        F("prohibited path component '%s' in '%s'") % *i % val);
 
       string::size_type pos = i->find_first_of(constants::illegal_path_bytes);
       N(pos == string::npos,
@@ -235,20 +235,8 @@ static void test_file_path_verification()
   char const * baddies [] = {"../escape",
                              "foo/../../escape",
                              "/rooted",
-#ifndef _WIN32
                              "foo//nonsense",
-// This cannot succeed on Win32.  Boost builds the path by splitting it
-// into sections.  In this case, it gets sections "foo" and "/nonsense".
-// This is the case on all platforms.  For each section, the filesystem
-// then calls the name checker for that section.  mkpath() in file_io.cc 
-// calls the Boost path constructor with boost::filesystem::native as the
-// name checker.  For non-Win32, this function is "return TRUE;".  For
-// Win32, it actually checks against a list of inappropriate characters.
-// For this example, '/' is clearly an invalid char, and it returns FALSE,
-// which in its turn causes a Boost exception.  It seems like the Boost
-// non-Win32 behaviour is actually wrong here - '/' isn't a valid char in
-// Unix filenames, either.
-#else
+#ifdef _WIN32
                              "c:\\windows\\rooted",
                              "c:/windows/rooted",
                              "c:thing",
@@ -260,12 +248,6 @@ static void test_file_path_verification()
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path p(*c), informative_failure);      
   
-#ifndef _WIN32
-// This whole check can't succeed on Win32, either, for reasons
-// analog to those above - all of these characters are already
-// checked and rejected by the boost constructor.  The same
-// comment about this not being the case for non-Win32 does *not*
-// apply, though - these are all valid chars for Unix names.
   char const * bad = "\t\r\n\v\f\a\b";
   char badboy[] = "bad";
   for (char const * c = bad; *c; ++c)
@@ -273,16 +255,15 @@ static void test_file_path_verification()
       badboy[1] = *c;
       BOOST_CHECK_THROW(file_path p(badboy), informative_failure);
     }
-#endif
   
   char const * goodies [] = {"unrooted", 
-			     "unrooted.txt",
-			     "fun_with_underscore.png",
-			     "fun-with-hyphen.tiff", 
- 			     "unrooted/../unescaping",
-			     "unrooted/general/path",
+                             "unrooted.txt",
+                             "fun_with_underscore.png",
+                             "fun-with-hyphen.tiff", 
+                             "unrooted/../unescaping",
+                             "unrooted/general/path",
                              "here/..",
-			     0 };
+                             0 };
 
   for (char const ** c = goodies; *c; ++c)
     BOOST_CHECK_NOT_THROW(file_path p(*c), informative_failure);
