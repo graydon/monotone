@@ -1464,10 +1464,9 @@ merge_disjoint_analyses(path_analysis const & a,
 			path_analysis & b_renumbered,
 			path_analysis & a_merged,
 			path_analysis & b_merged,
+			tid_source & ts,
 			app_state & app)
 {
-  tid_source ts;
-
   // we have anc->a and anc->b and we want to construct a->merged and
   // b->merged, leading to the eventual identity concatenate(a,a_merged) ==
   // concatenate(b,b_merged).  
@@ -1500,7 +1499,7 @@ merge_disjoint_analyses(path_analysis const & a,
   {
     directory_map a_second_map, b_second_map;
     build_directory_map(a_tmp.second, a_second_map);
-    build_directory_map(a_tmp.second, b_second_map);
+    build_directory_map(b_tmp.second, b_second_map);
     ensure_entries_exist(a_tmp.first, a_second_map, a_tmp.second, ts);
     ensure_entries_exist(b_tmp.first, b_second_map, b_tmp.second, ts);
   }
@@ -1721,7 +1720,7 @@ merge_change_sets(change_set const & a,
   merge_disjoint_analyses(a_analysis, b_analysis,
 			  a_renumbered, b_renumbered,
 			  a_merged_analysis, b_merged_analysis, 
-			  app);
+			  ts, app);
 
   compose_rearrangement(a_merged_analysis, 
 			a_merged.rearrangement);

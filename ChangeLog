@@ -1,3 +1,9 @@
+2004-11-30  Matt Johnston  <matt@ucc.asn.au>
+
+        * change_set.cc (merge_disjoint_analyses): Prevent duplicated
+        tids being used.
+        (merge_disjoint_analyses): Fix typo (s/a_tmp/b_tmp/)
+
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_cleanup_empty_dir.at: Shorten name.
