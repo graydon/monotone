@@ -1,5 +1,13 @@
 2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* merkle_tree.hh: Remove mcert_item and fcert_item, rename
+	rcert_item to cert_item, renumber to remove gaps left.
+	* merkle_tree.cc (netcmd_item_type_to_string):
+	* netcmd.cc (read_netcmd_item_type): 
+	* netsync.cc: Adjust accordingly.
+	
+2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* constants.cc (constants): Bump netsync protocol version.
 
 2005-02-05  Nathaniel Smith  <njs@codesourcery.com>

@@ -263,7 +263,7 @@ session
   void mark_recent_io();
 
   bool done_all_refinements();
-  bool rcert_refinement_done();
+  bool cert_refinement_done();
   bool all_requested_revisions_received();
 
   void note_item_requested(netcmd_item_type ty, id const & i);
@@ -355,12 +355,12 @@ session
                                id const & item);
 
   bool merkle_node_exists(netcmd_item_type type,
-                          utf8 const & collection,			
+                          utf8 const & collection,                      
                           size_t level,
                           prefix const & pref);
 
   void load_merkle_node(netcmd_item_type type,
-                        utf8 const & collection,			
+                        utf8 const & collection,                        
                         size_t level,
                         prefix const & pref,
                         merkle_ptr & node);
@@ -451,14 +451,10 @@ session::session(protocol_role role,
     }  
   prng.reset(new CryptoPP::AutoSeededRandomPool(request_blocking_rng));
 
-  done_refinements.insert(make_pair(rcert_item, done_marker()));
-  done_refinements.insert(make_pair(mcert_item, done_marker()));
-  done_refinements.insert(make_pair(fcert_item, done_marker()));
+  done_refinements.insert(make_pair(cert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
   
-  requested_items.insert(make_pair(rcert_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(fcert_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(mcert_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
@@ -503,9 +499,9 @@ session::done_all_refinements()
 
 
 bool 
-session::rcert_refinement_done()
+session::cert_refinement_done()
 {
-  return done_refinements[rcert_item].tree_is_done;
+  return done_refinements[cert_item].tree_is_done;
 }
 
 bool 
@@ -548,7 +544,7 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
 
   switch (ty)
     {
-    case rcert_item:
+    case cert_item:
       if (cert_in_ticker.get() != NULL)
         ++(*cert_in_ticker);
       break;
@@ -577,7 +573,7 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
 {
   switch (ty)
     {
-    case rcert_item:
+    case cert_item:
       if (cert_out_ticker.get() != NULL)
         ++(*cert_out_ticker);
       break;
@@ -912,7 +908,7 @@ session::analyze_ancestry_graph()
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
 
-  if (! (all_requested_revisions_received() && rcert_refinement_done()))
+  if (! (all_requested_revisions_received() && cert_refinement_done()))
     return;
 
   if (analyzed_ancestry)
@@ -1645,17 +1641,9 @@ session::process_confirm_cmd(string const & signature)
           queue_refine_cmd(*root);
           queue_done_cmd(0, key_item);
 
-          load_merkle_node(mcert_item, this->collection, 0, get_root_prefix().val, root);
+          load_merkle_node(cert_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
-          queue_done_cmd(0, mcert_item);
-
-          load_merkle_node(fcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, fcert_item);
-
-          load_merkle_node(rcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, rcert_item);
+          queue_done_cmd(0, cert_item);
           return true;
         }
       else
@@ -1681,17 +1669,13 @@ data_exists(netcmd_item_type type,
     {
     case key_item:
       return app.db.public_key_exists(hitem);
-    case fcert_item:
-      return false;
-    case mcert_item:
-      return false;
     case manifest_item:
       return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
     case revision_item:
       return app.db.revision_exists(revision_id(hitem));
-    case rcert_item:
+    case cert_item:
       return app.db.revision_cert_exists(hitem);
     }
   return false;
@@ -1769,7 +1753,7 @@ load_data(netcmd_item_type type,
         }
       break;
 
-    case rcert_item:
+    case cert_item:
       if(app.db.revision_cert_exists(hitem))
         {
           revision<cert> c;
@@ -1779,16 +1763,8 @@ load_data(netcmd_item_type type,
         }
       else
         {
-          throw bad_decode(F("rcert '%s' does not exist in our database") % hitem);
+          throw bad_decode(F("cert '%s' does not exist in our database") % hitem);
         }
-      break;
-
-    case mcert_item:
-      throw bad_decode(F("mcert '%s' not supported") % hitem);
-      break;
-
-    case fcert_item:
-      throw bad_decode(F("fcert '%s' not supported") % hitem);
       break;
     }
 }
@@ -2311,13 +2287,9 @@ session::process_data_cmd(netcmd_item_type type,
         }
       break;
 
-    case mcert_item:
-      L(F("ignoring manifest cert '%s'\n") % hitem);
-      break;
-
-    case rcert_item:
+    case cert_item:
       if (this->app.db.revision_cert_exists(hitem))
-        L(F("revision cert '%s' already exists in our database\n")  % hitem);
+        L(F("cert '%s' already exists in our database\n")  % hitem);
       else
         {
           cert c;
@@ -2336,10 +2308,6 @@ session::process_data_cmd(netcmd_item_type type,
         }
       break;
 
-    case fcert_item:
-      L(F("ignoring file cert '%s'\n") % hitem);
-      break;
-
     case revision_item:
       {
         revision_id rid(hitem);
@@ -2356,7 +2324,7 @@ session::process_data_cmd(netcmd_item_type type,
             rp->first = revision_data(packed);
             read_revision_set(dat, rp->second);
             ancestry.insert(std::make_pair(rid, rp));
-            if (rcert_refinement_done())
+            if (cert_refinement_done())
               {
                 analyze_ancestry_graph();
               }
@@ -2485,7 +2453,7 @@ session::process_nonexistant_cmd(netcmd_item_type type,
 
 bool
 session::merkle_node_exists(netcmd_item_type type,
-                            utf8 const & collection,			
+                            utf8 const & collection,                    
                             size_t level,
                             prefix const & pref)
 {
@@ -2500,7 +2468,7 @@ session::merkle_node_exists(netcmd_item_type type,
 
 void 
 session::load_merkle_node(netcmd_item_type type,
-                          utf8 const & collection,			
+                          utf8 const & collection,                      
                           size_t level,
                           prefix const & pref,
                           merkle_ptr & node)
@@ -3150,15 +3118,11 @@ session::rebuild_merkle_trees(app_state & app,
 {
   P(F("rebuilding merkle trees for collection %s\n") % collection);
 
-  // we're not using these anymore..
-  make_root_node(*this, collection, mcert_item);
-  make_root_node(*this, collection, fcert_item);
-
-  boost::shared_ptr<merkle_table> rtab = make_root_node(*this, collection, rcert_item);
+  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, collection, cert_item);
   boost::shared_ptr<merkle_table> ktab = make_root_node(*this, collection, key_item);
 
-  ticker rcerts("rcerts", "r", 256);
-  ticker keys("keys", "k", 1);
+  ticker certs_ticker("certs", "c", 256);
+  ticker keys_ticker("keys", "k", 1);
 
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;
@@ -3182,13 +3146,13 @@ session::rebuild_merkle_trees(app_state & app,
       }
 
     typedef std::vector< std::pair<hexenc<id>,
-      std::pair<revision_id, rsa_keypair_id> > > rcert_idx;
+      std::pair<revision_id, rsa_keypair_id> > > cert_idx;
 
-    rcert_idx idx;
+    cert_idx idx;
     app.db.get_revision_cert_index(idx);
 
     // insert all certs and keys reachable via these revisions
-    for (rcert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
+    for (cert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
       {
         hexenc<id> const & hash = i->first;
         revision_id const & ident = i->second.first;
@@ -3199,8 +3163,8 @@ session::rebuild_merkle_trees(app_state & app,
         
         id raw_hash;
         decode_hexenc(hash, raw_hash);
-        insert_into_merkle_tree(*rtab, rcert_item, true, raw_hash(), 0);
-        ++rcerts;
+        insert_into_merkle_tree(*ctab, cert_item, true, raw_hash(), 0);
+        ++certs_ticker;
         if (inserted_keys.find(key) == inserted_keys.end())
           {
             if (app.db.public_key_exists(key))
@@ -3211,7 +3175,7 @@ session::rebuild_merkle_trees(app_state & app,
                 key_hash_code(key, pub_encoded, keyhash);
                 decode_hexenc(keyhash, raw_hash);
                 insert_into_merkle_tree(*ktab, key_item, true, raw_hash(), 0);
-                ++keys;
+                ++keys_ticker;
               }
             inserted_keys.insert(key);
           }
@@ -3219,7 +3183,7 @@ session::rebuild_merkle_trees(app_state & app,
   }  
 
   recalculate_merkle_codes(*ktab, get_root_prefix().val, 0);
-  recalculate_merkle_codes(*rtab, get_root_prefix().val, 0);
+  recalculate_merkle_codes(*ctab, get_root_prefix().val, 0);
 }
 
 void 

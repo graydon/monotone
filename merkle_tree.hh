@@ -35,11 +35,9 @@ typedef enum
   {
     manifest_item = 1,
     file_item = 2,
-    mcert_item = 3,
-    fcert_item = 4,
-    key_item = 5,    
-    revision_item = 6,
-    rcert_item = 7
+    key_item = 3,    
+    revision_item = 4,
+    cert_item = 5
   }
 netcmd_item_type;
 
@@ -97,21 +95,21 @@ std::string raw_sha1(std::string const & in);
 // these operate against the database
  
 void load_merkle_node(app_state & app,
-		      netcmd_item_type type,
-		      utf8 const & collection,			
-		      size_t level,
-		      hexenc<prefix> const & hpref,
-		      merkle_node & node);
+                      netcmd_item_type type,
+                      utf8 const & collection,                  
+                      size_t level,
+                      hexenc<prefix> const & hpref,
+                      merkle_node & node);
 
 // returns the first hashsz bytes of the serialized node, which is 
 // the hash of its contents.
 
 id store_merkle_node(app_state & app,
-		     utf8 const & collection,
-		     merkle_node const & node);
+                     utf8 const & collection,
+                     merkle_node const & node);
 
 void pick_slot_and_prefix_for_value(id const & val, size_t level, 
-				    size_t & slotnum, boost::dynamic_bitset<unsigned char> & pref);
+                                    size_t & slotnum, boost::dynamic_bitset<unsigned char> & pref);
 
 // this inserts a leaf into the appropriate position in a merkle
 // tree, writing it to the db and updating any other nodes in the

@@ -34,12 +34,8 @@ read_netcmd_item_type(string const & in,
       return manifest_item;
     case static_cast<u8>(file_item):
       return file_item;
-    case static_cast<u8>(mcert_item):
-      return mcert_item;
-    case static_cast<u8>(fcert_item):
-      return fcert_item;
-    case static_cast<u8>(rcert_item):
-      return rcert_item;
+    case static_cast<u8>(cert_item):
+      return cert_item;
     case static_cast<u8>(key_item):
       return key_item;      
     default:
