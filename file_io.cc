@@ -40,16 +40,28 @@ save_initial_path()
 }
 
 bool
-find_working_copy(fs::path & working_copy_root, fs::path & working_copy_restriction) 
+find_working_copy(fs::path const & search_root,
+                  fs::path & working_copy_root, 
+                  fs::path & working_copy_restriction) 
 {
-  L(F("searching for '%s' directory\n") % book_keeping_dir);
-
   fs::path bookdir = mkpath(book_keeping_dir);
   fs::path current = fs::initial_path();
   fs::path removed;
   fs::path check = current / bookdir;
 
-  while (current.has_branch_path() && current.has_leaf() && !fs::exists(check))
+  L(F("searching for '%s' directory with root '%s'\n") 
+    % bookdir.string()
+    % search_root.string());
+
+  // nb: boost 1.32.0 has added operations::equivalent(path1, path2)
+  // and ==, !=, ... on paths which are probably better than
+  // native_directory_string comparisons used here temporarily
+
+  while ( current.native_directory_string() 
+          != search_root.native_directory_string() &&
+          current.has_branch_path() && 
+          current.has_leaf() && 
+          !fs::exists(check))
     {
       L(F("'%s' not found in '%s' with '%s' removed\n")
         % bookdir.string() % current.string() % removed.string());
@@ -58,7 +70,7 @@ find_working_copy(fs::path & working_copy_root, fs::path & working_copy_restrict
       check = current / bookdir;
     }
 
-  L(F("'%s' found in '%s' with '%s' removed\n") 
+  L(F("search for '%s' ended at '%s' with '%s' removed\n") 
     % book_keeping_dir % current.string() % removed.string());
 
   if (!fs::exists(check))

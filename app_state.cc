@@ -26,7 +26,8 @@ static string const branch_option("branch");
 static string const key_option("key");
 
 app_state::app_state() 
-  : branch_name(""), db(""), stdhooks(true), rcfiles(true)
+  : branch_name(""), db(""), stdhooks(true), rcfiles(true),
+    search_root("/")
 {
   db.set_app(this);
 }
@@ -35,36 +36,21 @@ app_state::~app_state()
 {
 }
 
-// search for working copy
-// working_copy true  ==> MT/options must exist and is read and written
-// working_copy false ==> MT/options may  exist and is read for defaults
-
-// NB: this is not done in the constructor because checkout and setup
-// must not do any searching for the MT dir and associated directory
-// changing
-
-// FIXME: this should be revisited, requiring explicit calls to
-// app.initialize(true/false) for every command seems rather primitive
-
 void
-app_state::initialize(bool working_copy)
+app_state::allow_working_copy()
 {
-  fs::path root;
-  fs::path subdir;
+  fs::path root = mkpath(search_root());
+  fs::path working;
+  fs::path current;
 
-  // a lua hook or --root option here that returns a directory prefix
-  // or regex to stop the directory search might be good
+  found_working_copy = find_working_copy(root, working, current);
 
-  bool found = find_working_copy(root, subdir);
-
-  N(!working_copy || found, F("working copy directory required but not found"));
-
-  if (found) 
+  if (found_working_copy) 
     {
       L(F("initializing from directory %s\n") % fs::initial_path().string());
-      L(F("found working copy directory %s\n") % root.string());
-      N(chdir(root.native_directory_string().c_str()) != -1,
-        F("cannot change to directory to %s\n") % root.native_directory_string());
+      L(F("found working copy directory %s\n") % working.string());
+      N(chdir(working.native_directory_string().c_str()) != -1,
+        F("cannot change to directory to %s\n") % working.native_directory_string());
 
       read_options();
 
@@ -73,24 +59,35 @@ app_state::initialize(bool working_copy)
       branch_name = options[branch_option];
       internalize_rsa_keypair_id(options[key_option], signing_key);
 
-      if (working_copy) write_options();
-
-      if (!subdir.empty()) 
+      if (!current.empty()) 
         {
-          relative_directory = file_path(subdir.native_directory_string());
+          relative_directory = file_path(current.native_directory_string());
           L(F("relative directory is '%s'\n") % relative_directory());
         }
     }
   load_rcfiles();
 }
 
-// create new working copy, create MT dir and write MT/options
-
-void
-app_state::initialize(std::string const & dir)
+void 
+app_state::require_working_copy()
 {
+  N(found_working_copy, F("working copy directory required but not found"));
+  write_options();
+}
+
+void 
+app_state::create_working_copy(std::string const & dir)
+{
+  // cd back to where we started from
+  N(chdir(fs::initial_path().native_directory_string().c_str()) != -1,
+    F("cannot change to initial directory %s\n") 
+    % fs::initial_path().native_directory_string());
+
+  string target = absolutify(dir);
+  L(F("create working copy in %s\n") % target);
+  
   {
-    fs::path new_dir = mkpath(dir);
+    fs::path new_dir = mkpath(target);
     try
       {
         fs::create_directories(new_dir);
@@ -103,17 +100,20 @@ app_state::initialize(std::string const & dir)
           % strerror(err.native_error()));
       }
     N(chdir(new_dir.native_directory_string().c_str()) != -1,
-      F("cannot change to directory %s\n") % new_dir.native_directory_string());
+      F("cannot change to new directory %s\n") 
+      % new_dir.native_directory_string());
+    
+    relative_directory = file_path();
   }
 
   local_path mt(book_keeping_dir);
 
   N(!directory_exists(mt),
     F("monotone book-keeping directory '%s' already exists in '%s'\n") 
-    % book_keeping_dir % dir);
+    % book_keeping_dir % target);
 
   L(F("creating book-keeping directory '%s' for working copy in '%s'\n")
-    % book_keeping_dir % dir);
+    % book_keeping_dir % target);
 
   mkdir_p(mt);
 
@@ -208,6 +208,18 @@ app_state::set_signing_key(utf8 const & key)
   internalize_rsa_keypair_id(key, signing_key);
 
   options[key_option] = key;
+}
+
+void 
+app_state::set_root(utf8 const & path)
+{
+  search_root = absolutify(path());
+  fs::path root = mkpath(search_root());
+  N(fs::exists(root),
+    F("search root '%s' does not exist\n") % search_root);
+  N(fs::is_directory(root),
+    F("search root '%s' is not a directory\n") % search_root);
+  L(F("set search root to %s\n") % search_root);
 }
 
 void

@@ -779,8 +779,6 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   if (args.size() != 1)
     throw usage(name);
 
-  app.initialize(false);
-
   vector<cert> certs;
   
   transaction_guard guard(app.db);
@@ -862,8 +860,6 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 {
   vector<rsa_keypair_id> pubkeys;
   vector<rsa_keypair_id> privkeys;
-
-  app.initialize(false);
 
   transaction_guard guard(app.db);
 
@@ -1043,8 +1039,6 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   if (args.size() != 1)
     throw usage(name);
   
-  app.initialize(false);
-
   transaction_guard guard(app.db);
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
@@ -1066,8 +1060,6 @@ CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key"
 {
   if (args.size() != 1)
     throw usage(name);
-
-  app.initialize(false);
 
   transaction_guard guard(app.db);
   rsa_keypair_id ident;
@@ -1091,8 +1083,6 @@ CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
 {
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
-
-  app.initialize(false);
 
   transaction_guard guard(app.db);
 
@@ -1135,8 +1125,6 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
   if (args.size() < 4)
     throw usage(name);
 
-  app.initialize(false);
-
   revision_id rid;
   complete(app, idx(args, 0)(), rid);
   hexenc<id> ident(rid.inner());
@@ -1174,8 +1162,6 @@ CMD(tag, "review", "REVISION TAGNAME",
   if (args.size() != 2)
     throw usage(name);
 
-  app.initialize(false);
-
   revision_id r;
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
@@ -1189,8 +1175,6 @@ CMD(testresult, "review", "ID (pass|fail|true|false|yes|no|1|0)",
   if (args.size() != 2)
     throw usage(name);
 
-  app.initialize(false);
-
   revision_id r;
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
@@ -1202,8 +1186,6 @@ CMD(approve, "review", "REVISION",
 {
   if (args.size() != 1)
     throw usage(name);  
-
-  app.initialize(false);
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
@@ -1221,8 +1203,6 @@ CMD(disapprove, "review", "REVISION",
 {
   if (args.size() != 1)
     throw usage(name);
-
-  app.initialize(false);
 
   revision_id r;
   revision_set rev, rev_inverse;
@@ -1270,8 +1250,6 @@ CMD(comment, "review", "REVISION [COMMENT]",
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);
 
-  app.initialize(false);
-
   string comment;
   if (args.size() == 2)
     comment = idx(args, 1)();
@@ -1295,7 +1273,7 @@ CMD(add, "working copy", "PATH...", "add files to working copy")
   if (args.size() < 1)
     throw usage(name);
 
-  app.initialize(true);
+  app.require_working_copy();
 
   manifest_map m_old;
   calculate_base_manifest(app, m_old);
@@ -1316,7 +1294,7 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy")
   if (args.size() < 1)
     throw usage(name);
 
-  app.initialize(true);
+  app.require_working_copy();
 
   manifest_map m_old;
   calculate_base_manifest(app, m_old);
@@ -1338,7 +1316,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   if (args.size() != 2)
     throw usage(name);
   
-  app.initialize(true);
+  app.require_working_copy();
 
   manifest_map m_old;
   calculate_base_manifest(app, m_old);
@@ -1449,8 +1427,6 @@ CMD(fload, "debug", "", "load file contents into db")
   string s = get_stdin();
   base64< gzip< data > > gzd;
 
-  app.initialize(false);
-
   pack(data(s), gzd);
 
   file_id f_id;
@@ -1466,8 +1442,6 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
 {
   if (args.size() != 3)
     throw usage(name);
-
-  app.initialize(false);
 
   file_id anc_id(idx(args, 0)()), left_id(idx(args, 1)()), right_id(idx(args, 2)());
   file_data anc, left, right;
@@ -1506,7 +1480,7 @@ CMD(status, "informative", "[PATH]...", "show status of working copy")
   manifest_map m_old, m_new;
   data tmp;
 
-  app.initialize(true);
+  app.require_working_copy();
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     app.add_restriction((*i)());
@@ -1522,8 +1496,6 @@ CMD(identify, "working copy", "[PATH]",
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
-
-  app.initialize(false);
 
   data dat;
 
@@ -1546,8 +1518,6 @@ CMD(cat, "informative", "(file|manifest|revision) [ID]",
 {
   if (!(args.size() == 1 || args.size() == 2))
     throw usage(name);
-
-  app.initialize(false);
 
   transaction_guard guard(app.db);
 
@@ -1579,7 +1549,10 @@ CMD(cat, "informative", "(file|manifest|revision) [ID]",
         {
           revision_set rev;
           manifest_map m_old, m_new;
+
+          app.require_working_copy();
           calculate_current_revision(app, rev, m_old, m_new);
+
           calculate_ident(m_new, ident);
           write_manifest_map(m_new, dat);
         }
@@ -1606,6 +1579,8 @@ CMD(cat, "informative", "(file|manifest|revision) [ID]",
         {
           revision_set rev;
           manifest_map m_old, m_new;
+
+          app.require_working_copy();
           calculate_current_revision(app, rev, m_old, m_new);
           calculate_ident(rev, ident);
           write_revision_set(rev, dat);
@@ -1650,20 +1625,38 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
       else
           dir = idx(args, 0)();
 
-      app.initialize(dir);
-
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
       N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
       N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
       ident = *(heads.begin());
+
+      app.create_working_copy(dir);
     }
   else
     {
       dir = idx(args, 1)();
-      app.initialize(dir);
-
       complete(app, idx(args, 0)(), ident);
+
+      if (!app.branch_name().empty()) 
+        {
+          cert_value branch_name(app.branch_name());
+          base64<cert_value> branch_encoded;
+          encode_base64(branch_name, branch_encoded);
+  
+          vector< revision<cert> > certs;
+          app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
+
+          L(F("found %d %s branch certs on revision %s\n") 
+            % certs.size()
+            % app.branch_name
+            % ident);
+
+          N(certs.size() != 0, F("revision %s is not a member of branch %s\n") 
+            % ident % app.branch_name);
+        }
+
+      app.create_working_copy(dir);
     }
 
   transaction_guard guard(app.db);
@@ -1710,9 +1703,6 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch")
   if (args.size() != 0)
     throw usage(name);
 
-  app.initialize(false);
-
-  
   N(app.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
@@ -1733,8 +1723,6 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch")
 static void 
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
-  app.initialize(false);
-
   transaction_guard guard(app.db);
   vector< revision<cert> > certs;
   app.db.get_revision_certs(branch_cert_name, certs);
@@ -1759,8 +1747,6 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 static void 
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
-  app.initialize(false);
-
   transaction_guard guard(app.db);
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
@@ -1806,7 +1792,7 @@ struct unknown_itemizer : public tree_walker
 static void
 ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 {
-  app.initialize(true);
+  app.require_working_copy();
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     app.add_restriction((*i)());
@@ -1828,7 +1814,7 @@ ls_missing (app_state & app, vector<utf8> const & args)
   change_set::path_rearrangement included, excluded;
   path_set old_paths, new_paths;
 
-  app.initialize(true);
+  app.require_working_copy();
 
   get_revision_id(rid);
   if (! rid.inner()().empty())
@@ -1912,8 +1898,6 @@ CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout"
   if (args.size() != 2)
     throw usage(name);
 
-  app.initialize(false);
-
   packet_writer pw(cout);
 
   manifest_id m_old_id, m_new_id; 
@@ -1936,8 +1920,6 @@ CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
   if (args.size() != 2)
     throw usage(name);
 
-  app.initialize(false);
-
   packet_writer pw(cout);
 
   file_id f_old_id, f_new_id;
@@ -1958,8 +1940,6 @@ CMD(rdata, "packet i/o", "ID", "write revision data packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
-  app.initialize(false);
-
   packet_writer pw(cout);
 
   revision_id r_id;
@@ -1975,8 +1955,6 @@ CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
-
-  app.initialize(false);
 
   packet_writer pw(cout);
 
@@ -1995,8 +1973,6 @@ CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
-  app.initialize(false);
-
   packet_writer pw(cout);
 
   file_id f_id;
@@ -2013,8 +1989,6 @@ CMD(certs, "packet i/o", "ID", "write cert packets to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
-
-  app.initialize(false);
 
   packet_writer pw(cout);
 
@@ -2033,8 +2007,6 @@ CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
-  app.initialize(false);
-
   rsa_keypair_id ident(idx(args, 0)());
   N(app.db.public_key_exists(ident),
     F("public key '%s' does not exist in database") % idx(args, 0)());
@@ -2050,8 +2022,6 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
-  app.initialize(false);
-
   rsa_keypair_id ident(idx(args, 0)());
   N(app.db.private_key_exists(ident),
     F("private key '%s' does not exist in database") % idx(args, 0)());
@@ -2065,8 +2035,6 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
 
 CMD(read, "packet i/o", "", "read packets from stdin")
 {
-  app.initialize(false);
-
   packet_db_writer dbw(app, true);
   size_t count = read_packets(cin, dbw);
   N(count != 0, F("no packets found on stdin"));
@@ -2083,8 +2051,6 @@ CMD(reindex, "network", "",
   if (args.size() > 0)
     throw usage(name);
 
-  app.initialize(false);
-
   transaction_guard guard(app.db);
   ui.set_tick_trailer("rehashing db");
   app.db.rehash();
@@ -2096,8 +2062,6 @@ CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION",
 {
   if (args.size() < 2)
     throw usage(name);
-
-  app.initialize(false);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
@@ -2114,8 +2078,6 @@ CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION",
   if (args.size() < 2)
     throw usage(name);
 
-  app.initialize(false);
-
   if (app.signing_key() == "")
     W(F("doing anonymous pull\n"));
   
@@ -2129,8 +2091,6 @@ CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION",
 {
   if (args.size() < 2)
     throw usage(name);
-
-  app.initialize(false);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
@@ -2146,8 +2106,6 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
 {
   if (args.size() < 2)
     throw usage(name);
-
-  app.initialize(false);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
@@ -2207,8 +2165,6 @@ check_db(app_state & app)
 
 CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipulate database state")
 {
-  app.initialize(false);
-
   if (args.size() == 1)
     {
       if (idx(args, 0)() == "init")
@@ -2249,7 +2205,7 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
 
-  app.initialize(true);
+  app.require_working_copy();
 
   data attr_data;
   file_path attr_path;
@@ -2326,7 +2282,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   revision_id rid;
   manifest_map m_old, m_new;
   
-  app.initialize(true);
+  app.require_working_copy();
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     app.add_restriction((*i)());
@@ -2583,11 +2539,9 @@ void do_diff(const string & name,
   // initialize before transaction so we have a database to work with
 
   if (app.revision_selectors.size() == 0)
-      app.initialize(true);
+    app.require_working_copy();
   else if (app.revision_selectors.size() == 1)
-      app.initialize(true);
-  else if (app.revision_selectors.size() == 2)
-      app.initialize(false);
+    app.require_working_copy();
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     app.add_restriction((*i)());
@@ -2742,8 +2696,6 @@ CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor")
   if (args.size() != 2)
     throw usage(name);
 
-  app.initialize(false);
-
   revision_id anc, left, right;
 
   complete(app, idx(args, 0)(), left);
@@ -2761,8 +2713,6 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
   if (args.size() != 2)
     throw usage(name);
 
-  app.initialize(false);
-
   revision_id anc, left, right;
 
   complete(app, idx(args, 0)(), left);
@@ -2777,8 +2727,6 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
 
 CMD(agraph, "debug", "", "dump ancestry graph to stdout")
 {
-  app.initialize(false);
-
   set<revision_id> nodes;
   multimap<revision_id,string> branches;
 
@@ -2893,7 +2841,8 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
 
-  app.initialize(true);
+  app.require_working_copy();
+
   calculate_current_revision(app, r_working, m_old, m_working);
   
   I(r_working.edges.size() == 1);
@@ -3139,7 +3088,6 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   if (args.size() != 0)
     throw usage(name);
 
-  app.initialize(false);
   N(app.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
@@ -3211,8 +3159,6 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   if (args.size() != 2)
     throw usage(name);
 
-  app.initialize(false);
-
   get_branch_heads(idx(args, 0)(), app, src_heads);
   get_branch_heads(idx(args, 1)(), app, dst_heads);
 
@@ -3275,8 +3221,6 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
   if (args.size() != 3 && args.size() != 4)
     throw usage(name);
 
-  app.initialize(false);
-
   complete(app, idx(args, 0)(), left);
   complete(app, idx(args, 1)(), right);
   if (args.size() == 4)
@@ -3329,8 +3273,6 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
   if (args.size() != 2)
     throw usage(name);
 
-  app.initialize(false);
-
   if (idx(args, 0)() == "revision")
     {      
       N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
@@ -3374,7 +3316,7 @@ CMD(revert, "working copy", "[PATH]...",
   manifest_id old_manifest_id;
   change_set::path_rearrangement included, excluded;
  
-  app.initialize(true);
+  app.require_working_copy();
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     app.add_restriction((*i)());
@@ -3387,10 +3329,19 @@ CMD(revert, "working copy", "[PATH]...",
 
   for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
     {
-      if (!app.restriction_includes(i->first)) continue;
+      if (!app.restriction_includes(manifest_entry_path(i))) continue;
+
+      hexenc<id> ident;
+
+      if (file_exists(manifest_entry_path(i)))
+        {
+          calculate_ident(manifest_entry_path(i), ident, app.lua);
+          // don't touch unchanged files
+          if (manifest_entry_id(i) == ident) continue;
+      }
       
-      L(F("reverting %s to %s\n") %
-        manifest_entry_path(i) % manifest_entry_id(i));
+      L(F("reverting %s from %s to %s\n") %
+        manifest_entry_path(i) % ident % manifest_entry_id(i));
 
       N(app.db.file_version_exists(manifest_entry_id(i)),
         F("no file version %s found in database for %s")
@@ -3416,8 +3367,6 @@ CMD(rcs_import, "debug", "RCSFILE...",
   if (args.size() < 1)
     throw usage(name);
   
-  app.initialize(false);
-
   transaction_guard guard(app.db);
   for (vector<utf8>::const_iterator i = args.begin();
        i != args.end(); ++i)
@@ -3432,8 +3381,6 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
 {
   if (args.size() != 1)
     throw usage(name);
-
-  app.initialize(false);
 
   import_cvs_repo(mkpath(idx(args, 0)()), app);
 }
@@ -3471,7 +3418,6 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
 
   if (args.size() == 2)
   {  
-    app.initialize(false);
     complete(app, idx(args, 0)(), rid);
     file=file_path(idx(args, 1)());
   }  
@@ -3481,12 +3427,12 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
       if (arg.find_first_not_of(constants::legal_id_bytes) == string::npos
           && arg.size()<=constants::idlen)
         {
-          app.initialize(false);
           complete(app, arg, rid);
         }
       else
         {  
-          app.initialize(true); // no id arg, must have working copy
+          app.require_working_copy(); // no id arg, must have working copy
+
           file=file_path(arg);
           file = file_path(arg);
           get_revision_id(rid);
@@ -3494,7 +3440,7 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
     }
   else
     {
-      app.initialize(true); // no id arg, must have working copy
+      app.require_working_copy(); // no id arg, must have working copy
       get_revision_id(rid);
     }
 
@@ -3611,7 +3557,7 @@ CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
     throw usage(name);
 
   dir = idx(args,0)();
-  app.initialize(dir);
+  app.create_working_copy(dir);
   revision_id null;
   put_revision_id(null);
 }

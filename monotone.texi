@@ -2312,19 +2312,19 @@ working copy. Because of this, a search is done to find the @file{MT}
 directory in case a command is executed from within a subdirectory of a
 working copy. Before a command is executed, the search for a working
 copy directory is done by traversing parent directories until an
-@file{MT} directory is found. Upon finding an @file{MT} directory, the
-@file{MT/options} file is read for default options.
+@file{MT} directory is found or the filesystem root is reached. Upon
+finding an @file{MT} directory, the @file{MT/options} file is read for
+default options. The @option{--root} option may be used to stop the 
+search early, before reaching the root of the physical filesystem.
 
 Many monotone commands don't require a working copy and will simply
 proceed with no default options if no @file{MT} directory is found.
 However, some monotone commands do require a working copy and will fail
 if no @file{MT} directory can be found.
 
-The @command{checkout} and @command{setup} commands currently do not
-search for a working copy. These commands create a @i{new working copy}
-and initialize the @file{MT/options} file based on their command line
-options. These commands may be changed to search for a working copy and
-read default options in the future.
+The @command{checkout} and @command{setup} commands create a @i{new
+working copy} and initialize a new @file{MT/options} file based on their
+current option settings.
 
 
 @page
@@ -5256,6 +5256,11 @@ Use the given message as the changelog when committing a new revision
 rather than invoking the log message editor. Currently this option only
 applies to the commit command but it may also apply to the comment
 command in the future.
+
+@item @b{--root=}@i{<root dir>}
+Stop the search for a working copy (containing the @file{MT} directory)
+at the specified root directory rather than at the physical root of the
+filesystem.
 
 @comment TROFF INPUT: .SH ENVIRONMENT
 
