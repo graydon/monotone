@@ -1,3 +1,7 @@
+2005-01-14  Christian Kollee <stuka@pestilenz.org>
+
+	* search for and link with sqlite3 when --bundle-sqlite=no
+
 2005-01-12  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_ambig_update.at: add comments from discussion on irc
