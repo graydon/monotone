@@ -1079,6 +1079,48 @@ CMD(update, "working copy", "[sort keys...]", "update working copy, relative to 
   P("updated to base version %s\n", m_chosen_id.inner()().c_str());
 }
 
+CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working copy")
+{
+  manifest_map m_old, m_new;
+  patch_set ps;
+
+  work_set work;
+  get_manifest_map(man);
+  get_work_set(work);
+
+  path_set paths;
+  work_set work;
+  extract_path_set(m_old, paths);
+  get_work_set(work);
+  if (work.dels.size() > 0)
+    L("removing %d dead files from manifest\n", 
+      work.dels.size());
+  if (work.adds.size() > 0)
+    L("adding %d files to manifest\n", work.adds.size());
+  apply_work_set(work, paths);
+  build_manifest_map(paths, m_new);
+
+  bool rewrite_work = false;
+
+  for (path_set::const_iterator i = work.adds.begin();
+       i != work.adds.end(); ++i)
+    build_deletion(*i, app, work, man, rewrite_work);
+
+  for (path_set::const_iterator i = work.dels.begin();
+       i != work.dels.end(); ++i)
+    build_addition(file_path(*i), app, work, man, rewrite_work);
+
+
+  transaction_guard guard(app.db);
+  get_manifest_map(m_old);
+  calculate_new_manifest_map(m_old, m_new);
+  manifests_to_patch_set(m_old, m_new, app, ps);
+  patch_set_to_text_summary(ps, cout);
+  guard.commit();
+
+  // race
+  put_work_set(work);
+}
 
 
 CMD(cat, "tree", "(file|manifest) <id>", "write file or manifest from database to stdout")
