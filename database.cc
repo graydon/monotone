@@ -116,7 +116,7 @@ database::database(fs::path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("40369a7bda66463c5785d160819ab6398b9d44f4"),
+  schema("e372b508bea9b991816d1c74680f7ae10d2a6d94"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -2244,6 +2244,72 @@ database::clear_epoch(cert_value const & branch)
   execute("DELETE FROM branch_epochs WHERE branch = '%q'", encoded().c_str());
 }
 
+// vars
+
+void
+database::get_vars(std::map<std::pair<var_domain, var_name>,
+                            var_value> &
+                   vars)
+{
+  vars.clear();
+  results res;
+  fetch(res, 3, any_rows, "SELECT domain, name, value FROM db_vars");
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    {
+      var_domain domain(idx(*i, 0));
+      var_name name(idx(*i, 1));
+      base64<var_value> value_encoded(idx(*i, 2));
+      var_value value;
+      decode_base64(value_encoded, value);
+      I(vars.find(std::make_pair(domain, name)) == vars.end());
+      vars.insert(std::make_pair(std::make_pair(domain, name), value));
+    }
+}
+
+void
+database::get_var(var_domain const & domain,
+                  var_name const & name,
+                  var_value & value)
+{
+  // FIXME: sillyly inefficient.  Doesn't really matter, though.
+  typedef std::map<std::pair<var_domain, var_name>, var_value> vt;
+  vt vars;
+  get_vars(vars);
+  vt::const_iterator i = vars.find(std::make_pair(domain, name));
+  I(i != vars.end());
+  value = i->second;
+}
+
+bool
+database::var_exists(var_domain const & domain,
+                     var_name const & name)
+{
+  // FIXME: sillyly inefficient.  Doesn't really matter, though.
+  typedef std::map<std::pair<var_domain, var_name>, var_value> vt;
+  vt vars;
+  get_vars(vars);
+  vt::const_iterator i = vars.find(std::make_pair(domain, name));
+  return i != vars.end();
+}
+
+void
+database::set_var(var_domain const & domain,
+                  var_name const & name,
+                  var_value const & value)
+{
+  base64<var_value> value_encoded;
+  encode_base64(value, value_encoded);
+  execute("INSERT OR REPLACE INTO db_vars VALUES('%q', '%q', '%q')",
+          domain().c_str(), name().c_str(), value_encoded().c_str());
+}
+
+void
+database::clear_var(var_domain const & domain,
+                    var_name const & value)
+{
+  execute("DELETE FROM db_vars WHERE domain = '%q' AND name = '%q'",
+          domain().c_str(), value().c_str());
+}
 
 // transaction guards
 

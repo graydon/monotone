@@ -387,6 +387,20 @@ public:
 
   void clear_epoch(cert_value const & branch);
  
+  // vars
+
+  void get_vars(std::map<std::pair<var_domain, var_name>, var_value > & vars);
+
+  void get_var(var_domain const & domain, var_name const & name, var_value & value);
+
+  bool var_exists(var_domain const & domain, var_name const & name);
+
+  void set_var(var_domain const & domain,
+               var_name const & name,
+               var_value const & value);
+
+  void clear_var(var_domain const & domain, var_name const & value);
+
   // completion stuff
 
   void complete(std::string const & partial,

@@ -102,3 +102,13 @@ CREATE TABLE branch_epochs
 	branch not null unique,       -- joins with revision_certs.value
 	epoch not null                -- random hex-encoded id
 	);
+
+-- database-local variables used to manage various things
+
+CREATE TABLE db_vars
+        (
+        domain not null,      -- scope of application of a var
+        name not null,        -- var key
+        value not null,       -- var value
+        unique(domain, name)
+        );

@@ -1903,6 +1903,37 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
     }
 }
 
+static void
+ls_vars(string name, app_state & app, vector<utf8> const & args)
+{
+  bool filterp;
+  var_domain filter;
+  if (args.size() == 0)
+    {
+      filterp = false;
+    }
+  else if (args.size() == 1)
+    {
+      filterp = true;
+      internalize_var_domain(idx(args, 0), filter);
+    }
+  else
+    throw usage(name);
+
+  typedef map<pair<var_domain, var_name>, var_value> vt;
+  vt vars;
+  app.db.get_vars(vars);
+  for (vt::const_iterator i = vars.begin(); i != vars.end(); ++i)
+    {
+      if (filterp && !(i->first.first == filter))
+        continue;
+      external ext_domain, ext_name;
+      externalize_var_domain(i->first.first, ext_domain);
+      externalize_var_name(i->first.second, ext_name);
+      cout << ext_domain << ": " << ext_name << " " << i->second << endl;
+    }
+}
+
 struct unknown_itemizer : public tree_walker
 {
   app_state & app;
@@ -1982,9 +2013,10 @@ CMD(list, "informative",
     "branches\n"
     "epochs [BRANCH [...]]\n"
     "tags\n"
+    "vars [DOMAIN]\n"
     "unknown\n"
     "ignored\n"
-    "missing", 
+    "missing",
     "show database objects, or unknown, intentionally ignored, or missing state files")
 {
   if (args.size() == 0)
@@ -2003,6 +2035,8 @@ CMD(list, "informative",
     ls_epochs(name, app, removed);
   else if (idx(args, 0)() == "tags")
     ls_tags(name, app, removed);
+  else if (idx(args, 0)() == "vars")
+    ls_vars(name, app, removed);
   else if (idx(args, 0)() == "unknown")
     ls_unknown(app, false, removed);
   else if (idx(args, 0)() == "ignored")
@@ -3654,5 +3688,32 @@ CMD(automate, "automation",
   automate_command(cmd, cmd_args, name, app, cout);
 }
 
+CMD(set, "vars", "DOMAIN NAME VALUE",
+    "set the database variable NAME to VALUE, in domain DOMAIN")
+{
+  if (args.size() != 3)
+    throw usage(name);
+
+  var_domain d;
+  var_name n;
+  var_value v;
+  internalize_var_domain(idx(args, 0), d);
+  internalize_var_name(idx(args, 1), n);
+  v = var_value(idx(args, 2)());
+  app.db.set_var(d, n, v);
+}
+
+CMD(unset, "vars", "DOMAIN NAME",
+    "remove the database variable NAME in domain DOMAIN")
+{
+  if (args.size() != 2)
+    throw usage(name);
+
+  var_domain d;
+  var_name n;
+  internalize_var_domain(idx(args, 0), d);
+  internalize_var_name(idx(args, 1), n);
+  app.db.clear_var(d, n);
+}
 
 }; // namespace commands
