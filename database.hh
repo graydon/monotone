@@ -389,17 +389,15 @@ public:
  
   // vars
 
-  void get_vars(std::map<std::pair<var_domain, var_name>, var_value > & vars);
+  void get_vars(std::map<var_key, var_value > & vars);
 
-  void get_var(var_domain const & domain, var_name const & name, var_value & value);
+  void get_var(var_key const & key, var_value & value);
 
-  bool var_exists(var_domain const & domain, var_name const & name);
+  bool var_exists(var_key const & key);
 
-  void set_var(var_domain const & domain,
-               var_name const & name,
-               var_value const & value);
+  void set_var(var_key const & key, var_value const & value);
 
-  void clear_var(var_domain const & domain, var_name const & value);
+  void clear_var(var_key const & key);
 
   // completion stuff
 

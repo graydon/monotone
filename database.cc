@@ -2247,9 +2247,7 @@ database::clear_epoch(cert_value const & branch)
 // vars
 
 void
-database::get_vars(std::map<std::pair<var_domain, var_name>,
-                            var_value> &
-                   vars)
+database::get_vars(std::map<var_key, var_value> & vars)
 {
   vars.clear();
   results res;
@@ -2267,48 +2265,42 @@ database::get_vars(std::map<std::pair<var_domain, var_name>,
 }
 
 void
-database::get_var(var_domain const & domain,
-                  var_name const & name,
-                  var_value & value)
+database::get_var(var_key const & key, var_value & value)
 {
   // FIXME: sillyly inefficient.  Doesn't really matter, though.
-  typedef std::map<std::pair<var_domain, var_name>, var_value> vt;
-  vt vars;
+  std::map<var_key, var_value> vars;
   get_vars(vars);
-  vt::const_iterator i = vars.find(std::make_pair(domain, name));
+  std::map<var_key, var_value>::const_iterator i = vars.find(key);
   I(i != vars.end());
   value = i->second;
 }
 
 bool
-database::var_exists(var_domain const & domain,
-                     var_name const & name)
+database::var_exists(var_key const & key)
 {
   // FIXME: sillyly inefficient.  Doesn't really matter, though.
-  typedef std::map<std::pair<var_domain, var_name>, var_value> vt;
-  vt vars;
+  std::map<var_key, var_value> vars;
   get_vars(vars);
-  vt::const_iterator i = vars.find(std::make_pair(domain, name));
+  std::map<var_key, var_value>::const_iterator i = vars.find(key);
   return i != vars.end();
 }
 
 void
-database::set_var(var_domain const & domain,
-                  var_name const & name,
-                  var_value const & value)
+database::set_var(var_key const & key, var_value const & value)
 {
   base64<var_value> value_encoded;
   encode_base64(value, value_encoded);
   execute("INSERT OR REPLACE INTO db_vars VALUES('%q', '%q', '%q')",
-          domain().c_str(), name().c_str(), value_encoded().c_str());
+          key.first().c_str(),
+          key.second().c_str(),
+          value_encoded().c_str());
 }
 
 void
-database::clear_var(var_domain const & domain,
-                    var_name const & value)
+database::clear_var(var_key const & key)
 {
   execute("DELETE FROM db_vars WHERE domain = '%q' AND name = '%q'",
-          domain().c_str(), value().c_str());
+          key.first().c_str(), key.second().c_str());
 }
 
 // transaction guards

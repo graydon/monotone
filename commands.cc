@@ -1920,10 +1920,10 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
   else
     throw usage(name);
 
-  typedef map<pair<var_domain, var_name>, var_value> vt;
-  vt vars;
+  map<var_key, var_value> vars;
   app.db.get_vars(vars);
-  for (vt::const_iterator i = vars.begin(); i != vars.end(); ++i)
+  for (std::map<var_key, var_value>::const_iterator i = vars.begin();
+       i != vars.end(); ++i)
     {
       if (filterp && !(i->first.first == filter))
         continue;
@@ -2222,47 +2222,87 @@ CMD(reindex, "network", "",
   guard.commit();
 }
 
-CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION",
+static const var_key default_server_key(var_domain("database"),
+                                        var_name("default-server"));
+static const var_key default_collection_key(var_domain("database"),
+                                            var_name("default-collection"));
+
+static void
+process_netsync_client_args(std::string const & name,
+                            std::vector<utf8> const & args,
+                            utf8 & addr, std::vector<utf8> & collections,
+                            app_state & app)
+{
+  if (args.size() > 2)
+    throw usage(name);
+
+  if (args.size() >= 1)
+    addr = idx(args, 0);
+  else
+    {
+      N(app.db.var_exists(default_server_key),
+        F("no server given and no default server set"));
+      var_value addr_value;
+      app.db.get_var(default_server_key, addr_value);
+      addr = utf8(addr_value());
+      L(F("using default server address: %s\n") % addr);
+    }
+  // NB: even though the netsync code wants a vector of collections, in fact
+  // this only works for the server; when we're a client, our vector must have
+  // length exactly 1.
+  utf8 collection;
+  if (args.size() >= 2)
+    collection = idx(args, 1);
+  else
+    {
+      N(app.db.var_exists(default_collection_key),
+        F("no collection given and no default collection set"));
+      var_value collection_value;
+      app.db.get_var(default_collection_key, collection_value);
+      collection = utf8(collection_value());
+      L(F("using default collection: %s\n") % collection);
+    }
+  collections.push_back(collection);
+}
+
+CMD(push, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
     "push COLLECTION to netsync server at ADDRESS")
 {
-  if (args.size() < 2)
-    throw usage(name);
+  utf8 addr;
+  vector<utf8> collections;
+  process_netsync_client_args(name, args, addr, collections, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  utf8 addr(idx(args,0));
-  vector<utf8> collections(args.begin() + 1, args.end());
   run_netsync_protocol(client_voice, source_role, addr, collections, app);  
 }
 
-CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION",
+CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
     "pull COLLECTION from netsync server at ADDRESS")
 {
-  if (args.size() < 2)
-    throw usage(name);
+  utf8 addr;
+  vector<utf8> collections;
+  process_netsync_client_args(name, args, addr, collections, app);
 
   if (app.signing_key() == "")
     W(F("doing anonymous pull\n"));
   
-  utf8 addr(idx(args,0));
-  vector<utf8> collections(args.begin() + 1, args.end());
   run_netsync_protocol(client_voice, sink_role, addr, collections, app);  
 }
 
-CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION",
+CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
     "sync COLLECTION with netsync server at ADDRESS")
 {
-  if (args.size() < 2)
-    throw usage(name);
+  utf8 addr;
+  vector<utf8> collections;
+  process_netsync_client_args(name, args, addr, collections, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  utf8 addr(idx(args,0));
-  vector<utf8> collections(args.begin() + 1, args.end());
   run_netsync_protocol(client_voice, source_and_sink_role, addr, collections, app);  
 }
 
@@ -3700,7 +3740,7 @@ CMD(set, "vars", "DOMAIN NAME VALUE",
   internalize_var_domain(idx(args, 0), d);
   internalize_var_name(idx(args, 1), n);
   v = var_value(idx(args, 2)());
-  app.db.set_var(d, n, v);
+  app.db.set_var(std::make_pair(d, n), v);
 }
 
 CMD(unset, "vars", "DOMAIN NAME",
@@ -3713,7 +3753,7 @@ CMD(unset, "vars", "DOMAIN NAME",
   var_name n;
   internalize_var_domain(idx(args, 0), d);
   internalize_var_name(idx(args, 1), n);
-  app.db.clear_var(d, n);
+  app.db.clear_var(std::make_pair(d, n));
 }
 
 }; // namespace commands

@@ -6,6 +6,7 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <utility>
 #include <string>
 #include <iosfwd>
 
@@ -121,6 +122,7 @@ typedef     file< base64< gzip<data> > >       file_data;
 typedef manifest< base64< gzip<delta> > >  manifest_delta;
 typedef     file< base64< gzip<delta> > >      file_delta;
 
+typedef std::pair<var_domain, var_name> var_key;
 
 // fs::path is our "generic" safe path type, pointing potentially anywhere
 // in the filesystem. if you want to *define* or work with any of these you
