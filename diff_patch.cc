@@ -527,6 +527,7 @@ void calculate_extents(vector<long> const & a_b_edits,
   for (vector<long>::const_iterator i = a_b_edits.begin(); 
        i != a_b_edits.end(); ++i)
     {
+      // L(F("edit: %d") % *i);
       if (*i < 0)
 	{
 	  // negative elements code the negation of the one-based index into A
@@ -539,6 +540,8 @@ void calculate_extents(vector<long> const & a_b_edits,
 	      a_pos++;
 	      extents.push_back(extent(b_pos++, 1, preserved));
 	    }
+
+	  // L(F(" -- delete at A-pos %d (B-pos = %d)\n") % a_deleted % b_pos);
 
 	  // skip the deleted line
 	  a_pos++;
@@ -556,6 +559,8 @@ void calculate_extents(vector<long> const & a_b_edits,
 	      a_pos++;
 	      extents.push_back(extent(b_pos++, 1, preserved));
 	    }
+
+	  // L(F(" -- insert at B-pos %d (A-pos = %d) : '%d'\n") % b_inserted % a_pos % b.at(b_inserted));
 	  
 	  // record that there was an insertion, but a_pos did not move.
 	  if ((b_pos == 0 && extents.empty())
@@ -581,6 +586,40 @@ void calculate_extents(vector<long> const & a_b_edits,
     extents.push_back(extent(b_pos++, 1, preserved));
 }
 
+void normalize_extents(vector<extent> & a_b_map,
+		       vector<long> const & b)
+{
+  for (size_t i = 0; i < a_b_map.size(); ++i)
+    {
+      if (i > 0)
+      {	
+	size_t j = i;
+	while (j > 0
+	       && (a_b_map.at(j-1).type == preserved)
+	       && (a_b_map.at(j).type == changed)
+	       && (b.at(a_b_map.at(j-1).pos) == 
+		   b.at(a_b_map.at(j).pos + a_b_map.at(j).len - 1)))
+	  {
+	    // the idea here is that if preserved extent j-1 has the same
+	    // contents as the last line in changed extent j of length N,
+	    // then it's exactly the same to consider j as changed, of
+	    // length N, (starting 1 line earlier) and j-1 as preserved as
+	    // length 1.
+
+	    L(F("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
+	      % a_b_map.at(j-1).pos
+	      % a_b_map.at(j-1).len
+	      % a_b_map.at(j).pos
+	      % a_b_map.at(j).len);
+
+	    swap(a_b_map.at(j-1).len, a_b_map.at(j).len);
+	    swap(a_b_map.at(j-1).type, a_b_map.at(j).type);
+	    --j;
+	  }
+      }
+    }
+}
+
 
 void merge_extents(vector<extent> const & a_b_map,
 		   vector<extent> const & a_c_map,
@@ -598,11 +637,10 @@ void merge_extents(vector<extent> const & a_b_map,
   for (; i != a_b_map.end(); ++i, ++j)
     {
 
-      
       //       L(F("trying to merge: [%s %d %d] vs. [%s %d %d] ")
       // 	% etab[i->type] % i->pos % i->len 
       // 	% etab[j->type] % j->pos % j->len);
-
+      
       // mutual, identical preserves / inserts / changes
       if (((i->type == changed && j->type == changed)
 	   || (i->type == preserved && j->type == preserved))
@@ -645,11 +683,11 @@ void merge_extents(vector<extent> const & a_b_map,
 	    % etab[j->type] % j->pos % j->len);
 	  throw conflict();	  
 	}      
-
+      
       //       if (merged.empty())
       // 	L(F(" --> EMPTY\n"));
       //       else
-      // 	L(F(" --> [%d]: %s\n") % (merged.size() - 1) % in.lookup(merged.back()));
+      //        	L(F(" --> [%d]: %s\n") % (merged.size() - 1) % in.lookup(merged.back()));
     }
 }
 
@@ -714,6 +752,13 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   calculate_extents(right_edits, right_interned, 
 		    right_prefix, right_extents, right_suffix, 
 		    anc_interned.size());
+
+  L(F("normalizing %d right extents\n") % right_extents.size());
+  normalize_extents(right_extents, right_interned);
+
+  L(F("normalizing %d left extents\n") % left_extents.size());
+  normalize_extents(left_extents, left_interned);
+
 
   if ((!right_prefix.empty()) && (!left_prefix.empty()))
     {
@@ -1897,6 +1942,7 @@ static void randomizing_merge_test()
 
 static void merge_prepend_test()
 {
+  BOOST_CHECKPOINT("prepend test");
   vector<string> anc, d1, d2, m1, m2, gm;
   for (int i = 10; i < 20; ++i)
     {
@@ -1927,6 +1973,7 @@ static void merge_prepend_test()
 
 static void merge_append_test()
 {
+  BOOST_CHECKPOINT("append test");
   vector<string> anc, d1, d2, m1, m2, gm;
   for (int i = 0; i < 10; ++i)
       anc.push_back(lexical_cast<string>(i));
@@ -1956,6 +2003,7 @@ static void merge_append_test()
 
 static void merge_additions_test()
 {
+  BOOST_CHECKPOINT("additions test");
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
   string desc1("I like oatmeal\nI don't like spam\nI like orange juice\nI like toast");
   string confl("I like oatmeal\nI don't like tuna\nI like orange juice\nI like toast");
@@ -1981,7 +2029,6 @@ static void merge_additions_test()
 
   BOOST_CHECK(!merge3(anc, d1, cf, m1));
 }
-
 
 static void merge_deletions_test()
 {

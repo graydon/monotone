@@ -1,3 +1,8 @@
+2003-12-20  graydon hoare  <graydon@pobox.com>
+
+	* diff_patch.cc (normalize_extents): New function.
+	(merge_via_edit_scripts): Use it.
+
 2003-12-19  graydon hoare  <graydon@pobox.com>
 
 	[net.venge.monotone.i18n branch]
