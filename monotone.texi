@@ -1741,7 +1741,7 @@ monotone: committed revision 70decb4b31a8227a629c0e364495286c5c75f979
 @end group
 @end smallexample
 
-Abe then sens his new revision back to Jim:
+Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
@@ -1755,7 +1755,7 @@ monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
-Beth does a similar sequence, First she syncs her database with
+Beth does a similar sequence. First she syncs her database with
 Jim's:
 
 @smallexample
@@ -1768,7 +1768,7 @@ monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
-Checks out a copy of the tree from her database:
+She checks out a copy of the tree from her database:
 
 @smallexample
 @group
@@ -1776,7 +1776,7 @@ $ monotone --db=beth.db --branch=co.jp.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
-Edits the file @file{src/banana.c}:
+She edits the file @file{src/banana.c}:
 
 @smallexample
 @group
@@ -1785,7 +1785,7 @@ $ vi src/banana.c
 @end group
 @end smallexample
 
-Commits her work:
+She commits her work:
 
 @smallexample
 @group
@@ -1798,7 +1798,7 @@ monotone: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
 @end group
 @end smallexample
 
-And syncs with Jim again:
+And she syncs with Jim again:
 
 @smallexample
 @group
@@ -1903,7 +1903,7 @@ $ monotone diff
 @end group
 @end smallexample
 
-Commits her work:
+She commits her work:
 
 @smallexample
 @group
@@ -1916,7 +1916,7 @@ monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
 @end smallexample
 
-And syncs with Jim:
+And she syncs with Jim:
 
 @smallexample
 @group
@@ -2302,7 +2302,7 @@ This cert's value is the name of a branch. A @code{branch} cert
 associates a revision with a branch. The revision is said to be ``in
 the branch'' named by the cert. The cert is generated when you commit
 a revision, either directly with the @code{commit} command or
-indirectly with the @code{merge} or @code{propagage} commands. The
+indirectly with the @code{merge} or @code{propagate} commands. The
 @code{branch} certs are read and directly interpreted by @emph{many}
 monotone commands, and play a fundamental role in organizing work in
 any monotone database.
