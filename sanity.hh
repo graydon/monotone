@@ -39,9 +39,12 @@ struct sanity {
   bool quiet;
   boost::circular_buffer<char> logbuf;
 
-  void log(boost::format const & fmt);
-  void progress(boost::format const & fmt);
-  void warning(boost::format const & fmt);
+  void log(boost::format const & fmt, 
+	   char const * file, int line);
+  void progress(boost::format const & fmt,
+		char const * file, int line);
+  void warning(boost::format const & fmt, 
+	       char const * file, int line);
   void naughty_failure(std::string const & expr, boost::format const & explain, 
 		       std::string const & file, int line);
   void invariant_failure(std::string const & expr, 
@@ -61,15 +64,15 @@ extern sanity global_sanity;
 #define F(str) boost::format(gettext(str))
 
 // L is for logging, you can log all you want
-#define L(fmt) global_sanity.log(fmt)
+#define L(fmt) global_sanity.log(fmt, __FILE__, __LINE__)
 
 // P is for progress, log only stuff which the user might
 // normally like to see some indication of progress of
-#define P(fmt) global_sanity.progress(fmt)
+#define P(fmt) global_sanity.progress(fmt, __FILE__, __LINE__)
 
 // W is for warnings, which are handled like progress only
 // they are only issued once and are prefixed with "warning: "
-#define W(fmt) global_sanity.warning(fmt)
+#define W(fmt) global_sanity.warning(fmt, __FILE__, __LINE__)
 
 // I is for invariants that "should" always be true
 // (if they are wrong, there is a *bug*)

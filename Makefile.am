@@ -20,11 +20,17 @@ MOST_SOURCES =								\
          schema_migration.hh smtp_tasks.hh quick_alloc.hh mac.hh url.hh \
 	 netsync.hh netcmd.hh netio.hh merkle_tree.hh numeric_vocab.hh
 
+if HAVE_INET_PTON 
+  IPV6 =
+else
+  IPV6 = Netxx/inet6.cxx Netxx/inet6.h
+endif
+
 NETXX_SOURCES = \
 	Netxx/Accept.cxx Netxx/Accept.h Netxx/Address.cxx Netxx/Address.h          \
 	Netxx/common.h Netxx/compat.h Netxx/Datagram.cxx Netxx/Datagram.h          \
-	Netxx/DatagramServer.cxx Netxx/DatagramServer.h Netxx/inet6.cxx            \
-	Netxx/inet6.h Netxx/Netbuf.h Netxx/OSError.cxx Netxx/OSError.h             \
+	Netxx/DatagramServer.cxx Netxx/DatagramServer.h $(IPV6)                    \
+	Netxx/Netbuf.h Netxx/OSError.cxx Netxx/OSError.h                           \
 	Netxx/Peer.cxx Netxx/Peer.h Netxx/Probe.cxx Netxx/Probe.h                  \
 	Netxx/Probe_impl.h Netxx/ProbeInfo.h Netxx/Probe_select.cxx                \
 	Netxx/RecvFrom.cxx Netxx/RecvFrom.h Netxx/Resolve_gethostbyname.cxx        \
@@ -63,52 +69,6 @@ CRYPTOPP_SOURCES = \
         cryptopp/zinflate.h cryptopp/hmac.h
 
 BOOST_SANDBOX_SOURCES = \
-	boost/socket/src/impl/address_storage.cpp \
-	boost/socket/src/impl/impl.cpp \
-	boost/socket/src/impl/socket_init.cpp \
-	boost/socket/src/ip4/address.cpp \
-	boost/socket/src/ip4/protocol.cpp \
-	boost/socket/src/address_info.cpp \
-	boost/socket/src/any_address.cpp \
-	boost/socket/src/default_socket_impl.cpp \
-	boost/socket/src/interface.cpp \
-	boost/socket/src/socket_option.cpp \
-	\
-        boost/socket/concept/address.hpp \
-        boost/socket/concept/error_policy.hpp \
-        boost/socket/concept/protocol.hpp \
-        boost/socket/acceptor_socket.hpp \
-        boost/socket/address_info.hpp \
-        boost/socket/any_address.hpp \
-        boost/socket/any_protocol.hpp \
-        boost/socket/asynch_acceptor.hpp \
-        boost/socket/asynch_data_socket.hpp \
-        boost/socket/asynch_socket_base.hpp \
-        boost/socket/config.hpp \
-        boost/socket/connector_socket.hpp \
-        boost/socket/data_socket.hpp \
-        boost/socket/interface.hpp \
-        boost/socket/ip4.hpp \
-        boost/socket/proactor.hpp \
-        boost/socket/socket_base.hpp \
-        boost/socket/socket_errors.hpp \
-        boost/socket/socket_exception.hpp \
-        boost/socket/socket_option.hpp \
-        boost/socket/socket_set.hpp \
-        boost/socket/socket_streambuf.hpp \
-        boost/socket/socketstream.hpp \
-        boost/socket/time_value.hpp \
-        boost/socket/impl/address_storage.hpp \
-        boost/socket/impl/default_asynch_socket_impl.hpp \
-        boost/socket/impl/default_error_policy.hpp \
-        boost/socket/impl/default_socket_impl.hpp \
-        boost/socket/impl/default_socket_proactor.hpp \
-        boost/socket/impl/socket_init.hpp \
-        boost/socket/ip4/address.hpp \
-        boost/socket/ip4/protocol.hpp \
-        boost/socket/src/impl/win32/overlapped.hpp \
-        boost/io/streambuf_wrapping.hpp \
-        \
         boost/circular_buffer_adaptor.hpp \
 	boost/circular_buffer_base.hpp \
 	boost/circular_buffer_fwd.hpp \

@@ -11,13 +11,9 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-#include "boost/socket/socket_errors.hpp"
-#include "boost/socket/any_protocol.hpp"
-#include "boost/socket/any_address.hpp"
-#include "boost/socket/ip4.hpp"
-#include "boost/socket/connector_socket.hpp"
-#include "boost/socket/socketstream.hpp"
-#include "boost/socket/socket_exception.hpp"
+#include "Netxx/Netbuf.h"
+#include "Netxx/Stream.h"
+#include "Netxx/Timeout.h"
 
 #include "adns/adns.h"
 
@@ -47,284 +43,6 @@ using namespace std;
 using namespace boost::spirit;
 using boost::lexical_cast;
 using boost::shared_ptr;
-
-
-struct 
-monotone_socket_error_policy
-{
-
-  boost::socket::socket_errno 
-  handle_error(boost::socket::function::name fn, 
-	       boost::socket::socket_errno error)
-  {    
-    string func("unknown");
-
-    switch (fn)
-      {
-#define TRANSLATE_FUNC(xx) case boost::socket::function::xx: func = #xx; break;
-	TRANSLATE_FUNC(ioctl);
-	TRANSLATE_FUNC(getsockopt);
-	TRANSLATE_FUNC(setsockopt);
-	TRANSLATE_FUNC(open);
-	TRANSLATE_FUNC(connect);
-	TRANSLATE_FUNC(bind);
-	TRANSLATE_FUNC(listen);
-	TRANSLATE_FUNC(accept);
-	TRANSLATE_FUNC(recv);
-	TRANSLATE_FUNC(send);
-	TRANSLATE_FUNC(shutdown);
-	TRANSLATE_FUNC(close);
-#undef TRANSLATE_FUNC
-      }
-
-    switch (error)
-      {
-      case boost::socket::WouldBlock :
-	L(F("temporary failure in %s: operation would block\n") % func);
-	return error;
-
-      case boost::socket::interrupted_function_call :
-	L(F("temporary failure in %s: interrupted syscall\n") % func);
-	return error;
-
-      case boost::socket::address_already_in_use :
-	throw informative_failure(func + ": Address already in use");
-	break;
-	
-      case boost::socket::address_family_not_supported_by_protocol_family :
-	throw informative_failure(func + ": Address family not supported by protocol family");
-	break;
-	
-      case boost::socket::address_not_available :
-	throw informative_failure(func + ": Address not available");
-	break;
-	
-      case boost::socket::bad_address :
-	throw informative_failure(func + ": Bad address");
-	break;
-	
-      case boost::socket::bad_protocol_option :
-	throw informative_failure(func + ": Bad protocol option");
-	break;
-	
-      case boost::socket::cannot_assign_requested_address :
-	throw informative_failure(func + ": Cannot assign requested address");
-	break;
-	
-      case boost::socket::cannot_send_after_socket_shutdown:
-	throw informative_failure(func + ": Can't send after socket shutdown");
-	break;
-	
-      case boost::socket::connection_aborted :	
-	throw informative_failure(func + ": Connection aborted");
-	break;
-	
-      case boost::socket::connection_already_in_progress :
-	throw informative_failure(func + ": Connection already in progress");
-	break;
-
-      case boost::socket::connection_refused :
-	throw informative_failure(func + ": Connection refused");
-	break;
-
-      case boost::socket::connection_reset_by_peer :
-	throw informative_failure(func + ": Connection reset by peer");
-	break;
-
-      case boost::socket::connection_timed_out :	
-	throw informative_failure(func + ": Connection timed out");
-	break;
-
-      case boost::socket::destination_address_required :
-	throw informative_failure(func + ": Destination address required");
-	break;
-
-      case boost::socket::graceful_shutdown_in_progress :
-	throw informative_failure(func + ": Graceful shutdown in progress");
-	break;
-
-      case boost::socket::host_is_down :
-	throw informative_failure(func + ": Host is down");
-	break;
-
-      case boost::socket::host_is_unreachable :
-	throw informative_failure(func + ": Host is unreachable");
-	break;
-
-      case boost::socket::host_not_found :
-	throw informative_failure(func + ": Host not found");
-	break;
-
-      case boost::socket::insufficient_memory_available :
-	throw informative_failure(func + ": Insufficient memory available");
-	break;
-
-      case boost::socket::invalid_argument :
-	throw informative_failure(func + ": Invalid argument");
-	break;
-
-      case boost::socket::message_too_long :
-	throw informative_failure(func + ": Message too long");
-	break;
-
-      case boost::socket::net_reset :
-	throw informative_failure(func + ": net reset");
-	break;
-
-      case boost::socket::network_dropped_connection_on_reset :
-	throw informative_failure(func + ": Network dropped connection on reset");
-	break;
-
-      case boost::socket::network_interface_is_not_configured :
-	throw informative_failure(func + ": Network interface is not configured");
-	break;
-
-      case boost::socket::network_is_down :
-	throw informative_failure(func + ": Network is down");
-	break;
-
-      case boost::socket::network_is_unreachable :
-	throw informative_failure(func + ": Network is unreachable");
-	break;
-
-      case boost::socket::network_subsystem_is_unavailable :
-	throw informative_failure(func + ": Network subsystem is unavailable");
-	break;
-
-      case boost::socket::no_buffer_space_available :
-	throw informative_failure(func + ": No buffer space available");
-	break;
-
-      case boost::socket::no_route_to_host :
-	throw informative_failure(func + ": No route to host");
-	break;
-
-      case boost::socket::nonauthoritative_host_not_found :
-	throw informative_failure(func + ": Nonauthoritative host not found");
-	break;
-
-      case boost::socket::not_a_valid_descriptor :
-	throw informative_failure(func + ": not a valid descriptor");
-	break;
-
-      case boost::socket::one_or_more_parameters_are_invalid :
-	throw informative_failure(func + ": One or more parameters are invalid");
-	break;
-
-      case boost::socket::operation_already_in_progress :
-	throw informative_failure(func + ": Operation already in progress");
-	break;
-
-      case boost::socket::operation_not_supported :
-	throw informative_failure(func + ": Operation not supported");
-	break;
-
-      case boost::socket::operation_not_supported_on_transport_endpoint :
-	throw informative_failure(func + ": Operation not supported on transport endpoint");
-	break;
-
-      case boost::socket::operation_now_in_progress :
-	throw informative_failure(func + ": Operation now in progress");
-	break;
-
-      case boost::socket::overlapped_operation_aborted :
-	throw informative_failure(func + ": Overlapped operation aborted");
-	break;
-
-      case boost::socket::permission_denied:
-	throw informative_failure(func + ": Permission denied");
-	break;
-
-      case boost::socket::protocol_family_not_supported :
-	throw informative_failure(func + ": Protocol family not supported");
-	break;
-
-      case boost::socket::protocol_not_available :
-	throw informative_failure(func + ": Protocol not available");
-	break;
-
-      case boost::socket::protocol_wrong_type_for_socket :
-	throw informative_failure(func + ": Protocol wrong type for socket");
-	break;
-
-      case boost::socket::socket_is_already_connected :
-	throw informative_failure(func + ": Socket is already connected");
-	break;
-
-      case boost::socket::socket_is_not_connected :
-	throw informative_failure(func + ": Socket is not connected");
-	break;
-
-      case boost::socket::socket_operation_on_nonsocket :
-	throw informative_failure(func + ": Socket operation on nonsocket");
-	break;
-
-      case boost::socket::socket_type_not_supported :
-	throw informative_failure(func + ": Socket type not supported");
-	break;
-
-      case boost::socket::software_caused_connection_abort :
-	throw informative_failure(func + ": Software caused connection abort");
-	break;
-
-      case boost::socket::specified_event_object_handle_is_invalid :
-	throw informative_failure(func + ": Specified event object handle is invalid");
-	break;
-
-      case boost::socket::system_call_failure :
-	throw informative_failure(func + ": System call failure");
-	break;
-
-      case boost::socket::this_is_a_nonrecoverable_error :
-	throw informative_failure(func + ": This is a nonrecoverable error");
-	break;
-
-      case boost::socket::too_many_open_files :
-	throw informative_failure(func + ": Too many open files");
-	break;
-
-      case boost::socket::too_many_processes :
-	throw informative_failure(func + ": Too many processes");
-	break;
-
-      case boost::socket::unknown_protocol :
-	throw informative_failure(func + ": Unknown protocol");
-	break;
-
-      case boost::socket::system_specific_error :
-	throw informative_failure(func + ": System specific error");
-	break;
-
-      default:
-	throw informative_failure(func + ": Unknown error");
-	break;
-      }
-    return boost::socket::system_specific_error;
-  }
-};
-
-typedef 
-boost::socket::socket_base<monotone_socket_error_policy,
-			   boost::socket::impl::default_socket_impl> 
-monotone_socket_base;
-
-typedef 
-boost::socket::data_socket<monotone_socket_base> 
-monotone_data_socket;
-
-typedef 
-boost::socket::connector<monotone_socket_base> 
-monotone_connector;
-
-typedef 
-monotone_connector::data_connection_t 
-monotone_connection;
-
-typedef 
-boost::socket::basic_socket_stream<char, 
-				   std::char_traits<char>, 
-				   monotone_data_socket> 
-monotone_socket_stream;
 
 bool 
 lookup_address(string const & dns_name,
@@ -444,16 +162,30 @@ lookup_mxs(string const & dns_name,
   return true;
 }
 
+struct 
+monotone_conn
+{
+  monotone_conn(string const & host,
+		unsigned long port) : 
+    client(host.c_str(), port), 
+    buf(client), 
+    stream(&buf)
+  {}
+  Netxx::Stream client;
+  Netxx::Netbuf<1024> buf;
+  std::iostream stream;
+};
 
-void 
+typedef shared_ptr<monotone_conn> monotone_connection;
+
+
+static void 
 open_connection(string const & proto_name,
 		string const & host_name_in,
 		unsigned long port_num_in,
 		monotone_connection & connection,
-		boost::shared_ptr<iostream> & stream,
 		app_state & app)
 {
-  using namespace boost::socket;
   string resolved_host;
 
   // check for tunnels
@@ -473,34 +205,16 @@ open_connection(string const & proto_name,
       port_num = port_num_in;
     }
   
-
-  ip4::address addr;
-  ip4::tcp_protocol proto;
-  
   {    
-    // fixme: boost::socket is currently a little braindead, in that it
-    // only takes ascii strings representing IP4 ADDRESSES. duh.
     if (! lookup_address(host_name, resolved_host))
       throw oops ("host " + host_name + " not found");    
     L(F("resolved '%s' as '%s'\n") % host_name % resolved_host);
   }
-  
-  addr.ip(resolved_host.c_str());
-  addr.port(port_num);
+
 
   L(F("connecting to port number %d\n") % port_num);
-  
-  monotone_connector connector;
-  N(connector.connect(connection, proto, addr) == 0,
-    F("unable to connect to server %s:%d") % host_name % port_num); 
 
-  boost::shared_ptr< monotone_socket_stream > 
-    link(new monotone_socket_stream(connection));
-
-  N(link->good(),
-    F("bad network link, connecting to %s:%d") % host_name % port_num);
-
-  stream = link;
+  connection = monotone_connection(new monotone_conn(resolved_host, port_num));
 }
 
 
@@ -534,7 +248,6 @@ post_http_blob(url const & targ,
   try 
     {
       monotone_connection connection;
-      boost::shared_ptr<iostream> stream;
 
       bool is_proxy = false;
       string connect_host_name = host;
@@ -553,11 +266,12 @@ post_http_blob(url const & targ,
 	}
 
       open_connection("http", connect_host_name, connect_port_num, 
-		      connection, stream, app);
+		      connection, app);
       
       posted_ok = post_http_packets(group, keyid(), 
 				    signature_hex(), blob, host, 
-				    path, port, is_proxy, *stream);
+				    path, port, is_proxy, 
+				    connection->stream);
     }
   catch (std::exception & e)
     {
@@ -581,12 +295,11 @@ post_nntp_blob(url const & targ,
   try 
     {
       monotone_connection connection;
-      boost::shared_ptr<iostream> stream;
-      open_connection("nntp", host, port, connection, stream, app);
+      open_connection("nntp", host, port, connection, app);
       posted_ok = post_nntp_article(group, sender, 
 				    // FIXME: maybe some sort of more creative subject line?
 				    "[MT] packets", 
-				    blob, *stream);
+				    blob, connection->stream);
     }
   catch (std::exception & e)
     {
@@ -626,14 +339,12 @@ post_smtp_blob(url const & targ,
 
       bool found_working_mx = false;
       monotone_connection connection;
-      boost::shared_ptr<iostream> stream;
       for (set< pair<int, string> >::const_iterator mx = mxs.begin();
 	   mx != mxs.end(); ++mx)
 	{
 	  try 
 	    {		      
-	      open_connection("smtp", mx->second, port, connection, 
-			      stream, app);
+	      open_connection("smtp", mx->second, port, connection, app);
 	      found_working_mx = true;
 	      break;
 	    }
@@ -649,7 +360,7 @@ post_smtp_blob(url const & targ,
 				      sender, user + "@" + host,
 				      sender, user + "@" + host,
 				      "[MT] packets",
-				      blob, *stream);
+				      blob, connection->stream);
     }
   catch (std::exception & e)
     {
@@ -774,7 +485,6 @@ fetch_queued_blobs_from_network(set<url> const & sources,
 	      unsigned long maj, min;
 	      app.db.get_sequences(*src, maj, min);
 	      monotone_connection connection;
-	      boost::shared_ptr<iostream> stream;
 
 	      bool is_proxy = false;
 	      string connect_host_name = host();
@@ -793,9 +503,9 @@ fetch_queued_blobs_from_network(set<url> const & sources,
 		}
 
 	      open_connection("http", connect_host_name, connect_port_num, 
-			      connection, stream, app);
+			      connection, app);
 	      fetch_http_packets(group(), maj, min, dbw, host(), path(), port, 
-				 is_proxy, *stream);
+				 is_proxy, connection->stream);
 	      app.db.put_sequences(*src, maj, min);
 	    }
 
@@ -804,9 +514,8 @@ fetch_queued_blobs_from_network(set<url> const & sources,
 	      unsigned long maj, min;
 	      app.db.get_sequences(*src, maj, min);
 	      monotone_connection connection;
-	      boost::shared_ptr<iostream> stream;
-	      open_connection("nntp", host(), port, connection, stream, app);
-	      fetch_nntp_articles(group(), min, dbw, *stream);
+	      open_connection("nntp", host(), port, connection, app);
+	      fetch_nntp_articles(group(), min, dbw, connection->stream);
 	      app.db.put_sequences(*src, maj, min);
 	    }
 	  guard.commit();

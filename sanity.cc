@@ -51,9 +51,23 @@ sanity::set_quiet()
 }
 
 void 
-sanity::log(format const & fmt)
+sanity::log(format const & fmt, 
+	    char const * file, int line)
 {
-  string str = fmt.str();
+  string str;
+  try 
+    {
+      str = fmt.str();
+    }
+  catch (std::exception & e)
+    {
+      ui.inform("fatal: formatter failed on " 
+		+ string(file) 
+		+ ":" + boost::lexical_cast<string>(line) 
+		+ ": " + e.what());
+      throw e;
+    }
+  
   if (str.size() > constants::log_line_sz)
     {
       str.resize(constants::log_line_sz);
@@ -66,9 +80,22 @@ sanity::log(format const & fmt)
 }
 
 void 
-sanity::progress(format const & fmt)
+sanity::progress(format const & fmt, 
+		 char const * file, int line)
 {
-  string str = fmt.str();
+  string str;
+  try 
+    {
+      str = fmt.str();
+    }
+  catch (std::exception & e)
+    {
+      ui.inform("fatal: formatter failed on " 
+		+ string(file) 
+		+ ":" + boost::lexical_cast<string>(line) 
+		+ ": " + e.what());
+      throw e;
+    }
   if (str.size() > constants::log_line_sz)
     {
       str.resize(constants::log_line_sz);
@@ -81,9 +108,22 @@ sanity::progress(format const & fmt)
 }
 
 void 
-sanity::warning(format const & fmt)
+sanity::warning(format const & fmt, 
+		char const * file, int line)
 {
-  string str = fmt.str();
+  string str;
+  try 
+    {
+      str = fmt.str();
+    }
+  catch (std::exception & e)
+    {
+      ui.inform("fatal: formatter failed on " 
+		+ string(file) 
+		+ ":" + boost::lexical_cast<string>(line) 
+		+ ": " + e.what());
+      throw e;
+    }
   if (str.size() > constants::log_line_sz)
     {
       str.resize(constants::log_line_sz);
@@ -100,7 +140,8 @@ void
 sanity::naughty_failure(string const & expr, format const & explain, 
 			string const & file, int line)
 {
-  log(format("%s:%d: usage constraint '%s' violated\n") % file % line % expr);
+  log(format("%s:%d: usage constraint '%s' violated\n") % file % line % expr,
+      file.c_str(), line);
   throw informative_failure(string("misuse: ") + explain.str());  
 }
 
@@ -111,7 +152,7 @@ sanity::invariant_failure(string const & expr,
   format fmt = 
     format("%s:%d: invariant '%s' violated\n") 
     % file % line % expr;
-  log(fmt);
+  log(fmt, file.c_str(), line);
   throw logic_error(fmt.str());
 }
 
@@ -125,7 +166,7 @@ sanity::index_failure(string const & vec_expr,
   format fmt = 
     format("%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n")
     % file % line % idx_expr % idx % vec_expr % sz;
-  log(fmt);
+  log(fmt, file.c_str(), line);
   throw logic_error(fmt.str());
 }
 

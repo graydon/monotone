@@ -14,12 +14,6 @@
 
 #include "vocab.hh"
 
-void open_connection(std::string const & proto_name,
-		     std::string const & host,
-		     unsigned long port,
-		     boost::shared_ptr<std::iostream> & stream, 
-		     app_state & app);
-
 void post_queued_blobs_to_network(std::set<url> const & targets,
 				  app_state & app);
 

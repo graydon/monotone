@@ -1,5 +1,18 @@
 2004-03-07  graydon hoare  <graydon@pobox.com>
 
+	* Makefile.am (BOOST_SANDBOX_SOURCES): Remove boost::socket entries.
+	(NETXX_SOURCES): Predicate on IP6 support in OS (from Paul Snively).
+	* boost/socket/*.[hc]pp: Remove.
+	* boost/io/streambuf_wrapping.hpp: Remove.
+	* AUTHORS: Remove copyright notice for boost::socket.
+	* acinclude.m4 (ACX_PTHREAD): Add.
+	* network.cc: Replace boost::socket machinery with Netxx.
+	* network.hh (open_connection): Remove prototype, static function.
+	* sanity.hh, sanity.cc: Make log formatters give file:line coords,
+	throw log offending coordinate if formatting fails.
+
+2004-03-07  graydon hoare  <graydon@pobox.com>
+
 	* sqlite/date.c, sqlite/vdbeInt.h, sqlite/vdbeaux.c: Add.
 	* sqlite/*.c: Upgrade to 2.8.12.
 	* Makefile.am: Update to mention new files.

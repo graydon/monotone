@@ -182,5 +182,7 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_STAT
 AC_CHECK_FUNCS([atexit gethostbyaddr gethostbyname inet_ntoa memset setenv socket])
 
+AC_CHECK_FUNC(inet_pton, [AM_CONDITIONAL(HAVE_INET_PTON, true)], [AM_CONDITIONAL(HAVE_INET_PTON, false)])
+
 AC_CONFIG_FILES([Makefile tests/atlocal po/Makefile.in])
 AC_OUTPUT
