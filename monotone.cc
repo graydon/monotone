@@ -72,7 +72,7 @@ struct poptOption options[] =
     {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
     {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
-    {0, '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "take extract command line arguments from the given file", NULL},
+    {0, '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "insert command line arguments taken from the given file", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
 
@@ -157,38 +157,41 @@ my_poptFreeContext(poptContext con)
 }
 
 // Read arguments from a file.  The special file '-' means stdin.
-static void
-my_poptStuffArgFile(poptContext con, char *filename)
+// Returned value must be free()'d, after arg parsing has completed.
+static const char **
+my_poptStuffArgFile(poptContext con, utf8 const & filename)
 {
-  ostringstream args;
-  ifstream input;
-  istream *inputp = &input;
-
-  if (strcmp(filename, "-") == 0)
-    {
-      inputp = &cin;
-    }
-  else
-    {
-      input.open(filename);
-    }
-
-  string tmp;
-  while(getline(*inputp, tmp))
-    {
-      args << ' ' << tmp;
-    }
-
+  // popt currently (Debian version 1.7-5) has a bug that's triggered
+  // when poptStuffArgs() is called more than once.  The symptom is that
+  // while the options from the second run are processed as such, they
+  // are ALSO passed back to the application as non-options...
+  // Our current workaround is simply to forbid -@ to be used more than
+  // once.                                            -- Richard Levitte
+  static bool used_at_sign = false;
+  N(!used_at_sign, F("-@ can currently only be used once.\n"));
+  used_at_sign = true;
+  
+  utf8 argstr;
+  {
+    data dat;
+    read_data_for_command_line(filename, dat);
+    external ext(dat());
+    system_to_utf8(ext, argstr);
+  }
+  
   const char **argv = 0;
   int argc = 0;
   int rc;
-  N((rc = poptParseArgvString(args.str().c_str(), &argc, &argv)) >= 0,
-    F("incorrect argument syntax when reading from %s: %s\n")
+  N(rc = poptParseArgvString(argstr().c_str(), &argc, &argv) >= 0,
+    F("problem parsing arguments from file %s: %s")
     % filename % poptStrerror(rc));
+  // poptStuffArgs does not take an argc argument, but rather requires that
+  // the argv array be null-terminated.
+  I(argv[argc] == NULL);
   N((rc = poptStuffArgs(con, argv)) >= 0,
     F("weird error when stuffing arguments read from %s: %s\n")
     % filename % poptStrerror(rc));
-  free(argv);
+  return argv;
 }
 
 int 
@@ -238,13 +241,9 @@ cpp_main(int argc, char ** argv)
   int opt;
   bool requested_help = false;
 
-  // popt currently (Debian version 1.7-5) has a bug that's triggered
-  // when poptStuffArgs() is called more than once.  The symptom is that
-  // while the options from the second run are processed as such, they
-  // are ALSO passed back to the application as non-options...
-  // Our current workaround is simply to forbid -@ to be used more than
-  // once.                                            -- Richard Levitte
-  bool at_sign_used = false;
+  // keep a list of argv vectors created by get_args_from_file, since they
+  // must be individually free()'d, but not until arg parsing is done.
+  std::vector<const char**> sub_argvs;
 
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
 
@@ -331,10 +330,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_ARGFILE:
-              N(!at_sign_used,
-                F("-@ can currently only be used once.\n"));
-              my_poptStuffArgFile(ctx(), argstr);
-              at_sign_used = true;
+              sub_argvs.push_back(my_poptStuffArgFile(ctx(), utf8(string(argstr))));
               break;
 
             case OPT_HELP:
@@ -384,6 +380,12 @@ cpp_main(int argc, char ** argv)
             {
               args.push_back(utf8(string(poptGetArg(ctx()))));
             }
+          // we've copied everything we want from the command line into our
+          // own data structures, so we can finally delete popt's malloc'ed
+          // argv stuff.
+          for (std::vector<const char**>::const_iterator i = sub_argvs.begin();
+               i != sub_argvs.end(); ++i)
+            free(*i);
           ret = commands::process(app, cmd, args);
         }
     }

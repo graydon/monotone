@@ -88,6 +88,9 @@ void read_localized_data(file_path const & path,
                          base64< gzip<data> > & dat,
                          lua_hooks & lua);
 
+// This function knows that "-" means "stdin".
+void read_data_for_command_line(utf8 const & path, data & dat);
+
 void write_data(local_path const & path, data const & data);
 void write_data(local_path const & path, base64< gzip<data> > const & data);
 void write_data(file_path const & path, data const & data);

@@ -384,6 +384,18 @@ read_data_impl(fs::path const & p,
   dat = in;
 }
 
+// This function can only be called once per run.
+static void
+read_data_stdin(data & dat)
+{
+  static bool have_consumed_stdin = false;
+  N(!have_consumed_stdin, F("Cannot read standard input multiple times"));
+  have_consumed_stdin = true;
+  string in;
+  CryptoPP::FileSource f(cin, true, new CryptoPP::StringSink(in));
+  dat = in;
+}
+
 void 
 read_data(local_path const & path, data & dat)
 { 
@@ -455,6 +467,15 @@ read_localized_data(file_path const & path,
   dat = tmp2;
 }
 
+
+void
+read_data_for_command_line(utf8 const & path, data & dat)
+{
+  if (path() == "-")
+    read_data_stdin(dat);
+  else
+    read_data_impl(localized(path()), dat);
+}
 
 // FIXME: this is probably not enough brains to actually manage "atomic
 // filesystem writes". at some point you have to draw the line with even
