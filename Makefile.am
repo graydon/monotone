@@ -271,7 +271,7 @@ DISTCLEANFILES = tests/atconfig \
 
 # distcheck stuff
 
-DISTCHECK_CONFIGURE_FLAGS = --with-bundled-adns \
+DISTCHECK_CONFIGURE_FLAGS = \
 			 --with-bundled-sqlite \
 			 --with-bundled-lua \
 			 --enable-static-boost
