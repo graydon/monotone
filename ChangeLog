@@ -1,3 +1,11 @@
+2005-01-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_checkout_noop_on_fail.at: Clarify description and XFAIL.
+
+	* tests/t_approval_semantics.at: New TODO.
+	* tests/t_monotone_agent.at: New TODO.
+	* testsuite.at: Add them.
+
 2005-01-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_checkout_noop_on_fail.at: New test.
