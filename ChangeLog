@@ -1,3 +1,10 @@
+2005-03-14  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (cat): 'cat file REV PATH'.
+	* monotone.texi: Mention it.
+	* tests/t_cat_file_by_name.at: New test.
+	* testsuite.at: Add it.
+
 2005-03-11  Nathaniel Smith  <njs@codesourcery.com>
 
 	* automate.cc (automate_heads): Remove app.initialize call.

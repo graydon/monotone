@@ -1513,32 +1513,50 @@ CMD(identify, "working copy", "[PATH]",
   cout << ident << endl;
 }
 
-CMD(cat, "informative", "(file|manifest|revision) [ID]", 
+CMD(cat, "informative",
+    "(file|manifest|revision) [ID]\n"
+    "file REVISION FILENAME", 
     "write file, manifest, or revision from database to stdout")
 {
-  if (!(args.size() == 1 || args.size() == 2))
+  if (args.size() < 1 || args.size() > 3)
+    throw usage(name);
+  if (args.size() == 3 && idx(args, 0)() != "file")
     throw usage(name);
 
   transaction_guard guard(app.db);
 
   if (idx(args, 0)() == "file")
     {
+      file_id ident;
       if (args.size() == 1)
         throw usage(name);
-
+      else if (args.size() == 2)
+        {
+          complete(app, idx(args, 1)(), ident);
+          
+          N(app.db.file_version_exists(ident),
+            F("no file version %s found in database") % ident);
+        }
+      else
+        {
+          revision_id rid;
+          complete(app, idx(args, 1)(), rid);
+          file_path fp(idx(args, 2)());
+          manifest_id mid;
+          app.db.get_revision_manifest(rid, mid);
+          manifest_map m;
+          app.db.get_manifest(mid, m);
+          manifest_map::const_iterator i = m.find(fp);
+          N(i != m.end(), F("no file '%s' found in revision '%s'\n") % fp % rid);
+          ident = manifest_entry_id(i);
+        }
+      
       file_data dat;
-      file_id ident;
-      complete(app, idx(args, 1)(), ident);
-
-      N(app.db.file_version_exists(ident),
-        F("no file version %s found in database") % ident);
-
       L(F("dumping file %s\n") % ident);
       app.db.get_file_version(ident, dat);
       data unpacked;
       unpack(dat.inner(), unpacked);
       cout.write(unpacked().data(), unpacked().size());
-
     }
   else if (idx(args, 0)() == "manifest")
     {
