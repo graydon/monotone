@@ -1,3 +1,8 @@
+2003-10-17  graydon hoare  <graydon@pobox.com>
+
+	* monotone.texi: Expand command and hook references.
+	* commands.cc: Disable db dump / load commands for now.
+
 2003-10-16  graydon hoare  <graydon@pobox.com>
 
 	* sanity.hh: Add a const version of idx().

@@ -20,7 +20,7 @@ See the file COPYING for details
 
 @dircategory Programming
 @direntry
-* monotone: (monotone).		Monotone version control system
+* monotone: (monotone).         Monotone version control system
 @end direntry
 
 @titlepage
@@ -1117,12 +1117,12 @@ Initially, the contents of the file @file{src/hello.c} were as follows:
 
 void say_hello()
 @{
-	printf("hello, world\n");
+        printf("hello, world\n");
 @}
 
 int main()
 @{
-	say_hello();
+        say_hello();
 @}
 @end example
 
@@ -1135,12 +1135,12 @@ save the following new version:
 
 void say_hello()
 @{
-	printf("hello, smelly world\n");
+        printf("hello, smelly world\n");
 @}
 
 int main()
 @{
-	say_hello();
+        say_hello();
 @}
 @end example
 
@@ -1629,7 +1629,7 @@ like to fetch from:
 @example
 $ cat >>~/.monotonerc
 function get_fetch_sources(branchname)
-	return @{ @{"http://www.myisp.com/~me/depot.cgi", "helloworld"         @} @} 
+        return @{ @{"http://www.myisp.com/~me/depot.cgi", "helloworld"         @} @} 
 end
 @end example
 
@@ -1733,11 +1733,11 @@ no parameters):
 @example
 $ cat >~/.monotonerc
 function get_post_targets(branchname)
-	return @{ @{"http://www.myisp.com/~me/depot.cgi", "helloworld"         @} @} 
+        return @{ @{"http://www.myisp.com/~me/depot.cgi", "helloworld"         @} @} 
 end
 
 function get_http_auth(url, group)
-	return "testkey@@nodomain.org"
+        return "testkey@@nodomain.org"
 end
 ^D
 @end example
@@ -2107,9 +2107,10 @@ A @code{date} cert, indicating when the new version was created.
 @item
 A @code{changelog} cert, containing the ``log message'' for these
 changes.  If you provided @var{logmsg} on the command line, this text
-will be used, otherwise @command{commit} will run a lua hook, which
-typically invokes an external editor program, in which you can compose
-a log message for the change.
+will be used, otherwise @command{commit} will the lua hook
+@code{edit_comment (@var{commentary})}, which typically invokes an
+external editor program, in which you can compose a log message for
+the change.
 @end itemize
 
 
@@ -2153,7 +2154,28 @@ copy.
 @ftable @command
 @item monotone fetch
 @itemx monotone fetch @var{url} @var{groupname} 
+
+These commands fetch packets from network servers. If you provide a
+particular @var{url} and @var{groupname}, monotone will fetch packets
+from that specific network server; otherwise monotone calls the hook
+@code{get_fetch_sources (@var{branchname})}, where @var{branchname}
+is the current branch, and fetches from all sources returned from that
+hook.  Finally, if no hook is found, monotone fetches from all sources
+it has listed in its database.
+
+When packets are received, monotone attempts to apply them to the
+database. If any packets are bad or rejected for semantic reasons,
+monotone will print a warning.
+
 @item monotone post
+
+This command attempts to post @emph{all} packets in the outgoing
+packet queue to their respective network servers. It calls the hook
+@code{get_http_auth (@var{url}, @var{group})} for any @code{http}
+URLs, and @code{get_news_sender (@var{url}, @var{group})} for any
+@code{nntp} URLs. See the documentation of these hooks for more
+detail.
+
 @end ftable
 
 
@@ -2164,31 +2186,125 @@ copy.
 @ftable @command
 @item monotone status
 
+This command prints a description of the ``status'' of your working copy.
+In particular, it prints:
+@itemize
+@item 
+The ``base manifest version'', which is the version of the manifest in @file{MT/manifest},
+which your working copy is an in-progress descendant of.
+@item
+The ``current manifest version'', which is the version of the manifest
+which results from applying @file{MT/work} to @file{MT/manifest}, and
+updating any @sc{sha1} values of files to reflect changes you have
+made to the working copy. In other words, the current manifest version
+is the version you would commit, if you ran @command{monotone commit}.
+@item
+A list of logical changes between the base and current manifest
+versions, such as adds, drops, renames, and patches.
+@end itemize
 
 @item monotone complete file @var{partial-id}
 @itemx monotone complete manifest @var{partial-id}
 
+These commands print out all known completions of a partial @sc{sha1}
+value, listing completions which are @code{file} or @code{manifest}
+versions depending on which variant is used. For example, suppose you
+enter this command and get this result:
+
+@example
+$ monotone complete manifest fa36
+fa36deead87811b0e15208da2853c39d2f6ebe90
+fa36b76dd0139177b28b379fe1d56b22342e5306
+fa36965ec190bee14c5afcac235f1b8e2239bb2a
+@end example
+
+Then monotone is telling you that there are 3 manifests it knows
+about, in its database, which begin with the 4 hex digits
+@code{fa36}. This command is intended to be used by programmable
+completion systems, such as those in @command{bash} and @command{zsh}.
 
 @item monotone diff 
 @itemx monotone diff @var{id}
 @itemx monotone diff @var{id1} @var{id2}
 
+These commands print out GNU ``unified diff format'' textual
+difference listings between various manifest versions. If no extra
+arguments are given, @command{monotone diff} will print the
+differences between the base manifest version and the current manifest
+version in your working copy. If one argument @var{id} is given,
+monotone will print the differences between the manifest @var{id} and
+the current manifest version in your working copy. If two arguments
+@var{id1} and @var{id2} are given, monotone will print the differences
+between manifests @var{id1} and @var{id2}, ignoring your working copy.
+
+In all cases, monotone will print a textual summary -- identical to
+the summary presented by @command{monotone status} -- of the logical
+differences between manifests in lines proceeding the diff. These
+lines begin with a single hash mark @code{#}, and should be ignored by
+a program processing the diff, such as @command{patch}.
 
 @item monotone list certs file @var{id}
 @itemx monotone list certs manifest @var{id}
 
+These commands will print out a list of certificates associated with
+a particular file or manifest @var{id}. Each line of the print out will
+indicate:
+@itemize
+@item
+Whether the signature on the certificate is @code{ok} or @code{bad}
+@item
+The key ID of the signer of the certificate
+@item 
+The name of the certificate
+@item 
+The value of the certificate
+@end itemize
+
+For example, this command lists the certificates associated with a
+particular version of monotone itself, in the monotone development
+branch:
+
+@example
+$ ./monotone list certs manifest 4a96
+monotone: expanded partial id '4a96' to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
+ok sig from [graydon@@pobox.com] : [ancestor] = [680e439ea20199f76c1aca1dcac5455b445fc965]
+ok sig from [graydon@@pobox.com] : [author] = [graydon@@dub.venge.net]
+ok sig from [graydon@@pobox.com] : [branch] = [monotone]
+ok sig from [graydon@@pobox.com] : [changelog] = [2003-10-16  graydon hoare  <graydon@@pobox.com>
+                                                 
+                                                        * sanity.hh: Add a const version of idx().
+                                                        * diff_patch.cc: Change to using idx() everywhere.
+                                                        * cert.cc (find_common_ancestor): Rewrite to recursive
+                                                        form, stepping over historic merges.
+                                                        * tests/t_cross.at: New test for merging merges.
+                                                        * testsuite.at: Call t_cross.at.
+                                                 ]
+ok sig from [graydon@@pobox.com] : [date] = [2003-10-17T03:20:27]
+@end example
 
 @item monotone list keys
 @itemx monotone list keys @var{pattern}
+These commands list @sc{rsa} keys held in your current database. They
+do not print out any cryptographic information; they simply list the
+names of public and private keys you have on hand.
 
+If @var{pattern} is provided, it is used as a glob to limit the keys
+listed. Otherwise all keys in your database are listed.
 
 @item monotone list branches
 
+This command lists all known branches in your database.
 
 @item monotone list unknown
 
+This command lists all files in your working copy that monotone is 
+either ignoring or knows nothing about.
 
 @item monotone list ignored
+
+This command lists all files in your working copy that monotone is 
+intentionally ignoring, due to the results of the @code{ignore_file (@var{filename})} hook.
+
 @end ftable
 
 
@@ -2199,11 +2315,38 @@ copy.
 @ftable @command
 @item monotone genkey @var{keyid}
 
+This command generates an @sc{rsa} public/private key pair, using a
+system random number generator, and stores it in your database under
+the key name @var{keyid}. If the the hook
+@code{non_blocking_rng_ok()} returns @code{true}, the key
+generation will use an unlimited random number generator (such as
+@file{/dev/urandom}), otherwise it will use a higher quality random
+number generator (such as @file{/dev/random}) but might run slightly
+slower.
+
+The private half of the key is stored in an encrypted form, using the
+symmetric cipher @sc{arc4}, so that anyone accidentally reading your
+database cannot extract your private key and use it. You must provide
+a passphrase for your key when it is generated, which is used to key
+the @sc{arc4} cipher. In the future you will need to enter this
+passphrase again each time you sign a certificate, which happens every
+time you @command{commit} to your database. You can tell monotone to
+automatically use a certain passphrase for a given key using the
+@code{get_passphrase(@var{keypair_id})}, but this significantly
+increases the risk of a key compromise on your local computer. Be
+careful using this hook.
 
 @item monotone cert file @var{id} @var{certname} 
 @itemx monotone cert file @var{id} @var{certname} @var{certval}
 @itemx monotone cert manifest @var{id} @var{certname} 
 @itemx monotone cert manifest @var{id} @var{certname} @var{certval}
+
+These commands create a new certificate with name @var{certname},
+either for a @code{file} or a @code{manifest} with version
+@var{id}. If @var{certval} is provided, it is the value of the
+certificate.  Otherwise the certificate value is read from
+@code{stdin}.
+
 @end ftable
 
 
@@ -2215,9 +2358,16 @@ copy.
 @item monotone approve file @var{id}
 @itemx monotone approve manifest @var{id}
 
+These commands are synonyms for
+@code{monotone cert file @var{id} approval true} or 
+@code{monotone cert manifest @var{id} approval true}
 
 @item monotone disapprove file @var{id}
 @itemx monotone disapprove manifest @var{id}
+
+These commands are synonyms for
+@code{monotone cert file @var{id} approval false} or 
+@code{monotone cert manifest @var{id} approval false}
 
 
 @item monotone comment file @var{id}
@@ -2225,8 +2375,18 @@ copy.
 @itemx monotone comment manifest @var{id}
 @itemx monotone comment manifest @var{id} @var{comment}
 
+These commands are synonyms for @code{monotone cert file @var{id}
+comment @var{comment}} or @code{monotone cert manifest @var{id}
+comment @var{comment}}. If @var{comment} is not provided, it is read
+from @code{stdin}.
+
 
 @item monotone tag @var{id} @var{tagname}
+
+These commands are synonyms for @code{monotone cert file @var{id}
+tag @var{tagname}} or @code{monotone cert manifest @var{id}
+tag @var{tagname}}. 
+
 @end ftable
 
 
@@ -2238,20 +2398,42 @@ copy.
 @item monotone fcerts @var{id}
 @itemx monotone mcerts @var{id}
 
+These commands print out an @code{fcert} or @code{mcert} packet for
+each file or manifest cert in your database associated with @var{id}.
+These can be used to transport certificates safely between monotone
+databases.
 
 @item monotone fdata @var{id}
 @itemx monotone mdata @var{id}
+
+These commands print out an @code{fdata} or @code{mdata} packet for
+the file or manifest @var{id} in your database.  These can be used to
+transport file or manifest versions, in their entirety, safely between
+monotone databases.
 
 
 @item monotone fdelta @var{id1} @var{id2}
 @itemx monotone mdelta @var{id1} @var{id2}
 
+These commands print out an @code{fdelta} or @code{mdelta} packet for
+the differences between file or manifest versions @var{id1} and
+@var{id2}, in your database.  These can be used to transport file or
+manifest differences safely between monotone databases.
 
 @item monotone privkey @var{keyid}
 @itemx monotone pubkey @var{keyid}
 
+These commands print out an @code{privkey} or @code{pubkey} packet for
+the @sc{rsa} key @var{keyid}. These can be used to transport public or
+private keys safely between monotone databases.
+
 
 @item monotone read
+
+This command reads packets from @code{stdin} and applies them to your
+database. Unlike fetching from a network, it will also insert public
+and private keys. Be careful which keys you accept.
+
 @end ftable
 
 
@@ -2259,22 +2441,30 @@ copy.
 @section Database
 
 @ftable @command
-@item monotone db init --db=@var{database} 
+@item monotone db init --db=@var{dbfile} 
 
+This command initializes a new monotone database at @file{dbfile}.
 
-@item monotone db dump --db=@var{database} 
+@item monotone db info --db=@var{dbfile} 
 
+This command prints information about the monotone database @file{dbfile},
+including its schema version and various table size statistics.
 
-@item monotone db load --db=@var{database} 
+@item monotone db version --db=@var{dbfile} 
 
+This command prints out just the schema version of the monotone
+database @file{dbfile}.
 
-@item monotone db info --db=@var{database} 
+@item monotone db migrate --db=@var{dbfile} 
 
+This attempts to migrate the database @file{dbfile} to the newest
+schema known by the version of monotone you are currently running.
+If the migration fails, no changes should be made to the database.
 
-@item monotone db version --db=@var{database} 
+If you have important information in your database, you should back up
+a copy of it before migrating, in case there is an untrapped error
+during migration.
 
-
-@item monotone db migrate --db=@var{database} 
 @end ftable
 
 
@@ -2284,8 +2474,21 @@ copy.
 @ftable @command
 @item monotone rcs_import @var{filename...}
 
+This command imports all the file versions in each RCS file listed in
+@var{filename...}.  These files should be raw RCS files, ending in
+@code{,v}. Monotone parses them directly and inserts them into your
+database.
 
 @item monotone cvs_import @var{pathname...}
+
+This command imports all the file versions in each RCS file found in
+the tree of files starting at @var{pathname...}, then reconstructs the
+tree-wide history of logical changes by comparing RCS time stamps and
+change log entries. For each logical tree-wide change, monotone
+synthesizes a manifest change and commits that manifest and all
+associated file versions to your database. It also copies all
+change log entries, author identifiers, and date stamps to manifest
+certificates.  
 @end ftable
 
 
@@ -2294,6 +2497,11 @@ copy.
 
 @ftable @command
 @item monotone debug @var{sql-statement}
+
+This is a debugging command which executes @var{sql-statement} against
+your database, and prints any results of the expression in a tabular
+form.  It can be used to investigate the state of your database, or
+help diagnose failures.
 @end ftable
 
 
@@ -2332,15 +2540,162 @@ do not need to define this function or provide a
 @option{--key=@var{keyname}} option; monotone will guess that you want
 to use the unique private key.
 
-@item get_passphrase (@var{branchname})
+@item get_passphrase (@var{keypair_id})
+
+Returns a string which is the passphrase used to encrypt the private
+half of @var{keypair_id} in your database, using the @sc{arc4}
+symmetric cipher. This hook has no default definition. If this hook is not
+defined, monotone will prompt you for a passphrase each time it needs
+to use a private key.
+
 @item get_author (@var{branchname})
+
+Returns a string which is used as a value for automatically generated 
+@code{author} certificates when you commit changes to @var{branchname}.
+
+The default definition of this hook looks is:
+@example
+function get_author(branchname)
+        local user = os.getenv("USER")
+        local host = os.getenv("HOSTNAME")
+        if ((user == nil) or (host == nil)) then return nil end
+        return string.format("%s@@%s", user, host)
+end
+@end example
+
 @item edit_comment (@var{commentary})
+
+Returns a log entry for a given set of changes, described in
+@var{commentary}.  The commentary is identical to the output of
+@command{monotone status}. This hook is intended to interface with
+some sort of editor, so that you can interactively document each
+change you make. The result is used as the value for a
+@code{changelog} certificate, automatically generated when you commit
+changes.
+
+The default definition fo this hook is:
+
+@example
+function edit_comment(commentary)
+        local exe = "vi"
+        local visual = os.getenv("VISUAL")
+        if (visual ~= nil) then exe = visual end
+        local editor = os.getenv("EDITOR")
+        if (editor ~= nil) then exe = editor end
+
+        local tmp, tname = temp_file()
+        if (tmp == nil) then return nil end
+        commentary = "MT: " .. string.gsub(commentary, "\n", "\nMT: ")
+        tmp:write(commentary)
+        io.close(tmp)
+
+        if (os.execute(string.format("%s %s", exe, tname)) ~= 0) then
+                os.remove(tname)
+                return nil
+        end
+
+        tmp = io.open(tname, "r")
+        if (tmp == nil) then os.remove(tname); return nil end
+        local res = ""
+        local line = tmp:read()
+        while(line ~= nil) do 
+                if (not string.find(line, "^MT:")) then
+                        res = res .. line .. "\n"
+                end
+                line = tmp:read()
+        end
+        io.close(tmp)
+        os.remove(tname)
+        return res
+end
+@end example
+
 @item persist_phrase_ok ()
+
+Returns @code{true} if you want monotone to remember the passphrase of
+a private key for the duration of a single command, or @code{false} if
+you want monotone to prompt you for a passphrase for each certificate
+it generates. Since monotone often generates several certificates in 
+quick succession, unless you are very concerned about security you
+probably want this hook to return @code{true}.
+
+The default definition of this hook is:
+@example
+function persist_phrase_ok()
+        return true
+end
+@end example
+
 @item non_blocking_rng_ok ()
+
+Returns @code{true} if you are willing to let monotone use the
+system's non-blocking random number generator, such as
+@file{/dev/urandom}, for generating random values during cryptographic
+operations. This diminishes the cryptographic strength of such
+operations, but speeds them up. Returns @code{false} if you want to
+force monotone to always use higher quality random numbers, such as
+those from @file{/dev/random}.
+
+The default definition of this hook is:
+@example
+function non_blocking_rng_ok()
+        return true
+end
+@end example
+
+
 @item get_news_sender (@var{url}, @var{group})
+
+Returns a string which is the email address (or other identifying
+sender address) of a news article, to be used when monotone is posting
+news articles to @var{url} and @var{group}. This hook is only called
+when posting to @code{nntp} URLs. This hook has no default definition.
+
 @item get_http_auth (@var{url}, @var{group})
+
+Returns a string which is the name of a private @sc{rsa} key you wish
+to use for posting packets to an @code{http} depot. Depots verify
+incoming packet streams by examining an @sc{rsa} signature on the
+entire transmission, so you need to return the name of a key which you
+have also put the public half of in the depot's database. This hook
+has no default definition.
+
 @item get_post_targets (@var{branchname})
+
+Returns a table, which itself contains a set of tables, each of which
+describe a posting target you wish to send packets to, when
+committing to @var{branchname}. Each inner table contains two strings,
+a URL and a group name. Packets will be queued to send to all targets
+returned by this hook. 
+
+This hook has no default definition, but it returns a somewhat unusual
+structure, so we give an example here. Suppose that when you commit to
+a branch called @code{examplebranch} you want to send to the group
+@code{example} at the depot @code{http://www.myisp.com/~user/depot.cgi},
+as well as to the news group @code{com.myisp.example} at the news server
+@code{nntp://news.myisp.com}. Then you would write the following hook:
+
+@example
+function get_fetch_sources(branch)
+        if (branch == "examplebranch) then
+                return @{ @{"http://www.myisp.com/~user/depot.cgi", "example"@},
+                         @{"nntp://news.myisp.com", "com.myisp.example"@}  @}
+        end
+end
+@end example
+
 @item get_fetch_sources (@var{branchname})
+
+Returns a table, which itself contains a set of tables, each of which
+describe a fetch source you wish to retrieve packets from, when you
+run @code{monotone fetch} for a particular @var{branchname}. Each
+inner table contains two strings, a URL and a group name. Packets
+will be fetched from all sources returned by this hook.
+
+This hook has no default definition, but its operation is analogous to
+the @code{get_post_targets (@var{branchname})} hook, described
+previously.
+
 @item ignore_file (@var{filename})
 
 Returns @code{true} if @var{filename} should be ignored while adding,
@@ -2351,24 +2706,210 @@ this hook is:
 
 @example
 function ignore_file(name)
-	if (string.find(name, "%.o$")) then return true end
-	if (string.find(name, "%.aux$")) then return true end
-	if (string.find(name, "%.bak$")) then return true end
-	if (string.find(name, "%.orig$")) then return true end
-	if (string.find(name, "%.rej$")) then return true end
-	if (string.find(name, "/core$")) then return true end
-	if (string.find(name, "^CVS/")) then return true end
-	if (string.find(name, "^SVN/")) then return true end
-	if (string.find(name, "/CVS/")) then return true end
-	if (string.find(name, "/SVN/")) then return true end
-	return false;
+        if (string.find(name, "%.o$")) then return true end
+        if (string.find(name, "%.aux$")) then return true end
+        if (string.find(name, "%.bak$")) then return true end
+        if (string.find(name, "%.orig$")) then return true end
+        if (string.find(name, "%.rej$")) then return true end
+        if (string.find(name, "/core$")) then return true end
+        if (string.find(name, "^CVS/")) then return true end
+        if (string.find(name, "^SVN/")) then return true end
+        if (string.find(name, "/CVS/")) then return true end
+        if (string.find(name, "/SVN/")) then return true end
+        return false
 end
 @end example
 
 @item get_sorter (@var{certname})
+
+Returns a string which is the name of a sort operator to use for the
+certificate named @var{certname}. Sort operators are used during
+@command{monotone update} to select versions which are ``not worse''
+than the current version, by examining certificates associated with
+update candidates and sorting them according to the sort
+operator. There are 3 pre-defined sort operator names:
+
+@itemize
+@item
+``string'', which sorts certificate values in ascending lexicographic ASCII order
+@item
+``integer'', which sorts certificate values which apear to be integers in ascending integer order
+@item
+``bitset'', which sorts certificate values which appear to be packed bitsets according to a 
+superset relation (supersets sort higher than subsets)
+@end itemize
+
+If you are not using sort operators, you can ignore this
+hook. Monotone always sorts according to ancestry after all other sort
+operators, so the default behavior is similar to other version control
+systems. This hook has no default definition.
+
 @item merge2 (@var{left}, @var{right})
+
+Returns a string, which should be the merger of the 2 provided
+strings, which are the contents of the @var{left} and @var{right}
+nodes of a file fork which monotone was unable to automatically
+merge. The merge should either call an intelligent merge program or
+interact with the user. The default definition of this hook is:
+
+@example
+function merge2(left, right)
+        local lfile
+        local rfile
+        local outfile
+        local tmp
+
+        -- write out one file
+        tmp, lfile = temp_file()
+        if (tmp == nil) then 
+                return nil 
+        end;
+        tmp:write(left)
+        io.close(tmp)
+
+        -- write out the other file
+        tmp, rfile = temp_file()
+        if (tmp == nil) then 
+                os.remove(lfile)
+                return nil
+        end
+        tmp:write(right)
+        io.close(tmp)
+
+        tmp, outfile = temp_file();
+        io.close(tmp);
+
+        -- run emacs to merge the files
+        local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
+        local cmd_fmt = "emacs -no-init-file -eval " .. elisp
+        local cmd = string.format(cmd_fmt, lfile, rfile, outfile)
+        io.write(string.format("executing external 2-way merge command: %s\n", cmd))
+        if (os.execute(cmd) ~= 0) then 
+                os.remove(lfile)
+                os.remove(rfile) 
+                os.remove(outfile)
+                return nil
+        end
+
+        -- read in the results
+        tmp = io.open(outfile, "r")
+        if (tmp == nil) then
+                return nil
+        end
+        local data = tmp:read("*a")
+        io.close(tmp)
+
+        os.remove(lfile)
+        os.remove(rfile)
+        os.remove(outfile)
+
+        return data
+end
+@end example
+
 @item merge3 (@var{ancestor}, @var{left}, @var{right})
+
+Returns a string, which should be the merger of the 3 provided
+strings, which are the contents of @var{left} and @var{right} nodes,
+and least common @var{ancestor}, of a file fork which monotone was
+unable to automatically merge. The merge should either call an
+intelligent merge program or interact with the user. The default
+definition of this hook is:
+
+@example
+function merge3(ancestor, left, right)
+        local afile
+        local lfile
+        local rfile
+        local outfile
+
+        -- write out one file
+        tmp, lfile = temp_file()
+        if (tmp == nil) then 
+                return nil 
+        end;
+        tmp:write(left)
+        io.close(tmp)
+
+        -- write out the other file
+        tmp, rfile = temp_file()
+        if (tmp == nil) then 
+                os.remove(lfile)
+                return nil
+        end
+        tmp:write(right)
+        io.close(tmp)
+
+        -- write out the ancestor
+        tmp, afile = temp_file()
+        if (tmp == nil) then 
+                os.remove(lfile)
+                os.remove(rfile) 
+                return nil
+        end
+        tmp:write(ancestor)
+        io.close(tmp)
+
+        tmp, outfile = temp_file()
+        io.close(tmp)
+
+        -- run emacs to merge the files
+        local elisp = "'(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")'"
+        local cmd_fmt = "emacs -no-init-file -eval " .. elisp
+        local cmd = string.format(cmd_fmt, lfile, rfile, afile, outfile)
+        io.write(string.format("executing external 3-way merge command: %s\n", cmd))
+        if (os.execute(cmd) ~= 0) then 
+                os.remove(lfile)
+                os.remove(rfile)
+                os.remove(ancestor)
+                os.remove(outfile) 
+                return nil
+        end
+
+        -- read in the results
+        tmp = io.open(outfile, "r")
+        if (tmp == nil) then
+                return nil
+        end
+        local data = tmp:read("*a")
+        io.close(tmp)
+
+        os.remove(lfile)
+        os.remove(rfile)
+        os.remove(outfile)
+
+        return data
+end
+@end example
+
+
 @item attr_functions [@var{arrtibute}] (@var{filename}, @var{value})
+
+This is not a hook function, but a @emph{table} of hook
+functions. Each entry in the table @code{attr_functions}, at table
+entry @var{attribute}, is a function taking a file name @var{filename}
+and a attribute value @var{value}. The function should ``apply'' the 
+attribute to the file, possibly in a platform-specific way.
+
+Persistent attributes are stored in the @file{.mt-attrs}, in your
+working copy and manifest. If such a file exists, hook functions from
+this table are called for each triple found in the file, after any
+command which modifies the working copy. This facility can be used to
+extend monotone's understanding of files with platform-specific attributes,
+such as permission bits, access control lists, or special file types.
+
+By default, there is only one entry in this table, for the @code{execute}
+attribute. Its definition is:
+
+@example
+attr_functions["execute"] = 
+  function(filename, value) 
+        if (value == "true") then
+                os.execute(string.format("chmod +x %s", filename))
+        end
+  end
+@end example
+
 @end ftable
 
 @node    Technical Notes
@@ -2604,7 +3145,7 @@ merely removed from the manifest.
 Update working copy, relative to sorting keys.
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{db} @i{(init|dump|load|info|version|migrate)}
+@item @b{db} @i{(init|info|version|migrate)}
 Manipulate database state.
 @comment TROFF INPUT: .SH DESCRIPTION
 

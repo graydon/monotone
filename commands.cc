@@ -2173,16 +2173,12 @@ CMD(debug, "debug", "SQL", "issue SQL queries directly (dangerous)")
   app.db.debug(args[0], cout);
 }
 
-CMD(db, "database", "init\ndump\nload\ninfo\nversion\nmigrate", "manipulate database state")
+CMD(db, "database", "init\ninfo\nversion\nmigrate", "manipulate database state")
 {
   if (args.size() != 1)
     throw usage(name);
   if (args[0] == "init")
     app.db.initialize();
-  else if (args[0] == "dump")
-    app.db.dump(cout);
-  else if (args[0] == "load")
-    app.db.load(cin);
   else if (args[0] == "info")
     app.db.info(cout);
   else if (args[0] == "version")
