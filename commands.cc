@@ -328,7 +328,9 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
 
   // remove restricted adds from f_adds and remove entry from m_new
 
-  for (set<patch_addition >::iterator i = ps.f_adds.begin();
+  set<patch_addition> included_adds;
+
+  for (set<patch_addition>::iterator i = ps.f_adds.begin();
        i != ps.f_adds.end(); ++i)
     {
       if (app.is_restricted(i->path())) 
@@ -336,14 +338,19 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
           L(F("restriction excludes add %s\n") % i->path());
           ps.map_new.erase(i->path());
           restricted_work.adds.insert(i->path());
-          ps.f_adds.erase(*i);
         }
       else
+        {
           L(F("restriction includes add %s\n") % i->path());
-        
+          included_adds.insert(*i);
+        }
     }
 
+  ps.f_adds = included_adds;
+
   // remove restricted dels from f_dels and put entry in m_new with entry from m_old
+
+  set<file_path> included_dels;
 
   for (set<file_path>::iterator i = ps.f_dels.begin();
        i != ps.f_dels.end(); ++i)
@@ -357,22 +364,25 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
           path_id_pair old(ps.map_old.find(*i));
           ps.map_new.insert(entry(old.path(), old.ident()));
           restricted_work.dels.insert((*i)());
-          ps.f_dels.erase(*i);
         }
       else
+        {
           L(F("restriction includes delete %s\n") % (*i)());
-
+          included_dels.insert(*i);
+        }
     }
 
+  ps.f_dels = included_dels;
+
   // remove restricted moves from f_moves and replace entry in m_new with entry from m_old
+
+  set<patch_move> included_moves;
 
   for (set<patch_move>::iterator i = ps.f_moves.begin();
        i != ps.f_moves.end(); ++i)
     {
-      // TODO: decide what's right here
       // is excluding both sides of a rename the right thing to do?
       // or should we just fail if only one side of a move is restricted? (njs's idea)
-      // thinking of java refactoring example that might require that we don't fail here
 
       if (app.is_restricted(i->path_old()) || app.is_restricted(i->path_new())) 
         {
@@ -384,14 +394,19 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
           path_id_pair old(ps.map_old.find(i->path_old()));
           ps.map_new.insert(entry(old.path(), old.ident()));
           restricted_work.renames.insert(make_pair(i->path_old(), i->path_new()));
-          ps.f_moves.erase(*i);
         }
       else
+        {
           L(F("restriction includes move %s to %s\n") % i->path_old() % i->path_new());
-
+          included_moves.insert(*i);
+        }
     }
 
+  ps.f_moves = included_moves;
+
   // remove restricted deltas from f_deltas and replace entry in m_new with entry from m_old
+
+  set<patch_delta> included_deltas;
 
   for (set<patch_delta>::iterator i = ps.f_deltas.begin();
        i != ps.f_deltas.end(); ++i)
@@ -405,11 +420,15 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
           ps.map_new.erase(i->path());
           path_id_pair old(ps.map_old.find(i->path()));
           ps.map_new.insert(entry(old.path(), old.ident()));
-          ps.f_deltas.erase(*i);
         }
       else
+        {
           L(F("restriction includes delta %s\n") % i->path());
+          included_deltas.insert(*i);
+        }
     }
+
+  ps.f_deltas = included_deltas;
 
   calculate_ident(ps.map_new, ps.m_new);
 

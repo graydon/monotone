@@ -1,3 +1,10 @@
+2004-09-02  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_restrictions.at: rework and attempt to clean things up a
+	bit; add test for bug in restrict_patch_set
+	* commands.cc (restrict_patch_set): fix bug in removal of
+	restricted adds/dels/moves/deltas
+
 2004-07-20  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_restrictions.at: new test

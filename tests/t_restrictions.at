@@ -45,7 +45,7 @@ AT_CHECK(grep work/file4 stdout, [0], [ignore])
 AT_CHECK(MONOTONE ls unknown --exclude work/file4, [], [stdout], [ignore])
 AT_CHECK(grep work/file4 stdout, [1], [ignore])
 
-AT_CHECK(rm work/file2)
+AT_CHECK(mv work/file2 work/filex2)
 
 AT_CHECK(MONOTONE ls missing, [], [stdout], [ignore])
 AT_CHECK(grep work/file2 stdout, [0], [ignore])
@@ -56,8 +56,7 @@ AT_CHECK(grep work/file2 stdout, [0], [ignore])
 AT_CHECK(MONOTONE ls missing --exclude work/file2, [], [stdout], [ignore])
 AT_CHECK(grep work/file2 stdout, [1], [ignore])
 
-AT_DATA(work/file2, [version 1 of file2
-])
+AT_CHECK(mv work/filex2 work/file2)
 
 AT_CHECK(MONOTONE ls ignored --rcfile=ignored.lua, [], [stdout], [ignore])
 AT_CHECK(grep work/foo.o stdout, [0], [ignore])
@@ -92,229 +91,174 @@ AT_CHECK(MONOTONE add work/file4, [], [ignore], [ignore])
 # changed file3
 # added file4
 
-# grep file[X1234] would be rather good here
+# test for files included/excluded in various outputs
+
+m4_define([INCLUDED], [
+files=""
+for i in $1
+do
+        grep work/file$i stdout || files="$files $i"
+done
+echo "missed: $files"
+test -z $files
+])
+
+m4_define([EXCLUDED], [
+files=""
+for i in $1
+do
+        grep work/file$i stdout && files="$files $i"
+done
+echo "seen: $files"
+test -n $files
+])
 
 # status
 
 AT_CHECK(MONOTONE status, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(X 1 2 3 4), [0], [ignore])
 
-# include rename source and target
+# include both source and target of rename
 
 AT_CHECK(MONOTONE status --include work/fileX --include work/file1, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [1], [ignore])
-AT_CHECK(grep work/file4 stdout, [1], [ignore])
+AT_CHECK(INCLUDED(X 1),[0], [ignore])
+AT_CHECK(EXCLUDED(2 3 4), [0], [ignore])
 
 # include drop
 
 AT_CHECK(MONOTONE status --include work/file2, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [1], [ignore])
-AT_CHECK(grep work/file4 stdout, [1], [ignore])
+AT_CHECK(INCLUDED(2), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1 3 4), [0], [ignore])
 
 # include delta
 
 AT_CHECK(MONOTONE status --include work/file3, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [1], [ignore])
+AT_CHECK(INCLUDED(3), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1 2 4), [0], [ignore])
 
 # include add
 
 AT_CHECK(MONOTONE status --include work/file4, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [1], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(4), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1 2 3), [0], [ignore])
 
 # exclude rename source
 
 AT_CHECK(MONOTONE status --exclude work/fileX, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(2 3 4), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1),[0], [ignore])
 
 # exclude rename target
 
 AT_CHECK(MONOTONE status --exclude work/file1, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(2 3 4), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1),[0], [ignore])
 
 # exclude drop
 
 AT_CHECK(MONOTONE status --exclude work/file2, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(X 1 3 4), [0], [ignore])
+AT_CHECK(EXCLUDED(2),[0], [ignore])
 
 # exclude delta 
 
 AT_CHECK(MONOTONE status --exclude work/file3, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [1], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(X 1 2 4), [0], [ignore])
+AT_CHECK(EXCLUDED(3),[0], [ignore])
 
 # exclude add
 
 AT_CHECK(MONOTONE status --exclude work/file4, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [1], [ignore])
+AT_CHECK(INCLUDED(X 1 2 3), [0], [ignore])
+AT_CHECK(EXCLUDED(4),[0], [ignore])
 
 # diff
 
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(X 1 2 3 4), [0], [ignore])
 
-# include rename source and target
+# include both source and target of rename
 
 AT_CHECK(MONOTONE diff --include work/fileX --include work/file1, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [1], [ignore])
-AT_CHECK(grep work/file4 stdout, [1], [ignore])
+AT_CHECK(INCLUDED(X 1), [0], [ignore])
+AT_CHECK(EXCLUDED(2 3 4), [0], [ignore])
 
 # include drop
 
 AT_CHECK(MONOTONE diff --include work/file2, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [1], [ignore])
-AT_CHECK(grep work/file4 stdout, [1], [ignore])
+AT_CHECK(INCLUDED(2), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1 3 4),[0], [ignore])
 
 # include delta
 
 AT_CHECK(MONOTONE diff --include work/file3, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [1], [ignore])
+AT_CHECK(INCLUDED(3), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1 2 4),[0], [ignore])
 
 # include add
 
 AT_CHECK(MONOTONE diff --include work/file4, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [1], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(4), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1 2 3),[0], [ignore])
 
 # exclude rename source
 
 AT_CHECK(MONOTONE diff --exclude work/fileX, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(2 3 4), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1),[0], [ignore])
 
 # exclude rename target
 
 AT_CHECK(MONOTONE diff --exclude work/file1, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(2 3 4), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1),[0], [ignore])
 
 # exclude drop
 
 AT_CHECK(MONOTONE diff --exclude work/file2, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(X 1 3 4), [0], [ignore])
+AT_CHECK(EXCLUDED(2),[0], [ignore])
 
 # exclude delta
 
 AT_CHECK(MONOTONE diff --exclude work/file3, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [1], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(X 1 2 4), [0], [ignore])
+AT_CHECK(EXCLUDED(3),[0], [ignore])
 
 # exclude add
 
 AT_CHECK(MONOTONE diff --exclude work/file4, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [1], [ignore])
+AT_CHECK(INCLUDED(X 1 2 3), [0], [ignore])
+AT_CHECK(EXCLUDED(4),[0], [ignore])
 
 # commit
 
 AT_CHECK(MONOTONE status, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [0], [ignore])
-AT_CHECK(grep work/file1 stdout, [0], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(X 1 2 3 4), [0], [ignore])
 
 # include rename source and target
 
 AT_CHECK(MONOTONE commit 'move fileX to file1' --include work/fileX --include work/file1, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE status, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [0], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(2 3 4), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1), [0], [ignore])
 
 # include drop
 
 AT_CHECK(MONOTONE commit 'drop file2' --include work/file2, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE status, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [0], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(3 4), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1 2), [0], [ignore])
 
 # include delta
 
 AT_CHECK(MONOTONE commit 'change file3' --include work/file3, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE status, [], [stdout], [ignore])
-AT_CHECK(grep work/fileX stdout, [1], [ignore])
-AT_CHECK(grep work/file1 stdout, [1], [ignore])
-AT_CHECK(grep work/file2 stdout, [1], [ignore])
-AT_CHECK(grep work/file3 stdout, [1], [ignore])
-AT_CHECK(grep work/file4 stdout, [0], [ignore])
+AT_CHECK(INCLUDED(4), [0], [ignore])
+AT_CHECK(EXCLUDED(X 1 2 3), [0], [ignore])
 
 # include add
 
@@ -326,13 +270,10 @@ M_HEAD=`SHA1(MT/manifest)`
 
 # setup for excluded commits
 
-#AT_CHECK(mv work/file3 work/file5)
-#AT_CHECK(rm work/file1)
-#AT_DATA(work/file4, [version 2 of file4 with some changes
-#])
-
-#AT_CHECK(MONOTONE rename work/file3 work/file5, [], [ignore], [ignore])
-#AT_CHECK(MONOTONE drop work/file1, [], [ignore], [ignore])
+# moved file1 to fileY
+# dropped file2
+# changed file3
+# added file4
 
 # moved file3 to file
 # dropped file1
@@ -372,6 +313,39 @@ AT_CHECK(grep work/file2 MT/manifest, [1], [ignore])
 AT_CHECK(grep work/file3 MT/manifest, [0], [ignore])
 AT_CHECK(grep work/file4 MT/manifest, [1], [ignore])
 AT_CHECK(test $SHA_3_1 == $SHA_3_now)
+
+# test bad removal of restricted files 
+# (set/iterator/erase bug found by matt@ucc.asn.au)
+
+for i in one two three four five six seven eight nine ten eleven twelve
+do
+  AT_CHECK(echo "file $i", [], [stdout])
+  AT_CHECK(mv stdout file.$i)
+done
+
+AT_CHECK(ls, [], [ignore], [])
+
+AT_CHECK(MONOTONE add file.*, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit 'add 12 files', [], [ignore], [ignore])
+
+for i in one three four five six seven eight nine ten eleven
+do
+  AT_CHECK(echo "new file $i", [], [stdout])
+  AT_CHECK(mv stdout file.$i)
+done
+
+AT_CHECK(MONOTONE diff --include file.four --include file.ten, [], [stdout], [ignore])
+
+AT_CHECK(grep "file.four" stdout, [0], [ignore])
+AT_CHECK(grep "file.ten"  stdout, [0], [ignore])
+
+# none of these should show up in the diff
+# only four and ten are included
+
+for i in one two three five six seven eight nine eleven twelve
+do
+        AT_CHECK(grep "file.$i"  stdout, [1], [ignore])
+done
 
 AT_CLEANUP
 
