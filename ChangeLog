@@ -1,3 +1,9 @@
+2004-04-28  Christof Petig <christof@petig-baender.de>
+
+	* command.cc (log):
+		support optional file argument to show change log for
+		e.g. monotone log [ID] cert.cc
+
 2004-04-26  Christof Petig <christof@petig-baender.de>
 
 	* rcs_import.cc (process branch):
