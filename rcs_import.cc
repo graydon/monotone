@@ -160,7 +160,6 @@ cvs_history
 
   ticker n_versions;
   ticker n_tree_branches;
-  ticker n_file_branches;
 
   cvs_history();
   void set_filename(string const & file,
@@ -664,8 +663,7 @@ cvs_key::cvs_key(rcs_file const & r, string const & version,
 
 cvs_history::cvs_history() :
   n_versions("versions", 1),
-  n_tree_branches("tree branches", 1),
-  n_file_branches("file branches", 1)
+  n_tree_branches("branches", 1)
 {
   stk.push(shared_ptr<cvs_state>(new cvs_state()));  
 }
@@ -795,7 +793,6 @@ cvs_history::push_branch(rcs_file const & r,
 			 string const & first_branch_version) 
 {      
   shared_ptr<cvs_state> branchpoint;
-  ++n_file_branches;
   I(stk.size() > 0);
   find_branchpoint(r, branchpoint_version, 
 		   first_branch_version, branchpoint);
@@ -1139,7 +1136,7 @@ import_cvs_repo(fs::path const & cvsroot,
 
 
   {
-    ticker n_branches("branches", 1), n_edges("edges", 1);
+    ticker n_branches("finished branches", 1), n_edges("finished edges", 1);
     transaction_guard guard(app.db);
     
     // write the trunk head version

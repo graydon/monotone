@@ -1,3 +1,11 @@
+2004-04-10  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc (operator<): Include name in compare.
+	(operator==): Likewise.
+	* packet.cc: Include shared_ptr.
+	* rcs_file.cc: Rewrite by hand, no spirit.
+	* rcs_import.cc: Change ticker names a bit.
+
 2004-04-09  graydon hoare  <graydon@pobox.com>
 
 	* app_state.cc: Fix a couple file path constructions.

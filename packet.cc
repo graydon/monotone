@@ -9,6 +9,7 @@
 #include <boost/optional.hpp>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "app_state.hh"
 #include "packet.hh"

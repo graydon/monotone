@@ -11,25 +11,11 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 
-struct rcs_symbol
-{
-  std::string version;
-  std::string name;
-};
-
 struct rcs_admin
 {
   std::string head;
   std::string branch;
-  std::string access;
   std::multimap<std::string, std::string> symbols;
-  std::multimap<std::string, std::string> locks;
-  std::string comment;
-  std::string expand;
-  void push_symbol(rcs_symbol const & s) 
-  { 
-    symbols.insert(make_pair(s.version, s.name));
-  }
 };
 
 struct rcs_delta
@@ -37,13 +23,8 @@ struct rcs_delta
   std::string num;
   std::string date;
   std::string author;
-  std::string state;
   std::vector<std::string> branches;
   std::string next;
-  void push_branch(std::string const & b) 
-  { 
-    branches.push_back(b); 
-  }
 };
 
 struct rcs_deltatext
@@ -57,7 +38,6 @@ struct rcs_file
 {
   rcs_admin admin;
   std::map<std::string, boost::shared_ptr<rcs_delta> > deltas;
-  std::string desc;
   std::map<std::string, boost::shared_ptr<rcs_deltatext> > deltatexts;
   void push_delta(rcs_delta const & d) 
   { 
