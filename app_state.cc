@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#ifdef WIN32
+#include <io.h> /* for chdir() */
+#endif
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -126,7 +129,7 @@ file_path
 app_state::prefix(utf8 const & path)
 {
   fs::path p1 = mkpath(relative_directory()) / mkpath(path());
-  file_path p2(p1.normalize().native_directory_string());
+  file_path p2(p1.normalize().string());
   L(F("'%s' prefixed to '%s'\n") % path() % p2());
   return p2;
 }
