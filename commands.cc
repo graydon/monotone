@@ -11,6 +11,8 @@
 #include <iterator>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/convenience.hpp>
 
 #include "commands.hh"
 #include "constants.hh"
@@ -1458,9 +1460,9 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state 
 
   if (dir != string("."))
     {
-      local_path lp(dir);
-      mkdir_p(lp);
-      chdir(dir.c_str());
+      fs::path co_dir = mkpath(dir);
+      fs::create_directories(co_dir);
+      chdir(co_dir.native_directory_string().c_str());
     }
 
   transaction_guard guard(app.db);

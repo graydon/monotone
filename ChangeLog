@@ -28,7 +28,12 @@
 	* AUTHORS: Rename Netxx back to netxx. Really, look in 
 	the manifest; it's been renamed!
 	* configure.ac: Remove prg_exec_monitor checks.
+2004-05-13  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc: Include boost/filesystem/path.hpp,
+	boost/filesystem/convenience.hpp.
+	(checkout): Make checkout directory an fs::path, not a local_path.
+	
 2004-05-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* testsuite.at (test_hooks.lua): Add a 'test_attr' attribute
