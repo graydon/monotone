@@ -400,7 +400,9 @@ walk_tree_recursive(fs::path const & absolute,
       if (book_keeping_file (entry))
 	continue;
       
-      if (!fs::exists(entry)) 
+      if (!fs::exists(entry) 
+	  || di->string() == "." 
+	  || di->string() == "..") 
 	;			// ignore
       else if (fs::is_directory(entry))
 	walk_tree_recursive(entry, rel_entry, walker);

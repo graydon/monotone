@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([importing files with a internationalized names])
+AT_SETUP([importing files with non-english names])
 
 MONOTONE_SETUP
 
@@ -23,15 +23,18 @@ AT_CHECK(MONOTONE add "tmp/file+name-with_funny@symbols%etc:", [], [ignore], [ig
 
 # add some files with UTF8 names
 export LANG=en_US.utf8
+export CHARSET=utf8
 AT_CHECK(MONOTONE add "tmp/$EUROPEAN_UTF8", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_UTF8", [], [ignore], [ignore])
 
 # remove the UTF8 file, change locale, and add it again. both should work.
 export LANG=de_DE.iso88591
+export CHARSET=iso88591
 AT_CHECK(MONOTONE drop "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
 
 export LANG=ja_JP.eucjp
+export CHARSET=eucjp
 AT_CHECK(MONOTONE drop "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 

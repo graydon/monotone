@@ -120,7 +120,7 @@ utf8_argv
       }    
   }
 };
- 
+
 int 
 cpp_main(int argc, char ** argv)
 {
@@ -136,6 +136,10 @@ cpp_main(int argc, char ** argv)
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
 
+  L(F("set locale: LC_CTYPE=%s, LC_MESSAGES=%s\n")
+    % (setlocale(LC_CTYPE, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL))
+    % (setlocale(LC_MESSAGES, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL)));
+  
   // decode all argv values into a UTF-8 array
 
   save_initial_path();

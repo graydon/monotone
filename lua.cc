@@ -403,13 +403,13 @@ lua_hooks::add_rcfile(fs::path const & rc)
   I(st);  
   if (fs::exists(rc))
     {
-      L(F("opening rcfile '%s' ... ") % rc.string());
+      L(F("opening rcfile '%s' ...\n") % rc.string());
       if (!run_file(st, rc.string()))
 	{
-	  L(F("no good\n"));
+	  L(F("'%s' is no good\n") % rc.string());
 	  throw oops("lua error while loading " + rc.string());
 	}
-      L(F("ok\n"));
+      L(F("'%s' is ok\n") % rc.string());
     }
   else
     L(F("skipping nonexistent rcfile '%s'\n") % rc.string());

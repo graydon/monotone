@@ -5,15 +5,18 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+
 #include <algorithm>
 #include <iterator>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <boost/lexical_cast.hpp>
 
 #include "constants.hh"
 #include "sanity.hh"
+#include "transforms.hh"
 #include "ui.hh"
 
 using namespace std;
@@ -41,6 +44,16 @@ sanity::set_verbose()
 {
   quiet = false;
   verbose = true;
+
+  // it is possible that some pre-setting-of-verbose data
+  // accumulated in the log buffer (during earlier option processing)
+  // so we will dump it now  
+  ostringstream oss;
+  vector<string> lines;
+  copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(oss));
+  split_into_lines(oss.str(), lines);
+  for (vector<string>::const_iterator i = lines.begin(); i != lines.end(); ++i)
+    ui.inform((*i) + "\n");
 }
 
 void 

@@ -1,5 +1,14 @@
 2004-04-09  graydon hoare  <graydon@pobox.com>
 
+	* file_io.cc: Fix boost filesystem "." and ".." breakage.
+	* lua.cc: Fix format of log entry.
+	* monotone.cc: Log locale settings on startup.
+	* sanity.cc: Dump prefix on --verbose activation.
+	* testsuite/t_i18n_file.at: Fix autotest LANG breakage.
+	* testsuite/t_null.at: Account for chatter with --verbose.
+
+2004-04-09  graydon hoare  <graydon@pobox.com>
+
 	* configure.ac: Comment out check for sse2,
 	set bundling to true by default.
 	* INSTALL: describe changes to bundling.
