@@ -1,3 +1,8 @@
+2005-02-10  Derek Scherger  <derek@echologic.com>
+
+	* monotone.1: update for restrictions
+	* monotone.texi: sync with manpage
+
 2005-02-09  Derek Scherger  <derek@echologic.com>
 
 	* cert.cc (cert_revision_testresult): allow pass/fail testresult

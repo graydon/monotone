@@ -5009,9 +5009,9 @@ Rename files from @i{<src>} to @i{<dst>} in working copy.
 @comment TROFF INPUT: .TP
 
 @item @b{commit} @i{[--message=log message] [<pathname>...]}
-Commit working copy to database. If the --message is provided on the
-command line, it is used; otherwise a log message editor will be
-invoked.
+Commit working copy to database. If a --message @option{option} is
+provided on the command line, it is used; otherwise a log message editor
+will be invoked.
 @comment TROFF INPUT: .TP
 
 @item @b{update} @i{[revision]}
