@@ -19,6 +19,7 @@
 
 2004-05-01  Joel Rosdahl  <joel@rosdahl.net>
 
+	Fix bug #7220:
 	* manifest.cc (build_manifest_map): Handle missing file
 	gracefully.
 
