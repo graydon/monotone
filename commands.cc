@@ -2236,6 +2236,17 @@ CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\
 	  for (set<manifest_id>::const_iterator j = ancs.begin();
 	       j != ancs.end(); ++j)
 	    {
+	      manifest_map empty, mm;
+	      manifest_data dat;
+	      patch_set ps;
+  
+	      // queue the ancestral state
+	      app.db.get_manifest_version(*j, dat);
+	      read_manifest_map(dat, mm);
+	      manifests_to_patch_set(empty, mm, app, ps);
+	      patch_set_to_packets(ps, app, qpw);
+	      
+	      // queue everything between here and there
 	      write_ancestry_paths(*j, *i, app, qpw);
 	    }
 	}
