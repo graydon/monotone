@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -9,6 +10,7 @@
 #include <cstdio>
 #include <iterator>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <stdlib.h>
@@ -42,6 +44,7 @@
 #define OPT_MESSAGE 15
 #define OPT_ROOT 16
 #define OPT_DEPTH 17
+#define OPT_ARGFILE 18
 
 // main option processing and exception handling code
 
@@ -69,6 +72,7 @@ struct poptOption options[] =
     {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
     {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
+    {0, '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "take extract command line arguments from the given file", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
 
@@ -152,6 +156,41 @@ my_poptFreeContext(poptContext con)
   poptFreeContext(con);
 }
 
+// Read arguments from a file.  The special file '-' means stdin.
+static void
+my_poptStuffArgFile(poptContext con, char *filename)
+{
+  ostringstream args;
+  ifstream input;
+  istream *inputp = &input;
+
+  if (strcmp(filename, "-") == 0)
+    {
+      inputp = &cin;
+    }
+  else
+    {
+      input.open(filename);
+    }
+
+  string tmp;
+  while(getline(*inputp, tmp))
+    {
+      args << ' ' << tmp;
+    }
+
+  const char **argv = 0;
+  int argc = 0;
+  int rc;
+  N((rc = poptParseArgvString(args.str().c_str(), &argc, &argv)) >= 0,
+    F("incorrect argument syntax when reading from %s: %s\n")
+    % filename % poptStrerror(rc));
+  N((rc = poptStuffArgs(con, argv)) >= 0,
+    F("weird error when stuffing arguments read from %s: %s\n")
+    % filename % poptStrerror(rc));
+  free(argv);
+}
+
 int 
 cpp_main(int argc, char ** argv)
 {
@@ -199,10 +238,18 @@ cpp_main(int argc, char ** argv)
   int opt;
   bool requested_help = false;
 
+  // popt currently (Debian version 1.7-5) has a bug that's triggered
+  // when poptStuffArgs() is called more than once.  The symptom is that
+  // while the options from the second run are processed as such, they
+  // are ALSO passed back to the application as non-options...
+  // Our current workaround is simply to forbid -@ to be used more than
+  // once.                                            -- Richard Levitte
+  bool at_sign_used = false;
+
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
 
-  try 
-    {      
+  try
+    {
 
       app_state app;
 
@@ -283,6 +330,13 @@ cpp_main(int argc, char ** argv)
               app.set_depth(arglong);
               break;
 
+            case OPT_ARGFILE:
+              N(!at_sign_used,
+                F("-@ can currently only be used once.\n"));
+              my_poptStuffArgFile(ctx(), argstr);
+              at_sign_used = true;
+              break;
+
             case OPT_HELP:
             default:
               requested_help = true;
@@ -326,12 +380,12 @@ cpp_main(int argc, char ** argv)
         {
           string cmd(poptGetArg(ctx()));
           vector<utf8> args;
-          while(poptPeekArg(ctx())) 
+          while(poptPeekArg(ctx()))
             {
               args.push_back(utf8(string(poptGetArg(ctx()))));
             }
           ret = commands::process(app, cmd, args);
-        } 
+        }
     }
   catch (usage & u)
     {

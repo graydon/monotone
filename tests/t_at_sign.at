@@ -1,0 +1,31 @@
+AT_SETUP([check that -@ behaves correctly])
+
+# Generate expected output, as we're testing using the output of 'list --help'
+AT_CHECK(RAW_MONOTONE list --help, [], [stdout], [ignore], [:], [:])
+mv stdout expout
+
+# Check that -@ works at all
+AT_DATA([at_test.input], [--help
+])
+AT_CHECK(RAW_MONOTONE list -@ at_test.input, [], [expout], [ignore])
+
+# Check that -@ works when injected in the middle of the arguments
+# (i.e. that it's prepended correctly)
+AT_DATA([at_test.input], [list
+])
+AT_CHECK(RAW_MONOTONE -@ at_test.input --help, [], [expout], [ignore])
+
+## NOTE: It looks like my version of popt (Debian version 1.7-5) has
+## some bug that gets triggered when poptStuffArgs() is called more
+## than once...                                   -- Richard Levitte
+# Check that -@ used twice generates an error
+AT_DATA([experr], [monotone: misuse: -@ can currently only be used once.
+
+])
+AT_DATA([at_test.input1], [list
+])
+AT_DATA([at_test.input2], [--help
+])
+AT_CHECK(RAW_MONOTONE -@ at_test.input1 -@ at_test.input2, [1], [ignore], [experr])
+
+AT_CLEANUP

@@ -1,3 +1,11 @@
+2005-04-01  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc (my_poptStuffArgFile): New function to parse a file
+	for more arguments and stuff them into the command line.
+	(cpp_main): Add the -@ option
+	* tests/t_at_sign.at, testsuite.at: Test it
+	* monotone.1: Document it.
+
 2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_log_depth.at: Cleanupy tweaks.
@@ -25,6 +33,10 @@
 	  app_state.cc (app_state::set_depth): ... and the field and
 	  method to store and set it.
 	* commands.cc (CMD(log)): ... then handle it.
+
+	* tests/t_log_depth.at: Add a test for 'log --depth=n'
+	* testsuite.at: Add it.
+	* monotone.texi (Informative): Document it.
 
 2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -2109,7 +2121,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
