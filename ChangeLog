@@ -1,3 +1,7 @@
+2004-09-19  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Add a unit test, fix some bugs.
+
 2004-09-18  graydon hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh} (subtract_change_sets): New function.

@@ -1767,7 +1767,24 @@ subtract_change_sets(change_set const & abc,
 							     delta_entry_dst(abc_delta))));
 	    }
 	}
+      else
+	{
+	  L(F("preserving add of '%s'\n") % *abc_add);
+	  bc_added_files.insert(*abc_add);
+	}
     }
+
+
+  {
+    path_edit_appender pc(bc.rearrangement);
+    play_back_analysis(bc_deleted_files, 
+		       bc_deleted_dirs,
+		       bc_renamed_files, 
+		       bc_renamed_dirs,
+		       bc_added_files, 
+		       pc);
+  }
+
 
   // subtract non-addition deltas
 
@@ -1957,6 +1974,12 @@ parse_path_edits(basic_io::parser & parser,
 	  parser.ket();
 	  pc.rename_dir(file_path(t1),
 			file_path(t2));
+	}
+      else
+	{
+	  std::string sym;
+	  parser.sym(sym);
+	  parser.err("unrecognized symbol: " + sym);
 	}
     }
 }
@@ -2184,6 +2207,39 @@ spin_change_set(change_set const & cs)
     }
 }
 
+static void
+concatenate_and_subtract_test(std::string const & ab_str,
+			      std::string const & bc_str)
+{
+  change_set ab, bc, abc;
+  change_set bc_check;
+
+  read_change_set(data(ab_str), ab);
+  read_change_set(data(bc_str), bc);
+  dump_change_set("ab", ab);
+  dump_change_set("bc", bc);
+
+  concatenate_change_sets(ab, bc, abc);
+  dump_change_set("abc", abc);
+
+  subtract_change_sets(abc, ab, bc_check);
+  dump_change_set("subtracted bc", bc_check);
+
+  data bc_first, bc_second;
+  write_change_set(bc, bc_first);
+  write_change_set(bc_check, bc_second);  
+  BOOST_CHECK(bc_first == bc_second);
+}
+
+static void
+concatenate_and_subtract_tests()
+{
+  concatenate_and_subtract_test
+    ("change_set: { paths: { rename_file: { src: \"foo\" dst: \"bar\" } } deltas: {} }",
+     "change_set: { paths: { rename_file: { src: \"bar\" dst: \"baz\" } } deltas: {} }");  
+}
+
+
 static void 
 basic_change_set_test()
 {
@@ -2308,6 +2364,7 @@ add_change_set_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&basic_change_set_test));
   suite->add(BOOST_TEST_CASE(&neutralize_change_test));
   suite->add(BOOST_TEST_CASE(&non_interfering_change_test));
+  suite->add(BOOST_TEST_CASE(&concatenate_and_subtract_tests));
 }
 
 
