@@ -3,12 +3,12 @@
 -- user-provided files can override it or add to it.
 
 function temp_file()
-	local tdir
-	tdir = os.getenv("TMPDIR")
-	if tdir == nil then tdir = os.getenv("TMP") end
-	if tdir == nil then tdir = os.getenv("TEMP") end
-	if tdir == nil then tdir = "/tmp" end
-	return io.mkstemp(string.format("%s/mt.XXXXXX", tdir))
+   local tdir
+   tdir = os.getenv("TMPDIR")
+   if tdir == nil then tdir = os.getenv("TMP") end
+   if tdir == nil then tdir = os.getenv("TEMP") end
+   if tdir == nil then tdir = "/tmp" end
+   return io.mkstemp(string.format("%s/mt.XXXXXX", tdir))
 end
 
 
@@ -20,225 +20,265 @@ end
 -- call to attr_functions[k](f,v) in lua.
 
 if (attr_functions == nil) then
-	attr_functions = {}
+   attr_functions = {}
 end
 
 
 attr_functions["execute"] = 
-  function(filename, value) 
-	if (value == "true") then
-		os.execute(string.format("chmod +x %s", filename))
-	end
-  end
+   function(filename, value) 
+      if (value == "true") then
+	 os.execute(string.format("chmod +x %s", filename))
+      end
+   end
 
 
 function get_http_proxy(host, port)
-	val = os.getenv("HTTP_PROXY")
-	if (val == nil) then 
-		val = os.getenv("http_proxy") 
-	end
-	if (val == nil) then 
-		return nil
-	end
-	val = string.gsub(val, "http://", "")
-	b, e = string.find(val, ":")
-	if (b ~= nil and b > 0) then
-		chost = string.sub(val, 0, b-1)
-		cport = string.sub(val, b+1)
-		return { chost, cport }
-	end
-	return { val, port }
+   val = os.getenv("HTTP_PROXY")
+   if (val == nil) then 
+      val = os.getenv("http_proxy") 
+   end
+   if (val == nil) then 
+      return nil
+   end
+   val = string.gsub(val, "http://", "")
+   b, e = string.find(val, ":")
+   if (b ~= nil and b > 0) then
+      chost = string.sub(val, 0, b-1)
+      cport = string.sub(val, b+1)
+      return { chost, cport }
+   end
+   return { val, port }
 end
 
 function ignore_file(name)
-	if (string.find(name, "%.a$")) then return true end
-	if (string.find(name, "%.so$")) then return true end
-	if (string.find(name, "%.o$")) then return true end
-	if (string.find(name, "%.la$")) then return true end
-	if (string.find(name, "%.lo$")) then return true end
-	if (string.find(name, "%.aux$")) then return true end
-	if (string.find(name, "%.bak$")) then return true end
-	if (string.find(name, "%.orig$")) then return true end
-	if (string.find(name, "%.rej$")) then return true end
-	if (string.find(name, "%~$")) then return true end
-	if (string.find(name, "/core$")) then return true end
-	if (string.find(name, "^CVS/")) then return true end
-	if (string.find(name, "^SVN/")) then return true end
-	if (string.find(name, "/CVS/")) then return true end
-	if (string.find(name, "/SVN/")) then return true end
-	return false;
+   if (string.find(name, "%.a$")) then return true end
+   if (string.find(name, "%.so$")) then return true end
+   if (string.find(name, "%.o$")) then return true end
+   if (string.find(name, "%.la$")) then return true end
+   if (string.find(name, "%.lo$")) then return true end
+   if (string.find(name, "%.aux$")) then return true end
+   if (string.find(name, "%.bak$")) then return true end
+   if (string.find(name, "%.orig$")) then return true end
+   if (string.find(name, "%.rej$")) then return true end
+   if (string.find(name, "%~$")) then return true end
+   if (string.find(name, "/core$")) then return true end
+   if (string.find(name, "^CVS/")) then return true end
+   if (string.find(name, "^SVN/")) then return true end
+   if (string.find(name, "/CVS/")) then return true end
+   if (string.find(name, "/SVN/")) then return true end
+   return false;
 end
 
 
 function edit_comment(basetext)
-        local exe = "vi"
-        local visual = os.getenv("VISUAL")
-        if (visual ~= nil) then exe = visual end
-        local editor = os.getenv("EDITOR")
-        if (editor ~= nil) then exe = editor end
+   local exe = "vi"
+   local visual = os.getenv("VISUAL")
+   if (visual ~= nil) then exe = visual end
+   local editor = os.getenv("EDITOR")
+   if (editor ~= nil) then exe = editor end
 
-	local tmp, tname = temp_file()
-        if (tmp == nil) then return nil end
-	basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ")
-        tmp:write(basetext)
-        io.close(tmp)
+   local tmp, tname = temp_file()
+   if (tmp == nil) then return nil end
+   basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ")
+   tmp:write(basetext)
+   io.close(tmp)
 
-        if (os.execute(string.format("%s %s", exe, tname)) ~= 0) then
-                os.remove(tname)
-                return nil
-        end
+   if (os.execute(string.format("%s %s", exe, tname)) ~= 0) then
+      os.remove(tname)
+      return nil
+   end
 
-        tmp = io.open(tname, "r")
-        if (tmp == nil) then os.remove(tname); return nil end
-        local res = ""
-	local line = tmp:read()
-	while(line ~= nil) do 
-		if (not string.find(line, "^MT:")) then
-			res = res .. line .. "\n"
-		end
-		line = tmp:read()
-	end
-        io.close(tmp)
-	os.remove(tname)
-        return res
+   tmp = io.open(tname, "r")
+   if (tmp == nil) then os.remove(tname); return nil end
+   local res = ""
+   local line = tmp:read()
+   while(line ~= nil) do 
+      if (not string.find(line, "^MT:")) then
+	 res = res .. line .. "\n"
+      end
+      line = tmp:read()
+   end
+   io.close(tmp)
+   os.remove(tname)
+   return res
 end
 
 
 function non_blocking_rng_ok()
-	return true
+   return true
 end
 
 
 function persist_phrase_ok()
-	return true
+   return true
 end
 
 function get_mail_hostname(url)
-	return os.getenv("HOSTNAME")
+   return os.getenv("HOSTNAME")
 end
 
 function get_author(branchname)
-        local user = os.getenv("USER")
-        local host = os.getenv("HOSTNAME")
-        if ((user == nil) or (host == nil)) then return nil end
-        return string.format("%s@%s", user, host)
+   local user = os.getenv("USER")
+   local host = os.getenv("HOSTNAME")
+   if ((user == nil) or (host == nil)) then return nil end
+   return string.format("%s@%s", user, host)
 end
 
+-- trust evaluation hooks
+
+function intersection(a,b)
+   local s={}
+   local t={}
+   for k,v in pairs(a) do s[v] = 1 end
+   for k,v in pairs(b) do if s[v] ~= nil then table.insert(t,v) end end
+   return t
+end
+
+function get_manifest_cert_trust(signers, id, name, val)
+   return true
+end
+
+function get_file_cert_trust(signers, id, name, val)
+   return true
+end
+
+function accept_testresult_change(old_results, new_results)
+   for test,res in pairs(old_results)
+   do
+      if res == true and new_results[test] ~= true
+      then
+	 return false
+      end
+   end
+   return true
+end
+
+-- merger support
+
+function merge2_emacs_cmd(lfile, rfile, outfile)
+   local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
+   local cmd_fmt = "emacs -no-init-file -eval " .. elisp
+   return string.format(cmd_fmt, lfile, rfile, outfile)
+end
+
+function merge3_emacs_cmd(lfile, afile, rfile, outfile)
+   local elisp = "'(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")'"
+   local cmd_fmt = "emacs -no-init-file -eval " .. elisp
+   return string.format(cmd_fmt, lfile, rfile, afile, outfile)
+end
+
+function merge2_xxdiff_cmd(lfile, rfile, outfile)
+   local cmd_fmt = "xxdiff %s %s " 
+   local cmd_opts = " --title1 left --title2 right" 
+   return string.format(cmd_fmt .. cmd_opts, lfile, rfile, outfile)
+end
+
+function merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
+   local cmd_fmt = "xxdiff %s %s %s --merge --merged-filename %s " 
+   local cmd_opts = " --title1 left --title2 ancestor --title3 right" 
+   return string.format(cmd_fmt .. cmd_opts, lfile, afile, rfile, outfile)
+end
+
+function write_to_temporary_file(data)
+   tmp, filename = temp_file()
+   if (tmp == nil) then 
+      return nil 
+   end;
+   tmp:write(data)
+   io.close(tmp)
+   return filename
+end
+
+function read_contents_of_file(filename)
+   tmp = io.open(filename, "r")
+   if (tmp == nil) then
+      return nil
+   end
+   local data = tmp:read("*a")
+   io.close(tmp)
+   return data
+end
+
+function program_exists_in_path(program)
+   return os.execute(string.format("which %s", program)) == 0
+end
 
 function merge2(left, right)
-	local lfile
-	local rfile
-	local outfile
-	local tmp
+   local lfile = nil
+   local rfile = nil
+   local outfile = nil
+   local data = nil
 
-	-- write out one file
-	tmp, lfile = temp_file()
-	if (tmp == nil) then 
-		return nil 
-	end;
-	tmp:write(left)
-	io.close(tmp)
+   lfile = write_to_temporary_file(left)
+   rfile = write_to_temporary_file(right)
+   outfile = write_to_temporary_file("")
 
-	-- write out the other file
-	tmp, rfile = temp_file()
-	if (tmp == nil) then 
-		os.remove(lfile)
-		return nil
-	end
-	tmp:write(right)
-	io.close(tmp)
+   if lfile ~= nil and
+      rfile ~= nil and
+      outfile ~= nil 
+   then 
+      local cmd = nil
+      if program_exists_in_path("xxdiff") then
+	 cmd = merge2_xxdiff_cmd(lfile, rfile, outfile)
+      elseif program_exists_in_path("emacs") then
+	 cmd = merge2_emacs_cmd(lfile, rfile, outfile)
+      end
 
-	tmp, outfile = temp_file();
-	io.close(tmp);
-
-	-- run emacs to merge the files
-	local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
-	local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-	local cmd = string.format(cmd_fmt, lfile, rfile, outfile)
-	io.write(string.format("executing external 2-way merge command: %s\n", cmd))
-	if (os.execute(cmd) ~= 0) then 
-		os.remove(lfile)
-		os.remove(rfile) 
-		os.remove(outfile)
-		return nil
-	end
-
-	-- read in the results
-	tmp = io.open(outfile, "r")
-	if (tmp == nil) then
-		return nil
-	end
-	local data = tmp:read("*a")
-	io.close(tmp)
-
-	os.remove(lfile)
-	os.remove(rfile)
-	os.remove(outfile)
-
-	return data
+      if cmd ~= nil
+      then
+	 io.write(string.format("executing external 2-way merge command: %s\n", cmd))
+	 if os.execute(cmd) == 0 
+	 then
+	    data = read_contents_of_file(outfile)
+	 end
+      end
+   end
+   
+   os.remove(lfile)
+   os.remove(rfile)
+   os.remove(outfile)
+   
+   return data
 end
 
-
 function merge3(ancestor, left, right)
-	local afile
-	local lfile
-	local rfile
-	local outfile
+   local afile = nil
+   local lfile = nil
+   local rfile = nil
+   local outfile = nil
+   local data = nil
 
-	-- write out one file
-	tmp, lfile = temp_file()
-	if (tmp == nil) then 
-		return nil 
-	end;
-	tmp:write(left)
-	io.close(tmp)
+   lfile = write_to_temporary_file(left)
+   afile = write_to_temporary_file(ancestor)
+   rfile = write_to_temporary_file(right)
+   outfile = write_to_temporary_file("")
 
-	-- write out the other file
-	tmp, rfile = temp_file()
-	if (tmp == nil) then 
-		os.remove(lfile)
-		return nil
-	end
-	tmp:write(right)
-	io.close(tmp)
+   if lfile ~= nil and
+      rfile ~= nil and
+      afile ~= nil and
+      outfile ~= nil 
+   then 
+      local cmd = nil
+      if program_exists_in_path("xxdiff") then
+	 cmd = merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("emacs") then
+	 cmd = merge3_emacs_cmd(lfile, afile, rfile, outfile)
+      end
 
-	-- write out the ancestor
-	tmp, afile = temp_file()
-	if (tmp == nil) then 
-		os.remove(lfile)
-		os.remove(rfile) 
-		return nil
-	end
-	tmp:write(ancestor)
-	io.close(tmp)
-
-	tmp, outfile = temp_file()
-	io.close(tmp)
-
-	-- run emacs to merge the files
-	local elisp = "'(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")'"
-	local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-	local cmd = string.format(cmd_fmt, lfile, rfile, afile, outfile)
-	io.write(string.format("executing external 3-way merge command: %s\n", cmd))
-	if (os.execute(cmd) ~= 0) then 
-		os.remove(lfile)
-		os.remove(rfile)
-		os.remove(afile)
-		os.remove(outfile) 
-		return nil
-	end
-
-	-- read in the results
-	tmp = io.open(outfile, "r")
-	if (tmp == nil) then
-		return nil
-	end
-	local data = tmp:read("*a")
-	io.close(tmp)
-
-	os.remove(lfile)
-	os.remove(rfile)
-	os.remove(outfile)
-
-	return data
+      if cmd ~= nil
+      then
+	 io.write(string.format("executing external 3-way merge command: %s\n", cmd))
+	 if os.execute(cmd) == 0 
+	 then
+	    data = read_contents_of_file(outfile)
+	 end
+      end
+   end
+   
+   os.remove(lfile)
+   os.remove(rfile)
+   os.remove(afile)
+   os.remove(outfile)
+   
+   return data
 end

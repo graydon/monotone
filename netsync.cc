@@ -262,9 +262,13 @@ struct session
 			   bool live_p);
 
   void queue_bye_cmd();
+  void queue_error_cmd(string const & errmsg);
   void queue_done_cmd(size_t level, netcmd_item_type type);
   void queue_hello_cmd(id const & server, 
 		       id const & nonce);
+  void queue_anonymous_cmd(protocol_role role, 
+			   string const & collection, 
+			   id const & nonce2);
   void queue_auth_cmd(protocol_role role, 
 		      string const & collection, 
 		      id const & client, 
@@ -289,9 +293,13 @@ struct session
 			     id const & item);
 
   bool process_bye_cmd();
+  bool process_error_cmd(string const & errmsg);
   bool process_done_cmd(size_t level, netcmd_item_type type);
   bool process_hello_cmd(id const & server, 
 			 id const & nonce);
+  bool process_anonymous_cmd(protocol_role role, 
+			     string const & collection, 
+			     id const & nonce2);
   bool process_auth_cmd(protocol_role role, 
 			string const & collection, 
 			id const & client, 
@@ -652,6 +660,15 @@ void session::queue_bye_cmd()
   this->sent_goodbye = true;
 }
 
+void session::queue_error_cmd(string const & errmsg)
+{
+  L(F("queueing 'error' command\n"));
+  netcmd cmd;
+  cmd.cmd_code = error_cmd;
+  write_error_cmd_payload(errmsg, cmd.payload);
+  write_netcmd(cmd, outbuf);
+}
+
 void session::queue_done_cmd(size_t level, netcmd_item_type type) 
 {
   string typestr;
@@ -669,6 +686,16 @@ void session::queue_hello_cmd(id const & server,
   netcmd cmd;
   cmd.cmd_code = hello_cmd;
   write_hello_cmd_payload(server, nonce, cmd.payload);
+  write_netcmd(cmd, outbuf);
+}
+
+void session::queue_anonymous_cmd(protocol_role role, 
+				  string const & collection, 
+				  id const & nonce2)
+{
+  netcmd cmd;
+  cmd.cmd_code = anonymous_cmd;
+  write_anonymous_cmd_payload(role, collection, nonce2, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
 
@@ -816,6 +843,13 @@ bool session::process_bye_cmd()
   return true;
 }
 
+bool session::process_error_cmd(string const & errmsg) 
+{
+  W(F("received network error: %s\n") % errmsg);
+  this->received_goodbye = true;
+  return true;
+}
+
 bool session::process_done_cmd(size_t level, netcmd_item_type type) 
 {
 
@@ -909,6 +943,79 @@ bool session::process_hello_cmd(id const & server,
   return false;
 }
 
+bool session::process_anonymous_cmd(protocol_role role, 
+				    string const & collection, 
+				    id const & nonce2)
+{
+  hexenc<id> hnonce2;
+  encode_hexenc(nonce2, hnonce2);
+
+  L(F("received 'anonymous' netcmd from client for collection '%s' "
+      "in %s mode with nonce2 '%s'\n")
+    %  collection % (role == source_and_sink_role ? "source and sink" :
+		     (role == source_role ? "source " : "sink"))
+    % hnonce2);
+
+  // check they're asking for a collection we're serving
+  bool collection_ok = false;
+  for (vector<utf8>::const_iterator i = collections.begin(); 
+       i != collections.end(); ++i)
+    {
+      if (*i == collection)
+	{
+	  collection_ok = true;
+	  break;
+	}
+    }
+  if (!collection_ok)
+    {
+      W(F("not currently serving requested collection '%s'\n") % collection);
+      this->saved_nonce = id("");
+      return false;	  
+    }
+  
+  //
+  // internally netsync thinks in terms of sources and sinks. users like
+  // thinking of repositories as "readonly", "readwrite", or "writeonly".
+  //
+  // we therefore use the read/write terminology when dealing with the UI:
+  // if the user asks to run a "read only" service, this means they are
+  // willing to be a source but not a sink.
+  //
+  // nb: the "role" here is the role the *client* wants to play
+  //     so we need to check that the opposite role is allowed for us,
+  //     in our this->role field.
+  //
+
+  if (role != sink_role)
+    {
+      W(F("rejected attempt at anonymous connection for write\n"));
+      this->saved_nonce = id("");
+      return false;
+    }
+
+  if (! ((this->role == source_role || this->role == source_and_sink_role)
+	 && app.lua.hook_get_netsync_anonymous_read_permitted(collection)))
+    {
+      W(F("anonymous read permission denied for '%s'\n") % collection);
+      this->saved_nonce = id("");
+      return false;
+    }
+
+  // get our private key and sign back
+  L(F("anonymous read permitted, signing back nonce\n"));
+  base64<rsa_sha1_signature> sig;
+  rsa_sha1_signature sig_raw;
+  base64< arc4<rsa_priv_key> > our_priv;
+  app.db.get_key(app.signing_key, our_priv);
+  make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
+  decode_base64(sig, sig_raw);
+  queue_confirm_cmd(sig_raw());
+  this->collection = collection;
+  this->authenticated = true;
+  return true;
+}
+
 bool session::process_auth_cmd(protocol_role role, 
 			       string const & collection, 
 			       id const & client, 
@@ -970,11 +1077,23 @@ bool session::process_auth_cmd(protocol_role role,
   //     in our this->role field.
   //
 
+  if (!app.db.public_key_exists(their_key_hash))
+    {
+      W(F("unknown key hash '%s'\n") % their_key_hash);
+      this->saved_nonce = id("");
+      return false;
+    }
+  
+  // get their public key
+  rsa_keypair_id their_id;
+  base64<rsa_pub_key> their_key;
+  app.db.get_pubkey(their_key_hash, their_id, their_key);
+
   if (role == sink_role || role == source_and_sink_role)
     {
       if (! ((this->role == source_role || this->role == source_and_sink_role)
 	     && app.lua.hook_get_netsync_read_permitted(collection, 
-							their_key_hash())))
+							their_id())))
 	{
 	  W(F("read permission denied for '%s'\n") % collection);
 	  this->saved_nonce = id("");
@@ -986,7 +1105,7 @@ bool session::process_auth_cmd(protocol_role role,
     {
       if (! ((this->role == sink_role || this->role == source_and_sink_role)
 	     && app.lua.hook_get_netsync_write_permitted(collection, 
-							 their_key_hash())))
+							 their_id())))
 	{
 	  W(F("write permission denied for '%s'\n") % collection);
 	  this->saved_nonce = id("");
@@ -994,42 +1113,31 @@ bool session::process_auth_cmd(protocol_role role,
 	}
     }
   
-  // check their signature
-  if (app.db.public_key_exists(their_key_hash))
+  // save their identity 
+  this->remote_peer_key_hash = client;
+  
+  // check the signature
+  base64<rsa_sha1_signature> sig;
+  encode_base64(rsa_sha1_signature(signature), sig);
+  if (check_signature(app.lua, their_id, their_key, nonce1(), sig))
     {
-      // save their identity 
-      this->remote_peer_key_hash = client;
-      
-      // get their public key and check the signature
-      rsa_keypair_id their_id;
-      base64<rsa_pub_key> their_key;
-      app.db.get_pubkey(their_key_hash, their_id, their_key);
+      // get our private key and sign back
+      L(F("client signature OK, accepting authentication\n"));
       base64<rsa_sha1_signature> sig;
-      encode_base64(rsa_sha1_signature(signature), sig);
-      if (check_signature(app.lua, their_id, their_key, nonce1(), sig))
-	{
-	  // get our private key and sign back
-	  L(F("client signature OK, accepting authentication\n"));
-	  base64<rsa_sha1_signature> sig;
-	  rsa_sha1_signature sig_raw;
-	  base64< arc4<rsa_priv_key> > our_priv;
-	  app.db.get_key(app.signing_key, our_priv);
-	  make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
-	  decode_base64(sig, sig_raw);
-	  queue_confirm_cmd(sig_raw());
-	  this->collection = collection;
-	  this->authenticated = true;
+      rsa_sha1_signature sig_raw;
+      base64< arc4<rsa_priv_key> > our_priv;
+      app.db.get_key(app.signing_key, our_priv);
+      make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
+      decode_base64(sig, sig_raw);
+      queue_confirm_cmd(sig_raw());
+      this->collection = collection;
+      this->authenticated = true;
 	  return true;
-	}
-      else
-	{
-	  W(F("bad client signature\n"));	      
-	}
     }
   else
     {
-      L(F("unknown client key\n"));
-    }
+      W(F("bad client signature\n"));	      
+    }  
   return false;
 }
 
@@ -1906,7 +2014,15 @@ bool session::dispatch_payload(netcmd const & cmd)
     case bye_cmd:
       return process_bye_cmd();
       break;
-      
+
+    case error_cmd:
+      {
+	string errmsg;
+	read_error_cmd_payload(cmd.payload, errmsg);
+	return process_error_cmd(errmsg);
+      }
+      break;
+
     case hello_cmd:
       require(! authenticated, "hello netcmd received when not authenticated");
       require(voice == client_voice, "hello netcmd received in client voice");
@@ -1914,6 +2030,21 @@ bool session::dispatch_payload(netcmd const & cmd)
 	id server, nonce;
 	read_hello_cmd_payload(cmd.payload, server, nonce);
 	return process_hello_cmd(server, nonce);
+      }
+      break;
+
+    case anonymous_cmd:
+      require(! authenticated, "anonymous netcmd received when not authenticated");
+      require(voice == server_voice, "anonymous netcmd received in server voice");
+      require(role == source_role ||
+	      role == source_and_sink_role, 
+	      "anonymous netcmd received in source or source/sink role");
+      {
+	protocol_role role;
+	string collection;
+	id nonce2;
+	read_anonymous_cmd_payload(cmd.payload, role, collection, nonce2);
+	return process_anonymous_cmd(role, collection, nonce2);
       }
       break;
 
@@ -2065,11 +2196,11 @@ bool session::arm()
 
 bool session::process()
 {
-  if (!arm())
-    return true;
-
   try 
-    {
+    {      
+      if (!arm())
+	return true;
+      
       transaction_guard guard(app.db);
       armed = false;
       L(F("processing %d byte input buffer from peer %s\n") % inbuf.size() % peer_id);
@@ -2110,7 +2241,17 @@ static void call_server(protocol_role role,
 
   while (true)
     {       
-      bool armed = sess.arm();
+      bool armed = false;
+      try 
+	{
+	  armed = sess.arm();
+	}
+      catch (bad_decode & bd)
+	{
+	  W(F("caught bad_decode exception decoding input from peer %s: '%s'\n") 
+	    % sess.peer_id % bd.what);
+	  return;	  
+	}
 
       probe.clear();
       probe.add(sess.stream, sess.which_events());
@@ -2128,11 +2269,23 @@ static void call_server(protocol_role role,
 	{
 	  if (sess.read_some(&input))
 	    {
-	      armed = sess.arm();
+	      try 
+		{
+		  armed = sess.arm();
+		}
+	      catch (bad_decode & bd)
+		{
+		  W(F("caught bad_decode exception decoding input from peer %s: '%s'\n") 
+		    % sess.peer_id % bd.what);
+		  return;	  
+		}
 	    }
 	  else
 	    {	      
-	      P(F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
+	      if (sess.sent_goodbye)
+		P(F("read from fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
+	      else
+		P(F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
 	      return;
 	    }
 	}
@@ -2141,7 +2294,10 @@ static void call_server(protocol_role role,
 	{
 	  if (! sess.write_some(&output))
 	    {
-	      P(F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
+	      if (sess.sent_goodbye)
+		P(F("write on fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
+	      else
+		P(F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
 	      return;
 	    }
 	}
@@ -2172,14 +2328,176 @@ static void call_server(protocol_role role,
     }  
 }
 
-static void serve_connections(protocol_role role,
-			      vector<utf8> const & collections,
-			      set<string> const & all_collections,
-			      app_state & app,
-			      utf8 const & address,
-			      port_type default_port,
-			      unsigned long timeout_seconds,
-			      unsigned long session_limit)
+static void 
+arm_sessions_and_calculate_probe(Probe & probe,
+				 map<socket_type, shared_ptr<session> > & sessions,
+				 set<socket_type> & armed_sessions)
+{
+  set<socket_type> arm_failed;
+  for (map<socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
+       i != sessions.end(); ++i)
+    {
+      try 
+	{
+	  if (i->second->arm())
+	    {
+	      L(F("fd %d is armed\n") % i->first);
+	      armed_sessions.insert(i->first);
+	    }
+	  probe.add(i->second->stream, i->second->which_events());
+	}
+      catch (bad_decode & bd)
+	{
+	  W(F("caught bad_decode exception decoding input from peer %s: '%s', marking as bad\n") 
+	    % i->second->peer_id % bd.what);
+	  arm_failed.insert(i->first);
+	}	  
+    }
+  for (set<socket_type>::const_iterator i = arm_failed.begin();
+       i != arm_failed.end(); ++i)
+    {
+      sessions.erase(*i);
+    }
+}
+
+static void
+handle_new_connection(Address & addr,
+		      StreamServer & server,
+		      Timeout & timeout,
+		      protocol_role role,
+		      vector<utf8> const & collections,
+		      set<string> const & all_collections,		      
+		      map<socket_type, shared_ptr<session> > & sessions,
+		      app_state & app)
+{
+  L(F("accepting new connection on %s : %d\n") 
+    % addr.get_name() % addr.get_port());
+  Peer client = server.accept_connection();
+  
+  if (!client) 
+    {
+      L(F("accept() returned a dead client\n"));
+    }
+  else
+    {
+      P(F("accepted new client connection from %s\n") % client);      
+      shared_ptr<session> sess(new session(role, server_voice, collections, 
+					   all_collections, app,
+					   lexical_cast<string>(client), 
+					   client.get_socketfd(), timeout));
+      sess->begin_service();
+      sessions.insert(make_pair(client.get_socketfd(), sess));
+    }
+}
+
+static void 
+handle_read_available(socket_type fd,
+		      shared_ptr<session> sess,
+		      map<socket_type, shared_ptr<session> > & sessions,
+		      set<socket_type> & armed_sessions)
+{
+  if (sess->read_some())
+    {
+      try
+	{
+	  if (sess->arm())
+	    armed_sessions.insert(fd);
+	}
+      catch (bad_decode & bd)
+	{
+	  W(F("caught bad_decode exception decoding input from peer %s: '%s', disconnecting\n") 
+	    % sess->peer_id % bd.what);
+	  sessions.erase(fd);
+	}
+    }
+  else
+    {
+      P(F("fd %d (peer %s) read failed, disconnecting\n") 
+	% fd % sess->peer_id);
+      sessions.erase(fd);
+    }
+}
+
+
+static void 
+handle_write_available(socket_type fd,
+		       shared_ptr<session> sess,
+		       map<socket_type, shared_ptr<session> > & sessions)
+{
+  if (! sess->write_some())
+    {
+      P(F("fd %d (peer %s) write failed, disconnecting\n") 
+	% fd % sess->peer_id);
+      sessions.erase(fd);
+    }
+}
+
+static void
+process_armed_sessions(map<socket_type, shared_ptr<session> > & sessions,
+		       set<socket_type> & armed_sessions)
+{
+  for (set<socket_type>::const_iterator i = armed_sessions.begin();
+       i != armed_sessions.end(); ++i)
+    {
+      map<socket_type, shared_ptr<session> >::iterator j;
+      j = sessions.find(*i);
+      if (j == sessions.end())
+	continue;
+      else
+	{
+	  socket_type fd = j->first;
+	  shared_ptr<session> sess = j->second;
+	  if (!sess->process())
+	    {
+	      P(F("fd %d (peer %s) processing finished, disconnecting\n") 
+		% fd % sess->peer_id);
+	      sessions.erase(j);
+	    }
+	}
+    }
+}
+
+static void
+reap_dead_sessions(map<socket_type, shared_ptr<session> > & sessions,
+		   unsigned long timeout_seconds)
+{
+  // kill any clients which haven't done any i/o inside the timeout period
+  // or who have said goodbye and flushed their output buffers
+  set<socket_type> dead_clients;
+  time_t now = ::time(NULL);
+  for (map<socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
+       i != sessions.end(); ++i)
+    {
+      if (static_cast<unsigned long>(i->second->last_io_time + timeout_seconds) 
+	  < static_cast<unsigned long>(now))
+	{
+	  P(F("fd %d (peer %s) has been idle too long, disconnecting\n") 
+	    % i->first % i->second->peer_id);
+	  dead_clients.insert(i->first);
+	}
+      if (i->second->sent_goodbye && i->second->outbuf.empty() && i->second->received_goodbye)
+	{
+	  P(F("fd %d (peer %s) exchanged goodbyes and flushed output, disconnecting\n") 
+	    % i->first % i->second->peer_id);
+	  dead_clients.insert(i->first);
+	}
+    }
+  for (set<socket_type>::const_iterator i = dead_clients.begin();
+       i != dead_clients.end(); ++i)
+    {
+      sessions.erase(*i);
+    }
+}
+
+static void 
+serve_connections(protocol_role role,
+		  vector<utf8> const & collections,
+		  set<string> const & all_collections,
+		  app_state & app,
+		  utf8 const & address,
+		  port_type default_port,
+		  unsigned long timeout_seconds,
+		  unsigned long session_limit)
 {
   Probe probe;  
 
@@ -2203,24 +2521,11 @@ static void serve_connections(protocol_role role,
       armed_sessions.clear();
 
       if (sessions.size() >= session_limit)
-	{
-	  W(F("session limit %d reached, some connections will be refused\n") % session_limit);
-	}
+	W(F("session limit %d reached, some connections will be refused\n") % session_limit);
       else
-	{
-	  probe.add(server);
-	}
+	probe.add(server);
 
-      for (map<socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
-	   i != sessions.end(); ++i)
-	{
-	  if (i->second->arm())
-	    {
-	      L(F("fd %d is armed\n") % i->first);
-	      armed_sessions.insert(i->first);
-	    }
-	  probe.add(i->second->stream, i->second->which_events());
-	}
+      arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
 
       L(F("i/o probe with %d armed\n") % armed_sessions.size());      
       Probe::result_type res = probe.ready(sessions.empty() ? forever 
@@ -2238,27 +2543,8 @@ static void serve_connections(protocol_role role,
       
       // we either got a new connection
       else if (fd == server)
-	{
-	  L(F("accepting new connection on %s : %d\n") 
-	    % addr.get_name() % addr.get_port());
-	  Peer client = server.accept_connection();
-	    
-	  if (!client) 
-	    {
-	      L(F("accept() returned a dead client\n"));
-	    }
-	  else
-	    {
-	      P(F("accepted new client connection from %s\n") % client);
-		
-	      shared_ptr<session> sess(new session(role, server_voice, collections, 
-						   all_collections, app,
-						   lexical_cast<string>(client), 
-						   client.get_socketfd(), timeout));
-	      sess->begin_service();
-	      sessions.insert(make_pair(client.get_socketfd(), sess));
-	    }
-	}
+	handle_new_connection(addr, server, timeout, role, 
+			      collections, all_collections, sessions, app);
       
       // or an existing session woke up
       else
@@ -2273,85 +2559,21 @@ static void serve_connections(protocol_role role,
 	    {
 	      shared_ptr<session> sess = i->second;		
 	      if (event & Probe::ready_read)
-		{
-		  if (sess->read_some())
-		    {
-		      if (sess->arm())
-			armed_sessions.insert(fd);
-		    }
-		  else
-		    {
-		      P(F("fd %d (peer %s) read failed, disconnecting\n") 
-			% fd % sess->peer_id);
-		      sessions.erase(i);
-		    }
-		}
+		handle_read_available(fd, sess, sessions, armed_sessions);
 		
 	      if (event & Probe::ready_write)
-		{
-		  if (! sess->write_some())
-		    {
-		      P(F("fd %d (peer %s) write failed, disconnecting\n") 
-			% fd % sess->peer_id);
-		      sessions.erase(i);
-		    }
-		}
+		handle_write_available(fd, sess, sessions);
 		
 	      if (event & Probe::ready_oobd)
 		{
-		  P(F("got some OOB data on fd %d (peer %s), disconnecting\n") % fd % sess->peer_id);
+		  P(F("got some OOB data on fd %d (peer %s), disconnecting\n") 
+		    % fd % sess->peer_id);
 		  sessions.erase(i);
 		}
 	    }
 	}
-
-      // now process any clients which are armed (have read a command)
-      for (set<socket_type>::const_iterator i = armed_sessions.begin();
-	   i != armed_sessions.end(); ++i)
-	{
-	  map<socket_type, shared_ptr<session> >::iterator j;
-	  j = sessions.find(*i);
-	  if (j == sessions.end())
-	    continue;
-	  else
-	    {
-	      shared_ptr<session> sess = j->second;
-	      if (!sess->process())
-		{
-		  P(F("fd %d (peer %s) processing finished, disconnecting\n") 
-		    % fd % sess->peer_id);
-		  sessions.erase(j);
-		}
-	    }
-	}
-	
-
-      // kill any clients which haven't done any i/o inside the timeout period
-      // or who have said goodbye and flushed their output buffers
-      set<socket_type> dead_clients;
-      time_t now = ::time(NULL);
-      for (map<socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
-	   i != sessions.end(); ++i)
-	{
-	  if (static_cast<unsigned long>(i->second->last_io_time + timeout_seconds) 
-	      < static_cast<unsigned long>(now))
-	    {
-	      P(F("fd %d (peer %s) has been idle too long, disconnecting\n") 
-		% i->first % i->second->peer_id);
-	      dead_clients.insert(i->first);
-	    }
-	  if (i->second->sent_goodbye && i->second->outbuf.empty() && i->second->received_goodbye)
-	    {
-	      P(F("fd %d (peer %s) exchanged goodbyes and flushed output, disconnecting\n") 
-		% i->first % i->second->peer_id);
-	      dead_clients.insert(i->first);
-	    }
-	}
-      for (set<socket_type>::const_iterator i = dead_clients.begin();
-	   i != dead_clients.end(); ++i)
-	{
-	  sessions.erase(*i);
-	}
+      process_armed_sessions(sessions, armed_sessions);
+      reap_dead_sessions(sessions, timeout_seconds);
     }
 }
 
@@ -2452,12 +2674,18 @@ static void ensure_merkle_tree_ready(app_state & app,
   netcmd_item_type_to_string(mcert_item, fcert_item_str);
   netcmd_item_type_to_string(mcert_item, key_item_str);
 
-  if (! (app.db.merkle_node_exists(mcert_item_str, collection, 0, ROOT_PREFIX.val)
-	 && app.db.merkle_node_exists(fcert_item_str, collection, 0, ROOT_PREFIX.val)
-	 && app.db.merkle_node_exists(key_item_str, collection, 0, ROOT_PREFIX.val)))
-    {
+//   if (! (app.db.merkle_node_exists(mcert_item_str, collection, 0, ROOT_PREFIX.val)
+// 	 && app.db.merkle_node_exists(fcert_item_str, collection, 0, ROOT_PREFIX.val)
+// 	 && app.db.merkle_node_exists(key_item_str, collection, 0, ROOT_PREFIX.val)))
+//     {
+
+  // FIXME: for now we always rebuild merkle trees. that's a bit coarse but it 
+  // saves us having to hunt down all the possible write conditions in the packet
+  // writers and make sure they update the indices properly
+
       rebuild_merkle_trees(app, collection);
-    }
+
+//     }
 }
 
 void run_netsync_protocol(protocol_voice voice, 

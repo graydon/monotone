@@ -1,3 +1,27 @@
+2004-03-01  graydon hoare  <graydon@pobox.com>
+
+	* NEWS: Mention impending 0.10 release.
+	* cert.cc, cert.hh: Bug fixes, implement trust function, QA stuff.
+	* commands.cc: Tweak disapprove, approve, testresult, push, pull.
+	* configure.ac: Bump version number.
+	* cryptopp/rng.h, cryptopp/rng.cpp 
+	(MaurerRandomnessTest): Fix bitrot.
+	* keys.cc: Add Maurer PRNG randomness test.
+	* lua.cc, lua.hh: Add trust, testresult, anonymous netsync hooks. 
+	* monotone.1: Update to follow changes to commands.
+	* monotone.texi: Include QA section, adjust some UI drift, clarify
+	reserved cert names, document new hooks and commands.
+	* netcmd.hh, netcmd.cc: Add anonymous, error commands; fix bugs.
+	* netsync.cc: Process new commands, factor server loop a bit.
+	* std_hooks.lua: Add new hook defaults, factor mergers.
+	* tests/t_netsync.at: Check SHA1 of each edge.
+	* tests/t_null.at: Call with --norc to skip ~/.monotonerc
+	* tests/t_update.at: Fix glaring error.
+	* tests/t_disapprove.at, tests/t_testresult.at: New tests.
+	* testsuite.at: Call them.
+	* ui.cc (sanitize): Clean escape chars from output (optional?)
+	* update.cc: Rewrite entirely in terms of new QA definitions.
+
 2004-02-24  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (ls_keys): Write key hash codes.

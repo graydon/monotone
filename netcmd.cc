@@ -87,8 +87,10 @@ bool read_netcmd(string & inbuf, netcmd & out)
   u8 cmd_byte = extract_datum_lsb<u8>(inbuf, pos, "netcmd code");
   switch (cmd_byte)
     {
+    case static_cast<u8>(error_cmd):
     case static_cast<u8>(bye_cmd):
     case static_cast<u8>(hello_cmd):
+    case static_cast<u8>(anonymous_cmd):
     case static_cast<u8>(auth_cmd):
     case static_cast<u8>(confirm_cmd):
     case static_cast<u8>(refine_cmd):
@@ -128,6 +130,26 @@ bool read_netcmd(string & inbuf, netcmd & out)
   return true;    
 }
 
+////////////////////////////////////////////
+// payload reader/writer functions follow //
+////////////////////////////////////////////
+
+void read_error_cmd_payload(std::string const & in, 
+			    std::string & errmsg)
+{
+  size_t pos = 0;
+  // syntax is: <errmsg:vstr>
+  extract_variable_length_string(in, errmsg, pos, "error netcmd, message");
+  assert_end_of_buffer(in, pos, "error netcmd payload");
+}
+
+void write_error_cmd_payload(std::string const & errmsg, 
+			     std::string & out)
+{
+  insert_variable_length_string(errmsg, out);
+}
+
+
 void read_hello_cmd_payload(string const & in, id & server, id & nonce)
 {
   size_t pos = 0;
@@ -145,6 +167,37 @@ void write_hello_cmd_payload(id const & server, id const & nonce, string & out)
   I(nonce().size() == constants::merkle_hash_length_in_bytes);
   out += server();
   out += nonce();
+}
+
+
+void read_anonymous_cmd_payload(std::string const & in, 
+				protocol_role & role, 
+				std::string & collection,
+				id & nonce2)
+{
+  size_t pos = 0;
+  // syntax is: <role:1 byte> <collection: vstr> <nonce2: 20 random bytes>
+  u8 role_byte = extract_datum_lsb<u8>(in, pos, "anonymous netcmd, role");
+  if (role_byte != static_cast<u8>(source_role)
+      && role_byte != static_cast<u8>(sink_role)
+      && role_byte != static_cast<u8>(source_and_sink_role))
+    throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
+  role = static_cast<protocol_role>(role_byte);
+  extract_variable_length_string(in, collection, pos, "anonymous netcmd, collection name");
+  nonce2 = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
+				"anonymous netcmd, nonce2"));
+  assert_end_of_buffer(in, pos, "anonymous netcmd payload");
+}
+
+void write_anonymous_cmd_payload(protocol_role role, 
+				 std::string const & collection,
+				 id const & nonce2,
+				 std::string & out)
+{
+  I(nonce2().size() == constants::merkle_hash_length_in_bytes);
+  out += static_cast<char>(role);
+  insert_variable_length_string(collection, out);
+  out += nonce2();
 }
 
 void read_auth_cmd_payload(string const & in, 
@@ -408,6 +461,22 @@ void test_netcmd_functions()
   try 
     {
 
+      // error_cmd
+      {
+	L(F("checking i/o round trip on error_cmd\n"));	
+	netcmd out_cmd, in_cmd;
+	string out_errmsg("your shoelaces are untied"), in_errmsg;
+	string buf;
+	out_cmd.cmd_code = error_cmd;
+	write_error_cmd_payload(out_errmsg, out_cmd.payload);
+	write_netcmd(out_cmd, buf);
+	BOOST_CHECK(read_netcmd(buf, in_cmd));
+	read_error_cmd_payload(in_cmd.payload, in_errmsg);
+	BOOST_CHECK(in_cmd == out_cmd);
+	BOOST_CHECK(in_errmsg == out_errmsg);
+	L(F("errmsg_cmd test done, buffer was %d bytes\n") % buf.size());
+      }
+
       // bye_cmd
       {
 	L(F("checking i/o round trip on bye_cmd\n"));	
@@ -435,6 +504,26 @@ void test_netcmd_functions()
 	BOOST_CHECK(in_server == out_server);
 	BOOST_CHECK(in_nonce == out_nonce);
 	L(F("hello_cmd test done, buffer was %d bytes\n") % buf.size());
+      }
+
+      // anonymous_cmd
+      {
+	L(F("checking i/o round trip on anonymous_cmd\n"));
+	netcmd out_cmd, in_cmd;
+	protocol_role out_role = source_and_sink_role, in_role;
+	string buf;
+	id out_nonce2(raw_sha1("nonce start my heart")), in_nonce2;
+	string out_collection("radishes galore!"), in_collection;
+
+	out_cmd.cmd_code = anonymous_cmd;
+	write_anonymous_cmd_payload(out_role, out_collection, out_nonce2, out_cmd.payload);
+	write_netcmd(out_cmd, buf);
+	BOOST_CHECK(read_netcmd(buf, in_cmd));
+	read_anonymous_cmd_payload(in_cmd.payload, in_role, in_collection, in_nonce2);
+	BOOST_CHECK(in_cmd == out_cmd);
+	BOOST_CHECK(in_nonce2 == out_nonce2);
+	BOOST_CHECK(in_role == out_role);
+	L(F("anonymous_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // auth_cmd

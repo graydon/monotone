@@ -15,11 +15,13 @@
 #include "transforms.hh"
 #include "ui.hh"
 
-#include <boost/shared_ptr.hpp>
-
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
+#include <boost/tuple/tuple_comparison.hpp>
 
 #include <string>
 #include <limits>
@@ -35,9 +37,10 @@ struct bogus_cert_p
 {
   app_state & app;
   bogus_cert_p(app_state & a) : app(a) {};
-  bool operator()(manifest<cert> const & c) const 
+
+  bool cert_is_bogus(cert const & c) const
   {
-  if (check_cert(app,c.inner()))
+  if (check_cert(app, c))
     {
       L(F("cert ok\n"));
       return false;
@@ -45,42 +48,126 @@ struct bogus_cert_p
   else
     {
       string txt;
-      cert_signable_text(c.inner(), txt);
-      W(F("bad signature by '%s' on '%s'\n") % c.inner().key() % txt);
+      cert_signable_text(c, txt);
+      W(F("bad signature by '%s' on '%s'\n") % c.key() % txt);
       return true;
     }
   }
+
+  bool operator()(manifest<cert> const & c) const 
+  {
+    return cert_is_bogus(c.inner());
+  }
+
   bool operator()(file<cert> const & c) const 
   {
-  if (check_cert(app,c.inner()))
-    {
-      L(F("cert ok\n"));
-      return false;
-    }
-  else
-    {
-      string txt;
-      cert_signable_text(c.inner(), txt);
-      W(F("bad signature by '%s' on '%s'\n") % c.inner().key() % txt);
-      return true;
-    }
+    return cert_is_bogus(c.inner());
   }
 };
 
+
 void erase_bogus_certs(vector< manifest<cert> > & certs,
-			      app_state & app)
+		       app_state & app)
 {
-  vector< manifest<cert> >::iterator e = 
-    remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
-  certs.erase(e, certs.end());      
+  typedef vector< manifest<cert> >::iterator it;
+  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
+  certs.erase(e, certs.end());
+
+  vector< manifest<cert> > tmp_certs;
+
+  // sorry, this is a crazy data structure
+  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
+  trust_map trust;
+
+  for (it i = certs.begin(); i != certs.end(); ++i)
+    {
+      trust_key key = trust_key(i->inner().ident, i->inner().name, i->inner().value);
+      trust_map::iterator j = trust.find(key);
+      shared_ptr< set<rsa_keypair_id> > s;
+      if (j == trust.end())
+	{
+	  s.reset(new set<rsa_keypair_id>());
+	  trust.insert(make_pair(key, make_pair(s, i)));
+	}
+      else
+	s = j->second.first;
+      s->insert(i->inner().key);
+    }
+
+  for (trust_map::const_iterator i = trust.begin();
+       i != trust.end(); ++i)
+    {
+      cert_value decoded_value;
+      decode_base64(get<2>(i->first), decoded_value);
+      if (app.lua.hook_get_manifest_cert_trust(*(i->second.first),
+					       get<0>(i->first),
+					       get<1>(i->first),
+					       decoded_value))
+	{
+	  L(F("trust function liked %d signers of cert '%s'='%s' on manifest '%s'\n")
+	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  tmp_certs.push_back(*(i->second.second));
+	}
+      else
+	{
+	  L(F("trust function disliked %d signers of cert '%s'='%s' on manifest '%s'\n")
+	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	}
+    }
+  certs = tmp_certs;
 }
 
 void erase_bogus_certs(vector< file<cert> > & certs,
-			      app_state & app)
+		       app_state & app)
 {
-  vector< file<cert> >::iterator e = 
-    remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
+  typedef vector< file<cert> >::iterator it;
+  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
   certs.erase(e, certs.end());
+
+  vector< file<cert> > tmp_certs;
+
+  // sorry, this is a crazy data structure
+  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
+  trust_map trust;
+
+  for (it i = certs.begin(); i != certs.end(); ++i)
+    {
+      trust_key key = trust_key(i->inner().ident, i->inner().name, i->inner().value);
+      trust_map::iterator j = trust.find(key);
+      shared_ptr< set<rsa_keypair_id> > s;
+      if (j == trust.end())
+	{
+	  s.reset(new set<rsa_keypair_id>());
+	  trust.insert(make_pair(key, make_pair(s, i)));
+	}
+      else
+	s = j->second.first;
+      s->insert(i->inner().key);
+    }
+
+  for (trust_map::const_iterator i = trust.begin();
+       i != trust.end(); ++i)
+    {
+      cert_value decoded_value;
+      decode_base64(get<2>(i->first), decoded_value);
+      if (app.lua.hook_get_manifest_cert_trust(*(i->second.first),
+					       get<0>(i->first),
+					       get<1>(i->first),
+					       decoded_value))
+	{
+	  L(F("trust function liked %d signers of cert '%s'='%s' on file '%s'\n")
+	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  tmp_certs.push_back(*(i->second.second));
+	}
+      else
+	{
+	  L(F("trust function disliked %d signers of cert '%s'='%s' on file '%s'\n")
+	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	}
+    }
+  certs = tmp_certs;
 }
 
 
@@ -380,7 +467,13 @@ static void get_parents(manifest_id const & child,
     {
       cert_value tv;
       decode_base64(i->inner().value, tv);
-      parents.insert(manifest_id(tv()));
+      manifest_id parent(tv());
+      vector< manifest<cert> > disapprove_certs;
+      app.db.get_manifest_certs(child, disapproval_cert_name, 
+				i->inner().value, disapprove_certs);
+      erase_bogus_certs(disapprove_certs, app);
+      if (disapprove_certs.empty())      
+	parents.insert(parent);
     }
 }
 
@@ -535,15 +628,13 @@ void get_branch_heads(cert_value const & branchname,
   P(F("fetching heads of branch '%s'\n") % branchname);
 
   app.db.get_head_candidates(branch_encoded(), branch_certs, ancestor_certs);
-  bogus_cert_p bogus(app);
+  erase_bogus_certs(branch_certs, app);
+  erase_bogus_certs(ancestor_certs, app);
 
   for (vector< manifest<cert> >::const_iterator i = branch_certs.begin();
        i != branch_certs.end(); ++i)
     {
-      if (!bogus(*i))
-	{
-	  heads.insert(i->inner().ident);
-	}      
+      heads.insert(i->inner().ident);
     }
 
   L(F("began with %d candidate heads\n") % heads.size());
@@ -552,16 +643,24 @@ void get_branch_heads(cert_value const & branchname,
   for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
        i != ancestor_certs.end(); ++i)
     {
+      // skip those invalidated by a specific disapproval
+      vector< manifest<cert> > disapprove_certs;
+      app.db.get_manifest_certs(i->inner().ident, disapproval_cert_name, 
+				i->inner().value, disapprove_certs);
+      erase_bogus_certs(disapprove_certs, app);
+      if (! disapprove_certs.empty())
+	continue;
+
       cert_value tv;
       decode_base64(i->inner().value, tv);
       manifest_id parent(tv());
       set<manifest_id>::const_iterator j = heads.find(parent);
-      if (j != heads.end() && !bogus(*i))
+      if (j != heads.end())
 	{
 	  heads.erase(j);
 	}
     }
-
+  
   L(F("reduced to %d heads\n") % heads.size());
 }
 		   
@@ -1129,7 +1228,7 @@ string const author_cert_name = "author";
 string const tag_cert_name = "tag";
 string const changelog_cert_name = "changelog";
 string const comment_cert_name = "comment";
-string const approval_cert_name = "approval";
+string const disapproval_cert_name = "disapproval";
 string const testresult_cert_name = "testresult";
 string const rename_cert_name = "rename";
 string const vcheck_cert_name = "vcheck";
@@ -1214,33 +1313,45 @@ void cert_manifest_comment(manifest_id const & m,
   put_simple_manifest_cert(m, comment_cert_name, comment, app, pc);  
 }
 
-void cert_file_approval(file_id const & f, 
+void cert_file_approval(file_id const & f1, 
+			file_id const & f2, 
 			bool const approval,
 			app_state & app,
 			packet_consumer & pc)
 {
-  string approved = approval ? "true" : "false";
-  put_simple_file_cert(f, approval_cert_name, approved, app, pc);
+  if (approval)
+    put_simple_file_cert(f2, ancestor_cert_name, f1.inner()(), app, pc);
+  else
+    put_simple_file_cert(f2, disapproval_cert_name, f1.inner()(), app, pc);
 }
 
-void cert_manifest_approval(manifest_id const & m, 
+void cert_manifest_approval(manifest_id const & m1, 
+			    manifest_id const & m2, 
 			    bool const approval,
 			    app_state & app,
 			    packet_consumer & pc)
 {
-  string approved = approval ? "true" : "false";
-  put_simple_manifest_cert(m, approval_cert_name, approved, app, pc);  
+  if (approval)
+    put_simple_manifest_cert(m2, ancestor_cert_name, m1.inner()(), app, pc);
+  else
+    put_simple_manifest_cert(m2, disapproval_cert_name, m1.inner()(), app, pc);
 }
 
 void cert_manifest_testresult(manifest_id const & m, 
-			      string const & suitename,
 			      string const & results,
 			      app_state & app,
 			      packet_consumer & pc)
 {
-  if (results.find_first_not_of("01") != string::npos)
-    throw oops("test results must be a contiguous sequence of '0' and '1' characters");
-  put_simple_manifest_cert(m, testresult_cert_name, results, app, pc); 
+  bool passed = false;
+  try
+    {
+      passed = lexical_cast<bool>(results);
+    }
+  catch (boost::bad_lexical_cast & e)
+    {
+      throw oops("test results must be a boolean value: '0' or '1'");
+    }
+  put_simple_manifest_cert(m, testresult_cert_name, lexical_cast<string>(passed), app, pc); 
 }
 
 void cert_manifest_rename(manifest_id const & m, 

@@ -52,6 +52,8 @@ lua_hooks::lua_hooks()
   lua_iolibopen(st);
   lua_strlibopen(st);
   lua_mathlibopen(st);
+  lua_tablibopen(st);
+  lua_dblibopen(st);
 }
 
 lua_hooks::~lua_hooks()
@@ -290,6 +292,23 @@ struct Lua
     return *this; 
   }
 
+  Lua & push_table() 
+  { 
+    if (failed) return *this;
+    I(lua_checkstack (st, 1));
+    lua_newtable(st); 
+    return *this; 
+  }
+
+  Lua & set_table(int idx = -3) 
+  { 
+    if (failed) return *this;
+    I(lua_checkstack (st, 1));
+    lua_settable(st, idx); 
+    return *this; 
+  }
+
+
   Lua & call(int in, int out) 
   { 
     if (failed) return *this;
@@ -492,6 +511,108 @@ bool lua_hooks::hook_non_blocking_rng_ok()
   return exec_ok && ok;
 }
 
+bool lua_hooks::hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
+					     hexenc<id> const & id,
+					     cert_name const & name,
+					     cert_value const & val)
+{
+  Lua ll(st);
+  ll
+    .push_str("get_manifest_cert_trust")
+    .get_fn()
+    .push_table();
+
+  int k = 0;
+  for (set<rsa_keypair_id>::const_iterator v = signers.begin();
+       v != signers.end(); ++v)
+    {
+      ll.push_int(k);
+      ll.push_str((*v)());
+      ll.set_table();
+      ++k;
+    }
+
+  bool ok;
+  bool exec_ok = ll
+    .push_str(id())
+    .push_str(name())
+    .push_str(val())
+    .call(4, 1)
+    .extract_bool(ok)
+    .ok();
+
+  return exec_ok && ok;
+}
+
+bool lua_hooks::hook_get_file_cert_trust(std::set<rsa_keypair_id> const & signers,
+					 hexenc<id> const & id,
+					 cert_name const & name,
+					 cert_value const & val)
+{
+  Lua ll(st);
+  ll
+    .push_str("get_file_cert_trust")
+    .get_fn()
+    .push_table();
+
+  int k = 0;
+  for (set<rsa_keypair_id>::const_iterator v = signers.begin();
+       v != signers.end(); ++v)
+    {
+      ll.push_int(k);
+      ll.push_str((*v)());
+      ll.set_table();
+      ++k;
+    }
+
+  bool ok;
+  bool exec_ok = ll
+    .push_str(id())
+    .push_str(name())
+    .push_str(val())
+    .call(4, 1)
+    .extract_bool(ok)
+    .ok();
+
+  return exec_ok && ok;
+}
+
+bool lua_hooks::hook_accept_testresult_change(map<rsa_keypair_id, bool> const & old_results,
+					      map<rsa_keypair_id, bool> const & new_results)
+{
+  Lua ll(st);
+  ll
+    .push_str("accept_testresult_change")
+    .get_fn()
+    .push_table();
+
+  for (map<rsa_keypair_id, bool>::const_iterator i = old_results.begin();
+       i != old_results.end(); ++i)
+    {
+      ll.push_str(i->first());
+      ll.push_bool(i->second);
+      ll.set_table();
+    }
+
+  ll.push_table();
+
+  for (map<rsa_keypair_id, bool>::const_iterator i = new_results.begin();
+       i != new_results.end(); ++i)
+    {
+      ll.push_str(i->first());
+      ll.push_bool(i->second);
+      ll.set_table();
+    }
+
+  bool ok;
+  bool exec_ok = ll
+    .call(2, 1)
+    .extract_bool(ok)
+    .ok();
+
+  return exec_ok && ok;  
+}
+
 
 
 bool lua_hooks::hook_merge2(data const & left, 
@@ -680,7 +801,7 @@ bool lua_hooks::hook_get_http_proxy(string const & host,
 }
 
 bool lua_hooks::hook_get_netsync_read_permitted(std::string const & collection, 
-						std::string const & identity)
+						rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
@@ -688,7 +809,7 @@ bool lua_hooks::hook_get_netsync_read_permitted(std::string const & collection,
     .push_str("get_netsync_read_permitted")
     .get_fn()
     .push_str(collection)
-    .push_str(identity)
+    .push_str(identity())
     .call(2,1)
     .extract_bool(permitted)
     .ok();
@@ -696,8 +817,23 @@ bool lua_hooks::hook_get_netsync_read_permitted(std::string const & collection,
   return exec_ok && permitted;
 }
 
+bool lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & collection)
+{
+  bool permitted = false, exec_ok = false;
+
+  exec_ok = Lua(st)
+    .push_str("get_netsync_anonymous_read_permitted")
+    .get_fn()
+    .push_str(collection)
+    .call(1,1)
+    .extract_bool(permitted)
+    .ok();
+
+  return exec_ok && permitted;
+}
+
 bool lua_hooks::hook_get_netsync_write_permitted(std::string const & collection, 
-						 std::string const & identity)
+						 rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
@@ -705,7 +841,7 @@ bool lua_hooks::hook_get_netsync_write_permitted(std::string const & collection,
     .push_str("get_netsync_write_permitted")
     .get_fn()
     .push_str(collection)
-    .push_str(identity)
+    .push_str(identity())
     .call(2,1)
     .extract_bool(permitted)
     .ok();

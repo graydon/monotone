@@ -386,9 +386,54 @@ static void signature_round_trip_test()
   BOOST_CHECK(!check_signature(lua, key, pubkey, broken_plaintext, sig));
 }
 
+static void osrng_test()
+{
+  AutoSeededRandomPool rng_random(true), rng_urandom(false);
+
+  for (int round = 0; round < 20; ++round)
+    {
+      MaurerRandomnessTest t_blank, t_urandom, t_random;
+      int i = 0;
+
+      while (t_blank.BytesNeeded() != 0)
+	{
+	  t_blank.Put(static_cast<byte>(0));
+	  i++;
+	}
+      L(F("%d bytes blank input -> tests as %f randomness\n") 
+	% i % t_blank.GetTestValue());
+
+
+      i = 0;
+      while (t_urandom.BytesNeeded() != 0)
+	{
+	  t_urandom.Put(rng_urandom.GenerateByte());
+	  i++;
+	}
+      L(F("%d bytes urandom-seeded input -> tests as %f randomness\n") 
+	% i % t_urandom.GetTestValue());
+
+
+      i = 0;
+      while (t_random.BytesNeeded() != 0)
+	{
+	  t_random.Put(rng_random.GenerateByte());
+	  i++;
+	}
+
+      L(F("%d bytes random-seeded input -> tests as %f randomness\n") 
+	% i % t_random.GetTestValue());
+
+      BOOST_CHECK(t_blank.GetTestValue() == 0.0);
+      BOOST_CHECK(t_urandom.GetTestValue() > 0.95);
+      BOOST_CHECK(t_random.GetTestValue() > 0.95);
+    }
+}
+
 void add_key_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&osrng_test));
   suite->add(BOOST_TEST_CASE(&signature_round_trip_test));
 }
 

@@ -23,24 +23,26 @@ protocol_role;
 
 typedef enum 
   { 
-    // bye is valid in all phases
+    // general commands
+    error_cmd = 0,
     bye_cmd = 1,
 
-    // authentication-phase commands
+    // authentication commands
     hello_cmd = 2,
-    auth_cmd = 3,
-    confirm_cmd = 4,
+    anonymous_cmd = 3,
+    auth_cmd = 4,
+    confirm_cmd = 5,
       
-    // refinement-phase commands
-    refine_cmd = 5,
-    done_cmd = 6,
+    // refinement commands
+    refine_cmd = 6,
+    done_cmd = 7,
       
-    // transmission-phase commands
-    send_data_cmd = 7,
-    send_delta_cmd = 8,
-    data_cmd = 9,
-    delta_cmd = 10,
-    nonexistant_cmd = 11
+    // transmission commands
+    send_data_cmd = 8,
+    send_delta_cmd = 9,
+    data_cmd = 10,
+    delta_cmd = 11,
+    nonexistant_cmd = 12
   }
 netcmd_code;
 
@@ -59,12 +61,26 @@ void write_netcmd(netcmd const & in, std::string & out);
 bool read_netcmd(std::string & inbuf, netcmd & out);
 
 // i/o functions for each type of command payload
+void read_error_cmd_payload(std::string const & in, 
+			    std::string & errmsg);
+void write_error_cmd_payload(std::string const & errmsg, 
+			     std::string & out);
+
 void read_hello_cmd_payload(std::string const & in, 
 			    id & server, 
 			    id & nonce);
 void write_hello_cmd_payload(id const & server, 
 			     id const & nonce, 
 			     std::string & out);
+
+void read_anonymous_cmd_payload(std::string const & in, 
+				protocol_role & role, 
+				std::string & collection,
+				id & nonce2);
+void write_anonymous_cmd_payload(protocol_role role, 
+				 std::string const & collection,
+				 id const & nonce2,
+				 std::string & out);
 
 void read_auth_cmd_payload(std::string const & in, 
 			   protocol_role & role, 

@@ -6,11 +6,11 @@ MONOTONE_SETUP
 AT_CHECK(cp test.db test2.db)
 
 AT_DATA(netsync.lua, [
-function get_netsync_read_permitted(collection, hash)
+function get_netsync_read_permitted(collection, identity)
 	return true
 end
 
-function get_netsync_write_permitted(collection, hash)
+function get_netsync_write_permitted(collection, identity)
 	return true
 end
 ])
@@ -51,9 +51,26 @@ AT_CHECK(grep ancestor certs, [], [ignore])
 AT_CHECK(grep bad certs, [1], [ignore])
 
 AT_CHECK(MONOTONE --db=test2.db cat manifest $VER0, [], [stdout])
+CHK=`SHA1(stdout)`
+AT_CHECK(test $CHK == $VER0)
+
 AT_CHECK(MONOTONE --db=test2.db cat manifest $VER1, [], [stdout])
+CHK=`SHA1(stdout)`
+AT_CHECK(test $CHK == $VER1)
+
 AT_CHECK(MONOTONE --db=test2.db cat file $F_VER0, [], [stdout])
+CHK=`SHA1(stdout)`
+AT_CHECK(test $CHK == $F_VER0)
+
 AT_CHECK(MONOTONE --db=test2.db cat file $F_VER1, [], [stdout])
+CHK=`SHA1(stdout)`
+AT_CHECK(test $CHK == $F_VER1)
+
+AT_CHECK(MONOTONE db info, [], [stdout])
+INFO1=`SHA1(stdout)`
+AT_CHECK(MONOTONE --db=test2.db db info, [], [stdout])
+INFO2=`SHA1(stdout)`
+AT_CHECK(test $INFO1 == $INFO2)
 
 killall -q -QUIT monotone
 

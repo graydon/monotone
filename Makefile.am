@@ -18,7 +18,7 @@ MOST_SOURCES =								\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
          lcs.hh network.hh http_tasks.hh constants.hh ui.hh		\
          schema_migration.hh smtp_tasks.hh quick_alloc.hh mac.hh url.hh \
-	 netsync.hh netcmd.hh netio.hh merkle_tree.hh
+	 netsync.hh netcmd.hh netio.hh merkle_tree.hh numeric_vocab.hh
 
 NETXX_SOURCES = \
 	Netxx/Accept.cxx Netxx/Accept.h Netxx/Address.cxx Netxx/Address.h          \

@@ -345,7 +345,7 @@ a @i{version code}, indicating which file or manifest you are
 making a statement about
 @item
 a @i{name} indicating the type of statement you are making, such as
-``changelog'', ``date'' or ``approval''
+``changelog'', ``date'' or ``disapproval''
 @item
 a @i{value} indicating the remaining detail of the statement, such as
 ``fixed a bug'', ``March 9th'' or ``approved for shipping''
@@ -971,17 +971,24 @@ correct key was generated.
 $ monotone --db=$HOME/test.db list keys
 
 [public keys]
-testkey@@nodomain.org
+9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c testkey@@nodomain.org
 
 
 [private keys]
-testkey@@nodomain.org
+771ace046c27770a99e5fddfa99c9247260b5401 testkey@@nodomain.org
 
 @end example
 
-This indicates that our keys have been successfully generated and
-stored. On subsequent commands, we will need to re-enter our
-passphrase to produce signatures on various tags.
+The hexidecimal string printed out before each key name is a
+@emph{fingerprint} of the key, and can be used to verify that the key
+you have stored under a given name is the one you intended to
+store. Monotone will never permit one database to store two keys with
+the same name or the same fingerprint.
+
+This output shows one private and one public key stored under the name
+@code{testkey@@tester.net}, so it indicates that our keys have been
+successfully generated and stored. On subsequent commands, we will
+need to re-enter our passphrase to produce signatures on various tags.
 
 
 @node    Adding Files
@@ -1009,9 +1016,12 @@ these files.
 
 @example
 $ cat MT/work
-+ Makefile
-+ include/hello.h
-+ src/hello.c
+add 
+ Makefile
+add
+ include/hello.h
+add
+ src/hello.c
 @end example
 
 Now we are ready to commit our additions. We will provide a ``log
@@ -1578,10 +1588,10 @@ other users. We have seen previously that monotone can produce
 sequences of ``packets'' which encode, in a safe and portable manner,
 any type of work recorded in its database. To make life easier, we can
 ask monotone to send sequences of packets to directly to a network
-server, after we commit work. Monotone supports two kinds of network
-servers: news servers and web servers. We will use a web server in
-this example. To use a web server with monotone, we must install a
-program on the web server called @dfn{depot}, which is a CGI
+server, after we commit work. Monotone supports three kinds of network
+servers: news servers, mail servers, and web servers. We will use a
+web server in this example. To use a web server with monotone, we must
+install a program on the web server called @dfn{depot}, which is a CGI
 program. The @code{depot} program contains a subset of the
 functionality of a news server, just enough to exchange packets.
 
@@ -1990,19 +2000,27 @@ By further removing from the set of trusted @code{ancestor} certificates,
 those which coincide with trusted @code{disapproval} certificates. 
 @item
 By restricting the set of trusted @code{testresult} certificates, you
-can require that the @emph{endpoints} of an update or merge operation
-have a certificate asserting that the version in question passed a 
-certain test, or testsuite.
+can require that the @emph{endpoints} of an update operation have a
+certificate asserting that the version in question passed a certain
+test, or testsuite.
 @end itemize
 
 The evaluation of trust is done on a cert-by-cert basis by calling a
-lua hook: @code{get_cert_trust}. This hook is only called when a cert
-has at least one good signature from a known key, and is assumed to
-return @code{true} if it is not defined. If the hook is defined, it is
-passed all the keys which have signed the cert, as well as the cert's
+pair of lua hooks: @code{get_manifest_cert_trust} and
+@code{get_manifest_cert_trust}. These hooks are only called when a
+cert has at least one good signature from a known key, and are passed
+@emph{all} the keys which have signed the cert, as well as the cert's
 id, name and value. The hook can then evaluate the set of signers, as
-a group, and decide whether to grant or deny trust to the cert in
-question.
+a group, and decide whether to grant or deny trust to the assertion made
+by the cert.
+
+The evaluation of testresults is controlled by the
+@code{accept_testresult_change} hook. This hook is called when
+selecting update candidates, and is passed a pair of tables describing
+the @code{testresult} certs present on the source and proposed
+destination of an update. Only if the change in test results are
+deemed ``acceptable'' does monotone actually select an update target
+to merge into your working copy.
 
 
 @node    Internationalization
@@ -2285,26 +2303,37 @@ delimiter. The files now use 0x0A (ASCII LF) as a delimiter, to permit
 @node    Reserved Certs
 @section Reserved Certs
 
-Certain certificate names are @emph{reserved}. This means that
-monotone has a special interpretation of the values of certificates
-with these names. Usually monotone is also responsible for
-@emph{generating} these certificates, so you should generally have no
-cause to make them yourself. They are described here to help you
-understand monotone's operation, and prevent you from accidentally
-using them for your own purposes.
+Every certificate has a name. Some names have meaning which is built
+in to monotone, others may be used for customization by a particular
+user, site, or community. If you wish to define custom certificates,
+you should prefix such certificate names with @code{x-}. For example,
+if you want to make a certificate describing the existence of security
+vulnerabilities in a version, you might wish to create a certificate
+called @code{x-vulnerability}.  Monotone reserves all names which do
+not begin with @code{x-} for possible internal use. If an @code{x-}
+certificate becomes widely used, montotone will likey adopt it as a
+reserved cert name and standardize its semantics.
 
-The reserved certificate names are:
+Most reserved certificate names have no meaning yet; some do. Usually
+monotone is also responsible for @emph{generating} these certificates,
+so you should generally have no cause to make them yourself. They are
+described here to help you understand monotone's operation.
+
+The pre-defined, reserved certificate names are:
 
 @table @code
+
 @item ancestor
 This cert's value is interpreted as the @sc{sha1} of another manifest,
 and monotone interprets such a cert as an assertion that manifest
 identified by the value if the cert is an ancestor of the manifest the
 cert applies to. This cert controls the merging and updating algorithms.
+
 @item author
 This cert's value is the name of a person who committed the manifest
 the cert is attached to. The cert is generated when you commit a
 version. It is displayed by the @code{log} command.
+
 @item changelog
 This cert's value is the change log message you provide when you commit a version.
 It is displayed by the @code{log} command.
@@ -2312,10 +2341,12 @@ It is displayed by the @code{log} command.
 This cert's value is an additional comment, usually provided after committing, 
 about a version. Certs with the name @code{comment} can be applied to files as
 well, and will be shown by the @code{log} command.
+
 @item date
 This cert's value is an ISO date string indicating the time at which a manifest
 was committed. It is displayed by the @code{log} command, and may be used as an
 additional heuristic or selection criterion in other commands in the future.
+
 @item rename
 This cert's value is a specially formatted string which describes the
 set of rename actions (if any) which occurred between some other
@@ -2327,14 +2358,28 @@ certs are damaged or missing, the analysis of rename events can
 potentially degrade, and monotone might consider a renamed file to be
 two different files (one deleted and one added). Otherwise the absence
 of these certificates is harmless.
+
 @item tag
-This cert's value is a symbolic name given to a version, which may be used
-in the future as a way of selecting versions for @code{checkout}.
-@item approval
-@itemx testresult
-These certs' values are in development; they may be used in the future
-to control @code{update} commands in more detail than the general
-sorting technique currently available.
+This cert's value is a symbolic name given to a version, which may be
+used in the future as a way of selecting versions for @code{checkout}.
+
+@item disapproval
+This cert's value is interpreted as the @sc{sha1} of another manifest.
+Monotone interprets such a cert signed by @var{key}, with value
+@var{pred} on manifest @var{id} as an assertion that @var{key}
+@emph{disapproves} of the ancestry edge between @var{pred} and
+@var{id}. This cert is generated by the @command{disapprove} command,
+and is used to facilitate code review.  This cert controls the merging
+and updating algorithms, along with the @code{ancestor} cert.
+
+@item testresult
+This cert's value is interpreted as a boolean string, either @code{0}
+or @code{1}. It is generated by the @code{testresult} command and
+represents the results of running a particular test on the underlying
+manifest. Typically you will make a separate signing key for each test
+you intend to run on tree versions. This cert controls the
+@command{update} algorithm.
+
 @item vcheck
 This cert contains a seed value and a special message authentication
 code (@sc{mac}) calculated with that seed value over the files of the
@@ -2346,12 +2391,13 @@ accidental collision in @sc{sha1}.
 @node    Naming Conventions
 @section Naming Conventions
 
-Some names in monotone are private to your work, such as filenames. Other names
-are potentially visible outside your project, such as @sc{rsa} key identifiers
-or branch names. It is possible that if you choose such names carelessly, you will
-choose a name which someone else in the world is using, and subsequently you may
-cause confusion when your work and their is received simultaneously by some third
-party.
+Some names in monotone are private to your work, such as
+filenames. Other names are potentially visible outside your project,
+such as @sc{rsa} key identifiers or branch names. It is possible that
+if you choose such names carelessly, you will choose a name which
+someone else in the world is using, and subsequently you may cause
+confusion when your work and their is received simultaneously by some
+third party.
 
 We therefore recommend two naming conventions:
 
@@ -2907,6 +2953,62 @@ copy.
 @section Network
 
 @ftable @command
+@item monotone netsync client readonly @var{address} @var{collection}
+@itemx monotone netsync client readwrite @var{address} @var{collection}
+@itemx monotone netsync client writeonly @var{address} @var{collection}
+@itemx monotone netsync server readonly @var{address} @var{collection}
+@itemx monotone netsync server readwrite @var{address} @var{collection}
+@itemx monotone netsync server writeonly @var{address} @var{collection}
+
+These commands operate the ``netsync'' protocol built into
+monotone. This is an experimental, custom protocol for rapidly
+synchronizing two monotone databases using a hash tree index. The
+protocol is ``peer to peer'', but requires one peer to listen for
+incoming connections (the server) and the other peer (the client) to
+connect to the server. The @code{readonly}, @code{writeonly}, or
+@code{readwrite} parameters indicate what sort of @emph{database
+access} the netsync operation should have. For example, in
+@code{readonly} mode the netsync operation will @emph{not} add entries
+your local database from the network.
+
+The network @var{address} specified in each case should be the same: a
+host name to listen on, or connect to, optionally followed by a colon
+and a port number. The @var{collection} parameter indicates a set of
+branches to exchange; every branch for which @var{collection} is a
+prefix will be indexed and made available for synchronization.
+
+For example, supposing bob and alice wish to synchronize their
+@code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
+branches. Supposing alice's computer has hostname
+@code{alice.someisp.com}, then alice might run:
+
+@example
+$ monotone netsync serve readwrite alice.someisp.com net.venge.monotone
+@end example
+
+And bob might run
+
+@example
+$ monotone netsync client readwrite alice.someisp.com net.venge.monotone
+@end example
+
+When the operation completes, all branches beginning with
+@code{net.venge.monotone} will be synchronized between alice and bob's
+databases.
+
+@item monotone serve @var{address} @var{collection}
+@itemx monotone pull @var{address} @var{collection}
+@itemx monotone push @var{address} @var{collection}
+@itemx monotone sync @var{address} @var{collection}
+
+These commands are aliases for @code{netsync} commands. The
+@code{serve} command is an alias for @code{netsync server
+readwrite}. The @code{pull} command is an alias for @code{netsync
+client writeonly}. The @code{push} command is an alias for
+@code{netsync client readonly}. The @code{sync} command is an alias
+for @code{netsync client readwrite}. See the @code{netsync} command
+for more details.
+
 @item monotone fetch
 @itemx monotone fetch @var{url} 
 
@@ -3196,19 +3298,19 @@ If you omit the @var{id}, these commands operate on the heads of
 @section Certificate
 
 @ftable @command
-@item monotone approve file @var{id}
-@itemx monotone approve manifest @var{id}
+@item monotone approve file @var{id1} @var{id2}
+@itemx monotone approve manifest @var{id1} @var{id2}
 
 These commands are synonyms for
-@code{monotone cert file @var{id} approval true} or 
-@code{monotone cert manifest @var{id} approval true}
+@code{monotone cert file @var{id2} ancestor @var{id1}} or 
+@code{monotone cert manifest @var{id2} ancestor @var{id1}}
 
-@item monotone disapprove file @var{id}
-@itemx monotone disapprove manifest @var{id}
+@item monotone disapprove file @var{id1} @var{id2}
+@itemx monotone disapprove manifest @var{id1} @var{id2}
 
 These commands are synonyms for
-@code{monotone cert file @var{id} approval false} or 
-@code{monotone cert manifest @var{id} approval false}
+@code{monotone cert file @var{id2} disapproval @var{id1}} or 
+@code{monotone cert manifest @var{id2} disapproval @var{id1}}
 
 
 @item monotone comment file @var{id}
@@ -3224,9 +3326,14 @@ from @code{stdin}.
 
 @item monotone tag @var{id} @var{tagname}
 
-These commands are synonyms for @code{monotone cert file @var{id}
-tag @var{tagname}} or @code{monotone cert manifest @var{id}
+This command is a synonyms for @code{monotone cert manifest @var{id}
 tag @var{tagname}}. 
+
+@item monotone testresult @var{id} 0
+@item monotone testresult @var{id} 1
+
+These commands are synonyms for @code{monotone cert manifest @var{id}
+testresult 0} or @code{monotone cert manifest @var{id} testresult 1}.
 
 @end ftable
 
@@ -3508,6 +3615,44 @@ end
 @end example
 
 
+@item get_netsync_read_permitted (@var{collection}, @var{identity})
+
+Returns @code{true} if a peer authenticated as key @var{identity}
+should be allowed to read from your database certs, manifests, and
+files associated with the netsync index @var{collection}; otherwise
+@code{false}. This hook has no default definition, therefore the
+default behavior is to deny all reads.
+
+Note that the @var{identity} value is a key id (such as
+``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
+key fingerprint (hash) in your database. Monotone will not permit two
+keys in your database to have the same id. Make sure you confirm the
+key fingerprints of each key in your database, as key id strings are
+``convenience names'', not security tokens.
+
+@item get_netsync_anonymous_read_permitted (@var{collection})
+
+This hook has identical semantics to @code{get_netsync_read_permitted}
+except that it is called when a connecting client requests anonymous
+read access to a collection. There is no corresponding anonymous write
+access hook. This hook has no default definition, therefore the
+default behavior is to deny all anonymous reads.
+
+@item get_netsync_write_permitted (@var{collection}, @var{identity})
+
+Returns @code{true} if a peer authenticated as key @var{identity}
+should be allowed to write into your database certs, manifests, and
+files associated with the netsync index @var{collection}; otherwise
+@code{false}. This hook has no default definition, therefore the
+default behavior is to deny all writes.
+
+Note that the @var{identity} value is a key id (such as
+``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
+key fingerprint (hash) in your database. Monotone will not permit two
+keys in your database to have the same id. Make sure you confirm the
+key fingerprints of each key in your database, as key id strings are
+``convenience names'', not security tokens.
+
 @item get_news_sender (@var{url})
 
 Returns a string which is the email address (or other identifying
@@ -3645,29 +3790,92 @@ function ignore_file(name)
 end
 @end example
 
-@item get_sorter (@var{certname})
+@item get_manifest_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
 
-Returns a string which is the name of a sort operator to use for the
-certificate named @var{certname}. Sort operators are used during
-@command{monotone update} to select versions which are ``not worse''
-than the current version, by examining certificates associated with
-update candidates and sorting them according to the sort
-operator. There are 3 pre-defined sort operator names:
+Returns whether or not you @emph{trust} the assertion
+@var{name}=@var{value} on a given manifest @var{id}, given a valid
+signature from all the keys in @var{signers}. The @var{signers}
+parameter is a table containing all the key names which signed this
+cert, the other three parameters are strings.
 
-@itemize
-@item
-``string'', which sorts certificate values in ascending lexicographic ASCII order
-@item
-``integer'', which sorts certificate values which appear to be integers in ascending integer order
-@item
-``bitset'', which sorts certificate values which appear to be packed bitsets according to a 
-superset relation (supersets sort higher than subsets)
-@end itemize
+The default definition of this hook simply returns @code{true}, which
+corresponds to a form of trust where every key which is defined in
+your database is trusted. This is a @emph{weak} trust setting; you
+should change it to something stronger. A possible example of a
+stronger trust function (along with a utility function for computing
+the intersection of tables) is the following:
 
-If you are not using sort operators, you can ignore this
-hook. Monotone always sorts according to ancestry after all other sort
-operators, so the default behavior is similar to other version control
-systems. This hook has no default definition.
+@example
+function intersection(a,b)
+   local s=@{@}
+   local t=@{@}
+   for k,v in pairs(a) do s[v] = 1 end
+   for k,v in pairs(b) do if s[v] ~= nil then table.insert(t,v) end end
+   return t
+end
+
+function get_manifest_cert_trust(signers, id, name, val)
+   local trusted_signers = @{ "bob@@happyplace.com", 
+                             "friend@@trustedplace.com", 
+                             "myself@@home.com" @}
+   local t = intersection(signers, trusted_signers)
+
+   if t == nil then return false end
+
+   if    (name ~= "ancestor" and table.getn(t) >= 1)
+      or (name == "ancestor" and table.getn(t) >= 2)
+   then
+      return true
+   else
+      return false
+   end
+end
+@end example
+
+In this example, any manifest certificate is trusted if it is signed
+by at least one of three ``trusted'' keys, unless it is an
+@code{ancestor} certificate, in which case it must be signed by
+@emph{two} or more trusted keys. This is one way of requiring that
+ancestry assertions go through an extra ``reviewer'' before they are
+accepted.
+
+@item get_file_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
+
+This hook is identical to the hook @code{get_manifest_cert_trust},
+except it is called for file certificates rather than manifest
+certificates. See the documentation for that hook for more details.
+
+@item accept_testresult_change (@var{old_results}, @var{new_results})
+
+This hook is used by the update algorithm to determine whether a
+change in test results between update source and update target is
+acceptable. The hook is called with two tables, each of which maps a
+signing key -- representing a particular testsuite -- to a boolean
+value indicating whether or not the test run was successful. The
+function should return @code{true} if you consider an update from the
+version carrying the @var{old_results} to the version carrying the
+@var{new_results} to be acceptable.
+
+The default definition of this hook follows:
+
+@example
+function accept_testresult_change(old_results, new_results)
+   for test,res in pairs(old_results)
+   do
+      if res == true and new_results[test] ~= true
+      then
+	 return false
+      end
+   end
+   return true
+end
+@end example
+
+This definition accepts only those updates which preserve the set of
+@code{true} test results from update source to target. If no rest
+results exist, this hook has no affect; but once a @code{true} test
+result is present, future updates will require it. If you want a more
+lenient behavior you must redefine this hook.
 
 @item merge2 (@var{left}, @var{right})
 
@@ -3679,56 +3887,41 @@ interact with the user. The default definition of this hook is:
 
 @example
 function merge2(left, right)
-        local lfile
-        local rfile
-        local outfile
-        local tmp
+   local lfile = nil
+   local rfile = nil
+   local outfile = nil
+   local data = nil
 
-        -- write out one file
-        tmp, lfile = temp_file()
-        if (tmp == nil) then 
-                return nil 
-        end;
-        tmp:write(left)
-        io.close(tmp)
+   lfile = write_to_temporary_file(left)
+   rfile = write_to_temporary_file(right)
+   outfile = write_to_temporary_file("")
 
-        -- write out the other file
-        tmp, rfile = temp_file()
-        if (tmp == nil) then 
-                os.remove(lfile)
-                return nil
-        end
-        tmp:write(right)
-        io.close(tmp)
+   if lfile ~= nil and
+      rfile ~= nil and
+      outfile ~= nil 
+   then 
+      local cmd = nil
+      if program_exists_in_path("xxdiff") then
+	 cmd = merge2_xxdiff_cmd(lfile, rfile, outfile)
+      elseif program_exists_in_path("emacs") then
+	 cmd = merge2_emacs_cmd(lfile, rfile, outfile)
+      end
 
-        tmp, outfile = temp_file();
-        io.close(tmp);
-
-        -- run emacs to merge the files
-        local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
-        local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-        local cmd = string.format(cmd_fmt, lfile, rfile, outfile)
-        io.write(string.format("executing external 2-way merge command: %s\n", cmd))
-        if (os.execute(cmd) ~= 0) then 
-                os.remove(lfile)
-                os.remove(rfile) 
-                os.remove(outfile)
-                return nil
-        end
-
-        -- read in the results
-        tmp = io.open(outfile, "r")
-        if (tmp == nil) then
-                return nil
-        end
-        local data = tmp:read("*a")
-        io.close(tmp)
-
-        os.remove(lfile)
-        os.remove(rfile)
-        os.remove(outfile)
-
-        return data
+      if cmd ~= nil
+      then
+	 io.write(string.format("executing external 2-way merge command: %s\n", cmd))
+	 if os.execute(cmd) == 0 
+	 then
+	    data = read_contents_of_file(outfile)
+	 end
+      end
+   end
+   
+   os.remove(lfile)
+   os.remove(rfile)
+   os.remove(outfile)
+   
+   return data
 end
 @end example
 
@@ -3743,67 +3936,45 @@ definition of this hook is:
 
 @example
 function merge3(ancestor, left, right)
-        local afile
-        local lfile
-        local rfile
-        local outfile
+   local afile = nil
+   local lfile = nil
+   local rfile = nil
+   local outfile = nil
+   local data = nil
 
-        -- write out one file
-        tmp, lfile = temp_file()
-        if (tmp == nil) then 
-                return nil 
-        end;
-        tmp:write(left)
-        io.close(tmp)
+   lfile = write_to_temporary_file(left)
+   afile = write_to_temporary_file(ancestor)
+   rfile = write_to_temporary_file(right)
+   outfile = write_to_temporary_file("")
 
-        -- write out the other file
-        tmp, rfile = temp_file()
-        if (tmp == nil) then 
-                os.remove(lfile)
-                return nil
-        end
-        tmp:write(right)
-        io.close(tmp)
+   if lfile ~= nil and
+      rfile ~= nil and
+      afile ~= nil and
+      outfile ~= nil 
+   then 
+      local cmd = nil
+      if program_exists_in_path("xxdiff") then
+	 cmd = merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("emacs") then
+	 cmd = merge3_emacs_cmd(lfile, afile, rfile, outfile)
+      end
 
-        -- write out the ancestor
-        tmp, afile = temp_file()
-        if (tmp == nil) then 
-                os.remove(lfile)
-                os.remove(rfile) 
-                return nil
-        end
-        tmp:write(ancestor)
-        io.close(tmp)
-
-        tmp, outfile = temp_file()
-        io.close(tmp)
-
-        -- run emacs to merge the files
-        local elisp = "'(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")'"
-        local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-        local cmd = string.format(cmd_fmt, lfile, rfile, afile, outfile)
-        io.write(string.format("executing external 3-way merge command: %s\n", cmd))
-        if (os.execute(cmd) ~= 0) then 
-                os.remove(lfile)
-                os.remove(rfile)
-                os.remove(ancestor)
-                os.remove(outfile) 
-                return nil
-        end
-
-        -- read in the results
-        tmp = io.open(outfile, "r")
-        if (tmp == nil) then
-                return nil
-        end
-        local data = tmp:read("*a")
-        io.close(tmp)
-
-        os.remove(lfile)
-        os.remove(rfile)
-        os.remove(outfile)
-
-        return data
+      if cmd ~= nil
+      then
+	 io.write(string.format("executing external 3-way merge command: %s\n", cmd))
+	 if os.execute(cmd) == 0 
+	 then
+	    data = read_contents_of_file(outfile)
+	 end
+      end
+   end
+   
+   os.remove(lfile)
+   os.remove(rfile)
+   os.remove(afile)
+   os.remove(outfile)
+   
+   return data
 end
 @end example
 
@@ -3972,16 +4143,20 @@ monotone} command, or online).
 Write a comment cert for a file or manifest version.
 @comment TROFF INPUT: .TP
 
-@item @b{approve} @i{(file|manifest) <id>}
-Make a cert approving of a file or manifest version.
+@item @b{approve} @i{(file|manifest) <id1> <id2>}
+Make a cert approving of a file or manifest change.
 @comment TROFF INPUT: .TP
 
-@item @b{disapprove} @i{(file|manifest) <id>}
-Make a cert disapproving of a file or manifest version.
+@item @b{disapprove} @i{(file|manifest) <id1> <id2>}
+Make a cert disapproving of a file or manifest change.
 @comment TROFF INPUT: .TP
 
 @item @b{tag} @i{<id> <tagname>}
 Put a symbolic tag cert on a manifest version.
+@comment TROFF INPUT: .TP
+
+@item @b{testresult} @i{<id> (0|1)}
+Indicate a passing or failing test result on a manifest version.
 @comment TROFF INPUT: .TP
 
 @item @b{agraph}
@@ -4157,8 +4332,8 @@ merely removed from the manifest.
 Rename files from @i{<src>} to @i{<dst>} in working copy.
 @comment TROFF INPUT: .TP
 
-@item @b{update} @i{[sort keys...]}
-Update working copy, relative to sorting keys.
+@item @b{update} 
+Update working copy.
 @comment TROFF INPUT: .SH DESCRIPTION
 
 @item @b{db} @i{(init|info|version|dump|load|migrate)}

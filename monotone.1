@@ -19,14 +19,17 @@ monotone\fP command, or online).
 \fBcomment\fP \fI(file|manifest) <id>\fP
 Write a comment cert for a file or manifest version.
 .TP
-\fBapprove\fP \fI(file|manifest) <id>\fP
-Make a cert approving of a file or manifest version.
+\fBapprove\fP \fI(file|manifest) <id1> <id2>\fP
+Make a cert approving of a file or manifest change.
 .TP
-\fBdisapprove\fP \fI(file|manifest) <id>\fP
-Make a cert disapproving of a file or manifest version.
+\fBdisapprove\fP \fI(file|manifest) <id1> <id2>\fP
+Make a cert disapproving of a file or manifest change.
 .TP
 \fBtag\fP \fI<id> <tagname>\fP
 Put a symbolic tag cert on a manifest version.
+.TP
+\fBtestresult\fP \fI<id> (1|0)\fP
+Indicate a passing or failing test result on a manifest version.
 .TP
 \fBagraph\fP
 Dump ancestry graph to stdout.
@@ -156,8 +159,8 @@ merely removed from the manifest.
 \fBrename\fP \fI<src> \fI<dst>\fP
 Rename files from \fI<src> \fP to \fI<dst> \fP in working copy.
 .TP
-\fBupdate\fP \fI[sort keys...]\fP
-Update working copy, relative to sorting keys.
+\fBupdate\fP 
+Update working copy.
 .TP
 \fBdb\fP \fI(init|info|version|migrate)\fP
 Manipulate database state.

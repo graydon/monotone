@@ -105,11 +105,31 @@ void user_interface::warn(string const & warning)
   issued_warnings.insert(warning);
 }
 
+
+static inline string sanitize(string const & line)
+{
+  // FIXME: you might want to adjust this if you're using a charset
+  // which has safe values in the sub-0x20 range. ASCII, UTF-8, 
+  // and most ISO8859-x sets do not.
+  string tmp;
+  tmp.reserve(line.size());
+  for (size_t i = 0; i < line.size(); ++i)
+    {
+      if ((line[i] == '\n')
+	  || (line[i] >= static_cast<char>(0x20) 
+	      && line[i] != static_cast<char>(0x7F)))
+	tmp += line[i];
+      else
+	tmp += ' ';
+    }
+  return tmp;
+}
+
 void user_interface::inform(string const & line)
 {
   if (last_write_was_a_tick)
     clog << endl;
-  clog << "monotone: " << line;
+  clog << "monotone: " << sanitize(line);
   clog.flush();
   last_write_was_a_tick = false;
 }

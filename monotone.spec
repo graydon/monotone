@@ -1,6 +1,6 @@
 Summary: monotone is a distributed version control tool
 Name: monotone
-Version: 0.9
+Version: 0.10
 Release: 1
 License: GPL
 Group: Development/Version Control
@@ -57,6 +57,9 @@ fi
 
 
 %changelog
+* Mon Mar 1 2004 graydon hoare <graydon@pobox.com>
+- 0.10 release
+
 * Thu Jan 8 2004 graydon hoare <graydon@pobox.com>
 - don't install /usr/share/info/dir
 

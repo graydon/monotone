@@ -40,7 +40,16 @@ public:
   bool hook_edit_comment(std::string const & commentary, std::string & result);  
   bool hook_persist_phrase_ok();
   bool hook_non_blocking_rng_ok();
-
+  bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
+				    hexenc<id> const & id,
+				    cert_name const & name,
+				    cert_value const & val);
+  bool hook_get_file_cert_trust(std::set<rsa_keypair_id> const & signers,
+				hexenc<id> const & id,
+				cert_name const & name,
+				cert_value const & val);
+  bool hook_accept_testresult_change(std::map<rsa_keypair_id, bool> const & old_results,
+				     std::map<rsa_keypair_id, bool> const & new_results);
 
   // network hooks
   bool hook_get_news_sender(url const & serv, std::string & sender);
@@ -64,10 +73,10 @@ public:
 			   unsigned long & port_out);
 
   bool hook_get_netsync_read_permitted(std::string const & collection, 
-				       std::string const & identity);
-
+				       rsa_keypair_id const & identity);
+  bool hook_get_netsync_anonymous_read_permitted(std::string const & collection);
   bool hook_get_netsync_write_permitted(std::string const & collection, 
-					std::string const & identity);
+					rsa_keypair_id const & identity);
 
   // local repo hooks
   bool hook_ignore_file(file_path const & p);

@@ -2,7 +2,7 @@
 
 AT_SETUP([basic invocations and options])
 
-AT_CHECK([monotone], [], [ignore])
+AT_CHECK([monotone --norc], [], [ignore])
 AT_CHECK([monotone --help], [], [ignore])
 AT_CHECK([monotone --version], [], [ignore])
 AT_CHECK([monotone --nostd   --help], [], [ignore])

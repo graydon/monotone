@@ -924,71 +924,92 @@ CMD(tag, "certificate", "ID TAGNAME",
   cert_manifest_tag(m, idx(args, 1)(), app, qpw);
 }
 
-CMD(approve, "certificate", "(file|manifest) ID", 
-    "approve of a manifest or file version")
+CMD(testresult, "certificate", "ID (true|false)", 
+    "note the results of running a test on a manifest")
 {
   if (args.size() != 2)
+    throw usage(name);
+  manifest_id m;
+  complete(app, idx(args, 0)(), m);
+  set<url> targets;
+  cert_value branchname;
+  guess_branch(m, app, branchname);
+  app.lua.hook_get_post_targets(branchname(), targets);  
+  queueing_packet_writer qpw(app, targets);
+  packet_db_writer dbw(app);
+  cert_manifest_testresult(m, idx(args, 1)(), app, dbw);
+  cert_manifest_testresult(m, idx(args, 1)(), app, qpw);
+}
+
+CMD(approve, "certificate", "(file|manifest) ID1 ID2", 
+    "approve of a manifest or file change")
+{
+  if (args.size() != 3)
     throw usage(name);
 
   if (idx(args, 0)() == "manifest")
     {
-      manifest_id m;
-      complete(app, idx(args, 1)(), m);
+      manifest_id m1, m2;
+      complete(app, idx(args, 1)(), m1);
+      complete(app, idx(args, 2)(), m2);
       set<url> targets;
       cert_value branchname;
-      guess_branch (m, app, branchname);
+      guess_branch (m1, app, branchname);
       app.lua.hook_get_post_targets(branchname(), targets);  
       queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
-      cert_manifest_approval(m, true, app, dbw);
-      cert_manifest_approval(m, true, app, qpw);
+      cert_manifest_approval(m1, m2, true, app, dbw);
+      cert_manifest_approval(m1, m2, true, app, qpw);
     }
   else if (idx(args, 0)() == "file")
     {
       packet_db_writer dbw(app);
-      file_id f;
-      complete(app, idx(args, 1)(), f);
+      file_id f1, f2;
+      complete(app, idx(args, 1)(), f1);
+      complete(app, idx(args, 2)(), f2);
       set<url> targets;
       N(app.branch_name() != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name()), targets); 
       queueing_packet_writer qpw(app, targets);
-      cert_file_approval(f, true, app, dbw);
-      cert_file_approval(f, true, app, qpw);
+      cert_file_approval(f1, f2, true, app, dbw);
+      cert_file_approval(f1, f2, true, app, qpw);
     }
   else
     throw usage(name);
 }
 
-CMD(disapprove, "certificate", "(file|manifest) ID", 
-    "disapprove of a manifest or file version")
+CMD(disapprove, "certificate", "(file|manifest) ID1 ID2", 
+    "disapprove of a manifest or file change")
 {
-  if (args.size() != 2)
+  if (args.size() != 3)
     throw usage(name);
 
   if (idx(args, 0)() == "manifest")
     {
-      manifest_id m;
-      complete(app, idx(args, 1)(), m);
+      manifest_id m1, m2;
+      complete(app, idx(args, 1)(), m1);
+      complete(app, idx(args, 2)(), m2);
       set<url> targets;
       cert_value branchname;
-      guess_branch(m, app, branchname);
+      guess_branch(m1, app, branchname);
       app.lua.hook_get_post_targets(branchname(), targets);  
       queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
-      cert_manifest_approval(m, false, app, dbw);
-      cert_manifest_approval(m, false, app, qpw);
+      cert_manifest_approval(m1, m2, false, app, dbw);
+      cert_manifest_approval(m1, m2, false, app, qpw);
     }
   else if (idx(args, 0)() == "file")
     {
-      file_id f;;
-      complete(app, idx(args, 1)(), f);
+      file_id f1, f2;
+      complete(app, idx(args, 1)(), f1);
+      complete(app, idx(args, 2)(), f2);
       set<url> targets;
       N(app.branch_name() != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name()), targets); 
       queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
-      cert_file_approval(f, false, app, dbw);
-      cert_file_approval(f, false, app, qpw);
+      cert_file_approval(f1, f2, false, app, dbw);
+      cert_file_approval(f1, f2, false, app, qpw);
     }
   else
     throw usage(name);
@@ -1284,7 +1305,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   app.write_options();
 }
 
-CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to sorting keys")
+CMD(update, "working copy", "", "update working copy")
 {
 
   manifest_data m_chosen_data;
@@ -1297,7 +1318,7 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
   calculate_ident(m_old, m_old_id);
   calculate_new_manifest_map(m_old, m_working, app);
   
-  pick_update_target(m_old_id, args, app, m_chosen_id);
+  pick_update_target(m_old_id, app, m_chosen_id);
   if (m_old_id == m_chosen_id)
     {
       P(F("already up to date at %s\n") % m_old_id);
@@ -2224,29 +2245,84 @@ static void ls_queue (string name, app_state & app)
     }
 }
 
-CMD(merkle, "merkle", "rebuild COLLECTION...", 
-    "rebuild the merkle trees used to synchronize COLLECTION")
+CMD(reindex, "network", "COLLECTION...", 
+    "rebuild the hash-tree indices used to sync COLLECTION over the network")
+{
+  if (args.size() < 1)
+    throw usage(name);
+
+  transaction_guard guard(app.db);
+  ui.set_tick_trailer("rehashing db");
+  app.db.rehash();
+  for (size_t i = 0; i < args.size(); ++i)
+    {
+      ui.set_tick_trailer(string("rebuilding hash-tree indices for ") + idx(args,i)());
+      rebuild_merkle_trees(app, idx(args,i));
+    }
+  guard.commit();
+}
+
+CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+    "alias for 'netsync client readonly'")
 {
   if (args.size() < 2)
     throw usage(name);
 
-  if (idx(args,0)() == "rebuild")
-    {
-      transaction_guard guard(app.db);
-      ui.set_tick_trailer("rehashing db");
-      app.db.rehash();
-      for (size_t i = 1; i < args.size(); ++i)
-	{
-	  ui.set_tick_trailer(string("rebuilding merkle indices for ") + idx(args,i)());
-	  rebuild_merkle_trees(app, idx(args,i));
-	}
-      guard.commit();
-    }
-  else
-    throw usage(name);
+  rsa_keypair_id key;
+  N(guess_default_key(key, app), "could not guess default signing key");
+  app.signing_key = key;
+
+  utf8 addr(idx(args,0));
+  vector<utf8> collections(args.begin() + 1, args.end());
+  run_netsync_protocol(client_voice, source_role, addr, collections, app);  
 }
 
-CMD(netsync, "network", "(client|server) (readonly|readwrite|writeonly) ADDRESS:PORTNUMBER COLLECTION...",
+CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+    "alias for 'netsync client writeonly'")
+{
+  if (args.size() < 2)
+    throw usage(name);
+
+  rsa_keypair_id key;
+  N(guess_default_key(key, app), "could not guess default signing key");
+  app.signing_key = key;
+
+  utf8 addr(idx(args,0));
+  vector<utf8> collections(args.begin() + 1, args.end());
+  run_netsync_protocol(client_voice, sink_role, addr, collections, app);  
+}
+
+CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+    "alias for 'netsync client readwrite'")
+{
+  if (args.size() < 2)
+    throw usage(name);
+
+  rsa_keypair_id key;
+  N(guess_default_key(key, app), "could not guess default signing key");
+  app.signing_key = key;
+
+  utf8 addr(idx(args,0));
+  vector<utf8> collections(args.begin() + 1, args.end());
+  run_netsync_protocol(client_voice, source_and_sink_role, addr, collections, app);  
+}
+
+CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+    "alias for 'netsync server readwrite'")
+{
+  if (args.size() < 2)
+    throw usage(name);
+
+  rsa_keypair_id key;
+  N(guess_default_key(key, app), "could not guess default signing key");
+  app.signing_key = key;
+
+  utf8 addr(idx(args,0));
+  vector<utf8> collections(args.begin() + 1, args.end());
+  run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
+}
+
+CMD(netsync, "network", "(client|server) (readonly|readwrite|writeonly) ADDRESS[:PORTNUMBER] COLLECTION...",
     "run synchronization for a given set of collections")
 {
   if (args.size() < 4)
