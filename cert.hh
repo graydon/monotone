@@ -7,6 +7,7 @@
 // see the file COPYING for details
 
 #include "vocab.hh"
+#include <set>
 #include <vector>
 #include <time.h>
 
@@ -69,7 +70,7 @@ void cert_manifest_in_branch(manifest_id const & manifest,
 
 void get_branch_heads(cert_value const & branchname,
 		      app_state & app,
-		      vector<manifest_id> & heads);
+		      set<manifest_id> & heads);
 
 void cert_file_ancestor(file_id const & parent, 
 			file_id const & child,

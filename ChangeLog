@@ -1,5 +1,12 @@
 2003-10-20  Tom Tromey  <tromey@redhat.com>
 
+	* cert.hh (get_branch_heads): Updated.
+	Include <set>.
+	* commands.cc (head): Updated for new get_branch_heads.
+	(merge): Likewise.
+	(propagate): Likewise.
+	* cert.cc (get_branch_heads): Use set<manifest_id>.
+
 	* commands.cc (merge): Use all caps for metasyntactic variable.
 	(heads): Likewise.
 

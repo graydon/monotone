@@ -261,15 +261,13 @@ void cert_manifest_in_branch(manifest_id const & man,
 // doesn't sound terribly useful, but who knows.
 
 void get_branch_heads(cert_value const & branchname,
-		     app_state & app,
-		     vector<manifest_id> & heads)
+		      app_state & app,
+		      set<manifest_id> & heads)
 {
   heads.clear();
   vector< manifest<cert> > certs;
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
-
-  set<manifest_id> heads_tmp;
 
   L(F("getting branch certs for %s\n") % branchname);
   app.db.get_manifest_certs(cert_name(branch_cert_name), branch_encoded, certs);
@@ -287,16 +285,13 @@ void get_branch_heads(cert_value const & branchname,
       if (children.size() == 0)
 	{
 	  L(F("found head %s\n") % i->inner().ident);
-	  heads_tmp.insert(manifest_id(i->inner().ident));
+	  heads.insert(manifest_id(i->inner().ident));
 	}
       else
 	{
 	  L(F("found non-head %s\n") % i->inner().ident);
 	}
     }
-
-  copy(heads_tmp.begin(), heads_tmp.end(), back_inserter(heads));
-
 }
 		   
 void cert_file_ancestor(file_id const & parent, 
