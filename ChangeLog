@@ -1,3 +1,8 @@
+2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (check_sane): Turn off this invariant when
+	global_sanity.relaxed.
+
 2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_load_into_existing.at: Oops, really add it too, sigh.

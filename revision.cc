@@ -36,8 +36,11 @@ void revision_set::check_sane() const
     {
       change_set const & cs = edge_changes(i);
       cs.check_sane();
-      // null old revisions come with null old manifests
-      I(!null_id(edge_old_revision(i)) || null_id(edge_old_manifest(i)));
+      if (!global_sanity.relaxed)
+        {
+          // null old revisions come with null old manifests
+          I(!null_id(edge_old_revision(i)) || null_id(edge_old_manifest(i)));
+        }
       for (change_set::delta_map::const_iterator j = cs.deltas.begin(); j != cs.deltas.end(); ++j)
         {
           manifest_map::const_iterator k = fragment.find(delta_entry_path(j));
