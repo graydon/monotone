@@ -150,7 +150,7 @@ get_homedir()
       return string(homedrive) + string(homepath);
     }
   // And if things _still_ didn't work, give up.
-  N((false, F("could not find home directory (tried MONOTONE_HOME, HOME (if "
+  N(false, F("could not find home directory (tried MONOTONE_HOME, HOME (if "
               "cygwin/mingw), USERPROFILE, HOMEDRIVE/HOMEPATH"));
 #else
   char * home = getenv("HOME");

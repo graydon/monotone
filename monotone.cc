@@ -12,6 +12,9 @@
 #include <sstream>
 
 #include <stdlib.h>
+#ifdef WIN32
+#include <libintl.h>
+#endif
 
 #include "app_state.hh"
 #include "commands.hh"

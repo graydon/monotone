@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#ifdef WIN32
+#include <io.h> /* for chdir() */
+#endif
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
