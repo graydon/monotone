@@ -623,7 +623,7 @@ complete(app_state & app,
       string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
       for (set<string>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += (*i + "\n");
+        err += (describe_revision(app, revision_id(*i)) + "\n");
       N(completions.size() == 1, boost::format(err));
     }
   completion = revision_id(*(completions.begin()));  
