@@ -1,5 +1,21 @@
 2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* update.cc (pick_update_candidates): Add I().
+	* commands.cc (calculate_base_revision): Remove 'rev' argument,
+	which was never set and callers never used.
+	(calculate_base_manifest, calculate_current_revision) 
+	(calculate_restricted_revision, revert): Update correspondingly.
+	(update): Check for null old revision.
+
+	* main.cc (main): Make exit status 3 if we caught an unhandled
+	exception, in particular so the testsuite can tell the difference
+	between an error handled cleanly and an error caught by an
+	invariant.
+	* tests/t_update_null_revision.at: New test.
+	* testsuite.at: Add it.
+
+2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* main.cc: Remove tabs.
 
 2005-02-02  Nathaniel Smith  <njs@codesourcery.com>

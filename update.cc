@@ -156,6 +156,7 @@ void pick_update_candidates(revision_id const & base_ident,
 {
   N(app.branch_name() != "",
     F("cannot determine branch for update"));
+  I(!null_id(base_ident));
 
   calculate_update_set(base_ident, cert_value(app.branch_name()),
                        app, candidates);

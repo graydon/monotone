@@ -459,6 +459,10 @@ main(int argc, char **argv)
   catch (the_one_true_exception const & e)
     {
       ui.fatal(std::string(e.buf) + "\n");
-      return 1;
+      // If we got here, it's because something went _really_ wrong, like an
+      // invariant failure or a segfault.  So use a distinctive error code, in
+      // particular so the testsuite can tell whether we detected an error
+      // properly or waited until an invariant caught it...
+      return 3;
     }
 }
