@@ -5,7 +5,7 @@
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (BUILT_SOURCES): List package_*version.{h,txt}.
-	(package_{full_,}version.txt: Work when blddir != srcdir.
+	* package_{full_,}version.txt: Work when blddir != srcdir.
 
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 
