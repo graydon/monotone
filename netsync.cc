@@ -235,6 +235,7 @@ session
   map< std::pair<utf8, netcmd_item_type>, 
        boost::shared_ptr<merkle_table> > merkle_tables;
 
+  map< id, std::pair<cert_value, epoch_id> > id_to_epoch;
   map<cert_value, epoch_id> epochs;
 
   map<netcmd_item_type, done_marker> done_refinements;
@@ -339,8 +340,7 @@ session
                         id const & nonce1, 
                         id const & nonce2, 
                         string const & signature);
-  bool process_confirm_cmd(string const & signature,
-                           map<string, id> const & server_epochs);
+  bool process_confirm_cmd(string const & signature);
   bool process_refine_cmd(merkle_node const & node);
   bool process_send_data_cmd(netcmd_item_type type,
                              id const & item);
@@ -459,12 +459,14 @@ session::session(protocol_role role,
 
   done_refinements.insert(make_pair(cert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
+  done_refinements.insert(make_pair(epoch_item, done_marker()));
   
   requested_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
 
   for (vector<utf8>::const_iterator i = collections.begin();
        i != collections.end(); ++i)
@@ -1121,15 +1123,7 @@ session::queue_confirm_cmd(string const & signature)
 {
   netcmd cmd;
   cmd.cmd_code = confirm_cmd;
-  map<string, id> tmp_epochs;
-  for (map<cert_value, epoch_id>::const_iterator i = epochs.begin(); 
-       i != epochs.end(); ++i)
-    {
-      id epoch;
-      decode_hexenc(i->second.inner(), epoch);
-      tmp_epochs.insert(make_pair(i->first(), epoch));
-    }
-  write_confirm_cmd_payload(signature, tmp_epochs, cmd.payload);
+  write_confirm_cmd_payload(signature, cmd.payload);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1633,8 +1627,7 @@ session::process_auth_cmd(protocol_role role,
 }
 
 bool 
-session::process_confirm_cmd(string const & signature,
-                             map<string, id> const & server_epochs)
+session::process_confirm_cmd(string const & signature)
 {
   I(this->remote_peer_key_hash().size() == constants::merkle_hash_length_in_bytes);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
@@ -1661,30 +1654,11 @@ session::process_confirm_cmd(string const & signature,
           L(F("server signature OK, accepting authentication\n"));
           this->authenticated = true;
 
-          // check, and possibly absorb, their epochs
-          for (map<string, id>::const_iterator e = server_epochs.begin(); 
-               e != server_epochs.end(); ++e)
-            {
-              cert_value branch(e->first);
-              hexenc<id> tmpid;
-              encode_hexenc(e->second, tmpid);
-              epoch_id epoch(tmpid);
-              map<cert_value, epoch_id>::const_iterator ours = epochs.find(branch);
-              if (ours == epochs.end())
-                {                  
-                  L(F("accepting server epoch %s for branch %s\n") % epoch % branch);
-                  app.db.set_epoch(branch, epoch);                  
-                  epochs.insert(make_pair(branch, epoch));
-                }
-              else
-                {
-                  N(ours->second == epoch, 
-                    (F("Mismatched epoch on branch %s. Server has %s, client has %s.\n") 
-                     % branch % epoch % ours->second));
-                }
-            }
-
           merkle_ptr root;
+          load_merkle_node(epoch_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(*root);
+          queue_done_cmd(0, cert_item);
+
           load_merkle_node(key_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, key_item);
@@ -2612,9 +2586,8 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "confirm netcmd received in client voice");
       {
         string signature;
-        map<string,id> server_epochs;
-        read_confirm_cmd_payload(cmd.payload, signature, server_epochs);
-        return process_confirm_cmd(signature, server_epochs);
+        read_confirm_cmd_payload(cmd.payload, signature);
+        return process_confirm_cmd(signature);
       }
       break;
 
@@ -3188,6 +3161,7 @@ session::rebuild_merkle_trees(app_state & app,
 
   boost::shared_ptr<merkle_table> ctab = make_root_node(*this, collection, cert_item);
   boost::shared_ptr<merkle_table> ktab = make_root_node(*this, collection, key_item);
+  boost::shared_ptr<merkle_table> etab = make_root_node(*this, collection, epoch_item);
 
   ticker certs_ticker("certs", "c", 256);
   ticker keys_ticker("keys", "k", 1);
@@ -3228,6 +3202,25 @@ session::rebuild_merkle_trees(app_state & app,
               epochs.insert(std::make_pair(branch, epoch_zero));
               app.db.set_epoch(branch, epoch_zero);
             }
+        }
+
+      // hash all epochs and load them into their merkle tree
+      for (std::map<cert_value, epoch_id>::const_iterator i = epochs.begin();
+           i != epochs.end(); ++i)
+        {
+          // hash is of concat(branch name, raw epoch representation).  This
+          // is unique, because epochs have a fixed length.
+          std::string tmp(i->first());
+          id raw_epoch;
+          decode_hexenc(i->second.inner(), raw_epoch);
+          tmp += raw_epoch();
+          data tdat(tmp);
+          hexenc<id> out;
+          calculate_ident(tdat, out);
+          id raw_hash;
+          decode_hexenc(out, raw_hash);
+          insert_into_merkle_tree(*etab, epoch_item, true, raw_hash(), 0);
+          id_to_epoch.insert(std::make_pair(raw_hash, *i));
         }
     }
 

@@ -1,3 +1,17 @@
+2005-03-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (session::id_to_epoch): New variable.
+	(session::session): Create refinement and requested item tables
+	for epochs.
+	(rebuild_merkle_trees): Fill epoch merkle tree and id_to_epoch
+	table.
+
+	* netsync.cc (queue_confirm_cmd, process_confirm_cmd) 
+	(dispatch_payload, rebuild_merkle_trees): 
+	* netcmd.hh:
+	* netcmd.cc (read_confirm_cmd_payload, write_confirm_cmd_payload):
+	Remove epochs.
+
 2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* constants.cc:

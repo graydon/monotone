@@ -271,43 +271,20 @@ write_auth_cmd_payload(protocol_role role,
 
 void 
 read_confirm_cmd_payload(string const & in, 
-                         string & signature,
-                         map<string, id> & epochs)
+                         string & signature)
 {
   size_t pos = 0;
-  size_t n_epochs = 0;
-  epochs.clear();
 
-  // syntax is: <signature: vstr> <n_epochs: uleb128> 
-  //            (<branch: vstr> <epoch: 20 bytes id>){n_epochs} 
+  // syntax is: <signature: vstr>
   extract_variable_length_string(in, signature, pos, "confirm netcmd, signature");
-  n_epochs = extract_datum_uleb128<size_t>(in, pos, "confirm netcmd, number of epochs");
-  for (size_t i = 0; i < n_epochs; ++i)
-    {
-      string branch;
-      id epoch;
-      extract_variable_length_string(in, branch, pos, "confirm netcmd, branch name");
-      epoch = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
-                                   "confirm netcmd, epoch"));
-      epochs.insert(std::make_pair(branch, epoch));
-    }  
   assert_end_of_buffer(in, pos, "confirm netcmd payload");
 }
   
 void 
 write_confirm_cmd_payload(string const & signature, 
-                          map<string, id> const & epochs, 
                           string & out)
 {
   insert_variable_length_string(signature, out);
-  insert_datum_uleb128<size_t>(epochs.size(), out);
-  for (map<string, id>::const_iterator i = epochs.begin(); 
-       i != epochs.end(); ++i)
-    {
-      insert_variable_length_string(i->first, out);
-      I(i->second().size() == constants::merkle_hash_length_in_bytes);
-      out += i->second();      
-    }
 }
   
 void 
