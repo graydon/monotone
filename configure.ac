@@ -41,7 +41,6 @@ AC_LANG_POP()
 # Checks for idna stuff
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h errno.h)
-AX_CREATE_STDINT_H(idna/idn-int.h)
 AC_CACHE_CHECK([if setlocale() and nl_langinfo() works],
 	ac_cv_locale_works, [
 	AC_TRY_RUN([
@@ -94,21 +93,32 @@ AC_SUBST(BOOST_SUFFIX)
 
 # Now check for Boost libraries proper.
 
-LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $OLD_LIBS"
-AC_MSG_CHECKING(libboost_unit_test_framework library)
-AC_LINK_IFELSE([AC_LANG_SOURCE([[
+found=no
+suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -sunpro"}
+for BOOST_SUFFIX in ${suffixes}
+do
+    test "x${BOOST_SUFFIX}" = "xnone" && BOOST_SUFFIX=
+    LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $OLD_LIBS"
+    AC_MSG_CHECKING(for the libboost_unit_test_framework${BOOST_SUFFIX} library)
+    AC_LINK_IFELSE([AC_LANG_SOURCE([[
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/test_tools.hpp>
 using boost::unit_test_framework::test_suite;
 test_suite * init_unit_test_suite(int argc, char * argv[]) 
 { return NULL; }
 ]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_unit_test_framework failure])])
-LIBS=$OLD_LIBS
+     [AC_MSG_RESULT([yes])
+      found=yes],
+     [AC_MSG_RESULT([no])])
+    LIBS=$OLD_LIBS
+    test "x${found}" = "xyes" && break
+done
+if test "x${found}" = "xno"; then
+    AC_MSG_FAILURE([libboost_unit_test_framework failure])
+fi
 
 LIBS="-lboost_filesystem${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(libboost_filesystem library)
+AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/filesystem/path.hpp>
   #include <boost/filesystem/operations.hpp>
@@ -119,7 +129,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_FAILURE([libboost_filesystem failure])])
 
 LIBS="-lboost_date_time${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(libboost_date_time library)
+AC_MSG_CHECKING(for the libboost_date_time${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/date_time/posix_time/posix_time.hpp>
   #include <iostream>
@@ -131,7 +141,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 
 
 LIBS="-lboost_regex${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(libboost_regex library)
+AC_MSG_CHECKING(for the libboost_regex${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/regex.hpp>
   using namespace boost; 
@@ -157,6 +167,10 @@ then
    AC_MSG_CHECKING([location of static boost libraries])
    for i in ${static_boost_prefixes}
    do
+	if test -e $i/lib64/libboost_regex${BOOST_SUFFIX}.a
+	then
+		BOOST_LIBDIR=$i/lib64
+	fi
 	if test -e $i/lib/libboost_regex${BOOST_SUFFIX}.a 
 	then
 		BOOST_LIBDIR=$i/lib
@@ -307,6 +321,7 @@ AC_SUBST(SQLITE_CPPFLAGS)
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h sys/time.h termios.h unistd.h])
+AX_CREATE_STDINT_H(mt-stdint.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

@@ -27,7 +27,6 @@
 #include "keys.hh"
 #include "sanity.hh"
 #include "schema_migration.hh"
-#include "cert.hh"
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
@@ -177,6 +176,9 @@ check_sqlite_format_version(fs::path const & filename)
 {
   if (fs::exists(filename))
     {
+      N(!fs::is_directory(filename), 
+        F("database %s is a directory\n") % filename.string());
+ 
       // sqlite 3 files begin with this constant string
       // (version 2 files begin with a different one)
       std::string version_string("SQLite format 3");
@@ -189,8 +191,8 @@ check_sqlite_format_version(fs::path const & filename)
         {
           char c;
           file.get(c);
-          N(c == *i, F("database is not an sqlite version 3 file, "
-                       "try dump and reload"));            
+          N(c == *i, F("database %s is not an sqlite version 3 file, "
+                       "try dump and reload") % filename.string());            
         }
     }
 }
@@ -201,16 +203,16 @@ database::sql(bool init)
 {
   if (! __sql)
     {
+      N(!filename.empty(), F("no database specified"));
+
       if (! init)
         {
-          if (filename.string() == "")
-            throw informative_failure(string("no database specified"));
-          else if (! fs::exists(filename))
-            throw informative_failure(string("database ") + filename.string() +
-                                      string(" does not exist"));
+          N(fs::exists(filename), 
+            F("database %s does not exist") % filename.string());
+          N(!fs::is_directory(filename), 
+            F("database %s is a directory") % filename.string());
         }
-      N(filename.string() != "",
-        F("need database name"));
+
       check_sqlite_format_version(filename);
       int error;
       error = sqlite3_open(filename.string().c_str(), &__sql);
@@ -369,27 +371,19 @@ database::debug(string const & sql, ostream & out)
     }
 }
 
-unsigned long 
-database::get_statistic(string const & query)
-{
-  results res;
-  fetch(res, 1, 1, query.c_str());
-  return lexical_cast<unsigned long>(res[0][0]);
-}
-
 void 
 database::info(ostream & out)
 {
   string id;
   calculate_schema_id(sql(), id);
   out << "schema version  : " << id << endl;
-  out << "full manifests  : " << get_statistic("SELECT COUNT(*) FROM manifests") << endl;
-  out << "manifest deltas : " << get_statistic("SELECT COUNT(*) FROM manifest_deltas") << endl;
-  out << "full files      : " << get_statistic("SELECT COUNT(*) FROM files") << endl;
-  out << "file deltas     : " << get_statistic("SELECT COUNT(*) FROM file_deltas") << endl;
-  out << "revisions       : " << get_statistic("SELECT COUNT(*) FROM revisions") << endl;
-  out << "ancestry edges  : " << get_statistic("SELECT COUNT(*) FROM revision_ancestry") << endl;
-  out << "certs           : " << get_statistic("SELECT COUNT(*) FROM revision_certs") << endl;
+  out << "full manifests  : " << count("manifests") << endl;
+  out << "manifest deltas : " << count("manifest_deltas") << endl;
+  out << "full files      : " << count("files") << endl;
+  out << "file deltas     : " << count("file_deltas") << endl;
+  out << "revisions       : " << count("revisions") << endl;
+  out << "ancestry edges  : " << count("revision_ancestry") << endl;
+  out << "certs           : " << count("revision_certs") << endl;
 }
 
 void 
@@ -452,7 +446,7 @@ database::rehash()
       }
   }
 
-{
+  {
     // rehash all privkeys
     results res;
     fetch(res, 2, any_rows, "SELECT id, keydata FROM private_keys");
@@ -777,14 +771,27 @@ database::delta_exists(hexenc<id> const & ident,
   return res.size() == 1;
 }
 
-int 
+unsigned long
 database::count(string const & table)
 {
   results res;
   fetch(res, one_col, one_row, 
         "SELECT COUNT(*) FROM '%q'", 
         table.c_str());
-  return lexical_cast<int>(res[0][0]);  
+  return lexical_cast<unsigned long>(res[0][0]);  
+}
+
+void
+database::get_ids(string const & table, set< hexenc<id> > & ids) 
+{
+  results res;
+
+  fetch(res, one_col, any_rows, "SELECT id FROM %q", table.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      ids.insert(hexenc<id>(res[i][0]));
+    }
 }
 
 void 
@@ -1159,6 +1166,34 @@ database::revision_exists(revision_id const & id)
   return exists(id.inner(), "revisions");
 }
 
+void 
+database::get_file_ids(set<file_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("files", tmp);
+  get_ids("file_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_manifest_ids(set<manifest_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("manifests", tmp);
+  get_ids("manifest_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_revision_ids(set<revision_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("revisions", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
 
 void 
 database::get_file_version(file_id const & id,
@@ -1348,7 +1383,7 @@ database::put_revision(revision_id const & new_id,
               new_id.inner()().c_str());
     }
 
-  check_sane_history(new_id, constants::verify_depth, *this);
+  check_sane_history(new_id, constants::verify_depth, *__app);
 
   guard.commit();
 }
@@ -1407,13 +1442,25 @@ database::get_key_ids(string const & pattern,
 }
 
 void 
-database::get_private_keys(vector<rsa_keypair_id> & privkeys)
+database::get_keys(string const & table, vector<rsa_keypair_id> & keys)
 {
-  privkeys.clear();
+  keys.clear();
   results res;
-  fetch(res, one_col, any_rows,  "SELECT id from private_keys");
+  fetch(res, one_col, any_rows,  "SELECT id from '%q'", table.c_str());
   for (size_t i = 0; i < res.size(); ++i)
-    privkeys.push_back(res[i][0]);
+    keys.push_back(res[i][0]);
+}
+
+void 
+database::get_private_keys(vector<rsa_keypair_id> & keys)
+{
+  get_keys("private_keys", keys);
+}
+
+void 
+database::get_public_keys(vector<rsa_keypair_id> & keys)
+{
+  get_keys("public_keys", keys);
 }
 
 bool 
@@ -1495,7 +1542,6 @@ database::get_key(rsa_keypair_id const & priv_id,
         priv_id().c_str());
   priv_encoded = res[0][0];
 }
-
 
 void 
 database::put_key(rsa_keypair_id const & pub_id, 
@@ -1627,6 +1673,18 @@ database::install_views()
 }
 
 void 
+database::get_certs(vector<cert> & certs,                       
+                    string const & table)
+{
+  results res;
+  fetch(res, 5, any_rows, 
+        "SELECT id, name, value, keypair, signature FROM '%q' ",
+        table.c_str());
+  results_to_certs(res, certs);
+}
+
+
+void 
 database::get_certs(hexenc<id> const & ident, 
                     vector<cert> & certs,                       
                     string const & table)
@@ -1755,7 +1813,16 @@ void database::get_revision_cert_index(std::vector< std::pair<hexenc<id>,
 }
 
 void 
-database::get_revision_certs(cert_name const & name, 
+database::get_revision_certs(vector< revision<cert> > & ts)
+{
+  vector<cert> certs;
+  get_certs(certs, "revision_certs");
+  ts.clear();
+  copy(certs.begin(), certs.end(), back_inserter(ts));  
+}
+
+void 
+database::get_revision_certs(cert_name const & name,
                             vector< revision<cert> > & ts)
 {
   vector<cert> certs;
@@ -1766,8 +1833,8 @@ database::get_revision_certs(cert_name const & name,
 
 void 
 database::get_revision_certs(revision_id const & id, 
-                            cert_name const & name, 
-                            vector< revision<cert> > & ts)
+                             cert_name const & name, 
+                             vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(id.inner(), name, certs, "revision_certs");
@@ -1777,9 +1844,9 @@ database::get_revision_certs(revision_id const & id,
 
 void 
 database::get_revision_certs(revision_id const & id, 
-                            cert_name const & name,
-                            base64<cert_value> const & val, 
-                            vector< revision<cert> > & ts)
+                             cert_name const & name,
+                             base64<cert_value> const & val, 
+                             vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(id.inner(), name, val, certs, "revision_certs");
@@ -1789,8 +1856,8 @@ database::get_revision_certs(revision_id const & id,
 
 void 
 database::get_revision_certs(cert_name const & name,
-                            base64<cert_value> const & val, 
-                            vector< revision<cert> > & ts)
+                             base64<cert_value> const & val, 
+                             vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(name, val, certs, "revision_certs");
@@ -1800,7 +1867,7 @@ database::get_revision_certs(cert_name const & name,
 
 void 
 database::get_revision_certs(revision_id const & id, 
-                            vector< revision<cert> > & ts)
+                             vector< revision<cert> > & ts)
 { 
   vector<cert> certs;
   get_certs(id.inner(), certs, "revision_certs"); 
@@ -1810,7 +1877,7 @@ database::get_revision_certs(revision_id const & id,
 
 void 
 database::get_revision_cert(hexenc<id> const & hash,
-                           revision<cert> & c)
+                            revision<cert> & c)
 {
   results res;
   vector<cert> certs;

@@ -109,10 +109,49 @@ string
 get_homedir()
 {
 #ifdef WIN32
+  // Windows is fun!
+  // See thread on monotone-devel:
+  //   Message-Id: <20050221.182951.104117563.dalcolmo@vh-s.de>
+  //   URL: http://lists.gnu.org/archive/html/monotone-devel/2005-02/msg00241.html
+  char * home;
+  L(F("Searching for home directory\n"));
+  // First try MONOTONE_HOME, to give people a way out in case the cruft below
+  // doesn't work for them.
+  home = getenv("MONOTONE_HOME");
+  if (home != NULL)
+    {
+      L(F("Home directory from MONOTONE_HOME\n"));
+      return string(home);
+    }
+  // If running under cygwin or mingw, try HOME next:
+  home = getenv("HOME");
+  char * ostype = getenv("OSTYPE");
+  if (home != NULL
+      && ostype != NULL
+      && (string(ostype) == "cygwin" || string(ostype) == "msys"))
+    {
+      L(F("Home directory from HOME\n"));
+      return string(home);
+    }
+  // Otherwise, try USERPROFILE:
+  home = getenv("USERPROFILE");
+  if (home != NULL)
+    {
+      L(F("Home directory from USERPROFILE\n"));
+      return string(home);
+    }
+  // Finally, if even that doesn't work (old version of Windows, I think?),
+  // try the HOMEDRIVE/HOMEPATH combo:
   char * homedrive = getenv("HOMEDRIVE");
   char * homepath = getenv("HOMEPATH");
-  N((homedrive!=NULL && homepath!=NULL), F("could not find home directory"));
-  return string(homedrive)+string(homepath);
+  if (homedrive != NULL && homepath != NULL)
+    {
+      L(F("Home directory from HOMEDRIVE+HOMEPATH\n"));
+      return string(homedrive) + string(homepath);
+    }
+  // And if things _still_ didn't work, give up.
+  N(false, F("could not find home directory (tried MONOTONE_HOME, HOME (if "
+              "cygwin/mingw), USERPROFILE, HOMEDRIVE/HOMEPATH"));
 #else
   char * home = getenv("HOME");
   if (home != NULL)
@@ -145,6 +184,9 @@ absolutify(string const & path)
   if (! tmp.has_root_path())
     tmp = fs::current_path() / tmp;
   I(tmp.has_root_path());
+#if BOOST_VERSION >= 103100
+      tmp = tmp.normalize();
+#endif
   return tmp.string();
 }
 
@@ -157,24 +199,24 @@ tilde_expand(string const & path)
     {
       fs::path res;
       if (*i == "~")
-	{
-	  res /= mkpath(get_homedir());
-	  ++i;
-	}
+        {
+          res /= mkpath(get_homedir());
+          ++i;
+        }
       else if (i->size() > 1 && i->at(0) == '~')
-	{
+        {
 #ifdef WIN32
-	  res /= mkpath(get_homedir());
+          res /= mkpath(get_homedir());
 #else
-	  struct passwd * pw;
-	  pw = getpwnam(i->substr(1).c_str());
-	  N(pw != NULL, F("could not find home directory user %s") % i->substr(1));
-	  res /= mkpath(string(pw->pw_dir));
+          struct passwd * pw;
+          pw = getpwnam(i->substr(1).c_str());
+          N(pw != NULL, F("could not find home directory for user %s") % i->substr(1));
+          res /= mkpath(string(pw->pw_dir));
 #endif
-	  ++i;
-	}
+          ++i;
+        }
       while (i != tmp.end())
-	res /= mkpath(*i++);
+        res /= mkpath(*i++);
       return res.string();
     }
 
@@ -188,7 +230,7 @@ book_keeping_file(fs::path const & p)
   for(path::iterator i = p.begin(); i != p.end(); ++i)
     {
       if (*i == book_keeping_dir)
-	return true;
+        return true;
     }
   return false;
 }
@@ -261,50 +303,50 @@ delete_dir_recursive(local_path const & p)
 
 void 
 move_file(file_path const & old_path,
-	  file_path const & new_path) 
+          file_path const & new_path) 
 { 
   N(file_exists(old_path), 
     F("rename source file '%s' does not exist") % old_path);
   N(! file_exists(new_path), 
     F("rename target file '%s' already exists") % new_path);
   fs::rename(localized(old_path()), 
-	     localized(new_path()));
+             localized(new_path()));
 }
 
 void 
 move_file(local_path const & old_path,
-	  local_path const & new_path) 
+          local_path const & new_path) 
 { 
   N(file_exists(old_path), 
     F("rename source file '%s' does not exist") % old_path);
   N(! file_exists(new_path), 
     F("rename target file '%s' already exists") % new_path);
   fs::rename(localized(old_path()), 
-	     localized(new_path()));
+             localized(new_path()));
 }
 
 void 
 move_dir(file_path const & old_path,
-	 file_path const & new_path) 
+         file_path const & new_path) 
 { 
   N(directory_exists(old_path), 
     F("rename source dir '%s' does not exist") % old_path);
   N(!directory_exists(new_path), 
     F("rename target dir '%s' already exists") % new_path);
   fs::rename(localized(old_path()), 
-	     localized(new_path()));
+             localized(new_path()));
 }
 
 void 
 move_dir(local_path const & old_path,
-	 local_path const & new_path) 
+         local_path const & new_path) 
 { 
   N(directory_exists(old_path), 
     F("rename source dir '%s' does not exist") % old_path);
   N(!directory_exists(new_path), 
     F("rename target dir '%s' already exists") % new_path);
   fs::rename(localized(old_path()), 
-	     localized(new_path()));
+             localized(new_path()));
 }
 
 void 
@@ -331,7 +373,7 @@ make_dir_for(file_path const & p)
 
 static void 
 read_data_impl(fs::path const & p,
-	       data & dat)
+               data & dat)
 {
   if (!fs::exists(p))
     throw oops("file '" + p.string() + "' does not exist");
@@ -340,7 +382,7 @@ read_data_impl(fs::path const & p,
     throw oops("file '" + p.string() + "' cannot be read as data; it is a directory");
   
   ifstream file(p.string().c_str(),
-		ios_base::in | ios_base::binary);
+                ios_base::in | ios_base::binary);
   string in;
   if (!file)
     throw oops(string("cannot open file ") + p.string() + " for reading");
@@ -362,7 +404,7 @@ read_data(file_path const & path, data & dat)
 
 void 
 read_data(local_path const & path,
-	  base64< gzip<data> > & dat)
+          base64< gzip<data> > & dat)
 {
   data data_plain;
   read_data_impl(localized(path()), data_plain);
@@ -374,15 +416,15 @@ read_data(local_path const & path,
 
 void 
 read_data(file_path const & path, 
-	  base64< gzip<data> > & dat)
+          base64< gzip<data> > & dat)
 { 
   read_data(local_path(path()), dat); 
 }
 
 void 
 read_localized_data(file_path const & path,
-		    base64< gzip<data> > & dat,
-		    lua_hooks & lua)
+                    base64< gzip<data> > & dat,
+                    lua_hooks & lua)
 {
   data data_plain;
   read_localized_data(path, data_plain, lua);
@@ -394,17 +436,17 @@ read_localized_data(file_path const & path,
 
 void 
 read_localized_data(file_path const & path, 
-		    data & dat, 
-		    lua_hooks & lua)
+                    data & dat, 
+                    lua_hooks & lua)
 {
   string db_linesep, ext_linesep;
   string db_charset, ext_charset;
   
   bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep) 
-		      && db_linesep != ext_linesep);
+                      && db_linesep != ext_linesep);
 
   bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset) 
-		      && db_charset != ext_charset);
+                      && db_charset != ext_charset);
 
   data tdat;
   read_data(path, tdat);
@@ -428,7 +470,7 @@ read_localized_data(file_path const & path,
 
 static void 
 write_data_impl(fs::path const & p,
-		data const & dat)
+                data const & dat)
 {  
   if (fs::exists(p) && fs::is_directory(p))
     throw oops("file '" + p.string() + "' cannot be over-written as data; it is a directory");
@@ -445,7 +487,7 @@ write_data_impl(fs::path const & p,
   {
     // data.tmp opens
     ofstream file(tmp.string().c_str(),
-		  ios_base::out | ios_base::trunc | ios_base::binary);
+                  ios_base::out | ios_base::trunc | ios_base::binary);
     if (!file)
       throw oops(string("cannot open file ") + tmp.string() + " for writing");    
     CryptoPP::StringSource s(dat(), true, new CryptoPP::FileSink(file));
@@ -474,17 +516,17 @@ write_data(file_path const & path, data const & dat)
 
 void 
 write_localized_data(file_path const & path, 
-		     data const & dat, 
-		     lua_hooks & lua)
+                     data const & dat, 
+                     lua_hooks & lua)
 {
   string db_linesep, ext_linesep;
   string db_charset, ext_charset;
   
   bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep) 
-		      && db_linesep != ext_linesep);
+                      && db_linesep != ext_linesep);
 
   bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset) 
-		      && db_charset != ext_charset);
+                      && db_charset != ext_charset);
   
   string tmp1, tmp2;
   tmp2 = dat();
@@ -499,8 +541,8 @@ write_localized_data(file_path const & path,
 
 void 
 write_localized_data(file_path const & path,
-		     base64< gzip<data> > const & dat,
-		     lua_hooks & lua)
+                     base64< gzip<data> > const & dat,
+                     lua_hooks & lua)
 {
   gzip<data> data_decoded;
   data data_decompressed;      
@@ -511,7 +553,7 @@ write_localized_data(file_path const & path,
 
 void 
 write_data(local_path const & path,
-	   base64< gzip<data> > const & dat)
+           base64< gzip<data> > const & dat)
 {
   gzip<data> data_decoded;
   data data_decompressed;      
@@ -522,7 +564,7 @@ write_data(local_path const & path,
 
 void 
 write_data(file_path const & path,
-	   base64< gzip<data> > const & dat)
+           base64< gzip<data> > const & dat)
 { 
   write_data(local_path(path()), dat); 
 }
@@ -532,8 +574,8 @@ tree_walker::~tree_walker() {}
 
 static void 
 walk_tree_recursive(fs::path const & absolute,
-		    fs::path const & relative,
-		    tree_walker & walker)
+                    fs::path const & relative,
+                    tree_walker & walker)
 {
   fs::directory_iterator ei;
   for(fs::directory_iterator di(absolute);
@@ -543,37 +585,37 @@ walk_tree_recursive(fs::path const & absolute,
       fs::path rel_entry = relative / mkpath(entry.leaf());
       
       if (book_keeping_file (entry))
-	continue;
+        continue;
       
       if (!fs::exists(entry) 
-	  || di->string() == "." 
-	  || di->string() == "..") 
-	;			// ignore
+          || di->string() == "." 
+          || di->string() == "..") 
+        ;                       // ignore
       else if (fs::is_directory(entry))
-	walk_tree_recursive(entry, rel_entry, walker);
+        walk_tree_recursive(entry, rel_entry, walker);
       else
-	{
-	  file_path p;
-	  try 
-	    {
-	      p = file_path(rel_entry.string());
-	    }
-	  catch (std::runtime_error const & c)
-	    {
-	      L(F("caught runtime error %s constructing file path for %s\n") 
-		% c.what() % rel_entry.string());
-	      continue;
-	    }	  
-	  walker.visit_file(p);
-	}
+        {
+          file_path p;
+          try 
+            {
+              p = file_path(rel_entry.string());
+            }
+          catch (std::runtime_error const & c)
+            {
+              L(F("caught runtime error %s constructing file path for %s\n") 
+                % c.what() % rel_entry.string());
+              continue;
+            }     
+          walker.visit_file(p);
+        }
     }
 }
 
 // from some (safe) sub-entry of cwd
 void 
 walk_tree(file_path const & path,
-	  tree_walker & walker,
-	  bool require_existing_path)
+          tree_walker & walker,
+          bool require_existing_path)
 {
   if (fs::exists(localized(path())))
     {
@@ -589,14 +631,14 @@ walk_tree(file_path const & path,
   else
     {
       if (require_existing_path)
-	{
-	  N(false,
-	    F("no such file or directory: %s") % path());
-	}
+        {
+          N(false,
+            F("no such file or directory: %s") % path());
+        }
       else
-	{
-	  walker.visit_file(path);
-	}
+        {
+          walker.visit_file(path);
+        }
     }
 }
 

@@ -27,7 +27,7 @@ static modeLookup modesel[] =
 	{'r',					S_IRUSR},
 	{'w',					S_IWUSR},
 	{'x',					S_IXUSR},
-	
+
 	{'r',					S_IRGRP},
 	{'w',					S_IWGRP},
 	{'x',					S_IXGRP},
@@ -35,6 +35,7 @@ static modeLookup modesel[] =
 	{'r',					S_IROTH},
 	{'w',					S_IWOTH},
 	{'x',					S_IXOTH},
+
 	{(char)NULL, 					(mode_t)-1} /* do not delete this line */
 };
 

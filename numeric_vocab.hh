@@ -8,7 +8,7 @@
 
 #include <limits>
 
-#include <stdint.h>
+#include "mt-stdint.h"
 #include <boost/static_assert.hpp>
 
 typedef uint8_t u8;

@@ -29,6 +29,7 @@ do
   FSHA=`cat fsha-$i`
 
   AT_CHECK(MONOTONE cat file $FSHA, [], [stdout])
+  AT_CHECK(CANONICALISE(stdout))
   AT_CHECK(cmp stdout testfile, [], [ignore])
 
   AT_CHECK(rm -rf MT)

@@ -8,7 +8,7 @@ MOST_SOURCES =								\
          xdelta.cc ui.cc schema_migration.cc				\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
-	 change_set.cc mt_version.cc automate.cc			\
+	 change_set.cc mt_version.cc automate.cc database_check.cc	\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -19,7 +19,8 @@ MOST_SOURCES =								\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
-         mkstemp.hh mt_version.hh automate.hh
+	 mkstemp.hh mt_version.hh automate.hh database_check.hh smap.hh	\
+	 gettext.h
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -98,8 +99,7 @@ LUA_SOURCES = \
 	lua/lopcodes.h lua/lparser.c lua/lparser.h lua/lstate.c lua/lstate.h \
 	lua/lstring.c lua/lstring.h lua/lstrlib.c lua/ltable.c lua/ltable.h \
 	lua/ltablib.c lua/ltests.c lua/ltm.c lua/ltm.h lua/lua.h lua/lualib.h \
-	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h \
-	lua/lposix.c 
+	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h
 
 IDNA_SOURCES = \
 	idna/gunibreak.h idna/gunidecomp.h idna/idna.h idna/nfkc.c	\
@@ -108,10 +108,10 @@ IDNA_SOURCES = \
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
 UNIX_PLATFORM_SOURCES = \
-	unix/read_password.cc unix/get_system_flavour.cc
+	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc
 
 WIN32_PLATFORM_SOURCES = \
-	win32/read_password.cc win32/get_system_flavour.cc
+	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc
 
 # primaries
 
@@ -267,8 +267,7 @@ TESTS = unit_tests $(srcdir)/testsuite
 mostlyclean-local:
 	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
 
-DISTCLEANFILES = tests/atconfig \
-                 idna/idn-int.h 
+DISTCLEANFILES = tests/atconfig mt-stdint.h
 
 # distcheck stuff
 
@@ -354,8 +353,11 @@ monotone.html: monotone.texi texinfo.css
 	makeinfo --no-split --no-headers --output $@ --html $<
 	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
 
+# The .perlbak thing is needed, otherwise the perl executions fails on MinGW
+
 html: monotone.texi texinfo.css
 	mkdir -p html
 	makeinfo --number-sections --html --output html $<
-	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
+	rm -f html/*.perlbak
 	cp texinfo.css html

@@ -45,7 +45,7 @@ public:
   void create_working_copy(std::string const & dir);
 
   file_path prefix(utf8 const & path);
-  void add_restriction(utf8 const & path);
+  void set_restriction(path_set const & valid_paths, std::vector<utf8> const & paths);
   bool restriction_includes(file_path const & path);
 
   void set_branch(utf8 const & name);

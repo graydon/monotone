@@ -1216,10 +1216,10 @@ import_states_recursive(ticker & n_edges,
         continue;
 
       revision_set rev;
-      change_set cs;
-      build_change_set(i->second, parent_map, cvs, cs);
+      boost::shared_ptr<change_set> cs(new change_set());
+      build_change_set(i->second, parent_map, cvs, *cs);
 
-      apply_change_set(cs, child_map);
+      apply_change_set(*cs, child_map);
       calculate_ident(child_map, child_mid);
 
       rev.new_manifest = child_mid;
@@ -1238,7 +1238,7 @@ import_states_recursive(ticker & n_edges,
                                 cvs, app, revisions, depth+1);
 
       // now apply same change set to parent_map, making parent_map == child_map
-      apply_change_set(cs, parent_map);
+      apply_change_set(*cs, parent_map);
       parent_mid = child_mid;
       parent_rid = child_rid;
       ++n_edges;
@@ -1255,17 +1255,7 @@ import_cvs_repo(fs::path const & cvsroot,
     rsa_keypair_id key;
     N(guess_default_key(key,app),
       F("no unique private key for cert construction"));
-    N(priv_key_exists(app, key),
-      F("no private key '%s' found in database or get_priv_key hook") % key);
-    // Require the password early on, so that we don't do lots of work
-    // and then die.
-    N(app.db.public_key_exists(key),
-      F("no public key '%s' found in database") % key);
-    base64<rsa_pub_key> pub;
-    app.db.get_key(key, pub);
-    base64< arc4<rsa_priv_key> > priv;
-    load_priv_key(app, key, priv);
-    require_password(app.lua, key, pub, priv);
+    require_password(key, app);
   }
 
   cvs_history cvs;

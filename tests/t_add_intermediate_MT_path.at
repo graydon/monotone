@@ -1,0 +1,40 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([add file with intermediate MT path element])
+
+MONOTONE_SETUP
+
+AT_CHECK(mkdir -p dir1/MT)
+AT_CHECK(mkdir -p dir2)
+AT_CHECK(mkdir -p dir3)
+
+# this test is a bug report. files with intermediate MT path elements 
+# should be allowed.
+
+AT_XFAIL_IF(true)
+
+# Check both implicit recursive add...
+AT_DATA(dir1/MT/testfile1, [testfile 1
+])
+AT_DATA(dir2/MT, [MT file 1
+])
+AT_CHECK(MONOTONE add dir1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add dir2, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+# ...and explicit add.
+AT_DATA(dir1/MT/testfile2, [testfile 2
+])
+AT_DATA(dir3/MT, [MT file 2
+])
+AT_CHECK(MONOTONE add dir1/MT/testfile2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add dir2/MT, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE checkout `BASE_REVISION` outdir, [], [ignore], [ignore])
+AT_CHECK(cmp dir1/MT/testfile1, outdir/dir1/MT/testfile1)
+AT_CHECK(cmp dir1/MT/testfile2, outdir/dir1/MT/testfile2)
+AT_CHECK(cmp dir2/MT, outdir/dir2/MT)
+AT_CHECK(cmp dir3/MT, outdir/dir3/MT)
+
+AT_CLEANUP

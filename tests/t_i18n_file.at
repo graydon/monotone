@@ -10,20 +10,26 @@ EUROPEAN_8859_1=`printf "\xF6\xE4\xFC\xDF"`
 JAPANESE_UTF8=`printf "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"`
 JAPANESE_EUC_JP=`printf "\xA4\xC6\xA4\xB9\xA4\xC8"`
 
+if test "$OSTYPE" == "msys"; then
+  FUNNY_FILENAME="file+name-with_funny@symbols%etc"
+else
+  FUNNY_FILENAME="file+name-with_funny@symbols%etc:"
+fi
+
 AT_CHECK(mkdir tmp)
 AT_CHECK(touch "tmp/file name with spaces", [], [ignore], [ignore])
-AT_CHECK(touch "tmp/file+name-with_funny@symbols%etc:", [], [ignore], [ignore])
+AT_CHECK(touch "tmp/$FUNNY_FILENAME", [], [ignore], [ignore])
 AT_CHECK(touch "tmp/$EUROPEAN_UTF8", [], [ignore], [ignore])
 AT_CHECK(touch "tmp/$JAPANESE_UTF8", [], [ignore], [ignore])
 AT_CHECK(touch "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
 AT_CHECK(touch "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE add "tmp/file name with spaces", [], [ignore], [ignore])
-AT_CHECK(MONOTONE add "tmp/file+name-with_funny@symbols%etc:", [], [ignore], [ignore])
+AT_CHECK(MONOTONE add "tmp/$FUNNY_FILENAME", [], [ignore], [ignore])
 
 # add some files with UTF8 names
-export LANG=en_US.utf8
-export CHARSET=utf8
+export LANG=en_US.utf-8
+export CHARSET=utf-8
 AT_CHECK(MONOTONE add "tmp/$EUROPEAN_UTF8", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_UTF8", [], [ignore], [ignore])
 
@@ -40,15 +46,15 @@ AT_CHECK(grep $EUROPEAN_UTF8 manifest, [], [ignore], [ignore])
 
 # remove the UTF8 files, change locales, and add them again. both should work.
 
-export LANG=de_DE.iso88591
-export CHARSET=iso88591
+export LANG=de_DE.iso-8859-1
+export CHARSET=iso-8859-1
 AT_CHECK(MONOTONE drop "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding european name in ISO 8859-1', [], [ignore], [ignore])
 
-export LANG=ja_JP.eucjp
-export CHARSET=eucjp
+export LANG=ja_JP.euc-jp
+export CHARSET=euc-jp
 AT_CHECK(MONOTONE drop "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 

@@ -17,6 +17,7 @@ AT_CHECK(MONOTONE fload <right, [], [ignore], [ignore])
 LEFT_SHA=`SHA1(left)`
 RIGHT_SHA=`SHA1(right)`
 AT_CHECK(MONOTONE fmerge $LEFT_SHA $LEFT_SHA $RIGHT_SHA, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp right stdout)
 
 AT_CLEANUP

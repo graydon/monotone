@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/exception.hpp>
 #include <boost/version.hpp>
 
 #include "constants.hh"
@@ -97,9 +98,13 @@ verify(local_path & val)
       p = p.normalize();
 #endif
     }
-  catch (std::runtime_error &e)
+  catch (std::runtime_error &re)
     {
-      throw informative_failure(e.what());
+      throw informative_failure(re.what());
+    }
+  catch (fs::filesystem_error &fse)
+    {
+      throw informative_failure(fse.what());
     }
 
   N(! (p.has_root_path() || p.has_root_name() || p.has_root_directory()),
@@ -111,7 +116,7 @@ verify(local_path & val)
         F("empty path component in '%s'") % val);
 
       N((*i != ".."),
-	F("prohibited path component '%s' in '%s'") % *i % val);
+        F("prohibited path component '%s' in '%s'") % *i % val);
 
       string::size_type pos = i->find_first_of(constants::illegal_path_bytes);
       N(pos == string::npos,
@@ -234,12 +239,14 @@ static void test_file_path_verification()
 {
   char const * baddies [] = {"../escape",
                              "foo/../../escape",
-                             "foo//nonsense",
                              "/rooted",
+                             "foo//nonsense",
 #ifdef _WIN32
                              "c:\\windows\\rooted",
                              "c:/windows/rooted",
                              "c:thing",
+                             "//unc/share",
+                             "//unc",
 #endif
                              0 };
   
@@ -255,13 +262,13 @@ static void test_file_path_verification()
     }
   
   char const * goodies [] = {"unrooted", 
-			     "unrooted.txt",
-			     "fun_with_underscore.png",
-			     "fun-with-hyphen.tiff", 
- 			     "unrooted/../unescaping",
-			     "unrooted/general/path",
+                             "unrooted.txt",
+                             "fun_with_underscore.png",
+                             "fun-with-hyphen.tiff", 
+                             "unrooted/../unescaping",
+                             "unrooted/general/path",
                              "here/..",
-			     0 };
+                             0 };
 
   for (char const ** c = goodies; *c; ++c)
     BOOST_CHECK_NOT_THROW(file_path p(*c), informative_failure);

@@ -94,7 +94,9 @@ class database
                     hexenc<id> const & base,
                     std::string const & table);
 
-  int count(std::string const & table);
+  unsigned long count(std::string const & table);
+
+  void get_ids(std::string const & table, std::set< hexenc<id> > & ids); 
 
   void get(hexenc<id> const & new_id,
            base64< gzip<data> > & dat,
@@ -128,35 +130,40 @@ class database
                            std::string const & data_table,
                            std::string const & delta_table);
 
+  void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
+
   bool cert_exists(cert const & t,
                   std::string const & table);
   void put_cert(cert const & t, std::string const & table);  
   void results_to_certs(results const & res,
                        std::vector<cert> & certs);
 
+  void get_certs(std::vector< cert > & certs,
+                 std::string const & table);  
+
   void get_certs(hexenc<id> const & id, 
-                std::vector< cert > & certs,
-                std::string const & table);  
+                 std::vector< cert > & certs,
+                 std::string const & table);  
 
   void get_certs(cert_name const & name,              
-                std::vector< cert > & certs,
-                std::string const & table);
+                 std::vector< cert > & certs,
+                 std::string const & table);
 
   void get_certs(hexenc<id> const & id,
-                cert_name const & name,
-                std::vector< cert > & certs,
-                std::string const & table);  
+                 cert_name const & name,
+                 std::vector< cert > & certs,
+                 std::string const & table);  
 
   void get_certs(hexenc<id> const & id,
-                cert_name const & name,
-                base64<cert_value> const & val, 
-                std::vector< cert > & certs,
-                std::string const & table);  
+                 cert_name const & name,
+                 base64<cert_value> const & val, 
+                 std::vector< cert > & certs,
+                 std::string const & table);  
 
   void get_certs(cert_name const & name,
-                base64<cert_value> const & val, 
-                std::vector<cert> & certs,
-                std::string const & table);
+                 base64<cert_value> const & val, 
+                 std::vector<cert> & certs,
+                 std::string const & table);
 
   void begin_transaction();
   void commit_transaction();
@@ -175,7 +182,6 @@ public:
 
   database(fs::path const & file);
 
-  unsigned long get_statistic(std::string const & query);
   void set_filename(fs::path const & file);
   void initialize();
   void debug(std::string const & sql, std::ostream & out);
@@ -190,6 +196,11 @@ public:
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
   bool revision_exists(revision_id const & id);
+
+  void get_file_ids(std::set<file_id> & ids);
+  void get_manifest_ids(std::set<manifest_id> & ids);
+  void get_revision_ids(std::set<revision_id> & ids);
+
   void set_app(app_state * app);
   
   // get plain version if it exists, or reconstruct version
@@ -281,6 +292,7 @@ public:
                    std::vector<rsa_keypair_id> & privkeys);
 
   void get_private_keys(std::vector<rsa_keypair_id> & privkeys);
+  void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
 
   bool key_exists(rsa_keypair_id const & id);
 
@@ -325,24 +337,26 @@ public:
   void get_revision_cert_index(std::vector< std::pair<hexenc<id>,
                                std::pair<revision_id, rsa_keypair_id> > > & idx);
 
+  void get_revision_certs(std::vector< revision<cert> > & certs);
+
   void get_revision_certs(cert_name const & name, 
-                         std::vector< revision<cert> > & certs);
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_certs(revision_id const & id, 
-                         cert_name const & name, 
-                         std::vector< revision<cert> > & certs);
+                          cert_name const & name, 
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_certs(cert_name const & name,
-                         base64<cert_value> const & val, 
-                         std::vector< revision<cert> > & certs);
+                          base64<cert_value> const & val, 
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_certs(revision_id const & id, 
-                         cert_name const & name, 
-                         base64<cert_value> const & value,
-                         std::vector< revision<cert> > & certs);
+                          cert_name const & name, 
+                          base64<cert_value> const & value,
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_certs(revision_id const & id, 
-                         std::vector< revision<cert> > & certs);
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_cert(hexenc<id> const & hash,
                          revision<cert> & cert);

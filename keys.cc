@@ -440,17 +440,23 @@ key_hash_code(rsa_keypair_id const & id,
 }
 
 void
-require_password(lua_hooks & lua,
-                 rsa_keypair_id const & key,
-                 base64<rsa_pub_key> const & pubkey,
-                 base64< arc4<rsa_priv_key> > const & privkey)
+require_password(rsa_keypair_id const & key,
+                 app_state & app)
 {
-  if (lua.hook_persist_phrase_ok())
+  N(priv_key_exists(app, key),
+    F("no private key '%s' found in database or get_priv_key hook") % key);
+  N(app.db.public_key_exists(key),
+    F("no public key '%s' found in database") % key);
+  base64<rsa_pub_key> pub;
+  app.db.get_key(key, pub);
+  base64< arc4<rsa_priv_key> > priv;
+  load_priv_key(app, key, priv);
+  if (app.lua.hook_persist_phrase_ok())
     {
       string plaintext("hi maude");
       base64<rsa_sha1_signature> sig;
-      make_signature(lua, key, privkey, plaintext, sig);
-      N(check_signature(lua, key, pubkey, plaintext, sig),
+      make_signature(app.lua, key, priv, plaintext, sig);
+      N(check_signature(app.lua, key, pub, plaintext, sig),
         F("passphrase for '%s' is incorrect") % key);
     }
 }

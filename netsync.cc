@@ -355,12 +355,12 @@ session
                                id const & item);
 
   bool merkle_node_exists(netcmd_item_type type,
-                          utf8 const & collection,			
+                          utf8 const & collection,                      
                           size_t level,
                           prefix const & pref);
 
   void load_merkle_node(netcmd_item_type type,
-                        utf8 const & collection,			
+                        utf8 const & collection,                        
                         size_t level,
                         prefix const & pref,
                         merkle_ptr & node);
@@ -876,7 +876,7 @@ session::request_fwd_revisions(revision_id const & i,
         }
 
       // check out each file delta edge
-      change_set const & an_attached_cset = an_attached_edge->second.second;
+      change_set const & an_attached_cset = edge_changes(an_attached_edge);
       for (change_set::delta_map::const_iterator k = an_attached_cset.deltas.begin();
            k != an_attached_cset.deltas.end(); ++k)
         {
@@ -2485,7 +2485,7 @@ session::process_nonexistant_cmd(netcmd_item_type type,
 
 bool
 session::merkle_node_exists(netcmd_item_type type,
-                            utf8 const & collection,			
+                            utf8 const & collection,                    
                             size_t level,
                             prefix const & pref)
 {
@@ -2500,7 +2500,7 @@ session::merkle_node_exists(netcmd_item_type type,
 
 void 
 session::load_merkle_node(netcmd_item_type type,
-                          utf8 const & collection,			
+                          utf8 const & collection,                      
                           size_t level,
                           prefix const & pref,
                           merkle_ptr & node)

@@ -1,0 +1,12 @@
+AT_SETUP([command completion])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE status, [], [ignore], [ignore])
+AT_CHECK(MONOTONE st, [], [ignore], [ignore])
+AT_CHECK(MONOTONE s, [1], [ignore], [ignore])
+
+AT_CHECK(MONOTONE diff, [], [ignore], [ignore])
+AT_CHECK(MONOTONE dif, [], [ignore], [ignore])
+AT_CHECK(MONOTONE di, [1], [ignore], [ignore])
+
+AT_CLEANUP

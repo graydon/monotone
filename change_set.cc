@@ -13,7 +13,6 @@
 #include <iostream>
 #include <list>
 #include <vector>
-#include <ext/hash_map>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
@@ -27,6 +26,7 @@
 #include "interner.hh"
 #include "numeric_vocab.hh"
 #include "sanity.hh"
+#include "smap.hh"
 
 // our analyses in this file happen on one of two families of
 // related structures: a path_analysis or a directory_map.
@@ -42,7 +42,7 @@
 // path_analysis.
 
 typedef enum { ptype_directory, ptype_file } ptype;
-typedef u64 tid;
+typedef u32 tid;
 static tid root_tid = 0;
 
 struct
@@ -50,10 +50,10 @@ tid_source
 {
   tid ctr;
   tid_source() : ctr(root_tid + 1) {}
-  tid next() { I(ctr != UINT64_C(0xffffffffffffffff)); return ctr++; }
+  tid next() { I(ctr != UINT32_C(0xffffffff)); return ctr++; }
 };
 
-typedef unsigned long path_component;
+typedef u32 path_component;
 
 struct
 path_component_maker
@@ -118,8 +118,8 @@ template<typename T> struct identity
   }
 };
 
-typedef __gnu_cxx::hash_map<tid, path_item, identity<tid> > path_state;
-typedef __gnu_cxx::hash_map<tid, tid, identity<tid> > state_renumbering;
+typedef smap<tid, path_item> path_state;
+typedef smap<tid, tid> state_renumbering;
 typedef std::pair<path_state, path_state> path_analysis;
 
 // nulls and tests
@@ -137,12 +137,8 @@ static file_id null_ident;
 //               name -> (ptype, tid),
 //               ...                  ]
 
-typedef __gnu_cxx::hash_map<path_component, 
-                            std::pair<ptype,tid>,
-                            identity<path_component> > directory_node;
-
-typedef __gnu_cxx::hash_map<tid, boost::shared_ptr<directory_node>,
-                            identity<tid> > directory_map;
+typedef smap< path_component, std::pair<ptype,tid> > directory_node;
+typedef smap<tid, boost::shared_ptr<directory_node> > directory_map;
 
 static path_component
 directory_entry_name(directory_node::const_iterator const & i)
@@ -548,19 +544,19 @@ sanity_check_path_item(path_item const & pi)
 static void
 confirm_proper_tree(path_state const & ps)
 {
-  std::set<tid> confirmed;
+  smap<tid,bool> confirmed;
   I(ps.find(root_tid) == ps.end());
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       tid curr = i->first;
       path_item item = i->second;
-      std::set<tid> ancs; 
+      smap<tid,bool> ancs; 
 
       while (confirmed.find(curr) == confirmed.end())
         {             
           sanity_check_path_item(item);
           I(ancs.find(curr) == ancs.end());
-          ancs.insert(curr);
+          ancs.insert(std::make_pair(curr,true));
           if (path_item_parent(item) == root_tid)
             break;
           else
@@ -586,7 +582,7 @@ confirm_proper_tree(path_state const & ps)
 static void
 confirm_unique_entries_in_directories(path_state const & ps)
 {  
-  std::set< std::pair<tid,path_component> > entries;
+  smap<std::pair<tid,path_component>, bool> entries;
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       if (null_name(path_item_name(i->second)))
@@ -598,7 +594,7 @@ confirm_unique_entries_in_directories(path_state const & ps)
       std::pair<tid,path_component> p = std::make_pair(path_item_parent(i->second), 
                                                        path_item_name(i->second));
       I(entries.find(p) == entries.end());
-      entries.insert(p);
+      entries.insert(std::make_pair(p,true));
     }
 }
 
@@ -2638,7 +2634,35 @@ apply_change_set(manifest_map const & old_man,
     }
 }
 
-// quick, optimistic and destructive version for log walker
+// quick, optimistic and destructive version
+void
+apply_path_rearrangement(change_set::path_rearrangement const & pr,
+                         path_set & ps)
+{
+  pr.check_sane();
+  if (pr.added_files.empty()
+      && pr.renamed_files.empty() 
+      && pr.renamed_dirs.empty()
+      && pr.deleted_dirs.empty())
+    {
+      // fast path for simple drop-or-nothing file operations
+      for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
+           i != pr.deleted_files.end(); ++i)
+        {
+          I(ps.find(*i) != ps.end());
+          ps.erase(*i);
+        }
+    }
+  else
+    {
+      // fall back to the slow way
+      path_set tmp;
+      apply_path_rearrangement(ps, pr, tmp);
+      ps = tmp;
+    }
+}
+
+// quick, optimistic and destructive version
 file_path
 apply_change_set_inverse(change_set const & cs,
                          file_path const & file_in_second)
@@ -2655,17 +2679,18 @@ apply_change_set_inverse(change_set const & cs,
   return file_in_first;
 }
 
-// quick, optimistic and destructive version for rcs importer
+// quick, optimistic and destructive version 
 void
 apply_change_set(change_set const & cs,
                  manifest_map & man)
 {
   cs.check_sane();
-  if (cs.rearrangement.renamed_files.empty() 
+  if (cs.rearrangement.added_files.empty() 
+      && cs.rearrangement.renamed_files.empty() 
       && cs.rearrangement.renamed_dirs.empty()
       && cs.rearrangement.deleted_dirs.empty())
     {
-      // fast path for simple drop/add/delta file operations
+      // fast path for simple drop/delta file operations
       for (std::set<file_path>::const_iterator i = cs.rearrangement.deleted_files.begin();
            i != cs.rearrangement.deleted_files.end(); ++i)
         {

@@ -12,13 +12,10 @@ function temp_file()
 end
 
 function execute(path, ...)   
-   local pid = posix.fork()
+   local pid
    local ret = -1
-   if pid == 0 then
-      posix.exec(path, unpack(arg))
-   else
-      ret, pid = posix.wait(pid)
-   end
+   pid = spawn(path, unpack(arg))
+   ret, pid = wait(pid)
    return ret
 end
 
@@ -39,7 +36,7 @@ end
 attr_functions["execute"] = 
    function(filename, value) 
       if (value == "true") then
-         posix.chmod(filename, "u+x")
+         make_executable(filename)
       end
    end
 
@@ -240,7 +237,7 @@ function read_contents_of_file(filename)
 end
 
 function program_exists_in_path(program)
-   return execute("which", program) == 0
+   return existsonpath(program) == 0
 end
 
 function merge2(left_path, right_path, merged_path, left, right)
@@ -272,7 +269,7 @@ function merge2(left_path, right_path, merged_path, left, right)
          cmd = merge2_emacs_cmd("emacs", lfile, rfile, outfile)
       elseif program_exists_in_path("xemacs") then
          cmd = merge2_emacs_cmd("xemacs", lfile, rfile, outfile)
-      elseif program_exists_in_path("gvim") then
+      elseif os.getenv("DISPLAY") ~=nil and program_exists_in_path("gvim") then
          cmd = merge2_vim_cmd("gvim", lfile, rfile, outfile)
       elseif program_exists_in_path("vim") then
          cmd = merge2_vim_cmd("vim", lfile, rfile, outfile)
@@ -335,7 +332,7 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
          cmd = merge3_emacs_cmd("emacs", lfile, afile, rfile, outfile)
       elseif program_exists_in_path("xemacs") then
          cmd = merge3_emacs_cmd("xemacs", lfile, afile, rfile, outfile)
-      elseif program_exists_in_path("gvim") then
+      elseif os.getenv("DISPLAY") ~=nil and program_exists_in_path("gvim") then
          cmd = merge3_vim_cmd("gvim", lfile, afile, rfile, outfile)
       elseif program_exists_in_path("vim") then
          cmd = merge3_vim_cmd("vim", lfile, afile, rfile, outfile)

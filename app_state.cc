@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#ifdef WIN32
+#include <io.h> /* for chdir() */
+#endif
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -126,22 +129,41 @@ file_path
 app_state::prefix(utf8 const & path)
 {
   fs::path p1 = mkpath(relative_directory()) / mkpath(path());
-  file_path p2(p1.normalize().native_directory_string());
+  file_path p2(p1.normalize().string());
   L(F("'%s' prefixed to '%s'\n") % path() % p2());
   return p2;
 }
 
 void 
-app_state::add_restriction(utf8 const & path)
+app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & paths)
 {
-  file_path p = prefix(path);
-  L(F("'%s' added to restricted path set\n") % p());
-  restrictions.insert(p);
+  // this can't be a file-global static, because file_path's initializer
+  // depends on another global static being defined.
+  static file_path dot(".");
+  for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      file_path p = prefix(*i);
+
+      if (lua.hook_ignore_file(p)) 
+        {
+          L(F("'%s' ignored by restricted path set\n") % p());
+          continue;
+        }
+
+      N(p == dot || valid_paths.find(p) != valid_paths.end(),
+        F("unknown path '%s'\n") % p());
+
+      L(F("'%s' added to restricted path set\n") % p());
+      restrictions.insert(p);
+    }
 }
 
 bool
 app_state::restriction_includes(file_path const & path)
 {
+  // this can't be a file-global static, because file_path's initializer
+  // depends on another global static being defined.
+  static file_path dot(".");
   if (restrictions.empty()) 
     {
       L(F("empty restricted path set; '%s' included\n") % path());
@@ -153,7 +175,7 @@ app_state::restriction_includes(file_path const & path)
   // careful about what goes in to the restricted path set we just
   // check for this special case here.
 
-  if (restrictions.find(file_path(".")) != restrictions.end())
+  if (restrictions.find(dot) != restrictions.end())
     {
       L(F("restricted path set cleared; '%s' included\n") % path());
       return true;

@@ -1,0 +1,39 @@
+AT_SETUP([diff respects restrictions])
+MONOTONE_SETUP
+
+ADD_FILE(file1, [1: data 1
+])
+ADD_FILE(file2, [2: data 1
+])
+COMMIT(testbranch)
+REV0=`BASE_REVISION`
+
+AT_DATA(file1, [1: data 2
+])
+AT_DATA(file2, [2: data 2
+])
+COMMIT(testbranch)
+REV1=`BASE_REVISION`
+
+AT_DATA(file1, [1: data 3
+])
+AT_DATA(file2, [2: data 3
+])
+
+AT_CHECK(MONOTONE diff file1, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
+AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
+
+AT_CHECK(MONOTONE diff --revision=$REV0 file1, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
+AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
+
+AT_CHECK(MONOTONE diff --revision=$REV0 --revision=$REV1 file1, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
+AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
+
+AT_CHECK(MONOTONE diff --revision=$REV1 --revision=$REV0 file1, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
+AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
+
+AT_CLEANUP
