@@ -430,7 +430,7 @@ struct feed_packet_consumer
 
 static size_t extract_packets(string const & s, packet_consumer & cons)
 {  
-  string const ident("([0-9a-f]{40})");
+  string const ident("([[:xdigit:]]{40})");
   string const sp("[[:space:]]+");
   string const bra("\\[");
   string const ket("\\]");
@@ -438,8 +438,8 @@ static size_t extract_packets(string const & s, packet_consumer & cons)
   string const datahead("(mdata|fdata)");
   string const deltahead("(mdelta|fdelta)");
   string const keyhead("(pubkey|privkey)");
-  string const key("([-a-zA-Z0-9_\\.@]+)");
-  string const certname("([-a-zA-Z0-9_\\.@]+)");
+  string const key("([-a-zA-Z0-9\\.@]+)");
+  string const certname("([-a-zA-Z0-9]+)");
   string const base64("([a-zA-Z0-9+/=[:space:]]+)");
   string const end("\\[end\\]");
   string const data = bra + datahead + sp + ident + ket + base64 + end; 

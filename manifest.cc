@@ -115,7 +115,7 @@ struct add_to_manifest_map
 void read_manifest_map(data const & dat,
 		       manifest_map & man)
 {
-  regex expr("^[[:blank:]]*([[:xdigit:]]{40})[[:blank:]]+([^[:space:]]+)");
+  regex expr("^([[:xdigit:]]{40})  ([^[:space:]].+)$");
   regex_grep(add_to_manifest_map(man), dat(), expr, match_not_dot_newline);  
 }
 

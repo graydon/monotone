@@ -26,3 +26,7 @@ end
 function get_news_sender(url, group)
 	return "tester@test.com"
 end
+
+function get_system_charset()
+	return "UTF-8"
+end

@@ -183,6 +183,107 @@ struct URI : public grammar<URI, result_closure<uri>::context_t>
 } uri_g;
 
 
+struct UTF_URI : public grammar<UTF_URI, result_closure<uri>::context_t>
+{
+  template <typename ScannerT> struct definition 
+  {
+    // UTF_URI differs from URI in that UTF_URI is applied to raw (un-encoded)
+    // UTF-8 strings. these are *not* valid RFC2396-et-al URIs; rather they are
+    // strings users types in, post-charset-conversion. parsing them is coarser
+    // and more forgiving; we will do a precise parse after internalizing.
+
+    typedef rule<ScannerT> rule_t;
+    rule_t main;
+    rule_t const & start() const { return main; }
+    definition(UTF_URI const & self)
+    {
+      subrule<0> submain;
+
+      subrule<1> path;
+
+      subrule<2> http;
+      subrule<3> nntp;
+      subrule<4> mailto;
+
+      subrule<5> mailname;
+      subrule<6> hostport;
+      subrule<7> host;
+      subrule<8> port;
+      subrule<9> group;
+
+      main = 
+	(	 
+	 submain = 
+	 (  
+	  (   http   >> str_p("://") >> hostport >> path)
+	  | ( nntp   >> str_p("://") >> hostport >> ch_p('/') >> group)
+	  | ( mailto >> str_p(":")   >> mailname >> ch_p('@') >> hostport)	  
+	 ),
+
+	 http = str_p("http")     [ bind(&uri::proto)(self.val) = construct_<string>(arg1,arg2) ],
+	 nntp = str_p("nntp")     [ bind(&uri::proto)(self.val) = construct_<string>(arg1,arg2) ],
+	 mailto = str_p("mailto") [ bind(&uri::proto)(self.val) = construct_<string>(arg1,arg2) ],
+
+	 hostport = (host >> !(ch_p(':') >> port)),
+	 host = (+(anychar_p - chset_p("/:"))) [ bind(&uri::host)(self.val) = construct_<string>(arg1,arg2) ],
+	 port = uint_p [ bind(&uri::port)(self.val) = arg1 ],
+
+ 	 path = (ch_p('/') >> (+anychar_p)) 
+	 [ bind(&uri::path)(self.val) = construct_<string>(arg1,arg2) ],
+
+ 	 group = (+anychar_p) 
+ 	 [ bind(&uri::group)(self.val) = construct_<string>(arg1,arg2) ],
+
+	 mailname = (+(~chset_p("@")))
+	 [bind(&uri::user)(self.val) = arg1]
+	 );
+    }
+  };
+} utf_uri_g;
+
+
+bool parse_utf8_url(string const & utf8,
+		    string & proto,
+		    string & user,
+		    string & host,	       
+		    string & path,
+		    string & group,
+		    unsigned long & port)
+{
+  uri ustruct;  
+  bool parsed_ok = parse(utf8.c_str(), utf_uri_g[var(ustruct) = arg1]).full;
+    
+  if (parsed_ok)
+    {
+      proto = ustruct.proto;
+      user = ustruct.user;
+      host = ustruct.host;
+      path = ustruct.path;
+      group = ustruct.group;
+      port = ustruct.port;
+
+      if (proto == "http")
+	{
+	  string::size_type gpos = path.rfind('/');
+	  if (gpos == string::npos || gpos == path.size() - 1 || gpos == 0)
+	    return false;
+	  group = path.substr(gpos+1);
+	  path = path.substr(0,gpos);
+	}
+      
+      if (proto == "http" && port == 0)
+	port = 80;
+      else if (proto == "nntp" && port == 0)
+	port = 119;
+      else if (proto == "mailto" && port == 0)
+	port= 25;
+    }
+  
+  L(F("parsed UTF-8 URL\n"));
+  return parsed_ok;
+}
+
+
 
 bool parse_url(url const & u,
 	       string & proto,
@@ -195,7 +296,6 @@ bool parse_url(url const & u,
   // http://host:port/path.cgi/group
   // nntp://host:port/group
   // mailto:user@host:port
-
 
   uri ustruct;  
   bool parsed_ok = parse(u().c_str(), uri_g[var(ustruct) = arg1]).full;

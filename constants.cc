@@ -18,6 +18,9 @@ namespace constants
   // number of bytes of random noise we seed vcheck packets with
   size_t const vchecklen = 32;
 
+  // number of characters in a SHA1 id
+  size_t const idlen = 40;
+
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
   size_t const cvs_window = 3600 * 3; 

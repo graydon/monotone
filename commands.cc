@@ -371,9 +371,9 @@ static void complete(app_state & app,
 		     string const & str, 
 		     ID & completion)
 {
-  N(str.find_first_not_of("abcdef0123456789") == string::npos,
+  N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
     F("non-hex digits in id"));
-  if (str.size() == 40)
+  if (str.size() == constants::idlen)
     {
       completion = ID(str);
       return;

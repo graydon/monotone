@@ -28,8 +28,8 @@ static inline void verify(hexenc<id> & val)
   if (val() == "")
     return;
 
-  N(val().size() == 40,
-    F("hex encoded ID '%s' size != 40") % val);
+  N(val().size() == constants::idlen,
+    F("hex encoded ID '%s' size != %d") % val % constants::idlen);
   string::size_type pos = val().find_first_not_of(constants::legal_id_bytes);
   N(pos == string::npos,
     F("bad character '%c' in id name '%s'") % val().at(pos) % val);
@@ -77,12 +77,10 @@ static inline void verify(url & val)
   N(pos == string::npos,
     F("bad character '%c' in URL name '%s'") % val().at(pos) % val);
 
-  /*
   string proto, user, host, path, group;
   unsigned long port;
   N(parse_url(val, proto, user, host, path, group, port),
     F("malformed URL: '%s'") % val);
-  */
 
   val.ok = true;
 }

@@ -1,3 +1,21 @@
+2003-12-28  graydon hoare  <graydon@pobox.com>
+
+	* constants.hh, constants.cc (idlen): New constant.
+	* commands.cc, vocab.cc: Use it.
+	* manifest.cc (read_manifest_map): Tighten up regex.
+	* packet.cc: Likewise.
+	* transforms.cc (uppercase)
+	(lowercase): Rewrite.
+	(utf8_to_urlenc)
+	(urlenc_to_utf8)
+	(internalize_url)
+	(internalize_cert_name)
+	(internalize_rsa_keypair_id)
+	(externalize_url)
+	(externalize_cert_name)
+	(externalize_rsa_keypair_id): New functions.
+	* url.hh, url.cc (parse_utf8_url): New function.
+
 2003-12-20  graydon hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (normalize_extents): New function.
