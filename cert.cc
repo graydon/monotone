@@ -1,4 +1,3 @@
-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -8,6 +7,7 @@
 #include "packet.hh"
 #include "app_state.hh"
 #include "mac.hh"
+#include "interner.hh"
 #include "keys.hh"
 #include "sanity.hh"
 #include "patch_set.hh"
@@ -517,129 +517,262 @@ void cert_manifest_ancestor(manifest_id const & parent,
 			    parent.inner()(), app, pc);
 }
 
-static bool find_common_ancestor_recursive(manifest_id const & left,
-					   manifest_id const & right,
-					   manifest_id & anc,
-					   app_state & app,
-					   int limit);
 
-static bool resolve_to_single_ancestor(set<manifest_id> const & immediate_parents, 
-				       app_state & app,
-				       manifest_id & anc, 
-				       int limit)
+// calculating least common ancestors is a delicate thing.
+// 
+// it turns out that we cannot choose the simple "least common ancestor"
+// for purposes of a merge, because it is possible that there are two
+// equally reachable common ancestors, and this produces ambiguity in the
+// merge. the result -- in a pathological case -- is silently accepting one
+// set of edits while discarding another; not exactly what you want a
+// version control tool to do.
+//
+// a conservative approximation, is what we'll call a "subgraph recurring"
+// LCA algorithm. this is somewhat like locating the least common dominator
+// node, but not quite. it is actually just a vanilla LCA search, except
+// that any time there's a fork (a historical merge looks like a fork from
+// our perspective, working backwards from children to parents) it reduces
+// the fork to a common parent via a sequence of pairwise recursive calls
+// to itself before proceeding. this will always resolve to a common parent
+// with no ambiguity, unless it falls off the root of the graph.
+//
+// unfortunately the subgraph recurring algorithm sometimes goes too far
+// back in history -- for example if there is an unambiguous propagate from
+// one branch to another, the entire subgraph preceeding the propagate on
+// the recipient branch is elided, since it is a merge.
+//
+// our current hypothesis is that the *exact* condition we're looking for,
+// when doing a merge, is the least node which dominates one side of the
+// merge and is an ancestor of the other.
+
+static void 
+ensure_parents_loaded(unsigned long man,
+		      map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents,
+		      interner<unsigned long> & intern,
+		      app_state & app)
 {
-  set<manifest_id> parents = immediate_parents;
+  if (parents.find(man) != parents.end())
+    return;
 
-  L(F("resolving %d ancestors at limit %d\n") % immediate_parents.size() % limit);
+  L(F("loading parents for node %d\n") % man);
 
-  while (true)
+  set<manifest_id> imm_parents;
+  get_parents(manifest_id(intern.lookup(man)), imm_parents, app);
+
+  shared_ptr< dynamic_bitset<> > bits = 
+    shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>(parents.size()));
+  
+  for (set<manifest_id>::const_iterator p = imm_parents.begin();
+       p != imm_parents.end(); ++p)
     {
-      if (parents.size() == 0)
-	return false;
-      
-      if (parents.size() == 1)
-	{
-	  anc = *(parents.begin());
-	  return true;
-	}
-      
-      set<manifest_id>::const_iterator i = parents.begin();
-      manifest_id left = *i++;
-      manifest_id right = *i++;      
-      parents.erase(left);
-      parents.erase(right);
-
-      L(F("seeking LCA of historical merge %s <-> %s\n") % left % right);
-
-      manifest_id tmp;
-      if (find_common_ancestor_recursive (left, right, tmp, app, limit))
-	parents.insert(tmp);
+      unsigned long pn = intern.intern(p->inner()());
+      L(F("parent %s -> node %d\n") % *p % pn);
+      if (pn >= bits->size()) 
+	bits->resize(pn+1);
+      bits->set(pn);
     }
+    
+  parents.insert(make_pair(man, bits));
 }
 
-static bool find_common_ancestor_recursive(manifest_id const & left,
-					   manifest_id const & right,
-					   manifest_id & anc,
-					   app_state & app,
-					   int limit)
+static bool 
+expand_dominators(map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents,
+		  map< unsigned long, shared_ptr< dynamic_bitset<> > > & dominators,
+		  interner<unsigned long> & intern,
+		  app_state & app)
 {
+  bool something_changed = false;
+  vector<unsigned long> nodes;
+
+  nodes.reserve(dominators.size());
+
+  // pass 1, pull out all the node numbers we're going to scan this time around
+  for (map< unsigned long, shared_ptr< dynamic_bitset<> > >::const_iterator e = dominators.begin(); 
+       e != dominators.end(); ++e)
+    nodes.push_back(e->first);
   
-  // nb: I think this is not exactly a "least common ancestor"
-  // algorithm. it just looks for *a* common ancestor that's probably
-  // pretty close to the least. I think. proof? murky. maybe try
-  // something a little more precise later?
-
-  set<manifest_id> left_ancestors, right_ancestors;
-
-  N(limit > 0,
-    F("recursion limit hit looking for common ancestor, giving up\n"));
-
-  L(F("searching for common ancestors of %s and %s\n") % left % right);
-
-  manifest_id curr_left = left, curr_right = right;
-  manifest_id next_left, next_right;
-  set<manifest_id> immediate_parents;
-  vector< manifest<cert> > ancestor_certs;
-
-  bool advance_left = true, advance_right = true;
-  while(advance_left || advance_right)
-    {    
-  
-      if (advance_left)
+  // pass 2, update any of the dominator entries we can
+  for (vector<unsigned long>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
+    {
+      shared_ptr< dynamic_bitset<> > bits = dominators[*n];
+      dynamic_bitset<> saved(*bits);
+      if (bits->size() <= *n)
+	bits->resize(*n + 1);
+      bits->set(*n);
+      
+      ensure_parents_loaded(*n, parents, intern, app);
+      shared_ptr< dynamic_bitset<> > n_parents = parents[*n];
+      
+      dynamic_bitset<> intersection(bits->size());
+      
+      bool first = true;
+      for (unsigned long parent = 0; parent != n_parents->size(); ++parent)
 	{
-	  get_parents (curr_left, immediate_parents, app);
-	  if (immediate_parents.size() == 0
-	      || !resolve_to_single_ancestor(immediate_parents, app, 
-					     next_left, limit - 1))
+	  if (! n_parents->test(parent))
+	    continue;
+
+	  if (dominators.find(parent) == dominators.end())
+	    dominators.insert(make_pair(parent, 
+					shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>())));
+	  shared_ptr< dynamic_bitset<> > pbits = dominators[parent];
+	  if (bits->size() > pbits->size())
+	    pbits->resize(bits->size());
+	  if (first)
 	    {
-	      advance_left = false;
+	      intersection = (*pbits);
+	      first = false;
 	    }
 	  else
-	    {
-	      if (right_ancestors.find(next_left) != right_ancestors.end())
-		{
-		  L(F("found common ancestor %s\n") % next_left);
-		  anc = next_left;
-		  return true;
-		}
-	      
-	      left_ancestors.insert(next_left);
-	      swap(next_left, curr_left);
-	    }
+	    intersection &= (*pbits);
 	}
 
-      if (advance_right)
+      (*bits) |= intersection;
+      if (*bits != saved)
+	something_changed = true;
+    }
+  return something_changed;
+}
+
+
+static bool 
+expand_ancestors(map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents,
+		 map< unsigned long, shared_ptr< dynamic_bitset<> > > & ancestors,
+		 interner<unsigned long> & intern,
+		 app_state & app)
+{
+  bool something_changed = false;
+  vector<unsigned long> nodes;
+
+  nodes.reserve(ancestors.size());
+
+  // pass 1, pull out all the node numbers we're going to scan this time around
+  for (map< unsigned long, shared_ptr< dynamic_bitset<> > >::const_iterator e = ancestors.begin(); 
+       e != ancestors.end(); ++e)
+    nodes.push_back(e->first);
+  
+  // pass 2, update any of the ancestor entries we can
+  for (vector<unsigned long>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
+    {
+      shared_ptr< dynamic_bitset<> > bits = ancestors[*n];
+      dynamic_bitset<> saved(*bits);
+      if (bits->size() <= *n)
+	bits->resize(*n + 1);
+      bits->set(*n);
+
+      ensure_parents_loaded(*n, parents, intern, app);
+      shared_ptr< dynamic_bitset<> > n_parents = parents[*n];
+      for (unsigned long parent = 0; parent != n_parents->size(); ++parent)
 	{
-	  get_parents (curr_right, immediate_parents, app);
-	  if (immediate_parents.size() == 0
-	      || !resolve_to_single_ancestor(immediate_parents, app, 
-					     next_right, limit - 1))
+	  if (! n_parents->test(parent))
+	    continue;
+
+	  if (bits->size() <= parent)
+	    bits->resize(parent + 1);
+	  bits->set(parent);
+
+	  if (ancestors.find(parent) == ancestors.end())
+	    ancestors.insert(make_pair(parent, 
+					shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>())));
+	  shared_ptr< dynamic_bitset<> > pbits = ancestors[parent];
+	  if (bits->size() > pbits->size())
+	    pbits->resize(bits->size());
+	  (*bits) |= (*pbits);
+	}
+
+      if (*bits != saved)
+	something_changed = true;
+    }
+  return something_changed;
+}
+
+static bool 
+find_intersecting_node(dynamic_bitset<> & fst, 
+		       dynamic_bitset<> & snd, 
+		       interner<unsigned long> const & intern, 
+		       manifest_id & anc)
+{
+
+  if (fst.size() > snd.size())
+    snd.resize(fst.size());
+  else if (snd.size() > fst.size())
+    fst.resize(snd.size());
+
+  dynamic_bitset<> intersection = fst & snd;
+  if (intersection.any())
+    {
+      L(F("found %d intersecting nodes") % intersection.count());
+      for (unsigned long i = 0; i < intersection.size(); ++i)
+	{
+	  if (intersection.test(i))
 	    {
-	      advance_right = false;
-	    }
-	  else 
-	    {
-	      if (left_ancestors.find(next_right) != left_ancestors.end())
-		{
-		  L(F("found common ancestor %s\n") % next_right);
-		  anc = next_right;
-		  return true;
-		}
-	      right_ancestors.insert(next_right);
-	      swap(next_right, curr_right);
+	      anc = manifest_id(intern.lookup(i));
+	      return true;
 	    }
 	}
     }
-
   return false;
 }
+
+// static void
+// dump_bitset_map(string const & hdr,
+// 		map< unsigned long, shared_ptr< dynamic_bitset<> > > const & mm)
+// {
+//   L(F("dumping [%s] (%d entries)\n") % hdr % mm.size());
+//   for (map< unsigned long, shared_ptr< dynamic_bitset<> > >::const_iterator i = mm.begin();
+//        i != mm.end(); ++i)
+//     {
+//       L(F("dump [%s]: %d -> %s\n") % hdr % i->first % (*(i->second)));
+//     }
+// }
 
 bool find_common_ancestor(manifest_id const & left,
 			  manifest_id const & right,
 			  manifest_id & anc,
 			  app_state & app)
 {
-  return find_common_ancestor_recursive (left, right, anc, app, 256);
+  interner<unsigned long> intern;
+  map< unsigned long, shared_ptr< dynamic_bitset<> > > 
+    parents, ancestors, dominators;
+  
+  unsigned long ln = intern.intern(left.inner()());
+  unsigned long rn = intern.intern(right.inner()());
+  
+  shared_ptr< dynamic_bitset<> > lanc = shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>());
+  shared_ptr< dynamic_bitset<> > ranc = shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>());
+  shared_ptr< dynamic_bitset<> > ldom = shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>());
+  shared_ptr< dynamic_bitset<> > rdom = shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>());
+  
+  ancestors.insert(make_pair(ln, lanc));
+  ancestors.insert(make_pair(rn, ranc));
+  dominators.insert(make_pair(ln, ldom));
+  dominators.insert(make_pair(rn, rdom));
+  
+  L(F("searching for common ancestor, left=%s right=%s\n") % left % right);
+  
+  while (expand_ancestors(parents, ancestors, intern, app) ||
+	 expand_dominators(parents, dominators, intern, app))
+    {
+      L(F("common ancestor scan [par=%d,anc=%d,dom=%d]\n") % 
+	parents.size() % ancestors.size() % dominators.size());
+
+      if (find_intersecting_node(*lanc, *rdom, intern, anc))
+	{
+	  L(F("found node %d, ancestor of left %s and dominating right %s\n")
+	    % anc % left % right);
+	  return true;
+	}
+      
+      else if (find_intersecting_node(*ranc, *ldom, intern, anc))
+	{
+	  L(F("found node %d, ancestor of right %s and dominating left %s\n")
+	    % anc % right % left);
+	  return true;
+	}
+    }
+  //   dump_bitset_map("ancestors", ancestors);
+  //   dump_bitset_map("dominators", dominators);
+  //   dump_bitset_map("parents", parents);
+  return false;
 }
 
 

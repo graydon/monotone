@@ -1,3 +1,12 @@
+2004-01-07  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc (ensure_parents_loaded)
+	(expand_dominators)
+	(expand_ancestors)
+	(find_intersecting_node): New functions.
+	(find_common_ancestor): Reimplement in terms of dominator
+	and ancestor bitset intersection.
+
 2004-01-05  Christof Petig <christof@petig-baender.de>
 
 	* vocab.cc (verify<local_path>) Fix use of val() / iterator.
