@@ -617,10 +617,21 @@ get_branch_heads(cert_value const & branchname,
                  app_state & app,
                  set<revision_id> & heads)
 {
-  heads.clear();
+  vector< revision<cert> > certs;
   base64<cert_value> branch_encoded;
+
   encode_base64(branchname, branch_encoded);
-  app.db.get_heads(branch_encoded, heads);
+  app.db.get_revision_certs(cert_name(branch_cert_name),
+                            branch_encoded, certs);
+
+  erase_bogus_certs(certs, app);
+
+  heads.clear();
+
+  for (vector< revision<cert> >::const_iterator i = certs.begin();
+       i != certs.end(); ++i)
+    heads.insert(revision_id(i->inner().ident));
+
   erase_ancestors(heads, app);
 }
 

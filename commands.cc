@@ -2093,10 +2093,10 @@ static void
 check_db(app_state & app)
 {
   ticker revs("revs", ".");
-  std::set<std::pair<revision_id, revision_id> > graph;
+  std::multimap<revision_id, revision_id> graph;
   app.db.get_revision_ancestry(graph);
   std::set<revision_id> seen;
-  for (std::set<std::pair<revision_id, revision_id> >::const_iterator i = graph.begin();
+  for (std::multimap<revision_id, revision_id>::const_iterator i = graph.begin();
        i != graph.end(); ++i)
     {
       revision_set rev;
@@ -2651,9 +2651,16 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
   set<revision_id> nodes;
   multimap<revision_id,string> branches;
 
+  std::multimap<revision_id, revision_id> edges_mmap;
   set<pair<revision_id, revision_id> > edges;
 
-  app.db.get_revision_ancestry(edges);
+  app.db.get_revision_ancestry(edges_mmap);
+
+  // convert from a weak lexicographic order to a strong one
+  for (std::multimap<revision_id, revision_id>::const_iterator i = edges_mmap.begin();
+       i != edges_mmap.end(); ++i)
+    edges.insert(std::make_pair(i->first, i->second));
+
   for (set<pair<revision_id, revision_id> >::const_iterator i = edges.begin();
        i != edges.end(); ++i)
     {

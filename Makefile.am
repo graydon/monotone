@@ -239,7 +239,8 @@ EXTRA_DIST = $(man1_MANS) \
              tests/atlocal.in  \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
-             $(wildcard m4/*.m4)
+             $(wildcard m4/*.m4) \
+             sqlite/keywordhash.c
 
 MAKEINFOFLAGS=-I $(top_builddir)
 

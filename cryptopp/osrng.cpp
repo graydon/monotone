@@ -83,6 +83,7 @@ byte NonblockingRng::GenerateByte()
 
 void NonblockingRng::GenerateBlock(byte *output, unsigned int size)
 {
+  int n = 0;
 #ifdef CRYPTOPP_WIN32_AVAILABLE
 #	ifdef WORKAROUND_MS_BUG_Q258000
 		static MicrosoftCryptoProvider m_Provider;
@@ -90,8 +91,16 @@ void NonblockingRng::GenerateBlock(byte *output, unsigned int size)
 	if (!CryptGenRandom(m_Provider.GetProviderHandle(), size, output))
 		throw OS_RNG_Err("CryptGenRandom");
 #else
-	if (read(m_fd, output, size) != size)
-		throw OS_RNG_Err("read /dev/urandom");
+	while (true)
+	  {
+	    n = read(m_fd, output, size);
+	    if (n == -1)
+	      throw OS_RNG_Err("read /dev/urandom");	      
+	    size -= n;
+	    output += n;
+	    if (size <= 0)
+	      break;
+	  }
 #endif
 }
 

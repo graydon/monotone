@@ -249,7 +249,7 @@ public:
 				    manifest_delta const & del);
 
 
-  void get_revision_ancestry(std::set<std::pair<revision_id, revision_id> > & graph);
+  void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
 
   void get_revision_parents(revision_id const & id,
 			   std::set<revision_id> & parents);
@@ -311,9 +311,6 @@ public:
   void delete_private_key(rsa_keypair_id const & pub_id);
 
   // note: this section is ridiculous. please do something about it.
-
-  void get_heads(base64<cert_value> const & branch,
-		 std::set<revision_id> & heads);
 
   bool manifest_cert_exists(manifest<cert> const & cert);
   bool manifest_cert_exists(hexenc<id> const & hash);

@@ -57,35 +57,54 @@ int const any_cols = -1;
 extern "C" {
 // some wrappers to ease migration
   int sqlite3_exec_printf(sqlite3*,const char *sqlFormat,sqlite3_callback,
-      void *,char **errmsg,...);
+                          void *,char **errmsg,...);
   int sqlite3_exec_vprintf(sqlite3*,const char *sqlFormat,sqlite3_callback,
-      void *,char **errmsg,va_list ap);
+                           void *,char **errmsg,va_list ap);
   int sqlite3_get_table_vprintf(sqlite3*,const char *sqlFormat,char ***resultp,
-      int *nrow,int *ncolumn,char **errmsg,va_list ap);
+                                int *nrow,int *ncolumn,char **errmsg,va_list ap);
   const char *sqlite3_value_text_s(sqlite3_value *v);
 }
 
-int sqlite3_exec_printf(sqlite3*db,const char *sqlFormat,sqlite3_callback cb,
-      void *user_data,char **errmsg,...)
-{ va_list ap;
-  va_start(ap,errmsg);
-  int result=sqlite3_exec_vprintf(db,sqlFormat,cb,user_data,errmsg,ap);
+int sqlite3_exec_printf(sqlite3 * db,
+                        char const * sqlFormat,
+                        sqlite3_callback cb,
+                        void * user_data,
+                        char ** errmsg,
+                        ...)
+{ 
+  va_list ap;
+  va_start(ap, errmsg);
+  int result = sqlite3_exec_vprintf(db, sqlFormat, cb,
+                                    user_data, errmsg, ap);
   va_end(ap);
   return result;
 }
 
-int sqlite3_exec_vprintf(sqlite3 *db,const char *sqlFormat,sqlite3_callback cb,
-      void *user_data,char **errmsg,va_list ap)
-{ char * formatted = sqlite3_vmprintf(sqlFormat, ap);
-  int result=sqlite3_exec(db,formatted,cb,user_data,errmsg);
+int sqlite3_exec_vprintf(sqlite3 * db,
+                         char const * sqlFormat,
+                         sqlite3_callback cb,
+                         void * user_data,
+                         char ** errmsg,
+                         va_list ap)
+{ 
+  char * formatted = sqlite3_vmprintf(sqlFormat, ap);
+  int result = sqlite3_exec(db, formatted, cb, 
+                            user_data, errmsg);
   sqlite3_free(formatted);
   return result;
 }
 
-int sqlite3_get_table_vprintf(sqlite3 *db,const char *sqlFormat,char ***resultp,
-      int *nrow,int *ncolumn,char **errmsg,va_list ap)
-{ char * formatted = sqlite3_vmprintf(sqlFormat, ap);
-  int result=sqlite3_get_table(db,formatted,resultp,nrow,ncolumn,errmsg);
+int sqlite3_get_table_vprintf(sqlite3 * db,
+                              char const * sqlFormat,
+                              char *** resultp,
+                              int * nrow,
+                              int * ncolumn,
+                              char ** errmsg,
+                              va_list ap)
+{ 
+  char * formatted = sqlite3_vmprintf(sqlFormat, ap);
+  int result = sqlite3_get_table(db, formatted, resultp, 
+                                 nrow, ncolumn, errmsg);
   sqlite3_free(formatted);
   return result;
 }
@@ -115,8 +134,10 @@ database::check_schema()
 
 // sqlite3_value_text gives a const unsigned char * but most of the time
 // we need a signed char
-const char *sqlite3_value_text_s(sqlite3_value *v)
-{  return (const char *)(sqlite3_value_text(v));
+const char *
+sqlite3_value_text_s(sqlite3_value *v)
+{  
+  return (const char *)(sqlite3_value_text(v));
 }
 
 static void 
@@ -204,7 +225,8 @@ database::initialize()
 
   fs::path journal = mkpath(filename.string() + "-journal");
   N(!fs::exists(journal),
-    F("existing (possibly stale) journal file '%s' has same stem as new database '%s'")
+    F("existing (possibly stale) journal file '%s' "
+      "has same stem as new database '%s'")
     % journal.string() % filename.string());
 
   sqlite3 *s = sql(true);
@@ -1133,7 +1155,7 @@ database::put_manifest_reverse_version(manifest_id const & new_id,
 
 
 void 
-database::get_revision_ancestry(std::set<std::pair<revision_id, revision_id> > & graph)
+database::get_revision_ancestry(std::multimap<revision_id, revision_id> & graph)
 {
   results res;
   graph.clear();
@@ -1478,169 +1500,6 @@ database::results_to_certs(results const & res,
     }
 }
 
-
-struct valid_certs
-{
-  set<rsa_keypair_id> valid_signers;
-  hexenc<id> ident;
-  cert_name name;
-  base64<cert_value> val;
-  string signature_type;
-
-  valid_certs(string const & ty) 
-    : signature_type(ty) 
-  {
-    L(F("constructing validity checker for %s certs\n") % ty);
-  }
-
-  bool check_signer_trust(app_state & app)
-  {
-    bool trusted = false;
-
-    L(F("checking %d signer %s cert trust set\n") 
-      % valid_signers.size() % signature_type);
-    try
-      {
-        cert_value v;
-        decode_base64(val, v);
-        // FIXME: lame string-makes-the-mode argument
-        if (signature_type == "revision")
-          trusted = app.lua.hook_get_revision_cert_trust(valid_signers,
-                                                        ident, name, v);
-        else if (signature_type == "manifest")
-          trusted = app.lua.hook_get_manifest_cert_trust(valid_signers,
-                                                         ident, name, v);
-        else if (signature_type == "file")
-          trusted = app.lua.hook_get_file_cert_trust(valid_signers,
-                                                     ident, name, v);
-        else
-          I(false); // should be illegal
-      }
-    catch (...)
-      {
-        W(F("exception in sqlite valid_certs::check_set_trust\n"));
-      }
-    
-    if (trusted)
-      L(F("trust function liked %d %s signers\n") 
-        % valid_signers.size() % signature_type);
-    else
-      L(F("trust function disliked %d %s signers\n") 
-        % valid_signers.size() % signature_type);
-    
-    return trusted;
-  }
-
-  void check_single_signer(app_state & app,
-                           int argc, 
-                           sqlite3_value ** argv)
-  {
-    try
-      {
-        // args are: hash, id, name, value, keypair, pubkey, signature
-        // L(F("entries are [%s] [%s] [%s] [%s] [%s] [%s] [%s]\n") 
-        //        % argv[0] % argv[1] % argv[2] % argv[3] % argv[4] % argv[5] % argv[6]);
-
-        cert tmp = cert(hexenc<id>(sqlite3_value_text_s(argv[1])), 
-                        cert_name(sqlite3_value_text_s(argv[2])),
-                        base64<cert_value>(sqlite3_value_text_s(argv[3])),
-                        rsa_keypair_id(sqlite3_value_text_s(argv[4])),
-                        base64<rsa_sha1_signature>(sqlite3_value_text_s(argv[6])));
-
-        base64<rsa_pub_key> pk(sqlite3_value_text_s(argv[5]));
-
-        if (ident().empty())
-          ident = tmp.ident;
-        else
-          I(ident == tmp.ident);
-
-        if (name().empty())
-          name = tmp.name;
-        else
-          I(name == tmp.name);
-
-        if (val().empty())
-          val = tmp.value;
-        else
-          I(val == tmp.value);
-
-        //      L(F("examining '%s' %s cert from %s\n") 
-        //        % name % signature_type % ident);
-
-        string txt;
-        cert_signable_text(tmp, txt);
-        if (check_signature(app.lua, tmp.key, pk, txt, tmp.sig))
-          {
-            L(F("ok '%s' %s cert from %s\n") 
-              % name % signature_type % tmp.key);
-            valid_signers.insert(tmp.key);
-          }
-        else
-          {
-            W(F("bad '%s' %s cert from %s\n") 
-              % name % signature_type % tmp.key);
-          }
-      }
-    catch (std::exception & e)
-      {
-        W(F("std::exception in sqlite valid_certs::check_single_signer: %s\n") % e.what());
-      }
-    catch (...)
-      {
-        W(F("unknown exception in sqlite valid_certs::check_single_signer\n"));
-      }
-  }
-};
-
-extern "C"
-{
-
-static void
-trusted_step_callback(sqlite3_context * fn_ctx, 
-                      int argc, 
-                      sqlite3_value ** argv)
-{
-  app_state * app = NULL; 
-  valid_certs ** vpp;
-
-  I(fn_ctx);
-  I(argc == 8);
-  I(argv);
-  for (size_t i = 0; i < 8; ++i)
-    I(sqlite3_value_text_s(argv[i]));
-
-  app = static_cast<app_state *>(sqlite3_user_data(fn_ctx));
-  I(app);
-  vpp = static_cast<valid_certs **>(sqlite3_aggregate_context(fn_ctx, sizeof(valid_certs *)));
-  I(vpp);
-  if (! (*vpp))
-    *vpp = new valid_certs(string(sqlite3_value_text_s(argv[0])));
-  I(*vpp);
-  (*vpp)->check_single_signer(*app, argc-1, argv+1);  
-}
-
-static void
-trusted_finalize_callback(sqlite3_context * fn_ctx)
-{
-  app_state * app = NULL; 
-  valid_certs ** vpp;
-  app = static_cast<app_state *>(sqlite3_user_data(fn_ctx));
-  I(app);
-  vpp = static_cast<valid_certs **>(sqlite3_aggregate_context(fn_ctx, sizeof(valid_certs *)));
-
-  I(vpp);
-  I(*vpp);
-
-  if ((*vpp)->check_signer_trust(*app))
-    sqlite3_result_int(fn_ctx, 1);
-  else
-    sqlite3_result_int(fn_ctx, 0);
-
-  delete (*vpp);
-}
-}
-
-
 void
 database::install_functions(app_state * app)
 {
@@ -1649,16 +1508,15 @@ database::install_functions(app_state * app)
                            SQLITE_UTF8, NULL,
 			   &sqlite3_unbase64_fn, 
                            NULL, NULL) == 0);
-
-  I(sqlite3_create_function(sql(), "trusted", 8, 
-                            SQLITE_UTF8, app, NULL,
-			    &trusted_step_callback,
-			    &trusted_finalize_callback) == 0);
 }
 
 void
 database::install_views()
 {
+  // we don't currently use any views. re-enable this code if you find a
+  // compelling reason to use views.
+
+  /*
   // delete any existing views
   results res;
   fetch(res, one_col, any_rows,
@@ -1669,23 +1527,7 @@ database::install_views()
     }
   // register any views we're going to use
   execute(views_constant);
-}
-
-void 
-database::get_heads(base64<cert_value> const & branch,
-                    std::set<revision_id> & heads)
-{
-  results res;
-  fetch(res, one_col, any_rows,
-        "SELECT parent "
-        "FROM branch_heads "
-        "WHERE value = '%q'",
-        branch().c_str());
-  heads.clear();
-  for (size_t i = 0; i < res.size(); ++i)
-    {
-      heads.insert(revision_id(res[i][0]));
-    }
+  */
 }
 
 void 

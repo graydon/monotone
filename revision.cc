@@ -391,6 +391,42 @@ find_least_common_ancestor(revision_id const & left,
 
 // FIXME: this algorithm is incredibly inefficient; it's O(n) where n is the
 // size of the entire revision graph.
+
+static bool
+is_ancestor(revision_id const & ancestor_id,
+            revision_id const & descendent_id,
+            std::multimap<revision_id, revision_id> const & graph)
+{
+
+  std::set<revision_id> visited;
+  std::queue<revision_id> queue;
+
+  queue.push(ancestor_id);
+
+  while (!queue.empty())
+    {
+      revision_id current_id = queue.front();
+      queue.pop();
+
+      if (current_id == descendent_id)
+        return true;
+      else
+        {
+          typedef std::multimap<revision_id, revision_id>::const_iterator gi;
+          std::pair<gi, gi> children = graph.equal_range(current_id);
+          for (gi i = children.first; i != children.second; ++i)
+            {
+              if (visited.find(i->second) == visited.end())
+                {
+                  queue.push(i->second);
+                  visited.insert(i->second);
+                }
+            }
+        }
+    }
+  return false;  
+}
+
 bool
 is_ancestor(revision_id const & ancestor_id,
             revision_id const & descendent_id,
@@ -398,62 +434,101 @@ is_ancestor(revision_id const & ancestor_id,
 {
   L(F("checking whether %s is an ancestor of %s\n") % ancestor_id % descendent_id);
 
-  std::set<revision_id> visited;
-  std::queue<revision_id> queue;
-
-  queue.push(descendent_id);
-
-  while (!queue.empty())
-    {
-      revision_id current_id = queue.front();
-      queue.pop();
-
-      if (current_id == ancestor_id)
-        return true;
-      else
-        {
-          revision_set rev;
-          app.db.get_revision(current_id, rev);
-
-          for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
-            {
-              revision_id parent = edge_old_revision(i);
-              if (!parent.inner()().empty() &&
-                  visited.find(parent) == visited.end())
-                {
-                  queue.push(parent);
-                  visited.insert(parent);
-                }
-            }
-        }
-    }
-
-  return false;
+  std::multimap<revision_id, revision_id> graph;
+  app.db.get_revision_ancestry(graph);
+  return is_ancestor(ancestor_id, descendent_id, graph);
 }
 
 
+static void 
+add_bitset_to_union(shared_bitmap src,
+		    shared_bitmap dst)
+{
+  if (dst->size() > src->size())
+    src->resize(dst->size());
+  if (src->size() > dst->size())
+    dst->resize(src->size());
+  *dst |= *src;
+}
+
+static void 
+calculate_ancestors_from_graph(interner<ctx> & intern,
+			       revision_id const & rev,
+			       std::set<revision_id> const & legal, 
+			       std::multimap<revision_id, revision_id> const & graph, 
+			       std::map< ctx, shared_bitmap > & ancestors,
+			       shared_bitmap & total_union)
+{
+  typedef std::multimap<revision_id, revision_id>::const_iterator gi;
+
+  shared_bitmap b = shared_bitmap(new bitmap());
+  ctx us = intern.intern(rev.inner()());
+  std::pair<gi,gi> parents = graph.equal_range(rev);
+
+  for (gi i = parents.first; i != parents.second; ++i)
+    {
+      ctx parent = intern.intern(i->second.inner()());
+
+      // set any the parent which is a members of the underlying legal set
+      if (legal.find(i->second) != legal.end())
+        {
+          if (b->size() <= parent)
+            b->resize(parent + 1);
+          b->set(parent);
+        }
+
+      // first ensure all parents are loaded into the ancestor map
+      if (ancestors.find(parent) == ancestors.end())
+	calculate_ancestors_from_graph(intern, i->second, legal, graph, 
+                                       ancestors, total_union);
+
+      // then union them into our map
+      std::map< ctx, shared_bitmap >::const_iterator j = ancestors.find(parent);
+      I(j != ancestors.end());
+      add_bitset_to_union(j->second, b);
+    }
+
+  add_bitset_to_union(b, total_union);
+  ancestors.insert(std::make_pair(us, b));
+}
+
 // This function looks at a set of revisions, and for every pair A, B in that
 // set such that A is an ancestor of B, it erases A.
-// FIXME: this is even more inefficient than is_ancestor.  Ideally this would
-// be implemented directly, and is_ancestor would be implemented trivially in
-// terms of it.
+
 void
 erase_ancestors(std::set<revision_id> & revisions, app_state & app)
 {
-  for (std::set<revision_id>::const_iterator d = revisions.begin();
-       d != revisions.end();
-       ++d)
-    {
-      for(std::set<revision_id>::iterator a = revisions.begin();
-          a != revisions.end();
-          ++a)
-        {
-          if (a == d)
-            continue;
-          if (is_ancestor(*a, *d, app))
-            revisions.erase(a);
-        }
+  typedef std::multimap<revision_id, revision_id>::const_iterator gi;
+  std::multimap<revision_id, revision_id> graph;
+  std::multimap<revision_id, revision_id> inverse_graph;
+
+  app.db.get_revision_ancestry(graph);
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    inverse_graph.insert(std::make_pair(i->second, i->first));
+
+  interner<ctx> intern;
+  std::map< ctx, shared_bitmap > ancestors;
+
+  shared_bitmap u = shared_bitmap(new bitmap());
+
+  for (std::set<revision_id>::const_iterator i = revisions.begin();
+       i != revisions.end(); ++i)
+    {      
+      calculate_ancestors_from_graph(intern, *i, revisions, 
+                                     inverse_graph, ancestors, u);
     }
+
+  std::set<revision_id> tmp;
+  for (std::set<revision_id>::const_iterator i = revisions.begin();
+       i != revisions.end(); ++i)
+    {
+      ctx id = intern.intern(i->inner()());
+      bool has_ancestor_in_set = id < u->size() && u->test(id);
+      if (!has_ancestor_in_set)
+	tmp.insert(*i);
+    }
+  
+  revisions = tmp;
 }
 
 // 
@@ -920,10 +995,10 @@ build_changesets_from_existing_revs(app_state & app)
   anc_graph graph(true, app);
 
   P(F("rebuilding revision graph from existing graph\n"));
-  std::set<std::pair<revision_id, revision_id> > existing_graph;
+  std::multimap<revision_id, revision_id> existing_graph;
 
   app.db.get_revision_ancestry(existing_graph);
-  for (std::set<std::pair<revision_id, revision_id> >::const_iterator i = existing_graph.begin();
+  for (std::multimap<revision_id, revision_id>::const_iterator i = existing_graph.begin();
        i != existing_graph.end(); ++i)
     {
       u64 parent_node = graph.add_node_for_old_revision(i->first);

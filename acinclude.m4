@@ -1,4 +1,4 @@
-AC_DEFUN(AC_HAVE_INADDR_NONE,
+AC_DEFUN([AC_HAVE_INADDR_NONE],
 [AC_CACHE_CHECK([whether INADDR_NONE is defined], ac_cv_have_inaddr_none,
  [AC_TRY_COMPILE([
 #ifdef HAVE_SYS_TYPES_H
