@@ -1,3 +1,7 @@
+2004-12-16  Joel Rosdahl  <joel@rosdahl.net>
+
+	* revision.cc (is_ancestor): Use std::queue for the queue.
+
 2004-12-14  Joel Rosdahl  <joel@rosdahl.net>
 
 	Generalize the explicit_merge command with an optional ancestor

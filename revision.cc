@@ -6,8 +6,8 @@
 #include <cctype>
 #include <cstdlib>
 #include <iostream>
-#include <list>
 #include <map>
+#include <queue>
 #include <set>
 #include <sstream>
 #include <string>
@@ -354,14 +354,14 @@ is_ancestor(revision_id const & ancestor_id,
   L(F("checking whether %s is an ancestor of %s\n") % ancestor_id % descendent_id);
 
   std::set<revision_id> visited;
-  std::list<revision_id> queue;
+  std::queue<revision_id> queue;
 
-  queue.push_back(descendent_id);
+  queue.push(descendent_id);
 
-  while (queue.size() > 0)
+  while (!queue.empty())
     {
       revision_id current_id = queue.front();
-      queue.pop_front();
+      queue.pop();
 
       if (current_id == ancestor_id)
         return true;
@@ -376,7 +376,7 @@ is_ancestor(revision_id const & ancestor_id,
               if (!parent.inner()().empty() &&
                   visited.find(parent) == visited.end())
                 {
-                  queue.push_back(parent);
+                  queue.push(parent);
                   visited.insert(parent);
                 }
             }
