@@ -2007,7 +2007,7 @@ test, or testsuite.
 
 The evaluation of trust is done on a cert-by-cert basis by calling a
 pair of lua hooks: @code{get_manifest_cert_trust} and
-@code{get_manifest_cert_trust}. These hooks are only called when a
+@code{get_file_cert_trust}. These hooks are only called when a
 cert has at least one good signature from a known key, and are passed
 @emph{all} the keys which have signed the cert, as well as the cert's
 id, name and value. The hook can then evaluate the set of signers, as

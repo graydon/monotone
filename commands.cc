@@ -1975,6 +1975,37 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
   for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
     cout << "# " << *i << endl;
 
+  for (std::set<patch_addition>::const_iterator i = ps.f_adds.begin();
+       i != ps.f_adds.end(); ++i)
+    {
+      data unpacked;
+      vector<string> lines;
+
+      if (new_is_archived)
+        {
+	  file_data dat;
+	  app.db.get_file_version(i->ident, dat);
+	  unpack(dat.inner(), unpacked);
+        }
+      else
+        {
+          read_localized_data(i->path, unpacked, app.lua);
+        }
+
+      split_into_lines(unpacked(), lines);
+      if (! lines.empty())
+	{
+	  cout << (F("--- %s\n") % i->path)
+	       << (F("+++ %s\n") % i->path)
+	       << (F("@@ -0,0 +1,%d @@\n") % lines.size());
+	  for (vector<string>::const_iterator j = lines.begin();
+	       j != lines.end(); ++j)
+	    {
+	      cout << "+" << *j << endl;
+	    }
+	}
+    }
+
   for (set<patch_delta>::const_iterator i = ps.f_deltas.begin();
        i != ps.f_deltas.end(); ++i)
     {
@@ -2005,6 +2036,7 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
 
       unidiff(i->path(), i->path(), old_lines, new_lines, cout);
     }  
+  
   guard.commit();
 }
 

@@ -1,3 +1,8 @@
+2004-03-14  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (diff): Show added files too.
+	* monotone.texi: Fix typo.
+
 2004-03-08  graydon hoare  <graydon@pobox.com>
 
 	* netsync.cc (analyze_manifest_edge): Fix broken formatter.
