@@ -90,7 +90,12 @@ BOOST_SANDBOX_SOURCES = \
         boost/socket/ip4/address.hpp \
         boost/socket/ip4/protocol.hpp \
         boost/socket/src/impl/win32/overlapped.hpp \
-        boost/io/streambuf_wrapping.hpp 
+        boost/io/streambuf_wrapping.hpp \
+        \
+        boost/circular_buffer_adaptor.hpp \
+	boost/circular_buffer_base.hpp \
+	boost/circular_buffer_fwd.hpp \
+	boost/circular_buffer.hpp
 
 # warning: we're *not* currently building on win32. we'll figure out
 # how to do that someday, I suspect, but not today.

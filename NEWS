@@ -1,3 +1,12 @@
+Sat Oct 18 22:10:09 EDT 2003
+
+	0.6 release. more stability and bug fixing, including fix to
+	some silent failures in LCA calculation. some minor new
+	features: persistent attributes (eg. 'the execute bit'),
+	rename and log commands. performance of cvs importer greatly
+	improved, lua system upgraded to 5.0, much expanded
+	documentation.
+
 Sat Sep 27 11:50:08 EDT 2003
 
 	0.5 release. stability and bug fixing. many UI issues

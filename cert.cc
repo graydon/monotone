@@ -43,6 +43,22 @@ struct bogus_cert_p
       return true;
     }
   }
+  bool operator()(file<cert> const & c) const 
+  {
+  string txt;
+  cert_signable_text(c.inner(), txt);
+  L(F("checking cert %s\n") % txt);
+  if (check_cert(app,c.inner()))
+    {
+      L(F("cert ok\n"));
+      return false;
+    }
+  else
+    {
+      ui.warn(F("bad signature by '%s' on '%s')") % c.inner().key() % txt);
+      return true;
+    }
+  }
 };
 
 void erase_bogus_certs(vector< manifest<cert> > & certs,
@@ -51,6 +67,14 @@ void erase_bogus_certs(vector< manifest<cert> > & certs,
   vector< manifest<cert> >::iterator e = 
     remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
   certs.erase(e, certs.end());      
+}
+
+void erase_bogus_certs(vector< file<cert> > & certs,
+			      app_state & app)
+{
+  vector< file<cert> >::iterator e = 
+    remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
+  certs.erase(e, certs.end());
 }
 
 

@@ -1830,6 +1830,8 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
   cert_name changelog_name(changelog_cert_name);
   cert_name comment_name(comment_cert_name);
 
+  set<file_id> no_comments;
+
   while(! frontier.empty())
     {
       set<manifest_id> next_frontier;
@@ -1843,6 +1845,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 	  cout << "Author:";
 	  vector< manifest<cert> > tmp;
 	  app.db.get_manifest_certs(*i, author_name, tmp);
+	  erase_bogus_certs(tmp, app);
 	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
 	       j != tmp.end(); ++j)
 	    {
@@ -1854,6 +1857,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 
 	  cout << "Date:";
 	  app.db.get_manifest_certs(*i, date_name, tmp);
+	  erase_bogus_certs(tmp, app);
 	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
 	       j != tmp.end(); ++j)
 	    {
@@ -1865,6 +1869,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 
 	  cout << "ChangeLog:" << endl << endl;
 	  app.db.get_manifest_certs(*i, changelog_name, tmp);
+	  erase_bogus_certs(tmp, app);
 	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
 	       j != tmp.end(); ++j)
 	    {
@@ -1875,6 +1880,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 	  cout << endl;
 
 	  app.db.get_manifest_certs(*i, comment_name, tmp);
+	  erase_bogus_certs(tmp, app);
 	  if (!tmp.empty())
 	    {
 	      cout << "Manifest Comments:" << endl << endl;
@@ -1899,8 +1905,12 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 		 mi != mtmp.end(); ++mi)
 	      {
 		path_id_pair pip(mi);
+		if (no_comments.find(pip.ident()) != no_comments.end())
+		  continue;
+
 		vector< file<cert> > ftmp;
 		app.db.get_file_certs(pip.ident(), comment_name, ftmp);
+		erase_bogus_certs(ftmp, app);
 		if (!ftmp.empty())
 		  {
 		    if (!wrote_headline)
@@ -1918,6 +1928,8 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 			cout << "    " << j->inner().key << ": " << tv << endl;
 		      }	  
 		  }
+		else
+		  no_comments.insert(pip.ident());
 	      }
 	    if (wrote_headline)
 	      cout << endl;

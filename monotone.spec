@@ -1,6 +1,6 @@
 Summary: monotone is a distributed version control tool
 Name: monotone
-Version: 0.5
+Version: 0.6
 Release: 1
 License: GPL
 Group: Development/Version Control
@@ -22,7 +22,8 @@ functions to client-side RSA certificates.
 %build
 ./configure --prefix=$RPM_BUILD_ROOT/usr \
             --infodir=$RPM_BUILD_ROOT%{_infodir} \
-            --mandir=$RPM_BUILD_ROOT%{_mandir}
+            --mandir=$RPM_BUILD_ROOT%{_mandir} \
+	    CFLAGS=-O2 CXXFLAGS=-O2
 make
 
 %install
@@ -36,8 +37,6 @@ rm -rf $RPM_BUILD_ROOT
 if [ -x /sbin/install-info ] 
 then
 /sbin/install-info --info-dir=%{_infodir} \
-             --entry="* monotone: (monotone).              Monotone version control system" \
-             --section=Programming \
 	     %{_infodir}/monotone.info.gz
 fi
 
@@ -57,6 +56,11 @@ fi
 
 
 %changelog
+* Sat Oct 18 2003 graydon hoare <graydon@pobox.com>
+- 0.6 release
+- set CFLAGS/CXXFLAGS since RH compiler can do optimization
+- remove info details since texi has category / entry
+
 * Wed Sep 27 2003 graydon hoare <graydon@pobox.com> 
 - 0.5 release.
 

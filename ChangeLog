@@ -1,3 +1,15 @@
+2003-10-19  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Mention Tecgraf PUC-Rio and their
+	copyright.
+	* Makefile.am: Mention circular buffer stuff.
+	* configure.ac, NEWS: Mention 0.6 release.
+	* cert.hh, cert.cc (erase_bogus_certs): file<cert> variant.	
+	* commands.cc (log): Erase bogus certs before writing,
+	cache comment-less file IDs.
+	* monotone.spec: Don't specify install-info args,
+	do build with optimization on RHL.
+
 2003-10-19  Matt Kraai  <kraai@ftbfs.org>
 
 	* commands.cc (merge): Use app.branch_name instead of args[0] for
