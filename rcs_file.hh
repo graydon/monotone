@@ -25,6 +25,7 @@ struct rcs_delta
   std::string author;
   std::vector<std::string> branches;
   std::string next;
+  std::string state; // dead, Exp  (or Stab, Rel)
 };
 
 struct rcs_deltatext
