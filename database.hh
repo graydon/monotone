@@ -389,9 +389,7 @@ public:
  
   // vars
 
-  void get_vars(std::map<var_domain, std::map<var_name, var_value> > & vars);
-
-  void get_vars(var_domain const & domain, std::map<var_name, var_value> & vars);
+  void get_vars(std::map<std::pair<var_domain, var_name>, var_value > & vars);
 
   void get_var(var_domain const & domain, var_name const & name, var_value & value);
 

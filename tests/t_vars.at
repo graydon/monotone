@@ -1,9 +1,6 @@
 AT_SETUP([vars])
 MONOTONE_SETUP
 
-# This tests not-yet-implemented functionality.
-AT_XFAIL_IF(true)
-
 AT_CHECK(MONOTONE set domain1 key1 orig_value, [], [ignore], [ignore])
 AT_CHECK(MONOTONE set domain1 key1 overwritten_value, [], [ignore], [ignore])
 AT_CHECK(MONOTONE set domain1 key2 other_value, [], [ignore], [ignore])
@@ -19,8 +16,11 @@ AT_DATA(domain2_vars, [domain2: key1 other_domain_value
 ])
 AT_CHECK(cat domain1_vars domain2_vars > all_vars)
 
-AT_CHECK(MONOTONE ls vars, [], [all_vars], [ignore])
-AT_CHECK(MONOTONE ls vars domain1, [], [domain1_vars], [ignore])
-AT_CHECK(MONOTONE ls vars domain2, [], [domain1_vars], [ignore])
+AT_CHECK(MONOTONE ls vars, [], [stdout], [ignore])
+AT_CHECK(cmp all_vars stdout)
+AT_CHECK(MONOTONE ls vars domain1, [], [stdout], [ignore])
+AT_CHECK(cmp domain1_vars stdout)
+AT_CHECK(MONOTONE ls vars domain2, [], [stdout], [ignore])
+AT_CHECK(cmp domain2_vars stdout)
 
 AT_CLEANUP

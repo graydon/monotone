@@ -24,6 +24,7 @@ ATOMIC(cert_value);           // symbol-of-your-choosing
 // some domains: "database" (+ default_server, default_collection),
 //   server_key (+ servername/key)
 //   branch_alias (+ short form/long form)
+//   trust_seed (+ branch/seed)
 ATOMIC(var_domain);           // symbol-of-your-choosing
 ATOMIC(var_name);             // symbol-of-your-choosing
 ATOMIC(var_value);            // symbol-of-your-choosing
@@ -74,6 +75,8 @@ EXTERN template class base64< rsa_pub_key >;
 EXTERN template class base64< rsa_sha1_signature >;
 EXTERN template class hexenc< rsa_sha1_signature >;
 EXTERN template class base64< cert_value >;
+
+EXTERN template class base64< var_value >;
 
 EXTERN template class hexenc<prefix>;
 EXTERN template class base64<merkle>;
