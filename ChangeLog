@@ -1,5 +1,17 @@
 2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
 
+	* database.cc (get_revision_parents): Add invariant.
+	(get_revision_children): Likewise.
+	(get_revision): Likewise.
+	(put_revision): Likewise.
+
+	* tests/t_merge_ancestor.at: New test.
+	* tests/t_propagate_desc.at: Likewise.
+	* tests/t_propagate_anc.at: Likewise.
+	* testsuite.at: Call them.
+
+2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_netsync_diffbranch.at: Add priority, add description of
 	problem and solution.
 	Also, XFAIL it.

@@ -1080,6 +1080,7 @@ void
 database::get_revision_parents(revision_id const & id,
                               set<revision_id> & parents)
 {
+  I(!null_id(id));
   results res;
   parents.clear();
   fetch(res, one_col, any_rows, 
@@ -1093,6 +1094,7 @@ void
 database::get_revision_children(revision_id const & id,
                                 set<revision_id> & children)
 {
+  I(!null_id(id));
   results res;
   children.clear();
   fetch(res, one_col, any_rows, 
@@ -1124,6 +1126,7 @@ void
 database::get_revision(revision_id const & id,
                        revision_data & dat)
 {
+  I(!null_id(id));
   results res;
   fetch(res, one_col, one_row, 
         "SELECT data FROM revisions WHERE id = '%q'",
@@ -1144,6 +1147,7 @@ database::put_revision(revision_id const & new_id,
                        revision_set const & rev)
 {
 
+  I(!null_id(new_id));
   I(!revision_exists(new_id));
   revision_data d;
 
@@ -1349,7 +1353,7 @@ void
 database::delete_private_key(rsa_keypair_id const & pub_id)
 {
   execute("DELETE FROM private_keys WHERE id = '%q'",
-	  pub_id().c_str());
+          pub_id().c_str());
 }
 
 // cert management

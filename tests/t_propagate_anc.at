@@ -1,0 +1,38 @@
+AT_SETUP([(normal) propagate an ancestor])
+MONOTONE_SETUP
+
+# This tests the case where we have something like A1 -> A2 -> B1 ->
+# B2, where A and B are different branches, and the user propagates A
+# to B.  This should be a no-op; no merge should be performed.
+
+# At the moment we don't even try to do this.
+AT_XFAIL_IF(true)
+
+ADD_FILE(testfile, [foo
+])
+COMMIT(a)
+
+SET_FILE(testfile, [bar
+])
+COMMIT(a)
+A_HEAD_REV=`BASE_REVISION`
+
+SET_FILE(testfile, [baz
+])
+COMMIT(b)
+
+SET_FILE(testfile, [quux
+])
+COMMIT(b)
+B_HEAD_REV=`BASE_REVISION`
+
+AT_CHECK(cp test.db test2.db)
+AT_CHECK(MONOTONE propagate a b, [], [ignore], [ignore])
+
+CHECK_SAME_STDOUT(MONOTONE agraph, MONOTONE --db=test2.db agraph)
+CHECK_SAME_STDOUT(MONOTONE ls certs $A_HEAD_REV, MONOTONE --db=test2.db ls certs $A_HEAD_REV)
+CHECK_SAME_STDOUT(MONOTONE ls certs $B_HEAD_REV, MONOTONE --db=test2.db ls certs $B_HEAD_REV)
+CHECK_SAME_STDOUT(MONOTONE heads --branch=a, MONOTONE --db=test2.db heads --branch=a)
+CHECK_SAME_STDOUT(MONOTONE heads --branch=b, MONOTONE --db=test2.db heads --branch=b)
+
+AT_CLEANUP
