@@ -49,6 +49,9 @@ AT_CHECK(test $RIGHT_F_SHA != $LEFT_F_SHA)
 AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore])
 
+AT_CHECK(MONOTONE --branch=testbranch heads, [], [stdout])
+AT_CHECK(grep empty stdout, [1], [ignore])
+
 # files should now be merged
 AT_DATA(probe, [first line of the file
 an insertion between first and second

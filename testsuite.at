@@ -79,7 +79,7 @@ AT_CHECK(rm test_keys)
 m4_define([PROBE_NODE], [ 
 AT_CHECK(rm MT/manifest)
 AT_CHECK(rm $1)
-AT_CHECK(MONOTONE checkout $2, [], [ignore])
+AT_CHECK(MONOTONE checkout $2 ., [], [ignore])
 PROBE_M_SHA=`SHA1(MT/manifest)`
 PROBE_F_SHA=`SHA1($1)`
 AT_CHECK(test $PROBE_M_SHA == $2)
@@ -101,5 +101,5 @@ m4_include(tests/t_update.at)
 m4_include(tests/t_merge.at)
 m4_include(tests/t_nntp.at)
 m4_include(tests/t_http.at)
-
-
+m4_include(tests/t_unidiff2.at)
+m4_include(tests/t_cwork.at)

@@ -97,6 +97,7 @@ int cpp_main(int argc, char ** argv)
 
   // process main program options
 
+  int ret = 0;
   int opt;
   bool stdhooks = true, rcfile = true;
   char * envstr;
@@ -120,7 +121,7 @@ int cpp_main(int argc, char ** argv)
   // read command options
 
   vector<string> extra_rcfiles;
-
+  
   try 
     {      
       while ((opt = poptGetNextOpt(ctx())) > 0)
@@ -208,7 +209,7 @@ int cpp_main(int argc, char ** argv)
 	    {
 	      args.push_back(poptGetArg(ctx()));
 	    }
-	  commands::process(app, cmd, args);
+	  ret = commands::process(app, cmd, args);
 	} 
     }
   catch (usage & u)
@@ -237,5 +238,5 @@ int cpp_main(int argc, char ** argv)
     }
   
   clean_shutdown = true;
-  return 0;
+  return ret;
 }

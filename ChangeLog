@@ -1,3 +1,21 @@
+2003-09-11  graydon hoare  <graydon@redhat.com>
+
+	* tests/t_merge.at: Check that heads works after a merge.
+	* tests/t_fork.at:  Check that heads works after a fork.
+
+	* commands.cc: Check for MT directory in status.
+
+	* commands.cc: Require directory for checkout.
+	
+	* commands.cc: Delete MT/work file after checkout.
+
+	* diff_patch.cc (unidiff): Compensate for occasional miscalculation
+	of LCS.
+
+	* tests/t_genkey.at: Remove use of 'import'.
+
+	* commands.cc, monotone.cc: Report unknown commands nicely.
+	
 2003-09-08  graydon hoare  <graydon@pobox.com>
 
 	* tests/merge.at: Accept tromey's non-error case for update.

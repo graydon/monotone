@@ -1291,7 +1291,7 @@ we can feel free to ``checkout'' previous versions from the database,
 without fear of losing our work:
 
 @example
-$ monotone checkout 577c21252290d4b66240efb1f917a9f3c4136fe5
+$ monotone checkout 577c21252290d4b66240efb1f917a9f3c4136fe5 .
 $ cat MT/manifest
 84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
 c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
@@ -1877,9 +1877,9 @@ Import all versions in RCS files. Does not reconstruct ancestry edges
 or convert ancestry edges.
 @comment TROFF INPUT: .TP
 
-@item @b{checkout} @i{<manifest-id>}
-@itemx @b{co} @i{<manifest-id>}
-Check out tree state from database.
+@item @b{checkout} @i{<manifest-id>} @i{<directory>}
+@itemx @b{co} @i{<manifest-id>} @i{<directory>}
+Check out tree state from database, into directory.
 @comment TROFF INPUT: .TP
 
 @item @b{cat} @i{(file|manifest) <id>}

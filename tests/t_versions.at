@@ -31,7 +31,7 @@ do
   AT_CHECK(MONOTONE cat file $FSHA, [], [stdout])
   AT_CHECK(cmp stdout testfile, [], [ignore])
 
-  AT_CHECK(MONOTONE checkout $MSHA, [], [stdout])
+  AT_CHECK(MONOTONE checkout $MSHA ., [], [stdout])
   AT_CHECK(SHA1(testfile), [], [stdout])
   AT_CHECK(cmp stdout fsha-$i, [], [ignore])  
 
