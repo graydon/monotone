@@ -16,3 +16,5 @@ licenses.
 
   -- ciabot_monotone.py: A python script to watch a repository and
      send notifications of commits to CIA (http://cia.navi.cx).
+
+  -- monotone.bash_completion: command line completion code for bash.
