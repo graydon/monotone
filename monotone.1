@@ -54,6 +54,9 @@ List certs associated with manifest or file.
 \fBlist keys\fP \fI[partial-id]\fP
 List keys matching glob, or list all keys if no glob given.
 .TP
+\fBlist queue\fP
+List contents of outgoing network queue.
+.TP
 \fBlist branches\fP
 List all branches.
 .TP
@@ -69,6 +72,18 @@ or private key packets; use the \fBread\fP command instead.
 .TP
 \fBpost\fP
 Post queued packets to network servers.
+.TP
+\fBqueue list\fP
+List contents of outgoing network queue.
+.TP
+\fBqueue print\fP \fI<target> <packet>\fP
+Print packet in outgoing network queue.
+.TP
+\fBqueue delete\fP \fI<target> <packet>\fP
+Delete packet from outgoing network queue
+.TP
+\fBqueue add\fP \fI<url> <group>\fP
+Queue contents of standard input to transmit to \fI<url>\fP and \fI<group>\fP
 .TP
 \fBfcerts\fP \fI<id>\fP
 Write file cert packets to stdout.

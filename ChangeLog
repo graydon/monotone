@@ -1,5 +1,10 @@
 2003-10-22  graydon hoare  <graydon@pobox.com>
 
+	* monotone.texi: Document 'queue' command.
+	* monotone.1: Likewise.
+
+2003-10-22  graydon hoare  <graydon@pobox.com>
+
 	* diff_patch.cc 
 	(infer_directory_moves): New function.
 	(rebuild_under_directory_moves): New function.

@@ -2184,6 +2184,47 @@ URLs, and @code{get_news_sender (@var{url}, @var{group})} for any
 @code{nntp} URLs. See the documentation of these hooks for more
 detail.
 
+@item monotone queue list
+
+This command lists the contents of the outgoing network queue. This
+queue lists an entry for each URL and group pair, called a
+@dfn{target}.  For each target, it then lists all the packets queued
+to send to that target. Each target and packet is given a number,
+which can be used in other @code{monotone queue} commands such as
+@code{monotone queue delete} or @code{monotone queue print}.
+
+Note that any commands which alter the queue will invalidate target
+and packet numbers.
+
+@item monotone queue delete @var{target} @var{packet}
+
+This command deletes the packet denoted by the numbers @var{target}
+and @var{packet} from the outgoing network queue. The @var{target} and
+@var{packet} numbers should correspond to a single queue entry listed
+by @code{monotone queue list}.
+
+Note that any commands which alter the queue will invalidate target
+and packet numbers.
+
+@item monotone queue print @var{target} @var{packet}
+
+This command prints the packet denoted by the numbers @var{target}
+and @var{packet}, in the outgoing network queue. The @var{target} and
+@var{packet} numbers should correspond to a single queue entry listed
+by @code{monotone queue list}.
+
+Note that any commands which alter the queue will invalidate target
+and packet numbers.
+
+@item monotone queue @var{url} @var{group}
+
+This command reads data from standard input, and adds it to the
+outgoing network queue. The data is queued for transmission to the
+target denoted by @var{url} and @var{group}.
+
+Note that any commands which alter the queue will invalidate target
+and packet numbers.
+
 @end ftable
 
 
@@ -2309,6 +2350,11 @@ names of public and private keys you have on hand.
 
 If @var{pattern} is provided, it is used as a glob to limit the keys
 listed. Otherwise all keys in your database are listed.
+
+@item monotone list queue
+
+This command lists the contents of the outgoing network queue. It is a
+synonym for @command{monotone queue list}.
 
 @item monotone list branches
 
@@ -3057,6 +3103,11 @@ List certs associated with manifest or file.
 List keys matching glob, or list all keys if no glob given.
 @comment TROFF INPUT: .TP
 
+@item @b{list queue}
+@itemx @b{ls queue}
+List contents of outgoing network queue.
+@comment TROFF INPUT: .TP
+
 @item @b{list branches}
 @itemx @b{ls branches}
 List all branches.
@@ -3079,6 +3130,22 @@ or private key packets; use the @b{read} command instead.
 
 @item @b{post}
 Post queued packets to network servers.
+@comment TROFF INPUT: .TP
+
+@item @b{queue list}
+List contents of outgoing network queue.
+@comment TROFF INPUT: .TP
+
+@item @b{queue print} @i{<target>} @i{<packet>}
+Print packet in outgoing network queue.
+@comment TROFF INPUT: .TP
+
+@item @b{queue delete} @i{<target>} @i{<packet>}
+Delete packet from outgoing network queue
+@comment TROFF INPUT: .TP
+
+@item @b{queue add} @i{<url>} @i{<group>}
+Queue contents of standard input to transmit to @i{<url>} and @i{<group>}
 @comment TROFF INPUT: .TP
 
 @item @b{fcerts} @i{<id>}
