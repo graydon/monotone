@@ -6,6 +6,13 @@
 	* file_io.cc (walk_tree): Handle nonexistent file/directory
 	gracefully.
 
+2004-04-30  Christof Petig <christof@petig-baender.de>
+
+	* rcs_import.cc (store_trunk_manifest_edge):
+		skip ancestry to empty manifest
+	* rcs_import.cc (process_branch):
+		also follow branches of last/first versions
+
 2004-04-29  graydon hoare  <graydon@pobox.com>
 
 	* configure.ac: Fix up windows probe and bundling checks.
