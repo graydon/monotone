@@ -1,0 +1,46 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([importing files with a internationalized names])
+
+MONOTONE_SETUP
+
+EUROPEAN_UTF8=`printf "\xC3\xB6\xC3\xA4\xC3\xBc\xC3\x9F"`
+EUROPEAN_8859_1=`printf "\xF6\xE4\xFC\xDF"`
+
+JAPANESE_UTF8=`printf "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"`
+JAPANESE_EUC_JP=`printf "\xA4\xC6\xA4\xB9\xA4\xC8"`
+
+AT_CHECK(mkdir tmp)
+AT_CHECK(touch "tmp/file name with spaces", [], [ignore], [ignore])
+AT_CHECK(touch "tmp/file+name-with_funny@symbols%etc", [], [ignore], [ignore])
+AT_CHECK(touch "tmp/$EUROPEAN_UTF8", [], [ignore], [ignore])
+AT_CHECK(touch "tmp/$JAPANESE_UTF8", [], [ignore], [ignore])
+AT_CHECK(touch "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
+AT_CHECK(touch "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE add "tmp/file name with spaces", [], [ignore], [ignore])
+AT_CHECK(MONOTONE add "tmp/file+name-with_funny@symbols%etc", [], [ignore], [ignore])
+
+# add some files with UTF8 names
+export LANG=en_US.utf8
+AT_CHECK(MONOTONE add "tmp/$EUROPEAN_UTF8", [], [ignore], [ignore])
+AT_CHECK(MONOTONE add "tmp/$JAPANESE_UTF8", [], [ignore], [ignore])
+
+# remove the UTF8 file, change locale, and add it again. both should work.
+export LANG=de_DE.iso88591
+AT_CHECK(MONOTONE drop "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
+AT_CHECK(MONOTONE add "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
+
+export LANG=ja_JP.eucjp
+AT_CHECK(MONOTONE drop "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
+AT_CHECK(MONOTONE add "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
+AT_CHECK(grep funny MT/manifest, [], [ignore], [ignore])
+AT_CHECK(grep spaces MT/manifest, [], [ignore], [ignore])
+AT_CHECK(grep $JAPANESE_UTF8 MT/manifest, [], [ignore], [ignore])
+AT_CHECK(grep $EUROPEAN_UTF8 MT/manifest, [], [ignore], [ignore])
+
+AT_CHECK(rm -Rf tmp)
+
+AT_CLEANUP

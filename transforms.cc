@@ -353,12 +353,11 @@ string canonical_base64(string const & s)
 
 // general character code conversion routines
 
-static string system_charset(lua_hooks & lua)
+static string system_charset()
 {
   char const * locale_charset_name = stringprep_locale_charset ();
   I(locale_charset_name != NULL);
   string sys_charset(locale_charset_name);
-  lua.hook_get_system_charset(sys_charset);
   return sys_charset;
 }
 
@@ -369,26 +368,26 @@ void charset_convert(string const & src_charset,
 {
   L(F("converting %d bytes from %s to %s\n") % src.size() 
     % src_charset % dst_charset);
-  char * converted = stringprep_convert(src.c_str(), 
-					src_charset.c_str(), 
-					dst_charset.c_str());
+  char * converted = stringprep_convert(src.c_str(),
+					dst_charset.c_str(),
+					src_charset.c_str());
   I(converted != NULL);
   dst = string(converted);
   free(converted);
 }
 
 
-void system_to_utf8(external const & ext, utf8 & utf, lua_hooks & lua)
+void system_to_utf8(external const & ext, utf8 & utf)
 {
   string out;
-  charset_convert(system_charset(lua), "UTF-8", ext(), out);
+  charset_convert(system_charset(), "UTF-8", ext(), out);
   utf = out;
 }
 
-void utf8_to_system(utf8 const & utf, external & ext, lua_hooks & lua)
+void utf8_to_system(utf8 const & utf, external & ext)
 {
   string out;
-  charset_convert("UTF-8", system_charset(lua), utf(), out);
+  charset_convert("UTF-8", system_charset(), utf(), out);
   ext = out;
 }
 
@@ -527,10 +526,10 @@ void internalize_url(utf8 const & utf, url & u)
   }
 }
 
-void internalize_url(external const & ext, url & u, lua_hooks & lua)
+void internalize_url(external const & ext, url & u)
 {
   utf8 utf;
-  system_to_utf8(ext, utf, lua);
+  system_to_utf8(ext, utf);
   internalize_url(utf, u);
 }
 
@@ -580,11 +579,11 @@ void externalize_url(url const & u, utf8 & utf)
   }
 }
 
-void externalize_url(url const & u, external & ext, lua_hooks & lua)
+void externalize_url(url const & u, external & ext)
 {
   utf8 utf;
   externalize_url(u, utf);
-  utf8_to_system(utf, ext, lua);
+  utf8_to_system(utf, ext);
 }
 
 void internalize_cert_name(utf8 const & utf, cert_name & c)
@@ -594,10 +593,10 @@ void internalize_cert_name(utf8 const & utf, cert_name & c)
   c = a();
 }
 
-void internalize_cert_name(external const & ext, cert_name & c, lua_hooks & lua)
+void internalize_cert_name(external const & ext, cert_name & c)
 {
   utf8 utf;
-  system_to_utf8(ext(), utf, lua);
+  system_to_utf8(ext(), utf);
   internalize_cert_name(utf, c);
 }
 
@@ -606,11 +605,11 @@ void externalize_cert_name(cert_name const & c, utf8 & utf)
   ace_to_utf8(ace(c()), utf);
 }
 
-void externalize_cert_name(cert_name const & c, external & ext, lua_hooks & lua)
+void externalize_cert_name(cert_name const & c, external & ext)
 {
   utf8 utf;
   externalize_cert_name(c, utf);
-  utf8_to_system(utf, ext, lua);  
+  utf8_to_system(utf, ext);  
 }
 
 void internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
@@ -634,10 +633,10 @@ void internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
   key = tmp;
 }
 
-void internalize_rsa_keypair_id(external const & ext, rsa_keypair_id & key, lua_hooks & lua)
+void internalize_rsa_keypair_id(external const & ext, rsa_keypair_id & key)
 {
   utf8 utf;
-  system_to_utf8(ext, utf, lua);
+  system_to_utf8(ext, utf);
   internalize_rsa_keypair_id(utf, key);
 }
 
@@ -663,11 +662,11 @@ void externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
   utf = tmp;
 }
 
-void externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext, lua_hooks & lua)
+void externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext)
 {
   utf8 utf;
   externalize_rsa_keypair_id(key, utf);
-  utf8_to_system(utf, ext, lua);
+  utf8_to_system(utf, ext);
 }
 
 
@@ -935,9 +934,7 @@ struct idna
 
 static void check_idna_encoding()
 {
-  lua_hooks lua;
-  lua.add_std_hooks();
-  lua.add_test_hooks();
+  putenv("CHARSET=UTF-8");
 
   for (size_t i = 0; i < sizeof(idna_vec) / sizeof(struct idna); ++i)
     {
@@ -965,19 +962,19 @@ static void check_idna_encoding()
       external utf_host_url("http://" + utf() + ":80/depot.cgi/path.to.group");
       url ace_host_url("http://" + a() + ":80/depot.cgi/path.to.group");
 
-      internalize_url(utf_host_url, tmp_url, lua);
+      internalize_url(utf_host_url, tmp_url);
       L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tmp_url());
       BOOST_CHECK(lowercase(ace_host_url()) == lowercase(tmp_url()));
-      externalize_url(ace_host_url, tmp_external, lua);
+      externalize_url(ace_host_url, tmp_external);
       BOOST_CHECK(lowercase(tmp_external()) == lowercase(utf_host_url()));
 
       external utf_group_url("http://www.gurgle.com:80/depot.cgi/" + utf());
       url ace_group_url("http://www.gurgle.com:80/depot.cgi/" + a());
 
-      internalize_url(utf_group_url, tmp_url, lua);
+      internalize_url(utf_group_url, tmp_url);
       L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tmp_url());
       BOOST_CHECK(lowercase(ace_group_url()) == lowercase(tmp_url()));
-      externalize_url(ace_group_url, tmp_external, lua);
+      externalize_url(ace_group_url, tmp_external);
       BOOST_CHECK(lowercase(tmp_external()) == lowercase(utf_group_url()));
     }
 }

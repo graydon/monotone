@@ -1,3 +1,13 @@
+2003-12-29  graydon hoare  <graydon@pobox.com>
+
+	* file_io.cc: Localize names before touching fs.
+	* lua.hh, lua.cc (hook_get_system_charset): Remove useless fn.
+	* test_hooks.lua: Likewise.
+	* monotone.cc, transforms.cc, transforms.hh: 
+	Remove lua from system charset conv.
+	* tests/t_i18n_file.at: New test.
+	* testsuite.at: Call it.
+
 2003-12-28  graydon hoare  <graydon@pobox.com>
 
 	* app_state.cc, app_state.hh: Massage to use i18n vocab.

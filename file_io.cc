@@ -45,6 +45,19 @@ string get_homedir()
   return string(pw->pw_dir);
 }
 
+
+static fs::path localized(string const & utf)
+{
+  fs::path tmp(utf), ret;
+  for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
+    {
+      external ext;
+      utf8_to_system(utf8(*i), ext);
+      ret /= ext();
+    }
+  return ret;
+}
+
 string absolutify(string const & path)
 {
   fs::path tmp(path);
@@ -102,24 +115,24 @@ bool book_keeping_file(local_path const & p)
 
 bool directory_exists(local_path const & p) 
 { 
-  return fs::exists(fs::path(p())) &&
-    fs::is_directory(fs::path(p())); 
+  return fs::exists(localized(p())) &&
+    fs::is_directory(localized(p())); 
 }
-bool file_exists(file_path const & p) { return fs::exists(fs::path(p())); }
-bool file_exists(local_path const & p) { return fs::exists(fs::path(p())); }
+bool file_exists(file_path const & p) { return fs::exists(localized(p())); }
+bool file_exists(local_path const & p) { return fs::exists(localized(p())); }
 
-void delete_file(local_path const & p) { fs::remove(fs::path(p())); }
-void delete_file(file_path const & p) { fs::remove(fs::path(p())); }
+void delete_file(local_path const & p) { fs::remove(localized(p())); }
+void delete_file(file_path const & p) { fs::remove(localized(p())); }
 
 void move_file(file_path const & old_path,
 	       file_path const & new_path) 
 { 
-  fs::rename(fs::path(old_path()), 
-	     fs::path(new_path()));
+  fs::rename(localized(old_path()), 
+	     localized(new_path()));
 }
 
-void mkdir_p(local_path const & p) { fs::create_directories(fs::path(p())); }
-void mkdir_p(file_path const & p) { fs::create_directories(fs::path(p())); }
+void mkdir_p(local_path const & p) { fs::create_directories(localized(p())); }
+void mkdir_p(file_path const & p) { fs::create_directories(localized(p())); }
 void make_dir_for(file_path const & p) { 
   fs::path tmp(p());
   if (tmp.has_branch_path())
@@ -147,16 +160,16 @@ static void read_data_impl(fs::path const & p,
 }
 
 void read_data(local_path const & path, data & dat)
-{ read_data_impl(fs::path(path()), dat); }
+{ read_data_impl(localized(path()), dat); }
 
 void read_data(file_path const & path, data & dat)
-{ read_data_impl(fs::path(path()), dat); }
+{ read_data_impl(localized(path()), dat); }
 
 void read_data(local_path const & path,
 	       base64< gzip<data> > & dat)
 {
   data data_plain;
-  read_data_impl(fs::path(path()), data_plain);
+  read_data_impl(localized(path()), data_plain);
   gzip<data> data_compressed;
   base64< gzip<data> > data_encoded;  
   encode_gzip(data_plain, data_compressed);
@@ -201,10 +214,10 @@ static void write_data_impl(fs::path const & p,
 }
 
 void write_data(local_path const & path, data const & dat)
-{ write_data_impl(fs::path(path()), dat); }
+{ write_data_impl(localized(path()), dat); }
 
 void write_data(file_path const & path, data const & dat)
-{ write_data_impl(fs::path(path()), dat); }
+{ write_data_impl(localized(path()), dat); }
 
 
 void write_data(local_path const & path,
@@ -214,7 +227,7 @@ void write_data(local_path const & path,
   data data_decompressed;      
   decode_base64(dat, data_decoded);
   decode_gzip(data_decoded, data_decompressed);      
-  write_data_impl(fs::path(path()), data_decompressed);
+  write_data_impl(localized(path()), data_decompressed);
 }
 
 void write_data(file_path const & path,
@@ -262,12 +275,12 @@ static void walk_tree_recursive(fs::path const & absolute,
 void walk_tree(file_path const & path,
 	       tree_walker & walker)
 {
-  if (! fs::is_directory(fs::path(path())))
+  if (! fs::is_directory(localized(path())))
     walker.visit_file(path);
   else
     {
-      fs::path root(fs::current_path());
-      fs::path rel(path());
+      fs::path root(localized(fs::current_path().string()));
+      fs::path rel(localized(path()));
       walk_tree_recursive(root / rel, rel, walker);
     }
 }

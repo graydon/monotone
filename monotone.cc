@@ -89,7 +89,7 @@ struct utf8_argv
   int argc;
   char **argv;
 
-  explicit utf8_argv(int ac, char **av, lua_hooks & lua)
+  explicit utf8_argv(int ac, char **av)
     : argc(ac),
       argv(static_cast<char **>(malloc(ac * sizeof(char *))))
   {
@@ -98,7 +98,7 @@ struct utf8_argv
       {
 	external ext(av[i]);
 	utf8 utf;
-	system_to_utf8(ext, utf, lua);
+	system_to_utf8(ext, utf);
 	argv[i] = static_cast<char *>(malloc(utf().size() + 1));
 	I(argv[i] != NULL);
 	memcpy(argv[i], utf().data(), utf().size());
@@ -136,7 +136,7 @@ int cpp_main(int argc, char ** argv)
 
   save_initial_path();
   app_state app;
-  utf8_argv uv(argc, argv, app.lua);
+  utf8_argv uv(argc, argv);
 
   // prepare for arg parsing
       
