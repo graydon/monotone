@@ -1,5 +1,11 @@
 2004-10-26  graydon hoare  <graydon@pobox.com>
 
+	* tests/t_update_missing.at: New test from Bruce Stephens
+	* testsuite.at: Call it.
+	* change_set.cc: Handle the error exposed by it.
+
+2004-10-26  graydon hoare  <graydon@pobox.com>
+
 	* work.{cc,hh}: Comply with Derek's new tests.
 	* commands.cc: Likewise.
 

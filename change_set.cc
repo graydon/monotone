@@ -1878,10 +1878,12 @@ move_files_to_tmp_bottom_up(tid t,
 	  switch (path_item_type(item))
 	    {
 	    case ptype_file:
-	      move_file(src, dst);
+	      if (file_exists(src))
+		move_file(src, dst);
 	      break;
 	    case ptype_directory:
-	      move_dir(src, dst);
+	      if (directory_exists(src))
+		move_dir(src, dst);
 	      break;
 	    }
 	}
