@@ -507,7 +507,7 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
           cvs.head_manifest.insert(make_pair(cvs.curr_file, fid));
       else
          L(F("not adding %s to manifest since state is '%s'\n")
-         	% cvs.curr_file % r.deltas[r.admin.head]->state
+         	% cvs.curr_file % r.deltas[r.admin.head]->state);
     }
 
     global_pieces.reset();
