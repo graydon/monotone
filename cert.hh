@@ -51,6 +51,9 @@ void make_simple_cert(hexenc<id> const & id,
 		      app_state & app,
 		      cert & c);
 
+void erase_bogus_certs(vector< manifest<cert> > & certs,
+		       app_state & app);
+
 // special certs -- system won't work without them
 
 extern string const ancestor_cert_name;

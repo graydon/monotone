@@ -381,6 +381,7 @@ static bool find_ancestor_on_netserver (manifest_id const & child,
 	{
 	  vector< manifest<cert> > tmp;
 	  app.db.get_manifest_certs(*i, tn, tmp);
+	  erase_bogus_certs(tmp, app);
 
 	  // we go through this vector backwards because we would prefer to
 	  // hit more recently-queued ancestors (such as intermediate nodes
@@ -915,6 +916,7 @@ CMD(commit, "working copy", "[log message]", "commit working copy to database")
       vector< manifest<cert> > certs;
       cert_name branch(branch_cert_name);
       app.db.get_manifest_certs(old_id, branch, certs);
+      erase_bogus_certs(certs, app);
 
       N(certs.size() != 0, 
 	string("no branch certs found for old manifest ")

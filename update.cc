@@ -18,6 +18,7 @@
 #include "sanity.hh"
 #include "cert.hh"
 #include "transforms.hh"
+#include "ui.hh"
 #include "update.hh"
 #include "vocab.hh"
 
@@ -28,15 +29,6 @@
 using boost::dynamic_bitset;
 using boost::lexical_cast;
 using boost::shared_ptr;
-
-static void check_cert_or_throw(cert const & t, app_state & app)
-{
-  string txt;
-  cert_signable_text(t, txt);
-  L("checking cert %s\n", txt.c_str());
-  N(check_cert(app, t),
-    "bad cert signature: '" + txt + "'");
-}
 
 static void find_descendents(manifest_id const & ident,
 			     app_state & app,
@@ -61,6 +53,8 @@ static void find_descendents(manifest_id const & ident,
 
 	  vector< manifest<cert> > certs;
 	  app.db.get_manifest_certs(cert_name(ancestor_cert_name), enc_val, certs);
+
+	  erase_bogus_certs(certs, app);
 
 	  for (vector< manifest<cert> >::iterator j = certs.begin();
 	       j != certs.end(); ++j)
@@ -97,11 +91,11 @@ static void filter_by_branch(app_state & app,
     {
       vector< manifest<cert> > certs;
       app.db.get_manifest_certs(*i, cert_name(branch_cert_name), enc_val, certs);
+
+      erase_bogus_certs(certs, app);
+      
       if (certs.size() > 0)
-	{
-	  check_cert_or_throw(certs[0].inner(), app);
-	  branch_filtered.insert(certs[0].inner().ident);
-	}
+	branch_filtered.insert(certs[0].inner().ident);
     }
 }
 
@@ -221,14 +215,7 @@ struct insert_id_with_value
   void operator()(manifest<cert> const & t) const
   {
     if (t.inner().value == val)
-      {
-	// FIXME: you might want to try some recovery / restart algorithm
-	// here. I'm assuming false signatures are pretty rare anyways, since you
-	// should have checked them on import. for now, I'm just going to throw
-	// if you picked a target which had a bogus signature.
-	check_cert_or_throw(t.inner(), app);
-	candidates.insert(manifest_id(t.inner().ident));
-      }
+      candidates.insert(manifest_id(t.inner().ident));
   }
 };
 
@@ -261,6 +248,8 @@ static void filter_by_sorting(vector<string> const & certnames,
 	  app.db.get_manifest_certs(*i, certname, tmpcerts);
 	  copy(tmpcerts.begin(), tmpcerts.end(), back_inserter(certs));
 	}
+
+      erase_bogus_certs(certs, app);
 
       // pick the most favourable cert value, via a sorter
       vector< manifest<cert> >::const_iterator max = 

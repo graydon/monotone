@@ -5,6 +5,9 @@
 	* ui.cc, ui.hh: Only pad with blanks enough to cover old output
 	when ticking.
 
+	* update.cc, cert.cc, commands.cc: Fix cert fetching functions to
+	remove bogus certs.
+
 2003-09-15  Tom Tromey  <tromey@redhat.com>
 
 	* monotone.texi (Getting Started): Don't mention MT_DB or

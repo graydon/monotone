@@ -10,6 +10,7 @@
 #include "keys.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "ui.hh"
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -19,6 +20,39 @@
 #include <vector>
 
 using std::string;
+
+// cert destroyer!
+
+struct bogus_cert_p
+{
+  app_state & app;
+  bogus_cert_p(app_state & a) : app(a) {};
+  bool operator()(manifest<cert> const & c) const 
+  {
+  string txt;
+  cert_signable_text(c.inner(), txt);
+  L("checking cert %s\n", txt.c_str());
+  if (check_cert(app,c.inner()))
+    {
+      L("cert ok\n");
+      return false;
+    }
+  else
+    {
+      ui.warn("bad signature by '" + c.inner().key() + "' on '" + txt + "'\n");
+      return true;
+    }
+  }
+};
+
+void erase_bogus_certs(vector< manifest<cert> > & certs,
+			      app_state & app)
+{
+  vector< manifest<cert> >::iterator e = 
+    remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
+  certs.erase(e, certs.end());      
+}
+
 
 // cert-managing routines
 
@@ -190,6 +224,7 @@ void get_branch_heads(cert_value const & branchname,
   
   L("getting branch certs for %s\n", branchname().c_str());
   app.db.get_manifest_certs(cert_name(branch_cert_name), branch_encoded, certs);
+  erase_bogus_certs(certs, app);
   L("got %d branch members\n", certs.size());
   for (vector< manifest<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
@@ -199,6 +234,7 @@ void get_branch_heads(cert_value const & branchname,
       base64<cert_value> id_encoded;
       encode_base64(tv, id_encoded);
       app.db.get_manifest_certs(ancestor_cert_name, id_encoded, children);
+      erase_bogus_certs(children, app);
       if (children.size() == 0)
 	{
 	  L("found head %s\n", i->inner().ident().c_str());
@@ -256,6 +292,7 @@ bool find_common_ancestor(manifest_id const & left,
 	{
 	  vector< manifest<cert> > tmp;
 	  app.db.get_manifest_certs(*i, tn, tmp);
+	  erase_bogus_certs(tmp, app);
 	  for(vector< manifest<cert> >::const_iterator j = tmp.begin();
 	      j != tmp.end(); ++j)
 	    {
@@ -283,6 +320,7 @@ bool find_common_ancestor(manifest_id const & left,
 	{
 	  vector< manifest<cert> > tmp;
 	  app.db.get_manifest_certs(*i, tn, tmp);
+	  erase_bogus_certs(tmp, app);
 	  for(vector< manifest<cert> >::const_iterator j = tmp.begin();
 	      j != tmp.end(); ++j)
 	    {
