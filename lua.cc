@@ -17,7 +17,7 @@ extern "C" {
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#include <vector>
+#include <set>
 #include <map>
 
 #include "lua.hh"
@@ -525,29 +525,36 @@ bool lua_hooks::hook_merge3(data const & ancestor,
 }
 
 
-bool lua_hooks::hook_get_news_sender(url const & u, group const & g, 
-				     string & sender)
+bool lua_hooks::hook_get_news_sender(url const & u, string & sender)
 {
   return Lua(st)
     .push_str("get_news_sender")
     .get_fn()
     .push_str(u())
-    .push_str(g())
-    .call(2,1)
+    .call(1,1)
     .extract_str(sender)
     .ok();
 }
 
-bool lua_hooks::hook_get_http_auth(url const & u, group const & g, 
-				   rsa_keypair_id & pubkey)
+bool lua_hooks::hook_get_mail_sender(url const & u, string & sender)
+{
+  return Lua(st)
+    .push_str("get_mail_sender")
+    .get_fn()
+    .push_str(u())
+    .call(1,1)
+    .extract_str(sender)
+    .ok();
+}
+
+bool lua_hooks::hook_get_http_auth(url const & u, rsa_keypair_id & pubkey)
 {
   string res;
   bool ok = Lua(st)
     .push_str("get_http_auth")
     .get_fn()
     .push_str(u())
-    .push_str(g())
-    .call(2,1)
+    .call(1,1)
     .extract_str(res)
     .ok();
   
@@ -556,7 +563,7 @@ bool lua_hooks::hook_get_http_auth(url const & u, group const & g,
 }
 
 bool lua_hooks::hook_get_post_targets(cert_value const & branchname, 
-				      vector< pair<url,group> > & targets)
+				      set<url> & targets)
 {
   targets.clear();
 
@@ -570,18 +577,16 @@ bool lua_hooks::hook_get_post_targets(cert_value const & branchname,
   
   while(ll.next())
     {
-      string u, g;
-      ll.begin().next();
-      ll.extract_str(u).pop().next();
-      ll.extract_str(g).pop(3);
-      targets.push_back(make_pair(url(u), group(g)));
+      string u;
+      ll.extract_str(u).pop();
+      targets.insert(url(u));
     }
 
   return ll.ok();
 }
 
 bool lua_hooks::hook_get_fetch_sources(cert_value const & branchname, 
-				       vector< pair<url,group> > & sources)
+				       set<url> & sources)
 {
   sources.clear();
 
@@ -592,14 +597,12 @@ bool lua_hooks::hook_get_fetch_sources(cert_value const & branchname,
     .push_str(branchname())
     .call(1,1)
     .begin();
-  
+
   while(ll.next())
     {
-      string u, g;
-      ll.begin().next();
-      ll.extract_str(u).pop().next();
-      ll.extract_str(g).pop(3);
-      sources.push_back(make_pair(url(u), group(g)));
+      string u;
+      ll.extract_str(u).pop();
+      sources.insert(url(u));
     }
   
   return ll.ok();

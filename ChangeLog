@@ -1,5 +1,17 @@
 2003-10-31  graydon hoare  <graydon@pobox.com>
 
+	* commands.cc, database.cc, database.hh, lua.cc, lua.hh,
+	network.cc, network.hh, packet.cc, packet.hh, schema.sql,
+	schema_migration.cc, tests/t_http.at, tests/t_nntp.at, vocab.cc:
+	Eliminate "groupname", use lone URL.
+	* monotone.texi: Update to cover new URL rules.
+	* network.cc, network.hh, lua.cc, lua.hh, smtp_tasks.cc:
+	Implement "mailto" URLs.
+	* tests/t_smtp.at: New test.
+	* testsuite.at: Call it.
+
+2003-10-31  graydon hoare  <graydon@pobox.com>
+
 	* patch_set.cc (manifests_to_patch_set): Second form with explicit renames.
 	(manifests_to_patch_set): Split edit+rename events when we see them.
 	* commands.cc (status, commit): Include explicit rename set.

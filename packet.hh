@@ -7,7 +7,7 @@
 // see the file COPYING for details
 
 #include <iostream>
-#include <vector>
+#include <set>
 #include <map>
 
 #include <boost/optional.hpp>
@@ -62,8 +62,8 @@ struct packet_consumer
 struct queueing_packet_writer : public packet_consumer
 {
   app_state & app;
-  std::vector< std::pair<url,group> > targets;
-  queueing_packet_writer(app_state & a, std::vector< std::pair<url,group> > const & t);
+  std::set<url> targets;
+  queueing_packet_writer(app_state & a, std::set<url> const & t);
   virtual ~queueing_packet_writer() {}
   virtual void consume_file_data(file_id const & ident, 
 				 file_data const & dat);
@@ -120,7 +120,7 @@ struct packet_db_writer : public packet_consumer
   bool take_keys;
   size_t count;
 
-  boost::optional< std::pair<url, group> > server;
+  boost::optional<url> server;
 
   packet_db_writer(app_state & app, bool take_keys = false);
   virtual ~packet_db_writer() {}

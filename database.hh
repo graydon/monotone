@@ -283,37 +283,32 @@ public:
 
   // network stuff
 
-  void get_queued_targets(std::vector< std::pair<url,group> > & targets);
+  void get_queued_targets(std::set<url> & targets);
 
   void get_queued_contents(url const & u, 
-			   group const & g, 
 			   std::vector<std::string> & contents);
   
   void get_sequences(url const & u, 
-		     group const & g, 
 		     unsigned long & maj, 
 		     unsigned long & min);
 
-  void get_all_known_sources(std::vector< std::pair<url,group> > & sources);
+  void get_all_known_sources(std::set<url> & sources);
 
   void put_sequences(url const & u, 
-		     group const & g, 
 		     unsigned long maj, 
 		     unsigned long min);
   
-  void queue_posting(url const & u, group const & g, 
+  void queue_posting(url const & u,
 		     std::string const & contents);
 
-  void delete_posting(url const & u, group const & g, 
+  void delete_posting(url const & u,
 		      std::string const & contents);
 
 
   bool manifest_exists_on_netserver (url const & u, 
-				     group const & g,
 				     manifest_id const & m);
 
   void note_manifest_on_netserver (url const & u, 
-				   group const & g,
 				   manifest_id const & m);
 
   // completion stuff

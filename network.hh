@@ -9,15 +9,17 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
-#include <vector>
+#include <set>
 #include <iostream>
 
 #include "vocab.hh"
 
 bool parse_url(url const & u,
 	       std::string & proto,
+	       std::string & user,	       
 	       std::string & host,	       
 	       std::string & path,
+	       std::string & group,
 	       unsigned long & port);
 
 void open_connection(std::string const & host,
@@ -29,13 +31,13 @@ void queue_aggregated_merge(manifest_id const & ancestor,
 			    std::vector<manifest_id> const & heads, 
 			    app_state & app);
 
-void post_queued_blobs_to_network(std::vector< std::pair<url,group> > const & targets,
+void post_queued_blobs_to_network(std::set<url> const & targets,
 				  app_state & app);
 
-void fetch_queued_blobs_from_network(std::vector< std::pair<url,group> > const & sources,
+void fetch_queued_blobs_from_network(std::set<url> const & sources,
 				     app_state & app);
 
-void queue_blob_for_network(std::vector< std::pair<url,group> > const & targets,
+void queue_blob_for_network(std::set<url> const & targets,
 			    std::string const & blob,
 			    app_state & app);
 

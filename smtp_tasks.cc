@@ -53,7 +53,7 @@ bool post_smtp_article(string const & envelope_host,
   // build state machine nodes
   cmd_state              helo("HELO", envelope_host);
   cmd_state              mail("MAIL", "FROM:<" + envelope_sender + ">");
-  cmd_state              rcpt("RCPT", "TO:<" + envelope_sender + ">");
+  cmd_state              rcpt("RCPT", "TO:<" + envelope_recipient + ">");
   cmd_state              data("DATA");
   postlines_state        post(to, from, subject, article);
   cmd_state              quit("QUIT");

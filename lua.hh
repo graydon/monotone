@@ -10,7 +10,7 @@
 // we expose to the user as lua functions or variables
 
 #include <string>
-#include <vector>
+#include <set>
 #include "file_io.hh"
 #include "vocab.hh"
 
@@ -42,14 +42,13 @@ public:
 
 
   // network hooks
-  bool hook_get_news_sender(url const & serv, group const & grp, 
-			    std::string & sender);
-  bool hook_get_http_auth(url const & serv, group const & grp, 
-			  rsa_keypair_id & pubkey);
+  bool hook_get_news_sender(url const & serv, std::string & sender);
+  bool hook_get_mail_sender(url const & serv, std::string & sender);
+  bool hook_get_http_auth(url const & serv, rsa_keypair_id & pubkey);
   bool hook_get_post_targets(cert_value const & branchname, 
-			     std::vector< std::pair<url,group> > & targets);
+			     std::set<url> & targets);
   bool hook_get_fetch_sources(cert_value const & branchname, 
-			      std::vector< std::pair<url,group> > & sources);
+			      std::set<url> & sources);
 
 
   // local repo hooks

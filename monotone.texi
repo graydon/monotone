@@ -507,12 +507,12 @@ working copies, and other databases. You can inspect and modify your
 databases without affecting your working copies, and vice-versa.
 
 Monotone knows how to exchange information in your database with
-various sorts of @dfn{network servers}. It supports two common
-networking protocols: HTTP and NNTP, and can communicate natively with
-web and news servers using these protocols. If you have access to a
-web server which can run CGI programs, you can use the HTTP transport
-easily with very little setup. See the tutorial section for more
-details.
+various sorts of @dfn{network servers}. It supports three common
+networking protocols: HTTP, NNTP and SMTP. Monotone can communicate
+natively with web, news and mail servers using these protocols. If you
+have access to a web server which can run CGI programs, you can use
+the HTTP transport easily with very little setup. See the tutorial
+section for more details.
 
 @example
                                         -----------------
@@ -1600,12 +1600,12 @@ our most recent commit would result in the following messages:
 $ monotone commit
 monotone: committing a2f12ab893e7e40feb83e19f4e707ec6a2841601 to branch testbranch
 enter passphrase for key ID [testkey@@nodomain.org] :@i{<enter your passphrase here>}
-monotone: 149 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
-monotone: 116 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
-monotone: 300 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
-monotone: 288 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
-monotone: 287 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
-monotone: 298 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot.cgi
+monotone: 149 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
+monotone: 116 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
+monotone: 300 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
+monotone: 288 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
+monotone: 287 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
+monotone: 298 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
 monotone: committed a2f12ab893e7e40feb83e19f4e707ec6a2841601
 @end example
 
@@ -1621,14 +1621,13 @@ monotone: posted 6 / 6 packets ok
 @end example
 
 Elsewhere, we may wish to receive changes from a network server. This
-is also quite straightforward. We add another hook function to our 
-configuration file specifying which URLs and logical group names we would
-like to fetch from:
+is also quite straightforward. We add another hook function to our
+configuration file specifying which URLs we would like to fetch from:
 
 @example
 $ cat >>~/.monotonerc
 function get_fetch_sources(branchname)
-        return @{ @{"http://www.myisp.com/~me/depot.cgi", "helloworld"         @} @} 
+        return @{ "http://www.myisp.com/~me/depot.cgi/helloworld"         @} 
 end
 @end example
 
@@ -1722,20 +1721,19 @@ depot operational with 0 packets.
 
 For monotone to fetch from our newly created depot, we must edit our
 @file{.monotonerc} file, which is a collection of functions written in
-the @uref{http://www.lua.org, Lua} programming language. We will write some entries
-which tell monotone which network server and logical group name to
-post to, and which user name we would like to post as. Configuration
-in monotone is always done as @i{hook functions}, which calculate
-configuration variables based on some parameters (or, in rare cases,
-no parameters):
+the @uref{http://www.lua.org, Lua} programming language. We will write
+some entries which tell monotone which network URL to post to, and
+which user name we would like to post as. Configuration in monotone is
+always done as @i{hook functions}, which calculate configuration
+variables based on some parameters (or, in rare cases, no parameters):
 
 @example
 $ cat >~/.monotonerc
 function get_post_targets(branchname)
-        return @{ @{"http://www.myisp.com/~me/depot.cgi", "helloworld"         @} @} 
+        return @{"http://www.myisp.com/~me/depot.cgi/helloworld"         @} 
 end
 
-function get_http_auth(url, group)
+function get_http_auth(url)
         return "testkey@@nodomain.org"
 end
 ^D
@@ -1745,21 +1743,21 @@ We have written two hook functions. The first takes a branch name and
 returns a lua table of values. You may return different results
 depending on the branch name provided, but for this example we ignore
 the branch name and always return the same table. Each value in the
-table is a pair (a sub-table) containing a URL and a @dfn{logical
-group name}. Logical group names are analogous to newsgroups on news
-servers: they collect some subset of the data on the depot --- perhaps
-multiple branches, perhaps all your work --- into a collection that can
-be requested by name.
+table is a URL, including the path to our depot CGI and a @dfn{logical
+group name} as the URL's path info. Logical group names are analogous
+to newsgroups on news servers: they collect some subset of the data on
+the depot --- perhaps multiple branches, perhaps all your work ---
+into a collection that can be requested by name.
 
 Usually you will post all your data to a single logical group name on
 a given depot, but you may occasionally wish to have more than one, if
 your depot is carrying many different sorts of data, and you want to
 be able to fetch only part of the data at a time.
 
-The second hook function takes a URL and logical group name, and
-returns the name of an @sc{rsa} keypair in your database, to use for
-authenticating transmissions to the depot. This will generally be the
-name of the key you use to sign certificates.
+The second hook function takes a URL and returns the name of an
+@sc{rsa} keypair in your database, to use for authenticating
+transmissions to the depot. This will generally be the name of the key
+you use to sign certificates.
 
 
 @node    CVS Phrasebook
@@ -1778,7 +1776,7 @@ $ cvs checkout -d :pserver:cvs.foo.com/wobbler -r 1.2
 @end example
 @tab
 @example
-$ monotone fetch http://www.foo.com/depot.cgi wobbler
+$ monotone fetch http://www.foo.com/depot.cgi/wobbler
 $ monotone checkout fe37 ./wobbler-checkout
 @end example
 @end multitable
@@ -1786,8 +1784,8 @@ $ monotone checkout fe37 ./wobbler-checkout
 The CVS command contacts a network server, retrieves a version, and
 stores it in your working copy. There are two cosmetic differences
 with the monotone command: network servers are denoted by URLs and
-``group names'', and versions are denoted by @sc{sha1} values (or
-unambiguous prefixes thereof). 
+versions are denoted by @sc{sha1} values (or unambiguous prefixes
+thereof).
 
 There is also one deep difference: fetching versions into your
 database is a separate step from checking out a single version; after
@@ -2161,13 +2159,13 @@ copy.
 
 @ftable @command
 @item monotone fetch
-@itemx monotone fetch @var{url} @var{groupname} 
+@itemx monotone fetch @var{url} 
 
 These commands fetch packets from network servers. If you provide a
-particular @var{url} and @var{groupname}, monotone will fetch packets
-from that specific network server; otherwise monotone calls the hook
-@code{get_fetch_sources (@var{branchname})}, where @var{branchname}
-is the current branch, and fetches from all sources returned from that
+particular @var{url}, monotone will fetch packets from that specific
+network server; otherwise monotone calls the hook
+@code{get_fetch_sources (@var{branchname})}, where @var{branchname} is
+the current branch, and fetches from all sources returned from that
 hook.  Finally, if no hook is found, monotone fetches from all sources
 it has listed in its database.
 
@@ -2176,22 +2174,27 @@ database. If any packets are bad or rejected for semantic reasons,
 monotone will print a warning.
 
 @item monotone post
+@itemx monotone post @var{url} 
 
-This command attempts to post @emph{all} packets in the outgoing
-packet queue to their respective network servers. It calls the hook
-@code{get_http_auth (@var{url}, @var{group})} for any @code{http}
-URLs, and @code{get_news_sender (@var{url}, @var{group})} for any
-@code{nntp} URLs. See the documentation of these hooks for more
+This command attempts to post packets in the outgoing packet queue to
+their respective network servers. If a @var{url} is supplied, monotone
+posts only those packets queued for @var{url}. If no @var{url} is
+given, monotone posts @emph{all} queued packets. 
+
+Monotone calls the hook @code{get_http_auth (@var{url})} for any
+@code{http} URLs, @code{get_news_sender (@var{url})} for any
+@code{nntp} URLs, and @code{get_mail_sender (@var{url})} for any
+@code{mailto} URLs. See the documentation of these hooks for more
 detail.
 
 @item monotone queue list
 
 This command lists the contents of the outgoing network queue. This
-queue lists an entry for each URL and group pair, called a
-@dfn{target}.  For each target, it then lists all the packets queued
-to send to that target. Each target and packet is given a number,
-which can be used in other @code{monotone queue} commands such as
-@code{monotone queue delete} or @code{monotone queue print}.
+queue lists an entry for each URL, called a @dfn{target}.  For each
+target, it then lists all the packets queued to send to that
+target. Each target and packet is given a number, which can be used in
+other @code{monotone queue} commands such as @code{monotone queue
+delete} or @code{monotone queue print}.
 
 Note that any commands which alter the queue will invalidate target
 and packet numbers.
@@ -2216,11 +2219,11 @@ by @code{monotone queue list}.
 Note that any commands which alter the queue will invalidate target
 and packet numbers.
 
-@item monotone queue @var{url} @var{group}
+@item monotone queue @var{url}
 
 This command reads data from standard input, and adds it to the
 outgoing network queue. The data is queued for transmission to the
-target denoted by @var{url} and @var{group}.
+target denoted by @var{url}.
 
 Note that any commands which alter the queue will invalidate target
 and packet numbers.
@@ -2709,14 +2712,21 @@ end
 @end example
 
 
-@item get_news_sender (@var{url}, @var{group})
+@item get_news_sender (@var{url})
 
 Returns a string which is the email address (or other identifying
 sender address) of a news article, to be used when monotone is posting
-news articles to @var{url} and @var{group}. This hook is only called
-when posting to @code{nntp} URLs. This hook has no default definition.
+news articles to @var{url}. This hook is only called when posting to
+@code{nntp} URLs. This hook has no default definition.
 
-@item get_http_auth (@var{url}, @var{group})
+@item get_mail_sender (@var{url})
+
+Returns a string which is the email address (or other identifying
+sender address) of an email message, to be used when monotone is
+posting email messages to @var{url}. This hook is only called when
+posting to @code{mailto} URLs. This hook has no default definition.
+
+@item get_http_auth (@var{url})
 
 Returns a string which is the name of a private @sc{rsa} key you wish
 to use for posting packets to an @code{http} depot. Depots verify
@@ -2727,15 +2737,14 @@ has no default definition.
 
 @item get_post_targets (@var{branchname})
 
-Returns a table, which itself contains a set of tables, each of which
-describe a posting target you wish to send packets to, when
-committing to @var{branchname}. Each inner table contains two strings,
-a URL and a group name. Packets will be queued to send to all targets
-returned by this hook. 
+Returns a table of strings, each of which is a URL for a posting
+target you wish to send packets to, when committing to
+@var{branchname}. Packets will be queued to send to all targets
+returned by this hook.
 
 This hook has no default definition, but it returns a somewhat unusual
 structure, so we give an example here. Suppose that when you commit to
-a branch called @code{examplebranch} you want to send to the group
+a branch called @code{examplebranch} you want to send to the logical group
 @code{example} at the depot @code{http://www.myisp.com/~user/depot.cgi},
 as well as to the news group @code{com.myisp.example} at the news server
 @code{nntp://news.myisp.com}. Then you would write the following hook:
@@ -2743,19 +2752,18 @@ as well as to the news group @code{com.myisp.example} at the news server
 @example
 function get_fetch_sources(branch)
         if (branch == "examplebranch) then
-                return @{ @{"http://www.myisp.com/~user/depot.cgi", "example"@},
-                         @{"nntp://news.myisp.com", "com.myisp.example"@}  @}
+                return @{ "http://www.myisp.com/~user/depot.cgi/example",
+                         "nntp://news.myisp.com/com.myisp.example"  @}
         end
 end
 @end example
 
 @item get_fetch_sources (@var{branchname})
 
-Returns a table, which itself contains a set of tables, each of which
-describe a fetch source you wish to retrieve packets from, when you
-run @code{monotone fetch} for a particular @var{branchname}. Each
-inner table contains two strings, a URL and a group name. Packets
-will be fetched from all sources returned by this hook.
+Returns a table of strings, each of which is a URL for a fetching
+source you wish to retrieve packets from, when you run @code{monotone
+fetch} for a particular @var{branchname}. Packets will be fetched from
+all sources returned by this hook.
 
 This hook has no default definition, but its operation is analogous to
 the @code{get_post_targets (@var{branchname})} hook, described
@@ -3123,12 +3131,12 @@ List files in working directory, but not in manifest or work list.
 List files intentionally ignored due to the ignore_file hook.
 @comment TROFF INPUT: .TP
 
-@item @b{fetch} @i{[URL] [groupname]}
+@item @b{fetch} @i{[URL]}
 Fetch recent packets from network servers. Does not read public
 or private key packets; use the @b{read} command instead.
 @comment TROFF INPUT: .TP
 
-@item @b{post}
+@item @b{post} @i{[URL]}
 Post queued packets to network servers.
 @comment TROFF INPUT: .TP
 
@@ -3144,8 +3152,8 @@ Print packet in outgoing network queue.
 Delete packet from outgoing network queue
 @comment TROFF INPUT: .TP
 
-@item @b{queue add} @i{<url>} @i{<group>}
-Queue contents of standard input to transmit to @i{<url>} and @i{<group>}
+@item @b{queue add} @i{<url>}
+Queue contents of standard input to transmit to @i{<url>} 
 @comment TROFF INPUT: .TP
 
 @item @b{fcerts} @i{<id>}

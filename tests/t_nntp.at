@@ -9,15 +9,15 @@ MONOTONE_SETUP
 AT_CHECK(cp test.db test2.db)
 
 AT_DATA(nntp.lua, [
-function get_post_targets(groupname)
-	return { {"nntp://127.0.0.1:8119", "monotone.test.packets"} } 
+function get_post_targets(branchname)
+	return { "nntp://127.0.0.1:8119/monotone.test.packets" } 
 end
 
-function get_fetch_sources(groupname)
-	return { {"nntp://127.0.0.1:8119", "monotone.test.packets"} } 
+function get_fetch_sources(branchname)
+	return { "nntp://127.0.0.1:8119/monotone.test.packets" } 
 end
 
-function get_news_sender(url, group)
+function get_news_sender(url)
 	return "tester@test.net"
 end
 ])
@@ -75,7 +75,7 @@ AT_CHECK(grep $VER0 stdout, [], [ignore])
 AT_CHECK(sncat $GROUP, [], [stdout])
 AT_CHECK(grep $VER1 stdout, [], [ignore])
 
-AT_CHECK(MONOTONE --db=test2.db --rcfile=nntp.lua fetch nntp://127.0.0.1:8119 monotone.test.packets, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --db=test2.db --rcfile=nntp.lua fetch nntp://127.0.0.1:8119/monotone.test.packets, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE --db=test2.db cat manifest $VER0, [], [stdout])
 AT_CHECK(grep testfile stdout, [], [ignore])

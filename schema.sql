@@ -92,31 +92,25 @@ CREATE TABLE file_certs
 CREATE TABLE posting_queue
 	(
 	url not null,       -- URL we are going to send this to
-	groupname not null, -- group (news or depot) we are going to post to
 	content not null    -- the packets we're going to send
 	);
 
 CREATE TABLE incoming_queue
 	(
 	url not null,       -- URL we got this bundle from
-	groupname not null, -- group (news or depot) we got it from
 	content not null    -- the packets we're going to read
 	);
 
 CREATE TABLE sequence_numbers
 	(
-	url not null,         -- URL to read from
-	groupname not null,   -- name of a group (news or depot) to read from
+	url primary key,      -- URL to read from
 	major not null,       -- 0 in news servers, may be higher in depots
-	minor not null,       -- last article / packet sequence number we got
-	unique(url, groupname)
+	minor not null        -- last article / packet sequence number we got
 	);
 
 CREATE TABLE netserver_manifests
 	(
 	url not null,         -- url of some server
-	groupname not null,   -- group name on that server
-	manifest not null,    -- manifest which exists on url, groupname
-	unique(url, groupname, manifest)
+	manifest not null,    -- manifest which exists on url
+	unique(url, manifest)
 	);
-

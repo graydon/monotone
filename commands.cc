@@ -398,14 +398,13 @@ static void complete(app_state & app,
 
 // the goal here is to look back through the ancestry of the provided
 // child, checking to see the least ancestor it has which we received from
-// the given network url/group pair.
+// the given network url.
 //
 // we use the ancestor as the source manifest when building a patchset to
-// send to that url/group.
+// send to that url.
 
 static bool find_ancestor_on_netserver (manifest_id const & child, 
 					url const & u,
-					group const & g, 
 					manifest_id & anc,
 					app_state & app)
 {
@@ -437,7 +436,7 @@ static bool find_ancestor_on_netserver (manifest_id const & child,
 
 	      L(F("looking for parent %s of %s on server\n") % (*i) % anc_id);
 
-	      if (app.db.manifest_exists_on_netserver (u, g, anc_id))
+	      if (app.db.manifest_exists_on_netserver (u, anc_id))
 		{
 		  L(F("found parent %s on server\n") % anc_id);
 		  anc = anc_id;
@@ -455,7 +454,7 @@ static bool find_ancestor_on_netserver (manifest_id const & child,
 }
 
 
-static void queue_edge_for_target_ancestor (pair<url,group> const & targ,
+static void queue_edge_for_target_ancestor (url const & targ,
 					    manifest_id const & child_id,
 					    manifest_map const & child_map,
 					    app_state & app)
@@ -473,15 +472,14 @@ static void queue_edge_for_target_ancestor (pair<url,group> const & targ,
   // database. we always store the edge from our parent, and we always know
   // when we have a parent.
 
-  vector< pair<url, group> > one_target;
-  one_target.push_back(targ);
+  set<url> one_target;
+  one_target.insert(targ);
   queueing_packet_writer qpw(app, one_target);
   
   manifest_id targ_ancestor_id;
   
   if (find_ancestor_on_netserver (child_id, 
-				  targ.first, 
-				  targ.second, 
+				  targ,
 				  targ_ancestor_id, 
 				  app))
     {
@@ -499,7 +497,7 @@ static void queue_edge_for_target_ancestor (pair<url,group> const & targ,
 
   // now that we've queued the data, we can note this new child
   // node as existing (well .. soon-to-exist) on the server
-  app.db.note_manifest_on_netserver (targ.first, targ.second, child_id);
+  app.db.note_manifest_on_netserver (targ, child_id);
 
 }
 
@@ -513,7 +511,7 @@ static void try_one_merge(manifest_id const & left,
 			  manifest_id const & right,
 			  manifest_id & merged,
 			  app_state & app, 
-			  vector< pair<url,group> > const & targets)
+			  set<url> const & targets)
 {
   manifest_data left_data, right_data, ancestor_data, merged_data;
   manifest_map left_map, right_map, ancestor_map, merged_map;
@@ -583,7 +581,7 @@ static void try_one_merge(manifest_id const & left,
     cert_manifest_rename(merged, right_renames, app, dbw);
     
     // make sure the appropriate edges get queued for the network.
-    for (vector< pair<url,group> >::const_iterator targ = targets.begin();
+    for (set<url>::const_iterator targ = targets.begin();
 	 targ != targets.end(); ++targ)
       {
 	queue_edge_for_target_ancestor (*targ, merged, merged_map, app);
@@ -777,7 +775,7 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
 
   cert t(ident, name, val_encoded, key);
   
-  vector< pair<url,group> > targets;
+  set<url> targets;
   cert_value branchname;
   guess_branch (manifest_id(ident), app, branchname);
   app.lua.hook_get_post_targets(branchname(), targets);  
@@ -816,7 +814,7 @@ CMD(tag, "certificate", "ID TAGNAME",
   complete(app, idx(args, 0), m);
   packet_db_writer dbw(app);
 
-  vector< pair<url,group> > targets;
+  set<url> targets;
   cert_value branchname;
   guess_branch (m, app, branchname);
   app.lua.hook_get_post_targets(branchname(), targets);  
@@ -836,7 +834,7 @@ CMD(approve, "certificate", "(file|manifest) ID",
     {
       manifest_id m;
       complete(app, idx(args, 1), m);
-      vector< pair<url,group> > targets;
+      set<url> targets;
       cert_value branchname;
       guess_branch (m, app, branchname);
       app.lua.hook_get_post_targets(branchname(), targets);  
@@ -850,7 +848,7 @@ CMD(approve, "certificate", "(file|manifest) ID",
       packet_db_writer dbw(app);
       file_id f;
       complete(app, idx(args, 1), f);
-      vector< pair<url,group> > targets;
+      set<url> targets;
       N(app.branch_name != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name), targets); 
       queueing_packet_writer qpw(app, targets);
@@ -871,7 +869,7 @@ CMD(disapprove, "certificate", "(file|manifest) ID",
     {
       manifest_id m;
       complete(app, idx(args, 1), m);
-      vector< pair<url,group> > targets;
+      set<url> targets;
       cert_value branchname;
       guess_branch (m, app, branchname);
       app.lua.hook_get_post_targets(branchname(), targets);  
@@ -884,7 +882,7 @@ CMD(disapprove, "certificate", "(file|manifest) ID",
     {
       file_id f;;
       complete(app, idx(args, 1), f);
-      vector< pair<url,group> > targets;
+      set<url> targets;
       N(app.branch_name != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name), targets); 
       queueing_packet_writer qpw(app, targets);
@@ -917,7 +915,7 @@ CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
     {
       file_id f;
       complete(app, idx(args, 1), f);
-      vector< pair<url,group> > targets;
+      set<url> targets;
       N(app.branch_name != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name), targets); 
       queueing_packet_writer qpw(app, targets);
@@ -929,7 +927,7 @@ CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
     {
       manifest_id m;
       complete(app, idx(args, 1), m);
-      vector< pair<url,group> > targets;
+      set<url> targets;
       cert_value branchname;
       guess_branch (m, app, branchname);
       app.lua.hook_get_post_targets(branchname(), targets);  
@@ -1156,11 +1154,11 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 
     if (app.db.manifest_version_exists(ps.m_new))
       {
-	vector< pair<url,group> > targets;
+	set<url> targets;
 	app.lua.hook_get_post_targets(branchname, targets);
 	
 	// make sure the appropriate edges get queued for the network.
-	for (vector< pair<url,group> >::const_iterator targ = targets.begin();
+	for (set<url>::const_iterator targ = targets.begin();
 	     targ != targets.end(); ++targ)
 	  {
 	    queue_edge_for_target_ancestor (*targ, ps.m_new, m_new, app);
@@ -1544,7 +1542,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
     }
   else
     {
-      vector< pair<url,group> > targets;
+      set<url> targets;
       app.lua.hook_get_post_targets(app.branch_name, targets);
 
       set<manifest_id>::const_iterator i = heads.begin();
@@ -1700,7 +1698,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
     }
   else
     {
-      vector< pair<url,group> > targets;
+      set<url> targets;
       app.lua.hook_get_post_targets(idx(args, 1), targets);
 
       set<manifest_id>::const_iterator src_i = src_heads.begin();
@@ -2083,17 +2081,17 @@ static void ls_ignored (app_state & app)
 
 static void ls_queue (string name, app_state & app)
 {
-  vector< pair<url,group> > targets;
-  app.db.get_queued_targets(targets);
+  set<url> target_set;
+  app.db.get_queued_targets(target_set);
+  vector<url> targets;
+  copy(target_set.begin(), target_set.end(), back_inserter(targets));
+
   for (size_t i = 0; i < targets.size(); ++i)
     {
       vector<string> contents;
       cout << "target " << i << ": " 
-	   << idx(targets, i).first << " " 
-	   << idx(targets, i).second << endl;
-      app.db.get_queued_contents(idx(targets, i).first, 
-				 idx(targets, i).second, 
-				 contents);
+	   << idx(targets, i) << endl;
+      app.db.get_queued_contents(idx(targets, i), contents);
       for (size_t j = 0; j < contents.size(); ++j)
 	{
 	  cout << "    target " << i << ", packet " << j 
@@ -2103,7 +2101,7 @@ static void ls_queue (string name, app_state & app)
 }
 
 
-CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL GROUP",
+CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL",
     "list, print, delete, or add items to network queue")
 {
   if (args.size() == 0)
@@ -2120,15 +2118,15 @@ CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL 
       size_t target = boost::lexical_cast<size_t>(idx(args,1));
       size_t packet = boost::lexical_cast<size_t>(idx(args,2));
 
-      vector< pair<url,group> > targets;
-      app.db.get_queued_targets(targets);
+      set<url> target_set;      
+      app.db.get_queued_targets(target_set);
+      vector<url> targets;
+      copy(target_set.begin(), target_set.end(), back_inserter(targets));
       N(target < targets.size(),
 	F("target number %d out of range") % target);
 
       vector<string> contents;
-      app.db.get_queued_contents(idx(targets, target).first, 
-				 idx(targets, target).second, 
-				 contents);
+      app.db.get_queued_contents(idx(targets, target), contents);
       N(packet < contents.size(),
 	F("packet number %d out of range for target %d")
 	% packet % target);
@@ -2139,25 +2137,22 @@ CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL 
 	}
       else
 	{
-	  ui.inform(F("deleting %d byte posting for %s %s\n") 
+	  ui.inform(F("deleting %d byte posting for %s\n") 
 		    % idx(contents, packet).size() 
-		    % idx(targets, target).first
-		    % idx(targets, target).second);
-	  app.db.delete_posting(idx(targets, target).first,
-				idx(targets, target).second,
+		    % idx(targets, target));
+	  app.db.delete_posting(idx(targets, target),
 				idx(contents, packet));
 	}
     }
 
   else if (idx(args, 0) == "add")
     {
-      if (args.size() != 3)
+      if (args.size() != 2)
 	throw usage(name);
       url u(idx(args,1));
-      group g(idx(args,2));
       string s = get_stdin();
-      ui.inform(F("queueing %d bytes for group %s on %s\n") % s.size() % g % u);
-      app.db.queue_posting(u, g, s);
+      ui.inform(F("queueing %d bytes for %s\n") % s.size() % u);
+      app.db.queue_posting(u, s);
     }  
 }
 
@@ -2397,12 +2392,12 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
   guard.commit();
 }
 
-CMD(fetch, "network", "[URL] [GROUPNAME]", "fetch recent changes from network")
+CMD(fetch, "network", "[URL]", "fetch recent changes from network")
 {
-  if (args.size() > 2)
+  if (args.size() > 1)
     throw usage(name);
 
-  vector< pair<url,group> > sources;
+  set<url> sources;
 
   if (args.size() == 0)
     {
@@ -2414,20 +2409,18 @@ CMD(fetch, "network", "[URL] [GROUPNAME]", "fetch recent changes from network")
     }
   else
     {
-      N(args.size() == 2, F("need URL and groupname"));
-      sources.push_back(make_pair(url(idx(args, 0)),
-				  group(idx(args, 1))));
+      sources.insert(url(idx(args, 0)));
     }
   
   fetch_queued_blobs_from_network(sources, app);
 }
 
-CMD(post, "network", "[URL] [GROUPNAME]", "post queued changes to network")
+CMD(post, "network", "[URL]", "post queued changes to network")
 {
-  if (args.size() > 2)
+  if (args.size() > 1)
     throw usage(name);
 
-  vector< pair<url,group> > targets;
+  set<url> targets;
   if (args.size() == 0)
     {
       if (app.branch_name == "")
@@ -2443,9 +2436,7 @@ CMD(post, "network", "[URL] [GROUPNAME]", "post queued changes to network")
     }  
   else
     {
-      N(args.size() == 2, F("need URL and groupname"));
-      targets.push_back(make_pair(url(idx(args, 0)),
-				  group(idx(args, 1))));
+      targets.insert(url(idx(args, 0)));
     }
 
   post_queued_blobs_to_network(targets, app);

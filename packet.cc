@@ -76,9 +76,7 @@ void packet_db_writer::consume_manifest_data(manifest_id const & ident,
   ++count;
 
   if (server)
-    app.db.note_manifest_on_netserver (server->first, 
-				       server->second,
-				       ident);  
+    app.db.note_manifest_on_netserver (*server, ident);  
 }
 
 void packet_db_writer::consume_manifest_delta(manifest_id const & old_id, 
@@ -100,12 +98,8 @@ void packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
 
   if (server)
     {
-      app.db.note_manifest_on_netserver (server->first, 
-					 server->second,
-					 old_id);
-      app.db.note_manifest_on_netserver (server->first, 
-					 server->second,
-					 new_id);
+      app.db.note_manifest_on_netserver (*server, old_id);
+      app.db.note_manifest_on_netserver (*server, new_id);
     }
 }
 
@@ -232,7 +226,7 @@ void packet_writer::consume_private_key(rsa_keypair_id const & ident,
 
 // --- packet writer ---
 
-queueing_packet_writer::queueing_packet_writer(app_state & a, vector< pair<url,group> > const & t) :
+queueing_packet_writer::queueing_packet_writer(app_state & a, set<url> const & t) :
   app(a), targets(t)
 {}
 

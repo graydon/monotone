@@ -59,7 +59,7 @@ database::database(fs::path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a"),
+  schema("f042f3c4d0a4f98f6658cbaf603d376acf88ff4b"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -155,14 +155,25 @@ void database::info(ostream & out)
   out << "full files      : " << get_statistic("SELECT COUNT(*) FROM files") << endl;
   out << "file deltas     : " << get_statistic("SELECT COUNT(*) FROM file_deltas") << endl;
 }
+
 void database::version(ostream & out)
 {
   string id;
   calculate_schema_id(sql(), id);
   out << "database schema version: " << id << endl;
 }
+
 void database::migrate()
-{
+{  
+  N(filename.string() != "",
+    F("need database name"));
+  char * errmsg = NULL;
+  __sql = sqlite_open(filename.string().c_str(), 0755, &errmsg);
+  if (! __sql)
+    throw oops(string("could not open database: ") + filename.string() + 
+	       (errmsg ? (": " + string(errmsg)) : ""));
+  migrate_monotone_schema(__sql);
+  sqlite_close(__sql);
 }
 
 void database::ensure_open()
@@ -1124,33 +1135,31 @@ void database::get_manifest_certs(manifest_id const & id,
 
 // network stuff
 
-void database::get_queued_targets(vector< pair<url,group> > & targets)
+void database::get_queued_targets(set<url> & targets)
 {
   results res;
-  fetch(res, 2, any_rows, 
-	"SELECT url, groupname FROM posting_queue "
-	"GROUP BY url, groupname");
+  fetch(res, 1, any_rows, 
+	"SELECT url FROM posting_queue "
+	"GROUP BY url");
   targets.clear();
   for (size_t i = 0; i < res.size(); ++i)
-    targets.push_back(make_pair(url(res[i][0]), group(res[i][1])));
+    targets.insert(url(res[i][0]));
 }
 
 void database::get_queued_contents(url const & u, 
-				   group const & g, 
 				   vector<string> & contents)
 {
   results res;
   fetch(res, one_col, any_rows, 
 	"SELECT content FROM posting_queue "
-	"WHERE url = '%s' AND groupname = '%s'",
-	u().c_str(), g().c_str());
+	"WHERE url = '%s'",
+	u().c_str());
   contents.clear();
   for (size_t i = 0; i < res.size(); ++i)
     contents.push_back(res[i][0]);
 }
 
 void database::get_sequences(url const & u, 
-			     group const & g, 
 			     unsigned long & maj, 
 			     unsigned long & min)
 {
@@ -1158,9 +1167,9 @@ void database::get_sequences(url const & u,
   fetch(res, 2, any_rows, 
 	"SELECT major, minor "
 	"FROM sequence_numbers "
-	"WHERE url = '%q' AND groupname = '%q' "
+	"WHERE url = '%q' "
 	"LIMIT 1",
-	u().c_str(), g().c_str());
+	u().c_str());
   if (res.size() == 1)
     {
       maj = lexical_cast<unsigned long>(res[0][0]);
@@ -1171,79 +1180,74 @@ void database::get_sequences(url const & u,
       maj = 0;
       min = 0;
       execute("INSERT INTO sequence_numbers "
-	      "VALUES ('%q', '%q', %lu, %lu)",
-	      u().c_str(), g().c_str(), maj, min);
+	      "VALUES ('%q', %lu, %lu)",
+	      u().c_str(), maj, min);
     }
 }
 
-void database::get_all_known_sources(vector< pair<url,group> > & sources)
+void database::get_all_known_sources(set<url> & sources)
 {
   results res;
-  fetch(res, 2, any_rows, 
-	"SELECT url, groupname "
-	"FROM sequence_numbers ");
+  fetch(res, 1, any_rows, 
+	"SELECT url "
+	"FROM sequence_numbers "
+	"GROUP BY url");
 
   sources.clear();
   for (size_t i = 0; i < res.size(); ++i)
     {
-      I(res[i].size() == 2);
-      sources.push_back(make_pair(url(res[i][0]),
-				  group(res[i][1])));
+      I(res[i].size() == 1);
+      sources.insert(url(res[i][0]));
     }
 }
 
 void database::put_sequences(url const & u, 
-			     group const & g, 
 			     unsigned long maj, 
 			     unsigned long min)
 {
   execute("UPDATE sequence_numbers "
 	  "SET major = %lu, minor = %lu "
-	  "WHERE url = '%q' AND groupname = '%q'",
-	  maj, min, u().c_str(), g().c_str());  
+	  "WHERE url = '%q'",
+	  maj, min, u().c_str());  
 }
 
-void database::queue_posting(url const & u, group const & g, 
+void database::queue_posting(url const & u,
 			     string const & content)
 {
   execute("INSERT INTO posting_queue "
-	  "VALUES ('%q', '%q', '%q')",
-	  u().c_str(), g().c_str(), content.c_str());
+	  "VALUES ('%q', '%q')",
+	  u().c_str(), content.c_str());
 }
 
-void database::delete_posting(url const & u, group const & g, 
+void database::delete_posting(url const & u, 
 			      string const & content)
 {
   execute("DELETE FROM posting_queue "
-	  "WHERE url = '%q' AND groupname = '%q' AND content = '%q'",
-	  u().c_str(), g().c_str(), content.c_str());
+	  "WHERE url = '%q' AND content = '%q'",
+	  u().c_str(), content.c_str());
 }
 
 bool database::manifest_exists_on_netserver(url const & u, 
-					    group const & g,
 					    manifest_id const & m)
 {
   results res;
   fetch(res, 1, any_rows,
 	"SELECT manifest FROM netserver_manifests "
 	"WHERE url = '%q' "
-	"AND groupname = '%q' "
 	"AND manifest = '%q' ",
 	u().c_str(), 
-	g().c_str(),
 	m.inner()().c_str());
   I(res.size() == 0 || res.size() == 1);
   return (res.size() == 1);
 }
 
 void database::note_manifest_on_netserver (url const & u, 
-					   group const & g,
 					   manifest_id const & m)
 {
-  if (!manifest_exists_on_netserver (u, g, m))
+  if (!manifest_exists_on_netserver (u, m))
     execute("INSERT INTO netserver_manifests "
-	    "VALUES ('%q','%q','%q')",
-	    u().c_str(), g().c_str(), m.inner()().c_str());
+	    "VALUES ('%q', '%q')",
+	    u().c_str(), m.inner()().c_str());
 }
 
 // completions

@@ -185,7 +185,7 @@ struct migrator
 	  {
 	    sqlite_exec(sql, "ROLLBACK", NULL, NULL, NULL);
 	    throw runtime_error("mismatched result of migration, "
-				"got" + curr + ", wanted " + target_id);
+				"got " + curr + ", wanted " + target_id);
 	  }
 	if (sqlite_exec(sql, "COMMIT", NULL, NULL, NULL) != SQLITE_OK)
 	  {
@@ -308,6 +308,149 @@ static bool migrate_depot_make_seqnumbers_non_null(sqlite * sql,
   return true;
 }
 
+
+static bool migrate_client_merge_url_and_group(sqlite * sql, 
+					       char ** errmsg)
+{
+
+  // migrate the posting_queue table
+  if (!move_table(sql, errmsg, 
+		  "posting_queue", 
+		  "tmp", 
+		  "("
+		  "url not null,"
+		  "groupname not null,"
+		  "content not null"
+		  ")"))
+    return false;
+
+  int res = sqlite_exec_printf(sql, "CREATE TABLE posting_queue "
+			       "("
+			       "url not null, -- URL we are going to send this to\n"
+			       "content not null -- the packets we're going to send\n"
+			       ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "INSERT INTO posting_queue "
+			   "SELECT "
+			   "(url || '/' || groupname), "
+			   "content "
+			   "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+
+  // migrate the incoming_queue table
+  if (!move_table(sql, errmsg, 
+		  "incoming_queue", 
+		  "tmp", 
+		  "("
+		  "url not null,"
+		  "groupname not null,"
+		  "content not null"
+		  ")"))
+    return false;
+
+  res = sqlite_exec_printf(sql, "CREATE TABLE incoming_queue "
+			   "("
+			   "url not null, -- URL we got this bundle from\n"
+			   "content not null -- the packets we're going to read\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "INSERT INTO incoming_queue "
+			   "SELECT "
+			   "(url || '/' || groupname), "
+			   "content "
+			   "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+
+  // migrate the sequence_numbers table
+  if (!move_table(sql, errmsg, 
+		  "sequence_numbers", 
+		  "tmp", 
+		  "("
+		  "url not null,"
+		  "groupname not null,"
+		  "major not null,"
+		  "minor not null,"
+		  "unique(url, groupname)"
+		  ")"
+		  ))
+    return false;
+  
+  res = sqlite_exec_printf(sql, "CREATE TABLE sequence_numbers "
+			   "("
+			   "url primary key, -- URL to read from\n"
+			   "major not null, -- 0 in news servers, may be higher in depots\n"
+			   "minor not null -- last article / packet sequence number we got\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "INSERT INTO sequence_numbers "
+			   "SELECT "
+			   "(url || '/' || groupname), "
+			   "major, "
+			   "minor "
+			   "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+
+  // migrate the netserver_manifests table
+  if (!move_table(sql, errmsg, 
+		  "netserver_manifests", 
+		  "tmp", 
+		  "("
+		  "url not null,"
+		  "groupname not null,"
+		  "manifest not null,"
+		  "unique(url, groupname, manifest)"
+		  ")"
+		  ))
+    return false;
+  
+  res = sqlite_exec_printf(sql, "CREATE TABLE netserver_manifests "
+			   "("
+			   "url not null, -- url of some server\n"
+			   "manifest not null, -- manifest which exists on url\n"
+			   "unique(url, manifest)"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "INSERT INTO netserver_manifests "
+			   "SELECT "
+			   "(url || '/' || groupname), "
+			   "manifest "
+			   "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  
+  return true;  
+}
+
 void migrate_depot_schema(sqlite *sql)
 {  
   migrator m;
@@ -326,4 +469,15 @@ void migrate_depot_schema(sqlite *sql)
 
 void migrate_monotone_schema(sqlite *sql)
 {
+
+  migrator m;
+  
+  m.add("edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a",
+	&migrate_client_merge_url_and_group);
+
+  m.migrate(sql, "f042f3c4d0a4f98f6658cbaf603d376acf88ff4b");
+  
+  if (sqlite_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
+    throw runtime_error("error vacuuming after migration");
+
 }

@@ -8,6 +8,7 @@
 
 #include "vocab.hh"
 #include "sanity.hh"
+#include "network.hh"
 
 // verifiers for various types of data
 
@@ -17,6 +18,36 @@ template <typename T>
 static inline void verify(T & val)
 {}
 
+template <>
+static inline void verify(url & val)
+{
+  if (val.ok)
+    return;
+
+  string proto, user, host, path, group;
+  unsigned long port;
+  N(parse_url(val, proto, user, host, path, group, port),
+    F("malformed URL: '%s'") % val);
+  val.ok = true;
+}
+
+template <>
+static inline void verify(group & val)
+{
+  if (val.ok)
+    return;
+
+  string::size_type pos = val().find_first_not_of("abcdefghijklmnopqrstuvwxyz"
+						  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+						  "0123456789"
+						  "_.-");
+  N(pos == string::npos,
+    F("bad character '%c' in group name '%s'") % val().at(pos) % val);
+
+  val.ok = true;
+}
+
+
 template<>
 static inline void verify(local_path & val)
 {
@@ -25,20 +56,30 @@ static inline void verify(local_path & val)
     return;
 
   using boost::filesystem::path;
-  boost::filesystem::path p(val());
+  boost::filesystem::path p;
+  try 
+    {
+      p = boost::filesystem::path(val());
+    }
+  catch (std::runtime_error &e)
+    {
+      throw informative_failure(e.what());
+    }
 
-  if (p.has_root_path() || p.has_root_name() || p.has_root_directory())
-    throw oops("prohibited absolute path '" + val() + "'");
+  N(! (p.has_root_path() || p.has_root_name() || p.has_root_directory()),
+    F("prohibited absolute path '%s'") % val);
 
   for(path::iterator i = p.begin(); i != p.end(); ++i)
     {
-      if ( *i == "" && (! p.empty()))
-	throw oops("empty path component in '" + val() + "'");
-      if (*i == "." || *i == "..")
-	throw oops("prohibited path component '" + *i + "' in '" + val() + "'");
-      if ( ! boost::filesystem::generic_name(*i))
-	throw oops("prohibited path component '" + *i + "' in '" + val() + "'");
+      N(!( *i == "" && (! p.empty())),
+	F("empty path component in '%s'") % val);
 
+      N(!(*i == "." || *i == ".."),
+	F("prohibited path component '%s' in '%s'") % *i % val);
+
+      N(boost::filesystem::generic_name(*i),
+	F("non-generic path component '%s' in '%s'") % *i % val);
+      
       // we're going to make a small exception here for files ending in ",v", since
       // those are RCS files and we want to walk CVS trees to import them. FIXME this
       // is a kludge I am not happy about.
@@ -49,11 +90,11 @@ static inline void verify(local_path & val)
 	     boost::filesystem::posix_name(s.substr(0, s.size() - 2)))
 	  continue;
       }
-
-      if ( ! boost::filesystem::posix_name(*i))
-	throw oops("non-posix file path component '" + *i + "' in '" + val() + "'");
+      
+      N(boost::filesystem::posix_name(*i),
+	F("non-posix file path component '%s' in '%s'") % *i % val);
     }
-
+  
   val.ok = true;
 }
 
@@ -65,11 +106,11 @@ static inline void verify(file_path & val)
 {
   if (val.ok)
     return;
-
+  
   local_path loc(val());
   verify(loc);
-  if (book_keeping_file(loc))
-    throw oops("prohibited book-keeping path in '" + val() + "'");
+  N(!book_keeping_file(loc),
+    F("prohibited book-keeping path in '%s'") % val);
   
   val.ok = true;
 }
@@ -82,11 +123,11 @@ static inline void verify(hexenc<id> & val)
 
   if (val() == "")
     return;
-  if (val().size() != 40)
-    throw oops("hex encoded ID '" + val() + "' size != 40");
-  if (val().find_first_not_of("0123456789abcdef") != string::npos)
-    throw oops("non-hex (or non-lowercase) character in ID '" + val() + "'");
-
+  N(val().size() == 40,
+    F("hex encoded ID '%s' size != 40") % val);
+  N(val().find_first_not_of("0123456789abcdef") == string::npos,
+    F("non-hex (or non-lowercase) character in ID '%s'") % val);
+  
   val.ok = true;
 }
 
@@ -191,20 +232,20 @@ static void test_file_path_verification()
 			     0 };
   
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path p(*c), std::runtime_error);      
+    BOOST_CHECK_THROW(file_path p(*c), informative_failure);      
   
   char const * bad = "!@#$%^&*()+=[]{};:?,<>~`'| \\";
   char badboy[] = "bad";
   for (char const * c = bad; *c; ++c)
     {
       badboy[1] = *c;
-      BOOST_CHECK_THROW(file_path p(badboy), std::runtime_error);
+      BOOST_CHECK_THROW(file_path p(badboy), informative_failure);
     }
   
   for (char c = 1; c < ' '; ++c)
     {
       badboy[1] = c;
-      BOOST_CHECK_THROW(file_path p(badboy), std::runtime_error);
+      BOOST_CHECK_THROW(file_path p(badboy), informative_failure);
     }
 
   char const * goodies [] = {"unrooted", 
@@ -216,7 +257,7 @@ static void test_file_path_verification()
 			     0 };
 
   for (char const ** c = goodies; *c; ++c)
-    BOOST_CHECK_NOT_THROW(file_path p(*c), std::runtime_error);
+    BOOST_CHECK_NOT_THROW(file_path p(*c), informative_failure);
 
 }
 

@@ -37,6 +37,7 @@
 #include "nntp_tasks.hh"
 #include "patch_set.hh"
 #include "sanity.hh"
+#include "smtp_tasks.hh"
 #include "transforms.hh"
 
 using namespace std;
@@ -81,37 +82,100 @@ bool lookup_address(string const & dns_name,
   return true;
 }
 
+bool lookup_mxs(string const & dns_name,
+		set<string> mx_names)
+{
+  adns_state st;
+  adns_answer *answer;
+
+  if (dns_name.size() == 0)
+    return false;
+
+  if (isdigit(dns_name[0]))
+    {
+      mx_names.insert(dns_name);
+      return true;
+    }
+
+  I(adns_init(&st, adns_if_noerrprint, 0) == 0);
+  if (adns_synchronous(st, dns_name.c_str(), adns_r_mx_raw, 
+		       (adns_queryflags)0, &answer) != 0)
+    {
+      adns_finish(st);
+      return false;
+    }
+
+  if (answer->status != adns_s_ok)
+    {
+      free(answer);
+      adns_finish(st);
+      return false;
+    }
+  for (int i = 0; i < answer->nrrs; ++i)
+    mx_names.insert(string(answer->rrs.intstr[i].str));
+
+  free(answer);
+  adns_finish(st);
+  return true;
+}
+
+
 bool parse_url(url const & u,
 	       string & proto,
+	       string & user,
 	       string & host,	       
 	       string & path,
+	       string & group,
 	       unsigned long & port)
 {
-  // http://host:port/path
-  // nntp://host:port/ignored
+  // http://host:port/path.cgi/group
+  // nntp://host:port/group
+  // mailto:user@host:port
 
   port = 0;
   path = "";
 
-  rule<> prot = (str_p("http") | str_p("nntp"))[assign(proto)];
+  rule<> http = str_p("http")[assign(proto)];
+  rule<> nntp = str_p("nntp")[assign(proto)];
+  rule<> mailto = str_p("mailto")[assign(proto)];
+  rule<> usr = (+chset<>("a-zA-Z0-9._-"))[assign(user)];
   rule<> hst = (list_p(+chset<>("a-zA-Z0-9_-"), ch_p('.')))[assign(host)];
-  rule<> prt = (ch_p(':') >> uint_p[assign(port)]);
-  rule<> pth = (ch_p('/') >> (+chset<>("a-zA-Z0-9_.~/-"))[assign(path)]);
-  rule<> r = prot >> str_p("://") >> hst >> !prt >> !pth;
+  rule<> prt = ch_p(':') >> uint_p[assign(port)];
+  rule<> grp = ch_p('/') >> (+chset<>("a-zA-Z0-9_.-"))[assign(group)];
+  rule<> pth = (ch_p('/') >> (+chset<>("a-zA-Z0-9_.~/-")))[assign(path)]; 
+  
+  rule<> r = 
+    (http >> str_p("://") >> hst >> !prt >> pth)
+    | (nntp >> str_p("://") >> hst >> !prt >> grp)
+    | (mailto >> str_p(":") >> usr >> ch_p('@') >> hst >> !prt);
   
   bool parsed_ok = parse(u().c_str(), r).full;
-
+  
+  if (proto == "http")
+    {
+      string::size_type gpos = path.rfind('/');
+      if (gpos == string::npos || gpos == path.size() - 1 || gpos == 0)
+	return false;
+      group = path.substr(gpos+1);
+      path = path.substr(0,gpos);
+    }
+  
   if (parsed_ok)
     {
       if (proto == "http" && port == 0)
 	port = 80;
       else if (proto == "nntp" && port == 0)
 	port = 119;
+      else if (proto == "mailto" && port == 0)
+	port= 25;
     }
+
+  L(F("parsed URL: proto '%s', user '%s', host '%s', port '%d', path '%s', group '%s'\n")
+    % proto % user % host % port % path % group);
 
   return parsed_ok;
 }
-	       
+
 
 void open_connection(string const & host_name,
 		     unsigned long port_num,
@@ -152,7 +216,7 @@ void open_connection(string const & host_name,
 }
 
 
-void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
+void post_queued_blobs_to_network(set<url> const & targets,
 				  app_state & app)
 {
 
@@ -160,24 +224,24 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 
   size_t good_packets = 0, total_packets = 0;
 
-  for (vector< pair<url,group> >::const_iterator targ = targets.begin();
+  for (set<url>::const_iterator targ = targets.begin();
        targ != targets.end(); ++targ)
     {
-      string proto, host, path;
+      string proto, user, host, path, group;
       unsigned long port;
-      N(parse_url(targ->first, proto, host, path, port),
-	F("cannot parse url '%s'") % targ->first);
+      N(parse_url(*targ, proto, user, host, path, group, port),
+	F("cannot parse url '%s'") % *targ);
 
-      N((proto == "http" || proto == "nntp"),
-	F("unknown protocol '%s', only know nntp and http") % proto);
+      N((proto == "http" || proto == "nntp" || proto == "mailto"),
+	F("unknown protocol '%s', only know nntp, http and mailto") % proto);
 
       string postbody;
       vector<string> contents;
-      app.db.get_queued_contents(targ->first, targ->second, contents);
+      app.db.get_queued_contents(*targ, contents);
       for (vector<string>::const_iterator content = contents.begin();
 	   content != contents.end(); ++content)
 	postbody.append(*content);
-
+      
       if (postbody == "")
 	{
 	  P("no packets to post\n");
@@ -194,9 +258,8 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 	  rsa_sha1_signature signature_plain;
 	  hexenc<rsa_sha1_signature> signature_hex;
 
-	  N(app.lua.hook_get_http_auth(targ->first, targ->second, keyid),
-	    F("missing pubkey for '%s', group %s")
-	    % targ->first % targ->second); 
+	  N(app.lua.hook_get_http_auth(*targ, keyid),
+	    F("missing pubkey for '%s'") % *targ); 
 
 	  N(app.db.private_key_exists(keyid),
 	    F("missing private key data for '%s'") % keyid);
@@ -212,7 +275,7 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 	      boost::shared_ptr<iostream> stream;
 	      open_connection(host, port, connection, stream);
 
-	      posted_ok = post_http_packets(targ->second(), keyid(), 
+	      posted_ok = post_http_packets(group, keyid(), 
 					    signature_hex(), postbody, host, 
 					    path, port, *stream);
 	    }
@@ -225,16 +288,15 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
       else if (proto == "nntp")
 	{
 	  string sender;
-	  N(app.lua.hook_get_news_sender(targ->first, targ->second, sender),
-	    F("missing sender address for '%s', group %s") 
-	    % targ->first % targ->second); 
+	  N(app.lua.hook_get_news_sender(*targ, sender),
+	    F("missing sender address for '%s'") % *targ);
 	  
 	  try 
 	    {
 	      boost::socket::connector<>::data_connection_t connection;
 	      boost::shared_ptr<iostream> stream;
 	      open_connection(host, port, connection, stream);
-	      posted_ok = post_nntp_article(targ->second(), sender, 
+	      posted_ok = post_nntp_article(group, sender, 
 					    // FIXME: maybe some sort of more creative subject line?
 					    "[MT] packets", 
 					    postbody, *stream);
@@ -245,82 +307,129 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 	    }
 	  
 	}
+
+      else if (proto == "mailto")
+	{
+	  string sender;
+	  N(app.lua.hook_get_mail_sender(*targ, sender),
+	    F("missing sender address for '%s'") % *targ);
+
+	  N(user != "",
+	    F("empty recipient in mailto: URL %s") % *targ);
+	  
+	  try 
+	    {
+	      set<string> mxs;
+	      lookup_mxs (host, mxs);
+	      if (mxs.empty())
+		mxs.insert(host);
+
+	      bool found_working_mx = false;
+	      boost::socket::connector<>::data_connection_t connection;
+	      boost::shared_ptr<iostream> stream;
+	      for (set<string>::const_iterator mx = mxs.begin();
+		   mx != mxs.end(); ++mx)
+		{
+		  try 
+		    {		      
+		      open_connection(host, port, connection, stream);
+		      found_working_mx = true;
+		      break;
+		    }
+		  catch (...)
+		    {
+		      L(F("exception while contacting MX %s\n") % *mx);
+		    }
+		}
+	      
+	      // FIXME: maybe hook to modify envelope params?
+	      if (found_working_mx)
+		posted_ok = post_smtp_article(host, 
+					      sender, user + "@" + host,
+					      sender, user + "@" + host,
+					      "[MT] packets",
+					      postbody, *stream);
+	    }
+	  catch (std::exception & e)
+	    {
+	      L(F("got exception from network: %s\n") % string(e.what()));
+	    }	  
+	}
+
+
       if (posted_ok)
 	for (vector<string>::const_iterator content = contents.begin();
 	     content != contents.end(); ++content)
 	  {
 	    ++good_packets;
-	    app.db.delete_posting(targ->first, targ->second, *content);
+	    app.db.delete_posting(*targ, *content);
 	  }
       total_packets += contents.size();
     }
   P(F("posted %d / %d packets ok\n") % good_packets % total_packets);
 }
 
-void fetch_queued_blobs_from_network(vector< pair<url,group> > const & sources,
+void fetch_queued_blobs_from_network(set<url> const & sources,
 				     app_state & app)
 {
 
   packet_db_writer dbw(app);
 
-  for(vector< pair<url,group> >::const_iterator src = sources.begin();
+  for(set<url>::const_iterator src = sources.begin();
       src != sources.end(); ++src)
     {
-      string proto, host, path;
+      string proto, user, host, path, group;
       unsigned long port;            
-      N(parse_url(src->first, proto, host, path, port),
-	F("cannot parse url '%s'") % src->first);
+      N(parse_url(*src, proto, user, host, path, group, port),
+	F("cannot parse url '%s'") % *src);
       
-      N((proto == "http" || proto == "nntp"),
-	F("unknown protocol '%s', only know nntp and http") % proto);
-      
-      P(F("fetching packets from group %s at %s\n")
-	% src->second % src->first);
+      N((proto == "http" || proto == "nntp" || proto == "mailto"),
+	F("unknown protocol '%s', only know nntp, http and mailto") % proto);
+
+      if (proto == "mailto")
+	{
+	  P(F("cannot fetch from mailto url %s, skipping\n") % *src);
+	  continue;
+	}
+
+      P(F("fetching packets from group %s\n") % *src);
 
       dbw.server.reset(*src);
       
       if (proto == "http")
 	{
 	  unsigned long maj, min;
-	  app.db.get_sequences(src->first, src->second, maj, min);
+	  app.db.get_sequences(*src, maj, min);
 	  boost::socket::connector<>::data_connection_t connection;
 	  boost::shared_ptr<iostream> stream;
 	  open_connection(host, port, connection, stream);
-	  fetch_http_packets(src->second(), maj, min, dbw, host, path, port, *stream);
-	  app.db.put_sequences(src->first, src->second, maj, min);
+	  fetch_http_packets(group, maj, min, dbw, host, path, port, *stream);
+	  app.db.put_sequences(*src, maj, min);
 	}
 
       else if (proto == "nntp")
 	{
 	  unsigned long maj, min;
-	  app.db.get_sequences(src->first, src->second, maj, min);
+	  app.db.get_sequences(*src, maj, min);
 	  boost::socket::connector<>::data_connection_t connection;
 	  boost::shared_ptr<iostream> stream;
 	  open_connection(host, port, connection, stream);
-	  fetch_nntp_articles(src->second(), min, dbw, *stream);
-	  app.db.put_sequences(src->first, src->second, maj, min);
+	  fetch_nntp_articles(group, min, dbw, *stream);
+	  app.db.put_sequences(*src, maj, min);
 	}
     }
   P(F("fetched %d packets\n") % dbw.count);
 }
   
 
-void queue_blob_for_network(vector< pair<url,group> > const & targets,
+void queue_blob_for_network(set<url> const & targets,
 			    string const & blob,
 			    app_state & app)
 {
-  for (vector< pair<url,group> >::const_iterator targ = targets.begin();
+  for (set<url>::const_iterator targ = targets.begin();
        targ != targets.end(); ++targ)
     {
-      string proto, host, path;
-      unsigned long port;      
-      N(parse_url(targ->first, proto, host, path, port),
-	F("cannot parse url '%s'") % targ->first);
-
-      app.db.queue_posting(targ->first, targ->second, blob);
-
-      P(F("%d bytes queued to send to group %s at %s\n") 
-	% blob.size() % targ->second % targ->first);
-
+      app.db.queue_posting(*targ, blob);
+      P(F("%d bytes queued to send to %s\n") % blob.size() % *targ);      
     }
 }

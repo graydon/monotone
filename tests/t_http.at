@@ -9,15 +9,15 @@ MONOTONE_SETUP
 AT_CHECK(cp test.db test2.db)
 
 AT_DATA(http.lua, [
-function get_post_targets(groupname)
-	return { {"http://127.0.0.1:8080/user/depot.cgi", "packets"} } 
+function get_post_targets(branchname)
+	return { "http://127.0.0.1:8080/user/depot.cgi/packets" } 
 end
 
-function get_fetch_sources(groupname)
-	return { {"http://127.0.0.1:8080/user/depot.cgi", "packets"} } 
+function get_fetch_sources(branchname)
+	return { "http://127.0.0.1:8080/user/depot.cgi/packets" } 
 end
 
-function get_http_auth(url, group)
+function get_http_auth(url)
 	return "tester@test.net"
 end
 ])
@@ -86,7 +86,7 @@ AT_CHECK(grep $VER0 stdout, [], [ignore])
 AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
 AT_CHECK(grep $VER1 stdout, [], [ignore])
 
-AT_CHECK(MONOTONE --db=test2.db --rcfile=http.lua fetch http://127.0.0.1:8080/user/depot.cgi packets, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --db=test2.db --rcfile=http.lua fetch http://127.0.0.1:8080/user/depot.cgi/packets, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE --db=test2.db cat manifest $VER0, [], [stdout])
 AT_CHECK(grep testfile stdout, [], [ignore])
