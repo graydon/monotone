@@ -11,6 +11,18 @@ function temp_file()
    return mkstemp(string.format("%s/mt.XXXXXX", tdir))
 end
 
+function execute(path, ...)   
+   local pid = posix.fork()
+   local ret = -1
+   if pid == 0 then
+      posix.exec(path, unpack(arg))
+   else
+      ret, pid = posix.wait(pid)
+   end
+   return ret
+end
+
+
 
 -- attributes are persistent metadata about files (such as execute
 -- bit, ACLs, various special flags) which we want to have set and
@@ -27,7 +39,7 @@ end
 attr_functions["execute"] = 
    function(filename, value) 
       if (value == "true") then
-         os.execute(string.format("chmod +x %s", filename))
+         posix.chmod(filename, "u+x")
       end
    end
 
@@ -67,7 +79,7 @@ function edit_comment(basetext)
    tmp:write(basetext)
    io.close(tmp)
 
-   if (os.execute(string.format("%s %s", exe, tname)) ~= 0) then
+   if (execute(exe, tname) ~= 0) then
       os.remove(tname)
       return nil
    end
@@ -133,47 +145,62 @@ end
 -- merger support
 
 function merge2_meld_cmd(lfile, rfile)
-   local cmd_fmt = "meld %s %s"
-   return string.format(cmd_fmt, lfile, rfile)
+   return 
+   function()
+      return execute("meld", lfile, rfile)
+   end
 end
 
 function merge3_meld_cmd(lfile, afile, rfile)
-   local cmd_fmt = "meld %s %s %s" 
-   return string.format(cmd_fmt, lfile, afile, rfile)
+   return 
+   function()
+      return execute("meld", lfile, afile, rfile)
+   end
 end
 
 
 function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
-   local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
-   local cmd_fmt = "%s -no-init-file -eval " .. elisp
-   return string.format(cmd_fmt, emacs, lfile, rfile, outfile)
+   local elisp = "(ediff-merge-files \"%s\" \"%s\" nil \"%s\")"
+   return 
+   function()
+      return execute(emacs, "-no-init-file", "-eval", 
+		     string.format(elisp, lfile, rfile, outfile))
+   end
 end
 
 function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
-   local elisp = "'(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")'"
+   local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
    local cmd_fmt = "%s -no-init-file -eval " .. elisp
-   return string.format(cmd_fmt, emacs, lfile, rfile, afile, outfile)
+   return 
+   function()
+      execute(emacs, "-no-init-file", "-eval", 
+	      string.format(elisp, lfile, rfile, afile, outfile))
+   end
 end
 
 function merge2_xxdiff_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
-   local cmd_fmt = "xxdiff --title1 %s --title2 %s %s %s --merged-filename %s "
-   return string.format(cmd_fmt, left_path, right_path, lfile, rfile, outfile)
+   return 
+   function()
+      return execute("xxdiff", 
+		     "--title1", left_path,
+		     "--title2", right_path,
+		     lfile, rfile, 
+		     "--merged-filename", outfile)
+   end
 end
 
 function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path, 
                            lfile, afile, rfile, outfile)
-   local cmd_fmt1 = "xxdiff --title1 %s --title2 %s --title3 %s"
-   local cmd_fmt2 = " %s %s %s --merge --merged-filename %s " 
-   return string.format(cmd_fmt1 .. cmd_fmt2, left_path, anc_path, right_path, 
-                        lfile, afile, rfile, outfile)
-end
-
--- For CVS-style merging.  Disabled by default.  You almost certainly
--- don't want to use this!  But it is here as documentation, because
--- it may become useful in the future.
-function merge3_merge_cmd(lfile, afile, rfile, outfile)
-   local cmd_fmt = "merge -p -L left -L ancestor -L right %s %s %s > %s"
-   return string.format(cmd_fmt, lfile, afile, rfile, outfile)
+   return 
+   function()
+      return execute("xxdiff", 
+		     "--title1", left_path,
+		     "--title2", right_path,
+		     "--title3", merged_path,
+		     lfile, afile, rfile, 
+		     "--merge", 
+		     "--merged-filename", outfile)
+   end
 end
    
 function write_to_temporary_file(data)
@@ -197,7 +224,7 @@ function read_contents_of_file(filename)
 end
 
 function program_exists_in_path(program)
-   return os.execute(string.format("which %s", program)) == 0
+   return execute("which", program) == 0
 end
 
 function merge2(left_path, right_path, merged_path, left, right)
@@ -233,8 +260,8 @@ function merge2(left_path, right_path, merged_path, left, right)
 
       if cmd ~= nil
       then
-         io.write(string.format("executing external 2-way merge command: %s\n", cmd))
-         os.execute(cmd)
+         io.write(string.format("executing external 2-way merge command\n"))
+         cmd()
 	 if meld_exists then
             data = read_contents_of_file(lfile)
          else
@@ -292,8 +319,8 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
       
       if cmd ~= nil
       then
-         io.write(string.format("executing external 3-way merge command: %s\n", cmd))
-         os.execute(cmd)
+         io.write(string.format("executing external 3-way merge command\n"))
+         cmd()
          if meld_exists then
             data = read_contents_of_file(afile)
          else

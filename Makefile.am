@@ -98,7 +98,8 @@ LUA_SOURCES = \
 	lua/lopcodes.h lua/lparser.c lua/lparser.h lua/lstate.c lua/lstate.h \
 	lua/lstring.c lua/lstring.h lua/lstrlib.c lua/ltable.c lua/ltable.h \
 	lua/ltablib.c lua/ltests.c lua/ltm.c lua/ltm.h lua/lua.h lua/lualib.h \
-	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h
+	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h \
+	lua/lposix.c 
 
 IDNA_SOURCES = \
 	idna/gunibreak.h idna/gunidecomp.h idna/idna.h idna/nfkc.c	\

@@ -1,3 +1,15 @@
+2005-02-03  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_i18n_changelog.at: New test.
+	* testsuite.at: Run it.
+	* lua/lposix.c: New file.
+	* lua/modemuncher.c: New file
+	* lua.cc: Load posix library.
+	* lua/liolib.c: Disable execute and popen.
+	* std_hooks.lua: Remove io.execute uses.
+	* AUTHORS: Update to mention lposix.c, modemuncher.c.
+	* Makefile.am: Likewise.
+
 2005-02-01  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_rebuild.at: Beef up test in response to possible

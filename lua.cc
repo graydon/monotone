@@ -95,12 +95,13 @@ lua_hooks::lua_hooks()
   // no atpanic support in 4.x
   // lua_atpanic (st, &panic_thrower);
 
-  lua_baselibopen(st);
-  lua_iolibopen(st);
-  lua_strlibopen(st);
-  lua_mathlibopen(st);
-  lua_tablibopen(st);
-  lua_dblibopen(st);
+  luaopen_base(st);
+  luaopen_io(st);
+  luaopen_string(st);
+  luaopen_math(st);
+  luaopen_table(st);
+  luaopen_debug(st);
+  luaopen_posix(st);
 
   // add monotone-specific functions
   lua_register(st, "mkstemp", monotone_mkstemp_for_lua);
