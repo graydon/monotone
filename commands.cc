@@ -269,12 +269,12 @@ static void remove_work_set()
   if (file_exists(w_path))
     delete_file(w_path);
 }
-  
+
 static void put_work_set(work_set & w)
 {
   local_path w_path;
   get_work_path(w_path);
-
+  
   if (w.adds.size() > 0
       || w.dels.size() > 0
       || w.renames.size() > 0)
@@ -338,11 +338,11 @@ static void calculate_new_manifest_map(manifest_map const & m_old,
 
 static string get_stdin()
 {
-  char buf[bufsz];
+  char buf[constants::bufsz];
   string tmp;
   while(cin)
     {
-      cin.read(buf, bufsz);
+      cin.read(buf, constants::bufsz);
       tmp.append(buf, cin.gcount());
     }
   return tmp;
@@ -384,11 +384,11 @@ static void complete(app_state & app,
     F("partial id '%s' does not have a unique expansion") % str);
   if (completions.size() > 1)
     {
-      string err = "partial id '" + str + "' has multiple ambiguous expansions: \n";
+      string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
       for (typename set<ID>::const_iterator i = completions.begin();
 	   i != completions.end(); ++i)
 	err += (i->inner()() + "\n");
-      N(completions.size() == 1, F(err));
+      N(completions.size() == 1, err);
     }
   completion = *(completions.begin());  
   P(F("expanded partial id '%s' to '%s'\n") % str % completion);
@@ -1666,13 +1666,14 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 	  cert_manifest_in_branch(merged, app.branch_name, app, dbw);
 	  cert_manifest_in_branch(merged, app.branch_name, app, qpw);
 
-	  string log = "merge of " + left.inner()() + " and " + right.inner()();
+	  string log = (F("merge of %s and %s\n") % left % right).str();
 	  cert_manifest_changelog(merged, log, app, dbw);
 	  cert_manifest_changelog(merged, log, app, qpw);
 	  
 	  guard.commit();
-	  P(F("[source] %s\n[source] %s\n[merged] %s\n")
-	    % left % right % merged);
+	  P(F("[source] %s") % left);
+	  P(F("[source] %s") % right);
+	  P(F("[merged] %s") % merged);
 	  left = merged;
 	}
     }
@@ -1777,22 +1778,22 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
 
   if (src_heads.size() == 0)
     {
-      cout << "branch " << idx(args, 0) << "is empty" << endl;
+      P(F("branch '%s' is empty\n") % idx(args, 0));
       return;
     }
   else if (src_heads.size() != 1)
     {
-      cout << "branch " << idx(args, 0) << "is not merged" << endl;
+      P(F("branch '%s' is not merged\n") % idx(args, 0));
       return;
     }
   else if (dst_heads.size() == 0)
     {
-      cout << "branch " << idx(args, 1) << "is empty" << endl;
+      P(F("branch '%s' is empty\n") % idx(args, 1));
       return;
     }
   else if (dst_heads.size() != 1)
     {
-      cout << "branch " << idx(args, 1) << "is not merged" << endl;
+      P(F("branch '%s' is not merged\n") % idx(args, 1));
       return;
     }
   else
@@ -1813,16 +1814,11 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
       cert_manifest_in_branch(merged, idx(args, 1), app, dbw);
       cert_manifest_in_branch(merged, idx(args, 1), app, qpw);
 
-      string log = ("propagate of " 
-                    + src_i->inner()()
-                    + " and " 
-                    + dst_i->inner()()
-                    + "\n"
-                    + "from branch "
-                    + idx(args, 0) + " to " + idx(args, 1) + "\n");
+      string log = F("propagate of %s and %s from branch '%s' to '%s'\n")
+                     % (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
 
-      cert_manifest_changelog(merged, log, app, dbw);
       cert_manifest_changelog(merged, log, app, qpw);
+      cert_manifest_changelog(merged, log, app, dbw);
 
       guard.commit();      
     }
@@ -2181,7 +2177,6 @@ static void ls_unknown (app_state & app, bool want_ignored)
   unknown_itemizer u(app, m_new, want_ignored);
   walk_tree(u);
 }
-
 
 static void ls_queue (string name, app_state & app)
 {

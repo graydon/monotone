@@ -37,6 +37,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   add_transform_tests(suite);
   add_vocab_tests(suite);
   add_packet_tests(suite);
+  add_url_tests(suite);
 
   // all done, add our clean-shutdown-indicator
   suite->add(BOOST_TEST_CASE(&clean_shutdown_dummy_test));

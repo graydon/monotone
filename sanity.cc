@@ -50,9 +50,9 @@ void sanity::set_quiet()
 void sanity::log(format const & fmt)
 {
   string str = fmt.str();
-  if (str.size() > log_line_sz)
+  if (str.size() > constants::log_line_sz)
     {
-      str.resize(log_line_sz);
+      str.resize(constants::log_line_sz);
       if (str.at(str.size() - 1) != '\n')
 	str.at(str.size() - 1) = '\n';
     }
@@ -64,9 +64,9 @@ void sanity::log(format const & fmt)
 void sanity::progress(format const & fmt)
 {
   string str = fmt.str();
-  if (str.size() > log_line_sz)
+  if (str.size() > constants::log_line_sz)
     {
-      str.resize(log_line_sz);
+      str.resize(constants::log_line_sz);
       if (str.at(str.size() - 1) != '\n')
 	str.at(str.size() - 1) = '\n';
     }
@@ -78,9 +78,9 @@ void sanity::progress(format const & fmt)
 void sanity::warning(format const & fmt)
 {
   string str = fmt.str();
-  if (str.size() > log_line_sz)
+  if (str.size() > constants::log_line_sz)
     {
-      str.resize(log_line_sz);
+      str.resize(constants::log_line_sz);
       if (str.at(str.size() - 1) != '\n')
 	str.at(str.size() - 1) = '\n';
     }

@@ -63,7 +63,7 @@ struct cvs_key
       return false;
     if (author != other.author)
       return false;
-    if (labs(time - other.time) > cvs_window)
+    if (labs(time - other.time) > constants::cvs_window)
       return false;
     return true;
   }
@@ -666,11 +666,11 @@ bool cvs_history::find_key_and_state(rcs_file const & r,
   map< cvs_key, shared_ptr<cvs_state> >::const_iterator i_new, i_old, i;
   cvs_key k_new(nk), k_old(nk);
 
-  if (static_cast<time_t>(k_new.time + cvs_window / 2) > k_new.time)
-    k_new.time += cvs_window / 2;
+  if (static_cast<time_t>(k_new.time + constants::cvs_window / 2) > k_new.time)
+    k_new.time += constants::cvs_window / 2;
 
-  if (static_cast<time_t>(k_old.time - cvs_window / 2) < k_old.time)
-    k_old.time -= cvs_window / 2;
+  if (static_cast<time_t>(k_old.time - constants::cvs_window / 2) < k_old.time)
+    k_old.time -= constants::cvs_window / 2;
   
   i_new = substates.lower_bound(k_new);
   i_old = substates.upper_bound(k_old);

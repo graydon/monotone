@@ -9,6 +9,7 @@
 #include "vocab.hh"
 #include "sanity.hh"
 #include "network.hh"
+#include "constants.hh"
 
 // verifiers for various types of data
 
@@ -19,30 +20,69 @@ static inline void verify(T & val)
 {}
 
 template <>
+static inline void verify(hexenc<id> & val)
+{
+  if (val.ok)
+    return;
+
+  if (val() == "")
+    return;
+
+  N(val().size() == 40,
+    F("hex encoded ID '%s' size != 40") % val);
+  string::size_type pos = val().find_first_not_of(constants::legal_id_bytes);
+  N(pos == string::npos,
+    F("bad character '%c' in id name '%s'") % val().at(pos) % val);
+
+  val.ok = true;
+}
+
+template <>
+static inline void verify(cert_name & val)
+{
+  if (val.ok)
+    return;
+
+  string::size_type pos = val().find_first_not_of(constants::legal_cert_name_bytes);
+  N(pos == string::npos,
+    F("bad character '%c' in cert name '%s'") % val().at(pos) % val);
+
+  val.ok = true;
+}
+
+template <>
+static inline void verify(rsa_keypair_id & val)
+{
+  if (val.ok)
+    return;
+
+  string::size_type pos = val().find_first_not_of(constants::legal_key_name_bytes);
+  N(pos == string::npos,
+    F("bad character '%c' in key name '%s'") % val().at(pos) % val);
+
+  val.ok = true;
+}
+
+
+template <>
 static inline void verify(url & val)
 {
   if (val.ok)
     return;
 
+  if (val() == "")
+    return;
+
+  string::size_type pos = val().find_first_not_of(constants::legal_url_bytes);
+  N(pos == string::npos,
+    F("bad character '%c' in URL name '%s'") % val().at(pos) % val);
+
+  /*
   string proto, user, host, path, group;
   unsigned long port;
   N(parse_url(val, proto, user, host, path, group, port),
     F("malformed URL: '%s'") % val);
-  val.ok = true;
-}
-
-template <>
-static inline void verify(group & val)
-{
-  if (val.ok)
-    return;
-
-  string::size_type pos = val().find_first_not_of("abcdefghijklmnopqrstuvwxyz"
-						  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-						  "0123456789"
-						  "_.-");
-  N(pos == string::npos,
-    F("bad character '%c' in group name '%s'") % val().at(pos) % val);
+  */
 
   val.ok = true;
 }
@@ -77,12 +117,9 @@ static inline void verify(local_path & val)
       N(!(*i == "." || *i == ".."),
 	F("prohibited path component '%s' in '%s'") % *i % val);
 
-      N(boost::filesystem::generic_name(*i),
-	F("non-generic path component '%s' in '%s'") % *i % val);
-
-      N(i->find_first_of(" ") == string::npos,
-	F("prohibited whitespace character found in component '%s' of '%s'") % *i % val);
-
+      string::size_type pos = val().find_first_of(constants::illegal_path_bytes);
+      N(pos == string::npos,
+	F("bad character '%c' in path component '%s' in '%s'") % *i % val);
     }
   
   val.ok = true;
@@ -101,22 +138,6 @@ static inline void verify(file_path & val)
   verify(loc);
   N(!book_keeping_file(loc),
     F("prohibited book-keeping path in '%s'") % val);
-  
-  val.ok = true;
-}
-
-template<>
-static inline void verify(hexenc<id> & val)
-{
-  if (val.ok)
-    return;
-
-  if (val() == "")
-    return;
-  N(val().size() == 40,
-    F("hex encoded ID '%s' size != 40") % val);
-  N(val().find_first_not_of("0123456789abcdef") == string::npos,
-    F("non-hex (or non-lowercase) character in ID '%s'") % val);
   
   val.ok = true;
 }
@@ -224,7 +245,7 @@ static void test_file_path_verification()
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path p(*c), informative_failure);      
   
-  char const * bad = "\"*:?<>| \t\r\n\v\f\a\b\\";
+  char const * bad = "\t\r\n\v\f\a\b";
   char badboy[] = "bad";
   for (char const * c = bad; *c; ++c)
     {
@@ -232,12 +253,6 @@ static void test_file_path_verification()
       BOOST_CHECK_THROW(file_path p(badboy), informative_failure);
     }
   
-  for (char c = 1; c < ' '; ++c)
-    {
-      badboy[1] = c;
-      BOOST_CHECK_THROW(file_path p(badboy), informative_failure);
-    }
-
   char const * goodies [] = {"unrooted", 
 			     "unrooted.txt",
 			     "fun_with_underscore.png",
@@ -248,7 +263,6 @@ static void test_file_path_verification()
 
   for (char const ** c = goodies; *c; ++c)
     BOOST_CHECK_NOT_THROW(file_path p(*c), informative_failure);
-
 }
 
 void add_vocab_tests(test_suite * suite)

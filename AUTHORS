@@ -49,6 +49,65 @@ The original sources for adns can be retrieved from
 http://www.chiark.greenend.org.uk/~ian/adns/
 
 
+The files in idna/* are copies of the core portion of the "GNU libidn"
+library. Copyright (C) 2002, 2003 Simon Josefsson. They are licensed
+under the GNU LGPL version 2.1. The original sources for libidn can be
+retrieved from http://josefsson.org/libidn/. The library carries an
+additional legal requirement of reproduction of the following text in
+any copies made:
+
+---
+
+Libidn AUTHORS -- Information about the authors.
+Copyright (C) 2002, 2003 Simon Josefsson
+See the end for copying conditions.
+
+Simon Josefsson <simon@josefsson.org>
+Designed and implemented libidn.
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Comment: This 0xB565716F key is used to sign releases of Libidn.
+
+mKsEPNUHKwEFALqJSBHn6Qk5ex138kwymxA3idCFoTi5Q6mVooEVVaYVfeDG+5uV
+T5rhTFDfDcT9SO0eIlfKOraSRnVEHyDDH2PAgJFxyneFELcmLUQ66D+m8z+ziGro
+6bcDSBBDMRkHIX6/kH/vnevjqivIld+j8WTcVX+SArcKyzgQ58uMTrfQdLqzh6D9
+sE/838+ZPZkabmKKWMVWccoaUbWGYOcNwO0ABim0IVNpbW9uIEpvc2Vmc3NvbiA8
+amFzQGV4dHVuZG8uY29tPojYBBMBAgAiAhsDBAsHAwIDFQIDAxYCAQIeAQIXgAUC
+P6QrUQUJA7xyJgAKCRDtoh6UtWVxbwueBP4uh9ZEOuSjt2n5OpfuAablsrRzhlgP
+fluBMfjHNynEFsGjn81l81TCqStRln7wDUj95ZufSi3YvoYSFG1jffGMk/k2trgI
+NtT3kxaGkfns6dykBuV7Ki2wWqdJkTe1ibyai+RCqt+J1ldSUuHdfQZ5wALPJQRb
+4Hqi7M29azFHcfxbMLf3yGYyBuKC7eBVNVaR58UTFK6r0CX3T7eGuk8biEYEExEC
+AAYFAj1Y8r8ACgkQV5Mp08AbKiIX9wCfR2rMiXdKzZB95acA5YSQ4MLQyygAn1Nv
+7M36SAofR/73WjqlPpVAQ+fRiEwEExECAAwFAj1esHUFgwFXijYACgkQvLvElXGK
+klYZnQCeOXIzmEoZ5yOVNygphYmUwON/S8IAn32gWDyaTMpqyDcJEQeLdjcW7boS
+tCVTaW1vbiBKb3NlZnNzb24gPHNpbW9uQGpvc2Vmc3Nvbi5vcmc+iNgEEwECACIC
+GwMECwcDAgMVAgMDFgIBAh4BAheABQI/pCtUBQkDvHImAAoJEO2iHpS1ZXFvPREE
+/j3fX+cLxCCZNTjMhThGFujiT7ty4x1jVc91J6QOA+Jp+78NIIeyg3JTeR3WIv7/
+WFNzLKJXJEEcga+0ViPjoLfvGsHMAnwXqPYAxu1cDY4jId0bCYgoVlnfF9gwOWxe
+btotLpCiuXGL/168zEAXWJpPg6r2MfPhAKUJ9G8q52OOWJW3cObxoZ2gyXjuWOFt
+ygZ1vUAqP/8UGeZNdajHD5uIRgQTEQIABgUCPVjywgAKCRBXkynTwBsqImY3AKCS
+COO5LlNxmritUFY1i7VXBCUlZgCgll/6kE0G/NP3E6AdyzVwAzBPgUeITAQTEQIA
+DAUCPV6wdQWDAVeKNgAKCRC8u8SVcYqSVleXAJ9NZKUvb/erk53fMFUwpUeClOjh
+qwCcC3Du9UQjCn2k+7LWgqNMH+huqW24qwQ81Qd7AQUA2PTaoT8RNkFDlX7UCOB9
+vaRFxrX+dN7l6QO+O0Mg7dVdjItEnaaYkJ+r4LXecI47HogsUGExRdDYGT0Dq7aZ
+8GkC4UKPXc3q2KWQ3ib3wj3qnCGm3IX/I249ydYLAzQyWqMW09wLB5vxhPi4yjet
+4FTGWmtYUlGzDb7+6VZilYRTty0vhFF4cVXlO2R+vgPxFMvUc7o8WGDnQ3iyWAiz
+kQAGKYjFBBgBAgAPAhsMBQI/pCt8BQkDvHIBAAoJEO2iHpS1ZXFvEeIE/ixQWhAC
+pnKjQZeTA7zcshH683NU/bBAjbOq7lJ51aWMXOdXExGJsBD0fyPtRJywMtSB4vrM
+F1WjKZlA0jBOxzxWaWpLvMwdwgkSiql8KTNActxIoijtu0e5GI3V+55Z+Cv/jsPD
+lzeYiob0cO6u/2todt6XVTyCIFKWjf6/5i/LdhXlw7J9gzrCwm28ITC4is3voTNh
+Uceqods6zDrk0qo=
+=1RsN
+-----END PGP PUBLIC KEY BLOCK-----
+
+----------------------------------------------------------------------
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+---
+
+
 The files in lua/* are copies of the lua 5.0 source distribution, from
 Tecgraf PUC-Rio. The lua distribution can be retrieved from
 www.lua.org. The files are provided under an MIT-like license,

@@ -1,5 +1,33 @@
 2003-12-19  graydon hoare  <graydon@pobox.com>
 
+	[net.venge.monotone.i18n branch]
+
+	* idna/*.[ch]: New files.
+	* po/*: New files.
+	* url.cc, url.hh, constants.cc: New files.
+	* Makefile.am, configure.ac: Various fiddling for gettext.
+	* lua.hh, lua.cc (hook_get_system_charset): New hook.
+	(hook_get_system_linesep): New hook.
+	* transforms.hh, transforms.cc
+	(charset_convert)
+	(system_to_utf8)
+	(utf8_to_system)
+	(ace_to_utf8)
+	(utf8_to_ace)
+	(line_end_convert): New functions.
+	* vocab.cc: Refine constraints.
+	* vocab_terms.hh (external): New atomic type.
+	* monotone.cc (cpp_main): Initialize gettext.
+	* sanity.hh (F): Call gettext() on format strings.
+	* commands.cc, depot.cc, database.cc, http_tasks.cc, keys.cc,
+	network.cc, rcs_import.cc, sanity.cc, mac.hh : Update to use
+	'constants::' namespace.
+	* config.h.in: Remove.
+	* commands.cc: Various formatting cleanups.
+	* unit_tests.cc, unit_tests.hh: Connect to url tests.
+
+2003-12-19  graydon hoare  <graydon@pobox.com>
+
 	* diff_patch.cc (merge3): Skip patches to deleted files.
 
 2003-12-10  Tom Tromey  <tromey@redhat.com>
@@ -88,7 +116,7 @@
 2003-11-29  Tom Tromey  <tromey@redhat.com>
 
 	* rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.
-        Updated all callers.
+	Updated all callers.
 
 	* http_tasks.cc (check_received_bytes): Allow "-" as well.
 	* depot.cc (execute_post_query): Allow "-" as well.

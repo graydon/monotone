@@ -63,6 +63,17 @@ public:
 			   std::string & host_out,
 			   unsigned long & port_out);
 
+  bool hook_get_connect_addr(std::string const & proto,
+			     std::string const & host, 
+			     unsigned long port,
+			     std::string & host_out,
+			     unsigned long & port_out);
+
+  bool hook_get_http_proxy(std::string const & host, 
+			   unsigned long port,
+			   std::string & host_out,
+			   unsigned long & port_out);
+
 
   // local repo hooks
   bool hook_ignore_file(file_path const & p);
@@ -79,7 +90,10 @@ public:
   bool hook_apply_attribute(std::string const & attr, 
 			    file_path const & filename, 
 			    std::string const & value);
-    
+
+  // conversion hooks
+  bool hook_get_system_charset(std::string & chset);
+  bool hook_get_system_linesep(std::string & linesep);
 
 };
 

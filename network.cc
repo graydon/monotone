@@ -41,6 +41,7 @@
 #include "sanity.hh"
 #include "smtp_tasks.hh"
 #include "transforms.hh"
+#include "url.hh"
 
 using namespace std;
 using namespace boost::spirit;
@@ -441,63 +442,6 @@ bool lookup_mxs(string const & dns_name,
 }
 
 
-bool parse_url(url const & u,
-	       string & proto,
-	       string & user,
-	       string & host,	       
-	       string & path,
-	       string & group,
-	       unsigned long & port)
-{
-  // http://host:port/path.cgi/group
-  // nntp://host:port/group
-  // mailto:user@host:port
-
-  port = 0;
-  path = "";
-
-  rule<> http = str_p("http")[assign(proto)];
-  rule<> nntp = str_p("nntp")[assign(proto)];
-  rule<> mailto = str_p("mailto")[assign(proto)];
-  rule<> usr = (+chset<>("a-zA-Z0-9._-"))[assign(user)];
-  rule<> hst = (list_p(+chset<>("a-zA-Z0-9_-"), ch_p('.')))[assign(host)];
-  rule<> prt = ch_p(':') >> uint_p[assign(port)];
-  rule<> grp = ch_p('/') >> (+chset<>("a-zA-Z0-9_.-"))[assign(group)];
-  rule<> pth = (ch_p('/') >> (+chset<>("a-zA-Z0-9_.~/-")))[assign(path)]; 
-  
-  rule<> r = 
-    (http >> str_p("://") >> hst >> !prt >> pth)
-    | (nntp >> str_p("://") >> hst >> !prt >> grp)
-    | (mailto >> str_p(":") >> usr >> ch_p('@') >> hst >> !prt);
-  
-  bool parsed_ok = parse(u().c_str(), r).full;
-  
-  if (proto == "http")
-    {
-      string::size_type gpos = path.rfind('/');
-      if (gpos == string::npos || gpos == path.size() - 1 || gpos == 0)
-	return false;
-      group = path.substr(gpos+1);
-      path = path.substr(0,gpos);
-    }
-  
-  if (parsed_ok)
-    {
-      if (proto == "http" && port == 0)
-	port = 80;
-      else if (proto == "nntp" && port == 0)
-	port = 119;
-      else if (proto == "mailto" && port == 0)
-	port= 25;
-    }
-
-  L(F("parsed URL: proto '%s', user '%s', host '%s', port '%d', path '%s', group '%s'\n")
-    % proto % user % host % port % path % group);
-
-  return parsed_ok;
-}
-
-
 void open_connection(string const & proto_name,
 		     string const & host_name_in,
 		     unsigned long port_num_in,
@@ -738,7 +682,7 @@ void post_queued_blobs_to_network(set<url> const & targets,
 	      L(F("found %d packets for %s\n") % queue_count % *targ);
 	      string postbody;
 	      vector<string> packets;
-	      while (postbody.size() < postsz 
+	      while (postbody.size() < constants::postsz 
 		     && packets.size() < queue_count)
 		{
 		  string tmp;

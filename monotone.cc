@@ -89,6 +89,15 @@ int cpp_main(int argc, char ** argv)
   putenv("BOOST_PRG_MON_CONFIRM=no");
   clean_shutdown = false;
   atexit(&dumper);
+
+  // go-go gadget i18n
+
+  setlocale(LC_CTYPE, "");
+  setlocale(LC_MESSAGES, "");
+  bindtextdomain(PACKAGE, LOCALEDIR);
+  textdomain(PACKAGE);
+
+  // prepare for arg parsing
       
   cleanup_ptr<poptContext, poptContext> 
     ctx(poptGetContext(NULL, argc, (char const **) argv, options, 0),
@@ -105,8 +114,6 @@ int cpp_main(int argc, char ** argv)
   bool requested_help = false;
 
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
-
-  // read command options
 
   vector<string> extra_rcfiles;
   

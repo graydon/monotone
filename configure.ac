@@ -25,6 +25,37 @@ AC_LANG(C++)
 # check to see how to make objects in subdirs
 AM_PROG_CC_C_O
 
+# intl / gettext
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION(0.12.1)
+AM_ICONV
+
+# Checks for idna stuff
+AC_HEADER_STDC
+AC_CHECK_HEADERS(unistd.h errno.h)
+AX_CREATE_STDINT_H(idna/idn-int.h)
+AC_CACHE_CHECK([if setlocale() and nl_langinfo() works],
+	ac_cv_locale_works, [
+	AC_TRY_RUN([
+#include <locale.h>
+#include <langinfo.h>
+int main ()
+{
+  char* cs;
+  setlocale(LC_CTYPE, "");
+  cs = nl_langinfo(CODESET);
+  return !cs;
+}
+],
+		ac_cv_locale_works=yes,
+		ac_cv_locale_works=no,
+		ac_cv_locale_works=no)
+	])
+if test "$ac_cv_locale_works" = "yes"; then
+  AC_DEFINE(LOCALE_WORKS, 1, [Define if setlocale() and nl_langinfo() works.])
+fi
+
+
 # check various C++ libs which confuse autoconf
 
 OLD_LIBS=$LIBS
@@ -135,6 +166,5 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_STAT
 AC_CHECK_FUNCS([atexit gethostbyaddr gethostbyname inet_ntoa memset setenv socket])
 
-AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([tests/atlocal])
+AC_CONFIG_FILES([Makefile tests/atlocal po/Makefile.in])
 AC_OUTPUT

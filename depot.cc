@@ -186,7 +186,7 @@ void execute_post_query (string const & user,
 
   char *errmsg = NULL;
   
-  if (nbytes >= maxbytes)
+  if (nbytes >= constants::maxbytes)
     throw runtime_error("uploading too much data");
 
   // step 1: get incoming data
@@ -195,12 +195,12 @@ void execute_post_query (string const & user,
   tmp.reserve(nbytes);
 
   {
-    char buf[bufsz];
-    while(tmp.size() < maxbytes && 
+    char buf[constants::bufsz];
+    while(tmp.size() < constants::maxbytes && 
 	  tmp.size() < nbytes && 
 	  cin.good())
       {
- 	unsigned long count = bufsz;
+ 	unsigned long count = constants::bufsz;
  	if (nbytes - tmp.size() < count)
  	  count = nbytes - tmp.size();
 
@@ -217,7 +217,7 @@ void execute_post_query (string const & user,
       throw runtime_error(string("illegal character in uploaded data: ") 
 			  + lexical_cast<string>(static_cast<int>(tmp.at(p))));
 
-    if (tmp.size() >= maxbytes)
+    if (tmp.size() >= constants::maxbytes)
       throw runtime_error("overflowed safety limit for maximum upload");
   }
 

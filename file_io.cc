@@ -234,10 +234,10 @@ static void walk_tree_recursive(fs::path const & absolute,
     {
       fs::path entry = *di;
       fs::path rel_entry = relative / fs::path(entry.leaf());
-
+      
       if (book_keeping_file (entry))
 	continue;
-
+      
       if (fs::is_directory(entry))
 	walk_tree_recursive(entry, rel_entry, walker);
       else
@@ -249,6 +249,8 @@ static void walk_tree_recursive(fs::path const & absolute,
 	    }
 	  catch (std::runtime_error const & c)
 	    {
+	      L(F("caught runtime error %s constructing file path for %s\n") 
+		% c.what() % rel_entry.string());
 	      continue;
 	    }	  
 	  walker.visit_file(p);

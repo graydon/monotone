@@ -27,5 +27,6 @@ void add_key_tests(test_suite * suite);
 void add_transform_tests(test_suite * suite);
 void add_vocab_tests(test_suite * suite);
 void add_packet_tests(test_suite * suite);
+void add_url_tests(test_suite * suite);
 
 #endif
