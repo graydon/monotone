@@ -1,4 +1,4 @@
-2005-01-17  Graydon Hoare  <graydon@redhat.com>
+2005-01-17  graydon hoare  <graydon@pobox.com>
 
 	* cryptopp/osrng.cpp (NonblockingRng::GenerateBlock): 
 	Bring forward patch lost in cryptopp 5.2 upgrade.
