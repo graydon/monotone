@@ -1,3 +1,6 @@
+2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* t_diff_binary.at: binary.bz.b64 -> binary.gz.b64
+
 2005-03-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* ChangeLog: Insert some missing newlines.
