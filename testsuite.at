@@ -53,7 +53,7 @@ function get_passphrase(keyid)
 end
 
 function non_blocking_rng_ok()
-	return 1
+	return true
 end
 
 function get_author(branchname)
@@ -61,9 +61,9 @@ function get_author(branchname)
 end
 
 function ignore_file(name)
-	if (strfind(name, "test_hooks.lua")) then return 1 end
-	if (strfind(name, "test.db")) then return 1 end
-	return nil
+	if (strfind(name, "test_hooks.lua")) then return true end
+	if (strfind(name, "test.db")) then return true end
+	return false
 end
 
 ])

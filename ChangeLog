@@ -1,3 +1,12 @@
+2003-10-10  graydon hoare  <graydon@pobox.com>
+
+	* work.cc: Fix add/drop inversion bug.
+	* lua/*.{c,h}: Import lua 5.0 sources.
+	* lua.cc: Rewrite lua interface completely. 	
+	* std_hooks.lua, test_hooks.lua, testsuite,
+	tests/t_persist_phrase.at, configure.ac, config.h.in, Makefile.am:
+	Modify to handle presence of lua 5.0.
+
 2003-10-08  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc: Attach aux certs to child, not parent.

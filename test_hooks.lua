@@ -8,11 +8,11 @@ function get_passphrase(keyid)
 end
 
 function non_blocking_rng_ok()
-	return 1;
+	return true;
 end
 
 function persist_phrase_ok()
-	return 1;
+	return true;
 end
 
 function get_post_targets(groupname)

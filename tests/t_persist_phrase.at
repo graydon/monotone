@@ -6,7 +6,7 @@ MONOTONE_SETUP
 
 AT_DATA(persist.lua, [
 function persist_phrase_ok()
-	return 1
+	return true
 end
 
 get_passphrase = nil

@@ -285,12 +285,12 @@ struct add_to_work_set
     if (action == "add")
       {
 	N(res.size() == 3, F("extra junk on work entry for add of %s") % path);
-	work.dels.insert(path);
+	work.adds.insert(path);
       }
     else if (action == "drop")
       {
 	N(res.size() == 3, F("extra junk on work entry for drop of %s") % path);
-	work.adds.insert(path);
+	work.dels.insert(path);
       }
     else if (action == "rename")
       {
@@ -333,11 +333,11 @@ void write_work_set(data & dat,
   ostringstream tmp;
   for (path_set::const_iterator i = work.dels.begin();
        i != work.dels.end(); ++i)
-    tmp << "add " << (*i) << endl;
+    tmp << "drop " << (*i) << endl;
 
   for (path_set::const_iterator i = work.adds.begin();
        i != work.adds.end(); ++i)
-    tmp << "drop " << (*i) << endl;
+    tmp << "add " << (*i) << endl;
 
   for (rename_set::const_iterator i = work.renames.begin();
        i != work.renames.end(); ++i)

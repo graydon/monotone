@@ -2,181 +2,191 @@
 -- this is the standard set of lua hooks for monotone;
 -- user-provided files can override it or add to it.
 
+function temp_file()
+	return io.mkstemp("/tmp/mt.XXXXXX")
+end
+
 function ignore_file(name)
-	if (strfind(name, "%.o$")) then return 1 end
-	if (strfind(name, "%.aux$")) then return 1 end
-	if (strfind(name, "%.bak$")) then return 1 end
-	if (strfind(name, "%.orig$")) then return 1 end
-	if (strfind(name, "%.rej$")) then return 1 end
-	if (strfind(name, "/core$")) then return 1 end
-	if (strfind(name, "^CVS/")) then return 1 end
-	if (strfind(name, "^SVN/")) then return 1 end
-	if (strfind(name, "/CVS/")) then return 1 end
-	if (strfind(name, "/SVN/")) then return 1 end
-	return nil;
+	if (string.find(name, "%.o$")) then return true end
+	if (string.find(name, "%.aux$")) then return true end
+	if (string.find(name, "%.bak$")) then return true end
+	if (string.find(name, "%.orig$")) then return true end
+	if (string.find(name, "%.rej$")) then return true end
+	if (string.find(name, "/core$")) then return true end
+	if (string.find(name, "^CVS/")) then return true end
+	if (string.find(name, "^SVN/")) then return true end
+	if (string.find(name, "/CVS/")) then return true end
+	if (string.find(name, "/SVN/")) then return true end
+	return false;
 end
 
 
 function edit_comment(basetext)
         local exe = "vi"
-        local visual = getenv("VISUAL")
+        local visual = os.getenv("VISUAL")
         if (visual ~= nil) then exe = visual end
-        local editor = getenv("EDITOR")
+        local editor = os.getenv("EDITOR")
         if (editor ~= nil) then exe = editor end
 
-        tname = tmpname()
-        local tmp = openfile(tname, "w+")
+	local tmp, tname = temp_file()
         if (tmp == nil) then return nil end
-	basetext = "MT: " .. gsub(basetext, "\n", "\nMT: ")
-        write(tmp, basetext)
-        closefile(tmp)
+	basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ")
+        tmp:write(basetext)
+        io.close(tmp)
 
-        if (execute(format("%s %s", exe, tname)) ~= 0) then
-                remove(tname)
+        if (os.execute(string.format("%s %s", exe, tname)) ~= 0) then
+                os.remove(tname)
                 return nil
         end
 
-        tmp = openfile(tname, "r")
-        if (tmp == nil) then remove(tname); return nil end
+        tmp = io.open(tname, "r")
+        if (tmp == nil) then os.remove(tname); return nil end
         local res = ""
-	local line = read(tmp)
+	local line = tmp:read()
 	while(line ~= nil) do 
-		if (not strfind(line, "^MT:")) then
+		if (not string.find(line, "^MT:")) then
 			res = res .. line .. "\n"
 		end
-		line = read(tmp)
+		line = tmp:read()
 	end
-        closefile(tmp)
-        remove(tname)
+        io.close(tmp)
+	os.remove(tname)
         return res
 end
 
 
 function non_blocking_rng_ok()
-	return 1
+	return true
 end
 
 
 function persist_phrase_ok()
-	return 1
+	return true
 end
 
 
 function get_author(branchname)
-        local user = getenv("USER")
-        local host = getenv("HOSTNAME")
+        local user = os.getenv("USER")
+        local host = os.getenv("HOSTNAME")
         if ((user == nil) or (host == nil)) then return nil end
-        return format("%s@%s", user, host)
+        return string.format("%s@%s", user, host)
 end
 
 
 function merge2(left, right)
-	local lfile = tmpname()
-	local rfile = tmpname()
-	local outfile = tmpname()
+	local lfile
+	local rfile
+	local outfile
+	local tmp
 
 	-- write out one file
-	local tmp = openfile(lfile, "w+")
+	tmp, lfile = temp_file()
 	if (tmp == nil) then 
 		return nil 
 	end;
-	write(tmp, left)
-	closefile(tmp)
+	tmp:write(left)
+	io.close(tmp)
 
 	-- write out the other file
-	tmp = openfile(rfile, "w+")
+	tmp, rfile = temp_file()
 	if (tmp == nil) then 
-		remove(lfile)
+		os.remove(lfile)
 		return nil
 	end
-	write(tmp, right)
-	closefile(tmp)
+	tmp:write(right)
+	io.close(tmp)
+
+	tmp, outfile = temp_file();
+	io.close(tmp);
 
 	-- run emacs to merge the files
 	local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
 	local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-	local cmd = format(cmd_fmt, lfile, rfile, outfile)
-	write(format("executing external 2-way merge command: %s\n", cmd))
-	if (execute(cmd) ~= 0) then 
-		remove(lfile)
-		remove(rfile) 
-		remove(outfile)
+	local cmd = string.format(cmd_fmt, lfile, rfile, outfile)
+	io.write(string.format("executing external 2-way merge command: %s\n", cmd))
+	if (os.execute(cmd) ~= 0) then 
+		os.remove(lfile)
+		os.remove(rfile) 
+		os.remove(outfile)
 		return nil
 	end
 
 	-- read in the results
-	tmp = openfile(outfile, "w+")
+	tmp = io.open(outfile, "r")
 	if (tmp == nil) then
 		return nil
 	end
-	local data = read(tmp, "*a")
-	closefile(tmp)
+	local data = tmp:read("*a")
+	io.close(tmp)
 
-	remove(lfile)
-	remove(rfile)
-	remove(outfile)
+	os.remove(lfile)
+	os.remove(rfile)
+	os.remove(outfile)
 
 	return data
 end
 
 
 function merge3(ancestor, left, right)
-	local afile = tmpname()
-	local lfile = tmpname()
-	local rfile = tmpname()
-	local outfile = tmpname()
+	local afile
+	local lfile
+	local rfile
+	local outfile
 
 	-- write out one file
-	local tmp = openfile(lfile, "w+")
+	tmp, lfile = temp_file()
 	if (tmp == nil) then 
 		return nil 
 	end;
-	write(tmp, left)
-	closefile(tmp)
+	tmp:write(left)
+	io.close(tmp)
 
 	-- write out the other file
-	tmp = openfile(rfile, "w+")
+	tmp, rfile = temp_file()
 	if (tmp == nil) then 
-		remove(lfile)
+		os.remove(lfile)
 		return nil
 	end
-	write(tmp, right)
-	closefile(tmp)
+	tmp:write(right)
+	io.close(tmp)
 
 	-- write out the ancestor
-	tmp = openfile(afile, "w+")
+	tmp, afile = temp_file()
 	if (tmp == nil) then 
-		remove(lfile)
-		remove(rfile) 
+		os.remove(lfile)
+		os.remove(rfile) 
 		return nil
 	end
-	write(tmp, ancestor)
-	closefile(tmp)
+	tmp:write(ancestor)
+	io.close(tmp)
+
+	tmp, outfile = temp_file()
+	io.close(tmp)
 
 	-- run emacs to merge the files
 	local elisp = "'(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")'"
 	local cmd_fmt = "emacs -no-init-file -eval " .. elisp
-	local cmd = format(cmd_fmt, lfile, rfile, afile, outfile)
-	write(format("executing external 3-way merge command: %s\n", cmd))
-	if (execute(cmd) ~= 0) then 
-		remove(lfile)
-		remove(rfile)
-		remove(ancestor)
-		remove(outfile) 
+	local cmd = string.format(cmd_fmt, lfile, rfile, afile, outfile)
+	io.write(string.format("executing external 3-way merge command: %s\n", cmd))
+	if (os.execute(cmd) ~= 0) then 
+		os.remove(lfile)
+		os.remove(rfile)
+		os.remove(ancestor)
+		os.remove(outfile) 
 		return nil
 	end
 
 	-- read in the results
-	tmp = openfile(outfile, "r")
+	tmp = io.open(outfile, "r")
 	if (tmp == nil) then
 		return nil
 	end
-	local data = read(tmp, "*a")
-	closefile(tmp)
+	local data = tmp:read("*a")
+	io.close(tmp)
 
-	remove(lfile)
-	remove(rfile)
-	remove(outfile)
+	os.remove(lfile)
+	os.remove(rfile)
+	os.remove(outfile)
 
 	return data
 end

@@ -93,23 +93,6 @@ AC_CHECK_LIB([pthread], [pthread_attr_init])
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h sys/time.h termios.h unistd.h])
 
-# Check for Lua libraries:
-AC_SEARCH_LIBS([lua_open], [lua40 lua], , AC_MSG_FAILURE([lua is required]))
-AC_SEARCH_LIBS([lua_strlibopen], [lualib40 lualib],
-               ,
-               AC_MSG_FAILURE([lualib is required]))
-# And check for Lua headers:
-AC_CHECK_HEADER([lua40/lua.h],
-                [AC_DEFINE([LUA_H], [<lua40/lua.h>], [Location of lua.h])],
-                [AC_CHECK_HEADER([lua.h],
-                                 [AC_DEFINE([LUA_H], [<lua.h>])],
-                                 [AC_MSG_FAILURE([lua header not found])])])
-AC_CHECK_HEADER([lua40/lualib.h],
-                [AC_DEFINE([LUALIB_H], [<lua40/lualib.h>], [Location of lualib.h])],
-                [AC_CHECK_HEADER([lualib.h],
-                                 [AC_DEFINE([LUALIB_H], [<lualib.h>])],
-                                 [AC_MSG_FAILURE([lualib header not found])])])
-
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_CONST

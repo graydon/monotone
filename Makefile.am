@@ -112,6 +112,18 @@ SQLITE_SOURCES = \
         sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
         sqlite/parse.h sqlite/sqlite.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/pager.h
 
+LUA_SOURCES = \
+	lua/lapi.c lua/lapi.h lua/lauxlib.c lua/lauxlib.h lua/lbaselib.c \
+	lua/lcode.c lua/lcode.h lua/ldblib.c lua/ldebug.c lua/ldebug.h lua/ldo.c \
+	lua/ldo.h lua/ldump.c lua/lfunc.c lua/lfunc.h lua/lgc.c lua/lgc.h \
+	lua/liolib.c lua/llex.c lua/llex.h lua/llimits.h lua/lmathlib.c lua/lmem.c \
+	lua/lmem.h lua/loadlib.c lua/lobject.c lua/lobject.h lua/lopcodes.c \
+	lua/lopcodes.h lua/lparser.c lua/lparser.h lua/lstate.c lua/lstate.h \
+	lua/lstring.c lua/lstring.h lua/lstrlib.c lua/ltable.c lua/ltable.h \
+	lua/ltablib.c lua/ltests.c lua/ltm.c lua/ltm.h lua/lua.h lua/lualib.h \
+	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h
+
+
 bin_PROGRAMS = monotone depot.cgi
 check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
@@ -122,7 +134,10 @@ depot_cgi_SOURCES = depot.cc
 txt2c_SOURCES = txt2c.cc
 
 noinst_LIBRARIES = lib3rdparty.a 
-lib3rdparty_a_SOURCES = $(CRYPTOPP_SOURCES) $(SQLITE_SOURCES) $(BOOST_SANDBOX_SOURCES)
+lib3rdparty_a_SOURCES = $(CRYPTOPP_SOURCES) \
+                        $(SQLITE_SOURCES) \
+                        $(BOOST_SANDBOX_SOURCES) \
+                        $(LUA_SOURCES)
 
 monotone_LDADD = lib3rdparty.a -lboost_prg_exec_monitor
 monotone_LDFLAGS = 
