@@ -336,6 +336,7 @@ find_least_common_ancestor(revision_id const & left,
         {
           L(F("found node %d, ancestor of left %s and right %s\n")
             % anc % left % right);
+          return true;
         }
     }
 //      dump_bitset_map("ancestors", ancestors);

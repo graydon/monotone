@@ -1,5 +1,11 @@
 2004-12-13  Joel Rosdahl  <joel@rosdahl.net>
 
+	* revision.cc (find_least_common_ancestor): Add a missing "return
+	true;" that mysteriously was removed in
+	c853237f9d8d155431f88aca12932d2cdaaa31fe.
+
+2004-12-13  Joel Rosdahl  <joel@rosdahl.net>
+
 	* revision.cc (find_least_common_ancestor): Remove unused variable.
 	* commands.cc (lca): Correct negative status text.
 	* commands.cc (update): Use GNU style braces.
