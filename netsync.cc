@@ -2829,7 +2829,7 @@ call_server(protocol_role role,
         const char *newargv[newsize];
         unsigned newargc=0;
         newargv[newargc++]="monotone";
-        newargv[newargc++]="--verbose";
+        if (global_sanity.debug) newargv[newargc++]="--debug";
         newargv[newargc++]="--db";
         newargv[newargc++]=db_path.c_str();
         newargv[newargc++]="--";
@@ -2839,7 +2839,8 @@ call_server(protocol_role role,
           newargv[newargc++]=collections[i]().c_str();
         newargv[newargc]=0;
         
-        dup2(open("server.log",O_WRONLY|O_CREAT|O_NOCTTY|O_APPEND,0666),2);
+        if (global_sanity.debug) 
+           dup2(open("monotone-server.log",O_WRONLY|O_CREAT|O_NOCTTY|O_APPEND,0666),2);
         execvp(newargv[0],(char*const*)newargv);
         perror(newargv[0]);
         exit(errno);
@@ -2877,7 +2878,8 @@ call_server(protocol_role role,
           newargv[newargc++]=collections[i]().c_str();
         newargv[newargc]=0;
         
-//        dup2(open("server.log",O_WRONLY|O_CREAT|O_NOCTTY|O_APPEND,0666),2);
+        if (global_sanity.debug) 
+           dup2(open("monotone-server.log",O_WRONLY|O_CREAT|O_NOCTTY|O_APPEND,0666),2);
         execvp(newargv[0],(char*const*)newargv);
         perror(newargv[0]);
         exit(errno);
@@ -3306,13 +3308,13 @@ serve_stdio(protocol_role role,
          if (live_p && FD_ISSET(sess->str.get_writefd(), &wfds))
 	    handle_write_available(sess->str.get_writefd(), sess, sessions, live_p);
       }
-      if (!sess->process())
-      {
-         P(F("stdin processing finished, disconnecting\n"));
-	 sessions.erase(sessions.begin());
-	 break;
+      while (sess->arm())
+      {  if (!sess->process())
+         {  P(F("stdin processing finished, disconnecting\n"));
+            sessions.erase(sessions.begin());
+            break;
+         }
       }
-		
     }
   // cleanup?
   // sess->queue_bye_cmd();
