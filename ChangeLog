@@ -1,5 +1,11 @@
 2005-03-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* ChangeLog: Insert some missing newlines.
+	* NEWS: Note file format changes.
+	* file_io.cc (tilde_expand): Clarify error message.
+
+2005-03-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* keys.{cc,hh} (require_password): Simplify interface, do more
 	work.
 	* rcs_import.cc (import_cvs_repo): Update accordingly.
@@ -17,6 +23,7 @@
 	* tests/t_diff_restrict.at: Oops.  XFAIL it.
 	
 2005-03-08  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc (process_spawn): Escape the parameters,
 	surround them with quotes before adding them to the consolidated
 	command line string
@@ -28,6 +35,7 @@
 	monotone_mkstemp
 
 2005-03-08  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/read_password.cc (read_password): Now correctly hides 
 	password when run in a Windows console.  Does at least enough in
 	a MinGW rxvt console to make sure that you can't see the password.
@@ -95,6 +103,7 @@
 	* netsync.cc: Remove a few tabs.
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc (process_spawn): Now takes 
 	const char * const argv[]
 	* unix/process.cc (process_spawn): Ditto.  Cast for call to
@@ -102,6 +111,7 @@
 	(existsonpath): Initialise args in a const way
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc (process_spawn): Now takes 
 	char * const argv[]
 	* platform.hh (process_spawn): Ditto
@@ -110,6 +120,7 @@
 	* General: Beginning to hate C++'s const rules
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc (process_spawn): Now takes 
 	const char * const *
 	* platform.hh (process_spawn): Ditto
@@ -118,20 +129,24 @@
 	forth between Linux and Win32
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc (process_spawn): Now takes char * const *
 	* platform.hh (process_spawn): Ditto
 	* unix/process.cc (process_spawn): Ditto
 	(existsonpath): argv now const char*[]
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc: Added forgotten file
 	* unix/process.cc: Include stat.h, (process_*) fix compilation
 	errors
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* unix/process.cc: Added forgotten file
 
 2005-03-03  Jon Bright  <jon@siliconcircus.com>
+	
 	* lposix.c: Deleted
 	* win32/process.cc: Created, added Win32 versions of functions
 	existsonpath, make_executable, process_spawn, process_wait,
@@ -168,6 +183,7 @@
 	comparison (0 doesn't compare as false in lua it seems).
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* lposix.c (win32 Pspawn): Search the path
 	(win32 Pexistsonpath): Added.  'which' isn't easily available,
 	and not available at all from a normal Win32 command shell
@@ -178,19 +194,23 @@
 	calls which as it always did.
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* lposix.c (win32 Pspawn): Remove dumb strlen bug resulting in
 	AVs on commit.
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* t_can_execute.at: Test to see if hooks can execute things
 	* testsuite.at: Add t_can_execute
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* lposix.c (win32 Pspawn): Ensure the command string is always
 	NUL-terminated.  Also, allocate enough memory for the quotes
 	around the command string.
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* xdelta.cc (unittests): Define BOOST_STDC_NO_NAMESPACE, needed
 	to compile with the latest MinGW which uses gcc 3.4.2
 	* vocab.cc (verify(local_path)): Catch fs::filesystem_error too
@@ -237,6 +257,7 @@
 	* std_hooks.lua: (execute) Now uses spawn()
 
 2005-02-25  Jon Bright  <jon@siliconcircus.com>
+	
 	* ChangeLog: Add all my previous changes.
 	* tests/t_add_owndb.at: Add test for trying to add the db to
 	itself.
@@ -296,6 +317,7 @@
 	doesn't contain ..'s
 
 2005-02-25  Jon Bright  <jon@siliconcircus.com>
+	
 	* ChangeLog: Add all my previous changes.
 	* tests/t_add_owndb.at: Add test for trying to add the db to
 	itself.
@@ -376,6 +398,7 @@
 	calculate_base_revision
 
 2005-02-23  Jon Bright  <jon@siliconcircus.com>
+	
 	* vocab.cc (test_file_path_verification): Disable foo//nonsense
 	test for Win32, add tests for UNC paths.  This was the only
 	failing unit test on Win32.

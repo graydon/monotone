@@ -26,6 +26,9 @@
                   working dir for a new project
         - important security fix -- don't use shell when calling
           external merge commands.
+        - format change for "MT/options", ".mt-attrs"; you may have to
+          edit these files
+                - new command "attr" for managing .mt-attrs.
         - builds merkle tries in-memory -- netsync starts up many
           times faster
         - start of new "automate" interface, for shell scripts and
