@@ -32,24 +32,6 @@ attr_functions["execute"] =
    end
 
 
-function get_http_proxy(host, port)
-   val = os.getenv("HTTP_PROXY")
-   if (val == nil) then 
-      val = os.getenv("http_proxy") 
-   end
-   if (val == nil) then 
-      return nil
-   end
-   val = string.gsub(val, "http://", "")
-   b, e = string.find(val, ":")
-   if (b ~= nil and b > 0) then
-      chost = string.sub(val, 0, b-1)
-      cport = string.sub(val, b+1)
-      return { chost, cport }
-   end
-   return { val, port }
-end
-
 function ignore_file(name)
    if (string.find(name, "%.a$")) then return true end
    if (string.find(name, "%.so$")) then return true end
@@ -285,8 +267,8 @@ end
 function expand_selector(str)
 
    -- simple date patterns
-   if string.find(str, "19%d%d-%d%d.*")
-      or string.find(str, "20%d%d-%d%d.*")
+   if string.find(str, "^19%d%d%-%d%d")
+      or string.find(str, "^20%d%d%-%d%d")
    then
       return ("d:" .. str)
    end
@@ -326,7 +308,6 @@ function expand_selector(str)
       year = 31536000 
    }
    local pos, len, n, type = string.find(str, "(%d+) ([minutehordaywk]+)s? ago")
-   print(pos, len, n, type)
    if trans[type] ~= nil
    then
       local t = os.time(os.date('!*t'))

@@ -62,6 +62,7 @@ EXTERN template class base64< cert_value >;
 
 EXTERN template class hexenc<prefix>;
 EXTERN template class base64<merkle>;
+EXTERN template class base64<data>;
 
 // instantiate those bits of the stream operator vocab (again) actually in
 // use. "again" since stream operators are friends, not members.

@@ -445,6 +445,18 @@ lua_hooks::hook_persist_phrase_ok()
   return executed_ok && persist_ok;
 }
 
+bool 
+lua_hooks::hook_expand_selector(std::string const & sel, 
+				std::string & exp)
+{
+  return Lua(st)
+    .push_str("expand_selector")
+    .get_fn()
+    .push_str(sel)
+    .call(1,1)
+    .extract_str(exp)
+    .ok();
+}
 
 bool 
 lua_hooks::hook_get_branch_key(cert_value const & branchname, 

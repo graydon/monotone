@@ -15,6 +15,7 @@ struct cert;
 
 #include <boost/filesystem/path.hpp>
 
+#include "commands.hh"
 #include "manifest.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
@@ -347,6 +348,12 @@ public:
   
   void complete(std::string const & partial,
 		std::set<file_id> & completions);
+
+  void complete(commands::selector_type ty,
+		std::string const & partial,
+		std::vector<std::pair<commands::selector_type, 
+		                      std::string> > const & limit,
+		std::set<std::string> & completions);
   
   ~database();
 

@@ -1,5 +1,14 @@
 2004-04-10  graydon hoare  <graydon@pobox.com>
 
+	* database.{cc,hh}: 
+	* commands.{cc,hh}:
+	* lua.{cc,hh}:
+	* std_hooks.lua:
+	* vocab_terms.hh:
+	Implement first cut at selectors.
+
+2004-04-10  graydon hoare  <graydon@pobox.com>
+
 	* cert.cc (operator<): Include name in compare.
 	(operator==): Likewise.
 	* packet.cc: Include shared_ptr.

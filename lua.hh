@@ -34,6 +34,7 @@ public:
   void add_rcfile(fs::path const & file);
 
   // cert hooks
+  bool hook_expand_selector(std::string const & sel, std::string & exp);
   bool hook_get_branch_key(cert_value const & branchname, rsa_keypair_id & k);
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
   bool hook_get_author(cert_value const & branchname, std::string & author);

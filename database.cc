@@ -77,6 +77,19 @@ database::check_schema()
      % schema % db_schema_id);
 }
 
+static void 
+sqlite_unbase64_fn(sqlite_func *f, int nargs, char const ** args)
+{
+  if (nargs != 1)
+    {
+      sqlite_set_result_error(f, "need exactly 1 arg to unbase64()", -1);
+      return;
+    }
+  data decoded;
+  decode_base64(base64<data>(string(args[0])), decoded);
+  sqlite_set_result_string(f, decoded().c_str(), decoded().size());
+}
+
 struct sqlite * 
 database::sql(bool init)
 {
@@ -101,10 +114,12 @@ database::sql(bool init)
 	execute (schema_constant);
 
       check_schema();
+      // register any functions we're going to use
+      if (sqlite_create_function(__sql, "unbase64", -1, &sqlite_unbase64_fn, NULL))
+	throw oops(string("error registering base64 function with sqlite"));
     }
   return __sql;
 }
-
 
 void 
 database::initialize()
@@ -1600,6 +1615,130 @@ database::complete(string const & partial,
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(file_id(res[i][0]));  
 }
+
+using commands::selector_type;
+
+static void selector_to_certname(selector_type ty,
+				 string & s)
+{
+  switch (ty)
+    {
+    case commands::sel_author:
+      s = author_cert_name;
+      break;
+    case commands::sel_branch:
+      s = branch_cert_name;
+      break;
+    case commands::sel_date:
+      s = date_cert_name;
+      break;
+    case commands::sel_tag:
+      s = tag_cert_name;
+      break;
+    case commands::sel_ident:
+    case commands::sel_unknown:
+      I(false); // don't do this.
+      break;
+    }
+}
+
+void database::complete(selector_type ty,
+			string const & partial,
+			vector<pair<selector_type, string> > const & limit,
+			set<string> & completions)
+{
+  completions.clear();
+
+  // step 1: the limit is transformed into an SQL select statement which
+  // selects a set of IDs from the manifest_certs table which match the
+  // limit.  this is done by building an SQL select statement for each term
+  // in the limit and then INTERSECTing them all.
+
+  string lim = "(";
+  bool first_limit = true;
+  for (vector<pair<selector_type, string> >::const_iterator i = limit.begin();
+       i != limit.end(); ++i)
+    {
+      if (first_limit)
+	first_limit = false;
+      else
+	lim += " INTERSECT ";
+      
+      if (i->first == commands::sel_ident)
+	{
+	  lim += "SELECT id FROM manifest_certs ";
+	  lim += (F("WHERE id GLOB '%s*'") 
+		  % i->second).str();
+	}
+      else if (i->first == commands::sel_unknown)
+	{
+	  lim += "SELECT id FROM manifest_certs ";
+	  lim += (F(" WHERE (name='%s' OR name='%s' OR name='%s')")
+		  % author_cert_name 
+		  % tag_cert_name 
+		  % branch_cert_name).str();
+	  lim += (F(" AND unbase64(value) glob '*%s*'")
+		  % i->second).str();	  
+	}
+      else
+	{
+	  string certname;
+	  selector_to_certname(i->first, certname);
+	  lim += "SELECT id FROM manifest_certs ";
+	  lim += (F("WHERE name='%s' AND unbase64(value) glob '*%s*'")
+		  % certname % i->second).str();
+	}
+    }
+  lim += ")";
+  
+  // step 2: depending on what we've been asked to disambiguate, we
+  // will complete either some idents, or cert values, or "unknown"
+  // which generally means "author, tag or branch"
+
+  string query;
+  if (ty == commands::sel_ident)
+    {
+      query = (F("SELECT id FROM %s") % lim).str();
+    }
+  else 
+    {
+      query = "SELECT value FROM manifest_certs WHERE";
+      if (ty == commands::sel_unknown)
+	{	  	
+	  query += 
+	    (F(" (name='%s' OR name='%s' OR name='%s')")
+	     % author_cert_name 
+	     % tag_cert_name 
+	     % branch_cert_name).str();
+	}
+      else
+	{
+	  string certname;
+	  selector_to_certname(ty, certname);
+	  query += 
+	    (F(" (name='%s')") % certname).str();
+	}
+        
+      query += (F(" AND (unbase64(value) GLOB '*%s*')") % partial).str();
+      query += (F(" AND (id IN %s)") % lim).str();
+    }
+
+  results res;
+  fetch(res, one_col, any_rows, query.c_str());
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      if (ty == commands::sel_ident)
+	completions.insert(res[i][0]);
+      else
+	{
+	  base64<data> row_encoded(res[i][0]);
+	  data row_decoded;
+	  decode_base64(row_encoded, row_decoded);
+	  completions.insert(row_decoded());
+	}
+    }
+}
+
 
 // merkle nodes
 

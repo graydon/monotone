@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <iterator>
 #include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
 
 #include "commands.hh"
 #include "constants.hh"
@@ -380,65 +381,31 @@ get_log_message(patch_set const & ps,
     F("edit of log message failed"));
 }
 
-template <typename ID>
-static void 
-complete(app_state & app, 
-	 string const & str, 
-	 ID & completion)
-{
-  N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
-    F("non-hex digits in id"));
-  if (str.size() == constants::idlen)
-    {
-      completion = ID(str);
-      return;
-    }
-  set<ID> completions;
-  app.db.complete(str, completions);
-  N(completions.size() != 0,
-    F("partial id '%s' does not have a unique expansion") % str);
-  if (completions.size() > 1)
-    {
-      string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
-      for (typename set<ID>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	err += (i->inner()() + "\n");
-      N(completions.size() == 1, boost::format(err));
-    }
-  completion = *(completions.begin());  
-  P(F("expanding partial id '%s'\n") % str);
-  P(F("expanded to '%s'\n") %  completion);
-}
-
-/*
-
-FIXME: finish this stuff.
-
 static void
-complete_selector(string const & orig_sel,
-		  vector<pair<selector_type, string> > const & limit,		  
-		  selector_type & type,
-		  set<string> & completions,
-		  app_state & app)
+decode_selector(string const & orig_sel,
+		selector_type & type,
+		string & sel,
+		app_state & app)
 {
-  
-  I(type == sel_unknown);
-  string sel = orig_sel;
+  sel = orig_sel;
 
-  L(F("completing selector '%s'\n") % sel);
+  L(F("decoding selector '%s'\n") % sel);
 
-  // stage 1: call user hook to expand selectors
-  if (sel.size < 2 || sel[1] != ':')
+  if (sel.size() < 2 || sel[1] != ':')
     {
       string tmp;
-      N(app.lua.hook_expand_selector(sel, tmp),
-	F("expansion of selector '%s' failed") % sel);
-      P(F("expanded selector '%s' -> '%s'\n") % sel % tmp);
-      sel = tmp;
+      if (!app.lua.hook_expand_selector(sel, tmp))
+	{
+	  L(F("expansion of selector '%s' failed\n") % sel);
+	}
+      else
+	{
+	  P(F("expanded selector '%s' -> '%s'\n") % sel % tmp);
+	  sel = tmp;
+	}
     }
   
-  // stage 2: decode the selector
-  if (sel.size >= 2 && sel[1] == ':')
+  if (sel.size() >= 2 && sel[1] == ':')
     {
       switch (sel[0])
 	{
@@ -463,66 +430,101 @@ complete_selector(string const & orig_sel,
 	}
       sel.erase(0,2);
     }
-
-  // stage 3: either we've decided what the thing is, or we're going to
-  // do a generic "word" completion over authors, tags, and branches.
-
-  cert_name cname;
-  cert_value cval(sel);
-  vector<cert_value> ctmp;
-
-  switch (type)
-    {
-    case sel_author:
-      app.db.complete_cert_value(author_cert_name, cval, limit, ctmp);
-      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
-      break;
-
-    case sel_branch:
-      app.db.complete_cert_value(branch_cert_name, cval, limit, ctmp);
-      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
-      break;
-
-    case sel_date:
-      app.db.complete_cert_value(date_cert_name, cval, limit, ctmp);
-      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
-      break;
-
-    case sel_tag:
-      app.db.complete_cert_value(tag_cert_name, cval, limit, ctmp);
-      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
-      break;
-
-    case sel_ident:
-      app.db.complete_cert_value(author_cert_name, cval, limit, ctmp);
-      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
-      break;
-
-    case sel_unknown:
-      app.db.complete_cert_value(author_cert_name, cval, limit, ctmp);
-      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
-
-      app.db.complete_cert_value(tag_cert_name, cval, limit, ctmp);
-      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
-
-      app.db.complete_cert_value(branch_cert_name, cval, limit, ctmp);
-      copy(ctmp.begin(), ctmp.end(), inserter(completions, completions.begin()));
-      break;
-    }
 }
 
 static void
-complete(string const & sels)
-{
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-  boost::char_separator<char> slash("/");
-  tokenizer tokens(sels, slash);
-  vector<string> selectors;
-  copy(tokens.begin(), tokens.end(), back_inserter(selectors));
+complete_selector(string const & orig_sel,
+		  vector<pair<selector_type, string> > const & limit,		  
+		  selector_type & type,
+		  set<string> & completions,
+		  app_state & app)
+{  
+  string sel;
+  decode_selector(orig_sel, type, sel, app);
+  app.db.complete(type, sel, limit, completions);
 }
 
-*/
 
+static void 
+complete(app_state & app, 
+	 string const & str, 
+	 manifest_id & completion)
+{
+
+  // this rule should always be enabled, even if the user specifies
+  // --norc: if you provide a manifest id, you get a manifest id.
+  if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
+      && str.size() == constants::idlen)
+    {
+      completion = manifest_id(str);
+      return;
+    }
+  
+  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  boost::char_separator<char> slash("/");
+  tokenizer tokens(str, slash);
+
+  vector<string> selector_strings;
+  vector<pair<selector_type, string> > selectors;  
+  copy(tokens.begin(), tokens.end(), back_inserter(selector_strings));
+  for (vector<string>::const_iterator i = selector_strings.begin();
+       i != selector_strings.end(); ++i)
+    {
+      string sel;
+      selector_type type = sel_unknown;
+      decode_selector(*i, type, sel, app);
+      selectors.push_back(make_pair(type, sel));
+    }
+
+  P(F("expanding selection '%s'\n") % str);
+
+  // we jam through an "empty" selection on sel_ident type
+  set<string> completions;
+  selector_type ty = sel_ident;
+  complete_selector("", selectors, ty, completions, app);
+
+  N(completions.size() != 0,
+    F("no match for selection '%s'") % str);
+  if (completions.size() > 1)
+    {
+      string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
+      for (set<string>::const_iterator i = completions.begin();
+	   i != completions.end(); ++i)
+	err += (*i + "\n");
+      N(completions.size() == 1, boost::format(err));
+    }
+  completion = manifest_id(*(completions.begin()));  
+  P(F("expanded to '%s'\n") %  completion);  
+}
+
+static void 
+complete(app_state & app, 
+	 string const & str, 
+	 file_id & completion)
+{
+  N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
+    F("non-hex digits in id"));
+  if (str.size() == constants::idlen)
+    {
+      completion = file_id(str);
+      return;
+    }
+  set<file_id> completions;
+  app.db.complete(str, completions);
+  N(completions.size() != 0,
+    F("partial id '%s' does not have a unique expansion") % str);
+  if (completions.size() > 1)
+    {
+      string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
+      for (set<file_id>::const_iterator i = completions.begin();
+	   i != completions.end(); ++i)
+	err += (i->inner()() + "\n");
+      N(completions.size() == 1, boost::format(err));
+    }
+  completion = *(completions.begin());  
+  P(F("expanding partial id '%s'\n") % str);
+  P(F("expanded to '%s'\n") %  completion);
+}
 
 
 // this helper tries to produce merge <- mergeN(left,right), possibly
