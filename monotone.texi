@@ -542,7 +542,7 @@ the scope of this document.
       |  "date"                  |  "2003-04-04T07:39:51"    |
       +--------------------------+---------------------------+
       |  signed by key           |  signature                |
-      |  "jrh@@somewhere.com"     |  "a02380def....0983fe90"  |
+      |  "jrh@@example.com"       |  "a02380def....0983fe90"  |
       +--------------------------+---------------------------+
 @end group
 @end smallexample
@@ -2095,8 +2095,8 @@ Some selector examples are helpful in clarifying the idea:
 Revision IDs beginning with the string @code{a432}
 @item graydon@@pobox.com/2004-04
 Revisions written by @code{graydon@@pobox.com} in April 2004.
-@item 'jrh@@nodomain.org/2 weeks ago'
-Revisions written by @code{jrh@@nodomain.org} 2 weeks ago.
+@item 'jrh@@example.org/2 weeks ago'
+Revisions written by @code{jrh@@example.org} 2 weeks ago.
 @item graydon/net.venge.monotone.win32/yesterday
 Revisions in the @code{net.venge.monotone.win32} branch, written by
 @code{graydon}, yesterday.
@@ -2152,9 +2152,9 @@ Before selectors are passed to the database, they are expanded using a
 lua hook: @code{expand_selector}. The default definition of this hook
 attempts to guess a number of common forms for selection, allowing you
 to omit selector types in many cases. For example, the hook guesses
-that the typeless selector @code{jrh@@nodomain.org} is an author
+that the typeless selector @code{jrh@@example.org} is an author
 selector, due to its syntactic form, so modifies it to read
-@code{a:jrh@@nodomain.org}. This hook will generally assign a selector
+@code{a:jrh@@example.org}. This hook will generally assign a selector
 type to values which ``look like'' partial hex strings, email
 addresses, branch names, or date specifications. For the complete
 source code of the hook, see @ref{Hook Reference}.
@@ -2522,9 +2522,9 @@ smaller trees first, to get a feel for the import process.
 We will assume certain values for this example which will differ in your case:
 @itemize
 @item
-Your domain name, @code{test.net} in this example.
+Your domain name, @code{example.net} in this example.
 @item 
-Your key name, @code{import@@test.net} in this example.
+Your key name, @code{import@@example.net} in this example.
 @item
 Your project name, @code{wobbler} in this example.
 @item
@@ -2541,9 +2541,9 @@ copy:
 @smallexample
 @group
 $ monotone --db=test.db db init
-$ monotone --db=test.db genkey import@@test.net
-$ monotone --db=test.db --branch=net.test.wobbler cvs_import /usr/local/cvsroot
-$ monotone --db=test.db --branch=net.test.wobbler checkout wobber-checkout
+$ monotone --db=test.db genkey import@@example.net
+$ monotone --db=test.db --branch=net.example.wobbler cvs_import /usr/local/cvsroot
+$ monotone --db=test.db --branch=net.example.wobbler checkout wobber-checkout
 @end group
 @end smallexample
 
@@ -3782,9 +3782,9 @@ function intersection(a,b)
 end
 
 function get_revision_cert_trust(signers, id, name, val)
-   local trusted_signers = @{ "bob@@happyplace.com", 
-                             "friend@@trustedplace.com", 
-                             "myself@@home.com" @}
+   local trusted_signers = @{ "bob@@happyplace.example.com", 
+                             "friend@@trustedplace.example.com", 
+                             "myself@@home.example.com" @}
    local t = intersection(signers, trusted_signers)
 
    if t == nil then return false end
