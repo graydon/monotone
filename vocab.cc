@@ -108,21 +108,21 @@ verify(local_path & val)
   for(path::iterator i = p.begin(); i != p.end(); ++i)
     {
       N(!( *i == "" && (! p.empty())),
-	F("empty path component in '%s'") % val);
+        F("empty path component in '%s'") % val);
 
       N(!(*i == "." || *i == ".."),
-	F("prohibited path component '%s' in '%s'") % *i % val);
+        F("prohibited path component '%s' in '%s'") % *i % val);
 
       string::size_type pos = i->find_first_of(constants::illegal_path_bytes);
       N(pos == string::npos,
-	F("bad character '%d' in path component '%s' of '%s'") 
-	% static_cast<int>(i->at(pos)) % *i % val);
+        F("bad character '%d' in path component '%s' of '%s'") 
+        % static_cast<int>(i->at(pos)) % *i % val);
 
       string s = val();
       for (string::const_iterator j = s.begin(); j != s.end(); ++j)
       N(*j != '\0',
-	F("null byte in path component '%s' of '%s'") % *i % val);
-	
+        F("null byte in path component '%s' of '%s'") % *i % val);
+        
     }
   
   val.ok = true;
@@ -227,7 +227,6 @@ ostream & operator<<(ostream & o, dec<INNER> const & d)  \
 
 template class revision<cert>;
 template class manifest<cert>;
-template class file<cert>;
 
 // the rest is unit tests
 
@@ -237,15 +236,15 @@ template class file<cert>;
 static void test_file_path_verification()
 {
   char const * baddies [] = {"../escape",
-			     "foo/../../escape",
-			     "foo//nonsense",
-			     "/rooted",
+                             "foo/../../escape",
+                             "foo//nonsense",
+                             "/rooted",
 #ifdef _WIN32
-			     "c:\\windows\\rooted",
-			     "c:/windows/rooted",
-			     "c:thing",
+                             "c:\\windows\\rooted",
+                             "c:/windows/rooted",
+                             "c:thing",
 #endif
-			     0 };
+                             0 };
   
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path p(*c), informative_failure);      
@@ -259,12 +258,12 @@ static void test_file_path_verification()
     }
   
   char const * goodies [] = {"unrooted", 
-			     "unrooted.txt",
-			     "fun_with_underscore.png",
-			     "fun-with-hyphen.tiff", 
- 			     "unrooted/../unescaping",
-			     "unrooted/general/path",
-			     0 };
+                             "unrooted.txt",
+                             "fun_with_underscore.png",
+                             "fun-with-hyphen.tiff", 
+                             "unrooted/../unescaping",
+                             "unrooted/general/path",
+                             0 };
 
   for (char const ** c = goodies; *c; ++c)
     BOOST_CHECK_NOT_THROW(file_path p(*c), informative_failure);

@@ -132,7 +132,6 @@ namespace fs = boost::filesystem;
 #include "cert.hh"
 extern template class revision<cert>;
 extern template class manifest<cert>;
-extern template class file<cert>;
 #endif
 
 #endif // __VOCAB_HH__

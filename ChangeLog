@@ -1,3 +1,190 @@
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Partially fix comment (s/manifest/revision/ etc.).
+	(dispatch_payload): Ignore mcert and fcert refinement requests,
+	instead of dying on them.  Hack, but I think it should let this
+	netsync continue to interoperate with old netsync...
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* vocab.hh: Remove file<cert>.
+	* vocab.cc: Likewise.
+	* packet_types.hh: Remove file.
+	* Makefile.am (MOST_SOURCES): Remove packet_types.hh and mac.hh.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (process_confirm_cmd): Don't try refining mcert and
+	fcert trees.
+	Remove other dead/pointless code.
+	
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* database.hh: Remove file cert stuff.
+	* netsync.cc (data_exists): We don't have file/manifest certs.
+	(load_data): Likewise.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (process_data_cmd): Ignore file/manifest certs.
+
+	* database.cc (struct valid_certs): Don't support file certs.
+	(rehash): No file certs.
+	(file_cert_exists): Remove.
+	(put_file_cert): Remove.
+	(get_file_certs): Remove.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* packet.cc (class delayed_manifest_cert_packet):
+	(class delayed_file_cert_packet): Remove.
+	(packet_db_writer::consume_file_cert, consume_manifest_cert) 
+	(packet_writer::consume_file_cert, consume_manifest_cert) 
+	Remove.
+	(struct feed_packet_consumer): Don't support mcert/fcert packets.
+	(extract_packets): Likewise.
+	(packet_roundabout_test): Test revision certs, not manifest/file
+	certs.
+
+	* packet.hh (packet_consumer::consume_file_cert):
+	(packet_consumer::consume_manifest_cert):
+	(packet_writer::consume_file_cert): 
+	(packet_writer::consume_manifest_cert):
+	(packet_db_writer::consume_file_cert):
+	(packet_db_writer::consume_manifest_cert):
+	Remove.
+
+	* lua.hh (hook_get_file_cert_trust): Remove.
+	* lua.cc (hook_get_file_cert_trust): Remove.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* cert.hh (erase_bogus_certs): Re-add manifest cert version.
+
+	* monotone.texi (Hook Reference): Remove documentation of
+	get_{file,manifest}_cert_trust.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* cert.cc (erase_bogus_certs): Re-add manifest cert version.
+	(bogus_cert_p): Likewise.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* cert.hh (rename_edge):
+	(rename_set):
+	(calculate_renames):
+	(rename_cert_name): Remove.
+	(cert_file_comment):
+	(cert_manifest_comment): Remove.
+	(erase_bogus_certs): Remove manifest and file versions.
+	* cert.cc (rename_cert_name): Remove.
+	(bogus_cert_p): Remove manifest<cert> and file<cert> variants.
+	(erase_bogus_certs): Likewise.
+	(put_simple_manifest_cert):
+	(put_simple_file_cert):
+	(cert_file_comment): Remove.
+
+	* commands.cc (fcerts): Remove.
+	(mcerts): Likewise.
+	(rcerts): Rename to...
+	(certs): ...this.  s/revision certs/certs/ in help text.
+	(trusted): s/revision cert/cert/.
+	(ls_certs): Don't special-case rename certs.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_vcheck.at: Fix AT_XFAIL_IF typo.
+	
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Reserved Certs): Remove 'vcheck'.
+	(Key and Cert): Remove 'vcheck'.
+	(Accidental collision): Likewise.
+	(Commands): Likewise.
+	* tests/t_vcheck.at: Add note about manual having useful stuff for
+	when vcheck is re-added.
+	
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* mac.hh: 
+	* cert.cc (vcheck_cert_name):
+	(calculate_vcheck_mac): 
+	(cert_manifest_vcheck
+	(check_manifest_vcheck):
+	* cert.hh (cert_manifest_vcheck):
+	(check_manifest_vcheck):
+	* constants.cc (constants::vchecklen):
+	* constants.hh (constants::vchecklen):
+	* commands.cc (vcheck):
+	Remove.
+
+	* tests/t_vcheck.at: New test.
+	* testsuite.at: Call it.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ROADMAP: Remove 'upgrade to sqlite3' todo item.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (tag):
+	(testresult):
+	(approve):
+	(disapprove):
+	(comment):
+	(fload):
+	(fmerge):
+	(cat):
+	(rcs_import): Change grouping for "--help" display, to make more
+	informative.
+	(rcs_import): Also add more details to help text.
+
+2005-01-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* diff_patch.cc (normalize_extents): Add missing ')'.
+	
+2005-01-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_update_1.at: New test.
+	* testsuite.at: Call it.
+
+2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* diff_patch.cc (normalize_extents): Add warning for anyone who
+	manages to trigger the untested part of the normalization code.
+
+2005-01-14  Christian Kollee <stuka@pestilenz.org>
+
+	* search for and link with sqlite3 when --bundle-sqlite=no
+
+2005-01-12  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_ambig_update.at: add comments from discussion on irc
+	* tests/t_status_missing.at: new test
+	* testsuite.at: include it
+
+2005-01-10  graydon hoare  <graydon@pboox.com>
+
+	* commands.cc (explicit_merge): Tweak merge message.
+	* database.cc (check_sqlite_format_version): New function.
+	(database::sql): Call it.
+	* sqlite/pager.hh (SQLITE_DEFAULT_PAGE_SIZE): Adjust to 8192.
+	(SQLITE_MAX_PAGE_SIZE): Adjust to 65536.
+	* schema_migration.cc: Post-merge cleanup.
+	* Makefile.am: Likewise.
+
+2005-01-10  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: SQLite 3.0.8 CVS import
+	* database.{cc,hh}:
+	* schema_migration.{cc,hh}: convert to use the SQLite3 API
+	
+	This does not yet use any of the more sophisticated API features
+	of SQLite3 (query parameters, BLOBs), so there is plenty of room 
+	for optimization. This also does not change the schema (i.e.
+	still uses base64 encoded values in tables)
+
 2005-01-17  graydon hoare  <graydon@pobox.com>
 
 	* AUTHORS: Mention Wojciech and Neil.

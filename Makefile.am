@@ -12,12 +12,12 @@ MOST_SOURCES =								\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
-	 packet_types.hh transforms.hh vocab.hh				\
+	 transforms.hh vocab.hh				\
 	 cleanup.hh diff_patch.hh lua.hh basic_io.hh			\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
          randomfile.hh rcs_file.hh xdelta.hh adler32.hh			\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
-	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
+	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
          mkstemp.hh mt_version.hh
 

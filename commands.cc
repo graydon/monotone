@@ -711,8 +711,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       cert_value tv;      
       decode_base64(idx(certs, i).value, tv);
       string washed;
-      if (guess_binary(tv()) 
-          || idx(certs, i).name == rename_cert_name)
+      if (guess_binary(tv()))
         {
           washed = "<binary data>";
         }
@@ -1019,7 +1018,7 @@ CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
 }
 
 CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
-    "test whether a hypothetical revision cert would be trusted\n"
+    "test whether a hypothetical cert would be trusted\n"
     "by current settings")
 {
   if (args.size() < 4)
@@ -1046,7 +1045,7 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
   bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
                                                       name, value);
 
-  cout << "if a revision cert on: " << ident << endl
+  cout << "if a cert on: " << ident << endl
        << "with key: " << name << endl
        << "and value: " << value << endl
        << "was signed by: ";
@@ -1056,58 +1055,7 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
        << "it would be: " << (trusted ? "trusted" : "UNtrusted") << endl;
 }
 
-CMD(vcheck, "key and cert", "create [REVISION]\ncheck [REVISION]", 
-    "create or check a cryptographic version-check certificate")
-{
-  if (args.size() < 1 || args.size() > 2)
-    throw usage(name);
-
-  set<manifest_id> ids;
-  if (args.size() == 1)
-    {
-      set<revision_id> rids;
-      N(app.branch_name() != "", F("need --branch argument for branch-based vcheck"));
-      get_branch_heads(app.branch_name(), app, rids);      
-      for (set<revision_id>::const_iterator i = rids.begin(); i != rids.end(); ++i)
-        {
-          manifest_id mid;
-          app.db.get_revision_manifest(*i, mid);
-          ids.insert(mid);
-        }
-    }
-  else
-    {
-      for (size_t i = 1; i < args.size(); ++i)
-        {
-          manifest_id mid;
-          revision_id rid;
-          complete(app, idx(args, i)(), rid);
-          app.db.get_revision_manifest(rid, mid);
-          ids.insert(mid);
-        }
-    }
-
-  if (idx(args, 0)() == "create")
-    for (set<manifest_id>::const_iterator i = ids.begin();
-         i != ids.end(); ++i)
-    {
-      packet_db_writer dbw(app);
-      cert_manifest_vcheck(*i, app, dbw); 
-    }
-
-  else if (idx(args, 0)() == "check")
-    for (set<manifest_id>::const_iterator i = ids.begin();
-         i != ids.end(); ++i)
-    {
-      check_manifest_vcheck(*i, app); 
-    }
-
-  else 
-    throw usage(name);
-}
-
-
-CMD(tag, "certificate", "REVISION TAGNAME", 
+CMD(tag, "review", "REVISION TAGNAME", 
     "put a symbolic tag cert on a revision version")
 {
   if (args.size() != 2)
@@ -1119,7 +1067,7 @@ CMD(tag, "certificate", "REVISION TAGNAME",
 }
 
 
-CMD(testresult, "certificate", "ID (true|false)", 
+CMD(testresult, "review", "ID (true|false)", 
     "note the results of running a test on a revision")
 {
   if (args.size() != 2)
@@ -1130,7 +1078,7 @@ CMD(testresult, "certificate", "ID (true|false)",
   cert_revision_testresult(r, idx(args, 1)(), app, dbw);
 }
 
-CMD(approve, "certificate", "REVISION", 
+CMD(approve, "review", "REVISION", 
     "approve of a particular revision")
 {
   if (args.size() != 1)
@@ -1147,7 +1095,7 @@ CMD(approve, "certificate", "REVISION",
 }
 
 
-CMD(disapprove, "certificate", "REVISION", 
+CMD(disapprove, "review", "REVISION", 
     "disapprove of a particular revision")
 {
   if (args.size() != 1)
@@ -1193,7 +1141,7 @@ CMD(disapprove, "certificate", "REVISION",
   }
 }
 
-CMD(comment, "certificate", "REVISION [COMMENT]",
+CMD(comment, "review", "REVISION [COMMENT]",
     "comment on a particular revision")
 {
   if (args.size() != 1 && args.size() != 2)
@@ -1370,7 +1318,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
 }
 
 
-CMD(fload, "tree", "", "load file contents into db")
+CMD(fload, "debug", "", "load file contents into db")
 {
   string s = get_stdin();
   base64< gzip< data > > gzd;
@@ -1386,7 +1334,7 @@ CMD(fload, "tree", "", "load file contents into db")
   dbw.consume_file_data(f_id, f_data);  
 }
 
-CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result")
+CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result")
 {
   if (args.size() != 3)
     throw usage(name);
@@ -1455,7 +1403,7 @@ CMD(identify, "working copy", "[PATH]",
   cout << ident << endl;
 }
 
-CMD(cat, "tree", "(file|manifest|revision) [ID]", 
+CMD(cat, "informative", "(file|manifest|revision) [ID]", 
     "write file, manifest, or revision from database to stdout")
 {
   if (!(args.size() == 1 || args.size() == 2))
@@ -1908,7 +1856,7 @@ CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
 }
 
 
-CMD(rcerts, "packet i/o", "ID", "write revision cert packets to stdout")
+CMD(certs, "packet i/o", "ID", "write cert packets to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1923,40 +1871,6 @@ CMD(rcerts, "packet i/o", "ID", "write revision cert packets to stdout")
   app.db.get_revision_certs(r_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_revision_cert(idx(certs, i));
-}
-
-CMD(mcerts, "packet i/o", "ID", "write manifest cert packets to stdout")
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  manifest_id m_id;
-  vector< manifest<cert> > certs;
-
-  complete(app, idx(args, 0)(), m_id);
-
-  app.db.get_manifest_certs(m_id, certs);
-  for (size_t i = 0; i < certs.size(); ++i)
-    pw.consume_manifest_cert(idx(certs, i));
-}
-
-CMD(fcerts, "packet i/o", "ID", "write file cert packets to stdout")
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  file_id f_id;
-  vector< file<cert> > certs;
-
-  complete(app, idx(args, 0)(), f_id);
-
-  app.db.get_file_certs(f_id, certs);
-  for (size_t i = 0; i < certs.size(); ++i)
-    pw.consume_file_cert(idx(certs, i));
 }
 
 CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
@@ -3360,7 +3274,9 @@ CMD(revert, "working copy", "[FILE]...",
 }
 
 
-CMD(rcs_import, "rcs", "RCSFILE...", "import all versions in RCS files")
+CMD(rcs_import, "debug", "RCSFILE...",
+    "import all versions in RCS files\n"
+    "this command doesn't reconstruct revisions.  you probably want cvs_import")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -3401,7 +3317,7 @@ log_certs(app_state & app, revision_id id, cert_name name, string label, bool mu
           cout << endl << endl << tv << endl;
       else
           cout << tv << endl;
-    }	  
+    }     
 }
 
 CMD(log, "informative", "[ID] [file]", "print history in reverse order starting from 'ID' (filtering by 'file')")

@@ -420,23 +420,6 @@ database::rehash()
   }
 
   {
-    // rehash all fcerts
-    results res;
-    vector<cert> certs;    
-    fetch(res, 5, any_rows, 
-          "SELECT id, name, value, keypair, signature "
-          "FROM file_certs");
-    results_to_certs(res, certs);
-    execute("DELETE FROM file_certs");
-    for(vector<cert>::const_iterator i = certs.begin(); i != certs.end(); ++i)
-      {
-        put_cert(*i, "file_certs");
-        ++fcerts;
-      }
-  }
-  
-
-  {
     // rehash all pubkeys
     results res;
     fetch(res, 2, any_rows, "SELECT id, keydata FROM public_keys");
@@ -1628,12 +1611,6 @@ database::manifest_cert_exists(manifest<cert> const & cert)
   return cert_exists(cert.inner(), "manifest_certs"); 
 }
 
-bool 
-database::file_cert_exists(file<cert> const & cert)
-{ 
-  return cert_exists(cert.inner(), "file_certs"); 
-}
-
 void 
 database::put_manifest_cert(manifest<cert> const & cert)
 { 
@@ -1645,99 +1622,6 @@ database::put_revision_cert(revision<cert> const & cert)
 { 
   put_cert(cert.inner(), "revision_certs"); 
 }
-
-void 
-database::put_file_cert(file<cert> const & cert)
-{ 
-  put_cert(cert.inner(), "file_certs"); 
-}
-
-void 
-database::get_file_certs(cert_name const & name, 
-                         vector< file<cert> > & ts)
-{
-  vector<cert> certs;
-  get_certs(name, certs, "file_certs");
-  ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));  
-}
-
-void 
-database::get_file_certs(file_id const & id, 
-                         cert_name const & name, 
-                         vector< file<cert> > & ts)
-{
-  vector<cert> certs;
-  get_certs(id.inner(), name, certs, "file_certs");
-  ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));    
-}
-
-void 
-database::get_file_certs(cert_name const & name,
-                         base64<cert_value> const & val, 
-                         vector< file<cert> > & ts)
-{
-  vector<cert> certs;
-  get_certs(name, val, certs, "file_certs");
-  ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));  
-}
-
-void 
-database::get_file_certs(file_id const & id, 
-                         cert_name const & name,
-                         base64<cert_value> const & val, 
-                         vector< file<cert> > & ts)
-{
-  vector<cert> certs;
-  get_certs(id.inner(), name, val, certs, "file_certs");
-  ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));  
-}
-
-void 
-database::get_file_certs(file_id const & id, 
-                         vector< file<cert> > & ts)
-{ 
-  vector<cert> certs;
-  get_certs(id.inner(), certs, "file_certs"); 
-  ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
-}
-
-
-bool 
-database::file_cert_exists(hexenc<id> const & hash)
-{
-  results res;
-  vector<cert> certs;
-  fetch(res, one_col, any_rows, 
-        "SELECT id "
-        "FROM file_certs "
-        "WHERE hash = '%q'", 
-        hash().c_str());
-  I(res.size() == 0 || res.size() == 1);
-  return (res.size() == 1);
-}
-
-void 
-database::get_file_cert(hexenc<id> const & hash,
-                        file<cert> & c)
-{
-  results res;
-  vector<cert> certs;
-  fetch(res, 5, one_row, 
-        "SELECT id, name, value, keypair, signature "
-        "FROM file_certs "
-        "WHERE hash = '%q'", 
-        hash().c_str());
-  results_to_certs(res, certs);
-  I(certs.size() == 1);
-  c = file<cert>(certs[0]);
-}
-
-
 
 void 
 database::get_revision_certs(cert_name const & name, 

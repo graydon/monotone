@@ -18,9 +18,6 @@ namespace constants
   // number of bits in an RSA key we use
   size_t const keylen = 1024; 
 
-  // number of bytes of random noise we seed vcheck packets with
-  size_t const vchecklen = 32;
-
   // number of characters in a SHA1 id
   size_t const idlen = 40;
 
@@ -143,9 +140,9 @@ namespace constants
 
   u8 const netcmd_current_protocol_version = 3;
   size_t const netcmd_minsz = (1     // version
-			       + 1   // cmd code
-			       + 1   // smallest uleb possible
-			       + 4); // adler32    
+                               + 1   // cmd code
+                               + 1   // smallest uleb possible
+                               + 4); // adler32    
   
   size_t const netcmd_payload_limit = 0xffffff;
   size_t const netcmd_maxsz = netcmd_minsz + netcmd_payload_limit;

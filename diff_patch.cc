@@ -207,6 +207,14 @@ void normalize_extents(vector<extent> & a_b_map,
             //     j: foo   --preserved-->   mapped[  j]: foo
             //
 
+            // This code is currently untested, because we haven't been able to find
+            // any test case that would exercise it!
+            // Maybe this text will make us look bad when/if someone discovers it, but
+            // better to have a bad reputation and good software than vice-versa.
+            W(F("You've found files that trigger a strange edge-case of the merge logic.\n"));
+            W(F("We think it will work, but please tell us; and, if possible, send us the files\n"));
+            W(F("for inclusion in our test suite (monotone-devel@nongnu.org).  Thanks!\n"));
+
             L(F("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
               % a_b_map.at(j-1).pos
               % a_b_map.at(j-1).len
