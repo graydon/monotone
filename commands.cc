@@ -1730,7 +1730,7 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
     app.db.get_key(key, pub);
     base64< arc4<rsa_priv_key> > priv;
     app.db.get_key(key, priv);    
-    require_password(app.lua, key, pub, priv);
+    require_password(app, key, pub, priv);
   }
 
   utf8 addr(idx(args,0));

@@ -1,0 +1,46 @@
+The following people have contributed substantial patches:
+
+  Peter J. Jones: Wrote the initial version of the comp_bzip2 module
+  Justin Karneges: Contributed the mux_qt module
+  Hany Greiss: Windows port
+
+AEP Systems Ltd kindly provided an AEP2000 crypto card and drivers, enabling
+the creation of Botan's AEP engine module.
+
+The author would also like to thank the following people for contributing bug
+reports, useful information, or other assistance:
+
+  Darren Starsmore
+  Dan Nicolaescu
+  Dominik Vogt
+  Hany Greiss
+  James Widener
+  Jeff B
+  Ken Perano
+  Ying-Chieh Liao
+  Vaclav Ovsik
+
+In addition, the following people have unknowingly contributed help:
+
+  The implementation of DES is based off a public domain implementation by Phil
+  Karn from 1994 (he, in turn, credits Richard Outerbridge and Jim Gillogly).
+
+  Rijndael and Square are based on the reference implementations written by
+  the inventors, Joan Daemen and Vincent Rijmen.
+
+  The Serpent S-boxes used were discovered by Dag Arne Osvik and detailed in
+  his paper "Speeding Up Serpent".
+
+  Matthew Skala's public domain twofish.c (as given in GnuPG 0.9.8) provided
+  the basis for my Twofish code (particularly the key schedule).
+
+  Some of the hash functions (MD5, SHA-1, etc) use an optimized implementation
+  of one of the boolean functions, which was discovered by Colin Plumb.
+
+  The design of Randpool takes some of it's design principles from those
+  suggested by Eric A. Young in his SSLeay documentation and Peter Gutmann's
+  paper "Software Generation of Practically Strong Random Numbers".
+
+  ANSI_X917_RNG's design was changed from the X9.17 standard in response to the
+  attacks presented in the paper "Cryptanalytic Attacks on Pseudorandom Number
+  Generators", by Kelsey, Schneier, Wagner, and Hall.

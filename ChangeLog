@@ -1,3 +1,7 @@
+2004-11-27  Matt Johnston  <matt@ucc.asn.au>
+
+        * Replaced cryptopp with botan
+
 2004-11-08  graydon hoare  <graydon@pobox.com>
 
 	* monotone.texi: Some minor cleanups.

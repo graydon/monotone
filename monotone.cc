@@ -12,6 +12,8 @@
 
 #include <stdlib.h>
 
+#include "botan/botan.h"
+
 #include "app_state.hh"
 #include "commands.hh"
 #include "sanity.hh"
@@ -87,6 +89,8 @@ dumper()
 {
   if (!clean_shutdown)
     global_sanity.dump_buffer();
+  
+  Botan::Init::deinitialize();
 }
 
 
@@ -143,6 +147,9 @@ cpp_main(int argc, char ** argv)
   L(F("set locale: LC_CTYPE=%s, LC_MESSAGES=%s\n")
     % (setlocale(LC_CTYPE, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL))
     % (setlocale(LC_MESSAGES, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL)));
+
+  // Set up secure memory allocation etc
+  Botan::Init::initialize();
   
   // decode all argv values into a UTF-8 array
 

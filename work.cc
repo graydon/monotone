@@ -119,7 +119,7 @@ build_deletion(file_path const & path,
   
   if (! known_preimage_path(path, man, pr, dir_p))
     {
-      P(F("skipping %s, not currently tracked") % path);
+      P(F("skipping %s, not currently tracked\n") % path);
       return;
     }
 

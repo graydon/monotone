@@ -17,7 +17,7 @@
 
 #ifndef HAVE_MKSTEMP
 
-#include "cryptopp/osrng.h"
+#include "botan/botan.h"
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -33,7 +33,6 @@ monotone_mkstemp(char *tmpl)
   static const char letters[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   static const int NLETTERS = sizeof (letters) - 1;
-  static CryptoPP::AutoSeededRandomPool mkstemp_urandom;
 
   len = strlen (tmpl);
   if (len < 6 || strcmp (&tmpl[len - 6], "XXXXXX"))
@@ -44,7 +43,7 @@ monotone_mkstemp(char *tmpl)
   for (count = 0; count < 100; ++count)
     {
       for (i = 0; i < 6; ++i)
-	XXXXXX[i] = letters[mkstemp_urandom.GenerateByte() % NLETTERS];
+	XXXXXX[i] = letters[Botan::Global_RNG::random(Botan::Nonce) % NLETTERS];
       fd = open(tmpl, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
       if (fd >= 0)
 	return fd;

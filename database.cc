@@ -1482,7 +1482,7 @@ struct valid_certs
 
 	string txt;
 	cert_signable_text(tmp, txt);
-	if (check_signature(app.lua, tmp.key, pk, txt, tmp.sig))
+	if (check_signature(app, tmp.key, pk, txt, tmp.sig))
 	  {
 	    L(F("ok '%s' %s cert from %s\n") 
 	      % name % signature_type % tmp.key);

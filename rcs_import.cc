@@ -1252,7 +1252,7 @@ import_cvs_repo(fs::path const & cvsroot,
     app.db.get_key(key, pub);
     base64< arc4<rsa_priv_key> > priv;
     app.db.get_key(key, priv);
-    require_password(app.lua, key, pub, priv);
+    require_password(app, key, pub, priv);
   }
 
   cvs_history cvs;

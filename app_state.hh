@@ -9,6 +9,10 @@
 class app_state;
 class lua_hooks;
 
+#include <boost/shared_ptr.hpp>
+#include <botan/pubkey.h>
+#include <botan/rsa.h>
+
 #include "database.hh"
 #include "lua.hh"
 #include "work.hh"
@@ -29,6 +33,16 @@ public:
   lua_hooks lua;
   bool options_changed;
   options_map options;
+
+  /* These are used to cache signers/verifiers (if the hook allows).
+   * They can't be function-static variables in key.cc, since they must be
+   * destroyed before the Botan deinitialize() function is called. */
+  std::map<rsa_keypair_id,
+    std::pair<boost::shared_ptr<Botan::PK_Signer>, 
+        boost::shared_ptr<Botan::RSA_PrivateKey> > > signers;
+  std::map<rsa_keypair_id,
+    std::pair<boost::shared_ptr<Botan::PK_Verifier>,
+        boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
 
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);

@@ -1,0 +1,8 @@
+The main author of Botan is:
+
+Name: Jack Lloyd
+Email: lloyd@randombit.net
+PGP Key Fingerprint: 2DD2 95F9 C7E3 A15E AF29 80E1 D6A9 A5B9 4DCD F398
+
+Also see doc/thanks.txt for a list of people who have contributed code, bug
+reports, ideas, and/or useful information.
