@@ -64,6 +64,7 @@ build_additions(vector<file_path> const & paths,
                 app_state & app,
                 change_set::path_rearrangement & pr)
 {
+  N(path() != "", F("invalid path ''"));
   change_set::path_rearrangement pr_new, pr_concatenated;
   change_set cs_new;
 
@@ -114,6 +115,8 @@ build_deletions(vector<file_path> const & paths,
                 app_state & app,
                 change_set::path_rearrangement & pr)
 {
+  N(path() != "", F("invalid path ''"));
+
   change_set::path_rearrangement pr_new, pr_concatenated;
   path_set ps;
   extract_path_set(man, ps);
@@ -148,6 +151,9 @@ build_rename(file_path const & src,
              manifest_map const & man,
              change_set::path_rearrangement & pr)
 {
+  N(src() != "", F("invalid source path ''"));
+  N(dst() != "", F("invalid destination path ''"));
+
   change_set::path_rearrangement pr_new, pr_concatenated;
   path_set ps;
   extract_path_set(man, ps);
