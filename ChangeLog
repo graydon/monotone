@@ -1,3 +1,8 @@
+2004-12-01  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: reordered commands to help merge with changesets
+	branch
+
 2004-09-24  Derek Scherger  <derek@echologic.com>
 
 	* app_state.{cc,hh} (initialize,prefix,in_restriction): rename
