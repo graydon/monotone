@@ -503,7 +503,8 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
 
       // add this file and youngest version to the head manifest
       I(cvs.head_manifest.find(cvs.curr_file) ==  cvs.head_manifest.end());
-      cvs.head_manifest.insert(make_pair(cvs.curr_file, fid));
+      if (r.deltas[r.admin.head].state != "dead")
+          cvs.head_manifest.insert(make_pair(cvs.curr_file, fid));
     }
 
     global_pieces.reset();
