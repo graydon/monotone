@@ -78,6 +78,13 @@ building and installation process for monotone
 
 2. configuring monotone:
 
+  * if there is no ./configure script in your source tree you'll need
+    to create one before proceeding to the next step. one of the 
+    following auto* commands should work:
+
+        $ aclocal-1.7 && autoreconf --install
+        $ AUTOMAKE=automake-1.7 ACLOCAL=aclocal-1.7 autoreconf --install
+
   * type "./configure" for a basic configuration of monotone.  several
     configuration options are available; type "configure --help" for a
     list of all of them. some special options are shown here:

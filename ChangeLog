@@ -1,3 +1,7 @@
+2005-03-17  Derek Scherger  <derek@echologic.com>
+
+	* INSTALL: add note about creating a ./configure script
+
 2005-03-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* UPGRADE: Finish, hopefully.
