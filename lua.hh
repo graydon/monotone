@@ -78,7 +78,10 @@ public:
   bool hook_apply_attribute(std::string const & attr, 
 			    file_path const & filename, 
 			    std::string const & value);
-    
+
+  // conversion hooks
+  bool hook_get_system_charset(std::string & chset);
+  bool hook_get_system_linesep(std::string & linesep);
 
 };
 

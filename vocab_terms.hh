@@ -7,6 +7,8 @@
 // in order to facilitate external instantiation of most of the
 // vocabulary, minimize code duplication, speed up compilation, etc.
 
+ATOMIC(external);             // "external" string in system charset
+
 ATOMIC(id);                   // hash of data
 ATOMIC(data);                 // meaningless blob
 ATOMIC(delta);                // xdelta between 2 datas
@@ -22,8 +24,7 @@ ATOMIC(rsa_pub_key);          // some nice numbers
 ATOMIC(rsa_priv_key);         // some nice numbers
 ATOMIC(rsa_sha1_signature);   // some other nice numbers
 
-ATOMIC(url);                  // URL of news server / depot
-ATOMIC(group);                // name of newsgroup / depot group
+ATOMIC(url);                  // URL of news server / depot / email list
 
 DECORATE(manifest);           // thing associated with a manifest
 DECORATE(file);               // thing associated with a file

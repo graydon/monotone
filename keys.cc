@@ -164,7 +164,7 @@ void generate_key_pair(lua_hooks & lua,           // to hook for phrase
   arc4<rsa_priv_key> raw_priv_key;
   
   // generate private key (and encrypt it)
-  RSAES_OAEP_SHA_Decryptor priv(rng, keylen);
+  RSAES_OAEP_SHA_Decryptor priv(rng, constants::keylen);
   write_der(priv, privkey);
   read_passphrase(lua, id, phrase);
   do_arc4(phrase, privkey); 

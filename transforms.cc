@@ -19,6 +19,9 @@
 #include "cryptopp/base64.h"
 #include "cryptopp/gzip.h"
 
+#include "idna/idna.h"
+#include "idna/stringprep.h"
+
 #include "cleanup.hh"
 #include "vocab.hh"
 #include "transforms.hh"
@@ -277,12 +280,18 @@ void split_into_lines(string const & in,
 }
 
 void join_lines(vector<string> const & in,
-		string & out)
+		string & out,
+		string const & linesep)
 {
   ostringstream oss;
-  // FIXME: shall we bother joining lines as CRLF?
-  copy(in.begin(), in.end(), ostream_iterator<string>(oss, "\n"));
+  copy(in.begin(), in.end(), ostream_iterator<string>(oss, linesep.c_str()));
   out = oss.str();
+}
+
+void join_lines(vector<string> const & in,
+		string & out)
+{
+  join_lines(in, out, "\n");
 }
 
 string remove_ws(string const & s)
@@ -325,6 +334,100 @@ string canonical_base64(string const & s)
     (xform<CryptoPP::Base64Decoder>(s));
 }
 
+static string system_charset(lua_hooks & lua)
+{
+  char const * locale_charset_name = stringprep_locale_charset ();
+  I(locale_charset_name != NULL);
+  string sys_charset(locale_charset_name);
+  lua.hook_get_system_charset(sys_charset);
+  return sys_charset;
+}
+
+void charset_convert(string const & src_charset,
+		     string const & dst_charset,
+		     string const & src, 
+		     string & dst)
+{
+  L(F("converting %d bytes from %s to %s\n") % src.size() 
+    % src_charset % dst_charset);
+  char * converted = stringprep_convert(src.c_str(), 
+					src_charset.c_str(), 
+					dst_charset.c_str());
+  I(converted != NULL);
+  dst = string(converted);
+  free(converted);
+}
+
+
+void system_to_utf8(string const & system, string & utf8, lua_hooks & lua)
+{
+  charset_convert(system_charset(lua), "UTF-8", system, utf8);
+}
+
+void utf8_to_system(string const & utf8, string & system, lua_hooks & lua)
+{
+  charset_convert("UTF-8", system_charset(lua), utf8, system);
+}
+
+static string decode_idna_error(int err)
+{
+  switch (static_cast<Idna_rc>(err))
+    {
+    case IDNA_STRINGPREP_ERROR: return "stringprep error"; break;
+    case IDNA_PUNYCODE_ERROR: return "punycode error"; break;
+    case IDNA_CONTAINS_NON_LDH: return "non-LDH characters"; break;
+    case IDNA_CONTAINS_MINUS: return "leading / trailing hyphen-minus character"; break;
+    case IDNA_INVALID_LENGTH: return "invalid length (output must be between 1 and 63 chars)"; break;
+    case IDNA_NO_ACE_PREFIX: return "no ace prefix"; break;
+    case IDNA_ROUNDTRIP_VERIFY_ERROR: return "roundtrip verify error"; break;
+    case IDNA_CONTAINS_ACE_PREFIX: return "contains ACE prefix (\"xn--\")"; break;
+    case IDNA_ICONV_ERROR: return "iconv error"; break;
+    case IDNA_MALLOC_ERROR: return "malloc error"; break;
+    default: return "unknown error"; break;
+    }
+  return "unknown error";
+}
+
+void ace_to_utf8(string const & ace, string & utf8)
+{
+  char *out = NULL;
+  L(F("converting %d bytes from IDNA ACE to UTF-8\n") % ace.size());
+  int res = idna_to_unicode_8z8z(ace.c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
+  N(res == IDNA_SUCCESS || res == IDNA_NO_ACE_PREFIX,
+    F("error converting %d UTF-8 bytes to IDNA ACE: %s")
+    % ace.size()
+    % decode_idna_error(res));
+  utf8 = string(out);
+  free(out);
+}
+
+void utf8_to_ace(string const & utf8, string & ace)
+{
+  char *out = NULL;
+  L(F("converting %d bytes from UTF-8 to IDNA ACE\n") % utf8.size());
+  int res = idna_to_ascii_8z(utf8.c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
+  N(res == IDNA_SUCCESS,
+    F("error converting %d UTF-8 bytes to IDNA ACE: %s")
+    % utf8.size()
+    % decode_idna_error(res));
+  ace = string(out);
+  free(out);
+}
+
+void line_end_convert(string const & linesep, string const & src, string & dst)
+{
+  string linesep_str("\n");
+  if (linesep == "CR" || linesep == "\r")
+    linesep_str = "\r";
+  else if (linesep == "CRLF" || linesep == "\r\n")
+    linesep_str = "\r\n";
+  else if (linesep == "LF"|| linesep == "\n")
+    linesep_str = "\n";
+
+  vector<string> tmp;
+  split_into_lines(src, tmp);
+  join_lines(tmp, dst, linesep_str);
+}
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"

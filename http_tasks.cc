@@ -137,10 +137,7 @@ static bool scan_for_seq(string const & str,
 
 static void check_received_bytes(string const & tmp)
 {
-  size_t pos = tmp.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
-				     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-				     "0123456789"
-				     "+/=_.@[] \n\t");
+  size_t pos = tmp.find_first_not_of(constants::legal_packet_bytes);
   N(pos == string::npos, 
     F("Bad char from network: pos %d, char '%d'\n")
     % pos % static_cast<int>(tmp.at(pos)));
@@ -149,7 +146,7 @@ static void check_received_bytes(string const & tmp)
 static void read_chunk(std::iostream & stream,
 		       string & packet)
 {
-  char buf[bufsz];
+  char buf[constants::bufsz];
   ios_base::fmtflags flags = stream.flags();
   stream.setf(ios_base::hex, ios_base::basefield);
   size_t chunk_size = 0;
@@ -167,7 +164,7 @@ static void read_chunk(std::iostream & stream,
   
   while(chunk_size > 0)
     {
-      size_t read_size = std::min(bufsz, chunk_size);
+      size_t read_size = std::min(constants::bufsz, chunk_size);
       stream.read(buf, read_size);
       size_t actual_read_size = stream.gcount();
       N(actual_read_size <= read_size, F("long chunked read from server"));
@@ -188,10 +185,10 @@ static void read_chunk(std::iostream & stream,
 static void read_buffer(std::iostream & stream,
 			string & packet)
 {
-  char buf[bufsz];
-  stream.read(buf, bufsz);
+  char buf[constants::bufsz];
+  stream.read(buf, constants::bufsz);
   size_t bytes = stream.gcount();
-  N(bytes <= bufsz, F("long read from server"));
+  N(bytes <= constants::bufsz, F("long read from server"));
   string tmp(buf, bytes);
   check_received_bytes(tmp);
   packet.append(tmp);
@@ -281,7 +278,7 @@ void fetch_http_packets(string const & group_name,
 
   // step 3: read any packets
   string packet;
-  packet.reserve(bufsz);
+  packet.reserve(constants::bufsz);
   {
     while(stream.good())
       {

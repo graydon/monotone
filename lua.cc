@@ -688,3 +688,24 @@ bool lua_hooks::hook_apply_attribute(string const & attr,
     .call(2,0)
     .ok();
 }
+
+bool lua_hooks::hook_get_system_charset(string & chset)
+{
+  return Lua(st)
+    .push_str("get_system_charset")
+    .get_fn()
+    .call(0,1)
+    .extract_str(chset)
+    .ok();
+}
+
+
+bool lua_hooks::hook_get_system_linesep(string & linesep)
+{
+  return Lua(st)
+    .push_str("get_system_linesep")
+    .get_fn()
+    .call(0,1)
+    .extract_str(linesep)
+    .ok();
+}

@@ -50,8 +50,8 @@ void sanity::set_quiet()
 void sanity::log(format const & fmt)
 {
   string str = fmt.str();
-  if (str.size() > log_line_sz)
-    str.resize(log_line_sz);
+  if (str.size() > constants::log_line_sz)
+    str.resize(constants::log_line_sz);
   copy(str.begin(), str.end(), back_inserter(logbuf));
   if (verbose)
     ui.inform(str);
@@ -60,8 +60,8 @@ void sanity::log(format const & fmt)
 void sanity::progress(format const & fmt)
 {
   string str = fmt.str();
-  if (str.size() > log_line_sz)
-    str.resize(log_line_sz);
+  if (str.size() > constants::log_line_sz)
+    str.resize(constants::log_line_sz);
   copy(str.begin(), str.end(), back_inserter(logbuf));
   if (! quiet)
     ui.inform(str);
@@ -70,8 +70,8 @@ void sanity::progress(format const & fmt)
 void sanity::warning(format const & fmt)
 {
   string str = fmt.str();
-  if (str.size() > log_line_sz)
-    str.resize(log_line_sz);  
+  if (str.size() > constants::log_line_sz)
+    str.resize(constants::log_line_sz);  
   string str2 = "warning: " + str;
   copy(str2.begin(), str2.end(), back_inserter(logbuf));
   if (! quiet)

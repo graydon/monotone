@@ -34,10 +34,10 @@ void make_random_seed(app_state & app,
 #endif
     }
 
-  byte seed[vchecklen];
+  byte seed[constants::vchecklen];
   AutoSeededRandomPool rng(request_blocking_rng);
-  rng.GenerateBlock(seed, vchecklen);
-  std::string out(reinterpret_cast<char *>(seed), vchecklen);
+  rng.GenerateBlock(seed, constants::vchecklen);
+  std::string out(reinterpret_cast<char *>(seed), constants::vchecklen);
   StringSource str(out, true, 
 		   new HexEncoder(new StringSink(hexseed)));  
   hexseed = lowercase(hexseed);

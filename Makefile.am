@@ -1,4 +1,5 @@
 AUTOMAKE_OPTIONS=subdir-objects 1.7.1
+ACLOCAL_AMFLAGS = -I m4
 
 MOST_SOURCES =								\
 	 app_state.cc commands.cc diff_patch.cc lua.cc			\
@@ -7,6 +8,7 @@ MOST_SOURCES =								\
          proto_machine.cc packet.cc sanity.cc vocab.cc			\
          rcs_file.cc rcs_import.cc xdelta.cc network.cc			\
          http_tasks.cc ui.cc schema_migration.cc smtp_tasks.cc		\
+         constants.cc url.cc                                            \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -15,7 +17,7 @@ MOST_SOURCES =								\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
          lcs.hh network.hh http_tasks.hh constants.hh ui.hh		\
-         schema_migration.hh smtp_tasks.hh quick_alloc.hh mac.hh
+         schema_migration.hh smtp_tasks.hh quick_alloc.hh mac.hh url.hh
 
 CRYPTOPP_SOURCES = \
         cryptopp/algebra.cpp cryptopp/algparam.cpp cryptopp/arc4.cpp \
@@ -133,6 +135,11 @@ ADNS_SOURCES = \
 	adns/general.c adns/internal.h adns/parse.c adns/poll.c adns/query.c \
 	adns/reply.c adns/setup.c adns/transmit.c adns/tvarith.h adns/types.c 
 
+IDNA_SOURCES = \
+	idna/gunibreak.h idna/gunidecomp.h idna/idna.h idna/nfkc.c	\
+	idna/punycode.c idna/rfc3454.c idna/stringprep.h idna/version.c \
+	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
+	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
 bin_PROGRAMS = monotone depot.cgi
 check_PROGRAMS = unit_tests
@@ -140,7 +147,7 @@ noinst_PROGRAMS = txt2c
 
 monotone_SOURCES = $(MOST_SOURCES) monotone.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
-depot_cgi_SOURCES = depot.cc 
+depot_cgi_SOURCES = constants.cc schema_migration.cc depot.cc 
 txt2c_SOURCES = txt2c.cc
 
 noinst_LIBRARIES = lib3rdparty.a 
@@ -148,7 +155,8 @@ lib3rdparty_a_SOURCES = $(CRYPTOPP_SOURCES) \
                         $(SQLITE_SOURCES) \
                         $(BOOST_SANDBOX_SOURCES) \
                         $(LUA_SOURCES) \
-			$(ADNS_SOURCES)
+			$(ADNS_SOURCES) \
+			$(IDNA_SOURCES)
 
 monotone_LDADD = lib3rdparty.a -lboost_prg_exec_monitor
 monotone_LDFLAGS = 
@@ -159,11 +167,16 @@ unit_tests_LDFLAGS =
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
 
 depot_cgi_LDFLAGS = 
-depot_cgi_LDADD = schema_migration.o lib3rdparty.a
+depot_cgi_LDADD = lib3rdparty.a
 
 AM_CFLAGS = -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
 AM_LDFLAGS = 
 AM_CXXFLAGS = -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
+
+SUBDIRS = po
+datadir = @datadir@
+localedir = $(datadir)/locale
+DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 
 man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi

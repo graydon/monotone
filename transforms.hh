@@ -8,6 +8,7 @@
 
 #include "vocab.hh"
 #include "manifest.hh"
+#include "lua.hh"
 
 #include <vector>
 
@@ -137,6 +138,10 @@ void split_into_lines(std::string const & in,
 		      std::vector<std::string> & out);
 
 void join_lines(std::vector<std::string> const & in,
+		std::string & out,
+		std::string const & linesep);
+
+void join_lines(std::vector<std::string> const & in,
 		std::string & out);
 
 // remove all whitespace
@@ -147,5 +152,16 @@ std::string trim_ws(std::string const & s);
 
 // canonicalize base64 encoding
 std::string canonical_base64(std::string const & s);
+
+// charset conversions
+void charset_convert(std::string const & src_charset, std::string const & dst_charset,
+		     std::string const & src, std::string & dst);
+void system_to_utf8(std::string const & system, std::string & utf8, lua_hooks & lua);
+void utf8_to_system(std::string const & utf8, std::string & system, lua_hooks & lua);
+void ace_to_utf8(std::string const & ace, std::string & utf8);
+void utf8_to_ace(std::string const & utf8, std::string & ace);
+
+// line-ending conversion
+void line_end_convert(std::string const & linesep, std::string const & src, std::string & dst);
 
 #endif // __TRANSFORMS_HH__

@@ -13,6 +13,8 @@
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
 
+#include <libintl.h>
+
 // our assertion / sanity / error logging system *was* based on GNU Nana,
 // but we're only using a small section of it, and have anyways rewritten
 // that to use typesafe boost-formatter stuff.
@@ -56,7 +58,7 @@ typedef std::runtime_error oops;
 extern sanity global_sanity;
 
 // F is for when you want to build a boost formatter
-#define F(str) boost::format((str))
+#define F(str) boost::format(gettext(str))
 
 // L is for logging, you can log all you want
 #define L(fmt) global_sanity.log(fmt)

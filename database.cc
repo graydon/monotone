@@ -190,7 +190,7 @@ void database::dump(ostream & out)
 
 void database::load(istream & in)
 {
-  char buf[bufsz];
+  char buf[constants::bufsz];
   string tmp;
 
   N(filename.string() != "",
@@ -203,7 +203,7 @@ void database::load(istream & in)
   
   while(in)
     {
-      in.read(buf, bufsz);
+      in.read(buf, constants::bufsz);
       tmp.append(buf, in.gcount());
     }
 
@@ -389,8 +389,8 @@ void database::execute(char const * query, ...)
   // log it
   char * formatted = sqlite_vmprintf(query, ap);
   string qq(formatted);
-  if (qq.size() > db_log_line_sz) 
-    qq = qq.substr(0, db_log_line_sz) + string(" ...");
+  if (qq.size() > constants::db_log_line_sz) 
+    qq = qq.substr(0, constants::db_log_line_sz) + string(" ...");
   L(F("db.execute(\"%s\")\n") % qq);
   sqlite_freemem(formatted);
 
@@ -428,8 +428,8 @@ void database::fetch(results & res,
   // log it
   char * formatted = sqlite_vmprintf(query, ap);
   string qq(formatted);
-  if (qq.size() > log_line_sz) 
-    qq = qq.substr(0, log_line_sz) + string(" ...");
+  if (qq.size() > constants::log_line_sz) 
+    qq = qq.substr(0, constants::log_line_sz) + string(" ...");
   L(F("db.fetch(\"%s\")\n") % qq);
   sqlite_freemem(formatted);
 
