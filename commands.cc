@@ -1453,7 +1453,7 @@ ALIAS(co, checkout, "tree", "MANIFEST-ID DIRECTORY",
 
 CMD(heads, "tree", "", "show unmerged heads of branch")
 {
-  vector<manifest_id> heads;
+  set<manifest_id> heads;
   if (args.size() != 0)
     throw usage(name);
 
@@ -1472,7 +1472,7 @@ CMD(heads, "tree", "", "show unmerged heads of branch")
   else
     cout << "branch '" << app.branch_name << "' is currently unmerged:" << endl;
 
-  for (vector<manifest_id>::const_iterator i = heads.begin(); 
+  for (set<manifest_id>::const_iterator i = heads.begin(); 
        i != heads.end(); ++i)
     {
       cout << i->inner()() << endl;
@@ -1482,7 +1482,7 @@ CMD(heads, "tree", "", "show unmerged heads of branch")
 
 CMD(merge, "tree", "", "merge unmerged heads of branch")
 {
-  vector<manifest_id> heads;
+  set<manifest_id> heads;
 
   if (args.size() != 0)
     throw usage(name);
@@ -1510,12 +1510,13 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
       vector< pair<url,group> > targets;
       app.lua.hook_get_post_targets(app.branch_name, targets);
 
-      manifest_id left = idx(heads, 0);
+      set<manifest_id>::const_iterator i = heads.begin();
+      manifest_id left = *i;
       manifest_id ancestor;
       size_t count = 1;
       for (++i; i != heads.end(); ++i, ++count)
 	{
-	  manifest_id right = idx(heads, i);
+	  manifest_id right = *i;
 	  P(F("merging with manifest %d / %d: %s <-> %s\n")
 	    % count % heads.size() % left % right);
 
@@ -1632,7 +1633,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
 
   */
 
-  vector<manifest_id> src_heads, dst_heads;
+  set<manifest_id> src_heads, dst_heads;
 
   if (args.size() != 2)
     throw usage(name);
@@ -1665,17 +1666,20 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
       vector< pair<url,group> > targets;
       app.lua.hook_get_post_targets(idx(args, 1), targets);
 
+      set<manifest_id>::const_iterator src_i = src_heads.begin();
+      set<manifest_id>::const_iterator dst_i = dst_heads.begin();
+
       manifest_id merged;
       transaction_guard guard(app.db);
-      try_one_merge (idx(src_heads, 0), idx(dst_heads, 0), merged, app, targets);      
+      try_one_merge (*src_i, *dst_i, merged, app, targets);      
 
       queueing_packet_writer qpw(app, targets);
       cert_manifest_in_branch(merged, app.branch_name, app, qpw);
       cert_manifest_changelog(merged, 
 			      "propagate of " 
-			      + idx(src_heads, 0).inner()() 
+			      + src_i->inner()() 
 			      + " and " 
-			      + idx(dst_heads, 0).inner()()
+			      + dst_i->inner()()
 			      + "\n"
 			      + "from branch " 
 			      + idx(args, 0) + " to " + idx(args, 1) + "\n", 
