@@ -1,4 +1,15 @@
-2003-03-08  Jon Bright  <jon@siliconcircus.com>
+2005-03-08  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Escape the parameters,
+	surround them with quotes before adding them to the consolidated
+	command line string
+	* mkstemp.cc (monotone_mkstemp): Now takes a std::string&, and
+	returns the *native* form of the path in this.
+	* mkstemp.hh: Now always use monotone_mkstemp
+	(monotone_mkstemp): Update prototype
+	* lua.cc (monotone_mkstemp_for_lua): Use new-style 
+	monotone_mkstemp
+
+2005-03-08  Jon Bright  <jon@siliconcircus.com>
 	* win32/read_password.cc (read_password): Now correctly hides 
 	password when run in a Windows console.  Does at least enough in
 	a MinGW rxvt console to make sure that you can't see the password.

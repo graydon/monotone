@@ -26,18 +26,10 @@ int process_spawn(const char * const argv[])
   int i;
   char *realexe,*filepart;
   int realexelen;
-  std::string cmd;
+  std::string cmd,tmp1,tmp2;
+  std::string::iterator it;
   STARTUPINFO si;
   PROCESS_INFORMATION pi;
-
-  std::ostringstream cmdline_ss;
-  for (const char *const *i = argv; *i; ++i)
-    {
-      if (i)
-	cmdline_ss << ", ";
-      cmdline_ss << "'" << *i << "'";
-    }
-  L(F("spawning command: %s\n") % cmdline_ss.str());
 
   realexelen = strlen(argv[0])+1+MAX_PATH;
   realexe = (char*)malloc(realexelen);
@@ -47,14 +39,34 @@ int process_spawn(const char * const argv[])
       free(realexe);
       return -1;
     }
-  cmd = "\"";
+
+  std::ostringstream cmdline_ss;
+  cmdline_ss << realexe;
+  for (const char *const *i = argv+1; *i; ++i)
+    {
+      if (i)
+	cmdline_ss << ", ";
+      cmdline_ss << "'" << *i << "'";
+    }
+  L(F("spawning command: %s\n") % cmdline_ss.str());
+
+  cmd = "";
   for (i=0; argv[i]; i++)
     {
-      cmd += argv[i];
-      if (i)
-        cmd += " ";
-      else
-	cmd += "\" ";
+      cmd += "\"";
+      tmp1 = argv[i];
+      tmp2 = "";
+      for (it=tmp1.begin(); it!=tmp1.end(); it++)
+      {
+        if (*it == '\\')
+          tmp2.append("\\\\");
+        else if (*it == '\"')
+          tmp2.append("\\\"");
+        else
+          tmp2.append(1, *it);
+      }
+      cmd += tmp2;
+      cmd += "\" ";
     }
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(STARTUPINFO);
