@@ -907,7 +907,6 @@ struct anc_graph
   std::map<u64,revision_id> node_to_new_rev;
   std::multimap<u64, std::pair<cert_name, cert_value> > certs;
   std::multimap<u64, u64> ancestry;
-  std::set<u64> heads;
   std::set<std::string> branches;
   
   void add_node_ancestry(u64 child, u64 parent);  
