@@ -1341,7 +1341,7 @@ database::delete_private_key(rsa_keypair_id const & pub_id)
 {
   execute("DELETE FROM private_keys WHERE id = '%q'",
 	  pub_id().c_str());
-
+}
 
 // cert management
 
