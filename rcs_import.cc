@@ -690,9 +690,7 @@ public:
     string file = path();
     if (file.substr(file.size() - 2) == string(",v"))      
       {
-	transaction_guard guard(db);
 	import_rcs_file_with_cvs(file, db, cvs);
-	guard.commit();
       }
     else
       L("skipping non-RCS file %s\n", file.c_str());
@@ -893,7 +891,8 @@ void import_substates(ticker & n_edges,
       calculate_manifest_map_ident(child_map, child_id);
       store_branch_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
       store_auxilliary_certs(i->first, child_id, app, cvs);
-      import_substates(n_edges, n_branches, i->second, child_map, cvs, app);
+      if (i->second->substates.size() > 0)
+	import_substates(n_edges, n_branches, i->second, child_map, cvs, app);
       parent_map = child_map;
       parent_id = child_id;
       ++n_edges;
@@ -904,12 +903,16 @@ void import_substates(ticker & n_edges,
 void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 {
   cvs_history cvs;
-  cvs_tree_walker walker(cvs, app.db);
-  I( fs::is_directory(cvsroot));
-  I( fs::exists(cvsroot));
-  app.db.ensure_open();
-  I(chdir(cvsroot.native_directory_string().c_str()) == 0);
-  walk_tree(walker);
+  {
+    transaction_guard guard(app.db);
+    cvs_tree_walker walker(cvs, app.db);
+    I( fs::is_directory(cvsroot));
+    I( fs::exists(cvsroot));
+    app.db.ensure_open();
+    I(chdir(cvsroot.native_directory_string().c_str()) == 0);
+    walk_tree(walker);
+    guard.commit();
+  }
 
   P("phase 1 (version import) complete\n");
   L("phase 1 complete, all versions imported\n");
@@ -944,7 +947,8 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 	calculate_manifest_map_ident(parent_map, parent_id);
 	store_trunk_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
 	store_auxilliary_certs(i->first, parent_id, app, cvs);
-	import_substates(n_edges, n_branches, i->second, parent_map, cvs, app);
+	if (i->second->substates.size() > 0)
+	  import_substates(n_edges, n_branches, i->second, parent_map, cvs, app);
 	child_map = parent_map;
 	child_id = parent_id;
 	++n_edges;

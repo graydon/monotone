@@ -33,10 +33,19 @@ make install
 rm -rf $RPM_BUILD_ROOT
 
 %post
-%_install_info monotone
+if [ -x /sbin/install-info ] 
+then
+/sbin/install-info --info-dir=%{_infodir} \
+             --entry="* monotone: (monotone).              Monotone version control system" \
+             --section=Programming \
+	     %{_infodir}/monotone.info.gz
+fi
 
 %preun
-%_remove_install_info monotone
+if [ -x /sbin/install-info ]
+then
+/sbin/install-info --info-dir=%{_infodir} --remove monotone
+fi
 
 %files
 %defattr(-,root,root,-)

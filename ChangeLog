@@ -1,5 +1,11 @@
 2003-09-27  graydon hoare  <graydon@pobox.com>
 
+	* diff_patch.cc: Rework conflict detection.
+	* rcs_import.cc: Remove some pointless slowness.
+	* monotone.spec: Install info files properly.
+
+2003-09-27  graydon hoare  <graydon@pobox.com>
+
 	* AUTHORS, NEWS, configure.ac: Update for 0.5 release.
 	* monotone.texi: Various updates.	
 	* xdelta.cc (compute_delta): Fix handling of empty data.

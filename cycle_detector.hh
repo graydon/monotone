@@ -45,7 +45,6 @@ struct cycle_detector
 
   bool edge_makes_cycle(T const & src, T const & dst)
   {
-
     if (src == dst)
       return true;
     

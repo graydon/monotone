@@ -138,10 +138,13 @@ void walk_hunk_consumer(vector<long> const & lcs,
 struct hunk_offset_calculator : public hunk_consumer
 {
   vector<size_t> & leftpos;
+  set<size_t> & deletes;
+  set<size_t> & inserts;
   size_t apos;
   size_t lpos;
   size_t final;
-  hunk_offset_calculator(vector<size_t> & lp, size_t fin);
+  hunk_offset_calculator(vector<size_t> & lp, size_t fin, 
+			 set<size_t> & dels, set<size_t> & inss);
   virtual void flush_hunk(size_t pos);
   virtual void advance_to(size_t newpos);
   virtual void insert_at(size_t b_pos);
@@ -149,8 +152,9 @@ struct hunk_offset_calculator : public hunk_consumer
   virtual ~hunk_offset_calculator();
 };
 
-hunk_offset_calculator::hunk_offset_calculator(vector<size_t> & off, size_t fin) 
-  : leftpos(off), apos(0), lpos(0), final(fin)
+hunk_offset_calculator::hunk_offset_calculator(vector<size_t> & off, size_t fin,
+					       set<size_t> & dels, set<size_t> & inss)
+  : leftpos(off), deletes(dels), inserts(inss), apos(0), lpos(0), final(fin)
 {}
 
 hunk_offset_calculator::~hunk_offset_calculator()
@@ -179,6 +183,7 @@ void hunk_offset_calculator::insert_at(size_t lp)
 {
   //   L("insert at %d: [%d,%d] -> [%d,%d] (sz=%d)\n", 
   //     lp, apos, lpos, apos, lpos+1, leftpos.size());
+  inserts.insert(apos);
   I(lpos == lp);
   lpos++;
 }
@@ -187,6 +192,7 @@ void hunk_offset_calculator::delete_at(size_t ap)
 {
   //   L("delete at %d: [%d,%d] -> [%d,%d] (sz=%d)\n", 
   //      ap, apos, lpos, apos+1, lpos, leftpos.size());
+  deletes.insert(apos);
   I(apos == ap);
   apos++;
   leftpos.push_back(lpos);
@@ -194,7 +200,9 @@ void hunk_offset_calculator::delete_at(size_t ap)
 
 void calculate_hunk_offsets(vector<string> const & ancestor,
 			    vector<string> const & left,
-			    vector<size_t> & leftpos)
+			    vector<size_t> & leftpos,
+			    set<size_t> & deletes, 
+			    set<size_t> & inserts)
 {
 
   vector<long> anc_interned;  
@@ -213,13 +221,14 @@ void calculate_hunk_offsets(vector<string> const & ancestor,
        i != left.end(); ++i)
     left_interned.push_back(in.intern(*i));
 
+  lcs.reserve(std::min(left.size(),ancestor.size()));
   longest_common_subsequence(anc_interned.begin(), anc_interned.end(),
 			     left_interned.begin(), left_interned.end(),
-			     std::max(ancestor.size(), left.size()),
+			     std::min(ancestor.size(), left.size()),
 			     back_inserter(lcs));
 
   leftpos.clear();
-  hunk_offset_calculator calc(leftpos, ancestor.size());
+  hunk_offset_calculator calc(leftpos, ancestor.size(), deletes, inserts);
   walk_hunk_consumer(lcs, anc_interned, left_interned, calc);
 }
 
@@ -232,6 +241,8 @@ struct hunk_merger : public hunk_consumer
   vector<string> const & ancestor;
   vector<string> const & right;
   vector<size_t> const & ancestor_to_leftpos_map;
+  set<size_t> const & deletes;
+  set<size_t> const & inserts;  
   vector<string> & merged;
   size_t apos; 
   size_t lpos; 
@@ -239,6 +250,8 @@ struct hunk_merger : public hunk_consumer
 	      vector<string> const & anc,
 	      vector<string> const & rght,
 	      vector<size_t> const & lpos,
+	      set<size_t> const & dels,
+	      set<size_t> const & inss,  	      
 	      vector<string> & mrgd);	      
   virtual void flush_hunk(size_t apos);
   virtual void advance_to(size_t apos);
@@ -253,9 +266,12 @@ hunk_merger::hunk_merger(vector<string> const & lft,
 			 vector<string> const & anc,
 			 vector<string> const & rght,
 			 vector<size_t> const & lpos,
+			 set<size_t> const & dels,
+			 set<size_t> const & inss,  	      
 			 vector<string> & mrgd)
   : left(lft), ancestor(anc), right(rght), 
-    ancestor_to_leftpos_map(lpos), merged(mrgd),
+    ancestor_to_leftpos_map(lpos), deletes(dels),
+    inserts(inss), merged(mrgd),
     apos(0), lpos(0)
 {
   merged.clear();
@@ -298,9 +314,9 @@ void hunk_merger::advance_to(size_t ap)
 	lend = ancestor_to_leftpos_map.at(ap);
     }
 
-  //   L("advance to %d / %d (lpos = %d / %d -> %d / %d)\n", 
-  //     ap, ancestor.size(), lpos, left.size(),
-  //     lend, left.size());
+//   L("advance to %d / %d (lpos = %d / %d -> %d / %d)\n", 
+//     ap, ancestor.size(), lpos, left.size(),
+//     lend, left.size());
 
   I(lpos <= lend);
   I(lend <= left.size());
@@ -339,22 +355,14 @@ void hunk_merger::advance_to(size_t ap)
 
 void hunk_merger::insert_at(size_t rp)
 {
-  //   L("insert at %d (lpos = %d)\n", rp, lpos);
+//   L("insert at %d (lpos = %d) '%8s'...\n", rp, lpos,
+//     right.at(rp).c_str());
   I(ancestor.size() == ancestor_to_leftpos_map.size());
   I(rp < right.size());
   I(apos <= ancestor_to_leftpos_map.size());
 
-  bool insert_here = false;
-  bool delete_here = false;
-  
-  if (apos > 0 && apos < ancestor_to_leftpos_map.size())
-    insert_here = 
-      (ancestor_to_leftpos_map.at(apos - 1) + 1 <
-       ancestor_to_leftpos_map.at(apos));
-  
-  if (apos + 1 < ancestor_to_leftpos_map.size())
-    delete_here = (ancestor_to_leftpos_map.at(apos + 1) == 
-		   ancestor_to_leftpos_map.at(apos));
+  bool insert_here = inserts.find(apos) != inserts.end();
+  bool delete_here = deletes.find(apos) != deletes.end();
 
   if (! (insert_here || delete_here))
     merged.push_back(right.at(rp));
@@ -371,6 +379,7 @@ void hunk_merger::insert_at(size_t rp)
   
   else if (insert_here)
     {
+      // simultaneous, identical insert?
       if (left.at(lpos) == right.at(rp))
 	return;
       
@@ -415,28 +424,21 @@ void hunk_merger::insert_at(size_t rp)
 
 void hunk_merger::delete_at(size_t ap)
 {
-  //   L("delete at %d (apos = %d, lpos = %d, translated = %d)\n", 
-  //     ap, apos, lpos, ancestor_to_leftpos_map.at(ap));
+//   L("delete at %d (apos = %d, lpos = %d, translated = %d) '%8s'...\n", 
+//     ap, apos, lpos, ancestor_to_leftpos_map.at(ap), 
+//     ancestor.at(ap).c_str());
   I(ancestor.size() == ancestor_to_leftpos_map.size());
   I(ap < ancestor_to_leftpos_map.size());
   I(ap == apos);
   I(ancestor_to_leftpos_map.at(ap) == lpos);
 
+  bool insert_here = inserts.find(apos) != inserts.end();
+  bool delete_here = deletes.find(apos) != deletes.end();
 
-  bool insert_here = false;
-  bool delete_here = false;
-  
-  if (ap > 0 && apos < ancestor_to_leftpos_map.size())
-    insert_here = 
-      (ancestor_to_leftpos_map.at(apos - 1) + 1 <
-       ancestor_to_leftpos_map.at(apos));
-  
-  if (ap + 1 < ancestor_to_leftpos_map.size())
-    delete_here = (ancestor_to_leftpos_map.at(apos + 1) == 
-		   ancestor_to_leftpos_map.at(apos));
-  
   if (!(insert_here || delete_here))
-    {apos++; lpos++;}
+    {
+      apos++; lpos++;
+    }
   
   else if (delete_here)
     {
@@ -475,6 +477,8 @@ void merge_hunks_via_offsets(vector<string> const & left,
 			     vector<string> const & ancestor,
 			     vector<string> const & right,
 			     vector<size_t> const & leftpos,
+			     set<size_t> const & deletes,
+			     set<size_t> const & inserts,
 			     vector<string> & merged)
 {
   vector<long> anc_interned;  
@@ -499,11 +503,12 @@ void merge_hunks_via_offsets(vector<string> const & left,
        i != right.end(); ++i)
     right_interned.push_back(in.intern(*i));
 
+  lcs.reserve(std::min(right.size(),ancestor.size()));
   longest_common_subsequence(anc_interned.begin(), anc_interned.end(),
 			     right_interned.begin(), right_interned.end(),
-			     std::max(ancestor.size(), right.size()),
+			     std::min(ancestor.size(), right.size()),
 			     back_inserter(lcs));
-  hunk_merger merger(left, ancestor, right, leftpos, merged);
+  hunk_merger merger(left, ancestor, right, leftpos, deletes, inserts, merged);
   walk_hunk_consumer(lcs, anc_interned, right_interned, merger);
 }
 
@@ -516,9 +521,12 @@ bool merge3(vector<string> const & ancestor,
   try 
     {
       vector<size_t> leftpos;
+      set<size_t> deletes;
+      set<size_t> inserts;
+
       L("calculating offsets from ancestor:[%d..%d) to left:[%d..%d)\n",
 	0, ancestor.size(), 0, left.size());
-      calculate_hunk_offsets(ancestor, left, leftpos);
+      calculate_hunk_offsets(ancestor, left, leftpos, deletes, inserts);
 
       L("sanity-checking offset table (sz=%d, ancestor=%d)\n",
 	leftpos.size(), ancestor.size());
@@ -533,7 +541,8 @@ bool merge3(vector<string> const & ancestor,
       
       L("merging differences from ancestor:[%d..%d) to right:[%d..%d)\n",
 	0, ancestor.size(), 0, right.size());
-      merge_hunks_via_offsets(left, ancestor, right, leftpos, merged);
+      merge_hunks_via_offsets(left, ancestor, right, leftpos, 
+			      deletes, inserts, merged);
     }
   catch(conflict & c)
     {
@@ -1137,9 +1146,10 @@ void unidiff(string const & filename1,
        i != lines2.end(); ++i)
     right_interned.push_back(in.intern(*i));
 
+  lcs.reserve(std::min(lines1.size(),lines2.size()));
   longest_common_subsequence(left_interned.begin(), left_interned.end(),
 			     right_interned.begin(), right_interned.end(),
-			     std::max(lines1.size(), lines2.size()),
+			     std::min(lines1.size(), lines2.size()),
 			     back_inserter(lcs));
 
   unidiff_hunk_writer hunks(lines1, lines2, 3, ost);

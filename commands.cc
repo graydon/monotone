@@ -1482,11 +1482,27 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 }
 
 
-// fmerge is a simple command for debugging the line merger.  most of the
-// time, leave it commented out. it can be helpful for certain cases,
-// though.
+// float and fmerge are simple commands for debugging the line merger.
+// most of the time, leave them commented out. they can be helpful for certain
+// cases, though.
 
 /*
+CMD(fload, "tree", "", "load file contents into db")
+{
+  string s = get_stdin();
+  base64< gzip< data > > gzd;
+
+  pack(data(s), gzd);
+
+  file_id f_id;
+  file_data f_data(gzd);
+  
+  calculate_ident (f_data, f_id);
+  
+  packet_db_writer dbw(app);
+  dbw.consume_file_data(f_id, f_data);  
+}
+
 CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result")
 {
   if (args.size() != 3)
