@@ -1,5 +1,40 @@
 2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc (request_fwd_revisions): Rename 'first_attached_edge'
+	to 'an_attached_edge', because it does not represent the first
+	attached edge.  Likewise for 'first_attached_cset'.
+	(analyze_attachment): Remove early exit from loop; we want to
+	analyze the entire graph, not just some linear subgraphs.
+
+	* revision.cc (ensure_parents_loaded): Filter out the null
+	revision when calculating parents.
+	* change_set.hh (null_id): Define for 'revision_id's.
+
+	* tests/t_merge2_add.at: New test.
+	* tests/t_merge2_data.at: New test.
+	* tests/t_related_merge2_data.at: New test.
+	* tests/t_merge_add.at: New test.
+	* tests/t_netsync_pubkey.at: New test.
+	* tests/t_netsync_repeated.at: New test.
+	* tests/t_netsync_unrelated.at: New test.
+
+
+	* testsuite.at: Add new tests.
+	(NETSYNC_SETUP): New macro.
+	(MONOTONE2): New macro.
+	(RUN_NETSYNC): New macro.
+	(ADD_FILE): New macro.
+	(SET_FILE): New macro.
+	(COMMIT): New macro.
+	* tests/t_netsync.at: Use them.
+
+	* tests/t_singlenetsync.at: Add 'netsync' keyword'.  Rename to...
+	* tests/t_netsync_single.at: ...this.
+
+	* tests/t_heads_discontinuous_branch.at: XFAIL it.
+
+2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netsync.cc: Remove hard tabs.
 
 2004-11-17  Nathaniel Smith  <njs@codesourcery.com>

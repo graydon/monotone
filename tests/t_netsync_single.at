@@ -1,6 +1,7 @@
 #  -*- Autoconf -*-
 
 AT_SETUP([single manifest netsync])
+AT_KEYWORDS([netsync])
 
 MONOTONE_SETUP
 AT_CHECK(cp test.db test2.db)

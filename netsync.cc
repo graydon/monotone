@@ -606,7 +606,6 @@ session::analyze_attachment(revision_id const & i,
                 {
                   L(F("revision %s is attached via parent %s\n") % i % edge_old_revision(k));
                   curr_attached = true;
-                  break;
                 }
             }
         }
@@ -776,7 +775,7 @@ session::request_fwd_revisions(revision_id const & i,
   ancestryT::const_iterator j = ancestry.find(i);
   if (j != ancestry.end())
     {
-      edge_map::const_iterator first_attached_edge = j->second->second.edges.end();
+      edge_map::const_iterator an_attached_edge = j->second->second.edges.end();
 
       // first make sure we've requested enough to get to here by
       // calling ourselves recursively. this is the forward path after all.
@@ -787,14 +786,14 @@ session::request_fwd_revisions(revision_id const & i,
           if (is_attached(edge_old_revision(k), attached))
             {
               request_fwd_revisions(edge_old_revision(k), attached, visited);
-              first_attached_edge = k;
+              an_attached_edge = k;
             }
         }
       
-      I(first_attached_edge != j->second->second.edges.end());
+      I(an_attached_edge != j->second->second.edges.end());
       
       // check out the manifest delta edge
-      manifest_id parent_manifest = edge_old_manifest(first_attached_edge);
+      manifest_id parent_manifest = edge_old_manifest(an_attached_edge);
       manifest_id child_manifest = j->second->second.new_manifest;      
       if (this->app.db.manifest_version_exists(child_manifest))
         L(F("not requesting forward manifest delta to '%s' as we already have it\n") 
@@ -817,9 +816,9 @@ session::request_fwd_revisions(revision_id const & i,
         }
 
       // check out each file delta edge
-      change_set const & first_attached_cset = first_attached_edge->second.second;
-      for (change_set::delta_map::const_iterator k = first_attached_cset.deltas.begin();
-           k != first_attached_cset.deltas.end(); ++k)
+      change_set const & an_attached_cset = an_attached_edge->second.second;
+      for (change_set::delta_map::const_iterator k = an_attached_cset.deltas.begin();
+           k != an_attached_cset.deltas.end(); ++k)
         {
           if (this->app.db.file_version_exists(delta_entry_dst(k)))
             L(F("not requesting forward delta %s -> %s on file %s as we already have it\n")

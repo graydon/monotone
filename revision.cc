@@ -68,6 +68,16 @@ ensure_parents_loaded(ctx child,
 
   std::set<revision_id> imm_parents;
   app.db.get_revision_parents(revision_id(intern.lookup(child)), imm_parents);
+
+  // The null revision is not a parent for purposes of finding common
+  // ancestors.
+  for (std::set<revision_id>::iterator p = imm_parents.begin();
+       p != imm_parents.end(); ++p)
+    {
+      if (null_id(*p))
+        imm_parents.erase(p);
+    }
+              
   shared_bitmap bits = shared_bitmap(new bitmap(parents.size()));
   
   for (std::set<revision_id>::const_iterator p = imm_parents.begin();

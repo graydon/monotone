@@ -110,6 +110,13 @@ AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
 ])
 
+# run as CHECK_SAME_STDOUT(command1, command2)
+m4_define([CHECK_SAME_STDOUT], [
+AT_CHECK($1, [], [stdout], [ignore])
+AT_CHECK(mv stdout expout)
+AT_CHECK($2, [], [expout], [ignore])
+])
+
 # run as PROBE_NODE(filename, rsha, fsha)
 m4_define([PROBE_NODE], [ 
 AT_CHECK(rm MT/revision)
@@ -128,6 +135,56 @@ PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA == $1)
 ])
 
+# run as ADD_FILE(filename, data)
+m4_define([ADD_FILE], [
+AT_DATA($1, $2)
+AT_CHECK(MONOTONE add $1, [], [ignore], [ignore])
+])
+
+# run as SET_FILE(filename, data)
+m4_define([SET_FILE], [
+AT_DATA($1, $2)
+])
+
+# run as COMMIT(branch)
+m4_define([COMMIT], [
+AT_CHECK(MONOTONE --branch=$1 commit blah-blah, [], [ignore],
+[ignore])
+])
+
+# netsync helpers
+# NETSYNC_SETUP sets up 2 databases; RUN_NETSYNC netsyncs between
+# them, MONOTONE2 operates on the second one.
+
+m4_define([NETSYNC_SETUP], [
+
+AT_CHECK(cp test.db test2.db)
+AT_DATA(netsync.lua, [
+function get_netsync_read_permitted(collection, identity)
+	return true
+end
+
+function get_netsync_write_permitted(collection, identity)
+	return true
+end
+])
+
+])
+
+m4_define([MONOTONE2], MONOTONE --db=test2.db)
+
+# run as RUN_NETSYNC(push|pull|sync, collection name)
+# It is the second database that is always the client; take this into
+# account when choosing push|pull|sync.
+m4_define([RUN_NETSYNC], [
+killall -q -KILL monotone
+MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $2 &
+sleep 5
+AT_CHECK(MONOTONE2 --rcfile=netsync.lua $1 127.0.0.1:5555 $2, [], [ignore], [ignore])
+killall -q -KILL monotone
+])
+
+
 
 # include all the sub-tests we're going to use
 
@@ -141,6 +198,10 @@ m4_include(tests/t_versions.at)
 m4_include(tests/t_fork.at)
 m4_include(tests/t_update.at)
 m4_include(tests/t_merge.at)
+m4_include(tests/t_merge_add.at)
+m4_include(tests/t_related_merge2_data.at)
+m4_include(tests/t_merge2_add.at)
+m4_include(tests/t_merge2_data.at)
 m4_include(tests/t_unidiff2.at)
 m4_include(tests/t_cwork.at)
 m4_include(tests/t_revert.at)
@@ -155,10 +216,13 @@ m4_include(tests/t_cvsimport.at)
 m4_include(tests/t_i18n_file.at)
 m4_include(tests/t_fmerge.at)
 m4_include(tests/t_netsync.at)
+m4_include(tests/t_netsync_single.at)
+m4_include(tests/t_netsync_pubkey.at)
+m4_include(tests/t_netsync_repeated.at)
+m4_include(tests/t_netsync_unrelated.at)
 m4_include(tests/t_disapprove.at)
 m4_include(tests/t_testresult.at)
 m4_include(tests/t_singlecvs.at)
-m4_include(tests/t_singlenetsync.at)
 m4_include(tests/t_ls_missing.at)
 m4_include(tests/t_attributes.at)
 m4_include(tests/t_single_char_filenames.at)
