@@ -62,6 +62,7 @@ namespace basic_io
     inline token_type get_token(std::string & val)
     {
       val.clear();
+      val.reserve(80);
       in.peek();
   
       while (true)
