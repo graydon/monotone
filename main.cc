@@ -320,7 +320,7 @@ main_with_signal_handlers(int argc, char **argv)
 
 
 static int 
-main_with_many_flavours_of_exception(char argc, char **argv)
+main_with_many_flavours_of_exception(int argc, char **argv)
 {
   
 #if defined(MS_STRUCTURED_EXCEPTION_HANDLING) && !defined(__BORLANDC__) && !defined(__MINGW32__)

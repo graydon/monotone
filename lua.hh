@@ -15,6 +15,8 @@
 #include "file_io.hh"
 #include "vocab.hh"
 
+struct patch_set;
+
 struct lua_State;
 
 class lua_hooks
@@ -62,8 +64,6 @@ public:
 
   // local repo hooks
   bool hook_ignore_file(file_path const & p);
-  bool hook_get_nonce(std::string & n);
-  bool hook_get_sorter(std::string const & certname, std::string & sort_type);
   bool hook_merge2(data const & left, 
 		   data const & right, 
 		   data & result);

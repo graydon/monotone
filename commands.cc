@@ -23,7 +23,6 @@
 #include "keys.hh"
 #include "manifest.hh"
 #include "netsync.hh"
-#include "nonce.hh"
 #include "packet.hh"
 #include "patch_set.hh"
 #include "rcs_import.hh"
@@ -739,8 +738,12 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 
   if (pubkeys.size() == 0 &&
       privkeys.size() == 0)
-    P(F("warning: no keys found matching '%s'\n") % idx(args, 0)());
-
+    {
+      if (args.size() == 0)
+	P(F("no keys found\n"));
+      else
+	W(F("no keys found matching '%s'\n") % idx(args, 0)());
+    }
   guard.commit();
 }
 
@@ -880,7 +883,12 @@ CMD(approve, "certificate", "ID1 ID2",
   complete(app, idx(args, 0)(), m1);
   complete(app, idx(args, 1)(), m2);
   packet_db_writer dbw(app);
+
+  cert_value branchname;
+  guess_branch (m1, app, branchname);
+
   cert_manifest_approval(m1, m2, true, app, dbw);
+  cert_manifest_in_branch(m2, branchname, app, dbw); 
 }
 
 CMD(disapprove, "certificate", "ID1 ID2", 
@@ -889,11 +897,14 @@ CMD(disapprove, "certificate", "ID1 ID2",
   if (args.size() != 2)
     throw usage(name);
 
-  manifest_id m1, m2;
-  complete(app, idx(args, 0)(), m1);
-  complete(app, idx(args, 1)(), m2);
-  packet_db_writer dbw(app);
-  cert_manifest_approval(m1, m2, false, app, dbw);
+  throw informative_failure("the 'disapprove' command is temporarily disabled, as it did not work properly");
+
+//   manifest_id m1, m2;
+//   complete(app, idx(args, 0)(), m1);
+//   complete(app, idx(args, 1)(), m2);
+//   packet_db_writer dbw(app);
+//   cert_manifest_approval(m1, m2, false, app, dbw);
+
 }
 
 
@@ -999,6 +1010,13 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   manifest_id old_id, new_id;
   calculate_ident(m_old, old_id);
   calculate_ident(m_new, new_id);
+
+  if (old_id == new_id)
+    {
+      P(F("manifest %s is unchanged\n") % old_id);
+      return;
+    }
+  
   renames.parent = old_id;
   renames.child = new_id;
 
@@ -1368,24 +1386,6 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
   app.write_options();
 }
 
-CMD(bump, "tree", "", "advance current tree state by updating nonce")
-{
-  string nonce;
-  work_set work;
-  manifest_map m_old, m_new;
-  get_manifest_map(m_old);
-  calculate_new_manifest_map(m_old, m_new, app);
-  make_nonce(app, nonce);
-  write_data(local_path(nonce_file_name), data(nonce));
-  P(F("updating %s with new random bytes\n") % nonce_file_name);
-  if (m_new.find(file_path(nonce_file_name)) == m_new.end())
-    {
-      bool rewrite_work;
-      build_addition(file_path(nonce_file_name), app, work, m_new, rewrite_work);
-      if (rewrite_work)
-	put_work_set(work);
-    }
-}
 
 CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to stdout")
 {
@@ -2212,7 +2212,7 @@ CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
-
+  
   utf8 addr(idx(args,0));
   vector<utf8> collections(args.begin() + 1, args.end());
   run_netsync_protocol(client_voice, source_role, addr, collections, app);  
@@ -2256,6 +2256,20 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
+
+  {
+    N(app.lua.hook_persist_phrase_ok(),
+      F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
+    N(app.db.private_key_exists(key),
+      F("no private key '%s' found in database") % key);
+    N(app.db.public_key_exists(key),
+      F("no public key '%s' found in database") % key);
+    base64<rsa_pub_key> pub;
+    app.db.get_key(key, pub);
+    base64< arc4<rsa_priv_key> > priv;
+    app.db.get_key(key, priv);    
+    require_password(app.lua, key, pub, priv);
+  }
 
   utf8 addr(idx(args,0));
   vector<utf8> collections(args.begin() + 1, args.end());
@@ -2549,14 +2563,7 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
   import_cvs_repo(mkpath(idx(args, 0)()), app);
 }
 
-CMD(debug, "debug", "SQL", "issue SQL queries directly (dangerous)")
-{
-  if (args.size() != 1)
-    throw usage(name);
-  app.db.debug(idx(args, 0)(), cout);
-}
-
-CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate", "manipulate database state")
+CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute SQL", "manipulate database state")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -2572,6 +2579,8 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate", "manipulate data
     app.db.load(cin);
   else if (idx(args, 0)() == "migrate")
     app.db.migrate();
+  else if (idx(args, 0)() == "execute")
+    app.db.debug(idx(args, 1)(), cout);
   else
     throw usage(name);
 }

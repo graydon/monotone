@@ -1,3 +1,31 @@
+Sat Jul 31 15:38:02 EDT 2004
+
+	0.14 release. bug fixes.
+
+	- some compile fixes for g++ 3.4
+	- made --dump=FILE option for saving traces,
+	  otherwise failures just print reason (no trace)
+	- some things disabled, as scheduled for replacement
+	  by upcoming changeset branch work
+		- disabled "disapprove" command due to bad semantics
+		- removed "bump" and .mt-nonce machinery
+	- several critical rename-merging bugs fixed
+		- renames vs. deletes
+		- renames vs. deltas
+		- parallel renames 
+	- bugs fixed from savannah bug tracker:
+		- 9223 argv overflow
+		- 9075 empty commits
+		- 8919 rename --verbose to --debug
+		- 8958 rename debug to db execute
+		- 8920 empty passphrase message
+		- 8917 connection refused message
+		- 8913 testresult argument
+		- 8912 passphrase read on serve
+		- 8472 approve into branch
+		- 8428 duplicate key warning
+		- 8928 nonce uses too many bits
+
 Thu May 20 22:26:27 EDT 2004
 
 	0.13 release. bug fixes.

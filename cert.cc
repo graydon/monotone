@@ -1479,14 +1479,18 @@ cert_manifest_testresult(manifest_id const & m,
 			 packet_consumer & pc)
 {
   bool passed = false;
-  try
-    {
-      passed = lexical_cast<bool>(results);
-    }
-  catch (boost::bad_lexical_cast & e)
-    {
-      throw oops("test results must be a boolean value: '0' or '1'");
-    }
+
+  if (lowercase(results) == "true" ||
+      lowercase(results) == "yes" ||
+      results == "1")
+    passed = true;
+  else if (lowercase(results) == "false" ||
+	   lowercase(results) == "no" ||
+	   results == "0")
+    passed = false;
+  else
+    throw informative_failure("could not interpret test results, tried '0/1' 'yes/no', 'true/false'");
+
   put_simple_manifest_cert(m, testresult_cert_name, lexical_cast<string>(passed), app, pc); 
 }
 

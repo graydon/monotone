@@ -32,12 +32,13 @@ struct sanity {
   sanity();
   ~sanity();
   void dump_buffer();
-  void set_verbose();
+  void set_debug();
   void set_quiet();
 
-  bool verbose;
+  bool debug;
   bool quiet;
   boost::circular_buffer<char> logbuf;
+  std::string filename;
 
   void log(boost::format const & fmt, 
 	   char const * file, int line);

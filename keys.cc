@@ -72,6 +72,8 @@ get_passphrase(lua_hooks & lua,
       // user is being a slob and hooking lua to return his passphrase
       phrase.Assign(reinterpret_cast<const byte *>(lua_phrase.data()), 
 		    lua_phrase.size());
+      N(lua_phrase != "",
+	F("got empty passphrase from get_passphrase() hook"));
     }
   else
     { 
@@ -89,11 +91,16 @@ get_passphrase(lua_hooks & lua,
 	      read_password(string("confirm passphrase for key ID [") + keyid() + "]: ",
 			    pass2, constants::maxpasswd);
 	      cout << endl;
-	      if (strcmp(pass1, pass2) == 0)
+	      if (strlen(pass1) == 0 || strlen(pass2) == 0)
+		{
+		  P(F("empty passphrases not allowed, try again\n"));
+		  N(i < 2, F("too many failed passphrases\n"));
+		}
+	      else if (strcmp(pass1, pass2) == 0)
 		break;
 	      else
 		{
-		  W(F("passwords do not match, try again\n"));
+		  P(F("passphrases do not match, try again\n"));
 		  N(i < 2, F("too many failed passphrases\n"));
 		}
 	    }

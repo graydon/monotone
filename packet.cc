@@ -963,7 +963,13 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
   if (! pimpl->app.db.public_key_exists(ident))
     pimpl->app.db.put_key(ident, k);
   else
-    L(F("skipping existing public key %s\n") % ident);
+    {
+      base64<rsa_pub_key> tmp;
+      pimpl->app.db.get_key(ident, tmp);
+      if (!(tmp() == k()))
+	W(F("key '%s' is not equal to key '%s' in database\n") % ident % ident);
+      L(F("skipping existing public key %s\n") % ident);
+    }
   ++(pimpl->count);
   guard.commit();
 }

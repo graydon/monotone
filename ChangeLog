@@ -1,4 +1,37 @@
-2004-07-27  Graydon Hoare  <graydon@redhat.com>
+2004-07-31  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Mention Richard Levitte.
+	* Makefile.am: Remove nonce stuff.
+	* NEWS: Describe changes from last release.
+	* cert.cc (cert_manifest_testresult): Teach about other ways
+	of writing a boolean value.
+	* commands.cc (disapprove): Temporarily disable.
+	(approve): Certify second manifest in branch.
+	(commit): Don't commit when no change.
+	(debug): Rename to "db execute".
+	(serve): Require passphrase on startup.
+	(bump): Remove command.
+	(ls keys): Handle no keys.
+	* configure.ac: Bump version number.
+	* keys.cc (get_passphrase): Reject empty passphrase nicely,
+	from user and from hook.
+	* lua.{cc,hh} (hook_get_sorter): Dead code, remove.
+	* main.cc (main_with_many_flavours_of_exception): s/char/int/.
+	* monotone.cc (OPT_DUMP): New option.
+	(OPT_VERBOSE): Rename as OPT_DEBUG.
+	* monotone.{texi,1}: Document changes, s/rdiff/xdelta/.
+	* nonce.{cc,hh}: Drop.
+	* sanity.hh (sanity::filename): New field.
+	* sanity.cc (dump_buffer): Dump to file or be silent.
+	* testsuite.at (persist_phrase_ok): Define as true.
+	* tests/t_null.at: Adjust for new option names.
+	* unit_tests.cc: Set debug, not verbose.
+
+2004-07-31  Richard Levitte <levitte@stacken.kth.se>
+
+	* rcs_file.cc (parse_admin): Switch ntmp and stmp.
+
+2004-07-27  graydon hoare  <graydon@pobox.com>
 
 	* tests/t_remerge.at: New test.
 	* testsuite.at: Call it.

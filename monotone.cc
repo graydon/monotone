@@ -20,7 +20,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 
-#define OPT_VERBOSE 1
+#define OPT_DEBUG 1
 #define OPT_HELP 2
 #define OPT_NOSTD 3
 #define OPT_NORC 4
@@ -30,6 +30,7 @@
 #define OPT_BRANCH_NAME 8
 #define OPT_QUIET 9
 #define OPT_VERSION 10
+#define OPT_DUMP 11
 
 // main option processing and exception handling code
 
@@ -39,7 +40,8 @@ char * argstr = NULL;
 
 struct poptOption options[] = 
   {
-    {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, "send log to stderr while running", NULL},     
+    {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, "print debug log to stderr while running", NULL},
+    {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, "file to dump debugging log to, on failure", NULL}, 
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},     
     {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, "display help message", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
@@ -82,7 +84,7 @@ void
 dumper() 
 {
   if (!clean_shutdown)
-    global_sanity.dump_buffer();    
+    global_sanity.dump_buffer();
 }
 
 
@@ -126,6 +128,7 @@ cpp_main(int argc, char ** argv)
 {
   
   clean_shutdown = false;
+
   atexit(&dumper);
 
   // go-go gadget i18n
@@ -168,8 +171,8 @@ cpp_main(int argc, char ** argv)
 	{
 	  switch(opt)
 	    {
-	    case OPT_VERBOSE:
-	      global_sanity.set_verbose();
+	    case OPT_DEBUG:
+	      global_sanity.set_debug();
 	      break;
 
 	    case OPT_QUIET:
@@ -186,6 +189,10 @@ cpp_main(int argc, char ** argv)
 
 	    case OPT_RCFILE:
 	      extra_rcfiles.push_back(absolutify(tilde_expand(string(argstr))));
+	      break;
+
+	    case OPT_DUMP:
+	      global_sanity.filename = absolutify(tilde_expand(string(argstr)));
 	      break;
 
 	    case OPT_DB_NAME:
