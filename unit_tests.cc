@@ -16,7 +16,7 @@ static bool clean_shutdown;
 void dumper() 
 {
   if (!clean_shutdown)
-	global_sanity.dump_buffer();    
+        global_sanity.dump_buffer();    
 }
 
 void clean_shutdown_dummy_test()
@@ -68,6 +68,9 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   
   if (t.empty() || t.find("netcmd") != t.end())
     add_netcmd_tests(suite);  
+
+  if (t.empty() || t.find("netcmd") != t.end())
+    add_path_component_tests(suite);  
 
   
   // all done, add our clean-shutdown-indicator

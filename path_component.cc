@@ -70,12 +70,17 @@ compose_path(std::vector<path_component> const & names,
 // and fills in a vector of paths corresponding to p[0] ... p[n-1],
 // along with, perhaps, a separate "leaf path" for element p[n]. 
 //
+// confusingly, perhaps, passing a null path ("") returns a zero-length
+// components vector, rather than a length one vector with a single null
+// component.
 void
 split_path(file_path const & p,
            std::vector<path_component> & components)
 {
   components.clear();
   std::string const & p_str = p();
+  if (p_str.empty())
+    return;
   std::string::size_type start, stop;
   start = 0;
   while (1)
@@ -89,7 +94,6 @@ split_path(file_path const & p,
       components.push_back(pc_interner.intern(p_str.substr(start, stop - start)));
       start = stop + 1;
     }
-  I(!components.empty());
 }
 
 void
@@ -109,3 +113,45 @@ make_null_component()
   static path_component null_pc = pc_interner.intern("");
   return null_pc;
 }
+
+
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+#include "sanity.hh"
+
+static void
+test_a_roundtrip(std::string const in)
+{
+  file_path old_fp = file_path(in);
+  std::vector<path_component> vec;
+  split_path(old_fp, vec);
+  file_path new_fp;
+  compose_path(vec, new_fp);
+  BOOST_CHECK(old_fp == new_fp);
+}
+
+static void
+roundtrip_tests()
+{
+  test_a_roundtrip("foo");
+  test_a_roundtrip("foo/bar");
+  test_a_roundtrip("foo/MT/bar");
+}
+
+static void
+null_test()
+{
+  std::vector<path_component> vec;
+  split_path(file_path(""), vec);
+  BOOST_CHECK(vec.empty());
+}
+
+void
+add_path_component_tests(test_suite * suite)
+{
+  I(suite);
+  suite->add(BOOST_TEST_CASE(roundtrip_tests));
+  suite->add(BOOST_TEST_CASE(null_test));
+}
+
+#endif  // BUILD_UNIT_TESTS

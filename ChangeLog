@@ -1,5 +1,11 @@
 2005-03-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* path_component (split_path): Fix bug.
+	Also, add unit tests for file.
+	* unit_tests.{hh,cc}: Add path_component unit tests.
+	
+2005-03-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* Makefile.am: Fixup after merge.
 	
 2005-03-18  Nathaniel Smith  <njs@codesourcery.com>
