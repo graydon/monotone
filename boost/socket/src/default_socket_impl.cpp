@@ -379,6 +379,8 @@ namespace boost
             return Success;
           case EAGAIN :
             return WouldBlock;
+          case EINTR :
+            return boost::socket::interrupted_function_call;
           case EBADF :
             return boost::socket::not_a_valid_descriptor;
           case EOPNOTSUPP :

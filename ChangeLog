@@ -1,3 +1,9 @@
+2003-11-23  graydon hoare  <graydon@pobox.com>
+
+	* network.cc: Make more informative error policy.
+	* boost/socket/socketstream.hpp: Pass SocketType to streambuf template.
+	* boost/socket/src/default_socket_impl.cpp: Translate EINTR.
+
 2003-11-22  graydon hoare  <graydon@pobox.com>
 
 	* lua.cc, lua.hh (hook_get_http_proxy): New hook.

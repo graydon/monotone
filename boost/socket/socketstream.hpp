@@ -32,7 +32,7 @@ namespace boost
               >
     class basic_socket_stream
       : public boost::io::basic_wrapping_iostream<
-      basic_socket_streambuf<Element, Traits> >
+      basic_socket_streambuf<Element, Traits, SocketType> >
     {
     public:
       typedef SocketType data_socket_t;
@@ -43,7 +43,7 @@ namespace boost
 
       explicit basic_socket_stream(SocketType& socket)
           : boost::io::basic_wrapping_iostream<
-        basic_socket_streambuf<Element, Traits> >(boost::ref(socket))
+        basic_socket_streambuf<Element, Traits, SocketType> >(boost::ref(socket))
       {}
     };  // boost::io::basic_array_stream
 
