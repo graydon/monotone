@@ -640,7 +640,7 @@ read_revision_set(data const & dat,
 		  revision_set & rev)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss);
+  basic_io::input_source src(iss, "revision");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_revision(pars, rev);

@@ -1572,7 +1572,10 @@ merge_disjoint_analyses(path_analysis const & a,
 }
 
 static void
-merge_deltas(file_path const & path_in_merged, 
+merge_deltas(file_path const & anc_path, 
+	     file_path const & left_path, 
+	     file_path const & right_path, 
+	     file_path const & path_in_merged, 
 	     std::map<file_path, file_id> & merge_finalists,
 	     file_id const & anc,
 	     file_id const & left,
@@ -1589,7 +1592,10 @@ merge_deltas(file_path const & path_in_merged,
     }
   else
     {
-      N(merger.try_to_merge_files(path_in_merged, anc, left, right, finalist),
+      N(merger.try_to_merge_files(anc_path, left_path, right_path,
+				  path_in_merged, 
+				  anc, left, right, 
+				  finalist),
 	F("merge of '%s' : '%s' -> '%s' vs '%s' failed") 
 	% path_in_merged % anc % left % right);
 
@@ -1679,11 +1685,21 @@ project_missing_deltas(change_set const & a,
 	      L(F("merging delta '%s' : '%s' -> '%s' vs. '%s'\n") 
 		% path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
 	      file_id finalist;
-	      merge_deltas(path_in_merged, 
+
+	      file_path anc_path;
+	      if (lookup_path(delta_entry_path(i), a_second_map, t))
+		get_full_path(a_analysis.first, t, anc_path);
+	      else
+		anc_path = delta_entry_path(i);
+
+	      merge_deltas(anc_path,
+			   delta_entry_path(i), // left_path
+			   delta_entry_path(j), // right_path
+			   path_in_merged, 
 			   merge_finalists,
-			   delta_entry_src(i),
-			   delta_entry_dst(i),
-			   delta_entry_dst(j),
+			   delta_entry_src(i), // anc
+			   delta_entry_dst(i), // left
+			   delta_entry_dst(j), // right
 			   finalist, merger);
 	      L(F("resolved merge to '%s' : '%s' -> '%s'\n")
 		% path_in_merged % delta_entry_src(i) % finalist);
@@ -2252,7 +2268,7 @@ read_path_rearrangement(data const & dat,
 			change_set::path_rearrangement & re)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss);
+  basic_io::input_source src(iss, "path_rearrangement");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   change_set cs;
@@ -2265,7 +2281,7 @@ read_change_set(data const & dat,
 		change_set & cs)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss);
+  basic_io::input_source src(iss, "change_set");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_change_set(pars, cs);

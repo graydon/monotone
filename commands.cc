@@ -1770,6 +1770,62 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipu
     throw usage(name);
 }
 
+CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]", 
+    "get or set file attributes")
+{
+  if (args.size() < 2 || args.size() > 4)
+    throw usage(name);
+
+  data attr_data;
+  file_path attr_path;
+  attr_map attrs;
+  get_attr_path(attr_path);
+
+  if (file_exists(attr_path))
+    {
+      read_data(attr_path, attr_data);
+      read_attr_map(attr_data, attrs);
+    }
+  
+  file_path path;
+  if (idx(args, 0)() == "set")
+    {
+      path = file_path(idx(args, 1)());
+      attrs[path][idx(args, 2)()] = idx(args, 3)();
+      write_attr_map(attr_data, attrs);
+      write_data(attr_path, attr_data);
+    }
+  else if (idx(args, 0)() == "get")
+    {
+      path = idx(args, 1)();
+      if (args.size() != 2 && args.size() != 3)
+	throw usage(name);
+
+      attr_map::const_iterator i = attrs.find(path);
+      if (i == attrs.end())
+	cout << "no attributes for " << path << endl;
+      else
+	{
+	  if (args.size() == 2)
+	    {
+	      for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
+		   j != i->second.end(); ++j)
+		cout << path << " : " << j->first << "=" << j->second << endl;
+	    }
+	  else
+	    {	    
+	      std::map<std::string, std::string>::const_iterator j = i->second.find(idx(args, 2)());
+	      if (j == i->second.end())
+		cout << "no attribute " << idx(args, 2)() << " on file " << path << endl;
+	      else
+		cout << path << " : " << j->first << "=" << j->second << endl;
+	    }
+	}
+    }
+  else 
+    throw usage(name);
+}
+
 CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 {
   string log_message("");
@@ -2246,11 +2302,11 @@ write_file_targets(change_set const & cs,
 
 CMD(update, "working copy", "", "update working copy")
 {
-  manifest_map m_old, m_working;
+  manifest_map m_old, m_working, m_chosen;
+  manifest_id m_chosen_id;
   revision_set r_old, r_working, r_new;
   revision_id r_old_id, r_chosen_id;
   change_set old_to_chosen, update;
-  update_merge_provider merger(app);
 
   calculate_current_revision(app, r_working, m_old, m_working);
   
@@ -2271,6 +2327,10 @@ CMD(update, "working copy", "", "update working copy")
   calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
 
   I(r_working.edges.size() == 1 || r_working.edges.size() == 0);
+
+  app.db.get_revision_manifest(r_chosen_id, m_chosen_id);
+  app.db.get_manifest(m_chosen_id, m_chosen);
+  update_merge_provider merger(app, m_old, m_chosen, m_working);
 
   if (r_working.edges.size() == 0)
     {
@@ -2340,7 +2400,6 @@ try_one_merge(revision_id const & left_id,
   app.db.get_revision(left_id, left_rev);
   app.db.get_revision(right_id, right_rev);
   
-  merge_provider merger(app);
   packet_db_writer dbw(app);    
     
   manifest_map anc_man, left_man, right_man, merged_man;
@@ -2369,6 +2428,8 @@ try_one_merge(revision_id const & left_id,
       build_pure_addition_change_set(left_man, anc_to_left);
       build_pure_addition_change_set(right_man, anc_to_right);
     }
+  
+  merge_provider merger(app, anc_man, left_man, right_man);
   
   merge_change_sets(anc_to_left, anc_to_right, 
 		    left_to_merged, right_to_merged, 

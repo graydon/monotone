@@ -26,9 +26,10 @@
 
 #include "cleanup.hh"
 #include "constants.hh"
-#include "vocab.hh"
-#include "transforms.hh"
 #include "sanity.hh"
+#include "transforms.hh"
+#include "vocab.hh"
+#include "work.hh"
 #include "xdelta.hh"
 
 using namespace std;
@@ -335,20 +336,66 @@ calculate_ident(file_path const & file,
     }
 }
 
+void split_into_lines(std::string const & in,		      
+		      std::string const & encoding,
+		      std::vector<std::string> & out)
+{
+  std::string lc_encoding = lowercase(encoding);  
+  out.clear();
+
+  // note: this function does not handle ISO-2022-X, Shift-JIS, and 
+  // probably a good deal of other encodings as well. please expand 
+  // the logic here if you can work out an easy way of doing line 
+  // breaking on these encodings. currently it's just designed to 
+  // work with charsets in which 0x0a / 0x0d are *always* \n and \r
+  // respectively.
+  //
+  // as far as I know, this covers the EUC, ISO-8859-X, GB, Big5, KOI,
+  // ASCII, and UTF-8 families of encodings. 
+  
+  if (lc_encoding == default_encoding
+      || lc_encoding.find("ascii") != std::string::npos
+      || lc_encoding.find("8859") != std::string::npos
+      || lc_encoding.find("euc") != std::string::npos
+      || lc_encoding.find("koi") != std::string::npos
+      || lc_encoding.find("gb") != std::string::npos
+      || lc_encoding == "utf-8"
+      || lc_encoding == "utf_8"
+      || lc_encoding == "utf8")
+    {
+      std::string::size_type begin = 0;
+      std::string::size_type end = in.find_first_of("\r\n", begin);
+
+      while (end != std::string::npos && end >= begin)
+	{
+	  out.push_back(in.substr(begin, end-begin));
+	  if (in.at(end) == '\r'
+	      && in.size() > end+1 
+	      && in.at(end+1) == '\n')
+	    begin = end + 2;
+	  else
+	    begin = end + 1;
+	  if (begin >= in.size())
+	    break;
+	  end = in.find_first_of("\r\n", begin);
+	}
+      if (begin < in.size())
+	out.push_back(in.substr(begin, in.size() - begin));
+    }
+  else
+    {
+      out.push_back(in);
+    }
+  if (out.size() == 0)
+    out.push_back("");
+}
+
 
 void 
 split_into_lines(string const & in,
 		 vector<string> & out)
 {
-  typedef boost::tokenizer<boost::char_separator<char> > 
-    tokenizer;
-  boost::char_separator<char> sep("\r\n", "", boost::keep_empty_tokens);
-  tokenizer tokens(in, sep);
-  out.clear();
-  copy(tokens.begin(), tokens.end(), back_inserter(out));
-  if (out.size() > 0 
-      && out.at(out.size()-1) == "")
-    out.pop_back();
+  split_into_lines(in, default_encoding, out);
 }
 
 void 
