@@ -1,3 +1,9 @@
+2005-02-26  Derek Scherger  <derek@echologic.com>
+
+	* file_io.cc (absolutify): normalize fs::path to remove ..'s
+	* tests/t_db_with_dots.at: ensure database path in MT/options
+	doesn't contain ..'s
+
 2005-02-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* vocab.cc (test_file_path_verification): Re-enable some tests
