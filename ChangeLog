@@ -1,5 +1,10 @@
 2003-09-21  Nathaniel Smith  <njs@codesourcery.com>
 
+	* depot.cc (depot_schema): Remove unique constraint on (contents),
+	replace with unique constraint on (groupname, contents).
+	
+2003-09-21  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (diff): Take manifest ids as arguments.  Add
 	explanatory text on files added, removed, modified.
 
