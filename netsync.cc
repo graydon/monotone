@@ -296,7 +296,7 @@ session :
 	  std::pair<Netxx::socket_type,Netxx::socket_type> sock, 
 	  Netxx::Timeout const & to);
 
-  virtual ~session() {} //  if (str_p) delete str_p; }
+  virtual ~session() {}
 
   id mk_nonce();
   void mark_recent_io();
