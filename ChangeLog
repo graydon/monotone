@@ -1,5 +1,9 @@
 2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_need_mt_revision.at: Oops, really add it.
+
+2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* interner.hh (interner::intern): Add version taking a bool&, so
 	callers can tell whether this string has previously been checked.
 	* change_set.cc: Use new interned string identifier
