@@ -1,5 +1,12 @@
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
 	* win32/process.cc (process_spawn): Now takes 
+	const char * const argv[]
+	* unix/process.cc (process_spawn): Ditto.  Cast for call to
+	execvp
+	(existsonpath): Initialise args in a const way
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Now takes 
 	char * const argv[]
 	* platform.hh (process_spawn): Ditto
 	* unix/process.cc (process_spawn): Ditto
@@ -18,7 +25,7 @@
 	* win32/process.cc (process_spawn): Now takes char * const *
 	* platform.hh (process_spawn): Ditto
 	* unix/process.cc (process_spawn): Ditto
-	(exists_on_path): argv now const char*[]
+	(existsonpath): argv now const char*[]
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
 	* win32/process.cc: Added forgotten file
@@ -31,7 +38,7 @@
 2005-03-03  Jon Bright  <jon@siliconcircus.com>
 	* lposix.c: Deleted
 	* win32/process.cc: Created, added Win32 versions of functions
-	exists_on_path, make_executable, process_spawn, process_wait,
+	existsonpath, make_executable, process_spawn, process_wait,
 	process_kill, process_sleep
 	* unix/process.cc: Ditto, for the Unix versions.
 	* lua.cc: Add LUA wrappers for the above functions, register

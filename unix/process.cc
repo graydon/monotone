@@ -14,12 +14,9 @@
 
 int existsonpath(const char *exe)
 {
-	char * const args[3];
+	const char * const args[3] = {"which", exe, NULL};
 	int pid;
 	int res;
-	args[0] = "which";
-	args[1] = exe;
-	args[2] = NULL;
 	pid = process_spawn(args);
 	if (pid==-1)
 		return -1;
@@ -41,7 +38,7 @@ int make_executable(const char *path)
 	return chmod(path, mode);
 }
 
-int process_spawn(char * const argv[])
+int process_spawn(const char * const argv[])
 {
 	pid_t pid;
 	pid = fork();
@@ -50,7 +47,7 @@ int process_spawn(char * const argv[])
 		case -1: /* Error */
 			return -1;
 		case 0: /* Child */
-			execvp(argv[0], argv);
+			execvp(argv[0], (char * const *)argv);
 			return -1;
 		default: /* Parent */
 			return (int)pid;
