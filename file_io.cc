@@ -253,11 +253,21 @@ mkdir_p(local_path const & p)
   fs::create_directories(localized(p())); 
 }
 
-void mkdir_p(file_path const & p) 
+void 
+mkdir_p(file_path const & p) 
 { 
   fs::create_directories(localized(p())); 
 }
 
+void 
+make_dir_for(file_path const & p) 
+{ 
+  fs::path tmp = localized(p());
+  if (tmp.has_branch_path())
+    {
+      fs::create_directories(tmp.branch_path()); 
+    }
+}
 
 static void 
 read_data_impl(fs::path const & p,

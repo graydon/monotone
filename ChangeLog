@@ -1,5 +1,16 @@
 2004-10-10  graydon hoare  <graydon@pobox.com>
 
+	* tests/t_remerge.at:
+	* tests/t_movedel.at:
+	* tests/t_movepatch.at: Import tests from trunk.
+	* testsuite.at: Call them.
+	* change_set.cc:
+	* file_io.{cc,hh}: Bug Fixes.
+	* tests/t_singlenetsync.at:
+	* tests/t_netsync.at: Add sleep 5.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
 	* cert.{cc,hh} (cert_revision_manifest): Bug fixes.
 	* commands.cc (approve)
 	(disapprove)

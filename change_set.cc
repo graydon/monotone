@@ -1891,14 +1891,23 @@ move_files_from_tmp_top_down(tid t,
 			  / mkpath(boost::lexical_cast<std::string>(child))).string());
 	  local_path dst(path());
 	  
-	  P(F("moving %s -> %s\n") % src % dst);
 	  switch (path_item_type(item))
 	    {
 	    case ptype_file:
-	      move_file(src, dst);
+	      if (file_exists(src))
+		{
+		  P(F("moving file %s -> %s\n") % src % dst);
+		  make_dir_for(path);
+		  move_file(src, dst);
+		}
 	      break;
 	    case ptype_directory:
-	      move_dir(src, dst);
+	      if (directory_exists(src))
+		{
+		  P(F("moving dir %s -> %s\n") % src % dst);
+		  make_dir_for(path);
+		  move_dir(src, dst);
+		}
 	      break;
 	    }
 

@@ -117,6 +117,13 @@ AT_CHECK(test $PROBE_R_SHA == $2)
 AT_CHECK(test $PROBE_F_SHA == $3)
 ])
 
+# run as REVERT_TO(rsha)
+m4_define([REVERT_TO], [ 
+AT_CHECK(MONOTONE checkout $1 ., [], [ignore])
+PROBE_R_SHA=`BASE_REVISION`
+AT_CHECK(test $PROBE_R_SHA == $1)
+])
+
 
 # include all the sub-tests we're going to use
 
@@ -149,3 +156,6 @@ m4_include(tests/t_singlenetsync.at)
 m4_include(tests/t_ls_missing.at)
 m4_include(tests/t_attributes.at)
 m4_include(tests/t_single_char_filenames.at)
+m4_include(tests/t_movepatch.at)
+m4_include(tests/t_movedel.at)
+m4_include(tests/t_remerge.at)

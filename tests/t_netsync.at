@@ -30,6 +30,7 @@ VER1=`BASE_REVISION`
 
 killall -q -KILL monotone
          MONOTONE --rcfile=netsync.lua               serve 127.0.0.1:5555 testbranch &
+sleep 5
 AT_CHECK(MONOTONE --rcfile=netsync.lua --db=test2.db pull 127.0.0.1:5555 testbranch, [], [ignore], [ignore])
 killall -q -KILL monotone
 
