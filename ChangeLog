@@ -1,3 +1,9 @@
+2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (package_full_revision.txt): Redo Joel Rosdahl
+	<joel@rosdahl.net>'s change below after it got clobbered by
+	merge.
+
 2004-12-06  Joel Rosdahl  <joel@rosdahl.net>
 
 	* Makefile.am (package_full_revision.txt): Silence error messages
