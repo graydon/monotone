@@ -22,9 +22,17 @@ struct file_randomizer
     srand (seed); 
   }
 
-  size_t random_index()
+  size_t random_index(bool last_line_ok = true)
   {
-    return static_cast<size_t>(rand() % lines.size());
+    if (last_line_ok)
+      return static_cast<size_t>(rand() % lines.size());
+    else
+      {
+	if (lines.size() == 0)
+	  return 0;
+	else
+	  return static_cast<size_t>(rand() % (lines.size() - 1));
+      }
   }
 
   bool random_bool()
@@ -73,7 +81,7 @@ struct file_randomizer
     double nlines_d = static_cast<double>(lines.size()) * scale;
     int nlines = static_cast<int>(nlines_d);
     for (int i = 0; i < nlines; ++i)
-      lines.erase(lines.begin() + random_index());
+      lines.erase(lines.begin() + random_index(false));
   }
 
   void insert_sequential_percent_of_lines_randomly(int percent = 50) {

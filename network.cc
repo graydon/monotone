@@ -760,7 +760,8 @@ void post_queued_blobs_to_network(set<url> const & targets,
 		  else if (proto == "mailto")
 		    post_smtp_blob(*targ, postbody, user, host, port, app, posted_ok);
 	      
-		  N(posted_ok, F("unknown failure during post to %s") % *targ);
+		  if (!posted_ok)
+		    throw informative_failure("unknown failure during post to " + (*targ)());
 
 		  n_packets += packets.size();
 		  n_bytes += postbody.size();
