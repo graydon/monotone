@@ -1,5 +1,7 @@
 2005-04-01  Richard Levitte  <richard@levitte.org>
 
+	* monotone.texi (Making Changes): Cleanupy tweaks.
+
 	* monotone.cc (my_poptStuffArgFile): New function to parse a file
 	for more arguments and stuff them into the command line.
 	(cpp_main): Add the -@ option
