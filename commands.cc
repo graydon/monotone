@@ -2237,7 +2237,14 @@ process_netsync_client_args(std::string const & name,
     throw usage(name);
 
   if (args.size() >= 1)
-    addr = idx(args, 0);
+    {
+      addr = idx(args, 0);
+      if (!app.db.var_exists(default_server_key))
+        {
+          P(F("setting default server to %s\n") % addr);
+          app.db.set_var(default_server_key, var_value(addr()));
+        }
+    }
   else
     {
       N(app.db.var_exists(default_server_key),
@@ -2252,7 +2259,14 @@ process_netsync_client_args(std::string const & name,
   // length exactly 1.
   utf8 collection;
   if (args.size() >= 2)
-    collection = idx(args, 1);
+    {
+      collection = idx(args, 1);
+      if (!app.db.var_exists(default_collection_key))
+        {
+          P(F("setting default collection to %s\n") % collection);
+          app.db.set_var(default_collection_key, var_value(collection()));
+        }
+    }
   else
     {
       N(app.db.var_exists(default_collection_key),

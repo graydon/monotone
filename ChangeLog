@@ -1,11 +1,19 @@
 2005-03-21  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (process_netsync_client_args): If user specifies
+	server/collection and there is no default, set the default.
+	* tests/t_netsync_set_defaults.at: New test.
+	* testsuite.at: Add it.
+
+2005-03-21  Nathaniel Smith  <njs@codesourcery.com>
+
 	* vocab.hh (var_key): New typedef.
 	* database.{cc,hh}: Use it.  Make most var commands take it.
 	* commands.cc (set, unset): Adjust accordingly.
 	(default_server_key, default_collection_key): New constants.
 	(process_netsync_client_args): New function.
 	(push, pull, sync): Use it.
+
 	* tests/t_netsync_defaults.at: New test.
 	* testsuite.at: Add it.
 
