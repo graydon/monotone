@@ -1,9 +1,13 @@
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	* lposix.c (win32 Pspawn): Remove dumb strlen bug resulting in
+	AVs on commit.
+
+2005-02-27  Jon Bright  <jon@siliconcircus.com>
 	* t_can_execute.at: Test to see if hooks can execute things
 	* testsuite.at: Add t_can_execute
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
-	* lposix.c: (win32 Pspawn) Ensure the command string is always
+	* lposix.c (win32 Pspawn): Ensure the command string is always
 	NUL-terminated.  Also, allocate enough memory for the quotes
 	around the command string.
 

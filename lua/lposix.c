@@ -422,7 +422,7 @@ static int Pspawn(lua_State *L)			/** spawn(path,[args]) */
 {
 	const char *path = luaL_checkstring(L, 1);
 	int i,n=lua_gettop(L);
-	char **argv = malloc((n+1)*sizeof(char*));
+	char **argv = malloc(n*sizeof(char*));
 	int totlen = 0;
 	char *cmdline;
 	STARTUPINFO si;
@@ -430,8 +430,7 @@ static int Pspawn(lua_State *L)			/** spawn(path,[args]) */
 	if (argv==NULL) luaL_error(L,"not enough memory");
 	argv[0] = (char*)path;
 	for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, i+1);
-	argv[i] = NULL;
-	for (i=0; i<n; i++) totlen += strlen(argv[i]+1);
+	for (i=0; i<n; i++) totlen += strlen(argv[i])+1;
 	totlen += 2; /* The quotes around the command */
 	cmdline = malloc(totlen);
 	if (cmdline==NULL) luaL_error(L,"not enough memory");
