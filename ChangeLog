@@ -1,3 +1,7 @@
+2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_log_depth.at: Cleanupy tweaks.
+
 2005-03-31  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* monotone.texi: Tutorial updated to include example of
