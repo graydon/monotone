@@ -160,7 +160,7 @@ build_deletion(file_path const & path,
 	       bool & rewrite_work)
 {
   deletion_builder build(app, work, man, rewrite_work);
-  walk_tree(path, build);
+  walk_tree(path, build, false);
 }
 
 
@@ -258,7 +258,7 @@ build_rename(file_path const & src,
 	     bool & rewrite_work)
 {
   rename_builder build(src, dst, app, work, man, rewrite_work);
-  walk_tree(src, build);
+  walk_tree(src, build, false);
 }
 
 

@@ -98,7 +98,8 @@ void walk_tree(tree_walker & walker);
 
 // from some safe sub-dir of cwd
 void walk_tree(file_path const & path,
-	       tree_walker & walker);
+	       tree_walker & walker,
+	       bool require_existing_path = true);
 
 
 

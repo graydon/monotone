@@ -1,5 +1,11 @@
 2004-05-02  Joel Rosdahl  <joel@rosdahl.net>
 
+	Fix bug #8458:
+	* file_io.hh, file_io.cc (walk_tree): Added require_existing_path
+	parameter.
+	* work.cc (build_deletion): Pass new parameter to walk_tree.
+	* work.cc (build_rename): Ditto.
+
 	* manifest.cc (build_manifest_map): Fix missing file check for
 	i18n paths.
 

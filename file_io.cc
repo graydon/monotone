@@ -445,18 +445,31 @@ walk_tree_recursive(fs::path const & absolute,
 // from some (safe) sub-entry of cwd
 void 
 walk_tree(file_path const & path,
-	  tree_walker & walker)
+	  tree_walker & walker,
+	  bool require_existing_path)
 {
-  N(fs::exists(localized(path())),
-    F("no such file or directory: %s\n") % path());
-
-  if (! fs::is_directory(localized(path())))
-    walker.visit_file(path);
+  if (fs::exists(localized(path())))
+    {
+      if (! fs::is_directory(localized(path())))
+        walker.visit_file(path);
+      else
+        {
+          fs::path root(localized(fs::current_path().string()));
+          fs::path rel(localized(path()));
+          walk_tree_recursive(root / rel, rel, walker);
+        }
+    }
   else
     {
-      fs::path root(localized(fs::current_path().string()));
-      fs::path rel(localized(path()));
-      walk_tree_recursive(root / rel, rel, walker);
+      if (require_existing_path)
+	{
+	  N(false,
+	    F("no such file or directory: %s\n") % path());
+	}
+      else
+	{
+	  walker.visit_file(path);
+	}
     }
 }
 
