@@ -1441,17 +1441,20 @@ $ monotone --db=jim.db diff
 @node    Committing Work
 @section Committing Work
 
-Satisfied with the work he's done, Jim then commits his working copy,
-which causes monotone to process the @file{MT/work} file and record
-the file contents, manifest, and revision into the database.
+Satisfied with the work he's done, Jim wants to save his changes. He
+chooses @code{jp.co.juicebot.jb7} as a branch name. (See @ref{Naming
+Conventions} for more information about appropriate branch names.) He
+then commits his working copy, which causes monotone to process the
+@file{MT/work} file and record the file contents, manifest, and revision
+into the database.
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 commit 'initial checkin of project'
+$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit 'initial checkin of project'
 monotone: beginning commit
 monotone: manifest 2098eddbe833046174de28172a813150a6cbda7b
 monotone: revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
@@ -1502,7 +1505,7 @@ $ monotone ls certs 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 Key   : jim@@juicebot.co.jp
 Sig   : ok
 Name  : branch
-Value : co.jp.juicebot.jb7
+Value : jp.co.juicebot.jb7
 -----------------------------------------------------------------
 Key   : jim@@juicebot.co.jp
 Sig   : ok
@@ -1546,13 +1549,13 @@ command, which lists all the head revisions in the branch:
 @smallexample
 @group
 $ monotone heads
-branch 'co.jp.juicebot.jb7' is currently merged:
+branch 'jp.co.juicebot.jb7' is currently merged:
 2e24d49a48adf9acf3a1b6391a080008cbef9c21 jim@@juicebot.co.jp 2004-10-26T02:53:08
 @end group
 @end smallexample
 
 The output of this command tells us that there is only one current
-``head'' revision in the branch @code{co.jp.juicebot.jb7}, and it is
+``head'' revision in the branch @code{jp.co.juicebot.jb7}, and it is
 the revision Jim just committed. A head revision is one without any
 descendents. Since Jim has not committed any changes to this revision
 yet, it has no descendents.
@@ -1594,22 +1597,22 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
 @end group
 @end smallexample
 
 This command sets up a single listener loop on the host
 @code{jim-laptop.juicebot.co.jp}, serving the
-@code{co.jp.juicebot.jb7} collection. This collection will naturally
-include the @code{co.jp.juicebot.jb7} branch, and any sub-branches.
+@code{jp.co.juicebot.jb7} collection. This collection will naturally
+include the @code{jp.co.juicebot.jb7} branch, and any sub-branches.
 
 Now Abe decides he wishes to fetch Jim's code. To do this he issues
 the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone --db=abe.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1642,12 +1645,12 @@ automatically as clients access them and trade with one another.
 Abe decides to do some work on his part of the code. He has a copy of
 Jim's database contents, but cannot edit any of that data yet.  He
 begins his editing by checking out the head of the
-@code{co.jp.juicebot.jb7} branch into a working copy, so he can edit
+@code{jp.co.juicebot.jb7} branch into a working copy, so he can edit
 it:
 
 @smallexample
 @group
-$ monotone --db=abe.db --branch=co.jp.juicebot.jb7 checkout .
+$ monotone --db=abe.db --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1699,7 +1702,7 @@ $ monotone commit
 monotone: beginning commit
 monotone: manifest b33cb337dccf21d6673f462d677a6010b60699d1
 monotone: revision 70decb4b31a8227a629c0e364495286c5c75f979
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 @end group
 @end smallexample
 
@@ -1746,8 +1749,8 @@ Abe then sends his new revision back to Jim:
 @smallexample
 @group
 $ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
-monotone: including branch co.jp.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 2] [rcerts: 8] 
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 630] [bytes out: 2844] 
@@ -1760,8 +1763,8 @@ Jim's:
 
 @smallexample
 @group
-monotone --db=beth.db sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone --db=beth.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1772,7 +1775,7 @@ She checks out a copy of the tree from her database:
 
 @smallexample
 @group
-$ monotone --db=beth.db --branch=co.jp.juicebot.jb7 checkout .
+$ monotone --db=beth.db --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1793,7 +1796,7 @@ $ monotone commit 'polling implementation of src/banana.c'
 monotone: beginning commit
 monotone: manifest eaebc3c558d9e30db6616ef543595a5a64cc6d5f
 monotone: revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 monotone: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
 @end group
 @end smallexample
@@ -1802,9 +1805,9 @@ And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
-monotone: including branch co.jp.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 3] [rcerts: 12] 
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 630] [bytes out: 2844] 
@@ -1911,7 +1914,7 @@ $ monotone commit 'interrupt implementation of src/banana.c'
 monotone: beginning commit
 monotone: manifest de81e46acb24b2950effb18572d5166f83af3881
 monotone: revision 8b41b5399a564494993063287a737d26ede3dee4
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
 @end smallexample
@@ -1920,7 +1923,7 @@ And she syncs with Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
 @end group
 @end smallexample
 
@@ -1951,7 +1954,7 @@ he has new work to contribute, however, he now syncs:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
 @end group
 @end smallexample
 
@@ -1962,7 +1965,7 @@ the branch:
 @smallexample
 @group
 $ monotone heads
-monotone: branch 'co.jp.juicebot.jb7' is currently unmerged:
+monotone: branch 'jp.co.juicebot.jb7' is currently unmerged:
 39969614e5a14316c7ffefc588771f491c709152 abe@@juicebot.co.jp 2004-10-26T02:53:16
 8b41b5399a564494993063287a737d26ede3dee4 beth@@juicebot.co.jp 2004-10-26T02:53:15
 @end group
