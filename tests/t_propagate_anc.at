@@ -1,4 +1,4 @@
-AT_SETUP([(normal) propagate an ancestor])
+AT_SETUP([propagate an ancestor])
 MONOTONE_SETUP
 
 # This tests the case where we have something like A1 -> A2 -> B1 ->
@@ -6,9 +6,6 @@ MONOTONE_SETUP
 # to B.  This should be a no-op; no merge should be performed.
 
 # The same applies when the heads of A and B are actually equal.
-
-# At the moment we don't even try to do this.
-AT_XFAIL_IF(true)
 
 ADD_FILE(testfile, [foo
 ])
@@ -31,21 +28,12 @@ B_HEAD_REV=`BASE_REVISION`
 AT_CHECK(cp test.db test2.db)
 AT_CHECK(MONOTONE propagate a b, [], [ignore], [ignore])
 
-CHECK_SAME_STDOUT(MONOTONE agraph, MONOTONE --db=test2.db agraph)
-CHECK_SAME_STDOUT(MONOTONE ls certs $A_HEAD_REV, MONOTONE --db=test2.db ls certs $A_HEAD_REV)
-CHECK_SAME_STDOUT(MONOTONE ls certs $B_HEAD_REV, MONOTONE --db=test2.db ls certs $B_HEAD_REV)
-CHECK_SAME_STDOUT(MONOTONE heads --branch=a, MONOTONE --db=test2.db heads --branch=a)
-CHECK_SAME_STDOUT(MONOTONE heads --branch=b, MONOTONE --db=test2.db heads --branch=b)
+CHECK_SAME_DB_CONTENTS(test.db, test2.db)
 
 AT_CHECK(MONOTONE cert $B_HEAD_REV branch c, [], [ignore], [ignore])
 AT_CHECK(cp test.db test3.db)
 AT_CHECK(MONOTONE propagate b c, [], [ignore], [ignore])
 
-CHECK_SAME_STDOUT(MONOTONE agraph, MONOTONE --db=test3.db agraph)
-CHECK_SAME_STDOUT(MONOTONE ls certs $A_HEAD_REV, MONOTONE --db=test3.db ls certs $A_HEAD_REV)
-CHECK_SAME_STDOUT(MONOTONE ls certs $B_HEAD_REV, MONOTONE --db=test3.db ls certs $B_HEAD_REV)
-CHECK_SAME_STDOUT(MONOTONE heads --branch=a, MONOTONE --db=test3.db heads --branch=a)
-CHECK_SAME_STDOUT(MONOTONE heads --branch=b, MONOTONE --db=test3.db heads --branch=b)
-CHECK_SAME_STDOUT(MONOTONE heads --branch=c, MONOTONE --db=test3.db heads --branch=c)
+CHECK_SAME_DB_CONTENTS(test.db, test3.db)
 
 AT_CLEANUP

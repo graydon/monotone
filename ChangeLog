@@ -1,5 +1,32 @@
 2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_check_same_db_contents.at: Uncapitalize title to unbreak
+	testsuite.
+
+	* revision.cc (is_ancestor): Add FIXME comment.
+	(erase_ancestors): New function.
+	* revision.hh (erase_ancestors): Prototype it.
+	* cert.cc (get_branch_heads): Call it.
+	* tests/t_heads_discontinuous_branch.at: Un-XFAIL it.
+
+	* revision.cc (find_subgraph_for_composite_search): Ignore null
+	revision ids.
+	* commands.cc (try_one_merge): Add invariant - never create merges
+	where the left parent is an ancestor or descendent of the right.
+	(explicit_merge): Same check.
+	(propagate): Handle cases where no merge is necessary.  Also, make
+	generated log message more readable.
+
+	* tests/t_propagate_desc.at: Un-XFAIL it.
+	* tests/t_propagate_anc.at: Un-XFAIL it.  Use new
+	CHECK_SAME_DB_CONTENTS macros.
+	* testsuite.at: Move t_check_same_db_contents.at to run before
+	propagation tests.  Make CHECK_SAME_DB_CONTENTS more thorough.
+
+	* tests/t_dump_load.at: Implement test.
+
+2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_check_same_db_contents.at: New test.
 	* testsuite.at: Add it.
 	(CHECK_SAME_DB_CONTENTS): New macro.

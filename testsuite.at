@@ -137,13 +137,25 @@ AT_CHECK($2, [], [expout], [ignore])
 # run as CHECK_SAME_DB_CONTENTS(db1, db2)
 m4_define([CHECK_SAME_DB_CONTENTS], [
 CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
+
 CHECK_SAME_STDOUT(MONOTONE --db=$1 agraph, MONOTONE --db=$2 agraph)
 REVS=`MONOTONE --db=$1 complete revision ""`
-for R in REVS; do
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 ls certs $R, MONOTONE --db=$2 ls keys $R)
+for R in $REVS; do
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 ls certs $R, MONOTONE --db=$2 ls certs $R)
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 cat revision $R, MONOTONE --db=$2 cat revision $R)
 done
+
 CHECK_SAME_STDOUT(MONOTONE --db=$1 complete manifest "", MONOTONE --db=$2 complete manifest "")
+MANIFESTS=`MONOTONE --db=$1 complete manifest ""`
+for M in $MANIFESTS; do
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 cat manifest $M, MONOTONE --db=$2 cat manifest $M)
+done
+
 CHECK_SAME_STDOUT(MONOTONE --db=$1 complete file "", MONOTONE --db=$2 complete file "")
+FILES=`MONOTONE --db=$1 complete file ""`
+for F in $FILES; do
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 cat file $F, MONOTONE --db=$2 cat file $F)
+done
 ])
 
 # run as PROBE_NODE(filename, rsha, fsha)
@@ -337,7 +349,7 @@ m4_include(tests/t_log_nonexistent.at)
 m4_include(tests/t_crlf.at)
 m4_include(tests/t_netsync_diffbranch.at)
 m4_include(tests/t_netsync_nocerts.at)
+m4_include(tests/t_check_same_db_contents.at)
 m4_include(tests/t_merge_ancestor.at)
 m4_include(tests/t_propagate_desc.at)
 m4_include(tests/t_propagate_anc.at)
-m4_include(tests/t_check_same_db_contents.at)

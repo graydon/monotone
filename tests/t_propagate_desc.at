@@ -1,13 +1,10 @@
-AT_SETUP([(normal) propagate a descendent])
+AT_SETUP([propagate a descendent])
 MONOTONE_SETUP
 
 # This tests the case where we have something like A1 -> A2 -> B1 ->
 # B2, where A and B are different branches, and the user propagates B
 # to A.  The result should be B2 being certed into branch A, with no
 # merge performed.
-
-# At the moment we don't even try to do this.
-AT_XFAIL_IF(true)
 
 ADD_FILE(testfile, [foo
 ])

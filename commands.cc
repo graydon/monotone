@@ -2913,6 +2913,17 @@ try_one_merge(revision_id const & left_id,
   app.db.get_manifest(right_rev.new_manifest, right_man);
   app.db.get_manifest(left_rev.new_manifest, left_man);
   
+  // Make sure that we can't create malformed graphs where the left parent is
+  // a descendent or ancestor of the right, or where both parents are equal,
+  // etc.
+  {
+    set<revision_id> ids;
+    ids.insert(left_id);
+    ids.insert(right_id);
+    erase_ancestors(ids, app);
+    I(ids.size() == 2);
+  }
+
   if (!null_id(ancestor_id))
     {
       I(is_ancestor(ancestor_id, left_id, app));
@@ -3051,6 +3062,10 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   //
   //   4. save the results as the delta (N2,M), the ancestry edges (N1,M)
   //   and (N2,M), and the cert (N2,dst).
+  //
+  //   there are also special cases we have to check for where no merge is
+  //   actually necessary, because there hasn't been any divergence since the
+  //   last time propagate was run.
   
   set<revision_id> src_heads, dst_heads;
 
@@ -3073,20 +3088,41 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   P(F("[source] %s\n") % *src_i);
   P(F("[target] %s\n") % *dst_i);
 
-  revision_id merged;
-  transaction_guard guard(app.db);
-  try_one_merge(*src_i, *dst_i, revision_id(), merged, app);
-  
-  packet_db_writer dbw(app);
-  
-  cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
-  
-  string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
-                % (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
-  
-  cert_revision_changelog(merged, log, app, dbw);
-  
-  guard.commit();      
+  // check for special cases
+  if (*src_i == *dst_i || is_ancestor(*src_i, *dst_i, app))
+    {
+      P(F("branch '%s' is up-to-date with respect to branch '%s'\n")
+          % idx(args, 1)() % idx(args, 0)());
+      P(F("no action taken\n"));
+    }
+  else if (is_ancestor(*dst_i, *src_i, app))
+    {
+      P(F("no merge necessary; putting %s in branch '%s'\n")
+        % (*src_i) % idx(args, 1)());
+      transaction_guard guard(app.db);
+      packet_db_writer dbw(app);
+      cert_revision_in_branch(*src_i, idx(args, 1)(), app, dbw);
+      guard.commit();
+    }
+  else
+    {
+      revision_id merged;
+      transaction_guard guard(app.db);
+      try_one_merge(*src_i, *dst_i, revision_id(), merged, app);
+
+      packet_db_writer dbw(app);
+
+      cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
+
+      string log = (F("propagate from branch '%s' (head %s)\n"
+                      "            to branch '%s' (head %s)\n")
+                    % idx(args, 0) % (*src_i)
+                    % idx(args, 1) % (*dst_i)).str();
+
+      cert_revision_changelog(merged, log, app, dbw);
+
+      guard.commit();      
+    }
 }
 
 CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
@@ -3098,10 +3134,10 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
   if (args.size() != 3 && args.size() != 4)
     throw usage(name);
 
+  complete(app, idx(args, 0)(), left);
+  complete(app, idx(args, 1)(), right);
   if (args.size() == 4)
     {
-      complete(app, idx(args, 0)(), left);
-      complete(app, idx(args, 1)(), right);
       complete(app, idx(args, 2)(), ancestor);
       N(is_ancestor(ancestor, left, app),
         F("%s is not an ancestor of %s") % ancestor % left);
@@ -3111,11 +3147,16 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
     }
   else
     {
-      complete(app, idx(args, 0)(), left);
-      complete(app, idx(args, 1)(), right);
       branch = idx(args, 2)();
     }
   
+  N(!(left == right),
+    F("%s and %s are the same revision, aborting") % left % right);
+  N(!is_ancestor(left, right, app),
+    F("%s is already an ancestor of %s") % left % right);
+  N(!is_ancestor(right, left, app),
+    F("%s is already an ancestor of %s") % right % left);
+
   // Somewhat redundant, but consistent with output of plain "merge" command.
   P(F("[source] %s\n") % left);
   P(F("[source] %s\n") % right);

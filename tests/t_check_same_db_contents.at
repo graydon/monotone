@@ -1,4 +1,4 @@
-AT_SETUP([CHECK_SAME_DB_CONTENTS macro])
+AT_SETUP([check_same_db_contents macro])
 MONOTONE_SETUP
 
 # this test just tests that the testsuite macro CHECK_SAME_DB_CONTENTS works,

@@ -389,6 +389,8 @@ find_least_common_ancestor(revision_id const & left,
 }
 
 
+// FIXME: this algorithm is incredibly inefficient; it's O(n) where n is the
+// size of the entire revision graph.
 bool
 is_ancestor(revision_id const & ancestor_id,
             revision_id const & descendent_id,
@@ -429,6 +431,30 @@ is_ancestor(revision_id const & ancestor_id,
   return false;
 }
 
+
+// This function looks at a set of revisions, and for every pair A, B in that
+// set such that A is an ancestor of B, it erases A.
+// FIXME: this is even more inefficient than is_ancestor.  Ideally this would
+// be implemented directly, and is_ancestor would be implemented trivially in
+// terms of it.
+void
+erase_ancestors(std::set<revision_id> & revisions, app_state & app)
+{
+  for (std::set<revision_id>::const_iterator d = revisions.begin();
+       d != revisions.end();
+       ++d)
+    {
+      for(std::set<revision_id>::iterator a = revisions.begin();
+          a != revisions.end();
+          ++a)
+        {
+          if (a == d)
+            continue;
+          if (is_ancestor(*a, *d, app))
+            revisions.erase(a);
+        }
+    }
+}
 
 // 
 // The idea with this algorithm is to walk from child up to ancestor,
@@ -556,6 +582,8 @@ find_subgraph_for_composite_search(revision_id const & ancestor,
           for(edge_map::const_iterator j = rev.edges.begin(); j != rev.edges.end(); ++j)
             {
               revision_id curr_parent = edge_old_revision(j);
+              if (null_id(curr_parent))
+                continue;
               subgraph.insert(curr_parent);
               if (curr_parent == ancestor)
                 {

@@ -621,6 +621,7 @@ get_branch_heads(cert_value const & branchname,
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
   app.db.get_heads(branch_encoded, heads);
+  erase_ancestors(heads, app);
 }
 
 
