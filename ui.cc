@@ -30,10 +30,9 @@ ticker::ticker(string const & tickname, std::string const & s, size_t mod) :
 ticker::~ticker()
 {
   I(ui.tickers.find(name) != ui.tickers.end());
-  if (!ui.dont_write_ticks)
+  if (ui.some_tick_is_dirty)
     {
       ui.write_ticks();
-      ui.dont_write_ticks = true;
     }
   ui.tickers.erase(name);
   ui.finish_ticking();
@@ -44,9 +43,9 @@ ticker::operator++()
 {
   I(ui.tickers.find(name) != ui.tickers.end());
   ticks++;
+  ui.some_tick_is_dirty = true;
   if (ticks % mod == 0)
     ui.write_ticks();
-  ui.dont_write_ticks = false;
 }
 
 void 
@@ -56,10 +55,12 @@ ticker::operator+=(size_t t)
   size_t old = ticks;
 
   ticks += t;
-  if (ticks % mod == 0
-      || (ticks / mod) > (old / mod))
-    ui.write_ticks();
-  ui.dont_write_ticks = false;
+  if (t != 0)
+    {
+      ui.some_tick_is_dirty = true;
+      if (ticks % mod == 0 || (ticks / mod) > (old / mod))
+	ui.write_ticks();
+    }
 }
 
 
@@ -182,6 +183,7 @@ user_interface::write_ticks()
 {
   t_writer->write_ticks();
   last_write_was_a_tick = true;
+  some_tick_is_dirty = false;
 }
 
 void 

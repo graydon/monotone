@@ -74,7 +74,7 @@ public:
 private:  
   std::set<std::string> issued_warnings;  
 
-  bool dont_write_ticks;
+  bool some_tick_is_dirty;    // At least one tick needs being printed
   bool last_write_was_a_tick;
   std::map<std::string,ticker *> tickers;
   tick_writer * t_writer;

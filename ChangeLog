@@ -1,3 +1,12 @@
+2004-08-16  Richard Levitte  <richard@levitte.org>
+
+	* ui.cc, ui.hh: Rethink the writing conditions as the ticks being
+	"dirty" when they have changed since the last print.  That way,
+	it's very easy to see when they need being printed.  This fixes a
+	small bug where, in some cases, the exact same tick output is
+	produced twice, once before a separate message, and once after,
+	when a ticker is actually being removed.
+
 2004-08-15  Richard Levitte  <richard@levitte.org>
 
 	fix bug 8733
