@@ -2065,6 +2065,7 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
   cert_name date_name(date_cert_name);
   cert_name changelog_name(changelog_cert_name);
   cert_name comment_name(comment_cert_name);
+  cert_name tag_name(tag_cert_name);
 
   set<file_id> no_comments;
 
@@ -2102,6 +2103,20 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 	      cout << " " << tv;
 	    }	  
 	  cout << endl;
+
+	  app.db.get_manifest_certs(*i, tag_name, tmp);
+	  erase_bogus_certs(tmp, app);
+	  if (!tmp.empty())
+	    {
+	      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+		   j != tmp.end(); ++j)
+		{
+		  cert_value tv;
+		  decode_base64(j->inner().value, tv);
+		  cout << "Tag: " << tv << endl;
+		}	  
+	      cout << endl;
+	    }
 
 	  cout << "ChangeLog:" << endl << endl;
 	  app.db.get_manifest_certs(*i, changelog_name, tmp);

@@ -1,3 +1,8 @@
+2004-03-20  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* commands.cc (log): Show tags in log.
+	* AUTHORS: Mention Olivier.
+
 2004-03-17  graydon hoare  <graydon@pobox.com>
 
 	* boost/circular_buffer.hpp: 
