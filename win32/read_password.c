@@ -1,33 +1,13 @@
-/* read_password.c: retrieve the password
- * Nico Schottelius (nico-linux-monotone@schottelius.org)
+/* read_password.c: retrieve the password (WIN32)
+ * Nico Schottelius (nico-linux-monotone AT schottelius.org)
  * 13-May-2004
  */
 
-#include <unistd.h>     /* write             */
+#include <io.h>     /* write             */
 #include <stdlib.h>     /* *alloc            */
 #include <string.h>     /* str*              */
-#include <termios.h>    /* tc(set|get)attr   */
 
 #define PASS_LENGTH 128 /* who'll ever use 128 Byte Passwords? */
-
-struct termios save_term;
-
-/* is successfull */
-static void echo_on()
-{
-   save_term.c_lflag |= ECHO | ECHOE | ECHOK;
-   tcsetattr(0, TCSANOW, &save_term);
-}
-
-/* return 0 if failed, return 1 if successfull */
-static int echo_off() {
-   struct termios temp;
-   if (tcgetattr(0,&save_term)) return 0;
-   temp=save_term;
-   temp.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
-   tcsetattr(0, TCSANOW, &temp);
-   return 1;
-}
 
 char *read_password(char *text) {
    char     *password = NULL;
@@ -41,11 +21,7 @@ char *read_password(char *text) {
    password = (char *) malloc(PASS_LENGTH);
    if(password == NULL) return (char *) 0; /* a die function should be here */
    
-   echo_off();
    pass_len = read(0,password,PASS_LENGTH-1);
-   echo_on();
-   tcflush(0,TCIFLUSH);
-   write(0,"\n",1);
    
    /* catch errors and zero reads */
    if(pass_len <= 0) {

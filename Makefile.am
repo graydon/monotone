@@ -18,7 +18,7 @@ MOST_SOURCES =								\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh nonce.hh                                      \
-         mkstemp.hh
+         mkstemp.hh os_specific.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -100,6 +100,10 @@ IDNA_SOURCES = \
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
+# os dependent
+WIN32_SOURCES = win32/read_password.c
+
+UNIX_SOURCES = unix/read_password.c
 
 # primaries
 
@@ -159,6 +163,9 @@ endif
 if WIN32_PLATFORM
   monotone_LDADD += -lws2_32 -lintl -liconv -liphlpapi
   unit_tests_LDADD += -lws2_32 -lintl -liconv -liphlpapi
+  monotone_SOURCES += $(WIN32_SOURCES)
+else
+  monotone_SOURCES += $(UNIX_SOURCES)
 endif
 
 if MISSING_INET_PTON
