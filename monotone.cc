@@ -85,7 +85,7 @@ void dumper()
 int cpp_main(int argc, char ** argv)
 {
 
-  setenv("BOOST_PRG_MON_CONFIRM", "no", 0);
+  putenv("BOOST_PRG_MON_CONFIRM=no");
   clean_shutdown = false;
   atexit(&dumper);
       
