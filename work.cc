@@ -19,7 +19,9 @@ using namespace std;
 
 string const work_file_name("work");
 
-class addition_builder : public tree_walker
+class 
+addition_builder 
+  : public tree_walker
 {
   app_state & app;
   work_set & work;
@@ -35,7 +37,8 @@ public:
   virtual void visit_file(file_path const & path);
 };
 
-void addition_builder::visit_file(file_path const & path)
+void 
+addition_builder::visit_file(file_path const & path)
 {
       
   if (book_keeping_file(path()))
@@ -83,11 +86,12 @@ void addition_builder::visit_file(file_path const & path)
     }
 }
 
-void build_addition(file_path const & path,
-		    app_state & app,
-		    work_set & work,
-		    manifest_map & man,
- 		    bool & rewrite_work)
+void 
+build_addition(file_path const & path,
+	       app_state & app,
+	       work_set & work,
+	       manifest_map & man,
+	       bool & rewrite_work)
 {
   addition_builder build(app, work, man, rewrite_work);
   walk_tree(path, build);
@@ -95,7 +99,9 @@ void build_addition(file_path const & path,
 
 
 
-class deletion_builder : public tree_walker
+class 
+deletion_builder 
+  : public tree_walker
 {
   app_state & app;
   work_set & work;
@@ -111,7 +117,8 @@ public:
   virtual void visit_file(file_path const & path);
 };
 
-void deletion_builder::visit_file(file_path const & path)
+void 
+deletion_builder::visit_file(file_path const & path)
 {
       
   if (book_keeping_file(path()))
@@ -159,18 +166,21 @@ void deletion_builder::visit_file(file_path const & path)
     }
 }
 
-void build_deletion(file_path const & path,
-		    app_state & app,
-		    work_set & work,
-		    manifest_map & man,
- 		    bool & rewrite_work)
+void 
+build_deletion(file_path const & path,
+	       app_state & app,
+	       work_set & work,
+	       manifest_map & man,
+	       bool & rewrite_work)
 {
   deletion_builder build(app, work, man, rewrite_work);
   walk_tree(path, build);
 }
 
 
-class rename_builder : public tree_walker
+class 
+rename_builder 
+  : public tree_walker
 {
   file_path const & src;
   file_path const & dst;
@@ -193,7 +203,8 @@ public:
 };
 
 
-file_path rename_builder::pathsub(file_path const & in)
+file_path 
+rename_builder::pathsub(file_path const & in)
 {
   fs::path sp = mkpath(src());
   fs::path dp = mkpath(dst());
@@ -213,7 +224,8 @@ file_path rename_builder::pathsub(file_path const & in)
 }
 
 
-void rename_builder::visit_file(file_path const & path)
+void 
+rename_builder::visit_file(file_path const & path)
 {
       
   if (book_keeping_file(path()))
@@ -258,19 +270,21 @@ void rename_builder::visit_file(file_path const & path)
 }
 
 
-void build_rename(file_path const & src,
-		  file_path const & dst,
-		  app_state & app,
-		  work_set & work,
-		  manifest_map & man,
-		  bool & rewrite_work)
+void 
+build_rename(file_path const & src,
+	     file_path const & dst,
+	     app_state & app,
+	     work_set & work,
+	     manifest_map & man,
+	     bool & rewrite_work)
 {
   rename_builder build(src, dst, app, work, man, rewrite_work);
   walk_tree(src, build);
 }
 
 
-struct add_to_work_set
+struct 
+add_to_work_set
 {    
   work_set & work;
   explicit add_to_work_set(work_set & w) : work(w) {}
@@ -319,8 +333,9 @@ struct add_to_work_set
   }
 };
 
-void read_work_set(data const & dat,
-		   work_set & work)
+void 
+read_work_set(data const & dat,
+	      work_set & work)
 {
   regex expr("^(add|drop)\n ([^[:space:]].+)$");
   regex_grep(add_to_work_set(work), dat(), expr, match_not_dot_newline);    
@@ -328,8 +343,9 @@ void read_work_set(data const & dat,
   regex_grep(add_to_work_set(work), dat(), expr2, match_not_dot_newline);
 }
 
-void write_work_set(data & dat,
-		    work_set const & work)
+void 
+write_work_set(data & dat,
+	       work_set const & work)
 {
   ostringstream tmp;
   for (path_set::const_iterator i = work.dels.begin();
@@ -347,8 +363,9 @@ void write_work_set(data & dat,
   dat = tmp.str();
 }
 
-void extract_path_set(manifest_map const & man,
-		      path_set & paths)
+void 
+extract_path_set(manifest_map const & man,
+		 path_set & paths)
 {
   paths.clear();
   for (manifest_map::const_iterator i = man.begin();
@@ -356,8 +373,9 @@ void extract_path_set(manifest_map const & man,
     paths.insert(path_id_pair(*i).path());
 }
 
-void apply_work_set(work_set const & work,
-		    path_set & paths)
+void 
+apply_work_set(work_set const & work,
+	       path_set & paths)
 {
   for (path_set::const_iterator i = work.dels.begin();
        i != work.dels.end(); ++i)
@@ -388,7 +406,8 @@ void apply_work_set(work_set const & work,
 
 string const options_file_name("options");
 
-struct add_to_options_map
+struct 
+add_to_options_map
 {
   options_map & options;
   explicit add_to_options_map(options_map & m): options(m) {}
@@ -402,19 +421,22 @@ struct add_to_options_map
   }
 };
 
-void get_options_path(local_path & o_path)
+void 
+get_options_path(local_path & o_path)
 {
   o_path = (mkpath(book_keeping_dir) / mkpath(options_file_name)).string();
   L(F("options path is %s\n") % o_path);
 }
 
-void read_options_map(data const & dat, options_map & options)
+void 
+read_options_map(data const & dat, options_map & options)
 {
   regex expr("^([^[:space:]]+)[[:blank:]]+([^[:space:]]+)$");
   regex_grep(add_to_options_map(options), dat(), expr, match_not_dot_newline);
 }
 
-void write_options_map(data & dat, options_map const & options)
+void 
+write_options_map(data & dat, options_map const & options)
 {
   ostringstream tmp;
   for (options_map::const_iterator i = options.begin();
@@ -428,7 +450,8 @@ void write_options_map(data & dat, options_map const & options)
 
 string const attr_file_name(".mt-attrs");
 
-struct add_to_attr_map
+struct 
+add_to_attr_map
 {
   attr_map & attr;
   explicit add_to_attr_map(attr_map & m): attr(m) {}
@@ -442,19 +465,22 @@ struct add_to_attr_map
   }
 };
 
-void get_attr_path(file_path & a_path)
+void 
+get_attr_path(file_path & a_path)
 {
   a_path = (mkpath(attr_file_name)).string();
   L(F("attribute map path is %s\n") % a_path);
 }
 
-void read_attr_map(data const & dat, attr_map & attr)
+void 
+read_attr_map(data const & dat, attr_map & attr)
 {
   regex expr("^([^[:space:]]+) ([^[:space:]]+) ([^[:space:]].+)$");
   regex_grep(add_to_attr_map(attr), dat(), expr, match_not_dot_newline);
 }
 
-void write_attr_map(data & dat, attr_map const & attr)
+void 
+write_attr_map(data & dat, attr_map const & attr)
 {
   ostringstream tmp;
   for (attr_map::const_iterator i = attr.begin();
@@ -466,7 +492,8 @@ void write_attr_map(data & dat, attr_map const & attr)
 }
 
 
-void apply_attributes(app_state & app, attr_map const & attr)
+void 
+apply_attributes(app_state & app, attr_map const & attr)
 {
   for (attr_map::const_iterator i = attr.begin();
        i != attr.end(); ++i)

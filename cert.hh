@@ -43,9 +43,13 @@ struct cert
   bool operator==(cert const & other) const;
 };
 
-void cert_signable_text(cert const & t,
-			std::string & out);
 
+// these 3 are for netio support
+void read_cert(std::string const & in, cert & t);
+void write_cert(cert const & t, std::string & out);
+void cert_hash_code(cert const & t, hexenc<id> & out);
+
+void cert_signable_text(cert const & t,std::string & out);
 bool check_cert(app_state & app, cert const & t);
 void calculate_cert(app_state & app, cert & t);
 void make_simple_cert(hexenc<id> const & id,
@@ -130,7 +134,7 @@ extern std::string const author_cert_name;
 extern std::string const tag_cert_name;
 extern std::string const changelog_cert_name;
 extern std::string const comment_cert_name;
-extern std::string const approval_cert_name;
+extern std::string const disapproval_cert_name;
 extern std::string const testresult_cert_name;
 extern std::string const rename_cert_name;
 
@@ -172,19 +176,20 @@ void cert_manifest_comment(manifest_id const & m,
 			   app_state & app,
 			   packet_consumer & pc);
 
-void cert_file_approval(file_id const & m, 
+void cert_file_approval(file_id const & f1,
+			file_id const & f2,  
 			bool const approval,
 			app_state & app,
 			packet_consumer & pc);
 
-void cert_manifest_approval(manifest_id const & m, 
+void cert_manifest_approval(manifest_id const & m1, 
+			    manifest_id const & m2, 
 			    bool const approval,
 			    app_state & app,
 			    packet_consumer & pc);
 
 void cert_manifest_testresult(manifest_id const & m, 
-			      std::string const & suitename,
-			      std::istream const & results,
+			      std::string const & results,
 			      app_state & app,
 			      packet_consumer & pc);
 

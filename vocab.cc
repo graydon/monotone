@@ -18,11 +18,12 @@
 using namespace std;
 
 template <typename T>
-static inline void verify(T & val)
+static inline void
+verify(T & val)
 {}
 
-template <>
-static inline void verify(hexenc<id> & val)
+static inline void 
+verify(hexenc<id> & val)
 {
   if (val.ok)
     return;
@@ -39,8 +40,8 @@ static inline void verify(hexenc<id> & val)
   val.ok = true;
 }
 
-template <>
-static inline void verify(ace & val)
+static inline void 
+verify(ace & val)
 {
   if (val.ok)
     return;
@@ -52,8 +53,8 @@ static inline void verify(ace & val)
   val.ok = true;
 }
 
-template <>
-static inline void verify(urlenc & val)
+static inline void 
+verify(urlenc & val)
 {
   if (val.ok)
     return;
@@ -65,8 +66,8 @@ static inline void verify(urlenc & val)
   val.ok = true;
 }
 
-template <>
-static inline void verify(cert_name & val)
+static inline void 
+verify(cert_name & val)
 {
   if (val.ok)
     return;
@@ -78,8 +79,8 @@ static inline void verify(cert_name & val)
   val.ok = true;
 }
 
-template <>
-static inline void verify(rsa_keypair_id & val)
+static inline void 
+verify(rsa_keypair_id & val)
 {
   if (val.ok)
     return;
@@ -92,8 +93,8 @@ static inline void verify(rsa_keypair_id & val)
 }
 
 
-template <>
-static inline void verify(url & val)
+static inline void 
+verify(url & val)
 {
   if (val.ok)
     return;
@@ -116,8 +117,8 @@ static inline void verify(url & val)
 }
 
 
-template<>
-static inline void verify(local_path & val)
+static inline void 
+verify(local_path & val)
 {
 
   if (val.ok)
@@ -163,8 +164,8 @@ static inline void verify(local_path & val)
 // fwd declare..
 bool book_keeping_file(local_path const & path);
 
-template<>
-static inline void verify(file_path & val)
+static inline void 
+verify(file_path & val)
 {
   if (val.ok)
     return;

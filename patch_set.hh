@@ -59,6 +59,28 @@ struct patch_set
   std::set<file_path> f_dels;
 };
 
+
+struct version_existence_check
+{
+  virtual bool check(file_id i) = 0;
+};
+
+// unfortunately the needs of this API have expanded over time (it was
+// among the first code ever in monotone) so we've had to flesh it out with
+// a bunch of overloads which call the more detailed versions using simple
+// defaults that preserve the "original" uses.
+
+void manifests_to_patch_set(manifest_map const & m_old,
+			    manifest_map const & m_new,
+			    app_state & app,
+			    patch_set & ps);
+
+void manifests_to_patch_set(manifest_map const & m_old,
+			    manifest_map const & m_new,
+			    app_state & app,
+			    version_existence_check & vc,
+			    patch_set & ps);
+
 void manifests_to_patch_set(manifest_map const & m_old,
 			    manifest_map const & m_new,
 			    rename_edge const & renames,
@@ -67,7 +89,8 @@ void manifests_to_patch_set(manifest_map const & m_old,
 
 void manifests_to_patch_set(manifest_map const & m_old,
 			    manifest_map const & m_new,
-			    app_state & app,
+			    rename_edge const & renames,
+			    version_existence_check & vc,
 			    patch_set & ps);
 
 void patch_set_to_text_summary(patch_set const & ps, 

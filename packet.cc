@@ -25,8 +25,9 @@ packet_db_writer::packet_db_writer(app_state & app, bool take_keys)
   : app(app), take_keys(take_keys), count(0)
 {}
 
-void packet_db_writer::consume_file_data(file_id const & ident, 
-					 file_data const & dat)
+void 
+packet_db_writer::consume_file_data(file_id const & ident, 
+				    file_data const & dat)
 {
   if (!app.db.file_version_exists(ident))
     app.db.put_file(ident, dat);
@@ -35,9 +36,10 @@ void packet_db_writer::consume_file_data(file_id const & ident,
   ++count;
 }
 
-void packet_db_writer::consume_file_delta(file_id const & old_id, 
-					  file_id const & new_id,
-					  file_delta const & del)
+void 
+packet_db_writer::consume_file_delta(file_id const & old_id, 
+				     file_id const & new_id,
+				     file_delta const & del)
 {
   if (!app.db.file_version_exists(new_id))
     {
@@ -52,7 +54,8 @@ void packet_db_writer::consume_file_delta(file_id const & old_id,
   ++count;
 }
 
-void packet_db_writer::consume_file_cert(file<cert> const & t)
+void 
+packet_db_writer::consume_file_cert(file<cert> const & t)
 {
   if (!app.db.file_cert_exists(t))
     app.db.put_file_cert(t);
@@ -65,8 +68,9 @@ void packet_db_writer::consume_file_cert(file<cert> const & t)
   ++count;
 }
 
-void packet_db_writer::consume_manifest_data(manifest_id const & ident, 
-					     manifest_data const & dat)
+void 
+packet_db_writer::consume_manifest_data(manifest_id const & ident, 
+					manifest_data const & dat)
 {
   if (!app.db.manifest_version_exists(ident))
     app.db.put_manifest(ident, dat);
@@ -79,9 +83,10 @@ void packet_db_writer::consume_manifest_data(manifest_id const & ident,
     app.db.note_manifest_on_netserver (*server, ident);  
 }
 
-void packet_db_writer::consume_manifest_delta(manifest_id const & old_id, 
-					      manifest_id const & new_id,
-					      manifest_delta const & del)
+void 
+packet_db_writer::consume_manifest_delta(manifest_id const & old_id, 
+					 manifest_id const & new_id,
+					 manifest_delta const & del)
 {
   if (!app.db.manifest_version_exists(new_id))
     {
@@ -103,7 +108,8 @@ void packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
     }
 }
 
-void packet_db_writer::consume_manifest_cert(manifest<cert> const & t)
+void 
+packet_db_writer::consume_manifest_cert(manifest<cert> const & t)
 {
   if (!app.db.manifest_cert_exists(t))
     app.db.put_manifest_cert(t);
@@ -116,8 +122,9 @@ void packet_db_writer::consume_manifest_cert(manifest<cert> const & t)
   ++count;
 }
 
-void packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
-					  base64< rsa_pub_key > const & k)
+void 
+packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
+				     base64< rsa_pub_key > const & k)
 {
   if (!take_keys) 
     {
@@ -131,8 +138,9 @@ void packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
   ++count;
 }
 
-void packet_db_writer::consume_private_key(rsa_keypair_id const & ident,
-					   base64< arc4<rsa_priv_key> > const & k)
+void 
+packet_db_writer::consume_private_key(rsa_keypair_id const & ident,
+				      base64< arc4<rsa_priv_key> > const & k)
 {
   if (!take_keys) 
     {
@@ -151,17 +159,19 @@ void packet_db_writer::consume_private_key(rsa_keypair_id const & ident,
 
 packet_writer::packet_writer(ostream & o) : ost(o) {}
 
-void packet_writer::consume_file_data(file_id const & ident, 
-				      file_data const & dat)
+void 
+packet_writer::consume_file_data(file_id const & ident, 
+				 file_data const & dat)
 {
   ost << "[fdata " << ident.inner()() << "]" << endl 
       << trim_ws(dat.inner()()) << endl
       << "[end]" << endl;
 }
 
-void packet_writer::consume_file_delta(file_id const & old_id, 
-				       file_id const & new_id,
-				       file_delta const & del)
+void 
+packet_writer::consume_file_delta(file_id const & old_id, 
+				  file_id const & new_id,
+				  file_delta const & del)
 {
   ost << "[fdelta " << old_id.inner()() << endl 
       << "        " << new_id.inner()() << "]" << endl 
@@ -169,7 +179,8 @@ void packet_writer::consume_file_delta(file_id const & old_id,
       << "[end]" << endl;
 }
 
-void packet_writer::consume_file_cert(file<cert> const & t)
+void 
+packet_writer::consume_file_cert(file<cert> const & t)
 {
   ost << "[fcert " << t.inner().ident() << endl
       << "       " << t.inner().name() << endl
@@ -179,17 +190,19 @@ void packet_writer::consume_file_cert(file<cert> const & t)
       << "[end]" << endl;
 }
 
-void packet_writer::consume_manifest_data(manifest_id const & ident, 
-					  manifest_data const & dat)
+void 
+packet_writer::consume_manifest_data(manifest_id const & ident, 
+				     manifest_data const & dat)
 {
   ost << "[mdata " << ident.inner()() << "]" << endl 
       << trim_ws(dat.inner()()) << endl
       << "[end]" << endl;
 }
 
-void packet_writer::consume_manifest_delta(manifest_id const & old_id, 
-					   manifest_id const & new_id,
-					   manifest_delta const & del)
+void 
+packet_writer::consume_manifest_delta(manifest_id const & old_id, 
+				      manifest_id const & new_id,
+				      manifest_delta const & del)
 {
   ost << "[mdelta " << old_id.inner()() << endl 
       << "        " << new_id.inner()() << "]" << endl 
@@ -197,7 +210,8 @@ void packet_writer::consume_manifest_delta(manifest_id const & old_id,
       << "[end]" << endl;
 }
 
-void packet_writer::consume_manifest_cert(manifest<cert> const & t)
+void 
+packet_writer::consume_manifest_cert(manifest<cert> const & t)
 {
   ost << "[mcert " << t.inner().ident() << endl
       << "       " << t.inner().name() << endl
@@ -207,16 +221,18 @@ void packet_writer::consume_manifest_cert(manifest<cert> const & t)
       << "[end]" << endl;
 }
 
-void packet_writer::consume_public_key(rsa_keypair_id const & ident,
-				       base64< rsa_pub_key > const & k)
+void 
+packet_writer::consume_public_key(rsa_keypair_id const & ident,
+				  base64< rsa_pub_key > const & k)
 {
   ost << "[pubkey " << ident() << "]" << endl
       << trim_ws(k()) << endl
       << "[end]" << endl;
 }
 
-void packet_writer::consume_private_key(rsa_keypair_id const & ident,
-					base64< arc4<rsa_priv_key> > const & k)
+void 
+packet_writer::consume_private_key(rsa_keypair_id const & ident,
+				   base64< arc4<rsa_priv_key> > const & k)
 {
   ost << "[privkey " << ident() << "]" << endl
       << trim_ws(k()) << endl
@@ -237,7 +253,8 @@ queueing_packet_writer::queueing_packet_writer(app_state & a, set<url> const & t
 }
 
 
-void queueing_packet_writer::queue_blob_for_network(string const & str)
+void 
+queueing_packet_writer::queue_blob_for_network(string const & str)
 {
   ++n_packets;
   n_bytes += str.size();
@@ -251,8 +268,9 @@ void queueing_packet_writer::queue_blob_for_network(string const & str)
     }  
 }
 
-void queueing_packet_writer::consume_file_data(file_id const & ident, 
-					       file_data const & dat)
+void 
+queueing_packet_writer::consume_file_data(file_id const & ident, 
+					  file_data const & dat)
 {
   ostringstream oss;
   packet_writer pw(oss);
@@ -260,9 +278,10 @@ void queueing_packet_writer::consume_file_data(file_id const & ident,
   queue_blob_for_network(oss.str());
 }
 
-void queueing_packet_writer::consume_file_delta(file_id const & old_id, 
-						file_id const & new_id,
-						file_delta const & del)
+void 
+queueing_packet_writer::consume_file_delta(file_id const & old_id, 
+					   file_id const & new_id,
+					   file_delta const & del)
 {
   ostringstream oss;
   packet_writer pw(oss);
@@ -270,7 +289,8 @@ void queueing_packet_writer::consume_file_delta(file_id const & old_id,
   queue_blob_for_network(oss.str());
 }
 
-void queueing_packet_writer::consume_file_cert(file<cert> const & t)
+void 
+queueing_packet_writer::consume_file_cert(file<cert> const & t)
 {
   ostringstream oss;
   packet_writer pw(oss);
@@ -278,8 +298,9 @@ void queueing_packet_writer::consume_file_cert(file<cert> const & t)
   queue_blob_for_network(oss.str());
 }
 
-void queueing_packet_writer::consume_manifest_data(manifest_id const & ident, 
-						   manifest_data const & dat)
+void 
+queueing_packet_writer::consume_manifest_data(manifest_id const & ident, 
+					      manifest_data const & dat)
 {
   ostringstream oss;
   packet_writer pw(oss);
@@ -287,9 +308,10 @@ void queueing_packet_writer::consume_manifest_data(manifest_id const & ident,
   queue_blob_for_network(oss.str());
 }
 
-void queueing_packet_writer::consume_manifest_delta(manifest_id const & old_id, 
-						    manifest_id const & new_id,
-						    manifest_delta const & del)
+void 
+queueing_packet_writer::consume_manifest_delta(manifest_id const & old_id, 
+					       manifest_id const & new_id,
+					       manifest_delta const & del)
 {
   ostringstream oss;
   packet_writer pw(oss);
@@ -297,7 +319,8 @@ void queueing_packet_writer::consume_manifest_delta(manifest_id const & old_id,
   queue_blob_for_network(oss.str());
 }
 
-void queueing_packet_writer::consume_manifest_cert(manifest<cert> const & t)
+void 
+queueing_packet_writer::consume_manifest_cert(manifest<cert> const & t)
 {
   ostringstream oss;
   packet_writer pw(oss);
@@ -305,8 +328,9 @@ void queueing_packet_writer::consume_manifest_cert(manifest<cert> const & t)
   queue_blob_for_network(oss.str());
 }
 
-void queueing_packet_writer::consume_public_key(rsa_keypair_id const & ident,
-						base64< rsa_pub_key > const & k)
+void 
+queueing_packet_writer::consume_public_key(rsa_keypair_id const & ident,
+					   base64< rsa_pub_key > const & k)
 {
   ostringstream oss;
   packet_writer pw(oss);
@@ -314,8 +338,9 @@ void queueing_packet_writer::consume_public_key(rsa_keypair_id const & ident,
   queue_blob_for_network(oss.str());
 }
 
-void queueing_packet_writer::consume_private_key(rsa_keypair_id const & ident,
-						 base64< arc4<rsa_priv_key> > const & k)
+void 
+queueing_packet_writer::consume_private_key(rsa_keypair_id const & ident,
+					    base64< arc4<rsa_priv_key> > const & k)
 {
   ostringstream oss;
   packet_writer pw(oss);
@@ -325,7 +350,8 @@ void queueing_packet_writer::consume_private_key(rsa_keypair_id const & ident,
 
 // -- remainder just deals with the regexes for reading packets off streams
 
-struct feed_packet_consumer
+struct 
+feed_packet_consumer
 {
   size_t & count;
   packet_consumer & cons;
@@ -428,7 +454,8 @@ struct feed_packet_consumer
   }
 };
 
-static size_t extract_packets(string const & s, packet_consumer & cons)
+static size_t 
+extract_packets(string const & s, packet_consumer & cons)
 {  
   string const ident("([[:xdigit:]]{40})");
   string const sp("[[:space:]]+");
@@ -457,7 +484,8 @@ static size_t extract_packets(string const & s, packet_consumer & cons)
 }
 
 
-size_t read_packets(istream & in, packet_consumer & cons)
+size_t 
+read_packets(istream & in, packet_consumer & cons)
 {
   string accum, tmp;
   size_t count = 0;
@@ -490,7 +518,8 @@ size_t read_packets(istream & in, packet_consumer & cons)
 #include "transforms.hh"
 #include "manifest.hh"
 
-static void packet_roundabout_test()
+static void 
+packet_roundabout_test()
 {
   string tmp;
 
@@ -579,7 +608,8 @@ static void packet_roundabout_test()
     }
 }
 
-void add_packet_tests(test_suite * suite)
+void 
+add_packet_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&packet_roundabout_test));

@@ -116,7 +116,7 @@ MaurerRandomnessTest::MaurerRandomnessTest()
 		tab[i] = 0;
 }
 
-inline void MaurerRandomnessTest::Put(byte inByte)
+void MaurerRandomnessTest::Put(byte inByte)
 {
 	if (n >= Q)
 		sum += log(double(n - tab[inByte]));

@@ -239,262 +239,6 @@ struct conflict {};
 
 // utility class which performs the merge
 
-/*
-struct hunk_merger : public hunk_consumer
-{
-  vector<string> const & left;
-  vector<string> const & ancestor;
-  vector<string> const & right;
-  vector<size_t> const & ancestor_to_leftpos_map;
-  set<size_t> const & deletes;
-  set<size_t> const & inserts;  
-  vector<string> & merged;
-  size_t apos; 
-  size_t lpos; 
-  hunk_merger(vector<string> const & lft,
-	      vector<string> const & anc,
-	      vector<string> const & rght,
-	      vector<size_t> const & lpos,
-	      set<size_t> const & dels,
-	      set<size_t> const & inss,  	      
-	      vector<string> & mrgd);	      
-  virtual void flush_hunk(size_t apos);
-  virtual void advance_to(size_t apos);
-  virtual void insert_at(size_t rpos);
-  virtual void delete_at(size_t apos);
-  virtual ~hunk_merger();
-};
-
-hunk_merger::hunk_merger(vector<string> const & lft,
-			 vector<string> const & anc,
-			 vector<string> const & rght,
-			 vector<size_t> const & lpos,
-			 set<size_t> const & dels,
-			 set<size_t> const & inss,  	      
-			 vector<string> & mrgd)
-  : left(lft), ancestor(anc), right(rght), 
-    ancestor_to_leftpos_map(lpos), deletes(dels),
-    inserts(inss), merged(mrgd),
-    apos(0), lpos(0)
-{
-  merged.clear();
-}
-
-hunk_merger::~hunk_merger()
-{
-  while (lpos < left.size())
-    {
-      // L(F("filling in final segment %d : '%s'\n") % lpos % left.at(lpos));
-      merged.push_back(left.at(lpos++));
-    }
-}
-
-void hunk_merger::flush_hunk(size_t ap)
-{
-  advance_to(ap);
-}
-
-// notes: 
-//
-// we are processing diff(ancestor,right), and applying the results
-// to positions in left.
-//
-// advancing to 'ap' means that *nothing changed* in ancestor->right,
-// between apos and ap, so you should copy all the lines between
-// translated(apos) and translated(ap), from left to merged.
-
-void hunk_merger::advance_to(size_t ap)
-{
-
-  I(ap <= ancestor_to_leftpos_map.size());
-
-  size_t lend = 0;
-  if (!ancestor_to_leftpos_map.empty())
-    {
-      if (ap == ancestor_to_leftpos_map.size())
-	lend = left.size();
-      else
-	lend = idx(ancestor_to_leftpos_map, ap);
-    }
-
-//   L(F("advance to %d / %d (lpos = %d / %d -> %d / %d)\n") % 
-//     ap % ancestor.size() % lpos % left.size() %
-//     lend % left.size());
-
-  I(lpos <= lend);
-  I(lend <= left.size());
-
-  while (lpos < lend)
-    merged.push_back(idx(left,lpos++));
-
-  apos = ap;
-  if (apos > ancestor_to_leftpos_map.size())
-    apos = ancestor_to_leftpos_map.size();
-}
-
-// notes: 
-//
-// we are processing diff(ancestor,right), and applying the results
-// to positions in left.
-//
-// inserting at 'rp' means that the value at right[rp] was inserted here
-// (where "here" means "at lpos"). our job is to figure out whether that
-// insert is a conflict, or can be repeated.
-//
-// there are 4 cases:
-//
-// 1: a->l contained no change here
-// 2: a->l contained a delete here
-// 3: a->l contained an insert here
-//  3.1: the insert was identical to ours
-//  3.2: the insert was different from ours
-//
-// our interpretation of these cases is as follows:
-//
-//  1: insert our data, leave apos as is
-//  2: conflict
-//  3.1: ignore our (duplicate) insert
-//  3.2: conflict
-
-void hunk_merger::insert_at(size_t rp)
-{
-//   L(F("insert at %d (lpos = %d) '%8s'...\n") % rp % lpos %
-//     idx(right,rp));
-  I(ancestor.size() == ancestor_to_leftpos_map.size());
-  I(rp < right.size());
-  I(apos <= ancestor_to_leftpos_map.size());
-
-  bool insert_here = inserts.find(apos) != inserts.end();
-  bool delete_here = deletes.find(apos) != deletes.end();
-
-  if (! (insert_here || delete_here))
-    merged.push_back(idx(right,rp));
-  
-  else if (delete_here)
-    {
-      L(F("insert conflict type 1 -- delete "
-	  "(apos = %d, lpos = %d, translated apos = %d)\n")
-	% apos % lpos 
-	% idx(ancestor_to_leftpos_map,apos));
-      throw conflict();
-    }
-  
-  else if (insert_here)
-    {
-      // simultaneous, identical insert?
-      if (idx(left,lpos) == idx(right,rp))
-	return;
-      
-      else
-	{
-	  L(F("insert conflict type 2 -- insert "
-	      "(apos = %d, lpos = %d, translated apos = %d)\n")
-	    % apos % lpos
-	    % idx(ancestor_to_leftpos_map,apos));
-	  L(F("trying to insert '%s', with '%s' conflicting\n")
-	    % idx(right,rp) % idx(left,lpos));
-	  throw conflict();
-	}
-    }
-}
-
-// notes: 
-//
-// we are processing diff(ancestor,right), and applying the results
-// to positions in left.
-//
-// deleting at 'ap' means that the value at ancestor[ap] was removed on
-// edge a->r, and is not present here in right (where "here" means "at
-// lpos"). our job is to figure out whether that delete is a conflict, or
-// can be repeated.
-//
-// there are 3 cases:
-//
-// 1: a->l contained no change here
-// 2: a->l contained a delete here
-//  2.1: there was no skew
-//  2.2: there was skew
-// 3: a->l contained an insert here
-//
-// our interpretation of these cases is as follows:
-//
-//  1: "delete" the line (increment apos) 
-//  2.1: do nothing, the line's already "missing" in the translation of apos
-//  2.2: conflict
-//  3: conflict
-
-void hunk_merger::delete_at(size_t ap)
-{
-//   L(F("delete at %d (apos = %d, lpos = %d, translated = %d) '%8s'...\n") % 
-//     ap % apos % lpos % idx(ancestor_to_leftpos_map,ap) %
-//     idx(ancestor,ap));
-  I(ancestor.size() == ancestor_to_leftpos_map.size());
-  I(ap < ancestor_to_leftpos_map.size());
-  I(ap == apos);
-  I(idx(ancestor_to_leftpos_map,ap) == lpos);
-
-  bool insert_here = inserts.find(apos) != inserts.end();
-  bool delete_here = deletes.find(apos) != deletes.end();
-
-  if (delete_here || !insert_here)
-    {
-      apos++; 
-      if (!delete_here)
-	lpos++;
-    }
-  
-  else
-    {
-      L(F("delete conflict -- insert "
-	  "(apos = %d, lpos = %d, translated apos = %d)\n")
-	% apos % lpos
-	% idx(ancestor_to_leftpos_map,apos));
-      L(F("trying to delete '%s', with '%s' conflicting\n")
-	% idx(ancestor,ap) % idx(left,lpos));
-      throw conflict();
-    }
-}
-
-void merge_hunks_via_offsets(vector<string> const & left,
-			     vector<string> const & ancestor,
-			     vector<string> const & right,
-			     vector<size_t> const & leftpos,
-			     set<size_t> const & deletes,
-			     set<size_t> const & inserts,
-			     vector<string> & merged)
-{
-  vector<long> anc_interned;  
-  vector<long> left_interned;  
-  vector<long> right_interned;  
-  vector<long> lcs;  
-
-  interner<long> in;
-
-  anc_interned.reserve(ancestor.size());
-  for (vector<string>::const_iterator i = ancestor.begin();
-       i != ancestor.end(); ++i)
-    anc_interned.push_back(in.intern(*i));
-
-  left_interned.reserve(left.size());
-  for (vector<string>::const_iterator i = left.begin();
-       i != left.end(); ++i)
-    left_interned.push_back(in.intern(*i));
-
-  right_interned.reserve(right.size());
-  for (vector<string>::const_iterator i = right.begin();
-       i != right.end(); ++i)
-    right_interned.push_back(in.intern(*i));
-
-  lcs.reserve(std::min(right.size(),ancestor.size()));
-  longest_common_subsequence(anc_interned.begin(), anc_interned.end(),
-			     right_interned.begin(), right_interned.end(),
-			     std::min(ancestor.size(), right.size()),
-			     back_inserter(lcs));
-  hunk_merger merger(left, ancestor, right, leftpos, deletes, inserts, merged);
-  walk_hunk_consumer(lcs, anc_interned, right_interned, merger);
-}
-*/
-
 typedef enum { preserved = 0, deleted = 1, changed = 2 } edit_t;
 static char *etab[3] = 
   {
@@ -645,7 +389,7 @@ void normalize_extents(vector<extent> & a_b_map,
 	    a_b_map.at(j).pos += piece;
 	    a_b_map.at(j-1).len += piece;
 	    
-	    // step 2: if this extene (now of length 1) has become a "changed" 
+	    // step 2: if this extent (now of length 1) has become a "changed" 
 	    // extent identical to its previous state, switch it to a "preserved"
 	    // extent.
 	    if (b.at(a_b_map.at(j).pos) == a.at(j))
@@ -1259,7 +1003,7 @@ bool merge3(manifest_map const & ancestor,
   // 
   //   - locating any moves which moved *directories* and modifying any adds
   //     in the opposing edge which have the source directory as input, to go
-  //     to the target directory (not yet implemented)
+  //     to the target directory
   //
   //   - locating any moves between non-equal ids. these are move+edit
   //     events, so we degrade them to a move + an edit (on the move target).
@@ -1406,6 +1150,8 @@ bool merge3(manifest_map const & ancestor,
     }
   catch (conflict & c)
     {
+      // FIXME: this catch should call out to a user-provided manifest
+      // merge resolution hook, the same way the file merger does.
       merged.clear();
       return false;
     }

@@ -30,24 +30,28 @@ sanity::sanity() :
 sanity::~sanity()
 {}
 
-void sanity::dump_buffer()
+void 
+sanity::dump_buffer()
 {
   copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(cout));
 }
 
-void sanity::set_verbose()
+void 
+sanity::set_verbose()
 {
   quiet = false;
   verbose = true;
 }
 
-void sanity::set_quiet()
+void 
+sanity::set_quiet()
 {
   verbose = false;
   quiet = true;
 }
 
-void sanity::log(format const & fmt)
+void 
+sanity::log(format const & fmt)
 {
   string str = fmt.str();
   if (str.size() > constants::log_line_sz)
@@ -61,7 +65,8 @@ void sanity::log(format const & fmt)
     ui.inform(str);
 }
 
-void sanity::progress(format const & fmt)
+void 
+sanity::progress(format const & fmt)
 {
   string str = fmt.str();
   if (str.size() > constants::log_line_sz)
@@ -75,7 +80,8 @@ void sanity::progress(format const & fmt)
     ui.inform(str);
 }
 
-void sanity::warning(format const & fmt)
+void 
+sanity::warning(format const & fmt)
 {
   string str = fmt.str();
   if (str.size() > constants::log_line_sz)
@@ -90,15 +96,17 @@ void sanity::warning(format const & fmt)
     ui.warn(str);
 }
 
-void sanity::naughty_failure(string const & expr, format const & explain, 
-			     string const & file, int line)
+void 
+sanity::naughty_failure(string const & expr, format const & explain, 
+			string const & file, int line)
 {
   log(format("%s:%d: usage constraint '%s' violated\n") % file % line % expr);
   throw informative_failure(string("misuse: ") + explain.str());  
 }
 
-void sanity::invariant_failure(string const & expr, 
-			       string const & file, int line)
+void 
+sanity::invariant_failure(string const & expr, 
+			  string const & file, int line)
 {
   format fmt = 
     format("%s:%d: invariant '%s' violated\n") 
@@ -107,11 +115,12 @@ void sanity::invariant_failure(string const & expr,
   throw logic_error(fmt.str());
 }
 
-void sanity::index_failure(string const & vec_expr, 
-			   string const & idx_expr, 
-			   unsigned long sz,
-			   unsigned long idx,
-			   string const & file, int line)
+void 
+sanity::index_failure(string const & vec_expr, 
+		      string const & idx_expr, 
+		      unsigned long sz,
+		      unsigned long idx,
+		      string const & file, int line)
 {
   format fmt = 
     format("%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n")

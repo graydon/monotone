@@ -28,15 +28,16 @@ using namespace std;
 using boost::lexical_cast;
 using boost::shared_ptr;
 
-bool post_http_packets(string const & group_name,
-		       string const & user,
-		       string const & signature,
-		       string const & packets,
-		       string const & http_host,
-		       string const & http_path,
-		       unsigned long port,
-		       bool is_proxy,
-		       std::iostream & stream)
+bool 
+post_http_packets(string const & group_name,
+		  string const & user,
+		  string const & signature,
+		  string const & packets,
+		  string const & http_host,
+		  string const & http_path,
+		  unsigned long port,
+		  bool is_proxy,
+		  std::iostream & stream)
 {
   string query = 
     string("q=post&") +
@@ -125,17 +126,19 @@ struct match_seq
 };
 
 
-static bool scan_for_seq(string const & str, 
-			 unsigned long & maj, 
-			 unsigned long & min,
-			 unsigned long & end)
+static bool 
+scan_for_seq(string const & str, 
+	     unsigned long & maj, 
+	     unsigned long & min,
+	     unsigned long & end)
 {
   boost::regex expr("^\\[seq ([[:digit:]]+) ([[:digit:]]+)\\]$");
   return boost::regex_grep(match_seq(maj, min, end), str, expr, 
 			   boost::match_not_dot_newline) != 0;
 }
 
-static void check_received_bytes(string const & tmp)
+static void 
+check_received_bytes(string const & tmp)
 {
   size_t pos = tmp.find_first_not_of(constants::legal_packet_bytes);
   N(pos == string::npos, 
@@ -143,8 +146,9 @@ static void check_received_bytes(string const & tmp)
     % pos % static_cast<int>(tmp.at(pos)));
 }
 
-static void read_chunk(std::iostream & stream,
-		       string & packet)
+static void 
+read_chunk(std::iostream & stream,
+	   string & packet)
 {
   char buf[constants::bufsz];
   ios_base::fmtflags flags = stream.flags();
@@ -182,8 +186,9 @@ static void read_chunk(std::iostream & stream,
   stream.flags(flags);
 }
 
-static void read_buffer(std::iostream & stream,
-			string & packet)
+static void 
+read_buffer(std::iostream & stream,
+	    string & packet)
 {
   char buf[constants::bufsz];
   stream.read(buf, constants::bufsz);
@@ -194,15 +199,16 @@ static void read_buffer(std::iostream & stream,
   packet.append(tmp);
 }
 
-void fetch_http_packets(string const & group_name,
-			unsigned long & maj_number,
-			unsigned long & min_number,
-			packet_consumer & consumer,
-			string const & http_host,
-			string const & http_path,
-			unsigned long port,
-			bool is_proxy,
-			std::iostream & stream)
+void 
+fetch_http_packets(string const & group_name,
+		   unsigned long & maj_number,
+		   unsigned long & min_number,
+		   packet_consumer & consumer,
+		   string const & http_host,
+		   string const & http_path,
+		   unsigned long port,
+		   bool is_proxy,
+		   std::iostream & stream)
 {
 
   ticker n_packets("packets");

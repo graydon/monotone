@@ -37,6 +37,8 @@ ENCODING(hexenc);             // thing which is hex-encoded
 ENCODING(base64);             // thing which is base64-encoded
 ENCODING(arc4);               // thing which is arc4-encrypted
 
+ATOMIC(prefix);               // raw encoding of a merkle tree prefix
+ATOMIC(merkle);               // raw encoding of a merkle tree node
 
 // instantiate those bits of the template vocabulary actually in use.
 
@@ -61,6 +63,9 @@ EXTERN template class base64< rsa_sha1_signature >;
 EXTERN template class hexenc< rsa_sha1_signature >;
 EXTERN template class base64< cert_value >;
 
+EXTERN template class hexenc<prefix>;
+EXTERN template class base64<merkle>;
+
 // instantiate those bits of the stream operator vocab (again) actually in
 // use. "again" since stream operators are friends, not members.
 
@@ -84,3 +89,6 @@ EXTERN template std::ostream & operator<< <>(std::ostream &, base64< rsa_pub_key
 EXTERN template std::ostream & operator<< <>(std::ostream &, base64< rsa_sha1_signature > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, hexenc< rsa_sha1_signature > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, base64< cert_value > const &);
+
+EXTERN template std::ostream & operator<< <>(std::ostream &, hexenc<prefix> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &, base64<merkle> const &);

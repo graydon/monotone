@@ -44,4 +44,6 @@ boost::shared_ptr<delta_applicator> new_piecewise_applicator();
 void apply_delta(boost::shared_ptr<delta_applicator> da,
 		 std::string const & delta);
 
+u64 measure_delta_target_size(std::string const & delta);
+
 #endif // __XDELTA_HH__

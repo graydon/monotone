@@ -21,6 +21,7 @@
 #include "file_io.hh"
 #include "keys.hh"
 #include "manifest.hh"
+#include "netsync.hh"
 #include "network.hh"
 #include "packet.hh"
 #include "patch_set.hh"
@@ -189,29 +190,34 @@ CMD(C, group, params, desc)				\
   process(app, string(#realcommand), args);		\
 }
 
-static bool bookdir_exists()
+static bool 
+bookdir_exists()
 {
   return directory_exists(local_path(book_keeping_dir));
 }
 
-static void ensure_bookdir()
+static void 
+ensure_bookdir()
 {
   mkdir_p(local_path(book_keeping_dir));
 }
 
-static void get_manifest_path(local_path & m_path)
+static void 
+get_manifest_path(local_path & m_path)
 {
   m_path = (mkpath(book_keeping_dir) / mkpath(manifest_file_name)).string();
   L(F("manifest path is %s\n") % m_path);
 }
 
-static void get_work_path(local_path & w_path)
+static void 
+get_work_path(local_path & w_path)
 {
   w_path = (mkpath(book_keeping_dir) / mkpath(work_file_name)).string();
   L(F("work path is %s\n") % w_path);
 }
 
-static void get_manifest_map(manifest_map & m)
+static void 
+get_manifest_map(manifest_map & m)
 {
   ensure_bookdir();
   local_path m_path;
@@ -230,7 +236,8 @@ static void get_manifest_map(manifest_map & m)
     }
 }
 
-static void put_manifest_map(manifest_map const & m)
+static void 
+put_manifest_map(manifest_map const & m)
 {
   ensure_bookdir();
   local_path m_path;
@@ -242,7 +249,8 @@ static void put_manifest_map(manifest_map const & m)
   L(F("wrote %d manifest entries\n") % m.size());
 }
 
-static void get_work_set(work_set & w)
+static void 
+get_work_set(work_set & w)
 {
   ensure_bookdir();
   local_path w_path;
@@ -262,7 +270,8 @@ static void get_work_set(work_set & w)
     }
 }
 
-static void remove_work_set()
+static void 
+remove_work_set()
 {
   local_path w_path;
   get_work_path(w_path);
@@ -270,7 +279,8 @@ static void remove_work_set()
     delete_file(w_path);
 }
 
-static void put_work_set(work_set & w)
+static void 
+put_work_set(work_set & w)
 {
   local_path w_path;
   get_work_path(w_path);
@@ -290,7 +300,8 @@ static void put_work_set(work_set & w)
     }
 }
 
-static void update_any_attrs(app_state & app)
+static void 
+update_any_attrs(app_state & app)
 {
   file_path fp;
   data attr_data;
@@ -305,10 +316,11 @@ static void update_any_attrs(app_state & app)
   apply_attributes(app, attr);
 }
 
-static void calculate_new_manifest_map(manifest_map const & m_old, 
-				       manifest_map & m_new,
-				       rename_set & renames,
-				       app_state & app)
+static void 
+calculate_new_manifest_map(manifest_map const & m_old, 
+			   manifest_map & m_new,
+			   rename_set & renames,
+			   app_state & app)
 {
   path_set paths;
   work_set work;
@@ -329,16 +341,18 @@ static void calculate_new_manifest_map(manifest_map const & m_old,
 }
 
 
-static void calculate_new_manifest_map(manifest_map const & m_old, 
-				       manifest_map & m_new,
-				       app_state & app)
+static void 
+calculate_new_manifest_map(manifest_map const & m_old, 
+			   manifest_map & m_new,
+			   app_state & app)
 {
   rename_set dummy;
   calculate_new_manifest_map (m_old, m_new, dummy, app);
 }
 
 
-static string get_stdin()
+static string 
+get_stdin()
 {
   char buf[constants::bufsz];
   string tmp;
@@ -350,9 +364,10 @@ static string get_stdin()
   return tmp;
 }
 
-static void get_log_message(patch_set const & ps, 
-			    app_state & app,
-			    string & log_message)
+static void 
+get_log_message(patch_set const & ps, 
+		app_state & app,
+		string & log_message)
 {
   string commentary;
   string summary;
@@ -369,9 +384,10 @@ static void get_log_message(patch_set const & ps,
 }
 
 template <typename ID>
-static void complete(app_state & app, 
-		     string const & str, 
-		     ID & completion)
+static void 
+complete(app_state & app, 
+	 string const & str, 
+	 ID & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
     F("non-hex digits in id"));
@@ -397,18 +413,22 @@ static void complete(app_state & app,
 }
 
 
-static void find_oldest_ancestors (manifest_id const & child, 
-				   set<manifest_id> & ancs,
-				   app_state & app)
+static void 
+find_oldest_ancestors(manifest_id const & child, 
+		      set<manifest_id> & ancs,
+		      app_state & app)
 {
   cert_name tn(ancestor_cert_name);
   ancs.insert(child);  
+  set<manifest_id> seen;
   while (true)
     {
       set<manifest_id> next_frontier;
       for (set<manifest_id>::const_iterator i = ancs.begin();
 	   i != ancs.end(); ++i)
 	{
+	  if (seen.find(*i) != seen.end())
+	    continue;
 	  vector< manifest<cert> > tmp;
 	  app.db.get_manifest_certs(*i, tn, tmp);
 	  erase_bogus_certs(tmp, app);
@@ -420,7 +440,9 @@ static void find_oldest_ancestors (manifest_id const & child,
 	      manifest_id anc_id (tv());
 	      next_frontier.insert(anc_id);
 	    }
+	  seen.insert(*i);
 	}
+
       if (next_frontier.empty())
 	break;
       else
@@ -435,10 +457,11 @@ static void find_oldest_ancestors (manifest_id const & child,
 // we use the ancestor as the source manifest when building a patchset to
 // send to that url.
 
-static bool find_ancestor_on_netserver (manifest_id const & child, 
-					url const & u,
-					manifest_id & anc,
-					app_state & app)
+static bool 
+find_ancestor_on_netserver (manifest_id const & child, 
+			    url const & u,
+			    manifest_id & anc,
+			    app_state & app)
 {
   set<manifest_id> frontier;
   cert_name tn(ancestor_cert_name);
@@ -486,10 +509,11 @@ static bool find_ancestor_on_netserver (manifest_id const & child,
 }
 
 
-static void queue_edge_for_target_ancestor (url const & targ,
-					    manifest_id const & child_id,
-					    manifest_map const & child_map,
-					    app_state & app)
+static void 
+queue_edge_for_target_ancestor(url const & targ,
+			       manifest_id const & child_id,
+			       manifest_map const & child_map,
+			       app_state & app)
 {  
   // now here is an interesting thing: we *might* be sending data to a
   // depot, or someone with indeterminate pre-existing state (say the first
@@ -542,11 +566,12 @@ static void queue_edge_for_target_ancestor (url const & targ,
 // appropriate edges from known ancestors to the new merge node, to be
 // transmitted to each of the targets provided.
 
-static void try_one_merge(manifest_id const & left,
-			  manifest_id const & right,
-			  manifest_id & merged,
-			  app_state & app, 
-			  set<url> const & targets)
+static void 
+try_one_merge(manifest_id const & left,
+	      manifest_id const & right,
+	      manifest_id & merged,
+	      app_state & app, 
+	      set<url> const & targets)
 {
   manifest_data left_data, right_data, ancestor_data, merged_data;
   manifest_map left_map, right_map, ancestor_map, merged_map;
@@ -637,7 +662,8 @@ static void try_one_merge(manifest_id const & left,
 // actual commands follow
 
 
-static void ls_certs (string name, app_state & app, vector<utf8> const & args)
+static void 
+ls_certs(string name, app_state & app, vector<utf8> const & args)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -709,7 +735,8 @@ static void ls_certs (string name, app_state & app, vector<utf8> const & args)
   guard.commit();
 }
 
-static void ls_keys (string name, app_state & app, vector<utf8> const & args)
+static void 
+ls_keys(string name, app_state & app, vector<utf8> const & args)
 {
   vector<rsa_keypair_id> pubkeys;
   vector<rsa_keypair_id> privkeys;
@@ -727,7 +754,15 @@ static void ls_keys (string name, app_state & app, vector<utf8> const & args)
     {
       cout << endl << "[public keys]" << endl;
       for (size_t i = 0; i < pubkeys.size(); ++i)
-	cout << idx(pubkeys, i)() << endl;
+	{
+	  rsa_keypair_id keyid = idx(pubkeys, i)();
+	  base64<rsa_pub_key> pub_encoded;
+	  hexenc<id> hash_code;
+
+	  app.db.get_key(keyid, pub_encoded); 
+	  key_hash_code(keyid, pub_encoded, hash_code);
+	  cout << hash_code << " " << keyid << endl;
+	}
       cout << endl;
     }
 
@@ -735,7 +770,14 @@ static void ls_keys (string name, app_state & app, vector<utf8> const & args)
     {
       cout << endl << "[private keys]" << endl;
       for (size_t i = 0; i < privkeys.size(); ++i)
-	cout << idx(privkeys, i)() << endl;
+	{
+	  rsa_keypair_id keyid = idx(privkeys, i)();
+	  base64< arc4<rsa_priv_key> > priv_encoded;
+	  hexenc<id> hash_code;
+	  app.db.get_key(keyid, priv_encoded); 
+	  key_hash_code(keyid, priv_encoded, hash_code);
+	  cout << hash_code << " " << keyid << endl;
+	}
       cout << endl;
     }
 
@@ -903,71 +945,92 @@ CMD(tag, "certificate", "ID TAGNAME",
   cert_manifest_tag(m, idx(args, 1)(), app, qpw);
 }
 
-CMD(approve, "certificate", "(file|manifest) ID", 
-    "approve of a manifest or file version")
+CMD(testresult, "certificate", "ID (true|false)", 
+    "note the results of running a test on a manifest")
 {
   if (args.size() != 2)
+    throw usage(name);
+  manifest_id m;
+  complete(app, idx(args, 0)(), m);
+  set<url> targets;
+  cert_value branchname;
+  guess_branch(m, app, branchname);
+  app.lua.hook_get_post_targets(branchname(), targets);  
+  queueing_packet_writer qpw(app, targets);
+  packet_db_writer dbw(app);
+  cert_manifest_testresult(m, idx(args, 1)(), app, dbw);
+  cert_manifest_testresult(m, idx(args, 1)(), app, qpw);
+}
+
+CMD(approve, "certificate", "(file|manifest) ID1 ID2", 
+    "approve of a manifest or file change")
+{
+  if (args.size() != 3)
     throw usage(name);
 
   if (idx(args, 0)() == "manifest")
     {
-      manifest_id m;
-      complete(app, idx(args, 1)(), m);
+      manifest_id m1, m2;
+      complete(app, idx(args, 1)(), m1);
+      complete(app, idx(args, 2)(), m2);
       set<url> targets;
       cert_value branchname;
-      guess_branch (m, app, branchname);
+      guess_branch (m1, app, branchname);
       app.lua.hook_get_post_targets(branchname(), targets);  
       queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
-      cert_manifest_approval(m, true, app, dbw);
-      cert_manifest_approval(m, true, app, qpw);
+      cert_manifest_approval(m1, m2, true, app, dbw);
+      cert_manifest_approval(m1, m2, true, app, qpw);
     }
   else if (idx(args, 0)() == "file")
     {
       packet_db_writer dbw(app);
-      file_id f;
-      complete(app, idx(args, 1)(), f);
+      file_id f1, f2;
+      complete(app, idx(args, 1)(), f1);
+      complete(app, idx(args, 2)(), f2);
       set<url> targets;
       N(app.branch_name() != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name()), targets); 
       queueing_packet_writer qpw(app, targets);
-      cert_file_approval(f, true, app, dbw);
-      cert_file_approval(f, true, app, qpw);
+      cert_file_approval(f1, f2, true, app, dbw);
+      cert_file_approval(f1, f2, true, app, qpw);
     }
   else
     throw usage(name);
 }
 
-CMD(disapprove, "certificate", "(file|manifest) ID", 
-    "disapprove of a manifest or file version")
+CMD(disapprove, "certificate", "(file|manifest) ID1 ID2", 
+    "disapprove of a manifest or file change")
 {
-  if (args.size() != 2)
+  if (args.size() != 3)
     throw usage(name);
 
   if (idx(args, 0)() == "manifest")
     {
-      manifest_id m;
-      complete(app, idx(args, 1)(), m);
+      manifest_id m1, m2;
+      complete(app, idx(args, 1)(), m1);
+      complete(app, idx(args, 2)(), m2);
       set<url> targets;
       cert_value branchname;
-      guess_branch(m, app, branchname);
+      guess_branch(m1, app, branchname);
       app.lua.hook_get_post_targets(branchname(), targets);  
       queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
-      cert_manifest_approval(m, false, app, dbw);
-      cert_manifest_approval(m, false, app, qpw);
+      cert_manifest_approval(m1, m2, false, app, dbw);
+      cert_manifest_approval(m1, m2, false, app, qpw);
     }
   else if (idx(args, 0)() == "file")
     {
-      file_id f;;
-      complete(app, idx(args, 1)(), f);
+      file_id f1, f2;
+      complete(app, idx(args, 1)(), f1);
+      complete(app, idx(args, 2)(), f2);
       set<url> targets;
       N(app.branch_name() != "", F("need --branch argument for posting"));
       app.lua.hook_get_post_targets(cert_value(app.branch_name()), targets); 
       queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
-      cert_file_approval(f, false, app, dbw);
-      cert_file_approval(f, false, app, qpw);
+      cert_file_approval(f1, f2, false, app, dbw);
+      cert_file_approval(f1, f2, false, app, qpw);
     }
   else
     throw usage(name);
@@ -1263,7 +1326,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   app.write_options();
 }
 
-CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to sorting keys")
+CMD(update, "working copy", "", "update working copy")
 {
 
   manifest_data m_chosen_data;
@@ -1276,7 +1339,7 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
   calculate_ident(m_old, m_old_id);
   calculate_new_manifest_map(m_old, m_working, app);
   
-  pick_update_target(m_old_id, args, app, m_chosen_id);
+  pick_update_target(m_old_id, app, m_chosen_id);
   if (m_old_id == m_chosen_id)
     {
       P(F("already up to date at %s\n") % m_old_id);
@@ -1690,8 +1753,8 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 // most of the time, leave them commented out. they can be helpful for certain
 // cases, though.
 
-  CMD(fload, "tree", "", "load file contents into db")
-  {
+CMD(fload, "tree", "", "load file contents into db")
+{
   string s = get_stdin();
   base64< gzip< data > > gzd;
 
@@ -1704,7 +1767,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   
   packet_db_writer dbw(app);
   dbw.consume_file_data(f_id, f_data);  
-  }
+}
 
   CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result")
   {
@@ -2122,7 +2185,8 @@ CMD(status, "informative", "", "show status of working copy")
   guard.commit();
 }
 
-static void ls_branches (string name, app_state & app, vector<utf8> const & args)
+static void 
+ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
   transaction_guard guard(app.db);
   vector< manifest<cert> > certs;
@@ -2202,6 +2266,116 @@ static void ls_queue (string name, app_state & app)
 	}      
     }
 }
+
+CMD(reindex, "network", "COLLECTION...", 
+    "rebuild the hash-tree indices used to sync COLLECTION over the network")
+{
+  if (args.size() < 1)
+    throw usage(name);
+
+  transaction_guard guard(app.db);
+  ui.set_tick_trailer("rehashing db");
+  app.db.rehash();
+  for (size_t i = 0; i < args.size(); ++i)
+    {
+      ui.set_tick_trailer(string("rebuilding hash-tree indices for ") + idx(args,i)());
+      rebuild_merkle_trees(app, idx(args,i));
+    }
+  guard.commit();
+}
+
+CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+    "alias for 'netsync client readonly'")
+{
+  if (args.size() < 2)
+    throw usage(name);
+
+  rsa_keypair_id key;
+  N(guess_default_key(key, app), "could not guess default signing key");
+  app.signing_key = key;
+
+  utf8 addr(idx(args,0));
+  vector<utf8> collections(args.begin() + 1, args.end());
+  run_netsync_protocol(client_voice, source_role, addr, collections, app);  
+}
+
+CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+    "alias for 'netsync client writeonly'")
+{
+  if (args.size() < 2)
+    throw usage(name);
+
+  if (app.signing_key() == "")
+    W(F("doing anonymous pull\n"));
+  
+  utf8 addr(idx(args,0));
+  vector<utf8> collections(args.begin() + 1, args.end());
+  run_netsync_protocol(client_voice, sink_role, addr, collections, app);  
+}
+
+CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+    "alias for 'netsync client readwrite'")
+{
+  if (args.size() < 2)
+    throw usage(name);
+
+  rsa_keypair_id key;
+  N(guess_default_key(key, app), "could not guess default signing key");
+  app.signing_key = key;
+
+  utf8 addr(idx(args,0));
+  vector<utf8> collections(args.begin() + 1, args.end());
+  run_netsync_protocol(client_voice, source_and_sink_role, addr, collections, app);  
+}
+
+CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+    "alias for 'netsync server readwrite'")
+{
+  if (args.size() < 2)
+    throw usage(name);
+
+  rsa_keypair_id key;
+  N(guess_default_key(key, app), "could not guess default signing key");
+  app.signing_key = key;
+
+  utf8 addr(idx(args,0));
+  vector<utf8> collections(args.begin() + 1, args.end());
+  run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
+}
+
+CMD(netsync, "network", "(client|server) (readonly|readwrite|writeonly) ADDRESS[:PORTNUMBER] COLLECTION...",
+    "run synchronization for a given set of collections")
+{
+  if (args.size() < 4)
+    throw usage(name);
+
+  protocol_voice voice = client_voice;
+  protocol_role role = source_role;
+
+  if (idx(args,0)() == "client")
+    voice  = client_voice;
+  else if (idx(args,0)() == "server")
+    voice = server_voice;
+  else
+    throw usage(name);
+
+  if (idx(args,1)() == "readonly")
+    role = source_role;
+  else if (idx(args,1)() == "readwrite")
+    role = source_and_sink_role;
+  else if (idx(args,1)() == "writeonly")
+    role = sink_role;
+  else throw usage(name);
+
+  rsa_keypair_id key;
+  N(guess_default_key(key, app), "could not guess default signing key");
+  app.signing_key = key;
+
+  utf8 addr(idx(args,2));
+  vector<utf8> collections(args.begin() + 3, args.end());
+  run_netsync_protocol(voice, role, addr, collections, app);
+}
+
 
 
 CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\naddtree URL [ID...]",

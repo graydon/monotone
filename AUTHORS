@@ -23,6 +23,8 @@ contributing authors, including:
   Eric Kidd  <eric.kidd@pobox.com>
   Christof Petig <christof@petig-baender.de>
   Paul Snively <psnively@mac.com>
+  Anders Petersson <demitar@worldforge.org>
+  Nathan Meyers <ncm@cantrip.org>
 
 supporting files:
 -----------------
@@ -105,6 +107,13 @@ Uceqods6zDrk0qo=
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
+
+---
+
+The files in Netxx/* are copies of the NetXX library, which is
+Copyright (C) 2001-2003 Peter J Jones (pjones@pmade.org), and
+distributed under a BSD-like license. The license terms are reproduced
+in the files, and do not require that they be reproduced here.
 
 ---
 

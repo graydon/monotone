@@ -11,39 +11,43 @@
 // and it seems to work.
 
 #include <string>
+#include "numeric_vocab.hh"
 
-typedef unsigned long u32;
-
-struct adler32
+struct 
+adler32
 {
   u32 s1, s2, len;
-  
+  u32 const mask;
+
   inline u32 sum() const
   {
     return (s2 << 16) | s1;
   }
 
-  inline void in(char c)
+  inline void in(u8 c)
   {
-    s1 += static_cast<u32>(c);
-    s1 &= 0xffff;
+    s1 += widen<u32,u8>(c);
+    s1 &= mask;
     s2 += s1;
-    s2 &= 0xffff;
+    s2 &= mask;
     ++len;
   }
 
-  inline void out(char c)
+  inline void out(u8 c)
   {
-    s1 -= static_cast<u32>(c);
-    s1 &= 0xffff;
-    s2 -= (len * static_cast<u32>(c)) + 1;
-    s2 &= 0xffff;
+    s1 -= widen<u32,u8>(c);
+    s1 &= mask;
+    s2 -= (len * widen<u32,u8>(c)) + 1;
+    s2 &= mask;
     --len;
   }
 
-  adler32() : s1(1), s2(0), len(0) {}
-  adler32(char const * ch, std::string::size_type count)
-    : s1(1), s2(0), len(0)
+  adler32() 
+    : s1(1), s2(0), len(0), mask(widen<u32,u16>(0xffff)) 
+  {}
+
+  adler32(u8 const * ch, std::string::size_type count)
+    : s1(1), s2(0), len(0), mask(widen<u32,u16>(0xffff))
   {
     while(count--)
       in(*(ch++));

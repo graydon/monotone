@@ -8,7 +8,7 @@ MOST_SOURCES =								\
          proto_machine.cc packet.cc sanity.cc vocab.cc			\
          rcs_file.cc rcs_import.cc xdelta.cc network.cc			\
          http_tasks.cc ui.cc schema_migration.cc smtp_tasks.cc		\
-         constants.cc url.cc                                            \
+         constants.cc url.cc netsync.cc netcmd.cc merkle_tree.cc        \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -17,7 +17,22 @@ MOST_SOURCES =								\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
          lcs.hh network.hh http_tasks.hh constants.hh ui.hh		\
-         schema_migration.hh smtp_tasks.hh quick_alloc.hh mac.hh url.hh
+         schema_migration.hh smtp_tasks.hh quick_alloc.hh mac.hh url.hh \
+	 netsync.hh netcmd.hh netio.hh merkle_tree.hh numeric_vocab.hh
+
+NETXX_SOURCES = \
+	Netxx/Accept.cxx Netxx/Accept.h Netxx/Address.cxx Netxx/Address.h          \
+	Netxx/common.h Netxx/compat.h Netxx/Datagram.cxx Netxx/Datagram.h          \
+	Netxx/DatagramServer.cxx Netxx/DatagramServer.h Netxx/inet6.cxx            \
+	Netxx/inet6.h Netxx/Netbuf.h Netxx/OSError.cxx Netxx/OSError.h             \
+	Netxx/Peer.cxx Netxx/Peer.h Netxx/Probe.cxx Netxx/Probe.h                  \
+	Netxx/Probe_impl.h Netxx/ProbeInfo.h Netxx/Probe_select.cxx                \
+	Netxx/RecvFrom.cxx Netxx/RecvFrom.h Netxx/Resolve_gethostbyname.cxx        \
+	Netxx/Resolve_getservbyname.cxx Netxx/Resolve.h Netxx/ServerBase.cxx       \
+	Netxx/ServerBase.h Netxx/SockAddr.cxx Netxx/SockAddr.h Netxx/Socket.cxx    \
+	Netxx/Socket.h Netxx/SockOpt.cxx Netxx/SockOpt.h Netxx/StreamBase.cxx      \
+	Netxx/StreamBase.h Netxx/Stream.cxx Netxx/Stream.h Netxx/StreamServer.cxx  \
+	Netxx/StreamServer.h Netxx/Timeout.h Netxx/Types.h
 
 CRYPTOPP_SOURCES = \
         cryptopp/algebra.cpp cryptopp/algparam.cpp cryptopp/arc4.cpp \
@@ -156,7 +171,8 @@ lib3rdparty_a_SOURCES = $(CRYPTOPP_SOURCES) \
                         $(BOOST_SANDBOX_SOURCES) \
                         $(LUA_SOURCES) \
 			$(ADNS_SOURCES) \
-			$(IDNA_SOURCES)
+			$(IDNA_SOURCES) \
+			$(NETXX_SOURCES)
 
 if STATIC_BOOST
 BOOSTLIBS=@BOOST_LIBDIR@/libboost_filesystem.a @BOOST_LIBDIR@/libboost_date_time.a @BOOST_LIBDIR@/libboost_regex.a

@@ -21,14 +21,17 @@
 // take a look in diff_patch.(cc|hh) for a nice interface to that.
 
 #include <ext/hash_map>
+#include <algorithm>
 #include <vector>
+#include <set>
 #include <string>
 #include <sstream>
 #include <boost/shared_ptr.hpp>
 
 #include "adler32.hh"
-#include "xdelta.hh"
+#include "numeric_vocab.hh"
 #include "sanity.hh"
+#include "xdelta.hh"
 
 using namespace std;
 using namespace __gnu_cxx;
@@ -37,7 +40,8 @@ struct identity {size_t operator()(u32 const & v) const { return static_cast<siz
 typedef pair<string::size_type, string::size_type> extent;
 typedef hash_map<u32, extent, identity> match_table;
 
-struct insn
+struct 
+insn
 {
   insn(char c) : code(insert), pos(0), len(0), payload("")  { payload += c; }
   insn(string s) : code(insert), pos(0), len(s.size()), payload(s)  {}
@@ -70,7 +74,7 @@ init_match_table(string const & a,
   for (string::size_type i = 0; i < sz; i += blocksz)
     {
       string::size_type step = ((i + blocksz) >= sz) ? (sz - i) : blocksz;
-      u32 sum = adler32(a.data() + i, step).sum();
+      u32 sum = adler32(reinterpret_cast<u8 const *>(a.data() + i), step).sum();
       if (tab.find(sum) == tab.end())
  	tab.insert(make_pair(sum, make_pair(i, step)));
     }  
@@ -184,7 +188,7 @@ compute_delta_insns(string const & a,
       return;
     }
   
-  adler32 rolling(b.data(), blocksz);  
+  adler32 rolling(reinterpret_cast<u8 const *>(b.data()), blocksz);  
 
   for (string::size_type 
 	 sz = b.size(),
@@ -212,9 +216,9 @@ compute_delta_insns(string const & a,
 	{
 	  I(next >= 0);
 	  I(next < b.size());
-	  rolling.out(b[next]);
+	  rolling.out(static_cast<u8>(b[next]));
 	  if (next + blocksz < b.size())
-	    rolling.in(b[next + blocksz]);
+	    rolling.in(static_cast<u8>(b[next + blocksz]));
 	}
       lo = next;
       hi = lo + blocksz;
@@ -348,7 +352,9 @@ compute_delta(string const & a,
   delta = oss.str();
 }
 
-struct simple_applicator : public delta_applicator
+struct 
+simple_applicator 
+  : public delta_applicator
 {
   string src;
   string dst;
@@ -378,8 +384,9 @@ struct simple_applicator : public delta_applicator
   }
 };
 
-void apply_delta(boost::shared_ptr<delta_applicator> da,
-		 std::string const & delta)
+void 
+apply_delta(boost::shared_ptr<delta_applicator> da,
+	    std::string const & delta)
 {
   istringstream del(delta);
   for (char c = del.get(); c == 'I' || c == 'C'; c = del.get())
@@ -430,7 +437,32 @@ apply_delta(string const & a,
   da->finish(b);
 }
 
+struct 
+size_accumulating_delta_applicator :
+  public delta_applicator
+{
+  u64 & sz;
+  size_accumulating_delta_applicator(u64 & s) : sz(s) {}
+  virtual void begin(std::string const & base) {}
+  virtual void next() {}
+  virtual void finish(std::string & out) {}
 
+  virtual void copy(std::string::size_type pos, 
+		    std::string::size_type len) 
+  { sz += len; }
+  virtual void insert(std::string const & str) 
+  { sz += str.size(); }
+};
+
+
+u64 
+measure_delta_target_size(std::string const & delta)
+{
+  u64 sz = 0;
+  boost::shared_ptr<delta_applicator> da(new size_accumulating_delta_applicator(sz));
+  apply_delta(da, delta);
+  return sz;
+}
 
 
 
@@ -469,7 +501,8 @@ struct chunk
 
 typedef vector<chunk> version_spec;
 
-struct piece_table
+struct 
+piece_table
 {
   vector<string> pieces;
 
@@ -512,7 +545,8 @@ apply_insert(piece_table & p, version_spec & out, string const & str)
   out.push_back(chunk(str.size(), piece, vpos, 0));
 }
 
-struct chunk_less_than
+struct 
+chunk_less_than
 {
   bool operator()(chunk const & ch, version_pos vp) const
   {
@@ -601,7 +635,9 @@ apply_copy(version_spec const & in, version_spec & out,
 }
 
 
-struct piecewise_applicator : public delta_applicator
+struct 
+piecewise_applicator 
+  : public delta_applicator
 {
   piece_table pt;
   boost::shared_ptr<version_spec> src;
@@ -649,12 +685,128 @@ struct piecewise_applicator : public delta_applicator
 
 // these just hide our implementation types from outside 
 
-boost::shared_ptr<delta_applicator> new_simple_applicator()
+boost::shared_ptr<delta_applicator> 
+new_simple_applicator()
 {
   return boost::shared_ptr<delta_applicator>(new simple_applicator());
 }
 
-boost::shared_ptr<delta_applicator> new_piecewise_applicator()
+boost::shared_ptr<delta_applicator> 
+new_piecewise_applicator()
 {
   return boost::shared_ptr<delta_applicator>(new piecewise_applicator());
 }
+
+#ifdef BUILD_UNIT_TESTS
+
+#include "unit_tests.hh"
+#include <boost/random.hpp>
+
+boost::mt19937 xdelta_prng;
+boost::uniform_smallint<boost::mt19937, char> xdelta_chargen(xdelta_prng, 'a', 'z');
+boost::uniform_smallint<boost::mt19937, size_t> xdelta_sizegen(xdelta_prng, 1024, 65536);
+boost::uniform_smallint<boost::mt19937, size_t> xdelta_editgen(xdelta_prng, 3, 10);
+boost::uniform_smallint<boost::mt19937, size_t> xdelta_lengen(xdelta_prng, 1, 256);
+
+void 
+xdelta_random_string(string & str)
+{
+  size_t sz = xdelta_sizegen();
+  str.clear();
+  str.reserve(sz);   
+  while(sz-- > 0)
+    {
+      str += xdelta_chargen();
+    }
+}
+
+void 
+xdelta_randomly_insert(string & str)
+{
+  size_t nedits = xdelta_editgen();
+  while (nedits > 0)
+    {
+      size_t pos = xdelta_sizegen() % str.size();
+      size_t len = xdelta_lengen();
+      if (pos+len >= str.size())
+	continue;
+      string tmp;
+      tmp.reserve(len);
+      for (size_t i = 0; i < len; ++i)
+	tmp += xdelta_chargen();
+	str.insert(pos, tmp);
+      nedits--;
+    }
+}
+
+void 
+xdelta_randomly_change(string & str)
+{
+  size_t nedits = xdelta_editgen();
+  while (nedits > 0)
+    {
+      size_t pos = xdelta_sizegen() % str.size();
+      size_t len = xdelta_lengen();
+      if (pos+len >= str.size())
+	continue;
+      for (size_t i = 0; i < len; ++i)
+	str[pos+i] = xdelta_chargen();
+      nedits--;
+    }
+}
+
+void 
+xdelta_randomly_delete(string & str)
+{
+  size_t nedits = xdelta_editgen();
+  while (nedits > 0)
+    {
+      size_t pos = xdelta_sizegen() % str.size();
+      size_t len = xdelta_lengen();
+      if (pos+len >= str.size())
+	continue;
+      str.erase(pos, len);
+      --nedits;
+    }
+}
+
+void 
+xdelta_random_simple_delta_test()
+{
+  for (int i = 0; i < 100; ++i)
+    {
+      string a, b, fdel, rdel, c, d;
+      xdelta_random_string(a);
+      b = a;
+      xdelta_randomly_change(b);
+      xdelta_randomly_insert(b);
+      xdelta_randomly_delete(b);
+      compute_delta(a, b, fdel);
+      compute_delta(b, a, rdel);
+      L(F("src %d, dst %d, fdel %d, rdel %d\n")
+	% a.size() % b.size()% fdel.size() % rdel.size()) ;
+      if (fdel.size() == 0)
+	{
+	  L(F("confirming src == dst and rdel == 0\n"));
+	  BOOST_CHECK(a == b);
+	  BOOST_CHECK(rdel.size() == 0);
+	}      
+      else
+	{
+	  apply_delta(a, fdel, c);
+	  apply_delta(b, rdel, d);
+	  L(F("confirming dst1 %d, dst2 %d\n") % c.size() % d.size());
+	  BOOST_CHECK(b == c);
+	  BOOST_CHECK(a == d);
+	}
+    }
+}
+
+void 
+add_xdelta_tests(test_suite * suite)
+{
+  I(suite);
+  suite->add(BOOST_TEST_CASE(&xdelta_random_simple_delta_test));
+}
+
+#endif // BUILD_UNIT_TESTS

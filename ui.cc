@@ -10,7 +10,7 @@
 // see the file COPYING for details
 
 // this file contains a couple utilities to deal with the user
-// interface. the global user_interface object 'ui' owns cerr, so no
+// interface. the global user_interface object 'ui' owns clog, so no
 // writing to it directly!
 
 using namespace std;
@@ -30,7 +30,8 @@ ticker::~ticker()
   ui.finish_ticking();
 }
 
-void ticker::operator++()
+void 
+ticker::operator++()
 {
   I(ui.ticks.find(name) != ui.ticks.end());
   ui.ticks[name]++;
@@ -38,7 +39,8 @@ void ticker::operator++()
     ui.write_ticks();
 }
 
-void ticker::operator+=(size_t t)
+void 
+ticker::operator+=(size_t t)
 {
   I(ui.ticks.find(name) != ui.ticks.end());
   size_t old = ui.ticks[name];
@@ -55,29 +57,34 @@ user_interface::user_interface() :
   last_write_was_a_tick(false),
   last_tick_len(0)
 {
+  clog.sync_with_stdio(false);
+  clog.unsetf(ios_base::unitbuf);
 }
 
 user_interface::~user_interface()
 {
 }
 
-void user_interface::finish_ticking()
+void 
+user_interface::finish_ticking()
 {
   if (ticks.size() == 0 && 
       last_write_was_a_tick)
     {
       tick_trailer = "";
-      cerr << endl;
+      clog << endl;
       last_write_was_a_tick = false;
     }
 }
 
-void user_interface::set_tick_trailer(string const & t)
+void 
+user_interface::set_tick_trailer(string const & t)
 {
   tick_trailer = t;
 }
 
-void user_interface::write_ticks()
+void 
+user_interface::write_ticks()
 {
 
   string tickline = "\rmonotone: ";
@@ -91,22 +98,46 @@ void user_interface::write_ticks()
     tickline += string(last_tick_len - curr_sz, ' ');
   last_tick_len = curr_sz;
 
-  cerr << tickline;
+  clog << tickline;
+  clog.flush();
   last_write_was_a_tick = true;
 }
 
-void user_interface::warn(string const & warning)
+void 
+user_interface::warn(string const & warning)
 {
   if (issued_warnings.find(warning) == issued_warnings.end())
     inform("warning: " + warning);
   issued_warnings.insert(warning);
 }
 
-void user_interface::inform(string const & line)
+
+static inline string 
+sanitize(string const & line)
+{
+  // FIXME: you might want to adjust this if you're using a charset
+  // which has safe values in the sub-0x20 range. ASCII, UTF-8, 
+  // and most ISO8859-x sets do not.
+  string tmp;
+  tmp.reserve(line.size());
+  for (size_t i = 0; i < line.size(); ++i)
+    {
+      if ((line[i] == '\n')
+	  || (line[i] >= static_cast<char>(0x20) 
+	      && line[i] != static_cast<char>(0x7F)))
+	tmp += line[i];
+      else
+	tmp += ' ';
+    }
+  return tmp;
+}
+
+void 
+user_interface::inform(string const & line)
 {
   if (last_write_was_a_tick)
-    cerr << endl;
-  cerr << "monotone: " << line;
-  cerr.flush();
+    clog << endl;
+  clog << "monotone: " << sanitize(line);
+  clog.flush();
   last_write_was_a_tick = false;
 }

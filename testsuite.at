@@ -56,6 +56,25 @@ function non_blocking_rng_ok()
 	return true
 end
 
+function get_manifest_cert_trust(signers, id, name, val)
+   return true
+end
+
+function get_file_cert_trust(signers, id, name, val)
+   return true
+end
+
+function accept_testresult_change(old_results, new_results)
+   for test,res in pairs(old_results)
+   do
+      if res == true and new_results@<:@test@:>@ ~= true
+      then
+	 return false
+      end
+   end
+   return true
+end
+
 function get_author(branchname)
 	return "tester@test.net"
 end
@@ -112,3 +131,6 @@ m4_include(tests/t_cvsimport.at)
 m4_include(tests/t_proxy.at)
 m4_include(tests/t_i18n_file.at)
 m4_include(tests/t_fmerge.at)
+m4_include(tests/t_netsync.at)
+m4_include(tests/t_disapprove.at)
+m4_include(tests/t_testresult.at)

@@ -16,6 +16,7 @@ struct cert;
 #include <boost/filesystem/path.hpp>
 
 #include "manifest.hh"
+#include "numeric_vocab.hh"
 #include "vocab.hh"
 
 // this file defines a public, typed interface to the database.
@@ -172,6 +173,7 @@ public:
   void info(std::ostream &);
   void version(std::ostream &);
   void migrate();
+  void rehash();
   void ensure_open();
   
   bool file_version_exists(file_id const & id);
@@ -205,7 +207,6 @@ public:
 			    manifest_id const & new_id,
 			    manifest_delta const & del);
 
-
   // only use these three variants if you really know what you're doing,
   // wrt. "old" and "new". they will throw if you do something wrong.
 
@@ -232,9 +233,15 @@ public:
   void get_private_keys(std::vector<rsa_keypair_id> & privkeys);
 
   bool key_exists(rsa_keypair_id const & id);
+
+  bool public_key_exists(hexenc<id> const & hash);
   bool public_key_exists(rsa_keypair_id const & id);
   bool private_key_exists(rsa_keypair_id const & id);
   
+  void get_pubkey(hexenc<id> const & hash, 
+		  rsa_keypair_id & id,
+		  base64<rsa_pub_key> & pub_encoded);
+
   void get_key(rsa_keypair_id const & id, 
 	       base64<rsa_pub_key> & pub_encoded);
 
@@ -258,6 +265,7 @@ public:
 			   std::vector< manifest<cert> > & ancestry_certs);
 
   bool manifest_cert_exists(manifest<cert> const & cert);
+  bool manifest_cert_exists(hexenc<id> const & hash);
 
   void put_manifest_cert(manifest<cert> const & cert);
 
@@ -280,8 +288,12 @@ public:
   void get_manifest_certs(manifest_id const & id, 
 			 std::vector< manifest<cert> > & certs);
 
+  void get_manifest_cert(hexenc<id> const & hash,
+			 manifest<cert> & cert);
+
   
   bool file_cert_exists(file<cert> const & cert);
+  bool file_cert_exists(hexenc<id> const & hash);
 
   void put_file_cert(file<cert> const & cert);
 
@@ -303,6 +315,9 @@ public:
   void get_file_certs(cert_name const & name,
 		     base64<cert_value> const & val, 
 		     std::vector< file<cert> > & certs);
+
+  void get_file_cert(hexenc<id> const & hash,
+		     file<cert> & cert);
 
   // network stuff
 
@@ -336,6 +351,28 @@ public:
 
   void note_manifest_on_netserver (url const & u, 
 				   manifest_id const & m);
+
+  // merkle tree stuff
+
+  bool merkle_node_exists(std::string const & type,
+			  utf8 const & collection, 
+			  size_t level,
+			  hexenc<prefix> const & prefix);
+  
+  void get_merkle_node(std::string const & type,
+		       utf8 const & collection, 
+		       size_t level,
+		       hexenc<prefix> const & prefix,
+		       base64<merkle> & node);
+
+  void put_merkle_node(std::string const & type,
+		       utf8 const & collection, 
+		       size_t level,
+		       hexenc<prefix> const & prefix,
+		       base64<merkle> const & node);
+
+  void erase_merkle_nodes(std::string const & type,
+			  utf8 const & collection);
 
   // completion stuff
 

@@ -6,36 +6,42 @@
 #include "cert.hh"
 #include "packet.hh"
 #include "app_state.hh"
-#include "mac.hh"
 #include "interner.hh"
 #include "keys.hh"
+#include "mac.hh"
+#include "netio.hh"
 #include "sanity.hh"
 #include "patch_set.hh"
 #include "transforms.hh"
 #include "ui.hh"
 
-#include <boost/shared_ptr.hpp>
-
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
+#include <boost/tuple/tuple_comparison.hpp>
 
 #include <string>
-#include <vector>
+#include <limits>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace boost;
 
 // cert destroyer!
 
-struct bogus_cert_p
+struct 
+bogus_cert_p
 {
   app_state & app;
   bogus_cert_p(app_state & a) : app(a) {};
-  bool operator()(manifest<cert> const & c) const 
+
+  bool cert_is_bogus(cert const & c) const
   {
-  if (check_cert(app,c.inner()))
+  if (check_cert(app, c))
     {
       L(F("cert ok\n"));
       return false;
@@ -43,42 +49,128 @@ struct bogus_cert_p
   else
     {
       string txt;
-      cert_signable_text(c.inner(), txt);
-      W(F("bad signature by '%s' on '%s'\n") % c.inner().key() % txt);
+      cert_signable_text(c, txt);
+      W(F("bad signature by '%s' on '%s'\n") % c.key() % txt);
       return true;
     }
   }
+
+  bool operator()(manifest<cert> const & c) const 
+  {
+    return cert_is_bogus(c.inner());
+  }
+
   bool operator()(file<cert> const & c) const 
   {
-  if (check_cert(app,c.inner()))
-    {
-      L(F("cert ok\n"));
-      return false;
-    }
-  else
-    {
-      string txt;
-      cert_signable_text(c.inner(), txt);
-      W(F("bad signature by '%s' on '%s'\n") % c.inner().key() % txt);
-      return true;
-    }
+    return cert_is_bogus(c.inner());
   }
 };
 
-void erase_bogus_certs(vector< manifest<cert> > & certs,
-			      app_state & app)
+
+void 
+erase_bogus_certs(vector< manifest<cert> > & certs,
+		  app_state & app)
 {
-  vector< manifest<cert> >::iterator e = 
-    remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
-  certs.erase(e, certs.end());      
+  typedef vector< manifest<cert> >::iterator it;
+  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
+  certs.erase(e, certs.end());
+
+  vector< manifest<cert> > tmp_certs;
+
+  // sorry, this is a crazy data structure
+  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
+  trust_map trust;
+
+  for (it i = certs.begin(); i != certs.end(); ++i)
+    {
+      trust_key key = trust_key(i->inner().ident, i->inner().name, i->inner().value);
+      trust_map::iterator j = trust.find(key);
+      shared_ptr< set<rsa_keypair_id> > s;
+      if (j == trust.end())
+	{
+	  s.reset(new set<rsa_keypair_id>());
+	  trust.insert(make_pair(key, make_pair(s, i)));
+	}
+      else
+	s = j->second.first;
+      s->insert(i->inner().key);
+    }
+
+  for (trust_map::const_iterator i = trust.begin();
+       i != trust.end(); ++i)
+    {
+      cert_value decoded_value;
+      decode_base64(get<2>(i->first), decoded_value);
+      if (app.lua.hook_get_manifest_cert_trust(*(i->second.first),
+					       get<0>(i->first),
+					       get<1>(i->first),
+					       decoded_value))
+	{
+	  L(F("trust function liked %d signers of cert '%s'='%s' on manifest '%s'\n")
+	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  tmp_certs.push_back(*(i->second.second));
+	}
+      else
+	{
+	  L(F("trust function disliked %d signers of cert '%s'='%s' on manifest '%s'\n")
+	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	}
+    }
+  certs = tmp_certs;
 }
 
-void erase_bogus_certs(vector< file<cert> > & certs,
-			      app_state & app)
+void 
+erase_bogus_certs(vector< file<cert> > & certs,
+		  app_state & app)
 {
-  vector< file<cert> >::iterator e = 
-    remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
+  typedef vector< file<cert> >::iterator it;
+  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
   certs.erase(e, certs.end());
+
+  vector< file<cert> > tmp_certs;
+
+  // sorry, this is a crazy data structure
+  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
+  trust_map trust;
+
+  for (it i = certs.begin(); i != certs.end(); ++i)
+    {
+      trust_key key = trust_key(i->inner().ident, i->inner().name, i->inner().value);
+      trust_map::iterator j = trust.find(key);
+      shared_ptr< set<rsa_keypair_id> > s;
+      if (j == trust.end())
+	{
+	  s.reset(new set<rsa_keypair_id>());
+	  trust.insert(make_pair(key, make_pair(s, i)));
+	}
+      else
+	s = j->second.first;
+      s->insert(i->inner().key);
+    }
+
+  for (trust_map::const_iterator i = trust.begin();
+       i != trust.end(); ++i)
+    {
+      cert_value decoded_value;
+      decode_base64(get<2>(i->first), decoded_value);
+      if (app.lua.hook_get_manifest_cert_trust(*(i->second.first),
+					       get<0>(i->first),
+					       get<1>(i->first),
+					       decoded_value))
+	{
+	  L(F("trust function liked %d signers of cert '%s'='%s' on file '%s'\n")
+	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	  tmp_certs.push_back(*(i->second.second));
+	}
+      else
+	{
+	  L(F("trust function disliked %d signers of cert '%s'='%s' on file '%s'\n")
+	    % i->second.first->size() % get<1>(i->first) % decoded_value % get<0>(i->first));
+	}
+    }
+  certs = tmp_certs;
 }
 
 
@@ -102,7 +194,8 @@ cert::cert(hexenc<id> const & ident,
   : ident(ident), name(name), value(value), key(key), sig(sig)
 {}
 
-bool cert::operator<(cert const & other) const
+bool 
+cert::operator<(cert const & other) const
 {
   return (ident < other.ident)
     || ((ident == other.ident) && value < other.value)
@@ -110,7 +203,8 @@ bool cert::operator<(cert const & other) const
     || ((((ident == other.ident) && value == other.value) && key == other.key) && sig < other.sig);
 }
 
-bool cert::operator==(cert const & other) const
+bool 
+cert::operator==(cert const & other) const
 {
   return 
     (ident == other.ident)
@@ -119,15 +213,94 @@ bool cert::operator==(cert const & other) const
     && (sig == other.sig);
 }
 
+// netio support
+			 
+void 
+read_cert(string const & in, cert & t)
+{
+  size_t pos = 0;
+  id hash = extract_substring(in, pos, 
+			      constants::merkle_hash_length_in_bytes, 
+			      "cert hash");
+  id ident = extract_substring(in, pos, 
+			       constants::merkle_hash_length_in_bytes, 
+			       "cert ident");
+  string name, val, key, sig;
+  extract_variable_length_string(in, name, pos, "cert name");
+  extract_variable_length_string(in, val, pos, "cert val");
+  extract_variable_length_string(in, key, pos, "cert key");
+  extract_variable_length_string(in, sig, pos, "cert sig");
+  assert_end_of_buffer(in, pos, "cert"); 
+  
+  hexenc<id> hid;
+  base64<cert_value> bval;
+  base64<rsa_sha1_signature> bsig;
 
-void cert_signable_text(cert const & t,
+  encode_hexenc(ident, hid);
+  encode_base64(cert_value(val), bval);
+  encode_base64(rsa_sha1_signature(sig), bsig);
+
+  cert tmp(hid, cert_name(name), bval, rsa_keypair_id(key), bsig);
+
+  hexenc<id> hcheck;
+  id check;
+  cert_hash_code(tmp, hcheck);
+  decode_hexenc(hcheck, check);
+  if (!(check == hash))
+    {
+      hexenc<id> hhash;
+      encode_hexenc(hash, hhash);
+      throw bad_decode(F("calculated cert hash '%s' does not match '%s'")
+		       % hcheck % hhash);
+    }
+  t = tmp;
+}
+
+void 
+write_cert(cert const & t, string & out)
+{  
+  string name, key;
+  hexenc<id> hash;
+  id ident_decoded, hash_decoded;
+  rsa_sha1_signature sig_decoded;
+  cert_value value_decoded;
+
+  cert_hash_code(t, hash);
+  decode_base64(t.value, value_decoded);
+  decode_base64(t.sig, sig_decoded);
+  decode_hexenc(t.ident, ident_decoded);
+  decode_hexenc(hash, hash_decoded);
+
+  out.append(hash_decoded());
+  out.append(ident_decoded());
+  insert_variable_length_string(t.name(), out);
+  insert_variable_length_string(value_decoded(), out);
+  insert_variable_length_string(t.key(), out);
+  insert_variable_length_string(sig_decoded(), out);
+}
+
+void 
+cert_signable_text(cert const & t,
 		       string & out)
 {
   out = (F("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
   L(F("cert: signable text %s\n") % out);
 }
 
-void calculate_cert(app_state & app, cert & t)
+void 
+cert_hash_code(cert const & t, hexenc<id> & out)
+{
+  string tmp(t.ident()
+	     + ":" + t.name()
+	     + ":" + remove_ws(t.value())
+	     + ":" + t.key()
+	     + ":" + remove_ws(t.sig()));
+  data tdat(tmp);
+  calculate_ident(tdat, out);
+}
+
+void 
+calculate_cert(app_state & app, cert & t)
 {
   string signed_text;
   base64< arc4<rsa_priv_key> > priv;
@@ -153,7 +326,8 @@ void calculate_cert(app_state & app, cert & t)
   make_signature(app.lua, t.key, priv, signed_text, t.sig);
 }
 
-bool check_cert(app_state & app, cert const & t)
+bool 
+check_cert(app_state & app, cert const & t)
 {
 
   base64< rsa_pub_key > pub;
@@ -186,7 +360,9 @@ bool check_cert(app_state & app, cert const & t)
 string const ancestor_cert_name("ancestor");
 string const branch_cert_name("branch");
 
-bool guess_default_key(rsa_keypair_id & key, app_state & app)
+bool 
+guess_default_key(rsa_keypair_id & key, 
+		  app_state & app)
 {
 
   if (app.signing_key() != "")
@@ -213,9 +389,10 @@ bool guess_default_key(rsa_keypair_id & key, app_state & app)
     }
 }
 
-void guess_branch(manifest_id const & id,
-		  app_state & app,
-		  cert_value & branchname)
+void 
+guess_branch(manifest_id const & id,
+	     app_state & app,
+	     cert_value & branchname)
 {
   if (app.branch_name() != "")
     {
@@ -240,11 +417,12 @@ void guess_branch(manifest_id const & id,
     }
 }
 
-void make_simple_cert(hexenc<id> const & id,
-		      cert_name const & nm,
-		      cert_value const & cv,
-		      app_state & app,
-		      cert & c)
+void 
+make_simple_cert(hexenc<id> const & id,
+		 cert_name const & nm,
+		 cert_value const & cv,
+		 app_state & app,
+		 cert & c)
 {
   rsa_keypair_id key;
   N(guess_default_key(key,app),
@@ -257,11 +435,12 @@ void make_simple_cert(hexenc<id> const & id,
 }
 
 
-static void put_simple_manifest_cert(manifest_id const & id,
-				     cert_name const & nm,
-				     cert_value const & val,
-				     app_state & app,
-				     packet_consumer & pc)
+static void 
+put_simple_manifest_cert(manifest_id const & id,
+			 cert_name const & nm,
+			 cert_value const & val,
+			 app_state & app,
+			 packet_consumer & pc)
 {
   cert t;
   make_simple_cert(id.inner(), nm, val, app, t);
@@ -269,11 +448,12 @@ static void put_simple_manifest_cert(manifest_id const & id,
   pc.consume_manifest_cert(cc);
 }
 
-static void put_simple_file_cert(file_id const & id,
-				 cert_name const & nm,
-				 cert_value const & val,
-				 app_state & app,
-				 packet_consumer & pc)
+static void 
+put_simple_file_cert(file_id const & id,
+		     cert_name const & nm,
+		     cert_value const & val,
+		     app_state & app,
+		     packet_consumer & pc)
 {
   cert t;
   make_simple_cert(id.inner(), nm, val, app, t);
@@ -281,19 +461,21 @@ static void put_simple_file_cert(file_id const & id,
   pc.consume_file_cert(fc);
 }
 
-void cert_manifest_in_branch(manifest_id const & man, 
-			     cert_value const & branchname,
-			     app_state & app,
-			     packet_consumer & pc)
+void 
+cert_manifest_in_branch(manifest_id const & man, 
+			cert_value const & branchname,
+			app_state & app,
+			packet_consumer & pc)
 {
   put_simple_manifest_cert (man, branch_cert_name,
 			    branchname, app, pc);
 }
 
 
-static void get_parents(manifest_id const & child,
-			set<manifest_id> & parents,
-			app_state & app)
+static void 
+get_parents(manifest_id const & child,
+	    set<manifest_id> & parents,
+	    app_state & app)
 {
   vector< manifest<cert> > certs;
   parents.clear();
@@ -304,16 +486,23 @@ static void get_parents(manifest_id const & child,
     {
       cert_value tv;
       decode_base64(i->inner().value, tv);
-      parents.insert(manifest_id(tv()));
+      manifest_id parent(tv());
+      vector< manifest<cert> > disapprove_certs;
+      app.db.get_manifest_certs(child, disapproval_cert_name, 
+				i->inner().value, disapprove_certs);
+      erase_bogus_certs(disapprove_certs, app);
+      if (disapprove_certs.empty())      
+	parents.insert(parent);
     }
 }
 
 
-static bool find_relevant_edges(manifest_id const & ancestor,
-				manifest_id const & child,
-				app_state & app,
-				multimap <manifest_id, manifest_id> & relevant_edges,
-				set<manifest_id> & visited_nodes)
+static bool 
+find_relevant_edges(manifest_id const & ancestor,
+		    manifest_id const & child,
+		    app_state & app,
+		    multimap <manifest_id, manifest_id> & relevant_edges,
+		    set<manifest_id> & visited_nodes)
 {
   if (ancestor == child)
     return true;
@@ -352,10 +541,11 @@ static bool find_relevant_edges(manifest_id const & ancestor,
 }
 
 
-void write_ancestry_paths(manifest_id const & ancestor,
-			  manifest_id const & begin,
-			  app_state & app,
-			  packet_consumer & pc)
+void 
+write_ancestry_paths(manifest_id const & ancestor,
+		     manifest_id const & begin,
+		     app_state & app,
+		     packet_consumer & pc)
 {
 
   typedef multimap < manifest_id, manifest_id > emap;
@@ -447,9 +637,10 @@ void write_ancestry_paths(manifest_id const & ancestor,
 // moment). we'll see if anyone cares to try branch certs on files. it
 // doesn't sound terribly useful, but who knows.
 
-void get_branch_heads(cert_value const & branchname,
-		      app_state & app,
-		      set<manifest_id> & heads)
+void 
+get_branch_heads(cert_value const & branchname,
+		 app_state & app,
+		 set<manifest_id> & heads)
 {
   heads.clear();
   vector< manifest<cert> > branch_certs, ancestor_certs;
@@ -459,15 +650,13 @@ void get_branch_heads(cert_value const & branchname,
   P(F("fetching heads of branch '%s'\n") % branchname);
 
   app.db.get_head_candidates(branch_encoded(), branch_certs, ancestor_certs);
-  bogus_cert_p bogus(app);
+  erase_bogus_certs(branch_certs, app);
+  erase_bogus_certs(ancestor_certs, app);
 
   for (vector< manifest<cert> >::const_iterator i = branch_certs.begin();
        i != branch_certs.end(); ++i)
     {
-      if (!bogus(*i))
-	{
-	  heads.insert(i->inner().ident);
-	}      
+      heads.insert(i->inner().ident);
     }
 
   L(F("began with %d candidate heads\n") % heads.size());
@@ -476,23 +665,32 @@ void get_branch_heads(cert_value const & branchname,
   for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
        i != ancestor_certs.end(); ++i)
     {
+      // skip those invalidated by a specific disapproval
+      vector< manifest<cert> > disapprove_certs;
+      app.db.get_manifest_certs(i->inner().ident, disapproval_cert_name, 
+				i->inner().value, disapprove_certs);
+      erase_bogus_certs(disapprove_certs, app);
+      if (! disapprove_certs.empty())
+	continue;
+
       cert_value tv;
       decode_base64(i->inner().value, tv);
       manifest_id parent(tv());
       set<manifest_id>::const_iterator j = heads.find(parent);
-      if (j != heads.end() && !bogus(*i))
+      if (j != heads.end())
 	{
 	  heads.erase(j);
 	}
     }
-
+  
   L(F("reduced to %d heads\n") % heads.size());
 }
 		   
-void cert_file_ancestor(file_id const & parent, 
-			file_id const & child,
-			app_state & app,
-			packet_consumer & pc)
+void 
+cert_file_ancestor(file_id const & parent, 
+		   file_id const & child,
+		   app_state & app,
+		   packet_consumer & pc)
 {
   if (parent == child)
     {
@@ -503,10 +701,11 @@ void cert_file_ancestor(file_id const & parent,
 			parent.inner()(), app, pc);
 }
 
-void cert_manifest_ancestor(manifest_id const & parent, 
-			   manifest_id const & child,
-			   app_state & app,
-			    packet_consumer & pc)
+void 
+cert_manifest_ancestor(manifest_id const & parent, 
+		       manifest_id const & child,
+		       app_state & app,
+		       packet_consumer & pc)
 {
   if (parent == child)
     {
@@ -725,10 +924,11 @@ find_intersecting_node(dynamic_bitset<> & fst,
 //     }
 // }
 
-bool find_common_ancestor(manifest_id const & left,
-			  manifest_id const & right,
-			  manifest_id & anc,
-			  app_state & app)
+bool 
+find_common_ancestor(manifest_id const & left,
+		     manifest_id const & right,
+		     manifest_id & anc,
+		     app_state & app)
 {
   interner<unsigned long> intern;
   map< unsigned long, shared_ptr< dynamic_bitset<> > > 
@@ -789,8 +989,9 @@ rename_edge::rename_edge(rename_edge const & other)
   mapping = other.mapping;
 }
 
-static void include_rename_edge(rename_edge const & in, 
-				rename_edge & out)
+static void 
+include_rename_edge(rename_edge const & in, 
+		    rename_edge & out)
 {
   L(F("merging rename edge %s -> %s with %s -> %s\n")
     % in.parent % in.child % out.parent % out.child);
@@ -821,9 +1022,10 @@ static void include_rename_edge(rename_edge const & in,
     }  
 }
 
-static void compose_rename_edges(rename_edge const & a,
-				  rename_edge const & b,
-				  rename_edge & out)
+static void 
+compose_rename_edges(rename_edge const & a,
+		     rename_edge const & b,
+		     rename_edge & out)
 {
   I(a.child == b.parent);
   out.mapping.clear();
@@ -857,8 +1059,9 @@ static void compose_rename_edges(rename_edge const & a,
     }
 }
 
-static void write_rename_edge(rename_edge const & edge,
-			      string & val)
+static void 
+write_rename_edge(rename_edge const & edge,
+		  string & val)
 {
   ostringstream oss;
   gzip<data> compressed;
@@ -872,9 +1075,10 @@ static void write_rename_edge(rename_edge const & edge,
   val = compressed();
 }
 
-static void read_rename_edge(hexenc<id> const & node,
-			     base64<cert_value> const & val,
-			     rename_edge & edge)
+static void 
+read_rename_edge(hexenc<id> const & node,
+		 base64<cert_value> const & val,
+		 rename_edge & edge)
 {
   edge.child = manifest_id(node);
   cert_value decoded;
@@ -926,12 +1130,13 @@ static void read_rename_edge(hexenc<id> const & node,
  * already atrocious.
  */
 
-static bool calculate_renames_recursive(manifest_id const & ancestor,
-					manifest_id const & child,
-					app_state & app,
-					rename_edge & edge,
-					map<manifest_id, shared_ptr<rename_edge> > & partial_edges,
-					set<manifest_id> & visited_nodes)
+static bool 
+calculate_renames_recursive(manifest_id const & ancestor,
+			    manifest_id const & child,
+			    app_state & app,
+			    rename_edge & edge,
+			    map<manifest_id, shared_ptr<rename_edge> > & partial_edges,
+			    set<manifest_id> & visited_nodes)
 {
 
   if (ancestor == child)
@@ -1034,10 +1239,11 @@ static bool calculate_renames_recursive(manifest_id const & ancestor,
   return relevant_child;
 }
 
-void calculate_renames(manifest_id const & ancestor,
-		       manifest_id const & child,
-		       app_state & app,
-		       rename_edge & edge)
+void 
+calculate_renames(manifest_id const & ancestor,
+		  manifest_id const & child,
+		  app_state & app,
+		  rename_edge & edge)
 {
   // it's ok if we can't find any paths
   set<manifest_id> visited;
@@ -1053,26 +1259,27 @@ string const author_cert_name = "author";
 string const tag_cert_name = "tag";
 string const changelog_cert_name = "changelog";
 string const comment_cert_name = "comment";
-string const approval_cert_name = "approval";
+string const disapproval_cert_name = "disapproval";
 string const testresult_cert_name = "testresult";
 string const rename_cert_name = "rename";
 string const vcheck_cert_name = "vcheck";
 
 
-static
-void cert_manifest_date(manifest_id const & m, 
-			boost::posix_time::ptime t,
-			app_state & app,
-			packet_consumer & pc)
+static void 
+cert_manifest_date(manifest_id const & m, 
+		   boost::posix_time::ptime t,
+		   app_state & app,
+		   packet_consumer & pc)
 {
   string val = boost::posix_time::to_iso_extended_string(t);
   put_simple_manifest_cert(m, date_cert_name, val, app, pc);
 }
 
-void cert_manifest_date_time(manifest_id const & m, 
-			     time_t t,
-			     app_state & app,
-			     packet_consumer & pc)
+void 
+cert_manifest_date_time(manifest_id const & m, 
+			time_t t,
+			app_state & app,
+			packet_consumer & pc)
 {
   // make sure you do all your CVS conversions by 2038!
   boost::posix_time::ptime tmp(boost::gregorian::date(1970,1,1), 
@@ -1080,24 +1287,27 @@ void cert_manifest_date_time(manifest_id const & m,
   cert_manifest_date(m, tmp, app, pc);
 }
 
-void cert_manifest_date_now(manifest_id const & m, 
-			    app_state & app,
-			    packet_consumer & pc)
+void 
+cert_manifest_date_now(manifest_id const & m, 
+		       app_state & app,
+		       packet_consumer & pc)
 {
   cert_manifest_date(m, boost::posix_time::second_clock::universal_time(), app, pc);
 }
 
-void cert_manifest_author(manifest_id const & m, 
-			  string const & author,
-			  app_state & app,
-			  packet_consumer & pc)
+void 
+cert_manifest_author(manifest_id const & m, 
+		     string const & author,
+		     app_state & app,
+		     packet_consumer & pc)
 {
   put_simple_manifest_cert(m, author_cert_name, author, app, pc);  
 }
 
-void cert_manifest_author_default(manifest_id const & m, 
-				  app_state & app,
-				  packet_consumer & pc)
+void 
+cert_manifest_author_default(manifest_id const & m, 
+			     app_state & app,
+			     packet_consumer & pc)
 {
   string author;
   N(app.lua.hook_get_author(app.branch_name(), author),
@@ -1105,72 +1315,92 @@ void cert_manifest_author_default(manifest_id const & m,
   put_simple_manifest_cert(m, author_cert_name, author, app, pc);
 }
 
-void cert_manifest_tag(manifest_id const & m, 
-		       string const & tagname,
-		       app_state & app,
-		       packet_consumer & pc)
+void 
+cert_manifest_tag(manifest_id const & m, 
+		  string const & tagname,
+		  app_state & app,
+		  packet_consumer & pc)
 {
   put_simple_manifest_cert(m, tag_cert_name, tagname, app, pc);  
 }
 
 
-void cert_manifest_changelog(manifest_id const & m, 
-			     string const & changelog,
-			     app_state & app,
-			     packet_consumer & pc)
+void 
+cert_manifest_changelog(manifest_id const & m, 
+			string const & changelog,
+			app_state & app,
+			packet_consumer & pc)
 {
   put_simple_manifest_cert(m, changelog_cert_name, changelog, app, pc);  
 }
 
-void cert_file_comment(file_id const & f, 
-		       string const & comment,
-		       app_state & app,
-		       packet_consumer & pc)
+void 
+cert_file_comment(file_id const & f, 
+		  string const & comment,
+		  app_state & app,
+		  packet_consumer & pc)
 {
   put_simple_file_cert(f, comment_cert_name, comment, app, pc);  
 }
 
-void cert_manifest_comment(manifest_id const & m, 
-			   string const & comment,
-			   app_state & app,
-			   packet_consumer & pc)
+void 
+cert_manifest_comment(manifest_id const & m, 
+		      string const & comment,
+		      app_state & app,
+		      packet_consumer & pc)
 {
   put_simple_manifest_cert(m, comment_cert_name, comment, app, pc);  
 }
 
-void cert_file_approval(file_id const & f, 
-			bool const approval,
-			app_state & app,
-			packet_consumer & pc)
+void 
+cert_file_approval(file_id const & f1, 
+		   file_id const & f2, 
+		   bool const approval,
+		   app_state & app,
+		   packet_consumer & pc)
 {
-  string approved = approval ? "true" : "false";
-  put_simple_file_cert(f, approval_cert_name, approved, app, pc);
+  if (approval)
+    put_simple_file_cert(f2, ancestor_cert_name, f1.inner()(), app, pc);
+  else
+    put_simple_file_cert(f2, disapproval_cert_name, f1.inner()(), app, pc);
 }
 
-void cert_manifest_approval(manifest_id const & m, 
-			    bool const approval,
-			    app_state & app,
-			    packet_consumer & pc)
+void 
+cert_manifest_approval(manifest_id const & m1, 
+		       manifest_id const & m2, 
+		       bool const approval,
+		       app_state & app,
+		       packet_consumer & pc)
 {
-  string approved = approval ? "true" : "false";
-  put_simple_manifest_cert(m, approval_cert_name, approved, app, pc);  
+  if (approval)
+    put_simple_manifest_cert(m2, ancestor_cert_name, m1.inner()(), app, pc);
+  else
+    put_simple_manifest_cert(m2, disapproval_cert_name, m1.inner()(), app, pc);
 }
 
-void cert_manifest_testresult(manifest_id const & m, 
-			      string const & suitename,
-			      string const & results,
-			      app_state & app,
-			      packet_consumer & pc)
+void 
+cert_manifest_testresult(manifest_id const & m, 
+			 string const & results,
+			 app_state & app,
+			 packet_consumer & pc)
 {
-  if (results.find_first_not_of("01") != string::npos)
-    throw oops("test results must be a contiguous sequence of '0' and '1' characters");
-  put_simple_manifest_cert(m, testresult_cert_name, results, app, pc); 
+  bool passed = false;
+  try
+    {
+      passed = lexical_cast<bool>(results);
+    }
+  catch (boost::bad_lexical_cast & e)
+    {
+      throw oops("test results must be a boolean value: '0' or '1'");
+    }
+  put_simple_manifest_cert(m, testresult_cert_name, lexical_cast<string>(passed), app, pc); 
 }
 
-void cert_manifest_rename(manifest_id const & m, 
-			  rename_edge const & re,
-			  app_state & app,
-			  packet_consumer & pc)
+void 
+cert_manifest_rename(manifest_id const & m, 
+		     rename_edge const & re,
+		     app_state & app,
+		     packet_consumer & pc)
 {
   string val;
   write_rename_edge(re, val);
@@ -1178,10 +1408,11 @@ void cert_manifest_rename(manifest_id const & m,
 }
 
 			  
-static void calculate_vcheck_mac(manifest_id const & m, 
-				 string const & seed,
-				 string & mac,
-				 app_state & app)
+static void 
+calculate_vcheck_mac(manifest_id const & m, 
+		     string const & seed,
+		     string & mac,
+		     app_state & app)
 {
   L(F("calculating vcheck cert on %s with seed %s\n") % m % seed);
 
@@ -1212,9 +1443,10 @@ static void calculate_vcheck_mac(manifest_id const & m,
   L(F("mac of %d entry mac-manifest is %s\n") % mm_mac.size() % mac);
 }
 
-void cert_manifest_vcheck(manifest_id const & m, 
-			  app_state & app,
-			  packet_consumer & pc)
+void 
+cert_manifest_vcheck(manifest_id const & m, 
+		     app_state & app,
+		     packet_consumer & pc)
 {
   string mac;
   string seed;
@@ -1225,8 +1457,9 @@ void cert_manifest_vcheck(manifest_id const & m,
   put_simple_manifest_cert(m, vcheck_cert_name, val, app, pc);
 }
 
-void check_manifest_vcheck(manifest_id const & m, 
-			   app_state & app)
+void 
+check_manifest_vcheck(manifest_id const & m, 
+		      app_state & app)
 {
 
   vector< manifest<cert> > certs;

@@ -29,7 +29,8 @@ string const manifest_file_name("manifest");
 
 // building manifest_maps
 
-class manifest_map_builder : public tree_walker
+class 
+manifest_map_builder : public tree_walker
 {
   app_state & app;
   manifest_map & man;
@@ -43,7 +44,8 @@ manifest_map_builder::manifest_map_builder(app_state & a, manifest_map & m)
 {
 }
 
-void manifest_map_builder::visit_file(file_path const & path)
+void 
+manifest_map_builder::visit_file(file_path const & path)
 {
       
   if (book_keeping_file(path()))
@@ -56,17 +58,19 @@ void manifest_map_builder::visit_file(file_path const & path)
   man.insert(entry(path, file_id(ident)));
 }
 
-void build_manifest_map(file_path const & path,
-			app_state & app,
-			manifest_map & man)
+void 
+build_manifest_map(file_path const & path,
+		   app_state & app,
+		   manifest_map & man)
 {
   man.clear();
   manifest_map_builder build(app,man);
   walk_tree(path, build);
 }
 
-void build_manifest_map(app_state & app,
-			manifest_map & man)
+void 
+build_manifest_map(app_state & app,
+		   manifest_map & man)
 {
   man.clear();
   manifest_map_builder build(app,man);
@@ -74,9 +78,10 @@ void build_manifest_map(app_state & app,
 }
 
 
-void build_manifest_map(path_set const & paths,
-			manifest_map & man, 
-			app_state & app)
+void 
+build_manifest_map(path_set const & paths,
+		   manifest_map & man, 
+		   app_state & app)
 {
   man.clear();
   for (path_set::const_iterator i = paths.begin();
@@ -88,8 +93,9 @@ void build_manifest_map(path_set const & paths,
     }
 }
 
-void append_manifest_map(manifest_map const & m1,
-			 manifest_map & m2)
+void 
+append_manifest_map(manifest_map const & m1,
+		    manifest_map & m2)
 {
   copy(m1.begin(), m1.end(), inserter(m2, m2.begin()));
 }
@@ -97,7 +103,8 @@ void append_manifest_map(manifest_map const & m1,
 
 // reading manifest_maps
 
-struct add_to_manifest_map
+struct 
+add_to_manifest_map
 {    
   manifest_map & man;
   explicit add_to_manifest_map(manifest_map & m) : man(m) {}
@@ -113,15 +120,17 @@ struct add_to_manifest_map
   }
 };
 
-void read_manifest_map(data const & dat,
-		       manifest_map & man)
+void 
+read_manifest_map(data const & dat,
+		  manifest_map & man)
 {
   regex expr("^([[:xdigit:]]{40})  ([^[:space:]].+)$");
   regex_grep(add_to_manifest_map(man), dat(), expr, match_not_dot_newline);  
 }
 
-void read_manifest_map(manifest_data const & dat,
-		       manifest_map & man)
+void 
+read_manifest_map(manifest_data const & dat,
+		  manifest_map & man)
 {  
   gzip<data> decoded;
   data decompressed;
@@ -134,15 +143,17 @@ void read_manifest_map(manifest_data const & dat,
 
 // writing manifest_maps
 
-std::ostream & operator<<(std::ostream & out, entry const & e)
+std::ostream & 
+operator<<(std::ostream & out, entry const & e)
 {
   path_id_pair pip(e);
   return (out << pip.ident().inner()() << "  " << pip.path()() << "\n");
 }
 
 
-void write_manifest_map(manifest_map const & man,
-			manifest_data & dat)
+void 
+write_manifest_map(manifest_map const & man,
+		   manifest_data & dat)
 {
   ostringstream sstr;
   copy(man.begin(),
@@ -159,8 +170,9 @@ void write_manifest_map(manifest_map const & man,
   dat = manifest_data(encoded);
 }
 
-void write_manifest_map(manifest_map const & man,
-			data & dat)
+void 
+write_manifest_map(manifest_map const & man,
+		   data & dat)
 {
   ostringstream sstr;
   for (manifest_map::const_iterator i = man.begin();
@@ -173,9 +185,10 @@ void write_manifest_map(manifest_map const & man,
 // manifest_maps are set-theoretic enough objects that we can use our
 // friendly <algorithm> routines
 
-void calculate_manifest_changes(manifest_map const & a,
-				manifest_map const & b,
-				manifest_changes & chg)
+void 
+calculate_manifest_changes(manifest_map const & a,
+			   manifest_map const & b,
+			   manifest_changes & chg)
 {  
   chg.adds.clear();
   chg.dels.clear();
@@ -186,9 +199,10 @@ void calculate_manifest_changes(manifest_map const & a,
 }
 
 
-void apply_manifest_changes(manifest_map const & a,
-			    manifest_changes const & chg,
-			    manifest_map & b)
+void 
+apply_manifest_changes(manifest_map const & a,
+		       manifest_changes const & chg,
+		       manifest_map & b)
 {
   set<entry> tmp, deleted;
   copy(a.begin(), a.end(), inserter(tmp, tmp.begin()));
@@ -201,8 +215,9 @@ void apply_manifest_changes(manifest_map const & a,
 	    inserter(b, b.begin()));
 }
 
-void write_manifest_changes(manifest_changes const & changes, 
-			    data & dat)
+void 
+write_manifest_changes(manifest_changes const & changes, 
+		       data & dat)
 {
   ostringstream out;
   for (set<entry>::const_iterator i = changes.dels.begin();

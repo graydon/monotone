@@ -290,7 +290,7 @@ void execute_post_query (string const & user,
       {
 	string content = tmp.substr(lo, (hi+tok.size()) - lo);
 	bool exists = false;
-	adler32 ad(content.data(), content.size());
+	adler32 ad(reinterpret_cast<u8 const *>(content.data()), content.size());
 	int res = sqlite_exec_printf(sql, 
 				     "SELECT COUNT(*) > 0 FROM packets "
 				     "WHERE groupname = '%q' AND adler32 = %lu AND contents = '%q'",

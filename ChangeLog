@@ -1,3 +1,149 @@
+2004-03-06  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc (get_root_prefix): Fix from Paul Snively
+	to fix static initialization order on mac OSX.
+	* montone.texi: Typo fix from Anders Petersson.
+	* *.cc: Move all function defs into column 0.
+
+2004-03-04  graydon hoare  <graydon@pobox.com>
+
+	* std_hooks.lua: Fix merger execution pessimism.
+
+2004-03-04  graydon hoare  <graydon@pobox.com>
+
+	* adler32.hh: Modify to use u8.
+	* depot.cc, netcmd.cc, xdelta.cc: Modify to use u8.
+	* netio.hh, numeric_vocab.hh (widen): Move between headers.
+	* netsync.cc: Correct role-assumption bugs.
+	* schema_migration.cc: Strip whitespace in sha1.
+	(changes received from Christof Petig)
+
+2004-03-01  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc: Handle anonymous pulling.
+	* netsync.cc: Ditto.
+
+	Release point (v 0.10).
+
+2004-03-01  graydon hoare  <graydon@pobox.com>
+
+	* NEWS: Mention impending 0.10 release.
+	* cert.cc, cert.hh: Bug fixes, implement trust function, QA stuff.
+	* commands.cc: Tweak disapprove, approve, testresult, push, pull.
+	* configure.ac: Bump version number.
+	* cryptopp/rng.h, cryptopp/rng.cpp 
+	(MaurerRandomnessTest): Fix bitrot.
+	* keys.cc: Add Maurer PRNG randomness test.
+	* lua.cc, lua.hh: Add trust, testresult, anonymous netsync hooks. 
+	* monotone.1: Update to follow changes to commands.
+	* monotone.texi: Include QA section, adjust some UI drift, clarify
+	reserved cert names, document new hooks and commands.
+	* netcmd.hh, netcmd.cc: Add anonymous, error commands; fix bugs.
+	* netsync.cc: Process new commands, factor server loop a bit.
+	* std_hooks.lua: Add new hook defaults, factor mergers.
+	* tests/t_netsync.at: Check SHA1 of each edge.
+	* tests/t_null.at: Call with --norc to skip ~/.monotonerc
+	* tests/t_update.at: Fix glaring error.
+	* tests/t_disapprove.at, tests/t_testresult.at: New tests.
+	* testsuite.at: Call them.
+	* ui.cc (sanitize): Clean escape chars from output (optional?)
+	* update.cc: Rewrite entirely in terms of new QA definitions.
+
+2004-02-24  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (ls_keys): Write key hash codes.
+	* constands.cc (netsync_timeout_seconds): Up to 120.
+	* netsync.cc: Fix a bunch of bugs.
+	* patch_set.cc (manifests_to_patch_set): Fix bug in overload
+	default construction.
+
+2004-02-22  graydon hoare  <graydon@pobox.com>
+
+	* patch_set.cc, patch_set.hh: Parameterize yet further.
+	* netsync.cc: Fix a lot of bugs, add manifest and file grovelling.
+	* tests/t_netsync.at: A new test (which runs!)
+	* testsuite.at: Call it.
+
+2004-02-20  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc, cert.hh, key.cc, key.hh, database.cc, database.hh:
+	Add lots of little netsync support routines.
+	* commands.cc (rebuild): Rehash everything too.
+	* constants.cc (netcmd_minsz): Recalculate.
+	* cryptopp/osrng.cpp (NonblockingRng::GenerateBlock): Handle
+	/dev/urandom a bit better.
+	* netcmd.cc, netcmd.hh: Remove describe cmds, add nonexistant cmd.
+	* netio.hh: Add uleb128 stuff.
+	* xdelta.cc: Add randomizing unit test suite.
+	* diff_patch.cc: Remove commented-out dead line-merger code.
+	* merkle_tree.cc: Fix various bugs.
+	* netcmd.cc: Switch everything over to uleb128s.
+	* netsync.cc: Implement lots of missing stuff.
+
+2004-02-09  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc (ROOT_PREFIX): New variable.
+	* commands.cc (merkle): New command.
+
+2004-02-09  Ben Elliston  <bje@wasabisystems.com>
+
+	* monotone.texi: Spelling corrections.
+
+2004-02-09  graydon hoare  <graydon@pobox.com>
+
+	* database.cc, database.hh 
+	(get_version_size)
+	(get_file_version_size)
+	(get_manifest_version_size): New functions.
+	* xdelta.cc, xdelta.hh (measure_delta_target_size): New function.
+	* merkle_tree.cc, merkle_tree.hh, netcmd.cc, netcmd.hh: 
+	Cleanup and typesafety.
+	* netsync.cc: Cleanup, typesafety, implement refine phase.
+
+2004-02-01  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc: Remove a lot of stuff, implement auth phase.
+	* constants.cc, constants.hh: Move constants from netsync.cc.
+	* netcmd.cc, netcmd.hh: Split out of netsync.cc.
+	* merkle_tree.cc, merkle_tree.hh: Likewise.
+	* numeric_vocab.hh: New header.
+	* adler32.hh: include numeric_vocab.hh.
+	* netio.hh: Likewise.
+	* unit_tests.cc, unit_tests.hh: Update.
+	* Makefile.am: Likewise.
+	* commands.cc: Guess signing key for auth phase.
+	* database.cc, database.hh (public_key_exists)
+	(get_pubkey): New functions based on key hashes.
+
+2004-01-31  graydon hoare  <graydon@pobox.com>
+
+	* Netxx/*: New files.
+	* AUTHORS: Mention Netxx.
+	* Makefile.am: Mention Netxx and netsync.{cc,hh}
+	* adler32.hh: Delegate typedefs to boost.
+	* cert.hh, cert.cc (cert_hash_code): New function.
+	* commands.cc (find_oldest_ancestors): Block cycles.
+	(netsync): New command.
+	* database.cc, database.hh (schema): Update.
+	(put_key): Calculate key hash on the fly.
+	(put_cert): Likewise.
+	(merkle_node_exists)
+	(get_merkle_node)
+	(put_merkle_node)
+	(erase_merkle_nodes): New functions.
+	* keys.hh, keys.cc (key_hash_code): New function.
+	* lua.cc, lua.hh 
+	(hook_get_netsync_read_permitted)
+	(hook_get_netsync_write_permitted): New hooks.
+	* monotone.spec: Update for FC1 info conventions.
+	* monotone.texi (Quality Assurance): New section.
+	* netsync.cc, netsync.hh: New files, preliminary
+	netsync infrastructure. Command bodies still missing.
+	* schema.sql: Add intrinsic key and cert hashes, merkle nodes.
+	* schema_migration.cc: Add code to migrate to new schema.	
+	* unit_tests.cc: Handle command-line args to limit test set.
+	* vocab_terms.hh: Add merkle and prefix as new terms.
+
 2004-01-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* idna/idn-int.h: Remove (generated by configure).

@@ -49,7 +49,8 @@ using boost::lexical_cast;
 using boost::shared_ptr;
 
 
-struct monotone_socket_error_policy
+struct 
+monotone_socket_error_policy
 {
 
   boost::socket::socket_errno 
@@ -325,8 +326,9 @@ boost::socket::basic_socket_stream<char,
 				   monotone_data_socket> 
 monotone_socket_stream;
 
-bool lookup_address(string const & dns_name,
-		    string & ip4)
+bool 
+lookup_address(string const & dns_name,
+	       string & ip4)
 {
   static map<string, string> name_cache;
   adns_state st;
@@ -378,8 +380,9 @@ bool lookup_address(string const & dns_name,
   return true;
 }
 
-bool lookup_mxs(string const & dns_name,
-		set< pair<int, string> > & mx_names)
+bool 
+lookup_mxs(string const & dns_name,
+	   set< pair<int, string> > & mx_names)
 {
   typedef shared_ptr< set< pair<int, string> > > mx_set_ptr;
   static map<string, mx_set_ptr> mx_cache;
@@ -442,12 +445,13 @@ bool lookup_mxs(string const & dns_name,
 }
 
 
-void open_connection(string const & proto_name,
-		     string const & host_name_in,
-		     unsigned long port_num_in,
-		     monotone_connection & connection,
-		     boost::shared_ptr<iostream> & stream,
-		     app_state & app)
+void 
+open_connection(string const & proto_name,
+		string const & host_name_in,
+		unsigned long port_num_in,
+		monotone_connection & connection,
+		boost::shared_ptr<iostream> & stream,
+		app_state & app)
 {
   using namespace boost::socket;
   string resolved_host;
@@ -500,14 +504,15 @@ void open_connection(string const & proto_name,
 }
 
 
-static void post_http_blob(url const & targ,
-			   string const & blob,
-			   string const & group,
-			   string const & host,
-			   unsigned long port,
-			   string const & path,
-			   app_state & app,
-			   bool & posted_ok)
+static void 
+post_http_blob(url const & targ,
+	       string const & blob,
+	       string const & group,
+	       string const & host,
+	       unsigned long port,
+	       string const & path,
+	       app_state & app,
+	       bool & posted_ok)
 {
   rsa_keypair_id keyid;
   base64< arc4<rsa_priv_key> > privkey;
@@ -560,13 +565,14 @@ static void post_http_blob(url const & targ,
     }
 }
 
-static void post_nntp_blob(url const & targ,
-			   string const & blob,
-			   string const & group,
-			   string const & host,
-			   unsigned long port,
-			   app_state & app,
-			   bool & posted_ok)
+static void 
+post_nntp_blob(url const & targ,
+	       string const & blob,
+	       string const & group,
+	       string const & host,
+	       unsigned long port,
+	       app_state & app,
+	       bool & posted_ok)
 {
   string sender;
   N(app.lua.hook_get_news_sender(targ, sender),
@@ -588,13 +594,14 @@ static void post_nntp_blob(url const & targ,
     }	  
 }
 
-static void post_smtp_blob(url const & targ,
-			   string const & blob,
-			   string const & user,
-			   string const & host,
-			   unsigned long port,
-			   app_state & app,
-			   bool & posted_ok)
+static void 
+post_smtp_blob(url const & targ,
+	       string const & blob,
+	       string const & user,
+	       string const & host,
+	       unsigned long port,
+	       app_state & app,
+	       bool & posted_ok)
 {
   string sender, self_hostname;
 
@@ -651,8 +658,9 @@ static void post_smtp_blob(url const & targ,
 }
 
 
-void post_queued_blobs_to_network(set<url> const & targets,
-				  app_state & app)
+void 
+post_queued_blobs_to_network(set<url> const & targets,
+			     app_state & app)
 {
 
   L(F("found %d targets for posting\n") % targets.size());
@@ -728,8 +736,9 @@ void post_queued_blobs_to_network(set<url> const & targets,
     W(F("errors occurred during posts\n"));
 }
 
-void fetch_queued_blobs_from_network(set<url> const & sources,
-				     app_state & app)
+void 
+fetch_queued_blobs_from_network(set<url> const & sources,
+				app_state & app)
 {
 
   bool exception_during_fetches = false;

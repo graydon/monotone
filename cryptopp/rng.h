@@ -55,6 +55,10 @@ class MaurerRandomnessTest : public Sink
 public:
 	MaurerRandomnessTest();
 
+	/** these two I just added in to make it compile. naughty bit-rot. graydon@pobox.com */
+	virtual unsigned int Put2(const byte *inString, unsigned int length, int messageEnd, bool blocking) { return 0; }
+	virtual bool IsolatedFlush(bool hardFlush, bool blocking) { return false; }
+
 	void Put(byte inByte);
 	void Put(const byte *inString, unsigned int length);
 
