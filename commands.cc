@@ -889,10 +889,16 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
     } \
   os << endl;
 
-  if (! rearrangement.added_files.empty())
+  if (! rearrangement.deleted_files.empty())
     {
-      os << "Added files:" << endl;
-      PRINT_INDENTED_SET(rearrangement.added_files)
+      os << "Deleted files:" << endl;
+      PRINT_INDENTED_SET(rearrangement.deleted_files)
+    }
+
+  if (! rearrangement.deleted_dirs.empty())
+    {
+      os << "Deleted directories:" << endl;
+      PRINT_INDENTED_SET(rearrangement.deleted_dirs)
     }
 
   if (! rearrangement.renamed_files.empty())
@@ -913,16 +919,10 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
         os << "        " << i->first << " to " << i->second << endl;
     }
 
-  if (! rearrangement.deleted_files.empty())
+  if (! rearrangement.added_files.empty())
     {
-      os << "Deleted files:" << endl;
-      PRINT_INDENTED_SET(rearrangement.deleted_files)
-    }
-
-  if (! rearrangement.deleted_dirs.empty())
-    {
-      os << "Deleted directories:" << endl;
-      PRINT_INDENTED_SET(rearrangement.deleted_dirs)
+      os << "Added files:" << endl;
+      PRINT_INDENTED_SET(rearrangement.added_files)
     }
 
   if (! modified_files.empty())
