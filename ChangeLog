@@ -1,5 +1,10 @@
 2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
 
+	* file_io.cc (get_homedir): Add more comments and logging to Win32
+	version.  Also, only check HOME under Cygwin/MinGW.
+
+2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (commit): Simplify chatter.
 
 2005-02-21  Nathaniel Smith  <njs@codesourcery.com>

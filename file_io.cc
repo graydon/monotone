@@ -109,21 +109,49 @@ string
 get_homedir()
 {
 #ifdef WIN32
+  // Windows is fun!
+  // See thread on monotone-devel:
+  //   Message-Id: <20050221.182951.104117563.dalcolmo@vh-s.de>
+  //   URL: http://lists.gnu.org/archive/html/monotone-devel/2005-02/msg00241.html
   char * home;
+  L(F("Searching for home directory\n"));
+  // First try MONOTONE_HOME, to give people a way out in case the cruft below
+  // doesn't work for them.
   home = getenv("MONOTONE_HOME");
   if (home != NULL)
-    return string(home);
+    {
+      L(F("Home directory from MONOTONE_HOME\n"));
+      return string(home);
+    }
+  // If running under cygwin or mingw, try HOME next:
   home = getenv("HOME");
-  if (home != NULL)
-    return string(home);
+  char * ostype = getenv("OSTYPE");
+  if (home != NULL
+      && ostype != NULL
+      && (string(ostype) == "cygwin" || string(ostype) == "msys"))
+    {
+      L(F("Home directory from HOME\n"));
+      return string(home);
+    }
+  // Otherwise, try USERPROFILE:
   home = getenv("USERPROFILE");
   if (home != NULL)
-    return string(home);
+    {
+      L(F("Home directory from USERPROFILE\n"));
+      return string(home);
+    }
+  // Finally, if even that doesn't work (old version of Windows, I think?),
+  // try the HOMEDRIVE/HOMEPATH combo:
   char * homedrive = getenv("HOMEDRIVE");
   char * homepath = getenv("HOMEPATH");
   if (homedrive != NULL && homepath != NULL)
-    return string(homedrive) + string(homepath);
-  N((false, F("could not find home directory (tried MONOTONE_HOME, HOME, USERPROFILE, HOMEDRIVE/HOMEPATH"));
+    {
+      L(F("Home directory from HOMEDRIVE+HOMEPATH\n"));
+      return string(homedrive) + string(homepath);
+    }
+  // And if things _still_ didn't work, give up.
+  N((false, F("could not find home directory (tried MONOTONE_HOME, HOME (if "
+              "cygwin/mingw), USERPROFILE, HOMEDRIVE/HOMEPATH"));
 #else
   char * home = getenv("HOME");
   if (home != NULL)
