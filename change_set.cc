@@ -23,10 +23,10 @@
 #include "constants.hh"
 #include "diff_patch.hh"
 #include "file_io.hh"
-#include "interner.hh"
 #include "numeric_vocab.hh"
 #include "sanity.hh"
 #include "smap.hh"
+#include "path_component.hh"
 
 // our analyses in this file happen on one of two families of
 // related structures: a path_analysis or a directory_map.
@@ -52,49 +52,6 @@ tid_source
   tid_source() : ctr(root_tid + 1) {}
   tid next() { I(ctr != UINT32_C(0xffffffff)); return ctr++; }
 };
-
-typedef u32 path_component;
-
-struct
-path_component_maker
-{
-  path_component make(std::string const & s)
-  {
-    bool is_new;
-    path_component pc = intern.intern(s, is_new);
-    // sanity check new ones
-    if (is_new)
-    {
-      // must be a valid file_path
-      file_path tmp_file_path = file_path(s);
-      // must contain exactly 0 or 1 components
-      fs::path tmp_fs_path = mkpath(s);
-      I(null_name(s) || ++(tmp_fs_path.begin()) == tmp_fs_path.end());
-    }
-    return pc;
-  }
-  std::string lookup(path_component pc) const
-  {
-    return intern.lookup(pc);
-  }
-private:
-  interner<path_component> intern;
-};
-
-static path_component_maker the_path_component_maker;
-
-static path_component
-make_null_component()
-{
-  static path_component null_pc = the_path_component_maker.make("");
-  return null_pc;
-}
-
-static bool
-null_name(path_component pc)
-{
-  return pc == make_null_component();
-}
 
 struct
 path_item
@@ -335,12 +292,16 @@ dump_state(std::string const & s,
   for (path_state::const_iterator i = st.begin();
        i != st.end(); ++i)
     {
+      std::vector<path_component> tmp_v;
+      tmp.push_back(path_item_name(path_state_item(i)));
+      file_path tmp_fp;
+      compose_path(tmp_v, tmp_fp);
       L(F("state '%s': tid %d, parent %d, type %s, name %s\n")
         % s
         % path_state_tid(i) 
         % path_item_parent(path_state_item(i))
         % (path_item_type(path_state_item(i)) == ptype_directory ? "dir" : "file")
-        % the_path_component_maker.lookup(path_item_name(path_state_item(i))));
+        % tmp_fp);
     }
   L(F("END dumping state '%s'\n") % s);
 }
@@ -686,46 +647,6 @@ dnode(directory_map & dir, tid t)
   return node;
 }
 
-
-// This function takes a vector of path components and joins them into a
-// single file_path.  Valid input may be a single-element vector whose sole
-// element is the empty path component (""); this represents the null path,
-// which we use to represent non-existent files.  Alternatively, input may be
-// a multi-element vector, in which case all elements of the vector are
-// required to be non-null.  The following are valid inputs (with strings
-// replaced by their interned version, of course):
-//    - [""]
-//    - ["foo"]
-//    - ["foo", "bar"]
-// The following are not:
-//    - []
-//    - ["foo", ""]
-//    - ["", "bar"]
-static void 
-compose_path(std::vector<path_component> const & names,
-             file_path & path)
-{
-  try
-    {      
-      std::vector<path_component>::const_iterator i = names.begin();
-      I(i != names.end());
-      fs::path p = mkpath(the_path_component_maker.lookup(*i));
-      ++i;
-      if (names.size() > 1)
-          I(!null_name(*i));
-      for ( ; i != names.end(); ++i)
-        {
-          I(!null_name(*i));
-          p /= mkpath(the_path_component_maker.lookup(*i));
-        }
-      path = file_path(p.string());
-    }
-  catch (std::runtime_error &e)
-    {
-      throw informative_failure(e.what());
-    }
-}
-
 static void
 get_full_path(path_state const & state,
               tid t,
@@ -852,37 +773,6 @@ compose_rearrangement(path_analysis const & pa,
 }
 
 
-
-  
-//
-// this takes a path of the form
-//
-//  "p[0]/p[1]/.../p[n-1]/p[n]"
-//
-// and fills in a vector of paths corresponding to p[0] ... p[n-1],
-// along with a separate "leaf path" for element p[n]. 
-//
-
-static void 
-split_path(file_path const & p,
-           std::vector<path_component> & components)
-{
-  components.clear();
-  fs::path tmp = mkpath(p());
-  for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
-    components.push_back(the_path_component_maker.make(*i));
-}
-
-static void 
-split_path(file_path const & p,
-           std::vector<path_component> & prefix,
-           path_component & leaf_path)
-{
-  split_path(p, prefix);
-  I(prefix.size() > 0);
-  leaf_path = prefix.back();
-  prefix.pop_back();
-}
 
 static bool
 lookup_path(std::vector<path_component> const & pth,

@@ -1,3 +1,9 @@
+2005-03-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Move path_component stuff to...
+	* path_component.{hh,cc}: ...these new files.
+	* Makefile.am: Add them.
+
 2005-03-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* UPGRADE: Finish, hopefully.

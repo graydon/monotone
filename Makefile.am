@@ -9,6 +9,7 @@ MOST_SOURCES =								\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
 	 change_set.cc mt_version.cc automate.cc database_check.cc	\
+	 path_component.cc                                              \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -20,7 +21,7 @@ MOST_SOURCES =								\
 	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
 	 mkstemp.hh mt_version.hh automate.hh database_check.hh smap.hh	\
-	 gettext.h
+	 gettext.h path_component.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
