@@ -1,3 +1,49 @@
+2005-02-26  Jon Bright  <jon@siliconcircus.com>
+	* xdelta.cc (unittests): Define BOOST_STDC_NO_NAMESPACE, needed
+	to compile with the latest MinGW which uses gcc 3.4.2
+	* vocab.cc (verify(local_path)): Catch fs::filesystem_error too
+	and rethrow this as an informative_failure, thereby fixing the
+	Win32 unit tests without disabling anything
+	* idna/toutf8.c (stringprep_convert): Fix a potential segfault
+	when memory allocation fails.  Potentially security-relevant.
+	* tests/t_i18n_file.at: Add a SET_FUNNY_FILENAME macro, which 
+	gets a platform-appropriate funny filename (with/without 
+	colon).  
+	Change references to utf8 to utf-8, iso88591 to iso-8859-1, and
+	eucjp to euc-jp, on the grounds that MinGW's iconv knows all
+	of the latter and none of the former, but Linux iconv knows all
+	of them.  Test now passes one Win32.  I'm presuming we weren't
+	deliberately using non-standard names for charsets here.
+	* tests/t_i18n_changelog.at: Same charset name changes.
+	* tests/t_dump_load.at: Canonicalise dump before loading it
+	* tests/t_load_into_existing.at: Ditto
+	* tests/t_fmerge.at: Canonicalise fmerge output
+	* tests/t_merge_normalization_edge_case.at: Ditto
+	* tests/t_unidiff.at: Canonicalise diff output
+	* tests/t_largish_file.at: Instead of using dd, which MinGW
+	doesn't have, I've generated the file with dd on a nearby Linux
+	box, then gziped and b64ed it, and the test case now generates
+	it with UNGZB64
+	* testsuite.at: Add a comment every 10 tests with the test
+	number.  Useful if you're trying to locate which test number
+	you're trying to run and only have the filename.  If people 
+	hate this, though, please do delete.
+	(UNB64_COMMAND) Do special handling for Win32 to avoid
+	having to canonicalise the file.
+	(UNGZ_COMMAND) Canonicalise the file after ungzipping it.
+	* lposix.c: (Pfork, Pexec) Removed, on the grounds that we only
+	really want to support fork+exec as a single operation.  fork()
+	without exec() could be risky with a child process also having
+	our sqlite handles, etc.  exec() could be risky since we 
+	wouldn't be exiting gracefully, just dying in the middle of a
+	hook.
+	(Pspawn) Implemented for both Win32 and Unix.  Does fork/exec
+	for Unix, CreateProcess for Win32.  Returns -1 on error, pid on
+	success in both cases.
+	(Pwait, Pkill, Psleep) Implemented for Win32.  Note that pid is
+	not optional for Pwait on Win32.
+	* std_hooks.lua: (execute) Now uses spawn()
+
 2005-02-25  Jon Bright  <jon@siliconcircus.com>
 	* ChangeLog: Add all my previous changes.
 	* tests/t_add_owndb.at: Add test for trying to add the db to

@@ -12,13 +12,10 @@ function temp_file()
 end
 
 function execute(path, ...)   
-   local pid = posix.fork()
+   local pid
    local ret = -1
-   if pid == 0 then
-      posix.exec(path, unpack(arg))
-   else
-      ret, pid = posix.wait(pid)
-   end
+   pid = posix.spawn(path, unpack(arg))
+   ret, pid = posix.wait(pid)
    return ret
 end
 

@@ -232,7 +232,13 @@ fi
 # Poor man's logging:
 AT_CHECK(echo $UNB64_COMMAND, [], [ignore], [ignore])
 ])
-m4_define([UNB64], [AT_CHECK(eval $UNB64_COMMAND <$1 >$2)])
+m4_define([UNB64], [AT_CHECK(
+if test "$OSTYPE" == "msys"; then
+  mimencode -u -o $2 $1
+else
+  eval $UNB64_COMMAND <$1 >$2
+fi
+)])
 
 # Usage: NEED_UNGZ will cancel the test (reporting success) if we
 # can't decode gzipped text.
@@ -249,7 +255,12 @@ fi
 # Poor man's logging:
 AT_CHECK(echo $UNGZ_COMMAND, [], [ignore], [ignore])
 ])
-m4_define([UNGZ], [AT_CHECK(eval $UNGZ_COMMAND <$1 >$2)])
+m4_define([UNGZ], [AT_CHECK(
+eval $UNGZ_COMMAND <$1 >$2
+if test "$OSTYPE" == "msys"; then
+  dos2unix -q -o $2
+fi
+)])
 
 # Usage: NEED_UNGZB64 will XFAIL the test if we can't decode base64'ed
 # gzipped text.
@@ -337,6 +348,7 @@ NETSYNC_SERVE_STOP
 
 # include all the sub-tests we're going to use
 
+#1
 m4_include(tests/t_null.at)
 m4_include(tests/t_scan.at)
 m4_include(tests/t_import.at)
@@ -346,6 +358,7 @@ m4_include(tests/t_persist_phrase.at)
 m4_include(tests/t_versions.at)
 m4_include(tests/t_fork.at)
 m4_include(tests/t_update.at)
+#10
 m4_include(tests/t_merge.at)
 m4_include(tests/t_merge_add.at)
 m4_include(tests/t_related_merge2_data.at)
@@ -356,6 +369,7 @@ m4_include(tests/t_cwork.at)
 m4_include(tests/t_revert.at)
 m4_include(tests/t_add.at)
 m4_include(tests/t_drop.at)
+#20
 m4_include(tests/t_drop_missing.at)
 m4_include(tests/t_cross.at)
 m4_include(tests/t_rename.at)
@@ -366,6 +380,7 @@ m4_include(tests/t_i18n_file.at)
 m4_include(tests/t_fmerge.at)
 m4_include(tests/t_netsync.at)
 m4_include(tests/t_netsync_single.at)
+#30
 m4_include(tests/t_netsync_pubkey.at)
 m4_include(tests/t_netsync_repeated.at)
 m4_include(tests/t_netsync_unrelated.at)
@@ -376,6 +391,7 @@ m4_include(tests/t_ls_missing.at)
 m4_include(tests/t_attributes.at)
 m4_include(tests/t_single_char_filenames.at)
 m4_include(tests/t_restrictions.at)
+#40
 m4_include(tests/t_subdirs.at)
 m4_include(tests/t_movepatch.at)
 m4_include(tests/t_movedel.at)
@@ -386,6 +402,7 @@ m4_include(tests/t_diff_added_file.at)
 m4_include(tests/t_update_to_revision.at)
 m4_include(tests/t_heads.at)
 m4_include(tests/t_heads_discontinuous_branch.at)
+#50
 m4_include(tests/t_merge_1.at)
 m4_include(tests/t_merge_2.at)
 m4_include(tests/t_tags.at)
@@ -396,6 +413,7 @@ m4_include(tests/t_add_edge.at)
 m4_include(tests/t_patch_drop_add.at)
 m4_include(tests/t_add_drop_add.at)
 m4_include(tests/t_merge2_add_drop_add.at)
+#60
 m4_include(tests/t_add_patch_drop_add.at)
 m4_include(tests/t_patch_vs_drop_add.at)
 m4_include(tests/t_explicit_merge.at)
@@ -406,6 +424,7 @@ m4_include(tests/t_trusted.at)
 m4_include(tests/t_attr.at)
 m4_include(tests/t_rcfile_required.at)
 m4_include(tests/t_persistent_server_revision.at)
+#70
 m4_include(tests/t_persistent_server_keys.at)
 m4_include(tests/t_fmerge_normalize.at)
 m4_include(tests/t_delete_dir.at)
@@ -416,6 +435,7 @@ m4_include(tests/t_drop_rename_patch.at)
 m4_include(tests/t_cmdline_options.at)
 m4_include(tests/t_log_nonexistent.at)
 m4_include(tests/t_crlf.at)
+#80
 m4_include(tests/t_netsync_diffbranch.at)
 m4_include(tests/t_netsync_nocerts.at)
 m4_include(tests/t_check_same_db_contents.at)
@@ -426,6 +446,7 @@ m4_include(tests/t_status_missing.at)
 m4_include(tests/t_persistent_server_keys_2.at)
 m4_include(tests/t_update_1.at)
 m4_include(tests/t_vcheck.at)
+#90
 m4_include(tests/t_db_with_dots.at)
 m4_include(tests/t_subdir_add.at)
 m4_include(tests/t_subdir_drop.at)
@@ -436,6 +457,7 @@ m4_include(tests/t_lca_1.at)
 m4_include(tests/t_update_2.at)
 m4_include(tests/t_rename_dir_cross_level.at)
 m4_include(tests/t_rename_added_in_rename.at)
+#100
 m4_include(tests/t_rename_conflict.at)
 m4_include(tests/t_rename_dir_patch.at)
 m4_include(tests/t_delete_dir_patch.at)
@@ -446,6 +468,7 @@ m4_include(tests/t_cdiff.at)
 m4_include(tests/t_no_rename_overwrite.at)
 m4_include(tests/t_checkout_noop_on_fail.at)
 m4_include(tests/t_monotone_agent.at)
+#110
 m4_include(tests/t_approval_semantics.at)
 m4_include(tests/t_rebuild.at)
 m4_include(tests/t_lua_privkey.at)
@@ -456,6 +479,7 @@ m4_include(tests/t_update_null_revision.at)
 m4_include(tests/t_branch_checkout.at)
 m4_include(tests/t_load_into_existing.at)
 m4_include(tests/t_automate_version.at)
+#120
 m4_include(tests/t_automate_heads.at)
 m4_include(tests/t_merge_normalization_edge_case.at)
 m4_include(tests/t_undo_update.at)
@@ -466,4 +490,5 @@ m4_include(tests/t_merge_3.at)
 m4_include(tests/t_merge_4.at)
 m4_include(tests/t_db_missing.at)
 m4_include(tests/t_fsck.at)
+#130
 m4_include(tests/t_add_owndb.at)

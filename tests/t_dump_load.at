@@ -11,7 +11,9 @@ ADD_FILE(testfile2, [foo foo
 ])
 COMMIT(branch2)
 
-AT_CHECK(MONOTONE db dump | MONOTONE db load --db=test2.db, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db dump, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(MONOTONE db load <stdout --db=test2.db, [], [ignore], [ignore])
 
 CHECK_SAME_DB_CONTENTS(test.db, test2.db)
 

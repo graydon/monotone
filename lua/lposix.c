@@ -22,6 +22,8 @@
 #include <sys/times.h>
 #include <sys/utsname.h>
 #include <sys/wait.h>
+#else
+#include <windows.h>
 #endif
 #include <time.h>
 #include <unistd.h>
@@ -322,27 +324,6 @@ static int Pmkfifo(lua_State *L)		/** mkfifo(path) */
 	const char *path = luaL_checkstring(L, 1);
 	return pushresult(L, mkfifo(path, 0777), path);
 }
-#endif
-
-
-static int Pexec(lua_State *L)			/** exec(path,[args]) */
-{
-	const char *path = luaL_checkstring(L, 1);
-	int i,n=lua_gettop(L);
-	char **argv = malloc((n+1)*sizeof(char*));
-	if (argv==NULL) luaL_error(L,"not enough memory");
-	argv[0] = (char*)path;
-	for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, i+1);
-	argv[i] = NULL;
-	execvp(path,argv);
-	return pusherror(L, path);
-}
-
-#ifndef WIN32
-static int Pfork(lua_State *L)			/** fork() */
-{
-	return pushresult(L, fork(), NULL);
-}
 
 
 static int Pwait(lua_State *L)			/** wait([pid]) */
@@ -372,6 +353,108 @@ static int Psleep(lua_State *L)			/** sleep(seconds) */
 	lua_pushnumber(L, sleep(seconds));
 	return 1;
 }
+#else
+
+/* Note: For the Win32 version of wait(), pid is not optional. */
+static int Pwait(lua_State *L)			/** wait(pid) */
+{
+	HANDLE hProcess = (HANDLE)luaL_checkint(L, 1);
+	DWORD res;
+	if (WaitForSingleObject(hProcess, INFINITE)==WAIT_FAILED)
+		return pushresult(L, -1, NULL);
+	if (GetExitCodeProcess(hProcess, &res)==0)
+		res = -1;
+	CloseHandle(hProcess); /* Let the process die */
+	lua_pushnumber(L, res);
+	return 1 + pushresult(L, (int)hProcess, NULL);
+}
+
+
+static int Pkill(lua_State *L)			/** kill(pid,[sig]) */
+{
+	HANDLE hProcess = (HANDLE)luaL_checkint(L, 1);
+	int sig = luaL_optint(L, 2, SIGTERM); /* No meaning on Win32 */
+	if (TerminateProcess(hProcess, 1)==0)
+		return pushresult(L, -1, NULL);
+	return pushresult(L, 0, NULL);
+}
+
+
+static int Psleep(lua_State *L)			/** sleep(seconds) */
+{
+	unsigned int seconds = luaL_checkint(L, 1);
+	Sleep(seconds*1000);
+	lua_pushnumber(L, 0);
+	return 1;
+}
+
+#endif
+
+#ifndef WIN32
+
+static int Pspawn(lua_State *L)			/** spawn(path,[args]) */
+{
+	const char *path = luaL_checkstring(L, 1);
+	int i,n=lua_gettop(L);
+	char **argv = malloc((n+1)*sizeof(char*));
+	pid_t pid;
+	if (argv==NULL) luaL_error(L,"not enough memory");
+	argv[0] = (char*)path;
+	for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, i+1);
+	argv[i] = NULL;
+	pid = fork();
+	free(argv);
+	switch (pid)
+	{
+		case -1: /* Error */
+			return pushresult(L, -1, NULL);
+		case 0: /* Child */
+			execvp(path,argv);
+			return pushresult(L, -1, NULL);
+		default: /* Parent */
+			return pushresult(L, pid, NULL);
+	}
+}
+
+#else
+
+static int Pspawn(lua_State *L)			/** spawn(path,[args]) */
+{
+	const char *path = luaL_checkstring(L, 1);
+	int i,n=lua_gettop(L);
+	char **argv = malloc((n+1)*sizeof(char*));
+	int totlen = 0;
+	char *cmdline;
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	if (argv==NULL) luaL_error(L,"not enough memory");
+	argv[0] = (char*)path;
+	for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, i+1);
+	argv[i] = NULL;
+	for (i=0; i<n; i++) totlen += strlen(argv[i]+1);
+	cmdline = malloc(totlen);
+	if (cmdline==NULL) luaL_error(L,"not enough memory");
+	totlen = 0;
+	cmdline[totlen++] = '\"';
+	for (i=0; i<n; i++)
+	{
+		strcpy(cmdline+totlen, argv[i]);
+		totlen += strlen(argv[i]);
+		if (i==0)
+			cmdline[totlen++] = '\"';
+		if (i<n-1)
+			cmdline[totlen++] = ' ';
+	}
+	free(argv);
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(STARTUPINFO);
+	/* We don't need to set any of the STARTUPINFO members */
+	if (CreateProcess(path, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)==0)
+		return pushresult(L, -1, NULL);
+	CloseHandle(pi.hThread);
+	return pushresult(L, (int)pi.hProcess, NULL);
+}
+
 #endif
 
 static int Pputenv(lua_State *L)		/** putenv(string) */
@@ -791,41 +874,40 @@ static const luaL_reg R[] =
 	{"chdir",		Pchdir},
 	{"dir",			Pdir},
 	{"errno",		Perrno},
-	{"exec",		Pexec},
 	{"files",		Pfiles},
 	{"getcwd",		Pgetcwd},
 	{"getenv",		Pgetenv},
+	{"kill",		Pkill},
 	{"mkdir",		Pmkdir},
 	{"putenv",		Pputenv},
 	{"rmdir",		Prmdir},
+	{"sleep",		Psleep},
+	{"spawn",		Pspawn},
 	{"stat",		Pstat},
 	{"unlink",		Punlink},
 	{"utime",		Putime},
+	{"wait",		Pwait},
 
 #ifndef WIN32
 	{"chmod",		Pchmod},
 	{"chown",		Pchown},
 	{"ctermid",		Pctermid},
-	{"fork",		Pfork},
 	{"getgroup",		Pgetgroup},
 	{"getlogin",		Pgetlogin},
 	{"getpasswd",		Pgetpasswd},
 	{"getprocessid",	Pgetprocessid},
-	{"kill",		Pkill},
 	{"link",		Plink},
 	{"mkfifo",		Pmkfifo},
 	{"pathconf",		Ppathconf},
 	{"readlink",		Preadlink},
 	{"setgid",		Psetgid},
 	{"setuid",		Psetuid},
-	{"sleep",		Psleep},
 	{"symlink",		Psymlink},
 	{"sysconf",		Psysconf},
 	{"times",		Ptimes},
 	{"ttyname",		Pttyname},
 	{"umask",		Pumask},
 	{"uname",		Puname},
-	{"wait",		Pwait},
 #endif
 #ifdef linux
 	{"setenv",		Psetenv},
