@@ -1,5 +1,9 @@
 2005-02-14  Nathaniel Smith  <njs@codesourcery.com>
 
+	* std_hooks.lua: Remove tabs.
+
+2005-02-14  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_automate_heads.at: New test.
 	* tests/t_automate_version.at: New test.
 	* testsuite.at: Add then.
