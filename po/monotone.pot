@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: monotone-devel@nongnu.org\n"
-"POT-Creation-Date: 2004-12-06 12:28-0500\n"
+"POT-Creation-Date: 2004-12-06 21:31+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -387,16 +387,16 @@ msgstr ""
 msgid "beginning disjoint_merge_test\n"
 msgstr ""
 
-#: change_set.cc:2383
+#: change_set.cc:2381
 msgid "finished disjoint_merge_test\n"
 msgstr ""
 
-#: change_set.cc:2447 change_set.cc:2491 change_set.cc:2535
+#: change_set.cc:2445 change_set.cc:2489 change_set.cc:2533
 #, c-format
 msgid "informative failure: %s\n"
 msgstr ""
 
-#: change_set.cc:2451 change_set.cc:2495 change_set.cc:2539
+#: change_set.cc:2449 change_set.cc:2493 change_set.cc:2537
 #, c-format
 msgid "runtime error: %s\n"
 msgstr ""

@@ -1,3 +1,29 @@
+2004-12-09  graydon hoare  <graydon@pobox.com>
+
+	* ROADMAP: Add file.
+
+2004-12-08  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc (extend_renumbering_via_added_files): 
+	Look up parent tid in existing renumbering.
+	* commands.cc (attr): Check index for "set" subcommand.
+	(lca): New diagnostic command.
+	(log): Tidy up output formatting a bit.
+	* po/monotone.pot: Regenerate.
+	* tests/t_add_edge.at: New test to catch add failure.
+	* testsuite.at: Call it.
+
+2004-12-07  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: Keep package_*revision.{txt,h}, so they are saved
+	as part of a distribution, and thereby make as sure as possible
+	people who download monotone get historical information on where
+	their copy of monotone came from.
+
+2004-12-06  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Add a hint on how to use --ticker.
+
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* testsuite.at: Remove duplicate line created by merge.
