@@ -1,5 +1,10 @@
 2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_heads.at: New test.
+	* testsuite.at: Add it.
+	
+2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi: Fix various typos.
 	(Committing Work): Add missing command line argument.
 	(Branch Names): New section.
