@@ -3362,6 +3362,27 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
   import_cvs_repo(mkpath(idx(args, 0)()), app);
 }
 
+static void
+log_certs(app_state & app, revision_id id, cert_name name, string label, bool multiline)
+{
+  vector< revision<cert> > certs;
+
+  app.db.get_revision_certs(id, name, certs);
+  erase_bogus_certs(certs, app);
+  for (vector< revision<cert> >::const_iterator i = certs.begin();
+       i != certs.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      cout << label;
+
+      if (multiline) 
+          cout << endl << endl << tv << endl;
+      else
+          cout << tv << endl;
+    }	  
+}
+
 CMD(log, "informative", "[ID] [file]", "print history in reverse order starting from 'ID' (filtering by 'file')")
 {
   revision_set rev;
@@ -3398,9 +3419,10 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
   
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);
+  cert_name branch_name(branch_cert_name);
+  cert_name tag_name(tag_cert_name);
   cert_name changelog_name(changelog_cert_name);
   cert_name comment_name(comment_cert_name);
-  cert_name tag_name(tag_cert_name);
 
   set<revision_id> seen;
 
@@ -3432,9 +3454,13 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
 
           changes_summary csum;
           
+          set<revision_id> ancestors;
+
           for (edge_map::const_iterator e = rev.edges.begin();
                e != rev.edges.end(); ++e)
             {
+              ancestors.insert(edge_old_revision(e));
+
               change_set const & cs = edge_changes(e);
               if (! file().empty())
                 {
@@ -3465,73 +3491,28 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
           
           if (print_this)
           {
-          cout << "-----------------------------------------------------------------"
-               << endl;
-          cout << "Revision: " << rid << endl;
+            cout << "-----------------------------------------------------------------"
+                 << endl;
+            cout << "Revision: " << rid << endl;
 
-          app.db.get_revision_certs(rid, author_name, tmp);
-          erase_bogus_certs(tmp, app);
-          for (vector< revision<cert> >::const_iterator j = tmp.begin();
-               j != tmp.end(); ++j)
-            {
-              cert_value tv;
-              decode_base64(j->inner().value, tv);
-              cout << "Author: " << tv << endl;
-            }     
+            for (set<revision_id>::const_iterator anc = ancestors.begin(); 
+                 anc != ancestors.end(); ++anc)
+              cout << "Ancestor: " << *anc << endl;
 
-          app.db.get_revision_certs(rid, date_name, tmp);
-          erase_bogus_certs(tmp, app);
-          for (vector< revision<cert> >::const_iterator j = tmp.begin();
-               j != tmp.end(); ++j)
-            {
-              cert_value tv;
-              decode_base64(j->inner().value, tv);
-              cout << "Date: " << tv << endl;
-            }     
+            log_certs(app, rid, author_name, "Author: ", false);
+            log_certs(app, rid, date_name,   "Date: ",   false);
+            log_certs(app, rid, branch_name, "Branch: ", false);
+            log_certs(app, rid, tag_name,    "Tag: ",    false);
 
-          app.db.get_revision_certs(rid, tag_name, tmp);
-          erase_bogus_certs(tmp, app);
-          if (!tmp.empty())
-            {
-              for (vector< revision<cert> >::const_iterator j = tmp.begin();
-                   j != tmp.end(); ++j)
-                {
-                  cert_value tv;
-                  decode_base64(j->inner().value, tv);
-                  cout << "Tag: " << tv << endl;
-                }         
-            }
+            if (! csum.empty)
+              {
+                cout << endl;
+                csum.print(cout, 70);
+                cout << endl;
+              }
 
-          if (! csum.empty)
-            {
-              cout << endl;
-              csum.print(cout, 70);
-              cout << endl;
-            }
-
-          app.db.get_revision_certs(rid, changelog_name, tmp);
-          erase_bogus_certs(tmp, app);
-          for (vector< revision<cert> >::const_iterator j = tmp.begin();
-               j != tmp.end(); ++j)
-            {
-              cert_value tv;
-              decode_base64(j->inner().value, tv);
-              cout << "ChangeLog:" << endl << endl << tv << endl;
-            }     
-
-          app.db.get_revision_certs(rid, comment_name, tmp);
-          erase_bogus_certs(tmp, app);
-          if (!tmp.empty())
-            {
-              cout << "Revision Comments:" << endl << endl;
-              for (vector< revision<cert> >::const_iterator j = tmp.begin();
-                   j != tmp.end(); ++j)
-                {
-                  cert_value tv;
-                  decode_base64(j->inner().value, tv);
-                  cout << j->inner().key << ": " << tv << endl;
-                }         
-            }
+            log_certs(app, rid, changelog_name, "ChangeLog: ", true);
+            log_certs(app, rid, comment_name,   "Comments: ",  true);
           }
         }
       frontier = next_frontier;

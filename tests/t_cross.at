@@ -2,9 +2,6 @@
 
 AT_SETUP([creating a bad criss-cross merge])
 
-# FIXME: not clear how to make this test work under changesets.
-exit 77
-
 MONOTONE_SETUP
 
 # this test demonstrates a tricky case in which two parties, bob and
@@ -35,10 +32,55 @@ AT_DATA(specific.alice, [non-conflicting mergeable data in bob
 AT_DATA(specific.bob, [non-conflicting mergeable data in alice
 ])
 
+# this case is somewhat tricky to set up too... we use two different
+# keys (bob and alice) that don't trust each other so that they can
+# produce two different merge results
+
+AT_DATA(bob.lua, [
+function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, right)
+   return left
+end
+
+function get_passphrase(key) return "bob" end
+
+function get_author(branch) return "bob" end
+
+function get_revision_cert_trust(signers, id, name, val)
+   for k,v in pairs(signers) do 
+        if (v ~= "alice") then return true end
+   end
+   return false
+end
+])
+
+AT_DATA(alice.lua, [
+function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, right)
+   return right
+end
+
+function get_passphrase(key) return "alice" end
+
+function get_author(branch) return "alice" end
+
+function get_revision_cert_trust(signers, id, name, val)
+   for k,v in pairs(signers) do 
+        if (v ~= "bob") then return true end
+   end
+   return false
+end
+])
+
+m4_define([BOB], [monotone --rcfile=test_hooks.lua --rcfile=bob.lua --nostd --norc --db=test.db --key=bob])
+m4_define([ALICE], [monotone --rcfile=test_hooks.lua --rcfile=alice.lua --nostd --norc --db=test.db --key=alice])
+
+AT_CHECK((echo "bob"; echo "bob") | BOB genkey bob, [], [ignore], [ignore])
+AT_CHECK((echo "alice"; echo "alice") | ALICE genkey alice, [], [ignore], [ignore])
+
 # construct ancestor
 AT_CHECK(cp shared.anc shared)
 AT_CHECK(MONOTONE add shared, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit ancestor, [], [ignore], [ignore])
+
 ROOT_R_SHA=`BASE_REVISION`
 ROOT_F_SHA=`SHA1(shared)`
 
@@ -65,27 +107,27 @@ AT_CHECK(test $RIGHT_F_SHA != $ROOT_F_SHA)
 AT_CHECK(test $RIGHT_R_SHA != $LEFT_R_SHA)
 AT_CHECK(test $RIGHT_F_SHA != $LEFT_F_SHA)
 
-# construct alice, a derivative of right but with the specific change
-# in left, and an ancestor edge to left.
-AT_CHECK(MONOTONE add specific.left, [], [ignore], [ignore])
-AT_CHECK(MONOTONE add specific.alice, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit alice, [], [ignore], [ignore])
-ALICE_R_SHA=`BASE_REVISION`
-AT_CHECK(MONOTONE cert manifest $ALICE_R_SHA ancestor $LEFT_R_SHA, [], [ignore], [ignore])
+# do alice's merge on the right, keeping shared.right and clobbering shared.left
+
+AT_CHECK(ALICE merge, [0], [ignore], [ignore])
+AT_CHECK(ALICE update, [], [ignore], [ignore])
+AT_CHECK(ALICE add specific.alice, [], [ignore], [ignore])
+AT_CHECK(ALICE commit alice, [], [ignore], [ignore])
 
 # revert to left
 PROBE_NODE(shared, $LEFT_R_SHA, $LEFT_F_SHA)
-AT_CHECK(grep specific.right MT/manifest, [1])
 
-# construct bob, a derivative of left but with the specific change
-# in right, and an ancestor edge to right.
-AT_CHECK(MONOTONE add specific.right, [], [ignore], [ignore])
-AT_CHECK(MONOTONE add specific.bob, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit bob, [], [ignore], [ignore])
-BOB_R_SHA=`BASE_REVISION`
-AT_CHECK(MONOTONE cert manifest $BOB_R_SHA ancestor $RIGHT_R_SHA, [], [ignore], [ignore])
+# do bob's merge on the left, keeping shared.left and clobbering shared.right
+
+AT_CHECK(BOB merge, [0], [ignore], [ignore])
+AT_CHECK(BOB update, [], [ignore], [ignore])
+AT_CHECK(BOB add specific.bob, [], [ignore], [ignore])
+AT_CHECK(BOB commit bob, [], [ignore], [ignore])
 
 # now merge the merges. this *should* fail.
+# because there are conflicting changes and
+# we have no merge3 hook to fall back on
+
 AT_CHECK(MONOTONE --branch=testbranch merge, [1], [ignore], [ignore])
 
 AT_CLEANUP
