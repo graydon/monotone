@@ -1,0 +1,30 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([attr command in subdirs])
+
+MONOTONE_SETUP
+
+AT_CHECK(mkdir -p foo/bar, [], [ignore], [ignore])
+AT_DATA(top, [top data
+])
+AT_DATA(foo/foodata, [foo data
+])
+AT_DATA(foo/bar/bardata, [foobar data
+])
+
+AT_CHECK(MONOTONE add top foo, [], [ignore], [ignore])
+
+# set attributes in directories
+
+AT_CHECK( (cd foo; MONOTONE attr set foodata test_attr true), [], [ignore], [ignore])
+AT_CHECK( (cd foo/bar; MONOTONE attr set bardata test_attr false), [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
+REV=`BASE_REVISION`
+
+# see if they're right
+
+AT_CHECK(MONOTONE checkout $REV co-dir, [], [stdout])
+AT_CHECK(grep "test_attr:foo/foodata:true" stdout, [], [ignore])
+AT_CHECK(grep "test_attr:foo/bar/bardata:false" stdout, [], [ignore])
+
+AT_CLEANUP
