@@ -197,7 +197,8 @@ EXTRA_DIST = $(man1_MANS) \
 	     testsuite \
              tests/atconfig.in \
              tests/atlocal.in  \
-	     package.m4
+	     package.m4 \
+             $(wildcard m4/*.m4)
 
 # testsuite stuff (could this possibly be more ugly?)
 
@@ -211,7 +212,8 @@ MOSTLYCLEANFILES = \
 	testsuite.dir/at-times \
 	testsuite.log
 
-DISTCLEANFILES = tests/atconfig
+DISTCLEANFILES = tests/atconfig \
+                 idna/idn-int.h 
 
 # note: these targets are all in srcdir; they are *not* built during
 # the VPATH build part of distcheck (with non-writable source

@@ -32,6 +32,11 @@
 #include "cygwin/in.h"
 #endif
 
+#ifdef __MACH__
+#include <sys/socket.h>
+#include <netinet/in_systm.h>
+#endif
+
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netdb.h>

@@ -4,7 +4,6 @@ app_state.hh
 cert.cc
 cert.hh
 cleanup.hh
-codecvt-test.cc
 commands.cc
 commands.hh
 constants.cc
@@ -17,8 +16,6 @@ diff_patch.cc
 diff_patch.hh
 file_io.cc
 file_io.hh
-grammars.cc
-grammars.hh
 http_tasks.cc
 http_tasks.hh
 interner.hh

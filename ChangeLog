@@ -1,5 +1,17 @@
 2004-01-07  graydon hoare  <graydon@pobox.com>
 
+	* Makefile.am:
+	* po/POTFILES.in: 
+	* po/monotone.pot: Minor tweaks for distclean.
+	* adns/config.h:
+	* boost/socket/src/interface.cpp:
+	* boost/socket/src/ip4/address.cpp:
+	* boost/socket/src/ip4/protocol.cpp: OSX portability.
+	* AUTHORS: Mention new contributors.
+	* monotone.texi (Hook Reference): Document i18n hooks.
+
+2004-01-07  graydon hoare  <graydon@pobox.com>
+
 	* cert.cc (ensure_parents_loaded)
 	(expand_dominators)
 	(expand_ancestors)

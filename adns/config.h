@@ -20,7 +20,9 @@
 /* #undef HAVEUSE_RPCTYPES_H */
 
 /* Define if you have the poll function.  */
+#ifndef __MACH__
 #define HAVE_POLL 1
+#endif
 
 /* Define if you have the nsl library (-lnsl).  */
 /* #undef HAVE_LIBNSL */

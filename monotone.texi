@@ -3548,7 +3548,7 @@ as well as to the news group @code{com.myisp.example} at the news server
 
 @example
 function get_fetch_sources(branch)
-        if (branch == "examplebranch) then
+        if (branch == "examplebranch") then
                 return @{ "http://www.myisp.com/~user/depot.cgi/example",
                          "nntp://news.myisp.com/com.myisp.example"  @}
         end
@@ -3751,6 +3751,63 @@ function merge3(ancestor, left, right)
         return data
 end
 @end example
+
+@item get_system_linesep ()
+
+Returns a string which defines the default system line separator.
+This should be one of the strings @code{CR}, @code{LF}, or
+@code{CRLF}. The system line separator may be used when reading or
+writing data to the terminal, or otherwise interfacing with the user.
+The system line separator is not used to convert files in the working
+copy; use @code{get_linesep_conv} for converting line endings in the
+working copy.
+
+This hook has no default definition. For more information on line
+ending conversion, see the section on @ref{Internationalization}.
+
+@item get_linesep_conv (@var{filename})
+
+Returns a table which contains two strings. The first string in the
+return value is the name of a line ending convention to use for the
+``internal'' representation of @var{filename}. The second string in
+the return value is the name of a line ending convention to use for
+the ``external'' representation of @var{filename}. Line ending
+conventions should be one of the strings @code{CR}, @code{LF}, or
+@code{CRLF}. 
+
+When @var{filename} is read from the working copy, it is run through
+line ending conversion from the external form to the internal
+form. When @var{filename} is written to the working copy, it is run
+through line ending conversion from the internal form to the external
+form. @sc{sha1} values are calculated from the internal form of
+@var{filename}. It is your responsibility to decide which line ending
+conversions your work will use.
+
+This hook has no default definition; monotone's default behavior is to
+keep external and internal forms byte-for-byte identical. For more
+information on line ending conversion, see the section on
+@ref{Internationalization}.
+
+@item get_charset_conv (@var{filename})
+
+Returns a table which contains two strings. The first string in the
+return value is the name of a character set to use for the
+``internal'' representation of @var{filename}. The second string in
+the return value is the name of a character set to use for the
+``external'' representation of @var{filename}.  
+
+When @var{filename} is read from the working copy, it is run through
+character set conversion from the external form to the internal
+form. When @var{filename} is written to the working copy, it is run
+through character set conversion from the internal form to the
+external form. @sc{sha1} values are calculated from the internal
+form of @var{filename}. It is your responsibility to decide which
+character set conversions your work will use. 
+
+This hook has no default definition; monotone's default behavior is to
+keep external and internal forms byte-for-byte identical. For more
+information on character set conversion, see the section on
+@ref{Internationalization}.
 
 
 @item attr_functions [@var{arrtibute}] (@var{filename}, @var{value})

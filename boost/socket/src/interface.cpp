@@ -24,6 +24,7 @@
 #endif
 
 #ifdef HAVE_SYS_SOCKET_H
+#include <sys/types.h>
 #include <sys/socket.h>
 #endif
 
@@ -319,12 +320,14 @@ namespace boost
         // Broadcast address
         if (ioctl(socket, SIOCGIFBRDADDR, (char *) ifr) < 0)
           continue;
-        iface->iiBroadcastAddress.set(&ifr->ifr_netmask,sizeof(::sockaddr));
+        iface->iiBroadcastAddress.set(&ifr->ifr_broadaddr,sizeof(::sockaddr));
 
+#ifndef __MACH__
         // Netmask address
         if (ioctl(socket, SIOCGIFNETMASK, (char *) ifr) < 0)
           continue;
-        iface->iiNetmask.set(&ifr->ifr_broadaddr,sizeof(::sockaddr));
+        iface->iiNetmask.set(&ifr->ifr_netmask,sizeof(::sockaddr));
+#endif
 
 //         // Hardware address
 //         if (ioctl(socket, SIOCGIFHWADDR, (char *) ifr) < 0)
