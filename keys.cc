@@ -2,9 +2,6 @@
 #include <string>
 #include <map>
 
-#ifndef WIN32
-#include <termios.h>
-#endif
 #include <unistd.h>
 #include <string.h>
 
@@ -47,8 +44,11 @@ do_arc4(SecByteBlock & phrase,
   a4.ProcessString(payload.data(), payload.size());
 }
 
+
+/* used to read passphrase for existing keys */
+/* may cache the password within one run */
 static void 
-read_passphrase(lua_hooks & lua,
+get_passphrase(lua_hooks & lua,
 		rsa_keypair_id const & keyid,
 		SecByteBlock & phrase)
 {
@@ -77,52 +77,29 @@ read_passphrase(lua_hooks & lua,
     }
   else
     { 
-      // FIXME: we will drop extra bytes of their phrase
-      size_t bufsz = 4096;
-      char buf[bufsz];
+      /* get user password from terminal */
+      char *pass;
 
-      // out to the console for us!
-      // FIXME: this is *way* non-portable at the moment.
-      cout << "enter passphrase for key ID [" << keyid() <<  "] : ";
-      cout.flush();
-      
-#ifndef WIN32
-      int cin_fd = 0;
-      struct termios t, t_saved;
-      tcgetattr(cin_fd, &t);
-      t_saved = t;
-      t.c_lflag &= ~ECHO;
-      tcsetattr(cin_fd, TCSANOW, &t);
-#endif
+      pass = read_password(keyid());
 
       try 
 	{
-#ifndef WIN32
-	  tcsetattr(cin_fd, TCSANOW, &t);
-#endif
-	  cin.getline(buf, bufsz, '\n');
-	  phrase.Assign(reinterpret_cast<byte const *>(buf), strlen(buf));
+	  phrase.Assign(reinterpret_cast<byte const *>(pass), strlen(pass));
 
 	  // permit security relaxation. maybe.
 	  if (persist_phrase)
 	    {
-	      phrases.insert(make_pair(keyid,string(buf)));
+	      phrases.insert(make_pair(keyid,string(pass)));
 	    }
 	} 
       catch (...)
 	{
-	  memset(buf, 0, bufsz);
-#ifndef WIN32
-	  tcsetattr(cin_fd, TCSANOW, &t_saved);
-#endif
+	  memset(pass, 0, strlen(pass));
 	  cout << endl;
 	  throw;
 	}
       cout << endl;
-      memset(buf, 0, bufsz);
-#ifndef WIN32
-      tcsetattr(cin_fd, TCSANOW, &t_saved);
-#endif
+      memset(pass, 0, strlen(pass));
     }
 }  
 
@@ -161,6 +138,7 @@ generate_key_pair(lua_hooks & lua,           // to hook for phrase
 		  base64<rsa_pub_key> & pub_out,
 		  base64< arc4<rsa_priv_key> > & priv_out)
 {
+  int pass_count = 3; /* maximal retries for entering password */
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
   bool request_blocking_rng = false;
@@ -181,7 +159,36 @@ generate_key_pair(lua_hooks & lua,           // to hook for phrase
   // generate private key (and encrypt it)
   RSAES_OAEP_SHA_Decryptor priv(rng, constants::keylen);
   write_der(priv, privkey);
-  read_passphrase(lua, id, phrase);
+
+  /* don't use get_passphrase, as it could cache passwords.
+   * and that's not senseful for creating a new key
+   * give the user three tries to enter two matching passwords. 
+   * After that we'll die */
+  
+  char *pass_1, *pass_2;
+  while(
+  get_passphrase(lua, id, phrase);
+
+      try 
+	{
+	  phrase.Assign(reinterpret_cast<byte const *>(pass), strlen(pass));
+
+	  // permit security relaxation. maybe.
+	  if (persist_phrase)
+	    {
+	      phrases.insert(make_pair(keyid,string(pass)));
+	    }
+	} 
+      catch (...)
+	{
+	  memset(pass, 0, strlen(pass));
+	  cout << endl;
+	  throw;
+	}
+      cout << endl;
+      memset(pass, 0, strlen(pass));
+
+
   do_arc4(phrase, privkey); 
   raw_priv_key = string(reinterpret_cast<char const *>(privkey.data()), 
 			privkey.size());
@@ -243,7 +250,7 @@ make_signature(lua_hooks & lua,           // to hook for phrase
       decode_base64(priv, decoded_key);
       decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
 			   decoded_key().size());
-      read_passphrase(lua, id, phrase);
+      get_passphrase(lua, id, phrase);
       do_arc4(phrase, decrypted_key);
 
       try 
