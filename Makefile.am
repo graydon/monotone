@@ -211,6 +211,7 @@ TESTS = unit_tests $(srcdir)/testsuite
 
 MOSTLYCLEANFILES = \
 	testsuite.dir/at-check-line \
+        testsuite.dir/at-status \
 	testsuite.dir/at-stdout \
 	testsuite.dir/at-stder1 \
 	testsuite.dir/at-stderr \
