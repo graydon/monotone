@@ -157,11 +157,12 @@ static void read_chunk(std::iostream & stream,
   if (chunk_size == 0)
     return;
 
-  char c;
+  char c = '\0';
   N(stream.good(), F("malformed chunk, stream closed after nonzero chunk size"));
-  stream.get(c); N(c == '\r', F("malformed chunk, no leading CR"));
+  while (stream.good()) { stream.get(c); if (c != ' ') break; }
+  N(c == '\r', F("malformed chunk, no leading CR (got %d)") % static_cast<int>(c));
   N(stream.good(), F("malformed chunk, stream closed after leading CR"));
-  stream.get(c); N(c == '\n', F("malformed chunk, no leading LF"));
+  stream.get(c); N(c == '\n', F("malformed chunk, no leading LF (got %d)") % static_cast<int>(c));
   N(stream.good(), F("malformed chunk, stream closed after leading LF"));
   
   while(chunk_size > 0)
@@ -176,9 +177,11 @@ static void read_chunk(std::iostream & stream,
       chunk_size -= actual_read_size;
     }    
 
-  stream.get(c); N(c == '\r', F("malformed chunk, no trailing CR"));
+  c = '\0';
+  while (stream.good()) { stream.get(c); if (c != ' ') break; }
+  N(c == '\r', F("malformed chunk, no trailing CR (got %d)") % static_cast<int>(c));
   N(stream.good(), F("malformed chunk, stream closed after reailing CR"));
-  stream.get(c); N(c == '\n', F("malformed chunk, no trailing LF"));
+  stream.get(c); N(c == '\n', F("malformed chunk, no trailing LF (got %d)") % static_cast<int>(c));
   stream.flags(flags);
 }
 

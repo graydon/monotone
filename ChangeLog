@@ -1,5 +1,9 @@
 2003-11-23  graydon hoare  <graydon@pobox.com>
 
+	* http_tasks.cc (read_chunk): Tolerate 0x20* after chunk len.
+
+2003-11-23  graydon hoare  <graydon@pobox.com>
+
 	* network.cc: Make more informative error policy.
 	* boost/socket/socketstream.hpp: Pass SocketType to streambuf template.
 	* boost/socket/src/default_socket_impl.cpp: Translate EINTR.
