@@ -600,8 +600,12 @@ bool merge3(vector<string> const & ancestor,
 }
 
 
-merge_provider::merge_provider(app_state & app) 
-  : app(app) {}
+merge_provider::merge_provider(app_state & app, 
+			       manifest_map const & anc_man,
+			       manifest_map const & left_man, 
+			       manifest_map const & right_man)
+  : app(app), anc_man(anc_man), left_man(left_man), right_man(right_man)
+{}
 
 void merge_provider::record_merge(file_id const & left_ident, 
 					 file_id const & right_ident, 
@@ -628,7 +632,20 @@ void merge_provider::get_version(file_path const & path,
   app.db.get_file_version(ident, dat);
 }
 
-bool merge_provider::try_to_merge_files(file_path const & path,
+std::string merge_provider::get_file_encoding(file_path const & path,
+					      manifest_map const & man)
+{
+  std::string enc;
+  if (get_attribute_from_db(path, encoding_attribute, man, enc, app))
+    return enc;
+  else
+    return default_encoding;
+}
+
+bool merge_provider::try_to_merge_files(file_path const & anc_path,
+					file_path const & left_path,
+					file_path const & right_path,
+					file_path const & merged_path,
 					file_id const & ancestor_id,					
 					file_id const & left_id,
 					file_id const & right_id,
@@ -647,19 +664,24 @@ bool merge_provider::try_to_merge_files(file_path const & path,
 
   file_data left_data, right_data, ancestor_data;
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
+  string left_encoding, anc_encoding, right_encoding;
   vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
 
-  this->get_version(path, left_id, left_data);
-  this->get_version(path, ancestor_id, ancestor_data);
-  this->get_version(path, right_id, right_data);
+  this->get_version(left_path, left_id, left_data);
+  this->get_version(anc_path, ancestor_id, ancestor_data);
+  this->get_version(right_path, right_id, right_data);
+
+  left_encoding = this->get_file_encoding(left_path, left_man);
+  anc_encoding = this->get_file_encoding(anc_path, anc_man);
+  right_encoding = this->get_file_encoding(right_path, right_man);
     
   unpack(left_data.inner(), left_unpacked);
   unpack(ancestor_data.inner(), ancestor_unpacked);
   unpack(right_data.inner(), right_unpacked);
 
-  split_into_lines(left_unpacked(), left_lines);
-  split_into_lines(ancestor_unpacked(), ancestor_lines);
-  split_into_lines(right_unpacked(), right_lines);
+  split_into_lines(left_unpacked(), left_encoding, left_lines);
+  split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
+  split_into_lines(right_unpacked(), right_encoding, right_lines);
     
   if (merge3(ancestor_lines, 
 	     left_lines, 
@@ -750,8 +772,11 @@ bool merge_provider::try_to_merge_files(file_path const & path,
 // are that we take our right versions from the filesystem, not the db,
 // and we only record the merges in a transient, in-memory table.
 
-update_merge_provider::update_merge_provider(app_state & app) 
-  : merge_provider(app) {}
+update_merge_provider::update_merge_provider(app_state & app,
+					     manifest_map const & anc_man,
+					     manifest_map const & left_man, 
+					     manifest_map const & right_man) 
+  : merge_provider(app, anc_man, left_man, right_man) {}
 
 void update_merge_provider::record_merge(file_id const & left_id, 
 					 file_id const & right_id,
@@ -784,6 +809,18 @@ void update_merge_provider::get_version(file_path const & path,
 	% path % fid % ident);
       dat = tmp;
     }
+}
+
+std::string update_merge_provider::get_file_encoding(file_path const & path,
+						     manifest_map const & man)
+{
+  std::string enc;
+  if (get_attribute_from_working_copy(path, encoding_attribute, enc))
+    return enc;
+  else if (get_attribute_from_db(path, encoding_attribute, man, enc, app))
+    return enc;
+  else
+    return default_encoding;
 }
 
 

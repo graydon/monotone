@@ -1,3 +1,17 @@
+2004-12-01  graydon hoare  <graydon@pobox.com>
+
+	* {unix,win32}/get_system_flavour.cc: New files.
+	* basic_io.{cc,hh}: Give names to input sources.
+	* monotone.cc: Move app_state ctor inside try.
+	* platform.hh (get_system_flavour): Declare.
+	* revision.cc: Name input source "revision".
+	* sanity.cc: Log flavour on startup.
+	* tests/t_attributes.at: Use new syntax.
+	* transforms.{cc,hh} (split_into_lines): New variant, and rewrite.
+	* work.{cc,hh}: Rewrite attributes to use basic_io.
+	(get_attribute_from_db):
+	(get_attribute_from_working_copy): New functions.
+
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_cleanup_empty_dir.at: Shorten name.
