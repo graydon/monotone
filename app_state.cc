@@ -14,6 +14,7 @@ using namespace std;
 
 static string const database_option("database");
 static string const branch_option("branch");
+static string const key_option("key");
 
 app_state::app_state() 
   : branch_name(""), db(""), options_changed(false)
@@ -32,6 +33,7 @@ app_state::app_state()
       if (dbname != "")
 	db.set_filename(dbname);
       branch_name = options[branch_option];
+      signing_key = options[key_option];
     }
 }
 
@@ -50,6 +52,13 @@ void app_state::set_branch(string branch)
 {
   options[branch_option] = branch;
   branch_name = string(branch);
+  options_changed = true;
+}
+
+void app_state::set_signing_key(string key)
+{
+  options[key_option] = key;
+  signing_key = key;
   options_changed = true;
 }
 

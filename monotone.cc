@@ -40,7 +40,7 @@ struct poptOption options[] =
   {
     {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, "send log to stderr while running", NULL},     
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},     
-    {"help", 0, POPT_ARG_STRING|POPT_ARGFLAG_OPTIONAL, &argstr, OPT_HELP, "display help message", "CMD"},
+    {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, "display help message", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
     {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load a ~/.monotonerc lua file", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
@@ -102,6 +102,7 @@ int cpp_main(int argc, char ** argv)
   int ret = 0;
   int opt;
   bool stdhooks = true, rcfile = true;
+  bool requested_help = false;
 
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
 
@@ -140,7 +141,7 @@ int cpp_main(int argc, char ** argv)
 	      break;
 
 	    case OPT_KEY_NAME:
-	      app.signing_key = string(argstr);
+	      app.set_signing_key(string(argstr));
 	      break;
 
 	    case OPT_BRANCH_NAME:
@@ -154,9 +155,23 @@ int cpp_main(int argc, char ** argv)
 
 	    case OPT_HELP:
 	    default:
-	      throw usage(argstr ? argstr : "");
+	      requested_help = true;
 	      break;
 	    }
+	}
+
+      // stop here if they asked for help
+
+      if (requested_help)
+	{
+	  if (poptPeekArg(ctx()))
+	    {
+	      string cmd(poptGetArg(ctx()));
+	      cerr << "found extra entry: " << cmd << endl;
+	      throw usage(cmd);
+	    }
+	  else
+	    throw usage("");
 	}
 
       // build-in rc settings are defaults

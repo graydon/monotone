@@ -1,3 +1,8 @@
+2003-12-01  graydon hoare  <graydon@pobox.com>
+
+	* app_state.hh, app_state.cc (set_signing_key): New fn, persist key.
+	* monotone.cc (cpp_main): Permit commuting the --help argument around.
+
 2003-11-28  Tom Tromey  <tromey@redhat.com>
 
 	* http_tasks.cc (check_received_bytes): Allow "-" as well.

@@ -33,6 +33,7 @@ public:
 
   void set_branch(std::string name);
   void set_database(std::string filename);
+  void set_signing_key(std::string key);
   void write_options();
 
   explicit app_state();
