@@ -44,7 +44,7 @@ bool post_http_packets(string const & group_name,
     "sig=" + signature;
 
   string request = string("POST ")
-    + "/" + http_path 
+    + http_path 
     + "?" + query + " HTTP/1.0";
 
   stream << request << "\r\n";
@@ -142,7 +142,7 @@ void fetch_http_packets(string const & group_name,
     "min=" + lexical_cast<string>(min_number);
 
   string request = string("GET ")
-    + "/" + http_path 
+    + http_path 
     + "?" + query + " HTTP/1.0";
 
   stream << request << "\r\n";

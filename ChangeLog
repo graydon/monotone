@@ -1,3 +1,7 @@
+2003-11-01  graydon hoare  <graydon@pobox.com>
+
+	* http_tasks.cc: Drop extra leading slashes in HTTP messages.
+
 2003-10-31  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc, database.cc, database.hh, lua.cc, lua.hh,
