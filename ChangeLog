@@ -1,3 +1,13 @@
+2005-02-06  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Use hash_map in a few places.
+	(confirm_unique_entries_in_directories): Fix invariants.
+	* constants.{cc,hh} (db_version_cache_sz): New constant.
+	* database.cc (version_cache): New structure.
+	(get_version): Use it.
+	* interner.hh: Rewrite to use hash_map and vector.
+	* tests/t_no_rename_overwrite.at: Tweak return codes.
+
 2005-02-06  Nathaniel Smith  <njs@codesourcery.com>
 
 	* ui.hh (ensure_clean_line): New method.
