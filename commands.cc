@@ -1818,25 +1818,10 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   app.require_working_copy();
 
-  get_revision_id(rid);
-  if (! rid.inner()().empty())
-    {
-      N(app.db.revision_exists(rid),
-        F("base revision %s does not exist in database\n") % rid);
-      
-      app.db.get_revision_manifest(rid, mid);
-      L(F("old manifest is %s\n") % mid);
-      
-      N(app.db.manifest_version_exists(mid),
-        F("base manifest %s does not exist in database\n") % mid);
-      
-      app.db.get_manifest(mid, man);
-    }
+  calculate_base_revision(app, rid, mid, man);
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     app.add_restriction((*i)());
-
-  L(F("old manifest has %d entries\n") % man.size());
 
   get_path_rearrangement(included, excluded, app);
   extract_path_set(man, old_paths);

@@ -1,3 +1,8 @@
+2005-02-23  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (ls_missing): replace duplicated code with call to
+	calculate_base_revision
+
 2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* file_io.cc (get_homedir): Add more comments and logging to Win32
