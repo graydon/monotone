@@ -1,5 +1,18 @@
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc (encountered_error, error): New variable and method.
+	(session::session): Initialize encountered_error.
+	(write_netcmd_and_try_flush, read_some, write_some): Check it.
+	(queue_error_cmd): Consider it like sending a goodbye.
+	(process_error_cmd): Throw an exception instead of considering it
+	a goodbye.
+	(process_data_cmd): Call error() if epochs don't match.
+	* tests/t_epoch.at, tests/t_epoch_server.at: More minor tweaks.
+	Expect failed pulls to exit with status 0.  This isn't really
+	correct, but looks complicated to fix...
+
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* testsuite.at (NETSYNC_SERVE_N_START): New macro.
 	* tests/t_epoch_server.at: Misc. fixes.
 

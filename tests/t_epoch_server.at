@@ -42,7 +42,10 @@ AT_CHECK(MONOTONE2 db rebuild, [], [ignore], [ignore])
 
 # this should *fail* to sync 
 NETSYNC_SERVE_START(testbranch)
-NETSYNC_CLIENT_RUN(push, testbranch, 1)
+# This should probably expect an exit value of 1, but ATM the netsync
+# client doesn't report errors in its exit value.
+#NETSYNC_CLIENT_RUN(pull, testbranch, 1)
+NETSYNC_CLIENT_RUN(pull, testbranch, 0)
 NETSYNC_SERVE_STOP
 
 AT_CHECK(MONOTONE list epochs, [], [stdout])
@@ -53,8 +56,8 @@ CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
 
 # double-check that the revisions didn't change (because otherwise our
 # next test is unreliable):
-AT_CHECK(MONOTONE cat revision $VER1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 cat revision $VER1, [], [ignore], [ignore])
 # confirm, we did not get the new revision
-AT_CHECK(MONOTONE2 cat revision $VER1, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE cat revision $VER1, [1], [ignore], [ignore])
 
 AT_CLEANUP

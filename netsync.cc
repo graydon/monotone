@@ -294,6 +294,9 @@ session
   bool read_some();
   bool write_some();
 
+  bool encountered_error;
+  void error(string const & errmsg);
+
   void write_netcmd_and_try_flush(netcmd const & cmd);
   void queue_bye_cmd();
   void queue_error_cmd(string const & errmsg);
@@ -434,7 +437,8 @@ session::session(protocol_role role,
   saved_nonce(""),
   received_goodbye(false),
   sent_goodbye(false),
-  dbw(app, true)
+  dbw(app, true),
+  encountered_error(false)
 {
   if (voice == client_voice)
     {
@@ -614,11 +618,36 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
 void 
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
-  write_netcmd(cmd, outbuf);
+  if (!encountered_error)
+    write_netcmd(cmd, outbuf);
+  else
+    L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
   // interfere with initial and final sequences. careful with it.
   // write_some();
   // read_some();
+}
+
+// This method triggers a special "error unwind" mode to netsync.  In this
+// mode, all received data is ignored, and no new data is queued.  We simply
+// stay connected long enough for the current write buffer to be flushed, to
+// ensure that our peer receives the error message.
+// WARNING WARNING WARNING (FIXME): this does _not_ throw an exception.  if
+// while processing any given netcmd packet you encounter an error, you can
+// _only_ call this method if you have not touched the database, because if
+// you have touched the database then you need to throw an exception to
+// trigger a rollback.
+// you could, of course, call this method and then throw an exception, but
+// there is no point in doing that, because throwing the exception will cause
+// the connection to be immediately terminated, so your call to error() will
+// actually have no effect (except to cause your error message to be printed
+// twice).
+void
+session::error(std::string const & errmsg)
+{
+  W(F("error: %s\n") % errmsg);
+  queue_error_cmd(errmsg);
+  encountered_error = true;
 }
 
 void 
@@ -1020,9 +1049,14 @@ session::read_some()
   I(inbuf.size() < constants::netcmd_maxsz);
   char tmp[constants::bufsz];
   Netxx::signed_size_type count = str.read(tmp, sizeof(tmp));
-  if(count > 0)
+  if (count > 0)
     {
       L(F("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
+      if (encountered_error)
+        {
+          L(F("in error unwind mode, so throwing them into the bit bucket\n"));
+          return true;
+        }
       inbuf.append(string(tmp, tmp + count));
       mark_recent_io();
       if (byte_in_ticker.get() != NULL)
@@ -1047,6 +1081,12 @@ session::write_some()
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
         (*byte_out_ticker) += count;
+      if (encountered_error && outbuf.empty())
+        {
+          // we've flushed our error message, so it's time to get out.
+          L(F("finished flushing output queue in error unwind mode, disconnecting\n"));
+          return false;
+        }
       return true;
     }
   else
@@ -1073,6 +1113,7 @@ session::queue_error_cmd(string const & errmsg)
   cmd.cmd_code = error_cmd;
   write_error_cmd_payload(errmsg, cmd.payload);
   write_netcmd_and_try_flush(cmd);
+  this->sent_goodbye = true;
 }
 
 void 
@@ -1320,9 +1361,7 @@ session::process_bye_cmd()
 bool 
 session::process_error_cmd(string const & errmsg) 
 {
-  W(F("received network error: %s\n") % errmsg);
-  this->received_goodbye = true;
-  return true;
+  throw bad_decode(F("received network error: %s\n") % errmsg);
 }
 
 bool 
@@ -2342,32 +2381,27 @@ session::process_data_cmd(netcmd_item_type type,
             {
               L(F("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
               app.db.set_epoch(branch, epoch);
+              maybe_note_epochs_finished();
             }
           else
             {
               L(F("branch %s already has an epoch; checking\n") % branch);
-              if (!(i->second == epoch))
-                {
-                  boost::format err = (F("Mismatched epoch on branch %s."
-                                         "  Server has '%s', client has '%s'.")
-                                       % branch
-                                       % (voice == server_voice ? i->second : epoch)
-                                       % (voice == server_voice ? epoch : i->second));
-                  // FIXME: this error command queuing is pointless, because
-                  // we hang up before actually flushing it through the queue.
-                  queue_error_cmd(err.str());
-                  throw bad_decode(err);
-                }
-              else
-                {
-                  // Can't get here, unless something's wrong with our hashing
-                  // (because the if(epoch_exists()) branch should have triggered
-                  // if we actually had the same epoch).  Getting epochs wrong is
-                  // dangerous, so play it safe.
-                  I(false);
-                }
+              // if we get here, then we know that the epoch must be
+              // different, because if it were the same then the
+              // if(epoch_exists()) branch up above would have been taken.  if
+              // somehow this is wrong, then we have broken epoch hashing or
+              // something, which is very dangerous, so play it safe...
+              I(!(i->second == epoch));
+
+              // It is safe to call 'error' here, because if we get here,
+              // then the current netcmd packet cannot possibly have
+              // written anything to the database.
+              error((F("Mismatched epoch on branch %s."
+                       "  Server has '%s', client has '%s'.")
+                     % branch
+                     % (voice == server_voice ? i->second : epoch)
+                     % (voice == server_voice ? epoch : i->second)).str());
             }
-          maybe_note_epochs_finished();
         }
       break;
       
