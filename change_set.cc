@@ -13,6 +13,7 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include <ext/hash_map>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
@@ -108,8 +109,17 @@ path_item
   bool operator==(path_item const & other) const;
 };
 
-typedef std::map<tid, path_item> path_state;
-typedef std::map<tid,tid> state_renumbering;
+
+template<typename T> struct identity 
+{
+  size_t operator()(T const & v) const 
+  { 
+    return static_cast<size_t>(v);
+  }
+};
+
+typedef __gnu_cxx::hash_map<tid, path_item, identity<tid> > path_state;
+typedef __gnu_cxx::hash_map<tid, tid, identity<tid> > state_renumbering;
 typedef std::pair<path_state, path_state> path_analysis;
 
 // nulls and tests
@@ -127,8 +137,12 @@ static file_id null_ident;
 //               name -> (ptype, tid),
 //               ...                  ]
 
-typedef std::map<path_component, std::pair<ptype,tid> > directory_node;
-typedef std::map<tid, boost::shared_ptr<directory_node> > directory_map;
+typedef __gnu_cxx::hash_map<path_component, 
+                            std::pair<ptype,tid>,
+                            identity<path_component> > directory_node;
+
+typedef __gnu_cxx::hash_map<tid, boost::shared_ptr<directory_node>,
+                            identity<tid> > directory_map;
 
 static ptype
 directory_entry_type(directory_node::const_iterator const & i)
@@ -142,16 +156,18 @@ directory_entry_tid(directory_node::const_iterator const & i)
   return i->second.second;
 }
 
-
 void 
 change_set::add_file(file_path const & a)
 {
+  I(rearrangement.added_files.find(a) == rearrangement.added_files.end());
   rearrangement.added_files.insert(a);
 }
 
 void 
 change_set::add_file(file_path const & a, file_id const & ident)
 {
+  I(rearrangement.added_files.find(a) == rearrangement.added_files.end());
+  I(deltas.find(a) == deltas.end());
   rearrangement.added_files.insert(a);
   deltas.insert(std::make_pair(a, std::make_pair(null_ident, ident)));
 }
@@ -161,18 +177,21 @@ change_set::apply_delta(file_path const & path,
                         file_id const & src, 
                         file_id const & dst)
 {
+  I(deltas.find(path) == deltas.end());
   deltas.insert(std::make_pair(path, std::make_pair(src, dst)));
 }
 
 void 
 change_set::delete_file(file_path const & d)
 {
+  I(rearrangement.deleted_files.find(d) == rearrangement.deleted_files.end());
   rearrangement.deleted_files.insert(d);
 }
 
 void 
 change_set::delete_dir(file_path const & d)
 {
+  I(rearrangement.deleted_files.find(d) == rearrangement.deleted_files.end());
   rearrangement.deleted_dirs.insert(d);
 }
 
@@ -331,6 +350,7 @@ dump_analysis(std::string const & s,
   dump_state(s + " second", t.second);
   L(F("END dumping tree '%s'\n") % s);
 }
+
 */
 
 
@@ -386,8 +406,21 @@ extract_pairs_and_insert(std::map<file_path, file_path> const & in,
 }
 
 void 
+analyze_rearrangement(change_set::path_rearrangement const & pr,
+                      path_analysis & pa,
+                      tid_source & ts);
+
+void
+sanity_check_path_analysis(path_analysis const & pr);
+
+void 
 change_set::path_rearrangement::check_sane() const
 {
+  tid_source ts;
+  path_analysis pa;
+  analyze_rearrangement(*this, pa, ts);
+  sanity_check_path_analysis (pa);
+
   // FIXME: extend this as you manage to think of more invariants
   // which are cheap enough to check at this level.
   std::set<file_path> renamed_srcs, renamed_dsts;
@@ -516,7 +549,14 @@ confirm_unique_entries_in_directories(path_state const & ps)
   std::set< std::pair<tid,path_component> > entries;
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
-      std::pair<tid,path_component> p = std::make_pair(i->first, path_item_name(i->second));
+      if (null_name(path_item_name(i->second)))
+        {
+          I(path_item_parent(i->second) == root_tid);
+          continue;
+        }
+          
+      std::pair<tid,path_component> p = std::make_pair(path_item_parent(i->second), 
+                                                       path_item_name(i->second));
       I(entries.find(p) == entries.end());
       entries.insert(p);
     }
@@ -577,7 +617,7 @@ check_states_agree(path_state const & p1,
     }
 }
 
-static void
+void
 sanity_check_path_analysis(path_analysis const & pr)
 {
   sanity_check_path_state(pr.first);
@@ -1061,7 +1101,7 @@ build_directory_map(path_state const & state,
 }
 
 
-static void 
+void 
 analyze_rearrangement(change_set::path_rearrangement const & pr,
                       path_analysis & pa,
                       tid_source & ts)

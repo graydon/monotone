@@ -35,6 +35,9 @@ namespace constants
   // truncated.
   extern size_t const db_log_line_sz;
 
+  // size in bytes of the database xdelta version reconstruction cache
+  extern size_t const db_version_cache_sz;
+
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
   extern size_t const log_line_sz;
