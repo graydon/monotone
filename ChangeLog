@@ -1,3 +1,7 @@
+2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* smap.hh (smap): Remove leading underscores, add comments.
+
 2005-02-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* std_hooks.lua (merge2, merge3): Check for DISPLAY before
