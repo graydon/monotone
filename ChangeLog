@@ -1,3 +1,9 @@
+2005-01-19  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc: Fix up some merge breakage.
+	* tests/t_add_dot.at: Un-XFAIL.
+	* testsuite.at: Run "setup ." before "db init".
+
 2005-01-09  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (get_path_rearrangement): new function/signature for

@@ -1715,20 +1715,21 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
 
   if (args.size() == 0 || args.size() == 1)
     {
-      dir = idx(args, 0)();
-      app.initialize(dir);
-
-      set<revision_id> heads;
       N(app.branch_name() != "", F("need --branch argument for branch-based checkout"));
-      get_branch_heads(app.branch_name(), app, heads);
-      N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
-      N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
-      ident = *(heads.begin());
+
       // if no checkout dir specified, use branch name
       if (args.size() == 0)
           dir = app.branch_name();
       else
           dir = idx(args, 0)();
+
+      app.initialize(dir);
+
+      set<revision_id> heads;
+      get_branch_heads(app.branch_name(), app, heads);
+      N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
+      N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
+      ident = *(heads.begin());
     }
   else
     {
@@ -2684,9 +2685,10 @@ dump_diffs(change_set::delta_map const & deltas,
     }
 }
 
-
-CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
-    "show current diffs on stdout")
+void do_diff(const string & name, 
+             app_state & app, 
+             vector<utf8> const & args, 
+             diff_type type)
 {
   revision_set r_old, r_new;
   manifest_map m_new;
@@ -2832,12 +2834,14 @@ CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]..."
   dump_diffs(composite.deltas, app, new_is_archived, type);
 }
 
-CMD(cdiff, "informative", "[REVISION [REVISION]]", "show current context diffs on stdout")
+CMD(cdiff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
+    "show current context diffs on stdout")
 {
   do_diff(name, app, args, context_diff);
 }
 
-CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout")
+CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
+    "show current unified diffs on stdout")
 {
   do_diff(name, app, args, unified_diff);
 }
@@ -3622,7 +3626,6 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
 
   app.initialize(false);
 
-  import_cvs_repo(mkpath(idx(args, 0)()), app);
   import_cvs_repo(mkpath(idx(args, 0)()), app);
 }
 
