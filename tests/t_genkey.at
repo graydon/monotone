@@ -28,7 +28,8 @@ AT_DATA(input.txt, [blah blah blah
 ])
 
 TSHA=`SHA1(input.txt)`
-AT_CHECK(MONOTONE import input.txt, [], [ignore])
+AT_CHECK(MONOTONE add input.txt, [], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore])
 AT_CHECK(MONOTONE --key=$TKEY cert file $TSHA color pink, [], [ignore])
 AT_CHECK(MONOTONE lscerts file $TSHA, [], [stdout])
 AT_CHECK(grep pink stdout, [], [ignore])

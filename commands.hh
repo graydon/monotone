@@ -24,7 +24,7 @@ struct usage
 namespace commands {
   using namespace std;
   void explain_usage(string const & cmd, ostream & out);
-  void process(app_state & app, string const & cmd, vector<string> const & args);
+  int process(app_state & app, string const & cmd, vector<string> const & args);
 };
 
 #endif

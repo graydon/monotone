@@ -142,16 +142,18 @@ void explain_usage(string const & cmd, ostream & out)
   out << endl << endl;
 }
 
-void process(app_state & app, string const & cmd, vector<string> const & args)
+int process(app_state & app, string const & cmd, vector<string> const & args)
 {
   if (cmds.find(cmd) != cmds.end())
     {
       L("executing %s command\n", cmd.c_str());
       cmds[cmd]->exec(app, args);
+      return 0;
     }
   else
     {
-      throw usage(cmd);
+      cerr << "unknown command '" << cmd << "'" << endl;
+      return 1;
     }
 }
 

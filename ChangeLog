@@ -1,3 +1,8 @@
+2003-09-11  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_genkey.at: Remove use of 'import'.
+	* commands.cc, monotone.cc: Report unknown commands nicely.
+	
 2003-09-08  graydon hoare  <graydon@pobox.com>
 
 	* tests/merge.at: Accept tromey's non-error case for update.
