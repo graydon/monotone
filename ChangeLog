@@ -1,3 +1,9 @@
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_subdir_revert.at: New test.
+	* tests/t_subdir_rename.at: New test.
+	* testsuite.at: Add them.
+
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_subdir_add.at: New test.
