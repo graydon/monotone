@@ -18,6 +18,7 @@
 
 #include <sqlite.h>
 
+#include "app_state.hh"
 #include "cert.hh"
 #include "cleanup.hh"
 #include "constants.hh"
@@ -1045,119 +1046,47 @@ database::get_revision_parents(revision_id const & id,
 {
   results res;
   fetch(res, one_col, any_rows, 
-	"SELECT parent FROM ancestry WHERE child = '%q'",
+	"SELECT parent FROM revision_ancestry WHERE child = '%q'",
 	id.inner()().c_str());
   for (size_t i = 0; i < res.size(); ++i)
     parents.insert(revision_id(res[i][0]));
 }
 
 void 
-database::get_revision_manifest(revision_id const & cid,
+database::get_revision_manifest(revision_id const & rid,
 			       manifest_id & mid)
 {
-  results res;
-  fetch(res, one_col, one_row, 
-	"SELECT manifest FROM revisions "
-	"WHERE id = '%q'",
-	cid.inner()().c_str());
-  mid = manifest_id(res[0][0]);
+  revision_set rev;
+  get_revision(rid, rev);
+  mid = rev.new_manifest;
 }
 
 void 
 database::get_revision(revision_id const & id,
 		       revision_set & rev)
 {
-  rev.new_manifest = manifest_id();
-  rev.edges.clear();
-
-  set<revision_id> parents;
-  get_revision_parents(id, parents);
-  I(! parents.empty());
-
-  // get the manifest ID
-  get_revision_manifest(id, rev.new_manifest);
-  
-  // get the edges
-  for (set<revision_id>::const_iterator parent = parents.begin();
-       parent != parents.end(); ++parent)
-    {
-      manifest_id old_manifest;
-      revision_id old_revision;
-      change_set cs;
-
-      old_revision = *parent;
-      get_revision_manifest(*parent, old_manifest);
-
-      // get the adds
-      {
-	results res;
-	fetch(res, 2, any_rows, 
-	      "SELECT path, data FROM changeset_adds "
-	      "WHERE parent = '%q' AND child = '%q'",
-	      parent->inner()().c_str(),
-	      id.inner()().c_str());
-	for (size_t i = 0; i < res.size(); ++i)
-	  cs.adds.insert(addition_entry(file_path(res[i][0]),
-					file_id(res[i][1])));
-      }
-
-      // get the deletes
-      {
-	results res;
-	fetch(res, one_col, any_rows, 
-	      "SELECT path FROM changeset_deletes "
-	      "WHERE parent = '%q' AND child = '%q'",
-	      parent->inner()().c_str(),
-	      id.inner()().c_str());
-	for (size_t i = 0; i < res.size(); ++i)
-	  cs.dels.insert(file_path(res[i][0]));
-      }
-
-      // get the renames
-      {
-	results res;
-	fetch(res, 2, any_rows, 
-	      "SELECT src, dst FROM changeset_renames "
-	      "WHERE parent = '%q' AND child = '%q'",
-	      parent->inner()().c_str(),
-	      id.inner()().c_str());
-	for (size_t i = 0; i < res.size(); ++i)
-	  cs.renames.insert(rename_entry(file_path(res[i][0]),
-					 file_path(res[i][1])));
-      }
-
-      // get the deltas
-      {
-	results res;
-	fetch(res, 3, any_rows, 
-	      "SELECT path, src, dst FROM changeset_deltas "
-	      "WHERE parent = '%q' AND child = '%q'",
-	      parent->inner()().c_str(),
-	      id.inner()().c_str());
-	for (size_t i = 0; i < res.size(); ++i)
-	  cs.deltas.insert(delta_entry(file_path(res[i][0]),
-				       make_pair(file_id(res[i][1]),
-						 file_id(res[i][2]))));
-      }
-      rev.edges.insert(edge_entry(old_revision,
-				  make_pair(old_manifest, cs)));
-    }
-
-  // verify that we got a piece of content which has the right id
-  {
-    revision_id tmp;
-    calculate_ident(rev, tmp);
-    I(id == tmp);
-  }
+  revision_data d;
+  get_revision(id, d);
+  read_revision_set(d, rev);
 }
 
 void 
 database::get_revision(revision_id const & id,
 		       revision_data & dat)
 {
-  revision_set rev;
-  get_revision(id, rev);
-  write_revision_set(rev, dat);
+  results res;
+  fetch(res, one_col, one_row, 
+	"SELECT data FROM revisions WHERE id = '%q'",
+	id.inner()().c_str());
+
+  dat = revision_data(res[0][0]);
+
+  // verify that we got a revision with the right id
+  {
+    revision_id tmp;
+    calculate_ident(dat, tmp);
+    I(id == tmp);
+  }
 }
 
 void 
@@ -1166,89 +1095,25 @@ database::put_revision(revision_id const & new_id,
 {
 
   I(!revision_exists(new_id));
+  revision_data d;
 
-  // verify that we are putting the revision under the right id
-  {
-    revision_id tmp;
-    calculate_ident(rev, tmp);
-    I(new_id == tmp);
-  }
+  write_revision_set(rev, d);
+  revision_id tmp;
+  calculate_ident(d, tmp);
+  I(tmp == new_id);
 
   transaction_guard guard(*this);
+
   execute("INSERT INTO revisions VALUES('%q', '%q')", 
 	  new_id.inner()().c_str(), 
-	  rev.new_manifest.inner()().c_str());
+	  d.inner()().c_str());
 
-  for (edge_map::const_iterator edge = rev.edges.begin();
-       edge != rev.edges.end(); ++edge)
+  for (edge_map::const_iterator e = rev.edges.begin();
+       e != rev.edges.end(); ++e)
     {
-      // make sure the parent revision exists w/ manifest
-      if (revision_exists(edge_old_revision(edge)))
-	{
-	  manifest_id tmp;
-	  get_revision_manifest(edge_old_revision(edge), tmp);
-	  I(tmp == edge_old_manifest(edge));
-	}
-      else
-	{
-	  I(!edge_old_revision(edge).inner()().empty());
-	  I(!edge_old_manifest(edge).inner()().empty());
-	  execute("INSERT INTO revisions VALUES('%q', '%q')", 
-		  edge_old_revision(edge).inner()().c_str(), 
-		  edge_old_manifest(edge).inner()().c_str());
-	}
-
-      // insert the adds
-
-      change_set const & cs = edge_changes(edge);
-
-      for (addition_map::const_iterator add = cs.adds.begin();
-	   add != cs.adds.end(); ++add)
-	{
-	  execute("INSERT INTO edge_adds "
-		  "VALUES('%q', '%q', '%q', '%q')", 
-		  edge_old_revision(edge).inner()().c_str(), 
-		  new_id.inner()().c_str(),
-		  addition_path(add)().c_str(),
-		  addition_id(add).inner()().c_str());
-	}
-
-      // insert the deletes
-      for (deletion_set::const_iterator del = cs.dels.begin();
-	   del != cs.dels.end(); ++del)
-	{
-	  execute("INSERT INTO edge_deletes "
-		  "VALUES('%q', '%q', '%q')", 
-		  edge_old_revision(edge).inner()().c_str(), 
-		  new_id.inner()().c_str(),
-		  (*del)().c_str());
-	}
-
-      // insert the renames
-      for (rename_map::const_iterator ren = cs.renames.begin();
-	   ren != cs.renames.end(); ++ren)
-	{
-	  execute("INSERT INTO edge_renames "
-		  "VALUES('%q', '%q', '%q', '%q')", 
-		  edge_old_revision(edge).inner()().c_str(), 
-		  new_id.inner()().c_str(),
-		  rename_src(ren)().c_str(),
-		  rename_dst(ren)().c_str());
-	}
-
-
-      // insert the deltas
-      for (delta_map::const_iterator delta = cs.deltas.begin();
-	   delta != cs.deltas.end(); ++delta)
-	{
-	  execute("INSERT INTO edge_deltas "
-		  "VALUES('%q', '%q', '%q', '%q', '%q')", 
-		  edge_old_manifest(edge).inner()().c_str(), 
-		  new_id.inner()().c_str(),
-		  delta_path(delta)().c_str(),
-		  delta_src_id(delta).inner()().c_str(),
-		  delta_dst_id(delta).inner()().c_str());
-	}      
+      execute("INSERT INTO revision_ancestry VALUES('%q', '%q')", 
+	      edge_old_revision(e).inner()().c_str(),
+	      new_id.inner()().c_str());
     }
 
   guard.commit();
@@ -1260,9 +1125,6 @@ database::put_revision(revision_id const & new_id,
 {
   revision_set rev;
   read_revision_set(dat, rev);
-  revision_id tmp;
-  calculate_ident(rev, tmp);
-  I(tmp == new_id);
   put_revision(new_id, rev);
 }
 

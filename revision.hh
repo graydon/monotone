@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 
+#include "change_set.hh"
 #include "vocab.hh"
 
 // a revision is a text object. It has a precise, normalizable serial form
@@ -101,12 +102,10 @@ edge_changes(edge_map::const_iterator i)
 
 void 
 read_revision_set(data const & dat,
-		  change_set::tid_source & ts,
 		  revision_set & rev);
 
 void 
 read_revision_set(revision_data const & dat,
-		  change_set::tid_source & ts,
 		  revision_set & rev);
 
 void
@@ -128,7 +127,6 @@ print_revision(basic_io::printer & printer,
 
 void 
 parse_revision(basic_io::parser & parser,
-	       change_set::tid_source & ts,
 	       revision_set & rev);
 
 void 
@@ -137,7 +135,6 @@ print_edge(basic_io::printer & printer,
 
 void 
 parse_edge(basic_io::parser & parser,
-	   change_set::tid_source & ts,
 	   edge_map & es);
 
 #endif // __REVISION_HH__

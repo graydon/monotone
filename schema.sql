@@ -48,44 +48,15 @@ CREATE TABLE manifest_deltas
 CREATE TABLE revisions
 	(
 	id primary key,      -- SHA1(text of revision)
-	manifest not null    -- joins with manifests.id or manifest_deltas.id
+	data not null        -- compressed, encoded contents of a revision
 	unique(id, manifest)
 	);
 
-CREATE TABLE changeset_adds
+CREATE TABLE revision_ancestry
 	(
 	parent not null,     -- joins with revisions.id
 	child not null,      -- joins with revisions.id
-	path not null,       -- path name
-	data not null,       -- joins with files.id or file_deltas.id
-	unique(parent, child, path, data)
-	);
-
-CREATE TABLE changeset_deletes
-	(
-	parent not null,     -- joins with revisions.id
-	child not null,      -- joins with revisions.id
-	path not null,       -- path name
-	unique(parent, child, path)
-	);
-
-CREATE TABLE changeset_renames
-	(
-	parent not null,     -- joins with revisions.id
-	child not null,      -- joins with revisions.id
-	src not null,        -- path name
-	dst not null,        -- path name
-	unique(parent, child, src, dst)
-	);
-
-CREATE TABLE changeset_deltas
-	(
-	parent not null,     -- joins with revisions.id
-	child not null,      -- joins with revisions.id
-	path not null,       -- path name
-	src not null,        -- joins with files.id or file_deltas.id
-	dst not null,        -- joins with files.id or file_deltas.id
-	unique(parent, child, path, src, dst)
+	unique(parent, child)
 	);
 
 -- structures for managing RSA keys and file / manifest certs
@@ -137,54 +108,6 @@ CREATE TABLE merkle_nodes
 	body not null,                -- binary, base64'ed node contents
 	unique(type, collection, level, prefix)
 	);
-
--- indices
-
-CREATE INDEX revision_manifests ON revisions (manifest);
-
-CREATE INDEX changeset_add_parents ON changeset_adds (parent);
-CREATE INDEX changeset_add_childs ON changeset_adds (child);
-CREATE INDEX changeset_add_paths ON changeset_adds (path);
-CREATE INDEX changeset_add_data ON changeset_adds (data);
-
-CREATE INDEX changeset_delete_parents ON changeset_deletes (parent);
-CREATE INDEX changeset_delete_childs ON changeset_deletes (child);
-CREATE INDEX changeset_delete_paths ON changeset_deletes (path);
-
-CREATE INDEX changeset_rename_parents ON changeset_renames (parent);
-CREATE INDEX changeset_rename_childs ON changeset_renames (child);
-CREATE INDEX changeset_rename_srcs ON changeset_renames (src);
-CREATE INDEX changeset_rename_dsts ON changeset_renames (dst);
-
-CREATE INDEX changeset_delta_parents ON changeset_deltas (parent);
-CREATE INDEX changeset_delta_childs ON changeset_deltas (child);
-CREATE INDEX changeset_delta_paths ON changeset_deltas (path);
-CREATE INDEX changeset_delta_srcs ON changeset_deltas (src);
-CREATE INDEX changeset_delta_dsts ON changeset_deltas (dst);
-
--- views
-
-CREATE VIEW revision_ancestry AS
-	SELECT parent, child FROM changeset_adds
-	UNION
-	SELECT parent, child FROM changeset_deletes
-	UNION
-	SELECT parent, child FROM changeset_renames
-	UNION
-	SELECT parent, child FROM changeset_deltas
-	;
-
-CREATE VIEW path_ancestry AS
-	SELECT parent, child, path FROM changeset_adds
-	UNION
-	SELECT parent, child, path FROM changeset_deletes
-	UNION
-	SELECT parent, child, src FROM changeset_renames
-	UNION
-	SELECT parent, child, dst FROM changeset_renames
-	UNION
-	SELECT parent, child, path FROM changeset_deltas
-	;
 
 CREATE VIEW revision_certs_with_trust AS
 	SELECT 

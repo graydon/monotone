@@ -286,7 +286,8 @@ void calculate_ident(revision_data const & dat,
 {
   hexenc<id> tmp;
   data unpacked;
-  calculate_ident(dat.inner(), tmp);
+  unpack(dat.inner(), unpacked);
+  calculate_ident(unpacked, tmp);
   ident = tmp;
 }
 

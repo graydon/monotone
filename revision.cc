@@ -73,7 +73,6 @@ print_revision(basic_io::printer & printer,
 
 void 
 parse_edge(basic_io::parser & parser,
-	   change_set::tid_source & ts,
 	   edge_map & es)
 {
   change_set cs;
@@ -92,7 +91,7 @@ parse_edge(basic_io::parser & parser,
     parser.hex(tmp);
     old_man = manifest_id(tmp);
 
-    parse_change_set(parser, ts, cs);
+    parse_change_set(parser, cs);
   }
   parser.ket();
 
@@ -102,7 +101,6 @@ parse_edge(basic_io::parser & parser,
 
 void 
 parse_revision(basic_io::parser & parser,
-	       change_set::tid_source & ts,
 	       revision_set & rev)
 {
   rev.edges.clear();
@@ -115,31 +113,29 @@ parse_revision(basic_io::parser & parser,
     parser.hex(tmp);
     rev.new_manifest = manifest_id(tmp);
     while (parser.symp(syms::edge))
-      parse_edge(parser, ts, rev.edges);
+      parse_edge(parser, rev.edges);
   }
   parser.ket();
 }
 
 void 
 read_revision_set(data const & dat,
-		  change_set::tid_source & ts,
 		  revision_set & rev)
 {
   std::istringstream iss(dat());
   basic_io::input_source src(iss);
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
-  parse_revision(pars, ts, rev);
+  parse_revision(pars, rev);
 }
 
 void 
 read_revision_set(revision_data const & dat,
-		  change_set::tid_source & ts,
 		  revision_set & rev)
 {
   data unpacked;
   unpack(dat.inner(), unpacked);
-  read_revision_set(unpacked, ts, rev);
+  read_revision_set(unpacked, rev);
 }
 
 void

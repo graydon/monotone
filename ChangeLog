@@ -1,3 +1,11 @@
+2004-08-17  graydon hoare  <graydon@pobox.com>
+
+	* database.cc: Simplified.
+	* schema.sql: Simplified.
+	* transforms.cc: Fixed bug.
+	* revision.{hh,cc}: Stripped out tid_source.
+	* change_set.{cc,hh}: Oops, never committed!
+
 2004-08-16  graydon hoare  <graydon@pobox.com>
 
 	* change_set.{hh,cc}: Simplified, finished i/o.
