@@ -15,6 +15,7 @@
 #include "packet.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "ui.hh"
 
 #include <string>
 #include <iostream>
@@ -88,7 +89,8 @@ void fetch_http_packets(string const & group_name,
 			unsigned long port,
 			std::iostream & stream)
 {
-  size_t count = 0;
+
+  ticker packet_ticker("packet");
 
   // step 1: make the request
   string query = 
@@ -168,7 +170,7 @@ void fetch_http_packets(string const & group_name,
 	      {
 		L("got sequence numbers %lu, %lu\n", tmaj, tmin);
 		istringstream pkt(packet);
-		P("\rfetched packet %d", count++);
+		++packet_ticker;
 		read_packets(pkt, consumer);
 		maj_number = tmaj;
 		min_number = tmin;
@@ -187,7 +189,7 @@ void fetch_http_packets(string const & group_name,
 	L("%d trailing bytes from http\n", packet.size());
 	istringstream pkt(packet);
 	read_packets(pkt, consumer);
-	P("\rfetched packet %d", count++);
+	++packet_ticker;
       }    
   }
   P("http fetch complete\n");

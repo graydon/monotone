@@ -8,6 +8,7 @@
 #include "nntp_tasks.hh"
 #include "nntp_machine.hh"
 #include "sanity.hh"
+#include "ui.hh"
 
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
@@ -103,10 +104,10 @@ struct postlines_state : public nntp_state
 
 struct feedlines_state : public cmd_state
 {
-  size_t count;
+  ticker count;
   packet_consumer & consumer;
   explicit feedlines_state(packet_consumer & cons)
-    : cmd_state("NEXT"), count(0), consumer(cons)
+    : cmd_state("NEXT"), count("packet"), consumer(cons)
   {}
   virtual ~feedlines_state() {}
   virtual nntp_edge drive(iostream & net, nntp_edge const & e)
@@ -114,7 +115,7 @@ struct feedlines_state : public cmd_state
     string joined;
     join_lines(e.lines, joined);
     stringstream ss(joined);
-    P("\rfetched packet %d", count++);
+    ++count;
     read_packets(ss, consumer);
     return cmd_state::drive(net, e);
   }  

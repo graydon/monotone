@@ -40,6 +40,7 @@ typedef hash_map<u32, extent, identity> match_table;
 struct insn
 {
   insn(char c) : code(insert), pos(0), len(0), payload("")  { payload += c; }
+  insn(string s) : code(insert), pos(0), len(s.size()), payload(s)  {}
   insn(u32 p, u32 l) : code(copy), pos(p), len(l) {}
   enum { insert, copy } code;
   u32 pos, len;
@@ -233,12 +234,27 @@ compute_delta(string const & a,
   // necessary logic directly in this function, don't bother doing an
   // xdelta. several places of the xdelta code prefer assertions which are
   // only true with non-empty chunks anyways.
-  I(a.size() > 0);
-  I(b.size() > 0);
 
-  L("computing binary delta instructions\n");
-  compute_delta_insns(a, b, delta_insns);
-  L("computed binary delta instructions\n");
+  if (a == b)
+    {
+      delta.clear();
+      return;
+    }
+
+  if (a.size() == 0 && b.size() != 0)
+    delta_insns.push_back(insn(a));
+  else if (a.size() != 0 && b.size() == 0)
+    delta_insns.push_back(insn(0, 0));
+  else
+    {
+      I(a.size() > 0);
+      I(b.size() > 0);
+      
+      L("computing binary delta instructions\n");
+      compute_delta_insns(a, b, delta_insns);
+      L("computed binary delta instructions\n");
+    }
+
   ostringstream oss;  
   for (vector<insn>::const_iterator i = delta_insns.begin(); 
        i != delta_insns.end(); ++i)

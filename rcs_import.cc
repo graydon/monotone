@@ -35,7 +35,7 @@
 #include "rcs_file.hh"
 #include "sanity.hh"
 #include "transforms.hh"
-
+#include "ui.hh"
 
 using namespace std;
 using boost::shared_ptr;
@@ -105,9 +105,9 @@ struct cvs_history
   file_path curr_file;
   manifest_map head_manifest;
 
-  int n_versions;
-  int n_tree_branches;
-  int n_file_branches;
+  ticker n_versions;
+  ticker n_tree_branches;
+  ticker n_file_branches;
 
   cvs_history();
   void set_filename(string const & file,
@@ -556,9 +556,9 @@ bool cvs_key::operator<(cvs_key const & other) const
 }
 
 cvs_history::cvs_history() :
-  n_versions(0),
-  n_tree_branches(0),
-  n_file_branches(0)
+  n_versions("versions"),
+  n_tree_branches("tree branches"),
+  n_file_branches("file branches")
 {
   stk.push(shared_ptr<cvs_state>(new cvs_state()));  
 }
@@ -570,6 +570,7 @@ void cvs_history::set_filename(string const & file,
   I(file.size() > 2);
   I(file.substr(file.size() - 2) == string(",v"));
   string ss = file;
+  ui.set_tick_trailer(ss);
   ss.resize(ss.size() - 2);
   curr_file = file_path(ss);
 }
@@ -664,9 +665,7 @@ void cvs_history::note_file_edge(rcs_file const & r,
   if (head_manifest.find(curr_file) ==  head_manifest.end())
     head_manifest.insert(make_pair(curr_file, prev_version));
   
-  printf("[versions: %d, branches: %d tree / %d file] scanning %-40.40s\r", 
-	 ++n_versions, n_tree_branches, n_file_branches, curr_file().c_str());
-  fflush(stdout);
+  ++n_versions;
 }
 
 void cvs_history::pop_branch() 
@@ -870,8 +869,8 @@ void build_child_state(shared_ptr<cvs_state> state,
     state->in_edges.size());
 }
 
-void import_substates(int & n_edges, 
-		      int & n_branches,
+void import_substates(ticker & n_edges, 
+		      ticker & n_branches,
 		      shared_ptr<cvs_state> state,
 		      manifest_map parent_map,
 		      cvs_history & cvs,
@@ -897,15 +896,13 @@ void import_substates(int & n_edges,
       import_substates(n_edges, n_branches, i->second, child_map, cvs, app);
       parent_map = child_map;
       parent_id = child_id;
-      printf("[edges: %d, branches: %d] building certs\r", ++n_edges, n_branches);
-      fflush(stdout);
+      ++n_edges;
     }
 }
 
 
 void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 {
-  int n_branches = 0, n_edges = 0;
   cvs_history cvs;
   cvs_tree_walker walker(cvs, app.db);
   I( fs::is_directory(cvsroot));
@@ -914,8 +911,7 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
   I(chdir(cvsroot.native_directory_string().c_str()) == 0);
   walk_tree(walker);
 
-  printf("\nphase 1 (version import) complete\n");
-  fflush(stdout);
+  P("phase 1 (version import) complete\n");
   L("phase 1 complete, all versions imported\n");
 
   I(cvs.stk.size() == 1);
@@ -927,6 +923,7 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 
 
   {
+    ticker n_branches("branches"), n_edges("edges");
     transaction_guard guard(app.db);
     
     // write the trunk head version
@@ -950,11 +947,10 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 	import_substates(n_edges, n_branches, i->second, parent_map, cvs, app);
 	child_map = parent_map;
 	child_id = parent_id;
-	printf("[edges: %d, branches: %d] building certs\r", ++n_edges, n_branches);
+	++n_edges;
       }
     
-    printf("\nphase 2 (ancestry reconstruction) complete\n");
-    fflush(stdout);
+    P("phase 2 (ancestry reconstruction) complete\n");
     L("phase 2 complete, all ancestry certs written\n");
 
     guard.commit();

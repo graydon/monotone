@@ -17,6 +17,7 @@
 #include "sanity.hh"
 #include "cleanup.hh"
 #include "file_io.hh"
+#include "ui.hh"
 
 #define OPT_VERBOSE 1
 #define OPT_HELP 2
@@ -222,7 +223,7 @@ int cpp_main(int argc, char ** argv)
     }
   catch (informative_failure & inf)
     {
-      cerr << "monotone: " << inf.what << endl;
+      ui.inform(inf.what + string("\n"));
       clean_shutdown = true;
       return 1;
     }

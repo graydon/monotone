@@ -1,0 +1,98 @@
+#include "ui.hh"
+#include "sanity.hh"
+
+#include <iostream>
+
+// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
+// all rights reserved.
+// licensed to the public under the terms of the GNU GPL (>= 2)
+// see the file COPYING for details
+
+// this file contains a couple utilities to deal with the user
+// interface. the global user_interface object 'ui' owns cerr, so no
+// writing to it directly!
+
+using namespace std;
+struct user_interface ui;
+
+static string blankline = 
+"                                                                      ";
+
+ticker::ticker(string const & tickname) : name (tickname)
+{
+  I(ui.ticks.find(tickname) == ui.ticks.end());
+  ui.ticks.insert(make_pair(tickname,0));
+}
+
+ticker::~ticker()
+{
+  I(ui.ticks.find(name) != ui.ticks.end());
+  ui.ticks.erase(name);
+  ui.finish_ticking();
+}
+
+void ticker::operator++()
+{
+  I(ui.ticks.find(name) != ui.ticks.end());
+  ui.ticks[name]++;
+  ui.write_ticks();
+}
+
+void ticker::operator+=(size_t t)
+{
+  I(ui.ticks.find(name) != ui.ticks.end());
+  ui.ticks[name] += t;
+  ui.write_ticks();
+}
+
+
+user_interface::user_interface() :
+  last_write_was_a_tick (false)
+{
+}
+
+user_interface::~user_interface()
+{
+}
+
+void user_interface::finish_ticking()
+{
+  if (ticks.size() == 0 && 
+      last_write_was_a_tick)
+    {
+      tick_trailer = "";
+      cerr << endl;
+    }
+}
+
+void user_interface::set_tick_trailer(string const & t)
+{
+  tick_trailer = t;
+}
+
+void user_interface::write_ticks()
+{
+  cerr << blankline;
+  cerr << "\rmonotone: ";
+  for (map<string,size_t>::const_iterator i = ticks.begin();
+       i != ticks.end(); ++i)
+    cerr << '[' << i->first << ": " << i->second << "] ";
+  cerr << tick_trailer;
+  last_write_was_a_tick = true;
+}
+
+void user_interface::warn(string const & warning)
+{
+  if (issued_warnings.find(warning) == issued_warnings.end())
+    inform("warning: " + warning);
+  issued_warnings.insert(warning);
+}
+
+void user_interface::inform(string const & line)
+{
+  if (last_write_was_a_tick)
+    cerr << endl;
+  cerr << "monotone: " << line;
+  cerr.flush();
+  last_write_was_a_tick = false;
+}

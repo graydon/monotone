@@ -28,6 +28,7 @@
 #include "sanity.hh"
 #include "cert.hh"
 #include "transforms.hh"
+#include "ui.hh"
 #include "update.hh"
 #include "vocab.hh"
 #include "work.hh"
@@ -152,7 +153,7 @@ int process(app_state & app, string const & cmd, vector<string> const & args)
     }
   else
     {
-      cerr << "monotone: unknown command '" << cmd << "'" << endl;
+      ui.inform(string("unknown command '") + cmd + "'\n");
       return 1;
     }
 }

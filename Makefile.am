@@ -6,7 +6,7 @@ MOST_SOURCES = \
 	 cert.cc database.cc file_io.cc keys.cc manifest.cc         \
          nntp_machine.cc packet.cc sanity.cc vocab.cc               \
          rcs_file.cc rcs_import.cc xdelta.cc network.cc             \
-         http_tasks.cc                                              \
+         http_tasks.cc ui.cc                                        \
                                                                     \
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh  \
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh    \
@@ -14,7 +14,7 @@ MOST_SOURCES = \
 	 cleanup.hh diff_patch.hh lua.hh nntp_tasks.hh patch_set.hh \
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh \
          rcs_file.hh rcs_import.hh xdelta.hh adler32.hh             \
-         network.hh http_tasks.hh constants.hh
+         network.hh http_tasks.hh constants.hh ui.hh
 
 CRYPTOPP_SOURCES = \
         cryptopp/algebra.cpp cryptopp/algparam.cpp cryptopp/arc4.cpp \

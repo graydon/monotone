@@ -6,10 +6,14 @@
 	* cert.cc (check_signature): Treat missing key as failed check.
 	* commands.cc (lscerts): Warn when keys are missing.
 
-	* nntp_tasks.cc, http_tasks.cc: Tick progress.
+	* rcs_import.cc, nntp_tasks.cc, http_tasks.cc: Tick progress.
 
 	* sanity.cc, monotone.cc: Tidy up output a bit.
-	
+
+	* xdelta.cc: Add code to handle empty files. Maybe correct?
+
+	* ui.cc, ui.hh: Add.
+
 2003-09-13  Tom Tromey  <tromey@redhat.com>
 
 	* tests/t_nntp.at: If we can't find tcpserver or snntpd, skip the

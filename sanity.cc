@@ -12,6 +12,7 @@
 
 #include "constants.hh"
 #include "sanity.hh"
+#include "ui.hh"
 
 using namespace std;
 
@@ -79,10 +80,7 @@ void sanity_log(sanity & s, const char *format, ...)
     }
     
   if (s.verbose)
-    {
-      cerr << "monotone: " << buf;
-      cerr.flush();
-    }
+    ui.inform(string(buf));
 }
 
 void sanity_progress(sanity & s, const char *format, ...)
@@ -111,10 +109,7 @@ void sanity_progress(sanity & s, const char *format, ...)
   sanity_log(s, "progress: %s", buf);
 
   if (! s.quiet)
-    {
-      cout << "monotone: " << buf;
-      cout.flush();
-    }
+    ui.inform(string(buf));
 
 }
 
@@ -138,7 +133,13 @@ void sanity_naughtyness_handler(char *expr, string const & explanation, char *fi
   if (global_sanity.logbuf)
     L("usage constraint '%s' violated at %s:%d\n", expr, file, line);
   else
-    cerr << "monotone: usage constraint '" << expr << "' violated at " << file << ":" << line << endl;
+    ui.inform("usage constraint '" 
+	      + string(expr) 
+	      + "' violated at " 
+	      + string(file) 
+	      + ":" 
+	      + boost::lexical_cast<string>(line)
+	      + "\n");
   // FIXME: is "misuse" too rude? you don't want to scare the user if all they
   // did was type something a little wrong.. revisit perhaps with someone very
   // sensitive and kind, and maybe a thesaurus.
@@ -150,7 +151,14 @@ void sanity_invariant_handler(char *expr, char *file, int line)
   if (global_sanity.logbuf)
     L("invariant '%s' violated at %s:%d\n", expr, file, line);
   else
-    cerr << "monotone: invariant '" << expr << "' violated at " << file << ":" << line << endl;
+    ui.inform("invariant '" 
+	      + string(expr) 
+	      + "' violated at " 
+	      + string(file) 
+	      + ":" 
+	      + boost::lexical_cast<string>(line)
+	      + "\n");
+
   throw std::logic_error(string(file) + string(":")
 			 + boost::lexical_cast<string>(line) + string(": ")
 			 + string(expr));
