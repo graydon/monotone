@@ -18,7 +18,11 @@
 #		if defined(_mm_free)
 #			define SSE2_INTRINSICS_AVAILABLE
 #		endif
-#	endif
+#       endif
+#endif
+
+#if defined(__i386__) && defined(__SSE2__) && defined(__GNUC__) && (__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)
+#   define SSE2_INTRINSICS_AVAILABLE
 #endif
 
 NAMESPACE_BEGIN(CryptoPP)

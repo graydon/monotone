@@ -643,15 +643,31 @@ get_branch_heads(cert_value const & branchname,
 		 set<manifest_id> & heads)
 {
   heads.clear();
-  vector< manifest<cert> > branch_certs, ancestor_certs;
+
+  vector< manifest<cert> > 
+    branch_certs, 
+    ancestor_certs, 
+    disapproval_certs;
+
+  set< pair<hexenc<id>, base64<cert_value> > > disapproved;
+
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
 
   P(F("fetching heads of branch '%s'\n") % branchname);
 
-  app.db.get_head_candidates(branch_encoded(), branch_certs, ancestor_certs);
+  app.db.get_head_candidates(branch_encoded(), 
+			     branch_certs, 
+			     ancestor_certs, 
+			     disapproval_certs);
+
+  P(F("erasing bogus certs on '%s'\n") % branchname);
+
   erase_bogus_certs(branch_certs, app);
   erase_bogus_certs(ancestor_certs, app);
+  erase_bogus_certs(disapproval_certs, app);
+
+  P(F("pulled initial cert set for '%s'\n") % branchname);
 
   for (vector< manifest<cert> >::const_iterator i = branch_certs.begin();
        i != branch_certs.end(); ++i)
@@ -659,18 +675,23 @@ get_branch_heads(cert_value const & branchname,
       heads.insert(i->inner().ident);
     }
 
-  L(F("began with %d candidate heads\n") % heads.size());
+  for (vector< manifest<cert> >::const_iterator i = disapproval_certs.begin();
+       i != disapproval_certs.end(); ++i)
+    {
+      disapproved.insert(make_pair(i->inner().ident,
+				   i->inner().value));
+    }
+
+  P(F("began with %d candidate heads\n") % heads.size());
 
   // Remove every manifest with descendents.
   for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
        i != ancestor_certs.end(); ++i)
-    {
+    {      
       // skip those invalidated by a specific disapproval
-      vector< manifest<cert> > disapprove_certs;
-      app.db.get_manifest_certs(i->inner().ident, disapproval_cert_name, 
-				i->inner().value, disapprove_certs);
-      erase_bogus_certs(disapprove_certs, app);
-      if (! disapprove_certs.empty())
+      if (disapproved.find(make_pair(i->inner().ident,
+				     i->inner().value)) 
+	  != disapproved.end())
 	continue;
 
       cert_value tv;
@@ -683,7 +704,7 @@ get_branch_heads(cert_value const & branchname,
 	}
     }
   
-  L(F("reduced to %d heads\n") % heads.size());
+  P(F("reduced to %d heads\n") % heads.size());
 }
 		   
 void 

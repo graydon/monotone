@@ -1,3 +1,8 @@
+2004-03-22  graydon hoare  <graydon@pobox.com>
+
+	* cryptopp/integer.cpp, integer.h: Enable SSE2 multiply code.
+	* database.cc, database.hh, certs.cc: Speed up 'heads'.
+
 2004-03-21  graydon hoare  <graydon@pobox.com>
 
 	* lcs.hh, sanity.hh: Minor performance tweaks.

@@ -262,7 +262,8 @@ public:
 
   void get_head_candidates(std::string const & branch_encoded,
 			   std::vector< manifest<cert> > & branch_certs,
-			   std::vector< manifest<cert> > & ancestry_certs);
+			   std::vector< manifest<cert> > & ancestry_certs,
+			   std::vector< manifest<cert> > & disapproval_certs);
 
   bool manifest_cert_exists(manifest<cert> const & cert);
   bool manifest_cert_exists(hexenc<id> const & hash);

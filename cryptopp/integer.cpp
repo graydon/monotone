@@ -35,23 +35,16 @@ static int DummyAssignIntToInteger = (AssignIntToInteger = FunctionAssignIntToIn
 
 #ifdef SSE2_INTRINSICS_AVAILABLE
 template <class T>
-AllocatorBase<T>::pointer AlignedAllocator<T>::allocate(size_type n, const void *)
+typename AllocatorBase<T>::pointer AlignedAllocator<T>::allocate(size_type n, const void *)
 {
-	if (n < 4)
 		return new T[n];
-	else
-		return (T *)_mm_malloc(sizeof(T)*n, 16);
-
 }
 
 template <class T>
 void AlignedAllocator<T>::deallocate(void *p, size_type n)
 {
 	memset(p, 0, n*sizeof(T));
-	if (n < 4)
-		delete [] p;
-	else
-		_mm_free(p);
+	delete [] static_cast<T *>(p);
 }
 
 template class AlignedAllocator<word>;
@@ -1300,7 +1293,7 @@ carry2:
 
 #endif	// #ifdef SSE2_INTRINSICS_AVAILABLE
 
-#elif defined(__GNUC__) && defined(__i386__)
+#elif defined(__GNUC__) && defined(__i386__) 
 
 class PentiumOptimized : public Portable
 {
@@ -1313,8 +1306,6 @@ public:
 	static void Multiply4(word *C, const word *A, const word *B);
 	static void Multiply8(word *C, const word *A, const word *B);
 };
-
-typedef PentiumOptimized LowLevel;
 
 // Add and Subtract assembly code originally contributed by Alister Lee
 
@@ -1694,6 +1685,432 @@ void PentiumOptimized::Multiply8(word* Z, const word* X, const word* Y)
 		: "%ecx", "%edx",  "memory"
 	);
 }
+
+typedef PentiumOptimized LowLevel;
+
+#ifdef SSE2_INTRINSICS_AVAILABLE
+
+static bool GetSSE2Capability()
+{
+  word32 flag = 1;
+  word32 eax, ebx, ecx, edx;  
+  __asm__ __volatile__ ("cpuid"
+			: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
+			: "a" (flag));
+  return (edx & (1 << 26)) != 0;
+}
+
+bool g_sse2DetectionDone = false, g_sse2Detected, g_sse2Enabled = true;
+
+static inline bool HasSSE2()
+{
+	if (g_sse2Enabled && !g_sse2DetectionDone)
+	{
+		g_sse2Detected = GetSSE2Capability();
+		g_sse2DetectionDone = true;
+	}
+	return g_sse2Enabled && g_sse2Detected;
+}
+
+class P4Optimized : public PentiumOptimized
+{
+public:
+	static void Multiply4(word *C, const word *A, const word *B);
+	static void Multiply8(word *C, const word *A, const word *B);
+	static inline void Square4(word *R, const word *A)
+	{
+		Multiply4(R, A, A);
+	}
+	static void Multiply8Bottom(word *C, const word *A, const word *B);
+};
+
+static __attribute__((regparm(3))) void P4_Mul(__m128i *C, const __m128i *A, const __m128i *B)
+{
+	__m128i a3210 = _mm_loadu_si128(A);
+	__m128i b3210 = _mm_loadu_si128(B);
+
+	__m128i sum;
+
+	__m128i z = _mm_setzero_si128();
+	__m128i a2b2_a0b0 = _mm_mul_epu32(a3210, b3210);
+	C[0] = a2b2_a0b0;
+
+	__m128i a3120 = _mm_shuffle_epi32(a3210, _MM_SHUFFLE(3, 1, 2, 0));
+	__m128i b3021 = _mm_shuffle_epi32(b3210, _MM_SHUFFLE(3, 0, 2, 1));
+	__m128i a1b0_a0b1 = _mm_mul_epu32(a3120, b3021);
+	__m128i a1b0 = _mm_unpackhi_epi32(a1b0_a0b1, z);
+	__m128i a0b1 = _mm_unpacklo_epi32(a1b0_a0b1, z);
+	C[1] = _mm_add_epi64(a1b0, a0b1);
+
+	__m128i a31 = _mm_srli_epi64(a3210, 32);
+	__m128i b31 = _mm_srli_epi64(b3210, 32);
+	__m128i a3b3_a1b1 = _mm_mul_epu32(a31, b31);
+	C[6] = a3b3_a1b1;
+
+	__m128i a1b1 = _mm_unpacklo_epi32(a3b3_a1b1, z);
+	__m128i b3012 = _mm_shuffle_epi32(b3210, _MM_SHUFFLE(3, 0, 1, 2));
+	__m128i a2b0_a0b2 = _mm_mul_epu32(a3210, b3012);
+	__m128i a0b2 = _mm_unpacklo_epi32(a2b0_a0b2, z);
+	__m128i a2b0 = _mm_unpackhi_epi32(a2b0_a0b2, z);
+	sum = _mm_add_epi64(a1b1, a0b2);
+	C[2] = _mm_add_epi64(sum, a2b0);
+
+	__m128i a2301 = _mm_shuffle_epi32(a3210, _MM_SHUFFLE(2, 3, 0, 1));
+	__m128i b2103 = _mm_shuffle_epi32(b3210, _MM_SHUFFLE(2, 1, 0, 3));
+	__m128i a3b0_a1b2 = _mm_mul_epu32(a2301, b3012);
+	__m128i a2b1_a0b3 = _mm_mul_epu32(a3210, b2103);
+	__m128i a3b0 = _mm_unpackhi_epi32(a3b0_a1b2, z);
+	__m128i a1b2 = _mm_unpacklo_epi32(a3b0_a1b2, z);
+	__m128i a2b1 = _mm_unpackhi_epi32(a2b1_a0b3, z);
+	__m128i a0b3 = _mm_unpacklo_epi32(a2b1_a0b3, z);
+	__m128i sum1 = _mm_add_epi64(a3b0, a1b2);
+	sum = _mm_add_epi64(a2b1, a0b3);
+	C[3] = _mm_add_epi64(sum, sum1);
+
+	__m128i	a3b1_a1b3 = _mm_mul_epu32(a2301, b2103);
+	__m128i a2b2 = _mm_unpackhi_epi32(a2b2_a0b0, z);
+	__m128i a3b1 = _mm_unpackhi_epi32(a3b1_a1b3, z);
+	__m128i a1b3 = _mm_unpacklo_epi32(a3b1_a1b3, z);
+	sum = _mm_add_epi64(a2b2, a3b1);
+	C[4] = _mm_add_epi64(sum, a1b3);
+
+	__m128i a1302 = _mm_shuffle_epi32(a3210, _MM_SHUFFLE(1, 3, 0, 2));
+	__m128i b1203 = _mm_shuffle_epi32(b3210, _MM_SHUFFLE(1, 2, 0, 3));
+	__m128i a3b2_a2b3 = _mm_mul_epu32(a1302, b1203);
+	__m128i a3b2 = _mm_unpackhi_epi32(a3b2_a2b3, z);
+	__m128i a2b3 = _mm_unpacklo_epi32(a3b2_a2b3, z);
+	C[5] = _mm_add_epi64(a3b2, a2b3);
+}
+
+void P4Optimized::Multiply4(word *C, const word *A, const word *B)
+{
+	__m128i temp[7];
+	const word *w = (word *)temp;
+	const __m64 *mw = (__m64 *)w;
+
+	P4_Mul(temp, (__m128i *)A, (__m128i *)B);
+
+	C[0] = w[0];
+
+	__m64 s1, s2;
+
+	__m64 w1 = _m_from_int(w[1]);
+	__m64 w4 = mw[2];
+	__m64 w6 = mw[3];
+	__m64 w8 = mw[4];
+	__m64 w10 = mw[5];
+	__m64 w12 = mw[6];
+	__m64 w14 = mw[7];
+	__m64 w16 = mw[8];
+	__m64 w18 = mw[9];
+	__m64 w20 = mw[10];
+	__m64 w22 = mw[11];
+	__m64 w26 = _m_from_int(w[26]);
+
+	s1 = _mm_add_si64(w1, w4);
+	C[1] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s2 = _mm_add_si64(w6, w8);
+	s1 = _mm_add_si64(s1, s2);
+	C[2] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s2 = _mm_add_si64(w10, w12);
+	s1 = _mm_add_si64(s1, s2);
+	C[3] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s2 = _mm_add_si64(w14, w16);
+	s1 = _mm_add_si64(s1, s2);
+	C[4] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s2 = _mm_add_si64(w18, w20);
+	s1 = _mm_add_si64(s1, s2);
+	C[5] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s2 = _mm_add_si64(w22, w26);
+	s1 = _mm_add_si64(s1, s2);
+	C[6] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	C[7] = _m_to_int(s1) + w[27];
+	_mm_empty();
+}
+
+void P4Optimized::Multiply8(word *C, const word *A, const word *B)
+{
+	__m128i temp[28];
+	const word *w = (word *)temp;
+	const __m64 *mw = (__m64 *)w;
+	const word *x = (word *)temp+7*4;
+	const __m64 *mx = (__m64 *)x;
+	const word *y = (word *)temp+7*4*2;
+	const __m64 *my = (__m64 *)y;
+	const word *z = (word *)temp+7*4*3;
+	const __m64 *mz = (__m64 *)z;
+
+	P4_Mul(temp, (__m128i *)A, (__m128i *)B);
+
+	P4_Mul(temp+7, (__m128i *)A+1, (__m128i *)B);
+
+	P4_Mul(temp+14, (__m128i *)A, (__m128i *)B+1);
+
+	P4_Mul(temp+21, (__m128i *)A+1, (__m128i *)B+1);
+
+	C[0] = w[0];
+
+	__m64 s1, s2, s3, s4;
+
+	__m64 w1 = _m_from_int(w[1]);
+	__m64 w4 = mw[2];
+	__m64 w6 = mw[3];
+	__m64 w8 = mw[4];
+	__m64 w10 = mw[5];
+	__m64 w12 = mw[6];
+	__m64 w14 = mw[7];
+	__m64 w16 = mw[8];
+	__m64 w18 = mw[9];
+	__m64 w20 = mw[10];
+	__m64 w22 = mw[11];
+	__m64 w26 = _m_from_int(w[26]);
+	__m64 w27 = _m_from_int(w[27]);
+
+	__m64 x0 = _m_from_int(x[0]);
+	__m64 x1 = _m_from_int(x[1]);
+	__m64 x4 = mx[2];
+	__m64 x6 = mx[3];
+	__m64 x8 = mx[4];
+	__m64 x10 = mx[5];
+	__m64 x12 = mx[6];
+	__m64 x14 = mx[7];
+	__m64 x16 = mx[8];
+	__m64 x18 = mx[9];
+	__m64 x20 = mx[10];
+	__m64 x22 = mx[11];
+	__m64 x26 = _m_from_int(x[26]);
+	__m64 x27 = _m_from_int(x[27]);
+
+	__m64 y0 = _m_from_int(y[0]);
+	__m64 y1 = _m_from_int(y[1]);
+	__m64 y4 = my[2];
+	__m64 y6 = my[3];
+	__m64 y8 = my[4];
+	__m64 y10 = my[5];
+	__m64 y12 = my[6];
+	__m64 y14 = my[7];
+	__m64 y16 = my[8];
+	__m64 y18 = my[9];
+	__m64 y20 = my[10];
+	__m64 y22 = my[11];
+	__m64 y26 = _m_from_int(y[26]);
+	__m64 y27 = _m_from_int(y[27]);
+
+	__m64 z0 = _m_from_int(z[0]);
+	__m64 z1 = _m_from_int(z[1]);
+	__m64 z4 = mz[2];
+	__m64 z6 = mz[3];
+	__m64 z8 = mz[4];
+	__m64 z10 = mz[5];
+	__m64 z12 = mz[6];
+	__m64 z14 = mz[7];
+	__m64 z16 = mz[8];
+	__m64 z18 = mz[9];
+	__m64 z20 = mz[10];
+	__m64 z22 = mz[11];
+	__m64 z26 = _m_from_int(z[26]);
+
+	s1 = _mm_add_si64(w1, w4);
+	C[1] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s2 = _mm_add_si64(w6, w8);
+	s1 = _mm_add_si64(s1, s2);
+	C[2] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s2 = _mm_add_si64(w10, w12);
+	s1 = _mm_add_si64(s1, s2);
+	C[3] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x0, y0);
+	s2 = _mm_add_si64(w14, w16);
+	s1 = _mm_add_si64(s1, s3);
+	s1 = _mm_add_si64(s1, s2);
+	C[4] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x1, y1);
+	s4 = _mm_add_si64(x4, y4);
+	s1 = _mm_add_si64(s1, w18);
+	s3 = _mm_add_si64(s3, s4);
+	s1 = _mm_add_si64(s1, w20);
+	s1 = _mm_add_si64(s1, s3);
+	C[5] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x6, y6);
+	s4 = _mm_add_si64(x8, y8);
+	s1 = _mm_add_si64(s1, w22);
+	s3 = _mm_add_si64(s3, s4);
+	s1 = _mm_add_si64(s1, w26);
+	s1 = _mm_add_si64(s1, s3);
+	C[6] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x10, y10);
+	s4 = _mm_add_si64(x12, y12);
+	s1 = _mm_add_si64(s1, w27);
+	s3 = _mm_add_si64(s3, s4);
+	s1 = _mm_add_si64(s1, s3);
+	C[7] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x14, y14);
+	s4 = _mm_add_si64(x16, y16);
+	s1 = _mm_add_si64(s1, z0);
+	s3 = _mm_add_si64(s3, s4);
+	s1 = _mm_add_si64(s1, s3);
+	C[8] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x18, y18);
+	s4 = _mm_add_si64(x20, y20);
+	s1 = _mm_add_si64(s1, z1);
+	s3 = _mm_add_si64(s3, s4);
+	s1 = _mm_add_si64(s1, z4);
+	s1 = _mm_add_si64(s1, s3);
+	C[9] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x22, y22);
+	s4 = _mm_add_si64(x26, y26);
+	s1 = _mm_add_si64(s1, z6);
+	s3 = _mm_add_si64(s3, s4);
+	s1 = _mm_add_si64(s1, z8);
+	s1 = _mm_add_si64(s1, s3);
+	C[10] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x27, y27);
+	s1 = _mm_add_si64(s1, z10);
+	s1 = _mm_add_si64(s1, z12);
+	s1 = _mm_add_si64(s1, s3);
+	C[11] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(z14, z16);
+	s1 = _mm_add_si64(s1, s3);
+	C[12] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(z18, z20);
+	s1 = _mm_add_si64(s1, s3);
+	C[13] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(z22, z26);
+	s1 = _mm_add_si64(s1, s3);
+	C[14] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	C[15] = z[27] + _m_to_int(s1);
+	_mm_empty();
+}
+
+void P4Optimized::Multiply8Bottom(word *C, const word *A, const word *B)
+{
+	__m128i temp[21];
+	const word *w = (word *)temp;
+	const __m64 *mw = (__m64 *)w;
+	const word *x = (word *)temp+7*4;
+	const __m64 *mx = (__m64 *)x;
+	const word *y = (word *)temp+7*4*2;
+	const __m64 *my = (__m64 *)y;
+
+	P4_Mul(temp, (__m128i *)A, (__m128i *)B);
+
+	P4_Mul(temp+7, (__m128i *)A+1, (__m128i *)B);
+
+	P4_Mul(temp+14, (__m128i *)A, (__m128i *)B+1);
+
+	C[0] = w[0];
+
+	__m64 s1, s2, s3, s4;
+
+	__m64 w1 = _m_from_int(w[1]);
+	__m64 w4 = mw[2];
+	__m64 w6 = mw[3];
+	__m64 w8 = mw[4];
+	__m64 w10 = mw[5];
+	__m64 w12 = mw[6];
+	__m64 w14 = mw[7];
+	__m64 w16 = mw[8];
+	__m64 w18 = mw[9];
+	__m64 w20 = mw[10];
+	__m64 w22 = mw[11];
+	__m64 w26 = _m_from_int(w[26]);
+
+	__m64 x0 = _m_from_int(x[0]);
+	__m64 x1 = _m_from_int(x[1]);
+	__m64 x4 = mx[2];
+	__m64 x6 = mx[3];
+	__m64 x8 = mx[4];
+
+	__m64 y0 = _m_from_int(y[0]);
+	__m64 y1 = _m_from_int(y[1]);
+	__m64 y4 = my[2];
+	__m64 y6 = my[3];
+	__m64 y8 = my[4];
+
+	s1 = _mm_add_si64(w1, w4);
+	C[1] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s2 = _mm_add_si64(w6, w8);
+	s1 = _mm_add_si64(s1, s2);
+	C[2] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s2 = _mm_add_si64(w10, w12);
+	s1 = _mm_add_si64(s1, s2);
+	C[3] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x0, y0);
+	s2 = _mm_add_si64(w14, w16);
+	s1 = _mm_add_si64(s1, s3);
+	s1 = _mm_add_si64(s1, s2);
+	C[4] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x1, y1);
+	s4 = _mm_add_si64(x4, y4);
+	s1 = _mm_add_si64(s1, w18);
+	s3 = _mm_add_si64(s3, s4);
+	s1 = _mm_add_si64(s1, w20);
+	s1 = _mm_add_si64(s1, s3);
+	C[5] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	s3 = _mm_add_si64(x6, y6);
+	s4 = _mm_add_si64(x8, y8);
+	s1 = _mm_add_si64(s1, w22);
+	s3 = _mm_add_si64(s3, s4);
+	s1 = _mm_add_si64(s1, w26);
+	s1 = _mm_add_si64(s1, s3);
+	C[6] = _m_to_int(s1);
+	s1 = _m_psrlqi(s1, 32);
+
+	C[7] = _m_to_int(s1) + w[27] + x[10] + y[10] + x[12] + y[12];
+	_mm_empty();
+}
+
+#endif // SSE2_INTRINSICS_AVAILABLE
+
 
 #elif defined(__GNUC__) && defined(__alpha__)
 

@@ -1233,13 +1233,14 @@ database::results_to_certs(results const & res,
 void 
 database::get_head_candidates(string const & branch_encoded,
 			      vector< manifest<cert> > & branch_certs,
-			      vector< manifest<cert> > & ancestry_certs)
+			      vector< manifest<cert> > & ancestry_certs,
+			      vector< manifest<cert> > & disapproval_certs)
 {
   results res;
   fetch(res, 5, any_rows,
 	"SELECT id, name, value, keypair, signature "
 	"FROM manifest_certs "
-	"WHERE (name = 'ancestor' OR name = 'branch') "
+	"WHERE (name = 'ancestor' OR name = 'branch' OR name = 'disapproval') "
 	"AND id IN "
 	"("
 	"SELECT id FROM manifest_certs WHERE name = 'branch' "
@@ -1249,6 +1250,7 @@ database::get_head_candidates(string const & branch_encoded,
 
   branch_certs.clear();
   ancestry_certs.clear();
+  disapproval_certs.clear();
   for (size_t i = 0; i < res.size(); ++i)
     {
       manifest<cert> t;
@@ -1259,8 +1261,10 @@ database::get_head_candidates(string const & branch_encoded,
 			      base64<rsa_sha1_signature>(res[i][4])));
       if (res[i][1] == "branch")	
 	branch_certs.push_back(t);
-      else
+      else if (res[i][1] == "ancestor")
 	ancestry_certs.push_back(t);
+      else
+	disapproval_certs.push_back(t);
     }
 }
 
