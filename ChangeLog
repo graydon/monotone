@@ -1,3 +1,8 @@
+2005-03-15  Matt Johnston  <matt@ucc.asn.au>
+
+        * commands.cc, monotone.texi, monotone.1: mention that agraph
+          output is in VCG format.
+
 2005-03-10  Derek Scherger  <derek@echologic.com>
 
 	* app_state.cc (set_restriction): adjust bad path error message

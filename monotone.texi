@@ -5052,7 +5052,7 @@ Indicate a passing or failing test result on a revision.
 @comment TROFF INPUT: .TP
 
 @item @b{agraph}
-Dump revision graph to stdout.
+Dump revision graph to stdout in VCG format.
 @comment TROFF INPUT: .TP
 
 @item @b{diff} @i{[--revision=<id1> [--revision=<id2>] ] [<pathname>...]}

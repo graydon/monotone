@@ -2764,7 +2764,7 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
 }
 
 
-CMD(agraph, "debug", "", "dump ancestry graph to stdout")
+CMD(agraph, "debug", "", "dump ancestry graph to stdout in VCG format")
 {
   set<revision_id> nodes;
   multimap<revision_id,string> branches;
