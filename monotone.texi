@@ -71,7 +71,6 @@ version control tools.
 * CVS Phrasebook::      Transitional guide for CVS users
 * Command Reference::   Details of each monotone command
 * Hook Reference::      Functions which extend monotone
-* Technical Notes::     Under the hood of monotone
 * Man Page::            That other document
 * Index::               Index of concepts and functions
 @end menu
@@ -2077,6 +2076,15 @@ not affect your database. When you @command{commit} your working copy,
 the dropped files on your work list will have their entries removed
 from your working copy's manifest. 
 
+@item monotone rename @var{src} @var{dst}
+This command renames paths in your manifest from @var{src} to
+@var{dst}.  If @var{src} is a file, it is renamed to @var{dst}.  If
+@var{src} is a directory, all files found in @var{src} have the
+@var{src} component of their pathname replaced with @var{dst}.
+
+You should run @command{monotone rename} @emph{before} you rename a
+file or directory in your source tree. Monotone will complain if it
+cannot find the source of a rename.
 
 @item monotone commit
 @itemx monotone commit @var{logmsg}
@@ -2107,7 +2115,7 @@ A @code{date} cert, indicating when the new version was created.
 @item
 A @code{changelog} cert, containing the ``log message'' for these
 changes.  If you provided @var{logmsg} on the command line, this text
-will be used, otherwise @command{commit} will the lua hook
+will be used, otherwise @command{commit} will run the lua hook
 @code{edit_comment (@var{commentary})}, which typically invokes an
 external editor program, in which you can compose a log message for
 the change.
@@ -2202,6 +2210,17 @@ is the version you would commit, if you ran @command{monotone commit}.
 A list of logical changes between the base and current manifest
 versions, such as adds, drops, renames, and patches.
 @end itemize
+
+@item monotone log
+@itemx monotone log @var{id}
+
+This command prints out a log, in reverse-ancestry order, of small
+history summaries.  Each summary contains author, date, changelog and
+comment information associated with a manifest, as well as any file
+comments associated with file versions in that manifest. If @var{id}
+is given, the command starts tracing back through history from the
+manifest @var{id}, otherwise it starts from the manifest which is the
+base version of your working copy.
 
 @item monotone complete file @var{partial-id}
 @itemx monotone complete manifest @var{partial-id}
@@ -2912,10 +2931,6 @@ attr_functions["execute"] =
 
 @end ftable
 
-@node    Technical Notes
-@chapter Technical Notes
-
-
 
 @node    Man Page
 @chapter Man Page
@@ -3016,6 +3031,11 @@ Show diffs between working copy and database.
 
 @item @b{status}
 Show status of working copy.
+@comment TROFF INPUT: .TP
+
+@item @b{log} @i{[id]}
+Show historical log of manifests, starting from working copy
+base version, or @i{[id]} if given.
 @comment TROFF INPUT: .TP
 
 @item @b{cert} @i{(file|manifest) <id> <certname> [certval]}
@@ -3139,6 +3159,10 @@ line, it is used; otherwise a log message editor will be invoked.
 @item @b{drop} @i{<pathname> [...]}
 Drop files from working copy. Files are not deleted from working copy,
 merely removed from the manifest.
+@comment TROFF INPUT: .TP
+
+@item @b{rename} @i{<src> <dst>}
+Rename files from @i{<src>} to @i{<dst>} in working copy.
 @comment TROFF INPUT: .TP
 
 @item @b{update} @i{[sort keys...]}

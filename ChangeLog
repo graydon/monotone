@@ -1,5 +1,11 @@
 2003-10-17  graydon hoare  <graydon@pobox.com>
 
+	* commands.cc (log): New command.
+	Various other bug fixes.
+	* monotone.1, monotone.texi: Minor updates.
+
+2003-10-17  graydon hoare  <graydon@pobox.com>
+
 	* monotone.texi: Expand command and hook references.
 	* commands.cc: Disable db dump / load commands for now.
 

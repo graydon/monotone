@@ -37,6 +37,10 @@ Show diffs between working copy and database.
 \fBstatus\fP
 Show status of working copy.
 .TP
+\fBlog\fP \fI[id] \fP
+Show historical log of manifests, starting from working copy
+base version, or \fI[id]\fP if given.
+.TP
 \fBcert\fP \fI(file|manifest) <id> <certname> [certval]\fP
 Create a custom cert for a file or manifest. Reads cert value
 from stdin if no value given on command line.
@@ -128,10 +132,13 @@ line, it is used; otherwise a log message editor will be invoked.
 Drop files from working copy. Files are not deleted from working copy, 
 merely removed from the manifest.
 .TP
+\fBrename\fP \fI<src> \fI<dst>\fP
+Rename files from \fI<src> \fP to \fI<dst> \fP in working copy.
+.TP
 \fBupdate\fP \fI[sort keys...]\fP
 Update working copy, relative to sorting keys.
 .TP
-\fBdb\fP \fI(init|dump|load|info|version|migrate)\fP
+\fBdb\fP \fI(init|info|version|migrate)\fP
 Manipulate database state.
 .SH DESCRIPTION
 Monotone is a version control system, which allows you to keep old

@@ -798,7 +798,15 @@ CMD(tag, "certificate", "ID TAGNAME",
   manifest_id m;
   complete(app, args[0], m);
   packet_db_writer dbw(app);
+
+  vector< pair<url,group> > targets;
+  cert_value branchname;
+  guess_branch (m, app, branchname);
+  app.lua.hook_get_post_targets(branchname(), targets);  
+
+  queueing_packet_writer qpw(app, targets);
   cert_manifest_tag(m, args[1], app, dbw);
+  cert_manifest_tag(m, args[1], app, qpw);
 }
 
 CMD(approve, "certificate", "(file|manifest) ID", 
@@ -806,19 +814,31 @@ CMD(approve, "certificate", "(file|manifest) ID",
 {
   if (args.size() != 2)
     throw usage(name);
+
   if (args[0] == "manifest")
     {
       manifest_id m;
       complete(app, args[1], m);
+      vector< pair<url,group> > targets;
+      cert_value branchname;
+      guess_branch (m, app, branchname);
+      app.lua.hook_get_post_targets(branchname(), targets);  
+      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_manifest_approval(m, true, app, dbw);
+      cert_manifest_approval(m, true, app, qpw);
     }
   else if (args[0] == "file")
     {
       packet_db_writer dbw(app);
       file_id f;
       complete(app, args[1], f);
+      vector< pair<url,group> > targets;
+      N(app.branch_name != "", F("need --branch argument for posting"));
+      app.lua.hook_get_post_targets(cert_value(app.branch_name), targets); 
+      queueing_packet_writer qpw(app, targets);
       cert_file_approval(f, true, app, dbw);
+      cert_file_approval(f, true, app, qpw);
     }
   else
     throw usage(name);
@@ -829,19 +849,31 @@ CMD(disapprove, "certificate", "(file|manifest) ID",
 {
   if (args.size() != 2)
     throw usage(name);
+
   if (args[0] == "manifest")
     {
       manifest_id m;
       complete(app, args[1], m);
+      vector< pair<url,group> > targets;
+      cert_value branchname;
+      guess_branch (m, app, branchname);
+      app.lua.hook_get_post_targets(branchname(), targets);  
+      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_manifest_approval(m, false, app, dbw);
+      cert_manifest_approval(m, false, app, qpw);
     }
   else if (args[0] == "file")
     {
       file_id f;;
       complete(app, args[1], f);
+      vector< pair<url,group> > targets;
+      N(app.branch_name != "", F("need --branch argument for posting"));
+      app.lua.hook_get_post_targets(cert_value(app.branch_name), targets); 
+      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_file_approval(f, false, app, dbw);
+      cert_file_approval(f, false, app, qpw);
     }
   else
     throw usage(name);
@@ -861,27 +893,37 @@ CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
     N(app.lua.hook_edit_comment("", comment), 
       F("edit comment failed"));
   
-  N(comment.find_first_not_of(" \r\t\n") == string::npos, 
+  N(comment.find_first_not_of(" \r\t\n") != string::npos, 
     F("empty comment"));
 
   if (args[0] == "file")
     {
       file_id f;
       complete(app, args[1], f);
+      vector< pair<url,group> > targets;
+      N(app.branch_name != "", F("need --branch argument for posting"));
+      app.lua.hook_get_post_targets(cert_value(app.branch_name), targets); 
+      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_file_comment(f, comment, app, dbw); 
+      cert_file_comment(f, comment, app, qpw); 
     }
   else if (args[0] == "manifest")
     {
       manifest_id m;
       complete(app, args[1], m);
+      vector< pair<url,group> > targets;
+      cert_value branchname;
+      guess_branch (m, app, branchname);
+      app.lua.hook_get_post_targets(branchname(), targets);  
+      queueing_packet_writer qpw(app, targets);
       packet_db_writer dbw(app);
       cert_manifest_comment(m, comment, app, dbw);
+      cert_manifest_comment(m, comment, app, qpw);
     }
   else
     throw usage(name);
 }
-
 
 
 CMD(add, "working copy", "PATHNAME...", "add files to working copy")
@@ -1759,6 +1801,142 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
       unidiff(i->path(), i->path(), old_lines, new_lines, cout);
     }  
   guard.commit();
+}
+
+CMD(log, "informative", "[ID]", "print log history in reverse order")
+{
+  manifest_map m;
+  manifest_id m_id;
+  set<manifest_id> frontier, cycles;
+
+  if (args.size() > 1)
+    throw usage(name);
+  
+  if (args.size() == 1)
+    {
+      complete(app, args[1], m_id);
+    }
+  else
+    {
+      get_manifest_map(m);
+      calculate_manifest_map_ident (m, m_id);
+    }
+
+  frontier.insert(m_id);
+  
+  cert_name ancestor_name(ancestor_cert_name);
+  cert_name author_name(author_cert_name);
+  cert_name date_name(date_cert_name);
+  cert_name changelog_name(changelog_cert_name);
+  cert_name comment_name(comment_cert_name);
+
+  while(! frontier.empty())
+    {
+      set<manifest_id> next_frontier;
+      for (set<manifest_id>::const_iterator i = frontier.begin();
+	   i != frontier.end(); ++i)
+	{
+	  cout << "-----------------------------------------------------------------"
+	       << endl;
+	  cout << "Version: " << *i << endl;
+
+	  cout << "Author:";
+	  vector< manifest<cert> > tmp;
+	  app.db.get_manifest_certs(*i, author_name, tmp);
+	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+	    {
+	      cert_value tv;
+	      decode_base64(j->inner().value, tv);
+	      cout << " " << tv;
+	    }	  
+	  cout << endl;
+
+	  cout << "Date:";
+	  app.db.get_manifest_certs(*i, date_name, tmp);
+	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+	    {
+	      cert_value tv;
+	      decode_base64(j->inner().value, tv);
+	      cout << " " << tv;
+	    }	  
+	  cout << endl;
+
+	  cout << "ChangeLog:" << endl << endl;
+	  app.db.get_manifest_certs(*i, changelog_name, tmp);
+	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+	    {
+	      cert_value tv;
+	      decode_base64(j->inner().value, tv);
+	      cout << " " << tv << endl;
+	    }	  
+	  cout << endl;
+
+	  app.db.get_manifest_certs(*i, comment_name, tmp);
+	  if (!tmp.empty())
+	    {
+	      cout << "Manifest Comments:" << endl << endl;
+	      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+		   j != tmp.end(); ++j)
+		{
+		  cert_value tv;
+		  decode_base64(j->inner().value, tv);
+		  cout << j->inner().key << ": " << tv << endl;
+		}	  
+	      cout << endl;
+	    }
+
+	  // pull any file-specific comments
+	  {
+	    manifest_data mdata;
+	    manifest_map mtmp;
+	    app.db.get_manifest_version(*i, mdata);
+	    read_manifest_map(mdata, mtmp);
+	    bool wrote_headline = false;
+	    for (manifest_map::const_iterator mi = mtmp.begin();
+		 mi != mtmp.end(); ++mi)
+	      {
+		path_id_pair pip(mi);
+		vector< file<cert> > ftmp;
+		app.db.get_file_certs(pip.ident(), comment_name, ftmp);
+		if (!ftmp.empty())
+		  {
+		    if (!wrote_headline)
+		      {
+			cout << "File Comments:" << endl << endl;
+			wrote_headline = true;
+		      }
+
+		    cout << "  " << pip.path() << endl;
+		    for (vector< file<cert> >::const_iterator j = ftmp.begin();
+			 j != ftmp.end(); ++j)
+		      {
+			cert_value tv;
+			decode_base64(j->inner().value, tv);
+			cout << "    " << j->inner().key << ": " << tv << endl;
+		      }	  
+		  }
+	      }
+	    if (wrote_headline)
+	      cout << endl;
+	    }
+	  
+	  app.db.get_manifest_certs(*i, ancestor_name, tmp);
+	  erase_bogus_certs(tmp, app);
+	  for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+	    {
+	      cert_value tv;
+	      decode_base64(j->inner().value, tv);
+	      manifest_id id(tv());
+	      if (cycles.find(id) == cycles.end())		
+		next_frontier.insert(id);
+	    }
+	}
+      frontier = next_frontier;
+    }
 }
 
 CMD(status, "informative", "", "show status of working copy")
