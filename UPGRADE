@@ -57,4 +57,86 @@ if you're the designated person, then you should:
      later version:
         $ monotone --db=new.db db migrate
      (this will create the new tables needed for epoch support)
-  5) 
+  5) rebuild your ancestry.  as mentioned above, this will lose
+     renames and cert signing information (all certs that you trust
+     will be re-issued with your signature; all other certs will be
+     lost), but will also generate new changesets that actually make
+     sense.
+        $ monotone --db=new.db db rebuild
+  6) check your database.  this is the rough equivalent of running a
+     'fsck' or a 'scandisk' on your hard drive -- it just goes through
+     and makes sure that everything looks good.  it's especially
+     important for detecting missing files; see below.
+        $ monotone --db=new.db db check 2>&1 | tee db-check.log
+  7) look at db-check.log, and if any files were missing, note down
+     their SHA1's, find the files, and load them into the database
+     with "fload".
+        $ monotone --db=new.db fload <missing-file
+     after doing this, run 'db check' again, until you get a clean
+     bill of health.  (if you see problems other than missing files
+     and incomplete manifests/incomplete revisions, then there's
+     something more gone wrong, and you might want to ask the list at
+     monotone-devel@nongnu.org.)
+  8) put the new database somewhere where people can netsync to it.
+     (either by putting it there directly, or by creating a new
+     database on your server and pushing to it.)
+  9) tell everyone to create a new, empty database, and pull from your
+     server.  (make sure they remember to copy their private keys over
+     from their old database, using 'monotone privkey' and 'monotone
+     read'.)
+
+missing files
+-------------
+
+unfortunately, monotone 0.16 had a bug that may have led to loss of
+data under certain, rare, circumstances.  the bug is that, 0.16's
+"rebuild" (and probably "changesetify") commands incorrectly
+constructed root revisions.  as a result, if you had any files that
+were in the initial import of your project, and then later deleted,
+without having had any changes made in between, then those files were
+invisible to netsync, and not transferred by "push", "pull", or
+"sync".  therefore, if you rebuilt your database at the 0.16 release,
+and then pulled everything into a new database and deleted the
+original database, monotone has lost its record of those files's
+contents; if you attempted to check out a revision containing them you
+would get an assertion error.
+
+hopefully this should be a rare enough problem that most people don't
+run into it.  the new 'db check' command detects this problem (indeed,
+it's how it was discovered in the first place), so it should be easy
+to find out whether you have it or not.  if you _do_ have it, you need
+to find those missing files, and tell monotone about them.  this is
+straightforward, though it may be tricky -- basically, 'db check' will
+tell you the SHA1's of the missing data.  you need to find files that
+have those SHA1's, and load them into your master database.  (that
+would be the database that you just ran 'db rebuild', as above.)
+
+some places to look:
+  -- old releases of your software
+  -- old copies of your monotone database (e.g., if you still have
+     pre-changesetify backups of it)
+     'cat file <SHA1>' is the useful command here
+  -- the database that you originally ran 'rebuild' or 'changesetify'
+     in, back at the 0.16 release.  since the problem only affects
+     netsync, your initial database should be fine
+
+getting the manifest of your initial revision may also be helpful,
+since you can grep it to find the filenames of the missing files.  you
+can do this by examining the output of 'cat revision <revision id>',
+and then running 'cat manifest <manifest id>'.
+
+once you've found the files, load them into your database with
+'fload', e.g.:
+  $ monotone --db=new.db fload <a-found-file
+
+if you cannot find the relevant files anywhere, then there's a more
+serious problem; your history is not fully reconstructible, and you
+won't be able to use it with 0.17, because the bug is now fixed.  it
+should still be possible to reconstruct all revisions after the
+offending files were deleted, but this requires some code that doesn't
+currently exist; if you actually are in this state, please email
+<monotone-devel@nongnu.org> and we'll work something out.
+
+in the future, the more rigorous checking monotone now does should
+prevent problems like this from arising; in case you're nervous,
+though, you can always run 'db check' to check for problems.

@@ -3740,8 +3740,17 @@ during migration.
 
 @item monotone db check --db=@var{dbfile} 
 
-This command systematically checks the database @file{dbfile} to ensure
-that it is complete and consistent. The following problems are detected:
+Monotone always works hard to verify the data it creates and accesses.
+For instance, if you have hard drive problems that corrupt data in
+monotone's database, and you attempt to retrieve this data, then
+monotone will notice the problem and stop, instead of silently giving
+you garbage data.
+
+However, it's also nice to notice such problems early, and in rarely
+used parts of history, while you still have backups.  That's what this
+command is for.  It systematically checks the database @file{dbfile} to
+ensure that it is complete and consistent. The following problems are
+detected:
 
 @itemize
 
@@ -3816,7 +3825,8 @@ possible, since monotone carefully checks every revision before storing
 it into the database, but if it does, then please request assistance on
 the monotone mailing list.  Fixing this generally means you may lose
 some history --- for instance, renames may be degraded into delete/add
-pairs --- but the actual contents of every version are preserved.
+pairs --- but the actual contents of every revision will still be
+reproducible.
 
 @item revisions with missing certs
 that exist in the database lacking at least one author, branch,
@@ -3857,10 +3867,7 @@ which can be loaded into your database with @command{read}.
 @end itemize
 
 This command also verifies that the @sc{sha1} of every file, manifest,
-and revision is correct.  Monotone always checks this before using any
-data anyway, but this allows you to check the entire database at once,
-including parts that are rarely accessed.  This is useful for detecting
-things like disk corruption early, while you still have backups.
+and revision is correct.
 
 @item monotone db execute @var{sql-statement}
 
@@ -4547,7 +4554,7 @@ information on character set conversion, see the section on
 @ref{Internationalization}.
 
 
-@item attr_functions [@var{arrtibute}] (@var{filename}, @var{value})
+@item attr_functions [@var{attribute}] (@var{filename}, @var{value})
 
 This is not a hook function, but a @emph{table} of hook
 functions. Each entry in the table @code{attr_functions}, at table
