@@ -114,7 +114,7 @@ tilde_expand(string const & path)
 	  ++i;
 	}
       while (i != tmp.end())
-	res /= *i++;
+	res /= mkpath(*i++);
       return res.string();
     }
 

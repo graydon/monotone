@@ -1,3 +1,7 @@
+2004-05-19  graydon hoare  <graydon@pobox.com>
+
+	* file_io.cc (tilde_expand): Fix fs::path use.
+
 2004-05-18  graydon hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (apply_directory_moves): Fix fs::path use.
