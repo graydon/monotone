@@ -233,7 +233,7 @@ EXTRA_DIST = $(man1_MANS) \
              tests/atconfig.in \
              tests/atlocal.in  \
 	     package.m4 \
-	     package_revision.txt package_full_revision.txt \
+	     package_revision.txt package_full_revision_dist.txt \
              $(wildcard m4/*.m4)
 
 MAKEINFOFLAGS=-I $(top_builddir)
@@ -297,9 +297,10 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h
-BUILT_SOURCES_NOCLEAN = package_revision.txt package_revision.h \
-		       package_full_revision.txt package_full_revision.h
+BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
+                      package_revision.h \
+                      package_full_revision.txt package_full_revision.h
+BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
 CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
 
@@ -325,16 +326,16 @@ package_revision.h: package_revision.txt txt2c Makefile
 
 .PHONY: package_full_revision.txt
 package_full_revision.txt:
-	(cd $(srcdir) && $(top_builddir)/monotone status) 2>/dev/null >$@.$$$$ \
-	|| (cd $(srcdir) && monotone status) 2>/dev/null >$@.$$$$ \
-	|| rm -f $@.$$$$; \
-	if [ -f $@.$$$$ ]; then \
-	  mv $@.$$$$ $@; \
-	  (echo ''; \
-	   echo '  Generated from data cached in the distribution;'; \
-	   echo '  further changes may have been made.') >> $@; \
-	fi; \
-	if [ ! -f $@ ]; then echo "unknown" >$@; fi
+	REAL_BLDDIR=$$PWD/$(top_builddir); \
+	(cd $(srcdir) && $$REAL_BLDDIR/monotone status) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && monotone status) 2>/dev/null >$@ \
+	|| (cp $(srcdir)/package_full_revision_dist.txt 2>/dev/null $@) \
+	|| (echo "unknown" >$@)
+package_full_revision_dist.txt: package_full_revision.txt
+	cp $< $@
+	(echo ''; \
+	 echo '  Generated from data cached in the distribution;'; \
+	 echo '  further changes may have been made.') >> $@
 package_full_revision.h: package_full_revision.txt txt2c Makefile
 	./txt2c $< package_full_revision >$@
 
