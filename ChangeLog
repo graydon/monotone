@@ -1,3 +1,12 @@
+2005-02-14  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_automate_heads.at: New test.
+	* tests/t_automate_version.at: New test.
+	* testsuite.at: Add then.
+	
+	* commands.cc (automate): Fix documentation string.
+	* automate.cc: Much more structured documentation comments.
+
 2005-02-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* automate.{cc,hh}: New files.

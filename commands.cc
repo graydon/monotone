@@ -3614,7 +3614,7 @@ CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
 
 CMD(automate, "automation",
     "heads BRANCH\n"
-    "automate_version\n",
+    "interface_version\n",
     "automation interface")
 {
   if (args.size() == 0)
