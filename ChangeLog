@@ -1,3 +1,13 @@
+2004-11-14  Joel Rosdahl  <joel@rosdahl.net>
+
+	Fix bug #9092 "add command to change passphrase":
+	* commands.cc (chkeypass): New command.
+	* keys.cc (get_passphrase): Added parameters for prompt beginning and
+	disabling hook lookup and passphrase caching.
+	* keys.hh, keys.cc (change_key_passphrase): New function.
+	* database.hh, database.cc (delete_private_key): New function.
+	* monotone.texi (Key and Cert): Document command.
+
 2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi: Fix various typos.

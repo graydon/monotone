@@ -307,6 +307,8 @@ public:
 		    base64<rsa_pub_key> const & pub_encoded,
 		    base64< arc4<rsa_priv_key> > const & priv_encoded);
 
+  void delete_private_key(rsa_keypair_id const & pub_id);
+
   // note: this section is ridiculous. please do something about it.
 
   void get_heads(base64<cert_value> const & branch,

@@ -3256,6 +3256,11 @@ automatically use a certain passphrase for a given key using the
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
 
+@item monotone chkeypass @var{id}
+
+This command lets you change the passphrase of the private half of the
+key @var{id}.
+
 @item monotone cert @var{id} @var{certname} 
 @itemx monotone cert @var{id} @var{certname} @var{certval}
 
@@ -4646,6 +4651,10 @@ Produce or check @code{vcheck} certs for the given manifest @i{[id]}.
 
 @item @b{genkey} @i{<keyid>}
 Generate an @sc{rsa} key-pair and store it in the database.
+@comment TROFF INPUT: .TP
+
+@item @b{chkeypass} @i{<keyid>}
+Change passphrase of the private half of a key.
 @comment TROFF INPUT: .TP
 
 @item @b{list certs} @i{<id>}
