@@ -346,26 +346,31 @@ restrict_path_set(string const & type,
 
 static void 
 restrict_rename_set(string const & type,
-                    rename_set const & renames, 
-                    rename_set & included,
-                    rename_set & excluded, 
+                    std::map<file_path, file_path> const & renames, 
+                    std::map<file_path, file_path> & included,
+                    std::map<file_path, file_path> & excluded, 
                     app_state & app)
 {
-  for (rename_set::const_iterator i = renames.begin();
+  for (std::map<file_path, file_path>::const_iterator i = renames.begin();
        i != renames.end(); ++i)
     {
-      // exclude a rename unless both paths are included in the restriction
-      // not sure if this is the right thing to do though?!?
-
-      if (app.restriction_includes(i->first) && app.restriction_includes(i->second)) 
+      bool src_included = app.restriction_includes(i->first);
+      bool dst_included = app.restriction_includes(i->second);
+      if (src_included && dst_included)
         {
-          L(F("restriction includes %s %s to %s\n") % type % i->first % i->second);
+          L(F("restriction includes %s '%s' to '%s'\n") % type % i->first % i->second);
           included.insert(*i);
+        }
+      else if (!src_included && !dst_included)
+        {
+          L(F("restriction excludes %s '%s' to '%s'\n") % type % i->first % i->second);
+          excluded.insert(*i);
         }
       else
         {
-          L(F("restriction excludes %s %s to %s\n") % type % i->first % i->second);
-          excluded.insert(*i);
+          N(false,
+            F("rename '%s' to '%s' crosses path restriction\n"
+              "please include or exclude explicitly") % i->first % i->second);
         }
     }
 }
@@ -1875,8 +1880,8 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
-      if (app.restriction_includes(*i) && !file_exists(*i))	
-	cout << *i << endl;
+      if (app.restriction_includes(*i) && !file_exists(*i))     
+        cout << *i << endl;
     }
 }
 

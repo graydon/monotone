@@ -1,3 +1,10 @@
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (restrict_rename_set): Fix types to compile with old
+	rename_set gunk removed.
+	Alter logic to yell if a rename crosses the restriction boundary,
+	rather than silently ignore it.
+
 2005-01-19  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc: Fix up some merge breakage.
