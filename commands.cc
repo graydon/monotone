@@ -711,8 +711,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       cert_value tv;      
       decode_base64(idx(certs, i).value, tv);
       string washed;
-      if (guess_binary(tv()) 
-          || idx(certs, i).name == rename_cert_name)
+      if (guess_binary(tv()))
         {
           washed = "<binary data>";
         }
@@ -1019,7 +1018,7 @@ CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
 }
 
 CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
-    "test whether a hypothetical revision cert would be trusted\n"
+    "test whether a hypothetical cert would be trusted\n"
     "by current settings")
 {
   if (args.size() < 4)
@@ -1046,7 +1045,7 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
   bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
                                                       name, value);
 
-  cout << "if a revision cert on: " << ident << endl
+  cout << "if a cert on: " << ident << endl
        << "with key: " << name << endl
        << "and value: " << value << endl
        << "was signed by: ";
@@ -1854,7 +1853,7 @@ CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
 }
 
 
-CMD(rcerts, "packet i/o", "ID", "write revision cert packets to stdout")
+CMD(certs, "packet i/o", "ID", "write cert packets to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1869,40 +1868,6 @@ CMD(rcerts, "packet i/o", "ID", "write revision cert packets to stdout")
   app.db.get_revision_certs(r_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_revision_cert(idx(certs, i));
-}
-
-CMD(mcerts, "packet i/o", "ID", "write manifest cert packets to stdout")
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  manifest_id m_id;
-  vector< manifest<cert> > certs;
-
-  complete(app, idx(args, 0)(), m_id);
-
-  app.db.get_manifest_certs(m_id, certs);
-  for (size_t i = 0; i < certs.size(); ++i)
-    pw.consume_manifest_cert(idx(certs, i));
-}
-
-CMD(fcerts, "packet i/o", "ID", "write file cert packets to stdout")
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  file_id f_id;
-  vector< file<cert> > certs;
-
-  complete(app, idx(args, 0)(), f_id);
-
-  app.db.get_file_certs(f_id, certs);
-  for (size_t i = 0; i < certs.size(); ++i)
-    pw.consume_file_cert(idx(certs, i));
 }
 
 CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")

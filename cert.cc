@@ -67,71 +67,8 @@ bogus_cert_p
   {
     return cert_is_bogus(c.inner());
   }
-
-  bool operator()(manifest<cert> const & c) const 
-  {
-    return cert_is_bogus(c.inner());
-  }
-
-  bool operator()(file<cert> const & c) const 
-  {
-    return cert_is_bogus(c.inner());
-  }
 };
 
-
-void 
-erase_bogus_certs(vector< manifest<cert> > & certs,
-                  app_state & app)
-{
-  typedef vector< manifest<cert> >::iterator it;
-  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
-  certs.erase(e, certs.end());
-
-  vector< manifest<cert> > tmp_certs;
-
-  // sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
-  typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
-  trust_map trust;
-
-  for (it i = certs.begin(); i != certs.end(); ++i)
-    {
-      trust_key key = trust_key(i->inner().ident, i->inner().name, i->inner().value);
-      trust_map::iterator j = trust.find(key);
-      shared_ptr< set<rsa_keypair_id> > s;
-      if (j == trust.end())
-        {
-          s.reset(new set<rsa_keypair_id>());
-          trust.insert(make_pair(key, make_pair(s, i)));
-        }
-      else
-        s = j->second.first;
-      s->insert(i->inner().key);
-    }
-
-  for (trust_map::const_iterator i = trust.begin();
-       i != trust.end(); ++i)
-    {
-      cert_value decoded_value;
-      decode_base64(get<2>(i->first), decoded_value);
-      if (app.lua.hook_get_manifest_cert_trust(*(i->second.first),
-                                               get<0>(i->first),
-                                               get<1>(i->first),
-                                               decoded_value))
-        {
-          L(F("trust function liked %d signers of %s cert on manifest %s\n")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-          tmp_certs.push_back(*(i->second.second));
-        }
-      else
-        {
-          W(F("trust function disliked %d signers of %s cert on manifest %s\n")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-        }
-    }
-  certs = tmp_certs;
-}
 
 void 
 erase_bogus_certs(vector< revision<cert> > & certs,
@@ -180,59 +117,6 @@ erase_bogus_certs(vector< revision<cert> > & certs,
       else
         {
           W(F("trust function disliked %d signers of %s cert on revision %s\n")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-        }
-    }
-  certs = tmp_certs;
-}
-
-void 
-erase_bogus_certs(vector< file<cert> > & certs,
-                  app_state & app)
-{
-  typedef vector< file<cert> >::iterator it;
-  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
-  certs.erase(e, certs.end());
-
-  vector< file<cert> > tmp_certs;
-
-  // sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
-  typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
-  trust_map trust;
-
-  for (it i = certs.begin(); i != certs.end(); ++i)
-    {
-      trust_key key = trust_key(i->inner().ident, i->inner().name, i->inner().value);
-      trust_map::iterator j = trust.find(key);
-      shared_ptr< set<rsa_keypair_id> > s;
-      if (j == trust.end())
-        {
-          s.reset(new set<rsa_keypair_id>());
-          trust.insert(make_pair(key, make_pair(s, i)));
-        }
-      else
-        s = j->second.first;
-      s->insert(i->inner().key);
-    }
-
-  for (trust_map::const_iterator i = trust.begin();
-       i != trust.end(); ++i)
-    {
-      cert_value decoded_value;
-      decode_base64(get<2>(i->first), decoded_value);
-      if (app.lua.hook_get_file_cert_trust(*(i->second.first),
-                                           get<0>(i->first),
-                                           get<1>(i->first),
-                                           decoded_value))
-        {
-          L(F("trust function liked %d signers of %s cert on file %s\n")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-          tmp_certs.push_back(*(i->second.second));
-        }
-      else
-        {
-          W(F("trust function disliked %d signers of %s cert on file %s\n")
             % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
         }
     }
@@ -561,21 +445,6 @@ make_simple_cert(hexenc<id> const & id,
   c = t;
 }
 
-
-static void 
-put_simple_manifest_cert(manifest_id const & id,
-                         cert_name const & nm,
-                         cert_value const & val,
-                         app_state & app,
-                         packet_consumer & pc)
-{
-  cert t;
-  make_simple_cert(id.inner(), nm, val, app, t);
-  manifest<cert> cc(t);
-  pc.consume_manifest_cert(cc);
-}
-
-
 static void 
 put_simple_revision_cert(revision_id const & id,
                         cert_name const & nm,
@@ -587,19 +456,6 @@ put_simple_revision_cert(revision_id const & id,
   make_simple_cert(id.inner(), nm, val, app, t);
   revision<cert> cc(t);
   pc.consume_revision_cert(cc);
-}
-
-static void 
-put_simple_file_cert(file_id const & id,
-                     cert_name const & nm,
-                     cert_value const & val,
-                     app_state & app,
-                     packet_consumer & pc)
-{
-  cert t;
-  make_simple_cert(id.inner(), nm, val, app, t);
-  file<cert> fc(t);
-  pc.consume_file_cert(fc);
 }
 
 void 
@@ -633,7 +489,6 @@ string const tag_cert_name = "tag";
 string const changelog_cert_name = "changelog";
 string const comment_cert_name = "comment";
 string const testresult_cert_name = "testresult";
-string const rename_cert_name = "rename";
 
 
 static void 
@@ -713,16 +568,6 @@ cert_revision_changelog(revision_id const & m,
 {
   put_simple_revision_cert(m, changelog_cert_name, 
                            changelog, app, pc);  
-}
-
-void 
-cert_file_comment(file_id const & f, 
-                  string const & comment,
-                  app_state & app,
-                  packet_consumer & pc)
-{
-  put_simple_file_cert(f, comment_cert_name, 
-                       comment, app, pc);  
 }
 
 void 

@@ -67,12 +67,6 @@ void make_simple_cert(hexenc<id> const & id,
 void erase_bogus_certs(std::vector< revision<cert> > & certs,
                        app_state & app);
 
-void erase_bogus_certs(std::vector< manifest<cert> > & certs,
-                       app_state & app);
-
-void erase_bogus_certs(std::vector< file<cert> > & certs,
-                       app_state & app);
-
 // special certs -- system won't work without them
 
 extern std::string const branch_cert_name;
@@ -95,28 +89,6 @@ find_common_ancestor(revision_id const & left,
                      app_state & app);
 
 
-// stuff for dealing with rename certs / rename maps
-
-typedef std::map<file_path,file_path> 
-rename_set;
-
-struct 
-rename_edge
-{
-  rename_edge() {}
-  rename_edge(rename_edge const & other);
-  revision_id parent;
-  revision_id child;
-  rename_set mapping;  
-};
-
-void 
-calculate_renames(revision_id const & ancestor,
-                  revision_id const & child,
-                  app_state & app,
-                  rename_edge & edge);
-
-
 // we also define some common cert types, to help establish useful
 // conventions. you should use these unless you have a compelling
 // reason not to.
@@ -136,7 +108,6 @@ extern std::string const tag_cert_name;
 extern std::string const changelog_cert_name;
 extern std::string const comment_cert_name;
 extern std::string const testresult_cert_name;
-extern std::string const rename_cert_name;
 
 void 
 cert_revision_date_now(revision_id const & m, 
@@ -171,18 +142,6 @@ cert_revision_changelog(revision_id const & m,
                        std::string const & changelog,
                        app_state & app,
                        packet_consumer & pc);
-
-void 
-cert_file_comment(file_id const & m, 
-                  std::string const & comment,
-                  app_state & app,
-                  packet_consumer & pc);
-
-void 
-cert_manifest_comment(manifest_id const & m, 
-                      std::string const & comment,
-                      app_state & app,
-                      packet_consumer & pc);
 
 void 
 cert_revision_comment(revision_id const & m, 

@@ -1,5 +1,29 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (ls_certs): Don't special-case rename certs.
+
+	* cert.hh (rename_edge):
+	(rename_set):
+	(calculate_renames):
+	(rename_cert_name): Remove.
+	(cert_file_comment):
+	(cert_manifest_comment): Remove.
+	(erase_bogus_certs): Remove manifest and file versions.
+	* cert.cc (rename_cert_name): Remove.
+	(bogus_cert_p): Remove manifest<cert> and file<cert> variants.
+	(erase_bogus_certs): Likewise.
+	(put_simple_manifest_cert):
+	(put_simple_file_cert):
+	(cert_file_comment): Remove.
+
+	* commands.cc (fcerts): Remove.
+	(mcerts): Likewise.
+	(rcerts): Rename to...
+	(certs): ...this.  s/revision certs/certs/ in help text.
+	(trusted): s/revision cert/cert/.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_vcheck.at: Fix AT_XFAIL_IF typo.
 	
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
