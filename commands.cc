@@ -1164,6 +1164,35 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   guard.commit();
 }
 
+CMD(delkey, "key and cert", "KEYID", "delete a public and private key")
+{
+  bool key_deleted = false;
+  
+  if (args.size() != 1)
+    throw usage(name);
+
+  transaction_guard guard(app.db);
+  rsa_keypair_id ident(idx(args, 0)());
+  if (app.db.public_key_exists(ident))
+    {
+      P(F("deleting public key '%s' from database\n") % ident);
+      app.db.delete_public_key(ident);
+      key_deleted = true;
+    }
+
+  if (app.db.private_key_exists(ident))
+    {
+      P(F("deleting private key '%s' from database\n") % ident);
+      app.db.delete_private_key(ident);
+      key_deleted = true;
+    }
+
+  N(key_deleted,
+    F("public or private key '%s' does not exist in database") % idx(args, 0)());
+  
+  guard.commit();
+}
+
 CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key")
 {
   if (args.size() != 1)

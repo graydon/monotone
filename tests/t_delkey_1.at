@@ -1,0 +1,26 @@
+# -*- Autoconf -*-
+
+AT_SETUP([delete a public key])
+
+MONOTONE_SETUP
+
+AT_DATA(pubkey.txt, [@<:@pubkey john@doe.com@:>@
+MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCPUdR/bM41m2KIpS0eXlTG91PSWvOUdwY4
+6aKd+DXZFma8Hi00Wvwmr+0JJdWqPwyxR/Dr2a2Z7Db76lUiNlhvRw3yoKP2ip9Jjfe0LReG
+5aJ5u1l5L5VPiZ5iZq9PjxNDAYASpb89yBT7BJZ6OAXuE9zHFR506Apg7UB4Em184wIBEQ==
+@<:@end@:>@
+])
+
+AT_CHECK(MONOTONE read < pubkey.txt, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE pubkey john@doe.com, [], [stdout], [ignore])
+
+AT_CHECK(grep -q 'john@doe.com' stdout, [])
+
+AT_CHECK(MONOTONE delkey john@doe.com, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE pubkey john@doe.com, [1], [ignore], [stderr])
+
+AT_CHECK(grep -q 'does not exist' stderr, [])
+
+AT_CLEANUP

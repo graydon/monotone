@@ -322,7 +322,8 @@ public:
                     base64< arc4<rsa_priv_key> > const & priv_encoded);
 
   void delete_private_key(rsa_keypair_id const & pub_id);
-
+  void delete_public_key(rsa_keypair_id const & pub_id);
+  
   // note: this section is ridiculous. please do something about it.
 
   bool manifest_cert_exists(manifest<cert> const & cert);
