@@ -54,36 +54,39 @@ CREATE TABLE manifest_deltas
  
 CREATE TABLE public_keys
 	(
-	id primary key,     -- key identifier chosen by user
-	keydata not null    -- RSA public params
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id primary key,         -- key identifier chosen by user
+	keydata not null        -- RSA public params
 	);
 
 CREATE TABLE private_keys
 	(
-	id primary key,     -- as in public_keys (same identifiers, in fact)
-	keydata not null    -- encrypted RSA private params
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id primary key,         -- as in public_keys (same identifiers, in fact)
+	keydata not null        -- encrypted RSA private params
 	);
 
 CREATE TABLE manifest_certs
 	(
-	id not null,        -- joins with manifests.id or manifest_deltas.id
-	name not null,      -- opaque string chosen by user
-	value not null,     -- opaque blob
-	keypair not null,   -- joins with public_keys.id
-	signature not null, -- RSA/SHA1 signature of [manifest,name,val]
-	unique(id, name, value, keypair, signature)
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with manifests.id or manifest_deltas.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
 	);
 
 CREATE TABLE file_certs
 	(
-	id not null,        -- joins with files.id or file_deltas.id
-	name not null,      -- opaque string chosen by user
-	value not null,     -- opaque blob
-	keypair not null,   -- joins with public_keys.id
-	signature not null, -- RSA/SHA1 signature of [manifest,name,val]
-	unique(id, name, value, keypair, signature)
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with files.id or file_deltas.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
 	);
-
 
 -- structures for managing our relationship to netnews or depots nb:
 -- these are all essentially transient data, and are not represented
@@ -114,3 +117,17 @@ CREATE TABLE netserver_manifests
 	manifest not null,    -- manifest which exists on url
 	unique(url, manifest)
 	);
+
+-- merkle nodes
+
+CREATE TABLE merkle_nodes
+	(
+	type not null,                -- "key", "mcert", "fcert", "manifest"
+	collection not null,          -- name chosen by user
+	level not null,               -- tree level this prefix encodes
+	prefix not null,              -- label identifying node in tree
+	body not null,                -- binary, base64'ed node contents
+	unique(type, collection, level, prefix)
+	);
+
+

@@ -679,6 +679,41 @@ bool lua_hooks::hook_get_http_proxy(string const & host,
   return ll.ok();
 }
 
+bool lua_hooks::hook_get_netsync_read_permitted(std::string const & collection, 
+						std::string const & identity)
+{
+  bool permitted = false, exec_ok = false;
+
+  exec_ok = Lua(st)
+    .push_str("get_netsync_read_permitted")
+    .get_fn()
+    .push_str(collection)
+    .push_str(identity)
+    .call(2,1)
+    .extract_bool(permitted)
+    .ok();
+
+  return exec_ok && permitted;
+}
+
+bool lua_hooks::hook_get_netsync_write_permitted(std::string const & collection, 
+						 std::string const & identity)
+{
+  bool permitted = false, exec_ok = false;
+
+  exec_ok = Lua(st)
+    .push_str("get_netsync_write_permitted")
+    .get_fn()
+    .push_str(collection)
+    .push_str(identity)
+    .call(2,1)
+    .extract_bool(permitted)
+    .ok();
+
+  return exec_ok && permitted;  
+}
+
+
 bool lua_hooks::hook_apply_attribute(string const & attr, 
 				     file_path const & filename, 
 				     string const & value)

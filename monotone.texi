@@ -495,11 +495,11 @@ and a working copy; the network is not involved.
 A @dfn{database} is a single, regular file. You can copy or back it up
 using standard methods. Typically you keep a database in your home
 directory. Databases are portable between different machine types. If
-a database grows too big, you can have remove information from it. You
-can have multiple databases and divide your work between them, or keep
-everything in a single database if you prefer. You can dump portions
-of your database out as text, and read them back into other databases,
-or send them to your friends.
+a database grows too big, you may choose to remove information from
+it. You can have multiple databases and divide your work between them,
+or keep everything in a single database if you prefer. You can dump
+portions of your database out as text, and read them back into other
+databases, or send them to your friends.
 
 A database contains many versions and certificates, some of which are
 not immediately of interest, some of which may be unwanted or even
@@ -1767,6 +1767,7 @@ playing with the program to familliarize yourself with its operation.
 
 @menu
 * Hash Integrity::         Notes on probability and failure.
+* Quality Assurance::      Integrating testing and review with development.
 * Internationalization::   Using monotone in non-english locales.
 * Reserved Certs::         Certificate names with special meanings.
 * Naming Conventions::     Choosing appropriate names for keys and branches.
@@ -1949,6 +1950,60 @@ stronger hash you like, at the cost of isolating your own
 communications to a group using the modified version. Monotone is free
 software, and runs atop @code{crypto++}, so it is both legal and
 relatively simple to change it to use some other algorithm.
+
+@node    Quality Assurance
+@section Quality Assurance
+
+Monotone was constructed to serve both as a version control tool and
+as a quality assurance tool. The quality assurance features permit
+users to ignore, or filter-out, versions which do not meet their
+criteria for quality. This section describes the way monotone
+represents and reasons about quality information.
+
+Monotone often views the collection of manifest @code{ancestor} cert
+as a directed graph, in which manifest versions are the nodes and the
+@code{ancestor} certificates are the edges. We call this graph the
+@dfn{ancestry graph}. The ancestry graph has a number of important
+subgraphs, many of which overlap. For example, each branch is a
+subgraph of the ancestry graph, containing only the nodes carrying a
+particular @code{branch} cert.
+
+Many of monotone's operations involve searching the ancestry graph for
+the ancestors or descendants of a particular manifest, or extracting
+the ``heads'' of a subgraph, which is the subgraph's set of nodes with
+no descendants. For example, when you run the @code{update} command,
+monotone searches the subgraph of descendants of base version of the
+current working copy, trying to locate a unique head to update the
+base version to.
+
+Monotone's quality assurance mechanisms are mostly based on
+restricting the subgraph each command operates on. There are three
+methods used to restrict the subgraph:
+
+@itemize
+@item
+By restricting the set of trusted @code{ancestor} certificates, you
+can require that specific code reviewers have approved of each edge in
+the graph.
+@item
+By further removing from the set of trusted @code{ancestor} certificates, 
+those which coincide with trusted @code{disapproval} certificates. 
+@item
+By restricting the set of trusted @code{testresult} certificates, you
+can require that the @emph{endpoints} of an update or merge operation
+have a certificate asserting that the version in question passed a 
+certain test, or testsuite.
+@end itemize
+
+The evaluation of trust is done on a cert-by-cert basis by calling a
+lua hook: @code{get_cert_trust}. This hook is only called when a cert
+has at least one good signature from a known key, and is assumed to
+return @code{true} if it is not defined. If the hook is defined, it is
+passed all the keys which have signed the cert, as well as the cert's
+id, name and value. The hook can then evaluate the set of signers, as
+a group, and decide whether to grant or deny trust to the cert in
+question.
+
 
 @node    Internationalization
 @section Internationalization

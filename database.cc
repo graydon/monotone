@@ -16,9 +16,11 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include "cert.hh"
 #include "cleanup.hh"
 #include "constants.hh"
 #include "database.hh"
+#include "keys.hh"
 #include "nntp_tasks.hh"
 #include "sanity.hh"
 #include "schema_migration.hh"
@@ -59,7 +61,7 @@ database::database(fs::path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("f042f3c4d0a4f98f6658cbaf603d376acf88ff4b"),
+  schema("8929e54f40bf4d3b4aea8b037d2c9263e82abdf4"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -993,15 +995,20 @@ void database::get_key(rsa_keypair_id const & priv_id,
 void database::put_key(rsa_keypair_id const & pub_id, 
 		       base64<rsa_pub_key> const & pub_encoded)
 {
-  execute("INSERT INTO public_keys VALUES('%q', '%q')", 
-	  pub_id().c_str(), pub_encoded().c_str());
+  hexenc<id> thash;
+  key_hash_code(pub_id, pub_encoded, thash);
+  execute("INSERT INTO public_keys VALUES('%q', '%q', '%q')", 
+	  thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
 }
 
 void database::put_key(rsa_keypair_id const & priv_id, 
 		       base64< arc4<rsa_priv_key> > const & priv_encoded)
 {
-  execute("INSERT INTO private_keys VALUES('%q', '%q')", 
-	  priv_id().c_str(), priv_encoded().c_str());
+  
+  hexenc<id> thash;
+  key_hash_code(priv_id, priv_encoded, thash);
+  execute("INSERT INTO private_keys VALUES('%q', '%q', '%q')", 
+	  thash().c_str(), priv_id().c_str(), priv_encoded().c_str());
 }
 
 void database::put_key_pair(rsa_keypair_id const & id, 
@@ -1038,8 +1045,11 @@ bool database::cert_exists(cert const & t,
 void database::put_cert(cert const & t,
 		       string const & table)
 {
-  execute("INSERT INTO '%q' VALUES('%q', '%q', '%q', '%q', '%q')", 
+  hexenc<id> thash;
+  cert_hash_code(t, thash);
+  execute("INSERT INTO '%q' VALUES('%q', '%q', '%q', '%q', '%q', '%q')", 
 	  table.c_str(),
+	  thash().c_str(),
 	  t.ident().c_str(),
 	  t.name().c_str(), 
 	  t.value().c_str(),
@@ -1476,6 +1486,65 @@ void database::complete(string const & partial,
     completions.insert(file_id(res[i][0]));  
 }
 
+// merkle nodes
+
+bool database::merkle_node_exists(string const & type,
+				  utf8 const & collection, 
+				  size_t level,
+				  hexenc<prefix> const & prefix)
+{
+  results res;
+  fetch(res, one_col, one_row, 
+	"SELECT COUNT(*) "
+	"FROM merkle_nodes "
+	"WHERE type = '%q' "
+	"AND collection = '%q' "
+	"AND level = %d "
+	"AND prefix = '%q' ",
+	type.c_str(), collection().c_str(), level, prefix().c_str());
+  size_t n_nodes = lexical_cast<size_t>(res[0][0]);
+  I(n_nodes == 0 || n_nodes == 1);
+  return n_nodes == 1;
+}
+
+void database::get_merkle_node(string const & type,
+			       utf8 const & collection, 
+			       size_t level,
+			       hexenc<prefix> const & prefix,
+			       base64<merkle> & node)
+{
+  results res;
+  fetch(res, one_col, one_row, 
+	"SELECT body "
+	"FROM merkle_nodes "
+	"WHERE type = '%q' "
+	"AND collection = '%q' "
+	"AND level = %d "
+	"AND prefix = '%q'",
+	type.c_str(), collection().c_str(), level, prefix().c_str());
+  node = res[0][0];
+}
+
+void database::put_merkle_node(string const & type,
+			       utf8 const & collection, 
+			       size_t level,
+			       hexenc<prefix> const & prefix,				       
+			       base64<merkle> const & node)
+{
+  execute("INSERT OR REPLACE "
+	  "INTO merkle_nodes "
+	  "VALUES ('%q', '%q', %d, '%q', '%q')",
+	  type.c_str(), collection().c_str(), level, prefix().c_str(), node().c_str());
+}
+
+void database::erase_merkle_nodes(string const & type,
+				  utf8 const & collection)
+{
+  execute("DELETE FROM merkle_nodes "
+	  "WHERE type = '%q' "
+	  "AND collection = '%q'",
+	  type.c_str(), collection().c_str());
+}
 
 // transaction guards
 

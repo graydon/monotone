@@ -72,6 +72,30 @@ static void calculate_id(string const & in,
 }
 
 
+static void sqlite_sha1_fn(sqlite_func *f, int nargs, char const ** args)
+{
+  string tmp, sha;
+  if (nargs <= 1)
+    {
+      sqlite_set_result_error(f, "need at least 1 arg to sha1()", -1);
+      return;
+    }
+
+  if (nargs == 1)
+    tmp = string(args[0]);
+  else
+    {
+      string sep = string(args[0]);
+      tmp = string(args[1]);
+      for (int i = 2; i < nargs; ++i)
+	{
+	  tmp += sep + string(args[i]);
+	}
+    }
+  calculate_id(tmp, sha);
+  sqlite_set_result_string(f,sha.c_str(),sha.size());
+}
+
 int append_sql_stmt(void * vp, 
 		    int ncols, 
 		    char ** values,
@@ -109,7 +133,6 @@ void calculate_schema_id(sqlite *sql, string & id)
       sqlite_exec(sql, "ROLLBACK", NULL, NULL, NULL);
       throw runtime_error("failure extracting schema from sqlite_master");
     }
-
   massage_sql_tokens(tmp, tmp2);
   calculate_id(tmp2, id);
 }
@@ -132,6 +155,9 @@ struct migrator
 
     if (sql == NULL)
       throw runtime_error("NULL sqlite object given to migrate");
+
+    if (sqlite_create_function(sql, "sha1", -1, &sqlite_sha1_fn, NULL))
+      throw runtime_error("error registering sha1 function with sqlite");
 
     bool migrating = false;
     for (vector< pair<string, migrator_cb> >::const_iterator i = migration_events.begin();
@@ -451,6 +477,168 @@ static bool migrate_client_merge_url_and_group(sqlite * sql,
   return true;  
 }
 
+static bool migrate_client_add_hashes_and_merkle_trees(sqlite * sql, 
+						       char ** errmsg)
+{
+
+  // add the column to manifest_certs
+  if (!move_table(sql, errmsg, 
+		  "manifest_certs", 
+		  "tmp", 
+		  "("
+		  "id not null,"
+		  "name not null,"
+		  "value not null,"
+		  "keypair not null,"
+		  "signature not null,"
+		  "unique(name, id, value, keypair, signature)"
+		  ")"))
+    return false;
+
+  int res = sqlite_exec_printf(sql, "CREATE TABLE manifest_certs\n"
+			       "(\n"
+			       "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+			       "id not null,            -- joins with manifests.id or manifest_deltas.id\n"
+			       "name not null,          -- opaque string chosen by user\n"
+			       "value not null,         -- opaque blob\n"
+			       "keypair not null,       -- joins with public_keys.id\n"
+			       "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+			       "unique(name, id, value, keypair, signature)\n"
+			       ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "INSERT INTO manifest_certs "
+			   "SELECT "
+			   "sha1(':', id, name, value, keypair, signature), "
+			   "id, name, value, keypair, signature "
+			   "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  // add the column to file_certs
+  if (!move_table(sql, errmsg, 
+		  "file_certs", 
+		  "tmp", 
+		  "("
+		  "id not null,"
+		  "name not null,"
+		  "value not null,"
+		  "keypair not null,"
+		  "signature not null,"
+		  "unique(name, id, value, keypair, signature)"
+		  ")"))
+    return false;
+
+  res = sqlite_exec_printf(sql, "CREATE TABLE file_certs\n"
+			   "(\n"
+			   "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+			   "id not null,            -- joins with files.id or file_deltas.id\n"
+			   "name not null,          -- opaque string chosen by user\n"
+			   "value not null,         -- opaque blob\n"
+			   "keypair not null,       -- joins with public_keys.id\n"
+			   "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+			   "unique(name, id, value, keypair, signature)\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "INSERT INTO file_certs "
+			   "SELECT "
+			   "sha1(':', id, name, value, keypair, signature), "
+			   "id, name, value, keypair, signature "
+			   "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  // add the column to public_keys
+  if (!move_table(sql, errmsg, 
+		  "public_keys", 
+		  "tmp", 
+		  "("
+		  "id primary key,"
+		  "keydata not null"
+		  ")"))
+    return false;
+
+  res = sqlite_exec_printf(sql, "CREATE TABLE public_keys\n"
+			   "(\n"
+			   "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+			   "id primary key,         -- key identifier chosen by user\n"
+			   "keydata not null        -- RSA public params\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "INSERT INTO public_keys "
+			   "SELECT "
+			   "sha1(':', id, keydata), "
+			   "id, keydata "
+			   "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  // add the column to private_keys
+  if (!move_table(sql, errmsg, 
+		  "private_keys", 
+		  "tmp", 
+		  "("
+		  "id primary key,"
+		  "keydata not null"
+		  ")"))
+    return false;
+
+  res = sqlite_exec_printf(sql, "CREATE TABLE private_keys\n"
+			   "(\n"
+			   "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+			   "id primary key,         -- as in public_keys (same identifiers, in fact)\n"
+			   "keydata not null        -- encrypted RSA private params\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "INSERT INTO private_keys "
+			   "SELECT "
+			   "sha1(':', id, keydata), "
+			   "id, keydata "
+			   "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  // add the merkle tree stuff
+
+  res = sqlite_exec_printf(sql, 
+			   "CREATE TABLE merkle_nodes\n"
+			   "(\n"
+			   "type not null,                -- \"key\", \"mcert\", \"fcert\", \"manifest\"\n"
+			   "collection not null,          -- name chosen by user\n"
+			   "level not null,               -- tree level this prefix encodes\n"
+			   "prefix not null,              -- label identifying node in tree\n"
+			   "body not null,                -- binary, base64'ed node contents\n"
+			   "unique(type, collection, level, prefix)\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  return true;
+}
+
 void migrate_depot_schema(sqlite *sql)
 {  
   migrator m;
@@ -475,7 +663,10 @@ void migrate_monotone_schema(sqlite *sql)
   m.add("edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a",
 	&migrate_client_merge_url_and_group);
 
-  m.migrate(sql, "f042f3c4d0a4f98f6658cbaf603d376acf88ff4b");
+  m.add("f042f3c4d0a4f98f6658cbaf603d376acf88ff4b",
+	&migrate_client_add_hashes_and_merkle_trees);
+
+  m.migrate(sql, "8929e54f40bf4d3b4aea8b037d2c9263e82abdf4");
   
   if (sqlite_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
     throw runtime_error("error vacuuming after migration");

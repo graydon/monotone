@@ -337,6 +337,28 @@ public:
   void note_manifest_on_netserver (url const & u, 
 				   manifest_id const & m);
 
+  // merkle tree stuff
+
+  bool merkle_node_exists(std::string const & type,
+			  utf8 const & collection, 
+			  size_t level,
+			  hexenc<prefix> const & prefix);
+  
+  void get_merkle_node(std::string const & type,
+		       utf8 const & collection, 
+		       size_t level,
+		       hexenc<prefix> const & prefix,
+		       base64<merkle> & node);
+
+  void put_merkle_node(std::string const & type,
+		       utf8 const & collection, 
+		       size_t level,
+		       hexenc<prefix> const & prefix,
+		       base64<merkle> const & node);
+
+  void erase_merkle_nodes(std::string const & type,
+			  utf8 const & collection);
+
   // completion stuff
 
   void complete(std::string const & partial,

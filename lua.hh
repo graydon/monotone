@@ -63,6 +63,12 @@ public:
 			   std::string & host_out,
 			   unsigned long & port_out);
 
+  bool hook_get_netsync_read_permitted(std::string const & collection, 
+				       std::string const & identity);
+
+  bool hook_get_netsync_write_permitted(std::string const & collection, 
+					std::string const & identity);
+
   // local repo hooks
   bool hook_ignore_file(file_path const & p);
   bool hook_get_sorter(std::string const & certname, std::string & sort_type);

@@ -11,8 +11,9 @@
 // and it seems to work.
 
 #include <string>
+#include <boost/cstdint.hpp>
 
-typedef unsigned long u32;
+typedef boost::uint32_t u32;
 
 struct adler32
 {

@@ -318,6 +318,23 @@ bool check_signature(lua_hooks & lua,
 }
 
 
+void key_hash_code(rsa_keypair_id const & id,
+		   base64<rsa_pub_key> const & pub,
+		   hexenc<id> & out)
+{
+  data tdat(id() + ":" + pub());
+  calculate_ident(tdat, out);  
+}
+
+void key_hash_code(rsa_keypair_id const & id,
+		   base64< arc4<rsa_priv_key> > const & priv,
+		   hexenc<id> & out)
+{
+  data tdat(id() + ":" + priv());
+  calculate_ident(tdat, out);
+}
+
+
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 

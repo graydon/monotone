@@ -29,6 +29,7 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 make install
+rm -f $RPM_BUILD_ROOT%{_infodir}/dir
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -52,10 +53,13 @@ fi
 %{_bindir}/monotone
 %{_bindir}/depot.cgi
 %{_mandir}/man1/monotone.1.gz
-%{_infodir}/*
+%{_infodir}/*.info*.gz
 
 
 %changelog
+* Thu Jan 8 2004 graydon hoare <graydon@pobox.com>
+- don't install /usr/share/info/dir
+
 * Thu Jan 8 2004 graydon hoare <graydon@pobox.com>
 - 0.9 release
 

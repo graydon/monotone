@@ -127,6 +127,18 @@ void cert_signable_text(cert const & t,
   L(F("cert: signable text %s\n") % out);
 }
 
+void cert_hash_code(cert const & t,
+		    hexenc<id> & out)
+{
+  string tmp(t.ident()
+	     + ":" + t.name()
+	     + ":" + t.value()
+	     + ":" + t.key()
+	     + ":" + t.sig());
+  data tdat(tmp);
+  calculate_ident(tdat, out);
+}
+
 void calculate_cert(app_state & app, cert & t)
 {
   string signed_text;

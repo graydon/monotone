@@ -46,6 +46,9 @@ struct cert
 void cert_signable_text(cert const & t,
 			std::string & out);
 
+void cert_hash_code(cert const & t, 
+		    hexenc<id> & out);
+
 bool check_cert(app_state & app, cert const & t);
 void calculate_cert(app_state & app, cert & t);
 void make_simple_cert(hexenc<id> const & id,

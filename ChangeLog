@@ -1,3 +1,32 @@
+2004-01-31  graydon hoare  <graydon@pobox.com>
+
+	* Netxx/*: New files.
+	* AUTHORS: Mention Netxx.
+	* Makefile.am: Mention Netxx and netsync.{cc,hh}
+	* adler32.hh: Delegate typedefs to boost.
+	* cert.hh, cert.cc (cert_hash_code): New function.
+	* commands.cc (find_oldest_ancestors): Block cycles.
+	(netsync): New command.
+	* database.cc, database.hh (schema): Update.
+	(put_key): Calculate key hash on the fly.
+	(put_cert): Likewise.
+	(merkle_node_exists)
+	(get_merkle_node)
+	(put_merkle_node)
+	(erase_merkle_nodes): New functions.
+	* keys.hh, keys.cc (key_hash_code): New function.
+	* lua.cc, lua.hh 
+	(hook_get_netsync_read_permitted)
+	(hook_get_netsync_write_permitted): New hooks.
+	* monotone.spec: Update for FC1 info conventions.
+	* monotone.texi (Quality Assurance): New section.
+	* netsync.cc, netsync.hh: New files, preliminary
+	netsync infrastructure. Command bodies still missing.
+	* schema.sql: Add intrinsic key and cert hashes, merkle nodes.
+	* schema_migration.cc: Add code to migrate to new schema.	
+	* unit_tests.cc: Handle command-line args to limit test set.
+	* vocab_terms.hh: Add merkle and prefix as new terms.
+
 2004-01-07  graydon hoare  <graydon@pobox.com>
 
 	* Makefile.am:

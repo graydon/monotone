@@ -21,6 +21,7 @@
 #include "file_io.hh"
 #include "keys.hh"
 #include "manifest.hh"
+#include "netsync.hh"
 #include "network.hh"
 #include "packet.hh"
 #include "patch_set.hh"
@@ -397,18 +398,21 @@ static void complete(app_state & app,
 }
 
 
-static void find_oldest_ancestors (manifest_id const & child, 
-				   set<manifest_id> & ancs,
-				   app_state & app)
+static void find_oldest_ancestors(manifest_id const & child, 
+				  set<manifest_id> & ancs,
+				  app_state & app)
 {
   cert_name tn(ancestor_cert_name);
   ancs.insert(child);  
+  set<manifest_id> seen;
   while (true)
     {
       set<manifest_id> next_frontier;
       for (set<manifest_id>::const_iterator i = ancs.begin();
 	   i != ancs.end(); ++i)
 	{
+	  if (seen.find(*i) != seen.end())
+	    continue;
 	  vector< manifest<cert> > tmp;
 	  app.db.get_manifest_certs(*i, tn, tmp);
 	  erase_bogus_certs(tmp, app);
@@ -420,7 +424,9 @@ static void find_oldest_ancestors (manifest_id const & child,
 	      manifest_id anc_id (tv());
 	      next_frontier.insert(anc_id);
 	    }
+	  seen.insert(*i);
 	}
+
       if (next_frontier.empty())
 	break;
       else
@@ -2202,6 +2208,36 @@ static void ls_queue (string name, app_state & app)
 	}      
     }
 }
+
+CMD(netsync, "network", "(client|server) (readonly|readwrite|writeonly) ADDRESS:PORTNUMBER COLLECTION...",
+    "run synchronization for a given set of collections")
+{
+  if (args.size() < 4)
+    throw usage(name);
+
+  protocol_voice voice = client_voice;
+  protocol_role role = source_role;
+
+  if (idx(args,0)() == "client")
+    voice  = client_voice;
+  else if (idx(args,0)() == "server")
+    voice = server_voice;
+  else
+    throw usage(name);
+
+  if (idx(args,1)() == "readonly")
+    role = source_role;
+  else if (idx(args,1)() == "readwrite")
+    role = source_and_sink_role;
+  else if (idx(args,1)() == "writeonly")
+    role = sink_role;
+  else throw usage(name);
+
+  utf8 addr(idx(args,2));
+  vector<utf8> collections(args.begin() + 3, args.end());
+  run_netsync_protocol(voice, role, addr, collections, app);
+}
+
 
 
 CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\naddtree URL [ID...]",
