@@ -1,3 +1,14 @@
+2004-12-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_keys.at: 
+	* tests/t_attr.at: 
+	* tests/t_patch_vs_drop_add.at: 
+	* tests/t_merge2_add_drop_add.at: 
+	* tests/t_add_drop_add.at: 
+	* tests/t_add_patch_drop_add.at: 
+	* tests/t_patch_drop_add.at: Remove priority notes, since these
+	are no longer bugs.
+
 2004-12-17  graydon hoare  <graydon@pobox.com>
 
 	* tests/t_merge_2.at: Works now, remove xfail.

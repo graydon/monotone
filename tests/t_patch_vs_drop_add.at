@@ -1,4 +1,4 @@
-AT_SETUP([(normal) merge(<patch a>, <drop a, add a>)])
+AT_SETUP([merge(<patch a>, <drop a, add a>)])
 
 # In this case, the patch should be completely ignored; we shouldn't
 # even try to do a merge.

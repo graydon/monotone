@@ -1,4 +1,4 @@
-AT_SETUP([(minor) attr command])
+AT_SETUP([attr command])
 MONOTONE_SETUP
 
 # This test is a bug report.

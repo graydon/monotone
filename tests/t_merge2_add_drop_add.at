@@ -1,4 +1,4 @@
-AT_SETUP([(imp) merge(<add a>, <add a, drop a, add a>)])
+AT_SETUP([merge(<add a>, <add a, drop a, add a>)])
 
 MONOTONE_SETUP
 
