@@ -760,14 +760,15 @@ void post_queued_blobs_to_network(set<url> const & targets,
 		  else if (proto == "mailto")
 		    post_smtp_blob(*targ, postbody, user, host, port, app, posted_ok);
 	      
-		  if (posted_ok)
-		    {
-		      n_packets += packets.size();
-		      n_bytes += postbody.size();
-		      for (size_t i = 0; i < packets.size(); ++i)
-			app.db.delete_posting(*targ, 0);
-		    }
+		  if (!posted_ok)
+		    throw informative_failure("unknown failure during post to " + (*targ)());
+
+		  n_packets += packets.size();
+		  n_bytes += postbody.size();
+		  for (size_t i = 0; i < packets.size(); ++i)
+		    app.db.delete_posting(*targ, 0);
 		}
+
 	      app.db.get_queue_count(*targ, queue_count);
 	    }
 	} 

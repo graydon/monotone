@@ -35,9 +35,6 @@ struct bogus_cert_p
   bogus_cert_p(app_state & a) : app(a) {};
   bool operator()(manifest<cert> const & c) const 
   {
-  string txt;
-  cert_signable_text(c.inner(), txt);
-  L(F("checking cert %s\n") % txt);
   if (check_cert(app,c.inner()))
     {
       L(F("cert ok\n"));
@@ -45,15 +42,14 @@ struct bogus_cert_p
     }
   else
     {
+      string txt;
+      cert_signable_text(c.inner(), txt);
       W(F("bad signature by '%s' on '%s'\n") % c.inner().key() % txt);
       return true;
     }
   }
   bool operator()(file<cert> const & c) const 
   {
-  string txt;
-  cert_signable_text(c.inner(), txt);
-  L(F("checking cert %s\n") % txt);
   if (check_cert(app,c.inner()))
     {
       L(F("cert ok\n"));
@@ -61,6 +57,8 @@ struct bogus_cert_p
     }
   else
     {
+      string txt;
+      cert_signable_text(c.inner(), txt);
       W(F("bad signature by '%s' on '%s'\n") % c.inner().key() % txt);
       return true;
     }
@@ -134,21 +132,52 @@ void calculate_cert(app_state & app, cert & t)
   string signed_text;
   base64< arc4<rsa_priv_key> > priv;
   cert_signable_text(t, signed_text);
-  N(app.db.private_key_exists(t.key),
-    F("no private key '%s' found in database") % t.key);
-  app.db.get_key(t.key, priv);
+
+  static std::map<rsa_keypair_id, base64< arc4<rsa_priv_key> > > privkeys;
+  bool persist_ok = (!privkeys.empty()) || app.lua.hook_persist_phrase_ok();
+
+  if (persist_ok
+      && privkeys.find(t.key) != privkeys.end())
+    {
+      priv = privkeys[t.key];
+    }
+  else
+    {
+      N(app.db.private_key_exists(t.key),
+	F("no private key '%s' found in database") % t.key);
+      app.db.get_key(t.key, priv);
+      if (persist_ok)
+	privkeys.insert(make_pair(t.key, priv));
+    }
+
   make_signature(app.lua, t.key, priv, signed_text, t.sig);
 }
 
 bool check_cert(app_state & app, cert const & t)
 {
-  if (!app.db.public_key_exists(t.key))
-    return false;
-  string signed_text;
+
   base64< rsa_pub_key > pub;
+
+  static std::map<rsa_keypair_id, base64< rsa_pub_key > > pubkeys;
+  bool persist_ok = (!pubkeys.empty()) || app.lua.hook_persist_phrase_ok();
+
+  if (persist_ok
+      && pubkeys.find(t.key) != pubkeys.end())
+    {
+      pub = pubkeys[t.key];
+    }
+  else
+    {
+      if (!app.db.public_key_exists(t.key))
+	return false;
+      app.db.get_key(t.key, pub);
+      if (persist_ok)
+	pubkeys.insert(make_pair(t.key, pub));
+    }
+
+  string signed_text;
   cert_signable_text(t, signed_text);
-  app.db.get_key(t.key, pub);
-  return check_signature(pub, signed_text, t.sig);
+  return check_signature(app.lua, t.key, pub, signed_text, t.sig);
 }
 
 
@@ -423,33 +452,50 @@ void get_branch_heads(cert_value const & branchname,
 		      set<manifest_id> & heads)
 {
   heads.clear();
-  vector< manifest<cert> > certs;
+  vector< manifest<cert> > branch_certs, ancestor_certs;
+  set<manifest_id> candidates;
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
 
-  L(F("getting branch certs for %s\n") % branchname);
-  app.db.get_manifest_certs(cert_name(branch_cert_name), branch_encoded, certs);
-  erase_bogus_certs(certs, app);
-  L(F("got %d branch members\n") % certs.size());
-  for (vector< manifest<cert> >::const_iterator i = certs.begin();
-       i != certs.end(); ++i)
+  P(F("fetching heads of branch '%s'\n") % branchname);
+
+  app.db.get_head_candidates(branch_encoded(), branch_certs, ancestor_certs);
+  bogus_cert_p bogus(app);
+
+  for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
+       i != ancestor_certs.end(); ++i)
     {
-      vector< manifest<cert> > children;
-      cert_value tv = cert_value(i->inner().ident());
-      base64<cert_value> id_encoded;
-      encode_base64(tv, id_encoded);
-      app.db.get_manifest_certs(ancestor_cert_name, id_encoded, children);
-      erase_bogus_certs(children, app);
-      if (children.size() == 0)
+      candidates.insert(i->inner().ident);
+    }
+
+  L(F("began with %d candidate heads\n") % candidates.size());
+
+  for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
+       i != ancestor_certs.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      manifest_id parent(tv());
+      set<manifest_id>::const_iterator j = candidates.find(parent);
+      if (j != candidates.end() && !bogus(*i))
 	{
-	  L(F("found head %s\n") % i->inner().ident);
-	  heads.insert(manifest_id(i->inner().ident));
-	}
-      else
-	{
-	  L(F("found non-head %s\n") % i->inner().ident);
+	  candidates.erase(j);
 	}
     }
+
+  L(F("reduced to %d candidate heads\n") % candidates.size());
+
+  for (vector< manifest<cert> >::const_iterator i = branch_certs.begin();
+       i != branch_certs.end(); ++i)
+    {
+      set<manifest_id>::const_iterator j = candidates.find(i->inner().ident);
+      if (j != candidates.end() && !bogus(*i))
+	{
+	  heads.insert(*j);
+	}      
+    }
+
+  L(F("finalized %d heads\n") % heads.size());
 }
 		   
 void cert_file_ancestor(file_id const & parent, 

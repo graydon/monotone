@@ -235,8 +235,11 @@ void calculate_hunk_offsets(vector<string> const & ancestor,
 }
 
 
+struct conflict {};
+
 // utility class which performs the merge
 
+/*
 struct hunk_merger : public hunk_consumer
 {
   vector<string> const & left;
@@ -261,8 +264,6 @@ struct hunk_merger : public hunk_consumer
   virtual void delete_at(size_t apos);
   virtual ~hunk_merger();
 };
-
-struct conflict {};
 
 hunk_merger::hunk_merger(vector<string> const & lft,
 			 vector<string> const & anc,
@@ -435,31 +436,16 @@ void hunk_merger::delete_at(size_t ap)
   bool insert_here = inserts.find(apos) != inserts.end();
   bool delete_here = deletes.find(apos) != deletes.end();
 
-  if (!(insert_here || delete_here))
+  if (delete_here || !insert_here)
     {
-      apos++; lpos++;
-    }
-  
-  else if (delete_here)
-    {
-      if (idx(ancestor,ap) == idx(left,lpos))
-	{apos++; lpos++;}
-      
-      else
-	{
-	  L(F("delete conflict type 1 -- delete "
-	      "(apos = %d, lpos = %d, translated apos = %d)\n")
-	    % apos % lpos
-	    % idx(ancestor_to_leftpos_map,apos));
-	  L(F("trying to delete '%s', with '%s' conflicting\n") 
-	    % idx(ancestor,ap) % idx(left,lpos));
-	  throw conflict();
-	}
+      apos++; 
+      if (!delete_here)
+	lpos++;
     }
   
   else
     {
-      L(F("delete conflict type 2 -- insert "
+      L(F("delete conflict -- insert "
 	  "(apos = %d, lpos = %d, translated apos = %d)\n")
 	% apos % lpos
 	% idx(ancestor_to_leftpos_map,apos));
@@ -468,8 +454,6 @@ void hunk_merger::delete_at(size_t ap)
       throw conflict();
     }
 }
-
-
 
 void merge_hunks_via_offsets(vector<string> const & left,
 			     vector<string> const & ancestor,
@@ -509,12 +493,283 @@ void merge_hunks_via_offsets(vector<string> const & left,
   hunk_merger merger(left, ancestor, right, leftpos, deletes, inserts, merged);
   walk_hunk_consumer(lcs, anc_interned, right_interned, merger);
 }
+*/
+
+typedef enum { preserved = 0, deleted = 1, changed = 2 } edit_t;
+static char *etab[3] = 
+  {
+    "preserved",
+    "deleted",
+    "changed"
+  };
+
+struct extent
+{
+  extent(size_t p, size_t l, edit_t t) 
+    : pos(p), len(l), type(t)
+  {}
+  size_t pos;
+  size_t len;
+  edit_t type;
+};
+
+void calculate_extents(vector<long> const & a_b_edits,
+		       vector<long> const & b,
+		       vector<long> & prefix,
+		       vector<extent> & extents,
+		       vector<long> & suffix,
+		       size_t const a_len)
+{
+  extents.reserve(a_len * 2);
+
+  size_t a_pos = 0, b_pos = 0;
+
+  for (vector<long>::const_iterator i = a_b_edits.begin(); 
+       i != a_b_edits.end(); ++i)
+    {
+      if (*i < 0)
+	{
+	  // negative elements code the negation of the one-based index into A
+	  // of the element to be deleted
+	  size_t a_deleted = (-1 - *i);
+
+	  // fill positions out to the deletion point
+	  while (a_pos < a_deleted)
+	    {
+	      a_pos++;
+	      extents.push_back(extent(b_pos++, 1, preserved));
+	    }
+
+	  // skip the deleted line
+	  a_pos++;
+	  extents.push_back(extent(b_pos, 0, deleted));
+	}
+      else
+	{
+	  // positive elements code the one-based index into B of the element to
+	  // be inserted
+	  size_t b_inserted = (*i - 1);
+
+	  // fill positions out to the insertion point
+	  while (b_pos < b_inserted)
+	    {
+	      a_pos++;
+	      extents.push_back(extent(b_pos++, 1, preserved));
+	    }
+	  
+	  // record that there was an insertion, but a_pos did not move.
+	  if ((b_pos == 0 && extents.empty())
+	      || (b_pos == prefix.size()))
+	    {
+	      prefix.push_back(b.at(b_pos));
+	    }
+	  else if (a_len == a_pos)
+	    {
+	      suffix.push_back(b.at(b_pos));
+	    }
+	  else
+	    {
+	      // make the insertion
+	      extents.back().type = changed;
+	      extents.back().len++;
+	    }
+	  b_pos++;
+	}
+    }
+
+  while (extents.size() < a_len)
+    extents.push_back(extent(b_pos++, 1, preserved));
+}
+
+
+void merge_extents(vector<extent> const & a_b_map,
+		   vector<extent> const & a_c_map,
+		   vector<long> const & b,
+		   vector<long> const & c,
+		   interner<long> const & in,
+		   vector<long> & merged)
+{
+  I(a_b_map.size() == a_c_map.size());
+
+  vector<extent>::const_iterator i = a_b_map.begin();
+  vector<extent>::const_iterator j = a_c_map.begin();
+  merged.reserve(a_b_map.size() * 2);
+
+  for (; i != a_b_map.end(); ++i, ++j)
+    {
+
+      
+      //       L(F("trying to merge: [%s %d %d] vs. [%s %d %d] ")
+      // 	% etab[i->type] % i->pos % i->len 
+      // 	% etab[j->type] % j->pos % j->len);
+
+      // mutual, identical preserves / inserts / changes
+      if (((i->type == changed && j->type == changed)
+	   || (i->type == preserved && j->type == preserved))
+	  && i->len == j->len)
+	{
+	  for (size_t k = 0; k < i->len; ++k)
+	    {
+	      if (b.at(i->pos + k) != c.at(j->pos + k))
+		{
+		  L(F("conflicting edits: %s %d[%d] '%s' vs. %s %d[%d] '%s'\n")
+		    % etab[i->type] % i->pos % k % in.lookup(b.at(i->pos + k)) 
+		    % etab[j->type] % j->pos % k % in.lookup(c.at(j->pos + k)));
+		  throw conflict();
+		}
+	      merged.push_back(b.at(i->pos + k));
+	    }
+	}
+
+      // mutual or single-edge deletes
+      else if ((i->type == deleted && j->len == deleted)
+	       || (i->type == deleted && j->type == preserved)
+	       || (i->type == preserved && j->type == deleted))
+	{ 
+	  // do nothing
+	}
+
+      // single-edge insert / changes 
+      else if (i->type == changed && j->type == preserved)
+	for (size_t k = 0; k < i->len; ++k)
+	  merged.push_back(b.at(i->pos + k));
+      
+      else if (i->type == preserved && j->type == changed)
+	for (size_t k = 0; k < j->len; ++k)
+	  merged.push_back(c.at(j->pos + k));
+      
+      else
+	{
+	  L(F("conflicting edits: [%s %d %d] vs. [%s %d %d]\n")
+	    % etab[i->type] % i->pos % i->len 
+	    % etab[j->type] % j->pos % j->len);
+	  throw conflict();	  
+	}      
+
+      //       if (merged.empty())
+      // 	L(F(" --> EMPTY\n"));
+      //       else
+      // 	L(F(" --> [%d]: %s\n") % (merged.size() - 1) % in.lookup(merged.back()));
+    }
+}
+
+
+void merge_via_edit_scripts(vector<string> const & ancestor,
+			    vector<string> const & left,			    
+			    vector<string> const & right,
+			    vector<string> & merged)
+{
+  vector<long> anc_interned;  
+  vector<long> left_interned, right_interned;  
+  vector<long> left_edits, right_edits;  
+  vector<long> left_prefix, right_prefix;  
+  vector<long> left_suffix, right_suffix;  
+  vector<extent> left_extents, right_extents;
+  vector<long> merged_interned;
+  vector<long> lcs;
+  interner<long> in;
+
+  //   for (int i = 0; i < std::min(std::min(left.size(), right.size()), ancestor.size()); ++i)
+  //     {
+  //       std::cerr << "[" << i << "] " << left[i] << " " << ancestor[i] <<  " " << right[i] << endl;
+  //     }
+
+  anc_interned.reserve(ancestor.size());
+  for (vector<string>::const_iterator i = ancestor.begin();
+       i != ancestor.end(); ++i)
+    anc_interned.push_back(in.intern(*i));
+
+  left_interned.reserve(left.size());
+  for (vector<string>::const_iterator i = left.begin();
+       i != left.end(); ++i)
+    left_interned.push_back(in.intern(*i));
+
+  right_interned.reserve(right.size());
+  for (vector<string>::const_iterator i = right.begin();
+       i != right.end(); ++i)
+    right_interned.push_back(in.intern(*i));
+
+  L(F("calculating left edit script on %d -> %d lines\n")
+    % anc_interned.size() % left_interned.size());
+
+  edit_script(anc_interned.begin(), anc_interned.end(),
+	      left_interned.begin(), left_interned.end(),
+	      std::min(ancestor.size(), left.size()),
+	      left_edits, back_inserter(lcs));
+  
+  L(F("calculating right edit script on %d -> %d lines\n")
+    % anc_interned.size() % right_interned.size());
+
+  edit_script(anc_interned.begin(), anc_interned.end(),
+	      right_interned.begin(), right_interned.end(),
+	      std::min(ancestor.size(), right.size()),
+	      right_edits, back_inserter(lcs));
+
+  L(F("calculating left extents on %d edits\n") % left_edits.size());
+  calculate_extents(left_edits, left_interned, 
+		    left_prefix, left_extents, left_suffix, 
+		    anc_interned.size());
+
+  L(F("calculating right extents on %d edits\n") % right_edits.size());
+  calculate_extents(right_edits, right_interned, 
+		    right_prefix, right_extents, right_suffix, 
+		    anc_interned.size());
+
+  if ((!right_prefix.empty()) && (!left_prefix.empty()))
+    {
+      L(F("conflicting prefixes\n"));
+      throw conflict();
+    }
+
+  if ((!right_suffix.empty()) && (!left_suffix.empty()))
+    {
+      L(F("conflicting suffixes\n"));
+      throw conflict();
+    }
+
+  L(F("merging %d left, %d right extents\n") 
+    % left_extents.size() % right_extents.size());
+
+  copy(left_prefix.begin(), left_prefix.end(), back_inserter(merged_interned));
+  copy(right_prefix.begin(), right_prefix.end(), back_inserter(merged_interned));
+
+  merge_extents(left_extents, right_extents,
+		left_interned, right_interned, 
+		in, merged_interned);
+
+  copy(left_suffix.begin(), left_suffix.end(), back_inserter(merged_interned));
+  copy(right_suffix.begin(), right_suffix.end(), back_inserter(merged_interned));
+
+  merged.reserve(merged_interned.size());
+  for (vector<long>::const_iterator i = merged_interned.begin();
+       i != merged_interned.end(); ++i)
+    merged.push_back(in.lookup(*i));
+}
 
 
 bool merge3(vector<string> const & ancestor,
 	    vector<string> const & left,
 	    vector<string> const & right,
 	    vector<string> & merged)
+{
+  try 
+   { 
+      merge_via_edit_scripts(ancestor, left, right, merged);
+    }
+  catch(conflict & c)
+    {
+      L(F("conflict detected. no merge.\n"));
+      return false;
+    }
+  return true;
+}
+
+/*
+
+bool merge3_lcs(vector<string> const & ancestor,
+		vector<string> const & left,
+		vector<string> const & right,
+		vector<string> & merged)
 {
   try 
     {
@@ -549,6 +804,8 @@ bool merge3(vector<string> const & ancestor,
     }
   return true;
 }
+
+*/
 
 // this does a merge2 on manifests. it's not as likely to succeed as the
 // merge3 on manifests, but you do what you can..

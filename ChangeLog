@@ -1,14 +1,51 @@
-2003-11-29  Tom Tromey  <tromey@redhat.com>
+2003-12-05  graydon hoare  <graydon@pobox.com>
 
-	* rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.
-	Updated all callers.
+	* lcs.hh (edit_script): New entry point.
+	* diff_patch.cc: Rewrite merge in terms of edit scripts.
+	* network.cc (post_queued_blobs_to_network): Tidy up transient
+	failure message.
+	* randomfile.hh: Prohibit deletes on end of chunks.
+	* sanity.cc: EOL-terminate truncated long lines.
+
+2003-12-02  graydon hoare  <graydon@pobox.com>
+
+	* database.cc, database.hh (reverse_queue): Copy constructor.
+	* std_hooks.lua (merge3): Remove afile, not ancestor.
+	* monotone.cc: Remove debugging message.
+	* ui.cc (finish_ticking): Set last_write_was_a_tick to false.
+
+2003-12-01  graydon hoare  <graydon@pobox.com>
+
+	* app_state.hh, app_state.cc (set_signing_key): New fn, persist key.
+	* monotone.cc (cpp_main): Permit commuting the --help argument around.
+
+2003-11-28  Tom Tromey  <tromey@redhat.com>
 
 	* http_tasks.cc (check_received_bytes): Allow "-" as well.
 	* depot.cc (execute_post_query): Allow "-" as well.
 
-2003-11-16  Tom Tromey  <tromey@redhat.com>
+2003-11-30  graydon hoare  <graydon@pobox.com>
 
-	* missing: Removed generated file.
+	* network.cc (post_queued_blobs_to_network): Fail when posted_ok is false.
+	* database.cc (initialize): Fail when -journal file exists.
+	* keys.cc (make_signature): Nicer message when privkey decrypt fails.
+
+2003-11-29  Tom Tromey  <tromey@redhat.com>
+
+        * rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.
+        Updated all callers.
+
+        * http_tasks.cc (check_received_bytes): Allow "-" as well.
+        * depot.cc (execute_post_query): Allow "-" as well.
+
+2003-11-28  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc: Various speedups.
+	* cycle_detector.hh (edge_makes_cycle): Use visited set, too.
+	* database.hh, database.cc (get_head_candidates): New, complex query.
+	* keys.hh, keys.cc (check_signature): Cache verifiers.
+	* sqlite/os.c (sqliteOsRandomSeed): Harmless valgrind purification.
+	* tests/t_fork.at, tests/t_merge.at: Ignore stderr chatter on 'heads'.
 
 2003-11-27  graydon hoare  <graydon@pobox.com>
 
@@ -68,6 +105,10 @@
 	* network.cc, network.hh: Use new hook.
 	* http_tasks.cc: Teach about HTTP/1.1.
 	* cert.cc (bogus_cert_p): Fix UI ugly.
+
+2003-11-16  Tom Tromey  <tromey@redhat.com>
+
+        * missing: Removed generated file.
 
 2003-11-21  graydon hoare  <graydon@pobox.com>
 

@@ -58,6 +58,7 @@ struct cycle_detector
     stk.push(make_pair(edges.at(dst).begin(),
 		       edges.at(dst).end()));
 
+    std::set<T> visited;
     while (!stk.empty())
       {
 	bool pushed = false;
@@ -68,8 +69,10 @@ struct cycle_detector
 	      {
 		return true;
 	      }
-	    if (val < edges.size() && ! edges.at(val).empty())
+	    if (val < edges.size() && ! edges.at(val).empty() 
+		&& visited.find(val) == visited.end())
 	      {
+		visited.insert(val);
 		stk.push(make_pair(edges.at(val).begin(),
 				   edges.at(val).end()));
 		pushed = true;
