@@ -1978,7 +1978,7 @@ $ monotone commit 'interrupt implementation of src/apple.c'
 @end smallexample
 
 Abe does not see the fork yet; Abe has not actually seen @emph{any} of
-Beth's work yet, because he has not not synchronized with Jim. Since
+Beth's work yet, because he has not synchronized with Jim. Since
 he has new work to contribute, however, he now syncs:
 
 @smallexample

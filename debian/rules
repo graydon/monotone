@@ -36,6 +36,7 @@ build-stamp:  config.status
 
 	# Add here commands to compile the package.
 	$(MAKE)
+	$(MAKE) html
 	#/usr/bin/docbook-to-man debian/monotone.sgml > monotone.1
 
 	touch build-stamp
