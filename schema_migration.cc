@@ -27,9 +27,10 @@
 // of the migration.
 
 // you will notice a little bit of duplicated code between here and
-// transforms.cc / database.cc; this is to facilitate includion of
-// migration capability into the depot code, which does not link against
-// those objects.
+// transforms.cc / database.cc; this was originally to facilitate inclusion of
+// migration capability into the depot code, which did not link against those
+// objects.  the depot code is gone, but this isn't the sort of code that
+// should ever be touched after being written, so the duplication remains.
 
 using namespace std;
 
@@ -269,94 +270,6 @@ static bool move_table(sqlite *sql, char **errmsg,
   if (res != SQLITE_OK)
     return false;
     
-  return true;
-}
-
-
-static bool 
-migrate_depot_split_seqnumbers_into_groups(sqlite * sql, 
-                                           char ** errmsg)
-{
-
-  // this migration event handles the bug related to sequence numbers only
-  // being assigned on a per-depot, rather than per-group basis.  in the
-  // process it also corrects the false UNIQUE constraint on contents
-  // (which may occur multiple times in different groups).
-  //
-  // after this migration event, all major sequence numbers are bumped, so
-  // your clients will re-fetch (idempotently) the contents of your depot.
-
-  if (!move_table(sql, errmsg, 
-                  "packets", 
-                  "tmp", 
-                  "("
-                  "major      INTEGER,"
-                  "minor      INTEGER,"
-                  "groupname  TEXT NOT NULL,"
-                  "adler32    TEXT NOT NULL,"
-                  "contents   TEXT NOT NULL UNIQUE,"
-                  "unique(major, minor)"
-                  ")"))
-    return false;
-
-  int res = 
-    sqlite_exec(sql,
-                " UPDATE tmp SET major = \n"
-                "   (SELECT MAX(major) + 1 FROM tmp);\n",
-                NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  if (!move_table(sql, errmsg, 
-                  "tmp", 
-                  "packets", 
-                  "("
-                  "major      INTEGER,"
-                  "minor      INTEGER,"
-                  "groupname  TEXT NOT NULL,"
-                  "adler32    TEXT NOT NULL,"
-                  "contents   TEXT NOT NULL,"
-                  "unique(groupname, contents),"
-                  "unique(major, minor, groupname)"
-                  ")"))
-    return false;
-
-  return true;
-}
-
-static bool migrate_depot_make_seqnumbers_non_null(sqlite * sql, 
-                                                   char ** errmsg)
-{
-  // this just adds NOT NULL constraints to the INTEGER fields
-
-  if (!move_table(sql, errmsg, 
-                  "packets", 
-                  "tmp", 
-                  "("
-                  "major      INTEGER,"
-                  "minor      INTEGER,"
-                  "groupname  TEXT NOT NULL,"
-                  "adler32    TEXT NOT NULL,"
-                  "contents   TEXT NOT NULL,"
-                  "unique(groupname, contents),"
-                  "unique(major, minor, groupname)"
-                  ")"))
-    return false;
-
-  if (!move_table(sql, errmsg, 
-                  "tmp", 
-                  "packets", 
-                  "("
-                  "major      INTEGER NOT NULL,"
-                  "minor      INTEGER NOT NULL,"
-                  "groupname  TEXT NOT NULL,"
-                  "adler32    TEXT NOT NULL,"
-                  "contents   TEXT NOT NULL,"
-                  "unique(groupname, contents),"
-                  "unique(major, minor, groupname)"
-                  ")"))
-    return false;
-  
   return true;
 }
 
@@ -747,22 +660,6 @@ migrate_client_to_revisions(sqlite * sql,
   return true;
 }
 
-void 
-migrate_depot_schema(sqlite *sql)
-{  
-  migrator m;
-
-  m.add("da3d5798a6ae61bd6566e74d8888faebc413dd2f",
-        &migrate_depot_split_seqnumbers_into_groups);
-
-  m.add("b820522b75efb31c8afb1b6f114841354d87e22d",
-        &migrate_depot_make_seqnumbers_non_null);
-
-  m.migrate(sql, "b0f3041a8ded95006584340ef76bd70ae81bb376");
-  
-  if (sqlite_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
-    throw runtime_error("error vacuuming after migration");
-}
 
 void 
 migrate_monotone_schema(sqlite *sql)

@@ -1,5 +1,12 @@
 2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* schema_migration.cc: Update comment about depot code.
+	(migrate_depot_split_seqnumbers_into_groups):
+	(migrate_depot_make_seqnumbers_non_null):
+	(migrate_depot_schema): Remove; all are dead code.
+	
+2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* schema_migration.cc: Remove tabs.
 
 2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
