@@ -1298,11 +1298,11 @@ keys they received into their respective databases.
 
 Before they can begin work on the project, Jim needs to create a
 @i{working copy} --- a directory whose contents monotone will keep track
-of.  Most of the time, you work on existing projects, and create working
-copies with the @code{checkout} command, which you'll learn about later.
-Jim is starting a new project, though, so he does something a little bit
-different.  He uses the @code{monotone setup} command to create a new
-working copy.
+of.  Often, one works on projects that someone else has started, and
+creates working copies with the @code{checkout} command, which you'll
+learn about later.  Jim is starting a new project, though, so he does
+something a little bit different.  He uses the @code{monotone setup}
+command to create a new working copy.
 
 This command creates the named directory (if it doesn't already exist),
 and creates the @file{MT} directory within it.  The @file{MT} directory

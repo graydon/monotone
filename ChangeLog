@@ -1,5 +1,9 @@
 2005-03-21  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Starting a New Project): Tweak phrasing.
+
+2005-03-21  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (process_netsync_client_args): If user specifies
 	server/collection and there is no default, set the default.
 	* tests/t_netsync_set_defaults.at: New test.
