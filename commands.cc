@@ -1458,7 +1458,7 @@ CMD(heads, "tree", "", "show unmerged heads of branch")
 
   if (app.branch_name == "")
     {
-      cout << "please specify a branch, with --branch=<branchname>" << endl;
+      cout << "please specify a branch, with --branch=BRANCH" << endl;
       return;
     }
 
@@ -1489,7 +1489,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 
   if (app.branch_name == "")
     {
-      cout << "please specify a branch, with --branch=<branchname>" << endl;
+      cout << "please specify a branch, with --branch=BRANCH" << endl;
       return;
     }
 

@@ -1,5 +1,8 @@
 2003-10-20  Tom Tromey  <tromey@redhat.com>
 
+	* commands.cc (merge): Use all caps for metasyntactic variable.
+	(heads): Likewise.
+
 	* network.cc (post_queued_blobs_to_network): Do nothing if no
 	packets to post.
 
