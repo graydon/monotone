@@ -49,8 +49,9 @@ struct string_closure :
 
 string unescape_string(char const * ch, char const * end) 
 {
-  string str;
+  static string str;
   str.reserve(static_cast<int>(end - ch));
+  str.clear();
   if (*ch != '@')
     throw oops("parser reported string without leading @");
   while(++ch < end)
@@ -64,7 +65,7 @@ string unescape_string(char const * ch, char const * end)
 	}
       str += *ch;
     }
-  return str;
+  return string(str);
 }
 
 struct rcsfile_grammar : 

@@ -1,3 +1,9 @@
+2003-10-08  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc: Attach aux certs to child, not parent.
+	* manifest.cc: Speed up some calculations.
+	* keys.cc: Optionally cache decoded keys.
+
 2003-10-07  graydon hoare  <graydon@pobox.com>
 
 	* manifest.hh, manifest.cc, rcs_import.cc: Write manifests w/o

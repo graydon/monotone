@@ -159,18 +159,15 @@ void piece_store::build_string(vector<piece> const & pieces,
 			       string & out)
 {
   out.clear();
-  out.reserve(pieces.size() * 30);
+  out.reserve(pieces.size() * 60);
   for(vector<piece>::const_iterator i = pieces.begin();
       i != pieces.end(); ++i)
     out.append(texts.at(i->string_id)->text, i->pos, i->len);
-  L(F("RCS import rebuilt %d byte string fragment from %d lines\n") 
-    % out.size() % pieces.size());
 }
 
 void piece_store::index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
 				  vector<piece> & pieces)
 {
-  L(F("RCS import indexing %d byte string\n") % dt->text.size());
   pieces.clear();
   pieces.reserve(dt->text.size() / 30);  
   texts.push_back(dt);
@@ -190,8 +187,6 @@ void piece_store::index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
       end = dt->text.size();
       pieces.push_back(piece(begin, end - begin, id));
     }
-  L(F("RCS import indexed %d byte string fragment with %d lines\n") 
-    % dt->text.size() % pieces.size());
 }
 
 
@@ -203,15 +198,15 @@ process_one_hunk(vector< piece > const & source,
 {
   string directive = **i;
   assert(directive.size() > 1);
-  istringstream iss(directive.substr(1));
   ++i;
 
+  char code;
   int pos, len;
-  iss >> pos >> len;
+  sscanf(directive.c_str(), " %c %d %d", &code, &pos, &len);
 
   try 
     {
-      if (directive[0] == 'a')
+      if (code == 'a')
 	{
 	  // 'ax y' means "copy from source to dest until cursor == x, then
 	  // copy y lines from delta, leaving cursor where it is"
@@ -221,7 +216,7 @@ process_one_hunk(vector< piece > const & source,
 	  while (len--)
 	    dest.push_back(*i++);
 	}
-      else if (directive[0] == 'd')
+      else if (code == 'd')
 	{      
 	  // 'dx y' means "copy from source to dest until cursor == x-1,
 	  // then increment cursor by y, ignoring those y lines"
@@ -437,6 +432,8 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
     global_pieces.index_deltatext(r.deltatexts.find(r.admin.head)->second, head_lines);
     process_branch(r.admin.head, head_lines, dat, id, r, db, cvs);
   }
+
+  ui.set_tick_trailer("");
 }
 
 
@@ -938,7 +935,7 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 	build_parent_state(i->second, parent_map, cvs, app);
 	calculate_manifest_map_ident(parent_map, parent_id);
 	store_trunk_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
-	store_auxilliary_certs(i->first, parent_id, app, cvs);
+	store_auxilliary_certs(i->first, child_id, app, cvs);
 	if (i->second->substates.size() > 0)
 	  import_substates(n_edges, n_branches, i->second, parent_map, cvs, app);
 	child_map = parent_map;

@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include "cryptopp/arc4.h"
 #include "cryptopp/base64.h"
 #include "cryptopp/hex.h"
@@ -30,6 +32,8 @@
 
 using namespace CryptoPP;
 using namespace std;
+
+using boost::shared_ptr;
 
 static void do_arc4(SecByteBlock & phrase,
 		    SecByteBlock & payload)
@@ -203,20 +207,41 @@ void make_signature(lua_hooks & lua,           // to hook for phrase
 #endif
     }  
   AutoSeededRandomPool rng(request_blocking_rng);
-  
-  L(F("base64-decoding %d-byte private key\n") % priv().size());
-  decode_base64(priv, decoded_key);
-  decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
-		       decoded_key().size());
-  read_passphrase(lua, id, phrase);
-  do_arc4(phrase, decrypted_key);
-  
-  L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
-  StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
-  RSASSA_PKCS1v15_SHA_Signer signer(keysource);
+
+  // we permit the user to relax security here, by caching a decrypted key
+  // (if they permit it) through the life of a program run. this helps when
+  // you're making a half-dozen certs during a commit or merge or
+  // something.
+
+  static std::map<rsa_keypair_id, shared_ptr<RSASSA_PKCS1v15_SHA_Signer> > signers;
+  bool persist_phrase = (!signers.empty()) || lua.hook_persist_phrase_ok();;
+
+  shared_ptr<RSASSA_PKCS1v15_SHA_Signer> signer;
+  if (persist_phrase 
+      && signers.find(id) != signers.end())
+    signer = signers[id];
+
+  else
+    {
+      L(F("base64-decoding %d-byte private key\n") % priv().size());
+      decode_base64(priv, decoded_key);
+      decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
+			   decoded_key().size());
+      read_passphrase(lua, id, phrase);
+      do_arc4(phrase, decrypted_key);
+      
+      L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
+      StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
+      signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
+	(new RSASSA_PKCS1v15_SHA_Signer(keysource));
+
+      if (persist_phrase)
+	signers.insert(make_pair(id,signer));
+    }
+
   StringSource tmp(tosign, true, 
 		   new SignerFilter
-		   (rng, signer, 
+		   (rng, *signer, 
 		    new StringSink(sig_string)));  
   
   L(F("produced %d-byte signature\n") % sig_string.size());
