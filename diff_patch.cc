@@ -9,6 +9,7 @@
 #include <string>
 #include <iostream>
 
+#include "config.h"
 #include "diff_patch.hh"
 #include "interner.hh"
 #include "lcs.hh"
@@ -213,7 +214,7 @@ void normalize_extents(vector<extent> & a_b_map,
             // better to have a bad reputation and good software than vice-versa.
             W(F("You've found files that trigger a strange edge-case of the merge logic.\n"));
             W(F("We think it will work, but please tell us; and, if possible, send us the files\n"));
-            W(F("for inclusion in our test suite (monotone-devel@nongnu.org).  Thanks!\n"));
+            W(F("for inclusion in our test suite (" PACKAGE_BUGREPORT ").  Thanks!\n"));
 
             L(F("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
               % a_b_map.at(j-1).pos
@@ -1041,7 +1042,7 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
           from_file.push_back(string("  ") + a[a_begin + a_len]);
           to_file.push_back(string("  ") + a[a_begin + a_len]);
           a_len++;
-          b_len++;	  
+          b_len++;        
         }
     }
 }

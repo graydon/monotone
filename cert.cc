@@ -327,9 +327,9 @@ priv_key_exists(app_state & app, rsa_keypair_id const & id)
   return false;
 }
 
-/* Loads a private key for a given key id, from either a lua hook
- * or the database. This will bomb out if the same keyid exists
- * in both with differing contents. */
+// Loads a private key for a given key id, from either a lua hook
+// or the database. This will bomb out if the same keyid exists
+// in both with differing contents.
 void
 load_priv_key(app_state & app,
               rsa_keypair_id const & id,
@@ -360,11 +360,16 @@ load_priv_key(app_state & app,
       N(havedb || havelua,
         F("no private key '%s' found in database or get_priv_key hook") % id);
 
-      /* Pick either, but make sure they don't both exist but differ */
       if (havelua)
         {
-          N(!havedb || luakey == dbkey,
-              F("mismatch between private key '%s' in database and get_priv_key hook") % id);
+          if (havedb)
+            {
+              // We really don't want the database key and the rcfile key
+              // to differ.
+              N(remove_ws(dbkey()) == remove_ws(luakey()),
+                  F("mismatch between private key '%s' in database"
+                    " and get_priv_key hook") % id);
+            }
           priv = luakey;
         }
       else if (havedb)

@@ -5,6 +5,69 @@
 	suffixes
 	* botan/{gzip.cpp}: fix type for std::max() comparison
 
+2005-01-27  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Mention Georg.
+	* change_set.cc: Null out names which are in null directories.
+	* commands.cc (reindex): Remove COLLECTION argument.
+	* database.{cc,hh} (get_revision_certs): 
+	Add brute force "load all certs" method.
+	* merkle_tree.{cc,hh}: Modify to use memory rather than disk.
+	* netsync.{cc,hh}: Likewise.
+	* packet.hh (manifest_edge_analyzer): Kill dead code.
+
+2005-01-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_rebuild.at: New test.
+	* testsuite.at: Add it.
+
+2005-01-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_checkout_noop_on_fail.at: Clarify description and XFAIL.
+
+	* tests/t_approval_semantics.at: New TODO.
+	* tests/t_monotone_agent.at: New TODO.
+	* testsuite.at: Add them.
+
+2005-01-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_checkout_noop_on_fail.at: New test.
+	* testsuite.at: Add it.
+	(RAW_MONOTONE): Add $PREEXECUTE to definition.
+
+2005-01-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (extend_renumbering_from_path_identities): Add
+	invariant.
+	(extend_renumbering_via_added_files): Likewise.
+
+	* constants.hh (maxbytes, postsz): Remove dead constants.
+	(verify_depth): New constant.
+	* constants.cc: Likewise.
+	* revision.hh (check_sane_history): New function.
+	* revision.cc (check_sane_history): Likewise.
+	* database.cc (put_revision): Sanity check revision and revision
+	history before storing it.
+	This breaks cvs import.  Why?
+
+	* update.cc (find_deepest_acceptable_descendent): Remove.
+	(acceptable_descendent, calculate_update_set): New functions.
+	(pick_update_candidates): Use 'calculate_update_set'.
+	* tests/t_update_2.at: Un-XFAIL.
+	* tests/t_ambig_update.at: Un-XFAIL.
+	
+	* tests/t_no_rename_overwrite.at: New test.
+	* tests/t_cdiff.at: New test placeholder.
+	* testsuite.at: Add them.
+	(MONOTONE): Prefix command line with $PREEXECUTE to e.g. support
+	running under Valgrind.
+2005-01-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* cert.cc: ignore whitespace when comparing private keys
+	from the database and with the lua hook
+	* tests/t_lua_privkey.at: new test
+	* testsuite.at: run it
+
 2005-01-23  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (restrict_rename_set): include renames if either
@@ -32,6 +95,15 @@
 
 	* tests/t_revert_dirs.at: New test.
 	* testsuite.at: Add it.
+
+2005-01-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* configure.ac (AC_INIT): Set bug-reporting address to list
+	address, rather than Graydon's personal email.
+	* diff_patch.cc (normalize_extents): Use it.
+	* ui.cc (fatal): Likewise.
+
+	* tests/t_vcheck.at: New priority "todo", tweak descriptive text.
 
 2005-01-22  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -398,7 +470,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

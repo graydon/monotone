@@ -1224,6 +1224,8 @@ database::put_revision(revision_id const & new_id,
   I(!revision_exists(new_id));
   revision_data d;
 
+  rev.check_sane();
+
   write_revision_set(rev, d);
   revision_id tmp;
   calculate_ident(d, tmp);
@@ -1242,6 +1244,8 @@ database::put_revision(revision_id const & new_id,
               edge_old_revision(e).inner()().c_str(),
               new_id.inner()().c_str());
     }
+
+  check_sane_history(new_id, constants::verify_depth, *this);
 
   guard.commit();
 }
@@ -1489,7 +1493,7 @@ database::install_functions(app_state * app)
   // register any functions we're going to use
   I(sqlite3_create_function(sql(), "unbase64", -1, 
                            SQLITE_UTF8, NULL,
-			   &sqlite3_unbase64_fn, 
+                           &sqlite3_unbase64_fn, 
                            NULL, NULL) == 0);
 }
 
@@ -1621,6 +1625,20 @@ void
 database::put_revision_cert(revision<cert> const & cert)
 { 
   put_cert(cert.inner(), "revision_certs"); 
+}
+
+void 
+database::get_revision_certs(vector< revision<cert> > & ts)
+{
+  results res;
+  vector<cert> certs;
+  fetch(res, 5, any_rows, 
+        "SELECT id, name, value, keypair, signature "
+        "FROM 'revision_certs'");
+  results_to_certs(res, certs);
+
+  ts.clear();
+  copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
 void 

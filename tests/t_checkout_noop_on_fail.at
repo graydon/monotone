@@ -1,0 +1,17 @@
+AT_SETUP([failed checkout is a no-op])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+# If a checkout fails, no target directory should be created, and if
+# the checkout directory already exists, no MT/ directory should be
+# created.
+
+AT_CHECK(MONOTONE checkout bogus-id outdir, [1], [ignore], [ignore])
+AT_CHECK(test ! -e outdir)
+AT_CHECK(mkdir outdir)
+AT_CHECK( (cd outdir && MONOTONE checkout bogus-id .), [1], [ignore], [ignore])
+AT_CHECK(test ! -e outdir/MT)
+
+AT_CLEANUP

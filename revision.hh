@@ -121,6 +121,11 @@ void
 write_revision_set(revision_set const & rev,
                    revision_data & dat);
 
+// sanity checking
+
+void
+check_sane_history(revision_id const & child_id, int depth, database & db);
+
 // graph walking
 
 bool 

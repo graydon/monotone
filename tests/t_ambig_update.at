@@ -1,45 +1,8 @@
-AT_SETUP([(normal) update with multiple candidates])
+AT_SETUP([update with multiple candidates])
 MONOTONE_SETUP
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
-# as described by njs on irc, the solution to this should be close to
-# the following
-#
-# 1) set "candidates" to {}, and set "queue" to that subset of the
-# heads that are descendents of the current revision
-#
-#
-# 2) while queue is non-empty, pull out a revision, and do
-#
-# 2.1) if the revision is not a descendent of the current revision,
-# discard and go back around the loop
-#
-# 2.2) if the revision is an acceptable update target according to the
-# hook, which checks testresult certs or whatever, then place the
-# revision in "candidates" and go back around the loop
-#
-# 2.3) else, insert all parents of the revision into the queue, and go
-# back around the loop 
-#
-# oh, I guess it might be good to have a check that the revision !=
-# the current revision, in step 2.1
-#
-# 3) run erase_ancestors(candidates)
-#
-# 4) now "candidates" contains exactly the candidate set; if its size
-# is zero print "already up to date", if its size is 1 then update, if
-# its size is >1 then print "multiple update candidates" and give the
-# list for the user to pick from.
-
-##### ACTUALLY.... no.  I was wrong.
-# The above algorithm is over-complicated; and, the check in (2.1) is
-# too expensive.  Instead, simply sweep over the entire descendent set
-# of the current revision, and for each revision add it to the
-# candidate set if it is in the branch and passes the hook check.
-# Then, run erase_ancestors(candidates).
-#    - njs
+# Make sure that when there are multiple plausible heads, update
+# fails, and prints some informative message listing the heads.
 
 ADD_FILE(testfile, [foo
 ])

@@ -321,6 +321,8 @@ public:
 
   void put_revision_cert(revision<cert> const & cert);
 
+  void get_revision_certs(std::vector< revision<cert> > & certs);
+
   void get_revision_certs(cert_name const & name, 
                          std::vector< revision<cert> > & certs);
 

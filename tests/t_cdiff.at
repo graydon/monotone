@@ -1,0 +1,15 @@
+AT_SETUP([(minor) context diff])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+
+# There is a new cdiff command, but  not tests for it at all.  We need
+# at least one test for it, probably more, to make sure it gives valid
+# output in all cases.
+
+AT_CHECK(false)
+
+
+AT_CLEANUP

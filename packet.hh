@@ -103,14 +103,6 @@ struct packet_writer : public packet_consumer
 
 // this writer injects packets it receives to the database.
 
-struct manifest_edge_analyzer
-{
-  virtual void analyze_manifest_edge(manifest_map const & mm_old, 
-                                     manifest_map const & mm_new)
-  {
-  }
-};
-
 struct packet_db_writer : public packet_consumer
 {
   struct impl;
