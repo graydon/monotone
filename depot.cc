@@ -24,6 +24,7 @@
 #include "adler32.hh"
 #include "cleanup.hh"
 #include "constants.hh"
+#include "schema_migration.hh"
 
 #include "cryptopp/base64.h"
 #include "cryptopp/hex.h"
@@ -36,31 +37,32 @@
 using namespace std;
 using namespace boost;
 
-// depot schema is small enough to just include it inline here.
+// defined in depot_schema.sql, defines symbol depot_schema_constant, 
+// converted to header:
+#include "depot_schema.h"
 
-char const * depot_schema =
-" CREATE TABLE packets (\n"
-"         major      INTEGER,\n"
-"         minor      INTEGER,\n"
-"         groupname  TEXT NOT NULL,\n"
-"         adler32    TEXT NOT NULL,\n"
-"         contents   TEXT NOT NULL,\n"
-"         unique(groupname, contents),\n"
-"         unique(major, minor, groupname)\n"
-"         );\n"
-" \n"
-" CREATE TABLE users (\n"
-"         name     TEXT PRIMARY KEY,\n"
-"         pubkey   TEXT NOT NULL\n"
-"         );\n"; 
-
-
+void check_schema(sqlite *sql)
+{
+  // nb. update this whenever the schema changes
+  string id;
+  string want("b0f3041a8ded95006584340ef76bd70ae81bb376");
+  calculate_schema_id(sql, id);
+  if (id != want)
+    throw runtime_error("database schemas do not match: wanted " + want
+			+ ", got " + id 
+			+ ". try migrating database");
+}
+  
 template<typename T>
 int read_value_cb (void * vp, 
 		   int ncols, 
 		   char ** values,
 		   char ** colnames)
 {
+  // nb. this function is designed to *not* kill query processing when
+  // there's an error, but to return 0 and let the query just live with
+  // default values.
+
   if (ncols != 1)
     return 0;
 
@@ -82,6 +84,7 @@ int read_value_cb (void * vp,
       // it is better for us to just not modify the value.
       // sqlite gets a bit snickery if you throw exceptions
       // up its call stack.
+      return 0;
     }
   return 0;
 }
@@ -91,7 +94,7 @@ template int read_value_cb<string>(void *,int,char **, char**);
 template int read_value_cb<bool>(void *,int,char **, char**);
 
 
-// ----- PROCESSING 'SINCE' QUERIES ----- 
+// ----- PROCESSING 'STATUS' QUERIES ----- 
 
 void execute_status_query (sqlite *sql)
 {
@@ -151,10 +154,12 @@ void execute_since_query (unsigned long maj,
   int res = sqlite_exec_printf(sql, 
 			       "SELECT major, minor, contents "
 			       "FROM packets "
-			       "WHERE major >= %lu AND minor > %lu "
+			       "WHERE (major > %lu OR "
+			       "(major = %lu AND minor > %lu)) "
+			       "AND groupname = '%q' "
 			       "ORDER BY major, minor",
 			       &write_since_results, NULL, NULL,
-			       maj, min);
+			       maj, maj, min, group.c_str());
   
   if (res != SQLITE_OK)
     throw runtime_error("sqlite returned error");
@@ -451,10 +456,44 @@ void run_cmdline(vector<string> const & args)
 	throw runtime_error("cannot open depot.db");
 
       char *errmsg = NULL;
-      if (sqlite_exec(sql(), depot_schema, NULL, NULL, &errmsg) != SQLITE_OK)
+      if (sqlite_exec(sql(), depot_schema_constant, NULL, NULL, &errmsg) != SQLITE_OK)
 	throw runtime_error("database initialization failed: " + string(errmsg));
       return;
     }
+
+  else if (args[0] == "migratedb")
+    {
+      if (args.size() != 1)
+	throw runtime_error("bad extra args to migratedb");
+      
+      cleanup_ptr<sqlite *, void> 
+	sql(sqlite_open("depot.db", 0755, NULL), &sqlite_close);
+
+      if (sql() == NULL)
+	throw runtime_error("cannot open depot.db");
+
+      migrate_depot_schema (sql());
+
+      return;
+    }
+
+  else if (args[0] == "dbversion")
+    {
+      if (args.size() != 1)
+	throw runtime_error("bad extra args to dbversion");
+      
+      cleanup_ptr<sqlite *, void> 
+	sql(sqlite_open("depot.db", 0755, NULL), &sqlite_close);
+
+      if (sql() == NULL)
+	throw runtime_error("cannot open depot.db");
+
+      string id;
+      calculate_schema_id(sql(), id);
+      cerr << "database schema version: " << id << endl;
+      return;
+    }
+
 
   else if (args[0] == "adduser")
     {
@@ -463,6 +502,7 @@ void run_cmdline(vector<string> const & args)
       
       cleanup_ptr<sqlite *, void> 
 	sql(sqlite_open("depot.db", 0755, NULL), &sqlite_close);
+      check_schema(sql());
 
       if (sql() == NULL)
 	throw runtime_error("cannot open depot.db");
@@ -483,6 +523,7 @@ void run_cmdline(vector<string> const & args)
       
       cleanup_ptr<sqlite *, void> 
 	sql(sqlite_open("depot.db", 0755, NULL), &sqlite_close);
+      check_schema(sql());
 
       if (sql() == NULL)
 	throw runtime_error("cannot open depot.db");
@@ -501,17 +542,25 @@ void run_cmdline(vector<string> const & args)
 int main(int argc, char ** argv)
 {
 
+      
+  if (argc > 1 && getenv("GATEWAY_INTERFACE") == NULL)
+    {
+      ++argv; --argc;
+      try 
+	{
+	  run_cmdline(vector<string>(argv, argv+argc));
+	}
+      catch (runtime_error & e)
+	{
+	  cerr << "runtime error: " << e.what() << endl;
+	  exit(1);
+	}
+      exit(0);
+    }
+  
   try 
     {
       
-      if (argc > 1 && getenv("GATEWAY_INTERFACE") == NULL)
-	{
-	  ++argv; --argc;
-	  run_cmdline(vector<string>(argv, argv+argc));
-	  exit(0);
-	}
-  
-
       map<string,string> keys;
       decode_query(keys);
 
@@ -521,7 +570,8 @@ int main(int argc, char ** argv)
 	{
 	  cleanup_ptr<sqlite *, void> 
 	    sql(sqlite_open("depot.db", 0755, NULL), &sqlite_close);
-      
+	  check_schema(sql());
+
 	  if (sql() == NULL)
 	    throw runtime_error("cannot open depot.db");
 	  execute_status_query (sql());
@@ -532,7 +582,8 @@ int main(int argc, char ** argv)
 	{
 	  cleanup_ptr<sqlite *, void> 
 	    sql(sqlite_open("depot.db", 0755, NULL), &sqlite_close);
-      
+	  check_schema(sql());
+
 	  if (sql() == NULL)
 	    throw runtime_error("cannot open depot.db");
 
@@ -547,7 +598,8 @@ int main(int argc, char ** argv)
 	{
 	  cleanup_ptr<sqlite *, void> 
 	    sql(sqlite_open("depot.db", 0755, NULL), &sqlite_close);
-      
+	  check_schema(sql());
+
 	  if (sql() == NULL)
 	    throw runtime_error("cannot open depot.db");
 

@@ -916,10 +916,10 @@ The first step is to create a new database.  Monotone requires this as
 an explicit step to prevent spurious creation of databases when an
 invalid @option{--db} option is given.
 
-This is easily done using the special @code{monotone initdb} command:
+This is easily done using the special @code{monotone db init} command:
 
 @example
-$ monotone initdb --db=$HOME/test.db
+$ monotone db init --db=$HOME/test.db
 @end example
 
 
@@ -1934,8 +1934,8 @@ merely removed from the manifest.
 Update working copy, relative to sorting keys.
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{initdb}
-Initialize a new database.
+@item @b{db} @i{(init|dump|load|info|version|migrate)}
+Manipulate database state.
 @comment TROFF INPUT: .SH DESCRIPTION
 
 @end table

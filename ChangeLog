@@ -1,3 +1,12 @@
+2003-09-22  graydon hoare  <graydon@pobox.com>
+
+	* depot_schema.sql, schema_migration.cc, 
+	schema_migration.hh: Add.
+	* database.cc, depot.cc: Implement schema migration.
+	* database.cc, commands.cc: Change to db ... cmd.
+	* monotone.texi, monotone.1: Document command change.
+	* depot.cc: Fix various query bugs.
+
 2003-09-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* depot.cc (depot_schema): Remove unique constraint on (contents),

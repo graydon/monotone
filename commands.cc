@@ -761,7 +761,7 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
 }
 
 
-CMD(tag, "certificate", "ID TAGNAME", 
+CMD(tag, "certificate", "<id> <tagname>", 
     "put a symbolic tag cert on a manifest version")
 {
   if (args.size() != 2)
@@ -819,7 +819,7 @@ CMD(disapprove, "certificate", "(file|manifest) ID",
 }
 
 
-CMD(comment, "certificate", "(file|manifest) ID [COMMENT]", 
+CMD(comment, "certificate", "(file|manifest) <id> [comment]", 
     "comment on a file or manifest version")
 {
   if (args.size() != 2 && args.size() != 3)
@@ -853,7 +853,7 @@ CMD(comment, "certificate", "(file|manifest) ID [COMMENT]",
 
 
 
-CMD(add, "working copy", "FILE...", "add files to working copy")
+CMD(add, "working copy", "<pathname> [...]", "add files to working copy")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -1292,7 +1292,7 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 }
 
 
-CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to stdout")
+CMD(cat, "tree", "(file|manifest) <id>", "write file or manifest from database to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1611,7 +1611,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
 }
 
 
-CMD(complete, "informative", "(manifest|file) PARTIAL-ID", "complete partial id")
+CMD(complete, "informative", "(manifest|file) <partial-id>", "complete partial id")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1805,7 +1805,7 @@ CMD(list, "informative", "certs (file|manifest) ID\nkeys [PATTERN]\nbranches", "
 ALIAS(ls, list, "informative",  "certs (file|manifest) ID\nkeys [PATTERN]\nbranches", "show certs, keys, or branches")
 
 
-CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
+CMD(mdelta, "packet i/o", "<oldid> <newid>", "write manifest delta packet to stdout")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1871,7 +1871,7 @@ CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
 }
 
 
-CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
+CMD(fdata, "packet i/o", "<id>", "write file data packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -2086,11 +2086,24 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
 }
 
 
-CMD(initdb, "database", "", "create a new database")
+CMD(db, "database", "(init|dump|load|info|version|migrate)", "manipulate database state")
 {
-  if (args.size() != 0)
+  if (args.size() != 1)
     throw usage(name);
-  app.db.initialize();
+  if (args[0] == "init")
+    app.db.initialize();
+  else if (args[0] == "dump")
+    app.db.dump(cout);
+  else if (args[0] == "load")
+    app.db.load(cin);
+  else if (args[0] == "info")
+    app.db.info(cout);
+  else if (args[0] == "version")
+    app.db.version(cout);
+  else if (args[0] == "migrate")
+    app.db.migrate();
+  else
+    throw usage(name);
 }
 
 
