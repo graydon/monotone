@@ -1352,6 +1352,24 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
   guard.commit();
 }
 
+static void 
+ls_tags(string name, app_state & app, vector<utf8> const & args)
+{
+  transaction_guard guard(app.db);
+  vector< revision<cert> > certs;
+  app.db.get_revision_certs(tag_cert_name, certs);
+
+  for (size_t i = 0; i < certs.size(); ++i)
+    {
+      cert_value name;
+      decode_base64(idx(certs, i).inner().value, name);
+      cout << name << " " 
+           << idx(certs,i).inner().ident  << " "
+           << idx(certs,i).inner().key  << endl;
+    }
+
+  guard.commit();
+}
 
 struct unknown_itemizer : public tree_walker
 {
@@ -1432,6 +1450,7 @@ CMD(list, "informative",
     "certs ID\n"
     "keys [PATTERN]\n"
     "branches\n"
+    "tags\n"
     "unknown\n"
     "ignored\n"
     "missing", 
@@ -1449,6 +1468,8 @@ CMD(list, "informative",
     ls_keys(name, app, removed);
   else if (idx(args, 0)() == "branches")
     ls_branches(name, app, removed);
+  else if (idx(args, 0)() == "tags")
+    ls_tags(name, app, removed);
   else if (idx(args, 0)() == "unknown")
     ls_unknown(app, false);
   else if (idx(args, 0)() == "ignored")
@@ -1463,6 +1484,7 @@ ALIAS(ls, list, "informative",
       "certs ID\n"
       "keys [PATTERN]\n"
       "branches\n"
+      "tags\n"
       "unknown\n"
       "ignored\n"
       "missing", "show certs, keys, or branches")

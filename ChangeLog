@@ -1,3 +1,12 @@
+2004-11-18  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (list tags): new command.
+	* monotone.1: update.
+	* monotone.texi: update.
+	* std_hooks.lua: remove unused get_problem_solution hook.
+	* test/t_tags.at: new test.
+	* testsuite.at: call it.
+
 2004-11-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Committing Work): Remove mistakenly added

@@ -4652,6 +4652,11 @@ List keys matching glob, or list all keys if no glob given.
 List all branches.
 @comment TROFF INPUT: .TP
 
+@item @b{list tags}
+@itemx @b{ls tags}
+List all tags.
+@comment TROFF INPUT: .TP
+
 @item @b{list unknown}
 @itemx @b{ls unknown}
 List files in working directory, but not in revision's manifest or

@@ -327,27 +327,3 @@ function expand_selector(str)
 
    return nil
 end
-
--- prompt the user for some guidance on how to solve a given
--- problem within a given predicament
-
-function get_problem_solution(problem, solutions)
-   while true
-   do
-      io.write(string.format("Problem: %s\n", problem))
-      io.write(string.format("Solution options:\n"))
-      
-      for k,v in pairs(solutions)
-      do
-	 io.write(string.format("  [%s]: %s\n", k, v))
-      end
-      io.write("select: ")
-      choice = io.read()
-      if (solutions[choice] ~= nil) then
-	 io.write(string.format("selected '%s' as solution to '%s'\n", solutions[choice], problem))
-	 return choice;
-      else
-	 io.write(string.format("selected choice '%s' is not an option\n", choice))
-      end
-   end
-end
