@@ -1,10 +1,6 @@
 AT_SETUP([automate toposort])
 MONOTONE_SETUP
 
-AT_CHECK(MONOTONE automate toposort c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
-
-AT_CHECK(MONOTONE automate toposort "", [1], [ignore], [ignore])
-
 #   A
 #  / \
 # B   C
@@ -50,6 +46,12 @@ AT_CHECK(test $REV_F != $REV_D)
 AT_CHECK(test $REV_F != $REV_E)
 
 # Now do some checks
+
+AT_CHECK(MONOTONE automate toposort c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate toposort "", [1], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate toposort, [], [], [ignore])
 
 CHECK_SAME_STDOUT(MONOTONE automate toposort $REV_A, echo $REV_A)
 CHECK_SAME_STDOUT(MONOTONE automate toposort $REV_B, echo $REV_B)

@@ -3772,7 +3772,7 @@ CMD(automate, "automation",
     "heads BRANCH\n"
     "descendents REV1 [REV2 [REV3 [...]]]\n"
     "erase_ancestors REV1 [REV2 [REV3 [...]]]\n"
-    "toposort REV1 [REV2 [REV3 [...]]]\n"
+    "toposort [REV1 [REV2 [REV3 [...]]]]\n"
     "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
     "leaves",
     "automation interface")

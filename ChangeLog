@@ -1,3 +1,11 @@
+2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_toposort): Accept zero arguments, and in
+	such case print nothing.  (Important for scripting.)
+	* commands.cc (automate):
+	* monotone.texi (Automation):
+	* tests/t_automate_toposort.at: Update accordingly.
+
 2005-03-30  Richard Levitte  <richard@levitte.org>
 
 	* contrib/Notify.pl: A new Perl hack to send change logs by

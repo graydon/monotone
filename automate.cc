@@ -142,7 +142,7 @@ automate_erase_ancestors(std::vector<utf8> args,
 
 // Name: toposort
 // Arguments:
-//   1 or more: revision ids
+//   0 or more: revision ids
 // Added in: 0.1
 // Purpose: Prints all arguments, topologically sorted.  I.e., if A is an
 //   ancestor of B, then A will appear before B in the output list.
@@ -156,9 +156,6 @@ automate_toposort(std::vector<utf8> args,
                   app_state & app,
                   std::ostream & output)
 {
-  if (args.size() == 0)
-    throw usage(help_name);
-
   std::set<revision_id> revs;
   for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {

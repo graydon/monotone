@@ -4176,7 +4176,7 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
-@item monotone automate toposort @var{rev1} [@var{rev2} [...]]
+@item monotone automate toposort [@var{rev1} [@var{rev2} [...]]]
 
 @table @strong
 @item Arguments:
@@ -4193,7 +4193,8 @@ Prints all arguments, topologically sorted.  I.e., if @var{rev1} is an
 ancestor of @var{rev2}, then @var{rev1} will appear before @var{rev2} in
 the output; if @var{rev2} is an ancestor of @var{rev1}, then @var{rev2}
 will appear before @var{rev1} in the output; and if neither is an
-ancestor of the other, then they may appear in either order.
+ancestor of the other, then they may appear in either order.  If there
+are no arguments, prints nothing.
 
 @item Sample output:
 
