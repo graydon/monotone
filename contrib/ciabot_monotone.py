@@ -29,18 +29,19 @@ class config:
     def project_for_branch(self, branchname):
         # Customize this if you are watching multiple different projects.
         # Return None if changes to the given branch are uninteresting.
-        if branchname.startswith("net.venge.monotone-viz"):
-            return "monotone-viz"
-        elif branchname.startswith("net.venge.monotone.contrib.monotree"):
-            return "monotree"
-        else:
-            return "monotone"
+        #if branchname.startswith("net.venge.monotone-viz"):
+        #    return "monotone-viz"
+        #elif branchname.startswith("net.venge.monotone.contrib.monotree"):
+        #    return "monotree"
+        #else:
+        #    return "monotone"
+        return "FIXME"
 
     # Add entries of the form "server address": "collection name" to get
     # this script to watch the given collections at the given monotone
     # servers.
     watch_list = {
-        "venge.net": "net.venge.monotone"
+        #"venge.net": "net.venge.monotone"
         }
 
     # If this is non-None, then the web interface will make any file 'foo' a
@@ -60,10 +61,10 @@ class config:
     from_address = "cia-user@FIXME"
 
     # Set to one of "xmlrpc", "email", "debug".
-    delivery = "xmlrpc"
+    delivery = "debug"
 
     # Path to monotone executable.
-    monotone_exec = "/home/njs/src/monotone/opt/monotone"
+    monotone_exec = "monotone"
 
 ################################################################################
 
