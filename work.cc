@@ -64,7 +64,6 @@ build_additions(vector<file_path> const & paths,
                 app_state & app,
                 change_set::path_rearrangement & pr)
 {
-  N(path() != "", F("invalid path ''"));
   change_set::path_rearrangement pr_new, pr_concatenated;
   change_set cs_new;
 
@@ -76,6 +75,7 @@ build_additions(vector<file_path> const & paths,
 
   for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
+      N((*i)() != "", F("invalid path ''"));
       N(directory_exists(*i) || file_exists(*i),
         F("path %s does not exist\n") % *i);
 
@@ -115,8 +115,6 @@ build_deletions(vector<file_path> const & paths,
                 app_state & app,
                 change_set::path_rearrangement & pr)
 {
-  N(path() != "", F("invalid path ''"));
-
   change_set::path_rearrangement pr_new, pr_concatenated;
   path_set ps;
   extract_path_set(man, ps);
@@ -126,6 +124,8 @@ build_deletions(vector<file_path> const & paths,
     {
       bool dir_p = false;
   
+      N((*i)() != "", F("invalid path ''"));
+
       if (! known_preimage_path(*i, ps, dir_p))
         {
           P(F("skipping %s, not currently tracked\n") % *i);

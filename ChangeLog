@@ -1,3 +1,7 @@
+2005-03-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc (build_deletions, build_additions): Fixup after merge.
+
 2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_cat_file_by_name.at: Check for attempting to cat
