@@ -1,3 +1,13 @@
+2004-12-17  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_merge_1.at: Remove AT_CHECK(false) and xfail.
+	* tests/t_fdiff_normalize.at: New test.
+	* testsuite.at: Call it.
+	* diff_patch.cc (normalize_extents): Fix the normalize bug.
+	* revision.{cc,hh} (construct_revisions): Rename to prepare for
+	next rebuild-the-graph migration.
+	* commands.cc (db): Change call name.
+
 2004-12-18  Matt Johnston <matt@ucc.asn.au>
 
         * change_set.cc (concatenate_change_sets): Be more careful checking

@@ -533,10 +533,19 @@ analyze_manifest_changes(app_state & app,
 }
 
 static revision_id
-construct_revisions(app_state & app,
-                    manifest_id const & child,
-                    std::multimap< manifest_id, manifest_id > const & ancestry,
-                    std::map<manifest_id, revision_id> & mapped)
+construct_revisions_from_revs(app_state & app,
+                              manifest_id const & child,
+                              std::multimap< manifest_id, manifest_id > const & ancestry,
+                              std::map<manifest_id, revision_id> & mapped)
+{
+  return revision_id(hexenc<id>(""));
+}
+
+static revision_id
+construct_revisions_from_manifests(app_state & app,
+                                   manifest_id const & child,
+                                   std::multimap< manifest_id, manifest_id > const & ancestry,
+                                   std::map<manifest_id, revision_id> & mapped)
 {
   revision_set rev;
   typedef std::multimap< manifest_id, manifest_id >::const_iterator ci;
@@ -546,12 +555,12 @@ construct_revisions(app_state & app,
       manifest_id parent(i->second);
       revision_id parent_rid;
       std::map<manifest_id, revision_id>::const_iterator j = mapped.find(parent);
-
+      
       if (j != mapped.end())
         parent_rid = j->second;
       else
         {
-          parent_rid = construct_revisions(app, parent, ancestry, mapped);
+          parent_rid = construct_revisions_from_manifests(app, parent, ancestry, mapped);
           P(F("inserting mapping %d : %s -> %s\n") % mapped.size() % parent % parent_rid);;
           mapped.insert(std::make_pair(parent, parent_rid));
         }
@@ -610,9 +619,47 @@ construct_revisions(app_state & app,
   return rid;  
 }
 
+void 
+build_changesets_from_existing_revs(app_state & app)
+{
+  std::set<std::pair<revision_id, revision_id> > existing_graph;
+  std::multimap< manifest_id, manifest_id > ancestry;
+  std::set<manifest_id> heads;
+  std::set<manifest_id> total;
+
+  app.db.get_revision_ancestry(existing_graph);
+  for (std::set<std::pair<revision_id, revision_id> >::const_iterator i = existing_graph.begin();
+       i != existing_graph.end(); ++i)
+    {
+      revision_id parent_rev = i->first;
+      revision_id child_rev = i->second;
+      manifest_id parent_man, child_man;
+      app.db.get_revision_manifest(parent_rev, parent_man);
+      app.db.get_revision_manifest(child_rev, child_man);
+
+      heads.insert(child_man);
+      heads.erase(parent_man);
+      total.insert(child_man);
+      total.insert(parent_man);
+      ancestry.insert(std::make_pair(child_man, parent_man));      
+    }
+
+  P(F("found a total of %d manifests\n") % total.size());
+
+  transaction_guard guard(app.db);
+  std::map<manifest_id, revision_id> mapped;
+  for (std::set<manifest_id>::const_iterator i = heads.begin();
+       i != heads.end(); ++i)
+    {
+      construct_revisions_from_revs(app, *i, ancestry, mapped);
+    }
+  guard.commit();
+  
+}
+
 
 void 
-build_changesets(app_state & app)
+build_changesets_from_manifest_ancestry(app_state & app)
 {
   std::vector< manifest<cert> > tmp;
   app.db.get_manifest_certs(cert_name("ancestor"), tmp);
@@ -644,7 +691,7 @@ build_changesets(app_state & app)
   for (std::set<manifest_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
     {
-      construct_revisions(app, *i, ancestry, mapped);
+      construct_revisions_from_manifests(app, *i, ancestry, mapped);
     }
   guard.commit();
 }

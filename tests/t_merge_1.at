@@ -1,4 +1,4 @@
-AT_SETUP([(URGENT) test a merge])
+AT_SETUP([test a merge])
 MONOTONE_SETUP
 
 NEED_UNB64
@@ -10,9 +10,6 @@ NEED_UNB64
 # This may actually be a bug in the unidiff algorithm; 'diff' and
 # 'monotone diff' produce different results when calculating
 # diff(parent, left).
-
-# This test is a bug report:
-AT_XFAIL_IF(true)
 
 AT_DATA(parent.b64, [Ly8gY29weXJpZ2h0IChDKSAyMDAyLCAyMDAzIGdyYXlkb24gaG9hcmUgPGdyYXlkb25AcG9i
 b3guY29tPgovLyBhbGwgcmlnaHRzIHJlc2VydmVkLgovLyBsaWNlbnNlZCB0byB0aGUgcHVi
@@ -4091,7 +4088,5 @@ AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 AT_CHECK(cmp testfile correct)
-
-AT_CHECK(false)
 
 AT_CLEANUP
