@@ -1,5 +1,13 @@
 2005-01-22  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_delete_dir.at: Add more commentary.
+
+	* tests/t_rename_dir_patch.at: New test.
+	* tests/t_delete_dir_patch.at: New test.
+	* testsuite.at: Add them.
+	
+2005-01-22  Nathaniel Smith  <njs@codesourcery.com>
+
 	* change_set.cc (apply_change_set): Add invariants.
 	* tests/t_rename_dir_cross_level.at: New test.
 	* tests/t_rename_added_in_rename.at: New test.

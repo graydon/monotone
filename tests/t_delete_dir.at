@@ -12,8 +12,15 @@ AT_XFAIL_IF(true)
 # revived", and so we have no way to come up with a changeset from
 # $DIR_DELETE_R to the merged revision that preserves rename-out.
 # This might be a problem...
+#
+# I guess that unless we come up with a way to extend the model with
+# file-reviving support (which would be useful in and of itself, aside
+# from its utility in this case, but would be a significant addition),
+# we should declare that <delete_dir foo> implies <delete_file
+# foo/**>.
 
 # After fixing this; t_subdir_drop.at should start passing.
+# So should t_delete_dir_patch.at (hopefully).
 
 AT_CHECK(mkdir groundzero)
 ADD_FILE(groundzero/preexisting, [1
