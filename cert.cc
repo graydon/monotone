@@ -661,13 +661,11 @@ get_branch_heads(cert_value const & branchname,
 			     ancestor_certs, 
 			     disapproval_certs);
 
-  P(F("erasing bogus certs on '%s'\n") % branchname);
+  L(F("erasing bogus certs on '%s'\n") % branchname);
 
   erase_bogus_certs(branch_certs, app);
   erase_bogus_certs(ancestor_certs, app);
   erase_bogus_certs(disapproval_certs, app);
-
-  P(F("pulled initial cert set for '%s'\n") % branchname);
 
   for (vector< manifest<cert> >::const_iterator i = branch_certs.begin();
        i != branch_certs.end(); ++i)
@@ -682,7 +680,7 @@ get_branch_heads(cert_value const & branchname,
 				   i->inner().value));
     }
 
-  P(F("began with %d candidate heads\n") % heads.size());
+  L(F("began with %d candidate heads\n") % heads.size());
 
   // Remove every manifest with descendents.
   for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
@@ -704,7 +702,7 @@ get_branch_heads(cert_value const & branchname,
 	}
     }
   
-  P(F("reduced to %d heads\n") % heads.size());
+  L(F("reduced to %d heads\n") % heads.size());
 }
 		   
 void 
