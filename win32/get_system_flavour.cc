@@ -5,25 +5,29 @@
 
 #include "sanity.hh"
 
+#include <string>
 #include <windows.h>
 
 struct table_entry
 {
-  char *key;
+  unsigned long key;
   char *val;
-}
+};
 
 void key_to_string(unsigned long key, 
 		   table_entry *table,
 		   std::string & str, 
-		   std::string const & default)
+		   std::string const & def)
 {
-  while (table->value != null)
-    if (table->key == key) {
-      str = string(table->val);
-      return;
+  while (table->val != NULL)
+    {
+      if (table->key == key) {
+	str = std::string(table->val);
+	return;
+      }
+      ++table;
     }
-  str = default;
+  str = def;
 }
 
 static table_entry processor_types[] = {
@@ -60,8 +64,8 @@ static table_entry processor_types[] = {
 #ifdef PROCESSOR_SHx_SH3DSP
   { PROCESSOR_SHx_SH3DSP, "sh3dsp" },
 #endif
-  { 0, 0 }
-}
+  { 0, NULL }
+};
 
 
 static table_entry processors[] = {
@@ -89,7 +93,7 @@ static table_entry processors[] = {
 #ifdef PROCESSOR_ARCHITECTURE_ARM
   { PROCESSOR_ARCHITECTURE_ARM, "arm" },
 #endif
-  { 0, 0 }
+  { 0, NULL }
 };
 
 
@@ -106,7 +110,7 @@ static table_entry families[] = {
 #ifdef VER_PLATFORM_WIN32_CE
   { VER_PLATFORM_WIN32_CE, "CE" },
 #endif
-  { 0, 0 }
+  { 0, NULL }
 };
 
 void get_system_flavour(std::string & ident)
@@ -122,30 +126,31 @@ void get_system_flavour(std::string & ident)
   
   std::string family, processor;
 
-  key_to_string(si.dwPlatformId, families, family, "unknown");
+  key_to_string(vi.dwPlatformId, families, family, "unknown");
 
   processor = "unknown";
 
   bool old_skool_cpu_identification = true;
 
 #ifdef VER_PLATFORM_WIN32_NT
-  if (si.dwPlatformId == VER_PLATFORM_WIN32_NT)
+  if (vi.dwPlatformId == VER_PLATFORM_WIN32_NT)
     old_skool_cpu_identification = false;
-#ifdef 
+#endif
 
 #ifdef VER_PLATFORM_WIN32_CE
-  if (si.dwPlatformId == VER_PLATFORM_WIN32_CE)
+  if (vi.dwPlatformId == VER_PLATFORM_WIN32_CE)
     old_skool_cpu_identification = false;
-#ifdef 
+#endif
 
   if (old_skool_cpu_identification)
-    key_to_string(si.dwProcessorType, processor_types, cpu, "unknown");
+    key_to_string(si.dwProcessorType, processor_types, processor, "unknown");
   else
     {
       key_to_string(si.wProcessorArchitecture, processors, processor, "unknown");
-      processor += (F(" (level %d, rev %d)") 
-		    % si.wProcessorLevel
-		    % si.wProcessorRevision).str();
+      processor = (F("%s (level %d, rev %d)") 
+		   % processor
+		   % si.wProcessorLevel
+		   % si.wProcessorRevision).str();
     }
 
   ident = (F("Windows %s (%d.%d, build %d) on %s")

@@ -1,5 +1,9 @@
 2004-12-30  graydon hoare  <graydon@pobox.com>
 
+	* win32/get_system_flavour.cc: Fix little compile bugs.
+
+2004-12-30  graydon hoare  <graydon@pobox.com>
+
 	* Makefile.am: Clean full testsuite directory and full-version.
 	* configure.ac: Bump version number.
 	* po/monotone.pot: Regenerate.
