@@ -2812,6 +2812,10 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   set<revision_id>::const_iterator src_i = src_heads.begin();
   set<revision_id>::const_iterator dst_i = dst_heads.begin();
   
+  P(F("propagating %s -> %s\n") % idx(args,0) % idx(args,1));
+  P(F("[source] %s\n") % *src_i);
+  P(F("[target] %s\n") % *dst_i);
+
   revision_id merged;
   transaction_guard guard(app.db);
   try_one_merge (*src_i, *dst_i, merged, app);    

@@ -709,8 +709,16 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
 
       return true;
     }
-  else if (app.lua.hook_merge3(ancestor_unpacked, left_unpacked, 
-                               right_unpacked, merged_unpacked))
+
+  P(F("help required for 3-way merge\n"));
+  P(F("[ancestor] %s\n") % anc_path);
+  P(F("[    left] %s\n") % left_path);
+  P(F("[   right] %s\n") % right_path);
+  P(F("[  merged] %s\n") % merged_path);
+
+  if (app.lua.hook_merge3(anc_path, left_path, right_path, merged_path,
+                          ancestor_unpacked, left_unpacked, 
+                          right_unpacked, merged_unpacked))
     {
       hexenc<id> tmp_id;
       base64< gzip<data> > packed_merge;
@@ -729,7 +737,9 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
   return false;
 }
 
-bool merge_provider::try_to_merge_files(file_path const & path,
+bool merge_provider::try_to_merge_files(file_path const & left_path,
+                                        file_path const & right_path,
+                                        file_path const & merged_path,
                                         file_id const & left_id,
                                         file_id const & right_id,
                                         file_id & merged_id)
@@ -750,13 +760,19 @@ bool merge_provider::try_to_merge_files(file_path const & path,
       return true;      
     }  
 
-  this->get_version(path, left_id, left_data);
-  this->get_version(path, right_id, right_data);
+  this->get_version(left_path, left_id, left_data);
+  this->get_version(right_path, right_id, right_data);
     
   unpack(left_data.inner(), left_unpacked);
   unpack(right_data.inner(), right_unpacked);
 
-  if (app.lua.hook_merge2(left_unpacked, right_unpacked, merged_unpacked))
+  P(F("help required for 2-way merge\n"));
+  P(F("[    left] %s\n") % left_path);
+  P(F("[   right] %s\n") % right_path);
+  P(F("[  merged] %s\n") % merged_path);
+
+  if (app.lua.hook_merge2(left_path, right_path, merged_path, 
+                          left_unpacked, right_unpacked, merged_unpacked))
     {
       hexenc<id> tmp_id;
       base64< gzip<data> > packed_merge;

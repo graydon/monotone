@@ -96,7 +96,7 @@ function ignore_file(name)
 	return false
 end
 
-function merge2(left, right)
+function merge2(left_path, right_path, merged_path, left, right)
 	io.write("running merge2 hook\n") 
 	return left
 end

@@ -69,10 +69,17 @@ public:
   // local repo hooks
   bool hook_ignore_file(file_path const & p);
   bool hook_ignore_branch(std::string const & branch);
-  bool hook_merge2(data const & left, 
+  bool hook_merge2(file_path const & left_path,
+                   file_path const & right_path,
+                   file_path const & merged_path,
+                   data const & left, 
 		   data const & right, 
 		   data & result);
-  bool hook_merge3(data const & ancestor, 
+  bool hook_merge3(file_path const & anc_path,
+                   file_path const & left_path,
+                   file_path const & right_path,
+                   file_path const & merged_path,
+                   data const & ancestor, 
 		   data const & left, 
 		   data const & right, 
 		   data & result);

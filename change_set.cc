@@ -1598,7 +1598,7 @@ merge_deltas(file_path const & anc_path,
     {
       if (null_id(anc))
         {
-          N(merger.try_to_merge_files(path_in_merged, left, right, finalist),
+          N(merger.try_to_merge_files(left_path, right_path, path_in_merged, left, right, finalist),
             F("merge of '%s' : '%s' vs. '%s' (no common ancestor) failed")
             % path_in_merged % left % right);
         }

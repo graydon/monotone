@@ -697,7 +697,10 @@ lua_hooks::hook_accept_testresult_change(map<rsa_keypair_id, bool> const & old_r
 
 
 bool 
-lua_hooks::hook_merge2(data const & left, 
+lua_hooks::hook_merge2(file_path const & left_path,
+                       file_path const & right_path,
+                       file_path const & merged_path,
+                       data const & left, 
 		       data const & right, 
 		       data & result)
 {
@@ -705,9 +708,12 @@ lua_hooks::hook_merge2(data const & left,
   bool ok = Lua(st)
     .push_str("merge2")
     .get_fn()
+    .push_str(left_path())
+    .push_str(right_path())
+    .push_str(merged_path())
     .push_str(left())
     .push_str(right())
-    .call(2,1)
+    .call(5,1)
     .extract_str(res)
     .ok();
   result = res;
@@ -715,7 +721,11 @@ lua_hooks::hook_merge2(data const & left,
 }
 
 bool 
-lua_hooks::hook_merge3(data const & ancestor, 
+lua_hooks::hook_merge3(file_path const & anc_path,
+                       file_path const & left_path,
+                       file_path const & right_path,
+                       file_path const & merged_path,
+                       data const & ancestor, 
 		       data const & left, 
 		       data const & right, 
 		       data & result)
@@ -724,10 +734,14 @@ lua_hooks::hook_merge3(data const & ancestor,
   bool ok = Lua(st)
     .push_str("merge3")
     .get_fn()
+    .push_str(anc_path())
+    .push_str(left_path())
+    .push_str(right_path())
+    .push_str(merged_path())
     .push_str(ancestor())
     .push_str(left())
     .push_str(right())
-    .call(3,1)
+    .call(7,1)
     .extract_str(res)
     .ok();
   result = res;

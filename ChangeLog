@@ -1,3 +1,18 @@
+2004-12-09  Derek Scherger  <derek@echologic.com>
+
+	* .mt-nonce: delete obsolete file	
+	* change_set.cc (merge_deltas): add file paths in call to
+	try_to_merge_files
+	* commands.cc (propagate): add progress logging similar to merge
+	* diff_patch.{cc,hh} (try_to_merge_files): add file paths to
+	merge2 and merge3 hooks; add logging of paths before calling merge
+	hooks
+	* lua.{cc,hh} (hook_merge2, hook_merge3): add file paths to merge
+	hooks
+	* std_hooks.lua (merge2, merge3, merge2_xxdiff_cmd,
+	merge3_xxdiff_cmd): pass file paths to xxdiff for use as titles
+	* testsuite.at (MONOTONE_SETUP): add paths to merge2 hook
+
 2004-12-09  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (BUILT_SOURCES_NOCLEAN): add 'S'.
