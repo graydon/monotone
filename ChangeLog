@@ -1,3 +1,8 @@
+2004-05-02  Joel Rosdahl  <joel@rosdahl.net>
+
+	* manifest.cc (build_manifest_map): Fix missing file check for
+	i18n paths.
+
 2004-05-01  Joel Rosdahl  <joel@rosdahl.net>
 
 	* manifest.cc (build_manifest_map): Handle missing file
