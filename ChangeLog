@@ -1,3 +1,8 @@
+2003-12-10  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (checkout): Give better error message if branch is
+	empty.
+
 2003-12-07  Eric Kidd  <eric.kidd@pobox.com>
 
 	* commands.cc (agraph): Handle repositories with a single version.
@@ -78,11 +83,11 @@
 
 2003-11-29  Tom Tromey  <tromey@redhat.com>
 
-        * rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.
+	* rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.
         Updated all callers.
 
-        * http_tasks.cc (check_received_bytes): Allow "-" as well.
-        * depot.cc (execute_post_query): Allow "-" as well.
+	* http_tasks.cc (check_received_bytes): Allow "-" as well.
+	* depot.cc (execute_post_query): Allow "-" as well.
 
 2003-11-28  graydon hoare  <graydon@pobox.com>
 
@@ -111,7 +116,7 @@
 	* database.hh, database.cc (delete_posting): Change to take queue
 	sequence numbers.	
 	* commands.cc (queue): Use new API.
-	* network.cc (post_queued_blobs_to_network) Use new API.
+	* network.cc (post_queued_blobs_to_network): Use new API.
 	
 2003-11-24  graydon hoare  <graydon@pobox.com>
 
@@ -154,7 +159,7 @@
 
 2003-11-16  Tom Tromey  <tromey@redhat.com>
 
-        * missing: Removed generated file.
+	* missing: Removed generated file.
 
 2003-11-21  graydon hoare  <graydon@pobox.com>
 
@@ -943,10 +948,10 @@
 
 2003-08-20  graydon hoare  <graydon@pobox.com>
 
-        * boost/*:
-        incorporate boost sandbox bits, for now.
+	* boost/*:
+	incorporate boost sandbox bits, for now.
 
-        * Makefile.am, Makefile.in, configure, configure.ac, diff_patch.cc,
+	* Makefile.am, Makefile.in, configure, configure.ac, diff_patch.cc,
 	http_tasks.cc, http_tasks.hh, network.cc, nntp_machine.cc,
 	nntp_machine.hh, nntp_tasks.cc, nntp_tasks.hh, testsuite/t_nntp.sh:
 
@@ -954,7 +959,7 @@
 
 2003-08-19  graydon hoare  <graydon@pobox.com>
 
-        * Makefile.am, Makefile.in, app_state.hh, cert.cc, commands.cc,
+	* Makefile.am, Makefile.in, app_state.hh, cert.cc, commands.cc,
 	constants.hh, cryptopp/misc.h, database.cc, depot.cc,
 	http_tasks.cc, http_tasks.hh, keys.cc, lua.cc, lua.hh, monotone.cc,
 	network.cc, network.hh, nntp_machine.cc, nntp_machine.hh,
@@ -969,50 +974,50 @@
 	
 2003-08-18  graydon hoare  <graydon@pobox.com>
 
-        * Makefile.am, Makefile.in, adler32.hh, database.cc, depot.cc,
+	* Makefile.am, Makefile.in, adler32.hh, database.cc, depot.cc,
 	mac.hh, xdelta.cc, Makefile.am, Makefile.in: 
 
 	first pass at a depot (CGI-based packet service)
 
 2003-08-08  graydon hoare  <graydon@pobox.com>
 
-        * Makefile.am, Makefile.in AUTHORS, ChangeLog, Makefile.am,
+	* Makefile.am, Makefile.in AUTHORS, ChangeLog, Makefile.am,
 	Makefile.in, NEWS, monotone.1, monotone.info, monotone.texi:
 
 	release point (v 0.2)
 
 2003-08-08  graydon hoare  <graydon@pobox.com>
 
-        * cert.cc, cert.hh, interner.hh, rcs_import.cc: 
+	* cert.cc, cert.hh, interner.hh, rcs_import.cc: 
 
 	auxilliary certs
 
-        * cert.cc, cert.hh, cycle_detector.hh, interner.hh, patch_set.cc,
+	* cert.cc, cert.hh, cycle_detector.hh, interner.hh, patch_set.cc,
 	rcs_import.cc: 
 
 	improvements to cycle detection stuff
 
 2003-08-05  graydon hoare  <graydon@pobox.com>
 
-        * rcs_import.cc:
-        
+	* rcs_import.cc:
+	
 	almost even more seemingly correct CVS graph reconstruction (still slow)
 
-        * sqlite/* cryptopp/* Makefile.am, Makefile.in, aclocal.m4,
+	* sqlite/* cryptopp/* Makefile.am, Makefile.in, aclocal.m4,
 	config.h.in, configure, configure.ac, file_io.cc, keys.cc,
 	sanity.cc, sanity.hh, transforms.cc: 
 
 	minimizing dependencies on 3rd party libs by importing the
 	necessary bits and rewriting others.
 
-        * cert.cc, cert.hh, rcs_import.cc:	
-        
+	* cert.cc, cert.hh, rcs_import.cc:	
+	
 	cvs import seems to be working, but several linear algorithms need
 	replacement
 
 2003-07-28  graydon hoare  <graydon@pobox.com>
 
-        * Makefile.am, Makefile.in, cert.cc, commands.cc, database.cc,
+	* Makefile.am, Makefile.in, cert.cc, commands.cc, database.cc,
 	database.hh, manifest.cc, rcs_file.cc, rcs_import.cc,
 	rcs_import.hh, vocab.cc, xdelta.cc:
 
@@ -1020,50 +1025,50 @@
 
 2003-07-21  graydon hoare  <graydon@pobox.com>
 
-        * database.cc, xdelta.cc, xdelta.hh: 
+	* database.cc, xdelta.cc, xdelta.hh: 
 
 	piecewise xdelta; improves speed a fair bit.
 
 2003-07-11  graydon hoare  <graydon@pobox.com>
 
-        * Makefile.am, Makefile.in, config.h.in, configure, configure.ac,
+	* Makefile.am, Makefile.in, config.h.in, configure, configure.ac,
 	transforms.cc, xdelta.cc, xdelta.hh:
 
 	implement xdelta by hand, forget 3rd party delta libs.
 
 2003-07-02  graydon hoare  <graydon@pobox.com>
 
-        * database.cc, rcs_import.cc, transforms.cc, transforms.hh:
+	* database.cc, rcs_import.cc, transforms.cc, transforms.hh:
 
 	speedups all around in the storage system
 
 2003-07-01  graydon hoare  <graydon@pobox.com>
 
-        * database.hh, rcs_import.cc, transforms.cc, transforms.hh: speed
+	* database.hh, rcs_import.cc, transforms.cc, transforms.hh: speed
 
 	improvements to RCS import
 
 2003-06-30  graydon hoare  <graydon@pobox.com>
 
-        * rcs_import.cc, transforms.cc: 
+	* rcs_import.cc, transforms.cc: 
 
 	some speed improvements to RCS import
 
 2003-06-29  graydon hoare  <graydon@pobox.com>
 
-        * commands.cc, database.hh, rcs_import.cc, transforms.cc: 
+	* commands.cc, database.hh, rcs_import.cc, transforms.cc: 
 
 	RCS file import successfully (albeit slowly) pulls in some pretty
 	large (multi-hundred revision, >1MB) test cases from GCC CVS
 
-        * Makefile.in, commands.cc, rcs_file.cc, rcs_file.hh,
+	* Makefile.in, commands.cc, rcs_file.cc, rcs_file.hh,
 	rcs_import.cc, rcs_import.hh, 
 
 	Makefile.am: preliminary support for reading and walking RCS files
 
 2003-04-09  graydon hoare  <graydon@pobox.com>
 
-        * autogen.sh: oops
+	* autogen.sh: oops
 	* */*: savannah import
 
 2003-04-06  graydon hoare  <graydon@pobox.com>
