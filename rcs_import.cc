@@ -432,9 +432,24 @@ process_branch(string const & begin_version,
   data curr_data(begin_data), next_data;
   hexenc<id> curr_id(begin_id), next_id;
   
-  while(! (r.deltas.find(curr_version) == r.deltas.end() ||
-	   r.deltas.find(curr_version)->second->next.empty()))
+  while(! (r.deltas.find(curr_version) == r.deltas.end()))
     {
+      if (r.deltas.find(curr_version)->second->next.empty())
+      {  L(F("revision %s has no successor\n") % curr_version);
+         if (curr_version=="1.1")
+         {  // mark this file as newly present since this commit
+            // (and as not present before)
+            
+            // perhaps this should get a member function of cvs_history ?
+            cvs_key k;
+            shared_ptr<cvs_state> s;
+            cvs.find_key_and_state(r, curr_version, k, s);
+            s->in_edges.insert(cvs_file_edge(curr_id, cvs.curr_file, false,
+            				curr_id, cvs.curr_file, false,
+            				cvs));
+         }
+         break;
+      }
       L(F("version %s has %d lines\n") % curr_version % curr_lines->size());
       
       // construct this edge on our own branch
@@ -1040,6 +1055,8 @@ build_parent_state(shared_ptr<cvs_state> state,
     {
       file_id fid(cvs.file_version_interner.lookup(f->parent_version));
       file_path pth(cvs.path_interner.lookup(f->parent_path));
+      L(F("File delta %s %d %d->%d\n") % pth % f->parent_version 
+      		% f->parent_live_p % f->child_live_p);
       if (!f->parent_live_p)
       {  manifest_map::iterator elem=state_map.find(pth);
          if (elem != state_map.end())
