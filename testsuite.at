@@ -134,6 +134,18 @@ AT_CHECK(mv stdout expout)
 AT_CHECK($2, [], [expout], [ignore])
 ])
 
+# run as CHECK_SAME_DB_CONTENTS(db1, db2)
+m4_define([CHECK_SAME_DB_CONTENTS], [
+CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
+CHECK_SAME_STDOUT(MONOTONE --db=$1 agraph, MONOTONE --db=$2 agraph)
+REVS=`MONOTONE --db=$1 complete revision ""`
+for R in REVS; do
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 ls certs $R, MONOTONE --db=$2 ls keys $R)
+done
+CHECK_SAME_STDOUT(MONOTONE --db=$1 complete manifest "", MONOTONE --db=$2 complete manifest "")
+CHECK_SAME_STDOUT(MONOTONE --db=$1 complete file "", MONOTONE --db=$2 complete file "")
+])
+
 # run as PROBE_NODE(filename, rsha, fsha)
 m4_define([PROBE_NODE], [ 
 AT_CHECK(rm MT/revision)
@@ -328,3 +340,4 @@ m4_include(tests/t_netsync_nocerts.at)
 m4_include(tests/t_merge_ancestor.at)
 m4_include(tests/t_propagate_desc.at)
 m4_include(tests/t_propagate_anc.at)
+m4_include(tests/t_check_same_db_contents.at)

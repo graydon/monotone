@@ -1,3 +1,9 @@
+2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_check_same_db_contents.at: New test.
+	* testsuite.at: Add it.
+	(CHECK_SAME_DB_CONTENTS): New macro.
+
 2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
 
 	* cert.cc: Remove tabs.
