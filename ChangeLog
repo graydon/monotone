@@ -1,5 +1,11 @@
 2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
 
+	* std_hooks.lua (ignore_file): Corrected name of Subversion's
+	administrative directory.
+	* work.hh: Ditto.
+	* monotone.texi (Hook Reference): Updated default definition of
+	ignore_file.
+
 	* cert.cc (get_branch_heads): Remove disapproved head candidates
 	correctly.
 
