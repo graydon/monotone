@@ -640,12 +640,12 @@ Then the following cert would express the ancestry relationship:
   +----------------------------------------------------------+
   | version code                                             |
   | 994fe79ae852133ff9a93ba0146d520192977078                 |
-  +-----------------+----------------------------------------+
+  +------------+---------------------------------------------+
   | cert name  |  cert value                                 |
   | "ancestor" |  "53f48d87d6ffbbb5a980f1393159e83a4921841e" |
-  +--------------------------+-------------------------------+
-  | signed by key           |  signature                     |
-  | "jrh@@somewhere.com"     |  "ac9c489c8...5d6b1c26c"       |
+  +------------+-------------+-------------------------------+
+  | signed by key            |  signature                    |
+  | "jrh@@somewhere.com"      |  "ac9c489c8...5d6b1c26c"      |
   +--------------------------+-------------------------------+
 @end group
 @end smallexample

@@ -718,8 +718,48 @@ get_branch_heads(cert_value const & branchname,
 	  heads.erase(j);
 	}
     }
+
+
+  // Calculate a disapproval attribute of a version: this is true for a
+  // version iff every ancestry edge into the version is disapproved.
+  //
+  // FIXME: this is slightly weird; it means that a disapproved edge
+  // vanishes whereas a lone (no-edge) version which is a branch member
+  // can't really be disapproved, and a disapproval doesn't completely mask
+  // an edge if there are multiple ways into it. possibly we need to extend
+  // disapproval to cover both versions and edges.
+
+  map<manifest_id, bool> disapproved_version;
+  for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
+       i != ancestor_certs.end(); ++i)
+    {
+      manifest_id child(i->inner().ident);
+      if (heads.find(child) == heads.end())
+	continue;
+
+      if (disapproved.find(make_pair(i->inner().ident,
+				     i->inner().value)) 
+	  != disapproved.end())
+	{
+	  if (disapproved_version.find(child) == disapproved_version.end())
+	    disapproved_version[child] = true;
+	  else	    
+	    disapproved_version[child] = disapproved_version[child] && true;
+	}
+      else
+	disapproved_version[child] = false;
+    }
   
+  // remove those remaining heads which are disapproved *versions*
+  for (map<manifest_id, bool>::const_iterator i = disapproved_version.begin();
+       i != disapproved_version.end(); ++i)
+    {
+      if (i->second)
+	heads.erase(i->first);
+    }
+
   L(F("reduced to %d heads\n") % heads.size());
+
 }
 		   
 void 

@@ -1,3 +1,10 @@
+2004-04-29  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc (get_branch_heads): Calculate a "disapproved version"
+	attribute which culls a version with only disapproved ancestry
+	edges.
+	* monotone.texi: Fix some ascii-art diagrams.
+
 2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
 
         * po/stamp-po: Removed since it's generated.
