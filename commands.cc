@@ -303,6 +303,142 @@ update_any_attrs(app_state & app)
   apply_attributes(app, attr);
 }
 
+static void 
+calculate_new_manifest_map(manifest_map const & m_old, 
+			   manifest_map & m_new,
+			   rename_set & renames,
+			   app_state & app)
+{
+  path_set paths;
+  work_set work;
+  extract_path_set(m_old, paths);
+  get_work_set(work);
+  if (work.dels.size() > 0)
+    L(F("removing %d dead files from manifest\n") %
+      work.dels.size());
+  if (work.adds.size() > 0)
+    L(F("adding %d files to manifest\n") % 
+      work.adds.size());
+  if (work.renames.size() > 0)
+    L(F("renaming %d files in manifest\n") % 
+      work.renames.size());
+  apply_work_set(work, paths);
+  build_manifest_map(paths, m_new, app);
+  renames = work.renames;
+}
+
+
+static void 
+calculate_new_manifest_map(manifest_map const & m_old, 
+			   manifest_map & m_new,
+			   app_state & app)
+{
+  rename_set dummy;
+  calculate_new_manifest_map (m_old, m_new, dummy, app);
+}
+
+/**
+static void
+calculate_base_revision(app_state & app, 
+                        revision_id & rid,
+                        revision_set & rev,
+                        manifest_id & mid,
+                        manifest_map & man)
+{
+  rev.edges.clear();
+  man.clear();
+
+  get_revision_id(rid);
+
+  if (! rid.inner()().empty())
+    {
+
+      N(app.db.revision_exists(rid),
+        F("base revision %s does not exist in database\n") % rid);
+      
+      app.db.get_revision_manifest(rid, mid);
+      L(F("old manifest is %s\n") % mid);
+      
+      N(app.db.manifest_version_exists(mid),
+        F("base manifest %s does not exist in database\n") % mid);
+      
+      app.db.get_manifest(mid, man);
+    }
+
+  L(F("old manifest has %d entries\n") % man.size());
+}
+
+static void
+calculate_base_revision(app_state & app, 
+                        revision_set & rev,
+                        manifest_map & man)
+{
+  revision_id rid;
+  manifest_id mid;
+  calculate_base_revision(app, rid, rev, mid, man);
+}
+
+static void
+calculate_base_manifest(app_state & app, 
+                        manifest_map & man)
+{
+  revision_id rid;
+  manifest_id mid;
+  revision_set rev;
+  calculate_base_revision(app, rid, rev, mid, man);
+}
+
+static void
+calculate_current_revision(app_state & app, 
+                           revision_set & rev,
+                           manifest_map & m_old,
+                           manifest_map & m_new)
+{
+  manifest_id old_manifest_id;
+  revision_id old_revision_id;    
+  change_set cs;
+  path_set paths;
+  manifest_map m_old_rearranged;
+
+  rev.edges.clear();
+  m_old.clear();
+  m_new.clear();
+
+  calculate_base_revision(app, 
+                          old_revision_id, rev, 
+                          old_manifest_id, m_old);
+
+  get_path_rearrangement(cs.rearrangement);
+  
+  apply_path_rearrangement(m_old, cs.rearrangement, m_old_rearranged);
+  extract_path_set(m_old_rearranged, paths);
+  build_manifest_map(paths, m_new, app);
+
+  I(m_new.size() == m_old_rearranged.size());
+  manifest_map::const_iterator i = m_old_rearranged.begin();
+  for (manifest_map::const_iterator j = m_new.begin(); j != m_new.end(); ++j, ++i)
+    {
+      I(manifest_entry_path(i) == manifest_entry_path(j));
+      if (! (manifest_entry_id(i) == manifest_entry_id(j)))
+        {
+          L(F("noted delta %s -> %s on %s\n") 
+            % manifest_entry_id(i) 
+            % manifest_entry_id(j) 
+            % manifest_entry_path(i));
+          cs.deltas.insert(make_pair(manifest_entry_path(i),
+                                     make_pair(manifest_entry_id(i),
+                                               manifest_entry_id(j))));
+        }
+    }
+  
+  calculate_ident(m_new, rev.new_manifest);
+  L(F("new manifest is %s\n") % rev.new_manifest);
+
+  rev.edges.insert(make_pair(old_revision_id,
+                             make_pair(old_manifest_id, cs)));
+}
+**/
+
 static void
 restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app) 
 {
@@ -423,40 +559,6 @@ restrict_patch_set(patch_set & ps, app_state & app)
 {
   work_set work;
   restrict_patch_set(ps, work, app);
-}
-
-static void 
-calculate_new_manifest_map(manifest_map const & m_old, 
-			   manifest_map & m_new,
-			   rename_set & renames,
-			   app_state & app)
-{
-  path_set paths;
-  work_set work;
-  extract_path_set(m_old, paths);
-  get_work_set(work);
-  if (work.dels.size() > 0)
-    L(F("removing %d dead files from manifest\n") %
-      work.dels.size());
-  if (work.adds.size() > 0)
-    L(F("adding %d files to manifest\n") % 
-      work.adds.size());
-  if (work.renames.size() > 0)
-    L(F("renaming %d files in manifest\n") % 
-      work.renames.size());
-  apply_work_set(work, paths);
-  build_manifest_map(paths, m_new, app);
-  renames = work.renames;
-}
-
-
-static void 
-calculate_new_manifest_map(manifest_map const & m_old, 
-			   manifest_map & m_new,
-			   app_state & app)
-{
-  rename_set dummy;
-  calculate_new_manifest_map (m_old, m_new, dummy, app);
 }
 
 
@@ -1039,6 +1141,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   update_any_attrs(app);
 }
 
+
 // fload and fmerge are simple commands for debugging the line merger.
 // most of the time, leave them commented out. they can be helpful for certain
 // cases, though.
@@ -1127,6 +1230,30 @@ CMD(status, "informative", "[FILE]...", "show status of working copy")
 
   guard.commit();
 }
+
+/**
+CMD(identify, "working copy", "[PATH]",
+    "calculate identity of PATH or stdin")
+{
+  if (!(args.size() == 0 || args.size() == 1))
+    throw usage(name);
+
+  data dat;
+
+  if (args.size() == 1)
+    {
+      read_localized_data(file_path(idx(args, 0)()), dat, app.lua);
+    }
+  else
+    {
+      dat = get_stdin();
+    }
+  
+  hexenc<id> ident;
+  calculate_ident(dat, ident);
+  cout << ident << endl;
+}
+**/
 
 CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to stdout")
 {
@@ -1894,15 +2021,13 @@ CMD(commit, "working copy", "[--message=STRING] [FILE]...", "commit working copy
   }
 }
 
-/**
-static void 
-dump_diffs(change_set::delta_map const & deltas,
-           app_state & app,
-           bool new_is_archived)
+ /**
+CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout")
 {
-}
+  revision_set r_old, r_new;
+  manifest_map m_new;
+  bool new_is_archived;
 **/
-
 CMD(diff, "informative", "[--manifest=STRING [--manifest=STRING]] [FILE]...", 
     "show current diffs on stdout")
 {

@@ -30,8 +30,10 @@
 #define OPT_BRANCH_NAME 8
 #define OPT_QUIET 9
 #define OPT_VERSION 10
-#define OPT_MANIFEST 11
-#define OPT_MESSAGE 12
+#define OPT_DUMP 11
+#define OPT_TICKER 12
+#define OPT_MANIFEST 14
+#define OPT_MESSAGE 15
 
 // main option processing and exception handling code
 
@@ -166,60 +168,63 @@ cpp_main(int argc, char ** argv)
   try 
     {      
       while ((opt = poptGetNextOpt(ctx())) > 0)
-	{
-	  switch(opt)
-	    {
-	    case OPT_VERBOSE:
-	      global_sanity.set_verbose();
-	      break;
+        {
+          switch(opt)
+            {
+            case OPT_VERBOSE:
+              global_sanity.set_verbose();
+              break;
 
-	    case OPT_QUIET:
-	      global_sanity.set_quiet();
-	      break;
+            case OPT_QUIET:
+              global_sanity.set_quiet();
+              break;
 
-	    case OPT_NOSTD:
+            case OPT_NOSTD:
               app.set_stdhooks(false);
-	      break;
+              break;
 
-	    case OPT_NORC:
+            case OPT_NORC:
               app.set_rcfiles(false);
-	      break;
+              break;
 
-	    case OPT_RCFILE:
+            case OPT_RCFILE:
               app.add_rcfile(absolutify(tilde_expand(string(argstr))));
-	      break;
+              break;
 
-	    case OPT_DB_NAME:
-	      app.set_database(absolutify(tilde_expand(string(argstr))));
-	      break;
+            case OPT_DUMP:
+              break;
 
-	    case OPT_KEY_NAME:
-	      app.set_signing_key(string(argstr));
-	      break;
+            case OPT_DB_NAME:
+              app.set_database(absolutify(tilde_expand(string(argstr))));
+              break;
 
-	    case OPT_BRANCH_NAME:
-	      app.set_branch(string(argstr));
-	      break;
+            case OPT_KEY_NAME:
+              app.set_signing_key(string(argstr));
+              break;
 
-	    case OPT_VERSION:
-	      cout << PACKAGE_STRING << endl;
-	      clean_shutdown = true;
-	      return 0;
+            case OPT_BRANCH_NAME:
+              app.set_branch(string(argstr));
+              break;
 
- 	    case OPT_MANIFEST:
+            case OPT_VERSION:
+              cout << PACKAGE_STRING << endl;
+              clean_shutdown = true;
+              return 0;
+
+            case OPT_MANIFEST:
                app.add_manifest(string(argstr));
- 	      break;
+              break;
 
- 	    case OPT_MESSAGE:
+            case OPT_MESSAGE:
                app.set_message(string(argstr));
- 	      break;
+              break;
 
-	    case OPT_HELP:
-	    default:
-	      requested_help = true;
-	      break;
-	    }
-	}
+            case OPT_HELP:
+            default:
+              requested_help = true;
+              break;
+            }
+        }
 
       // stop here if they asked for help
 

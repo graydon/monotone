@@ -1,3 +1,8 @@
+2004-12-05  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: move more things around to help align merge regions
+	* monotone.cc: untabify a few things to help merge
+
 2004-12-02  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc: more tweaking to ease changeset merge
