@@ -1,3 +1,10 @@
+2004-12-06  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc:
+	* tests/t_merge_add_del.at:
+	* netsync.cc:
+	* commands.cc: Clean up from merge.
+
 2004-12-01  graydon hoare  <graydon@pobox.com>
 
 	* {unix,win32}/get_system_flavour.cc: New files.

@@ -607,6 +607,7 @@ session::analyze_attachment(revision_id const & i,
                   L(F("revision %s is attached via parent %s\n") % i % edge_old_revision(k));
                   curr_attached = true;
                 }
+            }
         }
     }
   L(F("decided that revision %s %s attached\n") % i % (curr_attached ? "is" : "is not"));

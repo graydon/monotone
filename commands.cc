@@ -2355,7 +2355,6 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   revision_set r_old, r_working, r_new;
   revision_id r_old_id, r_chosen_id;
   change_set old_to_chosen, update;
-  update_merge_provider merger(app);
 
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);

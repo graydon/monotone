@@ -1599,7 +1599,8 @@ merge_deltas(file_path const & anc_path,
         }
       else
         {
-          N(merger.try_to_merge_files(path_in_merged, anc, left, right, finalist),
+          N(merger.try_to_merge_files(anc_path, left_path, right_path, path_in_merged, 
+				      anc, left, right, finalist),
             F("merge of '%s' : '%s' -> '%s' vs '%s' failed") 
             % path_in_merged % anc % left % right);
         }
@@ -1690,11 +1691,21 @@ project_missing_deltas(change_set const & a,
               L(F("merging delta '%s' : '%s' -> '%s' vs. '%s'\n") 
                 % path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
               file_id finalist;
-              merge_deltas(path_in_merged, 
+
+	      file_path anc_path;
+	      if (lookup_path(delta_entry_path(i), a_second_map, t))
+		get_full_path(a_analysis.first, t, anc_path);
+	      else
+		anc_path = delta_entry_path(i);
+
+              merge_deltas(anc_path,
+                           delta_entry_path(i), // left_path
+                           delta_entry_path(j), // right_path
+                           path_in_merged, 
                            merge_finalists,
-                           delta_entry_src(i),
-                           delta_entry_dst(i),
-                           delta_entry_dst(j),
+                           delta_entry_src(i), // anc
+                           delta_entry_dst(i), // left
+                           delta_entry_dst(j), // right
                            finalist, merger);
               L(F("resolved merge to '%s' : '%s' -> '%s'\n")
                 % path_in_merged % delta_entry_src(i) % finalist);
