@@ -43,23 +43,23 @@ bogus_cert_p
     cert_status status = check_cert(app, c);
     if (status == cert_ok)
       {
-	L(F("cert ok\n"));
-	return false;
+        L(F("cert ok\n"));
+        return false;
       }
     else if (status == cert_bad)
       {
-	string txt;
-	cert_signable_text(c, txt);
-	W(F("ignoring bad signature by '%s' on '%s'\n") % c.key() % txt);
-	return true;
+        string txt;
+        cert_signable_text(c, txt);
+        W(F("ignoring bad signature by '%s' on '%s'\n") % c.key() % txt);
+        return true;
       }
     else
       {
-	I(status == cert_unknown);
-	string txt;
-	cert_signable_text(c, txt);
-	W(F("ignoring unknown signature by '%s' on '%s'\n") % c.key() % txt);
-	return true;
+        I(status == cert_unknown);
+        string txt;
+        cert_signable_text(c, txt);
+        W(F("ignoring unknown signature by '%s' on '%s'\n") % c.key() % txt);
+        return true;
       }
   }
 
@@ -82,7 +82,7 @@ bogus_cert_p
 
 void 
 erase_bogus_certs(vector< manifest<cert> > & certs,
-		  app_state & app)
+                  app_state & app)
 {
   typedef vector< manifest<cert> >::iterator it;
   it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
@@ -101,12 +101,12 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
       trust_map::iterator j = trust.find(key);
       shared_ptr< set<rsa_keypair_id> > s;
       if (j == trust.end())
-	{
-	  s.reset(new set<rsa_keypair_id>());
-	  trust.insert(make_pair(key, make_pair(s, i)));
-	}
+        {
+          s.reset(new set<rsa_keypair_id>());
+          trust.insert(make_pair(key, make_pair(s, i)));
+        }
       else
-	s = j->second.first;
+        s = j->second.first;
       s->insert(i->inner().key);
     }
 
@@ -116,26 +116,26 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
       cert_value decoded_value;
       decode_base64(get<2>(i->first), decoded_value);
       if (app.lua.hook_get_manifest_cert_trust(*(i->second.first),
-					       get<0>(i->first),
-					       get<1>(i->first),
-					       decoded_value))
-	{
-	  L(F("trust function liked %d signers of %s cert on manifest %s\n")
-	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-	  tmp_certs.push_back(*(i->second.second));
-	}
+                                               get<0>(i->first),
+                                               get<1>(i->first),
+                                               decoded_value))
+        {
+          L(F("trust function liked %d signers of %s cert on manifest %s\n")
+            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          tmp_certs.push_back(*(i->second.second));
+        }
       else
-	{
-	  W(F("trust function disliked %d signers of %s cert on manifest %s\n")
-	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-	}
+        {
+          W(F("trust function disliked %d signers of %s cert on manifest %s\n")
+            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+        }
     }
   certs = tmp_certs;
 }
 
 void 
 erase_bogus_certs(vector< revision<cert> > & certs,
-		  app_state & app)
+                  app_state & app)
 {
   typedef vector< revision<cert> >::iterator it;
   it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
@@ -154,12 +154,12 @@ erase_bogus_certs(vector< revision<cert> > & certs,
       trust_map::iterator j = trust.find(key);
       shared_ptr< set<rsa_keypair_id> > s;
       if (j == trust.end())
-	{
-	  s.reset(new set<rsa_keypair_id>());
-	  trust.insert(make_pair(key, make_pair(s, i)));
-	}
+        {
+          s.reset(new set<rsa_keypair_id>());
+          trust.insert(make_pair(key, make_pair(s, i)));
+        }
       else
-	s = j->second.first;
+        s = j->second.first;
       s->insert(i->inner().key);
     }
 
@@ -169,26 +169,26 @@ erase_bogus_certs(vector< revision<cert> > & certs,
       cert_value decoded_value;
       decode_base64(get<2>(i->first), decoded_value);
       if (app.lua.hook_get_revision_cert_trust(*(i->second.first),
-					       get<0>(i->first),
-					       get<1>(i->first),
-					       decoded_value))
-	{
-	  L(F("trust function liked %d signers of %s cert on revision %s\n")
-	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-	  tmp_certs.push_back(*(i->second.second));
-	}
+                                               get<0>(i->first),
+                                               get<1>(i->first),
+                                               decoded_value))
+        {
+          L(F("trust function liked %d signers of %s cert on revision %s\n")
+            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          tmp_certs.push_back(*(i->second.second));
+        }
       else
-	{
-	  W(F("trust function disliked %d signers of %s cert on revision %s\n")
-	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-	}
+        {
+          W(F("trust function disliked %d signers of %s cert on revision %s\n")
+            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+        }
     }
   certs = tmp_certs;
 }
 
 void 
 erase_bogus_certs(vector< file<cert> > & certs,
-		  app_state & app)
+                  app_state & app)
 {
   typedef vector< file<cert> >::iterator it;
   it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
@@ -207,12 +207,12 @@ erase_bogus_certs(vector< file<cert> > & certs,
       trust_map::iterator j = trust.find(key);
       shared_ptr< set<rsa_keypair_id> > s;
       if (j == trust.end())
-	{
-	  s.reset(new set<rsa_keypair_id>());
-	  trust.insert(make_pair(key, make_pair(s, i)));
-	}
+        {
+          s.reset(new set<rsa_keypair_id>());
+          trust.insert(make_pair(key, make_pair(s, i)));
+        }
       else
-	s = j->second.first;
+        s = j->second.first;
       s->insert(i->inner().key);
     }
 
@@ -222,19 +222,19 @@ erase_bogus_certs(vector< file<cert> > & certs,
       cert_value decoded_value;
       decode_base64(get<2>(i->first), decoded_value);
       if (app.lua.hook_get_file_cert_trust(*(i->second.first),
-					   get<0>(i->first),
-					   get<1>(i->first),
-					   decoded_value))
-	{
-	  L(F("trust function liked %d signers of %s cert on file %s\n")
-	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-	  tmp_certs.push_back(*(i->second.second));
-	}
+                                           get<0>(i->first),
+                                           get<1>(i->first),
+                                           decoded_value))
+        {
+          L(F("trust function liked %d signers of %s cert on file %s\n")
+            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          tmp_certs.push_back(*(i->second.second));
+        }
       else
-	{
-	  W(F("trust function disliked %d signers of %s cert on file %s\n")
-	    % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
-	}
+        {
+          W(F("trust function disliked %d signers of %s cert on file %s\n")
+            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+        }
     }
   certs = tmp_certs;
 }
@@ -246,17 +246,17 @@ cert::cert()
 {}
 
 cert::cert(hexenc<id> const & ident,
-	 cert_name const & name,
-	 base64<cert_value> const & value,
-	 rsa_keypair_id const & key)
+         cert_name const & name,
+         base64<cert_value> const & value,
+         rsa_keypair_id const & key)
   : ident(ident), name(name), value(value), key(key)
 {}
 
 cert::cert(hexenc<id> const & ident, 
-	 cert_name const & name,
-	 base64<cert_value> const & value,
-	 rsa_keypair_id const & key,
-	 base64<rsa_sha1_signature> const & sig)
+         cert_name const & name,
+         base64<cert_value> const & value,
+         rsa_keypair_id const & key,
+         base64<rsa_sha1_signature> const & sig)
   : ident(ident), name(name), value(value), key(key), sig(sig)
 {}
 
@@ -266,11 +266,11 @@ cert::operator<(cert const & other) const
   return (ident < other.ident)
     || ((ident == other.ident) && name < other.name)
     || (((ident == other.ident) && name == other.name) 
-	&& value < other.value)    
+        && value < other.value)    
     || ((((ident == other.ident) && name == other.name) 
-	 && value == other.value) && key < other.key)
+         && value == other.value) && key < other.key)
     || (((((ident == other.ident) && name == other.name) 
-	  && value == other.value) && key == other.key) && sig < other.sig);
+          && value == other.value) && key == other.key) && sig < other.sig);
 }
 
 bool 
@@ -285,17 +285,17 @@ cert::operator==(cert const & other) const
 }
 
 // netio support
-			 
+                         
 void 
 read_cert(string const & in, cert & t)
 {
   size_t pos = 0;
   id hash = extract_substring(in, pos, 
-			      constants::merkle_hash_length_in_bytes, 
-			      "cert hash");
+                              constants::merkle_hash_length_in_bytes, 
+                              "cert hash");
   id ident = extract_substring(in, pos, 
-			       constants::merkle_hash_length_in_bytes, 
-			       "cert ident");
+                               constants::merkle_hash_length_in_bytes, 
+                               "cert ident");
   string name, val, key, sig;
   extract_variable_length_string(in, name, pos, "cert name");
   extract_variable_length_string(in, val, pos, "cert val");
@@ -322,7 +322,7 @@ read_cert(string const & in, cert & t)
       hexenc<id> hhash;
       encode_hexenc(hash, hhash);
       throw bad_decode(F("calculated cert hash '%s' does not match '%s'")
-		       % hcheck % hhash);
+                       % hcheck % hhash);
     }
   t = tmp;
 }
@@ -352,7 +352,7 @@ write_cert(cert const & t, string & out)
 
 void 
 cert_signable_text(cert const & t,
-		       string & out)
+                       string & out)
 {
   out = (F("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
   L(F("cert: signable text %s\n") % out);
@@ -362,10 +362,10 @@ void
 cert_hash_code(cert const & t, hexenc<id> & out)
 {
   string tmp(t.ident()
-	     + ":" + t.name()
-	     + ":" + remove_ws(t.value())
-	     + ":" + t.key()
-	     + ":" + remove_ws(t.sig()));
+             + ":" + t.name()
+             + ":" + remove_ws(t.value())
+             + ":" + t.key()
+             + ":" + remove_ws(t.sig()));
   data tdat(tmp);
   calculate_ident(tdat, out);
 }
@@ -464,10 +464,10 @@ check_cert(app_state & app, cert const & t)
   else
     {
       if (!app.db.public_key_exists(t.key))
-	return cert_unknown;
+        return cert_unknown;
       app.db.get_key(t.key, pub);
       if (persist_ok)
-	pubkeys.insert(make_pair(t.key, pub));
+        pubkeys.insert(make_pair(t.key, pub));
     }
 
   string signed_text;
@@ -485,7 +485,7 @@ string const branch_cert_name("branch");
 
 bool 
 guess_default_key(rsa_keypair_id & key, 
-		  app_state & app)
+                  app_state & app)
 {
 
   if (app.signing_key() != "")
@@ -498,7 +498,7 @@ guess_default_key(rsa_keypair_id & key,
     {
       cert_value branch(app.branch_name());
       if (app.lua.hook_get_branch_key(branch, key))
-	return true;
+        return true;
     }
   
   vector<rsa_keypair_id> all_privkeys;
@@ -514,8 +514,8 @@ guess_default_key(rsa_keypair_id & key,
 
 void 
 guess_branch(revision_id const & ident,
-	     app_state & app,
-	     cert_value & branchname)
+             app_state & app,
+             cert_value & branchname)
 {
   if (app.branch_name() != "")
     {
@@ -524,8 +524,8 @@ guess_branch(revision_id const & ident,
   else
     {
       N(!ident.inner()().empty(),
-	F("no branch found for empty revision, "
-	  "please provide a branch name"));
+        F("no branch found for empty revision, "
+          "please provide a branch name"));
 
       vector< revision<cert> > certs;
       cert_name branch(branch_cert_name);
@@ -533,12 +533,12 @@ guess_branch(revision_id const & ident,
       erase_bogus_certs(certs, app);
 
       N(certs.size() != 0, 
-	F("no branch certs found for revision %s, "
-	  "please provide a branch name") % ident);
+        F("no branch certs found for revision %s, "
+          "please provide a branch name") % ident);
       
       N(certs.size() == 1,
-	F("multiple branch certs found for revision %s, "
-	  "please provide a branch name") % ident);
+        F("multiple branch certs found for revision %s, "
+          "please provide a branch name") % ident);
       
       decode_base64(certs[0].inner().value, branchname);
     }
@@ -546,10 +546,10 @@ guess_branch(revision_id const & ident,
 
 void 
 make_simple_cert(hexenc<id> const & id,
-		 cert_name const & nm,
-		 cert_value const & cv,
-		 app_state & app,
-		 cert & c)
+                 cert_name const & nm,
+                 cert_value const & cv,
+                 app_state & app,
+                 cert & c)
 {
   rsa_keypair_id key;
   N(guess_default_key(key,app),
@@ -564,10 +564,10 @@ make_simple_cert(hexenc<id> const & id,
 
 static void 
 put_simple_manifest_cert(manifest_id const & id,
-			 cert_name const & nm,
-			 cert_value const & val,
-			 app_state & app,
-			 packet_consumer & pc)
+                         cert_name const & nm,
+                         cert_value const & val,
+                         app_state & app,
+                         packet_consumer & pc)
 {
   cert t;
   make_simple_cert(id.inner(), nm, val, app, t);
@@ -578,10 +578,10 @@ put_simple_manifest_cert(manifest_id const & id,
 
 static void 
 put_simple_revision_cert(revision_id const & id,
-			cert_name const & nm,
-			cert_value const & val,
-			app_state & app,
-			packet_consumer & pc)
+                        cert_name const & nm,
+                        cert_value const & val,
+                        app_state & app,
+                        packet_consumer & pc)
 {
   cert t;
   make_simple_cert(id.inner(), nm, val, app, t);
@@ -591,10 +591,10 @@ put_simple_revision_cert(revision_id const & id,
 
 static void 
 put_simple_file_cert(file_id const & id,
-		     cert_name const & nm,
-		     cert_value const & val,
-		     app_state & app,
-		     packet_consumer & pc)
+                     cert_name const & nm,
+                     cert_value const & val,
+                     app_state & app,
+                     packet_consumer & pc)
 {
   cert t;
   make_simple_cert(id.inner(), nm, val, app, t);
@@ -604,23 +604,24 @@ put_simple_file_cert(file_id const & id,
 
 void 
 cert_revision_in_branch(revision_id const & rev, 
-		       cert_value const & branchname,
-		       app_state & app,
-		       packet_consumer & pc)
+                       cert_value const & branchname,
+                       app_state & app,
+                       packet_consumer & pc)
 {
   put_simple_revision_cert (rev, branch_cert_name,
-			   branchname, app, pc);
+                           branchname, app, pc);
 }
 
 void 
 get_branch_heads(cert_value const & branchname,
-		 app_state & app,
-		 set<revision_id> & heads)
+                 app_state & app,
+                 set<revision_id> & heads)
 {
   heads.clear();
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
   app.db.get_heads(branch_encoded, heads);
+  erase_ancestors(heads, app);
 }
 
 
@@ -638,9 +639,9 @@ string const vcheck_cert_name = "vcheck";
 
 static void 
 cert_revision_date(revision_id const & m, 
-		   boost::posix_time::ptime t,
-		   app_state & app,
-		   packet_consumer & pc)
+                   boost::posix_time::ptime t,
+                   app_state & app,
+                   packet_consumer & pc)
 {
   string val = boost::posix_time::to_iso_extended_string(t);
   put_simple_revision_cert(m, date_cert_name, val, app, pc);
@@ -648,98 +649,98 @@ cert_revision_date(revision_id const & m,
 
 void 
 cert_revision_date_time(revision_id const & m, 
-			time_t t,
-			app_state & app,
-			packet_consumer & pc)
+                        time_t t,
+                        app_state & app,
+                        packet_consumer & pc)
 {
   // make sure you do all your CVS conversions by 2038!
   boost::posix_time::ptime tmp(boost::gregorian::date(1970,1,1), 
-			       boost::posix_time::seconds(static_cast<long>(t)));
+                               boost::posix_time::seconds(static_cast<long>(t)));
   cert_revision_date(m, tmp, app, pc);
 }
 
 void 
 cert_revision_date_now(revision_id const & m, 
-		       app_state & app,
-		       packet_consumer & pc)
+                       app_state & app,
+                       packet_consumer & pc)
 {
   cert_revision_date(m, boost::posix_time::second_clock::universal_time(), app, pc);
 }
 
 void 
 cert_revision_author(revision_id const & m, 
-		     string const & author,
-		     app_state & app,
-		     packet_consumer & pc)
+                     string const & author,
+                     app_state & app,
+                     packet_consumer & pc)
 {
   put_simple_revision_cert(m, author_cert_name, 
-			   author, app, pc);  
+                           author, app, pc);  
 }
 
 void 
 cert_revision_author_default(revision_id const & m, 
-			     app_state & app,
-			     packet_consumer & pc)
+                             app_state & app,
+                             packet_consumer & pc)
 {
   string author;
   if (!app.lua.hook_get_author(app.branch_name(), author))
     {
       rsa_keypair_id key;
       N(guess_default_key(key, app),
-	F("no default author name for branch '%s'") 
-	% app.branch_name);
+        F("no default author name for branch '%s'") 
+        % app.branch_name);
       author = key();
     }
   put_simple_revision_cert(m, author_cert_name, 
-			   author, app, pc);
+                           author, app, pc);
 }
 
 void 
 cert_revision_tag(revision_id const & m, 
-		  string const & tagname,
-		  app_state & app,
-		  packet_consumer & pc)
+                  string const & tagname,
+                  app_state & app,
+                  packet_consumer & pc)
 {
   put_simple_revision_cert(m, tag_cert_name, 
-			   tagname, app, pc);  
+                           tagname, app, pc);  
 }
 
 
 void 
 cert_revision_changelog(revision_id const & m, 
-			string const & changelog,
-			app_state & app,
-			packet_consumer & pc)
+                        string const & changelog,
+                        app_state & app,
+                        packet_consumer & pc)
 {
   put_simple_revision_cert(m, changelog_cert_name, 
-			   changelog, app, pc);  
+                           changelog, app, pc);  
 }
 
 void 
 cert_file_comment(file_id const & f, 
-		  string const & comment,
-		  app_state & app,
-		  packet_consumer & pc)
+                  string const & comment,
+                  app_state & app,
+                  packet_consumer & pc)
 {
   put_simple_file_cert(f, comment_cert_name, 
-		       comment, app, pc);  
+                       comment, app, pc);  
 }
 
 void 
 cert_revision_comment(revision_id const & m, 
-		      string const & comment,
-		      app_state & app,
-		      packet_consumer & pc)
+                      string const & comment,
+                      app_state & app,
+                      packet_consumer & pc)
 {
   put_simple_revision_cert(m, comment_cert_name, 
-			   comment, app, pc);  
+                           comment, app, pc);  
 }
 
 void 
 cert_revision_testresult(revision_id const & r, 
-			 string const & results,
-			 app_state & app,
-			 packet_consumer & pc)
+                         string const & results,
+                         app_state & app,
+                         packet_consumer & pc)
 {
   bool passed = false;
   if (lowercase(results) == "true" ||
@@ -747,8 +748,8 @@ cert_revision_testresult(revision_id const & r,
       results == "1")
     passed = true;
   else if (lowercase(results) == "false" ||
-	   lowercase(results) == "no" ||
-	   results == "0")
+           lowercase(results) == "no" ||
+           results == "0")
     passed = false;
   else
     throw informative_failure("could not interpret test results, tried '0/1' 'yes/no', 'true/false'");
@@ -756,12 +757,12 @@ cert_revision_testresult(revision_id const & r,
   put_simple_revision_cert(r, testresult_cert_name, lexical_cast<string>(passed), app, pc); 
 }
 
-			  
+                          
 static void 
 calculate_vcheck_mac(manifest_id const & m, 
-		     string const & seed,
-		     string & mac,
-		     app_state & app)
+                     string const & seed,
+                     string & mac,
+                     app_state & app)
 {
   L(F("calculating vcheck cert on %s with seed %s\n") % m % seed);
 
@@ -770,8 +771,8 @@ calculate_vcheck_mac(manifest_id const & m,
   for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
     {
       N(app.db.file_version_exists(manifest_entry_id(i)),
-	F("missing file version %s for %s") 
-	% manifest_entry_id(i) % manifest_entry_path(i));
+        F("missing file version %s for %s") 
+        % manifest_entry_id(i) % manifest_entry_path(i));
 
       file_data fdat;
       data dat;
@@ -782,7 +783,7 @@ calculate_vcheck_mac(manifest_id const & m,
       calculate_mac(seed, dat(), fmac); 
       mm_mac.insert(make_pair(manifest_entry_path(i), file_id(fmac)));
       L(F("mac of %s (seed=%s, id=%s) is %s\n") % 
-	manifest_entry_path(i) % seed % manifest_entry_id(i) % fmac);
+        manifest_entry_path(i) % seed % manifest_entry_id(i) % fmac);
     }
   
   data dat;
@@ -793,8 +794,8 @@ calculate_vcheck_mac(manifest_id const & m,
 
 void 
 cert_manifest_vcheck(manifest_id const & m, 
-		     app_state & app,
-		     packet_consumer & pc)
+                     app_state & app,
+                     packet_consumer & pc)
 {
   string mac;
   string seed;
@@ -807,7 +808,7 @@ cert_manifest_vcheck(manifest_id const & m,
 
 void 
 check_manifest_vcheck(manifest_id const & m, 
-		      app_state & app)
+                      app_state & app)
 {
 
   vector< manifest<cert> > certs;
@@ -826,28 +827,28 @@ check_manifest_vcheck(manifest_id const & m,
       string::size_type colon_pos = cv.find(':');
 
       N(colon_pos != string::npos ||
-	colon_pos +1 >= cv.size(),
-	F("malformed vcheck cert on %s: %s") % m % cv);
+        colon_pos +1 >= cv.size(),
+        F("malformed vcheck cert on %s: %s") % m % cv);
 
       string seed = cv.substr(0, colon_pos);
       string their_mac = cv.substr(colon_pos + 1);
       string our_mac;
 
       P(F("confirming vcheck packet on %s from %s (%d bit seed)\n") 
-	% m % cert->inner().key % (seed.size() * 4));
+        % m % cert->inner().key % (seed.size() * 4));
 
       calculate_vcheck_mac(m, seed, our_mac, app);
 
       if (their_mac != our_mac)
-	{
-	  W(F("vcheck FAILED: key %s, id %s\n") % cert->inner().key % m);
-	  W(F("seed: %s\n") % seed);
-	  W(F("their mac: %s\n") % their_mac);
-	  W(F("our mac: %s\n") % our_mac);  
-	  W(F("you should investigate the contents of manifest %s immediately\n") % m);
-	}
+        {
+          W(F("vcheck FAILED: key %s, id %s\n") % cert->inner().key % m);
+          W(F("seed: %s\n") % seed);
+          W(F("their mac: %s\n") % their_mac);
+          W(F("our mac: %s\n") % our_mac);  
+          W(F("you should investigate the contents of manifest %s immediately\n") % m);
+        }
       else 
-	P(F("vcheck OK: key %s, id %s\n") % cert->inner().key % m);
+        P(F("vcheck OK: key %s, id %s\n") % cert->inner().key % m);
     }
 }
 

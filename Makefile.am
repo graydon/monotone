@@ -86,16 +86,21 @@ BOOST_SANDBOX_SOURCES = \
 	boost/circular_buffer.hpp
 
 SQLITE_SOURCES = \
-        sqlite/attach.c sqlite/auth.c sqlite/btree.c sqlite/btree_rb.c \
-        sqlite/build.c sqlite/copy.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
-        sqlite/hash.c sqlite/insert.c sqlite/main.c sqlite/opcodes.c sqlite/os.c \
+        sqlite/attach.c sqlite/auth.c sqlite/btree.c \
+        sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
+        sqlite/hash.c sqlite/insert.c \
+        sqlite/legacy.c sqlite/main.c sqlite/opcodes.c \
+        sqlite/os_mac.c sqlite/os_unix.c sqlite/os_win.c \
         sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c \
         sqlite/random.c sqlite/select.c sqlite/table.c sqlite/tokenize.c \
-        sqlite/trigger.c sqlite/update.c sqlite/util.c sqlite/vacuum.c \
-        sqlite/vdbe.c sqlite/vdbeaux.c sqlite/where.c \
+        sqlite/trigger.c sqlite/update.c sqlite/utf.c \
+        sqlite/util.c sqlite/vacuum.c \
+        sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c \
+        sqlite/vdbemem.c sqlite/where.c \
 	\
         sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/parse.h sqlite/sqlite.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
+        sqlite/os_common.h sqlite/os_mac.h sqlite/os_unix.h sqlite/os_win.h \
+        sqlite/parse.h sqlite/sqlite3.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
 	sqlite/pager.h
 
 LUA_SOURCES = \
@@ -135,14 +140,14 @@ txt2c_SOURCES = txt2c.cc
 noinst_LIBRARIES = libplatform.a lib3rdparty.a 
 libplatform_a_SOURCES = platform.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
-                        $(BOTAN_SOURCES) \
+			$(BOTAN_SOURCES) \
 			$(IDNA_SOURCES) \
 			$(NETXX_SOURCES)
 
 # flags
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -Wall 
 AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
 AM_LDFLAGS = 
 

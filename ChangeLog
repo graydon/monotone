@@ -1,7 +1,134 @@
+2005-01-10  graydon hoare  <graydon@pboox.com>
+
+	* commands.cc (explicit_merge): Tweak merge message.
+	* database.cc (check_sqlite_format_version): New function.
+	(database::sql): Call it.
+	* sqlite/pager.hh (SQLITE_DEFAULT_PAGE_SIZE): Adjust to 8192.
+	(SQLITE_MAX_PAGE_SIZE): Adjust to 65536.
+	* schema_migration.cc: Post-merge cleanup.
+	* Makefile.am: Likewise.
+
+2005-01-10  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: SQLite 3.0.8 CVS import
+	* database.{cc,hh}:
+	* schema_migration.{cc,hh}: convert to use the SQLite3 API
+	
+	This does not yet use any of the more sophisticated API features
+	of SQLite3 (query parameters, BLOBs), so there is plenty of room 
+	for optimization. This also does not change the schema (i.e.
+	still uses base64 encoded values in tables)
+
+2005-01-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* schema_migration.cc (migrate_monotone_schema): Add comment
+	pointing to t_migrate_schema.at.
+	* tests/t_migrate_schema.at: Implement, mostly.  (Still broken.)
+
+	* tests/t_heads_discontinuous_branch.at: Remove urgency
+	annotation.
+	* tests/t_netsync_nocerts.at: Add urgency annotation.
+
+	* testsuite.at: Add UNGZ, UNGZB64 macros.
+	* tests/t_fmerge.at: Use them.
+
+2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* schema_migration.cc: Update comment about depot code.
+	(migrate_depot_split_seqnumbers_into_groups):
+	(migrate_depot_make_seqnumbers_non_null):
+	(migrate_depot_schema): Remove; all are dead code.
+	
+2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* schema_migration.cc: Remove tabs.
+
+2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_check_same_db_contents.at: Uncapitalize title to unbreak
+	testsuite.
+
+	* revision.cc (is_ancestor): Add FIXME comment.
+	(erase_ancestors): New function.
+	* revision.hh (erase_ancestors): Prototype it.
+	* cert.cc (get_branch_heads): Call it.
+	* tests/t_heads_discontinuous_branch.at: Un-XFAIL it.
+
+	* revision.cc (find_subgraph_for_composite_search): Ignore null
+	revision ids.
+	* commands.cc (try_one_merge): Add invariant - never create merges
+	where the left parent is an ancestor or descendent of the right.
+	(explicit_merge): Same check.
+	(propagate): Handle cases where no merge is necessary.  Also, make
+	generated log message more readable.
+
+	* tests/t_propagate_desc.at: Un-XFAIL it.
+	* tests/t_propagate_anc.at: Un-XFAIL it.  Use new
+	CHECK_SAME_DB_CONTENTS macros.
+	* testsuite.at: Move t_check_same_db_contents.at to run before
+	propagation tests.  Make CHECK_SAME_DB_CONTENTS more thorough.
+
+	* tests/t_dump_load.at: Implement test.
+
+2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_check_same_db_contents.at: New test.
+	* testsuite.at: Add it.
+	(CHECK_SAME_DB_CONTENTS): New macro.
+
+2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* cert.cc: Remove tabs.
+	* revision.hh: Likewise.
+
+2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_propagate_anc.at: Also check the case where we're
+	propagating a non-strict ancestor, i.e. the heads are actually
+	equal.
+
+2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* database.cc (get_revision_parents): Add invariant.
+	(get_revision_children): Likewise.
+	(get_revision): Likewise.
+	(put_revision): Likewise.
+
+	* tests/t_merge_ancestor.at: New test.
+	* tests/t_propagate_desc.at: Likewise.
+	* tests/t_propagate_anc.at: Likewise.
+	* testsuite.at: Call them.
+
+2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_netsync_diffbranch.at: Add priority, add description of
+	problem and solution.
+	Also, XFAIL it.
+	* tests/t_netsync_unrelated.at: Add reference to discussion.
+	* tests/t_cmdline_options.at: Remove priority marking from
+	non-bug.
+	* tests/t_checkout_dir.at: XFAIL when run as root.
+
+	* tests/t_netsync_nocerts.at: New test.
+	* testsuite.at: Call it.
+	
+2005-1-3  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_netsync_diffbranch.at: add a new test for pulling a branch
+	with a parent from a different branch.
+	* testsuite.at: add it
+
+2005-01-02  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (log_certs): new function
+	(log) add Ancestor: and Branch: entries to output; use above new
+	function
+	* tests/t_cross.at: update to work with changesets
+
 2005-1-1  Matt Johnston  <matt@ucc.asn.au>
 
-        * botan/base64.cpp: Include a terminating newline in all cases for
-        compatibility with cryptopp
+	* botan/base64.cpp: Include a terminating newline in all cases for
+	compatibility with cryptopp
 
 2005-1-1  Matt Johnston  <matt@ucc.asn.au>
 
@@ -23,12 +150,12 @@
 
 2004-12-30  Julio M. Merino Vidal  <jmmv@menta.net>
 
-        * change_set.{cc,hh}: Add the has_renamed_file_src function in
+	* change_set.{cc,hh}: Add the has_renamed_file_src function in
 	change_set::path_rearrangement.
 	* commands.cc: Make the 'log' command show nothing for renamed or
-        deleted files (when asked to do so) and stop going backwards in
-        history when such condition is detected; they don't exist any more,
-        so there is no point in showing history (and could drive to incorrect
+	deleted files (when asked to do so) and stop going backwards in
+	history when such condition is detected; they don't exist any more,
+	so there is no point in showing history (and could drive to incorrect
 	logs anyway).
 	* tests/t_log_nonexistent.at: New check to verify previous.
 	* testsuite.at: Add it.
@@ -53,10 +180,10 @@
 
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
-        * tests/t_drop_rename_patch.at: A test to check that deltas on
-        renamed files are included in concatenate_change_sets, if there was a
-        deletion of a file with the same name as the rename src.
-        * testsuite.at: add it
+	* tests/t_drop_rename_patch.at: A test to check that deltas on
+	renamed files are included in concatenate_change_sets, if there was a
+	deletion of a file with the same name as the rename src.
+	* testsuite.at: add it
 
 2004-12-29  graydon hoare  <graydon@pobox.com>
 
@@ -78,19 +205,19 @@
 
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
-        * change_set.{cc,hh}: Take account of files which are the
-        destination of a rename_file operation, when examining
-        file deletions. Added helper methods to clean up related code.
+	* change_set.{cc,hh}: Take account of files which are the
+	destination of a rename_file operation, when examining
+	file deletions. Added helper methods to clean up related code.
 
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
-        * change_set.cc: added a sanity check for deltas with same src/dst,
-        and deleted files with deltas.
+	* change_set.cc: added a sanity check for deltas with same src/dst,
+	and deleted files with deltas.
 
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
-        * testsuite.at, tests/t_netsync_single.at: don't use -q with
-        killall since it isn't portable.
+	* testsuite.at, tests/t_netsync_single.at: don't use -q with
+	killall since it isn't portable.
 
 2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
 
@@ -156,13 +283,13 @@
 
 2004-12-20  Matt Johnston  <matt@ucc.asn.au>
 
-        * keys.cc: don't cache bad passphrases, so prompt for a correct
-        password if the first ones fail.
+	* keys.cc: don't cache bad passphrases, so prompt for a correct
+	password if the first ones fail.
 
 2004-12-19  Matt Johnston  <matt@ucc.asn.au>
 
-        * commands.cc: print out author/date next to ambiguous revision
-        lists from selectors.
+	* commands.cc: print out author/date next to ambiguous revision
+	lists from selectors.
 
 2004-12-22  Julio M. Merino Vidal  <jmmv@menta.net>
 
@@ -225,8 +352,8 @@
 
 2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
 
-        * ChangeLog: Add missing entries for several modifications I did
-        in December 6th and 3rd.
+	* ChangeLog: Add missing entries for several modifications I did
+	in December 6th and 3rd.
 
 2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
 
@@ -458,9 +585,9 @@
 
 2004-12-10  Matt Johnston  <matt@ucc.asn.au>
 
-        * cert.cc: Added priv_key_exists() function
-        * commands.cc, rcs_import.cc: use new privkey functions
-        * netsync.cc: change some bits that were missed
+	* cert.cc: Added priv_key_exists() function
+	* commands.cc, rcs_import.cc: use new privkey functions
+	* netsync.cc: change some bits that were missed
 
 2004-12-09  Derek Scherger  <derek@echologic.com>
 
@@ -479,20 +606,20 @@
 
 2004-12-09  Matt Johnston  <matt@ucc.asn.au>
 
-        * cert.cc, cert.hh, lua.cc, lua.hh, netsync.cc:
-        Added a new get_priv_key(keyid) lua hook to retrieve
-        a private key from ~/.monotonerc
+	* cert.cc, cert.hh, lua.cc, lua.hh, netsync.cc:
+	Added a new get_priv_key(keyid) lua hook to retrieve
+	a private key from ~/.monotonerc
 
 2004-12-09  Matt Johnston  <matt@ucc.asn.au>
 
-        * change_set.cc: Don't include patch deltas on files which
-        are being deleted in changesets. (partial fix for bug
-        invoked by t_merge_add_del.at)
+	* change_set.cc: Don't include patch deltas on files which
+	are being deleted in changesets. (partial fix for bug
+	invoked by t_merge_add_del.at)
 
 2004-12-09  Matt Johnston  <matt@ucc.asn.au>
 
-        * configure.ac,Makefile.am: Fix iconv and intl
-        handling so that the libraries are used (required for OS X).
+	* configure.ac,Makefile.am: Fix iconv and intl
+	handling so that the libraries are used (required for OS X).
 
 2004-12-09  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -707,8 +834,8 @@
 
 2004-12-05  graydon hoare  <graydon@pobox.com>
 
-        * Makefile.am (package_full_revision.txt): Use top_builddir
-        to locate monotone executable.
+	* Makefile.am (package_full_revision.txt): Use top_builddir
+	to locate monotone executable.
 
 2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -724,13 +851,13 @@
 
 2004-12-04  graydon hoare  <graydon@pobox.com>
 
-        * commands.cc (fcommit): New command.
-        (update): Finish off merge of update command.
+	* commands.cc (fcommit): New command.
+	(update): Finish off merge of update command.
 
 2004-12-04  Derek Scherger  <derek@echologic.com>
 
-        * commands.cc: (complete_command): New function.
-        (explain_usage/process): Use it.
+	* commands.cc: (complete_command): New function.
+	(explain_usage/process): Use it.
 
 2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -869,13 +996,13 @@
 
 2004-11-30  Matt Johnston  <matt@ucc.asn.au>
 
-        * change_set.cc (merge_disjoint_analyses): Prevent duplicated
-        tids being used.
-        (merge_disjoint_analyses): Fix typo (s/a_tmp/b_tmp/)
+	* change_set.cc (merge_disjoint_analyses): Prevent duplicated
+	tids being used.
+	(merge_disjoint_analyses): Fix typo (s/a_tmp/b_tmp/)
 
 2004-11-27  Matt Johnston  <matt@ucc.asn.au>
 
-        * Replaced cryptopp with botan
+	* Replaced cryptopp with botan
 
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 

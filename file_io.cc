@@ -4,7 +4,6 @@
 // see the file COPYING for details
 
 #include <stdio.h>             // for rename(2)
-#include <fstream>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>

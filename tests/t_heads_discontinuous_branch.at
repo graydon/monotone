@@ -1,10 +1,7 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([(minor) 'heads' with discontinuous branches])
+AT_SETUP(['heads' with discontinuous branches])
 MONOTONE_SETUP
-
-# This test is a bug report.
-AT_XFAIL_IF(true)
 
 # This tests the 'heads' command with a graph like:
 #

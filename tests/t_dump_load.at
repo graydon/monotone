@@ -1,16 +1,18 @@
-AT_SETUP([(imp) database dump/load])
+AT_SETUP([database dump/load])
 MONOTONE_SETUP
 
-# This test is a "bug report" -- the bug is that there is no test that
-# exercises 'db dump'/'db load'!  These commands are critical for
-# various backup/migration scenarios; write a test for them here.
-AT_XFAIL_IF(true)
+AT_CHECK((echo foo; echo foo) | MONOTONE genkey foo, [], [ignore], [ignore])
+ADD_FILE(testfile1, [blah balh
+])
+COMMIT(branch1)
+SET_FILE(testfile1, [stuff stuff
+])
+ADD_FILE(testfile2, [foo foo
+])
+COMMIT(branch2)
 
+AT_CHECK(MONOTONE db dump | MONOTONE db load --db=test2.db, [], [ignore], [ignore])
 
-
-# This Space For Test
-AT_CHECK(false)
-
-
+CHECK_SAME_DB_CONTENTS(test.db, test2.db)
 
 AT_CLEANUP

@@ -2913,6 +2913,17 @@ try_one_merge(revision_id const & left_id,
   app.db.get_manifest(right_rev.new_manifest, right_man);
   app.db.get_manifest(left_rev.new_manifest, left_man);
   
+  // Make sure that we can't create malformed graphs where the left parent is
+  // a descendent or ancestor of the right, or where both parents are equal,
+  // etc.
+  {
+    set<revision_id> ids;
+    ids.insert(left_id);
+    ids.insert(right_id);
+    erase_ancestors(ids, app);
+    I(ids.size() == 2);
+  }
+
   if (!null_id(ancestor_id))
     {
       I(is_ancestor(ancestor_id, left_id, app));
@@ -3051,6 +3062,10 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   //
   //   4. save the results as the delta (N2,M), the ancestry edges (N1,M)
   //   and (N2,M), and the cert (N2,dst).
+  //
+  //   there are also special cases we have to check for where no merge is
+  //   actually necessary, because there hasn't been any divergence since the
+  //   last time propagate was run.
   
   set<revision_id> src_heads, dst_heads;
 
@@ -3073,20 +3088,41 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   P(F("[source] %s\n") % *src_i);
   P(F("[target] %s\n") % *dst_i);
 
-  revision_id merged;
-  transaction_guard guard(app.db);
-  try_one_merge(*src_i, *dst_i, revision_id(), merged, app);
-  
-  packet_db_writer dbw(app);
-  
-  cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
-  
-  string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
-                % (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
-  
-  cert_revision_changelog(merged, log, app, dbw);
-  
-  guard.commit();      
+  // check for special cases
+  if (*src_i == *dst_i || is_ancestor(*src_i, *dst_i, app))
+    {
+      P(F("branch '%s' is up-to-date with respect to branch '%s'\n")
+          % idx(args, 1)() % idx(args, 0)());
+      P(F("no action taken\n"));
+    }
+  else if (is_ancestor(*dst_i, *src_i, app))
+    {
+      P(F("no merge necessary; putting %s in branch '%s'\n")
+        % (*src_i) % idx(args, 1)());
+      transaction_guard guard(app.db);
+      packet_db_writer dbw(app);
+      cert_revision_in_branch(*src_i, idx(args, 1)(), app, dbw);
+      guard.commit();
+    }
+  else
+    {
+      revision_id merged;
+      transaction_guard guard(app.db);
+      try_one_merge(*src_i, *dst_i, revision_id(), merged, app);
+
+      packet_db_writer dbw(app);
+
+      cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
+
+      string log = (F("propagate from branch '%s' (head %s)\n"
+                      "            to branch '%s' (head %s)\n")
+                    % idx(args, 0) % (*src_i)
+                    % idx(args, 1) % (*dst_i)).str();
+
+      cert_revision_changelog(merged, log, app, dbw);
+
+      guard.commit();      
+    }
 }
 
 CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
@@ -3098,10 +3134,10 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
   if (args.size() != 3 && args.size() != 4)
     throw usage(name);
 
+  complete(app, idx(args, 0)(), left);
+  complete(app, idx(args, 1)(), right);
   if (args.size() == 4)
     {
-      complete(app, idx(args, 0)(), left);
-      complete(app, idx(args, 1)(), right);
       complete(app, idx(args, 2)(), ancestor);
       N(is_ancestor(ancestor, left, app),
         F("%s is not an ancestor of %s") % ancestor % left);
@@ -3111,11 +3147,16 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
     }
   else
     {
-      complete(app, idx(args, 0)(), left);
-      complete(app, idx(args, 1)(), right);
       branch = idx(args, 2)();
     }
   
+  N(!(left == right),
+    F("%s and %s are the same revision, aborting") % left % right);
+  N(!is_ancestor(left, right, app),
+    F("%s is already an ancestor of %s") % left % right);
+  N(!is_ancestor(right, left, app),
+    F("%s is already an ancestor of %s") % right % left);
+
   // Somewhat redundant, but consistent with output of plain "merge" command.
   P(F("[source] %s\n") % left);
   P(F("[source] %s\n") % right);
@@ -3131,7 +3172,7 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
   string log = (F("explicit_merge of %s\n"
                   "              and %s\n"
                   "   using ancestor %s\n"
-                  "to branch '%s'\n")
+                  "        to branch '%s'\n")
                 % left % right % ancestor % branch).str();
   
   cert_revision_changelog(merged, log, app, dbw);
@@ -3321,6 +3362,27 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
   import_cvs_repo(mkpath(idx(args, 0)()), app);
 }
 
+static void
+log_certs(app_state & app, revision_id id, cert_name name, string label, bool multiline)
+{
+  vector< revision<cert> > certs;
+
+  app.db.get_revision_certs(id, name, certs);
+  erase_bogus_certs(certs, app);
+  for (vector< revision<cert> >::const_iterator i = certs.begin();
+       i != certs.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      cout << label;
+
+      if (multiline) 
+          cout << endl << endl << tv << endl;
+      else
+          cout << tv << endl;
+    }	  
+}
+
 CMD(log, "informative", "[ID] [file]", "print history in reverse order starting from 'ID' (filtering by 'file')")
 {
   revision_set rev;
@@ -3357,9 +3419,10 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
   
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);
+  cert_name branch_name(branch_cert_name);
+  cert_name tag_name(tag_cert_name);
   cert_name changelog_name(changelog_cert_name);
   cert_name comment_name(comment_cert_name);
-  cert_name tag_name(tag_cert_name);
 
   set<revision_id> seen;
 
@@ -3391,9 +3454,13 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
 
           changes_summary csum;
           
+          set<revision_id> ancestors;
+
           for (edge_map::const_iterator e = rev.edges.begin();
                e != rev.edges.end(); ++e)
             {
+              ancestors.insert(edge_old_revision(e));
+
               change_set const & cs = edge_changes(e);
               if (! file().empty())
                 {
@@ -3424,73 +3491,28 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
           
           if (print_this)
           {
-          cout << "-----------------------------------------------------------------"
-               << endl;
-          cout << "Revision: " << rid << endl;
+            cout << "-----------------------------------------------------------------"
+                 << endl;
+            cout << "Revision: " << rid << endl;
 
-          app.db.get_revision_certs(rid, author_name, tmp);
-          erase_bogus_certs(tmp, app);
-          for (vector< revision<cert> >::const_iterator j = tmp.begin();
-               j != tmp.end(); ++j)
-            {
-              cert_value tv;
-              decode_base64(j->inner().value, tv);
-              cout << "Author: " << tv << endl;
-            }     
+            for (set<revision_id>::const_iterator anc = ancestors.begin(); 
+                 anc != ancestors.end(); ++anc)
+              cout << "Ancestor: " << *anc << endl;
 
-          app.db.get_revision_certs(rid, date_name, tmp);
-          erase_bogus_certs(tmp, app);
-          for (vector< revision<cert> >::const_iterator j = tmp.begin();
-               j != tmp.end(); ++j)
-            {
-              cert_value tv;
-              decode_base64(j->inner().value, tv);
-              cout << "Date: " << tv << endl;
-            }     
+            log_certs(app, rid, author_name, "Author: ", false);
+            log_certs(app, rid, date_name,   "Date: ",   false);
+            log_certs(app, rid, branch_name, "Branch: ", false);
+            log_certs(app, rid, tag_name,    "Tag: ",    false);
 
-          app.db.get_revision_certs(rid, tag_name, tmp);
-          erase_bogus_certs(tmp, app);
-          if (!tmp.empty())
-            {
-              for (vector< revision<cert> >::const_iterator j = tmp.begin();
-                   j != tmp.end(); ++j)
-                {
-                  cert_value tv;
-                  decode_base64(j->inner().value, tv);
-                  cout << "Tag: " << tv << endl;
-                }         
-            }
+            if (! csum.empty)
+              {
+                cout << endl;
+                csum.print(cout, 70);
+                cout << endl;
+              }
 
-          if (! csum.empty)
-            {
-              cout << endl;
-              csum.print(cout, 70);
-              cout << endl;
-            }
-
-          app.db.get_revision_certs(rid, changelog_name, tmp);
-          erase_bogus_certs(tmp, app);
-          for (vector< revision<cert> >::const_iterator j = tmp.begin();
-               j != tmp.end(); ++j)
-            {
-              cert_value tv;
-              decode_base64(j->inner().value, tv);
-              cout << "ChangeLog:" << endl << endl << tv << endl;
-            }     
-
-          app.db.get_revision_certs(rid, comment_name, tmp);
-          erase_bogus_certs(tmp, app);
-          if (!tmp.empty())
-            {
-              cout << "Revision Comments:" << endl << endl;
-              for (vector< revision<cert> >::const_iterator j = tmp.begin();
-                   j != tmp.end(); ++j)
-                {
-                  cert_value tv;
-                  decode_base64(j->inner().value, tv);
-                  cout << j->inner().key << ": " << tv << endl;
-                }         
-            }
+            log_certs(app, rid, changelog_name, "ChangeLog: ", true);
+            log_certs(app, rid, comment_name,   "Comments: ",  true);
           }
         }
       frontier = next_frontier;

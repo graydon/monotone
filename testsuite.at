@@ -134,6 +134,30 @@ AT_CHECK(mv stdout expout)
 AT_CHECK($2, [], [expout], [ignore])
 ])
 
+# run as CHECK_SAME_DB_CONTENTS(db1, db2)
+m4_define([CHECK_SAME_DB_CONTENTS], [
+CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
+
+CHECK_SAME_STDOUT(MONOTONE --db=$1 agraph, MONOTONE --db=$2 agraph)
+REVS=`MONOTONE --db=$1 complete revision ""`
+for R in $REVS; do
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 ls certs $R, MONOTONE --db=$2 ls certs $R)
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 cat revision $R, MONOTONE --db=$2 cat revision $R)
+done
+
+CHECK_SAME_STDOUT(MONOTONE --db=$1 complete manifest "", MONOTONE --db=$2 complete manifest "")
+MANIFESTS=`MONOTONE --db=$1 complete manifest ""`
+for M in $MANIFESTS; do
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 cat manifest $M, MONOTONE --db=$2 cat manifest $M)
+done
+
+CHECK_SAME_STDOUT(MONOTONE --db=$1 complete file "", MONOTONE --db=$2 complete file "")
+FILES=`MONOTONE --db=$1 complete file ""`
+for F in $FILES; do
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 cat file $F, MONOTONE --db=$2 cat file $F)
+done
+])
+
 # run as PROBE_NODE(filename, rsha, fsha)
 m4_define([PROBE_NODE], [ 
 AT_CHECK(rm MT/revision)
@@ -184,10 +208,46 @@ elif perl -MMIME::Base64 -e 1 2>/dev/null; then
 elif python -c 'import sys;sys.exit(not hasattr("", "decode"))' 2>/dev/null; then
   UNB64_COMMAND="python -c 'import sys;sys.stdout.write(sys.stdin.read().decode("'"'"base64"'"'"))'"
 else
+  # This is lame!  We should XFAIL the test so the user knows that
+  # they're not, you know, actually testing the software.  But
+  # Autotest runs XFAIL conditions in a completely different shell, so
+  # we can't without duplicating the whole test here.
   exit 77
 fi
+# Poor man's logging:
+AT_CHECK(echo $UNB64_COMMAND, [], [ignore], [ignore])
 ])
 m4_define([UNB64], [AT_CHECK(eval $UNB64_COMMAND <$1 >$2)])
+
+# Usage: NEED_UNGZ will cancel the test (reporting success) if we
+# can't decode gzipped text.
+# After calling NEED_UNGZ, you can use UNGZ(infile, outfile) to
+# decode gzipped text.
+m4_define([NEED_UNGZ], [
+if which gunzip 2>/dev/null; then
+  # This is lame!  We should XFAIL the test so the user knows that
+  # they're not, you know, actually testing the software.  But
+  # Autotest runs XFAIL conditions in a completely different shell, so
+  # we can't without duplicating the whole test here.
+  UNGZ_COMMAND="gunzip -c"
+fi
+# Poor man's logging:
+AT_CHECK(echo $UNGZ_COMMAND, [], [ignore], [ignore])
+])
+m4_define([UNGZ], [AT_CHECK(eval $UNGZ_COMMAND <$1 >$2)])
+
+# Usage: NEED_UNGZB64 will XFAIL the test if we can't decode base64'ed
+# gzipped text.
+# After calling NEED_UNGZB64, you can use UNGZB64(infile, outfile) to
+# decode base64'ed gzipped text.
+m4_define([NEED_UNGZB64], [
+NEED_UNB64
+NEED_UNGZ
+])
+m4_define([UNGZB64], [
+UNB64($1, $2.gz)
+UNGZ($2.gz, $2)
+])
 
 # netsync helpers
 # NETSYNC_SETUP sets up 2 databases; RUN_NETSYNC netsyncs between
@@ -323,3 +383,9 @@ m4_include(tests/t_drop_rename_patch.at)
 m4_include(tests/t_cmdline_options.at)
 m4_include(tests/t_log_nonexistent.at)
 m4_include(tests/t_crlf.at)
+m4_include(tests/t_netsync_diffbranch.at)
+m4_include(tests/t_netsync_nocerts.at)
+m4_include(tests/t_check_same_db_contents.at)
+m4_include(tests/t_merge_ancestor.at)
+m4_include(tests/t_propagate_desc.at)
+m4_include(tests/t_propagate_anc.at)

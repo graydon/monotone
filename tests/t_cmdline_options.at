@@ -1,4 +1,4 @@
-AT_SETUP([(minor) verification of command line options])
+AT_SETUP([verification of command line options])
 
 MONOTONE_SETUP
 

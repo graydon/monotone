@@ -68,6 +68,7 @@ template<typename XFM> string xform(string const & in)
   return out;
 }
 
+// specialize it
 template string xform<Botan::Base64_Encoder>(string const &);
 template string xform<Botan::Base64_Decoder>(string const &);
 template string xform<Botan::Hex_Encoder>(string const &);

@@ -1,0 +1,27 @@
+AT_SETUP([(normal) netsync revision with no certs])
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+ADD_FILE(testfile, [blah stuff
+])
+COMMIT(testbranch)
+VER0=`BASE_REVISION`
+
+AT_CHECK(MONOTONE db execute 'delete from revision_certs', [], [ignore], [ignore])
+
+SET_FILE(testfile, [other stuff
+])
+COMMIT(testbranch)
+VER1=`BASE_REVISION`
+
+RUN_NETSYNC(pull, testbranch)
+
+CHECK_SAME_STDOUT(MONOTONE cat revision $VER0, MONOTONE2 cat revision $VER0)
+CHECK_SAME_STDOUT(MONOTONE ls certs $VER0, MONOTONE2 ls certs $VER0)
+CHECK_SAME_STDOUT(MONOTONE cat revision $VER1, MONOTONE2 cat revision $VER1)
+CHECK_SAME_STDOUT(MONOTONE ls certs $VER1, MONOTONE2 ls certs $VER1)
+
+AT_CLEANUP

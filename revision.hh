@@ -107,44 +107,47 @@ edge_changes(edge_map::const_iterator i)
 
 void 
 read_revision_set(data const & dat,
-		  revision_set & rev);
+                  revision_set & rev);
 
 void 
 read_revision_set(revision_data const & dat,
-		  revision_set & rev);
+                  revision_set & rev);
 
 void
 write_revision_set(revision_set const & rev,
-		   data & dat);
+                   data & dat);
 
 void
 write_revision_set(revision_set const & rev,
-		   revision_data & dat);
+                   revision_data & dat);
 
 // graph walking
 
 bool 
 find_common_ancestor_for_merge(revision_id const & left,
-			       revision_id const & right,
-			       revision_id & anc,
-			       app_state & app);
+                               revision_id const & right,
+                               revision_id & anc,
+                               app_state & app);
 
 bool 
 find_least_common_ancestor(revision_id const & left,
-			   revision_id const & right,
-			   revision_id & anc,
-			   app_state & app);
+                           revision_id const & right,
+                           revision_id & anc,
+                           app_state & app);
 
 bool
 is_ancestor(revision_id const & ancestor,
-	    revision_id const & descendent,
-	    app_state & app);
+            revision_id const & descendent,
+            app_state & app);
+
+void
+erase_ancestors(std::set<revision_id> & revisions, app_state & app);
 
 void 
 calculate_composite_change_set(revision_id const & ancestor,
-			       revision_id const & child,
-			       app_state & app,
-			       change_set & composed);
+                               revision_id const & child,
+                               app_state & app,
+                               change_set & composed);
 
 
 void 
@@ -159,18 +162,18 @@ namespace basic_io { struct printer; struct parser; }
 
 void 
 print_revision(basic_io::printer & printer,
-	       revision_set const & rev);
+               revision_set const & rev);
 
 void 
 parse_revision(basic_io::parser & parser,
-	       revision_set & rev);
+               revision_set & rev);
 
 void 
 print_edge(basic_io::printer & printer,
-	   edge_entry const & e);
+           edge_entry const & e);
 
 void 
 parse_edge(basic_io::parser & parser,
-	   edge_map & es);
+           edge_map & es);
 
 #endif // __REVISION_HH__
