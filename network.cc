@@ -11,11 +11,11 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
+#include <adns.h>
+
 #include "Netxx/Netbuf.h"
 #include "Netxx/Stream.h"
 #include "Netxx/Timeout.h"
-
-#include "adns/adns.h"
 
 #include <boost/spirit.hpp>
 

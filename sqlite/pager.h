@@ -24,13 +24,13 @@
 ** experiments show that a page size of 1024 gives the best speed.
 ** (The speed differences are minimal.)
 */
-#define SQLITE_PAGE_SIZE 1024
+#define SQLITE_PAGE_SIZE (1024 * 8)
 
 /*
 ** Maximum number of pages in one database.  (This is a limitation of
 ** imposed by 4GB files size limits.)
 */
-#define SQLITE_MAX_PAGE 1073741823
+#define SQLITE_MAX_PAGE (1073741823 / 8)
 
 /*
 ** The type used to represent a page number.  The first page in a file

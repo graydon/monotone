@@ -1772,8 +1772,7 @@ you use to sign certificates.
 @chapter Network Service
 
 @emph{Note:} Monotone's networking system changed between release 0.9
-and 0.10. The old system is depricated and will be removed. The
-documentation for the old system has already been removed. Please
+and 0.10. The old system is depricated and will be removed. Please
 familiarize yourself with the new system.
 
 Monotone's networking protocol is called 'netsync'. It is a pipelined,
@@ -3016,23 +3015,17 @@ copy.
 @section Network
 
 @ftable @command
-@item monotone netsync client readonly @var{address} @var{collection}
-@itemx monotone netsync client readwrite @var{address} @var{collection}
-@itemx monotone netsync client writeonly @var{address} @var{collection}
-@itemx monotone netsync server readonly @var{address} @var{collection}
-@itemx monotone netsync server readwrite @var{address} @var{collection}
-@itemx monotone netsync server writeonly @var{address} @var{collection}
+@item monotone serve @var{address} @var{collection}
+@itemx monotone pull @var{address} @var{collection}
+@itemx monotone push @var{address} @var{collection}
+@itemx monotone sync @var{address} @var{collection}
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is an experimental, custom protocol for rapidly
 synchronizing two monotone databases using a hash tree index. The
 protocol is ``peer to peer'', but requires one peer to listen for
 incoming connections (the server) and the other peer (the client) to
-connect to the server. The @code{readonly}, @code{writeonly}, or
-@code{readwrite} parameters indicate what sort of @emph{database
-access} the netsync operation should have. For example, in
-@code{readonly} mode the netsync operation will @emph{not} add entries
-your local database from the network.
+connect to the server.
 
 The network @var{address} specified in each case should be the same: a
 host name to listen on, or connect to, optionally followed by a colon
@@ -3046,111 +3039,18 @@ branches. Supposing alice's computer has hostname
 @code{alice.someisp.com}, then alice might run:
 
 @example
-$ monotone netsync server readwrite alice.someisp.com net.venge.monotone
+$ monotone serve alice.someisp.com net.venge.monotone
 @end example
 
 And bob might run
 
 @example
-$ monotone netsync client readwrite alice.someisp.com net.venge.monotone
+$ monotone sync alice.someisp.com net.venge.monotone
 @end example
 
 When the operation completes, all branches beginning with
 @code{net.venge.monotone} will be synchronized between alice and bob's
 databases.
-
-@item monotone serve @var{address} @var{collection}
-@itemx monotone pull @var{address} @var{collection}
-@itemx monotone push @var{address} @var{collection}
-@itemx monotone sync @var{address} @var{collection}
-
-These commands are aliases for @code{netsync} commands. The
-@code{serve} command is an alias for @code{netsync server
-readwrite}. The @code{pull} command is an alias for @code{netsync
-client writeonly}. The @code{push} command is an alias for
-@code{netsync client readonly}. The @code{sync} command is an alias
-for @code{netsync client readwrite}. See the @code{netsync} command
-for more details.
-
-@item monotone fetch
-@itemx monotone fetch @var{url} 
-
-These commands fetch packets from network servers. If you provide a
-particular @var{url}, monotone will fetch packets from that specific
-network server; otherwise monotone calls the hook
-@code{get_fetch_sources (@var{branchname})}, where @var{branchname} is
-the current branch, and fetches from all sources returned from that
-hook.  Finally, if no hook is found, monotone fetches from all sources
-it has listed in its database.
-
-When packets are received, monotone attempts to apply them to the
-database. If any packets are bad or rejected for semantic reasons,
-monotone will print a warning.
-
-@item monotone post
-@itemx monotone post @var{url} 
-
-This command attempts to post packets in the outgoing packet queue to
-their respective network servers. If a @var{url} is supplied, monotone
-posts only those packets queued for @var{url}. If no @var{url} is
-given, monotone posts @emph{all} queued packets. 
-
-Monotone calls the hook @code{get_http_auth (@var{url})} for any
-@code{http} URLs, @code{get_news_sender (@var{url})} for any
-@code{nntp} URLs, and @code{get_mail_sender (@var{url})} for any
-@code{mailto} URLs. See the documentation of these hooks for more
-detail.
-
-@item monotone queue list
-
-This command lists the contents of the outgoing network queue. This
-queue lists an entry for each URL, called a @dfn{target}.  For each
-target, it then lists all the packets queued to send to that
-target. Each target and packet is given a number, which can be used in
-other @code{monotone queue} commands such as @code{monotone queue
-delete} or @code{monotone queue print}.
-
-Note that any commands which alter the queue will invalidate target
-and packet numbers.
-
-@item monotone queue delete @var{target} @var{packet}
-
-This command deletes the packet denoted by the numbers @var{target}
-and @var{packet} from the outgoing network queue. The @var{target} and
-@var{packet} numbers should correspond to a single queue entry listed
-by @code{monotone queue list}.
-
-Note that any commands which alter the queue will invalidate target
-and packet numbers.
-
-@item monotone queue print @var{target} @var{packet}
-
-This command prints the packet denoted by the numbers @var{target}
-and @var{packet}, in the outgoing network queue. The @var{target} and
-@var{packet} numbers should correspond to a single queue entry listed
-by @code{monotone queue list}.
-
-Note that any commands which alter the queue will invalidate target
-and packet numbers.
-
-@item monotone queue add @var{url}
-
-This command reads data from standard input, and adds it to the
-outgoing network queue. The data is queued for transmission to the
-target denoted by @var{url}.
-
-Note that any commands which alter the queue will invalidate target
-and packet numbers.
-
-@item monotone --branch=@var{branchname} queue addtree @var{url}
-@itemx monotone queue addtree @var{url} @var{id} @var{...}
-
-This command queues the complete ancestry graph between @var{id} and
-its greatest known ancestor. This is typically used to queue an
-imported CVS tree for transmission to a depot.
-
-If no @var{id} is provided, this command will queue the heads of the
-@var{branchname}, which you must provide instead.
 
 @end ftable
 
@@ -3716,119 +3616,6 @@ keys in your database to have the same id. Make sure you confirm the
 key fingerprints of each key in your database, as key id strings are
 ``convenience names'', not security tokens.
 
-@item get_news_sender (@var{url})
-
-Returns a string which is the email address (or other identifying
-sender address) of a news article, to be used when monotone is posting
-news articles to @var{url}. This hook is only called when posting to
-@code{nntp} URLs. This hook has no default definition.
-
-@item get_mail_sender (@var{url})
-
-Returns a string which is the email address (or other identifying
-sender address) of an email message, to be used when monotone is
-posting email messages to @var{url}. This hook is only called when
-posting to @code{mailto} URLs. This hook has no default definition.
-
-@item get_mail_hostname (@var{url})
-
-Returns a string which is the host name used to identify ourselves as
-in the opening @code{HELO} exchange, when speaking SMTP to an MX
-server responsible for the mail destination identified by
-@var{url}. This hook is only called when posting to @code{mailto}
-URLs.
-
-The default definition of this hook is:
-@example
-function get_mail_hostname(url)
-	return os.getenv("HOSTNAME")
-end
-@end example
-
-@item get_http_auth (@var{url})
-
-Returns a string which is the name of a private @sc{rsa} key you wish
-to use for posting packets to an @code{http} depot. Depots verify
-incoming packet streams by examining an @sc{rsa} signature on the
-entire transmission, so you need to return the name of a key which you
-have also put the public half of in the depot's database. This hook
-has no default definition.
-
-@item get_http_proxy (@var{host}, @var{port})
-
-Returns a 2-entry table which contains a string specifying a host, and
-an integer specifying a port, used as a proxy to connect to the HTTP
-server at @var{host} and @var{port}. 
-
-The default definition of this hook is:
-
-@example
-function get_http_proxy(host, port)
-	val = os.getenv("HTTP_PROXY")
-	if (val == nil) then 
-		val = os.getenv("http_proxy") 
-	end
-	if (val == nil) then 
-		return nil
-	end
-	val = string.gsub(val, "http://", "")
-	b, e = string.find(val, ":")
-	if (b ~= nil and b > 0) then
-		chost = string.sub(val, 0, b-1)
-		cport = string.sub(val, b+1)
-		return @{ chost, cport @}
-	end
-	return @{ val, port @}
-end
-@end example
-
-@item get_connect_addr (@var{proto}, @var{host}, @var{port})
-
-Returns a 2-entry table which contains a string specifying a host, and
-an integer specifying a port, used as a ``connection address'' when
-sending or receiving packets. Unlike an HTTP proxy, a connection
-address has no affect on the protocol parameters after the socket is
-opened; it is intended for redirecting connections into local
-tunnels. If you want to use an HTTP proxy, you should use the
-@code{get_http_proxy} hook.
-
-This hook has no default definition.
-
-
-@item get_post_targets (@var{branchname})
-
-Returns a table of strings, each of which is a URL for a posting
-target you wish to send packets to, when committing to
-@var{branchname}. Packets will be queued to send to all targets
-returned by this hook.
-
-This hook has no default definition, but it returns a somewhat unusual
-structure, so we give an example here. Suppose that when you commit to
-a branch called @code{examplebranch} you want to send to the logical group
-@code{example} at the depot @code{http://www.myisp.com/~user/depot.cgi},
-as well as to the news group @code{com.myisp.example} at the news server
-@code{nntp://news.myisp.com}. Then you would write the following hook:
-
-@example
-function get_fetch_sources(branch)
-        if (branch == "examplebranch") then
-                return @{ "http://www.myisp.com/~user/depot.cgi/example",
-                         "nntp://news.myisp.com/com.myisp.example"  @}
-        end
-end
-@end example
-
-@item get_fetch_sources (@var{branchname})
-
-Returns a table of strings, each of which is a URL for a fetching
-source you wish to retrieve packets from, when you run @code{monotone
-fetch} for a particular @var{branchname}. Packets will be fetched from
-all sources returned by this hook.
-
-This hook has no default definition, but its operation is analogous to
-the @code{get_post_targets (@var{branchname})} hook, described
-previously.
-
 @item ignore_file (@var{filename})
 
 Returns @code{true} if @var{filename} should be ignored while adding,
@@ -4280,35 +4067,6 @@ List files in working directory, but not in manifest or work list.
 @item @b{list ignored}
 @itemx @b{ls ignored}
 List files intentionally ignored due to the ignore_file hook.
-@comment TROFF INPUT: .TP
-
-@item @b{fetch} @i{[URL]}
-Fetch recent packets from network servers. Does not read public
-or private key packets; use the @b{read} command instead.
-@comment TROFF INPUT: .TP
-
-@item @b{post} @i{[URL]}
-Post queued packets to network servers.
-@comment TROFF INPUT: .TP
-
-@item @b{queue list}
-List contents of outgoing network queue.
-@comment TROFF INPUT: .TP
-
-@item @b{queue print} @i{<target>} @i{<packet>}
-Print packet in outgoing network queue.
-@comment TROFF INPUT: .TP
-
-@item @b{queue delete} @i{<target>} @i{<packet>}
-Delete packet from outgoing network queue
-@comment TROFF INPUT: .TP
-
-@item @b{queue add} @i{<url>}
-Queue contents of standard input to transmit to @i{<url>} 
-@comment TROFF INPUT: .TP
-
-@item @b{queue addtree} @i{<url>} @i{[id]}
-Queue history of @i{id} to transmit to @i{<url>} 
 @comment TROFF INPUT: .TP
 
 @item @b{fcerts} @i{<id>}

@@ -171,6 +171,75 @@ AC_CHECK_LIB([resolv], [inet_aton])
 AC_CHECK_LIB([socket], [accept])
 AC_CHECK_LIB([nsl], [inet_ntoa])
 
+
+##########
+# Checks for external adns library, revert to bundled version if not found
+# or user gives --with-bundled-adns.
+AC_ARG_WITH([bundled-adns],
+   AC_HELP_STRING(
+      [--with-bundled-adns],
+      [Force use of bundled version of adns (default=no)]
+   ), , [bundled_adns=no]
+)
+
+if test "x$bundled_adns" = "xno" ; then
+   bundled_adns=yes
+   AC_CHECK_HEADER([adns.h],
+      AC_CHECK_LIB([adns], [adns_init],
+         [LIBS="$LIBS -ladns" ; bundled_adns=no]
+      )
+   )
+fi
+
+AM_CONDITIONAL(BUNDLED_ADNS, test "x$bundled_adns" != "xno")
+
+##########
+# Checks for external lua library, revert to bundled version if not found or
+# user gives --with-bundled-lua.
+AC_ARG_WITH([bundled-lua],
+   AC_HELP_STRING(
+      [--with-bundled-lua],
+      [Force use of bundled version of lua (default=no)]
+   ), , [bundled_lua=no]
+)
+
+if test "x$bundled_lua" = "xno" ; then
+   bundled_lua=yes
+   AC_CHECK_HEADERS([lua.h lualib.h],
+      AC_CHECK_LIB([lua], [lua_open],
+         AC_CHECK_LIB([lualib], [luaopen_base],
+            [LIBS="$LIBS -llua -llualib" ; bundled_lua=no], , [-llua]
+         )
+      )
+   )
+fi
+
+AM_CONDITIONAL(BUNDLED_LUA, test "x$bundled_lua" != "xno")
+
+##########
+# Checks for external sqlite library, revert to bundled version if not found or
+# user gives --with-bundled-sqlite.
+AC_ARG_WITH([bundled-sqlite],
+   AC_HELP_STRING(
+      [--with-bundled-sqlite],
+      [Force use of bundled version of sqlite (default=no)]
+   ), , [bundled_sqlite=no]
+)
+
+if test "x$bundled_sqlite" = "xno" ; then
+   bundled_sqlite=yes
+   AC_CHECK_HEADER([sqlite.h],
+      AC_CHECK_LIB([sqlite], [sqlite_open],
+         [LIBS="$LIBS -lsqlite" ; bundled_sqlite=no]
+      )
+   )
+fi
+
+AM_CONDITIONAL(BUNDLED_SQLITE, test "x$bundled_sqlite" != "xno")
+
+##########
+
+
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h sys/time.h termios.h unistd.h])

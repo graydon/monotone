@@ -1,0 +1,143 @@
+building and installation process for monotone
+==============================================
+
+1. prerequisites: 
+
+  * hardware prerequisites:
+
+    - g++ consumes a lot of memory building monotone, due to
+      monotone's liberal use of C++ features. it is possible to build
+      on a system with less than 512mb of memory, but not pleasant. we
+      are working on making this situation better.
+
+  * software prerequisites:
+
+    - a supported C++ compiler: g++ 3.2 or 3.3.
+    - an installed copy of boost 1.30.2 or 1.31.0.
+    - gnome popt, an option processing library.
+
+        on debian: 
+
+           apt-get install libboost-date-time1.30.2
+           apt-get install libboost-date-time-dev
+           apt-get install libboost-regex1.30.2
+           apt-get install libboost-regex-dev
+           apt-get install libboost-test1.30.2
+           apt-get install libboost-test-dev
+           apt-get install libboost-dev
+           apt-get install g++
+           apt-get install libpopt0
+           apt-get install libpopt-dev
+
+        on fedora: 
+
+           apt-get install boost 
+           apt-get install boost-devel 
+           apt-get install g++
+           apt-get install popt
+
+        on other systems:
+
+           check your system package repository, you may need to 
+           build some of these from source. if your package repository
+           does not contain the libraries, see:
+
+                http://gcc.gnu.org      for g++
+                http://www.boost.org    for boost
+                http://www.gnome.org    for popt
+
+1.1 building boost:
+
+  many people have reported difficulty building boost. the main
+  problem is that boost builds with an unorthodox build tool called
+  "bjam" which must, itself, be built or installed before boost can be
+  built. the bjam sources are contained within the boost distribution,
+  but somewhat hidden. there are instructions on
+  http://www.boost.org/more/getting_started.html, but we have
+  assembled this abbreviated bourne shell sequence for advanced users
+  who do not need all the preamble:
+
+    wget http://aleron.dl.sourceforge.net/sourceforge/boost/boost_1_31_0.tar.gz
+    tar -xzf boost_1_31_0.tar.gz
+    cd boost_1_31_0
+    (cd tools/build/jam_src && ./build.sh)
+    BJAM=`find tools/build/jam_src/ -name bjam -a -type f`
+    $BJAM "-sBUILD=release <threading>single <optimization>speed <runtime-link>static"
+    for i in `find bin -type d -a -name \*.a`; 
+      do for j in `find $i -type f -a -name \*.a`; 
+        do mv $j libs/`basename $i`; 
+      done; 
+    done
+    ranlib libs/*.a
+
+  if this completes successfully, you will have a selection of boost
+  libraries in boost_1_31_0/libs and boost headers in
+  boost_1_31_0/boost. you can then either copy the .a files to your
+  standard library path and the directory "boost_1_31_0/boost" to your
+  standard include path, or you can pass additional configuration
+  options to your monotone configure build, such as:
+
+    ./configure CPPFLAGS="-Iboost_1_31_2" LDFLAGS="-Lboost_1_31_0/libs"
+
+
+2. configuring monotone:
+
+  * type "./configure" for a basic configuration of monotone.  several
+    configuration options are available; type "configure --help" for a
+    list of all of them. some special options are shown here:
+
+     --enable-static-boost
+
+       this will attempt to link a "mostly static" version of monotone
+       using the .a files supplied with your installation of
+       boost. the resulting binary will be larger but more portable
+       than a normal (dynamic) link.
+
+     --disable-nls
+
+       build a version of monotone without support for local message
+       catalogs. you might like to do this if you do not have a
+       working installation of GNU gettext.
+
+     --with-bundled-adns
+     --with-bundled-lua
+     --with-bundled-sqlite
+
+       build a version of monotone using the internal "bundled" 
+       copies of adns, lua, and sqlite libraries. normally monotone
+       will use copies of these libraries if it finds them on your 
+       system, and use the bundled versions only if you do not have
+       your own copies. adding any of these flags will force monotone
+       to use the bundled version even if it finds a local copy on 
+       your system.
+
+3. building monotone
+
+  * type "make". this should produce a monotone binary in your current
+    directory. if not, please send a build log to 
+    monotone-devel@nongnu.org with a description of the failure.
+
+4. testing monotone
+
+  * there is a "make check" target which you can try, if you'd like to
+    confirm monotone's functionality on your system. you might also
+    like to try fetching monotone's sources from our monotone
+    server. this process will transfer the complete development
+    history (about 2 megabytes) to your database, and you will then be
+    free to share it with others or make changes and submit them to
+    us:
+
+        monotone --db=mt.db db init
+
+        monotone --db=mt.db read  <<EOF
+         [pubkey monotone@off.net]
+         MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCkVU7BYI5bRRJmkJc8gomO9WdTTGG10Lmh
+         PdAEqD6sSdsMkTC9okfsQQ8obE+GODrFa70fX5PJNevNoE+Ryxzu+xtJjmuR2tYTeRNwNa0F
+         dIo/QLteQ4Vwh5162It1kPhLKb1Ki62ZG8aw6ATS4GQVJPci2g1lpn1RG0Z+fFdFJQIBEQ==
+         [end]
+        EOF
+
+        monotone --db=mt.db --key="" pull off.net net.venge.monotone
+
+        monotone --db=mt.db --branch=net.venge.monotone checkout monotone-sources
+

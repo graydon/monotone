@@ -6,8 +6,8 @@
 #include "config.h"
 
 extern "C" {
-#include "lua/lua.h"
-#include "lua/lualib.h"
+#include <lua.h>
+#include <lualib.h>
 }
 
 #include <stdlib.h>

@@ -127,13 +127,27 @@ depot_cgi_SOURCES = constants.cc schema_migration.cc depot.cc
 txt2c_SOURCES = txt2c.cc
 
 noinst_LIBRARIES = lib3rdparty.a 
-lib3rdparty_a_SOURCES = $(CRYPTOPP_SOURCES) \
-                        $(SQLITE_SOURCES) \
-                        $(BOOST_SANDBOX_SOURCES) \
-                        $(LUA_SOURCES) \
-			$(ADNS_SOURCES) \
+lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
+			$(CRYPTOPP_SOURCES) \
 			$(IDNA_SOURCES) \
 			$(NETXX_SOURCES)
+
+AM_CPPFLAGS =
+
+if BUNDLED_ADNS
+lib3rdparty_a_SOURCES += $(ADNS_SOURCES)
+AM_CPPFLAGS += -I$(top_srcdir)/adns
+endif
+
+if BUNDLED_LUA
+lib3rdparty_a_SOURCES += $(LUA_SOURCES)
+AM_CPPFLAGS += -I$(top_srcdir)/lua
+endif
+
+if BUNDLED_SQLITE
+lib3rdparty_a_SOURCES += $(SQLITE_SOURCES)
+AM_CPPFLAGS += -I$(top_srcdir)/sqlite
+endif
 
 if STATIC_BOOST
 BOOSTLIBS=@BOOST_LIBDIR@/libboost_filesystem.a @BOOST_LIBDIR@/libboost_date_time.a @BOOST_LIBDIR@/libboost_regex.a
@@ -156,7 +170,7 @@ depot_cgi_LDFLAGS =
 
 AM_CFLAGS = -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
 AM_LDFLAGS = 
-AM_CXXFLAGS = -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
+AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
 
 SUBDIRS = po
 datadir = @datadir@
@@ -166,6 +180,8 @@ DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
+             INSTALL \
+             monotone.html \
              texinfo.css \
 	     schema.sql depot_schema.sql \
 	     std_hooks.lua test_hooks.lua \
@@ -227,6 +243,10 @@ txt2c: txt2c.cc Makefile
 	./txt2c $< $(*F) >$@
 
 # automake doesn't build html docs
+
+monotone.html: monotone.texi texinfo.css
+	makeinfo --no-split --no-headers --output $@ --html $<
+	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
 
 html: monotone.texi texinfo.css
 	mkdir -p html

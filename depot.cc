@@ -21,6 +21,8 @@
 
 #include <boost/spirit.hpp>
 
+#include <sqlite.h>
+
 #include "adler32.hh"
 #include "cleanup.hh"
 #include "constants.hh"
@@ -32,14 +34,85 @@
 #include "cryptopp/sha.h"
 #include "cryptopp/rsa.h"
 
-#include "sqlite/sqlite.h"
-
 using namespace std;
 using namespace boost;
 
 // defined in depot_schema.sql, defines symbol depot_schema_constant, 
 // converted to header:
 #include "depot_schema.h"
+
+
+// begin DUMP support
+
+struct 
+dump_request
+{
+  dump_request() {};
+  struct sqlite *sql;
+  string table_name;
+  ostream *out;
+};
+
+static int 
+dump_row_cb(void *data, int n, char **vals, char **cols)
+{
+  dump_request *dump = reinterpret_cast<dump_request *>(data);
+  *(dump->out) << "INSERT INTO " << dump->table_name << " VALUES(";
+  for (int i = 0; i < n; ++i)
+    {
+      if (i != 0)
+	*(dump->out) << ',';
+
+      if (vals[i] == NULL)
+	*(dump->out) << "NULL";
+      else
+	{
+	  *(dump->out) << "'";
+	  for (char *cp = vals[i]; *cp; ++cp)
+	    {
+	      if (*cp == '\'')
+		*(dump->out) << "''";
+	      else
+		*(dump->out) << *cp;
+	    }
+	  *(dump->out) << "'";
+	}
+    }
+  *(dump->out) << ");\n";  
+  return 0;
+}
+
+static int 
+dump_table_cb(void *data, int n, char **vals, char **cols)
+{
+  dump_request *dump = reinterpret_cast<dump_request *>(data);
+  *(dump->out) << vals[2] << ";\n";
+  if (string(vals[1]) == "table")
+    {
+      dump->table_name = string(vals[0]);
+      sqlite_exec_printf(dump->sql, "SELECT * FROM '%q'", 
+			 dump_row_cb, data, NULL, vals[0]);
+    }
+  return 0;
+}
+
+static void 
+dump(ostream & out, sqlite * sql)
+{
+  dump_request req;
+  req.out = &out;
+  req.sql = sql;
+  out << "BEGIN TRANSACTION;\n";
+  sqlite_exec(req.sql,
+	      "SELECT name, type, sql FROM sqlite_master "
+	      "WHERE type!='meta' AND sql NOT NULL "
+	      "ORDER BY substr(type,2,1), name",
+	      dump_table_cb, &req, NULL);
+  out << "COMMIT;\n";
+}
+
+// end DUMP support
+
 
 void check_schema(sqlite *sql)
 {
@@ -458,6 +531,22 @@ void run_cmdline(vector<string> const & args)
       char *errmsg = NULL;
       if (sqlite_exec(sql(), depot_schema_constant, NULL, NULL, &errmsg) != SQLITE_OK)
 	throw runtime_error("database initialization failed: " + string(errmsg));
+      return;
+    }
+
+  else if (args[0] == "dump")
+    {
+      if (args.size() != 2)
+	throw runtime_error("bad extra args to migratedb");
+      
+      cleanup_ptr<sqlite *, void> 
+	sql(sqlite_open(args[1].c_str(), 0755, NULL), &sqlite_close);
+
+      if (sql() == NULL)
+	throw runtime_error("cannot open depot.db");
+
+      dump (cout, sql());
+
       return;
     }
 

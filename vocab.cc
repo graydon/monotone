@@ -5,6 +5,7 @@
 
 #include <string>
 #include <boost/filesystem/path.hpp>
+#include <boost/version.hpp>
 
 #include "constants.hh"
 #include "file_io.hh"
@@ -129,6 +130,9 @@ verify(local_path & val)
   try 
     {
       p = mkpath(val());
+#if BOOST_VERSION >= 103100
+      p = p.normalize();
+#endif
     }
   catch (std::runtime_error &e)
     {
@@ -268,8 +272,7 @@ template class file<cert>;
 
 static void test_file_path_verification()
 {
-  char const * baddies [] = {"./redundant",
-			     "../escape",
+  char const * baddies [] = {"../escape",
 			     "foo/../../escape",
 			     "foo//nonsense",
 			     "/rooted",
@@ -295,7 +298,7 @@ static void test_file_path_verification()
 			     "unrooted.txt",
 			     "fun_with_underscore.png",
 			     "fun-with-hyphen.tiff", 
-			     "unrooted/../unescaping",
+ 			     "unrooted/../unescaping",
 			     "unrooted/general/path",
 			     0 };
 

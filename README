@@ -4,4 +4,3 @@ included, and you must use "autoreconf --install" to create them.
 
 "make html" for docs, or read the .info file and / or man page.
 
-You will need automake 1.7, autoconf 2.57, boost and popt.

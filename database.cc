@@ -16,6 +16,8 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include <sqlite.h>
+
 #include "cert.hh"
 #include "cleanup.hh"
 #include "constants.hh"
@@ -29,8 +31,6 @@
 #include "ui.hh"
 #include "vocab.hh"
 #include "xdelta.hh"
-
-#include "sqlite/sqlite.h"
 
 // defined in schema.sql, converted to header:
 #include "schema.h"

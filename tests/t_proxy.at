@@ -96,20 +96,14 @@ killall -q -KILL proxy-test-boa proxy-test-tinyproxy
 ./proxy-test-tinyproxy -c ./http_root/tinyproxy.conf >/dev/null 2>&1 &
 sleep 2
 
-AT_DATA(dumpit.sql, [.dump
-])
-
 AT_CHECK(MONOTONE --rcfile=http.lua post, [], [ignore], [ignore])
-AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
-AT_CHECK(grep mdata stdout, [], [stdout])
-AT_CHECK(grep $VER0 stdout, [], [ignore])
-
-AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
-AT_CHECK(grep mdelta stdout, [], [stdout])
-AT_CHECK(grep $VER0 stdout, [], [ignore])
-
-AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
-AT_CHECK(grep $VER1 stdout, [], [ignore])
+AT_CHECK($DEPOT dump http_root/docroot/user/depot.db, [], [stdout])
+AT_CHECK(mv stdout dump)
+AT_CHECK(grep mdata dump, [], [stdout])
+AT_CHECK(grep $VER0 dump, [], [ignore])
+AT_CHECK(grep mdelta dump, [], [stdout])
+AT_CHECK(grep $VER0 dump, [], [ignore])
+AT_CHECK(grep $VER1 dump, [], [ignore])
 
 AT_CHECK(MONOTONE --db=test2.db --rcfile=http.lua fetch http://127.0.0.1:8080/user/depot.cgi/packets, [], [ignore], [ignore])
 

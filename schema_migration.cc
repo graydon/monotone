@@ -12,8 +12,9 @@
 
 #include <boost/tokenizer.hpp>
 
+#include <sqlite.h>
+
 #include "schema_migration.hh"
-#include "sqlite/sqlite.h"
 #include "cryptopp/filters.h"
 #include "cryptopp/sha.h"
 #include "cryptopp/hex.h"
