@@ -823,7 +823,6 @@ database::put(hexenc<id> const & ident,
           table.c_str(), ident().c_str(), dat().c_str());
 }
 
-
 void 
 database::put_delta(hexenc<id> const & ident,
                     hexenc<id> const & base,
@@ -837,6 +836,8 @@ database::put_delta(hexenc<id> const & ident,
           table.c_str(), 
           ident().c_str(), base().c_str(), del().c_str());
 }
+
+// static ticker cache_hits("vcache hits", "h", 1);
 
 struct version_cache
 {
@@ -862,7 +863,7 @@ struct version_cache
         if (i != cache.end())
           {
             L(F("version cache expiring %s\n") % i->first);
-            I(i->second().size() >= use);
+            I(i->second().size() <= use);
             use -= i->second().size();          
             cache.erase(i->first);
           }
@@ -885,6 +886,7 @@ struct version_cache
     i = cache.find(ident);
     if (i == cache.end())
       return false;
+    // ++cache_hits;
     L(F("version cache hit on %s\n") % ident);
     dat = i->second;
     return true;
@@ -892,7 +894,6 @@ struct version_cache
 };
 
 static version_cache vcache;
-//static ticker cache_hits("vcache hits", "h", 1);
 
 void 
 database::get_version(hexenc<id> const & ident,
@@ -904,7 +905,6 @@ database::get_version(hexenc<id> const & ident,
 
   if (vcache.get(ident, dat))
     {
-      // ++cache_hits;
       return;
     }
   else if (exists(ident, data_table))
@@ -1006,7 +1006,6 @@ database::get_version(hexenc<id> const & ident,
 
       if (vcache.exists(root))
         {
-          // ++cache_hits;
           I(vcache.get(root, begin_packed));
         }
       else

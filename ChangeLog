@@ -1,3 +1,8 @@
+2005-02-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* database.cc (struct version_cache): Fix invariant in cache
+	clearing logic.
+
 2005-02-06  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc: Add a few more invariants; add lots and lots of
