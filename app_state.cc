@@ -151,7 +151,7 @@ app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & pa
         }
 
       N(p == dot || valid_paths.find(p) != valid_paths.end(),
-        F("path '%s' not found in base manifest or current work set\n") % p());
+        F("unknown path '%s'\n") % p());
 
       L(F("'%s' added to restricted path set\n") % p());
       restrictions.insert(p);
