@@ -3386,10 +3386,19 @@ CMD(revert, "working copy", "[PATH]...",
 
   for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
     {
-      if (!app.restriction_includes(i->first)) continue;
+      if (!app.restriction_includes(manifest_entry_path(i))) continue;
+
+      hexenc<id> ident;
+
+      if (file_exists(manifest_entry_path(i)))
+        {
+          calculate_ident(manifest_entry_path(i), ident, app.lua);
+          // don't touch unchanged files
+          if (manifest_entry_id(i) == ident) continue;
+      }
       
-      L(F("reverting %s to %s\n") %
-        manifest_entry_path(i) % manifest_entry_id(i));
+      L(F("reverting %s from %s to %s\n") %
+        manifest_entry_path(i) % ident % manifest_entry_id(i));
 
       N(app.db.file_version_exists(manifest_entry_id(i)),
         F("no file version %s found in database for %s")

@@ -1,3 +1,9 @@
+2005-02-16  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (revert): don't rewrite unchanged files
+	* tests/t_revert_unchanged.at: new test
+	* testsuite.at: call it
+
 2005-02-12  Derek Scherger  <derek@echologic.com>
 
 	* database.cc (sqlite3_unpack_fn): new function for viewing
