@@ -1,3 +1,11 @@
+2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* txt2c.cc (main): Add "--skip-trailing" option to skip trailing
+	whitespace.
+	* Makefile.am (package_revision.h): Generate it.
+	* monotone.cc (package_revision.h): Include it.
+	(cpp_main): Print it as part of --version.
+
 2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_cleanup_empty_dir.at: New test.

@@ -309,6 +309,19 @@ txt2c: txt2c.cc Makefile
 %.h: %.lua txt2c Makefile
 	./txt2c $< $(*F) >$@
 
+# A fake target so we can use MT/revision as a prerequisite, yet not
+# crash if MT/revision does not exist.
+MT/revision:
+	true
+package_revision.txt: MT/revision
+	if [ ! -f MT/revision ]; then \
+	  echo "unknown" > $@;        \
+	else                          \
+	  cp MT/revision $@;          \
+	fi
+package_revision.h: package_revision.txt txt2c Makefile
+	./txt2c --strip-trailing $< package_revision >$@
+
 # automake doesn't build html docs
 
 monotone.html: monotone.texi texinfo.css

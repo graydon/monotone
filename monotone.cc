@@ -19,6 +19,7 @@
 #include "file_io.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "package_revision.h"
 
 #define OPT_DEBUG 1
 #define OPT_HELP 2
@@ -103,13 +104,13 @@ utf8_argv
     I(argv != NULL);
     for (int i = 0; i < argc; ++i)
       {
-	external ext(av[i]);
-	utf8 utf;
-	system_to_utf8(ext, utf);
-	argv[i] = static_cast<char *>(malloc(utf().size() + 1));
-	I(argv[i] != NULL);
-	memcpy(argv[i], utf().data(), utf().size());
-	argv[i][utf().size()] = static_cast<char>(0);
+        external ext(av[i]);
+        utf8 utf;
+        system_to_utf8(ext, utf);
+        argv[i] = static_cast<char *>(malloc(utf().size() + 1));
+        I(argv[i] != NULL);
+        memcpy(argv[i], utf().data(), utf().size());
+        argv[i][utf().size()] = static_cast<char>(0);
     }
   }
 
@@ -117,10 +118,10 @@ utf8_argv
   {
     if (argv != NULL)
       {
-	for (int i = 0; i < argc; ++i)
-	  if (argv[i] != NULL)
-	    free(argv[i]);
-	free(argv);
+        for (int i = 0; i < argc; ++i)
+          if (argv[i] != NULL)
+            free(argv[i]);
+        free(argv);
       }    
   }
 };
@@ -154,7 +155,7 @@ cpp_main(int argc, char ** argv)
       
   cleanup_ptr<poptContext, poptContext> 
     ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
-	&poptFreeContext);
+        &poptFreeContext);
 
   // process main program options
 
@@ -170,122 +171,123 @@ cpp_main(int argc, char ** argv)
   try 
     {      
       while ((opt = poptGetNextOpt(ctx())) > 0)
-	{
-	  switch(opt)
-	    {
-	    case OPT_DEBUG:
-	      global_sanity.set_debug();
-	      break;
+        {
+          switch(opt)
+            {
+            case OPT_DEBUG:
+              global_sanity.set_debug();
+              break;
 
-	    case OPT_QUIET:
-	      global_sanity.set_quiet();
-	      break;
+            case OPT_QUIET:
+              global_sanity.set_quiet();
+              break;
 
-	    case OPT_NOSTD:
-	      stdhooks = false;
-	      break;
+            case OPT_NOSTD:
+              stdhooks = false;
+              break;
 
-	    case OPT_NORC:
-	      rcfile = false;
-	      break;
+            case OPT_NORC:
+              rcfile = false;
+              break;
 
-	    case OPT_RCFILE:
-	      extra_rcfiles.push_back(absolutify(tilde_expand(string(argstr))));
-	      break;
+            case OPT_RCFILE:
+              extra_rcfiles.push_back(absolutify(tilde_expand(string(argstr))));
+              break;
 
-	    case OPT_DUMP:
-	      global_sanity.filename = absolutify(tilde_expand(string(argstr)));
-	      break;
+            case OPT_DUMP:
+              global_sanity.filename = absolutify(tilde_expand(string(argstr)));
+              break;
 
-	    case OPT_DB_NAME:
-	      app.set_database(absolutify(tilde_expand(string(argstr))));
-	      break;
+            case OPT_DB_NAME:
+              app.set_database(absolutify(tilde_expand(string(argstr))));
+              break;
 
-	    case OPT_TICKER:
-	      if (string(argstr) == "dot")
-		ui.set_tick_writer(new tick_write_dot);
-	      else if (string(argstr) == "count")
-		ui.set_tick_writer(new tick_write_count);
-	      else
-		requested_help = true;
-	      break;
+            case OPT_TICKER:
+              if (string(argstr) == "dot")
+                ui.set_tick_writer(new tick_write_dot);
+              else if (string(argstr) == "count")
+                ui.set_tick_writer(new tick_write_count);
+              else
+                requested_help = true;
+              break;
 
-	    case OPT_KEY_NAME:
-	      app.set_signing_key(string(argstr));
-	      break;
+            case OPT_KEY_NAME:
+              app.set_signing_key(string(argstr));
+              break;
 
-	    case OPT_BRANCH_NAME:
-	      app.set_branch(string(argstr));
-	      break;
+            case OPT_BRANCH_NAME:
+              app.set_branch(string(argstr));
+              break;
 
-	    case OPT_VERSION:
-	      cout << PACKAGE_STRING << endl;
-	      clean_shutdown = true;
-	      return 0;
+            case OPT_VERSION:
+              cout << PACKAGE_STRING
+                   << " (base revision: " << package_revision_constant << ")" << endl;
+              clean_shutdown = true;
+              return 0;
 
-	    case OPT_HELP:
-	    default:
-	      requested_help = true;
-	      break;
-	    }
-	}
+            case OPT_HELP:
+            default:
+              requested_help = true;
+              break;
+            }
+        }
 
       // stop here if they asked for help
 
       if (requested_help)
-	{
-	  if (poptPeekArg(ctx()))
-	    {
-	      string cmd(poptGetArg(ctx()));
-	      throw usage(cmd);
-	    }
-	  else
-	    throw usage("");
-	}
+        {
+          if (poptPeekArg(ctx()))
+            {
+              string cmd(poptGetArg(ctx()));
+              throw usage(cmd);
+            }
+          else
+            throw usage("");
+        }
 
       // built-in rc settings are defaults
 
       if (stdhooks)
-	app.lua.add_std_hooks();
+        app.lua.add_std_hooks();
 
       // ~/.monotonerc overrides that, and
       // MT/monotonerc overrides *that*
 
       if (rcfile)
-	{
-	  fs::path default_rcfile;
-	  fs::path working_copy_rcfile;
-	  app.lua.default_rcfilename(default_rcfile);
-	  app.lua.working_copy_rcfilename(working_copy_rcfile);
-	  app.lua.add_rcfile(default_rcfile);
-	  app.lua.add_rcfile(working_copy_rcfile);
-	}
+        {
+          fs::path default_rcfile;
+          fs::path working_copy_rcfile;
+          app.lua.default_rcfilename(default_rcfile);
+          app.lua.working_copy_rcfilename(working_copy_rcfile);
+          app.lua.add_rcfile(default_rcfile);
+          app.lua.add_rcfile(working_copy_rcfile);
+        }
 
       // command-line rcfiles override even that
 
       for (vector<string>::const_iterator i = extra_rcfiles.begin();
-	   i != extra_rcfiles.end(); ++i)
-	{
-	  app.lua.add_rcfile(mkpath(*i));
-	}
+           i != extra_rcfiles.end(); ++i)
+        {
+          app.lua.add_rcfile(mkpath(*i));
+        }
 
       // main options processed, now invoke the 
       // sub-command w/ remaining args
 
       if (!poptPeekArg(ctx()))
-	{
-	  throw usage("");
-	}
+        {
+          throw usage("");
+        }
       else
-	{
-	  string cmd(poptGetArg(ctx()));
-	  vector<utf8> args;
-	  while(poptPeekArg(ctx())) 
-	    {
-	      args.push_back(utf8(string(poptGetArg(ctx()))));
-	    }
-	  ret = commands::process(app, cmd, args);
-	} 
+        {
+          string cmd(poptGetArg(ctx()));
+          vector<utf8> args;
+          while(poptPeekArg(ctx())) 
+            {
+              args.push_back(utf8(string(poptGetArg(ctx()))));
+            }
+          ret = commands::process(app, cmd, args);
+        } 
     }
   catch (usage & u)
     {
