@@ -1,3 +1,8 @@
+2005-02-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua: posix.iswin32() == 1, rather than plain boolean
+	comparison (0 doesn't compare as false in lua it seems).
+
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
 	* lposix.c (win32 Pspawn): Search the path
 	(win32 Pexistsonpath): Added.  'which' isn't easily available,

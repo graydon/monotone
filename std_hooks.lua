@@ -237,7 +237,7 @@ function read_contents_of_file(filename)
 end
 
 function program_exists_in_path(program)
-   if (posix.iswin32()) then
+   if (posix.iswin32() == 1) then
       return posix.existsonpath(program) == 0
    else   
       return execute("which", program) == 0
