@@ -28,6 +28,8 @@ patch "foo1"
    to @<:@b0d699dae7df285e64265ec6b46538b0ce785da0@:>@
 ])
 AT_CHECK(MONOTONE cat revision c1dc9e4d249ac7a5f6143a87a1e90246d8be0ee5,
-         [], [expout], [ignore])
+         [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp stdout expout, [], [ignore]) 
 
 AT_CLEANUP
