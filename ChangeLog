@@ -1,5 +1,10 @@
 2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (File Attributes): Rewrite for new .mt-attrs
+	syntax.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_attr.at: New test.
 	* testsuite.at: Call it.
 
