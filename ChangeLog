@@ -1,3 +1,16 @@
+2005-03-03  Jon Bright  <jon@siliconcircus.com>
+	* lposix.c: Deleted
+	* win32/process.cc: Created, added Win32 versions of functions
+	exists_on_path, make_executable, process_spawn, process_wait,
+	process_kill, process_sleep
+	* unix/process.cc: Ditto, for the Unix versions.
+	* lua.cc: Add LUA wrappers for the above functions, register
+	them with LUA
+	* std_hooks.lua (execute, attr_functions->execute, 
+	program_exists_in_path): Use the new functions instead of posix
+	functions
+	* t_can_execute.at (touchhook.lua): Ditto
+
 2005-03-01  Derek Scherger  <derek@echologic.com>
 
 	* app_state.cc (set_restriction): actually ignore ignored files

@@ -14,8 +14,8 @@ end
 function execute(path, ...)   
    local pid
    local ret = -1
-   pid = posix.spawn(path, unpack(arg))
-   ret, pid = posix.wait(pid)
+   pid = spawn(path, unpack(arg))
+   ret, pid = wait(pid)
    return ret
 end
 
@@ -36,7 +36,7 @@ end
 attr_functions["execute"] = 
    function(filename, value) 
       if (value == "true") then
-         posix.chmod(filename, "u+x")
+         make_executable(filename)
       end
    end
 
@@ -237,11 +237,7 @@ function read_contents_of_file(filename)
 end
 
 function program_exists_in_path(program)
-   if (posix.iswin32() == 1) then
-      return posix.existsonpath(program) == 0
-   else   
-      return execute("which", program) == 0
-   end
+   return existsonpath(program) == 0
 end
 
 function merge2(left_path, right_path, merged_path, left, right)

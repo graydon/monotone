@@ -99,8 +99,7 @@ LUA_SOURCES = \
 	lua/lopcodes.h lua/lparser.c lua/lparser.h lua/lstate.c lua/lstate.h \
 	lua/lstring.c lua/lstring.h lua/lstrlib.c lua/ltable.c lua/ltable.h \
 	lua/ltablib.c lua/ltests.c lua/ltm.c lua/ltm.h lua/lua.h lua/lualib.h \
-	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h \
-	lua/lposix.c 
+	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h
 
 IDNA_SOURCES = \
 	idna/gunibreak.h idna/gunidecomp.h idna/idna.h idna/nfkc.c	\
@@ -109,10 +108,10 @@ IDNA_SOURCES = \
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
 UNIX_PLATFORM_SOURCES = \
-	unix/read_password.cc unix/get_system_flavour.cc
+	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc
 
 WIN32_PLATFORM_SOURCES = \
-	win32/read_password.cc win32/get_system_flavour.cc
+	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc
 
 # primaries
 
