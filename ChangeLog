@@ -1,3 +1,9 @@
+2005-02-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Creating a Database): Fix typo, clarify
+	conventions for database management following question on mailing
+	list.
+
 2005-02-12  graydon hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh}: Correct code to pass newly-added unit tests.

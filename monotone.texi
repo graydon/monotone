@@ -1086,12 +1086,18 @@ tasks involve only one member.
 
 The first step Jim, Abe and Beth each need to perform is to create a
 new database. This is done with the @code{monotone db init} command,
-providing a @option{--db} option to speficy the location of the new
+providing a @option{--db} option to specify the location of the new
 database. Each programmer creates their own database, which will
 reside in their home directory and store all the revisions, files and
 manifests they work on. Monotone requires this step as an explicit
 command, to prevent spurious creation of databases when an invalid
 @option{--db} option is given.
+
+In real life, most people prefer to keep one database for each project
+they work on.  If we followed that convention here in the tutorial,
+though, then all the databases would be called @code{juicebot.db}, and
+that would make things more confusing to read.  So instead, we'll have
+them each name their database after themselves.
 
 Thus Jim issues the command:
 
