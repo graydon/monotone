@@ -314,7 +314,7 @@ check_certs(app_state & app,
         {
           std::string signed_text;
           cert_signable_text(i->inner(), signed_text);
-          checked.good_sig = check_signature(app.lua, i->inner().key, 
+          checked.good_sig = check_signature(app, i->inner().key, 
                                              checked_keys[i->inner().key].pub_encoded, 
                                              signed_text, i->inner().sig);
         }

@@ -29,7 +29,7 @@
 #include "xdelta.hh"
 #include "epoch.hh"
 
-#include "cryptopp/osrng.h"
+#include "botan/botan.h"
 
 #include "netxx/address.h"
 #include "netxx/peer.h"
@@ -245,7 +245,6 @@ session
   id saved_nonce;
   bool received_goodbye;
   bool sent_goodbye;
-  boost::scoped_ptr<CryptoPP::AutoSeededRandomPool> prng;
 
   packet_db_valve dbw;
 
@@ -459,7 +458,6 @@ session::session(protocol_role role,
       request_blocking_rng = true;
 #endif
     }  
-  prng.reset(new CryptoPP::AutoSeededRandomPool(request_blocking_rng));
 
   done_refinements.insert(make_pair(cert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
@@ -484,7 +482,8 @@ session::mk_nonce()
 {
   I(this->saved_nonce().size() == 0);
   char buf[constants::merkle_hash_length_in_bytes];
-  prng->GenerateBlock(reinterpret_cast<byte *>(buf), constants::merkle_hash_length_in_bytes);
+  Botan::Global_RNG::randomize(reinterpret_cast<Botan::byte *>(buf),
+          constants::merkle_hash_length_in_bytes);
   this->saved_nonce = string(buf, buf + constants::merkle_hash_length_in_bytes);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
   return this->saved_nonce;
@@ -1490,7 +1489,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       rsa_sha1_signature sig_raw;
       base64< arc4<rsa_priv_key> > our_priv;
       load_priv_key(app, app.signing_key, our_priv);
-      make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
+      make_signature(app, app.signing_key, our_priv, nonce(), sig);
       decode_base64(sig, sig_raw);
       
       // make a new nonce of our own and send off the 'auth'
@@ -1570,7 +1569,7 @@ session::process_anonymous_cmd(protocol_role role,
   rsa_sha1_signature sig_raw;
   base64< arc4<rsa_priv_key> > our_priv;
   load_priv_key(app, app.signing_key, our_priv);
-  make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
+  make_signature(app, app.signing_key, our_priv, nonce2(), sig);
   decode_base64(sig, sig_raw);
   queue_confirm_cmd(sig_raw());
   this->collection = collection;
@@ -1683,7 +1682,7 @@ session::process_auth_cmd(protocol_role role,
   // check the signature
   base64<rsa_sha1_signature> sig;
   encode_base64(rsa_sha1_signature(signature), sig);
-  if (check_signature(app.lua, their_id, their_key, nonce1(), sig))
+  if (check_signature(app, their_id, their_key, nonce1(), sig))
     {
       // get our private key and sign back
       L(F("client signature OK, accepting authentication\n"));
@@ -1691,7 +1690,7 @@ session::process_auth_cmd(protocol_role role,
       rsa_sha1_signature sig_raw;
       base64< arc4<rsa_priv_key> > our_priv;
       load_priv_key(app, app.signing_key, our_priv);
-      make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
+      make_signature(app, app.signing_key, our_priv, nonce2(), sig);
       decode_base64(sig, sig_raw);
       queue_confirm_cmd(sig_raw());
       this->collection = collection;
@@ -1743,7 +1742,7 @@ session::process_confirm_cmd(string const & signature)
       app.db.get_pubkey(their_key_hash, their_id, their_key);
       base64<rsa_sha1_signature> sig;
       encode_base64(rsa_sha1_signature(signature), sig);
-      if (check_signature(app.lua, their_id, their_key, this->saved_nonce(), sig))
+      if (check_signature(app, their_id, their_key, this->saved_nonce(), sig))
         {
           L(F("server signature OK, accepting authentication\n"));
           this->authenticated = true;
