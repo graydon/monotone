@@ -1,3 +1,9 @@
+2004-08-05  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Hook Reference): Mention that if get_passphrase
+	returns false, the user will be prompted for a pass phrase as
+	well.
+
 2004-08-04  Richard Levitte  <richard@levitte.org>
 
 	* AUTHORS: Change my email address.
