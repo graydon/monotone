@@ -324,7 +324,7 @@ put_path_rearrangement(change_set::path_rearrangement & w)
 
 static void
 get_valid_paths(path_set const & old_paths, change_set::path_rearrangement const & work, 
-		path_set & valid_paths)
+                path_set & valid_paths)
 {
   // collect paths from old manifest and work set into valid_paths
 

@@ -1,3 +1,13 @@
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (kill_redundant_edges): Rename back to...
+	(kluge_for_3_ancestor_nodes): ...this.  Go back to only cleaning
+	up parents of 3+ parent nodes.
+	(analyze_manifest_changes): Take a third argument, of files whose
+	ancestry needs splitting.
+	(construct_revision_from_ancestry): Make more more complex, in
+	order to properly track file identity in merges.
+
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* revision.cc (check_sane_history): Typo.
