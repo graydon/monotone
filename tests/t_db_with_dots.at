@@ -1,0 +1,8 @@
+AT_SETUP([--db with ..])
+MONOTONE_SETUP
+
+AT_CHECK(mkdir foo)
+AT_CHECK( (cd foo && MONOTONE --db=../new.db db init), [], [ignore], [ignore])
+AT_CHECK( (cd foo && MONOTONE --db=../new.db ls branches), [], [ignore], [ignore])
+
+AT_CLEANUP
