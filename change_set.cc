@@ -144,6 +144,12 @@ typedef __gnu_cxx::hash_map<path_component,
 typedef __gnu_cxx::hash_map<tid, boost::shared_ptr<directory_node>,
                             identity<tid> > directory_map;
 
+static path_component
+directory_entry_name(directory_node::const_iterator const & i)
+{
+  return i->first;
+}
+
 static ptype
 directory_entry_type(directory_node::const_iterator const & i)
 {
@@ -407,6 +413,39 @@ extract_pairs_and_insert(std::map<file_path, file_path> const & in,
     }
 }
 
+template <typename A, typename B>
+static void
+extract_first(std::map<A, B> const & m, std::set<A> & s)
+{
+  s.clear();
+  for (typename std::map<A, B>::const_iterator i = m.begin();
+       i != m.end(); ++i)
+    {
+      s.insert(i->first);
+    }
+}
+
+static void
+extract_killed(path_analysis const & a,
+               std::set<file_path> & killed);
+
+
+static void
+check_no_deltas_on_killed_files(path_analysis const & pa,
+                                change_set::delta_map const & del)
+{
+  std::set<file_path> killed;
+  std::set<file_path> delta_paths;
+
+  extract_killed(pa, killed);
+  extract_first(del, delta_paths);
+  check_sets_disjoint(killed, delta_paths);
+}
+
+static void
+check_delta_entries_not_directories(path_analysis const & pa,
+                                    change_set::delta_map const & dels);
+
 void 
 analyze_rearrangement(change_set::path_rearrangement const & pr,
                       path_analysis & pa,
@@ -418,10 +457,20 @@ sanity_check_path_analysis(path_analysis const & pr);
 void 
 change_set::path_rearrangement::check_sane() const
 {
+  delta_map del;
+  this->check_sane(del);
+}
+
+void 
+change_set::path_rearrangement::check_sane(delta_map const & deltas) const
+{
   tid_source ts;
   path_analysis pa;
   analyze_rearrangement(*this, pa, ts);
   sanity_check_path_analysis (pa);
+
+  check_no_deltas_on_killed_files(pa, deltas);
+  check_delta_entries_not_directories(pa, deltas);
 
   // FIXME: extend this as you manage to think of more invariants
   // which are cheap enough to check at this level.
@@ -461,7 +510,7 @@ change_set::check_sane() const
   // FIXME: extend this as you manage to think of more invariants
   // which are cheap enough to check at this level.
 
-  rearrangement.check_sane();
+  rearrangement.check_sane(this->deltas);
 
   for (std::set<file_path>::const_iterator i = rearrangement.added_files.begin(); 
        i != rearrangement.added_files.end(); ++i)
@@ -472,20 +521,6 @@ change_set::check_sane() const
           I(j != deltas.end());
           I(null_id(delta_entry_src(j)));
           I(!null_id(delta_entry_dst(j)));
-        }
-    }
-
-  for (std::set<file_path>::const_iterator i = rearrangement.deleted_files.begin(); 
-       i != rearrangement.deleted_files.end(); ++i)
-    {
-      delta_map::const_iterator j = deltas.find(*i);
-      if (!global_sanity.relaxed)
-        {
-          // we can only have deltas if the file has been re-added or the file is a
-          // rename destination.
-          I(j == deltas.end() ||
-              rearrangement.has_added_file(*i) ||
-              rearrangement.has_renamed_file_dst(*i));
         }
     }
 
@@ -1121,6 +1156,11 @@ build_directory_map(path_state const & state,
       //       L(F("adding entry %s (%s %d) to directory node %d\n") 
       //        % name % (type == ptype_directory ? "dir" : "file") % curr % parent);
       dnode(dir, parent)->insert(std::make_pair(name,std::make_pair(type, curr)));
+
+      // also, make sure to add current node if it's a directory, even if
+      // there are no entries in it
+      if (type == ptype_directory)
+        dnode(dir, curr);        
     }
 }
 
@@ -1353,8 +1393,72 @@ ensure_tids_disjoint(path_analysis const & a,
 }
 
 static void
+extract_killed(path_analysis const & a,
+               std::set<file_path> & killed)
+
+{
+  killed.clear();
+  directory_map first_map, second_map;
+
+  build_directory_map(a.first, first_map);
+  build_directory_map(a.second, second_map);
+
+  for (directory_map::const_iterator i = first_map.begin();
+       i != first_map.end(); ++i)
+    {
+      tid dir_tid = i->first;
+      directory_map::const_iterator j = second_map.find(dir_tid);
+      I(j != second_map.end());
+
+      // a path P = DIR/LEAF is "killed" by a path_analysis iff the
+      // directory node named DIR in the post-state contains LEAF in the
+      // pre-state, and does not contain LEAF in the post-state
+
+      boost::shared_ptr<directory_node> first_node = i->second;
+      boost::shared_ptr<directory_node> second_node = j->second;
+
+      for (directory_node::const_iterator p = first_node->begin();
+           p != first_node->end(); ++p)
+        {
+          path_component first_name = directory_entry_name(p);
+          directory_node::const_iterator q = second_node->find(first_name);
+          if (q == second_node->end())
+            {
+              // found a killed entry
+              std::vector<path_component> killed_name;
+              file_path killed_path;
+              get_full_path(a.second, dir_tid, killed_name);
+              killed_name.push_back(first_name);
+              compose_path(killed_name, killed_path);
+              killed.insert(killed_path);
+            }
+        }
+    }
+}
+
+static void
+check_delta_entries_not_directories(path_analysis const & pa,
+                                    change_set::delta_map const & dels)
+{
+  directory_map dmap;
+  build_directory_map(pa.second, dmap);
+  for (change_set::delta_map::const_iterator i = dels.begin();
+       i != dels.end(); ++i)
+    {
+      tid delta_tid;
+      if (lookup_path(delta_entry_path(i), dmap, delta_tid))
+        {
+          path_state::const_iterator j = pa.second.find(delta_tid);
+          I(j != pa.second.end());
+          I(path_item_type(path_state_item(j)) == ptype_file);
+        }
+    }
+}
+
+static void
 concatenate_disjoint_analyses(path_analysis const & a,
                               path_analysis const & b,
+                              std::set<file_path> const & a_killed,
                               path_analysis & concatenated)
 {
   std::map<file_path, tid> a_second_files, a_second_dirs;
@@ -1378,6 +1482,25 @@ concatenate_disjoint_analyses(path_analysis const & a,
 
   index_entries(a_tmp.second, a_second_files, a_second_dirs);
   index_entries(b_tmp.first, b_first_files, b_first_dirs);
+
+  {
+    std::set<file_path> 
+      a_second_file_set, a_second_dir_set, 
+      b_first_file_set, b_first_dir_set;
+    
+    extract_first(a_second_files, a_second_file_set);
+    extract_first(a_second_dirs, a_second_dir_set);
+    extract_first(b_first_files, b_first_file_set);
+    extract_first(b_first_dirs, b_first_dir_set);
+    
+    // check that there are no entry-type mismatches
+    check_sets_disjoint(a_second_file_set, b_first_dir_set);
+    check_sets_disjoint(a_second_dir_set, b_first_file_set);
+
+    // check that there's no use of killed entries
+    check_sets_disjoint(a_killed, b_first_dir_set);
+    check_sets_disjoint(a_killed, b_first_file_set);
+  }
 
   extend_renumbering_from_path_identities(a_second_files, b_first_files, renumbering);
   extend_renumbering_from_path_identities(a_second_dirs, b_first_dirs, renumbering);
@@ -1411,8 +1534,12 @@ concatenate_rearrangements(change_set::path_rearrangement const & a,
   analyze_rearrangement(a, a_analysis, ts);
   analyze_rearrangement(b, b_analysis, ts);
 
+  std::set<file_path> a_killed;
+  extract_killed(a_analysis, a_killed);
+
   concatenate_disjoint_analyses(a_analysis, 
                                 b_analysis,
+                                a_killed,
                                 concatenated_analysis);
 
   compose_rearrangement(concatenated_analysis, 
@@ -1437,8 +1564,12 @@ concatenate_change_sets(change_set const & a,
   analyze_rearrangement(a.rearrangement, a_analysis, ts);
   analyze_rearrangement(b.rearrangement, b_analysis, ts);
 
+  std::set<file_path> a_killed;
+  extract_killed(a_analysis, a_killed);
+
   concatenate_disjoint_analyses(a_analysis, 
                                 b_analysis,
+                                a_killed,
                                 concatenated_analysis);
 
   compose_rearrangement(concatenated_analysis, 
@@ -1447,9 +1578,10 @@ concatenate_change_sets(change_set const & a,
   // now process the deltas
 
   concatenated.deltas.clear();
-  directory_map b_src_map;
+  directory_map a_dst_map, b_src_map;
   L(F("concatenating %d and %d deltas\n")
     % a.deltas.size() % b.deltas.size());
+  build_directory_map(a_analysis.second, a_dst_map);
   build_directory_map(b_analysis.first, b_src_map);
 
   // first rename a's deltas under the rearrangement of b
@@ -1458,25 +1590,16 @@ concatenate_change_sets(change_set const & a,
     {
       file_path new_pth;
       L(F("processing delta on %s\n") % delta_entry_path(del));
+
+      // work out the name of entry in b.first
       reconstruct_path(delta_entry_path(del), b_src_map, b_analysis.second, new_pth);
       L(F("delta on %s in first changeset renamed to %s\n")
         % delta_entry_path(del) % new_pth);
 
-      // it doesn't make sense if the revision has a delta with a deleted file
-      // (unless there's also a corresponding add for a new file)
-      
-      if ( a.rearrangement.has_deleted_file(delta_entry_path(del))
-        && !a.rearrangement.has_added_file(delta_entry_path(del))
-        && !a.rearrangement.has_renamed_file_dst(delta_entry_path(del)) )
-          // FIXME: this should really be an invariant, but some
-          // revisions in monotone's tree have patches with deletions.
-          // (54b9be0d60633ca2941edd02b9b7cfe8da90cc3a for example)
-          W(F("delta [%s]->[%s] for deleted file %s\n")
-            % delta_entry_src(del) % delta_entry_dst(del) % delta_entry_path(del));
-      else if (b.rearrangement.has_deleted_file(delta_entry_path(del)))
+      if (b.rearrangement.has_deleted_file(delta_entry_path(del)))
         // the delta should be removed if the file is going to be deleted
         L(F("discarding delta [%s]->[%s] for deleted file '%s'\n")
-            % delta_entry_src(del) % delta_entry_dst(del) % delta_entry_path(del));
+          % delta_entry_src(del) % delta_entry_dst(del) % delta_entry_path(del));
       else
         concatenated.deltas.insert(std::make_pair(new_pth,
                                                   std::make_pair(delta_entry_src(del),
@@ -1487,6 +1610,7 @@ concatenate_change_sets(change_set const & a,
   for (change_set::delta_map::const_iterator del = b.deltas.begin();
        del != b.deltas.end(); ++del)
     {
+
       file_path del_pth = delta_entry_path(del);
       change_set::delta_map::const_iterator existing = 
         concatenated.deltas.find(del_pth);
@@ -1514,16 +1638,12 @@ concatenate_change_sets(change_set const & a,
               || b.rearrangement.has_added_file(del_pth)
               || b.rearrangement.has_renamed_file_dst(del_pth))
             concatenated.deltas.insert(*del);
-          else
-            // FIXME: this should be an invariant, see fixme above.
-            W(F("delta [%s]->[%s] for deleted file %s\n")
-              % delta_entry_src(del) % delta_entry_dst(del) % del_pth);
         }
     }
-
+  
   normalize_change_set(concatenated);
   concatenated.check_sane();
-
+  
   L(F("finished concatenation\n")); 
 }
 
@@ -1920,8 +2040,12 @@ merge_disjoint_analyses(path_analysis const & a,
     rebuild_analysis(a_merged, a_merge_check, ts_tmp);
     rebuild_analysis(b_merged, b_merge_check, ts_tmp);
 
-    concatenate_disjoint_analyses(anc_a_check, a_merge_check, a_check);
-    concatenate_disjoint_analyses(anc_b_check, b_merge_check, b_check);
+    std::set<file_path> anc_a_killed, anc_b_killed;
+    extract_killed(anc_a_check, anc_a_killed);
+    extract_killed(anc_b_check, anc_b_killed);
+
+    concatenate_disjoint_analyses(anc_a_check, a_merge_check, anc_a_killed, a_check);
+    concatenate_disjoint_analyses(anc_b_check, b_merge_check, anc_b_killed, b_check);
     compose_rearrangement(a_check, a_re);
     compose_rearrangement(b_check, b_re);
     I(a_re == b_re);
@@ -3013,8 +3137,19 @@ struct bad_concatenate_change_test
   change_set combined;
   change_set concat;
   bool do_combine;
-  bad_concatenate_change_test() : do_combine(false)
-  {}
+  std::string ident;
+  bad_concatenate_change_test(char const *file, int line) : 
+    do_combine(false),
+    ident((F("%s:%d") % file % line).str())
+  {    
+    L(F("BEGINNING concatenation test %s\n") % ident);
+  }
+
+  ~bad_concatenate_change_test()
+  {
+    L(F("FINISHING concatenation test %s\n") % ident);
+  }
+
   change_set & getit(which_t which)
   {
     if (which == in_a)
@@ -3067,7 +3202,7 @@ struct bad_concatenate_change_test
   }
   void run()
   {
-    L(F("Running bad_concatenate_change_test\n"));
+    L(F("RUNNING bad_concatenate_change_test %s\n") % ident);
     try
       {
         dump_change_set("a", a);
@@ -3096,7 +3231,7 @@ struct bad_concatenate_change_test
   void run_both()
   {
     run();
-    L(F("Running bad_concatenate_change_test again backwards\n"));
+    L(F("RUNNING bad_concatenate_change_test %s again backwards\n") % ident);
     BOOST_CHECK_THROW(concatenate_change_sets(a, b, concat),
                       std::logic_error);
   }
@@ -3104,71 +3239,71 @@ struct bad_concatenate_change_test
 
 // We also do a number of just "bad change set" tests here, leaving one of
 // them empty; this is because our main line of defense against bad
-// change_set's, check_sane_history, does its checking by doing
-// concatenation's, so it's doing concatenation's that we want to be sure does
-// sanity checking...
+// change_sets, check_sane_history, does its checking by doing
+// concatenations, so it's doing concatenations that we want to be sure does
+// sanity checking.
 static void
 bad_concatenate_change_tests()
 {
   // Files/directories can't be dropped on top of each other:
   BOOST_CHECKPOINT("on top");
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.add_file(in_a, "target");
     t.add_file(in_b, "target");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.rename_file(in_a, "foo", "target");
     t.rename_file(in_b, "bar", "target");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.rename_dir(in_a, "foo", "target");
     t.rename_dir(in_b, "bar", "target");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.rename_file(in_a, "foo", "target");
     t.rename_dir(in_b, "bar", "target");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.add_file(in_a, "target");
     t.rename_file(in_b, "foo", "target");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.add_file(in_a, "target");
     t.rename_dir(in_b, "foo", "target");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.add_file(in_a, "target/subfile");
     t.add_file(in_b, "target");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.add_file(in_a, "target/subfile");
     t.rename_file(in_b, "foo", "target");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.add_file(in_a, "target/subfile");
     t.rename_dir(in_b, "foo", "target");
     t.run_both();
@@ -3176,20 +3311,20 @@ bad_concatenate_change_tests()
   // You can only delete something once
   BOOST_CHECKPOINT("delete once");
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.delete_file(in_a, "target");
     t.delete_file(in_b, "target");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.delete_file(in_a, "target");
     t.delete_dir(in_b, "target");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.delete_dir(in_a, "target");
     t.delete_dir(in_b, "target");
     t.run();
@@ -3197,28 +3332,28 @@ bad_concatenate_change_tests()
   // You can't delete something that's not there anymore
   BOOST_CHECKPOINT("delete after rename");
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.delete_file(in_a, "target");
     t.rename_file(in_b, "target", "foo");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.delete_dir(in_a, "target");
     t.rename_file(in_b, "target", "foo");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.delete_dir(in_a, "target");
     t.rename_dir(in_b, "target", "foo");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.delete_file(in_a, "target");
     t.rename_dir(in_b, "target", "foo");
@@ -3227,19 +3362,19 @@ bad_concatenate_change_tests()
   // Files/directories can't be split in two
   BOOST_CHECKPOINT("splitting files/dirs");
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.rename_file(in_a, "target", "foo");
     t.rename_file(in_b, "target", "bar");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.rename_dir(in_a, "target", "foo");
     t.rename_dir(in_b, "target", "bar");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.rename_dir(in_a, "target", "foo");
     t.rename_file(in_b, "target", "bar");
@@ -3248,64 +3383,64 @@ bad_concatenate_change_tests()
   // Files and directories are different
   BOOST_CHECKPOINT("files != dirs");
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.add_file(in_a, "target");
     t.delete_dir(in_b, "target");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.add_file(in_a, "target/subfile");
     t.delete_file(in_b, "target");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.add_file(in_a, "target/subfile");
     t.rename_file(in_b, "target", "foo");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.rename_file(in_a, "foo", "target");
     t.delete_dir(in_b, "target");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.apply_delta(in_a, "target", fid1, fid2);
     t.delete_dir(in_b, "target");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.rename_dir(in_a, "foo", "target");
     t.delete_file(in_b, "target");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.rename_dir(in_a, "foo", "target");
     t.apply_delta(in_b, "target", fid1, fid2);
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.apply_delta(in_a, "target", fid1, fid2);
     t.rename_dir(in_b, "target", "bar");
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.rename_file(in_a, "foo", "target");
     t.rename_dir(in_b, "target", "bar");
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.rename_dir(in_a, "foo", "target");
     t.rename_file(in_b, "target", "bar");
     t.run();
@@ -3313,14 +3448,14 @@ bad_concatenate_change_tests()
   // Directories can't be patched, and patches can't be directoried...
   BOOST_CHECKPOINT("can't patch dirs or vice versa");
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.add_file(in_a, "target/subfile");
     t.apply_delta(in_b, "target", fid_null, fid1);
     t.run_both();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.add_file(in_a, "target/subfile");
     t.apply_delta(in_b, "target", fid1, fid2);
@@ -3329,13 +3464,13 @@ bad_concatenate_change_tests()
   // Deltas must be consistent
   BOOST_CHECKPOINT("consistent deltas");
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.apply_delta(in_a, "target", fid1, fid2);
     t.apply_delta(in_b, "target", fid3, fid1);
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.add_file(in_a, "target", fid1);
     t.apply_delta(in_b, "target", fid2, fid3);
     t.run();
@@ -3343,13 +3478,13 @@ bad_concatenate_change_tests()
   // Can't have a null source id if it's not an add
   BOOST_CHECKPOINT("null id on non-add");
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.apply_delta(in_a, "target", fid_null, fid1);
     t.run();
   }
   // Can't have drop + delta with no add
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.combine();
     t.delete_file(in_a, "target");
     t.apply_delta(in_b, "target", fid1, fid2);
@@ -3358,19 +3493,19 @@ bad_concatenate_change_tests()
   // Can't have a null destination id, ever, with or without a delete_file
   BOOST_CHECKPOINT("no null destinations");
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.delete_file(in_a, "target");
     t.apply_delta(in_a, "target", fid1, fid_null);
     t.run();
   }
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.apply_delta(in_a, "target", fid1, fid_null);
     t.run();
   }
   // Can't have a patch with src == dst
   {
-    bad_concatenate_change_test t;
+    bad_concatenate_change_test t(__FILE__, __LINE__);
     t.apply_delta(in_a, "target", fid1, fid1);
     t.run();
   }

@@ -1,3 +1,7 @@
+2005-02-12  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Correct code to pass newly-added unit tests.
+
 2005-02-10  Derek Scherger  <derek@echologic.com>
 
 	* monotone.1: update for restrictions

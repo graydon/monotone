@@ -25,6 +25,9 @@
 struct
 change_set
 {  
+
+  typedef std::map<file_path, std::pair<file_id, file_id> > delta_map;
+
   struct
   path_rearrangement
   {
@@ -40,14 +43,13 @@ change_set
     bool operator==(path_rearrangement const & other) const;
     bool empty() const;
     void check_sane() const;
+    void check_sane(delta_map const &) const;
 
     bool has_added_file(file_path const & file) const;
     bool has_deleted_file(file_path const & file) const;
     bool has_renamed_file_dst(file_path const & file) const;
     bool has_renamed_file_src(file_path const & file) const;
   };
-
-  typedef std::map<file_path, std::pair<file_id, file_id> > delta_map;
   
   path_rearrangement rearrangement;
   delta_map deltas;
