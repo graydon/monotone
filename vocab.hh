@@ -27,7 +27,8 @@ template<typename INNER>                               \
 class enc {                                            \
   INNER i;                                             \
 public:                                                \
-  enc() {}                                             \
+  bool ok;                                             \
+  enc() : ok(false) {}                                 \
   enc(string const & s);                               \
   enc(INNER const & inner);                            \
   enc(enc<INNER> const & other);                       \
@@ -56,7 +57,8 @@ template<typename INNER>                               \
 class dec {                                            \
   INNER i;                                             \
 public:                                                \
-  dec() {}                                             \
+  bool ok;                                             \
+  dec() : ok(false) {}                                 \
   dec(INNER const & inner);                            \
   dec(dec<INNER> const & other);                       \
   bool operator<(dec<INNER> const & x) const           \
@@ -76,7 +78,8 @@ public:                                                \
 class ty {                                             \
   string s;                                            \
 public:                                                \
-  ty() : s("") {}                                      \
+  bool ok;                                             \
+  ty() : s(""), ok(false) {}                           \
   ty(string const & str);                              \
   ty(ty const & other);                                \
   string const & operator()() const                    \

@@ -14,12 +14,16 @@
 using namespace std;
 
 template <typename T>
-static inline void verify(T const & val)
+static inline void verify(T & val)
 {}
 
 template<>
-static inline void verify(local_path const & val)
+static inline void verify(local_path & val)
 {
+
+  if (val.ok)
+    return;
+
   using boost::filesystem::path;
   boost::filesystem::path p(val());
 
@@ -49,29 +53,41 @@ static inline void verify(local_path const & val)
       if ( ! boost::filesystem::posix_name(*i))
 	throw oops("non-posix file path component '" + *i + "' in '" + val() + "'");
     }
+
+  val.ok = true;
 }
 
 // fwd declare..
 bool book_keeping_file(local_path const & path);
 
 template<>
-static inline void verify(file_path const & val)
+static inline void verify(file_path & val)
 {
+  if (val.ok)
+    return;
+
   local_path loc(val());
   verify(loc);
   if (book_keeping_file(loc))
     throw oops("prohibited book-keeping path in '" + val() + "'");
+  
+  val.ok = true;
 }
 
 template<>
-static inline void verify(hexenc<id> const & val)
+static inline void verify(hexenc<id> & val)
 {
+  if (val.ok)
+    return;
+
   if (val() == "")
     return;
   if (val().size() != 40)
     throw oops("hex encoded ID '" + val() + "' size != 40");
   if (val().find_first_not_of("0123456789abcdef") != string::npos)
     throw oops("non-hex (or non-lowercase) character in ID '" + val() + "'");
+
+  val.ok = true;
 }
 
 
@@ -79,14 +95,17 @@ static inline void verify(hexenc<id> const & val)
 
 #define ATOMIC(ty)                           \
                                              \
-ty::ty(string const & str) : s(str)          \
+ty::ty(string const & str) :                 \
+     s(str), ok(false)                       \
 { verify(*this); }                           \
                                              \
-ty::ty(ty const & other) : s(other.s)        \
+ty::ty(ty const & other) :                   \
+            s(other.s), ok(other.ok)         \
 { verify(*this); }                           \
                                              \
 ty const & ty::operator=(ty const & other)   \
-{ s = other.s; verify(*this); return *this; }\
+{ s = other.s; ok = other.ok;                \
+  verify(*this); return *this; }             \
                                              \
 ostream & operator<<(ostream & o,            \
                      ty const & a)           \
@@ -98,21 +117,23 @@ ostream & operator<<(ostream & o,            \
 #define ENCODING(enc)                                    \
                                                          \
 template<typename INNER>                                 \
-enc<INNER>::enc(string const & s) : i(s)                 \
+enc<INNER>::enc(string const & s) : i(s), ok(false)      \
   { verify(*this); }                                     \
                                                          \
 template<typename INNER>                                 \
 enc<INNER>::enc(enc<INNER> const & other)                \
-  : i(other.i()) { verify(*this); }                      \
+  : i(other.i()), ok(other.ok) { verify(*this); }        \
                                                          \
 template<typename INNER>                                 \
-enc<INNER>::enc(INNER const & inner) : i(inner)          \
+enc<INNER>::enc(INNER const & inner) :                   \
+    i(inner), ok(false)                                  \
   { verify(*this); }                                     \
                                                          \
 template<typename INNER>                                 \
 enc<INNER> const &                                       \
 enc<INNER>::operator=(enc<INNER> const & other)          \
-  { i = other.i; verify(*this); return *this;}           \
+  { i = other.i; ok = other.ok;                          \
+    verify(*this); return *this;}                        \
                                                          \
 template <typename INNER>                                \
 ostream & operator<<(ostream & o, enc<INNER> const & e)  \
@@ -123,16 +144,18 @@ ostream & operator<<(ostream & o, enc<INNER> const & e)  \
                                                          \
 template<typename INNER>                                 \
 dec<INNER>::dec(dec<INNER> const & other)                \
-  : i(other.i) { verify(*this); }                        \
+  : i(other.i), ok(other.ok) { verify(*this); }          \
                                                          \
 template<typename INNER>                                 \
-dec<INNER>::dec(INNER const & inner) : i(inner)          \
+dec<INNER>::dec(INNER const & inner) :                   \
+    i(inner), ok(false)                                  \
   { verify(*this); }                                     \
                                                          \
 template<typename INNER>                                 \
 dec<INNER> const &                                       \
 dec<INNER>::operator=(dec<INNER> const & other)          \
-  { i = other.i; verify(*this); return *this;}           \
+  { i = other.i; ok = other.ok;                          \
+    verify(*this); return *this;}                        \
                                                          \
 template <typename INNER>                                \
 ostream & operator<<(ostream & o, dec<INNER> const & d)  \

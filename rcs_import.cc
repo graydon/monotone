@@ -716,7 +716,7 @@ void store_branch_manifest_edge(manifest_map const & parent,
 				app_state & app,
 				cvs_history & cvs)
 {
-  manifest_data parent_data, child_data;
+  data parent_data, child_data;
 
   unsigned long p, c;
   p = cvs.manifest_version_interner.intern(parent_id.inner()());
@@ -746,7 +746,7 @@ void store_branch_manifest_edge(manifest_map const & parent,
       // parent (new) -> child (old)
 
       base64< gzip<delta> > del;	      
-      diff(parent_data.inner(), child_data.inner(), del);
+      diff(parent_data, child_data, del);
       rcs_put_raw_manifest_edge(child_id.inner(),
 				parent_id.inner(),				
 				del, app.db);
@@ -764,7 +764,7 @@ void store_trunk_manifest_edge(manifest_map const & parent,
 			       app_state & app,
 			       cvs_history & cvs)
 {
-  manifest_data parent_data, child_data;
+  data parent_data, child_data;
 
   unsigned long p, c;
   p = cvs.manifest_version_interner.intern(parent_id.inner()());
@@ -792,7 +792,7 @@ void store_trunk_manifest_edge(manifest_map const & parent,
       // the delta should run from child (new) -> parent (old).
 
       base64< gzip<delta> > del;	      
-      diff(child_data.inner(), parent_data.inner(), del);
+      diff(child_data, parent_data, del);
       rcs_put_raw_manifest_edge(parent_id.inner(),
 				child_id.inner(),
 				del, app.db);

@@ -106,6 +106,9 @@ void read_manifest_map(manifest_data const & dat,
 void write_manifest_map(manifest_map const & man, 
 			manifest_data & dat);
 
+void write_manifest_map(manifest_map const & man, 
+			data & dat);
+
 void calculate_manifest_map_ident(manifest_map const & m,
 				  manifest_id & ident);
 

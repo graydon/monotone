@@ -150,13 +150,23 @@ void write_manifest_map(manifest_map const & man,
   dat = manifest_data(encoded);
 }
 
+void write_manifest_map(manifest_map const & man,
+			data & dat)
+{
+  ostringstream sstr;
+  copy(man.begin(), man.end(),
+       ostream_iterator<entry>(sstr));
+  dat = sstr.str();
+}
+
 void calculate_manifest_map_ident(manifest_map const & m,
 				  manifest_id & ident)
 {
-  manifest_data tmp;
-  write_manifest_map(m, tmp);
+  ostringstream sstr;
+  copy(m.begin(), m.end(),
+       ostream_iterator<entry>(sstr));
   hexenc<id> tid;
-  calculate_ident(tmp.inner(), tid);
+  calculate_ident(data(sstr.str()), tid);
   ident = manifest_id(tid);
 }
 
