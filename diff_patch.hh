@@ -21,11 +21,18 @@ struct conflict {};
 
 bool guess_binary(std::string const & s);
 
-void unidiff(std::string const & filename1,
-	     std::string const & filename2,
-	     std::vector<std::string> const & lines1,
-	     std::vector<std::string> const & lines2,
-	     std::ostream & ost);
+enum diff_type
+{
+  unified_diff,
+  context_diff
+};
+
+void make_diff(std::string const & filename1,
+               std::string const & filename2,
+               std::vector<std::string> const & lines1,
+               std::vector<std::string> const & lines2,
+               std::ostream & ost,
+               diff_type type);
 
 bool merge3(std::vector<std::string> const & ancestor,
 	    std::vector<std::string> const & left,

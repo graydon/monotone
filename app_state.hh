@@ -31,12 +31,18 @@ public:
   utf8 branch_name;
   database db;
   lua_hooks lua;
-  bool options_changed;
+  bool stdhooks;
+  bool rcfiles;
   options_map options;
+  utf8 message;
+  std::vector<utf8> revision_selectors;
+  std::vector<utf8> extra_rcfiles;
+  path_set restrictions;
+  file_path relative_directory;
 
-  /* These are used to cache signers/verifiers (if the hook allows).
-   * They can't be function-static variables in key.cc, since they must be
-   * destroyed before the Botan deinitialize() function is called. */
+  // These are used to cache signers/verifiers (if the hook allows).
+  // They can't be function-static variables in key.cc, since they must be
+  // destroyed before the Botan deinitialize() function is called. */
   std::map<rsa_keypair_id,
     std::pair<boost::shared_ptr<Botan::PK_Signer>, 
         boost::shared_ptr<Botan::RSA_PrivateKey> > > signers;
@@ -44,15 +50,31 @@ public:
     std::pair<boost::shared_ptr<Botan::PK_Verifier>,
         boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
 
+  void initialize(bool working_copy);
+  void initialize(std::string const & dir);
+
+  file_path prefix(utf8 const & path);
+  void add_restriction(utf8 const & path);
+  bool restriction_includes(file_path const & path);
+
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
-  
-  void write_options(bool force = false);
+
+  void set_message(utf8 const & message);
+  void add_revision(utf8 const & selector);
+
+  void set_stdhooks(bool b);
+  void set_rcfiles(bool b);
+  void add_rcfile(utf8 const & filename);
 
   explicit app_state();
   ~app_state();
+
 private:
+  void load_rcfiles();
+  void read_options();
+  void write_options();
 };
 
 #endif // __APP_STATE_HH__

@@ -162,18 +162,17 @@
 // if the requested item exists. if an item does not exist, a "nonexistant"
 // response command is sent. 
 //
-// once a response is received for each requested key and manifest cert
+// once a response is received for each requested key and revision cert
 // (either data or nonexistant) the requesting party walks the graph of
-// received manifest certs and transmits send_data or send_delta commands
-// for all the manifests mentionned in the certs which it does not already
+// received revision certs and transmits send_data or send_delta commands
+// for all the revisions mentionned in the certs which it does not already
 // have in its database.
 //
-// for each manifest edge it receives, the recipient builds a patch_set 
-// out of the manifests and then requests all the file data or deltas
-// described in that patch_set.
+// for each revision it receives, the recipient requests all the file data or
+// deltas described in that revision.
 //
-// once all requested files, manifests and certs are received (or noted as
-// nonexistant), the recipient closes its connection.
+// once all requested files, manifests, revisions and certs are received (or
+// noted as nonexistant), the recipient closes its connection.
 //
 // (aside: this protocol is raw binary because coding density is actually
 // important here, and each packet consists of very information-dense
@@ -522,8 +521,6 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
   switch (ty)
     {
     case rcert_item:
-    case mcert_item:
-    case fcert_item:
       if (cert_in_ticker.get() != NULL)
         ++(*cert_in_ticker);
       break;
@@ -553,8 +550,6 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
   switch (ty)
     {
     case rcert_item:
-    case mcert_item:
-    case fcert_item:
       if (cert_out_ticker.get() != NULL)
         ++(*cert_out_ticker);
       break;
@@ -1622,10 +1617,6 @@ session::process_confirm_cmd(string const & signature)
           queue_refine_cmd(root);
           queue_done_cmd(0, key_item);
 
-          load_merkle_node(app, rcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
-          queue_done_cmd(0, rcert_item);
-
           load_merkle_node(app, mcert_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(root);
           queue_done_cmd(0, mcert_item);
@@ -1633,6 +1624,10 @@ session::process_confirm_cmd(string const & signature)
           load_merkle_node(app, fcert_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(root);
           queue_done_cmd(0, fcert_item);
+
+          load_merkle_node(app, rcert_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(root);
+          queue_done_cmd(0, rcert_item);
           return true;
         }
       else
@@ -1659,9 +1654,9 @@ data_exists(netcmd_item_type type,
     case key_item:
       return app.db.public_key_exists(hitem);
     case fcert_item:
-      return app.db.file_cert_exists(hitem);
+      return false;
     case mcert_item:
-      return app.db.manifest_cert_exists(hitem);
+      return false;
     case manifest_item:
       return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
@@ -1761,31 +1756,11 @@ load_data(netcmd_item_type type,
       break;
 
     case mcert_item:
-      if(app.db.manifest_cert_exists(hitem))
-        {
-          manifest<cert> c;
-          app.db.get_manifest_cert(hitem, c);
-          string tmp;
-          write_cert(c.inner(), out);
-        }
-      else
-        {
-          throw bad_decode(F("mcert '%s' does not exist in our database") % hitem);
-        }
+      throw bad_decode(F("mcert '%s' not supported") % hitem);
       break;
 
     case fcert_item:
-      if(app.db.file_cert_exists(hitem))
-        {
-          file<cert> c;
-          app.db.get_file_cert(hitem, c);
-          string tmp;
-          write_cert(c.inner(), out);
-        }
-      else
-        {
-          throw bad_decode(F("fcert '%s' does not exist in our database") % hitem);
-        }
+      throw bad_decode(F("fcert '%s' not supported") % hitem);
       break;
     }
 }
@@ -2303,6 +2278,8 @@ session::process_data_cmd(netcmd_item_type type,
 
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
+  // FIXME: what does the above comment mean?  note_item_arrived does require
+  // that the item passed to it have been requested...
   note_item_arrived(type, item);
                            
   switch (type)
@@ -2327,19 +2304,7 @@ session::process_data_cmd(netcmd_item_type type,
       break;
 
     case mcert_item:
-      if (this->app.db.manifest_cert_exists(hitem))
-        L(F("manifest cert '%s' already exists in our database\n")  % hitem);
-      else
-        {
-          cert c;
-          read_cert(dat, c);
-          hexenc<id> tmp;
-          cert_hash_code(c, tmp);
-          if (! (tmp == hitem))
-            throw bad_decode(F("hash check failed for manifest cert '%s'")  % hitem);
-          this->dbw.consume_manifest_cert(manifest<cert>(c));
-          update_merkle_trees(mcert_item, tmp, true);
-        }
+      L(F("ignoring manifest cert '%s'\n") % hitem);
       break;
 
     case rcert_item:
@@ -2365,19 +2330,7 @@ session::process_data_cmd(netcmd_item_type type,
       break;
 
     case fcert_item:
-      if (this->app.db.file_cert_exists(hitem))
-        L(F("file cert '%s' already exists in our database\n")  % hitem);
-      else
-        {
-          cert c;
-          read_cert(dat, c);
-          hexenc<id> tmp;
-          cert_hash_code(c, tmp);
-          if (! (tmp == hitem))
-            throw bad_decode(F("hash check failed for file cert '%s'")  % hitem);
-          this->dbw.consume_file_cert(file<cert>(c));
-          update_merkle_trees(fcert_item, tmp, true);
-        }
+      L(F("ignoring file cert '%s'\n") % hitem);
       break;
 
     case revision_item:
@@ -2455,6 +2408,8 @@ session::process_delta_cmd(netcmd_item_type type,
 
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
+  // FIXME: what does the above comment mean?  note_item_arrived does require
+  // that the item passed to it have been requested...
   note_item_arrived(type, ident);
 
   switch (type)
@@ -3164,9 +3119,6 @@ rebuild_merkle_trees(app_state & app,
   app.db.erase_merkle_nodes(typestr, collection);
   store_merkle_node(app, collection, empty_root_node);
 
-  // FIXME: do fcerts later 
-  // ticker fcerts("fcerts");
-
   ticker rcerts("rcerts", "r", 32);
   ticker keys("keys", "k", 1);
 
@@ -3229,11 +3181,6 @@ static void
 ensure_merkle_tree_ready(app_state & app,
                          utf8 const & collection)
 {
-  string mcert_item_str, fcert_item_str, key_item_str;
-  netcmd_item_type_to_string(mcert_item, mcert_item_str);
-  netcmd_item_type_to_string(mcert_item, fcert_item_str);
-  netcmd_item_type_to_string(mcert_item, key_item_str);
-
 //   if (! (app.db.merkle_node_exists(mcert_item_str, collection, 0, get_root_prefix().val)
 //       && app.db.merkle_node_exists(fcert_item_str, collection, 0, get_root_prefix().val)
 //       && app.db.merkle_node_exists(key_item_str, collection, 0, get_root_prefix().val)))

@@ -12,12 +12,12 @@ MOST_SOURCES =								\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
-	 packet_types.hh transforms.hh vocab.hh				\
+	 transforms.hh vocab.hh				\
 	 cleanup.hh diff_patch.hh lua.hh basic_io.hh			\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
          randomfile.hh rcs_file.hh xdelta.hh adler32.hh			\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
-	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
+	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
          mkstemp.hh mt_version.hh
 
@@ -255,7 +255,8 @@ EXTRA_DIST = $(man1_MANS) \
              tests/atlocal.in  \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
-             $(wildcard m4/*.m4)
+             $(wildcard m4/*.m4) \
+             sqlite/keywordhash.c
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -324,10 +325,14 @@ txt2c: txt2c.cc Makefile
 	chmod 0755 $@$(EXEEXT)
 
 %.h: %.sql txt2c Makefile
-	./txt2c $< $(*F) >$@
+	./txt2c $< $(*F) >$@.tmp
+	cmp $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 %.h: %.lua txt2c Makefile
-	./txt2c $< $(*F) >$@
+	./txt2c $< $(*F) >$@.tmp
+	cmp $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 # A fake target so we can use MT/revision as a prerequisite, yet not
 # crash if MT/revision does not exist.
@@ -337,7 +342,9 @@ package_revision.txt: $(srcdir)/MT/revision
 	if [ -f $< ]; then cp $< $@; fi
 	if [ ! -f $@ ]; then echo "unknown" > $@; fi
 package_revision.h: package_revision.txt txt2c Makefile
-	./txt2c --strip-trailing $< package_revision >$@
+	./txt2c --strip-trailing $< package_revision >$@.tmp
+	cmp $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 .PHONY: package_full_revision.txt
 package_full_revision.txt:
@@ -352,7 +359,9 @@ package_full_revision_dist.txt: package_full_revision.txt
 	 echo '  Generated from data cached in the distribution;'; \
 	 echo '  further changes may have been made.') >> $@
 package_full_revision.h: package_full_revision.txt txt2c Makefile
-	./txt2c $< package_full_revision >$@
+	./txt2c $< package_full_revision >$@.tmp
+	cmp $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 # automake doesn't build html docs
 

@@ -13,7 +13,7 @@ AT_DATA(f, [base data
 ])
 
 AT_CHECK(MONOTONE add f, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=branch1 commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
@@ -29,7 +29,7 @@ AT_CHECK(grep -q $ROOT_R_SHA stdout)
 
 AT_DATA(f, [child1 data
 ])
-AT_CHECK(MONOTONE --branch=branch1 commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
 CHILD1_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
@@ -47,7 +47,7 @@ AT_CHECK(grep -q $CHILD1_R_SHA stdout)
 REVERT_TO($ROOT_R_SHA)
 AT_DATA(f, [child2 data
 ])
-AT_CHECK(MONOTONE --branch=branch1 commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
 CHILD2_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
@@ -68,7 +68,7 @@ AT_CHECK(grep -q $CHILD2_R_SHA stdout)
 
 AT_DATA(f, [child3 data
 ])
-AT_CHECK(MONOTONE --branch=branch2 commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [ignore])
 CHILD3_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
@@ -96,7 +96,7 @@ AT_CHECK(grep -q $CHILD3_R_SHA stdout)
 REVERT_TO($CHILD1_R_SHA)
 AT_DATA(f, [child4 data
 ])
-AT_CHECK(MONOTONE --branch=branch2 commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [ignore])
 CHILD4_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])

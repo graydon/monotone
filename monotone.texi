@@ -2367,12 +2367,6 @@ revision. Typically you will make a separate signing key for each test
 you intend to run on revisions. This cert influences the
 @command{update} algorithm.
 
-@item vcheck
-This cert contains a seed value and a special message authentication
-code (@sc{mac}) calculated with that seed value over the files of the
-manifest the cert applies to. It can be used to reduce the chance of
-accidental collision in @sc{sha1}.
-
 @end table
 
 @page
@@ -3337,20 +3331,6 @@ key ids, and it will tell you whether, under your current settings,
 Monotone would trust a cert on that revision with that value signed by
 those keys.
 
-@item monotone --branch=@var{branchname} vcheck create 
-@itemx monotone vcheck create @var{id}
-@itemx monotone --branch=@var{branchname} vcheck check
-@itemx monotone vcheck check @var{id}
-
-These commands produce or check @code{vcheck} certs for the given
-manifest @var{id}. A @code{vcheck} cert on a manifest simply reduces
-the probability that you and your colleague have different manifests
-or files with the same (colliding) @sc{sha1} value. You can produce as
-many @code{vcheck} certs as you like.
-
-If you omit the @var{id}, these commands operate on the heads of
-@var{branchname}, which you must provide.
-
 @end ftable
 
 
@@ -3411,12 +3391,9 @@ monotone as a utility for moving individual data items around
 manually.
 
 @ftable @command
-@item monotone fcerts @var{id}
-@itemx monotone mcerts @var{id}
-@itemx monotone rcerts @var{id}
+@itemx monotone certs @var{id}
 
-These commands print out an @code{fcert}, @code{mcert} or
-@code{rcert} packet for each file, manifest, or revision cert in your
+This command prints out an @code{rcert} packet for each cert in your
 database associated with @var{id}. These can be used to transport
 certificates safely between monotone databases.
 
@@ -3831,14 +3808,6 @@ by at least one of three ``trusted'' keys, unless it is an
 @emph{two} or more trusted keys. This is one way of requiring that
 ancestry assertions go through an extra ``reviewer'' before they are
 accepted.
-
-@item get_manifest_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
-@itemx get_file_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
-
-These hooks are identical to the hook @code{get_revision_cert_trust},
-except they is called for manifest or file certificates rather than
-revision certificates. See the documentation for that hook for more
-details.
 
 @item accept_testresult_change (@var{old_results}, @var{new_results})
 
@@ -4537,35 +4506,6 @@ theory. Fair enough. Below we present @emph{practical} procedures you
 can follow to compensate for the supposed threats presented in the
 paper.
 
-@subheading Accidental collision
-
-To minimize the chance of accidental collision further, monotone has a
-special type of certificate called a @code{vcheck}, which you can
-issue at any time and in any quantity you like. A @code{vcheck}
-certificate contains a @emph{randomly keyed} message authentication
-code (@sc{mac}). This effectively means that a @code{vcheck}
-cert identifies your tree again, with a ``different'' variant of
-@sc{sha1}.
-
-If you have the @sc{sha1} of your manifest and a @code{vcheck} cert,
-the probability of a collision involving that manifest drops from
-@math{2^{-160}} to @math{2^{-320}}. If you have two @code{vcheck} certs,
-it drops to @math{2^{-480}}, and so on. You can issue as many
-@code{vcheck} certs as you like until your personal level of paranoia
-is met. Each @code{vcheck} cert has its own random seed, usually 128
-bits, so after you've issued about @math{2^{64}} @code{vcheck} certs on
-the same manifest you have a decent chance of repeating one, but that
-is harmless.
-
-Adding the occasional @code{vcheck} cert to your tree is a good idea
-if you are worried about the ``deterministic'' nature of accidental
-collisions in @sc{sha1}, outlined in the paper. Since the @sc{mac} is
-randomized, unintentional (non-attack) collisions in @code{vcheck}
-certs are reliably nondeterministic. Furthermore, they minimize the
-chance that a malicious collision has gone undetected, by requiring
-the collision to pass an additional (and equally hard) check. A large
-warning is printed if such a check fails.
-
 @subheading Collision attacks
 
 A successful collision attack on @sc{sha1}, as mentioned, does not
@@ -4715,10 +4655,6 @@ Create a custom cert for a revision. Reads cert value
 from stdin if no value given on command line.
 @comment TROFF INPUT: .TP
 
-@item @b{vcheck} @i{(create|check) [id]}
-Produce or check @code{vcheck} certs for the given manifest @i{[id]}.
-@comment TROFF INPUT: .TP
-
 @item @b{genkey} @i{<keyid>}
 Generate an @sc{rsa} key-pair and store it in the database.
 @comment TROFF INPUT: .TP
@@ -4763,10 +4699,6 @@ List files intentionally ignored due to the ignore_file hook.
 List files in revision's manifest, but not in working directory.
 @comment TROFF INPUT: .TP
 
-@item @b{fcerts} @i{<id>}
-Write file cert packets to stdout.
-@comment TROFF INPUT: .TP
-
 @item @b{fdata} @i{<id>}
 Write file data packet to stdout.
 @comment TROFF INPUT: .TP
@@ -4775,10 +4707,6 @@ Write file data packet to stdout.
 Write file delta packet to stdout.
 @comment TROFF INPUT: .TP
  
-@item @b{mcerts} @i{<id>}
-Write manifest cert packets to stdout.
-@comment TROFF INPUT: .TP
-
 @item @b{mdata} @i{<id>}
 Write manifest data packet to stdout.
 @comment TROFF INPUT: .TP

@@ -34,7 +34,7 @@ public:
   void add_std_hooks();
   void working_copy_rcfilename(fs::path & file);
   void default_rcfilename(fs::path & file);
-  void add_rcfile(fs::path const & file, bool required);
+  void load_rcfile(fs::path const & file, bool required);
 
   // cert hooks
   bool hook_expand_selector(std::string const & sel, std::string & exp);
@@ -54,10 +54,6 @@ public:
                                     hexenc<id> const & id,
                                     cert_name const & name,
                                     cert_value const & val);
-  bool hook_get_file_cert_trust(std::set<rsa_keypair_id> const & signers,
-                                hexenc<id> const & id,
-                                cert_name const & name,
-                                cert_value const & val);
   bool hook_accept_testresult_change(std::map<rsa_keypair_id, bool> const & old_results,
                                      std::map<rsa_keypair_id, bool> const & new_results);
 

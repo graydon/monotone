@@ -1,0 +1,27 @@
+AT_SETUP([rename in subdir])
+MONOTONE_SETUP
+
+AT_CHECK(mkdir subdir)
+AT_CHECK(mkdir subdir/anotherdir)
+AT_DATA(subdir/foo, [data data
+])
+AT_DATA(subdir/anotherdir/bar, [more data
+])
+AT_CHECK(MONOTONE add ., [], [ignore], [ignore])
+COMMIT(testbranch)
+REV=`BASE_REVISION`
+
+AT_CHECK(mv subdir/foo subdir/foo-renamed)
+AT_CHECK( (cd subdir && MONOTONE rename foo foo-renamed), [], [ignore], [ignore])
+AT_CHECK(mv subdir/anotherdir anotherdir-renamed)
+AT_CHECK( (cd subdir && MONOTONE rename anotherdir ../anotherdir-renamed), [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE checkout $REV codir, [], [ignore], [ignore])
+AT_CHECK( (cd codir && MONOTONE update --branch=testbranch), [], [ignore], [ignore])
+AT_CHECK(test -f codir/subdir/foo, [1])
+AT_CHECK(test -f codir/subdir/anotherdir/bar, [1])
+AT_CHECK(cmp subdir/foo-renamed codir/subdir/foo-renamed)
+AT_CHECK(cmp anotherdir-renamed/bar codir/anotherdir-renamed/bar)
+
+AT_CLEANUP

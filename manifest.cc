@@ -59,6 +59,8 @@ manifest_map_builder::visit_file(file_path const & path)
   man.insert(manifest_entry(path, file_id(ident)));
 }
 
+/** these seem to be unused
+
 void 
 build_manifest_map(file_path const & path,
 		   app_state & app,
@@ -78,6 +80,9 @@ build_manifest_map(app_state & app,
   walk_tree(build);
 }
 
+**/
+
+
 
 void 
 build_manifest_map(path_set const & paths,
@@ -85,8 +90,7 @@ build_manifest_map(path_set const & paths,
 		   app_state & app)
 {
   man.clear();
-  for (path_set::const_iterator i = paths.begin();
-       i != paths.end(); ++i)
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       N(fs::exists(mkpath((*i)())),
 	F("file disappeared but exists in manifest: %s") % (*i)());
@@ -96,6 +100,35 @@ build_manifest_map(path_set const & paths,
     }
 }
 
+
+void 
+build_restricted_manifest_map(path_set const & paths,
+                              manifest_map const & m_old, 
+                              manifest_map & m_new, 
+                              app_state & app)
+{
+  m_new.clear();
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      if (app.restriction_includes(*i))
+        {
+          // compute the current sha1 id for included files
+          N(fs::exists(mkpath((*i)())),
+            F("file disappeared but exists in new manifest: %s") % (*i)());
+          hexenc<id> ident;
+          calculate_ident(*i, ident, app.lua);
+          m_new.insert(manifest_entry(*i, file_id(ident)));
+        }
+      else
+        {
+          // copy the old manifest entry for excluded files
+          manifest_map::const_iterator old = m_old.find(*i);
+          N(old != m_old.end(),
+            F("file restricted but does not exist in old manifest: %s") % *i);
+          m_new.insert(*old);
+        }
+    }
+}
 
 // reading manifest_maps
 

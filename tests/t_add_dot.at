@@ -1,8 +1,5 @@
-AT_SETUP([(minor) monotone add .])
+AT_SETUP([monotone add .])
 MONOTONE_SETUP
-
-# This test is a bug report.
-AT_XFAIL_IF(true)
 
 AT_DATA(testfile1, [foo
 ])

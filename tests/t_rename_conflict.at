@@ -1,0 +1,24 @@
+AT_SETUP([merge(<rename a b>, <rename a c>)])
+MONOTONE_SETUP
+
+# Should cause a merge conflict.
+
+ADD_FILE(a, [blah blah
+])
+COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
+
+AT_CHECK(mv a b)
+AT_CHECK(MONOTONE rename a b, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(mv b a)
+REVERT_TO($BASE_R)
+
+AT_CHECK(mv a c)
+AT_CHECK(MONOTONE rename a c, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE merge --branch=testbranch, [1], [ignore], [ignore])
+
+AT_CLEANUP

@@ -1,0 +1,37 @@
+AT_SETUP([(normal) update 2])
+MONOTONE_SETUP
+
+# This test is a bug report
+AT_XFAIL_IF(true)
+
+# Bug: update isn't able to jump over discontinuities in branches.  If
+# we have A1 -> B1 -> A2, then updating branch A from A1 doesn't get
+# to A2.
+
+# Discussion of solution to this is in t_ambig_update.at.
+
+ADD_FILE(testfile, [main branch data
+])
+COMMIT(mainbranch)
+A1_R=`BASE_REVISION`
+
+SET_FILE(testfile, [first branch data 1
+])
+COMMIT(firstbranch)
+B1_R=`BASE_REVISION`
+
+SET_FILE(testfile, [first branch data 2
+])
+COMMIT(mainbranch)
+A2_R=`BASE_REVISION`
+
+
+REVERT_TO($A1_R)
+
+AT_CHECK(MONOTONE update --branch=mainbranch, [], [ignore], [ignore])
+GOT_R=`BASE_REVISION`
+
+AT_CHECK(test $GOT_R != $A1_R)
+AT_CHECK(test $GOT_R == $A2_R)
+
+AT_CLEANUP

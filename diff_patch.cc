@@ -207,6 +207,14 @@ void normalize_extents(vector<extent> & a_b_map,
             //     j: foo   --preserved-->   mapped[  j]: foo
             //
 
+            // This code is currently untested, because we haven't been able to find
+            // any test case that would exercise it!
+            // Maybe this text will make us look bad when/if someone discovers it, but
+            // better to have a bad reputation and good software than vice-versa.
+            W(F("You've found files that trigger a strange edge-case of the merge logic.\n"));
+            W(F("We think it will work, but please tell us; and, if possible, send us the files\n"));
+            W(F("for inclusion in our test suite (monotone-devel@nongnu.org).  Thanks!\n"));
+
             L(F("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
               % a_b_map.at(j-1).pos
               % a_b_map.at(j-1).len
@@ -706,8 +714,9 @@ std::string update_merge_provider::get_file_encoding(file_path const & path,
 
 
 
-// the remaining part of this file just handles printing out unidiffs for
-// the case where someone wants to *read* a diff rather than apply it.
+// the remaining part of this file just handles printing out various
+// diff formats for the case where someone wants to *read* a diff
+// rather than apply it.
 
 struct hunk_consumer
 {
@@ -819,10 +828,6 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
           a_len++;
           b_len++;
         }
-    }
-
-  if (hunk.size() > 0)
-    {
       
       // write hunk to stream
       ost << "@@ -" << a_begin+1;
@@ -877,16 +882,177 @@ void unidiff_hunk_writer::advance_to(size_t newpos)
     }
 }
 
-
-void unidiff(string const & filename1,
-             string const & filename2,
-             vector<string> const & lines1,
-             vector<string> const & lines2,
-             ostream & ost)
+struct cxtdiff_hunk_writer : public hunk_consumer
 {
-  ost << "--- " << filename1 << endl;
-  ost << "+++ " << filename2 << endl;  
+  vector<string> const & a;
+  vector<string> const & b;
+  size_t ctx;
+  ostream & ost;
+  size_t a_begin, b_begin, a_len, b_len;
+  long skew;
+  vector<size_t> inserts;
+  vector<size_t> deletes;
+  vector<string> from_file;
+  vector<string> to_file;
+  bool have_insertions;
+  bool have_deletions;
+  cxtdiff_hunk_writer(vector<string> const & a,
+                      vector<string> const & b,
+                      size_t ctx,
+                      ostream & ost);
+  virtual void flush_hunk(size_t pos);
+  virtual void advance_to(size_t newpos);
+  virtual void insert_at(size_t b_pos);
+  virtual void delete_at(size_t a_pos);
+  void flush_pending_mods();
+  virtual ~cxtdiff_hunk_writer() {}
+};
+  
+cxtdiff_hunk_writer::cxtdiff_hunk_writer(vector<string> const & a,
+                                         vector<string> const & b,
+                                         size_t ctx,
+                                         ostream & ost)
+    : a(a), b(b), ctx(ctx), ost(ost),
+      a_begin(0), b_begin(0),
+      a_len(0), b_len(0), skew(0),
+      have_insertions(false), have_deletions(false)
+{}
 
+void cxtdiff_hunk_writer::insert_at(size_t b_pos)
+{
+  inserts.push_back(b_pos);
+  have_insertions = true;
+}
+  
+void cxtdiff_hunk_writer::delete_at(size_t a_pos)
+{
+  deletes.push_back(a_pos);
+  have_deletions = true;
+}
+
+void cxtdiff_hunk_writer::flush_hunk(size_t pos)
+{
+  flush_pending_mods();
+
+  if (have_deletions || have_insertions)
+    {
+      // insert trailing context
+      size_t ctx_start = a_begin + a_len;
+      for (size_t i = 0; (i < ctx) && (ctx_start + i < a.size()); ++i)
+        {
+          from_file.push_back(string("  ") + a[ctx_start + i]);
+          a_len++;
+        }
+
+      ctx_start = b_begin + b_len;
+      for (size_t i = 0; (i < ctx) && (ctx_start + i < b.size()); ++i)
+        {
+          to_file.push_back(string("  ") + b[ctx_start + i]);
+          b_len++;
+        }
+
+      ost << "***************" << endl;
+
+      ost << "*** " << (a_begin + 1) << "," << (a_begin + a_len) << " ****" << endl;
+      if (have_deletions)
+        copy(from_file.begin(), from_file.end(), ostream_iterator<string>(ost, "\n"));
+
+      ost << "--- " << (b_begin + 1) << "," << (b_begin + b_len) << " ----" << endl;
+      if (have_insertions)
+        copy(to_file.begin(), to_file.end(), ostream_iterator<string>(ost, "\n"));
+    }
+
+  // reset hunk
+  to_file.clear();
+  from_file.clear();
+  have_insertions = false;
+  have_deletions = false;
+  skew += b_len - a_len;
+  a_begin = pos;
+  b_begin = pos + skew;
+  a_len = 0;
+  b_len = 0;
+}
+
+void cxtdiff_hunk_writer::flush_pending_mods()
+{
+  // nothing to flush?
+  if (inserts.empty() && deletes.empty())
+    return;
+
+  string prefix;
+
+  // if we have just insertions to flush, prefix them with "+"; if
+  // just deletions, prefix with "-"; if both, prefix with "!"
+  if (inserts.empty() && !deletes.empty())
+    prefix = "-";
+  else if (deletes.empty() && !inserts.empty())
+    prefix = "+";
+  else
+    prefix = "!";
+
+  for (vector<size_t>::const_iterator i = deletes.begin();
+       i != deletes.end(); ++i)
+    {
+      from_file.push_back(prefix + string(" ") + a[*i]);
+      a_len++;
+    }
+  for (vector<size_t>::const_iterator i = inserts.begin();
+       i != inserts.end(); ++i)
+    {
+      to_file.push_back(prefix + string(" ") + b[*i]);
+      b_len++;
+    }
+
+  // clear pending mods
+  inserts.clear();
+  deletes.clear();
+}
+
+void cxtdiff_hunk_writer::advance_to(size_t newpos)
+{
+  if (a_begin + a_len + (2 * ctx) < newpos)
+    {
+      flush_hunk(newpos);
+
+      // insert new leading context
+      if (newpos - ctx < a.size())
+        {
+          for (int i = ctx; i > 0; --i)
+            {
+              if (newpos - i < 0)
+                continue;
+
+              // note that context diffs prefix common text with two
+              // spaces, whereas unified diffs use a single space
+              from_file.push_back(string("  ") + a[newpos - i]);
+              to_file.push_back(string("  ") + a[newpos - i]);
+              a_begin--; a_len++;
+              b_begin--; b_len++;
+            }
+        }
+    }
+  else
+    {
+      flush_pending_mods();
+      // pad intermediate context
+      while (a_begin + a_len < newpos)
+        {
+          from_file.push_back(string("  ") + a[a_begin + a_len]);
+          to_file.push_back(string("  ") + a[a_begin + a_len]);
+          a_len++;
+          b_len++;	  
+        }
+    }
+}
+
+void make_diff(string const & filename1,
+               string const & filename2,
+               vector<string> const & lines1,
+               vector<string> const & lines2,
+               ostream & ost,
+               diff_type type)
+{
   vector<long> left_interned;  
   vector<long> right_interned;  
   vector<long> lcs;  
@@ -909,10 +1075,28 @@ void unidiff(string const & filename1,
                              std::min(lines1.size(), lines2.size()),
                              back_inserter(lcs));
 
-  unidiff_hunk_writer hunks(lines1, lines2, 3, ost);
-  walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
-}
+  switch (type)
+    {
+      case unified_diff:
+      {
+        ost << "--- " << filename1 << endl;
+        ost << "+++ " << filename2 << endl;
 
+        unidiff_hunk_writer hunks(lines1, lines2, 3, ost);
+        walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
+        break;
+      }
+      case context_diff:
+      {
+        ost << "*** " << filename1 << endl;
+        ost << "--- " << filename2 << endl;
+
+        cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost);
+        walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
+        break;
+      }
+    }
+}
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
@@ -997,8 +1181,8 @@ static void unidiff_append_test()
   split_into_lines(src, src_lines);
   split_into_lines(dst, dst_lines);
   stringstream sst;
-  unidiff("hello.c", "hello.c", src_lines, dst_lines, sst);
-  BOOST_CHECK(sst.str() == ud);  
+  make_diff("hello.c", "hello.c", src_lines, dst_lines, sst, unified_diff);
+  BOOST_CHECK(sst.str() == ud);
 }
 
 
