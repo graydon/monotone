@@ -101,8 +101,10 @@ cvs_file_edge
 {
   cvs_file_edge (file_id const & pv, 
 		 file_path const & pp,
+		 bool pl,
 		 file_id const & cv, 
 		 file_path const & cp,
+		 bool cl,
 		 cvs_history & cvs);
   cvs_version parent_version;
   cvs_path parent_path;
@@ -112,15 +114,17 @@ cvs_file_edge
   bool child_live_p;
   inline bool operator<(cvs_file_edge const & other) const
   {
-    return (parent_path < other.parent_path) ||
-      
-      ((parent_path == other.parent_path) && (parent_version < other.parent_version)) ||
-      
-      ((parent_path == other.parent_path) && (parent_version == other.parent_version) && 
-       (child_path < other.child_path)) ||
-      
-      ((parent_path == other.parent_path) && (parent_version == other.parent_version) && 
-       (child_path == other.child_path) && (child_version < other.child_version));
+    return (parent_path < other.parent_path) 
+    			|| ((parent_path == other.parent_path) 
+    	&& ((parent_version < other.parent_version) 
+    			|| ((parent_version == other.parent_version) 
+    	&& ((parent_live_p < other.parent_live_p) 
+    			|| ((parent_live_p == other.parent_live_p) 
+    	&& ((child_path < other.child_path) 
+    			|| ((child_path == other.child_path) 
+    	&& ((child_version < other.child_version) 
+    			|| ((child_version == other.child_version) 
+    	&& (child_live_p < other.child_live_p) )))))))));
   }
 };
 
@@ -570,15 +574,15 @@ import_rcs_file(fs::path const & filename, database & db)
 
  */
 
-cvs_file_edge::cvs_file_edge (file_id const & pv, file_path const & pp, 
-			      file_id const & cv, file_path const & cp, 
+cvs_file_edge::cvs_file_edge (file_id const & pv, file_path const & pp, bool pl,
+			      file_id const & cv, file_path const & cp, bool cl,
 			      cvs_history & cvs) :
   parent_version(cvs.file_version_interner.intern(pv.inner()())), 
   parent_path(cvs.path_interner.intern(pp())),
-  parent_live_p(true),
+  parent_live_p(pl),
   child_version(cvs.file_version_interner.intern(cv.inner()())), 
   child_path(cvs.path_interner.intern(cp())),
-  child_live_p(true)
+  child_live_p(cl)
 {
 }
 
@@ -825,6 +829,15 @@ cvs_history::note_file_edge(rcs_file const & r,
 
   I(stk.size() > 0);
   I(! curr_file().empty());
+  
+  // we can't use operator[] since it is non-const
+  std::map<std::string, boost::shared_ptr<rcs_delta> >::const_iterator
+  	prev_delta = r.deltas.find(prev_rcs_version_num),
+  	next_delta = r.deltas.find(next_rcs_version_num);
+  I(prev_delta!=r.deltas.end());
+  I(next_delta!=r.deltas.end());
+  bool prev_alive = prev_delta->second->state!="dead";
+  bool next_alive = next_delta->second->state!="dead";
 
   // we always aggregate in-edges in children, but we will also create
   // parents as we encounter them.
@@ -836,8 +849,9 @@ cvs_history::note_file_edge(rcs_file const & r,
 	% prev_rcs_version_num);
       find_key_and_state (r, next_rcs_version_num, k, s); // just to create it if necessary
       find_key_and_state (r, prev_rcs_version_num, k, s);
-      s->in_edges.insert(cvs_file_edge(next_version, curr_file, 
-				       prev_version, curr_file, 
+      
+      s->in_edges.insert(cvs_file_edge(next_version, curr_file, next_alive,
+				       prev_version, curr_file, prev_alive,
 				       *this));
     }
   else
@@ -847,8 +861,8 @@ cvs_history::note_file_edge(rcs_file const & r,
 	% prev_rcs_version_num
 	% next_rcs_version_num);
       find_key_and_state (r, next_rcs_version_num, k, s);
-      s->in_edges.insert(cvs_file_edge(prev_version, curr_file, 
-				       next_version, curr_file, 
+      s->in_edges.insert(cvs_file_edge(prev_version, curr_file, prev_alive,
+				       next_version, curr_file, next_alive,
 				       *this));
     }
     
@@ -1009,7 +1023,13 @@ build_parent_state(shared_ptr<cvs_state> state,
     {
       file_id fid(cvs.file_version_interner.lookup(f->parent_version));
       file_path pth(cvs.path_interner.lookup(f->parent_path));
-      state_map[pth] = fid;
+      if (!f->parent_live_p)
+      {  manifest_map::iterator elem=state_map.find(pth);
+         if (elem != state_map.end())
+            state_map.erase(elem);
+      }
+      else 
+         state_map[pth] = fid;
     }  
   L(F("logical changeset from child -> parent has %d file deltas\n")
     % state->in_edges.size());
@@ -1027,7 +1047,13 @@ build_child_state(shared_ptr<cvs_state> state,
     {
       file_id fid(cvs.file_version_interner.lookup(f->child_version));
       file_path pth(cvs.path_interner.lookup(f->child_path));
-      state_map[pth] = fid;
+      if (!f->child_live_p)
+      {  manifest_map::iterator elem=state_map.find(pth);
+         if (elem != state_map.end())
+            state_map.erase(elem);
+      }
+      else 
+         state_map[pth] = fid;
     }  
   L(F("logical changeset from parent -> child has %d file deltas\n") 
     % state->in_edges.size());
