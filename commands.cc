@@ -2180,14 +2180,16 @@ static void ls_queue (string name, app_state & app)
 
   for (size_t i = 0; i < targets.size(); ++i)
     {
-      vector<string> contents;
+      size_t queue_count;
+      string content;
       cout << "target " << i << ": " 
 	   << idx(targets, i) << endl;
-      app.db.get_queued_contents(idx(targets, i), contents);
-      for (size_t j = 0; j < contents.size(); ++j)
+      app.db.get_queue_count(idx(targets, i), queue_count);
+      for (size_t j = 0; j < queue_count; ++j)
 	{
+	  app.db.get_queued_content(idx(targets, i), j, content);
 	  cout << "    target " << i << ", packet " << j 
-	       << ": " << idx(contents, j).size() << " bytes" << endl;
+	       << ": " << content.size() << " bytes" << endl;
 	}      
     }
 }
@@ -2217,23 +2219,25 @@ CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\
       N(target < targets.size(),
 	F("target number %d out of range") % target);
 
-      vector<string> contents;
-      app.db.get_queued_contents(idx(targets, target), contents);
-      N(packet < contents.size(),
+      size_t queue_count;
+      app.db.get_queue_count(idx(targets, target), queue_count);
+
+      N(packet < queue_count,
 	F("packet number %d out of range for target %d")
 	% packet % target);
-
+      
+      string content;
+      app.db.get_queued_content(idx(targets, target), packet, content);
+      
       if (idx(args, 0) == "print")
 	{
-	  cout << idx(contents, packet);
+	  cout << content;
 	}
       else
 	{
 	  ui.inform(F("deleting %d byte posting for %s\n") 
-		    % idx(contents, packet).size() 
-		    % idx(targets, target));
-	  app.db.delete_posting(idx(targets, target),
-				idx(contents, packet));
+		    % content.size() % idx(targets, target));
+	  app.db.delete_posting(idx(targets, target), content);
 	}
     }
 

@@ -304,8 +304,11 @@ public:
 
   void get_queued_targets(std::set<url> & targets);
 
-  void get_queued_contents(url const & u, 
-			   std::vector<std::string> & contents);
+  void get_queue_count(url const & u, size_t & num_packets);
+
+  void get_queued_content(url const & u, 
+			  size_t const & queue_pos,
+			  std::string & content);
   
   void get_sequences(url const & u, 
 		     unsigned long & maj, 

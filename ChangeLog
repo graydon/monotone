@@ -1,3 +1,19 @@
+2003-11-21  graydon hoare  <graydon@pobox.com>
+
+	* constants.hh (postsz): New constant for suggested post size.
+	* database.cc, database.hh (queue*): Change db API slightly.
+	* commands.cc (queue): Adjust to changed db API.
+	* network.cc (post_queued_blobs_to_network): Switch to doing
+	incremental posts.
+	* cert.cc (write_rename_edge, read_rename_edge): Put files on 
+	separate lines to accomodate future i18n work.
+	* work.cc (add_to_attr_map, write_attr_map): Reorder fields to
+	accomodate future i18n work.
+	* monotone.texi: Document it.
+	* configure.ac, NEWS: Mention 0.8 release.
+
+	Release point (v 0.8).
+	
 2003-11-14  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (vcheck): Add.
@@ -94,6 +110,9 @@
 	* network.cc: Correct MX logic.
 	* nntp_tasks.cc, smtp_tasks.cc: Separate postlines state.
 	* smtp_tasks.cc: Correct some SMTP logic.
+	* configure.ac, NEWS: Mention 0.7 release.
+
+	Release point (v 0.7).
 
 2003-11-01  graydon hoare  <graydon@pobox.com>
 

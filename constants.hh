@@ -25,6 +25,11 @@ size_t const cvs_window = 3600 * 3;
 // limit in the depot code).
 size_t const maxbytes = 0xffffff;
 
+// advisory number of bytes sent in a single network transmission; not a
+// strict limit (single packets beyond this size will post as a unit) but a
+// "suggested maximum size" for each posting.
+size_t const postsz = 0xffff;
+
 // number of bytes to use in buffers, for buffered i/o operations
 size_t const bufsz = 0xfff;
 

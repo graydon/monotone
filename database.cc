@@ -1266,17 +1266,28 @@ void database::get_queued_targets(set<url> & targets)
     targets.insert(url(res[i][0]));
 }
 
-void database::get_queued_contents(url const & u, 
-				   vector<string> & contents)
+void database::get_queue_count(url const & u, 
+			       size_t & num_packets)
 {
   results res;
-  fetch(res, one_col, any_rows, 
-	"SELECT content FROM posting_queue "
+  fetch(res, one_col, one_row, 
+	"SELECT count(*) FROM posting_queue "
 	"WHERE url = '%s'",
 	u().c_str());
-  contents.clear();
-  for (size_t i = 0; i < res.size(); ++i)
-    contents.push_back(res[i][0]);
+  num_packets = lexical_cast<size_t>(res[0][0]);
+}
+
+void database::get_queued_content(url const & u, 
+				  size_t const & queue_pos,
+				  string & content)
+{
+  results res;
+  fetch(res, one_col, one_row, 
+	"SELECT content FROM posting_queue "
+	"WHERE url = '%s' "
+	"LIMIT 1 OFFSET %d",
+	u().c_str(), queue_pos);
+  content = res[0][0];
 }
 
 void database::get_sequences(url const & u, 

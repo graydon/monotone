@@ -16,8 +16,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <boost/regex.hpp>
-
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -676,30 +674,11 @@ static void write_rename_edge(rename_edge const & edge,
   for (rename_set::const_iterator i = edge.mapping.begin();
        i != edge.mapping.end(); ++i)
     {
-      oss << i->first << " " << i->second << "\n";
+      oss << i->first << "\n" << i->second << "\n";
     }
   encode_gzip(data(oss.str()), compressed);
   val = compressed();
 }
-
-struct add_to_rename_set
-{    
-  rename_set & m;
-  set<file_path> rename_targets;
-  explicit add_to_rename_set(rename_set & mm) : m(mm) {}
-  bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
-  {
-    std::string src(res[1].first, res[1].second);
-    std::string dst(res[2].first, res[2].second);
-    N(m.find(file_path(src)) == m.end(), 
-      F("duplicate rename src entry for %s") % src);
-    N(rename_targets.find(file_path(dst)) == rename_targets.end(),
-      F("duplicate rename dst entry for %s") % dst);
-    rename_targets.insert(file_path(dst));      
-    m.insert(make_pair(file_path(src), file_path(dst)));
-    return true;
-  }
-};
 
 static void read_rename_edge(hexenc<id> const & node,
 			     base64<cert_value> const & val,
@@ -713,13 +692,27 @@ static void read_rename_edge(hexenc<id> const & node,
   decode_gzip(gzip<data>(decoded()), decompressed_data);
   decompressed = decompressed_data();
 
-  string::size_type off = decompressed.find('\n');
-  N(off != string::npos, F("rename edge without initial EOL"));
-  edge.parent = manifest_id(decompressed.substr(0, off));
-  decompressed = decompressed.substr(off);
-  
-  regex expr("^[[:blank:]]*([^[:space:]]+)[[:blank:]]+([^[:space:]]+)");
-  regex_grep(add_to_rename_set(edge.mapping), decompressed, expr, match_not_dot_newline);
+  vector<string> lines;
+  split_into_lines(decompressed, lines);
+
+  N(lines.size() >= 1 && lines.size() % 2 == 1, 
+    F("malformed rename cert"));
+
+  edge.parent = manifest_id(idx(lines, 0));
+  set<file_path> rename_targets;
+
+  for (size_t i = 1; i+1 < lines.size(); ++i)
+    {
+    std::string src(idx(lines, i));
+    ++i;
+    std::string dst(idx(lines, i));
+    N(edge.mapping.find(file_path(src)) == edge.mapping.end(), 
+      F("duplicate rename src entry for %s") % src);
+    N(rename_targets.find(file_path(dst)) == rename_targets.end(),
+      F("duplicate rename dst entry for %s") % dst);
+    rename_targets.insert(file_path(dst));      
+    edge.mapping.insert(make_pair(file_path(src), file_path(dst)));    
+    }
 }
 
 

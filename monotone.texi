@@ -2066,15 +2066,15 @@ file in the root of your working copy. The file is called
 @file{.mt-attrs}, and it has a simple 3-column format, for example:
 
 @example
-src/configure   execute      true
-autogen.sh      execute      true
+execute   true   src/configure
+execute   true   autogen.sh
 @end example
 
 Each line of an @file{.mt-attrs} file assigns an attribute to a file
-in your working copy. The first column of each line contains the path
-within the working copy to which the attribute will be applied. The
-second column is the name of the attribute, and the third column is
-the value of the attribute.
+in your working copy. The first column of each line contains the name
+of the attribute, the second column is the value of the attribute, and
+the third column is the file name within the working copy to which the
+attribute will be applied.
 
 Every time your working copy is written to, monotone will look for an
 @file{.mt-attrs} file, and if it finds one, run the corresponding

@@ -1,3 +1,13 @@
+Fri Nov 21 20:25:26 EST 2003
+
+	0.8 release. row size increased to 16mb. more performance
+	improvements in cvs importer. cvs branch tags imported now.
+	minor UI improvements. new commands: SQL dump and load, vcheck
+	for enhanced collision detection, queue addtree for recursive
+	queueing. improved networking scalability. historical rename
+	certs and .mt-attrs file format changed to accomodate upcoming
+	i18n work.
+
 Sun Nov  2 23:38:09 EST 2003
 
 	0.7 release. many critical merge and patch set calculation

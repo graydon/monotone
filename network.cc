@@ -29,6 +29,7 @@
 #include <iostream>
 
 #include "app_state.hh"
+#include "constants.hh"
 #include "database.hh"
 #include "http_tasks.hh"
 #include "keys.hh"
@@ -45,15 +46,22 @@ using namespace boost::spirit;
 using boost::lexical_cast;
 using boost::shared_ptr;
 
-
 bool lookup_address(string const & dns_name,
 		    string & ip4)
 {
+  static map<string, string> name_cache;
   adns_state st;
   adns_answer *answer;
 
   if (dns_name.size() == 0)
     return false;
+
+  map<string, string>::const_iterator it = name_cache.find(dns_name);
+  if (it != name_cache.end())
+    {
+      ip4 = it->second;
+      return true;
+    }
 
   L(F("resolving name %s\n") % dns_name);
 
@@ -82,6 +90,8 @@ bool lookup_address(string const & dns_name,
     }
 
   ip4 = string(inet_ntoa(*(answer->rrs.inaddr)));
+  name_cache.insert(make_pair(dns_name, ip4));
+
   L(F("name %s resolved to IP %s\n") % dns_name % ip4);
 
   free(answer);
@@ -90,20 +100,32 @@ bool lookup_address(string const & dns_name,
 }
 
 bool lookup_mxs(string const & dns_name,
-		set<string> & mx_names)
+		set< pair<int, string> > & mx_names)
 {
+  typedef shared_ptr< set< pair<int, string> > > mx_set_ptr;
+  static map<string, mx_set_ptr> mx_cache;
   adns_state st;
   adns_answer *answer;
 
   if (dns_name.size() == 0)
     return false;
 
+  map<string, mx_set_ptr>::const_iterator it 
+    = mx_cache.find(dns_name);
+  if (it != mx_cache.end())
+    {
+      mx_names = *(it->second);
+      return true;
+    }
+
+  mx_set_ptr mxs = mx_set_ptr(new set< pair<int, string> >());
+
   L(F("searching for MX records for %s\n") % dns_name);
 
   if (isdigit(dns_name[0]))
     {
       L(F("%s considered a raw IP address, returning\n") % dns_name);
-      mx_names.insert(dns_name);
+      mx_names.insert(make_pair(10, dns_name));
       return true;
     }
 
@@ -128,9 +150,12 @@ bool lookup_mxs(string const & dns_name,
   for (int i = 0; i < answer->nrrs; ++i)
     {
       string mx = string(answer->rrs.intstr[i].str);
-      L(F("MX %s : %s\n") % dns_name % mx );
-      mx_names.insert(mx);
+      int prio = answer->rrs.intstr[i].i;
+      mxs->insert(make_pair(prio, mx));
+      mx_names.insert(make_pair(prio, mx));
+      L(F("MX %s : %s priority %d\n") % dns_name % mx % prio);
     }
+  mx_cache.insert(make_pair(dns_name, mxs));
 
   free(answer);
   adns_finish(st);
@@ -234,13 +259,146 @@ void open_connection(string const & host_name,
 }
 
 
+static void post_http_blob(url const & targ,
+			   string const & blob,
+			   string const & group,
+			   string const & host,
+			   unsigned long port,
+			   string const & path,
+			   app_state & app,
+			   bool & posted_ok)
+{
+  rsa_keypair_id keyid;
+  base64< arc4<rsa_priv_key> > privkey;
+  base64<rsa_sha1_signature> signature_base64;
+  rsa_sha1_signature signature_plain;
+  hexenc<rsa_sha1_signature> signature_hex;
+	      
+  N(app.lua.hook_get_http_auth(targ, keyid),
+    F("missing pubkey for '%s'") % targ); 
+	      
+  N(app.db.private_key_exists(keyid),
+    F("missing private key data for '%s'") % keyid);
+  
+  app.db.get_key(keyid, privkey);
+  make_signature(app.lua, keyid, privkey, blob, signature_base64);
+  decode_base64 (signature_base64, signature_plain);
+  encode_hexenc (signature_plain, signature_hex);	  
+  
+  try 
+    {
+      boost::socket::connector<>::data_connection_t connection;
+      boost::shared_ptr<iostream> stream;
+      open_connection(host, port, connection, stream);
+      
+      posted_ok = post_http_packets(group, keyid(), 
+				    signature_hex(), blob, host, 
+				    path, port, *stream);
+    }
+  catch (std::exception & e)
+    {
+      L(F("got exception from network: %s\n") % string(e.what()));
+    }
+}
+
+static void post_nntp_blob(url const & targ,
+			   string const & blob,
+			   string const & group,
+			   string const & host,
+			   unsigned long port,
+			   app_state & app,
+			   bool & posted_ok)
+{
+  string sender;
+  N(app.lua.hook_get_news_sender(targ, sender),
+    F("missing sender address for '%s'") % targ);
+	      
+  try 
+    {
+      boost::socket::connector<>::data_connection_t connection;
+      boost::shared_ptr<iostream> stream;
+      open_connection(host, port, connection, stream);
+      posted_ok = post_nntp_article(group, sender, 
+				    // FIXME: maybe some sort of more creative subject line?
+				    "[MT] packets", 
+				    blob, *stream);
+    }
+  catch (std::exception & e)
+    {
+      L(F("got exception from network: %s\n") % string(e.what()));
+    }	  
+}
+
+static void post_smtp_blob(url const & targ,
+			   string const & blob,
+			   string const & user,
+			   string const & host,
+			   unsigned long port,
+			   app_state & app,
+			   bool & posted_ok)
+{
+  string sender, self_hostname;
+
+  N(app.lua.hook_get_mail_sender(targ, sender),
+    F("missing sender address for '%s'") % targ);
+
+  N(app.lua.hook_get_mail_hostname(targ, self_hostname),
+    F("missing self hostname for '%s'") % targ);
+
+  N(user != "",
+    F("empty recipient in mailto: URL %s") % targ);
+	  
+  try 
+    {
+      set< pair<int,string> > mxs;
+      lookup_mxs (host, mxs);
+      if (mxs.empty())
+	{
+	  L(F("MX lookup is empty, using hostname %s\n") % host);
+	  mxs.insert(make_pair(10, host));
+	}
+
+      bool found_working_mx = false;
+      boost::socket::connector<>::data_connection_t connection;
+      boost::shared_ptr<iostream> stream;
+      for (set< pair<int, string> >::const_iterator mx = mxs.begin();
+	   mx != mxs.end(); ++mx)
+	{
+	  try 
+	    {		      
+	      open_connection(mx->second, port, connection, stream);
+	      found_working_mx = true;
+	      break;
+	    }
+	  catch (...)
+	    {
+	      L(F("exception while contacting MX %s\n") % mx->second);
+	    }
+	}
+	      
+      // FIXME: maybe hook to modify envelope params?
+      if (found_working_mx)
+	posted_ok = post_smtp_article(self_hostname, 
+				      sender, user + "@" + host,
+				      sender, user + "@" + host,
+				      "[MT] packets",
+				      blob, *stream);
+    }
+  catch (std::exception & e)
+    {
+      L(F("got exception from network: %s\n") % string(e.what()));
+    }	  
+}
+
+
 void post_queued_blobs_to_network(set<url> const & targets,
 				  app_state & app)
 {
 
   L(F("found %d targets for posting\n") % targets.size());
 
-  size_t good_packets = 0, total_packets = 0;
+  ticker n_bytes("bytes");
+  ticker n_packets("packets");
 
   for (set<url>::const_iterator targ = targets.begin();
        targ != targets.end(); ++targ)
@@ -253,145 +411,48 @@ void post_queued_blobs_to_network(set<url> const & targets,
       N((proto == "http" || proto == "nntp" || proto == "mailto"),
 	F("unknown protocol '%s', only know nntp, http and mailto") % proto);
 
-      string postbody;
-      vector<string> contents;
-      app.db.get_queued_contents(*targ, contents);
-      for (vector<string>::const_iterator content = contents.begin();
-	   content != contents.end(); ++content)
-	postbody.append(*content);
+      size_t queue_count = 0;
+      app.db.get_queue_count(*targ, queue_count);
       
-      if (postbody == "")
+      while (queue_count != 0)
 	{
-	  P("no packets to post\n");
-	  return;
-	}
-
-      bool posted_ok = false;
-      
-      if (proto == "http")
-	{
-	  rsa_keypair_id keyid;
-	  base64< arc4<rsa_priv_key> > privkey;
-	  base64<rsa_sha1_signature> signature_base64;
-	  rsa_sha1_signature signature_plain;
-	  hexenc<rsa_sha1_signature> signature_hex;
-
-	  N(app.lua.hook_get_http_auth(*targ, keyid),
-	    F("missing pubkey for '%s'") % *targ); 
-
-	  N(app.db.private_key_exists(keyid),
-	    F("missing private key data for '%s'") % keyid);
-	  
-	  app.db.get_key(keyid, privkey);
-	  make_signature(app.lua, keyid, privkey, postbody, signature_base64);
-	  decode_base64 (signature_base64, signature_plain);
-	  encode_hexenc (signature_plain, signature_hex);	  
-	  
-	  try 
+	  L(F("found %d packets for %s\n") % queue_count % *targ);
+	  string postbody;
+	  vector<string> packets;
+	  while (postbody.size() < postsz 
+		 && packets.size() < queue_count)
 	    {
-	      boost::socket::connector<>::data_connection_t connection;
-	      boost::shared_ptr<iostream> stream;
-	      open_connection(host, port, connection, stream);
-
-	      posted_ok = post_http_packets(group, keyid(), 
-					    signature_hex(), postbody, host, 
-					    path, port, *stream);
-	    }
-	  catch (std::exception & e)
-	    {
-	      L(F("got exception from network: %s\n") % string(e.what()));
-	    }
-	}
-      
-      else if (proto == "nntp")
-	{
-	  string sender;
-	  N(app.lua.hook_get_news_sender(*targ, sender),
-	    F("missing sender address for '%s'") % *targ);
-	  
-	  try 
-	    {
-	      boost::socket::connector<>::data_connection_t connection;
-	      boost::shared_ptr<iostream> stream;
-	      open_connection(host, port, connection, stream);
-	      posted_ok = post_nntp_article(group, sender, 
-					    // FIXME: maybe some sort of more creative subject line?
-					    "[MT] packets", 
-					    postbody, *stream);
-	    }
-	  catch (std::exception & e)
-	    {
-	      L(F("got exception from network: %s\n") % string(e.what()));
+	      string tmp;
+	      app.db.get_queued_content(*targ, packets.size(), tmp);
+	      packets.push_back(tmp);
+	      postbody.append(tmp);
 	    }
 	  
-	}
-
-      else if (proto == "mailto")
-	{
-	  string sender, self_hostname;
-
-	  N(app.lua.hook_get_mail_sender(*targ, sender),
-	    F("missing sender address for '%s'") % *targ);
-
-	  N(app.lua.hook_get_mail_hostname(*targ, self_hostname),
-	    F("missing self hostname for '%s'") % *targ);
-
-	  N(user != "",
-	    F("empty recipient in mailto: URL %s") % *targ);
-	  
-	  try 
+	  if (postbody != "")
 	    {
-	      set<string> mxs;
-	      lookup_mxs (host, mxs);
-	      if (mxs.empty())
-		{
-		  L(F("MX lookup is empty, using hostname %s\n") % host);
-		  mxs.insert(host);
-		}
+	      bool posted_ok = false;
 
-	      bool found_working_mx = false;
-	      boost::socket::connector<>::data_connection_t connection;
-	      boost::shared_ptr<iostream> stream;
-	      for (set<string>::const_iterator mx = mxs.begin();
-		   mx != mxs.end(); ++mx)
-		{
-		  try 
-		    {		      
-		      open_connection(*mx, port, connection, stream);
-		      found_working_mx = true;
-		      break;
-		    }
-		  catch (...)
-		    {
-		      L(F("exception while contacting MX %s\n") % *mx);
-		    }
-		}
+	      L(F("posting %d packets for %s\n") % packets.size() % *targ);
 	      
-	      // FIXME: maybe hook to modify envelope params?
-	      if (found_working_mx)
-		posted_ok = post_smtp_article(self_hostname, 
-					      sender, user + "@" + host,
-					      sender, user + "@" + host,
-					      "[MT] packets",
-					      postbody, *stream);
+	      if (proto == "http")
+		post_http_blob(*targ, postbody, group, host, port, path, app, posted_ok);
+	      else if (proto == "nntp")
+		post_nntp_blob(*targ, postbody, group, host, port, app, posted_ok);
+	      else if (proto == "mailto")
+		post_smtp_blob(*targ, postbody, user, host, port, app, posted_ok);
+	      
+	      if (posted_ok)
+		{
+		  n_bytes += postbody.size();
+		  n_packets += packets.size();
+		  for (vector<string>::const_iterator i = packets.begin();
+		       i != packets.end(); ++i)
+		    app.db.delete_posting(*targ, *i);
+		}
 	    }
-	  catch (std::exception & e)
-	    {
-	      L(F("got exception from network: %s\n") % string(e.what()));
-	    }	  
+	  app.db.get_queue_count(*targ, queue_count);
 	}
-
-
-      if (posted_ok)
-	for (vector<string>::const_iterator content = contents.begin();
-	     content != contents.end(); ++content)
-	  {
-	    ++good_packets;
-	    app.db.delete_posting(*targ, *content);
-	  }
-      total_packets += contents.size();
     }
-  P(F("posted %d / %d packets ok\n") % good_packets % total_packets);
 }
 
 void fetch_queued_blobs_from_network(set<url> const & sources,
