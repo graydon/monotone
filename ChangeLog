@@ -1,3 +1,9 @@
+2004-05-20  graydon hoare  <graydon@pobox.com>
+
+	* NEWS: Note 0.13 release.
+	* configure.ac: Bump version number.
+	* monotone.spec: Likewise.
+
 2004-05-19  graydon hoare  <graydon@pobox.com>
 
 	* file_io.cc (tilde_expand): Fix fs::path use.
@@ -136,6 +142,8 @@
 	* monotone.texi: Add stuff on selectors, new hooks.
 	* AUTHORS: Typo fix.
 	* configure.ac: Bump version number.
+
+	Release point (v 0.12).	
 
 2004-05-02  Joel Rosdahl  <joel@rosdahl.net>
 
@@ -344,6 +352,8 @@
 2004-03-29  graydon hoare  <graydon@pobox.com>
 
 	* monotone.spec: Update for 0.11 release.
+
+	Release point (v 0.11).	
 
 2004-03-29  graydon hoare  <graydon@pobox.com>
 

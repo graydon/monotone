@@ -1,3 +1,21 @@
+Thu May 20 22:26:27 EDT 2004
+
+	0.13 release. bug fixes.
+
+	- remove (file|manifest) in several commands
+	- "list missing" command
+	- fixed bugs: 
+		- (critical) empty data netsync crash
+		- mkstemp, platform lua
+		- runtime error reporting chatter
+		- non-posix database names
+		- non-posix dirnames
+		- non-posix merge names
+		- 2-way merge algorithm and hook
+		- single-character filenames
+		- multiple password reads
+		- .svn ignore pattern
+
 Sun May  2 21:03:38 EDT 2004
 
 	0.12 release. win32 port, bug fixes and optimizations.
