@@ -75,9 +75,18 @@ get_passphrase(lua_hooks & lua,
                     const byte * >(lua_phrase.data()), lua_phrase.size());
    } else {
       /* get user password from terminal */
-      char *pass;
+      char     *pass;
+      char     *text_1  = "enter passphrase for key ID [";
+      char     *text_2  = (char *) keyid().c_str();
+      char     *text_3  = "] : ";
+      size_t   text_len = strlen(text_1) + strlen(text_2) + strlen(text_3);
+      char     *tmp     = (char *) alloca(text_len+1); /* don't forget \0 .. */
 
-      pass = read_password((char *) keyid().c_str());
+      strcpy(tmp,text_1);
+      strcat(tmp,text_2);
+      strcat(tmp,text_3);
+
+      pass = read_password(tmp);
 
       try {
          phrase.Assign(reinterpret_cast < byte const *>(pass),
