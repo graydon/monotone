@@ -196,11 +196,15 @@ AM_CONDITIONAL(BUNDLED_LUA, test "x$bundled_lua" != "xno")
 ##########
 # Checks for external sqlite library, revert to bundled version if not found or
 # user gives --with-bundled-sqlite.
+
+# default to bundled sqlite (graydon may change that once appropriate)
+bundled_sqlite=yes
+
 AC_ARG_WITH([bundled-sqlite],
    AC_HELP_STRING(
       [--with-bundled-sqlite],
-      [Force use of bundled version of sqlite (default=no)]
-   ), , [bundled_sqlite=no]
+      [Force use of bundled version of sqlite (default=$bundled_sqlite)]
+   ), [bundled_sqlite=yes], [bundled_sqlite=no]
 )
 
 if test "x$bundled_sqlite" = "xno" ; then
