@@ -45,7 +45,7 @@ char const * depot_schema =
 "         groupname  TEXT NOT NULL,\n"
 "         adler32    TEXT NOT NULL,\n"
 "         contents   TEXT NOT NULL UNIQUE,\n"
-"         unique(major, minor)\n"
+"         unique(major, minor, groupname)\n"
 "         );\n"
 " \n"
 " CREATE TABLE users (\n"
