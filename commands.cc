@@ -354,23 +354,16 @@ restrict_rename_set(string const & type,
   for (std::map<file_path, file_path>::const_iterator i = renames.begin();
        i != renames.end(); ++i)
     {
-      bool src_included = app.restriction_includes(i->first);
-      bool dst_included = app.restriction_includes(i->second);
-      if (src_included && dst_included)
+      // include renames if either source or target name is included in the restriction
+      if (app.restriction_includes(i->first) || app.restriction_includes(i->second))
         {
           L(F("restriction includes %s '%s' to '%s'\n") % type % i->first % i->second);
           included.insert(*i);
         }
-      else if (!src_included && !dst_included)
+      else
         {
           L(F("restriction excludes %s '%s' to '%s'\n") % type % i->first % i->second);
           excluded.insert(*i);
-        }
-      else
-        {
-          N(false,
-            F("rename '%s' to '%s' crosses path restriction\n"
-              "please include or exclude explicitly") % i->first % i->second);
         }
     }
 }
@@ -452,16 +445,6 @@ calculate_base_revision(app_state & app,
 }
 
 static void
-calculate_base_revision(app_state & app, 
-                        revision_set & rev,
-                        manifest_map & man)
-{
-  revision_id rid;
-  manifest_id mid;
-  calculate_base_revision(app, rid, rev, mid, man);
-}
-
-static void
 calculate_base_manifest(app_state & app, 
                         manifest_map & man)
 {
@@ -481,7 +464,6 @@ calculate_current_revision(app_state & app,
   revision_id old_revision_id;  
   change_set cs;
   path_set old_paths, new_paths;
-  manifest_map m_old_rearranged;
 
   rev.edges.clear();
   m_old.clear();
@@ -516,7 +498,6 @@ calculate_restricted_revision(app_state & app,
   revision_id old_revision_id;    
   change_set cs;
   path_set old_paths, new_paths;
-  manifest_map m_old_rearranged;
 
   rev.edges.clear();
   m_old.clear();
@@ -1848,7 +1829,7 @@ ls_missing (app_state & app, vector<utf8> const & args)
   revision_set rev;
   revision_id rid;
   manifest_id mid;
-  manifest_map man, man_rearranged;
+  manifest_map man;
   change_set::path_rearrangement included, excluded;
   path_set old_paths, new_paths;
 
@@ -3392,129 +3373,45 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
 
 
 CMD(revert, "working copy", "[PATH]...", 
-    "revert file(s) or entire working copy")
+    "revert file(s), dir(s) or entire working copy")
 {
   manifest_map m_old;
-  revision_set r_old;
-
+  revision_id old_revision_id;
+  manifest_id old_manifest_id;
+  revision_set rev;
+  change_set::path_rearrangement included, excluded;
+ 
   app.initialize(true);
 
-  calculate_base_revision(app, r_old, m_old);
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
 
-  if (args.size() == 0)
+  calculate_base_revision(app, 
+                          old_revision_id, rev, 
+                          old_manifest_id, m_old);
+
+  get_path_rearrangement(included, excluded, app);
+
+  for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
     {
-      // revert the whole thing
-      for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
-        {
-
-          N(app.db.file_version_exists(manifest_entry_id(i)),
-            F("no file version %s found in database for %s")
-            % manifest_entry_id(i) % manifest_entry_path(i));
+      if (!app.restriction_includes(i->first)) continue;
       
-          file_data dat;
-          L(F("writing file %s to %s\n")
-            % manifest_entry_id(i) % manifest_entry_path(i));
-          app.db.get_file_version(manifest_entry_id(i), dat);
-          write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
-        }
-      remove_path_rearrangement();
-    }
-  else
-    {
-      change_set::path_rearrangement work;
-      get_path_rearrangement(work);
+      L(F("reverting %s to %s\n") %
+        manifest_entry_path(i) % manifest_entry_id(i));
 
-      // TODO: set up restriction
-      // TODO: restrict rearrangement into included and excluded
-      // TODO: revert all included files
-      // TODO: rewrite excluded work
-
-      // revert some specific files
-      vector<file_path> work_args;
-      for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-        work_args.push_back(app.prefix((*i)()));
-
-      for (size_t i = 0; i < work_args.size(); ++i)
-        {
-          string arg(idx(work_args, i)());
-          if (directory_exists(file_path(arg)))
-            {
-              // simplest is to just add all files from that
-              // directory.
-              string dir = fs::path(arg).string();
-              for (manifest_map::const_iterator i = m_old.begin();
-                   i != m_old.end(); ++i)
-                {
-                  // this doesn't seem quite right... *some* branch path, not *the* branch path
-                  file_path p = i->first;
-                  if (fs::path(p()).branch_path().string() == dir)
-                    work_args.push_back(p());
-                }
-            }
-
-          N(directory_exists(file_path(arg)) ||
-            (m_old.find(arg) != m_old.end()) ||
-            (work.added_files.find(arg) != work.added_files.end()) ||
-            (work.deleted_dirs.find(arg) != work.deleted_dirs.end()) ||
-            (work.deleted_files.find(arg) != work.deleted_files.end()) ||
-            (work.deleted_dirs.find(arg) != work.deleted_dirs.end()) ||
-            (work.renamed_files.find(arg) != work.renamed_files.end()),
-            F("nothing known about %s") % arg);
-
-          manifest_map::const_iterator entry = m_old.find(file_path(arg));
-          if (entry != m_old.end())
-            {
-              
-              L(F("reverting %s to %s\n") %
-                manifest_entry_path(entry) % manifest_entry_id(entry));
-              
-              N(app.db.file_version_exists(manifest_entry_id(entry)),
-                F("no file version %s found in database for %s")
-                % manifest_entry_id(entry) % manifest_entry_path(entry));
-              
-              file_data dat;
-              L(F("writing file %s to %s\n") %
-                manifest_entry_id(entry) % manifest_entry_path(entry));
-              app.db.get_file_version(manifest_entry_id(entry), dat);
-              write_localized_data(manifest_entry_path(entry), dat.inner(), app.lua);
-
-              // a deleted file will always appear in the manifest
-              if (work.deleted_files.find(arg) != work.deleted_files.end())
-                {
-                  L(F("also removing deletion for %s\n") % arg);
-                  work.deleted_files.erase(arg);
-                }
-            }
-          else if (work.deleted_dirs.find(arg) != work.deleted_dirs.end())
-            {
-              L(F("removing delete for %s\n") % arg);
-              work.deleted_dirs.erase(arg);
-            }
-          else if (work.deleted_files.find(arg) != work.deleted_files.end())
-            {
-              L(F("removing delete for %s\n") % arg);
-              work.deleted_files.erase(arg);
-            }
-          else if (work.renamed_dirs.find(arg) != work.renamed_dirs.end())
-            {
-              L(F("removing rename for %s\n") % arg);
-              work.renamed_dirs.erase(arg);
-            }
-          else if (work.renamed_files.find(arg) != work.renamed_files.end())
-            {
-              L(F("removing rename for %s\n") % arg);
-              work.renamed_files.erase(arg);
-            }
-          else if (work.added_files.find(arg) != work.added_files.end())
-            {
-              L(F("removing addition for %s\n") % arg);
-              work.added_files.erase(arg);
-            }
-        }
-      // race
-      put_path_rearrangement(work);
+      N(app.db.file_version_exists(manifest_entry_id(i)),
+        F("no file version %s found in database for %s")
+        % manifest_entry_id(i) % manifest_entry_path(i));
+      
+      file_data dat;
+      L(F("writing file %s to %s\n")
+        % manifest_entry_id(i) % manifest_entry_path(i));
+      app.db.get_file_version(manifest_entry_id(i), dat);
+      write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
     }
 
+  // race
+  put_path_rearrangement(excluded);
   update_any_attrs(app);
 }
 

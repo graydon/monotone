@@ -1,8 +1,5 @@
-AT_SETUP([(normal) revert directories])
+AT_SETUP([revert directories])
 MONOTONE_SETUP
-
-# This test is a bug report.
-AT_XFAIL_IF(true)
 
 # reverting files deeper in the directory tree with only some leading
 # components of their relative path specified
