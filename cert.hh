@@ -88,7 +88,12 @@ bool find_common_ancestor(manifest_id const & left,
 // conventions. you should use these unless you have a compelling
 // reason not to.
 
-bool guess_default_key(rsa_keypair_id & key, app_state & app);
+bool guess_default_key(rsa_keypair_id & key, 
+		       app_state & app);
+
+void guess_branch(manifest_id const & id,
+		  app_state & app,
+		  cert_value & branchname);
 
 extern string const date_cert_name;
 extern string const author_cert_name;

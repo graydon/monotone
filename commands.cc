@@ -745,18 +745,28 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
 
   cert t(ident, name, val_encoded, key);
   
+  vector< pair<url,group> > targets;
+  cert_value branchname;
+  guess_branch (manifest_id(ident), app, branchname);
+  app.lua.hook_get_post_targets(branchname(), targets);  
+
+  queueing_packet_writer qpw(app, targets);
+  packet_db_writer dbw(app);
+
   // nb: we want to throw usage on mis-use *before* asking for a
   // passphrase.
-
+  
   if (args[0] == "file")
     {
-      calculate_cert(app, t);
-      app.db.put_file_cert(file<cert>(t));
+      calculate_cert(app, t);  
+      dbw.consume_file_cert(file<cert>(t));
+      qpw.consume_file_cert(file<cert>(t));
     }
   else if (args[0] == "manifest")
     {
       calculate_cert(app, t);
-      app.db.put_manifest_cert(manifest<cert>(t));
+      dbw.consume_manifest_cert(manifest<cert>(t));
+      qpw.consume_manifest_cert(manifest<cert>(t));
     }
   else
     throw usage(this->name);
@@ -921,31 +931,11 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
-  
+
   cert_value branchname;
-  if (app.branch_name != "")
-    {
-      branchname = app.branch_name;
-    }
-  else
-    {
-      vector< manifest<cert> > certs;
-      cert_name branch(branch_cert_name);
-      app.db.get_manifest_certs(old_id, branch, certs);
-      erase_bogus_certs(certs, app);
-
-      N(certs.size() != 0, 
-	string("no branch certs found for old manifest ")
-	+ old_id.inner()() + ", please provide a branch name");
-
-      N(certs.size() == 1,
-	string("multiple branch certs found for old manifest ")
-	+ old_id.inner()() + ", please provide a branch name");
-
-      decode_base64(certs[0].inner().value, branchname);
-    }
+  guess_branch (old_id, app, branchname);
     
-  L("committing %s to branch %s\n", 
+  P("committing %s to branch %s\n", 
     new_id.inner()().c_str(), branchname().c_str());
   app.set_branch(branchname());
 

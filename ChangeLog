@@ -1,5 +1,8 @@
 2003-09-24  graydon hoare  <graydon@redhat.com>
 
+	* cert.cc, cert.hh (guess_branch): New function.
+	* commands.cc (cert): Queue certs to network servers.
+	* commands.cc (cert, commit): Use guess_branch.
 	* commands.cc (list): List unknown, ignored files.
 	* monotone.texi, monotone.1: Document.
 

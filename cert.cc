@@ -158,6 +158,33 @@ bool guess_default_key(rsa_keypair_id & key, app_state & app)
     }
 }
 
+void guess_branch(manifest_id const & id,
+		  app_state & app,
+		  cert_value & branchname)
+{
+  if (app.branch_name != "")
+    {
+      branchname = app.branch_name;
+    }
+  else
+    {
+      vector< manifest<cert> > certs;
+      cert_name branch(branch_cert_name);
+      app.db.get_manifest_certs(id, branch, certs);
+      erase_bogus_certs(certs, app);
+
+      N(certs.size() != 0, 
+	string("no branch certs found for manifest ")
+	+ id.inner()() + ", please provide a branch name");
+
+      N(certs.size() == 1,
+	string("multiple branch certs found for manifest ")
+	+ id.inner()() + ", please provide a branch name");
+      
+      decode_base64(certs[0].inner().value, branchname);
+    }
+}
+
 void make_simple_cert(hexenc<id> const & id,
 		      cert_name const & nm,
 		      cert_value const & cv,
