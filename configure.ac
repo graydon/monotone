@@ -77,9 +77,21 @@ AC_CHECK_FUNC([pthread_mutex_lock], [],
 # without threads on a system that does provide threads; we'll end up
 # compiling monotone with thread support for no reason.
 
+# Boost libraries have a string suffix that identifies the compiler
+# they were built with, among other details.  For example, it can be
+# '-gcc', '-gcc-mt', '-gcc-mt-1_31', and many other combinations
+# depending on the build system.
+# Some systems provide symlinks that hide these suffixes, avoiding
+# this mess.  However, other systems don't; we have to provide a way
+# to let the user manually specify a suffix.  Guessing can be very
+# difficult, given the variety of possibilities.
+AC_ARG_VAR(BOOST_SUFFIX,
+           [String suffix that identifies Boost libraries (empty by default)])
+AC_SUBST(BOOST_SUFFIX)
+
 # Now check for Boost libraries proper.
 
-LIBS="-lboost_unit_test_framework $OLD_LIBS"
+LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $OLD_LIBS"
 AC_MSG_CHECKING(libboost_unit_test_framework library)
 AC_LINK_IFELSE([AC_LANG_SOURCE([[
 #include <boost/test/unit_test_suite.hpp>
@@ -92,7 +104,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
  [AC_MSG_FAILURE([libboost_unit_test_framework failure])])
 LIBS=$OLD_LIBS
 
-LIBS="-lboost_filesystem $LIBS"
+LIBS="-lboost_filesystem${BOOST_SUFFIX} $LIBS"
 AC_MSG_CHECKING(libboost_filesystem library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/filesystem/path.hpp>
@@ -103,7 +115,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_RESULT([yes])],
  [AC_MSG_FAILURE([libboost_filesystem failure])])
 
-LIBS="-lboost_date_time $LIBS"
+LIBS="-lboost_date_time${BOOST_SUFFIX} $LIBS"
 AC_MSG_CHECKING(libboost_date_time library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/date_time/posix_time/posix_time.hpp>
@@ -115,7 +127,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_FAILURE([libboost_date_time failure])])
 
 
-LIBS="-lboost_regex $LIBS"
+LIBS="-lboost_regex${BOOST_SUFFIX} $LIBS"
 AC_MSG_CHECKING(libboost_regex library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/regex.hpp>
@@ -141,7 +153,7 @@ then
    AC_MSG_CHECKING([location of static boost libraries])
    for i in ${static_boost_prefixes}
    do
-	if test -e $i/lib/libboost_regex.a 
+	if test -e $i/lib/libboost_regex${BOOST_SUFFIX}.a 
 	then
 		BOOST_LIBDIR=$i/lib
 	fi

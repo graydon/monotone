@@ -153,12 +153,12 @@ if BUNDLED_SQLITE
 endif
 
 if STATIC_BOOST
-  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem.a \
-              @BOOST_LIBDIR@/libboost_date_time.a \
-              @BOOST_LIBDIR@/libboost_regex.a
+  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem$(BOOST_SUFFIX).a \
+              @BOOST_LIBDIR@/libboost_date_time$(BOOST_SUFFIX).a \
+              @BOOST_LIBDIR@/libboost_regex$(BOOST_SUFFIX).a
   monotone_LDADD = lib3rdparty.a $(BOOSTLIBS)
   unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
-                     @BOOST_LIBDIR@/libboost_unit_test_framework.a
+                     @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
 else
   monotone_LDADD = lib3rdparty.a
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
