@@ -342,13 +342,15 @@ static void complete(app_state & app,
     "partial id '" + str + "' does not have a unique expansion");
   if (completions.size() > 1)
     {
-      string err = "partial id '" + str + "' has multiple ambiguous expansions: ";
+      string err = "partial id '" + str + "' has multiple ambiguous expansions: \n";
       for (typename set<ID>::const_iterator i = completions.begin();
 	   i != completions.end(); ++i)
 	err += (i->inner()() + "\n");
       N(completions.size() == 1, err);
     }
   completion = *(completions.begin());  
+  P("expanded partial id '%s' to '%s'\n",
+    str.c_str(), completion.inner()().c_str());
 }
 
 
