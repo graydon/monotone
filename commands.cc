@@ -1219,18 +1219,38 @@ CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working cop
       work_set work;
       get_manifest_map(m_old);
       get_work_set(work);
-      
-      // revert some specific files
-      for (size_t i = 0; i < args.size(); ++i)
-	{
-	  N((m_old.find(args[i]) != m_old.end()) ||
-	    (work.adds.find(args[i]) != work.adds.end()) ||
-	    (work.dels.find(args[i]) != work.dels.end()),
-	    "nothing known about " + args[i]);
 
-	  if (m_old.find(args[i]) != m_old.end())
+      // revert some specific files
+      vector<string> work_args (args.begin(), args.end());
+      for (size_t i = 0; i < work_args.size(); ++i)
+	{
+	  if (directory_exists(work_args[i]))
 	    {
-	      path_id_pair pip(m_old.find(args[i]));
+	      // simplest is to just add all files from that
+	      // directory.
+	      string dir = work_args[i];
+	      int off = work_args[i].find_last_not_of('/');
+	      if (off != -1)
+		dir = work_args[i].substr(0, off + 1);
+	      dir += '/';
+	      for (manifest_map::const_iterator i = m_old.begin();
+		   i != m_old.end(); ++i)
+		{
+		  file_path p = i->first;
+		  if (! p().compare(0, dir.length(), dir))
+		    work_args.push_back(p());
+		}
+	      continue;
+	    }
+
+	  N((m_old.find(work_args[i]) != m_old.end()) ||
+	    (work.adds.find(work_args[i]) != work.adds.end()) ||
+	    (work.dels.find(work_args[i]) != work.dels.end()),
+	    "nothing known about " + work_args[i]);
+
+	  if (m_old.find(work_args[i]) != m_old.end())
+	    {
+	      path_id_pair pip(m_old.find(work_args[i]));
 	      L("reverting %s to %s\n",
 		pip.path()().c_str(),
 		pip.ident().inner()().c_str());
@@ -1249,19 +1269,19 @@ CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working cop
 	      write_data(pip.path(), dat.inner());	      
 
 	      // a deleted file will always appear in the manifest
-	      if (work.dels.find(args[i]) != work.dels.end())
+	      if (work.dels.find(work_args[i]) != work.dels.end())
 		{
 		  L("also removing deletion for %s\n",
-		    args[i].c_str());
-		  work.dels.erase(args[i]);
+		    work_args[i].c_str());
+		  work.dels.erase(work_args[i]);
 		}
 	    }
 	  else
 	    {
-	      I (work.adds.find(args[i]) != work.adds.end());
+	      I (work.adds.find(work_args[i]) != work.adds.end());
 	      L("removing addition for %s\n",
-		args[i].c_str());
-	      work.adds.erase(args[i]);
+		work_args[i].c_str());
+	      work.adds.erase(work_args[i]);
 	    }
 	}
       // race

@@ -74,5 +74,29 @@ AT_CHECK(test ! -e MT/work, [], [ignore])
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep testfile1 stdout, [1], [ignore])
 
+# check reverting a directory
+
+AT_CHECK(mkdir sub, [], [ignore])
+AT_DATA(sub/testfile2, [maude
+])
+AT_CHECK(MONOTONE add sub/testfile2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit 'new file', [], [ignore], [ignore])
+AT_DATA(sub/testfile2, [liver
+])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep sub stdout, [], [ignore])
+AT_CHECK(MONOTONE revert sub, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep sub stdout, [1], [ignore])
+
+# it also shouldn't matter how we spell the subdirectory name
+AT_DATA(sub/testfile2, [liver
+])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep sub stdout, [], [ignore])
+AT_CHECK(MONOTONE revert sub/, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep sub stdout, [1], [ignore])
+
 
 AT_CLEANUP

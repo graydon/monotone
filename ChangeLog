@@ -1,5 +1,9 @@
 2003-09-17  Tom Tromey  <tromey@redhat.com>
 
+	* commands.cc (revert): Handle case where argument is a
+	directory.
+	* tests/t_revert.at: Test for revert of directory.
+
 	* testsuite.at (MONOTONE_SETUP): Use "monotone initdb".
 	* monotone.1: Document "initdb".
 	* monotone.texi (Commands): Document initdb.
