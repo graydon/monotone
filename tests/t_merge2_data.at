@@ -25,7 +25,7 @@ COMMIT(testbranch)
 RIGHT=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [stdout], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 
 AT_CHECK(cmp left testfile || cmp right testfile, [], [ignore])
 

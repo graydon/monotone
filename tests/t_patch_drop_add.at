@@ -1,29 +1,30 @@
-AT_SETUP([merge(<>, <add a, drop a, add a>)])
+AT_SETUP([merge(<>, <patch a, drop a, add a>)])
 
 # This test is a bug report.
 AT_XFAIL_IF(true)
 
 MONOTONE_SETUP
 
-AT_DATA(v1, [foo blah
+AT_DATA(v1a, [foo blah
 ])
-AT_DATA(v2, [baz blah
+AT_DATA(v1b, [bar blah
+])
+AT_DATA(v2a, [baz blah
 ])
 
-ADD_FILE(randomfile, [blah blah blah
-])
+AT_CHECK(cp v1a testfile)
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
 COMMIT(testbranch)
 BASE_R_SHA=`BASE_REVISION`
 
-AT_CHECK(cp v1 testfile)
-AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(cp v1b testfile)
 COMMIT(testbranch)
 
 AT_CHECK(rm -f testfile)
 AT_CHECK(MONOTONE drop testfile, [], [ignore], [ignore])
 COMMIT(testbranch)
 
-AT_CHECK(cp v2 testfile)
+AT_CHECK(cp v2a testfile)
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
 COMMIT(testbranch)
 
@@ -35,6 +36,6 @@ COMMIT(testbranch)
 
 AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
-AT_CHECK(cmp testfile v2, [], [ignore])
+AT_CHECK(cmp testfile v2a, [], [ignore])
 
 AT_CLEANUP

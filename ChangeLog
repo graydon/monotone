@@ -1,5 +1,20 @@
 2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_add_patch_drop_add.at: New test.
+	* tests/t_merge2_add_drop_add.at: New test.
+	* tests/t_patch_drop_add.at: New test.
+	* tests/t_patch_vs_drop_add.at: New test.
+	* testsuite.at: Add them.
+	
+	* tests/t_add_drop_add.at: Fix to test what it was supposed to.
+	
+	* tests/t_merge2_data.at: Remove extraneous [stdout].
+
+	* tests/t_merge_add_del.at: Fix description.
+	XFAIL it.
+
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_add_drop_add.at: New test.
 	* testsuite.at: Add it.
 
