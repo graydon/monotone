@@ -184,6 +184,9 @@ absolutify(string const & path)
   if (! tmp.has_root_path())
     tmp = fs::current_path() / tmp;
   I(tmp.has_root_path());
+#if BOOST_VERSION >= 103100
+      tmp = tmp.normalize();
+#endif
   return tmp.string();
 }
 
