@@ -1,3 +1,9 @@
+2005-01-12  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_ambig_update.at: add comments from discussion on irc
+	* tests/t_status_missing.at: new test
+	* testsuite.at: include it
+
 2005-01-10  graydon hoare  <graydon@pboox.com>
 
 	* commands.cc (explicit_merge): Tweak merge message.
