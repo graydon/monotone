@@ -110,6 +110,11 @@ IDNA_SOURCES = \
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
+POPT_SOURCES = \
+	popt/findme.c  popt/poptconfig.c  popt/poptint.h   \
+	popt/findme.h  popt/popt.h        popt/poptparse.c \
+	popt/popt.c    popt/popthelp.c    popt/system.h
+
 UNIX_PLATFORM_SOURCES = \
 	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/have_smart_terminal.cc \
 	unix/platform_netsync.cc
@@ -134,6 +139,7 @@ libplatform_a_SOURCES = platform.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(CRYPTOPP_SOURCES) \
 			$(IDNA_SOURCES) \
+			$(POPT_SOURCES) \
 			$(NETXX_SOURCES)
 
 # flags

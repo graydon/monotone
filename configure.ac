@@ -247,7 +247,6 @@ AM_CONDITIONAL(MISSING_INET6, test x"${ac_inet6}" = x"no")
 # simple library checks 
 AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))
 AH_TEMPLATE([USE_DLOPEN], [For LUA: use dlopen for loadlib])
-AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_FAILURE([popt is required]))
 AC_SEARCH_LIBS([inet_aton], [resolv])
 AC_SEARCH_LIBS([accept], [socket])
 AC_SEARCH_LIBS([inet_ntoa], [nsl])
@@ -314,6 +313,37 @@ if test "x$enable_large_file" = "xno"; then
    fi
 fi
 AC_SUBST(SQLITE_CPPFLAGS)
+
+##########
+# Checks for bundled popt.  We use it unconditionally, because the external
+# one has serious bugs that we can't live with.  Maybe some time in the
+# future...
+# The following was simply taken from the configure.in that comes with popt.
+#AC_LANG_PUSH(C)
+AC_CHECK_HEADERS([alloca.h float.h libintl.h mcheck.h])
+AC_MSG_CHECKING(for /usr/ucblib in LIBS)
+if test -d /usr/ucblib ; then
+	if test "$build" = "mips-sni-sysv4" ; then
+		addlib /usr/ccs/lib -lc
+	fi
+
+	addlib /usr/ucblib
+	
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_CHECK_FUNCS(strerror mtrace getuid geteuid)
+AC_CHECK_FUNC(setreuid, [], [
+    AC_CHECK_LIB(ucb, setreuid, [if echo $LIBS | grep -- -lucb >/dev/null ;then :; else LIBS="$LIBS -lc -lucb" USEUCB=y;fi])
+])
+
+POPT_SOURCE_PATH="`pwd`"
+AC_DEFINE_UNQUOTED(POPT_SOURCE_PATH, "$POPT_SOURCE_PATH",
+	[Full path to popt top_sourcedir.])
+AC_SUBST(POPT_SOURCE_PATH)
+#AC_LANG_POP()
+
 
 ##########
 
