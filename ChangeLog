@@ -1,3 +1,8 @@
+2004-12-19  Matt Johnston  <matt@ucc.asn.au>
+
+        * commands.cc: print out author/date next to ambiguous revision
+        lists from selectors.
+
 2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.hh: Remove obsolete comment.
