@@ -76,6 +76,12 @@ retrieved from http://josefsson.org/libidn/. The library carries an
 additional legal requirement of reproduction of the following text in
 any copies made:
 
+
+The file gettext.h is a copy of the one included in the GNU Gettext
+package, and is Copyright (C) 1995-1998, 2000-2002 Free Software
+Foundation, Inc.  It is licensed under the GNU LGPL version 2.  For
+more information, see the message on top of that file.
+
 ---
 
 Libidn AUTHORS -- Information about the authors.

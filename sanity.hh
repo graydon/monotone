@@ -13,7 +13,8 @@
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
 
-#include <libintl.h>
+#include <config.h> // Required for ENABLE_NLS
+#include "gettext.h"
 
 // our assertion / sanity / error logging system *was* based on GNU Nana,
 // but we're only using a small section of it, and have anyways rewritten

@@ -1,3 +1,12 @@
+2005-02-20  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* gettext.h: Add file.
+	* AUTHORS: Mention that it comes from the GNU Gettext package.
+	* Makefile.am: Distribute it.
+	* sanity.hh: Use gettext.h rather than libintl.h so that --disable-nls
+	works.  Also improves portability, according to the GNU Gettext
+	manual.
+
 2005-02-19  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_add_intermediate_MT_path.at: Tighten up.
