@@ -1,5 +1,12 @@
 2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc (session, process_confirm_cmd, dispatch_payload):
+	Back out some over-zealous changes that broke netsync
+	compatibility.  Probably should redo later, when have a chance to
+	bump netsync protocol number, but we're not ready for that now.
+
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_subdir_revert.at: New test.
 	* tests/t_subdir_rename.at: New test.
 	* testsuite.at: Add them.
