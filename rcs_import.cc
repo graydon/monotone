@@ -86,11 +86,11 @@ struct cvs_state
 struct cvs_history
 {
 
-  interner author_interner;
-  interner changelog_interner;
-  interner file_version_interner;
-  interner path_interner;
-  interner manifest_version_interner;
+  interner<unsigned long> author_interner;
+  interner<unsigned long> changelog_interner;
+  interner<unsigned long> file_version_interner;
+  interner<unsigned long> path_interner;
+  interner<unsigned long> manifest_version_interner;
 
   cycle_detector<unsigned long> manifest_cycle_detector;
 
