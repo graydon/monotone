@@ -1,5 +1,10 @@
 2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_persistent_server_keys_2.at: XFAIL it, add commentary on
+	solution.
+	
+2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_persistent_server_keys_2.at: New test.
 	* testsuite.at: Add it.
 
