@@ -3745,6 +3745,79 @@ If you have important information in your database, you should back up
 a copy of it before migrating, in case there is an untrapped error
 during migration.
 
+@item monotone db check --db=@var{dbfile} 
+
+This command systematically checks the database @file{dbfile} to ensure
+that it is complete and consistent. The following problems are detected:
+
+@itemize
+
+@item missing files 
+that are referenced by their sha1 hash from some manifest but do not
+exist in the database.
+
+@item unreferenced files
+that exist in the database but are not referenced by their sha1 hash
+from any existing manifest.
+
+@item missing manifests
+that are referenced by their sha1 hash from some revision but do not
+exist in the database.
+
+@item unreferenced manifests
+that exist in the database but are not referenced by their sha1 hash
+from any existing revision.
+
+@item incomplete manifests
+that exist in the database but contain references to files that do not
+exist in the database.
+
+@item missing revisions
+that are referenced by their sha1 hash from some other revision or
+revision cert but do not exist in the database.
+
+@item incomplete revisions
+that exist in the database but contain references to missing manifests,
+incomplete manifests or missing revisions.
+
+@item revisions with mismatched parents
+that disagree with the cached revision ancestry on their parent
+revisions.
+
+@item revisions with mismatched children
+that disagree with the cached revision ancestry on their child
+revisions.
+
+@item revisions with bad history
+that exist in the database but fail the sane history check.
+
+@item revisions with missing certs
+that exist in the database lacking at least one author, branch,
+changelog or date cert. All revisions are expected to have at least one
+of each of these certs.
+
+@item revisions with mismatched certs
+that exist in the database with differing numbers of author, changelog
+and date certs. These certs are expected to appear together, as each
+revision committed should have an author, changelog and date associated
+with it.
+
+@item missing keys
+that have been used to sign certs but do not exist in the database.
+
+@item certs with bad signatures
+that exist in the database with signatures that cannot be verified to
+have been signed by their specified signing key.
+
+@item certs with unchecked signatures
+that exist in the database but cannot have their signatures checked
+because the signing key is missing.
+
+@end itemize
+
+The sha1 hash code of every file, manifest and revision retrieved from
+the database is verified as a consequence of this process.
+
 @item monotone db execute @var{sql-statement}
 
 This is a debugging command which executes @var{sql-statement} against

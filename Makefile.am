@@ -8,7 +8,7 @@ MOST_SOURCES =								\
          xdelta.cc ui.cc schema_migration.cc				\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
-	 change_set.cc mt_version.cc automate.cc fsck.cc		\
+	 change_set.cc mt_version.cc automate.cc database_check.cc	\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -19,7 +19,7 @@ MOST_SOURCES =								\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
-	 mkstemp.hh mt_version.hh automate.hh fsck.hh smap.hh		\
+	 mkstemp.hh mt_version.hh automate.hh database_check.hh smap.hh	\
 	 gettext.h
 
 NETXX_SOURCES =									\
