@@ -17,7 +17,7 @@ using namespace std;
 using boost::lexical_cast;
 struct user_interface ui;
 
-ticker::ticker(string const & tickname) : name (tickname)
+ticker::ticker(string const & tickname, size_t mod) : mod(mod), name (tickname)
 {
   I(ui.ticks.find(tickname) == ui.ticks.end());
   ui.ticks.insert(make_pair(tickname,0));
@@ -34,20 +34,26 @@ void ticker::operator++()
 {
   I(ui.ticks.find(name) != ui.ticks.end());
   ui.ticks[name]++;
-  ui.write_ticks();
+  if (ui.ticks[name] % mod == 0)
+    ui.write_ticks();
 }
 
 void ticker::operator+=(size_t t)
 {
   I(ui.ticks.find(name) != ui.ticks.end());
+  size_t old = ui.ticks[name];
+
   ui.ticks[name] += t;
-  ui.write_ticks();
+  if ((old+t) % mod == 0
+      || (old % mod) > ((old+t) % mod)
+      || t > mod)
+    ui.write_ticks();
 }
 
 
 user_interface::user_interface() :
   last_write_was_a_tick(false),
-  max_tick_len(0)
+  last_tick_len(0)
 {
 }
 
@@ -79,11 +85,10 @@ void user_interface::write_ticks()
     tickline += string("[") + i->first + ": " + lexical_cast<string>(i->second) + "] ";
   tickline += tick_trailer;
 
-  if (tickline.size() > max_tick_len)
-    max_tick_len = tickline.size();
-
-  while (tickline.size() < max_tick_len)
-    tickline += ' ';
+  size_t curr_sz = tickline.size();
+  if (curr_sz < last_tick_len)
+    tickline += string(last_tick_len - curr_sz, ' ');
+  last_tick_len = curr_sz;
 
   cerr << tickline;
   last_write_was_a_tick = true;

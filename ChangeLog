@@ -3,6 +3,7 @@
 	* manifest.hh, manifest.cc, rcs_import.cc: Write manifests w/o
 	compression.
 	* vocab.hh, vocab.cc: Don't re-verify verified data.
+	* ui.hh, ui.cc: Minor efficiency tweaks.
 
 2003-10-07  graydon hoare  <graydon@pobox.com>
 

@@ -19,8 +19,9 @@ struct user_interface;
 
 struct ticker
 {
+  size_t mod;
   std::string name;
-  ticker(std::string const & n);
+  ticker(std::string const & n, size_t mod = 64);
   void operator++();
   void operator+=(size_t t);
   ~ticker();
@@ -39,7 +40,7 @@ public:
 
 private:  
   bool last_write_was_a_tick;
-  size_t max_tick_len;
+  size_t last_tick_len;
   std::set<std::string> issued_warnings;  
   std::map<std::string,size_t> ticks;
 
