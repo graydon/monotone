@@ -153,7 +153,7 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
   if (unit_test_passphrase.empty())
     get_passphrase(lua, id, phrase, true, true);
   else
-    phrase.Assign(reinterpret_cast<byte const *>(unit_test_passphrase.c_str()),
+    phrase.set(reinterpret_cast<byte const *>(unit_test_passphrase.c_str()),
                   unit_test_passphrase.size());
   do_arc4(phrase, privkey); 
   raw_priv_key = string(reinterpret_cast<char const *>(privkey.begin()), privkey.size());
@@ -183,7 +183,7 @@ change_key_passphrase(lua_hooks & lua,
   arc4<rsa_priv_key> decoded_key;
   SecureVector<byte> key_block;
   decode_base64(encoded_key, decoded_key);
-  key_block.Assign(reinterpret_cast<byte const *>(decoded_key().data()),
+  key_block.set(reinterpret_cast<byte const *>(decoded_key().data()),
                    decoded_key().size());
   do_arc4(phrase, key_block);
 
@@ -191,7 +191,7 @@ change_key_passphrase(lua_hooks & lua,
     {
       L(F("building signer from %d-byte decrypted private key\n") % key_block.size());
       Pipe p;
-      p.process_msg(decrypted_key);
+      p.process_msg(key_block);
       shared_ptr<PKCS8_PrivateKey> pkcs8_key = 
         shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p));
     }
@@ -203,7 +203,7 @@ change_key_passphrase(lua_hooks & lua,
 
   get_passphrase(lua, id, phrase, true, true, "enter new passphrase");
   do_arc4(phrase, key_block);
-  decoded_key = string(reinterpret_cast<char const *>(key_block.data()),
+  decoded_key = string(reinterpret_cast<char const *>(key_block.begin()),
                        key_block.size());
   encode_base64(decoded_key, encoded_key);
 }
@@ -443,7 +443,7 @@ signature_round_trip_test()
   rsa_keypair_id key("bob123@test.com");
   base64<rsa_pub_key> pubkey;
   base64< arc4<rsa_priv_key> > privkey;
-  generate_key_pair(lua, key, pubkey, privkey, "bob123@test.com");
+  generate_key_pair(app.lua, key, pubkey, privkey, "bob123@test.com");
 
   BOOST_CHECKPOINT("signing plaintext");
   string plaintext("test string to sign");

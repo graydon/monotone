@@ -49,10 +49,10 @@ BOTAN_SOURCES =                                                                 
         botan/charset.cpp botan/conf.cpp botan/crc32.cpp botan/crl_ent.cpp         \
         botan/ctr.cpp botan/cts.cpp botan/data_snk.cpp botan/data_src.cpp          \
         botan/def_eng.cpp botan/def_ops.cpp botan/defalloc.cpp                     \
-        botan/der_code.cpp botan/der_enc.cpp botan/des.cpp botan/des_tab.cpp       \
-        botan/dh.cpp botan/divide.cpp botan/dl_algo.cpp botan/dl_get.cpp           \
-        botan/dl_group.cpp botan/dl_param.cpp botan/dlies.cpp botan/dsa.cpp        \
-        botan/eax.cpp botan/ecb.cpp botan/elgamal.cpp botan/eme1.cpp               \
+        botan/der_code.cpp botan/der_enc.cpp \
+        botan/divide.cpp botan/dl_algo.cpp botan/dl_get.cpp           \
+        botan/dl_group.cpp botan/dl_param.cpp botan/dlies.cpp \
+        botan/eax.cpp botan/ecb.cpp botan/eme1.cpp               \
         botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp botan/emsa3.cpp         \
         botan/emsa4.cpp botan/emsa_raw.cpp botan/eng_base.cpp botan/engine.cpp     \
         botan/es_file.cpp botan/exceptn.cpp botan/filter.cpp botan/filters.cpp     \
@@ -64,15 +64,15 @@ BOTAN_SOURCES =                                                                 
         botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp botan/mod_exp.cpp        \
         botan/mode_pad.cpp botan/modebase.cpp botan/mp_comba.cpp                   \
         botan/mp_core.cpp botan/mp_fkmul.cpp botan/mp_misc.cpp botan/mp_mul.cpp    \
-        botan/mp_shift.cpp botan/mp_smul.cpp botan/mutex.cpp botan/nr.cpp          \
-        botan/numthry.cpp botan/ofb.cpp botan/oids.cpp botan/openpgp.cpp           \
+        botan/mp_shift.cpp botan/mp_smul.cpp botan/mutex.cpp \
+        botan/numthry.cpp botan/ofb.cpp botan/oids.cpp \
         botan/parse.cpp botan/pbes1.cpp botan/pbes2.cpp botan/pem.cpp              \
         botan/pipe.cpp botan/pipe_io.cpp botan/pipe_rw.cpp botan/pk_algs.cpp       \
         botan/pk_core.cpp botan/pk_filts.cpp botan/pk_keys.cpp                     \
         botan/pk_util.cpp botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp        \
         botan/pow_mod.cpp botan/prf_ssl3.cpp botan/prf_tls.cpp                     \
         botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp botan/randpool.cpp    \
-        botan/reducer.cpp botan/rng.cpp botan/rsa.cpp botan/rw.cpp                 \
+        botan/reducer.cpp botan/rng.cpp botan/rsa.cpp \
         botan/s2k.cpp botan/secqueue.cpp botan/sha160.cpp botan/symkey.cpp         \
         botan/timers.cpp botan/ui.cpp botan/util.cpp botan/x509_ca.cpp             \
         botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp                   \

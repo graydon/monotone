@@ -6,7 +6,6 @@
 #include <botan/lookup.h>
 
 #include <botan/aes.h>
-#include <botan/des.h>
 
 #include <botan/arc4.h>
 
@@ -76,9 +75,6 @@ BlockCipher* get_block_cipher(const std::string& algo_spec)
    HANDLE_TYPE_NO_ARGS("AES-128", AES_128);
    HANDLE_TYPE_NO_ARGS("AES-192", AES_192);
    HANDLE_TYPE_NO_ARGS("AES-256", AES_256);
-   HANDLE_TYPE_NO_ARGS("DES", DES);
-   HANDLE_TYPE_NO_ARGS("DESX", DESX);
-   HANDLE_TYPE_NO_ARGS("TripleDES", TripleDES);
 
    return 0;
    }
