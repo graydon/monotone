@@ -1,9 +1,37 @@
-2004-04-14  Tom Tromey  <tromey@redhat.com>
+2004-05-02  Joel Rosdahl  <joel@rosdahl.net>
 
-	* rcs_import.cc (import_cvs_repo): Use require_password.
-	Include keys.hh.
-	* keys.hh (require_password): Declare.
-	* keys.cc (require_password): New function.
+	Made it possible to rename a rename target and to undo a rename.
+	I.e.: Given a rename set A -> B, "monotone rename B C" gives the
+	rename set A -> C and "monotone rename B A" gives the empty rename
+	set.
+	* work.cc (visit_file): Implement new behavior.
+	* tests/t_rename.at: Added test cases for new behavior.
+	* monotone.texi: Note that a rename can be undone.
+
+	Fix bug #8458:
+	* file_io.hh, file_io.cc (walk_tree): Added require_existing_path
+	parameter.
+	* work.cc (build_deletion): Pass new parameter to walk_tree.
+	* work.cc (build_rename): Ditto.
+
+	* manifest.cc (build_manifest_map): Fix missing file check for
+	i18n paths.
+
+2004-05-01  Joel Rosdahl  <joel@rosdahl.net>
+
+	Fix bug #7220:
+	* manifest.cc (build_manifest_map): Handle missing file
+	gracefully.
+
+	* file_io.cc (walk_tree): Handle nonexistent file/directory
+	gracefully.
+
+2004-04-30  Christof Petig <christof@petig-baender.de>
+
+	* rcs_import.cc (store_trunk_manifest_edge):
+		skip ancestry to empty manifest
+	* rcs_import.cc (process_branch):
+		also follow branches of last/first versions
 
 2004-04-29  graydon hoare  <graydon@pobox.com>
 
@@ -17,22 +45,6 @@
 	attribute which culls a version with only disapproved ancestry
 	edges.
 	* monotone.texi: Fix some ascii-art diagrams.
-
-2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
-
-	* po/stamp-po: Removed since it's generated.
-	* std_hooks.lua (ignore_file): Corrected name of Subversion's
-	administrative directory.
-	* work.hh: Ditto.
-	* monotone.texi (Hook Reference): Updated default definition of
-	ignore_file.
-
-2004-04-30  Christof Petig <christof@petig-baender.de>
-
-	* rcs_import.cc (store_trunk_manifest_edge):
-		skip ancestry to empty manifest
-	* rcs_import.cc (process_branch):
-		also follow branches of last/first versions
 
 2004-04-28  Christof Petig <christof@petig-baender.de>
 
@@ -55,6 +67,15 @@
 	* rcs_import.cc (process branch):
 		insert dummy cvs_edge to mark newly added file 
 		as previously non existant
+
+2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
+
+	* po/stamp-po: Removed since it's generated.
+	* std_hooks.lua (ignore_file): Corrected name of Subversion's
+	administrative directory.
+	* work.hh: Ditto.
+	* monotone.texi (Hook Reference): Updated default definition of
+	ignore_file.
 
 2004-04-23  Christof Petig <christof@petig-baender.de>
 
@@ -95,6 +116,13 @@
 	(session::analyze_ancestry_graph): Use it.
 	* tests/t_singlenetsync.at: New test for single manifest sync.
 	* testsuite.at: Call it.
+
+2004-04-14  Tom Tromey  <tromey@redhat.com>
+
+	* rcs_import.cc (import_cvs_repo): Use require_password.
+	Include keys.hh.
+	* keys.hh (require_password): Declare.
+	* keys.cc (require_password): New function.
 
 2004-04-13  Tom Tromey  <tromey@redhat.com>
 
@@ -620,25 +648,6 @@
 
 	* diff_patch.cc (merge3): Skip patches to deleted files.
 
-2003-12-10  Tom Tromey  <tromey@redhat.com>
-
-	* commands.cc (checkout): Give better error message if branch is
-	empty.
-
-2003-12-07  Eric Kidd  <eric.kidd@pobox.com>
-
-	* commands.cc (agraph): Handle repositories with a single version.
-	* database.cc (get_head_candidates): Handle heads with no ancestors.
-	* cert.cc (get_branch_heads): Handle heads with no ancestors.
-
-2003-12-06  Eric Kidd  <eric.kidd@pobox.com>
-
-	* update.hh, update.cc (pick_update_target): Return current
-	version if no better update candidates available.
-	* update.cc (pick_update_target): Always do branch filtering.
-	* commands.cc (update): Notice when we're already up-to-date.
-	* commands.cc (propagate): Assign branch name correctly when merging.
-
 2003-12-16  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (ls_ignored, ignored_itemizer): Fold in as subcases of unknown.
@@ -671,6 +680,25 @@
 
 	* work.cc (add_to_attr_map): Finish change to attr map format.
  
+2003-12-10  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (checkout): Give better error message if branch is
+	empty.
+
+2003-12-07  Eric Kidd  <eric.kidd@pobox.com>
+
+	* commands.cc (agraph): Handle repositories with a single version.
+	* database.cc (get_head_candidates): Handle heads with no ancestors.
+	* cert.cc (get_branch_heads): Handle heads with no ancestors.
+
+2003-12-06  Eric Kidd  <eric.kidd@pobox.com>
+
+	* update.hh, update.cc (pick_update_target): Return current
+	version if no better update candidates available.
+	* update.cc (pick_update_target): Always do branch filtering.
+	* commands.cc (update): Notice when we're already up-to-date.
+	* commands.cc (propagate): Assign branch name correctly when merging.
+
 2003-12-05  graydon hoare  <graydon@pobox.com>
 
 	* lcs.hh (edit_script): New entry point.
@@ -692,11 +720,6 @@
 	* app_state.hh, app_state.cc (set_signing_key): New fn, persist key.
 	* monotone.cc (cpp_main): Permit commuting the --help argument around.
 
-2003-11-28  Tom Tromey  <tromey@redhat.com>
-
-	* http_tasks.cc (check_received_bytes): Allow "-" as well.
-	* depot.cc (execute_post_query): Allow "-" as well.
-
 2003-11-30  graydon hoare  <graydon@pobox.com>
 
 	* network.cc (post_queued_blobs_to_network): Fail when posted_ok is false.
@@ -707,6 +730,11 @@
 
 	* rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.
 	Updated all callers.
+
+	* http_tasks.cc (check_received_bytes): Allow "-" as well.
+	* depot.cc (execute_post_query): Allow "-" as well.
+
+2003-11-28  Tom Tromey  <tromey@redhat.com>
 
 	* http_tasks.cc (check_received_bytes): Allow "-" as well.
 	* depot.cc (execute_post_query): Allow "-" as well.
@@ -779,10 +807,6 @@
 	* http_tasks.cc: Teach about HTTP/1.1.
 	* cert.cc (bogus_cert_p): Fix UI ugly.
 
-2003-11-16  Tom Tromey  <tromey@redhat.com>
-
-	* missing: Removed generated file.
-
 2003-11-21  graydon hoare  <graydon@pobox.com>
 
 	* constants.hh (postsz): New constant for suggested post size.
@@ -799,6 +823,10 @@
 
 	Release point (v 0.8).
 	
+2003-11-16  Tom Tromey  <tromey@redhat.com>
+
+	* missing: Removed generated file.
+
 2003-11-14  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (vcheck): Add.
@@ -1461,14 +1489,6 @@
 
 	* update.cc: Update by ancestry. Duh.
 
-2003-08-31  Nathaniel Smith  <njs@codesourcery.com>
-
-	* configure.ac: Check for lua40/lua.h, lua40/lualib.h and -llua40,
-	-lliblua40.
-	* config.h.in: Add LUA_H, LIBLUA_H templates, remove HAVE_LIBLUA,
-	HAVE_LIBLUALIB templates.
-	* lua.cc: Include config.h.  Use LUA_H, LIBLUA_H macros.
-
 2003-09-02  graydon hoare  <graydon@pobox.com>
 
 	* boost/socket/streambuf.hpp: Bump ppos on overflow.
@@ -1499,6 +1519,14 @@
 2003-09-02  Tom Tromey  <tromey@redhat.com>
 
 	* aclocal.m4, monotone.info: Removed generated files.
+
+2003-08-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* configure.ac: Check for lua40/lua.h, lua40/lualib.h and -llua40,
+	-lliblua40.
+	* config.h.in: Add LUA_H, LIBLUA_H templates, remove HAVE_LIBLUA,
+	HAVE_LIBLUALIB templates.
+	* lua.cc: Include config.h.  Use LUA_H, LIBLUA_H macros.
 
 2003-08-29  graydon hoare  <graydon@pobox.com>
 

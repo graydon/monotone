@@ -12,6 +12,10 @@
 
 #include <boost/regex.hpp>
 
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/convenience.hpp>
+
 #include "app_state.hh"
 #include "file_io.hh"
 #include "manifest.hh"
@@ -84,6 +88,8 @@ build_manifest_map(path_set const & paths,
   for (path_set::const_iterator i = paths.begin();
        i != paths.end(); ++i)
     {
+      N(fs::exists(mkpath((*i)())),
+	F("file disappeared but exists in manifest: %s") % (*i)());
       hexenc<id> ident;
       calculate_ident(*i, ident, app.lua);
       man.insert(entry(*i, file_id(ident)));

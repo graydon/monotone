@@ -3247,7 +3247,9 @@ from your working copy's manifest.
 This command renames paths in your manifest from @var{src} to
 @var{dst}.  If @var{src} is a file, it is renamed to @var{dst}.  If
 @var{src} is a directory, all files found in @var{src} have the
-@var{src} component of their pathname replaced with @var{dst}.
+@var{src} component of their pathname replaced with @var{dst}.  If you
+have renamed a path from @var{a} to @var{b}, you can undo the rename
+by renaming @var{b} to @var{a}.
 
 You should run @command{monotone rename} @emph{before} you rename a
 file or directory in your source tree. Monotone will complain if it
@@ -3823,7 +3825,7 @@ hook is only intended as an aid for integrating monotone with informal
 commit-notification systems such as mailing lists or news services. It
 should not perform any security-critical operations.
 
-
+@ftable @code
 @item get_branch_key (@var{branchname})
 
 Returns a string which is the name of an @sc{rsa} private key used to sign
