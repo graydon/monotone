@@ -1,3 +1,8 @@
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (kluge_for_3_ancestor_nodes): New method.
+	(rebuild_ancestry): Call it.
+
 2005-03-03  Nathaniel Smith  <njs@codesourcery.com>
 
 	* revision.cc (check_sane_history): Print a warning to let the
