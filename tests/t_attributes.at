@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([attribute support])
+AT_SETUP([attr set/get commands])
 
 MONOTONE_SETUP
 
@@ -40,5 +40,8 @@ AT_CHECK(rm -rf co-dir/MT)
 AT_CHECK(MONOTONE checkout $UPDATE_R_SHA1 co-dir, [], [stdout])
 AT_CHECK(grep "test_attr:foo" stdout, [1], [ignore])
 AT_CHECK(grep "test_attr:a:2" stdout, [], [ignore])
+
+# check that files must exist to have attributes set
+AT_CHECK(MONOTONE attr set missing execute, [1], [ignore], [ignore])
 
 AT_CLEANUP

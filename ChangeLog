@@ -1,3 +1,13 @@
+2005-01-27  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (attr): adjust for subdir; ensure files exist
+	* tests/t_attr.at: improve setup description
+	* tests/t_attributes.at: improve setup description so that
+	testsuite -k attr runs this test; check for attributes on missing
+	files
+	* tests/t_subdir_attr.at: new test
+	* testsuite.at: fix dutch spelling of monotone; call new test
+
 2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.hh (null_id): New function.
