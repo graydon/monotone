@@ -1,5 +1,18 @@
 2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
 
+	* automate.cc (automate_erase_ancestors): New function.
+	(automate_command): Use it.
+	* commands.cc (automate): Document it.
+
+	* tests/t_automate_erase_ancestors.at: New test.
+	* testsuite.at: Add it.
+
+	* monotone.texi (Automation, Commands): Document automate
+	erase_ancestors.
+	* monotone.1: Document automate erase_ancestors.
+
+2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
+
 	* automate.cc (interface_version): Bump to 0.1.
 	(automate_descendents): New function.
 	(automate_command): Call it.

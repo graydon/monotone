@@ -4124,6 +4124,43 @@ an error message to stderr, and exits with status 1.
 
 @end table
 
+@item monotone automate erase_ancestors @var{rev1} [@var{rev2} [...]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints all arguments, except those that are an ancestor of some other
+argument.  One way to think about this is that it prints the minimal
+elements of the given set, under the ordering imposed by the ``child
+of'' relation.  Another way to think of it is if the arguments formed a
+branch branch, then we would print the heads of that branch.
+
+@item Sample output:
+
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+
+@item Output format:
+
+Zero or more lines, each giving the id of one descendent of the given
+revisions.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in sorted order.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
 @end ftable
 
 @page
@@ -5598,7 +5635,7 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{automate} @i{(interface_version|heads|descendents)}
+@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors)}
 Scripting interface.
 
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}

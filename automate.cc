@@ -10,6 +10,7 @@
 #include "vocab.hh"
 #include "app_state.hh"
 #include "commands.hh"
+#include "revision.hh"
 
 static std::string const interface_version = "0.1";
 
@@ -105,6 +106,40 @@ automate_descendents(std::vector<utf8> args,
     output << (*i).inner()() << std::endl;
 }
 
+// Name: erase_ancestors
+// Arguments:
+//   1 or more: revision ids
+// Added in: 0.1
+// Purpose: Prints all arguments, except those that are an ancestor of some
+//   other argument.  One way to think about this is that it prints the
+//   minimal elements of the given set, under the ordering imposed by the
+//   "child of" relation.  Another way to think of it is if the arguments were
+//   a branch, then we print the heads of that branch.
+// Output format: A list of revision ids, in hexadecimal, each followed by a
+//   newline. Revision ids are sorted.
+// Error conditions: If any of the revisions do not exist, prints nothing to
+//   stdout, prints an error message to stderr, and exits with status 1.
+static void
+automate_erase_ancestors(std::vector<utf8> args,
+                         std::string const & help_name,
+                         app_state & app,
+                         std::ostream & output)
+{
+  if (args.size() == 0)
+    throw usage(help_name);
+
+  std::set<revision_id> revs;
+  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      revision_id rid((*i)());
+      N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+      revs.insert(rid);
+    }
+  erase_ancestors(revs, app);
+  for (std::set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
+    output << (*i).inner()() << std::endl;
+}
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -117,6 +152,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_heads(args, root_cmd_name, app, output);
   else if (cmd() == "descendents")
     automate_descendents(args, root_cmd_name, app, output);
+  else if (cmd() == "erase_ancestors")
+    automate_erase_ancestors(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

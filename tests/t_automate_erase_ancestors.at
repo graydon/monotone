@@ -1,0 +1,79 @@
+AT_SETUP([automate erase_ancestors])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE automate erase_ancestors c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+
+#   A
+#  / \
+# B   C
+#     |\
+#     D E
+#     \/
+#      F
+
+ADD_FILE(testfile, [A
+])
+COMMIT(testbranch)
+REV_A=`BASE_REVISION`
+
+SET_FILE(testfile, [B
+])
+COMMIT(testbranch)
+REV_B=`BASE_REVISION`
+
+REVERT_TO($REV_A)
+
+SET_FILE(testfile, [C
+])
+COMMIT(testbranch)
+REV_C=`BASE_REVISION`
+
+SET_FILE(testfile, [D
+])
+COMMIT(testbranch)
+REV_D=`BASE_REVISION`
+
+REVERT_TO($REV_C)
+
+ADD_FILE(otherfile, [E
+])
+COMMIT(testbranch)
+REV_E=`BASE_REVISION`
+
+AT_CHECK(MONOTONE explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REV_F=`BASE_REVISION`
+
+AT_CHECK(test $REV_F != $REV_D)
+AT_CHECK(test $REV_F != $REV_E)
+
+# Now do some checks
+
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_A, echo $REV_A)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_B, echo $REV_B)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_C, echo $REV_C)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_D, echo $REV_D)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_E, echo $REV_E)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_F, echo $REV_F)
+
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_A $REV_B, echo $REV_B)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_A $REV_C, echo $REV_C)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_A $REV_F, echo $REV_F)
+
+AT_CHECK(echo $REV_B > b_c)
+AT_CHECK(echo $REV_C >> b_c)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_B $REV_C, sort < b_c)
+
+AT_CHECK(echo $REV_B > a_b_c)
+AT_CHECK(echo $REV_C >> a_b_c)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_A $REV_B $REV_C, sort < a_b_c)
+
+AT_CHECK(echo $REV_B > b_f)
+AT_CHECK(echo $REV_F >> b_f)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_B $REV_F, sort < b_f)
+
+AT_CHECK(echo $REV_B > a_b_f)
+AT_CHECK(echo $REV_F >> a_b_f)
+CHECK_SAME_STDOUT(MONOTONE automate erase_ancestors $REV_A $REV_B $REV_F, sort < a_b_f)
+
+AT_CLEANUP
