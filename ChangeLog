@@ -1,5 +1,11 @@
 2005-02-18  graydon hoare  <graydon@pobox.com>
 
+	* change_set.cc 
+	(apply_change_set): Avoid fast path when there are adds.
+	(apply_path_rearrangement): Likewise.
+
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
 	* automate.cc (automate_heads): Fix initialize() call.  
 	* change_set.{cc,hh} 
 	(apply_path_rearrangement): Add quick version.
