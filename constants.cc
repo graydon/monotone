@@ -32,6 +32,9 @@ namespace constants
   // limit in the depot code).
   size_t const maxbytes = 0xffffff;
 
+  // number of bytes in a password buffer. further bytes will be dropped.
+  size_t const maxpasswd = 0xfff;
+
   // advisory number of bytes sent in a single network transmission; not a
   // strict limit (single packets beyond this size will post as a unit) but a
   // "suggested maximum size" for each posting.

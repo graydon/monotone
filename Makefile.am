@@ -18,7 +18,7 @@ MOST_SOURCES =								\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh nonce.hh                                      \
-         mkstemp.hh os_specific.hh
+         mkstemp.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -100,10 +100,11 @@ IDNA_SOURCES = \
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
-# os dependent
-WIN32_SOURCES = win32/read_password.c
+UNIX_PLATFORM_SOURCES = \
+	unix/read_password.cc
 
-UNIX_SOURCES = unix/read_password.c
+WIN32_PLATFORM_SOURCES = \
+	win32/read_password.cc
 
 # primaries
 
@@ -115,7 +116,8 @@ monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
 txt2c_SOURCES = txt2c.cc
 
-noinst_LIBRARIES = lib3rdparty.a 
+noinst_LIBRARIES = libplatform.a lib3rdparty.a 
+libplatform_a_SOURCES = platform.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(CRYPTOPP_SOURCES) \
 			$(IDNA_SOURCES) \
@@ -160,12 +162,15 @@ else
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
 endif
 
+monotone_LDADD += libplatform.a
+unit_tests_LDADD += libplatform.a
+
 if WIN32_PLATFORM
+  libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
   monotone_LDADD += -lws2_32 -lintl -liconv -liphlpapi
   unit_tests_LDADD += -lws2_32 -lintl -liconv -liphlpapi
-  monotone_SOURCES += $(WIN32_SOURCES)
 else
-  monotone_SOURCES += $(UNIX_SOURCES)
+  libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
 endif
 
 if MISSING_INET_PTON

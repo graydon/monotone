@@ -141,7 +141,7 @@ function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
 end
 
 function merge2_xxdiff_cmd(lfile, rfile, outfile)
-   local cmd_fmt = "xxdiff %s %s " 
+   local cmd_fmt = "xxdiff %s %s --merged-filename %s "
    local cmd_opts = " --title1 left --title2 right" 
    return string.format(cmd_fmt .. cmd_opts, lfile, rfile, outfile)
 end

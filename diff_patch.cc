@@ -656,20 +656,44 @@ bool merge2(manifest_map const & left,
 	    file_merge_provider & file_merger,
 	    manifest_map & merged)
 {
+  set<file_path> paths;
+
   for (manifest_map::const_iterator i = left.begin();
        i != left.end(); ++i)
+    paths.insert(i->first);
+  
+  for (manifest_map::const_iterator i = right.begin();
+       i != right.end(); ++i)
+    paths.insert(i->first);
+  
+  for (set<file_path>::const_iterator i = paths.begin();
+       i != paths.end(); ++i)
     {
-      // we go left-to-right. we could go right-to-left too, but who
-      // knows. merge2 is really weak. FIXME: replace this please.
-      path_id_pair l_pip(i);
-      manifest_map::const_iterator j = right.find(l_pip.path());
-      if (right.find(l_pip.path()) != right.end())
+      manifest_map::const_iterator left_entry = left.find(*i);
+      manifest_map::const_iterator right_entry = right.find(*i);
+
+      bool left_exists = (left_entry != left.end());
+      bool right_exists = (right_entry != right.end());
+
+      I(left_exists || right_exists);
+
+      if (left_exists && !right_exists)
 	{
-	  // right has this file, we can try to merge2 the file.
-	  path_id_pair r_pip(j);
-	  path_id_pair m_pip;
+	  L(F("taking left version of %s\n") % *i);
+	  merged.insert(*left_entry);
+	}
+      else if (!left_exists && right_exists)
+	{
+	  L(F("taking right version of %s\n") % *i);
+	  merged.insert(*right_entry);
+	}
+      else
+	{
+	  path_id_pair l_pip(left_entry), r_pip(right_entry), m_pip;
+
 	  L(F("merging existant versions of %s in both manifests\n")
 	    % l_pip.path());
+
 	  if (file_merger.try_to_merge_files(l_pip, r_pip, m_pip))
 	    {
 	      L(F("arrived at merged version %s\n") % m_pip.ident());
@@ -680,11 +704,6 @@ bool merge2(manifest_map const & left,
 	      merged.clear();
 	      return false;
 	    }
-	}
-      else
-	{
-	  // right hasn't seen this file at all.
-	  merged.insert(l_pip.get_entry());
 	}
     }
   return true;
