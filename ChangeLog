@@ -1,5 +1,12 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc: Partially fix comment (s/manifest/revision/ etc.).
+	(dispatch_payload): Ignore mcert and fcert refinement requests,
+	instead of dying on them.  Hack, but I think it should let this
+	netsync continue to interoperate with old netsync...
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* vocab.hh: Remove file<cert>.
 	* vocab.cc: Likewise.
 	* packet_types.hh: Remove file.

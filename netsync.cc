@@ -162,18 +162,17 @@
 // if the requested item exists. if an item does not exist, a "nonexistant"
 // response command is sent. 
 //
-// once a response is received for each requested key and manifest cert
+// once a response is received for each requested key and revision cert
 // (either data or nonexistant) the requesting party walks the graph of
-// received manifest certs and transmits send_data or send_delta commands
-// for all the manifests mentionned in the certs which it does not already
+// received revision certs and transmits send_data or send_delta commands
+// for all the revisions mentionned in the certs which it does not already
 // have in its database.
 //
-// for each manifest edge it receives, the recipient builds a patch_set 
-// out of the manifests and then requests all the file data or deltas
-// described in that patch_set.
+// for each revision it receives, the recipient requests all the file data or
+// deltas described in that revision.
 //
-// once all requested files, manifests and certs are received (or noted as
-// nonexistant), the recipient closes its connection.
+// once all requested files, manifests, revisions and certs are received (or
+// noted as nonexistant), the recipient closes its connection.
 //
 // (aside: this protocol is raw binary because coding density is actually
 // important here, and each packet consists of very information-dense
@@ -2552,6 +2551,10 @@ session::dispatch_payload(netcmd const & cmd)
       {
         merkle_node node;
         read_refine_cmd_payload(cmd.payload, node);
+        // Ignore mcert and fcert refinement for compatibility with clients
+        // that still perform them.
+        if (node.type == mcert_item || node.type == fcert_item)
+          break;
         map< netcmd_item_type, done_marker>::iterator i = done_refinements.find(node.type);
         require(i != done_refinements.end(), "refinement netcmd refers to valid type");
         require(i->second.tree_is_done == false, "refinement netcmd received when tree is live");
