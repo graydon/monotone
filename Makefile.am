@@ -6,18 +6,18 @@ MOST_SOURCES =								\
          transforms.cc update.cc work.cc cert.cc database.cc file_io.cc	\
          keys.cc manifest.cc packet.cc sanity.cc vocab.cc rcs_file.cc	\
          rcs_import.cc xdelta.cc ui.cc schema_migration.cc		\
-         constants.cc netsync.cc netcmd.cc merkle_tree.cc        	\
-         mkstemp.cc lcs.cc revision.cc                                  \
+         constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
+         mkstemp.cc lcs.cc revision.cc predicament.cc change_set.cc     \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
 	 packet_types.hh transforms.hh vocab.hh				\
-	 cleanup.hh diff_patch.hh lua.hh           			\
+	 cleanup.hh diff_patch.hh lua.hh basic_io.hh			\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
-	 numeric_vocab.hh revision.hh                                   \
+	 numeric_vocab.hh revision.hh predicament.hh change_set.hh      \
          mkstemp.hh
 
 NETXX_SOURCES =									\

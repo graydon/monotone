@@ -16,6 +16,7 @@
 #include "vocab.hh"
 
 struct lua_State;
+struct problem;
 
 class lua_hooks
 {
@@ -75,6 +76,8 @@ public:
 		   data const & left, 
 		   data const & right, 
 		   data & result);
+  bool hook_get_problem_solution(problem const & problem,
+				 std::string & solution);
 
   // attribute hooks
   bool hook_apply_attribute(std::string const & attr, 

@@ -15,6 +15,8 @@
 #include <vector>
 #include <iostream>
 
+struct conflict {};
+
 // this file is to contain some stripped down, in-process implementations
 // of GNU-diffutils-like things (diff, diff3, maybe patch..)
 
@@ -41,34 +43,43 @@ struct path_id_pair;
 struct file_merge_provider
 {
   // merge3 on a file (line by line)
-  virtual bool try_to_merge_files(path_id_pair const & ancestor,
-				  path_id_pair const & left,
-				  path_id_pair const & right,
-				  path_id_pair & merged) = 0;
+  virtual bool try_to_merge_files(file_path const & path,
+				  file_id const & ancestor,
+				  file_id const & left,
+				  file_id const & right,
+				  file_id & merged) = 0;
 
   // merge2 on a file (line by line)
-  virtual bool try_to_merge_files(path_id_pair const & left,
-				  path_id_pair const & right,
-				  path_id_pair & merged) = 0;
+  virtual bool try_to_merge_files(file_path const & path,
+				  file_id const & left,
+				  file_id const & right,
+				  file_id & merged) = 0;
 };
 
 struct simple_merge_provider : public file_merge_provider
 {
   app_state & app;
   simple_merge_provider(app_state & app);
-  virtual bool try_to_merge_files(path_id_pair const & ancestor,
-				  path_id_pair const & left,
-				  path_id_pair const & right,
-				  path_id_pair & merged);
-  virtual bool try_to_merge_files(path_id_pair const & left,
-				  path_id_pair const & right,
-				  path_id_pair & merged);
+  // merge3 on a file (line by line)
+  virtual bool try_to_merge_files(file_path const & path,
+				  file_id const & ancestor,
+				  file_id const & left,
+				  file_id const & right,
+				  file_id & merged) = 0;
+
+  // merge2 on a file (line by line)
+  virtual bool try_to_merge_files(file_path const & path,
+				  file_id const & left,
+				  file_id const & right,
+				  file_id & merged) = 0;
   virtual void record_merge(file_id const & left_ident, 
 			    file_id const & right_ident, 
 			    file_id const & merged_ident,
 			    file_data const & left_data, 
 			    file_data const & merged_data);
-  virtual void get_version(path_id_pair const & pip, file_data & dat);
+  virtual void get_version(file_path const & path,
+			   file_id const & id,			   
+			   file_data & dat);
 
 };
 
@@ -81,7 +92,9 @@ struct update_merge_provider : public simple_merge_provider
 			    file_id const & merged_ident,
 			    file_data const & left_data, 
 			    file_data const & merged_data);
-  virtual void get_version(path_id_pair const & pip, file_data & dat);
+  virtual void get_version(file_path const & path,
+			   file_id const & id,			   
+			   file_data & dat);
   virtual ~update_merge_provider() {}
 };
 

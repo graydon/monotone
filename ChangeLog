@@ -1,3 +1,13 @@
+2004-08-09  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{hh,cc}: New files.
+	* basic_io.{hh,cc}: New files.
+	* predicament.{hh,cc}: New files.
+	* revision.{hh,cc}: Break completely, need to fix.
+	* diff_patch.{hh,cc}: Minor touchups.
+	* lua.{hh,cc}, std_hooks.lua: Model predicaments.
+	* Makefile.am: Update.
+
 2004-07-10  graydon hoare  <graydon@pobox.com>
 
 	* lcs.{hh,cc}: Move lcs.hh body into lcs.cc.

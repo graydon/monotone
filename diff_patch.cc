@@ -235,8 +235,6 @@ void calculate_hunk_offsets(vector<string> const & ancestor,
 }
 
 
-struct conflict {};
-
 // utility class which performs the merge
 
 typedef enum { preserved = 0, deleted = 1, changed = 2 } edit_t;

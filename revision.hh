@@ -18,168 +18,39 @@
 // call for it). a grammar (aside from the parsing code) for the serialized
 // form will show up here eventually. until then, here is an example.
 //
-// revision:
+// change_set:
 // {
 //   new_manifest: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
 //   edge:
 //   {
 //     old_revision: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
 //     old_manifest: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//     changes:
+//     change_set:
 //     {
-//       delete: [s10:usr/bin/sh]
-//       rename:
+//       path_edits:
 //       {
-//         src: [s10:usr/bin/sh]
-//         dst: [s10:usr/bin/sh]
+//          rename_file:
+//          {
+//            src: [s10:usr/bin/sh]
+//            dst: [s11:usr/bin/foo]
+//          }
+//          delete_dir: [s7:usr/bin]
+//          add_file: [s15:tmp/foo/bar.txt]
 //       }
-//       delta:
+//       deltas:
 //       {
-//         path: [s10:/usr/bin/sh]
-//         src: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
-//         dst: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//       }
-//       add:
-//       {
-//         path: [s10:usr/bin/sh]
-//         data: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//       }
+//         delta:
+//         {
+//           path: [s15:tmp/foo/bar.txt]
+//           src: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
+//           dst: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
+//         }
 //     }
 //   }
 // }
 
 extern std::string revision_file_name;
 
-typedef std::set<file_path>
-deletion_set;
-
-typedef deletion_set::value_type
-deletion_entry;
-
-typedef std::map<file_path, file_id>
-addition_map;
-
-typedef addition_map::value_type
-addition_entry;
-
-typedef std::map<file_path, file_path>
-rename_map;
-
-typedef rename_map::value_type
-rename_entry;
-
-typedef std::map<file_path, std::pair<file_id, file_id> >
-delta_map;
-
-typedef delta_map::value_type
-delta_entry;
-
-// rename entry accessors 
-
-inline file_path const &
-rename_src(rename_entry const & a)
-{
-  return a.first;
-}
-
-inline file_path const &
-rename_src(rename_map::const_iterator i)
-{
-  return i->first;
-}
-
-inline file_path const &
-rename_dst(rename_entry const & a)
-{
-  return a.second;
-}
-
-inline file_path const &
-rename_dst(rename_map::const_iterator const & i)
-{
-  return i->second;
-}
-
-// delta entry accessors
-
-inline file_path const &
-delta_path(delta_entry const & d)
-{
-  return d.first;
-}
-
-inline file_path const &
-delta_path(delta_map::const_iterator i)
-{
-  return i->first;
-}
-
-inline file_id const &
-delta_src_id(delta_entry const & d)
-{
-  return d.second.first;
-}
-
-inline file_id const &
-delta_src_id(delta_map::const_iterator i)
-{
-  return i->second.first;
-}
-
-inline file_id const &
-delta_dst_id(delta_entry const & d)
-{
-  return d.second.second;
-}
-
-inline file_id const &
-delta_dst_id(delta_map::const_iterator i)
-{
-  return i->second.second;
-}
-
-// addition entry accessors 
-
-inline file_path const &
-addition_path(addition_entry const & a)
-{
-  return a.first;
-}
-
-inline file_path const &
-addition_path(addition_map::const_iterator i)
-{
-  return i->first;
-}
-
-inline file_id const &
-addition_id(addition_entry const & a)
-{
-  return a.second;
-}
-
-inline file_id const &
-addition_id(addition_map::const_iterator const & i)
-{
-  return i->second;
-}
-
-struct 
-change_set
-{
-  deletion_set dels;
-  rename_map renames;
-  delta_map deltas;
-  addition_map adds;
-
-  change_set();
-  change_set(change_set const & other);
-  change_set const & operator=(change_set const & other);
-  change_set const & operator+(change_set const & other) const;
-  change_set const & operator|(change_set const & other) const;
-  bool is_applicable(manifest_map const &m) const;
-  bool is_sane() const;
-};
 
 typedef std::map<revision_id, std::pair<manifest_id, change_set> > 
 edge_map;
@@ -194,37 +65,37 @@ revision_set
   edge_map edges;
 };
 
-inline revision_id const & 
+revision_id const & 
 edge_old_revision(edge_entry const & e) 
 { 
   return e.first; 
 }
 
-inline revision_id const & 
+revision_id const & 
 edge_old_revision(edge_map::const_iterator i) 
 { 
   return i->first; 
 }
 
-inline manifest_id const & 
+manifest_id const & 
 edge_old_manifest(edge_entry const & e) 
 { 
   return e.second.first; 
 }
 
-inline manifest_id const & 
+manifest_id const & 
 edge_old_manifest(edge_map::const_iterator i) 
 { 
   return i->second.first; 
 }
 
-inline change_set  const & 
+change_set const & 
 edge_changes(edge_entry const & e) 
 { 
   return e.second.second; 
 }
 
-inline change_set  const & 
+change_set const & 
 edge_changes(edge_map::const_iterator i) 
 { 
   return i->second.second; 
@@ -245,8 +116,5 @@ write_revision_set(revision_set const & rev,
 void
 write_revision_set(revision_set const & rev,
 		   revision_data & dat);
-
-bool operator==(const change_set & a, const change_set & b);
-bool operator<(const change_set & a, const change_set & b);
 
 #endif // __REVISION_HH__

@@ -24,6 +24,7 @@ extern "C" {
 #include "file_io.hh"
 #include "lua.hh"
 #include "mkstemp.hh"
+#include "predicament.hh"
 #include "sanity.hh"
 #include "vocab.hh"
 
@@ -743,6 +744,33 @@ lua_hooks::hook_merge3(data const & ancestor,
     .ok();
   result = res;
   return ok;
+}
+
+bool 
+lua_hooks::hook_get_problem_solution(problem const & problem,
+				     std::string & solution)
+{
+  Lua ll(st);
+
+  ll
+    .push_str("get_problem_solution")
+    .get_fn()
+    .push_str(problem.name);
+
+  ll.push_table();
+
+  for (std::map<std::string, boost::shared_ptr<solution> >::const_iterator i = 
+       problem.solutions.begin(); i != problem.solutions.end(); ++i)
+    {
+      ll.push_str(i->first);
+      ll.push_str(i->second->name);
+      ll.set_table();
+    }
+
+  return 
+    ll.call(2, 1)
+    .extract_str(solution)
+    .ok();
 }
 
 bool 
