@@ -12,7 +12,7 @@
 This manual is for the ``monotone'' distributed version control system.
 This edition documents version @value{VERSION}.
 
-Copyright 2003 Graydon Hoare
+Copyright 2003, 2004 Graydon Hoare
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -1769,7 +1769,7 @@ server. This concludes the initial tutorial.
 @chapter Network Service
 
 @emph{Note:} Monotone's networking system changed between release 0.9
-and 0.10. The old system is depricated and will be
+and 0.10. The old system is deprecated and will be
 removed. Documentation for it has already been removed. Please
 familiarize yourself with the new system.
 
@@ -3481,7 +3481,7 @@ convenient to read and write packets.
 
 @emph{Note:} earlier versions of monotone queued and replayed packet
 streams for their networking system. This older networking system is
-depricated and will be removed in a future version, as the netsync
+deprecated and will be removed in a future version, as the netsync
 protocol has several properties which make it advantageous as a
 communication system. However, the packet i/o facility will remain in
 monotone as a utility for moving individual data items around
