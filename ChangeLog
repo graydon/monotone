@@ -1,3 +1,11 @@
+2003-11-27  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (AM_LDFLAGS): No more -static, sigh.
+	* cert.cc (find_relevant_edges): Keep dynamic-programming caches.
+	(calculate_renames_recursive): Likewise.
+	* cert.cc, cert.hh (rename_edge): Add constructor, copy constructor.
+	* commands.cc (list certs): Note rename certs are binary.
+
 2003-11-24  graydon hoare  <graydon@pobox.com>
 
 	* network.cc: Continue fetch, post loops even if one target has

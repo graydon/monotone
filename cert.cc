@@ -283,11 +283,14 @@ static void get_parents(manifest_id const & child,
 static bool find_relevant_edges(manifest_id const & ancestor,
 				manifest_id const & child,
 				app_state & app,
-				multimap <manifest_id, manifest_id> & relevant_edges)
+				multimap <manifest_id, manifest_id> & relevant_edges,
+				set<manifest_id> & visited_nodes)
 {
   if (ancestor == child)
     return true;
-  
+ 
+  visited_nodes.insert(child);
+ 
   set<manifest_id> parents;
   get_parents(child, parents, app);
   if (parents.size() == 0)
@@ -298,7 +301,18 @@ static bool find_relevant_edges(manifest_id const & ancestor,
   for(set<manifest_id>::const_iterator i = parents.begin();
       i != parents.end(); ++i)
     {
-      if (find_relevant_edges(ancestor, *i, app, relevant_edges))
+      if (relevant_edges.find(*i) != relevant_edges.end())
+	{
+	  // edge was already deemed relevant; don't re-traverse!
+	  relevant_child = true;
+	}
+      else if (visited_nodes.find(*i) != visited_nodes.end())
+	{
+	  // node was visited (and presumably deemed irrelevant);
+	  // don't re-traverse!
+	}
+      else if (find_relevant_edges(ancestor, *i, app, 
+				   relevant_edges, visited_nodes))
 	{	  
 	  relevant_child = true;
 	  relevant_edges.insert(make_pair(child, *i));
@@ -322,8 +336,9 @@ void write_ancestry_paths(manifest_id const & ancestor,
   shared_ptr<fmap> frontier(new fmap());
   shared_ptr<fmap> next_frontier(new fmap());
   emap relevant_edges;
+  set<manifest_id> visited;
 
-  find_relevant_edges(ancestor, begin, app, relevant_edges);
+  find_relevant_edges(ancestor, begin, app, relevant_edges, visited);
 
   shared_ptr<data> begin_data(new data());
   shared_ptr<manifest_map> begin_map(new manifest_map());
@@ -597,6 +612,13 @@ bool find_common_ancestor(manifest_id const & left,
 // in the ancestry graph. they assist the algorithm in patch_set.cc in
 // determining which add/del pairs count as moves.
 
+rename_edge::rename_edge(rename_edge const & other)
+{
+  parent = other.parent;
+  child = other.child;
+  mapping = other.mapping;
+}
+
 static void include_rename_edge(rename_edge const & in, 
 				rename_edge & out)
 {
@@ -715,15 +737,37 @@ static void read_rename_edge(hexenc<id> const & node,
     }
 }
 
+/* 
+ * The idea with this algorithm is to walk from child up to ancestor,
+ * recursively, accumulating all the rename_edges associated with
+ * intermediate nodes into *one big rename_edge*. don't confuse an ancestry
+ * edge with a rename edge here: when we get_parents, that's loading
+ * ancestry edges. rename edges are a secondary graph overlaid on some --
+ * but not all -- edges in the ancestry graph. I know, it's a real party.
+ *
+ * clever readers will realize this is an overlapping-subproblem type
+ * situation (as is the relevant_edges algorithm later on) and thus needs
+ * to keep a dynamic programming map to keep itself in linear complexity.
+ *
+ * in fact, we keep two: one which maps to computed results (partial_edges)
+ * and one which just keeps a set of all nodes we traversed
+ * (visited_nodes). in theory it could be one map with an extra bool stuck
+ * on each entry, but I think that would make it even less readable. it's
+ * already atrocious.
+ */
 
 static bool calculate_renames_recursive(manifest_id const & ancestor,
 					manifest_id const & child,
 					app_state & app,
-					rename_edge & edge)
+					rename_edge & edge,
+					map<manifest_id, shared_ptr<rename_edge> > & partial_edges,
+					set<manifest_id> & visited_nodes)
 {
 
   if (ancestor == child)
     return false;
+
+  visited_nodes.insert(child);
 
   set<manifest_id> parents;
   get_parents(child, parents, app);
@@ -755,8 +799,31 @@ static bool calculate_renames_recursive(manifest_id const & ancestor,
   for(set<manifest_id>::const_iterator i = parents.begin();
       i != parents.end(); ++i)
     {
+
+      bool relevant_parent = false;
       rename_edge curr_parent_edge;
-      if (calculate_renames_recursive(ancestor, *i, app, curr_parent_edge))
+      map<manifest_id, shared_ptr<rename_edge> >::const_iterator 
+	j = partial_edges.find(*i);
+      if (j != partial_edges.end()) 
+	{
+	  // a recursive call has traversed this parent before and found an
+	  // existing rename edge. just reuse that rather than re-traversing
+	  curr_parent_edge = *(j->second);
+	  relevant_parent = true;
+	}
+      else if (visited_nodes.find(*i) != visited_nodes.end())
+	{
+	  // a recursive call has traversed this parent, but there was no
+	  // rename edge on it, so the parent is irrelevant. skip.
+	  relevant_parent = false;
+	}
+      else
+	relevant_parent = calculate_renames_recursive(ancestor, *i, app, 
+						      curr_parent_edge, 
+						      partial_edges,
+						      visited_nodes);
+
+      if (relevant_parent)
 	{
 	  map<manifest_id, rename_edge>::const_iterator inc = incident_edges.find(*i);
 	  if (inc != incident_edges.end())
@@ -787,7 +854,13 @@ static bool calculate_renames_recursive(manifest_id const & ancestor,
 	% i->second.parent % i->second.child);
       include_rename_edge(i->second, edge);
     }
-  
+
+  // store the partial edge from ancestor -> child, so that if anyone
+  // re-traverses this edge they'll just fetch from the partial_edges
+  // cache.
+  if (relevant_child)
+    partial_edges.insert(make_pair(child, shared_ptr<rename_edge>(new rename_edge(edge))));
+
   return relevant_child;
 }
 
@@ -797,7 +870,9 @@ void calculate_renames(manifest_id const & ancestor,
 		       rename_edge & edge)
 {
   // it's ok if we can't find any paths
-  calculate_renames_recursive(ancestor, child, app, edge);  
+  set<manifest_id> visited;
+  map<manifest_id, shared_ptr<rename_edge> > partial;
+  calculate_renames_recursive(ancestor, child, app, edge, partial, visited);
 }
 
 

@@ -162,7 +162,7 @@ depot_cgi_LDFLAGS =
 depot_cgi_LDADD = schema_migration.o lib3rdparty.a
 
 AM_CFLAGS = -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
-AM_LDFLAGS = -static 
+AM_LDFLAGS = 
 AM_CXXFLAGS = -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
 
 man1_MANS = monotone.1

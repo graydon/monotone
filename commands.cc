@@ -683,7 +683,8 @@ static void ls_certs (string name, app_state & app, vector<string> const & args)
       cert_value tv;      
       decode_base64(idx(certs, i).value, tv);
       string washed;
-      if (guess_binary(tv()))
+      if (guess_binary(tv()) 
+	  || idx(certs, i).name == rename_cert_name)
 	{
 	  washed = "<binary data>";
 	}

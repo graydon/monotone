@@ -101,6 +101,8 @@ typedef std::map<file_path,file_path> rename_set;
 
 struct rename_edge
 {
+  rename_edge() {}
+  rename_edge(rename_edge const & other);
   manifest_id parent;
   manifest_id child;
   rename_set mapping;  
