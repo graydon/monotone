@@ -1,5 +1,7 @@
 2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
 
+	* po/stamp-po: Removed since it's generated.
+
 	* std_hooks.lua (ignore_file): Corrected name of Subversion's
 	administrative directory.
 	* work.hh: Ditto.
