@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <cstring>
 #include <iostream>
+#include <ui.hh>
 
 // Microsoft + other compatible compilers such as Intel
 #if defined(_MSC_VER) || (defined(__MWERKS__) && __MWERKS__ >= 0x3000)
@@ -457,7 +458,7 @@ main(int argc, char **argv)
     }
   catch (the_one_true_exception const & e)
     {
-      std::cerr << "monotone: fatal: " << e.buf << std::endl;
+      ui.fatal(std::string(e.buf) + "\n");
       return 1;
     }
 }

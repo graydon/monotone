@@ -586,7 +586,7 @@ write_ancestry_paths(manifest_id const & ancestor,
   read_manifest_map(*begin_data, *begin_map);
 
   P(F("writing %d historical edges\n") % relevant_edges.size());
-  ticker n_edges("edges");
+  ticker n_edges("edges", ".");
 
   frontier->insert(make_pair(begin, make_pair(begin_data, begin_map)));
 

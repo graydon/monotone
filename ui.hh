@@ -19,12 +19,42 @@ struct user_interface;
 
 struct ticker
 {
+  size_t ticks;
   size_t mod;
   std::string name;
-  ticker(std::string const & n, size_t mod = 64);
+  std::string shortname;
+  ticker(std::string const & n, std::string const & s, size_t mod = 64);
   void operator++();
   void operator+=(size_t t);
   ~ticker();
+};
+
+struct tick_writer
+{
+public:
+  tick_writer() {}
+  virtual ~tick_writer() {}
+  virtual void write_ticks() = 0;
+};
+
+struct tick_write_count : virtual public tick_writer
+{
+public:
+  tick_write_count();
+  ~tick_write_count();
+  void write_ticks();
+private:
+  size_t last_tick_len;
+};
+
+struct tick_write_dot : virtual public tick_writer
+{
+public:
+  tick_write_dot();
+  ~tick_write_dot();
+  void write_ticks();
+private:
+  std::map<std::string,size_t> last_ticks;
 };
 
 struct user_interface
@@ -34,19 +64,26 @@ public:
   ~user_interface();
   void warn(std::string const & warning);
   void warn(boost::format const & fmt) { warn(fmt.str()); }
+  void fatal(std::string const & warning);
+  void fatal(boost::format const & fmt) { warn(fmt.str()); }
   void inform(std::string const & line);
   void inform(boost::format const & fmt) { inform(fmt.str()); }
   void set_tick_trailer(std::string const & trailer);
+  void set_tick_writer(tick_writer * t_writer);
 
 private:  
-  bool last_write_was_a_tick;
-  size_t last_tick_len;
   std::set<std::string> issued_warnings;  
-  std::map<std::string,size_t> ticks;
 
+  bool dont_write_ticks;
+  bool last_write_was_a_tick;
+  std::map<std::string,ticker *> tickers;
+  tick_writer * t_writer;
   void finish_ticking();
   void write_ticks();
   std::string tick_trailer;
+
+  friend struct tick_write_dot;
+  friend struct tick_write_count;
   friend struct ticker;
 };
 

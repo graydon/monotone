@@ -2356,7 +2356,7 @@ call_server(protocol_role role,
   session sess(role, client_voice, collections, all_collections, app, 
 	       address(), server.get_socketfd(), timeout);
 
-  ticker input("bytes in"), output("bytes out");
+  ticker input("bytes in", ">", 256), output("bytes out", "<", 256);
   sess.in_ticker = &input;
   sess.out_ticker = &output;
 
@@ -2743,8 +2743,8 @@ rebuild_merkle_trees(app_state & app,
   // FIXME: do fcerts later 
   // ticker fcerts("fcerts");
 
-  ticker mcerts("mcerts");
-  ticker keys("keys");
+  ticker mcerts("mcerts", "m", 32);
+  ticker keys("keys", "k", 1);
 
   set<manifest_id> manifest_ids;
   set<rsa_keypair_id> inserted_keys;
