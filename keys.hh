@@ -27,7 +27,9 @@ void make_signature(lua_hooks & lua,           // to hook for phrase
 		    std::string const & tosign,
 		    base64<rsa_sha1_signature> & signature);
 
-bool check_signature(base64<rsa_pub_key> const & pub,
+bool check_signature(lua_hooks & lua,
+		     rsa_keypair_id const & id,
+		     base64<rsa_pub_key> const & pub,
 		     std::string const & alleged_text,
 		     base64<rsa_sha1_signature> const & signature);
 

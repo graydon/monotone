@@ -1364,6 +1364,7 @@ int sqliteOsUnlock(OsFile *id){
 ** supply a sufficiently large buffer.
 */
 int sqliteOsRandomSeed(char *zBuf){
+  memset(zBuf, 0, 256);
 #ifdef SQLITE_TEST
   /* When testing, always use the same random number sequence.
   ** This makes the tests repeatable.

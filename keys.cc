@@ -248,35 +248,53 @@ void make_signature(lua_hooks & lua,           // to hook for phrase
   encode_base64(rsa_sha1_signature(sig_string), signature);
 }
 
-bool check_signature(base64<rsa_pub_key> const & pub_encoded,
+bool check_signature(lua_hooks & lua,           
+		     rsa_keypair_id const & id, 
+		     base64<rsa_pub_key> const & pub_encoded,
 		     string const & alleged_text,
 		     base64<rsa_sha1_signature> const & signature)
 {
   // examine pubkey
-  rsa_pub_key pub;
-  decode_base64(pub_encoded, pub);
-  SecByteBlock pub_block;
-  pub_block.Assign(reinterpret_cast<byte const *>(pub().data()), pub().size());
-  StringSource keysource(pub_block.data(), pub_block.size(), true);
-  L(F("building verifier for %d-byte pub key\n") % pub_block.size());
-  RSASSA_PKCS1v15_SHA_Verifier verifier(keysource);
+
+  static std::map<rsa_keypair_id, shared_ptr<RSASSA_PKCS1v15_SHA_Verifier> > verifiers;
+  bool persist_phrase = (!verifiers.empty()) || lua.hook_persist_phrase_ok();
+
+  shared_ptr<RSASSA_PKCS1v15_SHA_Verifier> verifier;
+  if (persist_phrase 
+      && verifiers.find(id) != verifiers.end())
+    verifier = verifiers[id];
+
+  else
+    {
+      rsa_pub_key pub;
+      decode_base64(pub_encoded, pub);
+      SecByteBlock pub_block;
+      pub_block.Assign(reinterpret_cast<byte const *>(pub().data()), pub().size());
+      StringSource keysource(pub_block.data(), pub_block.size(), true);
+      L(F("building verifier for %d-byte pub key\n") % pub_block.size());
+      verifier = shared_ptr<RSASSA_PKCS1v15_SHA_Verifier>
+	(new RSASSA_PKCS1v15_SHA_Verifier(keysource));
+      
+      if (persist_phrase)
+	verifiers.insert(make_pair(id, verifier));
+    }
 
   // examine signature
   rsa_sha1_signature sig_decoded;
   decode_base64(signature, sig_decoded);
-  if (sig_decoded().size() != verifier.SignatureLength())
+  if (sig_decoded().size() != verifier->SignatureLength())
     return false;
 
   // check the text+sig against the key
-  L(F("checking %d-byte (%d decoded) signature with %d-byte pub key\n") % 
-    signature().size() % sig_decoded().size() % pub_block.size());
+  L(F("checking %d-byte (%d decoded) signature\n") % 
+    signature().size() % sig_decoded().size());
   VerifierFilter * vf = NULL;
 
   // crypto++ likes to use pointers in ways which boost and std:: smart
   // pointers aren't really good with, unfortunately.
   try 
     {
-      vf = new VerifierFilter(verifier);
+      vf = new VerifierFilter(*verifier);
       vf->Put(reinterpret_cast<byte const *>(sig_decoded().data()), sig_decoded().size());
     } 
   catch (...)
@@ -313,11 +331,11 @@ static void signature_round_trip_test()
   make_signature(lua, key, privkey, plaintext, sig);
   
   BOOST_CHECKPOINT("checking signature");
-  BOOST_CHECK(check_signature(pubkey, plaintext, sig));
+  BOOST_CHECK(check_signature(lua, key, pubkey, plaintext, sig));
   
   string broken_plaintext = plaintext + " ...with a lie";
   BOOST_CHECKPOINT("checking non-signature");
-  BOOST_CHECK(!check_signature(pubkey, broken_plaintext, sig));
+  BOOST_CHECK(!check_signature(lua, key, pubkey, broken_plaintext, sig));
 }
 
 void add_key_tests(test_suite * suite)

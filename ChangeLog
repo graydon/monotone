@@ -1,3 +1,12 @@
+2003-11-28  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc: Various speedups.
+	* cycle_detector.hh (edge_makes_cycle): Use visited set, too.
+	* database.hh, database.cc (get_head_candidates): New, complex query.
+	* keys.hh, keys.cc (check_signature): Cache verifiers.
+	* sqlite/os.c (sqliteOsRandomSeed): Harmless valgrind purification.
+	* tests/t_fork.at, tests/t_merge.at: Ignore stderr chatter on 'heads'.
+
 2003-11-27  graydon hoare  <graydon@pobox.com>
 
 	* Makefile.am (AM_LDFLAGS): No more -static, sigh.
