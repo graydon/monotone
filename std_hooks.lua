@@ -73,8 +73,8 @@ function edit_comment(basetext, user_log_message)
    local tmp, tname = temp_file()
    if (tmp == nil) then return nil end
    basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ") .. "\n"
-   tmp:write(basetext)
    tmp:write(user_log_message)
+   tmp:write(basetext)
    io.close(tmp)
 
    if (execute(exe, tname) ~= 0) then
