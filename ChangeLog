@@ -15,11 +15,6 @@
 		insert dummy cvs_edge to mark newly added file 
 		as previously non existant
 
-2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
-
-	* cert.cc (get_branch_heads): Remove disapproved head candidates
-	correctly.
-
 2004-04-23  Christof Petig <christof@petig-baender.de>
 
 	* rcs_import.cc (build_parent_state, build_child_state):

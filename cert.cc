@@ -666,6 +666,8 @@ get_branch_heads(cert_value const & branchname,
     ancestor_certs, 
     disapproval_certs;
 
+  set< pair<hexenc<id>, base64<cert_value> > > disapproved;
+
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
 
@@ -688,12 +690,25 @@ get_branch_heads(cert_value const & branchname,
       heads.insert(i->inner().ident);
     }
 
+  for (vector< manifest<cert> >::const_iterator i = disapproval_certs.begin();
+       i != disapproval_certs.end(); ++i)
+    {
+      disapproved.insert(make_pair(i->inner().ident,
+				   i->inner().value));
+    }
+
   L(F("began with %d candidate heads\n") % heads.size());
 
   // Remove every manifest with descendents.
   for (vector< manifest<cert> >::const_iterator i = ancestor_certs.begin();
        i != ancestor_certs.end(); ++i)
     {      
+      // skip those invalidated by a specific disapproval
+      if (disapproved.find(make_pair(i->inner().ident,
+				     i->inner().value)) 
+	  != disapproved.end())
+	continue;
+
       cert_value tv;
       decode_base64(i->inner().value, tv);
       manifest_id parent(tv());
@@ -704,17 +719,6 @@ get_branch_heads(cert_value const & branchname,
 	}
     }
   
-  for (vector< manifest<cert> >::const_iterator i = disapproval_certs.begin();
-       i != disapproval_certs.end(); ++i)
-    {
-      set<manifest_id>::const_iterator j = heads.find(i->inner().ident);
-      if (j != heads.end())
-	{
-	  L(F("removed disapproved head candidate '%s'\n") % i->inner().ident);
-	  heads.erase(j);
-	}
-    }
-
   L(F("reduced to %d heads\n") % heads.size());
 }
 		   
