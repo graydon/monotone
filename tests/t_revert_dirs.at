@@ -1,0 +1,23 @@
+AT_SETUP([(normal) revert directories])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+# reverting files deeper in the directory tree with only some leading
+# components of their relative path specified
+
+AT_CHECK(mkdir -p abc/def/ghi, [], [ignore])
+AT_DATA(abc/def/ghi/file, [deep deep snow
+])
+AT_CHECK(MONOTONE add abc/def/ghi/file, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message='deep file' --branch=test, [], [ignore], [ignore])
+AT_DATA(abc/def/ghi/file, [deep deep mud
+])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep abc/def/ghi/file stdout, [], [ignore])
+AT_CHECK(MONOTONE revert abc/def, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep abc/def/ghi/file stdout, [1], [ignore])
+
+AT_CLEANUP
