@@ -163,7 +163,9 @@ function merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
    return string.format(cmd_fmt .. cmd_opts, lfile, afile, rfile, outfile)
 end
 
--- For CVS-style merging.  Disabled by default.
+-- For CVS-style merging.  Disabled by default.  You almost certainly
+-- don't want to use this!  But it is here as documentation, because
+-- it may become useful in the future.
 function merge3_merge_cmd(lfile, afile, rfile, outfile)
    local cmd_fmt = "merge -p -L left -L ancestor -L right %s %s %s > %s"
    return string.format(cmd_fmt, lfile, afile, rfile, outfile)
