@@ -881,6 +881,7 @@ session::queue_delta_cmd(netcmd_item_type type,
 			 delta const & del)
 {
   I(type == manifest_item || type == file_item);
+  I(! del().empty() || ident == base);
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   hexenc<id> base_hid;
@@ -898,7 +899,7 @@ session::queue_delta_cmd(netcmd_item_type type,
   L(F("queueing %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
   netcmd cmd;
-  cmd.cmd_code = delta_cmd;
+  cmd.cmd_code = delta_cmd;  
   write_delta_cmd_payload(type, base, ident, del, cmd.payload);
   write_netcmd(cmd, outbuf);
 }
@@ -1853,6 +1854,7 @@ session::process_send_delta_cmd(netcmd_item_type type,
 	else
 	  {
 	    queue_nonexistant_cmd(type, ident);
+	    return true;
 	  }
       }
       break;
@@ -1877,6 +1879,7 @@ session::process_send_delta_cmd(netcmd_item_type type,
 	else
 	  {
 	    queue_nonexistant_cmd(type, ident);
+	    return true;
 	  }
       }
       break;
@@ -2480,7 +2483,8 @@ static void
 handle_read_available(socket_type fd,
 		      shared_ptr<session> sess,
 		      map<socket_type, shared_ptr<session> > & sessions,
-		      set<socket_type> & armed_sessions)
+		      set<socket_type> & armed_sessions,
+		      bool & live_p)
 {
   if (sess->read_some())
     {
@@ -2494,6 +2498,7 @@ handle_read_available(socket_type fd,
 	  W(F("caught bad_decode exception decoding input from peer %s: '%s', disconnecting\n") 
 	    % sess->peer_id % bd.what);
 	  sessions.erase(fd);
+	  live_p = false;
 	}
     }
   else
@@ -2501,6 +2506,7 @@ handle_read_available(socket_type fd,
       P(F("fd %d (peer %s) read failed, disconnecting\n") 
 	% fd % sess->peer_id);
       sessions.erase(fd);
+      live_p = false;
     }
 }
 
@@ -2508,13 +2514,15 @@ handle_read_available(socket_type fd,
 static void 
 handle_write_available(socket_type fd,
 		       shared_ptr<session> sess,
-		       map<socket_type, shared_ptr<session> > & sessions)
+		       map<socket_type, shared_ptr<session> > & sessions,
+		       bool & live_p)
 {
   if (! sess->write_some())
     {
       P(F("fd %d (peer %s) write failed, disconnecting\n") 
 	% fd % sess->peer_id);
       sessions.erase(fd);
+      live_p = false;
     }
 }
 
@@ -2643,14 +2651,16 @@ serve_connections(protocol_role role,
 	    }
 	  else
 	    {
-	      shared_ptr<session> sess = i->second;		
+	      shared_ptr<session> sess = i->second;
+	      bool live_p = true;
+
 	      if (event & Probe::ready_read)
-		handle_read_available(fd, sess, sessions, armed_sessions);
+		handle_read_available(fd, sess, sessions, armed_sessions, live_p);
 		
-	      if (event & Probe::ready_write)
-		handle_write_available(fd, sess, sessions);
+	      if (live_p && (event & Probe::ready_write))
+		handle_write_available(fd, sess, sessions, live_p);
 		
-	      if (event & Probe::ready_oobd)
+	      if (live_p && (event & Probe::ready_oobd))
 		{
 		  P(F("got some OOB data on fd %d (peer %s), disconnecting\n") 
 		    % fd % sess->peer_id);
@@ -2814,20 +2824,26 @@ run_netsync_protocol(protocol_voice voice,
 	}
     }
 
-
-  if (voice == server_voice)
+  try 
     {
-      serve_connections(role, collections, all_collections, app,
-			addr, static_cast<port_type>(constants::netsync_default_port), 
-			static_cast<unsigned long>(constants::netsync_timeout_seconds), 
-			static_cast<unsigned long>(constants::netsync_connection_limit));
+      if (voice == server_voice)
+	{
+	  serve_connections(role, collections, all_collections, app,
+			    addr, static_cast<port_type>(constants::netsync_default_port), 
+			    static_cast<unsigned long>(constants::netsync_timeout_seconds), 
+			    static_cast<unsigned long>(constants::netsync_connection_limit));
+	}
+      else    
+	{
+	  I(voice == client_voice);
+	  call_server(role, collections, all_collections, app, 
+		      addr, static_cast<port_type>(constants::netsync_default_port), 
+		      static_cast<unsigned long>(constants::netsync_timeout_seconds));
+	}
     }
-  else    
-    {
-      I(voice == client_voice);
-      call_server(role, collections, all_collections, app, 
-		  addr, static_cast<port_type>(constants::netsync_default_port), 
-		  static_cast<unsigned long>(constants::netsync_timeout_seconds));
+  catch (Netxx::Exception & e)
+    {      
+      throw oops((F("trapped network exception: %s\n") % e.what()).str());;
     }
 }
 

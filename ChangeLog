@@ -1,5 +1,9 @@
 2004-04-10  graydon hoare  <graydon@pobox.com>
 
+	* netsync.cc: Minor bug fixes.
+
+2004-04-10  graydon hoare  <graydon@pobox.com>
+
 	* database.{cc,hh}: 
 	* commands.{cc,hh}:
 	* lua.{cc,hh}:
