@@ -1093,45 +1093,82 @@ CMD(update, "working copy", "[sort keys...]", "update working copy, relative to 
 
 CMD(revert, "working copy", "[<file>]...", "revert file(s) or entire working copy")
 {
-  manifest_map m_old, m_new;
-  patch_set ps;
+  manifest_map m_old;
 
-  work_set work;
-  get_manifest_map(man);
-  get_work_set(work);
+  if (args.size() == 0)
+    {
+      // revert the whole thing
+      get_manifest_map(m_old);
+      for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
+	{
+	  path_id_pair pip(*i);
 
-  path_set paths;
-  work_set work;
-  extract_path_set(m_old, paths);
-  get_work_set(work);
-  if (work.dels.size() > 0)
-    L("removing %d dead files from manifest\n", 
-      work.dels.size());
-  if (work.adds.size() > 0)
-    L("adding %d files to manifest\n", work.adds.size());
-  apply_work_set(work, paths);
-  build_manifest_map(paths, m_new);
+	  N(app.db.file_version_exists(pip.ident()),
+	    (string("no file version ")
+	     + pip.ident().inner()() 
+	     + " found in database for "
+	     + pip.path()().c_str()));
+      
+	  file_data dat;
+	  L("writing file %s to %s\n", 
+	    pip.ident().inner()().c_str(),
+	    pip.path()().c_str());
+	  app.db.get_file_version(pip.ident(), dat);
+	  write_data(pip.path(), dat.inner());
+	}
+      remove_work_set();
+    }
+  else
+    {
+      work_set work;
+      get_manifest_map(m_old);
+      get_work_set(work);
+      
+      // revert some specific files
+      for (size_t i = 0; i < args.size(); ++i)
+	{
+	  N((m_old.find(args[i]) != m_old.end()) ||
+	    (work.adds.find(args[i]) != work.adds.end()) ||
+	    (work.dels.find(args[i]) != work.dels.end()),
+	    "nothing known about " + args[i]);
 
-  bool rewrite_work = false;
+	  if (m_old.find(args[i]) != m_old.end())
+	    {
+	      path_id_pair pip(m_old.find(args[i]));
+	      L("reverting %s to %s\n",
+		pip.path()().c_str(),
+		pip.ident().inner()().c_str());
 
-  for (path_set::const_iterator i = work.adds.begin();
-       i != work.adds.end(); ++i)
-    build_deletion(*i, app, work, man, rewrite_work);
-
-  for (path_set::const_iterator i = work.dels.begin();
-       i != work.dels.end(); ++i)
-    build_addition(file_path(*i), app, work, man, rewrite_work);
-
-
-  transaction_guard guard(app.db);
-  get_manifest_map(m_old);
-  calculate_new_manifest_map(m_old, m_new);
-  manifests_to_patch_set(m_old, m_new, app, ps);
-  patch_set_to_text_summary(ps, cout);
-  guard.commit();
-
-  // race
-  put_work_set(work);
+	      N(app.db.file_version_exists(pip.ident()),
+		(string("no file version ")
+		 + pip.ident().inner()() 
+		 + " found in database for "
+		 + pip.path()().c_str()));
+	      
+	      file_data dat;
+	      L("writing file %s to %s\n", 
+		pip.ident().inner()().c_str(),
+		pip.path()().c_str());
+	      app.db.get_file_version(pip.ident(), dat);
+	      write_data(pip.path(), dat.inner());	      
+	    }
+	  else if (work.adds.find(args[i]) != work.adds.end())
+	    {
+	      L("removing addition for %s\n",
+		args[i].c_str());
+	      work.adds.erase(args[i]);
+	    }
+	  else 
+	    {
+	      I (work.dels.find(args[i]) != work.dels.end());
+	      L("removing deletion for %s\n",
+		args[i].c_str());
+	      work.dels.erase(args[i]);
+	    }
+	}
+      // race
+      put_work_set(work);
+    }
 }
 
 
@@ -1207,7 +1244,6 @@ CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from da
   
   for (manifest_map::const_iterator i = m.begin(); i != m.end(); ++i)
     {
-      vector<string> args;
       path_id_pair pip(*i);
       
       N(app.db.file_version_exists(pip.ident()),
