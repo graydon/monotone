@@ -312,6 +312,13 @@ else
 fi
 ])
 
+# run as NETSYNC_SERVE_N_START(2|3, collection name)
+# note that NETSYNC_SERVE_START is _not_ a special case of this macro.
+m4_define([NETSYNC_SERVE_N_START], [
+NETSYNC_KILLHARD
+MONOTONE --db=test$1.db --rcfile=netsync.lua serve 127.0.0.1:5555 $2 &
+sleep 4
+])
 # run as NETSYNC_SERVE_START(collection name)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD

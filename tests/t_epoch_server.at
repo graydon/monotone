@@ -19,10 +19,10 @@ AT_CHECK(MONOTONE list epochs, [], [stdout], [ignore])
 AT_CHECK(mv stdout orig-epochs)
 AT_DATA(otherfile, [other data
 ])
-AT_CHECK(MONOTONE2 add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 add otherfile, [], [ignore], [ignore])
 AT_CHECK(MONOTONE2 commit --message=foo --branch=otherbranch, [], [ignore], [ignore])
 # Run an irrelevant netsync, just to force epochs to be regenerated
-NETSYNC_SERVE_START(otherbranch)
+NETSYNC_SERVE_N_START(2, otherbranch)
 NETSYNC_CLIENT_N_RUN(3, sync, otherbranch, 0)
 NETSYNC_SERVE_STOP
 # Run the real netsync

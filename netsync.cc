@@ -236,8 +236,6 @@ session
   map< std::pair<utf8, netcmd_item_type>, 
        boost::shared_ptr<merkle_table> > merkle_tables;
 
-  map< id, std::pair<cert_value, epoch_id> > id_to_epoch;
-
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
   map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestry;
@@ -272,6 +270,8 @@ session
   void note_item_requested(netcmd_item_type ty, id const & i);
   bool item_request_outstanding(netcmd_item_type ty, id const & i);
   void note_item_arrived(netcmd_item_type ty, id const & i);
+
+  void maybe_note_epochs_finished();
 
   void note_item_sent(netcmd_item_type ty, id const & i);
 
@@ -436,9 +436,6 @@ session::session(protocol_role role,
   sent_goodbye(false),
   dbw(app, true)
 {
-  // FIXME: temporary, for testing:
-  dbw.open_valve();
-
   if (voice == client_voice)
     {
       N(collections.size() == 1,
@@ -533,6 +530,23 @@ session::all_requested_revisions_received()
     i = requested_items.find(revision_item);
   I(i != requested_items.end());
   return i->second->empty();
+}
+
+void
+session::maybe_note_epochs_finished()
+{
+  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
+    i = requested_items.find(epoch_item);
+  I(i != requested_items.end());
+  // Maybe there are outstanding epoch requests.
+  if (!i->second->empty())
+    return;
+  // And maybe we haven't even finished the refinement.
+  if (!done_refinements[epoch_item].tree_is_done)
+    return;
+  // But otherwise, we're ready to go!
+  L(F("all epochs processed, opening database valve\n"));
+  this->dbw.open_valve();
 }
 
 void
@@ -1338,6 +1352,8 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
 
       if (all_requested_revisions_received())
         analyze_ancestry_graph();      
+
+      maybe_note_epochs_finished();
     }
 
   else if (i->second.current_level_had_refinements 
@@ -2330,15 +2346,28 @@ session::process_data_cmd(netcmd_item_type type,
           else
             {
               L(F("branch %s already has an epoch; checking\n") % branch);
-              N(i->second == epoch,
-                F("Mismatched epoch on branch %s.  We have '%s', they have '%s'.\n")
-                % branch % i->second % epoch);
-              // Can't get here, unless something's wrong with our hashing
-              // (because the if(epoch_exists()) branch should have triggered
-              // if we actually had the same epoch).  Getting epochs wrong is
-              // dangerous, so play it safe.
-              I(false);
+              if (!(i->second == epoch))
+                {
+                  boost::format err = (F("Mismatched epoch on branch %s."
+                                         "  Server has '%s', client has '%s'.")
+                                       % branch
+                                       % (voice == server_voice ? i->second : epoch)
+                                       % (voice == server_voice ? epoch : i->second));
+                  // FIXME: this error command queuing is pointless, because
+                  // we hang up before actually flushing it through the queue.
+                  queue_error_cmd(err.str());
+                  throw bad_decode(err);
+                }
+              else
+                {
+                  // Can't get here, unless something's wrong with our hashing
+                  // (because the if(epoch_exists()) branch should have triggered
+                  // if we actually had the same epoch).  Getting epochs wrong is
+                  // dangerous, so play it safe.
+                  I(false);
+                }
             }
+          maybe_note_epochs_finished();
         }
       break;
       
@@ -3259,27 +3288,25 @@ session::rebuild_merkle_trees(app_state & app,
       map<cert_value, epoch_data> epochs;
       app.db.get_epochs(epochs);
 
-      // set to zero any epoch which is not yet set    
       epoch_data epoch_zero(std::string(constants::epochlen, '0'));
       for (std::set<string>::const_iterator i = branchnames.begin();
            i != branchnames.end(); ++i)
         {
           cert_value branch(*i);
-          std::map<cert_value, epoch_data>::const_iterator j = epochs.find(branch);
+          std::map<cert_value, epoch_data>::const_iterator j;
+          j = epochs.find(branch);
+          // set to zero any epoch which is not yet set    
           if (j == epochs.end())
             {
               L(F("setting epoch on %s to zero\n") % branch);
               epochs.insert(std::make_pair(branch, epoch_zero));
               app.db.set_epoch(branch, epoch_zero);
             }
-        }
-
-      // hash all epochs and load them into their merkle tree
-      for (std::map<cert_value, epoch_data>::const_iterator i = epochs.begin();
-           i != epochs.end(); ++i)
-        {
+          // then insert all epochs into merkle tree
+          j = epochs.find(branch);
+          I(j != epochs.end());
           epoch_id eid;
-          epoch_hash_code(i->first, i->second, eid);
+          epoch_hash_code(j->first, j->second, eid);
           id raw_hash;
           decode_hexenc(eid.inner(), raw_hash);
           insert_into_merkle_tree(*etab, epoch_item, true, raw_hash(), 0);
@@ -3323,6 +3350,7 @@ session::rebuild_merkle_trees(app_state & app,
       }
   }  
 
+  recalculate_merkle_codes(*etab, get_root_prefix().val, 0);
   recalculate_merkle_codes(*ktab, get_root_prefix().val, 0);
   recalculate_merkle_codes(*ctab, get_root_prefix().val, 0);
 }

@@ -1,10 +1,23 @@
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* testsuite.at (NETSYNC_SERVE_N_START): New macro.
+	* tests/t_epoch_server.at: Misc. fixes.
+
+	* netsync.cc (session::session): Don't open valve yet.
+	(maybe_note_epochs_finished): New method to open
+	valve.
+	(process_done_cmd, process_data_cmd): Call it.
+	(rebuild_merkle_trees): Actually calculate hashes for epoch merkle
+	trees.  Also, only include epochs that meet the branch mask.
+	(session): Remove unused id_to_epoch map.
+	
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netcmd.cc (read_netcmd_item_type): Handle epoch_item.
 	(test_netcmd_functions): Update for new confirm_cmd_payload
 	format.
 	* netsync.cc (process_confirm_cmd): Cut and paste error.
-	
+
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* constants.{cc,hh}: Add new epochlen, epochlen_bytes constants.
