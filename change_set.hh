@@ -16,34 +16,8 @@
 #include "vocab.hh"
 
 // a change_set is a text object. It has a precise, normalizable serial form
-// as UTF-8 text. it also has some sub-components. not all of these
-// sub-components are separately serialized (they could be but there is no
-// call for it). a grammar (aside from the parsing code) for the serialized
-// form will show up here eventually. until then, here is an example.
-//
-// change_set:
-// {
-//   paths:
-//   {
-//      rename_file:
-//      {
-//        src: "usr/bin/sh"
-//        dst: "usr/bin/foo"
-//      }
-//      delete_dir: "usr/bin"
-//      add_file: "tmp/foo/bar.txt"
-//   }
-//   deltas:
-//   {
-//     delta:
-//     {
-//       path: "tmp/foo/bar.txt"
-//       src: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
-//       dst: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//     }
-//   }
-// } 
-//
+// as UTF-8 text.
+// 
 // note that this object is made up of two important sub-components: 
 // path_edits and deltas. "path_edits" is exactly the same object stored
 // in MT/work. 
