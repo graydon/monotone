@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <boost/filesystem/path.hpp>
 
+#include "file_io.hh"
 #include "botan/botan.h"
 
 #ifndef O_BINARY

@@ -458,7 +458,6 @@ session::session(protocol_role role,
       request_blocking_rng = true;
 #endif
     }  
-  prng.reset(new CryptoPP::AutoSeededRandomPool(request_blocking_rng));
 
   done_refinements.insert(make_pair(cert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
@@ -1489,7 +1488,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       rsa_sha1_signature sig_raw;
       base64< arc4<rsa_priv_key> > our_priv;
       load_priv_key(app, app.signing_key, our_priv);
-      make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
+      make_signature(app, app.signing_key, our_priv, nonce(), sig);
       decode_base64(sig, sig_raw);
       
       // make a new nonce of our own and send off the 'auth'
