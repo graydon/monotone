@@ -471,20 +471,20 @@ forming a new unique ID for each point in history.
 @section Certificates
 
 Often, you will wish to make a @i{statement} about a revision, such as
-stating the reason that you made some changes, or stating the fact
-that you approve of the changes which were made, or stating the time
-at which you made the changes. Statements such as these can be thought
-of, generally, as a bundle of information with three parts:
+stating the reason that you made some changes, or stating the time at
+which you made the changes, or stating that the revision passes a test
+suite. Statements such as these can be thought of, generally, as a
+bundle of information with three parts:
 
 @itemize
 @item
 an @i{ID}, indicating which revision you are making a statement about
 @item
 a @i{name} indicating the type of statement you are making, such as
-``changelog'', ``date'' or ``disapproval''
+``changelog'', ``date'' or ``testresult''
 @item
 a @i{value} indicating the remaining detail of the statement, such as
-``fixed a bug'', ``March 9th'' or ``approved for shipping''
+``fixed a bug'', ``March 9th'' or ``1''
 @end itemize
 
 
@@ -2802,6 +2802,17 @@ If no @var{id} is provided, as in the latter two commands, you
 @var{id} as the unique head of @var{branchname} if it exists.
 
 
+@item monotone disapprove @var{id}
+
+This command records a disapproval of the changes between @var{id}'s
+ancestor and @var{id}. It does this by committing the @i{inverse}
+changes as a new revision descending from @var{id}. The new revision
+will show up as a new head and thus a subsequent @command{merge} will
+incorporate the inverse of the disapproved changes in the other head(s).
+
+Note that this command only works if @var{id} has exactly one ancestor.
+
+
 @item monotone heads --branch=@var{branchname}
 This command lists the ``heads'' of @var{branchname}. 
 
@@ -3222,9 +3233,9 @@ the value of the certificate.  Otherwise the certificate value is read
 from @code{stdin}.
 
 @item monotone --branch=@var{branchname} vcheck create 
-@item monotone vcheck create @var{id}
-@item monotone --branch=@var{branchname} vcheck check
-@item monotone vcheck check @var{id}
+@itemx monotone vcheck create @var{id}
+@itemx monotone --branch=@var{branchname} vcheck check
+@itemx monotone vcheck check @var{id}
 
 These commands produce or check @code{vcheck} certs for the given
 manifest @var{id}. A @code{vcheck} cert on a manifest simply reduces
@@ -3244,15 +3255,12 @@ If you omit the @var{id}, these commands operate on the heads of
 @section Certificate
 
 @ftable @command
-@item monotone approve @var{id1} @var{id2}
+@item monotone approve @var{id}
 
-This command is a synonym for
-@code{monotone cert @var{id2} ancestor @var{id1}}
-
-@item monotone disapprove @var{id1} @var{id2}
-
-This command is a synonym for
-@code{monotone cert @var{id2} disapproval @var{id1}}
+This command is a synonym for @code{monotone cert @var{id} branch
+@var{branchname}} where @var{branchname} is the current branch name
+(either deduced from the working copy or from the @option{--branch}
+option).
 
 
 @item monotone comment @var{id}
@@ -3269,7 +3277,7 @@ This command is a synonym for @code{monotone cert @var{id} tag
 @var{tagname}}.
 
 @item monotone testresult @var{id} 0
-@item monotone testresult @var{id} 1
+@itemx monotone testresult @var{id} 1
 
 These commands are synonyms for @code{monotone cert @var{id}
 testresult 0} or @code{monotone cert @var{id} testresult 1}.
@@ -4561,11 +4569,11 @@ monotone} command, or online).
 Write a comment cert for a revision.
 @comment TROFF INPUT: .TP
 
-@item @b{approve} @i{<id1>}
+@item @b{approve} @i{<id>}
 Make a ``branch'' cert approving of a revision's membership in a branch.
 @comment TROFF INPUT: .TP
 
-@item @b{disapprove} @i{<id1>}
+@item @b{disapprove} @i{<id>}
 Disapprove of a revision, committing the inverse changes as as a
 descendant of the disapproved revision.
 @comment TROFF INPUT: .TP

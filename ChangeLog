@@ -1,3 +1,8 @@
+2004-11-12  Joel Rosdahl  <joel@rosdahl.net>
+
+	* monotone.texi: Fix documentation of the approve and disapprove
+	commands. Other minor fixes.
+
 2004-11-11  Joel Rosdahl  <joel@rosdahl.net>
 
 	* monotone.texi: Fix typos.
