@@ -1,5 +1,11 @@
 2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_propagate_anc.at: Also check the case where we're
+	propagating a non-strict ancestor, i.e. the heads are actually
+	equal.
+
+2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
+
 	* database.cc (get_revision_parents): Add invariant.
 	(get_revision_children): Likewise.
 	(get_revision): Likewise.
