@@ -23,6 +23,51 @@ using namespace std;
 
 string const book_keeping_dir("MT");
 
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <sys/types.h>
+
+string get_homedir()
+{
+  char * home = getenv("HOME");
+  if (home != NULL)
+    return string(home);
+
+  struct passwd * pw = getpwuid(getuid());  
+  N(pw != NULL, F("could not find home directory for uid %d") % getuid());
+  return string(pw->pw_dir);
+}
+
+string tilde_expand(string const & path)
+{
+  fs::path tmp(path);
+  fs::path::iterator i = tmp.begin();
+  if (i != tmp.end())
+    {
+      fs::path res;
+      if (*i == "~")
+	{
+	  res /= fs::path(get_homedir());
+	  ++i;
+	}
+      else if (i->size() > 1 && i->at(0) == '~')
+	{	  
+	  struct passwd * pw;
+	  pw = getpwnam(i->substr(1).c_str());
+	  N(pw != NULL, F("could not find home directory user %s") % i->substr(1));
+	  res /= fs::path(string(pw->pw_dir));
+	  ++i;
+	}
+      while (i != tmp.end())
+	res /= *i++;
+      return res.string();
+    }
+
+  return tmp.string();
+}
+
 bool book_keeping_file(local_path const & p)
 {
   if (p() == book_keeping_dir) return true;

@@ -892,14 +892,27 @@ void import_substates(ticker & n_edges,
 
 void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 {
+
+  {
+    // early short-circuit to avoid failure after lots of work
+    rsa_keypair_id key;
+    N(guess_default_key(key,app),
+      F("no unique private key for cert construction"));
+    N(app.db.private_key_exists(key),
+      F("no private key '%s' found in database") % key);
+  }
+
   cvs_history cvs;
   {
     transaction_guard guard(app.db);
     cvs_tree_walker walker(cvs, app.db);
-    I( fs::is_directory(cvsroot));
-    I( fs::exists(cvsroot));
+    N( fs::exists(cvsroot),
+       F("path %s does not exist") % cvsroot.string());
+    N( fs::is_directory(cvsroot),
+       F("path %s is not a directory") % cvsroot.string());
     app.db.ensure_open();
-    I(chdir(cvsroot.native_directory_string().c_str()) == 0);
+    N(chdir(cvsroot.native_directory_string().c_str()) == 0,
+      F("could not change directory to %s") % cvsroot.string());
     walk_tree(walker);
     guard.commit();
   }

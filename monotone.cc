@@ -138,11 +138,11 @@ int cpp_main(int argc, char ** argv)
 	      break;
 
 	    case OPT_RCFILE:
-	      extra_rcfiles.push_back(string(argstr));
+	      extra_rcfiles.push_back(tilde_expand(string(argstr)));
 	      break;
 
 	    case OPT_DB_NAME:
-	      app.set_database(argstr);
+	      app.set_database(tilde_expand(string(argstr)));
 	      break;
 
 	    case OPT_KEY_NAME:

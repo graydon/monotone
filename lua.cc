@@ -362,10 +362,7 @@ void lua_hooks::add_std_hooks()
 
 void lua_hooks::default_rcfilename(fs::path & file)
 {
-  char * home = getenv("HOME");
-  if (!home)
-    throw oops("no HOME directory in $ENV");
-  file = fs::path(home) / fs::path(".monotonerc");
+  file = fs::path(get_homedir()) / fs::path(".monotonerc");
 }
 
 void lua_hooks::add_rcfile(fs::path const & rc)
