@@ -1,5 +1,12 @@
 2003-09-12  Tom Tromey  <tromey@redhat.com>
 
+	* testsuite.at: Include t_drop.at.
+	* tests/t_drop.at: New test.
+	* work.cc (visit_file): Check for file in working delete set
+	before looking in manifest.
+
+2003-09-12  Tom Tromey  <tromey@redhat.com>
+
 	* Makefile.am ($(srcdir)/testsuite): tests/atconfig and
 	tests/atlocal are not in srcdir.
 

@@ -1,0 +1,18 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([drop and re-add file does nothing])
+
+MONOTONE_SETUP
+
+AT_DATA(maude, [the file maude
+])
+
+AT_CHECK(MONOTONE add maude, [], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit 'committed', [], [ignore])
+
+AT_CHECK(MONOTONE drop maude, [], [ignore])
+AT_CHECK(MONOTONE add maude, [], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep 'no changes' stdout, [], [ignore])
+
+AT_CLEANUP
