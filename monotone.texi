@@ -3565,10 +3565,12 @@ to use the unique private key.
 @item get_passphrase (@var{keypair_id})
 
 Returns a string which is the passphrase used to encrypt the private
-half of @var{keypair_id} in your database, using the @sc{arc4}
-symmetric cipher. This hook has no default definition. If this hook is
-not defined or returns false, monotone will prompt you for a
-passphrase each time it needs to use a private key.
+half of @var{keypair_id} in your database, using the @sc{arc4} symmetric
+cipher.  @var{keypair_id} is a Lua string containing the label that you
+used when you created your key --- something like
+@code{"nicole@@example.com"}.  This hook has no default definition. If
+this hook is not defined or returns false, monotone will prompt you for
+a passphrase each time it needs to use a private key.
 
 @item get_author (@var{branchname})
 

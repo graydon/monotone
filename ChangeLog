@@ -1,3 +1,8 @@
+2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Hook Reference): Clarify description of
+	'get_passphrase', following confusion on IRC.
+
 2004-11-30  Joel Rosdahl  <joel@rosdahl.net>
 
 	* ui.cc (fatal): Added missing newlines in fatal message.
