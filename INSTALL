@@ -6,9 +6,9 @@ building and installation process for monotone
   * hardware prerequisites:
 
     - g++ consumes a lot of memory building monotone, due to
-      monotone's liberal use of C++ features. it is possible to build
-      on a system with less than 512mb of memory, but not pleasant. we
-      are working on making this situation better.
+      monotone's liberal use of C++ features. it may be possible to
+      build on a system with 128mb of memory, but not pleasant. we are
+      working on making this situation better.
 
   * software prerequisites:
 
