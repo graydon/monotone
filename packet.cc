@@ -44,8 +44,8 @@ void packet_db_writer::consume_file_delta(file_id const & old_id,
       if (app.db.file_version_exists(old_id))
 	app.db.put_file_version(old_id, new_id, del);
       else
-	cerr << "warning: file delta pre-image " << old_id.inner()() 
-	     << " not found in database" << endl;
+	P("warning: file delta pre-image '%s' not found in database\n",
+	  old_id.inner()().c_str()); 
     }
   else
     L("skipping delta to existing file version %s\n", 

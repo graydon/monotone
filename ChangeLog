@@ -1,3 +1,15 @@
+2003-09-14  graydon hoare  <graydon@pobox.com>
+
+	* vocab.cc, vocab.hh: Add streamers for vocab terms in preparation
+	for switch to formatter.
+
+	* cert.cc (check_signature): Treat missing key as failed check.
+	* commands.cc (lscerts): Warn when keys are missing.
+
+	* nntp_tasks.cc, http_tasks.cc: Tick progress.
+
+	* sanity.cc, monotone.cc: Tidy up output a bit.
+	
 2003-09-13  Tom Tromey  <tromey@redhat.com>
 
 	* tests/t_nntp.at: If we can't find tcpserver or snntpd, skip the
@@ -5,7 +17,7 @@
 	* tests/t_http.at: If we can't find boa or depot.cgi, skip the
 	test.
 
-2003-09-12  graydon hoare  <graydon@redhat.com>
+2003-09-12  graydon hoare  <graydon@pobox.com>
 
 	* update.cc (pick_update_target): Only insert base rev as update
 	candidate if it actually exists in db.
@@ -36,7 +48,7 @@
 
 	* Makefile.am (TESTS): unit_tests is not in srcdir.
 
-2003-09-11  graydon hoare  <graydon@redhat.com>
+2003-09-11  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc: Check for MT directory in status.
 	* commands.cc: Require directory for checkout.

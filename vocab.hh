@@ -15,58 +15,81 @@ using namespace std;
 // generally describe the "vocabulary" (nouns anyways) that modules in this
 // program use.
 
-#define ENCODING(enc)                          \
-template<typename INNER>                       \
-class enc {                                    \
-  INNER i;                                     \
-public:                                        \
-  enc() {}                                     \
-  enc(string const & s);                       \
-  enc(INNER const & inner);                    \
-  enc(enc<INNER> const & other);               \
-  string const & operator()() const            \
-    { return i(); }                            \
-  bool operator<(enc<INNER> const & x) const   \
-    { return i() < x(); }                      \
-  enc<INNER> const &                           \
-  operator=(enc<INNER> const & other);         \
-  bool operator==(enc<INNER> const & x) const  \
-    { return i() == x(); }                     \
+#define ENCODING(enc)                                  \
+                                                       \
+template<typename INNER>                               \
+class enc;                                             \
+                                                       \
+template <typename INNER>                              \
+ostream & operator<<(ostream &, enc<INNER> const &);   \
+                                                       \
+template<typename INNER>                               \
+class enc {                                            \
+  INNER i;                                             \
+public:                                                \
+  enc() {}                                             \
+  enc(string const & s);                               \
+  enc(INNER const & inner);                            \
+  enc(enc<INNER> const & other);                       \
+  string const & operator()() const                    \
+    { return i(); }                                    \
+  bool operator<(enc<INNER> const & x) const           \
+    { return i() < x(); }                              \
+  enc<INNER> const &                                   \
+  operator=(enc<INNER> const & other);                 \
+  bool operator==(enc<INNER> const & x) const          \
+    { return i() == x(); }                             \
+  friend ostream & operator<< <>(ostream &,            \
+                                 enc<INNER> const &);  \
 };
 
-#define DECORATE(dec)                          \
-template<typename INNER>                       \
-class dec {                                    \
-  INNER i;                                     \
-public:                                        \
-  dec() {}                                     \
-  dec(INNER const & inner);                    \
-  dec(dec<INNER> const & other);               \
-  bool operator<(dec<INNER> const & x) const   \
-    { return i < x.i; }                        \
-  INNER const & inner() const                  \
-    { return i; }                              \
-  dec<INNER> const &                           \
-  operator=(dec<INNER> const & other);         \
-  bool operator==(dec<INNER> const & x) const  \
-    { return i == x.i; }                       \
+
+#define DECORATE(dec)                                  \
+                                                       \
+template<typename INNER>                               \
+class dec;                                             \
+                                                       \
+template <typename INNER>                              \
+ostream & operator<<(ostream &, dec<INNER> const &);   \
+                                                       \
+template<typename INNER>                               \
+class dec {                                            \
+  INNER i;                                             \
+public:                                                \
+  dec() {}                                             \
+  dec(INNER const & inner);                            \
+  dec(dec<INNER> const & other);                       \
+  bool operator<(dec<INNER> const & x) const           \
+    { return i < x.i; }                                \
+  INNER const & inner() const                          \
+    { return i; }                                      \
+  dec<INNER> const &                                   \
+  operator=(dec<INNER> const & other);                 \
+  bool operator==(dec<INNER> const & x) const          \
+    { return i == x.i; }                               \
+  friend ostream & operator<< <>(ostream &,            \
+                                 dec<INNER> const &);  \
 };
 
-#define ATOMIC(ty)                           \
-class ty {                                   \
-  string s;                                  \
-public:                                      \
-  ty() : s("") {}                            \
-  ty(string const & str);                    \
-  ty(ty const & other);                      \
-  string const & operator()() const          \
-    { return s; }                            \
-  bool operator<(ty const & other) const     \
-    { return s < other(); }                  \
-  ty const & operator=(ty const & other);    \
-  bool operator==(ty const & other) const    \
-    { return s == other(); }                 \
-};
+
+#define ATOMIC(ty)                                     \
+class ty {                                             \
+  string s;                                            \
+public:                                                \
+  ty() : s("") {}                                      \
+  ty(string const & str);                              \
+  ty(ty const & other);                                \
+  string const & operator()() const                    \
+    { return s; }                                      \
+  bool operator<(ty const & other) const               \
+    { return s < other(); }                            \
+  ty const & operator=(ty const & other);              \
+  bool operator==(ty const & other) const              \
+    { return s == other(); }                           \
+  friend ostream & operator<<(ostream &, ty const &);  \
+};                                                     \
+ostream & operator<<(ostream &, ty const &);
+
 
 #define EXTERN extern
 

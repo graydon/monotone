@@ -86,7 +86,12 @@ ty::ty(ty const & other) : s(other.s)        \
 { verify(*this); }                           \
                                              \
 ty const & ty::operator=(ty const & other)   \
-{ s = other.s; verify(*this); return *this; }
+{ s = other.s; verify(*this); return *this; }\
+                                             \
+ostream & operator<<(ostream & o,            \
+                     ty const & a)           \
+{ return (o << a.s); }
+
 
 
 
@@ -107,7 +112,11 @@ enc<INNER>::enc(INNER const & inner) : i(inner)          \
 template<typename INNER>                                 \
 enc<INNER> const &                                       \
 enc<INNER>::operator=(enc<INNER> const & other)          \
-  { i = other.i; verify(*this); return *this;}           
+  { i = other.i; verify(*this); return *this;}           \
+                                                         \
+template <typename INNER>                                \
+ostream & operator<<(ostream & o, enc<INNER> const & e)  \
+{ return (o << e.i); }
 
 
 #define DECORATE(dec)                                    \
@@ -123,7 +132,12 @@ dec<INNER>::dec(INNER const & inner) : i(inner)          \
 template<typename INNER>                                 \
 dec<INNER> const &                                       \
 dec<INNER>::operator=(dec<INNER> const & other)          \
-  { i = other.i; verify(*this); return *this;}           
+  { i = other.i; verify(*this); return *this;}           \
+                                                         \
+template <typename INNER>                                \
+ostream & operator<<(ostream & o, dec<INNER> const & d)  \
+{ return (o << d.i); }
+
 
 #define EXTERN 
 

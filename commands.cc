@@ -152,7 +152,7 @@ int process(app_state & app, string const & cmd, vector<string> const & args)
     }
   else
     {
-      cerr << "unknown command '" << cmd << "'" << endl;
+      cerr << "monotone: unknown command '" << cmd << "'" << endl;
       return 1;
     }
 }
@@ -583,6 +583,18 @@ CMD(lscerts, "key and cert", "(file|manifest) <id>",
     }
   else
     throw usage(name);
+
+  {
+    set<rsa_keypair_id> checked;      
+    for (size_t i = 0; i < certs.size(); ++i)
+      {
+	if (checked.find(certs[i].key) == checked.end() &&
+	    !app.db.public_key_exists(certs[i].key))
+	  P("warning: no public key '%s' found in database\n",
+	    certs[i].key().c_str());
+	checked.insert(certs[i].key);
+      }
+  }
 	
   for (size_t i = 0; i < certs.size(); ++i)
     {
@@ -642,6 +654,10 @@ CMD(lskeys, "key and cert", "[partial-id]", "list keys")
 	cout << privkeys[i]() << endl;
       cout << endl;
     }
+
+  if (pubkeys.size() == 0 &&
+      privkeys.size() == 0)
+    P("warning: no keys found matching '%s'\n", args[0].c_str());
 
   guard.commit();
 }

@@ -222,7 +222,7 @@ int cpp_main(int argc, char ** argv)
     }
   catch (informative_failure & inf)
     {
-      cout << inf.what << endl;
+      cerr << "monotone: " << inf.what << endl;
       clean_shutdown = true;
       return 1;
     }

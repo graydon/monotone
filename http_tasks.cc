@@ -88,6 +88,8 @@ void fetch_http_packets(string const & group_name,
 			unsigned long port,
 			std::iostream & stream)
 {
+  size_t count = 0;
+
   // step 1: make the request
   string query = 
     string("q=since&") +
@@ -166,6 +168,7 @@ void fetch_http_packets(string const & group_name,
 	      {
 		L("got sequence numbers %lu, %lu\n", tmaj, tmin);
 		istringstream pkt(packet);
+		P("\rfetched packet %d", count++);
 		read_packets(pkt, consumer);
 		maj_number = tmaj;
 		min_number = tmin;
@@ -184,6 +187,8 @@ void fetch_http_packets(string const & group_name,
 	L("%d trailing bytes from http\n", packet.size());
 	istringstream pkt(packet);
 	read_packets(pkt, consumer);
+	P("\rfetched packet %d", count++);
       }    
-  }  
+  }
+  P("http fetch complete\n");
 }

@@ -74,12 +74,16 @@ void calculate_cert(app_state & app, cert & t)
   string signed_text;
   base64< arc4<rsa_priv_key> > priv;
   cert_signable_text(t, signed_text);
+  N(app.db.private_key_exists(t.key),
+    "no private key " + t.key() + " found in database");
   app.db.get_key(t.key, priv);
   make_signature(app.lua, t.key, priv, signed_text, t.sig);
 }
 
 bool check_cert(app_state & app, cert const & t)
 {
+  if (!app.db.public_key_exists(t.key))
+    return false;
   string signed_text;
   base64< rsa_pub_key > pub;
   cert_signable_text(t, signed_text);

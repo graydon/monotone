@@ -103,9 +103,10 @@ struct postlines_state : public nntp_state
 
 struct feedlines_state : public cmd_state
 {
+  size_t count;
   packet_consumer & consumer;
   explicit feedlines_state(packet_consumer & cons)
-    : cmd_state("NEXT"), consumer(cons)
+    : cmd_state("NEXT"), count(0), consumer(cons)
   {}
   virtual ~feedlines_state() {}
   virtual nntp_edge drive(iostream & net, nntp_edge const & e)
@@ -113,6 +114,7 @@ struct feedlines_state : public cmd_state
     string joined;
     join_lines(e.lines, joined);
     stringstream ss(joined);
+    P("\rfetched packet %d", count++);
     read_packets(ss, consumer);
     return cmd_state::drive(net, e);
   }  
@@ -187,4 +189,5 @@ void fetch_nntp_articles(string const & group_name,
 
   // run it
   run_nntp_state_machine(&mode_reader, stream);  
+  P("nntp fetch complete\n");
 }
