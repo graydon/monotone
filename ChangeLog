@@ -1,5 +1,10 @@
 2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_cleanup_empty_dir.at: New test.
+	* testsuite.at: Call it.
+	
+2004-11-23  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi (File Attributes): Document how restricted format
 	of .mt-attrs currently is.  Also talk about 'the' .mt-attrs file
 	instead of 'an', in response to confusion.
