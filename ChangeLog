@@ -1,5 +1,13 @@
 2004-12-28  graydon hoare  <graydon@pobox.com>
 
+	* AUTHORS: Add various recent authors.
+
+2004-12-28  Badai Aqrandista <badaiaqrandista@hotmail.com>
+	
+	* debian/*: Fix up for package building.
+
+2004-12-28  graydon hoare  <graydon@pobox.com>
+
 	* change_set.{cc,hh}: Add sanity checking, rework
 	some of concatenation logic to accomodate.
 	* revision.{cc,hh}: Likewise.
