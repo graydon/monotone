@@ -25,4 +25,8 @@ int process_sleep(unsigned int seconds);
 // for term selection
 bool have_smart_terminal();
 
+// for netsync
+void start_platform_netsync();
+void end_platform_netsync();
+
 #endif // __PLATFORM_HH__
