@@ -1,0 +1,91 @@
+AT_SETUP([automate descendents])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE automate descendents c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+
+#   A
+#  / \
+# B   C
+#     |\
+#     D E
+#     \/
+#      F
+
+ADD_FILE(testfile, [A
+])
+COMMIT(testbranch)
+REV_A=`BASE_REVISION`
+
+SET_FILE(testfile, [B
+])
+COMMIT(testbranch)
+REV_B=`BASE_REVISION`
+
+REVERT_TO($REV_A)
+
+SET_FILE(testfile, [C
+])
+COMMIT(testbranch)
+REV_C=`BASE_REVISION`
+
+SET_FILE(testfile, [D
+])
+COMMIT(testbranch)
+REV_D=`BASE_REVISION`
+
+REVERT_TO($REV_C)
+
+ADD_FILE(otherfile, [E
+])
+COMMIT(testbranch)
+REV_E=`BASE_REVISION`
+
+AT_CHECK(MONOTONE explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REV_F=`BASE_REVISION`
+
+AT_CHECK(test $REV_F != $REV_D)
+AT_CHECK(test $REV_F != $REV_E)
+
+# Now do some checks
+
+AT_CHECK(MONOTONE automate descendents $REV_B, [], [], [ignore])
+AT_CHECK(MONOTONE automate descendents $REV_F, [], [], [ignore])
+
+AT_CHECK(MONOTONE automate descendents $REV_D, [], [stdout], [ignore])
+AT_CHECK(echo $REV_F > d_descendents)
+AT_CHECK(cmp d_descendents stdout)
+
+AT_CHECK(MONOTONE automate descendents $REV_E, [], [stdout], [ignore])
+AT_CHECK(echo $REV_F > e_descendents)
+AT_CHECK(cmp e_descendents stdout)
+
+AT_CHECK(echo $REV_D > c_descendents)
+AT_CHECK(echo $REV_E >> c_descendents)
+AT_CHECK(echo $REV_F >> c_descendents)
+AT_CHECK(sort c_descendents > cd)
+AT_CHECK(MONOTONE automate descendents $REV_C, [], [stdout], [ignore])
+AT_CHECK(cmp cd stdout)
+
+AT_CHECK(echo $REV_D > a_descendents)
+AT_CHECK(echo $REV_E >> a_descendents)
+AT_CHECK(echo $REV_F >> a_descendents)
+AT_CHECK(echo $REV_C >> a_descendents)
+AT_CHECK(echo $REV_B >> a_descendents)
+AT_CHECK(sort a_descendents > ad)
+AT_CHECK(MONOTONE automate descendents $REV_A, [], [stdout], [ignore])
+AT_CHECK(cmp ad stdout)
+
+AT_CHECK(MONOTONE automate descendents $REV_D $REV_F, [], [stdout], [ignore])
+AT_CHECK(echo $REV_F > d_f_descendents)
+AT_CHECK(cmp d_f_descendents stdout)
+
+AT_CHECK(MONOTONE automate descendents $REV_D $REV_E $REV_F, [], [stdout], [ignore])
+AT_CHECK(echo $REV_F > d_e_f_descendents)
+AT_CHECK(cmp d_e_f_descendents stdout)
+
+AT_CHECK(MONOTONE automate descendents $REV_B $REV_D $REV_E $REV_F, [], [stdout], [ignore])
+AT_CHECK(echo $REV_F > b_d_e_f_descendents)
+AT_CHECK(cmp b_d_e_f_descendents stdout)
+
+AT_CLEANUP

@@ -1,5 +1,19 @@
 2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
 
+	* automate.cc (interface_version): Bump to 0.1.
+	(automate_descendents): New function.
+	(automate_command): Call it.
+	* commands.cc (automate): Add it to help text.
+
+	* tests/t_automate_descendents.at: New test.
+	* testsuite.at: Add it.
+	
+	* monotone.texi (Automation, Commands): Document automate
+	descendents.
+	* monotone.1: Document automate descendents, and vars stuff.
+
+2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_attr.at: No longer a bug report.
 	* tests/t_rename_attr.at: New test.
 	* testsuite.at: Add it.

@@ -5,10 +5,13 @@
 
 #include <string>
 #include <iostream>
+#include <iterator>
 
 #include "vocab.hh"
 #include "app_state.hh"
 #include "commands.hh"
+
+static std::string const interface_version = "0.1";
 
 // Name: interface_version
 // Arguments: none
@@ -19,7 +22,6 @@
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-static std::string const interface_version = "0.0";
 static void
 automate_interface_version(std::vector<utf8> args,
                            std::string const & help_name,
@@ -38,7 +40,7 @@ automate_interface_version(std::vector<utf8> args,
 // Added in: 0.0
 // Purpose: Prints the heads of the given branch.
 // Output format: A list of revision ids, in hexadecimal, each followed by a
-//   newline. Revision ids are sorted.  If the branch does not exist, then 
+//   newline. Revision ids are sorted.
 // Error conditions: If the branch does not exist, prints nothing.  (There are
 //   no heads.)
 static void
@@ -56,6 +58,53 @@ automate_heads(std::vector<utf8> args,
     output << (*i).inner()() << std::endl;
 }
 
+// Name: descendents
+// Arguments:
+//   1 or more: revision ids
+// Added in: 0.1
+// Purpose: Prints the descendents (exclusive) of the given revisions
+// Output format: A list of revision ids, in hexadecimal, each followed by a
+//   newline. Revision ids are sorted.
+// Error conditions: If any of the revisions do not exist, prints nothing to
+//   stdout, prints an error message to stderr, and exits with status 1.
+static void
+automate_descendents(std::vector<utf8> args,
+                     std::string const & help_name,
+                     app_state & app,
+                     std::ostream & output)
+{
+  if (args.size() == 0)
+    throw usage(help_name);
+
+  std::set<revision_id> descendents;
+  std::vector<revision_id> frontier;
+  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      revision_id rid((*i)());
+      N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+      frontier.push_back(rid);
+    }
+  while (!frontier.empty())
+    {
+      revision_id rid = frontier.back();
+      frontier.pop_back();
+      std::set<revision_id> children;
+      app.db.get_revision_children(rid, children);
+      for (std::set<revision_id>::const_iterator i = children.begin();
+           i != children.end(); ++i)
+        {
+          if (descendents.find(*i) == descendents.end())
+            {
+              frontier.push_back(*i);
+              descendents.insert(*i);
+            }
+        }
+    }
+  for (std::set<revision_id>::const_iterator i = descendents.begin();
+       i != descendents.end(); ++i)
+    output << (*i).inner()() << std::endl;
+}
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -66,6 +115,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_interface_version(args, root_cmd_name, app, output);
   else if (cmd() == "heads")
     automate_heads(args, root_cmd_name, app, output);
+  else if (cmd() == "descendents")
+    automate_descendents(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

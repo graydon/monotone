@@ -4087,6 +4087,43 @@ If the given branch contains no members, then no lines are printed.
 
 @end table
 
+@item monotone automate descendents @var{rev1} [@var{rev2} [...]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints the descendents of one or more revisions.
+
+@item Sample output:
+
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+
+@item Output format:
+
+Zero or more lines, each giving the id of one descendent of the given
+revisions.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in sorted order.
+
+The output does not include @var{rev1}, @var{rev2}, etc., except that if
+@var{rev2} is itself a descendent of @var{rev1}, then @var{rev2} will be
+included in the output.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
 @end ftable
 
 @page
@@ -5561,7 +5598,7 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{automate} @i{(interface_version|heads)}
+@item @b{automate} @i{(interface_version|heads|descendents)}
 Scripting interface.
 
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}
