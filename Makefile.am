@@ -167,7 +167,7 @@ if STATIC_BOOST
                      @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
 else
   monotone_LDADD = lib3rdparty.a
-  unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
+  unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework$(BOOST_SUFFIX)
 endif
 
 monotone_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)

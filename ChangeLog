@@ -1,5 +1,11 @@
 2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
 
+	* Makefile.am: Append $(BOOST_SUFFIX) to -lboost_unit_test_framework
+	to fix 'make check' on systems where boost libraries can only be
+	found by passing the exact suffix as part of the name.
+
+2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
+
 	* monotone.texi: Fix a typo (hexidecimal to hexadecimal).  Also
 	change an example command to append stuff to ~/.monotonerc, instead
 	of completely destroying the possibily existing file.  Addresses
