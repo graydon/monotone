@@ -1,5 +1,12 @@
 2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
 
+	* monotone.texi: Fix a typo (hexidecimal to hexadecimal).  Also
+	change an example command to append stuff to ~/.monotonerc, instead
+	of completely destroying the possibily existing file.  Addresses
+	bug #11136.
+
+2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
+
 	* cryptopp/config.h: Use uint{8,16,32,64}_t as size types instead of
 	trying to match them to unsigned char/int/long/long long respectively.
 	Should fix build on FreeBSD/sparc64, as seen in bug #10203.

@@ -1187,7 +1187,7 @@ $ monotone --db=~/jim.db list keys
 @end group
 @end smallexample
 
-The hexidecimal string printed out before each key name is a
+The hexadecimal string printed out before each key name is a
 @emph{fingerprint} of the key, and can be used to verify that the key
 you have stored under a given name is the one you intended to
 store. Monotone will never permit one database to store two keys with
@@ -1204,13 +1204,18 @@ need to repeatedly be prompted for it:
 
 @smallexample
 @group
-$ cat >~/.monotonerc
+$ cat >>~/.monotonerc
 function get_passphrase(keypair_id)
   return "jimsekret"
 end
 ^D
 @end group
 @end smallexample
+
+Note that we are appending the new hook to the (possibly existing) file.
+We do this to avoid loosing other changes by mistake; therefore, be sure
+to check that no other @code{get_passphrase} function appears in the
+configuration file.
 
 Abe and Beth do the same, with their secret passphrases.
 
@@ -2140,7 +2145,7 @@ familiarize yourself with its operation.
 @section Selectors
 
 Revisions can be specified on the monotone command line, precisely, by
-entering the entire 40-character hexidecimal @sc{sha1} code. This can
+entering the entire 40-character hexadecimal @sc{sha1} code. This can
 be cumbersome, so monotone also allows a more general syntax called
 ``selectors'' which is less precise but more ``human friendly''. Any
 command which expects a precise revision ID can also accept a selector
