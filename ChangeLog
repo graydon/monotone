@@ -1,3 +1,11 @@
+2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* merkle_tree.hh (netcmd_item_type): Add epoch_item.
+	* merkle_tree.cc (netcmd_item_type_to_string): Handle epoch_item.
+
+	* packet.hh, packet.cc (struct packet_db_valve): New class.
+	* netsync.cc (session): Use a valved writer.
+
 2005-02-26  Nathaniel Smith  <njs@codesourcery.com>
 
 	* merkle_tree.hh: Fix comment.

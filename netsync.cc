@@ -248,7 +248,7 @@ session
   bool sent_goodbye;
   boost::scoped_ptr<CryptoPP::AutoSeededRandomPool> prng;
 
-  packet_db_writer dbw;
+  packet_db_valve dbw;
 
   session(protocol_role role,
           protocol_voice voice,
@@ -434,6 +434,9 @@ session::session(protocol_role role,
   sent_goodbye(false),
   dbw(app, true)
 {
+  // FIXME: temporary, for testing:
+  dbw.open_valve();
+
   if (voice == client_voice)
     {
       N(collections.size() == 1,

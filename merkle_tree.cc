@@ -44,6 +44,9 @@ netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
     case key_item:
       typestr = "key";
       break;
+    case epoch_item:
+      typestr = "epoch";
+      break;
     }
   I(!typestr.empty());
 }
