@@ -1,6 +1,7 @@
 2003-11-30  graydon hoare  <graydon@pobox.com>
 
 	* network.cc (post_queued_blobs_to_network): Fail when posted_ok is false.
+	* database.cc (initialize): Fail when -journal file exists.
 
 2003-11-28  graydon hoare  <graydon@pobox.com>
 

@@ -106,9 +106,16 @@ void database::initialize()
 {
   if (__sql)
     throw oops("cannot initialize database while it is open");
+
   N(!fs::exists(filename),
     F("could not initialize database: %s: already exists") 
     % filename.string());
+
+  fs::path journal(filename.string() + "-journal");
+  N(!fs::exists(journal),
+    F("existing (possibly stale) journal file '%s' has same stem as new database '%s'")
+    % journal.string() % filename.string());
+
   sqlite *s = sql(true);
   I(s != NULL);
 }
