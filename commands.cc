@@ -707,7 +707,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 	
   for (size_t i = 0; i < certs.size(); ++i)
     {
-      bool ok = check_cert(app, idx(certs, i));
+      cert_status status = check_cert(app, idx(certs, i));
       cert_value tv;      
       decode_base64(idx(certs, i).value, tv);
       string washed;
@@ -720,7 +720,20 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 	{
 	  washed = tv();
 	}
-      string head = string(ok ? "ok sig from " : "bad sig from ")
+      string head;
+      switch (status)
+	{
+	case cert_ok:
+	  head = "ok sig from";
+	  break;
+	case cert_bad:
+	  head = "bad sig from";
+	  break;
+	case cert_unknown:
+	  head = "unknown sig from";
+	  break;
+	}
+      head = head 
 	+ "[" + idx(certs, i).key() + "] : " 
 	+ "[" + idx(certs, i).name() + "] = [";
       string pad(head.size(), ' ');

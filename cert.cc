@@ -38,21 +38,30 @@ bogus_cert_p
 {
   app_state & app;
   bogus_cert_p(app_state & a) : app(a) {};
-
+  
   bool cert_is_bogus(cert const & c) const
   {
-  if (check_cert(app, c))
-    {
-      L(F("cert ok\n"));
-      return false;
-    }
-  else
-    {
-      string txt;
-      cert_signable_text(c, txt);
-      W(F("bad signature by '%s' on '%s'\n") % c.key() % txt);
-      return true;
-    }
+    cert_status status = check_cert(app, c);
+    if (status == cert_ok)
+      {
+	L(F("cert ok\n"));
+	return false;
+      }
+    else if (status == cert_bad)
+      {
+	string txt;
+	cert_signable_text(c, txt);
+	W(F("ignoring bad signature by '%s' on '%s'\n") % c.key() % txt);
+	return true;
+      }
+    else
+      {
+	I(status == cert_unknown);
+	string txt;
+	cert_signable_text(c, txt);
+	W(F("ignoring unknown signature by '%s' on '%s'\n") % c.key() % txt);
+	return true;
+      }
   }
 
   bool operator()(manifest<cert> const & c) const 
@@ -326,7 +335,7 @@ calculate_cert(app_state & app, cert & t)
   make_signature(app.lua, t.key, priv, signed_text, t.sig);
 }
 
-bool 
+cert_status 
 check_cert(app_state & app, cert const & t)
 {
 
@@ -343,7 +352,7 @@ check_cert(app_state & app, cert const & t)
   else
     {
       if (!app.db.public_key_exists(t.key))
-	return false;
+	return cert_unknown;
       app.db.get_key(t.key, pub);
       if (persist_ok)
 	pubkeys.insert(make_pair(t.key, pub));
@@ -351,7 +360,10 @@ check_cert(app_state & app, cert const & t)
 
   string signed_text;
   cert_signable_text(t, signed_text);
-  return check_signature(app.lua, t.key, pub, signed_text, t.sig);
+  if (check_signature(app.lua, t.key, pub, signed_text, t.sig))
+    return cert_ok;
+  else
+    return cert_bad;
 }
 
 

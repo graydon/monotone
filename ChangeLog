@@ -1,5 +1,11 @@
 2004-03-24  graydon hoare  <graydon@pobox.com>
 
+	* boost/circular_buffer_base.hpp: Boost version insulation.
+	* cert.cc, cert.hh, commands.cc: Differentiate "unknown" keys from "bad".
+	* xdelta.cc, proto_machine.cc: Fix boost version insulation.
+
+2004-03-24  graydon hoare  <graydon@pobox.com>
+
 	* rcs_import.cc (import_substates): Filter by branch.
 	* xdelta.cc: Minor bits of insulation.
 

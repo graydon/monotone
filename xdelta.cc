@@ -26,7 +26,9 @@
 #include <set>
 #include <string>
 #include <sstream>
+
 #include <boost/shared_ptr.hpp>
+#include <boost/version.hpp>
 
 #include "adler32.hh"
 #include "numeric_vocab.hh"
@@ -704,7 +706,7 @@ new_piecewise_applicator()
 
 boost::mt19937 xdelta_prng;
 
-#if (BOOST_VERSION / 100 % 1000) > 30
+#if BOOST_VERSION >= 103100
 boost::uniform_smallint<char> xdelta_chargen('a', 'z');
 boost::uniform_smallint<size_t> xdelta_sizegen(1024, 65536);
 boost::uniform_smallint<size_t> xdelta_editgen(3, 10);

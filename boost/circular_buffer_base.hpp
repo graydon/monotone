@@ -22,6 +22,12 @@
 #include <boost/type_traits.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/assert.hpp>
+#include <boost/version.hpp>
+
+#if BOOST_VERSION >= 103100
+#include <boost/iterator/reverse_iterator.hpp>
+#endif
+
 #include <memory>
 #include <algorithm>
 #if !defined(BOOST_NO_EXCEPTIONS)
@@ -488,11 +494,19 @@ public:
     //! Iterator (random access) used to iterate through a circular buffer.
     typedef cb_details::cb_iterator< circular_buffer<T, Alloc>, cb_details::cb_nonconst_traits<Alloc> > iterator;
 
+#if BOOST_VERSION >= 103100
+    //! Const iterator used to iterate backwards through a circular buffer.
+    typedef typename reverse_iterator<const_iterator>::type const_reverse_iterator;
+
+    //! Iterator used to iterate backwards through a circular buffer.
+    typedef typename reverse_iterator<iterator>::type reverse_iterator;
+#else 
     //! Const iterator used to iterate backwards through a circular buffer.
     typedef typename reverse_iterator_generator<const_iterator>::type const_reverse_iterator;
 
     //! Iterator used to iterate backwards through a circular buffer.
     typedef typename reverse_iterator_generator<iterator>::type reverse_iterator;
+#endif
 
 private:
 // Member variables
