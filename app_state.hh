@@ -39,6 +39,7 @@ public:
   path_set restrictions;
   file_path relative_directory;
   bool found_working_copy;
+  long depth;
 
   void allow_working_copy();
   void require_working_copy();
@@ -53,6 +54,7 @@ public:
   void set_signing_key(utf8 const & key);
   void set_root(utf8 const & root);
   void set_message(utf8 const & message);
+  void set_depth(long depth);
   void add_revision(utf8 const & selector);
 
   void set_stdhooks(bool b);

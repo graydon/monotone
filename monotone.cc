@@ -41,12 +41,14 @@
 #define OPT_REVISION 14
 #define OPT_MESSAGE 15
 #define OPT_ROOT 16
+#define OPT_DEPTH 17
 
 // main option processing and exception handling code
 
 using namespace std;
 
 char * argstr = NULL;
+long arglong = 0;
 
 struct poptOption options[] =
   {
@@ -66,6 +68,7 @@ struct poptOption options[] =
     {"revision", 'r', POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
     {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
+    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
 
@@ -274,6 +277,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_ROOT:
               app.set_root(string(argstr));
+              break;
+
+            case OPT_DEPTH:
+              app.set_depth(arglong);
               break;
 
             case OPT_HELP:

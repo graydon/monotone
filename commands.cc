@@ -3659,8 +3659,9 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
   cert_name comment_name(comment_cert_name);
 
   set<revision_id> seen;
+  long depth = app.depth;
 
-  while(! frontier.empty())
+  while(! frontier.empty() && (depth == -1 || depth > 0))
     {
       set< pair<file_path, revision_id> > next_frontier;
       for (set< pair<file_path, revision_id> >::const_iterator i = frontier.begin();
@@ -3750,6 +3751,10 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
           }
         }
       frontier = next_frontier;
+      if (depth > 0)
+        {
+          depth--;
+        }
     }
 }
 

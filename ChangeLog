@@ -1,3 +1,11 @@
+2005-03-31  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Add the --depth option...
+	* app_state.hh (class app_state),
+	  app_state.cc (app_state::set_depth): ... and the field and
+	  method to store and set it.
+	* commands.cc (CMD(log)): ... then handle it.
+
 2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
 
 	* automate.cc (automate_erase_ancestors): Accept zero arguments,

@@ -4,6 +4,7 @@
 #ifdef WIN32
 #include <io.h> /* for chdir() */
 #endif
+#include <cstdlib>		// for strtoul()
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -30,7 +31,7 @@ static string const key_option("key");
 
 app_state::app_state() 
   : branch_name(""), db(""), stdhooks(true), rcfiles(true),
-    search_root("/")
+    search_root("/"), depth(-1)
 {
   db.set_app(this);
 }
@@ -260,6 +261,14 @@ void
 app_state::set_message(utf8 const & m)
 {
   message = m;
+}
+
+void
+app_state::set_depth(long d)
+{
+  N(d > 0,
+    F("negative or zero depth not allowed\n"));
+  depth = d;
 }
 
 void
