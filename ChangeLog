@@ -1,3 +1,10 @@
+2004-05-18  graydon hoare  <graydon@pobox.com>
+
+	* diff_patch.cc (apply_directory_moves): Fix fs::path use.
+	* file_io.cc (write_data_impl): Likewise.
+	* packet.cc: Use explicit true/false maps in caches.
+	* sanity.cc (dump_buffer): Write to clog (buffered).
+
 2004-05-14  Joel Rosdahl  <joel@rosdahl.net>
 
         * std_hooks.lua (ignore_file): Quote dots in .svn patterns.

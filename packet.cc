@@ -365,13 +365,18 @@ struct packet_db_writer::impl
   set<manifest_id> analyzed_manifests;
 
   map<manifest_id, shared_ptr< map<manifest_id, manifest_delta> > > manifest_delta_cache;
-  set<manifest_id> existing_manifest_cache;
-  set<manifest_id> manifest_constructable_cache;
-  set<file_id> existing_file_cache;
+  map<manifest_id, bool> existing_manifest_cache;
+  map<manifest_id, bool> manifest_constructable_cache;
+  map<file_id, bool> existing_file_cache;
 
   // this is essential for making cascading reconstruction happen fast
   manifest_id cached_id;
   manifest_data cached_mdata;
+
+  //   ticker cert;
+  //   ticker manc;
+  //   ticker manw;
+  //   ticker filec;
 
   bool manifest_version_constructable(manifest_id const & m);
   void construct_manifest_version(manifest_id const & m, manifest_data & mdat);
@@ -393,6 +398,7 @@ struct packet_db_writer::impl
 
   impl(app_state & app, bool take_keys, manifest_edge_analyzer * ana) 
     : app(app), take_keys(take_keys), count(0), analyzer(ana)
+    // cert("cert", 1), manc("manc", 1), manw("manw", 1), filec("filec", 1)
   {}
 };
 
@@ -411,8 +417,10 @@ recursive_constructable(manifest_id const & m,
 {
   if (impl.manifest_version_exists_in_db(m))
     return true;
-  else if (impl.manifest_constructable_cache.find(m) != impl.manifest_constructable_cache.end())
-    return true;
+
+  map<manifest_id, bool>::const_iterator i = impl.manifest_constructable_cache.find(m);
+  if (i != impl.manifest_constructable_cache.end())
+    return i->second;
   else
     {
       map<manifest_id, shared_ptr< map<manifest_id, manifest_delta> > >::const_iterator i;
@@ -428,7 +436,7 @@ recursive_constructable(manifest_id const & m,
 	      protector.insert(j->first);
 	      if (recursive_constructable(j->first, impl, protector))
 		{
-		  impl.manifest_constructable_cache.insert(m);
+		  impl.manifest_constructable_cache.insert(make_pair(m, true));
 		  return true;
 		}
 	      protector.erase(j->first);
@@ -503,14 +511,13 @@ packet_db_writer::impl::construct_manifest_version(manifest_id const & m,
 bool 
 packet_db_writer::impl::manifest_version_exists_in_db(manifest_id const & m)
 {
-  set<manifest_id>::const_iterator i = existing_manifest_cache.find(m);
+  map<manifest_id, bool>::const_iterator i = existing_manifest_cache.find(m);
   if (i != existing_manifest_cache.end())
-    return true;
+    return i->second;
   else
     {
       bool exists = app.db.manifest_version_exists(m);
-      if (exists)
-	existing_manifest_cache.insert(m);
+      existing_manifest_cache.insert(make_pair(m, exists));
       return exists;
     }
 }
@@ -518,14 +525,13 @@ packet_db_writer::impl::manifest_version_exists_in_db(manifest_id const & m)
 bool 
 packet_db_writer::impl::file_version_exists_in_db(file_id const & f)
 {
-  set<file_id>::const_iterator i = existing_file_cache.find(f);
+  map<file_id, bool>::const_iterator i = existing_file_cache.find(f);
   if (i != existing_file_cache.end())
-    return true;
+    return i->second;
   else
     {
       bool exists = app.db.file_version_exists(f);
-      if (exists)
-	existing_file_cache.insert(f);
+      existing_file_cache.insert(make_pair(f, exists));
       return exists;
     }
 }
@@ -578,7 +584,8 @@ packet_db_writer::impl::get_manifest_writable_prereq(manifest_id const & man,
 void 
 packet_db_writer::impl::accepted_file(file_id const & f, packet_db_writer & dbw)
 {
-  existing_file_cache.insert(f);
+  // ++filec;
+  existing_file_cache[f] = true;
   map<file_id, shared_ptr<prerequisite> >::iterator i = file_prereqs.find(f);  
   if (i != file_prereqs.end())
     {
@@ -591,7 +598,8 @@ packet_db_writer::impl::accepted_file(file_id const & f, packet_db_writer & dbw)
 void 
 packet_db_writer::impl::accepted_manifest_writable(manifest_id const & m, packet_db_writer & dbw)
 {
-  existing_manifest_cache.insert(m);
+  // ++manw;
+  existing_manifest_cache[m] = true;
   manifest_delta_cache.erase(m);
   // fire anything waiting for writability
   map<manifest_id, shared_ptr<prerequisite> >::iterator i = manifest_write_prereqs.find(m);
@@ -621,6 +629,8 @@ packet_db_writer::impl::accepted_manifest_constructable(manifest_id const & m,
 							manifest_delta const & del,
 							packet_db_writer & dbw)
 {
+  // ++manc;
+  manifest_constructable_cache[m] = true;
   // first stash the delta for future use
   map<manifest_id, shared_ptr< map<manifest_id, manifest_delta> > >::const_iterator i;
   i = manifest_delta_cache.find(m);
@@ -651,6 +661,7 @@ packet_db_writer::impl::accepted_manifest_constructable(manifest_id const & m,
 void 
 packet_db_writer::impl::accepted_manifest_cert_on(manifest_id const & m, packet_db_writer & dbw)
 {
+  // ++cert;
 }
 
 void 

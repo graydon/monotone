@@ -472,9 +472,9 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   write_netcmd(cmd, outbuf);
   // FIXME: this helps keep the protocol pipeline full but it seems to
-  // interfere with initial and final sequences. disable for now.
-  //   write_some();
-  //   read_some();
+  // interfere with initial and final sequences. careful with it.
+  // write_some();
+  // read_some();
 }
 
 void 

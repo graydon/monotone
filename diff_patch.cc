@@ -830,7 +830,7 @@ static void apply_directory_moves(map<file_path, file_path> const & dir_moves,
   fs::path rest;
   while (stem.has_branch_path())
     {
-      rest = stem.leaf() / rest;
+      rest = mkpath(stem.leaf()) / rest;
       stem = stem.branch_path();
       map<file_path, file_path>::const_iterator j = 
 	dir_moves.find(file_path(stem.string()));
