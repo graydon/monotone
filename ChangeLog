@@ -1,3 +1,8 @@
+2004-12-29  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Fix unit tests to satisfy sanity checks.
+	* std_hooks.lua: Fix status checking on external merges.
+
 2004-12-28  graydon hoare  <graydon@pobox.com>
 
 	* AUTHORS: Add various recent authors.

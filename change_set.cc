@@ -2692,15 +2692,15 @@ basic_change_set_test()
       
       change_set cs;
       cs.delete_file(file_path("usr/lib/zombie"));
-      cs.add_file(file_path("usr/bin/cat"));
-      cs.add_file(file_path("usr/local/bin/dog"));
+      cs.add_file(file_path("usr/bin/cat"),
+                  file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
+      cs.add_file(file_path("usr/local/bin/dog"),
+                  file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
       cs.rename_file(file_path("usr/local/bin/dog"), file_path("usr/bin/dog"));
       cs.rename_file(file_path("usr/bin/cat"), file_path("usr/local/bin/chicken"));
-      cs.add_file(file_path("usr/lib/libc.so"));
+      cs.add_file(file_path("usr/lib/libc.so"),
+                  file_id(hexenc<id>("435e816c30263c9184f94e7c4d5aec78ea7c028a")));
       cs.rename_dir(file_path("usr/lib"), file_path("usr/local/lib"));
-      cs.apply_delta(file_path("usr/local/lib/libc.so"), 
-                     null_ident,
-                     file_id(hexenc<id>("435e816c30263c9184f94e7c4d5aec78ea7c028a")));
       cs.apply_delta(file_path("usr/local/bin/chicken"), 
                      file_id(hexenc<id>("c6a4a6196bb4a744207e1a6e90273369b8c2e925")),
                      file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892")));
@@ -2723,7 +2723,8 @@ neutralize_change_test()
     {
       
       change_set cs1, cs2, csa;
-      cs1.add_file(file_path("usr/lib/zombie"));
+      cs1.add_file(file_path("usr/lib/zombie"),
+                   file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
       cs1.rename_file(file_path("usr/lib/apple"),
                       file_path("usr/lib/orange"));
       cs1.rename_dir(file_path("usr/lib/moose"),
@@ -2775,7 +2776,8 @@ non_interfering_change_test()
 
       dump_change_set("non-interference A", cs1);
 
-      cs2.add_file(file_path("usr/lib/zombie"));
+      cs2.add_file(file_path("usr/lib/zombie"),
+                   file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
       cs2.rename_file(file_path("usr/lib/pear"),
                       file_path("usr/lib/orange"));
       cs2.rename_dir(file_path("usr/lib/spy"),
