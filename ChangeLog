@@ -1,3 +1,8 @@
+2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_keys_2.at: New test.
+	* testsuite.at: Add it.
+
 2005-01-06  Nathaniel Smith  <njs@codesourcery.com>
 
 	* schema_migration.cc (migrate_monotone_schema): Add comment
