@@ -1,5 +1,11 @@
 2004-12-29  Julio M. Merino Vidal  <jmmv@menta.net>
 
+	* tests/t_cmdline_options.at: New test for previous: ensure that
+	monotone is actually checking for command line correctness.
+	* testsuite.at: Add it.
+
+2004-12-29  Julio M. Merino Vidal  <jmmv@menta.net>
+
 	* monotone.cc: Verify that the command line is syntactically correct
 	as regards to options (based on error codes from popt).
 
