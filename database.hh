@@ -372,6 +372,7 @@ class reverse_queue
   database & db;
 public:
   reverse_queue(database & d);
+  reverse_queue(reverse_queue const & other);
   void reverse_queue_posting(url const & u,
 			     std::string const & contents);
   ~reverse_queue();

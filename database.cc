@@ -1503,6 +1503,11 @@ void transaction_guard::commit()
 
 static int global_rq_refcount = 0;
 
+reverse_queue::reverse_queue(reverse_queue const & other) : db(other.db)
+{
+  ++global_rq_refcount;  
+}
+
 reverse_queue::reverse_queue(database & d) : db(d)
 {
   if (global_rq_refcount == 0)

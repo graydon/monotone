@@ -223,7 +223,7 @@ function merge3(ancestor, left, right)
 	if (os.execute(cmd) ~= 0) then 
 		os.remove(lfile)
 		os.remove(rfile)
-		os.remove(ancestor)
+		os.remove(afile)
 		os.remove(outfile) 
 		return nil
 	end

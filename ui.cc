@@ -68,6 +68,7 @@ void user_interface::finish_ticking()
     {
       tick_trailer = "";
       cerr << endl;
+      last_write_was_a_tick = false;
     }
 }
 

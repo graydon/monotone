@@ -167,7 +167,6 @@ int cpp_main(int argc, char ** argv)
 	  if (poptPeekArg(ctx()))
 	    {
 	      string cmd(poptGetArg(ctx()));
-	      cerr << "found extra entry: " << cmd << endl;
 	      throw usage(cmd);
 	    }
 	  else

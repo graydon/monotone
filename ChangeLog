@@ -1,3 +1,10 @@
+2003-12-02  graydon hoare  <graydon@pobox.com>
+
+	* database.cc, database.hh (reverse_queue): Copy constructor.
+	* std_hooks.lua (merge3): Remove afile, not ancestor.
+	* monotone.cc: Remove debugging message.
+	* ui.cc (finish_ticking): Set last_write_was_a_tick to false.
+
 2003-12-01  graydon hoare  <graydon@pobox.com>
 
 	* app_state.hh, app_state.cc (set_signing_key): New fn, persist key.
