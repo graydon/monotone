@@ -1,3 +1,4 @@
+#include "config.h"
 #include "ui.hh"
 #include "sanity.hh"
 
@@ -215,7 +216,7 @@ user_interface::fatal(string const & fatal)
   inform("fatal: " + fatal);
   inform("this is almost certainly a bug in monotone.\n");
   inform("please send this error message, the output of 'monotone --full-version',\n");
-  inform("and a description of what you were doing to monotone-devel@nongnu.org.\n");
+  inform("and a description of what you were doing to " PACKAGE_BUGREPORT ".\n");
 }
 
 

@@ -5,6 +5,15 @@
 
 2005-01-22  Nathaniel Smith  <njs@codesourcery.com>
 
+	* configure.ac (AC_INIT): Set bug-reporting address to list
+	address, rather than Graydon's personal email.
+	* diff_patch.cc (normalize_extents): Use it.
+	* ui.cc (fatal): Likewise.
+
+	* tests/t_vcheck.at: New priority "todo", tweak descriptive text.
+
+2005-01-22  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_delete_dir.at: Add more commentary.
 
 	* tests/t_rename_dir_patch.at: New test.
