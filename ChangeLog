@@ -1,3 +1,51 @@
+2004-09-20  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh}: add message and manifest options; add subdir
+	restriction; use set instead of vector for path restrictions
+	(prefix): new method
+	(add_restriction): change signature for set of path restrictions
+	(in_restriction): renamed from is_restricted; adjust path matching
+	(set_message): new method
+	(add_manifest): new method
+	(initialize): remove code to adjust restrictions from old options
+	* commands.cc
+	(restrict_patch_set, struct unknown_itemizer): rename
+	app.is_restricted to app.in_restriction
+	(add,drop,rename,revert): prefix file args with current subdir
+	(update,status,ls_unknown,ls_missing): build restriction from args
+	(commit): build restriction from args; use --message option
+	(diff): build restriction from args; use --manifest options
+	* file_io.cc (find_working_copy): logging tweaks
+	* monotone.cc: remove --include/--exclude options; add --manifest
+	and --message options
+	* tests/t_attributes.at: add commit --message option
+	* tests/t_cross.at: commit --message
+	* tests/t_cwork.at: commit --message
+	* tests/t_disapprove.at: commit --message
+	* tests/t_drop.at: commit --message
+	* tests/t_erename.at: commit --message; diff --manifest
+	* tests/t_fork.at: commit --message
+	* tests/t_genkey.at: commit --message
+	* tests/t_i18n_file.at: commit --message
+	* tests/t_import.at: commit --message
+	* tests/t_ls_missing.at: commit --message
+	* tests/t_merge.at: commit --message
+	* tests/t_movedel.at: commit --message
+	* tests/t_movepatch.at: commit --message
+	* tests/t_netsync.at: commit --message
+	* tests/t_persist_phrase.at: commit --message
+	* tests/t_rename.at: commit --message
+	* tests/t_renamed.at: commit --message
+	* tests/t_restrictions.at: remove --include/--exlclude options
+	* tests/t_revert.at: commit --message
+	* tests/t_scan.at: commit --message
+	* tests/t_single_char_filenames.at: commit --message
+	* tests/t_testresult.at: commit --message
+	* tests/t_unidiff.at: commit --message
+	* tests/t_unidiff2.at: commit --message
+	* tests/t_update.at: commit --message
+	* tests/t_versions.at: commit --message
+
 2004-09-07  Derek Scherger  <derek@echologic.com>
 
 	subdirectory restrictions

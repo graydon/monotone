@@ -22,7 +22,7 @@ AT_CHECK(MONOTONE ls missing, [], [foo
 AT_CHECK(MONOTONE drop foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE ls missing, [], [], [])
 
-AT_CHECK(MONOTONE --branch=testbranch commit 'committed', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='committed', [], [ignore], [ignore])
 AT_CHECK(MONOTONE ls missing, [], [], [])
 
 AT_CHECK(rm bar, [], [], [])

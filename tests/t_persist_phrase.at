@@ -23,7 +23,7 @@ AT_DATA(input.txt, [version 1 of the file
 AT_DATA(passphrase, [tester@test.net
 ])
 
-AT_CHECK(MONOTONE --branch=testbranch --rcfile=persist.lua commit blah-blah <passphrase, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=persist.lua commit --message=blah-blah <passphrase, [], [ignore], [ignore])
 
 MSHA=`SHA1(MT/manifest)`
 AT_CHECK(MONOTONE ls certs $MSHA, [], [stdout])

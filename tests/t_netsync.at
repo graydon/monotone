@@ -18,13 +18,13 @@ end
 AT_DATA(testfile, [version 0 of test file
 ])
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch --rcfile=netsync.lua commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=netsync.lua commit --message=blah-blah, [], [ignore], [ignore])
 F_VER0=`SHA1(testfile)`
 VER0=`SHA1(MT/manifest)`
 
 AT_DATA(testfile, [version 1 of test file
 ])
-AT_CHECK(MONOTONE --rcfile=netsync.lua commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=netsync.lua commit --message=blah-blah, [], [ignore], [ignore])
 F_VER1=`SHA1(testfile)`
 VER1=`SHA1(MT/manifest)`
 

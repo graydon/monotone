@@ -9,7 +9,7 @@ second line of the file
 third line of the file
 ])
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 ROOT_M_SHA=`SHA1(MT/manifest)`
 ROOT_F_SHA=`SHA1(testfile)`
 
@@ -19,7 +19,7 @@ second line of the file
 third line of the file
 ])
 
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=blah-blah, [], [ignore], [ignore])
 LEFT_GOOD_M_SHA=`SHA1(MT/manifest)`
 LEFT_GOOD_F_SHA=`SHA1(testfile)`
 AT_CHECK(test $LEFT_GOOD_M_SHA != $ROOT_M_SHA)
@@ -32,7 +32,7 @@ third line of the file
 an evil line which should never be seen
 ])
 
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=blah-blah, [], [ignore], [ignore])
 LEFT_BAD_M_SHA=`SHA1(MT/manifest)`
 LEFT_BAD_F_SHA=`SHA1(testfile)`
 AT_CHECK(test $LEFT_BAD_M_SHA != $LEFT_GOOD_M_SHA)

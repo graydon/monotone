@@ -30,8 +30,8 @@
 #define OPT_BRANCH_NAME 8
 #define OPT_QUIET 9
 #define OPT_VERSION 10
-#define OPT_INCLUDE 11
-#define OPT_EXCLUDE 12
+#define OPT_MANIFEST 11
+#define OPT_MESSAGE 12
 
 // main option processing and exception handling code
 
@@ -51,8 +51,8 @@ struct poptOption options[] =
     {"db", 0, POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
     {"branch", 0, POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
-    {"include", 0, POPT_ARG_STRING, &argstr, OPT_INCLUDE, "include restriction", NULL},
-    {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, "exclude restriction", NULL},
+    {"manifest", 0, POPT_ARG_STRING, &argstr, OPT_MANIFEST, "select manifest id for operation", NULL},
+    {"message", 0, POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
 
@@ -206,13 +206,13 @@ cpp_main(int argc, char ** argv)
 	      clean_shutdown = true;
 	      return 0;
 
-	    case OPT_INCLUDE:
-              app.add_restriction(false, string(argstr));
-	      break;
+ 	    case OPT_MANIFEST:
+               app.add_manifest(string(argstr));
+ 	      break;
 
-	    case OPT_EXCLUDE:
-              app.add_restriction(true, string(argstr));
-	      break;
+ 	    case OPT_MESSAGE:
+               app.set_message(string(argstr));
+ 	      break;
 
 	    case OPT_HELP:
 	    default:

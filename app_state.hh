@@ -16,8 +16,6 @@ class lua_hooks;
 #include "work.hh"
 #include "vocab.hh"
 
-typedef std::pair<bool, utf8> restriction;
-
 // this class is supposed to hold all (or.. well, most) of the state of the
 // application, barring some unfortunate static objects like the debugging /
 // logging system and the command objects, for the time being. the vague intent
@@ -34,22 +32,29 @@ public:
   bool stdhooks;
   bool rcfiles;
   options_map options;
+  utf8 message;
+  std::vector<utf8> manifest_selectors;
   std::vector<utf8> extra_rcfiles;
-  std::vector<restriction> restrictions;
+  std::set<file_path> path_restrictions;
+  file_path subdir_restriction;
 
   void initialize(bool working_copy);
   void initialize(std::string const & dir);
+
+  file_path prefix(utf8 const & path);
+  void add_restriction(utf8 const & path);
+  bool in_restriction(file_path const & path);
 
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
 
+  void set_message(utf8 const & message);
+  void add_manifest(utf8 const & selector);
+
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);
   void add_rcfile(utf8 const & filename);
-
-  void add_restriction(bool restrict, utf8 const & path);
-  bool is_restricted(file_path const & path);
 
   explicit app_state();
   ~app_state();

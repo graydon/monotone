@@ -315,16 +315,16 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
   for (set<patch_addition>::iterator i = ps.f_adds.begin();
        i != ps.f_adds.end(); ++i)
     {
-      if (app.is_restricted(i->path())) 
+      if (app.in_restriction(i->path())) 
+        {
+          L(F("restriction includes add %s\n") % i->path());
+          included_adds.insert(*i);
+        }
+      else
         {
           L(F("restriction excludes add %s\n") % i->path());
           ps.map_new.erase(i->path());
           restricted_work.adds.insert(i->path());
-        }
-      else
-        {
-          L(F("restriction includes add %s\n") % i->path());
-          included_adds.insert(*i);
         }
     }
 
@@ -337,7 +337,12 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
   for (set<file_path>::iterator i = ps.f_dels.begin();
        i != ps.f_dels.end(); ++i)
     {
-      if (app.is_restricted((*i)())) 
+      if (app.in_restriction((*i)())) 
+        {
+          L(F("restriction includes delete %s\n") % (*i)());
+          included_dels.insert(*i);
+        }
+      else
         {
           N(ps.map_old.find(*i) != ps.map_old.end(),
             F("nothing known about %s") % *i);
@@ -346,11 +351,6 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
           path_id_pair old(ps.map_old.find(*i));
           ps.map_new.insert(entry(old.path(), old.ident()));
           restricted_work.dels.insert((*i)());
-        }
-      else
-        {
-          L(F("restriction includes delete %s\n") % (*i)());
-          included_dels.insert(*i);
         }
     }
 
@@ -366,7 +366,12 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
       // is excluding both sides of a rename the right thing to do?
       // or should we just fail if only one side of a move is restricted? (njs's idea)
 
-      if (app.is_restricted(i->path_old()) || app.is_restricted(i->path_new())) 
+      if (app.in_restriction(i->path_old()) || app.in_restriction(i->path_new())) 
+        {
+          L(F("restriction includes move %s to %s\n") % i->path_old() % i->path_new());
+          included_moves.insert(*i);
+        }
+      else
         {
           N(ps.map_old.find(i->path_old()) != ps.map_old.end(),
             F("nothing known about %s") % i->path_old());
@@ -376,11 +381,6 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
           path_id_pair old(ps.map_old.find(i->path_old()));
           ps.map_new.insert(entry(old.path(), old.ident()));
           restricted_work.renames.insert(make_pair(i->path_old(), i->path_new()));
-        }
-      else
-        {
-          L(F("restriction includes move %s to %s\n") % i->path_old() % i->path_new());
-          included_moves.insert(*i);
         }
     }
 
@@ -393,7 +393,12 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
   for (set<patch_delta>::iterator i = ps.f_deltas.begin();
        i != ps.f_deltas.end(); ++i)
     {
-      if (app.is_restricted(i->path()))
+      if (app.in_restriction(i->path()))
+        {
+          L(F("restriction includes delta %s\n") % i->path());
+          included_deltas.insert(*i);
+        }
+      else
         {
           N(ps.map_old.find(i->path()) != ps.map_old.end(),
             F("nothing known about %s") % i->path());
@@ -402,11 +407,6 @@ restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app)
           ps.map_new.erase(i->path());
           path_id_pair old(ps.map_old.find(i->path()));
           ps.map_new.insert(entry(old.path(), old.ident()));
-        }
-      else
-        {
-          L(F("restriction includes delta %s\n") % i->path());
-          included_deltas.insert(*i);
         }
     }
 
@@ -424,7 +424,6 @@ restrict_patch_set(patch_set & ps, app_state & app)
   work_set work;
   restrict_patch_set(ps, work, app);
 }
-
 
 static void 
 calculate_new_manifest_map(manifest_map const & m_old, 
@@ -1051,7 +1050,7 @@ CMD(comment, "certificate", "ID [COMMENT]",
 }
 
 
-CMD(add, "working copy", "PATHNAME...", "add files to working copy")
+CMD(add, "working copy", "FILE...", "add files to working copy")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -1065,7 +1064,7 @@ CMD(add, "working copy", "PATHNAME...", "add files to working copy")
   bool rewrite_work = false;
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_addition(file_path((*i)()), app, work, man, rewrite_work);
+    build_addition(app.prefix((*i)()), app, work, man, rewrite_work);
     
   if (rewrite_work)
     put_work_set(work);
@@ -1087,7 +1086,7 @@ CMD(drop, "working copy", "FILE...", "drop files from working copy")
   bool rewrite_work = false;
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_deletion(file_path((*i)()), app, work, man, rewrite_work);
+    build_deletion(app.prefix((*i)()), app, work, man, rewrite_work);
   
   if (rewrite_work)
     put_work_set(work);
@@ -1110,8 +1109,8 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   get_work_set(work);
   bool rewrite_work = false;
 
-  build_rename(file_path(idx(args, 0)()), file_path(idx(args, 1)()), app, work, 
-	       man, rewrite_work);
+  build_rename(app.prefix(idx(args, 0)()), app.prefix(idx(args, 1)()), app, work, 
+               man, rewrite_work);
   
   if (rewrite_work)
     put_work_set(work);
@@ -1120,12 +1119,12 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
 }
 
 
-CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
+CMD(commit, "working copy", "[--message=STRING] [FILE]...", "commit working copy to database")
 {
-  if (args.size() != 0 && args.size() != 1)
-    throw usage(name);
-
   app.initialize(true);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
 
   string log_message("");
   manifest_map m_old, m_new;
@@ -1156,8 +1155,8 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   P(F("committing to branch %s\n") % branchname);
 
   // get log message
-  if (args.size() == 1)
-    log_message = idx(args, 0)();
+  if (app.message().length() > 0)
+    log_message = app.message();
   else
     get_log_message(ps, app, log_message);
 
@@ -1299,13 +1298,16 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   }
 }
 
-CMD(update, "working copy", "", "update working copy")
+CMD(update, "working copy", "[FILE]...", "update working copy")
 {
   manifest_data m_chosen_data;
   manifest_map m_old, m_working, m_chosen, m_new;
   manifest_id m_old_id, m_chosen_id;
 
   app.initialize(true);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
 
   transaction_guard guard(app.db);
 
@@ -1431,14 +1433,7 @@ CMD(update, "working copy", "", "update working copy")
 
 CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy")
 {
-  app.initialize(true);
-
   manifest_map m_old;
-
-  // should what get's reverted here be the subject of a restriction
-  // rather than specified as files?
-
-  // perhaps in the zero args case restrictions should be considered
 
   if (args.size() == 0)
     {
@@ -1467,7 +1462,10 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
       get_work_set(work);
 
       // revert some specific files
-      vector<utf8> work_args (args.begin(), args.end());
+      vector<file_path> work_args;
+      for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+        work_args.push_back(app.prefix((*i)()));
+
       for (size_t i = 0; i < work_args.size(); ++i)
 	{
 	  string arg(idx(work_args, i)());
@@ -1971,7 +1969,8 @@ CMD(complete, "informative", "(manifest|file) PARTIAL-ID", "complete partial id"
     throw usage(name);  
 }
 
-CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on stdout")
+CMD(diff, "informative", "[--manifest=STRING [--manifest=STRING]] [FILE]...", 
+    "show current diffs on stdout")
 {
   manifest_map m_old, m_new;
   patch_set ps;
@@ -1986,18 +1985,21 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
   else if (args.size() == 2)
       app.initialize(false);
 
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
+
   transaction_guard guard(app.db);
 
-  if (args.size() == 0)
+  if (app.manifest_selectors.size() == 0)
     {
       get_manifest_map(m_old);
       calculate_new_manifest_map(m_old, m_new, app);
       new_is_archived = false;
     }
-  else if (args.size() == 1)
+  else if (app.manifest_selectors.size() == 1)
     {
       manifest_id m_old_id;
-      complete(app, idx(args, 0)(), m_old_id);
+      complete(app, idx(app.manifest_selectors, 0)(), m_old_id);
       manifest_data m_old_data;
       app.db.get_manifest_version(m_old_id, m_old_data);
       read_manifest_map(m_old_data, m_old);
@@ -2007,12 +2009,12 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
       calculate_new_manifest_map(parent, m_new, app);
       new_is_archived = false;
     }
-  else if (args.size() == 2)
+  else if (app.manifest_selectors.size() == 2)
     {
       manifest_id m_old_id, m_new_id;
 
-      complete(app, idx(args, 0)(), m_old_id);
-      complete(app, idx(args, 1)(), m_new_id);
+      complete(app, idx(app.manifest_selectors, 0)(), m_old_id);
+      complete(app, idx(app.manifest_selectors, 1)(), m_new_id);
 
       manifest_data m_old_data, m_new_data;
       app.db.get_manifest_version(m_old_id, m_old_data);
@@ -2272,7 +2274,7 @@ CMD(log, "informative", "[ID] [file]", "print log history in reverse order (whic
     }
 }
 
-CMD(status, "informative", "", "show status of working copy")
+CMD(status, "informative", "[FILE]...", "show status of working copy")
 {
   manifest_map m_old, m_new;
   manifest_id old_id, new_id;
@@ -2280,6 +2282,9 @@ CMD(status, "informative", "", "show status of working copy")
   rename_edge renames;
 
   app.initialize(true);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
 
   transaction_guard guard(app.db);
   get_manifest_map(m_old);
@@ -2333,7 +2338,7 @@ struct unknown_itemizer : public tree_walker
     : app(a), man(m), want_ignored(i) {}
   virtual void visit_file(file_path const & path)
   {
-    if (!app.is_restricted(path) && man.find(path) == man.end())
+    if (app.in_restriction(path) && man.find(path) == man.end())
       {
       if (want_ignored)
 	{
@@ -2351,9 +2356,12 @@ struct unknown_itemizer : public tree_walker
 
 
 static void
-ls_unknown (app_state & app, bool want_ignored)
+ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 {
   app.initialize(true);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
 
   manifest_map m_old, m_new;
   get_manifest_map(m_old);
@@ -2363,13 +2371,16 @@ ls_unknown (app_state & app, bool want_ignored)
 }
 
 static void
-ls_missing (app_state & app)
+ls_missing (app_state & app, vector<utf8> const & args)
 {
   manifest_map m_old;
   path_set paths;
   work_set work;
 
   app.initialize(true);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
 
   get_manifest_map(m_old);
   extract_path_set(m_old, paths);
@@ -2378,7 +2389,7 @@ ls_missing (app_state & app)
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      if (!app.is_restricted(*i) && !file_exists(*i))	
+      if (app.in_restriction(*i) && !file_exists(*i))	
 	cout << *i << endl;
     }
 }
@@ -2491,11 +2502,11 @@ CMD(list, "informative",
   else if (idx(args, 0)() == "branches")
     ls_branches(name, app, removed);
   else if (idx(args, 0)() == "unknown")
-    ls_unknown(app, false);
+    ls_unknown(app, false, removed);
   else if (idx(args, 0)() == "ignored")
-    ls_unknown(app, true);
+    ls_unknown(app, true, removed);
   else if (idx(args, 0)() == "missing")
-    ls_missing(app);
+    ls_missing(app, removed);
   else
     throw usage(name);
 }

@@ -11,7 +11,7 @@ AT_DATA(baz, [baz file
 
 # produce root
 AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 ROOT_M_SHA=`SHA1(MT/manifest)`
 ROOT_F_SHA=`SHA1(foo)`
 
@@ -19,7 +19,7 @@ ROOT_F_SHA=`SHA1(foo)`
 AT_CHECK(MONOTONE add baz, [], [ignore], [ignore])
 AT_CHECK(MONOTONE rename foo bar, [], [ignore], [ignore])
 AT_CHECK(cp foo bar)
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=blah-blah, [], [ignore], [ignore])
 
 # revert to root
 PROBE_NODE(foo, $ROOT_M_SHA, $ROOT_F_SHA)
@@ -27,7 +27,7 @@ AT_CHECK(rm bar)
 
 # make a delete edge on the move preimage
 AT_CHECK(MONOTONE drop foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=blah-blah, [], [ignore], [ignore])
 
 # merge the del and the rename
 AT_CHECK(MONOTONE merge, [], [ignore], [ignore])

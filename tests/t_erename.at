@@ -18,18 +18,18 @@ AT_DATA(bleh, [bleh file
 # produce root
 AT_CHECK(cp foo1 foo)
 AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit root, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=root, [], [ignore], [ignore])
 ROOT_M_SHA=`SHA1(MT/manifest)`
 ROOT_F_SHA=`SHA1(foo)`
 
 # produce 4-step path with move in the middle
 AT_CHECK(cp foo2 foo)
-AT_CHECK(MONOTONE commit edit-foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=edit-foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE rename foo bar, [], [ignore], [ignore])
 AT_CHECK(cp bar1 bar)
-AT_CHECK(MONOTONE commit rename-to-bar, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=rename-to-bar, [], [ignore], [ignore])
 AT_CHECK(cp bar2 bar)
-AT_CHECK(MONOTONE commit edit-bar, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=edit-bar, [], [ignore], [ignore])
 
 # revert to root
 PROBE_NODE(foo, $ROOT_M_SHA, $ROOT_F_SHA)
@@ -37,7 +37,7 @@ AT_CHECK(rm bar)
 
 # make a simple add edge
 AT_CHECK(MONOTONE add bleh, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=blah-blah, [], [ignore], [ignore])
 
 # merge the add and the rename
 AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
@@ -47,7 +47,7 @@ AT_CHECK(grep bleh MT/manifest, [0], [ignore], [ignore])
 AT_CHECK(grep foo MT/manifest, [1], [ignore], [ignore])
 
 # now the moment of truth: do we *think* there was a rename?
-AT_CHECK(MONOTONE diff $ROOT_M_SHA, [], [stdout], [ignore])
+AT_CHECK(MONOTONE diff --manifest=$ROOT_M_SHA, [], [stdout], [ignore])
 AT_CHECK(grep move stdout, [0], [ignore], [ignore])
 
 AT_CHECK(rm bar)

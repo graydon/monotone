@@ -33,6 +33,7 @@ app_state::~app_state()
 {
 }
 
+// search for working copy
 // working_copy true  MT/options must exist and is read and written
 // working_copy false MT/options may  exist and is read for defaults
 
@@ -61,37 +62,10 @@ app_state::initialize(bool working_copy)
 
       if (working_copy) write_options();
 
-      // is there any point to building a subdir restriction for 
-      // non-working copy commands?
-
       if (!subdir.empty()) 
         {
-          // we want the trailing directory separator on a subdir restriction
-          // so that a directory restriction like lua/ doesn't match files
-          // like lua.cc
-
-          // this is a poor attempt at a portable way of getting this
-          subdir /= "a";
-          string prefix = subdir.native_directory_string();
-          prefix = prefix.substr(0, prefix.length()-1);
-
-          L(F("sub-directory restriction is '%s'\n") % prefix);
-
-          // add subdir prefix to all existing restrictions
-
-          for (vector<restriction>::iterator i = restrictions.begin();
-               i != restrictions.end(); ++i)
-            {
-              i->second = prefix + i->second();
-              L(F("adjusted restriction is '%s'\n") % i->second);
-            }
-
-          // add initial include restriction for subdir prefix
-
-          if (restrictions.empty() || restrictions.begin()->first) 
-            {
-              restrictions.insert(restrictions.begin(), make_pair(false, prefix));
-            }
+          subdir_restriction = file_path(subdir.native_directory_string());
+          L(F("sub-directory restriction is '%s'\n") % subdir_restriction());
         }
       else
         {
@@ -102,7 +76,7 @@ app_state::initialize(bool working_copy)
   load_rcfiles();
 }
 
-// new working copy... create MT dir and write MT/options
+// create new working copy, create MT dir and write MT/options
 
 void
 app_state::initialize(std::string const & dir)
@@ -120,7 +94,7 @@ app_state::initialize(std::string const & dir)
     F("monotone book-keeping directory '%s' already exists in '%s'\n") 
     % book_keeping_dir % dir);
 
-  L(F("creating book-keeping directory '%s' for working copy in '%s'\n") 
+  L(F("creating book-keeping directory '%s' for working copy in '%s'\n")
     % book_keeping_dir % dir);
 
   mkdir_p(mt);
@@ -128,6 +102,100 @@ app_state::initialize(std::string const & dir)
   write_options();
 
   load_rcfiles();
+}
+
+file_path
+app_state::prefix(utf8 const & path)
+{
+  fs::path p1 = mkpath(subdir_restriction()) / mkpath(path());
+  file_path p2(p1.normalize().native_directory_string());
+  return p2;
+}
+
+void 
+app_state::add_restriction(utf8 const & path)
+{
+  file_path p = prefix(path);
+  L(F("adding '%s' to restricted path set as '%s'\n") % path() % p());
+  path_restrictions.insert(p);
+}
+
+// subdir_restriction is only used here when there are no explicit
+// path_restrictions. explicit path restrictions will all be prefixed
+// with the contents of subdir_restriction as they are created.
+
+// if subdir_restriction or any element of path_restrictions "matches"
+// path it will be considered to be "in the restriction". note that
+// matching is somewhat complicated by the fact that a restriction
+// can be a directory or file path and if it's a directory we need
+// to see if path is in this directory.
+
+bool
+app_state::in_restriction(file_path const & path)
+{
+  if (path_restrictions.empty()) 
+    {
+      fs::path subdir = mkpath(subdir_restriction());
+
+      if (subdir.empty()) 
+        {
+          L(F("no restrictions: '%s' included'\n") % path());
+          return true;
+        }
+
+      L(F("checking subdir restriction\n"));
+
+      fs::path test = mkpath(path());
+
+      while (!test.empty())
+        {
+          if (test.string() == subdir.string()) 
+            {
+              L(F("matched subdir restriction '%s' includes '%s'\n") 
+                % subdir_restriction() % test.string());
+              L(F("path '%s' found in restricted path set; '%s' included\n") 
+                % test.string() % path());
+              return true;
+            }
+          else
+            {
+              L(F("unmatched subdir restriction '%s' excludes '%s'\n") 
+                % subdir_restriction() % test.string());
+            }
+          test = test.branch_path();
+        }
+      
+      return false;
+    }
+  else
+    {
+      L(F("checking path restrictions\n"));
+
+      fs::path test = mkpath(path());
+
+      while (!test.empty()) 
+        {
+          L(F("test path is '%s'\n") % test.string());
+
+          file_path p(test.string());
+          set<file_path>::const_iterator i = path_restrictions.find(p);
+
+          if (i != path_restrictions.end()) 
+            {
+              L(F("path '%s' found in restricted path set; '%s' included\n") 
+                % test.string() % path());
+              return true;
+            }
+          else
+            {
+              L(F("path '%s' not found in restricted path set; '%s' excluded\n") 
+                % test.string() % path());
+            }
+          test = test.branch_path();
+        }
+      
+      return false;
+    }
 }
 
 void 
@@ -156,6 +224,18 @@ app_state::set_signing_key(utf8 const & key)
 }
 
 void
+app_state::set_message(utf8 const & m)
+{
+  message = m;
+}
+
+void
+app_state::add_manifest(utf8 const & selector)
+{
+  manifest_selectors.push_back(selector);
+}
+
+void
 app_state::set_stdhooks(bool b)
 {
   stdhooks = b;
@@ -171,41 +251,6 @@ void
 app_state::add_rcfile(utf8 const & filename)
 {
   extra_rcfiles.push_back(filename);
-}
-
-void
-app_state::add_restriction(bool restrict, utf8 const & path)
-{
-  L(F("%s %s\n") % (restrict ? "exclude" : "include") % path);
-  restrictions.push_back(make_pair(restrict, path));
-}
-
-bool
-app_state::is_restricted(file_path const & path)
-{
-  if (restrictions.empty()) return false;
-
-  vector<restriction>::const_iterator i = restrictions.begin();
-
-  // set the initial status to the inverse of the first element 
-  // in the list so that "--include something" means everything else
-  // is excluded and "--exclude something" means everything else is
-  // included
-
-  bool status = !i->first;
-
-  L(F("%s %s\n") % path() % (status ? "excluded" : "included"));
-
-  for (; i != restrictions.end(); ++i)
-    {
-      if (path().compare(0, i->second().length(), i->second()) == 0)
-        {
-          status = i->first;
-          L(F("%s %s by %s\n") % path() % (status ? "excluded" : "included") % i->second);
-        }
-    }
-
-  return status;
 }
 
 // rc files are loaded after we've changed to the working copy

@@ -51,14 +51,15 @@ find_working_copy(fs::path & working_copy_root, fs::path & working_copy_restrict
 
   while (current.has_branch_path() && current.has_leaf() && !fs::exists(check))
     {
-      L(F("not found at '%s' with '%s' removed\n") % check.string() % removed.string());
+      L(F("'%s' not found in '%s' with '%s' removed\n")
+        % bookdir.string() % current.string() % removed.string());
       removed = mkpath(current.leaf()) / removed;
       current = current.branch_path();
       check = current / bookdir;
     }
 
-  L(F("found '%s' at '%s' with '%s' removed\n") 
-    % book_keeping_dir % check.string() % removed.string());
+  L(F("'%s' found in '%s' with '%s' removed\n") 
+    % book_keeping_dir % current.string() % removed.string());
 
   if (!fs::exists(check))
     {

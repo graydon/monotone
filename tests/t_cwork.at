@@ -10,7 +10,7 @@ AT_DATA(testfile1, [version 1 of second test file
 ])
 
 AT_CHECK(MONOTONE add testfile0, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
 V1=`SHA1(MT/manifest)`
 AT_CHECK(MONOTONE add testfile1, [], [ignore], [ignore])
 AT_CHECK(test -e MT/work, [], [ignore])

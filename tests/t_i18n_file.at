@@ -38,7 +38,7 @@ export CHARSET=eucjp
 AT_CHECK(MONOTONE drop "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
 AT_CHECK(grep funny MT/manifest, [], [ignore], [ignore])
 AT_CHECK(grep spaces MT/manifest, [], [ignore], [ignore])
 AT_CHECK(grep $JAPANESE_UTF8 MT/manifest, [], [ignore], [ignore])

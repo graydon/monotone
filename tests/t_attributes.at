@@ -16,12 +16,12 @@ test_attr 1 a
 
 AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add .mt-attrs, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 CO_M_SHA1=`SHA1(MT/manifest)`
 
 AT_DATA(.mt-attrs, [test_attr 2 a
 ])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 UPDATE_M_SHA1=`SHA1(MT/manifest)`
 
 # Check checkouts.

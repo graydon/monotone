@@ -11,7 +11,7 @@ AT_DATA(liver, [the file liver
 ])
 
 AT_CHECK(MONOTONE add maude, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit 'committed', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='committed', [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE drop maude, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add maude, [], [ignore], [ignore])
