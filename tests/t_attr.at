@@ -4,7 +4,6 @@ MONOTONE_SETUP
 # This test is a bug report.
 # Specifically, 'attr set' should automatically do an 'add .mt-attrs'
 # if .mt-attrs did not previously exist.
-AT_XFAIL_IF(true)
 
 ADD_FILE(testfile, [foo bar
 ])

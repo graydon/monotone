@@ -654,6 +654,7 @@ read_revision_set(data const & dat,
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_revision(pars, rev);
+  I(src.lookahead == EOF);
 }
 
 void 

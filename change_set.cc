@@ -2290,6 +2290,7 @@ read_path_rearrangement(data const & dat,
   change_set cs;
   parse_path_rearrangement(pars, cs);
   re = cs.rearrangement;
+  I(src.lookahead == EOF);
 }
 
 void
@@ -2301,6 +2302,7 @@ read_change_set(data const & dat,
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_change_set(pars, cs);
+  I(src.lookahead == EOF);
 }
 
 void
@@ -2391,37 +2393,42 @@ static void
 disjoint_merge_tests()
 {
   disjoint_merge_test
-    ("change_set: { paths: { rename_file: { src: \"foo\" dst: \"bar\" } } deltas: {} }",
-     "change_set: { paths: { rename_file: { src: \"apple\" dst: \"orange\" } } deltas: {} }");  
+    ("rename_file \"foo\"\n"
+     "         to \"bar\"\n",
+
+     "rename_file \"apple\"\n"
+     "         to \"orange\"\n");
 
   disjoint_merge_test
-    ("change_set: { paths: { rename_file: { src: \"foo/a.txt\" dst: \"bar/b.txt\" } } deltas: {} }",
-     "change_set: { paths: { rename_file: { src: \"bar/c.txt\" dst: \"baz/d.txt\" } } deltas: {} }");  
+    ("rename_file \"foo/a.txt\"\n"
+     "         to \"bar/b.txt\"\n",
+
+     "rename_file \"bar/c.txt\"\n"
+     "         to \"baz/d.txt\"\n");
 
   disjoint_merge_test
-    ("change_set: { paths: { } "
-     "deltas: {"
-     "delta: { path: \"foo/file.txt\" "
-     "src: [c6a4a6196bb4a744207e1a6e90273369b8c2e925] "
-     "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }",  
-     "change_set: { paths: { rename_file: { src: \"foo/file.txt\" dst: \"foo/apple.txt\" } } deltas: {} }");  
+    ("patch \"foo/file.txt\"\n"
+     " from [c6a4a6196bb4a744207e1a6e90273369b8c2e925]\n"
+     "   to [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892]\n",
+
+     "rename_file \"foo/file.txt\"\n"
+     "         to \"foo/apple.txt\"\n");
 
   disjoint_merge_test
     (
-     "change_set: { "
-     "paths: { rename_file: { src: \"apple.txt\" dst: \"pear.txt\" } } "
-     "deltas: { "
-     "delta: { path: \"foo.txt\" "
-     "src: [c6a4a6196bb4a744207e1a6e90273369b8c2e925] "
-     "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }",
+     "rename_file \"apple.txt\"\n"
+     "         to \"pear.txt\"\n"
+     "\n"
+     "patch \"foo.txt\"\n"
+     " from [c6a4a6196bb4a744207e1a6e90273369b8c2e925]\n"
+     "   to [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892]\n",
      
-     "change_set: { "
-     "paths: { rename_file: { src: \"foo.txt\" dst: \"bar.txt\" } } "
-     "deltas: { "
-     "delta: { path: \"apple.txt\" "
-     "src: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] "
-     "dst: [435e816c30263c9184f94e7c4d5aec78ea7c028a] } } }"
-     );  
+     "rename_file \"foo.txt\"\n"
+     "         to \"bar.txt\"\n"
+     "\n"
+     "patch \"apple.txt\"\n"
+     " from [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892]\n"
+     "   to [435e816c30263c9184f94e7c4d5aec78ea7c028a]\n");  
 }
 
 static void 
