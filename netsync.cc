@@ -1332,7 +1332,7 @@ session::process_hello_cmd(id const & server,
     }
   else
     {
-      W(F("unknown server key\n"));
+      W(F("unknown server key.  disconnecting.\n"));
     }
   return false;
 }

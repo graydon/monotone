@@ -1,3 +1,8 @@
+2004-10-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (process_hello_cmd): Make clear that when the
+	server's key is unknown, we abort the connection.
+
 2004-10-29  Nathaniel Smith  <njs@codesourcery.com>
 
 	* sanity.cc (dump_buffer): Wrap bare string in call to string(),
