@@ -1,3 +1,7 @@
+2003-12-19  graydon hoare  <graydon@pobox.com>
+
+	* diff_patch.cc (merge3): Skip patches to deleted files.
+
 2003-12-10  Tom Tromey  <tromey@redhat.com>
 
 	* commands.cc (checkout): Give better error message if branch is

@@ -1391,6 +1391,11 @@ bool merge3(manifest_map const & ancestor,
   for (set<patch_delta>::const_iterator delta = merged_edge.f_deltas.begin();
        delta != merged_edge.f_deltas.end(); ++delta)
     {
+      if (merged_edge.f_dels.find(delta->path) != merged_edge.f_dels.end())
+	{
+	  L(F("skipping merged delta on deleted file %s\n") % delta->path);
+	  continue;
+	}
       L(F("applying merged delta to file %s: %s -> %s\n")
 	% delta->path % delta->id_old % delta->id_old);
       I(merged.find(delta->path) != merged.end());
