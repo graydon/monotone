@@ -1,3 +1,11 @@
+2005-01-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (store_manifest_edge): Don't try to store deltas
+	to the null manifest.
+	(import_cvs_repo): Root revision has null manifest, not empty
+	manifest.
+	* revision.cc (check_sane): More invariants.
+
 2005-01-28  graydon hoare  <graydon@pobox.com>
 
 	* database.{cc,hh}: More netsync speed tweaks.

@@ -997,6 +997,12 @@ store_manifest_edge(manifest_map const & parent,
         }
     }
 
+  if (null_id(parent_mid))
+    {
+      L(F("skipping null manifest\n"));
+      return;
+    }
+
   unsigned long p, c;
   p = cvs.manifest_version_interner.intern(parent_mid.inner()());
   c = cvs.manifest_version_interner.intern(child_mid.inner()());
@@ -1294,7 +1300,6 @@ import_cvs_repo(fs::path const & cvsroot,
     manifest_id root_mid;
     revision_id root_rid; 
 
-    calculate_ident(root_manifest, root_mid);
     import_states_by_branch(n_edges, n_branches, state, 
                             root_rid, root_mid,
                             root_manifest, cvs, app, revisions, 0);
