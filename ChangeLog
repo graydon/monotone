@@ -1,3 +1,8 @@
+2003-09-06  Tom Tromey  <tromey@redhat.com>
+
+	* texinfo.tex, INSTALL, Makefile.in, aclocal.m4, compile, depcomp,
+	install-sh, missing, mkinstalldirs: Removed generated files.
+
 2003-09-04  graydon hoare  <graydon@pobox.com>
 
 	* Makefile.am, depot.cc, http_tasks.cc, http_tasks.hh,
