@@ -4192,8 +4192,10 @@ ancestor of the other, then they may appear in either order.
 
 @item Sample output:
 
+@verbatim
 28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
 75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
 
 @item Output format:
 
@@ -4234,8 +4236,10 @@ new since then.
 
 @item Sample output:
 
+@verbatim
 28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
 75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
 
 @item Output format:
 

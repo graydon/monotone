@@ -1,5 +1,10 @@
 2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Automation): Make newly added sample outputs
+	verbatim also.
+
+2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_automate_toposort.at: New test.
 	* tests/t_automate_ancestry_difference.at: New test.
 	* tests/t_diff_first_rev.at: New test.
