@@ -1,3 +1,648 @@
+2004-12-30  graydon hoare  <graydon@pobox.com>
+
+	* constants.cc (netcmd_current_protocol_version): Set to 3.
+	* tests/t_crlf.at: New test of crlf line encodings.
+	* testsuite.at: Call it.
+	* monotone.spec: Note 0.16 release.
+
+2004-12-30  graydon hoare  <graydon@pobox.com>
+
+	* win32/get_system_flavour.cc: Fix little compile bugs.
+
+2004-12-30  Julio M. Merino Vidal  <jmmv@menta.net>
+
+        * change_set.{cc,hh}: Add the has_renamed_file_src function in
+	change_set::path_rearrangement.
+	* commands.cc: Make the 'log' command show nothing for renamed or
+        deleted files (when asked to do so) and stop going backwards in
+        history when such condition is detected; they don't exist any more,
+        so there is no point in showing history (and could drive to incorrect
+	logs anyway).
+	* tests/t_log_nonexistent.at: New check to verify previous.
+	* testsuite.at: Add it.
+
+2004-12-30  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am: Clean full testsuite directory and full-version.
+	* configure.ac: Bump version number.
+	* po/monotone.pot: Regenerate.
+	* NEWS: Describe new release.
+
+2004-12-29  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* tests/t_cmdline_options.at: New test for previous: ensure that
+	monotone is actually checking for command line correctness.
+	* testsuite.at: Add it.
+
+2004-12-29  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* monotone.cc: Verify that the command line is syntactically correct
+	as regards to options (based on error codes from popt).
+
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
+        * tests/t_drop_rename_patch.at: A test to check that deltas on
+        renamed files are included in concatenate_change_sets, if there was a
+        deletion of a file with the same name as the rename src.
+        * testsuite.at: add it
+
+2004-12-29  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Add Jordi.
+	* change_set.{cc,hh}: Make sanity helpers const.
+	(normalize_change_set): Drop a->a deltas.
+	(merge_change_sets): Call normalize.
+	(invert_change_set): Likewise.
+	* revision.cc 
+	(find_subgraph_for_composite_search): New fn.
+	(calculate_composite_change_set): Call it.
+	(calculate_change_sets_recursive): Use results.
+	* tests/t_no_change_deltas.at: Fix.
+
+2004-12-29  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Fix unit tests to satisfy sanity checks.
+	* std_hooks.lua: Fix status checking on external merges.
+
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
+        * change_set.{cc,hh}: Take account of files which are the
+        destination of a rename_file operation, when examining
+        file deletions. Added helper methods to clean up related code.
+
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
+        * change_set.cc: added a sanity check for deltas with same src/dst,
+        and deleted files with deltas.
+
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
+        * testsuite.at, tests/t_netsync_single.at: don't use -q with
+        killall since it isn't portable.
+
+2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Make the 'log' command show all affected files
+	in each revision in a nice format (easier to read than what
+	'cat revision' shows).
+
+2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Change the order used by the 'log' command to show
+	affected files so that it matches the order in which these changes
+	really happen.  Otherwise, a sequence like "rm foo; mv bar foo;
+	patch foo" could be difficult to understand by the reader.
+
+2004-12-28  Jordi Vilalta Prat  <jvprat@wanadoo.es>
+
+	* monotone.texi: Fix a typo: "not not" should be "not".
+
+2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Make the 'log' command show all affected files
+	in each revision in a nice format (easier to read than what
+	'cat revision' shows).
+
+2004-12-28  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Add various recent authors.
+
+2004-12-28  Badai Aqrandista <badaiaqrandista@hotmail.com>
+	
+	* debian/*: Fix up for package building.
+
+2004-12-28  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Add sanity checking, rework
+	some of concatenation logic to accomodate.
+	* revision.{cc,hh}: Likewise.
+	Teach about generalized graph rebuilding.
+	* database.cc (delete_existing_revs_and_certs): New fn.
+	* commands.cc (db rebuild): New command.
+	(db fsck) New command.
+	* sanity.{cc,hh} (relaxed): New flag.
+	* work.cc: Use new concatenation logic.
+
+2004-12-25  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: During 'log', print duplicate certificates (by
+	different people) in separate lines, rather than showing them
+	together without any spacing.  While here, homogenize new lines
+	in other messages as well; this also avoids printing some of
+	them in case of missing certificates).
+
+2004-12-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_disapprove.at: Enable previously disabled test.
+
+	* tests/t_no_change_deltas.at: New test.
+	* testsuite.at: Call it.
+
+2004-12-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* win32/read_password.c: Remove unused file.
+
+2004-12-20  Matt Johnston  <matt@ucc.asn.au>
+
+        * keys.cc: don't cache bad passphrases, so prompt for a correct
+        password if the first ones fail.
+
+2004-12-19  Matt Johnston  <matt@ucc.asn.au>
+
+        * commands.cc: print out author/date next to ambiguous revision
+        lists from selectors.
+
+2004-12-22  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Verify that the key identifier passed to the pubkey
+	and privkey commands exists in the database.  Otherwise exit with
+	an informational message instead of an exception.
+
+2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* testsuite.at:
+	* tests/t_fmerge.at:
+	* tests/t_netsync.at:
+	* tests/t_netsync_single.at:
+	* tests/t_revert.at:
+	* tests/t_tags.at: Avoid usage of test's == operator.  It's a
+	GNUism and causes unexpected failures in many tests.  The correct
+	operator to use is just an equal sign (=).
+	* tests/t_renamed.at: Don't use cp's -a flag, which is not
+	supported by some implementations of this utility (such as the
+	one in NetBSD).  Try to add some of its funcionality by using
+	the -p flag, although everything could be fine without it.
+	* tests/t_unidiff.at: Discard patch's stderr output.  Otherwise
+	it's treated as errors, but NetBSD's patch uses it to print
+	informative messages.
+
+2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* tests/t_scan.at: Instead of running sha1sum, use a prestored
+	manifest file to do the verification.  This avoids problems in
+	systems that do not have the sha1sum tool, like NetBSD.
+
+2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* Makefile.am: Remove obsolete --with-bundled-adns flag from
+	DISTCHECK_CONFIGURE_FLAGS.
+
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_checkout_dir.at: Make the test directory chdir'able
+	again after the test.
+	* tests/t_delete_dir.at: Add trailing newline.
+	
+	* tests/t_dump_load.at: New bug report.
+	* tests/t_migrate_schema.at: Likewise.
+	* testsuite.at: Call them.
+
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.hh: Remove obsolete comment.
+
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_delete_dir.at: New bug report.
+	* testsuite.at: Call it.
+
+2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Homogenize help message for 'ls' with the one shown
+	by 'list'.
+
+2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+
+        * ChangeLog: Add missing entries for several modifications I did
+        in December 6th and 3rd.
+
+2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* tests/t_checkout_dir.at: New test triggering the bug I fixed
+	  previously in the checkout command, verifying that directory
+	  creation and chdir succeed.
+	* testsuite.at: Add new test.
+
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Add log entry for <jmmv@menta.net>'s last change.
+	* std_hooks.lua: Check exit status of external merge commands.
+	
+2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Include cerrno, cstring,
+	boost/filesystem/exception.hpp.
+	(checkout): Verify that directory creation and chdir succeeded.
+	
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* diff_patch.cc (struct hunk_offset_calculator): Remove dead
+	code.  (I believe it was used by the old, non-extent-based
+	merging.)
+	(calculate_hunk_offsets): Likewise.
+	(struct hunk_consumer): Move next to rest of unidiff code.
+	(walk_hunk_consumer): Likewise.
+
+2004-12-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_keys.at: 
+	* tests/t_attr.at: 
+	* tests/t_patch_vs_drop_add.at: 
+	* tests/t_merge2_add_drop_add.at: 
+	* tests/t_add_drop_add.at: 
+	* tests/t_add_patch_drop_add.at: 
+	* tests/t_patch_drop_add.at: Remove priority notes, since these
+	are no longer bugs.
+
+2004-12-17  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_merge_2.at: Works now, remove xfail.
+
+2004-12-17  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_merge_1.at: Remove AT_CHECK(false) and xfail.
+	* tests/t_fdiff_normalize.at: New test.
+	* testsuite.at: Call it.
+	* diff_patch.cc (normalize_extents): Fix the normalize bug.
+	* revision.{cc,hh} (construct_revisions): Rename to prepare for
+	next rebuild-the-graph migration.
+	* commands.cc (db): Change call name.
+
+2004-12-18  Matt Johnston <matt@ucc.asn.au>
+
+	* change_set.cc (concatenate_change_sets): Be more careful checking
+	whether to discard deltas for deleted files (in particular take
+	care when files are removed then re-added) - fixes tests
+	t_patch_drop_add, t_add_drop_add.at, t_add_patch_drop_add,
+	t_merge2_add_drop_add
+	* change_set.cc (project_missing_deltas): don't copy deltas
+	for deleted files, and handle the case where src file ids vary when
+	files are added/removed. (fixes t_patch_vs_drop_add)
+	* t_patch_drop_add.at, t_add_drop_add.at, t_add_patch_drop_add.at,
+	  t_merge2_add_drop_add.at, t_patch_vs_drop_add.t: don't expect
+	to fail any more.
+
+2004-12-16  Joel Rosdahl  <joel@rosdahl.net>
+
+	* revision.cc (is_ancestor): Use std::queue for the queue.
+
+2004-12-14  Joel Rosdahl  <joel@rosdahl.net>
+
+	Generalize the explicit_merge command with an optional ancestor
+	argument:
+	* revision.cc (is_ancestor): New method.
+	* revision.hh (is_ancestor): Add prototype.
+	* commands.cc (try_one_merge): Add ancestor argument. Empty
+	ancestor means use ancestor from find_common_ancestor_for_merge.
+	(merge): Pass empty ancestor to try_one_merge.
+	(propagate): Likewise.
+	(explicit_merge): Add optional ancestor argument.
+	* monotone.texi: Document new explicit_merge argument.
+
+2004-12-13  Joel Rosdahl  <joel@rosdahl.net>
+
+	* tests/t_merge_2.at: New test triggering a bad merge.
+	* testsuite.at: Add new test.
+
+2004-12-13  Joel Rosdahl  <joel@rosdahl.net>
+
+	* revision.cc (find_least_common_ancestor): Add a missing "return
+	true;" that mysteriously was removed in
+	c853237f9d8d155431f88aca12932d2cdaaa31fe.
+
+2004-12-13  Joel Rosdahl  <joel@rosdahl.net>
+
+	* revision.cc (find_least_common_ancestor): Remove unused variable.
+	* commands.cc (lca): Correct negative status text.
+	* commands.cc (update): Use GNU style braces.
+
+2004-12-12  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc: Fix bug reported in t_attr.at
+	* tests/t_attr.at: Remove xfail.
+	* change_set.cc: Change unit tests syntax.
+	(read_change_set): Assert complete read.
+	* revision_ser.cc (read_revision_set): Likewise.
+	* os_specific.hh: Drop obsolete file.
+
+2004-12-12  Joel Rosdahl  <joel@rosdahl.net>
+
+	* revision.cc (find_least_common_ancestor): New function for
+	finding the vanilla LCA.
+	* revision.hh: Added prototype for find_least_common_ancestor.
+	* commands.cc (update): Use find_least_common_ancestor for finding
+	a common ancestor.
+	* commands.cc (diff): Likewise.
+	* revision.cc (find_common_ancestor): Rename to...
+	(find_common_ancestor_for_merge): ...this, for clarity.
+	* revision.hh: find_common_ancestor -->
+	find_common_ancestor_for_merge.
+	* commands.cc (try_one_merge): Call find_common_ancestor_for_merge
+	to find ancestor.
+	* commands.cc (lcad): Rename lca command to lcad.
+	* commands.cc (lca): New command for finding the vanilla LCA.
+
+2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_keys.at: Actually test what it's
+	supposed to.  Also, un-XFAIL it, since now it seems to pass.
+	
+2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_keys.at: New test.
+
+	* testsuite.at: Call it.
+	* tests/t_persistent_server_revision.at: Fix typo.
+
+2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_revision.at: New test.
+	* testsuite.at: Call it.  Tweak NETSYNC macros in support of it.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.hh (add_rcfile): Add 'required' argument.
+	* lua.cc (add_rcfile): Implement it.  Simplify error checking
+	logic while I'm there...
+	* monotone.cc (cpp_main): Pass new argument to add_rcfile.
+	
+	* tests/t_rcfile_required.at: New test.
+	* testsuite.at: Call it.
+	Revamp netsync support macros, to allow long-running servers.
+	Make netsync-killer try first with -TERM, in case that plays nicer
+	with gcov.
+	
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.hh: Remove tabs.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Document explicit_merge.
+	
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am: Redo full-revision support again, to properly
+	handle 'make dist' and caching.  Hopefully.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (File Attributes): Rewrite for new .mt-attrs
+	syntax.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_attr.at: New test.
+	* testsuite.at: Call it.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (trusted): Print spaces between key ids.
+
+	* lua.cc (add_rcfile): Errors while loading a user-provided rc
+	file are naughtiness, not oopses.
+	
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (commands::explain_usage): Use split_into_lines to
+	do formatting of per-command usage; allow multi-line
+	descriptions.
+	(trusted): New command.
+	* monotone.texi (Key and Cert): Document 'trusted' command.
+	* tests/t_trusted.at: New test.
+	* testsuite.at: Change get_revision_cert_trust to support
+	t_trusted.at.  Call t_trusted.at.
+	
+2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (package_full_revision.txt): Redo Joel Rosdahl
+	<joel@rosdahl.net>'s change below after it got clobbered by
+	merge.
+
+2004-12-06  Joel Rosdahl  <joel@rosdahl.net>
+
+	* Makefile.am (package_full_revision.txt): Silence error messages
+	when deducing full package revision.
+
+2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (log): Synopsize optional 'file' argument, and
+	describe both arguments in help description.
+
+2004-12-09  Derek Scherger  <derek@echologic.com>
+
+	* .mt-nonce: delete obsolete file	
+	* change_set.cc (merge_deltas): add file paths in call to
+	try_to_merge_files
+	* commands.cc (propagate): add progress logging similar to merge
+	* diff_patch.{cc,hh} (try_to_merge_files): add file paths to
+	merge2 and merge3 hooks; add logging of paths before calling merge
+	hooks
+	* lua.{cc,hh} (hook_merge2, hook_merge3): add file paths to merge
+	hooks
+	* std_hooks.lua (merge2, merge3, merge2_xxdiff_cmd,
+	merge3_xxdiff_cmd): pass file paths to xxdiff for use as titles
+	* testsuite.at (MONOTONE_SETUP): add paths to merge2 hook
+
+2004-12-10  Matt Johnston  <matt@ucc.asn.au>
+
+        * cert.cc: Added priv_key_exists() function
+        * commands.cc, rcs_import.cc: use new privkey functions
+        * netsync.cc: change some bits that were missed
+
+2004-12-09  Derek Scherger  <derek@echologic.com>
+
+	* .mt-nonce: delete obsolete file	
+	* change_set.cc (merge_deltas): add file paths in call to
+	try_to_merge_files
+	* commands.cc (propagate): add progress logging similar to merge
+	* diff_patch.{cc,hh} (try_to_merge_files): add file paths to
+	merge2 and merge3 hooks; add logging of paths before calling merge
+	hooks
+	* lua.{cc,hh} (hook_merge2, hook_merge3): add file paths to merge
+	hooks
+	* std_hooks.lua (merge2, merge3, merge2_xxdiff_cmd,
+	merge3_xxdiff_cmd): pass file paths to xxdiff for use as titles
+	* testsuite.at (MONOTONE_SETUP): add paths to merge2 hook
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * cert.cc, cert.hh, lua.cc, lua.hh, netsync.cc:
+        Added a new get_priv_key(keyid) lua hook to retrieve
+        a private key from ~/.monotonerc
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * change_set.cc: Don't include patch deltas on files which
+        are being deleted in changesets. (partial fix for bug
+        invoked by t_merge_add_del.at)
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * configure.ac,Makefile.am: Fix iconv and intl
+        handling so that the libraries are used (required for OS X).
+
+2004-12-09  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (BUILT_SOURCES_NOCLEAN): add 'S'.
+	
+	* netsync.cc (session): Make ticker pointers into auto_ptr's.  Add
+	cert and revision tickers.
+	(session::session): Initialize new tickers.
+	(session::note_item_sent): New method.  Increment tickers.
+	(session::note_item_arrived): Increment tickers.
+	(session::read_some): Adjust for auto_ptr.
+	(session::write_some): Likewise.
+	(call_server): Conditionally initialize cert and revision
+	tickers.
+	(queue_data_cmd): Call 'note_item_sent'.
+	(queue_delta_cmd): Call 'note_item_sent'.
+
+2004-12-09  graydon hoare  <graydon@pobox.com>
+
+	* ROADMAP: Add file.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_patch_vs_drop_add.at: 
+	* tests/t_patch_drop_add.at: 
+	* tests/t_netsync_unrelated.at: 
+	* tests/t_merge_add_del.at: 
+	* tests/t_merge2_add_drop_add.at: 
+	* tests/t_merge_1.at: 
+	* tests/t_heads_discontinuous_branch.at: 
+	* tests/t_cleanup_empty_dir.at: 
+	* tests/t_checkout_options.at: 
+	* tests/t_ambig_update.at: 
+	* tests/t_add_patch_drop_add.at:
+	* tests/t_add_drop_add.at: 
+	* tests/t_add_dot.at: Add (importance) markers to all bug report
+	tests.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* app_state.hh (write_options): Add 'force' option.
+	* app_state.cc: Remove tabs.
+	(write_options): Implement.
+	* commands.cc (checkout): Pass force=true to 'write_options'.
+
+	* tests/t_checkout_options.at: New test.
+	* testsuite.at: Define RAW_MONOTONE.
+	(t_checkout_options.at): Call it.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* update.hh (pick_update_target): Rename to...
+	(pick_update_candidates): ...this.  Return a set of candidates,
+	rather than a single best.
+	* update.cc (pick_update_candidates): Likewise.  Remove logic
+	checking for unique candidate.
+	* commands.cc (describe_revision): New function.
+	(heads): Use it.
+	(update): Use new 'pick_update_candidates' function.  Add logic
+	checking for unique candidate.  On non-unique candidate, print all
+	candidates, using 'describe_revision'.
+
+	* tests/t_ambig_update.at: Check that failure messages describe
+	the candidate set.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* update.cc: Remove tabs.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_ambig_update.at: Also check that update fails when one
+	candidate edge is deeper than the other.
+
+2004-12-08  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc (extend_renumbering_via_added_files): 
+	Look up parent tid in existing renumbering.
+	* commands.cc (attr): Check index for "set" subcommand.
+	(lca): New diagnostic command.
+	(log): Tidy up output formatting a bit.
+	* po/monotone.pot: Regenerate.
+	* tests/t_add_edge.at: New test to catch add failure.
+	* testsuite.at: Call it.
+
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_ambig_update.at: New test.
+	* testsuite.at: Add it.
+
+	* tests/t_explicit_merge.at: Add, having forgotten to last time.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_explicit_merge.at: New test.
+	* testsuite.at: Add it.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* testsuite.at: Remove duplicate line created by merge.
+	* ChangeLog: Re-sort after merges.
+
+	* commands.cc (explicit_merge): Remove stray space.  Print id of
+	merge result.
+	(complete_command): Add back "}" deleted by merge.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Remove tabs.
+	* diff_patch.cc: Likewise.
+
+	* commands.cc (explicit_merge): New command.
+
+2004-12-08  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc (extend_renumbering_via_added_files): 
+	Look up parent tid in existing renumbering.
+	* commands.cc (attr): Check index for "set" subcommand.
+	(lca): New diagnostic command.
+	(log): Tidy up output formatting a bit.
+	* po/monotone.pot: Regenerate.
+	* tests/t_add_edge.at: New test to catch add failure.
+	* testsuite.at: Call it.
+
+2004-12-07  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: Keep package_*revision.{txt,h}, so they are saved
+	as part of a distribution, and thereby make as sure as possible
+	people who download monotone get historical information on where
+	their copy of monotone came from.
+
+2004-12-06  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Add a hint on how to use --ticker.
+
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (ls_certs): Sort the certs before printing.
+	* tests/t_netsync_repeated.at: Actually check that certs were
+	transferred correctly.
+
+2004-12-06  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* figures/cert.pdf:
+	* figures/cert.png:
+	* figures/oo-figures.sxd:
+	* monotone.texi: Use example host names under the
+	example.{com,org,net} subdomains instead of invented names.
+	These are defined in RFC 2606.
+
+2004-12-06  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* configure.ac: Now that we depend on GNU Autoconf >= 2.58, we
+	can use the AS_HELP_STRING macro everywhere we need to pretty-print
+	help strings.  Also convert old calls to AC_HELP_STRING (deprecated)
+	to this one.
+
+2004-12-06  Joel Rosdahl  <joel@rosdahl.net>
+
+	* Makefile.am (package_full_revision.txt): Silence error messages
+	when deducing full package revision.
+
 2004-12-11  Derek Scherger  <derek@echologic.com>
 
 	* app_state.{cc,hh} (restriction_includes): renamed from
@@ -42,15 +687,25 @@
 	* netsync.cc:
 	* commands.cc: Clean up from merge.
 
-2004-12-05  graydon hoare  <graydon@pobox.com>
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
 
-        * Makefile.am (package_full_revision.txt): Use top_builddir
-        to locate monotone executable.
+	* tests/t_add_patch_drop_add.at: New test.
+	* tests/t_merge2_add_drop_add.at: New test.
+	* tests/t_patch_drop_add.at: New test.
+	* tests/t_patch_vs_drop_add.at: New test.
+	* testsuite.at: Add them.
+	
+	* tests/t_add_drop_add.at: Fix to test what it was supposed to.
+	
+	* tests/t_merge2_data.at: Remove extraneous [stdout].
 
-2004-12-05  Derek Scherger  <derek@echologic.com>
+	* tests/t_merge_add_del.at: Fix description.
+	XFAIL it.
 
-	* commands.cc: move more things around to help align merge regions
-	* monotone.cc: untabify a few things to help merge
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_add_drop_add.at: New test.
+	* testsuite.at: Add it.
 
 2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -64,6 +719,33 @@
 	* configure.ac: bumped the prequisite version to 2.58 since
 	  some tests use AT_XFAIL_IF
 
+2004-12-05  graydon hoare  <graydon@pobox.com>
+
+        * Makefile.am (package_full_revision.txt): Use top_builddir
+        to locate monotone executable.
+
+2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_merge_add_del: Shorten name for better display.
+
+2004-12-05  Matt Johnston <matt@ucc.asn.au>
+
+	* tests/t_merge_add_del: added a new test for merging
+	  branches where a file is added then removed.
+	* testsuite.at: added the new test
+	* configure.ac: bumped the prequisite version to 2.58 since
+	  some tests use AT_XFAIL_IF
+
+2004-12-04  graydon hoare  <graydon@pobox.com>
+
+        * commands.cc (fcommit): New command.
+        (update): Finish off merge of update command.
+
+2004-12-04  Derek Scherger  <derek@echologic.com>
+
+        * commands.cc: (complete_command): New function.
+        (explain_usage/process): Use it.
+
 2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (merge_deltas): Call correct variant of
@@ -76,6 +758,24 @@
 	* tests/t_related_merge2_data.at: Update to use.
 	Mark as expected to PASS.
 	* tests/t_merge2_data.at: Likewise.
+
+2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (merge_deltas): Call correct variant of
+	try_to_merge_files depending on whether ancestor is available.
+	* diff_patch.cc (try_to_merge_files -- merge3 version): Add
+	assertions about ids.
+	(try_to_merge_files -- merge2 version): Likewise.
+
+	* testsuite.at: Add a trivial working merge2 hook.
+	* tests/t_related_merge2_data.at: Update to use.
+	Mark as expected to PASS.
+	* tests/t_merge2_data.at: Likewise.
+
+2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Remove tabs.
+	* diff_patch.cc: Likewise.
 
 2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -100,6 +800,58 @@
 
 	* commands.cc: reordered commands to help merge with changesets
 	branch
+
+2004-12-01  graydon hoare  <graydon@pobox.com>
+
+	* {unix,win32}/get_system_flavour.cc: New files.
+	* basic_io.{cc,hh}: Give names to input sources.
+	* monotone.cc: Move app_state ctor inside try.
+	* platform.hh (get_system_flavour): Declare.
+	* revision.cc: Name input source "revision".
+	* sanity.cc: Log flavour on startup.
+	* tests/t_attributes.at: Use new syntax.
+	* transforms.{cc,hh} (split_into_lines): New variant, and rewrite.
+	* work.{cc,hh}: Rewrite attributes to use basic_io.
+	(get_attribute_from_db):
+	(get_attribute_from_working_copy): New functions.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Add a missing newline to a message.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* cryptopp/config.h:
+	* configure.ac: NetBSD does not define __unix__ nor __unix, so the
+	build fails.  To solve, check for __NetBSD__ where appropiate to
+	detect a Unix system.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* INSTALL: Document my latest changes: --enable-ipv6 option, ability
+	to specify static boost prefix through --enable-static-boost and
+	BOOST_SUFFIX variable.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* Makefile.am:
+	* configure.am: Add a variable, BOOST_SUFFIX, that identifies the
+	suffix string that has to be appended to Boost library names to use
+	them.  This variable can be defined on configure's command line.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* configure.ac: Let the --enable-static-boost argument take a prefix
+	to where boost libraries are located.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* configure.ac: Add a three-state --enable-ipv6 argument to the
+	configure script to explicitly enable or disable IPv6 support.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* std_hooks.lua: Add missing newlines to two error messages.
 
 2004-12-01  graydon hoare  <graydon@pobox.com>
 

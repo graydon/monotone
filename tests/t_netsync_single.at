@@ -23,11 +23,11 @@ AT_CHECK(MONOTONE --branch=testbranch --rcfile=netsync.lua commit blah-blah, [],
 F_VER0=`SHA1(testfile)`
 VER0=`BASE_REVISION`
 
-killall -q -KILL monotone
+killall -KILL monotone 2> /dev/null
          MONOTONE --rcfile=netsync.lua               serve 127.0.0.1:5555 testbranch &
 sleep 5
 AT_CHECK(MONOTONE --rcfile=netsync.lua --db=test2.db pull 127.0.0.1:5555 testbranch, [], [ignore], [ignore])
-killall -q -KILL monotone
+killall -KILL monotone 2> /dev/null
 
 AT_CHECK(MONOTONE --db=test2.db ls certs $VER0, [], [stdout])
 AT_CHECK(mv stdout certs, [], [ignore])
@@ -39,16 +39,16 @@ AT_CHECK(grep bad certs, [1], [ignore])
 
 AT_CHECK(MONOTONE --db=test2.db cat revision $VER0, [], [stdout])
 CHK=`SHA1(stdout)`
-AT_CHECK(test $CHK == $VER0)
+AT_CHECK(test $CHK = $VER0)
 
 AT_CHECK(MONOTONE --db=test2.db cat file $F_VER0, [], [stdout])
 CHK=`SHA1(stdout)`
-AT_CHECK(test $CHK == $F_VER0)
+AT_CHECK(test $CHK = $F_VER0)
 
 AT_CHECK(MONOTONE db info, [], [stdout])
 INFO1=`SHA1(stdout)`
 AT_CHECK(MONOTONE --db=test2.db db info, [], [stdout])
 INFO2=`SHA1(stdout)`
-AT_CHECK(test $INFO1 == $INFO2)
+AT_CHECK(test $INFO1 = $INFO2)
 
 AT_CLEANUP

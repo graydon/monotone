@@ -1179,6 +1179,15 @@ database::put_revision(revision_id const & new_id,
 }
 
 
+void 
+database::delete_existing_revs_and_certs()
+{
+  execute("DELETE from revisions");
+  execute("DELETE from revision_ancestry");
+  execute("DELETE from revision_certs");
+}
+
+
 // crypto key management
 
 void 

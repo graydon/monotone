@@ -5,6 +5,7 @@
 
 #include <map>
 #include <string>
+#include <memory>
 
 #include <time.h>
 
@@ -226,8 +227,12 @@ session :
   bool authenticated;
 
   time_t last_io_time;
-  ticker * in_ticker;
-  ticker * out_ticker;
+  auto_ptr<ticker> byte_in_ticker;
+  auto_ptr<ticker> byte_out_ticker;
+  auto_ptr<ticker> cert_in_ticker;
+  auto_ptr<ticker> cert_out_ticker;
+  auto_ptr<ticker> revision_in_ticker;
+  auto_ptr<ticker> revision_out_ticker;
 
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
@@ -263,6 +268,8 @@ session :
   void note_item_requested(netcmd_item_type ty, id const & i);
   bool item_request_outstanding(netcmd_item_type ty, id const & i);
   void note_item_arrived(netcmd_item_type ty, id const & i);
+
+  void note_item_sent(netcmd_item_type ty, id const & i);
 
   bool got_all_data();
   void maybe_say_goodbye();
@@ -403,8 +410,12 @@ session::session(protocol_role role,
   remote_peer_key_hash(""),
   authenticated(false),
   last_io_time(::time(NULL)),
-  in_ticker(NULL),
-  out_ticker(NULL),
+  byte_in_ticker(NULL),
+  byte_out_ticker(NULL),
+  cert_in_ticker(NULL),
+  cert_out_ticker(NULL),
+  revision_in_ticker(NULL),
+  revision_out_ticker(NULL),
   analyzed_ancestry(false),
   saved_nonce(""),
   received_goodbye(false),
@@ -519,6 +530,23 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
     i = requested_items.find(ty);
   I(i != requested_items.end());
   i->second->erase(ident);
+
+  switch (ty)
+    {
+    case rcert_item:
+    case mcert_item:
+    case fcert_item:
+      if (cert_in_ticker.get() != NULL)
+        ++(*cert_in_ticker);
+      break;
+    case revision_item:
+      if (revision_in_ticker.get() != NULL)
+        ++(*revision_in_ticker);
+      break;
+    default:
+      // No ticker for other things.
+      break;
+    }
 }
 
 bool 
@@ -530,6 +558,27 @@ session::item_request_outstanding(netcmd_item_type ty, id const & ident)
   return i->second->find(ident) != i->second->end();
 }
 
+
+void
+session::note_item_sent(netcmd_item_type ty, id const & ident)
+{
+  switch (ty)
+    {
+    case rcert_item:
+    case mcert_item:
+    case fcert_item:
+      if (cert_out_ticker.get() != NULL)
+        ++(*cert_out_ticker);
+      break;
+    case revision_item:
+      if (revision_out_ticker.get() != NULL)
+        ++(*revision_out_ticker);
+      break;
+    default:
+      // No ticker for other things.
+      break;
+    }
+}
 
 void 
 session::write_netcmd_and_try_flush(netcmd const & cmd)
@@ -945,8 +994,8 @@ session::read_some()
       L(F("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
       inbuf.append(string(tmp, tmp + count));
       mark_recent_io();
-      if (in_ticker != NULL)
-        (*in_ticker) += count;
+      if (byte_in_ticker.get() != NULL)
+        (*byte_in_ticker) += count;
       return true;
     }
   else
@@ -965,8 +1014,8 @@ session::write_some()
       L(F("wrote %d bytes to fd %d (peer %s), %d remain in output buffer\n") 
         % count % fd % peer_id % outbuf.size());
       mark_recent_io();
-      if (out_ticker != NULL)
-        (*out_ticker) += count;
+      if (byte_out_ticker.get() != NULL)
+        (*byte_out_ticker) += count;
       return true;
     }
   else
@@ -1161,6 +1210,7 @@ session::queue_data_cmd(netcmd_item_type type,
   cmd.cmd_code = data_cmd;
   write_data_cmd_payload(type, item, dat, cmd.payload);
   write_netcmd_and_try_flush(cmd);
+  note_item_sent(type, item);
 }
 
 void
@@ -1191,6 +1241,7 @@ session::queue_delta_cmd(netcmd_item_type type,
   cmd.cmd_code = delta_cmd;  
   write_delta_cmd_payload(type, base, ident, del, cmd.payload);
   write_netcmd_and_try_flush(cmd);
+  note_item_sent(type, ident);
 }
 
 void 
@@ -1314,7 +1365,7 @@ session::process_hello_cmd(id const & server,
           base64<rsa_sha1_signature> sig;
           rsa_sha1_signature sig_raw;
           base64< arc4<rsa_priv_key> > our_priv;
-          app.db.get_key(app.signing_key, our_priv);
+          load_priv_key(app, app.signing_key, our_priv);
           make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
           decode_base64(sig, sig_raw);
           
@@ -1400,7 +1451,7 @@ session::process_anonymous_cmd(protocol_role role,
   base64<rsa_sha1_signature> sig;
   rsa_sha1_signature sig_raw;
   base64< arc4<rsa_priv_key> > our_priv;
-  app.db.get_key(app.signing_key, our_priv);
+  load_priv_key(app, app.signing_key, our_priv);
   make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
   decode_base64(sig, sig_raw);
   queue_confirm_cmd(sig_raw());
@@ -1521,7 +1572,7 @@ session::process_auth_cmd(protocol_role role,
       base64<rsa_sha1_signature> sig;
       rsa_sha1_signature sig_raw;
       base64< arc4<rsa_priv_key> > our_priv;
-      app.db.get_key(app.signing_key, our_priv);
+      load_priv_key(app, app.signing_key, our_priv);
       make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
       decode_base64(sig, sig_raw);
       queue_confirm_cmd(sig_raw());
@@ -2721,10 +2772,25 @@ call_server(protocol_role role,
   session sess(role, client_voice, collections, all_collections, app, 
                address(), server.get_socketfd(), timeout);
 
-  ticker input("bytes in", ">", 256), output("bytes out", "<", 256);
-  sess.in_ticker = &input;
-  sess.out_ticker = &output;
-
+  sess.byte_in_ticker.reset(new ticker("bytes in", ">", 256));
+  sess.byte_out_ticker.reset(new ticker("bytes out", "<", 256));
+  if (role == sink_role)
+    {
+      sess.cert_in_ticker.reset(new ticker("certs in", "c", 3));
+      sess.revision_in_ticker.reset(new ticker("revs in", "r", 1));
+    }
+  else if (role == source_role)
+    {
+      sess.cert_out_ticker.reset(new ticker("certs out", "C", 3));
+      sess.revision_out_ticker.reset(new ticker("revs out", "R", 1));
+    }
+  else
+    {
+      I(role == source_and_sink_role);
+      sess.revision_in_ticker.reset(new ticker("revs in", "r", 1));
+      sess.revision_out_ticker.reset(new ticker("revs out", "R", 1));
+    }
+  
   while (true)
     {       
       bool armed = false;

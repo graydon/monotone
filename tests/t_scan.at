@@ -15,11 +15,14 @@ AT_DATA(foo/testfile1, [version 0 of second test file
 AT_DATA(foo/bar/testfile2, [version 0 of third test file
 ])
 
+AT_DATA(manifest, [85d521304e3660f05bbb458b05d0efc6e981f832  foo/bar/testfile2
+14c5b672e2181377e41e6d8c5ce21457d8342667  foo/testfile1
+5c39de9ca49b3aa34fa21f5778954665d947476c  testfile0
+])
+
 AT_CHECK(MONOTONE add testfile0 foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
 AT_CHECK(MONOTONE cat manifest, [], [stdout]) 
-AT_CHECK(cp stdout manifest, [], [ignore]) 
-AT_CHECK(sha1sum foo/bar/testfile2 foo/testfile1 testfile0, [], [stdout])
 AT_CHECK(cmp stdout manifest, [], [ignore]) 
 
 AT_CLEANUP

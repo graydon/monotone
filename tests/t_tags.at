@@ -43,7 +43,7 @@ AT_CHECK(rm -rf MT file1 file2 file3)
 
 AT_CHECK(MONOTONE co tag1 ., [], [ignore], [ignore])
 TAG1=`BASE_REVISION`
-AT_CHECK(test $TAG1 == $REV1)
+AT_CHECK(test $TAG1 = $REV1)
 AT_CHECK(test -e file1, [0], [ignore], [ignore])
 AT_CHECK(test -e file2, [1], [ignore], [ignore])
 AT_CHECK(test -e file3, [1], [ignore], [ignore])
@@ -52,7 +52,7 @@ AT_CHECK(rm -rf MT file1 file2 file3)
 
 AT_CHECK(MONOTONE co tag2 ., [], [ignore], [ignore])
 TAG2=`BASE_REVISION`
-AT_CHECK(test $TAG2 == $REV2)
+AT_CHECK(test $TAG2 = $REV2)
 AT_CHECK(test -e file1, [0], [ignore], [ignore])
 AT_CHECK(test -e file2, [0], [ignore], [ignore])
 AT_CHECK(test -e file3, [1], [ignore], [ignore])
@@ -61,7 +61,7 @@ AT_CHECK(rm -rf MT file1 file2 file3)
 
 AT_CHECK(MONOTONE co tag3 ., [], [ignore], [ignore])
 TAG3=`BASE_REVISION`
-AT_CHECK(test $TAG1 == $REV1)
+AT_CHECK(test $TAG1 = $REV1)
 AT_CHECK(test -e file1, [0], [ignore], [ignore])
 AT_CHECK(test -e file2, [0], [ignore], [ignore])
 AT_CHECK(test -e file3, [0], [ignore], [ignore])

@@ -16,34 +16,8 @@
 #include "vocab.hh"
 
 // a change_set is a text object. It has a precise, normalizable serial form
-// as UTF-8 text. it also has some sub-components. not all of these
-// sub-components are separately serialized (they could be but there is no
-// call for it). a grammar (aside from the parsing code) for the serialized
-// form will show up here eventually. until then, here is an example.
-//
-// change_set:
-// {
-//   paths:
-//   {
-//      rename_file:
-//      {
-//        src: "usr/bin/sh"
-//        dst: "usr/bin/foo"
-//      }
-//      delete_dir: "usr/bin"
-//      add_file: "tmp/foo/bar.txt"
-//   }
-//   deltas:
-//   {
-//     delta:
-//     {
-//       path: "tmp/foo/bar.txt"
-//       src: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
-//       dst: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//     }
-//   }
-// } 
-//
+// as UTF-8 text.
+// 
 // note that this object is made up of two important sub-components: 
 // path_edits and deltas. "path_edits" is exactly the same object stored
 // in MT/work. 
@@ -59,8 +33,18 @@ change_set
     std::map<file_path, file_path> renamed_files;
     std::map<file_path, file_path> renamed_dirs;
     std::set<file_path> added_files;
+
+    path_rearrangement() {}
+    path_rearrangement(path_rearrangement const & other);
+    path_rearrangement const & operator=(path_rearrangement const & other);
     bool operator==(path_rearrangement const & other) const;
     bool empty() const;
+    void check_sane() const;
+
+    bool has_added_file(file_path const & file) const;
+    bool has_deleted_file(file_path const & file) const;
+    bool has_renamed_file_dst(file_path const & file) const;
+    bool has_renamed_file_src(file_path const & file) const;
   };
 
   typedef std::map<file_path, std::pair<file_id, file_id> > delta_map;
@@ -68,7 +52,11 @@ change_set
   path_rearrangement rearrangement;
   delta_map deltas;
 
+  change_set() {}
+  change_set(change_set const & other);
+  change_set const &operator=(change_set const & other);
   bool operator==(change_set const & other) const;
+  void check_sane() const;
   bool empty() const;
   void add_file(file_path const & a);
   void add_file(file_path const & a, file_id const & ident);
@@ -128,6 +116,14 @@ void
 normalize_change_set(change_set & n);
 
 void
+normalize_path_rearrangement(change_set::path_rearrangement & n);
+
+void
+concatenate_rearrangements(change_set::path_rearrangement const & a,
+                           change_set::path_rearrangement const & b,
+                           change_set::path_rearrangement & concatenated);
+
+void
 concatenate_change_sets(change_set const & a,
                         change_set const & b,
                         change_set & concatenated);
@@ -165,10 +161,10 @@ apply_path_rearrangement(path_set const & old_ps,
                          change_set::path_rearrangement const & pr,
                          path_set & new_ps);
 
-void
-apply_path_rearrangement(manifest_map const & old_m,
-                         change_set::path_rearrangement const & pr,
-                         manifest_map & old_m_rearranged);
+void 
+complete_change_set(manifest_map const & m_old,
+                    manifest_map const & m_new,
+                    change_set & cs);
 
 void
 build_pure_addition_change_set(manifest_map const & man,

@@ -1,0 +1,22 @@
+AT_SETUP([(imp) schema migration])
+MONOTONE_SETUP
+
+
+# This test is a "bug report" -- the bug is that there is no test that
+# tests schema migration!  The way to do this is probably to create a
+# standard database with some revisions, files, certs, keys, and stick
+# in here uuencoded versions of it for each database format we want to
+# test.  Then migrate each old format database with 'db migrate', and
+# test that we can read the new database, and that it has the contents
+# that it's supposed to.  (Including things like actual content of the
+# files.)
+AT_XFAIL_IF(true)
+
+
+
+# This Space For Test
+AT_CHECK(false)
+
+
+
+AT_CLEANUP

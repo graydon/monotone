@@ -4790,7 +4790,7 @@ AT_CHECK(MONOTONE diff, [], [stdout])
 AT_CHECK(mv stdout monodiff, [], [ignore])
 
 # see if patch likes that
-AT_CHECK(patch firstfile <monodiff, [], [ignore])
+AT_CHECK(patch firstfile <monodiff, [], [ignore], [ignore])
 
 # see if the resulting file has been properly patched
 AT_CHECK(cmp firstfile secondfile, [], [ignore])

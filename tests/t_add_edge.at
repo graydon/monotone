@@ -1,0 +1,39 @@
+AT_SETUP([merging an add edge])
+MONOTONE_SETUP
+
+mkdir zz
+
+ADD_FILE(ancfile, [ancestral file
+])
+ADD_FILE(zz/testfile0, [added file
+])
+COMMIT(testbranch)
+ANC=`BASE_REVISION`
+
+
+ADD_FILE(zz/testfile1, [added file
+])
+COMMIT(testbranch)
+
+REVERT_TO($ANC)
+
+AT_DATA(changed_anc, [changed anc
+])
+
+AT_CHECK(cp changed_anc ancfile, [], [ignore])
+
+ADD_FILE(zz/testfile1, [added file
+])
+
+COMMIT(testbranch)	
+
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+
+MERGED=`BASE_REVISION`
+
+AT_CHECK(MONOTONE cat revision $MERGED, [], [stdout])
+AT_CHECK(mv stdout rev)
+AT_CHECK(grep add_file rev, [1], [ignore])
+
+AT_CLEANUP

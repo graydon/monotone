@@ -1,0 +1,8 @@
+AT_SETUP([--rcfile requires extant file])
+MONOTONE_SETUP
+
+# rcfiles may contain security settings.  So make it a hard error if
+# the user typoes or somesuch.
+AT_CHECK(MONOTONE --rcfile=no-such-file status, [1], [ignore], [ignore])
+
+AT_CLEANUP

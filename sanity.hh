@@ -34,9 +34,11 @@ struct sanity {
   void dump_buffer();
   void set_debug();
   void set_quiet();
+  void set_relaxed(bool rel);
 
   bool debug;
   bool quiet;
+  bool relaxed;
   boost::circular_buffer<char> logbuf;
   std::string filename;
 

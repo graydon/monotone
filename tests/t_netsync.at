@@ -39,24 +39,24 @@ AT_CHECK(grep bad certs, [1], [ignore])
 
 AT_CHECK(MONOTONE2 cat revision $VER0, [], [stdout])
 CHK=`SHA1(stdout)`
-AT_CHECK(test $CHK == $VER0)
+AT_CHECK(test $CHK = $VER0)
 
 AT_CHECK(MONOTONE2 cat revision $VER1, [], [stdout])
 CHK=`SHA1(stdout)`
-AT_CHECK(test $CHK == $VER1)
+AT_CHECK(test $CHK = $VER1)
 
 AT_CHECK(MONOTONE2 cat file $F_VER0, [], [stdout])
 CHK=`SHA1(stdout)`
-AT_CHECK(test $CHK == $F_VER0)
+AT_CHECK(test $CHK = $F_VER0)
 
 AT_CHECK(MONOTONE2 cat file $F_VER1, [], [stdout])
 CHK=`SHA1(stdout)`
-AT_CHECK(test $CHK == $F_VER1)
+AT_CHECK(test $CHK = $F_VER1)
 
 AT_CHECK(MONOTONE db info, [], [stdout])
 INFO1=`SHA1(stdout)`
 AT_CHECK(MONOTONE2 db info, [], [stdout])
 INFO2=`SHA1(stdout)`
-AT_CHECK(test $INFO1 == $INFO2)
+AT_CHECK(test $INFO1 = $INFO2)
 
 AT_CLEANUP

@@ -1,3 +1,17 @@
+Thu Dec 30 01:37:54 EST 2004
+
+	0.16 release. bug fixes.
+
+	- 50+ new integration tests
+	- many NetBSD portability fixes
+	- release build on gcc 3.4 / FC3
+	- masses of changeset bugs in 0.15 fixed
+
+		- some bogus changesets were generated
+		  in the 0.16 development cycle. you will
+		  need to rebuild revision graph.
+
+
 Sun Nov  7 14:06:03 EST 2004
 
 	0.15 release. major changes.

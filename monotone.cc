@@ -57,7 +57,7 @@ struct poptOption options[] =
     {"branch", 0, POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, "print detailed version number, then exit", NULL},
-    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style", NULL},
+    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot) [count]", NULL},
     {"revision", 0, POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
     {"message", 0, POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
     { NULL, 0, 0, NULL, 0 }
@@ -248,6 +248,12 @@ cpp_main(int argc, char ** argv)
               break;
             }
         }
+
+      // verify that there are no errors in the command line
+
+      N(opt == -1,
+        F("syntax error near the \"%s\" option: %s") %
+          poptBadOption(ctx(), POPT_BADOPTION_NOALIAS) % poptStrerror(opt));
 
       // stop here if they asked for help
 
