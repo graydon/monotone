@@ -191,19 +191,21 @@ change_set::delete_file(file_path const & d)
 void 
 change_set::delete_dir(file_path const & d)
 {
-  I(rearrangement.deleted_files.find(d) == rearrangement.deleted_files.end());
+  I(rearrangement.deleted_dirs.find(d) == rearrangement.deleted_dirs.end());
   rearrangement.deleted_dirs.insert(d);
 }
 
 void 
 change_set::rename_file(file_path const & a, file_path const & b)
 {
+  I(rearrangement.renamed_files.find(a) == rearrangement.renamed_files.end());
   rearrangement.renamed_files.insert(std::make_pair(a,b));
 }
 
 void 
 change_set::rename_dir(file_path const & a, file_path const & b)
 {
+  I(rearrangement.renamed_dirs.find(a) == rearrangement.renamed_dirs.end());
   rearrangement.renamed_dirs.insert(std::make_pair(a,b));
 }
 
@@ -2490,6 +2492,14 @@ apply_change_set(manifest_map const & old_man,
   // place.
   I(b.rearrangement.deleted_files.empty());
   I(b.rearrangement.renamed_files.empty());
+  // Furthermore, all deltas should be add deltas
+  for (change_set::delta_map::const_iterator i = b.deltas.begin();
+      i != b.deltas.end(); ++i)
+    {
+      I(null_id(delta_entry_src(i)));
+      I(b.rearrangement.added_files.find(delta_entry_path(i))
+        != b.rearrangement.added_files.end());
+    }
 
   new_man.clear();
   for (std::set<file_path>::const_iterator i = b.rearrangement.added_files.begin();
@@ -2987,6 +2997,385 @@ non_interfering_change_test()
     }
 }
 
+static const file_id fid_null;
+static const file_id fid1 = file_id(hexenc<id>("aaaa3831e5eb74e6cd50b94f9e99e6a14d98d702"));
+static const file_id fid2 = file_id(hexenc<id>("bbbb3831e5eb74e6cd50b94f9e99e6a14d98d702"));
+static const file_id fid3 = file_id(hexenc<id>("cccc3831e5eb74e6cd50b94f9e99e6a14d98d702"));
+
+typedef enum { in_a, in_b } which_t;
+struct bad_concatenate_change_test
+{
+  change_set a;
+  change_set b;
+  change_set combined;
+  change_set concat;
+  bool do_combine;
+  bad_concatenate_change_test() : do_combine(false)
+  {}
+  change_set & getit(which_t which)
+  {
+    if (which == in_a)
+      return a;
+    return b;
+  }
+  // Call combine() if you want to make sure that the things that are bad when
+  // concatenated are also bad when all stuck together into a single
+  // changeset.
+  void combine() { do_combine = true; }
+  void add_file(which_t which, std::string const & path, file_id fid = fid1)
+  {
+    getit(which).add_file(file_path(path), fid);
+    if (do_combine)
+      combined.add_file(file_path(path), fid);
+  }
+  void apply_delta(which_t which, std::string const & path,
+                   file_id from_fid,
+                   file_id to_fid)
+  {
+    getit(which).apply_delta(file_path(path), from_fid, to_fid);
+    if (do_combine)
+      combined.apply_delta(file_path(path), from_fid, to_fid);
+  }
+  void delete_file(which_t which, std::string const & path)
+  {
+    getit(which).delete_file(file_path(path));
+    if (do_combine)
+      combined.delete_file(file_path(path));
+  }
+  void delete_dir(which_t which, std::string const & path)
+  {
+    getit(which).delete_dir(file_path(path));
+    if (do_combine)
+      combined.delete_dir(file_path(path));
+  }
+  void rename_file(which_t which,
+                   std::string const & path1, std::string const & path2)
+  {
+    getit(which).rename_file(file_path(path1), file_path(path2));
+    if (do_combine)
+      combined.rename_file(file_path(path1), file_path(path2));
+  }
+  void rename_dir(which_t which,
+                  std::string const & path1, std::string const & path2)
+  {
+    getit(which).rename_dir(file_path(path1), file_path(path2));
+    if (do_combine)
+      combined.rename_dir(file_path(path1), file_path(path2));
+  }
+  void run()
+  {
+    L(F("Running bad_concatenate_change_test\n"));
+    try
+      {
+        dump_change_set("a", a);
+        dump_change_set("b", b);
+      }
+    catch (std::logic_error e)
+      {
+        L(F("skipping change_set printing, one or both are not sane\n"));
+      }
+    BOOST_CHECK_THROW(concatenate_change_sets(a, b, concat),
+                      std::logic_error);
+    try { dump_change_set("concat", concat); }
+    catch (std::logic_error e) { L(F("concat change_set is insane\n")); }
+    if (do_combine)
+      {
+        L(F("Checking combined change set\n"));
+        change_set empty_cs, combined_concat;
+        BOOST_CHECK_THROW(concatenate_change_sets(combined,
+                                                  empty_cs,
+                                                  combined_concat),
+                          std::logic_error);
+        try { dump_change_set("combined_concat", combined_concat); }
+        catch (std::logic_error e) { L(F("combined_concat is insane\n")); }
+      }
+  }
+  void run_both()
+  {
+    run();
+    L(F("Running bad_concatenate_change_test again backwards\n"));
+    BOOST_CHECK_THROW(concatenate_change_sets(a, b, concat),
+                      std::logic_error);
+  }
+};
+
+// We also do a number of just "bad change set" tests here, leaving one of
+// them empty; this is because our main line of defense against bad
+// change_set's, check_sane_history, does its checking by doing
+// concatenation's, so it's doing concatenation's that we want to be sure does
+// sanity checking...
+static void
+bad_concatenate_change_tests()
+{
+  // Files/directories can't be dropped on top of each other:
+  BOOST_CHECKPOINT("on top");
+  {
+    bad_concatenate_change_test t;
+    t.add_file(in_a, "target");
+    t.add_file(in_b, "target");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.rename_file(in_a, "foo", "target");
+    t.rename_file(in_b, "bar", "target");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.rename_dir(in_a, "foo", "target");
+    t.rename_dir(in_b, "bar", "target");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.rename_file(in_a, "foo", "target");
+    t.rename_dir(in_b, "bar", "target");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.add_file(in_a, "target");
+    t.rename_file(in_b, "foo", "target");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.add_file(in_a, "target");
+    t.rename_dir(in_b, "foo", "target");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.add_file(in_a, "target/subfile");
+    t.add_file(in_b, "target");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.add_file(in_a, "target/subfile");
+    t.rename_file(in_b, "foo", "target");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.add_file(in_a, "target/subfile");
+    t.rename_dir(in_b, "foo", "target");
+    t.run_both();
+  }
+  // You can only delete something once
+  BOOST_CHECKPOINT("delete once");
+  {
+    bad_concatenate_change_test t;
+    t.delete_file(in_a, "target");
+    t.delete_file(in_b, "target");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.delete_file(in_a, "target");
+    t.delete_dir(in_b, "target");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.delete_dir(in_a, "target");
+    t.delete_dir(in_b, "target");
+    t.run();
+  }
+  // You can't delete something that's not there anymore
+  BOOST_CHECKPOINT("delete after rename");
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.delete_file(in_a, "target");
+    t.rename_file(in_b, "target", "foo");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.delete_dir(in_a, "target");
+    t.rename_file(in_b, "target", "foo");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.delete_dir(in_a, "target");
+    t.rename_dir(in_b, "target", "foo");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.delete_file(in_a, "target");
+    t.rename_dir(in_b, "target", "foo");
+    t.run_both();
+  }
+  // Files/directories can't be split in two
+  BOOST_CHECKPOINT("splitting files/dirs");
+  {
+    bad_concatenate_change_test t;
+    t.rename_file(in_a, "target", "foo");
+    t.rename_file(in_b, "target", "bar");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.rename_dir(in_a, "target", "foo");
+    t.rename_dir(in_b, "target", "bar");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.rename_dir(in_a, "target", "foo");
+    t.rename_file(in_b, "target", "bar");
+    t.run_both();
+  }
+  // Files and directories are different
+  BOOST_CHECKPOINT("files != dirs");
+  {
+    bad_concatenate_change_test t;
+    t.add_file(in_a, "target");
+    t.delete_dir(in_b, "target");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.add_file(in_a, "target/subfile");
+    t.delete_file(in_b, "target");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.add_file(in_a, "target/subfile");
+    t.rename_file(in_b, "target", "foo");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.rename_file(in_a, "foo", "target");
+    t.delete_dir(in_b, "target");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.apply_delta(in_a, "target", fid1, fid2);
+    t.delete_dir(in_b, "target");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.rename_dir(in_a, "foo", "target");
+    t.delete_file(in_b, "target");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.rename_dir(in_a, "foo", "target");
+    t.apply_delta(in_b, "target", fid1, fid2);
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.apply_delta(in_a, "target", fid1, fid2);
+    t.rename_dir(in_b, "target", "bar");
+    t.run_both();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.rename_file(in_a, "foo", "target");
+    t.rename_dir(in_b, "target", "bar");
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.rename_dir(in_a, "foo", "target");
+    t.rename_file(in_b, "target", "bar");
+    t.run();
+  }
+  // Directories can't be patched, and patches can't be directoried...
+  BOOST_CHECKPOINT("can't patch dirs or vice versa");
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.add_file(in_a, "target/subfile");
+    t.apply_delta(in_b, "target", fid_null, fid1);
+    t.run_both();
+  }
+  // Deltas must be consistent
+  BOOST_CHECKPOINT("consistent deltas");
+  {
+    bad_concatenate_change_test t;
+    t.apply_delta(in_a, "target", fid1, fid2);
+    t.apply_delta(in_b, "target", fid3, fid1);
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.add_file(in_a, "target", fid1);
+    t.apply_delta(in_b, "target", fid2, fid3);
+    t.run();
+  }
+  // Can't have a null source id if it's not an add
+  BOOST_CHECKPOINT("null id on non-add");
+  {
+    bad_concatenate_change_test t;
+    t.apply_delta(in_a, "target", fid_null, fid1);
+    t.run();
+  }
+  // Can't have drop + delta with no add
+  {
+    bad_concatenate_change_test t;
+    t.combine();
+    t.delete_file(in_a, "target");
+    t.apply_delta(in_b, "target", fid1, fid2);
+    t.run();
+  }
+  // Can't have a null destination id, ever, with or without a delete_file
+  BOOST_CHECKPOINT("no null destinations");
+  {
+    bad_concatenate_change_test t;
+    t.delete_file(in_a, "target");
+    t.apply_delta(in_a, "target", fid1, fid_null);
+    t.run();
+  }
+  {
+    bad_concatenate_change_test t;
+    t.apply_delta(in_a, "target", fid1, fid_null);
+    t.run();
+  }
+  // Can't have a patch with src == dst
+  {
+    bad_concatenate_change_test t;
+    t.apply_delta(in_a, "target", fid1, fid1);
+    t.run();
+  }
+}
+
+// FIXME: Things that should be added, but can't be trivially because they
+// assert too early:
+//   anything repeated -- multiple adds, multiple deletes, multiple deltas
+//   including <rename a b, rename a c> in one changeset, for both files and dirs
+// (probably should put these in strings, and do BOOST_CHECK_THROWS in the
+// parser?)
+
+// FIXME: also need tests for the invariants in apply_manifest (and any
+// invariants that should be there but aren't, of course)
+
 void 
 add_change_set_tests(test_suite * suite)
 {
@@ -2995,6 +3384,7 @@ add_change_set_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&neutralize_change_test));
   suite->add(BOOST_TEST_CASE(&non_interfering_change_test));
   suite->add(BOOST_TEST_CASE(&disjoint_merge_tests));
+  suite->add(BOOST_TEST_CASE(&bad_concatenate_change_tests));
 }
 
 

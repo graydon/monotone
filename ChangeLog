@@ -1,3 +1,8 @@
+2005-02-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Add a few more invariants; add lots and lots of
+	unit tests.
+
 2005-02-06  graydon hoare  <graydon@pobox.com>
 
 	* change_set.cc: Use hash_map in a few places.
