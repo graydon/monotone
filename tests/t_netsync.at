@@ -47,14 +47,13 @@ AT_CHECK(grep date certs, [], [ignore])
 AT_CHECK(grep author certs, [], [ignore])
 AT_CHECK(grep branch certs, [], [ignore])
 AT_CHECK(grep changelog certs, [], [ignore])
-AT_CHECK(grep ancestor certs, [], [ignore])
 AT_CHECK(grep bad certs, [1], [ignore])
 
-AT_CHECK(MONOTONE --db=test2.db cat manifest $VER0, [], [stdout])
+AT_CHECK(MONOTONE --db=test2.db cat revision $VER0, [], [stdout])
 CHK=`SHA1(stdout)`
 AT_CHECK(test $CHK == $VER0)
 
-AT_CHECK(MONOTONE --db=test2.db cat manifest $VER1, [], [stdout])
+AT_CHECK(MONOTONE --db=test2.db cat revision $VER1, [], [stdout])
 CHK=`SHA1(stdout)`
 AT_CHECK(test $CHK == $VER1)
 

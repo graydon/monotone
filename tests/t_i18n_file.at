@@ -39,10 +39,12 @@ AT_CHECK(MONOTONE drop "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
-AT_CHECK(grep funny MT/manifest, [], [ignore], [ignore])
-AT_CHECK(grep spaces MT/manifest, [], [ignore], [ignore])
-AT_CHECK(grep $JAPANESE_UTF8 MT/manifest, [], [ignore], [ignore])
-AT_CHECK(grep $EUROPEAN_UTF8 MT/manifest, [], [ignore], [ignore])
+AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(mv stdout manifest)
+AT_CHECK(grep funny manifest, [], [ignore], [ignore])
+AT_CHECK(grep spaces manifest, [], [ignore], [ignore])
+AT_CHECK(grep $JAPANESE_UTF8 manifest, [], [ignore], [ignore])
+AT_CHECK(grep $EUROPEAN_UTF8 manifest, [], [ignore], [ignore])
 
 AT_CHECK(rm -Rf tmp)
 

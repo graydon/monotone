@@ -1,3 +1,12 @@
+2004-10-09  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc: 
+	* packet.cc: 
+	* tests/t_i18n_file.at:
+	* tests/t_netsync.at:
+	* tests/t_single_char_filenames.at:
+	* tests/t_singlenetsync.at: Bug fixes.
+
 2004-10-04  graydon hoare  <graydon@pobox.com>
 
 	* Makefile.am: Re-enable rcs stuff.

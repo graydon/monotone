@@ -733,8 +733,8 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
 }
 
 void
-packet_db_writer::consume_manifest_reverse_delta(manifest_id const & old_id, 
-						 manifest_id const & new_id,
+packet_db_writer::consume_manifest_reverse_delta(manifest_id const & new_id,
+						 manifest_id const & old_id, 						 
 						 manifest_delta const & del)
 {
   transaction_guard guard(pimpl->app.db);

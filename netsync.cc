@@ -234,6 +234,7 @@ session :
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
   map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestry;
   set< pair<id, id> > reverse_delta_requests;
+  bool analyzed_ancestry;
 
   id saved_nonce;
   bool received_goodbye;
@@ -405,6 +406,7 @@ session::session(protocol_role role,
   last_io_time(::time(NULL)),
   in_ticker(NULL),
   out_ticker(NULL),
+  analyzed_ancestry(false),
   saved_nonce(""),
   received_goodbye(false),
   sent_goodbye(false),
@@ -506,7 +508,7 @@ void
 session::note_item_requested(netcmd_item_type ty, id const & ident)
 {
   map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    i = requested_items.find(revision_item);
+    i = requested_items.find(ty);
   I(i != requested_items.end());
   i->second->insert(ident);
 }
@@ -515,7 +517,7 @@ void
 session::note_item_arrived(netcmd_item_type ty, id const & ident)
 {
   map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    i = requested_items.find(revision_item);
+    i = requested_items.find(ty);
   I(i != requested_items.end());
   i->second->erase(ident);
 }
@@ -524,7 +526,7 @@ bool
 session::item_request_outstanding(netcmd_item_type ty, id const & ident)
 {
   map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    i = requested_items.find(revision_item);
+    i = requested_items.find(ty);
   I(i != requested_items.end());
   return i->second->find(ident) != i->second->end();
 }
@@ -639,6 +641,9 @@ session::request_rev_revisions(revision_id const & init,
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
 
+  set<manifest_id> seen_manifests;
+  set<file_id> seen_files;
+
   set<revision_id> frontier;
   frontier.insert(init);
   while(!frontier.empty())
@@ -668,40 +673,81 @@ session::request_rev_revisions(revision_id const & init,
 		  // check out the manifest delta edge
 		  manifest_id parent_manifest = edge_old_manifest(k);
 		  manifest_id child_manifest = j->second->second.new_manifest;	
-		  if (this->app.db.manifest_version_exists(parent_manifest))
-		    L(F("not requesting reverse manifest delta to '%s' as we already have it\n") 
-		      % parent_manifest);
-		  else
-		    {
-		      L(F("requesting reverse manifest delta %s -> %s\n")
-			% child_manifest % parent_manifest);
 
-		      reverse_delta_requests.insert(make_pair(plain_id(child_manifest),
-							      plain_id(parent_manifest)));
-		      queue_send_delta_cmd(manifest_item, 
-					   plain_id(child_manifest), 
-					   plain_id(parent_manifest));
+		  // first, if we have a child we've never seen before we will need
+		  // to request it in its entrety.		  
+		  if (seen_manifests.find(child_manifest) == seen_manifests.end())
+		    {
+		      if (this->app.db.manifest_version_exists(child_manifest))
+			L(F("not requesting (in reverse) initial manifest %s as we already have it\n") % child_manifest);
+		      else
+			{
+			  L(F("requesting (in reverse) initial manifest data %s\n") % child_manifest);
+			  queue_send_data_cmd(manifest_item, plain_id(child_manifest));
+			}
+		      seen_manifests.insert(child_manifest);
 		    }
+
+		  // second, if the parent is nonempty, we want to ask for an edge to it		  
+		  if (!parent_manifest.inner()().empty())
+		    {
+		      if (this->app.db.manifest_version_exists(parent_manifest))
+			L(F("not requesting (in reverse) manifest delta to %s as we already have it\n") % parent_manifest);
+		      else
+			{
+			  L(F("requesting (in reverse) manifest delta %s -> %s\n") 
+			    % child_manifest % parent_manifest);
+			  reverse_delta_requests.insert(make_pair(plain_id(child_manifest),
+								  plain_id(parent_manifest)));
+			  queue_send_delta_cmd(manifest_item, 
+					       plain_id(child_manifest), 
+					       plain_id(parent_manifest));
+			}
+		      seen_manifests.insert(parent_manifest);
+		    }
+
+
 		  
 		  // check out each file delta edge
 		  change_set const & cset = edge_changes(k);
 		  for (change_set::delta_map::const_iterator d = cset.deltas.begin(); 
 		       d != cset.deltas.end(); ++d)
 		    {
-		      if (this->app.db.file_version_exists(delta_entry_src(d)))
-			L(F("not requesting reverse delta %s -> %s on file %s as we already have it\n")
-			  % delta_entry_dst(d) % delta_entry_src(d) % delta_entry_path(d));
-		      else
-			{
-			  L(F("requesting reverse delta %s -> %s on file %s\n")
-			    % delta_entry_dst(d) % delta_entry_src(d) % delta_entry_path(d));
+		      file_id parent_file (delta_entry_src(d));
+		      file_id child_file (delta_entry_dst(d));
 
-			  reverse_delta_requests.insert(make_pair(plain_id(delta_entry_dst(d)),
-								  plain_id(delta_entry_src(d))));
-			  queue_send_delta_cmd(file_item, 
-					       plain_id(delta_entry_dst(d)), 
-					       plain_id(delta_entry_src(d)));
+
+		      // first, if we have a child we've never seen before we will need
+		      // to request it in its entrety.		  
+		      if (seen_files.find(child_file) == seen_files.end())
+			{
+			  if (this->app.db.file_version_exists(child_file))
+			    L(F("not requesting (in reverse) initial file %s as we already have it\n") % child_file);
+			  else
+			    {
+			      L(F("requesting (in reverse) initial file data %s\n") % child_file);
+			      queue_send_data_cmd(file_item, plain_id(child_file));
+			    }
+			  seen_files.insert(child_file);
 			}
+		      
+		      // second, if the parent is nonempty, we want to ask for an edge to it		  
+		      if (!parent_file.inner()().empty())
+			{
+			  if (this->app.db.file_version_exists(parent_file))
+			    L(F("not requesting (in reverse) file delta to %s as we already have it\n") % parent_file);
+			  else
+			    {
+			      L(F("requesting (in reverse) file delta %s -> %s on %s\n") 
+				% child_file % parent_file % delta_entry_path(d));
+			      reverse_delta_requests.insert(make_pair(plain_id(child_file),
+								      plain_id(parent_file)));
+			      queue_send_delta_cmd(file_item, 
+						   plain_id(child_file), 
+						   plain_id(parent_file));
+			    }
+			  seen_files.insert(parent_file);
+			}		      
 		    }
 		}
 	      
@@ -756,11 +802,19 @@ session::request_fwd_revisions(revision_id const & i,
 	  % child_manifest);
       else
 	{
-	  L(F("requesting forward manifest delta %s -> %s\n")
-	    % parent_manifest % child_manifest);
-	  queue_send_delta_cmd(manifest_item, 
-			       plain_id(parent_manifest), 
-			       plain_id(child_manifest));
+	  if (parent_manifest.inner()().empty())
+	    {
+	      L(F("requesting full manifest data %s\n") % child_manifest);
+	      queue_send_data_cmd(manifest_item, plain_id(child_manifest));
+	    }
+	  else
+	    {
+	      L(F("requesting forward manifest delta %s -> %s\n")
+		% parent_manifest % child_manifest);
+	      queue_send_delta_cmd(manifest_item, 
+				   plain_id(parent_manifest), 
+				   plain_id(child_manifest));
+	    }
 	}
 
       // check out each file delta edge
@@ -773,11 +827,20 @@ session::request_fwd_revisions(revision_id const & i,
 	      % delta_entry_src(k) % delta_entry_dst(k) % delta_entry_path(k));
 	  else
 	    {
-	      L(F("requesting forward delta %s -> %s on file %s\n")
-		% delta_entry_src(k) % delta_entry_dst(k) % delta_entry_path(k));
-	      queue_send_delta_cmd(file_item, 
-				   plain_id(delta_entry_src(k)), 
-				   plain_id(delta_entry_dst(k)));
+	      if (delta_entry_src(k).inner()().empty())
+		{
+		  L(F("requesting full file data %s\n") % delta_entry_dst(k));
+		  queue_send_data_cmd(file_item, plain_id(delta_entry_dst(k)));
+		}
+	      else
+		{
+		  
+		  L(F("requesting forward delta %s -> %s on file %s\n")
+		    % delta_entry_src(k) % delta_entry_dst(k) % delta_entry_path(k));
+		  queue_send_delta_cmd(file_item, 
+				       plain_id(delta_entry_src(k)), 
+				       plain_id(delta_entry_dst(k)));
+		}
 	    }
 	}
       // now actually consume the data packet, which will wait on the
@@ -790,6 +853,12 @@ void
 session::analyze_ancestry_graph()
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
+
+  if (! (all_requested_revisions_received() && rcert_refinement_done()))
+    return;
+
+  if (analyzed_ancestry)
+    return;
 
   set<revision_id> heads;
   {
@@ -845,6 +914,7 @@ session::analyze_ancestry_graph()
 	  request_rev_revisions(*i, attached, rev_visited);
 	}	
     }
+  analyzed_ancestry = true;
 }
 
 Netxx::Probe::ready_type 
@@ -1190,7 +1260,9 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
       // tombstone it
       i->second.current_level_had_refinements = false;
       i->second.tree_is_done = true;
-      
+
+      if (all_requested_revisions_received())
+	analyze_ancestry_graph();      
     }
 
   else if (i->second.current_level_had_refinements 
@@ -2226,6 +2298,12 @@ session::process_data_cmd(netcmd_item_type type,
 	  if (! (tmp == hitem))
 	    throw bad_decode(F("hash check failed for revision cert '%s'")  % hitem);
 	  this->dbw.consume_revision_cert(revision<cert>(c));
+	  if (!app.db.revision_exists(revision_id(c.ident)))
+	    {
+	      id rid;
+	      decode_hexenc(c.ident, rid);
+	      queue_send_data_cmd(revision_item, rid);
+	    }
 	  update_merkle_trees(rcert_item, tmp, true);
 	}
       break;
@@ -2261,8 +2339,8 @@ session::process_data_cmd(netcmd_item_type type,
 	    pack(data(dat), packed);
 	    rp->first = revision_data(packed);
 	    read_revision_set(dat, rp->second);
-	    if (rcert_refinement_done() &&
-		all_requested_revisions_received())
+	    ancestry.insert(std::make_pair(rid, rp));
+	    if (rcert_refinement_done())
 	      {
 		analyze_ancestry_graph();
 	      }
