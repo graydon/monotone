@@ -664,17 +664,6 @@ lua_hooks::hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers
 }
 
 bool 
-lua_hooks::hook_get_file_cert_trust(std::set<rsa_keypair_id> const & signers,
-                                    hexenc<id> const & id,
-                                    cert_name const & name,
-                                    cert_value const & val)
-{
-  Lua ll(st);
-  ll.push_str("get_file_cert_trust");
-  return shared_trust_function_body(ll, signers, id, name, val);
-}
-
-bool 
 lua_hooks::hook_accept_testresult_change(map<rsa_keypair_id, bool> const & old_results,
                                          map<rsa_keypair_id, bool> const & new_results)
 {
