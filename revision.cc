@@ -918,7 +918,7 @@ struct anc_graph
   
   void add_node_ancestry(u64 child, u64 parent);  
   void write_certs();
-  void kluge_for_3_ancestor_nodes();
+  void kill_redundant_edges();
   void rebuild_ancestry();
   void get_node_manifest(u64 node, manifest_id & man);
   u64 add_node_for_old_manifest(manifest_id const & man);
@@ -981,35 +981,39 @@ void anc_graph::write_certs()
 }
 
 void
-anc_graph::kluge_for_3_ancestor_nodes()
+anc_graph::kill_redundant_edges()
 {
   // This little chunk of code is a bit of a kluge, and sloppy besides.  The
   // problem is that as of 0.17, monotone has a few nodes in its ancestry
-  // graph that have 3 parents.  They are weird artifacts of
+  // graph that have "redundant edge" -- immediate parents that are also
+  // ancestors via some more circuitous route.  They are weird artifacts of
   // changesetification; such things used to be possible in the pre-changeset
-  // days.  This wouldn't be so bad -- there's no actual restriction on
-  // revisions only have 1 or 2 parents -- except that these nodes also have
-  // at least one of their parent edges as weird redundant edges, like
+  // days.  For example, something like
   //     A -> B -> C,   A -> C
-  // where the A -> C edge is kinda meaningless.  _This_ wouldn't be so bad,
+  // where the A -> C edge is kinda meaningless.  This wouldn't be so bad,
   // except that at least one of these nodes has a file that exists in A and
   // C, but not in B.  This means that the rebuild process generates invalid
   // changesets, where A -> C says that there is only one logical file,
   // whereas A -> B -> C says that there are two different logical files, we
   // lose.
-  // So this is a special routine just to deal with these particular weird
-  // cases, by throwing out the redundant edges.  It's of questionable utility
-  // in general, since both the 3-parent case and the redundant-edge case are
-  // _theoretically_ possible, and we may decide at some point that we
-  // actually want them.  But we need it for 0.17, for monotone's own ancestry
-  // graph.  But possibly not for anyone else's graph, at any other time.  So
-  // FIXME: this method should probably be removed entirely.
-  P(F("scanning for nodes with 3+ parents\n"));
+  // The proper solution would be to have rebuild notice such cases and
+  // synthesize a drop/add pair one the A -> C edge; this same situation can
+  // occur in perfectly normal ancestry graphs.  But that is hard, and
+  // currently these weird edges can only happen because of weirdnesses
+  // carried over from the old pre-changeset days, and weirdnesses in the old
+  // "propagate" command.  So we might as well just get rid of them, and worry
+  // about the "proper solution" when it actually arises.
+  // FIXME: this method should be removed entirely in the long run, because in
+  // the long run we may decide that we _want_ redundant edges in some
+  // situations.  However, we haven't decided that yet, and all such edges
+  // that exist in the 0.17 timeframe are _not_ particularly wanted, so for
+  // now we do this.
+  P(F("scanning for nodes with spurious redundant parents\n"));
   std::set<u64> manyparents;
   for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
        i != ancestry.end(); ++i)
     {
-      if (ancestry.count(i->first) > 2)
+      if (ancestry.count(i->first) > 1)
         manyparents.insert(i->first);
     }
   for (std::set<u64>::const_iterator i = manyparents.begin();
@@ -1024,7 +1028,6 @@ anc_graph::kluge_for_3_ancestor_nodes()
           to_examine.push_back(j->second);
           parents.insert(j->second);
         }
-      P(F("  considering node: %i (%i parents)\n") % (*i) % parents.size());
       I(!to_examine.empty());
       while (!to_examine.empty())
         {
@@ -1046,29 +1049,32 @@ anc_graph::kluge_for_3_ancestor_nodes()
         {
           if (indirect_ancestors.find(*p) != indirect_ancestors.end())
             {
-              P(F("  optimizing out edge %i -> %i\n") % (*p) % (*i));
+              P(F("optimizing out redundant edge %i -> %i\n") % (*p) % (*i));
               // sometimes I hate STL.  or at least my incompetence at using it.
-              bool foundit = false;
+              size_t old_size = ancestry.size();
               for (std::multimap<u64, u64>::iterator e = ancestry.lower_bound(*i);
-                   !foundit && e != ancestry.upper_bound(*i); ++e)
+                   e != ancestry.upper_bound(*i); ++e)
                 {
                   I(e->first == *i);
                   if (e->second == *p)
-                    ancestry.erase(e);
-                  foundit = true;
+                    {
+                      ancestry.erase(e);
+                      break;
+                    }
                 }
-              I(foundit);
+              I(old_size - 1 == ancestry.size());
               ++killed;
             }
         }
       I(killed < parents.size());
+      I(ancestry.find(*i) != ancestry.end());
     }
 }
 
 void
 anc_graph::rebuild_ancestry()
 {
-  kluge_for_3_ancestor_nodes();
+  kill_redundant_edges();
 
   P(F("rebuilding %d nodes\n") % max_node);
   {

@@ -1,5 +1,11 @@
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* revision.cc (kluge_for_3_ancestor_nodes): Rename to...
+	(kill_redundant_edges): ...this.  Kill all redundant edges, not
+	just ones on nodes with 3+ parents.  Also, make it actually work.
+	
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* revision.cc (kluge_for_3_ancestor_nodes): New method.
 	(rebuild_ancestry): Call it.
 
