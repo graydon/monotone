@@ -216,6 +216,7 @@ m4_define([MONOTONE3], MONOTONE --db=test3.db)
 m4_define([NETSYNC_SERVE_START], [
 killall -q -KILL monotone
 MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $1 &
+sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
 m4_define([NETSYNC_SERVE_STOP], [
@@ -237,7 +238,6 @@ NETSYNC_CLIENT_N_RUN(2, $1, $2)
 # account when choosing push|pull|sync.
 m4_define([RUN_NETSYNC], [
 NETSYNC_SERVE_START($2)
-sleep 4
 NETSYNC_CLIENT_RUN($1, $2)
 NETSYNC_SERVE_STOP
 ])
@@ -310,3 +310,4 @@ m4_include(tests/t_checkout_options.at)
 m4_include(tests/t_trusted.at)
 m4_include(tests/t_attr.at)
 m4_include(tests/t_rcfile_required.at)
+m4_include(tests/t_persistent_server_revision.at)

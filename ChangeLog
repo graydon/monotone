@@ -1,3 +1,8 @@
+2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_revision.at: New test.
+	* testsuite.at: Call it.  Tweak NETSYNC macros in support of it.
+
 2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
 
 	* lua.hh (add_rcfile): Add 'required' argument.
