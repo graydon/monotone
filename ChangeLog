@@ -1,5 +1,16 @@
 2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* ChangeLog: Add log entry for <jmmv@menta.net>'s last change.
+	* std_hooks.lua: Check exit status of external merge commands.
+	
+2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Include cerrno, cstring,
+	boost/filesystem/exception.hpp.
+	(checkout): Verify that directory creation and chdir succeeded.
+	
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* diff_patch.cc (struct hunk_offset_calculator): Remove dead
 	code.  (I believe it was used by the old, non-extent-based
 	merging.)

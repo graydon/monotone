@@ -216,8 +216,11 @@ function merge2(left_path, right_path, merged_path, left, right)
       if cmd ~= nil
       then
          io.write(string.format("executing external 2-way merge command: %s\n", cmd))
-         os.execute(cmd)
-         data = read_contents_of_file(outfile)
+         if os.execute(cmd) == 0 then
+            data = read_contents_of_file(outfile)
+         else
+            io.write("2-way merge command failed\n")
+         end
       else
          io.write("no external 2-way merge command found\n")
       end
@@ -260,8 +263,11 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
       if cmd ~= nil
       then
          io.write(string.format("executing external 3-way merge command: %s\n", cmd))
-         os.execute(cmd)
-         data = read_contents_of_file(outfile)
+         if os.execute(cmd) == 0 then
+            data = read_contents_of_file(outfile)
+         else
+            io.write("3-way merge command failed\n")
+         end
       else
          io.write("no external 3-way merge command found\n")
       end
