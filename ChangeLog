@@ -1,5 +1,16 @@
 2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
 
+	* automate.cc (automate_leaves): New function.
+	(automate_command): Add it.
+	* commands.cc (automate): Synopsify it.
+	* monotone.1: Add it.
+	* monotone.texi (Automation, Commands): Likewise.
+	
+	* tests/t_automate_leaves.at: New test.
+	* testsuite.at: Add it.
+
+2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi (Automation): Make newly added sample outputs
 	verbatim also.
 

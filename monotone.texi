@@ -4020,6 +4020,7 @@ command, used for scripting monotone.  All give output on stdout; they
 may also give useful chatter on stderr, including warnings and error
 messages.
 
+
 @ftable @command
 @item monotone automate interface_version
 
@@ -4057,6 +4058,7 @@ None.
 
 @end table
 
+
 @item monotone automate heads @var{branch}
 
 @table @strong
@@ -4090,6 +4092,7 @@ newline.  The lines are printed in alphabetically sorted order.
 If the given branch contains no members, then no lines are printed.
 
 @end table
+
 
 @item monotone automate descendents @var{rev1} [@var{rev2} [...]]
 
@@ -4131,6 +4134,7 @@ an error message to stderr, and exits with status 1.
 
 @end table
 
+
 @item monotone automate erase_ancestors @var{rev1} [@var{rev2} [...]]
 
 @table @strong
@@ -4171,6 +4175,7 @@ an error message to stderr, and exits with status 1.
 
 @end table
 
+
 @item monotone automate toposort @var{rev1} [@var{rev2} [...]]
 
 @table @strong
@@ -4208,6 +4213,7 @@ If any of the revisions do not exist, prints nothing to stdout, prints
 an error message to stderr, and exits with status 1.
 
 @end table
+
 
 @item monotone automate ancestry_difference @var{new} [@var{old1} [@var{old2} [...]]]
 
@@ -4250,6 +4256,46 @@ Revisions are printed in topologically sorted order.
 
 If any of the revisions do not exist, prints nothing to stdout, prints
 an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate leaves
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints the leaves of the revision graph, i.e. all revision that have no
+children.  This is similar, but not identical to the functionality of
+@command{heads}, which prints every revision in a branch, that has no
+descendents in that branch.  If every revision in the database was in
+the same branch, then they would be identical.  Generally, every leaf is
+the head of some branch, but not every branch head is a leaf.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each a leaf of the revision graph.  Each line
+consists of a revision id, in hexadecimal, followed by a newline.  The
+lines are printed in alphabetically sorted order.
+
+@item Error conditions:
+
+None.
 
 @end table
 
@@ -5727,7 +5773,7 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference)}
+@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference|leaves)}
 Scripting interface.
 
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}

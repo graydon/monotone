@@ -219,6 +219,40 @@ automate_ancestry_difference(std::vector<utf8> args,
     output << (*i).inner()() << std::endl;
 }
 
+// Name: leaves
+// Arguments:
+//   None
+// Added in: 0.1
+// Purpose: Prints the leaves of the revision graph, i.e., all revisions that
+//   have no children.  This is similar, but not identical to the
+//   functionality of 'heads', which prints every revision in a branch, that
+//   has no descendents in that branch.  If every revision in the database was
+//   in the same branch, then they would be identical.  Generally, every leaf
+//   is the head of some branch, but not every branch head is a leaf.
+// Output format: A list of revision ids, in hexadecimal, each followed by a
+//   newline.  Revision ids are printed in alphabetically sorted order.
+// Error conditions: None.
+static void
+automate_leaves(std::vector<utf8> args,
+               std::string const & help_name,
+               app_state & app,
+               std::ostream & output)
+{
+  if (args.size() != 0)
+    throw usage(help_name);
+
+  // this might be more efficient in SQL, but for now who cares.
+  std::set<revision_id> leaves;
+  app.db.get_revision_ids(leaves);
+  std::multimap<revision_id, revision_id> graph;
+  app.db.get_revision_ancestry(graph);
+  for (std::multimap<revision_id, revision_id>::const_iterator i = graph.begin();
+       i != graph.end(); ++i)
+    leaves.erase(i->first);
+  for (std::set<revision_id>::const_iterator i = leaves.begin(); i != leaves.end(); ++i)
+    output << (*i).inner()() << std::endl;
+}
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -237,6 +271,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_toposort(args, root_cmd_name, app, output);
   else if (cmd() == "ancestry_difference")
     automate_ancestry_difference(args, root_cmd_name, app, output);
+  else if (cmd() == "leaves")
+    automate_leaves(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }
