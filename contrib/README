@@ -1,0 +1,6 @@
+This directory contains various things that we're not quite sure what
+to do with, but that someone may find useful.  See individual files for
+licenses.
+
+  -- Log2Gxl.java: Java code to convert output from 'monotone log' into
+     GXL, an XML-based graph description language.

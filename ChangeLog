@@ -1,3 +1,11 @@
+2005-03-26  Joel Crisp  <jcrisp@s-r-s.co.uk>
+
+	* contrib/Log2Gxl.java: New file.
+
+2005-03-26  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/README: New file.
+
 2005-03-25  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (user_log_file_name): Remove unused variable
