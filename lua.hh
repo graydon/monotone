@@ -11,6 +11,7 @@
 
 #include <string>
 #include <set>
+#include <map>
 #include "file_io.hh"
 #include "vocab.hh"
 
@@ -82,6 +83,9 @@ public:
   bool hook_get_linesep_conv(file_path const & p, 
 			     std::string & db, std::string & ext);
 
+  // notification hooks
+  bool hook_note_commit(manifest_id const & new_id,
+			std::map<cert_name, cert_value> const & certs);
 };
 
 #endif // __LUA_HH__

@@ -810,3 +810,27 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
   ll.extract_str(ext).pop();
   return ll.ok();
 }
+
+bool 
+lua_hooks::hook_note_commit(manifest_id const & new_id,
+			    map<cert_name, cert_value> const & certs)
+{
+  Lua ll(st);
+  ll
+    .push_str("note_commit")
+    .get_fn()
+    .push_str(new_id.inner()());
+
+  ll.push_table();
+
+  for (map<cert_name, cert_value>::const_iterator i = certs.begin();
+       i != certs.end(); ++i)
+    {
+      ll.push_str(i->first());
+      ll.push_str(i->second());
+      ll.set_table();
+    }
+  
+  ll.call(2, 0);
+  return ll.ok();
+}

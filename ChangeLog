@@ -1,3 +1,8 @@
+2004-04-20  graydon hoare  <graydon@pobox.com>
+
+	* lua.hh, lua.cc (hook_note_commit): New hook.
+	* commands.cc (commit): Call it.
+
 2004-04-19  graydon hoare  <graydon@pobox.com>
 
 	* cert.cc: Make trust messages nicer.

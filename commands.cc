@@ -1214,6 +1214,24 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 
   update_any_attrs(app);
   app.write_options();
+
+  {
+    // tell lua what happened. yes, we might lose some information here,
+    // but it's just an indicator for lua, eg. to post stuff to a mailing
+    // list. if the user *really* cares about cert validity, multiple certs
+    // with same name, etc.  they can inquire further, later.
+    map<cert_name, cert_value> certs;
+    vector< manifest<cert> > ctmp;
+    app.db.get_manifest_certs(ps.m_new, ctmp);
+    for (vector< manifest<cert> >::const_iterator i = ctmp.begin();
+	 i != ctmp.end(); ++i)
+      {
+	cert_value vtmp;
+	decode_base64(i->inner().value, vtmp);
+	certs.insert(make_pair(i->inner().name, vtmp));
+      }
+    app.lua.hook_note_commit(ps.m_new, certs);
+  }
 }
 
 CMD(update, "working copy", "", "update working copy")
