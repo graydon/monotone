@@ -1886,7 +1886,20 @@ $ vi MT/log
 @end group
 @end smallexample
 
-She commits her work:
+and logs her changes in @file{MT/log} right away so she does not
+forget what she has done:
+
+@small example
+@group
+$ vi MT/log
+* src/banana.c: Added polling implementation
+@end group
+@end smallexample
+
+Later, she commits her work.  Monotone again invokes an external editor
+for her to edit her log message, but this time it fills in the messages
+she's written so far, and she simply checks them over one last time
+before finishing her commit:
 
 @smallexample
 @group
