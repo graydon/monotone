@@ -1,3 +1,8 @@
+2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (log): Synopsize optional 'file' argument, and
+	describe both arguments in help description.
+
 2004-12-09  Derek Scherger  <derek@echologic.com>
 
 	* .mt-nonce: delete obsolete file	

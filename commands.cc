@@ -3049,7 +3049,7 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
   import_cvs_repo(mkpath(idx(args, 0)()), app);
 }
 
-CMD(log, "informative", "[ID]", "print log history in reverse order (which affected file)")
+CMD(log, "informative", "[ID] [file]", "print history in reverse order starting from 'ID' (filtering by 'file')")
 {
   revision_set rev;
   revision_id rid;
