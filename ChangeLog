@@ -1,3 +1,8 @@
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_add_drop_add.at: New test.
+	* testsuite.at: Add it.
+
 2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_merge_add_del: Shorten name for better display.
