@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: monotone-devel@nongnu.org\n"
-"POT-Creation-Date: 2004-12-30 01:46-0500\n"
+"POT-Creation-Date: 2005-01-06 11:31+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -189,248 +189,248 @@ msgstr ""
 msgid "vcheck OK: key %s, id %s\n"
 msgstr ""
 
-#: change_set.cc:660
+#: change_set.cc:666
 #, c-format
 msgid "skipping preserved %s %d : '%s'\n"
 msgstr ""
 
-#: change_set.cc:666
+#: change_set.cc:672
 #, c-format
 msgid "analyzing %s %d : '%s' -> '%s'\n"
 msgstr ""
 
-#: change_set.cc:1301
+#: change_set.cc:1307
 msgid "concatenating change sets\n"
 msgstr ""
 
-#: change_set.cc:1320
+#: change_set.cc:1326
 #, c-format
 msgid "concatenating %d and %d deltas\n"
 msgstr ""
 
-#: change_set.cc:1329
+#: change_set.cc:1335
 #, c-format
 msgid "processing delta on %s\n"
 msgstr ""
 
-#: change_set.cc:1331
+#: change_set.cc:1337
 #, c-format
 msgid "delta on %s in first changeset renamed to %s\n"
 msgstr ""
 
-#: change_set.cc:1343 change_set.cc:1388
+#: change_set.cc:1349 change_set.cc:1394
 #, c-format
 msgid "delta [%s]->[%s] for deleted file %s\n"
 msgstr ""
 
-#: change_set.cc:1347
+#: change_set.cc:1353
 #, c-format
 msgid "discarding delta [%s]->[%s] for deleted file '%s'\n"
 msgstr ""
 
-#: change_set.cc:1364
+#: change_set.cc:1370
 #, c-format
 msgid "fusing deltas on %s : %s -> %s and %s -> %s\n"
 msgstr ""
 
-#: change_set.cc:1378
+#: change_set.cc:1384
 #, c-format
 msgid "delta on %s in second changeset copied forward\n"
 msgstr ""
 
-#: change_set.cc:1396
+#: change_set.cc:1402
 msgid "finished concatenation\n"
 msgstr ""
 
-#: change_set.cc:1501 change_set.cc:1508
+#: change_set.cc:1507 change_set.cc:1514
 #, c-format
 msgid "delete of %s dominates rename to %s\n"
 msgstr ""
 
-#: change_set.cc:1518
+#: change_set.cc:1524
 #, c-format
 msgid "unable to resolve file conflict '%s' -> '%s' vs. '%s'"
 msgstr ""
 
-#: change_set.cc:1522
+#: change_set.cc:1528
 #, c-format
 msgid "unable to resolve dir conflict '%s' -> '%s' vs. '%s'"
 msgstr ""
 
-#: change_set.cc:1527
+#: change_set.cc:1533
 #, c-format
 msgid "illegal conflict resolution '%s', wanted '%s' or '%s'\n"
 msgstr ""
 
-#: change_set.cc:1583
+#: change_set.cc:1589
 #, c-format
 msgid "tid %d (%s) clobbered tid %d (%s)\n"
 msgstr ""
 
-#: change_set.cc:1619
+#: change_set.cc:1625
 #, c-format
 msgid "skipping common change on %s (tid %d)\n"
 msgstr ""
 
-#: change_set.cc:1624
+#: change_set.cc:1630
 #, c-format
 msgid "skipping neutral change of %s -> %s (tid %d)\n"
 msgstr ""
 
-#: change_set.cc:1631
+#: change_set.cc:1637
 #, c-format
 msgid "propagating change on %s -> %s (tid %d)\n"
 msgstr ""
 
-#: change_set.cc:1647
+#: change_set.cc:1653
 msgid "conflict detected, resolved in A's favour\n"
 msgstr ""
 
-#: change_set.cc:1653
+#: change_set.cc:1659
 msgid "conflict detected, resolved in B's favour\n"
 msgstr ""
 
-#: change_set.cc:1815
+#: change_set.cc:1821
 #, c-format
 msgid "reusing merge resolution '%s' : '%s' -> '%s'\n"
 msgstr ""
 
-#: change_set.cc:1824
+#: change_set.cc:1830
 #, c-format
 msgid "merge of '%s' : '%s' vs. '%s' (no common ancestor) failed"
 msgstr ""
 
-#: change_set.cc:1831
+#: change_set.cc:1837
 #, c-format
 msgid "merge of '%s' : '%s' -> '%s' vs '%s' failed"
 msgstr ""
 
-#: change_set.cc:1835
+#: change_set.cc:1841
 #, c-format
 msgid "merge of '%s' : '%s' -> '%s' vs '%s' resolved to '%s'\n"
 msgstr ""
 
-#: change_set.cc:1892
+#: change_set.cc:1898
 #, c-format
 msgid "merge is copying delta '%s' : '%s' -> '%s'\n"
 msgstr ""
 
-#: change_set.cc:1898
+#: change_set.cc:1904
 #, c-format
 msgid "skipping delta '%s'->'%s' on deleted file '%s'\n"
 msgstr ""
 
-#: change_set.cc:1922
+#: change_set.cc:1928
 #, c-format
 msgid "propagating new file addition delta on '%s' : '%s' -> '%s'\n"
 msgstr ""
 
-#: change_set.cc:1934
+#: change_set.cc:1940
 #, c-format
 msgid "skipping new file addition delta on '%s' : '' -> '%s'\n"
 msgstr ""
 
-#: change_set.cc:1942
+#: change_set.cc:1948
 #, c-format
 msgid "skipping common delta '%s' : '%s' -> '%s'\n"
 msgstr ""
 
-#: change_set.cc:1948
+#: change_set.cc:1954
 #, c-format
 msgid "skipping neutral delta on '%s' : %s -> %s\n"
 msgstr ""
 
-#: change_set.cc:1956
+#: change_set.cc:1962
 #, c-format
 msgid "propagating unperturbed delta on '%s' : '%s' -> '%s'\n"
 msgstr ""
 
-#: change_set.cc:1966
+#: change_set.cc:1972
 #, c-format
 msgid "merging delta '%s' : '%s' -> '%s' vs. '%s'\n"
 msgstr ""
 
-#: change_set.cc:1979
+#: change_set.cc:1985
 #, c-format
 msgid "resolved merge to '%s' : '%s' -> '%s'\n"
 msgstr ""
 
-#: change_set.cc:2004
+#: change_set.cc:2010
 msgid "merging change sets\n"
 msgstr ""
 
-#: change_set.cc:2060
+#: change_set.cc:2066
 msgid "finished merge\n"
 msgstr ""
 
-#: change_set.cc:2076
+#: change_set.cc:2082
 msgid "inverting change set\n"
 msgstr ""
 
-#: change_set.cc:2104
+#: change_set.cc:2110
 #, c-format
 msgid "converted 'delete %s' to 'add as %s' in inverse\n"
 msgstr ""
 
-#: change_set.cc:2113
+#: change_set.cc:2119
 #, c-format
 msgid "converted add %s to delete in inverse\n"
 msgstr ""
 
-#: change_set.cc:2123
+#: change_set.cc:2129
 #, c-format
 msgid "converting delta %s -> %s on %s\n"
 msgstr ""
 
-#: change_set.cc:2125
+#: change_set.cc:2131
 #, c-format
 msgid "inverse is delta %s -> %s on %s\n"
 msgstr ""
 
-#: change_set.cc:2183
+#: change_set.cc:2189
 #, c-format
 msgid "moving %s -> %s\n"
 msgstr ""
 
-#: change_set.cc:2232
+#: change_set.cc:2238
 #, c-format
 msgid "moving file %s -> %s\n"
 msgstr ""
 
-#: change_set.cc:2240
+#: change_set.cc:2246
 #, c-format
 msgid "moving dir %s -> %s\n"
 msgstr ""
 
-#: change_set.cc:2637
+#: change_set.cc:2643
 #, c-format
 msgid "[begin changeset %s]\n"
 msgstr ""
 
-#: change_set.cc:2638
+#: change_set.cc:2644
 #, c-format
 msgid "%s"
 msgstr ""
 
-#: change_set.cc:2639
+#: change_set.cc:2645
 #, c-format
 msgid "[end changeset %s]\n"
 msgstr ""
 
-#: change_set.cc:2671
+#: change_set.cc:2677
 msgid "beginning disjoint_merge_test\n"
 msgstr ""
 
-#: change_set.cc:2689
+#: change_set.cc:2695
 msgid "finished disjoint_merge_test\n"
 msgstr ""
 
-#: change_set.cc:2758 change_set.cc:2803 change_set.cc:2848
+#: change_set.cc:2764 change_set.cc:2809 change_set.cc:2854
 #, c-format
 msgid "informative failure: %s\n"
 msgstr ""
 
-#: change_set.cc:2762 change_set.cc:2807 change_set.cc:2852
+#: change_set.cc:2768 change_set.cc:2813 change_set.cc:2858
 #, c-format
 msgid "runtime error: %s\n"
 msgstr ""
@@ -1118,7 +1118,7 @@ msgstr ""
 msgid "revision %s does not exist in db, skipping\n"
 msgstr ""
 
-#: commands.cc:3401
+#: commands.cc:3410
 #, c-format
 msgid "revision '%s' in '%s' maps to '%s' in %s\n"
 msgstr ""
