@@ -257,14 +257,8 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 
 TESTS = unit_tests $(srcdir)/testsuite
 
-MOSTLYCLEANFILES = \
-	testsuite.dir/at-check-line \
-        testsuite.dir/at-status \
-	testsuite.dir/at-stdout \
-	testsuite.dir/at-stder1 \
-	testsuite.dir/at-stderr \
-	testsuite.dir/at-times \
-	testsuite.log
+mostlyclean-local:
+	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
 
 DISTCLEANFILES = tests/atconfig \
                  idna/idn-int.h 
