@@ -1,3 +1,9 @@
+2005-03-23  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_merge_5.at: new test for a merge which ends up with
+	duplicate lines.
+	* testsuite.at: add it
+
 2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
 
 	* vocab_terms.hh: Declare base64<var_name>.
