@@ -1,5 +1,10 @@
 2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
 
+        * ChangeLog: Add missing entries for several modifications I did
+        in December 6th and 3rd.
+
+2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+
 	* tests/t_checkout_dir.at: New test triggering the bug I fixed
 	  previously in the checkout command, verifying that directory
 	  creation and chdir succeed.
@@ -404,6 +409,22 @@
 	* tests/t_netsync_repeated.at: Actually check that certs were
 	transferred correctly.
 
+2004-12-06  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* figures/cert.pdf:
+	* figures/cert.png:
+	* figures/oo-figures.sxd:
+	* monotone.texi: Use example host names under the
+	example.{com,org,net} subdomains instead of invented names.
+	These are defined in RFC 2606.
+
+2004-12-06  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* configure.ac: Now that we depend on GNU Autoconf >= 2.58, we
+	can use the AS_HELP_STRING macro everywhere we need to pretty-print
+	help strings.  Also convert old calls to AC_HELP_STRING (deprecated)
+	to this one.
+
 2004-12-06  Joel Rosdahl  <joel@rosdahl.net>
 
 	* Makefile.am (package_full_revision.txt): Silence error messages
@@ -521,6 +542,44 @@
 
 	* change_set.cc: Remove tabs.
 	* diff_patch.cc: Likewise.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Add a missing newline to a message.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* cryptopp/config.h:
+	* configure.ac: NetBSD does not define __unix__ nor __unix, so the
+	build fails.  To solve, check for __NetBSD__ where appropiate to
+	detect a Unix system.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* INSTALL: Document my latest changes: --enable-ipv6 option, ability
+	to specify static boost prefix through --enable-static-boost and
+	BOOST_SUFFIX variable.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* Makefile.am:
+	* configure.am: Add a variable, BOOST_SUFFIX, that identifies the
+	suffix string that has to be appended to Boost library names to use
+	them.  This variable can be defined on configure's command line.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* configure.ac: Let the --enable-static-boost argument take a prefix
+	to where boost libraries are located.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* configure.ac: Add a three-state --enable-ipv6 argument to the
+	configure script to explicitly enable or disable IPv6 support.
+
+2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* std_hooks.lua: Add missing newlines to two error messages.
 
 2004-12-01  graydon hoare  <graydon@pobox.com>
 
