@@ -164,8 +164,8 @@ else
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
 endif
 
-monotone_LDADD += libplatform.a
-unit_tests_LDADD += libplatform.a
+monotone_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
+unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
@@ -325,8 +325,8 @@ package_revision.h: package_revision.txt txt2c Makefile
 
 .PHONY: package_full_revision.txt
 package_full_revision.txt:
-	(cd $(srcdir) && $(top_builddir)/monotone status) >$@.$$$$ \
-	|| (cd $(srcdir) && monotone status) >$@.$$$$ \
+	(cd $(srcdir) && $(top_builddir)/monotone status 2>/dev/null) >$@.$$$$ \
+	|| (cd $(srcdir) && monotone status 2>/dev/null) >$@.$$$$ \
 	|| rm -f $@.$$$$; \
 	if [ -f $@.$$$$ ]; then \
 	  mv $@.$$$$ $@; \

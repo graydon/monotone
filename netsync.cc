@@ -1365,7 +1365,7 @@ session::process_hello_cmd(id const & server,
           base64<rsa_sha1_signature> sig;
           rsa_sha1_signature sig_raw;
           base64< arc4<rsa_priv_key> > our_priv;
-          app.db.get_key(app.signing_key, our_priv);
+          load_priv_key(app, app.signing_key, our_priv);
           make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
           decode_base64(sig, sig_raw);
           
@@ -1451,7 +1451,7 @@ session::process_anonymous_cmd(protocol_role role,
   base64<rsa_sha1_signature> sig;
   rsa_sha1_signature sig_raw;
   base64< arc4<rsa_priv_key> > our_priv;
-  app.db.get_key(app.signing_key, our_priv);
+  load_priv_key(app, app.signing_key, our_priv);
   make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
   decode_base64(sig, sig_raw);
   queue_confirm_cmd(sig_raw());
@@ -1572,7 +1572,7 @@ session::process_auth_cmd(protocol_role role,
       base64<rsa_sha1_signature> sig;
       rsa_sha1_signature sig_raw;
       base64< arc4<rsa_priv_key> > our_priv;
-      app.db.get_key(app.signing_key, our_priv);
+      load_priv_key(app, app.signing_key, our_priv);
       make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
       decode_base64(sig, sig_raw);
       queue_confirm_cmd(sig_raw());

@@ -1136,9 +1136,14 @@ concatenate_change_sets(change_set const & a,
       reconstruct_path(delta_entry_path(del), b_src_map, b_analysis.second, new_pth);
       L(F("delta on %s in first changeset renamed to %s\n")
         % delta_entry_path(del) % new_pth);
-      concatenated.deltas.insert(std::make_pair(new_pth,
-                                                std::make_pair(delta_entry_src(del),
-                                                               delta_entry_dst(del))));
+      if (b.rearrangement.deleted_files.find(delta_entry_path(del)) != 
+                                                  b.rearrangement.deleted_files.end())
+        L(F("discarding delta [%s]->[%s] for deleted file '%s'\n")
+            % delta_entry_src(del) % delta_entry_dst(del) % new_pth);
+      else
+        concatenated.deltas.insert(std::make_pair(new_pth,
+                                                  std::make_pair(delta_entry_src(del),
+                                                                 delta_entry_dst(del))));
     }
 
   // next fuse any deltas id1->id2 and id2->id3 to id1->id3
@@ -1165,6 +1170,8 @@ concatenate_change_sets(change_set const & a,
         {
           L(F("delta on %s in second changeset copied forward\n")
             % delta_entry_path(del));
+          I(b.rearrangement.deleted_files.find(delta_entry_path(del)) ==
+                                          b.rearrangement.deleted_files.end());
           concatenated.deltas.insert(*del);
         }
     }

@@ -526,6 +526,23 @@ lua_hooks::hook_get_branch_key(cert_value const & branchname,
 }
 
 bool 
+lua_hooks::hook_get_priv_key(rsa_keypair_id const & k,
+                               base64< arc4<rsa_priv_key> > & priv_key )
+{
+  string key;
+  bool ok = Lua(st)
+    .push_str("get_priv_key")
+    .get_fn()
+    .push_str(k())
+    .call(1,1)
+    .extract_str(key)
+    .ok();
+
+  priv_key = key;
+  return ok;
+}
+
+bool 
 lua_hooks::hook_get_author(cert_value const & branchname, 
 			   string & author)
 {

@@ -1909,14 +1909,14 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   {
     N(app.lua.hook_persist_phrase_ok(),
       F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-    N(app.db.private_key_exists(key),
-      F("no private key '%s' found in database") % key);
+    N(priv_key_exists(app, key),
+      F("no private key '%s' found in database or get_priv_key hook") % key);
     N(app.db.public_key_exists(key),
       F("no public key '%s' found in database") % key);
     base64<rsa_pub_key> pub;
     app.db.get_key(key, pub);
     base64< arc4<rsa_priv_key> > priv;
-    app.db.get_key(key, priv);    
+    load_priv_key(app, key, priv);
     require_password(app.lua, key, pub, priv);
   }
 

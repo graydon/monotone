@@ -3,6 +3,12 @@
 	* commands.cc (log): Synopsize optional 'file' argument, and
 	describe both arguments in help description.
 
+2004-12-10  Matt Johnston  <matt@ucc.asn.au>
+
+        * cert.cc: Added priv_key_exists() function
+        * commands.cc, rcs_import.cc: use new privkey functions
+        * netsync.cc: change some bits that were missed
+
 2004-12-09  Derek Scherger  <derek@echologic.com>
 
 	* .mt-nonce: delete obsolete file	
@@ -17,6 +23,23 @@
 	* std_hooks.lua (merge2, merge3, merge2_xxdiff_cmd,
 	merge3_xxdiff_cmd): pass file paths to xxdiff for use as titles
 	* testsuite.at (MONOTONE_SETUP): add paths to merge2 hook
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * cert.cc, cert.hh, lua.cc, lua.hh, netsync.cc:
+        Added a new get_priv_key(keyid) lua hook to retrieve
+        a private key from ~/.monotonerc
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * change_set.cc: Don't include patch deltas on files which
+        are being deleted in changesets. (partial fix for bug
+        invoked by t_merge_add_del.at)
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * configure.ac,Makefile.am: Fix iconv and intl
+        handling so that the libraries are used (required for OS X).
 
 2004-12-09  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -33,6 +56,10 @@
 	tickers.
 	(queue_data_cmd): Call 'note_item_sent'.
 	(queue_delta_cmd): Call 'note_item_sent'.
+
+2004-12-09  graydon hoare  <graydon@pobox.com>
+
+	* ROADMAP: Add file.
 
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -87,10 +114,6 @@
 	* tests/t_ambig_update.at: Also check that update fails when one
 	candidate edge is deeper than the other.
 
-2004-12-09  graydon hoare  <graydon@pobox.com>
-
-	* ROADMAP: Add file.
-
 2004-12-08  graydon hoare  <graydon@pobox.com>
 
 	* change_set.cc (extend_renumbering_via_added_files): 
@@ -101,17 +124,6 @@
 	* po/monotone.pot: Regenerate.
 	* tests/t_add_edge.at: New test to catch add failure.
 	* testsuite.at: Call it.
-
-2004-12-07  Richard Levitte  <richard@levitte.org>
-
-	* Makefile.am: Keep package_*revision.{txt,h}, so they are saved
-	as part of a distribution, and thereby make as sure as possible
-	people who download monotone get historical information on where
-	their copy of monotone came from.
-
-2004-12-06  Richard Levitte  <richard@levitte.org>
-
-	* monotone.cc: Add a hint on how to use --ticker.
 
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -152,11 +164,27 @@
 	* tests/t_add_edge.at: New test to catch add failure.
 	* testsuite.at: Call it.
 
+2004-12-07  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: Keep package_*revision.{txt,h}, so they are saved
+	as part of a distribution, and thereby make as sure as possible
+	people who download monotone get historical information on where
+	their copy of monotone came from.
+
+2004-12-06  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Add a hint on how to use --ticker.
+
 2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc (ls_certs): Sort the certs before printing.
 	* tests/t_netsync_repeated.at: Actually check that certs were
 	transferred correctly.
+
+2004-12-06  Joel Rosdahl  <joel@rosdahl.net>
+
+	* Makefile.am (package_full_revision.txt): Silence error messages
+	when deducing full package revision.
 
 2004-12-06  graydon hoare  <graydon@pobox.com>
 
