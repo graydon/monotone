@@ -16,10 +16,10 @@ AT_TESTED([monotone])
 
 # Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
 m4_define([MONOTONE], [$PREEXECUTE monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net --root=$_ROOT_DIR])
-m4_define([RAW_MONOTONE], [$PREEXECUTE monotone])
-m4_define([SHA1], [monotone identify $1])
+m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
+m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
-m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
+m4_define([WORKING_REVISION], [monotone --norc cat revision | monotone --norc identify])
 
 # the MONOTONE_SETUP macro deploys the standard lua hooks and loads the 
 # standard testing key, which we use for further tests.
@@ -27,7 +27,7 @@ m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
 m4_define([MONOTONE_SETUP], [
 
 # Save the PWD so MONOTONE macro can refer back to it
-_ROOT_DIR=$PWD
+_ROOT_DIR=`pwd -P`
 
 AT_DATA(test_keys, [@<:@pubkey tester@test.net@:>@
 MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
