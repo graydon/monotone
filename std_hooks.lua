@@ -227,10 +227,8 @@ function merge2(left, right)
       if cmd ~= nil
       then
 	 io.write(string.format("executing external 2-way merge command: %s\n", cmd))
-	 if os.execute(cmd) == 0 
-	 then
-	    data = read_contents_of_file(outfile)
-	 end
+	 os.execute(cmd)
+	 data = read_contents_of_file(outfile)
       end
    end
    
@@ -268,10 +266,8 @@ function merge3(ancestor, left, right)
       if cmd ~= nil
       then
 	 io.write(string.format("executing external 3-way merge command: %s\n", cmd))
-	 if os.execute(cmd) == 0 
-	 then
-	    data = read_contents_of_file(outfile)
-	 end
+	 os.execute(cmd)
+	 data = read_contents_of_file(outfile)
       end
    end
    

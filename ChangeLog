@@ -1,5 +1,9 @@
 2004-03-04  graydon hoare  <graydon@pobox.com>
 
+	* std_hooks.lua: Fix merger execution pessimism.
+
+2004-03-04  graydon hoare  <graydon@pobox.com>
+
 	* adler32.hh: Modify to use u8.
 	* depot.cc, netcmd.cc, xdelta.cc: Modify to use u8.
 	* netio.hh, numeric_vocab.hh (widen): Move between headers.
