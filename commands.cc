@@ -1701,7 +1701,8 @@ ALIAS(ls, list, "informative",
       "tags\n"
       "unknown\n"
       "ignored\n"
-      "missing", "show certs, keys, or branches")
+      "missing",
+      "show certs, keys, branches, unknown, intentionally ignored, or missing files; alias for list")
 
 
 CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")

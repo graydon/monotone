@@ -1,0 +1,15 @@
+AT_SETUP([(normal) deleting directories])
+MONOTONE_SETUP
+
+# This test is a "bug report" -- the bug is that there is no test that
+# exercises directory deletion!  Write such a test here.
+AT_XFAIL_IF(true)
+
+
+
+# This Space For Test
+AT_CHECK(false)
+
+
+
+AT_CLEANUP
