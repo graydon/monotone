@@ -33,6 +33,14 @@ AT_XFAIL_IF(true)
 # its size is >1 then print "multiple update candidates" and give the
 # list for the user to pick from.
 
+##### ACTUALLY.... no.  I was wrong.
+# The above algorithm is over-complicated; and, the check in (2.1) is
+# too expensive.  Instead, simply sweep over the entire descendent set
+# of the current revision, and for each revision add it to the
+# candidate set if it is in the branch and passes the hook check.
+# Then, run erase_ancestors(candidates).
+#    - njs
+
 ADD_FILE(testfile, [foo
 ])
 COMMIT(testbranch)

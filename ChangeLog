@@ -1,3 +1,11 @@
+2005-01-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_ambig_update.at: Update comments.
+
+	* tests/t_update_2.at: New test from Georg-W. Koltermann
+	<Georg.Koltermann@mscsoftware.com>.
+	* testsuite.at: Add it.
+
 2005-01-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_lca_1.at: New bug report.
