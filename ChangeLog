@@ -1,3 +1,8 @@
+2003-12-10  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (checkout): Give better error message if branch is
+	empty.
+
 2003-11-29  Tom Tromey  <tromey@redhat.com>
 
 	* rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.

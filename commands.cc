@@ -1524,6 +1524,7 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state 
       set<manifest_id> heads;
       N(app.branch_name != "", F("need --branch argument for branch-based checkout"));
       get_branch_heads(app.branch_name, app, heads);
+      N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
       N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
       ident = *(heads.begin());
       dir = idx(args, 0);
