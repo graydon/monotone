@@ -370,6 +370,56 @@ cert_hash_code(cert const & t, hexenc<id> & out)
   calculate_ident(tdat, out);
 }
 
+/* Loads a private key for a given key id, from either a lua hook
+ * or the database. This will bomb out if the same keyid exists
+ * in both with differing contents. */
+void
+load_priv_key(app_state & app,
+              rsa_keypair_id const & id,
+              base64< arc4<rsa_priv_key> > & priv)
+{
+
+  static std::map<rsa_keypair_id, base64< arc4<rsa_priv_key> > > privkeys;
+  bool persist_ok = (!privkeys.empty()) || app.lua.hook_persist_phrase_ok();
+
+
+  if (persist_ok
+      && privkeys.find(id) != privkeys.end())
+    {
+      priv = privkeys[id];
+    }
+  else
+    {
+      base64< arc4<rsa_priv_key> > dbkey, luakey;
+      bool havedb = false, havelua = false;
+
+      if (app.db.private_key_exists(id))
+        {
+          app.db.get_key(id, dbkey);
+          havedb = true;
+        }
+      havelua = app.lua.hook_get_priv_key(id, luakey);
+
+      N(havedb || havelua,
+        F("no private key '%s' found in database or get_priv_key hook") % id);
+
+      /* Pick either, but make sure they don't both exist but differ */
+      if (havelua)
+        {
+          N(!havedb || luakey == dbkey,
+              F("mismatch between private key '%s' in database and get_priv_key hook") % id);
+          priv = luakey;
+        }
+      else if (havedb)
+        {
+          priv = dbkey;
+        }
+
+      if (persist_ok)
+        privkeys.insert(make_pair(id, priv));
+    }
+}
+
 void 
 calculate_cert(app_state & app, cert & t)
 {
@@ -377,22 +427,7 @@ calculate_cert(app_state & app, cert & t)
   base64< arc4<rsa_priv_key> > priv;
   cert_signable_text(t, signed_text);
 
-  static std::map<rsa_keypair_id, base64< arc4<rsa_priv_key> > > privkeys;
-  bool persist_ok = (!privkeys.empty()) || app.lua.hook_persist_phrase_ok();
-
-  if (persist_ok
-      && privkeys.find(t.key) != privkeys.end())
-    {
-      priv = privkeys[t.key];
-    }
-  else
-    {
-      N(app.db.private_key_exists(t.key),
-	F("no private key '%s' found in database") % t.key);
-      app.db.get_key(t.key, priv);
-      if (persist_ok)
-	privkeys.insert(make_pair(t.key, priv));
-    }
+  load_priv_key(app, t.key, priv);
 
   make_signature(app.lua, t.key, priv, signed_text, t.sig);
 }

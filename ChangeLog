@@ -1,5 +1,11 @@
 2004-12-09  Matt Johnston  <matt@ucc.asn.au>
 
+        * cert.cc, cert.hh, lua.cc, lua.hh, netsync.cc:
+        Added a new get_priv_key(keyid) lua hook to retrieve
+        a private key from ~/.monotonerc
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
         * change_set.cc: Don't include patch deltas on files which
         are being deleted in changesets. (partial fix for bug
         invoked by t_merge_add_del.at)
