@@ -14,7 +14,7 @@
 
 int existsonpath(const char *exe)
 {
-	char *args[3];
+	const char *args[3];
 	int pid;
 	int res;
 	args[0] = "which";
@@ -41,7 +41,7 @@ int make_executable(const char *path)
 	return chmod(path, mode);
 }
 
-int process_spawn(char **argv)
+int process_spawn(char * const *argv)
 {
 	pid_t pid;
 	pid = fork();

@@ -1,4 +1,10 @@
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Now takes char * const *
+	* platform.hh (process_spawn): Ditto
+	* unix/process.cc (process_spawn): Ditto
+	(exists_on_path): argv now const char*[]
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
 	* win32/process.cc: Added forgotten file
 	* unix/process.cc: Include stat.h, (process_*) fix compilation
 	errors

@@ -21,7 +21,7 @@ int make_executable(const char *path)
 	return 0; /* Basically meaningless on win32 */
 }
 
-int process_spawn(char **argv)
+int process_spawn(char * const *argv)
 {
 	int i;
 	char *realexe,*filepart;
