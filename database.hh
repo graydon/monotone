@@ -270,8 +270,9 @@ public:
 		   revision_set const & cs);
 
   void put_revision(revision_id const & new_id,
-		   revision_data const & dat);
+                    revision_data const & dat);
   
+  void delete_existing_revs_and_certs();
 
   // crypto key / cert operations
 

@@ -405,9 +405,9 @@ calculate_current_revision(app_state & app,
                            manifest_map & m_new)
 {
   manifest_id old_manifest_id;
-  revision_id old_revision_id;    
+  revision_id old_revision_id;  
   change_set cs;
-  path_set paths;
+  path_set old_paths, new_paths;
   manifest_map m_old_rearranged;
 
   rev.edges.clear();
@@ -417,29 +417,13 @@ calculate_current_revision(app_state & app,
   calculate_base_revision(app, 
                           old_revision_id, rev, 
                           old_manifest_id, m_old);
+  
 
   get_path_rearrangement(cs.rearrangement);
-  
-  apply_path_rearrangement(m_old, cs.rearrangement, m_old_rearranged);
-  extract_path_set(m_old_rearranged, paths);
-  build_manifest_map(paths, m_new, app);
-
-  I(m_new.size() == m_old_rearranged.size());
-  manifest_map::const_iterator i = m_old_rearranged.begin();
-  for (manifest_map::const_iterator j = m_new.begin(); j != m_new.end(); ++j, ++i)
-    {
-      I(manifest_entry_path(i) == manifest_entry_path(j));
-      if (! (manifest_entry_id(i) == manifest_entry_id(j)))
-        {
-          L(F("noted delta %s -> %s on %s\n") 
-            % manifest_entry_id(i) 
-            % manifest_entry_id(j) 
-            % manifest_entry_path(i));
-          cs.deltas.insert(make_pair(manifest_entry_path(i),
-                                     make_pair(manifest_entry_id(i),
-                                               manifest_entry_id(j))));
-        }
-    }
+  extract_path_set(m_old, old_paths);
+  apply_path_rearrangement(old_paths, cs.rearrangement, new_paths);
+  build_manifest_map(new_paths, m_new, app);
+  complete_change_set(m_old, m_new, cs);
   
   calculate_ident(m_new, rev.new_manifest);
   L(F("new manifest is %s\n") % rev.new_manifest);
@@ -1163,7 +1147,9 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
-  build_rename(file_path(idx(args, 0)()), file_path(idx(args, 1)()), m_old, work);
+  build_rename(file_path(idx(args, 0)()), 
+               file_path(idx(args, 1)()), 
+               m_old, work);
   
   put_path_rearrangement(work);
   
@@ -1629,7 +1615,7 @@ ls_missing (app_state & app)
   manifest_id mid;
   manifest_map man, man_rearranged;
   change_set cs;
-  path_set paths;
+  path_set paths_old, paths;
 
   get_revision_id(rid);
   if (! rid.inner()().empty())
@@ -1649,8 +1635,8 @@ ls_missing (app_state & app)
   L(F("old manifest has %d entries\n") % man.size());
 
   get_path_rearrangement(cs.rearrangement);  
-  apply_path_rearrangement(man, cs.rearrangement, man_rearranged);
-  extract_path_set(man_rearranged, paths);
+  extract_path_set(man, paths_old);
+  apply_path_rearrangement(paths_old, cs.rearrangement, paths);
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
@@ -1981,6 +1967,39 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
 }
 
+static void
+check_db(app_state & app)
+{
+  ticker revs("revs", ".");
+  std::set<std::pair<revision_id, revision_id> > graph;
+  app.db.get_revision_ancestry(graph);
+  std::set<revision_id> seen;
+  for (std::set<std::pair<revision_id, revision_id> >::const_iterator i = graph.begin();
+       i != graph.end(); ++i)
+    {
+      revision_set rev;
+      if (seen.find(i->first) == seen.end())
+        {
+          if (app.db.revision_exists(i->first))
+            {            
+              app.db.get_revision(i->first, rev);
+              seen.insert(i->first);
+              ++revs;
+            }
+        }
+      if (seen.find(i->second) == seen.end())
+        {      
+          if (app.db.revision_exists(i->second))
+            {            
+              app.db.get_revision(i->second, rev);
+              seen.insert(i->second);
+              ++revs;
+            }
+        }
+    }
+}
+
+
 CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipulate database state")
 {
   if (args.size() == 1)
@@ -1997,8 +2016,12 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipu
         app.db.load(cin);
       else if (idx(args, 0)() == "migrate")
         app.db.migrate();
+      else if (idx(args, 0)() == "fsck")
+        check_db(app);
       else if (idx(args, 0)() == "changesetify")
         build_changesets_from_manifest_ancestry(app);
+      else if (idx(args, 0)() == "rebuild")
+        build_changesets_from_existing_revs(app);
       else
         throw usage(name);
     }

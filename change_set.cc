@@ -263,6 +263,121 @@ dump_analysis(std::string const & s,
 
 //  sanity checking 
 
+static void 
+check_sets_disjoint(std::set<file_path> const & a,
+                    std::set<file_path> const & b)
+{
+  std::set<file_path> isect;
+  std::set_intersection(a.begin(), a.end(),
+                        b.begin(), b.end(),
+                        std::inserter(isect, isect.begin()));
+  if (!global_sanity.relaxed)
+    {
+      I(isect.empty());
+    }
+}
+
+change_set::path_rearrangement::path_rearrangement(path_rearrangement const & other)
+{
+  other.check_sane();
+  deleted_files = other.deleted_files;
+  deleted_dirs = other.deleted_dirs;
+  renamed_files = other.renamed_files;
+  renamed_dirs = other.renamed_dirs;
+  added_files = other.added_files;
+}
+
+change_set::path_rearrangement const &
+change_set::path_rearrangement::operator=(path_rearrangement const & other)
+{
+  other.check_sane();
+  deleted_files = other.deleted_files;
+  deleted_dirs = other.deleted_dirs;
+  renamed_files = other.renamed_files;
+  renamed_dirs = other.renamed_dirs;
+  added_files = other.added_files;
+  return *this;
+}
+
+static void
+extract_first(std::map<file_path, file_path> const & in,
+              std::set<file_path> & out)
+{
+  out.clear();
+  for (std::map<file_path, file_path>::const_iterator i = in.begin();
+       i != in.end(); ++i)
+    {
+      out.insert(i->first);
+    }
+}
+
+
+void 
+change_set::path_rearrangement::check_sane() const
+{
+  // FIXME: extend this as you manage to think of more invariants
+  // which are cheap enough to check at this level.
+  std::set<file_path> renamed_file_set, renamed_dir_set;
+  extract_first(renamed_files, renamed_file_set);
+  extract_first(renamed_dirs, renamed_dir_set);
+
+  check_sets_disjoint(deleted_files, deleted_dirs);
+  check_sets_disjoint(deleted_files, renamed_file_set);
+  check_sets_disjoint(deleted_files, renamed_dir_set);
+
+  check_sets_disjoint(deleted_dirs, renamed_file_set);
+  check_sets_disjoint(deleted_dirs, renamed_dir_set);
+
+  check_sets_disjoint(renamed_file_set, renamed_dir_set);
+}
+
+change_set::change_set(change_set const & other)
+{
+  other.check_sane();
+  rearrangement = other.rearrangement;
+  deltas = other.deltas;
+}
+
+change_set const &change_set::operator=(change_set const & other)
+{
+  other.check_sane();
+  rearrangement = other.rearrangement;
+  deltas = other.deltas;
+  return *this;
+}
+
+void 
+change_set::check_sane() const
+{
+  // FIXME: extend this as you manage to think of more invariants
+  // which are cheap enough to check at this level.
+
+  rearrangement.check_sane();
+
+  for (std::set<file_path>::const_iterator i = rearrangement.added_files.begin(); 
+       i != rearrangement.added_files.end(); ++i)
+    {
+      delta_map::const_iterator j = deltas.find(*i);
+      if (!global_sanity.relaxed)
+        {
+          I(j != deltas.end());
+          I(null_id(delta_entry_src(j)));
+          I(!null_id(delta_entry_dst(j)));
+        }
+    }
+
+  for (delta_map::const_iterator i = deltas.begin(); 
+       i != deltas.end(); ++i)
+    {
+      if (!global_sanity.relaxed)
+        {
+          I(!null_name(delta_entry_path(i)));
+          I(!null_id(delta_entry_dst(i)));
+        }
+    }
+
+}
+
 static void
 sanity_check_path_item(path_item const & pi)
 {
@@ -964,17 +1079,21 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
   sanity_check_path_analysis (pa);
 }
 
+void
+normalize_path_rearrangement(change_set::path_rearrangement & norm)
+{
+  path_analysis tmp;
+  tid_source ts;
+
+  analyze_rearrangement(norm, tmp, ts);
+  clear_rearrangement(norm);
+  compose_rearrangement(tmp, norm);
+}
 
 void
 normalize_change_set(change_set & norm)
 {  
-  path_analysis tmp;
-  tid_source ts;
-
-  // L(F("normalizing changeset\n"));
-  analyze_rearrangement(norm.rearrangement, tmp, ts);
-  clear_rearrangement(norm.rearrangement);
-  compose_rearrangement(tmp, norm.rearrangement);
+  normalize_path_rearrangement(norm.rearrangement);
 }
 
 
@@ -1100,10 +1219,38 @@ concatenate_disjoint_analyses(path_analysis const & a,
 }
 
 void
+concatenate_rearrangements(change_set::path_rearrangement const & a,
+                           change_set::path_rearrangement const & b,
+                           change_set::path_rearrangement & concatenated)
+{
+  a.check_sane();
+  b.check_sane();
+  concatenated = change_set::path_rearrangement();
+  
+  tid_source ts;
+  path_analysis a_analysis, b_analysis, concatenated_analysis;
+
+  analyze_rearrangement(a, a_analysis, ts);
+  analyze_rearrangement(b, b_analysis, ts);
+
+  concatenate_disjoint_analyses(a_analysis, 
+                                b_analysis,
+                                concatenated_analysis);
+
+  compose_rearrangement(concatenated_analysis, 
+                        concatenated);
+
+  concatenated.check_sane();
+}
+
+void
 concatenate_change_sets(change_set const & a,
                         change_set const & b,
                         change_set & concatenated)
 {
+  a.check_sane();
+  b.check_sane();
+
   L(F("concatenating change sets\n"));
 
   tid_source ts;
@@ -1147,7 +1294,7 @@ concatenate_change_sets(change_set const & a,
           // FIXME: this should really be an invariant, but some
           // revisions in monotone's tree have patches with deletions.
           // (54b9be0d60633ca2941edd02b9b7cfe8da90cc3a for example)
-          L(F("WARNING: delta [%s]->[%s] for deleted file %s\n")
+          W(F("delta [%s]->[%s] for deleted file %s\n")
             % delta_entry_src(del) % delta_entry_dst(del) % new_pth);
       else if (b.rearrangement.deleted_files.find(delta_entry_path(del)) != 
                                       b.rearrangement.deleted_files.end())
@@ -1194,12 +1341,13 @@ concatenate_change_sets(change_set const & a,
             concatenated.deltas.insert(*del);
           else
             // FIXME: this should be an invariant, see fixme above.
-            L(F("WARNING: delta [%s]->[%s] for deleted file %s\n")
+            W(F("delta [%s]->[%s] for deleted file %s\n")
               % delta_entry_src(del) % delta_entry_dst(del) % delta_entry_path(del));
         }
     }
 
   normalize_change_set(concatenated);
+  concatenated.check_sane();
 
   L(F("finished concatenation\n")); 
 }
@@ -1807,7 +1955,10 @@ merge_change_sets(change_set const & a,
                   merge_provider & merger,
                   app_state & app)
 {
-  L(F("concatenating change sets\n"));
+  a.check_sane();
+  b.check_sane();
+
+  L(F("merging change sets\n"));
 
   tid_source ts;
   path_analysis 
@@ -1857,6 +2008,9 @@ merge_change_sets(change_set const & a,
     I(a_check == b_check);
   }
 
+  a_merged.check_sane();
+  b_merged.check_sane();
+
   L(F("finished merge\n"));  
 }
 
@@ -1867,6 +2021,7 @@ invert_change_set(change_set const & a2b,
                   manifest_map const & a_map,
                   change_set & b2a)
 {
+  a2b.check_sane();
   tid_source ts;
   path_analysis a2b_analysis, b2a_analysis;
 
@@ -1943,6 +2098,7 @@ invert_change_set(change_set const & a2b,
                                        std::make_pair(delta_entry_dst(del),
                                                       delta_entry_src(del))));
     }
+  b2a.check_sane();
 }
 
 void 
@@ -2053,6 +2209,7 @@ void
 apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
                                   local_path const & temporary_root)
 {
+  re.check_sane();
   tid_source ts;
   path_analysis analysis;
   directory_map first_dmap, second_dmap;
@@ -2078,11 +2235,11 @@ apply_path_rearrangement(path_set const & old_ps,
                          change_set::path_rearrangement const & pr,
                          path_set & new_ps)
 {
-  change_set a, b, c;
-  a.rearrangement.added_files = old_ps;
-  b.rearrangement = pr;
-  concatenate_change_sets(a, b, c);
-  new_ps = c.rearrangement.added_files;
+  pr.check_sane();
+  change_set::path_rearrangement a, b, c;
+  a.added_files = old_ps;
+  concatenate_rearrangements(a, pr, c);
+  new_ps = c.added_files;
 }
 
 void
@@ -2091,39 +2248,56 @@ build_pure_addition_change_set(manifest_map const & man,
 {
   for (manifest_map::const_iterator i = man.begin(); i != man.end(); ++i)
     cs.add_file(manifest_entry_path(i), manifest_entry_id(i));
+  cs.check_sane();
 }
 
-// this function rearranges a manifest map under a path_rearrangement
-// but does *not* apply any deltas to it. so notably, if a file was 
-// added the new file will have an empty id, since all we know is that
-// it was added. 
+// this function takes the rearrangement sitting in cs and "completes" the
+// changeset by filling in all the deltas
 
-void
-apply_path_rearrangement(manifest_map const & m_old,
-                         change_set::path_rearrangement const & pr,
-                         manifest_map & m_old_rearranged)
+void 
+complete_change_set(manifest_map const & m_old,
+                    manifest_map const & m_new,
+                    change_set & cs)
 {
-  change_set a, b, c;
-  build_pure_addition_change_set(m_old, a);
-  b.rearrangement = pr;
-  concatenate_change_sets(a, b, c);
+  cs.rearrangement.check_sane();
+  tid_source ts;
+  path_analysis analysis;
+  directory_map first_dmap, second_dmap;
 
-  m_old_rearranged.clear();
-  for (std::set<file_path>::const_iterator i = c.rearrangement.added_files.begin();
-       i != c.rearrangement.added_files.end(); ++i)
+  analyze_rearrangement(cs.rearrangement, analysis, ts);
+  build_directory_map(analysis.first, first_dmap);
+  build_directory_map(analysis.second, second_dmap);
+
+  std::set<file_path> paths;
+  extract_path_set(m_new, paths);
+
+  for (std::set<file_path>::const_iterator i = cs.rearrangement.added_files.begin();
+       i != cs.rearrangement.added_files.end(); ++i)
     {
-      change_set::delta_map::const_iterator d = c.deltas.find(*i);
-      if (d == c.deltas.end())
-        // case 1: the file was added by the rearrangement, but we have
-        // no idea what it was added as, so we leave its ID empty
-        m_old_rearranged.insert(std::make_pair(*i, null_ident));
-      else
-        // case 2: we know the ID to insert
-        m_old_rearranged.insert(std::make_pair(*i, delta_entry_dst(d)));        
+      manifest_map::const_iterator j = m_new.find(*i);
+      I(j != m_new.end());
+      cs.deltas.insert(std::make_pair(*i,
+                                      std::make_pair(null_ident,
+                                                     manifest_entry_id(j))));
+      paths.erase(*i);
     }
+
+  for (std::set<file_path>::const_iterator i = paths.begin();
+       i != paths.end(); ++i)
+    {
+      file_path old_path;
+      reconstruct_path(*i, second_dmap, analysis.first, old_path);
+      manifest_map::const_iterator j = m_old.find(old_path);
+      manifest_map::const_iterator k = m_new.find(*i);
+      I(j != m_old.end());
+      I(k != m_new.end());
+      if (!(manifest_entry_id(j) == manifest_entry_id(k)))
+        cs.deltas.insert(std::make_pair(*i, std::make_pair(manifest_entry_id(j),
+                                                           manifest_entry_id(k))));
+    }
+
+  cs.check_sane();    
 }
-
-
 
 
 void
@@ -2131,6 +2305,7 @@ apply_change_set(manifest_map const & old_man,
                  change_set const & cs,
                  manifest_map & new_man)
 {
+  cs.check_sane();
   change_set a, b;
   build_pure_addition_change_set(old_man, a);
   concatenate_change_sets(a, cs, b);
@@ -2150,6 +2325,7 @@ file_path
 apply_change_set_inverse(change_set const & cs,
                          file_path const & file_in_second)
 {
+  cs.check_sane();
   tid_source ts;
   path_analysis analysis;
   directory_map second_dmap;
@@ -2166,6 +2342,7 @@ void
 apply_change_set(change_set const & cs,
                  manifest_map & man)
 {
+  cs.check_sane();
   if (cs.rearrangement.renamed_files.empty() 
       && cs.rearrangement.renamed_dirs.empty()
       && cs.rearrangement.deleted_dirs.empty())
@@ -2256,6 +2433,7 @@ parse_path_rearrangement(basic_io::parser & parser,
       else
         break;
     }
+  cs.rearrangement.check_sane();
 }
 
 
@@ -2264,6 +2442,7 @@ print_path_rearrangement(basic_io::printer & printer,
                          change_set::path_rearrangement const & pr)
 {
 
+  pr.check_sane();
   for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
        i != pr.deleted_files.end(); ++i)
     {
@@ -2328,12 +2507,14 @@ parse_change_set(basic_io::parser & parser,
                                       std::make_pair(file_id(src),
                                                      file_id(dst))));
     }
+  cs.check_sane();
 }
 
 void 
 print_change_set(basic_io::printer & printer,
                  change_set const & cs)
 {
+  cs.check_sane();
   print_path_rearrangement(printer, cs.rearrangement);
   
   for (change_set::delta_map::const_iterator i = cs.deltas.begin();
@@ -2359,6 +2540,7 @@ read_path_rearrangement(data const & dat,
   parse_path_rearrangement(pars, cs);
   re = cs.rearrangement;
   I(src.lookahead == EOF);
+  re.check_sane();
 }
 
 void
@@ -2371,12 +2553,14 @@ read_change_set(data const & dat,
   basic_io::parser pars(tok);
   parse_change_set(pars, cs);
   I(src.lookahead == EOF);
+  cs.check_sane();
 }
 
 void
 write_change_set(change_set const & cs,
                  data & dat)
 {
+  cs.check_sane();
   std::ostringstream oss;
   basic_io::printer pr(oss);
   print_change_set(pr, cs);
@@ -2387,6 +2571,7 @@ void
 write_path_rearrangement(change_set::path_rearrangement const & re,
                          data & dat)
 {
+  re.check_sane();
   std::ostringstream oss;
   basic_io::printer pr(oss);
   print_path_rearrangement(pr, re);

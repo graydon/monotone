@@ -1,3 +1,15 @@
+2004-12-28  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Add sanity checking, rework
+	some of concatenation logic to accomodate.
+	* revision.{cc,hh}: Likewise.
+	Teach about generalized graph rebuilding.
+	* database.cc (delete_existing_revs_and_certs): New fn.
+	* commands.cc (db rebuild): New command.
+	(db fsck) New command.
+	* sanity.{cc,hh} (relaxed): New flag.
+	* work.cc: Use new concatenation logic.
+
 2004-12-25  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* commands.cc: During 'log', print duplicate certificates (by

@@ -11,6 +11,7 @@
 #include "change_set.hh"
 #include "file_io.hh"
 #include "sanity.hh"
+#include "transforms.hh"
 #include "vocab.hh"
 #include "work.hh"
 
@@ -26,13 +27,13 @@ addition_builder
   : public tree_walker
 {
   app_state & app;
-  change_set & cs;
+  change_set::path_rearrangement & pr;
   path_set ps;
 public:
   addition_builder(app_state & a, 
-                   change_set & cs,
+                   change_set::path_rearrangement & pr,
                    path_set & p)
-    : app(a), cs(cs), ps(p)
+    : app(a), pr(pr), ps(p)
   {}
   virtual void visit_file(file_path const & path);
 };
@@ -54,7 +55,7 @@ addition_builder::visit_file(file_path const & path)
 
   P(F("adding %s to working copy add set\n") % path);
   ps.insert(path);
-  cs.add_file(path);
+  pr.added_files.insert(path);
 }
 
 void 
@@ -66,19 +67,19 @@ build_addition(file_path const & path,
   N(directory_exists(path) || file_exists(path),
     F("path %s does not exist\n") % path);
 
-  change_set cs_new, cs_old, cs_concatenated;
-  cs_old.rearrangement = pr;
+  change_set::path_rearrangement pr_new, pr_concatenated;
+  change_set cs_new;
 
   path_set tmp, ps;
   extract_path_set(man, tmp);
   apply_path_rearrangement(tmp, pr, ps);    
 
-  addition_builder build(app, cs_new, ps);
+  addition_builder build(app, pr_new, ps);
   walk_tree(path, build);
 
-  normalize_change_set(cs_new);
-  concatenate_change_sets(cs_old, cs_new, cs_concatenated);
-  pr = cs_concatenated.rearrangement;
+  normalize_path_rearrangement(pr_new);
+  concatenate_rearrangements(pr, pr_new, pr_concatenated);
+  pr = pr_concatenated;
 }
 
 static bool
@@ -113,8 +114,7 @@ build_deletion(file_path const & path,
                manifest_map const & man,
                change_set::path_rearrangement & pr)
 {
-  change_set cs_new, cs_old, cs_concatenated;
-  cs_old.rearrangement = pr;
+  change_set::path_rearrangement pr_new, pr_concatenated;
 
   bool dir_p = false;
   
@@ -127,13 +127,13 @@ build_deletion(file_path const & path,
   P(F("adding %s to working copy delete set\n") % path);
 
   if (dir_p) 
-    cs_new.delete_dir(path);
+    pr_new.deleted_dirs.insert(path);
   else 
-    cs_new.delete_file(path);
+    pr_new.deleted_files.insert(path);
   
-  normalize_change_set(cs_new);
-  concatenate_change_sets(cs_old, cs_new, cs_concatenated);
-  pr = cs_concatenated.rearrangement;
+  normalize_path_rearrangement(pr_new);
+  concatenate_rearrangements(pr, pr_new, pr_concatenated);
+  pr = pr_concatenated;
 }
 
 void 
@@ -142,8 +142,7 @@ build_rename(file_path const & src,
              manifest_map const & man,
              change_set::path_rearrangement & pr)
 {
-  change_set cs_new, cs_old, cs_concatenated;
-  cs_old.rearrangement = pr;
+  change_set::path_rearrangement pr_new, pr_concatenated;
 
   bool dir_p = false;
 
@@ -155,13 +154,13 @@ build_rename(file_path const & src,
 
   P(F("adding %s -> %s to working copy rename set\n") % src % dst);
   if (dir_p)
-    cs_new.rename_dir(src, dst);
+    pr_new.renamed_dirs.insert(std::make_pair(src, dst));
   else 
-    cs_new.rename_file(src, dst);
+    pr_new.renamed_files.insert(std::make_pair(src, dst));
 
-  normalize_change_set(cs_new);
-  concatenate_change_sets(cs_old, cs_new, cs_concatenated);
-  pr = cs_concatenated.rearrangement;
+  normalize_path_rearrangement(pr_new);
+  concatenate_rearrangements(pr, pr_new, pr_concatenated);
+  pr = pr_concatenated;
 }
 
 

@@ -29,7 +29,7 @@ using boost::format;
 sanity global_sanity;
 
 sanity::sanity() : 
-  debug(false), quiet(false), logbuf(0xffff)
+  debug(false), quiet(false), relaxed(false), logbuf(0xffff)
 {
   std::string flavour;
   get_system_flavour(flavour);
@@ -79,6 +79,12 @@ sanity::set_quiet()
 {
   debug = false;
   quiet = true;
+}
+
+void 
+sanity::set_relaxed(bool rel)
+{
+  relaxed = rel;
 }
 
 void 
