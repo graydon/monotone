@@ -1,8 +1,11 @@
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include "app_state.hh"
 #include "database.hh"
 #include "file_io.hh"
+#include "sanity.hh"
 #include "transforms.hh"
 #include "work.hh"
 
@@ -66,6 +69,43 @@ app_state::set_signing_key(utf8 const & key)
   options[key_option] = key;
   signing_key = k;
   options_changed = true;
+}
+
+void
+app_state::add_restriction(bool restrict, utf8 const & path)
+{
+  L(F("%s %s\n") % (restrict ? "exclude" : "include") % path);
+  restrictions.push_back(make_pair(restrict, path));
+}
+
+bool
+app_state::is_restricted(file_path const & path)
+{
+  if (restrictions.empty()) return false;
+
+  L(F("checking %s for restrictions\n") % path);
+
+  vector<restriction>::iterator i = restrictions.begin();
+
+  // set the initial status to the inverse of the first element 
+  // in the list so that "--include something" means everything else
+  // is excluded and "--exclude something" means everything else is
+  // included
+
+  bool status = !i->first;
+
+  L(F("initial status is %s\n") % (status ? "true" : "false"));
+
+  for (; i != restrictions.end(); ++i)
+    {
+      if (path().compare(0, i->second().length(), i->second()) == 0)
+        {
+          status = i->first;
+          L(F("matched %s; current status is %s\n") % i->second % (status ? "true" : "false"));
+        }
+    }
+
+  return status;
 }
 
 void 

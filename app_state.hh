@@ -9,10 +9,14 @@
 class app_state;
 class lua_hooks;
 
+#include <vector>
+
 #include "database.hh"
 #include "lua.hh"
 #include "work.hh"
 #include "vocab.hh"
+
+typedef std::pair<bool, utf8> restriction;
 
 // this class is supposed to hold all (or.. well, most) of the state of the
 // application, barring some unfortunate static objects like the debugging /
@@ -29,10 +33,13 @@ public:
   lua_hooks lua;
   bool options_changed;
   options_map options;
+  std::vector<restriction> restrictions;
 
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
+  void add_restriction(bool restrict, utf8 const & path);
+  bool is_restricted(file_path const & path);
   void write_options();
 
   explicit app_state();

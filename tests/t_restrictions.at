@@ -1,0 +1,377 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([manifest restrictions])
+
+MONOTONE_SETUP
+
+AT_DATA(ignored.lua, [
+function ignore_file(name)
+   if (string.find(name, "%.o$")) then return true end
+   return false;
+end
+])
+
+AT_CHECK(mkdir work, [], [ignore])
+
+AT_DATA(work/foo.o, [version 1 of foo.o
+])
+
+AT_DATA(work/fileX, [version 1 of fileX which will be renamed to work/file1
+])
+
+AT_DATA(work/file2, [version 1 of file2
+])
+
+AT_DATA(work/file3, [version 1 of file3
+])
+
+AT_DATA(work/file4, [version 1 of file4
+])
+
+SHA_3_1=`SHA1(work/file3)`
+
+AT_CHECK(MONOTONE add work/fileX, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add work/file2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add work/file3, [], [ignore], [ignore])
+
+# test restriction of unknown, missing, ignored files
+
+AT_CHECK(MONOTONE ls unknown, [], [stdout], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE ls unknown --include work/file4, [], [stdout], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE ls unknown --exclude work/file4, [], [stdout], [ignore])
+AT_CHECK(grep work/file4 stdout, [1], [ignore])
+
+AT_CHECK(rm work/file2)
+
+AT_CHECK(MONOTONE ls missing, [], [stdout], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE ls missing --include work/file2, [], [stdout], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE ls missing --exclude work/file2, [], [stdout], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+
+AT_DATA(work/file2, [version 1 of file2
+])
+
+AT_CHECK(MONOTONE ls ignored --rcfile=ignored.lua, [], [stdout], [ignore])
+AT_CHECK(grep work/foo.o stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE ls ignored --rcfile=ignored.lua --include work/foo.o, [], [stdout], [ignore])
+AT_CHECK(grep work/foo.o stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE ls ignored --rcfile=ignored.lua --exclude work/foo.o, [], [stdout], [ignore])
+AT_CHECK(grep work/foo.o stdout, [1], [ignore])
+
+# initial commit
+
+AT_CHECK(MONOTONE --branch=testbranch commit 'add file[X23]', [], [ignore], [ignore])
+M_BASE=`SHA1(MT/manifest)`
+
+# create moved, dropped, and changed work to test status, diff, commit
+
+AT_CHECK(mv work/fileX work/file1)
+AT_CHECK(rm work/file2)
+
+AT_DATA(work/file3, [version 2 of file3 with some changes
+])
+
+SHA_3_2=`SHA1(work/file3)`
+
+AT_CHECK(MONOTONE rename work/fileX work/file1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE drop work/file2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add work/file4, [], [ignore], [ignore])
+
+# moved fileX to file1
+# dropped file2
+# changed file3
+# added file4
+
+# grep file[X1234] would be rather good here
+
+# status
+
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# include rename source and target
+
+AT_CHECK(MONOTONE status --include work/fileX --include work/file1, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [1], [ignore])
+AT_CHECK(grep work/file4 stdout, [1], [ignore])
+
+# include drop
+
+AT_CHECK(MONOTONE status --include work/file2, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [1], [ignore])
+AT_CHECK(grep work/file4 stdout, [1], [ignore])
+
+# include delta
+
+AT_CHECK(MONOTONE status --include work/file3, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [1], [ignore])
+
+# include add
+
+AT_CHECK(MONOTONE status --include work/file4, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [1], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude rename source
+
+AT_CHECK(MONOTONE status --exclude work/fileX, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude rename target
+
+AT_CHECK(MONOTONE status --exclude work/file1, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude drop
+
+AT_CHECK(MONOTONE status --exclude work/file2, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude delta 
+
+AT_CHECK(MONOTONE status --exclude work/file3, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [1], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude add
+
+AT_CHECK(MONOTONE status --exclude work/file4, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [1], [ignore])
+
+# diff
+
+AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# include rename source and target
+
+AT_CHECK(MONOTONE diff --include work/fileX --include work/file1, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [1], [ignore])
+AT_CHECK(grep work/file4 stdout, [1], [ignore])
+
+# include drop
+
+AT_CHECK(MONOTONE diff --include work/file2, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [1], [ignore])
+AT_CHECK(grep work/file4 stdout, [1], [ignore])
+
+# include delta
+
+AT_CHECK(MONOTONE diff --include work/file3, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [1], [ignore])
+
+# include add
+
+AT_CHECK(MONOTONE diff --include work/file4, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [1], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude rename source
+
+AT_CHECK(MONOTONE diff --exclude work/fileX, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude rename target
+
+AT_CHECK(MONOTONE diff --exclude work/file1, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude drop
+
+AT_CHECK(MONOTONE diff --exclude work/file2, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude delta
+
+AT_CHECK(MONOTONE diff --exclude work/file3, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [1], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# exclude add
+
+AT_CHECK(MONOTONE diff --exclude work/file4, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [1], [ignore])
+
+# commit
+
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [0], [ignore])
+AT_CHECK(grep work/file1 stdout, [0], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# include rename source and target
+
+AT_CHECK(MONOTONE commit 'move fileX to file1' --include work/fileX --include work/file1, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [0], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# include drop
+
+AT_CHECK(MONOTONE commit 'drop file2' --include work/file2, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [0], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# include delta
+
+AT_CHECK(MONOTONE commit 'change file3' --include work/file3, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(grep work/fileX stdout, [1], [ignore])
+AT_CHECK(grep work/file1 stdout, [1], [ignore])
+AT_CHECK(grep work/file2 stdout, [1], [ignore])
+AT_CHECK(grep work/file3 stdout, [1], [ignore])
+AT_CHECK(grep work/file4 stdout, [0], [ignore])
+
+# include add
+
+AT_CHECK(MONOTONE commit 'add file4' --include work/file4, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(grep 'no changes' stdout, [0], [ignore])
+M_HEAD=`SHA1(MT/manifest)`
+
+# setup for excluded commits
+
+#AT_CHECK(mv work/file3 work/file5)
+#AT_CHECK(rm work/file1)
+#AT_DATA(work/file4, [version 2 of file4 with some changes
+#])
+
+#AT_CHECK(MONOTONE rename work/file3 work/file5, [], [ignore], [ignore])
+#AT_CHECK(MONOTONE drop work/file1, [], [ignore], [ignore])
+
+# moved file3 to file
+# dropped file1
+# changed file4
+# added file5
+
+# exclude rename source 
+# exclude rename target 
+# exclude drop
+# exclude delta
+# exclude add
+
+# restricted updates
+
+# M_BASE has file[X23]
+# rename X to 1
+# drop 2
+# change 3 (SHA_3_1 to SHA_3_2)
+# add 4
+# M_HEAD has file[134]
+
+# working copy based on manifest before rename/drop/delta/add tree
+# unrestricted update should go to manifest after all 4 commits
+# various restricted updates to get out of order changes
+
+AT_CHECK(rm -rf MT work)
+AT_CHECK(MONOTONE co --branch=testbranch $M_BASE ., [], [ignore],[ignore])
+
+# second change was drop file2
+AT_CHECK(MONOTONE update --include work/file2, [], [ignore], [ignore])
+
+SHA_3_now=`SHA1(work/file3)`
+
+AT_CHECK(grep work/fileX MT/manifest, [0], [ignore])
+AT_CHECK(grep work/file1 MT/manifest, [1], [ignore])
+AT_CHECK(grep work/file2 MT/manifest, [1], [ignore])
+AT_CHECK(grep work/file3 MT/manifest, [0], [ignore])
+AT_CHECK(grep work/file4 MT/manifest, [1], [ignore])
+AT_CHECK(test $SHA_3_1 == $SHA_3_now)
+
+AT_CLEANUP
+

@@ -191,6 +191,8 @@ CMD(C, group, params, desc)				\
   process(app, string(#realcommand), args);		\
 }
 
+// this might be better in work.cc
+
 static bool 
 bookdir_exists()
 {
@@ -271,6 +273,8 @@ get_work_set(work_set & w)
     }
 }
 
+// this might also be better in work.cc
+
 static void 
 remove_work_set()
 {
@@ -316,6 +320,110 @@ update_any_attrs(app_state & app)
   read_attr_map(attr_data, attr);
   apply_attributes(app, attr);
 }
+
+static void
+restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app) 
+{
+  L(F("restricting changes between %s and %s\n") % ps.m_old % ps.m_new);
+
+  // remove restricted adds from f_adds and remove entry from m_new
+
+  for (set<patch_addition >::iterator i = ps.f_adds.begin();
+       i != ps.f_adds.end(); ++i)
+    {
+      if (app.is_restricted(i->path())) 
+        {
+          L(F("restriction excludes add %s\n") % i->path());
+          ps.map_new.erase(i->path());
+          restricted_work.adds.insert(i->path());
+          ps.f_adds.erase(*i);
+        }
+      else
+          L(F("restriction includes add %s\n") % i->path());
+        
+    }
+
+  // remove restricted dels from f_dels and put entry in m_new with entry from m_old
+
+  for (set<file_path>::iterator i = ps.f_dels.begin();
+       i != ps.f_dels.end(); ++i)
+    {
+      if (app.is_restricted((*i)())) 
+        {
+          N(ps.map_old.find(*i) != ps.map_old.end(),
+            F("nothing known about %s") % *i);
+
+          L(F("restriction excludes delete %s\n") % (*i)());
+          path_id_pair old(ps.map_old.find(*i));
+          ps.map_new.insert(entry(old.path(), old.ident()));
+          restricted_work.dels.insert((*i)());
+          ps.f_dels.erase(*i);
+        }
+      else
+          L(F("restriction includes delete %s\n") % (*i)());
+
+    }
+
+  // remove restricted moves from f_moves and replace entry in m_new with entry from m_old
+
+  for (set<patch_move>::iterator i = ps.f_moves.begin();
+       i != ps.f_moves.end(); ++i)
+    {
+      // TODO: decide what's right here
+      // is excluding both sides of a rename the right thing to do?
+      // or should we just fail if only one side of a move is restricted? (njs's idea)
+      // thinking of java refactoring example that might require that we don't fail here
+
+      if (app.is_restricted(i->path_old()) || app.is_restricted(i->path_new())) 
+        {
+          N(ps.map_old.find(i->path_old()) != ps.map_old.end(),
+            F("nothing known about %s") % i->path_old());
+
+          L(F("restriction excludes move %s to %s\n") % i->path_old() % i->path_new());
+          ps.map_new.erase(i->path_new());
+          path_id_pair old(ps.map_old.find(i->path_old()));
+          ps.map_new.insert(entry(old.path(), old.ident()));
+          restricted_work.renames.insert(make_pair(i->path_old(), i->path_new()));
+          ps.f_moves.erase(*i);
+        }
+      else
+          L(F("restriction includes move %s to %s\n") % i->path_old() % i->path_new());
+
+    }
+
+  // remove restricted deltas from f_deltas and replace entry in m_new with entry from m_old
+
+  for (set<patch_delta>::iterator i = ps.f_deltas.begin();
+       i != ps.f_deltas.end(); ++i)
+    {
+      if (app.is_restricted(i->path()))
+        {
+          N(ps.map_old.find(i->path()) != ps.map_old.end(),
+            F("nothing known about %s") % i->path());
+
+          L(F("restriction excludes delta %s\n") % i->path());
+          ps.map_new.erase(i->path());
+          path_id_pair old(ps.map_old.find(i->path()));
+          ps.map_new.insert(entry(old.path(), old.ident()));
+          ps.f_deltas.erase(*i);
+        }
+      else
+          L(F("restriction includes delta %s\n") % i->path());
+    }
+
+  calculate_ident(ps.map_new, ps.m_new);
+
+  L(F("restricted changes between %s and %s\n") % ps.m_old % ps.m_new);
+
+}
+
+static void
+restrict_patch_set(patch_set & ps, app_state & app) 
+{
+  work_set work;
+  restrict_patch_set(ps, work, app);
+}
+
 
 static void 
 calculate_new_manifest_map(manifest_map const & m_old, 
@@ -988,31 +1096,36 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
 
 CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 {
+  if (args.size() != 0 && args.size() != 1)
+    throw usage(name);
+
   string log_message("");
   manifest_map m_old, m_new;
-  patch_set ps;
 
   rename_edge renames;
 
   get_manifest_map(m_old);
   calculate_new_manifest_map(m_old, m_new, renames.mapping, app);
+
   manifest_id old_id, new_id;
   calculate_ident(m_old, old_id);
   calculate_ident(m_new, new_id);
+
   renames.parent = old_id;
   renames.child = new_id;
 
-  if (args.size() != 0 && args.size() != 1)
-    throw usage(name);
+  patch_set ps;
+  manifests_to_patch_set(m_old, m_new, renames, app, ps);
+
+  work_set restricted_work;
+  restrict_patch_set(ps, restricted_work, app);
 
   cert_value branchname;
-  guess_branch (old_id, app, branchname);
-    
-  P(F("committing %s\n") % new_id);
-  P(F("committing to branch %s\n") % branchname);
+  guess_branch (ps.m_old, app, branchname);
   app.set_branch(branchname());
 
-  manifests_to_patch_set(m_old, m_new, renames, app, ps);
+  P(F("committing %s\n") % ps.m_new);
+  P(F("committing to branch %s\n") % branchname);
 
   // get log message
   if (args.size() == 1)
@@ -1038,14 +1151,14 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 	    L(F("inserting manifest delta %s -> %s\n") % ps.m_old % ps.m_new);
 	    manifest_data m_old_data, m_new_data;
 	    base64< gzip<delta> > del;
-	    diff(m_old, m_new, del);
+	    diff(ps.map_old, ps.map_new, del);
 	    app.db.put_manifest_version(ps.m_old, ps.m_new, manifest_delta(del));
 	  }
 	else
 	  {
 	    L(F("inserting full manifest %s\n") % ps.m_new);
 	    manifest_data m_new_data;
-	    write_manifest_map(m_new, m_new_data);
+	    write_manifest_map(ps.map_new, m_new_data);
 	    app.db.put_manifest(ps.m_new, m_new_data);
 	  }
       }
@@ -1106,7 +1219,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 
     packet_db_writer dbw(app);
 
-    if (! m_old.empty())
+    if (! ps.map_old.empty())
       cert_manifest_ancestor(ps.m_old, ps.m_new, app, dbw);
 
     cert_manifest_in_branch(ps.m_new, branchname, app, dbw); 
@@ -1133,8 +1246,8 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
     guard.commit();
   }
   // small race condition here...
-  remove_work_set();
-  put_manifest_map(m_new);
+  put_work_set(restricted_work);
+  put_manifest_map(ps.map_new);
   P(F("committed %s\n") % ps.m_new);
 
   update_any_attrs(app);
@@ -1169,8 +1282,9 @@ CMD(update, "working copy", "", "update working copy")
 
   get_manifest_map(m_old);
   calculate_ident(m_old, m_old_id);
+
   calculate_new_manifest_map(m_old, m_working, app);
-  
+
   pick_update_target(m_old_id, app, m_chosen_id);
   if (m_old_id == m_chosen_id)
     {
@@ -1181,8 +1295,28 @@ CMD(update, "working copy", "", "update working copy")
   app.db.get_manifest_version(m_chosen_id, m_chosen_data);
   read_manifest_map(m_chosen_data, m_chosen);
 
+  patch_set ps_chosen;
+  manifests_to_patch_set(m_old, m_chosen, app, ps_chosen);
+
+  restrict_patch_set(ps_chosen, app);
+  P(F("restricted update target %s\n") % ps_chosen.m_new);
+
+  // restrict chosen update target
+  m_chosen = ps_chosen.map_new;
+  m_chosen_id = ps_chosen.m_new;
+
+  // merge restricted m_chosen into m_working
+  // is update to restricted m_chosen ok? restricted m_chosen will not exist in the db!
+  // graydon seems to think it should be ok
+
+  // the only wrinkle seems to be that the new manifest will have no ancestor since
+  // the base appeared out of nowhere and this causes merge to fall back on the weaker
+  // merge2 algorithm
+
   rename_edge left_renames, right_renames;
   update_merge_provider merger(app);
+
+  // merge chosen manifest into working manifest
   N(merge3(m_old, m_chosen, m_working, app, merger, m_new, 
 	   left_renames.mapping, right_renames.mapping),
     F("manifest merge failed, no update performed"));
@@ -1191,6 +1325,7 @@ CMD(update, "working copy", "", "update working copy")
   patch_set ps;
   manifests_to_patch_set(m_working, m_new, app, ps);
 
+  // merge chosen into working copy
   L(F("applying %d deletions to files in tree\n") % ps.f_dels.size());
   for (set<file_path>::const_iterator i = ps.f_dels.begin();
        i != ps.f_dels.end(); ++i)
@@ -1258,6 +1393,7 @@ CMD(update, "working copy", "", "update working copy")
   // small race condition here...
   // nb: we write out m_chosen, not m_new, because the manifest-on-disk
   // is the basis of the working copy, not the working copy itself.
+  // note also that m_chosen may be restricted from the initial update target
   put_manifest_map(m_chosen);
   P(F("updated to base version %s\n") % m_chosen_id);
 
@@ -1268,6 +1404,11 @@ CMD(update, "working copy", "", "update working copy")
 CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy")
 {
   manifest_map m_old;
+
+  // should what get's reverted here be the subject of a restriction
+  // rather than specified as files?
+
+  // perhaps in the zero args case restrictions should be considered
 
   if (args.size() == 0)
     {
@@ -1585,7 +1726,6 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
     {
       set<manifest_id>::const_iterator i = heads.begin();
       manifest_id left = *i;
-      manifest_id ancestor;
       size_t count = 1;
       for (++i; i != heads.end(); ++i, ++count)
 	{
@@ -1826,8 +1966,9 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
     {
       throw usage(name);
     }
-      
+
   manifests_to_patch_set(m_old, m_new, app, ps);
+  restrict_patch_set(ps, app);
 
   stringstream summary;
   patch_set_to_text_summary(ps, summary);
@@ -2066,7 +2207,7 @@ CMD(status, "informative", "", "show status of working copy")
 {
   manifest_map m_old, m_new;
   manifest_id old_id, new_id;
-  patch_set ps1;
+  patch_set ps;
   rename_edge renames;
 
   N(bookdir_exists(),
@@ -2075,14 +2216,17 @@ CMD(status, "informative", "", "show status of working copy")
 
   transaction_guard guard(app.db);
   get_manifest_map(m_old);
-  calculate_ident(m_old, old_id);
   calculate_new_manifest_map(m_old, m_new, renames.mapping, app);
+
+  calculate_ident(m_old, old_id);
   calculate_ident(m_new, new_id);
 
   renames.parent = old_id;
   renames.child = new_id;
-  manifests_to_patch_set(m_old, m_new, renames, app, ps1);
-  patch_set_to_text_summary(ps1, cout);
+
+  manifests_to_patch_set(m_old, m_new, renames, app, ps);
+  restrict_patch_set(ps, app);
+  patch_set_to_text_summary(ps, cout);
 
   guard.commit();
 }
@@ -2120,7 +2264,7 @@ struct unknown_itemizer : public tree_walker
     : app(a), man(m), want_ignored(i) {}
   virtual void visit_file(file_path const & path)
   {
-    if (man.find(path) == man.end())
+    if (!app.is_restricted(path) && man.find(path) == man.end())
       {
       if (want_ignored)
 	{
@@ -2161,7 +2305,7 @@ ls_missing (app_state & app)
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      if (!file_exists(*i))	
+      if (!app.is_restricted(*i) && !file_exists(*i))	
 	cout << *i << endl;
     }
 }

@@ -1,3 +1,12 @@
+2004-07-20  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_restrictions.at: new test
+	* testsuite.at: run it
+	* app_state.{cc,hh} (add_restriction, is_restricted): new functions
+	* monotone.cc (--include,--exclude): new options
+	* commands.cc (restrict_patch_set): new function. called by
+	commit, update, status, diff commands
+
 2004-07-05  graydon hoare  <graydon@pobox.com>
 
 	* cert.cc (operator<): Fix wrong ordering of 
