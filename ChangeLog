@@ -1,5 +1,12 @@
 2004-12-30  graydon hoare  <graydon@pobox.com>
 
+	* constants.cc (netcmd_current_protocol_version): Set to 3.
+	* tests/t_crlf.at: New test of crlf line encodings.
+	* testsuite.at: Call it.
+	* monotone.spec: Note 0.16 release.
+
+2004-12-30  graydon hoare  <graydon@pobox.com>
+
 	* win32/get_system_flavour.cc: Fix little compile bugs.
 
 2004-12-30  Julio M. Merino Vidal  <jmmv@menta.net>

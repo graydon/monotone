@@ -1,0 +1,17 @@
+AT_SETUP([CRLF line normalization])
+
+MONOTONE_SETUP
+
+AT_CHECK(printf "a\r\nb\r\nc\r\nd\r\n", [], [stdout])
+AT_CHECK(cp stdout test.crlf)
+AT_CHECK(MONOTONE add test.crlf, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(printf "a\r\nb\r\nnew line!\r\nc\r\nd\r\n", [], [stdout])
+AT_CHECK(cp stdout test.crlf)
+
+AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+LINES=`wc -l <stdout`
+AT_CHECK(test $LINES -eq 13) 
+
+AT_CLEANUP
