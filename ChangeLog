@@ -1,5 +1,11 @@
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
+        * change_set.{cc,hh}: Take account of files which are the
+        destination of a rename_file operation, when examining
+        file deletions. Added helper methods to clean up related code.
+
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
         * change_set.cc: added a sanity check for deltas with same src/dst,
         and deleted files with deltas.
 

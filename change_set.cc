@@ -167,6 +167,31 @@ change_set::path_rearrangement::empty() const
     added_files.empty();
 }
 
+bool
+change_set::path_rearrangement::has_added_file(file_path const & file)
+{
+  return added_files.find(file) != added_files.end();
+}
+
+bool
+change_set::path_rearrangement::has_deleted_file(file_path const & file)
+{
+  return deleted_files.find(file) != deleted_files.end();
+}
+
+bool
+change_set::path_rearrangement::has_renamed_file_dst(file_path const & file)
+{
+  // FIXME: this is inefficient, but improvements would require a different
+  // structure for renamed_files (or perhaps a second reverse map). For now
+  // we'll assume that few files will be renamed per changeset.
+  for (std::map<file_path,file_path>::const_iterator rf = renamed_files.begin();
+       rf != renamed_files.end(); ++rf)
+    if (rf->second == file)
+      return true;
+  return false;
+}
+
 bool 
 change_set::empty() const
 {
@@ -372,9 +397,11 @@ change_set::check_sane() const
       delta_map::const_iterator j = deltas.find(*i);
       if (!global_sanity.relaxed)
         {
-          // we can only have deltas if the file has been re-added.
+          // we can only have deltas if the file has been re-added or the file is a
+          // rename destination.
           I(j == deltas.end() ||
-              rearrangement.added_files.find(*i) != rearrangement.added_files.end() );
+              rearrangement.has_added_file(*i) ||
+              rearrangement.has_renamed_file_dst(*i));
         }
     }
 
@@ -1300,20 +1327,18 @@ concatenate_change_sets(change_set const & a,
       // it doesn't make sense if the revision has a delta with a deleted file
       // (unless there's also a corresponding add for a new file)
       
-      if ( a.rearrangement.deleted_files.find(delta_entry_path(del)) !=
-                                      a.rearrangement.deleted_files.end()
-        && a.rearrangement.added_files.find(delta_entry_path(del)) ==
-                                      a.rearrangement.added_files.end() )
+      if ( a.rearrangement.has_deleted_file(delta_entry_path(del))
+        && !a.rearrangement.has_added_file(delta_entry_path(del))
+        && !a.rearrangement.has_renamed_file_dst(delta_entry_path(del)) )
           // FIXME: this should really be an invariant, but some
           // revisions in monotone's tree have patches with deletions.
           // (54b9be0d60633ca2941edd02b9b7cfe8da90cc3a for example)
           W(F("delta [%s]->[%s] for deleted file %s\n")
-            % delta_entry_src(del) % delta_entry_dst(del) % new_pth);
-      else if (b.rearrangement.deleted_files.find(delta_entry_path(del)) != 
-                                      b.rearrangement.deleted_files.end())
+            % delta_entry_src(del) % delta_entry_dst(del) % delta_entry_path(del));
+      else if (b.rearrangement.has_deleted_file(delta_entry_path(del)))
         // the delta should be removed if the file is going to be deleted
         L(F("discarding delta [%s]->[%s] for deleted file '%s'\n")
-            % delta_entry_src(del) % delta_entry_dst(del) % new_pth);
+            % delta_entry_src(del) % delta_entry_dst(del) % delta_entry_path(del));
       else
         concatenated.deltas.insert(std::make_pair(new_pth,
                                                   std::make_pair(delta_entry_src(del),
@@ -1324,12 +1349,13 @@ concatenate_change_sets(change_set const & a,
   for (change_set::delta_map::const_iterator del = b.deltas.begin();
        del != b.deltas.end(); ++del)
     {
+      file_path del_pth = delta_entry_path(del);
       change_set::delta_map::const_iterator existing = 
-        concatenated.deltas.find(delta_entry_path(del));
+        concatenated.deltas.find(del_pth);
       if (existing != concatenated.deltas.end())
         {
           L(F("fusing deltas on %s : %s -> %s and %s -> %s\n")
-            % delta_entry_path(del) 
+            % del_pth
             % delta_entry_src(existing) 
             % delta_entry_dst(existing)
             % delta_entry_src(del)
@@ -1337,25 +1363,23 @@ concatenate_change_sets(change_set const & a,
           I(delta_entry_dst(existing) == delta_entry_src(del));
           std::pair<file_id, file_id> fused = std::make_pair(delta_entry_src(existing),
                                                              delta_entry_dst(del));      
-          concatenated.deltas.erase(delta_entry_path(del));
-          concatenated.deltas.insert(std::make_pair(delta_entry_path(del), fused));
+          concatenated.deltas.erase(del_pth);
+          concatenated.deltas.insert(std::make_pair((del_pth), fused));
         }
       else
         {
-          L(F("delta on %s in second changeset copied forward\n")
-            % delta_entry_path(del));
+          L(F("delta on %s in second changeset copied forward\n") % del_pth);
           // in general don't want deltas on deleted files. however if a
           // file has been deleted then re-added, then a delta is valid
           // (it applies to the newly-added file)
-          if (b.rearrangement.deleted_files.find(delta_entry_path(del)) == 
-                                          b.rearrangement.deleted_files.end()
-            || b.rearrangement.added_files.find(delta_entry_path(del)) != 
-                                          b.rearrangement.added_files.end() )
+          if (!b.rearrangement.has_deleted_file(del_pth)
+              || b.rearrangement.has_added_file(del_pth)
+              || b.rearrangement.has_renamed_file_dst(del_pth))
             concatenated.deltas.insert(*del);
           else
             // FIXME: this should be an invariant, see fixme above.
             W(F("delta [%s]->[%s] for deleted file %s\n")
-              % delta_entry_src(del) % delta_entry_dst(del) % delta_entry_path(del));
+              % delta_entry_src(del) % delta_entry_dst(del) % del_pth);
         }
     }
 
@@ -1861,10 +1885,9 @@ project_missing_deltas(change_set const & a,
           L(F("merge is copying delta '%s' : '%s' -> '%s'\n") 
             % path_in_merged % delta_entry_src(i) % delta_entry_dst(i));
           I(b.deltas.find(path_in_merged) == b.deltas.end());
-          if (b.rearrangement.deleted_files.find(path_in_merged) !=
-                b.rearrangement.deleted_files.end())
+          if (b.rearrangement.has_deleted_file(path_in_merged))
             // if the file was deleted on the other fork of the merge, then
-            // we don't want to keep this delta
+            // we don't want to keep this delta.
             L(F("skipping delta '%s'->'%s' on deleted file '%s'\n")
                 % delta_entry_src(i) % delta_entry_dst(i) % path_in_merged);
           else
