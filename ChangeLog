@@ -1,5 +1,9 @@
 2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.cc: Fixup after merge.
+
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
 	* file_io.cc (read_data_for_command_line): New function.
 	(read_data_stdin): New function.
 	* file_io.hh (read_data_for_command_line): Add prototype.
