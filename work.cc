@@ -63,7 +63,7 @@ build_addition(file_path const & path,
                change_set::path_rearrangement & pr)
 {
   N(directory_exists(path) || file_exists(path),
-    F("path %s does not exist") % path);
+    F("path %s does not exist\n") % path);
 
   change_set cs_new, cs_old, cs_concatenated;
   cs_old.rearrangement = pr;
@@ -119,7 +119,7 @@ build_deletion(file_path const & path,
   
   if (! known_preimage_path(path, man, pr, dir_p))
     {
-      P(F("skipping %s, not currently tracked") % path);
+      P(F("skipping %s, not currently tracked\n") % path);
       return;
     }
 
@@ -148,7 +148,7 @@ build_rename(file_path const & src,
 
   if (! known_preimage_path(src, man, pr, dir_p))
     {
-      P(F("skipping %s, not currently tracked") % src);
+      P(F("skipping %s, not currently tracked\n") % src);
       return;
     }
 
