@@ -16,9 +16,9 @@ static string const database_option("database");
 static string const branch_option("branch");
 
 app_state::app_state() 
-  : branch_name(""), db("monotone.db"), options_changed(false)
+  : branch_name(""), db(""), options_changed(false)
 {
-  options[database_option] = string("monotone.db");
+  options[database_option] = string("");
   options[branch_option] = string("");
   local_path o_path;
   get_options_path(o_path);
@@ -29,7 +29,7 @@ app_state::app_state()
       read_options_map(dat, options);
 
       string dbname = options[database_option];
-      if (dbname != "monotone.db")
+      if (dbname != "")
 	db.set_filename(dbname);
       branch_name = options[branch_option];
     }

@@ -1,3 +1,9 @@
+2003-09-26  Tom Tromey  <tromey@redhat.com>
+
+	* database.cc (sql): Throw informative error if database name not
+	set.
+	* app_state.cc (app_state): Default to no database.
+
 2003-09-26  graydon hoare  <graydon@pobox.com>
 
 	* debian/*, monotone.spec: Add packaging control files.
