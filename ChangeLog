@@ -1,3 +1,8 @@
+2005-01-28  graydon hoare  <graydon@pobox.com>
+
+	* database.{cc,hh}: More netsync speed tweaks.
+	* netsync.cc: Likewise.
+
 2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.hh (null_id): New function.
