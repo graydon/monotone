@@ -1326,6 +1326,48 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 }
 
 
+// fmerge is a simple command for debugging the line merger.  most of the
+// time, leave it commented out. it can be helpful for certain cases,
+// though.
+
+/*
+CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result")
+{
+  if (args.size() != 3)
+    throw usage(name);
+
+  file_id anc_id(args[0]), left_id(args[1]), right_id(args[2]);
+  file_data anc, left, right;
+  data anc_unpacked, left_unpacked, right_unpacked;
+
+  N(app.db.file_version_exists (anc_id),
+    "ancestor file id does not exist");
+
+  N(app.db.file_version_exists (left_id),
+    "left file id does not exist");
+
+  N(app.db.file_version_exists (right_id),
+    "right file id does not exist");
+
+  app.db.get_file_version(anc_id, anc);
+  app.db.get_file_version(left_id, left);
+  app.db.get_file_version(right_id, right);
+
+  unpack(left.inner(), left_unpacked);
+  unpack(anc.inner(), anc_unpacked);
+  unpack(right.inner(), right_unpacked);
+
+  vector<string> anc_lines, left_lines, right_lines, merged_lines;
+
+  split_into_lines(anc_unpacked(), anc_lines);
+  split_into_lines(left_unpacked(), left_lines);
+  split_into_lines(right_unpacked(), right_lines);
+  N(merge3(anc_lines, left_lines, right_lines, merged_lines), "merge failed");
+  copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
+
+}
+*/
+
 CMD(propagate, "tree", "<src-branch> <dst-branch>", 
     "merge from one branch to another asymmetrically")
 {
@@ -1444,16 +1486,32 @@ CMD(diff, "informative", "", "show current diffs on stdout")
 CMD(status, "informative", "", "show status of working copy")
 {
   manifest_map m_old, m_new;
-  patch_set ps;
+  manifest_id old_id, new_id;
+  patch_set ps1;
 
   N(bookdir_exists(),
     "no monotone book-keeping directory '" + book_keeping_dir + "' found");
 
   transaction_guard guard(app.db);
   get_manifest_map(m_old);
+  calculate_manifest_map_ident(m_old, old_id);
   calculate_new_manifest_map(m_old, m_new);
-  manifests_to_patch_set(m_old, m_new, app, ps);
-  patch_set_to_text_summary(ps, cout);
+  calculate_manifest_map_ident(m_new, new_id);
+
+  cout << "base manifest: " << old_id.inner()() << endl;
+  cout << "curr manifest: " << new_id.inner()() << endl;
+
+  if (old_id.inner()() != new_id.inner()())
+    {
+      cout << "changes:" << endl;
+      manifests_to_patch_set(m_old, m_new, app, ps1);
+      patch_set_to_text_summary(ps1, cout);
+    }
+  else
+    {
+      cout << "no changes" << endl;
+    }
+
   guard.commit();
 }
 

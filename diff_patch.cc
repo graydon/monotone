@@ -111,7 +111,9 @@ void walk_hunk_consumer(vector<string> lcs,
 	  // least common subsequence (i.e. there is actually some
 	  // commonality it doesn't notice). you will probably need to dig
 	  // into the lcs implementation to fix this, bleh.
-	  if(lines1[a] == lines2[b] &&
+	  if(a < lines1.size() &&
+	     b < lines2.size() && 
+	     lines1[a] == lines2[b] &&
 	     lines1[a] != *i)
 	    { a++; b++; continue; }
 	  
@@ -288,9 +290,9 @@ void hunk_merger::advance_to(size_t ap)
 	lend = ancestor_to_leftpos_map.at(ap);
     }
 
-  //    L("advance to %d / %d (lpos = %d / %d -> %d / %d)\n", 
-  //      ap, ancestor.size(), lpos, left.size(),
-  //      lend, left.size());
+  //   L("advance to %d / %d (lpos = %d / %d -> %d / %d)\n", 
+  //     ap, ancestor.size(), lpos, left.size(),
+  //     lend, left.size());
 
   I(lpos <= lend);
   I(lend <= left.size());
@@ -334,49 +336,48 @@ void hunk_merger::insert_at(size_t rp)
   I(rp < right.size());
   I(apos <= ancestor_to_leftpos_map.size());
 
-  if (apos > 0 && 
-      apos + 1 < ancestor_to_leftpos_map.size())
+  bool insert_here = false;
+  bool delete_here = false;
+  
+  if (apos > 0 && apos < ancestor_to_leftpos_map.size())
+    insert_here = 
+      (ancestor_to_leftpos_map.at(apos - 1) + 1 <
+       ancestor_to_leftpos_map.at(apos));
+  
+  if (apos + 1 < ancestor_to_leftpos_map.size())
+    delete_here = (ancestor_to_leftpos_map.at(apos + 1) == 
+		   ancestor_to_leftpos_map.at(apos));
+
+  if (! (insert_here || delete_here))
+    merged.push_back(right.at(rp));
+  
+  else if (delete_here)
     {
-
-      bool insert_here = (ancestor_to_leftpos_map.at(apos - 1) + 1 < 
-			  ancestor_to_leftpos_map.at(apos));
+      L("insert conflict type 1 -- delete "
+	"(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
+	apos, lpos, 
+	ancestor_to_leftpos_map.at(apos),
+	ancestor_to_leftpos_map.at(apos+1));
+      throw conflict();
+    }
+  
+  else if (insert_here)
+    {
+      if (left.at(lpos) == right.at(rp))
+	return;
       
-      bool delete_here = (ancestor_to_leftpos_map.at(apos + 1) == 
-			  ancestor_to_leftpos_map.at(apos));
-
-      if (! (insert_here || delete_here))
-	merged.push_back(right.at(rp));
-      
-      else if (delete_here)
+      else
 	{
-	  L("insert conflict type 1 -- delete "
+	  L("insert conflict type 2 -- insert "
 	    "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
 	    apos, lpos, 
 	    ancestor_to_leftpos_map.at(apos),
 	    ancestor_to_leftpos_map.at(apos+1));
+	  L("trying to insert '%s', with '%s' conflicting\n",
+	    right.at(rp).c_str(), left.at(lpos).c_str());
 	  throw conflict();
 	}
-
-      else if (insert_here)
-	{
-	  if (left.at(lpos) == right.at(rp))
-	    return;
-
-	  else
-	    {
-	      L("insert conflict type 2 -- insert "
-		"(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
-		apos, lpos, 
-		ancestor_to_leftpos_map.at(apos),
-		ancestor_to_leftpos_map.at(apos+1));
-	      L("trying to insert '%s', with '%s' conflicting\n",
-		right.at(rp).c_str(), left.at(lpos).c_str());
-	      throw conflict();
-	    }
-	}
     }
-  else
-    merged.push_back(right.at(rp));
 }
 
 // notes: 
@@ -406,38 +407,58 @@ void hunk_merger::insert_at(size_t rp)
 
 void hunk_merger::delete_at(size_t ap)
 {
-  //   L("delete at %d (apos = %d)\n", ap, apos);
+  //   L("delete at %d (apos = %d, lpos = %d, translated = %d)\n", 
+  //     ap, apos, lpos, ancestor_to_leftpos_map.at(ap));
   I(ancestor.size() == ancestor_to_leftpos_map.size());
   I(ap < ancestor_to_leftpos_map.size());
+  I(ap == apos);
   I(ancestor_to_leftpos_map.at(ap) == lpos);
 
-  if (ap > 0 &&
-      ap + 1 < ancestor_to_leftpos_map.size())
+
+  bool insert_here = false;
+  bool delete_here = false;
+  
+  if (ap > 0 && apos < ancestor_to_leftpos_map.size())
+    insert_here = 
+      (ancestor_to_leftpos_map.at(apos - 1) + 1 <
+       ancestor_to_leftpos_map.at(apos));
+  
+  if (ap + 1 < ancestor_to_leftpos_map.size())
+    delete_here = (ancestor_to_leftpos_map.at(apos + 1) == 
+		   ancestor_to_leftpos_map.at(apos));
+  
+  if (!(insert_here || delete_here))
+    {apos++; lpos++;}
+  
+  else if (delete_here)
     {
-
-      bool insert_here = (ancestor_to_leftpos_map.at(apos - 1) + 1 <
-			  ancestor_to_leftpos_map.at(apos));
-      
-      bool delete_here = (ancestor_to_leftpos_map.at(apos + 1) == 
-			  ancestor_to_leftpos_map.at(apos));
-
-      if (!(insert_here || delete_here))
+      if (ancestor.at(ap) == left.at(lpos))
 	{apos++; lpos++;}
-
-      else if (delete_here)
-	{
-	  if (ancestor.at(ap) == left.at(lpos))
-	    {apos++; lpos++;}
-
-	  else
-	    throw conflict();
-	}
       
       else
-	throw conflict();
+	{
+	  L("delete conflict type 1 -- delete "
+	    "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
+	    apos, lpos, 
+	    ancestor_to_leftpos_map.at(apos),
+	    ancestor_to_leftpos_map.at(apos+1));
+	  L("trying to delete '%s', with '%s' conflicting\n",
+	    ancestor.at(ap).c_str(), left.at(lpos).c_str());
+	  throw conflict();
+	}
     }
+  
   else
-    {apos++; lpos++;}
+    {
+      L("delete conflict type 1 -- insert "
+	"(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
+	apos, lpos, 
+	ancestor_to_leftpos_map.at(apos),
+	ancestor_to_leftpos_map.at(apos+1));
+      L("trying to delete '%s', with '%s' conflicting\n",
+	ancestor.at(ap).c_str(), left.at(lpos).c_str());
+      throw conflict();
+    }
 }
 
 
