@@ -1124,8 +1124,8 @@ anc_graph::construct_revision_from_ancestry(u64 child)
       L(F("node %d is a root node\n") % child);
       revision_id null_rid;
       manifest_id null_mid;
-      change_set cs;
-      analyze_manifest_changes(app, null_mid, child_man, cs);
+      boost::shared_ptr<change_set> cs(new change_set());
+      analyze_manifest_changes(app, null_mid, child_man, *cs);
       rev.edges.insert(std::make_pair(null_rid,
                                       std::make_pair(null_mid, cs)));
     }
@@ -1152,8 +1152,8 @@ anc_graph::construct_revision_from_ancestry(u64 child)
           L(F("parent node %d = revision %s\n") % parent % parent_rid);      
           manifest_id parent_man;
           get_node_manifest(parent, parent_man);
-          change_set cs;
-          analyze_manifest_changes(app, parent_man, child_man, cs);
+          boost::shared_ptr<change_set> cs(new change_set());
+          analyze_manifest_changes(app, parent_man, child_man, *cs);
           rev.edges.insert(std::make_pair(parent_rid,
                                           std::make_pair(parent_man, cs)));
         } 

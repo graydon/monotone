@@ -1,5 +1,13 @@
 2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
 
+	* constants.cc:
+	* revision.cc:
+	* testsuite.at: 
+	* commands.cc:
+	* ChangeLog: Fixup after merge.
+
+2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
+
 	* merkle_tree.hh (netcmd_item_type): Add epoch_item.
 	* merkle_tree.cc (netcmd_item_type_to_string): Handle epoch_item.
 
@@ -77,137 +85,6 @@
 2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* constants.cc (constants): Bump netsync protocol version.
-
-2005-02-15  Nathaniel Smith  <njs@codesourcery.com>
-
-	* monotone.1: Add cursory note about "automate".
-	* monotone.texi: Synchronize with manpage.
-
-2005-02-15  Nathaniel Smith  <njs@codesourcery.com>
-
-	* automate.cc: Add "Error conditions" to the standard comment
-	sections.
-	
-	* monotone.texi (Scripting): New section.
-	(Automation): New section.
-	
-	* tests/t_automate_heads.at: Test behavior with nonexistent
-	branch.
-
-2005-02-14  Nathaniel Smith  <njs@codesourcery.com>
-
-	* tests/t_merge_normalization_edge_case.at: New test.
-	* testsuite.at: Add it.
-
-	* diff_patch.cc (normalize_extents): Soften the warning message
-	now that we have one test case.
-
-2005-02-14  Matthew A. Nicholson  <mnicholson@digium.com>
-
-	* std_hooks.lua: Add vimdiff merge hooks.
-	
-2005-02-14  Nathaniel Smith  <njs@codesourcery.com>
-
-	* std_hooks.lua: Remove tabs.
-
-2005-02-14  Nathaniel Smith  <njs@codesourcery.com>
-
-	* tests/t_automate_heads.at: New test.
-	* tests/t_automate_version.at: New test.
-	* testsuite.at: Add then.
-	
-	* commands.cc (automate): Fix documentation string.
-	* automate.cc: Much more structured documentation comments.
-
-2005-02-13  Nathaniel Smith  <njs@codesourcery.com>
-
-	* automate.{cc,hh}: New files.
-	* commands.cc: New command "automate".
-
-2005-02-13  Nathaniel Smith  <njs@codesourcery.com>
-
-	* monotone.texi (Creating a Database): Fix typo, clarify
-	conventions for database management following question on mailing
-	list.
-
-2005-02-12  graydon hoare  <graydon@pobox.com>
-
-	* change_set.{cc,hh}: Correct code to pass newly-added unit tests.
-
-2005-02-10  Derek Scherger  <derek@echologic.com>
-
-	* monotone.1: update for restrictions
-	* monotone.texi: sync with manpage
-
-2005-02-09  Derek Scherger  <derek@echologic.com>
-
-	* cert.cc (cert_revision_testresult): allow pass/fail testresult
-	values
-	* commands.cc (testresult): likewise
-	* commands.cc (do_diff): disallow restriction of non-working copy
-	diffs
-	* monotone.texi: update for restrictions
-
-2005-02-08  graydon hoare  <graydon@pobox.com>
-
-	* database.cc (version_cache::set): Fix bad expiry logic.
-
-2005-02-08  Nathaniel Smith  <njs@codesourcery.com>
-
-	* change_set.cc (check_sane): Null sources are only valid for
-	adds.
-
-2005-02-07  Nathaniel Smith  <njs@codesourcery.com>
-
-	* database.cc (struct version_cache): Fix invariant in cache
-	clearing logic.
-
-2005-02-06  Nathaniel Smith  <njs@codesourcery.com>
-
-	* change_set.cc: Add a few more invariants; add lots and lots of
-	unit tests.
-
-2005-02-06  graydon hoare  <graydon@pobox.com>
-
-	* change_set.cc: Use hash_map in a few places.
-	(confirm_unique_entries_in_directories): Fix invariants.
-	* constants.{cc,hh} (db_version_cache_sz): New constant.
-	* database.cc (version_cache): New structure.
-	(get_version): Use it.
-	* interner.hh: Rewrite to use hash_map and vector.
-	* tests/t_no_rename_overwrite.at: Tweak return codes.
-
-2005-02-06  Nathaniel Smith  <njs@codesourcery.com>
-
-	* ui.hh (ensure_clean_line): New method.
-	* ui.cc (inform): Use it.
-	* keys.cc (get_passphrase): Call it before prompting for passphrase.
-
-2005-02-06  Nathaniel Smith  <njs@codesourcery.com>
-
-	* database.cc (info): Report more statistics.
-
-	* ROADMAP: Remove finished items.
-
-	* revision.cc (analyze_manifest_changes): Childs cannot be null,
-	that makes no sense.
-	(add_node_for_old_manifest): Log node names, don't print it.
-	(construct_revision_from_ancestry): Partially rewrite to handle
-	root nodes explicitly.
-	(build_changesets_from_existing_revs): Don't put the null revision
-	in the ancestry graph, to match changesetify logic.
-	(add_node_for_old_revision): Enforce decision that the ancestry
-	graph not contain the null revision.
-
-	(anc_graph::heads): Remove.
-	(add_node_ancestry): Don't try creating it; logic was broken
-	anyway.
-	(rebuild_from_heads): Rename to...
-	(rebuild_ancestry): ...this.  Calculate head set correctly.
-
-2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
-
-	* change_set.cc (compose_path): Add more invariants.
 
 2005-02-25  Nathaniel Smith  <njs@codesourcery.com>
 

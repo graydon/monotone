@@ -325,7 +325,7 @@ put_path_rearrangement(change_set::path_rearrangement & w)
 
 static void
 get_valid_paths(path_set const & old_paths, change_set::path_rearrangement const & work, 
-		path_set & valid_paths)
+                path_set & valid_paths)
 {
   // collect paths from old manifest and work set into valid_paths
 
@@ -1764,8 +1764,6 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch")
 static void 
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
-  app.initialize(false);
-
   vector< revision<cert> > certs;
   app.db.get_revision_certs(branch_cert_name, certs);
 
@@ -1787,7 +1785,6 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 static void 
 ls_epochs(string name, app_state & app, vector<utf8> const & args)
 {
-  app.initialize(false);
   std::map<cert_value, epoch_id> epochs;
   app.db.get_epochs(epochs);
 
@@ -1814,8 +1811,6 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
 static void 
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
-  app.initialize(false);
-
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
 
@@ -2184,47 +2179,6 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
 }
 
-static void
-check_db(app_state & app)
-{
-  ticker revs("revs", ".");
-  ticker checked("checked", "+");
-
-  std::multimap<revision_id, revision_id> graph;
-  app.db.get_revision_ancestry(graph);
-  std::set<revision_id> seen;
-  for (std::multimap<revision_id, revision_id>::const_iterator i = graph.begin();
-       i != graph.end(); ++i)
-    {
-      revision_set rev;
-      if (seen.find(i->first) == seen.end())
-        {
-          if (app.db.revision_exists(i->first))
-            {            
-              app.db.get_revision(i->first, rev);
-              seen.insert(i->first);
-              ++revs;
-            }
-        }
-      if (seen.find(i->second) == seen.end())
-        {      
-          if (app.db.revision_exists(i->second))
-            {            
-              app.db.get_revision(i->second, rev);
-              seen.insert(i->second);
-              ++revs;
-            }
-        }
-    }
-
-  for (std::set<revision_id>::const_iterator i = seen.begin();
-       i != seen.end(); ++i)
-    {
-      check_sane_history(*i, constants::verify_depth, app.db);
-      ++checked;
-    }
-}
-
 
 CMD(db, "database", 
     "init\n"
@@ -2240,8 +2194,6 @@ CMD(db, "database",
     "set_epoch BRANCH EPOCH\n", 
     "manipulate database state")
 {
-  app.initialize(false);
-
   if (args.size() == 1)
     {
       if (idx(args, 0)() == "init")
