@@ -2902,10 +2902,8 @@ selected, then their least common ancestor is located in the ancestry
 graph and these 3 revisions are provided to the built-in 3-way merge
 algorithm. The process then repeats for each additional head, using
 the result of each previous merge as an input to the next.
-@end ftable
 
 
-@ftable @command
 @item monotone propagate @var{sourcebranch} @var{destbranch}
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
@@ -2921,6 +2919,16 @@ branches for medium-length development activities, such as
 maintenance branches for stable software releases, trivial bug fix
 branches, public contribution branches, or branches devoted to the
 development of a single module within a larger project.
+
+
+@item monotone explicit_merge @var{id} @var{id} @var{destbranch}
+This command merges exactly the two @var{id}s you give it, and places
+the result in branch @var{destbranch}.  It is useful when you need more
+control over the merging process than @code{propagate} or @code{merge}
+give you.  For instance, if you have a branch with three heads, and you
+only want to merge two of them, you can use this command.  Or if you
+have a branch with two heads, and you want to propagate one of them to
+another branch, again, you can use this command.
 @end ftable
 
 
