@@ -68,7 +68,7 @@ template<typename XFM> string xform(string const & in)
   out.reserve(in.size() * 2);
   CryptoPP::StringSource 
     str(in, true, 
-	new XFM(new CryptoPP::StringSink(out)));
+        new XFM(new CryptoPP::StringSink(out)));
   return out;
 }
 
@@ -190,11 +190,11 @@ patch(base64< gzip<data> > const & olddata,
 
 void 
 calculate_ident(data const & dat,
-		hexenc<id> & ident)
+                hexenc<id> & ident)
 {
   CryptoPP::SHA hash;
   hash.Update(reinterpret_cast<byte const *>(dat().c_str()), 
-	      static_cast<unsigned int>(dat().size()));
+              static_cast<unsigned int>(dat().size()));
   char digest[CryptoPP::SHA::DIGESTSIZE];
   hash.Final(reinterpret_cast<byte *>(digest));
   string out(digest, CryptoPP::SHA::DIGESTSIZE);
@@ -204,7 +204,7 @@ calculate_ident(data const & dat,
 
 void 
 calculate_ident(base64< gzip<data> > const & dat,
-		hexenc<id> & ident)
+                hexenc<id> & ident)
 {
   gzip<data> data_decoded;
   data data_decompressed;  
@@ -215,7 +215,7 @@ calculate_ident(base64< gzip<data> > const & dat,
 
 void 
 calculate_ident(file_data const & dat,
-		file_id & ident)
+                file_id & ident)
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
@@ -224,7 +224,7 @@ calculate_ident(file_data const & dat,
 
 void 
 calculate_ident(manifest_map const & m,
-		manifest_id & ident)
+                manifest_id & ident)
 {
   CryptoPP::SHA hash;
   size_t sz = 0;
@@ -261,7 +261,7 @@ calculate_ident(manifest_map const & m,
     }
   
   hash.Update(reinterpret_cast<byte const *>(buf), 
-	      static_cast<unsigned int>(sz));
+              static_cast<unsigned int>(sz));
 
   char digest[CryptoPP::SHA::DIGESTSIZE];
   hash.Final(reinterpret_cast<byte *>(digest));
@@ -274,7 +274,7 @@ calculate_ident(manifest_map const & m,
 
 void 
 calculate_ident(manifest_data const & dat,
-		manifest_id & ident)
+                manifest_id & ident)
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
@@ -283,7 +283,7 @@ calculate_ident(manifest_data const & dat,
 
 
 void calculate_ident(revision_data const & dat,
-		     revision_id & ident)
+                     revision_id & ident)
 {
   hexenc<id> tmp;
   data unpacked;
@@ -293,7 +293,7 @@ void calculate_ident(revision_data const & dat,
 }
 
 void calculate_ident(revision_set const & cs,
-		     revision_id & ident)
+                     revision_id & ident)
 {
   data tmp;
   hexenc<id> tid;
@@ -305,17 +305,17 @@ void calculate_ident(revision_set const & cs,
 // this might reasonably go in file_io.cc too..
 void 
 calculate_ident(file_path const & file,
-		hexenc<id> & ident,
-		lua_hooks & lua)
+                hexenc<id> & ident,
+                lua_hooks & lua)
 {
   string db_linesep, ext_linesep;
   string db_charset, ext_charset;
 
   bool do_lineconv = (lua.hook_get_linesep_conv(file, db_linesep, ext_linesep) 
-		      && db_linesep != ext_linesep);
+                      && db_linesep != ext_linesep);
 
   bool do_charconv = (lua.hook_get_charset_conv(file, db_charset, ext_charset) 
-		      && db_charset != ext_charset);
+                      && db_charset != ext_charset);
 
   if (do_charconv || do_lineconv)
     {
@@ -330,15 +330,15 @@ calculate_ident(file_path const & file,
       unsigned int const sz = 2 * CryptoPP::SHA::DIGESTSIZE;
       char buffer[sz];
       CryptoPP::FileSource f(file().c_str(), true, new CryptoPP::HashFilter
-			     (hash, new CryptoPP::HexEncoder
-			      (new CryptoPP::ArraySink(reinterpret_cast<byte *>(buffer), sz))));
+                             (hash, new CryptoPP::HexEncoder
+                              (new CryptoPP::ArraySink(reinterpret_cast<byte *>(buffer), sz))));
       ident = lowercase(string(buffer, sz));
     }
 }
 
-void split_into_lines(std::string const & in,		      
-		      std::string const & encoding,
-		      std::vector<std::string> & out)
+void split_into_lines(std::string const & in,                 
+                      std::string const & encoding,
+                      std::vector<std::string> & out)
 {
   std::string lc_encoding = lowercase(encoding);  
   out.clear();
@@ -367,20 +367,20 @@ void split_into_lines(std::string const & in,
       std::string::size_type end = in.find_first_of("\r\n", begin);
 
       while (end != std::string::npos && end >= begin)
-	{
-	  out.push_back(in.substr(begin, end-begin));
-	  if (in.at(end) == '\r'
-	      && in.size() > end+1 
-	      && in.at(end+1) == '\n')
-	    begin = end + 2;
-	  else
-	    begin = end + 1;
-	  if (begin >= in.size())
-	    break;
-	  end = in.find_first_of("\r\n", begin);
-	}
+        {
+          out.push_back(in.substr(begin, end-begin));
+          if (in.at(end) == '\r'
+              && in.size() > end+1 
+              && in.at(end+1) == '\n')
+            begin = end + 2;
+          else
+            begin = end + 1;
+          if (begin >= in.size())
+            break;
+          end = in.find_first_of("\r\n", begin);
+        }
       if (begin < in.size())
-	out.push_back(in.substr(begin, in.size() - begin));
+        out.push_back(in.substr(begin, in.size() - begin));
     }
   else
     {
@@ -393,15 +393,15 @@ void split_into_lines(std::string const & in,
 
 void 
 split_into_lines(string const & in,
-		 vector<string> & out)
+                 vector<string> & out)
 {
   split_into_lines(in, default_encoding, out);
 }
 
 void 
 join_lines(vector<string> const & in,
-	   string & out,
-	   string const & linesep)
+           string & out,
+           string const & linesep)
 {
   ostringstream oss;
   copy(in.begin(), in.end(), ostream_iterator<string>(oss, linesep.c_str()));
@@ -410,7 +410,7 @@ join_lines(vector<string> const & in,
 
 void 
 join_lines(vector<string> const & in,
-	   string & out)
+           string & out)
 {
   join_lines(in, out, "\n");
 }
@@ -424,16 +424,16 @@ remove_ws(string const & s)
        i != s.end(); ++i)
     {
       switch (*i)
-	{
-	case '\n':
-	case '\r':
-	case '\t':
-	case ' ':
-	  break;
-	default:
-	  tmp += *i;
-	  break;
-	}
+        {
+        case '\n':
+        case '\r':
+        case '\t':
+        case ' ':
+          break;
+        default:
+          tmp += *i;
+          break;
+        }
     }
   return tmp;
 }
@@ -472,19 +472,19 @@ system_charset()
 
 void 
 charset_convert(string const & src_charset,
-		string const & dst_charset,
-		string const & src, 
-		string & dst)
+                string const & dst_charset,
+                string const & src, 
+                string & dst)
 {
   if (src_charset == dst_charset)
     dst = src;
   else
     {
       L(F("converting %d bytes from %s to %s\n") % src.size() 
-	% src_charset % dst_charset);
+        % src_charset % dst_charset);
       char * converted = stringprep_convert(src.c_str(),
-					    dst_charset.c_str(),
-					    src_charset.c_str());
+                                            dst_charset.c_str(),
+                                            src_charset.c_str());
       I(converted != NULL);
       dst = string(converted);
       free(converted);
@@ -598,13 +598,13 @@ internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)
     {
       if (*i == "." || *i == "@")
-	tmp += *i;
+        tmp += *i;
       else
-	{
-	  ace a;
-	  utf8_to_ace(*i, a);
-	  tmp += a();
-	}
+        {
+          ace a;
+          utf8_to_ace(*i, a);
+          tmp += a();
+        }
     }
   key = tmp;
 }
@@ -628,14 +628,14 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)
     {
       if (*i == "." || *i == "@")
-	tmp += *i;
+        tmp += *i;
       else
-	{
-	  ace a(*i);
-	  utf8 u;
-	  ace_to_utf8(a, u);
-	  tmp += u();
-	}
+        {
+          ace a(*i);
+          utf8 u;
+          ace_to_utf8(a, u);
+          tmp += u();
+        }
     }
   utf = tmp;
 }
@@ -759,7 +759,7 @@ strip_ws_test()
   BOOST_CHECK(trim_ws("trailing space  \n") == "trailing space");
   BOOST_CHECK(trim_ws("\t\n both \r \n\r\n") == "both");
   BOOST_CHECK(remove_ws("  I like going\tfor walks\n  ")
-	      == "Ilikegoingforwalks");
+              == "Ilikegoingforwalks");
 }
 
 #define IDNA_ACE_PREFIX "xn--"
@@ -781,129 +781,129 @@ idna
     {
       "Arabic (Egyptian)", 17,
       {
-	0x0644, 0x064A, 0x0647, 0x0645, 0x0627, 0x0628, 0x062A, 0x0643,
-	0x0644, 0x0645, 0x0648, 0x0634, 0x0639, 0x0631, 0x0628, 0x064A,
-	0x061F},
+        0x0644, 0x064A, 0x0647, 0x0645, 0x0627, 0x0628, 0x062A, 0x0643,
+        0x0644, 0x0645, 0x0648, 0x0634, 0x0639, 0x0631, 0x0628, 0x064A,
+        0x061F},
       IDNA_ACE_PREFIX "egbpdaj6bu4bxfgehfvwxn", 0, 0, IDNA_SUCCESS,
       IDNA_SUCCESS},
     {
       "Chinese (simplified)", 9,
       {
-	0x4ED6, 0x4EEC, 0x4E3A, 0x4EC0, 0x4E48, 0x4E0D, 0x8BF4, 0x4E2D, 0x6587},
+        0x4ED6, 0x4EEC, 0x4E3A, 0x4EC0, 0x4E48, 0x4E0D, 0x8BF4, 0x4E2D, 0x6587},
       IDNA_ACE_PREFIX "ihqwcrb4cv8a8dqg056pqjye", 0, 0, IDNA_SUCCESS,
       IDNA_SUCCESS},
     {
       "Chinese (traditional)", 9,
       {
-	0x4ED6, 0x5011, 0x7232, 0x4EC0, 0x9EBD, 0x4E0D, 0x8AAA, 0x4E2D, 0x6587},
+        0x4ED6, 0x5011, 0x7232, 0x4EC0, 0x9EBD, 0x4E0D, 0x8AAA, 0x4E2D, 0x6587},
       IDNA_ACE_PREFIX "ihqwctvzc91f659drss3x8bo0yb", 0, 0, IDNA_SUCCESS,
       IDNA_SUCCESS},
     {
       "Czech", 22,
       {
-	0x0050, 0x0072, 0x006F, 0x010D, 0x0070, 0x0072, 0x006F, 0x0073,
-	0x0074, 0x011B, 0x006E, 0x0065, 0x006D, 0x006C, 0x0075, 0x0076,
-	0x00ED, 0x010D, 0x0065, 0x0073, 0x006B, 0x0079},
+        0x0050, 0x0072, 0x006F, 0x010D, 0x0070, 0x0072, 0x006F, 0x0073,
+        0x0074, 0x011B, 0x006E, 0x0065, 0x006D, 0x006C, 0x0075, 0x0076,
+        0x00ED, 0x010D, 0x0065, 0x0073, 0x006B, 0x0079},
       IDNA_ACE_PREFIX "Proprostnemluvesky-uyb24dma41a", 0, 0, IDNA_SUCCESS,
       IDNA_SUCCESS},
     {
       "Hebrew", 22,
       {
-	0x05DC, 0x05DE, 0x05D4, 0x05D4, 0x05DD, 0x05E4, 0x05E9, 0x05D5,
-	0x05D8, 0x05DC, 0x05D0, 0x05DE, 0x05D3, 0x05D1, 0x05E8, 0x05D9,
-	0x05DD, 0x05E2, 0x05D1, 0x05E8, 0x05D9, 0x05EA},
+        0x05DC, 0x05DE, 0x05D4, 0x05D4, 0x05DD, 0x05E4, 0x05E9, 0x05D5,
+        0x05D8, 0x05DC, 0x05D0, 0x05DE, 0x05D3, 0x05D1, 0x05E8, 0x05D9,
+        0x05DD, 0x05E2, 0x05D1, 0x05E8, 0x05D9, 0x05EA},
       IDNA_ACE_PREFIX "4dbcagdahymbxekheh6e0a7fei0b", 0, 0, IDNA_SUCCESS,
       IDNA_SUCCESS},
     {
       "Hindi (Devanagari)", 30,
       {
-	0x092F, 0x0939, 0x0932, 0x094B, 0x0917, 0x0939, 0x093F, 0x0928,
-	0x094D, 0x0926, 0x0940, 0x0915, 0x094D, 0x092F, 0x094B, 0x0902,
-	0x0928, 0x0939, 0x0940, 0x0902, 0x092C, 0x094B, 0x0932, 0x0938,
-	0x0915, 0x0924, 0x0947, 0x0939, 0x0948, 0x0902},
+        0x092F, 0x0939, 0x0932, 0x094B, 0x0917, 0x0939, 0x093F, 0x0928,
+        0x094D, 0x0926, 0x0940, 0x0915, 0x094D, 0x092F, 0x094B, 0x0902,
+        0x0928, 0x0939, 0x0940, 0x0902, 0x092C, 0x094B, 0x0932, 0x0938,
+        0x0915, 0x0924, 0x0947, 0x0939, 0x0948, 0x0902},
       IDNA_ACE_PREFIX "i1baa7eci9glrd9b2ae1bj0hfcgg6iyaf8o0a1dig0cd", 0, 0,
       IDNA_SUCCESS},
     {
       "Japanese (kanji and hiragana)", 18,
       {
-	0x306A, 0x305C, 0x307F, 0x3093, 0x306A, 0x65E5, 0x672C, 0x8A9E,
-	0x3092, 0x8A71, 0x3057, 0x3066, 0x304F, 0x308C, 0x306A, 0x3044,
-	0x306E, 0x304B},
+        0x306A, 0x305C, 0x307F, 0x3093, 0x306A, 0x65E5, 0x672C, 0x8A9E,
+        0x3092, 0x8A71, 0x3057, 0x3066, 0x304F, 0x308C, 0x306A, 0x3044,
+        0x306E, 0x304B},
       IDNA_ACE_PREFIX "n8jok5ay5dzabd5bym9f0cm5685rrjetr6pdxa", 0, 0,
       IDNA_SUCCESS},
     {
       "Russian (Cyrillic)", 28,
       {
-	0x043F, 0x043E, 0x0447, 0x0435, 0x043C, 0x0443, 0x0436, 0x0435,
-	0x043E, 0x043D, 0x0438, 0x043D, 0x0435, 0x0433, 0x043E, 0x0432,
-	0x043E, 0x0440, 0x044F, 0x0442, 0x043F, 0x043E, 0x0440, 0x0443,
-	0x0441, 0x0441, 0x043A, 0x0438},
+        0x043F, 0x043E, 0x0447, 0x0435, 0x043C, 0x0443, 0x0436, 0x0435,
+        0x043E, 0x043D, 0x0438, 0x043D, 0x0435, 0x0433, 0x043E, 0x0432,
+        0x043E, 0x0440, 0x044F, 0x0442, 0x043F, 0x043E, 0x0440, 0x0443,
+        0x0441, 0x0441, 0x043A, 0x0438},
       IDNA_ACE_PREFIX "b1abfaaepdrnnbgefbadotcwatmq2g4l", 0, 0,
       IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Spanish", 40,
       {
-	0x0050, 0x006F, 0x0072, 0x0071, 0x0075, 0x00E9, 0x006E, 0x006F,
-	0x0070, 0x0075, 0x0065, 0x0064, 0x0065, 0x006E, 0x0073, 0x0069,
-	0x006D, 0x0070, 0x006C, 0x0065, 0x006D, 0x0065, 0x006E, 0x0074,
-	0x0065, 0x0068, 0x0061, 0x0062, 0x006C, 0x0061, 0x0072, 0x0065,
-	0x006E, 0x0045, 0x0073, 0x0070, 0x0061, 0x00F1, 0x006F, 0x006C},
+        0x0050, 0x006F, 0x0072, 0x0071, 0x0075, 0x00E9, 0x006E, 0x006F,
+        0x0070, 0x0075, 0x0065, 0x0064, 0x0065, 0x006E, 0x0073, 0x0069,
+        0x006D, 0x0070, 0x006C, 0x0065, 0x006D, 0x0065, 0x006E, 0x0074,
+        0x0065, 0x0068, 0x0061, 0x0062, 0x006C, 0x0061, 0x0072, 0x0065,
+        0x006E, 0x0045, 0x0073, 0x0070, 0x0061, 0x00F1, 0x006F, 0x006C},
       IDNA_ACE_PREFIX "PorqunopuedensimplementehablarenEspaol-fmd56a", 0, 0,
       IDNA_SUCCESS},
     {
       "Vietnamese", 31,
       {
-	0x0054, 0x1EA1, 0x0069, 0x0073, 0x0061, 0x006F, 0x0068, 0x1ECD,
-	0x006B, 0x0068, 0x00F4, 0x006E, 0x0067, 0x0074, 0x0068, 0x1EC3,
-	0x0063, 0x0068, 0x1EC9, 0x006E, 0x00F3, 0x0069, 0x0074, 0x0069,
-	0x1EBF, 0x006E, 0x0067, 0x0056, 0x0069, 0x1EC7, 0x0074},
+        0x0054, 0x1EA1, 0x0069, 0x0073, 0x0061, 0x006F, 0x0068, 0x1ECD,
+        0x006B, 0x0068, 0x00F4, 0x006E, 0x0067, 0x0074, 0x0068, 0x1EC3,
+        0x0063, 0x0068, 0x1EC9, 0x006E, 0x00F3, 0x0069, 0x0074, 0x0069,
+        0x1EBF, 0x006E, 0x0067, 0x0056, 0x0069, 0x1EC7, 0x0074},
       IDNA_ACE_PREFIX "TisaohkhngthchnitingVit-kjcr8268qyxafd2f1b9g", 0, 0,
       IDNA_SUCCESS},
     {
       "Japanese", 8,
       {
-	0x0033, 0x5E74, 0x0042, 0x7D44, 0x91D1, 0x516B, 0x5148, 0x751F},
+        0x0033, 0x5E74, 0x0042, 0x7D44, 0x91D1, 0x516B, 0x5148, 0x751F},
       IDNA_ACE_PREFIX "3B-ww4c5e180e575a65lsy2b", 0, 0, IDNA_SUCCESS,
       IDNA_SUCCESS},
     {
       "Japanese", 24,
       {
-	0x5B89, 0x5BA4, 0x5948, 0x7F8E, 0x6075, 0x002D, 0x0077, 0x0069,
-	0x0074, 0x0068, 0x002D, 0x0053, 0x0055, 0x0050, 0x0045, 0x0052,
-	0x002D, 0x004D, 0x004F, 0x004E, 0x004B, 0x0045, 0x0059, 0x0053},
+        0x5B89, 0x5BA4, 0x5948, 0x7F8E, 0x6075, 0x002D, 0x0077, 0x0069,
+        0x0074, 0x0068, 0x002D, 0x0053, 0x0055, 0x0050, 0x0045, 0x0052,
+        0x002D, 0x004D, 0x004F, 0x004E, 0x004B, 0x0045, 0x0059, 0x0053},
       IDNA_ACE_PREFIX "-with-SUPER-MONKEYS-pc58ag80a8qai00g7n9n", 0, 0,
       IDNA_SUCCESS},
     {
       "Japanese", 25,
       {
-	0x0048, 0x0065, 0x006C, 0x006C, 0x006F, 0x002D, 0x0041, 0x006E,
-	0x006F, 0x0074, 0x0068, 0x0065, 0x0072, 0x002D, 0x0057, 0x0061,
-	0x0079, 0x002D, 0x305D, 0x308C, 0x305E, 0x308C, 0x306E, 0x5834,
-	0x6240},
+        0x0048, 0x0065, 0x006C, 0x006C, 0x006F, 0x002D, 0x0041, 0x006E,
+        0x006F, 0x0074, 0x0068, 0x0065, 0x0072, 0x002D, 0x0057, 0x0061,
+        0x0079, 0x002D, 0x305D, 0x308C, 0x305E, 0x308C, 0x306E, 0x5834,
+        0x6240},
       IDNA_ACE_PREFIX "Hello-Another-Way--fc4qua05auwb3674vfr0b", 0, 0,
       IDNA_SUCCESS},
     {
       "Japanese", 8,
       {
-	0x3072, 0x3068, 0x3064, 0x5C4B, 0x6839, 0x306E, 0x4E0B, 0x0032},
+        0x3072, 0x3068, 0x3064, 0x5C4B, 0x6839, 0x306E, 0x4E0B, 0x0032},
       IDNA_ACE_PREFIX "2-u9tlzr9756bt3uc0v", 0, 0, IDNA_SUCCESS,
       IDNA_SUCCESS},
     {
       "Japanese", 13,
       {
-	0x004D, 0x0061, 0x006A, 0x0069, 0x3067, 0x004B, 0x006F, 0x0069,
-	0x3059, 0x308B, 0x0035, 0x79D2, 0x524D},
+        0x004D, 0x0061, 0x006A, 0x0069, 0x3067, 0x004B, 0x006F, 0x0069,
+        0x3059, 0x308B, 0x0035, 0x79D2, 0x524D},
       IDNA_ACE_PREFIX "MajiKoi5-783gue6qz075azm5e", 0, 0, IDNA_SUCCESS,
       IDNA_SUCCESS},
     {
       "Japanese", 9,
       {
-	0x30D1, 0x30D5, 0x30A3, 0x30FC, 0x0064, 0x0065, 0x30EB, 0x30F3, 0x30D0},
+        0x30D1, 0x30D5, 0x30A3, 0x30FC, 0x0064, 0x0065, 0x30EB, 0x30F3, 0x30D0},
       IDNA_ACE_PREFIX "de-jg4avhby1noc0d", 0, 0, IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Japanese", 7,
       {
-	0x305D, 0x306E, 0x30B9, 0x30D4, 0x30FC, 0x30C9, 0x3067},
+        0x305D, 0x306E, 0x30B9, 0x30D4, 0x30FC, 0x30C9, 0x3067},
       IDNA_ACE_PREFIX "d9juau41awczczp", 0, 0, IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Greek", 8,
@@ -935,8 +935,8 @@ check_idna_encoding()
 
       size_t p, q;
       char *uc = stringprep_ucs4_to_utf8(idna_vec[i].in, 
-					 idna_vec[i].inlen, 
-					 &p, &q);
+                                         idna_vec[i].inlen, 
+                                         &p, &q);
       utf8 utf = string(uc);
       utf8 tutf;
       free(uc);

@@ -93,68 +93,68 @@ void unpack(base64< gzip<T> > const & in, T & out)
 // diffing and patching
 
 void diff(data const & olddata,
-	  data const & newdata,
-	  base64< gzip<delta> > & del);
+          data const & newdata,
+          base64< gzip<delta> > & del);
 
 void diff(manifest_map const & oldman,
-	  manifest_map const & newman,
-	  base64< gzip<delta> > & del);
+          manifest_map const & newman,
+          base64< gzip<delta> > & del);
 
 void diff(base64< gzip<data> > const & old_data,
-	  base64< gzip<data> > const & new_data,
-	  base64< gzip<delta> > & delta);
+          base64< gzip<data> > const & new_data,
+          base64< gzip<delta> > & delta);
 
 void patch(data const & olddata,
-	   base64< gzip<delta> > const & del,
-	   data & newdata);
+           base64< gzip<delta> > const & del,
+           data & newdata);
 
 void patch(base64< gzip<data> > const & old_data,
-	   base64< gzip<delta> > const & delta,
-	   base64< gzip<data> > & new_data);
+           base64< gzip<delta> > const & delta,
+           base64< gzip<data> > & new_data);
 
 // version (a.k.a. sha1 fingerprint) calculation
 
 void calculate_ident(data const & dat,
-		     hexenc<id> & ident);
+                     hexenc<id> & ident);
 
 void calculate_ident(base64< gzip<data> > const & dat,
-		     hexenc<id> & ident);
+                     hexenc<id> & ident);
 
 void calculate_ident(file_data const & dat,
-		     file_id & ident);
+                     file_id & ident);
 
 void calculate_ident(manifest_data const & dat,
-		     manifest_id & ident);
+                     manifest_id & ident);
 
 void calculate_ident(manifest_map const & mm,
-		     manifest_id & ident);
+                     manifest_id & ident);
 
 void calculate_ident(revision_data const & dat,
-		     revision_id & ident);
+                     revision_id & ident);
 
 void calculate_ident(revision_set const & cs,
-		     revision_id & ident);
+                     revision_id & ident);
 
 
 // quick streamy variant which doesn't necessarily load the whole file
 
 void calculate_ident(file_path const & file,
-		     hexenc<id> & ident, 
-		     lua_hooks & lua);
+                     hexenc<id> & ident, 
+                     lua_hooks & lua);
 
 void split_into_lines(std::string const & in,
-		      std::vector<std::string> & out);
+                      std::vector<std::string> & out);
 
 void split_into_lines(std::string const & in,
-		      std::string const & encoding,
-		      std::vector<std::string> & out);
+                      std::string const & encoding,
+                      std::vector<std::string> & out);
 
 void join_lines(std::vector<std::string> const & in,
-		std::string & out,
-		std::string const & linesep);
+                std::string & out,
+                std::string const & linesep);
 
 void join_lines(std::vector<std::string> const & in,
-		std::string & out);
+                std::string & out);
 
 // remove all whitespace
 std::string remove_ws(std::string const & s);
@@ -167,7 +167,7 @@ std::string canonical_base64(std::string const & s);
 
 // charset conversions
 void charset_convert(std::string const & src_charset, std::string const & dst_charset,
-		     std::string const & src, std::string & dst);
+                     std::string const & src, std::string & dst);
 void system_to_utf8(external const & system, utf8 & utf);
 void utf8_to_system(utf8 const & utf, external & system);
 void ace_to_utf8(ace const & ac, utf8 & utf);

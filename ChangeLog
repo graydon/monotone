@@ -1,3 +1,7 @@
+2005-03-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* transforms.{cc,hh}: Remove tabs.
+
 2005-03-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_vars.at: New test.
