@@ -138,6 +138,17 @@ utf8_argv
   }
 };
 
+// Stupid type system tricks: to use a cleanup_ptr, we need to know the return
+// type of the cleanup function.  But popt silently changed the return type of
+// poptFreeContext at some point, I guess because they thought it would be
+// "backwards compatible".  We don't actually _use_ the return value of
+// poptFreeContext, so this little wrapper works.
+static void
+my_poptFreeContext(poptContext con)
+{
+  poptFreeContext(con);
+}
+
 int 
 cpp_main(int argc, char ** argv)
 {
@@ -175,9 +186,9 @@ cpp_main(int argc, char ** argv)
 
   // prepare for arg parsing
       
-  cleanup_ptr<poptContext, poptContext> 
+  cleanup_ptr<poptContext, void> 
     ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
-        &poptFreeContext);
+        &my_poptFreeContext);
 
   // process main program options
 

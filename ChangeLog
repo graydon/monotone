@@ -1,5 +1,11 @@
 2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.cc (my_poptFreeContext, cpp_main): Apparently
+	poptFreeContext silently changed its return type at some unknown
+	time.  Hack around this.
+
+2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.cc (cpp_main): Remove the special code to dump before
 	printing exception information, since we no longer dump to the
 	screen, so it's always better to have the little status message
