@@ -578,12 +578,12 @@ session::analyze_attachment(revision_id const & i,
                             map<revision_id, bool> & attached)
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
-
+  
   if (visited.find(i) != visited.end())
     return;
-
+  
   visited.insert(i);
-
+  
   bool curr_attached = false;
 
   if (app.db.revision_exists(i))
@@ -596,19 +596,20 @@ session::analyze_attachment(revision_id const & i,
       L(F("checking attachment of %s in ancestry\n") % i);
       ancestryT::const_iterator j = ancestry.find(i);
       if (j != ancestry.end())
-        {
-          for (edge_map::const_iterator k = j->second->second.edges.begin();
-               k != j->second->second.edges.end(); ++k)
-            {
-              L(F("checking attachment of %s in parent %s\n") % i % edge_old_revision(k));
-              analyze_attachment(edge_old_revision(k), visited, attached);
-              if (is_attached(edge_old_revision(k), attached))
-                {
-                  L(F("revision %s is attached via parent %s\n") % i % edge_old_revision(k));
-                  curr_attached = true;
-                }
-            }
-        }
+	{
+	  for (edge_map::const_iterator k = j->second->second.edges.begin();
+	       k != j->second->second.edges.end(); ++k)
+	    {
+	      L(F("checking attachment of %s in parent %s\n") % i % edge_old_revision(k));
+	      analyze_attachment(edge_old_revision(k), visited, attached);
+	      if (is_attached(edge_old_revision(k), attached))
+		{
+		  L(F("revision %s is attached via parent %s\n") % i % edge_old_revision(k));
+		  curr_attached = true;
+		  break;
+		}
+	    }
+	}
     }
   L(F("decided that revision %s %s attached\n") % i % (curr_attached ? "is" : "is not"));
   attached[i] = curr_attached;

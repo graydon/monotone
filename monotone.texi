@@ -3029,10 +3029,10 @@ aborts, doing nothing. The stages are:
 @item
 Examine the ancestry graph of revisions in your database, and (subject
 to trust evaluation) select the set of all descendents of your working
-copy's base revision.  Call this set the ``candidates'' of the update.
+copy's base revision. Call this set the ``candidates'' of the update.
 @item
 Remove any candidates which lack acceptable testresult
-certificates.  From the remaining candidates, select the deepest child
+certificates. From the remaining candidates, select the deepest child
 by ancestry and call it the ``target'' of the update.
 @item 
 Merge the target of the update with the working copy, in memory, and

@@ -153,7 +153,7 @@ byte AutoSeededX917RNG<BLOCK_CIPHER>::GenerateByte()
 	if (m_counter == m_lastBlock.size())
 	{
 		if (!m_isDifferent)
-			throw SelfTestFailure("AutoSeededX917RNG: Continuous random number generator test failed.");
+			throw this->SelfTestFailure("AutoSeededX917RNG: Continuous random number generator test failed.");
 		m_counter = 0;
 		m_isDifferent = false;
 	}
