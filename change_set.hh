@@ -46,7 +46,7 @@
 //
 // note that this object is made up of two important sub-components: 
 // path_edits and deltas. "path_edits" is exactly the same object stored
-// in MT/path_edits (formerly MT/work). 
+// in MT/work. 
 
 struct
 change_set

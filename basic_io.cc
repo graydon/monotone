@@ -20,8 +20,8 @@
 // revision_set. every revision_set contains a number of change_sets, so
 // their i/o routines are somewhat related.
 
-basic_io::input_source::input_source(std::istream & i)
-  : line(1), col(1), in(i), lookahead(0), c('\0')
+basic_io::input_source::input_source(std::istream & i, std::string const & nm)
+  : line(1), col(1), in(i), name(nm), lookahead(0), c('\0')
 {    
 }
 
@@ -49,9 +49,9 @@ void basic_io::input_source::advance()
 
 void basic_io::input_source::err(std::string const & s)
 {
-  L(F("error in input_source:%d:%d:E: %s") % line % col % s);
-  throw informative_failure((F("input_source:%d:%d:E: %s") 
-			     % line % col % s).str());
+  L(F("error in %s:%d:%d:E: %s") % name % line % col % s);
+  throw informative_failure((F("%s:%d:%d:E: %s") 
+			     % name % line % col % s).str());
 }
 
 

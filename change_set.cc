@@ -1571,13 +1571,16 @@ merge_disjoint_analyses(path_analysis const & a,
 }
 
 static void
-merge_deltas(file_path const & path_in_merged, 
-             std::map<file_path, file_id> & merge_finalists,
-             file_id const & anc,
-             file_id const & left,
-             file_id const & right,
-             file_id & finalist, 
-             merge_provider & merger)
+merge_deltas(file_path const & anc_path, 
+	     file_path const & left_path, 
+	     file_path const & right_path, 
+	     file_path const & path_in_merged, 
+	     std::map<file_path, file_id> & merge_finalists,
+	     file_id const & anc,
+	     file_id const & left,
+	     file_id const & right,
+	     file_id & finalist, 
+	     merge_provider & merger)
 {
   std::map<file_path, file_id>::const_iterator i = merge_finalists.find(path_in_merged);
   if (i != merge_finalists.end())
@@ -2260,7 +2263,7 @@ read_path_rearrangement(data const & dat,
                         change_set::path_rearrangement & re)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss);
+  basic_io::input_source src(iss, "path_rearrangement");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   change_set cs;
@@ -2273,7 +2276,7 @@ read_change_set(data const & dat,
                 change_set & cs)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss);
+  basic_io::input_source src(iss, "change_set");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_change_set(pars, cs);

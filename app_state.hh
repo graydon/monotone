@@ -33,6 +33,7 @@ public:
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
+  
   void write_options();
 
   explicit app_state();
