@@ -1,3 +1,12 @@
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* diff_patch.cc (struct hunk_offset_calculator): Remove dead
+	code.  (I believe it was used by the old, non-extent-based
+	merging.)
+	(calculate_hunk_offsets): Likewise.
+	(struct hunk_consumer): Move next to rest of unidiff code.
+	(walk_hunk_consumer): Likewise.
+
 2004-12-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_persistent_server_keys.at: 
