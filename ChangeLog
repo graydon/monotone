@@ -1,3 +1,11 @@
+2004-12-05  Matt Johnston <matt@ucc.asn.au>
+
+	* tests/t_merge_add_del: added a new test for merging
+	  branches where a file is added then removed.
+	* testsuite.at: added the new test
+	* configure.ac: bumped the prequisite version to 2.58 since
+	  some tests use AT_XFAIL_IF
+
 2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (merge_deltas): Call correct variant of
