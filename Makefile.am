@@ -128,6 +128,11 @@ LUA_SOURCES = \
 	lua/ltablib.c lua/ltests.c lua/ltm.c lua/ltm.h lua/lua.h lua/lualib.h \
 	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h
 
+ADNS_SOURCES = \
+	adns/adns.h adns/check.c adns/config.h adns/dlist.h adns/event.c \
+	adns/general.c adns/internal.h adns/parse.c adns/poll.c adns/query.c \
+	adns/reply.c adns/setup.c adns/transmit.c adns/tvarith.h adns/types.c 
+
 
 bin_PROGRAMS = monotone depot.cgi
 check_PROGRAMS = unit_tests
@@ -142,7 +147,8 @@ noinst_LIBRARIES = lib3rdparty.a
 lib3rdparty_a_SOURCES = $(CRYPTOPP_SOURCES) \
                         $(SQLITE_SOURCES) \
                         $(BOOST_SANDBOX_SOURCES) \
-                        $(LUA_SOURCES)
+                        $(LUA_SOURCES) \
+			$(ADNS_SOURCES)
 
 monotone_LDADD = lib3rdparty.a -lboost_prg_exec_monitor
 monotone_LDFLAGS = 

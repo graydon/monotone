@@ -11,7 +11,6 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-#include "boost/socket/address_info.hpp"
 #include "boost/socket/any_protocol.hpp"
 #include "boost/socket/any_address.hpp"
 #include "boost/socket/ip4.hpp"
@@ -19,7 +18,11 @@
 #include "boost/socket/socketstream.hpp"
 #include "boost/socket/socket_exception.hpp"
 
+#include "adns/adns.h"
+
 #include <boost/spirit.hpp>
+
+#include <ctype.h>
 
 #include <boost/shared_ptr.hpp>
 #include <string>
@@ -41,6 +44,42 @@ using namespace boost::spirit;
 using boost::lexical_cast;
 using boost::shared_ptr;
 
+
+bool lookup_address(string const & dns_name,
+		    string & ip4)
+{
+  adns_state st;
+  adns_answer *answer;
+
+  if (dns_name.size() == 0)
+    return false;
+
+  if (isdigit(dns_name[0]))
+    {
+      ip4 = dns_name;
+      return true;
+    }
+
+  I(adns_init(&st, adns_if_noerrprint, 0) == 0);
+  if (adns_synchronous(st, dns_name.c_str(), adns_r_a, 
+		       (adns_queryflags)0, &answer) != 0)
+    {
+      adns_finish(st);
+      return false;
+    }
+
+  if (answer->status != adns_s_ok)
+    {
+      free(answer);
+      adns_finish(st);
+      return false;
+    }
+
+  ip4 = string(inet_ntoa(*(answer->rrs.inaddr)));
+  free(answer);
+  adns_finish(st);
+  return true;
+}
 
 bool parse_url(url const & u,
 	       string & proto,
@@ -88,15 +127,11 @@ void open_connection(string const & host_name,
   {    
     // fixme: boost::socket is currently a little braindead, in that it
     // only takes ascii strings representing IP4 ADDRESSES. duh.
-    struct hostent * hent = gethostbyname(host_name.c_str());
-    if (hent == NULL)
+    if (! lookup_address(host_name, resolved_host))
       throw oops ("host " + host_name + " not found");    
-    struct in_addr iad;
-    iad.s_addr = * reinterpret_cast<unsigned long *>(hent->h_addr);
-    resolved_host = string(inet_ntoa(iad));    
     L(F("resolved '%s' as '%s'\n") % host_name % resolved_host);
   }
-
+  
   addr.ip(resolved_host.c_str());
   addr.port(port_num);
 

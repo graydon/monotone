@@ -457,7 +457,7 @@ void hunk_merger::delete_at(size_t ap)
   
   else
     {
-      L(F("delete conflict type 1 -- insert "
+      L(F("delete conflict type 2 -- insert "
 	  "(apos = %d, lpos = %d, translated apos = %d)\n")
 	% apos % lpos
 	% idx(ancestor_to_leftpos_map,apos));
@@ -850,10 +850,11 @@ bool merge3(manifest_map const & ancestor,
     left_move_dsts, right_move_dsts,
     left_deltas, right_deltas;
 
+
   for(set<patch_addition>::const_iterator a = left_edge.f_adds.begin(); 
       a != left_edge.f_adds.end(); ++a)
     left_adds.insert(a->path);
-
+  
   for(set<patch_addition>::const_iterator a = right_edge.f_adds.begin(); 
       a != right_edge.f_adds.end(); ++a)
     right_adds.insert(a->path);

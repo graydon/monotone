@@ -39,9 +39,18 @@ work here; I am merely using several public domain files from it. You
 can find the original code at http://www.cryptopp.com.
 
 
+The files in adns/* are copies of the core portion of the "adns"
+library. Copyright 1997-2001 Ian Jackson, Copyright 1999-2000 Tony
+Finch, and Copyright (C) 1991 Massachusetts Institute of
+Technology. They are licensed under the GNU GPL version 2 or greater.
+The original sources for adns can be retrieved from
+http://www.chiark.greenend.org.uk/~ian/adns/
+
+
 The files in lua/* are copies of the lua 5.0 source distribution, from
-Tecgraf PUC-Rio. They are provided under an MIT-like license, reproduced
-here:
+Tecgraf PUC-Rio. The lua distribution can be retrieved from
+www.lua.org. The files are provided under an MIT-like license,
+reproduced here:
 
 ---
 
@@ -104,9 +113,10 @@ copyright status:
 I believe I am within my rights to assert my own copyright on:
 
   - the files I wrote
-  - the collective work, including the files I copied from the public
-    domain, and other copyrighted but freely-licensed sources (and
-    possibly lcs.cc, as mentionned)
+
+  - the collective work, including the use (though not authorship) of
+    files I copied from the public domain, and other copyrighted but
+    freely-licensed sources (and possibly lcs.cc, as mentionned)
 
 I license my publication of these copyrighted works to the public
 under the terms of the GNU GPL, version 2 or greater. See the file
