@@ -1,5 +1,12 @@
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
+        * tests/t_drop_rename_patch.at: A test to check that deltas on
+        renamed files are included in concatenate_change_sets, if there was a
+        deletion of a file with the same name as the rename src.
+        * testsuite.at: add it
+
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
         * change_set.{cc,hh}: Take account of files which are the
         destination of a rename_file operation, when examining
         file deletions. Added helper methods to clean up related code.
