@@ -1273,6 +1273,11 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
   calculate_new_manifest_map(m_old, m_working);
   
   pick_update_target(m_old_id, args, app, m_chosen_id);
+  if (m_old_id == m_chosen_id)
+    {
+      P(F("already up to date at %s\n") % m_old_id);
+      return;
+    }
   P(F("selected update target %s\n") % m_chosen_id);
   app.db.get_manifest_version(m_chosen_id, m_chosen_data);
   read_manifest_map(m_chosen_data, m_chosen);
@@ -1802,17 +1807,23 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
       transaction_guard guard(app.db);
       try_one_merge (*src_i, *dst_i, merged, app, targets);      
 
+      packet_db_writer dbw(app);
       queueing_packet_writer qpw(app, targets);
-      cert_manifest_in_branch(merged, app.branch_name, app, qpw);
-      cert_manifest_changelog(merged, 
-			      "propagate of " 
-			      + src_i->inner()() 
-			      + " and " 
-			      + dst_i->inner()()
-			      + "\n"
-			      + "from branch " 
-			      + idx(args, 0) + " to " + idx(args, 1) + "\n", 
-			      app, qpw);	  
+
+      cert_manifest_in_branch(merged, idx(args, 1), app, dbw);
+      cert_manifest_in_branch(merged, idx(args, 1), app, qpw);
+
+      string log = ("propagate of " 
+                    + src_i->inner()()
+                    + " and " 
+                    + dst_i->inner()()
+                    + "\n"
+                    + "from branch "
+                    + idx(args, 0) + " to " + idx(args, 1) + "\n");
+
+      cert_manifest_changelog(merged, log, app, dbw);
+      cert_manifest_changelog(merged, log, app, qpw);
+
       guard.commit();      
     }
 }
@@ -2135,43 +2146,42 @@ static void ls_branches (string name, app_state & app, vector<string> const & ar
   guard.commit();
 }
 
+
 struct unknown_itemizer : public tree_walker
 {
+  app_state & app;
   manifest_map & man;
-  unknown_itemizer(manifest_map & m) : man(m) {}
+  bool want_ignored;
+  unknown_itemizer(app_state & a, manifest_map & m, bool i) 
+    : app(a), man(m), want_ignored(i) {}
   virtual void visit_file(file_path const & path)
   {
     if (man.find(path) == man.end())
-      cout << path() << endl;
+      {
+      if (want_ignored)
+	{
+	  if (app.lua.hook_ignore_file(path))
+	    cout << path() << endl;
+	}
+      else
+	{
+	  if (!app.lua.hook_ignore_file(path))
+	    cout << path() << endl;
+	}
+      }
   }
 };
 
-struct ignored_itemizer : public tree_walker
-{
-  app_state & app;
-  ignored_itemizer(app_state & a) : app(a) {}
-  virtual void visit_file(file_path const & path)
-  {    
-    if (app.lua.hook_ignore_file(path))
-      cout << path() << endl;
-  }
-};
 
-
-static void ls_unknown (app_state & app)
+static void ls_unknown (app_state & app, bool want_ignored)
 {
   manifest_map m_old, m_new;
   get_manifest_map(m_old);
   calculate_new_manifest_map(m_old, m_new);
-  unknown_itemizer u(m_new);
+  unknown_itemizer u(app, m_new, want_ignored);
   walk_tree(u);
 }
 
-static void ls_ignored (app_state & app)
-{
-  ignored_itemizer i(app);
-  walk_tree(i);
-}
 
 static void ls_queue (string name, app_state & app)
 {
@@ -2335,9 +2345,9 @@ CMD(list, "informative",
   else if (idx(args, 0) == "branches")
     ls_branches(name, app, removed);
   else if (idx(args, 0) == "unknown")
-    ls_unknown(app);
+    ls_unknown(app, false);
   else if (idx(args, 0) == "ignored")
-    ls_ignored(app);
+    ls_unknown(app, true);
   else
     throw usage(name);
 }
@@ -2542,6 +2552,7 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
     {
       cert_value tv;
       decode_base64(i->inner().value, tv);
+      nodes.insert(i->inner().ident()); // in case no edges were connected
       branches.insert(make_pair(i->inner().ident(), tv()));
     }  
 

@@ -40,7 +40,7 @@ struct poptOption options[] =
   {
     {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, "send log to stderr while running", NULL},     
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},     
-    {"help", 0, POPT_ARG_STRING|POPT_ARGFLAG_OPTIONAL, &argstr, OPT_HELP, "display help message", "CMD"},
+    {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, "display help message", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
     {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load a ~/.monotonerc lua file", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
@@ -102,6 +102,7 @@ int cpp_main(int argc, char ** argv)
   int ret = 0;
   int opt;
   bool stdhooks = true, rcfile = true;
+  bool requested_help = false;
 
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
 
@@ -140,7 +141,7 @@ int cpp_main(int argc, char ** argv)
 	      break;
 
 	    case OPT_KEY_NAME:
-	      app.signing_key = string(argstr);
+	      app.set_signing_key(string(argstr));
 	      break;
 
 	    case OPT_BRANCH_NAME:
@@ -154,23 +155,40 @@ int cpp_main(int argc, char ** argv)
 
 	    case OPT_HELP:
 	    default:
-	      throw usage(argstr ? argstr : "");
+	      requested_help = true;
 	      break;
 	    }
 	}
 
-      // build-in rc settings are defaults
+      // stop here if they asked for help
+
+      if (requested_help)
+	{
+	  if (poptPeekArg(ctx()))
+	    {
+	      string cmd(poptGetArg(ctx()));
+	      throw usage(cmd);
+	    }
+	  else
+	    throw usage("");
+	}
+
+      // built-in rc settings are defaults
 
       if (stdhooks)
 	app.lua.add_std_hooks();
 
-      // ~/.monotonerc overrides that
+      // ~/.monotonerc overrides that, and
+      // MT/.monotonerc overrides *that*
 
       if (rcfile)
 	{
 	  fs::path default_rcfile;
+	  fs::path working_copy_rcfile;
 	  app.lua.default_rcfilename(default_rcfile);
+	  app.lua.working_copy_rcfilename(working_copy_rcfile);
 	  app.lua.add_rcfile(default_rcfile);
+	  app.lua.add_rcfile(working_copy_rcfile);
 	}
 
       // command-line rcfiles override even that

@@ -43,6 +43,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <iostream>
 #include "sanity.hh"
 
 template <typename A,
@@ -483,6 +484,43 @@ struct jaffer_edit_calculator
     std::copy(lcs.begin(), lcs.end(), output);
   }
 };
+
+
+template <typename A,
+	  typename B,
+	  typename LCS>
+
+void edit_script(A begin_a, A end_a,
+		 B begin_b, B end_b,
+		 long p_lim,
+		 std::vector<long> & edits_out,
+		 LCS ignored_out)
+{
+  typedef jaffer_edit_calculator<A,B,LCS> calc_t;
+  long len_a = end_a - begin_a;
+  long len_b = end_b - begin_b;
+  typename calc_t::edit_vec edits, ordered;
+
+  typename calc_t::subarray<A> a(begin_a, 0, len_a);
+  typename calc_t::subarray<B> b(begin_b, 0, len_b);
+
+  if (len_b < len_a)
+    {
+      calc_t::diff_to_edits (b, len_b, a, len_a, edits, p_lim);
+      calc_t::order_edits (edits, -1, ordered);
+      for (size_t i = 0; i < ordered.size(); ++i)
+	ordered[i] *= -1;
+    }
+  else
+    {
+      calc_t::diff_to_edits (a, len_a, b, len_b, edits, p_lim);
+      calc_t::order_edits (edits, 1, ordered);
+    }
+
+  edits_out.clear();
+  edits_out.reserve(ordered.size());
+  copy(ordered.begin(), ordered.end(), back_inserter(edits_out));
+}
 
 
 template <typename A,

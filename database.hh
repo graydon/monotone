@@ -253,6 +253,10 @@ public:
 
   // note: this section is ridiculous. please do something about it.
 
+  void get_head_candidates(std::string const & branch_encoded,
+			   std::vector< manifest<cert> > & branch_certs,
+			   std::vector< manifest<cert> > & ancestry_certs);
+
   bool manifest_cert_exists(manifest<cert> const & cert);
 
   void put_manifest_cert(manifest<cert> const & cert);
@@ -368,6 +372,7 @@ class reverse_queue
   database & db;
 public:
   reverse_queue(database & d);
+  reverse_queue(reverse_queue const & other);
   void reverse_queue_posting(url const & u,
 			     std::string const & contents);
   ~reverse_queue();

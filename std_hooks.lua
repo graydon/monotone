@@ -50,6 +50,42 @@ function get_http_proxy(host, port)
 	return { val, port }
 end
 
+function get_http_proxy(host, port)
+	val = os.getenv("HTTP_PROXY")
+	if (val == nil) then 
+		val = os.getenv("http_proxy") 
+	end
+	if (val == nil) then 
+		return nil
+	end
+	val = string.gsub(val, "http://", "")
+	b, e = string.find(val, ":")
+	if (b ~= nil and b > 0) then
+		chost = string.sub(val, 0, b-1)
+		cport = string.sub(val, b+1)
+		return { chost, cport }
+	end
+	return { val, port }
+end
+
+function get_http_proxy(host, port)
+	val = os.getenv("HTTP_PROXY")
+	if (val == nil) then 
+		val = os.getenv("http_proxy") 
+	end
+	if (val == nil) then 
+		return nil
+	end
+	val = string.gsub(val, "http://", "")
+	b, e = string.find(val, ":")
+	if (b ~= nil and b > 0) then
+		chost = string.sub(val, 0, b-1)
+		cport = string.sub(val, b+1)
+		return { chost, cport }
+	end
+	return { val, port }
+end
+
 function ignore_file(name)
 	if (string.find(name, "%.a$")) then return true end
 	if (string.find(name, "%.so$")) then return true end
@@ -223,7 +259,7 @@ function merge3(ancestor, left, right)
 	if (os.execute(cmd) ~= 0) then 
 		os.remove(lfile)
 		os.remove(rfile)
-		os.remove(ancestor)
+		os.remove(afile)
 		os.remove(outfile) 
 		return nil
 	end

@@ -24,11 +24,20 @@
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
+/* Define to 1 if you have the `nsl' library (-lnsl). */
+#undef HAVE_LIBNSL
+
 /* Define to 1 if you have the `popt' library (-lpopt). */
 #undef HAVE_LIBPOPT
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
+
+/* Define to 1 if you have the `resolv' library (-lresolv). */
+#undef HAVE_LIBRESOLV
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+#undef HAVE_LIBSOCKET
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -90,6 +99,10 @@
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
+
+/* Define to value of INADDR_NONE if not provided by your system header files.
+   */
+#undef INADDR_NONE
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */

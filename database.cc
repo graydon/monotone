@@ -106,9 +106,16 @@ void database::initialize()
 {
   if (__sql)
     throw oops("cannot initialize database while it is open");
+
   N(!fs::exists(filename),
     F("could not initialize database: %s: already exists") 
     % filename.string());
+
+  fs::path journal(filename.string() + "-journal");
+  N(!fs::exists(journal),
+    F("existing (possibly stale) journal file '%s' has same stem as new database '%s'")
+    % journal.string() % filename.string());
+
   sqlite *s = sql(true);
   I(s != NULL);
 }
@@ -1056,6 +1063,40 @@ void database::results_to_certs(results const & res,
     }
 }
 
+void database::get_head_candidates(string const & branch_encoded,
+				   vector< manifest<cert> > & branch_certs,
+				   vector< manifest<cert> > & ancestry_certs)
+{
+  results res;
+  fetch(res, 5, any_rows,
+	"SELECT id, name, value, keypair, signature "
+	"FROM manifest_certs "
+	"WHERE (name = 'ancestor' OR name = 'branch') "
+	"AND id IN "
+	"("
+	"SELECT id FROM manifest_certs WHERE name = 'branch' "
+	"AND value = '%q'"
+	")",
+	branch_encoded.c_str());
+
+  branch_certs.clear();
+  ancestry_certs.clear();
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      manifest<cert> t;
+      t = manifest<cert>(cert(hexenc<id>(res[i][0]), 
+			      cert_name(res[i][1]),
+			      base64<cert_value>(res[i][2]),
+			      rsa_keypair_id(res[i][3]),
+			      base64<rsa_sha1_signature>(res[i][4])));
+      if (res[i][1] == "branch")	
+	branch_certs.push_back(t);
+      else
+	ancestry_certs.push_back(t);
+    }
+}
+
+
 void database::get_certs(hexenc<id> const & ident, 
 			vector<cert> & certs,			
 			string const & table)
@@ -1459,6 +1500,11 @@ void transaction_guard::commit()
 // reverse queue
 
 static int global_rq_refcount = 0;
+
+reverse_queue::reverse_queue(reverse_queue const & other) : db(other.db)
+{
+  ++global_rq_refcount;  
+}
 
 reverse_queue::reverse_queue(database & d) : db(d)
 {

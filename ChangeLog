@@ -1,19 +1,97 @@
-2003-12-10  Tom Tromey  <tromey@redhat.com>
+2003-12-07  Eric Kidd  <eric.kidd@pobox.com>
 
-	* commands.cc (checkout): Give better error message if branch is
-	empty.
+	* commands.cc (agraph): Handle repositories with a single version.
+	* database.cc (get_head_candidates): Handle heads with no ancestors.
+	* cert.cc (get_branch_heads): Handle heads with no ancestors.
 
-2003-11-29  Tom Tromey  <tromey@redhat.com>
+2003-12-06  Eric Kidd  <eric.kidd@pobox.com>
 
-	* rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.
-	Updated all callers.
+	* update.hh, update.cc (pick_update_target): Return current
+	version if no better update candidates available.
+	* update.cc (pick_update_target): Always do branch filtering.
+	* commands.cc (update): Notice when we're already up-to-date.
+	* commands.cc (propagate): Assign branch name correctly when merging.
+
+2003-12-16  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (ls_ignored, ignored_itemizer): Fold in as subcases of unknown.
+
+2003-12-16  graydon hoare  <graydon@pobox.com>
+
+	* lua.cc (working_copy_rcfilename): MT/monotonerc not MT/.monotonerc.
+
+2003-12-16  graydon hoare  <graydon@pobox.com>
+
+	* lua.hh, lua.cc (working_copy_rcfilename): New function.
+	* monotone.cc: Add working copy rcfiles.
+	* commands.cc (ls_unknown, unknown_itemizer): Skip ignored files.
+
+2003-12-16  graydon hoare  <graydon@pobox.com>
+
+	* file_io.cc (walk_tree_recursive): continue on book-keeping file.
+
+2003-12-15  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_unidiff.at, t_unidiff2.at: Check for mimencode.
+
+2003-12-15  graydon hoare  <graydon@pobox.com>
+
+	* configure.ac: Add --enable-static-boost.
+	* Makefile.am: Likewise.
+	* AUTHORS: Mention new contributors.
+
+2003-12-14  Lorenzo Campedelli <lorenzo.campedelli@libero.it>
+
+	* work.cc (add_to_attr_map): Finish change to attr map format.
+ 
+2003-12-05  graydon hoare  <graydon@pobox.com>
+
+	* lcs.hh (edit_script): New entry point.
+	* diff_patch.cc: Rewrite merge in terms of edit scripts.
+	* network.cc (post_queued_blobs_to_network): Tidy up transient
+	failure message.
+	* randomfile.hh: Prohibit deletes on end of chunks.
+	* sanity.cc: EOL-terminate truncated long lines.
+
+2003-12-02  graydon hoare  <graydon@pobox.com>
+
+	* database.cc, database.hh (reverse_queue): Copy constructor.
+	* std_hooks.lua (merge3): Remove afile, not ancestor.
+	* monotone.cc: Remove debugging message.
+	* ui.cc (finish_ticking): Set last_write_was_a_tick to false.
+
+2003-12-01  graydon hoare  <graydon@pobox.com>
+
+	* app_state.hh, app_state.cc (set_signing_key): New fn, persist key.
+	* monotone.cc (cpp_main): Permit commuting the --help argument around.
+
+2003-11-28  Tom Tromey  <tromey@redhat.com>
 
 	* http_tasks.cc (check_received_bytes): Allow "-" as well.
 	* depot.cc (execute_post_query): Allow "-" as well.
 
-2003-11-16  Tom Tromey  <tromey@redhat.com>
+2003-11-30  graydon hoare  <graydon@pobox.com>
 
-	* missing: Removed generated file.
+	* network.cc (post_queued_blobs_to_network): Fail when posted_ok is false.
+	* database.cc (initialize): Fail when -journal file exists.
+	* keys.cc (make_signature): Nicer message when privkey decrypt fails.
+
+2003-11-29  Tom Tromey  <tromey@redhat.com>
+
+        * rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.
+        Updated all callers.
+
+        * http_tasks.cc (check_received_bytes): Allow "-" as well.
+        * depot.cc (execute_post_query): Allow "-" as well.
+
+2003-11-28  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc: Various speedups.
+	* cycle_detector.hh (edge_makes_cycle): Use visited set, too.
+	* database.hh, database.cc (get_head_candidates): New, complex query.
+	* keys.hh, keys.cc (check_signature): Cache verifiers.
+	* sqlite/os.c (sqliteOsRandomSeed): Harmless valgrind purification.
+	* tests/t_fork.at, tests/t_merge.at: Ignore stderr chatter on 'heads'.
 
 2003-11-27  graydon hoare  <graydon@pobox.com>
 
@@ -73,6 +151,10 @@
 	* network.cc, network.hh: Use new hook.
 	* http_tasks.cc: Teach about HTTP/1.1.
 	* cert.cc (bogus_cert_p): Fix UI ugly.
+
+2003-11-16  Tom Tromey  <tromey@redhat.com>
+
+        * missing: Removed generated file.
 
 2003-11-21  graydon hoare  <graydon@pobox.com>
 

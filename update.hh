@@ -17,6 +17,9 @@
 // behind picking an update target. the actual updating takes
 // place in commands.cc, along with most other file-modifying
 // actions.
+//
+// if no version is better than base_ident, then this function
+// will set chosen to base_ident.
 
 void pick_update_target(manifest_id const & base_ident,
 			std::vector<std::string> const & sort_certs,

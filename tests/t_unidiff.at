@@ -2,6 +2,11 @@
 
 AT_SETUP([calculation of unidiffs])
 
+MIMENCODE=`which mimencode 2>/dev/null`
+if test -z "$MIMENCODE" ; then
+  exit 77
+fi
+
 MONOTONE_SETUP
 
 AT_DATA(firstfile.b64, [LyogU3Vicm91dGluZXMgc2hhcmVkIGJ5IGFsbCBsYW5ndWFnZXMgdGhhdCBhcmUgdmFyaWFu
