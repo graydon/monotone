@@ -104,6 +104,9 @@ void build_manifest_map(path_set const & paths,
 void append_manifest_map(manifest_map const & m1,
 			 manifest_map & m2);
 
+void read_manifest_map(data const & dat,
+		       manifest_map & man);
+
 void read_manifest_map(manifest_data const & dat,
 		       manifest_map & man);
 

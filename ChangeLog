@@ -1,3 +1,19 @@
+2003-11-13  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (AUTOMAKE_OPTIONS): Require 1.7.1
+	* commands.cc (addtree): Wrap in transaction guard.
+	* database.cc, database.hh (manifest_delta_exists): Add.
+	(get_manifest_delta): Add.
+	* cert.cc (write_paths_recursive): Use partial deltas.
+	* manifest.cc, manifest.hh (read_manifest_map): New variant.
+	* patch_set.cc, patch_set.hh (patch_set): Add map_new, map_old
+	fields.
+	(manifests_to_patch_set) Store new field.
+	(patch_set_to_packets) Don't read manifest versions from db.
+	* std_hooks.lua (ignore_file): ignore .a, .so, .lo, .la, ~ files.
+	* tests/t_cvsimport.at: New test.
+	* testsuite.at: Call it.
+
 2003-11-10  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (find_oldest_ancestors): New function.

@@ -202,6 +202,16 @@ public:
   void put_manifest_version(manifest_id const & old_id,
 			    manifest_id const & new_id,
 			    manifest_delta const & del);
+
+
+  // only use these two variants if you really know what you're doing,
+  // wrt. "old" and "new".
+  bool manifest_delta_exists(manifest_id const & new_id,
+			     manifest_id const & old_id);
+
+  void get_manifest_delta(manifest_id const & new_id,
+			  manifest_id const & old_id,
+			  manifest_delta & dat);
   
 
   // crypto key / cert operations

@@ -281,6 +281,7 @@ static void get_parents(manifest_id const & child,
 
 static bool write_paths_recursive(manifest_id const & ancestor,
 				  manifest_id const & child,
+				  manifest_map const & child_map,
 				  app_state & app,
 				  packet_consumer & pc)
 {
@@ -298,22 +299,37 @@ static bool write_paths_recursive(manifest_id const & ancestor,
 
   bool relevant_child = false;
 
+  data child_dat;
+  write_manifest_map (child_map, child_dat);
+
   for(set<manifest_id>::const_iterator i = parents.begin();
       i != parents.end(); ++i)
     {
-      if (write_paths_recursive(ancestor, *i, app, pc))
+      manifest_map parent_map;
+
+      if (app.db.manifest_delta_exists(child, *i))
 	{
-	  manifest_map m_old, m_new;
-	  manifest_data m_old_data, m_new_data;
-	  patch_set ps;
-	  
-	  L(F("edge %s -> %s is relevant, writing to consumer\n") % (*i) % child);
+	  manifest_delta del;
+	  data parent_dat;
+	  P(F("Loading incremental reverse delta %s -> %s\n") % child % *i);
+	  app.db.get_manifest_delta(child, *i, del);
+	  patch(child_dat, del.inner(), parent_dat);
+	  read_manifest_map(parent_dat, parent_map);
+	}
+      else
+	{
+	  P(F("Loading full manifest version %s\n") % *i);
+	  manifest_data parent_dat;
+	  app.db.get_manifest_version(*i, parent_dat);
+	  read_manifest_map(parent_dat, parent_map);
+	}
+
+      if (write_paths_recursive(ancestor, *i, parent_map, app, pc))
+	{	  
 	  relevant_child = true;
-	  app.db.get_manifest_version(*i, m_old_data);
-	  app.db.get_manifest_version(child, m_new_data);	  
-	  read_manifest_map(m_old_data, m_old);
-	  read_manifest_map(m_new_data, m_new);
-	  manifests_to_patch_set(m_old, m_new, app, ps);
+	  patch_set ps;	  
+	  L(F("edge %s -> %s is relevant, writing to consumer\n") % (*i) % child);
+	  manifests_to_patch_set(parent_map, child_map, app, ps);
 	  patch_set_to_packets(ps, app, pc);
 	}
     }
@@ -336,7 +352,11 @@ void write_ancestry_paths(manifest_id const & ancestor,
 			  app_state & app,
 			  packet_consumer & pc)
 {
-  N(write_paths_recursive(ancestor, child, app, pc), 
+  manifest_map begin;
+  manifest_data begin_data;
+  app.db.get_manifest_version (child, begin_data);
+  read_manifest_map (begin_data, begin);
+  N(write_paths_recursive(ancestor, child, begin, app, pc), 
     F("no path found between ancestor %s and child %s") % ancestor % child);
 }
 

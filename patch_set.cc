@@ -278,6 +278,8 @@ void manifests_to_patch_set(manifest_map const & m_old,
 {
   ps.m_old = renames.parent;
   ps.m_new = renames.child;
+  ps.map_old = m_old;
+  ps.map_new = m_new;
   ps.f_adds.clear();
   ps.f_deltas.clear();
   ps.f_moves.clear();
@@ -389,20 +391,19 @@ void patch_set_to_packets(patch_set const & ps,
 {
   
   // manifest delta packet
-  manifest_data m_old_data, m_new_data;
 
   I(app.db.manifest_version_exists(ps.m_new));
-  app.db.get_manifest_version(ps.m_new, m_new_data);
   
   if (app.db.manifest_version_exists(ps.m_old))
     {
-      app.db.get_manifest_version(ps.m_old, m_old_data);
       base64< gzip<delta> > del;
-      diff(m_old_data.inner(), m_new_data.inner(), del);
+      diff(ps.map_old, ps.map_new, del);
       cons.consume_manifest_delta(ps.m_old, ps.m_new, manifest_delta(del));
     }
   else
     {
+      manifest_data m_new_data;
+      write_manifest_map(ps.map_new, m_new_data);
       cons.consume_manifest_data(ps.m_new, m_new_data);
     }
   

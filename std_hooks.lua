@@ -33,11 +33,16 @@ attr_functions["execute"] =
 
 
 function ignore_file(name)
+	if (string.find(name, "%.a$")) then return true end
+	if (string.find(name, "%.so$")) then return true end
 	if (string.find(name, "%.o$")) then return true end
+	if (string.find(name, "%.la$")) then return true end
+	if (string.find(name, "%.lo$")) then return true end
 	if (string.find(name, "%.aux$")) then return true end
 	if (string.find(name, "%.bak$")) then return true end
 	if (string.find(name, "%.orig$")) then return true end
 	if (string.find(name, "%.rej$")) then return true end
+	if (string.find(name, "%~$")) then return true end
 	if (string.find(name, "/core$")) then return true end
 	if (string.find(name, "^CVS/")) then return true end
 	if (string.find(name, "^SVN/")) then return true end

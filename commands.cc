@@ -2228,6 +2228,8 @@ CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\
       targets.insert (u);
       queueing_packet_writer qpw(app, targets);
 
+      transaction_guard guard(app.db);
+
       for (set<manifest_id>::const_iterator i = roots.begin();
 	   i != roots.end(); ++i)
 	{
@@ -2250,7 +2252,10 @@ CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\
 	      write_ancestry_paths(*j, *i, app, qpw);
 	    }
 	}
+      guard.commit();
     }
+  else 
+    throw usage(name);
 }
 
 CMD(list, "informative", 

@@ -51,6 +51,8 @@ struct patch_set
 {
   manifest_id m_old;
   manifest_id m_new;
+  manifest_map map_old;
+  manifest_map map_new;
   std::set<patch_addition> f_adds;
   std::set<patch_delta> f_deltas;
   std::set<patch_move> f_moves;

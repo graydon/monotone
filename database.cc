@@ -830,6 +830,22 @@ void database::get_manifest_version(manifest_id const & id,
   dat = tmp;
 }
 
+bool database::manifest_delta_exists(manifest_id const & new_id,
+				     manifest_id const & old_id)
+{
+  return delta_exists(old_id.inner(), new_id.inner(), "manifest_deltas");
+}
+
+void database::get_manifest_delta(manifest_id const & new_id,
+				  manifest_id const & old_id,			
+				  manifest_delta & mdel)
+{
+  base64< gzip<delta> > del;
+  I(delta_exists(old_id.inner(), new_id.inner(), "manifest_deltas"));
+  get_delta(old_id.inner(), new_id.inner(), del, "manifest_deltas");
+  mdel = manifest_delta(del);
+}
+
 void database::put_file(file_id const & id,
 			file_data const & dat)
 {

@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS=subdir-objects
+AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 
 MOST_SOURCES =								\
 	 app_state.cc commands.cc diff_patch.cc lua.cc			\

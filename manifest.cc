@@ -112,6 +112,13 @@ struct add_to_manifest_map
   }
 };
 
+void read_manifest_map(data const & dat,
+		       manifest_map & man)
+{
+  regex expr("^[[:blank:]]*([[:xdigit:]]{40})[[:blank:]]+([^[:space:]]+)");
+  regex_grep(add_to_manifest_map(man), dat(), expr, match_not_dot_newline);  
+}
+
 void read_manifest_map(manifest_data const & dat,
 		       manifest_map & man)
 {  
@@ -119,9 +126,9 @@ void read_manifest_map(manifest_data const & dat,
   data decompressed;
   decode_base64(dat.inner(), decoded);
   decode_gzip(decoded, decompressed);
-  regex expr("^[[:blank:]]*([[:xdigit:]]{40})[[:blank:]]+([^[:space:]]+)");
-  regex_grep(add_to_manifest_map(man), decompressed(), expr, match_not_dot_newline);
+  read_manifest_map(decompressed, man);
 }
+
 
 
 // writing manifest_maps
