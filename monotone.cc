@@ -37,6 +37,7 @@
 #define OPT_FULL_VERSION 13
 #define OPT_REVISION 14
 #define OPT_MESSAGE 15
+#define OPT_ROOT 16
 
 // main option processing and exception handling code
 
@@ -61,6 +62,7 @@ struct poptOption options[] =
     {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot) [count]", NULL},
     {"revision", 0, POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
     {"message", 0, POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
+    {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
 
@@ -247,11 +249,15 @@ cpp_main(int argc, char ** argv)
               return 0;
 
             case OPT_REVISION:
-               app.add_revision(string(argstr));
+              app.add_revision(string(argstr));
               break;
 
             case OPT_MESSAGE:
-               app.set_message(string(argstr));
+              app.set_message(string(argstr));
+              break;
+
+            case OPT_ROOT:
+              app.set_root(string(argstr));
               break;
 
             case OPT_HELP:
@@ -279,6 +285,12 @@ cpp_main(int argc, char ** argv)
           else
             throw usage("");
         }
+
+      // at this point we allow a working copy (meaning search for it
+      // and if found read MT/options) but don't require it. certain
+      // commands may subsequently require a working copy or fail
+
+      app.allow_working_copy();
 
       // main options processed, now invoke the 
       // sub-command w/ remaining args

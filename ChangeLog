@@ -1,3 +1,31 @@
+2005-02-17  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (app_state): initialize search root
+	(initialize): boolean signature variant renamed to ...
+	(allow_working_copy): this; add explicit search root; move
+	requirement for working copy to ...
+	(require_working_copy): this new method
+	(initialize): string signature variant renamed to ...
+	(create_working_copy): this
+	(set_root): new method
+	* commands.cc: remove app.initialize(false) calls; replace
+	app.initialize(true) with app.require_working_copy(); replace
+	app.initialize(dir) with app.create_working_copy(dir)
+	(checkout): ensure revision is member of specified branch
+	* file_io.{cc,hh} (find_working_copy): stop search at --root if
+	specified
+	* monotone.cc (OPT_ROOT): new option
+	(cpp_main): call app.allow_working_copy() before executing
+	commands to always read default options
+	* monotone.1: add --root option
+	* monotone.texi: add --root option
+	* tests/t_checkout_noop_on_fail.at: un-XFAIL
+	* tests/t_checkout_options.at: un-XFAIL, add check for specified
+	revision not in specified branch
+	* testsuite.at: add --root option to MONOTONE to prevent searching
+	above test dir
+	* vocab.cc: remove redundant forward declaration
+	
 2005-02-16  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (revert): don't rewrite unchanged files
