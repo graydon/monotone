@@ -1,5 +1,9 @@
 2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc: Remove hard tabs.
+
+2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
+
 	* revision.cc: Remove hard tabs.
 	* change_set.hh: Likewise.
 
