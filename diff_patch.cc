@@ -1665,7 +1665,7 @@ void update_merge_provider::get_version(path_id_pair const & pip, file_data & da
       file_id fid;
       N(file_exists (pip.path()),
 	F("file %s does not exist in working copy") % pip.path());
-      read_data(pip.path(), tmp);
+      read_localized_data(pip.path(), tmp, app.lua);
       calculate_ident(tmp, fid);
       N(fid == pip.ident(),
 	F("file %s in working copy has id %s, wanted %s")

@@ -99,7 +99,8 @@ void build_manifest_map(file_path const & path,
 			manifest_map & man);
 
 void build_manifest_map(path_set const & paths,
-			manifest_map & man);
+			manifest_map & man,
+			app_state & app);
 
 void append_manifest_map(manifest_map const & m1,
 			 manifest_map & m2);

@@ -1,7 +1,7 @@
 #ifndef _MONOTONE_IDNA_IDN_INT_H
 #define _MONOTONE_IDNA_IDN_INT_H 1
 #ifndef _GENERATED_STDINT_H
-#define _GENERATED_STDINT_H "monotone 0.8"
+#define _GENERATED_STDINT_H "monotone 0.9"
 /* generated using gnu compiler gcc (GCC) 3.3.2 20031022 (Red Hat Linux 3.3.2-1) */
 #define _STDINT_HAVE_STDINT_H 1
 

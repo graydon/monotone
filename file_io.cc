@@ -12,9 +12,10 @@
 #include "cryptopp/filters.h"
 #include "cryptopp/files.h"
 
-#include "transforms.hh"
 #include "file_io.hh"
+#include "lua.hh"
 #include "sanity.hh"
+#include "transforms.hh"
 
 // this file deals with talking to the filesystem, loading and
 // saving files.
@@ -193,6 +194,45 @@ void read_data(local_path const & path,
 void read_data(file_path const & path, base64< gzip<data> > & dat)
 { read_data(local_path(path()), dat); }
 
+void read_localized_data(file_path const & path,
+			 base64< gzip<data> > & dat,
+			 lua_hooks & lua)
+{
+  data data_plain;
+  read_localized_data(path, data_plain, lua);
+  gzip<data> data_compressed;
+  base64< gzip<data> > data_encoded;  
+  encode_gzip(data_plain, data_compressed);
+  encode_base64(data_compressed, dat);
+}
+
+void read_localized_data(file_path const & path, 
+			 data & dat, 
+			 lua_hooks & lua)
+{
+  string db_linesep, ext_linesep;
+  string db_charset, ext_charset;
+  
+  bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep) 
+		      && db_linesep != ext_linesep);
+
+  bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset) 
+		      && db_charset != ext_charset);
+
+  data tdat;
+  read_data(path, tdat);
+  
+  string tmp1, tmp2;
+  tmp2 = tdat();
+  if (do_charconv)
+      charset_convert(ext_charset, db_charset, tmp1, tmp2);
+  tmp1 = tmp2;
+  if (do_lineconv)
+      line_end_convert(db_linesep, tmp1, tmp2);
+  dat = tmp2;
+}
+
+
 // FIXME: this is probably not enough brains to actually manage "atomic
 // filesystem writes". at some point you have to draw the line with even
 // trying, and I'm not sure it's really a strict requirement of this tool,
@@ -238,6 +278,40 @@ void write_data(file_path const & path, data const & dat)
   write_data_impl(localized(path()), dat); 
 }
 
+void write_localized_data(file_path const & path, 
+			  data const & dat, 
+			  lua_hooks & lua)
+{
+  string db_linesep, ext_linesep;
+  string db_charset, ext_charset;
+  
+  bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep) 
+		      && db_linesep != ext_linesep);
+
+  bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset) 
+		      && db_charset != ext_charset);
+  
+  string tmp1, tmp2;
+  tmp2 = dat();
+  if (do_lineconv)
+      line_end_convert(ext_linesep, tmp1, tmp2);
+  tmp1 = tmp2;
+  if (do_charconv)
+      charset_convert(db_charset, ext_charset, tmp1, tmp2);
+
+  write_data(path, data(tmp2));
+}
+
+void write_localized_data(file_path const & path,
+			  base64< gzip<data> > const & dat,
+			  lua_hooks & lua)
+{
+  gzip<data> data_decoded;
+  data data_decompressed;      
+  decode_base64(dat, data_decoded);
+  decode_gzip(data_decoded, data_decompressed);
+  write_localized_data(path, data_decompressed, lua);
+}
 
 void write_data(local_path const & path,
 		base64< gzip<data> > const & dat)

@@ -704,3 +704,41 @@ bool lua_hooks::hook_get_system_linesep(string & linesep)
     .extract_str(linesep)
     .ok();
 }
+
+bool lua_hooks::hook_get_charset_conv(file_path const & p, 
+				      std::string & db, std::string & ext)
+{
+  Lua ll(st);
+  ll
+    .push_str("get_charset_conv")
+    .get_fn()
+    .push_str(p())
+    .call(1,1)
+    .begin();
+  
+  ll.next();
+  ll.extract_str(db).pop();
+
+  ll.next();
+  ll.extract_str(ext).pop();
+  return ll.ok();
+}
+
+bool lua_hooks::hook_get_linesep_conv(file_path const & p, 
+				      std::string & db, std::string & ext)
+{
+  Lua ll(st);
+  ll
+    .push_str("get_linesep_conv")
+    .get_fn()
+    .push_str(p())
+    .call(1,1)
+    .begin();
+  
+  ll.next();
+  ll.extract_str(db).pop();
+
+  ll.next();
+  ll.extract_str(ext).pop();
+  return ll.ok();
+}

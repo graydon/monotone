@@ -52,7 +52,7 @@ void manifest_map_builder::visit_file(file_path const & path)
     return;
   hexenc<id> ident;
   L(F("scanning file %s\n") % path);
-  calculate_ident(path, ident);
+  calculate_ident(path, ident, app.lua);
   man.insert(entry(path, file_id(ident)));
 }
 
@@ -75,14 +75,15 @@ void build_manifest_map(app_state & app,
 
 
 void build_manifest_map(path_set const & paths,
-			manifest_map & man)
+			manifest_map & man, 
+			app_state & app)
 {
   man.clear();
   for (path_set::const_iterator i = paths.begin();
        i != paths.end(); ++i)
     {
       hexenc<id> ident;
-      calculate_ident(*i, ident);
+      calculate_ident(*i, ident, app.lua);
       man.insert(entry(*i, file_id(ident)));
     }
 }

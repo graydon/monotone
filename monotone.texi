@@ -2009,21 +2009,28 @@ internationalization behavior.
 @item Character set conversion
 The process of mapping a string of bytes representing wide characters
 from one encoding to another. Per-file character set conversions are
-specified by a lua hook @code{charset_conv} which takes a filename and
-returns a table of two strings: the first represents the "internal"
-(database) charset, the second represents the "external" (filesystem)
-charset.
+specified by a lua hook @code{get_charset_conv} which takes a filename
+and returns a table of two strings: the first represents the
+"internal" (database) charset, the second represents the "external"
+(filesystem) charset.
 
 @item Line ending conversion
 The process of converting platform-dependent end-of-line codes
 (@code{0x0D}, @code{0x0A}, or the pair @code{0x0D 0x0A}) from one
 convention to another. Per-file line ending conversion is specified by
-a lua hook @code{linesep_conv} which takes a filename and returns a
-table of two strings: the first represents the "internal" (database)
+a lua hook @code{get_linesep_conv} which takes a filename and returns
+a table of two strings: the first represents the "internal" (database)
 line ending convention, the second represents the "external"
 (filesystem) line ending convention. each string should be one of the
-three strings "CR", "LF", or "CRLF". Line ending conversion is always
-performed after character set conversion, when both are enabled.
+three strings "CR", "LF", or "CRLF".
+
+Note that Line ending conversion is always performed on the internal
+character set, when both character set and line ending conversion are
+enabled; this behavior is meant to encourage the use of the monotone's
+``normal form'' (UTF-8, '\n') as an internal form for your source
+files, when working with multiple external forms. Also note that line
+ending conversion only works on character encodings with the specific
+code bytes described above, such as ASCII, ISO-8859x, and UTF-8.
 
 @item Normal form conversion
 Character set and line ending conversions done between a "system form"
@@ -3318,10 +3325,14 @@ function definition which suits your preferences, monotone will
 execute it. This way you can modify how monotone behaves.
 
 You can put new definitions for any of these hook functions in a file
-@file{$HOME/.monotonerc}, which will be read every time monotone
-runs. You can also tell monotone to interpret extra hook functions
-from any other @var{file} using the @option{--rcfile=@var{file}}
-option.
+@file{$HOME/.monotonerc}, or in your working copy in
+@file{MT/monotonerc}, both of which will be read every time monotone
+runs. Definitions in @file{MT/monotonerc} shadow (override)
+definitions made in your @file{$HOME/.monotonerc}. You can also tell
+monotone to interpret extra hook functions from any other @var{file}
+using the @option{--rcfile=@var{file}} option; hooks defined in files
+specified on the command-line will shadow hooks from the the automatic
+files.
 
 The remainder of this section documents the existing hook functions
 and their default definitions. 

@@ -81,6 +81,10 @@ public:
 
   // conversion hooks
   bool hook_get_system_linesep(std::string & linesep);
+  bool hook_get_charset_conv(file_path const & p, 
+			     std::string & db, std::string & ext);
+  bool hook_get_linesep_conv(file_path const & p, 
+			     std::string & db, std::string & ext);
 
 };
 

@@ -269,15 +269,35 @@ void calculate_ident(manifest_data const & dat,
 
 // this might reasonably go in file_io.cc too..
 void calculate_ident(file_path const & file,
-		     hexenc<id> & ident)
+		     hexenc<id> & ident,
+		     lua_hooks & lua)
 {
-  CryptoPP::SHA hash;
-  unsigned int const sz = 2 * CryptoPP::SHA::DIGESTSIZE;
-  char buffer[sz];
-  CryptoPP::FileSource f(file().c_str(), true, new CryptoPP::HashFilter
-			 (hash, new CryptoPP::HexEncoder
-			  (new CryptoPP::ArraySink(reinterpret_cast<byte *>(buffer), sz))));
-  ident = lowercase(string(buffer, sz));
+  string db_linesep, ext_linesep;
+  string db_charset, ext_charset;
+
+  bool do_lineconv = (lua.hook_get_linesep_conv(file, db_linesep, ext_linesep) 
+		      && db_linesep != ext_linesep);
+
+  bool do_charconv = (lua.hook_get_charset_conv(file, db_charset, ext_charset) 
+		      && db_charset != ext_charset);
+
+  if (do_charconv || do_lineconv)
+    {
+      data dat;
+      read_localized_data(file, dat, lua);
+      calculate_ident(dat, ident);
+    }
+  else
+    {
+      // no conversions necessary, use streaming form
+      CryptoPP::SHA hash;
+      unsigned int const sz = 2 * CryptoPP::SHA::DIGESTSIZE;
+      char buffer[sz];
+      CryptoPP::FileSource f(file().c_str(), true, new CryptoPP::HashFilter
+			     (hash, new CryptoPP::HexEncoder
+			      (new CryptoPP::ArraySink(reinterpret_cast<byte *>(buffer), sz))));
+      ident = lowercase(string(buffer, sz));
+    }
 }
 
 
@@ -366,14 +386,19 @@ void charset_convert(string const & src_charset,
 		     string const & src, 
 		     string & dst)
 {
-  L(F("converting %d bytes from %s to %s\n") % src.size() 
-    % src_charset % dst_charset);
-  char * converted = stringprep_convert(src.c_str(),
-					dst_charset.c_str(),
-					src_charset.c_str());
-  I(converted != NULL);
-  dst = string(converted);
-  free(converted);
+  if (src_charset == dst_charset)
+    dst = src;
+  else
+    {
+      L(F("converting %d bytes from %s to %s\n") % src.size() 
+	% src_charset % dst_charset);
+      char * converted = stringprep_convert(src.c_str(),
+					    dst_charset.c_str(),
+					    src_charset.c_str());
+      I(converted != NULL);
+      dst = string(converted);
+      free(converted);
+    }
 }
 
 

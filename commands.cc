@@ -307,7 +307,8 @@ static void update_any_attrs(app_state & app)
 
 static void calculate_new_manifest_map(manifest_map const & m_old, 
 				       manifest_map & m_new,
-				       rename_set & renames)
+				       rename_set & renames,
+				       app_state & app)
 {
   path_set paths;
   work_set work;
@@ -323,16 +324,17 @@ static void calculate_new_manifest_map(manifest_map const & m_old,
     L(F("renaming %d files in manifest\n") % 
       work.renames.size());
   apply_work_set(work, paths);
-  build_manifest_map(paths, m_new);
+  build_manifest_map(paths, m_new, app);
   renames = work.renames;
 }
 
 
 static void calculate_new_manifest_map(manifest_map const & m_old, 
-				       manifest_map & m_new)
+				       manifest_map & m_new,
+				       app_state & app)
 {
   rename_set dummy;
-  calculate_new_manifest_map (m_old, m_new, dummy);
+  calculate_new_manifest_map (m_old, m_new, dummy, app);
 }
 
 
@@ -1093,7 +1095,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   rename_edge renames;
 
   get_manifest_map(m_old);
-  calculate_new_manifest_map(m_old, m_new, renames.mapping);
+  calculate_new_manifest_map(m_old, m_new, renames.mapping, app);
   manifest_id old_id, new_id;
   calculate_ident(m_old, old_id);
   calculate_ident(m_new, new_id);
@@ -1163,7 +1165,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 		file_data old_data;
 		base64< gzip<data> > new_data;
 		app.db.get_file_version(i->id_old, old_data);
-		read_data(i->path, new_data);
+		read_localized_data(i->path, new_data, app.lua);
 		base64< gzip<delta> > del;
 		diff(old_data.inner(), new_data, del);
 		app.db.put_file_version(i->id_old, i->id_new, file_delta(del));
@@ -1172,7 +1174,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 	      {
 		L(F("inserting full version %s\n") % i->id_old);
 		base64< gzip<data> > new_data;
-		read_data(i->path, new_data);
+		read_localized_data(i->path, new_data, app.lua);
 		// sanity check
 		hexenc<id> tid;
 		calculate_ident(new_data, tid);
@@ -1196,7 +1198,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 	    // it's a new file
 	    L(F("inserting new file %s %s\n") % i->path % i->ident);
 	    base64< gzip<data> > new_data;
-	    read_data(i->path, new_data);
+	    read_localized_data(i->path, new_data, app.lua);
 	    app.db.put_file(i->ident, new_data);
 	  }
       }
@@ -1272,7 +1274,7 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
 
   get_manifest_map(m_old);
   calculate_ident(m_old, m_old_id);
-  calculate_new_manifest_map(m_old, m_working);
+  calculate_new_manifest_map(m_old, m_working, app);
   
   pick_update_target(m_old_id, args, app, m_chosen_id);
   if (m_old_id == m_chosen_id)
@@ -1323,7 +1325,7 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
 	tmp = merger.temporary_store[i->ident];
       else
 	I(false); // trip assert. this should be impossible.
-      write_data(i->path, tmp.inner());
+      write_localized_data(i->path, tmp.inner(), app.lua);
     }
 
   L(F("applying %d deltas to tree\n") % ps.f_deltas.size());
@@ -1337,7 +1339,7 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
       {
 	base64< gzip<data> > dtmp;
 	hexenc<id> dtmp_id;
-	read_data(i->path, dtmp);
+	read_localized_data(i->path, dtmp, app.lua);
 	calculate_ident(dtmp, dtmp_id);
 	I(dtmp_id == i->id_old.inner());
       }
@@ -1351,7 +1353,7 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
 	  tmp = merger.temporary_store[i->id_new];
 	else
 	  I(false); // trip assert. this should be impossible.
-	write_data(i->path, tmp.inner());
+	write_localized_data(i->path, tmp.inner(), app.lua);
       }
     }
   
@@ -1388,7 +1390,7 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 	  L(F("writing file %s to %s\n") %
 	    pip.ident() % pip.path());
 	  app.db.get_file_version(pip.ident(), dat);
-	  write_data(pip.path(), dat.inner());
+	  write_localized_data(pip.path(), dat.inner(), app.lua);
 	}
       remove_work_set();
     }
@@ -1442,7 +1444,7 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 	      L(F("writing file %s to %s\n") %
 		pip.ident() % pip.path());
 	      app.db.get_file_version(pip.ident(), dat);
-	      write_data(pip.path(), dat.inner());	      
+	      write_localized_data(pip.path(), dat.inner(), app.lua);
 
 	      // a deleted file will always appear in the manifest
 	      if (work.dels.find(arg) != work.dels.end())
@@ -1576,7 +1578,7 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state 
       L(F("writing file %s to %s\n") %
 	pip.ident() % pip.path());
       app.db.get_file_version(pip.ident(), dat);
-      write_data(pip.path(), dat.inner());
+      write_localized_data(pip.path(), dat.inner(), app.lua);
     }
   remove_work_set();
   guard.commit();
@@ -1867,7 +1869,7 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
   if (args.size() == 0)
     {
       get_manifest_map(m_old);
-      calculate_new_manifest_map(m_old, m_new);
+      calculate_new_manifest_map(m_old, m_new, app);
       new_is_archived = false;
     }
   else if (args.size() == 1)
@@ -1880,7 +1882,7 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
 
       manifest_map parent;
       get_manifest_map(parent);
-      calculate_new_manifest_map(parent, m_new);
+      calculate_new_manifest_map(parent, m_new, app);
       new_is_archived = false;
     }
   else if (args.size() == 2)
@@ -1934,7 +1936,7 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
         }
       else
         {
-          read_data(i->path, decompressed_new);
+          read_localized_data(i->path, decompressed_new, app.lua);
         }
 
       split_into_lines(decompressed_old(), old_lines);
@@ -2111,7 +2113,7 @@ CMD(status, "informative", "", "show status of working copy")
   transaction_guard guard(app.db);
   get_manifest_map(m_old);
   calculate_ident(m_old, old_id);
-  calculate_new_manifest_map(m_old, m_new, renames.mapping);
+  calculate_new_manifest_map(m_old, m_new, renames.mapping, app);
   calculate_ident(m_new, new_id);
 
   renames.parent = old_id;
@@ -2175,7 +2177,7 @@ static void ls_unknown (app_state & app, bool want_ignored)
 {
   manifest_map m_old, m_new;
   get_manifest_map(m_old);
-  calculate_new_manifest_map(m_old, m_new);
+  calculate_new_manifest_map(m_old, m_new, app);
   unknown_itemizer u(app, m_new, want_ignored);
   walk_tree(u);
 }

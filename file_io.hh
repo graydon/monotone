@@ -35,6 +35,8 @@
 // value in *other* parts of the code. this file contains stuff which is so
 // low level we can't mostly know whether what's being asked for is legal.
 
+struct lua_hooks;
+
 void save_initial_path();
 
 fs::path mkpath(std::string const & s);
@@ -66,11 +68,23 @@ void read_data(local_path const & path, data & data);
 void read_data(local_path const & path, base64< gzip<data> > & data);
 void read_data(file_path const & path, data & data);
 void read_data(file_path const & path, base64< gzip<data> > & data);
+void read_localized_data(file_path const & path, 
+			 data & dat, 
+			 lua_hooks & lua);
+void read_localized_data(file_path const & path,
+			 base64< gzip<data> > & dat,
+			 lua_hooks & lua);
 
 void write_data(local_path const & path, data const & data);
 void write_data(local_path const & path, base64< gzip<data> > const & data);
 void write_data(file_path const & path, data const & data);
 void write_data(file_path const & path, base64< gzip<data> > const & data);
+void write_localized_data(file_path const & path, 
+			  data const & dat, 
+			  lua_hooks & lua);
+void write_localized_data(file_path const & path,
+			  base64< gzip<data> > const & dat,
+			  lua_hooks & lua);
 
 class tree_walker
 {

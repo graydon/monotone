@@ -129,10 +129,11 @@ void calculate_ident(manifest_map const & mm,
 		     manifest_id & ident);
 
 
-// quick streamy variant which doesn't load the whole file
+// quick streamy variant which doesn't necessarily load the whole file
 
 void calculate_ident(file_path const & file,
-		     hexenc<id> & ident);
+		     hexenc<id> & ident, 
+		     lua_hooks & lua);
 
 void split_into_lines(std::string const & in,
 		      std::vector<std::string> & out);

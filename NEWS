@@ -1,3 +1,14 @@
+Thu Jan  1 18:23:06 EST 2004
+
+	0.9 release. support international users (non-ASCII character
+	sets, locales). some corrections to update algorithm. line
+	merging algorithm reimplemented. support working copy
+	MT/monotonerc file. broke format compatibility with MT/work
+	files; commit any pending work before upgrading. permit
+	spaces, colons, other "funny" characters in filenames. support
+	HTTP 1.1, HTTP proxies, handle some corner cases in ancestry
+	graph and database faults.
+
 Fri Nov 21 20:25:26 EST 2003
 
 	0.8 release. row size increased to 16mb. more performance

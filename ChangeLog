@@ -1,3 +1,15 @@
+2004-01-01  graydon hoare  <graydon@pobox.com>
+
+	* file_io.hh, file_io.cc (read_localized_data, write_localized_data): 
+	New functions
+	* commands.cc, manifest.cc, transforms.cc: Use them.
+	* monotone.texi: Minor update to i18n docs.
+	* lua.hh, lua.cc (hook_get_linesep_conv, hook_get_charset_conv):
+	New hooks.
+	* acinclude.m4: Move AX_CREATE_STDINT_H in here.
+	* po/monotone.pot: Regenerate.
+	* NEWS, configure.ac: Prep for 0.9 release.
+
 2003-12-30  graydon hoare  <graydon@pobox.com>
 
 	* file_io.hh, file_io.cc (mkpath): New function.
