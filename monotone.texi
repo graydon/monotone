@@ -4011,6 +4011,12 @@ end
 @end group
 @end smallexample
 
+@item ignore_branch (@var{branchname})
+
+Returns @code{true} if @var{branchname} should be ignored while listing
+branches. Otherwise returns @code{false}. This hook has no default
+definition, therefore the default behavior is to list all branches.
+
 @item get_manifest_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
 
 Returns whether or not you @emph{trust} the assertion
