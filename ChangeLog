@@ -1,3 +1,12 @@
+2005-03-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_heads): Remove app.initialize call.
+	* revision.cc, revision.hh (calculate_arbitrary_change_set): New
+	function.
+	(calculate_composite_change_set): Touch more sanity checking.
+
+	* commands.cc (update): Use it.
+
 2005-02-17  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* testsuite.at:

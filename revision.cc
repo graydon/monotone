@@ -820,14 +820,39 @@ calculate_composite_change_set(revision_id const & ancestor,
                                app_state & app,
                                change_set & composed)
 {
+  I(composed.empty());
   L(F("calculating composite changeset between %s and %s\n")
     % ancestor % child);
+  if (ancestor == child)
+    return;
   std::set<revision_id> visited;
   std::set<revision_id> subgraph;
   std::map<revision_id, boost::shared_ptr<change_set> > partial;
   find_subgraph_for_composite_search(ancestor, child, app, subgraph);
   calculate_change_sets_recursive(ancestor, child, app, composed, partial, 
                                   visited, subgraph);
+}
+
+void
+calculate_arbitrary_change_set(revision_id const & start,
+                               revision_id const & end,
+                               app_state & app,
+                               change_set & composed)
+{
+  L(F("calculating changeset from %s to %s\n") % start % end);
+  revision_id r_ca_id;
+  change_set ca_to_start, ca_to_end, start_to_ca;
+  N(find_least_common_ancestor(start, end, r_ca_id, app),
+    F("no common ancestor for %s and %s\n") % start % end);
+  L(F("common ancestor is %s\n") % r_ca_id);
+  calculate_composite_change_set(r_ca_id, start, app, ca_to_start);
+  calculate_composite_change_set(r_ca_id, end, app, ca_to_end);
+  manifest_id m_ca_id;
+  manifest_map m_ca;
+  app.db.get_revision_manifest(r_ca_id, m_ca_id);
+  app.db.get_manifest(m_ca_id, m_ca);
+  invert_change_set(ca_to_start, m_ca, start_to_ca);
+  concatenate_change_sets(start_to_ca, ca_to_end, composed);
 }
 
 
