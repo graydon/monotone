@@ -11,7 +11,7 @@
 *************************************************************************
 ** This file contains code used to implement the ATTACH and DETACH commands.
 **
-** $Id: attach.c,v 1.1 2003/08/05 23:03:07 graydon Exp $
+** $Id: attach.c,v 1.9 2004/01/20 11:54:03 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -28,7 +28,10 @@ void sqliteAttach(Parse *pParse, Token *pFilename, Token *pDbname){
   int rc, i;
   char *zFile, *zName;
   sqlite *db;
+  Vdbe *v;
 
+  v = sqliteGetVdbe(pParse);
+  sqliteVdbeAddOp(v, OP_Halt, 0, 0);
   if( pParse->explain ) return;
   db = pParse->db;
   if( db->file_format<4 ){
@@ -43,6 +46,31 @@ void sqliteAttach(Parse *pParse, Token *pFilename, Token *pDbname){
     pParse->rc = SQLITE_ERROR;
     return;
   }
+
+  zFile = 0;
+  sqliteSetNString(&zFile, pFilename->z, pFilename->n, 0);
+  if( zFile==0 ) return;
+  sqliteDequote(zFile);
+#ifndef SQLITE_OMIT_AUTHORIZATION
+  if( sqliteAuthCheck(pParse, SQLITE_ATTACH, zFile, 0, 0)!=SQLITE_OK ){
+    sqliteFree(zFile);
+    return;
+  }
+#endif /* SQLITE_OMIT_AUTHORIZATION */
+
+  zName = 0;
+  sqliteSetNString(&zName, pDbname->z, pDbname->n, 0);
+  if( zName==0 ) return;
+  sqliteDequote(zName);
+  for(i=0; i<db->nDb; i++){
+    if( db->aDb[i].zName && sqliteStrICmp(db->aDb[i].zName, zName)==0 ){
+      sqliteErrorMsg(pParse, "database %z is already in use", zName);
+      pParse->rc = SQLITE_ERROR;
+      sqliteFree(zFile);
+      return;
+    }
+  }
+
   if( db->aDb==db->aDbStatic ){
     aNew = sqliteMalloc( sizeof(db->aDb[0])*3 );
     if( aNew==0 ) return;
@@ -58,24 +86,7 @@ void sqliteAttach(Parse *pParse, Token *pFilename, Token *pDbname){
   sqliteHashInit(&aNew->idxHash, SQLITE_HASH_STRING, 0);
   sqliteHashInit(&aNew->trigHash, SQLITE_HASH_STRING, 0);
   sqliteHashInit(&aNew->aFKey, SQLITE_HASH_STRING, 1);
-  
-  zName = 0;
-  sqliteSetNString(&zName, pDbname->z, pDbname->n, 0);
-  if( zName==0 ) return;
-  sqliteDequote(zName);
-  for(i=0; i<db->nDb; i++){
-    if( db->aDb[i].zName && sqliteStrICmp(db->aDb[i].zName, zName)==0 ){
-      sqliteErrorMsg(pParse, "database %z is already in use", zName);
-      db->nDb--;
-      pParse->rc = SQLITE_ERROR;
-      return;
-    }
-  }
   aNew->zName = zName;
-  zFile = 0;
-  sqliteSetNString(&zFile, pFilename->z, pFilename->n, 0);
-  if( zFile==0 ) return;
-  sqliteDequote(zFile);
   rc = sqliteBtreeFactory(db, zFile, 0, MAX_PAGES, &aNew->pBt);
   if( rc ){
     sqliteErrorMsg(pParse, "unable to open database: %s", zFile);
@@ -83,8 +94,16 @@ void sqliteAttach(Parse *pParse, Token *pFilename, Token *pDbname){
   sqliteFree(zFile);
   db->flags &= ~SQLITE_Initialized;
   if( pParse->nErr ) return;
-  rc = sqliteInit(pParse->db, &pParse->zErrMsg);
+  if( rc==SQLITE_OK ){
+    rc = sqliteInit(pParse->db, &pParse->zErrMsg);
+  }
   if( rc ){
+    int i = db->nDb - 1;
+    assert( i>=2 );
+    if( db->aDb[i].pBt ){
+      sqliteBtreeClose(db->aDb[i].pBt);
+      db->aDb[i].pBt = 0;
+    }
     sqliteResetInternalSchema(db, 0);
     pParse->nErr++;
     pParse->rc = SQLITE_ERROR;
@@ -101,7 +120,10 @@ void sqliteAttach(Parse *pParse, Token *pFilename, Token *pDbname){
 void sqliteDetach(Parse *pParse, Token *pDbname){
   int i;
   sqlite *db;
+  Vdbe *v;
 
+  v = sqliteGetVdbe(pParse);
+  sqliteVdbeAddOp(v, OP_Halt, 0, 0);
   if( pParse->explain ) return;
   db = pParse->db;
   for(i=0; i<db->nDb; i++){
@@ -117,6 +139,11 @@ void sqliteDetach(Parse *pParse, Token *pDbname){
     sqliteErrorMsg(pParse, "cannot detach database %T", pDbname);
     return;
   }
+#ifndef SQLITE_OMIT_AUTHORIZATION
+  if( sqliteAuthCheck(pParse,SQLITE_DETACH,db->aDb[i].zName,0,0)!=SQLITE_OK ){
+    return;
+  }
+#endif /* SQLITE_OMIT_AUTHORIZATION */
   sqliteBtreeClose(db->aDb[i].pBt);
   db->aDb[i].pBt = 0;
   sqliteFree(db->aDb[i].zName);

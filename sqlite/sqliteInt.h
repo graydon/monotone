@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.2 2003/11/13 15:49:58 graydon Exp $
+** @(#) $Id: sqliteInt.h,v 1.209 2004/01/16 15:55:38 drh Exp $
 */
 #include "config.h"
 #include "sqlite.h"
@@ -87,6 +87,8 @@
 /* #define SQLITE_OMIT_AUTHORIZATION  1 */
 /* #define SQLITE_OMIT_INMEMORYDB     1 */
 /* #define SQLITE_OMIT_VACUUM         1 */
+/* #define SQLITE_OMIT_DATETIME_FUNCS 1 */
+/* #define SQLITE_OMIT_PROGRESS_CALLBACK 1 */
 
 /*
 ** Integers of known sizes.  These typedefs might change for architectures
@@ -118,6 +120,15 @@ typedef INTPTR_TYPE ptr;           /* Big enough to hold a pointer */
 typedef unsigned INTPTR_TYPE uptr; /* Big enough to hold a pointer */
 
 /*
+** Most C compilers these days recognize "long double", don't they?
+** Just in case we encounter one that does not, we will create a macro
+** for long double so that it can be easily changed to just "double".
+*/
+#ifndef LONGDOUBLE_TYPE
+# define LONGDOUBLE_TYPE long double
+#endif
+
+/*
 ** This macro casts a pointer to an integer.  Useful for doing
 ** pointer arithmetic.
 */
@@ -137,9 +148,8 @@ typedef unsigned INTPTR_TYPE uptr; /* Big enough to hold a pointer */
 ** original pages plus 16448 overflow pages each holding 1020 bytes of
 ** data.
 */
-/* #define MAX_BYTES_PER_ROW  1048576 */
-
-#define MAX_BYTES_PER_ROW 16777198
+#define MAX_BYTES_PER_ROW  1048576
+/* #define MAX_BYTES_PER_ROW 16777198 */
 
 /*
 ** If memory allocation problems are found, recompile with
@@ -312,6 +322,8 @@ struct sqlite {
   int nTable;                   /* Number of tables in the database */
   void *pBusyArg;               /* 1st Argument to the busy callback */
   int (*xBusyCallback)(void *,const char*,int);  /* The busy callback */
+  void *pCommitArg;             /* Argument to xCommitCallback() */   
+  int (*xCommitCallback)(void*);/* Invoked at every commit. */
   Hash aFunc;                   /* All functions that can be in SQL exprs */
   int lastRowid;                /* ROWID of most recent insert */
   int priorNewRowid;            /* Last randomly generated ROWID */
@@ -319,14 +331,17 @@ struct sqlite {
   int magic;                    /* Magic number for detect library misuse */
   int nChange;                  /* Number of rows changed */
   struct Vdbe *pVdbe;           /* List of active virtual machines */
-#ifndef SQLITE_OMIT_TRACE
   void (*xTrace)(void*,const char*);     /* Trace function */
   void *pTraceArg;                       /* Argument to the trace function */
-#endif
 #ifndef SQLITE_OMIT_AUTHORIZATION
   int (*xAuth)(void*,int,const char*,const char*,const char*,const char*);
                                 /* Access authorization function */
   void *pAuthArg;               /* 1st argument to the access auth function */
+#endif
+#ifndef SQLITE_OMIT_PROGRESS_CALLBACK
+  int (*xProgress)(void *);     /* The progress callback */
+  void *pProgressArg;           /* Argument to the progress callback */
+  int nProgressOps;             /* Number of opcodes for progress callback */
 #endif
 };
 
@@ -386,7 +401,7 @@ struct Column {
   char *zDflt;     /* Default value of this column */
   char *zType;     /* Data type for this column */
   u8 notNull;      /* True if there is a NOT NULL constraint */
-  u8 isPrimKey;    /* True if this column is an INTEGER PRIMARY KEY */
+  u8 isPrimKey;    /* True if this column is part of the PRIMARY KEY */
   u8 sortOrder;    /* Some combination of SQLITE_SO_... values */
 };
 
@@ -572,6 +587,10 @@ struct Index {
 /*
 ** Each token coming out of the lexer is an instance of
 ** this structure.  Tokens are also used as part of an expression.
+**
+** Note if Token.z==0 then Token.dyn and Token.n are undefined and
+** may contain random values.  Do not make any assuptions about Token.dyn
+** and Token.n when Token.z==0.
 */
 struct Token {
   const char *z;      /* Text of the token.  Not NULL-terminated! */
@@ -606,7 +625,9 @@ struct Token {
 ** it can be accessed after all aggregates are computed.
 **
 ** If the expression is a function, the Expr.iTable is an integer code
-** representing which function.
+** representing which function.  If the expression is an unbound variable
+** marker (a question mark character '?' in the original SQL) then the
+** Expr.iTable holds the index number for that variable.
 **
 ** The Expr.pSelect field points to a SELECT statement.  The SELECT might
 ** be the right operand of an IN operator.  Or, if a scalar SELECT appears
@@ -635,7 +656,6 @@ struct Expr {
 ** The following are the meanings of bits in the Expr.flags field.
 */
 #define EP_FromJoin     0x0001  /* Originated in ON or USING clause of a join */
-#define EP_Oracle8Join  0x0002  /* Carries the Oracle8 "(+)" join operator */
 
 /*
 ** These macros can be used to test, set, or clear bits in the 
@@ -656,6 +676,7 @@ struct Expr {
 */
 struct ExprList {
   int nExpr;             /* Number of expressions on the list */
+  int nAlloc;            /* Number of entries allocated below */
   struct ExprList_item {
     Expr *pExpr;           /* The list of expressions */
     char *zName;           /* Token associated with this expression */
@@ -682,6 +703,7 @@ struct ExprList {
 */
 struct IdList {
   int nId;         /* Number of identifiers on the list */
+  int nAlloc;      /* Number of entries allocated for a[] below */
   struct IdList_item {
     char *zName;      /* Name of the identifier */
     int idx;          /* Index in some Table.aCol[] of a column named zName */
@@ -700,7 +722,8 @@ struct IdList {
 ** now be identified by a database name, a dot, then the table name: ID.ID.
 */
 struct SrcList {
-  int nSrc;        /* Number of tables or subqueries in the FROM clause */
+  u16 nSrc;        /* Number of tables or subqueries in the FROM clause */
+  u16 nAlloc;      /* Number of entries allocated in a[] below */
   struct SrcList_item {
     char *zDatabase;  /* Name of database holding this table */
     char *zName;      /* Name of the table */
@@ -781,16 +804,17 @@ struct WhereInfo {
 ** in the VDBE that record the limit and offset counters.
 */
 struct Select {
-  int isDistinct;        /* True if the DISTINCT keyword is present */
   ExprList *pEList;      /* The fields of the result */
+  u8 op;                 /* One of: TK_UNION TK_ALL TK_INTERSECT TK_EXCEPT */
+  u8 isDistinct;         /* True if the DISTINCT keyword is present */
   SrcList *pSrc;         /* The FROM clause */
   Expr *pWhere;          /* The WHERE clause */
   ExprList *pGroupBy;    /* The GROUP BY clause */
   Expr *pHaving;         /* The HAVING clause */
   ExprList *pOrderBy;    /* The ORDER BY clause */
-  int op;                /* One of: TK_UNION TK_ALL TK_INTERSECT TK_EXCEPT */
   Select *pPrior;        /* Prior select in a compound select statement */
   int nLimit, nOffset;   /* LIMIT and OFFSET values.  -1 means not used */
+  int iLimit, iOffset;   /* Memory registers holding LIMIT & OFFSET counters */
   char *zSelect;         /* Complete text of the SELECT command */
 };
 
@@ -864,6 +888,7 @@ struct Parse {
   int nMem;            /* Number of memory cells used so far */
   int nSet;            /* Number of sets used so far */
   int nAgg;            /* Number of aggregate expressions */
+  int nVar;            /* Number of '?' variables seen in the SQL so far */
   AggExpr *aAgg;       /* An array of aggregate expressions */
   const char *zAuthContext; /* The 6th parameter to db->xAuth callbacks */
   Trigger *pNewTrigger;     /* Trigger under construct by a CREATE TRIGGER */
@@ -1091,7 +1116,7 @@ void sqliteSrcListAddAlias(SrcList*, Token*);
 void sqliteSrcListAssignCursors(Parse*, SrcList*);
 void sqliteIdListDelete(IdList*);
 void sqliteSrcListDelete(SrcList*);
-void sqliteCreateIndex(Parse*,Token*,SrcList*,IdList*,int,int,Token*,Token*);
+void sqliteCreateIndex(Parse*,Token*,SrcList*,IdList*,int,Token*,Token*);
 void sqliteDropIndex(Parse*, SrcList*);
 void sqliteAddKeyType(Vdbe*, ExprList*);
 void sqliteAddIdxKeyType(Vdbe*, Index*);
@@ -1115,6 +1140,7 @@ Index *sqliteFindIndex(sqlite*,const char*, const char*);
 void sqliteUnlinkAndDeleteIndex(sqlite*,Index*);
 void sqliteCopy(Parse*, SrcList*, Token*, Token*, int);
 void sqliteVacuum(Parse*, Token*);
+int sqliteRunVacuum(char**, sqlite*);
 int sqliteGlobCompare(const unsigned char*,const unsigned char*);
 int sqliteLikeCompare(const unsigned char*,const unsigned char*);
 char *sqliteTableNameFromToken(Token*);
@@ -1149,6 +1175,7 @@ IdList *sqliteIdListDup(IdList*);
 Select *sqliteSelectDup(Select*);
 FuncDef *sqliteFindFunction(sqlite*,const char*,int,int,int);
 void sqliteRegisterBuiltinFunctions(sqlite*);
+void sqliteRegisterDateTimeFunctions(sqlite*);
 int sqliteSafetyOn(sqlite*);
 int sqliteSafetyOff(sqlite*);
 int sqliteSafetyCheck(sqlite*);
@@ -1177,9 +1204,9 @@ void sqliteDeferForeignKey(Parse*, int);
   void sqliteAuthContextPop(AuthContext*);
 #else
 # define sqliteAuthRead(a,b,c)
-# define sqliteAuthCheck(a,b,c,d)    SQLITE_OK
+# define sqliteAuthCheck(a,b,c,d,e)    SQLITE_OK
 # define sqliteAuthContextPush(a,b,c)
-# define sqliteAuthContextPop(a)
+# define sqliteAuthContextPop(a)  ((void)(a))
 #endif
 void sqliteAttach(Parse*, Token*, Token*);
 void sqliteDetach(Parse*, Token*);
@@ -1191,3 +1218,6 @@ int sqliteFixSelect(DbFixer*, Select*);
 int sqliteFixExpr(DbFixer*, Expr*);
 int sqliteFixExprList(DbFixer*, ExprList*);
 int sqliteFixTriggerStep(DbFixer*, TriggerStep*);
+double sqliteAtoF(const char *z);
+int sqlite_snprintf(int,char*,const char*,...);
+int sqliteFitsIn32Bits(const char *);
