@@ -1,5 +1,11 @@
 2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
 
+	* tests/t_scan.at: Instead of running sha1sum, use a prestored
+	manifest file to do the verification.  This avoids problems in
+	systems that do not have the sha1sum tool, like NetBSD.
+
+2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+
 	* Makefile.am: Remove obsolete --with-bundled-adns flag from
 	DISTCHECK_CONFIGURE_FLAGS.
 
