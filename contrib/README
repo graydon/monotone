@@ -11,3 +11,5 @@ licenses.
      variables (those handled with 'monotone set/unset') in the domain
      domain 'notify' to keep track of the last revisions that have
      already been sent out.
+     For a manual, do `perl Notify.pl --man'.
+     To get a help text, do `perl Notify.pl --help'.

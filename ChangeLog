@@ -1,3 +1,9 @@
+2005-04-01  Richard Levitte  <richard@levitte.org>
+
+	* contrib/Notify.pl: Complete rewrite.  Among other things, it
+	  makes better use of some new monotone automate features.  It's
+	  also better organised and much more documented.
+
 2005-04-01  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* tests/t_dropkey_2.at: Updated to test dropkey instead of delkey
