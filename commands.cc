@@ -1298,16 +1298,16 @@ CMD(commit, "working copy", "[--message=STRING] [FILE]...", "commit working copy
   }
 }
 
-CMD(update, "working copy", "[FILE]...", "update working copy")
+CMD(update, "working copy", "", "update working copy")
 {
   manifest_data m_chosen_data;
   manifest_map m_old, m_working, m_chosen, m_new;
   manifest_id m_old_id, m_chosen_id;
 
-  app.initialize(true);
+  if (args.size() > 0)
+    throw usage(name);
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    app.add_restriction((*i)());
+  app.initialize(true);
 
   transaction_guard guard(app.db);
 
@@ -1326,28 +1326,9 @@ CMD(update, "working copy", "[FILE]...", "update working copy")
   app.db.get_manifest_version(m_chosen_id, m_chosen_data);
   read_manifest_map(m_chosen_data, m_chosen);
 
-  patch_set ps_chosen;
-  manifests_to_patch_set(m_old, m_chosen, app, ps_chosen);
-
-  restrict_patch_set(ps_chosen, app);
-  P(F("restricted update target %s\n") % ps_chosen.m_new);
-
-  // restrict chosen update target
-  m_chosen = ps_chosen.map_new;
-  m_chosen_id = ps_chosen.m_new;
-
-  // merge restricted m_chosen into m_working
-  // is update to restricted m_chosen ok? restricted m_chosen will not exist in the db!
-  // graydon seems to think it should be ok
-
-  // the only wrinkle seems to be that the new manifest will have no ancestor since
-  // the base appeared out of nowhere and this causes merge to fall back on the weaker
-  // merge2 algorithm
-
   rename_edge left_renames, right_renames;
   update_merge_provider merger(app);
 
-  // merge chosen manifest into working manifest
   N(merge3(m_old, m_chosen, m_working, app, merger, m_new, 
 	   left_renames.mapping, right_renames.mapping),
     F("manifest merge failed, no update performed"));
@@ -1356,7 +1337,6 @@ CMD(update, "working copy", "[FILE]...", "update working copy")
   patch_set ps;
   manifests_to_patch_set(m_working, m_new, app, ps);
 
-  // merge chosen into working copy
   L(F("applying %d deletions to files in tree\n") % ps.f_dels.size());
   for (set<file_path>::const_iterator i = ps.f_dels.begin();
        i != ps.f_dels.end(); ++i)
@@ -1424,7 +1404,6 @@ CMD(update, "working copy", "[FILE]...", "update working copy")
   // small race condition here...
   // nb: we write out m_chosen, not m_new, because the manifest-on-disk
   // is the basis of the working copy, not the working copy itself.
-  // note also that m_chosen may be restricted from the initial update target
   put_manifest_map(m_chosen);
   P(F("updated to base version %s\n") % m_chosen_id);
 
@@ -1978,11 +1957,11 @@ CMD(diff, "informative", "[--manifest=STRING [--manifest=STRING]] [FILE]...",
 
   // initialize before transaction so we have a database to work with
 
-  if (args.size() == 0)
+  if (app.manifest_selectors.size() == 0)
       app.initialize(true);
-  else if (args.size() == 1)
+  else if (app.manifest_selectors.size() == 1)
       app.initialize(true);
-  else if (args.size() == 2)
+  else if (app.manifest_selectors.size() == 2)
       app.initialize(false);
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)

@@ -64,12 +64,8 @@ app_state::initialize(bool working_copy)
 
       if (!subdir.empty()) 
         {
-          subdir_restriction = file_path(subdir.native_directory_string());
-          L(F("sub-directory restriction is '%s'\n") % subdir_restriction());
-        }
-      else
-        {
-          L(F("sub-directory restriction is empty\n"));
+          relative_directory = file_path(subdir.native_directory_string());
+          L(F("relative directory is '%s'\n") % relative_directory());
         }
     }
 
@@ -107,8 +103,9 @@ app_state::initialize(std::string const & dir)
 file_path
 app_state::prefix(utf8 const & path)
 {
-  fs::path p1 = mkpath(subdir_restriction()) / mkpath(path());
+  fs::path p1 = mkpath(relative_directory()) / mkpath(path());
   file_path p2(p1.normalize().native_directory_string());
+  L(F("'%s' prefixed to '%s'\n") % path() % p2());
   return p2;
 }
 
@@ -116,86 +113,55 @@ void
 app_state::add_restriction(utf8 const & path)
 {
   file_path p = prefix(path);
-  L(F("adding '%s' to restricted path set as '%s'\n") % path() % p());
-  path_restrictions.insert(p);
+  L(F("'%s' added to restricted path set\n") % p());
+  restrictions.insert(p);
 }
-
-// subdir_restriction is only used here when there are no explicit
-// path_restrictions. explicit path restrictions will all be prefixed
-// with the contents of subdir_restriction as they are created.
-
-// if subdir_restriction or any element of path_restrictions "matches"
-// path it will be considered to be "in the restriction". note that
-// matching is somewhat complicated by the fact that a restriction
-// can be a directory or file path and if it's a directory we need
-// to see if path is in this directory.
 
 bool
 app_state::in_restriction(file_path const & path)
 {
-  if (path_restrictions.empty()) 
+  if (restrictions.empty()) 
     {
-      fs::path subdir = mkpath(subdir_restriction());
+      L(F("empty restricted path set; '%s' included\n") % path());
+      return true;
+    }
+  
+  // a path that normalizes to "." means that the restriction has been
+  // essentially cleared (all files are included). rather than be
+  // careful about what goes in to the restricted path set we just
+  // check for this special case here.
 
-      if (subdir.empty()) 
+  if (restrictions.find(file_path(".")) != restrictions.end())
+    {
+      L(F("restricted path set cleared; '%s' included\n") % path());
+      return true;
+    }
+
+
+  fs::path test = mkpath(path());
+
+  while (!test.empty()) 
+    {
+      L(F("checking restricted path set for '%s'\n") % test.string());
+
+      file_path p(test.string());
+      set<file_path>::const_iterator i = restrictions.find(p);
+
+      if (i != restrictions.end()) 
         {
-          L(F("no restrictions: '%s' included'\n") % path());
+          L(F("path '%s' found in restricted path set; '%s' included\n") 
+            % test.string() % path());
           return true;
         }
-
-      L(F("checking subdir restriction\n"));
-
-      fs::path test = mkpath(path());
-
-      while (!test.empty())
+      else
         {
-          if (test.string() == subdir.string()) 
-            {
-              L(F("matched subdir restriction '%s' includes '%s'\n") 
-                % subdir_restriction() % test.string());
-              L(F("path '%s' found in restricted path set; '%s' included\n") 
-                % test.string() % path());
-              return true;
-            }
-          else
-            {
-              L(F("unmatched subdir restriction '%s' excludes '%s'\n") 
-                % subdir_restriction() % test.string());
-            }
-          test = test.branch_path();
+          L(F("path '%s' not found in restricted path set; '%s' excluded\n") 
+            % test.string() % path());
         }
-      
-      return false;
+      test = test.branch_path();
     }
-  else
-    {
-      L(F("checking path restrictions\n"));
-
-      fs::path test = mkpath(path());
-
-      while (!test.empty()) 
-        {
-          L(F("test path is '%s'\n") % test.string());
-
-          file_path p(test.string());
-          set<file_path>::const_iterator i = path_restrictions.find(p);
-
-          if (i != path_restrictions.end()) 
-            {
-              L(F("path '%s' found in restricted path set; '%s' included\n") 
-                % test.string() % path());
-              return true;
-            }
-          else
-            {
-              L(F("path '%s' not found in restricted path set; '%s' excluded\n") 
-                % test.string() % path());
-            }
-          test = test.branch_path();
-        }
       
-      return false;
-    }
+  return false;
 }
 
 void 

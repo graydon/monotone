@@ -217,34 +217,6 @@ M_HEAD=`SHA1(MT/manifest)`
 # exclude delta
 # exclude add
 
-# restricted updates
-
-# M_BASE has file[X23]
-# rename X to 1
-# drop 2
-# change 3 (SHA_3_1 to SHA_3_2)
-# add 4
-# M_HEAD has file[134]
-
-# working copy based on manifest before rename/drop/delta/add tree
-# unrestricted update should go to manifest after all 4 commits
-# various restricted updates to get out of order changes
-
-AT_CHECK(rm -rf MT work)
-AT_CHECK(MONOTONE co --branch=testbranch $M_BASE ., [], [ignore],[ignore])
-
-# second change was drop file2
-AT_CHECK(MONOTONE update work/file2, [], [ignore], [ignore])
-
-SHA_3_now=`SHA1(work/file3)`
-
-AT_CHECK(grep work/fileX MT/manifest, [0], [ignore])
-AT_CHECK(grep work/file1 MT/manifest, [1], [ignore])
-AT_CHECK(grep work/file2 MT/manifest, [1], [ignore])
-AT_CHECK(grep work/file3 MT/manifest, [0], [ignore])
-AT_CHECK(grep work/file4 MT/manifest, [1], [ignore])
-AT_CHECK(test $SHA_3_1 == $SHA_3_now)
-
 # test bad removal of restricted files 
 # (set/iterator/erase bug found by matt@ucc.asn.au)
 

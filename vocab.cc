@@ -110,7 +110,7 @@ verify(local_path & val)
       N(!( *i == "" && (! p.empty())),
 	F("empty path component in '%s'") % val);
 
-      N(!(*i == "." || *i == ".."),
+      N((*i != ".."),
 	F("prohibited path component '%s' in '%s'") % *i % val);
 
       string::size_type pos = i->find_first_of(constants::illegal_path_bytes);
@@ -263,6 +263,7 @@ static void test_file_path_verification()
 			     "fun-with-hyphen.tiff", 
  			     "unrooted/../unescaping",
 			     "unrooted/general/path",
+                             "here/..",
 			     0 };
 
   for (char const ** c = goodies; *c; ++c)

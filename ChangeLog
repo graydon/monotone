@@ -1,3 +1,15 @@
+2004-09-24  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (initialize,prefix,in_restriction): rename
+	restriction vars; require explicit subdir restriction with ".";
+	remove restriction if any path evaluates to working copy root	
+	* commands.cc (update): disallow restricted updates
+	(diff): use --manifest options for initialization
+	* tests/t_restrictions.at: remove restricted update test
+	* tests/t_subdirs.at: added (missed previously)
+	* vocab.cc (verify): allow "." elements in local_path
+	(test_file_path_verification): test for "." in paths
+
 2004-09-20  Derek Scherger  <derek@echologic.com>
 
 	* app_state.{cc,hh}: add message and manifest options; add subdir

@@ -35,8 +35,8 @@ public:
   utf8 message;
   std::vector<utf8> manifest_selectors;
   std::vector<utf8> extra_rcfiles;
-  std::set<file_path> path_restrictions;
-  file_path subdir_restriction;
+  std::set<file_path> restrictions;
+  file_path relative_directory;
 
   void initialize(bool working_copy);
   void initialize(std::string const & dir);
