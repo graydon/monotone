@@ -1,3 +1,9 @@
+2005-04-04  Richard Levitte  <richard@levitte.org>
+
+	* popt/popt.3, popt/popt.ps, popt/testit.sh: Include a few more
+	  files from popt, mostly to have documentation on hand.  post.ps
+	  is mentioned in popt/README.
+
 2005-04-03  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (EXTRA_DIST): Add contrib/ stuff to distributed
@@ -12,6 +18,8 @@
 	* contrib/README: Describe it.
 
 2005-04-03  Richard Levitte  <richard@levitte.org>
+
+	* AUTHORS: Add information about popt.
 
 	* monotone.cc (my_poptStuffArgFile): Include the bundled popt.h.
 	Since we now have a working popt, we can remove the restrictions
@@ -2266,7 +2274,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅ√ÖÅ¬Çkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅÅ√ÖÅÅ¬Çkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
