@@ -71,6 +71,9 @@ void Netxx::resolve_hostname (const char *hostname, port_type port, bool use_ipv
     if (use_ipv6) flags.ai_family = AF_UNSPEC;
     else flags.ai_family = AF_INET;
     flags.ai_flags = AI_CANONNAME;
+#ifdef AI_ADDRCONFIG
+    flags.ai_flags |= AI_ADDRCONFIG;
+#endif
 
     // FIXME: this is a local monotone hack; it appears that getaddrinfo
     // will return datagram and stream addresses here, and we want to avoid

@@ -152,7 +152,7 @@ namespace constants
   size_t const netcmd_minimum_bytes_to_bother_with_gzip = 0xfff;
 
   size_t const netsync_default_port = 5253;
-  size_t const netsync_connection_limit = 100;
-  size_t const netsync_timeout_seconds = 120;
+  size_t const netsync_connection_limit = 1024;
+  size_t const netsync_timeout_seconds = 21600; // 6 hours
 
 }

@@ -1,3 +1,19 @@
+2004-11-05  graydon hoare  <graydon@pobox.com>
+
+	* constants.cc: Up timeout, connection limit.
+	* monotone.texi: Various cleanups.
+
+2004-11-05  Ulrich Drepper  <drepper@redhat.com>
+
+	* configure.ac: Reduce dependencies.
+	* lua/lua.h: Include config.h.
+	* mkstemp.{cc,hh}: Use system variant when found.
+	* netxx/resolve_getaddrinfo.cxx: Check for AI_ADDRCONFIG
+	definition.
+	* po/POTFILES.in: Update to mention changes.
+	* Makefile.am (EXTRA_DIST): Include spec file.
+	* commands.cc (diff): No output if empty diff.
+
 2004-10-31  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (diff): Use guess_binary.

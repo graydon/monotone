@@ -208,6 +208,7 @@ man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
              INSTALL \
+             monotone.spec \
              monotone.html \
              texinfo.css \
 	     schema.sql views.sql \
