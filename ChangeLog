@@ -1,3 +1,19 @@
+2005-03-23  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (add): pass list of prefixed file_path's to
+	build_additions
+	(drop): pass list of prefixed file_path's to build_deletions
+	(attr): pass attr_path as a 1 element vector to build_additions
+	* work.{cc,hh} (build_addition): rename to...
+	(build_additions): this, and accept a vector of paths to be added
+	in a single path_rearrangement
+	(build_deletion): rename to ...
+	(build_deletions): this, and accept a vector of paths to be
+	dropped in a single path_rearrangement
+	(known_preimage_path): replace manifest and path_rearrangement
+	args with a path_set to avoid extracting paths for every file
+	(build_rename): adjust for change to known_preimage_path
+
 2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
 
 	* vocab_terms.hh: Declare base64<var_name>.

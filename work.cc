@@ -58,15 +58,12 @@ addition_builder::visit_file(file_path const & path)
   pr.added_files.insert(path);
 }
 
-void 
-build_addition(file_path const & path,
-               manifest_map const & man,
-               app_state & app,
-               change_set::path_rearrangement & pr)
+void
+build_additions(vector<file_path> const & paths, 
+                manifest_map const & man,
+                app_state & app,
+                change_set::path_rearrangement & pr)
 {
-  N(directory_exists(path) || file_exists(path),
-    F("path %s does not exist\n") % path);
-
   change_set::path_rearrangement pr_new, pr_concatenated;
   change_set cs_new;
 
@@ -75,7 +72,14 @@ build_addition(file_path const & path,
   apply_path_rearrangement(pr, ps);    
 
   addition_builder build(app, pr_new, ps);
-  walk_tree(path, build);
+
+  for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      N(directory_exists(*i) || file_exists(*i),
+        F("path %s does not exist\n") % *i);
+
+      walk_tree(*i, build);
+    }
 
   normalize_path_rearrangement(pr_new);
   concatenate_rearrangements(pr, pr_new, pr_concatenated);
@@ -84,14 +88,9 @@ build_addition(file_path const & path,
 
 static bool
 known_preimage_path(file_path const & p,
-                    manifest_map const & m,
-                    change_set::path_rearrangement const & pr,
+                    path_set const & ps,
                     bool & path_is_directory)
 {
-  path_set ps;
-  extract_path_set(m, ps);
-  apply_path_rearrangement(pr, ps);    
-
   std::string path_as_dir = p() + "/";
   for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
@@ -109,28 +108,35 @@ known_preimage_path(file_path const & p,
   return false;
 }
 
-void 
-build_deletion(file_path const & path,
-               manifest_map const & man,
-               change_set::path_rearrangement & pr)
+void
+build_deletions(vector<file_path> const & paths, 
+                manifest_map const & man,
+                app_state & app,
+                change_set::path_rearrangement & pr)
 {
   change_set::path_rearrangement pr_new, pr_concatenated;
+  path_set ps;
+  extract_path_set(man, ps);
+  apply_path_rearrangement(pr, ps);    
 
-  bool dir_p = false;
-  
-  if (! known_preimage_path(path, man, pr, dir_p))
+  for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      P(F("skipping %s, not currently tracked\n") % path);
-      return;
-    }
-
-  P(F("adding %s to working copy delete set\n") % path);
-
-  if (dir_p) 
-    pr_new.deleted_dirs.insert(path);
-  else 
-    pr_new.deleted_files.insert(path);
+      bool dir_p = false;
   
+      if (! known_preimage_path(*i, ps, dir_p))
+        {
+          P(F("skipping %s, not currently tracked\n") % *i);
+          continue;
+        }
+
+      P(F("adding %s to working copy delete set\n") % *i);
+
+      if (dir_p) 
+        pr_new.deleted_dirs.insert(*i);
+      else 
+        pr_new.deleted_files.insert(*i);
+  }
+
   normalize_path_rearrangement(pr_new);
   concatenate_rearrangements(pr, pr_new, pr_concatenated);
   pr = pr_concatenated;
@@ -143,10 +149,13 @@ build_rename(file_path const & src,
              change_set::path_rearrangement & pr)
 {
   change_set::path_rearrangement pr_new, pr_concatenated;
+  path_set ps;
+  extract_path_set(man, ps);
+  apply_path_rearrangement(pr, ps);    
 
   bool dir_p = false;
 
-  if (! known_preimage_path(src, man, pr, dir_p))
+  if (! known_preimage_path(src, ps, dir_p))
     {
       P(F("skipping %s, not currently tracked\n") % src);
       return;
