@@ -1,5 +1,11 @@
 2003-10-20  graydon hoare  <graydon@pobox.com>
 
+	* file_io.cc (tilde_expand): New function.
+	* monotone.cc (cpp_main): Expand tildes in 
+	db and rcfile arguments.
+
+2003-10-20  graydon hoare  <graydon@pobox.com>
+
 	* rcs_import.cc (import_cvs_repo): Check key existence
 	at beginning of import pass, to avoid wasted work.
 
