@@ -16,7 +16,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#include <sqlite.h>
+#include <sqlite3.h>
 
 #include "app_state.hh"
 #include "cert.hh"
@@ -55,7 +55,22 @@ int const any_cols = -1;
 
 extern "C" {
   // strangely this isn't declared, even though it's present in my sqlite.
-  char *sqlite_vmprintf(const char *zFormat, va_list);
+//  char *sqlite3_vmprintf(const char *zFormat, va_list);
+  int sqlite3_exec_printf(sqlite3*,const char *sqlFormat,sqlite3_callback,
+      void *,char **errmsg,...);
+  int sqlite3_exec_vprintf(sqlite3*,const char *sqlFormat,sqlite3_callback,
+      void *,char **errmsg,va_list ap);
+  int sqlite3_get_table_vprintf(sqlite3*,const char *sqlFormat,char ***resultp,
+      int *nrow,int *ncolumn,char **errmsg,va_list ap);
+}
+
+int sqlite3_exec_printf(sqlite3*db,const char *sqlFormat,sqlite3_callback cb,
+      void *user_data,char **errmsg,...)
+{ va_list ap;
+  va_start(ap,errmsg);
+  int result=sqlite3_exec_vprintf(db,sqlFormat,cb,user_data,errmsg,ap);
+  va_end(ap);
+  return result;
 }
 
 database::database(fs::path const & fn) :
@@ -81,17 +96,23 @@ database::check_schema()
      % schema % db_schema_id);
 }
 
+// sqlite3_value_text gives a const unsigned char * but most of the time
+// we need a signed char
+static const char *sqlite3_value_text_s(sqlite3_value *v)
+{  return (const char *)(sqlite3_value_text(v));
+}
+
 static void 
-sqlite_unbase64_fn(sqlite_func *f, int nargs, char const ** args)
+sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 {
   if (nargs != 1)
     {
-      sqlite_set_result_error(f, "need exactly 1 arg to unbase64()", -1);
+      sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
       return;
     }
   data decoded;
-  decode_base64(base64<data>(string(args[0])), decoded);
-  sqlite_set_result_string(f, decoded().c_str(), decoded().size());
+  decode_base64(base64<data>(string(sqlite3_value_text_s(args[0]))), decoded);
+  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
 void 
@@ -100,7 +121,7 @@ database::set_app(app_state * app)
   __app = app;
 }
 
-struct sqlite * 
+struct sqlite3 * 
 database::sql(bool init)
 {
   if (! __sql)
@@ -115,11 +136,11 @@ database::sql(bool init)
 	}
       N(filename.string() != "",
 	F("need database name"));
-      char * errmsg = NULL;
-      __sql = sqlite_open(filename.string().c_str(), 0755, &errmsg);
-      if (! __sql)
+      int error;
+      error = sqlite3_open(filename.string().c_str(), &__sql);
+      if (error)
 	throw oops(string("could not open database: ") + filename.string() + 
-		   (errmsg ? (": " + string(errmsg)) : ""));
+		   (": " + string(sqlite3_errmsg(__sql))));
       if (init)
 	execute(schema_constant);
 
@@ -145,7 +166,7 @@ database::initialize()
     F("existing (possibly stale) journal file '%s' has same stem as new database '%s'")
     % journal.string() % filename.string());
 
-  sqlite *s = sql(true);
+  sqlite3 *s = sql(true);
   I(s != NULL);
 }
 
@@ -154,7 +175,7 @@ struct
 dump_request
 {
   dump_request() {};
-  struct sqlite *sql;
+  struct sqlite3 *sql;
   string table_name;
   ostream *out;
 };
@@ -206,7 +227,7 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
     {
       *(dump->out) << vals[2] << ";\n";
       dump->table_name = string(vals[0]);
-      sqlite_exec_printf(dump->sql, "SELECT * FROM '%q'", 
+      sqlite3_exec_printf(dump->sql, "SELECT * FROM '%q'", 
 			 dump_row_cb, data, NULL, vals[0]);
     }
   return 0;
@@ -219,8 +240,8 @@ database::dump(ostream & out)
   req.out = &out;
   req.sql = sql();
   out << "BEGIN TRANSACTION;\n";
-  int res = sqlite_exec(req.sql,
-			"SELECT name, type, sql FROM sqlite_master "
+  int res = sqlite3_exec(req.sql,
+			"SELECT name, type, sql FROM sqlite3_master "
 			"WHERE type='table' AND sql NOT NULL "
 			"ORDER BY substr(type,2,1), name",
 			dump_table_cb, &req, NULL);
@@ -236,11 +257,10 @@ database::load(istream & in)
 
   N(filename.string() != "",
     F("need database name"));
-  char * errmsg = NULL;
-  __sql = sqlite_open(filename.string().c_str(), 0755, &errmsg);
-  if (! __sql)
+  int error = sqlite3_open(filename.string().c_str(), &__sql);
+  if (error)
     throw oops(string("could not open database: ") + filename.string() + 
-	       (errmsg ? (": " + string(errmsg)) : ""));
+	       (string(sqlite3_errmsg(__sql))));
   
   while(in)
     {
@@ -303,13 +323,12 @@ database::migrate()
 {  
   N(filename.string() != "",
     F("need database name"));
-  char * errmsg = NULL;
-  __sql = sqlite_open(filename.string().c_str(), 0755, &errmsg);
-  if (! __sql)
+  int error = sqlite3_open(filename.string().c_str(), &__sql);
+  if (error)
     throw oops(string("could not open database: ") + filename.string() + 
-	       (errmsg ? (": " + string(errmsg)) : ""));
+	       (": " + string(sqlite3_errmsg(__sql))));
   migrate_monotone_schema(__sql);
-  sqlite_close(__sql);
+  sqlite3_close(__sql);
 }
 
 void 
@@ -390,7 +409,7 @@ database::rehash()
 void 
 database::ensure_open()
 {
-  sqlite *s = sql();
+  sqlite3 *s = sql();
   I(s != NULL);
 }
 
@@ -398,13 +417,13 @@ database::~database()
 {
   if (__sql)
     {
-      sqlite_close(__sql);
+      sqlite3_close(__sql);
       __sql = 0;
     }
 }
 
 static void 
-assert_sqlite_ok(int res)
+assert_sqlite3_ok(int res)
 {
   switch (res)
     {      
@@ -444,7 +463,7 @@ assert_sqlite_ok(int res)
       break;
 
     case SQLITE_INTERRUPT:
-      throw oops("Operation terminated by sqlite_interrupt()");
+      throw oops("Operation terminated by sqlite3_interrupt()");
       break;
 
     case SQLITE_IOERR:
@@ -495,6 +514,14 @@ assert_sqlite_ok(int res)
       throw oops("Library used incorrectly");
       break;
 
+    case SQLITE_NOLFS:
+      throw oops("Uses OS features not supported on host");
+      break;
+
+    case SQLITE_AUTH:
+      throw oops("Authorization denied");
+      break;
+
     default:
       throw oops(string("Unknown DB result code: ") + lexical_cast<string>(res));
       break;
@@ -511,25 +538,25 @@ database::execute(char const * query, ...)
   va_start(ap, query);
 
   // log it
-  char * formatted = sqlite_vmprintf(query, ap);
+  char * formatted = sqlite3_vmprintf(query, ap);
   string qq(formatted);
   if (qq.size() > constants::db_log_line_sz) 
     qq = qq.substr(0, constants::db_log_line_sz) + string(" ...");
   L(F("db.execute(\"%s\")\n") % qq);
-  sqlite_freemem(formatted);
+  sqlite3_free(formatted);
 
   va_end(ap);
   va_start(ap, query);
 
   // do it
-  res = sqlite_exec_vprintf(sql(), query, NULL, NULL, &errmsg, ap);
+  res = sqlite3_exec_vprintf(sql(), query, NULL, NULL, &errmsg, ap);
 
   va_end(ap);
 
   if (errmsg)
     throw oops(string("sqlite exec error ") + errmsg);
 
-  assert_sqlite_ok(res);
+  assert_sqlite3_ok(res);
 
 }
 
@@ -551,29 +578,29 @@ database::fetch(results & res,
   va_start(ap, query);
 
   // log it
-  char * formatted = sqlite_vmprintf(query, ap);
+  char * formatted = sqlite3_vmprintf(query, ap);
   string qq(formatted);
   if (qq.size() > constants::log_line_sz) 
     qq = qq.substr(0, constants::log_line_sz) + string(" ...");
   L(F("db.fetch(\"%s\")\n") % qq);
-  sqlite_freemem(formatted);
+  sqlite3_free(formatted);
 
   va_end(ap);
   va_start(ap, query);
 
   // do it
-  rescode = sqlite_get_table_vprintf(sql(), query, &result, &nrow, &ncol, &errmsg, ap);
+  rescode = sqlite3_get_table_vprintf(sql(), query, &result, &nrow, &ncol, &errmsg, ap);
 
   va_end(ap);
 
   cleanup_ptr<char **, void> 
-    result_guard(result, &sqlite_free_table);
+    result_guard(result, &sqlite3_free_table);
 
   string ctx = string("db query [") + string(query) + "]: ";
 
   if (errmsg)
     throw oops(ctx + string("sqlite error ") + errmsg);
-  assert_sqlite_ok(rescode);
+  assert_sqlite3_ok(rescode);
 
   if (want_cols == 0 && ncol == 0) return;
   if (want_rows == 0 && nrow == 0) return;
@@ -1446,7 +1473,7 @@ struct valid_certs
 
   void check_single_signer(app_state & app,
 			   int argc, 
-			   char const ** argv)
+			   sqlite3_value ** argv)
   {
     try
       {
@@ -1454,13 +1481,13 @@ struct valid_certs
 	// L(F("entries are [%s] [%s] [%s] [%s] [%s] [%s] [%s]\n") 
 	// 	  % argv[0] % argv[1] % argv[2] % argv[3] % argv[4] % argv[5] % argv[6]);
 
-	cert tmp = cert(hexenc<id>(argv[1]), 
-			cert_name(argv[2]),
-			base64<cert_value>(argv[3]),
-			rsa_keypair_id(argv[4]),
-			base64<rsa_sha1_signature>(argv[6]));
+	cert tmp = cert(hexenc<id>(sqlite3_value_text_s(argv[1])), 
+			cert_name(sqlite3_value_text_s(argv[2])),
+			base64<cert_value>(sqlite3_value_text_s(argv[3])),
+			rsa_keypair_id(sqlite3_value_text_s(argv[4])),
+			base64<rsa_sha1_signature>(sqlite3_value_text_s(argv[6])));
 
-	base64<rsa_pub_key> pk(argv[5]);
+	base64<rsa_pub_key> pk(sqlite3_value_text_s(argv[5]));
 
 	if (ident().empty())
 	  ident = tmp.ident;
@@ -1509,9 +1536,9 @@ extern "C"
 {
 
 static void
-trusted_step_callback(sqlite_func * fn_ctx, 
+trusted_step_callback(sqlite3_context * fn_ctx, 
 		      int argc, 
-		      char const ** argv)
+		      sqlite3_value ** argv)
 {
   app_state * app = NULL; 
   valid_certs ** vpp;
@@ -1520,34 +1547,34 @@ trusted_step_callback(sqlite_func * fn_ctx,
   I(argc == 8);
   I(argv);
   for (size_t i = 0; i < 8; ++i)
-    I(argv[i]);
+    I(sqlite3_value_text_s(argv[i]));
 
-  app = static_cast<app_state *>(sqlite_user_data(fn_ctx));
+  app = static_cast<app_state *>(sqlite3_user_data(fn_ctx));
   I(app);
-  vpp = static_cast<valid_certs **>(sqlite_aggregate_context(fn_ctx, sizeof(valid_certs *)));
+  vpp = static_cast<valid_certs **>(sqlite3_aggregate_context(fn_ctx, sizeof(valid_certs *)));
   I(vpp);
   if (! (*vpp))
-    *vpp = new valid_certs(string(argv[0]));
+    *vpp = new valid_certs(string(sqlite3_value_text_s(argv[0])));
   I(*vpp);
   (*vpp)->check_single_signer(*app, argc-1, argv+1);  
 }
 
 static void
-trusted_finalize_callback(sqlite_func * fn_ctx)
+trusted_finalize_callback(sqlite3_context * fn_ctx)
 {
   app_state * app = NULL; 
   valid_certs ** vpp;
-  app = static_cast<app_state *>(sqlite_user_data(fn_ctx));
+  app = static_cast<app_state *>(sqlite3_user_data(fn_ctx));
   I(app);
-  vpp = static_cast<valid_certs **>(sqlite_aggregate_context(fn_ctx, sizeof(valid_certs *)));
+  vpp = static_cast<valid_certs **>(sqlite3_aggregate_context(fn_ctx, sizeof(valid_certs *)));
 
   I(vpp);
   I(*vpp);
 
   if ((*vpp)->check_signer_trust(*app))
-    sqlite_set_result_int(fn_ctx, 1);
+    sqlite3_result_int(fn_ctx, 1);
   else
-    sqlite_set_result_int(fn_ctx, 0);
+    sqlite3_result_int(fn_ctx, 0);
 
   delete (*vpp);
 }
@@ -1558,14 +1585,15 @@ void
 database::install_functions(app_state * app)
 {
   // register any functions we're going to use
-  I(sqlite_create_function(sql(), "unbase64", -1, 
-			   &sqlite_unbase64_fn, 
-			   NULL) == 0);
+  I(sqlite3_create_function(sql(), "unbase64", -1, 
+                           SQLITE_UTF8, NULL,
+			   &sqlite3_unbase64_fn, 
+			   NULL, NULL) == 0);
 
-  I(sqlite_create_aggregate(sql(), "trusted", 8, 
+  I(sqlite3_create_function(sql(), "trusted", 8, 
+                            SQLITE_UTF8, app, NULL,
 			    &trusted_step_callback,
-			    &trusted_finalize_callback,
-			    app) == 0);
+			    &trusted_finalize_callback) == 0);
 }
 
 void
@@ -1574,7 +1602,7 @@ database::install_views()
   // delete any existing views
   results res;
   fetch(res, one_col, any_rows,
-	"SELECT name FROM sqlite_master WHERE type='view'");
+	"SELECT name FROM sqlite3_master WHERE type='view'");
   for (size_t i = 0; i < res.size(); ++i)
     {
       execute("DROP VIEW '%q'", res[i][0].c_str());

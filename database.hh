@@ -6,7 +6,7 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-struct sqlite;
+struct sqlite3;
 struct cert;
 
 #include <vector>
@@ -72,8 +72,8 @@ class database
   void check_schema();
 
   struct app_state * __app;
-  struct sqlite * __sql;
-  struct sqlite * sql(bool init = false);
+  struct sqlite3 * __sql;
+  struct sqlite3 * sql(bool init = false);
   int transaction_level;
 
   void install_functions(app_state * app);
