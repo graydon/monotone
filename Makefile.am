@@ -1,11 +1,18 @@
 AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
+#
+# this is not yet working, and we're going to focus on other stuff
+# for a while before going back to *make* it work
+#
+# rcs_import.hh rcs_import.cc 
+#
+
 MOST_SOURCES =								\
 	 app_state.cc commands.cc diff_patch.cc lua.cc          	\
          transforms.cc update.cc work.cc cert.cc database.cc file_io.cc	\
          keys.cc manifest.cc packet.cc sanity.cc vocab.cc rcs_file.cc	\
-         rcs_import.cc xdelta.cc ui.cc schema_migration.cc		\
+         xdelta.cc ui.cc schema_migration.cc		\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc revision.cc predicament.cc change_set.cc     \
 									\
@@ -14,7 +21,7 @@ MOST_SOURCES =								\
 	 packet_types.hh transforms.hh vocab.hh				\
 	 cleanup.hh diff_patch.hh lua.hh basic_io.hh			\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
-         randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
+         randomfile.hh rcs_file.hh xdelta.hh adler32.hh	\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh predicament.hh change_set.hh      \
@@ -116,8 +123,8 @@ monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 
 # disable until we get the changeset unit tests working
 #unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
-NOT_WORKING = commands.cc update.cc rcs_import.cc   \
-               commands.hh update.hh rcs_import.hh 
+NOT_WORKING = commands.cc rcs_import.cc   \
+               commands.hh rcs_import.hh 
 
 unit_tests_SOURCES = unit_tests.cc lua.cc cert.cc database.cc					\
 			diff_patch.cc work.cc							\
@@ -127,7 +134,7 @@ unit_tests_SOURCES = unit_tests.cc lua.cc cert.cc database.cc					\
 			rcs_file.cc xdelta.cc ui.cc						\
 			schema_migration.cc constants.cc basic_io.cc				\
 			mkstemp.cc lcs.cc revision.cc packet.cc predicament.cc			\
-			change_set.cc								\
+			change_set.cc  update.cc						\
 												\
 			file_io.hh manifest.hh database.hh					\
 			diff_patch.hh cert.hh work.hh app_state.hh				\
@@ -138,7 +145,7 @@ unit_tests_SOURCES = unit_tests.cc lua.cc cert.cc database.cc					\
 			mac.hh merkle_tree.hh netcmd.hh netio.hh				\
 			netsync.hh								\
 			numeric_vocab.hh revision.hh packet.hh predicament.hh			\
-			change_set.hh mkstemp.hh
+			change_set.hh mkstemp.hh update.hh 
 
 txt2c_SOURCES = txt2c.cc
 

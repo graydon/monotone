@@ -835,7 +835,8 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
       for (edge_map::const_iterator i = rev.edges.begin(); 
 	   i != rev.edges.end(); ++i)
 	{
-	  if (! pimpl->manifest_version_exists_in_db(edge_old_manifest(i)))
+	  if (! (edge_old_manifest(i).inner()().empty() 
+		 || pimpl->manifest_version_exists_in_db(edge_old_manifest(i))))
 	    {
 	      L(F("delaying revision %s for old manifest %s\n") 
 		% ident % edge_old_manifest(i));
@@ -844,7 +845,8 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
 	      dp->add_prerequisite(fp);
 	      fp->add_dependent(dp);
 	    }
-	  if (! pimpl->revision_exists_in_db(edge_old_revision(i)))
+	  if (! (edge_old_revision(i).inner()().empty() 
+		 || pimpl->revision_exists_in_db(edge_old_revision(i))))
 	    {
 	      L(F("delaying revision %s for old revision %s\n") 
 		% ident % edge_old_revision(i));
@@ -856,7 +858,8 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
 	  for (change_set::delta_map::const_iterator d = edge_changes(i).deltas.begin();
 	       d != edge_changes(i).deltas.end(); ++d)
 	    {
-	      if (! pimpl->file_version_exists_in_db(delta_entry_src(d)))
+	      if (! (delta_entry_src(d).inner()().empty() 
+		     || pimpl->file_version_exists_in_db(delta_entry_src(d))))
 		{
 		  L(F("delaying revision %s for old file %s\n") 
 		    % ident % delta_entry_src(d));
@@ -865,6 +868,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
 		  dp->add_prerequisite(fp);
 		  fp->add_dependent(dp);
 		}
+	      I(!delta_entry_dst(d).inner()().empty());
 	      if (! pimpl->file_version_exists_in_db(delta_entry_dst(d)))
 		{
 		  L(F("delaying revision %s for new file %s\n") 

@@ -49,7 +49,6 @@ CREATE TABLE revisions
 	(
 	id primary key,      -- SHA1(text of revision)
 	data not null        -- compressed, encoded contents of a revision
-	unique(id, manifest)
 	);
 
 CREATE TABLE revision_ancestry
@@ -101,7 +100,7 @@ CREATE TABLE revision_certs
 
 CREATE TABLE merkle_nodes
 	(
-	type not null,                -- "key", "mcert", "fcert", "ccert"
+	type not null,                -- "key", "mcert", "fcert", "rcert"
 	collection not null,          -- name chosen by user
 	level not null,               -- tree level this prefix encodes
 	prefix not null,              -- label identifying node in tree

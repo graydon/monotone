@@ -62,7 +62,7 @@ database::database(fs::path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("8929e54f40bf4d3b4aea8b037d2c9263e82abdf4"),
+  schema("c1e86588e11ad07fa53e5d294edc043ce1d4005a"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -1049,11 +1049,25 @@ database::get_revision_parents(revision_id const & id,
 			      set<revision_id> & parents)
 {
   results res;
+  parents.clear();
   fetch(res, one_col, any_rows, 
 	"SELECT parent FROM revision_ancestry WHERE child = '%q'",
 	id.inner()().c_str());
   for (size_t i = 0; i < res.size(); ++i)
     parents.insert(revision_id(res[i][0]));
+}
+
+void 
+database::get_revision_children(revision_id const & id,
+				set<revision_id> & children)
+{
+  results res;
+  children.clear();
+  fetch(res, one_col, any_rows, 
+	"SELECT child FROM revision_ancestry WHERE parent = '%q'",
+	id.inner()().c_str());
+  for (size_t i = 0; i < res.size(); ++i)
+    children.insert(revision_id(res[i][0]));
 }
 
 void 
@@ -1831,6 +1845,16 @@ database::get_manifest_cert(hexenc<id> const & hash,
 
 void 
 database::get_manifest_certs(manifest_id const & id, 
+			     vector< manifest<cert> > & ts)
+{ 
+  vector<cert> certs;
+  get_certs(id.inner(), certs, "manifest_certs"); 
+  ts.clear();
+  copy(certs.begin(), certs.end(), back_inserter(ts));
+}
+
+void 
+database::get_manifest_certs(manifest_id const & id, 
 			     cert_name const & name, 
 			     vector< manifest<cert> > & ts)
 {
@@ -1941,13 +1965,13 @@ void database::complete(selector_type ty,
       
       if (i->first == commands::sel_ident)
 	{
-	  lim += "SELECT id FROM manifest_certs ";
+	  lim += "SELECT id FROM revision_certs ";
 	  lim += (F("WHERE id GLOB '%s*'") 
 		  % i->second).str();
 	}
       else if (i->first == commands::sel_unknown)
 	{
-	  lim += "SELECT id FROM manifest_certs ";
+	  lim += "SELECT id FROM revision_certs ";
 	  lim += (F(" WHERE (name='%s' OR name='%s' OR name='%s')")
 		  % author_cert_name 
 		  % tag_cert_name 
@@ -1959,7 +1983,7 @@ void database::complete(selector_type ty,
 	{
 	  string certname;
 	  selector_to_certname(i->first, certname);
-	  lim += "SELECT id FROM manifest_certs ";
+	  lim += "SELECT id FROM revision_certs ";
 	  lim += (F("WHERE name='%s' AND unbase64(value) glob '*%s*'")
 		  % certname % i->second).str();
 	}
@@ -1977,7 +2001,7 @@ void database::complete(selector_type ty,
     }
   else 
     {
-      query = "SELECT value FROM manifest_certs WHERE";
+      query = "SELECT value FROM revision_certs WHERE";
       if (ty == commands::sel_unknown)
 	{	  	
 	  query += 

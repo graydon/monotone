@@ -160,6 +160,14 @@ concatenate_change_sets(change_set const & a,
 // value-oriented access to printers and parsers
 
 void
+read_path_rearrangement(data const & dat,
+			change_set::path_rearrangement & re);
+
+void
+write_path_rearrangement(change_set::path_rearrangement const & re,
+			 data & dat);
+
+void
 read_change_set(data const & dat,
 		change_set & cs);
 
@@ -171,6 +179,11 @@ void
 apply_path_rearrangement(path_set const & old_ps,
 			 change_set::path_rearrangement const & pr,
 			 path_set & new_ps);
+
+void
+apply_path_rearrangement(manifest_map const & old_m,
+			 change_set::path_rearrangement const & pr,
+			 manifest_map & old_m_rearranged);
 
 void
 apply_change_set(manifest_map const & old_man,

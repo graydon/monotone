@@ -465,7 +465,7 @@ guess_default_key(rsa_keypair_id & key,
 }
 
 void 
-guess_branch(revision_id const & id,
+guess_branch(revision_id const & ident,
 	     app_state & app,
 	     cert_value & branchname)
 {
@@ -475,18 +475,22 @@ guess_branch(revision_id const & id,
     }
   else
     {
+      N(!ident.inner()().empty(),
+	F("no branch found for empty revision, "
+	  "please provide a branch name"));
+
       vector< revision<cert> > certs;
       cert_name branch(branch_cert_name);
-      app.db.get_revision_certs(id, branch, certs);
+      app.db.get_revision_certs(ident, branch, certs);
       erase_bogus_certs(certs, app);
 
       N(certs.size() != 0, 
-	F("no branch certs found for manifest %s, "
-	  "please provide a branch name") % id);
+	F("no branch certs found for revision %s, "
+	  "please provide a branch name") % ident);
       
       N(certs.size() == 1,
-	F("multiple branch certs found for manifest %s, "
-	  "please provide a branch name") % id);
+	F("multiple branch certs found for revision %s, "
+	  "please provide a branch name") % ident);
       
       decode_base64(certs[0].inner().value, branchname);
     }

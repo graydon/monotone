@@ -1133,6 +1133,63 @@ apply_path_rearrangement(path_set const & old_ps,
     }
 }
 
+// this function rearranges a manifest map under a path_rearrangement
+// but does *not* apply any deltas to it. so notably, if a file was 
+// added the new file will have an empty id, since all we know is that
+// it was added. 
+
+void
+apply_path_rearrangement(manifest_map const & m_old,
+			 change_set::path_rearrangement const & pr,
+			 manifest_map & m_old_rearranged)
+{
+  m_old_rearranged.clear();
+
+  change_set::path_rearrangement composed;
+  
+  {
+    // first turn the manifest_map into an identity path_rearrangement
+    path_edit_appender pa(composed);
+    for(manifest_map::const_iterator i = m_old.begin();
+	i != m_old.end(); ++i)
+      pa.add_file(manifest_entry_path(i));
+    composed.first = composed.second;
+  }
+
+  path_edit_appender pa(composed);  
+  play_back_rearrangement(pr, pa);
+  
+  for (change_set::path_state::const_iterator i = composed.second.begin();
+       i != composed.second.end(); ++i)
+    {
+      if (!null_name(path_item_name(path_state_item(i)))
+	  && (path_item_type(path_state_item(i)) == change_set::ptype_file))
+	{
+	  file_path new_pth;
+	  get_full_path(composed.second, path_state_tid(i), new_pth);
+
+	  change_set::path_state::const_iterator j = composed.first.find(path_state_tid(i));
+	  I(j != composed.first.end());
+
+	  if (null_name(path_item_name(path_state_item(j))))
+	    {
+	      // case 1: the file was added, the best we can do is leave an 
+	      // empty entry in the manifest map
+	      m_old_rearranged.insert(std::make_pair(new_pth, file_id()));
+	    }
+	  else
+	    {
+	      // case 2: the file was not added, copy its old file id forwards
+	      file_path old_pth;
+	      get_full_path(composed.first, path_state_tid(i), old_pth);
+	      manifest_map::const_iterator old = m_old.find(old_pth);	
+	      I(old != m_old.end());
+	      m_old_rearranged.insert(std::make_pair(new_pth, manifest_entry_id(old)));
+	    }
+	}
+    }
+}
+
 void
 apply_change_set(manifest_map const & old_man,
 		 change_set const & cs,
@@ -1429,6 +1486,17 @@ print_change_set(basic_io::printer & printer,
 }
 
 void
+read_path_rearrangement(data const & dat,
+			change_set::path_rearrangement & re)
+{
+  std::istringstream iss(dat());
+  basic_io::input_source src(iss);
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  parse_path_rearrangement(pars, re);
+}
+
+void
 read_change_set(data const & dat,
 		change_set & cs)
 {
@@ -1449,6 +1517,15 @@ write_change_set(change_set const & cs,
   dat = data(oss.str());  
 }
 
+void
+write_path_rearrangement(change_set::path_rearrangement const & re,
+			 data & dat)
+{
+  std::ostringstream oss;
+  basic_io::printer pr(oss);
+  print_path_rearrangement(pr, re);
+  dat = data(oss.str());  
+}
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"

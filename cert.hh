@@ -60,6 +60,9 @@ void make_simple_cert(hexenc<id> const & id,
 		      app_state & app,
 		      cert & c);
 
+void erase_bogus_certs(std::vector< revision<cert> > & certs,
+		       app_state & app);
+
 void erase_bogus_certs(std::vector< manifest<cert> > & certs,
 		       app_state & app);
 
@@ -68,7 +71,6 @@ void erase_bogus_certs(std::vector< file<cert> > & certs,
 
 // special certs -- system won't work without them
 
-extern std::string const ancestor_cert_name;
 extern std::string const branch_cert_name;
 
 void 

@@ -437,7 +437,7 @@ print_revision(basic_io::printer & printer,
     basic_io::scope sc(printer);
 
     printer.print_key(syms::new_manifest); 
-    printer.print_str(rev.new_manifest.inner()());    
+    printer.print_hex(rev.new_manifest.inner()());    
 
     for (edge_map::const_iterator edge = rev.edges.begin();
 	 edge != rev.edges.end(); ++edge)

@@ -1,5 +1,19 @@
 2004-09-06  graydon hoare  <graydon@pobox.com>
 
+	* Makefile.am: Revise,
+	* cert.{cc,hh}: Minor bug fixes.
+	* change_set.{cc,hh} 
+	(apply_path_rearrangement): New variant.
+	(read_path_rearrangement): New function.
+	(write_path_rearrangement): New function.
+	* commands.cc: Partially teach about revisions.
+	* database.{cc,hh}: Bug fixes.
+	* revision.cc: Print new manifest as hex.
+	* schema.sql: Fix typos.
+	* update.{cc,hh}: Teach about revisions.
+
+2004-09-06  graydon hoare  <graydon@pobox.com>
+
 	* Makefile.am (unit_tests): Revise.
 	* change_set.{cc,hh}: Move accessors to header.
 	* constants.cc (netcmd_current_protocol_version): Bump.
