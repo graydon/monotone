@@ -60,6 +60,7 @@ change_set
     std::map<file_path, file_path> renamed_dirs;
     std::set<file_path> added_files;
     bool operator==(path_rearrangement const & other) const;
+    bool empty() const;
   };
 
   typedef std::map<file_path, std::pair<file_id, file_id> > delta_map;
@@ -79,31 +80,17 @@ change_set
   void rename_dir(file_path const & a, file_path const & b);
 };
 
-struct
-path_edit_consumer
+inline bool 
+null_name(file_path const & p)
 {
-  virtual void add_file(file_path const & a) = 0;
-  virtual void delete_file(file_path const & d) = 0;
-  virtual void delete_dir(file_path const & d) = 0;
-  virtual void rename_file(file_path const & a, file_path const & b) = 0;
-  virtual void rename_dir(file_path const & a, file_path const & b) = 0;
-  virtual ~path_edit_consumer() {}
-};
+  return p().empty();
+}
 
-struct
-change_set_consumer
+inline bool 
+null_id(file_id const & i)
 {
-  virtual void add_file(file_path const & a, file_id const & ident) = 0;
-  virtual void apply_delta(file_path const & path, 
-			   file_id const & src, 
-			   file_id const & dst) = 0;
-  virtual void delete_file(file_path const & d) = 0;
-  virtual void delete_dir(file_path const & d) = 0;
-  virtual void rename_file(file_path const & a, file_path const & b) = 0;
-  virtual void rename_dir(file_path const & a, file_path const & b) = 0;
-  virtual ~change_set_consumer() {}
-};
-
+  return i.inner()().empty();
+}
 
 inline file_path const & 
 delta_entry_path(change_set::delta_map::const_iterator i)
@@ -123,11 +110,10 @@ delta_entry_dst(change_set::delta_map::const_iterator i)
   return i->second.second;
 }
 
-// change_set algebra access
-
 void
-play_back_change_set_in_topological_order(change_set const & cs,
-					  change_set_consumer & csc);
+apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
+				  local_path const & temporary_root);
+
 
 // merging and concatenating 
 

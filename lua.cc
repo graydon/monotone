@@ -747,31 +747,45 @@ lua_hooks::hook_merge3(data const & ancestor,
 }
 
 bool 
-lua_hooks::hook_get_problem_solution(problem const & problem,
-				     std::string & soln)
+lua_hooks::hook_resolve_file_conflict(file_path const & anc,
+				      file_path const & a,
+				      file_path const & b,
+				      file_path & res)
 {
-  Lua ll(st);
-
-  ll
-    .push_str("get_problem_solution")
+  string tmp;
+  bool ok = Lua(st)
+    .push_str("resolve_file_conflict")
     .get_fn()
-    .push_str(problem.name);
-
-  ll.push_table();
-
-  for (std::map<std::string, boost::shared_ptr<solution> >::const_iterator i = 
-       problem.solutions.begin(); i != problem.solutions.end(); ++i)
-    {
-      ll.push_str(i->first);
-      ll.push_str(i->second->name);
-      ll.set_table();
-    }
-
-  return 
-    ll.call(2, 1)
-    .extract_str(soln)
+    .push_str(anc())
+    .push_str(a())
+    .push_str(b())
+    .call(3,1)
+    .extract_str(tmp)
     .ok();
+  res = tmp;
+  return ok;
 }
+
+bool 
+lua_hooks::hook_resolve_dir_conflict(file_path const & anc,
+				     file_path const & a,
+				     file_path const & b,
+				     file_path & res)
+{
+  string tmp;
+  bool ok = Lua(st)
+    .push_str("resolve_dir_conflict")
+    .get_fn()
+    .push_str(anc())
+    .push_str(a())
+    .push_str(b())
+    .call(3,1)
+    .extract_str(tmp)
+    .ok();
+  res = tmp;
+  return ok;  
+}
+
 
 bool 
 lua_hooks::hook_get_netsync_read_permitted(std::string const & collection, 

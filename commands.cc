@@ -254,7 +254,7 @@ get_path_rearrangement(change_set::path_rearrangement & w)
       data w_data;
       read_data(w_path, w_data);
       read_path_rearrangement(w_data, w);
-      L(F("read %d nodes from %s\n") % w.first.size() % w_path);
+      L(F("read rearrangement from %s\n") % w_path);
     }
   else
     {
@@ -277,16 +277,16 @@ put_path_rearrangement(change_set::path_rearrangement & w)
   local_path w_path;
   get_work_path(w_path);
   
-  if (w.first.size() > 0)
+  if (w.empty())
+    {
+      delete_file(w_path);
+    }
+  else
     {
       ensure_bookdir();
       data w_data;
       write_path_rearrangement(w, w_data);
       write_data(w_path, w_data);
-    }
-  else
-    {
-      delete_file(w_path);
     }
 }
 
@@ -1716,84 +1716,78 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 }
 
 
-struct
-diff_dumper : public change_set_consumer
+static void 
+dump_diffs(change_set::delta_map const & deltas,
+	   app_state & app,
+	   bool new_is_archived)
 {
-  app_state & app;
-  bool const & new_is_archived;
-  diff_dumper(app_state & app,
-	      bool const & new_is_archived)
-    : app(app), new_is_archived(new_is_archived)
-  {}
   
-  virtual void add_file(file_path const & pth, 
-			file_id const & ident) 
-  {
-      data unpacked;
-      vector<string> lines;
-      
-      if (new_is_archived)
-        {
-	  file_data dat;
-	  app.db.get_file_version(ident, dat);
-	  unpack(dat.inner(), unpacked);
-        }
-      else
-        {
-          read_localized_data(pth, unpacked, app.lua);
-        }
-
-      split_into_lines(unpacked(), lines);
-      if (! lines.empty())
+  for (change_set::delta_map::const_iterator i = deltas.begin();
+       i != deltas.end(); ++i)
+    {
+      if (null_id(delta_entry_src(i)))
 	{
-	  cout << (F("--- %s\n") % pth)
-	       << (F("+++ %s\n") % pth)
-	       << (F("@@ -0,0 +1,%d @@\n") % lines.size());
-	  for (vector<string>::const_iterator j = lines.begin();
-	       j != lines.end(); ++j)
+	  data unpacked;
+	  vector<string> lines;
+	  
+	  if (new_is_archived)
 	    {
-	      cout << "+" << *j << endl;
+	      file_data dat;
+	      app.db.get_file_version(delta_entry_src(i), dat);
+	      unpack(dat.inner(), unpacked);
+	    }
+	  else
+	    {
+	      read_localized_data(delta_entry_path(i), 
+				  unpacked, app.lua);
+	    }
+	  
+	  split_into_lines(unpacked(), lines);
+	  if (! lines.empty())
+	    {
+	      cout << (F("--- %s\n") % delta_entry_path(i))
+		   << (F("+++ %s\n") % delta_entry_path(i))
+		   << (F("@@ -0,0 +1,%d @@\n") % lines.size());
+	      for (vector<string>::const_iterator j = lines.begin();
+		   j != lines.end(); ++j)
+		{
+		  cout << "+" << *j << endl;
+		}
 	    }
 	}
-  }
-
-  virtual void apply_delta(file_path const & path, 
-			   file_id const & src, 
-			   file_id const & dst)
-  {
-    file_data f_old;
-    gzip<data> decoded_old;
-    data decompressed_old, decompressed_new;
-    vector<string> old_lines, new_lines;
+      else
+	{
+	  file_data f_old;
+	  gzip<data> decoded_old;
+	  data decompressed_old, decompressed_new;
+	  vector<string> old_lines, new_lines;
+	  
+	  app.db.get_file_version(delta_entry_src(i), f_old);
+	  decode_base64(f_old.inner(), decoded_old);
+	  decode_gzip(decoded_old, decompressed_old);
+	  
+	  if (new_is_archived)
+	    {
+	      file_data f_new;
+	      gzip<data> decoded_new;
+	      app.db.get_file_version(delta_entry_dst(i), f_new);
+	      decode_base64(f_new.inner(), decoded_new);
+	      decode_gzip(decoded_new, decompressed_new);
+	    }
+	  else
+	    {
+	      read_localized_data(delta_entry_path(i), 
+				  decompressed_new, app.lua);
+	    }
     
-    app.db.get_file_version(src, f_old);
-    decode_base64(f_old.inner(), decoded_old);
-    decode_gzip(decoded_old, decompressed_old);
-    
-    if (new_is_archived)
-      {
-	file_data f_new;
-	gzip<data> decoded_new;
-	app.db.get_file_version(dst, f_new);
-	decode_base64(f_new.inner(), decoded_new);
-	decode_gzip(decoded_new, decompressed_new);
-      }
-    else
-      {
-	read_localized_data(path, decompressed_new, app.lua);
-      }
-    
-    split_into_lines(decompressed_old(), old_lines);
-    split_into_lines(decompressed_new(), new_lines);
-    unidiff(path(), path(), old_lines, new_lines, cout);
-  }
-
-  virtual void delete_file(file_path const & d) {}
-  virtual void delete_dir(file_path const & d) {}
-  virtual void rename_file(file_path const & a, file_path const & b) {}
-  virtual void rename_dir(file_path const & a, file_path const & b) {}
-  virtual ~diff_dumper() {}
-};
+	  split_into_lines(decompressed_old(), old_lines);
+	  split_into_lines(decompressed_new(), new_lines);
+	  unidiff(delta_entry_path(i)(), 
+		  delta_entry_path(i)(), 
+		  old_lines, new_lines, cout);
+	}
+    }
+}
 
 CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout")
 {
@@ -1920,8 +1914,7 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
   for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
     cout << "# " << *i << endl;
 
-  diff_dumper dd(app, new_is_archived);
-  play_back_change_set(composite, dd);
+  dump_diffs(composite.deltas, app, new_is_archived);
 }
 
 
@@ -1978,153 +1971,43 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
   cout << "}" << endl << endl; // close graph
 }
 
-struct
-update_writer : public change_set_consumer
+
+static void
+write_file_targets(change_set const & cs,
+		   update_merge_provider & merger,
+		   app_state & app)
 {
-  fs::path base;
 
-  // FIXME: need to do this in the correct order; not clear whether that's
-  // even possible w/o hardlinks.
-
-  virtual void add_file(file_path const & pth, 
-			file_id const & ident) 
-  {
-    L(F("processing add_file(%s,%s)\n") % pth % ident);
-    files_to_write.insert(make_pair(pth, ident));
-  }
-
-  virtual void apply_delta(file_path const & pth, 
-			   file_id const & src, 
-			   file_id const & dst)
-  {
-  }
-
-  virtual void delete_file(file_path const & d) 
-  {
-    L(F("processing delete_file(%s)\n") % d);
-    // FIXME: a --prune option here to control whether or not
-    // to actually delete the file from working copy, rather than
-    // just un-register it (which happens naturally)
-    // ::delete_file(d);
-  }
-
-  virtual void delete_dir(file_path const & d) 
-  {
-    P(F("processing delete_dir(%s)\n") % d);
-    // FIXME: a --prune-dirs option here to control whether or not
-    // to actually delete the dir from working copy, rather than
-    // just un-register it (which happens naturally)
-    // ::delete_dir_recursive(d);
-  }
-
-  virtual void rename_file(file_path const & a, file_path const & b) 
-  {
-  }
-
-  virtual void rename_dir(file_path const & a, file_path const & b) 
-  {
-  }
-
-  virtual ~update_writer() {}
-};
-
-/*
-struct
-update_writer : public change_set_consumer
-{
-  app_state & app;
-  update_merge_provider & merger;
   manifest_map files_to_write;
-  update_writer(app_state & app,
-		update_merge_provider & merger)
-    : app(app), merger(merger)
-  {}
-
-  void write_modified_files()
-  {
-    for (manifest_map::const_iterator i = files_to_write.begin();
-	 i != files_to_write.end(); ++i)
-      {
-	file_path pth(manifest_entry_path(i));
-	file_id ident(manifest_entry_id(i));
-
-	if (file_exists(pth))
+  for (change_set::delta_map::const_iterator i = cs.deltas.begin();
+       i != cs.deltas.end(); ++i)
+    {
+      file_path pth(delta_entry_path(i));
+      file_id ident(delta_entry_dst(i));
+      
+      if (file_exists(pth))
 	{
 	  hexenc<id> tmp_id;
 	  calculate_ident(pth, tmp_id, app.lua);
 	  if (tmp_id == ident.inner())
 	    continue;
 	}
-	
-	P(F("updating %s to %s\n") % pth % ident);
-
-	I(app.db.file_version_exists(ident)
-	  || merger.temporary_store.find(ident) != merger.temporary_store.end());
-
-	file_data tmp;
-	if (app.db.file_version_exists(ident))
-	  app.db.get_file_version(ident, tmp);
-	else if (merger.temporary_store.find(ident) != merger.temporary_store.end())
-	  tmp = merger.temporary_store[ident];    
+      
+      P(F("updating %s to %s\n") % pth % ident);
+      
+      I(app.db.file_version_exists(ident)
+	|| merger.temporary_store.find(ident) != merger.temporary_store.end());
+      
+      file_data tmp;
+      if (app.db.file_version_exists(ident))
 	app.db.get_file_version(ident, tmp);
-	write_localized_data(pth, tmp.inner(), app.lua);
-      }
-  }
+      else if (merger.temporary_store.find(ident) != merger.temporary_store.end())
+	tmp = merger.temporary_store[ident];    
+      app.db.get_file_version(ident, tmp);
+      write_localized_data(pth, tmp.inner(), app.lua);
+    }
+}
   
-  virtual void add_file(file_path const & pth, 
-			file_id const & ident) 
-  {
-    L(F("processing add_file(%s,%s)\n") % pth % ident);
-    files_to_write.insert(make_pair(pth, ident));
-  }
-
-  virtual void apply_delta(file_path const & pth, 
-			   file_id const & src, 
-			   file_id const & dst)
-  {
-    L(F("processing apply_delta(%s,%s,%s)\n") % pth % src % dst);    
-    hexenc<id> tmp_id;
-    calculate_ident(pth, tmp_id, app.lua);
-    N(tmp_id == src.inner(), 
-      F("file %s in working copy has unexpected content %s"));
-    files_to_write.insert(make_pair(pth, dst));
-  }
-
-  virtual void delete_file(file_path const & d) 
-  {
-    L(F("processing delete_file(%s)\n") % d);
-    // FIXME: a --prune option here to control whether or not
-    // to actually delete the file from working copy, rather than
-    // just un-register it (which happens naturally)
-    // ::delete_file(d);
-  }
-
-  virtual void delete_dir(file_path const & d) 
-  {
-    P(F("processing delete_dir(%s)\n") % d);
-    // FIXME: a --prune-dirs option here to control whether or not
-    // to actually delete the dir from working copy, rather than
-    // just un-register it (which happens naturally)
-    // ::delete_dir_recursive(d);
-  }
-
-  virtual void rename_file(file_path const & a, file_path const & b) 
-  {
-    P(F("renaming file '%s' as '%s'\n") % a % b);
-    ::make_dir_for(b);
-    ::move_file(a, b);
-  }
-
-  virtual void rename_dir(file_path const & a, file_path const & b) 
-  {
-    P(F("renaming directory '%s' as '%s'\n") % a % b);
-    ::make_dir_for(b);
-    ::move_dir(a, b);
-  }
-
-  virtual ~update_writer() {}
-};
-*/
 
 // static void dump_change_set(string const & name,
 // 			    change_set & cs)
@@ -2171,7 +2054,10 @@ CMD(update, "working copy", "", "update working copy")
     }
   else
     {      
-      change_set old_to_working(edge_changes(r_working.edges.begin())), merged;
+      change_set 
+	old_to_working(edge_changes(r_working.edges.begin())),
+	working_to_merged, 
+	chosen_to_merged;
 
       L(F("merging working copy with chosen edge %s -> %s\n") 
 	% r_old_id % r_chosen_id);
@@ -2187,9 +2073,13 @@ CMD(update, "working copy", "", "update working copy")
       update = working_to_merged;
     }
   
-  update_writer updater(app, merger);
-  play_back_change_set(update, updater);
-  updater.write_modified_files();
+  local_path tmp_root((mkpath(book_keeping_dir) / mkpath("tmp")).string());
+  if (directory_exists(tmp_root))
+    unlink(tmp_root);
+
+  mkdir_p(tmp_root);
+  apply_rearrangement_to_filesystem(update.rearrangement, tmp_root);
+  write_file_targets(update, merger, app);
   
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk

@@ -14,7 +14,7 @@ MOST_SOURCES =								\
          keys.cc manifest.cc packet.cc sanity.cc vocab.cc rcs_file.cc	\
          xdelta.cc ui.cc schema_migration.cc		\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
-         mkstemp.cc lcs.cc revision.cc predicament.cc change_set.cc     \
+         mkstemp.cc lcs.cc revision.cc change_set.cc     \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -24,7 +24,7 @@ MOST_SOURCES =								\
          randomfile.hh rcs_file.hh xdelta.hh adler32.hh	\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
-	 numeric_vocab.hh revision.hh predicament.hh change_set.hh      \
+	 numeric_vocab.hh revision.hh change_set.hh      \
          mkstemp.hh
 
 NETXX_SOURCES =									\
@@ -133,7 +133,7 @@ unit_tests_SOURCES = unit_tests.cc lua.cc cert.cc database.cc					\
 			netsync.cc sanity.cc vocab.cc						\
 			rcs_file.cc xdelta.cc ui.cc						\
 			schema_migration.cc constants.cc basic_io.cc				\
-			mkstemp.cc lcs.cc revision.cc packet.cc predicament.cc			\
+			mkstemp.cc lcs.cc revision.cc packet.cc					\
 			change_set.cc  update.cc						\
 												\
 			file_io.hh manifest.hh database.hh					\
@@ -144,7 +144,7 @@ unit_tests_SOURCES = unit_tests.cc lua.cc cert.cc database.cc					\
 			ui.hh schema_migration.hh quick_alloc.hh				\
 			mac.hh merkle_tree.hh netcmd.hh netio.hh				\
 			netsync.hh								\
-			numeric_vocab.hh revision.hh packet.hh predicament.hh			\
+			numeric_vocab.hh revision.hh packet.hh					\
 			change_set.hh mkstemp.hh update.hh 
 
 txt2c_SOURCES = txt2c.cc

@@ -1,3 +1,12 @@
+2004-09-26  graydon hoare  <graydon@pobox.com>
+
+	* predicament.{cc,hh}: Remove.
+	* Makefile.am: Update.
+	* change_set.{cc,hh}: Compilation fixes.
+	* commands.cc: Likewise.
+	* file_io.{cc,hh}: Likewise, and implement link/unlink.
+	* lua.{cc,hh}: Implement conflict resolver hooks.
+
 2004-09-25  graydon hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh}: Rewrite entirely.
