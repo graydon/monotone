@@ -633,7 +633,6 @@ add_bitset_to_union(shared_bitmap src,
 static void 
 calculate_ancestors_from_graph(interner<ctx> & intern,
                                revision_id const & init,
-                               std::set<revision_id> const & legal, 
                                std::multimap<revision_id, revision_id> const & graph, 
                                std::map< ctx, shared_bitmap > & ancestors,
                                shared_bitmap & total_union)
@@ -674,13 +673,10 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
         {
           ctx parent = intern.intern(i->second.inner()());
 
-          // set any parent which is a member of the underlying legal set
-          if (legal.find(i->second) != legal.end())
-            {
-              if (b->size() <= parent)
-                b->resize(parent + 1);
-              b->set(parent);
-            }
+          // set all parents
+          if (b->size() <= parent)
+            b->resize(parent + 1);
+          b->set(parent);
 
           // ensure all parents are loaded into the ancestor map
           I(ancestors.find(parent) != ancestors.end());
@@ -694,6 +690,49 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
       add_bitset_to_union(b, total_union);
       ancestors.insert(std::make_pair(us, b));
       stk.pop();
+    }
+}
+
+// this function actually toposorts the whole graph, and then filters by the
+// passed in set.  if anyone ever needs to toposort the whole graph, then,
+// this function would be a good thing to generalize...
+void
+toposort(std::set<revision_id> const & revisions,
+         std::vector<revision_id> & sorted,
+         app_state & app)
+{
+  sorted.clear();
+  typedef std::multimap<revision_id, revision_id>::iterator gi;
+  std::multimap<revision_id, revision_id> graph;
+  app.db.get_revision_ancestry(graph);
+  std::set<revision_id> leaves;
+  app.db.get_revision_ids(leaves);
+  while (!graph.empty())
+    {
+      // first find the set of current graph roots
+      std::set<revision_id> roots;
+      for (gi i = graph.begin(); i != graph.end(); ++i)
+        roots.insert(i->first);
+      for (gi i = graph.begin(); i != graph.end(); ++i)
+        roots.erase(i->second);
+      // now stick them in our ordering (if wanted), and remove them from the
+      // graph
+      for (std::set<revision_id>::const_iterator i = roots.begin();
+           i != roots.end(); ++i)
+        {
+          L(F("new root: %s\n") % (*i));
+          if (revisions.find(*i) != revisions.end())
+            sorted.push_back(*i);
+          graph.erase(*i);
+          leaves.erase(*i);
+        }
+    }
+  for (std::set<revision_id>::const_iterator i = leaves.begin();
+       i != leaves.end(); ++i)
+    {
+      L(F("new leaf: %s\n") % (*i));
+      if (revisions.find(*i) != revisions.end())
+        sorted.push_back(*i);
     }
 }
 
@@ -719,8 +758,7 @@ erase_ancestors(std::set<revision_id> & revisions, app_state & app)
   for (std::set<revision_id>::const_iterator i = revisions.begin();
        i != revisions.end(); ++i)
     {      
-      calculate_ancestors_from_graph(intern, *i, revisions, 
-                                     inverse_graph, ancestors, u);
+      calculate_ancestors_from_graph(intern, *i, inverse_graph, ancestors, u);
     }
 
   std::set<revision_id> tmp;
@@ -734,6 +772,65 @@ erase_ancestors(std::set<revision_id> & revisions, app_state & app)
     }
   
   revisions = tmp;
+}
+
+// This function takes a revision A and a set of revision Bs, calculates the
+// ancestry of each, and returns the set of revisions that are in A's ancestry
+// but not in the ancestry of any of the Bs.  It tells you 'what's new' in A
+// that's not in the Bs.  If the output set if non-empty, then A will
+// certainly be in it; but the output set might be empty.
+void
+ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
+                    std::set<revision_id> & new_stuff,
+                    app_state & app)
+{
+  new_stuff.clear();
+  typedef std::multimap<revision_id, revision_id>::const_iterator gi;
+  std::multimap<revision_id, revision_id> graph;
+  std::multimap<revision_id, revision_id> inverse_graph;
+
+  app.db.get_revision_ancestry(graph);
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    inverse_graph.insert(std::make_pair(i->second, i->first));
+
+  interner<ctx> intern;
+  std::map< ctx, shared_bitmap > ancestors;
+
+  shared_bitmap u = shared_bitmap(new bitmap());
+
+  for (std::set<revision_id>::const_iterator i = bs.begin();
+       i != bs.end(); ++i)
+    {      
+      calculate_ancestors_from_graph(intern, *i, inverse_graph, ancestors, u);
+      ctx c = intern.intern(i->inner()());
+      if (u->size() <= c)
+        u->resize(c + 1);
+      u->set(c);
+    }
+
+  shared_bitmap au = shared_bitmap(new bitmap());
+  calculate_ancestors_from_graph(intern, a, inverse_graph, ancestors, au);
+  {
+    ctx c = intern.intern(a.inner()());
+    if (au->size() <= c)
+      au->resize(c + 1);
+    au->set(c);
+  }
+
+  au->resize(std::max(au->size(), u->size()));
+  u->resize(std::max(au->size(), u->size()));
+  
+  *au -= *u;
+
+  for (unsigned int i = 0; i != au->size(); ++i)
+  {
+    if (au->test(i))
+      {
+        revision_id rid(intern.lookup(i));
+        if (!null_id(rid))
+          new_stuff.insert(rid);
+      }
+  }
 }
 
 // 

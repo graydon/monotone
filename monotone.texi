@@ -4079,7 +4079,7 @@ Prints the heads of branch @var{branch}.
 
 Zero or more lines, each giving the id of one head of the given branch.
 Each line consists of a revision id, in hexadecimal, followed by a
-newline.  The lines are printed in sorted order.
+newline.  The lines are printed in alphabetically sorted order.
 
 @item Error conditions:
 
@@ -4111,7 +4111,8 @@ Prints the descendents of one or more revisions.
 
 Zero or more lines, each giving the id of one descendent of the given
 revisions.  Each line consists of a revision id, in hexadecimal,
-followed by a newline.  The lines are printed in sorted order.
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
 
 The output does not include @var{rev1}, @var{rev2}, etc., except that if
 @var{rev2} is itself a descendent of @var{rev1}, then @var{rev2} will be
@@ -4152,7 +4153,86 @@ branch branch, then we would print the heads of that branch.
 
 Zero or more lines, each giving the id of one descendent of the given
 revisions.  Each line consists of a revision id, in hexadecimal,
-followed by a newline.  The lines are printed in sorted order.
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+@item monotone automate toposort @var{rev1} [@var{rev2} [...]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints all arguments, topologically sorted.  I.e., if @var{rev1} is an
+ancestor of @var{rev2}, then @var{rev1} will appear before @var{rev2} in
+the output; if @var{rev2} is an ancestor of @var{rev1}, then @var{rev2}
+will appear before @var{rev1} in the output; and if neither is an
+ancestor of the other, then they may appear in either order.
+
+@item Sample output:
+
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+
+@item Output format:
+
+A list of revision ids, in hexadecimal, each followed by a newline.
+Revisions are printed in topologically sorted order.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+@item monotone automate ancestry_difference @var{new} [@var{old1} [@var{old2} [...]]]
+
+@table @strong
+@item Arguments:
+
+A ``new'' revision id @var{new}, followed by zero or more ``old''
+revision ids @var{old1}, @var{old2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints all ancestors of the revision @var{new}, that are not also
+ancestors of one of the old revisions.  For purposes of this command,
+``ancestor'' is an inclusive term; for example, if @var{new} is an
+ancestor of @var{old1}, it will not be printed; but if @var{new} is not
+an ancestor of any of the ``old'' revisions, then it will be.
+Similarly, @var{old1} will never be printed, because it is considered to
+be an ancestor of itself.  The reason for the names is that if @var{new}
+a new revision, and @var{old1}, @var{old2}, etc. are revisions that you
+have processed before, then this command tells you which revisions are
+new since then.
+
+@item Sample output:
+
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+
+@item Output format:
+
+A list of revision ids, in hexadecimal, each followed by a newline.
+Revisions are printed in topologically sorted order.
 
 @item Error conditions:
 
@@ -5635,7 +5715,7 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors)}
+@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference)}
 Scripting interface.
 
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}

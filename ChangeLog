@@ -1,3 +1,33 @@
+2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_automate_toposort.at: New test.
+	* tests/t_automate_ancestry_difference.at: New test.
+	* tests/t_diff_first_rev.at: New test.
+	* testsuite.at: Add them.
+	
+	* revision.cc (calculate_ancestors_from_graph): Do not keep an
+	"interesting" set and return only ancestors from this set;
+	instead, simply return all ancestors.  Returning a limited set of
+	ancestors does not speed things up, nor reduce memory usage in
+	common cases.  (The only time it would reduce memory usage is when
+	examining only a small ancestor set, which the important case,
+	'heads', does not; even then, erase_ancestors would need to intern
+	the interesting revisions first so they got low numbers, which it
+	doesn't.)
+	(erase_ancestors): Adjust accordingly.
+	(toposort, ancestry_difference): New functions.
+	* revision.hh (toposort, ancestry_difference): Declare.
+	* automate.cc (automate_toposort, automate_ancestry_difference):
+	New functions.
+	(automate_command): Add them.
+	All functions: clarify in description whether output is sorted
+	alphabetically or topologically.
+	* commands.cc (automate): Synopsify them.
+	* monotone.1: Add them.
+	* monotone.texi (Commands): Likewise.
+	(Automation): Likewise.  Also, clarify for each command whether
+	its output is alphabetically or topologically sorted.
+	
 2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
 
 	* automate.cc (automate_erase_ancestors): New function.

@@ -3322,7 +3322,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
       P(F("[merged] %s\n") % merged);
       left = merged;
     }
-
+  P(F("your working copies have not been updated\n"));
 }
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
@@ -3769,7 +3769,9 @@ CMD(automate, "automation",
     "interface_version\n"
     "heads BRANCH\n"
     "descendents REV1 [REV2 [REV3 [...]]]\n"
-    "erase_ancestors REV1 [REV2 [REV3 [...]]]",
+    "erase_ancestors REV1 [REV2 [REV3 [...]]]\n"
+    "toposort REV1 [REV2 [REV3 [...]]]\n"
+    "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]",
     "automation interface")
 {
   if (args.size() == 0)
