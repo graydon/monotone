@@ -1,5 +1,10 @@
 2005-03-21  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (list tags, list vars, set, unset): Document.
+	(Internationalization): Document vars.
+
+2005-03-21  Nathaniel Smith  <njs@codesourcery.com>
+
 	* transforms.{hh,cc} ({in,ex}ternalize_var_{name,domain}): New
 	functions.
 	* vocab_terms.hh (base64<var_value>): Declare template.

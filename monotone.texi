@@ -3493,6 +3493,16 @@ listed. Otherwise all keys in your database are listed.
 
 This command lists all known branches in your database.
 
+@item monotone list tags
+
+This command lists all known tags in your database.
+
+@item monotone list vars
+@item monotone list vars @var{domain}
+
+This command lists all vars in your database, or all vars within a given
+@var{domain}.
+
 @item monotone list unknown
 @itemx monotone list unknown @var{pathname...}
 
@@ -3697,6 +3707,14 @@ database.
 @section Database
 
 @ftable @command
+@item monotone set @var{domain} @var{name} @var{value}
+
+Associates the value @var{value} to @var{name} in domain @var{domain}.
+
+@item monotone unset @var{domain} @var{name}
+
+Deletes any value associated with @var{name} in @var{domain}.
+
 @item monotone db init --db=@var{dbfile} 
 
 This command initializes a new monotone database at @file{dbfile}.
@@ -4840,6 +4858,19 @@ character conversion. If text, the cert value is subject to normal
 form conversion, as well as having all UTF-8 codes corresponding to
 ASCII control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in
 the normal form, except @code{0x0A} (ASCII LF).
+
+@heading Var names
+
+Read on the command line and subject to normal form conversion and
+IDNA encoding as a single component. The invariant is that a cert name
+inside monotone is a single LDH ASCII string.
+
+@heading Var values
+
+Var values are assumed to be text, and subject to normal form
+conversion, as well as having all UTF-8 codes corresponding to ASCII
+control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in the
+normal form, except @code{0x0A} (ASCII LF).
 
 @heading Key names
 
