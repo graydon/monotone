@@ -479,6 +479,19 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
 	file_data fdat = packed;
 	db.put_file(fid, fdat);	
       }
+    
+    
+    {
+      // create the head state in case it is a loner
+      cvs_key k;
+      shared_ptr<cvs_state> s;
+      L(F("noting head version %s : %s\n") % cvs.curr_file % r.admin.head);
+      cvs.find_key_and_state (r, r.admin.head, k, s);
+
+      // add this file and youngest version to the head manifest
+      I(cvs.head_manifest.find(cvs.curr_file) ==  cvs.head_manifest.end());
+      cvs.head_manifest.insert(make_pair(cvs.curr_file, fid));
+    }
 
     global_pieces.reset();
     global_pieces.index_deltatext(r.deltatexts.find(r.admin.head)->second, head_lines);
@@ -766,11 +779,7 @@ cvs_history::note_file_edge(rcs_file const & r,
 				       next_version, curr_file, 
 				       *this));
     }
-  
-  // add this file and youngest version to the manifest if we've never seen it before
-  if (head_manifest.find(curr_file) ==  head_manifest.end())
-    head_manifest.insert(make_pair(curr_file, prev_version));
-  
+    
   ++n_versions;
 }
 
@@ -1041,7 +1050,7 @@ import_cvs_repo(fs::path const & cvsroot,
 	write_manifest_map(child_map, child_data);
 	app.db.put_manifest(child_id, child_data);
       }
-    
+
     // these are all versions on the main trunk, so we look through them from
     // newest to oldest
     for (map< cvs_key, shared_ptr<cvs_state> >::const_iterator i = state->substates.begin();
