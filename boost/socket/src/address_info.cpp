@@ -8,6 +8,10 @@
 // about the suitability of this software for any purpose.
 // It is provided "as is" without express or implied warranty.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef _MSC_VER
 #pragma warning (disable: 4786 4305)
   // 4786 truncated debug symbolic name
@@ -28,10 +32,6 @@
 #include <Ws2tcpip.h>
 #else
 
-#endif
-
-#ifdef __sun
-#define INADDR_NONE -1
 #endif
 
 #if defined(USES_WINSOCK2)
