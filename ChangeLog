@@ -1,3 +1,18 @@
+2004-02-01  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc: Remove a lot of stuff, implement auth phase.
+	* constants.cc, constants.hh: Move constants from netsync.cc.
+	* netcmd.cc, netcmd.hh: Split out of netsync.cc.
+	* merkle_tree.cc, merkle_tree.hh: Likewise.
+	* numeric_vocab.hh: New header.
+	* adler32.hh: include numeric_vocab.hh.
+	* netio.hh: Likewise.
+	* unit_tests.cc, unit_tests.hh: Update.
+	* Makefile.am: Likewise.
+	* commands.cc: Guess signing key for auth phase.
+	* database.cc, database.hh (public_key_exists)
+	(get_pubkey): New functions based on key hashes.
+
 2004-01-31  graydon hoare  <graydon@pobox.com>
 
 	* Netxx/*: New files.

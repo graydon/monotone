@@ -940,6 +940,17 @@ void database::get_private_keys(vector<rsa_keypair_id> & privkeys)
     privkeys.push_back(res[i][0]);
 }
 
+bool database::public_key_exists(hexenc<id> const & hash)
+{
+  results res;
+  fetch(res, one_col, any_rows, 
+	"SELECT id FROM public_keys WHERE hash = '%q'",
+	hash().c_str());
+  I((res.size() == 1) || (res.size() == 0));
+  if (res.size() == 1) 
+    return true;
+  return false;
+}
 
 bool database::public_key_exists(rsa_keypair_id const & id)
 {
@@ -970,12 +981,23 @@ bool database::key_exists(rsa_keypair_id const & id)
   return public_key_exists(id) || private_key_exists(id);
 }
 
+void database::get_pubkey(hexenc<id> const & hash, 
+			  rsa_keypair_id & id,
+			  base64<rsa_pub_key> & pub_encoded)
+{
+  results res;
+  fetch(res, 2, one_row, 
+	"SELECT id, keydata FROM public_keys where hash = '%q'", 
+	hash().c_str());
+  id = res[0][0];
+  pub_encoded = res[0][1];
+}
 
 void database::get_key(rsa_keypair_id const & pub_id, 
 		       base64<rsa_pub_key> & pub_encoded)
 {
   results res;
-  fetch(res, one_col, one_col, 
+  fetch(res, one_col, one_row, 
 	"SELECT keydata FROM public_keys where id = '%q'", 
 	pub_id().c_str());
   pub_encoded = res[0][0];

@@ -2233,6 +2233,10 @@ CMD(netsync, "network", "(client|server) (readonly|readwrite|writeonly) ADDRESS:
     role = sink_role;
   else throw usage(name);
 
+  rsa_keypair_id key;
+  N(guess_default_key(key, app), "could not guess default signing key");
+  app.signing_key = key;
+
   utf8 addr(idx(args,2));
   vector<utf8> collections(args.begin() + 3, args.end());
   run_netsync_protocol(voice, role, addr, collections, app);

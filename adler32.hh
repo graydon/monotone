@@ -11,9 +11,7 @@
 // and it seems to work.
 
 #include <string>
-#include <boost/cstdint.hpp>
-
-typedef boost::uint32_t u32;
+#include "numeric_vocab.hh"
 
 struct adler32
 {

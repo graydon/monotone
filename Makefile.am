@@ -8,7 +8,7 @@ MOST_SOURCES =								\
          proto_machine.cc packet.cc sanity.cc vocab.cc			\
          rcs_file.cc rcs_import.cc xdelta.cc network.cc			\
          http_tasks.cc ui.cc schema_migration.cc smtp_tasks.cc		\
-         constants.cc url.cc netsync.cc                                 \
+         constants.cc url.cc netsync.cc netcmd.cc merkle_tree.cc        \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -18,7 +18,7 @@ MOST_SOURCES =								\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
          lcs.hh network.hh http_tasks.hh constants.hh ui.hh		\
          schema_migration.hh smtp_tasks.hh quick_alloc.hh mac.hh url.hh \
-	 netsync.hh
+	 netsync.hh netcmd.hh netio.hh merkle_tree.hh
 
 NETXX_SOURCES = \
 	Netxx/Accept.cxx Netxx/Accept.h Netxx/Address.cxx Netxx/Address.h          \

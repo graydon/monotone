@@ -7,6 +7,7 @@
 // see the file COPYING for details
 
 #include <unistd.h>
+#include "numeric_vocab.hh"
 
 namespace constants
 {
@@ -68,7 +69,54 @@ namespace constants
   // all the ASCII characters (bytes) which are illegal in a (file|local)_path
   extern char const * const illegal_path_bytes;
 
+
+  // remaining constants are related to netsync protocol
+
+  // number of bytes in the hash used in netsync
+  extern size_t const merkle_hash_length_in_bytes;
+
+  // number of bits of merkle prefix consumed by each level of tree
+  extern size_t const merkle_fanout_bits;
+
+  // derived from hash_length_in_bytes
+  extern size_t const merkle_hash_length_in_bits;
+
+  // derived from fanout_bits
+  extern size_t const merkle_num_tree_levels;
+
+  // derived from fanout_bits
+  extern size_t const merkle_num_slots;
+
+  // derived from fanout_bits
+  extern size_t const merkle_bitmap_length_in_bits;
+
+  // derived from fanout_bits
+  extern size_t const merkle_bitmap_length_in_bytes;
+
+  // the current netcmd/netsync protocol version
+  extern u8 const netcmd_current_protocol_version;
+
+  // minimum size of any netcmd on the wire
+  extern size_t const netcmd_minsz;
   
+  // largest command *payload* allowed in a netcmd
+  extern size_t const netcmd_payload_limit;
+
+  // maximum size of any netcmd on the wire, including payload
+  extern size_t const netcmd_maxsz;
+
+  // netsync fragments larger than this are gzipped
+  extern size_t const netcmd_minimum_bytes_to_bother_with_gzip;
+
+  // TCP port to listen on / connect to when doing netsync
+  extern size_t const netsync_default_port;
+
+  // maximum number of simultaneous clients on a server
+  extern size_t const netsync_connection_limit;
+
+  // number of seconds a connection can be idle before it's dropped
+  extern size_t const netsync_timeout_seconds;
+
 }
 
 #endif // __CONSTANTS_HH__

@@ -232,9 +232,15 @@ public:
   void get_private_keys(std::vector<rsa_keypair_id> & privkeys);
 
   bool key_exists(rsa_keypair_id const & id);
+
+  bool public_key_exists(hexenc<id> const & hash);
   bool public_key_exists(rsa_keypair_id const & id);
   bool private_key_exists(rsa_keypair_id const & id);
   
+  void get_pubkey(hexenc<id> const & hash, 
+		  rsa_keypair_id & id,
+		  base64<rsa_pub_key> & pub_encoded);
+
   void get_key(rsa_keypair_id const & id, 
 	       base64<rsa_pub_key> & pub_encoded);
 

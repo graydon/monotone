@@ -8,6 +8,9 @@
 // probably best not to tweak them though.
 
 #include "constants.hh"
+#include "numeric_vocab.hh"
+
+#include <boost/static_assert.hpp>
 
 namespace constants
 {
@@ -127,5 +130,42 @@ namespace constants
   char const * const illegal_path_bytes =
   illegal_path_bytes_arr
   ;
+
+  // merkle tree / netcmd / netsync related stuff
+
+  size_t const merkle_hash_length_in_bytes = 20;
+  size_t const merkle_fanout_bits = 4;
+
+  // all other merkle constants are derived
+  size_t const merkle_hash_length_in_bits = merkle_hash_length_in_bytes * 8;
+  size_t const merkle_num_tree_levels = merkle_hash_length_in_bits / merkle_fanout_bits;
+  size_t const merkle_num_slots = 1 << merkle_fanout_bits;
+  size_t const merkle_bitmap_length_in_bits = merkle_num_slots * 2;
+  size_t const merkle_bitmap_length_in_bytes = merkle_bitmap_length_in_bits / 8;
+
+  BOOST_STATIC_ASSERT(sizeof(char) == 1);
+  BOOST_STATIC_ASSERT(CHAR_BIT == 8);
+  BOOST_STATIC_ASSERT(merkle_num_tree_levels > 0);
+  BOOST_STATIC_ASSERT(merkle_num_tree_levels < 256);
+  BOOST_STATIC_ASSERT(merkle_fanout_bits > 0);
+  BOOST_STATIC_ASSERT(merkle_fanout_bits < 32);
+  BOOST_STATIC_ASSERT(merkle_hash_length_in_bits > 0);
+  BOOST_STATIC_ASSERT((merkle_hash_length_in_bits % merkle_fanout_bits) == 0);
+  BOOST_STATIC_ASSERT(merkle_bitmap_length_in_bits > 0);
+  BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
+
+  u8 const netcmd_current_protocol_version = 1;
+  size_t const netcmd_minsz = (1     // version
+			       + 1   // cmd code
+			       + 4   // length
+			       + 4); // adler32    
+  
+  size_t const netcmd_payload_limit = 0xffffff;
+  size_t const netcmd_maxsz = netcmd_minsz + netcmd_payload_limit;
+  size_t const netcmd_minimum_bytes_to_bother_with_gzip = 64;
+
+  size_t const netsync_default_port = 5253;
+  size_t const netsync_connection_limit = 100;
+  size_t const netsync_timeout_seconds = 10;
 
 }

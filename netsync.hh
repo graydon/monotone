@@ -4,20 +4,13 @@
 #include <vector>
 
 #include "app_state.hh"
+#include "netcmd.hh"
 #include "vocab.hh"
 
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
-
-typedef enum 
-  { 
-    source_role = 1, 
-    sink_role = 2, 
-    source_and_sink_role = 3
-  }
-protocol_role;
 
 typedef enum
   {
