@@ -1,5 +1,9 @@
 2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* constants.cc (constants): Bump netsync protocol version.
+
+2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.cc (cpp_main): Log command line, to help interpret the
 	logs people send in.
 
