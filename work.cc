@@ -262,12 +262,12 @@ read_attr_map(data const & dat, attr_map & attr)
       file_path fp(file);
 
       while (parser.symp() && 
-	     !parser.symp(syms::file)) 
-	{
-	  parser.sym(name);
-	  parser.str(value);
-	  attr[fp][name] = value;
-	}
+             !parser.symp(syms::file)) 
+        {
+          parser.sym(name);
+          parser.str(value);
+          attr[fp][name] = value;
+        }
     }
 }
 
@@ -284,8 +284,8 @@ write_attr_map(data & dat, attr_map const & attr)
       st.push_str_pair(syms::file, i->first());
 
       for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
-	   j != i->second.end(); ++j)
-	  st.push_str_pair(j->first, j->second);	  
+           j != i->second.end(); ++j)
+          st.push_str_pair(j->first, j->second);          
 
       pr.print_stanza(st);
     }
@@ -300,10 +300,10 @@ apply_attributes(app_state & app, attr_map const & attr)
   for (attr_map::const_iterator i = attr.begin();
        i != attr.end(); ++i)
       for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
-	   j != i->second.end(); ++j)
-	app.lua.hook_apply_attribute (j->first,
-				      i->first, 
-				      j->second);
+           j != i->second.end(); ++j)
+        app.lua.hook_apply_attribute (j->first,
+                                      i->first, 
+                                      j->second);
 }
 
 string const encoding_attribute("encoding");
@@ -311,9 +311,9 @@ string const binary_encoding("binary");
 string const default_encoding("default");
 
 static bool find_in_attr_map(attr_map const & attr,
-			     file_path const & file,
-			     std::string const & attr_key,
-			     std::string & attr_val)
+                             file_path const & file,
+                             std::string const & attr_key,
+                             std::string & attr_val)
 {
   attr_map::const_iterator f = attr.find(file);
   if (f == attr.end())
@@ -328,10 +328,10 @@ static bool find_in_attr_map(attr_map const & attr,
 }
 
 bool get_attribute_from_db(file_path const & file,
-			   std::string const & attr_key,
-			   manifest_map const & man,
-			   std::string & attr_val,
-			   app_state & app)
+                           std::string const & attr_key,
+                           manifest_map const & man,
+                           std::string & attr_val,
+                           app_state & app)
 {
   file_path fp;
   get_attr_path(fp);
@@ -353,8 +353,8 @@ bool get_attribute_from_db(file_path const & file,
 }
 
 bool get_attribute_from_working_copy(file_path const & file,
-				     std::string const & attr_key,
-				     std::string & attr_val)
+                                     std::string const & attr_key,
+                                     std::string & attr_val)
 {
   file_path fp;
   get_attr_path(fp);

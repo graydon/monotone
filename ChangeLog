@@ -1,5 +1,9 @@
 2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
 
+	* work.cc, sanity.cc: Remove tabs.
+
+2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi (Network Service): Mention that monotone remembers
 	your server/collection.
 	(Vars): New section.
