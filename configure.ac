@@ -140,7 +140,8 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 
 # check for static boost option
 AC_ARG_ENABLE(static-boost,
-[  --enable-static-boost[=prefix] use static libs from boost])
+AS_HELP_STRING([--enable-static-boost@<:@=prefix@:>@],
+               [use static libs from boost]))
 AM_CONDITIONAL(STATIC_BOOST, test "x${enable_static_boost}" != x)
 if test "x${enable_static_boost}" != x
 then
@@ -191,7 +192,7 @@ __wont_compile_
 # Check for IPv6.  Let the user enable or disable it manually using a
 # three-state (yes|no|auto) --enable argument.
 AC_ARG_ENABLE(ipv6,
-   [  --enable-ipv6               enable IPv6 support (default=auto)], ,
+   AS_HELP_STRING([--enable-ipv6],[enable IPv6 support (default=auto)]), ,
    enable_ipv6=auto
 )
 AC_CACHE_CHECK([presence of IPv6],
@@ -239,7 +240,7 @@ AC_SEARCH_LIBS([inet_ntoa], [nsl])
 # Checks for external lua library, revert to bundled version if not found or
 # user gives --with-bundled-lua.
 AC_ARG_WITH([bundled-lua],
-   AC_HELP_STRING(
+   AS_HELP_STRING(
       [--with-bundled-lua],
       [Force use of bundled version of lua (default=yes)]
    ), [bundled_lua="$withval"], [bundled_lua=yes]
@@ -262,7 +263,7 @@ AM_CONDITIONAL(BUNDLED_LUA, test "x$bundled_lua" != "xno")
 # Checks for external sqlite library, revert to bundled version if not found or
 # user gives --with-bundled-sqlite.
 AC_ARG_WITH([bundled-sqlite],
-   AC_HELP_STRING(
+   AS_HELP_STRING(
       [--with-bundled-sqlite],
       [Force use of bundled version of sqlite (default=yes)]
    ), [bundled_sqlite="$withval"], [bundled_sqlite=yes]
