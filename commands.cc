@@ -1788,7 +1788,52 @@ static void ls_branches (string name, app_state & app, vector<string> const & ar
   guard.commit();
 }
 
-CMD(list, "informative", "certs (file|manifest) ID\nkeys [PATTERN]\nbranches", "show certs, keys, or branches")
+struct unknown_itemizer : public tree_walker
+{
+  manifest_map & man;
+  unknown_itemizer(manifest_map & m) : man(m) {}
+  virtual void visit_file(file_path const & path)
+  {
+    if (man.find(path) == man.end())
+      cout << path() << endl;
+  }
+};
+
+struct ignored_itemizer : public tree_walker
+{
+  app_state & app;
+  ignored_itemizer(app_state & a) : app(a) {}
+  virtual void visit_file(file_path const & path)
+  {    
+    if (app.lua.hook_ignore_file(path))
+      cout << path() << endl;
+  }
+};
+
+
+static void ls_unknown (app_state & app)
+{
+  manifest_map m_old, m_new;
+  get_manifest_map(m_old);
+  calculate_new_manifest_map(m_old, m_new);
+  unknown_itemizer u(m_new);
+  walk_tree(u);
+}
+
+static void ls_ignored (app_state & app)
+{
+  ignored_itemizer i(app);
+  walk_tree(i);
+}
+
+
+CMD(list, "informative", 
+    "certs (file|manifest) ID\n"
+    "keys [PATTERN]\n"
+    "branches\n"
+    "unknown\n"
+    "ignored", 
+    "show certs, keys, branches, unknown or intentionally ignored files")
 {
   if (args.size() == 0)
     throw usage(name);
@@ -1802,11 +1847,20 @@ CMD(list, "informative", "certs (file|manifest) ID\nkeys [PATTERN]\nbranches", "
     ls_keys(name, app, removed);
   else if (args[0] == "branches")
     ls_branches(name, app, removed);
+  else if (args[0] == "unknown")
+    ls_unknown(app);
+  else if (args[0] == "ignored")
+    ls_ignored(app);
   else
     throw usage(name);
 }
 
-ALIAS(ls, list, "informative",  "certs (file|manifest) ID\nkeys [PATTERN]\nbranches", "show certs, keys, or branches")
+ALIAS(ls, list, "informative",  
+      "certs (file|manifest) ID\n"
+      "keys [PATTERN]\n"
+      "branches\n"
+      "unknown\n"
+      "ignored", "show certs, keys, or branches")
 
 
 CMD(mdelta, "packet i/o", "<oldid> <newid>", "write manifest delta packet to stdout")

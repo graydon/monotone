@@ -1841,6 +1841,16 @@ List keys matching glob, or list all keys if no glob given.
 List all branches.
 @comment TROFF INPUT: .TP
 
+@item @b{list unknown}
+@itemx @b{ls unknown}
+List files in working directory, but not in manifest or work list.
+@comment TROFF INPUT: .TP
+
+@item @b{list ignored}
+@itemx @b{ls ignored}
+List files intentionally ignored due to the ignore_file hook.
+@comment TROFF INPUT: .TP
+
 @item @b{fetch} @i{[URL] [groupname]}
 Fetch recent packets from network servers. Does not read public
 or private key packets; use the @b{read} command instead.
