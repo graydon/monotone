@@ -1,3 +1,11 @@
+2005-03-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.cc: add short options -r, -b, -k, and -m
+	for --revision, --branch, --key, and --message respectively.
+	* monotone.texi, monotone.1: document them
+	* tests/t_short_opts.at: test them
+	* testsuite.at: add it
+
 2005-03-24  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_empty_env.at: New test.

@@ -5605,6 +5605,7 @@ Use database in @i{file}.
 @comment TROFF INPUT: .TP
 
 @item @b{--key=}@i{<keyid>}
+@itemx @b{-k} @i{<keyid>}
 Use @i{keyid} for operations which produce @sc{rsa}
 signatures. Default is inferred from presence of unique private key in
 database. Can also be customized on a per-branch basis with hook
@@ -5612,6 +5613,7 @@ function @b{get@t{_}branch@t{_}key(branchname)}.
 @comment TROFF INPUT: .TP
 
 @item @b{--branch=}@i{<branchname>}
+@itemx @b{-b} @i{<branchname>}
 Use @i{branchname} for operations on a branch. Default is inferred
 in operations on existing branches (commit, update, etc). 
 @comment TROFF INPUT: .TP
@@ -5624,12 +5626,14 @@ characters (like some programs provide a progress line of dots).
 The default is @b{count}.
 
 @item @b{--revision=}@i{<id>}
+@itemx @b{-r} @i{<id>}
 Currently this option only applies to the diff command where it may be
 used to compare a working copy with a specific revision or to compare
 two specific revisions. It will likely apply to other commands in the
 future.
 
 @item @b{--message=}@i{<log message>}
+@itemx @b{-m} @i{<log message>}
 Use the given message as the changelog when committing a new revision
 rather than invoking the log message editor. Currently this option only
 applies to the commit command but it may also apply to the comment

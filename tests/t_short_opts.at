@@ -1,0 +1,26 @@
+#  -*- Autoconf -*-
+
+# a test for the abbreviate options (-b, -k, -r, -m)
+
+AT_SETUP([short options work correctly])
+
+MONOTONE_SETUP
+
+AT_DATA(maude, [the file maude
+])
+
+AT_DATA(liver, [the file liver
+])
+
+# same as MONOTONE macro but without --db and --key
+m4_define([SHORT_MONOTONE], [$PREEXECUTE monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --root=$_ROOT_DIR])
+
+AT_CHECK(SHORT_MONOTONE add maude, [], [ignore], [ignore])
+
+# check it won't work with a bad key
+AT_CHECK(SHORT_MONOTONE -k badkey@example.com -b test.branch commit -d test.db -m happy, [1], [ignore], [ignore])
+
+# and it does work with a key
+AT_CHECK(SHORT_MONOTONE -k tester@test.net -b test.branch commit -d test.db -m happy, [], [ignore], [ignore])
+
+AT_CLEANUP
