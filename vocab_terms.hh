@@ -18,8 +18,15 @@ ATOMIC(delta);                // xdelta between 2 datas
 ATOMIC(local_path);           // non-absolute file
 ATOMIC(file_path);            // non-absolute, non-bookeeping file
 
-ATOMIC(cert_name);             // symbol-of-your-choosing
-ATOMIC(cert_value);            // symbol-of-your-choosing
+ATOMIC(cert_name);            // symbol-of-your-choosing
+ATOMIC(cert_value);           // symbol-of-your-choosing
+
+// some domains: "database" (+ default_server, default_collection),
+//   server_key (+ servername/key)
+//   branch_alias (+ short form/long form)
+ATOMIC(var_domain);           // symbol-of-your-choosing
+ATOMIC(var_name);             // symbol-of-your-choosing
+ATOMIC(var_value);            // symbol-of-your-choosing
 
 ATOMIC(rsa_keypair_id);       // keyname@domain.you.own
 ATOMIC(rsa_pub_key);          // some nice numbers

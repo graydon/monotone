@@ -1,5 +1,17 @@
 2005-03-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* schema.sql (db_vars): New table.
+	* database.cc (database::database): Update schema id.
+	* schema_migration.cc (migrate_client_to_vars): New function.
+	(migrate_monotone_schema): Use it.
+	* tests/t_migrate_schema.at: Another schema, another test...
+	
+	* vocab_terms.hh (var_domain, var_name, var_value): New types.
+	* database.hh (get_vars, get_var, var_exists, set_var, clear_var):
+	Prototype new functions.
+	
+2005-03-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi: Add some missing @sc{}'s.
 	* cryptopp/config.h: Use "mt-stdint.h", not <stdint.h>, for
 	portability.
