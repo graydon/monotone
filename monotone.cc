@@ -182,15 +182,28 @@ my_poptStuffArgFile(poptContext con, utf8 const & filename)
   const char **argv = 0;
   int argc = 0;
   int rc;
-  N(rc = poptParseArgvString(argstr().c_str(), &argc, &argv) >= 0,
+
+  // Parse the string.  It's OK if there are no arguments.
+  rc = poptParseArgvString(argstr().c_str(), &argc, &argv);
+  N(rc >= 0 || rc == POPT_ERROR_NOARG,
     F("problem parsing arguments from file %s: %s")
     % filename % poptStrerror(rc));
-  // poptStuffArgs does not take an argc argument, but rather requires that
-  // the argv array be null-terminated.
-  I(argv[argc] == NULL);
-  N((rc = poptStuffArgs(con, argv)) >= 0,
-    F("weird error when stuffing arguments read from %s: %s\n")
-    % filename % poptStrerror(rc));
+
+  if (rc != POPT_ERROR_NOARG)
+    {
+      // poptStuffArgs does not take an argc argument, but rather requires that
+      // the argv array be null-terminated.
+      I(argv[argc] == NULL);
+      N((rc = poptStuffArgs(con, argv)) >= 0,
+	F("weird error when stuffing arguments read from %s: %s\n")
+	% filename % poptStrerror(rc));
+    }
+  else
+    {
+      free(argv);               // just in case there was something...
+      argv = 0;
+    }
+
   return argv;
 }
 
@@ -330,7 +343,8 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_ARGFILE:
-              sub_argvs.push_back(my_poptStuffArgFile(ctx(), utf8(string(argstr))));
+              sub_argvs.push_back(my_poptStuffArgFile(ctx(),
+						      utf8(string(argstr))));
               break;
 
             case OPT_HELP:

@@ -1,3 +1,10 @@
+2005-04-01  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc (my_poptStuffArgFile): An argument file might be
+	empty, and therefore contain no arguments to be parsed.  That's
+	OK.
+	* tests/t_at_sign.at: Test it.
+
 2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.cc: Fixup after merge.

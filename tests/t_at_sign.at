@@ -1,6 +1,7 @@
 AT_SETUP([check that --xargs / -@ behave correctly])
 
-# Generate expected output, as we're testing using the output of 'list --help'
+# Generate the general expected output, as we're testing using the
+# output of 'list --help'
 AT_CHECK(RAW_MONOTONE list --help, [], [stdout], [ignore], [:], [:])
 mv stdout expout
 
@@ -33,5 +34,11 @@ AT_DATA([at_test.input1], [list
 AT_DATA([at_test.input2], [--help
 ])
 AT_CHECK(RAW_MONOTONE -@ at_test.input1 -@ at_test.input2, [1], [ignore], [experr])
+
+# Check that -@ works with an argument file with no content
+AT_CHECK(RAW_MONOTONE list, [], [stdout], [ignore], [:], [:])
+mv stdout expout
+AT_DATA([at_test.input], [])
+AT_CHECK(RAW_MONOTONE list -@ at_test.input, [], [expout], [ignore])
 
 AT_CLEANUP
