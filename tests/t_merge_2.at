@@ -1,4 +1,4 @@
-AT_SETUP([(URGENT) test a merge 2])
+AT_SETUP([test a merge 2])
 MONOTONE_SETUP
 
 NEED_UNB64
@@ -20,9 +20,6 @@ NEED_UNB64
 #  //      dump_bitset_map("parents", parents);
 #    return false;
 #  }
-
-# This test is a bug report:
-AT_XFAIL_IF(true)
 
 AT_DATA(parent.b64, [Ly8gY29weXJpZ2h0IChDKSAyMDA0IGdyYXlkb24gaG9hcmUgPGdyYXlkb25AcG9ib3guY29tPgov
 LyBhbGwgcmlnaHRzIHJlc2VydmVkLgovLyBsaWNlbnNlZCB0byB0aGUgcHVibGljIHVuZGVyIHRo
