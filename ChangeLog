@@ -35,6 +35,12 @@
 
 2004-05-13  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc: Include boost/filesystem/path.hpp,
+	boost/filesystem/convenience.hpp.
+	(checkout): Make checkout directory an fs::path, not a local_path.
+	
+2004-05-13  Nathaniel Smith  <njs@codesourcery.com>
+
 	* testsuite.at (test_hooks.lua): Add a 'test_attr' attribute
 	hook.  Add tests t_attributes and t_single_char_filenames.
 	* tests/t_attributes.at: New test.

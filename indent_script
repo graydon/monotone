@@ -1,0 +1,8 @@
+#!/bin/sh
+# Nico Schottelius
+# indents like kr with a little bit more beauty look
+# 13-May-2004
+
+for file in $@; do 
+   indent -nbad -bap -ts3 -nut -sc -br -ce -cdw -cli0 -nbc -brs -i3 -lp -ppi3 -di1 -c33 -cd33 -ncdb -ci3 -cp33 -cs -d0 -di0 -l75 -bbo -nfc1 -nfca -hnl -ip0 -npcs -nprs -saf -sai -saw -nsob -nss -npsl "$file"
+done
