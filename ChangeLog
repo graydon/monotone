@@ -1,3 +1,7 @@
+2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* main.cc: Remove tabs.
+
 2005-02-02  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (extract_first): Rename to...
