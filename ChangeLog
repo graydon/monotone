@@ -1,3 +1,8 @@
+2004-10-18  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_add.at: New test.
+	* testsuite.at: Call it.
+
 2004-10-12  graydon hoare  <graydon@pobox.com>
 
 	* unix/read_password.cc: Don't force echo on.

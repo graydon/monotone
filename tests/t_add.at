@@ -1,0 +1,50 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([addition of files and directories])
+
+MONOTONE_SETUP
+
+AT_CHECK(mkdir dir)
+AT_DATA(file0, [file 0
+])
+AT_DATA(dir/file1, [file 1
+])
+AT_DATA(dir/file2, [file 2
+])
+
+# adding a non-existent file should fail
+
+AT_CHECK(monotone add foobar, [1], [ignore], [ignore])
+
+# newly added files should appear as such
+
+AT_CHECK(MONOTONE add file0, [], [ignore], [stderr])
+AT_CHECK(grep 'adding file0' stderr, [0], [ignore])
+
+AT_CHECK(MONOTONE add dir, [], [ignore], [stderr])
+AT_CHECK(grep 'adding dir/file1' stderr, [0], [ignore])
+AT_CHECK(grep 'adding dir/file2' stderr, [0], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep file0 stdout, [0], [ignore])
+AT_CHECK(grep file1 stdout, [0], [ignore])
+AT_CHECK(grep file2 stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE --branch=testbranch commit 'add files', [], [ignore], [ignore])
+
+# redundant additions should not appear 
+# (i.e. they should be ignored)
+
+AT_CHECK(MONOTONE add file0, [], [ignore], [stderr])
+AT_CHECK(grep 'skipping file0' stderr, [0], [ignore])
+
+AT_CHECK(MONOTONE add dir, [], [ignore], [stderr])
+AT_CHECK(grep 'skipping dir/file1' stderr, [0], [ignore])
+AT_CHECK(grep 'skipping dir/file2' stderr, [0], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep file0 stdout, [1], [ignore])
+AT_CHECK(grep file1 stdout, [1], [ignore])
+AT_CHECK(grep file2 stdout, [1], [ignore])
+
+AT_CLEANUP
