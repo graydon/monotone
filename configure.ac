@@ -274,9 +274,9 @@ AC_ARG_WITH([bundled-sqlite],
 
 if test "x$bundled_sqlite" = "xno" ; then
    bundled_sqlite=yes
-   AC_CHECK_HEADER([sqlite.h],
-      AC_CHECK_LIB([sqlite], [sqlite_open],
-         [LIBS="$LIBS -lsqlite" ; bundled_sqlite=no]
+   AC_CHECK_HEADER([sqlite3.h],
+      AC_CHECK_LIB([sqlite3], [sqlite3_open],
+         [LIBS="$LIBS -lsqlite3" ; bundled_sqlite=no]
       )
    )
 fi

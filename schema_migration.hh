@@ -16,10 +16,10 @@
 // then runs all the migration functions between that point and the target
 // of the migration.
 
-struct sqlite;
+struct sqlite3;
 
-void calculate_schema_id(sqlite *sql, std::string & id);
-void migrate_depot_schema(sqlite *sql);
-void migrate_monotone_schema(sqlite *sql);
+void calculate_schema_id(sqlite3 *sql, std::string & id);
+void migrate_depot_schema(sqlite3 *sql);
+void migrate_monotone_schema(sqlite3 *sql);
 
 #endif // __SCHEMA_MIGRATION__
