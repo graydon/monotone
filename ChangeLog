@@ -10,6 +10,8 @@
 
 2003-09-15  Tom Tromey  <tromey@redhat.com>
 
+	* monotone.1: Don't mention MT_KEY or MT_BRANCH.
+
 	* monotone.texi (Getting Started): Don't mention MT_DB or
 	MT_BRANCH.
 	(Adding Files): Explicitly use --db and --branch.
