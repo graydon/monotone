@@ -1,3 +1,27 @@
+2004-12-10  Matt Johnston  <matt@ucc.asn.au>
+
+        * cert.cc: Added priv_key_exists() function
+        * commands.cc, rcs_import.cc: use new privkey functions
+        * netsync.cc: change some bits that were missed
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * cert.cc, cert.hh, lua.cc, lua.hh, netsync.cc:
+        Added a new get_priv_key(keyid) lua hook to retrieve
+        a private key from ~/.monotonerc
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * change_set.cc: Don't include patch deltas on files which
+        are being deleted in changesets. (partial fix for bug
+        invoked by t_merge_add_del.at)
+
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * configure.ac,Makefile.am: Fix iconv and intl
+        handling so that the libraries are used (required for OS X).
+
+
 2004-12-09  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (BUILT_SOURCES_NOCLEAN): add 'S'.

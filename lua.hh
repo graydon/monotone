@@ -39,6 +39,8 @@ public:
   // cert hooks
   bool hook_expand_selector(std::string const & sel, std::string & exp);
   bool hook_get_branch_key(cert_value const & branchname, rsa_keypair_id & k);
+  bool lua_hooks::hook_get_priv_key(rsa_keypair_id const & k,
+                                   base64< arc4<rsa_priv_key> > & priv_key );
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
   bool hook_get_author(cert_value const & branchname, std::string & author);
   bool hook_edit_comment(std::string const & commentary, std::string & result);  
