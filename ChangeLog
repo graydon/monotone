@@ -15,6 +15,31 @@
 2005-03-09  Jon Bright <jon@siliconcircus.com>
 	* t_diff_binary.at: binary.bz.b64 -> binary.gz.b64
 
+2005-03-08  Derek Scherger  <derek@echologic.com>
+
+	* Makefile.am: adjust for fsck rename
+	* commands.cc (db fsck): rename to db check and add short help;
+	adjust for fsck file renames
+	* database.{cc,hh}: minor alignment adjustments
+	(get_statistic): remove redundant method
+	(info): use count in place of get_statistic
+	(count): return unsigned long instead of int
+	(get_keys): new method
+	(get_public_keys): new method
+	(get_private_keys): rewrite using get_keys
+	(get_certs): new method to get all certs in database from
+	specified table
+	(get_revision_certs): ditto
+	* fsck.{cc,hh}: rename to...
+	* database_check.{cc,hh}: ...this; add key, cert and sane revision
+	history checking
+	* monotone.1: document db dump/load/check commands
+	* monotone.texi: document db check command
+	* tests/t_fsck.at: rename to...
+	* tests/t_database_check.at: ...this; and add tests for key and
+	cert problems
+	* testsuite.at: account for new test name
+
 2005-03-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* ChangeLog: Insert some missing newlines.
@@ -86,31 +111,6 @@
 	ancestry needs splitting.
 	(construct_revision_from_ancestry): Make more more complex, in
 	order to properly track file identity in merges.
-
-2005-03-08  Derek Scherger  <derek@echologic.com>
-
-	* Makefile.am: adjust for fsck rename
-	* commands.cc (db fsck): rename to db check and add short help;
-	adjust for fsck file renames
-	* database.{cc,hh}: minor alignment adjustments
-	(get_statistic): remove redundant method
-	(info): use count in place of get_statistic
-	(count): return unsigned long instead of int
-	(get_keys): new method
-	(get_public_keys): new method
-	(get_private_keys): rewrite using get_keys
-	(get_certs): new method to get all certs in database from
-	specified table
-	(get_revision_certs): ditto
-	* fsck.{cc,hh}: rename to...
-	* database_check.{cc,hh}: ...this; add key, cert and sane revision
-	history checking
-	* monotone.1: document db dump/load/check commands
-	* monotone.texi: document db check command
-	* tests/t_fsck.at: rename to...
-	* tests/t_database_check.at: ...this; and add tests for key and
-	cert problems
-	* testsuite.at: account for new test name
 
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
