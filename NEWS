@@ -1,3 +1,41 @@
+Sun Mar 28 12:41:07 EST 2004
+
+	0.11 release. bug fixes and optimizations. 
+
+	NOTE: this release expands the sqlite page size. YOU WILL NEED
+	to dump existing databases before upgrading and reload it
+	after upgrading, otherwise monotone will complain that the
+	database image appears malformed. this condition cannot
+	unfortunately be distinguished from a real malformed image on
+	disk. for example:
+
+		$ monotone --db=my.db db dump >dump.sql
+		$ <upgrade to new monotone>
+		$ mv my.db my.db.backup
+		$ monotone --db=my.db db load <dump.sql
+
+	- fixed bugs:
+		- aliasing bug on debian (-O2 now works)
+		- netsync ppc portability / checksums 
+		- sha1 whitespace bug
+		- netsync broken formatter
+		- broken symlink handling
+		- merger execution pessimism	
+		- LCA bitset calculation pessimism
+		- static object initialization order
+		- CVS single-version import
+		- CVS first-version changelog
+		- CVS branch inference and topology
+	- cryptographic SSE2 paths enabled on linux/x86. 
+	- builds against boost 1.31.0. 
+	- removed boost::socket
+	- removed documentation about old networking system. 
+	- "officially" deprecated old networking system. 
+	- enable building with system-local libraries.
+	- upgraded bundled sqlite. 
+	- changed sqlite page size from 1k -> 8k
+
+
 Mon Mar  1 00:32:07 EST 2004
 
 	0.10 release. new "netsync" protocol implemented, allowing

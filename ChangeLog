@@ -1,3 +1,12 @@
+2004-03-28  graydon hoare  <graydon@pobox.com>
+
+	* NEWS: Mention 0.11 release.
+	* AUTHORS: Mention Robert.
+
+2004-03-28  Robert Bihlmeyer  <robbe+mt@orcus.priv.at>
+
+	* file_io.cc (walk_tree_recursive): Ignore broken symlinks.
+
 2004-03-27  graydon hoare  <graydon@pobox.com>
 
 	* monotone.texi: Flesh out netsync stuff, remove old network stuff.
