@@ -1,5 +1,11 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc (process_confirm_cmd): Don't try refining mcert and
+	fcert trees.
+	Remove other dead/pointless code.
+	
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* database.hh: Remove file cert stuff.
 	* netsync.cc (data_exists): We don't have file/manifest certs.
 	(load_data): Likewise.

@@ -534,8 +534,6 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
   switch (ty)
     {
     case rcert_item:
-    case mcert_item:
-    case fcert_item:
       if (cert_in_ticker.get() != NULL)
         ++(*cert_in_ticker);
       break;
@@ -565,8 +563,6 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
   switch (ty)
     {
     case rcert_item:
-    case mcert_item:
-    case fcert_item:
       if (cert_out_ticker.get() != NULL)
         ++(*cert_out_ticker);
       break;
@@ -1637,14 +1633,6 @@ session::process_confirm_cmd(string const & signature)
           load_merkle_node(app, rcert_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(root);
           queue_done_cmd(0, rcert_item);
-
-          load_merkle_node(app, mcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
-          queue_done_cmd(0, mcert_item);
-
-          load_merkle_node(app, fcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
-          queue_done_cmd(0, fcert_item);
           return true;
         }
       else
@@ -3132,9 +3120,6 @@ rebuild_merkle_trees(app_state & app,
   app.db.erase_merkle_nodes(typestr, collection);
   store_merkle_node(app, collection, empty_root_node);
 
-  // FIXME: do fcerts later 
-  // ticker fcerts("fcerts");
-
   ticker rcerts("rcerts", "r", 32);
   ticker keys("keys", "k", 1);
 
@@ -3197,11 +3182,6 @@ static void
 ensure_merkle_tree_ready(app_state & app,
                          utf8 const & collection)
 {
-  string mcert_item_str, fcert_item_str, key_item_str;
-  netcmd_item_type_to_string(mcert_item, mcert_item_str);
-  netcmd_item_type_to_string(mcert_item, fcert_item_str);
-  netcmd_item_type_to_string(mcert_item, key_item_str);
-
 //   if (! (app.db.merkle_node_exists(mcert_item_str, collection, 0, get_root_prefix().val)
 //       && app.db.merkle_node_exists(fcert_item_str, collection, 0, get_root_prefix().val)
 //       && app.db.merkle_node_exists(key_item_str, collection, 0, get_root_prefix().val)))
