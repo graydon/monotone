@@ -1,3 +1,9 @@
+2005-04-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc (build_deletions): Issue warning when generating
+	delete_dir's; they're totally broken, but I don't want to disable
+	them, because then our tests won't see when they're fixed...
+
 2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
 
 	* file_io.hh: Remove tabs.
