@@ -69,6 +69,7 @@ change_set
   delta_map deltas;
 
   bool operator==(change_set const & other) const;
+  bool empty() const;
   void add_file(file_path const & a);
   void add_file(file_path const & a, file_id const & ident);
   void apply_delta(file_path const & path, 

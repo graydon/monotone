@@ -29,7 +29,7 @@ AT_DATA(input.txt, [blah blah blah
 
 AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
-TSHA=`SHA1(MT/manifest)`
+TSHA=`BASE_REVISION`
 AT_CHECK(MONOTONE --key=$TKEY cert $TSHA color pink, [], [ignore], [ignore])
 AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout])
 AT_CHECK(grep pink stdout, [], [ignore])

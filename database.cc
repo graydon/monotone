@@ -1446,8 +1446,8 @@ struct valid_certs
     try
       {
 	// args are: hash, id, name, value, keypair, pubkey, signature
-	L(F("entries are [%s] [%s] [%s] [%s] [%s] [%s] [%s]\n") 
-	  % argv[0] % argv[1] % argv[2] % argv[3] % argv[4] % argv[5] % argv[6]);
+	// L(F("entries are [%s] [%s] [%s] [%s] [%s] [%s] [%s]\n") 
+	// 	  % argv[0] % argv[1] % argv[2] % argv[3] % argv[4] % argv[5] % argv[6]);
 
 	cert tmp = cert(hexenc<id>(argv[1]), 
 			cert_name(argv[2]),
@@ -1472,8 +1472,8 @@ struct valid_certs
 	else
 	  I(val == tmp.value);
 
-	L(F("examining '%s' %s cert from %s\n") 
-	  % name % signature_type % ident);
+	// 	L(F("examining '%s' %s cert from %s\n") 
+	// 	  % name % signature_type % ident);
 
 	string txt;
 	cert_signable_text(tmp, txt);

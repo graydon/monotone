@@ -25,8 +25,8 @@ AT_DATA(passphrase, [tester@test.net
 
 AT_CHECK(MONOTONE --branch=testbranch --rcfile=persist.lua commit blah-blah <passphrase, [], [ignore], [ignore])
 
-MSHA=`SHA1(MT/manifest)`
-AT_CHECK(MONOTONE ls certs $MSHA, [], [stdout])
+TSHA=`BASE_REVISION`
+AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout])
 AT_CHECK(mv stdout certs, [], [ignore])
 AT_CHECK(grep branch certs, [], [ignore])
 AT_CHECK(grep author certs, [], [ignore])

@@ -162,6 +162,12 @@ change_set::path_rearrangement::empty() const
 }
 
 bool 
+change_set::empty() const
+{
+  return deltas.empty() && rearrangement.empty();
+}
+
+bool 
 change_set::operator==(change_set const & other) const
 {
   return rearrangement == other.rearrangement &&
@@ -1189,16 +1195,17 @@ extend_renumbering_via_added_files(path_analysis const & a,
 	    {
 	      tid added_parent_tid = path_item_parent(path_state_item(j));
 	      directory_map::const_iterator dirent = a_second_map.find(added_parent_tid);
-	      I(dirent != a_second_map.end());
-      
-	      boost::shared_ptr<directory_node> node = dirent->second;
-	      directory_node::const_iterator entry = node->find(leaf_name);
-	      if (entry != node->end() && directory_entry_type(entry) == ptype_file)
+	      if (dirent != a_second_map.end())
 		{
-		  renumbering.insert(std::make_pair(path_state_tid(i), 
-						    directory_entry_tid(entry)));
+		  
+		  boost::shared_ptr<directory_node> node = dirent->second;
+		  directory_node::const_iterator entry = node->find(leaf_name);
+		  if (entry != node->end() && directory_entry_type(entry) == ptype_file)
+		    {
+		      renumbering.insert(std::make_pair(path_state_tid(i), 
+							directory_entry_tid(entry)));
+		    }
 		}
-	      
 	    }
 	}
     }
@@ -1360,6 +1367,22 @@ project_missing_changes(path_analysis const & a_tmp,
 	      L(F("skipping common change on %s (tid %d)\n") 
 		% path_item_name(a_first_item) % t);
 	    }
+	  else if (a_first_item == a_second_item)
+	    {
+	      L(F("skipping neutral change of %s -> %s (tid %d)\n") 
+		% path_item_name(a_first_item) 
+		% path_item_name(a_second_item)
+		% t);	      
+	    }
+	  else if (b_first_item == b_second_item)
+	    {
+	      L(F("propagating change on %s -> %s (tid %d)\n") 
+		% path_item_name(b_first_item) 
+		% path_item_name(b_second_item)
+		% t);
+	      b_merged.first.insert(std::make_pair(t, b_second_item));
+	      b_merged.second.insert(std::make_pair(t, a_second_item));
+	    }
 	  else
 	    {
 	      // conflict
@@ -1367,7 +1390,7 @@ project_missing_changes(path_analysis const & a_tmp,
 	      resolve_conflict(t, path_item_type(a_first_item), a_tmp, b_tmp, 
 			       resolved, resolved_conflicts, app);
 	      
-	      if (resolved == a_first_item)
+	      if (resolved == a_second_item)
 		{
 		  L(F("conflict detected, resolved in A's favour\n"));
 		  b_merged.first.insert(std::make_pair(t, b_second_item));
@@ -1574,7 +1597,8 @@ project_missing_deltas(change_set const & a,
       file_path path_in_merged, path_in_b_second;
 
       // first work out what the path in b.second is
-      if (lookup_path(delta_entry_path(i), a_second_map, t))
+      if (lookup_path(delta_entry_path(i), a_second_map, t) 
+	  && b_analysis.second.find(t) != b_analysis.second.end())
 	get_full_path(b_analysis.second, t, path_in_b_second);
       else
 	reconstruct_path(delta_entry_path(i), b_first_map, 
@@ -1597,7 +1621,7 @@ project_missing_deltas(change_set const & a,
 	}
       else 
 	{
-	  I(delta_entry_src(i) == delta_entry_dst(j));
+	  I(delta_entry_src(i) == delta_entry_src(j));
 	  // if so, either... 
 
 	  if (delta_entry_dst(i) == delta_entry_dst(j))
@@ -1605,6 +1629,23 @@ project_missing_deltas(change_set const & a,
 	      // ... absorb identical deltas
 	      L(F("skipping common delta '%s' : '%s' -> '%s'\n") 
 		% path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
+	    }
+
+	  else if (delta_entry_src(i) == delta_entry_dst(i))
+	    {
+	      L(F("skipping neutral delta on '%s' : %s -> %s\n") 
+		% delta_entry_path(i) 
+		% delta_entry_src(i) 
+		% delta_entry_dst(i));	      
+	    }
+
+	  else if (delta_entry_src(j) == delta_entry_dst(j))
+	    {
+	      L(F("propagating unperturbed delta on '%s' : '%s' -> '%s'\n") 
+		% delta_entry_path(i) 
+		% delta_entry_src(i) 
+		% delta_entry_dst(i));	      
+	      b_merged.apply_delta(path_in_merged, delta_entry_dst(j), delta_entry_dst(i));
 	    }
 
 	  else
@@ -1776,6 +1817,98 @@ invert_change_set(change_set const & a2b,
     }
 }
 
+void 
+move_files_to_tmp_bottom_up(tid t,
+			    local_path const & temporary_root,
+			    path_state const & state,
+			    directory_map const & dmap)
+{
+  directory_map::const_iterator dirent = dmap.find(t);
+  if (dirent != dmap.end())
+    {
+      boost::shared_ptr<directory_node> node = dirent->second;  
+      for (directory_node::const_iterator entry = node->begin();
+	   entry != node->end(); ++entry)
+	{
+	  tid child = directory_entry_tid(entry);
+	  file_path path;
+	  path_item item;
+	      
+	  find_item(child, state, item);
+
+	  if (null_name(path_item_name(item)))
+	    continue;
+
+	  // recursively move all sub-entries
+	  if (path_item_type(item) == ptype_directory)
+	    move_files_to_tmp_bottom_up(child, temporary_root, state, dmap);
+
+	  get_full_path(state, child, path);
+	  
+	  local_path src(path());
+	  local_path dst((mkpath(temporary_root()) 
+			  / mkpath(boost::lexical_cast<std::string>(child))).string());
+	  
+	  P(F("moving %s -> %s\n") % src % dst);
+	  switch (path_item_type(item))
+	    {
+	    case ptype_file:
+	      move_file(src, dst);
+	      break;
+	    case ptype_directory:
+	      move_dir(src, dst);
+	      break;
+	    }
+	}
+    }
+}
+
+void 
+move_files_from_tmp_top_down(tid t,
+			     local_path const & temporary_root,
+			     path_state const & state,
+			     directory_map const & dmap)
+{
+  directory_map::const_iterator dirent = dmap.find(t);
+  if (dirent != dmap.end())
+    {
+      boost::shared_ptr<directory_node> node = dirent->second;  
+      for (directory_node::const_iterator entry = node->begin();
+	   entry != node->end(); ++entry)
+	{
+	  tid child = directory_entry_tid(entry);
+	  file_path path;
+	  path_item item;
+	      
+	  find_item(child, state, item);
+
+	  if (null_name(path_item_name(item)))
+	    continue;
+
+	  get_full_path(state, child, path);
+	  
+	  local_path src((mkpath(temporary_root()) 
+			  / mkpath(boost::lexical_cast<std::string>(child))).string());
+	  local_path dst(path());
+	  
+	  P(F("moving %s -> %s\n") % src % dst);
+	  switch (path_item_type(item))
+	    {
+	    case ptype_file:
+	      move_file(src, dst);
+	      break;
+	    case ptype_directory:
+	      move_dir(src, dst);
+	      break;
+	    }
+
+	  // recursively move all sub-entries
+	  if (path_item_type(item) == ptype_directory)
+	    move_files_from_tmp_top_down(child, temporary_root, state, dmap);
+	}
+    }
+}
+
 
 void
 apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
@@ -1792,102 +1925,12 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
   if (analysis.first.empty())
     return;
 
-  std::set<tid> frontier;
-  frontier.insert(root_tid);
+  move_files_to_tmp_bottom_up(root_tid, temporary_root,
+			      analysis.first, first_dmap);
 
-  std::list<file_path> old_entries_to_unlink;
-
-  // first link each existing entry to a temporary name (by tid)
-  while (!frontier.empty())
-    {
-      std::set<tid> next_frontier;
-      for (std::set<tid>::const_iterator i = frontier.begin(); 
-	   i != frontier.end(); ++i)
-	{
-	  L(F("linking tid %d to temporary\n") % *i);
-	  directory_map::const_iterator dirent = first_dmap.find(*i);
-	  I(dirent != first_dmap.end());
-	  boost::shared_ptr<directory_node> node = dirent->second;
-	  
-	  for (directory_node::const_iterator entry = node->begin();
-	       entry != node->end(); ++entry)
-	    {
-	      tid t = directory_entry_tid(entry);
-	      file_path old_path;
-	      path_item old_item;
-	      
-	      find_item(t, analysis.first, old_item);
-
-	      if (null_name(path_item_name(old_item)))
-		continue;
-	      
-	      if (directory_entry_type(entry) == ptype_directory)
-		next_frontier.insert(t);
-
-	      get_full_path(analysis.first, t, old_path);
-
-	      L(F("hard-linking %s to %s\n") 
-		% local_path(old_path())
-		% local_path((mkpath(temporary_root()) 
-			      / mkpath(boost::lexical_cast<std::string>(t))).string()));
-
-	      hard_link(local_path(old_path()),
-			local_path((mkpath(temporary_root()) 
-				   / mkpath(boost::lexical_cast<std::string>(t))).string()));
-
-	      old_entries_to_unlink.push_front(old_path);
-	    }
-	}
-      frontier = next_frontier;
-    }
-
-  // now delete the old elements from the bottom up
-  for (std::list<file_path>::const_iterator i = old_entries_to_unlink.begin();
-       i != old_entries_to_unlink.end(); ++i)
-    {
-      L(F("deleting initial entry from %s\n") % *i);
-      delete_file(local_path((*i)()));
-    }
-
-  // now relink new elements and delete the temps
-  frontier.insert(root_tid);
-  while (!frontier.empty())
-    {
-      std::set<tid> next_frontier;
-      for (std::set<tid>::const_iterator i = frontier.begin(); 
-	   i != frontier.end(); ++i)
-	{
-	  directory_map::const_iterator dirent = second_dmap.find(*i);
-	  I(dirent != second_dmap.end());	  
-	  boost::shared_ptr<directory_node> node = dirent->second;
-	  
-	  for (directory_node::const_iterator entry = node->begin();
-	       entry != node->end(); ++entry)
-	    {
-	      tid t = directory_entry_tid(entry);
-	      file_path new_path;
-	      path_item new_item;
-	      
-	      find_item(t, analysis.second, new_item);
-	      
-	      local_path tpth((mkpath(temporary_root()) 
-			       / mkpath(boost::lexical_cast<std::string>(t))).string());
-	      
-	      if (!null_name(path_item_name(new_item)))
-		{
-		  if (directory_entry_type(entry) == ptype_directory)
-		    next_frontier.insert(t);		  
-		  get_full_path(analysis.second, t, new_path);		  
-		  hard_link(tpth, local_path(new_path()));
-		}
-	      L(F("deleting temporary from %s\n") % tpth);
-	      delete_file (tpth);
-	    }
-	}
-      frontier = next_frontier;
-    }
+  move_files_from_tmp_top_down(root_tid, temporary_root,
+			       analysis.second, second_dmap);
 }
-
 
 // application stuff
 

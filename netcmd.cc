@@ -28,6 +28,8 @@ read_netcmd_item_type(string const & in,
   u8 tmp = extract_datum_lsb<u8>(in, pos, name);
   switch (tmp)
     {
+    case static_cast<u8>(revision_item):
+      return revision_item;      
     case static_cast<u8>(manifest_item):
       return manifest_item;
     case static_cast<u8>(file_item):
@@ -36,6 +38,8 @@ read_netcmd_item_type(string const & in,
       return mcert_item;
     case static_cast<u8>(fcert_item):
       return fcert_item;
+    case static_cast<u8>(rcert_item):
+      return rcert_item;
     case static_cast<u8>(key_item):
       return key_item;      
     default:

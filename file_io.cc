@@ -191,10 +191,29 @@ delete_dir_recursive(file_path const & p)
   fs::remove_all(localized(p())); 
 }
 
+void 
+delete_dir_recursive(local_path const & p) 
+{ 
+  N(directory_exists(p), 
+    F("directory to delete '%s' does not exist") % p);
+  fs::remove_all(localized(p())); 
+}
 
 void 
 move_file(file_path const & old_path,
 	  file_path const & new_path) 
+{ 
+  N(file_exists(old_path), 
+    F("rename source file '%s' does not exist") % old_path);
+  N(! file_exists(new_path), 
+    F("rename target file '%s' already exists") % new_path);
+  fs::rename(localized(old_path()), 
+	     localized(new_path()));
+}
+
+void 
+move_file(local_path const & old_path,
+	  local_path const & new_path) 
 { 
   N(file_exists(old_path), 
     F("rename source file '%s' does not exist") % old_path);
@@ -217,6 +236,18 @@ move_dir(file_path const & old_path,
 }
 
 void 
+move_dir(local_path const & old_path,
+	 local_path const & new_path) 
+{ 
+  N(directory_exists(old_path), 
+    F("rename source dir '%s' does not exist") % old_path);
+  N(!directory_exists(new_path), 
+    F("rename target dir '%s' already exists") % new_path);
+  fs::rename(localized(old_path()), 
+	     localized(new_path()));
+}
+
+void 
 mkdir_p(local_path const & p) 
 { 
   fs::create_directories(localized(p())); 
@@ -226,17 +257,6 @@ void mkdir_p(file_path const & p)
 { 
   fs::create_directories(localized(p())); 
 }
-
-void 
-hard_link(local_path const & src, local_path const & dst)
-{
-  // FIXME afaik this only works on win32 environments using NTFS; need to
-  // check and possibly develop workaround 
-  string a = localized(src()).string();
-  string b = localized(dst()).string();
-  I(link(a.c_str(), b.c_str()) == 0);
-}
-
 
 
 static void 

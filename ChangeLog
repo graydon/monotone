@@ -1,3 +1,15 @@
+2004-10-03  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Lots of little bug fixes.
+	* commands.cc: Likewise.
+	* database.cc: Comment some chatter.
+	* file_io.{cc,hh}: Bug fixes, remove unlink / hardlink stuff.
+	* netcmd.cc: Bug fixes.
+	* netsync.cc: Likewise.
+	* tests/t_*.at: Teach about revisions.
+	* testsuite.at: Likewise.
+	* work.cc: Bug fixes.
+
 2004-09-30  graydon hoare  <graydon@pobox.com>
 
 	* app_state.cc: Inform db of app.

@@ -3019,7 +3019,7 @@ rebuild_merkle_trees(app_state & app,
   // FIXME: do fcerts later 
   // ticker fcerts("fcerts");
 
-  ticker mcerts("mcerts");
+  ticker rcerts("rcerts");
   ticker keys("keys");
 
   set<revision_id> revision_ids;
@@ -3054,8 +3054,8 @@ rebuild_merkle_trees(app_state & app,
 	    id raw_id;
 	    cert_hash_code(idx(certs, i).inner(), certhash);
 	    decode_hexenc(certhash, raw_id);
-	    insert_into_merkle_tree(app, true, mcert_item, collection, raw_id(), 0);
-	    ++mcerts;
+	    insert_into_merkle_tree(app, true, rcert_item, collection, raw_id(), 0);
+	    ++rcerts;
 	    rsa_keypair_id const & k = idx(certs, i).inner().key;
 	    if (inserted_keys.find(k) == inserted_keys.end())
 	      {

@@ -15,7 +15,9 @@ AT_TESTED([monotone])
 # some command abbreviations to make life easier
 
 m4_define([MONOTONE], [monotone --rcfile=test_hooks.lua --nostd --norc --db=test.db --key=tester@test.net])
-m4_define([SHA1], [sha1sum $1 | cut -d ' ' -f 1])
+m4_define([SHA1], [monotone identify $1])
+m4_define([BASE_REVISION], [cat MT/revision])
+m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
 
 # the MONOTONE_SETUP macro deploys the standard lua hooks and loads the 
 # standard testing key, which we use for further tests.
@@ -54,6 +56,10 @@ end
 
 function non_blocking_rng_ok()
 	return true
+end
+
+function get_revision_cert_trust(signers, id, name, val)
+   return true
 end
 
 function get_manifest_cert_trust(signers, id, name, val)
@@ -100,14 +106,14 @@ AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
 ])
 
-# run as PROBE_NODE(filename, msha, fsha)
+# run as PROBE_NODE(filename, rsha, fsha)
 m4_define([PROBE_NODE], [ 
-AT_CHECK(rm MT/manifest)
+AT_CHECK(rm MT/revision)
 AT_CHECK(rm $1)
 AT_CHECK(MONOTONE checkout $2 ., [], [ignore])
-PROBE_M_SHA=`SHA1(MT/manifest)`
+PROBE_R_SHA=`BASE_REVISION`
 PROBE_F_SHA=`SHA1($1)`
-AT_CHECK(test $PROBE_M_SHA == $2)
+AT_CHECK(test $PROBE_R_SHA == $2)
 AT_CHECK(test $PROBE_F_SHA == $3)
 ])
 

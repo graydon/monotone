@@ -53,40 +53,45 @@ build_addition(file_path const & path,
   N(directory_exists(path) || file_exists(path),
     F("path %s does not exist") % path);
 
-  change_set cs;
+  change_set cs_new, cs_old, cs_concatenated;
+  cs_old.rearrangement = pr;
 
   if (directory_exists(path))
     {
-      addition_builder build(app, cs);
+      addition_builder build(app, cs_new);
       walk_tree(path, build);
     }
   else 
     {
       I(file_exists(path));
-      cs.add_file(path);
+      cs_new.add_file(path);
     }
-  normalize_change_set(cs);
-  pr = cs.rearrangement;
+  normalize_change_set(cs_new);
+  concatenate_change_sets(cs_old, cs_new, cs_concatenated);
+  pr = cs_concatenated.rearrangement;
 }
 
 void 
 build_deletion(file_path const & path,
 	       change_set::path_rearrangement & pr)
 {
-  change_set cs;
+  change_set cs_new, cs_old, cs_concatenated;
+  cs_old.rearrangement = pr;
 
   N(directory_exists(path) || file_exists(path),
     F("path %s does not exist") % path);
   
   if (directory_exists(path))
-    cs.delete_dir(path);
+    cs_new.delete_dir(path);
   else 
     {
       I(file_exists(path));
-      cs.delete_file(path);
+      cs_new.delete_file(path);
     }
-  normalize_change_set(cs);
-  pr = cs.rearrangement;
+
+  normalize_change_set(cs_new);
+  concatenate_change_sets(cs_old, cs_new, cs_concatenated);
+  pr = cs_concatenated.rearrangement;
 }
 
 void 
@@ -94,20 +99,22 @@ build_rename(file_path const & src,
 	     file_path const & dst,
 	     change_set::path_rearrangement & pr)
 {
-  change_set cs;
+  change_set cs_new, cs_old, cs_concatenated;
+  cs_old.rearrangement = pr;
 
   N(directory_exists(src) || file_exists(src),
     F("path %s does not exist") % src);
 
   if (directory_exists(src))
-    cs.rename_dir(src, dst);
+    cs_new.rename_dir(src, dst);
   else 
     {
       I(file_exists(src));
-      cs.rename_file(src, dst);
+      cs_new.rename_file(src, dst);
     }
-  normalize_change_set(cs);
-  pr = cs.rearrangement;
+  normalize_change_set(cs_new);
+  concatenate_change_sets(cs_old, cs_new, cs_concatenated);
+  pr = cs_concatenated.rearrangement;
 }
 
 

@@ -23,9 +23,7 @@
 #include "keys.hh"
 #include "manifest.hh"
 #include "netsync.hh"
-#include "nonce.hh"
 #include "packet.hh"
-#include "patch_set.hh"
 #include "rcs_import.hh"
 #include "sanity.hh"
 #include "cert.hh"
@@ -223,7 +221,7 @@ get_revision_id(revision_id & c)
       data c_data;
       L(F("loading revision id from %s\n") % c_path);
       read_data(c_path, c_data);
-      c = revision_id(c_data());
+      c = revision_id(remove_ws(c_data()));
     }
   else
     {
@@ -238,7 +236,7 @@ put_revision_id(revision_id & rev)
   get_revision_path(c_path);
   L(F("writing revision id to %s\n") % c_path);
   ensure_bookdir();
-  data c_data(rev.inner()());
+  data c_data(rev.inner()() + "\n");
   write_data(c_path, c_data);
 }
 
@@ -279,7 +277,8 @@ put_path_rearrangement(change_set::path_rearrangement & w)
   
   if (w.empty())
     {
-      delete_file(w_path);
+      if (file_exists(w_path))
+	delete_file(w_path);
     }
   else
     {
@@ -976,16 +975,41 @@ CMD(status, "informative", "", "show status of working copy")
   cout << tmp;
 }
 
-CMD(cat, "tree", "(file|manifest|revision) ID", 
+CMD(identify, "working copy", "[PATH]",
+    "calculate identity of PATH or stdin")
+{
+  if (!(args.size() == 0 || args.size() == 1))
+    throw usage(name);
+
+  data dat;
+
+  if (args.size() == 1)
+    {
+      read_localized_data(file_path(idx(args, 0)()), dat, app.lua);
+    }
+  else
+    {
+      dat = get_stdin();
+    }
+  
+  hexenc<id> ident;
+  calculate_ident(dat, ident);
+  cout << ident << endl;
+}
+
+CMD(cat, "tree", "(file|manifest|revision) [ID]", 
     "write file, manifest, or revision from database to stdout")
 {
-  if (args.size() != 2)
+  if (!(args.size() == 1 || args.size() == 2))
     throw usage(name);
 
   transaction_guard guard(app.db);
 
   if (idx(args, 0)() == "file")
     {
+      if (args.size() == 1)
+	throw usage(name);
+
       file_data dat;
       file_id ident;
       complete(app, idx(args, 1)(), ident);
@@ -1004,28 +1028,51 @@ CMD(cat, "tree", "(file|manifest|revision) ID",
     {
       manifest_data dat;
       manifest_id ident;
-      complete(app, idx(args, 1)(), ident);
 
-      N(app.db.manifest_version_exists(ident),
-	F("no manifest version %s found in database") % ident);
+      if (args.size() == 1)
+	{
+	  revision_set rev;
+	  manifest_map m_old, m_new;
+	  calculate_current_revision(app, rev, m_old, m_new);
+	  calculate_ident(m_new, ident);
+	  write_manifest_map(m_new, dat);
+	}
+      else
+	{
+	  complete(app, idx(args, 1)(), ident);
+	  N(app.db.manifest_version_exists(ident),
+	    F("no manifest version %s found in database") % ident);
+	  app.db.get_manifest_version(ident, dat);
+	}
 
       L(F("dumping manifest %s\n") % ident);
-      app.db.get_manifest_version(ident, dat);
       data unpacked;
       unpack(dat.inner(), unpacked);
       cout.write(unpacked().data(), unpacked().size());
     }
+
   else if (idx(args, 0)() == "revision")
     {
       revision_data dat;
       revision_id ident;
-      complete(app, idx(args, 1)(), ident);
 
-      N(app.db.revision_exists(ident),
-	F("no revision %s found in database") % ident);
+      if (args.size() == 1)
+	{
+	  revision_set rev;
+	  manifest_map m_old, m_new;
+	  calculate_current_revision(app, rev, m_old, m_new);
+	  calculate_ident(rev, ident);
+	  write_revision_set(rev, dat);
+	}
+      else
+	{
+	  complete(app, idx(args, 1)(), ident);
+	  N(app.db.revision_exists(ident),
+	    F("no revision %s found in database") % ident);
+	  app.db.get_revision(ident, dat);
+	}
 
       L(F("dumping revision %s\n") % ident);
-      app.db.get_revision(ident, dat);
       data unpacked;
       unpack(dat.inner(), unpacked);
       cout.write(unpacked().data(), unpacked().size());
@@ -1286,7 +1333,6 @@ CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout"
 
   manifest_id m_old_id, m_new_id; 
   manifest_map m_old, m_new;
-  patch_set ps;      
 
   complete(app, idx(args, 0)(), m_old_id);
   complete(app, idx(args, 1)(), m_new_id);
@@ -1575,10 +1621,13 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   calculate_current_revision(app, rs, m_old, m_new);
   calculate_ident(rs, rid);
 
-  N(rs.edges.size() != 0, F("no changes to commit\n"));
+  N(!(rs.edges.size() == 0 || 
+      edge_changes(rs.edges.begin()).empty()), 
+    F("no changes to commit\n"));
     
   cert_value branchname;
   I(rs.edges.size() == 1);
+
   guess_branch (edge_old_revision(rs.edges.begin()), app, branchname);
   app.set_branch(branchname());
     
@@ -2003,7 +2052,6 @@ write_file_targets(change_set const & cs,
 	app.db.get_file_version(ident, tmp);
       else if (merger.temporary_store.find(ident) != merger.temporary_store.end())
 	tmp = merger.temporary_store[ident];    
-      app.db.get_file_version(ident, tmp);
       write_localized_data(pth, tmp.inner(), app.lua);
     }
 }
@@ -2075,11 +2123,14 @@ CMD(update, "working copy", "", "update working copy")
   
   local_path tmp_root((mkpath(book_keeping_dir) / mkpath("tmp")).string());
   if (directory_exists(tmp_root))
-    delete_file(tmp_root);
+    delete_dir_recursive(tmp_root);
 
   mkdir_p(tmp_root);
   apply_rearrangement_to_filesystem(update.rearrangement, tmp_root);
   write_file_targets(update, merger, app);
+
+  if (directory_exists(tmp_root))
+    delete_dir_recursive(tmp_root);
   
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
@@ -2319,6 +2370,128 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
 }
 
 
+CMD(revert, "working copy", "[FILE]...", 
+    "revert file(s) or entire working copy")
+{
+  manifest_map m_new, m_old;
+  revision_set rev;
+
+  calculate_current_revision(app, rev, m_old, m_new);
+
+  if (args.size() == 0)
+    {
+      // revert the whole thing
+      for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
+	{
+
+	  N(app.db.file_version_exists(manifest_entry_id(i)),
+	    F("no file version %s found in database for %s")
+	    % manifest_entry_id(i) % manifest_entry_path(i));
+      
+	  file_data dat;
+	  L(F("writing file %s to %s\n")
+	    % manifest_entry_id(i) % manifest_entry_path(i));
+	  app.db.get_file_version(manifest_entry_id(i), dat);
+	  write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
+	}
+      remove_path_rearrangement();
+    }
+  else
+    {
+      change_set::path_rearrangement work;
+      get_path_rearrangement(work);
+
+      // revert some specific files
+      vector<utf8> work_args (args.begin(), args.end());
+      for (size_t i = 0; i < work_args.size(); ++i)
+	{
+	  string arg(idx(work_args, i)());
+	  if (directory_exists(file_path(arg)))
+	    {
+	      // simplest is to just add all files from that
+	      // directory.
+	      string dir = arg;
+	      int off = dir.find_last_not_of('/');
+	      if (off != -1)
+		dir = dir.substr(0, off + 1);
+	      dir += '/';
+	      for (manifest_map::const_iterator i = m_old.begin();
+		   i != m_old.end(); ++i)
+		{
+		  file_path p = i->first;
+		  if (! p().compare(0, dir.length(), dir))
+		    work_args.push_back(p());
+		}
+	    }
+
+	  N(directory_exists(file_path(arg)) ||
+	    (m_old.find(arg) != m_old.end()) ||
+	    (work.added_files.find(arg) != work.added_files.end()) ||
+	    (work.deleted_dirs.find(arg) != work.deleted_dirs.end()) ||
+	    (work.deleted_files.find(arg) != work.deleted_files.end()) ||
+	    (work.deleted_dirs.find(arg) != work.deleted_dirs.end()) ||
+	    (work.renamed_files.find(arg) != work.renamed_files.end()),
+	    F("nothing known about %s") % arg);
+
+	  manifest_map::const_iterator entry = m_old.find(file_path(arg));
+	  if (entry != m_old.end())
+	    {
+	      
+	      L(F("reverting %s to %s\n") %
+		manifest_entry_path(entry) % manifest_entry_id(entry));
+	      
+	      N(app.db.file_version_exists(manifest_entry_id(entry)),
+		F("no file version %s found in database for %s")
+		% manifest_entry_id(entry) % manifest_entry_path(entry));
+	      
+	      file_data dat;
+	      L(F("writing file %s to %s\n") %
+		manifest_entry_id(entry) % manifest_entry_path(entry));
+	      app.db.get_file_version(manifest_entry_id(entry), dat);
+	      write_localized_data(manifest_entry_path(entry), dat.inner(), app.lua);
+
+	      // a deleted file will always appear in the manifest
+	      if (work.deleted_files.find(arg) != work.deleted_files.end())
+		{
+		  L(F("also removing deletion for %s\n") % arg);
+		  work.deleted_files.erase(arg);
+		}
+	    }
+	  else if (work.deleted_dirs.find(arg) != work.deleted_dirs.end())
+	    {
+	      L(F("removing delete for %s\n") % arg);
+	      work.deleted_dirs.erase(arg);
+	    }
+	  else if (work.deleted_files.find(arg) != work.deleted_files.end())
+	    {
+	      L(F("removing delete for %s\n") % arg);
+	      work.deleted_files.erase(arg);
+	    }
+	  else if (work.renamed_dirs.find(arg) != work.renamed_dirs.end())
+	    {
+	      L(F("removing rename for %s\n") % arg);
+	      work.renamed_dirs.erase(arg);
+	    }
+	  else if (work.renamed_files.find(arg) != work.renamed_files.end())
+	    {
+	      L(F("removing rename for %s\n") % arg);
+	      work.renamed_files.erase(arg);
+	    }
+	  else if (work.added_files.find(arg) != work.added_files.end())
+	    {
+	      L(F("removing addition for %s\n") % arg);
+	      work.added_files.erase(arg);
+	    }
+	}
+      // race
+      put_path_rearrangement(work);
+    }
+
+  update_any_attrs(app);
+  app.write_options();
+}
+
+
 /*
 
 // actual commands follow
@@ -2404,118 +2577,6 @@ CMD(disapprove, "certificate", "REVISION",
   packet_db_writer dbw(app);
   cert_revision_approval(c, false, app, dbw);
 }
-
-
-
-
-CMD(revert, "working copy", "[FILE]...", 
-    "revert file(s) or entire working copy")
-{
-  manifest_map m_old;
-
-  if (args.size() == 0)
-    {
-      // revert the whole thing
-      get_manifest_map(m_old);
-      for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
-	{
-	  path_id_pair pip(*i);
-
-	  N(app.db.file_version_exists(manifest_entry_id(i)),
-	    F("no file version %s found in database for %s")
-	    % manifest_entry_id(i) % manifest_entry_path(i));
-      
-	  file_data dat;
-	  L(F("writing file %s to %s\n") %
-	    % manifest_entry_id(i) % manifest_entry_path(i));
-	  app.db.get_file_version(manifest_entry_id(i), dat);
-	  write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
-	}
-      remove_path_rearrangement();
-    }
-  else
-    {
-      change_set::path_rearrangement work;
-      get_manifest_map(m_old);
-      get_path_rearrangement(work);
-
-      // revert some specific files
-      vector<utf8> work_args (args.begin(), args.end());
-      for (size_t i = 0; i < work_args.size(); ++i)
-	{
-	  string arg(idx(work_args, i)());
-	  if (directory_exists(arg))
-	    {
-	      // simplest is to just add all files from that
-	      // directory.
-	      string dir = arg;
-	      int off = dir.find_last_not_of('/');
-	      if (off != -1)
-		dir = dir.substr(0, off + 1);
-	      dir += '/';
-	      for (manifest_map::const_iterator i = m_old.begin();
-		   i != m_old.end(); ++i)
-		{
-		  file_path p = i->first;
-		  if (! p().compare(0, dir.length(), dir))
-		    work_args.push_back(p());
-		}
-	      continue;
-	    }
-
-	  N((m_old.find(arg) != m_old.end()) ||
-	    (work.adds.find(arg) != work.adds.end()) ||
-	    (work.dels.find(arg) != work.dels.end()) ||
-	    (work.renames.find(arg) != work.renames.end()),
-	    F("nothing known about %s") % arg);
-
-	  if (m_old.find(arg) != m_old.end())
-	    {
-	      manifest_entry entry = m_old.find(arg);
-	      L(F("reverting %s to %s\n") %
-		manifest_entry_path(entry) % manifest_entry_id(entry));
-	      
-	      N(app.db.file_version_exists(pip.ident()),
-		F("no file version %s found in database for %s")
-		manifest_entry_id(entry) % manifest_entry_path(entry));
-	      
-	      file_data dat;
-	      L(F("writing file %s to %s\n") %
-		manifest_entry_id(entry) % manifest_entry_path(entry));
-	      app.db.get_file_version(manifest_entry_id(entry), dat);
-	      write_localized_data(manifest_entry_path(entry), dat.inner(), app.lua);
-
-	      // a deleted file will always appear in the manifest
-	      if (work.dels.find(arg) != work.dels.end())
-		{
-		  L(F("also removing deletion for %s\n") % arg);
-		  work.dels.erase(arg);
-		}
-	    }
-	  else if (work.renames.find(arg) != work.renames.end())
-	    {
-	      L(F("removing rename for %s\n") % arg);
-	      work.renames.erase(arg);
-	    }
-	  else
-	    {
-	      I(work.adds.find(arg) != work.adds.end());
-	      L(F("removing addition for %s\n") % arg);
-	      work.adds.erase(arg);
-	    }
-	}
-      // race
-      put_path_rearrangement(work);
-    }
-
-  update_any_attrs(app);
-  app.write_options();
-}
-
-
-
-
-
 
 
 CMD(log, "informative", "[ID] [file]", "print log history in reverse order (which affected file)")
