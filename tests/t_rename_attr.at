@@ -1,0 +1,22 @@
+AT_SETUP([rename moves attributes])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+ADD_FILE(testfile, [foo bar
+])
+AT_CHECK(MONOTONE attr set testfile some_key some_value, [], [ignore], [ignore])
+AT_CHECK(MONOTONE attr get testfile, [], [stdout], [ignore])
+AT_CHECK(grep -q some_key stdout)
+AT_CHECK(grep -q some_value stdout)
+
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE rename testfile otherfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE attr get testfile, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE attr get otherfile, [], [stdout], [ignore])
+AT_CHECK(grep -q some_key stdout)
+AT_CHECK(grep -q some_value stdout)
+
+AT_CLEANUP

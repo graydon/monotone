@@ -1,3 +1,9 @@
+2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_attr.at: No longer a bug report.
+	* tests/t_rename_attr.at: New test.
+	* testsuite.at: Add it.
+
 2005-03-26  Joel Crisp  <jcrisp@s-r-s.co.uk>
 
 	* contrib/Log2Gxl.java: New file.
