@@ -22,6 +22,7 @@
 #include "netio.hh"
 #include "netsync.hh"
 #include "numeric_vocab.hh"
+#include "patch_set.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
@@ -218,9 +219,8 @@ struct session
   time_t last_io_time;
 
   map<netcmd_item_type, done_marker> done_refinements;
-  set<id> requested_manifests;
-  set<id> requested_files;
-  map<id,id> ancestry_edges;
+  set< pair<netcmd_item_type, id> > requested_items;
+  multimap<id,id> ancestry_edges;
 
   id saved_nonce;
   bool sent_goodbye;
@@ -239,6 +239,12 @@ struct session
   void mark_recent_io();
   bool done_all_refinements();
   bool got_all_data();
+  void analyze_ancestry_graph();
+  void analyze_manifest(manifest_map const & man);
+  void analyze_manifest_edge(manifest_map const & parent,
+			     manifest_map const & child);
+  void request_manifests_recursive(id const & i, set<id> & visited);
+
   Probe::ready_type which_events() const;
   bool read_some(ticker * t = NULL);
   bool write_some(ticker * t = NULL);
@@ -402,8 +408,171 @@ bool session::done_all_refinements()
 
 bool session::got_all_data()
 {
-  return requested_manifests.empty() &&
-    requested_files.empty();
+  return requested_items.empty();
+}
+
+struct always_true_version_check :
+  public version_existence_check
+{
+  virtual bool check(file_id i)
+  {
+    return true;
+  }
+};
+
+void session::analyze_manifest_edge(manifest_map const & parent,
+				    manifest_map const & child)
+{
+  L(F("analyzing %d parent, %d child manifest entries\n") 
+    % parent.size() % child.size());
+
+  always_true_version_check atc;
+  patch_set ps;
+  manifests_to_patch_set(parent, child, this->app, atc, ps);
+
+  for (set<patch_delta>::const_iterator i = ps.f_deltas.begin();
+       i != ps.f_deltas.end(); ++i)
+    {
+      if (this->app.db.file_version_exists(i->id_new))
+	{
+	  L(F("file delta target '%s' already exists on our side\n"));
+	}
+      else
+	{
+	  L(F("requesting file delta from '%s' -> '%s' (path %s)") 
+	    % i->id_old % i->id_new % i->path);
+	  id tmp1, tmp2;
+	  decode_hexenc(i->id_old.inner(), tmp1);
+	  decode_hexenc(i->id_new.inner(), tmp2);
+	  queue_send_delta_cmd(file_item, tmp1, tmp2);
+	}
+    }
+
+  for (set<patch_addition>::const_iterator i = ps.f_adds.begin();
+       i != ps.f_adds.end(); ++i)
+    {      
+      if (this->app.db.file_version_exists(i->ident))
+	{
+	  L(F("added file version '%s' already exists on our side\n"));
+	}
+      else
+	{
+	  L(F("requesting missing data for file '%s' (path %s)") 
+	    % i->ident % i->path);
+	  id tmp;
+	  decode_hexenc(i->ident.inner(), tmp);
+	  queue_send_data_cmd(file_item, tmp);
+	}
+    }
+}
+
+void session::analyze_manifest(manifest_map const & man)
+{
+  L(F("analyzing %d entries in manifest\n") % man.size());
+  for (manifest_map::const_iterator i = man.begin();
+       i != man.end(); ++i)
+    {
+      path_id_pair pip(i);
+      if (! this->app.db.file_version_exists(pip.ident()))
+	{
+	  id tmp;
+	  decode_hexenc(pip.ident().inner(), tmp);
+	  queue_send_data_cmd(file_item, tmp);
+	}
+    }
+}
+
+void session::request_manifests_recursive(id const & i, set<id> & visited)
+{
+  if (visited.find(i) != visited.end())
+    return;
+
+  visited.insert(i);
+
+  hexenc<id> hid;
+  encode_hexenc(i, hid);
+
+  L(F("visiting manifest '%s'\n") % hid);
+
+  typedef multimap<id,id>::const_iterator ite;
+  pair<ite,ite> range = ancestry_edges.equal_range(i);
+
+  if (range.first == ancestry_edges.end())
+    {
+      // we are at a root, request full data
+      if (this->app.db.manifest_version_exists(manifest_id(hid)))
+	{
+	  L(F("not requesting manifest '%s' as we already have it\n") % hid);
+	}
+      else
+	{
+	  queue_send_data_cmd(manifest_item, i);
+	}
+    }
+  else
+    {
+      // first make sure we've requested enough to get to here by
+      // calling ourselves recursively
+      for (ite p = range.first; p != range.second; ++p)
+	{
+	  id const & child = p->first;
+	  id const & parent = p->second;
+	  I(i == child);
+	  request_manifests_recursive(parent, visited);
+	}
+
+      // then perhaps request the edge that leads from an arbitrary parent
+      // to here. we'll pick the first parent, why not?
+      id const & child = range.first->first;
+      id const & parent = range.first->second;
+      I(i == child);
+      if (this->app.db.manifest_version_exists(manifest_id(hid)))
+	{
+	  L(F("not requesting manifest delta to '%s' as we already have it\n") % hid);
+	}
+      else
+	{
+	  queue_send_delta_cmd(manifest_item, parent, child);
+	}      
+    }
+}
+
+void session::analyze_ancestry_graph()
+{
+  set<id> heads;
+
+  L(F("analyzing %d ancestry edges\n") % ancestry_edges.size());
+
+  // each ancestry edge goes from child -> parent
+
+  for (multimap<id,id>::const_iterator i = ancestry_edges.begin();
+       i != ancestry_edges.end(); ++i)
+    {
+      // first we add all children we're aware of to the heads set
+      heads.insert(i->first);
+    }
+
+  for (multimap<id,id>::const_iterator i = ancestry_edges.begin();
+       i != ancestry_edges.end(); ++i)
+    {
+      // then we remove any which are also parents
+      heads.erase(i->second);
+    }
+
+  L(F("isolated %d heads\n") % heads.size());
+
+  // then we walk the graph upwards, recursively, starting from
+  // each of the heads
+
+  set<id> visited;
+  for (set<id>::const_iterator i = heads.begin();
+       i != heads.end(); ++i)
+    {
+      hexenc<id> hid;
+      encode_hexenc(*i, hid);
+      L(F("walking upwards from '%s'\n") % hid);
+      request_manifests_recursive(*i, visited);
+    }
 }
 
 Probe::ready_type session::which_events() const
@@ -534,14 +703,27 @@ void session::queue_send_data_cmd(netcmd_item_type type,
 				  id const & item)
 {
   if (this->sent_goodbye) return;
+
   string typestr;
   netcmd_item_type_to_string(type, typestr);
+
+  if (this->requested_items.find(make_pair(type, item)) != 
+      this->requested_items.end())
+    {
+      hexenc<id> hid;
+      encode_hexenc(item, hid);
+      L(F("not queueing request for %s '%s' as we already requested it\n") 
+	% typestr % hid);
+      return;
+    }
+
   L(F("queueing request for data of %s item '%s'\n")
     % typestr % tohex(item()));
   netcmd cmd;
   cmd.cmd_code = send_data_cmd;
   write_send_data_cmd_payload(type, item, cmd.payload);
   write_netcmd(cmd, outbuf);
+  this->requested_items.insert(make_pair(type, item));
 }
     
 void session::queue_send_delta_cmd(netcmd_item_type type,
@@ -549,14 +731,30 @@ void session::queue_send_delta_cmd(netcmd_item_type type,
 				   id const & ident)
 {
   if (this->sent_goodbye) return;
+
   string typestr;
   netcmd_item_type_to_string(type, typestr);
+  I(type == manifest_item || type == file_item);
+
+  if (this->requested_items.find(make_pair(type, ident)) != 
+      this->requested_items.end())
+    {
+      hexenc<id> base_hid;
+      encode_hexenc(base, base_hid);
+      hexenc<id> ident_hid;
+      encode_hexenc(ident, ident_hid);
+      L(F("not queueing request for %s delta '%s' -> '%s' as we already requested the target\n") 
+	% typestr % base_hid % ident_hid % ident_hid);
+      return;
+    }
+
   L(F("queueing request for contents of %s delta '%s' -> '%s'\n")
     % typestr % tohex(base()) % tohex(ident()));
   netcmd cmd;
   cmd.cmd_code = send_delta_cmd;
   write_send_delta_cmd_payload(type, base, ident, cmd.payload);
   write_netcmd(cmd, outbuf);
+  this->requested_items.insert(make_pair(type, ident));
 }
 
 void session::queue_data_cmd(netcmd_item_type type,
@@ -635,6 +833,10 @@ bool session::process_done_cmd(size_t level, netcmd_item_type type)
       // tombstone it
       i->second.current_level_had_refinements = false;
       i->second.tree_is_done = true;
+      
+      // if it's mcerts, look over the ancestry graph
+      if (type == mcert_item)
+	analyze_ancestry_graph();
     }
 
   else if (i->second.current_level_had_refinements 
@@ -877,6 +1079,27 @@ bool session::process_confirm_cmd(string const & signature)
   return false;
 }
 
+static bool data_exists(netcmd_item_type type, 
+			id const & item, 
+			app_state & app)
+{
+  hexenc<id> hitem;
+  encode_hexenc(item, hitem);
+  switch (type)
+    {
+    case key_item:
+      return app.db.public_key_exists(hitem);
+    case fcert_item:
+      return app.db.file_cert_exists(hitem);
+    case mcert_item:
+      return app.db.manifest_cert_exists(hitem);
+    case manifest_item:
+      return app.db.manifest_version_exists(manifest_id(hitem));
+    case file_item:
+      return app.db.file_version_exists(file_id(hitem));
+    }
+  return false;
+}
 
 static void load_data(netcmd_item_type type, 
 		      id const & item, 
@@ -917,6 +1140,7 @@ static void load_data(netcmd_item_type type,
 	{
 	  throw bad_decode(F("manifest '%s' does not exist in our database") % hitem);
 	}
+      break;
 
     case file_item:
       if (app.db.file_version_exists(file_id(hitem)))
@@ -931,6 +1155,7 @@ static void load_data(netcmd_item_type type,
 	{
 	  throw bad_decode(F("file '%s' does not exist in our database") % hitem);
 	}
+      break;
 
     case mcert_item:
       if(app.db.manifest_cert_exists(hitem))
@@ -1337,61 +1562,80 @@ bool session::process_send_data_cmd(netcmd_item_type type,
   encode_hexenc(item, hitem);
   L(F("received 'send_data' netcmd requesting %s '%s'\n") 
     % typestr % hitem);
-  string out;
-  load_data(type, item, this->app, out);
-  queue_data_cmd(type, item, out);
+  if (data_exists(type, item, this->app))
+    {
+      string out;
+      load_data(type, item, this->app, out);
+      queue_data_cmd(type, item, out);
+    }
+  else
+    {
+      queue_nonexistant_cmd(type, item);
+    }
   return true;
 }
 
 bool session::process_send_delta_cmd(netcmd_item_type type,
-				     id const & ident, 
-				     id const & base)
+				     id const & base,
+				     id const & ident)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   delta del;
+
+  hexenc<id> hbase, hident;
+  encode_hexenc(base, hbase);
+  encode_hexenc(ident, hident);
+
+  L(F("received 'send_delta' netcmd requesting %s edge '%s' -> '%s'\n") 
+    % typestr % hbase % hident);
+
   switch (type)
     {
     case file_item:
       {
-	file_id fbase(base), fident(ident);
+	file_id fbase(hbase), fident(hident);
 	file_delta fdel;
 	if (this->app.db.file_version_exists(fbase) 
 	    && this->app.db.file_version_exists(fident))
 	  {
-	    file_data base_dat, ident_dat;
-	    this->app.db.get_file_version(fbase, base_dat);
-	    this->app.db.get_file_version(fident, ident_dat);
-	    string tmp;
-	    compute_delta(base_dat.inner()(), ident_dat.inner()(), tmp);
+	    file_data base_fdat, ident_fdat;
+	    data base_dat, ident_dat;
+	    this->app.db.get_file_version(fbase, base_fdat);
+	    this->app.db.get_file_version(fident, ident_fdat);	    
+	    string tmp;	    
+	    unpack(base_fdat.inner(), base_dat);
+	    unpack(ident_fdat.inner(), ident_dat);
+	    compute_delta(base_dat(), ident(), tmp);
 	    del = delta(tmp);
 	  }
 	else
 	  {
-	    throw bad_decode(F("file delta '%s' -> '%s' does not exist in our database") 
-			     % base % ident);
+	    queue_nonexistant_cmd(type, ident);
 	  }
       }
       break;
 
     case manifest_item:
       {
-	manifest_id mbase(base), mident(ident);
+	manifest_id mbase(hbase), mident(hident);
 	manifest_delta mdel;
 	if (this->app.db.manifest_version_exists(mbase) 
 	    && this->app.db.manifest_version_exists(mident))
 	  {
-	    manifest_data base_dat, ident_dat;
-	    this->app.db.get_manifest_version(mbase, base_dat);
-	    this->app.db.get_manifest_version(mident, ident_dat);
+	    manifest_data base_mdat, ident_mdat;
+	    data base_dat, ident_dat;
+	    this->app.db.get_manifest_version(mbase, base_mdat);
+	    this->app.db.get_manifest_version(mident, ident_mdat);
 	    string tmp;
-	    compute_delta(base_dat.inner()(), ident_dat.inner()(), tmp);
+	    unpack(base_mdat.inner(), base_dat);
+	    unpack(ident_mdat.inner(), ident_dat);
+	    compute_delta(base_dat(), ident_dat(), tmp);
 	    del = delta(tmp);
 	  }
 	else
 	  {
-	    throw bad_decode(F("manifest delta '%s' -> '%s' does not exist in our database") 
-			     % base % ident);
+	    queue_nonexistant_cmd(type, ident);
 	  }
       }
       break;
@@ -1426,9 +1670,14 @@ void session::update_merkle_trees(netcmd_item_type type,
 bool session::process_data_cmd(netcmd_item_type type,
 			       id const & item, 
 			       string const & dat)
-{
+{  
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
+
+  // it's ok if we received something we didn't ask for; it might
+  // be a spontaneous transmission from refinement
+  requested_items.erase(make_pair(type, item));
+			   
   switch (type)
     {
     case key_item:
@@ -1463,6 +1712,19 @@ bool session::process_data_cmd(netcmd_item_type type,
 	    throw bad_decode(F("hash check failed for manifest cert '%s'")  % hitem);
 	  this->app.db.put_manifest_cert(manifest<cert>(c));
 	  update_merkle_trees(mcert_item, tmp, true);
+	  if (c.name == ancestor_cert_name)
+	    {
+	      cert_value tmp_value;
+	      hexenc<id> tmp_parent;
+	      id child, parent;
+
+	      decode_base64(c.value, tmp_value);
+	      tmp_parent = tmp_value();
+	      decode_hexenc(c.ident, child);
+	      decode_hexenc(tmp_parent, parent);
+	      L(F("noticed ancestry edge from '%s' -> '%s'\n") % tmp_parent % c.ident);
+	      this->ancestry_edges.insert(make_pair(child, parent));
+	    }
 	}
       break;
 
@@ -1492,6 +1754,9 @@ bool session::process_data_cmd(netcmd_item_type type,
 	    base64< gzip<data> > packed_dat;
 	    pack(data(dat), packed_dat);
 	    this->app.db.put_manifest(mid, manifest_data(packed_dat));
+	    manifest_map man;
+	    read_manifest_map(data(dat), man);
+	    analyze_manifest(man);
 	  }
       }
       break;
@@ -1511,7 +1776,7 @@ bool session::process_data_cmd(netcmd_item_type type,
       break;
 
     }
-  return true;
+      return true;
 }
 
 bool session::process_delta_cmd(netcmd_item_type type,
@@ -1524,6 +1789,11 @@ bool session::process_delta_cmd(netcmd_item_type type,
   hexenc<id> hbase, hident;
   encode_hexenc(base, hbase);
   encode_hexenc(ident, hident);
+
+  // it's ok if we received something we didn't ask for; it might
+  // be a spontaneous transmission from refinement
+  requested_items.erase(make_pair(type, ident));
+
   switch (type)
     {
     case manifest_item:
@@ -1556,6 +1826,9 @@ bool session::process_delta_cmd(netcmd_item_type type,
 		pack(del, packed_del);		
 		this->app.db.put_manifest_version(old_manifest, new_manifest, 
 						  manifest_delta(packed_del));
+		manifest_map man;
+		read_manifest_map(data(tmp), man);
+		analyze_manifest(man);
 	      }					      
 	  }
       }
@@ -1611,6 +1884,7 @@ bool session::process_nonexistant_cmd(netcmd_item_type type,
   encode_hexenc(item, hitem);
   L(F("received 'nonexistant' netcmd for %s '%s'\n") 
     % typestr % hitem);
+  requested_items.erase(make_pair(type, item));
   return true;
 }
 
@@ -1963,8 +2237,6 @@ static void serve_connections(protocol_role role,
 			    % fd % sess->peer_id);
 			  sessions.erase(i);
 			}
-		      if (sess->done_all_refinements() && sess->got_all_data())
-			sess->queue_bye_cmd();
 		    }
 		  else
 		    {

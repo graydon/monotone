@@ -1,3 +1,10 @@
+2004-02-22  graydon hoare  <graydon@pobox.com>
+
+	* patch_set.cc, patch_set.hh: Parameterize yet further.
+	* netsync.cc: Fix a lot of bugs, add manifest and file grovelling.
+	* tests/t_netsync.at: A new test (which runs!)
+	* testsuite.at: Call it.
+
 2004-02-20  graydon hoare  <graydon@pobox.com>
 
 	* cert.cc, cert.hh, key.cc, key.hh, database.cc, database.hh:

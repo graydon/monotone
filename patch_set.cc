@@ -192,7 +192,7 @@ static void index_adds(set<entry> const & adds,
 
 static void classify_dels(set<entry> const & in_dels,
 			  path_id_bijection & adds,		  
-			  app_state & app,
+			  version_existence_check & vc,
 			  set<file_path> & dels,
 			  set<patch_move> & moves,
 			  set<patch_delta> & deltas)
@@ -210,7 +210,7 @@ static void classify_dels(set<entry> const & in_dels,
       if (adds.exists(pip.path()))
 	{
 	  // there is an add which matches this delete
-	  if (app.db.file_version_exists(pip.ident()))
+	  if (vc.check(pip.ident()))
 	    {
 	      // this is a "true delta"
 	      L(F("found true delta %s\n") % pip.path());
@@ -245,9 +245,40 @@ static void classify_dels(set<entry> const & in_dels,
     }
 }
 
+struct app_based_version_check :
+  public version_existence_check
+{
+  app_state & app;
+  app_based_version_check(app_state & a) : app(a) {}
+  virtual bool check(file_id i)
+  {
+    return app.db.file_version_exists(i);
+  }
+};
+
 void manifests_to_patch_set(manifest_map const & m_old,
 			    manifest_map const & m_new,
 			    app_state & app,
+			    patch_set & ps)
+{
+  app_based_version_check abc(app);
+  manifests_to_patch_set(m_old, m_new, app, abc, ps);
+}
+
+void manifests_to_patch_set(manifest_map const & m_old,
+			    manifest_map const & m_new,
+			    rename_edge const & renames,
+			    app_state & app,
+			    patch_set & ps)
+{
+  app_based_version_check abc(app);
+  manifests_to_patch_set(m_old, m_new, renames, abc, ps);  
+}
+
+void manifests_to_patch_set(manifest_map const & m_old,
+			    manifest_map const & m_new,
+			    app_state & app,
+			    version_existence_check & vc,
 			    patch_set & ps)
 {
   rename_edge renames;
@@ -272,7 +303,7 @@ void manifests_to_patch_set(manifest_map const & m_old,
 void manifests_to_patch_set(manifest_map const & m_old,
 			    manifest_map const & m_new,
 			    rename_edge const & renames,
-			    app_state & app,
+			    version_existence_check & vc,
 			    patch_set & ps)
 
 {
@@ -301,7 +332,7 @@ void manifests_to_patch_set(manifest_map const & m_old,
   path_id_bijection add_mapping;
   index_adds(changes.adds, add_mapping);
   size_t num_add_candidates = add_mapping.size();
-  classify_dels(changes.dels, add_mapping, app,
+  classify_dels(changes.dels, add_mapping, vc,
 		ps.f_dels, ps.f_moves, ps.f_deltas);  
 
   size_t move_and_edits = 0;
