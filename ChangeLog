@@ -1,5 +1,10 @@
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_explicit_merge.at: New test.
+	* testsuite.at: Add it.
+	
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* testsuite.at: Remove duplicate line created by merge.
 	* ChangeLog: Re-sort after merges.
 
