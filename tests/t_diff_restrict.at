@@ -1,12 +1,6 @@
 AT_SETUP([diff respects restrictions])
 MONOTONE_SETUP
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
-# Currently, if any --revision argument is passed to monotone, diff
-# ignores restrictions.
-
 ADD_FILE(file1, [1: data 1
 ])
 ADD_FILE(file2, [2: data 1

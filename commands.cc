@@ -323,50 +323,68 @@ put_path_rearrangement(change_set::path_rearrangement & w)
 }
 
 static void
-get_valid_paths(path_set const & old_paths, change_set::path_rearrangement const & work, 
-                path_set & valid_paths)
+extract_rearranged_paths(change_set::path_rearrangement const & rearrangement, path_set & paths)
 {
-  // collect paths from old manifest and work set into valid_paths
+  paths.insert(rearrangement.deleted_files.begin(), rearrangement.deleted_files.end());
+  paths.insert(rearrangement.deleted_dirs.begin(), rearrangement.deleted_dirs.end());
 
-  valid_paths.clear();
-  valid_paths.insert(old_paths.begin(), old_paths.end());
-  valid_paths.insert(work.deleted_files.begin(), work.deleted_files.end());
-  valid_paths.insert(work.deleted_dirs.begin(), work.deleted_dirs.end());
+  for (map<file_path, file_path>::const_iterator i = rearrangement.renamed_files.begin(); 
+       i != rearrangement.renamed_files.end(); ++i) 
+    {
+      paths.insert(i->first); 
+      paths.insert(i->second); 
+    }
 
-  // only add the new names for renamed files and dirs
-  // the old names should come from the old manifest
+  for (map<file_path, file_path>::const_iterator i = rearrangement.renamed_dirs.begin(); 
+       i != rearrangement.renamed_dirs.end(); ++i) 
+    {
+      paths.insert(i->first); 
+      paths.insert(i->second); 
+    }
 
-  for (map<file_path, file_path>::const_iterator i = work.renamed_files.begin(); 
-       i != work.renamed_files.end(); ++i) 
-      valid_paths.insert(i->second); 
+  paths.insert(rearrangement.added_files.begin(), rearrangement.added_files.end());
+}
 
-  for (map<file_path, file_path>::const_iterator i = work.renamed_dirs.begin(); 
-       i != work.renamed_dirs.end(); ++i) 
-      valid_paths.insert(i->second); 
+static void 
+extract_delta_paths(change_set::delta_map const & deltas, path_set & paths)
+{
+  for (change_set::delta_map::const_iterator i = deltas.begin(); i != deltas.end(); ++i)
+    {
+      paths.insert(i->first);
+    }
+}
 
-  valid_paths.insert(work.added_files.begin(), work.added_files.end());
+static void
+extract_changed_paths(change_set const & cs, path_set & paths)
+{
+  extract_rearranged_paths(cs.rearrangement, paths);
+  extract_delta_paths(cs.deltas, paths);
+}
 
-  // add intermediate directories to valid paths
+static void 
+add_intermediate_paths(path_set & paths)
+{
+  path_set intermediate_paths;
 
-  path_set added_dirs;
-
-  for (path_set::const_iterator i = valid_paths.begin(); i != valid_paths.end();
-       ++i)
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       fs::path p = mkpath((*i)());
       while (p.has_branch_path())
         {
           p = p.branch_path();
           file_path dir(p.string());
-          // once we his a that exists or has been added we're done.
-          if (valid_paths.find(dir) != valid_paths.end()) break;
-          if (added_dirs.find(dir) != added_dirs.end()) break;
-          added_dirs.insert(dir);
+
+          // once we hit a subdir that exists or has been added we're done.
+          if (paths.find(dir) != paths.end()) break;
+          if (intermediate_paths.find(dir) != intermediate_paths.end()) break;
+
+          intermediate_paths.insert(dir);
         }
     }
 
-  valid_paths.insert(added_dirs.begin(), added_dirs.end());
+  paths.insert(intermediate_paths.begin(), intermediate_paths.end());
 }
+
 
 static void
 restrict_path_set(string const & type,
@@ -432,6 +450,27 @@ restrict_path_rearrangement(change_set::path_rearrangement const & work,
 
   restrict_path_set("add file", work.added_files, 
                     included.added_files, excluded.added_files, app);
+}
+
+static void
+restrict_delta_map(change_set::delta_map const & deltas,
+                   change_set::delta_map & included,
+                   change_set::delta_map & excluded,
+                   app_state & app)
+{
+  for (change_set::delta_map::const_iterator i = deltas.begin(); i!= deltas.end(); ++i)
+    {
+      if (app.restriction_includes(i->first)) 
+        {
+          L(F("restriction includes delta on %s\n") % i->first);
+          included.insert(*i);
+        }
+      else
+        {
+          L(F("restriction excludes delta on %s\n") % i->first);
+          excluded.insert(*i);
+        }
+    }
 }
 
 static void 
@@ -531,7 +570,7 @@ calculate_restricted_revision(app_state & app,
   manifest_id old_manifest_id;
   revision_id old_revision_id;    
   boost::shared_ptr<change_set> cs(new change_set());
-  path_set old_paths, new_paths, valid_paths;
+  path_set old_paths, new_paths;
   change_set::path_rearrangement work, included, excluded;
 
   rev.edges.clear();
@@ -544,7 +583,10 @@ calculate_restricted_revision(app_state & app,
 
   get_path_rearrangement(work);
   extract_path_set(m_old, old_paths);
-  get_valid_paths(old_paths, work, valid_paths);
+
+  path_set valid_paths(old_paths);
+  extract_rearranged_paths(work, valid_paths);
+  add_intermediate_paths(valid_paths);
 
   app.set_restriction(valid_paths, args); 
 
@@ -576,6 +618,25 @@ calculate_restricted_revision(app_state & app,
   calculate_restricted_revision(app, args, rev, m_old, m_new, work);
 }
 
+static void
+calculate_restricted_change_set(app_state & app, 
+                                vector<utf8> const & args,
+                                change_set const & cs,
+                                change_set & included,
+                                change_set & excluded)
+{
+  path_set valid_paths;
+
+  extract_changed_paths(cs, valid_paths);
+  add_intermediate_paths(valid_paths);
+
+  app.set_restriction(valid_paths, args); 
+
+  restrict_path_rearrangement(cs.rearrangement, 
+                              included.rearrangement, excluded.rearrangement, app);
+
+  restrict_delta_map(cs.deltas, included.deltas, excluded.deltas, app);
+}
 
 static string 
 get_stdin()
@@ -1850,7 +1911,7 @@ ls_missing (app_state & app, vector<utf8> const & args)
   manifest_id mid;
   manifest_map man;
   change_set::path_rearrangement work, included, excluded;
-  path_set old_paths, new_paths, valid_paths;
+  path_set old_paths, new_paths;
 
   app.require_working_copy();
 
@@ -1858,7 +1919,10 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   get_path_rearrangement(work);
   extract_path_set(man, old_paths);
-  get_valid_paths(old_paths, work, valid_paths);
+
+  path_set valid_paths(old_paths);
+  extract_rearranged_paths(work, valid_paths);
+  add_intermediate_paths(valid_paths);
 
   app.set_restriction(valid_paths, args); 
 
@@ -2541,7 +2605,7 @@ void do_diff(const string & name,
       N(app.db.revision_exists(r_old_id),
         F("revision %s does not exist") % r_old_id);
       app.db.get_revision(r_old_id, r_old);
-      calculate_restricted_revision(app, args, r_new, m_old, m_new);
+      calculate_current_revision(app, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       N(r_new.edges.size() == 1, F("current revision has no ancestor"));
       new_is_archived = false;
@@ -2550,10 +2614,6 @@ void do_diff(const string & name,
     {
       revision_id r_old_id, r_new_id;
       manifest_id m_new_id;
-
-      // don't support pathnames or restrictions in this form
-      if (args.size() != 0)
-        throw usage(name);
 
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       complete(app, idx(app.revision_selectors, 1)(), r_new_id);
@@ -2575,7 +2635,7 @@ void do_diff(const string & name,
     {
       throw usage(name);
     }
-      
+
   if (app.revision_selectors.size() > 0)
     {
       revision_id new_id, src_id, dst_id, anc_id;
@@ -2597,7 +2657,6 @@ void do_diff(const string & name,
           calculate_composite_change_set(src_id, dst_id, app, composite);
           L(F("calculated diff via direct analysis\n"));
         }
-
       else if (!(src_id == anc_id) && dst_id == anc_id)
         {
           change_set tmp;
@@ -2605,7 +2664,6 @@ void do_diff(const string & name,
           invert_change_set(tmp, m_new, composite);
           L(F("calculated diff via inverted direct analysis\n"));
         }
-
       else
         {
           change_set anc_to_src, src_to_anc, anc_to_dst;
@@ -2633,6 +2691,10 @@ void do_diff(const string & name,
           composite = tmp;
         }
 
+      change_set included, excluded;
+      calculate_restricted_change_set(app, args, composite, included, excluded);
+      composite = included;
+
     }
 
   data summary;
@@ -2653,6 +2715,7 @@ void do_diff(const string & name,
   cout << "# " << endl;
 
   dump_diffs(composite.deltas, app, new_is_archived, type);
+
 }
 
 CMD(cdiff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
@@ -3293,7 +3356,7 @@ CMD(revert, "working copy", "[PATH]...",
   revision_id old_revision_id;
   manifest_id old_manifest_id;
   change_set::path_rearrangement work, included, excluded;
-  path_set old_paths, valid_paths;
+  path_set old_paths;
  
   app.require_working_copy();
 
@@ -3303,7 +3366,10 @@ CMD(revert, "working copy", "[PATH]...",
 
   get_path_rearrangement(work);
   extract_path_set(m_old, old_paths);
-  get_valid_paths(old_paths, work, valid_paths);
+
+  path_set valid_paths(old_paths);
+  extract_rearranged_paths(work, valid_paths);
+  add_intermediate_paths(valid_paths);
   
   app.set_restriction(valid_paths, args);
 

@@ -1,3 +1,19 @@
+2005-03-10  Derek Scherger  <derek@echologic.com>
+
+	* app_state.cc (set_restriction): adjust bad path error message
+	* commands.cc (get_valid_paths): refactor into ...
+	(extract_rearranged_paths): ... this
+	(extract_delta_paths): ... this
+	(extract_changed_paths): ... this
+	(add_intermediate_paths): ... and this
+	(restrict_delta_map): new function
+	(calculate_restricted_change_set): new function
+	(calculate_restricted_revision):
+	(ls_missing):
+	(revert): rework using new valid path functions
+	(do_diff): adjust --revision variants to work with restrictions
+	* tests/t_diff_restrict.at: un-XFAIL
+
 2005-03-09  Jon Bright <jon@siliconcircus.com>
 	* win32/monotone.iss: Install the many-files version of the
 	docs, install the figures, create a start-menu icon for the
