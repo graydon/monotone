@@ -2621,7 +2621,7 @@ copy. Each working copy has a base version. When the working copy is
 committed, the base version is considered to be the ancestor of the
 committed version.
 @item MT/options
-Contains ``sticky'' command-line options such as @option{--database} or 
+Contains ``sticky'' command-line options such as @option{--db} or 
 @option{--branch}, such that you do not need to enter them repeatedly
 after checking out a particular working copy.
 @item MT/work
@@ -3289,11 +3289,16 @@ the change.
 
 
 @item monotone revert
-This command changes your working copy, so that changes you have made
-since the last checkout or update are discarded. It does this by
-changing every file listed in @file{MT/manifest} to have contents
-equal to the @sc{sha1} value listed in the manifest, and by erasing the
-@file{MT/work} file.
+@itemx monotone revert @var{filename...}
+
+With no files given, this command changes your working copy, so that
+changes you have made since the last checkout or update are discarded.
+It does this by changing every file listed in @file{MT/manifest} to
+have contents equal to the @sc{sha1} value listed in the manifest, and
+by erasing the @file{MT/work} file.
+
+If files are given as arguments, only those files are affected instead
+of the entirety of your working copy.
 
 
 @item monotone update
@@ -4006,6 +4011,12 @@ end
 @end group
 @end smallexample
 
+@item ignore_branch (@var{branchname})
+
+Returns @code{true} if @var{branchname} should be ignored while listing
+branches. Otherwise returns @code{false}. This hook has no default
+definition, therefore the default behavior is to list all branches.
+
 @item get_manifest_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
 
 Returns whether or not you @emph{trust} the assertion
@@ -4702,6 +4713,14 @@ function @b{get@t{_}branch@t{_}key(branchname)}.
 @item @b{--branch=}@i{<branchname>}
 Use @i{branchname} for operations on a branch. Default is inferred
 in operations on existing branches (commit, update, etc). 
+@comment TROFF INPUT: .TP
+
+@item @b{--ticker=}[@b{dot}|@b{count}]
+Use the given method to print tickers.  The @b{count} method prints
+the count for each ticker on one line, incrementing the numbers in
+place, while the @b{dot} method prints a continuous string of
+characters (like some programs provide a progress line of dots).
+The default is @b{count}.
 @comment TROFF INPUT: .SH ENVIRONMENT
 
 @end table

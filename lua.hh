@@ -64,6 +64,7 @@ public:
 
   // local repo hooks
   bool hook_ignore_file(file_path const & p);
+  bool hook_ignore_branch(std::string const & branch);
   bool hook_merge2(data const & left, 
 		   data const & right, 
 		   data & result);

@@ -565,6 +565,19 @@ lua_hooks::hook_ignore_file(file_path const & p)
   return exec_ok && ignore_it;
 }
 
+bool 
+lua_hooks::hook_ignore_branch(std::string const & branch)
+{
+  bool ignore_it = false;
+  bool exec_ok = Lua(st)
+    .push_str("ignore_branch")
+    .get_fn()
+    .push_str(branch)
+    .call(1,1)
+    .extract_bool(ignore_it)
+    .ok();
+  return exec_ok && ignore_it;
+}
 
 bool 
 lua_hooks::hook_non_blocking_rng_ok()
