@@ -1,0 +1,15 @@
+             pull, push, sync
+       (untrusted network exchanges)
+            _________/\________
+           /                   \
+
+    +-------------+      +------------+      +--------------+
+    |             |      |            |      |              |
+    |  remote db  | <==> |  local db  | <==> | working copy |
+    |             |      |            |      |              |
+    +-------------+      +------------+      +--------------+
+
+                                \________  _______/
+                                         \/
+                                  commit, update
+                            (certified local exchanges)

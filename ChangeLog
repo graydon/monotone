@@ -1,3 +1,33 @@
+2004-11-05  graydon hoare  <graydon@pobox.com>
+
+	* constants.cc: Up timeout, connection limit.
+	* monotone.texi: Various cleanups.
+
+2004-11-05  Ulrich Drepper  <drepper@redhat.com>
+
+	* configure.ac: Reduce dependencies.
+	* lua/lua.h: Include config.h.
+	* mkstemp.{cc,hh}: Use system variant when found.
+	* netxx/resolve_getaddrinfo.cxx: Check for AI_ADDRCONFIG
+	definition.
+	* po/POTFILES.in: Update to mention changes.
+	* Makefile.am (EXTRA_DIST): Include spec file.
+	* commands.cc (diff): No output if empty diff.
+
+2004-10-31  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (diff): Use guess_binary.
+	Fix up some messages to fit on single lines.
+	* Makefile.am: Make monotone.pdf depend on figures.
+	* change_set.cc: Make inversion drop "delete deltas".
+	* texinfo.css: Make images align nicely.
+	* netsync.cc: Fix up some messages to be clearer.
+
+2004-10-30  graydon hoare  <graydon@pobox.com>
+
+	* figures/*: New figures.
+	* monotone.texi: Rewrite much of the tutorial.
+
 2004-10-30  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc (process_hello_cmd): Make clear that when the
@@ -12,7 +42,7 @@
 
 	* tests/t_update_missing.at: New test from Bruce Stephens
 	* testsuite.at: Call it.
-	* change_set.cc: Handle the error exposed by it.
+	* change_set.cc: Fix the error exposed by it.
 
 2004-10-26  graydon hoare  <graydon@pobox.com>
 
