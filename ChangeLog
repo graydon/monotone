@@ -25,6 +25,44 @@
 	fs::path, so that it doesn't get passed as a freshly created fs::path
 	with default checker (which disallows '.foo' path components)
 
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (session, process_confirm_cmd, dispatch_payload):
+	Back out some over-zealous changes that broke netsync
+	compatibility.  Probably should redo later, when have a chance to
+	bump netsync protocol number, but we're not ready for that now.
+
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_subdir_revert.at: New test.
+	* tests/t_subdir_rename.at: New test.
+	* testsuite.at: Add them.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_subdir_add.at: New test.
+	* tests/t_subdir_drop.at: New test.
+	* testsuite.at: Add them.
+	* tests/t_delete_dir.at: Implement it.
+	
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc: Remove tabs.
+
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* merkle_tree.cc: Remove tabs.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (cvs_key): Initialize struct tm to all zeros, to
+	stop garbage sneaking in -- thanks to Zack Weinberg for pointing
+	this out.  Also, handle 2 digit years properly on WIN32.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc: Remove tabs.
+
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi: Undocument mcerts, fcerts; rename rcerts to

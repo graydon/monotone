@@ -442,6 +442,8 @@ session::session(protocol_role role,
   prng.reset(new CryptoPP::AutoSeededRandomPool(request_blocking_rng));
 
   done_refinements.insert(make_pair(rcert_item, done_marker()));
+  done_refinements.insert(make_pair(mcert_item, done_marker()));
+  done_refinements.insert(make_pair(fcert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
   
   requested_items.insert(make_pair(rcert_item, boost::shared_ptr< set<id> >(new set<id>())));
@@ -1627,6 +1629,14 @@ session::process_confirm_cmd(string const & signature)
           queue_refine_cmd(root);
           queue_done_cmd(0, key_item);
 
+          load_merkle_node(app, mcert_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(root);
+          queue_done_cmd(0, mcert_item);
+
+          load_merkle_node(app, fcert_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(root);
+          queue_done_cmd(0, fcert_item);
+
           load_merkle_node(app, rcert_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(root);
           queue_done_cmd(0, rcert_item);
@@ -2551,10 +2561,6 @@ session::dispatch_payload(netcmd const & cmd)
       {
         merkle_node node;
         read_refine_cmd_payload(cmd.payload, node);
-        // Ignore mcert and fcert refinement for compatibility with clients
-        // that still perform them.
-        if (node.type == mcert_item || node.type == fcert_item)
-          break;
         map< netcmd_item_type, done_marker>::iterator i = done_refinements.find(node.type);
         require(i != done_refinements.end(), "refinement netcmd refers to valid type");
         require(i->second.tree_is_done == false, "refinement netcmd received when tree is live");
