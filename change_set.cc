@@ -116,8 +116,8 @@ change_set::add_file(file_path const & a, file_id const & ident)
 
 void 
 change_set::apply_delta(file_path const & path, 
-			file_id const & src, 
-			file_id const & dst)
+                        file_id const & src, 
+                        file_id const & dst)
 {
   deltas.insert(std::make_pair(path, std::make_pair(src, dst)));
 }
@@ -220,7 +220,7 @@ path_state_item(path_state::const_iterator i)
 
 static void
 dump_renumbering(std::string const & s,
-		 state_renumbering const & r)
+                 state_renumbering const & r)
 {
   L(F("BEGIN dumping renumbering '%s'\n") % s);
   for (state_renumbering::const_iterator i = r.begin();
@@ -233,25 +233,25 @@ dump_renumbering(std::string const & s,
 
 static void
 dump_state(std::string const & s,
-	   path_state const & st)
+           path_state const & st)
 {
   L(F("BEGIN dumping state '%s'\n") % s);
   for (path_state::const_iterator i = st.begin();
        i != st.end(); ++i)
     {
       L(F("state '%s': tid %d, parent %d, type %s, name %s\n")
-	% s
-	% path_state_tid(i) 
-	% path_item_parent(path_state_item(i))
-	% (path_item_type(path_state_item(i)) == ptype_directory ? "dir" : "file")
-	% path_item_name(path_state_item(i)));
+        % s
+        % path_state_tid(i) 
+        % path_item_parent(path_state_item(i))
+        % (path_item_type(path_state_item(i)) == ptype_directory ? "dir" : "file")
+        % path_item_name(path_state_item(i)));
     }
   L(F("END dumping state '%s'\n") % s);
 }
 
 static void
 dump_analysis(std::string const & s,
-	      path_analysis const & t)
+              path_analysis const & t)
 {
   L(F("BEGIN dumping tree '%s'\n") % s);
   dump_state(s + " first", t.first);
@@ -282,23 +282,23 @@ confirm_proper_tree(path_state const & ps)
       std::set<tid> ancs; 
 
       while (confirmed.find(curr) == confirmed.end())
-	{	      
-	  sanity_check_path_item(item);
-	  I(ancs.find(curr) == ancs.end());
-	  ancs.insert(curr);
-	  if (path_item_parent(item) == root_tid)
-	    break;
-	  else
-	    {
-	      curr = path_item_parent(item);
-	      path_state::const_iterator j = ps.find(curr);
-	      I(j != ps.end());
-	      item = path_state_item(j);
-	      I(path_item_type(item) == ptype_directory);
-	    }
-	}
+        {             
+          sanity_check_path_item(item);
+          I(ancs.find(curr) == ancs.end());
+          ancs.insert(curr);
+          if (path_item_parent(item) == root_tid)
+            break;
+          else
+            {
+              curr = path_item_parent(item);
+              path_state::const_iterator j = ps.find(curr);
+              I(j != ps.end());
+              item = path_state_item(j);
+              I(path_item_type(item) == ptype_directory);
+            }
+        }
       std::copy(ancs.begin(), ancs.end(), 
-		inserter(confirmed, confirmed.begin()));      
+                inserter(confirmed, confirmed.begin()));      
     }
   I(confirmed.find(root_tid) == confirmed.end());
 }
@@ -353,7 +353,7 @@ bool path_item::operator==(path_item const & other) const
 
 static void
 check_states_agree(path_state const & p1,
-		   path_state const & p2)
+                   path_state const & p2)
 {
   path_analysis pa;
   pa.first = p1;
@@ -365,8 +365,8 @@ check_states_agree(path_state const & p1,
       I(j != p2.end());
       I(path_item_type(i->second) == path_item_type(j->second));
       //       I(! (null_name(path_item_name(i->second))
-      // 	   &&
-      // 	   null_name(path_item_name(j->second))));
+      //           &&
+      //           null_name(path_item_name(j->second))));
     }
 }
 
@@ -406,7 +406,7 @@ dnode(directory_map & dir, tid t)
 
 static void 
 compose_path(std::vector<file_path> const & names,
-	     file_path & path)
+             file_path & path)
 {
   try
     {      
@@ -415,7 +415,7 @@ compose_path(std::vector<file_path> const & names,
       fs::path p = mkpath((*i)());
       ++i;
       for ( ; i != names.end(); ++i)
-	p /= mkpath((*i)());
+        p /= mkpath((*i)());
       path = file_path(p.string());
     }
   catch (std::runtime_error &e)
@@ -426,8 +426,8 @@ compose_path(std::vector<file_path> const & names,
 
 static void
 get_full_path(path_state const & state,
-	      tid t,
-	      std::vector<file_path> & pth)
+              tid t,
+              std::vector<file_path> & pth)
 {
   std::vector<file_path> tmp;
   while(t != root_tid)
@@ -443,8 +443,8 @@ get_full_path(path_state const & state,
 
 static void
 get_full_path(path_state const & state,
-	      tid t,
-	      file_path & pth)
+              tid t,
+              file_path & pth)
 {
   std::vector<file_path> tmp;
   get_full_path(state, t, tmp);
@@ -471,7 +471,7 @@ clear_change_set(change_set & cs)
 
 static void 
 compose_rearrangement(path_analysis const & pa,
-		      change_set::path_rearrangement & pr)
+                      change_set::path_rearrangement & pr)
 {
   clear_rearrangement(pr);
 
@@ -489,63 +489,63 @@ compose_rearrangement(path_analysis const & pa,
 
       // compose names
       if (!null_name(path_item_name(old_item)))
-	{
-	  get_full_path(pa.first, curr, old_name);
-	  compose_path(old_name, old_path);
-	}
+        {
+          get_full_path(pa.first, curr, old_name);
+          compose_path(old_name, old_path);
+        }
 
       if (!null_name(path_item_name(new_item)))      
-	{
-	  get_full_path(pa.second, curr, new_name);
-	  compose_path(new_name, new_path);
-	}
+        {
+          get_full_path(pa.second, curr, new_name);
+          compose_path(new_name, new_path);
+        }
 
       if (old_path == new_path)
-	{
-	  L(F("skipping preserved %s %d : '%s'\n")
-	    % (path_item_type(old_item) == ptype_directory ? "directory" : "file")
-	    % curr % old_path);
-	  continue;
-	}
+        {
+          L(F("skipping preserved %s %d : '%s'\n")
+            % (path_item_type(old_item) == ptype_directory ? "directory" : "file")
+            % curr % old_path);
+          continue;
+        }
       
       L(F("analyzing %s %d : '%s' -> '%s'\n")
-	% (path_item_type(old_item) == ptype_directory ? "directory" : "file")
-	% curr % old_path % new_path);
+        % (path_item_type(old_item) == ptype_directory ? "directory" : "file")
+        % curr % old_path % new_path);
       
       if (null_name(path_item_name(old_item)))
-	{
-	  // an addition (which must be a file, not a directory)
-	  I(! null_name(path_item_name(new_item)));
-	  I(path_item_type(new_item) != ptype_directory);
-	  pr.added_files.insert(new_path);
-	}
+        {
+          // an addition (which must be a file, not a directory)
+          I(! null_name(path_item_name(new_item)));
+          I(path_item_type(new_item) != ptype_directory);
+          pr.added_files.insert(new_path);
+        }
       else if (null_name(path_item_name(new_item)))
-	{
-	  // a deletion
-	  I(! null_name(path_item_name(old_item)));
-	  switch (path_item_type(new_item))
-	    {
-	    case ptype_directory:
-	      pr.deleted_dirs.insert(old_path);
-	      break;
-	    case ptype_file:
-	      pr.deleted_files.insert(old_path);
-	      break;
-	    }	  
-	}
+        {
+          // a deletion
+          I(! null_name(path_item_name(old_item)));
+          switch (path_item_type(new_item))
+            {
+            case ptype_directory:
+              pr.deleted_dirs.insert(old_path);
+              break;
+            case ptype_file:
+              pr.deleted_files.insert(old_path);
+              break;
+            }     
+        }
       else
-	{
-	  // a generic rename
-	  switch (path_item_type(new_item))
-	    {
-	    case ptype_directory:
-	      pr.renamed_dirs.insert(std::make_pair(old_path, new_path));
-	      break;
-	    case ptype_file:
-	      pr.renamed_files.insert(std::make_pair(old_path, new_path));
-	      break;
-	    }
-	}
+        {
+          // a generic rename
+          switch (path_item_type(new_item))
+            {
+            case ptype_directory:
+              pr.renamed_dirs.insert(std::make_pair(old_path, new_path));
+              break;
+            case ptype_file:
+              pr.renamed_files.insert(std::make_pair(old_path, new_path));
+              break;
+            }
+        }
     }
 }
 
@@ -563,7 +563,7 @@ compose_rearrangement(path_analysis const & pa,
 
 static void 
 split_path(file_path const & p,
-	   std::vector<file_path> & components)
+           std::vector<file_path> & components)
 {
   components.clear();
   fs::path tmp = mkpath(p());
@@ -572,8 +572,8 @@ split_path(file_path const & p,
 
 static void 
 split_path(file_path const & p,
-	   std::vector<file_path> & prefix,
-	   file_path & leaf_path)
+           std::vector<file_path> & prefix,
+           file_path & leaf_path)
 {
   split_path(p, prefix);
   I(prefix.size() > 0);
@@ -583,8 +583,8 @@ split_path(file_path const & p,
 
 static bool
 lookup_path(std::vector<file_path> const & pth,
-	    directory_map const & dir,
-	    tid & t)
+            directory_map const & dir,
+            tid & t)
 {
   t = root_tid;
   for (std::vector<file_path>::const_iterator i = pth.begin();
@@ -592,23 +592,23 @@ lookup_path(std::vector<file_path> const & pth,
     {
       directory_map::const_iterator dirent = dir.find(t);
       if (dirent != dir.end())
-	{
-	  boost::shared_ptr<directory_node> node = dirent->second;
-	  directory_node::const_iterator entry = node->find(*i);
-	  if (entry == node->end())
-	    return false;
-	  t = directory_entry_tid(entry);
-	}
+        {
+          boost::shared_ptr<directory_node> node = dirent->second;
+          directory_node::const_iterator entry = node->find(*i);
+          if (entry == node->end())
+            return false;
+          t = directory_entry_tid(entry);
+        }
       else
-	return false;
+        return false;
     }
   return true;
 }
 
 static bool
 lookup_path(file_path const & pth,
-	    directory_map const & dir,
-	    tid & t)
+            directory_map const & dir,
+            tid & t)
 {
   std::vector<file_path> vec;
   fs::path tmp = mkpath(pth());
@@ -618,11 +618,11 @@ lookup_path(file_path const & pth,
 
 static tid
 ensure_entry(directory_map & dmap,
-	     path_state & state,	     
-	     tid dir_tid,
-	     ptype entry_ty,
-	     file_path const & entry,
-	     tid_source & ts)
+             path_state & state,             
+             tid dir_tid,
+             ptype entry_ty,
+             file_path const & entry,
+             tid_source & ts)
 {
   I(! null_name(entry));
 
@@ -645,25 +645,25 @@ ensure_entry(directory_map & dmap,
 
 static tid
 ensure_dir_in_map (std::vector<file_path> pth,
-		   directory_map & dmap,
-		   path_state & state,
-		   tid_source & ts)
+                   directory_map & dmap,
+                   path_state & state,
+                   tid_source & ts)
 {
   tid dir_tid = root_tid;
   for (std::vector<file_path>::const_iterator p = pth.begin();
        p != pth.end(); ++p)
     {
       dir_tid = ensure_entry(dmap, state, dir_tid, 
-			     ptype_directory, *p, ts);
+                             ptype_directory, *p, ts);
     }
   return dir_tid;
 }
 
 static tid
 ensure_dir_in_map (file_path const & path,
-		   directory_map & dmap,
-		   path_state & state,
-		   tid_source & ts)
+                   directory_map & dmap,
+                   path_state & state,
+                   tid_source & ts)
 {
   std::vector<file_path> components;
   split_path(path, components);
@@ -672,9 +672,9 @@ ensure_dir_in_map (file_path const & path,
 
 static tid
 ensure_file_in_map (file_path const & path,
-		    directory_map & dmap,
-		    path_state & state,
-		    tid_source & ts)
+                    directory_map & dmap,
+                    path_state & state,
+                    tid_source & ts)
 {
   std::vector<file_path> prefix;  
   file_path leaf_path;
@@ -687,38 +687,38 @@ ensure_file_in_map (file_path const & path,
 
 static void
 ensure_entries_exist (path_state const & self_state,
-		      directory_map & other_dmap,
-		      path_state & other_state,
-		      tid_source & ts)
+                      directory_map & other_dmap,
+                      path_state & other_state,
+                      tid_source & ts)
 {
   for (path_state::const_iterator i = self_state.begin(); 
        i != self_state.end(); ++i)
     {
       if (other_state.find(path_state_tid(i)) != other_state.end())
-	continue;
+        continue;
 
       if (null_name(path_item_name(path_state_item(i))))
-	continue;
+        continue;
 
       file_path full;
       get_full_path(self_state, path_state_tid(i), full);
       switch (path_item_type(path_state_item(i)))
-	{
-	case ptype_directory:
-	  ensure_dir_in_map(full, other_dmap, other_state, ts);
-	  break;
+        {
+        case ptype_directory:
+          ensure_dir_in_map(full, other_dmap, other_state, ts);
+          break;
 
-	case ptype_file:
-	  ensure_file_in_map(full, other_dmap, other_state, ts);
-	  break;
-	}
+        case ptype_file:
+          ensure_file_in_map(full, other_dmap, other_state, ts);
+          break;
+        }
     }
 }
 
 
 static void
 apply_state_renumbering(state_renumbering const & renumbering,
-			path_state & state)
+                        path_state & state)
 {
   sanity_check_path_state(state);  
   path_state tmp(state);
@@ -731,11 +731,11 @@ apply_state_renumbering(state_renumbering const & renumbering,
 
       state_renumbering::const_iterator j = renumbering.find(t);
       if (j != renumbering.end())
-	t = j->second;
+        t = j->second;
 
       j = renumbering.find(item.parent);
       if (j != renumbering.end())
-	item.parent = j->second;
+        item.parent = j->second;
 
       state.insert(std::make_pair(t, item));
     }
@@ -744,12 +744,12 @@ apply_state_renumbering(state_renumbering const & renumbering,
 
 static void
 apply_state_renumbering(state_renumbering const & renumbering,
-			path_analysis & pa)
+                        path_analysis & pa)
 {
   apply_state_renumbering(renumbering, pa.first);
   apply_state_renumbering(renumbering, pa.second);
 }
-			
+                        
 
 // this takes a path in the path space defined by input_dir and rebuilds it
 // in the path space defined by output_space, including any changes to
@@ -759,9 +759,9 @@ apply_state_renumbering(state_renumbering const & renumbering,
 
 static void
 reconstruct_path(file_path const & input,
-		 directory_map const & input_dir,
-		 path_state const & output_space,
-		 file_path & output)
+                 directory_map const & input_dir,
+                 path_state const & output_space,
+                 file_path & output)
 {
   std::vector<file_path> vec;
   std::vector<file_path> rebuilt;
@@ -774,27 +774,27 @@ reconstruct_path(file_path const & input,
   tid t = root_tid;
   std::vector<file_path>::const_iterator pth = vec.begin();
   while (pth != vec.end())
-    {	  
+    {     
       directory_map::const_iterator dirent = input_dir.find(t);
       if (dirent == input_dir.end())
-	break;
+        break;
       
       boost::shared_ptr<directory_node> node = dirent->second;
       directory_node::const_iterator entry = node->find(*pth);
       if (entry == node->end())
-	break;
+        break;
 
       {
-	// check to see if this is the image of an added or deleted entry
-	// (i.e. null name in output space), if so it terminates our
-	// search.
-	path_state::const_iterator i = output_space.find(directory_entry_tid(entry));
-	I(i != output_space.end());
-	if (null_name(path_item_name(path_state_item(i))))
-	  {
-	    // L(F("input path element '%s' is null in output space, mapping truncated\n") % *pth);
-	    break;
-	  }
+        // check to see if this is the image of an added or deleted entry
+        // (i.e. null name in output space), if so it terminates our
+        // search.
+        path_state::const_iterator i = output_space.find(directory_entry_tid(entry));
+        I(i != output_space.end());
+        if (null_name(path_item_name(path_state_item(i))))
+          {
+            // L(F("input path element '%s' is null in output space, mapping truncated\n") % *pth);
+            break;
+          }
       }
  
       // L(F("resolved entry '%s' in reconstruction\n") % *pth);
@@ -802,7 +802,7 @@ reconstruct_path(file_path const & input,
       t = directory_entry_tid(entry);
 
       if (directory_entry_type(entry) != ptype_directory)
-	break;
+        break;
     }
       
   get_full_path(output_space, t, rebuilt);
@@ -821,7 +821,7 @@ reconstruct_path(file_path const & input,
 
 static void
 build_directory_map(path_state const & state,
-		    directory_map & dir)
+                    directory_map & dir)
 {
   sanity_check_path_state(state);
   dir.clear();
@@ -832,9 +832,9 @@ build_directory_map(path_state const & state,
       path_item item = path_state_item(i);
       tid parent = path_item_parent(item);
       file_path name = path_item_name(item);
-      ptype type = path_item_type(item);	    
+      ptype type = path_item_type(item);            
       //       L(F("adding entry %s (%s %d) to directory node %d\n") 
-      // 	% name % (type == ptype_directory ? "dir" : "file") % curr % parent);
+      //        % name % (type == ptype_directory ? "dir" : "file") % curr % parent);
       dnode(dir, parent)->insert(std::make_pair(name,std::make_pair(type, curr)));
     }
 }
@@ -842,8 +842,8 @@ build_directory_map(path_state const & state,
 
 static void 
 analyze_rearrangement(change_set::path_rearrangement const & pr,
-		      path_analysis & pa,
-		      tid_source & ts)
+                      path_analysis & pa,
+                      tid_source & ts)
 {
   directory_map first_map, second_map;
   state_renumbering renumbering;
@@ -945,12 +945,12 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
       second_tid = path_state_tid(i);
       file_path full;
       if (pa.first.find(second_tid) != pa.first.end())
-	continue;
+        continue;
       get_full_path(pa.second, second_tid, full);
       if (damaged_in_second.find(second_tid) != damaged_in_second.end())
-	continue;
+        continue;
       if (null_name(path_item_name(path_state_item(i))))
-	continue;
+        continue;
       I(lookup_path(full, first_map, first_tid));
       renumbering.insert(std::make_pair(second_tid, first_tid));
     }
@@ -982,8 +982,8 @@ normalize_change_set(change_set & norm)
 
 static void 
 index_entries(path_state const & state, 
-	      std::map<file_path, tid> & files, 
-	      std::map<file_path, tid> & dirs)
+              std::map<file_path, tid> & files, 
+              std::map<file_path, tid> & dirs)
 {
   for (path_state::const_iterator i = state.begin(); 
        i != state.end(); ++i)
@@ -993,18 +993,18 @@ index_entries(path_state const & state,
       get_full_path(state, path_state_tid(i), full);
 
       if (null_name(path_item_name(item))) 
-	continue;
+        continue;
 
       switch (path_item_type(item))
-	{
-	case ptype_directory:
-	  files.insert(std::make_pair(full, path_state_tid(i)));
-	  break;
+        {
+        case ptype_directory:
+          files.insert(std::make_pair(full, path_state_tid(i)));
+          break;
 
-	case ptype_file:
-	  dirs.insert(std::make_pair(full, path_state_tid(i)));
-	  break;
-	}
+        case ptype_file:
+          dirs.insert(std::make_pair(full, path_state_tid(i)));
+          break;
+        }
     }  
 }
 
@@ -1013,8 +1013,8 @@ index_entries(path_state const & state,
 // renumbering from b->a
 static void 
 extend_renumbering_from_path_identities(std::map<file_path, tid> const & a,
-					std::map<file_path, tid> const & b,
-					state_renumbering & renumbering)
+                                        std::map<file_path, tid> const & b,
+                                        state_renumbering & renumbering)
 {
   for (std::map<file_path, tid>::const_iterator i = b.begin();
        i != b.end(); ++i)
@@ -1022,26 +1022,26 @@ extend_renumbering_from_path_identities(std::map<file_path, tid> const & a,
       I(! null_name(i->first));
       std::map<file_path, tid>::const_iterator j = a.find(i->first);
       if (j == a.end())
-	continue;
+        continue;
       renumbering.insert(std::make_pair(i->second, j->second));
     }
 }
 
 static void
 extend_state(path_state const & src, 
-	     path_state & dst)
+             path_state & dst)
 {
   for (path_state::const_iterator i = src.begin();
        i != src.end(); ++i)
     {
       if (dst.find(path_state_tid(i)) == dst.end())
-	dst.insert(*i);
+        dst.insert(*i);
     }
 }
 
 static void
 ensure_tids_disjoint(path_analysis const & a, 
-		     path_analysis const & b)
+                     path_analysis const & b)
 {
   for (path_state::const_iterator i = a.first.begin();
        i != a.first.end(); ++i)
@@ -1057,8 +1057,8 @@ ensure_tids_disjoint(path_analysis const & a,
 
 static void
 concatenate_disjoint_analyses(path_analysis const & a,
-			      path_analysis const & b,
-			      path_analysis & concatenated)
+                              path_analysis const & b,
+                              path_analysis & concatenated)
 {
   std::map<file_path, tid> a_second_files, a_second_dirs;
   std::map<file_path, tid> b_first_files, b_first_dirs;
@@ -1101,8 +1101,8 @@ concatenate_disjoint_analyses(path_analysis const & a,
 
 void
 concatenate_change_sets(change_set const & a,
-			change_set const & b,
-			change_set & concatenated)
+                        change_set const & b,
+                        change_set & concatenated)
 {
   L(F("concatenating change sets\n"));
 
@@ -1113,11 +1113,11 @@ concatenate_change_sets(change_set const & a,
   analyze_rearrangement(b.rearrangement, b_analysis, ts);
 
   concatenate_disjoint_analyses(a_analysis, 
-				b_analysis,
-				concatenated_analysis);
+                                b_analysis,
+                                concatenated_analysis);
 
   compose_rearrangement(concatenated_analysis, 
-			concatenated.rearrangement);
+                        concatenated.rearrangement);
 
   // now process the deltas
 
@@ -1135,10 +1135,10 @@ concatenate_change_sets(change_set const & a,
       L(F("processing delta on %s\n") % delta_entry_path(del));
       reconstruct_path(delta_entry_path(del), b_src_map, b_analysis.second, new_pth);
       L(F("delta on %s in first changeset renamed to %s\n")
-	% delta_entry_path(del) % new_pth);
+        % delta_entry_path(del) % new_pth);
       concatenated.deltas.insert(std::make_pair(new_pth,
-						std::make_pair(delta_entry_src(del),
-							       delta_entry_dst(del))));
+                                                std::make_pair(delta_entry_src(del),
+                                                               delta_entry_dst(del))));
     }
 
   // next fuse any deltas id1->id2 and id2->id3 to id1->id3
@@ -1146,26 +1146,26 @@ concatenate_change_sets(change_set const & a,
        del != b.deltas.end(); ++del)
     {
       change_set::delta_map::const_iterator existing = 
-	concatenated.deltas.find(delta_entry_path(del));
+        concatenated.deltas.find(delta_entry_path(del));
       if (existing != concatenated.deltas.end())
-	{
-	  I(delta_entry_dst(existing) == delta_entry_src(del));
-	  L(F("fusing deltas on %s : %s -> %s -> %s\n")
-	    % delta_entry_path(del) 
-	    % delta_entry_src(existing) 
-	    % delta_entry_dst(existing)
-	    % delta_entry_dst(del));
-	  std::pair<file_id, file_id> fused = std::make_pair(delta_entry_src(existing),
-							     delta_entry_dst(del));      
-	  concatenated.deltas.erase(delta_entry_path(del));
-	  concatenated.deltas.insert(std::make_pair(delta_entry_path(del), fused));
-	}
+        {
+          I(delta_entry_dst(existing) == delta_entry_src(del));
+          L(F("fusing deltas on %s : %s -> %s -> %s\n")
+            % delta_entry_path(del) 
+            % delta_entry_src(existing) 
+            % delta_entry_dst(existing)
+            % delta_entry_dst(del));
+          std::pair<file_id, file_id> fused = std::make_pair(delta_entry_src(existing),
+                                                             delta_entry_dst(del));      
+          concatenated.deltas.erase(delta_entry_path(del));
+          concatenated.deltas.insert(std::make_pair(delta_entry_path(del), fused));
+        }
       else
-	{
-	  L(F("delta on %s in second changeset copied forward\n")
-	    % delta_entry_path(del));
-	  concatenated.deltas.insert(*del);
-	}
+        {
+          L(F("delta on %s in second changeset copied forward\n")
+            % delta_entry_path(del));
+          concatenated.deltas.insert(*del);
+        }
     }
 
   normalize_change_set(concatenated);
@@ -1181,8 +1181,8 @@ concatenate_change_sets(change_set const & a,
 
 static void
 extend_renumbering_via_added_files(path_analysis const & a, 
-				   path_analysis const & b, 
-				   state_renumbering & renumbering)
+                                   path_analysis const & b, 
+                                   state_renumbering & renumbering)
 {
   directory_map a_second_map;
   build_directory_map(a.second, a_second_map);
@@ -1192,34 +1192,34 @@ extend_renumbering_via_added_files(path_analysis const & a,
     {
       path_item item = path_state_item(i);
       if (path_item_type(item) == ptype_file && null_name(path_item_name(item)))
-	{
-	  path_state::const_iterator j = b.second.find(path_state_tid(i));
-	  I(j != b.second.end());
-	  file_path leaf_name(path_item_name(path_state_item(j)));
-	  I(path_item_type(path_state_item(j)) == ptype_file);
-	  if (! null_name(leaf_name))
-	    {
-	      tid added_parent_tid = path_item_parent(path_state_item(j));
-	      directory_map::const_iterator dirent = a_second_map.find(added_parent_tid);
-	      if (dirent != a_second_map.end())
-		{
-		  
-		  boost::shared_ptr<directory_node> node = dirent->second;
-		  directory_node::const_iterator entry = node->find(leaf_name);
-		  if (entry != node->end() && directory_entry_type(entry) == ptype_file)
-		    {
-		      renumbering.insert(std::make_pair(path_state_tid(i), 
-							directory_entry_tid(entry)));
-		    }
-		}
-	    }
-	}
+        {
+          path_state::const_iterator j = b.second.find(path_state_tid(i));
+          I(j != b.second.end());
+          file_path leaf_name(path_item_name(path_state_item(j)));
+          I(path_item_type(path_state_item(j)) == ptype_file);
+          if (! null_name(leaf_name))
+            {
+              tid added_parent_tid = path_item_parent(path_state_item(j));
+              directory_map::const_iterator dirent = a_second_map.find(added_parent_tid);
+              if (dirent != a_second_map.end())
+                {
+                  
+                  boost::shared_ptr<directory_node> node = dirent->second;
+                  directory_node::const_iterator entry = node->find(leaf_name);
+                  if (entry != node->end() && directory_entry_type(entry) == ptype_file)
+                    {
+                      renumbering.insert(std::make_pair(path_state_tid(i), 
+                                                        directory_entry_tid(entry)));
+                    }
+                }
+            }
+        }
     }
 }
 
 static bool
 find_item(tid t, path_state const & ps, 
-	  path_item & item)
+          path_item & item)
 {
   path_state::const_iterator i = ps.find(t);
   if (i == ps.end())
@@ -1230,7 +1230,7 @@ find_item(tid t, path_state const & ps,
 
 static bool
 find_items(tid t, path_analysis const & pa, 
-	   path_item & first, path_item & second)
+           path_item & first, path_item & second)
 {
   if (find_item(t, pa.first, first))
     {
@@ -1247,11 +1247,11 @@ find_items(tid t, path_analysis const & pa,
 
 static void
 resolve_conflict(tid t, ptype ty,
-		 path_analysis const & a_tmp, 
-		 path_analysis const & b_tmp, 
-		 path_item & resolved,
-		 path_state & resolved_conflicts,
-		 app_state & app)
+                 path_analysis const & a_tmp, 
+                 path_analysis const & b_tmp, 
+                 path_item & resolved,
+                 path_state & resolved_conflicts,
+                 app_state & app)
 {
   path_state::const_iterator i = resolved_conflicts.find(t);
 
@@ -1269,14 +1269,14 @@ resolve_conflict(tid t, ptype ty,
       resolved = path_state_item(i);
     }
   else if (null_name(path_item_name(a_item)) &&
-	   ! null_name(path_item_name(b_item)))
+           ! null_name(path_item_name(b_item)))
     {
       L(F("delete of %s dominates rename to %s\n") % anc % b);
       resolved = a_item;
       resolved_conflicts.insert(std::make_pair(t, resolved));
     }
   else if (null_name(path_item_name(b_item)) &&
-	   ! null_name(path_item_name(a_item)))
+           ! null_name(path_item_name(a_item)))
     {
       L(F("delete of %s dominates rename to %s\n") % anc % a);
       resolved = b_item;
@@ -1285,24 +1285,24 @@ resolve_conflict(tid t, ptype ty,
   else
     {
       switch (ty) 
-	{
-	case ptype_file:
-	  N(app.lua.hook_resolve_file_conflict(anc, a, b, res),
-	    F("unable to resolve file conflict '%s' -> '%s' vs. '%s'") % anc % a % b);
-	  break;
-	case ptype_directory:
-	  N(app.lua.hook_resolve_dir_conflict(anc, a, b, res),
-	    F("unable to resolve dir conflict '%s' -> '%s' vs. '%s'") % anc % a % b);
-	  break;
-	}
+        {
+        case ptype_file:
+          N(app.lua.hook_resolve_file_conflict(anc, a, b, res),
+            F("unable to resolve file conflict '%s' -> '%s' vs. '%s'") % anc % a % b);
+          break;
+        case ptype_directory:
+          N(app.lua.hook_resolve_dir_conflict(anc, a, b, res),
+            F("unable to resolve dir conflict '%s' -> '%s' vs. '%s'") % anc % a % b);
+          break;
+        }
 
       N((res == a || res == b), 
-	F("illegal conflict resolution '%s', wanted '%s' or '%s'\n") % res % a % b);
+        F("illegal conflict resolution '%s', wanted '%s' or '%s'\n") % res % a % b);
 
       if (res == a)
-	I(find_item(t, a_tmp.second, resolved));
+        I(find_item(t, a_tmp.second, resolved));
       else
-	I(find_item(t, b_tmp.second, resolved));
+        I(find_item(t, b_tmp.second, resolved));
       
       resolved_conflicts.insert(std::make_pair(t, resolved));
     }      
@@ -1310,7 +1310,7 @@ resolve_conflict(tid t, ptype ty,
 
 static void
 ensure_no_rename_clobbers(path_analysis const & a, 
-			  path_analysis const & b)
+                          path_analysis const & b)
 {
   // there is a special non-mergable pair of changes which we need
   // to identify here: 
@@ -1348,25 +1348,25 @@ ensure_no_rename_clobbers(path_analysis const & a,
       get_full_path(a.first, a_tid, anc_path);
 
       if (! lookup_path(anc_path, b_first_map, b_tid))
-	{
-	  file_path b_second_path;
-	  reconstruct_path(anc_path, b_first_map, b.second, b_second_path);
+        {
+          file_path b_second_path;
+          reconstruct_path(anc_path, b_first_map, b.second, b_second_path);
 
-	  N(! lookup_path(b_second_path, b_second_map, b_tid),
-	    (F("tid %d (%s) clobbered tid %d (%s)\n")
-	     % b_tid % b_second_path 
-	     % a_tid % anc_path));
-	}
+          N(! lookup_path(b_second_path, b_second_map, b_tid),
+            (F("tid %d (%s) clobbered tid %d (%s)\n")
+             % b_tid % b_second_path 
+             % a_tid % anc_path));
+        }
     }
 
 }
 
 static void
 project_missing_changes(path_analysis const & a_tmp, 
-			path_analysis const & b_tmp, 
-			path_analysis & b_merged, 
-			path_state & resolved_conflicts,
-			app_state & app)
+                        path_analysis const & b_tmp, 
+                        path_analysis & b_merged, 
+                        path_state & resolved_conflicts,
+                        app_state & app)
 {
 
   // for each tid t adjusted in a:
@@ -1385,54 +1385,54 @@ project_missing_changes(path_analysis const & a_tmp,
       path_item b_first_item, b_second_item;
       I(find_items(t, a_tmp, a_first_item, a_second_item));
       if (find_items(t, b_tmp, b_first_item, b_second_item))
-	{
-	  I(a_first_item == b_first_item);
-	  if (a_second_item == b_second_item)
-	    {
-	      L(F("skipping common change on %s (tid %d)\n") 
-		% path_item_name(a_first_item) % t);
-	    }
-	  else if (a_first_item == a_second_item)
-	    {
-	      L(F("skipping neutral change of %s -> %s (tid %d)\n") 
-		% path_item_name(a_first_item) 
-		% path_item_name(a_second_item)
-		% t);	      
-	    }
-	  else if (b_first_item == b_second_item)
-	    {
-	      L(F("propagating change on %s -> %s (tid %d)\n") 
-		% path_item_name(b_first_item) 
-		% path_item_name(b_second_item)
-		% t);
-	      b_merged.first.insert(std::make_pair(t, b_second_item));
-	      b_merged.second.insert(std::make_pair(t, a_second_item));
-	    }
-	  else
-	    {
-	      // conflict
-	      path_item resolved;
-	      resolve_conflict(t, path_item_type(a_first_item), a_tmp, b_tmp, 
-			       resolved, resolved_conflicts, app);
-	      
-	      if (resolved == a_second_item)
-		{
-		  L(F("conflict detected, resolved in A's favour\n"));
-		  b_merged.first.insert(std::make_pair(t, b_second_item));
-		  b_merged.second.insert(std::make_pair(t, a_second_item));
-		}
-	      else
-		{
-		  L(F("conflict detected, resolved in B's favour\n"));
-		}
-	    }
-	}
+        {
+          I(a_first_item == b_first_item);
+          if (a_second_item == b_second_item)
+            {
+              L(F("skipping common change on %s (tid %d)\n") 
+                % path_item_name(a_first_item) % t);
+            }
+          else if (a_first_item == a_second_item)
+            {
+              L(F("skipping neutral change of %s -> %s (tid %d)\n") 
+                % path_item_name(a_first_item) 
+                % path_item_name(a_second_item)
+                % t);         
+            }
+          else if (b_first_item == b_second_item)
+            {
+              L(F("propagating change on %s -> %s (tid %d)\n") 
+                % path_item_name(b_first_item) 
+                % path_item_name(b_second_item)
+                % t);
+              b_merged.first.insert(std::make_pair(t, b_second_item));
+              b_merged.second.insert(std::make_pair(t, a_second_item));
+            }
+          else
+            {
+              // conflict
+              path_item resolved;
+              resolve_conflict(t, path_item_type(a_first_item), a_tmp, b_tmp, 
+                               resolved, resolved_conflicts, app);
+              
+              if (resolved == a_second_item)
+                {
+                  L(F("conflict detected, resolved in A's favour\n"));
+                  b_merged.first.insert(std::make_pair(t, b_second_item));
+                  b_merged.second.insert(std::make_pair(t, a_second_item));
+                }
+              else
+                {
+                  L(F("conflict detected, resolved in B's favour\n"));
+                }
+            }
+        }
       else
-	{
-	  // there was no entry in b at all for this tid, copy it
-	  b_merged.first.insert(std::make_pair(t, a_first_item));
-	  b_merged.second.insert(std::make_pair(t, a_second_item));
-	}
+        {
+          // there was no entry in b at all for this tid, copy it
+          b_merged.first.insert(std::make_pair(t, a_first_item));
+          b_merged.second.insert(std::make_pair(t, a_second_item));
+        }
     }
 
   // now drive through b.second's view of the directory structure, in case
@@ -1444,8 +1444,8 @@ project_missing_changes(path_analysis const & a_tmp,
 
 static void
 rebuild_analysis(path_analysis const & src,
-		 path_analysis & dst,
-		 tid_source & ts)
+                 path_analysis & dst,
+                 tid_source & ts)
 {
   state_renumbering renumbering;
   
@@ -1459,13 +1459,13 @@ rebuild_analysis(path_analysis const & src,
 
 static void
 merge_disjoint_analyses(path_analysis const & a,
-			path_analysis const & b,
-			path_analysis & a_renumbered,
-			path_analysis & b_renumbered,
-			path_analysis & a_merged,
-			path_analysis & b_merged,
-			tid_source & ts,
-			app_state & app)
+                        path_analysis const & b,
+                        path_analysis & a_renumbered,
+                        path_analysis & b_renumbered,
+                        path_analysis & a_merged,
+                        path_analysis & b_merged,
+                        tid_source & ts,
+                        app_state & app)
 {
   // we have anc->a and anc->b and we want to construct a->merged and
   // b->merged, leading to the eventual identity concatenate(a,a_merged) ==
@@ -1524,10 +1524,10 @@ merge_disjoint_analyses(path_analysis const & a,
     state_renumbering aux_renumbering;
     extend_renumbering_via_added_files(a_tmp, b_tmp, aux_renumbering);
     for (state_renumbering::const_iterator i = aux_renumbering.begin(); 
-	 i != aux_renumbering.end(); ++i)
+         i != aux_renumbering.end(); ++i)
       {
-	I(renumbering.find(i->first) == renumbering.end());
-	renumbering.insert(*i);
+        I(renumbering.find(i->first) == renumbering.end());
+        renumbering.insert(*i);
       }
   }
 
@@ -1572,28 +1572,28 @@ merge_disjoint_analyses(path_analysis const & a,
 
 static void
 merge_deltas(file_path const & path_in_merged, 
-	     std::map<file_path, file_id> & merge_finalists,
-	     file_id const & anc,
-	     file_id const & left,
-	     file_id const & right,
-	     file_id & finalist, 
-	     merge_provider & merger)
+             std::map<file_path, file_id> & merge_finalists,
+             file_id const & anc,
+             file_id const & left,
+             file_id const & right,
+             file_id & finalist, 
+             merge_provider & merger)
 {
   std::map<file_path, file_id>::const_iterator i = merge_finalists.find(path_in_merged);
   if (i != merge_finalists.end())
     {
       L(F("reusing merge resolution '%s' : '%s' -> '%s'\n")
-	% path_in_merged % anc % i->second);
+        % path_in_merged % anc % i->second);
       finalist = i->second;
     }
   else
     {
       N(merger.try_to_merge_files(path_in_merged, anc, left, right, finalist),
-	F("merge of '%s' : '%s' -> '%s' vs '%s' failed") 
-	% path_in_merged % anc % left % right);
+        F("merge of '%s' : '%s' -> '%s' vs '%s' failed") 
+        % path_in_merged % anc % left % right);
 
       L(F("merge of '%s' : '%s' -> '%s' vs '%s' resolved to '%s'\n") 
-	% path_in_merged % anc % left % right % finalist);
+        % path_in_merged % anc % left % right % finalist);
 
       merge_finalists.insert(std::make_pair(path_in_merged, finalist));
     }
@@ -1601,13 +1601,13 @@ merge_deltas(file_path const & path_in_merged,
 
 static void
 project_missing_deltas(change_set const & a,
-		       change_set const & b,
-		       path_analysis const & a_analysis,		       
-		       path_analysis const & b_analysis,		       
-		       path_analysis const & a_merged_analysis,		       
-		       change_set & b_merged,
-		       merge_provider & merger,
-		       std::map<file_path, file_id> & merge_finalists)
+                       change_set const & b,
+                       path_analysis const & a_analysis,                       
+                       path_analysis const & b_analysis,                       
+                       path_analysis const & a_merged_analysis,                
+                       change_set & b_merged,
+                       merge_provider & merger,
+                       std::map<file_path, file_id> & merge_finalists)
 {
   directory_map a_second_map, b_first_map, a_merged_first_map;
   build_directory_map(a_analysis.second, a_second_map);
@@ -1622,89 +1622,89 @@ project_missing_deltas(change_set const & a,
 
       // first work out what the path in b.second is
       if (lookup_path(delta_entry_path(i), a_second_map, t) 
-	  && b_analysis.second.find(t) != b_analysis.second.end())
-	get_full_path(b_analysis.second, t, path_in_b_second);
+          && b_analysis.second.find(t) != b_analysis.second.end())
+        get_full_path(b_analysis.second, t, path_in_b_second);
       else
-	reconstruct_path(delta_entry_path(i), b_first_map, 
-			 b_analysis.second, path_in_b_second);
+        reconstruct_path(delta_entry_path(i), b_first_map, 
+                         b_analysis.second, path_in_b_second);
 
       // then work out what the path in merged is
       reconstruct_path(delta_entry_path(i), a_merged_first_map, 
-		       a_merged_analysis.second, path_in_merged);
+                       a_merged_analysis.second, path_in_merged);
 
       // now check to see if there was a delta on the b.second name in b
       change_set::delta_map::const_iterator j = b.deltas.find(path_in_b_second);
 
       if (j == b.deltas.end())
-	{
-	  // if not, copy ours over using the merged name
-	  L(F("merge is copying delta '%s' : '%s' -> '%s'\n") 
-	    % path_in_merged % delta_entry_src(i) % delta_entry_dst(i));
-	  I(b_merged.deltas.find(path_in_merged) == b_merged.deltas.end());
-	  b_merged.apply_delta(path_in_merged, delta_entry_src(i), delta_entry_dst(i));
-	}
+        {
+          // if not, copy ours over using the merged name
+          L(F("merge is copying delta '%s' : '%s' -> '%s'\n") 
+            % path_in_merged % delta_entry_src(i) % delta_entry_dst(i));
+          I(b_merged.deltas.find(path_in_merged) == b_merged.deltas.end());
+          b_merged.apply_delta(path_in_merged, delta_entry_src(i), delta_entry_dst(i));
+        }
       else 
-	{
-	  I(delta_entry_src(i) == delta_entry_src(j));
-	  // if so, either... 
+        {
+          I(delta_entry_src(i) == delta_entry_src(j));
+          // if so, either... 
 
-	  if (delta_entry_dst(i) == delta_entry_dst(j))
-	    {
-	      // ... absorb identical deltas
-	      L(F("skipping common delta '%s' : '%s' -> '%s'\n") 
-		% path_in_merged % delta_entry_src(i) % delta_entry_dst(i));
-	    }
+          if (delta_entry_dst(i) == delta_entry_dst(j))
+            {
+              // ... absorb identical deltas
+              L(F("skipping common delta '%s' : '%s' -> '%s'\n") 
+                % path_in_merged % delta_entry_src(i) % delta_entry_dst(i));
+            }
 
-	  else if (delta_entry_src(i) == delta_entry_dst(i))
-	    {
-	      L(F("skipping neutral delta on '%s' : %s -> %s\n") 
-		% delta_entry_path(i) 
-		% delta_entry_src(i) 
-		% delta_entry_dst(i));	      
-	    }
+          else if (delta_entry_src(i) == delta_entry_dst(i))
+            {
+              L(F("skipping neutral delta on '%s' : %s -> %s\n") 
+                % delta_entry_path(i) 
+                % delta_entry_src(i) 
+                % delta_entry_dst(i));        
+            }
 
-	  else if (delta_entry_src(j) == delta_entry_dst(j))
-	    {
-	      L(F("propagating unperturbed delta on '%s' : '%s' -> '%s'\n") 
-		% delta_entry_path(i) 
-		% delta_entry_src(i) 
-		% delta_entry_dst(i));	      
-	      b_merged.apply_delta(path_in_merged, delta_entry_dst(j), delta_entry_dst(i));
-	    }
+          else if (delta_entry_src(j) == delta_entry_dst(j))
+            {
+              L(F("propagating unperturbed delta on '%s' : '%s' -> '%s'\n") 
+                % delta_entry_path(i) 
+                % delta_entry_src(i) 
+                % delta_entry_dst(i));        
+              b_merged.apply_delta(path_in_merged, delta_entry_dst(j), delta_entry_dst(i));
+            }
 
-	  else
-	    {
-	      // ... or resolve conflict
-	      L(F("merging delta '%s' : '%s' -> '%s' vs. '%s'\n") 
-		% path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
-	      file_id finalist;
-	      merge_deltas(path_in_merged, 
-			   merge_finalists,
-			   delta_entry_src(i),
-			   delta_entry_dst(i),
-			   delta_entry_dst(j),
-			   finalist, merger);
-	      L(F("resolved merge to '%s' : '%s' -> '%s'\n")
-		% path_in_merged % delta_entry_src(i) % finalist);
+          else
+            {
+              // ... or resolve conflict
+              L(F("merging delta '%s' : '%s' -> '%s' vs. '%s'\n") 
+                % path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
+              file_id finalist;
+              merge_deltas(path_in_merged, 
+                           merge_finalists,
+                           delta_entry_src(i),
+                           delta_entry_dst(i),
+                           delta_entry_dst(j),
+                           finalist, merger);
+              L(F("resolved merge to '%s' : '%s' -> '%s'\n")
+                % path_in_merged % delta_entry_src(i) % finalist);
 
-	      // if the conflict resolved to something other than the
-	      // existing post-state of b, add a new entry to the deltas of
-	      // b finishing the job.
-	      if (! (finalist == delta_entry_dst(j)))
-		b_merged.apply_delta(path_in_merged, delta_entry_dst(j), finalist);
-	    }
-	}
+              // if the conflict resolved to something other than the
+              // existing post-state of b, add a new entry to the deltas of
+              // b finishing the job.
+              if (! (finalist == delta_entry_dst(j)))
+                b_merged.apply_delta(path_in_merged, delta_entry_dst(j), finalist);
+            }
+        }
     }
 }
 
 
 void
 merge_change_sets(change_set const & a,
-		  change_set const & b,
-		  change_set & a_merged,
-		  change_set & b_merged,
-		  merge_provider & merger,
-		  app_state & app)
+                  change_set const & b,
+                  change_set & a_merged,
+                  change_set & b_merged,
+                  merge_provider & merger,
+                  app_state & app)
 {
   L(F("concatenating change sets\n"));
 
@@ -1718,29 +1718,29 @@ merge_change_sets(change_set const & a,
   analyze_rearrangement(b.rearrangement, b_analysis, ts);
 
   merge_disjoint_analyses(a_analysis, b_analysis,
-			  a_renumbered, b_renumbered,
-			  a_merged_analysis, b_merged_analysis, 
-			  ts, app);
+                          a_renumbered, b_renumbered,
+                          a_merged_analysis, b_merged_analysis, 
+                          ts, app);
 
   compose_rearrangement(a_merged_analysis, 
-			a_merged.rearrangement);
+                        a_merged.rearrangement);
 
   compose_rearrangement(b_merged_analysis, 
-			b_merged.rearrangement);
+                        b_merged.rearrangement);
 
   std::map<file_path, file_id> merge_finalists;
 
   project_missing_deltas(a, b, 
-			 a_renumbered, b_renumbered,
-			 a_merged_analysis, 
-			 b_merged,
-			 merger, merge_finalists);
+                         a_renumbered, b_renumbered,
+                         a_merged_analysis, 
+                         b_merged,
+                         merger, merge_finalists);
 
   project_missing_deltas(b, a, 
-			 b_renumbered, a_renumbered,
-			 b_merged_analysis, 
-			 a_merged,
-			 merger, merge_finalists);
+                         b_renumbered, a_renumbered,
+                         b_merged_analysis, 
+                         a_merged,
+                         merger, merge_finalists);
 
   {
     // confirmation step
@@ -1763,8 +1763,8 @@ merge_change_sets(change_set const & a,
 
 void 
 invert_change_set(change_set const & a2b,
-		  manifest_map const & a_map,
-		  change_set & b2a)
+                  manifest_map const & a_map,
+                  change_set & b2a)
 {
   tid_source ts;
   path_analysis a2b_analysis, b2a_analysis;
@@ -1785,46 +1785,46 @@ invert_change_set(change_set const & a2b,
       path_state::const_iterator a = b2a_analysis.second.find(path_state_tid(b));
       I(a != b2a_analysis.second.end());
       if (path_item_type(path_state_item(b)) == ptype_file)
-	{
-	  file_path b_pth, a_pth;
-	  get_full_path(b2a_analysis.first, path_state_tid(b), b_pth);
+        {
+          file_path b_pth, a_pth;
+          get_full_path(b2a_analysis.first, path_state_tid(b), b_pth);
 
-	  if (null_name(path_item_name(path_state_item(b))) &&
-	      ! null_name(path_item_name(path_state_item(a))))
-	    {
-	      // b->a represents an add in "a space"
-	      get_full_path(b2a_analysis.second, path_state_tid(a), a_pth);
-	      manifest_map::const_iterator i = a_map.find(a_pth);
-	      I(i != a_map.end());
-	      b2a.deltas.insert(std::make_pair(a_pth, 
-					       std::make_pair(file_id(), 
-							      manifest_entry_id(i))));
-	      L(F("converted 'delete %s' to 'add as %s' in inverse\n")
-		% a_pth 
-		% manifest_entry_id(i));
-	    }
-	  else if (! null_name(path_item_name(path_state_item(b))) &&
-		   null_name(path_item_name(path_state_item(a))))
-	    {
-	      // b->a represents a del from "b space"
-	      get_full_path(b2a_analysis.first, path_state_tid(b), b_pth);
-	      L(F("converted add %s to delete in inverse\n") % b_pth );
-	    }
-	  else
-	    {
-	      get_full_path(b2a_analysis.first, path_state_tid(b), b_pth);
-	      get_full_path(b2a_analysis.second, path_state_tid(a), a_pth);
-	      change_set::delta_map::const_iterator del = a2b.deltas.find(b_pth);
-	      if (del == a2b.deltas.end())
-		continue;
-	      file_id src_id(delta_entry_src(del)), dst_id(delta_entry_dst(del));
-	      L(F("converting delta %s -> %s on %s\n")
-		% src_id % dst_id % b_pth);
-	      L(F("inverse is delta %s -> %s on %s\n")
-		% dst_id % src_id % a_pth);
-	      b2a.deltas.insert(std::make_pair(a_pth, std::make_pair(dst_id, src_id)));
-	    }
-	}
+          if (null_name(path_item_name(path_state_item(b))) &&
+              ! null_name(path_item_name(path_state_item(a))))
+            {
+              // b->a represents an add in "a space"
+              get_full_path(b2a_analysis.second, path_state_tid(a), a_pth);
+              manifest_map::const_iterator i = a_map.find(a_pth);
+              I(i != a_map.end());
+              b2a.deltas.insert(std::make_pair(a_pth, 
+                                               std::make_pair(file_id(), 
+                                                              manifest_entry_id(i))));
+              L(F("converted 'delete %s' to 'add as %s' in inverse\n")
+                % a_pth 
+                % manifest_entry_id(i));
+            }
+          else if (! null_name(path_item_name(path_state_item(b))) &&
+                   null_name(path_item_name(path_state_item(a))))
+            {
+              // b->a represents a del from "b space"
+              get_full_path(b2a_analysis.first, path_state_tid(b), b_pth);
+              L(F("converted add %s to delete in inverse\n") % b_pth );
+            }
+          else
+            {
+              get_full_path(b2a_analysis.first, path_state_tid(b), b_pth);
+              get_full_path(b2a_analysis.second, path_state_tid(a), a_pth);
+              change_set::delta_map::const_iterator del = a2b.deltas.find(b_pth);
+              if (del == a2b.deltas.end())
+                continue;
+              file_id src_id(delta_entry_src(del)), dst_id(delta_entry_dst(del));
+              L(F("converting delta %s -> %s on %s\n")
+                % src_id % dst_id % b_pth);
+              L(F("inverse is delta %s -> %s on %s\n")
+                % dst_id % src_id % a_pth);
+              b2a.deltas.insert(std::make_pair(a_pth, std::make_pair(dst_id, src_id)));
+            }
+        }
     }
 
   // some deltas might not have been renamed, however. these we just invert the
@@ -1834,123 +1834,123 @@ invert_change_set(change_set const & a2b,
     {
       // check to make sure this isn't the image of an add (now a delete)
       if (null_id(delta_entry_src(del)))
-	continue;
+        continue;
       // check to make sure this isn't one of the already-moved deltas
       if (b2a.deltas.find(delta_entry_path(del)) != b2a.deltas.end())
-	continue;
+        continue;
       b2a.deltas.insert(std::make_pair(delta_entry_path(del),
-				       std::make_pair(delta_entry_dst(del),
-						      delta_entry_src(del))));
+                                       std::make_pair(delta_entry_dst(del),
+                                                      delta_entry_src(del))));
     }
 }
 
 void 
 move_files_to_tmp_bottom_up(tid t,
-			    local_path const & temporary_root,
-			    path_state const & state,
-			    directory_map const & dmap)
+                            local_path const & temporary_root,
+                            path_state const & state,
+                            directory_map const & dmap)
 {
   directory_map::const_iterator dirent = dmap.find(t);
   if (dirent != dmap.end())
     {
       boost::shared_ptr<directory_node> node = dirent->second;  
       for (directory_node::const_iterator entry = node->begin();
-	   entry != node->end(); ++entry)
-	{
-	  tid child = directory_entry_tid(entry);
-	  file_path path;
-	  path_item item;
-	      
-	  find_item(child, state, item);
+           entry != node->end(); ++entry)
+        {
+          tid child = directory_entry_tid(entry);
+          file_path path;
+          path_item item;
+              
+          find_item(child, state, item);
 
-	  if (null_name(path_item_name(item)))
-	    continue;
+          if (null_name(path_item_name(item)))
+            continue;
 
-	  // recursively move all sub-entries
-	  if (path_item_type(item) == ptype_directory)
-	    move_files_to_tmp_bottom_up(child, temporary_root, state, dmap);
+          // recursively move all sub-entries
+          if (path_item_type(item) == ptype_directory)
+            move_files_to_tmp_bottom_up(child, temporary_root, state, dmap);
 
-	  get_full_path(state, child, path);
-	  
-	  local_path src(path());
-	  local_path dst((mkpath(temporary_root()) 
-			  / mkpath(boost::lexical_cast<std::string>(child))).string());
-	  
-	  P(F("moving %s -> %s\n") % src % dst);
-	  switch (path_item_type(item))
-	    {
-	    case ptype_file:
-	      if (file_exists(src))
-		move_file(src, dst);
-	      break;
-	    case ptype_directory:
-	      if (directory_exists(src))
-		move_dir(src, dst);
-	      break;
-	    }
-	}
+          get_full_path(state, child, path);
+          
+          local_path src(path());
+          local_path dst((mkpath(temporary_root()) 
+                          / mkpath(boost::lexical_cast<std::string>(child))).string());
+          
+          P(F("moving %s -> %s\n") % src % dst);
+          switch (path_item_type(item))
+            {
+            case ptype_file:
+              if (file_exists(src))
+                move_file(src, dst);
+              break;
+            case ptype_directory:
+              if (directory_exists(src))
+                move_dir(src, dst);
+              break;
+            }
+        }
     }
 }
 
 void 
 move_files_from_tmp_top_down(tid t,
-			     local_path const & temporary_root,
-			     path_state const & state,
-			     directory_map const & dmap)
+                             local_path const & temporary_root,
+                             path_state const & state,
+                             directory_map const & dmap)
 {
   directory_map::const_iterator dirent = dmap.find(t);
   if (dirent != dmap.end())
     {
       boost::shared_ptr<directory_node> node = dirent->second;  
       for (directory_node::const_iterator entry = node->begin();
-	   entry != node->end(); ++entry)
-	{
-	  tid child = directory_entry_tid(entry);
-	  file_path path;
-	  path_item item;
-	      
-	  find_item(child, state, item);
+           entry != node->end(); ++entry)
+        {
+          tid child = directory_entry_tid(entry);
+          file_path path;
+          path_item item;
+              
+          find_item(child, state, item);
 
-	  if (null_name(path_item_name(item)))
-	    continue;
+          if (null_name(path_item_name(item)))
+            continue;
 
-	  get_full_path(state, child, path);
-	  
-	  local_path src((mkpath(temporary_root()) 
-			  / mkpath(boost::lexical_cast<std::string>(child))).string());
-	  local_path dst(path());
-	  
-	  switch (path_item_type(item))
-	    {
-	    case ptype_file:
-	      if (file_exists(src))
-		{
-		  P(F("moving file %s -> %s\n") % src % dst);
-		  make_dir_for(path);
-		  move_file(src, dst);
-		}
-	      break;
-	    case ptype_directory:
-	      if (directory_exists(src))
-		{
-		  P(F("moving dir %s -> %s\n") % src % dst);
-		  make_dir_for(path);
-		  move_dir(src, dst);
-		}
-	      break;
-	    }
+          get_full_path(state, child, path);
+          
+          local_path src((mkpath(temporary_root()) 
+                          / mkpath(boost::lexical_cast<std::string>(child))).string());
+          local_path dst(path());
+          
+          switch (path_item_type(item))
+            {
+            case ptype_file:
+              if (file_exists(src))
+                {
+                  P(F("moving file %s -> %s\n") % src % dst);
+                  make_dir_for(path);
+                  move_file(src, dst);
+                }
+              break;
+            case ptype_directory:
+              if (directory_exists(src))
+                {
+                  P(F("moving dir %s -> %s\n") % src % dst);
+                  make_dir_for(path);
+                  move_dir(src, dst);
+                }
+              break;
+            }
 
-	  // recursively move all sub-entries
-	  if (path_item_type(item) == ptype_directory)
-	    move_files_from_tmp_top_down(child, temporary_root, state, dmap);
-	}
+          // recursively move all sub-entries
+          if (path_item_type(item) == ptype_directory)
+            move_files_from_tmp_top_down(child, temporary_root, state, dmap);
+        }
     }
 }
 
 
 void
 apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
-				  local_path const & temporary_root)
+                                  local_path const & temporary_root)
 {
   tid_source ts;
   path_analysis analysis;
@@ -1964,18 +1964,18 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
     return;
 
   move_files_to_tmp_bottom_up(root_tid, temporary_root,
-			      analysis.first, first_dmap);
+                              analysis.first, first_dmap);
 
   move_files_from_tmp_top_down(root_tid, temporary_root,
-			       analysis.second, second_dmap);
+                               analysis.second, second_dmap);
 }
 
 // application stuff
 
 void
 apply_path_rearrangement(path_set const & old_ps,
-			 change_set::path_rearrangement const & pr,
-			 path_set & new_ps)
+                         change_set::path_rearrangement const & pr,
+                         path_set & new_ps)
 {
   change_set a, b, c;
   a.rearrangement.added_files = old_ps;
@@ -1986,7 +1986,7 @@ apply_path_rearrangement(path_set const & old_ps,
 
 void
 build_pure_addition_change_set(manifest_map const & man,
-			       change_set & cs)
+                               change_set & cs)
 {
   for (manifest_map::const_iterator i = man.begin(); i != man.end(); ++i)
     cs.add_file(manifest_entry_path(i), manifest_entry_id(i));
@@ -1999,8 +1999,8 @@ build_pure_addition_change_set(manifest_map const & man,
 
 void
 apply_path_rearrangement(manifest_map const & m_old,
-			 change_set::path_rearrangement const & pr,
-			 manifest_map & m_old_rearranged)
+                         change_set::path_rearrangement const & pr,
+                         manifest_map & m_old_rearranged)
 {
   change_set a, b, c;
   build_pure_addition_change_set(m_old, a);
@@ -2013,12 +2013,12 @@ apply_path_rearrangement(manifest_map const & m_old,
     {
       change_set::delta_map::const_iterator d = c.deltas.find(*i);
       if (d == c.deltas.end())
-	// case 1: the file was added by the rearrangement, but we have
-	// no idea what it was added as, so we leave its ID empty
-	m_old_rearranged.insert(std::make_pair(*i, null_ident));
+        // case 1: the file was added by the rearrangement, but we have
+        // no idea what it was added as, so we leave its ID empty
+        m_old_rearranged.insert(std::make_pair(*i, null_ident));
       else
-	// case 2: we know the ID to insert
-	m_old_rearranged.insert(std::make_pair(*i, delta_entry_dst(d)));	
+        // case 2: we know the ID to insert
+        m_old_rearranged.insert(std::make_pair(*i, delta_entry_dst(d)));        
     }
 }
 
@@ -2027,8 +2027,8 @@ apply_path_rearrangement(manifest_map const & m_old,
 
 void
 apply_change_set(manifest_map const & old_man,
-		 change_set const & cs,
-		 manifest_map & new_man)
+                 change_set const & cs,
+                 manifest_map & new_man)
 {
   change_set a, b;
   build_pure_addition_change_set(old_man, a);
@@ -2047,7 +2047,7 @@ apply_change_set(manifest_map const & old_man,
 // quick, optimistic and destructive version for log walker
 file_path
 apply_change_set_inverse(change_set const & cs,
-			 file_path const & file_in_second)
+                         file_path const & file_in_second)
 {
   tid_source ts;
   path_analysis analysis;
@@ -2063,7 +2063,7 @@ apply_change_set_inverse(change_set const & cs,
 // quick, optimistic and destructive version for rcs importer
 void
 apply_change_set(change_set const & cs,
-		 manifest_map & man)
+                 manifest_map & man)
 {
   if (cs.rearrangement.renamed_files.empty() 
       && cs.rearrangement.renamed_dirs.empty()
@@ -2071,16 +2071,16 @@ apply_change_set(change_set const & cs,
     {
       // fast path for simple drop/add/delta file operations
       for (std::set<file_path>::const_iterator i = cs.rearrangement.deleted_files.begin();
-	   i != cs.rearrangement.deleted_files.end(); ++i)
-	{
-	  man.erase(*i);
-	}
+           i != cs.rearrangement.deleted_files.end(); ++i)
+        {
+          man.erase(*i);
+        }
       for (change_set::delta_map::const_iterator i = cs.deltas.begin(); 
-	   i != cs.deltas.end(); ++i)
-	{
-	  if (!null_id(delta_entry_dst(i)))
-	    man[delta_entry_path(i)] = delta_entry_dst(i);
-	}
+           i != cs.deltas.end(); ++i)
+        {
+          if (!null_id(delta_entry_dst(i)))
+            man[delta_entry_path(i)] = delta_entry_dst(i);
+        }
     }
   else
     {
@@ -2111,56 +2111,56 @@ namespace
 
 static void 
 parse_path_rearrangement(basic_io::parser & parser,
-			 change_set & cs)
+                         change_set & cs)
 {
   while (parser.symp())
     {
       std::string t1, t2;
       if (parser.symp(syms::add_file)) 
-	{ 
-	  parser.sym();
-	  parser.str(t1);
-	  cs.add_file(file_path(t1));
-	}
+        { 
+          parser.sym();
+          parser.str(t1);
+          cs.add_file(file_path(t1));
+        }
       else if (parser.symp(syms::delete_file)) 
-	{ 
-	  parser.sym();
-	  parser.str(t1);
-	  cs.delete_file(file_path(t1));
-	}
+        { 
+          parser.sym();
+          parser.str(t1);
+          cs.delete_file(file_path(t1));
+        }
       else if (parser.symp(syms::delete_dir)) 
-	{ 
-	  parser.sym();
-	  parser.str(t1);
-	  cs.delete_dir(file_path(t1));
-	}
+        { 
+          parser.sym();
+          parser.str(t1);
+          cs.delete_dir(file_path(t1));
+        }
       else if (parser.symp(syms::rename_file)) 
-	{ 
-	  parser.sym();
-	  parser.str(t1);
-	  parser.esym(syms::to);
-	  parser.str(t2);
-	  cs.rename_file(file_path(t1),
-			 file_path(t2));
-	}
+        { 
+          parser.sym();
+          parser.str(t1);
+          parser.esym(syms::to);
+          parser.str(t2);
+          cs.rename_file(file_path(t1),
+                         file_path(t2));
+        }
       else if (parser.symp(syms::rename_dir)) 
-	{ 
-	  parser.sym();
-	  parser.str(t1);
-	  parser.esym(syms::to);
-	  parser.str(t2);
-	  cs.rename_dir(file_path(t1),
-			file_path(t2));
-	}
+        { 
+          parser.sym();
+          parser.str(t1);
+          parser.esym(syms::to);
+          parser.str(t2);
+          cs.rename_dir(file_path(t1),
+                        file_path(t2));
+        }
       else
-	break;
+        break;
     }
 }
 
 
 void 
 print_path_rearrangement(basic_io::printer & printer,
-			 change_set::path_rearrangement const & pr)
+                         change_set::path_rearrangement const & pr)
 {
 
   for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
@@ -2208,7 +2208,7 @@ print_path_rearrangement(basic_io::printer & printer,
 
 void 
 parse_change_set(basic_io::parser & parser,
-		 change_set & cs)
+                 change_set & cs)
 {
   clear_change_set(cs);
 
@@ -2224,14 +2224,14 @@ parse_change_set(basic_io::parser & parser,
       parser.esym(syms::to);
       parser.hex(dst);
       cs.deltas.insert(std::make_pair(file_path(path),
-				      std::make_pair(file_id(src),
-						     file_id(dst))));
+                                      std::make_pair(file_id(src),
+                                                     file_id(dst))));
     }
 }
 
 void 
 print_change_set(basic_io::printer & printer,
-		 change_set const & cs)
+                 change_set const & cs)
 {
   print_path_rearrangement(printer, cs.rearrangement);
   
@@ -2248,7 +2248,7 @@ print_change_set(basic_io::printer & printer,
 
 void
 read_path_rearrangement(data const & dat,
-			change_set::path_rearrangement & re)
+                        change_set::path_rearrangement & re)
 {
   std::istringstream iss(dat());
   basic_io::input_source src(iss);
@@ -2261,7 +2261,7 @@ read_path_rearrangement(data const & dat,
 
 void
 read_change_set(data const & dat,
-		change_set & cs)
+                change_set & cs)
 {
   std::istringstream iss(dat());
   basic_io::input_source src(iss);
@@ -2272,7 +2272,7 @@ read_change_set(data const & dat,
 
 void
 write_change_set(change_set const & cs,
-		 data & dat)
+                 data & dat)
 {
   std::ostringstream oss;
   basic_io::printer pr(oss);
@@ -2282,7 +2282,7 @@ write_change_set(change_set const & cs,
 
 void
 write_path_rearrangement(change_set::path_rearrangement const & re,
-			 data & dat)
+                         data & dat)
 {
   std::ostringstream oss;
   basic_io::printer pr(oss);
@@ -2295,7 +2295,7 @@ write_path_rearrangement(change_set::path_rearrangement const & re,
 #include "sanity.hh"
 
 static void dump_change_set(std::string const & ctx,
-			    change_set const & cs)
+                            change_set const & cs)
 {
   data tmp;
   write_change_set(cs, tmp);
@@ -2327,7 +2327,7 @@ spin_change_set(change_set const & cs)
 
 static void
 disjoint_merge_test(std::string const & ab_str,
-		    std::string const & ac_str)
+                    std::string const & ac_str)
 {
   change_set ab, ac, bm, cm;
 
@@ -2404,11 +2404,11 @@ basic_change_set_test()
       cs.add_file(file_path("usr/lib/libc.so"));
       cs.rename_dir(file_path("usr/lib"), file_path("usr/local/lib"));
       cs.apply_delta(file_path("usr/local/lib/libc.so"), 
-		     null_ident,
-		     file_id(hexenc<id>("435e816c30263c9184f94e7c4d5aec78ea7c028a")));
+                     null_ident,
+                     file_id(hexenc<id>("435e816c30263c9184f94e7c4d5aec78ea7c028a")));
       cs.apply_delta(file_path("usr/local/bin/chicken"), 
-		     file_id(hexenc<id>("c6a4a6196bb4a744207e1a6e90273369b8c2e925")),
-		     file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892")));
+                     file_id(hexenc<id>("c6a4a6196bb4a744207e1a6e90273369b8c2e925")),
+                     file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892")));
       spin_change_set(cs);
     }
   catch (informative_failure & exn)
@@ -2430,17 +2430,17 @@ neutralize_change_test()
       change_set cs1, cs2, csa;
       cs1.add_file(file_path("usr/lib/zombie"));
       cs1.rename_file(file_path("usr/lib/apple"),
-		      file_path("usr/lib/orange"));
+                      file_path("usr/lib/orange"));
       cs1.rename_dir(file_path("usr/lib/moose"),
-		     file_path("usr/lib/squirrel"));
+                     file_path("usr/lib/squirrel"));
 
       dump_change_set("neutralize target", cs1);
 
       cs2.delete_file(file_path("usr/lib/zombie"));
       cs2.rename_file(file_path("usr/lib/orange"),
-		      file_path("usr/lib/apple"));
+                      file_path("usr/lib/apple"));
       cs2.rename_dir(file_path("usr/lib/squirrel"),
-		     file_path("usr/lib/moose"));
+                     file_path("usr/lib/moose"));
 
       dump_change_set("neutralizer", cs2);
       
@@ -2474,17 +2474,17 @@ non_interfering_change_test()
       change_set cs1, cs2, csa;
       cs1.delete_file(file_path("usr/lib/zombie"));
       cs1.rename_file(file_path("usr/lib/orange"),
-		      file_path("usr/lib/apple"));
+                      file_path("usr/lib/apple"));
       cs1.rename_dir(file_path("usr/lib/squirrel"),
-		     file_path("usr/lib/moose"));
+                     file_path("usr/lib/moose"));
 
       dump_change_set("non-interference A", cs1);
 
       cs2.add_file(file_path("usr/lib/zombie"));
       cs2.rename_file(file_path("usr/lib/pear"),
-		      file_path("usr/lib/orange"));
+                      file_path("usr/lib/orange"));
       cs2.rename_dir(file_path("usr/lib/spy"),
-		     file_path("usr/lib/squirrel"));
+                     file_path("usr/lib/squirrel"));
       
       dump_change_set("non-interference B", cs2);
 
