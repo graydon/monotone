@@ -11,6 +11,7 @@
 
 #include <iostream>
 
+#include "platform.hh"
 #include "mt_version.hh"
 #include "package_revision.h"
 #include "package_full_revision.h"
@@ -26,6 +27,9 @@ void
 print_full_version()
 {
   print_version();
+  std::string s;
+  get_system_flavour(s);
+  std::cout << "Running on: " << s << std::endl;
   std::cout << "Changes since base revision:" << std::endl
             << package_full_revision_constant;
 }
