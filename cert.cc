@@ -9,7 +9,6 @@
 #include "app_state.hh"
 #include "interner.hh"
 #include "keys.hh"
-#include "mac.hh"
 #include "netio.hh"
 #include "sanity.hh"
 #include "transforms.hh"
