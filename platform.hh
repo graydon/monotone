@@ -17,7 +17,7 @@ void get_system_flavour(std::string & ident);
 // For LUA
 int existsonpath(const char *exe);
 int make_executable(const char *path);
-int process_spawn(char * const *argv);
+int process_spawn(const char * const *argv);
 int process_wait(int pid, int *res);
 int process_kill(int pid, int signal);
 int process_sleep(unsigned int seconds);

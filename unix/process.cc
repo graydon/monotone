@@ -41,7 +41,7 @@ int make_executable(const char *path)
 	return chmod(path, mode);
 }
 
-int process_spawn(char * const *argv)
+int process_spawn(const char * const *argv)
 {
 	pid_t pid;
 	pid = fork();

@@ -1,4 +1,12 @@
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Now takes 
+	const char * const *
+	* platform.hh (process_spawn): Ditto
+	* unix/process.cc (process_spawn): Ditto
+	* General: Sorry about all these commits, I'm syncing back and
+	forth between Linux and Win32
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
 	* win32/process.cc (process_spawn): Now takes char * const *
 	* platform.hh (process_spawn): Ditto
 	* unix/process.cc (process_spawn): Ditto
