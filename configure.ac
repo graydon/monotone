@@ -175,8 +175,8 @@ __wont_compile_
 #endif
 ],
    AM_CONDITIONAL(WIN32_PLATFORM, true),
-   AM_CONDITIONAL(WIN32_PLATFORM, true),
-   AM_CONDITIONAL(WIN32_PLATFORM, true)
+   AM_CONDITIONAL(WIN32_PLATFORM, false),
+   AM_CONDITIONAL(WIN32_PLATFORM, false)
 )])
 
 
@@ -215,8 +215,8 @@ AC_CHECK_LIB([nsl], [inet_ntoa])
 AC_ARG_WITH([bundled-lua],
    AC_HELP_STRING(
       [--with-bundled-lua],
-      [Force use of bundled version of lua (default=no)]
-   ), , [bundled_lua=yes]
+      [Force use of bundled version of lua (default=yes)]
+   ), [bundled_lua="$withval"], [bundled_lua=yes]
 )
 
 if test "x$bundled_lua" = "xno" ; then

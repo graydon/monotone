@@ -1,5 +1,11 @@
 2004-04-29  graydon hoare  <graydon@pobox.com>
 
+	* configure.ac: Fix up windows probe and bundling checks.
+	* netxx/resolve_getaddrinfo.cxx: Local hack for stream addresses.
+	* netsync.cc: Report address before listening.
+
+2004-04-29  graydon hoare  <graydon@pobox.com>
+
 	* cert.cc (get_branch_heads): Calculate a "disapproved version"
 	attribute which culls a version with only disapproved ancestry
 	edges.
@@ -7,13 +13,12 @@
 
 2004-04-25  Joel Rosdahl  <joel@rosdahl.net>
 
-        * po/stamp-po: Removed since it's generated.
-
-        * std_hooks.lua (ignore_file): Corrected name of Subversion's
-        administrative directory.
-        * work.hh: Ditto.
-        * monotone.texi (Hook Reference): Updated default definition of
-        ignore_file.
+	* po/stamp-po: Removed since it's generated.
+	* std_hooks.lua (ignore_file): Corrected name of Subversion's
+	administrative directory.
+	* work.hh: Ditto.
+	* monotone.texi (Hook Reference): Updated default definition of
+	ignore_file.
 
 2004-04-28  Christof Petig <christof@petig-baender.de>
 

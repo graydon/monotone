@@ -2634,13 +2634,14 @@ serve_connections(protocol_role role,
     instant(0,1);
 
   Netxx::Address addr(address().c_str(), default_port, true);
+
+  P(F("beginning service on %s : %d\n") 
+    % addr.get_name() % addr.get_port());
+
   Netxx::StreamServer server(addr, timeout);
   
   map<Netxx::socket_type, shared_ptr<session> > sessions;
   set<Netxx::socket_type> armed_sessions;
-
-  P(F("beginning service on %s : %d\n") 
-    % addr.get_name() % addr.get_port());
   
   while (true)
     {      
