@@ -1,5 +1,13 @@
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
 	* win32/process.cc (process_spawn): Now takes 
+	char * const argv[]
+	* platform.hh (process_spawn): Ditto
+	* unix/process.cc (process_spawn): Ditto
+	* lua.cc (monotone_spawn_for_lua): Remove debug code
+	* General: Beginning to hate C++'s const rules
+
+2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Now takes 
 	const char * const *
 	* platform.hh (process_spawn): Ditto
 	* unix/process.cc (process_spawn): Ditto

@@ -106,12 +106,10 @@ extern "C"
   static int
   monotone_spawn_for_lua(lua_State *L)
   {
-	  printf("in spawn\n");
     int n = lua_gettop(L);
     const char *path = lua_tostring(L, -n);
     char **argv = (char**)malloc((n+1)*sizeof(char*));
     int ret, i;
-    printf("n %d\n", n);
     if (argv==NULL)
       return 0;
     argv[0] = (char*)path;
