@@ -74,11 +74,22 @@ extern sanity global_sanity;
 // they are only issued once and are prefixed with "warning: "
 #define W(fmt) global_sanity.warning(fmt, __FILE__, __LINE__)
 
+
+// invariants and assertions
+
+#ifdef __GNUC__
+#define LIKELY(zz) (__builtin_expect((zz), 1))
+#define UNLIKELY(zz) (__builtin_expect((zz), 0))
+#else
+#define LIKELY(zz) (zz)
+#define UNLIKELY(zz) (zz)
+#endif
+
 // I is for invariants that "should" always be true
 // (if they are wrong, there is a *bug*)
 #define I(e) \
 do { \
-  if(!(e)) { \
+  if(UNLIKELY(!(e))) { \
     global_sanity.invariant_failure("I("#e")", __FILE__, __LINE__); \
   } \
 } while(0)
@@ -87,7 +98,7 @@ do { \
 // (if they are wrong, the user just did something wrong)
 #define N(e, explain)\
 do { \
-  if(!(e)) { \
+  if(UNLIKELY(!(e))) { \
     global_sanity.naughty_failure("N("#e")", (explain), __FILE__, __LINE__); \
   } \
 } while(0)
@@ -106,7 +117,7 @@ inline T & checked_index(std::vector<T> & v,
 			 char const * file,
 			 int line) 
 { 
-  if (i >= v.size())
+  if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
 }
@@ -119,7 +130,7 @@ inline T const & checked_index(std::vector<T> const & v,
 			       char const * file,
 			       int line) 
 { 
-  if (i >= v.size())
+  if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
 }

@@ -1,3 +1,7 @@
+2004-03-21  graydon hoare  <graydon@pobox.com>
+
+	* lcs.hh, sanity.hh: Minor performance tweaks.
+
 2004-03-20  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc: Teach how to aggregate branches.

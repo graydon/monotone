@@ -46,6 +46,29 @@
 #include <iostream>
 #include "sanity.hh"
 
+struct work_vec
+{
+  long lo;
+  long hi;
+  static std::vector<long> vec;
+  work_vec(long lo, long hi) : 
+    lo(lo), hi(hi)
+  {
+    I(hi >= lo);
+    size_t len = (hi - lo) + 1;
+    vec.resize(len);
+    vec.assign(len, -1);
+  }
+
+  inline long & operator[](long t) 
+  {
+    I(t >= lo && t <= hi);
+    return vec[t-lo]; 
+  }
+};
+
+std::vector<long> work_vec::vec;
+
 template <typename A,
 	  typename B,
 	  typename LCS>	
@@ -87,25 +110,7 @@ struct jaffer_edit_calculator
       else
 	  return *(base + (start + idx));
     }
-  };
-  
-  struct work_vec
-  {
-    long lo;
-    long hi;
-    std::vector<long> vec;
-    work_vec(long lo, long hi) : 
-      lo(lo), hi(hi), vec((hi - lo) + 1, -1) 
-    {}
-    long & operator[](long t) 
-    {
-      I(t >= lo);
-      I(t <= hi);
-      I((t-lo) <= static_cast<long>(vec.size()));
-      return vec[t-lo]; 
-    }
-  };
-  
+  };    
 
   static long run(work_vec & fp, long k, 
 		  subarray<A> const & a, long m,
