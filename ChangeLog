@@ -1,3 +1,8 @@
+2004-12-20  Matt Johnston  <matt@ucc.asn.au>
+
+        * keys.cc: don't cache bad passphrases, so prompt for a correct
+        password if the first ones fail.
+
 2004-12-19  Matt Johnston  <matt@ucc.asn.au>
 
         * commands.cc: print out author/date next to ambiguous revision
