@@ -268,7 +268,7 @@ TESTS = unit_tests $(srcdir)/testsuite
 mostlyclean-local:
 	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
 
-DISTCLEANFILES = tests/atconfig
+DISTCLEANFILES = tests/atconfig mt-stdint.h
 
 # distcheck stuff
 
@@ -300,8 +300,7 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
                       package_revision.h \
-                      package_full_revision.txt package_full_revision.h \
-                      mt-stdint.h
+                      package_full_revision.txt package_full_revision.h
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
 CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)

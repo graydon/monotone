@@ -1,3 +1,9 @@
+2005-02-28  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (BUILT_SOURCES_CLEAN): Moved mt-stding.h from here...
+	(DISTCLEANFILES): ... to here.  Since mt-stding.h is created by
+	config.status, it should only be removed by the distclean target.
+
 2005-02-28  Matt Johnston  <matt@ucc.asn.au>
 
 	* std_hooks.lua: posix.iswin32() == 1, rather than plain boolean
