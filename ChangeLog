@@ -27,7 +27,7 @@
 	* tests/t_null.at: Adjust for new option names.
 	* unit_tests.cc: Set debug, not verbose.
 
-2004-07-31  Richard Levitte <levitte@stacken.kth.se>
+2004-07-31  Richard Levitte <richard@levitte.org>
 
 	* rcs_file.cc (parse_admin): Switch ntmp and stmp.
 
