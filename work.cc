@@ -7,9 +7,10 @@
 #include <sstream>
 
 #include "app_state.hh"
-#include "work.hh"
 #include "file_io.hh"
 #include "sanity.hh"
+#include "vocab.hh"
+#include "work.hh"
 
 // working copy / book-keeping file code
 
@@ -321,9 +322,9 @@ struct add_to_work_set
 void read_work_set(data const & dat,
 		   work_set & work)
 {
-  regex expr("^[[:blank:]]*(add|drop)[[:blank:]]+([^[:space:]]+)$");
+  regex expr("^(add|drop)\n ([^[:space:]].+)$");
   regex_grep(add_to_work_set(work), dat(), expr, match_not_dot_newline);    
-  regex expr2("^[[:blank:]]*(rename)[[:blank:]]+([^[:space:]]+)[[:blank:]]+([^[:space:]]+)$");
+  regex expr2("^(rename)\n ([^[:space:]].+)\n ([^[:space:]].+)$");
   regex_grep(add_to_work_set(work), dat(), expr2, match_not_dot_newline);
 }
 
@@ -333,15 +334,15 @@ void write_work_set(data & dat,
   ostringstream tmp;
   for (path_set::const_iterator i = work.dels.begin();
        i != work.dels.end(); ++i)
-    tmp << "drop " << (*i) << endl;
+    tmp << "drop\n " << (*i) << endl;
 
   for (path_set::const_iterator i = work.adds.begin();
        i != work.adds.end(); ++i)
-    tmp << "add " << (*i) << endl;
+    tmp << "add\n " << (*i) << endl;
 
   for (rename_set::const_iterator i = work.renames.begin();
        i != work.renames.end(); ++i)
-    tmp << "rename " << i->first << " " << i->second << endl;
+    tmp << "rename\n " << i->first << "\n " << i->second << endl;
 
   dat = tmp.str();
 }
@@ -393,8 +394,9 @@ struct add_to_options_map
   explicit add_to_options_map(options_map & m): options(m) {}
   bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
   {
+    utf8 value;
     std::string key(res[1].first, res[1].second);
-    std::string value(res[2].first, res[2].second);
+    value = std::string(res[2].first, res[2].second);
     options[key] = value;
     return true;
   }
@@ -448,7 +450,7 @@ void get_attr_path(file_path & a_path)
 
 void read_attr_map(data const & dat, attr_map & attr)
 {
-  regex expr("^([^[:space:]]+)[[:blank:]]+([^[:space:]]+)[[:blank:]]+([^[:space:]]+)$");
+  regex expr("^([^[:space:]]+) ([^[:space:]]+) ([^[:space:]].+)$");
   regex_grep(add_to_attr_map(attr), dat(), expr, match_not_dot_newline);
 }
 

@@ -666,7 +666,9 @@ void post_queued_blobs_to_network(set<url> const & targets,
     {
       try 
 	{
-	  string proto, user, host, path, group;
+	  ace user, host, group;
+	  urlenc path;
+	  string proto;
 	  unsigned long port;
 	  N(parse_url(*targ, proto, user, host, path, group, port),
 	    F("cannot parse url '%s'") % *targ);
@@ -698,11 +700,11 @@ void post_queued_blobs_to_network(set<url> const & targets,
 		  L(F("posting %d packets for %s\n") % packets.size() % *targ);
 	      
 		  if (proto == "http")
-		    post_http_blob(*targ, postbody, group, host, port, path, app, posted_ok);
+		    post_http_blob(*targ, postbody, group(), host(), port, path(), app, posted_ok);
 		  else if (proto == "nntp")
-		    post_nntp_blob(*targ, postbody, group, host, port, app, posted_ok);
+		    post_nntp_blob(*targ, postbody, group(), host(), port, app, posted_ok);
 		  else if (proto == "mailto")
-		    post_smtp_blob(*targ, postbody, user, host, port, app, posted_ok);
+		    post_smtp_blob(*targ, postbody, user(), host(), port, app, posted_ok);
 	      
 		  if (!posted_ok)
 		    throw informative_failure("unknown failure during post to " + (*targ)());
@@ -738,9 +740,10 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
     {
       try
 	{
-
-	  string proto, user, host, path, group;
-	  unsigned long port;            
+	  ace user, host, group;
+	  urlenc path;
+	  string proto;
+	  unsigned long port;
 	  N(parse_url(*src, proto, user, host, path, group, port),
 	    F("cannot parse url '%s'") % *src);
       
@@ -765,9 +768,9 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
 	      boost::shared_ptr<iostream> stream;
 
 	      bool is_proxy = false;
-	      string connect_host_name = host;
+	      string connect_host_name = host();
 	      unsigned long connect_port_num = port;
-	      if (app.lua.hook_get_http_proxy(host, port,
+	      if (app.lua.hook_get_http_proxy(host(), port,
 					      connect_host_name, 
 					      connect_port_num))
 		{
@@ -776,13 +779,13 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
 		}
 	      else
 		{
-		  connect_host_name = host;
+		  connect_host_name = host();
 		  connect_port_num = port;
 		}
 
 	      open_connection("http", connect_host_name, connect_port_num, 
 			      connection, stream, app);
-	      fetch_http_packets(group, maj, min, dbw, host, path, port, 
+	      fetch_http_packets(group(), maj, min, dbw, host(), path(), port, 
 				 is_proxy, *stream);
 	      app.db.put_sequences(*src, maj, min);
 	    }
@@ -793,8 +796,8 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
 	      app.db.get_sequences(*src, maj, min);
 	      monotone_connection connection;
 	      boost::shared_ptr<iostream> stream;
-	      open_connection("nntp", host, port, connection, stream, app);
-	      fetch_nntp_articles(group, min, dbw, *stream);
+	      open_connection("nntp", host(), port, connection, stream, app);
+	      fetch_nntp_articles(group(), min, dbw, *stream);
 	      app.db.put_sequences(*src, maj, min);
 	    }
 	  guard.commit();

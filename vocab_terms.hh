@@ -7,7 +7,10 @@
 // in order to facilitate external instantiation of most of the
 // vocabulary, minimize code duplication, speed up compilation, etc.
 
-ATOMIC(external);             // "external" string in system charset
+ATOMIC(external);             // "external" string in unknown system charset
+ATOMIC(utf8);                 // unknown string in UTF8 charset
+ATOMIC(ace);                  // unknown string in ACE form
+ATOMIC(urlenc);               // unknown string in URL-encoded form
 
 ATOMIC(id);                   // hash of data
 ATOMIC(data);                 // meaningless blob

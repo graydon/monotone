@@ -14,14 +14,6 @@
 
 #include "vocab.hh"
 
-bool parse_url(url const & u,
-	       std::string & proto,
-	       std::string & user,	       
-	       std::string & host,	       
-	       std::string & path,
-	       std::string & group,
-	       unsigned long & port);
-
 void open_connection(std::string const & proto_name,
 		     std::string const & host,
 		     unsigned long port,

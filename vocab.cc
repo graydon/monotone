@@ -6,10 +6,11 @@
 #include <string>
 #include <boost/filesystem/path.hpp>
 
-#include "vocab.hh"
-#include "sanity.hh"
-#include "network.hh"
 #include "constants.hh"
+#include "network.hh"
+#include "sanity.hh"
+#include "url.hh"
+#include "vocab.hh"
 
 // verifiers for various types of data
 
@@ -33,6 +34,32 @@ static inline void verify(hexenc<id> & val)
   string::size_type pos = val().find_first_not_of(constants::legal_id_bytes);
   N(pos == string::npos,
     F("bad character '%c' in id name '%s'") % val().at(pos) % val);
+
+  val.ok = true;
+}
+
+template <>
+static inline void verify(ace & val)
+{
+  if (val.ok)
+    return;
+
+  string::size_type pos = val().find_first_not_of(constants::legal_ace_bytes);
+  N(pos == string::npos,
+    F("bad character '%c' in ace string '%s'") % val().at(pos) % val);
+
+  val.ok = true;
+}
+
+template <>
+static inline void verify(urlenc & val)
+{
+  if (val.ok)
+    return;
+
+  string::size_type pos = val().find_first_not_of(constants::legal_url_bytes);
+  N(pos == string::npos,
+    F("bad character '%c' in URL-encoded string '%s'") % val().at(pos) % val);
 
   val.ok = true;
 }
@@ -77,7 +104,9 @@ static inline void verify(url & val)
   N(pos == string::npos,
     F("bad character '%c' in URL name '%s'") % val().at(pos) % val);
 
-  string proto, user, host, path, group;
+  ace user, host, group;
+  urlenc path;
+  string proto;
   unsigned long port;
   N(parse_url(val, proto, user, host, path, group, port),
     F("malformed URL: '%s'") % val);

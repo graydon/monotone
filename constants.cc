@@ -64,6 +64,17 @@ namespace constants
   char const * const legal_id_bytes =
   "0123456789abcdef"
   ;
+
+  // all the ASCII characters (bytes) which are legal in an ACE string
+  char const * const legal_ace_bytes =
+  // LDH characters
+  "abcdefghijklmnopqrstuvwxyz"
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  "0123456789"
+  "-"
+  // label separators
+  ".@"
+  ;
   
   // all the ASCII characters (bytes) which can occur in URLs
   char const * const legal_url_bytes =

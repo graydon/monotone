@@ -82,7 +82,7 @@ static void filter_by_branch(app_state & app,
 			    set<manifest_id> const & candidates,
 			    set<manifest_id> & branch_filtered)
 {
-  cert_value val(app.branch_name);
+  cert_value val(app.branch_name());
   base64<cert_value> enc_val;
 
   branch_filtered.clear();
@@ -277,12 +277,20 @@ static void filter_by_sorting(vector<string> const & certnames,
 
 
 void pick_update_target(manifest_id const & base_ident,
-			vector<string> const & in_sort_certs,
+			vector<utf8> const & in_sort_certs,
 			app_state & app,
 			manifest_id & chosen)
 {
 
-  vector<string> sort_certs(in_sort_certs);
+  vector<string> sort_certs;
+  for (vector<utf8>::const_iterator i = in_sort_certs.begin();
+       i != in_sort_certs.end(); ++i)
+    {
+      cert_name cn;
+      internalize_cert_name(*i, cn);
+      sort_certs.push_back(cn());
+    }
+
   set<manifest_id> candidates;
 
   if (find(sort_certs.begin(), sort_certs.end(), ancestor_cert_name) 
@@ -297,7 +305,7 @@ void pick_update_target(manifest_id const & base_ident,
     // We can almost always "update" to what we're starting with.
     candidates.insert(base_ident);
   
-  N(app.branch_name != "",
+  N(app.branch_name() != "",
     F("cannot determine branch for update"));
   set<manifest_id> branch;
   filter_by_branch(app, candidates, branch);

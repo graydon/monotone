@@ -977,8 +977,8 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
   }
 
   cvs_history cvs;
-  N(app.branch_name != "", F("need base --branch argument for importing"));
-  cvs.base_branch = app.branch_name;
+  N(app.branch_name() != "", F("need base --branch argument for importing"));
+  cvs.base_branch = app.branch_name();
 
   {
     transaction_guard guard(app.db);

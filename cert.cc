@@ -195,9 +195,9 @@ bool guess_default_key(rsa_keypair_id & key, app_state & app)
       return true;
     }
 
-  if (app.branch_name != "")
+  if (app.branch_name() != "")
     {
-      cert_value branch(app.branch_name);
+      cert_value branch(app.branch_name());
       if (app.lua.hook_get_branch_key(branch, key))
 	return true;
     }
@@ -217,9 +217,9 @@ void guess_branch(manifest_id const & id,
 		  app_state & app,
 		  cert_value & branchname)
 {
-  if (app.branch_name != "")
+  if (app.branch_name() != "")
     {
-      branchname = app.branch_name;
+      branchname = app.branch_name();
     }
   else
     {
@@ -967,7 +967,7 @@ void cert_manifest_author_default(manifest_id const & m,
 				  packet_consumer & pc)
 {
   string author;
-  N(app.lua.hook_get_author(app.branch_name, author),
+  N(app.lua.hook_get_author(app.branch_name(), author),
     F("no default author name for branch '%s'") % app.branch_name);
   put_simple_manifest_cert(m, author_cert_name, author, app, pc);
 }

@@ -242,16 +242,16 @@ struct UTF_URI : public grammar<UTF_URI, result_closure<uri>::context_t>
 } utf_uri_g;
 
 
-bool parse_utf8_url(string const & utf8,
-		    string & proto,
-		    string & user,
-		    string & host,	       
-		    string & path,
-		    string & group,
+bool parse_utf8_url(utf8 const & utf,
+		    utf8 & proto,
+		    utf8 & user,
+		    utf8 & host,	       
+		    utf8 & path,
+		    utf8 & group,
 		    unsigned long & port)
 {
   uri ustruct;  
-  bool parsed_ok = parse(utf8.c_str(), utf_uri_g[var(ustruct) = arg1]).full;
+  bool parsed_ok = parse(utf().c_str(), utf_uri_g[var(ustruct) = arg1]).full;
     
   if (parsed_ok)
     {
@@ -262,20 +262,20 @@ bool parse_utf8_url(string const & utf8,
       group = ustruct.group;
       port = ustruct.port;
 
-      if (proto == "http")
+      if (ustruct.proto == "http")
 	{
-	  string::size_type gpos = path.rfind('/');
-	  if (gpos == string::npos || gpos == path.size() - 1 || gpos == 0)
+	  string::size_type gpos = ustruct.path.rfind('/');
+	  if (gpos == string::npos || gpos == ustruct.path.size() - 1 || gpos == 0)
 	    return false;
-	  group = path.substr(gpos+1);
-	  path = path.substr(0,gpos);
+	  group = ustruct.path.substr(gpos+1);
+	  path = ustruct.path.substr(0,gpos);
 	}
       
-      if (proto == "http" && port == 0)
+      if (ustruct.proto == "http" && ustruct.port == 0)
 	port = 80;
-      else if (proto == "nntp" && port == 0)
+      else if (ustruct.proto == "nntp" && ustruct.port == 0)
 	port = 119;
-      else if (proto == "mailto" && port == 0)
+      else if (ustruct.proto == "mailto" && ustruct.port == 0)
 	port= 25;
     }
   
@@ -286,11 +286,11 @@ bool parse_utf8_url(string const & utf8,
 
 
 bool parse_url(url const & u,
-	       string & proto,
-	       string & user,
-	       string & host,	       
-	       string & path,
-	       string & group,
+	       std::string & proto,
+	       ace & user,
+	       ace & host,	       
+	       urlenc & path,
+	       ace & group,
 	       unsigned long & port)
 {
   // http://host:port/path.cgi/group
@@ -311,18 +311,18 @@ bool parse_url(url const & u,
 
       if (proto == "http")
 	{
-	  string::size_type gpos = path.rfind('/');
-	  if (gpos == string::npos || gpos == path.size() - 1 || gpos == 0)
+	  string::size_type gpos = ustruct.path.rfind('/');
+	  if (gpos == string::npos || gpos == ustruct.path.size() - 1 || gpos == 0)
 	    return false;
-	  group = path.substr(gpos+1);
-	  path = path.substr(0,gpos);
+	  group = ustruct.path.substr(gpos+1);
+	  path = ustruct.path.substr(0,gpos);
 	}
       
-      if (proto == "http" && port == 0)
+      if (ustruct.proto == "http" && ustruct.port == 0)
 	port = 80;
-      else if (proto == "nntp" && port == 0)
+      else if (ustruct.proto == "nntp" && ustruct.port == 0)
 	port = 119;
-      else if (proto == "mailto" && port == 0)
+      else if (ustruct.proto == "mailto" && ustruct.port == 0)
 	port= 25;
     }
   
@@ -345,24 +345,26 @@ static bool url_parses(string u,
 		       unsigned long xport)
 {
   url uu(u);
-  string proto, user, host, path, group;
+  ace user, host, group;
+  urlenc path;
+  string proto;
   unsigned long port = 0;
 
   L(F("trying to parse %s\n") % u);
 
   parse_url(uu, proto, user, host, path, group, port);
 
-#define CHECK(z) if (z != (x ## z)) { \
+#define CHECK(z,c) if (c != (x ## z)) { \
   cerr << "parsed url '" << u << "' wrong: " \
   "got " << (#z) << " = '" << z << "', expected '" << (x ## z) << "'" \
   << endl; return false; \
 }
-  CHECK(proto);
-  CHECK(user);
-  CHECK(host);
-  CHECK(path);
-  CHECK(group);
-  CHECK(port);
+  CHECK(proto, proto);
+  CHECK(user, user());
+  CHECK(host, host());
+  CHECK(path, path());
+  CHECK(group, group());
+  CHECK(port, port);
 #undef CHECK
 
   return true;

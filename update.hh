@@ -22,7 +22,7 @@
 // will set chosen to base_ident.
 
 void pick_update_target(manifest_id const & base_ident,
-			std::vector<std::string> const & sort_certs,
+			std::vector<utf8> const & sort_certs,
 			app_state & app,
 			manifest_id & chosen);
 

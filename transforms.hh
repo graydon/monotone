@@ -156,12 +156,30 @@ std::string canonical_base64(std::string const & s);
 // charset conversions
 void charset_convert(std::string const & src_charset, std::string const & dst_charset,
 		     std::string const & src, std::string & dst);
-void system_to_utf8(std::string const & system, std::string & utf8, lua_hooks & lua);
-void utf8_to_system(std::string const & utf8, std::string & system, lua_hooks & lua);
-void ace_to_utf8(std::string const & ace, std::string & utf8);
-void utf8_to_ace(std::string const & utf8, std::string & ace);
+void system_to_utf8(external const & system, utf8 & utf, lua_hooks & lua);
+void utf8_to_system(utf8 const & utf, external & system, lua_hooks & lua);
+void ace_to_utf8(ace const & ac, utf8 & utf);
+void utf8_to_ace(utf8 const & utf, ace & a);
+void utf8_to_urlenc(utf8 const & utf, urlenc & u);
+void urlenc_to_utf8(urlenc const & u, utf8 & utf);
+
+// specific internal / external conversions for various vocab terms
+void internalize_url(utf8 const & utf, url & u);
+void internalize_url(external const & ext, url & u, lua_hooks & lua);
+void externalize_url(url const & u, utf8 & utf);
+void externalize_url(url const & u, external & ext, lua_hooks & lua);
+void internalize_cert_name(utf8 const & utf, cert_name & c);
+void internalize_cert_name(external const & ext, cert_name & c, lua_hooks & lua);
+void externalize_cert_name(cert_name const & c, utf8 & utf);
+void externalize_cert_name(cert_name const & c, external & ext, lua_hooks & lua);
+void internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key);
+void internalize_rsa_keypair_id(external const & ext, rsa_keypair_id & key, lua_hooks & lua);
+void externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf);
+void externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext, lua_hooks & lua);
 
 // line-ending conversion
 void line_end_convert(std::string const & linesep, std::string const & src, std::string & dst);
+
+
 
 #endif // __TRANSFORMS_HH__

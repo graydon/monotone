@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/filesystem/path.hpp>
 #include <boost/tokenizer.hpp>
 
 #include "cryptopp/filters.h"
@@ -377,14 +378,18 @@ void charset_convert(string const & src_charset,
 }
 
 
-void system_to_utf8(string const & system, string & utf8, lua_hooks & lua)
+void system_to_utf8(external const & ext, utf8 & utf, lua_hooks & lua)
 {
-  charset_convert(system_charset(lua), "UTF-8", system, utf8);
+  string out;
+  charset_convert(system_charset(lua), "UTF-8", ext(), out);
+  utf = out;
 }
 
-void utf8_to_system(string const & utf8, string & system, lua_hooks & lua)
+void utf8_to_system(utf8 const & utf, external & ext, lua_hooks & lua)
 {
-  charset_convert("UTF-8", system_charset(lua), utf8, system);
+  string out;
+  charset_convert("UTF-8", system_charset(lua), utf(), out);
+  ext = out;
 }
 
 static string decode_idna_error(int err)
@@ -406,49 +411,53 @@ static string decode_idna_error(int err)
   return "unknown error";
 }
 
-void ace_to_utf8(string const & ace, string & utf8)
+void ace_to_utf8(ace const & a, utf8 & utf)
 {
   char *out = NULL;
-  L(F("converting %d bytes from IDNA ACE to UTF-8\n") % ace.size());
-  int res = idna_to_unicode_8z8z(ace.c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
+  L(F("converting %d bytes from IDNA ACE to UTF-8\n") % a().size());
+  int res = idna_to_unicode_8z8z(a().c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
   N(res == IDNA_SUCCESS || res == IDNA_NO_ACE_PREFIX,
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
-    % ace.size()
+    % a().size()
     % decode_idna_error(res));
-  utf8 = string(out);
+  utf = string(out);
   free(out);
 }
 
-void utf8_to_ace(string const & utf8, string & ace)
+void utf8_to_ace(utf8 const & utf, ace & a)
 {
   char *out = NULL;
-  L(F("converting %d bytes from UTF-8 to IDNA ACE\n") % utf8.size());
-  int res = idna_to_ascii_8z(utf8.c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
+  L(F("converting %d bytes from UTF-8 to IDNA ACE\n") % utf().size());
+  int res = idna_to_ascii_8z(utf().c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
   N(res == IDNA_SUCCESS,
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
-    % utf8.size()
+    % utf().size()
     % decode_idna_error(res));
-  ace = string(out);
+  a = string(out);
   free(out);
 }
 
-void utf8_to_urlenc(string const & utf8, string & urlenc)
+void utf8_to_urlenc(utf8 const & utf, urlenc & u)
 {
+  string tmp;
   string ok_bytes(constants::legal_url_bytes);
-  for (string::const_iterator i = utf8.begin(); i != utf8.end(); ++i)
+  string ut = utf();
+  for (string::const_iterator i = ut.begin(); i != ut.end(); ++i)
     {
       if (ok_bytes.find(*i) == string::npos)
-	urlenc += (F("%%%2.2x") % (0xff & static_cast<unsigned long>(*i))).str();
+	tmp += (F("%%%2.2x") % (0xff & static_cast<unsigned long>(*i))).str();
       else
-	urlenc += *i;
+	tmp += *i;
     }
+  u = tmp;
 }
 
-void urlenc_to_utf8(string const & urlenc, string & utf8)
+void urlenc_to_utf8(urlenc const & u, utf8 & utf)
 {
-  istringstream iss(urlenc);
+  istringstream iss(u());
   string ok_bytes(constants::legal_url_bytes);
   char c = 0;
+  string tmp;
 
   while (iss.get(c), iss.gcount() != 0)
     {
@@ -458,67 +467,79 @@ void urlenc_to_utf8(string const & urlenc, string & utf8)
 	  iss >> std::hex >> val;
 	  N(val > 0 && val <= 0xff,
 	    F("bad URL-encoding escape value '%%%x'") % val);
-	  utf8 += static_cast<char>(val);
+	  tmp += static_cast<char>(val);
 	}
       else
 	{
 	  N(ok_bytes.find(c) != string::npos,
 	    F("bad char 0x%x in URL-encoded string") % static_cast<unsigned long>(c));
-	  utf8 += c;
+	  tmp += c;
 	}
     }
+  utf = tmp;
 }
 
 
 // specific internal / external conversions for various vocab terms
 
-void internalize_url(external const & ext, url & u, lua_hooks & lua)
+void internalize_url(utf8 const & utf, url & u)
 {
-  string utf8;
-  system_to_utf8(ext(), utf8, lua);
-
-  string proto, user, host, path, group;
+  utf8 proto, user, host, path, group;
   unsigned long port;
-  N(parse_utf8_url(utf8, proto, user, host, path, group, port),
+  N(parse_utf8_url(utf, proto, user, host, path, group, port),
     F("UTF8-URL parse failed"));
   
-  if (proto == "mailto")
+  if (proto() == "mailto")
     {
-      string ace_user, ace_host;
+      ace ace_user, ace_host;
       utf8_to_ace(user, ace_user);
       utf8_to_ace(host, ace_host);
       u = (F("mailto:%s@%s:%d") % ace_user % ace_host % port).str();
     }
-  else if (proto == "http")
+  else if (proto() == "http")
     {
-      string urlenc_path, ace_host, ace_group;
+      urlenc urlenc_path;
+      ace ace_host, ace_group;
       utf8_to_urlenc(path, urlenc_path);
       utf8_to_ace(host, ace_host);
       utf8_to_ace(group, ace_group);
       u = (F("http://%s:%d%s/%s") % ace_host % port % urlenc_path % ace_group).str();
     }
-  else if (proto == "nntp")
+  else if (proto() == "nntp")
     {
-      string ace_host, ace_group;
+      ace ace_host, ace_group;
       utf8_to_ace(host, ace_host);
       utf8_to_ace(group, ace_group);
       u = (F("nntp://%s:%d/%s") % ace_host % port % ace_group).str();
     }
   else
     {
-      throw informative_failure("unknown URL protocol '" + proto + "'");
+      throw informative_failure("unknown URL protocol '" + proto() + "'");
     }
   
-  L(F("checking internalized URL '%s'\n") % u);
-  N(parse_url(u, proto, user, host, path, group, port),
-    F("confirmation parse of internalized URL '%s' failed") % u);
+  {
+    ace auser, ahost, agroup;
+    urlenc upath;
+    string sproto;
+    L(F("checking internalized URL '%s'\n") % u);
+    N(parse_url(u, sproto, auser, ahost, upath, agroup, port),
+      F("confirmation parse of internalized URL '%s' failed") % u);
+  }
+}
+
+void internalize_url(external const & ext, url & u, lua_hooks & lua)
+{
+  utf8 utf;
+  system_to_utf8(ext, utf, lua);
+  internalize_url(utf, u);
 }
 
 
-void externalize_url(url const & u, external & ext, lua_hooks & lua)
+void externalize_url(url const & u, utf8 & utf)
 {
-  string utf8, e;
-  string proto, user, host, path, group;
+  ace user, host, group;
+  urlenc path;
+  string proto;
   unsigned long port;
 
   L(F("externalizing URL '%s'\n") % u);
@@ -527,80 +548,102 @@ void externalize_url(url const & u, external & ext, lua_hooks & lua)
   
   if (proto == "mailto")
     {
-      string utf8_user, utf8_host;
-      ace_to_utf8(user, utf8_user);
-      ace_to_utf8(host, utf8_host);
-      utf8 = (F("mailto:%s@%s:%d") % utf8_user % utf8_host % port).str();
+      utf8 utf_user, utf_host;
+      ace_to_utf8(user, utf_user);
+      ace_to_utf8(host, utf_host);
+      utf = (F("mailto:%s@%s:%d") % utf_user % utf_host % port).str();
     }
   else if (proto == "http")
     {
-      string utf8_path, utf8_host, utf8_group;
-      urlenc_to_utf8(path, utf8_path);
-      ace_to_utf8(host, utf8_host);
-      ace_to_utf8(group, utf8_group);
-      utf8 = (F("http://%s:%d%s/%s") % utf8_host % port % utf8_path % utf8_group).str();
+      utf8 utf_path, utf_host, utf_group;
+      urlenc_to_utf8(path, utf_path);
+      ace_to_utf8(host, utf_host);
+      ace_to_utf8(group, utf_group);
+      utf = (F("http://%s:%d%s/%s") % utf_host % port % utf_path % utf_group).str();
     }
   else if (proto == "nntp")
     {
-      string utf8_path, utf8_host, utf8_group;
-      ace_to_utf8(host, utf8_host);
-      ace_to_utf8(group, utf8_group);
-      utf8 = (F("nntp://%s:%d/%s") % utf8_host % port % utf8_group).str();
+      utf8 utf_path, utf_host, utf_group;
+      ace_to_utf8(host, utf_host);
+      ace_to_utf8(group, utf_group);
+      utf = (F("nntp://%s:%d/%s") % utf_host % port % utf_group).str();
     }
   else
     {
       throw informative_failure("unknown URL protocol '" + proto + "'");
     }
 
-  N(parse_utf8_url(utf8, proto, user, host, path, group, port),
-    F("confirmation parse of UTF8-URL failed"));
-  utf8_to_system(utf8, e, lua);
-  ext = e;
+  {
+    utf8 uproto, uuser, uhost, upath, ugroup;
+    N(parse_utf8_url(utf, uproto, uuser, uhost, upath, ugroup, port),
+      F("confirmation parse of UTF8-URL failed"));
+  }
 }
 
+void externalize_url(url const & u, external & ext, lua_hooks & lua)
+{
+  utf8 utf;
+  externalize_url(u, utf);
+  utf8_to_system(utf, ext, lua);
+}
+
+void internalize_cert_name(utf8 const & utf, cert_name & c)
+{
+  ace a;
+  utf8_to_ace(utf, a);
+  c = a();
+}
 
 void internalize_cert_name(external const & ext, cert_name & c, lua_hooks & lua)
 {
-  string utf8, ace;
-  system_to_utf8(ext(), utf8, lua);
-  utf8_to_ace(utf8, ace);
-  c = ace;
+  utf8 utf;
+  system_to_utf8(ext(), utf, lua);
+  internalize_cert_name(utf, c);
+}
+
+void externalize_cert_name(cert_name const & c, utf8 & utf)
+{
+  ace_to_utf8(ace(c()), utf);
 }
 
 void externalize_cert_name(cert_name const & c, external & ext, lua_hooks & lua)
 {
-  string utf8, e;
-  ace_to_utf8(c(), utf8);
-  utf8_to_system(utf8, e, lua);
-  ext = e;
+  utf8 utf;
+  externalize_cert_name(c, utf);
+  utf8_to_system(utf, ext, lua);  
 }
 
-
-void internalize_rsa_keypair_id(external const & ext, rsa_keypair_id & key, lua_hooks & lua)
+void internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
 {
-  string utf8, ace;
-  system_to_utf8(ext(), utf8, lua);
+  string tmp;
   typedef boost::tokenizer<boost::char_separator<char> > 
     tokenizer;
   boost::char_separator<char> sep("", ".@", boost::keep_empty_tokens);
-  tokenizer tokens(utf8, sep);
+  tokenizer tokens(utf(), sep);
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)
     {
       if (*i == "." || *i == "@")
-	ace += *i;
+	tmp += *i;
       else
 	{
-	  string a;
+	  ace a;
 	  utf8_to_ace(*i, a);
-	  ace += a;
+	  tmp += a();
 	}
     }
-  key = ace;
+  key = tmp;
 }
 
-void externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext, lua_hooks & lua)
+void internalize_rsa_keypair_id(external const & ext, rsa_keypair_id & key, lua_hooks & lua)
 {
-  string utf8, e;
+  utf8 utf;
+  system_to_utf8(ext, utf, lua);
+  internalize_rsa_keypair_id(utf, key);
+}
+
+void externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
+{
+  string tmp;
   typedef boost::tokenizer<boost::char_separator<char> > 
     tokenizer;
   boost::char_separator<char> sep("", ".@", boost::keep_empty_tokens);
@@ -608,16 +651,23 @@ void externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext, lua_
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)
     {
       if (*i == "." || *i == "@")
-	utf8 += *i;
+	tmp += *i;
       else
 	{
-	  string u;
-	  ace_to_utf8(*i, u);
-	  utf8 += u;
+	  ace a(*i);
+	  utf8 u;
+	  ace_to_utf8(a, u);
+	  tmp += u();
 	}
     }
-  utf8_to_system(utf8, e, lua);
-  ext = e;
+  utf = tmp;
+}
+
+void externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext, lua_hooks & lua)
+{
+  utf8 utf;
+  externalize_rsa_keypair_id(key, utf);
+  utf8_to_system(utf, ext, lua);
 }
 
 
@@ -897,48 +947,50 @@ static void check_idna_encoding()
       char *uc = stringprep_ucs4_to_utf8(idna_vec[i].in, 
 					 idna_vec[i].inlen, 
 					 &p, &q);
-      string utf8(uc);
+      utf8 utf = string(uc);
+      utf8 tutf;
       free(uc);
 
-      string ace(idna_vec[i].out);
-      string tmp;
-      utf8_to_ace(utf8, tmp);
-      L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tmp);
-      BOOST_CHECK(lowercase(ace) == lowercase(tmp));
-      ace_to_utf8(ace, tmp);
-      BOOST_CHECK(lowercase(utf8) == lowercase(tmp));
+      ace a = string(idna_vec[i].out);
+      ace tace;
+      utf8_to_ace(utf, tace);
+      L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tace());
+      BOOST_CHECK(lowercase(a()) == lowercase(tace()));
+      ace_to_utf8(a, tutf);
+      BOOST_CHECK(lowercase(utf()) == lowercase(tutf()));
 
       external tmp_external;      
       url tmp_url;
 
-      external utf8_host_url("http://" + utf8 + ":80/depot.cgi/path.to.group");
-      url ace_host_url("http://" + ace + ":80/depot.cgi/path.to.group");
+      external utf_host_url("http://" + utf() + ":80/depot.cgi/path.to.group");
+      url ace_host_url("http://" + a() + ":80/depot.cgi/path.to.group");
 
-      internalize_url(utf8_host_url, tmp_url, lua);
+      internalize_url(utf_host_url, tmp_url, lua);
       L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tmp_url());
       BOOST_CHECK(lowercase(ace_host_url()) == lowercase(tmp_url()));
       externalize_url(ace_host_url, tmp_external, lua);
-      BOOST_CHECK(lowercase(tmp_external()) == lowercase(utf8_host_url()));
+      BOOST_CHECK(lowercase(tmp_external()) == lowercase(utf_host_url()));
 
-      external utf8_group_url("http://www.gurgle.com:80/depot.cgi/" + utf8);
-      url ace_group_url("http://www.gurgle.com:80/depot.cgi/" + ace);
+      external utf_group_url("http://www.gurgle.com:80/depot.cgi/" + utf());
+      url ace_group_url("http://www.gurgle.com:80/depot.cgi/" + a());
 
-      internalize_url(utf8_group_url, tmp_url, lua);
+      internalize_url(utf_group_url, tmp_url, lua);
       L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tmp_url());
       BOOST_CHECK(lowercase(ace_group_url()) == lowercase(tmp_url()));
       externalize_url(ace_group_url, tmp_external, lua);
-      BOOST_CHECK(lowercase(tmp_external()) == lowercase(utf8_group_url()));
+      BOOST_CHECK(lowercase(tmp_external()) == lowercase(utf_group_url()));
     }
 }
 
 static void check_url_encoding(string const & dec, string const & enc)
 {
-  string tmp1, tmp2;
-  utf8_to_urlenc(dec, tmp1);
-  L(F("URL-encoded to '%s'\n") % tmp1);
-  BOOST_CHECK(enc == tmp1);
-  urlenc_to_utf8(tmp1, tmp2);
-  BOOST_CHECK(tmp2 == dec);
+  urlenc tu;
+  utf8 tutf;
+  utf8_to_urlenc(dec, tu);
+  L(F("URL-encoded to '%s'\n") % tu());
+  BOOST_CHECK(enc == tu());
+  urlenc_to_utf8(tu, tutf);
+  BOOST_CHECK(tutf == dec);
 }
 
 static void encode_test()

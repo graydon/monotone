@@ -1,5 +1,21 @@
 2003-12-28  graydon hoare  <graydon@pobox.com>
 
+	* app_state.cc, app_state.hh: Massage to use i18n vocab.
+	* cert.cc, commands.cc, commands.hh, rcs_import.cc, 
+	update.cc, update.hh, url.cc, url.hh: Likewise.
+
+	* work.cc, work.hh: --> Likewise, and break file format! <--
+
+	* constants.hh, constants.cc (legal_ace_bytes): New constant.
+	* vocab.cc (verify<ace>): Use it.
+	(verify<urlenc>) New function.
+	* vocab_terms.hh (ace, urlenc, utf8): New terms.
+	* transforms.hh, transforms.cc: Use them.
+	* monotone.cc (utf8_argv): Charconv argv.
+	* network.hh, network.cc: Use url.{hh,cc}.
+
+2003-12-28  graydon hoare  <graydon@pobox.com>
+
 	* constants.hh, constants.cc (idlen): New constant.
 	* commands.cc, vocab.cc: Use it.
 	* manifest.cc (read_manifest_map): Tighten up regex.

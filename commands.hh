@@ -14,6 +14,7 @@
 // bind tcl or lua or something in here
 
 class app_state;
+struct utf8;
 
 struct usage 
 {
@@ -23,7 +24,7 @@ struct usage
 
 namespace commands {
   void explain_usage(std::string const & cmd, std::ostream & out);
-  int process(app_state & app, std::string const & cmd, std::vector<std::string> const & args);
+  int process(app_state & app, std::string const & cmd, std::vector<utf8> const & args);
 };
 
 #endif

@@ -3,20 +3,24 @@
 
 #include <string>
 
-bool parse_utf8_url(std::string const & utf8,
-		    std::string & proto,
-		    std::string & user,
-		    std::string & host,	       
-		    std::string & path,
-		    std::string & group,
+struct utf8;
+struct ace;
+struct urlenc;
+
+bool parse_utf8_url(utf8 const & utf,
+		    utf8 & proto,
+		    utf8 & user,
+		    utf8 & host,	       
+		    utf8 & path,
+		    utf8 & group,
 		    unsigned long & port);
 
 bool parse_url(url const & u,
 	       std::string & proto,
-	       std::string & user,
-	       std::string & host,	       
-	       std::string & path,
-	       std::string & group,
+	       ace & user,
+	       ace & host,	       
+	       urlenc & path,
+	       ace & group,
 	       unsigned long & port);
 
 #endif // __URL_HH__

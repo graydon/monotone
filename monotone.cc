@@ -17,6 +17,7 @@
 #include "sanity.hh"
 #include "cleanup.hh"
 #include "file_io.hh"
+#include "transforms.hh"
 #include "ui.hh"
 
 #define OPT_VERBOSE 1
@@ -82,6 +83,40 @@ void dumper()
     global_sanity.dump_buffer();    
 }
 
+
+struct utf8_argv
+{
+  int argc;
+  char **argv;
+
+  explicit utf8_argv(int ac, char **av, lua_hooks & lua)
+    : argc(ac),
+      argv(static_cast<char **>(malloc(ac * sizeof(char *))))
+  {
+    I(argv != NULL);
+    for (int i = 0; i < argc; ++i)
+      {
+	external ext(av[i]);
+	utf8 utf;
+	system_to_utf8(ext, utf, lua);
+	argv[i] = static_cast<char *>(malloc(utf().size() + 1));
+	I(argv[i] != NULL);
+	memcpy(argv[i], utf().data(), utf().size());
+	argv[i][utf().size()] = static_cast<char>(0);
+    }
+  }
+
+  ~utf8_argv() 
+  {
+    if (argv != NULL)
+      {
+	for (int i = 0; i < argc; ++i)
+	  if (argv[i] != NULL)
+	    free(argv[i]);
+	free(argv);
+      }    
+  }
+};
  
 int cpp_main(int argc, char ** argv)
 {
@@ -97,14 +132,17 @@ int cpp_main(int argc, char ** argv)
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
 
-  // prepare for arg parsing
-      
-  cleanup_ptr<poptContext, poptContext> 
-    ctx(poptGetContext(NULL, argc, (char const **) argv, options, 0),
-	&poptFreeContext);
+  // decode all argv values into a UTF-8 array
 
   save_initial_path();
   app_state app;
+  utf8_argv uv(argc, argv, app.lua);
+
+  // prepare for arg parsing
+      
+  cleanup_ptr<poptContext, poptContext> 
+    ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
+	&poptFreeContext);
 
   // process main program options
 
@@ -186,7 +224,7 @@ int cpp_main(int argc, char ** argv)
 	app.lua.add_std_hooks();
 
       // ~/.monotonerc overrides that, and
-      // MT/.monotonerc overrides *that*
+      // MT/monotonerc overrides *that*
 
       if (rcfile)
 	{
@@ -216,10 +254,10 @@ int cpp_main(int argc, char ** argv)
       else
 	{
 	  string cmd(poptGetArg(ctx()));
-	  vector<string> args;
+	  vector<utf8> args;
 	  while(poptPeekArg(ctx())) 
 	    {
-	      args.push_back(poptGetArg(ctx()));
+	      args.push_back(utf8(string(poptGetArg(ctx()))));
 	    }
 	  ret = commands::process(app, cmd, args);
 	} 

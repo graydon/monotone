@@ -3,6 +3,7 @@
 
 #include "app_state.hh"
 #include "database.hh"
+#include "transforms.hh"
 #include "work.hh"
 
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
@@ -29,11 +30,11 @@ app_state::app_state()
       read_data(o_path, dat);
       read_options_map(dat, options);
 
-      string dbname = absolutify(options[database_option]);
+      string dbname = absolutify(options[database_option]());
       if (dbname != "")
 	db.set_filename(dbname);
       branch_name = options[branch_option];
-      signing_key = options[key_option];
+      internalize_rsa_keypair_id(options[key_option], signing_key);
     }
 }
 
@@ -41,24 +42,26 @@ app_state::~app_state()
 {
 }
 
-void app_state::set_database(string filename)
+void app_state::set_database(utf8 const & filename)
 {
-  options[database_option] = absolutify(filename);
-  db.set_filename(filename);
+  options[database_option] = utf8(absolutify(filename()));
+  db.set_filename(filename());
   options_changed = true;
 }
 
-void app_state::set_branch(string branch)
+void app_state::set_branch(utf8 const & branch)
 {
   options[branch_option] = branch;
-  branch_name = string(branch);
+  branch_name = branch();
   options_changed = true;
 }
 
-void app_state::set_signing_key(string key)
+void app_state::set_signing_key(utf8 const & key)
 {
+  rsa_keypair_id k;
+  internalize_rsa_keypair_id(key, k);
   options[key_option] = key;
-  signing_key = key;
+  signing_key = k;
   options_changed = true;
 }
 

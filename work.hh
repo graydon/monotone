@@ -92,7 +92,7 @@ void build_rename(file_path const & src,
 // implied unless overridden on the command line. the main ones are
 // --branch and --db, although some others may follow in the future.
 
-typedef std::map<std::string, std::string> options_map;
+typedef std::map<std::string, utf8> options_map;
 
 void get_options_path(local_path & o_path);
 
@@ -114,7 +114,7 @@ void write_options_map(data & dat,
 // intrinsic properties of the files, but not actually part of the file's
 // data stream. so they're kept here.
 
-typedef std::map<std::pair<file_path, std::string>, std::string > attr_map;
+typedef std::map<std::pair<file_path, std::string>, std::string> attr_map;
 
 void get_attr_path(file_path & a_path);
 

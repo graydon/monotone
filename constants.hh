@@ -50,6 +50,9 @@ namespace constants
   // all the ASCII characters (bytes) which are legal in a packet
   extern char const * const legal_packet_bytes;
 
+  // all the ASCII characters (bytes) which are legal in an ACE string
+  extern char const * const legal_ace_bytes;
+
   // all the ASCII characters (bytes) which are legal in a SHA1 hex id
   extern char const * const legal_id_bytes;
 
