@@ -28,7 +28,7 @@ using boost::format;
 sanity global_sanity;
 
 sanity::sanity() : 
-  verbose(false), quiet(false), logbuf(0xffff)
+  debug(false), quiet(false), logbuf(0xffff)
 {}
 
 sanity::~sanity()
@@ -37,16 +37,28 @@ sanity::~sanity()
 void 
 sanity::dump_buffer()
 {
-  copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(clog));
+  if (filename != "")
+    {
+      ofstream out(filename.c_str());
+      if (out)
+	{
+	  copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
+	  ui.inform(string("wrote debugging log to ") + filename + "\n");
+	}
+      else
+	ui.inform("failed to write debugging log to " + filename + "\n");
+    }
+  else
+    ui.inform("discarding debug log\n");
 }
 
 void 
-sanity::set_verbose()
+sanity::set_debug()
 {
   quiet = false;
-  verbose = true;
+  debug = true;
 
-  // it is possible that some pre-setting-of-verbose data
+  // it is possible that some pre-setting-of-debug data
   // accumulated in the log buffer (during earlier option processing)
   // so we will dump it now  
   ostringstream oss;
@@ -60,7 +72,7 @@ sanity::set_verbose()
 void 
 sanity::set_quiet()
 {
-  verbose = false;
+  debug = false;
   quiet = true;
 }
 
@@ -89,7 +101,7 @@ sanity::log(format const & fmt,
 	str.at(str.size() - 1) = '\n';
     }
   copy(str.begin(), str.end(), back_inserter(logbuf));
-  if (verbose)
+  if (debug)
     ui.inform(str);
 }
 

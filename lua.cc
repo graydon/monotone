@@ -10,6 +10,7 @@ extern "C" {
 #include <lualib.h>
 }
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -550,20 +551,6 @@ lua_hooks::hook_edit_comment(string const & commentary,
     .ok();
 }
 
-
-bool 
-lua_hooks::hook_get_sorter(string const & certname, 
-			   string & sort_type)
-{
-  return Lua(st)
-    .push_str("get_sorter")
-    .get_fn()
-    .push_str(certname)
-    .call(1,1)
-    .extract_str(sort_type)
-    .ok();
-}
-
 bool 
 lua_hooks::hook_ignore_file(file_path const & p)
 {
@@ -576,17 +563,6 @@ lua_hooks::hook_ignore_file(file_path const & p)
     .extract_bool(ignore_it)
     .ok();
   return exec_ok && ignore_it;
-}
-
-bool 
-lua_hooks::hook_get_nonce(std::string & n)
-{
-  return Lua(st)
-    .push_str("get_nonce")
-    .get_fn()
-    .call(0,1)
-    .extract_str(n)
-    .ok();
 }
 
 

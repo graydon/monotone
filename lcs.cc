@@ -504,8 +504,8 @@ void _edit_script(A begin_a, A end_a,
   long len_b = end_b - begin_b;
   typename calc_t::edit_vec edits, ordered;
 
-  typename calc_t::subarray<A> a(begin_a, 0, len_a);
-  typename calc_t::subarray<B> b(begin_b, 0, len_b);
+  typename calc_t::template subarray<A> a(begin_a, 0, len_a);
+  typename calc_t::template subarray<B> b(begin_b, 0, len_b);
 
   if (len_b < len_a)
     {
@@ -539,8 +539,8 @@ void _longest_common_subsequence(A begin_a, A end_a,
   long len_b = end_b - begin_b;
   typename calc_t::edit_vec edits, ordered;
 
-  typename calc_t::subarray<A> a(begin_a, 0, len_a);
-  typename calc_t::subarray<B> b(begin_b, 0, len_b);
+  typename calc_t::template subarray<A> a(begin_a, 0, len_a);
+  typename calc_t::template subarray<B> b(begin_b, 0, len_b);
 
   if (len_b < len_a)
     {

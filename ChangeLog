@@ -1,13 +1,79 @@
 2004-10-10  graydon hoare  <graydon@pobox.com>
 
-	* tests/t_remerge.at:
-	* tests/t_movedel.at:
-	* tests/t_movepatch.at: Import tests from trunk.
-	* testsuite.at: Call them.
+	merge a batch of changes from trunk, see below.
+	* monotone.spec: Bump to 0.14.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	fix bug 9884
+	* tests/t_singlenetsync.at: sleep 5
+	* tests/t_netsync.at: sleep 5 
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Mention Richard Levitte.
+	* Makefile.am: Remove nonce stuff.
+	* NEWS: Describe changes from last release.
+	* cert.cc (cert_manifest_testresult): Teach about other ways
+	of writing a boolean value.
+	* commands.cc (commit): Don't commit when no change.
+	(debug): Rename to "db execute".
+	(serve): Require passphrase on startup.
+	(bump): Remove command.
+	(ls keys): Handle no keys.
+	* configure.ac: Bump version number.
+	* keys.cc (get_passphrase): Reject empty passphrase nicely,
+	from user and from hook.
+	* lua.{cc,hh} (hook_get_sorter): Dead code, remove.
+	* main.cc (main_with_many_flavours_of_exception): s/char/int/.
+	* monotone.cc (OPT_DUMP): New option.
+	(OPT_VERBOSE): Rename as OPT_DEBUG.
+	* monotone.{texi,1}: Document changes, s/rdiff/xdelta/.
+	* nonce.{cc,hh}: Drop.
+	* sanity.hh (sanity::filename): New field.
+	* sanity.cc (dump_buffer): Dump to file or be silent.
+	* testsuite.at (persist_phrase_ok): Define as true.
+	* tests/t_null.at: Adjust for new option names.
+	* unit_tests.cc: Set debug, not verbose.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_remerge.at: New test.
+	* testsuite.at: Call it.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* cryptopp/algebra.cpp:
+	* cryptopp/asn.h:
+	* cryptopp/hmac.h:
+	* cryptopp/iterhash.h:
+	* cryptopp/mdc.h:
+	* cryptopp/modes.h:
+	* cryptopp/osrng.h:
+	* cryptopp/pubkey.h:
+	* cryptopp/seckey.h:
+	* cryptopp/simple.h:
+	* cryptopp/smartptr.h:
+	* cryptopp/strciphr.cpp:
+	* cryptopp/strciphr.h:
+	* lcs.cc:
+	* lua.cc: Fixes for g++ 3.4 from Michael Scherer.
+	* AUTHORS: Mention Michael.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_movedel.at: New test.
+	* testsuite.at: Call it.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_movepatch.at: New test.
+	* testsuite.at: Call it.
+
+2004-10-10  graydon hoare  <graydon@pobox.com>
+
 	* change_set.cc:
 	* file_io.{cc,hh}: Bug Fixes.
-	* tests/t_singlenetsync.at:
-	* tests/t_netsync.at: Add sleep 5.
 
 2004-10-10  graydon hoare  <graydon@pobox.com>
 

@@ -1248,17 +1248,36 @@ resolve_conflict(tid t, ptype ty,
 		 app_state & app)
 {
   path_state::const_iterator i = resolved_conflicts.find(t);
+
+  path_item a_item, b_item;
+  find_item(t, a_tmp.second, a_item);
+  find_item(t, b_tmp.second, b_item);
+
+  file_path anc, a, b, res;
+  get_full_path(a_tmp.first, t, anc);
+  get_full_path(a_tmp.second, t, a);
+  get_full_path(b_tmp.second, t, b);
+  
   if (i != resolved_conflicts.end())
     {
       resolved = path_state_item(i);
     }
+  else if (null_name(path_item_name(a_item)) &&
+	   ! null_name(path_item_name(b_item)))
+    {
+      L(F("delete of %s dominates rename to %s\n") % anc % b);
+      resolved = a_item;
+      resolved_conflicts.insert(std::make_pair(t, resolved));
+    }
+  else if (null_name(path_item_name(b_item)) &&
+	   ! null_name(path_item_name(a_item)))
+    {
+      L(F("delete of %s dominates rename to %s\n") % anc % a);
+      resolved = b_item;
+      resolved_conflicts.insert(std::make_pair(t, resolved));
+    }
   else
     {
-      file_path anc, a, b, res;
-      get_full_path(a_tmp.first, t, anc);
-      get_full_path(a_tmp.second, t, a);
-      get_full_path(b_tmp.second, t, b);
-
       switch (ty) 
 	{
 	case ptype_file:
@@ -2323,9 +2342,9 @@ static void dump_change_set(std::string const & ctx,
 {
   data tmp;
   write_change_set(cs, tmp);
-  L(F("[begin changeset %s]\n", ctx));
-  L(F("%s", tmp));
-  L(F("[end changeset %s]\n", ctx));
+  L(F("[begin changeset %s]\n") % ctx);
+  L(F("%s") % tmp);
+  L(F("[end changeset %s]\n") % ctx);
 }
 
 static void

@@ -701,8 +701,12 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 
   if (pubkeys.size() == 0 &&
       privkeys.size() == 0)
-    P(F("warning: no keys found matching '%s'\n") % idx(args, 0)());
-
+    {
+      if (args.size() == 0)
+	P(F("no keys found\n"));
+      else
+	W(F("no keys found matching '%s'\n") % idx(args, 0)());
+    }
   guard.commit();
 }
 
@@ -1600,14 +1604,6 @@ CMD(read, "packet i/o", "", "read packets from stdin")
 }
 
 
-CMD(debug, "debug", "SQL", "issue SQL queries directly (dangerous)")
-{
-  if (args.size() != 1)
-    throw usage(name);
-  app.db.debug(idx(args, 0)(), cout);
-}
-
-
 CMD(reindex, "network", "COLLECTION...", 
     "rebuild the hash-tree indices used to sync COLLECTION over the network")
 {
@@ -1679,27 +1675,51 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
+  {
+    N(app.lua.hook_persist_phrase_ok(),
+      F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
+    N(app.db.private_key_exists(key),
+      F("no private key '%s' found in database") % key);
+    N(app.db.public_key_exists(key),
+      F("no public key '%s' found in database") % key);
+    base64<rsa_pub_key> pub;
+    app.db.get_key(key, pub);
+    base64< arc4<rsa_priv_key> > priv;
+    app.db.get_key(key, priv);    
+    require_password(app.lua, key, pub, priv);
+  }
+
   utf8 addr(idx(args,0));
   vector<utf8> collections(args.begin() + 1, args.end());
   run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
 }
 
-CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate", "manipulate database state")
+CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipulate database state")
 {
-  if (args.size() != 1)
-    throw usage(name);
-  if (idx(args, 0)() == "init")
-    app.db.initialize();
-  else if (idx(args, 0)() == "info")
-    app.db.info(cout);
-  else if (idx(args, 0)() == "version")
-    app.db.version(cout);
-  else if (idx(args, 0)() == "dump")
-    app.db.dump(cout);
-  else if (idx(args, 0)() == "load")
-    app.db.load(cin);
-  else if (idx(args, 0)() == "migrate")
-    app.db.migrate();
+  if (args.size() == 1)
+    {
+      if (idx(args, 0)() == "init")
+	app.db.initialize();
+      else if (idx(args, 0)() == "info")
+	app.db.info(cout);
+      else if (idx(args, 0)() == "version")
+	app.db.version(cout);
+      else if (idx(args, 0)() == "dump")
+	app.db.dump(cout);
+      else if (idx(args, 0)() == "load")
+	app.db.load(cin);
+      else if (idx(args, 0)() == "migrate")
+	app.db.migrate();
+      else
+	throw usage(name);
+    }
+  else if (args.size() == 2)
+    {
+      if (idx(args, 0)() == "execute")
+	app.db.debug(idx(args, 1)(), cout);
+      else
+	throw usage(name);
+    }
   else
     throw usage(name);
 }

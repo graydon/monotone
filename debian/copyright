@@ -1,11 +1,9 @@
 This package was debianized by graydon hoare <graydon@pobox.com> on
-Fri, 26 Sep 2003 13:18:41 -0400.
+Mon, 2 Aug 2004 12:52:26 -0400.
 
-It was downloaded from http://savannah.nongnu.org/download/monotone/monotone.pkg/0.5/monotone-0.5.tar.gz
+It was downloaded from http://www.venge.net/monotone/monotone-0.14.tar.gz
 
 Upstream Author(s): graydon hoare <graydon@pobox.com>
-
-Copyright:
 
 main files:
 -----------
@@ -13,13 +11,18 @@ main files:
 Graydon Hoare <graydon@pobox.com> originally wrote *.{lua,sql,cc,hh}
 in the top level directory. That's me.
 
-One possible exception to this -- depending on how you interpret the
-word "wrote" -- is the file lcs.hh, which I merely *translated*
-(without much inventive contribution) from a file called differ.scm,
-from SLIB, which is written by Aubrey Jaffer <agj@alum.mit.edu>, and
-on which he retains Copyright. He has licensed this code for any use
-provided its copyright notice is preserved, which it is, in
-lcs.hh. You can find the original (scheme) code at
+Two exceptions are the file main.cc, which is a slightly reworked copy
+of execution_monitor.cc from the boost project; and the file
+mkstemp.cc, which is a slightly reworked copy of mkstemp code from
+glib. In both cases I've noted the original copyrights in the files.
+
+Another possible exception -- depending on how you interpret the word
+"wrote" -- is the file lcs.hh, which I did write, but the writing was
+merely *translation* (without much inventive contribution) from a file
+called differ.scm, from SLIB, which is written by Aubrey Jaffer
+<agj@alum.mit.edu>, and on which he retains Copyright. He has licensed
+this code for any use provided its copyright notice is preserved,
+which it is, in lcs.hh. You can find the original (scheme) code at
 http://www.swiss.ai.mit.edu/~jaffer/
 
 Several of the top level files have subsequently been amended by other
@@ -27,8 +30,20 @@ contributing authors, including:
 
   Tom Tromey <tromey@redhat.com>
   Nathaniel Smith <njs@pobox.com>
-
-
+  Matt Kraai <kraai@ftbfs.org>
+  Lorenzo Campedelli <lorenzo.campedelli@libero.it>
+  Eric Kidd  <eric.kidd@pobox.com>
+  Christof Petig <christof@petig-baender.de>
+  Paul Snively <psnively@mac.com>
+  Anders Petersson <demitar@worldforge.org>
+  Nathan Myers <ncm@cantrip.org>
+  Olivier Andrieu <oliv__a@users.sourceforge.net>
+  Robert Helgesson <rycee@home.se>
+  Robert Bihlmeyer <robbe+mt@orcus.priv.at>
+  Joel Rosdahl <joel@rosdahl.net>
+  Ben Elliston <bje@wasabisystems.com>
+  Michael Scherer <misc@mandrake.org>
+  Richard Levitte <levitte@stacken.kth.se>
 
 supporting files:
 -----------------
@@ -48,23 +63,117 @@ work here; I am merely using several public domain files from it. You
 can find the original code at http://www.cryptopp.com.
 
 
+The files in idna/* are copies of the core portion of the "GNU libidn"
+library. Copyright (C) 2002, 2003 Simon Josefsson. They are licensed
+under the GNU LGPL version 2.1. The original sources for libidn can be
+retrieved from http://josefsson.org/libidn/. The library carries an
+additional legal requirement of reproduction of the following text in
+any copies made:
+
+---
+
+Libidn AUTHORS -- Information about the authors.
+Copyright (C) 2002, 2003 Simon Josefsson
+See the end for copying conditions.
+
+Simon Josefsson <simon@josefsson.org>
+Designed and implemented libidn.
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Comment: This 0xB565716F key is used to sign releases of Libidn.
+
+mKsEPNUHKwEFALqJSBHn6Qk5ex138kwymxA3idCFoTi5Q6mVooEVVaYVfeDG+5uV
+T5rhTFDfDcT9SO0eIlfKOraSRnVEHyDDH2PAgJFxyneFELcmLUQ66D+m8z+ziGro
+6bcDSBBDMRkHIX6/kH/vnevjqivIld+j8WTcVX+SArcKyzgQ58uMTrfQdLqzh6D9
+sE/838+ZPZkabmKKWMVWccoaUbWGYOcNwO0ABim0IVNpbW9uIEpvc2Vmc3NvbiA8
+amFzQGV4dHVuZG8uY29tPojYBBMBAgAiAhsDBAsHAwIDFQIDAxYCAQIeAQIXgAUC
+P6QrUQUJA7xyJgAKCRDtoh6UtWVxbwueBP4uh9ZEOuSjt2n5OpfuAablsrRzhlgP
+fluBMfjHNynEFsGjn81l81TCqStRln7wDUj95ZufSi3YvoYSFG1jffGMk/k2trgI
+NtT3kxaGkfns6dykBuV7Ki2wWqdJkTe1ibyai+RCqt+J1ldSUuHdfQZ5wALPJQRb
+4Hqi7M29azFHcfxbMLf3yGYyBuKC7eBVNVaR58UTFK6r0CX3T7eGuk8biEYEExEC
+AAYFAj1Y8r8ACgkQV5Mp08AbKiIX9wCfR2rMiXdKzZB95acA5YSQ4MLQyygAn1Nv
+7M36SAofR/73WjqlPpVAQ+fRiEwEExECAAwFAj1esHUFgwFXijYACgkQvLvElXGK
+klYZnQCeOXIzmEoZ5yOVNygphYmUwON/S8IAn32gWDyaTMpqyDcJEQeLdjcW7boS
+tCVTaW1vbiBKb3NlZnNzb24gPHNpbW9uQGpvc2Vmc3Nvbi5vcmc+iNgEEwECACIC
+GwMECwcDAgMVAgMDFgIBAh4BAheABQI/pCtUBQkDvHImAAoJEO2iHpS1ZXFvPREE
+/j3fX+cLxCCZNTjMhThGFujiT7ty4x1jVc91J6QOA+Jp+78NIIeyg3JTeR3WIv7/
+WFNzLKJXJEEcga+0ViPjoLfvGsHMAnwXqPYAxu1cDY4jId0bCYgoVlnfF9gwOWxe
+btotLpCiuXGL/168zEAXWJpPg6r2MfPhAKUJ9G8q52OOWJW3cObxoZ2gyXjuWOFt
+ygZ1vUAqP/8UGeZNdajHD5uIRgQTEQIABgUCPVjywgAKCRBXkynTwBsqImY3AKCS
+COO5LlNxmritUFY1i7VXBCUlZgCgll/6kE0G/NP3E6AdyzVwAzBPgUeITAQTEQIA
+DAUCPV6wdQWDAVeKNgAKCRC8u8SVcYqSVleXAJ9NZKUvb/erk53fMFUwpUeClOjh
+qwCcC3Du9UQjCn2k+7LWgqNMH+huqW24qwQ81Qd7AQUA2PTaoT8RNkFDlX7UCOB9
+vaRFxrX+dN7l6QO+O0Mg7dVdjItEnaaYkJ+r4LXecI47HogsUGExRdDYGT0Dq7aZ
+8GkC4UKPXc3q2KWQ3ib3wj3qnCGm3IX/I249ydYLAzQyWqMW09wLB5vxhPi4yjet
+4FTGWmtYUlGzDb7+6VZilYRTty0vhFF4cVXlO2R+vgPxFMvUc7o8WGDnQ3iyWAiz
+kQAGKYjFBBgBAgAPAhsMBQI/pCt8BQkDvHIBAAoJEO2iHpS1ZXFvEeIE/ixQWhAC
+pnKjQZeTA7zcshH683NU/bBAjbOq7lJ51aWMXOdXExGJsBD0fyPtRJywMtSB4vrM
+F1WjKZlA0jBOxzxWaWpLvMwdwgkSiql8KTNActxIoijtu0e5GI3V+55Z+Cv/jsPD
+lzeYiob0cO6u/2todt6XVTyCIFKWjf6/5i/LdhXlw7J9gzrCwm28ITC4is3voTNh
+Uceqods6zDrk0qo=
+=1RsN
+-----END PGP PUBLIC KEY BLOCK-----
+
+----------------------------------------------------------------------
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+---
+
+The files in netxx/* are copies of the NetXX library, which is
+Copyright (C) 2001-2003 Peter J Jones (pjones@pmade.org), and
+distributed under a BSD-like license. The license terms are reproduced
+in the files, and do not require that they be reproduced here.
+
+---
+
+
+The files in lua/* are copies of the lua 5.0 source distribution, from
+Tecgraf PUC-Rio. The lua distribution can be retrieved from
+www.lua.org. The files are provided under an MIT-like license,
+reproduced here:
+
+---
+
+Copyright (C) 2003 Tecgraf, PUC-Rio.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+---
+
 The files in boost/* are copies of unofficial development files from
 the boost "sandbox" CVS repository, linked off of
 http://www.boost.org. The only license obligation I can find in those
 files is to reproduce their license statement in documentation, which
 I am doing here:
 
-files in boost/socket:
+files in boost/ related to circular buffers:
 
-// Copyright (C) 2002 Hugo Duncan
-//
-// Permission to use, copy, modify, distribute and sell this software and
-// its documentation for any purpose is hereby granted without fee,
-// provided that the above copyright notice appear in all copies and that
-// both that copyright notice and this permission notice appear in
-// supporting documentation.  Hugo Duncan makes no representations about
-// the suitability of this software for any purpose.  It is provided "as
-// is" without express or implied warranty.
+// Copyright (c) 2003
+// Jan Gaspar, Whitestein Technologies
+
+// Permission to use or copy this software for any purpose is hereby granted 
+// without fee, provided the above notices are retained on all copies.
+// Permission to modify the code and to distribute modified code is granted,
+// provided the above notices are retained, and a notice that the code was
+// modified is included with the above copyright notice.
 
 
 copyright status:
@@ -73,13 +182,15 @@ copyright status:
 I believe I am within my rights to assert my own copyright on:
 
   - the files I wrote
-  - the collective work including the files I copied from
-    the public domain (and possibly lcs.cc, as mentionned)
+
+  - the collective work, including the use (though not authorship) of
+    files I copied from the public domain, and other copyrighted but
+    freely-licensed sources (and possibly lcs.cc, as mentionned)
 
 I license my publication of these copyrighted works to the public
-under the terms of the GNU GPL. See the file COPYING for details. If
-you believe I am in violation of some existing copyrights, please
-contact me.
+under the terms of the GNU GPL, version 2 or greater. See the file
+COPYING for details. If you believe I am in violation of some existing
+copyrights, please contact me.
 
 Subsequent additions by contributing authors are implicitly licensed
 to the public under the same terms (GPL), but the contributing authors

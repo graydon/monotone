@@ -28,7 +28,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
 {
   clean_shutdown = false;
   atexit(&dumper);
-  global_sanity.set_verbose();
+  global_sanity.set_debug();
 
   test_suite * suite = BOOST_TEST_SUITE("monotone unit tests");
   I(suite);

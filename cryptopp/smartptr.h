@@ -54,14 +54,14 @@ public:
 	value_ptr<T>& operator=(const value_ptr<T>& rhs);
 	bool operator==(const value_ptr<T>& rhs)
 	{
-		return (!m_p && !rhs.m_p) || (m_p && rhs.m_p && *m_p == *rhs.m_p);
+		return (!this->m_p && !rhs.m_p) || (this->m_p && rhs.m_p && *this->m_p == *rhs.m_p);
 	}
 };
 
 template <class T> value_ptr<T>& value_ptr<T>::operator=(const value_ptr<T>& rhs)
 {
-	T *old_p = m_p;
-	m_p = rhs.m_p ? new T(*rhs.m_p) : NULL;
+	T *old_p = this->m_p;
+	this->m_p = rhs.m_p ? new T(*rhs.m_p) : NULL;
 	delete old_p;
 	return *this;
 }
@@ -81,8 +81,8 @@ public:
 
 template <class T> clonable_ptr<T>& clonable_ptr<T>::operator=(const clonable_ptr<T>& rhs)
 {
-	T *old_p = m_p;
-	m_p = rhs.m_p ? rhs.m_p->Clone() : NULL;
+	T *old_p = this->m_p;
+	this->m_p = rhs.m_p ? rhs.m_p->Clone() : NULL;
 	delete old_p;
 	return *this;
 }
@@ -195,7 +195,7 @@ public:
 	void resize(unsigned int newSize)
 	{
 		member_ptr<T> *newPtr = new member_ptr<T>[newSize];
-		for (unsigned int i=0; i<STDMIN(_size, newSize); i++)
+		for (unsigned int i=0; i<this->STDMIN(_size, newSize); i++)
 			newPtr[i].reset(ptr[i].release());
 		delete [] ptr;
 		_size = newSize;

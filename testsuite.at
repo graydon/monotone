@@ -81,6 +81,10 @@ function accept_testresult_change(old_results, new_results)
    return true
 end
 
+function persist_phrase_ok()
+	return true
+end
+
 function get_author(branchname)
 	return "tester@test.net"
 end
