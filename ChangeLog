@@ -1,3 +1,8 @@
+2004-12-05  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: move more things around to help align merge regions
+	* monotone.cc: untabify a few things to help merge
+
 2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (merge_deltas): Call correct variant of
@@ -15,6 +20,15 @@
 
 	* change_set.cc: Remove tabs.
 	* diff_patch.cc: Likewise.
+
+2004-12-02  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: more tweaking to ease changeset merge
+
+2004-12-01  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: reordered commands to help merge with changesets
+	branch
 
 2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -660,150 +674,6 @@
 	* commands.cc: Likewise.
 	* numeric_vocab.hh: Ask for C99 constant ctor macros.
 
-2004-09-19  graydon hoare  <graydon@pobox.com>
-
-	* change_set.cc: More bug fixes.
-	* basic_io.cc: Improve error reporting.
-	* commands.cc (complete): Teach about revisions.
-	* database.{cc,hh}: Add complete variant for revisions.
-
-2004-09-19  graydon hoare  <graydon@pobox.com>
-
-	* change_set.cc: Add a unit test, fix some bugs.
-
-2004-09-18  graydon hoare  <graydon@pobox.com>
-
-	* change_set.{cc,hh} (subtract_change_sets): New function.
-	(build_pure_addition_change_set): New function.
-	* commands.cc (try_one_merge): Teach about revisions
-	(merge): Likewise.
-	(propagate): Likewise.
-	(update): Change from changeset inversion to negation.
-	* database.{cc,hh} (get_manifest): New function.
-	* cert.cc: Use it.
-
-2004-09-13  graydon hoare  <graydon@pobox.com>
-
-	* change_set.cc: Bug fixes.
-	* commands.cc: Likewise.
-
-2004-09-13  graydon hoare  <graydon@pobox.com>
-
-	* change_set.{cc,hh}: Implement delta renaming and merging.
-	* commands.cc 
-	(update): Teach about revisions.
-	(agraph): Likewise.
-	* diff_patch.{cc,hh}: Tidy up interface a bit.
-	* database.{cc,hh} (get_revision_ancestry): New helper.
-	* file_io.{cc,hh}
-	(move_dir): New function.
-	(delete_dir_recursive): New function.	
-
-2004-09-10  graydon hoare  <graydon@pobox.com>
-
-	* basic_io.{cc,hh}: Move to more "normal" looking
-	quoted output.
-	* change_set.{cc,hh}: Extend, bugfix.
-	* commands.cc (diff): Teach about revisions.
-	* revision.{cc,hh}: Extend, bugfix.
-
-2004-09-06  graydon hoare  <graydon@pobox.com>
-
-	* Makefile.am: Revise,
-	* cert.{cc,hh}: Minor bug fixes.
-	* change_set.{cc,hh} 
-	(apply_path_rearrangement): New variant.
-	(read_path_rearrangement): New function.
-	(write_path_rearrangement): New function.
-	* commands.cc: Partially teach about revisions.
-	* database.{cc,hh}: Bug fixes.
-	* revision.cc: Print new manifest as hex.
-	* schema.sql: Fix typos.
-	* update.{cc,hh}: Teach about revisions.
-
-2004-09-06  graydon hoare  <graydon@pobox.com>
-
-	* Makefile.am (unit_tests): Revise.
-	* change_set.{cc,hh}: Move accessors to header.
-	* constants.cc (netcmd_current_protocol_version): Bump.
-	(netcmd_minimum_bytes_to_bother_with_gzip): Expand to 0xfff.
-	* database.{cc,hh}: Teach about reverse deltas, bug fixes.
-	* diff_patch.{cc,hh}: Remove dead code.
-	* merkle_tree.{cc,hh}: Teach about revisions.
-	* netsync.cc: Teach about revisions, reverse deltas.
-	* packet.{cc,hh}: Likewise.
-	* unit_tests.{cc,hh}: Reactivate tests.
-
-2004-08-28  graydon hoare  <graydon@pobox.com>
-
-	* Makefile.am (unit_tests): Split out working parts.
-	* basic_io.{cc,hh}: Minor fixes. 
-	* cert.{cc,hh}: Fixes, remove major algorithms.
-	* revision.{cc,hh}: Rewrite algorithms from cert.cc.
-	* change_set.{cc,hh}: Extensive surgery, unit tests.
-	* database.{cc,hh}: Minor fixes.
-	* file_io.{cc,hh}: Likewise.
-	* lua.cc: Likewise.
-	* packet.{cc,hh}: Teach about revisions.
-	* schema.sql: Drop some optimistic tables.
-	* unit_tests.{cc,hh}: Add revision, change_set tests.
-	* vocab.cc: Instantiate revision<cert>.
-	* work.{cc,hh}: Rewrite in terms of path_rearrangement.
-
-2004-08-17  graydon hoare  <graydon@pobox.com>
-
-	* database.cc: Simplified.
-	* schema.sql: Simplified.
-	* transforms.cc: Fixed bug.
-	* revision.{hh,cc}: Stripped out tid_source.
-	* change_set.{cc,hh}: Oops, never committed!
-
-2004-08-16  graydon hoare  <graydon@pobox.com>
-
-	* change_set.{hh,cc}: Simplified, finished i/o.
-	* revision.{hh,cc}: Fix to match, redo i/o.
-	* basic_io.cc (basic_io::parser::key): Print trailing colon.
-	* vocab.hh: Whitespace tweak.
-
-2004-08-09  graydon hoare  <graydon@pobox.com>
-
-	* change_set.{hh,cc}: New files.
-	* basic_io.{hh,cc}: New files.
-	* predicament.{hh,cc}: New files.
-	* revision.{hh,cc}: Break completely, need to fix.
-	* diff_patch.{hh,cc}: Minor touchups.
-	* lua.{hh,cc}, std_hooks.lua: Model predicaments.
-	* Makefile.am: Update.
-
-2004-07-10  graydon hoare  <graydon@pobox.com>
-
-	* lcs.{hh,cc}: Move lcs.hh body into lcs.cc.
-	* diff_patch.cc: Modify to compensate.
-	* revision.{hh,cc}: New files.
-	* Makefile.am: Update
-	* patch_set.{hh,cc}: Remove.
-	* {cert,database,lua,packets}.{hh,cc}, commands.cc: 
-	Modify partially (incomplete) to use revisions.
-	* manifest.{hh,cc}: Cleanup, remove dead code.
-	* schema.sql: Declare new revision tables.
-	* schema_migration.cc: Incomplete migrator.
-	* {transforms.{hh,cc}, vocab{,_terms}.hh:
-	Infrastructure for revisions.
-
-2004-12-05  Derek Scherger  <derek@echologic.com>
-
-	* commands.cc: move more things around to help align merge regions
-	* monotone.cc: untabify a few things to help merge
-
-2004-12-02  Derek Scherger  <derek@echologic.com>
-
-	* commands.cc: more tweaking to ease changeset merge
-
-2004-12-01  Derek Scherger  <derek@echologic.com>
-
-	* commands.cc: reordered commands to help merge with changesets
-	branch
-
 2004-09-24  Derek Scherger  <derek@echologic.com>
 
 	* app_state.{cc,hh} (initialize,prefix,in_restriction): rename
@@ -864,6 +734,53 @@
 	* tests/t_update.at: commit --message
 	* tests/t_versions.at: commit --message
 
+2004-09-19  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: More bug fixes.
+	* basic_io.cc: Improve error reporting.
+	* commands.cc (complete): Teach about revisions.
+	* database.{cc,hh}: Add complete variant for revisions.
+
+2004-09-19  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Add a unit test, fix some bugs.
+
+2004-09-18  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh} (subtract_change_sets): New function.
+	(build_pure_addition_change_set): New function.
+	* commands.cc (try_one_merge): Teach about revisions
+	(merge): Likewise.
+	(propagate): Likewise.
+	(update): Change from changeset inversion to negation.
+	* database.{cc,hh} (get_manifest): New function.
+	* cert.cc: Use it.
+
+2004-09-13  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Bug fixes.
+	* commands.cc: Likewise.
+
+2004-09-13  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Implement delta renaming and merging.
+	* commands.cc 
+	(update): Teach about revisions.
+	(agraph): Likewise.
+	* diff_patch.{cc,hh}: Tidy up interface a bit.
+	* database.{cc,hh} (get_revision_ancestry): New helper.
+	* file_io.{cc,hh}
+	(move_dir): New function.
+	(delete_dir_recursive): New function.	
+
+2004-09-10  graydon hoare  <graydon@pobox.com>
+
+	* basic_io.{cc,hh}: Move to more "normal" looking
+	quoted output.
+	* change_set.{cc,hh}: Extend, bugfix.
+	* commands.cc (diff): Teach about revisions.
+	* revision.{cc,hh}: Extend, bugfix.
+
 2004-09-07  Derek Scherger  <derek@echologic.com>
 
 	subdirectory restrictions
@@ -897,12 +814,95 @@
 	* tests/t_single_char_filenames.at: ditto
 	* tests/t_versions.at: ditto
 	
+2004-09-06  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am: Revise,
+	* cert.{cc,hh}: Minor bug fixes.
+	* change_set.{cc,hh} 
+	(apply_path_rearrangement): New variant.
+	(read_path_rearrangement): New function.
+	(write_path_rearrangement): New function.
+	* commands.cc: Partially teach about revisions.
+	* database.{cc,hh}: Bug fixes.
+	* revision.cc: Print new manifest as hex.
+	* schema.sql: Fix typos.
+	* update.{cc,hh}: Teach about revisions.
+
+2004-09-06  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (unit_tests): Revise.
+	* change_set.{cc,hh}: Move accessors to header.
+	* constants.cc (netcmd_current_protocol_version): Bump.
+	(netcmd_minimum_bytes_to_bother_with_gzip): Expand to 0xfff.
+	* database.{cc,hh}: Teach about reverse deltas, bug fixes.
+	* diff_patch.{cc,hh}: Remove dead code.
+	* merkle_tree.{cc,hh}: Teach about revisions.
+	* netsync.cc: Teach about revisions, reverse deltas.
+	* packet.{cc,hh}: Likewise.
+	* unit_tests.{cc,hh}: Reactivate tests.
+
 2004-09-02  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_restrictions.at: rework and attempt to clean things up a
 	bit; add test for bug in restrict_patch_set
 	* commands.cc (restrict_patch_set): fix bug in removal of
 	restricted adds/dels/moves/deltas
+
+2004-08-28  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (unit_tests): Split out working parts.
+	* basic_io.{cc,hh}: Minor fixes. 
+	* cert.{cc,hh}: Fixes, remove major algorithms.
+	* revision.{cc,hh}: Rewrite algorithms from cert.cc.
+	* change_set.{cc,hh}: Extensive surgery, unit tests.
+	* database.{cc,hh}: Minor fixes.
+	* file_io.{cc,hh}: Likewise.
+	* lua.cc: Likewise.
+	* packet.{cc,hh}: Teach about revisions.
+	* schema.sql: Drop some optimistic tables.
+	* unit_tests.{cc,hh}: Add revision, change_set tests.
+	* vocab.cc: Instantiate revision<cert>.
+	* work.{cc,hh}: Rewrite in terms of path_rearrangement.
+
+2004-08-17  graydon hoare  <graydon@pobox.com>
+
+	* database.cc: Simplified.
+	* schema.sql: Simplified.
+	* transforms.cc: Fixed bug.
+	* revision.{hh,cc}: Stripped out tid_source.
+	* change_set.{cc,hh}: Oops, never committed!
+
+2004-08-16  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{hh,cc}: Simplified, finished i/o.
+	* revision.{hh,cc}: Fix to match, redo i/o.
+	* basic_io.cc (basic_io::parser::key): Print trailing colon.
+	* vocab.hh: Whitespace tweak.
+
+2004-08-09  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{hh,cc}: New files.
+	* basic_io.{hh,cc}: New files.
+	* predicament.{hh,cc}: New files.
+	* revision.{hh,cc}: Break completely, need to fix.
+	* diff_patch.{hh,cc}: Minor touchups.
+	* lua.{hh,cc}, std_hooks.lua: Model predicaments.
+	* Makefile.am: Update.
+
+2004-07-10  graydon hoare  <graydon@pobox.com>
+
+	* lcs.{hh,cc}: Move lcs.hh body into lcs.cc.
+	* diff_patch.cc: Modify to compensate.
+	* revision.{hh,cc}: New files.
+	* Makefile.am: Update
+	* patch_set.{hh,cc}: Remove.
+	* {cert,database,lua,packets}.{hh,cc}, commands.cc: 
+	Modify partially (incomplete) to use revisions.
+	* manifest.{hh,cc}: Cleanup, remove dead code.
+	* schema.sql: Declare new revision tables.
+	* schema_migration.cc: Incomplete migrator.
+	* {transforms.{hh,cc}, vocab{,_terms}.hh:
+	Infrastructure for revisions.
 
 2004-07-20  Derek Scherger  <derek@echologic.com>
 
@@ -968,11 +968,6 @@
 	* packet.cc: Use explicit true/false maps in caches.
 	* sanity.cc (dump_buffer): Write to clog (buffered).
 
-2004-05-14  Joel Rosdahl  <joel@rosdahl.net>
-
-	* std_hooks.lua (ignore_file): Quote dots in .svn patterns.
-	* monotone.texi: Updated ignore_file hook example.
-
 2004-05-16  graydon hoare  <graydon@pobox.com>
 
 	* keys.cc (get_passphrase): Reimplement.
@@ -986,11 +981,10 @@
 	* diff_patch.cc (merge2): Don't discard files on one side.
 	* std_hooks.lua (merge2_xxdiff_cmd): Specify merge filename.
 
-2004-05-12  graydon hoare  <graydon@pobox.com>
+2004-05-14  Joel Rosdahl  <joel@rosdahl.net>
 
-	* AUTHORS: Rename Netxx back to netxx. Really, look in 
-	the manifest; it's been renamed!
-	* configure.ac: Remove prg_exec_monitor checks.
+	* std_hooks.lua (ignore_file): Quote dots in .svn patterns.
+	* monotone.texi: Updated ignore_file hook example.
 
 2004-05-13  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -1013,6 +1007,12 @@
 
 	* monotone.texi (Hook Reference): Update documented default
 	definitions of 'merge2' and 'merge3'.
+
+2004-05-12  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Rename Netxx back to netxx. Really, look in 
+	the manifest; it's been renamed!
+	* configure.ac: Remove prg_exec_monitor checks.
 
 2004-05-12  Nathaniel Smith  <njs@pobox.com>
 

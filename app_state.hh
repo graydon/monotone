@@ -33,7 +33,7 @@ public:
   bool rcfiles;
   options_map options;
   utf8 message;
-  std::vector<utf8> manifest_selectors;
+  std::vector<utf8> revision_selectors;
   std::vector<utf8> extra_rcfiles;
   std::set<file_path> restrictions;
   file_path relative_directory;
@@ -50,7 +50,7 @@ public:
   void set_signing_key(utf8 const & key);
 
   void set_message(utf8 const & message);
-  void add_manifest(utf8 const & selector);
+  void add_revision(utf8 const & selector);
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);

@@ -196,9 +196,9 @@ app_state::set_message(utf8 const & m)
 }
 
 void
-app_state::add_manifest(utf8 const & selector)
+app_state::add_revision(utf8 const & selector)
 {
-  manifest_selectors.push_back(selector);
+  revision_selectors.push_back(selector);
 }
 
 void
