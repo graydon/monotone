@@ -4,13 +4,18 @@ main files:
 Graydon Hoare <graydon@pobox.com> originally wrote *.{lua,sql,cc,hh}
 in the top level directory. That's me.
 
-One possible exception to this -- depending on how you interpret the
-word "wrote" -- is the file lcs.hh, which I merely *translated*
-(without much inventive contribution) from a file called differ.scm,
-from SLIB, which is written by Aubrey Jaffer <agj@alum.mit.edu>, and
-on which he retains Copyright. He has licensed this code for any use
-provided its copyright notice is preserved, which it is, in
-lcs.hh. You can find the original (scheme) code at
+Two exceptions are the file main.cc, which is a slightly reworked copy
+of execution_monitor.cc from the boost project; and the file
+mkstemp.cc, which is a slightly reworked copy of mkstemp code from
+glib. In both cases I've noted the original copyrights in the files.
+
+Another possible exception -- depending on how you interpret the word
+"wrote" -- is the file lcs.hh, which I did write, but the writing was
+merely *translation* (without much inventive contribution) from a file
+called differ.scm, from SLIB, which is written by Aubrey Jaffer
+<agj@alum.mit.edu>, and on which he retains Copyright. He has licensed
+this code for any use provided its copyright notice is preserved,
+which it is, in lcs.hh. You can find the original (scheme) code at
 http://www.swiss.ai.mit.edu/~jaffer/
 
 Several of the top level files have subsequently been amended by other

@@ -1,3 +1,14 @@
+2004-05-08  graydon hoare  <graydon@pobox.com>
+
+	* main.cc: New file encompassing prg_exec_monitor.
+	* mkstemp.cc, mkstemp.hh: New portable implementation.
+	* lua.cc: Use mkstemp from bundled version.
+	* lua/liolib.c: Remove old mkstemp definition.
+	* monotone.cc (cpp_main): Remove prg_exec env setting.
+	* sanity.cc (sanity::dump_buffer): Dump logbuf to stderr, not stdout.
+	* std_hooks.lua (temp_file): Use mkstemp not io.mkstemp.
+	* Makefile.am (MOST_SOURCES): Add new files.
+
 2004-05-03  Joel Rosdahl  <joel@rosdahl.net>
 
 	* monotone.texi: Removed extraneous @ftable directive.

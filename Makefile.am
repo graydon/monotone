@@ -7,6 +7,7 @@ MOST_SOURCES =								\
          keys.cc manifest.cc packet.cc sanity.cc vocab.cc rcs_file.cc	\
          rcs_import.cc xdelta.cc ui.cc schema_migration.cc		\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc		\
+         mkstemp.cc                                                     \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -16,7 +17,8 @@ MOST_SOURCES =								\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
-	 numeric_vocab.hh
+	 numeric_vocab.hh                                               \
+         mkstemp.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -105,7 +107,7 @@ bin_PROGRAMS = monotone
 check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
 
-monotone_SOURCES = $(MOST_SOURCES) monotone.cc
+monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
 txt2c_SOURCES = txt2c.cc
 
@@ -146,12 +148,11 @@ if STATIC_BOOST
   BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem.a \
               @BOOST_LIBDIR@/libboost_date_time.a \
               @BOOST_LIBDIR@/libboost_regex.a
-  monotone_LDADD = lib3rdparty.a $(BOOSTLIBS) \
-                   @BOOST_LIBDIR@/libboost_prg_exec_monitor.a
+  monotone_LDADD = lib3rdparty.a $(BOOSTLIBS)
   unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
                      @BOOST_LIBDIR@/libboost_unit_test_framework.a
 else
-  monotone_LDADD = lib3rdparty.a -lboost_prg_exec_monitor
+  monotone_LDADD = lib3rdparty.a
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
 endif
 

@@ -8,7 +8,7 @@ function temp_file()
    if tdir == nil then tdir = os.getenv("TMP") end
    if tdir == nil then tdir = os.getenv("TEMP") end
    if tdir == nil then tdir = "/tmp" end
-   return io.mkstemp(string.format("%s/mt.XXXXXX", tdir))
+   return mkstemp(string.format("%s/mt.XXXXXX", tdir))
 end
 
 

@@ -20,11 +20,12 @@ extern "C" {
 #include <set>
 #include <map>
 
+#include "app_state.hh"
+#include "file_io.hh"
 #include "lua.hh"
+#include "mkstemp.hh"
 #include "sanity.hh"
 #include "vocab.hh"
-#include "file_io.hh"
-#include "app_state.hh"
 
 // defined in {std,test}_hooks.lua, converted
 #include "test_hooks.h"
@@ -40,6 +41,51 @@ static int panic_thrower(lua_State * st)
 }
 */
 
+extern "C"
+{
+  static int 
+  monotone_mkstemp_for_lua(lua_State *L) 
+  {
+    int fd = -1;
+    FILE **pf = NULL;
+    char const *filename = lua_tostring (L, -1);
+    char *dup = strdup(filename);
+    
+    if (dup == NULL)
+      return 0;
+    
+    fd = monotone_mkstemp(dup);
+    
+    if (fd == -1)
+      {
+	free(dup);
+	return 0;
+      }
+    
+    // this magic constructs a lua object which the lua io library
+    // will enjoy working with
+    pf = static_cast<FILE **>(lua_newuserdata(L, sizeof(FILE *)));
+    *pf = fdopen(fd, "r+");  
+    lua_pushstring(L, "FILE*");
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    lua_setmetatable(L, -2);  
+    
+    lua_pushstring(L, dup);
+    free(dup);
+    
+    if (*pf == NULL) 
+      {
+	lua_pushnil(L);
+	lua_pushfstring(L, "%s", strerror(errno));
+	lua_pushnumber(L, errno);
+	return 3;
+      }
+    else
+      return 2;
+  }
+}
+
+
 lua_hooks::lua_hooks()
 {
   st = lua_open ();  
@@ -54,6 +100,9 @@ lua_hooks::lua_hooks()
   lua_mathlibopen(st);
   lua_tablibopen(st);
   lua_dblibopen(st);
+
+  // add monotone-specific functions
+  lua_register(st, "mkstemp", monotone_mkstemp_for_lua);
 }
 
 lua_hooks::~lua_hooks()

@@ -125,7 +125,6 @@ int
 cpp_main(int argc, char ** argv)
 {
   
-  putenv("BOOST_PRG_MON_CONFIRM=no");
   clean_shutdown = false;
   atexit(&dumper);
 

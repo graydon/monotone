@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -36,7 +37,7 @@ sanity::~sanity()
 void 
 sanity::dump_buffer()
 {
-  copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(cout));
+  copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(cerr));
 }
 
 void 

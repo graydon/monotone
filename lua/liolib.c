@@ -216,55 +216,6 @@ static int io_tmpfile (lua_State *L) {
 }
 
 
-// this function added for monotone
-static int io_mkstemp (lua_State *L) {
-  int fd;
-  FILE **pf;
-  char const *filename = lua_tostring (L, -1);
-  char *dup = strdup(filename);
-#ifdef WIN32
-  int sl;
-  static int mkstmpcnt = 0;
-#endif
-
-  if (dup == NULL)
-    return 0;
-
-#ifdef WIN32
-  sl = strlen(dup);
-  if (sl<6)
-    {
-      free(dup);
-      return 0;
-    }
-  if (strcmp(dup+sl-6,"XXXXXX"))
-    {
-      free(dup);
-      return 0;
-    }
-  sprintf(dup+sl-6,"%06d",mkstmpcnt++);
-  pf = newfile(L);
-  *pf = fopen(dup, "r+");
-#else
-  fd = mkstemp(dup);
-  
-  if (fd == -1)
-    {
-      free(dup);
-      return 0;
-    }
-  
-  pf = newfile(L);
-  *pf = fdopen(fd, "r+");  
-#endif
-
-  lua_pushstring(L, dup);
-  free(dup);
-
-  return (*pf == NULL) ? pushresult(L, 0, NULL) : 2;
-}
-
-
 static FILE *getiofile (lua_State *L, const char *name) {
   lua_pushstring(L, name);
   lua_rawget(L, lua_upvalueindex(1));
@@ -548,7 +499,6 @@ static const luaL_reg iolib[] = {
   {"popen", io_popen},
   {"read", io_read},
   {"tmpfile", io_tmpfile},
-  {"mkstemp", io_mkstemp},
   {"type", io_type},
   {"write", io_write},
   {NULL, NULL}
