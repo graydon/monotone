@@ -6,6 +6,8 @@
 	small bug where, in some cases, the exact same tick output is
 	produced twice, once before a separate message, and once after,
 	when a ticker is actually being removed.
+	(tick_write_dot::write_ticks): Add a line that describes the
+	ticks, including the amount of each tick per short name.
 
 2004-08-15  Richard Levitte  <richard@levitte.org>
 

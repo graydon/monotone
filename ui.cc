@@ -105,26 +105,41 @@ tick_write_dot::~tick_write_dot()
 
 void tick_write_dot::write_ticks()
 {
-  string tickline;
+  string tickline1, tickline2;
+  bool first_tick = true;
 
   if (ui.last_write_was_a_tick)
     {
-      tickline = "";
+      tickline1 = "";
+      tickline2 = "";
     }
   else
     {
-      tickline = "monotone: ";
+      tickline1 = "monotone: ticks: ";
+      tickline2 = "\nmonotone: ";
     }
 
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
       map<string,size_t>::const_iterator old = last_ticks.find(i->first);
+
+      if (!ui.last_write_was_a_tick)
+	{
+	  if (!first_tick)
+	    tickline1 += ", ";
+
+	  tickline1 +=
+	    i->second->shortname + "=\"" + i->second->name + "\""
+	    + "/" + lexical_cast<string>(i->second->mod);
+	  first_tick = false;
+	}
+
       if (old == last_ticks.end()
 	  || ((i->second->ticks / i->second->mod)
 	      > (old->second / i->second->mod)))
 	{
-	  tickline += i->second->shortname;
+	  tickline2 += i->second->shortname;
 
 	  if (old == last_ticks.end())
 	    last_ticks.insert(make_pair(i->first, i->second->ticks));
@@ -133,7 +148,7 @@ void tick_write_dot::write_ticks()
 	}
     }
 
-  clog << tickline;
+  clog << tickline1 << tickline2;
   clog.flush();
 }
 
