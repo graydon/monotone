@@ -1,3 +1,10 @@
+2005-01-02  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (log_certs): new function
+	(log) add Ancestor: and Branch: entries to output; use above new
+	function
+	* tests/t_cross.at: update to work with changesets
+
 2004-12-30  graydon hoare  <graydon@pobox.com>
 
 	* constants.cc (netcmd_current_protocol_version): Set to 3.
