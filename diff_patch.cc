@@ -823,7 +823,9 @@ bool merge3(manifest_map const & ancestor,
 	    manifest_map const & right,
 	    app_state & app,
 	    file_merge_provider & file_merger,
-	    manifest_map & merged)
+	    manifest_map & merged,
+	    rename_set & left_renames,
+	    rename_set & right_renames)
 {
   // in phase #1 we make a bunch of indexes of the changes we saw on each
   // edge.
@@ -916,7 +918,8 @@ bool merge3(manifest_map const & ancestor,
     if (left != left_new || right != right_new)
       {
 	L(F("restarting merge under propagated directory renames\n"));
-	return merge3(ancestor, left_new, right_new, app, file_merger, merged);
+	return merge3(ancestor, left_new, right_new, app, file_merger, merged,
+		      left_renames, right_renames);
       }
   }
 
@@ -1044,6 +1047,19 @@ bool merge3(manifest_map const & ancestor,
   set_union(left_edge.f_moves.begin(), left_edge.f_moves.end(),
 	    right_edge.f_moves.begin(), right_edge.f_moves.end(), 
 	    inserter(merged_edge.f_moves, merged_edge.f_moves.begin()));
+
+  // (phase 4.5, copy the renames into the disjoint rename sets for independent
+  // certification in our caller)
+
+  left_renames.clear();
+  for (set<patch_move>::const_iterator mv = left_edge.f_moves.begin();
+       mv != left_edge.f_moves.end(); ++mv)
+    left_renames.insert(make_pair(mv->path_old, mv->path_new));
+
+  right_renames.clear();
+  for (set<patch_move>::const_iterator mv = right_edge.f_moves.begin();
+       mv != right_edge.f_moves.end(); ++mv)
+    right_renames.insert(make_pair(mv->path_old, mv->path_new));
 
   // in phase #5 we run 3-way file merges on all the files which have 
   // a delta on both edges, and union the results of the 3-way merges with

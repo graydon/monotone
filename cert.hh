@@ -7,6 +7,7 @@
 // see the file COPYING for details
 
 #include "vocab.hh"
+
 #include <set>
 #include <map>
 #include <vector>
@@ -96,12 +97,13 @@ bool find_common_ancestor(manifest_id const & left,
 
 // stuff for dealing with rename certs / rename maps
 
-typedef std::map<file_path, file_path> rename_map;
+typedef std::map<file_path,file_path> rename_set;
+
 struct rename_edge
 {
   manifest_id parent;
   manifest_id child;
-  rename_map mapping;  
+  rename_set mapping;  
 };
 
 void calculate_renames(manifest_id const & ancestor,

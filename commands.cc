@@ -306,7 +306,8 @@ static void update_any_attrs(app_state & app)
 }
 
 static void calculate_new_manifest_map(manifest_map const & m_old, 
-				       manifest_map & m_new)
+				       manifest_map & m_new,
+				       rename_set & renames)
 {
   path_set paths;
   work_set work;
@@ -323,7 +324,17 @@ static void calculate_new_manifest_map(manifest_map const & m_old,
       work.renames.size());
   apply_work_set(work, paths);
   build_manifest_map(paths, m_new);
+  renames = work.renames;
 }
+
+
+static void calculate_new_manifest_map(manifest_map const & m_old, 
+				       manifest_map & m_new)
+{
+  rename_set dummy;
+  calculate_new_manifest_map (m_old, m_new, dummy);
+}
+
 
 static string get_stdin()
 {
@@ -507,6 +518,7 @@ static void try_one_merge(manifest_id const & left,
   manifest_data left_data, right_data, ancestor_data, merged_data;
   manifest_map left_map, right_map, ancestor_map, merged_map;
   manifest_id ancestor;
+  rename_edge left_renames, right_renames;
 
   app.db.get_manifest_version(left, left_data);
   app.db.get_manifest_version(right, right_data);
@@ -521,7 +533,7 @@ static void try_one_merge(manifest_id const & left,
       app.db.get_manifest_version(ancestor, ancestor_data);
       read_manifest_map(ancestor_data, ancestor_map);
       N(merge3(ancestor_map, left_map, right_map, 
-	       app, merger, merged_map),
+	       app, merger, merged_map, left_renames.mapping, right_renames.mapping),
 	F("failed to 3-way merge manifests %s and %s via ancestor %s") 
 	% left % right % ancestor);
     }
@@ -562,6 +574,13 @@ static void try_one_merge(manifest_id const & left,
     cert_manifest_ancestor(right, merged, app, dbw);
     cert_manifest_date_now(merged, app, dbw);
     cert_manifest_author_default(merged, app, dbw);
+
+    left_renames.parent = left;
+    left_renames.child = merged;
+    right_renames.parent = right;
+    right_renames.child = merged;
+    cert_manifest_rename(merged, left_renames, app, dbw);
+    cert_manifest_rename(merged, right_renames, app, dbw);
     
     // make sure the appropriate edges get queued for the network.
     for (vector< pair<url,group> >::const_iterator targ = targets.begin();
@@ -570,11 +589,13 @@ static void try_one_merge(manifest_id const & left,
 	queue_edge_for_target_ancestor (*targ, merged, merged_map, app);
       }
     
+    // throw in all available certs for good measure
     queueing_packet_writer qpw(app, targets);
-    cert_manifest_ancestor(left, merged, app, qpw);
-    cert_manifest_ancestor(right, merged, app, qpw);
-    cert_manifest_date_now(merged, app, qpw);
-    cert_manifest_author_default(merged, app, qpw);
+    vector< manifest<cert> > certs;
+    app.db.get_manifest_certs(merged, certs);
+    for(vector< manifest<cert> >::const_iterator i = certs.begin();
+	i != certs.end(); ++i)
+      qpw.consume_manifest_cert(*i);
   }
 
 }			  
@@ -994,8 +1015,10 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   manifest_map m_old, m_new;
   patch_set ps;
 
+  rename_edge renames;
+
   get_manifest_map(m_old);
-  calculate_new_manifest_map(m_old, m_new);
+  calculate_new_manifest_map(m_old, m_new, renames.mapping);
   manifest_id old_id, new_id;
   calculate_ident(m_old, old_id);
   calculate_ident(m_new, new_id);
@@ -1110,6 +1133,22 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
     cert_manifest_date_now(ps.m_new, app, dbw);
     cert_manifest_author_default(ps.m_new, app, dbw);
     cert_manifest_changelog(ps.m_new, log_message, app, dbw);
+    
+    if (! (ps.f_moves.empty() && renames.mapping.empty()))
+      {
+	for (set<patch_move>::const_iterator mv = ps.f_moves.begin();
+	     mv != ps.f_moves.end(); ++mv)
+	  {
+	    rename_set::const_iterator rn = renames.mapping.find(mv->path_old);
+	    if (rn != renames.mapping.end())
+	      I(rn->second == mv->path_new);
+	    else
+	      renames.mapping.insert(make_pair(mv->path_old, mv->path_new));
+	  }
+	renames.parent = ps.m_old;
+	renames.child = ps.m_new;
+	cert_manifest_rename(ps.m_new, renames, app, dbw);
+      }    
 
     // commit done, now queue diff for sending
 
@@ -1163,8 +1202,10 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
   app.db.get_manifest_version(m_chosen_id, m_chosen_data);
   read_manifest_map(m_chosen_data, m_chosen);
 
+  rename_edge left_renames, right_renames;
   update_merge_provider merger(app);
-  N(merge3(m_old, m_chosen, m_working, app, merger, m_new),
+  N(merge3(m_old, m_chosen, m_working, app, merger, m_new, 
+	   left_renames.mapping, right_renames.mapping),
     F("manifest merge failed, no update performed"));
 
   P(F("calculating patchset for update\n"));

@@ -275,6 +275,23 @@ void manifests_to_patch_set(manifest_map const & m_old,
   size_t num_add_candidates = add_mapping.size();
   classify_dels(changes.dels, add_mapping, app,
 		ps.f_dels, ps.f_moves, ps.f_deltas);  
+
+  // pick up any explicit renames we might have seen floating around
+  rename_edge renames;
+  calculate_renames (ps.m_old, ps.m_new, app, renames);
+  for (rename_set::const_iterator i = renames.mapping.begin();
+       i != renames.mapping.end(); ++i)
+    {
+      if (ps.f_dels.find(i->first) != ps.f_dels.end() && 
+	  add_mapping.exists(i->second))
+	{
+	  ps.f_dels.erase (i->first);
+	  file_id fid = add_mapping.get(i->second);
+	  add_mapping.del (make_pair(i->second, fid));
+	  ps.f_moves.insert (patch_move (i->first, i->second));
+	  L(F("found historical move %s -> %s\n") % i->first % i->second);
+	}
+    }
   
   // now copy any remaining unmatched adds into ps.f_adds
   add_mapping.copy_to(ps.f_adds);

@@ -469,42 +469,55 @@ static bool find_common_ancestor_recursive(manifest_id const & left,
   manifest_id next_left, next_right;
   set<manifest_id> immediate_parents;
   vector< manifest<cert> > ancestor_certs;
+
+  bool advance_left = true, advance_right = true;
+  while(advance_left || advance_right)
+    {    
   
-  while(true)
-    {      
-      // advance left edge
-      get_parents (curr_left, immediate_parents, app);
-      if (immediate_parents.size() == 0
-	  || !resolve_to_single_ancestor(immediate_parents, app, 
-					 next_left, limit - 1))
-	return false;
-
-      if (right_ancestors.find(next_left) != right_ancestors.end())
+      if (advance_left)
 	{
-	  L(F("found common ancestor %s\n") % next_left);
-	  anc = next_left;
-	  return true;
+	  get_parents (curr_left, immediate_parents, app);
+	  if (immediate_parents.size() == 0
+	      || !resolve_to_single_ancestor(immediate_parents, app, 
+					     next_left, limit - 1))
+	    {
+	      advance_left = false;
+	    }
+	  else
+	    {
+	      if (right_ancestors.find(next_left) != right_ancestors.end())
+		{
+		  L(F("found common ancestor %s\n") % next_left);
+		  anc = next_left;
+		  return true;
+		}
+	      
+	      left_ancestors.insert(next_left);
+	      swap(next_left, curr_left);
+	    }
 	}
 
-      left_ancestors.insert(next_left);
-      swap(next_left, curr_left);
-
-      // advance right edge
-      get_parents (curr_right, immediate_parents, app);
-      if (immediate_parents.size() == 0
-	  || !resolve_to_single_ancestor(immediate_parents, app, 
-					 next_right, limit - 1))
-	return false;
-
-      if (left_ancestors.find(next_right) != left_ancestors.end())
+      if (advance_right)
 	{
-	  L(F("found common ancestor %s\n") % next_right);
-	  anc = next_right;
-	  return true;
+	  get_parents (curr_right, immediate_parents, app);
+	  if (immediate_parents.size() == 0
+	      || !resolve_to_single_ancestor(immediate_parents, app, 
+					     next_right, limit - 1))
+	    {
+	      advance_right = false;
+	    }
+	  else 
+	    {
+	      if (left_ancestors.find(next_right) != left_ancestors.end())
+		{
+		  L(F("found common ancestor %s\n") % next_right);
+		  anc = next_right;
+		  return true;
+		}
+	      right_ancestors.insert(next_right);
+	      swap(next_right, curr_right);
+	    }
 	}
-
-      right_ancestors.insert(next_right);
-      swap(next_right, curr_right);
     }
 
   return false;
@@ -528,20 +541,30 @@ bool find_common_ancestor(manifest_id const & left,
 static void include_rename_edge(rename_edge const & in, 
 				rename_edge & out)
 {
-  I(in.child == out.child);
+  L(F("merging rename edge %s -> %s with %s -> %s\n")
+    % in.parent % in.child % out.parent % out.child);
+
   set<file_path> rename_targets;
-  for (rename_map::const_iterator i = out.mapping.begin();
+  for (rename_set::const_iterator i = out.mapping.begin();
        i != out.mapping.end(); ++i)
     {
       I(rename_targets.find(i->second) == rename_targets.end());
       rename_targets.insert(i->second);
     }
 
-  for (rename_map::const_iterator i = in.mapping.begin();
+  for (rename_set::const_iterator i = in.mapping.begin();
        i != in.mapping.end(); ++i)
     {
-      I(out.mapping.find(i->first) == out.mapping.end());
-      I(rename_targets.find(i->second) == rename_targets.end());
+      rename_set::const_iterator other = out.mapping.find(i->first);
+      if (other == out.mapping.end())
+	I(rename_targets.find(i->second) == rename_targets.end());
+      else      
+	N(other->second == i->second,
+	  F("impossible historical record of renames: %s renamed to both %s and %s")
+	  % i->first % i->second % other->second);
+
+      L(F("merged in rename of %s -> %s\n")
+	% i->first % i->second);
       rename_targets.insert(i->second);
       out.mapping.insert(*i);
     }  
@@ -557,18 +580,29 @@ static void compose_rename_edges(rename_edge const & a,
   out.child = b.child;
   set<file_path> rename_targets;
 
-  for (rename_map::const_iterator i = a.mapping.begin();
+  L(F("composing rename edges %s -> %s and %s -> %s\n")
+    % a.parent % a.child % b.parent % b.child);
+
+  for (rename_set::const_iterator i = a.mapping.begin();
        i != a.mapping.end(); ++i)
     {
       I(rename_targets.find(i->second) == rename_targets.end());
       I(out.mapping.find(i->first) == out.mapping.end());
       rename_targets.insert(i->second);
 
-      rename_map::const_iterator j = b.mapping.find(i->second);
+      rename_set::const_iterator j = b.mapping.find(i->second);
       if (j != b.mapping.end())
-	out.mapping.insert(make_pair(i->first, j->second));
+	{
+	  L(F("composing rename %s -> %s with %s -> %s\n")
+	    % i->first % i->second % j->first % j->second);
+	  out.mapping.insert(make_pair(i->first, j->second));
+	}
       else
-	out.mapping.insert(*i);
+	{
+	  L(F("composing lone rename %s -> %s\n")
+	    % i->first % i->second);
+	  out.mapping.insert(*i);
+	}
     }
 }
 
@@ -578,7 +612,7 @@ static void write_rename_edge(rename_edge const & edge,
   ostringstream oss;
   gzip<data> compressed;
   oss << edge.parent << "\n";
-  for (rename_map::const_iterator i = edge.mapping.begin();
+  for (rename_set::const_iterator i = edge.mapping.begin();
        i != edge.mapping.end(); ++i)
     {
       oss << i->first << " " << i->second << "\n";
@@ -587,11 +621,11 @@ static void write_rename_edge(rename_edge const & edge,
   val = compressed();
 }
 
-struct add_to_rename_map
+struct add_to_rename_set
 {    
-  rename_map & m;
+  rename_set & m;
   set<file_path> rename_targets;
-  explicit add_to_rename_map(rename_map & mm) : m(mm) {}
+  explicit add_to_rename_set(rename_set & mm) : m(mm) {}
   bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
   {
     std::string src(res[1].first, res[1].second);
@@ -624,7 +658,7 @@ static void read_rename_edge(hexenc<id> const & node,
   decompressed = decompressed.substr(off);
   
   regex expr("^[[:blank:]]*([^[:space:]]+)[[:blank:]]+([^[:space:]]+)");
-  regex_grep(add_to_rename_map(edge.mapping), decompressed, expr, match_not_dot_newline);
+  regex_grep(add_to_rename_set(edge.mapping), decompressed, expr, match_not_dot_newline);
 }
 
 
@@ -635,18 +669,34 @@ static bool calculate_renames_recursive(manifest_id const & ancestor,
 {
 
   if (ancestor == child)
-    return true;
+    return false;
 
   set<manifest_id> parents;
   get_parents(child, parents, app);
-  if (parents.size() == 0)
-    return false;
+  bool relevant_child = false;
+
+  edge.child = child;
+  map<manifest_id, rename_edge> incident_edges;
+
+  rename_edge child_edge;
+  vector< manifest<cert> > certs;
+  app.db.get_manifest_certs(child, cert_name(rename_cert_name), certs);
+  erase_bogus_certs(certs, app);
+
+  L(F("found %d incident rename edges at node %s\n")
+    % certs.size() % child);
+  
+  for(vector< manifest<cert> >::const_iterator j = certs.begin();
+      j != certs.end(); ++j)
+    {
+      rename_edge curr_child_edge;
+      read_rename_edge(j->inner().ident, j->inner().value, curr_child_edge);
+      incident_edges.insert(make_pair(curr_child_edge.parent, curr_child_edge));
+      relevant_child = true;
+    }
 
   L(F("exploring renames from parents of %s, seeking towards %s\n")
     % child % ancestor);
-
-  bool relevant_child = false;
-  rename_edge all_parents_edge;
 
   for(set<manifest_id>::const_iterator i = parents.begin();
       i != parents.end(); ++i)
@@ -654,30 +704,34 @@ static bool calculate_renames_recursive(manifest_id const & ancestor,
       rename_edge curr_parent_edge;
       if (calculate_renames_recursive(ancestor, *i, app, curr_parent_edge))
 	{
-	  L(F("edge %s -> %s is relevant, joining renames\n") % (*i) % child);
-	  include_rename_edge(curr_parent_edge, all_parents_edge);
+	  map<manifest_id, rename_edge>::const_iterator inc = incident_edges.find(*i);
+	  if (inc != incident_edges.end())
+	    {
+	      L(F("ancestor edge %s -> %s is relevant, composing with edge %s -> %s\n") 
+		% curr_parent_edge.parent % curr_parent_edge.child 
+		% inc->second.parent % inc->second.child);
+	      rename_edge tmp;
+	      compose_rename_edges(curr_parent_edge, inc->second, tmp);
+	      include_rename_edge(tmp, edge);
+	      incident_edges.erase(*i);
+	    }
+	  else
+	    {				    
+	      L(F("ancestor edge %s -> %s is relevant, merging with current\n") % (*i) % child);
+	      include_rename_edge(curr_parent_edge, edge);
+	    }
 	  relevant_child = true;
 	}
     }
 
-  if (relevant_child)
+  // copy any remaining incident edges  
+  for (map<manifest_id, rename_edge>::const_iterator i = incident_edges.begin();
+       i != incident_edges.end(); ++i)
     {
-      rename_edge child_edge;
-      vector< manifest<cert> > certs;
-      app.db.get_manifest_certs(child, cert_name(rename_cert_name), certs);
-      erase_bogus_certs(certs, app);
-
-      for(vector< manifest<cert> >::const_iterator j = certs.begin();
-	  j != certs.end(); ++j)
-	{
-	  rename_edge curr_child_edge;
-	  read_rename_edge(j->inner().ident, j->inner().value, curr_child_edge);
-	  include_rename_edge(curr_child_edge, child_edge);
-	}
-
-      compose_rename_edges(all_parents_edge, 
-			   child_edge, 
-			   edge);
+      relevant_child = true;
+      L(F("adding lone incident edge %s -> %s\n") 
+	% i->second.parent % i->second.child);
+      include_rename_edge(i->second, edge);
     }
   
   return relevant_child;
@@ -688,8 +742,8 @@ void calculate_renames(manifest_id const & ancestor,
 		       app_state & app,
 		       rename_edge & edge)
 {
-  N(calculate_renames_recursive(ancestor, child, app, edge), 
-    F("no path found between ancestor %s and child %s") % ancestor % child);
+  // it's ok if we can't find any paths
+  calculate_renames_recursive(ancestor, child, app, edge);  
 }
 
 

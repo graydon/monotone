@@ -7,6 +7,7 @@
 // see the file COPYING for details
 
 #include "app_state.hh"
+#include "cert.hh"
 #include "manifest.hh"
 #include "vocab.hh"
 
@@ -91,7 +92,9 @@ bool merge3(manifest_map const & ancestor,
 	    manifest_map const & right,
 	    app_state & app,
 	    file_merge_provider & file_merger,
-	    manifest_map & merged);
+	    manifest_map & merged,
+	    rename_set & left_renames,
+	    rename_set & right_renames);
 
 // ditto but the weaker merge2
 

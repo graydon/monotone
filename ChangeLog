@@ -1,3 +1,16 @@
+2003-10-31  graydon hoare  <graydon@pobox.com>
+
+	* diff_patch.cc (merge3): Extract renames.
+	* commands.cc (calculate_new_manifest_map): Extract renames.
+	(try_one_merge): Extract renames, propagate to merge target.
+	(commit): Extract renames, propagate to commit target.
+	* cert.cc (calculate_renames_recursive): Fix wrong logic.
+	(find_common_ancestor_recursive): Stall advances at top of graph.
+	* patch_set.cc: (manifests_to_patch_set): Teach about historical
+	renames.
+	* tests/t_erename.at: New test for edit+rename events.
+	* testsuite.at: Call t_erename.at.
+
 2003-10-30  graydon hoare  <graydon@pobox.com>
 
 	* patch_set.cc (operator<): s/a/b/ in a few places, yikes!
