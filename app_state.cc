@@ -89,6 +89,8 @@ app_state::require_working_copy()
 void 
 app_state::create_working_copy(std::string const & dir)
 {
+  N(dir.size(), F("invalid directory ''"));
+
   // cd back to where we started from
   N(chdir(fs::initial_path().native_directory_string().c_str()) != -1,
     F("cannot change to initial directory %s\n") 

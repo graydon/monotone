@@ -1,5 +1,21 @@
 2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_cat_file_by_name.at: Check for attempting to cat
+	non-existent files.
+	* tests/t_empty_id_completion.at: New test.
+	* tests/t_empty_path.at: New test.
+	* testsuite.at: Add them.
+	
+	* database.cc (complete): Always generate some sort of limit term,
+	even a degenerate one.
+	
+	* app_state.cc (create_working_copy): Check for null directory.
+
+	* work.cc (build_deletion, build_addition, build_rename): Check
+	for null paths.
+
+2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.cc (my_poptFreeContext, cpp_main): Apparently
 	poptFreeContext silently changed its return type at some unknown
 	time.  Hack around this.
