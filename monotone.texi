@@ -3840,10 +3840,13 @@ to use a private key.
 
 @item get_author (@var{branchname})
 
-Returns a string which is used as a value for automatically generated 
-@code{author} certificates when you commit changes to @var{branchname}.
+Returns a string which is used as a value for automatically generated
+@code{author} certificates when you commit changes to
+@var{branchname}.  Generally this hook remains undefined, and monotone
+selects your signing key name for the author certificate. You can use
+this hook to override that choice, if you like.
 
-The default definition of this hook looks is:
+This hook has no default definition, but a possible definition might be:
 @smallexample
 @group
 function get_author(branchname)

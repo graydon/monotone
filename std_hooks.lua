@@ -97,17 +97,6 @@ function persist_phrase_ok()
    return true
 end
 
-function get_mail_hostname(url)
-   return os.getenv("HOSTNAME")
-end
-
-function get_author(branchname)
-   local user = os.getenv("USER")
-   local host = os.getenv("HOSTNAME")
-   if ((user == nil) or (host == nil)) then return nil end
-   return string.format("%s@%s", user, host)
-end
-
 -- trust evaluation hooks
 
 function intersection(a,b)
