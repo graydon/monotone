@@ -44,11 +44,14 @@ from stdin if no value given on command line.
 \fBgenkey\fP \fI<keyid>\fP
 Generate an RSA key-pair and store it in the database.
 .TP
-\fBlscerts\fP \fI(file|manifest) <id>\fP
+\fBlist certs\fP \fI(file|manifest) <id>\fP
 List certs associated with manifest or file.
 .TP
-\fBlskeys\fP \fI[partial-id]\fP
+\fBlist keys\fP \fI[partial-id]\fP
 List keys matching glob, or list all keys if no glob given.
+.TP
+\fBlist branches\fP
+List all branches.
 .TP
 \fBfetch\fP \fI[URL] [groupname]\fP
 Fetch recent packets from network servers. Does not read public

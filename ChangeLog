@@ -1,3 +1,21 @@
+2003-09-16  Tom Tromey  <tromey@redhat.com>
+
+	* monotone.1: Document "list branches".
+	* commands.cc (ls_certs): New function, from `lscerts' command.
+	(ls_keys): New function, from `lskeys' command.
+	(ls_branches): New function.
+	(list): New command.
+	(ls): New alias.
+	(explain_usage): Split parameter info at \n.
+	* monotone.texi (Adding Files): Use "list certs".
+	(Committing Changes): Likewise.
+	(Forking and Merging): Likewise.
+	(Commands): Likewise.
+	(Generating Keys): Use "list keys".
+	(Commands): Likewise.
+	(Commands): Mention "list branches".
+	(Branches): Likewise.
+
 2003-09-15  graydon hoare  <graydon@redhat.com>
 
 	* http_tasks.cc: Fix networking to handle long input.

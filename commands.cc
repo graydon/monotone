@@ -97,7 +97,20 @@ void explain_usage(string const & cmd, ostream & out)
   i = cmds.find(cmd);
   if (i != cmds.end())
     {
-      out << "     " << i->second->name << " " << i->second->params << endl
+      string params = i->second->params;
+      int old = 0;
+      int j = params.find('\n');
+      while (j != -1)
+	{
+	  out << "     " << i->second->name
+	      << " " << params.substr(old, j - old)
+	      << endl;
+	  old = j + 1;
+	  j = params.find('\n', old);
+	}
+      out << "     " << i->second->name
+	  << " " << params.substr(old, j - old)
+	  << endl
 	  << "     " << i->second->desc << endl << endl;
       return;
     }
@@ -555,8 +568,7 @@ static void try_one_merge(manifest_id const & left,
 // actual commands follow
 
 
-CMD(lscerts, "key and cert", "(file|manifest) <id>", 
-    "list certs associated with manifest or file")
+static void ls_certs (string name, app_state & app, vector<string> const & args)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -627,7 +639,7 @@ CMD(lscerts, "key and cert", "(file|manifest) <id>",
   guard.commit();
 }
 
-CMD(lskeys, "key and cert", "[partial-id]", "list keys")
+static void ls_keys (string name, app_state & app, vector<string> const & args)
 {
   vector<rsa_keypair_id> pubkeys;
   vector<rsa_keypair_id> privkeys;
@@ -1672,6 +1684,49 @@ CMD(status, "informative", "", "show status of working copy")
 
   guard.commit();
 }
+
+static void ls_branches (string name, app_state & app, vector<string> const & args)
+{
+  transaction_guard guard(app.db);
+  vector< manifest<cert> > certs;
+  app.db.get_manifest_certs(branch_cert_name, certs);
+
+  vector<string> names;
+  for (size_t i = 0; i < certs.size(); ++i)
+    {
+      cert_value name;
+      decode_base64(certs[i].inner().value, name);
+      names.push_back(name());
+    }
+
+  sort(names.begin(), names.end());
+  names.erase(std::unique(names.begin(), names.end()), names.end());
+  for (size_t i = 0; i < names.size(); ++i)
+    cout << names[i] << endl;
+
+  guard.commit();
+}
+
+CMD(list, "informative", "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranches", "show certs, keys, or branches")
+{
+  if (args.size() == 0)
+    throw usage(name);
+
+  vector<string>::const_iterator i = args.begin();
+  ++i;
+  vector<string> removed (i, args.end());
+  string subname = name + " " + args[0];
+  if (args[0] == "certs")
+    ls_certs(subname, app, removed);
+  else if (args[0] == "keys")
+    ls_keys(subname, app, removed);
+  else if (args[0] == "branches")
+    ls_branches(subname, app, removed);
+  else
+    throw usage(subname);
+}
+
+ALIAS(ls, list, "informative",  "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranches", "show certs, keys, or branches")
 
 
 CMD(mdelta, "packet i/o", "<oldid> <newid>", "write manifest delta packet to stdout")

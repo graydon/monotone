@@ -765,6 +765,8 @@ that the fork has produced a new @dfn{branch}. Branches tell monotone
 which versions you would like to merge, and which you would like to
 keep separate.
 
+You can see all the available branches using @code{monotone list branches}.
+
 Branches are indicated with certs.  The cert name @code{branch} is
 reserved for use by monotone, for the purpose of identifying the
 members of a branch. A @code{branch} cert has a symbolic ``branch
@@ -927,7 +929,7 @@ We have now generated a key pair and placed it in the database
 correct key was generated.
 
 @example
-$ monotone lskeys
+$ monotone list keys
 
 [public keys]
 testkey@@nodomain.org
@@ -1001,10 +1003,10 @@ you do not want to manage the file with monotone, you can remove that
 line of the manifest.
 
 We can also check to see which certificates monotone generated when
-we commited our work, using the @code{lscerts} command:
+we commited our work, using the @code{list certs} command:
 
 @example
-$ monotone lscerts manifest 577c21252290d4b66240efb1f917a9f3c4136fe5
+$ monotone list certs manifest 577c21252290d4b66240efb1f917a9f3c4136fe5
 ok sig from [testkey@@nodomain.org] : [author] = [jrh@@nodomain.org]
 ok sig from [testkey@@nodomain.org] : [branch] = [testbranch]
 ok sig from [testkey@@nodomain.org] : [changelog] = [initial addition of files]
@@ -1235,10 +1237,10 @@ committed 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
 
 A commit typically involves making several certs, as well as storing
 new versions of files and the manifest in the database. We can show the
-certs produced, using the @command{lscerts} command.
+certs produced, using the @command{list certs} command.
 
 @example
-$ monotone lscerts manifest 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
+$ monotone list certs manifest 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
 ok sig from [testkey@@nodomain.org] : [ancestor] = [577c21252290d4b66240efb1f917a9f3c4136fe5]
 ok sig from [testkey@@nodomain.org] : [author] = [jrh@@nodomain.org]
 ok sig from [testkey@@nodomain.org] : [branch] = [testbranch]
@@ -1391,7 +1393,7 @@ this can be overridden if you prefer some other tool. If we
 investigate the resulting manifest, we see the following.
 
 @example
-$ monotone lscerts manifest ecec7c49374ab9a7706a500339a2a0d6157372f1
+$ monotone list certs manifest ecec7c49374ab9a7706a500339a2a0d6157372f1
 ok sig from [testkey@@nodomain.org] [ancestor] = [57d3afae9e806b930130a674befec2a52bd85cd1]
 ok sig from [testkey@@nodomain.org] [ancestor] = [0b34c61bd098a9c37cece9cbf7b765cc4d7b587e]
 ok sig from [testkey@@nodomain.org] [author] = [jrh@@nodomain.org]
@@ -1809,12 +1811,19 @@ from stdin if no value given on command line.
 Generate an RSA key-pair and store it in the database.
 @comment TROFF INPUT: .TP
 
-@item @b{lscerts} @i{(file|manifest) <id>}
+@item @b{list certs} @i{(file|manifest) <id>}
+@itemx @b{ls certs} @i{(file|manifest) <id>}
 List certs associated with manifest or file.
 @comment TROFF INPUT: .TP
 
-@item @b{lskeys} @i{[partial-id]}
+@item @b{list keys} @i{[partial-id]}
+@itemx @b{ls keys} @i{[partial-id]}
 List keys matching glob, or list all keys if no glob given.
+@comment TROFF INPUT: .TP
+
+@item @b{list branches}
+@itemx @b{ls branches}
+List all branches.
 @comment TROFF INPUT: .TP
 
 @item @b{fetch} @i{[URL] [groupname]}
