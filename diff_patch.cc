@@ -768,14 +768,19 @@ void walk_hunk_consumer(vector<long> const & lcs,
 
 struct unidiff_hunk_writer : public hunk_consumer
 {
+  string const & filename_a;
   vector<string> const & a;
+  string const & filename_b;
   vector<string> const & b;
   size_t ctx;
   ostream & ost;
   size_t a_begin, b_begin, a_len, b_len;
   long skew;
+  bool first;
   vector<string> hunk;
-  unidiff_hunk_writer(vector<string> const & a,
+  unidiff_hunk_writer(string const & filename_a,
+		      vector<string> const & a,
+		      string const & filename_b,
                       vector<string> const & b,
                       size_t ctx,
                       ostream & ost);
@@ -786,13 +791,16 @@ struct unidiff_hunk_writer : public hunk_consumer
   virtual ~unidiff_hunk_writer() {}
 };
 
-unidiff_hunk_writer::unidiff_hunk_writer(vector<string> const & a,
-                                         vector<string> const & b,
+unidiff_hunk_writer::unidiff_hunk_writer(string const & filename_a,
+					 vector<string> const & a,
+					 string const & filename_b,
+					 vector<string> const & b,
                                          size_t ctx,
                                          ostream & ost)
-: a(a), b(b), ctx(ctx), ost(ost),
+: filename_a(filename_a), a(a), filename_b(filename_b), b(b),
+  ctx(ctx), ost(ost),
   a_begin(0), b_begin(0),
-  a_len(0), b_len(0), skew(0)
+  a_len(0), b_len(0), skew(0), first(true)
 {}
 
 void unidiff_hunk_writer::insert_at(size_t b_pos)
@@ -823,6 +831,12 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
 
   if (hunk.size() > 0)
     {
+      if (first)
+	{
+	  ost << "--- " << filename_a << endl;
+	  ost << "+++ " << filename_b << endl;
+	  first = false;
+	}
       
       // write hunk to stream
       ost << "@@ -" << a_begin+1;
@@ -884,9 +898,6 @@ void unidiff(string const & filename1,
              vector<string> const & lines2,
              ostream & ost)
 {
-  ost << "--- " << filename1 << endl;
-  ost << "+++ " << filename2 << endl;  
-
   vector<long> left_interned;  
   vector<long> right_interned;  
   vector<long> lcs;  
@@ -909,7 +920,7 @@ void unidiff(string const & filename1,
                              std::min(lines1.size(), lines2.size()),
                              back_inserter(lcs));
 
-  unidiff_hunk_writer hunks(lines1, lines2, 3, ost);
+  unidiff_hunk_writer hunks(filename1, lines1, filename2, lines2, 3, ost);
   walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
 }
 
