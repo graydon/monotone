@@ -1,3 +1,40 @@
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
+	* automate.cc (automate_heads): Fix initialize() call.  
+	* change_set.{cc,hh} 
+	(apply_path_rearrangement): Add quick version.
+	* revision.cc 
+	(check_sane_history): Use quick version of apply_change_set.  
+	* work.cc 
+	(build_addition): Use quick version of apply_path_rearrangement.
+	(known_preimage_path): Likewise.
+	* testsuite.at: Fix definitions of _ROOT_DIR, add --norc some
+	places.
+	* AUTHORS: Mention Daniel.
+
+2005-02-18  Daniel Berlin  <dberlin@dberlin.org>
+
+	* xdelta.cc (compute_delta_insns): Correct 1-byte-source bug.
+
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (MOST_SOURCES): Add smap.hh.
+
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
+	* basic_io.{cc,hh}: Inline some stuff.
+	* change_set.cc: Use smap various places, reduce to 32-bit tids.
+	* commands.cc: Use shared_ptr<change_set> everywhere.
+	* netsync.cc: Likewise.
+	* rcs_import.cc: Likewise.
+	* revision.{cc,hh}: Likewise.
+	* smap.hh: New file.
+
+2005-02-17  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_add_intermediate_MT_path.at: new test
+	* testsuite.at: call it
+
 2005-02-17  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* testsuite.at:

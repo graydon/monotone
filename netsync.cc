@@ -876,7 +876,7 @@ session::request_fwd_revisions(revision_id const & i,
         }
 
       // check out each file delta edge
-      change_set const & an_attached_cset = an_attached_edge->second.second;
+      change_set const & an_attached_cset = edge_changes(an_attached_edge);
       for (change_set::delta_map::const_iterator k = an_attached_cset.deltas.begin();
            k != an_attached_cset.deltas.end(); ++k)
         {
