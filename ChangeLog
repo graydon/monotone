@@ -1,3 +1,7 @@
+2005-02-02  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.hh: Remove tabs.
+
 2005-02-03  graydon hoare  <graydon@pobox.com>
 
 	* tests/t_i18n_changelog.at: New test.

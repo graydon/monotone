@@ -44,24 +44,24 @@ typedef std::set<file_path> path_set;
 extern std::string const work_file_name;
 
 void extract_path_set(manifest_map const & man,
-		      path_set & paths);
+                      path_set & paths);
 
 void 
 build_addition(file_path const & path,
-	       manifest_map const & m_old,
-	       app_state & app,
-	       change_set::path_rearrangement & pr);
+               manifest_map const & m_old,
+               app_state & app,
+               change_set::path_rearrangement & pr);
 
 void 
 build_deletion(file_path const & path,
-	       manifest_map const & m_old,
-	       change_set::path_rearrangement & pr);
+               manifest_map const & m_old,
+               change_set::path_rearrangement & pr);
 
 void 
 build_rename(file_path const & src,
-	     file_path const & dst,
-	     manifest_map const & m_old,
-	     change_set::path_rearrangement & pr);
+             file_path const & dst,
+             manifest_map const & m_old,
+             change_set::path_rearrangement & pr);
 
 
 // the "options map" is another administrative file, stored in
@@ -77,7 +77,7 @@ void get_options_path(local_path & o_path);
 void read_options_map(data const & dat, options_map & options);
 
 void write_options_map(data & dat,
-		       options_map const & options);
+                       options_map const & options);
 
 // the "attribute map" is part of a working copy. it is *not* stored in MT,
 // because its contents are considered part of the "content" of a tree of
@@ -99,22 +99,22 @@ void get_attr_path(file_path & a_path);
 void read_attr_map(data const & dat, attr_map & attrs);
 
 void write_attr_map(data & dat,
-		    attr_map const & options);
+                    attr_map const & options);
 
 void apply_attributes(app_state & app, 
-		      attr_map const & attr);
+                      attr_map const & attr);
 
 extern std::string const encoding_attribute;
 
 bool get_attribute_from_db(file_path const & file,
-			   std::string const & attr_key,
-			   manifest_map const & man,
-			   std::string & attr_val,
-			   app_state & app); 
+                           std::string const & attr_key,
+                           manifest_map const & man,
+                           std::string & attr_val,
+                           app_state & app); 
 
 bool get_attribute_from_working_copy(file_path const & file,
-				     std::string const & attr_key,
-				     std::string & attr_val); 
+                                     std::string const & attr_key,
+                                     std::string & attr_val); 
 
 extern std::string const binary_encoding;
 extern std::string const default_encoding;
