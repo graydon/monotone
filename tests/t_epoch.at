@@ -1,0 +1,42 @@
+AT_SETUP([prohibit cross-epoch netsync])
+AT_KEYWORDS([netsync])
+
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+ADD_FILE(testfile, [version 0 data
+])
+COMMIT(testbranch)
+VER0=`BASE_REVISION`
+
+# check that this got an epoch
+AT_CHECK(MONOTONE list epochs, [], [stdout])
+AT_CHECK(grep testbranch stdout, [0], [ignore])
+
+RUN_NETSYNC(pull, testbranch)
+
+# check that the second db got our epoch
+AT_CHECK(MONOTONE2 list epochs, [], [stdout])
+AT_CHECK(grep testbranch stdout, [0], [ignore])
+CHECK_SAME_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
+
+ADD_FILE(testfile2, [some data
+])
+COMMIT(testbranch)
+VER1=`BASE_REVISION`
+
+# change the epochs in the first db
+AT_CHECK(MONOTONE db rebuild, [], [ignore], [ignore])
+AT_CHECK(MONOTONE list epochs, [], [stdout])
+AT_CHECK(grep testbranch stdout, [0], [ignore])
+CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
+
+# this should *fail* to sync 
+NETSYNC_SERVE_START(testbranch)
+NETSYNC_CLIENT_RUN(pull, testbranch, 1)
+NETSYNC_SERVE_STOP
+
+# confirm, we did not get the new revision
+AT_CHECK(MONOTONE2 cat revision $VER1, [1], [ignore], [ignore])
+
+AT_CLEANUP

@@ -29,6 +29,7 @@ ATOMIC(rsa_sha1_signature);   // some other nice numbers
 DECORATE(revision);           // thing associated with a revision
 DECORATE(manifest);           // thing associated with a manifest
 DECORATE(file);               // thing associated with a file
+DECORATE(epoch);              // thing associated with an epoch
 
 ENCODING(gzip);               // thing which is gzipped
 ENCODING(hexenc);             // thing which is hex-encoded
@@ -41,13 +42,14 @@ ATOMIC(merkle);               // raw encoding of a merkle tree node
 // instantiate those bits of the template vocabulary actually in use.
 
 EXTERN template class           hexenc<id>;
-EXTERN template class  revision< hexenc<id> >;
+EXTERN template class revision< hexenc<id> >;
 EXTERN template class manifest< hexenc<id> >;
 EXTERN template class     file< hexenc<id> >;
+EXTERN template class    epoch< hexenc<id> >;
 
 EXTERN template class                   gzip<data>;
 EXTERN template class           base64< gzip<data> >;
-EXTERN template class  revision< base64< gzip<data> > >;
+EXTERN template class revision< base64< gzip<data> > >;
 EXTERN template class manifest< base64< gzip<data> > >;
 EXTERN template class     file< base64< gzip<data> > >;
 
@@ -71,13 +73,14 @@ EXTERN template class base64<data>;
 // use. "again" since stream operators are friends, not members.
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<id>   const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,  revision< hexenc<id> > const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &, revision< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,     file< hexenc<id> > const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<id> > const &);
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,                   gzip<data>     const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,           base64< gzip<data> >   const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,  revision< base64< gzip<data> > > const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &, revision< base64< gzip<data> > > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< base64< gzip<data> > > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,     file< base64< gzip<data> > > const &);
 

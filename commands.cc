@@ -864,8 +864,6 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 
   app.initialize(false);
 
-  transaction_guard guard(app.db);
-
   if (args.size() == 0)
     app.db.get_key_ids("", pubkeys, privkeys);
   else if (args.size() == 1)
@@ -912,7 +910,6 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
       else
         W(F("no keys found matching '%s'\n") % idx(args, 0)());
     }
-  guard.commit();
 }
 
 // The changes_summary structure holds a list all of files and directories
@@ -1734,7 +1731,6 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
   app.initialize(false);
 
-  transaction_guard guard(app.db);
   vector< revision<cert> > certs;
   app.db.get_revision_certs(branch_cert_name, certs);
 
@@ -1751,8 +1747,33 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
   names.erase(std::unique(names.begin(), names.end()), names.end());
   for (size_t i = 0; i < names.size(); ++i)
     cout << idx(names, i) << endl;
+}
 
-  guard.commit();
+static void 
+ls_epochs(string name, app_state & app, vector<utf8> const & args)
+{
+  app.initialize(false);
+  std::map<cert_value, epoch_id> epochs;
+  app.db.get_epochs(epochs);
+
+  if (args.size() == 0)
+    {
+      for (std::map<cert_value, epoch_id>::const_iterator i = epochs.begin();
+           i != epochs.end(); ++i)
+        {
+          cout << i->second << " " << i->first << endl;
+        }
+    }
+  else
+    {
+      for (vector<utf8>::const_iterator i = args.begin(); i != args.end();
+           ++i)
+        {
+          std::map<cert_value, epoch_id>::const_iterator j = epochs.find(cert_value((*i)()));
+          N(j != epochs.end(), F("no epoch for branch %s\n") % *i);
+          cout << j->second << " " << j->first << endl;
+        }
+    }  
 }
 
 static void 
@@ -1760,7 +1781,6 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
   app.initialize(false);
 
-  transaction_guard guard(app.db);
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
 
@@ -1772,8 +1792,6 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
            << idx(certs,i).inner().ident  << " "
            << idx(certs,i).inner().key  << endl;
     }
-
-  guard.commit();
 }
 
 struct unknown_itemizer : public tree_walker
@@ -1865,11 +1883,12 @@ CMD(list, "informative",
     "certs ID\n"
     "keys [PATTERN]\n"
     "branches\n"
+    "epochs [BRANCH [...]]\n"
     "tags\n"
     "unknown\n"
     "ignored\n"
     "missing", 
-    "show certs, keys, branches, unknown, intentionally ignored, or missing files")
+    "show database objects, or unknown, intentionally ignored, or missing state files")
 {
   if (args.size() == 0)
     throw usage(name);
@@ -1883,6 +1902,8 @@ CMD(list, "informative",
     ls_keys(name, app, removed);
   else if (idx(args, 0)() == "branches")
     ls_branches(name, app, removed);
+  else if (idx(args, 0)() == "epochs")
+    ls_epochs(name, app, removed);
   else if (idx(args, 0)() == "tags")
     ls_tags(name, app, removed);
   else if (idx(args, 0)() == "unknown")
@@ -2175,6 +2196,8 @@ static void
 check_db(app_state & app)
 {
   ticker revs("revs", ".");
+  ticker checked("checked", "+");
+
   std::multimap<revision_id, revision_id> graph;
   app.db.get_revision_ancestry(graph);
   std::set<revision_id> seen;
@@ -2201,10 +2224,29 @@ check_db(app_state & app)
             }
         }
     }
+
+  for (std::set<revision_id>::const_iterator i = seen.begin();
+       i != seen.end(); ++i)
+    {
+      check_sane_history(*i, constants::verify_depth, app.db);
+      ++checked;
+    }
 }
 
 
-CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipulate database state")
+CMD(db, "database", 
+    "init\n"
+    "info\n"
+    "version\n"
+    "dump\n"
+    "load\n"
+    "migrate\n"
+    "execute\n"
+    "fsck\n"
+    "changesetify\n"
+    "rebuild\n"
+    "set_epoch BRANCH EPOCH\n", 
+    "manipulate database state")
 {
   app.initialize(false);
 
@@ -2235,6 +2277,16 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipu
     {
       if (idx(args, 0)() == "execute")
         app.db.debug(idx(args, 1)(), cout);
+      else if (idx(args, 0)() == "clear_epoch")
+        app.db.clear_epoch(cert_value(idx(args, 1)()));
+      else
+        throw usage(name);
+    }
+  else if (args.size() == 3)
+    {
+      if (idx(args, 0)() == "set_epoch")
+        app.db.set_epoch(cert_value(idx(args, 1)()),
+                         epoch_id(idx(args,2)()));
       else
         throw usage(name);
     }

@@ -139,6 +139,15 @@ AT_CHECK(mv stdout expout)
 AT_CHECK($2, [], [expout], [ignore])
 ])
 
+# run as CHECK_DIFFERENT_STDOUT(command1, command2)
+m4_define([CHECK_DIFFERENT_STDOUT], [
+AT_CHECK($1, [], [stdout], [ignore])
+AT_CHECK(mv stdout firstout)
+AT_CHECK($2, [], [stdout], [ignore])
+AT_CHECK(mv stdout secondout)
+AT_CHECK(cmp firstout secondout, [1], [ignore], [ignore])
+])
+
 # run as CHECK_SAME_DB_CONTENTS(db1, db2)
 m4_define([CHECK_SAME_DB_CONTENTS], [
 CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
@@ -297,18 +306,18 @@ killall -KILL monotone 2> /dev/null
 # run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name)
 # first argument chooses whether to use the 2nd or 3rd database
 m4_define([NETSYNC_CLIENT_N_RUN], [
-AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 127.0.0.1:5555 $3, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 127.0.0.1:5555 $3, [$4], [ignore], [ignore])
 ])
 # run as NETSYNC_CLIENT_RUN(push|pull|sync, collection name)
 m4_define([NETSYNC_CLIENT_RUN], [
-NETSYNC_CLIENT_N_RUN(2, $1, $2)
+NETSYNC_CLIENT_N_RUN(2, $1, $2, $3)
 ])
 # run as RUN_NETSYNC(push|pull|sync, collection name)
 # It is the second database that is always the client; take this into
 # account when choosing push|pull|sync.
 m4_define([RUN_NETSYNC], [
 NETSYNC_SERVE_START($2)
-NETSYNC_CLIENT_RUN($1, $2)
+NETSYNC_CLIENT_RUN($1, $2, 0)
 NETSYNC_SERVE_STOP
 ])
 
@@ -433,3 +442,4 @@ m4_include(tests/t_need_mt_revision.at)
 m4_include(tests/t_update_null_revision.at)
 m4_include(tests/t_branch_checkout.at)
 m4_include(tests/t_load_into_existing.at)
+m4_include(tests/t_epoch.at)

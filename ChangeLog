@@ -1,3 +1,20 @@
+2005-02-06  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (db): Add epoch commands.
+	(list): Likewise.
+	Also remove some unneeded transaction guards.
+	* database.{cc,hh} (get_epochs): New function.
+	(set_epoch): Likewise.
+	(clear_epoch): Likewise.
+	Also remove all persistent merkle trie stuff.
+	* schema.sql: Add epochs, remove tries.
+	* schema_migration.cc: Update.
+	* tests/t_epoch.at: New test.
+	* tests/t_migrate_schema.at: Update.
+	* testsuite.at: Add some new helpers, call t_epoch.at.
+	* vocab.hh (epoch_id): Define.
+	* vocab_terms.hh (epoch): Define.
+
 2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* merkle_tree.hh: Remove mcert_item and fcert_item, rename
