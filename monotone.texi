@@ -17,6 +17,11 @@ Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
 @end ifinfo
 
+@dircategory Programming
+@direntry
+* monotone: (monotone).		Monotone version control system
+@end direntry
+
 @titlepage
 @title Monotone
 @subtitle A distributed version control system
