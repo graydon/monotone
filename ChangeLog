@@ -1,18 +1,20 @@
 2003-09-11  graydon hoare  <graydon@redhat.com>
 
-	* tests/t_merge.at: Check that heads works after a merge.
-	* tests/t_fork.at:  Check that heads works after a fork.
-
 	* commands.cc: Check for MT directory in status.
-
 	* commands.cc: Require directory for checkout.
-	
 	* commands.cc: Delete MT/work file after checkout.
+	* commands.cc: Implement 'revert', following tromey's lead.
+	* commands.cc: Print base, working manifest ids in status.
 
+	* diff_patch.cc: Further merge corrections.
 	* diff_patch.cc (unidiff): Compensate for occasional miscalculation
 	of LCS.
 
+	* tests/t_merge.at: Check that heads works after a merge.
+	* tests/t_fork.at:  Check that heads works after a fork.
 	* tests/t_genkey.at: Remove use of 'import'.
+	* tests/t_cwork.at: Check deletion of work file on checkout.
+	* tests/t_revert.at: Check that revert works.
 
 	* commands.cc, monotone.cc: Report unknown commands nicely.
 	
