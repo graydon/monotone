@@ -1,3 +1,10 @@
+2004-12-07  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: Keep package_*revision.{txt,h}, so they are saved
+	as part of a distribution, and thereby make as sure as possible
+	people who download monotone get historical information on where
+	their copy of monotone came from.
+
 2004-12-06  Richard Levitte  <richard@levitte.org>
 
 	* monotone.cc: Add a hint on how to use --ticker.
