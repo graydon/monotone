@@ -1,0 +1,88 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([creating a bad criss-cross merge])
+
+MONOTONE_SETUP
+
+# this test demonstrates a tricky case in which two parties, bob and
+# alice, merge a fork, left and right, differently. bob chooses the
+# changes in the left node, alice chooses the changes in the right
+# node.
+#
+# the result of merging their merges incorrectly succeeds, considering
+# the LCA(bob,alice) as either foo or bar, and thereby seeing one of
+# the edges (left->bob or right->alice) as having "no changes", and
+# letting the edge "with changes" (right->bob, or left->alice) clobber
+# it.
+#
+# this should be fixed so the merge-of-merges conflicts.
+
+AT_DATA(shared.anc, [base version data
+])
+AT_DATA(shared.left, [conflicting data on left side
+])
+AT_DATA(shared.right, [conflicting data on right side
+])
+AT_DATA(specific.left, [non-conflicting mergeable data on left side
+])
+AT_DATA(specific.right, [non-conflicting mergeable data on right side
+])
+AT_DATA(specific.alice, [non-conflicting mergeable data in bob
+])
+AT_DATA(specific.bob, [non-conflicting mergeable data in alice
+])
+
+# construct ancestor
+AT_CHECK(cp shared.anc shared)
+AT_CHECK(MONOTONE add shared, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit ancestor, [], [ignore], [ignore])
+ROOT_M_SHA=`SHA1(MT/manifest)`
+ROOT_F_SHA=`SHA1(shared)`
+
+# construct left node
+AT_CHECK(cp shared.left shared)
+AT_CHECK(MONOTONE add specific.left, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit left, [], [ignore], [ignore])
+LEFT_M_SHA=`SHA1(MT/manifest)`
+LEFT_F_SHA=`SHA1(shared)`
+AT_CHECK(test $LEFT_M_SHA != $ROOT_M_SHA)
+AT_CHECK(test $LEFT_F_SHA != $ROOT_F_SHA)
+
+# revert to root
+PROBE_NODE(shared, $ROOT_M_SHA, $ROOT_F_SHA)
+
+# construct right node
+AT_CHECK(cp shared.right shared)
+AT_CHECK(MONOTONE add specific.right, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit right, [], [ignore], [ignore])
+RIGHT_M_SHA=`SHA1(MT/manifest)`
+RIGHT_F_SHA=`SHA1(shared)`
+AT_CHECK(test $RIGHT_M_SHA != $ROOT_M_SHA)
+AT_CHECK(test $RIGHT_F_SHA != $ROOT_F_SHA)
+AT_CHECK(test $RIGHT_M_SHA != $LEFT_M_SHA)
+AT_CHECK(test $RIGHT_F_SHA != $LEFT_F_SHA)
+
+# construct alice, a derivative of right but with the specific change
+# in left, and an ancestor edge to left.
+AT_CHECK(MONOTONE add specific.left, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add specific.alice, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit alice, [], [ignore], [ignore])
+ALICE_M_SHA=`SHA1(MT/manifest)`
+AT_CHECK(MONOTONE cert manifest $ALICE_M_SHA ancestor $LEFT_M_SHA)
+
+# revert to left
+PROBE_NODE(shared, $LEFT_M_SHA, $LEFT_F_SHA)
+AT_CHECK(grep specific.right MT/manifest, [1])
+
+# construct bob, a derivative of left but with the specific change
+# in right, and an ancestor edge to right.
+AT_CHECK(MONOTONE add specific.right, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add specific.bob, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit bob, [], [ignore], [ignore])
+BOB_M_SHA=`SHA1(MT/manifest)`
+AT_CHECK(MONOTONE cert manifest $BOB_M_SHA ancestor $RIGHT_M_SHA)
+
+# now merge the merges. this *should* fail.
+AT_CHECK(MONOTONE --branch=testbranch merge, [1], [ignore], [ignore])
+
+AT_CLEANUP

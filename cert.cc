@@ -275,6 +275,11 @@ void cert_file_ancestor(file_id const & parent,
 		       app_state & app,
 			packet_consumer & pc)
 {
+  if (parent == child)
+    {
+      W(F("parent file %d is same as child, skipping edge") % parent);
+      return;
+    }
   put_simple_file_cert (child, ancestor_cert_name,
 			parent.inner()(), app, pc);
 }
@@ -284,88 +289,148 @@ void cert_manifest_ancestor(manifest_id const & parent,
 			   app_state & app,
 			    packet_consumer & pc)
 {
+  if (parent == child)
+    {
+      W(F("parent manifest %d is same as child, skipping edge") % parent);
+      return;
+    }
   put_simple_manifest_cert (child, ancestor_cert_name,
 			    parent.inner()(), app, pc);
 }
 
+static bool find_common_ancestor_recursive(manifest_id const & left,
+					   manifest_id const & right,
+					   manifest_id & anc,
+					   app_state & app,
+					   int limit);
 
-bool find_common_ancestor(manifest_id const & left,
-			  manifest_id const & right,
-			  manifest_id & anc,
-			  app_state & app)
+static bool resolve_to_single_ancestor(set<manifest_id> const & immediate_parents, 
+				       app_state & app,
+				       manifest_id & anc, 
+				       int limit)
 {
+  set<manifest_id> parents = immediate_parents;
+
+  L(F("resolving %d ancestors at limit %d\n") % immediate_parents.size() % limit);
+
+  while (true)
+    {
+      if (parents.size() == 0)
+	return false;
+      
+      if (parents.size() == 1)
+	{
+	  anc = *(parents.begin());
+	  return true;
+	}
+      
+      set<manifest_id>::const_iterator i = parents.begin();
+      manifest_id left = *i++;
+      manifest_id right = *i++;      
+      parents.erase(left);
+      parents.erase(right);
+
+      L(F("seeking LCA of historical merge %s <-> %s\n") % left % right);
+
+      manifest_id tmp;
+      if (find_common_ancestor_recursive (left, right, tmp, app, limit))
+	parents.insert(tmp);
+    }
+}
+
+static bool find_common_ancestor_recursive(manifest_id const & left,
+					   manifest_id const & right,
+					   manifest_id & anc,
+					   app_state & app,
+					   int limit)
+{
+  
   // nb: I think this is not exactly a "least common ancestor"
   // algorithm. it just looks for *a* common ancestor that's probably
   // pretty close to the least. I think. proof? murky. maybe try
   // something a little more precise later?
 
   set<manifest_id> left_ancestors, right_ancestors;
-  vector<manifest_id> left_frontier, right_frontier;
-  cert_name tn(ancestor_cert_name);
-  left_frontier.push_back(left);
-  right_frontier.push_back(right);
+
+  N(limit > 0,
+    F("recursion limit hit looking for common ancestor, giving up\n"));
+
+  cert_name ancestor(ancestor_cert_name);
   L(F("searching for common ancestors of %s and %s\n") % left % right);
-  while(left_frontier.size() > 0 || right_frontier.size() > 0)
-    {
-      vector<manifest_id> next_left_frontier, next_right_frontier;
 
-      for(vector<manifest_id>::const_iterator i = left_frontier.begin();
-	  i != left_frontier.end(); ++i)
+  manifest_id curr_left = left, curr_right = right;
+  manifest_id next_left, next_right;
+  set<manifest_id> immediate_parents;
+  vector< manifest<cert> > ancestor_certs;
+  
+  while(true)
+    {      
+      // advance left edge
+      immediate_parents.clear();
+      ancestor_certs.clear();
+      app.db.get_manifest_certs(curr_left, ancestor, ancestor_certs);      
+      erase_bogus_certs(ancestor_certs, app);
+      for(vector< manifest<cert> >::const_iterator j = ancestor_certs.begin();
+	  j != ancestor_certs.end(); ++j)
 	{
-	  vector< manifest<cert> > tmp;
-	  app.db.get_manifest_certs(*i, tn, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for(vector< manifest<cert> >::const_iterator j = tmp.begin();
-	      j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      manifest_id m = manifest_id(tv());
-	      if (right_ancestors.find(m) != right_ancestors.end())
-		{
-		  L(F("found common ancestor %s\n") % m);
-		  anc = m;
-		  return true;
-		}
-	      else
-		{
-		  L(F("recording ancestor edge %s -> %s\n") % (*i) % m);
-		  next_left_frontier.push_back(m);
-		  left_ancestors.insert(m);
-		}
-	    }	  
+	  cert_value tv;
+	  decode_base64(j->inner().value, tv);
+	  immediate_parents.insert(manifest_id(tv()));
+	}
+      
+      if (immediate_parents.size() == 0
+	  || !resolve_to_single_ancestor(immediate_parents, app, 
+					 next_left, limit - 1))
+	return false;
+
+      if (right_ancestors.find(next_left) != right_ancestors.end())
+	{
+	  L(F("found common ancestor %s\n") % next_left);
+	  anc = next_left;
+	  return true;
 	}
 
-      for(vector<manifest_id>::const_iterator i = right_frontier.begin();
-	  i != right_frontier.end(); ++i)
+      left_ancestors.insert(next_left);
+      swap(next_left, curr_left);
+
+      // advance right edge
+      immediate_parents.clear();
+      ancestor_certs.clear();
+      app.db.get_manifest_certs(curr_right, ancestor, ancestor_certs);      
+      erase_bogus_certs(ancestor_certs, app);
+      for(vector< manifest<cert> >::const_iterator j = ancestor_certs.begin();
+	  j != ancestor_certs.end(); ++j)
 	{
-	  vector< manifest<cert> > tmp;
-	  app.db.get_manifest_certs(*i, tn, tmp);
-	  erase_bogus_certs(tmp, app);
-	  for(vector< manifest<cert> >::const_iterator j = tmp.begin();
-	      j != tmp.end(); ++j)
-	    {
-	      cert_value tv;
-	      decode_base64(j->inner().value, tv);
-	      manifest_id m = manifest_id(tv());
-	      if (left_ancestors.find(m) != left_ancestors.end())
-		{
-		  L(F("found common ancestor %s\n") % m);
-		  anc = m;
-		  return true;
-		}
-	      else
-		{
-		  L(F("recording ancestor edge %s -> %s\n") % (*i) % m);
-		  next_right_frontier.push_back(m);
-		  right_ancestors.insert(m);
-		}
-	    }	  
+	  cert_value tv;
+	  decode_base64(j->inner().value, tv);
+	  immediate_parents.insert(manifest_id(tv()));
 	}
-      left_frontier = next_left_frontier;
-      right_frontier = next_right_frontier;      
+      
+      if (immediate_parents.size() == 0
+	  || !resolve_to_single_ancestor(immediate_parents, app, 
+					 next_right, limit - 1))
+	return false;
+
+      if (left_ancestors.find(next_right) != left_ancestors.end())
+	{
+	  L(F("found common ancestor %s\n") % next_right);
+	  anc = next_right;
+	  return true;
+	}
+
+      right_ancestors.insert(next_right);
+      swap(next_right, curr_right);
     }
+
   return false;
+}
+
+bool find_common_ancestor(manifest_id const & left,
+			  manifest_id const & right,
+			  manifest_id & anc,
+			  app_state & app)
+{
+  return find_common_ancestor_recursive (left, right, anc, app, 256);
 }
 
 // "standard certs"

@@ -107,13 +107,13 @@ void walk_hunk_consumer(vector<long> const & lcs,
       for (vector<long>::const_iterator i = lcs.begin();
 	   i != lcs.end(); ++i, ++a, ++b)
 	{      	  
-	  if (lines1[a] == *i && lines2[b] == *i)
+	  if (idx(lines1, a) == *i && idx(lines2, b) == *i)
 	    continue;
 
 	  cons.advance_to(a);
-	  while (lines1[a] != *i)
+	  while (idx(lines1,a) != *i)
 	      cons.delete_at(a++);
-	  while (lines2[b] != *i)
+	  while (idx(lines2,b) != *i)
 	    cons.insert_at(b++);
 	}
       if (b < lines2.size())
@@ -311,7 +311,7 @@ void hunk_merger::advance_to(size_t ap)
       if (ap == ancestor_to_leftpos_map.size())
 	lend = left.size();
       else
-	lend = ancestor_to_leftpos_map.at(ap);
+	lend = idx(ancestor_to_leftpos_map, ap);
     }
 
 //   L(F("advance to %d / %d (lpos = %d / %d -> %d / %d)\n") % 
@@ -322,7 +322,7 @@ void hunk_merger::advance_to(size_t ap)
   I(lend <= left.size());
 
   while (lpos < lend)
-    merged.push_back(left.at(lpos++));
+    merged.push_back(idx(left,lpos++));
 
   apos = ap;
   if (apos > ancestor_to_leftpos_map.size())
@@ -356,7 +356,7 @@ void hunk_merger::advance_to(size_t ap)
 void hunk_merger::insert_at(size_t rp)
 {
 //   L(F("insert at %d (lpos = %d) '%8s'...\n") % rp % lpos %
-//     right.at(rp));
+//     idx(right,rp));
   I(ancestor.size() == ancestor_to_leftpos_map.size());
   I(rp < right.size());
   I(apos <= ancestor_to_leftpos_map.size());
@@ -365,33 +365,31 @@ void hunk_merger::insert_at(size_t rp)
   bool delete_here = deletes.find(apos) != deletes.end();
 
   if (! (insert_here || delete_here))
-    merged.push_back(right.at(rp));
+    merged.push_back(idx(right,rp));
   
   else if (delete_here)
     {
       L(F("insert conflict type 1 -- delete "
-	  "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n")
+	  "(apos = %d, lpos = %d, translated apos = %d)\n")
 	% apos % lpos 
-	% ancestor_to_leftpos_map.at(apos)
-	% ancestor_to_leftpos_map.at(apos+1));
+	% idx(ancestor_to_leftpos_map,apos));
       throw conflict();
     }
   
   else if (insert_here)
     {
       // simultaneous, identical insert?
-      if (left.at(lpos) == right.at(rp))
+      if (idx(left,lpos) == idx(right,rp))
 	return;
       
       else
 	{
 	  L(F("insert conflict type 2 -- insert "
-	      "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n")
+	      "(apos = %d, lpos = %d, translated apos = %d)\n")
 	    % apos % lpos
-	    % ancestor_to_leftpos_map.at(apos)
-	    % ancestor_to_leftpos_map.at(apos+1));
+	    % idx(ancestor_to_leftpos_map,apos));
 	  L(F("trying to insert '%s', with '%s' conflicting\n")
-	    % right.at(rp) % left.at(lpos));
+	    % idx(right,rp) % idx(left,lpos));
 	  throw conflict();
 	}
     }
@@ -425,12 +423,12 @@ void hunk_merger::insert_at(size_t rp)
 void hunk_merger::delete_at(size_t ap)
 {
 //   L(F("delete at %d (apos = %d, lpos = %d, translated = %d) '%8s'...\n") % 
-//     ap % apos % lpos % ancestor_to_leftpos_map.at(ap) %
-//     ancestor.at(ap));
+//     ap % apos % lpos % idx(ancestor_to_leftpos_map,ap) %
+//     idx(ancestor,ap));
   I(ancestor.size() == ancestor_to_leftpos_map.size());
   I(ap < ancestor_to_leftpos_map.size());
   I(ap == apos);
-  I(ancestor_to_leftpos_map.at(ap) == lpos);
+  I(idx(ancestor_to_leftpos_map,ap) == lpos);
 
   bool insert_here = inserts.find(apos) != inserts.end();
   bool delete_here = deletes.find(apos) != deletes.end();
@@ -442,18 +440,17 @@ void hunk_merger::delete_at(size_t ap)
   
   else if (delete_here)
     {
-      if (ancestor.at(ap) == left.at(lpos))
+      if (idx(ancestor,ap) == idx(left,lpos))
 	{apos++; lpos++;}
       
       else
 	{
 	  L(F("delete conflict type 1 -- delete "
-	      "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n")
+	      "(apos = %d, lpos = %d, translated apos = %d)\n")
 	    % apos % lpos
-	    % ancestor_to_leftpos_map.at(apos)
-	    % ancestor_to_leftpos_map.at(apos+1));
+	    % idx(ancestor_to_leftpos_map,apos));
 	  L(F("trying to delete '%s', with '%s' conflicting\n") 
-	    % ancestor.at(ap) % left.at(lpos));
+	    % idx(ancestor,ap) % idx(left,lpos));
 	  throw conflict();
 	}
     }
@@ -461,12 +458,11 @@ void hunk_merger::delete_at(size_t ap)
   else
     {
       L(F("delete conflict type 1 -- insert "
-	  "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n")
+	  "(apos = %d, lpos = %d, translated apos = %d)\n")
 	% apos % lpos
-	% ancestor_to_leftpos_map.at(apos)
-	% ancestor_to_leftpos_map.at(apos+1));
+	% idx(ancestor_to_leftpos_map,apos));
       L(F("trying to delete '%s', with '%s' conflicting\n")
-	% ancestor.at(ap) % left.at(lpos));
+	% idx(ancestor,ap) % idx(left,lpos));
       throw conflict();
     }
 }
@@ -533,10 +529,10 @@ bool merge3(vector<string> const & ancestor,
       I(leftpos.size() == ancestor.size());
       for(size_t i = 0; i < ancestor.size(); ++i)
 	{
-	  if (leftpos.at(i) > left.size())
+	  if (idx(leftpos,i) > left.size())
 	    L(F("weird offset table: leftpos[%d] = %d (left.size() = %d)\n") 
-	      % i % leftpos.at(i) % left.size());
-	  I(leftpos.at(i) <= left.size());
+	      % i % idx(leftpos,i) % left.size());
+	  I(idx(leftpos,i) <= left.size());
 	}
       
       L(F("merging differences from ancestor:[%d..%d) to right:[%d..%d)\n")

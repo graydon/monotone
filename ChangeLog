@@ -1,3 +1,12 @@
+2003-10-16  graydon hoare  <graydon@pobox.com>
+
+	* sanity.hh: Add a const version of idx().
+	* diff_patch.cc: Change to using idx() everywhere.
+	* cert.cc (find_common_ancestor): Rewrite to recursive
+	form, stepping over historic merges.
+	* tests/t_cross.at: New test for merging merges.
+	* testsuite.at: Call t_cross.at.
+
 2003-10-10  graydon hoare  <graydon@pobox.com>
 
 	* lua.hh, lua.cc (hook_apply_attribute): New hook.

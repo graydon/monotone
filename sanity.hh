@@ -106,6 +106,20 @@ inline T & checked_index(std::vector<T> & v,
   return v[i];
 }
 
+template <typename T>
+inline T const & checked_index(std::vector<T> const & v, 
+			       typename std::vector<T>::size_type i,
+			       char const * vec,
+			       char const * index,
+			       char const * file,
+			       int line) 
+{ 
+  if (i >= v.size())
+    global_sanity.index_failure(vec, index, v.size(), i, file, line);
+  return v[i];
+}
+
+
 #define idx(v, i) checked_index((v), (i), #v, #i, __FILE__, __LINE__)
 
 
