@@ -88,6 +88,9 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 AC_CHECK_LIB([dl], [dlsym])
 AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_FAILURE([popt is required]))
 AC_CHECK_LIB([pthread], [pthread_attr_init])
+AC_CHECK_LIB([resolv], [inet_aton])
+AC_CHECK_LIB([socket], [accept])
+AC_CHECK_LIB([nsl], [inet_ntoa])
 
 # Checks for header files.
 AC_HEADER_STDC

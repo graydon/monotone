@@ -26,6 +26,10 @@
 
 #include "boost/lexical_cast.hpp"
 
+#ifdef __sun
+#define INADDR_NONE -1
+#endif
+
 //! implementation
 #ifdef USES_WINSOCK2
 

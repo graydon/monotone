@@ -30,6 +30,10 @@
 
 #endif
 
+#ifdef __sun
+#define INADDR_NONE -1
+#endif
+
 #if defined(USES_WINSOCK2)
 #define HAVE_GETADDRINFO
 #else

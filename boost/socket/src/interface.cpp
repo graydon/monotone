@@ -19,6 +19,10 @@
 #pragma option -w-8061 -w-8060
 #endif
 
+#ifdef __sun
+#include <sys/socket.h>
+#endif
+
 #include "boost/socket/config.hpp"
 #include "boost/socket/interface.hpp"
 #include "boost/socket/any_address.hpp"
@@ -273,6 +277,7 @@ namespace boost
     interface_info_list::interface_info_list()
         : m_impl(new interface_info_list_impl)
     {
+#ifndef __sun
       int socket=::socket(AF_INET, SOCK_DGRAM, 0);
 
       ::ifconf  conf;
@@ -334,6 +339,7 @@ namespace boost
       }
 
       ::close(socket);
+#endif
     }
 
     interface_info_list::~interface_info_list()
