@@ -1,5 +1,10 @@
 2005-01-23  Derek Scherger  <derek@echologic.com>
 
+	* tests/t_revert_rename.at: remove extra MONOTONE_SETUP
+	attempt revert by both original name and new name
+	
+2005-01-23  Derek Scherger  <derek@echologic.com>
+
 	* tests/t_revert_rename.at: New test. 
 	* testsuite.at: Add it.
 
