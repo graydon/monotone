@@ -1,3 +1,10 @@
+2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Fix various typos.
+	(Committing Work): Add missing command line argument.
+	(Branch Names): New section.
+	Add me to the copyright block.
+
 2004-11-05  graydon hoare  <graydon@pobox.com>
 
 	* constants.cc: Up timeout, connection limit.

@@ -13,6 +13,7 @@ This manual is for the ``monotone'' distributed version control system.
 This edition documents version @value{VERSION}.
 
 Copyright 2003, 2004 Graydon Hoare
+Copyright 2004 Nathaniel Smith
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -31,6 +32,7 @@ See the file COPYING for details
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 2003, 2004 Graydon Hoare
+Copyright @copyright{} 2004 Nathaniel Smith
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -525,6 +527,33 @@ merging activity. If there are two or more revisions in the heads of a
 branch, and you ask to merge the branch, monotone will merge them
 two-at-a-time until there is only one.
 
+@subsection Branch Names
+
+The branch names used in the above section are fine for an example, but
+they would be bad to use in a real project.  The reason is, monotone
+branch names must be @emph{globally} unique, over all branches in the
+world.  Otherwise, bad things can happen.  Fortunately, we have a handy
+source of globally unique names --- the DNS system.
+
+When naming a branch, always prepend the reversed name of a host that
+you control or are otherwise authorized to use.  For example, monotone
+development happens on the branch @code{net.venge.monotone}, because
+@code{venge.net} belongs to monotone's primary author.  The idea is that
+this way, you can coordinate with other people using a host to make sure
+there are no conflicts --- in the example, monotone's primary author can
+be certain that no-one else using @code{venge.net} will start up a
+different program named @code{monotone}.  If you work for Yoyodyne,
+Inc. (owners of yoyodyne.com), then all your branch names should look
+like @code{com.yoyodyne.@emph{something}}.
+
+What the @code{@emph{something}} part looks like is up to you, but
+usually the first part is the project name (the @code{monotone} in
+@code{net.venge.monotone}), and then possibly more stuff after that to
+describe a particular branch.  For example, monotone's win32 support
+was initially developed on the branch @code{net.venge.monotone.win32}.
+
+(For more information, see @ref{Naming Conventions}.)
+
 @node    Tutorial
 @chapter Tutorial
 
@@ -534,7 +563,7 @@ tutorial, there are two minor issues to address: standard options and
 revision selectors.
 
 @subsection Standard Options
-Before operating monotone, two inportant command-line options should
+Before operating monotone, two important command-line options should
 be explained.
 
 @itemize
@@ -1019,7 +1048,7 @@ of all the files referenced by the revision he committed:
 
 @smallexample
 @group
-$ monotone cat manifest
+$ monotone cat manifest 2098eddbe833046174de28172a813150a6cbda7b
 3b12b2d0b31439bd50976633db1895cff8b19da0  include/jb.h
 2650ffc660dd00a08b659b883b65a060cac7e560  src/apple.c
 e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f  src/banana.c
@@ -1807,7 +1836,7 @@ if you want to make a certificate describing the existence of security
 vulnerabilities in a revision, you might wish to create a certificate
 called @code{x-vulnerability}.  Monotone reserves all names which do
 not begin with @code{x-} for possible internal use. If an @code{x-}
-certificate becomes widely used, montotone will likey adopt it as a
+certificate becomes widely used, monotone will likely adopt it as a
 reserved cert name and standardize its semantics.
 
 Most reserved certificate names have no meaning yet; some do. Usually
@@ -1876,11 +1905,11 @@ accidental collision in @sc{sha1}.
 
 Some names in monotone are private to your work, such as
 filenames. Other names are potentially visible outside your project,
-such as @sc{rsa} key identifiers or branch names. It is possible that
-if you choose such names carelessly, you will choose a name which
-someone else in the world is using, and subsequently you may cause
-confusion when your work and their is received simultaneously by some
-third party.
+such as @sc{rsa} key identifiers or branch names. It is possible that if
+you choose such names carelessly, you will choose a name which someone
+else in the world is using, and subsequently you may cause confusion
+when your work and theirs is received simultaneously by some third
+party.
 
 We therefore recommend two naming conventions:
 
