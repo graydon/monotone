@@ -302,8 +302,8 @@ void pick_update_target(manifest_id const & base_ident,
     }
   
   find_descendents(base_ident, app, candidates);
-  N (candidates.size() != 0,
-     "no update candidates in descendents set");
+  if (candidates.size() == 0)
+    candidates.insert(base_ident);
   
   if (candidates.size() > 1
       && (app.branch_name != ""))
