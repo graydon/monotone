@@ -1,5 +1,10 @@
 2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_diff_restrict.at: New test.
+	* testsuite.at: Add it.
+
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
 	* lua.cc (monotone_spawn_for_lua): Minimal change to get arguments
 	in right order.  Still needs hygienic cleanups...
 	* tests/t_can_execute.at: Run 'cp' instead of 'touch', because cp
