@@ -1,3 +1,17 @@
+2005-02-19  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_heads): remove bogus call to 
+	app.allow_working_copy() which is called in cpp_main
+	* database.cc (check_sqlite_format_version): don't check database
+	version when "file" is really a directory; add filename to error
+	message
+	(sql): check for empty database early, even though this seems
+	impossible as absolutify changes "" into path to working dir;
+	convert to use N-style assertions; add check to ensure "file" is
+	not really a directory
+	* tests/t_db_missing.at: new test for above problems
+	* testsuite.at: call it
+
 2005-02-18  graydon hoare  <graydon@pobox.com>
 
 	* automate.cc (automate_heads): Fix initialize() call.  

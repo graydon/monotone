@@ -177,6 +177,9 @@ check_sqlite_format_version(fs::path const & filename)
 {
   if (fs::exists(filename))
     {
+      N(!fs::is_directory(filename), 
+        F("database %s is a directory\n") % filename.string());
+ 
       // sqlite 3 files begin with this constant string
       // (version 2 files begin with a different one)
       std::string version_string("SQLite format 3");
@@ -189,8 +192,8 @@ check_sqlite_format_version(fs::path const & filename)
         {
           char c;
           file.get(c);
-          N(c == *i, F("database is not an sqlite version 3 file, "
-                       "try dump and reload"));            
+          N(c == *i, F("database %s is not an sqlite version 3 file, "
+                       "try dump and reload") % filename.string());            
         }
     }
 }
@@ -201,16 +204,16 @@ database::sql(bool init)
 {
   if (! __sql)
     {
+      N(!filename.empty(), F("no database specified"));
+
       if (! init)
         {
-          if (filename.string() == "")
-            throw informative_failure(string("no database specified"));
-          else if (! fs::exists(filename))
-            throw informative_failure(string("database ") + filename.string() +
-                                      string(" does not exist"));
+          N(fs::exists(filename), 
+            F("database %s does not exist") % filename.string());
+          N(!fs::is_directory(filename), 
+            F("database %s is a directory") % filename.string());
         }
-      N(filename.string() != "",
-        F("need database name"));
+
       check_sqlite_format_version(filename);
       int error;
       error = sqlite3_open(filename.string().c_str(), &__sql);
