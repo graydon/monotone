@@ -3671,6 +3671,13 @@ automatically use a certain passphrase for a given key using the
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
 
+@item monotone delkey @var{keyid}
+
+This command deletes the public and/or private key. If both exist,
+both are deleted, if only one exists, the one that does is deleted.
+This command should be used with caution as changes are irreversible
+without a backup of the key(s) that were removed.
+
 @item monotone chkeypass @var{id}
 
 This command lets you change the passphrase of the private half of the
@@ -4188,7 +4195,7 @@ end
 @end group
 @end smallexample
 
-@item edit_comment (@var{commentary})
+@item edit_comment (@var{commentary}, @var{user_log_message})
 
 Returns a log entry for a given set of changes, described in
 @var{commentary}.  The commentary is identical to the output of
@@ -4198,11 +4205,17 @@ change you make. The result is used as the value for a
 @code{changelog} certificate, automatically generated when you commit
 changes.
 
+The contents of @file{MT/log} are read and passed as
+@var{user_log_message}. This allows you do document your changes as
+you proceed instead of waiting until you are ready to commit. Upon
+a successful commit, the contents of @file{MT/log} are erased setting
+the system up for another edit/commit cycle.
+
 The default definition of this hook is:
 
 @smallexample
 @group
-function edit_comment(commentary)
+function edit_comment(commentary, user_log_message)
         local exe = "vi"
         local visual = os.getenv("VISUAL")
         if (visual ~= nil) then exe = visual end
@@ -4212,6 +4225,7 @@ function edit_comment(commentary)
         local tmp, tname = temp_file()
         if (tmp == nil) then return nil end
         commentary = "MT: " .. string.gsub(commentary, "\n", "\nMT: ")
+        tmp:write(user_log_message)
         tmp:write(commentary)
         io.close(tmp)
 
@@ -5395,6 +5409,10 @@ from stdin if no value given on command line.
 Generate an @sc{rsa} key-pair and store it in the database.
 @comment TROFF INPUT: .TP
 
+@item @b{delkey} @i{<keyid>}
+Delete a public and/or private key.
+@comment TROFF INPUT: .TP
+
 @item @b{chkeypass} @i{<keyid>}
 Change passphrase of the private half of a key.
 @comment TROFF INPUT: .TP
@@ -5518,8 +5536,9 @@ Rename files from @i{<src>} to @i{<dst>} in working copy.
 
 @item @b{commit} @i{[--message=log message] [<pathname>...]}
 Commit working copy to database. If a --message @option{option} is
-provided on the command line, it is used; otherwise a log message editor
-will be invoked.
+provided on the command line, it is used; otherwise a log message
+editor will be invoked. If @i{MT/log} exists, it's content will be
+passed to the message editor.
 @comment TROFF INPUT: .TP
 
 @item @b{update} @i{[revision]}
