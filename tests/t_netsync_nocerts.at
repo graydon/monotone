@@ -1,4 +1,4 @@
-AT_SETUP([netsync revision with no certs])
+AT_SETUP([(normal) netsync revision with no certs])
 MONOTONE_SETUP
 NETSYNC_SETUP
 

@@ -1,3 +1,16 @@
+2005-01-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* schema_migration.cc (migrate_monotone_schema): Add comment
+	pointing to t_migrate_schema.at.
+	* tests/t_migrate_schema.at: Implement, mostly.  (Still broken.)
+
+	* tests/t_heads_discontinuous_branch.at: Remove urgency
+	annotation.
+	* tests/t_netsync_nocerts.at: Add urgency annotation.
+
+	* testsuite.at: Add UNGZ, UNGZB64 macros.
+	* tests/t_fmerge.at: Use them.
+
 2005-01-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* schema_migration.cc: Update comment about depot code.

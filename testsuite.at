@@ -208,10 +208,46 @@ elif perl -MMIME::Base64 -e 1 2>/dev/null; then
 elif python -c 'import sys;sys.exit(not hasattr("", "decode"))' 2>/dev/null; then
   UNB64_COMMAND="python -c 'import sys;sys.stdout.write(sys.stdin.read().decode("'"'"base64"'"'"))'"
 else
+  # This is lame!  We should XFAIL the test so the user knows that
+  # they're not, you know, actually testing the software.  But
+  # Autotest runs XFAIL conditions in a completely different shell, so
+  # we can't without duplicating the whole test here.
   exit 77
 fi
+# Poor man's logging:
+AT_CHECK(echo $UNB64_COMMAND, [], [ignore], [ignore])
 ])
 m4_define([UNB64], [AT_CHECK(eval $UNB64_COMMAND <$1 >$2)])
+
+# Usage: NEED_UNGZ will cancel the test (reporting success) if we
+# can't decode gzipped text.
+# After calling NEED_UNGZ, you can use UNGZ(infile, outfile) to
+# decode gzipped text.
+m4_define([NEED_UNGZ], [
+if which gunzip 2>/dev/null; then
+  # This is lame!  We should XFAIL the test so the user knows that
+  # they're not, you know, actually testing the software.  But
+  # Autotest runs XFAIL conditions in a completely different shell, so
+  # we can't without duplicating the whole test here.
+  UNGZ_COMMAND="gunzip -c"
+fi
+# Poor man's logging:
+AT_CHECK(echo $UNGZ_COMMAND, [], [ignore], [ignore])
+])
+m4_define([UNGZ], [AT_CHECK(eval $UNGZ_COMMAND <$1 >$2)])
+
+# Usage: NEED_UNGZB64 will XFAIL the test if we can't decode base64'ed
+# gzipped text.
+# After calling NEED_UNGZB64, you can use UNGZB64(infile, outfile) to
+# decode base64'ed gzipped text.
+m4_define([NEED_UNGZB64], [
+NEED_UNB64
+NEED_UNGZ
+])
+m4_define([UNGZB64], [
+UNB64($1, $2.gz)
+UNGZ($2.gz, $2)
+])
 
 # netsync helpers
 # NETSYNC_SETUP sets up 2 databases; RUN_NETSYNC netsyncs between

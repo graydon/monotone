@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([(minor) 'heads' with discontinuous branches])
+AT_SETUP(['heads' with discontinuous branches])
 MONOTONE_SETUP
 
 # This tests the 'heads' command with a graph like:

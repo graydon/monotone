@@ -676,6 +676,10 @@ migrate_monotone_schema(sqlite *sql)
   m.add("8929e54f40bf4d3b4aea8b037d2c9263e82abdf4",
         &migrate_client_to_revisions);
 
+  // IMPORTANT: whenever you modify this to add a new schema version, you must
+  // also add a new migration test for the new schema version.  See
+  // tests/t_migrate_schema.at for details.
+
   m.migrate(sql, "c1e86588e11ad07fa53e5d294edc043ce1d4005a");
   
   if (sqlite_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
