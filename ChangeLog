@@ -1,5 +1,18 @@
 2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
 
+	* lua.hh (add_rcfile): Add 'required' argument.
+	* lua.cc (add_rcfile): Implement it.  Simplify error checking
+	logic while I'm there...
+	* monotone.cc (cpp_main): Pass new argument to add_rcfile.
+	
+	* tests/t_rcfile_required.at: New test.
+	* testsuite.at: Call it.
+	Revamp netsync support macros, to allow long-running servers.
+	Make netsync-killer try first with -TERM, in case that plays nicer
+	with gcov.
+	
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
 	* lua.hh: Remove tabs.
 
 2004-12-11  Nathaniel Smith  <njs@codesourcery.com>

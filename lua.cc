@@ -448,21 +448,21 @@ lua_hooks::working_copy_rcfilename(fs::path & file)
 
 
 void 
-lua_hooks::add_rcfile(fs::path const & rc)
+lua_hooks::add_rcfile(fs::path const & rc, bool required)
 {
   I(st);  
   if (fs::exists(rc))
     {
       L(F("opening rcfile '%s' ...\n") % rc.string());
-      if (!run_file(st, rc.string()))
-        {
-          L(F("'%s' is no good\n") % rc.string());
-          N(0, F("lua error while loading %s") % rc.string());
-        }
+      N(run_file(st, rc.string()),
+        F("lua error while loading '%s'") % rc.string());
       L(F("'%s' is ok\n") % rc.string());
     }
   else
-    L(F("skipping nonexistent rcfile '%s'\n") % rc.string());
+    {
+      N(!required, F("rcfile '%s' does not exist") % rc.string());
+      L(F("skipping nonexistent rcfile '%s'\n") % rc.string());
+    }
 }
 
 

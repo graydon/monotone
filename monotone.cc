@@ -267,8 +267,8 @@ cpp_main(int argc, char ** argv)
           fs::path working_copy_rcfile;
           app.lua.default_rcfilename(default_rcfile);
           app.lua.working_copy_rcfilename(working_copy_rcfile);
-          app.lua.add_rcfile(default_rcfile);
-          app.lua.add_rcfile(working_copy_rcfile);
+          app.lua.add_rcfile(default_rcfile, false);
+          app.lua.add_rcfile(working_copy_rcfile, false);
         }
 
       // command-line rcfiles override even that
@@ -276,7 +276,7 @@ cpp_main(int argc, char ** argv)
       for (vector<string>::const_iterator i = extra_rcfiles.begin();
            i != extra_rcfiles.end(); ++i)
         {
-          app.lua.add_rcfile(mkpath(*i));
+          app.lua.add_rcfile(mkpath(*i), true);
         }
 
       // main options processed, now invoke the 
