@@ -1,5 +1,15 @@
 2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_checkout_dir.at: Make the test directory chdir'able
+	again after the test.
+	* tests/t_delete_dir.at: Add trailing newline.
+	
+	* tests/t_dump_load.at: New bug report.
+	* tests/t_migrate_schema.at: Likewise.
+	* testsuite.at: Call them.
+
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* change_set.hh: Remove obsolete comment.
 
 2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
