@@ -1,3 +1,12 @@
+2005-02-09  Derek Scherger  <derek@echologic.com>
+
+	* cert.cc (cert_revision_testresult): allow pass/fail testresult
+	values
+	* commands.cc (testresult): likewise
+	* commands.cc (do_diff): disallow restriction of non-working copy
+	diffs
+	* monotone.texi: update for restrictions
+
 2005-02-08  graydon hoare  <graydon@pobox.com>
 
 	* database.cc (version_cache::set): Fix bad expiry logic.
