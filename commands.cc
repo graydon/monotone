@@ -2134,45 +2134,42 @@ static void ls_branches (string name, app_state & app, vector<string> const & ar
   guard.commit();
 }
 
+
 struct unknown_itemizer : public tree_walker
 {
   app_state & app;
   manifest_map & man;
-  unknown_itemizer(app_state & a, manifest_map & m) : app(a), man(m) {}
+  bool want_ignored;
+  unknown_itemizer(app_state & a, manifest_map & m, bool i) 
+    : app(a), man(m), want_ignored(i) {}
   virtual void visit_file(file_path const & path)
   {
-    if (man.find(path) == man.end() 
-	&& !app.lua.hook_ignore_file(path))
-      cout << path() << endl;
+    if (man.find(path) == man.end())
+      {
+      if (want_ignored)
+	{
+	  if (app.lua.hook_ignore_file(path))
+	    cout << path() << endl;
+	}
+      else
+	{
+	  if (!app.lua.hook_ignore_file(path))
+	    cout << path() << endl;
+	}
+      }
   }
 };
 
-struct ignored_itemizer : public tree_walker
-{
-  app_state & app;
-  ignored_itemizer(app_state & a) : app(a) {}
-  virtual void visit_file(file_path const & path)
-  {    
-    if (app.lua.hook_ignore_file(path))
-      cout << path() << endl;
-  }
-};
 
-
-static void ls_unknown (app_state & app)
+static void ls_unknown (app_state & app, bool want_ignored)
 {
   manifest_map m_old, m_new;
   get_manifest_map(m_old);
   calculate_new_manifest_map(m_old, m_new);
-  unknown_itemizer u(app, m_new);
+  unknown_itemizer u(app, m_new, want_ignored);
   walk_tree(u);
 }
 
-static void ls_ignored (app_state & app)
-{
-  ignored_itemizer i(app);
-  walk_tree(i);
-}
 
 static void ls_queue (string name, app_state & app)
 {
@@ -2336,9 +2333,9 @@ CMD(list, "informative",
   else if (idx(args, 0) == "branches")
     ls_branches(name, app, removed);
   else if (idx(args, 0) == "unknown")
-    ls_unknown(app);
+    ls_unknown(app, false);
   else if (idx(args, 0) == "ignored")
-    ls_ignored(app);
+    ls_unknown(app, true);
   else
     throw usage(name);
 }

@@ -1,5 +1,9 @@
 2003-12-16  graydon hoare  <graydon@pobox.com>
 
+	* commands.cc (ls_ignored, ignored_itemizer): Fold in as subcases of unknown.
+
+2003-12-16  graydon hoare  <graydon@pobox.com>
+
 	* lua.cc (working_copy_rcfilename): MT/monotonerc not MT/.monotonerc.
 
 2003-12-16  graydon hoare  <graydon@pobox.com>
