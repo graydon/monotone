@@ -488,8 +488,8 @@ import_rcs_file(fs::path const & filename, database & db)
   I(! fs::is_directory(filename));
   I(! filename.empty());
 
-  fs::path leaf = filename.leaf();
-  fs::path branch = filename.branch_path();
+  fs::path leaf = mkpath(filename.leaf());
+  fs::path branch = mkpath(filename.branch_path().string());
 
   I(! branch.empty());
   I(! leaf.empty());

@@ -195,9 +195,9 @@ public:
 
 file_path rename_builder::pathsub(file_path const & in)
 {
-  fs::path sp(src());
-  fs::path dp(dst());
-  fs::path ip(in());
+  fs::path sp = mkpath(src());
+  fs::path dp = mkpath(dst());
+  fs::path ip = mkpath(in());
   
   fs::path::iterator i = ip.begin();
   for (fs::path::iterator s = sp.begin();
@@ -404,7 +404,7 @@ struct add_to_options_map
 
 void get_options_path(local_path & o_path)
 {
-  o_path = (fs::path(book_keeping_dir) / fs::path(options_file_name)).string();
+  o_path = (mkpath(book_keeping_dir) / mkpath(options_file_name)).string();
   L(F("options path is %s\n") % o_path);
 }
 
@@ -444,7 +444,7 @@ struct add_to_attr_map
 
 void get_attr_path(file_path & a_path)
 {
-  a_path = (fs::path(attr_file_name)).string();
+  a_path = (mkpath(attr_file_name)).string();
   L(F("attribute map path is %s\n") % a_path);
 }
 

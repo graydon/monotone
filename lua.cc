@@ -362,12 +362,12 @@ void lua_hooks::add_std_hooks()
 
 void lua_hooks::default_rcfilename(fs::path & file)
 {
-  file = fs::path(get_homedir()) / fs::path(".monotonerc");
+  file = mkpath(get_homedir()) / mkpath(".monotonerc");
 }
 
 void lua_hooks::working_copy_rcfilename(fs::path & file)
 {
-  file = fs::path(book_keeping_dir) / fs::path("monotonerc");
+  file = mkpath(book_keeping_dir) / mkpath("monotonerc");
 }
 
 

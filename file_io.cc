@@ -34,6 +34,12 @@ void save_initial_path()
   fs::initial_path();
 }
 
+fs::path mkpath(string const & s)
+{
+  fs::path p(s, fs::native);
+  return p;
+}
+
 string get_homedir()
 {
   char * home = getenv("HOME");
@@ -48,19 +54,19 @@ string get_homedir()
 
 static fs::path localized(string const & utf)
 {
-  fs::path tmp(utf), ret;
+  fs::path tmp = mkpath(utf), ret;
   for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
     {
       external ext;
       utf8_to_system(utf8(*i), ext);
-      ret /= ext();
+      ret /= mkpath(ext());
     }
   return ret;
 }
 
 string absolutify(string const & path)
 {
-  fs::path tmp(path);
+  fs::path tmp = mkpath(path);
   if (! tmp.has_root_path())
     tmp = fs::initial_path() / tmp;
   I(tmp.has_root_path());
@@ -69,14 +75,14 @@ string absolutify(string const & path)
 
 string tilde_expand(string const & path)
 {
-  fs::path tmp(path);
+  fs::path tmp = mkpath(path);
   fs::path::iterator i = tmp.begin();
   if (i != tmp.end())
     {
       fs::path res;
       if (*i == "~")
 	{
-	  res /= fs::path(get_homedir());
+	  res /= mkpath(get_homedir());
 	  ++i;
 	}
       else if (i->size() > 1 && i->at(0) == '~')
@@ -84,7 +90,7 @@ string tilde_expand(string const & path)
 	  struct passwd * pw;
 	  pw = getpwnam(i->substr(1).c_str());
 	  N(pw != NULL, F("could not find home directory user %s") % i->substr(1));
-	  res /= fs::path(string(pw->pw_dir));
+	  res /= mkpath(string(pw->pw_dir));
 	  ++i;
 	}
       while (i != tmp.end())
@@ -109,7 +115,7 @@ bool book_keeping_file(fs::path const & p)
 bool book_keeping_file(local_path const & p)
 {
   if (p() == book_keeping_dir) return true;
-  if (*(fs::path(p()).begin()) == book_keeping_dir) return true;
+  if (*(mkpath(p()).begin()) == book_keeping_dir) return true;
   return false;
 }
 
@@ -131,10 +137,18 @@ void move_file(file_path const & old_path,
 	     localized(new_path()));
 }
 
-void mkdir_p(local_path const & p) { fs::create_directories(localized(p())); }
-void mkdir_p(file_path const & p) { fs::create_directories(localized(p())); }
+void mkdir_p(local_path const & p) 
+{ 
+  fs::create_directories(localized(p())); 
+}
+
+void mkdir_p(file_path const & p) 
+{ 
+  fs::create_directories(localized(p())); 
+}
+
 void make_dir_for(file_path const & p) { 
-  fs::path tmp(p());
+  fs::path tmp = mkpath(p());
   if (tmp.has_branch_path())
     {
       fs::create_directories(tmp.branch_path()); 
@@ -196,7 +210,7 @@ static void write_data_impl(fs::path const & p,
   // we write, non-atomically, to MT/data.tmp.
   // nb: no mucking around with multiple-writer conditions. we're a
   // single-user single-threaded program. you get what you paid for.
-  fs::path mtdir(book_keeping_dir);
+  fs::path mtdir = mkpath(book_keeping_dir);
   fs::create_directories(mtdir);
   fs::path tmp = mtdir / "data.tmp"; 
 
@@ -210,14 +224,19 @@ static void write_data_impl(fs::path const & p,
   }
 
   // god forgive my portability sins
-  rename(tmp.string().c_str(), p.string().c_str());
+  N(rename(tmp.string().c_str(), p.string().c_str()) == 0,
+    F("rename of %s to %s failed") % tmp.string() % p.string());
 }
 
 void write_data(local_path const & path, data const & dat)
-{ write_data_impl(localized(path()), dat); }
+{ 
+  write_data_impl(localized(path()), dat); 
+}
 
 void write_data(file_path const & path, data const & dat)
-{ write_data_impl(localized(path()), dat); }
+{ 
+  write_data_impl(localized(path()), dat); 
+}
 
 
 void write_data(local_path const & path,
@@ -232,7 +251,9 @@ void write_data(local_path const & path,
 
 void write_data(file_path const & path,
 		base64< gzip<data> > const & dat)
-{ write_data(local_path(path()), dat); }
+{ 
+  write_data(local_path(path()), dat); 
+}
 
 
 tree_walker::~tree_walker() {}
@@ -245,8 +266,8 @@ static void walk_tree_recursive(fs::path const & absolute,
   for(fs::directory_iterator di(absolute);
       di != ei; ++di)
     {
-      fs::path entry = *di;
-      fs::path rel_entry = relative / fs::path(entry.leaf());
+      fs::path entry = mkpath(di->string());
+      fs::path rel_entry = relative / mkpath(entry.leaf());
       
       if (book_keeping_file (entry))
 	continue;

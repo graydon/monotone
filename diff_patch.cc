@@ -1012,7 +1012,7 @@ void merge_deltas (map<file_path, patch_delta> const & self_map,
 static void apply_directory_moves(map<file_path, file_path> const & dir_moves,
 				  file_path & fp)
 {
-  fs::path stem = fs::path(fp());
+  fs::path stem = mkpath(fp());
   fs::path rest;
   while (stem.has_branch_path())
     {
@@ -1023,7 +1023,7 @@ static void apply_directory_moves(map<file_path, file_path> const & dir_moves,
       if (j != dir_moves.end())
 	{
 	  file_path old = fp;
-	  fp = file_path((fs::path(j->second()) / rest).string());
+	  fp = file_path((mkpath(j->second()) / rest).string());
 	  L(F("applying dir rename: %s -> %s\n") % old % fp);
 	  return;
 	}      
@@ -1053,8 +1053,8 @@ static void infer_directory_moves(manifest_map const & ancestor,
   for (map<file_path, file_path>::const_iterator mov = moves.begin();
        mov != moves.end(); ++mov)
     {
-      fs::path src = fs::path(mov->first());
-      fs::path dst = fs::path(mov->second());
+      fs::path src = mkpath(mov->first());
+      fs::path dst = mkpath(mov->second());
 
       // we will call this a "directory move" if the branch path changed,
       // and the new branch path didn't exist in the ancestor, and there
@@ -1079,7 +1079,7 @@ static void infer_directory_moves(manifest_map const & ancestor,
 	  for (manifest_map::const_iterator mm = ancestor.begin();
 	       mm != ancestor.end(); ++mm)
 	    {
-	      fs::path mp = fs::path(mm->first());
+	      fs::path mp = mkpath(mm->first());
 	      if (mp.branch_path().string() == dp.string())
 		{
 		  clean_move = false;
@@ -1091,7 +1091,7 @@ static void infer_directory_moves(manifest_map const & ancestor,
 	    for (manifest_map::const_iterator mm = child.begin();
 		 mm != child.end(); ++mm)
 	      {
-		fs::path mp = fs::path(mm->first());
+		fs::path mp = mkpath(mm->first());
 		if (mp.branch_path().string() == sp.string())
 		  {
 		    clean_move = false;

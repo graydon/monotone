@@ -1767,6 +1767,7 @@ playing with the program to familliarize yourself with its operation.
 
 @menu
 * Hash Integrity::         Notes on probability and failure.
+* Internationalization::   Using monotone in non-english locales.
 * Reserved Certs::         Certificate names with special meanings.
 * Naming Conventions::     Choosing appropriate names for keys and branches.
 * File Attributes::        Marking files as executable, or other attributes.
@@ -1948,6 +1949,275 @@ stronger hash you like, at the cost of isolating your own
 communications to a group using the modified version. Monotone is free
 software, and runs atop @code{crypto++}, so it is both legal and
 relatively simple to change it to use some other algorithm.
+
+@node    Internationalization
+@section Internationalization
+
+Monotone initially dealt with only ASCII characters, in file path
+names, certificate names, key names, URLs, and packets. Some
+conservative extensions are provided to permit internationalized
+use. These extensions can be summarized as follows:
+
+@itemize
+
+@item
+Monotone uses GNU gettext to provide localized progress and error
+messages. Translations may or may not exist for your locale, but the
+infrastructure is present to add them.
+
+@item
+All command-line arguments are mapped from your local character set to
+UTF-8 before processing. This means that monotone can @emph{only}
+handle key names, file names, certificate names and URLs which map
+cleanly into UTF-8.
+
+@item
+Monotone's control files are stored in UTF-8. This includes: manifest
+files, both inside the database and when written to the
+@file{MT/manifest} file in the working copy; the @file{MT/options} and
+@file{MT/work} files; and the @file{.mt-attrs} file. Converting these
+files to any other character set will cause monotone to break; do not
+do so.
+
+@item
+File path names in the working copy are converted to the locale's
+character set (determined via the LANG or CHARSET environment
+variables) before monotone interacts with the filesystem. If you are
+accustomed to being able to use file names in your locale's character
+set, this should ``just work'' with monotone.
+
+@item
+Key and cert names, URLs, and similar ``name-like'' entities are
+subject to some cleaning and normalization, and conversion into
+network-safe subsets of ASCII (ACE or URL-encoding, depending on
+context). Generally, you should be able to use ``sensible'' strings in
+your locale's character set as names, but they may appear mangled or
+escaped in certain contexts such as network transmission.
+
+@item
+Monotone's transmission and storage forms are otherwise
+unchanged. Packets and database contents are 7-bit clean ASCII.
+
+@end itemize
+
+The remainder of this section is a precise specification of monotone's
+internationalization behavior.
+
+@heading General Terms
+
+@table @asis
+@item Character set conversion
+The process of mapping a string of bytes representing wide characters
+from one encoding to another. Per-file character set conversions are
+specified by a lua hook @code{charset_conv} which takes a filename and
+returns a table of two strings: the first represents the "internal"
+(database) charset, the second represents the "external" (filesystem)
+charset.
+
+@item Line ending conversion
+The process of converting platform-dependent end-of-line codes
+(@code{0x0D}, @code{0x0A}, or the pair @code{0x0D 0x0A}) from one
+convention to another. Per-file line ending conversion is specified by
+a lua hook @code{linesep_conv} which takes a filename and returns a
+table of two strings: the first represents the "internal" (database)
+line ending convention, the second represents the "external"
+(filesystem) line ending convention. each string should be one of the
+three strings "CR", "LF", or "CRLF". Line ending conversion is always
+performed after character set conversion, when both are enabled.
+
+@item Normal form conversion
+Character set and line ending conversions done between a "system form"
+and a "normal form". The system character set form is inferred from
+the environment, using the various locale environment variables. The
+system line ending form can be additionally specialized using the
+@code{get_system_linesep} hook. No hooks exist for adjusting the
+system character set, since the system character set must be known
+during command-line argument processing, before any lua hooks are
+loaded.
+
+Monotone's normal form is the UTF-8 character set and the @code{0x0A}
+(LF) line ending form. This form is used in any files monotone needs
+to read, write, and interpret itself, such as: @file{MT/manifest},
+@file{MT/work}, @file{MT/options}, @file{.mt-attrs}
+
+@item LDH
+Letters, digits, and hyphen: the set of ASCII bytes @code{0x2D},
+@code{0x30..0x39}, @code{0x41..0x5A}, and @code{0x61..0x7A}.
+
+@item stringprep
+RFC 3454, a general framework for mapping, normalizing, prohibiting
+and bidirectionality checking for international names prior to use in
+public network protocols.
+
+@item nameprep
+RFC 3491, a specific profile of stringprep, used for preparing
+international domain names (IDNs)
+
+@item punycode
+RFC 3492, a "bootstring" encoding of unicode into ASCII. 
+
+@item IDNA
+RFC 3490, international domain names for applications, a combination
+of the above technologies (nameprep, punycoding, limiting to LDH
+characters) to form a specific "ASCII compatible encoding" (ACE) of
+unicode, signified by the presence of an "unlikely" ACE prefix string
+"xn--". IDNA is intended to make it possible to use unicode relatively
+"safely" over legacy ASCII-based applications. the general picture of
+an IDNA string is this:
+
+@example     
+      @{ACE-prefix@}@{LDH-sanitized(punycode(nameprep(UTF-8-string)))@}
+@end example
+
+It is important to understand that IDNA encoding does @emph{not}
+preserve the input string: it both prohibits a wide variety of
+possible strings and normalizes non-equal strings to supposedly
+"equivalent" forms.
+
+By default, monotone does @emph{not} decode IDNA when printing to the
+console (IDNA names are ASCII, which is a subset of UTF-8, so this
+normal form conversion can still apply, albeit oddly). this behavior
+is to protect users against security problems associated with
+malicious use of "similar-looking" characters. If the hook
+@code{display_decoded_idna} returns true, IDNA names are decoded for
+display.
+
+@end table
+  
+@heading Filenames
+
+@itemize
+
+@item
+Filenames are subject to normal form conversion. 
+
+@item
+Filenames are subject to an additional normal form stage which adjusts
+for platform name semantics, for example changing the Windows
+@code{0x5C} '\' path separator to @code{0x2F} '/'. This extra
+processing is performed by boost::filesystem.
+
+@item
+FIXME: Monotone does not properly handle case insensitivity on windows.
+
+@item
+A filename (in normal form) is constrained to be a nonempty sequence
+of path components, separated by byte @code{0x2F} (ASCII / ), and
+without a leading or trailing @code{0x2F}.
+
+@item
+A path component is a nonempty sequence of any UTF-8 character codes
+except the path separator byte @code{0x2F} and any ASCII "control codes"
+(@code{0x00..0x1F} and @code{0x7F}).
+
+@item
+The path components "." and ".." are prohibited.
+
+@item
+Manifests are constructed from the normal form (UTF-8). The LC_COLLATE
+locale category is @emph{not} used to sort manifest entries.
+
+@end itemize
+
+@heading File contents
+
+@itemize
+@item
+Files are subject to character set conversion and line ending
+conversion.
+
+@item
+File SHA1 values are calculated from the internal form of the
+conversions. If the external form of a file differs from the internal
+form, running a 3rd party program such as @code{sha1sum} will produce
+different results than those entries shown in the @file{MT/manifest}
+file.
+
+@end itemize
+
+@heading UI messages
+
+UI messages are displayed via calls to @code{gettext()}. 
+
+
+@heading URLs
+
+URLs are read on the command-line and subject to normal form
+conversion. Each component of a URL is then subject to a different
+further normalization or conversion:
+
+@table @asis
+
+@item Host names 
+Split at '.', each component subject to IDNA encoding, rejoined.
+
+@item Path components in HTTP URL
+All ASCII control codes (@code{0x0..0x1F} and @code{0x7F}) and code
+@code{0x20} (ASCII SP) are prohibited; 10 reserved ";/?:@@&=+$,"
+characters and all other UTF-8 codes outside the unreserved class of
+72 chars (62 alphanum, 9 mark "-_.!~*'()" and one escape "%") are
+escaped into (%xx) hex form. Behavior roughly follows RFC 2396.
+
+@item Email addresses and NNTP group names
+Split at '.' and '@@', each component subject to IDNA encoding, and
+rejoined. Behavior roughly follows suggested procedure in
+draft-faerber-i18n-email-netnews-names-00.txt.
+
+@end table
+
+After these processing stages, URLs are stored internally as ASCII.
+The invariant is that a URL inside monotone contains only the 72
+non-reserved bytes and the 3 reserved bytes "/@@." described in RFC
+2396.
+
+@heading Cert names
+
+Read on the command line and subject to normal form conversion and
+IDNA encoding as a single component. The invariant is that a cert name
+inside monotone is a single LDH ASCII string.
+
+@heading Cert values
+
+Cert values may be either text or binary, depending on the return
+value of the hook @code{cert_is_binary}. If binary, the cert value is
+never printed to the screen (the literal string "<binary>" is
+displayed, instead), and is never subjected to line ending or
+character conversion. If text, the cert value is subject to normal
+form conversion, as well as having all UTF-8 codes corresponding to
+ASCII control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in
+the normal form, except @code{0x0A} (ASCII LF).
+
+@heading Key names
+
+Read on the command line and subject to normal form conversion and
+IDNA encoding as an email address (split and joined at '.' and '@@'
+characters). The invariant is that a key name inside monotone contains
+only LDH, '.' and '@@' characters.
+
+@heading Packets
+
+Packets are 7-bit ASCII. The characters permitted in packets are
+the union of these character sets:
+
+@itemize
+@item
+The 65 characters of base64 encoding (64 coding + "=" pad).
+@item
+The 16 characters of hex encoding.
+@item
+LDH, '@@' and '.' characters, as required for key and cert names.
+@item
+'[' and ']', the packet delimiters.
+@item
+ASCII codes 0x0D (CR), 0x0A (LF), 0x09 (HT), and 0x20 (SP). 
+@end itemize
+
+@heading Explicit rename certs, @file{MT/work} and @file{.mt-attrs}
+
+Incompatible change: these formats were changed, incompatibly, from
+earlier versions of monotone which used 0x20 (ASCII SP) as a
+delimiter. The files now use 0x0A (ASCII LF) as a delimiter, to permit
+0x20 in filenames.
 
 
 @node    Reserved Certs

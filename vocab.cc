@@ -7,6 +7,7 @@
 #include <boost/filesystem/path.hpp>
 
 #include "constants.hh"
+#include "file_io.hh"
 #include "network.hh"
 #include "sanity.hh"
 #include "url.hh"
@@ -126,7 +127,7 @@ static inline void verify(local_path & val)
   boost::filesystem::path p;
   try 
     {
-      p = boost::filesystem::path(val());
+      p = mkpath(val());
     }
   catch (std::runtime_error &e)
     {
@@ -146,7 +147,14 @@ static inline void verify(local_path & val)
 
       string::size_type pos = val().find_first_of(constants::illegal_path_bytes);
       N(pos == string::npos,
-	F("bad character '%c' in path component '%s' in '%s'") % *i % val);
+	F("bad character '%d' in path component '%s' of '%s'") 
+	% static_cast<int>(i->at(pos)) % *i % val);
+
+      string s = val();
+      for (string::const_iterator j = s.begin(); j != s.end(); ++j)
+      N(*j != '\0',
+	F("null byte in path component '%s' of '%s'") % *i % val);
+	
     }
   
   val.ok = true;
@@ -264,9 +272,11 @@ static void test_file_path_verification()
 			     "foo/../../escape",
 			     "foo//nonsense",
 			     "/rooted",
+#ifdef _WIN32
 			     "c:\\windows\\rooted",
 			     "c:/windows/rooted",
 			     "c:thing",
+#endif
 			     0 };
   
   for (char const ** c = baddies; *c; ++c)

@@ -1,3 +1,12 @@
+2003-12-30  graydon hoare  <graydon@pobox.com>
+
+	* file_io.hh, file_io.cc (mkpath): New function.
+	* commands.cc, database.cc, diff_patch.cc, file_io.cc, 
+	lua.cc, vocab.cc, work.cc: Use it.
+	* constants.cc (illegal_path_bytes_arr): Remove leading null.
+	* monotone.texi: Include i18n docs.
+	* tests/t_i18n_file.at: Check colon in filename.
+
 2003-12-29  graydon hoare  <graydon@pobox.com>
 
 	* file_io.cc: Localize names before touching fs.

@@ -201,13 +201,13 @@ static void ensure_bookdir()
 
 static void get_manifest_path(local_path & m_path)
 {
-  m_path = (fs::path(book_keeping_dir) / fs::path(manifest_file_name)).string();
+  m_path = (mkpath(book_keeping_dir) / mkpath(manifest_file_name)).string();
   L(F("manifest path is %s\n") % m_path);
 }
 
 static void get_work_path(local_path & w_path)
 {
-  w_path = (fs::path(book_keeping_dir) / fs::path(work_file_name)).string();
+  w_path = (mkpath(book_keeping_dir) / mkpath(work_file_name)).string();
   L(F("work path is %s\n") % w_path);
 }
 
@@ -2638,7 +2638,7 @@ CMD(rcs_import, "rcs", "RCSFILE...", "import all versions in RCS files")
   for (vector<utf8>::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
-      import_rcs_file(fs::path((*i)()), app.db);
+      import_rcs_file(mkpath((*i)()), app.db);
     }
   guard.commit();
 }
@@ -2649,7 +2649,7 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
   if (args.size() != 1)
     throw usage(name);
 
-  import_cvs_repo(fs::path(idx(args, 0)()), app);
+  import_cvs_repo(mkpath(idx(args, 0)()), app);
 }
 
 CMD(debug, "debug", "SQL", "issue SQL queries directly (dangerous)")

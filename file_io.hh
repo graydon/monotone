@@ -36,6 +36,9 @@
 // low level we can't mostly know whether what's being asked for is legal.
 
 void save_initial_path();
+
+fs::path mkpath(std::string const & s);
+
 std::string get_homedir();
 std::string absolutify(std::string const & path);
 std::string tilde_expand(std::string const & path);

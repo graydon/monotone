@@ -241,7 +241,7 @@ int cpp_main(int argc, char ** argv)
       for (vector<string>::const_iterator i = extra_rcfiles.begin();
 	   i != extra_rcfiles.end(); ++i)
 	{
-	  app.lua.add_rcfile(fs::path(*i));
+	  app.lua.add_rcfile(mkpath(*i));
 	}
 
       // main options processed, now invoke the 
