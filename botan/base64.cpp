@@ -116,8 +116,9 @@ void Base64_Encoder::end_msg()
       do_output(out, 4);
       }
 
-   if(counter && line_length)
-      send('\n');
+   // XXX: monotone requires a terminating newline in all cases,
+   // for compatibility with cryptopp.
+   send('\n');
 
    counter = position = 0;
    }

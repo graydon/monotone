@@ -1,5 +1,10 @@
 2005-1-1  Matt Johnston  <matt@ucc.asn.au>
 
+        * botan/base64.cpp: Include a terminating newline in all cases for
+        compatibility with cryptopp
+
+2005-1-1  Matt Johnston  <matt@ucc.asn.au>
+
 	* keys.cc: fix merge issues propagating 0.16 to net.venge.monotone.botan
 	* botan/config.h: add it
 	* botan/{aes,des,dh,dsa,elgamal,lion,lubyrack,nr,rw,openpgp}*: removed
