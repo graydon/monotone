@@ -93,6 +93,56 @@
 	* change_set.cc: Remove tabs.
 	* diff_patch.cc: Likewise.
 
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_add_patch_drop_add.at: New test.
+	* tests/t_merge2_add_drop_add.at: New test.
+	* tests/t_patch_drop_add.at: New test.
+	* tests/t_patch_vs_drop_add.at: New test.
+	* testsuite.at: Add them.
+	
+	* tests/t_add_drop_add.at: Fix to test what it was supposed to.
+	
+	* tests/t_merge2_data.at: Remove extraneous [stdout].
+
+	* tests/t_merge_add_del.at: Fix description.
+	XFAIL it.
+
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_add_drop_add.at: New test.
+	* testsuite.at: Add it.
+
+2004-12-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_merge_add_del: Shorten name for better display.
+
+2004-12-05  Matt Johnston <matt@ucc.asn.au>
+
+	* tests/t_merge_add_del: added a new test for merging
+	  branches where a file is added then removed.
+	* testsuite.at: added the new test
+	* configure.ac: bumped the prequisite version to 2.58 since
+	  some tests use AT_XFAIL_IF
+
+2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (merge_deltas): Call correct variant of
+	try_to_merge_files depending on whether ancestor is available.
+	* diff_patch.cc (try_to_merge_files -- merge3 version): Add
+	assertions about ids.
+	(try_to_merge_files -- merge2 version): Likewise.
+
+	* testsuite.at: Add a trivial working merge2 hook.
+	* tests/t_related_merge2_data.at: Update to use.
+	Mark as expected to PASS.
+	* tests/t_merge2_data.at: Likewise.
+
+2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Remove tabs.
+	* diff_patch.cc: Likewise.
+
 2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
 
 	* keys.cc (get_passphrase): Simplify arguments.

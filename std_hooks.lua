@@ -217,7 +217,7 @@ function merge2(left, right)
          os.execute(cmd)
          data = read_contents_of_file(outfile)
       else
-         io.write("no external 2-way merge command found")
+         io.write("no external 2-way merge command found\n")
       end
    end
    
@@ -260,7 +260,7 @@ function merge3(ancestor, left, right)
          os.execute(cmd)
          data = read_contents_of_file(outfile)
       else
-         io.write("no external 3-way merge command found")
+         io.write("no external 3-way merge command found\n")
       end
    end
    

@@ -125,7 +125,7 @@ namespace commands
     }
 
     return cmd;
-  }
+
 
   void explain_usage(string const & cmd, ostream & out)
   {

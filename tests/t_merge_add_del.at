@@ -1,6 +1,9 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([merging "add a" with "add a, drop a"])
+AT_SETUP([merging <add a> with <add a, drop a>])
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
 
 MONOTONE_SETUP
 
@@ -21,9 +24,6 @@ MONOTONE_SETUP
 
 # C is "add bar", E is "drop bar", other revisions involve non-conflicting
 # file additions or merges.
-
-# This test is a bug report.
-AT_XFAIL_IF(true)
 
 AT_DATA(foo, [extra blah blah foo
 ])
