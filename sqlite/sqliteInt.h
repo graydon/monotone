@@ -137,8 +137,9 @@ typedef unsigned INTPTR_TYPE uptr; /* Big enough to hold a pointer */
 ** original pages plus 16448 overflow pages each holding 1020 bytes of
 ** data.
 */
-#define MAX_BYTES_PER_ROW  1048576
-/* #define MAX_BYTES_PER_ROW 16777198 */
+/* #define MAX_BYTES_PER_ROW  1048576 */
+
+#define MAX_BYTES_PER_ROW 16777198
 
 /*
 ** If memory allocation problems are found, recompile with

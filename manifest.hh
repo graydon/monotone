@@ -10,6 +10,7 @@
 #include <set>
 #include <string>
 
+#include "quick_alloc.hh"
 #include "vocab.hh"
 
 // this file defines the class of manifest_map objects, and various
@@ -39,8 +40,11 @@
 
 typedef std::set<file_path> path_set;
 extern std::string const manifest_file_name;
-typedef std::map<file_path, file_id> manifest_map;
 typedef std::pair<file_path, file_id> entry;
+typedef std::pair<file_path const, file_id> manifest_map_entry;
+typedef std::map<file_path, file_id, 
+		 std::less<file_path>, 
+		 QA(manifest_map_entry) > manifest_map;
 
 // this helper exists solely to save us writing ->first and ->second all
 // over the place when dealing with entries / members of manifest_maps. they're

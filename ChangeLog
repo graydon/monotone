@@ -1,3 +1,12 @@
+2003-11-09  graydon hoare  <graydon@pobox.com>
+
+	* quick_alloc.hh: New file.
+	* Makefile.am: Add it.
+	* cycle_detector.hh: Rewrite.
+	* manifest.hh: Use quick_alloc.
+	* vocab.cc: Relax path name requirements a bit.
+	* sqlite/sqliteInt.h: Up size of row to 16mb.
+
 2003-11-02  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (post): Post everything if no URL given; don't base

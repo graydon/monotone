@@ -79,20 +79,10 @@ static inline void verify(local_path & val)
 
       N(boost::filesystem::generic_name(*i),
 	F("non-generic path component '%s' in '%s'") % *i % val);
-      
-      // we're going to make a small exception here for files ending in ",v", since
-      // those are RCS files and we want to walk CVS trees to import them. FIXME this
-      // is a kludge I am not happy about.
-      {
-	string s = *i;
-	if ( s.size() > 2 &&
-	     s.substr(s.size() - 2) == string(",v") &&	     
-	     boost::filesystem::posix_name(s.substr(0, s.size() - 2)))
-	  continue;
-      }
-      
-      N(boost::filesystem::posix_name(*i),
-	F("non-posix file path component '%s' in '%s'") % *i % val);
+
+      N(i->find_first_of(" ") == string::npos,
+	F("prohibited whitespace character found in component '%s' of '%s'") % *i % val);
+
     }
   
   val.ok = true;
@@ -234,7 +224,7 @@ static void test_file_path_verification()
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path p(*c), informative_failure);      
   
-  char const * bad = "!@#$%^&*()+=[]{};:?,<>~`'| \\";
+  char const * bad = "\"*:?<>| \t\r\n\v\f\a\b\\";
   char badboy[] = "bad";
   for (char const * c = bad; *c; ++c)
     {

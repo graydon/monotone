@@ -15,7 +15,7 @@ MOST_SOURCES =								\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
          randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
          lcs.hh network.hh http_tasks.hh constants.hh ui.hh		\
-         schema_migration.hh smtp_tasks.hh
+         schema_migration.hh smtp_tasks.hh quick_alloc.hh
 
 CRYPTOPP_SOURCES = \
         cryptopp/algebra.cpp cryptopp/algparam.cpp cryptopp/arc4.cpp \
