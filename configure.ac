@@ -31,9 +31,12 @@ AC_LANG(C++)
 AM_PROG_CC_C_O
 
 # intl / gettext
+# the AM_GNU_GETTEXT macro test won't compile with g++
+AC_LANG_PUSH(C)
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.12.1)
 AM_ICONV
+AC_LANG_POP()
 
 # Checks for idna stuff
 AC_HEADER_STDC

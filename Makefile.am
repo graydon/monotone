@@ -164,8 +164,8 @@ else
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
 endif
 
-monotone_LDADD += libplatform.a
-unit_tests_LDADD += libplatform.a
+monotone_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
+unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)

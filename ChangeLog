@@ -1,3 +1,9 @@
+2004-12-09  Matt Johnston  <matt@ucc.asn.au>
+
+        * configure.ac,Makefile.am: Fix iconv and intl
+        handling so that the libraries are used (required for OS X).
+
+
 2004-12-09  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (BUILT_SOURCES_NOCLEAN): add 'S'.
