@@ -1,10 +1,23 @@
 2005-04-03  Richard Levitte  <richard@levitte.org>
 
+	* popt/poptint.h (struct poptContext_s): Add field to keep track
+	  of the number of allocated leftovers elements.
+	* popt/popt.c (poptGetContext): Initialise it and use it.
+	  (poptGetNextOpt): Use it and realloc leftovers when needed.
+	  Also make sure that the added element is a dynamically allocated
+	  copy of the original string, or we may end up with a dangling
+	  pointer.  These are huge bugs in popt 1.7, when using
+	  poptStuffArgs().
+	  (poptFreeContext): Free the leftovers elements when freeing
+	  leftovers.
+	  (poptSaveLong, poptSaveInt): Apply a small patch from Debian.
+
 	* popt/CHANGES, popt/COPYING, popt/README, popt/findme.c,
 	  popt/findme.h, popt/popt.c, popt/poptconfig.c, popt/popt.h,
 	  popt/popthelp.c, popt/poptint.h, popt/poptparse.c,
 	  popt/system.h, popt/test1.c, popt/test2.c, popt/test3.c: Bundle
 	  popt 1.7.
+	* configure.ac, Makefile.am: Adapt.
 
 2005-04-01  Richard Levitte  <richard@levitte.org>
 

@@ -168,7 +168,8 @@ poptContext poptGetContext(const char * name, int argc, const char ** argv,
     if (!(flags & POPT_CONTEXT_KEEP_FIRST))
 	con->os->next = 1;			/* skip argv[0] */
 
-    con->leftovers = calloc( (argc + 1), sizeof(*con->leftovers) );
+    con->allocLeftovers = argc + 1;
+    con->leftovers = calloc( con->allocLeftovers, sizeof(*con->leftovers) );
     /*@-dependenttrans -assignexpose@*/	/* FIX: W2DO? */
     con->options = options;
     /*@=dependenttrans =assignexpose@*/
@@ -623,8 +624,13 @@ static void poptStripArg(/*@special@*/ poptContext con, int which)
 
 int poptSaveLong(long * arg, int argInfo, long aLong)
 {
+#if 0
     /* XXX Check alignment, may fail on funky platforms. */
     if (arg == NULL || (((unsigned long)arg) & (sizeof(*arg)-1)))
+#else
+    /* It does! pm@debian.org */
+    if (arg == NULL)
+#endif
 	return POPT_ERROR_NULLARG;
 
     if (argInfo & POPT_ARGFLAG_NOT)
@@ -652,8 +658,13 @@ int poptSaveLong(long * arg, int argInfo, long aLong)
 int poptSaveInt(/*@null@*/ int * arg, int argInfo, long aLong)
 {
     /* XXX Check alignment, may fail on funky platforms. */
+#if 0
+    /* XXX Check alignment, may fail on funky platforms. */
     if (arg == NULL || (((unsigned long)arg) & (sizeof(*arg)-1)))
-	return POPT_ERROR_NULLARG;
+#else
+    /* It does! pm@debian.org */
+    if (arg == NULL)
+#endif
 
     if (argInfo & POPT_ARGFLAG_NOT)
 	aLong = ~aLong;
@@ -732,7 +743,19 @@ int poptGetNextOpt(poptContext con)
 		    return 0;
 		}
 		if (con->leftovers != NULL)	/* XXX can't happen */
-		    con->leftovers[con->numLeftovers++] = origOptString;
+		    /* One might think we can never overflow the leftovers
+		       array.  Actually, that's true, as long as you don't
+		       use poptStuffArgs()... */
+		    if ((con->numLeftovers + 1) >= (con->allocLeftovers)) {
+			con->allocLeftovers += 10;
+			con->leftovers =
+			    realloc(con->leftovers,
+				    sizeof(*con->leftovers) * con->allocLeftovers);
+		    }
+		    con->leftovers[con->numLeftovers++]
+			= xstrdup(origOptString); /* so a free of a stuffed
+						     argv doesn't give us a
+						     dangling pointer */
 		continue;
 	    }
 
@@ -1066,7 +1089,11 @@ poptContext poptFreeContext(poptContext con)
     }
     con->execs = _free(con->execs);
 
+    for (i = 0; i < con->numLeftovers; i++) {
+	con->leftovers[i] = _free(&con->leftovers[i]);
+    }
     con->leftovers = _free(con->leftovers);
+
     con->finalArgv = _free(con->finalArgv);
     con->appName = _free(con->appName);
     con->otherHelp = _free(con->otherHelp);

@@ -65,6 +65,7 @@ struct poptContext_s {
 /*@owned@*/ /*@null@*/
     const char ** leftovers;
     int numLeftovers;
+    int allocLeftovers;
     int nextLeftover;
 /*@keep@*/
     const struct poptOption * options;
