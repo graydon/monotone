@@ -28,6 +28,7 @@
 	* AUTHORS: Rename Netxx back to netxx. Really, look in 
 	the manifest; it's been renamed!
 	* configure.ac: Remove prg_exec_monitor checks.
+
 2004-05-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc: Include boost/filesystem/path.hpp,
