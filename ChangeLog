@@ -1,3 +1,8 @@
+2004-07-05  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc (operator<): Fix wrong ordering of 
+	fields.
+
 2004-06-07  graydon hoare  <graydon@pobox.com>
 
 	* cryptopp/algebra.cpp:

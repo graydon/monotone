@@ -208,11 +208,11 @@ cert::operator<(cert const & other) const
 {
   return (ident < other.ident)
     || ((ident == other.ident) && name < other.name)
-    || (((ident == other.ident) && name < other.name) 
+    || (((ident == other.ident) && name == other.name) 
 	&& value < other.value)    
-    || ((((ident == other.ident) && name < other.name) 
+    || ((((ident == other.ident) && name == other.name) 
 	 && value == other.value) && key < other.key)
-    || (((((ident == other.ident) && name < other.name) 
+    || (((((ident == other.ident) && name == other.name) 
 	  && value == other.value) && key == other.key) && sig < other.sig);
 }
 
