@@ -812,6 +812,128 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
   guard.commit();
 }
 
+// The changes_summary structure holds a list all of files and directories
+// affected in a revision, and is useful in the 'log' command to print this
+// information easily.  It has to be constructed from all change_set objects
+// that belong to a revision.
+struct
+changes_summary
+{
+  bool empty;
+  change_set::path_rearrangement rearrangement;
+  std::set<file_path> modified_files;
+
+  changes_summary(void);
+  void add_change_set(change_set const & cs);
+  void print(std::ostream & os, size_t max_cols) const;
+};
+
+changes_summary::changes_summary(void) : empty(true)
+{
+}
+
+void
+changes_summary::add_change_set(change_set const & cs)
+{
+  if (cs.empty())
+    return;
+  empty = false;
+
+  change_set::path_rearrangement const & pr = cs.rearrangement;
+
+  for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
+       i != pr.deleted_files.end(); i++)
+    rearrangement.deleted_files.insert(*i);
+
+  for (std::set<file_path>::const_iterator i = pr.deleted_dirs.begin();
+       i != pr.deleted_dirs.end(); i++)
+    rearrangement.deleted_dirs.insert(*i);
+
+  for (std::map<file_path, file_path>::const_iterator
+       i = pr.renamed_files.begin(); i != pr.renamed_files.end(); i++)
+    rearrangement.renamed_files.insert(*i);
+
+  for (std::map<file_path, file_path>::const_iterator
+       i = pr.renamed_dirs.begin(); i != pr.renamed_dirs.end(); i++)
+    rearrangement.renamed_dirs.insert(*i);
+
+  for (std::set<file_path>::const_iterator i = pr.added_files.begin();
+       i != pr.added_files.end(); i++)
+    rearrangement.added_files.insert(*i);
+
+  for (change_set::delta_map::const_iterator i = cs.deltas.begin();
+       i != cs.deltas.end(); i++)
+    {
+      if (pr.added_files.find(i->first()) == pr.added_files.end())
+        modified_files.insert(i->first());
+    }
+}
+
+void
+changes_summary::print(std::ostream & os, size_t max_cols) const
+{
+#define PRINT_INDENTED_SET(setname) \
+  size_t cols = 8; \
+  os << "       "; \
+  for (std::set<file_path>::const_iterator i = setname.begin(); \
+       i != setname.end(); i++) \
+    { \
+      const std::string str = (*i)(); \
+      if (cols > 8 && cols + str.size() + 1 >= max_cols) \
+        { \
+          cols = 8; \
+          os << endl << "       "; \
+        } \
+      os << " " << str; \
+      cols += str.size() + 1; \
+    } \
+  os << endl;
+
+  if (! rearrangement.added_files.empty())
+    {
+      os << "Added files:" << endl;
+      PRINT_INDENTED_SET(rearrangement.added_files)
+    }
+
+  if (! rearrangement.renamed_files.empty())
+    {
+      os << "Renamed files:" << endl;
+      for (std::map<file_path, file_path>::const_iterator
+           i = rearrangement.renamed_files.begin();
+           i != rearrangement.renamed_files.end(); i++)
+        os << "        " << i->first << " to " << i->second << endl;
+    }
+
+  if (! rearrangement.renamed_dirs.empty())
+    {
+      os << "Renamed directories:" << endl;
+      for (std::map<file_path, file_path>::const_iterator
+           i = rearrangement.renamed_dirs.begin();
+           i != rearrangement.renamed_dirs.end(); i++)
+        os << "        " << i->first << " to " << i->second << endl;
+    }
+
+  if (! rearrangement.deleted_files.empty())
+    {
+      os << "Deleted files:" << endl;
+      PRINT_INDENTED_SET(rearrangement.deleted_files)
+    }
+
+  if (! rearrangement.deleted_dirs.empty())
+    {
+      os << "Deleted directories:" << endl;
+      PRINT_INDENTED_SET(rearrangement.deleted_dirs)
+    }
+
+  if (! modified_files.empty())
+    {
+      os << "Modified files:" << endl;
+      PRINT_INDENTED_SET(modified_files)
+    }
+
+#undef PRINT_INDENTED_SET
+}
+
 CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
 {
   if (args.size() != 1)
@@ -3266,6 +3388,8 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
           seen.insert(rid);
 
           app.db.get_revision(rid, rev);
+
+          changes_summary csum;
           
           for (edge_map::const_iterator e = rev.edges.begin();
                e != rev.edges.end(); ++e)
@@ -3283,6 +3407,8 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
                     }
                 }
               next_frontier.insert(std::make_pair(file, edge_old_revision(e)));
+
+              csum.add_change_set(cs);
             }
           
           if (print_this)
@@ -3322,6 +3448,13 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
                   decode_base64(j->inner().value, tv);
                   cout << "Tag: " << tv << endl;
                 }         
+            }
+
+          if (! csum.empty)
+            {
+              cout << endl;
+              csum.print(cout, 70);
+              cout << endl;
             }
 
           app.db.get_revision_certs(rid, changelog_name, tmp);
