@@ -1273,8 +1273,6 @@ void simple_merge_provider::record_merge(file_id const & left_ident,
   diff(left_data.inner(), merged_data.inner(), merge_delta);  
   packet_db_writer dbw(app);
   dbw.consume_file_delta (left_ident, merged_ident, file_delta(merge_delta));
-  cert_file_ancestor(left_ident, merged_ident, app, dbw);
-  cert_file_ancestor(right_ident, merged_ident, app, dbw);
   guard.commit();
 }
 
@@ -1300,41 +1298,6 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
       return true;      
     }  
 
-  // check for an existing merge, use it if available
-  {
-    vector< file<cert> > left_edges, right_edges;
-    set< base64<cert_value> > left_children, right_children, common_children;
-    app.db.get_file_certs(left.ident(), cert_name(ancestor_cert_name), left_edges);
-    app.db.get_file_certs(right.ident(), cert_name(ancestor_cert_name), left_edges);
-    for (vector< file<cert> >::const_iterator i = left_edges.begin();
-	 i != left_edges.end(); ++i)
-      left_children.insert(i->inner().value);
-
-    for (vector< file<cert> >::const_iterator i = right_edges.begin();
-	 i != right_edges.end(); ++i)
-      right_children.insert(i->inner().value);
-
-    set_intersection(left_children.begin(), left_children.end(),
-		     right_children.begin(), right_children.end(),
-		     inserter(common_children, common_children.begin()));
-      
-    L(F("existing merges: %s <-> %s, %d found\n")
-      % left.ident() % right.ident() % common_children.size());
-    
-    if (common_children.size() == 1)
-      {
-	cert_value unpacked;
-	decode_base64(*common_children.begin(), unpacked);
-	file_id ident = file_id(unpacked());
-	merged.ident(ident);
-	merged.path(left.path());
-	L(F("reusing existing merge\n"));
-	return true;
-      }
-    L(F("no reusable merge\n"));
-  }
-
-  // no existing merges, we'll have to do it ourselves.
   file_data left_data, right_data, ancestor_data;
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
   vector<string> left_lines, ancestor_lines, right_lines, merged_lines;

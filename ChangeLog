@@ -1,5 +1,9 @@
 2004-05-09  graydon hoare  <graydon@pobox.com>
 
+	* diff_patch.cc: Remove recording of file merge ancestry.
+
+2004-05-09  graydon hoare  <graydon@pobox.com>
+
 	* commands.cc (ls_missing): Modify to account for work.
 
 2004-05-09  graydon hoare  <graydon@pobox.com>
