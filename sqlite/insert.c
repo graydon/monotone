@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle INSERT statements in SQLite.
 **
-** $Id: insert.c,v 1.1 2003/08/05 23:03:07 graydon Exp $
+** $Id: insert.c,v 1.90 2003/12/06 21:43:56 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -688,7 +688,7 @@ void sqliteGenerateConstraintChecks(
         char *zMsg = 0;
         sqliteVdbeAddOp(v, OP_Halt, SQLITE_CONSTRAINT, onError);
         sqliteSetString(&zMsg, pTab->zName, ".", pTab->aCol[i].zName,
-                        " may not be NULL", 0);
+                        " may not be NULL", (char*)0);
         sqliteVdbeChangeP3(v, -1, zMsg, P3_DYNAMIC);
         break;
       }
@@ -748,7 +748,7 @@ void sqliteGenerateConstraintChecks(
       case OE_Replace: {
         sqliteGenerateRowIndexDelete(pParse->db, v, pTab, base, 0);
         if( isUpdate ){
-          sqliteVdbeAddOp(v, OP_Dup, nCol+extra+1+hasTwoRecnos, 1);
+          sqliteVdbeAddOp(v, OP_Dup, nCol+hasTwoRecnos, 1);
           sqliteVdbeAddOp(v, OP_MoveTo, base, 0);
         }
         seenReplace = 1;
@@ -817,8 +817,30 @@ void sqliteGenerateConstraintChecks(
       case OE_Rollback:
       case OE_Abort:
       case OE_Fail: {
+        int j, n1, n2;
+        char zErrMsg[200];
+        strcpy(zErrMsg, pIdx->nColumn>1 ? "columns " : "column ");
+        n1 = strlen(zErrMsg);
+        for(j=0; j<pIdx->nColumn && n1<sizeof(zErrMsg)-30; j++){
+          char *zCol = pTab->aCol[pIdx->aiColumn[j]].zName;
+          n2 = strlen(zCol);
+          if( j>0 ){
+            strcpy(&zErrMsg[n1], ", ");
+            n1 += 2;
+          }
+          if( n1+n2>sizeof(zErrMsg)-30 ){
+            strcpy(&zErrMsg[n1], "...");
+            n1 += 3;
+            break;
+          }else{
+            strcpy(&zErrMsg[n1], zCol);
+            n1 += n2;
+          }
+        }
+        strcpy(&zErrMsg[n1], 
+            pIdx->nColumn>1 ? " are not unique" : " is not unique");
         sqliteVdbeAddOp(v, OP_Halt, SQLITE_CONSTRAINT, onError);
-        sqliteVdbeChangeP3(v, -1, "uniqueness constraint failed", P3_STATIC);
+        sqliteVdbeChangeP3(v, -1, sqliteStrDup(zErrMsg), P3_DYNAMIC);
         break;
       }
       case OE_Ignore: {

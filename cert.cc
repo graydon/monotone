@@ -814,8 +814,13 @@ expand_dominators(map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents
 	    dominators.insert(make_pair(parent, 
 					shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>())));
 	  shared_ptr< dynamic_bitset<> > pbits = dominators[parent];
+
 	  if (bits->size() > pbits->size())
 	    pbits->resize(bits->size());
+
+	  if (pbits->size() > bits->size())
+	    bits->resize(pbits->size());
+
 	  if (first)
 	    {
 	      intersection = (*pbits);
@@ -873,11 +878,15 @@ expand_ancestors(map< unsigned long, shared_ptr< dynamic_bitset<> > > & parents,
 	    ancestors.insert(make_pair(parent, 
 					shared_ptr< dynamic_bitset<> >(new dynamic_bitset<>())));
 	  shared_ptr< dynamic_bitset<> > pbits = ancestors[parent];
+
 	  if (bits->size() > pbits->size())
 	    pbits->resize(bits->size());
+
+	  if (pbits->size() > bits->size())
+	    bits->resize(pbits->size());
+
 	  (*bits) |= (*pbits);
 	}
-
       if (*bits != saved)
 	something_changed = true;
     }
@@ -912,17 +921,17 @@ find_intersecting_node(dynamic_bitset<> & fst,
   return false;
 }
 
-// static void
-// dump_bitset_map(string const & hdr,
-// 		map< unsigned long, shared_ptr< dynamic_bitset<> > > const & mm)
-// {
-//   L(F("dumping [%s] (%d entries)\n") % hdr % mm.size());
-//   for (map< unsigned long, shared_ptr< dynamic_bitset<> > >::const_iterator i = mm.begin();
-//        i != mm.end(); ++i)
-//     {
-//       L(F("dump [%s]: %d -> %s\n") % hdr % i->first % (*(i->second)));
-//     }
-// }
+//  static void
+//  dump_bitset_map(string const & hdr,
+//  		map< unsigned long, shared_ptr< dynamic_bitset<> > > const & mm)
+//  {
+//    L(F("dumping [%s] (%d entries)\n") % hdr % mm.size());
+//    for (map< unsigned long, shared_ptr< dynamic_bitset<> > >::const_iterator i = mm.begin();
+//         i != mm.end(); ++i)
+//      {
+//        L(F("dump [%s]: %d -> %s\n") % hdr % i->first % (*(i->second)));
+//      }
+//  }
 
 bool 
 find_common_ancestor(manifest_id const & left,
@@ -969,9 +978,9 @@ find_common_ancestor(manifest_id const & left,
 	  return true;
 	}
     }
-  //   dump_bitset_map("ancestors", ancestors);
-  //   dump_bitset_map("dominators", dominators);
-  //   dump_bitset_map("parents", parents);
+//      dump_bitset_map("ancestors", ancestors);
+//      dump_bitset_map("dominators", dominators);
+//      dump_bitset_map("parents", parents);
   return false;
 }
 

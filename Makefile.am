@@ -124,15 +124,16 @@ BOOST_SANDBOX_SOURCES = \
 
 SQLITE_SOURCES = \
         sqlite/attach.c sqlite/auth.c sqlite/btree.c sqlite/btree_rb.c \
-        sqlite/build.c sqlite/copy.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
+        sqlite/build.c sqlite/copy.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
         sqlite/hash.c sqlite/insert.c sqlite/main.c sqlite/opcodes.c sqlite/os.c \
         sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c \
         sqlite/random.c sqlite/select.c sqlite/table.c sqlite/tokenize.c \
         sqlite/trigger.c sqlite/update.c sqlite/util.c sqlite/vacuum.c \
-        sqlite/vdbe.c sqlite/where.c \
+        sqlite/vdbe.c sqlite/vdbeaux.c sqlite/where.c \
 	\
         sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/parse.h sqlite/sqlite.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/pager.h
+        sqlite/parse.h sqlite/sqlite.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
+	sqlite/pager.h
 
 LUA_SOURCES = \
 	lua/lapi.c lua/lapi.h lua/lauxlib.c lua/lauxlib.h lua/lbaselib.c \

@@ -81,3678 +81,590 @@ struct TrigEvent { int a; IdList * b; };
 */
 /*  */
 #define YYCODETYPE unsigned char
-#define YYNOCODE 219
+#define YYNOCODE 220
 #define YYACTIONTYPE unsigned short int
 #define sqliteParserTOKENTYPE Token
 typedef union {
   sqliteParserTOKENTYPE yy0;
-  Select* yy11;
-  int yy52;
-  ExprList* yy62;
-  IdList* yy92;
-  Token yy210;
-  struct TrigEvent yy234;
-  Expr * yy270;
-  struct {int value; int mask;} yy279;
-  struct LimitVal yy280;
-  Expr* yy334;
-  SrcList* yy335;
-  TriggerStep * yy347;
-  int yy437;
+  struct LimitVal yy22;
+  Expr* yy164;
+  Expr * yy206;
+  ExprList* yy232;
+  IdList* yy246;
+  SrcList* yy283;
+  struct {int value; int mask;} yy299;
+  Token yy318;
+  TriggerStep * yy353;
+  Select* yy375;
+  struct TrigEvent yy414;
+  int yy424;
+  int yy439;
 } YYMINORTYPE;
 #define YYSTACKDEPTH 100
 #define sqliteParserARG_SDECL Parse *pParse;
 #define sqliteParserARG_PDECL ,Parse *pParse
 #define sqliteParserARG_FETCH Parse *pParse = yypParser->pParse
 #define sqliteParserARG_STORE yypParser->pParse = pParse
-#define YYNSTATE 555
-#define YYNRULE 287
+#define YYNSTATE 561
+#define YYNRULE 291
 #define YYERRORSYMBOL 155
-#define YYERRSYMDT yy437
+#define YYERRSYMDT yy439
 #define YYFALLBACK 1
 #define YY_NO_ACTION      (YYNSTATE+YYNRULE+2)
 #define YY_ACCEPT_ACTION  (YYNSTATE+YYNRULE+1)
 #define YY_ERROR_ACTION   (YYNSTATE+YYNRULE)
-/* Next is the action table.  Each entry in this table contains
-**
-**  +  An integer which is the number representing the look-ahead
-**     token
-**
-**  +  An integer indicating what action to take.  Number (N) between
-**     0 and YYNSTATE-1 mean shift the look-ahead and go to state N.
-**     Numbers between YYNSTATE and YYNSTATE+YYNRULE-1 mean reduce by
-**     rule N-YYNSTATE.  Number YYNSTATE+YYNRULE means that a syntax
-**     error has occurred.  Number YYNSTATE+YYNRULE+1 means the parser
-**     accepts its input.
-**
-**  +  A pointer to the next entry with the same hash value.
-**
-** The action table is really a series of hash tables.  Each hash
-** table contains a number of entries which is a power of two.  The
-** "state" table (which follows) contains information about the starting
-** point and size of each hash table.
-*/
-struct yyActionEntry {
-  YYCODETYPE   lookahead;   /* The value of the look-ahead token */
-  YYCODETYPE   next;        /* Next entry + 1. Zero at end of collision chain */
-  YYACTIONTYPE action;      /* Action to take for this look-ahead */
-};
-typedef struct yyActionEntry yyActionEntry;
-static const yyActionEntry yyActionTable[] = {
-/* State 0 */
-  { 156,   0,   3}, /*  1:                explain shift  3 */
-  { 139,   0,   1}, /*  2:                cmdlist shift  1 */
-  { 170,   0, 843}, /*  3:                  input accept */
-  {  47,   0, 553}, /*  4:                EXPLAIN shift  553 */
-  { 154,   0, 554}, /*  5:                   ecmd shift  554 */
-  { 107,   4, 552}, /*  6:                   SEMI shift  552 */
-/* State 1 */
-  {   0,   0, 555}, /*  1:                      $ reduce 0 */
-  { 156,   0,   3}, /*  2:                explain shift  3 */
-  { 107,   4, 552}, /*  3:                   SEMI shift  552 */
-  {  47,   0, 553}, /*  4:                EXPLAIN shift  553 */
-  { 154,   0,   2}, /*  5:                   ecmd shift  2 */
-/* State 3 */
-  {  66,   0, 512}, /*  1:                 INSERT shift  512 */
-  {  28,   0, 515}, /*  2:                   COPY shift  515 */
-  {  24,   0,  23}, /*  3:                 COMMIT shift  23 */
-  {  29,   0, 388}, /*  4:                 CREATE shift  388 */
-  {   8,   0, 543}, /*  5:                 ATTACH shift  543 */
-  {  34,   0, 490}, /*  6:                 DELETE shift  490 */
-  { 138,   2,   6}, /*  7:                    cmd shift  6 */
-  {  95,   4, 526}, /*  8:                 PRAGMA shift  526 */
-  { 140,   5,   4}, /*  9:                   cmdx shift  4 */
-  { 185,   0,  69}, /* 10:              oneselect shift  69 */
-  {  10,   0,   7}, /* 11:                  BEGIN shift  7 */
-  {  37,   0, 549}, /* 12:                 DETACH shift  549 */
-  { 100,   6, 514}, /* 13:                REPLACE shift  514 */
-  { 123,   0, 495}, /* 14:                 UPDATE shift  495 */
-  { 102,   0,  27}, /* 15:               ROLLBACK shift  27 */
-  { 147,  12,  29}, /* 16:           create_table shift  29 */
-  { 126,   0, 524}, /* 17:                 VACUUM shift  524 */
-  {  40,   0, 478}, /* 18:                   DROP shift  478 */
-  { 106,  18,  73}, /* 19:                 SELECT shift  73 */
-  { 173,   0, 502}, /* 20:             insert_cmd shift  502 */
-  { 196,   0, 489}, /* 21:                 select shift  489 */
-  {  43,   0,  25}, /* 22:                    END shift  25 */
-/* State 4 */
-  { 107,   0,   5}, /*  1:                   SEMI shift  5 */
-/* State 6 */
-  { 107,   0, 560}, /*  1:                   SEMI reduce 5 */
-/* State 7 */
-  { 206,   0,   8}, /*  1:              trans_opt shift  8 */
-  { 117,   0,  18}, /*  2:            TRANSACTION shift  18 */
-/* State 8 */
-  {  90,   0,  10}, /*  1:                     ON shift  10 */
-  { 184,   0,   9}, /*  2:                 onconf shift  9 */
-  { 107,   0, 643}, /*  3:                   SEMI reduce 88 */
-/* State 9 */
-  { 107,   0, 563}, /*  1:                   SEMI reduce 8 */
-/* State 10 */
-  {  26,   0,  11}, /*  1:               CONFLICT shift  11 */
-/* State 11 */
-  { 102,   3,  13}, /*  1:               ROLLBACK shift  13 */
-  { 193,   4,  12}, /*  2:            resolvetype shift  12 */
-  {  60,   6,  16}, /*  3:                 IGNORE shift  16 */
-  {   1,   0,  14}, /*  4:                  ABORT shift  14 */
-  { 100,   0,  17}, /*  5:                REPLACE shift  17 */
-  {  48,   0,  15}, /*  6:                   FAIL shift  15 */
-/* State 18 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1,  19}, /*  2:                     nm shift  19 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 23 */
-  { 117,   0,  18}, /*  1:            TRANSACTION shift  18 */
-  { 107,   0, 564}, /*  2:                   SEMI reduce 9 */
-  { 206,   2,  24}, /*  3:              trans_opt shift  24 */
-/* State 24 */
-  { 107,   0, 567}, /*  1:                   SEMI reduce 12 */
-/* State 25 */
-  { 117,   0,  18}, /*  1:            TRANSACTION shift  18 */
-  { 107,   0, 564}, /*  2:                   SEMI reduce 9 */
-  { 206,   2,  26}, /*  3:              trans_opt shift  26 */
-/* State 26 */
-  { 107,   0, 568}, /*  1:                   SEMI reduce 13 */
-/* State 27 */
-  { 117,   0,  18}, /*  1:            TRANSACTION shift  18 */
-  { 107,   0, 564}, /*  2:                   SEMI reduce 9 */
-  { 206,   2,  28}, /*  3:              trans_opt shift  28 */
-/* State 28 */
-  { 107,   0, 569}, /*  1:                   SEMI reduce 14 */
-/* State 29 */
-  {   6,   0, 386}, /*  1:                     AS shift  386 */
-  { 148,   3,  30}, /*  2:      create_table_args shift  30 */
-  {  79,   0,  31}, /*  3:                     LP shift  31 */
-/* State 30 */
-  { 107,   0, 570}, /*  1:                   SEMI reduce 15 */
-/* State 31 */
-  {  59,   0,  20}, /*  1:                     ID shift  20 */
-  { 113,   0,  21}, /*  2:                 STRING shift  21 */
-  { 142,   0, 385}, /*  3:                 column shift  385 */
-  { 143,   1,  37}, /*  4:               columnid shift  37 */
-  { 144,   6,  32}, /*  5:             columnlist shift  32 */
-  {  74,   0,  22}, /*  6:                JOIN_KW shift  22 */
-  { 181,   0, 351}, /*  7:                     nm shift  351 */
-/* State 32 */
-  { 104,   0, 631}, /*  1:                     RP reduce 76 */
-  {  22,   0,  35}, /*  2:                  COMMA shift  35 */
-  { 146,   1,  33}, /*  3:           conslist_opt shift  33 */
-/* State 33 */
-  { 104,   0,  34}, /*  1:                     RP shift  34 */
-/* State 34 */
-  { 107,   0, 574}, /*  1:                   SEMI reduce 19 */
-/* State 35 */
-  { 143,   0,  37}, /*  1:               columnid shift  37 */
-  {  27,   0, 355}, /*  2:             CONSTRAINT shift  355 */
-  { 145,   0, 352}, /*  3:               conslist shift  352 */
-  {  96,   5, 357}, /*  4:                PRIMARY shift  357 */
-  {  18,   0, 368}, /*  5:                  CHECK shift  368 */
-  { 122,   4, 363}, /*  6:                 UNIQUE shift  363 */
-  { 113,   9,  21}, /*  7:                 STRING shift  21 */
-  {  59,   0,  20}, /*  8:                     ID shift  20 */
-  {  74,   0,  22}, /*  9:                JOIN_KW shift  22 */
-  { 204,   7, 384}, /* 10:                  tcons shift  384 */
-  { 142,  12,  36}, /* 11:                 column shift  36 */
-  {  51,   0, 371}, /* 12:                FOREIGN shift  371 */
-  { 181,  11, 351}, /* 13:                     nm shift  351 */
-/* State 37 */
-  { 165,   0, 350}, /*  1:                    ids shift  350 */
-  { 113,   0, 252}, /*  2:                 STRING shift  252 */
-  { 212,   0,  38}, /*  3:                   type shift  38 */
-  { 213,   2, 337}, /*  4:               typename shift  337 */
-  {  59,   0, 251}, /*  5:                     ID shift  251 */
-/* State 38 */
-  { 133,   0,  39}, /*  1:               carglist shift  39 */
-/* State 39 */
-  {  96,   4,  54}, /*  1:                PRIMARY shift  54 */
-  {  27,   0,  41}, /*  2:             CONSTRAINT shift  41 */
-  { 132,   0,  40}, /*  3:                   carg shift  40 */
-  {  31,   5, 325}, /*  4:                DEFAULT shift  325 */
-  {  18,   0,  62}, /*  5:                  CHECK shift  62 */
-  { 122,   1,  60}, /*  6:                 UNIQUE shift  60 */
-  {  32,   0, 322}, /*  7:             DEFERRABLE shift  322 */
-  { 137,  11, 324}, /*  8:                  ccons shift  324 */
-  { 151,   0, 319}, /*  9:        defer_subclause shift  319 */
-  {  87,   0,  44}, /* 10:                   NULL shift  44 */
-  {  98,  12, 297}, /* 11:             REFERENCES shift  297 */
-  {  85,  13,  46}, /* 12:                    NOT shift  46 */
-  {  20,   0, 320}, /* 13:                COLLATE shift  320 */
-/* State 41 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1,  42}, /*  2:                     nm shift  42 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 42 */
-  {  20,   0, 320}, /*  1:                COLLATE shift  320 */
-  { 151,   0, 319}, /*  2:        defer_subclause shift  319 */
-  { 122,   4,  60}, /*  3:                 UNIQUE shift  60 */
-  {  32,   0, 322}, /*  4:             DEFERRABLE shift  322 */
-  {  87,   0,  44}, /*  5:                   NULL shift  44 */
-  {  85,   0,  46}, /*  6:                    NOT shift  46 */
-  {  96,   0,  54}, /*  7:                PRIMARY shift  54 */
-  { 137,   5,  43}, /*  8:                  ccons shift  43 */
-  {  98,  10, 297}, /*  9:             REFERENCES shift  297 */
-  {  18,   0,  62}, /* 10:                  CHECK shift  62 */
-/* State 44 */
-  { 184,   2,  45}, /*  1:                 onconf shift  45 */
-  {  90,   0,  10}, /*  2:                     ON shift  10 */
-/* State 46 */
-  {  32,   0,  49}, /*  1:             DEFERRABLE shift  49 */
-  {  87,   0,  47}, /*  2:                   NULL shift  47 */
-/* State 47 */
-  { 184,   2,  48}, /*  1:                 onconf shift  48 */
-  {  90,   0,  10}, /*  2:                     ON shift  10 */
-/* State 49 */
-  {  65,   0,  51}, /*  1:              INITIALLY shift  51 */
-  { 169,   1,  50}, /*  2: init_deferred_pred_opt shift  50 */
-/* State 51 */
-  {  62,   0,  53}, /*  1:              IMMEDIATE shift  53 */
-  {  33,   0,  52}, /*  2:               DEFERRED shift  52 */
-/* State 54 */
-  {  75,   0,  55}, /*  1:                    KEY shift  55 */
-/* State 55 */
-  {  36,   0,  59}, /*  1:                   DESC shift  59 */
-  { 202,   3,  56}, /*  2:              sortorder shift  56 */
-  {   7,   0,  58}, /*  3:                    ASC shift  58 */
-/* State 56 */
-  { 184,   2,  57}, /*  1:                 onconf shift  57 */
-  {  90,   0,  10}, /*  2:                     ON shift  10 */
-/* State 60 */
-  { 184,   2,  61}, /*  1:                 onconf shift  61 */
-  {  90,   0,  10}, /*  2:                     ON shift  10 */
-/* State 62 */
-  {  79,   0,  63}, /*  1:                     LP shift  63 */
-/* State 63 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 294}, /*  8:                   expr shift  294 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 64 */
-  {  39,   0, 583}, /*  1:                    DOT reduce 28 */
-  {  79,   1,  65}, /*  2:                     LP shift  65 */
-/* State 65 */
-  {  59,   0,  64}, /*  1:                     ID shift  64 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  74,   0,  67}, /*  3:                JOIN_KW shift  67 */
-  { 111,   0, 292}, /*  4:                   STAR shift  292 */
-  {  94,   0, 176}, /*  5:                   PLUS shift  176 */
-  { 113,   1,  66}, /*  6:                 STRING shift  66 */
-  {  79,   0,  68}, /*  7:                     LP shift  68 */
-  {  97,   7, 188}, /*  8:                  RAISE shift  188 */
-  {  85,  10, 170}, /*  9:                    NOT shift  170 */
-  {  49,  11, 169}, /* 10:                  FLOAT shift  169 */
-  {  13,   0, 172}, /* 11:                 BITNOT shift  172 */
-  {  83,   0, 174}, /* 12:                  MINUS shift  174 */
-  {  68,   0, 168}, /* 13:                INTEGER shift  168 */
-  { 157,   9, 167}, /* 14:                   expr shift  167 */
-  { 158,  13, 214}, /* 15:               expritem shift  214 */
-  { 159,  17, 290}, /* 16:               exprlist shift  290 */
-  {  87,   0, 101}, /* 17:                   NULL shift  101 */
-  {  17,   0, 178}, /* 18:                   CASE shift  178 */
-/* State 66 */
-  {  39,   0, 584}, /*  1:                    DOT reduce 29 */
-/* State 67 */
-  {  39,   0, 585}, /*  1:                    DOT reduce 30 */
-/* State 68 */
-  { 113,   4,  66}, /*  1:                 STRING shift  66 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  74,   0,  67}, /*  3:                JOIN_KW shift  67 */
-  {  59,   0,  64}, /*  4:                     ID shift  64 */
-  {  94,   0, 176}, /*  5:                   PLUS shift  176 */
-  { 185,   1,  69}, /*  6:              oneselect shift  69 */
-  {  79,   0,  68}, /*  7:                     LP shift  68 */
-  {  97,   7, 188}, /*  8:                  RAISE shift  188 */
-  {  85,  10, 170}, /*  9:                    NOT shift  170 */
-  {  49,  11, 169}, /* 10:                  FLOAT shift  169 */
-  {  13,   0, 172}, /* 11:                 BITNOT shift  172 */
-  {  83,   0, 174}, /* 12:                  MINUS shift  174 */
-  { 106,   0,  73}, /* 13:                 SELECT shift  73 */
-  { 157,   9, 288}, /* 14:                   expr shift  288 */
-  {  68,   0, 168}, /* 15:                INTEGER shift  168 */
-  {  87,   0, 101}, /* 16:                   NULL shift  101 */
-  { 196,  13,  70}, /* 17:                 select shift  70 */
-  {  17,   0, 178}, /* 18:                   CASE shift  178 */
-/* State 70 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   3, 162}, /*  2:                  UNION shift  162 */
-  {  46,   0, 165}, /*  3:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  4:              INTERSECT shift  164 */
-  { 104,   4, 287}, /*  5:                     RP shift  287 */
-/* State 71 */
-  { 106,   0,  73}, /*  1:                 SELECT shift  73 */
-  { 185,   0,  72}, /*  2:              oneselect shift  72 */
-/* State 73 */
-  { 153,   0,  74}, /*  1:               distinct shift  74 */
-  {   4,   0, 286}, /*  2:                    ALL shift  286 */
-  {  38,   0, 285}, /*  3:               DISTINCT shift  285 */
-/* State 74 */
-  { 194,   0, 278}, /*  1:                   sclp shift  278 */
-  { 195,   0,  75}, /*  2:             selcollist shift  75 */
-/* State 75 */
-  {  22,   0, 236}, /*  1:                  COMMA shift  236 */
-  {  52,   1, 237}, /*  2:                   FROM shift  237 */
-  { 161,   0,  76}, /*  3:                   from shift  76 */
-/* State 76 */
-  { 130,   0, 234}, /*  1:                  WHERE shift  234 */
-  { 217,   0,  77}, /*  2:              where_opt shift  77 */
-/* State 77 */
-  { 162,   2,  78}, /*  1:            groupby_opt shift  78 */
-  {  56,   0, 231}, /*  2:                  GROUP shift  231 */
-/* State 78 */
-  {  58,   0, 229}, /*  1:                 HAVING shift  229 */
-  { 163,   0,  79}, /*  2:             having_opt shift  79 */
-/* State 79 */
-  {  93,   0,  88}, /*  1:                  ORDER shift  88 */
-  { 187,   1,  80}, /*  2:            orderby_opt shift  80 */
-/* State 80 */
-  { 178,   2,  81}, /*  1:              limit_opt shift  81 */
-  {  78,   0,  82}, /*  2:                  LIMIT shift  82 */
-/* State 82 */
-  {  68,   0,  83}, /*  1:                INTEGER shift  83 */
-/* State 83 */
-  {  22,   0,  86}, /*  1:                  COMMA shift  86 */
-  {  89,   0,  84}, /*  2:                 OFFSET shift  84 */
-/* State 84 */
-  {  68,   0,  85}, /*  1:                INTEGER shift  85 */
-/* State 86 */
-  {  68,   0,  87}, /*  1:                INTEGER shift  87 */
-/* State 88 */
-  {  15,   0,  89}, /*  1:                     BY shift  89 */
-/* State 89 */
-  {  85,   2, 170}, /*  1:                    NOT shift  170 */
-  {  68,   4, 168}, /*  2:                INTEGER shift  168 */
-  {  87,   0, 101}, /*  3:                   NULL shift  101 */
-  {  17,   0, 178}, /*  4:                   CASE shift  178 */
-  { 157,   0,  98}, /*  5:                   expr shift  98 */
-  { 113,   8,  66}, /*  6:                 STRING shift  66 */
-  {  74,   0,  67}, /*  7:                JOIN_KW shift  67 */
-  {  79,   0,  68}, /*  8:                     LP shift  68 */
-  {  59,   0,  64}, /*  9:                     ID shift  64 */
-  {  94,   0, 176}, /* 10:                   PLUS shift  176 */
-  {  13,   0, 172}, /* 11:                 BITNOT shift  172 */
-  { 181,   6, 102}, /* 12:                     nm shift  102 */
-  {  97,   0, 188}, /* 13:                  RAISE shift  188 */
-  { 200,  11, 226}, /* 14:               sortitem shift  226 */
-  { 201,   0,  90}, /* 15:               sortlist shift  90 */
-  {  83,  17, 174}, /* 16:                  MINUS shift  174 */
-  {  49,   0, 169}, /* 17:                  FLOAT shift  169 */
-/* State 90 */
-  {  22,   0,  91}, /*  1:                  COMMA shift  91 */
-/* State 91 */
-  {  97,   3, 188}, /*  1:                  RAISE shift  188 */
-  { 113,   1,  66}, /*  2:                 STRING shift  66 */
-  {  49,   7, 169}, /*  3:                  FLOAT shift  169 */
-  {  83,   0, 174}, /*  4:                  MINUS shift  174 */
-  {  68,   0, 168}, /*  5:                INTEGER shift  168 */
-  { 181,  10, 102}, /*  6:                     nm shift  102 */
-  {  17,   0, 178}, /*  7:                   CASE shift  178 */
-  {  87,   0, 101}, /*  8:                   NULL shift  101 */
-  { 200,   0,  92}, /*  9:               sortitem shift  92 */
-  {  85,   0, 170}, /* 10:                    NOT shift  170 */
-  {  74,   0,  67}, /* 11:                JOIN_KW shift  67 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  13,   0, 172}, /* 13:                 BITNOT shift  172 */
-  { 157,  13,  98}, /* 14:                   expr shift  98 */
-  {  94,   0, 176}, /* 15:                   PLUS shift  176 */
-  {  79,   0,  68}, /* 16:                     LP shift  68 */
-/* State 92 */
-  {  20,   0,  95}, /*  1:                COLLATE shift  95 */
-  { 141,   0,  93}, /*  2:                collate shift  93 */
-/* State 93 */
-  {  36,   0,  59}, /*  1:                   DESC shift  59 */
-  { 202,   3,  94}, /*  2:              sortorder shift  94 */
-  {   7,   0,  58}, /*  3:                    ASC shift  58 */
-/* State 95 */
-  { 164,   0,  97}, /*  1:                     id shift  97 */
-  {  59,   0,  96}, /*  2:                     ID shift  96 */
-/* State 98 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 100 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 107}, /*  8:                   expr shift  107 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 102 */
-  {  39,   0, 103}, /*  1:                    DOT shift  103 */
-/* State 103 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 104}, /*  2:                     nm shift  104 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 104 */
-  {  39,   0, 105}, /*  1:                    DOT shift  105 */
-/* State 105 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 106}, /*  2:                     nm shift  106 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 107 */
-  {  54,   0, 116}, /*  1:                     GE shift  116 */
-  { 105,   0, 128}, /*  2:                 RSHIFT shift  128 */
-  {  80,   1, 126}, /*  3:                 LSHIFT shift  126 */
-  {  81,   5, 110}, /*  4:                     LT shift  110 */
-  {  55,   0, 136}, /*  5:                   GLOB shift  136 */
-  { 109,  10, 143}, /*  6:                  SLASH shift  143 */
-  {  84,   0, 118}, /*  7:                     NE shift  118 */
-  { 111,  11, 141}, /*  8:                   STAR shift  141 */
-  {  86,   0, 154}, /*  9:                NOTNULL shift  154 */
-  {  83,  14, 139}, /* 10:                  MINUS shift  139 */
-  {  85,   0, 132}, /* 11:                    NOT shift  132 */
-  {  63,  16, 159}, /* 12:                     IN shift  159 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  57,   0, 112}, /* 14:                     GT shift  112 */
-  {  92,  18,  99}, /* 15:      ORACLE_OUTER_JOIN shift  99 */
-  {  11,   0, 155}, /* 16:                BETWEEN shift  155 */
-  {  94,   0, 137}, /* 17:                   PLUS shift  137 */
-  {  14,   0, 124}, /* 18:                  BITOR shift  124 */
-  {  45,   0, 120}, /* 19:                     EQ shift  120 */
-  {  71,  19, 150}, /* 20:                     IS shift  150 */
-  {  72,   0, 149}, /* 21:                 ISNULL shift  149 */
-  { 177,  23, 130}, /* 22:                 likeop shift  130 */
-  {  99,   0, 145}, /* 23:                    REM shift  145 */
-  {  25,   0, 147}, /* 24:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 25:                     LE shift  114 */
-  {  77,  24, 135}, /* 26:                   LIKE shift  135 */
-/* State 108 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 109}, /*  8:                   expr shift  109 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 109 */
-  {  81,   7, 110}, /*  1:                     LT shift  110 */
-  { 109,   8, 143}, /*  2:                  SLASH shift  143 */
-  {  83,   0, 139}, /*  3:                  MINUS shift  139 */
-  { 111,   9, 141}, /*  4:                   STAR shift  141 */
-  {  85,   0, 132}, /*  5:                    NOT shift  132 */
-  {  86,  11, 154}, /*  6:                NOTNULL shift  154 */
-  {  54,   0, 116}, /*  7:                     GE shift  116 */
-  {  55,   0, 136}, /*  8:                   GLOB shift  136 */
-  {  84,  17, 118}, /*  9:                     NE shift  118 */
-  {  63,   0, 159}, /* 10:                     IN shift  159 */
-  {   5,   0, 100}, /* 11:                    AND shift  100 */
-  {  92,  20,  99}, /* 12:      ORACLE_OUTER_JOIN shift  99 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  94,   0, 137}, /* 14:                   PLUS shift  137 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  { 177,   0, 130}, /* 16:                 likeop shift  130 */
-  {  57,   0, 112}, /* 17:                     GT shift  112 */
-  {  71,   0, 150}, /* 18:                     IS shift  150 */
-  {  99,  21, 145}, /* 19:                    REM shift  145 */
-  {  11,   0, 155}, /* 20:                BETWEEN shift  155 */
-  {  72,  22, 149}, /* 21:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 22:                     EQ shift  120 */
-  {  76,   0, 114}, /* 23:                     LE shift  114 */
-  {  77,   0, 135}, /* 24:                   LIKE shift  135 */
-  { 105,   0, 128}, /* 25:                 RSHIFT shift  128 */
-  {  25,   0, 147}, /* 26:                 CONCAT shift  147 */
-  {  80,   0, 126}, /* 27:                 LSHIFT shift  126 */
-/* State 110 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 111}, /*  8:                   expr shift  111 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 111 */
-  {  12,   0, 122}, /*  1:                 BITAND shift  122 */
-  { 109,   5, 143}, /*  2:                  SLASH shift  143 */
-  {  14,   0, 124}, /*  3:                  BITOR shift  124 */
-  { 111,   6, 141}, /*  4:                   STAR shift  141 */
-  {  25,   0, 147}, /*  5:                 CONCAT shift  147 */
-  {  99,   0, 145}, /*  6:                    REM shift  145 */
-  {  80,   0, 126}, /*  7:                 LSHIFT shift  126 */
-  { 105,   0, 128}, /*  8:                 RSHIFT shift  128 */
-  {  92,   7,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   8, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  83,   0, 139}, /* 12:                  MINUS shift  139 */
-/* State 112 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 113}, /*  8:                   expr shift  113 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 113 */
-  {  12,   0, 122}, /*  1:                 BITAND shift  122 */
-  { 109,   5, 143}, /*  2:                  SLASH shift  143 */
-  {  14,   0, 124}, /*  3:                  BITOR shift  124 */
-  { 111,   6, 141}, /*  4:                   STAR shift  141 */
-  {  25,   0, 147}, /*  5:                 CONCAT shift  147 */
-  {  99,   0, 145}, /*  6:                    REM shift  145 */
-  {  80,   0, 126}, /*  7:                 LSHIFT shift  126 */
-  { 105,   0, 128}, /*  8:                 RSHIFT shift  128 */
-  {  92,   7,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   8, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  83,   0, 139}, /* 12:                  MINUS shift  139 */
-/* State 114 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 115}, /*  8:                   expr shift  115 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 115 */
-  {  12,   0, 122}, /*  1:                 BITAND shift  122 */
-  { 109,   5, 143}, /*  2:                  SLASH shift  143 */
-  {  14,   0, 124}, /*  3:                  BITOR shift  124 */
-  { 111,   6, 141}, /*  4:                   STAR shift  141 */
-  {  25,   0, 147}, /*  5:                 CONCAT shift  147 */
-  {  99,   0, 145}, /*  6:                    REM shift  145 */
-  {  80,   0, 126}, /*  7:                 LSHIFT shift  126 */
-  { 105,   0, 128}, /*  8:                 RSHIFT shift  128 */
-  {  92,   7,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   8, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  83,   0, 139}, /* 12:                  MINUS shift  139 */
-/* State 116 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 117}, /*  8:                   expr shift  117 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 117 */
-  {  12,   0, 122}, /*  1:                 BITAND shift  122 */
-  { 109,   5, 143}, /*  2:                  SLASH shift  143 */
-  {  14,   0, 124}, /*  3:                  BITOR shift  124 */
-  { 111,   6, 141}, /*  4:                   STAR shift  141 */
-  {  25,   0, 147}, /*  5:                 CONCAT shift  147 */
-  {  99,   0, 145}, /*  6:                    REM shift  145 */
-  {  80,   0, 126}, /*  7:                 LSHIFT shift  126 */
-  { 105,   0, 128}, /*  8:                 RSHIFT shift  128 */
-  {  92,   7,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   8, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  83,   0, 139}, /* 12:                  MINUS shift  139 */
-/* State 118 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 119}, /*  8:                   expr shift  119 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 119 */
-  {  80,   0, 126}, /*  1:                 LSHIFT shift  126 */
-  { 177,   3, 130}, /*  2:                 likeop shift  130 */
-  {  81,   0, 110}, /*  3:                     LT shift  110 */
-  {  99,   5, 145}, /*  4:                    REM shift  145 */
-  {  83,   0, 139}, /*  5:                  MINUS shift  139 */
-  {  57,   8, 112}, /*  6:                     GT shift  112 */
-  {  54,   0, 116}, /*  7:                     GE shift  116 */
-  {  25,   0, 147}, /*  8:                 CONCAT shift  147 */
-  {  76,  11, 114}, /*  9:                     LE shift  114 */
-  { 105,   6, 128}, /* 10:                 RSHIFT shift  128 */
-  {  12,   0, 122}, /* 11:                 BITAND shift  122 */
-  {  14,   0, 124}, /* 12:                  BITOR shift  124 */
-  {  92,   9,  99}, /* 13:      ORACLE_OUTER_JOIN shift  99 */
-  { 109,   0, 143}, /* 14:                  SLASH shift  143 */
-  {  94,  12, 137}, /* 15:                   PLUS shift  137 */
-  { 111,   0, 141}, /* 16:                   STAR shift  141 */
-/* State 120 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 121}, /*  8:                   expr shift  121 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 121 */
-  {  80,   0, 126}, /*  1:                 LSHIFT shift  126 */
-  { 177,   3, 130}, /*  2:                 likeop shift  130 */
-  {  81,   0, 110}, /*  3:                     LT shift  110 */
-  {  99,   5, 145}, /*  4:                    REM shift  145 */
-  {  83,   0, 139}, /*  5:                  MINUS shift  139 */
-  {  57,   8, 112}, /*  6:                     GT shift  112 */
-  {  54,   0, 116}, /*  7:                     GE shift  116 */
-  {  25,   0, 147}, /*  8:                 CONCAT shift  147 */
-  {  76,  11, 114}, /*  9:                     LE shift  114 */
-  { 105,   6, 128}, /* 10:                 RSHIFT shift  128 */
-  {  12,   0, 122}, /* 11:                 BITAND shift  122 */
-  {  14,   0, 124}, /* 12:                  BITOR shift  124 */
-  {  92,   9,  99}, /* 13:      ORACLE_OUTER_JOIN shift  99 */
-  { 109,   0, 143}, /* 14:                  SLASH shift  143 */
-  {  94,  12, 137}, /* 15:                   PLUS shift  137 */
-  { 111,   0, 141}, /* 16:                   STAR shift  141 */
-/* State 122 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 123}, /*  8:                   expr shift  123 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 123 */
-  {  25,   0, 147}, /*  1:                 CONCAT shift  147 */
-  { 177,   1, 130}, /*  2:                 likeop shift  130 */
-  {  83,   0, 139}, /*  3:                  MINUS shift  139 */
-  {  99,   3, 145}, /*  4:                    REM shift  145 */
-  {  92,   0,  99}, /*  5:      ORACLE_OUTER_JOIN shift  99 */
-  { 109,   0, 143}, /*  6:                  SLASH shift  143 */
-  {  94,   0, 137}, /*  7:                   PLUS shift  137 */
-  { 111,   0, 141}, /*  8:                   STAR shift  141 */
-/* State 124 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 125}, /*  8:                   expr shift  125 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 125 */
-  {  25,   0, 147}, /*  1:                 CONCAT shift  147 */
-  { 177,   1, 130}, /*  2:                 likeop shift  130 */
-  {  83,   0, 139}, /*  3:                  MINUS shift  139 */
-  {  99,   3, 145}, /*  4:                    REM shift  145 */
-  {  92,   0,  99}, /*  5:      ORACLE_OUTER_JOIN shift  99 */
-  { 109,   0, 143}, /*  6:                  SLASH shift  143 */
-  {  94,   0, 137}, /*  7:                   PLUS shift  137 */
-  { 111,   0, 141}, /*  8:                   STAR shift  141 */
-/* State 126 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 127}, /*  8:                   expr shift  127 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 127 */
-  {  25,   0, 147}, /*  1:                 CONCAT shift  147 */
-  { 177,   1, 130}, /*  2:                 likeop shift  130 */
-  {  83,   0, 139}, /*  3:                  MINUS shift  139 */
-  {  99,   3, 145}, /*  4:                    REM shift  145 */
-  {  92,   0,  99}, /*  5:      ORACLE_OUTER_JOIN shift  99 */
-  { 109,   0, 143}, /*  6:                  SLASH shift  143 */
-  {  94,   0, 137}, /*  7:                   PLUS shift  137 */
-  { 111,   0, 141}, /*  8:                   STAR shift  141 */
-/* State 128 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 129}, /*  8:                   expr shift  129 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 129 */
-  {  25,   0, 147}, /*  1:                 CONCAT shift  147 */
-  { 177,   1, 130}, /*  2:                 likeop shift  130 */
-  {  83,   0, 139}, /*  3:                  MINUS shift  139 */
-  {  99,   3, 145}, /*  4:                    REM shift  145 */
-  {  92,   0,  99}, /*  5:      ORACLE_OUTER_JOIN shift  99 */
-  { 109,   0, 143}, /*  6:                  SLASH shift  143 */
-  {  94,   0, 137}, /*  7:                   PLUS shift  137 */
-  { 111,   0, 141}, /*  8:                   STAR shift  141 */
-/* State 130 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 131}, /*  8:                   expr shift  131 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 131 */
-  {  80,   0, 126}, /*  1:                 LSHIFT shift  126 */
-  { 177,   3, 130}, /*  2:                 likeop shift  130 */
-  {  81,   0, 110}, /*  3:                     LT shift  110 */
-  {  99,   5, 145}, /*  4:                    REM shift  145 */
-  {  83,   0, 139}, /*  5:                  MINUS shift  139 */
-  {  57,   8, 112}, /*  6:                     GT shift  112 */
-  {  54,   0, 116}, /*  7:                     GE shift  116 */
-  {  25,   0, 147}, /*  8:                 CONCAT shift  147 */
-  {  76,  11, 114}, /*  9:                     LE shift  114 */
-  { 105,   6, 128}, /* 10:                 RSHIFT shift  128 */
-  {  12,   0, 122}, /* 11:                 BITAND shift  122 */
-  {  14,   0, 124}, /* 12:                  BITOR shift  124 */
-  {  92,   9,  99}, /* 13:      ORACLE_OUTER_JOIN shift  99 */
-  { 109,   0, 143}, /* 14:                  SLASH shift  143 */
-  {  94,  12, 137}, /* 15:                   PLUS shift  137 */
-  { 111,   0, 141}, /* 16:                   STAR shift  141 */
-/* State 132 */
-  {  87,   3, 215}, /*  1:                   NULL shift  215 */
-  {  55,   0, 136}, /*  2:                   GLOB shift  136 */
-  {  63,   0, 220}, /*  3:                     IN shift  220 */
-  { 177,   1, 133}, /*  4:                 likeop shift  133 */
-  {  11,   0, 216}, /*  5:                BETWEEN shift  216 */
-  {  77,   5, 135}, /*  6:                   LIKE shift  135 */
-/* State 133 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 134}, /*  8:                   expr shift  134 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 134 */
-  {  80,   0, 126}, /*  1:                 LSHIFT shift  126 */
-  { 177,   3, 130}, /*  2:                 likeop shift  130 */
-  {  81,   0, 110}, /*  3:                     LT shift  110 */
-  {  99,   5, 145}, /*  4:                    REM shift  145 */
-  {  83,   0, 139}, /*  5:                  MINUS shift  139 */
-  {  57,   8, 112}, /*  6:                     GT shift  112 */
-  {  54,   0, 116}, /*  7:                     GE shift  116 */
-  {  25,   0, 147}, /*  8:                 CONCAT shift  147 */
-  {  76,  11, 114}, /*  9:                     LE shift  114 */
-  { 105,   6, 128}, /* 10:                 RSHIFT shift  128 */
-  {  12,   0, 122}, /* 11:                 BITAND shift  122 */
-  {  14,   0, 124}, /* 12:                  BITOR shift  124 */
-  {  92,   9,  99}, /* 13:      ORACLE_OUTER_JOIN shift  99 */
-  { 109,   0, 143}, /* 14:                  SLASH shift  143 */
-  {  94,  12, 137}, /* 15:                   PLUS shift  137 */
-  { 111,   0, 141}, /* 16:                   STAR shift  141 */
-/* State 137 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 138}, /*  8:                   expr shift  138 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 138 */
-  {  25,   0, 147}, /*  1:                 CONCAT shift  147 */
-  { 109,   1, 143}, /*  2:                  SLASH shift  143 */
-  {  92,   0,  99}, /*  3:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   5, 130}, /*  4:                 likeop shift  130 */
-  { 111,   6, 141}, /*  5:                   STAR shift  141 */
-  {  99,   0, 145}, /*  6:                    REM shift  145 */
-/* State 139 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 140}, /*  8:                   expr shift  140 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 140 */
-  {  25,   0, 147}, /*  1:                 CONCAT shift  147 */
-  { 109,   1, 143}, /*  2:                  SLASH shift  143 */
-  {  92,   0,  99}, /*  3:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   5, 130}, /*  4:                 likeop shift  130 */
-  { 111,   6, 141}, /*  5:                   STAR shift  141 */
-  {  99,   0, 145}, /*  6:                    REM shift  145 */
-/* State 141 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 142}, /*  8:                   expr shift  142 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 142 */
-  { 177,   0, 130}, /*  1:                 likeop shift  130 */
-  {  25,   0, 147}, /*  2:                 CONCAT shift  147 */
-  {  92,   0,  99}, /*  3:      ORACLE_OUTER_JOIN shift  99 */
-/* State 143 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 144}, /*  8:                   expr shift  144 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 144 */
-  { 177,   0, 130}, /*  1:                 likeop shift  130 */
-  {  25,   0, 147}, /*  2:                 CONCAT shift  147 */
-  {  92,   0,  99}, /*  3:      ORACLE_OUTER_JOIN shift  99 */
-/* State 145 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 146}, /*  8:                   expr shift  146 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 146 */
-  { 177,   0, 130}, /*  1:                 likeop shift  130 */
-  {  25,   0, 147}, /*  2:                 CONCAT shift  147 */
-  {  92,   0,  99}, /*  3:      ORACLE_OUTER_JOIN shift  99 */
-/* State 147 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 148}, /*  8:                   expr shift  148 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 148 */
-  {  92,   0,  99}, /*  1:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /*  2:                 likeop shift  130 */
-/* State 150 */
-  {  85,   0, 152}, /*  1:                    NOT shift  152 */
-  {  87,   1, 151}, /*  2:                   NULL shift  151 */
-/* State 152 */
-  {  87,   0, 153}, /*  1:                   NULL shift  153 */
-/* State 155 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 156}, /*  8:                   expr shift  156 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 156 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 157}, /*  6:                    AND shift  157 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 157 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 158}, /*  8:                   expr shift  158 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 158 */
-  {  80,   0, 126}, /*  1:                 LSHIFT shift  126 */
-  { 177,   3, 130}, /*  2:                 likeop shift  130 */
-  {  81,   0, 110}, /*  3:                     LT shift  110 */
-  {  99,   5, 145}, /*  4:                    REM shift  145 */
-  {  83,   0, 139}, /*  5:                  MINUS shift  139 */
-  {  57,   8, 112}, /*  6:                     GT shift  112 */
-  {  54,   0, 116}, /*  7:                     GE shift  116 */
-  {  25,   0, 147}, /*  8:                 CONCAT shift  147 */
-  {  76,  11, 114}, /*  9:                     LE shift  114 */
-  { 105,   6, 128}, /* 10:                 RSHIFT shift  128 */
-  {  12,   0, 122}, /* 11:                 BITAND shift  122 */
-  {  14,   0, 124}, /* 12:                  BITOR shift  124 */
-  {  92,   9,  99}, /* 13:      ORACLE_OUTER_JOIN shift  99 */
-  { 109,   0, 143}, /* 14:                  SLASH shift  143 */
-  {  94,  12, 137}, /* 15:                   PLUS shift  137 */
-  { 111,   0, 141}, /* 16:                   STAR shift  141 */
-/* State 159 */
-  {  79,   0, 160}, /*  1:                     LP shift  160 */
-/* State 160 */
-  {  85,   0, 170}, /*  1:                    NOT shift  170 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  13,   0, 172}, /*  3:                 BITNOT shift  172 */
-  {  83,   0, 174}, /*  4:                  MINUS shift  174 */
-  {  74,   0,  67}, /*  5:                JOIN_KW shift  67 */
-  { 185,   1,  69}, /*  6:              oneselect shift  69 */
-  { 106,   0,  73}, /*  7:                 SELECT shift  73 */
-  {  87,   0, 101}, /*  8:                   NULL shift  101 */
-  {  68,   0, 168}, /*  9:                INTEGER shift  168 */
-  {  49,   0, 169}, /* 10:                  FLOAT shift  169 */
-  {  97,  12, 188}, /* 11:                  RAISE shift  188 */
-  {  17,   0, 178}, /* 12:                   CASE shift  178 */
-  {  79,  16,  68}, /* 13:                     LP shift  68 */
-  { 113,   3,  66}, /* 14:                 STRING shift  66 */
-  {  94,   5, 176}, /* 15:                   PLUS shift  176 */
-  {  59,   0,  64}, /* 16:                     ID shift  64 */
-  { 196,   0, 161}, /* 17:                 select shift  161 */
-  { 157,  11, 167}, /* 18:                   expr shift  167 */
-  { 158,   0, 214}, /* 19:               expritem shift  214 */
-  { 159,  13, 210}, /* 20:               exprlist shift  210 */
-/* State 161 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   3, 162}, /*  2:                  UNION shift  162 */
-  {  46,   0, 165}, /*  3:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  4:              INTERSECT shift  164 */
-  { 104,   4, 166}, /*  5:                     RP shift  166 */
-/* State 162 */
-  { 106,   2, 658}, /*  1:                 SELECT reduce 103 */
-  {   4,   0, 163}, /*  2:                    ALL shift  163 */
-/* State 163 */
-  { 106,   0, 659}, /*  1:                 SELECT reduce 104 */
-/* State 164 */
-  { 106,   0, 660}, /*  1:                 SELECT reduce 105 */
-/* State 165 */
-  { 106,   0, 661}, /*  1:                 SELECT reduce 106 */
-/* State 167 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 170 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 171}, /*  8:                   expr shift  171 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 171 */
-  {  54,   0, 116}, /*  1:                     GE shift  116 */
-  { 105,   0, 128}, /*  2:                 RSHIFT shift  128 */
-  {  80,   1, 126}, /*  3:                 LSHIFT shift  126 */
-  {  81,   5, 110}, /*  4:                     LT shift  110 */
-  {  55,   0, 136}, /*  5:                   GLOB shift  136 */
-  { 109,  10, 143}, /*  6:                  SLASH shift  143 */
-  {  84,   0, 118}, /*  7:                     NE shift  118 */
-  { 111,  11, 141}, /*  8:                   STAR shift  141 */
-  {  86,   0, 154}, /*  9:                NOTNULL shift  154 */
-  {  83,  14, 139}, /* 10:                  MINUS shift  139 */
-  {  85,   0, 132}, /* 11:                    NOT shift  132 */
-  {  63,  16, 159}, /* 12:                     IN shift  159 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  57,   0, 112}, /* 14:                     GT shift  112 */
-  {  92,  18,  99}, /* 15:      ORACLE_OUTER_JOIN shift  99 */
-  {  11,   0, 155}, /* 16:                BETWEEN shift  155 */
-  {  94,   0, 137}, /* 17:                   PLUS shift  137 */
-  {  14,   0, 124}, /* 18:                  BITOR shift  124 */
-  {  45,   0, 120}, /* 19:                     EQ shift  120 */
-  {  71,  19, 150}, /* 20:                     IS shift  150 */
-  {  72,   0, 149}, /* 21:                 ISNULL shift  149 */
-  { 177,  23, 130}, /* 22:                 likeop shift  130 */
-  {  99,   0, 145}, /* 23:                    REM shift  145 */
-  {  25,   0, 147}, /* 24:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 25:                     LE shift  114 */
-  {  77,  24, 135}, /* 26:                   LIKE shift  135 */
-/* State 172 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 173}, /*  8:                   expr shift  173 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 173 */
-  {  92,   0,  99}, /*  1:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /*  2:                 likeop shift  130 */
-/* State 174 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 175}, /*  8:                   expr shift  175 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 175 */
-  {  92,   0,  99}, /*  1:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /*  2:                 likeop shift  130 */
-/* State 176 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 177}, /*  8:                   expr shift  177 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 177 */
-  {  92,   0,  99}, /*  1:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /*  2:                 likeop shift  130 */
-/* State 178 */
-  { 136,   2, 180}, /*  1:           case_operand shift  180 */
-  {  85,   4, 170}, /*  2:                    NOT shift  170 */
-  {  87,   0, 101}, /*  3:                   NULL shift  101 */
-  {  68,   6, 168}, /*  4:                INTEGER shift  168 */
-  { 157,   0, 179}, /*  5:                   expr shift  179 */
-  {  17,   0, 178}, /*  6:                   CASE shift  178 */
-  {  74,   0,  67}, /*  7:                JOIN_KW shift  67 */
-  { 113,  15,  66}, /*  8:                 STRING shift  66 */
-  {  59,   0,  64}, /*  9:                     ID shift  64 */
-  {  94,   0, 176}, /* 10:                   PLUS shift  176 */
-  { 129,   0, 781}, /* 11:                   WHEN reduce 226 */
-  { 181,   8, 102}, /* 12:                     nm shift  102 */
-  {  97,   0, 188}, /* 13:                  RAISE shift  188 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  79,   0,  68}, /* 15:                     LP shift  68 */
-  {  83,  17, 174}, /* 16:                  MINUS shift  174 */
-  {  49,   0, 169}, /* 17:                  FLOAT shift  169 */
-/* State 179 */
-  {  63,   2, 159}, /*  1:                     IN shift  159 */
-  {   5,   0, 100}, /*  2:                    AND shift  100 */
-  {  12,   0, 122}, /*  3:                 BITAND shift  122 */
-  { 177,   0, 130}, /*  4:                 likeop shift  130 */
-  {  91,   0, 108}, /*  5:                     OR shift  108 */
-  {  92,   1,  99}, /*  6:      ORACLE_OUTER_JOIN shift  99 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  94,   0, 137}, /*  8:                   PLUS shift  137 */
-  {  14,   0, 124}, /*  9:                  BITOR shift  124 */
-  {  76,   0, 114}, /* 10:                     LE shift  114 */
-  {  80,   0, 126}, /* 11:                 LSHIFT shift  126 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  99,   3, 145}, /* 13:                    REM shift  145 */
-  { 129,   7, 780}, /* 14:                   WHEN reduce 225 */
-  {  72,   9, 149}, /* 15:                 ISNULL shift  149 */
-  {  54,  18, 116}, /* 16:                     GE shift  116 */
-  {  45,   0, 120}, /* 17:                     EQ shift  120 */
-  {  25,   0, 147}, /* 18:                 CONCAT shift  147 */
-  { 105,  10, 128}, /* 19:                 RSHIFT shift  128 */
-  {  77,   0, 135}, /* 20:                   LIKE shift  135 */
-  {  55,   0, 136}, /* 21:                   GLOB shift  136 */
-  {  57,   0, 112}, /* 22:                     GT shift  112 */
-  { 109,  11, 143}, /* 23:                  SLASH shift  143 */
-  {  81,   0, 110}, /* 24:                     LT shift  110 */
-  { 111,   0, 141}, /* 25:                   STAR shift  141 */
-  {  83,  16, 139}, /* 26:                  MINUS shift  139 */
-  {  84,  21, 118}, /* 27:                     NE shift  118 */
-  {  85,   0, 132}, /* 28:                    NOT shift  132 */
-  {  86,  22, 154}, /* 29:                NOTNULL shift  154 */
-/* State 180 */
-  { 129,   0, 206}, /*  1:                   WHEN shift  206 */
-  { 135,   1, 181}, /*  2:          case_exprlist shift  181 */
-/* State 181 */
-  {  42,   0, 204}, /*  1:                   ELSE shift  204 */
-  { 129,   0, 184}, /*  2:                   WHEN shift  184 */
-  { 134,   1, 182}, /*  3:              case_else shift  182 */
-  {  43,   0, 779}, /*  4:                    END reduce 224 */
-/* State 182 */
-  {  43,   0, 183}, /*  1:                    END shift  183 */
-/* State 184 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 185}, /*  8:                   expr shift  185 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 185 */
-  { 116,   0, 186}, /*  1:                   THEN shift  186 */
-  {  63,   3, 159}, /*  2:                     IN shift  159 */
-  {   5,   0, 100}, /*  3:                    AND shift  100 */
-  { 177,   0, 130}, /*  4:                 likeop shift  130 */
-  {  91,   0, 108}, /*  5:                     OR shift  108 */
-  {  92,   2,  99}, /*  6:      ORACLE_OUTER_JOIN shift  99 */
-  {  12,   0, 122}, /*  7:                 BITAND shift  122 */
-  {  94,   0, 137}, /*  8:                   PLUS shift  137 */
-  {  14,   0, 124}, /*  9:                  BITOR shift  124 */
-  {  76,   0, 114}, /* 10:                     LE shift  114 */
-  {  80,   0, 126}, /* 11:                 LSHIFT shift  126 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  99,   7, 145}, /* 13:                    REM shift  145 */
-  {  71,   0, 150}, /* 14:                     IS shift  150 */
-  {  72,   9, 149}, /* 15:                 ISNULL shift  149 */
-  {  54,  18, 116}, /* 16:                     GE shift  116 */
-  {  45,   0, 120}, /* 17:                     EQ shift  120 */
-  {  25,   0, 147}, /* 18:                 CONCAT shift  147 */
-  { 105,  10, 128}, /* 19:                 RSHIFT shift  128 */
-  {  77,   0, 135}, /* 20:                   LIKE shift  135 */
-  {  55,   0, 136}, /* 21:                   GLOB shift  136 */
-  {  57,   0, 112}, /* 22:                     GT shift  112 */
-  { 109,  11, 143}, /* 23:                  SLASH shift  143 */
-  {  81,   0, 110}, /* 24:                     LT shift  110 */
-  { 111,   0, 141}, /* 25:                   STAR shift  141 */
-  {  83,  16, 139}, /* 26:                  MINUS shift  139 */
-  {  84,  21, 118}, /* 27:                     NE shift  118 */
-  {  85,   0, 132}, /* 28:                    NOT shift  132 */
-  {  86,  22, 154}, /* 29:                NOTNULL shift  154 */
-/* State 186 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 187}, /*  8:                   expr shift  187 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 187 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 188 */
-  {  79,   0, 189}, /*  1:                     LP shift  189 */
-/* State 189 */
-  {  60,   4, 190}, /*  1:                 IGNORE shift  190 */
-  {   1,   0, 196}, /*  2:                  ABORT shift  196 */
-  { 102,   0, 192}, /*  3:               ROLLBACK shift  192 */
-  {  48,   0, 200}, /*  4:                   FAIL shift  200 */
-/* State 190 */
-  { 104,   0, 191}, /*  1:                     RP shift  191 */
-/* State 192 */
-  {  22,   0, 193}, /*  1:                  COMMA shift  193 */
-/* State 193 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 194}, /*  2:                     nm shift  194 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 194 */
-  { 104,   0, 195}, /*  1:                     RP shift  195 */
-/* State 196 */
-  {  22,   0, 197}, /*  1:                  COMMA shift  197 */
-/* State 197 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 198}, /*  2:                     nm shift  198 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 198 */
-  { 104,   0, 199}, /*  1:                     RP shift  199 */
-/* State 200 */
-  {  22,   0, 201}, /*  1:                  COMMA shift  201 */
-/* State 201 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 202}, /*  2:                     nm shift  202 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 202 */
-  { 104,   0, 203}, /*  1:                     RP shift  203 */
-/* State 204 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 205}, /*  8:                   expr shift  205 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 205 */
-  {  63,   2, 159}, /*  1:                     IN shift  159 */
-  {   5,   0, 100}, /*  2:                    AND shift  100 */
-  {  12,   0, 122}, /*  3:                 BITAND shift  122 */
-  { 177,   0, 130}, /*  4:                 likeop shift  130 */
-  {  91,   0, 108}, /*  5:                     OR shift  108 */
-  {  92,   1,  99}, /*  6:      ORACLE_OUTER_JOIN shift  99 */
-  {  43,   9, 778}, /*  7:                    END reduce 223 */
-  {  94,   0, 137}, /*  8:                   PLUS shift  137 */
-  {  14,   0, 124}, /*  9:                  BITOR shift  124 */
-  {  76,   0, 114}, /* 10:                     LE shift  114 */
-  {  80,   0, 126}, /* 11:                 LSHIFT shift  126 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  99,   3, 145}, /* 13:                    REM shift  145 */
-  {  71,   0, 150}, /* 14:                     IS shift  150 */
-  {  72,   7, 149}, /* 15:                 ISNULL shift  149 */
-  {  54,  18, 116}, /* 16:                     GE shift  116 */
-  {  45,   0, 120}, /* 17:                     EQ shift  120 */
-  {  25,   0, 147}, /* 18:                 CONCAT shift  147 */
-  { 105,  10, 128}, /* 19:                 RSHIFT shift  128 */
-  {  77,   0, 135}, /* 20:                   LIKE shift  135 */
-  {  55,   0, 136}, /* 21:                   GLOB shift  136 */
-  {  57,   0, 112}, /* 22:                     GT shift  112 */
-  { 109,  11, 143}, /* 23:                  SLASH shift  143 */
-  {  81,   0, 110}, /* 24:                     LT shift  110 */
-  { 111,   0, 141}, /* 25:                   STAR shift  141 */
-  {  83,  16, 139}, /* 26:                  MINUS shift  139 */
-  {  84,  21, 118}, /* 27:                     NE shift  118 */
-  {  85,   0, 132}, /* 28:                    NOT shift  132 */
-  {  86,  22, 154}, /* 29:                NOTNULL shift  154 */
-/* State 206 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 207}, /*  8:                   expr shift  207 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 207 */
-  { 116,   0, 208}, /*  1:                   THEN shift  208 */
-  {  63,   3, 159}, /*  2:                     IN shift  159 */
-  {   5,   0, 100}, /*  3:                    AND shift  100 */
-  { 177,   0, 130}, /*  4:                 likeop shift  130 */
-  {  91,   0, 108}, /*  5:                     OR shift  108 */
-  {  92,   2,  99}, /*  6:      ORACLE_OUTER_JOIN shift  99 */
-  {  12,   0, 122}, /*  7:                 BITAND shift  122 */
-  {  94,   0, 137}, /*  8:                   PLUS shift  137 */
-  {  14,   0, 124}, /*  9:                  BITOR shift  124 */
-  {  76,   0, 114}, /* 10:                     LE shift  114 */
-  {  80,   0, 126}, /* 11:                 LSHIFT shift  126 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  99,   7, 145}, /* 13:                    REM shift  145 */
-  {  71,   0, 150}, /* 14:                     IS shift  150 */
-  {  72,   9, 149}, /* 15:                 ISNULL shift  149 */
-  {  54,  18, 116}, /* 16:                     GE shift  116 */
-  {  45,   0, 120}, /* 17:                     EQ shift  120 */
-  {  25,   0, 147}, /* 18:                 CONCAT shift  147 */
-  { 105,  10, 128}, /* 19:                 RSHIFT shift  128 */
-  {  77,   0, 135}, /* 20:                   LIKE shift  135 */
-  {  55,   0, 136}, /* 21:                   GLOB shift  136 */
-  {  57,   0, 112}, /* 22:                     GT shift  112 */
-  { 109,  11, 143}, /* 23:                  SLASH shift  143 */
-  {  81,   0, 110}, /* 24:                     LT shift  110 */
-  { 111,   0, 141}, /* 25:                   STAR shift  141 */
-  {  83,  16, 139}, /* 26:                  MINUS shift  139 */
-  {  84,  21, 118}, /* 27:                     NE shift  118 */
-  {  85,   0, 132}, /* 28:                    NOT shift  132 */
-  {  86,  22, 154}, /* 29:                NOTNULL shift  154 */
-/* State 208 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 209}, /*  8:                   expr shift  209 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 209 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 210 */
-  { 104,   2, 211}, /*  1:                     RP shift  211 */
-  {  22,   0, 212}, /*  2:                  COMMA shift  212 */
-/* State 212 */
-  {  97,   3, 188}, /*  1:                  RAISE shift  188 */
-  { 113,   1,  66}, /*  2:                 STRING shift  66 */
-  {  49,   7, 169}, /*  3:                  FLOAT shift  169 */
-  {  83,   0, 174}, /*  4:                  MINUS shift  174 */
-  {  68,   0, 168}, /*  5:                INTEGER shift  168 */
-  { 181,   9, 102}, /*  6:                     nm shift  102 */
-  {  17,   0, 178}, /*  7:                   CASE shift  178 */
-  {  87,   0, 101}, /*  8:                   NULL shift  101 */
-  {  85,   0, 170}, /*  9:                    NOT shift  170 */
-  {  13,   0, 172}, /* 10:                 BITNOT shift  172 */
-  {  74,   0,  67}, /* 11:                JOIN_KW shift  67 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  94,   0, 176}, /* 13:                   PLUS shift  176 */
-  { 157,  10, 167}, /* 14:                   expr shift  167 */
-  { 158,  13, 213}, /* 15:               expritem shift  213 */
-  {  79,   0,  68}, /* 16:                     LP shift  68 */
-/* State 216 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 217}, /*  8:                   expr shift  217 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 217 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 218}, /*  6:                    AND shift  218 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 218 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 219}, /*  8:                   expr shift  219 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 219 */
-  {  54,   0, 116}, /*  1:                     GE shift  116 */
-  { 105,   0, 128}, /*  2:                 RSHIFT shift  128 */
-  {  80,   1, 126}, /*  3:                 LSHIFT shift  126 */
-  {  81,   5, 110}, /*  4:                     LT shift  110 */
-  {  55,   0, 136}, /*  5:                   GLOB shift  136 */
-  { 109,  10, 143}, /*  6:                  SLASH shift  143 */
-  {  84,   0, 118}, /*  7:                     NE shift  118 */
-  { 111,  11, 141}, /*  8:                   STAR shift  141 */
-  {  86,   0, 154}, /*  9:                NOTNULL shift  154 */
-  {  83,  14, 139}, /* 10:                  MINUS shift  139 */
-  {  85,   0, 132}, /* 11:                    NOT shift  132 */
-  {  63,  16, 159}, /* 12:                     IN shift  159 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  57,   0, 112}, /* 14:                     GT shift  112 */
-  {  92,  18,  99}, /* 15:      ORACLE_OUTER_JOIN shift  99 */
-  {  11,   0, 155}, /* 16:                BETWEEN shift  155 */
-  {  94,   0, 137}, /* 17:                   PLUS shift  137 */
-  {  14,   0, 124}, /* 18:                  BITOR shift  124 */
-  {  45,   0, 120}, /* 19:                     EQ shift  120 */
-  {  71,  19, 150}, /* 20:                     IS shift  150 */
-  {  72,   0, 149}, /* 21:                 ISNULL shift  149 */
-  { 177,  23, 130}, /* 22:                 likeop shift  130 */
-  {  99,   0, 145}, /* 23:                    REM shift  145 */
-  {  25,   0, 147}, /* 24:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 25:                     LE shift  114 */
-  {  77,  24, 135}, /* 26:                   LIKE shift  135 */
-/* State 220 */
-  {  79,   0, 221}, /*  1:                     LP shift  221 */
-/* State 221 */
-  {  85,   0, 170}, /*  1:                    NOT shift  170 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  13,   0, 172}, /*  3:                 BITNOT shift  172 */
-  {  83,   0, 174}, /*  4:                  MINUS shift  174 */
-  {  74,   0,  67}, /*  5:                JOIN_KW shift  67 */
-  { 185,   1,  69}, /*  6:              oneselect shift  69 */
-  { 106,   0,  73}, /*  7:                 SELECT shift  73 */
-  {  87,   0, 101}, /*  8:                   NULL shift  101 */
-  {  68,   0, 168}, /*  9:                INTEGER shift  168 */
-  {  49,   0, 169}, /* 10:                  FLOAT shift  169 */
-  {  97,  12, 188}, /* 11:                  RAISE shift  188 */
-  {  17,   0, 178}, /* 12:                   CASE shift  178 */
-  {  79,  16,  68}, /* 13:                     LP shift  68 */
-  { 113,   3,  66}, /* 14:                 STRING shift  66 */
-  {  94,   5, 176}, /* 15:                   PLUS shift  176 */
-  {  59,   0,  64}, /* 16:                     ID shift  64 */
-  { 196,   0, 222}, /* 17:                 select shift  222 */
-  { 157,  11, 167}, /* 18:                   expr shift  167 */
-  { 158,   0, 214}, /* 19:               expritem shift  214 */
-  { 159,  13, 224}, /* 20:               exprlist shift  224 */
-/* State 222 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   3, 162}, /*  2:                  UNION shift  162 */
-  {  46,   0, 165}, /*  3:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  4:              INTERSECT shift  164 */
-  { 104,   4, 223}, /*  5:                     RP shift  223 */
-/* State 224 */
-  { 104,   2, 225}, /*  1:                     RP shift  225 */
-  {  22,   0, 212}, /*  2:                  COMMA shift  212 */
-/* State 226 */
-  {  20,   0,  95}, /*  1:                COLLATE shift  95 */
-  { 141,   0, 227}, /*  2:                collate shift  227 */
-/* State 227 */
-  {  36,   0,  59}, /*  1:                   DESC shift  59 */
-  { 202,   3, 228}, /*  2:              sortorder shift  228 */
-  {   7,   0,  58}, /*  3:                    ASC shift  58 */
-/* State 229 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 230}, /*  8:                   expr shift  230 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 230 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 231 */
-  {  15,   0, 232}, /*  1:                     BY shift  232 */
-/* State 232 */
-  {  85,   2, 170}, /*  1:                    NOT shift  170 */
-  {  68,   4, 168}, /*  2:                INTEGER shift  168 */
-  {  87,   0, 101}, /*  3:                   NULL shift  101 */
-  {  17,   0, 178}, /*  4:                   CASE shift  178 */
-  { 157,   0, 167}, /*  5:                   expr shift  167 */
-  { 158,   0, 214}, /*  6:               expritem shift  214 */
-  { 159,   8, 233}, /*  7:               exprlist shift  233 */
-  {  74,   0,  67}, /*  8:                JOIN_KW shift  67 */
-  {  59,   0,  64}, /*  9:                     ID shift  64 */
-  {  94,   0, 176}, /* 10:                   PLUS shift  176 */
-  { 113,  15,  66}, /* 11:                 STRING shift  66 */
-  { 181,  11, 102}, /* 12:                     nm shift  102 */
-  {  97,   0, 188}, /* 13:                  RAISE shift  188 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  79,   0,  68}, /* 15:                     LP shift  68 */
-  {  83,  17, 174}, /* 16:                  MINUS shift  174 */
-  {  49,   0, 169}, /* 17:                  FLOAT shift  169 */
-/* State 233 */
-  {  22,   0, 212}, /*  1:                  COMMA shift  212 */
-/* State 234 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 235}, /*  8:                   expr shift  235 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 235 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 237 */
-  { 197,   0, 238}, /*  1:             seltablist shift  238 */
-  { 203,   1, 248}, /*  2:             stl_prefix shift  248 */
-/* State 238 */
-  {  22,   0, 240}, /*  1:                  COMMA shift  240 */
-  {  73,   0, 241}, /*  2:                   JOIN shift  241 */
-  {  74,   1, 242}, /*  3:                JOIN_KW shift  242 */
-  { 175,   0, 239}, /*  4:                 joinop shift  239 */
-/* State 242 */
-  {  73,   0, 243}, /*  1:                   JOIN shift  243 */
-  { 181,   0, 244}, /*  2:                     nm shift  244 */
-  {  59,   0,  20}, /*  3:                     ID shift  20 */
-  { 113,   1,  21}, /*  4:                 STRING shift  21 */
-  {  74,   3,  22}, /*  5:                JOIN_KW shift  22 */
-/* State 244 */
-  {  73,   0, 245}, /*  1:                   JOIN shift  245 */
-  { 181,   0, 246}, /*  2:                     nm shift  246 */
-  {  59,   0,  20}, /*  3:                     ID shift  20 */
-  { 113,   1,  21}, /*  4:                 STRING shift  21 */
-  {  74,   3,  22}, /*  5:                JOIN_KW shift  22 */
-/* State 246 */
-  {  73,   0, 247}, /*  1:                   JOIN shift  247 */
-/* State 248 */
-  {  74,   3,  22}, /*  1:                JOIN_KW shift  22 */
-  { 181,   0, 249}, /*  2:                     nm shift  249 */
-  {  59,   0,  20}, /*  3:                     ID shift  20 */
-  { 113,   0,  21}, /*  4:                 STRING shift  21 */
-  {  79,   1, 272}, /*  5:                     LP shift  272 */
-/* State 249 */
-  { 150,   0, 250}, /*  1:                   dbnm shift  250 */
-  {  39,   0, 270}, /*  2:                    DOT shift  270 */
-/* State 250 */
-  { 165,   0, 255}, /*  1:                    ids shift  255 */
-  { 131,   3, 256}, /*  2:                     as shift  256 */
-  {   6,   0, 253}, /*  3:                     AS shift  253 */
-  { 113,   0, 252}, /*  4:                 STRING shift  252 */
-  {  59,   0, 251}, /*  5:                     ID shift  251 */
-/* State 253 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 254}, /*  2:                     nm shift  254 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 256 */
-  {  90,   0, 268}, /*  1:                     ON shift  268 */
-  { 183,   0, 257}, /*  2:                 on_opt shift  257 */
-/* State 257 */
-  { 125,   0, 259}, /*  1:                  USING shift  259 */
-  { 215,   1, 258}, /*  2:              using_opt shift  258 */
-/* State 259 */
-  {  79,   0, 260}, /*  1:                     LP shift  260 */
-/* State 260 */
-  { 113,   4,  21}, /*  1:                 STRING shift  21 */
-  { 181,   0, 265}, /*  2:                     nm shift  265 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-  { 166,   0, 267}, /*  5:                idxitem shift  267 */
-  { 167,   1, 261}, /*  6:                idxlist shift  261 */
-/* State 261 */
-  { 104,   2, 262}, /*  1:                     RP shift  262 */
-  {  22,   0, 263}, /*  2:                  COMMA shift  263 */
-/* State 263 */
-  { 166,   0, 264}, /*  1:                idxitem shift  264 */
-  { 181,   1, 265}, /*  2:                     nm shift  265 */
-  {  59,   0,  20}, /*  3:                     ID shift  20 */
-  { 113,   0,  21}, /*  4:                 STRING shift  21 */
-  {  74,   3,  22}, /*  5:                JOIN_KW shift  22 */
-/* State 265 */
-  {  36,   0,  59}, /*  1:                   DESC shift  59 */
-  { 202,   3, 266}, /*  2:              sortorder shift  266 */
-  {   7,   0,  58}, /*  3:                    ASC shift  58 */
-/* State 268 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 269}, /*  8:                   expr shift  269 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 269 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 270 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 271}, /*  2:                     nm shift  271 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 272 */
-  { 106,   0,  73}, /*  1:                 SELECT shift  73 */
-  { 196,   1, 273}, /*  2:                 select shift  273 */
-  { 185,   0,  69}, /*  3:              oneselect shift  69 */
-/* State 273 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   3, 162}, /*  2:                  UNION shift  162 */
-  {  46,   0, 165}, /*  3:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  4:              INTERSECT shift  164 */
-  { 104,   4, 274}, /*  5:                     RP shift  274 */
-/* State 274 */
-  { 165,   0, 255}, /*  1:                    ids shift  255 */
-  { 131,   3, 275}, /*  2:                     as shift  275 */
-  {   6,   0, 253}, /*  3:                     AS shift  253 */
-  { 113,   0, 252}, /*  4:                 STRING shift  252 */
-  {  59,   0, 251}, /*  5:                     ID shift  251 */
-/* State 275 */
-  {  90,   0, 268}, /*  1:                     ON shift  268 */
-  { 183,   0, 276}, /*  2:                 on_opt shift  276 */
-/* State 276 */
-  { 125,   0, 259}, /*  1:                  USING shift  259 */
-  { 215,   1, 277}, /*  2:              using_opt shift  277 */
-/* State 278 */
-  {  97,   3, 188}, /*  1:                  RAISE shift  188 */
-  { 113,   1,  66}, /*  2:                 STRING shift  66 */
-  {  49,   7, 169}, /*  3:                  FLOAT shift  169 */
-  {  83,   0, 174}, /*  4:                  MINUS shift  174 */
-  {  68,   0, 168}, /*  5:                INTEGER shift  168 */
-  { 181,   9, 282}, /*  6:                     nm shift  282 */
-  {  17,   0, 178}, /*  7:                   CASE shift  178 */
-  {  87,   0, 101}, /*  8:                   NULL shift  101 */
-  {  85,   0, 170}, /*  9:                    NOT shift  170 */
-  {  13,   0, 172}, /* 10:                 BITNOT shift  172 */
-  {  74,   0,  67}, /* 11:                JOIN_KW shift  67 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  79,   0,  68}, /* 13:                     LP shift  68 */
-  { 157,  10, 279}, /* 14:                   expr shift  279 */
-  {  94,   0, 176}, /* 15:                   PLUS shift  176 */
-  { 111,  13, 281}, /* 16:                   STAR shift  281 */
-/* State 279 */
-  { 165,   2, 255}, /*  1:                    ids shift  255 */
-  {  99,   0, 145}, /*  2:                    REM shift  145 */
-  {   5,   0, 100}, /*  3:                    AND shift  100 */
-  {  72,   5, 149}, /*  4:                 ISNULL shift  149 */
-  {   6,   0, 253}, /*  5:                     AS shift  253 */
-  {  71,   3, 150}, /*  6:                     IS shift  150 */
-  { 105,   4, 128}, /*  7:                 RSHIFT shift  128 */
-  {  76,   0, 114}, /*  8:                     LE shift  114 */
-  {  11,   0, 155}, /*  9:                BETWEEN shift  155 */
-  { 111,  14, 141}, /* 10:                   STAR shift  141 */
-  { 109,   8, 143}, /* 11:                  SLASH shift  143 */
-  {  77,   9, 135}, /* 12:                   LIKE shift  135 */
-  { 177,  10, 130}, /* 13:                 likeop shift  130 */
-  {  45,  17, 120}, /* 14:                     EQ shift  120 */
-  { 113,  24, 252}, /* 15:                 STRING shift  252 */
-  {  81,   0, 110}, /* 16:                     LT shift  110 */
-  {  12,   0, 122}, /* 17:                 BITAND shift  122 */
-  {  83,   0, 139}, /* 18:                  MINUS shift  139 */
-  {  84,   0, 118}, /* 19:                     NE shift  118 */
-  {  85,   0, 132}, /* 20:                    NOT shift  132 */
-  {  86,   0, 154}, /* 21:                NOTNULL shift  154 */
-  {  54,   0, 116}, /* 22:                     GE shift  116 */
-  {  55,   0, 136}, /* 23:                   GLOB shift  136 */
-  {  80,  28, 126}, /* 24:                 LSHIFT shift  126 */
-  {  57,   0, 112}, /* 25:                     GT shift  112 */
-  {  91,  30, 108}, /* 26:                     OR shift  108 */
-  {  92,  32,  99}, /* 27:      ORACLE_OUTER_JOIN shift  99 */
-  {  14,   0, 124}, /* 28:                  BITOR shift  124 */
-  {  94,   0, 137}, /* 29:                   PLUS shift  137 */
-  {  25,   0, 147}, /* 30:                 CONCAT shift  147 */
-  {  63,   0, 159}, /* 31:                     IN shift  159 */
-  {  59,   0, 251}, /* 32:                     ID shift  251 */
-  { 131,   0, 280}, /* 33:                     as shift  280 */
-/* State 282 */
-  {  39,   0, 283}, /*  1:                    DOT shift  283 */
-/* State 283 */
-  { 111,   0, 284}, /*  1:                   STAR shift  284 */
-  { 181,   1, 104}, /*  2:                     nm shift  104 */
-  {  59,   0,  20}, /*  3:                     ID shift  20 */
-  { 113,   0,  21}, /*  4:                 STRING shift  21 */
-  {  74,   3,  22}, /*  5:                JOIN_KW shift  22 */
-/* State 288 */
-  {  63,   2, 159}, /*  1:                     IN shift  159 */
-  {   5,   0, 100}, /*  2:                    AND shift  100 */
-  {  12,   0, 122}, /*  3:                 BITAND shift  122 */
-  { 177,   0, 130}, /*  4:                 likeop shift  130 */
-  {  91,   0, 108}, /*  5:                     OR shift  108 */
-  {  92,   1,  99}, /*  6:      ORACLE_OUTER_JOIN shift  99 */
-  {  14,   0, 124}, /*  7:                  BITOR shift  124 */
-  {  94,   0, 137}, /*  8:                   PLUS shift  137 */
-  {  76,   0, 114}, /*  9:                     LE shift  114 */
-  {  80,   0, 126}, /* 10:                 LSHIFT shift  126 */
-  {  54,  16, 116}, /* 11:                     GE shift  116 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  99,   3, 145}, /* 13:                    REM shift  145 */
-  {  71,   0, 150}, /* 14:                     IS shift  150 */
-  {  72,   7, 149}, /* 15:                 ISNULL shift  149 */
-  {  25,   0, 147}, /* 16:                 CONCAT shift  147 */
-  {  45,   0, 120}, /* 17:                     EQ shift  120 */
-  { 104,   0, 289}, /* 18:                     RP shift  289 */
-  { 105,   9, 128}, /* 19:                 RSHIFT shift  128 */
-  {  77,   0, 135}, /* 20:                   LIKE shift  135 */
-  {  55,   0, 136}, /* 21:                   GLOB shift  136 */
-  {  57,   0, 112}, /* 22:                     GT shift  112 */
-  { 109,  10, 143}, /* 23:                  SLASH shift  143 */
-  {  81,   0, 110}, /* 24:                     LT shift  110 */
-  { 111,   0, 141}, /* 25:                   STAR shift  141 */
-  {  83,  11, 139}, /* 26:                  MINUS shift  139 */
-  {  84,  21, 118}, /* 27:                     NE shift  118 */
-  {  85,   0, 132}, /* 28:                    NOT shift  132 */
-  {  86,  22, 154}, /* 29:                NOTNULL shift  154 */
-/* State 290 */
-  { 104,   2, 291}, /*  1:                     RP shift  291 */
-  {  22,   0, 212}, /*  2:                  COMMA shift  212 */
-/* State 292 */
-  { 104,   0, 293}, /*  1:                     RP shift  293 */
-/* State 294 */
-  {  63,   2, 159}, /*  1:                     IN shift  159 */
-  {   5,   0, 100}, /*  2:                    AND shift  100 */
-  {  12,   0, 122}, /*  3:                 BITAND shift  122 */
-  { 177,   0, 130}, /*  4:                 likeop shift  130 */
-  {  91,   0, 108}, /*  5:                     OR shift  108 */
-  {  92,   1,  99}, /*  6:      ORACLE_OUTER_JOIN shift  99 */
-  {  14,   0, 124}, /*  7:                  BITOR shift  124 */
-  {  94,   0, 137}, /*  8:                   PLUS shift  137 */
-  {  76,   0, 114}, /*  9:                     LE shift  114 */
-  {  80,   0, 126}, /* 10:                 LSHIFT shift  126 */
-  {  54,  16, 116}, /* 11:                     GE shift  116 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  99,   3, 145}, /* 13:                    REM shift  145 */
-  {  71,   0, 150}, /* 14:                     IS shift  150 */
-  {  72,   7, 149}, /* 15:                 ISNULL shift  149 */
-  {  25,   0, 147}, /* 16:                 CONCAT shift  147 */
-  {  45,   0, 120}, /* 17:                     EQ shift  120 */
-  { 104,   0, 295}, /* 18:                     RP shift  295 */
-  { 105,   9, 128}, /* 19:                 RSHIFT shift  128 */
-  {  77,   0, 135}, /* 20:                   LIKE shift  135 */
-  {  55,   0, 136}, /* 21:                   GLOB shift  136 */
-  {  57,   0, 112}, /* 22:                     GT shift  112 */
-  { 109,  10, 143}, /* 23:                  SLASH shift  143 */
-  {  81,   0, 110}, /* 24:                     LT shift  110 */
-  { 111,   0, 141}, /* 25:                   STAR shift  141 */
-  {  83,  11, 139}, /* 26:                  MINUS shift  139 */
-  {  84,  21, 118}, /* 27:                     NE shift  118 */
-  {  85,   0, 132}, /* 28:                    NOT shift  132 */
-  {  86,  22, 154}, /* 29:                NOTNULL shift  154 */
-/* State 295 */
-  { 184,   2, 296}, /*  1:                 onconf shift  296 */
-  {  90,   0,  10}, /*  2:                     ON shift  10 */
-/* State 297 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 298}, /*  2:                     nm shift  298 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 298 */
-  { 168,   0, 299}, /*  1:            idxlist_opt shift  299 */
-  {  79,   0, 316}, /*  2:                     LP shift  316 */
-/* State 299 */
-  { 192,   0, 300}, /*  1:                refargs shift  300 */
-/* State 300 */
-  {  90,   0, 304}, /*  1:                     ON shift  304 */
-  {  82,   0, 302}, /*  2:                  MATCH shift  302 */
-  { 191,   0, 301}, /*  3:                 refarg shift  301 */
-/* State 302 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 303}, /*  2:                     nm shift  303 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 304 */
-  { 123,   3, 312}, /*  1:                 UPDATE shift  312 */
-  {  34,   0, 305}, /*  2:                 DELETE shift  305 */
-  {  66,   0, 314}, /*  3:                 INSERT shift  314 */
-/* State 305 */
-  { 108,   4, 307}, /*  1:                    SET shift  307 */
-  { 101,   0, 311}, /*  2:               RESTRICT shift  311 */
-  { 190,   0, 306}, /*  3:                 refact shift  306 */
-  {  16,   0, 310}, /*  4:                CASCADE shift  310 */
-/* State 307 */
-  {  31,   0, 309}, /*  1:                DEFAULT shift  309 */
-  {  87,   1, 308}, /*  2:                   NULL shift  308 */
-/* State 312 */
-  { 108,   4, 307}, /*  1:                    SET shift  307 */
-  { 101,   0, 311}, /*  2:               RESTRICT shift  311 */
-  { 190,   0, 313}, /*  3:                 refact shift  313 */
-  {  16,   0, 310}, /*  4:                CASCADE shift  310 */
-/* State 314 */
-  { 108,   4, 307}, /*  1:                    SET shift  307 */
-  { 101,   0, 311}, /*  2:               RESTRICT shift  311 */
-  { 190,   0, 315}, /*  3:                 refact shift  315 */
-  {  16,   0, 310}, /*  4:                CASCADE shift  310 */
-/* State 316 */
-  { 113,   4,  21}, /*  1:                 STRING shift  21 */
-  { 181,   0, 265}, /*  2:                     nm shift  265 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-  { 166,   0, 267}, /*  5:                idxitem shift  267 */
-  { 167,   1, 317}, /*  6:                idxlist shift  317 */
-/* State 317 */
-  { 104,   2, 318}, /*  1:                     RP shift  318 */
-  {  22,   0, 263}, /*  2:                  COMMA shift  263 */
-/* State 320 */
-  { 164,   0, 321}, /*  1:                     id shift  321 */
-  {  59,   0,  96}, /*  2:                     ID shift  96 */
-/* State 322 */
-  {  65,   0,  51}, /*  1:              INITIALLY shift  51 */
-  { 169,   1, 323}, /*  2: init_deferred_pred_opt shift  323 */
-/* State 325 */
-  {  49,   0, 335}, /*  1:                  FLOAT shift  335 */
-  { 113,   0, 326}, /*  2:                 STRING shift  326 */
-  {  87,   5, 336}, /*  3:                   NULL shift  336 */
-  {  94,   3, 329}, /*  4:                   PLUS shift  329 */
-  {  59,   0, 327}, /*  5:                     ID shift  327 */
-  {  68,   0, 328}, /*  6:                INTEGER shift  328 */
-  {  83,   0, 332}, /*  7:                  MINUS shift  332 */
-/* State 329 */
-  {  68,   0, 330}, /*  1:                INTEGER shift  330 */
-  {  49,   0, 331}, /*  2:                  FLOAT shift  331 */
-/* State 332 */
-  {  68,   0, 333}, /*  1:                INTEGER shift  333 */
-  {  49,   0, 334}, /*  2:                  FLOAT shift  334 */
-/* State 337 */
-  { 113,   0, 252}, /*  1:                 STRING shift  252 */
-  { 165,   1, 349}, /*  2:                    ids shift  349 */
-  {  59,   0, 251}, /*  3:                     ID shift  251 */
-  {  79,   3, 338}, /*  4:                     LP shift  338 */
-/* State 338 */
-  {  68,   0, 344}, /*  1:                INTEGER shift  344 */
-  {  83,   0, 347}, /*  2:                  MINUS shift  347 */
-  {  94,   0, 345}, /*  3:                   PLUS shift  345 */
-  { 199,   2, 339}, /*  4:                 signed shift  339 */
-/* State 339 */
-  { 104,   2, 340}, /*  1:                     RP shift  340 */
-  {  22,   0, 341}, /*  2:                  COMMA shift  341 */
-/* State 341 */
-  {  68,   0, 344}, /*  1:                INTEGER shift  344 */
-  {  83,   0, 347}, /*  2:                  MINUS shift  347 */
-  {  94,   0, 345}, /*  3:                   PLUS shift  345 */
-  { 199,   2, 342}, /*  4:                 signed shift  342 */
-/* State 342 */
-  { 104,   0, 343}, /*  1:                     RP shift  343 */
-/* State 345 */
-  {  68,   0, 346}, /*  1:                INTEGER shift  346 */
-/* State 347 */
-  {  68,   0, 348}, /*  1:                INTEGER shift  348 */
-/* State 352 */
-  { 104,   2, 632}, /*  1:                     RP reduce 77 */
-  {  96,   0, 357}, /*  2:                PRIMARY shift  357 */
-  { 122,   6, 363}, /*  3:                 UNIQUE shift  363 */
-  {  51,   8, 371}, /*  4:                FOREIGN shift  371 */
-  { 204,   0, 383}, /*  5:                  tcons shift  383 */
-  {  18,   0, 368}, /*  6:                  CHECK shift  368 */
-  {  22,   0, 353}, /*  7:                  COMMA shift  353 */
-  {  27,   0, 355}, /*  8:             CONSTRAINT shift  355 */
-/* State 353 */
-  { 204,   2, 354}, /*  1:                  tcons shift  354 */
-  {  96,   5, 357}, /*  2:                PRIMARY shift  357 */
-  { 122,   0, 363}, /*  3:                 UNIQUE shift  363 */
-  {  51,   6, 371}, /*  4:                FOREIGN shift  371 */
-  {  18,   0, 368}, /*  5:                  CHECK shift  368 */
-  {  27,   0, 355}, /*  6:             CONSTRAINT shift  355 */
-/* State 355 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 356}, /*  2:                     nm shift  356 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 357 */
-  {  75,   0, 358}, /*  1:                    KEY shift  358 */
-/* State 358 */
-  {  79,   0, 359}, /*  1:                     LP shift  359 */
-/* State 359 */
-  { 113,   4,  21}, /*  1:                 STRING shift  21 */
-  { 181,   0, 265}, /*  2:                     nm shift  265 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-  { 166,   0, 267}, /*  5:                idxitem shift  267 */
-  { 167,   1, 360}, /*  6:                idxlist shift  360 */
-/* State 360 */
-  { 104,   2, 361}, /*  1:                     RP shift  361 */
-  {  22,   0, 263}, /*  2:                  COMMA shift  263 */
-/* State 361 */
-  { 184,   2, 362}, /*  1:                 onconf shift  362 */
-  {  90,   0,  10}, /*  2:                     ON shift  10 */
-/* State 363 */
-  {  79,   0, 364}, /*  1:                     LP shift  364 */
-/* State 364 */
-  { 113,   4,  21}, /*  1:                 STRING shift  21 */
-  { 181,   0, 265}, /*  2:                     nm shift  265 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-  { 166,   0, 267}, /*  5:                idxitem shift  267 */
-  { 167,   1, 365}, /*  6:                idxlist shift  365 */
-/* State 365 */
-  { 104,   2, 366}, /*  1:                     RP shift  366 */
-  {  22,   0, 263}, /*  2:                  COMMA shift  263 */
-/* State 366 */
-  { 184,   2, 367}, /*  1:                 onconf shift  367 */
-  {  90,   0,  10}, /*  2:                     ON shift  10 */
-/* State 368 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 369}, /*  8:                   expr shift  369 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 369 */
-  {  90,   0,  10}, /*  1:                     ON shift  10 */
-  {  91,   0, 108}, /*  2:                     OR shift  108 */
-  {  92,   0,  99}, /*  3:      ORACLE_OUTER_JOIN shift  99 */
-  {  63,   0, 159}, /*  4:                     IN shift  159 */
-  { 184,   7, 370}, /*  5:                 onconf shift  370 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  94,   0, 137}, /*  7:                   PLUS shift  137 */
-  {  11,   0, 155}, /*  8:                BETWEEN shift  155 */
-  {  12,   0, 122}, /*  9:                 BITAND shift  122 */
-  {  99,   0, 145}, /* 10:                    REM shift  145 */
-  {  45,   0, 120}, /* 11:                     EQ shift  120 */
-  {  71,   8, 150}, /* 12:                     IS shift  150 */
-  {  72,   9, 149}, /* 13:                 ISNULL shift  149 */
-  {  81,   0, 110}, /* 14:                     LT shift  110 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  { 105,  11, 128}, /* 16:                 RSHIFT shift  128 */
-  {  76,   0, 114}, /* 17:                     LE shift  114 */
-  {  77,   0, 135}, /* 18:                   LIKE shift  135 */
-  {  54,   0, 116}, /* 19:                     GE shift  116 */
-  { 109,   0, 143}, /* 20:                  SLASH shift  143 */
-  {  80,   0, 126}, /* 21:                 LSHIFT shift  126 */
-  { 111,  14, 141}, /* 22:                   STAR shift  141 */
-  {  55,  29, 136}, /* 23:                   GLOB shift  136 */
-  {  83,   0, 139}, /* 24:                  MINUS shift  139 */
-  {  84,  19, 118}, /* 25:                     NE shift  118 */
-  {  85,  23, 132}, /* 26:                    NOT shift  132 */
-  {  86,   0, 154}, /* 27:                NOTNULL shift  154 */
-  { 177,  30, 130}, /* 28:                 likeop shift  130 */
-  {  25,   0, 147}, /* 29:                 CONCAT shift  147 */
-  {  57,   0, 112}, /* 30:                     GT shift  112 */
-/* State 371 */
-  {  75,   0, 372}, /*  1:                    KEY shift  372 */
-/* State 372 */
-  {  79,   0, 373}, /*  1:                     LP shift  373 */
-/* State 373 */
-  { 113,   4,  21}, /*  1:                 STRING shift  21 */
-  { 181,   0, 265}, /*  2:                     nm shift  265 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-  { 166,   0, 267}, /*  5:                idxitem shift  267 */
-  { 167,   1, 374}, /*  6:                idxlist shift  374 */
-/* State 374 */
-  { 104,   2, 375}, /*  1:                     RP shift  375 */
-  {  22,   0, 263}, /*  2:                  COMMA shift  263 */
-/* State 375 */
-  {  98,   0, 376}, /*  1:             REFERENCES shift  376 */
-/* State 376 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 377}, /*  2:                     nm shift  377 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 377 */
-  { 168,   0, 378}, /*  1:            idxlist_opt shift  378 */
-  {  79,   0, 316}, /*  2:                     LP shift  316 */
-/* State 378 */
-  { 192,   0, 379}, /*  1:                refargs shift  379 */
-/* State 379 */
-  {  32,   0, 322}, /*  1:             DEFERRABLE shift  322 */
-  {  85,   0, 380}, /*  2:                    NOT shift  380 */
-  { 191,   0, 301}, /*  3:                 refarg shift  301 */
-  {  82,   0, 302}, /*  4:                  MATCH shift  302 */
-  { 151,   1, 382}, /*  5:        defer_subclause shift  382 */
-  { 152,   4, 381}, /*  6:    defer_subclause_opt shift  381 */
-  {  90,   0, 304}, /*  7:                     ON shift  304 */
-/* State 380 */
-  {  32,   0,  49}, /*  1:             DEFERRABLE shift  49 */
-/* State 386 */
-  { 106,   0,  73}, /*  1:                 SELECT shift  73 */
-  { 196,   1, 387}, /*  2:                 select shift  387 */
-  { 185,   0,  69}, /*  3:              oneselect shift  69 */
-/* State 387 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   4, 162}, /*  2:                  UNION shift  162 */
-  { 107,   0, 575}, /*  3:                   SEMI reduce 20 */
-  {  46,   0, 165}, /*  4:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  5:              INTERSECT shift  164 */
-/* State 388 */
-  { 115,   0, 434}, /*  1:                   TEMP shift  434 */
-  { 205,   1, 389}, /*  2:                   temp shift  389 */
-  { 209,   0, 435}, /*  3:           trigger_decl shift  435 */
-/* State 389 */
-  { 114,   0, 390}, /*  1:                  TABLE shift  390 */
-  { 122,   0, 406}, /*  2:                 UNIQUE shift  406 */
-  { 128,   2, 392}, /*  3:                   VIEW shift  392 */
-  { 118,   6, 407}, /*  4:                TRIGGER shift  407 */
-  { 214,   4, 396}, /*  5:             uniqueflag shift  396 */
-  {  64,   0, 788}, /*  6:                  INDEX reduce 233 */
-/* State 390 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 391}, /*  2:                     nm shift  391 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 392 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 393}, /*  2:                     nm shift  393 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 393 */
-  {   6,   0, 394}, /*  1:                     AS shift  394 */
-/* State 394 */
-  { 106,   0,  73}, /*  1:                 SELECT shift  73 */
-  { 196,   1, 395}, /*  2:                 select shift  395 */
-  { 185,   0,  69}, /*  3:              oneselect shift  69 */
-/* State 395 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   4, 162}, /*  2:                  UNION shift  162 */
-  { 107,   0, 653}, /*  3:                   SEMI reduce 98 */
-  {  46,   0, 165}, /*  4:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  5:              INTERSECT shift  164 */
-/* State 396 */
-  {  64,   0, 397}, /*  1:                  INDEX shift  397 */
-/* State 397 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 398}, /*  2:                     nm shift  398 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 398 */
-  {  90,   0, 399}, /*  1:                     ON shift  399 */
-/* State 399 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 400}, /*  2:                     nm shift  400 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 400 */
-  { 150,   3, 401}, /*  1:                   dbnm shift  401 */
-  {  79,   0, 680}, /*  2:                     LP reduce 125 */
-  {  39,   0, 270}, /*  3:                    DOT shift  270 */
-/* State 401 */
-  {  79,   0, 402}, /*  1:                     LP shift  402 */
-/* State 402 */
-  { 113,   4,  21}, /*  1:                 STRING shift  21 */
-  { 181,   0, 265}, /*  2:                     nm shift  265 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-  { 166,   0, 267}, /*  5:                idxitem shift  267 */
-  { 167,   1, 403}, /*  6:                idxlist shift  403 */
-/* State 403 */
-  { 104,   2, 404}, /*  1:                     RP shift  404 */
-  {  22,   0, 263}, /*  2:                  COMMA shift  263 */
-/* State 404 */
-  {  90,   0,  10}, /*  1:                     ON shift  10 */
-  { 184,   0, 405}, /*  2:                 onconf shift  405 */
-  { 107,   0, 643}, /*  3:                   SEMI reduce 88 */
-/* State 405 */
-  { 107,   0, 786}, /*  1:                   SEMI reduce 231 */
-/* State 406 */
-  {  64,   0, 787}, /*  1:                  INDEX reduce 232 */
-/* State 407 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 408}, /*  2:                     nm shift  408 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 408 */
-  {  67,   0, 432}, /*  1:                INSTEAD shift  432 */
-  {   9,   0, 430}, /*  2:                 BEFORE shift  430 */
-  {   2,   0, 431}, /*  3:                  AFTER shift  431 */
-  { 211,   1, 409}, /*  4:           trigger_time shift  409 */
-/* State 409 */
-  {  66,   2, 423}, /*  1:                 INSERT shift  423 */
-  {  34,   0, 422}, /*  2:                 DELETE shift  422 */
-  { 210,   1, 410}, /*  3:          trigger_event shift  410 */
-  { 123,   0, 424}, /*  4:                 UPDATE shift  424 */
-/* State 410 */
-  {  90,   0, 411}, /*  1:                     ON shift  411 */
-/* State 411 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 412}, /*  2:                     nm shift  412 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 412 */
-  { 150,   0, 413}, /*  1:                   dbnm shift  413 */
-  {  39,   0, 270}, /*  2:                    DOT shift  270 */
-/* State 413 */
-  { 160,   2, 414}, /*  1:         foreach_clause shift  414 */
-  {  50,   0, 418}, /*  2:                    FOR shift  418 */
-/* State 414 */
-  { 216,   3, 415}, /*  1:            when_clause shift  415 */
-  {  10,   0, 824}, /*  2:                  BEGIN reduce 269 */
-  { 129,   0, 416}, /*  3:                   WHEN shift  416 */
-/* State 415 */
-  {  10,   0, 812}, /*  1:                  BEGIN reduce 257 */
-/* State 416 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 417}, /*  8:                   expr shift  417 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 417 */
-  {  63,   2, 159}, /*  1:                     IN shift  159 */
-  {   5,   0, 100}, /*  2:                    AND shift  100 */
-  {  12,   0, 122}, /*  3:                 BITAND shift  122 */
-  { 177,   0, 130}, /*  4:                 likeop shift  130 */
-  {  91,   0, 108}, /*  5:                     OR shift  108 */
-  {  92,   1,  99}, /*  6:      ORACLE_OUTER_JOIN shift  99 */
-  {  14,   0, 124}, /*  7:                  BITOR shift  124 */
-  {  94,   0, 137}, /*  8:                   PLUS shift  137 */
-  {  76,   0, 114}, /*  9:                     LE shift  114 */
-  {  80,   0, 126}, /* 10:                 LSHIFT shift  126 */
-  {  10,   0, 825}, /* 11:                  BEGIN reduce 270 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  99,   3, 145}, /* 13:                    REM shift  145 */
-  {  71,   0, 150}, /* 14:                     IS shift  150 */
-  {  72,   7, 149}, /* 15:                 ISNULL shift  149 */
-  {  54,  18, 116}, /* 16:                     GE shift  116 */
-  {  45,   0, 120}, /* 17:                     EQ shift  120 */
-  {  25,   0, 147}, /* 18:                 CONCAT shift  147 */
-  { 105,   9, 128}, /* 19:                 RSHIFT shift  128 */
-  {  77,   0, 135}, /* 20:                   LIKE shift  135 */
-  {  55,   0, 136}, /* 21:                   GLOB shift  136 */
-  {  57,   0, 112}, /* 22:                     GT shift  112 */
-  { 109,  10, 143}, /* 23:                  SLASH shift  143 */
-  {  81,   0, 110}, /* 24:                     LT shift  110 */
-  { 111,   0, 141}, /* 25:                   STAR shift  141 */
-  {  83,  16, 139}, /* 26:                  MINUS shift  139 */
-  {  84,  21, 118}, /* 27:                     NE shift  118 */
-  {  85,   0, 132}, /* 28:                    NOT shift  132 */
-  {  86,  22, 154}, /* 29:                NOTNULL shift  154 */
-/* State 418 */
-  {  41,   0, 419}, /*  1:                   EACH shift  419 */
-/* State 419 */
-  { 112,   0, 421}, /*  1:              STATEMENT shift  421 */
-  { 103,   0, 420}, /*  2:                    ROW shift  420 */
-/* State 422 */
-  {  90,   0, 817}, /*  1:                     ON reduce 262 */
-/* State 423 */
-  {  90,   0, 818}, /*  1:                     ON reduce 263 */
-/* State 424 */
-  {  90,   2, 819}, /*  1:                     ON reduce 264 */
-  {  88,   0, 425}, /*  2:                     OF shift  425 */
-/* State 425 */
-  { 171,   0, 426}, /*  1:             inscollist shift  426 */
-  { 181,   1, 429}, /*  2:                     nm shift  429 */
-  {  59,   0,  20}, /*  3:                     ID shift  20 */
-  { 113,   0,  21}, /*  4:                 STRING shift  21 */
-  {  74,   3,  22}, /*  5:                JOIN_KW shift  22 */
-/* State 426 */
-  {  90,   2, 820}, /*  1:                     ON reduce 265 */
-  {  22,   0, 427}, /*  2:                  COMMA shift  427 */
-/* State 427 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 428}, /*  2:                     nm shift  428 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 432 */
-  {  88,   0, 433}, /*  1:                     OF shift  433 */
-/* State 435 */
-  {  10,   0, 436}, /*  1:                  BEGIN shift  436 */
-/* State 436 */
-  { 207,   0, 440}, /*  1:            trigger_cmd shift  440 */
-  { 208,   0, 438}, /*  2:       trigger_cmd_list shift  438 */
-  { 106,   5,  73}, /*  3:                 SELECT shift  73 */
-  {  66,   0, 458}, /*  4:                 INSERT shift  458 */
-  {  43,   9, 827}, /*  5:                    END reduce 272 */
-  { 185,   0,  69}, /*  6:              oneselect shift  69 */
-  { 123,   0, 443}, /*  7:                 UPDATE shift  443 */
-  { 196,   3, 437}, /*  8:                 select shift  437 */
-  {  34,   0, 474}, /*  9:                 DELETE shift  474 */
-/* State 437 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   4, 162}, /*  2:                  UNION shift  162 */
-  { 107,   0, 832}, /*  3:                   SEMI reduce 277 */
-  {  46,   0, 165}, /*  4:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  5:              INTERSECT shift  164 */
-/* State 438 */
-  {  43,   0, 439}, /*  1:                    END shift  439 */
-/* State 439 */
-  { 107,   0, 811}, /*  1:                   SEMI reduce 256 */
-/* State 440 */
-  { 107,   0, 441}, /*  1:                   SEMI shift  441 */
-/* State 441 */
-  { 207,   0, 440}, /*  1:            trigger_cmd shift  440 */
-  { 208,   0, 442}, /*  2:       trigger_cmd_list shift  442 */
-  { 106,   5,  73}, /*  3:                 SELECT shift  73 */
-  {  66,   0, 458}, /*  4:                 INSERT shift  458 */
-  {  43,   9, 827}, /*  5:                    END reduce 272 */
-  { 185,   0,  69}, /*  6:              oneselect shift  69 */
-  { 123,   0, 443}, /*  7:                 UPDATE shift  443 */
-  { 196,   3, 437}, /*  8:                 select shift  437 */
-  {  34,   0, 474}, /*  9:                 DELETE shift  474 */
-/* State 442 */
-  {  43,   0, 826}, /*  1:                    END reduce 271 */
-/* State 443 */
-  { 186,   0, 446}, /*  1:                 orconf shift  446 */
-  {  91,   0, 444}, /*  2:                     OR shift  444 */
-/* State 444 */
-  { 102,   3,  13}, /*  1:               ROLLBACK shift  13 */
-  { 193,   4, 445}, /*  2:            resolvetype shift  445 */
-  {  60,   6,  16}, /*  3:                 IGNORE shift  16 */
-  {   1,   0,  14}, /*  4:                  ABORT shift  14 */
-  { 100,   0,  17}, /*  5:                REPLACE shift  17 */
-  {  48,   0,  15}, /*  6:                   FAIL shift  15 */
-/* State 446 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 447}, /*  2:                     nm shift  447 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 447 */
-  { 108,   0, 448}, /*  1:                    SET shift  448 */
-/* State 448 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   0, 455}, /*  2:                     nm shift  455 */
-  {  59,   0,  20}, /*  3:                     ID shift  20 */
-  { 198,   1, 449}, /*  4:                setlist shift  449 */
-  {  74,   3,  22}, /*  5:                JOIN_KW shift  22 */
-/* State 449 */
-  {  22,   0, 450}, /*  1:                  COMMA shift  450 */
-  { 217,   0, 454}, /*  2:              where_opt shift  454 */
-  { 130,   1, 234}, /*  3:                  WHERE shift  234 */
-  { 107,   0, 710}, /*  4:                   SEMI reduce 155 */
-/* State 450 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 451}, /*  2:                     nm shift  451 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 451 */
-  {  45,   0, 452}, /*  1:                     EQ shift  452 */
-/* State 452 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 453}, /*  8:                   expr shift  453 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 453 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 454 */
-  { 107,   0, 828}, /*  1:                   SEMI reduce 273 */
-/* State 455 */
-  {  45,   0, 456}, /*  1:                     EQ shift  456 */
-/* State 456 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 457}, /*  8:                   expr shift  457 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 457 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 458 */
-  { 186,   0, 459}, /*  1:                 orconf shift  459 */
-  {  91,   3, 444}, /*  2:                     OR shift  444 */
-  {  70,   0, 645}, /*  3:                   INTO reduce 90 */
-/* State 459 */
-  {  70,   0, 460}, /*  1:                   INTO shift  460 */
-/* State 460 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 461}, /*  2:                     nm shift  461 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 461 */
-  { 172,   0, 465}, /*  1:         inscollist_opt shift  465 */
-  {  79,   0, 462}, /*  2:                     LP shift  462 */
-/* State 462 */
-  { 171,   0, 463}, /*  1:             inscollist shift  463 */
-  { 181,   1, 429}, /*  2:                     nm shift  429 */
-  {  59,   0,  20}, /*  3:                     ID shift  20 */
-  { 113,   0,  21}, /*  4:                 STRING shift  21 */
-  {  74,   3,  22}, /*  5:                JOIN_KW shift  22 */
-/* State 463 */
-  { 104,   2, 464}, /*  1:                     RP shift  464 */
-  {  22,   0, 427}, /*  2:                  COMMA shift  427 */
-/* State 465 */
-  { 196,   0, 466}, /*  1:                 select shift  466 */
-  { 185,   0,  69}, /*  2:              oneselect shift  69 */
-  { 106,   0,  73}, /*  3:                 SELECT shift  73 */
-  { 127,   0, 467}, /*  4:                 VALUES shift  467 */
-/* State 466 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   4, 162}, /*  2:                  UNION shift  162 */
-  { 107,   0, 830}, /*  3:                   SEMI reduce 275 */
-  {  46,   0, 165}, /*  4:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  5:              INTERSECT shift  164 */
-/* State 467 */
-  {  79,   0, 468}, /*  1:                     LP shift  468 */
-/* State 468 */
-  {  97,   3, 188}, /*  1:                  RAISE shift  188 */
-  { 113,   1,  66}, /*  2:                 STRING shift  66 */
-  {  49,   7, 169}, /*  3:                  FLOAT shift  169 */
-  {  83,   0, 174}, /*  4:                  MINUS shift  174 */
-  {  68,   0, 168}, /*  5:                INTEGER shift  168 */
-  { 181,   9, 102}, /*  6:                     nm shift  102 */
-  {  17,   0, 178}, /*  7:                   CASE shift  178 */
-  {  87,   0, 101}, /*  8:                   NULL shift  101 */
-  {  85,   0, 170}, /*  9:                    NOT shift  170 */
-  {  13,   0, 172}, /* 10:                 BITNOT shift  172 */
-  {  74,   0,  67}, /* 11:                JOIN_KW shift  67 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  94,   0, 176}, /* 13:                   PLUS shift  176 */
-  { 157,  10, 473}, /* 14:                   expr shift  473 */
-  { 174,  13, 469}, /* 15:               itemlist shift  469 */
-  {  79,   0,  68}, /* 16:                     LP shift  68 */
-/* State 469 */
-  { 104,   2, 472}, /*  1:                     RP shift  472 */
-  {  22,   0, 470}, /*  2:                  COMMA shift  470 */
-/* State 470 */
-  {  79,   4,  68}, /*  1:                     LP shift  68 */
-  { 181,   0, 102}, /*  2:                     nm shift  102 */
-  {  17,   0, 178}, /*  3:                   CASE shift  178 */
-  {  49,   0, 169}, /*  4:                  FLOAT shift  169 */
-  {  94,   1, 176}, /*  5:                   PLUS shift  176 */
-  {  97,   0, 188}, /*  6:                  RAISE shift  188 */
-  {  83,  10, 174}, /*  7:                  MINUS shift  174 */
-  { 157,   6, 471}, /*  8:                   expr shift  471 */
-  { 113,   7,  66}, /*  9:                 STRING shift  66 */
-  {  68,   0, 168}, /* 10:                INTEGER shift  168 */
-  {  85,   0, 170}, /* 11:                    NOT shift  170 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  87,   0, 101}, /* 13:                   NULL shift  101 */
-  {  13,   0, 172}, /* 14:                 BITNOT shift  172 */
-  {  74,  12,  67}, /* 15:                JOIN_KW shift  67 */
-/* State 471 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 472 */
-  { 107,   0, 829}, /*  1:                   SEMI reduce 274 */
-/* State 473 */
-  {  84,   0, 118}, /*  1:                     NE shift  118 */
-  {  85,   4, 132}, /*  2:                    NOT shift  132 */
-  {  86,   0, 154}, /*  3:                NOTNULL shift  154 */
-  {  57,   0, 112}, /*  4:                     GT shift  112 */
-  {  63,   0, 159}, /*  5:                     IN shift  159 */
-  {   5,   0, 100}, /*  6:                    AND shift  100 */
-  {  71,   0, 150}, /*  7:                     IS shift  150 */
-  {  91,   5, 108}, /*  8:                     OR shift  108 */
-  {  92,   0,  99}, /*  9:      ORACLE_OUTER_JOIN shift  99 */
-  { 177,   0, 130}, /* 10:                 likeop shift  130 */
-  {  94,   0, 137}, /* 11:                   PLUS shift  137 */
-  {  11,   0, 155}, /* 12:                BETWEEN shift  155 */
-  {  12,   0, 122}, /* 13:                 BITAND shift  122 */
-  {  77,   0, 135}, /* 14:                   LIKE shift  135 */
-  {  14,   0, 124}, /* 15:                  BITOR shift  124 */
-  {  99,   7, 145}, /* 16:                    REM shift  145 */
-  {  72,   0, 149}, /* 17:                 ISNULL shift  149 */
-  {  45,   0, 120}, /* 18:                     EQ shift  120 */
-  {  81,  20, 110}, /* 19:                     LT shift  110 */
-  {  25,   0, 147}, /* 20:                 CONCAT shift  147 */
-  {  76,   0, 114}, /* 21:                     LE shift  114 */
-  { 105,  14, 128}, /* 22:                 RSHIFT shift  128 */
-  {  83,  24, 139}, /* 23:                  MINUS shift  139 */
-  {  55,   0, 136}, /* 24:                   GLOB shift  136 */
-  {  80,   0, 126}, /* 25:                 LSHIFT shift  126 */
-  { 109,  19, 143}, /* 26:                  SLASH shift  143 */
-  {  54,   0, 116}, /* 27:                     GE shift  116 */
-  { 111,  23, 141}, /* 28:                   STAR shift  141 */
-/* State 474 */
-  {  52,   0, 475}, /*  1:                   FROM shift  475 */
-/* State 475 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 476}, /*  2:                     nm shift  476 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 476 */
-  { 130,   0, 234}, /*  1:                  WHERE shift  234 */
-  { 217,   1, 477}, /*  2:              where_opt shift  477 */
-  { 107,   0, 710}, /*  3:                   SEMI reduce 155 */
-/* State 477 */
-  { 107,   0, 831}, /*  1:                   SEMI reduce 276 */
-/* State 478 */
-  { 128,   2, 481}, /*  1:                   VIEW shift  481 */
-  {  64,   0, 483}, /*  2:                  INDEX shift  483 */
-  { 118,   4, 486}, /*  3:                TRIGGER shift  486 */
-  { 114,   0, 479}, /*  4:                  TABLE shift  479 */
-/* State 479 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 480}, /*  2:                     nm shift  480 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 480 */
-  { 107,   0, 652}, /*  1:                   SEMI reduce 97 */
-/* State 481 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 482}, /*  2:                     nm shift  482 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 482 */
-  { 107,   0, 654}, /*  1:                   SEMI reduce 99 */
-/* State 483 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 484}, /*  2:                     nm shift  484 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 484 */
-  { 150,   2, 485}, /*  1:                   dbnm shift  485 */
-  {  39,   0, 270}, /*  2:                    DOT shift  270 */
-  { 107,   0, 680}, /*  3:                   SEMI reduce 125 */
-/* State 485 */
-  { 107,   0, 794}, /*  1:                   SEMI reduce 239 */
-/* State 486 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 487}, /*  2:                     nm shift  487 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 487 */
-  { 150,   2, 488}, /*  1:                   dbnm shift  488 */
-  {  39,   0, 270}, /*  2:                    DOT shift  270 */
-  { 107,   0, 680}, /*  3:                   SEMI reduce 125 */
-/* State 488 */
-  { 107,   0, 837}, /*  1:                   SEMI reduce 282 */
-/* State 489 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   4, 162}, /*  2:                  UNION shift  162 */
-  { 107,   0, 655}, /*  3:                   SEMI reduce 100 */
-  {  46,   0, 165}, /*  4:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  5:              INTERSECT shift  164 */
-/* State 490 */
-  {  52,   0, 491}, /*  1:                   FROM shift  491 */
-/* State 491 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 492}, /*  2:                     nm shift  492 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 492 */
-  { 150,   0, 493}, /*  1:                   dbnm shift  493 */
-  {  39,   0, 270}, /*  2:                    DOT shift  270 */
-/* State 493 */
-  { 130,   0, 234}, /*  1:                  WHERE shift  234 */
-  { 217,   1, 494}, /*  2:              where_opt shift  494 */
-  { 107,   0, 710}, /*  3:                   SEMI reduce 155 */
-/* State 494 */
-  { 107,   0, 709}, /*  1:                   SEMI reduce 154 */
-/* State 495 */
-  { 186,   0, 496}, /*  1:                 orconf shift  496 */
-  {  91,   0, 444}, /*  2:                     OR shift  444 */
-/* State 496 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 497}, /*  2:                     nm shift  497 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 497 */
-  { 150,   2, 498}, /*  1:                   dbnm shift  498 */
-  { 108,   3, 680}, /*  2:                    SET reduce 125 */
-  {  39,   0, 270}, /*  3:                    DOT shift  270 */
-/* State 498 */
-  { 108,   0, 499}, /*  1:                    SET shift  499 */
-/* State 499 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   0, 455}, /*  2:                     nm shift  455 */
-  {  59,   0,  20}, /*  3:                     ID shift  20 */
-  { 198,   1, 500}, /*  4:                setlist shift  500 */
-  {  74,   3,  22}, /*  5:                JOIN_KW shift  22 */
-/* State 500 */
-  {  22,   0, 450}, /*  1:                  COMMA shift  450 */
-  { 217,   0, 501}, /*  2:              where_opt shift  501 */
-  { 130,   1, 234}, /*  3:                  WHERE shift  234 */
-  { 107,   0, 710}, /*  4:                   SEMI reduce 155 */
-/* State 501 */
-  { 107,   0, 712}, /*  1:                   SEMI reduce 157 */
-/* State 502 */
-  {  70,   0, 503}, /*  1:                   INTO shift  503 */
-/* State 503 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 504}, /*  2:                     nm shift  504 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 504 */
-  { 150,   0, 505}, /*  1:                   dbnm shift  505 */
-  {  39,   0, 270}, /*  2:                    DOT shift  270 */
-/* State 505 */
-  { 172,   0, 506}, /*  1:         inscollist_opt shift  506 */
-  {  79,   0, 462}, /*  2:                     LP shift  462 */
-/* State 506 */
-  { 196,   0, 507}, /*  1:                 select shift  507 */
-  { 185,   0,  69}, /*  2:              oneselect shift  69 */
-  { 106,   0,  73}, /*  3:                 SELECT shift  73 */
-  { 127,   0, 508}, /*  4:                 VALUES shift  508 */
-/* State 507 */
-  { 180,   0,  71}, /*  1:         multiselect_op shift  71 */
-  { 121,   4, 162}, /*  2:                  UNION shift  162 */
-  { 107,   0, 716}, /*  3:                   SEMI reduce 161 */
-  {  46,   0, 165}, /*  4:                 EXCEPT shift  165 */
-  {  69,   0, 164}, /*  5:              INTERSECT shift  164 */
-/* State 508 */
-  {  79,   0, 509}, /*  1:                     LP shift  509 */
-/* State 509 */
-  {  97,   3, 188}, /*  1:                  RAISE shift  188 */
-  { 113,   1,  66}, /*  2:                 STRING shift  66 */
-  {  49,   7, 169}, /*  3:                  FLOAT shift  169 */
-  {  83,   0, 174}, /*  4:                  MINUS shift  174 */
-  {  68,   0, 168}, /*  5:                INTEGER shift  168 */
-  { 181,   9, 102}, /*  6:                     nm shift  102 */
-  {  17,   0, 178}, /*  7:                   CASE shift  178 */
-  {  87,   0, 101}, /*  8:                   NULL shift  101 */
-  {  85,   0, 170}, /*  9:                    NOT shift  170 */
-  {  13,   0, 172}, /* 10:                 BITNOT shift  172 */
-  {  74,   0,  67}, /* 11:                JOIN_KW shift  67 */
-  {  59,   0,  64}, /* 12:                     ID shift  64 */
-  {  94,   0, 176}, /* 13:                   PLUS shift  176 */
-  { 157,  10, 473}, /* 14:                   expr shift  473 */
-  { 174,  13, 510}, /* 15:               itemlist shift  510 */
-  {  79,   0,  68}, /* 16:                     LP shift  68 */
-/* State 510 */
-  { 104,   2, 511}, /*  1:                     RP shift  511 */
-  {  22,   0, 470}, /*  2:                  COMMA shift  470 */
-/* State 511 */
-  { 107,   0, 715}, /*  1:                   SEMI reduce 160 */
-/* State 512 */
-  { 186,   0, 513}, /*  1:                 orconf shift  513 */
-  {  91,   3, 444}, /*  2:                     OR shift  444 */
-  {  70,   0, 645}, /*  3:                   INTO reduce 90 */
-/* State 513 */
-  {  70,   0, 717}, /*  1:                   INTO reduce 162 */
-/* State 514 */
-  {  70,   0, 718}, /*  1:                   INTO reduce 163 */
-/* State 515 */
-  { 186,   0, 516}, /*  1:                 orconf shift  516 */
-  {  91,   0, 444}, /*  2:                     OR shift  444 */
-/* State 516 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 517}, /*  2:                     nm shift  517 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 517 */
-  { 150,   3, 518}, /*  1:                   dbnm shift  518 */
-  {  52,   0, 680}, /*  2:                   FROM reduce 125 */
-  {  39,   0, 270}, /*  3:                    DOT shift  270 */
-/* State 518 */
-  {  52,   0, 519}, /*  1:                   FROM shift  519 */
-/* State 519 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 520}, /*  2:                     nm shift  520 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 520 */
-  { 107,   0, 796}, /*  1:                   SEMI reduce 241 */
-  { 125,   1, 521}, /*  2:                  USING shift  521 */
-/* State 521 */
-  {  35,   0, 522}, /*  1:             DELIMITERS shift  522 */
-/* State 522 */
-  { 113,   0, 523}, /*  1:                 STRING shift  523 */
-/* State 523 */
-  { 107,   0, 795}, /*  1:                   SEMI reduce 240 */
-/* State 524 */
-  {  59,   0,  20}, /*  1:                     ID shift  20 */
-  { 181,   0, 525}, /*  2:                     nm shift  525 */
-  { 107,   0, 797}, /*  3:                   SEMI reduce 242 */
-  { 113,   0,  21}, /*  4:                 STRING shift  21 */
-  {  74,   1,  22}, /*  5:                JOIN_KW shift  22 */
-/* State 525 */
-  { 107,   0, 798}, /*  1:                   SEMI reduce 243 */
-/* State 526 */
-  { 165,   0, 527}, /*  1:                    ids shift  527 */
-  {  59,   0, 251}, /*  2:                     ID shift  251 */
-  { 113,   2, 252}, /*  3:                 STRING shift  252 */
-/* State 527 */
-  {  45,   0, 528}, /*  1:                     EQ shift  528 */
-  {  79,   0, 540}, /*  2:                     LP shift  540 */
-  { 107,   0, 804}, /*  3:                   SEMI reduce 249 */
-/* State 528 */
-  {  90,   0, 530}, /*  1:                     ON shift  530 */
-  { 181,   0, 529}, /*  2:                     nm shift  529 */
-  {  83,   0, 537}, /*  3:                  MINUS shift  537 */
-  { 113,   3,  21}, /*  4:                 STRING shift  21 */
-  {  94,   6, 539}, /*  5:                   PLUS shift  539 */
-  {  74,   0,  22}, /*  6:                JOIN_KW shift  22 */
-  { 179,   8, 532}, /*  7:              minus_num shift  532 */
-  {  59,   0,  20}, /*  8:                     ID shift  20 */
-  { 188,   0, 531}, /*  9:               plus_num shift  531 */
-  { 189,   7, 533}, /* 10:               plus_opt shift  533 */
-/* State 529 */
-  { 107,   0, 799}, /*  1:                   SEMI reduce 244 */
-/* State 530 */
-  { 107,   0, 800}, /*  1:                   SEMI reduce 245 */
-/* State 531 */
-  { 107,   0, 801}, /*  1:                   SEMI reduce 246 */
-/* State 532 */
-  { 107,   0, 802}, /*  1:                   SEMI reduce 247 */
-/* State 533 */
-  {  68,   0, 535}, /*  1:                INTEGER shift  535 */
-  {  49,   0, 536}, /*  2:                  FLOAT shift  536 */
-  { 182,   1, 534}, /*  3:                 number shift  534 */
-/* State 534 */
-  { 107,   0, 805}, /*  1:                   SEMI reduce 250 */
-/* State 535 */
-  { 107,   0, 807}, /*  1:                   SEMI reduce 252 */
-/* State 536 */
-  { 107,   0, 808}, /*  1:                   SEMI reduce 253 */
-/* State 537 */
-  {  68,   0, 535}, /*  1:                INTEGER shift  535 */
-  {  49,   0, 536}, /*  2:                  FLOAT shift  536 */
-  { 182,   1, 538}, /*  3:                 number shift  538 */
-/* State 538 */
-  { 107,   0, 806}, /*  1:                   SEMI reduce 251 */
-/* State 540 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 541}, /*  2:                     nm shift  541 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 541 */
-  { 104,   0, 542}, /*  1:                     RP shift  542 */
-/* State 542 */
-  { 107,   0, 803}, /*  1:                   SEMI reduce 248 */
-/* State 543 */
-  {  30,   0, 548}, /*  1:               DATABASE shift  548 */
-  { 149,   0, 544}, /*  2:        database_kw_opt shift  544 */
-/* State 544 */
-  { 165,   0, 545}, /*  1:                    ids shift  545 */
-  {  59,   0, 251}, /*  2:                     ID shift  251 */
-  { 113,   2, 252}, /*  3:                 STRING shift  252 */
-/* State 545 */
-  {   6,   0, 546}, /*  1:                     AS shift  546 */
-/* State 546 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 547}, /*  2:                     nm shift  547 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 547 */
-  { 107,   0, 838}, /*  1:                   SEMI reduce 283 */
-/* State 549 */
-  {  30,   0, 548}, /*  1:               DATABASE shift  548 */
-  { 149,   0, 550}, /*  2:        database_kw_opt shift  550 */
-/* State 550 */
-  { 113,   0,  21}, /*  1:                 STRING shift  21 */
-  { 181,   1, 551}, /*  2:                     nm shift  551 */
-  {  74,   0,  22}, /*  3:                JOIN_KW shift  22 */
-  {  59,   0,  20}, /*  4:                     ID shift  20 */
-/* State 551 */
-  { 107,   0, 841}, /*  1:                   SEMI reduce 286 */
-};
 
-/* The state table contains information needed to look up the correct
-** action in the action table, given the current state of the parser.
-** Information needed includes:
+/* Next are that tables used to determine what action to take based on the
+** current state and lookahead token.  These tables are used to implement
+** functions that take a state number and lookahead value and return an
+** action integer.  
 **
-**  +  A pointer to the start of the action hash table in yyActionTable.
+** Suppose the action integer is N.  Then the action is determined as
+** follows
 **
-**  +  The number of entries in the action hash table.
+**   0 <= N < YYNSTATE                  Shift N.  That is, push the lookahead
+**                                      token onto the stack and goto state N.
 **
-**  +  The default action.  This is the action to take if no entry for
-**     the given look-ahead is found in the action hash table.
+**   YYNSTATE <= N < YYNSTATE+YYNRULE   Reduce by rule N-YYNSTATE.
+**
+**   N == YYNSTATE+YYNRULE              A syntax error has occurred.
+**
+**   N == YYNSTATE+YYNRULE+1            The parser accepts its input.
+**
+**   N == YYNSTATE+YYNRULE+2            No such action.  Denotes unused
+**                                      slots in the yy_action[] table.
+**
+** The action table is constructed as a single large table named yy_action[].
+** Given state S and lookahead X, the action is computed as
+**
+**      yy_action[ yy_shift_ofst[S] + X ]
+**
+** If the index value yy_shift_ofst[S]+X is out of range or if the value
+** yy_lookahead[yy_shift_ofst[S]+X] is not equal to X or if yy_shift_ofst[S]
+** is equal to YY_SHIFT_USE_DFLT, it means that the action is not in the table
+** and that yy_default[S] should be used instead.  
+**
+** The formula above is for computing the action when the lookahead is
+** a terminal symbol.  If the lookahead is a non-terminal (as occurs after
+** a reduce action) then the yy_reduce_ofst[] array is used in place of
+** the yy_shift_ofst[] array and YY_REDUCE_USE_DFLT is used in place of
+** YY_SHIFT_USE_DFLT.
+**
+** The following are the tables generated in this section:
+**
+**  yy_action[]        A single table containing all actions.
+**  yy_lookahead[]     A table containing the lookahead for each entry in
+**                     yy_action.  Used to detect hash collisions.
+**  yy_shift_ofst[]    For each state, the offset into yy_action for
+**                     shifting terminals.
+**  yy_reduce_ofst[]   For each state, the offset into yy_action for
+**                     shifting non-terminals after a reduce.
+**  yy_default[]       Default action for each state.
 */
-struct yyStateEntry {
-  const yyActionEntry *hashtbl;  /* Start of the hash table in yyActionTable */
-  YYCODETYPE nEntry;             /* Number of entries in action hash table */
-  YYACTIONTYPE actionDefault;    /* Default action if look-ahead not found */
+static YYACTIONTYPE yy_action[] = {
+ /*     0 */   104,  264,  174,  219,  215,   43,  162,  129,   20,  131,
+ /*    10 */   174,  219,  301,  289,   75,   62,    1,  331,  374,  330,
+ /*    20 */   154,  174,  218,   22,   41,   69,  106,  361,  336,  333,
+ /*    30 */    69,  560,  543,    3,  106,   35,  282,  283,  284,  536,
+ /*    40 */   127,  168,  545,   14,  259,  106,   69,  853,   20,  123,
+ /*    50 */   143,  377,  119,  262,  262,    8,  374,  443,  166,   20,
+ /*    60 */     5,   21,  254,   22,  177,  361,  157,  156,  183,  446,
+ /*    70 */   444,  121,  142,  349,   22,  133,  117,  566,  146,  125,
+ /*    80 */   139,  161,   46,    2,   44,    3,  115,  103,  144,  377,
+ /*    90 */    15,   49,   54,  152,  308,  363,  174,  219,  233,  135,
+ /*   100 */   112,   21,   16,  150,   40,  148,  263,  263,  104,  335,
+ /*   110 */    64,  106,   21,   10,  162,  129,  637,  131,   60,  111,
+ /*   120 */   106,  369,  392,  330,   69,   67,  559,  275,  154,  649,
+ /*   130 */    68,  237,   95,  363,  179,  231,  175,   62,  105,  331,
+ /*   140 */    20,   17,  276,   13,  181,   18,   47,  193,  127,   20,
+ /*   150 */    20,  333,  391,   37,   32,   22,  154,  123,  143,  369,
+ /*   160 */   119,  303,  154,   66,   22,   22,  166,   83,  415,  167,
+ /*   170 */   230,  346,  177,  569,  157,  156,  183,  416,  113,  121,
+ /*   180 */   142,  338,   86,  133,  117,  558,  146,  125,  139,  161,
+ /*   190 */   339,  357,   84,   21,  115,   31,  144,   36,   37,  172,
+ /*   200 */   358,  152,   21,   21,   46,  343,   44,  135,  112,  347,
+ /*   210 */   262,  150,  489,  148,   54,  340,  308,  104,   64,  480,
+ /*   220 */   146,  570,  171,  162,  129,  172,  131,  111,  837,  152,
+ /*   230 */   144,   18,  790,   67,  337,  152,  357,  154,   68,  150,
+ /*   240 */    60,  148,  179,   52,  175,  150,  105,  148,  171,  395,
+ /*   250 */   320,  464,  181,  441,  172,  193,  298,  127,  430,   20,
+ /*   260 */   390,  485,  201,  263,   73,  492,  123,  143,  297,  119,
+ /*   270 */     9,   66,   53,  169,   22,  166,  487,  171,    6,  281,
+ /*   280 */     4,  172,  173,  157,  156,   11,  113,   29,  121,  142,
+ /*   290 */    73,  299,  133,  117,  172,  146,  125,  139,  161,  169,
+ /*   300 */   251,  225,  296,  115,  171,  144,  319,  449,   58,  205,
+ /*   310 */   152,  232,   21,  508,  374,  106,  135,  171,  359,   69,
+ /*   320 */   150,  195,  148,  361,  305,   69,  104,  191,  169,   20,
+ /*   330 */    70,  356,  162,  129,   20,  131,  495,   59,  686,  174,
+ /*   340 */   219,  244,   20,  256,   22,  143,  154,  377,  106,   22,
+ /*   350 */   172,  252,  253,  229,  581,  169,  561,   22,  333,  129,
+ /*   360 */   172,  131,  197,  106,  788,  264,  127,  142,  169,  159,
+ /*   370 */   251,  158,  154,  171,   12,  123,  143,  224,  119,   38,
+ /*   380 */   348,  687,   21,  171,  166,  295,  172,   21,  589,  807,
+ /*   390 */    19,  363,  157,  156,  420,   21,  829,  121,  142,  638,
+ /*   400 */    24,  133,  117,  559,  146,  125,  139,  161,  313,  171,
+ /*   410 */   659,  386,  115,  172,  144,  573,  315,  369,  262,  152,
+ /*   420 */   842,  252,  253,  103,  169,  135,   69,  133,   65,  150,
+ /*   430 */   146,  148,  104,  321,  169,   26,  171,  443,  162,  129,
+ /*   440 */   144,  131,  209,  789,  316,  152,  840,  106,  185,  446,
+ /*   450 */   448,  135,  154,  217,  172,  150,  538,  148,  535,   69,
+ /*   460 */   169,  426,  558,  278,  272,  537,  539,   97,  425,  184,
+ /*   470 */   393,  263,  127,  661,  574,  291,  325,  171,  276,  278,
+ /*   480 */   328,  123,  143,  417,  119,  278,  366,  169,  798,  456,
+ /*   490 */   166,  396,   91,  106,  276,  402,  388,  387,  157,  156,
+ /*   500 */   276,  278,  371,  121,  142,   28,  398,  133,  117,  266,
+ /*   510 */   146,  125,  139,  161,  724,  418,  276,  322,  115,  247,
+ /*   520 */   144,  137,  534,  170,  318,  152,  427,   30,  169,  189,
+ /*   530 */   217,  135,  323,  114,  216,  150,  312,  148,  429,  278,
+ /*   540 */   380,  104,  213,  278,  437,  440,  575,  162,  129,  248,
+ /*   550 */   131,  479,  221,  479,  276,  116,  546,  106,  276,   89,
+ /*   560 */   118,  154,  120,  122,  124,   34,  576,  249,  475,  267,
+ /*   570 */   516,  419,  126,  718,  259,  106,  128,  106,  130,  106,
+ /*   580 */   132,  127,  134,  814,  106,  136,  106,  106,  106,   33,
+ /*   590 */   123,  143,  688,  119,  138,  274,  106,  245,  217,  166,
+ /*   600 */   106,  141,  106,  266,  106,   39,  106,  157,  156,  106,
+ /*   610 */   274,  234,  121,  142,  145,  834,  133,  117,  106,  146,
+ /*   620 */   125,  139,  161,  147,  664,  106,  149,  115,  580,  144,
+ /*   630 */    10,  151,  352,  153,  152,  155,  163,  165,  106,  300,
+ /*   640 */   135,  274,  176,  178,  150,  104,  148,  106,  180,  182,
+ /*   650 */   106,  162,  129,  190,  131,  106,  192,  106,  210,  106,
+ /*   660 */   106,  106,  212,  313,  214,  154,  106,  106,  226,  228,
+ /*   670 */   286,  315,  106,  106,  241,  246,  273,  106,  280,  302,
+ /*   680 */   106,  290,  106,  274,  375,  127,  106,  342,  106,  274,
+ /*   690 */   345,  329,  106,  106,  123,  143,  274,  119,  106,  106,
+ /*   700 */   137,  461,  106,  166,  266,  293,  341,  376,  106,  344,
+ /*   710 */   422,  157,  156,  351,  422,  412,  121,  142,   69,  455,
+ /*   720 */   133,  117,  367,  146,  125,  139,  161,  421,  459,  401,
+ /*   730 */   651,  115,  469,  144,  411,  463,   69,  424,  152,  106,
+ /*   740 */    73,  476,  424,  306,  135,  221,  221,  472,  150,  104,
+ /*   750 */   148,  450,  106,  461,   73,  162,  129,  476,  131,  106,
+ /*   760 */   477,  473,   69,  718,  372,  549,  221,    7,   42,  154,
+ /*   770 */   381,  506,  806,  513,  542,  514,   45,  438,  830,  688,
+ /*   780 */    48,   23,   51,   50,  106,  521,  394,  245,   55,  127,
+ /*   790 */   527,  496,   56,  541,  555,  470,   57,  484,  123,  143,
+ /*   800 */    25,  119,   61,   63,  590,  591,   71,  166,   73,   72,
+ /*   810 */   245,   74,  688,   76,  688,  157,  156,   77,  242,  240,
+ /*   820 */   121,  142,  478,  518,  133,  117,   78,  146,  125,  139,
+ /*   830 */   161,   79,   93,   80,   10,  115,   82,  144,  517,   88,
+ /*   840 */   104,   81,  152,   85,   87,  835,  162,  129,  135,  131,
+ /*   850 */    90,  532,  150,   92,  148,   94,  520,   98,   27,   96,
+ /*   860 */   154,  100,   73,  101,  102,   99,  137,  107,  177,  109,
+ /*   870 */   154,  108,  183,  140,  110,  160,  220,  665,  666,  501,
+ /*   880 */   127,  211,  530,  667,  186,  187,  188,  194,  196,  123,
+ /*   890 */   143,  198,  119,  199,  200,  202,  203,  204,  166,  206,
+ /*   900 */   208,  207,  221,  223,  112,  236,  157,  156,  238,  222,
+ /*   910 */   235,  121,  142,  239,   64,  133,  117,  243,  146,  125,
+ /*   920 */   139,  161,  217,  111,  255,  250,  115,  257,  144,   67,
+ /*   930 */   258,  261,  279,  152,   68,  260,  270,  265,  179,  135,
+ /*   940 */   175,  271,  105,  150,  277,  148,  104,  268,  181,  269,
+ /*   950 */   285,  193,  162,  129,  287,  131,  294,  304,  288,  327,
+ /*   960 */   309,  307,  311,  310,  314,  312,  154,   66,  334,  332,
+ /*   970 */   317,  355,  324,  354,  326,  365,  364,  362,  370,  378,
+ /*   980 */   382,  383,  113,  384,  791,  368,  127,  350,  379,  353,
+ /*   990 */   385,  389,   49,  373,  397,  123,  143,  360,  119,  399,
+ /*  1000 */   400,  403,  404,  406,  166,  407,  408,  413,  409,  822,
+ /*  1010 */   410,  414,  157,  156,  405,  827,  828,  121,  142,  423,
+ /*  1020 */   428,  133,  117,  431,  146,  125,  139,  161,  433,  435,
+ /*  1030 */   432,  434,  115,  436,  144,  439,  796,  797,  442,  152,
+ /*  1040 */   445,  821,  447,  836,  450,  135,  452,  453,  457,  150,
+ /*  1050 */   454,  148,  164,  458,  451,  838,  462,  460,  162,  129,
+ /*  1060 */   465,  131,  466,  467,  468,  471,  474,  839,  481,  482,
+ /*  1070 */   483,  841,  154,  486,  658,  488,  490,  660,  491,  493,
+ /*  1080 */   804,  494,  847,  497,  498,  717,  500,  499,  503,  504,
+ /*  1090 */   505,  502,  127,  507,  720,  509,  510,  511,  515,  512,
+ /*  1100 */   519,  123,  143,  725,  119,  726,  522,  723,  524,  525,
+ /*  1110 */   166,  528,  805,  808,  523,  526,  529,  533,  157,  156,
+ /*  1120 */   809,  531,  554,  121,  142,  547,  810,  133,  117,  811,
+ /*  1130 */   146,  125,  139,  161,  551,  812,  815,  540,  115,  550,
+ /*  1140 */   144,  548,  817,  818,  544,  152,  816,  813,  552,  848,
+ /*  1150 */   851,  135,  556,  553,  512,  150,  557,  148,  227,  512,
+ /*  1160 */   512,  512,  512,  512,  162,  129,  512,  131,  512,  512,
+ /*  1170 */   512,  512,  512,  512,  512,  512,  512,  512,  154,  512,
+ /*  1180 */   512,  512,  512,  512,  512,  512,  512,  512,  512,  512,
+ /*  1190 */   512,  512,  512,  512,  512,  512,  512,  512,  127,  512,
+ /*  1200 */   512,  512,  512,  512,  512,  512,  512,  123,  143,  512,
+ /*  1210 */   119,  512,  512,  512,  512,  512,  166,  512,  512,  512,
+ /*  1220 */   512,  512,  512,  512,  157,  156,  512,  512,  512,  121,
+ /*  1230 */   142,  512,  512,  133,  117,  512,  146,  125,  139,  161,
+ /*  1240 */   512,  512,  512,  512,  115,  512,  144,  512,  512,  512,
+ /*  1250 */   512,  152,  512,  512,  512,  512,  512,  135,  512,  512,
+ /*  1260 */   512,  150,  512,  148,  104,  512,  512,  512,  512,  512,
+ /*  1270 */   162,  129,  512,  131,  512,  512,  512,  512,  512,  512,
+ /*  1280 */   512,  512,  512,  512,  154,  512,  512,  512,  512,  512,
+ /*  1290 */   512,  512,  512,  512,  512,  512,  512,  512,  512,  512,
+ /*  1300 */   512,  512,  512,  512,  127,  512,  512,  512,  512,  512,
+ /*  1310 */   512,  512,  512,  123,  143,  512,  119,  512,  512,  512,
+ /*  1320 */   512,  512,  166,  512,  512,  512,  512,  512,  512,  512,
+ /*  1330 */   157,  156,  512,  512,  512,  121,  142,  512,  512,  133,
+ /*  1340 */   117,  512,  146,  125,  139,  161,  512,  162,  129,  512,
+ /*  1350 */   131,  512,  144,  512,  512,  512,  512,  152,  512,  512,
+ /*  1360 */   512,  154,  512,  135,  512,  512,  512,  150,  512,  148,
+ /*  1370 */   512,  512,  512,  512,  512,  512,  512,  512,  512,  512,
+ /*  1380 */   512,  127,  512,  512,  512,  512,  512,  512,  512,  512,
+ /*  1390 */   123,  143,  512,  119,  512,  512,  512,  512,  512,  166,
+ /*  1400 */   512,  512,  512,  512,  512,  177,  512,  157,  156,  183,
+ /*  1410 */   512,  512,  121,  142,  512,  512,  133,  117,  512,  146,
+ /*  1420 */   125,  139,  161,  177,  512,  512,  512,  183,  512,  144,
+ /*  1430 */   512,  512,  512,  512,  152,  512,  512,  512,  512,  512,
+ /*  1440 */   135,  112,  512,  512,  150,  512,  148,  512,  512,  512,
+ /*  1450 */   512,   64,  512,  512,  512,  512,  512,  512,  512,  112,
+ /*  1460 */   111,  512,  512,  512,  512,  512,   67,  512,  512,   64,
+ /*  1470 */   512,   68,  512,  512,  512,  179,  512,  175,  111,  105,
+ /*  1480 */   512,  512,  512,  512,   67,  181,  512,  512,  193,   68,
+ /*  1490 */   512,  512,  512,  179,  512,  175,  512,  105,  129,  512,
+ /*  1500 */   131,  512,  292,  181,   66,  512,  193,  512,  512,  512,
+ /*  1510 */   512,  154,  512,  512,  512,  512,  512,  512,  512,  113,
+ /*  1520 */   512,  512,   66,  512,  512,  512,  512,  512,  512,  512,
+ /*  1530 */   512,  512,  512,  512,  512,  512,  512,  113,  512,  512,
+ /*  1540 */   123,  512,  512,  119,  512,  512,  512,  512,  512,  512,
+ /*  1550 */   512,  512,  512,  512,  512,  512,  512,  512,  512,  512,
+ /*  1560 */   512,  512,  121,  512,  512,  512,  133,  117,  512,  146,
+ /*  1570 */   512,  512,  512,  512,  512,  512,  512,  512,  512,  144,
+ /*  1580 */   512,  512,  512,  512,  152,  512,  512,  512,  512,  512,
+ /*  1590 */   135,  512,  512,  512,  150,  512,  148,
 };
-typedef struct yyStateEntry yyStateEntry;
-static const yyStateEntry yyStateTable[] = {
-  { &yyActionTable[0],   6, 562 },
-  { &yyActionTable[6],   5, 562 },
-  { &yyActionTable[11],   0, 557 },
-  { &yyActionTable[11],  22, 842 },
-  { &yyActionTable[33],   1, 842 },
-  { &yyActionTable[34],   0, 558 },
-  { &yyActionTable[34],   1, 842 },
-  { &yyActionTable[35],   2, 564 },
-  { &yyActionTable[37],   3, 842 },
-  { &yyActionTable[40],   1, 842 },
-  { &yyActionTable[41],   1, 842 },
-  { &yyActionTable[42],   6, 842 },
-  { &yyActionTable[48],   0, 644 },
-  { &yyActionTable[48],   0, 647 },
-  { &yyActionTable[48],   0, 648 },
-  { &yyActionTable[48],   0, 649 },
-  { &yyActionTable[48],   0, 650 },
-  { &yyActionTable[48],   0, 651 },
-  { &yyActionTable[48],   4, 565 },
-  { &yyActionTable[52],   0, 566 },
-  { &yyActionTable[52],   0, 583 },
-  { &yyActionTable[52],   0, 584 },
-  { &yyActionTable[52],   0, 585 },
-  { &yyActionTable[52],   3, 842 },
-  { &yyActionTable[55],   1, 842 },
-  { &yyActionTable[56],   3, 842 },
-  { &yyActionTable[59],   1, 842 },
-  { &yyActionTable[60],   3, 842 },
-  { &yyActionTable[63],   1, 842 },
-  { &yyActionTable[64],   3, 842 },
-  { &yyActionTable[67],   1, 842 },
-  { &yyActionTable[68],   7, 842 },
-  { &yyActionTable[75],   3, 842 },
-  { &yyActionTable[78],   1, 842 },
-  { &yyActionTable[79],   1, 842 },
-  { &yyActionTable[80],  13, 842 },
-  { &yyActionTable[93],   0, 576 },
-  { &yyActionTable[93],   5, 586 },
-  { &yyActionTable[98],   1, 596 },
-  { &yyActionTable[99],  13, 578 },
-  { &yyActionTable[112],   0, 595 },
-  { &yyActionTable[112],   4, 842 },
-  { &yyActionTable[116],  10, 842 },
-  { &yyActionTable[126],   0, 597 },
-  { &yyActionTable[126],   2, 643 },
-  { &yyActionTable[128],   0, 608 },
-  { &yyActionTable[128],   2, 842 },
-  { &yyActionTable[130],   2, 643 },
-  { &yyActionTable[132],   0, 609 },
-  { &yyActionTable[132],   2, 628 },
-  { &yyActionTable[134],   0, 626 },
-  { &yyActionTable[134],   2, 842 },
-  { &yyActionTable[136],   0, 629 },
-  { &yyActionTable[136],   0, 630 },
-  { &yyActionTable[136],   1, 842 },
-  { &yyActionTable[137],   3, 698 },
-  { &yyActionTable[140],   2, 643 },
-  { &yyActionTable[142],   0, 610 },
-  { &yyActionTable[142],   0, 696 },
-  { &yyActionTable[142],   0, 697 },
-  { &yyActionTable[142],   2, 643 },
-  { &yyActionTable[144],   0, 611 },
-  { &yyActionTable[144],   1, 842 },
-  { &yyActionTable[145],  15, 842 },
-  { &yyActionTable[160],   2, 727 },
-  { &yyActionTable[162],  18, 785 },
-  { &yyActionTable[180],   1, 734 },
-  { &yyActionTable[181],   1, 728 },
-  { &yyActionTable[182],  18, 842 },
-  { &yyActionTable[200],   0, 656 },
-  { &yyActionTable[200],   5, 842 },
-  { &yyActionTable[205],   2, 842 },
-  { &yyActionTable[207],   0, 657 },
-  { &yyActionTable[207],   3, 665 },
-  { &yyActionTable[210],   2, 667 },
-  { &yyActionTable[212],   3, 674 },
-  { &yyActionTable[215],   2, 710 },
-  { &yyActionTable[217],   2, 701 },
-  { &yyActionTable[219],   2, 703 },
-  { &yyActionTable[221],   2, 691 },
-  { &yyActionTable[223],   2, 705 },
-  { &yyActionTable[225],   0, 662 },
-  { &yyActionTable[225],   1, 842 },
-  { &yyActionTable[226],   2, 706 },
-  { &yyActionTable[228],   1, 842 },
-  { &yyActionTable[229],   0, 707 },
-  { &yyActionTable[229],   1, 842 },
-  { &yyActionTable[230],   0, 708 },
-  { &yyActionTable[230],   1, 842 },
-  { &yyActionTable[231],  17, 842 },
-  { &yyActionTable[248],   1, 692 },
-  { &yyActionTable[249],  16, 842 },
-  { &yyActionTable[265],   2, 699 },
-  { &yyActionTable[267],   3, 698 },
-  { &yyActionTable[270],   0, 693 },
-  { &yyActionTable[270],   2, 842 },
-  { &yyActionTable[272],   0, 580 },
-  { &yyActionTable[272],   0, 700 },
-  { &yyActionTable[272],  28, 695 },
-  { &yyActionTable[300],   0, 731 },
-  { &yyActionTable[300],  15, 842 },
-  { &yyActionTable[315],   0, 726 },
-  { &yyActionTable[315],   1, 842 },
-  { &yyActionTable[316],   4, 842 },
-  { &yyActionTable[320],   1, 729 },
-  { &yyActionTable[321],   4, 842 },
-  { &yyActionTable[325],   0, 730 },
-  { &yyActionTable[325],  26, 737 },
-  { &yyActionTable[351],  15, 842 },
-  { &yyActionTable[366],  27, 738 },
-  { &yyActionTable[393],  15, 842 },
-  { &yyActionTable[408],  12, 739 },
-  { &yyActionTable[420],  15, 842 },
-  { &yyActionTable[435],  12, 740 },
-  { &yyActionTable[447],  15, 842 },
-  { &yyActionTable[462],  12, 741 },
-  { &yyActionTable[474],  15, 842 },
-  { &yyActionTable[489],  12, 742 },
-  { &yyActionTable[501],  15, 842 },
-  { &yyActionTable[516],  16, 743 },
-  { &yyActionTable[532],  15, 842 },
-  { &yyActionTable[547],  16, 744 },
-  { &yyActionTable[563],  15, 842 },
-  { &yyActionTable[578],   8, 745 },
-  { &yyActionTable[586],  15, 842 },
-  { &yyActionTable[601],   8, 746 },
-  { &yyActionTable[609],  15, 842 },
-  { &yyActionTable[624],   8, 747 },
-  { &yyActionTable[632],  15, 842 },
-  { &yyActionTable[647],   8, 748 },
-  { &yyActionTable[655],  15, 842 },
-  { &yyActionTable[670],  16, 749 },
-  { &yyActionTable[686],   6, 842 },
-  { &yyActionTable[692],  15, 842 },
-  { &yyActionTable[707],  16, 750 },
-  { &yyActionTable[723],   0, 751 },
-  { &yyActionTable[723],   0, 752 },
-  { &yyActionTable[723],  15, 842 },
-  { &yyActionTable[738],   6, 753 },
-  { &yyActionTable[744],  15, 842 },
-  { &yyActionTable[759],   6, 754 },
-  { &yyActionTable[765],  15, 842 },
-  { &yyActionTable[780],   3, 755 },
-  { &yyActionTable[783],  15, 842 },
-  { &yyActionTable[798],   3, 756 },
-  { &yyActionTable[801],  15, 842 },
-  { &yyActionTable[816],   3, 757 },
-  { &yyActionTable[819],  15, 842 },
-  { &yyActionTable[834],   2, 758 },
-  { &yyActionTable[836],   0, 759 },
-  { &yyActionTable[836],   2, 842 },
-  { &yyActionTable[838],   0, 760 },
-  { &yyActionTable[838],   1, 842 },
-  { &yyActionTable[839],   0, 763 },
-  { &yyActionTable[839],   0, 761 },
-  { &yyActionTable[839],  15, 842 },
-  { &yyActionTable[854],  28, 842 },
-  { &yyActionTable[882],  15, 842 },
-  { &yyActionTable[897],  16, 769 },
-  { &yyActionTable[913],   1, 842 },
-  { &yyActionTable[914],  20, 785 },
-  { &yyActionTable[934],   5, 842 },
-  { &yyActionTable[939],   2, 842 },
-  { &yyActionTable[941],   1, 842 },
-  { &yyActionTable[942],   1, 842 },
-  { &yyActionTable[943],   1, 842 },
-  { &yyActionTable[944],   0, 772 },
-  { &yyActionTable[944],  28, 784 },
-  { &yyActionTable[972],   0, 732 },
-  { &yyActionTable[972],   0, 733 },
-  { &yyActionTable[972],  15, 842 },
-  { &yyActionTable[987],  26, 764 },
-  { &yyActionTable[1013],  15, 842 },
-  { &yyActionTable[1028],   2, 765 },
-  { &yyActionTable[1030],  15, 842 },
-  { &yyActionTable[1045],   2, 766 },
-  { &yyActionTable[1047],  15, 842 },
-  { &yyActionTable[1062],   2, 767 },
-  { &yyActionTable[1064],  17, 842 },
-  { &yyActionTable[1081],  29, 842 },
-  { &yyActionTable[1110],   2, 842 },
-  { &yyActionTable[1112],   4, 842 },
-  { &yyActionTable[1116],   1, 842 },
-  { &yyActionTable[1117],   0, 775 },
-  { &yyActionTable[1117],  15, 842 },
-  { &yyActionTable[1132],  29, 842 },
-  { &yyActionTable[1161],  15, 842 },
-  { &yyActionTable[1176],  28, 776 },
-  { &yyActionTable[1204],   1, 842 },
-  { &yyActionTable[1205],   4, 842 },
-  { &yyActionTable[1209],   1, 842 },
-  { &yyActionTable[1210],   0, 833 },
-  { &yyActionTable[1210],   1, 842 },
-  { &yyActionTable[1211],   4, 842 },
-  { &yyActionTable[1215],   1, 842 },
-  { &yyActionTable[1216],   0, 834 },
-  { &yyActionTable[1216],   1, 842 },
-  { &yyActionTable[1217],   4, 842 },
-  { &yyActionTable[1221],   1, 842 },
-  { &yyActionTable[1222],   0, 835 },
-  { &yyActionTable[1222],   1, 842 },
-  { &yyActionTable[1223],   4, 842 },
-  { &yyActionTable[1227],   1, 842 },
-  { &yyActionTable[1228],   0, 836 },
-  { &yyActionTable[1228],  15, 842 },
-  { &yyActionTable[1243],  29, 842 },
-  { &yyActionTable[1272],  15, 842 },
-  { &yyActionTable[1287],  29, 842 },
-  { &yyActionTable[1316],  15, 842 },
-  { &yyActionTable[1331],  28, 777 },
-  { &yyActionTable[1359],   2, 842 },
-  { &yyActionTable[1361],   0, 771 },
-  { &yyActionTable[1361],  16, 785 },
-  { &yyActionTable[1377],   0, 782 },
-  { &yyActionTable[1377],   0, 783 },
-  { &yyActionTable[1377],   0, 762 },
-  { &yyActionTable[1377],  15, 842 },
-  { &yyActionTable[1392],  28, 842 },
-  { &yyActionTable[1420],  15, 842 },
-  { &yyActionTable[1435],  26, 770 },
-  { &yyActionTable[1461],   1, 842 },
-  { &yyActionTable[1462],  20, 785 },
-  { &yyActionTable[1482],   5, 842 },
-  { &yyActionTable[1487],   0, 774 },
-  { &yyActionTable[1487],   2, 842 },
-  { &yyActionTable[1489],   0, 773 },
-  { &yyActionTable[1489],   2, 699 },
-  { &yyActionTable[1491],   3, 698 },
-  { &yyActionTable[1494],   0, 694 },
-  { &yyActionTable[1494],  15, 842 },
-  { &yyActionTable[1509],  28, 704 },
-  { &yyActionTable[1537],   1, 842 },
-  { &yyActionTable[1538],  17, 785 },
-  { &yyActionTable[1555],   1, 702 },
-  { &yyActionTable[1556],  15, 842 },
-  { &yyActionTable[1571],  28, 711 },
-  { &yyActionTable[1599],   0, 666 },
-  { &yyActionTable[1599],   2, 677 },
-  { &yyActionTable[1601],   4, 675 },
-  { &yyActionTable[1605],   0, 676 },
-  { &yyActionTable[1605],   0, 682 },
-  { &yyActionTable[1605],   0, 683 },
-  { &yyActionTable[1605],   5, 842 },
-  { &yyActionTable[1610],   0, 684 },
-  { &yyActionTable[1610],   5, 842 },
-  { &yyActionTable[1615],   0, 685 },
-  { &yyActionTable[1615],   1, 842 },
-  { &yyActionTable[1616],   0, 686 },
-  { &yyActionTable[1616],   5, 842 },
-  { &yyActionTable[1621],   2, 680 },
-  { &yyActionTable[1623],   5, 673 },
-  { &yyActionTable[1628],   0, 581 },
-  { &yyActionTable[1628],   0, 582 },
-  { &yyActionTable[1628],   4, 842 },
-  { &yyActionTable[1632],   0, 671 },
-  { &yyActionTable[1632],   0, 672 },
-  { &yyActionTable[1632],   2, 688 },
-  { &yyActionTable[1634],   2, 690 },
-  { &yyActionTable[1636],   0, 678 },
-  { &yyActionTable[1636],   1, 842 },
-  { &yyActionTable[1637],   6, 842 },
-  { &yyActionTable[1643],   2, 842 },
-  { &yyActionTable[1645],   0, 689 },
-  { &yyActionTable[1645],   5, 842 },
-  { &yyActionTable[1650],   0, 791 },
-  { &yyActionTable[1650],   3, 698 },
-  { &yyActionTable[1653],   0, 793 },
-  { &yyActionTable[1653],   0, 792 },
-  { &yyActionTable[1653],  15, 842 },
-  { &yyActionTable[1668],  28, 687 },
-  { &yyActionTable[1696],   4, 842 },
-  { &yyActionTable[1700],   0, 681 },
-  { &yyActionTable[1700],   3, 842 },
-  { &yyActionTable[1703],   5, 842 },
-  { &yyActionTable[1708],   5, 673 },
-  { &yyActionTable[1713],   2, 688 },
-  { &yyActionTable[1715],   2, 690 },
-  { &yyActionTable[1717],   0, 679 },
-  { &yyActionTable[1717],  16, 842 },
-  { &yyActionTable[1733],  33, 673 },
-  { &yyActionTable[1766],   0, 668 },
-  { &yyActionTable[1766],   0, 669 },
-  { &yyActionTable[1766],   1, 842 },
-  { &yyActionTable[1767],   5, 842 },
-  { &yyActionTable[1772],   0, 670 },
-  { &yyActionTable[1772],   0, 663 },
-  { &yyActionTable[1772],   0, 664 },
-  { &yyActionTable[1772],   0, 768 },
-  { &yyActionTable[1772],  29, 842 },
-  { &yyActionTable[1801],   0, 725 },
-  { &yyActionTable[1801],   2, 842 },
-  { &yyActionTable[1803],   0, 735 },
-  { &yyActionTable[1803],   1, 842 },
-  { &yyActionTable[1804],   0, 736 },
-  { &yyActionTable[1804],  29, 842 },
-  { &yyActionTable[1833],   2, 643 },
-  { &yyActionTable[1835],   0, 612 },
-  { &yyActionTable[1835],   4, 842 },
-  { &yyActionTable[1839],   2, 789 },
-  { &yyActionTable[1841],   1, 616 },
-  { &yyActionTable[1842],   3, 613 },
-  { &yyActionTable[1845],   0, 617 },
-  { &yyActionTable[1845],   4, 842 },
-  { &yyActionTable[1849],   0, 618 },
-  { &yyActionTable[1849],   3, 842 },
-  { &yyActionTable[1852],   4, 842 },
-  { &yyActionTable[1856],   0, 619 },
-  { &yyActionTable[1856],   2, 842 },
-  { &yyActionTable[1858],   0, 622 },
-  { &yyActionTable[1858],   0, 623 },
-  { &yyActionTable[1858],   0, 624 },
-  { &yyActionTable[1858],   0, 625 },
-  { &yyActionTable[1858],   4, 842 },
-  { &yyActionTable[1862],   0, 620 },
-  { &yyActionTable[1862],   4, 842 },
-  { &yyActionTable[1866],   0, 621 },
-  { &yyActionTable[1866],   6, 842 },
-  { &yyActionTable[1872],   2, 842 },
-  { &yyActionTable[1874],   0, 790 },
-  { &yyActionTable[1874],   0, 614 },
-  { &yyActionTable[1874],   2, 842 },
-  { &yyActionTable[1876],   0, 615 },
-  { &yyActionTable[1876],   2, 628 },
-  { &yyActionTable[1878],   0, 627 },
-  { &yyActionTable[1878],   0, 598 },
-  { &yyActionTable[1878],   7, 842 },
-  { &yyActionTable[1885],   0, 599 },
-  { &yyActionTable[1885],   0, 600 },
-  { &yyActionTable[1885],   0, 601 },
-  { &yyActionTable[1885],   2, 842 },
-  { &yyActionTable[1887],   0, 602 },
-  { &yyActionTable[1887],   0, 605 },
-  { &yyActionTable[1887],   2, 842 },
-  { &yyActionTable[1889],   0, 603 },
-  { &yyActionTable[1889],   0, 606 },
-  { &yyActionTable[1889],   0, 604 },
-  { &yyActionTable[1889],   0, 607 },
-  { &yyActionTable[1889],   4, 587 },
-  { &yyActionTable[1893],   4, 842 },
-  { &yyActionTable[1897],   2, 842 },
-  { &yyActionTable[1899],   0, 588 },
-  { &yyActionTable[1899],   4, 842 },
-  { &yyActionTable[1903],   1, 842 },
-  { &yyActionTable[1904],   0, 589 },
-  { &yyActionTable[1904],   0, 592 },
-  { &yyActionTable[1904],   1, 842 },
-  { &yyActionTable[1905],   0, 593 },
-  { &yyActionTable[1905],   1, 842 },
-  { &yyActionTable[1906],   0, 594 },
-  { &yyActionTable[1906],   0, 591 },
-  { &yyActionTable[1906],   0, 590 },
-  { &yyActionTable[1906],   0, 579 },
-  { &yyActionTable[1906],   8, 842 },
-  { &yyActionTable[1914],   6, 842 },
-  { &yyActionTable[1920],   0, 633 },
-  { &yyActionTable[1920],   4, 842 },
-  { &yyActionTable[1924],   0, 636 },
-  { &yyActionTable[1924],   1, 842 },
-  { &yyActionTable[1925],   1, 842 },
-  { &yyActionTable[1926],   6, 842 },
-  { &yyActionTable[1932],   2, 842 },
-  { &yyActionTable[1934],   2, 643 },
-  { &yyActionTable[1936],   0, 637 },
-  { &yyActionTable[1936],   1, 842 },
-  { &yyActionTable[1937],   6, 842 },
-  { &yyActionTable[1943],   2, 842 },
-  { &yyActionTable[1945],   2, 643 },
-  { &yyActionTable[1947],   0, 638 },
-  { &yyActionTable[1947],  15, 842 },
-  { &yyActionTable[1962],  30, 643 },
-  { &yyActionTable[1992],   0, 639 },
-  { &yyActionTable[1992],   1, 842 },
-  { &yyActionTable[1993],   1, 842 },
-  { &yyActionTable[1994],   6, 842 },
-  { &yyActionTable[2000],   2, 842 },
-  { &yyActionTable[2002],   1, 842 },
-  { &yyActionTable[2003],   4, 842 },
-  { &yyActionTable[2007],   2, 789 },
-  { &yyActionTable[2009],   1, 616 },
-  { &yyActionTable[2010],   7, 641 },
-  { &yyActionTable[2017],   1, 842 },
-  { &yyActionTable[2018],   0, 640 },
-  { &yyActionTable[2018],   0, 642 },
-  { &yyActionTable[2018],   0, 634 },
-  { &yyActionTable[2018],   0, 635 },
-  { &yyActionTable[2018],   0, 577 },
-  { &yyActionTable[2018],   3, 842 },
-  { &yyActionTable[2021],   5, 842 },
-  { &yyActionTable[2026],   3, 573 },
-  { &yyActionTable[2029],   6, 842 },
-  { &yyActionTable[2035],   4, 842 },
-  { &yyActionTable[2039],   0, 571 },
-  { &yyActionTable[2039],   4, 842 },
-  { &yyActionTable[2043],   1, 842 },
-  { &yyActionTable[2044],   3, 842 },
-  { &yyActionTable[2047],   5, 842 },
-  { &yyActionTable[2052],   1, 842 },
-  { &yyActionTable[2053],   4, 842 },
-  { &yyActionTable[2057],   1, 842 },
-  { &yyActionTable[2058],   4, 842 },
-  { &yyActionTable[2062],   3, 842 },
-  { &yyActionTable[2065],   1, 842 },
-  { &yyActionTable[2066],   6, 842 },
-  { &yyActionTable[2072],   2, 842 },
-  { &yyActionTable[2074],   3, 842 },
-  { &yyActionTable[2077],   1, 842 },
-  { &yyActionTable[2078],   1, 842 },
-  { &yyActionTable[2079],   4, 842 },
-  { &yyActionTable[2083],   4, 816 },
-  { &yyActionTable[2087],   4, 842 },
-  { &yyActionTable[2091],   1, 842 },
-  { &yyActionTable[2092],   4, 842 },
-  { &yyActionTable[2096],   2, 680 },
-  { &yyActionTable[2098],   2, 821 },
-  { &yyActionTable[2100],   3, 842 },
-  { &yyActionTable[2103],   1, 842 },
-  { &yyActionTable[2104],  15, 842 },
-  { &yyActionTable[2119],  29, 842 },
-  { &yyActionTable[2148],   1, 842 },
-  { &yyActionTable[2149],   2, 842 },
-  { &yyActionTable[2151],   0, 822 },
-  { &yyActionTable[2151],   0, 823 },
-  { &yyActionTable[2151],   1, 842 },
-  { &yyActionTable[2152],   1, 842 },
-  { &yyActionTable[2153],   2, 842 },
-  { &yyActionTable[2155],   5, 842 },
-  { &yyActionTable[2160],   2, 842 },
-  { &yyActionTable[2162],   4, 842 },
-  { &yyActionTable[2166],   0, 723 },
-  { &yyActionTable[2166],   0, 724 },
-  { &yyActionTable[2166],   0, 813 },
-  { &yyActionTable[2166],   0, 814 },
-  { &yyActionTable[2166],   1, 842 },
-  { &yyActionTable[2167],   0, 815 },
-  { &yyActionTable[2167],   0, 572 },
-  { &yyActionTable[2167],   1, 842 },
-  { &yyActionTable[2168],   9, 842 },
-  { &yyActionTable[2177],   5, 842 },
-  { &yyActionTable[2182],   1, 842 },
-  { &yyActionTable[2183],   1, 842 },
-  { &yyActionTable[2184],   1, 842 },
-  { &yyActionTable[2185],   9, 842 },
-  { &yyActionTable[2194],   1, 842 },
-  { &yyActionTable[2195],   2, 645 },
-  { &yyActionTable[2197],   6, 842 },
-  { &yyActionTable[2203],   0, 646 },
-  { &yyActionTable[2203],   4, 842 },
-  { &yyActionTable[2207],   1, 842 },
-  { &yyActionTable[2208],   5, 842 },
-  { &yyActionTable[2213],   4, 842 },
-  { &yyActionTable[2217],   4, 842 },
-  { &yyActionTable[2221],   1, 842 },
-  { &yyActionTable[2222],  15, 842 },
-  { &yyActionTable[2237],  28, 713 },
-  { &yyActionTable[2265],   1, 842 },
-  { &yyActionTable[2266],   1, 842 },
-  { &yyActionTable[2267],  15, 842 },
-  { &yyActionTable[2282],  28, 714 },
-  { &yyActionTable[2310],   3, 842 },
-  { &yyActionTable[2313],   1, 842 },
-  { &yyActionTable[2314],   4, 842 },
-  { &yyActionTable[2318],   2, 721 },
-  { &yyActionTable[2320],   5, 842 },
-  { &yyActionTable[2325],   2, 842 },
-  { &yyActionTable[2327],   0, 722 },
-  { &yyActionTable[2327],   4, 842 },
-  { &yyActionTable[2331],   5, 842 },
-  { &yyActionTable[2336],   1, 842 },
-  { &yyActionTable[2337],  16, 842 },
-  { &yyActionTable[2353],   2, 842 },
-  { &yyActionTable[2355],  15, 842 },
-  { &yyActionTable[2370],  28, 719 },
-  { &yyActionTable[2398],   1, 842 },
-  { &yyActionTable[2399],  28, 720 },
-  { &yyActionTable[2427],   1, 842 },
-  { &yyActionTable[2428],   4, 842 },
-  { &yyActionTable[2432],   3, 842 },
-  { &yyActionTable[2435],   1, 842 },
-  { &yyActionTable[2436],   4, 842 },
-  { &yyActionTable[2440],   4, 842 },
-  { &yyActionTable[2444],   1, 842 },
-  { &yyActionTable[2445],   4, 842 },
-  { &yyActionTable[2449],   1, 842 },
-  { &yyActionTable[2450],   4, 842 },
-  { &yyActionTable[2454],   3, 842 },
-  { &yyActionTable[2457],   1, 842 },
-  { &yyActionTable[2458],   4, 842 },
-  { &yyActionTable[2462],   3, 842 },
-  { &yyActionTable[2465],   1, 842 },
-  { &yyActionTable[2466],   5, 842 },
-  { &yyActionTable[2471],   1, 842 },
-  { &yyActionTable[2472],   4, 842 },
-  { &yyActionTable[2476],   2, 680 },
-  { &yyActionTable[2478],   3, 842 },
-  { &yyActionTable[2481],   1, 842 },
-  { &yyActionTable[2482],   2, 645 },
-  { &yyActionTable[2484],   4, 842 },
-  { &yyActionTable[2488],   3, 842 },
-  { &yyActionTable[2491],   1, 842 },
-  { &yyActionTable[2492],   5, 842 },
-  { &yyActionTable[2497],   4, 842 },
-  { &yyActionTable[2501],   1, 842 },
-  { &yyActionTable[2502],   1, 842 },
-  { &yyActionTable[2503],   4, 842 },
-  { &yyActionTable[2507],   2, 680 },
-  { &yyActionTable[2509],   2, 721 },
-  { &yyActionTable[2511],   4, 842 },
-  { &yyActionTable[2515],   5, 842 },
-  { &yyActionTable[2520],   1, 842 },
-  { &yyActionTable[2521],  16, 842 },
-  { &yyActionTable[2537],   2, 842 },
-  { &yyActionTable[2539],   1, 842 },
-  { &yyActionTable[2540],   3, 842 },
-  { &yyActionTable[2543],   1, 842 },
-  { &yyActionTable[2544],   1, 842 },
-  { &yyActionTable[2545],   2, 645 },
-  { &yyActionTable[2547],   4, 842 },
-  { &yyActionTable[2551],   3, 842 },
-  { &yyActionTable[2554],   1, 842 },
-  { &yyActionTable[2555],   4, 842 },
-  { &yyActionTable[2559],   2, 842 },
-  { &yyActionTable[2561],   1, 842 },
-  { &yyActionTable[2562],   1, 842 },
-  { &yyActionTable[2563],   1, 842 },
-  { &yyActionTable[2564],   5, 842 },
-  { &yyActionTable[2569],   1, 842 },
-  { &yyActionTable[2570],   3, 842 },
-  { &yyActionTable[2573],   3, 842 },
-  { &yyActionTable[2576],  10, 810 },
-  { &yyActionTable[2586],   1, 842 },
-  { &yyActionTable[2587],   1, 842 },
-  { &yyActionTable[2588],   1, 842 },
-  { &yyActionTable[2589],   1, 842 },
-  { &yyActionTable[2590],   3, 842 },
-  { &yyActionTable[2593],   1, 842 },
-  { &yyActionTable[2594],   1, 842 },
-  { &yyActionTable[2595],   1, 842 },
-  { &yyActionTable[2596],   3, 842 },
-  { &yyActionTable[2599],   1, 842 },
-  { &yyActionTable[2600],   0, 809 },
-  { &yyActionTable[2600],   4, 842 },
-  { &yyActionTable[2604],   1, 842 },
-  { &yyActionTable[2605],   1, 842 },
-  { &yyActionTable[2606],   2, 840 },
-  { &yyActionTable[2608],   3, 842 },
-  { &yyActionTable[2611],   1, 842 },
-  { &yyActionTable[2612],   4, 842 },
-  { &yyActionTable[2616],   1, 842 },
-  { &yyActionTable[2617],   0, 839 },
-  { &yyActionTable[2617],   2, 840 },
-  { &yyActionTable[2619],   4, 842 },
-  { &yyActionTable[2623],   1, 842 },
-  { &yyActionTable[2624],   0, 559 },
-  { &yyActionTable[2624],   0, 561 },
-  { &yyActionTable[2624],   0, 556 },
+static YYCODETYPE yy_lookahead[] = {
+ /*     0 */     5,    6,  157,  158,  159,  137,   11,   12,   59,   14,
+ /*    10 */   157,  158,  159,  194,  195,   18,  139,   20,   18,  151,
+ /*    20 */    25,  157,  158,   74,   27,  185,  181,   27,   31,   32,
+ /*    30 */   185,  154,   83,  156,  181,   22,  196,  197,  198,   90,
+ /*    40 */    45,  196,   93,    1,  204,  181,  185,  170,   59,   54,
+ /*    50 */    55,   51,   57,   59,   59,  207,   18,  196,   63,   59,
+ /*    60 */   106,  112,   73,   74,   13,   27,   71,   72,   17,  208,
+ /*    70 */   209,   76,   77,   79,   74,   80,   81,  106,   83,   84,
+ /*    80 */    85,   86,   85,  154,   87,  156,   91,  157,   93,   51,
+ /*    90 */    48,   32,   95,   98,   97,   95,  157,  158,  159,  104,
+ /*   100 */    49,  112,   60,  108,  132,  110,  112,  112,    5,  137,
+ /*   110 */    59,  181,  112,   90,   11,   12,  103,   14,  121,   68,
+ /*   120 */   181,  121,    6,  151,  185,   74,   47,  166,   25,  106,
+ /*   130 */    79,  201,  202,   95,   83,  196,   85,   18,   87,   20,
+ /*   140 */    59,   99,  181,  101,   93,  116,   87,   96,   45,   59,
+ /*   150 */    59,   32,  142,  143,  144,   74,   25,   54,   55,  121,
+ /*   160 */    57,  110,   25,  112,   74,   74,   63,   68,  102,   79,
+ /*   170 */    79,   49,   13,  106,   71,   72,   17,  111,  127,   76,
+ /*   180 */    77,   59,   83,   80,   81,  106,   83,   84,   85,   86,
+ /*   190 */    68,  181,   93,  112,   91,   79,   93,  142,  143,   46,
+ /*   200 */   145,   98,  112,  112,   85,   83,   87,  104,   49,   87,
+ /*   210 */    59,  108,   64,  110,   95,   93,   97,    5,   59,   34,
+ /*   220 */    83,  106,   69,   11,   12,   46,   14,   68,   43,   98,
+ /*   230 */    93,  116,  129,   74,  112,   98,  181,   25,   79,  108,
+ /*   240 */   121,  110,   83,   33,   85,  108,   87,  110,   69,  206,
+ /*   250 */    31,   66,   93,  210,   46,   96,  103,   45,  215,   59,
+ /*   260 */   205,  113,    1,  112,  105,  117,   54,   55,    4,   57,
+ /*   270 */   184,  112,   62,  120,   74,   63,  128,   69,  138,   79,
+ /*   280 */   140,   46,  103,   71,   72,   26,  127,  147,   76,   77,
+ /*   290 */   105,  157,   80,   81,   46,   83,   84,   85,   86,  120,
+ /*   300 */    22,   11,   38,   91,   69,   93,   87,  122,    7,   48,
+ /*   310 */    98,  103,  112,  173,   18,  181,  104,   69,   22,  185,
+ /*   320 */   108,   60,  110,   27,  157,  185,    5,  115,  120,   59,
+ /*   330 */   196,  165,   11,   12,   59,   14,  196,   36,  103,  157,
+ /*   340 */   158,  159,   59,   73,   74,   55,   25,   51,  181,   74,
+ /*   350 */    46,   73,   74,   63,  106,  120,    0,   74,   32,   12,
+ /*   360 */    46,   14,  101,  181,   43,    6,   45,   77,  120,   85,
+ /*   370 */    22,   87,   25,   69,  193,   54,   55,   87,   57,  213,
+ /*   380 */   214,  103,  112,   69,   63,  110,   46,  112,   39,  106,
+ /*   390 */   181,   95,   71,   72,   88,  112,   90,   76,   77,  103,
+ /*   400 */   207,   80,   81,   47,   83,   84,   85,   86,   82,   69,
+ /*   410 */   106,   85,   91,   46,   93,  106,   90,  121,   59,   98,
+ /*   420 */   106,   73,   74,  157,  120,  104,  185,   80,   79,  108,
+ /*   430 */    83,  110,    5,   16,  120,  207,   69,  196,   11,   12,
+ /*   440 */    93,   14,   42,   43,   34,   98,  106,  181,  136,  208,
+ /*   450 */   209,  104,   25,   22,   46,  108,  179,  110,  181,  185,
+ /*   460 */   120,    2,  106,  166,  167,  188,  189,  201,    9,  157,
+ /*   470 */   196,  112,   45,  106,  106,  131,   66,   69,  181,  166,
+ /*   480 */   167,   54,   55,   34,   57,  166,  167,  120,   64,   22,
+ /*   490 */    63,  113,   22,  181,  181,  117,  151,  152,   71,   72,
+ /*   500 */   181,  166,  167,   76,   77,  207,  128,   80,   81,  165,
+ /*   510 */    83,   84,   85,   86,  106,   66,  181,  100,   91,   22,
+ /*   520 */    93,  177,   45,    4,  107,   98,   67,  148,  120,  129,
+ /*   530 */    22,  104,  122,  157,  103,  108,  191,  110,  114,  166,
+ /*   540 */   167,    5,  115,  166,  167,  121,  106,   11,   12,   52,
+ /*   550 */    14,  157,   39,  157,  181,  157,   79,  181,  181,   89,
+ /*   560 */   157,   25,  157,  157,  157,  103,  106,  197,  174,  131,
+ /*   570 */   174,  122,  157,  106,  204,  181,  157,  181,  157,  181,
+ /*   580 */   157,   45,  157,  106,  181,  157,  181,  181,  181,  146,
+ /*   590 */    54,   55,   79,   57,  157,   22,  181,  130,   22,   63,
+ /*   600 */   181,  157,  181,  165,  181,  133,  181,   71,   72,  181,
+ /*   610 */    22,  103,   76,   77,  157,   10,   80,   81,  181,   83,
+ /*   620 */    84,   85,   86,  157,  105,  181,  157,   91,  106,   93,
+ /*   630 */    90,  157,   22,  157,   98,  157,  157,  157,  181,  103,
+ /*   640 */   104,   22,  157,  157,  108,    5,  110,  181,  157,  157,
+ /*   650 */   181,   11,   12,  157,   14,  181,  157,  181,  157,  181,
+ /*   660 */   181,  181,  157,   82,  157,   25,  181,  181,  157,  157,
+ /*   670 */   131,   90,  181,  181,  157,  157,  103,  181,  157,  103,
+ /*   680 */   181,  157,  181,   22,  157,   45,  181,   49,  181,   22,
+ /*   690 */    49,  103,  181,  181,   54,   55,   22,   57,  181,  181,
+ /*   700 */   177,  181,  181,   63,  165,  181,   68,  184,  181,   68,
+ /*   710 */    22,   71,   72,  103,   22,  157,   76,   77,  185,  199,
+ /*   720 */    80,   81,  103,   83,   84,   85,   86,  171,  157,  196,
+ /*   730 */    70,   91,  171,   93,  129,  157,  185,  181,   98,  181,
+ /*   740 */   105,   22,  181,  103,  104,   39,   39,  196,  108,    5,
+ /*   750 */   110,   91,  181,  181,  105,   11,   12,   22,   14,  181,
+ /*   760 */   157,  126,  185,  106,  103,    8,   39,   10,  181,   25,
+ /*   770 */   103,  199,  106,  196,   49,  126,  184,  103,   90,   52,
+ /*   780 */   184,   24,   65,  169,  181,   28,   29,  130,   75,   45,
+ /*   790 */   124,   34,  203,   68,   37,  103,  184,   40,   54,   55,
+ /*   800 */    43,   57,  184,   79,   39,   39,  180,   63,  105,  185,
+ /*   810 */   130,  153,  106,  161,  107,   71,   72,  218,   56,   58,
+ /*   820 */    76,   77,  103,   66,   80,   81,  162,   83,   84,   85,
+ /*   830 */    86,  163,   92,  187,   90,   91,   78,   93,  103,  200,
+ /*   840 */     5,  178,   98,   68,   68,   10,   11,   12,  104,   14,
+ /*   850 */   200,   94,  108,  200,  110,   15,   99,  141,  101,   22,
+ /*   860 */    25,   20,  105,   59,  164,  203,  177,   39,   13,   39,
+ /*   870 */    25,  181,   17,  177,  181,   87,  181,  105,  105,  122,
+ /*   880 */    45,  129,  125,  105,  135,  134,   43,   79,  103,   54,
+ /*   890 */    55,   22,   57,  181,  103,   22,  181,  103,   63,   22,
+ /*   900 */   103,  181,   39,  150,   49,  150,   71,   72,  141,  181,
+ /*   910 */   181,   76,   77,  203,   59,   80,   81,   15,   83,   84,
+ /*   920 */    85,   86,   22,   68,  181,  175,   91,  181,   93,   74,
+ /*   930 */    73,  150,   90,   98,   79,  181,  124,  181,   83,  104,
+ /*   940 */    85,   79,   87,  108,  203,  110,    5,  183,   93,  216,
+ /*   950 */   103,   96,   11,   12,  183,   14,   39,  103,  216,   79,
+ /*   960 */   181,  184,  192,  168,  181,  191,   25,  112,  169,  164,
+ /*   970 */   190,  165,  190,  103,  190,   79,   75,  181,   79,   75,
+ /*   980 */    97,  181,  127,  168,  129,  184,   45,  200,   79,  200,
+ /*   990 */   192,  205,   32,  184,  181,   54,   55,  205,   57,  181,
+ /*  1000 */     6,  181,  212,   90,   63,  181,  150,   50,  160,   10,
+ /*  1010 */   217,   41,   71,   72,  211,   90,   90,   76,   77,  181,
+ /*  1020 */    88,   80,   81,   64,   83,   84,   85,   86,   90,  150,
+ /*  1030 */   181,  181,   91,   79,   93,  184,  106,   64,   10,   98,
+ /*  1040 */    43,  106,  106,   43,   91,  104,  186,  181,  181,  108,
+ /*  1050 */   107,  110,    5,   45,  193,  106,   45,  218,   11,   12,
+ /*  1060 */   186,   14,   70,  181,   79,  172,   79,  106,   52,  181,
+ /*  1070 */   218,  106,   25,  181,  106,  181,  181,  106,  150,  181,
+ /*  1080 */   106,  150,  106,   52,  181,  106,  218,  150,  181,  150,
+ /*  1090 */   107,  186,   45,  218,  106,   70,  181,  150,   79,  172,
+ /*  1100 */   186,   54,   55,   70,   57,   70,  186,  106,  150,   52,
+ /*  1110 */    63,   35,  106,  106,  181,  181,  112,  165,   71,   72,
+ /*  1120 */   106,  181,   30,   76,   77,  181,  106,   80,   81,  106,
+ /*  1130 */    83,   84,   85,   86,  165,  106,  106,  182,   91,  149,
+ /*  1140 */    93,  103,  106,  106,  182,   98,  106,  106,    6,  106,
+ /*  1150 */   106,  104,  149,  181,  219,  108,  181,  110,    5,  219,
+ /*  1160 */   219,  219,  219,  219,   11,   12,  219,   14,  219,  219,
+ /*  1170 */   219,  219,  219,  219,  219,  219,  219,  219,   25,  219,
+ /*  1180 */   219,  219,  219,  219,  219,  219,  219,  219,  219,  219,
+ /*  1190 */   219,  219,  219,  219,  219,  219,  219,  219,   45,  219,
+ /*  1200 */   219,  219,  219,  219,  219,  219,  219,   54,   55,  219,
+ /*  1210 */    57,  219,  219,  219,  219,  219,   63,  219,  219,  219,
+ /*  1220 */   219,  219,  219,  219,   71,   72,  219,  219,  219,   76,
+ /*  1230 */    77,  219,  219,   80,   81,  219,   83,   84,   85,   86,
+ /*  1240 */   219,  219,  219,  219,   91,  219,   93,  219,  219,  219,
+ /*  1250 */   219,   98,  219,  219,  219,  219,  219,  104,  219,  219,
+ /*  1260 */   219,  108,  219,  110,    5,  219,  219,  219,  219,  219,
+ /*  1270 */    11,   12,  219,   14,  219,  219,  219,  219,  219,  219,
+ /*  1280 */   219,  219,  219,  219,   25,  219,  219,  219,  219,  219,
+ /*  1290 */   219,  219,  219,  219,  219,  219,  219,  219,  219,  219,
+ /*  1300 */   219,  219,  219,  219,   45,  219,  219,  219,  219,  219,
+ /*  1310 */   219,  219,  219,   54,   55,  219,   57,  219,  219,  219,
+ /*  1320 */   219,  219,   63,  219,  219,  219,  219,  219,  219,  219,
+ /*  1330 */    71,   72,  219,  219,  219,   76,   77,  219,  219,   80,
+ /*  1340 */    81,  219,   83,   84,   85,   86,  219,   11,   12,  219,
+ /*  1350 */    14,  219,   93,  219,  219,  219,  219,   98,  219,  219,
+ /*  1360 */   219,   25,  219,  104,  219,  219,  219,  108,  219,  110,
+ /*  1370 */   219,  219,  219,  219,  219,  219,  219,  219,  219,  219,
+ /*  1380 */   219,   45,  219,  219,  219,  219,  219,  219,  219,  219,
+ /*  1390 */    54,   55,  219,   57,  219,  219,  219,  219,  219,   63,
+ /*  1400 */   219,  219,  219,  219,  219,   13,  219,   71,   72,   17,
+ /*  1410 */   219,  219,   76,   77,  219,  219,   80,   81,  219,   83,
+ /*  1420 */    84,   85,   86,   13,  219,  219,  219,   17,  219,   93,
+ /*  1430 */   219,  219,  219,  219,   98,  219,  219,  219,  219,  219,
+ /*  1440 */   104,   49,  219,  219,  108,  219,  110,  219,  219,  219,
+ /*  1450 */   219,   59,  219,  219,  219,  219,  219,  219,  219,   49,
+ /*  1460 */    68,  219,  219,  219,  219,  219,   74,  219,  219,   59,
+ /*  1470 */   219,   79,  219,  219,  219,   83,  219,   85,   68,   87,
+ /*  1480 */   219,  219,  219,  219,   74,   93,  219,  219,   96,   79,
+ /*  1490 */   219,  219,  219,   83,  219,   85,  219,   87,   12,  219,
+ /*  1500 */    14,  219,  110,   93,  112,  219,   96,  219,  219,  219,
+ /*  1510 */   219,   25,  219,  219,  219,  219,  219,  219,  219,  127,
+ /*  1520 */   219,  219,  112,  219,  219,  219,  219,  219,  219,  219,
+ /*  1530 */   219,  219,  219,  219,  219,  219,  219,  127,  219,  219,
+ /*  1540 */    54,  219,  219,   57,  219,  219,  219,  219,  219,  219,
+ /*  1550 */   219,  219,  219,  219,  219,  219,  219,  219,  219,  219,
+ /*  1560 */   219,  219,   76,  219,  219,  219,   80,   81,  219,   83,
+ /*  1570 */   219,  219,  219,  219,  219,  219,  219,  219,  219,   93,
+ /*  1580 */   219,  219,  219,  219,   98,  219,  219,  219,  219,  219,
+ /*  1590 */   104,  219,  219,  219,  108,  219,  110,
 };
+#define YY_SHIFT_USE_DFLT (-52)
+static short yy_shift_ofst[] = {
+ /*     0 */    79,  356,  -52,  757,  -46,  -52,  -29,   29,   23,   67,
+ /*    10 */   259,   42,  -52,  -52,  -52,  -52,  -52,  -52,   81,  -52,
+ /*    20 */   -52,  -52,  -52,  115,  309,  115,  368,  115,  440,  116,
+ /*    30 */   460,   81,   13,  462,  522,    0,  -52,  151,  -52,   -3,
+ /*    40 */   -52,   81,  119,  -52,  540,  -52,   59,  540,  -52,  717,
+ /*    50 */   -52,  210,  -52,  -52,  713,  301,  540,  -52,  -52,  -52,
+ /*    60 */   540,  -52,  724, 1410,  349,   51,  765,  766,  159,  -52,
+ /*    70 */   153,  703,  -52,  264,  -52,  497,  680,  762,  761,  740,
+ /*    80 */   758,  -52,   99,  -52,  775,  -52,  776,  -52,  470,   99,
+ /*    90 */   -52,   99,  -52,  840, 1410,  837, 1410,  841,  301,  -52,
+ /*   100 */   804,  -52,  -52,  941, 1410,  -52,  828,   81,  830,   81,
+ /*   110 */   -52,  -52,  -52,  -52, 1336, 1410, 1259, 1410,  347, 1410,
+ /*   120 */   347, 1410,  347, 1410,  347, 1410, 1486, 1410, 1486, 1410,
+ /*   130 */   137, 1410,  137, 1410,  137, 1410,  137, 1410, 1486,  290,
+ /*   140 */  1410, 1486,  -52,  -52, 1410,  131, 1410,  131, 1410,  845,
+ /*   150 */  1410,  845, 1410,  845, 1410,  -52,  -52,  284,  -52,  788,
+ /*   160 */   -52,  -52, 1410, 1047, 1410, 1486,   90,  159,  179,  519,
+ /*   170 */   772,  773,  778,  -52,  941, 1410, 1336, 1410,  -52, 1410,
+ /*   180 */   -52, 1410,  -52,  855,  103,  752,  400,  843,  -52, 1410,
+ /*   190 */   212, 1410,  941,  808,  261,  785,  -52,  869,   81,  791,
+ /*   200 */   -52,  873,   81,  794,  -52,  877,   81,  797,  -52, 1410,
+ /*   210 */   321, 1410,  427, 1410,  941,  431,  -52, 1410,  -52,  -52,
+ /*   220 */   863,   81,  -52,  -52,  -52, 1410, 1153, 1410, 1336,   91,
+ /*   230 */   159,  208,  -52,  508,  -52,  863,  -52,  841,  301,  -52,
+ /*   240 */  1410,  941,  902, 1410,  900, 1410,  941,  -52,  -52,  348,
+ /*   250 */   -52,  -52,  -52,  -11,  -52,  270,  -52,  857,  -52,  200,
+ /*   260 */   863,  359,  -52,  -52,   81,  -52,  -52,  842,  812,  -52,
+ /*   270 */   862,   81,  573,  -52,   81,  -52,  301,  -52,  -52, 1410,
+ /*   280 */   941,  703,  235,  278,  847,  359,  842,  812,  -52, 1392,
+ /*   290 */    -5,  -52,  -52,  917,  275,  -52,  -52,  -52,  -52,  536,
+ /*   300 */   -52,  576,  -52,  854,  -52,  640,  540,  -52,   81,  880,
+ /*   310 */   -52,  581,  -52,   81,  -52,  410,  417,  -52,  219,  -52,
+ /*   320 */   -52,  -52,  -52,  417,  -52,  417,  -52,   81,  588,  -52,
+ /*   330 */   -52,  804,  -52,  717,  -52,  -52,  122,  -52,  -52,  -52,
+ /*   340 */   638,  -52,  -52,  641,  -52,  -52,  -52,  -52,   -6,   99,
+ /*   350 */   610,  -52,   99,  870,  -52,  -52,  -52,  -52,  296,   38,
+ /*   360 */   -52,   81,  -52,  901,  896,   81,  619,  540,  -52,  899,
+ /*   370 */    81,  661,  540,  -52, 1410,  744,  -52,  904,  909,   81,
+ /*   380 */   667,  883,   81,  880,  -52,  326,  960,  -52,  -52,  -52,
+ /*   390 */   -52,  -52,  703,  248,  424,  378,   81,  -52,   81,  994,
+ /*   400 */   703,  304,   81,  459,  449,  913,   81,  863,  957,  605,
+ /*   410 */   999, 1410,  835,  970,   66,  -52,  -52,  925,  926,  306,
+ /*   420 */    81,  688,   81,  -52,  -52,  -52,  -52,  932,  -52,  -52,
+ /*   430 */   959,   81,  938,   81,  513,  954,   81,  674,   23,  930,
+ /*   440 */   973, 1028,  185,  314,  997,  935,  936,  185, 1000,  953,
+ /*   450 */    42,  -52,   81,  943,   81,  467,   81, 1008, 1410,  941,
+ /*   460 */   949, 1011, 1410,  941,  660,  992,   81,  985,   81,  692,
+ /*   470 */   -52,  635,  340,  987, 1410,  719, 1410,  941,  961,  941,
+ /*   480 */  1016,   81,  657,  965,  148,   81,  968,   81,  971,   81,
+ /*   490 */   706,  974,   81,  706,  976,  367, 1031,   81,  863,  657,
+ /*   500 */   979,  953,   81,  707,  983,   81,  467,  988, 1025,   81,
+ /*   510 */   863,  985,  649,  408, 1019, 1410,  735, 1001,  660, 1033,
+ /*   520 */  1035,  953,   81,  727, 1057,   81,  666, 1076, 1004, 1006,
+ /*   530 */   283, 1007,  151,  477,  -51, 1014, 1020, 1023, 1029,  725,
+ /*   540 */  1030, 1036, 1037,  725, 1040,  -52,   81, 1038, 1041, 1092,
+ /*   550 */   151, 1142,   81, 1043,  -52, 1092,   81, 1044,  -52,  -52,
+ /*   560 */   -52,
+};
+#define YY_REDUCE_USE_DFLT (-182)
+static short yy_reduce_ofst[] = {
+ /*     0 */  -123,  -71, -182,  140, -182, -182, -182, -152,   86, -182,
+ /*    10 */  -182,  181, -182, -182, -182, -182, -182, -182,  209, -182,
+ /*    20 */  -182, -182, -182,  193, -182,  228, -182,  298, -182,  379,
+ /*    30 */  -182,   10,  443, -182, -182,   55, -182,  166,  472,  -28,
+ /*    40 */  -182,  587, -132, -182,  592, -182, -182,  596, -182,  614,
+ /*    50 */  -182, -182, -182, -182, -182,  589,  612, -182, -182, -182,
+ /*    60 */   618, -182, -182,  167, -182, -147, -182, -182,  134, -182,
+ /*    70 */   626,  624, -182,  658, -181,  652,  599,  664,  668,  646,
+ /*    80 */   663, -182,  639, -182, -182, -182, -182, -182, -182,  650,
+ /*    90 */  -182,  653, -182, -182,  -70, -182,  266,  716,  662, -182,
+ /*   100 */   700, -182, -182,  689,  376, -182, -182,  690, -182,  693,
+ /*   110 */  -182, -182, -182, -182,  689,  398,  689,  403,  689,  405,
+ /*   120 */   689,  406,  689,  407,  689,  415,  689,  419,  689,  421,
+ /*   130 */   689,  423,  689,  425,  689,  428,  689,  437,  689,  696,
+ /*   140 */   444,  689, -182, -182,  457,  689,  466,  689,  469,  689,
+ /*   150 */   474,  689,  476,  689,  478,  689, -182, -182, -182, -182,
+ /*   160 */  -182, -182,  479,  689,  480,  689,  695, -155,  626, -182,
+ /*   170 */  -182, -182, -182, -182,  689,  485,  689,  486,  689,  491,
+ /*   180 */   689,  492,  689,  312,  689,  749,  751, -182, -182,  496,
+ /*   190 */   689,  499,  689, -182, -182, -182, -182, -182,  712, -182,
+ /*   200 */  -182, -182,  715, -182, -182, -182,  720, -182, -182,  501,
+ /*   210 */   689,  505,  689,  507,  689, -182, -182, -136, -182, -182,
+ /*   220 */   753,  728, -182, -182, -182,  511,  689,  512,  689,  729,
+ /*   230 */   -61,  626, -182, -182, -182,  755, -182,  767,  710, -182,
+ /*   240 */   517,  689, -182,  182, -182,  518,  689, -182,  370,  750,
+ /*   250 */  -182, -182, -182,  743, -182,  746, -182, -182, -182,  754,
+ /*   260 */   781,  438, -182, -182,  756, -182, -182,  764,  733, -182,
+ /*   270 */  -182,  297, -182, -182,  -39, -182,  741, -182, -182,  521,
+ /*   280 */   689, -160,  626,  750, -182,  539,  771,  742, -182,  524,
+ /*   290 */   344, -182, -182, -182,  690, -182, -182, -182, -182,  689,
+ /*   300 */  -182, -182, -182, -182, -182,  689,  777, -182,  779,  795,
+ /*   310 */   770,  774, -182,  783, -182, -182,  780, -182, -182, -182,
+ /*   320 */  -182, -182, -182,  782, -182,  784, -182,  313, -182, -182,
+ /*   330 */  -182,  805, -182,  799, -182, -182, -182, -182, -182, -182,
+ /*   340 */  -182, -182, -182, -182, -182, -182, -182, -182,  806,  787,
+ /*   350 */  -182, -182,  789, -182, -182, -182, -182, -182,  786,  792,
+ /*   360 */  -182,  796, -182, -182, -182,  319, -182,  801, -182, -182,
+ /*   370 */   335, -182,  809, -182,  527,  523, -182, -182, -182,  373,
+ /*   380 */  -182, -182,  800,  815,  798,  345, -182, -182, -182, -182,
+ /*   390 */  -182, -182,  274,  626,   43, -182,  813, -182,  818, -182,
+ /*   400 */   533,  626,  820,  790,  803, -182,  824,  856,  848,  793,
+ /*   410 */  -182,  558,  689, -182, -182, -182, -182, -182, -182, -182,
+ /*   420 */   556, -182,  838, -182, -182, -182, -182, -182, -182, -182,
+ /*   430 */  -182,  849, -182,  850,  879, -182,  377, -182,  851, -182,
+ /*   440 */  -182, -182, -139,  626, -182, -182, -182,  241, -182,  860,
+ /*   450 */   861, -182,  866, -182,  520,  839,  867, -182,  571,  689,
+ /*   460 */  -182, -182,  578,  689,  874, -182,  882,  893,  561, -182,
+ /*   470 */  -182,  551,  626, -182,  394, -182,  603,  689, -182,  689,
+ /*   480 */  -182,  888,  852, -182, -182,  892, -182,  894, -182,  895,
+ /*   490 */   928, -182,  898,  931, -182,  626, -182,  903,  937,  868,
+ /*   500 */  -182,  905,  907,  939, -182,  572,  875, -182, -182,  915,
+ /*   510 */   947,  927,  577,  626, -182,  396, -182, -182,  914, -182,
+ /*   520 */  -182,  920,  933,  958, -182,  934, -182, -182, -182, -182,
+ /*   530 */   940, -182,  952, -182,  277, -182, -182, -182, -182,  955,
+ /*   540 */  -182, -182, -182,  962, -182, -182,  944, -182, -182,  990,
+ /*   550 */   969, -182,  972, -182, -182, 1003,  975, -182, -182, -182,
+ /*   560 */  -182,
+};
+static YYACTIONTYPE yy_default[] = {
+ /*     0 */   568,  568,  563,  852,  852,  564,  852,  570,  852,  852,
+ /*    10 */   852,  852,  650,  653,  654,  655,  656,  657,  571,  572,
+ /*    20 */   589,  590,  591,  852,  852,  852,  852,  852,  852,  852,
+ /*    30 */   852,  852,  852,  852,  852,  852,  582,  592,  602,  584,
+ /*    40 */   601,  852,  852,  603,  649,  614,  852,  649,  615,  634,
+ /*    50 */   632,  852,  635,  636,  852,  706,  649,  616,  704,  705,
+ /*    60 */   649,  617,  852,  852,  735,  795,  741,  736,  852,  662,
+ /*    70 */   852,  852,  663,  671,  673,  680,  718,  709,  711,  699,
+ /*    80 */   713,  668,  852,  598,  852,  599,  852,  600,  714,  852,
+ /*    90 */   715,  852,  716,  852,  852,  700,  852,  707,  706,  701,
+ /*   100 */   852,  586,  708,  703,  852,  734,  852,  852,  737,  852,
+ /*   110 */   738,  739,  740,  742,  745,  852,  746,  852,  747,  852,
+ /*   120 */   748,  852,  749,  852,  750,  852,  751,  852,  752,  852,
+ /*   130 */   753,  852,  754,  852,  755,  852,  756,  852,  757,  852,
+ /*   140 */   852,  758,  759,  760,  852,  761,  852,  762,  852,  763,
+ /*   150 */   852,  764,  852,  765,  852,  766,  767,  852,  768,  852,
+ /*   160 */   771,  769,  852,  852,  852,  777,  852,  795,  852,  852,
+ /*   170 */   852,  852,  852,  780,  794,  852,  772,  852,  773,  852,
+ /*   180 */   774,  852,  775,  852,  852,  852,  852,  852,  785,  852,
+ /*   190 */   852,  852,  786,  852,  852,  852,  843,  852,  852,  852,
+ /*   200 */   844,  852,  852,  852,  845,  852,  852,  852,  846,  852,
+ /*   210 */   852,  852,  852,  852,  787,  852,  779,  795,  792,  793,
+ /*   220 */   688,  852,  689,  783,  770,  852,  852,  852,  778,  852,
+ /*   230 */   795,  852,  782,  852,  781,  688,  784,  707,  706,  702,
+ /*   240 */   852,  712,  852,  795,  710,  852,  719,  672,  683,  681,
+ /*   250 */   682,  690,  691,  852,  692,  852,  693,  852,  694,  852,
+ /*   260 */   688,  679,  587,  588,  852,  677,  678,  696,  698,  684,
+ /*   270 */   852,  852,  852,  697,  852,  801,  706,  803,  802,  852,
+ /*   280 */   695,  683,  852,  852,  852,  679,  696,  698,  685,  852,
+ /*   290 */   679,  674,  675,  852,  852,  676,  669,  670,  776,  852,
+ /*   300 */   733,  852,  743,  852,  744,  852,  649,  618,  852,  799,
+ /*   310 */   622,  619,  623,  852,  624,  852,  852,  625,  852,  628,
+ /*   320 */   629,  630,  631,  852,  626,  852,  627,  852,  852,  800,
+ /*   330 */   620,  852,  621,  634,  633,  604,  852,  605,  606,  607,
+ /*   340 */   852,  608,  611,  852,  609,  612,  610,  613,  593,  852,
+ /*   350 */   852,  594,  852,  852,  595,  597,  596,  585,  852,  852,
+ /*   360 */   639,  852,  642,  852,  852,  852,  852,  649,  643,  852,
+ /*   370 */   852,  852,  649,  644,  852,  649,  645,  852,  852,  852,
+ /*   380 */   852,  852,  852,  799,  622,  647,  852,  646,  648,  640,
+ /*   390 */   641,  583,  852,  852,  579,  852,  852,  577,  852,  852,
+ /*   400 */   852,  852,  852,  826,  852,  852,  852,  688,  831,  852,
+ /*   410 */   852,  852,  852,  852,  852,  832,  833,  852,  852,  852,
+ /*   420 */   852,  852,  852,  731,  732,  823,  824,  852,  825,  578,
+ /*   430 */   852,  852,  852,  852,  852,  852,  852,  852,  852,  852,
+ /*   440 */   852,  852,  852,  852,  852,  852,  852,  852,  852,  651,
+ /*   450 */   852,  652,  852,  852,  852,  852,  852,  852,  852,  721,
+ /*   460 */   852,  852,  852,  722,  852,  852,  852,  729,  852,  852,
+ /*   470 */   730,  852,  852,  852,  852,  852,  852,  727,  852,  728,
+ /*   480 */   852,  852,  852,  852,  852,  852,  852,  852,  852,  852,
+ /*   490 */   852,  852,  852,  852,  852,  852,  852,  852,  688,  852,
+ /*   500 */   852,  651,  852,  852,  852,  852,  852,  852,  852,  852,
+ /*   510 */   688,  729,  852,  852,  852,  852,  852,  852,  852,  852,
+ /*   520 */   852,  651,  852,  852,  852,  852,  852,  852,  852,  852,
+ /*   530 */   852,  852,  852,  852,  820,  852,  852,  852,  852,  852,
+ /*   540 */   852,  852,  852,  852,  852,  819,  852,  852,  852,  850,
+ /*   550 */   852,  852,  852,  852,  849,  850,  852,  852,  565,  567,
+ /*   560 */   562,
+};
+#define YY_SZ_ACTTAB (sizeof(yy_action)/sizeof(yy_action[0]))
 
 /* The next table maps tokens into fallback tokens.  If a construct
 ** like the following:
@@ -3821,7 +733,7 @@ static const YYCODETYPE yyFallback[] = {
     0,  /*       FROM => nothing */
     0,  /*   FUNCTION => nothing */
     0,  /*         GE => nothing */
-    0,  /*       GLOB => nothing */
+   59,  /*       GLOB => ID */
     0,  /*      GROUP => nothing */
     0,  /*         GT => nothing */
     0,  /*     HAVING => nothing */
@@ -3843,7 +755,7 @@ static const YYCODETYPE yyFallback[] = {
     0,  /*    JOIN_KW => nothing */
    59,  /*        KEY => ID */
     0,  /*         LE => nothing */
-    0,  /*       LIKE => nothing */
+   59,  /*       LIKE => ID */
     0,  /*      LIMIT => nothing */
     0,  /*         LP => nothing */
     0,  /*     LSHIFT => nothing */
@@ -3858,7 +770,6 @@ static const YYCODETYPE yyFallback[] = {
    59,  /*     OFFSET => ID */
     0,  /*         ON => nothing */
     0,  /*         OR => nothing */
-    0,  /* ORACLE_OUTER_JOIN => nothing */
     0,  /*      ORDER => nothing */
     0,  /*       PLUS => nothing */
    59,  /*     PRAGMA => ID */
@@ -3894,6 +805,7 @@ static const YYCODETYPE yyFallback[] = {
     0,  /*      USING => nothing */
    59,  /*     VACUUM => ID */
     0,  /*     VALUES => nothing */
+    0,  /*   VARIABLE => nothing */
    59,  /*       VIEW => ID */
     0,  /*       WHEN => nothing */
     0,  /*      WHERE => nothing */
@@ -3926,7 +838,6 @@ typedef struct yyStackEntry yyStackEntry;
 struct yyParser {
   int yyidx;                    /* Index of top element in stack */
   int yyerrcnt;                 /* Shifts left before out of the error */
-  yyStackEntry *yytop;          /* Pointer to the top stack element */
   sqliteParserARG_SDECL                /* A place to hold %extra_argument */
   yyStackEntry yystack[YYSTACKDEPTH];  /* The parser's stack */
 };
@@ -3991,15 +902,15 @@ static const char *yyTokenName[] = {
   "LSHIFT",        "LT",            "MATCH",         "MINUS",       
   "NE",            "NOT",           "NOTNULL",       "NULL",        
   "OF",            "OFFSET",        "ON",            "OR",          
-  "ORACLE_OUTER_JOIN",  "ORDER",         "PLUS",          "PRAGMA",      
-  "PRIMARY",       "RAISE",         "REFERENCES",    "REM",         
-  "REPLACE",       "RESTRICT",      "ROLLBACK",      "ROW",         
-  "RP",            "RSHIFT",        "SELECT",        "SEMI",        
-  "SET",           "SLASH",         "SPACE",         "STAR",        
-  "STATEMENT",     "STRING",        "TABLE",         "TEMP",        
-  "THEN",          "TRANSACTION",   "TRIGGER",       "UMINUS",      
-  "UNCLOSED_STRING",  "UNION",         "UNIQUE",        "UPDATE",      
-  "UPLUS",         "USING",         "VACUUM",        "VALUES",      
+  "ORDER",         "PLUS",          "PRAGMA",        "PRIMARY",     
+  "RAISE",         "REFERENCES",    "REM",           "REPLACE",     
+  "RESTRICT",      "ROLLBACK",      "ROW",           "RP",          
+  "RSHIFT",        "SELECT",        "SEMI",          "SET",         
+  "SLASH",         "SPACE",         "STAR",          "STATEMENT",   
+  "STRING",        "TABLE",         "TEMP",          "THEN",        
+  "TRANSACTION",   "TRIGGER",       "UMINUS",        "UNCLOSED_STRING",
+  "UNION",         "UNIQUE",        "UPDATE",        "UPLUS",       
+  "USING",         "VACUUM",        "VALUES",        "VARIABLE",    
   "VIEW",          "WHEN",          "WHERE",         "as",          
   "carg",          "carglist",      "case_else",     "case_exprlist",
   "case_operand",  "ccons",         "cmd",           "cmdlist",     
@@ -4017,12 +928,12 @@ static const char *yyTokenName[] = {
   "onconf",        "oneselect",     "orconf",        "orderby_opt", 
   "plus_num",      "plus_opt",      "refact",        "refarg",      
   "refargs",       "resolvetype",   "sclp",          "selcollist",  
-  "select",        "seltablist",    "setlist",       "signed",      
-  "sortitem",      "sortlist",      "sortorder",     "stl_prefix",  
-  "tcons",         "temp",          "trans_opt",     "trigger_cmd", 
-  "trigger_cmd_list",  "trigger_decl",  "trigger_event",  "trigger_time",
-  "type",          "typename",      "uniqueflag",    "using_opt",   
-  "when_clause",   "where_opt",   
+  "select",        "seltablist",    "seltablist_paren",  "setlist",     
+  "signed",        "sortitem",      "sortlist",      "sortorder",   
+  "stl_prefix",    "tcons",         "temp",          "trans_opt",   
+  "trigger_cmd",   "trigger_cmd_list",  "trigger_decl",  "trigger_event",
+  "trigger_time",  "type",          "typename",      "uniqueflag",  
+  "using_opt",     "when_clause",   "where_opt",   
 };
 #endif /* NDEBUG */
 
@@ -4154,169 +1065,173 @@ static const char *yyRuleName[] = {
  /* 121 */ "stl_prefix ::= seltablist joinop",
  /* 122 */ "stl_prefix ::=",
  /* 123 */ "seltablist ::= stl_prefix nm dbnm as on_opt using_opt",
- /* 124 */ "seltablist ::= stl_prefix LP select RP as on_opt using_opt",
- /* 125 */ "dbnm ::=",
- /* 126 */ "dbnm ::= DOT nm",
- /* 127 */ "joinop ::= COMMA",
- /* 128 */ "joinop ::= JOIN",
- /* 129 */ "joinop ::= JOIN_KW JOIN",
- /* 130 */ "joinop ::= JOIN_KW nm JOIN",
- /* 131 */ "joinop ::= JOIN_KW nm nm JOIN",
- /* 132 */ "on_opt ::= ON expr",
- /* 133 */ "on_opt ::=",
- /* 134 */ "using_opt ::= USING LP idxlist RP",
- /* 135 */ "using_opt ::=",
- /* 136 */ "orderby_opt ::=",
- /* 137 */ "orderby_opt ::= ORDER BY sortlist",
- /* 138 */ "sortlist ::= sortlist COMMA sortitem collate sortorder",
- /* 139 */ "sortlist ::= sortitem collate sortorder",
- /* 140 */ "sortitem ::= expr",
- /* 141 */ "sortorder ::= ASC",
- /* 142 */ "sortorder ::= DESC",
- /* 143 */ "sortorder ::=",
- /* 144 */ "collate ::=",
- /* 145 */ "collate ::= COLLATE id",
- /* 146 */ "groupby_opt ::=",
- /* 147 */ "groupby_opt ::= GROUP BY exprlist",
- /* 148 */ "having_opt ::=",
- /* 149 */ "having_opt ::= HAVING expr",
- /* 150 */ "limit_opt ::=",
- /* 151 */ "limit_opt ::= LIMIT INTEGER",
- /* 152 */ "limit_opt ::= LIMIT INTEGER OFFSET INTEGER",
- /* 153 */ "limit_opt ::= LIMIT INTEGER COMMA INTEGER",
- /* 154 */ "cmd ::= DELETE FROM nm dbnm where_opt",
- /* 155 */ "where_opt ::=",
- /* 156 */ "where_opt ::= WHERE expr",
- /* 157 */ "cmd ::= UPDATE orconf nm dbnm SET setlist where_opt",
- /* 158 */ "setlist ::= setlist COMMA nm EQ expr",
- /* 159 */ "setlist ::= nm EQ expr",
- /* 160 */ "cmd ::= insert_cmd INTO nm dbnm inscollist_opt VALUES LP itemlist RP",
- /* 161 */ "cmd ::= insert_cmd INTO nm dbnm inscollist_opt select",
- /* 162 */ "insert_cmd ::= INSERT orconf",
- /* 163 */ "insert_cmd ::= REPLACE",
- /* 164 */ "itemlist ::= itemlist COMMA expr",
- /* 165 */ "itemlist ::= expr",
- /* 166 */ "inscollist_opt ::=",
- /* 167 */ "inscollist_opt ::= LP inscollist RP",
- /* 168 */ "inscollist ::= inscollist COMMA nm",
- /* 169 */ "inscollist ::= nm",
- /* 170 */ "expr ::= LP expr RP",
- /* 171 */ "expr ::= NULL",
- /* 172 */ "expr ::= ID",
- /* 173 */ "expr ::= JOIN_KW",
- /* 174 */ "expr ::= nm DOT nm",
- /* 175 */ "expr ::= nm DOT nm DOT nm",
- /* 176 */ "expr ::= expr ORACLE_OUTER_JOIN",
- /* 177 */ "expr ::= INTEGER",
- /* 178 */ "expr ::= FLOAT",
- /* 179 */ "expr ::= STRING",
- /* 180 */ "expr ::= ID LP exprlist RP",
- /* 181 */ "expr ::= ID LP STAR RP",
- /* 182 */ "expr ::= expr AND expr",
- /* 183 */ "expr ::= expr OR expr",
- /* 184 */ "expr ::= expr LT expr",
- /* 185 */ "expr ::= expr GT expr",
- /* 186 */ "expr ::= expr LE expr",
- /* 187 */ "expr ::= expr GE expr",
- /* 188 */ "expr ::= expr NE expr",
- /* 189 */ "expr ::= expr EQ expr",
- /* 190 */ "expr ::= expr BITAND expr",
- /* 191 */ "expr ::= expr BITOR expr",
- /* 192 */ "expr ::= expr LSHIFT expr",
- /* 193 */ "expr ::= expr RSHIFT expr",
- /* 194 */ "expr ::= expr likeop expr",
- /* 195 */ "expr ::= expr NOT likeop expr",
- /* 196 */ "likeop ::= LIKE",
- /* 197 */ "likeop ::= GLOB",
- /* 198 */ "expr ::= expr PLUS expr",
- /* 199 */ "expr ::= expr MINUS expr",
- /* 200 */ "expr ::= expr STAR expr",
- /* 201 */ "expr ::= expr SLASH expr",
- /* 202 */ "expr ::= expr REM expr",
- /* 203 */ "expr ::= expr CONCAT expr",
- /* 204 */ "expr ::= expr ISNULL",
- /* 205 */ "expr ::= expr IS NULL",
- /* 206 */ "expr ::= expr NOTNULL",
- /* 207 */ "expr ::= expr NOT NULL",
- /* 208 */ "expr ::= expr IS NOT NULL",
- /* 209 */ "expr ::= NOT expr",
- /* 210 */ "expr ::= BITNOT expr",
- /* 211 */ "expr ::= MINUS expr",
- /* 212 */ "expr ::= PLUS expr",
- /* 213 */ "expr ::= LP select RP",
- /* 214 */ "expr ::= expr BETWEEN expr AND expr",
- /* 215 */ "expr ::= expr NOT BETWEEN expr AND expr",
- /* 216 */ "expr ::= expr IN LP exprlist RP",
- /* 217 */ "expr ::= expr IN LP select RP",
- /* 218 */ "expr ::= expr NOT IN LP exprlist RP",
- /* 219 */ "expr ::= expr NOT IN LP select RP",
- /* 220 */ "expr ::= CASE case_operand case_exprlist case_else END",
- /* 221 */ "case_exprlist ::= case_exprlist WHEN expr THEN expr",
- /* 222 */ "case_exprlist ::= WHEN expr THEN expr",
- /* 223 */ "case_else ::= ELSE expr",
- /* 224 */ "case_else ::=",
- /* 225 */ "case_operand ::= expr",
- /* 226 */ "case_operand ::=",
- /* 227 */ "exprlist ::= exprlist COMMA expritem",
- /* 228 */ "exprlist ::= expritem",
- /* 229 */ "expritem ::= expr",
- /* 230 */ "expritem ::=",
- /* 231 */ "cmd ::= CREATE temp uniqueflag INDEX nm ON nm dbnm LP idxlist RP onconf",
- /* 232 */ "uniqueflag ::= UNIQUE",
- /* 233 */ "uniqueflag ::=",
- /* 234 */ "idxlist_opt ::=",
- /* 235 */ "idxlist_opt ::= LP idxlist RP",
- /* 236 */ "idxlist ::= idxlist COMMA idxitem",
- /* 237 */ "idxlist ::= idxitem",
- /* 238 */ "idxitem ::= nm sortorder",
- /* 239 */ "cmd ::= DROP INDEX nm dbnm",
- /* 240 */ "cmd ::= COPY orconf nm dbnm FROM nm USING DELIMITERS STRING",
- /* 241 */ "cmd ::= COPY orconf nm dbnm FROM nm",
- /* 242 */ "cmd ::= VACUUM",
- /* 243 */ "cmd ::= VACUUM nm",
- /* 244 */ "cmd ::= PRAGMA ids EQ nm",
- /* 245 */ "cmd ::= PRAGMA ids EQ ON",
- /* 246 */ "cmd ::= PRAGMA ids EQ plus_num",
- /* 247 */ "cmd ::= PRAGMA ids EQ minus_num",
- /* 248 */ "cmd ::= PRAGMA ids LP nm RP",
- /* 249 */ "cmd ::= PRAGMA ids",
- /* 250 */ "plus_num ::= plus_opt number",
- /* 251 */ "minus_num ::= MINUS number",
- /* 252 */ "number ::= INTEGER",
- /* 253 */ "number ::= FLOAT",
- /* 254 */ "plus_opt ::= PLUS",
- /* 255 */ "plus_opt ::=",
- /* 256 */ "cmd ::= CREATE trigger_decl BEGIN trigger_cmd_list END",
- /* 257 */ "trigger_decl ::= temp TRIGGER nm trigger_time trigger_event ON nm dbnm foreach_clause when_clause",
- /* 258 */ "trigger_time ::= BEFORE",
- /* 259 */ "trigger_time ::= AFTER",
- /* 260 */ "trigger_time ::= INSTEAD OF",
- /* 261 */ "trigger_time ::=",
- /* 262 */ "trigger_event ::= DELETE",
- /* 263 */ "trigger_event ::= INSERT",
- /* 264 */ "trigger_event ::= UPDATE",
- /* 265 */ "trigger_event ::= UPDATE OF inscollist",
- /* 266 */ "foreach_clause ::=",
- /* 267 */ "foreach_clause ::= FOR EACH ROW",
- /* 268 */ "foreach_clause ::= FOR EACH STATEMENT",
- /* 269 */ "when_clause ::=",
- /* 270 */ "when_clause ::= WHEN expr",
- /* 271 */ "trigger_cmd_list ::= trigger_cmd SEMI trigger_cmd_list",
- /* 272 */ "trigger_cmd_list ::=",
- /* 273 */ "trigger_cmd ::= UPDATE orconf nm SET setlist where_opt",
- /* 274 */ "trigger_cmd ::= INSERT orconf INTO nm inscollist_opt VALUES LP itemlist RP",
- /* 275 */ "trigger_cmd ::= INSERT orconf INTO nm inscollist_opt select",
- /* 276 */ "trigger_cmd ::= DELETE FROM nm where_opt",
- /* 277 */ "trigger_cmd ::= select",
- /* 278 */ "expr ::= RAISE LP IGNORE RP",
- /* 279 */ "expr ::= RAISE LP ROLLBACK COMMA nm RP",
- /* 280 */ "expr ::= RAISE LP ABORT COMMA nm RP",
- /* 281 */ "expr ::= RAISE LP FAIL COMMA nm RP",
- /* 282 */ "cmd ::= DROP TRIGGER nm dbnm",
- /* 283 */ "cmd ::= ATTACH database_kw_opt ids AS nm",
- /* 284 */ "database_kw_opt ::= DATABASE",
- /* 285 */ "database_kw_opt ::=",
- /* 286 */ "cmd ::= DETACH database_kw_opt nm",
+ /* 124 */ "seltablist ::= stl_prefix LP seltablist_paren RP as on_opt using_opt",
+ /* 125 */ "seltablist_paren ::= select",
+ /* 126 */ "seltablist_paren ::= seltablist",
+ /* 127 */ "dbnm ::=",
+ /* 128 */ "dbnm ::= DOT nm",
+ /* 129 */ "joinop ::= COMMA",
+ /* 130 */ "joinop ::= JOIN",
+ /* 131 */ "joinop ::= JOIN_KW JOIN",
+ /* 132 */ "joinop ::= JOIN_KW nm JOIN",
+ /* 133 */ "joinop ::= JOIN_KW nm nm JOIN",
+ /* 134 */ "on_opt ::= ON expr",
+ /* 135 */ "on_opt ::=",
+ /* 136 */ "using_opt ::= USING LP idxlist RP",
+ /* 137 */ "using_opt ::=",
+ /* 138 */ "orderby_opt ::=",
+ /* 139 */ "orderby_opt ::= ORDER BY sortlist",
+ /* 140 */ "sortlist ::= sortlist COMMA sortitem collate sortorder",
+ /* 141 */ "sortlist ::= sortitem collate sortorder",
+ /* 142 */ "sortitem ::= expr",
+ /* 143 */ "sortorder ::= ASC",
+ /* 144 */ "sortorder ::= DESC",
+ /* 145 */ "sortorder ::=",
+ /* 146 */ "collate ::=",
+ /* 147 */ "collate ::= COLLATE id",
+ /* 148 */ "groupby_opt ::=",
+ /* 149 */ "groupby_opt ::= GROUP BY exprlist",
+ /* 150 */ "having_opt ::=",
+ /* 151 */ "having_opt ::= HAVING expr",
+ /* 152 */ "limit_opt ::=",
+ /* 153 */ "limit_opt ::= LIMIT signed",
+ /* 154 */ "limit_opt ::= LIMIT signed OFFSET signed",
+ /* 155 */ "limit_opt ::= LIMIT signed COMMA signed",
+ /* 156 */ "cmd ::= DELETE FROM nm dbnm where_opt",
+ /* 157 */ "where_opt ::=",
+ /* 158 */ "where_opt ::= WHERE expr",
+ /* 159 */ "cmd ::= UPDATE orconf nm dbnm SET setlist where_opt",
+ /* 160 */ "setlist ::= setlist COMMA nm EQ expr",
+ /* 161 */ "setlist ::= nm EQ expr",
+ /* 162 */ "cmd ::= insert_cmd INTO nm dbnm inscollist_opt VALUES LP itemlist RP",
+ /* 163 */ "cmd ::= insert_cmd INTO nm dbnm inscollist_opt select",
+ /* 164 */ "insert_cmd ::= INSERT orconf",
+ /* 165 */ "insert_cmd ::= REPLACE",
+ /* 166 */ "itemlist ::= itemlist COMMA expr",
+ /* 167 */ "itemlist ::= expr",
+ /* 168 */ "inscollist_opt ::=",
+ /* 169 */ "inscollist_opt ::= LP inscollist RP",
+ /* 170 */ "inscollist ::= inscollist COMMA nm",
+ /* 171 */ "inscollist ::= nm",
+ /* 172 */ "expr ::= LP expr RP",
+ /* 173 */ "expr ::= NULL",
+ /* 174 */ "expr ::= ID",
+ /* 175 */ "expr ::= JOIN_KW",
+ /* 176 */ "expr ::= nm DOT nm",
+ /* 177 */ "expr ::= nm DOT nm DOT nm",
+ /* 178 */ "expr ::= INTEGER",
+ /* 179 */ "expr ::= FLOAT",
+ /* 180 */ "expr ::= STRING",
+ /* 181 */ "expr ::= VARIABLE",
+ /* 182 */ "expr ::= ID LP exprlist RP",
+ /* 183 */ "expr ::= ID LP STAR RP",
+ /* 184 */ "expr ::= expr AND expr",
+ /* 185 */ "expr ::= expr OR expr",
+ /* 186 */ "expr ::= expr LT expr",
+ /* 187 */ "expr ::= expr GT expr",
+ /* 188 */ "expr ::= expr LE expr",
+ /* 189 */ "expr ::= expr GE expr",
+ /* 190 */ "expr ::= expr NE expr",
+ /* 191 */ "expr ::= expr EQ expr",
+ /* 192 */ "expr ::= expr BITAND expr",
+ /* 193 */ "expr ::= expr BITOR expr",
+ /* 194 */ "expr ::= expr LSHIFT expr",
+ /* 195 */ "expr ::= expr RSHIFT expr",
+ /* 196 */ "expr ::= expr likeop expr",
+ /* 197 */ "expr ::= expr NOT likeop expr",
+ /* 198 */ "likeop ::= LIKE",
+ /* 199 */ "likeop ::= GLOB",
+ /* 200 */ "expr ::= expr PLUS expr",
+ /* 201 */ "expr ::= expr MINUS expr",
+ /* 202 */ "expr ::= expr STAR expr",
+ /* 203 */ "expr ::= expr SLASH expr",
+ /* 204 */ "expr ::= expr REM expr",
+ /* 205 */ "expr ::= expr CONCAT expr",
+ /* 206 */ "expr ::= expr ISNULL",
+ /* 207 */ "expr ::= expr IS NULL",
+ /* 208 */ "expr ::= expr NOTNULL",
+ /* 209 */ "expr ::= expr NOT NULL",
+ /* 210 */ "expr ::= expr IS NOT NULL",
+ /* 211 */ "expr ::= NOT expr",
+ /* 212 */ "expr ::= BITNOT expr",
+ /* 213 */ "expr ::= MINUS expr",
+ /* 214 */ "expr ::= PLUS expr",
+ /* 215 */ "expr ::= LP select RP",
+ /* 216 */ "expr ::= expr BETWEEN expr AND expr",
+ /* 217 */ "expr ::= expr NOT BETWEEN expr AND expr",
+ /* 218 */ "expr ::= expr IN LP exprlist RP",
+ /* 219 */ "expr ::= expr IN LP select RP",
+ /* 220 */ "expr ::= expr NOT IN LP exprlist RP",
+ /* 221 */ "expr ::= expr NOT IN LP select RP",
+ /* 222 */ "expr ::= expr IN nm dbnm",
+ /* 223 */ "expr ::= expr NOT IN nm dbnm",
+ /* 224 */ "expr ::= CASE case_operand case_exprlist case_else END",
+ /* 225 */ "case_exprlist ::= case_exprlist WHEN expr THEN expr",
+ /* 226 */ "case_exprlist ::= WHEN expr THEN expr",
+ /* 227 */ "case_else ::= ELSE expr",
+ /* 228 */ "case_else ::=",
+ /* 229 */ "case_operand ::= expr",
+ /* 230 */ "case_operand ::=",
+ /* 231 */ "exprlist ::= exprlist COMMA expritem",
+ /* 232 */ "exprlist ::= expritem",
+ /* 233 */ "expritem ::= expr",
+ /* 234 */ "expritem ::=",
+ /* 235 */ "cmd ::= CREATE uniqueflag INDEX nm ON nm dbnm LP idxlist RP onconf",
+ /* 236 */ "uniqueflag ::= UNIQUE",
+ /* 237 */ "uniqueflag ::=",
+ /* 238 */ "idxlist_opt ::=",
+ /* 239 */ "idxlist_opt ::= LP idxlist RP",
+ /* 240 */ "idxlist ::= idxlist COMMA idxitem",
+ /* 241 */ "idxlist ::= idxitem",
+ /* 242 */ "idxitem ::= nm sortorder",
+ /* 243 */ "cmd ::= DROP INDEX nm dbnm",
+ /* 244 */ "cmd ::= COPY orconf nm dbnm FROM nm USING DELIMITERS STRING",
+ /* 245 */ "cmd ::= COPY orconf nm dbnm FROM nm",
+ /* 246 */ "cmd ::= VACUUM",
+ /* 247 */ "cmd ::= VACUUM nm",
+ /* 248 */ "cmd ::= PRAGMA ids EQ nm",
+ /* 249 */ "cmd ::= PRAGMA ids EQ ON",
+ /* 250 */ "cmd ::= PRAGMA ids EQ plus_num",
+ /* 251 */ "cmd ::= PRAGMA ids EQ minus_num",
+ /* 252 */ "cmd ::= PRAGMA ids LP nm RP",
+ /* 253 */ "cmd ::= PRAGMA ids",
+ /* 254 */ "plus_num ::= plus_opt number",
+ /* 255 */ "minus_num ::= MINUS number",
+ /* 256 */ "number ::= INTEGER",
+ /* 257 */ "number ::= FLOAT",
+ /* 258 */ "plus_opt ::= PLUS",
+ /* 259 */ "plus_opt ::=",
+ /* 260 */ "cmd ::= CREATE trigger_decl BEGIN trigger_cmd_list END",
+ /* 261 */ "trigger_decl ::= temp TRIGGER nm trigger_time trigger_event ON nm dbnm foreach_clause when_clause",
+ /* 262 */ "trigger_time ::= BEFORE",
+ /* 263 */ "trigger_time ::= AFTER",
+ /* 264 */ "trigger_time ::= INSTEAD OF",
+ /* 265 */ "trigger_time ::=",
+ /* 266 */ "trigger_event ::= DELETE",
+ /* 267 */ "trigger_event ::= INSERT",
+ /* 268 */ "trigger_event ::= UPDATE",
+ /* 269 */ "trigger_event ::= UPDATE OF inscollist",
+ /* 270 */ "foreach_clause ::=",
+ /* 271 */ "foreach_clause ::= FOR EACH ROW",
+ /* 272 */ "foreach_clause ::= FOR EACH STATEMENT",
+ /* 273 */ "when_clause ::=",
+ /* 274 */ "when_clause ::= WHEN expr",
+ /* 275 */ "trigger_cmd_list ::= trigger_cmd SEMI trigger_cmd_list",
+ /* 276 */ "trigger_cmd_list ::=",
+ /* 277 */ "trigger_cmd ::= UPDATE orconf nm SET setlist where_opt",
+ /* 278 */ "trigger_cmd ::= INSERT orconf INTO nm inscollist_opt VALUES LP itemlist RP",
+ /* 279 */ "trigger_cmd ::= INSERT orconf INTO nm inscollist_opt select",
+ /* 280 */ "trigger_cmd ::= DELETE FROM nm where_opt",
+ /* 281 */ "trigger_cmd ::= select",
+ /* 282 */ "expr ::= RAISE LP IGNORE RP",
+ /* 283 */ "expr ::= RAISE LP ROLLBACK COMMA nm RP",
+ /* 284 */ "expr ::= RAISE LP ABORT COMMA nm RP",
+ /* 285 */ "expr ::= RAISE LP FAIL COMMA nm RP",
+ /* 286 */ "cmd ::= DROP TRIGGER nm dbnm",
+ /* 287 */ "cmd ::= ATTACH database_kw_opt ids AS nm",
+ /* 288 */ "database_kw_opt ::= DATABASE",
+ /* 289 */ "database_kw_opt ::=",
+ /* 290 */ "cmd ::= DETACH database_kw_opt nm",
 };
 #endif /* NDEBUG */
 
@@ -4375,144 +1290,149 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     ** inside the C code.
     */
     case 135:
-#line 673 "parse.y"
-{sqliteExprListDelete((yypminor->yy62));}
-#line 4380 "parse.c"
+#line 701 "parse.y"
+{sqliteExprListDelete((yypminor->yy232));}
+#line 1295 "parse.c"
       break;
     case 157:
-#line 520 "parse.y"
-{sqliteExprDelete((yypminor->yy334));}
-#line 4385 "parse.c"
+#line 532 "parse.y"
+{sqliteExprDelete((yypminor->yy164));}
+#line 1300 "parse.c"
       break;
     case 158:
-#line 692 "parse.y"
-{sqliteExprDelete((yypminor->yy334));}
-#line 4390 "parse.c"
+#line 720 "parse.y"
+{sqliteExprDelete((yypminor->yy164));}
+#line 1305 "parse.c"
       break;
     case 159:
-#line 690 "parse.y"
-{sqliteExprListDelete((yypminor->yy62));}
-#line 4395 "parse.c"
+#line 718 "parse.y"
+{sqliteExprListDelete((yypminor->yy232));}
+#line 1310 "parse.c"
       break;
     case 161:
-#line 341 "parse.y"
-{sqliteSrcListDelete((yypminor->yy335));}
-#line 4400 "parse.c"
+#line 342 "parse.y"
+{sqliteSrcListDelete((yypminor->yy283));}
+#line 1315 "parse.c"
       break;
     case 162:
-#line 435 "parse.y"
-{sqliteExprListDelete((yypminor->yy62));}
-#line 4405 "parse.c"
+#line 448 "parse.y"
+{sqliteExprListDelete((yypminor->yy232));}
+#line 1320 "parse.c"
       break;
     case 163:
-#line 440 "parse.y"
-{sqliteExprDelete((yypminor->yy334));}
-#line 4410 "parse.c"
+#line 453 "parse.y"
+{sqliteExprDelete((yypminor->yy164));}
+#line 1325 "parse.c"
       break;
     case 167:
-#line 715 "parse.y"
-{sqliteIdListDelete((yypminor->yy92));}
-#line 4415 "parse.c"
+#line 743 "parse.y"
+{sqliteIdListDelete((yypminor->yy246));}
+#line 1330 "parse.c"
       break;
     case 168:
-#line 717 "parse.y"
-{sqliteIdListDelete((yypminor->yy92));}
-#line 4420 "parse.c"
+#line 745 "parse.y"
+{sqliteIdListDelete((yypminor->yy246));}
+#line 1335 "parse.c"
       break;
     case 171:
-#line 498 "parse.y"
-{sqliteIdListDelete((yypminor->yy92));}
-#line 4425 "parse.c"
+#line 511 "parse.y"
+{sqliteIdListDelete((yypminor->yy246));}
+#line 1340 "parse.c"
       break;
     case 172:
-#line 496 "parse.y"
-{sqliteIdListDelete((yypminor->yy92));}
-#line 4430 "parse.c"
+#line 509 "parse.y"
+{sqliteIdListDelete((yypminor->yy246));}
+#line 1345 "parse.c"
       break;
     case 174:
-#line 490 "parse.y"
-{sqliteExprListDelete((yypminor->yy62));}
-#line 4435 "parse.c"
+#line 503 "parse.y"
+{sqliteExprListDelete((yypminor->yy232));}
+#line 1350 "parse.c"
       break;
     case 183:
-#line 396 "parse.y"
-{sqliteExprDelete((yypminor->yy334));}
-#line 4440 "parse.c"
+#line 409 "parse.y"
+{sqliteExprDelete((yypminor->yy164));}
+#line 1355 "parse.c"
       break;
     case 185:
-#line 276 "parse.y"
-{sqliteSelectDelete((yypminor->yy11));}
-#line 4445 "parse.c"
+#line 277 "parse.y"
+{sqliteSelectDelete((yypminor->yy375));}
+#line 1360 "parse.c"
       break;
     case 187:
-#line 407 "parse.y"
-{sqliteExprListDelete((yypminor->yy62));}
-#line 4450 "parse.c"
+#line 420 "parse.y"
+{sqliteExprListDelete((yypminor->yy232));}
+#line 1365 "parse.c"
       break;
     case 194:
-#line 312 "parse.y"
-{sqliteExprListDelete((yypminor->yy62));}
-#line 4455 "parse.c"
+#line 313 "parse.y"
+{sqliteExprListDelete((yypminor->yy232));}
+#line 1370 "parse.c"
       break;
     case 195:
-#line 310 "parse.y"
-{sqliteExprListDelete((yypminor->yy62));}
-#line 4460 "parse.c"
+#line 311 "parse.y"
+{sqliteExprListDelete((yypminor->yy232));}
+#line 1375 "parse.c"
       break;
     case 196:
-#line 274 "parse.y"
-{sqliteSelectDelete((yypminor->yy11));}
-#line 4465 "parse.c"
+#line 275 "parse.y"
+{sqliteSelectDelete((yypminor->yy375));}
+#line 1380 "parse.c"
       break;
     case 197:
-#line 337 "parse.y"
-{sqliteSrcListDelete((yypminor->yy335));}
-#line 4470 "parse.c"
+#line 338 "parse.y"
+{sqliteSrcListDelete((yypminor->yy283));}
+#line 1385 "parse.c"
       break;
     case 198:
-#line 465 "parse.y"
-{sqliteExprListDelete((yypminor->yy62));}
-#line 4475 "parse.c"
+#line 389 "parse.y"
+{sqliteSelectDelete((yypminor->yy375));}
+#line 1390 "parse.c"
       break;
-    case 200:
-#line 411 "parse.y"
-{sqliteExprDelete((yypminor->yy334));}
-#line 4480 "parse.c"
+    case 199:
+#line 478 "parse.y"
+{sqliteExprListDelete((yypminor->yy232));}
+#line 1395 "parse.c"
       break;
     case 201:
-#line 409 "parse.y"
-{sqliteExprListDelete((yypminor->yy62));}
-#line 4485 "parse.c"
+#line 424 "parse.y"
+{sqliteExprDelete((yypminor->yy164));}
+#line 1400 "parse.c"
       break;
-    case 203:
-#line 339 "parse.y"
-{sqliteSrcListDelete((yypminor->yy335));}
-#line 4490 "parse.c"
+    case 202:
+#line 422 "parse.y"
+{sqliteExprListDelete((yypminor->yy232));}
+#line 1405 "parse.c"
       break;
-    case 207:
-#line 807 "parse.y"
-{sqliteDeleteTriggerStep((yypminor->yy347));}
-#line 4495 "parse.c"
+    case 204:
+#line 340 "parse.y"
+{sqliteSrcListDelete((yypminor->yy283));}
+#line 1410 "parse.c"
       break;
     case 208:
-#line 799 "parse.y"
-{sqliteDeleteTriggerStep((yypminor->yy347));}
-#line 4500 "parse.c"
+#line 835 "parse.y"
+{sqliteDeleteTriggerStep((yypminor->yy353));}
+#line 1415 "parse.c"
       break;
-    case 210:
-#line 783 "parse.y"
-{sqliteIdListDelete((yypminor->yy234).b);}
-#line 4505 "parse.c"
+    case 209:
+#line 827 "parse.y"
+{sqliteDeleteTriggerStep((yypminor->yy353));}
+#line 1420 "parse.c"
       break;
-    case 215:
-#line 401 "parse.y"
-{sqliteIdListDelete((yypminor->yy92));}
-#line 4510 "parse.c"
+    case 211:
+#line 811 "parse.y"
+{sqliteIdListDelete((yypminor->yy414).b);}
+#line 1425 "parse.c"
       break;
-    case 217:
-#line 459 "parse.y"
-{sqliteExprDelete((yypminor->yy334));}
-#line 4515 "parse.c"
+    case 216:
+#line 414 "parse.y"
+{sqliteIdListDelete((yypminor->yy246));}
+#line 1430 "parse.c"
+      break;
+    case 218:
+#line 472 "parse.y"
+{sqliteExprDelete((yypminor->yy164));}
+#line 1435 "parse.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -4528,19 +1448,19 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
 */
 static int yy_pop_parser_stack(yyParser *pParser){
   YYCODETYPE yymajor;
+  yyStackEntry *yytos = &pParser->yystack[pParser->yyidx];
 
   if( pParser->yyidx<0 ) return 0;
 #ifndef NDEBUG
   if( yyTraceFILE && pParser->yyidx>=0 ){
     fprintf(yyTraceFILE,"%sPopping %s\n",
       yyTracePrompt,
-      yyTokenName[pParser->yytop->major]);
+      yyTokenName[yytos->major]);
   }
 #endif
-  yymajor = pParser->yytop->major;
-  yy_destructor( yymajor, &pParser->yytop->minor);
+  yymajor = yytos->major;
+  yy_destructor( yymajor, &yytos->minor);
   pParser->yyidx--;
-  pParser->yytop--;
   return yymajor;
 }
 
@@ -4567,32 +1487,32 @@ void sqliteParserFree(
 }
 
 /*
-** Find the appropriate action for a parser given the look-ahead token.
+** Find the appropriate action for a parser given the terminal
+** look-ahead token iLookAhead.
 **
 ** If the look-ahead token is YYNOCODE, then check to see if the action is
 ** independent of the look-ahead.  If it is, return the action, otherwise
 ** return YY_NO_ACTION.
 */
-static int yy_find_parser_action(
+static int yy_find_shift_action(
   yyParser *pParser,        /* The parser */
-  int iLookAhead             /* The look-ahead token */
+  int iLookAhead            /* The look-ahead token */
 ){
-  const yyStateEntry *pState;   /* Appropriate entry in the state table */
-  const yyActionEntry *pAction; /* Action appropriate for the look-ahead */
-  int iFallback;                /* Fallback token */
+  int i;
+  int stateno = pParser->yystack[pParser->yyidx].stateno;
  
   /* if( pParser->yyidx<0 ) return YY_NO_ACTION;  */
-  pState = &yyStateTable[pParser->yytop->stateno];
-  if( pState->nEntry==0 ){
-    return pState->actionDefault;
-  }else if( iLookAhead!=YYNOCODE ){
-    pAction = &pState->hashtbl[iLookAhead % pState->nEntry];
-    while( 1 ){
-      if( pAction->lookahead==iLookAhead ) return pAction->action;
-      if( pAction->next==0 ) break;
-      pAction = &pState->hashtbl[pAction->next-1];
-    }
+  i = yy_shift_ofst[stateno];
+  if( i==YY_SHIFT_USE_DFLT ){
+    return yy_default[stateno];
+  }
+  if( iLookAhead==YYNOCODE ){
+    return YY_NO_ACTION;
+  }
+  i += iLookAhead;
+  if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
 #ifdef YYFALLBACK
+    int iFallback;            /* Fallback token */
     if( iLookAhead<sizeof(yyFallback)/sizeof(yyFallback[0])
            && (iFallback = yyFallback[iLookAhead])!=0 ){
 #ifndef NDEBUG
@@ -4601,13 +1521,43 @@ static int yy_find_parser_action(
            yyTracePrompt, yyTokenName[iLookAhead], yyTokenName[iFallback]);
       }
 #endif
-      return yy_find_parser_action(pParser, iFallback);
+      return yy_find_shift_action(pParser, iFallback);
     }
 #endif
-  }else if( pState->hashtbl->lookahead!=YYNOCODE ){
+    return yy_default[stateno];
+  }else{
+    return yy_action[i];
+  }
+}
+
+/*
+** Find the appropriate action for a parser given the non-terminal
+** look-ahead token iLookAhead.
+**
+** If the look-ahead token is YYNOCODE, then check to see if the action is
+** independent of the look-ahead.  If it is, return the action, otherwise
+** return YY_NO_ACTION.
+*/
+static int yy_find_reduce_action(
+  yyParser *pParser,        /* The parser */
+  int iLookAhead            /* The look-ahead token */
+){
+  int i;
+  int stateno = pParser->yystack[pParser->yyidx].stateno;
+ 
+  i = yy_reduce_ofst[stateno];
+  if( i==YY_REDUCE_USE_DFLT ){
+    return yy_default[stateno];
+  }
+  if( iLookAhead==YYNOCODE ){
     return YY_NO_ACTION;
   }
-  return pState->actionDefault;
+  i += iLookAhead;
+  if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
+    return yy_default[stateno];
+  }else{
+    return yy_action[i];
+  }
 }
 
 /*
@@ -4619,12 +1569,11 @@ static void yy_shift(
   int yyMajor,                  /* The major token to shift in */
   YYMINORTYPE *yypMinor         /* Pointer ot the minor token to shift in */
 ){
+  yyStackEntry *yytos;
   yypParser->yyidx++;
-  yypParser->yytop++;
   if( yypParser->yyidx>=YYSTACKDEPTH ){
      sqliteParserARG_FETCH;
      yypParser->yyidx--;
-     yypParser->yytop--;
 #ifndef NDEBUG
      if( yyTraceFILE ){
        fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
@@ -4636,9 +1585,10 @@ static void yy_shift(
      sqliteParserARG_STORE; /* Suppress warning about unused %extra_argument var */
      return;
   }
-  yypParser->yytop->stateno = yyNewState;
-  yypParser->yytop->major = yyMajor;
-  yypParser->yytop->minor = *yypMinor;
+  yytos = &yypParser->yystack[yypParser->yyidx];
+  yytos->stateno = yyNewState;
+  yytos->major = yyMajor;
+  yytos->minor = *yypMinor;
 #ifndef NDEBUG
   if( yyTraceFILE && yypParser->yyidx>0 ){
     int i;
@@ -4667,16 +1617,16 @@ static struct {
   { 156, 1 },
   { 156, 0 },
   { 138, 3 },
-  { 206, 0 },
-  { 206, 1 },
-  { 206, 2 },
+  { 207, 0 },
+  { 207, 1 },
+  { 207, 2 },
   { 138, 2 },
   { 138, 2 },
   { 138, 2 },
   { 138, 2 },
   { 147, 4 },
-  { 205, 1 },
-  { 205, 0 },
+  { 206, 1 },
+  { 206, 0 },
   { 148, 4 },
   { 148, 2 },
   { 144, 3 },
@@ -4689,15 +1639,15 @@ static struct {
   { 181, 1 },
   { 181, 1 },
   { 181, 1 },
-  { 212, 0 },
-  { 212, 1 },
-  { 212, 4 },
-  { 212, 6 },
+  { 213, 0 },
   { 213, 1 },
-  { 213, 2 },
-  { 199, 1 },
-  { 199, 2 },
-  { 199, 2 },
+  { 213, 4 },
+  { 213, 6 },
+  { 214, 1 },
+  { 214, 2 },
+  { 200, 1 },
+  { 200, 2 },
+  { 200, 2 },
   { 133, 2 },
   { 133, 0 },
   { 132, 3 },
@@ -4739,11 +1689,11 @@ static struct {
   { 145, 3 },
   { 145, 2 },
   { 145, 1 },
-  { 204, 2 },
-  { 204, 6 },
-  { 204, 5 },
-  { 204, 3 },
-  { 204, 10 },
+  { 205, 2 },
+  { 205, 6 },
+  { 205, 5 },
+  { 205, 3 },
+  { 205, 10 },
   { 152, 0 },
   { 152, 1 },
   { 184, 0 },
@@ -4779,10 +1729,12 @@ static struct {
   { 131, 0 },
   { 161, 0 },
   { 161, 2 },
-  { 203, 2 },
-  { 203, 0 },
+  { 204, 2 },
+  { 204, 0 },
   { 197, 6 },
   { 197, 7 },
+  { 198, 1 },
+  { 198, 1 },
   { 150, 0 },
   { 150, 2 },
   { 175, 1 },
@@ -4792,16 +1744,16 @@ static struct {
   { 175, 4 },
   { 183, 2 },
   { 183, 0 },
-  { 215, 4 },
-  { 215, 0 },
+  { 216, 4 },
+  { 216, 0 },
   { 187, 0 },
   { 187, 3 },
-  { 201, 5 },
-  { 201, 3 },
-  { 200, 1 },
-  { 202, 1 },
-  { 202, 1 },
-  { 202, 0 },
+  { 202, 5 },
+  { 202, 3 },
+  { 201, 1 },
+  { 203, 1 },
+  { 203, 1 },
+  { 203, 0 },
   { 141, 0 },
   { 141, 2 },
   { 162, 0 },
@@ -4813,11 +1765,11 @@ static struct {
   { 178, 4 },
   { 178, 4 },
   { 138, 5 },
-  { 217, 0 },
-  { 217, 2 },
+  { 218, 0 },
+  { 218, 2 },
   { 138, 7 },
-  { 198, 5 },
-  { 198, 3 },
+  { 199, 5 },
+  { 199, 3 },
   { 138, 9 },
   { 138, 6 },
   { 173, 2 },
@@ -4834,7 +1786,7 @@ static struct {
   { 157, 1 },
   { 157, 3 },
   { 157, 5 },
-  { 157, 2 },
+  { 157, 1 },
   { 157, 1 },
   { 157, 1 },
   { 157, 1 },
@@ -4878,6 +1830,8 @@ static struct {
   { 157, 5 },
   { 157, 6 },
   { 157, 6 },
+  { 157, 4 },
+  { 157, 5 },
   { 157, 5 },
   { 135, 5 },
   { 135, 4 },
@@ -4889,9 +1843,9 @@ static struct {
   { 159, 1 },
   { 158, 1 },
   { 158, 0 },
-  { 138, 12 },
-  { 214, 1 },
-  { 214, 0 },
+  { 138, 11 },
+  { 215, 1 },
+  { 215, 0 },
   { 168, 0 },
   { 168, 3 },
   { 167, 3 },
@@ -4915,27 +1869,27 @@ static struct {
   { 189, 1 },
   { 189, 0 },
   { 138, 5 },
-  { 209, 10 },
+  { 210, 10 },
+  { 212, 1 },
+  { 212, 1 },
+  { 212, 2 },
+  { 212, 0 },
   { 211, 1 },
   { 211, 1 },
-  { 211, 2 },
-  { 211, 0 },
-  { 210, 1 },
-  { 210, 1 },
-  { 210, 1 },
-  { 210, 3 },
+  { 211, 1 },
+  { 211, 3 },
   { 160, 0 },
   { 160, 3 },
   { 160, 3 },
-  { 216, 0 },
-  { 216, 2 },
-  { 208, 3 },
-  { 208, 0 },
-  { 207, 6 },
-  { 207, 9 },
-  { 207, 6 },
-  { 207, 4 },
-  { 207, 1 },
+  { 217, 0 },
+  { 217, 2 },
+  { 209, 3 },
+  { 209, 0 },
+  { 208, 6 },
+  { 208, 9 },
+  { 208, 6 },
+  { 208, 4 },
+  { 208, 1 },
   { 157, 4 },
   { 157, 6 },
   { 157, 6 },
@@ -4963,7 +1917,7 @@ static void yy_reduce(
   yyStackEntry *yymsp;            /* The top of the parser's stack */
   int yysize;                     /* Amount to pop the stack */
   sqliteParserARG_FETCH;
-  yymsp = yypParser->yytop;
+  yymsp = &yypParser->yystack[yypParser->yyidx];
 #ifndef NDEBUG
   if( yyTraceFILE && yyruleno>=0 
         && yyruleno<sizeof(yyRuleName)/sizeof(yyRuleName[0]) ){
@@ -5002,24 +1956,24 @@ static void yy_reduce(
       case 5:
 #line 77 "parse.y"
 { sqliteExec(pParse); }
-#line 5005 "parse.c"
+#line 1959 "parse.c"
         /* No destructor defined for cmd */
         break;
       case 6:
 #line 78 "parse.y"
 { sqliteBeginParse(pParse, 1); }
-#line 5011 "parse.c"
+#line 1965 "parse.c"
         /* No destructor defined for EXPLAIN */
         break;
       case 7:
 #line 79 "parse.y"
 { sqliteBeginParse(pParse, 0); }
-#line 5017 "parse.c"
+#line 1971 "parse.c"
         break;
       case 8:
 #line 84 "parse.y"
-{sqliteBeginTransaction(pParse,yymsp[0].minor.yy52);}
-#line 5022 "parse.c"
+{sqliteBeginTransaction(pParse,yymsp[0].minor.yy424);}
+#line 1976 "parse.c"
         /* No destructor defined for BEGIN */
         /* No destructor defined for trans_opt */
         break;
@@ -5035,21 +1989,21 @@ static void yy_reduce(
       case 12:
 #line 88 "parse.y"
 {sqliteCommitTransaction(pParse);}
-#line 5038 "parse.c"
+#line 1992 "parse.c"
         /* No destructor defined for COMMIT */
         /* No destructor defined for trans_opt */
         break;
       case 13:
 #line 89 "parse.y"
 {sqliteCommitTransaction(pParse);}
-#line 5045 "parse.c"
+#line 1999 "parse.c"
         /* No destructor defined for END */
         /* No destructor defined for trans_opt */
         break;
       case 14:
 #line 90 "parse.y"
 {sqliteRollbackTransaction(pParse);}
-#line 5052 "parse.c"
+#line 2006 "parse.c"
         /* No destructor defined for ROLLBACK */
         /* No destructor defined for trans_opt */
         break;
@@ -5060,28 +2014,28 @@ static void yy_reduce(
       case 16:
 #line 95 "parse.y"
 {
-   sqliteStartTable(pParse,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy210,yymsp[-2].minor.yy52,0);
+   sqliteStartTable(pParse,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy318,yymsp[-2].minor.yy424,0);
 }
-#line 5065 "parse.c"
+#line 2019 "parse.c"
         /* No destructor defined for TABLE */
         break;
       case 17:
 #line 99 "parse.y"
-{yygotominor.yy52 = 1;}
-#line 5071 "parse.c"
+{yygotominor.yy424 = 1;}
+#line 2025 "parse.c"
         /* No destructor defined for TEMP */
         break;
       case 18:
 #line 100 "parse.y"
-{yygotominor.yy52 = 0;}
-#line 5077 "parse.c"
+{yygotominor.yy424 = 0;}
+#line 2031 "parse.c"
         break;
       case 19:
 #line 101 "parse.y"
 {
   sqliteEndTable(pParse,&yymsp[0].minor.yy0,0);
 }
-#line 5084 "parse.c"
+#line 2038 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for columnlist */
         /* No destructor defined for conslist_opt */
@@ -5089,10 +2043,10 @@ static void yy_reduce(
       case 20:
 #line 104 "parse.y"
 {
-  sqliteEndTable(pParse,0,yymsp[0].minor.yy11);
-  sqliteSelectDelete(yymsp[0].minor.yy11);
+  sqliteEndTable(pParse,0,yymsp[0].minor.yy375);
+  sqliteSelectDelete(yymsp[0].minor.yy375);
 }
-#line 5095 "parse.c"
+#line 2049 "parse.c"
         /* No destructor defined for AS */
         break;
       case 21:
@@ -5110,57 +2064,57 @@ static void yy_reduce(
         break;
       case 24:
 #line 116 "parse.y"
-{sqliteAddColumn(pParse,&yymsp[0].minor.yy210);}
-#line 5114 "parse.c"
+{sqliteAddColumn(pParse,&yymsp[0].minor.yy318);}
+#line 2068 "parse.c"
         break;
       case 25:
 #line 122 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy0;}
-#line 5119 "parse.c"
+{yygotominor.yy318 = yymsp[0].minor.yy0;}
+#line 2073 "parse.c"
         break;
       case 26:
 #line 138 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy0;}
-#line 5124 "parse.c"
+{yygotominor.yy318 = yymsp[0].minor.yy0;}
+#line 2078 "parse.c"
         break;
       case 27:
 #line 139 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy0;}
-#line 5129 "parse.c"
+{yygotominor.yy318 = yymsp[0].minor.yy0;}
+#line 2083 "parse.c"
         break;
       case 28:
 #line 144 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy0;}
-#line 5134 "parse.c"
+{yygotominor.yy318 = yymsp[0].minor.yy0;}
+#line 2088 "parse.c"
         break;
       case 29:
 #line 145 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy0;}
-#line 5139 "parse.c"
+{yygotominor.yy318 = yymsp[0].minor.yy0;}
+#line 2093 "parse.c"
         break;
       case 30:
 #line 146 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy0;}
-#line 5144 "parse.c"
+{yygotominor.yy318 = yymsp[0].minor.yy0;}
+#line 2098 "parse.c"
         break;
       case 31:
         break;
       case 32:
 #line 149 "parse.y"
-{sqliteAddColumnType(pParse,&yymsp[0].minor.yy210,&yymsp[0].minor.yy210);}
-#line 5151 "parse.c"
+{sqliteAddColumnType(pParse,&yymsp[0].minor.yy318,&yymsp[0].minor.yy318);}
+#line 2105 "parse.c"
         break;
       case 33:
 #line 150 "parse.y"
-{sqliteAddColumnType(pParse,&yymsp[-3].minor.yy210,&yymsp[0].minor.yy0);}
-#line 5156 "parse.c"
+{sqliteAddColumnType(pParse,&yymsp[-3].minor.yy318,&yymsp[0].minor.yy0);}
+#line 2110 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for signed */
         break;
       case 34:
 #line 152 "parse.y"
-{sqliteAddColumnType(pParse,&yymsp[-5].minor.yy210,&yymsp[0].minor.yy0);}
-#line 5163 "parse.c"
+{sqliteAddColumnType(pParse,&yymsp[-5].minor.yy318,&yymsp[0].minor.yy0);}
+#line 2117 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for signed */
         /* No destructor defined for COMMA */
@@ -5168,25 +2122,31 @@ static void yy_reduce(
         break;
       case 35:
 #line 154 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy210;}
-#line 5172 "parse.c"
+{yygotominor.yy318 = yymsp[0].minor.yy318;}
+#line 2126 "parse.c"
         break;
       case 36:
 #line 155 "parse.y"
-{yygotominor.yy210 = yymsp[-1].minor.yy210;}
-#line 5177 "parse.c"
+{yygotominor.yy318 = yymsp[-1].minor.yy318;}
+#line 2131 "parse.c"
         /* No destructor defined for ids */
         break;
       case 37:
-        /* No destructor defined for INTEGER */
+#line 157 "parse.y"
+{ yygotominor.yy424 = atoi(yymsp[0].minor.yy0.z); }
+#line 2137 "parse.c"
         break;
       case 38:
+#line 158 "parse.y"
+{ yygotominor.yy424 = atoi(yymsp[0].minor.yy0.z); }
+#line 2142 "parse.c"
         /* No destructor defined for PLUS */
-        /* No destructor defined for INTEGER */
         break;
       case 39:
+#line 159 "parse.y"
+{ yygotominor.yy424 = -atoi(yymsp[0].minor.yy0.z); }
+#line 2148 "parse.c"
         /* No destructor defined for MINUS */
-        /* No destructor defined for INTEGER */
         break;
       case 40:
         /* No destructor defined for carglist */
@@ -5203,54 +2163,54 @@ static void yy_reduce(
         /* No destructor defined for ccons */
         break;
       case 44:
-#line 163 "parse.y"
+#line 164 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5208 "parse.c"
+#line 2168 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 45:
-#line 164 "parse.y"
+#line 165 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5214 "parse.c"
+#line 2174 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 46:
-#line 165 "parse.y"
+#line 166 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5220 "parse.c"
+#line 2180 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 47:
-#line 166 "parse.y"
+#line 167 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5226 "parse.c"
+#line 2186 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for PLUS */
         break;
       case 48:
-#line 167 "parse.y"
+#line 168 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,1);}
-#line 5233 "parse.c"
+#line 2193 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for MINUS */
         break;
       case 49:
-#line 168 "parse.y"
+#line 169 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5240 "parse.c"
+#line 2200 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 50:
-#line 169 "parse.y"
+#line 170 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5246 "parse.c"
+#line 2206 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for PLUS */
         break;
       case 51:
-#line 170 "parse.y"
+#line 171 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,1);}
-#line 5253 "parse.c"
+#line 2213 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for MINUS */
         break;
@@ -5263,24 +2223,24 @@ static void yy_reduce(
         /* No destructor defined for onconf */
         break;
       case 54:
-#line 177 "parse.y"
-{sqliteAddNotNull(pParse, yymsp[0].minor.yy52);}
-#line 5268 "parse.c"
+#line 178 "parse.y"
+{sqliteAddNotNull(pParse, yymsp[0].minor.yy424);}
+#line 2228 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for NULL */
         break;
       case 55:
-#line 178 "parse.y"
-{sqliteAddPrimaryKey(pParse,0,yymsp[0].minor.yy52);}
-#line 5275 "parse.c"
+#line 179 "parse.y"
+{sqliteAddPrimaryKey(pParse,0,yymsp[0].minor.yy424);}
+#line 2235 "parse.c"
         /* No destructor defined for PRIMARY */
         /* No destructor defined for KEY */
         /* No destructor defined for sortorder */
         break;
       case 56:
-#line 179 "parse.y"
-{sqliteCreateIndex(pParse,0,0,0,yymsp[0].minor.yy52,0,0,0);}
-#line 5283 "parse.c"
+#line 180 "parse.y"
+{sqliteCreateIndex(pParse,0,0,0,yymsp[0].minor.yy424,0,0);}
+#line 2243 "parse.c"
         /* No destructor defined for UNIQUE */
         break;
       case 57:
@@ -5291,117 +2251,117 @@ static void yy_reduce(
         /* No destructor defined for onconf */
         break;
       case 58:
-#line 182 "parse.y"
-{sqliteCreateForeignKey(pParse,0,&yymsp[-2].minor.yy210,yymsp[-1].minor.yy92,yymsp[0].minor.yy52);}
-#line 5296 "parse.c"
+#line 183 "parse.y"
+{sqliteCreateForeignKey(pParse,0,&yymsp[-2].minor.yy318,yymsp[-1].minor.yy246,yymsp[0].minor.yy424);}
+#line 2256 "parse.c"
         /* No destructor defined for REFERENCES */
         break;
       case 59:
-#line 183 "parse.y"
-{sqliteDeferForeignKey(pParse,yymsp[0].minor.yy52);}
-#line 5302 "parse.c"
+#line 184 "parse.y"
+{sqliteDeferForeignKey(pParse,yymsp[0].minor.yy424);}
+#line 2262 "parse.c"
         break;
       case 60:
-#line 184 "parse.y"
+#line 185 "parse.y"
 {
-   sqliteAddCollateType(pParse, sqliteCollateType(yymsp[0].minor.yy210.z, yymsp[0].minor.yy210.n));
+   sqliteAddCollateType(pParse, sqliteCollateType(yymsp[0].minor.yy318.z, yymsp[0].minor.yy318.n));
 }
-#line 5309 "parse.c"
+#line 2269 "parse.c"
         /* No destructor defined for COLLATE */
         break;
       case 61:
-#line 194 "parse.y"
-{ yygotominor.yy52 = OE_Restrict * 0x010101; }
-#line 5315 "parse.c"
+#line 195 "parse.y"
+{ yygotominor.yy424 = OE_Restrict * 0x010101; }
+#line 2275 "parse.c"
         break;
       case 62:
-#line 195 "parse.y"
-{ yygotominor.yy52 = (yymsp[-1].minor.yy52 & yymsp[0].minor.yy279.mask) | yymsp[0].minor.yy279.value; }
-#line 5320 "parse.c"
+#line 196 "parse.y"
+{ yygotominor.yy424 = (yymsp[-1].minor.yy424 & yymsp[0].minor.yy299.mask) | yymsp[0].minor.yy299.value; }
+#line 2280 "parse.c"
         break;
       case 63:
-#line 197 "parse.y"
-{ yygotominor.yy279.value = 0;     yygotominor.yy279.mask = 0x000000; }
-#line 5325 "parse.c"
+#line 198 "parse.y"
+{ yygotominor.yy299.value = 0;     yygotominor.yy299.mask = 0x000000; }
+#line 2285 "parse.c"
         /* No destructor defined for MATCH */
         /* No destructor defined for nm */
         break;
       case 64:
-#line 198 "parse.y"
-{ yygotominor.yy279.value = yymsp[0].minor.yy52;     yygotominor.yy279.mask = 0x0000ff; }
-#line 5332 "parse.c"
+#line 199 "parse.y"
+{ yygotominor.yy299.value = yymsp[0].minor.yy424;     yygotominor.yy299.mask = 0x0000ff; }
+#line 2292 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for DELETE */
         break;
       case 65:
-#line 199 "parse.y"
-{ yygotominor.yy279.value = yymsp[0].minor.yy52<<8;  yygotominor.yy279.mask = 0x00ff00; }
-#line 5339 "parse.c"
+#line 200 "parse.y"
+{ yygotominor.yy299.value = yymsp[0].minor.yy424<<8;  yygotominor.yy299.mask = 0x00ff00; }
+#line 2299 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for UPDATE */
         break;
       case 66:
-#line 200 "parse.y"
-{ yygotominor.yy279.value = yymsp[0].minor.yy52<<16; yygotominor.yy279.mask = 0xff0000; }
-#line 5346 "parse.c"
+#line 201 "parse.y"
+{ yygotominor.yy299.value = yymsp[0].minor.yy424<<16; yygotominor.yy299.mask = 0xff0000; }
+#line 2306 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for INSERT */
         break;
       case 67:
-#line 202 "parse.y"
-{ yygotominor.yy52 = OE_SetNull; }
-#line 5353 "parse.c"
+#line 203 "parse.y"
+{ yygotominor.yy424 = OE_SetNull; }
+#line 2313 "parse.c"
         /* No destructor defined for SET */
         /* No destructor defined for NULL */
         break;
       case 68:
-#line 203 "parse.y"
-{ yygotominor.yy52 = OE_SetDflt; }
-#line 5360 "parse.c"
+#line 204 "parse.y"
+{ yygotominor.yy424 = OE_SetDflt; }
+#line 2320 "parse.c"
         /* No destructor defined for SET */
         /* No destructor defined for DEFAULT */
         break;
       case 69:
-#line 204 "parse.y"
-{ yygotominor.yy52 = OE_Cascade; }
-#line 5367 "parse.c"
+#line 205 "parse.y"
+{ yygotominor.yy424 = OE_Cascade; }
+#line 2327 "parse.c"
         /* No destructor defined for CASCADE */
         break;
       case 70:
-#line 205 "parse.y"
-{ yygotominor.yy52 = OE_Restrict; }
-#line 5373 "parse.c"
+#line 206 "parse.y"
+{ yygotominor.yy424 = OE_Restrict; }
+#line 2333 "parse.c"
         /* No destructor defined for RESTRICT */
         break;
       case 71:
-#line 207 "parse.y"
-{yygotominor.yy52 = yymsp[0].minor.yy52;}
-#line 5379 "parse.c"
+#line 208 "parse.y"
+{yygotominor.yy424 = yymsp[0].minor.yy424;}
+#line 2339 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for DEFERRABLE */
         break;
       case 72:
-#line 208 "parse.y"
-{yygotominor.yy52 = yymsp[0].minor.yy52;}
-#line 5386 "parse.c"
+#line 209 "parse.y"
+{yygotominor.yy424 = yymsp[0].minor.yy424;}
+#line 2346 "parse.c"
         /* No destructor defined for DEFERRABLE */
         break;
       case 73:
-#line 210 "parse.y"
-{yygotominor.yy52 = 0;}
-#line 5392 "parse.c"
+#line 211 "parse.y"
+{yygotominor.yy424 = 0;}
+#line 2352 "parse.c"
         break;
       case 74:
-#line 211 "parse.y"
-{yygotominor.yy52 = 1;}
-#line 5397 "parse.c"
+#line 212 "parse.y"
+{yygotominor.yy424 = 1;}
+#line 2357 "parse.c"
         /* No destructor defined for INITIALLY */
         /* No destructor defined for DEFERRED */
         break;
       case 75:
-#line 212 "parse.y"
-{yygotominor.yy52 = 0;}
-#line 5404 "parse.c"
+#line 213 "parse.y"
+{yygotominor.yy424 = 0;}
+#line 2364 "parse.c"
         /* No destructor defined for INITIALLY */
         /* No destructor defined for IMMEDIATE */
         break;
@@ -5428,18 +2388,18 @@ static void yy_reduce(
         /* No destructor defined for nm */
         break;
       case 82:
-#line 224 "parse.y"
-{sqliteAddPrimaryKey(pParse,yymsp[-2].minor.yy92,yymsp[0].minor.yy52);}
-#line 5433 "parse.c"
+#line 225 "parse.y"
+{sqliteAddPrimaryKey(pParse,yymsp[-2].minor.yy246,yymsp[0].minor.yy424);}
+#line 2393 "parse.c"
         /* No destructor defined for PRIMARY */
         /* No destructor defined for KEY */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 83:
-#line 226 "parse.y"
-{sqliteCreateIndex(pParse,0,0,yymsp[-2].minor.yy92,yymsp[0].minor.yy52,0,0,0);}
-#line 5442 "parse.c"
+#line 227 "parse.y"
+{sqliteCreateIndex(pParse,0,0,yymsp[-2].minor.yy246,yymsp[0].minor.yy424,0,0);}
+#line 2402 "parse.c"
         /* No destructor defined for UNIQUE */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
@@ -5450,12 +2410,12 @@ static void yy_reduce(
         /* No destructor defined for onconf */
         break;
       case 85:
-#line 229 "parse.y"
+#line 230 "parse.y"
 {
-    sqliteCreateForeignKey(pParse, yymsp[-6].minor.yy92, &yymsp[-3].minor.yy210, yymsp[-2].minor.yy92, yymsp[-1].minor.yy52);
-    sqliteDeferForeignKey(pParse, yymsp[0].minor.yy52);
+    sqliteCreateForeignKey(pParse, yymsp[-6].minor.yy246, &yymsp[-3].minor.yy318, yymsp[-2].minor.yy246, yymsp[-1].minor.yy424);
+    sqliteDeferForeignKey(pParse, yymsp[0].minor.yy424);
 }
-#line 5458 "parse.c"
+#line 2418 "parse.c"
         /* No destructor defined for FOREIGN */
         /* No destructor defined for KEY */
         /* No destructor defined for LP */
@@ -5463,1403 +2423,1441 @@ static void yy_reduce(
         /* No destructor defined for REFERENCES */
         break;
       case 86:
-#line 234 "parse.y"
-{yygotominor.yy52 = 0;}
-#line 5468 "parse.c"
+#line 235 "parse.y"
+{yygotominor.yy424 = 0;}
+#line 2428 "parse.c"
         break;
       case 87:
-#line 235 "parse.y"
-{yygotominor.yy52 = yymsp[0].minor.yy52;}
-#line 5473 "parse.c"
+#line 236 "parse.y"
+{yygotominor.yy424 = yymsp[0].minor.yy424;}
+#line 2433 "parse.c"
         break;
       case 88:
-#line 243 "parse.y"
-{ yygotominor.yy52 = OE_Default; }
-#line 5478 "parse.c"
+#line 244 "parse.y"
+{ yygotominor.yy424 = OE_Default; }
+#line 2438 "parse.c"
         break;
       case 89:
-#line 244 "parse.y"
-{ yygotominor.yy52 = yymsp[0].minor.yy52; }
-#line 5483 "parse.c"
+#line 245 "parse.y"
+{ yygotominor.yy424 = yymsp[0].minor.yy424; }
+#line 2443 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for CONFLICT */
         break;
       case 90:
-#line 245 "parse.y"
-{ yygotominor.yy52 = OE_Default; }
-#line 5490 "parse.c"
+#line 246 "parse.y"
+{ yygotominor.yy424 = OE_Default; }
+#line 2450 "parse.c"
         break;
       case 91:
-#line 246 "parse.y"
-{ yygotominor.yy52 = yymsp[0].minor.yy52; }
-#line 5495 "parse.c"
+#line 247 "parse.y"
+{ yygotominor.yy424 = yymsp[0].minor.yy424; }
+#line 2455 "parse.c"
         /* No destructor defined for OR */
         break;
       case 92:
-#line 247 "parse.y"
-{ yygotominor.yy52 = OE_Rollback; }
-#line 5501 "parse.c"
+#line 248 "parse.y"
+{ yygotominor.yy424 = OE_Rollback; }
+#line 2461 "parse.c"
         /* No destructor defined for ROLLBACK */
         break;
       case 93:
-#line 248 "parse.y"
-{ yygotominor.yy52 = OE_Abort; }
-#line 5507 "parse.c"
+#line 249 "parse.y"
+{ yygotominor.yy424 = OE_Abort; }
+#line 2467 "parse.c"
         /* No destructor defined for ABORT */
         break;
       case 94:
-#line 249 "parse.y"
-{ yygotominor.yy52 = OE_Fail; }
-#line 5513 "parse.c"
+#line 250 "parse.y"
+{ yygotominor.yy424 = OE_Fail; }
+#line 2473 "parse.c"
         /* No destructor defined for FAIL */
         break;
       case 95:
-#line 250 "parse.y"
-{ yygotominor.yy52 = OE_Ignore; }
-#line 5519 "parse.c"
+#line 251 "parse.y"
+{ yygotominor.yy424 = OE_Ignore; }
+#line 2479 "parse.c"
         /* No destructor defined for IGNORE */
         break;
       case 96:
-#line 251 "parse.y"
-{ yygotominor.yy52 = OE_Replace; }
-#line 5525 "parse.c"
+#line 252 "parse.y"
+{ yygotominor.yy424 = OE_Replace; }
+#line 2485 "parse.c"
         /* No destructor defined for REPLACE */
         break;
       case 97:
-#line 255 "parse.y"
-{sqliteDropTable(pParse,&yymsp[0].minor.yy210,0);}
-#line 5531 "parse.c"
+#line 256 "parse.y"
+{sqliteDropTable(pParse,&yymsp[0].minor.yy318,0);}
+#line 2491 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for TABLE */
         break;
       case 98:
-#line 259 "parse.y"
+#line 260 "parse.y"
 {
-  sqliteCreateView(pParse, &yymsp[-5].minor.yy0, &yymsp[-2].minor.yy210, yymsp[0].minor.yy11, yymsp[-4].minor.yy52);
+  sqliteCreateView(pParse, &yymsp[-5].minor.yy0, &yymsp[-2].minor.yy318, yymsp[0].minor.yy375, yymsp[-4].minor.yy424);
 }
-#line 5540 "parse.c"
+#line 2500 "parse.c"
         /* No destructor defined for VIEW */
         /* No destructor defined for AS */
         break;
       case 99:
-#line 262 "parse.y"
+#line 263 "parse.y"
 {
-  sqliteDropTable(pParse, &yymsp[0].minor.yy210, 1);
+  sqliteDropTable(pParse, &yymsp[0].minor.yy318, 1);
 }
-#line 5549 "parse.c"
+#line 2509 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for VIEW */
         break;
       case 100:
-#line 268 "parse.y"
+#line 269 "parse.y"
 {
-  sqliteSelect(pParse, yymsp[0].minor.yy11, SRT_Callback, 0, 0, 0, 0);
-  sqliteSelectDelete(yymsp[0].minor.yy11);
+  sqliteSelect(pParse, yymsp[0].minor.yy375, SRT_Callback, 0, 0, 0, 0);
+  sqliteSelectDelete(yymsp[0].minor.yy375);
 }
-#line 5559 "parse.c"
+#line 2519 "parse.c"
         break;
       case 101:
-#line 278 "parse.y"
-{yygotominor.yy11 = yymsp[0].minor.yy11;}
-#line 5564 "parse.c"
+#line 279 "parse.y"
+{yygotominor.yy375 = yymsp[0].minor.yy375;}
+#line 2524 "parse.c"
         break;
       case 102:
-#line 279 "parse.y"
+#line 280 "parse.y"
 {
-  if( yymsp[0].minor.yy11 ){
-    yymsp[0].minor.yy11->op = yymsp[-1].minor.yy52;
-    yymsp[0].minor.yy11->pPrior = yymsp[-2].minor.yy11;
+  if( yymsp[0].minor.yy375 ){
+    yymsp[0].minor.yy375->op = yymsp[-1].minor.yy424;
+    yymsp[0].minor.yy375->pPrior = yymsp[-2].minor.yy375;
   }
-  yygotominor.yy11 = yymsp[0].minor.yy11;
+  yygotominor.yy375 = yymsp[0].minor.yy375;
 }
-#line 5575 "parse.c"
+#line 2535 "parse.c"
         break;
       case 103:
-#line 287 "parse.y"
-{yygotominor.yy52 = TK_UNION;}
-#line 5580 "parse.c"
+#line 288 "parse.y"
+{yygotominor.yy424 = TK_UNION;}
+#line 2540 "parse.c"
         /* No destructor defined for UNION */
         break;
       case 104:
-#line 288 "parse.y"
-{yygotominor.yy52 = TK_ALL;}
-#line 5586 "parse.c"
+#line 289 "parse.y"
+{yygotominor.yy424 = TK_ALL;}
+#line 2546 "parse.c"
         /* No destructor defined for UNION */
         /* No destructor defined for ALL */
         break;
       case 105:
-#line 289 "parse.y"
-{yygotominor.yy52 = TK_INTERSECT;}
-#line 5593 "parse.c"
+#line 290 "parse.y"
+{yygotominor.yy424 = TK_INTERSECT;}
+#line 2553 "parse.c"
         /* No destructor defined for INTERSECT */
         break;
       case 106:
-#line 290 "parse.y"
-{yygotominor.yy52 = TK_EXCEPT;}
-#line 5599 "parse.c"
+#line 291 "parse.y"
+{yygotominor.yy424 = TK_EXCEPT;}
+#line 2559 "parse.c"
         /* No destructor defined for EXCEPT */
         break;
       case 107:
-#line 292 "parse.y"
+#line 293 "parse.y"
 {
-  yygotominor.yy11 = sqliteSelectNew(yymsp[-6].minor.yy62,yymsp[-5].minor.yy335,yymsp[-4].minor.yy334,yymsp[-3].minor.yy62,yymsp[-2].minor.yy334,yymsp[-1].minor.yy62,yymsp[-7].minor.yy52,yymsp[0].minor.yy280.limit,yymsp[0].minor.yy280.offset);
+  yygotominor.yy375 = sqliteSelectNew(yymsp[-6].minor.yy232,yymsp[-5].minor.yy283,yymsp[-4].minor.yy164,yymsp[-3].minor.yy232,yymsp[-2].minor.yy164,yymsp[-1].minor.yy232,yymsp[-7].minor.yy424,yymsp[0].minor.yy22.limit,yymsp[0].minor.yy22.offset);
 }
-#line 5607 "parse.c"
+#line 2567 "parse.c"
         /* No destructor defined for SELECT */
         break;
       case 108:
-#line 300 "parse.y"
-{yygotominor.yy52 = 1;}
-#line 5613 "parse.c"
+#line 301 "parse.y"
+{yygotominor.yy424 = 1;}
+#line 2573 "parse.c"
         /* No destructor defined for DISTINCT */
         break;
       case 109:
-#line 301 "parse.y"
-{yygotominor.yy52 = 0;}
-#line 5619 "parse.c"
+#line 302 "parse.y"
+{yygotominor.yy424 = 0;}
+#line 2579 "parse.c"
         /* No destructor defined for ALL */
         break;
       case 110:
-#line 302 "parse.y"
-{yygotominor.yy52 = 0;}
-#line 5625 "parse.c"
+#line 303 "parse.y"
+{yygotominor.yy424 = 0;}
+#line 2585 "parse.c"
         break;
       case 111:
-#line 313 "parse.y"
-{yygotominor.yy62 = yymsp[-1].minor.yy62;}
-#line 5630 "parse.c"
+#line 314 "parse.y"
+{yygotominor.yy232 = yymsp[-1].minor.yy232;}
+#line 2590 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 112:
-#line 314 "parse.y"
-{yygotominor.yy62 = 0;}
-#line 5636 "parse.c"
+#line 315 "parse.y"
+{yygotominor.yy232 = 0;}
+#line 2596 "parse.c"
         break;
       case 113:
-#line 315 "parse.y"
+#line 316 "parse.y"
 {
-   yygotominor.yy62 = sqliteExprListAppend(yymsp[-2].minor.yy62,yymsp[-1].minor.yy334,yymsp[0].minor.yy210.n?&yymsp[0].minor.yy210:0);
+   yygotominor.yy232 = sqliteExprListAppend(yymsp[-2].minor.yy232,yymsp[-1].minor.yy164,yymsp[0].minor.yy318.n?&yymsp[0].minor.yy318:0);
 }
-#line 5643 "parse.c"
+#line 2603 "parse.c"
         break;
       case 114:
-#line 318 "parse.y"
+#line 319 "parse.y"
 {
-  yygotominor.yy62 = sqliteExprListAppend(yymsp[-1].minor.yy62, sqliteExpr(TK_ALL, 0, 0, 0), 0);
+  yygotominor.yy232 = sqliteExprListAppend(yymsp[-1].minor.yy232, sqliteExpr(TK_ALL, 0, 0, 0), 0);
 }
-#line 5650 "parse.c"
+#line 2610 "parse.c"
         /* No destructor defined for STAR */
         break;
       case 115:
-#line 321 "parse.y"
+#line 322 "parse.y"
 {
   Expr *pRight = sqliteExpr(TK_ALL, 0, 0, 0);
-  Expr *pLeft = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy210);
-  yygotominor.yy62 = sqliteExprListAppend(yymsp[-3].minor.yy62, sqliteExpr(TK_DOT, pLeft, pRight, 0), 0);
+  Expr *pLeft = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy318);
+  yygotominor.yy232 = sqliteExprListAppend(yymsp[-3].minor.yy232, sqliteExpr(TK_DOT, pLeft, pRight, 0), 0);
 }
-#line 5660 "parse.c"
+#line 2620 "parse.c"
         /* No destructor defined for DOT */
         /* No destructor defined for STAR */
         break;
       case 116:
-#line 331 "parse.y"
-{ yygotominor.yy210 = yymsp[0].minor.yy210; }
-#line 5667 "parse.c"
+#line 332 "parse.y"
+{ yygotominor.yy318 = yymsp[0].minor.yy318; }
+#line 2627 "parse.c"
         /* No destructor defined for AS */
         break;
       case 117:
-#line 332 "parse.y"
-{ yygotominor.yy210 = yymsp[0].minor.yy210; }
-#line 5673 "parse.c"
+#line 333 "parse.y"
+{ yygotominor.yy318 = yymsp[0].minor.yy318; }
+#line 2633 "parse.c"
         break;
       case 118:
-#line 333 "parse.y"
-{ yygotominor.yy210.n = 0; }
-#line 5678 "parse.c"
+#line 334 "parse.y"
+{ yygotominor.yy318.n = 0; }
+#line 2638 "parse.c"
         break;
       case 119:
-#line 345 "parse.y"
-{yygotominor.yy335 = sqliteMalloc(sizeof(*yygotominor.yy335));}
-#line 5683 "parse.c"
+#line 346 "parse.y"
+{yygotominor.yy283 = sqliteMalloc(sizeof(*yygotominor.yy283));}
+#line 2643 "parse.c"
         break;
       case 120:
-#line 346 "parse.y"
-{yygotominor.yy335 = yymsp[0].minor.yy335;}
-#line 5688 "parse.c"
+#line 347 "parse.y"
+{yygotominor.yy283 = yymsp[0].minor.yy283;}
+#line 2648 "parse.c"
         /* No destructor defined for FROM */
         break;
       case 121:
-#line 351 "parse.y"
+#line 352 "parse.y"
 {
-   yygotominor.yy335 = yymsp[-1].minor.yy335;
-   if( yygotominor.yy335 && yygotominor.yy335->nSrc>0 ) yygotominor.yy335->a[yygotominor.yy335->nSrc-1].jointype = yymsp[0].minor.yy52;
+   yygotominor.yy283 = yymsp[-1].minor.yy283;
+   if( yygotominor.yy283 && yygotominor.yy283->nSrc>0 ) yygotominor.yy283->a[yygotominor.yy283->nSrc-1].jointype = yymsp[0].minor.yy424;
 }
-#line 5697 "parse.c"
+#line 2657 "parse.c"
         break;
       case 122:
-#line 355 "parse.y"
-{yygotominor.yy335 = 0;}
-#line 5702 "parse.c"
+#line 356 "parse.y"
+{yygotominor.yy283 = 0;}
+#line 2662 "parse.c"
         break;
       case 123:
-#line 356 "parse.y"
+#line 357 "parse.y"
 {
-  yygotominor.yy335 = sqliteSrcListAppend(yymsp[-5].minor.yy335,&yymsp[-4].minor.yy210,&yymsp[-3].minor.yy210);
-  if( yymsp[-2].minor.yy210.n ) sqliteSrcListAddAlias(yygotominor.yy335,&yymsp[-2].minor.yy210);
-  if( yymsp[-1].minor.yy334 ){
-    if( yygotominor.yy335 && yygotominor.yy335->nSrc>1 ){ yygotominor.yy335->a[yygotominor.yy335->nSrc-2].pOn = yymsp[-1].minor.yy334; }
-    else { sqliteExprDelete(yymsp[-1].minor.yy334); }
+  yygotominor.yy283 = sqliteSrcListAppend(yymsp[-5].minor.yy283,&yymsp[-4].minor.yy318,&yymsp[-3].minor.yy318);
+  if( yymsp[-2].minor.yy318.n ) sqliteSrcListAddAlias(yygotominor.yy283,&yymsp[-2].minor.yy318);
+  if( yymsp[-1].minor.yy164 ){
+    if( yygotominor.yy283 && yygotominor.yy283->nSrc>1 ){ yygotominor.yy283->a[yygotominor.yy283->nSrc-2].pOn = yymsp[-1].minor.yy164; }
+    else { sqliteExprDelete(yymsp[-1].minor.yy164); }
   }
-  if( yymsp[0].minor.yy92 ){
-    if( yygotominor.yy335 && yygotominor.yy335->nSrc>1 ){ yygotominor.yy335->a[yygotominor.yy335->nSrc-2].pUsing = yymsp[0].minor.yy92; }
-    else { sqliteIdListDelete(yymsp[0].minor.yy92); }
+  if( yymsp[0].minor.yy246 ){
+    if( yygotominor.yy283 && yygotominor.yy283->nSrc>1 ){ yygotominor.yy283->a[yygotominor.yy283->nSrc-2].pUsing = yymsp[0].minor.yy246; }
+    else { sqliteIdListDelete(yymsp[0].minor.yy246); }
   }
 }
-#line 5718 "parse.c"
+#line 2678 "parse.c"
         break;
       case 124:
-#line 368 "parse.y"
+#line 370 "parse.y"
 {
-  yygotominor.yy335 = sqliteSrcListAppend(yymsp[-6].minor.yy335,0,0);
-  yygotominor.yy335->a[yygotominor.yy335->nSrc-1].pSelect = yymsp[-4].minor.yy11;
-  if( yymsp[-2].minor.yy210.n ) sqliteSrcListAddAlias(yygotominor.yy335,&yymsp[-2].minor.yy210);
-  if( yymsp[-1].minor.yy334 ){
-    if( yygotominor.yy335 && yygotominor.yy335->nSrc>1 ){ yygotominor.yy335->a[yygotominor.yy335->nSrc-2].pOn = yymsp[-1].minor.yy334; }
-    else { sqliteExprDelete(yymsp[-1].minor.yy334); }
+  yygotominor.yy283 = sqliteSrcListAppend(yymsp[-6].minor.yy283,0,0);
+  yygotominor.yy283->a[yygotominor.yy283->nSrc-1].pSelect = yymsp[-4].minor.yy375;
+  if( yymsp[-2].minor.yy318.n ) sqliteSrcListAddAlias(yygotominor.yy283,&yymsp[-2].minor.yy318);
+  if( yymsp[-1].minor.yy164 ){
+    if( yygotominor.yy283 && yygotominor.yy283->nSrc>1 ){ yygotominor.yy283->a[yygotominor.yy283->nSrc-2].pOn = yymsp[-1].minor.yy164; }
+    else { sqliteExprDelete(yymsp[-1].minor.yy164); }
   }
-  if( yymsp[0].minor.yy92 ){
-    if( yygotominor.yy335 && yygotominor.yy335->nSrc>1 ){ yygotominor.yy335->a[yygotominor.yy335->nSrc-2].pUsing = yymsp[0].minor.yy92; }
-    else { sqliteIdListDelete(yymsp[0].minor.yy92); }
+  if( yymsp[0].minor.yy246 ){
+    if( yygotominor.yy283 && yygotominor.yy283->nSrc>1 ){ yygotominor.yy283->a[yygotominor.yy283->nSrc-2].pUsing = yymsp[0].minor.yy246; }
+    else { sqliteIdListDelete(yymsp[0].minor.yy246); }
   }
 }
-#line 5735 "parse.c"
+#line 2695 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 125:
-#line 383 "parse.y"
-{yygotominor.yy210.z=0; yygotominor.yy210.n=0;}
-#line 5742 "parse.c"
+#line 390 "parse.y"
+{yygotominor.yy375 = yymsp[0].minor.yy375;}
+#line 2702 "parse.c"
         break;
       case 126:
-#line 384 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy210;}
-#line 5747 "parse.c"
-        /* No destructor defined for DOT */
+#line 391 "parse.y"
+{
+   yygotominor.yy375 = sqliteSelectNew(0,yymsp[0].minor.yy283,0,0,0,0,0,-1,0);
+}
+#line 2709 "parse.c"
         break;
       case 127:
-#line 388 "parse.y"
-{ yygotominor.yy52 = JT_INNER; }
-#line 5753 "parse.c"
-        /* No destructor defined for COMMA */
+#line 396 "parse.y"
+{yygotominor.yy318.z=0; yygotominor.yy318.n=0;}
+#line 2714 "parse.c"
         break;
       case 128:
-#line 389 "parse.y"
-{ yygotominor.yy52 = JT_INNER; }
-#line 5759 "parse.c"
-        /* No destructor defined for JOIN */
+#line 397 "parse.y"
+{yygotominor.yy318 = yymsp[0].minor.yy318;}
+#line 2719 "parse.c"
+        /* No destructor defined for DOT */
         break;
       case 129:
-#line 390 "parse.y"
-{ yygotominor.yy52 = sqliteJoinType(pParse,&yymsp[-1].minor.yy0,0,0); }
-#line 5765 "parse.c"
-        /* No destructor defined for JOIN */
+#line 401 "parse.y"
+{ yygotominor.yy424 = JT_INNER; }
+#line 2725 "parse.c"
+        /* No destructor defined for COMMA */
         break;
       case 130:
-#line 391 "parse.y"
-{ yygotominor.yy52 = sqliteJoinType(pParse,&yymsp[-2].minor.yy0,&yymsp[-1].minor.yy210,0); }
-#line 5771 "parse.c"
+#line 402 "parse.y"
+{ yygotominor.yy424 = JT_INNER; }
+#line 2731 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 131:
-#line 393 "parse.y"
-{ yygotominor.yy52 = sqliteJoinType(pParse,&yymsp[-3].minor.yy0,&yymsp[-2].minor.yy210,&yymsp[-1].minor.yy210); }
-#line 5777 "parse.c"
+#line 403 "parse.y"
+{ yygotominor.yy424 = sqliteJoinType(pParse,&yymsp[-1].minor.yy0,0,0); }
+#line 2737 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 132:
-#line 397 "parse.y"
-{yygotominor.yy334 = yymsp[0].minor.yy334;}
-#line 5783 "parse.c"
-        /* No destructor defined for ON */
+#line 404 "parse.y"
+{ yygotominor.yy424 = sqliteJoinType(pParse,&yymsp[-2].minor.yy0,&yymsp[-1].minor.yy318,0); }
+#line 2743 "parse.c"
+        /* No destructor defined for JOIN */
         break;
       case 133:
-#line 398 "parse.y"
-{yygotominor.yy334 = 0;}
-#line 5789 "parse.c"
+#line 406 "parse.y"
+{ yygotominor.yy424 = sqliteJoinType(pParse,&yymsp[-3].minor.yy0,&yymsp[-2].minor.yy318,&yymsp[-1].minor.yy318); }
+#line 2749 "parse.c"
+        /* No destructor defined for JOIN */
         break;
       case 134:
-#line 402 "parse.y"
-{yygotominor.yy92 = yymsp[-1].minor.yy92;}
-#line 5794 "parse.c"
+#line 410 "parse.y"
+{yygotominor.yy164 = yymsp[0].minor.yy164;}
+#line 2755 "parse.c"
+        /* No destructor defined for ON */
+        break;
+      case 135:
+#line 411 "parse.y"
+{yygotominor.yy164 = 0;}
+#line 2761 "parse.c"
+        break;
+      case 136:
+#line 415 "parse.y"
+{yygotominor.yy246 = yymsp[-1].minor.yy246;}
+#line 2766 "parse.c"
         /* No destructor defined for USING */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 135:
-#line 403 "parse.y"
-{yygotominor.yy92 = 0;}
-#line 5802 "parse.c"
-        break;
-      case 136:
-#line 413 "parse.y"
-{yygotominor.yy62 = 0;}
-#line 5807 "parse.c"
-        break;
       case 137:
-#line 414 "parse.y"
-{yygotominor.yy62 = yymsp[0].minor.yy62;}
-#line 5812 "parse.c"
+#line 416 "parse.y"
+{yygotominor.yy246 = 0;}
+#line 2774 "parse.c"
+        break;
+      case 138:
+#line 426 "parse.y"
+{yygotominor.yy232 = 0;}
+#line 2779 "parse.c"
+        break;
+      case 139:
+#line 427 "parse.y"
+{yygotominor.yy232 = yymsp[0].minor.yy232;}
+#line 2784 "parse.c"
         /* No destructor defined for ORDER */
         /* No destructor defined for BY */
         break;
-      case 138:
-#line 415 "parse.y"
+      case 140:
+#line 428 "parse.y"
 {
-  yygotominor.yy62 = sqliteExprListAppend(yymsp[-4].minor.yy62,yymsp[-2].minor.yy334,0);
-  if( yygotominor.yy62 ) yygotominor.yy62->a[yygotominor.yy62->nExpr-1].sortOrder = yymsp[-1].minor.yy52+yymsp[0].minor.yy52;
+  yygotominor.yy232 = sqliteExprListAppend(yymsp[-4].minor.yy232,yymsp[-2].minor.yy164,0);
+  if( yygotominor.yy232 ) yygotominor.yy232->a[yygotominor.yy232->nExpr-1].sortOrder = yymsp[-1].minor.yy424+yymsp[0].minor.yy424;
 }
-#line 5822 "parse.c"
+#line 2794 "parse.c"
         /* No destructor defined for COMMA */
         break;
-      case 139:
-#line 419 "parse.y"
-{
-  yygotominor.yy62 = sqliteExprListAppend(0,yymsp[-2].minor.yy334,0);
-  if( yygotominor.yy62 ) yygotominor.yy62->a[0].sortOrder = yymsp[-1].minor.yy52+yymsp[0].minor.yy52;
-}
-#line 5831 "parse.c"
-        break;
-      case 140:
-#line 423 "parse.y"
-{yygotominor.yy334 = yymsp[0].minor.yy334;}
-#line 5836 "parse.c"
-        break;
       case 141:
-#line 428 "parse.y"
-{yygotominor.yy52 = SQLITE_SO_ASC;}
-#line 5841 "parse.c"
-        /* No destructor defined for ASC */
+#line 432 "parse.y"
+{
+  yygotominor.yy232 = sqliteExprListAppend(0,yymsp[-2].minor.yy164,0);
+  if( yygotominor.yy232 ) yygotominor.yy232->a[0].sortOrder = yymsp[-1].minor.yy424+yymsp[0].minor.yy424;
+}
+#line 2803 "parse.c"
         break;
       case 142:
-#line 429 "parse.y"
-{yygotominor.yy52 = SQLITE_SO_DESC;}
-#line 5847 "parse.c"
-        /* No destructor defined for DESC */
+#line 436 "parse.y"
+{yygotominor.yy164 = yymsp[0].minor.yy164;}
+#line 2808 "parse.c"
         break;
       case 143:
-#line 430 "parse.y"
-{yygotominor.yy52 = SQLITE_SO_ASC;}
-#line 5853 "parse.c"
+#line 441 "parse.y"
+{yygotominor.yy424 = SQLITE_SO_ASC;}
+#line 2813 "parse.c"
+        /* No destructor defined for ASC */
         break;
       case 144:
-#line 431 "parse.y"
-{yygotominor.yy52 = SQLITE_SO_UNK;}
-#line 5858 "parse.c"
+#line 442 "parse.y"
+{yygotominor.yy424 = SQLITE_SO_DESC;}
+#line 2819 "parse.c"
+        /* No destructor defined for DESC */
         break;
       case 145:
-#line 432 "parse.y"
-{yygotominor.yy52 = sqliteCollateType(yymsp[0].minor.yy210.z, yymsp[0].minor.yy210.n);}
-#line 5863 "parse.c"
-        /* No destructor defined for COLLATE */
+#line 443 "parse.y"
+{yygotominor.yy424 = SQLITE_SO_ASC;}
+#line 2825 "parse.c"
         break;
       case 146:
-#line 436 "parse.y"
-{yygotominor.yy62 = 0;}
-#line 5869 "parse.c"
+#line 444 "parse.y"
+{yygotominor.yy424 = SQLITE_SO_UNK;}
+#line 2830 "parse.c"
         break;
       case 147:
-#line 437 "parse.y"
-{yygotominor.yy62 = yymsp[0].minor.yy62;}
-#line 5874 "parse.c"
+#line 445 "parse.y"
+{yygotominor.yy424 = sqliteCollateType(yymsp[0].minor.yy318.z, yymsp[0].minor.yy318.n);}
+#line 2835 "parse.c"
+        /* No destructor defined for COLLATE */
+        break;
+      case 148:
+#line 449 "parse.y"
+{yygotominor.yy232 = 0;}
+#line 2841 "parse.c"
+        break;
+      case 149:
+#line 450 "parse.y"
+{yygotominor.yy232 = yymsp[0].minor.yy232;}
+#line 2846 "parse.c"
         /* No destructor defined for GROUP */
         /* No destructor defined for BY */
         break;
-      case 148:
-#line 441 "parse.y"
-{yygotominor.yy334 = 0;}
-#line 5881 "parse.c"
-        break;
-      case 149:
-#line 442 "parse.y"
-{yygotominor.yy334 = yymsp[0].minor.yy334;}
-#line 5886 "parse.c"
-        /* No destructor defined for HAVING */
-        break;
       case 150:
-#line 445 "parse.y"
-{yygotominor.yy280.limit = -1; yygotominor.yy280.offset = 0;}
-#line 5892 "parse.c"
+#line 454 "parse.y"
+{yygotominor.yy164 = 0;}
+#line 2853 "parse.c"
         break;
       case 151:
-#line 446 "parse.y"
-{yygotominor.yy280.limit = atoi(yymsp[0].minor.yy0.z); yygotominor.yy280.offset = 0;}
-#line 5897 "parse.c"
-        /* No destructor defined for LIMIT */
+#line 455 "parse.y"
+{yygotominor.yy164 = yymsp[0].minor.yy164;}
+#line 2858 "parse.c"
+        /* No destructor defined for HAVING */
         break;
       case 152:
-#line 448 "parse.y"
-{yygotominor.yy280.limit = atoi(yymsp[-2].minor.yy0.z); yygotominor.yy280.offset = atoi(yymsp[0].minor.yy0.z);}
-#line 5903 "parse.c"
+#line 458 "parse.y"
+{yygotominor.yy22.limit = -1; yygotominor.yy22.offset = 0;}
+#line 2864 "parse.c"
+        break;
+      case 153:
+#line 459 "parse.y"
+{yygotominor.yy22.limit = yymsp[0].minor.yy424; yygotominor.yy22.offset = 0;}
+#line 2869 "parse.c"
+        /* No destructor defined for LIMIT */
+        break;
+      case 154:
+#line 461 "parse.y"
+{yygotominor.yy22.limit = yymsp[-2].minor.yy424; yygotominor.yy22.offset = yymsp[0].minor.yy424;}
+#line 2875 "parse.c"
         /* No destructor defined for LIMIT */
         /* No destructor defined for OFFSET */
         break;
-      case 153:
-#line 450 "parse.y"
-{yygotominor.yy280.limit = atoi(yymsp[0].minor.yy0.z); yygotominor.yy280.offset = atoi(yymsp[-2].minor.yy0.z);}
-#line 5910 "parse.c"
+      case 155:
+#line 463 "parse.y"
+{yygotominor.yy22.limit = yymsp[0].minor.yy424; yygotominor.yy22.offset = yymsp[-2].minor.yy424;}
+#line 2882 "parse.c"
         /* No destructor defined for LIMIT */
         /* No destructor defined for COMMA */
         break;
-      case 154:
-#line 454 "parse.y"
+      case 156:
+#line 467 "parse.y"
 {
-   sqliteDeleteFrom(pParse, sqliteSrcListAppend(0,&yymsp[-2].minor.yy210,&yymsp[-1].minor.yy210), yymsp[0].minor.yy334);
+   sqliteDeleteFrom(pParse, sqliteSrcListAppend(0,&yymsp[-2].minor.yy318,&yymsp[-1].minor.yy318), yymsp[0].minor.yy164);
 }
-#line 5919 "parse.c"
+#line 2891 "parse.c"
         /* No destructor defined for DELETE */
         /* No destructor defined for FROM */
         break;
-      case 155:
-#line 461 "parse.y"
-{yygotominor.yy334 = 0;}
-#line 5926 "parse.c"
+      case 157:
+#line 474 "parse.y"
+{yygotominor.yy164 = 0;}
+#line 2898 "parse.c"
         break;
-      case 156:
-#line 462 "parse.y"
-{yygotominor.yy334 = yymsp[0].minor.yy334;}
-#line 5931 "parse.c"
+      case 158:
+#line 475 "parse.y"
+{yygotominor.yy164 = yymsp[0].minor.yy164;}
+#line 2903 "parse.c"
         /* No destructor defined for WHERE */
         break;
-      case 157:
-#line 470 "parse.y"
-{sqliteUpdate(pParse,sqliteSrcListAppend(0,&yymsp[-4].minor.yy210,&yymsp[-3].minor.yy210),yymsp[-1].minor.yy62,yymsp[0].minor.yy334,yymsp[-5].minor.yy52);}
-#line 5937 "parse.c"
+      case 159:
+#line 483 "parse.y"
+{sqliteUpdate(pParse,sqliteSrcListAppend(0,&yymsp[-4].minor.yy318,&yymsp[-3].minor.yy318),yymsp[-1].minor.yy232,yymsp[0].minor.yy164,yymsp[-5].minor.yy424);}
+#line 2909 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for SET */
         break;
-      case 158:
-#line 473 "parse.y"
-{yygotominor.yy62 = sqliteExprListAppend(yymsp[-4].minor.yy62,yymsp[0].minor.yy334,&yymsp[-2].minor.yy210);}
-#line 5944 "parse.c"
+      case 160:
+#line 486 "parse.y"
+{yygotominor.yy232 = sqliteExprListAppend(yymsp[-4].minor.yy232,yymsp[0].minor.yy164,&yymsp[-2].minor.yy318);}
+#line 2916 "parse.c"
         /* No destructor defined for COMMA */
         /* No destructor defined for EQ */
         break;
-      case 159:
-#line 474 "parse.y"
-{yygotominor.yy62 = sqliteExprListAppend(0,yymsp[0].minor.yy334,&yymsp[-2].minor.yy210);}
-#line 5951 "parse.c"
+      case 161:
+#line 487 "parse.y"
+{yygotominor.yy232 = sqliteExprListAppend(0,yymsp[0].minor.yy164,&yymsp[-2].minor.yy318);}
+#line 2923 "parse.c"
         /* No destructor defined for EQ */
         break;
-      case 160:
-#line 480 "parse.y"
-{sqliteInsert(pParse, sqliteSrcListAppend(0,&yymsp[-6].minor.yy210,&yymsp[-5].minor.yy210), yymsp[-1].minor.yy62, 0, yymsp[-4].minor.yy92, yymsp[-8].minor.yy52);}
-#line 5957 "parse.c"
+      case 162:
+#line 493 "parse.y"
+{sqliteInsert(pParse, sqliteSrcListAppend(0,&yymsp[-6].minor.yy318,&yymsp[-5].minor.yy318), yymsp[-1].minor.yy232, 0, yymsp[-4].minor.yy246, yymsp[-8].minor.yy424);}
+#line 2929 "parse.c"
         /* No destructor defined for INTO */
         /* No destructor defined for VALUES */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 161:
-#line 482 "parse.y"
-{sqliteInsert(pParse, sqliteSrcListAppend(0,&yymsp[-3].minor.yy210,&yymsp[-2].minor.yy210), 0, yymsp[0].minor.yy11, yymsp[-1].minor.yy92, yymsp[-5].minor.yy52);}
-#line 5966 "parse.c"
+      case 163:
+#line 495 "parse.y"
+{sqliteInsert(pParse, sqliteSrcListAppend(0,&yymsp[-3].minor.yy318,&yymsp[-2].minor.yy318), 0, yymsp[0].minor.yy375, yymsp[-1].minor.yy246, yymsp[-5].minor.yy424);}
+#line 2938 "parse.c"
         /* No destructor defined for INTO */
         break;
-      case 162:
-#line 485 "parse.y"
-{yygotominor.yy52 = yymsp[0].minor.yy52;}
-#line 5972 "parse.c"
+      case 164:
+#line 498 "parse.y"
+{yygotominor.yy424 = yymsp[0].minor.yy424;}
+#line 2944 "parse.c"
         /* No destructor defined for INSERT */
         break;
-      case 163:
-#line 486 "parse.y"
-{yygotominor.yy52 = OE_Replace;}
-#line 5978 "parse.c"
+      case 165:
+#line 499 "parse.y"
+{yygotominor.yy424 = OE_Replace;}
+#line 2950 "parse.c"
         /* No destructor defined for REPLACE */
         break;
-      case 164:
-#line 492 "parse.y"
-{yygotominor.yy62 = sqliteExprListAppend(yymsp[-2].minor.yy62,yymsp[0].minor.yy334,0);}
-#line 5984 "parse.c"
+      case 166:
+#line 505 "parse.y"
+{yygotominor.yy232 = sqliteExprListAppend(yymsp[-2].minor.yy232,yymsp[0].minor.yy164,0);}
+#line 2956 "parse.c"
         /* No destructor defined for COMMA */
         break;
-      case 165:
-#line 493 "parse.y"
-{yygotominor.yy62 = sqliteExprListAppend(0,yymsp[0].minor.yy334,0);}
-#line 5990 "parse.c"
-        break;
-      case 166:
-#line 500 "parse.y"
-{yygotominor.yy92 = 0;}
-#line 5995 "parse.c"
-        break;
       case 167:
-#line 501 "parse.y"
-{yygotominor.yy92 = yymsp[-1].minor.yy92;}
-#line 6000 "parse.c"
+#line 506 "parse.y"
+{yygotominor.yy232 = sqliteExprListAppend(0,yymsp[0].minor.yy164,0);}
+#line 2962 "parse.c"
+        break;
+      case 168:
+#line 513 "parse.y"
+{yygotominor.yy246 = 0;}
+#line 2967 "parse.c"
+        break;
+      case 169:
+#line 514 "parse.y"
+{yygotominor.yy246 = yymsp[-1].minor.yy246;}
+#line 2972 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 168:
-#line 502 "parse.y"
-{yygotominor.yy92 = sqliteIdListAppend(yymsp[-2].minor.yy92,&yymsp[0].minor.yy210);}
-#line 6007 "parse.c"
+      case 170:
+#line 515 "parse.y"
+{yygotominor.yy246 = sqliteIdListAppend(yymsp[-2].minor.yy246,&yymsp[0].minor.yy318);}
+#line 2979 "parse.c"
         /* No destructor defined for COMMA */
         break;
-      case 169:
-#line 503 "parse.y"
-{yygotominor.yy92 = sqliteIdListAppend(0,&yymsp[0].minor.yy210);}
-#line 6013 "parse.c"
-        break;
-      case 170:
-#line 522 "parse.y"
-{yygotominor.yy334 = yymsp[-1].minor.yy334; sqliteExprSpan(yygotominor.yy334,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0); }
-#line 6018 "parse.c"
-        break;
       case 171:
-#line 523 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_NULL, 0, 0, &yymsp[0].minor.yy0);}
-#line 6023 "parse.c"
+#line 516 "parse.y"
+{yygotominor.yy246 = sqliteIdListAppend(0,&yymsp[0].minor.yy318);}
+#line 2985 "parse.c"
         break;
       case 172:
-#line 524 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy0);}
-#line 6028 "parse.c"
+#line 534 "parse.y"
+{yygotominor.yy164 = yymsp[-1].minor.yy164; sqliteExprSpan(yygotominor.yy164,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0); }
+#line 2990 "parse.c"
         break;
       case 173:
-#line 525 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy0);}
-#line 6033 "parse.c"
+#line 535 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_NULL, 0, 0, &yymsp[0].minor.yy0);}
+#line 2995 "parse.c"
         break;
       case 174:
-#line 526 "parse.y"
-{
-  Expr *temp1 = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy210);
-  Expr *temp2 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy210);
-  yygotominor.yy334 = sqliteExpr(TK_DOT, temp1, temp2, 0);
-}
-#line 6042 "parse.c"
-        /* No destructor defined for DOT */
+#line 536 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy0);}
+#line 3000 "parse.c"
         break;
       case 175:
-#line 531 "parse.y"
-{
-  Expr *temp1 = sqliteExpr(TK_ID, 0, 0, &yymsp[-4].minor.yy210);
-  Expr *temp2 = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy210);
-  Expr *temp3 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy210);
-  Expr *temp4 = sqliteExpr(TK_DOT, temp2, temp3, 0);
-  yygotominor.yy334 = sqliteExpr(TK_DOT, temp1, temp4, 0);
-}
-#line 6054 "parse.c"
-        /* No destructor defined for DOT */
-        /* No destructor defined for DOT */
+#line 537 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy0);}
+#line 3005 "parse.c"
         break;
       case 176:
-#line 539 "parse.y"
-{yygotominor.yy334 = yymsp[-1].minor.yy334; ExprSetProperty(yygotominor.yy334,EP_Oracle8Join);}
-#line 6061 "parse.c"
-        /* No destructor defined for ORACLE_OUTER_JOIN */
+#line 538 "parse.y"
+{
+  Expr *temp1 = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy318);
+  Expr *temp2 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy318);
+  yygotominor.yy164 = sqliteExpr(TK_DOT, temp1, temp2, 0);
+}
+#line 3014 "parse.c"
+        /* No destructor defined for DOT */
         break;
       case 177:
-#line 540 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_INTEGER, 0, 0, &yymsp[0].minor.yy0);}
-#line 6067 "parse.c"
-        break;
-      case 178:
-#line 541 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_FLOAT, 0, 0, &yymsp[0].minor.yy0);}
-#line 6072 "parse.c"
-        break;
-      case 179:
-#line 542 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_STRING, 0, 0, &yymsp[0].minor.yy0);}
-#line 6077 "parse.c"
-        break;
-      case 180:
 #line 543 "parse.y"
 {
-  yygotominor.yy334 = sqliteExprFunction(yymsp[-1].minor.yy62, &yymsp[-3].minor.yy0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
+  Expr *temp1 = sqliteExpr(TK_ID, 0, 0, &yymsp[-4].minor.yy318);
+  Expr *temp2 = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy318);
+  Expr *temp3 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy318);
+  Expr *temp4 = sqliteExpr(TK_DOT, temp2, temp3, 0);
+  yygotominor.yy164 = sqliteExpr(TK_DOT, temp1, temp4, 0);
 }
-#line 6085 "parse.c"
-        /* No destructor defined for LP */
+#line 3026 "parse.c"
+        /* No destructor defined for DOT */
+        /* No destructor defined for DOT */
+        break;
+      case 178:
+#line 550 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_INTEGER, 0, 0, &yymsp[0].minor.yy0);}
+#line 3033 "parse.c"
+        break;
+      case 179:
+#line 551 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_FLOAT, 0, 0, &yymsp[0].minor.yy0);}
+#line 3038 "parse.c"
+        break;
+      case 180:
+#line 552 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_STRING, 0, 0, &yymsp[0].minor.yy0);}
+#line 3043 "parse.c"
         break;
       case 181:
-#line 547 "parse.y"
+#line 553 "parse.y"
 {
-  yygotominor.yy334 = sqliteExprFunction(0, &yymsp[-3].minor.yy0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_VARIABLE, 0, 0, &yymsp[0].minor.yy0);
+  if( yygotominor.yy164 ) yygotominor.yy164->iTable = ++pParse->nVar;
 }
-#line 6094 "parse.c"
-        /* No destructor defined for LP */
-        /* No destructor defined for STAR */
+#line 3051 "parse.c"
         break;
       case 182:
-#line 551 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_AND, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6101 "parse.c"
-        /* No destructor defined for AND */
+#line 557 "parse.y"
+{
+  yygotominor.yy164 = sqliteExprFunction(yymsp[-1].minor.yy232, &yymsp[-3].minor.yy0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
+}
+#line 3059 "parse.c"
+        /* No destructor defined for LP */
         break;
       case 183:
-#line 552 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_OR, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6107 "parse.c"
-        /* No destructor defined for OR */
-        break;
-      case 184:
-#line 553 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_LT, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6113 "parse.c"
-        /* No destructor defined for LT */
-        break;
-      case 185:
-#line 554 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_GT, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6119 "parse.c"
-        /* No destructor defined for GT */
-        break;
-      case 186:
-#line 555 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_LE, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6125 "parse.c"
-        /* No destructor defined for LE */
-        break;
-      case 187:
-#line 556 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_GE, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6131 "parse.c"
-        /* No destructor defined for GE */
-        break;
-      case 188:
-#line 557 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_NE, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6137 "parse.c"
-        /* No destructor defined for NE */
-        break;
-      case 189:
-#line 558 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_EQ, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6143 "parse.c"
-        /* No destructor defined for EQ */
-        break;
-      case 190:
-#line 559 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_BITAND, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6149 "parse.c"
-        /* No destructor defined for BITAND */
-        break;
-      case 191:
-#line 560 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_BITOR, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6155 "parse.c"
-        /* No destructor defined for BITOR */
-        break;
-      case 192:
 #line 561 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_LSHIFT, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6161 "parse.c"
-        /* No destructor defined for LSHIFT */
-        break;
-      case 193:
-#line 562 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_RSHIFT, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6167 "parse.c"
-        /* No destructor defined for RSHIFT */
-        break;
-      case 194:
-#line 563 "parse.y"
 {
-  ExprList *pList = sqliteExprListAppend(0, yymsp[0].minor.yy334, 0);
-  pList = sqliteExprListAppend(pList, yymsp[-2].minor.yy334, 0);
-  yygotominor.yy334 = sqliteExprFunction(pList, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->op = yymsp[-1].minor.yy52;
-  sqliteExprSpan(yygotominor.yy334, &yymsp[-2].minor.yy334->span, &yymsp[0].minor.yy334->span);
+  yygotominor.yy164 = sqliteExprFunction(0, &yymsp[-3].minor.yy0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 6179 "parse.c"
-        break;
-      case 195:
-#line 570 "parse.y"
-{
-  ExprList *pList = sqliteExprListAppend(0, yymsp[0].minor.yy334, 0);
-  pList = sqliteExprListAppend(pList, yymsp[-3].minor.yy334, 0);
-  yygotominor.yy334 = sqliteExprFunction(pList, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->op = yymsp[-1].minor.yy52;
-  yygotominor.yy334 = sqliteExpr(TK_NOT, yygotominor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-3].minor.yy334->span,&yymsp[0].minor.yy334->span);
-}
-#line 6191 "parse.c"
-        /* No destructor defined for NOT */
-        break;
-      case 196:
-#line 579 "parse.y"
-{yygotominor.yy52 = TK_LIKE;}
-#line 6197 "parse.c"
-        /* No destructor defined for LIKE */
-        break;
-      case 197:
-#line 580 "parse.y"
-{yygotominor.yy52 = TK_GLOB;}
-#line 6203 "parse.c"
-        /* No destructor defined for GLOB */
-        break;
-      case 198:
-#line 581 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_PLUS, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6209 "parse.c"
-        /* No destructor defined for PLUS */
-        break;
-      case 199:
-#line 582 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_MINUS, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6215 "parse.c"
-        /* No destructor defined for MINUS */
-        break;
-      case 200:
-#line 583 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_STAR, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6221 "parse.c"
+#line 3068 "parse.c"
+        /* No destructor defined for LP */
         /* No destructor defined for STAR */
         break;
-      case 201:
+      case 184:
+#line 565 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_AND, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3075 "parse.c"
+        /* No destructor defined for AND */
+        break;
+      case 185:
+#line 566 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_OR, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3081 "parse.c"
+        /* No destructor defined for OR */
+        break;
+      case 186:
+#line 567 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_LT, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3087 "parse.c"
+        /* No destructor defined for LT */
+        break;
+      case 187:
+#line 568 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_GT, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3093 "parse.c"
+        /* No destructor defined for GT */
+        break;
+      case 188:
+#line 569 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_LE, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3099 "parse.c"
+        /* No destructor defined for LE */
+        break;
+      case 189:
+#line 570 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_GE, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3105 "parse.c"
+        /* No destructor defined for GE */
+        break;
+      case 190:
+#line 571 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_NE, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3111 "parse.c"
+        /* No destructor defined for NE */
+        break;
+      case 191:
+#line 572 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_EQ, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3117 "parse.c"
+        /* No destructor defined for EQ */
+        break;
+      case 192:
+#line 573 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_BITAND, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3123 "parse.c"
+        /* No destructor defined for BITAND */
+        break;
+      case 193:
+#line 574 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_BITOR, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3129 "parse.c"
+        /* No destructor defined for BITOR */
+        break;
+      case 194:
+#line 575 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_LSHIFT, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3135 "parse.c"
+        /* No destructor defined for LSHIFT */
+        break;
+      case 195:
+#line 576 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_RSHIFT, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3141 "parse.c"
+        /* No destructor defined for RSHIFT */
+        break;
+      case 196:
+#line 577 "parse.y"
+{
+  ExprList *pList = sqliteExprListAppend(0, yymsp[0].minor.yy164, 0);
+  pList = sqliteExprListAppend(pList, yymsp[-2].minor.yy164, 0);
+  yygotominor.yy164 = sqliteExprFunction(pList, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->op = yymsp[-1].minor.yy424;
+  sqliteExprSpan(yygotominor.yy164, &yymsp[-2].minor.yy164->span, &yymsp[0].minor.yy164->span);
+}
+#line 3153 "parse.c"
+        break;
+      case 197:
 #line 584 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_SLASH, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6227 "parse.c"
-        /* No destructor defined for SLASH */
+{
+  ExprList *pList = sqliteExprListAppend(0, yymsp[0].minor.yy164, 0);
+  pList = sqliteExprListAppend(pList, yymsp[-3].minor.yy164, 0);
+  yygotominor.yy164 = sqliteExprFunction(pList, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->op = yymsp[-1].minor.yy424;
+  yygotominor.yy164 = sqliteExpr(TK_NOT, yygotominor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-3].minor.yy164->span,&yymsp[0].minor.yy164->span);
+}
+#line 3165 "parse.c"
+        /* No destructor defined for NOT */
+        break;
+      case 198:
+#line 593 "parse.y"
+{yygotominor.yy424 = TK_LIKE;}
+#line 3171 "parse.c"
+        /* No destructor defined for LIKE */
+        break;
+      case 199:
+#line 594 "parse.y"
+{yygotominor.yy424 = TK_GLOB;}
+#line 3177 "parse.c"
+        /* No destructor defined for GLOB */
+        break;
+      case 200:
+#line 595 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_PLUS, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3183 "parse.c"
+        /* No destructor defined for PLUS */
+        break;
+      case 201:
+#line 596 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_MINUS, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3189 "parse.c"
+        /* No destructor defined for MINUS */
         break;
       case 202:
-#line 585 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_REM, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6233 "parse.c"
-        /* No destructor defined for REM */
+#line 597 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_STAR, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3195 "parse.c"
+        /* No destructor defined for STAR */
         break;
       case 203:
-#line 586 "parse.y"
-{yygotominor.yy334 = sqliteExpr(TK_CONCAT, yymsp[-2].minor.yy334, yymsp[0].minor.yy334, 0);}
-#line 6239 "parse.c"
-        /* No destructor defined for CONCAT */
+#line 598 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_SLASH, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3201 "parse.c"
+        /* No destructor defined for SLASH */
         break;
       case 204:
-#line 587 "parse.y"
-{
-  yygotominor.yy334 = sqliteExpr(TK_ISNULL, yymsp[-1].minor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-1].minor.yy334->span,&yymsp[0].minor.yy0);
-}
-#line 6248 "parse.c"
+#line 599 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_REM, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3207 "parse.c"
+        /* No destructor defined for REM */
         break;
       case 205:
-#line 591 "parse.y"
-{
-  yygotominor.yy334 = sqliteExpr(TK_ISNULL, yymsp[-2].minor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-2].minor.yy334->span,&yymsp[0].minor.yy0);
-}
-#line 6256 "parse.c"
-        /* No destructor defined for IS */
+#line 600 "parse.y"
+{yygotominor.yy164 = sqliteExpr(TK_CONCAT, yymsp[-2].minor.yy164, yymsp[0].minor.yy164, 0);}
+#line 3213 "parse.c"
+        /* No destructor defined for CONCAT */
         break;
       case 206:
-#line 595 "parse.y"
+#line 601 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_NOTNULL, yymsp[-1].minor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-1].minor.yy334->span,&yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_ISNULL, yymsp[-1].minor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-1].minor.yy164->span,&yymsp[0].minor.yy0);
 }
-#line 6265 "parse.c"
+#line 3222 "parse.c"
         break;
       case 207:
-#line 599 "parse.y"
+#line 605 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_NOTNULL, yymsp[-2].minor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-2].minor.yy334->span,&yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_ISNULL, yymsp[-2].minor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-2].minor.yy164->span,&yymsp[0].minor.yy0);
 }
-#line 6273 "parse.c"
-        /* No destructor defined for NOT */
+#line 3230 "parse.c"
+        /* No destructor defined for IS */
         break;
       case 208:
-#line 603 "parse.y"
+#line 609 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_NOTNULL, yymsp[-3].minor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-3].minor.yy334->span,&yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_NOTNULL, yymsp[-1].minor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-1].minor.yy164->span,&yymsp[0].minor.yy0);
 }
-#line 6282 "parse.c"
+#line 3239 "parse.c"
+        break;
+      case 209:
+#line 613 "parse.y"
+{
+  yygotominor.yy164 = sqliteExpr(TK_NOTNULL, yymsp[-2].minor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-2].minor.yy164->span,&yymsp[0].minor.yy0);
+}
+#line 3247 "parse.c"
+        /* No destructor defined for NOT */
+        break;
+      case 210:
+#line 617 "parse.y"
+{
+  yygotominor.yy164 = sqliteExpr(TK_NOTNULL, yymsp[-3].minor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-3].minor.yy164->span,&yymsp[0].minor.yy0);
+}
+#line 3256 "parse.c"
         /* No destructor defined for IS */
         /* No destructor defined for NOT */
         break;
-      case 209:
-#line 607 "parse.y"
-{
-  yygotominor.yy334 = sqliteExpr(TK_NOT, yymsp[0].minor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy334->span);
-}
-#line 6292 "parse.c"
-        break;
-      case 210:
-#line 611 "parse.y"
-{
-  yygotominor.yy334 = sqliteExpr(TK_BITNOT, yymsp[0].minor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy334->span);
-}
-#line 6300 "parse.c"
-        break;
       case 211:
-#line 615 "parse.y"
+#line 621 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_UMINUS, yymsp[0].minor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy334->span);
+  yygotominor.yy164 = sqliteExpr(TK_NOT, yymsp[0].minor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy164->span);
 }
-#line 6308 "parse.c"
+#line 3266 "parse.c"
         break;
       case 212:
-#line 619 "parse.y"
+#line 625 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_UPLUS, yymsp[0].minor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy334->span);
+  yygotominor.yy164 = sqliteExpr(TK_BITNOT, yymsp[0].minor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy164->span);
 }
-#line 6316 "parse.c"
+#line 3274 "parse.c"
         break;
       case 213:
-#line 623 "parse.y"
+#line 629 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_SELECT, 0, 0, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->pSelect = yymsp[-1].minor.yy11;
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_UMINUS, yymsp[0].minor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy164->span);
 }
-#line 6325 "parse.c"
+#line 3282 "parse.c"
         break;
       case 214:
-#line 628 "parse.y"
+#line 633 "parse.y"
 {
-  ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy334, 0);
-  pList = sqliteExprListAppend(pList, yymsp[0].minor.yy334, 0);
-  yygotominor.yy334 = sqliteExpr(TK_BETWEEN, yymsp[-4].minor.yy334, 0, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->pList = pList;
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-4].minor.yy334->span,&yymsp[0].minor.yy334->span);
+  yygotominor.yy164 = sqliteExpr(TK_UPLUS, yymsp[0].minor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy164->span);
 }
-#line 6336 "parse.c"
-        /* No destructor defined for BETWEEN */
-        /* No destructor defined for AND */
+#line 3290 "parse.c"
         break;
       case 215:
-#line 635 "parse.y"
+#line 637 "parse.y"
 {
-  ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy334, 0);
-  pList = sqliteExprListAppend(pList, yymsp[0].minor.yy334, 0);
-  yygotominor.yy334 = sqliteExpr(TK_BETWEEN, yymsp[-5].minor.yy334, 0, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->pList = pList;
-  yygotominor.yy334 = sqliteExpr(TK_NOT, yygotominor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-5].minor.yy334->span,&yymsp[0].minor.yy334->span);
+  yygotominor.yy164 = sqliteExpr(TK_SELECT, 0, 0, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pSelect = yymsp[-1].minor.yy375;
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 6350 "parse.c"
+#line 3299 "parse.c"
+        break;
+      case 216:
+#line 642 "parse.y"
+{
+  ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy164, 0);
+  pList = sqliteExprListAppend(pList, yymsp[0].minor.yy164, 0);
+  yygotominor.yy164 = sqliteExpr(TK_BETWEEN, yymsp[-4].minor.yy164, 0, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pList = pList;
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-4].minor.yy164->span,&yymsp[0].minor.yy164->span);
+}
+#line 3310 "parse.c"
+        /* No destructor defined for BETWEEN */
+        /* No destructor defined for AND */
+        break;
+      case 217:
+#line 649 "parse.y"
+{
+  ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy164, 0);
+  pList = sqliteExprListAppend(pList, yymsp[0].minor.yy164, 0);
+  yygotominor.yy164 = sqliteExpr(TK_BETWEEN, yymsp[-5].minor.yy164, 0, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pList = pList;
+  yygotominor.yy164 = sqliteExpr(TK_NOT, yygotominor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-5].minor.yy164->span,&yymsp[0].minor.yy164->span);
+}
+#line 3324 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for BETWEEN */
         /* No destructor defined for AND */
         break;
-      case 216:
-#line 643 "parse.y"
-{
-  yygotominor.yy334 = sqliteExpr(TK_IN, yymsp[-4].minor.yy334, 0, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->pList = yymsp[-1].minor.yy62;
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-4].minor.yy334->span,&yymsp[0].minor.yy0);
-}
-#line 6362 "parse.c"
-        /* No destructor defined for IN */
-        /* No destructor defined for LP */
-        break;
-      case 217:
-#line 648 "parse.y"
-{
-  yygotominor.yy334 = sqliteExpr(TK_IN, yymsp[-4].minor.yy334, 0, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->pSelect = yymsp[-1].minor.yy11;
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-4].minor.yy334->span,&yymsp[0].minor.yy0);
-}
-#line 6373 "parse.c"
-        /* No destructor defined for IN */
-        /* No destructor defined for LP */
-        break;
       case 218:
-#line 653 "parse.y"
+#line 657 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_IN, yymsp[-5].minor.yy334, 0, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->pList = yymsp[-1].minor.yy62;
-  yygotominor.yy334 = sqliteExpr(TK_NOT, yygotominor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-5].minor.yy334->span,&yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_IN, yymsp[-4].minor.yy164, 0, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pList = yymsp[-1].minor.yy232;
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-4].minor.yy164->span,&yymsp[0].minor.yy0);
 }
-#line 6385 "parse.c"
-        /* No destructor defined for NOT */
+#line 3336 "parse.c"
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
       case 219:
-#line 659 "parse.y"
+#line 662 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_IN, yymsp[-5].minor.yy334, 0, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->pSelect = yymsp[-1].minor.yy11;
-  yygotominor.yy334 = sqliteExpr(TK_NOT, yygotominor.yy334, 0, 0);
-  sqliteExprSpan(yygotominor.yy334,&yymsp[-5].minor.yy334->span,&yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_IN, yymsp[-4].minor.yy164, 0, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pSelect = yymsp[-1].minor.yy375;
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-4].minor.yy164->span,&yymsp[0].minor.yy0);
 }
-#line 6398 "parse.c"
-        /* No destructor defined for NOT */
+#line 3347 "parse.c"
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
       case 220:
 #line 667 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_CASE, yymsp[-3].minor.yy334, yymsp[-1].minor.yy334, 0);
-  if( yygotominor.yy334 ) yygotominor.yy334->pList = yymsp[-2].minor.yy62;
-  sqliteExprSpan(yygotominor.yy334, &yymsp[-4].minor.yy0, &yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_IN, yymsp[-5].minor.yy164, 0, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pList = yymsp[-1].minor.yy232;
+  yygotominor.yy164 = sqliteExpr(TK_NOT, yygotominor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-5].minor.yy164->span,&yymsp[0].minor.yy0);
 }
-#line 6410 "parse.c"
+#line 3359 "parse.c"
+        /* No destructor defined for NOT */
+        /* No destructor defined for IN */
+        /* No destructor defined for LP */
         break;
       case 221:
-#line 674 "parse.y"
+#line 673 "parse.y"
 {
-  yygotominor.yy62 = sqliteExprListAppend(yymsp[-4].minor.yy62, yymsp[-2].minor.yy334, 0);
-  yygotominor.yy62 = sqliteExprListAppend(yygotominor.yy62, yymsp[0].minor.yy334, 0);
+  yygotominor.yy164 = sqliteExpr(TK_IN, yymsp[-5].minor.yy164, 0, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pSelect = yymsp[-1].minor.yy375;
+  yygotominor.yy164 = sqliteExpr(TK_NOT, yygotominor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-5].minor.yy164->span,&yymsp[0].minor.yy0);
 }
-#line 6418 "parse.c"
-        /* No destructor defined for WHEN */
-        /* No destructor defined for THEN */
+#line 3372 "parse.c"
+        /* No destructor defined for NOT */
+        /* No destructor defined for IN */
+        /* No destructor defined for LP */
         break;
       case 222:
-#line 678 "parse.y"
+#line 679 "parse.y"
 {
-  yygotominor.yy62 = sqliteExprListAppend(0, yymsp[-2].minor.yy334, 0);
-  yygotominor.yy62 = sqliteExprListAppend(yygotominor.yy62, yymsp[0].minor.yy334, 0);
+  SrcList *pSrc = sqliteSrcListAppend(0, &yymsp[-1].minor.yy318, &yymsp[0].minor.yy318);
+  yygotominor.yy164 = sqliteExpr(TK_IN, yymsp[-3].minor.yy164, 0, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pSelect = sqliteSelectNew(0,pSrc,0,0,0,0,0,-1,0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-3].minor.yy164->span,yymsp[0].minor.yy318.z?&yymsp[0].minor.yy318:&yymsp[-1].minor.yy318);
 }
-#line 6428 "parse.c"
+#line 3385 "parse.c"
+        /* No destructor defined for IN */
+        break;
+      case 223:
+#line 685 "parse.y"
+{
+  SrcList *pSrc = sqliteSrcListAppend(0, &yymsp[-1].minor.yy318, &yymsp[0].minor.yy318);
+  yygotominor.yy164 = sqliteExpr(TK_IN, yymsp[-4].minor.yy164, 0, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pSelect = sqliteSelectNew(0,pSrc,0,0,0,0,0,-1,0);
+  yygotominor.yy164 = sqliteExpr(TK_NOT, yygotominor.yy164, 0, 0);
+  sqliteExprSpan(yygotominor.yy164,&yymsp[-4].minor.yy164->span,yymsp[0].minor.yy318.z?&yymsp[0].minor.yy318:&yymsp[-1].minor.yy318);
+}
+#line 3397 "parse.c"
+        /* No destructor defined for NOT */
+        /* No destructor defined for IN */
+        break;
+      case 224:
+#line 695 "parse.y"
+{
+  yygotominor.yy164 = sqliteExpr(TK_CASE, yymsp[-3].minor.yy164, yymsp[-1].minor.yy164, 0);
+  if( yygotominor.yy164 ) yygotominor.yy164->pList = yymsp[-2].minor.yy232;
+  sqliteExprSpan(yygotominor.yy164, &yymsp[-4].minor.yy0, &yymsp[0].minor.yy0);
+}
+#line 3408 "parse.c"
+        break;
+      case 225:
+#line 702 "parse.y"
+{
+  yygotominor.yy232 = sqliteExprListAppend(yymsp[-4].minor.yy232, yymsp[-2].minor.yy164, 0);
+  yygotominor.yy232 = sqliteExprListAppend(yygotominor.yy232, yymsp[0].minor.yy164, 0);
+}
+#line 3416 "parse.c"
         /* No destructor defined for WHEN */
         /* No destructor defined for THEN */
         break;
-      case 223:
-#line 683 "parse.y"
-{yygotominor.yy334 = yymsp[0].minor.yy334;}
-#line 6435 "parse.c"
-        /* No destructor defined for ELSE */
-        break;
-      case 224:
-#line 684 "parse.y"
-{yygotominor.yy334 = 0;}
-#line 6441 "parse.c"
-        break;
-      case 225:
-#line 686 "parse.y"
-{yygotominor.yy334 = yymsp[0].minor.yy334;}
-#line 6446 "parse.c"
-        break;
       case 226:
-#line 687 "parse.y"
-{yygotominor.yy334 = 0;}
-#line 6451 "parse.c"
+#line 706 "parse.y"
+{
+  yygotominor.yy232 = sqliteExprListAppend(0, yymsp[-2].minor.yy164, 0);
+  yygotominor.yy232 = sqliteExprListAppend(yygotominor.yy232, yymsp[0].minor.yy164, 0);
+}
+#line 3426 "parse.c"
+        /* No destructor defined for WHEN */
+        /* No destructor defined for THEN */
         break;
       case 227:
-#line 695 "parse.y"
-{yygotominor.yy62 = sqliteExprListAppend(yymsp[-2].minor.yy62,yymsp[0].minor.yy334,0);}
-#line 6456 "parse.c"
-        /* No destructor defined for COMMA */
+#line 711 "parse.y"
+{yygotominor.yy164 = yymsp[0].minor.yy164;}
+#line 3433 "parse.c"
+        /* No destructor defined for ELSE */
         break;
       case 228:
-#line 696 "parse.y"
-{yygotominor.yy62 = sqliteExprListAppend(0,yymsp[0].minor.yy334,0);}
-#line 6462 "parse.c"
+#line 712 "parse.y"
+{yygotominor.yy164 = 0;}
+#line 3439 "parse.c"
         break;
       case 229:
-#line 697 "parse.y"
-{yygotominor.yy334 = yymsp[0].minor.yy334;}
-#line 6467 "parse.c"
+#line 714 "parse.y"
+{yygotominor.yy164 = yymsp[0].minor.yy164;}
+#line 3444 "parse.c"
         break;
       case 230:
-#line 698 "parse.y"
-{yygotominor.yy334 = 0;}
-#line 6472 "parse.c"
+#line 715 "parse.y"
+{yygotominor.yy164 = 0;}
+#line 3449 "parse.c"
         break;
       case 231:
-#line 703 "parse.y"
+#line 723 "parse.y"
+{yygotominor.yy232 = sqliteExprListAppend(yymsp[-2].minor.yy232,yymsp[0].minor.yy164,0);}
+#line 3454 "parse.c"
+        /* No destructor defined for COMMA */
+        break;
+      case 232:
+#line 724 "parse.y"
+{yygotominor.yy232 = sqliteExprListAppend(0,yymsp[0].minor.yy164,0);}
+#line 3460 "parse.c"
+        break;
+      case 233:
+#line 725 "parse.y"
+{yygotominor.yy164 = yymsp[0].minor.yy164;}
+#line 3465 "parse.c"
+        break;
+      case 234:
+#line 726 "parse.y"
+{yygotominor.yy164 = 0;}
+#line 3470 "parse.c"
+        break;
+      case 235:
+#line 731 "parse.y"
 {
-  SrcList *pSrc = sqliteSrcListAppend(0, &yymsp[-5].minor.yy210, &yymsp[-4].minor.yy210);
-  if( yymsp[-9].minor.yy52!=OE_None ) yymsp[-9].minor.yy52 = yymsp[0].minor.yy52;
-  if( yymsp[-9].minor.yy52==OE_Default) yymsp[-9].minor.yy52 = OE_Abort;
-  sqliteCreateIndex(pParse, &yymsp[-7].minor.yy210, pSrc, yymsp[-2].minor.yy92, yymsp[-9].minor.yy52, yymsp[-10].minor.yy52, &yymsp[-11].minor.yy0, &yymsp[-1].minor.yy0);
+  SrcList *pSrc = sqliteSrcListAppend(0, &yymsp[-5].minor.yy318, &yymsp[-4].minor.yy318);
+  if( yymsp[-9].minor.yy424!=OE_None ) yymsp[-9].minor.yy424 = yymsp[0].minor.yy424;
+  if( yymsp[-9].minor.yy424==OE_Default) yymsp[-9].minor.yy424 = OE_Abort;
+  sqliteCreateIndex(pParse, &yymsp[-7].minor.yy318, pSrc, yymsp[-2].minor.yy246, yymsp[-9].minor.yy424, &yymsp[-10].minor.yy0, &yymsp[-1].minor.yy0);
 }
-#line 6482 "parse.c"
+#line 3480 "parse.c"
         /* No destructor defined for INDEX */
         /* No destructor defined for ON */
         /* No destructor defined for LP */
         break;
-      case 232:
-#line 711 "parse.y"
-{ yygotominor.yy52 = OE_Abort; }
-#line 6490 "parse.c"
+      case 236:
+#line 739 "parse.y"
+{ yygotominor.yy424 = OE_Abort; }
+#line 3488 "parse.c"
         /* No destructor defined for UNIQUE */
         break;
-      case 233:
-#line 712 "parse.y"
-{ yygotominor.yy52 = OE_None; }
-#line 6496 "parse.c"
+      case 237:
+#line 740 "parse.y"
+{ yygotominor.yy424 = OE_None; }
+#line 3494 "parse.c"
         break;
-      case 234:
-#line 720 "parse.y"
-{yygotominor.yy92 = 0;}
-#line 6501 "parse.c"
+      case 238:
+#line 748 "parse.y"
+{yygotominor.yy246 = 0;}
+#line 3499 "parse.c"
         break;
-      case 235:
-#line 721 "parse.y"
-{yygotominor.yy92 = yymsp[-1].minor.yy92;}
-#line 6506 "parse.c"
+      case 239:
+#line 749 "parse.y"
+{yygotominor.yy246 = yymsp[-1].minor.yy246;}
+#line 3504 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 236:
-#line 722 "parse.y"
-{yygotominor.yy92 = sqliteIdListAppend(yymsp[-2].minor.yy92,&yymsp[0].minor.yy210);}
-#line 6513 "parse.c"
+      case 240:
+#line 750 "parse.y"
+{yygotominor.yy246 = sqliteIdListAppend(yymsp[-2].minor.yy246,&yymsp[0].minor.yy318);}
+#line 3511 "parse.c"
         /* No destructor defined for COMMA */
         break;
-      case 237:
-#line 723 "parse.y"
-{yygotominor.yy92 = sqliteIdListAppend(0,&yymsp[0].minor.yy210);}
-#line 6519 "parse.c"
+      case 241:
+#line 751 "parse.y"
+{yygotominor.yy246 = sqliteIdListAppend(0,&yymsp[0].minor.yy318);}
+#line 3517 "parse.c"
         break;
-      case 238:
-#line 724 "parse.y"
-{yygotominor.yy210 = yymsp[-1].minor.yy210;}
-#line 6524 "parse.c"
+      case 242:
+#line 752 "parse.y"
+{yygotominor.yy318 = yymsp[-1].minor.yy318;}
+#line 3522 "parse.c"
         /* No destructor defined for sortorder */
         break;
-      case 239:
-#line 729 "parse.y"
+      case 243:
+#line 757 "parse.y"
 {
-  sqliteDropIndex(pParse, sqliteSrcListAppend(0,&yymsp[-1].minor.yy210,&yymsp[0].minor.yy210));
+  sqliteDropIndex(pParse, sqliteSrcListAppend(0,&yymsp[-1].minor.yy318,&yymsp[0].minor.yy318));
 }
-#line 6532 "parse.c"
+#line 3530 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for INDEX */
         break;
-      case 240:
-#line 737 "parse.y"
-{sqliteCopy(pParse,sqliteSrcListAppend(0,&yymsp[-6].minor.yy210,&yymsp[-5].minor.yy210),&yymsp[-3].minor.yy210,&yymsp[0].minor.yy0,yymsp[-7].minor.yy52);}
-#line 6539 "parse.c"
+      case 244:
+#line 765 "parse.y"
+{sqliteCopy(pParse,sqliteSrcListAppend(0,&yymsp[-6].minor.yy318,&yymsp[-5].minor.yy318),&yymsp[-3].minor.yy318,&yymsp[0].minor.yy0,yymsp[-7].minor.yy424);}
+#line 3537 "parse.c"
         /* No destructor defined for COPY */
         /* No destructor defined for FROM */
         /* No destructor defined for USING */
         /* No destructor defined for DELIMITERS */
         break;
-      case 241:
-#line 739 "parse.y"
-{sqliteCopy(pParse,sqliteSrcListAppend(0,&yymsp[-3].minor.yy210,&yymsp[-2].minor.yy210),&yymsp[0].minor.yy210,0,yymsp[-4].minor.yy52);}
-#line 6548 "parse.c"
+      case 245:
+#line 767 "parse.y"
+{sqliteCopy(pParse,sqliteSrcListAppend(0,&yymsp[-3].minor.yy318,&yymsp[-2].minor.yy318),&yymsp[0].minor.yy318,0,yymsp[-4].minor.yy424);}
+#line 3546 "parse.c"
         /* No destructor defined for COPY */
         /* No destructor defined for FROM */
         break;
-      case 242:
-#line 743 "parse.y"
-{sqliteVacuum(pParse,0);}
-#line 6555 "parse.c"
-        /* No destructor defined for VACUUM */
-        break;
-      case 243:
-#line 744 "parse.y"
-{sqliteVacuum(pParse,&yymsp[0].minor.yy210);}
-#line 6561 "parse.c"
-        /* No destructor defined for VACUUM */
-        break;
-      case 244:
-#line 748 "parse.y"
-{sqlitePragma(pParse,&yymsp[-2].minor.yy210,&yymsp[0].minor.yy210,0);}
-#line 6567 "parse.c"
-        /* No destructor defined for PRAGMA */
-        /* No destructor defined for EQ */
-        break;
-      case 245:
-#line 749 "parse.y"
-{sqlitePragma(pParse,&yymsp[-2].minor.yy210,&yymsp[0].minor.yy0,0);}
-#line 6574 "parse.c"
-        /* No destructor defined for PRAGMA */
-        /* No destructor defined for EQ */
-        break;
       case 246:
-#line 750 "parse.y"
-{sqlitePragma(pParse,&yymsp[-2].minor.yy210,&yymsp[0].minor.yy210,0);}
-#line 6581 "parse.c"
-        /* No destructor defined for PRAGMA */
-        /* No destructor defined for EQ */
+#line 771 "parse.y"
+{sqliteVacuum(pParse,0);}
+#line 3553 "parse.c"
+        /* No destructor defined for VACUUM */
         break;
       case 247:
-#line 751 "parse.y"
-{sqlitePragma(pParse,&yymsp[-2].minor.yy210,&yymsp[0].minor.yy210,1);}
-#line 6588 "parse.c"
+#line 772 "parse.y"
+{sqliteVacuum(pParse,&yymsp[0].minor.yy318);}
+#line 3559 "parse.c"
+        /* No destructor defined for VACUUM */
+        break;
+      case 248:
+#line 776 "parse.y"
+{sqlitePragma(pParse,&yymsp[-2].minor.yy318,&yymsp[0].minor.yy318,0);}
+#line 3565 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
-      case 248:
-#line 752 "parse.y"
-{sqlitePragma(pParse,&yymsp[-3].minor.yy210,&yymsp[-1].minor.yy210,0);}
-#line 6595 "parse.c"
+      case 249:
+#line 777 "parse.y"
+{sqlitePragma(pParse,&yymsp[-2].minor.yy318,&yymsp[0].minor.yy0,0);}
+#line 3572 "parse.c"
+        /* No destructor defined for PRAGMA */
+        /* No destructor defined for EQ */
+        break;
+      case 250:
+#line 778 "parse.y"
+{sqlitePragma(pParse,&yymsp[-2].minor.yy318,&yymsp[0].minor.yy318,0);}
+#line 3579 "parse.c"
+        /* No destructor defined for PRAGMA */
+        /* No destructor defined for EQ */
+        break;
+      case 251:
+#line 779 "parse.y"
+{sqlitePragma(pParse,&yymsp[-2].minor.yy318,&yymsp[0].minor.yy318,1);}
+#line 3586 "parse.c"
+        /* No destructor defined for PRAGMA */
+        /* No destructor defined for EQ */
+        break;
+      case 252:
+#line 780 "parse.y"
+{sqlitePragma(pParse,&yymsp[-3].minor.yy318,&yymsp[-1].minor.yy318,0);}
+#line 3593 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 249:
-#line 753 "parse.y"
-{sqlitePragma(pParse,&yymsp[0].minor.yy210,&yymsp[0].minor.yy210,0);}
-#line 6603 "parse.c"
+      case 253:
+#line 781 "parse.y"
+{sqlitePragma(pParse,&yymsp[0].minor.yy318,&yymsp[0].minor.yy318,0);}
+#line 3601 "parse.c"
         /* No destructor defined for PRAGMA */
         break;
-      case 250:
-#line 754 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy210;}
-#line 6609 "parse.c"
+      case 254:
+#line 782 "parse.y"
+{yygotominor.yy318 = yymsp[0].minor.yy318;}
+#line 3607 "parse.c"
         /* No destructor defined for plus_opt */
         break;
-      case 251:
-#line 755 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy210;}
-#line 6615 "parse.c"
+      case 255:
+#line 783 "parse.y"
+{yygotominor.yy318 = yymsp[0].minor.yy318;}
+#line 3613 "parse.c"
         /* No destructor defined for MINUS */
         break;
-      case 252:
-#line 756 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy0;}
-#line 6621 "parse.c"
+      case 256:
+#line 784 "parse.y"
+{yygotominor.yy318 = yymsp[0].minor.yy0;}
+#line 3619 "parse.c"
         break;
-      case 253:
-#line 757 "parse.y"
-{yygotominor.yy210 = yymsp[0].minor.yy0;}
-#line 6626 "parse.c"
+      case 257:
+#line 785 "parse.y"
+{yygotominor.yy318 = yymsp[0].minor.yy0;}
+#line 3624 "parse.c"
         break;
-      case 254:
+      case 258:
         /* No destructor defined for PLUS */
         break;
-      case 255:
+      case 259:
         break;
-      case 256:
-#line 763 "parse.y"
+      case 260:
+#line 791 "parse.y"
 {
   Token all;
   all.z = yymsp[-4].minor.yy0.z;
   all.n = (yymsp[0].minor.yy0.z - yymsp[-4].minor.yy0.z) + yymsp[0].minor.yy0.n;
-  sqliteFinishTrigger(pParse, yymsp[-1].minor.yy347, &all);
+  sqliteFinishTrigger(pParse, yymsp[-1].minor.yy353, &all);
 }
-#line 6641 "parse.c"
+#line 3639 "parse.c"
         /* No destructor defined for trigger_decl */
         /* No destructor defined for BEGIN */
         break;
-      case 257:
-#line 771 "parse.y"
+      case 261:
+#line 799 "parse.y"
 {
-  SrcList *pTab = sqliteSrcListAppend(0, &yymsp[-3].minor.yy210, &yymsp[-2].minor.yy210);
-  sqliteBeginTrigger(pParse, &yymsp[-7].minor.yy210, yymsp[-6].minor.yy52, yymsp[-5].minor.yy234.a, yymsp[-5].minor.yy234.b, pTab, yymsp[-1].minor.yy52, yymsp[0].minor.yy270, yymsp[-9].minor.yy52);
+  SrcList *pTab = sqliteSrcListAppend(0, &yymsp[-3].minor.yy318, &yymsp[-2].minor.yy318);
+  sqliteBeginTrigger(pParse, &yymsp[-7].minor.yy318, yymsp[-6].minor.yy424, yymsp[-5].minor.yy414.a, yymsp[-5].minor.yy414.b, pTab, yymsp[-1].minor.yy424, yymsp[0].minor.yy206, yymsp[-9].minor.yy424);
 }
-#line 6651 "parse.c"
+#line 3649 "parse.c"
         /* No destructor defined for TRIGGER */
         /* No destructor defined for ON */
         break;
-      case 258:
-#line 777 "parse.y"
-{ yygotominor.yy52 = TK_BEFORE; }
-#line 6658 "parse.c"
+      case 262:
+#line 805 "parse.y"
+{ yygotominor.yy424 = TK_BEFORE; }
+#line 3656 "parse.c"
         /* No destructor defined for BEFORE */
         break;
-      case 259:
-#line 778 "parse.y"
-{ yygotominor.yy52 = TK_AFTER;  }
-#line 6664 "parse.c"
+      case 263:
+#line 806 "parse.y"
+{ yygotominor.yy424 = TK_AFTER;  }
+#line 3662 "parse.c"
         /* No destructor defined for AFTER */
         break;
-      case 260:
-#line 779 "parse.y"
-{ yygotominor.yy52 = TK_INSTEAD;}
-#line 6670 "parse.c"
+      case 264:
+#line 807 "parse.y"
+{ yygotominor.yy424 = TK_INSTEAD;}
+#line 3668 "parse.c"
         /* No destructor defined for INSTEAD */
         /* No destructor defined for OF */
         break;
-      case 261:
-#line 780 "parse.y"
-{ yygotominor.yy52 = TK_BEFORE; }
-#line 6677 "parse.c"
+      case 265:
+#line 808 "parse.y"
+{ yygotominor.yy424 = TK_BEFORE; }
+#line 3675 "parse.c"
         break;
-      case 262:
-#line 784 "parse.y"
-{ yygotominor.yy234.a = TK_DELETE; yygotominor.yy234.b = 0; }
-#line 6682 "parse.c"
+      case 266:
+#line 812 "parse.y"
+{ yygotominor.yy414.a = TK_DELETE; yygotominor.yy414.b = 0; }
+#line 3680 "parse.c"
         /* No destructor defined for DELETE */
         break;
-      case 263:
-#line 785 "parse.y"
-{ yygotominor.yy234.a = TK_INSERT; yygotominor.yy234.b = 0; }
-#line 6688 "parse.c"
+      case 267:
+#line 813 "parse.y"
+{ yygotominor.yy414.a = TK_INSERT; yygotominor.yy414.b = 0; }
+#line 3686 "parse.c"
         /* No destructor defined for INSERT */
         break;
-      case 264:
-#line 786 "parse.y"
-{ yygotominor.yy234.a = TK_UPDATE; yygotominor.yy234.b = 0;}
-#line 6694 "parse.c"
+      case 268:
+#line 814 "parse.y"
+{ yygotominor.yy414.a = TK_UPDATE; yygotominor.yy414.b = 0;}
+#line 3692 "parse.c"
         /* No destructor defined for UPDATE */
         break;
-      case 265:
-#line 787 "parse.y"
-{yygotominor.yy234.a = TK_UPDATE; yygotominor.yy234.b = yymsp[0].minor.yy92; }
-#line 6700 "parse.c"
+      case 269:
+#line 815 "parse.y"
+{yygotominor.yy414.a = TK_UPDATE; yygotominor.yy414.b = yymsp[0].minor.yy246; }
+#line 3698 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for OF */
         break;
-      case 266:
-#line 790 "parse.y"
-{ yygotominor.yy52 = TK_ROW; }
-#line 6707 "parse.c"
+      case 270:
+#line 818 "parse.y"
+{ yygotominor.yy424 = TK_ROW; }
+#line 3705 "parse.c"
         break;
-      case 267:
-#line 791 "parse.y"
-{ yygotominor.yy52 = TK_ROW; }
-#line 6712 "parse.c"
+      case 271:
+#line 819 "parse.y"
+{ yygotominor.yy424 = TK_ROW; }
+#line 3710 "parse.c"
         /* No destructor defined for FOR */
         /* No destructor defined for EACH */
         /* No destructor defined for ROW */
         break;
-      case 268:
-#line 792 "parse.y"
-{ yygotominor.yy52 = TK_STATEMENT; }
-#line 6720 "parse.c"
+      case 272:
+#line 820 "parse.y"
+{ yygotominor.yy424 = TK_STATEMENT; }
+#line 3718 "parse.c"
         /* No destructor defined for FOR */
         /* No destructor defined for EACH */
         /* No destructor defined for STATEMENT */
         break;
-      case 269:
-#line 795 "parse.y"
-{ yygotominor.yy270 = 0; }
-#line 6728 "parse.c"
+      case 273:
+#line 823 "parse.y"
+{ yygotominor.yy206 = 0; }
+#line 3726 "parse.c"
         break;
-      case 270:
-#line 796 "parse.y"
-{ yygotominor.yy270 = yymsp[0].minor.yy334; }
-#line 6733 "parse.c"
+      case 274:
+#line 824 "parse.y"
+{ yygotominor.yy206 = yymsp[0].minor.yy164; }
+#line 3731 "parse.c"
         /* No destructor defined for WHEN */
         break;
-      case 271:
-#line 800 "parse.y"
+      case 275:
+#line 828 "parse.y"
 {
-  yymsp[-2].minor.yy347->pNext = yymsp[0].minor.yy347;
-  yygotominor.yy347 = yymsp[-2].minor.yy347;
+  yymsp[-2].minor.yy353->pNext = yymsp[0].minor.yy353;
+  yygotominor.yy353 = yymsp[-2].minor.yy353;
 }
-#line 6742 "parse.c"
+#line 3740 "parse.c"
         /* No destructor defined for SEMI */
         break;
-      case 272:
-#line 804 "parse.y"
-{ yygotominor.yy347 = 0; }
-#line 6748 "parse.c"
+      case 276:
+#line 832 "parse.y"
+{ yygotominor.yy353 = 0; }
+#line 3746 "parse.c"
         break;
-      case 273:
-#line 810 "parse.y"
-{ yygotominor.yy347 = sqliteTriggerUpdateStep(&yymsp[-3].minor.yy210, yymsp[-1].minor.yy62, yymsp[0].minor.yy334, yymsp[-4].minor.yy52); }
-#line 6753 "parse.c"
+      case 277:
+#line 838 "parse.y"
+{ yygotominor.yy353 = sqliteTriggerUpdateStep(&yymsp[-3].minor.yy318, yymsp[-1].minor.yy232, yymsp[0].minor.yy164, yymsp[-4].minor.yy424); }
+#line 3751 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for SET */
         break;
-      case 274:
-#line 815 "parse.y"
-{yygotominor.yy347 = sqliteTriggerInsertStep(&yymsp[-5].minor.yy210, yymsp[-4].minor.yy92, yymsp[-1].minor.yy62, 0, yymsp[-7].minor.yy52);}
-#line 6760 "parse.c"
+      case 278:
+#line 843 "parse.y"
+{yygotominor.yy353 = sqliteTriggerInsertStep(&yymsp[-5].minor.yy318, yymsp[-4].minor.yy246, yymsp[-1].minor.yy232, 0, yymsp[-7].minor.yy424);}
+#line 3758 "parse.c"
         /* No destructor defined for INSERT */
         /* No destructor defined for INTO */
         /* No destructor defined for VALUES */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 275:
-#line 818 "parse.y"
-{yygotominor.yy347 = sqliteTriggerInsertStep(&yymsp[-2].minor.yy210, yymsp[-1].minor.yy92, 0, yymsp[0].minor.yy11, yymsp[-4].minor.yy52);}
-#line 6770 "parse.c"
+      case 279:
+#line 846 "parse.y"
+{yygotominor.yy353 = sqliteTriggerInsertStep(&yymsp[-2].minor.yy318, yymsp[-1].minor.yy246, 0, yymsp[0].minor.yy375, yymsp[-4].minor.yy424);}
+#line 3768 "parse.c"
         /* No destructor defined for INSERT */
         /* No destructor defined for INTO */
         break;
-      case 276:
-#line 822 "parse.y"
-{yygotominor.yy347 = sqliteTriggerDeleteStep(&yymsp[-1].minor.yy210, yymsp[0].minor.yy334);}
-#line 6777 "parse.c"
+      case 280:
+#line 850 "parse.y"
+{yygotominor.yy353 = sqliteTriggerDeleteStep(&yymsp[-1].minor.yy318, yymsp[0].minor.yy164);}
+#line 3775 "parse.c"
         /* No destructor defined for DELETE */
         /* No destructor defined for FROM */
         break;
-      case 277:
-#line 825 "parse.y"
-{yygotominor.yy347 = sqliteTriggerSelectStep(yymsp[0].minor.yy11); }
-#line 6784 "parse.c"
+      case 281:
+#line 853 "parse.y"
+{yygotominor.yy353 = sqliteTriggerSelectStep(yymsp[0].minor.yy375); }
+#line 3782 "parse.c"
         break;
-      case 278:
-#line 828 "parse.y"
+      case 282:
+#line 856 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_RAISE, 0, 0, 0); 
-  yygotominor.yy334->iColumn = OE_Ignore;
-  sqliteExprSpan(yygotominor.yy334, &yymsp[-3].minor.yy0, &yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_RAISE, 0, 0, 0); 
+  yygotominor.yy164->iColumn = OE_Ignore;
+  sqliteExprSpan(yygotominor.yy164, &yymsp[-3].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6793 "parse.c"
+#line 3791 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for IGNORE */
         break;
-      case 279:
-#line 833 "parse.y"
+      case 283:
+#line 861 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy210); 
-  yygotominor.yy334->iColumn = OE_Rollback;
-  sqliteExprSpan(yygotominor.yy334, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy318); 
+  yygotominor.yy164->iColumn = OE_Rollback;
+  sqliteExprSpan(yygotominor.yy164, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6804 "parse.c"
+#line 3802 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for ROLLBACK */
         /* No destructor defined for COMMA */
         break;
-      case 280:
-#line 838 "parse.y"
+      case 284:
+#line 866 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy210); 
-  yygotominor.yy334->iColumn = OE_Abort;
-  sqliteExprSpan(yygotominor.yy334, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy318); 
+  yygotominor.yy164->iColumn = OE_Abort;
+  sqliteExprSpan(yygotominor.yy164, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6816 "parse.c"
+#line 3814 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for ABORT */
         /* No destructor defined for COMMA */
         break;
-      case 281:
-#line 843 "parse.y"
+      case 285:
+#line 871 "parse.y"
 {
-  yygotominor.yy334 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy210); 
-  yygotominor.yy334->iColumn = OE_Fail;
-  sqliteExprSpan(yygotominor.yy334, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);
+  yygotominor.yy164 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy318); 
+  yygotominor.yy164->iColumn = OE_Fail;
+  sqliteExprSpan(yygotominor.yy164, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6828 "parse.c"
+#line 3826 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for FAIL */
         /* No destructor defined for COMMA */
         break;
-      case 282:
-#line 850 "parse.y"
+      case 286:
+#line 878 "parse.y"
 {
-  sqliteDropTrigger(pParse,sqliteSrcListAppend(0,&yymsp[-1].minor.yy210,&yymsp[0].minor.yy210));
+  sqliteDropTrigger(pParse,sqliteSrcListAppend(0,&yymsp[-1].minor.yy318,&yymsp[0].minor.yy318));
 }
-#line 6838 "parse.c"
+#line 3836 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for TRIGGER */
         break;
-      case 283:
-#line 855 "parse.y"
+      case 287:
+#line 883 "parse.y"
 {
-  sqliteAttach(pParse, &yymsp[-2].minor.yy210, &yymsp[0].minor.yy210);
+  sqliteAttach(pParse, &yymsp[-2].minor.yy318, &yymsp[0].minor.yy318);
 }
-#line 6847 "parse.c"
+#line 3845 "parse.c"
         /* No destructor defined for ATTACH */
         /* No destructor defined for database_kw_opt */
         /* No destructor defined for AS */
         break;
-      case 284:
+      case 288:
         /* No destructor defined for DATABASE */
         break;
-      case 285:
+      case 289:
         break;
-      case 286:
-#line 863 "parse.y"
+      case 290:
+#line 891 "parse.y"
 {
-  sqliteDetach(pParse, &yymsp[0].minor.yy210);
+  sqliteDetach(pParse, &yymsp[0].minor.yy318);
 }
-#line 6862 "parse.c"
+#line 3860 "parse.c"
         /* No destructor defined for DETACH */
         /* No destructor defined for database_kw_opt */
         break;
@@ -6867,8 +3865,7 @@ static void yy_reduce(
   yygoto = yyRuleInfo[yyruleno].lhs;
   yysize = yyRuleInfo[yyruleno].nrhs;
   yypParser->yyidx -= yysize;
-  yypParser->yytop -= yysize;
-  yyact = yy_find_parser_action(yypParser,yygoto);
+  yyact = yy_find_reduce_action(yypParser,yygoto);
   if( yyact < YYNSTATE ){
     yy_shift(yypParser,yyact,yygoto,&yygotominor);
   }else if( yyact == YYNSTATE + YYNRULE + 1 ){
@@ -6911,12 +3908,12 @@ static void yy_syntax_error(
       sqliteSetNString(&pParse->zErrMsg, 
           "near \"", -1, TOKEN.z, TOKEN.n, "\": syntax error", -1, 0);
     }else{
-      sqliteSetString(&pParse->zErrMsg, "incomplete SQL statement", 0);
+      sqliteSetString(&pParse->zErrMsg, "incomplete SQL statement", (char*)0);
     }
   }
   pParse->nErr++;
 
-#line 6919 "parse.c"
+#line 3916 "parse.c"
   sqliteParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -6975,9 +3972,8 @@ void sqliteParser(
     if( yymajor==0 ) return;
     yypParser->yyidx = 0;
     yypParser->yyerrcnt = -1;
-    yypParser->yytop = &yypParser->yystack[0];
-    yypParser->yytop->stateno = 0;
-    yypParser->yytop->major = 0;
+    yypParser->yystack[0].stateno = 0;
+    yypParser->yystack[0].major = 0;
   }
   yyminorunion.yy0 = yyminor;
   yyendofinput = (yymajor==0);
@@ -6990,7 +3986,7 @@ void sqliteParser(
 #endif
 
   do{
-    yyact = yy_find_parser_action(yypParser,yymajor);
+    yyact = yy_find_shift_action(yypParser,yymajor);
     if( yyact<YYNSTATE ){
       yy_shift(yypParser,yyact,yymajor,&yyminorunion);
       yypParser->yyerrcnt--;
@@ -7002,6 +3998,7 @@ void sqliteParser(
     }else if( yyact < YYNSTATE + YYNRULE ){
       yy_reduce(yypParser,yyact-YYNSTATE);
     }else if( yyact == YY_ERROR_ACTION ){
+      int yymx;
 #ifndef NDEBUG
       if( yyTraceFILE ){
         fprintf(yyTraceFILE,"%sSyntax Error!\n",yyTracePrompt);
@@ -7030,7 +4027,8 @@ void sqliteParser(
       if( yypParser->yyerrcnt<0 ){
         yy_syntax_error(yypParser,yymajor,yyminorunion);
       }
-      if( yypParser->yytop->major==YYERRORSYMBOL || yyerrorhit ){
+      yymx = yypParser->yystack[yypParser->yyidx].major;
+      if( yymx==YYERRORSYMBOL || yyerrorhit ){
 #ifndef NDEBUG
         if( yyTraceFILE ){
           fprintf(yyTraceFILE,"%sDiscard input token %s\n",
@@ -7042,8 +4040,8 @@ void sqliteParser(
       }else{
          while(
           yypParser->yyidx >= 0 &&
-          yypParser->yytop->major != YYERRORSYMBOL &&
-          (yyact = yy_find_parser_action(yypParser,YYERRORSYMBOL)) >= YYNSTATE
+          yymx != YYERRORSYMBOL &&
+          (yyact = yy_find_shift_action(yypParser,YYERRORSYMBOL)) >= YYNSTATE
         ){
           yy_pop_parser_stack(yypParser);
         }
@@ -7051,7 +4049,7 @@ void sqliteParser(
           yy_destructor(yymajor,&yyminorunion);
           yy_parse_failed(yypParser);
           yymajor = YYNOCODE;
-        }else if( yypParser->yytop->major!=YYERRORSYMBOL ){
+        }else if( yymx!=YYERRORSYMBOL ){
           YYMINORTYPE u2;
           u2.YYERRSYMDT = 0;
           yy_shift(yypParser,yyact,YYERRORSYMBOL,&u2);

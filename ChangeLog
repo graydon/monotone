@@ -1,3 +1,12 @@
+2004-03-07  graydon hoare  <graydon@pobox.com>
+
+	* sqlite/date.c, sqlite/vdbeInt.h, sqlite/vdbeaux.c: Add.
+	* sqlite/*.c: Upgrade to 2.8.12.
+	* Makefile.am: Update to mention new files.
+	* cert.cc 
+	(expand_ancestors)
+	(expand_dominators): Resize child bitmaps to cover parent.
+
 2004-03-06  graydon hoare  <graydon@pobox.com>
 
 	* netsync.cc (get_root_prefix): Fix from Paul Snively
