@@ -29,5 +29,6 @@ void add_vocab_tests(test_suite * suite);
 void add_packet_tests(test_suite * suite);
 void add_url_tests(test_suite * suite);
 void add_netcmd_tests(test_suite * suite);
+void add_xdelta_tests(test_suite * suite);
 
 #endif

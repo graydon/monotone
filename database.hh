@@ -100,10 +100,7 @@ class database
 		   base64< gzip<data> > & dat,
 		   std::string const & data_table,
 		   std::string const & delta_table);
-  u64 get_version_size(hexenc<id> const & ident,
-		       std::string const & data_table,
-		       std::string const & delta_table);
-
+  
   void put(hexenc<id> const & new_id,
 	   base64< gzip<data> > const & dat,
 	   std::string const & table);
@@ -176,6 +173,7 @@ public:
   void info(std::ostream &);
   void version(std::ostream &);
   void migrate();
+  void rehash();
   void ensure_open();
   
   bool file_version_exists(file_id const & id);
@@ -185,9 +183,6 @@ public:
   // from deltas (if they exist)
   void get_file_version(file_id const & id,
 			file_data & dat);
-
-  // get the size of the file version
-  u64 get_file_version_size(file_id const & id);
 
   // put file w/o predecessor into db
   void put_file(file_id const & new_id,
@@ -203,9 +198,6 @@ public:
   void get_manifest_version(manifest_id const & id,
 			    manifest_data & dat);
 
-  // get the size of the manifest version
-  u64 get_manifest_version_size(manifest_id const & id);
-
   // put manifest w/o predecessor into db
   void put_manifest(manifest_id const & new_id,
 		    manifest_data const & dat);
@@ -214,7 +206,6 @@ public:
   void put_manifest_version(manifest_id const & old_id,
 			    manifest_id const & new_id,
 			    manifest_delta const & del);
-
 
   // only use these three variants if you really know what you're doing,
   // wrt. "old" and "new". they will throw if you do something wrong.
@@ -274,6 +265,7 @@ public:
 			   std::vector< manifest<cert> > & ancestry_certs);
 
   bool manifest_cert_exists(manifest<cert> const & cert);
+  bool manifest_cert_exists(hexenc<id> const & hash);
 
   void put_manifest_cert(manifest<cert> const & cert);
 
@@ -296,8 +288,12 @@ public:
   void get_manifest_certs(manifest_id const & id, 
 			 std::vector< manifest<cert> > & certs);
 
+  void get_manifest_cert(hexenc<id> const & hash,
+			 manifest<cert> & cert);
+
   
   bool file_cert_exists(file<cert> const & cert);
+  bool file_cert_exists(hexenc<id> const & hash);
 
   void put_file_cert(file<cert> const & cert);
 
@@ -319,6 +315,9 @@ public:
   void get_file_certs(cert_name const & name,
 		     base64<cert_value> const & val, 
 		     std::vector< file<cert> > & certs);
+
+  void get_file_cert(hexenc<id> const & hash,
+		     file<cert> & cert);
 
   // network stuff
 

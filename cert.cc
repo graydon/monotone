@@ -6,9 +6,10 @@
 #include "cert.hh"
 #include "packet.hh"
 #include "app_state.hh"
-#include "mac.hh"
 #include "interner.hh"
 #include "keys.hh"
+#include "mac.hh"
+#include "netio.hh"
 #include "sanity.hh"
 #include "patch_set.hh"
 #include "transforms.hh"
@@ -21,8 +22,9 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include <string>
-#include <vector>
+#include <limits>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace boost;
@@ -119,6 +121,69 @@ bool cert::operator==(cert const & other) const
     && (sig == other.sig);
 }
 
+// netio support
+			 
+void read_cert(string const & in, cert & t)
+{
+  size_t pos = 0;
+  id hash = extract_substring(in, pos, 
+			      constants::merkle_hash_length_in_bytes, 
+			      "cert hash");
+  id ident = extract_substring(in, pos, 
+			       constants::merkle_hash_length_in_bytes, 
+			       "cert ident");
+  string name, val, key, sig;
+  extract_variable_length_string(in, name, pos, "cert name");
+  extract_variable_length_string(in, val, pos, "cert val");
+  extract_variable_length_string(in, key, pos, "cert key");
+  extract_variable_length_string(in, sig, pos, "cert sig");
+  assert_end_of_buffer(in, pos, "cert"); 
+  
+  hexenc<id> hid;
+  base64<cert_value> bval;
+  base64<rsa_sha1_signature> bsig;
+
+  encode_hexenc(ident, hid);
+  encode_base64(cert_value(val), bval);
+  encode_base64(rsa_sha1_signature(sig), bsig);
+
+  cert tmp(hid, cert_name(name), bval, rsa_keypair_id(key), bsig);
+
+  hexenc<id> hcheck;
+  id check;
+  cert_hash_code(tmp, hcheck);
+  decode_hexenc(hcheck, check);
+  if (!(check == hash))
+    {
+      hexenc<id> hhash;
+      encode_hexenc(hash, hhash);
+      throw bad_decode(F("calculated cert hash '%s' does not match '%s'")
+		       % hcheck % hhash);
+    }
+  t = tmp;
+}
+
+void write_cert(cert const & t, string & out)
+{  
+  string name, key;
+  hexenc<id> hash;
+  id ident_decoded, hash_decoded;
+  rsa_sha1_signature sig_decoded;
+  cert_value value_decoded;
+
+  cert_hash_code(t, hash);
+  decode_base64(t.value, value_decoded);
+  decode_base64(t.sig, sig_decoded);
+  decode_hexenc(t.ident, ident_decoded);
+  decode_hexenc(hash, hash_decoded);
+
+  out.append(hash_decoded());
+  out.append(ident_decoded());
+  insert_variable_length_string(t.name(), out);
+  insert_variable_length_string(value_decoded(), out);
+  insert_variable_length_string(t.key(), out);
+  insert_variable_length_string(sig_decoded(), out);
+}
 
 void cert_signable_text(cert const & t,
 		       string & out)
@@ -127,14 +192,13 @@ void cert_signable_text(cert const & t,
   L(F("cert: signable text %s\n") % out);
 }
 
-void cert_hash_code(cert const & t,
-		    hexenc<id> & out)
+void cert_hash_code(cert const & t, hexenc<id> & out)
 {
   string tmp(t.ident()
 	     + ":" + t.name()
-	     + ":" + t.value()
+	     + ":" + remove_ws(t.value())
 	     + ":" + t.key()
-	     + ":" + t.sig());
+	     + ":" + remove_ws(t.sig()));
   data tdat(tmp);
   calculate_ident(tdat, out);
 }

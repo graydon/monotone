@@ -10,7 +10,7 @@
 // see the file COPYING for details
 
 // this file contains a couple utilities to deal with the user
-// interface. the global user_interface object 'ui' owns cerr, so no
+// interface. the global user_interface object 'ui' owns clog, so no
 // writing to it directly!
 
 using namespace std;
@@ -55,6 +55,8 @@ user_interface::user_interface() :
   last_write_was_a_tick(false),
   last_tick_len(0)
 {
+  clog.sync_with_stdio(false);
+  clog.unsetf(ios_base::unitbuf);
 }
 
 user_interface::~user_interface()
@@ -67,7 +69,7 @@ void user_interface::finish_ticking()
       last_write_was_a_tick)
     {
       tick_trailer = "";
-      cerr << endl;
+      clog << endl;
       last_write_was_a_tick = false;
     }
 }
@@ -91,7 +93,8 @@ void user_interface::write_ticks()
     tickline += string(last_tick_len - curr_sz, ' ');
   last_tick_len = curr_sz;
 
-  cerr << tickline;
+  clog << tickline;
+  clog.flush();
   last_write_was_a_tick = true;
 }
 
@@ -105,8 +108,8 @@ void user_interface::warn(string const & warning)
 void user_interface::inform(string const & line)
 {
   if (last_write_was_a_tick)
-    cerr << endl;
-  cerr << "monotone: " << line;
-  cerr.flush();
+    clog << endl;
+  clog << "monotone: " << line;
+  clog.flush();
   last_write_was_a_tick = false;
 }

@@ -93,7 +93,6 @@ void merkle_node::get_raw_prefix(prefix & pref) const
 {
   check_invariants();
   ostringstream oss;
-  oss.put(level);
   to_block_range(this->pref, ostream_iterator<char>(oss));
   pref = prefix(oss.str());
 }
@@ -135,11 +134,12 @@ void merkle_node::set_hex_slot(size_t slot, hexenc<id> const & val)
 
 void merkle_node::extended_prefix(size_t slot, dynamic_bitset<char> & extended) const
 {
+  // remember, in a dynamic_bitset, bit size()-1 is most significant
   check_invariants();
   I(slot < constants::merkle_num_slots);
   extended = this->pref;
-  for (size_t i = constants::merkle_fanout_bits; i > 0; --i)
-    extended.push_back(static_cast<bool>(slot & (1 << (i-1))));
+  for (size_t i = 0; i < constants::merkle_fanout_bits; ++i)
+    extended.push_back(static_cast<bool>((slot >> i) & 1));
 }
 
 void merkle_node::extended_raw_prefix(size_t slot, prefix & extended) const
@@ -215,12 +215,17 @@ void write_node(merkle_node const & in, string & outbuf)
   ostringstream oss;
   oss.put(static_cast<u8>(in.type));
   I(in.pref.size() == in.level * constants::merkle_fanout_bits);
-  oss.put(in.level);
-  to_block_range(in.pref, ostream_iterator<char>(oss));
 
   string tmp;
-  write_datum_msb<u64>(in.total_num_leaves, tmp);
+  insert_datum_uleb128<size_t>(in.level, tmp);
   oss.write(tmp.data(), tmp.size());
+  tmp.clear();
+
+  to_block_range(in.pref, ostream_iterator<char>(oss));
+
+  insert_datum_uleb128<size_t>(in.total_num_leaves, tmp);
+  oss.write(tmp.data(), tmp.size());
+  tmp.clear();
 
   to_block_range(in.bitmap, ostream_iterator<char>(oss));
 
@@ -228,7 +233,6 @@ void write_node(merkle_node const & in, string & outbuf)
     {
       if (in.get_slot_state(slot) != empty_state)
 	{
-	  L(F("writing slot #%d\n") % slot);
 	  I(slot < in.slots.size());
 	  id slot_val;
 	  in.get_raw_slot(slot, slot_val);
@@ -238,20 +242,19 @@ void write_node(merkle_node const & in, string & outbuf)
   string hash = raw_sha1(oss.str());
   I(hash.size() == constants::merkle_hash_length_in_bytes);
   outbuf = hash + oss.str();
-  L(F("output buffer of node is %d bytes\n") % outbuf.size());
 }
     
 void read_node(string const & inbuf, merkle_node & out)
 {
   size_t pos = 0;
   string hash = extract_substring(inbuf, pos, constants::merkle_hash_length_in_bytes, "node hash");
-  out.type = static_cast<netcmd_item_type>(extract_datum_msb<u8>(inbuf, pos, "node type"));
-  out.level = extract_datum_msb<u8>(inbuf, pos, "node level");
+  out.type = static_cast<netcmd_item_type>(extract_datum_lsb<u8>(inbuf, pos, "node type"));
+  out.level = extract_datum_uleb128<size_t>(inbuf, pos, "node level");
 
   if (out.level >= constants::merkle_num_tree_levels)
     throw bad_decode(F("node level is %d, exceeds maximum %d") 
-		     % static_cast<int>(out.level)
-		     % static_cast<int>(constants::merkle_num_tree_levels));
+		     % widen<u32,u8>(out.level)
+		     % widen<u32,u8>(constants::merkle_num_tree_levels));
 
   size_t prefixsz = prefix_length_in_bytes(out.level);
   require_bytes(inbuf, pos, prefixsz, "node prefix");   
@@ -261,7 +264,7 @@ void read_node(string const & inbuf, merkle_node & out)
 		   out.pref);
   pos += prefixsz;
 
-  out.total_num_leaves = extract_datum_msb<u64>(inbuf, pos, "number of leaves");
+  out.total_num_leaves = extract_datum_uleb128<size_t>(inbuf, pos, "number of leaves");
 
   require_bytes(inbuf, pos, constants::merkle_bitmap_length_in_bytes, "bitmap");
   out.bitmap.resize(constants::merkle_bitmap_length_in_bits);
@@ -335,7 +338,9 @@ void pick_slot_and_prefix_for_value(id const & val, size_t level,
 {
   pref.resize(val().size() * 8);
   from_block_range(val().begin(), val().end(), pref);
-  
+
+  // remember, in a dynamic_bitset, bit size()-1 is most significant
+
   slotnum = 0;
   for (size_t i = constants::merkle_fanout_bits; i > 0; --i)
     {

@@ -157,7 +157,7 @@ namespace constants
   u8 const netcmd_current_protocol_version = 1;
   size_t const netcmd_minsz = (1     // version
 			       + 1   // cmd code
-			       + 4   // length
+			       + 1   // smallest uleb possible
 			       + 4); // adler32    
   
   size_t const netcmd_payload_limit = 0xffffff;

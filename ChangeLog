@@ -1,3 +1,19 @@
+2004-02-20  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc, cert.hh, key.cc, key.hh, database.cc, database.hh:
+	Add lots of little netsync support routines.
+	* commands.cc (rebuild): Rehash everything too.
+	* constants.cc (netcmd_minsz): Recalculate.
+	* cryptopp/osrng.cpp (NonblockingRng::GenerateBlock): Handle
+	/dev/urandom a bit better.
+	* netcmd.cc, netcmd.hh: Remove describe cmds, add nonexistant cmd.
+	* netio.hh: Add uleb128 stuff.
+	* xdelta.cc: Add randomizing unit test suite.
+	* diff_patch.cc: Remove commented-out dead line-merger code.
+	* merkle_tree.cc: Fix various bugs.
+	* netcmd.cc: Switch everything over to uleb128s.
+	* netsync.cc: Implement lots of missing stuff.
+
 2004-02-09  graydon hoare  <graydon@pobox.com>
 
 	* netsync.cc (ROOT_PREFIX): New variable.

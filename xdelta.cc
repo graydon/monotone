@@ -21,7 +21,9 @@
 // take a look in diff_patch.(cc|hh) for a nice interface to that.
 
 #include <ext/hash_map>
+#include <algorithm>
 #include <vector>
+#include <set>
 #include <string>
 #include <sstream>
 #include <boost/shared_ptr.hpp>
@@ -431,7 +433,6 @@ apply_delta(string const & a,
   da->finish(b);
 }
 
-
 struct size_accumulating_delta_applicator :
   public delta_applicator
 {
@@ -683,3 +684,111 @@ boost::shared_ptr<delta_applicator> new_piecewise_applicator()
 {
   return boost::shared_ptr<delta_applicator>(new piecewise_applicator());
 }
+
+#ifdef BUILD_UNIT_TESTS
+
+#include "unit_tests.hh"
+#include <boost/random.hpp>
+
+boost::mt19937 xdelta_prng;
+boost::uniform_smallint<boost::mt19937, char> xdelta_chargen(xdelta_prng, 'a', 'z');
+boost::uniform_smallint<boost::mt19937, size_t> xdelta_sizegen(xdelta_prng, 1024, 65536);
+boost::uniform_smallint<boost::mt19937, size_t> xdelta_editgen(xdelta_prng, 3, 10);
+boost::uniform_smallint<boost::mt19937, size_t> xdelta_lengen(xdelta_prng, 1, 256);
+
+void xdelta_random_string(string & str)
+{
+  size_t sz = xdelta_sizegen();
+  str.clear();
+  str.reserve(sz);   
+  while(sz-- > 0)
+    {
+      str += xdelta_chargen();
+    }
+}
+
+void xdelta_randomly_insert(string & str)
+{
+  size_t nedits = xdelta_editgen();
+  while (nedits > 0)
+    {
+      size_t pos = xdelta_sizegen() % str.size();
+      size_t len = xdelta_lengen();
+      if (pos+len >= str.size())
+	continue;
+      string tmp;
+      tmp.reserve(len);
+      for (size_t i = 0; i < len; ++i)
+	tmp += xdelta_chargen();
+	str.insert(pos, tmp);
+      nedits--;
+    }
+}
+
+void xdelta_randomly_change(string & str)
+{
+  size_t nedits = xdelta_editgen();
+  while (nedits > 0)
+    {
+      size_t pos = xdelta_sizegen() % str.size();
+      size_t len = xdelta_lengen();
+      if (pos+len >= str.size())
+	continue;
+      for (size_t i = 0; i < len; ++i)
+	str[pos+i] = xdelta_chargen();
+      nedits--;
+    }
+}
+
+void xdelta_randomly_delete(string & str)
+{
+  size_t nedits = xdelta_editgen();
+  while (nedits > 0)
+    {
+      size_t pos = xdelta_sizegen() % str.size();
+      size_t len = xdelta_lengen();
+      if (pos+len >= str.size())
+	continue;
+      str.erase(pos, len);
+      --nedits;
+    }
+}
+
+void xdelta_random_simple_delta_test()
+{
+  for (int i = 0; i < 100; ++i)
+    {
+      string a, b, fdel, rdel, c, d;
+      xdelta_random_string(a);
+      b = a;
+      xdelta_randomly_change(b);
+      xdelta_randomly_insert(b);
+      xdelta_randomly_delete(b);
+      compute_delta(a, b, fdel);
+      compute_delta(b, a, rdel);
+      L(F("src %d, dst %d, fdel %d, rdel %d\n")
+	% a.size() % b.size()% fdel.size() % rdel.size()) ;
+      if (fdel.size() == 0)
+	{
+	  L(F("confirming src == dst and rdel == 0\n"));
+	  BOOST_CHECK(a == b);
+	  BOOST_CHECK(rdel.size() == 0);
+	}      
+      else
+	{
+	  apply_delta(a, fdel, c);
+	  apply_delta(b, rdel, d);
+	  L(F("confirming dst1 %d, dst2 %d\n") % c.size() % d.size());
+	  BOOST_CHECK(b == c);
+	  BOOST_CHECK(a == d);
+	}
+    }
+}
+
+void add_xdelta_tests(test_suite * suite)
+{
+  I(suite);
+  suite->add(BOOST_TEST_CASE(&xdelta_random_simple_delta_test));
+}
+
+#endif // BUILD_UNIT_TESTS

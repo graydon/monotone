@@ -34,14 +34,13 @@ typedef enum
     // refinement-phase commands
     refine_cmd = 5,
     done_cmd = 6,
-    describe_cmd = 7,
-    description_cmd = 8,
       
     // transmission-phase commands
-    send_data_cmd = 9,
-    send_delta_cmd = 10,
-    data_cmd = 11,
-    delta_cmd = 12,
+    send_data_cmd = 7,
+    send_delta_cmd = 8,
+    data_cmd = 9,
+    delta_cmd = 10,
+    nonexistant_cmd = 11
   }
 netcmd_code;
 
@@ -88,57 +87,49 @@ void write_confirm_cmd_payload(std::string const & signature, std::string & out)
 void read_refine_cmd_payload(std::string const & in, merkle_node & node);
 void write_refine_cmd_payload(merkle_node const & node, std::string & out);
 
-void read_done_cmd_payload(std::string const & in, u8 & level, netcmd_item_type & type);
-void write_done_cmd_payload(u8 level, netcmd_item_type type, std::string & out);
-
-void read_describe_cmd_payload(std::string const & in, netcmd_item_type & type, id & item);
-void write_describe_cmd_payload(netcmd_item_type type, id const & item, std::string & out);
-
-void read_description_cmd_payload(std::string const & in, 
-				  netcmd_item_type & type,
-				  id & item, 
-				  u64 & len,
-				  std::vector<id> & predecessors);
-void write_description_cmd_payload(netcmd_item_type type,
-				   id const & item, 
-				   u64 len,
-				   std::vector<id> const & predecessors,
-				   std::string & out);
+void read_done_cmd_payload(std::string const & in, size_t & level, netcmd_item_type & type);
+void write_done_cmd_payload(size_t level, netcmd_item_type type, std::string & out);
 
 void read_send_data_cmd_payload(std::string const & in, 
 				netcmd_item_type & type,
-				id & item,
-				std::vector<std::pair<u64, u64> > & fragments);
+				id & item);
 void write_send_data_cmd_payload(netcmd_item_type type,
 				 id const & item,
-				 std::vector<std::pair<u64, u64> > const & fragments,
 				 std::string & out);
 
 void read_send_delta_cmd_payload(std::string const & in, 
 				 netcmd_item_type & type,
-				 id & head,
-				 id & base);
+				 id & base,
+				 id & ident);
 void write_send_delta_cmd_payload(netcmd_item_type type,
-				  id const & head,
 				  id const & base,
+				  id const & ident,
 				  std::string & out);
 
 void read_data_cmd_payload(std::string const & in,
 			   netcmd_item_type & type,
 			   id & item,
-			   std::vector< std::pair<std::pair<u64,u64>,std::string> > & fragments);
+			   std::string & dat);
 void write_data_cmd_payload(netcmd_item_type type,
 			    id const & item,
-			    std::vector< std::pair<std::pair<u64,u64>,std::string> > const & fragments,
+			    std::string const & dat,
 			    std::string & out);
 
 void read_delta_cmd_payload(std::string const & in, 
 			    netcmd_item_type & type,
-			    id & src, id & dst, 
-			    u64 & src_len, delta & del);
+			    id & base, id & ident, 
+			    delta & del);
 void write_delta_cmd_payload(netcmd_item_type & type,
-			     id const & src, id const & dst, 
-			     u64 src_len, delta const & del,
+			     id const & base, id const & ident, 
+			     delta const & del,
 			     std::string & out);
+
+void read_nonexistant_cmd_payload(std::string const & in, 
+				  netcmd_item_type & type,
+				  id & item);
+void write_nonexistant_cmd_payload(netcmd_item_type type,
+				   id const & item,
+				   std::string & out);
+
 
 #endif // __NETCMD_HH__

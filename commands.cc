@@ -2217,8 +2217,15 @@ CMD(merkle, "merkle", "rebuild COLLECTION...",
 
   if (idx(args,0)() == "rebuild")
     {
+      transaction_guard guard(app.db);
+      ui.set_tick_trailer("rehashing db");
+      app.db.rehash();
       for (size_t i = 1; i < args.size(); ++i)
-	rebuild_merkle_trees(app, idx(args,1));
+	{
+	  ui.set_tick_trailer(string("rebuilding merkle indices for ") + idx(args,i)());
+	  rebuild_merkle_trees(app, idx(args,i));
+	}
+      guard.commit();
     }
   else
     throw usage(name);

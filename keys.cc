@@ -19,6 +19,7 @@
 #include "constants.hh"
 #include "keys.hh"
 #include "lua.hh"
+#include "netio.hh"
 #include "transforms.hh"
 #include "sanity.hh"
 
@@ -317,12 +318,34 @@ bool check_signature(lua_hooks & lua,
   return vf->GetLastResult();
 }
 
+void read_pubkey(string const & in, 
+		 rsa_keypair_id & id,
+		 base64<rsa_pub_key> & pub)
+{
+  string tmp_id, tmp_key;
+  size_t pos = 0;
+  extract_variable_length_string(in, tmp_id, pos, "pubkey id");
+  extract_variable_length_string(in, tmp_key, pos, "pubkey value"); 
+  id = tmp_id;
+  encode_base64(rsa_pub_key(tmp_key), pub);
+}
+
+void write_pubkey(rsa_keypair_id const & id,
+		  base64<rsa_pub_key> const & pub,
+		  string & out)
+{
+  rsa_pub_key pub_tmp;
+  decode_base64(pub, pub_tmp);
+  insert_variable_length_string(id(), out);
+  insert_variable_length_string(pub_tmp(), out);
+}
+
 
 void key_hash_code(rsa_keypair_id const & id,
 		   base64<rsa_pub_key> const & pub,
 		   hexenc<id> & out)
 {
-  data tdat(id() + ":" + pub());
+  data tdat(id() + ":" + remove_ws(pub()));
   calculate_ident(tdat, out);  
 }
 
@@ -330,7 +353,7 @@ void key_hash_code(rsa_keypair_id const & id,
 		   base64< arc4<rsa_priv_key> > const & priv,
 		   hexenc<id> & out)
 {
-  data tdat(id() + ":" + priv());
+  data tdat(id() + ":" + remove_ws(priv()));
   calculate_ident(tdat, out);
 }
 

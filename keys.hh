@@ -33,6 +33,16 @@ bool check_signature(lua_hooks & lua,
 		     std::string const & alleged_text,
 		     base64<rsa_sha1_signature> const & signature);
 
+// netsync stuff
+
+void read_pubkey(std::string const & in, 
+		 rsa_keypair_id & id,
+		 base64<rsa_pub_key> & pub);
+
+void write_pubkey(rsa_keypair_id const & id,
+		  base64<rsa_pub_key> const & pub,
+		  std::string & out);
+
 void key_hash_code(rsa_keypair_id const & id,
 		   base64<rsa_pub_key> const & pub,
 		   hexenc<id> & out);
@@ -40,5 +50,7 @@ void key_hash_code(rsa_keypair_id const & id,
 void key_hash_code(rsa_keypair_id const & id,
 		   base64< arc4<rsa_priv_key> > const & priv,
 		   hexenc<id> & out);
+
+
 
 #endif // __KEYS_HH__

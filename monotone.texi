@@ -633,7 +633,7 @@ through the packets.
 
 Because of these strong properties, the network servers used by
 monotone act as @emph{dumb transports}. A network server is only used
-to move packets between various monotone clients; servers to
+to move packets between various monotone clients; servers do
 @emph{not} interpret packets when they exchange them. 
 
 @node    Ancestry

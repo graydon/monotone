@@ -54,9 +54,9 @@ slot_state;
 
 struct merkle_node
 {    
-  u8 level;
+  size_t level;
   boost::dynamic_bitset<char> pref;
-  u64 total_num_leaves;
+  size_t total_num_leaves;
   boost::dynamic_bitset<char> bitmap;
   std::vector<id> slots;
   netcmd_item_type type;

@@ -26,6 +26,7 @@
 #include "schema_migration.hh"
 #include "cert.hh"
 #include "transforms.hh"
+#include "ui.hh"
 #include "vocab.hh"
 #include "xdelta.hh"
 
@@ -273,6 +274,80 @@ void database::migrate()
 	       (errmsg ? (": " + string(errmsg)) : ""));
   migrate_monotone_schema(__sql);
   sqlite_close(__sql);
+}
+
+void database::rehash()
+{
+  transaction_guard guard(*this);
+  ticker mcerts("mcerts", 1);
+  ticker fcerts("fcerts", 1);
+  ticker pubkeys("pubkeys", 1);
+  ticker privkeys("privkeys", 1);
+  
+  {
+    // rehash all mcerts
+    results res;
+    vector<cert> certs;
+    fetch(res, 5, any_rows, 
+	  "SELECT id, name, value, keypair, signature "
+	  "FROM manifest_certs");
+    results_to_certs(res, certs);
+    execute("DELETE FROM manifest_certs");
+    for(vector<cert>::const_iterator i = certs.begin(); i != certs.end(); ++i)
+      {
+	put_cert(*i, "manifest_certs");
+	++mcerts;
+      }
+  }
+
+  {
+    // rehash all fcerts
+    results res;
+    vector<cert> certs;    
+    fetch(res, 5, any_rows, 
+	  "SELECT id, name, value, keypair, signature "
+	  "FROM file_certs");
+    results_to_certs(res, certs);
+    execute("DELETE FROM file_certs");
+    for(vector<cert>::const_iterator i = certs.begin(); i != certs.end(); ++i)
+      {
+	put_cert(*i, "file_certs");
+	++fcerts;
+      }
+  }
+  
+
+  {
+    // rehash all pubkeys
+    results res;
+    fetch(res, 2, any_rows, "SELECT id, keydata FROM public_keys");
+    execute("DELETE FROM public_keys");
+    for (size_t i = 0; i < res.size(); ++i)
+      {
+	hexenc<id> tmp;
+	key_hash_code(rsa_keypair_id(res[i][0]), base64<rsa_pub_key>(res[i][1]), tmp);
+	execute("INSERT INTO public_keys VALUES('%q', '%q', '%q')", 
+		tmp().c_str(), res[i][0].c_str(), res[i][1].c_str());
+	++pubkeys;
+      }
+  }
+
+{
+    // rehash all privkeys
+    results res;
+    fetch(res, 2, any_rows, "SELECT id, keydata FROM private_keys");
+    execute("DELETE FROM private_keys");
+    for (size_t i = 0; i < res.size(); ++i)
+      {
+	hexenc<id> tmp;
+	key_hash_code(rsa_keypair_id(res[i][0]), base64< arc4<rsa_priv_key> >(res[i][1]), tmp);
+	execute("INSERT INTO private_keys VALUES('%q', '%q', '%q')", 
+		tmp().c_str(), res[i][0].c_str(), res[i][1].c_str());
+	++privkeys;
+      }
+  }
+
+  guard.commit();
 }
 
 void database::ensure_open()
@@ -632,46 +707,6 @@ void database::put_delta(hexenc<id> const & ident,
 	  ident().c_str(), base().c_str(), del().c_str());
 }
 
-u64 database::get_version_size(hexenc<id> const & ident,
-			       string const & data_table,
-			       string const & delta_table)
-{
-  I(ident() != "");
-  if (exists(ident, data_table))
-    {
-      base64< gzip<data> > dat;
-      data dat_unpacked;
-      get(ident, dat, data_table);
-      unpack(dat, dat_unpacked);
-      return dat_unpacked().size();
-    }
-  else
-    {
-      I(delta_exists(ident, delta_table));
-      results res;
-      base64< gzip<delta> > del_packed;
-      fetch(res, one_col, any_rows,
-	    "SELECT delta FROM '%q' WHERE id = '%q' ", 
-	    delta_table.c_str(), ident().c_str());
-      size_t outsz = 0;
-      I(res.size() > 0);
-      for (size_t i = 0; i < res.size(); ++i)
-	{
-	  // we loop here to confirm that all paths to this ID
-	  // indicate a target with the *same* size. if not there
-	  // is corruption in the database.
-	  del_packed = res[i][0]; 
-	  delta del;
-	  unpack(del_packed, del);
-	  size_t tmp = measure_delta_target_size(del());
-	  if (i > 0)
-	    I(tmp == outsz);
-	  outsz = tmp;
-	}
-      return outsz;
-    }
-}
-
 void database::get_version(hexenc<id> const & ident,
 			   base64< gzip<data> > & dat,
 			   string const & data_table,
@@ -871,11 +906,6 @@ void database::get_file_version(file_id const & id,
   dat = tmp;
 }
 
-u64 database::get_file_version_size(file_id const & id)
-{
-  return get_version_size(id.inner(), "files", "file_deltas");
-}
-
 void database::get_manifest_version(manifest_id const & id,
 				    manifest_data & dat)
 {
@@ -884,10 +914,6 @@ void database::get_manifest_version(manifest_id const & id,
   dat = tmp;
 }
 
-u64 database::get_manifest_version_size(manifest_id const & id)
-{
-  return get_version_size(id.inner(), "manifests", "manifest_deltas");
-}
 
 bool database::manifest_delta_exists(manifest_id const & new_id,
 				     manifest_id const & old_id)
@@ -1323,6 +1349,35 @@ void database::get_file_certs(file_id const & id,
 }
 
 
+bool database::file_cert_exists(hexenc<id> const & hash)
+{
+  results res;
+  vector<cert> certs;
+  fetch(res, one_col, any_rows, 
+	"SELECT id "
+	"FROM file_certs "
+	"WHERE hash = '%q'", 
+	hash().c_str());
+  I(res.size() == 0 || res.size() == 1);
+  return (res.size() == 1);
+}
+
+void database::get_file_cert(hexenc<id> const & hash,
+			     file<cert> & c)
+{
+  results res;
+  vector<cert> certs;
+  fetch(res, 5, one_row, 
+	"SELECT id, name, value, keypair, signature "
+	"FROM file_certs "
+	"WHERE hash = '%q'", 
+	hash().c_str());
+  results_to_certs(res, certs);
+  I(certs.size() == 1);
+  c = file<cert>(certs[0]);
+}
+
+
 
 
 
@@ -1373,6 +1428,34 @@ void database::get_manifest_certs(manifest_id const & id,
   get_certs(id.inner(), certs, "manifest_certs"); 
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+}
+
+bool database::manifest_cert_exists(hexenc<id> const & hash)
+{
+  results res;
+  vector<cert> certs;
+  fetch(res, one_col, any_rows, 
+	"SELECT id "
+	"FROM manifest_certs "
+	"WHERE hash = '%q'", 
+	hash().c_str());
+  I(res.size() == 0 || res.size() == 1);
+  return (res.size() == 1);
+}
+
+void database::get_manifest_cert(hexenc<id> const & hash,
+				 manifest<cert> & c)
+{
+  results res;
+  vector<cert> certs;
+  fetch(res, 5, one_row, 
+	"SELECT id, name, value, keypair, signature "
+	"FROM manifest_certs "
+	"WHERE hash = '%q'", 
+	hash().c_str());
+  results_to_certs(res, certs);
+  I(certs.size() == 1);
+  c = manifest<cert>(certs[0]);
 }
 
 
