@@ -1,3 +1,9 @@
+2003-09-24  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (queue_edge_for_target_ancestor): Queue the
+	correct ancestry cert, from child to target, as well as
+	patch_set.
+
 2003-09-22  graydon hoare  <graydon@pobox.com>
 
 	* depot_schema.sql, schema_migration.cc, 

@@ -464,6 +464,10 @@ static void queue_edge_for_target_ancestor (pair<url,group> const & targ,
     {	    
       app.db.get_manifest_version(targ_ancestor_id, targ_ancestor_data);
       read_manifest_map(targ_ancestor_data, targ_ancestor_map);
+      
+      // very important: queue an edge directly from any found ancestor
+      // to the new child. regardless of other certs we may have.
+      cert_manifest_ancestor(targ_ancestor_id, child_id, app, qpw);
     }
 
   patch_set ps;
