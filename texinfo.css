@@ -1,0 +1,65 @@
+h1, h2, h3, h4
+	{
+		color: #990000;
+	}
+
+hr
+	{
+		border-style: none;
+	}
+
+div.node
+	{
+		margin: 0em;
+		padding: 0em;
+	}
+
+div.node hr
+	{
+		float: right;
+		height: 0;
+		width: 0;
+		padding: 0; 
+		margin: 0;
+	}
+
+div.node br
+	{
+		float: right;
+		height: 0;
+		width: 0;
+		padding: 0; 
+		margin: 0;
+	}
+
+div.node p
+	{
+		font-style: italic;
+		font-size: small;
+		margin: 0em;
+		padding: 0em;		
+		border-bottom: thin solid grey;
+	}
+
+ul.menu li
+	{
+		margin: 0.2em;
+	}
+
+ul.menu li a
+	{
+		font-weight: bold;
+	}
+
+
+dt 
+	{ 
+		background-color: #eeeeee;
+	}
+
+dd 
+	{ 
+		padding-top: 0.5em;
+		padding-bottom: 1.5em;
+		padding-left: 2em;	
+	}

@@ -5,6 +5,7 @@
 @setchapternewpage odd
 @c %**end of header
 
+@syncodeindex fn cp
 @include version.texi
 
 @ifinfo
@@ -72,6 +73,7 @@ version control tools.
 * Hook Reference::      Functions which extend monotone
 * Technical Notes::     Under the hood of monotone
 * Man Page::            That other document
+* Index::               Index of concepts and functions
 @end menu
 
 
@@ -132,12 +134,12 @@ direction of the edit, from parent to child.
 
 We may want to identify the parent and the child precisely, for sake
 of reference. To do so, we will compute a @i{cryptographic hash
-function}, called @sc{SHA1}, of each version. The deails of this
-function are beyond the scope of this document; in summary, the @sc{SHA1}
+function}, called @sc{sha1}, of each version. The deails of this
+function are beyond the scope of this document; in summary, the @sc{sha1}
 function takes a version of a file and produces a short string of 20
 bytes, which we will use to uniquely identify the version@footnote{we
-say @sc{SHA1} values are ``unique'' here, when in fact there is a
-small probability of two different versions having the same @sc{SHA1}
+say @sc{sha1} values are ``unique'' here, when in fact there is a
+small probability of two different versions having the same @sc{sha1}
 value. this probability is very small, so we discount it.}.  Now our
 graph does not refer to some ``abstract'' parent and child, but rather
 to the exact edit we performed between a specific parent and a
@@ -163,7 +165,7 @@ specific child.
 @end example
 
 When dealing with versions of files, we will dispense with writing out
-``file names'', and identify versions @i{purely} by their @sc{SHA1}
+``file names'', and identify versions @i{purely} by their @sc{sha1}
 value, which we will also refer to as their @dfn{version code}. Using
 version codes alone will often help us accomodate the fact that people
 often wish to call files by different names. So now our graph of
@@ -282,8 +284,8 @@ to the filename.
 @end example
 
 Now we note that a manifest is itself a file. Therefore a manifest can
-serve as input to the @sc{SHA1} function, and thus every manifest has
-a version code of its own. By calculating the @sc{SHA1} value of a
+serve as input to the @sc{sha1} function, and thus every manifest has
+a version code of its own. By calculating the @sc{sha1} value of a
 manifest, we capture the @i{state of our tree} in a single version
 code. In other words, the version code of the manifest essentially
 captures all the version codes and file names of every file in our
@@ -904,7 +906,7 @@ need to specify them again.  We will therefore only mention these
 arguments in the first example.
 
 @subsection Version Codes
-Many commands require you to supply 40-character SHA1 values as
+Many commands require you to supply 40-character @sc{sha1} values as
 arguments, which we refer to as @i{versions}. These are tedious to
 type, so monotone permits you to supply @i{unambiguous prefixes} of
 versions, rather than complete versions. For example, you may type
@@ -919,7 +921,7 @@ We are now ready to explore some version control tasks.
 
 @menu
 * Creating a Database::   Create a new database.
-* Generating Keys::       Generate an RSA public/private key pair
+* Generating Keys::       Generate an @sc{rsa} public/private key pair
 * Adding Files::          Import the state of the tree to the database
 * Making Changes::        Edit a file and examine work
 * Committing Changes::    Save your work in the database
@@ -947,7 +949,7 @@ $ monotone db init --db=$HOME/test.db
 @node    Generating Keys
 @section Generating Keys
 
-Now we must generate an RSA key pair for ourselves. This step requires
+Now we must generate an @sc{rsa} key pair for ourselves. This step requires
 choosing a key identifier. Typical key identifiers are similar to email addresses,
 possibly modified with some prefix or suffix to distinguish multiple keys held by
 the same owner. We will use the key identifier ``testkey@@nodomain.org''. When we
@@ -1056,7 +1058,7 @@ ok sig from [testkey@@nodomain.org] : [date] = [2003-04-04T07:39:51]
 
 The output of this command has a line for each cert found. Each line
 has 4 significant pieces of information. The first indicates whether
-this cert is ``ok'', meaning whether the RSA signature provided is
+this cert is ``ok'', meaning whether the @sc{rsa} signature provided is
 correct for the cert data. The second indicates the signer of the
 cert, in this case @code{testkey@@nodomain.org}. The third is the cert
 name, and the fourth is the cert value. This list shows us that
@@ -1657,7 +1659,7 @@ request a personal retransmission, via email for example.
 @node       Set up a Depot
 @subsection Set up a Depot
 
-The first step in setting up a depot is to extract our RSA public key
+The first step in setting up a depot is to extract our @sc{rsa} public key
 packet from our monotone database. This will enable us to communicate
 securely with the depot. We will extract the key to the file
 @file{key-packet.txt}:
@@ -1666,7 +1668,7 @@ securely with the depot. We will extract the key to the file
 $ monotone pubkey testkey@@nodomain.org >key-packet.txt
 @end example
 
-The packet generated is a plain text encoding of an RSA public key
+The packet generated is a plain text encoding of an @sc{rsa} public key
 number. It looks pretty much like any other packet:
 
 @example
@@ -1721,7 +1723,7 @@ depot operational with 0 packets.
 
 For monotone to fetch from our newly created depot, we must edit our
 @file{.monotonerc} file, which is a collection of functions written in
-the @command{lua} programming language. We will write some entries
+the @uref{http://www.lua.org, Lua} programming language. We will write some entries
 which tell monotone which network server and logical group name to
 post to, and which user name we would like to post as. Configuration
 in monotone is always done as @i{hook functions}, which calculate
@@ -1756,7 +1758,7 @@ your depot is carrying many different sorts of data, and you want to
 be able to fetch only part of the data at a time.
 
 The second hook function takes a URL and logical group name, and
-returns the name of an RSA keypair in your database, to use for
+returns the name of an @sc{rsa} keypair in your database, to use for
 authenticating transmissions to the depot. This will generally be the
 name of the key you use to sign certificates.
 
@@ -1785,7 +1787,7 @@ $ monotone checkout fe37 ./wobbler-checkout
 The CVS command contacts a network server, retrieves a version, and
 stores it in your working copy. There are two cosmetic differences
 with the monotone command: network servers are denoted by URLs and
-``group names'', and versions are denoted by SHA1 values (or
+``group names'', and versions are denoted by @sc{sha1} values (or
 unambiguous prefixes thereof). 
 
 There is also one deep difference: fetching versions into your
@@ -1966,16 +1968,14 @@ all, commands are grouped into logical categories.
 @node    Tree
 @section Tree
 
-@table @command
+@ftable @command
 @item monotone cat file @var{id}
 @itemx monotone cat manifest @var{id}
 
 These commands write the contents of a specific file or manifest
 version @var{id} to standard output. They are useful if you wish to
 inspect a version without checking it out into your working copy.
-@end table
 
-@table @command
 @item monotone checkout @var{id} @var{directory}
 @itemx monotone co @var{id} @var{directory}
 
@@ -2000,9 +2000,8 @@ Then the following files are created:
 If you wish to @command{checkout} in the current directory, you can
 supply the special name @file{.} (a single period) for
 @var{directory}.
-@end table
 
-@table @command
+
 @item monotone heads --branch=@var{branchname}
 This command lists the ``heads'' of @var{branchname}. 
 
@@ -2012,9 +2011,8 @@ generally the ``newest'' versions committed by you or your colleagues,
 at least in terms of ancestry. The heads of a branch may not be the
 newest versions, in terms of time, but synchronization of time is not
 reliable, so monotone usually ignores time.
-@end table
 
-@table @command
+
 @item monotone merge --branch=@var{branchname}
 This command merges the ``heads'' of @var{branchname}, if there are
 multiple heads, and commits the results to the database, marking the
@@ -2027,10 +2025,10 @@ selected, then their least common ancestor is located in the ancestry
 graph and these 3 manifests are provided to the built-in 3-way merge
 algorithm. The process then repeats for each additional head, using
 the result of each previous merge as an input to the next.
-@end table
+@end ftable
 
 
-@table @command
+@ftable @command
 @item monotone propagate @var{sourcebranch} @var{destbranch}
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
@@ -2046,14 +2044,14 @@ branches for medium-length development activities, such as
 maintainance branches for stable software releases, trivial bug fix
 branches, public contribution branches, or branches devoted to the
 development of a single module within a larger project.
-@end table
+@end ftable
 
 
 
 @node    Working Copy
 @section Working Copy
 
-@table @command
+@ftable @command
 @item monotone add @var{filename...}
 This command places ``add'' entries for the paths specified in
 @var{filename...} in the working copy's ``work list''. The work list
@@ -2064,10 +2062,9 @@ as addition and removal of files.
 While this command places an ``add'' entry on your work list, it does
 not affect your database. When you @command{commit} your working copy,
 the added files on your work list will be copied into your database
-and their paths and SHA1 values added to your working copy manifest.
-@end table
+and their paths and @sc{sha1} values added to your working copy manifest.
 
-@table @command
+
 @item monotone drop @var{filename...}
 This command places ``drop'' entries for the paths specified in
 @var{filename...} in the working copy's ``work list''. The work list
@@ -2079,9 +2076,8 @@ While this command places an ``drop'' entry on your work list, it does
 not affect your database. When you @command{commit} your working copy,
 the dropped files on your work list will have their entries removed
 from your working copy's manifest. 
-@end table
 
-@table @command
+
 @item monotone commit
 @itemx monotone commit @var{logmsg}
 This command looks at your working copy, decides which files have
@@ -2115,18 +2111,16 @@ will be used, otherwise @command{commit} will run a lua hook, which
 typically invokes an external editor program, in which you can compose
 a log message for the change.
 @end itemize
-@end table
 
-@table @command
+
 @item monotone revert
 This command changes your working copy, so that changes you have made
 since the last checkout or update are discarded. It does this by
 changing every file listed in @file{MT/manifest} to have contents
-equal to the SHA1 value listed in the manifest, and by erasing the
+equal to the @sc{sha1} value listed in the manifest, and by erasing the
 @file{MT/work} file.
-@end table
 
-@table @command
+
 @item monotone update
 @itemx monotone update @var{sort...}
 This command incorporates ``recent'' changes found in your database
@@ -2149,182 +2143,158 @@ Merge the target of the update with the working copy, in memory, and
 if the merge is successful, write the result over top of the working
 copy.
 @end itemize
-@end table
+@end ftable
 
 
 
 @node    Network
 @section Network
 
-@table @command
+@ftable @command
 @item monotone fetch
 @itemx monotone fetch @var{url} @var{groupname} 
-@end table
-
-@table @command
 @item monotone post
-@end table
+@end ftable
 
 
 
 @node    Informative
 @section Informative
 
-@table @command
+@ftable @command
 @item monotone status
-@end table
 
-@table @command
+
 @item monotone complete file @var{partial-id}
 @itemx monotone complete manifest @var{partial-id}
-@end table
 
-@table @command
+
 @item monotone diff 
 @itemx monotone diff @var{id}
 @itemx monotone diff @var{id1} @var{id2}
-@end table
 
-@table @command
+
 @item monotone list certs file @var{id}
 @itemx monotone list certs manifest @var{id}
-@end table
 
-@table @command
+
 @item monotone list keys
 @itemx monotone list keys @var{pattern}
-@end table
 
-@table @command
+
 @item monotone list branches
-@end table
 
-@table @command
+
 @item monotone list unknown
-@end table
 
-@table @command
+
 @item monotone list ignored
-@end table
+@end ftable
 
 
 
 @node    Key and Cert
 @section Key and Cert
 
-@table @command
+@ftable @command
 @item monotone genkey @var{keyid}
-@end table
 
-@table @command
+
 @item monotone cert file @var{id} @var{certname} 
 @itemx monotone cert file @var{id} @var{certname} @var{certval}
 @itemx monotone cert manifest @var{id} @var{certname} 
 @itemx monotone cert manifest @var{id} @var{certname} @var{certval}
-@end table
+@end ftable
 
 
 
 @node    Certificate
 @section Certificate
 
-@table @command
+@ftable @command
 @item monotone approve file @var{id}
 @itemx monotone approve manifest @var{id}
-@end table
 
-@table @command
-@item monotone approve file @var{id}
-@itemx monotone approve manifest @var{id}
-@end table
 
-@table @command
+@item monotone disapprove file @var{id}
+@itemx monotone disapprove manifest @var{id}
+
+
 @item monotone comment file @var{id}
 @itemx monotone comment file @var{id} @var{comment}
 @itemx monotone comment manifest @var{id}
 @itemx monotone comment manifest @var{id} @var{comment}
-@end table
 
-@table @command
+
 @item monotone tag @var{id} @var{tagname}
-@end table
+@end ftable
 
 
 
 @node    Packet I/O
 @section Packet I/O
 
-@table @command
+@ftable @command
 @item monotone fcerts @var{id}
 @itemx monotone mcerts @var{id}
-@end table
 
-@table @command
+
 @item monotone fdata @var{id}
 @itemx monotone mdata @var{id}
-@end table
 
-@table @command
+
 @item monotone fdelta @var{id1} @var{id2}
 @itemx monotone mdelta @var{id1} @var{id2}
-@end table
 
-@table @command
+
 @item monotone privkey @var{keyid}
 @itemx monotone pubkey @var{keyid}
-@end table
 
-@table @command
+
 @item monotone read
-@end table
+@end ftable
 
 
 @node    Database
 @section Database
 
-@table @command
+@ftable @command
 @item monotone db init --db=@var{database} 
-@end table
 
-@table @command
+
 @item monotone db dump --db=@var{database} 
-@end table
 
-@table @command
+
 @item monotone db load --db=@var{database} 
-@end table
 
-@table @command
+
 @item monotone db info --db=@var{database} 
-@end table
 
-@table @command
+
 @item monotone db version --db=@var{database} 
-@end table
 
-@table @command
+
 @item monotone db migrate --db=@var{database} 
-@end table
+@end ftable
 
 
 @node    RCS
 @section RCS
 
-@table @command
+@ftable @command
 @item monotone rcs_import @var{filename...}
-@end table
 
-@table @command
+
 @item monotone cvs_import @var{pathname...}
-@end table
+@end ftable
 
 
 @node    Debug
 @section Debug
 
-@table @command
+@ftable @command
 @item monotone debug @var{sql-statement}
-@end table
+@end ftable
 
 
 
@@ -2332,6 +2302,74 @@ copy.
 
 @node    Hook Reference
 @chapter Hook Reference
+
+Monotone's behavior can be customized and extended by writing
+@dfn{hook functions}, which are written in the
+@uref{http://www.lua.org, Lua} programming language. At certain points
+in time, when monotone is running, it will call a hook function to
+help it make a decision or perform some action.  If you provide a hook
+function definition which suits your preferences, monotone will
+execute it. This way you can modify how monotone behaves.
+
+You can put new definitions for any of these hook functions in a file
+@file{$HOME/.monotonerc}, which will be read every time monotone
+runs. You can also tell monotone to interpret extra hook functions
+from any other @var{file} using the @option{--rcfile=@var{file}}
+option.
+
+The remainder of this section documents the existing hook functions
+and their default definitions. 
+
+@ftable @code
+@item get_branch_key (@var{branchname})
+
+Returns a string which is the name of an @sc{rsa} private key used to sign
+certificates in a particular branch @var{branchname}. There is no
+default definition for this hook. The command-line option
+@option{--key=@var{keyname}} overrides any value returned from this
+hook function. If you have only one private key in your database, you
+do not need to define this function or provide a
+@option{--key=@var{keyname}} option; monotone will guess that you want
+to use the unique private key.
+
+@item get_passphrase (@var{branchname})
+@item get_author (@var{branchname})
+@item edit_comment (@var{commentary})
+@item persist_phrase_ok ()
+@item non_blocking_rng_ok ()
+@item get_news_sender (@var{url}, @var{group})
+@item get_http_auth (@var{url}, @var{group})
+@item get_post_targets (@var{branchname})
+@item get_fetch_sources (@var{branchname})
+@item ignore_file (@var{filename})
+
+Returns @code{true} if @var{filename} should be ignored while adding,
+dropping, or moving files. Otherwise returns @code{false}. This is
+most important when performing recursive actions on directories, which
+may affect multiple files simultaneously. The default definition of
+this hook is:
+
+@example
+function ignore_file(name)
+	if (string.find(name, "%.o$")) then return true end
+	if (string.find(name, "%.aux$")) then return true end
+	if (string.find(name, "%.bak$")) then return true end
+	if (string.find(name, "%.orig$")) then return true end
+	if (string.find(name, "%.rej$")) then return true end
+	if (string.find(name, "/core$")) then return true end
+	if (string.find(name, "^CVS/")) then return true end
+	if (string.find(name, "^SVN/")) then return true end
+	if (string.find(name, "/CVS/")) then return true end
+	if (string.find(name, "/SVN/")) then return true end
+	return false;
+end
+@end example
+
+@item get_sorter (@var{certname})
+@item merge2 (@var{left}, @var{right})
+@item merge3 (@var{ancestor}, @var{left}, @var{right})
+@item attr_functions [@var{arrtibute}] (@var{filename}, @var{value})
+@end ftable
 
 @node    Technical Notes
 @chapter Technical Notes
@@ -2445,7 +2483,7 @@ from stdin if no value given on command line.
 @comment TROFF INPUT: .TP
 
 @item @b{genkey} @i{<keyid>}
-Generate an RSA key-pair and store it in the database.
+Generate an @sc{rsa} key-pair and store it in the database.
 @comment TROFF INPUT: .TP
 
 @item @b{list certs} @i{(file|manifest) <id>}
@@ -2630,7 +2668,7 @@ Use database in @i{file}.
 @comment TROFF INPUT: .TP
 
 @item @b{--key=}@i{<keyid>}
-Use @i{keyid} for operations which produce RSA signatures. Default
+Use @i{keyid} for operations which produce @sc{rsa} signatures. Default
 is inferred from presence of unique private key in database. Can also
 be set with environment variable @b{MT@t{_}KEY} or customized on a per-branch
 basis with hook function @b{get@t{_}branch@t{_}key(branchname)}.
@@ -2661,7 +2699,7 @@ Database file to use
 @comment TROFF INPUT: .TP
 
 @item @b{MT@t{_}KEY}
-Key to use for operations which produce RSA signatures
+Key to use for operations which produce @sc{rsa} signatures
 (same as @b{--key} option).
 @comment TROFF INPUT: .TP
 
@@ -2735,5 +2773,10 @@ None known, please report any found.
 @c DEBUG: print_menu("AUTHOR")
 
 graydon hoare <graydon@@pobox.com>
+
+@node Index
+@unnumbered Index
+     
+@printindex cp
 
 @bye

@@ -157,6 +157,7 @@ AM_CXXFLAGS = -DNDEBUG -DBOOST_DISABLE_THREADS -Wall
 man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
+             texinfo.css \
 	     schema.sql depot_schema.sql \
 	     std_hooks.lua test_hooks.lua \
 	     testsuite.at \
@@ -216,6 +217,8 @@ txt2c: txt2c.cc Makefile
 
 # automake doesn't build html docs
 
-html: monotone.texi 
+html: monotone.texi texinfo.css
 	mkdir -p html
 	makeinfo --number-sections --html --output html $<
+	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
+	cp texinfo.css html
