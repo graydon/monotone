@@ -1957,16 +1957,21 @@ dump_diffs(change_set::delta_map const & deltas,
 				  unpacked, app.lua);
 	    }
 	  
-	  split_into_lines(unpacked(), lines);
-	  if (! lines.empty())
-	    {
-	      cout << (F("--- %s\n") % delta_entry_path(i))
-		   << (F("+++ %s\n") % delta_entry_path(i))
-		   << (F("@@ -0,0 +1,%d @@\n") % lines.size());
-	      for (vector<string>::const_iterator j = lines.begin();
-		   j != lines.end(); ++j)
+	  if (guess_binary(unpacked()))
+	    cout << "# " << delta_entry_path(i) << " is binary\n";
+	  else
+	    {	  
+	      split_into_lines(unpacked(), lines);
+	      if (! lines.empty())
 		{
-		  cout << "+" << *j << endl;
+		  cout << (F("--- %s\n") % delta_entry_path(i))
+		       << (F("+++ %s\n") % delta_entry_path(i))
+		       << (F("@@ -0,0 +1,%d @@\n") % lines.size());
+		  for (vector<string>::const_iterator j = lines.begin();
+		       j != lines.end(); ++j)
+		    {
+		      cout << "+" << *j << endl;
+		    }
 		}
 	    }
 	}
@@ -1994,12 +1999,18 @@ dump_diffs(change_set::delta_map const & deltas,
 	      read_localized_data(delta_entry_path(i), 
 				  decompressed_new, app.lua);
 	    }
-    
-	  split_into_lines(decompressed_old(), old_lines);
-	  split_into_lines(decompressed_new(), new_lines);
-	  unidiff(delta_entry_path(i)(), 
-		  delta_entry_path(i)(), 
-		  old_lines, new_lines, cout);
+
+	  if (guess_binary(decompressed_new()) || 
+	      guess_binary(decompressed_old()))
+	    cout << "# " << delta_entry_path(i) << " is binary\n";
+	  else
+	    {
+	      split_into_lines(decompressed_old(), old_lines);
+	      split_into_lines(decompressed_new(), new_lines);
+	      unidiff(delta_entry_path(i)(), 
+		      delta_entry_path(i)(), 
+		      old_lines, new_lines, cout);
+	    }
 	}
     }
 }
@@ -2343,7 +2354,8 @@ try_one_merge(revision_id const & left_id,
   
   if(find_common_ancestor(left_id, right_id, anc_id, app))
     {	  
-      P(F("common ancestor %s found, trying 3-way merge\n") % anc_id); 
+      P(F("common ancestor %s found\n") % anc_id); 
+      P(F("trying 3-way merge\n"));
       
       app.db.get_revision(anc_id, anc_rev);
       app.db.get_manifest(anc_rev.new_manifest, anc_man);
@@ -2417,8 +2429,9 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   for (++i; i != heads.end(); ++i, ++count)
     {
       revision_id right = *i;
-      P(F("merging with revision %d / %d: %s <-> %s\n")
-	% count % heads.size() % left % right);
+      P(F("merging with revision %d / %d") % count % heads.size());
+      P(F("[source] %s\n") % left);
+      P(F("[source] %s\n") % right);
 
       revision_id merged;
       transaction_guard guard(app.db);
@@ -2435,8 +2448,6 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
       cert_revision_changelog(merged, log, app, dbw);
 	  
       guard.commit();
-      P(F("[source] %s\n") % left);
-      P(F("[source] %s\n") % right);
       P(F("[merged] %s\n") % merged);
       left = merged;
     }

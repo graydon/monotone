@@ -67,8 +67,7 @@ version control tools.
 
 @menu
 * Concepts::            Taxonomy of monotone
-* Getting Started::     Simple use of monotone
-* Network Service::     How to use the networking system
+* Tutorial::            A detailed example of using monotone
 * Special Topics::      Extra explanations and details
 * CVS Phrasebook::      Transitional guide for CVS users
 * Command Reference::   Details of each monotone command
@@ -113,60 +112,22 @@ parent and the child. We may draw the relationship between parent and
 child using a graph, where the arrow in the graph indicates the
 direction of the edit, from parent to child.
 
-@smallexample
-@group
-     +----------------+
-     |                |
-     | parent version |
-     | of file.txt    |
-     |                |
-     +----------------+
-              |
-              |
-             \|/
-              V
-     +----------------+
-     |                |
-     | child version  |
-     | of file.txt    |
-     |                |
-     +----------------+
-@end group
-@end smallexample
+@image{figures/parent-child}
 
 We may want to identify the parent and the child precisely, for sake
 of reference. To do so, we will compute a @i{cryptographic hash
 function}, called @sc{sha1}, of each version. The details of this
 function are beyond the scope of this document; in summary, the @sc{sha1}
 function takes a version of a file and produces a short string of 20
-bytes, which we will use to uniquely identify the version@footnote{we
+bytes, which we will use to uniquely identify the version@footnote{We
 say @sc{sha1} values are ``unique'' here, when in fact there is a
 small probability of two different versions having the same @sc{sha1}
-value. this probability is very small, so we discount it.}.  Now our
+value. This probability is very small, so we discount it.}.  Now our
 graph does not refer to some ``abstract'' parent and child, but rather
 to the exact edit we performed between a specific parent and a
 specific child.
 
-@smallexample
-@group
-     +---------------------------------------------------+
-     | parent version                                    |
-     | of file.txt                                       |
-     |                                                   |
-     | SHA1 = 65f1bde1f38262034e7c3457301e8f736ba6381b   |
-     +---------------------------------------------------+
-              |
-              |
-             \|/
-              V
-     +---------------------------------------------------+
-     | child version                                     |
-     | of file.txt                                       |
-     |                                                   |
-     | SHA1 = a91566316d208dc405795904f8d67ae3a0e765cb   |
-     +---------------------------------------------------+
-@end group
-@end smallexample
+@image{figures/parent-child-names-hashes}
 
 When dealing with versions of files, we will dispense with writing out
 ``file names'', and identify versions @i{purely} by their @sc{sha1}
@@ -175,22 +136,7 @@ alone will often help us accommodate the fact that people often wish
 to call files by different names. So now our graph of parent and child
 is just a relationship between two versions, only identified by ID.
 
-@smallexample
-@group
-     +---------------------------------------------------+
-     | parent version                                    |
-     | SHA1 = 65f1bde1f38262034e7c3457301e8f736ba6381b   |
-     +---------------------------------------------------+
-              |
-              |
-             \|/
-              V
-     +---------------------------------------------------+
-     | child version                                     |
-     | SHA1 = a91566316d208dc405795904f8d67ae3a0e765cb   |
-     +---------------------------------------------------+
-@end group
-@end smallexample
+@image{figures/parent-child-hashes}
 
 Version control systems, such as monotone, are principally concerned
 with the storage and management of @i{multiple} versions of some
@@ -199,22 +145,7 @@ save a separate @i{complete} copy of the file, every time you make a
 change. When necessary, monotone will save complete copies of your
 files in their, compressed with the @command{zlib} compression format.
 
-@smallexample
-@group
-   +--------------+  +--------------+  +--------------+
-   |              |  |              |  |              |
-   | Hello        |  | Hello,       |  | Why, Hello   |
-   |              |  | world!       |  | there world, |    . . .
-   |              |  |              |  | how do you   |
-   |              |  |              |  | do?          |
-   |              |  |              |  |              |
-   +--------------+  +--------------+  +--------------+
-
-   \______  ______/  \______  ______/  \______  ______/
-          \/                \/                \/
-      1st version       2nd version      3rd version
-@end group
-@end smallexample
+@image{figures/three-versions}
 
 Often we find that successive versions of a file are very similar to
 one another, so storing multiple complete copies is a waste of
@@ -232,25 +163,7 @@ when possible monotone stores deltas, using a modified @command{xdelta}
 format. The details of this format are beyond the scope of this
 document.
 
-@smallexample
-@group
-                        difference
-                     between versions
-                       _____/\____
-   +--------------+   /           \    +--------------+
-   |              |                    |              |
-   | Hello        |    +[, world!]     | Hello,       |
-   |              |                    | world!       |
-   |              |                    |              |
-   |              |                    |              |
-   |              |                    |              |
-   +--------------+                    +--------------+
-
-   \______  ______/                    \______  ______/
-          \/                                  \/
-     1st version                         2nd version
-@end group
-@end smallexample
+@image{figures/difference-between-versions}
 
 @node    Versions of trees
 @section Versions of trees
@@ -262,8 +175,6 @@ we say that you want to capture a @i{version of your tree}. Doing
 so will permit you to undo changes to multiple files at once, or send
 your friend a @i{set} of changes to many files at once.
 
-@c figure of snapshotting a tree
-
 To make a snapshot of a tree, we begin by writing a special file
 called a @dfn{manifest}. In fact, monotone will write this file for
 us, but we could write it ourselves too. It is just a plain text
@@ -272,27 +183,7 @@ column we write the ID of a file in your tree, and in the second
 column we write the path to the file, from the root of our tree to the
 filename.
 
-@smallexample
-@group
-+--------------------------------------------------------------+
-|                                                              |
-|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
-|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
-|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
-|  ddc2686e000e97f670180c60a3066989e56a11a3  fs/open.c         |
-|  295d276e6c9ce64846d309a8e39507bcb0a14248  fs/namespace.c    |
-|  71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc  fs/namei.c        |
-|  1112c0f8054cebc9978aa77384e3e45c0f3b6472  fs/iobuf.c        |
-|  8ddcfcc568f33db6205316d072825d2e5c123275  fs/inode.c        |
-|                                                              |
-+--------------------------------------------------------------+
-
-\_____________________________  _______________________________/
-                              \/
-                          an example
-                         manifest file
-@end group
-@end smallexample
+@image{figures/manifest}
 
 Now we note that a manifest is itself a file. Therefore a manifest can
 serve as input to the @sc{sha1} function, and thus every manifest has
@@ -303,36 +194,7 @@ and file names of every file in our tree, combined. So we may treat
 manifests and their IDs as @i{snapshots} of a tree of files, though
 lacking the actual contents of the files themselves.
 
-@smallexample
-@group
-  +--------------------------+
-  |   int readdir(...) @{     |
-  |     ...                  |
-  |   @}                      |
-  +--------------------------+
-
-  \____________  ___________/
-               \/
-              SHA1
-               ||
-+--------------||----------------------------------------------+
-|              \/                                              |
-|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
-|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
-|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
-|                   . . .                       . . .          |
-+--------------------------------------------------------------+
-
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-                              ||
-                              \/
-                         manifest ID:
-           a2eeaa28574141a7d48fa1cc2802070150b93ec4
-@end group
-@end smallexample
+@image{figures/file-id-manifest-id}
 
 As with versions of files, we may decide to store manifests in their
 entirety, or else we may store only a compact description of changes
@@ -355,20 +217,7 @@ changes -- monotone builds a special composite file called a
 are ordinary text files which can be passed through the @sc{sha1}
 function and thus assigned a @dfn{revision ID}.
 
-+--------------------------------------------------------------+
-|                                                              |
-|                 ... content of revision ...                  |
-|                                                              |
-+--------------------------------------------------------------+
-
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-                              \/
-                         revision ID:
-           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
-
+@image{figures/revision}
 
 The content of a revision makes reference to file IDs, in describing
 a changeset, and manifest IDs, in describing tree states ``before and
@@ -382,42 +231,7 @@ return to a previously-visited manifest ID during the course of your
 edits, each revision will incorporate the ID of its predecessor, thus
 forming a new unique ID for each point in history.
 
-@smallexample
-@group
-                              ||
-+-----------------------------||-------------------------------+
-|                             \/                               |
-|  old_revision: 86d06a095529dca003ad62715dc2be7873edade0      |
-|    change_set:           .  .  .                             |
-|  old_manifest: 1b24ba8b8dc3ff9c87b5198315eced1b279dc74e  <----- manifest ID 
-|  new_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
-|                                                              |
-+--------------------------------------------------------------+
-
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-+-----------------------------||-------------------------------+
-|                             \/                               |
-|  old_revision: f45add3bfb21cb459d99b6a9c0111df75f6d9f85      |
-|    change_set:           .  .  .                             |
-|  old_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
-|  new_manifest: 8a05c60422770bbf49a3192c2367ddaa066538ca  <----- manifest ID 
-|                                                              |
-+--------------------------------------------------------------+
-
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-                              \/
-                         revision ID:
-           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
-
-@end group
-@end smallexample
-
+@image{figures/revision-chaining}
 
 @node    Certificates
 @section Certificates
@@ -443,17 +257,7 @@ a @i{value} indicating the remaining detail of the statement, such as
 For example, if you want to say that a particular revision was
 composed on April 4, 2003, you might make a statement like this:
 
-@smallexample
-@group
-      +------------------------------------------------------+
-      |  revision ID                                         |
-      |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
-      +--------------------------+---------------------------+
-      |  statement name          |  statement value          |
-      |  "date"                  |  "2003-04-04T07:39:51"    |
-      +--------------------------+---------------------------+
-@end group
-@end smallexample
+@image{figures/statement}
 
 In an ideal world, these are all the parts of a statement we would
 need in order to go about our work. In the real world, however, there
@@ -476,20 +280,7 @@ a secure fashion. The security of the signature in a cert is derived
 from the @sc{rsa} cryptography system, the details of which are beyond
 the scope of this document.
 
-@smallexample
-@group
-      +------------------------------------------------------+
-      |  revision ID                                         |
-      |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
-      +--------------------------+---------------------------+
-      |  cert name               |  cert value               |
-      |  "date"                  |  "2003-04-04T07:39:51"    |
-      +--------------------------+---------------------------+
-      |  signed by key           |  signature                |
-      |  "jrh@@somewhere.com"     |  "a02380def....0983fe90"  |
-      +--------------------------+---------------------------+
-@end group
-@end smallexample
+@image{figures/cert}
 
 Monotone uses certs extensively. Any ``extra'' information which needs
 to be stored, transmitted or retrieved --- above and beyond files,
@@ -533,25 +324,7 @@ not move information directly between a working copy and a remote
 database, or between working copies. Your local database is always
 the ``switching point'' for communication.
 
-@smallexample
-@group
-             pull, push, sync
-       (untrusted network exchanges)
-            _________/\________
-           /                   \
-
-    +-------------+      +------------+      +--------------+
-    |             |      |            |      |              |
-    |  remote db  | <==> |  local db  | <==> | working copy |
-    |             |      |            |      |              |
-    +-------------+      +------------+      +--------------+
-
-                                \________  _______/
-                                         \/
-                                  commit, update
-                            (certified local exchanges)
-@end group
-@end smallexample
+@image{figures/general-workflow}
 
 A @dfn{working copy} is a tree of files in your file system, arranged
 according to the list of file paths and IDs in a particular
@@ -575,19 +348,7 @@ and @dfn{update} a working copy to receive changes that have arrived
 in a database. Committing and updating take place purely between a
 database and a working copy; the network is not involved.
 
-@smallexample
-@group
-   -----------------     check out,      working copy
-  (                 )    or update      +----------------
-   -----------------     ---------->    |
-  |                 |                   |  src/func.c
-  |      local      |   <----------     |  src/func.h
-  |     database    |    add,           |  src/main.c
-  |                 |    or commit      |  Makefile
-  \_________________/                   |  MT/
-                                        |
-@end group
-@end smallexample
+@image{figures/local-workflow}
 
 A @dfn{database} is a single, regular file. You can copy or back it up
 using standard methods. Typically you keep a database in your home
@@ -616,18 +377,7 @@ the destination is copied. The netsync protocol calculates the data to
 send ``on the fly'' by exchanging partial hash values of each
 database.
 
-@smallexample
-@group
-  -----------------                    ----------------- 
- (                 )                  (                 )
-  -----------------    --- pull --->   -----------------       
- |                 |                  |                 |
- |      remote     |  <--- sync --->  |      local      |
- |     database    |                  |     database    |
- |                 |  <--- push ---   |                 |
- \_________________/                  \_________________/
-@end group
-@end smallexample
+@image{figures/network-workflow}
 
 In general, work flow with monotone involves 3 distinct stages:
 
@@ -678,23 +428,7 @@ So far we have been talking about revisions as though each logically
 follows exactly one revision before it, in a simple sequence of
 revisions.
 
-@smallexample
-@group
-       +-----------------------+
-       |  parent revision      |
-       +-----------------------+
-                |
-                |
-       +-----------------------+
-       |  child revision       |
-       +-----------------------+
-                |
-                |
-       +-----------------------+
-       |  grandchild revision  |
-       +-----------------------+
-@end group
-@end smallexample
+@image{figures/linear-history}
 
 This is a rosy picture, but sometimes it does not work out this
 way. Sometimes when you make new revisions, other people are
@@ -710,21 +444,7 @@ child}. In a large collection of revisions with many people editing
 files, especially on many different computers spread all around the
 world, forks are a common occurrence.
 
-
-@smallexample
-@group
-             +-----------------+
-             | parent revision |
-             +-----------------+
-                    |   |
-           +--------+   +---------+
-           |                      |
-     +-------------+     +--------------+
-     | left child  |     | right child  |
-     +-------------+     +--------------+
-@end group
-@end smallexample
-
+@image{figures/fork}
 
 If we analyze the changes in each child revision, we will often find
 that the changeset between the parent and the left child are unrelated
@@ -732,25 +452,7 @@ to the changeset between the parent and the right child. When this
 happens, we can usually @dfn{merge} the fork, producing a common
 grandchild revision which contains both changesets.
 
-@smallexample
-@group
-             +-----------------+
-             | parent revision |
-             +-----------------+
-                    |   |
-           +--------+   +---------+
-           |                      |
-     +-------------+     +--------------+
-     | left child  |     | right child  |
-     +-------------+     +--------------+
-           |                      |
-           +--------+   +---------+
-                    |   |
-             +-----------------+
-             | merged revision |
-             +-----------------+
-@end group
-@end smallexample
+@image{figures/merge}
 
 @node    Branches
 @section Branches
@@ -788,38 +490,7 @@ be merged. However, the @code{wobbler-stable} and
 @code{wobbler-unstable} branches will not be merged together, despite
 having a common ancestor.
 
-@smallexample
-@group
-                   +--------------------------+
-                   | common ancestor revision |
-                   +--------------------------+
-                          |          |
-                +---------+          +---------+
-                |                              |
-       +-----------------+            +-------------------+           
-       | stable revision |            | unstable revision |           
-       +-----------------+            +-------------------+           
-              | |                               | |                   
-      +-------+ +-------+               +-------+ +-------+           
-      |                 |               |                 |           
-+-------------+ +--------------+  +---------------+ +----------------+
-| left stable | | right stable |  | left unstable | | right unstable |
-|   child     | |     child    |  |   child       | |     child      |
-+-------------+ +--------------+  +---------------+ +----------------+
-      |                  |              |                  |          
-      +-------+ +--------+              +-------+ +--------+          
-              | |                               | |                   
-       +----------------+                +------------------+         
-       | merged stable  |                | merged unstable  |         
-       |   revision     |                |     revision     |         
-       +----------------+                +------------------+ 
-
-\_____________  _______________/  \_______________  _________________/
-              \/                                  \/
-         stable branch                     unstable branch
-@end group
-@end smallexample
-
+@image{figures/two-branches}
 
 For each branch, the set of revisions with @emph{no children} is
 called the @dfn{heads} of the branch. Monotone can automatically
@@ -833,33 +504,7 @@ left grandchild, since those revisions are the heads of the branch. It
 will not merge the left child with the right child, because the left
 child is not a member of the heads.
 
-@smallexample
-@group
-               +-----------------+
-               | parent revision |
-               +-----------------+
-                      |       |
-             +--------+       |
-             |                |
-       +-------------+        |
-       | left child  |        |
-       +-------------+        |
-             |                |         
-*************|****************|************
-*            |                |           *
-*  +-----------------+  +-------------+   *
-*  | left grandchild |  | right child |   *  the heads of the branch
-*  +-----------------+  +-------------+   *    (before the merge)
-*            |                |           *
-*************|****************|************
-             |                |         
-             +--------+   +---+
-                      |   |
-               +-----------------+
-               | merged revision |
-               +-----------------+
-@end group
-@end smallexample
+@image{figures/branch-heads}
 
 When there is only one revision in the heads of a branch, we say that
 @i{the heads are merged}, or more generally that @i{the branch is
@@ -868,24 +513,17 @@ merging activity. If there are two or more revisions in the heads of a
 branch, and you ask to merge the branch, monotone will merge them
 two-at-a-time until there is only one.
 
-@node    Getting Started
-@chapter Getting Started
+@node    Tutorial
+@chapter Tutorial
 
-Getting started using monotone is easy. This chapter is a tutorial,
-which illustrates the basic use of monotone by means of a small
-example software project: the canonical ``hello world'' program. We
-will assume the following files exist:
+This chapter illustrates the basic uses of monotone by means of an
+example, fictional software project. Before we walk through the
+tutorial, there are two minor issues to address: standard options and
+revision selectors.
 
-@smallexample
-@group
-src/hello.c
-include/hello.h
-Makefile
-@end group
-@end smallexample
-
-@subsection Important Options
-Before operating monotone, two options should be explained.
+@subsection Standard Options
+Before operating monotone, two inportant command-line options should
+be explained.
 
 @itemize
 @item
@@ -901,80 +539,154 @@ copy, so ordinarily once you have checked out a project, you will not
 need to specify them again.  We will therefore only mention these
 arguments in the first example.
 
-@subsection Version Selectors
+@subsection Revision Selectors
 Many commands require you to supply 40-character @sc{sha1} values as
-arguments, which we refer to as @i{versions}. These are tedious to
-type, so monotone permits you to supply ``version selectors'' rather
-than complete versions. Selectors are a more ``human friendly'' way of
-specifying versions by combining certificate values into unique
-identifiers. This ``selector'' mechanism can be used anywhere a
-version code would normally be used. For details on selector syntax,
-see @ref{Selectors}.
+arguments, which identify revisions. These ``revision IDs'' are
+tedious to type, so monotone permits you to supply ``revision
+selectors'' rather than complete revision IDs. Selectors are a more
+``human friendly'' way of specifying revisions by combining certificate
+values into unique identifiers. This ``selector'' mechanism can be
+used anywhere a revision ID would normally be used. For details on
+selector syntax, see @ref{Selectors}.
 
-We are now ready to explore some version control tasks.
+We are now ready to explore our fictional project.
+
+@section The Fictional Project
+
+Our fictional project involves 3 programmers cooperating to write
+firmware for a robot, the JuiceBot 7, which dispenses fruit juice. The
+programmers are named Jim, Abe and Beth.
+
+@itemize
+@item
+Jim lives in Japan, and owns JuiceBot Inc. You will know when we're talking
+about Jim, because everything he does involves the letter ``j''.
+@item
+Abe lives in Australia and writes code related to apple juice. You will
+know when we're talking about Abe, because everything he does involves
+the letter ``a''.
+@item
+Beth lives in Brazil and writes code related to banana juice. You will
+know when we're talking about Beth, because everything she does involves
+the letter ``b''.
+@end itemize
+
+In our example the programmers work privately on laptops, and are
+usually @emph{disconnected} from the network. They share no storage
+system. Thus when each programmer enters a command, it affects only
+his or her own computer, unless otherwise stated.
+
+Our fictional project will work through the following version control
+tasks. Some tasks must be done by each member of our example team, other
+tasks involve only one member.
 
 @menu
-* Creating a Database::   Create a new database.
-* Generating Keys::       Generate an @sc{rsa} public/private key pair
-* Adding Files::          Import the state of the tree to the database
-* Making Changes::        Edit a file and examine work
-* Committing Changes::    Save your work in the database
-* Checking Out::          Move to a different version of a tree
-* Forking and Merging::   Make multiple changes from the same base version
-* Updating::              Moving a working copy to a ``newer'' version
-* Transmitting Changes::  Exchange your work with another database
+* Creating a Database::
+* Generating Keys::
+* Exchanging Keys::
+* Adding Files::
+* Committing Work::
+* Network Service::
+* Making Changes::
+* Dealing with a Fork::
 @end menu
 
 
 @node    Creating a Database
 @section Creating a Database
 
-The first step is to create a new database.  Monotone requires this as
-an explicit step to prevent spurious creation of databases when an
-invalid @option{--db} option is given.
+The first step Jim, Abe and Beth each need to perform is to create a
+new database. This is done with the @code{monotone db init} command,
+providing a @option{--db} option to speficy the location of the new
+database. Each programmer creates their own database, which will
+reside in their home directory and store all the revisions, files and
+manifests they work on. Monotone requires this step as an explicit
+command, to prevent spurious creation of databases when an invalid
+@option{--db} option is given.
 
-This is easily done using the special @code{monotone db init} command:
+Thus Jim issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=$HOME/test.db
+$ monotone db init --db=~/jim.db
 @end group
 @end smallexample
 
+Abe issues the command:
+
+@smallexample
+@group
+$ monotone db init --db=~/abe.db
+@end group
+@end smallexample
+
+And Beth issues the command:
+
+@smallexample
+@group
+$ monotone db init --db=~/beth.db
+@end group
+@end smallexample
 
 @node    Generating Keys
 @section Generating Keys
 
-Now we must generate an @sc{rsa} key pair for ourselves. This step requires
-choosing a key identifier. Typical key identifiers are similar to email addresses,
-possibly modified with some prefix or suffix to distinguish multiple keys held by
-the same owner. We will use the key identifier ``testkey@@nodomain.org''. When we
-ask for a key to be generated, monotone will ask us for a passphrase. This phrase
-is used to encrypt the key when storing it on disk, as a security measure.
+Now Jim, Abe and Beth must each generate an @sc{rsa} key pair for
+themselves. This step requires choosing a key identifier. Typical key
+identifiers are similar to email addresses, possibly modified with
+some prefix or suffix to distinguish multiple keys held by the same
+owner. Our example programmers will use their email addresses at the
+fictional ``juicebot.co.jp'' domain name. When we ask for a key to be
+generated, monotone will ask us for a passphrase. This phrase is used
+to encrypt the key when storing it on disk, as a security measure.
+
+Jim does the following:
 
 @smallexample
 @group
-$ monotone --db=$HOME/test.db genkey testkey@@nodomain.org
-enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter passphrase>}
-monotone: generating key-pair 'testkey@@nodomain.org'
-monotone: storing key-pair 'testkey@@nodomain.org' in database
+$ monotone --db=~/jim.db genkey jim@@juicebot.co.jp
+enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
+monotone: generating key-pair 'jim@@juicebot.co.jp'
+monotone: storing key-pair 'jim@@juicebot.co.jp' in database
 @end group
 @end smallexample
 
-We have now generated a key pair and placed it in the database
-@file{~/test.db}. We can list the keys in this database, to ensure the
-correct key was generated.
+Abe does something similar:
 
 @smallexample
 @group
-$ monotone --db=$HOME/test.db list keys
+$ monotone --db=~/abe.db genkey abe@@juicebot.co.jp
+enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
+monotone: generating key-pair 'abe@@juicebot.co.jp'
+monotone: storing key-pair 'abe@@juicebot.co.jp' in database
+@end group
+@end smallexample
+
+as does Beth:
+
+@smallexample
+@group
+$ monotone --db=~/beth.db genkey beth@@juicebot.co.jp
+enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
+monotone: generating key-pair 'beth@@juicebot.co.jp'
+monotone: storing key-pair 'beth@@juicebot.co.jp' in database
+@end group
+@end smallexample
+
+Each programmer has now generated a key pair and placed it in their
+local database. Each can list the keys in their database, to ensure
+the correct key was generated. For example, Jim might see this:
+
+@smallexample
+@group
+$ monotone --db=~/jim.db list keys
 
 [public keys]
-9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c testkey@@nodomain.org
+9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp
 
 
 [private keys]
-771ace046c27770a99e5fddfa99c9247260b5401 testkey@@nodomain.org
+771ace046c27770a99e5fddfa99c9247260b5401 jim@@juicebot.co.jp
 
 @end group
 @end smallexample
@@ -986,980 +698,827 @@ store. Monotone will never permit one database to store two keys with
 the same name or the same fingerprint.
 
 This output shows one private and one public key stored under the name
-@code{testkey@@nodomain.org}, so it indicates that our keys have been
-successfully generated and stored. On subsequent commands, we will
-need to re-enter our passphrase to produce signatures on various tags.
+@code{jim@@juicebot.co.jp}, so it indicates that Jim's key-pair has
+been successfully generated and stored. On subsequent commands, Jim
+will need to re-enter our passphrase in order to perform
+security-sensitive tasks. To simplify matters, Jim decides to store
+his security passphrase in his @code{.monotonerc} file, by writing a
+@emph{hook function} which returns the passphrase, so that he does not
+need to repeatedly be prompted for it:
+
+@smallexample
+@group
+$ cat >~/.monotonerc
+function get_passphrase(keypair_id)
+  return "jimsekret"
+end
+^D
+@end group
+@end smallexample
+
+Abe and Beth do the same, with their secret passphrases.
+
+@node    Exchanging Keys
+@section Exchanging Keys
+
+Jim, Abe and Beth all wish to work with one another, and trust one
+another. For monotone to accept this situation, the team members will
+need to exchange the public parts of their @sc{rsa} key with each
+other. 
+
+First, Jim exports his public key:
+
+@smallexample
+@group
+$ monotone --db=~/jim.db pubkey jim@@juicebot.co.jp >~/jim.pubkey
+@end group
+@end smallexample
+
+His public key is just a plain block of ASCII text:
+
+@smallexample
+@group
+$ cat ~/jim.pubkey
+[pubkey jim@@juicebot.co.jp]
+MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCbaVff9SF78FiB/1nUdmjbU/TtPyQqe/fW
+CDg7hSg1yY/hWgClXE9FI0bHtjPMIx1kBOig09AkCT7tBXM9z6iGWxTBhSR7D/qsJQGPorOD
+DO7xovIHthMbZZ9FnvyB/BCyiibdWgGT0Gtq94OKdvCRNuT59e5v9L4pBkvajb+IzQIBEQ==
+[end]
+@end group
+@end smallexample
+
+Abe also exports his public key:
+
+@smallexample
+@group
+$ monotone --db=~/abe.db pubkey abe@@juicebot.co.jp >~/abe.pubkey
+@end group
+@end smallexample
+
+As does Beth:
+
+@smallexample
+@group
+$ monotone --db=~/beth.db pubkey beth@@juicebot.co.jp >~/beth.pubkey
+@end group
+@end smallexample
+
+Then all three team members exchange keys. The keys are not secret,
+but the team members must be relatively certain that they are
+communicating with the person they intend to trust, when exchanging
+keys, and not some malicious person pretending to be a team
+member. Key exchange may involve sending keys over an encrypted
+medium, or meeting in person to exchange physical copies, or any
+number of techniques. All that matters, ultimately, is for each team
+member to receive the keys of the others.
+
+So eventually, after key exchange, Jim has Beth's and Abe's public key
+files in his home directory, along with his own. He tells monotone to
+read the associated key packets into his database:
+
+@smallexample
+@group
+$ monotone --db=~/jim.db read <~/abe.pubkey
+monotone: read 1 packet
+$ monotone --db=~/jim.db read <~/beth.pubkey
+monotone: read 1 packet
+@end group
+@end smallexample
+
+Beth and Abe similarly tell monotone to read read the two new public
+keys they received into their respective databases.
 
 
 @node    Adding Files
 @section Adding Files
 
-Next we add all our files to our database. We can specify directories
-or filenames; monotone will recursively scan any directories we
-mention.
+Next Jim decides to add some files to the project. He writes up 
+a file containing the prototypes for the JuiceBot 7:
 
 @smallexample
 @group
-$ monotone --branch=testbranch --db=$HOME/test.db add Makefile include src
-monotone: adding Makefile to working copy add set
-monotone: adding include/hello.h to working copy add set
-monotone: adding src/hello.c to working copy add set
+$ mkdir include
+$ cat >include/jb.h
+/* Standard JuiceBot hw interface */
+
+#define FLOW_JUICE 0x1
+#define POLL_JUICE 0x2
+int spoutctl(int port, int cmd, void *x);
+
+/* JuiceBot 7 API */
+
+#define APPLE_SPOUT 0x7e
+#define BANANA_SPOUT 0x7f
+void dispense_apple_juice ();
+void dispense_banana_juice ();
+^D
 @end group
 @end smallexample
 
-This command has now added our files to the @dfn{work list}, as
-``additions''.  The work list is a special file called @file{work},
-stored in a special control directory monotone just created, called
-@file{MT}. There is only one control directory for the entire working
-copy.
+Then adds a couple skeleton source files which he wants Abe and Beth
+to fill in:
 
-If we look at the work list, we see it contains instructions to add
-these files.
+@smallexample
+@group
+$ mkdir src
+$ cat >src/apple.c
+#include "jb.h"
+
+void 
+dispense_apple_juice()
+@{
+  /* Fill this in please, Abe. */
+@}
+^D
+$ cat >src/banana.c
+#include "jb.h"
+
+void 
+dispense_banana_juice()
+@{
+  /* Fill this in please, Beth. */
+@}
+^D
+@end group
+@end smallexample
+
+Now Jim tells monotone to add these files to its record of his working
+copy. He specifies one filename and one directory; monotone
+recursively scans the directory and adds all its files.
+
+@smallexample
+@group
+$ monotone --db=~/jim.db add include/jb.h src
+monotone: adding include/jb.h to working copy add set
+monotone: adding src/apple.c to working copy add set
+monotone: adding src/banana.c to working copy add set
+@end group
+@end smallexample
+
+This command produces a record of Jim's intentions in a special file
+called @file{MT/work}, stored in the working copy. The file is plain
+text:
 
 @smallexample
 @group
 $ cat MT/work
-add_file: ``Makefile''
-add_file: ``include/hello.h''
-add_file: ``src/hello.c''
+add_file "include/jb.h"
+
+add_file "src/apple.c"
+
+add_file "src/banana.c"
 @end group
 @end smallexample
 
-Now we are ready to commit our additions. We will provide a ``log
-message'' for our commit as an argument on the command line.
+Jim then gets up from his machine to get a coffee. When he returns
+he has forgotten what he was doing. He asks monotone:
 
 @smallexample
 @group
-$ monotone commit 'initial addition of files'
-monotone: committing 577c21252290d4b66240efb1f917a9f3c4136fe5
-monotone: committing to branch testbranch
-enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter passphrase>}
-monotone: committed 577c21252290d4b66240efb1f917a9f3c4136fe5
+$ monotone --db=jim.db status
+
+new_manifest [2098eddbe833046174de28172a813150a6cbda7b]
+
+old_revision []
+old_manifest []
+
+add_file "include/jb.h"
+
+add_file "src/apple.c"
+
+add_file "src/banana.c"
+
+patch "include/jb.h"
+ from []
+   to [3b12b2d0b31439bd50976633db1895cff8b19da0]
+
+patch "src/apple.c"
+ from []
+   to [2650ffc660dd00a08b659b883b65a060cac7e560]
+
+patch "src/banana.c"
+ from []
+   to [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
+
 @end group
 @end smallexample
 
-Now we can check to see that monotone is tracking these files in the
-working copy manifest.  The working copy manifest is held in the file
-@file{MT/manifest}. 
+The output of this command tells Jim that his edits, so far,
+constitute only the addition of some files. In the output we can see
+one pecularity of monotone's changeset format. The pecularity is that
+when monotone records a ``new file'', it actually records two separate
+events: the addition of an empty file to the working copy, and a patch
+of that file from empty to its intended contents. 
+
+Jim wants to see the actual details of the files he added, however, so
+he runs a command which prints out the status @emph{and} a GNU
+``unified diff'' of the patches involved in the changeset:
 
 @smallexample
 @group
-$ cat MT/manifest
-84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
-c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
-97dfc6fd4f486df95868d85b4b81197014ae2a84  src/hello.c
+$ monotone --db=jim.db diff
+# 
+# add_file "include/jb.h"
+# 
+# add_file "src/apple.c"
+# 
+# add_file "src/banana.c"
+# 
+# patch "include/jb.h"
+#  from []
+#    to [3b12b2d0b31439bd50976633db1895cff8b19da0]
+# 
+# patch "src/apple.c"
+#  from []
+#    to [2650ffc660dd00a08b659b883b65a060cac7e560]
+# 
+# patch "src/banana.c"
+#  from []
+#    to [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
+# 
+--- include/jb.h
++++ include/jb.h
+@@ -0,0 +1,13 @@
++/* Standard JuiceBot hw interface */
++
++#define FLOW_JUICE 0x1
++#define POLL_JUICE 0x2
++#define SET_INTR 0x3
++int spoutctl(int port, int cmd, void *x);
++
++/* JuiceBot 7 API */
++
++#define APPLE_SPOUT 0x7e
++#define BANANA_SPOUT 0x7f
++void dispense_apple_juice ();
++void dispense_banana_juice ();
+--- src/apple.c
++++ src/apple.c
+@@ -0,0 +1,7 @@
++#include "jb.h"
++
++void 
++dispense_apple_juice()
++@{
++  /* Fill this in please, Abe. */
++@}
+--- src/banana.c
++++ src/banana.c
+@@ -0,0 +1,7 @@
++#include "jb.h"
++
++void 
++dispense_banana_juice()
++@{
++  /* Fill this in please, Beth. */
++@}
+@end group
+@end smallexample
+
+@node    Committing Work
+@section Committing Work
+
+Satisfied with the work he's done, Jim then commits his working copy,
+which causes monotone to process the @file{MT/work} file and record
+the file contents, manifest, and revision into the database.
+
+@smallexample
+@group
+$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 commit 'initial checkin of project'
+monotone: beginning commit
+monotone: manifest 2098eddbe833046174de28172a813150a6cbda7b
+monotone: revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
+monotone: branch co.jp.juicebot.jb7
+monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
+@end group
+@end smallexample
+
+Monotone did a number of things when committing the new
+revision. First, we can see from the output that monotone generated a
+manifest of the tree Jim committed. The manifest is stored inside the
+database, but Jim can print it out if he wants to see the exact state
+of all the files referenced by the revision he committed:
+
+@smallexample
+@group
+$ monotone cat manifest
+3b12b2d0b31439bd50976633db1895cff8b19da0  include/jb.h
+2650ffc660dd00a08b659b883b65a060cac7e560  src/apple.c
+e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f  src/banana.c
 @end group
 @end smallexample
 
 The column on the left contains cryptographic hashes of the files
-listed in the column on the right. Such a hash is called the ``version
-code'' of each file. The manifest is a plain text file, and can be
-manipulated with standard tools. If a file appears in a manifest, and
-you do not want to manage the file with monotone, you can remove that
-line of the manifest.
+listed in the column on the right. Such a hash is also called the
+``file ID'' of the file. The file ID identifies the state of each file
+stored in Jim's tree. The manifest is just a plain text file,
+identical to the output from the popular @command{sha1sum} unix
+command.
 
-We can also check to see which certificates monotone generated when we
-committed our work, using the @code{list certs} command. Note that we
-only need to mention the first few digits of the manifest version we
-wish to inspect, and monotone completes the version code for us:
+When monotone committed Jim's revision, it also erased the
+@file{MT/work} file, and wrote a new file called @file{MT/revision},
+which contains the working copy's new base revision ID. Jim can use
+this revision ID in the future, as an argument to the
+@command{checkout} command, if he wishes to return to this revision:
 
 @smallexample
 @group
-$ monotone list certs manifest 577c
-monotone: expanding partial id '577c'
-monotone: expanded to '577c21252290d4b66240efb1f917a9f3c4136fe5'
+$ cat MT/revision
+2e24d49a48adf9acf3a1b6391a080008cbef9c21
+@end group
+@end smallexample
+
+Finally, monotone also generated a number of certificates, attached to
+the new revision. These certs store metadata about the commit. Jim can
+ask monotone for a list of certs on this revision.
+
+@smallexample
+@group
+$ monotone ls certs 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 -----------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : author
-Value : jrh@@nodomain.org
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
+Key   : jim@@juicebot.co.jp
 Sig   : ok
 Name  : branch
-Value : testbranch
+Value : co.jp.juicebot.jb7
 -----------------------------------------------------------------
-Key   : testkey@@nodomain.org
+Key   : jim@@juicebot.co.jp
 Sig   : ok
 Name  : date
-Value : 2003-04-04T07:39:51
+Value : 2004-10-26T02:53:08
 -----------------------------------------------------------------
-Key   : testkey@@nodomain.org
+Key   : jim@@juicebot.co.jp
+Sig   : ok
+Name  : author
+Value : jim@@juicebot.co.jp
+-----------------------------------------------------------------
+Key   : jim@@juicebot.co.jp
 Sig   : ok
 Name  : changelog
-Value : initial addition of files
+Value : initial checkin of project
 @end group
 @end smallexample
 
 The output of this command has a block for each cert found. Each block
 has 4 significant pieces of information. The first indicates the
-signer of the cert, in this case @code{testkey@@nodomain.org}. The
+signer of the cert, in this case @code{jim@@juicebot.co.jp}. The
 second indicates whether this cert is ``ok'', meaning whether the
 @sc{rsa} signature provided is correct for the cert data. The third is
 the cert name, and the fourth is the cert value. This list shows us
 that monotone has confirmed that, according to
-@code{testkey@@nodomain.org}, the manifest
-@code{577c21252290d4b66240efb1f917a9f3c4136fe5} is a member of the
-branch @code{testbranch}, written by @code{jrh@@nodomain.org}, with
-the given date and changelog.
+@code{jim@@juicebot.co.jp}, the revision
+@code{2e24d49a48adf9acf3a1b6391a080008cbef9c21} is a member of the
+branch @code{jp.co.juicebot.jb7}, written by
+@code{jim@@juicebot.co.jp}, with the given date and changelog.
 
-It is important to keep in mind that manifests are not ``in'' or
+It is important to keep in mind that revisions are not ``in'' or
 ``out'' of a branch in any global sense, nor are any of these cert
 values @i{true} or @i{false} in any global sense. Each cert indicates
-that @i{some person} would like to associate a manifest with some
-value; it is up to you to decide if you want to accept that
-association.
+that @i{some person} -- in this case Jim -- would like to associate a
+revision with some value; it is up to you to decide if you want to
+accept that association.
 
-We can check status of our branch with the following command:
+Jim can now check the status of his branch using the ``heads''
+command, which lists all the head revisions in the branch:
 
 @smallexample
 @group
 $ monotone heads
-branch 'testbranch' is currently merged:
-577c21252290d4b66240efb1f917a9f3c4136fe5 jrh@@nodomain.org 2003-04-04T07:39:51
+branch 'co.jp.juicebot.jb7' is currently merged:
+2e24d49a48adf9acf3a1b6391a080008cbef9c21 jim@@juicebot.co.jp 2004-10-26T02:53:08
 @end group
 @end smallexample
 
 The output of this command tells us that there is only one current
-``head'' version in the branch @code{testbranch}, and it is the manifest
-we just imported. A head version is one without any descendents. Since
-we have not committed any changes to this manifest yet, it has no
-descendents. 
-
-Finally, if we wanted to print out the manifest and inspect it, we
-could issue the following command:
-
-@smallexample
-@group
-$ monotone cat manifest 577c
-monotone: expanding partial id '577c'
-monotone: expanded to '577c21252290d4b66240efb1f917a9f3c4136fe5'
-84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
-c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
-97dfc6fd4f486df95868d85b4b81197014ae2a84  src/hello.c
-@end group
-@end smallexample
-
-This command accesses our database directly, printing out the manifest
-identified as the head of our branch. This command @emph{not} read the
-manifest from the working copy. We could safely erase our working
-copy, as the manifest (and its files) are stored in our database. We will
-not erase it, however, because there is more left to explore.
-
-@node    Making Changes
-@section Making Changes
-
-Initially, the contents of the file @file{src/hello.c} were as follows:
-
-@smallexample
-@group
-#include "hello.h"
-
-void say_hello()
-@{
-        printf("hello, world\n");
-@}
-
-int main()
-@{
-        say_hello();
-@}
-@end group
-@end smallexample
-
-Suppose now that we would like to make a change to this file, say to
-the message which is printed out. We can edit the file directly, and
-save the following new version:
-
-@smallexample
-@group
-#include "hello.h"
-
-void say_hello()
-@{
-        printf("hello, smelly world\n");
-@}
-
-int main()
-@{
-        say_hello();
-@}
-@end group
-@end smallexample
-
-If we would like to see a compact listing of the change we have made,
-relative to the version of the file recorded in our current manifest,
-we can use the following command:
-
-@smallexample
-@group
-$ monotone status
-Old manifest: 577c21252290d4b66240efb1f917a9f3c4136fe5
-New manifest: 86975f57ad571a61eb653371a2ffd12b96a301ed
-Summary of changes:
-
-  patch src/hello.c 
-   from 97dfc6fd4f486df95868d85b4b81197014ae2a84
-     to 8574638d5f34493e05e62d9e48b3c338169e7558
-
-@end group
-@end smallexample
-
-The output of this command tells us that our edits, so far, constitute
-only a simple edit to a single file. This command accessed our working
-copy alone: monotone read the @file{MT/manifest} file and compared it
-to the @sc{sha1} values of all the files found in the working copy,
-then listed the differences it found. If we would like to see those
-differences in closer detail, we can also print out a difference
-listing in GNU ``unified diff'' format:
-
-@smallexample
-@group
-$ monotone diff
-# Old manifest: 577c21252290d4b66240efb1f917a9f3c4136fe5
-# New manifest: 86975f57ad571a61eb653371a2ffd12b96a301ed
-# Summary of changes:
-#
-#   patch src/hello.c 
-#    from 97dfc6fd4f486df95868d85b4b81197014ae2a84
-#      to 8574638d5f34493e05e62d9e48b3c338169e7558
-#
---- src/hello.c
-+++ src/hello.c
-@@@@ -1,8 +1,8 @@@@
- #include "hello.h"
-
- void say_hello()
- @{
--       printf("hello, world\n");
-+       printf("hello, smelly world\n");
- @}
-
- int main()
-@end group
-@end smallexample
-
-This command accessed our database and our working copy: as in the
-previous command, monotone compared the @file{MT/manifest} file to the
-working copy. Once monotone found a difference, it consulted the
-database consulted to construct the previous file version (97dfc6...),
-and ran a line-oriented diff algorithm between the old version of the
-file, from the database, and the new version of the file, in the
-working copy.
-
-Suppose now we would also like to move our @code{say_hello}
-function to a secondary source file, and modify our @file{Makefile} to
-build it separately. We can make these changes directly:
-
-@smallexample
-@group
-$ head -n 6 src/hello.c >src/say-hello.c
-$ vi src/hello.c
-         @i{<remove the function from this source file>}
-$ vi Makefile
-         @i{<add a rule to build the new object file>}
-@end group
-@end smallexample
-
-We must then add the new file to monotone's working record:
-
-@smallexample
-@group
-$ monotone add src/say-hello.c
-@end group
-@end smallexample
-
-This command did not modify the @file{MT/manifest} file, but rather
-made a note in a persistent log file @file{MT/work}, stating that we
-wish to add the file @file{src/say-hello.c}. The @file{MT/work} file
-will be processed when we commit our work. Before we commit anything,
-we can show the current status of our working copy once more, which
-will include any changes between the @file{MT/manifest} file and the
-files in our working copy, as well as any additions or deletions
-written in the @file{MT/work} file:
-
-@smallexample
-@group
-$ monotone status
-Old manifest: 86975f57ad571a61eb653371a2ffd12b96a301ed
-New manifest: 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
-Summary of changes:
-
-  add src/say-hello.c 
-   as 84afbb102eca7e5f802ce381987ad7100ff7a1a9
-
-  patch Makefile 
-   from 84e2c30a2571bd627918deee1e6613d34e64a29e
-     to b506d36ac5a6ea0fd588acacf1ebaa0317601abe
-
-  patch src/hello.c 
-   from 97dfc6fd4f486df95868d85b4b81197014ae2a84
-     to eac552f8ee3d29198884368d592de67db5cb77e2
-
-@end group
-@end smallexample
-
-And, as before, we can view the full difference listing:
-
-@smallexample
-@group
-$ monotone diff
-# Old manifest: 86975f57ad571a61eb653371a2ffd12b96a301ed
-# New manifest: 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
-# Summary of changes:
-#
-#   add src/say-hello.c 
-#    as 84afbb102eca7e5f802ce381987ad7100ff7a1a9
-#
-#   patch Makefile 
-#    from 84e2c30a2571bd627918deee1e6613d34e64a29e
-#      to b506d36ac5a6ea0fd588acacf1ebaa0317601abe
-#
-#   patch src/hello.c 
-#    from 97dfc6fd4f486df95868d85b4b81197014ae2a84 
-#      to eac552f8ee3d29198884368d592de67db5cb77e2
-#
---- Makefile
-+++ Makefile
-@@@@ -1,2 +1,6 @@@@
--hello: include/hello.h src/hello.c
--       gcc -o hello -I include src/hello.c
-+hello: include/hello.h src/say-hello.o src/hello.c
-+       gcc -o hello say-hello.o src/hello.c
-+
-+say-hello.o: include/hello.h src/say-hello.c
-+       gcc -c say-hello.o src/say-hello.c
-+
---- src/hello.c
-+++ src/hello.c
-@@@@ -1,10 +1,5 @@@@
- #include "hello.h"
-
--void say_hello()
--@{
--       printf("hello, world\n");
--@}
--
- int main()
- @{
-        say_hello();
-@end group
-@end smallexample
-
-@node    Committing Changes
-@section Committing Changes
-
-Now that we have made changes, we can commit them to the
-database. Doing so will replace the ``head'' version of our branch
-with the new, changed version, and store the older version as a
-reverse delta from the new version.
-
-@smallexample
-@group
-$ monotone commit
-@end group
-@end smallexample
-
-This will first place us in a ``log message editor'' --- typically an editor
-like @command{vi} --- with an explanation of the changes being committed and
-the opportunity to enter a log message.
-
-@smallexample
-@group
-example commit log
-MT: ----------------------------------------------------------------------
-MT: Enter Log.  Lines beginning with `MT:' are removed automatically
-MT:
-MT: Old manifest: 86975f57ad571a61eb653371a2ffd12b96a301ed
-MT: New manifest: 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
-MT: Summary of changes:
-MT:
-MT:   add src/say-hello.c 
-MT:    as 84afbb102eca7e5f802ce381987ad7100ff7a1a9
-MT:
-MT:   patch Makefile 
-MT:    from 84e2c30a2571bd627918deee1e6613d34e64a29e 
-MT:      to b506d36ac5a6ea0fd588acacf1ebaa0317601abe
-MT:
-MT:   patch src/hello.c 
-MT:    from 97dfc6fd4f486df95868d85b4b81197014ae2a84
-MT:      to eac552f8ee3d29198884368d592de67db5cb77e2
-MT:
-MT: ----------------------------------------------------------------------
-MT:
-@end group
-@end smallexample
-
-We have entered a single line above the explanatory message, saying
-``example commit log''. We then save the file and quit the
-editor. Monotone will delete all the lines beginning with ``MT:'' and
-leave only our message. Returning to the shell, we are prompted for
-our passphrase.
-
-@smallexample
-@group
-monotone: committing 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e 
-monotone: committing to branch testbranch
-enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter passphrase>}
-monotone: committed 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
-@end group
-@end smallexample
-
-A commit typically involves making several certs, as well as storing
-new versions of files and the manifest in the database. We can show the
-certs produced, using the @command{list certs} command.
-
-@smallexample
-@group
-$ monotone list certs manifest 0b34
-monotone: expanding partial id '0b34'
-monotone: expanded to '0b34c61bd098a9c37cece9cbf7b765cc4d7b587e'
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : ancestor
-Value : 577c21252290d4b66240efb1f917a9f3c4136fe5
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : author
-Value : jrh@@nodomain.org
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : branch
-Value : testbranch
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : date
-Value : 2003-04-04T07:44:54
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : changelog
-Value : example commit log
-
-@end group
-@end smallexample
-
-In this commit, monotone produced a @code{branch} cert which relates
-the new version to the branch @code{testbranch}, an @code{ancestor}
-cert which relates old version to the new one, and several informative
-meta-data certs such as @code{author}, @code{date}, and
-@code{changelog}.
-
-If we would like to examine the ancestry graph at any time, we can
-produce a representation of it suitable for viewing with the popular
-@command{xvcg} graph visualization tool, with the following command:
-
-@smallexample
-@group
-$ monotone agraph
-graph:
-@{
-node: @{ title : "0b34c61bd098a9c37cece9cbf7b765cc4d7b587e"@}
-node: @{ title : "577c21252290d4b66240efb1f917a9f3c4136fe5"@}
-edge: @{ sourcename : "577c21252290d4b66240efb1f917a9f3c4136fe5"
-        targetname : "0b34c61bd098a9c37cece9cbf7b765cc4d7b587e" @}
-@}
-@end group
-@end smallexample
-
-@node    Checking Out
-@section Checking Out
-
-Now that we have committed one version, the @file{MT/manifest} file
-has been updated to reflect the current contents of the files we are
-working on:
-
-@smallexample
-@group
-$ cat MT/manifest
-b506d36ac5a6ea0fd588acacf1ebaa0317601abe  Makefile
-c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
-eac552f8ee3d29198884368d592de67db5cb77e2  src/hello.c
-84afbb102eca7e5f802ce381987ad7100ff7a1a9  src/say-hello.c
-@end group
-@end smallexample
-
-This version of the tree is safely stored in the database, however, so
-we can feel free to ``checkout'' previous versions from the database,
-without fear of losing our work:
-
-@smallexample
-@group
-$ monotone checkout 577c .
-monotone: expanding partial id '577c'
-monotone: expanded to '577c21252290d4b66240efb1f917a9f3c4136fe5'
-$ cat MT/manifest
-84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
-c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
-97dfc6fd4f486df95868d85b4b81197014ae2a84  src/hello.c
-$ cat src/hello.c
-#include "hello.h"
-
-void say_hello()
-@{
-        printf("hello, world\n");
-@}
-
-int main()
-@{
-        say_hello();
-@}
-@end group
-@end smallexample
-
-Note that monotone has reverted the tree to its original contents. It
-has @emph{not}, however, deleted the file @file{src/say-hello.c} which
-we added to our second version; it has merely removed it from the
-manifest.
-
-@node    Forking and Merging
-@section Forking and Merging
-
-Suppose that we (or some other user) happen to produce a different
-modified version of our example project, derived from the same initial
-version. We call this situation a @dfn{fork}. Monotone does not
-prevent you from making forks, even when it can detect them.
-
-@smallexample
-@group
-$ cat >>src/hello.c
-
-void say_goodbye()
-@{
-        printf("goodbye\n");
-@}
-^D
-@end group
-@end smallexample
-
-We can view our differences, as before:
-
-@smallexample
-@group
-$ monotone diff
-# Summary of changes:
-# 
-#   patch src/hello.c 
-#    from 97dfc6fd4f486df95868d85b4b81197014ae2a84 
-#      to bdcf3d335db02a8a944b8945357c0e080b40f1b4
-#
---- src/hello.c
-+++ src/hello.c
-@@@@ -9,3 +9,8 @@@@
- @{
-        say_hello();
- @}
-+
-+void say_goodbye()
-+@{
-+       printf("goodbye\n");
-+@}
-@end group
-@end smallexample
-
-And commit our change, this time providing the changelog message on
-the command line as a third argument to the @command{commit} command.
-
-@smallexample
-@group
-$ monotone commit "a fork"
-monotone: committing 57d3afae9e806b930130a674befec2a52bd85cd1 
-monotone: committing to branch testbranch
-enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter passphrase>}
-monotone: committed 57d3afae9e806b930130a674befec2a52bd85cd1
-@end group
-@end smallexample
-
-Monotone does not prohibit us from making a fork. However, if we check
-the heads of our branch, we will now find that it is unmerged. In
-other words, it has an unresolved fork:
-
-@smallexample
-@group
-$ monotone heads
-branch 'testbranch' is currently unmerged:
-0b34c61bd098a9c37cece9cbf7b765cc4d7b587e jrh@@nodomain.org 2003-04-04T07:44:54
-57d3afae9e806b930130a674befec2a52bd85cd1 jrh@@nodomain.org 2003-04-04T07:46:02
-@end group
-@end smallexample
-
-This state does not, in itself, constitute a threat to the branch; we
-can still commit new changes, check out versions, show differences,
-etc. without resolving this fork. However, we will probably want to
-resolve it eventually, if for no other reason than to incorporate the
-positive features of both edges into a common head version.
-
-Merging a fork can be quite simple:
-
-@smallexample
-@group
-$ monotone merge
-enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter passphrase>}
-[source] 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e 
-[source] 57d3afae9e806b930130a674befec2a52bd85cd1 
-[merged] ecec7c49374ab9a7706a500339a2a0d6157372f1
-@end group
-@end smallexample
-
-This case is quite trivial and was handled automatically by the built
-in 3-way merge algorithm. In more complicated merges, a hook is called
-and the user may provide an external merge tool. By default, this hook
-runs an emacs process with a batch command invoking @code{ediff} mode
-with the conflicting files, to interactively merge the difference, but
-this can be overridden if you prefer some other tool. If we
-investigate the resulting manifest, we see the following.
-
-@smallexample
-@group
-$ monotone list certs manifest ecec
-monotone: expanding partial id 'ecec' 
-monotone: expanded to 'ecec7c49374ab9a7706a500339a2a0d6157372f1'
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : ancestor
-Value : 57d3afae9e806b930130a674befec2a52bd85cd1
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : ancestor
-Value : 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : author
-Value : jrh@@nodomain.org
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : branch
-Value : testbranch
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : date
-Value : 2003-04-04T08:00:09
------------------------------------------------------------------
-Key   : testkey@@nodomain.org
-Sig   : ok
-Name  : changelog
-Value : merge of 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e 
-             and 57d3afae9e806b930130a674befec2a52bd85cd1
-@end group
-@end smallexample
-
-In the process of merging, monotone generated a merged copy of our
-forked file, a merged copy of our forked manifest, and a number of
-certs relating the fork and merge:
-
-@itemize
-@item
-an @code{ancestor} cert relating the @i{left} ancestor version of
-@file{src/hello.c} to the merged version
-@item
-an @code{ancestor} cert relating the @i{right} ancestor version of
-@file{src/hello.c} to the merged version
-@item
-an @code{ancestor} cert relating the @i{left} ancestor manifest to the merged version
-@item
-an @code{ancestor} cert relating the @i{right} ancestor manifest to the merged version
-@item
-a @code{branch} cert associating the merged manifest with @code{testbranch}
-@item
-the usual @code{author}, @code{date}, and @code{changelog} certs for the merged manifest
-@end itemize
-
-Each cert is recorded separately. An interesting affect of this
-independent record is that once you have performed a merge between two
-file versions, the merge will automatically be reused in any future
-tree merges which involve the same two files, even if they appear in
-different branches.
-
-We can now check the status of our branch's heads, to ensure that only
-one merged copy remains.
-
-@smallexample
-@group
-$ monotone heads
-branch 'testbranch' is currently merged:
-ecec7c49374ab9a7706a500339a2a0d6157372f1 jrh@@nodomain.org 2003-04-04T08:00:09
-@end group
-@end smallexample
-
-@node    Updating
-@section Updating
-
-Now that we've merged our fork, we notice that the current version of
-our working copy is no longer the ``newest'', in the sense that it has
-a live descendent version in the database (the merged version).
-
-Updating our working copy is quite straightforward in this simple
-case.
-
-@smallexample
-@group
-$ monotone update
-monotone: updated to base version ecec7c49374ab9a7706a500339a2a0d6157372f1
-@end group
-@end smallexample
-
-If we check our version of @file{src/hello.c}, we now see we have a
-merge of the two previous files.
-
-@smallexample
-@group
-$ cat src/hello.c
-#include "hello.h"
-
-int main()
-@{
-        say_hello();
-@}
-
-void say_goodbye()
-@{
-        printf("goodbye\n");
-@}
-@end group
-@end smallexample
-
-An update actually consists of 3 distinct phases.
-
-@itemize
-
-@item
-In the @dfn{select phase}, monotone selects all descendants of the
-manifest version the current working copy is based on, and sorts them
-by ancestry, excluding ancestry edges which do not meet user-specified
-criteria for quality assurance, such as code review or testing. This
-phase should select an ideal ``new base version'' for your working
-copy. If the select phase does not arrive at a @emph{unique} new base
-version, the update stops.
-
-@item
-In the @dfn{merge phase}, monotone performs an in-memory merge between
-the new base version and your working copy. Just as during a
-@code{merge} command, if the built in 3-way merge fails then monotone
-will run a user-provided hook. If this merge fails, the update stops.
-
-@item
-In the @dfn{write phase}, the new base version's manifest is written into
-your @file{MT/manifest} file, and the merged files are written to your
-working copy. This happens after the update is @emph{known} to
-succeed, so it is an all-or-nothing phase.
-@end itemize
-
-The update operation essentially ``re-parents'' your working copy,
-changing it from being a child of the version it was initially checked
-out as, to being a child of the new base version. Your changes
-relative to your previous parent are moved forward during the merge
-phase.
-
-One interesting feature of the update operation is that you can
-override or extend the logic monotone uses to filter update
-candidates, with Lua hook functions. @xref{Quality Assurance}, for
-details.
-
-
-@node    Transmitting Changes
-@section Transmitting Changes
-
-After doing some work, typically we want to send these changes to
-other users. Monotone contains a built-in protocol which can directly
-synchronize your database with another over TCP/IP. Supposing we set
-up a monotone ``server'', then synchronizing with it will ``send'' our
-work to the server, and ``receive'' any work the server has which we
-have not yet seen.
-
-Setting up a remote server is the subject of the next chapter, which
-includes some examples illustrating the use of a client and
-server. This concludes the initial tutorial.
-
+``head'' revision in the branch @code{co.jp.juicebot.jb7}, and it is
+the revision Jim just committed. A head revision is one without any
+descendents. Since Jim has not committed any changes to this revision
+yet, it has no descendents.
 
 @node    Network Service
-@chapter Network Service
+@section Network Service
 
-@emph{Note:} Monotone's networking system changed between release 0.9
-and 0.10. The old system is deprecated and will be
-removed. Documentation for it has already been removed. Please
-familiarize yourself with the new system.
-
-Monotone's networking protocol is called @dfn{netsync}. It is a
-pipelined, bidirectional protocol which synchronizes monotone
-databases over a TCP connection. Monotone can behave as either a
-client or server for netsync. No additional server software is
-required.
-
-@section Setting up the server
-
-To illustrate netsync's use, we consider the branch containing
-monotone development itself: @code{net.venge.monotone}. Suppose we
-wish to serve this branch via the netsync protocol, on a host called
-@code{off.net}. We begin by initializing a database, say
-@code{server.db}, generating a public and private keypair, and storing
-the resulting public key packet in a text file:
+Jim now decides he will make his base revision available to his
+employees. To do this first adds a small amount of extra information
+to his @file{.monotonerc} file, permitting Abe and Beth to access his
+database:
 
 @smallexample
 @group
-$ monotone --db=server.db db init
-$ monotone --db=server.db genkey monotone@@off.net
-enter passphrase for key ID [monotone@@off.net] : @i{<enter passphrase>}
-monotone: generating key-pair 'monotone@@off.net'
-monotone: storing key-pair 'monotone@@off.net' in database
-$ monotone --db=server.db pubkey montone@@off.net >server-key.txt
-@end group
-@end smallexample
-
-Now that the database is initialized, we need to write a small lua
-hook file specifying the anonymous read permission. 
-
-@smallexample
-@group
-$ cat >permissions.lua
-function get_netsync_anonymous_read_permitted (collection)
-  return true
-end
-^D
-@end group
-@end smallexample
-
-We can then start monotone running as a server using the @code{serve}
-command, providing the hook file as an additional command line
-argument:
-
-@smallexample
-@group
-$ monotone --db=server.db --rcfile=permissions.lua \
-           serve off.net net.venge.monotone
-@end group
-@end smallexample
-
-Monotone will continue to serve incoming netsync requests until it is
-terminated, for example with a @code{CTRL-C} interrupt from the
-operator's keyboard. If you want to run a monotone server permanently,
-it is a good idea to run it under a supervision program such as
-@uref{http://cr.yp.to/daemontools.html, daemontools}. 
-
-@section Pulling from a server to a client
-
-In order to connect to a monotone server, a client needs to know the
-server's public key. This involves reading the key packet generated
-in the previous step.
-
-@smallexample
-@group
-$ monotone --db=client.db read <server-key.txt
-monotone: read 1 packet
-@end group
-@end smallexample
-
-Netsync clients can then pull, push, or sync with a given server. Sync
-simply means ``push and pull at the same time'', but it is performed
-in a single connection. The server may accept or refuse connections
-depending on configuration.
-
-So, returning to our example, suppose we wish to retrieve data as a
-client from the server we started on off.net. Then we can use the
-@code{pull} command, providing an empty key to authenticate
-anonymously with the server:
-
-@smallexample
-@group 
-$ monotone --key="" --db=client.db pull off.net net.venge.monotone
-monotone: warning: doing anonymous pull
-monotone: rebuilding merkle trees for collection net.venge.monotone
-monotone: [keys: 1] [mcerts: 1] 
-monotone: connecting to off.net
-monotone: [bytes in: 2387498] [bytes out: 498739] 
-monotone: read from fd 5 (peer off.net) closed OK after goodbye
-@end group
-@end smallexample
-
-Here monotone has warned us that it is doing an anonymous pull,
-described the indexing process on the local database, connected,
-exchanged data, and disconnected from the remote database. Most
-netsync operations look like this from the client side.
-
-@section Pushing from a client to a server
-
-Later, we may want to start sending data to our server. To do this, we
-need to configure the server to accept connections from us. We do this
-by first exporting the client key into a text file:
-
-@smallexample
-@group
-$ monotone --db=client.db pubkey client@@somewhere.net >client-key.txt
-@end group
-@end smallexample
-
-Then loading the client key into the server database:
-
-@smallexample
-@group
-$ monotone --db=server.db read <client-key.txt
-monotone: read 1 packet
-@end group
-@end smallexample
-
-And and writing a small lua hook which defines the list of keys which
-can read and write to the server:
-
-@smallexample
-@group
-$ cat >>permissions.lua
-
+$ cat >>~/.monotonerc
 function get_netsync_read_permitted (collection, identity)
-  if (identity == "client@@somewhere.net") then return true end
+  if (identity == "abe@@juicebot.co.jp") then return true end
+  if (identity == "beth@@juicebot.co.jp") then return true end
   return false
 end
 
 function get_netsync_write_permitted (collection, identity)
-  if (identity == "client@@somewhere.net") then return true end
+  if (identity == "abe@@juicebot.co.jp") then return true end
+  if (identity == "beth@@juicebot.co.jp") then return true end
+  return false
+end
+
+function get_netsync_anonymous_read_permitted (collection)
   return false
 end
 ^D
 @end group
 @end smallexample
 
-We can then restart the server with this new set of permissions:
+He then makes sure that his TCP port 5253 is open to incoming
+connections, adjusting his firewall settings as necessary, and runs
+the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=server.db --rcfile=permissions.lua \
-           serve off.net net.venge.monotone
+$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
 @end group
 @end smallexample
 
-And then the client can push changes to the server:
+This command sets up a single listener loop on the host
+@code{jim-laptop.juicebot.co.jp}, serving the
+@code{co.jp.juicebot.jb7} collection. This collection will naturally
+include the @code{co.jp.juicebot.jb7} branch, and any sub-branches.
+
+Now Abe decides he wishes to fetch Jim's code. To do this he issues
+the monotone @code{sync} command:
 
 @smallexample
 @group
-$ monotone --db=client.db push off.net net.venge.monotone
-monotone: rebuilding merkle trees for collection net.venge.monotone
-monotone: [keys: 5] [mcerts: 704] 
-monotone: connecting to off.net
-monotone: [bytes in: 221] [bytes out: 782] 
-monotone: read from fd 5 (peer off.net) closed OK after goodbye
+monotone --db=abe.db sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone: connecting to jim-laptop.juicebot.co.jp
+monotone: [bytes in: 3200] [bytes out: 673] 
+monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
-@section Syncing and multiple servers
+Abe now has, in his database, a copy of everything Jim put in the
+branch. Therefore Abe can disconnect from the expensive network
+connection he's on and work locally for a while. When Abe wants to
+send work back to Jim, or get new work Jim has added, all he needs to
+do is run the @command{sync} command again and work will flow both
+ways, bringing each party up to date with the work of the other.
 
-We can combine a @code{push} and @code{pull} operation against a
-single server with a @code{sync}. It requires nothing new since we've
-configured the server to permit reads and writes from the client.
+At this point Jim is operating as a sort of ``central server'' for the
+company. If Jim wants to, he can leave his server running forever, or
+even put his server on a dedicated computer with better network
+connectivity. But if Jim is ever unable to play this role of ``central
+server'', perhaps due to a network failure, either Beth or Abe can run
+the @command{serve} command and provide access for the other to
+@command{sync} with. In fact, each employee can run a server if they
+like, concurrently, to help minimize the risk of service disruption
+from hardware failures. Changes will flow between servers
+automatically as clients access them and trade with one another.
 
-It is important to point out that there is no coupling between our
-client and any particular server. If the server on off.net vanished or
-was taken offline, we could sync with any other database, without
-having to re-exchange any history or adjust our understanding of
-branches. Indeed, if there are no firewalls in the way, we can skip
-the use of servers altogether and synchronize @emph{between clients}
-directly, in a ``peer to peer'' fashion.
+
+@node    Making Changes
+@section Making Changes
+
+Abe decides to do some work on his part of the code. He has a copy of
+Jim's database contents, but cannot edit any of that data yet.  He
+begins his editing by checking out the head of the
+@code{co.jp.juicebot.jb7} branch into a working copy, so he can edit
+it:
+
+@smallexample
+@group
+$ monotone --db=abe.db --branch=co.jp.juicebot.jb7 checkout .
+@end group
+@end smallexample
+
+Monotone unpacks the set of files in the head revision's manifest into
+Abe's current directory. Abe then opens up one of the files,
+@file{src/apple.c}, and edits it:
+
+@smallexample
+@group
+$ vi src/apple.c
+@i{<Abe writes some apple-juice dispensing code>}
+@end group
+@end smallexample
+
+The file @file{src/apple.c} has now been @emph{changed}. Abe gets
+up to answer a phone call, and when he returns to his work he has
+forgotten what he changed. He can ask monotone for details:
+
+@smallexample
+@group
+$ monotone diff
+# 
+# patch "src/apple.c"
+#  from [2650ffc660dd00a08b659b883b65a060cac7e560]
+#    to [e2c418703c863eabe70f9bde988765406f885fd0]
+# 
+--- src/apple.c
++++ src/apple.c
+@@ -1,7 +1,10 @@
+ #include "jb.h"
+ 
+ void 
+ dispense_apple_juice()
+ @{
+-  /* Fill this in please, Abe. */
++  spoutctl(APPLE_SPOUT, FLOW_JUICE, 1);
++  while (spoutctl(APPLE_SPOUT, POLL_JUICE, 1) == 0)
++    usleep (1000);
++  spoutctl(APPLE_SPOUT, FLOW_JUICE, 0);
+ @}
+@end group
+@end smallexample
+
+Satisfied with his day's work, Abe decides to commit. 
+
+@smallexample
+@group
+$ monotone commit 
+monotone: beginning commit
+monotone: manifest b33cb337dccf21d6673f462d677a6010b60699d1
+monotone: revision 70decb4b31a8227a629c0e364495286c5c75f979
+monotone: branch co.jp.juicebot.jb7
+@end group
+@end smallexample
+
+Abe neglected to provide a change log on the command line.  Monotone
+therefore invokes an external ``log message editor'' --- typically an
+editor like @command{vi} --- with an explanation of the changes being
+committed and the opportunity to enter a log message.
+
+@smallexample
+@group
+polling implementation of src/apple.c
+MT:
+MT: ----------------------------------------------------------------------
+MT: Enter Log.  Lines beginning with `MT:' are removed automatically
+MT:
+MT: new_manifest [b33cb337dccf21d6673f462d677a6010b60699d1]
+MT:
+MT: old_revision [2e24d49a48adf9acf3a1b6391a080008cbef9c21]
+MT: old_manifest [2098eddbe833046174de28172a813150a6cbda7b]
+MT: 
+MT: patch "src/apple.c"
+MT: from [2650ffc660dd00a08b659b883b65a060cac7e560]
+MT:   to [e2c418703c863eabe70f9bde988765406f885fd0]
+MT:
+MT: ----------------------------------------------------------------------
+MT:
+@end group
+@end smallexample
+
+Abe enters a single line above the explanatory message, saying
+``polling implementation of src/apple.c''. He then saves the file and
+quits the editor. Monotone deletes all the lines beginning with
+``MT:'' and leaves only Abe's short message. Returning to the shell,
+Abe's commit completes:
+
+@smallexample
+@group
+monotone: committed revision 70decb4b31a8227a629c0e364495286c5c75f979
+@end group
+@end smallexample
+
+Abe then sens his new revision back to Jim:
+
+@smallexample
+@group
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone: including branch co.jp.juicebot.jb7
+monotone: [keys: 2] [rcerts: 8] 
+monotone: connecting to jim-laptop.juicebot.co.jp
+monotone: [bytes in: 630] [bytes out: 2844] 
+monotone: successful exchange with jim-laptop.juicebot.co.jp
+@end group
+@end smallexample
+
+Beth does a similar sequence, First she syncs her database with
+Jim's:
+
+@smallexample
+@group
+monotone --db=beth.db sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone: connecting to jim-laptop.juicebot.co.jp
+monotone: [bytes in: 3200] [bytes out: 673] 
+monotone: successful exchange with jim-laptop.juicebot.co.jp
+@end group
+@end smallexample
+
+Checks out a copy of the tree from her database:
+
+@smallexample
+@group
+$ monotone --db=beth.db --branch=co.jp.juicebot.jb7 checkout .
+@end group
+@end smallexample
+
+Edits the file @file{src/banana.c}:
+
+@smallexample
+@group
+$ vi src/banana.c
+@i{<Beth writes some banana-juice dispensing code>}
+@end group
+@end smallexample
+
+Commits her work:
+
+@smallexample
+@group
+$ monotone commit 'polling implementation of src/banana.c'
+monotone: beginning commit
+monotone: manifest eaebc3c558d9e30db6616ef543595a5a64cc6d5f
+monotone: revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
+monotone: branch co.jp.juicebot.jb7
+monotone: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
+@end group
+@end smallexample
+
+And syncs with Jim again:
+
+@smallexample
+@group
+$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone: including branch co.jp.juicebot.jb7
+monotone: [keys: 3] [rcerts: 12] 
+monotone: connecting to jim-laptop.juicebot.co.jp
+monotone: [bytes in: 630] [bytes out: 2844] 
+monotone: successful exchange with jim-laptop.juicebot.co.jp
+@end group
+@end smallexample
+
+@node    Dealing with a Fork
+@section Dealing with a Fork
+
+Careful readers will note that, in the previous section, the JuiceBot
+company's work was perfectly serialized:
+
+@enumerate
+@item Jim did some work
+@item Abe synced with Jim
+@item Abe did some work
+@item Abe synced with Jim
+@item Beth synced with Jim
+@item Beth did some work
+@item Beth synced with Jim
+@end enumerate
+
+The result of this ordering is that Jim's work entirely preceeded
+Abe's work, which entirely preceeded Beth's work. Moreover, each
+worker was fully informed of the ``up-stream'' worker's actions, and
+produced purely derivative, ``down-stream'' work:
+
+@enumerate
+@item Jim made revision 2e24d...
+@item Abe changed revision 2e24d... into revision 70dec...
+@item Beth derived revision 70dec... into revision 80ef9...
+@end enumerate
+
+This is a simple, but sadly unrealistic, ordering of events. In real
+companies or work groups, people often work in parallel,
+@emph{diverging} from commonly known revisions and @emph{merging}
+their work together, sometime after each unit of work is complete.
+
+Monotone supports this diverge/merge style of operation naturally; any
+time two revisions diverge from a common parent revision, we say that
+the revision graph has a @dfn{fork} in it. Forks can happen at any
+time, and require no coordination between workers. In fact any
+interleaving of the previous events would work equally well; with one
+exception: if forks were produced, someone would eventually have to
+run the @command{merge} command, and possibly resolve any conflicts
+in the fork.
+
+To illustrate this, we return to our workers Beth and Abe. Suppose Jim
+sends out an email saying that the current polling juice dispensers
+use too much CPU time, and must be rewritten to use the JuiceBot's
+interrupt system. Beth wakes up first and begins working immediately,
+basing her work off the revision 80ef9... which is currently in her
+working copy:
+
+@smallexample
+@group
+$ vi src/banana.c
+@i{<Beth changes her banana-juice dispenser to use interrupts>}
+@end group
+@end smallexample
+
+Beth finishes and examines her changes:
+
+@smallexample
+@group
+$ monotone --db=beth.db diff
+# 
+# patch "src/banana.c"
+#  from [7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a]
+#    to [5e6622cf5c8805bcbd50921ce7db86dad40f2ec6]
+# 
+--- src/banana.c
++++ src/banana.c
+@@ -1,10 +1,15 @@
+ #include "jb.h"
+ 
++static void 
++shut_off_banana()
++@{
++  spoutctl(BANANA_SPOUT, SET_INTR, 0);
++  spoutctl(BANANA_SPOUT, FLOW_JUICE, 0);
++@}
++
+ void 
+-dispense_banana_juice()
++dispense_banana_juice() 
+ @{
++  spoutctl(BANANA_SPOUT, SET_INTR, &shut_off_banana);
+   spoutctl(BANANA_SPOUT, FLOW_JUICE, 1);
+-  while (spoutctl(BANANA_SPOUT, POLL_JUICE, 1) == 0)
+-    usleep (1000);
+-  spoutctl(BANANA_SPOUT, FLOW_JUICE, 0);
+ @}
+@end group
+@end smallexample
+
+Commits her work:
+
+@smallexample
+@group
+$ monotone commit 'interrupt implementation of src/banana.c'
+monotone: beginning commit
+monotone: manifest de81e46acb24b2950effb18572d5166f83af3881
+monotone: revision 8b41b5399a564494993063287a737d26ede3dee4
+monotone: branch co.jp.juicebot.jb7
+monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
+@end group
+@end smallexample
+
+And syncs with Jim:
+
+@smallexample
+@group
+$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+@end group
+@end smallexample
+
+
+Unfortunately, before Beth managed to sync with Jim, Abe had woken up
+and implemented a similar interrupt-based apple juice dispenser, but
+his working copy is 70dec..., which is still ``upstream'' of
+Beth's. 
+
+@smallexample
+@group
+$ vi apple.c
+@i{<Abe changes his apple-juice dispenser to use interrupts>}
+@end group
+@end smallexample
+
+Thus when Abe commits, he unknowingly creates a fork:
+
+@smallexample
+@group
+$ monotone commit 'interrupt implementation of src/apple.c'
+@end group
+@end smallexample
+
+Abe does not see the fork yet; Abe has not actually seen @emph{any} of
+Beth's work yet, because he has not not synchronized with Jim. Since
+he has new work to contribute, however, he now syncs:
+
+@smallexample
+@group
+$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+@end group
+@end smallexample
+
+Now Jim and Abe will be aware of the fork. Jim sees it when he sits
+down at his desk and asks monotone for the current set of heads of
+the branch:
+
+@smallexample
+@group
+$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 heads
+monotone: branch 'co.jp.juicebot.jb7' is currently unmerged:
+39969614e5a14316c7ffefc588771f491c709152 abe@@juicebot.co.jp 2004-10-26T02:53:16
+8b41b5399a564494993063287a737d26ede3dee4 beth@@juicebot.co.jp 2004-10-26T02:53:15
+@end group
+@end smallexample
+
+
+Clearly there are two heads to the branch: it contains an un-merged
+fork. Beth will not yet know about the fork, but in this case it
+doesn't matter: anyone can merge the fork, and since there are no
+conflicts Jim does so himself:
+
+@smallexample
+@group
+$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 merge
+monotone: merging with revision 1 / 2
+monotone: [source] 39969614e5a14316c7ffefc588771f491c709152
+monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
+monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 found
+monotone: trying 3-way merge
+monotone: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+@end group
+@end smallexample
 
 
 @node    Special Topics

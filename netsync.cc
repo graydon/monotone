@@ -2801,7 +2801,7 @@ call_server(protocol_role role,
 	{
 	  if (!sess.process())
 	    {
-	      P(F("processing on fd %d (peer %s) finished, disconnecting\n") 
+	      P(F("terminated exchange with %s\n") 
 		% fd % sess.peer_id);
 	      return;
 	    }
@@ -2809,7 +2809,7 @@ call_server(protocol_role role,
 
       if (sess.sent_goodbye && sess.outbuf.empty() && sess.received_goodbye)
 	{
-	  P(F("exchanged goodbyes and flushed output on fd %d (peer %s), disconnecting\n") 
+	  P(F("successful exchange with %s\n") 
 	    % fd % sess.peer_id);
 	  return;
 	}	  

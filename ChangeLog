@@ -1,8 +1,22 @@
+2004-10-31  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (diff): Use guess_binary.
+	Fix up some messages to fit on single lines.
+	* Makefile.am: Make monotone.pdf depend on figures.
+	* change_set.cc: Make inversion drop "delete deltas".
+	* texinfo.css: Make images align nicely.
+	* netsync.cc: Fix up some messages to be clearer.
+
+2004-10-30  graydon hoare  <graydon@pobox.com>
+
+	* figures/*: New figures.
+	* monotone.texi: Rewrite much of the tutorial.
+
 2004-10-26  graydon hoare  <graydon@pobox.com>
 
 	* tests/t_update_missing.at: New test from Bruce Stephens
 	* testsuite.at: Call it.
-	* change_set.cc: Handle the error exposed by it.
+	* change_set.cc: Fix the error exposed by it.
 
 2004-10-26  graydon hoare  <graydon@pobox.com>
 

@@ -220,6 +220,11 @@ EXTRA_DIST = $(man1_MANS) \
 	     package.m4 \
              $(wildcard m4/*.m4)
 
+PDF_FIGURES=$(wildcard figures/*.pdf)
+
+monotone.pdf: monotone.texi $(PDF_FIGURES)
+
+
 # testsuite stuff (could this possibly be more ugly?)
 
 TESTS = unit_tests $(srcdir)/testsuite

@@ -1833,6 +1833,9 @@ invert_change_set(change_set const & a2b,
   for (change_set::delta_map::const_iterator del = a2b.deltas.begin();
        del != a2b.deltas.end(); ++del)
     {
+      // check to make sure this isn't the image of an add (now a delete)
+      if (null_id(delta_entry_src(del)))
+	continue;
       // check to make sure this isn't one of the already-moved deltas
       if (b2a.deltas.find(delta_entry_path(del)) != b2a.deltas.end())
 	continue;
