@@ -1,3 +1,14 @@
+2004-12-08  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc (extend_renumbering_via_added_files): 
+	Look up parent tid in existing renumbering.
+	* commands.cc (attr): Check index for "set" subcommand.
+	(lca): New diagnostic command.
+	(log): Tidy up output formatting a bit.
+	* po/monotone.pot: Regenerate.
+	* tests/t_add_edge.at: New test to catch add failure.
+	* testsuite.at: Call it.
+
 2004-12-06  Joel Rosdahl  <joel@rosdahl.net>
 
 	* Makefile.am (package_full_revision.txt): Silence error messages
