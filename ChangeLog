@@ -1,5 +1,9 @@
 2005-01-26  Nathaniel Smith  <njs@codesourcery.com>
 
+	* mt_version.cc (print_full_version): Include system flavour.
+
+2005-01-26  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_rebuild.at: New test.
 	* testsuite.at: Add it.
 
