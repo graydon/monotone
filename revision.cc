@@ -28,6 +28,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "keys.hh"
 
 void revision_set::check_sane() const
 {
@@ -1395,6 +1396,14 @@ build_changesets_from_existing_revs(app_state & app)
   P(F("rebuilding revision graph from existing graph\n"));
   std::multimap<revision_id, revision_id> existing_graph;
 
+  {
+    // early short-circuit to avoid failure after lots of work
+    rsa_keypair_id key;
+    N(guess_default_key(key,app),
+      F("no unique private key for cert construction"));
+    require_password(key, app);
+  }
+
   app.db.get_revision_ancestry(existing_graph);
   for (std::multimap<revision_id, revision_id>::const_iterator i = existing_graph.begin();
        i != existing_graph.end(); ++i)
@@ -1418,6 +1427,15 @@ build_changesets_from_manifest_ancestry(app_state & app)
   anc_graph graph(false, app);
 
   P(F("rebuilding revision graph from manifest certs\n"));
+
+  {
+    // early short-circuit to avoid failure after lots of work
+    rsa_keypair_id key;
+    N(guess_default_key(key,app),
+      F("no unique private key for cert construction"));
+    require_password(key, app);
+  }
+
   std::vector< manifest<cert> > tmp;
   app.db.get_manifest_certs(cert_name("ancestor"), tmp);
   erase_bogus_certs(tmp, app);
