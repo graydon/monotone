@@ -23,17 +23,12 @@ AT_DATA([at_test.input], [list
 ])
 AT_CHECK(RAW_MONOTONE -@ at_test.input --help, [], [expout], [ignore])
 
-## NOTE: It looks like my version of popt (Debian version 1.7-5) has
-## some bug that gets triggered when poptStuffArgs() is called more
-## than once...                                   -- Richard Levitte
-# Check that -@ used twice generates an error
-AT_DATA([experr], [monotone: misuse: -@ can currently only be used once.
-])
+# Check that -@ works when used more than once
 AT_DATA([at_test.input1], [list
 ])
 AT_DATA([at_test.input2], [--help
 ])
-AT_CHECK(RAW_MONOTONE -@ at_test.input1 -@ at_test.input2, [1], [ignore], [experr])
+AT_CHECK(RAW_MONOTONE -@ at_test.input1 -@ at_test.input2, [], [expout], [ignore])
 
 # Check that -@ works with an argument file with no content
 AT_CHECK(RAW_MONOTONE list, [], [stdout], [ignore], [:], [:])

@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <popt.h>
+#include "popt/popt.h"
 #include <cstdio>
 #include <iterator>
 #include <iostream>
@@ -161,16 +161,6 @@ my_poptFreeContext(poptContext con)
 static const char **
 my_poptStuffArgFile(poptContext con, utf8 const & filename)
 {
-  // popt currently (Debian version 1.7-5) has a bug that's triggered
-  // when poptStuffArgs() is called more than once.  The symptom is that
-  // while the options from the second run are processed as such, they
-  // are ALSO passed back to the application as non-options...
-  // Our current workaround is simply to forbid -@ to be used more than
-  // once.                                            -- Richard Levitte
-  static bool used_at_sign = false;
-  N(!used_at_sign, F("-@ can currently only be used once.\n"));
-  used_at_sign = true;
-  
   utf8 argstr;
   {
     data dat;

@@ -1,5 +1,11 @@
 2005-04-03  Richard Levitte  <richard@levitte.org>
 
+	* monotone.cc (my_poptStuffArgFile): Include the bundled popt.h.
+	Since we now have a working popt, we can remove the restrictions
+	on the use of -@.
+	* tests/t_at_sign.at: Test that we can take more tha one -@.
+	* monotone.1: Document it.
+
 	* popt/poptint.h (struct poptContext_s): Add field to keep track
 	  of the number of allocated leftovers elements.
 	* popt/popt.c (poptGetContext): Initialise it and use it.
