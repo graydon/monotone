@@ -228,6 +228,7 @@ void write_node(merkle_node const & in, string & outbuf)
     {
       if (in.get_slot_state(slot) != empty_state)
 	{
+	  L(F("writing slot #%d\n") % slot);
 	  I(slot < in.slots.size());
 	  id slot_val;
 	  in.get_raw_slot(slot, slot_val);
@@ -237,6 +238,7 @@ void write_node(merkle_node const & in, string & outbuf)
   string hash = raw_sha1(oss.str());
   I(hash.size() == constants::merkle_hash_length_in_bytes);
   outbuf = hash + oss.str();
+  L(F("output buffer of node is %d bytes\n") % outbuf.size());
 }
     
 void read_node(string const & inbuf, merkle_node & out)

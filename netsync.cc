@@ -310,6 +310,7 @@ static inline string tohex(string const & s)
   return lowercase(xform<CryptoPP::HexEncoder>(s));
 }
 
+static hexenc<prefix> const ROOT_PREFIX("00");
   
 session::session(protocol_role role,
 		 protocol_voice voice,
@@ -813,7 +814,7 @@ bool session::process_confirm_cmd(string const & signature)
 	  this->phase = refinement_phase;
 	  merkle_node root;
 	  load_merkle_node(app, manifest_item, this->collection, 
-			   0, hexenc<prefix>(), root);
+			   0, ROOT_PREFIX, root);
 	  queue_refine_cmd(root);
 	  return true;
 	}
@@ -1712,8 +1713,8 @@ static void serve_connections(protocol_role role,
 //
 /////////////////////////////////////////////////
 
-static void rebuild_merkle_trees(app_state & app,
-				 utf8 const & collection)
+void rebuild_merkle_trees(app_state & app,
+			  utf8 const & collection)
 {
   transaction_guard guard(app.db);
 
@@ -1787,11 +1788,11 @@ static void rebuild_merkle_trees(app_state & app,
 static void ensure_merkle_tree_ready(app_state & app,
 				     utf8 const & collection)
 {
-  if (! (app.db.merkle_node_exists("mcert", collection, 0, hexenc<prefix>())
+  if (! (app.db.merkle_node_exists("mcert", collection, 0, ROOT_PREFIX)
 	 // FIXME: support fcerts, later
-	 // && app.db.merkle_node_exists("fcert", collection, 0, hexenc<prefix>())
-	 && app.db.merkle_node_exists("manifest", collection, 0, hexenc<prefix>())
-	 && app.db.merkle_node_exists("key", collection, 0, hexenc<prefix>())))
+	 // && app.db.merkle_node_exists("fcert", collection, 0, ROOT_PREFIX)
+	 && app.db.merkle_node_exists("manifest", collection, 0, ROOT_PREFIX)
+	 && app.db.merkle_node_exists("key", collection, 0, ROOT_PREFIX)))
     {
       rebuild_merkle_trees(app, collection);
     }

@@ -1,3 +1,8 @@
+2004-02-09  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc (ROOT_PREFIX): New variable.
+	* commands.cc (merkle): New command.
+
 2004-02-09  Ben Elliston  <bje@wasabisystems.com>
 
 	* monotone.texi: Spelling corrections.

@@ -2209,6 +2209,21 @@ static void ls_queue (string name, app_state & app)
     }
 }
 
+CMD(merkle, "merkle", "rebuild COLLECTION...", 
+    "rebuild the merkle trees used to synchronize COLLECTION")
+{
+  if (args.size() < 2)
+    throw usage(name);
+
+  if (idx(args,0)() == "rebuild")
+    {
+      for (size_t i = 1; i < args.size(); ++i)
+	rebuild_merkle_trees(app, idx(args,1));
+    }
+  else
+    throw usage(name);
+}
+
 CMD(netsync, "network", "(client|server) (readonly|readwrite|writeonly) ADDRESS:PORTNUMBER COLLECTION...",
     "run synchronization for a given set of collections")
 {
