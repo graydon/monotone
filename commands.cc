@@ -335,11 +335,7 @@ calculate_current_revision(app_state & app,
       N(app.db.manifest_version_exists(old_manifest_id),
 	F("base manifest %s does not exist in database\n") % old_manifest_id);
       
-      {
-	manifest_data mdat;
-	app.db.get_manifest_version(old_manifest_id, mdat);
-	read_manifest_map(mdat, m_old);
-      }
+      app.db.get_manifest(old_manifest_id, m_old);
     }
 
   L(F("old manifest has %d entries\n") % m_old.size());
@@ -1091,9 +1087,7 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
     F("no manifest %s found in database") % ident);
   
   L(F("checking out revision %s to directory %s\n") % ident % dir);
-  manifest_data m_data;
-  app.db.get_manifest_version(mid, m_data);
-  read_manifest_map(m_data, m);      
+  app.db.get_manifest(mid, m);
   
   for (manifest_map::const_iterator i = m.begin(); i != m.end(); ++i)
     {
@@ -1291,17 +1285,14 @@ CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout"
   packet_writer pw(cout);
 
   manifest_id m_old_id, m_new_id; 
-  manifest_data m_old_data, m_new_data;
   manifest_map m_old, m_new;
   patch_set ps;      
 
   complete(app, idx(args, 0)(), m_old_id);
   complete(app, idx(args, 1)(), m_new_id);
 
-  app.db.get_manifest_version(m_old_id, m_old_data);
-  app.db.get_manifest_version(m_new_id, m_new_data);
-  read_manifest_map(m_old_data, m_old);
-  read_manifest_map(m_new_data, m_new);
+  app.db.get_manifest(m_old_id, m_old);
+  app.db.get_manifest(m_new_id, m_new);
 
   base64< gzip<delta> > del;
   diff(m_old, m_new, del);
@@ -1838,7 +1829,6 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
     {
       revision_id r_old_id, r_new_id;
       manifest_id m_new_id;
-      manifest_data m_new_dat;
 
       complete(app, idx(args, 0)(), r_old_id);
       complete(app, idx(args, 1)(), r_new_id);
@@ -1852,8 +1842,7 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
       app.db.get_revision(r_new_id, r_new);
 
       app.db.get_revision_manifest(r_new_id, m_new_id);
-      app.db.get_manifest_version(m_new_id, m_new_dat);
-      read_manifest_map(m_new_dat, m_new);
+      app.db.get_manifest(m_new_id, m_new);
 
       new_is_archived = true;
     }
@@ -1898,14 +1887,12 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
 	{
 	  change_set anc_to_src, src_to_anc, anc_to_dst;
 	  manifest_id anc_m_id;
-	  manifest_data anc_m_data;
 	  manifest_map m_anc;
 
 	  I(!(src_id == anc_id || dst_id == anc_id));
 
 	  app.db.get_revision_manifest(anc_id, anc_m_id);
-	  app.db.get_manifest_version(anc_m_id, anc_m_data);
-	  read_manifest_map(anc_m_data, m_anc);
+	  app.db.get_manifest(anc_m_id, m_anc);
 
 	  calculate_composite_change_set(anc_id, src_id, app, anc_to_src);
 	  invert_change_set(anc_to_src, m_anc, src_to_anc);
@@ -2139,22 +2126,18 @@ CMD(update, "working copy", "", "update working copy")
       //
       // update is B->N
       //
-      // we therefore calculate W->B->(merge(B->W,B->N))
+      // we therefore calculate M = merge(B->W,B->N) and 
+      // update = W->M = (B->M - B->W)
 
-      change_set working(edge_changes(r_working.edges.begin()));
-      change_set merged, working_inverse, composite;
-
-      L(F("inverting working copy changeset\n"));
-      invert_change_set(working, m_old, working_inverse);
-      // dump_change_set("working inverse", working_inverse);
+      change_set working(edge_changes(r_working.edges.begin())), merged;
 
       L(F("merging working copy with chosen edge %s -> %s\n") 
 	% r_old_id % r_chosen_id);
       merge_change_sets(old_to_chosen, working, merger, merged);
       // dump_change_set("merged", merged);
 
-      L(F("concatenating inverse working copy with merged changeset\n"));
-      concatenate_change_sets(working_inverse, merged, update);
+      L(F("calculating update = merged - working\n"));
+      subtract_change_sets(merged, working, update);
       // dump_change_set("update", update);
 
       L(F("updating to composite derived from chosen edge %s -> %s\n") 
@@ -2176,85 +2159,224 @@ CMD(update, "working copy", "", "update working copy")
 }
 
 
-/*
-
-// this helper tries to produce merge <- mergeN(left,right), possibly
-// merge3 if it can find an ancestor, otherwise merge2. 
-
 static void 
-try_one_merge(manifest_id const & left,
-	      manifest_id const & right,
-	      manifest_id & merged,
+try_one_merge(revision_id const & left_id,
+	      revision_id const & right_id,
+	      revision_id & merged_id,
 	      app_state & app)
 {
-  manifest_data left_data, right_data, ancestor_data, merged_data;
-  manifest_map left_map, right_map, ancestor_map, merged_map;
-  manifest_id ancestor;
-  rename_edge left_renames, right_renames;
+  revision_id anc_id;
+  revision_set left_rev, right_rev, anc_rev, merged_rev;
 
-  app.db.get_manifest_version(left, left_data);
-  app.db.get_manifest_version(right, right_data);
-  read_manifest_map(left_data, left_map);
-  read_manifest_map(right_data, right_map);
+  app.db.get_revision(left_id, left_rev);
+  app.db.get_revision(right_id, right_rev);
   
-  simple_merge_provider merger(app);
+  merge_provider merger(app);
+  packet_db_writer dbw(app);    
   
-  if(find_common_ancestor(left, right, ancestor, app))	    
-    {
-      P(F("common ancestor %s found, trying 3-way merge\n") % ancestor); 
-      app.db.get_manifest_version(ancestor, ancestor_data);
-      read_manifest_map(ancestor_data, ancestor_map);
-      N(merge3(ancestor_map, left_map, right_map, 
-	       app, merger, merged_map, left_renames.mapping, right_renames.mapping),
-	F("failed to 3-way merge manifests %s and %s via ancestor %s") 
-	% left % right % ancestor);
+  // we now have a graph which looks like this:
+  //
+  //    +---> RIGHT
+  //   ANC      
+  //    +---> LEFT
+  //
+  // we are going to pick out two composite changesets (ANC->LEFT and
+  // ANC->RIGHT) from the existing graph and merge them, producing this:
+  //
+  //    +---> RIGHT
+  //   ANC----------> MERGED      
+  //    +---> LEFT
+  //
+  // that is not *really* what we want though; we want the following
+  // graph instead:
+  //
+  //    +---> RIGHT >---+
+  //   ANC            MERGED
+  //    +---> LEFT  >---+
+  //
+  // this can be constructed from the former graph, however, by noting
+  // the identities
+  //   
+  //     ANC->MERGED - ANC->RIGHT  ==   RIGHT->MERGED
+  //     ANC->MERGED - ANC->LEFT   ==   LEFT->MERGED
+  //
+  // so it's just a matter of change set subtraction (not inversion;
+  // change sets are unfortunately non-commutative.
+  
+  manifest_map anc_man, left_man, right_man, merged_man;
+  
+  change_set 
+    anc_to_left, anc_to_right, 
+    anc_to_merged,
+    left_to_anc, right_to_anc, 
+    left_to_merged, right_to_merged;
+  
+  app.db.get_manifest(right_rev.new_manifest, right_man);
+  app.db.get_manifest(left_rev.new_manifest, left_man);
+  
+  if(find_common_ancestor(left_id, right_id, anc_id, app))
+    {	  
+      P(F("common ancestor %s found, trying 3-way merge\n") % anc_id); 
+      
+      app.db.get_revision(anc_id, anc_rev);
+      app.db.get_manifest(anc_rev.new_manifest, anc_man);
+      
+      calculate_composite_change_set(anc_id, left_id, app, anc_to_left);
+      calculate_composite_change_set(anc_id, right_id, app, anc_to_right);
     }
   else
     {
-      P(F("no common ancestor found, trying 2-way merge\n")); 
-      N(merge2(left_map, right_map, app, merger, merged_map),
-	F("failed to 2-way merge manifests %s and %s") % left % right);
+      P(F("no common ancestor found, synthesizing edges\n")); 
+      build_pure_addition_change_set(left_man, anc_to_left);
+      build_pure_addition_change_set(right_man, anc_to_right);
     }
   
-  write_manifest_map(merged_map, merged_data);
-  calculate_ident(merged_map, merged);	  
+  merge_change_sets(anc_to_left, anc_to_right, merger, anc_to_merged);
+  subtract_change_sets(anc_to_merged, anc_to_left, left_to_merged);
+  subtract_change_sets(anc_to_merged, anc_to_right, right_to_merged);
   
-  base64< gzip<delta> > left_edge;
-  diff(left_data.inner(), merged_data.inner(), left_edge);
-
-  // FIXME: we do *not* manufacture or store the second edge to
-  // the merged version, since doing so violates the
-  // assumptions of the db, and the 'right' version already
-  // exists in its entirety, anyways. this is a subtle issue
-  // though and I'm not sure I'm making the right
-  // decision. revisit. if you do not see that it is a subtle
-  // issue I suggest you are not thinking about it long enough.
-  //
-  // base64< gzip<delta> > right_edge;
-  // diff(right_data.inner(), merged_data.inner(), right_edge);
-  // app.db.put_manifest_version(right, merged, right_edge);
-  
-  
-  // we do of course record the left edge, and ancestry relationship to
-  // both predecessors.
-
   {
-    packet_db_writer dbw(app);    
-
-    dbw.consume_manifest_delta(left, merged, left_edge);  
-    cert_manifest_ancestor(left, merged, app, dbw);
-    cert_manifest_ancestor(right, merged, app, dbw);
-    cert_manifest_date_now(merged, app, dbw);
-    cert_manifest_author_default(merged, app, dbw);
-
-    left_renames.parent = left;
-    left_renames.child = merged;
-    right_renames.parent = right;
-    right_renames.child = merged;
-    cert_manifest_rename(merged, left_renames, app, dbw);
-    cert_manifest_rename(merged, right_renames, app, dbw);
+    // we have to record *some* route to this manifest. we pick the
+    // smaller of the two.
+    apply_change_set(anc_man, anc_to_merged, merged_man);
+    calculate_ident(merged_man, merged_rev.new_manifest);
+    base64< gzip<delta> > left_mdelta, right_mdelta;
+    diff(left_man, merged_man, left_mdelta);
+    diff(right_man, merged_man, right_mdelta);
+    if (left_mdelta().size() < right_mdelta().size())
+      dbw.consume_manifest_delta(left_rev.new_manifest, 
+				 merged_rev.new_manifest, left_mdelta);
+    else
+      dbw.consume_manifest_delta(right_rev.new_manifest, 
+				 merged_rev.new_manifest, right_mdelta);
   }
+  
+  merged_rev.edges.insert(std::make_pair(left_id,
+					 std::make_pair(left_rev.new_manifest,
+							left_to_merged)));
+  merged_rev.edges.insert(std::make_pair(right_id,
+					 std::make_pair(right_rev.new_manifest,
+							right_to_merged)));
+  revision_data merged_data;
+  write_revision_set(merged_rev, merged_data);
+  calculate_ident(merged_data, merged_id);
+  dbw.consume_revision_data(merged_id, merged_data);
+  cert_revision_date_now(merged_id, app, dbw);
+  cert_revision_author_default(merged_id, app, dbw);
 }			  
+
+
+CMD(merge, "tree", "", "merge unmerged heads of branch")
+{
+  set<revision_id> heads;
+
+  if (args.size() != 0)
+    throw usage(name);
+
+  N(app.branch_name() != "",
+    F("please specify a branch, with --branch=BRANCH"));
+
+  get_branch_heads(app.branch_name(), app, heads);
+
+  N(heads.size() != 0, F("branch '%s' is empty\n") % app.branch_name);
+  N(heads.size() != 1, F("branch '%s' is merged\n") % app.branch_name);
+
+  set<revision_id>::const_iterator i = heads.begin();
+  revision_id left = *i;
+  revision_id ancestor;
+  size_t count = 1;
+  for (++i; i != heads.end(); ++i, ++count)
+    {
+      revision_id right = *i;
+      P(F("merging with revision %d / %d: %s <-> %s\n")
+	% count % heads.size() % left % right);
+
+      revision_id merged;
+      transaction_guard guard(app.db);
+      try_one_merge (left, right, merged, app);
+	  	  
+      // merged 1 edge; now we commit this, update merge source and
+      // try next one
+
+      packet_db_writer dbw(app);
+      cert_revision_in_branch(merged, app.branch_name(), app, dbw);
+
+      string log = (F("merge of %s\n"
+		      "     and %s\n") % left % right).str();
+      cert_revision_changelog(merged, log, app, dbw);
+	  
+      guard.commit();
+      P(F("[source] %s\n") % left);
+      P(F("[source] %s\n") % right);
+      P(F("[merged] %s\n") % merged);
+      left = merged;
+    }
+
+  app.write_options();
+}
+
+CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
+    "merge from one branch to another asymmetrically")
+{
+  //   this is a special merge operator, but very useful for people maintaining
+  //   "slightly disparate but related" trees. it does a one-way merge; less
+  //   powerful than putting things in the same branch and also more flexible.
+  //
+  //   1. check to see if src and dst branches are merged, if not abort, if so
+  //   call heads N1 and N2 respectively.
+  //
+  //   2. (FIXME: not yet present) run the hook propagate ("src-branch",
+  //   "dst-branch", N1, N2) which gives the user a chance to massage N1 into
+  //   a state which is likely to "merge nicely" with N2, eg. edit pathnames,
+  //   omit optional files of no interest.
+  //
+  //   3. do a normal 2 or 3-way merge on N1 and N2, depending on the
+  //   existence of common ancestors.
+  //
+  //   4. save the results as the delta (N2,M), the ancestry edges (N1,M)
+  //   and (N2,M), and the cert (N2,dst).
+  
+  set<revision_id> src_heads, dst_heads;
+
+  if (args.size() != 2)
+    throw usage(name);
+
+  get_branch_heads(idx(args, 0)(), app, src_heads);
+  get_branch_heads(idx(args, 1)(), app, dst_heads);
+
+  N(src_heads.size() != 0, F("branch '%s' is empty\n") % idx(args, 0)());
+  N(src_heads.size() == 1, F("branch '%s' is not merged\n") % idx(args, 0)());
+
+  N(dst_heads.size() != 0, F("branch '%s' is empty\n") % idx(args, 1)());
+  N(dst_heads.size() == 1, F("branch '%s' is not merged\n") % idx(args, 1)());
+
+  set<revision_id>::const_iterator src_i = src_heads.begin();
+  set<revision_id>::const_iterator dst_i = dst_heads.begin();
+  
+  revision_id merged;
+  transaction_guard guard(app.db);
+  try_one_merge (*src_i, *dst_i, merged, app);    
+  
+  packet_db_writer dbw(app);
+  
+  cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
+  
+  string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
+		% (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
+  
+  cert_revision_changelog(merged, log, app, dbw);
+  
+  guard.commit();      
+}
+
+
+/*
+
+// this helper tries to produce merge <- mergeN(left,right); it searches
+// for a common ancestor and if none is found synthesizes a common one with
+// no contents. it then computes composite changesets via the common
+// ancestor and does a 3-way merge.
+
 
 
 // actual commands follow
@@ -2451,109 +2573,7 @@ CMD(revert, "working copy", "[FILE]...",
 }
 
 
-CMD(merge, "tree", "", "merge unmerged heads of branch")
-{
-  set<manifest_id> heads;
 
-  if (args.size() != 0)
-    throw usage(name);
-
-  N(app.branch_name() != "",
-    P(F("please specify a branch, with --branch=BRANCH")));
-
-  get_branch_heads(app.branch_name(), app, heads);
-
-  N(heads.size() != 0, F("branch '%s' is empty\n") % app.branch_name);
-  N(heads.size() != 1, F("branch '%s' is merged\n") % app.branch_name);
-
-  set<manifest_id>::const_iterator i = heads.begin();
-  manifest_id left = *i;
-  manifest_id ancestor;
-  size_t count = 1;
-  for (++i; i != heads.end(); ++i, ++count)
-    {
-      manifest_id right = *i;
-      P(F("merging with manifest %d / %d: %s <-> %s\n")
-	% count % heads.size() % left % right);
-
-      manifest_id merged;
-      transaction_guard guard(app.db);
-      try_one_merge (left, right, merged, app);
-	  	  
-      // merged 1 edge; now we commit this, update merge source and
-      // try next one
-
-      packet_db_writer dbw(app);
-      cert_manifest_in_branch(merged, app.branch_name(), app, dbw);
-
-      string log = (F("merge of %s\n"
-		      "     and %s\n") % left % right).str();
-      cert_manifest_changelog(merged, log, app, dbw);
-	  
-      guard.commit();
-      P(F("[source] %s\n") % left);
-      P(F("[source] %s\n") % right);
-      P(F("[merged] %s\n") % merged);
-      left = merged;
-    }
-
-  app.write_options();
-}
-
-
-CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
-    "merge from one branch to another asymmetrically")
-{
-  //   this is a special merge operator, but very useful for people maintaining
-  //   "slightly disparate but related" trees. it does a one-way merge; less
-  //   powerful than putting things in the same branch and also more flexible.
-  //
-  //   1. check to see if src and dst branches are merged, if not abort, if so
-  //   call heads N1 and N2 respectively.
-  //
-  //   2. (FIXME: not yet present) run the hook propagate ("src-branch",
-  //   "dst-branch", N1, N2) which gives the user a chance to massage N1 into
-  //   a state which is likely to "merge nicely" with N2, eg. edit pathnames,
-  //   omit optional files of no interest.
-  //
-  //   3. do a normal 2 or 3-way merge on N1 and N2, depending on the
-  //   existence of common ancestors.
-  //
-  //   4. save the results as the delta (N2,M), the ancestry edges (N1,M)
-  //   and (N2,M), and the cert (N2,dst).
-  
-  set<manifest_id> src_heads, dst_heads;
-
-  if (args.size() != 2)
-    throw usage(name);
-
-  get_branch_heads(idx(args, 0)(), app, src_heads);
-  get_branch_heads(idx(args, 1)(), app, dst_heads);
-
-  N(src_heads.size() != 0, F("branch '%s' is empty\n") % idx(args, 0)());
-  N(src_heads.size() == 1, F("branch '%s' is not merged\n") % idx(args, 0)());
-
-  N(dst_heads.size() != 0, F("branch '%s' is empty\n") % idx(args, 1)());
-  N(dst_heads.size() == 1, F("branch '%s' is not merged\n") % idx(args, 1)());
-
-  set<manifest_id>::const_iterator src_i = src_heads.begin();
-  set<manifest_id>::const_iterator dst_i = dst_heads.begin();
-  
-  manifest_id merged;
-  transaction_guard guard(app.db);
-  try_one_merge (*src_i, *dst_i, merged, app);      
-  
-  packet_db_writer dbw(app);
-  
-  cert_manifest_in_branch(merged, idx(args, 1)(), app, dbw);
-  
-  string log = (F("propagate of %s and %s from branch '%s' to '%s'\n")
-		% (*src_i) % (*dst_i) % idx(args,0) % idx(args,1)).str();
-  
-  cert_manifest_changelog(merged, log, app, dbw);
-  
-  guard.commit();      
-}
 
 
 CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete partial id")

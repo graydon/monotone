@@ -313,39 +313,31 @@ tid_source
   change_set::tid next() { return ctr++; }
 };
 
-void
-play_back_rearrangement(change_set::path_rearrangement const & pr,
-			path_edit_consumer & pc)
+static void 
+analyze_rearrangement(change_set::path_rearrangement const & pr,
+		      std::set<file_path> & deleted_files,
+		      std::set<file_path> & deleted_dirs,
+		      std::map<file_path, file_path> & renamed_files,
+		      std::map<file_path, file_path> & renamed_dirs,
+		      std::set<file_path> & added_files)
 {
-  sanity_check_path_rearrangement(pr);
-
-  L(F("playing back path_rearrangement with %d entries\n") 
-    % pr.first.size());
-
-  // we copy the replayed state into temporary sets
-  // before outputting them. this ensures that the
-  // output is canonicalized (each type of change is
-  // output in a fixed order, and each change within
-  // each type is alphabetical)
-
-  std::set<file_path> deleted_files;
-  std::set<file_path> deleted_dirs;
-  std::set< std::pair<file_path, file_path> > renamed_files;
-  std::set< std::pair<file_path, file_path> > renamed_dirs;
-  std::set<file_path> added_files;
+  deleted_files.clear();
+  deleted_dirs.clear();
+  renamed_files.clear();
+  renamed_dirs.clear();
+  added_files.clear();
 
   for (change_set::path_state::const_iterator i = pr.first.begin();
        i != pr.first.end(); ++i)
-    {
-
-     change_set::tid curr(path_state_tid(i));
-     std::vector<file_path> old_name, new_name;
-     file_path old_path, new_path;
+    {      
+      change_set::tid curr(path_state_tid(i));
+      std::vector<file_path> old_name, new_name;
+      file_path old_path, new_path;
      
-     change_set::path_state::const_iterator j = pr.second.find(curr);
-     I(j != pr.second.end());
-     change_set::path_item old_item(path_state_item(i));
-     change_set::path_item new_item(path_state_item(j));
+      change_set::path_state::const_iterator j = pr.second.find(curr);
+      I(j != pr.second.end());
+      change_set::path_item old_item(path_state_item(i));
+      change_set::path_item new_item(path_state_item(j));
 
       // compose names
       if (!null_name(path_item_name(old_item)))
@@ -368,7 +360,7 @@ play_back_rearrangement(change_set::path_rearrangement const & pr,
 	  continue;
 	}
       
-      L(F("playing back %s %d : '%s' -> '%s'\n")
+      L(F("analyzing %s %d : '%s' -> '%s'\n")
 	% (path_item_type(old_item) == change_set::ptype_directory ? "directory" : "file")
 	% curr % old_path % new_path);
       
@@ -407,8 +399,16 @@ play_back_rearrangement(change_set::path_rearrangement const & pr,
 	    }
 	}
     }
+}
 
-  // phase 2: we're done analysis, now replay
+static void 
+play_back_analysis(std::set<file_path> const & deleted_files,
+		   std::set<file_path> const & deleted_dirs,
+		   std::map<file_path, file_path> const & renamed_files,
+		   std::map<file_path, file_path> const & renamed_dirs,
+		   std::set<file_path> const & added_files,
+		   path_edit_consumer & pc)
+{
   for (std::set<file_path>::const_iterator i = deleted_files.begin();
        i != deleted_files.end(); ++i)
     pc.delete_file(*i);
@@ -417,17 +417,55 @@ play_back_rearrangement(change_set::path_rearrangement const & pr,
        i != deleted_dirs.end(); ++i)
     pc.delete_dir(*i);
 
-  for (std::set<std::pair<file_path,file_path> >::const_iterator i = renamed_files.begin();
+  for (std::map<file_path,file_path>::const_iterator i = renamed_files.begin();
        i != renamed_files.end(); ++i)
     pc.rename_file(i->first, i->second);
 
-  for (std::set<std::pair<file_path,file_path> >::const_iterator i = renamed_dirs.begin();
+  for (std::map<file_path,file_path>::const_iterator i = renamed_dirs.begin();
        i != renamed_dirs.end(); ++i)
     pc.rename_dir(i->first, i->second);
 
   for (std::set<file_path>::const_iterator i = added_files.begin();
        i != added_files.end(); ++i)
     pc.add_file(*i);
+}
+			   
+
+
+void
+play_back_rearrangement(change_set::path_rearrangement const & pr,
+			path_edit_consumer & pc)
+{
+  sanity_check_path_rearrangement(pr);
+
+  L(F("playing back path_rearrangement with %d entries\n") 
+    % pr.first.size());
+
+  // we copy the replayed state into temporary sets
+  // before outputting them. this ensures that the
+  // output is canonicalized (each type of change is
+  // output in a fixed order, and each change within
+  // each type is alphabetical)
+
+  std::set<file_path> deleted_files;
+  std::set<file_path> deleted_dirs;
+  std::map<file_path, file_path> renamed_files;
+  std::map<file_path, file_path> renamed_dirs;
+  std::set<file_path> added_files;
+
+  analyze_rearrangement(pr, 
+			deleted_files, 
+			deleted_dirs,
+			renamed_files, 
+			renamed_dirs,
+			added_files);
+
+  play_back_analysis(deleted_files, 
+		     deleted_dirs,
+		     renamed_files, 
+		     renamed_dirs,
+		     added_files, 
+		     pc);
 }
 
 
@@ -544,19 +582,25 @@ dnode(directory_map & dir, change_set::tid t)
 
 static void 
 split_path(file_path const & p,
+	   std::vector<file_path> & components)
+{
+  components.clear();
+  fs::path tmp = mkpath(p());
+  std::copy(tmp.begin(), tmp.end(), std::inserter(components, components.begin()));
+}
+
+static void 
+split_path(file_path const & p,
 	   std::vector<file_path> & prefix,
 	   file_path & leaf_path)
 {
-  prefix.clear();
-  fs::path tmp = mkpath(p());
-  std::copy(tmp.begin(), tmp.end(), std::inserter(prefix, prefix.begin()));
+  split_path(p, prefix);
   I(prefix.size() > 0);
   leaf_path = prefix.back();
   prefix.pop_back();
 }
 
 /*
-
 static bool
 lookup_path(std::vector<file_path> const & pth,
 	    directory_map const & dir,
@@ -627,13 +671,14 @@ reconstruct_path(file_path const & input,
 	break;
 
       {
-	// check to see if this is the image of an added entry (i.e. null
-	// preimage name), if so it terminates our search.
+	// check to see if this is the image of an added or deleted entry
+	// (i.e. null name in output space), if so it terminates our
+	// search.
 	change_set::path_state::const_iterator i = output_space.find(directory_entry_tid(entry));
 	I(i != output_space.end());
 	if (null_name(path_item_name(path_state_item(i))))
 	  {
-	    L(F("path element %s was added, mapping truncated\n") % *pth);
+	    L(F("input path element '%s' is null in output space, mapping truncated\n") % *pth);
 	    break;
 	  }
       }
@@ -1472,6 +1517,49 @@ apply_path_rearrangement(manifest_map const & m_old,
     }
 }
 
+struct change_set_builder :
+  public change_set_consumer
+{
+  change_set & target;
+  path_edit_appender pae;
+  change_set_builder(change_set & t) : 
+    target(t), pae(path_edit_appender(target.rearrangement)) 
+  {
+    target.rearrangement.first.clear();
+    target.rearrangement.second.clear();
+    target.deltas.clear();
+  }
+  virtual void add_file(file_path const & pth, file_id const & ident)
+  {
+    pae.add_file(pth);
+    apply_delta(pth, file_id(), ident);
+  }
+  virtual void apply_delta(file_path const & path, 
+			   file_id const & src, 
+			   file_id const & dst)
+  {
+    target.deltas.insert(std::make_pair(path, std::make_pair(src, dst)));
+  }
+  virtual void delete_file(file_path const & d) { pae.delete_file(d); }
+  virtual void delete_dir(file_path const & d) { pae.delete_dir(d); }
+  virtual void rename_file(file_path const & a, file_path const & b) 
+  { pae.rename_file(a,b); }
+  virtual void rename_dir(file_path const & a, file_path const & b) 
+  { pae.rename_dir(a,b); }
+};
+
+void
+build_pure_addition_change_set(manifest_map const & man,
+			       change_set & cs)
+{
+  change_set_builder b(cs);
+  for (manifest_map::const_iterator i = man.begin(); i != man.end(); ++i)
+    {
+      b.add_file(manifest_entry_path(i), manifest_entry_id(i));
+    }
+}
+
+
 void
 apply_change_set(manifest_map const & old_man,
 		 change_set const & cs,
@@ -1538,6 +1626,192 @@ apply_change_set(manifest_map const & old_man,
 	    }
 	}
     }
+}
+
+static void
+subtract_pure_renames(change_set const & abc,
+		      change_set const & ab,
+		      directory_map const & abc_dst_map,
+		      directory_map const & ab_src_map,
+		      std::map<file_path,file_path> const & abc_renamed,
+		      std::map<file_path,file_path> const & ab_renamed,
+		      std::map<file_path,file_path> & bc_renamed)
+{
+  bc_renamed.clear();
+  for (std::map<file_path,file_path>::const_iterator abc_rename = abc_renamed.begin();
+       abc_rename != abc_renamed.end(); ++abc_rename)
+    {
+      file_path src_pth_in_a(abc_rename->first);
+      file_path dst_pth_in_c(abc_rename->second);
+
+      std::map<file_path,file_path>::const_iterator ab_rename = ab_renamed.find(src_pth_in_a);
+      if (ab_rename != ab_renamed.end())
+	{
+	  if (ab_rename->second == dst_pth_in_c)
+	    L(F("subtracting duplicate rename '%s' -> '%s'\n") % src_pth_in_a % dst_pth_in_c);
+	  else
+	    {
+	      L(F("reduced rename from '%s' -> '%s' to '%s' -> '%s'\n") 
+		% src_pth_in_a % dst_pth_in_c % ab_rename->second % dst_pth_in_c);
+	      bc_renamed.insert(std::make_pair(ab_rename->second, dst_pth_in_c));
+	    }
+	}
+      else
+	{
+	  file_path src_pth_in_b;
+	  reconstruct_path(src_pth_in_a, ab_src_map, ab.rearrangement.second, src_pth_in_b);
+	  L(F("preserving rename '%s' -> '%s' as '%s' -> '%s'\n") 
+	    % src_pth_in_a % dst_pth_in_c % src_pth_in_b % dst_pth_in_c);
+	  bc_renamed.insert(std::make_pair(src_pth_in_b, dst_pth_in_c));
+	}
+    }
+}
+
+
+void
+subtract_change_sets(change_set const & abc,
+		     change_set const & ab,		     
+		     change_set & bc)
+{
+
+  bc.rearrangement.first.clear();
+  bc.rearrangement.second.clear();
+  bc.deltas.clear();
+
+  directory_map abc_src_map, abc_dst_map, ab_src_map, ab_dst_map;
+  build_directory_map(abc.rearrangement.first, abc_src_map);
+  build_directory_map(abc.rearrangement.second, abc_dst_map);
+  build_directory_map(ab.rearrangement.first, ab_src_map);
+  build_directory_map(ab.rearrangement.second, ab_dst_map);
+
+  std::set<file_path> abc_deleted_files, ab_deleted_files, bc_deleted_files;
+  std::set<file_path> abc_deleted_dirs, ab_deleted_dirs, bc_deleted_dirs;
+  std::map<file_path, file_path> abc_renamed_files, ab_renamed_files, bc_renamed_files;
+  std::map<file_path, file_path> abc_renamed_dirs, ab_renamed_dirs, bc_renamed_dirs;
+  std::set<file_path> abc_added_files, ab_added_files, bc_added_files;
+
+  analyze_rearrangement(abc.rearrangement, 
+			abc_deleted_files, 
+			abc_deleted_dirs,
+			abc_renamed_files, 
+			abc_renamed_dirs,
+			abc_added_files);
+
+  analyze_rearrangement(ab.rearrangement, 
+			ab_deleted_files, 
+			ab_deleted_dirs,
+			ab_renamed_files, 
+			ab_renamed_dirs,
+			ab_added_files);
+
+  // subtract deletes
+
+  std::set_difference(abc_deleted_files.begin(), abc_deleted_files.end(),
+		      ab_deleted_files.begin(), ab_deleted_files.end(),
+		      std::inserter(bc_deleted_files, bc_deleted_files.begin()));
+
+  std::set_difference(abc_deleted_dirs.begin(), abc_deleted_dirs.end(),
+		      ab_deleted_dirs.begin(), ab_deleted_dirs.end(),
+		      std::inserter(bc_deleted_dirs, bc_deleted_dirs.begin()));
+
+  // subtract renames
+  
+  subtract_pure_renames(abc, ab, abc_dst_map, ab_src_map, 
+			abc_renamed_files, ab_renamed_files, bc_renamed_files);
+
+  subtract_pure_renames(abc, ab, abc_dst_map, ab_src_map, 
+			abc_renamed_dirs, ab_renamed_dirs, bc_renamed_dirs);
+
+  // subtract adds
+
+  for (std::set<file_path>::const_iterator abc_add = abc_added_files.begin();
+       abc_add != abc_added_files.end(); ++abc_add)
+    {
+      // we cannot *exactly* go by way of the a name map, because it's possible
+      // that ab has some other business happening with the name added here
+      // (for example, ab could contain a rename starting from our path; that is
+      // legal as we can add a new file in bc in the position moved away from 
+      // in ab). what we do instead is work out the target *directory* via the
+      // a name map, then check for adds with the current leaf. afaik this is
+      // the most sensible interpretation, but it might need revisiting.
+      
+      std::vector<file_path> tmp; 
+      file_path parent_in_c, parent_in_a, parent_in_b, leaf, ab_add;
+      split_path(*abc_add, tmp, leaf);
+      compose_path(tmp, parent_in_c);
+      reconstruct_path(parent_in_c, abc_dst_map, abc.rearrangement.first, parent_in_a);
+      reconstruct_path(parent_in_a, ab_src_map, ab.rearrangement.second, parent_in_b);
+      split_path(parent_in_b, tmp);
+      tmp.push_back(leaf);
+      compose_path(tmp, ab_add);
+      if (ab_added_files.find(ab_add) != ab_added_files.end())
+	{
+	  change_set::delta_map::const_iterator abc_delta = abc.deltas.find(*abc_add);
+	  change_set::delta_map::const_iterator ab_delta = ab.deltas.find(ab_add);
+	  I(abc_delta != abc.deltas.end());
+	  I(ab_delta != ab.deltas.end());
+	  I(delta_entry_src(abc_delta).inner()().empty());
+	  I(delta_entry_src(ab_delta).inner()().empty());
+	  if (delta_entry_dst(abc_delta) == delta_entry_dst(ab_delta))
+	    {
+	      L(F("subtracting add of '%s' at '%s', matched with add at '%s'\n")
+		% delta_entry_dst(abc_delta) % *abc_add % ab_add);
+	    }
+	  else
+	    {
+	      L(F("converting adds '%s' at '%s' and '%s' at '%s' to delta\n")
+		% delta_entry_dst(abc_delta) % *abc_add 
+		% delta_entry_dst(ab_delta) % ab_add);
+	      bc.deltas.insert(std::make_pair(ab_add, 
+					      std::make_pair(delta_entry_dst(ab_delta),
+							     delta_entry_dst(abc_delta))));
+	    }
+	}
+    }
+
+  // subtract non-addition deltas
+
+  for (change_set::delta_map::const_iterator abc_delta = abc.deltas.begin();
+       abc_delta != abc.deltas.end(); ++abc_delta)
+    {
+      if (delta_entry_src(abc_delta).inner()().empty())
+	continue;
+      file_path delta_in_c(delta_entry_path(abc_delta)), delta_in_a, delta_in_b;
+      reconstruct_path(delta_in_c, abc_dst_map, abc.rearrangement.first, delta_in_a);
+      if (ab_deleted_files.find(delta_in_a) != ab_deleted_files.end())
+	L(F("subtracting delta on '%s' due to deletion on preimage '%s'\n") 
+	  % delta_in_c % delta_in_a);
+      else
+	{
+	  reconstruct_path(delta_in_a, ab_src_map, ab.rearrangement.second, delta_in_b);
+	  change_set::delta_map::const_iterator ab_delta = ab.deltas.find(delta_in_b);
+	  if (ab_delta != ab.deltas.end())
+	    {
+	      I(delta_entry_src(ab_delta) == delta_entry_src(abc_delta));
+	      if (delta_entry_dst(ab_delta) == delta_entry_dst(abc_delta))
+		L(F("subtracting duplicate delta '%s' -> '%s' on '%s'\n") 
+		  % delta_entry_src(ab_delta) % delta_entry_dst(ab_delta) % delta_in_c);
+	      else
+		{
+		  L(F("reduced delta on '%s' from '%s' -> '%s' to '%s' -> '%s'\n")
+		    % delta_in_c 
+		    % delta_entry_src(abc_delta) % delta_entry_dst(abc_delta)
+		    % delta_entry_dst(ab_delta) % delta_entry_dst(abc_delta));
+		  bc.deltas.insert(std::make_pair(delta_in_b,
+						  std::make_pair(delta_entry_dst(ab_delta),
+								 delta_entry_dst(abc_delta))));		  
+		}
+	    }
+	  else
+	    {
+	      L(F("preserving delta '%s' -> '%s' on '%s'\n")		
+		% delta_entry_src(abc_delta) % delta_entry_dst(abc_delta) % delta_in_b);
+		  bc.deltas.insert(std::make_pair(delta_in_b,
+						  std::make_pair(delta_entry_src(abc_delta),
+								 delta_entry_dst(abc_delta))));
+	    }	  
+	}
+    }  
 }
 
 void 

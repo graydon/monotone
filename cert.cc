@@ -714,10 +714,8 @@ calculate_vcheck_mac(manifest_id const & m,
 {
   L(F("calculating vcheck cert on %s with seed %s\n") % m % seed);
 
-  manifest_data mdat;
   manifest_map mm, mm_mac;
-  app.db.get_manifest_version(m, mdat);
-  read_manifest_map(mdat, mm);
+  app.db.get_manifest(m, mm);
   for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
     {
       N(app.db.file_version_exists(manifest_entry_id(i)),

@@ -16,6 +16,7 @@ struct cert;
 #include <boost/filesystem/path.hpp>
 
 #include "commands.hh"
+#include "manifest.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
 
@@ -216,6 +217,10 @@ public:
   // from deltas (if they exist). 
   void get_manifest_version(manifest_id const & id,
 			    manifest_data & dat);
+
+  // get a constructed manifest
+  void get_manifest(manifest_id const & id,
+		    manifest_map & mm);
 
   // get manifest delta if it exists, else calculate it.
   // both manifests must exist.

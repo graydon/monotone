@@ -164,6 +164,11 @@ void
 play_back_change_set(change_set const & cs,
 		     change_set_consumer & csc);
 
+void
+subtract_change_sets(change_set const & abc,
+		     change_set const & ab,		     
+		     change_set & bc);
+
 // merging and concatenating 
 
 struct merge_provider;
@@ -206,6 +211,10 @@ void
 apply_path_rearrangement(manifest_map const & old_m,
 			 change_set::path_rearrangement const & pr,
 			 manifest_map & old_m_rearranged);
+
+void
+build_pure_addition_change_set(manifest_map const & man,
+			       change_set & cs);
 
 void
 apply_change_set(manifest_map const & old_man,

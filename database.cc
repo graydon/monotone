@@ -992,6 +992,15 @@ database::get_manifest_version(manifest_id const & id,
   dat = tmp;
 }
 
+void 
+database::get_manifest(manifest_id const & id,
+		       manifest_map & mm)
+{
+  manifest_data mdat;
+  get_manifest_version(id, mdat);
+  read_manifest_map(mdat, mm);
+}
+
 
 void 
 database::put_file(file_id const & id,
