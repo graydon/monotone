@@ -8,7 +8,7 @@ MOST_SOURCES =								\
          xdelta.cc ui.cc schema_migration.cc				\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
-	 change_set.cc							\
+	 change_set.cc mt_version.cc					\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -19,7 +19,7 @@ MOST_SOURCES =								\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
-         mkstemp.hh
+         mkstemp.hh mt_version.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -321,6 +321,12 @@ package_revision.txt: MT/revision
 	fi
 package_revision.h: package_revision.txt txt2c Makefile
 	./txt2c --strip-trailing $< package_revision >$@
+
+.PHONY: package_full_revision.txt
+package_full_revision.txt:
+	monotone status >$@ || echo "unknown" >$@
+package_full_revision.h: package_full_revision.txt txt2c Makefile
+	./txt2c $< package_full_revision >$@
 
 # automake doesn't build html docs
 

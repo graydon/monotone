@@ -19,7 +19,7 @@
 #include "file_io.hh"
 #include "transforms.hh"
 #include "ui.hh"
-#include "package_revision.h"
+#include "mt_version.hh"
 
 #define OPT_DEBUG 1
 #define OPT_HELP 2
@@ -33,6 +33,7 @@
 #define OPT_VERSION 10
 #define OPT_DUMP 11
 #define OPT_TICKER 12
+#define OPT_FULL_VERSION 13
 
 // main option processing and exception handling code
 
@@ -53,6 +54,7 @@ struct poptOption options[] =
     {"db", 0, POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
     {"branch", 0, POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
+    {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, "print detailed version number, then exit", NULL},
     {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
@@ -220,8 +222,12 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_VERSION:
-              cout << PACKAGE_STRING
-                   << " (base revision: " << package_revision_constant << ")" << endl;
+              print_version();
+              clean_shutdown = true;
+              return 0;
+
+            case OPT_FULL_VERSION:
+              print_full_version();
               clean_shutdown = true;
               return 0;
 

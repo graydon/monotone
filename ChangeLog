@@ -1,5 +1,19 @@
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 
+	* mt_version.hh: New file.
+	* mt_version.cc: New file.
+	* monotone.cc (package_revision.h): Don't include it.
+	(mt_version.hh): Include it.
+	(OPT_FULL_VERSION): New option.
+	(options): Add it.
+	(cpp_main): Implement --version and --full-version in terms of
+	mt_version.hh.
+
+	* Makefile.am (package_full_revision.h): Build it.
+	(MOST_SOURCES): Add mt_version.{cc,hh}.
+
+2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
+
 	* txt2c.cc (main): Add "--skip-trailing" option to skip trailing
 	whitespace.
 	* Makefile.am (package_revision.h): Generate it.
