@@ -942,7 +942,7 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
        << "and value: " << value << endl
        << "was signed by: ";
   for (set<rsa_keypair_id>::const_iterator i = signers.begin(); i != signers.end(); ++i)
-    cout << *i;
+    cout << *i << " ";
   cout << endl
        << "it would be: " << (trusted ? "trusted" : "UNtrusted") << endl;
 }

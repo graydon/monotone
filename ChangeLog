@@ -1,5 +1,12 @@
 2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (trusted): Print spaces between key ids.
+
+	* lua.cc (add_rcfile): Errors while loading a user-provided rc
+	file are naughtiness, not oopses.
+	
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (commands::explain_usage): Use split_into_lines to
 	do formatting of per-command usage; allow multi-line
 	descriptions.
