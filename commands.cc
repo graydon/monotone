@@ -2735,14 +2735,17 @@ void do_diff(const string & name,
 
   vector<string> lines;
   split_into_lines(summary(), lines);
-  if (lines.size() > 0) {
-    cout << "# " << endl;
-  }
-  for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
-    cout << "# " << *i << endl;
-  if (lines.size() > 0) {
-    cout << "# " << endl;
-  }
+  cout << "# " << endl;
+  if (summary().size() > 0) 
+    {
+      for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
+        cout << "# " << *i << endl;
+    }
+  else
+    {
+      cout << F("# no changes") << endl;
+    }
+  cout << "# " << endl;
 
   dump_diffs(composite.deltas, app, new_is_archived, type);
 }
@@ -3174,10 +3177,11 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   revision_id left = *i;
   revision_id ancestor;
   size_t count = 1;
+  P(F("starting with revision 1 / %d\n") % heads.size());
   for (++i; i != heads.end(); ++i, ++count)
     {
       revision_id right = *i;
-      P(F("merging with revision %d / %d\n") % count % heads.size());
+      P(F("merging with revision %d / %d\n") % (count + 1) % heads.size());
       P(F("[source] %s\n") % left);
       P(F("[source] %s\n") % right);
 

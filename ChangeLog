@@ -1,3 +1,35 @@
+2005-01-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_lca_1.at: New bug report.
+	* testsuite.at: Add it.
+
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (merge): Improve merge chatter.
+	(do_diff): Don't print anything when there are no
+	changes.
+
+2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_db_with_dots.at: New test.
+	* testsuite.at: Add it.
+
+2005-01-19  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+	
+	* Makefile.am (%.h, package_revision.h, package_full_revision.h):
+	Don't update target file if no change has occurred, to reduce
+	unnecessary rebuilds.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (cvs_key): Initialize struct tm to all zeros, to
+	stop garbage sneaking in -- thanks to Zack Weinberg for pointing
+	this out.  Also, handle 2 digit years properly on WIN32.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc: Remove tabs.
+
 2005-01-19  Matt Johnston  <matt@ucc.asn.au>
 
 	* database.cc: Pass filename to check_sqlite_format_version as a

@@ -309,10 +309,14 @@ txt2c: txt2c.cc Makefile
 	chmod 0755 $@$(EXEEXT)
 
 %.h: %.sql txt2c Makefile
-	./txt2c $< $(*F) >$@
+	./txt2c $< $(*F) >$@.tmp
+	cmp $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 %.h: %.lua txt2c Makefile
-	./txt2c $< $(*F) >$@
+	./txt2c $< $(*F) >$@.tmp
+	cmp $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 # A fake target so we can use MT/revision as a prerequisite, yet not
 # crash if MT/revision does not exist.
@@ -322,7 +326,9 @@ package_revision.txt: $(srcdir)/MT/revision
 	if [ -f $< ]; then cp $< $@; fi
 	if [ ! -f $@ ]; then echo "unknown" > $@; fi
 package_revision.h: package_revision.txt txt2c Makefile
-	./txt2c --strip-trailing $< package_revision >$@
+	./txt2c --strip-trailing $< package_revision >$@.tmp
+	cmp $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 .PHONY: package_full_revision.txt
 package_full_revision.txt:
@@ -337,7 +343,9 @@ package_full_revision_dist.txt: package_full_revision.txt
 	 echo '  Generated from data cached in the distribution;'; \
 	 echo '  further changes may have been made.') >> $@
 package_full_revision.h: package_full_revision.txt txt2c Makefile
-	./txt2c $< package_full_revision >$@
+	./txt2c $< package_full_revision >$@.tmp
+	cmp $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 # automake doesn't build html docs
 
