@@ -1,3 +1,186 @@
+2005-03-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* path_component (split_path): Fix bug.
+	Also, add unit tests for file.
+	* unit_tests.{hh,cc}: Add path_component unit tests.
+	
+2005-03-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am: Fixup after merge.
+	
+2005-03-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc: Move path_component stuff to...
+	* path_component.{hh,cc}: ...these new files.
+	* Makefile.am: Add them.
+
+2005-03-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* txt2c.cc: add --no-static option
+	* Makefile.am, package_revision.h, package_full_revision.h:
+	create revision info files as standalone .c files to speed
+	compilation (mt_version.cc doesn't need to recompile each time)
+
+2005-03-17  Derek Scherger  <derek@echologic.com>
+
+	* INSTALL: add note about creating a ./configure script
+
+2005-03-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* UPGRADE: Finish, hopefully.
+	* monotone.texi (db check): Be more clear about what is normally
+	checked, and when 'db check' is useful.
+
+2005-03-16  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+
+	* monotone.texi (Hook Reference): Typo.
+
+2005-03-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Add Derek Scherger to the copyright list.
+	Various tweaks.
+	(Starting a New Project): Rewrite to clarify that only Jim runs
+	"setup", and explain why.
+	(Network Service): Add a note that most people do use a central
+	server, since people on the mailing list seem to perhaps be
+	getting the wrong idea.
+	(Making Changes): Expand a little on what the "." in "checkout ."
+	means, since people seem to accidentally checkout stuff into real
+	directories.
+	(db check): Add much verbiage on the implications
+	of various problems, and how to fix them.  Also clarify some
+	wording.
+	* NEWS: Small tweaks.
+	* UPGRADE: More instructions, not done yet...
+	
+2005-03-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc, monotone.texi, monotone.1: mention that agraph
+          output is in VCG format.
+
+2005-03-14  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (cat): 'cat file REV PATH'.
+	* monotone.texi: Mention it.
+	* tests/t_cat_file_by_name.at: New test.
+	* testsuite.at: Add it.
+
+2005-03-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_heads): Remove app.initialize call.
+	* revision.cc, revision.hh (calculate_arbitrary_change_set): New
+	function.
+	(calculate_composite_change_set): Touch more sanity checking.
+
+	* commands.cc (update): Use it.
+
+2005-03-10  Derek Scherger  <derek@echologic.com>
+
+	* app_state.cc (set_restriction): adjust bad path error message
+	* commands.cc (get_valid_paths): refactor into ...
+	(extract_rearranged_paths): ... this
+	(extract_delta_paths): ... this
+	(extract_changed_paths): ... this
+	(add_intermediate_paths): ... and this
+	(restrict_delta_map): new function
+	(calculate_restricted_change_set): new function
+	(calculate_restricted_revision):
+	(ls_missing):
+	(revert): rework using new valid path functions
+	(do_diff): adjust --revision variants to work with restrictions
+	* tests/t_diff_restrict.at: un-XFAIL
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* win32/monotone.iss: Install the many-files version of the
+	docs, install the figures, create a start-menu icon for the
+	docs.
+	* Makefile.am: Make docs generation work with MinGW
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* win32/monotone.iss: Monotone -> monotone
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* win32/monotone.iss: Added an Inno Setup script for 
+	generating a Windows installer.  Inno Setup is GPLed, see
+	http://www.jrsoftware.org for download
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* t_diff_binary.at: binary.bz.b64 -> binary.gz.b64
+
+2005-03-08  Derek Scherger  <derek@echologic.com>
+
+	* Makefile.am: adjust for fsck rename
+	* commands.cc (db fsck): rename to db check and add short help;
+	adjust for fsck file renames
+	* database.{cc,hh}: minor alignment adjustments
+	(get_statistic): remove redundant method
+	(info): use count in place of get_statistic
+	(count): return unsigned long instead of int
+	(get_keys): new method
+	(get_public_keys): new method
+	(get_private_keys): rewrite using get_keys
+	(get_certs): new method to get all certs in database from
+	specified table
+	(get_revision_certs): ditto
+	* fsck.{cc,hh}: rename to...
+	* database_check.{cc,hh}: ...this; add key, cert and sane revision
+	history checking
+	* monotone.1: document db dump/load/check commands
+	* monotone.texi: document db check command
+	* tests/t_fsck.at: rename to...
+	* tests/t_database_check.at: ...this; and add tests for key and
+	cert problems
+	* testsuite.at: account for new test name
+
+2005-03-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Insert some missing newlines.
+	* NEWS: Note file format changes.
+	* file_io.cc (tilde_expand): Clarify error message.
+
+2005-03-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* keys.{cc,hh} (require_password): Simplify interface, do more
+	work.
+	* rcs_import.cc (import_cvs_repo): Update accordingly.
+	* commands.cc (server): Likewise.
+	* revision.cc (build_changesets_from_existing_revs) 
+	(build_changesets_from_manifest_ancestry): Require passphrase
+	early.
+
+2005-03-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* NEWS, INSTALL, README.changesets: Update in preparation for
+	0.17.
+	* UPGRADE: New file.
+	
+	* tests/t_diff_restrict.at: Oops.  XFAIL it.
+	
+2005-03-08  Jon Bright  <jon@siliconcircus.com>
+	
+	* win32/process.cc (process_spawn): Escape the parameters,
+	surround them with quotes before adding them to the consolidated
+	command line string
+	* mkstemp.cc (monotone_mkstemp): Now takes a std::string&, and
+	returns the *native* form of the path in this.
+	* mkstemp.hh: Now always use monotone_mkstemp
+	(monotone_mkstemp): Update prototype
+	* lua.cc (monotone_mkstemp_for_lua): Use new-style 
+	monotone_mkstemp
+
+2005-03-08  Jon Bright  <jon@siliconcircus.com>
+	
+	* win32/read_password.cc (read_password): Now correctly hides 
+	password when run in a Windows console.  Does at least enough in
+	a MinGW rxvt console to make sure that you can't see the password.
+	* win32/process.cc: Change indentation.
+	(process_spawn): Log commands executed, as for unix process.cc
+
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_diff_restrict.at: New test.
+	* testsuite.at: Add it.
+
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc (encountered_error, error): New variable and method.
@@ -210,6 +393,7 @@
 	* netsync.cc: Remove a few tabs.
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc (process_spawn): Now takes 
 	const char * const argv[]
 	* unix/process.cc (process_spawn): Ditto.  Cast for call to
@@ -217,6 +401,7 @@
 	(existsonpath): Initialise args in a const way
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc (process_spawn): Now takes 
 	char * const argv[]
 	* platform.hh (process_spawn): Ditto
@@ -225,6 +410,7 @@
 	* General: Beginning to hate C++'s const rules
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc (process_spawn): Now takes 
 	const char * const *
 	* platform.hh (process_spawn): Ditto
@@ -233,20 +419,24 @@
 	forth between Linux and Win32
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc (process_spawn): Now takes char * const *
 	* platform.hh (process_spawn): Ditto
 	* unix/process.cc (process_spawn): Ditto
 	(existsonpath): argv now const char*[]
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* win32/process.cc: Added forgotten file
 	* unix/process.cc: Include stat.h, (process_*) fix compilation
 	errors
 
 2005-03-04  Jon Bright  <jon@siliconcircus.com>
+	
 	* unix/process.cc: Added forgotten file
 
 2005-03-03  Jon Bright  <jon@siliconcircus.com>
+	
 	* lposix.c: Deleted
 	* win32/process.cc: Created, added Win32 versions of functions
 	existsonpath, make_executable, process_spawn, process_wait,
@@ -283,6 +473,7 @@
 	comparison (0 doesn't compare as false in lua it seems).
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* lposix.c (win32 Pspawn): Search the path
 	(win32 Pexistsonpath): Added.  'which' isn't easily available,
 	and not available at all from a normal Win32 command shell
@@ -293,19 +484,23 @@
 	calls which as it always did.
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* lposix.c (win32 Pspawn): Remove dumb strlen bug resulting in
 	AVs on commit.
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* t_can_execute.at: Test to see if hooks can execute things
 	* testsuite.at: Add t_can_execute
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* lposix.c (win32 Pspawn): Ensure the command string is always
 	NUL-terminated.  Also, allocate enough memory for the quotes
 	around the command string.
 
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	
 	* xdelta.cc (unittests): Define BOOST_STDC_NO_NAMESPACE, needed
 	to compile with the latest MinGW which uses gcc 3.4.2
 	* vocab.cc (verify(local_path)): Catch fs::filesystem_error too
@@ -352,6 +547,7 @@
 	* std_hooks.lua: (execute) Now uses spawn()
 
 2005-02-25  Jon Bright  <jon@siliconcircus.com>
+	
 	* ChangeLog: Add all my previous changes.
 	* tests/t_add_owndb.at: Add test for trying to add the db to
 	itself.
@@ -411,6 +607,7 @@
 	doesn't contain ..'s
 
 2005-02-25  Jon Bright  <jon@siliconcircus.com>
+	
 	* ChangeLog: Add all my previous changes.
 	* tests/t_add_owndb.at: Add test for trying to add the db to
 	itself.
@@ -491,6 +688,7 @@
 	calculate_base_revision
 
 2005-02-23  Jon Bright  <jon@siliconcircus.com>
+	
 	* vocab.cc (test_file_path_verification): Disable foo//nonsense
 	test for Win32, add tests for UNC paths.  This was the only
 	failing unit test on Win32.

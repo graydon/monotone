@@ -8,7 +8,8 @@ MOST_SOURCES =								\
          xdelta.cc ui.cc schema_migration.cc				\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
-	 change_set.cc mt_version.cc automate.cc fsck.cc epoch.cc	\
+	 change_set.cc mt_version.cc automate.cc database_check.cc	\
+	 path_component.cc                                              \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -19,8 +20,9 @@ MOST_SOURCES =								\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
-	 mkstemp.hh mt_version.hh automate.hh fsck.hh smap.hh		\
-	 gettext.h epoch.hh
+	 mkstemp.hh mt_version.hh automate.hh database_check.hh smap.hh	\
+	 gettext.h package_revision.c package_full_revision.c           \
+	 path_component.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -298,8 +300,8 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
-                      package_revision.h \
-                      package_full_revision.txt package_full_revision.h
+                      package_revision.c \
+                      package_full_revision.txt package_full_revision.c
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
 CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
@@ -325,8 +327,8 @@ $(srcdir)/MT/revision:
 package_revision.txt: $(srcdir)/MT/revision
 	if [ -f $< ]; then cp $< $@; fi
 	if [ ! -f $@ ]; then echo "unknown" > $@; fi
-package_revision.h: package_revision.txt txt2c Makefile
-	./txt2c --strip-trailing $< package_revision >$@.tmp
+package_revision.c: package_revision.txt txt2c Makefile
+	./txt2c --strip-trailing --no-static $< package_revision >$@.tmp
 	cmp $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
@@ -342,8 +344,8 @@ package_full_revision_dist.txt: package_full_revision.txt
 	(echo ''; \
 	 echo '  Generated from data cached in the distribution;'; \
 	 echo '  further changes may have been made.') >> $@
-package_full_revision.h: package_full_revision.txt txt2c Makefile
-	./txt2c $< package_full_revision >$@.tmp
+package_full_revision.c: package_full_revision.txt txt2c Makefile
+	./txt2c --no-static $< package_full_revision >$@.tmp
 	cmp $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
@@ -353,8 +355,11 @@ monotone.html: monotone.texi texinfo.css
 	makeinfo --no-split --no-headers --output $@ --html $<
 	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
 
+# The .perlbak thing is needed, otherwise the perl executions fails on MinGW
+
 html: monotone.texi texinfo.css
 	mkdir -p html
 	makeinfo --number-sections --html --output html $<
-	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
+	rm -f html/*.perlbak
 	cp texinfo.css html

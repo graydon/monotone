@@ -30,6 +30,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "keys.hh"
 
 void revision_set::check_sane() const
 {
@@ -884,14 +885,39 @@ calculate_composite_change_set(revision_id const & ancestor,
                                app_state & app,
                                change_set & composed)
 {
+  I(composed.empty());
   L(F("calculating composite changeset between %s and %s\n")
     % ancestor % child);
+  if (ancestor == child)
+    return;
   std::set<revision_id> visited;
   std::set<revision_id> subgraph;
   std::map<revision_id, boost::shared_ptr<change_set> > partial;
   find_subgraph_for_composite_search(ancestor, child, app, subgraph);
   calculate_change_sets_recursive(ancestor, child, app, composed, partial, 
                                   visited, subgraph);
+}
+
+void
+calculate_arbitrary_change_set(revision_id const & start,
+                               revision_id const & end,
+                               app_state & app,
+                               change_set & composed)
+{
+  L(F("calculating changeset from %s to %s\n") % start % end);
+  revision_id r_ca_id;
+  change_set ca_to_start, ca_to_end, start_to_ca;
+  N(find_least_common_ancestor(start, end, r_ca_id, app),
+    F("no common ancestor for %s and %s\n") % start % end);
+  L(F("common ancestor is %s\n") % r_ca_id);
+  calculate_composite_change_set(r_ca_id, start, app, ca_to_start);
+  calculate_composite_change_set(r_ca_id, end, app, ca_to_end);
+  manifest_id m_ca_id;
+  manifest_map m_ca;
+  app.db.get_revision_manifest(r_ca_id, m_ca_id);
+  app.db.get_manifest(m_ca_id, m_ca);
+  invert_change_set(ca_to_start, m_ca, start_to_ca);
+  concatenate_change_sets(start_to_ca, ca_to_end, composed);
 }
 
 
@@ -1419,6 +1445,14 @@ build_changesets_from_existing_revs(app_state & app)
   P(F("rebuilding revision graph from existing graph\n"));
   std::multimap<revision_id, revision_id> existing_graph;
 
+  {
+    // early short-circuit to avoid failure after lots of work
+    rsa_keypair_id key;
+    N(guess_default_key(key,app),
+      F("no unique private key for cert construction"));
+    require_password(key, app);
+  }
+
   app.db.get_revision_ancestry(existing_graph);
   for (std::multimap<revision_id, revision_id>::const_iterator i = existing_graph.begin();
        i != existing_graph.end(); ++i)
@@ -1442,6 +1476,15 @@ build_changesets_from_manifest_ancestry(app_state & app)
   anc_graph graph(false, app);
 
   P(F("rebuilding revision graph from manifest certs\n"));
+
+  {
+    // early short-circuit to avoid failure after lots of work
+    rsa_keypair_id key;
+    N(guess_default_key(key,app),
+      F("no unique private key for cert construction"));
+    require_password(key, app);
+  }
+
   std::vector< manifest<cert> > tmp;
   app.db.get_manifest_certs(cert_name("ancestor"), tmp);
   erase_bogus_certs(tmp, app);

@@ -13,7 +13,8 @@ This manual is for the ``monotone'' distributed version control system.
 This edition documents version @value{VERSION}.
 
 Copyright 2003, 2004 Graydon Hoare
-Copyright 2004 Nathaniel Smith
+Copyright 2004, 2005 Nathaniel Smith
+Copyright 2005 Derek Scherger
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -1063,9 +1064,9 @@ usually @emph{disconnected} from the network. They share no storage
 system. Thus when each programmer enters a command, it affects only
 his or her own computer, unless otherwise stated.
 
-Our fictional project will work through the following version control
-tasks. Some tasks must be done by each member of our example team, other
-tasks involve only one member.
+In the following, our fictional project team will work through several
+version control tasks. Some tasks must be done by each member of our
+example team; other tasks involve only one member.
 
 @menu
 * Creating a Database::
@@ -1295,17 +1296,22 @@ keys they received into their respective databases.
 @node    Starting a New Project
 @section Starting a New Project
 
-Before they can begin work on the project Jim, Abe and Beth must each
-create a @i{working copy} directory where they will do their work.
-This is done with the @code{monotone setup} command providing a
-directory name which will be the root of the new working copy.
+Before they can begin work on the project, Jim needs to create a
+@i{working copy} --- a directory whose contents monotone will keep track
+of.  Most of the time, you work on existing projects, and create working
+copies with the @code{checkout} command, which you'll learn about later.
+Jim is starting a new project, though, so he does something a little bit
+different.  He uses the @code{monotone setup} command to create a new
+working copy.
 
-This command creates the named directory if it doesn't already exist and
-creates the @file{MT} directory within it. Monotone requires this step
-as an explicit command, to prevent spurious creation of @file{MT}
-directories in incorrect locations. Command line values for the
-@option{--db}, @option{--branch} or @option{--key} options to the setup
-command will be cached in the new working copy.
+This command creates the named directory (if it doesn't already exist),
+and creates the @file{MT} directory within it.  The @file{MT} directory
+is how monotone recognizes that a directory is a working copy, and
+monotone stores some bookkeeping files within it.  For instance, command
+line values for the @option{--db}, @option{--branch} or @option{--key}
+options to the @code{setup} command will be cached in a file called
+@file{MT/options}, so you don't have to keep passing them to monotone
+all the time.
 
 Jim creates his working copy:
 
@@ -1317,30 +1323,10 @@ Jim creates his working copy:
 @end group
 @end smallexample
 
-Abe creates his:
-
-@smallexample
-@group
-/home/abe$ monotone setup work
-/home/abe$ cd work
-/home/abe/work
-@end group
-@end smallexample
-
-and Beth creates hers:
-
-@smallexample
-@group
-/home/beth$ monotone setup juice-bot
-/home/beth$ cd juice-bot
-/home/beth/juice-bot$ 
-@end group
-@end smallexample
-
-Notice that Jim, Abe and Beth have each changed their current working
-directory to their newly created working copies. For the rest of this
-example we will assume that they issue all further monotone commands
-from their working copy directories.
+Notice that Jim has changed his current directory to his newly created
+working copy. For the rest of this example we will assume that everyone
+issues all further monotone commands from their working copy
+directories.
 
 @page
 @node    Adding Files
@@ -1721,14 +1707,19 @@ ways, bringing each party up to date with the work of the other.
 At this point Jim is operating as a sort of ``central server'' for the
 company. If Jim wants to, he can leave his server running forever, or
 even put his server on a dedicated computer with better network
-connectivity. But if Jim is ever unable to play this role of ``central
+connectivity.  But if Jim is ever unable to play this role of ``central
 server'', perhaps due to a network failure, either Beth or Abe can run
 the @command{serve} command and provide access for the other to
-@command{sync} with. In fact, each employee can run a server if they
-like, concurrently, to help minimize the risk of service disruption
-from hardware failures. Changes will flow between servers
-automatically as clients access them and trade with one another.
+@command{sync} with.  In fact, each employee can run a server if they
+like, concurrently, to help minimize the risk of service disruption from
+hardware failures.  Changes will flow between servers automatically as
+clients access them and trade with one another.
 
+In practice, most people like to use at least one central server that is
+always running; this way, everyone always knows where to go to get the
+latest changes, and people can push their changes out without first
+calling their friends and making sure that they have their servers
+running.
 
 @page
 @node    Making Changes
@@ -1746,9 +1737,11 @@ $ monotone --db=abe.db --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
-Monotone unpacks the set of files in the head revision's manifest into
-Abe's current directory. Abe then opens up one of the files,
-@file{src/apple.c}, and edits it:
+Monotone unpacks the set of files in the head revision's manifest
+directly into Abe's current directory.  (If he had specified something
+other than @file{.} at the end, monotone would have created that
+directory and unpacked the files into it.)  Abe then opens up one of the
+files, @file{src/apple.c}, and edits it:
 
 @smallexample
 @group
@@ -3001,14 +2994,16 @@ all, commands are grouped into logical categories.
 
 @ftable @command
 @item monotone cat file @var{id}
+@itemx monotone cat file @var{rid} @var{path}
 @itemx monotone cat manifest
 @itemx monotone cat manifest @var{id}
 @itemx monotone cat revision
 @itemx monotone cat revision @var{id}
 
 These commands write the contents of a specific file, manifest or
-revision @var{id} to standard output. They are useful if you wish to
-inspect a version without checking it out into your working copy.  An
+revision @var{id} to standard output, or the contents of the file
+@var{path} as it was at revision @var{rid}. They are useful if you wish
+to inspect a version without checking it out into your working copy.  An
 unspecified manifest or revision @var{id} is allowed from within a
 working copy and refers to the current manifest or revision.
 
@@ -3757,6 +3752,137 @@ If you have important information in your database, you should back up
 a copy of it before migrating, in case there is an untrapped error
 during migration.
 
+@item monotone db check --db=@var{dbfile} 
+
+Monotone always works hard to verify the data it creates and accesses.
+For instance, if you have hard drive problems that corrupt data in
+monotone's database, and you attempt to retrieve this data, then
+monotone will notice the problem and stop, instead of silently giving
+you garbage data.
+
+However, it's also nice to notice such problems early, and in rarely
+used parts of history, while you still have backups.  That's what this
+command is for.  It systematically checks the database @file{dbfile} to
+ensure that it is complete and consistent. The following problems are
+detected:
+
+@itemize
+
+@item missing files 
+that are referenced by their sha1 hash from some manifest but do not
+exist in the database.  This is a serious problem; it means that your
+history is not fully reconstructible.  You can fix it by finding the
+file with the given hash, and loading it into your database with
+@command{fload}.
+
+@item unreferenced files
+that exist in the database but are not referenced by their sha1 hash
+from any existing manifest.  In itself, this only indicates some wasted
+space, and is not a problem; it's possible it could arise under normal
+use (for instance, in some strange corner cases following an incomplete
+netsync).  It could also arise, though, as a symptom of some other
+more serious problem.
+
+@item missing manifests
+that are referenced by their sha1 hash from some revision but do not
+exist in the database.  This is a serious problem; it means that your
+history is not fully reconstructible.  You can fix it by finding a
+database containing the manifest, and using @command{mdata} on that
+database to create a manifest data packet, which can be loaded into your
+database with @command{read}.
+
+@item unreferenced manifests
+that exist in the database but are not referenced by their sha1 hash
+from any existing revision.  In itself, this only indicates some wasted
+space, and is not a problem; it's possible it could arise under normal
+use (for instance, in some strange corner cases following an incomplete
+netsync).  It could also arise, though, as a symptom of some other
+more serious problem.
+
+@item incomplete manifests
+that exist in the database but contain references to files that do not
+exist in the database.  For diagnosis and solution, see ``missing
+files'' above.
+
+@item missing revisions
+that are referenced by their sha1 hash from some other revision or
+revision cert but do not exist in the database.  This may be a serious
+problem; it may indicate that your history is not fully reconstructible
+(if the reference is from another revision) or that someone is creating
+bogus certs (if the reference is from a cert).  You can fix it by
+finding a database containing the revision, and using @command{rdata} on
+that database to create a revision data packet, which can be loaded into
+your database with @command{read}.
+
+@item incomplete revisions
+that exist in the database but contain references to missing manifests,
+incomplete manifests or missing revisions.  This always occurs with some
+more detailed error; see above.
+
+@item revisions with mismatched parents
+that disagree with the cached revision ancestry on their parent
+revisions.  This may cause problems in using the database, and suggests
+the presence of a bug in monotone's caching system, but does not involve
+data loss.
+
+@item revisions with mismatched children
+that disagree with the cached revision ancestry on their child
+revisions.  This may cause problems in using the database, and suggests
+the presence of a bug in monotone's caching system, but does not involve
+data loss.
+
+@item revisions with bad history
+that exist in the database but fail monotone's normal sanity checks for
+consistent and correct history.  This is a serious problem; it indicates
+that your history record is somehow malformed.  This should not be
+possible, since monotone carefully checks every revision before storing
+it into the database, but if it does, then please request assistance on
+the monotone mailing list.  Fixing this generally means you may lose
+some history --- for instance, renames may be degraded into delete/add
+pairs --- but the actual contents of every revision will still be
+reproducible.
+
+@item revisions with missing certs
+that exist in the database lacking at least one author, branch,
+changelog or date cert. All revisions are expected to have at least one
+of each of these certs.  In itself, this is not necessarily a problem,
+but it is peculiar, and some operations such as netsync may behave
+strangely.
+
+@item revisions with mismatched certs
+that exist in the database with differing numbers of author, changelog
+and date certs. These certs are expected to appear together, as each
+revision committed should have an author, changelog and date associated
+with it.  In itself, this is not a problem, but it is peculiar.  All
+operations should behave normally.
+
+@item missing keys
+that have been used to sign certs but do not exist in the database.  In
+itself, this is not a problem, except that monotone will ignore any
+certs signed by the missing key.  You can fix it by finding a database
+containing the key in question, and using @command{pubkey} on that
+database to create a public key packet, which can be loaded into your
+database with @command{read}.
+
+@item certs with bad signatures
+that exist in the database with signatures that are invalid.  In itself,
+this is not a problem, except that monotone will ignore any such certs.
+You may also wish to find out who is creating certs with bad
+signatures; it may indicate some kind of security attack.
+
+@item certs with unchecked signatures
+that exist in the database but cannot have their signatures checked
+because the signing key is missing.  In itself, this is not a problem,
+except that monotone will ignore any certs signed by the missing key.
+You can fix it by finding a database containing the key in question, and
+using @command{pubkey} on that database to create a public key packet,
+which can be loaded into your database with @command{read}.
+
+@end itemize
+
+This command also verifies that the @sc{sha1} of every file, manifest,
+and revision is correct.
+
 @item monotone db execute @var{sql-statement}
 
 This is a debugging command which executes @var{sql-statement} against
@@ -4442,7 +4568,7 @@ information on character set conversion, see the section on
 @ref{Internationalization}.
 
 
-@item attr_functions [@var{arrtibute}] (@var{filename}, @var{value})
+@item attr_functions [@var{attribute}] (@var{filename}, @var{value})
 
 This is not a hook function, but a @emph{table} of hook
 functions. Each entry in the table @code{attr_functions}, at table
@@ -5122,7 +5248,7 @@ Indicate a passing or failing test result on a revision.
 @comment TROFF INPUT: .TP
 
 @item @b{agraph}
-Dump revision graph to stdout.
+Dump revision graph to stdout in VCG format.
 @comment TROFF INPUT: .TP
 
 @item @b{diff} @i{[--revision=<id1> [--revision=<id2>] ] [<pathname>...]}

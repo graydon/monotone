@@ -78,6 +78,13 @@ building and installation process for monotone
 
 2. configuring monotone:
 
+  * if there is no ./configure script in your source tree you'll need
+    to create one before proceeding to the next step. one of the 
+    following auto* commands should work:
+
+        $ aclocal-1.7 && autoreconf --install
+        $ AUTOMAKE=automake-1.7 ACLOCAL=aclocal-1.7 autoreconf --install
+
   * type "./configure" for a basic configuration of monotone.  several
     configuration options are available; type "configure --help" for a
     list of all of them. some special options are shown here:
@@ -150,7 +157,7 @@ building and installation process for monotone
     confirm monotone's functionality on your system. you might also
     like to try fetching monotone's sources from our monotone
     server. this process will transfer the complete development
-    history (about 2 megabytes) to your database, and you will then be
+    history (about 25 megabytes) to your database, and you will then be
     free to share it with others or make changes and submit them to
     us:
 
@@ -168,3 +175,8 @@ building and installation process for monotone
 
         monotone --db=mt.db --branch=net.venge.monotone checkout monotone-sources
 
+5. upgrading
+
+  * if you have an existing monotone installation, you may need to
+    perform some additional steps to migrate your data to the newest
+    version; see the file UPGRADE for details.
