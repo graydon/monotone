@@ -1,3 +1,7 @@
+2005-03-18  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: Imported sqlite version 3.1.6 tree
+
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc (encountered_error, error): New variable and method.
