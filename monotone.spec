@@ -53,7 +53,6 @@ fi
 %defattr(-,root,root,-)
 %doc AUTHORS COPYING NEWS README
 %{_bindir}/monotone
-%{_bindir}/depot.cgi
 %{_mandir}/man1/monotone.1.gz
 %{_infodir}/*.info*.gz
 
