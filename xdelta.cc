@@ -367,7 +367,7 @@ struct chunk
   }
 };
 
-typedef vector<chunk> version;
+typedef vector<chunk> version_spec;
 
 struct piece_table
 {
@@ -391,10 +391,10 @@ struct piece_table
     targ.append(pieces[p], pp, ln);
   }
 
-  void build(version const & in, string & out)
+  void build(version_spec const & in, string & out)
   {
     out.clear();
-    for (version::const_iterator i = in.begin();
+    for (version_spec::const_iterator i = in.begin();
 	 i != in.end(); ++i)
       {	
 	append(out, i->piece, i->ppos, i->len);
@@ -403,7 +403,7 @@ struct piece_table
 };
 
 static void 
-apply_insert(piece_table & p, version & out, string const & str)
+apply_insert(piece_table & p, version_spec & out, string const & str)
 {
   piece_id piece = p.insert(str);
   version_pos vpos = 0;
@@ -424,7 +424,7 @@ struct chunk_less_than
 };
 
 static void 
-apply_copy(version const & in, version & out, 
+apply_copy(version_spec const & in, version_spec & out, 
 	   version_pos src_vpos, length src_len)
 {
   //
@@ -453,7 +453,7 @@ apply_copy(version const & in, version & out,
   if (!out.empty())
     dst_vpos = out.back().vpos + out.back().len;
   version_pos dst_final = dst_vpos + src_len;
-  version::const_iterator lo = lower_bound(in.begin(), 
+  version_spec::const_iterator lo = lower_bound(in.begin(), 
 					   in.end(), 
 					   src_vpos, 
 					   chunk_less_than());
@@ -504,12 +504,12 @@ apply_copy(version const & in, version & out,
 struct piecewise_applicator : public delta_applicator
 {
   piece_table pt;
-  boost::shared_ptr<version> src;
-  boost::shared_ptr<version> dst;
+  boost::shared_ptr<version_spec> src;
+  boost::shared_ptr<version_spec> dst;
 
   piecewise_applicator() :
-    src(new version()),
-    dst(new version())
+    src(new version_spec()),
+    dst(new version_spec())
   {}
 
   virtual ~piecewise_applicator () {}
