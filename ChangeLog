@@ -1,3 +1,8 @@
+2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_ambig_update.at: Also check that update fails when one
+	candidate edge is deeper than the other.
+
 2004-12-09  graydon hoare  <graydon@pobox.com>
 
 	* ROADMAP: Add file.

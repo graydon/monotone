@@ -1,6 +1,9 @@
 AT_SETUP([ambiguous update fails])
 MONOTONE_SETUP
 
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
 ADD_FILE(testfile, [foo
 ])
 COMMIT(testbranch)
@@ -9,6 +12,7 @@ ANC=`BASE_REVISION`
 ADD_FILE(file1, [bar
 ])
 COMMIT(testbranch)
+LEFT=`BASE_REVISION`
 
 REVERT_TO($ANC)
 
@@ -18,6 +22,22 @@ COMMIT(testbranch)
 
 REVERT_TO($ANC)
 
+# There are two possible candidates, so our update should fail.
+AT_CHECK(rm -f file1)
 AT_CHECK(MONOTONE update, [1], [ignore], [ignore])
+AT_CHECK(test ! -e file1)
+
+# Check also when one side is deeper than the other...
+REVERT_TO($LEFT)
+ADD_FILE(file2, [blah blah blah
+])
+COMMIT(testbranch)
+
+REVERT_TO($ANC)
+AT_CHECK(rm -f file1)
+AT_CHECK(rm -f file2)
+AT_CHECK(MONOTONE update, [1], [ignore], [ignore])
+AT_CHECK(test ! -e file1)
+AT_CHECK(test ! -e file2)
 
 AT_CLEANUP
