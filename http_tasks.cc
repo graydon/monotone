@@ -44,8 +44,8 @@ bool post_http_packets(string const & group_name,
     "sig=" + signature;
 
   string request = string("POST ")
-    + http_path 
-    + "?" + query + " HTTP/1.0";
+    + "http://" + http_host + http_path 
+    + "?" + query + " HTTP/1.1";
 
   stream << request << "\r\n";
   L(F("HTTP -> '%s'\n") % request);
@@ -122,6 +122,65 @@ static bool scan_for_seq(string const & str,
 			   boost::match_not_dot_newline) != 0;
 }
 
+static void check_received_bytes(string const & tmp)
+{
+  size_t pos = tmp.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
+				     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+				     "0123456789"
+				     "+/=_.@[] \n\t");
+  N(pos == string::npos, 
+    F("Bad char from network: pos %d, char '%d'\n")
+    % pos % static_cast<int>(tmp.at(pos)));
+}
+
+static void read_chunk(std::iostream & stream,
+		       string & packet)
+{
+  char buf[bufsz];
+  ios_base::fmtflags flags = stream.flags();
+  stream.setf(ios_base::hex, ios_base::basefield);
+  size_t chunk_size = 0;
+  stream >> chunk_size;
+  if (chunk_size == 0)
+    return;
+
+  char c;
+  N(stream.good(), F("malformed chunk, stream closed after nonzero chunk size"));
+  stream.get(c); N(c == '\r', F("malformed chunk, no leading CR"));
+  N(stream.good(), F("malformed chunk, stream closed after leading CR"));
+  stream.get(c); N(c == '\n', F("malformed chunk, no leading LF"));
+  N(stream.good(), F("malformed chunk, stream closed after leading LF"));
+  
+  while(chunk_size > 0)
+    {
+      size_t read_size = std::min(bufsz, chunk_size);
+      stream.read(buf, read_size);
+      size_t actual_read_size = stream.gcount();
+      N(actual_read_size <= read_size, F("long chunked read from server"));
+      string tmp(buf, actual_read_size);
+      check_received_bytes(tmp);
+      packet.append(tmp);
+      chunk_size -= actual_read_size;
+    }    
+
+  stream.get(c); N(c == '\r', F("malformed chunk, no trailing CR"));
+  N(stream.good(), F("malformed chunk, stream closed after reailing CR"));
+  stream.get(c); N(c == '\n', F("malformed chunk, no trailing LF"));
+  stream.flags(flags);
+}
+
+static void read_buffer(std::iostream & stream,
+			string & packet)
+{
+  char buf[bufsz];
+  stream.read(buf, bufsz);
+  size_t bytes = stream.gcount();
+  N(bytes <= bufsz, F("long read from server"));
+  string tmp(buf, bytes);
+  check_received_bytes(tmp);
+  packet.append(tmp);
+}
+
 void fetch_http_packets(string const & group_name,
 			unsigned long & maj_number,
 			unsigned long & min_number,
@@ -132,7 +191,8 @@ void fetch_http_packets(string const & group_name,
 			std::iostream & stream)
 {
 
-  ticker packet_ticker("packet");
+  ticker n_packets("packets");
+  ticker n_bytes("bytes");
 
   // step 1: make the request
   string query = 
@@ -142,8 +202,8 @@ void fetch_http_packets(string const & group_name,
     "min=" + lexical_cast<string>(min_number);
 
   string request = string("GET ")
-    + http_path 
-    + "?" + query + " HTTP/1.0";
+    + "http://" + http_host + http_path 
+    + "?" + query + " HTTP/1.1";
 
   stream << request << "\r\n";
   L(F("HTTP -> '%s'\n") % request);
@@ -154,8 +214,13 @@ void fetch_http_packets(string const & group_name,
   stream << "\r\n";
   stream.flush();
 
-  // step 2: skip the headers. either we get packets or we don't; how we
-  // get them, or what the HTTP server thinks, is irrelevant.
+  // step 2: skip most of the headers. either we get packets or we don't;
+  // how we get them, or what the HTTP server thinks, is mostly
+  // irrelevant. unless they send chunked transport encoding, in which case
+  // we need to change our read loop slightly.
+
+  bool chunked_transport_encoding = false;
+
   {
     bool in_headers = true;
     while(stream.good() && in_headers)
@@ -163,43 +228,37 @@ void fetch_http_packets(string const & group_name,
 	size_t linesz = 0xfff;
 	char line[linesz];
 	memset(line, 0, linesz);
-	stream.getline(line, linesz, '\n');	
+	stream.getline(line, linesz, '\n');
 	size_t bytes = stream.gcount();
 	N(bytes < linesz, F("long header response line from server"));
 	if (bytes > 0) bytes--;
 	string tmp(line, bytes);
 	if (bytes == 1 || tmp.empty() || tmp == "\r") 
-	  in_headers = false;
+	  in_headers = false;	
+	else if (tmp.find("Transfer-Encoding") != string::npos 
+		 && tmp.find("chunked") != string::npos)
+	  {
+	    L(F("reading response as chunked encoding\n"));
+	    chunked_transport_encoding = true;
+	  }
 	else
 	  L(F("HTTP <- header %d bytes: '%s'\n") % bytes % tmp);
       }
   }
 
   // step 3: read any packets
+  string packet;
+  packet.reserve(bufsz);
   {
-    char buf[bufsz];
-    string packet;
-    packet.reserve(bufsz);
     while(stream.good())
       {
 	// WARNING: again, we are reading from the network here.
 	// please use the utmost clarity and safety in this part.
-	stream.read(buf, bufsz);
-	size_t bytes = stream.gcount();
-	N(bytes <= bufsz, F("long read from server"));
-	string tmp(buf, bytes);
-	size_t pos = tmp.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
-					   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-					   "0123456789"
-					   "+/=_.@[] \n\t");
-	if (pos != string::npos)
-	  {
-	    W(F("Bad char from network: pos %d, char '%d'\n")
-	      % pos % static_cast<int>(packet.at(pos)));
-	    continue;
-	  }
-	
-	packet.append(tmp);
+
+	if (chunked_transport_encoding)
+	  read_chunk(stream, packet);
+	else
+	  read_buffer(stream, packet);
 
 	unsigned long end = 0;	
 	if (scan_for_seq(packet, maj_number, min_number, end))
@@ -207,7 +266,8 @@ void fetch_http_packets(string const & group_name,
 	    // we are at the end of a packet
 	    L(F("got sequence numbers %lu, %lu\n") % maj_number % min_number);
 	    istringstream pkt(packet.substr(0,end));
-	    packet_ticker += read_packets(pkt, consumer);
+	    n_packets += read_packets(pkt, consumer);
+	    n_bytes += end;
 	    packet.erase(0, end);
 	  }
       }
@@ -216,7 +276,8 @@ void fetch_http_packets(string const & group_name,
       {
 	L(F("%d trailing bytes from http\n") % packet.size());
 	istringstream pkt(packet);
-	packet_ticker += read_packets(pkt, consumer);
+	n_packets += read_packets(pkt, consumer);
+	n_bytes += packet.size();
       }    
   }
   P(F("http fetch complete\n"));

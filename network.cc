@@ -220,14 +220,30 @@ bool parse_url(url const & u,
 }
 
 
-void open_connection(string const & host_name,
-		     unsigned long port_num,
+void open_connection(string const & proto_name,
+		     string const & host_name_in,
+		     unsigned long port_num_in,
 		     boost::socket::connector<>::data_connection_t & connection,
-		     boost::shared_ptr<iostream> & stream)
+		     boost::shared_ptr<iostream> & stream,
+		     app_state & app)
 {
   using namespace boost::socket;
   string resolved_host;
+
+  // check for proxies / tunnels
+  string host_name = host_name_in;
+  unsigned long port_num = port_num_in;
+  if (! app.lua.hook_get_connect_addr(proto_name,
+				      host_name_in, 
+				      port_num_in,
+				      host_name,
+				      port_num))
+    {
+      host_name = host_name_in;
+      port_num = port_num_in;
+    }
   
+
   ip4::address addr;
   ip4::tcp_protocol proto;
   
@@ -289,7 +305,7 @@ static void post_http_blob(url const & targ,
     {
       boost::socket::connector<>::data_connection_t connection;
       boost::shared_ptr<iostream> stream;
-      open_connection(host, port, connection, stream);
+      open_connection("http", host, port, connection, stream, app);
       
       posted_ok = post_http_packets(group, keyid(), 
 				    signature_hex(), blob, host, 
@@ -317,7 +333,7 @@ static void post_nntp_blob(url const & targ,
     {
       boost::socket::connector<>::data_connection_t connection;
       boost::shared_ptr<iostream> stream;
-      open_connection(host, port, connection, stream);
+      open_connection("nntp", host, port, connection, stream, app);
       posted_ok = post_nntp_article(group, sender, 
 				    // FIXME: maybe some sort of more creative subject line?
 				    "[MT] packets", 
@@ -366,7 +382,8 @@ static void post_smtp_blob(url const & targ,
 	{
 	  try 
 	    {		      
-	      open_connection(mx->second, port, connection, stream);
+	      open_connection("smtp", mx->second, port, connection, 
+			      stream, app);
 	      found_working_mx = true;
 	      break;
 	    }
@@ -481,6 +498,7 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
       P(F("fetching packets from group %s\n") % *src);
 
       dbw.server.reset(*src);
+      transaction_guard guard(app.db);
       
       if (proto == "http")
 	{
@@ -488,7 +506,7 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
 	  app.db.get_sequences(*src, maj, min);
 	  boost::socket::connector<>::data_connection_t connection;
 	  boost::shared_ptr<iostream> stream;
-	  open_connection(host, port, connection, stream);
+	  open_connection("http", host, port, connection, stream, app);
 	  fetch_http_packets(group, maj, min, dbw, host, path, port, *stream);
 	  app.db.put_sequences(*src, maj, min);
 	}
@@ -499,10 +517,11 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
 	  app.db.get_sequences(*src, maj, min);
 	  boost::socket::connector<>::data_connection_t connection;
 	  boost::shared_ptr<iostream> stream;
-	  open_connection(host, port, connection, stream);
+	  open_connection("nntp", host, port, connection, stream, app);
 	  fetch_nntp_articles(group, min, dbw, *stream);
 	  app.db.put_sequences(*src, maj, min);
 	}
+      guard.commit();
     }
   P(F("fetched %d packets\n") % dbw.count);
 }

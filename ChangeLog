@@ -1,3 +1,11 @@
+2003-11-22  graydon hoare  <graydon@pobox.com>
+
+	* lua.cc, lua.hh (hook_get_connect_addr): New hook.
+	* std_hooks.lua (get_connect_addr): Default uses HTTP_PROXY.
+	* network.cc, network.hh: Use new hook.
+	* http_tasks.cc: Teach about HTTP/1.1.
+	* cert.cc (bogus_cert_p): Fix UI ugly.
+
 2003-11-21  graydon hoare  <graydon@pobox.com>
 
 	* constants.hh (postsz): New constant for suggested post size.

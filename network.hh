@@ -22,9 +22,11 @@ bool parse_url(url const & u,
 	       std::string & group,
 	       unsigned long & port);
 
-void open_connection(std::string const & host,
+void open_connection(std::string const & proto_name,
+		     std::string const & host,
 		     unsigned long port,
-		     boost::shared_ptr<std::iostream> & stream);
+		     boost::shared_ptr<std::iostream> & stream, 
+		     app_state & app);
 
 void post_queued_blobs_to_network(std::set<url> const & targets,
 				  app_state & app);

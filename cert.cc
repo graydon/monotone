@@ -45,7 +45,7 @@ struct bogus_cert_p
     }
   else
     {
-      ui.warn(F("bad signature by '%s' on '%s')") % c.inner().key() % txt);
+      W(F("bad signature by '%s' on '%s'\n") % c.inner().key() % txt);
       return true;
     }
   }
@@ -61,7 +61,7 @@ struct bogus_cert_p
     }
   else
     {
-      ui.warn(F("bad signature by '%s' on '%s')") % c.inner().key() % txt);
+      W(F("bad signature by '%s' on '%s'\n") % c.inner().key() % txt);
       return true;
     }
   }
