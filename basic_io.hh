@@ -61,7 +61,6 @@ namespace basic_io
     void print_indent();
     void print_bra();
     void print_ket();
-    void print_val(char c, std::string const & s);
     void print_hex(std::string const & s);
     void print_str(std::string const & s);
     void print_sym(std::string const & s, bool eol = false);

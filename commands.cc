@@ -1725,6 +1725,219 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 }
 
 
+struct
+diff_dumper : public change_set_consumer
+{
+  app_state & app;
+  bool const & new_is_archived;
+  diff_dumper(app_state & app,
+	      bool const & new_is_archived)
+    : app(app), new_is_archived(new_is_archived)
+  {}
+  
+  virtual void add_file(file_path const & pth, 
+			file_id const & ident) 
+  {
+      data unpacked;
+      vector<string> lines;
+      
+      if (new_is_archived)
+        {
+	  file_data dat;
+	  app.db.get_file_version(ident, dat);
+	  unpack(dat.inner(), unpacked);
+        }
+      else
+        {
+          read_localized_data(pth, unpacked, app.lua);
+        }
+
+      split_into_lines(unpacked(), lines);
+      if (! lines.empty())
+	{
+	  cout << (F("--- %s\n") % pth)
+	       << (F("+++ %s\n") % pth)
+	       << (F("@@ -0,0 +1,%d @@\n") % lines.size());
+	  for (vector<string>::const_iterator j = lines.begin();
+	       j != lines.end(); ++j)
+	    {
+	      cout << "+" << *j << endl;
+	    }
+	}
+  }
+
+  virtual void apply_delta(file_path const & path, 
+			   file_id const & src, 
+			   file_id const & dst)
+  {
+    file_data f_old;
+    gzip<data> decoded_old;
+    data decompressed_old, decompressed_new;
+    vector<string> old_lines, new_lines;
+    
+    app.db.get_file_version(src, f_old);
+    decode_base64(f_old.inner(), decoded_old);
+    decode_gzip(decoded_old, decompressed_old);
+    
+    if (new_is_archived)
+      {
+	file_data f_new;
+	gzip<data> decoded_new;
+	app.db.get_file_version(dst, f_new);
+	decode_base64(f_new.inner(), decoded_new);
+	decode_gzip(decoded_new, decompressed_new);
+      }
+    else
+      {
+	read_localized_data(path, decompressed_new, app.lua);
+      }
+    
+    split_into_lines(decompressed_old(), old_lines);
+    split_into_lines(decompressed_new(), new_lines);
+    unidiff(path(), path(), old_lines, new_lines, cout);
+  }
+
+  virtual void delete_file(file_path const & d) {}
+  virtual void delete_dir(file_path const & d) {}
+  virtual void rename_file(file_path const & a, file_path const & b) {}
+  virtual void rename_dir(file_path const & a, file_path const & b) {}
+  virtual ~diff_dumper() {}
+};
+
+CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout")
+{
+  revision_set r_old, r_new;
+  manifest_map m_new;
+  bool new_is_archived;
+
+  change_set composite;
+
+  if (args.size() == 0)
+    {
+      manifest_map m_old;
+      calculate_current_revision(app, r_new, m_old, m_new);
+      I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
+      if (r_new.edges.size() == 1)
+	composite = edge_changes(r_new.edges.begin());
+      new_is_archived = false;
+    }
+  else if (args.size() == 1)
+    {
+      revision_id r_old_id;
+      manifest_map m_old;
+      complete(app, idx(args, 0)(), r_old_id);
+      N(app.db.revision_exists(r_old_id),
+	F("revision %s does not exist") % r_old_id);
+      app.db.get_revision(r_old_id, r_old);
+      calculate_current_revision(app, r_new, m_old, m_new);
+      I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
+      N(r_new.edges.size() == 1, F("current revision has no ancestor"));
+      new_is_archived = false;
+    }
+  else if (args.size() == 2)
+    {
+      revision_id r_old_id, r_new_id;
+      manifest_id m_new_id;
+      manifest_data m_new_dat;
+
+      complete(app, idx(args, 0)(), r_old_id);
+      complete(app, idx(args, 1)(), r_new_id);
+
+      N(app.db.revision_exists(r_old_id),
+	F("revision %s does not exist") % r_old_id);
+      app.db.get_revision(r_old_id, r_old);
+
+      N(app.db.revision_exists(r_new_id),
+	F("revision %s does not exist") % r_new_id);
+      app.db.get_revision(r_new_id, r_new);
+
+      app.db.get_revision_manifest(r_new_id, m_new_id);
+      app.db.get_manifest_version(m_new_id, m_new_dat);
+      read_manifest_map(m_new_dat, m_new);
+
+      new_is_archived = true;
+    }
+  else
+    {
+      throw usage(name);
+    }
+      
+
+
+  if (args.size() > 0)
+    {
+      revision_id new_id, src_id, dst_id, anc_id;
+      calculate_ident(r_old, src_id);
+      calculate_ident(r_new, new_id);
+      if (new_is_archived)
+	dst_id = new_id;
+      else
+	{
+	  I(r_new.edges.size() == 1);
+	  dst_id = edge_old_revision(r_new.edges.begin());
+	}
+
+      N(find_common_ancestor(src_id, dst_id, anc_id, app),
+	F("no common ancestor for %s and %s") % src_id % dst_id);
+
+      if (src_id == anc_id)
+	{
+	  calculate_composite_change_set(src_id, dst_id, app, composite);
+	  L(F("calculated diff via direct analysis\n"));
+	}
+
+      else if (!(src_id == anc_id) && dst_id == anc_id)
+	{
+	  change_set tmp;
+	  calculate_composite_change_set(dst_id, src_id, app, tmp);
+	  invert_change_set(tmp, m_new, composite);
+	  L(F("calculated diff via inverted direct analysis\n"));
+	}
+
+      else
+	{
+	  change_set anc_to_src, src_to_anc, anc_to_dst;
+	  manifest_id anc_m_id;
+	  manifest_data anc_m_data;
+	  manifest_map m_anc;
+
+	  I(!(src_id == anc_id || dst_id == anc_id));
+
+	  app.db.get_revision_manifest(anc_id, anc_m_id);
+	  app.db.get_manifest_version(anc_m_id, anc_m_data);
+	  read_manifest_map(anc_m_data, m_anc);
+
+	  calculate_composite_change_set(anc_id, src_id, app, anc_to_src);
+	  invert_change_set(anc_to_src, m_anc, src_to_anc);
+	  calculate_composite_change_set(anc_id, dst_id, app, anc_to_dst);
+	  concatenate_change_sets(src_to_anc, anc_to_dst, composite);
+	  L(F("calculated diff via common ancestor %s\n") % anc_id);
+	}
+
+      if (!new_is_archived)
+	{
+	  L(F("concatenating un-committed changeset to composite\n"));
+	  change_set tmp;
+	  I(r_new.edges.size() == 1);
+	  concatenate_change_sets(composite, edge_changes(r_new.edges.begin()), tmp);
+	  composite = tmp;
+	}
+
+    }
+
+  data summary;
+  write_change_set(composite, summary);
+
+  vector<string> lines;
+  split_into_lines(summary(), lines);
+  for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
+    cout << "# " << *i << endl;
+
+  diff_dumper dd(app, new_is_archived);
+  play_back_change_set(composite, dd);
+}
+
+
 /*
 
 // this helper tries to produce merge <- mergeN(left,right), possibly
@@ -2249,126 +2462,6 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
     throw usage(name);  
 }
 
-CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on stdout")
-{
-  manifest_map m_old, m_new;
-  patch_set ps;
-  bool new_is_archived;
-
-  transaction_guard guard(app.db);
-
-  if (args.size() == 0)
-    {
-      get_manifest_map(m_old);
-      calculate_new_manifest_map(m_old, m_new, app);
-      new_is_archived = false;
-    }
-  else if (args.size() == 1)
-    {
-      manifest_id m_old_id;
-      complete(app, idx(args, 0)(), m_old_id);
-      manifest_data m_old_data;
-      app.db.get_manifest_version(m_old_id, m_old_data);
-      read_manifest_map(m_old_data, m_old);
-
-      manifest_map parent;
-      get_manifest_map(parent);
-      calculate_new_manifest_map(parent, m_new, app);
-      new_is_archived = false;
-    }
-  else if (args.size() == 2)
-    {
-      manifest_id m_old_id, m_new_id;
-
-      complete(app, idx(args, 0)(), m_old_id);
-      complete(app, idx(args, 1)(), m_new_id);
-
-      manifest_data m_old_data, m_new_data;
-      app.db.get_manifest_version(m_old_id, m_old_data);
-      app.db.get_manifest_version(m_new_id, m_new_data);
-
-      read_manifest_map(m_old_data, m_old);
-      read_manifest_map(m_new_data, m_new);
-      new_is_archived = true;
-    }
-  else
-    {
-      throw usage(name);
-    }
-      
-  manifests_to_patch_set(m_old, m_new, app, ps);
-
-  stringstream summary;
-  patch_set_to_text_summary(ps, summary);
-  vector<string> lines;
-  split_into_lines(summary.str(), lines);
-  for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
-    cout << "# " << *i << endl;
-
-  for (std::set<patch_addition>::const_iterator i = ps.f_adds.begin();
-       i != ps.f_adds.end(); ++i)
-    {
-      data unpacked;
-      vector<string> lines;
-
-      if (new_is_archived)
-        {
-	  file_data dat;
-	  app.db.get_file_version(i->ident, dat);
-	  unpack(dat.inner(), unpacked);
-        }
-      else
-        {
-          read_localized_data(i->path, unpacked, app.lua);
-        }
-
-      split_into_lines(unpacked(), lines);
-      if (! lines.empty())
-	{
-	  cout << (F("--- %s\n") % i->path)
-	       << (F("+++ %s\n") % i->path)
-	       << (F("@@ -0,0 +1,%d @@\n") % lines.size());
-	  for (vector<string>::const_iterator j = lines.begin();
-	       j != lines.end(); ++j)
-	    {
-	      cout << "+" << *j << endl;
-	    }
-	}
-    }
-
-  for (set<patch_delta>::const_iterator i = ps.f_deltas.begin();
-       i != ps.f_deltas.end(); ++i)
-    {
-      file_data f_old;
-      gzip<data> decoded_old;
-      data decompressed_old, decompressed_new;
-      vector<string> old_lines, new_lines;
-
-      app.db.get_file_version(i->id_old, f_old);
-      decode_base64(f_old.inner(), decoded_old);
-      decode_gzip(decoded_old, decompressed_old);
-
-      if (new_is_archived)
-        {
-          file_data f_new;
-          gzip<data> decoded_new;
-          app.db.get_file_version(i->id_new, f_new);
-          decode_base64(f_new.inner(), decoded_new);
-          decode_gzip(decoded_new, decompressed_new);
-        }
-      else
-        {
-          read_localized_data(i->path, decompressed_new, app.lua);
-        }
-
-      split_into_lines(decompressed_old(), old_lines);
-      split_into_lines(decompressed_new(), new_lines);
-
-      unidiff(i->path(), i->path(), old_lines, new_lines, cout);
-    }  
-  
-  guard.commit();
-}
 
 CMD(log, "informative", "[ID] [file]", "print log history in reverse order (which affected file)")
 {

@@ -216,7 +216,7 @@ find_intersecting_node(bitmap & fst,
   bitmap intersection = fst & snd;
   if (intersection.any())
     {
-      L(F("found %d intersecting nodes") % intersection.count());
+      L(F("found %d intersecting nodes\n") % intersection.count());
       for (ctx i = 0; i < intersection.size(); ++i)
 	{
 	  if (intersection.test(i))
@@ -258,7 +258,7 @@ find_common_ancestor(revision_id const & left,
   shared_bitmap ranc = shared_bitmap(new bitmap());
   shared_bitmap ldom = shared_bitmap(new bitmap());
   shared_bitmap rdom = shared_bitmap(new bitmap());
-  
+
   ancestors.insert(make_pair(ln, lanc));
   ancestors.insert(make_pair(rn, ranc));
   dominators.insert(make_pair(ln, ldom));
@@ -319,7 +319,7 @@ calculate_change_sets_recursive(revision_id const & ancestor,
 {
 
   if (ancestor == child)
-    return false;
+    return true;
 
   visited_nodes.insert(child);
 
@@ -336,6 +336,8 @@ calculate_change_sets_recursive(revision_id const & ancestor,
       bool relevant_parent = false;
       revision_id curr_parent = edge_old_revision(i);
       change_set cset_to_curr_parent;
+
+      L(F("considering parent %s of %s\n") % curr_parent % child);
 
       std::map<revision_id, boost::shared_ptr<change_set> >::const_iterator j = 
 	partial_csets.find(curr_parent);
@@ -366,6 +368,8 @@ calculate_change_sets_recursive(revision_id const & ancestor,
 	  relevant_child = true;
 	  break;
 	}
+      else
+	L(F("parent %s of %s is not relevant\n") % curr_parent % child);
     }
 
   // store the partial edge from ancestor -> child, so that if anyone
@@ -385,6 +389,8 @@ calculate_composite_change_set(revision_id const & ancestor,
 			       app_state & app,
 			       change_set & composed)
 {
+  L(F("calculating composite changeset between %s and %s\n")
+    % ancestor % child);
   std::set<revision_id> visited;
   std::map<revision_id, boost::shared_ptr<change_set> > partial;
   calculate_change_sets_recursive(ancestor, child, app, composed, partial, visited);

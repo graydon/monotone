@@ -11,6 +11,7 @@
 
 #include "basic_io.hh"
 #include "change_set.hh"
+#include "file_io.hh"
 #include "interner.hh"
 #include "sanity.hh"
 
@@ -132,7 +133,7 @@ static bool null_name(file_path const & p)
 static void
 sanity_check_path_item(change_set::path_item const & pi)
 {
-  fs::path tmp(pi.name());
+  fs::path tmp = mkpath(pi.name());
   I(null_name(pi.name) || ++(tmp.begin()) == tmp.end());
 }
 
@@ -249,10 +250,10 @@ compose_path(std::vector<file_path> const & names,
     {      
       std::vector<file_path>::const_iterator i = names.begin();
       I(i != names.end());
-      boost::filesystem::path p((*i)());
+      fs::path p = mkpath((*i)());
       ++i;
       for ( ; i != names.end(); ++i)
-	p /= (*i)();
+	p /= mkpath((*i)());
       path = file_path(p.string());
     }
   catch (std::runtime_error &e)
@@ -285,6 +286,7 @@ get_full_path(change_set::path_state const & state,
 {
   std::vector<file_path> tmp;
   get_full_path(state, t, tmp);
+  L(F("got %d-entry path for tid %d\n") % tmp.size() % t);
   compose_path(tmp, pth);
 }
 
@@ -331,6 +333,7 @@ play_back_rearrangement(change_set::path_rearrangement const & pr,
   for (change_set::path_state::const_iterator i = pr.first.begin();
        i != pr.first.end(); ++i)
     {
+
      change_set::tid curr(path_state_tid(i));
      std::vector<file_path> old_name, new_name;
      file_path old_path, new_path;
@@ -424,6 +427,54 @@ play_back_rearrangement(change_set::path_rearrangement const & pr,
 }
 
 
+struct change_set_playback_rearrangement_consumer
+  : public path_edit_consumer
+{
+  change_set::delta_map const & deltas;
+  change_set_consumer & csc;
+  change_set_playback_rearrangement_consumer(change_set::delta_map const & d,
+					     change_set_consumer & csc) 
+    : deltas(d), csc(csc) {}
+  virtual void add_file(file_path const & a)
+  {
+    change_set::delta_map::const_iterator i = deltas.find(a);
+    I(i != deltas.end());
+    csc.add_file(a, delta_entry_dst(i));
+  }
+  virtual void delete_file(file_path const & d) { csc.delete_file(d); }
+  virtual void delete_dir(file_path const & d) { csc.delete_dir(d); }
+  virtual void rename_file(file_path const & a, file_path const & b) { csc.rename_file(a, b); }
+  virtual void rename_dir(file_path const & a, file_path const & b) { csc.rename_dir(a, b); }
+  virtual ~change_set_playback_rearrangement_consumer() {}
+};
+
+
+void
+play_back_change_set(change_set const & cs,
+		     change_set_consumer & csc)
+{
+  change_set_playback_rearrangement_consumer csprc(cs.deltas, csc);
+  play_back_rearrangement(cs.rearrangement, csprc);
+  L(F("playing back %d deltas\n") % cs.deltas.size());
+  for (change_set::delta_map::const_iterator i = cs.deltas.begin();
+       i != cs.deltas.end(); ++i)
+    {
+      if (delta_entry_src(i).inner()().empty() 
+	  || delta_entry_dst(i).inner()().empty())
+	{
+	  L(F("skipping delta %s : '%s' -> '%s' ")
+	    % delta_entry_path(i)
+	    % delta_entry_src(i)
+	    % delta_entry_dst(i));
+	  continue;
+	}
+      csc.apply_delta(delta_entry_path(i),
+		      delta_entry_src(i),
+		      delta_entry_dst(i));
+    }
+}
+
+
 
 // a few of the auxiliary functions here operate on a more "normal"
 // representation of a directory tree:
@@ -443,13 +494,11 @@ play_back_rearrangement(change_set::path_rearrangement const & pr,
 typedef std::map<file_path, std::pair<change_set::ptype,change_set::tid> > directory_node;
 typedef std::map<change_set::tid, boost::shared_ptr<directory_node> > directory_map;
 
-/*
 static change_set::tid
 directory_entry_tid(directory_node::const_iterator const & i)
 {
   return i->second.second;
 }
-*/
 
 static boost::shared_ptr<directory_node>
 new_dnode()
@@ -489,14 +538,13 @@ split_path(file_path const & p,
 	   file_path & leaf_path)
 {
   prefix.clear();
-  fs::path tmp(p());
+  fs::path tmp = mkpath(p());
   std::copy(tmp.begin(), tmp.end(), std::inserter(prefix, prefix.begin()));
   I(prefix.size() > 0);
   leaf_path = prefix.back();
   prefix.pop_back();
 }
 
-/*
 static bool
 lookup_path(std::vector<file_path> const & pth,
 	    directory_map const & dir,
@@ -515,6 +563,8 @@ lookup_path(std::vector<file_path> const & pth,
 	    return false;
 	  t = directory_entry_tid(entry);
 	}
+      else
+	return false;
     }
   return true;
 }
@@ -525,11 +575,10 @@ lookup_path(file_path const & pth,
 	    change_set::tid & t)
 {
   std::vector<file_path> vec;
-  fs::path tmp(pth());
+  fs::path tmp = mkpath(pth());
   std::copy(tmp.begin(), tmp.end(), std::inserter(vec, vec.begin()));
   return lookup_path(vec, dir, t);
 }
-*/
 
 static void
 build_directory_map(change_set::path_state const & state,
@@ -1084,14 +1133,70 @@ concatenate_change_sets(change_set const & a,
   path_edit_appender app(concatenated.rearrangement);
   play_back_rearrangement(b.rearrangement, app);
 
-  // FIXME: need to actually concatenate deltas here
-  //  delta_renamer dn(concatenated.deltas);
-  // play_back_rearrangement(b.rearrangement, dn);  
+  // now process the deltas
+
+  concatenated.deltas.clear();
+  directory_map b_src_map;
+  L(F("concatenating %d and %d deltas\n")
+    % a.deltas.size() % b.deltas.size());
+  build_directory_map(b.rearrangement.first, b_src_map);
+
+  // first rename a's deltas under the rearrangement of b
+  for (change_set::delta_map::const_iterator del = a.deltas.begin();
+       del != a.deltas.end(); ++del)
+    {
+      change_set::tid b_tid;
+      L(F("processing delta on %s\n") % delta_entry_path(del));
+      if (lookup_path(delta_entry_path(del), b_src_map, b_tid))
+	{	  
+	  file_path new_pth;
+	  L(F("file %s has tid %d in second changeset\n") % delta_entry_path(del) % b_tid);
+	  get_full_path(b.rearrangement.second, b_tid, new_pth);
+	  L(F("delta on %s in first changeset renamed to %s\n")
+	    % delta_entry_path(del) % new_pth);
+	  concatenated.deltas.insert(std::make_pair(new_pth,
+						    std::make_pair(delta_entry_src(del),
+								   delta_entry_dst(del))));
+	}
+      else
+	{
+	  L(F("delta on %s in first changeset copied forward\n")
+	    % delta_entry_path(del));
+	  concatenated.deltas.insert(*del);
+	}
+    }
+
+  // next fuse any deltas id1->id2 and id2->id3 to id1->id3
+  for (change_set::delta_map::const_iterator del = b.deltas.begin();
+       del != b.deltas.end(); ++del)
+    {
+      change_set::delta_map::const_iterator existing = 
+	concatenated.deltas.find(delta_entry_path(del));
+      if (existing != concatenated.deltas.end())
+	{
+	  I(delta_entry_dst(existing) == delta_entry_src(del));
+	  L(F("fusing deltas on %s : %s -> %s -> %s\n")
+	    % delta_entry_path(del) 
+	    % delta_entry_src(existing) 
+	    % delta_entry_dst(existing)
+	    % delta_entry_dst(del));
+	  std::pair<file_id, file_id> fused = std::make_pair(delta_entry_src(existing),
+							     delta_entry_dst(del));      
+	  concatenated.deltas.erase(delta_entry_path(del));
+	  concatenated.deltas.insert(std::make_pair(delta_entry_path(del), fused));
+	}
+      else
+	{
+	  L(F("delta on %s in second changeset copied forward\n")
+	    % delta_entry_path(del));
+	  concatenated.deltas.insert(*del);
+	}
+    }
 
   normalize_change_set(concatenated);
 
-  L(F("concatenated rearrangement has %d entries\n") 
-    % concatenated.rearrangement.first.size());
+  L(F("concatenated changeset has %d rearrangement entries, %d deltas\n") 
+    % concatenated.rearrangement.first.size() % concatenated.deltas.size());
 }
 
 
@@ -1258,6 +1363,79 @@ apply_change_set(manifest_map const & old_man,
     }
 }
 
+void 
+invert_change_set(change_set const & a2b,
+		  manifest_map const & a_map,
+		  change_set & b2a)
+{
+
+  L(F("inverting change set\n"));
+  b2a.rearrangement.first = a2b.rearrangement.second;
+  b2a.rearrangement.second = a2b.rearrangement.first;
+  b2a.deltas.clear();
+
+  // existing deltas are in "b space"
+  for (change_set::path_state::const_iterator b = b2a.rearrangement.first.begin();
+       b != b2a.rearrangement.first.end(); ++b)
+    {
+      change_set::path_state::const_iterator a = b2a.rearrangement.second.find(path_state_tid(b));
+      I(a != b2a.rearrangement.second.end());
+      if (path_item_type(path_state_item(b)) == change_set::ptype_file)
+	{
+	  file_path b_pth, a_pth;
+	  get_full_path(b2a.rearrangement.first, path_state_tid(b), b_pth);
+
+	  if (null_name(path_item_name(path_state_item(b))) &&
+	      ! null_name(path_item_name(path_state_item(a))))
+	    {
+	      // b->a represents an add in "a space"
+	      get_full_path(b2a.rearrangement.second, path_state_tid(a), a_pth);
+	      manifest_map::const_iterator i = a_map.find(a_pth);
+	      I(i != a_map.end());
+	      b2a.deltas.insert(std::make_pair(a_pth, 
+					       std::make_pair(file_id(), 
+							      manifest_entry_id(i))));
+	      L(F("converted 'delete %s' to 'add as %s' in inverse\n")
+		% a_pth 
+		% manifest_entry_id(i));
+	    }
+	  else if (! null_name(path_item_name(path_state_item(b))) &&
+		   null_name(path_item_name(path_state_item(a))))
+	    {
+	      // b->a represents a del from "b space"
+	      get_full_path(b2a.rearrangement.first, path_state_tid(b), b_pth);
+	      L(F("converted add %s to delete in inverse\n") % b_pth );
+	    }
+	  else
+	    {
+	      get_full_path(b2a.rearrangement.first, path_state_tid(b), b_pth);
+	      get_full_path(b2a.rearrangement.second, path_state_tid(a), a_pth);
+	      change_set::delta_map::const_iterator del = a2b.deltas.find(b_pth);
+	      if (del == a2b.deltas.end())
+		continue;
+	      file_id src_id(delta_entry_src(del)), dst_id(delta_entry_dst(del));
+	      L(F("converting delta %s -> %s on %s\n")
+		% src_id % dst_id % b_pth);
+	      L(F("inverse is delta %s -> %s on %s\n")
+		% dst_id % src_id % a_pth);
+	      b2a.deltas.insert(std::make_pair(a_pth, std::make_pair(dst_id, src_id)));
+	    }
+	}
+    }
+
+  // some deltas might not have been renamed, however. these we just invert the
+  // direction on
+  for (change_set::delta_map::const_iterator del = a2b.deltas.begin();
+       del != a2b.deltas.end(); ++del)
+    {
+      // check to make sure this isn't one of the already-moved deltas
+      if (b2a.deltas.find(delta_entry_path(del)) != b2a.deltas.end())
+	continue;
+      b2a.deltas.insert(std::make_pair(delta_entry_path(del),
+				       std::make_pair(delta_entry_dst(del),
+						      delta_entry_src(del))));
+    }
+}
 
 // i/o stuff
 
@@ -1273,7 +1451,6 @@ namespace
     std::string const rename_file("rename_file");
     std::string const rename_dir("rename_dir");
     std::string const src("src");
-    std::string const none("none");
     std::string const dst("dst");
     std::string const deltas("deltas");
     std::string const delta("delta");
@@ -1431,10 +1608,7 @@ parse_change_set(basic_io::parser & parser,
 	parser.key(syms::path);
 	parser.str(path);
 	parser.key(syms::src);
-	if (parser.symp(syms::none))
-	  parser.sym();
-	else
-	  parser.hex(src);
+	parser.hex(src);
 	parser.key(syms::dst);
 	parser.hex(dst);
 	parser.ket();
@@ -1473,10 +1647,7 @@ print_change_set(basic_io::printer & printer,
 	    printer.print_key(syms::path);
 	    printer.print_str(i->first());
 	    printer.print_key(syms::src);
-	    if (i->second.first.inner()().empty())
-	      printer.print_sym(syms::none, true);
-	    else
-	      printer.print_hex(i->second.first.inner()());
+	    printer.print_hex(i->second.first.inner()());
 	    printer.print_key(syms::dst);
 	    printer.print_hex(i->second.second.inner()());
 	  }

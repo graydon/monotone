@@ -27,19 +27,19 @@
 //   {
 //      rename_file:
 //      {
-//        src: [s10:usr/bin/sh]
-//        dst: [s11:usr/bin/foo]
+//        src: "usr/bin/sh"
+//        dst: "usr/bin/foo"
 //      }
-//      delete_dir: [s7:usr/bin]
-//      add_file: [s15:tmp/foo/bar.txt]
+//      delete_dir: "usr/bin"
+//      add_file: "tmp/foo/bar.txt"
 //   }
 //   deltas:
 //   {
 //     delta:
 //     {
-//       path: [s15:tmp/foo/bar.txt]
-//       src: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
-//       dst: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
+//       path: "tmp/foo/bar.txt"
+//       src: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
+//       dst: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
 //     }
 //   }
 // } 
@@ -85,6 +85,21 @@ path_edit_consumer
   virtual void rename_dir(file_path const & a, file_path const & b) = 0;
   virtual ~path_edit_consumer() {}
 };
+
+struct
+change_set_consumer
+{
+  virtual void add_file(file_path const & a, file_id const & ident) = 0;
+  virtual void apply_delta(file_path const & path, 
+			   file_id const & src, 
+			   file_id const & dst) = 0;
+  virtual void delete_file(file_path const & d) = 0;
+  virtual void delete_dir(file_path const & d) = 0;
+  virtual void rename_file(file_path const & a, file_path const & b) = 0;
+  virtual void rename_dir(file_path const & a, file_path const & b) = 0;
+  virtual ~change_set_consumer() {}
+};
+
 
 // simple accessors
 
@@ -145,6 +160,10 @@ void
 play_back_rearrangement(change_set::path_rearrangement const & pr,
 			path_edit_consumer & pc);
 
+void
+play_back_change_set(change_set const & cs,
+		     change_set_consumer & csc);
+
 // merging and concatenating 
 
 void
@@ -189,6 +208,11 @@ void
 apply_change_set(manifest_map const & old_man,
 		 change_set const & cs,
 		 manifest_map & new_man);
+
+void 
+invert_change_set(change_set const & a2b,
+		  manifest_map const & a_map,
+		  change_set & b2a);
 
 
 // basic_io access to printers and parsers

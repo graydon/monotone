@@ -21,30 +21,30 @@
 //
 // revision:
 // {
-//   new_manifest: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
+//   new_manifest: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
 //   edge:
 //   {
-//     old_revision: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//     old_manifest: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
+//     old_revision: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
+//     old_manifest: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
 //     change_set:
 //     {
 //       paths:
 //       {
 //          rename_file:
 //          {
-//            src: [s10:usr/bin/sh]
-//            dst: [s11:usr/bin/foo]
+//            src: "usr/bin/sh"
+//            dst: "usr/bin/foo"
 //          }
-//          delete_dir: [s7:usr/bin]
-//          add_file: [s15:tmp/foo/bar.txt]
+//          delete_dir: "usr/bin"
+//          add_file: "tmp/foo/bar.txt"
 //       }
 //       deltas:
 //       {
 //         delta:
 //         {
-//           path: [s15:tmp/foo/bar.txt]
-//           src: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
-//           dst: [x40:71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
+//           path: "tmp/foo/bar.txt"
+//           src: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
+//           dst: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
 //         }
 //     }
 //   }

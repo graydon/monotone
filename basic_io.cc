@@ -76,58 +76,67 @@ basic_io::tokenizer::get_token(std::string & val)
   
   switch (in.lookahead)
     {
+
     case ':':
       in.eat();
       return basic_io::TOK_COLON;
+
     case '{':
       in.eat();
       return basic_io::TOK_OPEN_BRACE;
+
     case '}':
       in.eat();
       return basic_io::TOK_CLOSE_BRACE;
-    case '[':
-      {
-	token_type tt = basic_io::TOK_NONE;
-	in.advance();
-	switch (static_cast<char>(in.lookahead))
-	  {
-	  case 's':
-	    tt = basic_io::TOK_STRING;
-	    break;
-	  case 'x':
-	    tt = basic_io::TOK_HEX;
-	    break;
-	  }
-	if (tt == basic_io::TOK_NONE)
-	  in.err("unknown string type specifier");
-	
-	in.advance();
-	
-	std::string ss;
-	while(std::isdigit(in.lookahead))
-	  {
-	    ss += static_cast<char>(in.lookahead);
-	    in.advance();
-	  }
-	if (static_cast<char>(in.lookahead) != ':')
-	  in.err("string lacks ':' after digits");
 
+    case '"':
+      {
 	in.advance();
-	for (size_t len = boost::lexical_cast<size_t>(ss); len > 0; --len)
+	while (static_cast<char>(in.lookahead) != '"')
 	  {
 	    if (in.lookahead == EOF)
 	      in.err("input stream ended in string");
-	    if (tt == basic_io::TOK_HEX && !std::isxdigit(in.lookahead))
+	    if (static_cast<char>(in.lookahead) == '\\')
+	      {
+		// possible escape: we understand escaped quotes
+		// and escaped backslashes. nothing else.
+		in.advance();
+		if (!(static_cast<char>(in.lookahead) == '"' 
+		      || static_cast<char>(in.lookahead) == '\\'))
+		  {
+		    in.err("unrecognized character escape");
+		  }
+	      }
+	    in.advance();
+	    val += in.c;
+	  }
+
+	if (static_cast<char>(in.lookahead) != '"')
+	  in.err("string did not end with '\"'");
+	in.eat();
+	
+	return basic_io::TOK_STRING;
+      }
+
+    case '[':
+      {
+	in.advance();
+	while (static_cast<char>(in.lookahead) != ']')
+	  {
+	    if (in.lookahead == EOF)
+	      in.err("input stream ended in hex string");
+	    if (!std::isxdigit(in.lookahead))
 	      in.err("non-hex character in hex string");
 	    in.advance();
 	    val += in.c;
 	  }
-	if (static_cast<char>(in.lookahead) != ']')
-	  in.err("string did not end with ']'");
-	in.eat();
-	return tt;
-      }
 
+	if (static_cast<char>(in.lookahead) != ']')
+	  in.err("hex string did not end with ']'");
+	in.eat();
+	
+	return basic_io::TOK_HEX;	
+      }
     default:
       if (std::isalpha(in.lookahead))
 	{
@@ -174,25 +183,31 @@ void basic_io::printer::print_ket()
   out.put('\n');
 }
 
-void basic_io::printer::print_val(char c, std::string const & s)
+void basic_io::printer::print_hex(std::string const & s)
 {
   out.put('[');
-  out.put(c);
-  out << s.size();
-  out.put(':');
-  out << s;
+  out.write(s.data(), s.size());
   out.put(']');
   out.put('\n');
 }
 
-void basic_io::printer::print_hex(std::string const & s)
-{
-  print_val('x', s);
-}
-
 void basic_io::printer::print_str(std::string const & s)
 {
-  print_val('s', s);
+  out.put('"');
+  for (std::string::const_iterator i = s.begin();
+       i != s.end(); ++i)
+    {
+      switch (*i)
+	{
+	case '\\':
+	case '"':
+	  out.put('\\');
+	default:
+	  out.put(*i);
+	}
+    }
+  out.put('"');
+  out.put('\n');
 }
   
 void basic_io::printer::print_key(std::string const & s, bool eol)
