@@ -201,8 +201,7 @@ done_marker
 };
 
 struct 
-session :
-  public manifest_edge_analyzer
+session
 {
   protocol_role role;
   protocol_voice const voice;
@@ -232,6 +231,9 @@ session :
   auto_ptr<ticker> cert_out_ticker;
   auto_ptr<ticker> revision_in_ticker;
   auto_ptr<ticker> revision_out_ticker;
+
+  map< std::pair<utf8, netcmd_item_type>, 
+       boost::shared_ptr<merkle_table> > merkle_tables;
 
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
@@ -288,9 +290,6 @@ session :
   Netxx::Probe::ready_type which_events() const;
   bool read_some();
   bool write_some();
-  void update_merkle_trees(netcmd_item_type type,
-                           hexenc<id> const & hident,
-                           bool live_p);
 
   void write_netcmd_and_try_flush(netcmd const & cmd);
   void queue_bye_cmd();
@@ -355,6 +354,19 @@ session :
   bool process_nonexistant_cmd(netcmd_item_type type,
                                id const & item);
 
+  bool merkle_node_exists(netcmd_item_type type,
+                          utf8 const & collection,			
+                          size_t level,
+                          prefix const & pref);
+
+  void load_merkle_node(netcmd_item_type type,
+                        utf8 const & collection,			
+                        size_t level,
+                        prefix const & pref,
+                        merkle_ptr & node);
+
+  void rebuild_merkle_trees(app_state & app,
+                            utf8 const & collection);
   
   bool dispatch_payload(netcmd const & cmd);
   void begin_service();
@@ -365,11 +377,9 @@ session :
 struct 
 root_prefix
 {
-  hexenc<prefix> val;
-  root_prefix()
-    {
-      encode_hexenc(prefix(""), val);
-    }
+  prefix val;
+  root_prefix() : val("")
+  {}
 };
 
 static root_prefix const & 
@@ -427,7 +437,7 @@ session::session(protocol_role role,
           F("client can only sync one collection at a time"));
       this->collection = idx(collections, 0);
     }
-  
+    
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
   bool request_blocking_rng = false;
@@ -453,6 +463,12 @@ session::session(protocol_role role,
   requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
+
+  for (vector<utf8>::const_iterator i = collections.begin();
+       i != collections.end(); ++i)
+    {
+      rebuild_merkle_trees(app, *i);
+    }
 }
 
 id 
@@ -1624,21 +1640,21 @@ session::process_confirm_cmd(string const & signature)
         {
           L(F("server signature OK, accepting authentication\n"));
           this->authenticated = true;
-          merkle_node root;
-          load_merkle_node(app, key_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
+          merkle_ptr root;
+          load_merkle_node(key_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(*root);
           queue_done_cmd(0, key_item);
 
-          load_merkle_node(app, mcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
+          load_merkle_node(mcert_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(*root);
           queue_done_cmd(0, mcert_item);
 
-          load_merkle_node(app, fcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
+          load_merkle_node(fcert_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(*root);
           queue_done_cmd(0, fcert_item);
 
-          load_merkle_node(app, rcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
+          load_merkle_node(rcert_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(*root);
           queue_done_cmd(0, rcert_item);
           return true;
         }
@@ -1781,7 +1797,9 @@ load_data(netcmd_item_type type,
 bool 
 session::process_refine_cmd(merkle_node const & their_node)
 {
+  prefix pref;
   hexenc<prefix> hpref;
+  their_node.get_raw_prefix(pref);
   their_node.get_hex_prefix(hpref);
   string typestr;
 
@@ -1791,8 +1809,8 @@ session::process_refine_cmd(merkle_node const & their_node)
   L(F("received 'refine' netcmd on %s node '%s', level %d\n") 
     % typestr % hpref % lev);
   
-  if (!app.db.merkle_node_exists(typestr, this->collection, 
-                                 their_node.level, hpref))
+  if (!merkle_node_exists(their_node.type, this->collection, 
+                          their_node.level, pref))
     {
       L(F("no corresponding %s merkle node for prefix '%s', level %d\n")
         % typestr % hpref % lev);
@@ -1851,15 +1869,15 @@ session::process_refine_cmd(merkle_node const & their_node)
       // to the following switch condition. it is awful. sorry.
       L(F("found corresponding %s merkle node for prefix '%s', level %d\n")
         % typestr % hpref % lev);
-      merkle_node our_node;
-      load_merkle_node(app, their_node.type, this->collection, 
-                       their_node.level, hpref, our_node);
+      merkle_ptr our_node;
+      load_merkle_node(their_node.type, this->collection, 
+                       their_node.level, pref, our_node);
       for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
         {         
           switch (their_node.get_slot_state(slot))
             {
             case empty_state:
-              switch (our_node.get_slot_state(slot))
+              switch (our_node->get_slot_state(slot))
                 {
 
                 case empty_state:
@@ -1874,10 +1892,10 @@ session::process_refine_cmd(merkle_node const & their_node)
                   L(F("(#2) they have an empty slot %d in %s node '%s', level %d, we have a live leaf\n")
                     % slot % typestr % hpref % lev);
                   {
-                    I(their_node.type == our_node.type);
+                    I(their_node.type == our_node->type);
                     string tmp;
                     id slotval;
-                    our_node.get_raw_slot(slot, slotval);
+                    our_node->get_raw_slot(slot, slotval);
                     load_data(their_node.type, slotval, this->app, tmp);
                     queue_data_cmd(their_node.type, slotval, tmp);
                   }
@@ -1895,14 +1913,14 @@ session::process_refine_cmd(merkle_node const & their_node)
                   L(F("(#4) they have an empty slot %d in %s node '%s', level %d, we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
-                    hexenc<prefix> subprefix;
-                    our_node.extended_hex_prefix(slot, subprefix);
-                    merkle_node our_subtree;
-                    I(our_node.type == their_node.type);
-                    load_merkle_node(app, their_node.type, this->collection, 
-                                     our_node.level + 1, subprefix, our_subtree);
-                    I(our_node.type == our_subtree.type);
-                    queue_refine_cmd(our_subtree);
+                    prefix subprefix;
+                    our_node->extended_raw_prefix(slot, subprefix);
+                    merkle_ptr our_subtree;
+                    I(our_node->type == their_node.type);
+                    load_merkle_node(their_node.type, this->collection, 
+                                     our_node->level + 1, subprefix, our_subtree);
+                    I(our_node->type == our_subtree->type);
+                    queue_refine_cmd(*our_subtree);
                   }
                   break;
 
@@ -1911,7 +1929,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
 
             case live_leaf_state:
-              switch (our_node.get_slot_state(slot))
+              switch (our_node->get_slot_state(slot))
                 {
 
                 case empty_state:
@@ -1932,7 +1950,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                   {
                     id our_slotval, their_slotval;
                     their_node.get_raw_slot(slot, their_slotval);
-                    our_node.get_raw_slot(slot, our_slotval);               
+                    our_node->get_raw_slot(slot, our_slotval);               
                     if (their_slotval == our_slotval)
                       {
                         hexenc<id> hslotval;
@@ -1942,11 +1960,11 @@ session::process_refine_cmd(merkle_node const & their_node)
                       }
                     else
                       {
-                        I(their_node.type == our_node.type);
+                        I(their_node.type == our_node->type);
                         string tmp;
-                        load_data(our_node.type, our_slotval, this->app, tmp);
+                        load_data(our_node->type, our_slotval, this->app, tmp);
                         queue_send_data_cmd(their_node.type, their_slotval);
-                        queue_data_cmd(our_node.type, our_slotval, tmp);
+                        queue_data_cmd(our_node->type, our_slotval, tmp);
                       }
                   }
                   break;
@@ -1957,7 +1975,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                     % slot % typestr % hpref % lev);
                   {
                     id our_slotval, their_slotval;
-                    our_node.get_raw_slot(slot, our_slotval);
+                    our_node->get_raw_slot(slot, our_slotval);
                     their_node.get_raw_slot(slot, their_slotval);
                     if (their_slotval == our_slotval)
                       {
@@ -1996,12 +2014,12 @@ session::process_refine_cmd(merkle_node const & their_node)
                     
                     L(F("(#8) sending our subtree for refinement, in slot %d of %s node '%s', level %d\n")
                       % slot % typestr % hpref % lev);
-                    hexenc<prefix> subprefix;
-                    our_node.extended_hex_prefix(slot, subprefix);
-                    merkle_node our_subtree;
-                    load_merkle_node(app, our_node.type, this->collection, 
-                                     our_node.level + 1, subprefix, our_subtree);
-                    queue_refine_cmd(our_subtree);
+                    prefix subprefix;
+                    our_node->extended_raw_prefix(slot, subprefix);
+                    merkle_ptr our_subtree;
+                    load_merkle_node(our_node->type, this->collection, 
+                                     our_node->level + 1, subprefix, our_subtree);
+                    queue_refine_cmd(*our_subtree);
                   }
                   break;
                 }
@@ -2009,7 +2027,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
 
             case dead_leaf_state:
-              switch (our_node.get_slot_state(slot))
+              switch (our_node->get_slot_state(slot))
                 {
                 case empty_state:
                   // 9: theirs == dead, ours == empty 
@@ -2025,9 +2043,9 @@ session::process_refine_cmd(merkle_node const & their_node)
                   {
                     id our_slotval, their_slotval;
                     their_node.get_raw_slot(slot, their_slotval);
-                    our_node.get_raw_slot(slot, our_slotval);
+                    our_node->get_raw_slot(slot, our_slotval);
                     hexenc<id> hslotval;
-                    our_node.get_hex_slot(slot, hslotval);
+                    our_node->get_hex_slot(slot, hslotval);
                     if (their_slotval == our_slotval)
                       {
                         L(F("(#10) we both have %s leaf %s, theirs is dead\n") 
@@ -2036,10 +2054,10 @@ session::process_refine_cmd(merkle_node const & their_node)
                       }
                     else
                       {
-                        I(their_node.type == our_node.type);
+                        I(their_node.type == our_node->type);
                         string tmp;
-                        load_data(our_node.type, our_slotval, this->app, tmp);
-                        queue_data_cmd(our_node.type, our_slotval, tmp);
+                        load_data(our_node->type, our_slotval, this->app, tmp);
+                        queue_data_cmd(our_node->type, our_slotval, tmp);
                       }
                   }
                   break;
@@ -2056,12 +2074,12 @@ session::process_refine_cmd(merkle_node const & their_node)
                   L(F("(#12) they have a dead leaf in slot %d of %s node '%s', we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
-                    hexenc<prefix> subprefix;
-                    our_node.extended_hex_prefix(slot, subprefix);
-                    merkle_node our_subtree;
-                    load_merkle_node(app, our_node.type, this->collection, 
-                                     our_node.level + 1, subprefix, our_subtree);
-                    queue_refine_cmd(our_subtree);
+                    prefix subprefix;
+                    our_node->extended_raw_prefix(slot, subprefix);
+                    merkle_ptr our_subtree;
+                    load_merkle_node(our_node->type, this->collection, 
+                                     our_node->level + 1, subprefix, our_subtree);
+                    queue_refine_cmd(*our_subtree);
                   }
                   break;
                 }
@@ -2069,7 +2087,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
 
             case subtree_state:
-              switch (our_node.get_slot_state(slot))
+              switch (our_node->get_slot_state(slot))
                 {
                 case empty_state:
                   // 13: theirs == subtree, ours == empty 
@@ -2092,18 +2110,18 @@ session::process_refine_cmd(merkle_node const & their_node)
                     size_t subslot;
                     id our_slotval;
                     merkle_node our_fake_subtree;
-                    our_node.get_raw_slot(slot, our_slotval);
+                    our_node->get_raw_slot(slot, our_slotval);
                     hexenc<id> hslotval;
                     encode_hexenc(our_slotval, hslotval);
                     
-                    pick_slot_and_prefix_for_value(our_slotval, our_node.level + 1, subslot, 
+                    pick_slot_and_prefix_for_value(our_slotval, our_node->level + 1, subslot, 
                                                    our_fake_subtree.pref);
                     L(F("(#14) pushed our leaf '%s' into fake subtree slot %d, level %d\n")
                       % hslotval % subslot % (lev + 1));
                     our_fake_subtree.type = their_node.type;
-                    our_fake_subtree.level = our_node.level + 1;
+                    our_fake_subtree.level = our_node->level + 1;
                     our_fake_subtree.set_raw_slot(subslot, our_slotval);
-                    our_fake_subtree.set_slot_state(subslot, our_node.get_slot_state(slot));
+                    our_fake_subtree.set_slot_state(subslot, our_node->get_slot_state(slot));
                     queue_refine_cmd(our_fake_subtree);
                   }
                   break;
@@ -2116,13 +2134,13 @@ session::process_refine_cmd(merkle_node const & their_node)
                     size_t subslot;
                     id our_slotval;
                     merkle_node our_fake_subtree;
-                    our_node.get_raw_slot(slot, our_slotval);
-                    pick_slot_and_prefix_for_value(our_slotval, our_node.level + 1, subslot, 
+                    our_node->get_raw_slot(slot, our_slotval);
+                    pick_slot_and_prefix_for_value(our_slotval, our_node->level + 1, subslot, 
                                                    our_fake_subtree.pref);
                     our_fake_subtree.type = their_node.type;
-                    our_fake_subtree.level = our_node.level + 1;
+                    our_fake_subtree.level = our_node->level + 1;
                     our_fake_subtree.set_raw_slot(subslot, our_slotval);
-                    our_fake_subtree.set_slot_state(subslot, our_node.get_slot_state(slot));
+                    our_fake_subtree.set_slot_state(subslot, our_node->get_slot_state(slot));
                     queue_refine_cmd(our_fake_subtree);    
                   }
                   break;
@@ -2135,8 +2153,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                     id our_slotval, their_slotval;
                     hexenc<id> hslotval;
                     their_node.get_raw_slot(slot, their_slotval);
-                    our_node.get_raw_slot(slot, our_slotval);
-                    our_node.get_hex_slot(slot, hslotval);
+                    our_node->get_raw_slot(slot, our_slotval);
+                    our_node->get_hex_slot(slot, hslotval);
                     if (their_slotval == our_slotval)
                       {
                         L(F("(#16) we both have %s subtree '%s'\n") % typestr % hslotval);
@@ -2145,12 +2163,12 @@ session::process_refine_cmd(merkle_node const & their_node)
                     else
                       {
                         L(F("(#16) %s subtrees at slot %d differ, refining ours\n") % typestr % slot);
-                        hexenc<prefix> subprefix;
-                        our_node.extended_hex_prefix(slot, subprefix);
-                        merkle_node our_subtree;
-                        load_merkle_node(app, our_node.type, this->collection, 
-                                         our_node.level + 1, subprefix, our_subtree);
-                        queue_refine_cmd(our_subtree);
+                        prefix subprefix;
+                        our_node->extended_raw_prefix(slot, subprefix);
+                        merkle_ptr our_subtree;
+                        load_merkle_node(our_node->type, this->collection, 
+                                         our_node->level + 1, subprefix, our_subtree);
+                        queue_refine_cmd(*our_subtree);
                       }
                   }
                   break;
@@ -2259,27 +2277,6 @@ session::process_send_delta_cmd(netcmd_item_type type,
   return true;
 }
 
-void 
-session::update_merkle_trees(netcmd_item_type type,
-                             hexenc<id> const & hident,
-                             bool live_p)
-{
-  id raw_id;
-  decode_hexenc(hident, raw_id);
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
-  for (set<string>::const_iterator i = this->all_collections.begin();
-       i != this->all_collections.end(); ++i)
-    {
-      if (this->collection().find(*i) == 0)
-        {
-          L(F("updating %s collection '%s' with item %s\n")
-            % typestr % *i % hident);
-          insert_into_merkle_tree(this->app, live_p, type, *i, raw_id(), 0); 
-        }
-    }
-}
-
 bool 
 session::process_data_cmd(netcmd_item_type type,
                           id const & item, 
@@ -2311,7 +2308,6 @@ session::process_data_cmd(netcmd_item_type type,
                                " wanted '%s' got '%s'")  
                              % hitem % keyid % hitem % tmp);
           this->dbw.consume_public_key(keyid, pub);
-          update_merkle_trees(key_item, tmp, true);
         }
       break;
 
@@ -2337,7 +2333,6 @@ session::process_data_cmd(netcmd_item_type type,
               decode_hexenc(c.ident, rid);
               queue_send_data_cmd(revision_item, rid);
             }
-          update_merkle_trees(rcert_item, tmp, true);
         }
       break;
 
@@ -2488,6 +2483,37 @@ session::process_nonexistant_cmd(netcmd_item_type type,
   return true;
 }
 
+bool
+session::merkle_node_exists(netcmd_item_type type,
+                            utf8 const & collection,			
+                            size_t level,
+                            prefix const & pref)
+{
+  map< std::pair<utf8, netcmd_item_type>, 
+       boost::shared_ptr<merkle_table> >::const_iterator i = 
+    merkle_tables.find(std::make_pair(collection,type));
+  
+  I(i != merkle_tables.end());
+  merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
+  return (j != i->second->end());
+}
+
+void 
+session::load_merkle_node(netcmd_item_type type,
+                          utf8 const & collection,			
+                          size_t level,
+                          prefix const & pref,
+                          merkle_ptr & node)
+{
+  map< std::pair<utf8, netcmd_item_type>, 
+       boost::shared_ptr<merkle_table> >::const_iterator i = 
+    merkle_tables.find(std::make_pair(collection,type));
+  
+  I(i != merkle_tables.end());
+  merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
+  I(j != i->second->end());
+  node = j->second;
+}
 
 
 bool 
@@ -3100,38 +3126,38 @@ serve_connections(protocol_role role,
 //
 /////////////////////////////////////////////////
 
-void 
-rebuild_merkle_trees(app_state & app,
-                     utf8 const & collection)
+static boost::shared_ptr<merkle_table>
+make_root_node(session & sess,
+               utf8 const & coll,
+               netcmd_item_type ty)
 {
-  transaction_guard guard(app.db);
+  boost::shared_ptr<merkle_table> tab = 
+    boost::shared_ptr<merkle_table>(new merkle_table());
+  
+  merkle_ptr tmp = merkle_ptr(new merkle_node());
+  tmp->type = ty;
 
+  tab->insert(std::make_pair(std::make_pair(get_root_prefix().val, 0), tmp));
+
+  sess.merkle_tables[std::make_pair(coll, ty)] = tab;
+  return tab;
+}
+
+
+void 
+session::rebuild_merkle_trees(app_state & app,
+                              utf8 const & collection)
+{
   P(F("rebuilding merkle trees for collection %s\n") % collection);
 
-  string typestr;
-  merkle_node empty_root_node;
+  // we're not using these anymore..
+  make_root_node(*this, collection, mcert_item);
+  make_root_node(*this, collection, fcert_item);
 
-  empty_root_node.type = rcert_item;
-  netcmd_item_type_to_string(rcert_item, typestr);
-  app.db.erase_merkle_nodes(typestr, collection);
-  store_merkle_node(app, collection, empty_root_node);
+  boost::shared_ptr<merkle_table> rtab = make_root_node(*this, collection, rcert_item);
+  boost::shared_ptr<merkle_table> ktab = make_root_node(*this, collection, key_item);
 
-  empty_root_node.type = mcert_item;
-  netcmd_item_type_to_string(mcert_item, typestr);
-  app.db.erase_merkle_nodes(typestr, collection);
-  store_merkle_node(app, collection, empty_root_node);
-
-  empty_root_node.type = fcert_item;
-  netcmd_item_type_to_string(fcert_item, typestr);
-  app.db.erase_merkle_nodes(typestr, collection);
-  store_merkle_node(app, collection, empty_root_node);
-
-  empty_root_node.type = key_item;
-  netcmd_item_type_to_string(key_item, typestr);
-  app.db.erase_merkle_nodes(typestr, collection);
-  store_merkle_node(app, collection, empty_root_node);
-
-  ticker rcerts("rcerts", "r", 32);
+  ticker rcerts("rcerts", "r", 256);
   ticker keys("keys", "k", 1);
 
   set<revision_id> revision_ids;
@@ -3155,59 +3181,41 @@ rebuild_merkle_trees(app_state & app,
           }
       }
 
+    app.db.get_revision_certs(certs);
+
     // insert all certs and keys reachable via these revisions
-    for (set<revision_id>::const_iterator rev = revision_ids.begin();
-         rev != revision_ids.end(); ++rev)
+    for (size_t i = 0; i < certs.size(); ++i)
       {
-        app.db.get_revision_certs(*rev, certs);
-        for (size_t i = 0; i < certs.size(); ++i)
+        if (revision_ids.find(revision_id(idx(certs,i).inner().ident)) 
+            == revision_ids.end())
+          continue;
+        
+        hexenc<id> certhash;
+        id raw_id;
+        cert_hash_code(idx(certs, i).inner(), certhash);
+        decode_hexenc(certhash, raw_id);
+        insert_into_merkle_tree(*rtab, rcert_item, true, raw_id(), 0);
+        ++rcerts;
+        rsa_keypair_id const & k = idx(certs, i).inner().key;
+        if (inserted_keys.find(k) == inserted_keys.end())
           {
-            hexenc<id> certhash;
-            id raw_id;
-            cert_hash_code(idx(certs, i).inner(), certhash);
-            decode_hexenc(certhash, raw_id);
-            insert_into_merkle_tree(app, true, rcert_item, collection, raw_id(), 0);
-            ++rcerts;
-            rsa_keypair_id const & k = idx(certs, i).inner().key;
-            if (inserted_keys.find(k) == inserted_keys.end())
+            if (app.db.public_key_exists(k))
               {
-                if (app.db.public_key_exists(k))
-                  {
-                    base64<rsa_pub_key> pub_encoded;
-                    app.db.get_key(k, pub_encoded);
-                    hexenc<id> keyhash;
-                    key_hash_code(k, pub_encoded, keyhash);
-                    decode_hexenc(keyhash, raw_id);
-                    insert_into_merkle_tree(app, true, key_item, collection, raw_id(), 0);
-                    ++keys;
-                  }
-                inserted_keys.insert(k);
+                base64<rsa_pub_key> pub_encoded;
+                app.db.get_key(k, pub_encoded);
+                hexenc<id> keyhash;
+                key_hash_code(k, pub_encoded, keyhash);
+                decode_hexenc(keyhash, raw_id);
+                insert_into_merkle_tree(*ktab, key_item, true, raw_id(), 0);
+                ++keys;
               }
+            inserted_keys.insert(k);
           }
       }
   }  
-  guard.commit();
-}
-                        
-static void 
-ensure_merkle_tree_ready(app_state & app,
-                         utf8 const & collection)
-{
-//   if (! (app.db.merkle_node_exists(mcert_item_str, collection, 0, get_root_prefix().val)
-//       && app.db.merkle_node_exists(fcert_item_str, collection, 0, get_root_prefix().val)
-//       && app.db.merkle_node_exists(key_item_str, collection, 0, get_root_prefix().val)))
-//     {
 
-  // FIXME: for now we always rebuild merkle trees. that's a bit coarse but it 
-  // saves us having to hunt down all the possible write conditions in the packet
-  // writers and make sure they update the indices properly
-
-  // FIXME: this is actually buggy anyways. we really need to fix up the merkle tree
-  // rebuilding conditions. another day, once revisions are working. sigh.
-
-      rebuild_merkle_trees(app, collection);
-
-//     }
+  recalculate_merkle_codes(*ktab, get_root_prefix().val, 0);
+  recalculate_merkle_codes(*rtab, get_root_prefix().val, 0);
 }
 
 void 
@@ -3217,9 +3225,6 @@ run_netsync_protocol(protocol_voice voice,
                      vector<utf8> collections,
                      app_state & app)
 {  
-  for (vector<utf8>::const_iterator i = collections.begin();
-       i != collections.end(); ++i)
-    ensure_merkle_tree_ready(app, *i);
 
   set<string> all_collections;
   for (vector<utf8>::const_iterator j = collections.begin(); 

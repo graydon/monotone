@@ -1,3 +1,14 @@
+2005-01-27  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Mention Georg.
+	* change_set.cc: Null out names which are in null directories.
+	* commands.cc (reindex): Remove COLLECTION argument.
+	* database.{cc,hh} (get_revision_certs): 
+	Add brute force "load all certs" method.
+	* merkle_tree.{cc,hh}: Modify to use memory rather than disk.
+	* netsync.{cc,hh}: Likewise.
+	* packet.hh (manifest_edge_analyzer): Kill dead code.
+
 2005-01-26  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_rebuild.at: New test.
@@ -441,7 +452,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
