@@ -14,7 +14,7 @@ AT_TESTED([monotone])
 
 # some command abbreviations to make life easier
 
-m4_define([MONOTONE], [monotone --rcfile=test_hooks.lua --nostd --norc --db=test.db --key=tester@test.net])
+m4_define([MONOTONE], [monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net])
 m4_define([RAW_MONOTONE], [monotone])
 m4_define([SHA1], [monotone identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
@@ -24,6 +24,9 @@ m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
 # standard testing key, which we use for further tests.
 
 m4_define([MONOTONE_SETUP], [
+
+# Save the PWD so MONOTONE macro can refer back to it
+_ROOT_DIR=$PWD
 
 AT_DATA(test_keys, [@<:@pubkey tester@test.net@:>@
 MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
@@ -401,3 +404,7 @@ m4_include(tests/t_status_missing.at)
 m4_include(tests/t_persistent_server_keys_2.at)
 m4_include(tests/t_update_1.at)
 m4_include(tests/t_vcheck.at)
+m4_include(tests/t_subdir_add.at)
+m4_include(tests/t_subdir_drop.at)
+m4_include(tests/t_subdir_revert.at)
+m4_include(tests/t_subdir_rename.at)
