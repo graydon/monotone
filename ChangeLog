@@ -1,3 +1,9 @@
+2004-12-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (ls_certs): Sort the certs before printing.
+	* tests/t_netsync_repeated.at: Actually check that certs were
+	transferred correctly.
+
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc: Remove tabs.
