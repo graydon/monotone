@@ -1,3 +1,10 @@
+2004-05-27  Graydon Hoare  <graydon@redhat.com>
+
+	* tests/t_movepatch.at: New test.
+	* testsuite.at: Call it.
+	* diff_patch.cc (adjust_deltas_under_renames): New function.
+	(merge3): Use it.
+
 2004-05-20  graydon hoare  <graydon@pobox.com>
 
 	* NEWS: Note 0.13 release.

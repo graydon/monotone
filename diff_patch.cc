@@ -932,6 +932,39 @@ static void infer_directory_moves(manifest_map const & ancestor,
     }
 }
 
+void 
+adjust_deltas_under_renames(set<file_path> & deltas, 
+			    map<file_path, patch_delta> & delta_map, 
+			    map<file_path, file_path> const & move_map)
+{
+  set<file_path> initial_deltas = deltas;
+  for (set<file_path>::const_iterator delta_path = initial_deltas.begin();
+       delta_path != initial_deltas.end(); ++delta_path)
+    {
+      map<file_path, file_path>::const_iterator i = move_map.find(*delta_path);
+      
+      if (i != move_map.end())
+	{
+	  I(*delta_path == i->first);
+	  if (deltas.find(i->second) != deltas.end())
+	    {
+	      L(F("patch moved from %s to %s conflicts with existing patch\n")
+		% i->first % i->second);
+	      throw conflict();
+	    }
+	  I(delta_map.find(i->second) == delta_map.end());
+
+	  map<file_path, patch_delta>::const_iterator delta = delta_map.find(*delta_path);
+	  I(delta != delta_map.end());
+	  patch_delta patch = delta->second;
+	  deltas.erase(i->first);
+	  delta_map.erase(i->first);
+	  deltas.insert(i->second);
+	  delta_map.insert(make_pair(i->second, patch));
+	}
+    }
+}
+
 // this is a 3-way merge algorithm on manifests.
 
 bool merge3(manifest_map const & ancestor,
@@ -1065,6 +1098,7 @@ bool merge3(manifest_map const & ancestor,
 	    }
 	  else
 	    {
+	      left_deltas.insert(lf->first);
 	      left_delta_map.insert
 		(make_pair
 		 (lf->first, patch_delta(anc->second, lf->second, anc->first)));
@@ -1092,12 +1126,14 @@ bool merge3(manifest_map const & ancestor,
 	    }
 	  else
 	    {
+	      right_deltas.insert(rt->first);
 	      right_delta_map.insert
 		(make_pair
 		 (rt->first, patch_delta(anc->second, rt->second, anc->first)));
 	    }
 	}
     }
+
 
   // phase #3 detects conflicts. any conflicts here -- including those
   // which were a result of the actions taken in phase #2 -- result in an
@@ -1113,24 +1149,7 @@ bool merge3(manifest_map const & ancestor,
 			  "left dels", "right adds");
 
 
-      // no fiddling with the source of a move
-      check_no_intersect (left_move_srcs, right_adds, 
-			  "left move sources", "right adds");
-      check_no_intersect (left_adds, right_move_srcs, 
-			  "left adds", "right move sources");
-
-      check_no_intersect (left_move_srcs, right_edge.f_dels, 
-			  "left move sources", "right dels");
-      check_no_intersect (left_edge.f_dels, right_move_srcs, 
-			  "left dels", "right move sources");
-
-      check_no_intersect (left_move_srcs, right_deltas, 
-			  "left move sources", "right deltas");
-      check_no_intersect (left_deltas, right_move_srcs, 
-			  "left deltas", "right move sources");
-
-
-      // no fiddling with the destinations of a move
+      // no initial fiddling with the destinations of a move
       check_no_intersect (left_move_dsts, right_adds, 
 			  "left move destinations", "right adds");
       check_no_intersect (left_adds, right_move_dsts, 
@@ -1145,6 +1164,29 @@ bool merge3(manifest_map const & ancestor,
 			  "left move destinations", "right deltas");
       check_no_intersect (left_deltas, right_move_dsts, 
 			  "left deltas", "right move destinations");
+
+      // intermediate phase #3.1 tries to move deltas on left to their
+      // targets on right and vice versa, provided there is not already a
+      // delta on the target.
+
+      adjust_deltas_under_renames(left_deltas, left_delta_map, right_move_map);
+      adjust_deltas_under_renames(right_deltas, right_delta_map, left_move_map);
+
+      // no remaining fiddling with the source of a move
+      check_no_intersect (left_move_srcs, right_adds, 
+			  "left move sources", "right adds");
+      check_no_intersect (left_adds, right_move_srcs, 
+			  "left adds", "right move sources");
+
+      check_no_intersect (left_move_srcs, right_edge.f_dels, 
+			  "left move sources", "right dels");
+      check_no_intersect (left_edge.f_dels, right_move_srcs, 
+			  "left dels", "right move sources");
+
+      check_no_intersect (left_move_srcs, right_deltas, 
+			  "left move sources", "right deltas");
+      check_no_intersect (left_deltas, right_move_srcs, 
+			  "left deltas", "right move sources");
 
 
       // we're not going to do anything clever like chaining moves together
