@@ -3,7 +3,7 @@ AppName=monotone
 AppVerName=monotone 0.17rc1
 AppCopyright=Copyright © 2002-2005 Graydon Hoare et al.
 DefaultDirName={pf}\monotone
-DefaultGroupName=SinoPrice
+DefaultGroupName=monotone
 MinVersion=0,5.0
 OutputDir=.
 OutputBaseFileName=monotone-setup
@@ -17,9 +17,10 @@ LicenseFile="..\COPYING"
 
 [Files]
 Source: "..\monotone.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\monotone.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\html\*.*"; DestDir: "{app}\documentation"; Flags: ignoreversion
 Source: "..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
 Source: "\mingw\bin\libiconv-2.dll"; DestDir: "{app}"
+Source: "..\figures\*.png"; DestDir: "{app}\documentation\figures"; Flags: ignoreversion
 
 [Tasks]
 Name: initdb; Description: "Initialise a new database"; GroupDescription: "Get up and running"; Check: DBDoesntExist
@@ -29,7 +30,10 @@ Name: viewdocs; Description: "View the monotone documentation"; GroupDescription
 [Run]
 Filename: "{app}\monotone.exe"; Tasks: initdb; StatusMsg: "Initialising database..."; WorkingDir: "{app}"; Parameters: "--db=""{code:ForceDBPath|monotone.db}"" db init"
 Filename: "{app}\monotone.exe"; Tasks: initdb\genkey; StatusMsg: "Generating key..."; Flags: hidewizard; WorkingDir: "{app}"; Parameters: "--db=""{code:ForceDBPath|monotone.db}"" genkey {code:GetKeyID}"
-Filename: "{app}\monotone.html"; Tasks: viewdocs; Flags: shellexec nowait; WorkingDir: "{app}"
+Filename: "{app}\documentation\index.html"; Tasks: viewdocs; Flags: shellexec nowait; WorkingDir: "{app}\documentation"
+
+[Icons]
+Name: "{group}\monotone documentation"; Filename: "{app}\documentation\index.html"; WorkingDir: "{app}"
 
 [Code]
 program Setup;

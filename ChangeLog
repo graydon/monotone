@@ -1,4 +1,10 @@
 2005-03-09  Jon Bright <jon@siliconcircus.com>
+	* win32/monotone.iss: Install the many-files version of the
+	docs, install the figures, create a start-menu icon for the
+	docs.
+	* Makefile.am: Make docs generation work with MinGW
+
+2005-03-09  Jon Bright <jon@siliconcircus.com>
 	* win32/monotone.iss: Monotone -> monotone
 
 2005-03-09  Jon Bright <jon@siliconcircus.com>
