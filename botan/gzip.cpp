@@ -56,7 +56,6 @@ void zlib_free(void* info_ptr, void* ptr)
       throw Invalid_Argument("zlib_free: Got pointer not allocated by us");
    info->alloc->deallocate(ptr, i->second);
    }
-
 }
 
 /*************************************************
@@ -99,13 +98,14 @@ void Gzip_Compression::start_msg()
    {
    clear();
    zlib = new Zlib_Stream;
-   /* window_bits == -15 relies on an undocumented feature of zlib, which supresses
-   * the zlib header on the message. We need that since gzip doesn't use this header.
-   * The feature been confirmed to exist in 1.1.4, which everyone should be using due to
-   * security fixes. In later versions this feature is documented, along with the ability
-   * to do proper gzip output (which would be a nicer way to do things, but will have to
-   * wait until 1.2 becomes more widespread). */
-   /* The other settings are the defaults which deflateInit() gives */
+   // window_bits == -15 relies on an undocumented feature of zlib, which
+   // supresses the zlib header on the message. We need that since gzip doesn't
+   // use this header.  The feature been confirmed to exist in 1.1.4, which
+   // everyone should be using due to security fixes. In later versions this
+   // feature is documented, along with the ability to do proper gzip output
+   // (which would be a nicer way to do things, but will have to wait until 1.2
+   // becomes more widespread).
+   // The other settings are the defaults which deflateInit() gives
    if(deflateInit2(&(zlib->stream), level, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) != Z_OK)
       throw Exception("Gzip_Compression: Memory allocation error");
    put_header();
@@ -204,19 +204,19 @@ void Gzip_Compression::put_header()
 void Gzip_Compression::put_footer()
    {
 
-      /* 4 byte CRC32, and 4 byte length field */
+      // 4 byte CRC32, and 4 byte length field
       SecureVector<byte> buf(4);
       SecureVector<byte> tmpbuf(4);
 
       pipe.read(tmpbuf.begin(), tmpbuf.size());
 
-     /* CRC32 is the reverse order to what gzip expects. */
+     // CRC32 is the reverse order to what gzip expects.
      for (int i = 0; i < 4; i++)
         buf[3-i] = tmpbuf[i];
 
       send(buf.begin(), buf.size());
 
-      /* Length - LSB first */
+      // Length - LSB first
      for (int i = 0; i < 4; i++)
         buf[3-i] = get_byte(i, count);
 
@@ -242,8 +242,8 @@ void Gzip_Decompression::start_msg()
    {
    clear();
    zlib = new Zlib_Stream;
-   /* window_bits == -15 is raw zlib (no header) - see comment
-   * above for deflateInit2 */
+   // window_bits == -15 is raw zlib (no header) - see comment
+   // above for deflateInit2
    if(inflateInit2(&(zlib->stream), -15) != Z_OK)
       throw Exception("Gzip_Decompression: Memory allocation error");
    pipe.start_msg();
@@ -259,7 +259,7 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
    {
    if(length) no_writes = false;
 
-   /* If we're in the footer, take what we need, then go to the next bit */
+   // If we're in the footer, take what we need, then go to the next block
    if (in_footer)
       {
       u32bit eat_len = write_footer(input, length);
@@ -269,12 +269,12 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
                   return;
       }
 
-   /* Check the gzip header */
+   // Check the gzip header
    if (pos < sizeof(GZIP::GZIP_HEADER))
       {
       u32bit len = std::min(sizeof(GZIP::GZIP_HEADER)-pos, (unsigned long)length);
-      /* The last byte is OS - we don't care about that */
       u32bit cmplen = len;
+      // The last byte is the OS flag - we don't care about that
       if (pos + len - 1 >= GZIP::HEADER_POS_OS)
          cmplen--;
 
@@ -294,8 +294,6 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
 
    while(zlib->stream.avail_in != 0)
       {
-      u32bit total_bytes = zlib->stream.avail_in;
-
       zlib->stream.next_out = (Bytef*)buffer.begin();
       zlib->stream.avail_out = buffer.size();
 
@@ -315,7 +313,7 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
       pipe.write(buffer.begin(), buffer.size() - zlib->stream.avail_out);
       datacount += buffer.size() - zlib->stream.avail_out;
 
-      /* Reached the end - we now need to check the footer */
+      // Reached the end - we now need to check the footer
       if(rc == Z_STREAM_END)
          {
          u32bit read_from_block = length - zlib->stream.avail_in;
@@ -337,16 +335,16 @@ u32bit Gzip_Decompression::write_footer(const byte input[], u32bit length)
       if (footer.size() >= GZIP::FOOTER_LENGTH)
          throw Decoding_Error("Gzip_Decompression: Data integrity error in footer");
 
-          u32bit eat_len = std::min(GZIP::FOOTER_LENGTH-footer.size(), length);
+      u32bit eat_len = std::min(GZIP::FOOTER_LENGTH-footer.size(), length);
       footer.append(input, eat_len);
 
       if (footer.size() == GZIP::FOOTER_LENGTH)
-                  {
-                  check_footer();
-                  start_msg();
-          }
+         {
+         check_footer();
+         start_msg();
+         }
 
-          return eat_len;
+         return eat_len;
    }
 
 /*************************************************
@@ -361,12 +359,12 @@ void Gzip_Decompression::check_footer()
 
    pipe.end_msg();
    
-   /* 4 byte CRC32, and 4 byte length field */
+   // 4 byte CRC32, and 4 byte length field
    SecureVector<byte> buf(4);
    SecureVector<byte> tmpbuf(4);
    pipe.read(tmpbuf.begin(), tmpbuf.size());
 
-  /* CRC32 is the reverse order to what gzip expects. */
+  // CRC32 is the reverse order to what gzip expects.
   for (int i = 0; i < 4; i++)
      buf[3-i] = tmpbuf[i];
 
@@ -374,7 +372,7 @@ void Gzip_Decompression::check_footer()
   if (buf != tmpbuf)
       throw Exception("Gzip_Decompression: Data integrity error - CRC32 error");
 
-   /* Check the length matches - it is encoded LSB-first */
+   // Check the length matches - it is encoded LSB-first
    for (int i = 0; i < 4; i++)
       {
       if (footer.begin()[GZIP::FOOTER_LENGTH-1-i] != get_byte(i, datacount))
@@ -388,28 +386,13 @@ void Gzip_Decompression::check_footer()
 *************************************************/
 void Gzip_Decompression::end_msg()
    {
+
+   // All messages should end with a footer, and when a footer is successfully
+   // read, start_msg() will be called.
    if(no_writes) return;
 
    throw Exception("Gzip_Decompression: didn't find footer");
 
-#if 0
-   zlib->stream.next_in = 0;
-   zlib->stream.avail_in = 0;
-   int rc = Z_OK;
-   while(rc != Z_STREAM_END)
-      {
-      zlib->stream.next_out = (Bytef*)buffer.begin();
-      zlib->stream.avail_out = buffer.size();
-      rc = inflate(&(zlib->stream), Z_SYNC_FLUSH);
-      if(rc != Z_OK && rc != Z_STREAM_END)
-         {
-         clear();
-         throw Exception("Gzip_Decompression: Error finalizing decompression");
-         }
-      send(buffer.begin(), buffer.size() - zlib->stream.avail_out);
-      }
-   clear();
-#endif
    }
 
 /*************************************************

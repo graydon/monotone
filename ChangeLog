@@ -1,3 +1,8 @@
+2005-01-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* file_io.cc: re-add accidentally removed #include
+	* botan/gzip.cc: improved comments, removed unused code
+
 2005-01-10  graydon hoare  <graydon@pboox.com>
 
 	* commands.cc (explicit_merge): Tweak merge message.
