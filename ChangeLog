@@ -1,3 +1,9 @@
+2005-04-04  Richard Levitte  <richard@levitte.org>
+
+	* popt/popt.3, popt/popt.ps, popt/testit.sh: Include a few more
+	  files from popt, mostly to have documentation on hand.  post.ps
+	  is mentioned in popt/README.
+
 2005-04-03  Richard Levitte  <richard@levitte.org>
 
 	* AUTHORS: Add information about popt.
