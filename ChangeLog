@@ -1,3 +1,9 @@
+2004-08-17  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Working Copy): Change the description of
+	'monotone revert' to explain what happens when there are
+	arguments.
+
 2004-08-16  Richard Levitte  <richard@levitte.org>
 
 	* monotone.texi (OPTIONS): Add a description of --ticker.

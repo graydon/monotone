@@ -3289,11 +3289,16 @@ the change.
 
 
 @item monotone revert
-This command changes your working copy, so that changes you have made
-since the last checkout or update are discarded. It does this by
-changing every file listed in @file{MT/manifest} to have contents
-equal to the @sc{sha1} value listed in the manifest, and by erasing the
-@file{MT/work} file.
+@itemx monotone revert @var{filename...}
+
+With no files given, this command changes your working copy, so that
+changes you have made since the last checkout or update are discarded.
+It does this by changing every file listed in @file{MT/manifest} to
+have contents equal to the @sc{sha1} value listed in the manifest, and
+by erasing the @file{MT/work} file.
+
+If files are given as arguments, only those files are affected instead
+of the entirety of your working copy.
 
 
 @item monotone update
