@@ -65,6 +65,10 @@
 
 	Release point (v 0.8).
 	
+2003-11-16  Tom Tromey  <tromey@redhat.com>
+
+	* missing: Removed generated file.
+
 2003-11-14  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (vcheck): Add.
