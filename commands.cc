@@ -1297,7 +1297,8 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
     {
       cert_value name;
       decode_base64(idx(certs, i).inner().value, name);
-      names.push_back(name());
+      if (!app.lua.hook_ignore_branch(name()))
+        names.push_back(name());
     }
 
   sort(names.begin(), names.end());
@@ -2673,6 +2674,8 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
   cert_name comment_name(comment_cert_name);
   cert_name tag_name(tag_cert_name);
 
+  set<revision_id> seen;
+
   while(! frontier.empty())
     {
       set< pair<file_path, revision_id> > next_frontier;
@@ -2691,6 +2694,11 @@ CMD(log, "informative", "[ID]", "print log history in reverse order (which affec
 	      L(F("revision %s does not exist in db, skipping\n") % rid);
 	      continue;
 	    }
+
+	  if (seen.find(rid) != seen.end())
+	    continue;
+
+	  seen.insert(rid);
 
 	  app.db.get_revision(rid, rev);
 	  

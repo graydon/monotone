@@ -729,8 +729,8 @@ cvs_key::cvs_key(rcs_file const & r, string const & version,
 
 
 cvs_history::cvs_history() :
-  n_versions("versions", 1),
-  n_tree_branches("branches", 1)
+  n_versions("versions", "v", 1),
+  n_tree_branches("branches", "b", 1)
 {
   stk.push(shared_ptr<cvs_state>(new cvs_state()));  
 }
@@ -1279,7 +1279,8 @@ import_cvs_repo(fs::path const & cvsroot,
   shared_ptr<cvs_state> state = cvs.stk.top();
 
   {
-    ticker n_branches("finished branches", 1), n_edges("finished edges", 1);
+    ticker n_branches("finished branches", "b", 1);
+    ticker n_edges("finished edges", "e", 1);
     transaction_guard guard(app.db);
     manifest_map root_manifest;
     manifest_id root_mid;

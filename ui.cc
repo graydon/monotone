@@ -17,58 +17,160 @@ using namespace std;
 using boost::lexical_cast;
 struct user_interface ui;
 
-ticker::ticker(string const & tickname, size_t mod) : mod(mod), name (tickname)
+ticker::ticker(string const & tickname, std::string const & s, size_t mod) :
+  ticks(0),
+  mod(mod),
+  name(tickname),
+  shortname(s)
 {
-  I(ui.ticks.find(tickname) == ui.ticks.end());
-  ui.ticks.insert(make_pair(tickname,0));
+  I(ui.tickers.find(tickname) == ui.tickers.end());
+  ui.tickers.insert(make_pair(tickname,this));
 }
 
 ticker::~ticker()
 {
-  I(ui.ticks.find(name) != ui.ticks.end());
-  ui.ticks.erase(name);
+  I(ui.tickers.find(name) != ui.tickers.end());
+  if (ui.some_tick_is_dirty)
+    {
+      ui.write_ticks();
+    }
+  ui.tickers.erase(name);
   ui.finish_ticking();
 }
 
 void 
 ticker::operator++()
 {
-  I(ui.ticks.find(name) != ui.ticks.end());
-  ui.ticks[name]++;
-  if (ui.ticks[name] % mod == 0)
+  I(ui.tickers.find(name) != ui.tickers.end());
+  ticks++;
+  ui.some_tick_is_dirty = true;
+  if (ticks % mod == 0)
     ui.write_ticks();
 }
 
 void 
 ticker::operator+=(size_t t)
 {
-  I(ui.ticks.find(name) != ui.ticks.end());
-  size_t old = ui.ticks[name];
+  I(ui.tickers.find(name) != ui.tickers.end());
+  size_t old = ticks;
 
-  ui.ticks[name] += t;
-  if ((old+t) % mod == 0
-      || (old % mod) > ((old+t) % mod)
-      || t > mod)
-    ui.write_ticks();
+  ticks += t;
+  if (t != 0)
+    {
+      ui.some_tick_is_dirty = true;
+      if (ticks % mod == 0 || (ticks / mod) > (old / mod))
+	ui.write_ticks();
+    }
+}
+
+
+tick_write_count::tick_write_count() : last_tick_len(0)
+{
+}
+
+tick_write_count::~tick_write_count()
+{
+}
+
+void tick_write_count::write_ticks()
+{
+  string tickline = "\rmonotone: ";
+  for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
+       i != ui.tickers.end(); ++i)
+    {
+      tickline +=
+	string("[")
+	+ i->first + ": " + lexical_cast<string>(i->second->ticks)
+	+ "] ";
+    }
+  tickline += ui.tick_trailer;
+
+  size_t curr_sz = tickline.size();
+  if (curr_sz < last_tick_len)
+    tickline += string(last_tick_len - curr_sz, ' ');
+  last_tick_len = curr_sz;
+
+  clog << tickline;
+  clog.flush();
+}
+
+
+tick_write_dot::tick_write_dot()
+{
+}
+
+tick_write_dot::~tick_write_dot()
+{
+}
+
+void tick_write_dot::write_ticks()
+{
+  string tickline1, tickline2;
+  bool first_tick = true;
+
+  if (ui.last_write_was_a_tick)
+    {
+      tickline1 = "";
+      tickline2 = "";
+    }
+  else
+    {
+      tickline1 = "monotone: ticks: ";
+      tickline2 = "\nmonotone: ";
+    }
+
+  for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
+       i != ui.tickers.end(); ++i)
+    {
+      map<string,size_t>::const_iterator old = last_ticks.find(i->first);
+
+      if (!ui.last_write_was_a_tick)
+	{
+	  if (!first_tick)
+	    tickline1 += ", ";
+
+	  tickline1 +=
+	    i->second->shortname + "=\"" + i->second->name + "\""
+	    + "/" + lexical_cast<string>(i->second->mod);
+	  first_tick = false;
+	}
+
+      if (old == last_ticks.end()
+	  || ((i->second->ticks / i->second->mod)
+	      > (old->second / i->second->mod)))
+	{
+	  tickline2 += i->second->shortname;
+
+	  if (old == last_ticks.end())
+	    last_ticks.insert(make_pair(i->first, i->second->ticks));
+	  else
+	    last_ticks[i->first] = i->second->ticks;
+	}
+    }
+
+  clog << tickline1 << tickline2;
+  clog.flush();
 }
 
 
 user_interface::user_interface() :
   last_write_was_a_tick(false),
-  last_tick_len(0)
+  t_writer(0)
 {
   clog.sync_with_stdio(false);
   clog.unsetf(ios_base::unitbuf);
+  set_tick_writer(new tick_write_count);
 }
 
 user_interface::~user_interface()
 {
+  delete t_writer;
 }
 
 void 
 user_interface::finish_ticking()
 {
-  if (ticks.size() == 0 && 
+  if (tickers.size() == 0 && 
       last_write_was_a_tick)
     {
       tick_trailer = "";
@@ -84,23 +186,19 @@ user_interface::set_tick_trailer(string const & t)
 }
 
 void 
+user_interface::set_tick_writer(tick_writer * t)
+{
+  if (t_writer != 0)
+    delete t_writer;
+  t_writer = t;
+}
+
+void 
 user_interface::write_ticks()
 {
-
-  string tickline = "\rmonotone: ";
-  for (map<string,size_t>::const_iterator i = ticks.begin();
-       i != ticks.end(); ++i)
-    tickline += string("[") + i->first + ": " + lexical_cast<string>(i->second) + "] ";
-  tickline += tick_trailer;
-
-  size_t curr_sz = tickline.size();
-  if (curr_sz < last_tick_len)
-    tickline += string(last_tick_len - curr_sz, ' ');
-  last_tick_len = curr_sz;
-
-  clog << tickline;
-  clog.flush();
+  t_writer->write_ticks();
   last_write_was_a_tick = true;
+  some_tick_is_dirty = false;
 }
 
 void 
@@ -109,6 +207,12 @@ user_interface::warn(string const & warning)
   if (issued_warnings.find(warning) == issued_warnings.end())
     inform("warning: " + warning);
   issued_warnings.insert(warning);
+}
+
+void 
+user_interface::fatal(string const & fatal)
+{
+  inform("fatal: " + fatal);
 }
 
 
@@ -136,7 +240,10 @@ void
 user_interface::inform(string const & line)
 {
   if (last_write_was_a_tick)
-    clog << endl;
+    {
+      write_ticks();
+      clog << endl;
+    }
   clog << "monotone: " << sanitize(line);
   clog.flush();
   last_write_was_a_tick = false;

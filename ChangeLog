@@ -1,3 +1,70 @@
+2004-10-17  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (log): Keep a seen list, mask frontier by it.
+	* monotone.texi: Updates to cover revision terminology.
+
+	Also various further merges from trunk, see below.
+
+2004-10-17  Derek Scherger  <derek@echologic.com>
+
+	* lua.{cc,hh} (hook_ignore_branch): new hook
+	* commands.cc (ls_branches): call it
+	* monotone.texi (Hook Reference): describe it
+
+2004-10-17  Richard Levitte  <richard@levitte.org>
+
+	fix bug 8715 and more
+	* diff_patch.cc (struct unidiff_hunk_writer,
+	unidiff_hunk_writer::flush_hunk): the skew is not just the
+	size difference between added and deleted lines in the current
+	hunk, it's the size difference between /all/ added and deleted
+	lines so far.  Therefore, the skew needs to be a member of the
+	struct rather than being something calculated for each hunk.
+	Furthermore, we need to add trailing context even if the change
+	only consisted of one line.
+
+2004-10-17  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Working Copy): Change the description of
+	'monotone revert' to explain what happens when there are
+	arguments.
+
+2004-10-17  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (OPTIONS): Add a description of --ticker.
+
+	* ui.cc, ui.hh: Rethink the writing conditions as the ticks being
+	"dirty" when they have changed since the last print.  That way,
+	it's very easy to see when they need being printed.  This fixes a
+	small bug where, in some cases, the exact same tick output is
+	produced twice, once before a separate message, and once after,
+	when a ticker is actually being removed.
+	(tick_write_dot::write_ticks): Add a line that describes the
+	ticks, including the amount of each tick per short name.
+
+2004-10-17  Richard Levitte  <richard@levitte.org>
+
+	fix bug 8733
+	* ui.cc, ui.hh: Define a separate tick writer struct, and two
+	subclasses, one that write counters, and one that writes progress
+	characters.  As a consequence, move the count to the ticker class
+	itself, and have the user interface contain a map of pointers to
+	tickers instead of a map of counters, so data is easier to expand
+	and access in a consistent manner.  Finally, correct a few errors
+	in the checks for when ticks should be written, and make sure the
+	final value gets written when the tickers are removed.
+
+	* cert.cc (write_ancestry_paths):
+	* database.cc (rehash):
+	* netsync.cc (call_server, rebuild_merkle_trees):
+	* rcs_import.cc (import_cvs_repo, cvs_history): Adapt to the new
+	tickers.
+
+	* monotone.cc: Add the option '--ticker' which takes the values
+	"dot" or "count" to express which type of tick writer to use.  As
+	a result, set the tick writer to be the progress dot kind or the
+	counting type.
+
 2004-10-15  graydon hoare  <graydon@pobox.com>
 
 	* std_hooks.lua (get_revision_cert_trust): Add.

@@ -31,6 +31,7 @@
 #define OPT_QUIET 9
 #define OPT_VERSION 10
 #define OPT_DUMP 11
+#define OPT_TICKER 12
 
 // main option processing and exception handling code
 
@@ -38,11 +39,11 @@ using namespace std;
 
 char * argstr = NULL;
 
-struct poptOption options[] = 
+struct poptOption options[] =
   {
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, "print debug log to stderr while running", NULL},
-    {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, "file to dump debugging log to, on failure", NULL}, 
-    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},     
+    {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, "file to dump debugging log to, on failure", NULL},
+    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},
     {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, "display help message", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
     {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load a ~/.monotonerc lua file", NULL},
@@ -51,6 +52,7 @@ struct poptOption options[] =
     {"db", 0, POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
     {"branch", 0, POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
+    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
 
@@ -197,6 +199,15 @@ cpp_main(int argc, char ** argv)
 
 	    case OPT_DB_NAME:
 	      app.set_database(absolutify(tilde_expand(string(argstr))));
+	      break;
+
+	    case OPT_TICKER:
+	      if (string(argstr) == "dot")
+		ui.set_tick_writer(new tick_write_dot);
+	      else if (string(argstr) == "count")
+		ui.set_tick_writer(new tick_write_count);
+	      else
+		requested_help = true;
 	      break;
 
 	    case OPT_KEY_NAME:

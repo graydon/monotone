@@ -93,9 +93,9 @@ with these terms.
 @menu
 * Versions of files::         Tracking changes to single files
 * Versions of trees::         Tracking changes to collections of files
+* Historical records::        Tracking the history of changes
 * Certificates::              Tracking extended information
 * Storage and workflow::      Saving, sending, and receiving changes
-* Ancestry::                  Relating versions to each other
 * Forks and merges::          Managing divergence of code
 * Branches::                  Intentional divergence and automatic merging
 @end menu
@@ -170,11 +170,10 @@ specific child.
 
 When dealing with versions of files, we will dispense with writing out
 ``file names'', and identify versions @i{purely} by their @sc{sha1}
-value, which we will also refer to as their @dfn{version code}. Using
-version codes alone will often help us accommodate the fact that people
-often wish to call files by different names. So now our graph of
-parent and child is just a relationship between two versions, only
-identified by version code.
+value, which we will also refer to as their @dfn{file ID}. Using IDs
+alone will often help us accommodate the fact that people often wish
+to call files by different names. So now our graph of parent and child
+is just a relationship between two versions, only identified by ID.
 
 @smallexample
 @group
@@ -269,9 +268,9 @@ To make a snapshot of a tree, we begin by writing a special file
 called a @dfn{manifest}. In fact, monotone will write this file for
 us, but we could write it ourselves too. It is just a plain text
 file. Each line of a manifest file contains two columns. In the first
-column we write the version code of a file in your tree, and in the
-second column we write the path to the file, from the root of our tree
-to the filename.
+column we write the ID of a file in your tree, and in the second
+column we write the path to the file, from the root of our tree to the
+filename.
 
 @smallexample
 @group
@@ -297,13 +296,12 @@ to the filename.
 
 Now we note that a manifest is itself a file. Therefore a manifest can
 serve as input to the @sc{sha1} function, and thus every manifest has
-a version code of its own. By calculating the @sc{sha1} value of a
-manifest, we capture the @i{state of our tree} in a single version
-code. In other words, the version code of the manifest essentially
-captures all the version codes and file names of every file in our
-tree, combined. So we may treat manifests and their version codes as
-@i{snapshots} of a tree of files, though lacking the actual contents
-of the files themselves.
+an ID of its own. By calculating the @sc{sha1} value of a manifest, we
+capture the @i{state of our tree} in a single @dfn{manifest ID}. In
+other words, the ID of the manifest essentially captures all the IDs
+and file names of every file in our tree, combined. So we may treat
+manifests and their IDs as @i{snapshots} of a tree of files, though
+lacking the actual contents of the files themselves.
 
 @smallexample
 @group
@@ -331,7 +329,7 @@ of the files themselves.
                               ||
                               ||
                               \/
-                       manifest version:
+                         manifest ID:
            a2eeaa28574141a7d48fa1cc2802070150b93ec4
 @end group
 @end smallexample
@@ -342,21 +340,97 @@ which occur between different versions of manifests. As with files,
 when possible monotone stores compact descriptions of changes between
 manifests; when necessary it stores complete versions of manifests.
 
+@node    Historical records
+@section Historical records
+
+Suppose you sit down to edit some files. Before you start working, you
+may record a manifest of the files, for reference sake. When you
+finish working, you may record another manifest. These ``before and
+after'' snapshots of the tree of files you worked on can serve as
+historical records of the set of changes, or @dfn{changeset}, that you
+made. In order to capture a ``complete'' view of history -- both the
+changes made and the state of your file tree on either side of those
+changes -- monotone builds a special composite file called a
+@dfn{revision} each time you make changes. Like manifests, revisions
+are ordinary text files which can be passed through the @sc{sha1}
+function and thus assigned a @dfn{revision ID}.
+
++--------------------------------------------------------------+
+|                                                              |
+|                 ... content of revision ...                  |
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
+                              \/
+                         revision ID:
+           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+
+
+The content of a revision makes reference to file IDs, in describing
+a changeset, and manifest IDs, in describing tree states ``before and
+after'' the changeset. Crucially, revisions also make reference to
+@i{other revision IDs}. This fact -- that revisions include the IDs of
+other revisions -- causes the set of revisions to join together into a
+historical @i{chain of events}, somewhat like a ``linked list''.  Each
+revision in the chain has a unique ID, which includes @i{by reference}
+all the revisions preceeding it. Even if you undo a changeset, and
+return to a previously-visited manifest ID during the course of your
+edits, each revision will incorporate the ID of its predecessor, thus
+forming a new unique ID for each point in history.
+
+@smallexample
+@group
+                              ||
++-----------------------------||-------------------------------+
+|                             \/                               |
+|  old_revision: 86d06a095529dca003ad62715dc2be7873edade0      |
+|    change_set:           .  .  .                             |
+|  old_manifest: 1b24ba8b8dc3ff9c87b5198315eced1b279dc74e  <----- manifest ID 
+|  new_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
++-----------------------------||-------------------------------+
+|                             \/                               |
+|  old_revision: f45add3bfb21cb459d99b6a9c0111df75f6d9f85      |
+|    change_set:           .  .  .                             |
+|  old_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
+|  new_manifest: 8a05c60422770bbf49a3192c2367ddaa066538ca  <----- manifest ID 
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
+                              \/
+                         revision ID:
+           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+
+@end group
+@end smallexample
+
 
 @node    Certificates
 @section Certificates
 
-Often, you will wish to make a @i{statement} about a version of a file
-or manifest, such as stating the reason that you made some changes, or
-stating the fact that you approve of the changes which were made, or
-stating the time at which you made the changes. Statements such as
-these can be thought of, generally, as a bundle of information with
-three parts:
+Often, you will wish to make a @i{statement} about a revision, such as
+stating the reason that you made some changes, or stating the fact
+that you approve of the changes which were made, or stating the time
+at which you made the changes. Statements such as these can be thought
+of, generally, as a bundle of information with three parts:
 
 @itemize
 @item
-a @i{version code}, indicating which file or manifest you are
-making a statement about
+an @i{ID}, indicating which revision you are making a statement about
 @item
 a @i{name} indicating the type of statement you are making, such as
 ``changelog'', ``date'' or ``disapproval''
@@ -366,14 +440,13 @@ a @i{value} indicating the remaining detail of the statement, such as
 @end itemize
 
 
-For example, if you want to say that a particular version of a
-manifest was written on April 4, 2003, you might make a statement like
-this:
+For example, if you want to say that a particular revision was
+composed on April 4, 2003, you might make a statement like this:
 
 @smallexample
 @group
       +------------------------------------------------------+
-      |  version code                                        |
+      |  revision ID                                         |
       |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
       +--------------------------+---------------------------+
       |  statement name          |  statement value          |
@@ -386,7 +459,7 @@ In an ideal world, these are all the parts of a statement we would
 need in order to go about our work. In the real world, however, there
 are sometimes malicious people who would make false or misleading
 statements; so we need a way to verify that a particular person made a
-particular statement about a version. We therefore will add two more
+particular statement about a revision. We therefore will add two more
 pieces of information to our bundle:
 
 @itemize
@@ -406,7 +479,7 @@ the scope of this document.
 @smallexample
 @group
       +------------------------------------------------------+
-      |  version code                                        |
+      |  revision ID                                         |
       |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
       +--------------------------+---------------------------+
       |  cert name               |  cert value               |
@@ -418,13 +491,14 @@ the scope of this document.
 @end group
 @end smallexample
 
-Monotone uses certs extensively. Any extra information which needs to
-be stored, transmitted or retrieved --- above and beyond versions of
-files and manifests --- is kept in the form of certs. This includes
-ancestry information, change logs, time and date records, and
-more. When monotone makes a decision about storing, transmitting, or
-recovering some files or manifests, the decision is based on certs it
-has seen, and the trustworthiness you assign to those certs.
+Monotone uses certs extensively. Any ``extra'' information which needs
+to be stored, transmitted or retrieved --- above and beyond files,
+manifests, and revisions --- is kept in the form of certs. This
+includes change logs, time and date records, branch membership,
+authorship, test results, and more. When monotone makes a decision
+about storing, transmitting, or extracting files, manifests, or
+revisions, the decision is often based on certs it has seen, and the
+trustworthiness you assign to those certs.
 
 The @sc{rsa} cryptography system --- and therefore monotone itself ---
 requires that you exchange special ``public'' numbers with your
@@ -480,18 +554,18 @@ the ``switching point'' for communication.
 @end smallexample
 
 A @dfn{working copy} is a tree of files in your file system, arranged
-according to the paths and version codes in a particular manifest.
-A special directory called @file{MT} exists in the root of any
-working copy. Monotone keeps some special files in the @file{MT}
+according to the list of file paths and IDs in a particular
+manifest. A special directory called @file{MT} exists in the root of
+any working copy. Monotone keeps some special files in the @file{MT}
 directory, in order to track changes you make to your working copy.
 
 Aside from the special @file{MT} directory, a working copy is just a
-normal tree of files. You can directly edit the files in a working copy
-using a plain text editor or other program; monotone will
+normal tree of files. You can directly edit the files in a working
+copy using a plain text editor or other program; monotone will
 automatically notice when you make any changes. If you wish to add
-files, remove files, or move files within your working copy, you may
-need to tell monotone explicitly what you are doing, as these actions
-cannot always be deduced.
+files, remove files, or move files within your working copy, you must
+tell monotone explicitly what you are doing, as these actions cannot
+be deduced.
 
 If you do not yet have a working copy, you can @dfn{check out} a
 working copy from a database, or construct one from scratch and
@@ -524,11 +598,12 @@ or keep everything in a single database if you prefer. You can dump
 portions of your database out as text, and read them back into other
 databases, or send them to your friends.
 
-A database contains many versions and certificates, some of which are
-not immediately of interest, some of which may be unwanted or even
-false. It is a collection of information received from network servers,
-working copies, and other databases. You can inspect and modify your
-databases without affecting your working copies, and vice-versa.
+A database contains many files, manifests, revisions, and
+certificates, some of which are not immediately of interest, some of
+which may be unwanted or even false. It is a collection of information
+received from network servers, working copies, and other
+databases. You can inspect and modify your databases without affecting
+your working copies, and vice-versa.
 
 Monotone knows how to exchange information in your database with other
 remote databases, using an interactive protocol called @dfn{netsync}.
@@ -596,106 +671,51 @@ Remote databases, in other words, are just untrusted ``buckets'' of
 data, which you can trade with promiscuously. There is no trust
 implied in communication.
 
-@node    Ancestry
-@section Ancestry
-
-We previously described ``old'' and ``new'' versions of a file as
-``parents'' and ``children'' in a directed graph. The relationship
-between a child and its parents is called the @dfn{ancestry} of the
-child.
-
-Since monotone often stores related versions as deltas, it may
-sometimes be @i{possible} to infer ancestry relationships by analyzing
-the deltas. For technical reasons we will not dwell on here, monotone
-does not do this. Instead, ancestry relationships are stored as
-certs. The cert name @code{ancestor} is reserved by monotone for
-expressing this relationship; the cert value of an @code{ancestor}
-cert is the @sc{sha1} of the parent version.
-
-For example, suppose the version
-994fe79ae852133ff9a93ba0146d520192977078 is logically a child of the
-version 53f48d87d6ffbbb5a980f1393159e83a4921841e, as shown:
-
-@smallexample
-@group
-     +---------------------------------------------------+
-     | parent version                                    |
-     | SHA1 = 53f48d87d6ffbbb5a980f1393159e83a4921841e   |
-     +---------------------------------------------------+
-              |
-              |
-             \|/
-              V
-     +---------------------------------------------------+
-     | child version                                     |
-     | SHA1 = 994fe79ae852133ff9a93ba0146d520192977078   |
-     +---------------------------------------------------+
-@end group
-@end smallexample
-
-Then the following cert would express the ancestry relationship:
-
-@smallexample
-@group
-  +----------------------------------------------------------+
-  | version code                                             |
-  | 994fe79ae852133ff9a93ba0146d520192977078                 |
-  +------------+---------------------------------------------+
-  | cert name  |  cert value                                 |
-  | "ancestor" |  "53f48d87d6ffbbb5a980f1393159e83a4921841e" |
-  +------------+-------------+-------------------------------+
-  | signed by key            |  signature                    |
-  | "jrh@@somewhere.com"      |  "ac9c489c8...5d6b1c26c"      |
-  +--------------------------+-------------------------------+
-@end group
-@end smallexample
-
-
 @node    Forks and merges
 @section Forks and merges
 
-So far we have been talking about versions of files as though each new
-version logically follows the version before it, in a simple sequence
-of versions.
+So far we have been talking about revisions as though each logically
+follows exactly one revision before it, in a simple sequence of
+revisions.
 
 @smallexample
 @group
-       +----------------+
-       | parent version |
-       +----------------+
+       +-----------------------+
+       |  parent revision      |
+       +-----------------------+
                 |
                 |
-       +----------------+
-       | child version  |
-       +----------------+
+       +-----------------------+
+       |  child revision       |
+       +-----------------------+
                 |
                 |
-     +---------------------+
-     | grandchild version  |
-     +---------------------+
+       +-----------------------+
+       |  grandchild revision  |
+       +-----------------------+
 @end group
 @end smallexample
 
 This is a rosy picture, but sometimes it does not work out this
-way. Sometimes when you make new versions of files, other people are
-@i{simultaneously} making new versions too, and their new versions
-might be derived from the same parent as yours. Without loss of
-generality, we will assume simultaneous edits only happen
-two-at-a-time; in fact many more edits may happen at once but our
-reasoning will be the same.
+way. Sometimes when you make new revisions, other people are
+@i{simultaneously} making new revisions as well, and their revisions
+might be derived from the same parent as yours, or contain different
+changesets. Without loss of generality, we will assume simultaneous
+edits only happen two-at-a-time; in fact many more edits may happen at
+once but our reasoning will be the same.
 
 We call this situation of simultaneous edits a @dfn{fork}, and will
-refer to the two children of a fork as the @i{left child} and
-@i{right child}. In a large collection of files with many people
-editing versions, especially on many different computers spread all
-around the world, forks are a common occurrence.
+refer to the two children of a fork as the @i{left child} and @i{right
+child}. In a large collection of revisions with many people editing
+files, especially on many different computers spread all around the
+world, forks are a common occurrence.
 
 
 @smallexample
 @group
-             +----------------+
-             | parent version |
-             +----------------+
+             +-----------------+
+             | parent revision |
+             +-----------------+
                     |   |
            +--------+   +---------+
            |                      |
@@ -706,18 +726,17 @@ around the world, forks are a common occurrence.
 @end smallexample
 
 
-If we analyze the changes in each child version, we will often find
-that the changes made between the parent and the left child are
-unrelated to the changes made between the parent and the right
-child. When this happens, we can usually @dfn{merge} the fork,
-producing a common grandchild version which contains both sets of
-changes. 
+If we analyze the changes in each child revision, we will often find
+that the changeset between the parent and the left child are unrelated
+to the changeset between the parent and the right child. When this
+happens, we can usually @dfn{merge} the fork, producing a common
+grandchild revision which contains both changesets.
 
 @smallexample
 @group
-             +----------------+
-             | parent version |
-             +----------------+
+             +-----------------+
+             | parent revision |
+             +-----------------+
                     |   |
            +--------+   +---------+
            |                      |
@@ -727,9 +746,9 @@ changes.
            |                      |
            +--------+   +---------+
                     |   |
-             +----------------+
-             | merged version |
-             +----------------+
+             +-----------------+
+             | merged revision |
+             +-----------------+
 @end group
 @end smallexample
 
@@ -742,43 +761,44 @@ for a time, or wish to change their files in ways which are not
 logically compatible with each other. When someone produces a fork
 which is supposed to last for a while (or perhaps permanently) we say
 that the fork has produced a new @dfn{branch}. Branches tell monotone
-which versions you would like to merge, and which you would like to
+which revisions you would like to merge, and which you would like to
 keep separate.
 
 You can see all the available branches using @code{monotone list branches}.
 
 Branches are indicated with certs.  The cert name @code{branch} is
 reserved for use by monotone, for the purpose of identifying the
-members of a branch. A @code{branch} cert has a symbolic ``branch
-name'' as its value. When we refer to ``a branch'', we mean all
-versions with a common branch name in their @code{branch} certs.
+revisions which are members of a branch. A @code{branch} cert has a
+symbolic ``branch name'' as its value. When we refer to ``a branch'',
+we mean all revisions with a common branch name in their @code{branch}
+certs.
 
 For example, suppose you are working on a program called ``wobbler''.
-You might develop many versions of wobbler and then decide to split
-your versions into a ``stable branch'' and an ``unstable branch'', to
+You might develop many revisions of wobbler and then decide to split
+your revisions into a ``stable branch'' and an ``unstable branch'', to
 help organize your work. In this case, you might call the new branches
 ``wobbler-stable'' and ``wobbler-unstable''. From then on, all
-versions in the stable branch would get a cert with name @code{branch}
-and value @code{wobbler-stable}; all versions in the unstable branch
+revisions in the stable branch would get a cert with name @code{branch}
+and value @code{wobbler-stable}; all revisions in the unstable branch
 would get a cert with name @code{branch} and value
-@code{wobbler-unstable}. When a @code{wobbler-stable} version forks,
+@code{wobbler-unstable}. When a @code{wobbler-stable} revision forks,
 the children of the fork will be merged. When a
-@code{wobbler-unstable} version forks, the children of the fork will
+@code{wobbler-unstable} revision forks, the children of the fork will
 be merged. However, the @code{wobbler-stable} and
 @code{wobbler-unstable} branches will not be merged together, despite
 having a common ancestor.
 
 @smallexample
 @group
-                   +-------------------------+
-                   | common ancestor version |
-                   +-------------------------+
+                   +--------------------------+
+                   | common ancestor revision |
+                   +--------------------------+
                           |          |
                 +---------+          +---------+
                 |                              |
-       +----------------+              +------------------+           
-       | stable version |              | unstable version |           
-       +----------------+              +------------------+           
+       +-----------------+            +-------------------+           
+       | stable revision |            | unstable revision |           
+       +-----------------+            +-------------------+           
               | |                               | |                   
       +-------+ +-------+               +-------+ +-------+           
       |                 |               |                 |           
@@ -791,7 +811,7 @@ having a common ancestor.
               | |                               | |                   
        +----------------+                +------------------+         
        | merged stable  |                | merged unstable  |         
-       |    version     |                |      version     |         
+       |   revision     |                |     revision     |         
        +----------------+                +------------------+ 
 
 \_____________  _______________/  \_______________  _________________/
@@ -801,23 +821,23 @@ having a common ancestor.
 @end smallexample
 
 
-For each branch, the set of versions with @emph{no children} is called
-the @dfn{heads} of the branch. Monotone can automatically locate, and
-attempt to merge, the heads of a branch. If it fails to automatically
-merge the heads, it may ask you for assistance or else fail cleanly,
-leaving the branch alone.
+For each branch, the set of revisions with @emph{no children} is
+called the @dfn{heads} of the branch. Monotone can automatically
+locate, and attempt to merge, the heads of a branch. If it fails to
+automatically merge the heads, it may ask you for assistance or else
+fail cleanly, leaving the branch alone.
 
 For example, if a fork's left child has a child of its own (a ``left
 grandchild''), monotone will merge the fork's right child with the
-left grandchild, since those versions are the heads of the branch. It
+left grandchild, since those revisions are the heads of the branch. It
 will not merge the left child with the right child, because the left
 child is not a member of the heads.
 
 @smallexample
 @group
-               +----------------+
-               | parent version |
-               +----------------+
+               +-----------------+
+               | parent revision |
+               +-----------------+
                       |       |
              +--------+       |
              |                |
@@ -835,18 +855,18 @@ child is not a member of the heads.
              |                |         
              +--------+   +---+
                       |   |
-               +----------------+
-               | merged version |
-               +----------------+
+               +-----------------+
+               | merged revision |
+               +-----------------+
 @end group
 @end smallexample
 
-When there is only one version in the heads of a branch, we say that
+When there is only one revision in the heads of a branch, we say that
 @i{the heads are merged}, or more generally that @i{the branch is
 merged}, since the heads is the logical set of candidates for any
-merging activity. If there are two or more version in the heads of a
-branch, monotone will merge them two-at-a-time until there is only
-one.
+merging activity. If there are two or more revisions in the heads of a
+branch, and you ask to merge the branch, monotone will merge them
+two-at-a-time until there is only one.
 
 @node    Getting Started
 @chapter Getting Started
@@ -2621,7 +2641,7 @@ copy. Each working copy has a base version. When the working copy is
 committed, the base version is considered to be the ancestor of the
 committed version.
 @item MT/options
-Contains ``sticky'' command-line options such as @option{--database} or 
+Contains ``sticky'' command-line options such as @option{--db} or 
 @option{--branch}, such that you do not need to enter them repeatedly
 after checking out a particular working copy.
 @item MT/work
@@ -3289,11 +3309,16 @@ the change.
 
 
 @item monotone revert
-This command changes your working copy, so that changes you have made
-since the last checkout or update are discarded. It does this by
-changing every file listed in @file{MT/manifest} to have contents
-equal to the @sc{sha1} value listed in the manifest, and by erasing the
-@file{MT/work} file.
+@itemx monotone revert @var{filename...}
+
+With no files given, this command changes your working copy, so that
+changes you have made since the last checkout or update are discarded.
+It does this by changing every file listed in @file{MT/manifest} to
+have contents equal to the @sc{sha1} value listed in the manifest, and
+by erasing the @file{MT/work} file.
+
+If files are given as arguments, only those files are affected instead
+of the entirety of your working copy.
 
 
 @item monotone update
@@ -4006,6 +4031,12 @@ end
 @end group
 @end smallexample
 
+@item ignore_branch (@var{branchname})
+
+Returns @code{true} if @var{branchname} should be ignored while listing
+branches. Otherwise returns @code{false}. This hook has no default
+definition, therefore the default behavior is to list all branches.
+
 @item get_manifest_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
 
 Returns whether or not you @emph{trust} the assertion
@@ -4702,6 +4733,14 @@ function @b{get@t{_}branch@t{_}key(branchname)}.
 @item @b{--branch=}@i{<branchname>}
 Use @i{branchname} for operations on a branch. Default is inferred
 in operations on existing branches (commit, update, etc). 
+@comment TROFF INPUT: .TP
+
+@item @b{--ticker=}[@b{dot}|@b{count}]
+Use the given method to print tickers.  The @b{count} method prints
+the count for each ticker on one line, incrementing the numbers in
+place, while the @b{dot} method prints a continuous string of
+characters (like some programs provide a progress line of dots).
+The default is @b{count}.
 @comment TROFF INPUT: .SH ENVIRONMENT
 
 @end table

@@ -316,10 +316,10 @@ void
 database::rehash()
 {
   transaction_guard guard(*this);
-  ticker mcerts("mcerts", 1);
-  ticker fcerts("fcerts", 1);
-  ticker pubkeys("pubkeys", 1);
-  ticker privkeys("privkeys", 1);
+  ticker mcerts("mcerts", "m", 1);
+  ticker fcerts("fcerts", "f", 1);
+  ticker pubkeys("pubkeys", "+", 1);
+  ticker privkeys("privkeys", "!", 1);
   
   {
     // rehash all mcerts
