@@ -191,6 +191,12 @@ void cert_manifest_rename(manifest_id const & m,
 			  app_state & app,
 			  packet_consumer & pc);
 
+void cert_manifest_vcheck(manifest_id const & m, 
+			  app_state & app,
+			  packet_consumer & pc);
+
+void check_manifest_vcheck(manifest_id const & m, 
+			   app_state & app);
 
 
 #endif // __CERT_HH__

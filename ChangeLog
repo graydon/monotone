@@ -1,5 +1,16 @@
 2003-11-14  graydon hoare  <graydon@pobox.com>
 
+	* commands.cc (vcheck): Add.
+	* cert.cc, cert.hh (cert_manifest_vcheck): Add.
+	(check_manifest_vcheck): Add.
+	(calculate_vcheck_mac): Add.
+	* constants.hh (vchecklen): New constant.
+	* mac.hh: Re-add.
+	* monotone.texi (Hash Integrity): New section.
+	* monotone.1: Document vcheck.
+
+2003-11-14  graydon hoare  <graydon@pobox.com>
+
 	* database.cc, database.hh (reverse_queue): New class.
 	(compute_older_version): New functions.
 	(get_manifest_delta): Remove.
@@ -10,6 +21,7 @@
 	memory.
 	* commands.cc (queue, queue_edge_for_target_ancestor):
 	Install optional<reverse_queue> in qpw.
+	* tests/t_cross.at: Ignore new UI chatter.
 	* monotone.texi (Transmitting Changes): Change UI output.
 
 2003-11-13  graydon hoare  <graydon@pobox.com>

@@ -837,6 +837,47 @@ CMD(cert, "key and cert", "(file|manifest) ID CERTNAME [CERTVAL]",
   guard.commit();
 }
 
+CMD(vcheck, "key and cert", "create [MANIFEST]\ncheck [MANIFEST]", 
+    "create or check a cryptographic version-check certificate")
+{
+  if (args.size() < 1 || args.size() > 2)
+    throw usage(name);
+
+  set<manifest_id> ids;
+  if (args.size() == 1)
+    {
+      N(app.branch_name != "", F("need --branch argument for branch-based vcheck"));
+      get_branch_heads(app.branch_name, app, ids);      
+    }
+  else
+    {
+      for (size_t i = 1; i < args.size(); ++i)
+	{
+	  manifest_id mid;
+	  complete(app, idx(args, i), mid);
+	  ids.insert(mid);
+	}
+    }
+
+  if (idx(args, 0) == "create")
+    for (set<manifest_id>::const_iterator i = ids.begin();
+	 i != ids.end(); ++i)
+    {
+      packet_db_writer dbw(app);
+      cert_manifest_vcheck(*i, app, dbw); 
+    }
+
+  else if (idx(args, 0) == "check")
+    for (set<manifest_id>::const_iterator i = ids.begin();
+	 i != ids.end(); ++i)
+    {
+      check_manifest_vcheck(*i, app); 
+    }
+
+  else 
+    throw usage(name);
+}
+
 
 CMD(tag, "certificate", "ID TAGNAME", 
     "put a symbolic tag cert on a manifest version")

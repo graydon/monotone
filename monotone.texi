@@ -167,7 +167,7 @@ specific child.
 When dealing with versions of files, we will dispense with writing out
 ``file names'', and identify versions @i{purely} by their @sc{sha1}
 value, which we will also refer to as their @dfn{version code}. Using
-version codes alone will often help us accomodate the fact that people
+version codes alone will often help us accommodate the fact that people
 often wish to call files by different names. So now our graph of
 parent and child is just a relationship between two versions, only
 identified by version code.
@@ -1766,12 +1766,189 @@ through the taxonomy and tutorial, and possibly spent some time
 playing with the program to familliarize yourself with its operation.
 
 @menu
+* Hash Integrity::         Notes on probability and failure.
 * Reserved Certs::         Certificate names with special meanings.
 * Naming Conventions::     Choosing appropriate names for keys and branches.
 * File Attributes::        Marking files as executable, or other attributes.
 * Migrating and Dumping::  Changing the underlying storage system.
 * Importing from CVS::     Building a monotone database from a CVS repository.
 @end menu
+
+@node    Hash Integrity
+@section Hash Integrity
+
+Some proponents of a competing, proprietary version control system
+have suggested, in a
+@uref{http://www.usenix.org/events/hotos03/tech/full_papers/henson/henson_html/,
+usenix paper}, that the use of a cryptographic hash function such as
+@sc{sha1} as an identifier for a version is unacceptably unsafe. This
+section addresses the argument presented in that paper and describes
+monotone's additional precautions.
+
+To summarize our position:
+@itemize
+@item
+the analysis in the paper is wrong,
+@item
+even if it were right, monotone is sufficiently safe.
+@end itemize
+
+@heading The analysis is wrong
+
+The paper displays a fundamental lack of understanding about what a
+@emph{cryptographic} hash function is, and how it differs from a
+normal hash function. Furthermore it confuses accidental collision
+with attack scenarios, and mixes up its analysis of the risk involved
+in each. We will try to untangle these issues here.
+
+A cryptographic hash function such as @sc{sha1} is more than just a
+uniform spread of inputs to an output range. Rather, it must be
+designed to withstand attempts at:
+
+@itemize
+@item 
+reversal: deriving an input value from the output
+@item 
+collision: finding two different inputs which hash to the same output
+@end itemize
+
+Collision is the problem the paper is concerned with. Formally, an
+n-bit cryptographic hash should cost @math{2^n} work units to collide
+against a given value, and @math{sqrt(2^n)} tries to find a random
+pair of colliding values. This latter probability is sometimes called
+the hash's ``birthday paradox probability''.
+
+@subheading Accidental collision 
+
+One way of measuring these bounds is by measuring how single-bit
+changes in the input affect bits in the hash output. The @sc{sha1}
+hash has a strong @emph{avalanche property}, which means that flipping
+@emph{any one bit} in the input will cause on average half the 160
+bits in the output code to change. The fanciful @sc{val1} hash
+presented in the paper does not have such a property --- flipping its
+first bit when all the rest are zero causes @emph{no change} to any of
+the 160 output bits --- and is completely unsuited for use as a
+@emph{cryptographic hash}, regardless of the general shape of its
+probability distribution.
+
+The paper also suggests that birthday paradox probability cannot be
+used to measure the chance of accidental @sc{sha1} collision on ``real
+inputs'', because birthday paradox probability assumes a uniformly
+random sample and ``real inputs'' are not uniformly random. The paper
+is wrong: the inputs to @sc{sha1} are not what is being measured (and
+in any case can be arbitrarily long); the collision probability being
+measured is of @emph{output space}. On output space, the hash is
+designed to produce uniformly random spread, even given nearly
+identical inputs. In other words, it is @emph{a primary design
+criteria} of such a hash that a birthday paradox probability is a
+valid approximation its collision probability.
+
+The paper's characterization of risk when hashing ``non-random
+inputs'' is similarly deceptive. It presents a fanciful case of a
+program which is @emph{storing} every possible 2kb block in a
+filesystem addressed by @sc{sha1} (the program is trying to find a
+@sc{sha1} collision). While this scenario @emph{will} very likely
+encounter a collision @emph{somewhere} in the course of storing all
+such blocks, the paper neglects to mention that we only expect it to
+collide after storing about @math{2^80} of the @math{2^16384} possible
+such blocks (not to mention the requirements for compute time to
+search, or disk space to store @math{2^80} 2kb blocks).
+
+Noting that monotone can only store @math{2^41} bytes in a database,
+and thus probably some lower number (say @math{2^32} or so) active
+rows, we consider such birthday paradox probability well out of
+practical sight. Perhaps it will be a serious concern when
+multi-yottabyte hard disks are common.
+
+
+@subheading Collision attacks
+
+Setting aside accidental collisions, then, the paper's underlying
+theme of vulnerability rests on the assertion that someone will break
+@sc{sha1}. Breaking a cryptographic hash usually means finding a way
+to collide it trivially. While we note that @sc{sha1} has in fact
+resisted attempts at breaking for nearly 10 years already, we cannot
+say that it will last forever. Someone might break it. We can say,
+however, that finding a way to trivially collide it only changes the
+resistance to @emph{active attack}, rather than the behavior of the
+hash on benign inputs.
+
+Therefore the vulnerability is not that the hash might suddenly cease
+to address benign blocks well, but merely that additional security
+precautions are might become a requirement to ensure that blocks are
+benign, rather than malicious. The paper fails to make this
+distinction, suggesting that a hash becomes ``unusable'' when it is
+broken. This is plainly not true, as a number of systems continue to
+get useful low collision hashing behavior --- just not good security
+behavior --- out of ``broken'' cryptographic hashes such as MD4.
+
+@heading Monotone is probably safe anyways
+
+Perhaps our arguments above are unconvincing, or perhaps you are the
+sort of person who thinks that practice never lines up with
+theory. Fair enough. Below we present @emph{practical} procedures you
+can follow to compensate for the supposed threats presented in the
+paper.
+
+@subheading Accidental collision
+
+To minimize the chance of accidental collision further, monotone has a
+special type of certificate called a @code{vcheck}, which you can
+issue at any time and in any quantity you like. A @code{vcheck}
+certificate contains a @emph{randomly keyed} message authentication
+code (@sc{mac}). This effectively means that a @code{vcheck}
+cert identifies your tree again, with a ``different'' variant of
+@sc{sha1}.
+
+If you have the @sc{sha1} of your manifest and a @code{vcheck} cert,
+the probability of a collision involving that manifest drops from
+@math{2^-160} to @math{2^-240}. If you have two @code{vcheck} certs,
+it drops to @math{2^-360}, and so on. You can issue as many
+@code{vcheck} certs as you like until your personal level of paranoia
+is met. Each @code{vcheck} cert has its own random seed, usually 128
+bits, so after you've issued about @math{2^64} @code{vcheck} certs on
+the same manifest you have a decent chance of repeating one, but that
+is harmless.
+
+Adding the occasional @code{vcheck} cert to your tree is a good idea
+if you are worried about the ``deterministic'' nature of accidental
+collisions in @sc{sha1}, outlined in the paper. Since the @sc{mac} is
+randomized, unintentional (non-attack) collisions in @code{vcheck}
+certs are reliably nondeterministic. Furthermore, they minimize the
+chance that a malicious collision has gone undetected, by requiring
+the collision to pass an additional (and equally hard) check. A large
+warning is printed if such a check fails.
+
+@subheading Collision attacks
+
+A successful collision attack on @sc{sha1}, as mentionned, does not
+disrupt the @emph{probability} features of @sc{sha1} on benign
+blocks. So if, at any time, you believe @sc{sha1} is ``broken'', it
+does @emph{not} mean that you cannot use it for your work with
+monotone. It means, rather, that you cannot base your @emph{trust} on
+@sc{sha1} values anymore. You must trust who you communicate with.
+
+The way around this is reasonably simple: if you do not trust
+@sc{sha1} to prevent malicious blocks from slipping into your
+communications, you can always augment it by enclosing your
+communications in more security, such as tunnels or additional
+signatures on your email posts. If you choose to do this, you will
+still have the benefit of self-identifying blocks, you will simply
+cease to trust such blocks unless they come with additional
+authentication information.
+
+If in the future @sc{sha1} (or, indeed, @sc{rsa}) becomes accepted as
+broken we will naturally upgrade monotone to a newer hash or public
+key scheme, and provide migration commands to recalculate existing
+databases based on the new algorithm. 
+
+Similarly, if you do not trust our vigilance in keeping up to date
+with cryptography literature, you can modify monotone to use any
+stronger hash you like, at the cost of isolating your own
+communications to a group using the modified version. Monotone is free
+software, and runs atop @code{crypto++}, so it is both legal and
+relatively simple to change it to use some other algorithm.
+
 
 @node    Reserved Certs
 @section Reserved Certs
@@ -1826,7 +2003,11 @@ in the future as a way of selecting versions for @code{checkout}.
 These certs' values are in development; they may be used in the future
 to control @code{update} commands in more detail than the general
 sorting technique currently available.
-
+@item vcheck
+This cert contains a seed value and a special message authentication
+code (@sc{mac}) calculated with that seed value over the files of the
+manifest the cert applies to. It can be used to reduce the chance of
+accidental collision in @sc{sha1}.
 
 @end table
 
@@ -1879,7 +2060,7 @@ Similarly, some people would like to store devices, symbolic links,
 read-only files, and all manner of extra attributes of a file, not
 directly related to a file's data content. 
 
-Rather than try to extend the manifest file to accomodate attributes,
+Rather than try to extend the manifest file to accommodate attributes,
 monotone requires that you place your attributes in a specially named
 file in the root of your working copy. The file is called
 @file{.mt-attrs}, and it has a simple 3-column format, for example:
@@ -2661,6 +2842,20 @@ either for a @code{file} or a @code{manifest} with version
 certificate.  Otherwise the certificate value is read from
 @code{stdin}.
 
+@item monotone --branch=@var{branchname} vcheck create 
+@item monotone vcheck create @var{id}
+@item monotone --branch=@var{branchname} vcheck check
+@item monotone vcheck check @var{id}
+
+These commands produce or check @code{vcheck} certs for the given
+manifest @var{id}. A @code{vcheck} cert on a manifest simply reduces
+the probability that you and your colleague have different manifests
+or files with the same (colliding) @sc{sha1} value. You can produce as
+many @code{vcheck} certs as you like.
+
+If you omit the @var{id}, these commands operate on the heads of
+@var{branchname}, which you must provide.
+
 @end ftable
 
 
@@ -3377,6 +3572,10 @@ Create a custom cert for a file or manifest. Reads cert value
 from stdin if no value given on command line.
 @comment TROFF INPUT: .TP
 
+@item @b{vcheck} @i{(create|check) [id]}
+Produce or check @code{vcheck} certs for the given manifest @i{[id]}.
+@comment TROFF INPUT: .TP
+
 @item @b{genkey} @i{<keyid>}
 Generate an @sc{rsa} key-pair and store it in the database.
 @comment TROFF INPUT: .TP
@@ -3451,7 +3650,7 @@ Write file data packet to stdout.
 @item @b{fdelta} @i{<oldid> <newid>}
 Write file delta packet to stdout.
 @comment TROFF INPUT: .TP
-
+ 
 @item @b{mcerts} @i{<id>}
 Write manifest cert packets to stdout.
 @comment TROFF INPUT: .TP

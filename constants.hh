@@ -14,6 +14,9 @@
 // number of bits in an RSA key we use
 size_t const keylen = 1024; 
 
+// number of bytes of random noise we seed vcheck packets with
+size_t const vchecklen = 32;
+
 // number of seconds in window, in which to consider CVS commits equivalent
 // if they have otherwise compatible contents (author, changelog)
 size_t const cvs_window = 3600 * 3; 

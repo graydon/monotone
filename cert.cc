@@ -7,6 +7,7 @@
 #include "cert.hh"
 #include "packet.hh"
 #include "app_state.hh"
+#include "mac.hh"
 #include "keys.hh"
 #include "sanity.hh"
 #include "patch_set.hh"
@@ -817,6 +818,7 @@ string const comment_cert_name = "comment";
 string const approval_cert_name = "approval";
 string const testresult_cert_name = "testresult";
 string const rename_cert_name = "rename";
+string const vcheck_cert_name = "vcheck";
 
 
 static
@@ -937,6 +939,98 @@ void cert_manifest_rename(manifest_id const & m,
   put_simple_manifest_cert(m, rename_cert_name, val, app, pc);
 }
 
+			  
+static void calculate_vcheck_mac(manifest_id const & m, 
+				 string const & seed,
+				 string & mac,
+				 app_state & app)
+{
+  L(F("calculating vcheck cert on %s with seed %s\n") % m % seed);
+
+  manifest_data mdat;
+  manifest_map mm, mm_mac;
+  app.db.get_manifest_version(m, mdat);
+  read_manifest_map(mdat, mm);
+  for (manifest_map::const_iterator i = mm.begin(); i != mm.end(); ++i)
+    {
+      path_id_pair pip(i);
+      N(app.db.file_version_exists(pip.ident()),
+	F("missing file version %s for %s") % pip.ident() % pip.path());
+
+      file_data fdat;
+      data dat;
+      string fmac;
+
+      app.db.get_file_version(pip.ident(), fdat);
+      unpack(fdat.inner(), dat);
+      calculate_mac(seed, dat(), fmac); 
+      mm_mac.insert(make_pair(pip.path(), file_id(fmac)));
+      L(F("mac of %s (seed=%s, id=%s) is %s\n") % pip.path() % seed % pip.ident() % fmac);
+    }
+  
+  data dat;
+  write_manifest_map(mm_mac, dat);
+  calculate_mac(seed, dat(), mac); 
+  L(F("mac of %d entry mac-manifest is %s\n") % mm_mac.size() % mac);
+}
+
+void cert_manifest_vcheck(manifest_id const & m, 
+			  app_state & app,
+			  packet_consumer & pc)
+{
+  string mac;
+  string seed;
+  make_random_seed(app, seed);
+  P(F("calculating vcheck packet for %s with seed %s\n") % m % seed);
+  calculate_vcheck_mac(m, seed, mac, app);
+  string val = seed + ":" + mac;
+  put_simple_manifest_cert(m, vcheck_cert_name, val, app, pc);
+}
+
+void check_manifest_vcheck(manifest_id const & m, 
+			   app_state & app)
+{
+
+  vector< manifest<cert> > certs;
+  app.db.get_manifest_certs(m, cert_name(vcheck_cert_name), certs);
+  erase_bogus_certs(certs, app);
+  N(certs.size() != 0,
+    F("missing non-bogus vcheck certs on %s") % m);
+
+  for (vector< manifest<cert> >::const_iterator cert = certs.begin();
+       cert != certs.end(); ++cert)
+    {
+      cert_value tv;
+      decode_base64(cert->inner().value, tv);
+
+      string cv = tv();
+      string::size_type colon_pos = cv.find(':');
+
+      N(colon_pos != string::npos ||
+	colon_pos +1 >= cv.size(),
+	F("malformed vcheck cert on %s: %s") % m % cv);
+
+      string seed = cv.substr(0, colon_pos);
+      string their_mac = cv.substr(colon_pos + 1);
+      string our_mac;
+
+      P(F("confirming vcheck packet on %s from %s (%d bit seed)\n") 
+	% m % cert->inner().key % (seed.size() * 4));
+
+      calculate_vcheck_mac(m, seed, our_mac, app);
+
+      if (their_mac != our_mac)
+	{
+	  W(F("vcheck FAILED: key %s, id %s\n") % cert->inner().key % m);
+	  W(F("seed: %s\n") % seed);
+	  W(F("their mac: %s\n") % their_mac);
+	  W(F("our mac: %s\n") % our_mac);  
+	  W(F("you should investigate the contents of manifest %s immediately\n") % m);
+	}
+      else 
+	P(F("vcheck OK: key %s, id %s\n") % cert->inner().key % m);
+    }
+}
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
