@@ -1,7 +1,3 @@
-2003-10-19  Tom Tromey  <tromey@redhat.com>
-
-	* commands.cc (log): Add each seen id to `cycles'.
-
 2003-10-20  graydon hoare  <graydon@pobox.com>
 
 	* file_io.cc (tilde_expand): New function.
@@ -12,6 +8,10 @@
 
 	* rcs_import.cc (import_cvs_repo): Check key existence
 	at beginning of import pass, to avoid wasted work.
+
+2003-10-19  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (log): Add each seen id to `cycles'.
 
 2003-10-19  graydon hoare  <graydon@pobox.com>
 
