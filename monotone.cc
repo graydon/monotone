@@ -397,7 +397,7 @@ cpp_main(int argc, char ** argv)
     }
   catch (informative_failure & inf)
     {
-      ui.inform(inf.what + string("\n"));
+      ui.inform(inf.what);
       clean_shutdown = true;
       return 1;
     }
