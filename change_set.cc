@@ -52,14 +52,57 @@ tid_source
   tid next() { I(ctr != UINT64_C(0xffffffffffffffff)); return ctr++; }
 };
 
+typedef unsigned long path_component;
+
+struct
+path_component_maker
+{
+  path_component make(std::string const & s)
+  {
+    bool is_new;
+    path_component pc = intern.intern(s, is_new);
+    // sanity check new ones
+    if (is_new)
+    {
+      // must be a valid file_path
+      file_path tmp_file_path = file_path(s);
+      // must contain exactly 0 or 1 components
+      fs::path tmp_fs_path = mkpath(s);
+      I(null_name(s) || ++(tmp_fs_path.begin()) == tmp_fs_path.end());
+    }
+    return pc;
+  }
+  std::string lookup(path_component pc) const
+  {
+    return intern.lookup(pc);
+  }
+private:
+  interner<path_component> intern;
+};
+
+static path_component_maker the_path_component_maker;
+
+static path_component
+make_null_component()
+{
+  static path_component null_pc = the_path_component_maker.make("");
+  return null_pc;
+}
+
+static bool
+null_name(path_component pc)
+{
+  return pc == make_null_component();
+}
+
 struct
 path_item
 {
   tid parent;
   ptype ty;
-  file_path name;      
+  path_component name;      
   path_item() {}
-  path_item(tid p, ptype t, file_path const & n);
+  path_item(tid p, ptype t, path_component n);
   path_item(path_item const & other);
   path_item const & operator=(path_item const & other);
   bool operator==(path_item const & other) const;
@@ -71,7 +114,6 @@ typedef std::pair<path_state, path_state> path_analysis;
 
 // nulls and tests
 
-static file_path null_path;
 static file_id null_ident;
 
 // a directory_map is a more "normal" representation of a directory tree,
@@ -85,7 +127,7 @@ static file_id null_ident;
 //               name -> (ptype, tid),
 //               ...                  ]
 
-typedef std::map<file_path, std::pair<ptype,tid> > directory_node;
+typedef std::map<path_component, std::pair<ptype,tid> > directory_node;
 typedef std::map<tid, boost::shared_ptr<directory_node> > directory_map;
 
 static ptype
@@ -226,7 +268,7 @@ path_item_type(path_item const & p)
   return p.ty; 
 }
 
-inline file_path const & 
+inline path_component
 path_item_name(path_item const & p) 
 { 
   return p.name; 
@@ -275,7 +317,7 @@ dump_state(std::string const & s,
         % path_state_tid(i) 
         % path_item_parent(path_state_item(i))
         % (path_item_type(path_state_item(i)) == ptype_directory ? "dir" : "file")
-        % path_item_name(path_state_item(i)));
+        % the_path_component_maker.lookup(path_item_name(path_state_item(i))));
     }
   L(F("END dumping state '%s'\n") % s);
 }
@@ -428,8 +470,6 @@ change_set::check_sane() const
 static void
 sanity_check_path_item(path_item const & pi)
 {
-  fs::path tmp = mkpath(pi.name());
-  I(null_name(pi.name) || ++(tmp.begin()) == tmp.end());
 }
 
 static void
@@ -473,10 +513,10 @@ confirm_proper_tree(path_state const & ps)
 static void
 confirm_unique_entries_in_directories(path_state const & ps)
 {  
-  std::set< std::pair<tid,file_path> > entries;
+  std::set< std::pair<tid,path_component> > entries;
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
-      std::pair<tid,file_path> p = std::make_pair(i->first, path_item_name(i->second));
+      std::pair<tid,path_component> p = std::make_pair(i->first, path_item_name(i->second));
       I(entries.find(p) == entries.end());
       entries.insert(p);
     }
@@ -489,7 +529,7 @@ sanity_check_path_state(path_state const & ps)
   confirm_unique_entries_in_directories(ps);
 }
 
-path_item::path_item(tid p, ptype t, file_path const & n) 
+path_item::path_item(tid p, ptype t, path_component n) 
   : parent(p), ty(t), name(n) 
 {
   sanity_check_path_item(*this);
@@ -572,17 +612,17 @@ dnode(directory_map & dir, tid t)
 
 
 static void 
-compose_path(std::vector<file_path> const & names,
+compose_path(std::vector<path_component> const & names,
              file_path & path)
 {
   try
     {      
-      std::vector<file_path>::const_iterator i = names.begin();
+      std::vector<path_component>::const_iterator i = names.begin();
       I(i != names.end());
-      fs::path p = mkpath((*i)());
+      fs::path p = mkpath(the_path_component_maker.lookup(*i));
       ++i;
       for ( ; i != names.end(); ++i)
-        p /= mkpath((*i)());
+        p /= mkpath(the_path_component_maker.lookup(*i));
       path = file_path(p.string());
     }
   catch (std::runtime_error &e)
@@ -594,9 +634,9 @@ compose_path(std::vector<file_path> const & names,
 static void
 get_full_path(path_state const & state,
               tid t,
-              std::vector<file_path> & pth)
+              std::vector<path_component> & pth)
 {
-  std::vector<file_path> tmp;
+  std::vector<path_component> tmp;
   while(t != root_tid)
     {
       path_state::const_iterator i = state.find(t);
@@ -613,7 +653,7 @@ get_full_path(path_state const & state,
               tid t,
               file_path & pth)
 {
-  std::vector<file_path> tmp;
+  std::vector<path_component> tmp;
   get_full_path(state, t, tmp);
   // L(F("got %d-entry path for tid %d\n") % tmp.size() % t);
   compose_path(tmp, pth);
@@ -646,7 +686,7 @@ compose_rearrangement(path_analysis const & pa,
        i != pa.first.end(); ++i)
     {      
       tid curr(path_state_tid(i));
-      std::vector<file_path> old_name, new_name;
+      std::vector<path_component> old_name, new_name;
       file_path old_path, new_path;
      
       path_state::const_iterator j = pa.second.find(curr);
@@ -730,17 +770,18 @@ compose_rearrangement(path_analysis const & pa,
 
 static void 
 split_path(file_path const & p,
-           std::vector<file_path> & components)
+           std::vector<path_component> & components)
 {
   components.clear();
   fs::path tmp = mkpath(p());
-  std::copy(tmp.begin(), tmp.end(), std::inserter(components, components.begin()));
+  for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
+    components.push_back(the_path_component_maker.make(*i));
 }
 
 static void 
 split_path(file_path const & p,
-           std::vector<file_path> & prefix,
-           file_path & leaf_path)
+           std::vector<path_component> & prefix,
+           path_component & leaf_path)
 {
   split_path(p, prefix);
   I(prefix.size() > 0);
@@ -749,12 +790,12 @@ split_path(file_path const & p,
 }
 
 static bool
-lookup_path(std::vector<file_path> const & pth,
+lookup_path(std::vector<path_component> const & pth,
             directory_map const & dir,
             tid & t)
 {
   t = root_tid;
-  for (std::vector<file_path>::const_iterator i = pth.begin();
+  for (std::vector<path_component>::const_iterator i = pth.begin();
        i != pth.end(); ++i)
     {
       directory_map::const_iterator dirent = dir.find(t);
@@ -777,9 +818,8 @@ lookup_path(file_path const & pth,
             directory_map const & dir,
             tid & t)
 {
-  std::vector<file_path> vec;
-  fs::path tmp = mkpath(pth());
-  std::copy(tmp.begin(), tmp.end(), std::inserter(vec, vec.begin()));
+  std::vector<path_component> vec;
+  split_path(pth, vec);
   return lookup_path(vec, dir, t);
 }
 
@@ -788,7 +828,7 @@ ensure_entry(directory_map & dmap,
              path_state & state,             
              tid dir_tid,
              ptype entry_ty,
-             file_path const & entry,
+             path_component entry,
              tid_source & ts)
 {
   I(! null_name(entry));
@@ -803,7 +843,7 @@ ensure_entry(directory_map & dmap,
       if (null_name(path_item_name(path_state_item(parent))))
         {
           tid new_tid = ts.next();
-          state.insert(std::make_pair(new_tid, path_item(root_tid, entry_ty, null_path)));
+          state.insert(std::make_pair(new_tid, path_item(root_tid, entry_ty, make_null_component())));
           return new_tid;
         }        
     }
@@ -826,13 +866,13 @@ ensure_entry(directory_map & dmap,
 }
 
 static tid
-ensure_dir_in_map (std::vector<file_path> pth,
+ensure_dir_in_map (std::vector<path_component> pth,
                    directory_map & dmap,
                    path_state & state,
                    tid_source & ts)
 {
   tid dir_tid = root_tid;
-  for (std::vector<file_path>::const_iterator p = pth.begin();
+  for (std::vector<path_component>::const_iterator p = pth.begin();
        p != pth.end(); ++p)
     {
       dir_tid = ensure_entry(dmap, state, dir_tid, 
@@ -847,7 +887,7 @@ ensure_dir_in_map (file_path const & path,
                    path_state & state,
                    tid_source & ts)
 {
-  std::vector<file_path> components;
+  std::vector<path_component> components;
   split_path(path, components);
   return ensure_dir_in_map(components, dmap, state, ts);
 }
@@ -858,8 +898,8 @@ ensure_file_in_map (file_path const & path,
                     path_state & state,
                     tid_source & ts)
 {
-  std::vector<file_path> prefix;  
-  file_path leaf_path;
+  std::vector<path_component> prefix;  
+  path_component leaf_path;
   split_path(path, prefix, leaf_path);
   
   I(! null_name(leaf_path));
@@ -945,16 +985,15 @@ reconstruct_path(file_path const & input,
                  path_state const & output_space,
                  file_path & output)
 {
-  std::vector<file_path> vec;
-  std::vector<file_path> rebuilt;
+  std::vector<path_component> vec;
+  std::vector<path_component> rebuilt;
 
   // L(F("reconstructing path '%s' under analysis\n") % input);
   
-  fs::path tmp = mkpath(input());
-  std::copy(tmp.begin(), tmp.end(), std::inserter(vec, vec.begin()));
+  split_path(input, vec);
 
   tid t = root_tid;
-  std::vector<file_path>::const_iterator pth = vec.begin();
+  std::vector<path_component>::const_iterator pth = vec.begin();
   while (pth != vec.end())
     {     
       directory_map::const_iterator dirent = input_dir.find(t);
@@ -1013,7 +1052,7 @@ build_directory_map(path_state const & state,
       tid curr = path_state_tid(i);
       path_item item = path_state_item(i);
       tid parent = path_item_parent(item);
-      file_path name = path_item_name(item);
+      path_component name = path_item_name(item);
       ptype type = path_item_type(item);            
       //       L(F("adding entry %s (%s %d) to directory node %d\n") 
       //        % name % (type == ptype_directory ? "dir" : "file") % curr % parent);
@@ -1038,7 +1077,7 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
        f != pr.deleted_files.end(); ++f)
     {
       tid x = ensure_file_in_map(*f, first_map, pa.first, ts);
-      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_file, null_path)));
+      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_file, make_null_component())));
       damaged_in_first.insert(x);
     }
 
@@ -1046,7 +1085,7 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
        d != pr.deleted_dirs.end(); ++d)
     {
       tid x = ensure_dir_in_map(*d, first_map, pa.first, ts);
-      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_directory, null_path)));
+      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_directory, make_null_component())));
       damaged_in_first.insert(x);
     }
 
@@ -1076,7 +1115,7 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
        a != pr.added_files.end(); ++a)
     {
       tid x = ensure_file_in_map(*a, second_map, pa.second, ts);
-      pa.first.insert(std::make_pair(x, path_item(root_tid, ptype_file, null_path)));
+      pa.first.insert(std::make_pair(x, path_item(root_tid, ptype_file, make_null_component())));
       damaged_in_second.insert(x);
     }
 
@@ -1447,7 +1486,7 @@ extend_renumbering_via_added_files(path_analysis const & a,
         {
           path_state::const_iterator j = b.second.find(path_state_tid(i));
           I(j != b.second.end());
-          file_path leaf_name(path_item_name(path_state_item(j)));
+          path_component leaf_name = path_item_name(path_state_item(j));
 
           I(path_item_type(path_state_item(j)) == ptype_file);
           if (! null_name(leaf_name))

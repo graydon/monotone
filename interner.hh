@@ -25,11 +25,18 @@ interner
     I(i != rev.end());
     return i->second;
   }
-  T intern(std::string const & s) 
+  T intern(std::string const & s)
   {
+    bool is_new;
+    return intern(s, is_new);
+  }
+  T intern(std::string const & s, bool & is_new) 
+  {
+    is_new = false;
     typename std::map<std::string, T>::const_iterator i = fwd.find(s);
     if (i == fwd.end())
       {
+        is_new = true;
 	++max;
 	I(rev.find(max) == rev.end());
 	fwd.insert(make_pair(s, max));

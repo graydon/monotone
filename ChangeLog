@@ -1,5 +1,13 @@
 2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* interner.hh (interner::intern): Add version taking a bool&, so
+	callers can tell whether this string has previously been checked.
+	* change_set.cc: Use new interned string identifier
+	'path_component's instead of file_path's for components of paths;
+	sanity-check each component exactly once.
+
+2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* database.cc (load): Check for existence of target database.
 	* tests/t_load_into_existing.at: New test.
 	* testsuite.at: Add it.
