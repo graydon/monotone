@@ -1,3 +1,10 @@
+2004-09-25  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Rewrite entirely.
+	* work.cc: Adjust to compensate.
+	* commands.cc: Likewise.
+	* numeric_vocab.hh: Ask for C99 constant ctor macros.
+
 2004-09-19  graydon hoare  <graydon@pobox.com>
 
 	* change_set.cc: More bug fixes.

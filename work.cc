@@ -25,11 +25,11 @@ addition_builder
   : public tree_walker
 {
   app_state & app;
-  boost::shared_ptr<path_edit_consumer> pc;
+  change_set & cs;
 public:
   addition_builder(app_state & a, 
-		   boost::shared_ptr<path_edit_consumer> pc)
-    : app(a), pc(pc)
+		   change_set & cs)
+    : app(a), cs(cs)
   {};
   virtual void visit_file(file_path const & path);
 };
@@ -42,7 +42,7 @@ addition_builder::visit_file(file_path const & path)
       P(F("skipping ignorable file %s\n") % path);
       return;
     }
-  pc->add_file(path);
+  cs.add_file(path);
 }
 
 void 
@@ -50,39 +50,43 @@ build_addition(file_path const & path,
 	       app_state & app,
 	       change_set::path_rearrangement & pr)
 {
-  boost::shared_ptr<path_edit_consumer> pc = new_rearrangement_builder(pr);
-
   N(directory_exists(path) || file_exists(path),
     F("path %s does not exist") % path);
 
+  change_set cs;
+
   if (directory_exists(path))
     {
-      addition_builder build(app, pc);
+      addition_builder build(app, cs);
       walk_tree(path, build);
     }
   else 
     {
       I(file_exists(path));
-      pc->add_file(path);
+      cs.add_file(path);
     }
+  normalize_change_set(cs);
+  pr = cs.rearrangement;
 }
 
 void 
 build_deletion(file_path const & path,
 	       change_set::path_rearrangement & pr)
 {
-  boost::shared_ptr<path_edit_consumer> pc = new_rearrangement_builder(pr);
+  change_set cs;
 
   N(directory_exists(path) || file_exists(path),
     F("path %s does not exist") % path);
-
+  
   if (directory_exists(path))
-    pc->delete_dir(path);
+    cs.delete_dir(path);
   else 
     {
       I(file_exists(path));
-      pc->delete_file(path);
+      cs.delete_file(path);
     }
+  normalize_change_set(cs);
+  pr = cs.rearrangement;
 }
 
 void 
@@ -90,18 +94,20 @@ build_rename(file_path const & src,
 	     file_path const & dst,
 	     change_set::path_rearrangement & pr)
 {
-  boost::shared_ptr<path_edit_consumer> pc = new_rearrangement_builder(pr);
+  change_set cs;
 
   N(directory_exists(src) || file_exists(src),
     F("path %s does not exist") % src);
 
   if (directory_exists(src))
-    pc->rename_dir(src, dst);
+    cs.rename_dir(src, dst);
   else 
     {
       I(file_exists(src));
-      pc->rename_file(src, dst);
+      cs.rename_file(src, dst);
     }
+  normalize_change_set(cs);
+  pr = cs.rearrangement;
 }
 
 

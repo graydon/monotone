@@ -8,6 +8,9 @@
 
 #include <limits>
 
+// this is how you "ask for" the C99 constant constructor macros
+#define __STDC_CONSTANT_MACROS
+
 #include <boost/cstdint.hpp>
 #include <boost/static_assert.hpp>
 

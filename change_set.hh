@@ -50,29 +50,33 @@
 
 struct
 change_set
-{
-
-  typedef enum {ptype_directory, ptype_file} ptype;
-  typedef unsigned long long tid;
-  
+{  
   struct
-  path_item
+  path_rearrangement
   {
-    tid parent;
-    ptype ty;
-    file_path name;      
-    path_item(tid p, ptype t, file_path const & n);
-    path_item(path_item const & other);
-    path_item const & operator=(path_item const & other);
-    bool operator==(path_item const & other) const;
+    std::set<file_path> deleted_files;
+    std::set<file_path> deleted_dirs;
+    std::map<file_path, file_path> renamed_files;
+    std::map<file_path, file_path> renamed_dirs;
+    std::set<file_path> added_files;
+    bool operator==(path_rearrangement const & other) const;
   };
 
-  typedef std::map<tid, path_item> path_state;
-  typedef std::pair<path_state, path_state> path_rearrangement;
   typedef std::map<file_path, std::pair<file_id, file_id> > delta_map;
   
   path_rearrangement rearrangement;
   delta_map deltas;
+
+  bool operator==(change_set const & other) const;
+  void add_file(file_path const & a);
+  void add_file(file_path const & a, file_id const & ident);
+  void apply_delta(file_path const & path, 
+		   file_id const & src, 
+		   file_id const & dst);
+  void delete_file(file_path const & d);
+  void delete_dir(file_path const & d);
+  void rename_file(file_path const & a, file_path const & b);
+  void rename_dir(file_path const & a, file_path const & b);
 };
 
 struct
@@ -101,38 +105,6 @@ change_set_consumer
 };
 
 
-// simple accessors
-
-inline change_set::tid const & 
-path_item_parent(change_set::path_item const & p) 
-{ 
-  return p.parent; 
-}
-
-inline change_set::ptype const & 
-path_item_type(change_set::path_item const & p) 
-{ 
-  return p.ty; 
-}
-
-inline file_path const & 
-path_item_name(change_set::path_item const & p) 
-{ 
-  return p.name; 
-}
-
-inline change_set::tid
-path_state_tid(change_set::path_state::const_iterator i)
-{
-  return i->first;
-}
-
-inline change_set::path_item const &
-path_state_item(change_set::path_state::const_iterator i)
-{
-  return i->second;
-}
-
 inline file_path const & 
 delta_entry_path(change_set::delta_map::const_iterator i)
 {
@@ -151,38 +123,31 @@ delta_entry_dst(change_set::delta_map::const_iterator i)
   return i->second.second;
 }
 
-// rearrangement algebra access
-
-boost::shared_ptr<path_edit_consumer> 
-new_rearrangement_builder(change_set::path_rearrangement & pr);
+// change_set algebra access
 
 void
-play_back_rearrangement(change_set::path_rearrangement const & pr,
-			path_edit_consumer & pc);
-
-void
-play_back_change_set(change_set const & cs,
-		     change_set_consumer & csc);
-
-void
-subtract_change_sets(change_set const & abc,
-		     change_set const & ab,		     
-		     change_set & bc);
+play_back_change_set_in_topological_order(change_set const & cs,
+					  change_set_consumer & csc);
 
 // merging and concatenating 
+
+void
+normalize_change_set(change_set & n);
+
+void
+concatenate_change_sets(change_set const & a,
+			change_set const & b,
+			change_set & concatenated);
 
 struct merge_provider;
 
 void
 merge_change_sets(change_set const & a,
 		  change_set const & b,
-		  merge_provider & file_merger,
-		  change_set & merged);
-
-void
-concatenate_change_sets(change_set const & a,
-			change_set const & b,
-			change_set & concatenated);
+		  change_set & a_merged,
+		  change_set & b_merged,
+		  merge_provider & merger,
+		  app_state & app);
 
 // value-oriented access to printers and parsers
 

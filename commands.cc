@@ -1981,6 +1981,57 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
 struct
 update_writer : public change_set_consumer
 {
+  fs::path base;
+
+  // FIXME: need to do this in the correct order; not clear whether that's
+  // even possible w/o hardlinks.
+
+  virtual void add_file(file_path const & pth, 
+			file_id const & ident) 
+  {
+    L(F("processing add_file(%s,%s)\n") % pth % ident);
+    files_to_write.insert(make_pair(pth, ident));
+  }
+
+  virtual void apply_delta(file_path const & pth, 
+			   file_id const & src, 
+			   file_id const & dst)
+  {
+  }
+
+  virtual void delete_file(file_path const & d) 
+  {
+    L(F("processing delete_file(%s)\n") % d);
+    // FIXME: a --prune option here to control whether or not
+    // to actually delete the file from working copy, rather than
+    // just un-register it (which happens naturally)
+    // ::delete_file(d);
+  }
+
+  virtual void delete_dir(file_path const & d) 
+  {
+    P(F("processing delete_dir(%s)\n") % d);
+    // FIXME: a --prune-dirs option here to control whether or not
+    // to actually delete the dir from working copy, rather than
+    // just un-register it (which happens naturally)
+    // ::delete_dir_recursive(d);
+  }
+
+  virtual void rename_file(file_path const & a, file_path const & b) 
+  {
+  }
+
+  virtual void rename_dir(file_path const & a, file_path const & b) 
+  {
+  }
+
+  virtual ~update_writer() {}
+};
+
+/*
+struct
+update_writer : public change_set_consumer
+{
   app_state & app;
   update_merge_provider & merger;
   manifest_map files_to_write;
@@ -2073,7 +2124,7 @@ update_writer : public change_set_consumer
 
   virtual ~update_writer() {}
 };
-
+*/
 
 // static void dump_change_set(string const & name,
 // 			    change_set & cs)
@@ -2120,28 +2171,20 @@ CMD(update, "working copy", "", "update working copy")
     }
   else
     {      
-      // working copy has changes from base
-      // 
-      // call these changes B->W
-      //
-      // update is B->N
-      //
-      // we therefore calculate M = merge(B->W,B->N) and 
-      // update = W->M = (B->M - B->W)
-
-      change_set working(edge_changes(r_working.edges.begin())), merged;
+      change_set old_to_working(edge_changes(r_working.edges.begin())), merged;
 
       L(F("merging working copy with chosen edge %s -> %s\n") 
 	% r_old_id % r_chosen_id);
-      merge_change_sets(old_to_chosen, working, merger, merged);
-      // dump_change_set("merged", merged);
 
-      L(F("calculating update = merged - working\n"));
-      subtract_change_sets(merged, working, update);
-      // dump_change_set("update", update);
+      merge_change_sets(old_to_chosen, 
+			old_to_working, 
+			chosen_to_merged, 
+			working_to_merged, 
+			merger, app);
+      // dump_change_set("chosen to merged", chosen_to_merged);
+      // dump_change_set("working to merged", working_to_merged);
 
-      L(F("updating to composite derived from chosen edge %s -> %s\n") 
-	% r_old_id % r_chosen_id);
+      update = working_to_merged;
     }
   
   update_writer updater(app, merger);
@@ -2173,42 +2216,11 @@ try_one_merge(revision_id const & left_id,
   
   merge_provider merger(app);
   packet_db_writer dbw(app);    
-  
-  // we now have a graph which looks like this:
-  //
-  //    +---> RIGHT
-  //   ANC      
-  //    +---> LEFT
-  //
-  // we are going to pick out two composite changesets (ANC->LEFT and
-  // ANC->RIGHT) from the existing graph and merge them, producing this:
-  //
-  //    +---> RIGHT
-  //   ANC----------> MERGED      
-  //    +---> LEFT
-  //
-  // that is not *really* what we want though; we want the following
-  // graph instead:
-  //
-  //    +---> RIGHT >---+
-  //   ANC            MERGED
-  //    +---> LEFT  >---+
-  //
-  // this can be constructed from the former graph, however, by noting
-  // the identities
-  //   
-  //     ANC->MERGED - ANC->RIGHT  ==   RIGHT->MERGED
-  //     ANC->MERGED - ANC->LEFT   ==   LEFT->MERGED
-  //
-  // so it's just a matter of change set subtraction (not inversion;
-  // change sets are unfortunately non-commutative.
-  
+    
   manifest_map anc_man, left_man, right_man, merged_man;
   
   change_set 
     anc_to_left, anc_to_right, 
-    anc_to_merged,
-    left_to_anc, right_to_anc, 
     left_to_merged, right_to_merged;
   
   app.db.get_manifest(right_rev.new_manifest, right_man);
@@ -2231,14 +2243,16 @@ try_one_merge(revision_id const & left_id,
       build_pure_addition_change_set(right_man, anc_to_right);
     }
   
-  merge_change_sets(anc_to_left, anc_to_right, merger, anc_to_merged);
-  subtract_change_sets(anc_to_merged, anc_to_left, left_to_merged);
-  subtract_change_sets(anc_to_merged, anc_to_right, right_to_merged);
+  merge_change_sets(anc_to_left, anc_to_right, 
+		    left_to_merged, right_to_merged, 
+		    merger, app);
   
   {
     // we have to record *some* route to this manifest. we pick the
     // smaller of the two.
-    apply_change_set(anc_man, anc_to_merged, merged_man);
+    manifest_map tmp;
+    apply_change_set(anc_man, anc_to_left, tmp);
+    apply_change_set(tmp, left_to_merged, merged_man);
     calculate_ident(merged_man, merged_rev.new_manifest);
     base64< gzip<delta> > left_mdelta, right_mdelta;
     diff(left_man, merged_man, left_mdelta);
