@@ -15,7 +15,7 @@ AT_TESTED([monotone])
 # some command abbreviations to make life easier
 
 # Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
-m4_define([MONOTONE], [$PREEXECUTE monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net --root=$_ROOT_DIR])
+m4_define([MONOTONE], [$PREEXECUTE $_MT_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net --root=$_ROOT_DIR])
 m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
 m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
@@ -30,6 +30,9 @@ fi
 # standard testing key, which we use for further tests.
 
 m4_define([MONOTONE_SETUP], [
+
+# Absolutify monotone path
+_MT_EXEC=`which monotone`
 
 # Save the PWD so MONOTONE macro can refer back to it
 _ROOT_DIR=`pwd -P`
@@ -511,3 +514,4 @@ m4_include(tests/t_netsync_checks_server_key.at)
 m4_include(tests/t_merge_5.at)
 m4_include(tests/t_empty_id_completion.at)
 m4_include(tests/t_empty_path.at)
+m4_include(tests/t_empty_env.at)

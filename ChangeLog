@@ -1,5 +1,14 @@
 2005-03-24  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_empty_env.at: New test.
+	* testsuite.at: Add it.  Absolutify path to monotone so it will
+	work.
+	
+	* unix/have_smart_terminal.cc (have_smart_terminal): Handle the
+	case where TERM is unset or empty.
+
+2005-03-24  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ui.hh (tick_write_nothing): New class.
 	* monotone.cc (cpp_main): Enable it.
 

@@ -10,8 +10,15 @@
 
 bool have_smart_terminal()
 {
-  std::string term = getenv("TERM");
+  std::string term;
+  if (char* term_cstr = getenv("TERM"))
+    term = term_cstr;
+  else
+    term = "";
 
-  if (term == "emacs" || term == "dumb" || !isatty(2)) return false;
-  return true;
+  if (term == "" || term == "emacs" || term == "dumb"
+      || !isatty(2))
+    return false;
+  else
+    return true;
 }
