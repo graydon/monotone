@@ -1,3 +1,40 @@
+2005-01-28  graydon hoare  <graydon@pobox.com>
+
+	* database.{cc,hh}: More netsync speed tweaks.
+	* netsync.cc: Likewise.
+
+2005-01-27  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (attr): adjust for subdir; ensure files exist
+	* tests/t_attr.at: improve setup description
+	* tests/t_attributes.at: improve setup description so that
+	testsuite -k attr runs this test; check for attributes on missing
+	files
+	* tests/t_subdir_attr.at: new test
+	* testsuite.at: fix dutch spelling of monotone; call new test
+
+2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.hh (null_id): New function.
+	* revision.cc (analyze_manifest_changes): Fix typo, use null_id.
+	* tests/t_rebuild.at: Un-XFAIL.
+
+2005-01-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_rebuild.at: Add priority tag.
+	
+	* tests/t_cvsimport.at: Be more thorough.
+
+	* rcs_import.cc (store_edge): Rename to...
+	(store_manifest_edge): ...this.  Remove revision arguments, and
+	remove storing of revision.
+	(import_states_recursive): Update accordingly.
+	Add 'revisions' argument; update it instead of trying to write
+	revisions now.
+	(import_states_by_branch): Add 'revisions' argument.
+	(import_cvs_repo): Add a stage 3 that writes out the revisions
+	accumulated in the 'revisions' vector.
+	
 2005-01-27  graydon hoare  <graydon@pobox.com>
 
 	* AUTHORS: Mention Georg.
@@ -8,6 +45,10 @@
 	* merkle_tree.{cc,hh}: Modify to use memory rather than disk.
 	* netsync.{cc,hh}: Likewise.
 	* packet.hh (manifest_edge_analyzer): Kill dead code.
+
+2005-01-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* mt_version.cc (print_full_version): Include system flavour.
 
 2005-01-26  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -54,6 +95,7 @@
 	* testsuite.at: Add them.
 	(MONOTONE): Prefix command line with $PREEXECUTE to e.g. support
 	running under Valgrind.
+
 2005-01-25  Matt Johnston  <matt@ucc.asn.au>
 
 	* cert.cc: ignore whitespace when comparing private keys

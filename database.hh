@@ -321,7 +321,9 @@ public:
 
   void put_revision_cert(revision<cert> const & cert);
 
-  void get_revision_certs(std::vector< revision<cert> > & certs);
+  // this variant has to be rather coarse and fast, for netsync's use
+  void get_revision_cert_index(std::vector< std::pair<hexenc<id>,
+                               std::pair<revision_id, rsa_keypair_id> > > & idx);
 
   void get_revision_certs(cert_name const & name, 
                          std::vector< revision<cert> > & certs);

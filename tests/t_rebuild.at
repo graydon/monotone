@@ -1,13 +1,6 @@
 AT_SETUP([db rebuild])
 MONOTONE_SETUP
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
-# 'db rebuild' current generates invalid root revisions.  They say
-# that they have no changes, when in fact they should have should have
-# a bunch of add_file's on them.
-
 # Make sure 'db rebuild' does something reasonable.
 
 ADD_FILE(foo, [blha blah

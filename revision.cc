@@ -834,10 +834,10 @@ analyze_manifest_changes(app_state & app,
 {
   manifest_map m_parent, m_child;
 
-  if (!parent.inner()().empty())
+  if (!null_id(parent))
     app.db.get_manifest(parent, m_parent);
 
-  if (!parent.inner()().empty())
+  if (!null_id(child))
     app.db.get_manifest(child, m_child);
 
   L(F("analyzing manifest changes from '%s' -> '%s'\n") % parent % child);
