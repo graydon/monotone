@@ -1,5 +1,10 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* cert.cc (erase_bogus_certs): Re-add manifest cert version.
+	(bogus_cert_p): Likewise.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* cert.hh (rename_edge):
 	(rename_set):
 	(calculate_renames):
