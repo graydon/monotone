@@ -1,3 +1,17 @@
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (MOST_SOURCES): Add smap.hh.
+
+2005-02-18  graydon hoare  <graydon@pobox.com>
+
+	* basic_io.{cc,hh}: Inline some stuff.
+	* change_set.cc: Use smap various places, reduce to 32-bit tids.
+	* commands.cc: Use shared_ptr<change_set> everywhere.
+	* netsync.cc: Likewise.
+	* rcs_import.cc: Likewise.
+	* revision.{cc,hh}: Likewise.
+	* smap.hh: New file.
+
 2005-02-17  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_add_intermediate_MT_path.at: new test

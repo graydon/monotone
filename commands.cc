@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <iterator>
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/convenience.hpp>
@@ -457,7 +458,7 @@ calculate_current_revision(app_state & app,
 {
   manifest_id old_manifest_id;
   revision_id old_revision_id;  
-  change_set cs;
+  boost::shared_ptr<change_set> cs(new change_set());
   path_set old_paths, new_paths;
 
   rev.edges.clear();
@@ -469,11 +470,11 @@ calculate_current_revision(app_state & app,
                           old_manifest_id, m_old);
   
 
-  get_path_rearrangement(cs.rearrangement);
+  get_path_rearrangement(cs->rearrangement);
   extract_path_set(m_old, old_paths);
-  apply_path_rearrangement(old_paths, cs.rearrangement, new_paths);
+  apply_path_rearrangement(old_paths, cs->rearrangement, new_paths);
   build_manifest_map(new_paths, m_new, app);
-  complete_change_set(m_old, m_new, cs);
+  complete_change_set(m_old, m_new, *cs);
   
   calculate_ident(m_new, rev.new_manifest);
   L(F("new manifest is %s\n") % rev.new_manifest);
@@ -491,7 +492,7 @@ calculate_restricted_revision(app_state & app,
 {
   manifest_id old_manifest_id;
   revision_id old_revision_id;    
-  change_set cs;
+  boost::shared_ptr<change_set> cs(new change_set());
   path_set old_paths, new_paths;
 
   rev.edges.clear();
@@ -509,11 +510,11 @@ calculate_restricted_revision(app_state & app,
   extract_path_set(m_old, old_paths);
   apply_path_rearrangement(old_paths, included, new_paths);
 
-  cs.rearrangement = included;
+  cs->rearrangement = included;
   restricted_work = excluded;
 
   build_restricted_manifest_map(new_paths, m_old, m_new, app);
-  complete_change_set(m_old, m_new, cs);
+  complete_change_set(m_old, m_new, *cs);
 
   calculate_ident(m_new, rev.new_manifest);
   L(F("new manifest is %s\n") % rev.new_manifest);
@@ -1206,7 +1207,7 @@ CMD(disapprove, "review", "REVISION",
 
   revision_id r;
   revision_set rev, rev_inverse;
-  change_set cs_inverse;
+  boost::shared_ptr<change_set> cs_inverse(new change_set());
   complete(app, idx(args, 0)(), r);
   app.db.get_revision(r, rev);
 
@@ -1222,7 +1223,7 @@ CMD(disapprove, "review", "REVISION",
   rev_inverse.new_manifest = edge_old_manifest(old_edge);
   manifest_map m_old;
   app.db.get_manifest(edge_old_manifest(old_edge), m_old);
-  invert_change_set(edge_changes(old_edge), m_old, cs_inverse);
+  invert_change_set(edge_changes(old_edge), m_old, *cs_inverse);
   rev_inverse.edges.insert(make_pair(r, make_pair(rev.new_manifest, cs_inverse)));
 
   {
@@ -1350,7 +1351,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
   cert_value branchname;
   revision_data rdata;
   revision_set rev;
-  change_set cs;
+  boost::shared_ptr<change_set> cs(new change_set());
 
   string log_message("");
   base64< gzip< data > > gz_dat;
@@ -1392,7 +1393,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
                              manifest_delta(gz_del));
 
   // build and store a changeset and revision
-  cs.apply_delta(pth, old_fid, new_fid);
+  cs->apply_delta(pth, old_fid, new_fid);
   rev.new_manifest = new_mid;
   rev.edges.insert(std::make_pair(old_rid, 
                                   std::make_pair(old_mid, cs)));
@@ -2993,9 +2994,11 @@ try_one_merge(revision_id const & left_id,
     
   manifest_map anc_man, left_man, right_man, merged_man;
   
-  change_set 
-    anc_to_left, anc_to_right, 
-    left_to_merged, right_to_merged;
+  boost::shared_ptr<change_set>
+    anc_to_left(new change_set()), 
+    anc_to_right(new change_set()), 
+    left_to_merged(new change_set()), 
+    right_to_merged(new change_set());
   
   app.db.get_manifest(right_rev.new_manifest, right_man);
   app.db.get_manifest(left_rev.new_manifest, left_man);
@@ -3021,8 +3024,8 @@ try_one_merge(revision_id const & left_id,
       app.db.get_revision(anc_id, anc_rev);
       app.db.get_manifest(anc_rev.new_manifest, anc_man);
 
-      calculate_composite_change_set(anc_id, left_id, app, anc_to_left);
-      calculate_composite_change_set(anc_id, right_id, app, anc_to_right);
+      calculate_composite_change_set(anc_id, left_id, app, *anc_to_left);
+      calculate_composite_change_set(anc_id, right_id, app, *anc_to_right);
     }
   else if (find_common_ancestor_for_merge(left_id, right_id, anc_id, app))
     {     
@@ -3032,28 +3035,28 @@ try_one_merge(revision_id const & left_id,
       app.db.get_revision(anc_id, anc_rev);
       app.db.get_manifest(anc_rev.new_manifest, anc_man);
       
-      calculate_composite_change_set(anc_id, left_id, app, anc_to_left);
-      calculate_composite_change_set(anc_id, right_id, app, anc_to_right);
+      calculate_composite_change_set(anc_id, left_id, app, *anc_to_left);
+      calculate_composite_change_set(anc_id, right_id, app, *anc_to_right);
     }
   else
     {
       P(F("no common ancestor found, synthesizing edges\n")); 
-      build_pure_addition_change_set(left_man, anc_to_left);
-      build_pure_addition_change_set(right_man, anc_to_right);
+      build_pure_addition_change_set(left_man, *anc_to_left);
+      build_pure_addition_change_set(right_man, *anc_to_right);
     }
   
   merge_provider merger(app, anc_man, left_man, right_man);
   
-  merge_change_sets(anc_to_left, anc_to_right, 
-                    left_to_merged, right_to_merged, 
+  merge_change_sets(*anc_to_left, *anc_to_right, 
+                    *left_to_merged, *right_to_merged, 
                     merger, app);
   
   {
     // we have to record *some* route to this manifest. we pick the
     // smaller of the two.
     manifest_map tmp;
-    apply_change_set(anc_man, anc_to_left, tmp);
-    apply_change_set(tmp, left_to_merged, merged_man);
+    apply_change_set(anc_man, *anc_to_left, tmp);
+    apply_change_set(tmp, *left_to_merged, merged_man);
     calculate_ident(merged_man, merged_rev.new_manifest);
     base64< gzip<delta> > left_mdelta, right_mdelta;
     diff(left_man, merged_man, left_mdelta);
