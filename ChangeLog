@@ -7,6 +7,8 @@
 	* keys.hh, keys.cc (change_key_passphrase): New function.
 	* database.hh, database.cc (delete_private_key): New function.
 	* monotone.texi (Key and Cert): Document command.
+	* tests/t_chkeypass.at: Testcase for the command.
+	* testsuite.at: Added new testcase.
 
 2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
 
