@@ -5,6 +5,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
+#include <boost/filesystem/exception.hpp>
 
 #include "app_state.hh"
 #include "database.hh"
@@ -62,7 +63,8 @@ app_state::initialize(bool working_copy)
     {
       L(F("initializing from directory %s\n") % fs::initial_path().string());
       L(F("found working copy directory %s\n") % root.string());
-      chdir(root.native_directory_string().c_str());
+      N(chdir(root.native_directory_string().c_str()) != -1,
+        F("cannot change to directory to %s\n") % root.native_directory_string());
 
       read_options();
 
@@ -87,14 +89,22 @@ app_state::initialize(bool working_copy)
 void
 app_state::initialize(std::string const & dir)
 {
-  if (dir != string("."))
-    {
-      fs::path co_dir = mkpath(dir);
-      fs::create_directories(co_dir);
-      chdir(co_dir.native_directory_string().c_str());
-      // this should probably have the exception handling code 
-      // added recently to .monotone
-    }
+  {
+    fs::path new_dir = mkpath(dir);
+    try
+      {
+        fs::create_directories(new_dir);
+      }
+    catch (fs::filesystem_error & err)
+      {
+        N(false,
+          F("could not create directory: %s: %s\n")
+          % err.path1().native_directory_string()
+          % strerror(err.native_error()));
+      }
+    N(chdir(new_dir.native_directory_string().c_str()) != -1,
+      F("cannot change to directory %s\n") % new_dir.native_directory_string());
+  }
 
   local_path mt(book_keeping_dir);
 

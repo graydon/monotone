@@ -1,5 +1,18 @@
 2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_checkout_dir.at: Also check that checkout to unwriteable
+	directory fails.
+	* tests/t_branch_checkout.at: New test.
+	* testsuite.at: Add it.
+
+	* app_state.cc (initialize): Simplify working directory
+	initialization, and improve error handling.
+	
+	* keys.cc (get_passphrase): Disallow empty passphrases early
+	(before they trigger an invariant down the line...).
+
+2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* update.cc (pick_update_candidates): Add I().
 	* commands.cc (calculate_base_revision): Remove 'rev' argument,
 	which was never set and callers never used.

@@ -90,6 +90,8 @@ get_passphrase(lua_hooks & lua,
           read_password(prompt_beginning + " for key ID [" + keyid() + "]: ",
                         pass1, constants::maxpasswd);
           cout << endl;
+          N(pass1[0],
+            F("empty passphrase not allowed"));
           if (confirm_phrase)
             {
               read_password(string("confirm passphrase for key ID [") + keyid() + "]: ",
