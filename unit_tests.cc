@@ -38,7 +38,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
     t = std::set<std::string>(argv+1, argv+argc);
 
   // call all the adders here
-  // call all the adders here
+
   if (t.empty() || t.find("file_io") != t.end())
     add_file_io_tests(suite);
   

@@ -75,6 +75,8 @@ std::ostream & operator<<(std::ostream & out, manifest_entry const & e);
 
 class app_state;
 
+/** these seem to be unused
+
 // from cwd
 void build_manifest_map(app_state & app,
 			manifest_map & man);
@@ -84,9 +86,16 @@ void build_manifest_map(file_path const & path,
 			app_state & app,
 			manifest_map & man);
 
+**/
+
 void build_manifest_map(path_set const & paths,
 			manifest_map & man,
 			app_state & app);
+
+void build_restricted_manifest_map(path_set const & paths,
+                                   manifest_map const & m_old, 
+                                   manifest_map & m_new, 
+                                   app_state & app);
 
 void read_manifest_map(data const & dat,
 		       manifest_map & man);

@@ -7,13 +7,13 @@ MONOTONE_SETUP
 AT_DATA(testfile, [version 0 of the file
 ])
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 
 for i in 1 2 3 4 5 6
 do
   AT_CHECK(echo "version $i of the file", [], [stdout])
   AT_CHECK(mv stdout testfile)
-  AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+  AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
   AT_CHECK(SHA1(testfile), [], [stdout])
   AT_CHECK(mv stdout fsha-$i, [], [ignore])
   AT_CHECK(BASE_REVISION, [], [stdout])
@@ -31,6 +31,7 @@ do
   AT_CHECK(MONOTONE cat file $FSHA, [], [stdout])
   AT_CHECK(cmp stdout testfile, [], [ignore])
 
+  AT_CHECK(rm -rf MT)
   AT_CHECK(MONOTONE checkout $RSHA ., [], [stdout])
   AT_CHECK(SHA1(testfile), [], [stdout])
   AT_CHECK(cmp stdout fsha-$i, [], [ignore])  

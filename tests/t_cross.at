@@ -79,15 +79,14 @@ AT_CHECK((echo "alice"; echo "alice") | ALICE genkey alice, [], [ignore], [ignor
 # construct ancestor
 AT_CHECK(cp shared.anc shared)
 AT_CHECK(MONOTONE add shared, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit ancestor, [], [ignore], [ignore])
-
+AT_CHECK(MONOTONE --branch=testbranch commit --message=ancestor, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 ROOT_F_SHA=`SHA1(shared)`
 
 # construct left node
 AT_CHECK(cp shared.left shared)
 AT_CHECK(MONOTONE add specific.left, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit left, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=left, [], [ignore], [ignore])
 LEFT_R_SHA=`BASE_REVISION`
 LEFT_F_SHA=`SHA1(shared)`
 AT_CHECK(test $LEFT_R_SHA != $ROOT_R_SHA)
@@ -99,7 +98,7 @@ PROBE_NODE(shared, $ROOT_R_SHA, $ROOT_F_SHA)
 # construct right node
 AT_CHECK(cp shared.right shared)
 AT_CHECK(MONOTONE add specific.right, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit right, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=right, [], [ignore], [ignore])
 RIGHT_R_SHA=`BASE_REVISION`
 RIGHT_F_SHA=`SHA1(shared)`
 AT_CHECK(test $RIGHT_R_SHA != $ROOT_R_SHA)
@@ -107,22 +106,24 @@ AT_CHECK(test $RIGHT_F_SHA != $ROOT_F_SHA)
 AT_CHECK(test $RIGHT_R_SHA != $LEFT_R_SHA)
 AT_CHECK(test $RIGHT_F_SHA != $LEFT_F_SHA)
 
-# do alice's merge on the right, keeping shared.right and clobbering shared.left
-
-AT_CHECK(ALICE merge, [0], [ignore], [ignore])
-AT_CHECK(ALICE update, [], [ignore], [ignore])
-AT_CHECK(ALICE add specific.alice, [], [ignore], [ignore])
-AT_CHECK(ALICE commit alice, [], [ignore], [ignore])
+# construct alice, a derivative of right but with the specific change
+# in left, and an ancestor edge to left.
+AT_CHECK(MONOTONE add specific.left, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add specific.alice, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=alice, [], [ignore], [ignore])
+ALICE_R_SHA=`BASE_REVISION`
+AT_CHECK(MONOTONE cert manifest $ALICE_R_SHA ancestor $LEFT_R_SHA, [], [ignore], [ignore])
 
 # revert to left
 PROBE_NODE(shared, $LEFT_R_SHA, $LEFT_F_SHA)
 
-# do bob's merge on the left, keeping shared.left and clobbering shared.right
-
-AT_CHECK(BOB merge, [0], [ignore], [ignore])
-AT_CHECK(BOB update, [], [ignore], [ignore])
-AT_CHECK(BOB add specific.bob, [], [ignore], [ignore])
-AT_CHECK(BOB commit bob, [], [ignore], [ignore])
+# construct bob, a derivative of left but with the specific change
+# in right, and an ancestor edge to right.
+AT_CHECK(MONOTONE add specific.right, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add specific.bob, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=bob, [], [ignore], [ignore])
+BOB_R_SHA=`BASE_REVISION`
+AT_CHECK(MONOTONE cert manifest $BOB_R_SHA ancestor $RIGHT_R_SHA, [], [ignore], [ignore])
 
 # now merge the merges. this *should* fail.
 # because there are conflicting changes and
