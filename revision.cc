@@ -335,6 +335,10 @@ calculate_change_sets_recursive(revision_id const & ancestor,
     {
       bool relevant_parent = false;
       revision_id curr_parent = edge_old_revision(i);
+
+      if (curr_parent.inner()().empty())
+	continue;
+
       change_set cset_to_curr_parent;
 
       L(F("considering parent %s of %s\n") % curr_parent % child);

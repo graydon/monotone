@@ -2075,7 +2075,7 @@ CMD(update, "working copy", "", "update working copy")
   
   local_path tmp_root((mkpath(book_keeping_dir) / mkpath("tmp")).string());
   if (directory_exists(tmp_root))
-    unlink(tmp_root);
+    delete_file(tmp_root);
 
   mkdir_p(tmp_root);
   apply_rearrangement_to_filesystem(update.rearrangement, tmp_root);

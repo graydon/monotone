@@ -91,6 +91,12 @@ sqlite_unbase64_fn(sqlite_func *f, int nargs, char const ** args)
   sqlite_set_result_string(f, decoded().c_str(), decoded().size());
 }
 
+void 
+database::set_app(app_state * app)
+{
+  __app = app;
+}
+
 struct sqlite * 
 database::sql(bool init)
 {
@@ -115,9 +121,8 @@ database::sql(bool init)
 	execute (schema_constant);
 
       check_schema();
-      // register any functions we're going to use
-      if (sqlite_create_function(__sql, "unbase64", -1, &sqlite_unbase64_fn, NULL))
-	throw oops(string("error registering base64 function with sqlite"));
+
+      install_functions(__app);
     }
   return __sql;
 }
@@ -1440,36 +1445,57 @@ struct valid_certs
   {
     try
       {
-	cert tmp = cert(hexenc<id>(argv[0]), 
-			cert_name(argv[1]),
-			base64<cert_value>(argv[2]),
-			rsa_keypair_id(argv[3]),
-			base64<rsa_sha1_signature>(argv[4]));
-	I(ident == tmp.ident);
-	I(name == tmp.name);
-	I(val == tmp.value);
+	// args are: hash, id, name, value, keypair, pubkey, signature
+	L(F("entries are [%s] [%s] [%s] [%s] [%s] [%s] [%s]\n") 
+	  % argv[0] % argv[1] % argv[2] % argv[3] % argv[4] % argv[5] % argv[6]);
+
+	cert tmp = cert(hexenc<id>(argv[1]), 
+			cert_name(argv[2]),
+			base64<cert_value>(argv[3]),
+			rsa_keypair_id(argv[4]),
+			base64<rsa_sha1_signature>(argv[6]));
+
+	base64<rsa_pub_key> pk(argv[5]);
+
+	if (ident().empty())
+	  ident = tmp.ident;
+	else
+	  I(ident == tmp.ident);
+
+	if (name().empty())
+	  name = tmp.name;
+	else
+	  I(name == tmp.name);
+
+	if (val().empty())
+	  val = tmp.value;
+	else
+	  I(val == tmp.value);
+
 	L(F("examining '%s' %s cert from %s\n") 
 	  % name % signature_type % ident);
-	switch (check_cert(app, tmp))
+
+	string txt;
+	cert_signable_text(tmp, txt);
+	if (check_signature(app.lua, tmp.key, pk, txt, tmp.sig))
 	  {
-	  case cert_ok:
 	    L(F("ok '%s' %s cert from %s\n") 
-	      % name % signature_type % ident);
+	      % name % signature_type % tmp.key);
 	    valid_signers.insert(tmp.key);
-	    break;
-	  case cert_unknown:
-	    L(F("unknown '%s' %s cert from %s\n") 
-	      % name % signature_type % ident);
-	    break;
-	  case cert_bad:
-	    W(F("bad '%s' %s cert from %s\n") 
-	      % name % signature_type % ident);
-	    break;
 	  }
+	else
+	  {
+	    W(F("bad '%s' %s cert from %s\n") 
+	      % name % signature_type % tmp.key);
+	  }
+      }
+    catch (std::exception & e)
+      {
+	W(F("std::exception in sqlite valid_certs::check_single_signer: %s\n") % e.what());
       }
     catch (...)
       {
-	W(F("exception in sqlite valid_certs::check_single_signer\n"));
+	W(F("unknown exception in sqlite valid_certs::check_single_signer\n"));
       }
   }
 };
@@ -1486,9 +1512,9 @@ trusted_step_callback(sqlite_func * fn_ctx,
   valid_certs ** vpp;
 
   I(fn_ctx);
-  I(argc == 7);
+  I(argc == 8);
   I(argv);
-  for (size_t i = 0; i < 7; ++i)
+  for (size_t i = 0; i < 8; ++i)
     I(argv[i]);
 
   app = static_cast<app_state *>(sqlite_user_data(fn_ctx));
@@ -1509,8 +1535,15 @@ trusted_finalize_callback(sqlite_func * fn_ctx)
   app = static_cast<app_state *>(sqlite_user_data(fn_ctx));
   I(app);
   vpp = static_cast<valid_certs **>(sqlite_aggregate_context(fn_ctx, sizeof(valid_certs *)));
+
   I(vpp);
   I(*vpp);
+
+  if ((*vpp)->check_signer_trust(*app))
+    sqlite_set_result_int(fn_ctx, 1);
+  else
+    sqlite_set_result_int(fn_ctx, 0);
+
   delete (*vpp);
 }
 }
@@ -1519,10 +1552,15 @@ trusted_finalize_callback(sqlite_func * fn_ctx)
 void
 database::install_functions(app_state * app)
 {
-  I(sqlite_create_aggregate(sql(), "trusted", 7, 
+  // register any functions we're going to use
+  I(sqlite_create_function(sql(), "unbase64", -1, 
+			   &sqlite_unbase64_fn, 
+			   NULL) == 0);
+
+  I(sqlite_create_aggregate(sql(), "trusted", 8, 
 			    &trusted_step_callback,
 			    &trusted_finalize_callback,
-			    app) == SQLITE_OK);
+			    app) == 0);
 }
 
 void 

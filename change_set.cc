@@ -1789,6 +1789,9 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
   build_directory_map(analysis.first, first_dmap);
   build_directory_map(analysis.second, second_dmap);
 
+  if (analysis.first.empty())
+    return;
+
   std::set<tid> frontier;
   frontier.insert(root_tid);
 
@@ -1801,6 +1804,7 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
       for (std::set<tid>::const_iterator i = frontier.begin(); 
 	   i != frontier.end(); ++i)
 	{
+	  L(F("linking tid %d to temporary\n") % *i);
 	  directory_map::const_iterator dirent = first_dmap.find(*i);
 	  I(dirent != first_dmap.end());
 	  boost::shared_ptr<directory_node> node = dirent->second;
@@ -1822,6 +1826,11 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
 
 	      get_full_path(analysis.first, t, old_path);
 
+	      L(F("hard-linking %s to %s\n") 
+		% local_path(old_path())
+		% local_path((mkpath(temporary_root()) 
+			      / mkpath(boost::lexical_cast<std::string>(t))).string()));
+
 	      hard_link(local_path(old_path()),
 			local_path((mkpath(temporary_root()) 
 				   / mkpath(boost::lexical_cast<std::string>(t))).string()));
@@ -1832,14 +1841,15 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
       frontier = next_frontier;
     }
 
-  // now unlink the old elements from the bottom up
+  // now delete the old elements from the bottom up
   for (std::list<file_path>::const_iterator i = old_entries_to_unlink.begin();
        i != old_entries_to_unlink.end(); ++i)
     {
-      unlink(local_path((*i)()));
+      L(F("deleting initial entry from %s\n") % *i);
+      delete_file(local_path((*i)()));
     }
 
-  // now relink new elements and unlink the temps
+  // now relink new elements and delete the temps
   frontier.insert(root_tid);
   while (!frontier.empty())
     {
@@ -1870,8 +1880,8 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
 		  get_full_path(analysis.second, t, new_path);		  
 		  hard_link(tpth, local_path(new_path()));
 		}
-	      
-	      unlink(tpth);
+	      L(F("deleting temporary from %s\n") % tpth);
+	      delete_file (tpth);
 	    }
 	}
       frontier = next_frontier;

@@ -110,10 +110,13 @@ CREATE TABLE merkle_nodes
 
 CREATE VIEW revision_certs_with_trust AS
 	SELECT 
-		id, name, value, 
-		trusted("revision", hash, id, name, value, keypair, signature) as trust
-	FROM revision_certs
-	GROUP BY id, name, value
+		rc.id as id, rc.name as name, rc.value as value, 
+		trusted("revision", rc.hash, rc.id, rc.name, 
+	                rc.value, rc.keypair, pk.keydata, rc.signature) as trust
+	FROM revision_certs AS rc,
+	     public_keys as pk
+	WHERE pk.id == rc.keypair
+	GROUP BY rc.id, rc.name, rc.value
 	;
 
 CREATE VIEW trusted_revision_certs AS

@@ -36,6 +36,7 @@ app_state::app_state()
       branch_name = options[branch_option];
       internalize_rsa_keypair_id(options[key_option], signing_key);
     }
+  db.set_app(this);
 }
 
 app_state::~app_state()

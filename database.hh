@@ -63,6 +63,7 @@ struct revision_set;
 
 class transaction_guard;
 struct posting;
+struct app_state;
 
 class database
 {
@@ -70,9 +71,12 @@ class database
   std::string const schema;
   void check_schema();
 
+  struct app_state * __app;
   struct sqlite * __sql;
   struct sqlite * sql(bool init = false);
   int transaction_level;
+
+  void install_functions(app_state * app);
 
   typedef std::vector< std::vector<std::string> > results;
   void execute(char const * query, ...);
@@ -173,7 +177,6 @@ public:
   unsigned long get_statistic(std::string const & query);
   void set_filename(fs::path const & file);
   void initialize();
-  void install_functions(app_state * app);
   void debug(std::string const & sql, std::ostream & out);
   void dump(std::ostream &);
   void load(std::istream &);
@@ -186,6 +189,7 @@ public:
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
   bool revision_exists(revision_id const & id);
+  void set_app(app_state * app);
   
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist)

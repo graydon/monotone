@@ -228,15 +228,6 @@ void mkdir_p(file_path const & p)
 }
 
 void 
-unlink(local_path const & path)
-{
-  // FIXME afaik this only works on win32 environments using NTFS; need to
-  // check and possibly develop workaround 
-  string t = localized(path()).string();
-  I(unlink(t.c_str()) == 0);
-}
-
-void 
 hard_link(local_path const & src, local_path const & dst)
 {
   // FIXME afaik this only works on win32 environments using NTFS; need to

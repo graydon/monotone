@@ -1,3 +1,13 @@
+2004-09-30  graydon hoare  <graydon@pobox.com>
+
+	* app_state.cc: Inform db of app.
+	* change_set.cc: Bug fixes.
+	* commands.cc: Use delete_file not unlink.
+	* database.{cc,hh}: Bug fixes in trust function machinery.
+	* revisions.cc: Skip consideration of empty parents.
+	* file_io.{cc,hh}: Remove unlink function.
+	* schema.sql: Pass pubkey data into trust call.
+
 2004-09-29  graydon hoare  <graydon@pobox.com>
 
 	* change_set.cc: Various bug fixes, merge unit tests.

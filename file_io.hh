@@ -58,7 +58,6 @@ bool file_exists(file_path const & path);
 void mkdir_p(local_path const & path);
 void mkdir_p(file_path const & path);
 
-void unlink(local_path const & path);
 void hard_link(local_path const & src, local_path const & dst);
 
 void delete_file(file_path const & path);
