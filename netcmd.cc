@@ -66,7 +66,8 @@ void write_netcmd(netcmd const & in, string & out)
   out += static_cast<char>(in.version);
   out += static_cast<char>(in.cmd_code);
   insert_variable_length_string(in.payload, out);
-  adler32 check(in.payload.data(), in.payload.size());
+  adler32 check(reinterpret_cast<u8 const *>(in.payload.data()), 
+		in.payload.size());
   insert_datum_lsb<u32>(check.sum(), out);
 }
   
@@ -123,7 +124,8 @@ bool read_netcmd(string & inbuf, netcmd & out)
 
   // they might have given us bogus data
   u32 checksum = extract_datum_lsb<u32>(inbuf, pos, "netcmd checksum");
-  adler32 check(out.payload.data(), out.payload.size());
+  adler32 check(reinterpret_cast<u8 const *>(out.payload.data()), 
+		out.payload.size());
   if (checksum != check.sum())
     throw bad_decode(F("bad checksum 0x%x vs. 0x%x") % checksum % check.sum());
 

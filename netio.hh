@@ -12,8 +12,6 @@
 #include <boost/format.hpp>
 #include <boost/static_assert.hpp>
 
-#include <limits>
-
 #include "numeric_vocab.hh"
 #include "sanity.hh"
 
@@ -21,25 +19,6 @@ struct bad_decode {
   bad_decode(boost::format const & fmt) : what(fmt.str()) {}
   std::string what;
 };
-
-BOOST_STATIC_ASSERT(sizeof(char) == 1);
-BOOST_STATIC_ASSERT(CHAR_BIT == 8);
-
-template <typename T, typename V>
-inline T
-widen(V const & v)
-{
-  BOOST_STATIC_ASSERT(sizeof(T) >= sizeof(V));
-  if (std::numeric_limits<T>::is_signed)
-    return static_cast<T>(v);
-  else
-    {
-      T mask = std::numeric_limits<T>::max();
-      size_t shift = (sizeof(T) - sizeof(V)) * 8;
-      mask >>= shift;
-      return static_cast<T>(v) & mask;
-    }
-}
 
 inline void 
 require_bytes(std::string const & str, 

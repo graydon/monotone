@@ -202,7 +202,7 @@ struct done_marker
 
 struct session
 {
-  protocol_role const role;
+  protocol_role role;
   protocol_voice const voice;
   vector<utf8> const & collections;
   set<string> const & all_collections;
@@ -739,22 +739,28 @@ void session::queue_refine_cmd(merkle_node const & node)
 void session::queue_send_data_cmd(netcmd_item_type type,
 				  id const & item)
 {
-
   string typestr;
   netcmd_item_type_to_string(type, typestr);
+  hexenc<id> hid;
+  encode_hexenc(item, hid);
+
+  if (role == source_role)
+    {
+      L(F("not queueing request for %s '%s' as we are in pure source role\n") 
+	% typestr % hid);
+      return;
+    }
 
   if (this->requested_items.find(make_pair(type, item)) != 
       this->requested_items.end())
     {
-      hexenc<id> hid;
-      encode_hexenc(item, hid);
       L(F("not queueing request for %s '%s' as we already requested it\n") 
 	% typestr % hid);
       return;
     }
 
   L(F("queueing request for data of %s item '%s'\n")
-    % typestr % tohex(item()));
+    % typestr % hid);
   netcmd cmd;
   cmd.cmd_code = send_data_cmd;
   write_send_data_cmd_payload(type, item, cmd.payload);
@@ -766,25 +772,32 @@ void session::queue_send_delta_cmd(netcmd_item_type type,
 				   id const & base, 
 				   id const & ident)
 {
+  I(type == manifest_item || type == file_item);
 
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  I(type == manifest_item || type == file_item);
+  hexenc<id> base_hid;
+  encode_hexenc(base, base_hid);
+  hexenc<id> ident_hid;
+  encode_hexenc(ident, ident_hid);
+  
+  if (role == source_role)
+    {
+      L(F("not queueing request for %s delta '%s' -> '%s' as we are in pure source role\n") 
+	% typestr % base_hid % ident_hid);
+      return;
+    }
 
   if (this->requested_items.find(make_pair(type, ident)) != 
       this->requested_items.end())
     {
-      hexenc<id> base_hid;
-      encode_hexenc(base, base_hid);
-      hexenc<id> ident_hid;
-      encode_hexenc(ident, ident_hid);
       L(F("not queueing request for %s delta '%s' -> '%s' as we already requested the target\n") 
 	% typestr % base_hid % ident_hid);
       return;
     }
 
   L(F("queueing request for contents of %s delta '%s' -> '%s'\n")
-    % typestr % tohex(base()) % tohex(ident()));
+    % typestr % base_hid % ident_hid);
   netcmd cmd;
   cmd.cmd_code = send_delta_cmd;
   write_send_delta_cmd_payload(type, base, ident, cmd.payload);
@@ -798,8 +811,18 @@ void session::queue_data_cmd(netcmd_item_type type,
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
+  hexenc<id> hid;
+  encode_hexenc(item, hid);
+
+  if (role == sink_role)
+    {
+      L(F("not queueing %s data for '%s' as we are in pure sink role\n") 
+	% typestr % hid);
+      return;
+    }
+
   L(F("queueing %d bytes of data for %s item '%s'\n")
-    % dat.size() % typestr % tohex(item()));
+    % dat.size() % typestr % hid);
   netcmd cmd;
   cmd.cmd_code = data_cmd;
   write_data_cmd_payload(type, item, dat, cmd.payload);
@@ -811,10 +834,23 @@ void session::queue_delta_cmd(netcmd_item_type type,
 			      id const & ident, 
 			      delta const & del)
 {
+  I(type == manifest_item || type == file_item);
   string typestr;
   netcmd_item_type_to_string(type, typestr);
+  hexenc<id> base_hid;
+  encode_hexenc(base, base_hid);
+  hexenc<id> ident_hid;
+  encode_hexenc(ident, ident_hid);
+
+  if (role == sink_role)
+    {
+      L(F("not queueing %s delta '%s' -> '%s' as we are in pure sink role\n") 
+	% typestr % base_hid % ident_hid);
+      return;
+    }
+
   L(F("queueing %s delta '%s' -> '%s'\n")
-    % typestr % tohex(base()) % tohex(ident()));
+    % typestr % base_hid % ident_hid);
   netcmd cmd;
   cmd.cmd_code = delta_cmd;
   write_delta_cmd_payload(type, base, ident, del, cmd.payload);
@@ -826,8 +862,17 @@ void session::queue_nonexistant_cmd(netcmd_item_type type,
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
+  hexenc<id> hid;
+  encode_hexenc(item, hid);
+  if (role == sink_role)
+    {
+      L(F("not queueing note of nonexistence of %s item '%s' as we are in pure sink role\n") 
+	% typestr % hid);
+      return;
+    }
+
   L(F("queueing note of nonexistance of %s item '%s'\n")
-    % typestr % tohex(item()));
+    % typestr % hid);
   netcmd cmd;
   cmd.cmd_code = nonexistant_cmd;
   write_nonexistant_cmd_payload(type, item, cmd.payload);
@@ -1020,6 +1065,7 @@ bool session::process_anonymous_cmd(protocol_role role,
   queue_confirm_cmd(sig_raw());
   this->collection = collection;
   this->authenticated = true;
+  this->role = source_role;
   return true;
 }
 
@@ -1139,7 +1185,22 @@ bool session::process_auth_cmd(protocol_role role,
       queue_confirm_cmd(sig_raw());
       this->collection = collection;
       this->authenticated = true;
-	  return true;
+      // assume the (possibly degraded) opposite role
+      switch (role)
+	{
+	case source_role:
+	  I(this->role != source_role);
+	  this->role = sink_role;
+	  break;
+	case source_and_sink_role:
+	  I(this->role == source_and_sink_role);
+	  break;
+	case sink_role:
+	  I(this->role != sink_role);
+	  this->role = source_role;
+	  break;	  
+	}
+      return true;
     }
   else
     {

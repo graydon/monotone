@@ -73,7 +73,7 @@ init_match_table(string const & a,
   for (string::size_type i = 0; i < sz; i += blocksz)
     {
       string::size_type step = ((i + blocksz) >= sz) ? (sz - i) : blocksz;
-      u32 sum = adler32(a.data() + i, step).sum();
+      u32 sum = adler32(reinterpret_cast<u8 const *>(a.data() + i), step).sum();
       if (tab.find(sum) == tab.end())
  	tab.insert(make_pair(sum, make_pair(i, step)));
     }  
@@ -187,7 +187,7 @@ compute_delta_insns(string const & a,
       return;
     }
   
-  adler32 rolling(b.data(), blocksz);  
+  adler32 rolling(reinterpret_cast<u8 const *>(b.data()), blocksz);  
 
   for (string::size_type 
 	 sz = b.size(),
@@ -215,9 +215,9 @@ compute_delta_insns(string const & a,
 	{
 	  I(next >= 0);
 	  I(next < b.size());
-	  rolling.out(b[next]);
+	  rolling.out(static_cast<u8>(b[next]));
 	  if (next + blocksz < b.size())
-	    rolling.in(b[next + blocksz]);
+	    rolling.in(static_cast<u8>(b[next + blocksz]));
 	}
       lo = next;
       hi = lo + blocksz;

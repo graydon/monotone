@@ -28,7 +28,7 @@ AT_CHECK(MONOTONE --rcfile=netsync.lua commit blah-blah, [], [ignore], [ignore])
 F_VER1=`SHA1(testfile)`
 VER1=`SHA1(MT/manifest)`
 
-killall -q -QUIT monotone
+killall -q -KILL monotone
 
          MONOTONE --rcfile=netsync.lua               netsync server readonly 127.0.0.1:5555 testbranch  >/dev/null 2>&1 &
 AT_CHECK(MONOTONE --rcfile=netsync.lua --db=test2.db netsync client writeonly 127.0.0.1:5555 testbranch, [], [ignore], [ignore])

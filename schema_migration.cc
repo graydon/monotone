@@ -72,6 +72,14 @@ static void calculate_id(string const & in,
 }
 
 
+struct is_ws
+{
+  bool operator()(char c) const
+    {
+      return c == '\r' || c == '\n' || c == '\t' || c == ' ';
+    }
+};
+
 static void sqlite_sha1_fn(sqlite_func *f, int nargs, char const ** args)
 {
   string tmp, sha;
@@ -82,14 +90,22 @@ static void sqlite_sha1_fn(sqlite_func *f, int nargs, char const ** args)
     }
 
   if (nargs == 1)
-    tmp = string(args[0]);
+    {
+      string s = (args[0]);
+      s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
+      tmp = s;
+    }
   else
     {
       string sep = string(args[0]);
-      tmp = string(args[1]);
+      string s = (args[1]);
+      s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
+      tmp = s;
       for (int i = 2; i < nargs; ++i)
 	{
-	  tmp += sep + string(args[i]);
+	  s = string(args[i]);
+	  s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
+	  tmp += sep + s;
 	}
     }
   calculate_id(tmp, sha);

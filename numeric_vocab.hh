@@ -6,10 +6,33 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <limits>
+
 #include <boost/cstdint.hpp>
+#include <boost/static_assert.hpp>
 
 typedef boost::uint8_t u8;
+typedef boost::uint16_t u16;
 typedef boost::uint32_t u32;
 typedef boost::uint64_t u64;
+
+BOOST_STATIC_ASSERT(sizeof(char) == 1);
+BOOST_STATIC_ASSERT(CHAR_BIT == 8);
+
+template <typename T, typename V>
+inline T
+widen(V const & v)
+{
+  BOOST_STATIC_ASSERT(sizeof(T) >= sizeof(V));
+  if (std::numeric_limits<T>::is_signed)
+    return static_cast<T>(v);
+  else
+    {
+      T mask = std::numeric_limits<T>::max();
+      size_t shift = (sizeof(T) - sizeof(V)) * 8;
+      mask >>= shift;
+      return static_cast<T>(v) & mask;
+    }
+}
 
 #endif

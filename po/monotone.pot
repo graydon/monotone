@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: monotone-devel@nongnu.org\n"
-"POT-Creation-Date: 2004-03-01 00:45-0500\n"
+"POT-Creation-Date: 2004-03-01 02:31-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -721,48 +721,52 @@ msgstr ""
 msgid "no monotone book-keeping directory '%s' found"
 msgstr ""
 
-#: commands.cc:2382
+#: commands.cc:2287
+msgid "doing anonymous pull\n"
+msgstr ""
+
+#: commands.cc:2381
 #, c-format
 msgid "target number %d out of range"
 msgstr ""
 
-#: commands.cc:2388
+#: commands.cc:2387
 #, c-format
 msgid "packet number %d out of range for target %d"
 msgstr ""
 
-#: commands.cc:2400
+#: commands.cc:2399
 #, c-format
 msgid "deleting %d byte posting for %s\n"
 msgstr ""
 
-#: commands.cc:2413
+#: commands.cc:2412
 #, c-format
 msgid "queueing %d bytes for %s\n"
 msgstr ""
 
-#: commands.cc:2428
+#: commands.cc:2427
 msgid "need --branch argument for addtree"
 msgstr ""
 
-#: commands.cc:2671
+#: commands.cc:2670
 msgid "no packets found on stdin"
 msgstr ""
 
-#: commands.cc:2673
+#: commands.cc:2672
 msgid "read 1 packet\n"
 msgstr ""
 
-#: commands.cc:2675
+#: commands.cc:2674
 #, c-format
 msgid "read %d packets\n"
 msgstr ""
 
-#: commands.cc:2749
+#: commands.cc:2748
 msgid "fetching from all known URLs\n"
 msgstr ""
 
-#: commands.cc:2771
+#: commands.cc:2770
 msgid "no URL provided, posting all queued targets\n"
 msgstr ""
 
