@@ -28,9 +28,11 @@ require_bytes(std::string const & str,
 {
   // if you've gone past the end of the buffer, there's a logic error,
   // and this program is not safe to keep running. shut down.
-  I(pos < str.size());
+  I(pos < str.size() || (pos == str.size() && len == 0));
   // otherwise make sure there's room for this decode operation, but
   // use a recoverable exception type.
+  if (len == 0)
+    return;
   if (str.size() < pos + len)
     throw bad_decode(F("need %d bytes to decode %s at %d, only have %d") 
 		     % len % name % pos % (str.size() - pos));
