@@ -1078,8 +1078,9 @@ static void
 include_rename_edge(rename_edge const & in, 
 		    rename_edge & out)
 {
-  L(F("merging rename edge %s -> %s with %s -> %s\n")
-    % in.parent % in.child % out.parent % out.child);
+  L(F("merging rename edge %s -> %s (%d renames) with %s -> %s (%d renames)\n")
+    % in.parent % in.child % in.mapping.size()
+    % out.parent % out.child % out.mapping.size());
 
   set<file_path> rename_targets;
   for (rename_set::const_iterator i = out.mapping.begin();
@@ -1094,13 +1095,17 @@ include_rename_edge(rename_edge const & in,
     {
       rename_set::const_iterator other = out.mapping.find(i->first);
       if (other == out.mapping.end())
-	I(rename_targets.find(i->second) == rename_targets.end());
+	{
+	  L(F("skipping rename of %s -> %s from first edge\n")
+	    % i->first % i->second);
+	  I(rename_targets.find(i->second) == rename_targets.end());
+	}
       else      
 	N(other->second == i->second,
 	  F("impossible historical record of renames: %s renamed to both %s and %s")
 	  % i->first % i->second % other->second);
 
-      L(F("merged in rename of %s -> %s\n")
+      L(F("merged in rename of %s -> %s from first edge\n")
 	% i->first % i->second);
       rename_targets.insert(i->second);
       out.mapping.insert(*i);
@@ -1118,6 +1123,8 @@ compose_rename_edges(rename_edge const & a,
   out.child = b.child;
   set<file_path> rename_targets;
 
+  rename_edge residual(b);
+
   L(F("composing rename edges %s -> %s and %s -> %s\n")
     % a.parent % a.child % b.parent % b.child);
 
@@ -1134,6 +1141,7 @@ compose_rename_edges(rename_edge const & a,
 	  L(F("composing rename %s -> %s with %s -> %s\n")
 	    % i->first % i->second % j->first % j->second);
 	  out.mapping.insert(make_pair(i->first, j->second));
+	  residual.mapping.erase(i->second);
 	}
       else
 	{
@@ -1142,6 +1150,9 @@ compose_rename_edges(rename_edge const & a,
 	  out.mapping.insert(*i);
 	}
     }
+  std::copy(residual.mapping.begin(),
+	    residual.mapping.end(),
+	    std::inserter(out.mapping, out.mapping.begin()));
 }
 
 static void 
@@ -1223,9 +1234,9 @@ calculate_renames_recursive(manifest_id const & ancestor,
 			    map<manifest_id, shared_ptr<rename_edge> > & partial_edges,
 			    set<manifest_id> & visited_nodes)
 {
-
+  edge.child = child;
   if (ancestor == child)
-    return false;
+    return true;
 
   visited_nodes.insert(child);
 
@@ -1233,7 +1244,6 @@ calculate_renames_recursive(manifest_id const & ancestor,
   get_parents(child, parents, app);
   bool relevant_child = false;
 
-  edge.child = child;
   map<manifest_id, rename_edge> incident_edges;
 
   rename_edge child_edge;
@@ -1259,7 +1269,6 @@ calculate_renames_recursive(manifest_id const & ancestor,
   for(set<manifest_id>::const_iterator i = parents.begin();
       i != parents.end(); ++i)
     {
-
       bool relevant_parent = false;
       rename_edge curr_parent_edge;
       map<manifest_id, shared_ptr<rename_edge> >::const_iterator 
@@ -1303,16 +1312,10 @@ calculate_renames_recursive(manifest_id const & ancestor,
 	    }
 	  relevant_child = true;
 	}
-    }
-
-  // copy any remaining incident edges  
-  for (map<manifest_id, rename_edge>::const_iterator i = incident_edges.begin();
-       i != incident_edges.end(); ++i)
-    {
-      relevant_child = true;
-      L(F("adding lone incident edge %s -> %s\n") 
-	% i->second.parent % i->second.child);
-      include_rename_edge(i->second, edge);
+      else
+	{
+	  L(F("ancestor edge %s -> %s is irrelevant\n") % (*i) % child);
+	}
     }
 
   // store the partial edge from ancestor -> child, so that if anyone
@@ -1334,6 +1337,7 @@ calculate_renames(manifest_id const & ancestor,
   set<manifest_id> visited;
   map<manifest_id, shared_ptr<rename_edge> > partial;
   calculate_renames_recursive(ancestor, child, app, edge, partial, visited);
+  L(F("found %d renames on %s -> %s edge\n") % edge.mapping.size() % ancestor % child);
 }
 
 
@@ -1493,6 +1497,35 @@ cert_manifest_rename(manifest_id const & m,
 		     packet_consumer & pc)
 {
   string val;
+  I(re.child == m);
+  vector< manifest<cert> > certs;
+  cert_name rename(rename_cert_name);
+  app.db.get_manifest_certs(m, rename, certs);
+  erase_bogus_certs(certs, app);
+  for (vector< manifest<cert> >::const_iterator c = certs.begin();
+       c != certs.end(); ++c)
+    {
+      rename_edge etmp;
+      read_rename_edge(c->inner().ident, c->inner().value, etmp);
+      if (etmp.parent == re.parent && etmp.child == re.child)
+	{
+	  W(F("existing renames on edge %s -> %s, skipping new ones\n")
+	    % re.parent % etmp.child);
+	  return;
+	}
+    }
+  manifest_data old_dat, new_dat;
+  manifest_map m_old, m_new;  
+  app.db.get_manifest_version(re.parent, old_dat);
+  app.db.get_manifest_version(re.child, new_dat);
+  read_manifest_map(old_dat, m_old);
+  read_manifest_map(new_dat, m_new);
+  for (rename_set::const_iterator i = re.mapping.begin();
+       i != re.mapping.end(); ++i)
+    {
+      I(m_old.find(i->first) != m_old.end());
+      I(m_new.find(i->second) != m_new.end());
+    }  
   write_rename_edge(re, val);
   put_simple_manifest_cert(m, rename_cert_name, val, app, pc);
 }

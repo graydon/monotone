@@ -647,7 +647,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       cert_value tv;      
       decode_base64(idx(certs, i).value, tv);
       string washed;
-      if (guess_binary(tv()) 
+      if (guess_binary(tv())
 	  || idx(certs, i).name == rename_cert_name)
 	{
 	  washed = "<binary data>";
@@ -1940,6 +1940,7 @@ CMD(log, "informative", "[ID] [file]", "print log history in reverse order (whic
   cert_name changelog_name(changelog_cert_name);
   cert_name comment_name(comment_cert_name);
   cert_name tag_name(tag_cert_name);
+  cert_name rename_name(rename_cert_name);
 
   while(! frontier.empty())
     {
@@ -2029,6 +2030,25 @@ CMD(log, "informative", "[ID] [file]", "print log history in reverse order (whic
 		}	  
 	      cout << endl;
 	    }
+
+	  /*
+	  app.db.get_manifest_certs(*i, rename_name, tmp);
+	  erase_bogus_certs(tmp, app);
+	  if (!tmp.empty())
+	    {
+	      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+		   j != tmp.end(); ++j)
+		{		  
+		  cert_value tv;
+		  decode_base64(j->inner().value, tv);
+		  gzip<data> dtmp(tv());
+		  data gunzipped;
+		  decode_gzip(dtmp, gunzipped);
+		  cout << "Rename: " << gunzipped << endl;
+		}	  
+	      cout << endl;
+	    }
+	  */
 
 	  cout << "ChangeLog:" << endl << endl;
 	  app.db.get_manifest_certs(*i, changelog_name, tmp);

@@ -788,7 +788,7 @@ void merge_deltas (map<file_path, patch_delta> const & self_map,
 	{
 	  // concurrent deltas! into the file merger we go..
 	  I(other->second.id_old == delta->second.id_old);
-	  I(other->second.path == delta->second.path);
+	  //I(other->second.path == delta->second.path);
 	  L(F("attempting to merge deltas on %s : %s -> %s and %s\n")
 	    % delta->first 
 	    % delta->second.id_old 
@@ -1276,19 +1276,6 @@ bool merge3(manifest_map const & ancestor,
 	    right_edge.f_moves.begin(), right_edge.f_moves.end(), 
 	    inserter(merged_edge.f_moves, merged_edge.f_moves.begin()));
 
-  // (phase 4.5, copy the renames into the disjoint rename sets for independent
-  // certification in our caller)
-
-  left_renames.clear();
-  for (set<patch_move>::const_iterator mv = left_edge.f_moves.begin();
-       mv != left_edge.f_moves.end(); ++mv)
-    left_renames.insert(make_pair(mv->path_old, mv->path_new));
-
-  right_renames.clear();
-  for (set<patch_move>::const_iterator mv = right_edge.f_moves.begin();
-       mv != right_edge.f_moves.end(); ++mv)
-    right_renames.insert(make_pair(mv->path_old, mv->path_new));
-
   // in phase #5 we run 3-way file merges on all the files which have 
   // a delta on both edges, and union the results of the 3-way merges with
   // all the deltas which only happen on one edge, and dump all this into
@@ -1318,6 +1305,7 @@ bool merge3(manifest_map const & ancestor,
     {
       L(F("applying merged move of file %s -> %s\n")
 	% mov->path_old % mov->path_new);
+      I(merged.find(mov->path_old) != merged.end());
       I(merged.find(mov->path_new) == merged.end());
       file_id fid = merged[mov->path_old];
       merged.erase(mov->path_old);
@@ -1354,6 +1342,29 @@ bool merge3(manifest_map const & ancestor,
       I(merged.find(delta->path) != merged.end());
       I(merged[delta->path] == delta->id_old);
       merged[delta->path] = delta->id_new;
+    }
+
+  // (phase 7, copy the renames into the disjoint rename sets for independent
+  // certification in our caller). note that we must copy the right renames
+  // into the left edge (and vice versa) because we are documenting the
+  // renames *missing* from the left side, which will be written into a cert.
+
+  right_renames.clear();
+  for (set<patch_move>::const_iterator mv = left_edge.f_moves.begin();
+       mv != left_edge.f_moves.end(); ++mv)
+    {
+      if (right.find(mv->path_old) != right.end() &&
+	  merged.find(mv->path_new) != merged.end())
+	right_renames.insert(make_pair(mv->path_old, mv->path_new));
+    }
+
+  left_renames.clear();
+  for (set<patch_move>::const_iterator mv = right_edge.f_moves.begin();
+       mv != right_edge.f_moves.end(); ++mv)
+    {
+      if (left.find(mv->path_old) != left.end() &&
+	  merged.find(mv->path_new) != merged.end())	
+	left_renames.insert(make_pair(mv->path_old, mv->path_new));
     }
 
   return true;

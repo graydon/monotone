@@ -1,3 +1,12 @@
+2004-07-27  Graydon Hoare  <graydon@redhat.com>
+
+	* tests/t_remerge.at: New test.
+	* testsuite.at: Call it.
+	* cert.cc: Adjust rename calculation logic.
+	* diff_patch.cc (merge3): Swap destination of
+	copied rename edges, improve conditions.
+	* path_set.cc: Tighten up invariants.
+
 2004-07-05  graydon hoare  <graydon@pobox.com>
 
 	* cert.cc (operator<): Fix wrong ordering of 

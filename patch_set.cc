@@ -348,6 +348,8 @@ manifests_to_patch_set(manifest_map const & m_old,
   for (rename_set::const_iterator i = renames.mapping.begin();
        i != renames.mapping.end(); ++i)
     {
+      I(m_old.find(i->first) != m_old.end());
+      I(m_new.find(i->second) != m_new.end());
       if (ps.f_dels.find(i->first) != ps.f_dels.end() && 
 	  add_mapping.exists(i->second))
 	{
