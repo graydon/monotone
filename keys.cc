@@ -38,7 +38,7 @@ using boost::shared_ptr;
 
 static void 
 do_arc4(SecByteBlock & phrase,
-	SecByteBlock & payload)
+        SecByteBlock & payload)
 {
   L(F("running arc4 process on %d bytes of data\n") % payload.size());
   ARC4 a4(phrase.data(), phrase.size());
@@ -47,12 +47,12 @@ do_arc4(SecByteBlock & phrase,
 
 static void 
 get_passphrase(lua_hooks & lua,
-	       rsa_keypair_id const & keyid,
-	       SecByteBlock & phrase,
-	       bool confirm_phrase = false,
-	       string prompt_beginning = "enter passphrase",
-	       bool enable_hook_lookup = true,
-	       bool enable_phrase_caching = true)
+               rsa_keypair_id const & keyid,
+               SecByteBlock & phrase,
+               bool confirm_phrase = false,
+               string prompt_beginning = "enter passphrase",
+               bool enable_hook_lookup = true,
+               bool enable_phrase_caching = true)
 {
   string lua_phrase;
 
@@ -74,59 +74,59 @@ get_passphrase(lua_hooks & lua,
     {
       // user is being a slob and hooking lua to return his passphrase
       phrase.Assign(reinterpret_cast<const byte *>(lua_phrase.data()), 
-		    lua_phrase.size());
+                    lua_phrase.size());
       N(lua_phrase != "",
-	F("got empty passphrase from get_passphrase() hook"));
+        F("got empty passphrase from get_passphrase() hook"));
     }
   else
     { 
       char pass1[constants::maxpasswd];
       char pass2[constants::maxpasswd];
       for (int i = 0; i < 3; ++i)
-	{
-	  memset(pass1, 0, constants::maxpasswd);
-	  memset(pass2, 0, constants::maxpasswd);
-	  read_password(prompt_beginning + " for key ID [" + keyid() + "]: ",
-			pass1, constants::maxpasswd);
-	  cout << endl;
-	  if (confirm_phrase)
-	    {
-	      read_password(string("confirm passphrase for key ID [") + keyid() + "]: ",
-			    pass2, constants::maxpasswd);
-	      cout << endl;
-	      if (strlen(pass1) == 0 || strlen(pass2) == 0)
-		{
-		  P(F("empty passphrases not allowed, try again\n"));
-		  N(i < 2, F("too many failed passphrases\n"));
-		}
-	      else if (strcmp(pass1, pass2) == 0)
-		break;
-	      else
-		{
-		  P(F("passphrases do not match, try again\n"));
-		  N(i < 2, F("too many failed passphrases\n"));
-		}
-	    }
-	  else
-	    break;
-	}
+        {
+          memset(pass1, 0, constants::maxpasswd);
+          memset(pass2, 0, constants::maxpasswd);
+          read_password(prompt_beginning + " for key ID [" + keyid() + "]: ",
+                        pass1, constants::maxpasswd);
+          cout << endl;
+          if (confirm_phrase)
+            {
+              read_password(string("confirm passphrase for key ID [") + keyid() + "]: ",
+                            pass2, constants::maxpasswd);
+              cout << endl;
+              if (strlen(pass1) == 0 || strlen(pass2) == 0)
+                {
+                  P(F("empty passphrases not allowed, try again\n"));
+                  N(i < 2, F("too many failed passphrases\n"));
+                }
+              else if (strcmp(pass1, pass2) == 0)
+                break;
+              else
+                {
+                  P(F("passphrases do not match, try again\n"));
+                  N(i < 2, F("too many failed passphrases\n"));
+                }
+            }
+          else
+            break;
+        }
 
       try 
-	{
-	  phrase.Assign(reinterpret_cast<byte const *>(pass1), strlen(pass1));
+        {
+          phrase.Assign(reinterpret_cast<byte const *>(pass1), strlen(pass1));
 
-	  // permit security relaxation. maybe.
-	  if (persist_phrase)
-	    {
-	      phrases.insert(make_pair(keyid,string(pass1)));
-	    }
-	} 
+          // permit security relaxation. maybe.
+          if (persist_phrase)
+            {
+              phrases.insert(make_pair(keyid,string(pass1)));
+            }
+        } 
       catch (...)
-	{
-	  memset(pass1, 0, constants::maxpasswd);
-	  memset(pass2, 0, constants::maxpasswd);
-	  throw;
-	}
+        {
+          memset(pass1, 0, constants::maxpasswd);
+          memset(pass2, 0, constants::maxpasswd);
+          throw;
+        }
       memset(pass1, 0, constants::maxpasswd);
       memset(pass2, 0, constants::maxpasswd);
     }
@@ -147,13 +147,13 @@ write_der(T & val, SecByteBlock & sec)
       val.DEREncode(der_sink);
       der_sink.MessageEnd();
       sec.Assign(reinterpret_cast<byte const *>(der_encoded.data()), 
-		 der_encoded.size());
+                 der_encoded.size());
       L(F("wrote %d bytes of DER-encoded data\n") % der_encoded.size());
     }
   catch (...)
     {
       for (size_t i = 0; i < der_encoded.size(); ++i)
-	der_encoded[i] = '\0';
+        der_encoded[i] = '\0';
       throw;
     }
   for (size_t i = 0; i < der_encoded.size(); ++i)
@@ -163,9 +163,9 @@ write_der(T & val, SecByteBlock & sec)
 
 void 
 generate_key_pair(lua_hooks & lua,           // to hook for phrase
-		  rsa_keypair_id const & id, // to prompting user for phrase
-		  base64<rsa_pub_key> & pub_out,
-		  base64< arc4<rsa_priv_key> > & priv_out)
+                  rsa_keypair_id const & id, // to prompting user for phrase
+                  base64<rsa_pub_key> & pub_out,
+                  base64< arc4<rsa_priv_key> > & priv_out)
 {
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
@@ -191,13 +191,13 @@ generate_key_pair(lua_hooks & lua,           // to hook for phrase
   get_passphrase(lua, id, phrase, true);
   do_arc4(phrase, privkey); 
   raw_priv_key = string(reinterpret_cast<char const *>(privkey.data()), 
-			privkey.size());
+                        privkey.size());
   
   // generate public key
   RSAES_OAEP_SHA_Encryptor pub(priv);
   write_der(pub, pubkey);
   raw_pub_key = string(reinterpret_cast<char const *>(pubkey.data()), 
-		       pubkey.size());
+                       pubkey.size());
   
   // if all that worked, we can return our results to caller
   encode_base64(raw_priv_key, priv_out);
@@ -208,8 +208,8 @@ generate_key_pair(lua_hooks & lua,           // to hook for phrase
 
 void
 change_key_passphrase(lua_hooks & lua,
-		      rsa_keypair_id const & id,
-		      base64< arc4<rsa_priv_key> > & encoded_key)
+                      rsa_keypair_id const & id,
+                      base64< arc4<rsa_priv_key> > & encoded_key)
 {
   SecByteBlock phrase;
   get_passphrase(lua, id, phrase, false, "enter old passphrase", false, false);
@@ -218,7 +218,7 @@ change_key_passphrase(lua_hooks & lua,
   SecByteBlock key_block;
   decode_base64(encoded_key, decoded_key);
   key_block.Assign(reinterpret_cast<byte const *>(decoded_key().data()),
-		   decoded_key().size());
+                   decoded_key().size());
   do_arc4(phrase, key_block);
 
   try
@@ -227,27 +227,27 @@ change_key_passphrase(lua_hooks & lua,
       StringSource keysource(key_block.data(), key_block.size(), true);
       shared_ptr<RSASSA_PKCS1v15_SHA_Signer> signer;
       signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
-	(new RSASSA_PKCS1v15_SHA_Signer(keysource));
+        (new RSASSA_PKCS1v15_SHA_Signer(keysource));
     }
   catch (...)
     {
       throw informative_failure("failed to decrypt private RSA key, "
-				"probably incorrect passphrase");
+                                "probably incorrect passphrase");
     }
 
   get_passphrase(lua, id, phrase, true, "enter new passphrase", false, false);
   do_arc4(phrase, key_block);
   decoded_key = string(reinterpret_cast<char const *>(key_block.data()),
-		       key_block.size());
+                       key_block.size());
   encode_base64(decoded_key, encoded_key);
 }
 
 void 
 make_signature(lua_hooks & lua,           // to hook for phrase
-	       rsa_keypair_id const & id, // to prompting user for phrase
-	       base64< arc4<rsa_priv_key> > const & priv,
-	       string const & tosign,
-	       base64<rsa_sha1_signature> & signature)
+               rsa_keypair_id const & id, // to prompting user for phrase
+               base64< arc4<rsa_priv_key> > const & priv,
+               string const & tosign,
+               base64<rsa_sha1_signature> & signature)
 {
   arc4<rsa_priv_key> decoded_key;
   SecByteBlock decrypted_key;
@@ -282,37 +282,37 @@ make_signature(lua_hooks & lua,           // to hook for phrase
   else
     {
       for (int i = 0; i < 3; ++i)
-	{
-	  L(F("base64-decoding %d-byte private key\n") % priv().size());
-	  decode_base64(priv, decoded_key);
-	  decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
-			       decoded_key().size());
-	  get_passphrase(lua, id, phrase);
-	  do_arc4(phrase, decrypted_key);
-	  
-	  try 
-	    {
-	      L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
-	      StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
-	      signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
-		(new RSASSA_PKCS1v15_SHA_Signer(keysource));
-	    }
-	  catch (...)
-	    {
-	      if (i >= 2)
-		throw informative_failure("failed to decrypt private RSA key, "
-					  "probably incorrect passphrase");
-	    }
-	  
-	  if (persist_phrase)
-	    signers.insert(make_pair(id,signer));
-	}
+        {
+          L(F("base64-decoding %d-byte private key\n") % priv().size());
+          decode_base64(priv, decoded_key);
+          decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
+                               decoded_key().size());
+          get_passphrase(lua, id, phrase);
+          do_arc4(phrase, decrypted_key);
+          
+          try 
+            {
+              L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
+              StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
+              signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
+                (new RSASSA_PKCS1v15_SHA_Signer(keysource));
+            }
+          catch (...)
+            {
+              if (i >= 2)
+                throw informative_failure("failed to decrypt private RSA key, "
+                                          "probably incorrect passphrase");
+            }
+          
+          if (persist_phrase)
+            signers.insert(make_pair(id,signer));
+        }
     }
 
   StringSource tmp(tosign, true, 
-		   new SignerFilter
-		   (rng, *signer, 
-		    new StringSink(sig_string)));  
+                   new SignerFilter
+                   (rng, *signer, 
+                    new StringSink(sig_string)));  
   
   L(F("produced %d-byte signature\n") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
@@ -320,10 +320,10 @@ make_signature(lua_hooks & lua,           // to hook for phrase
 
 bool 
 check_signature(lua_hooks & lua,           
-		rsa_keypair_id const & id, 
-		base64<rsa_pub_key> const & pub_encoded,
-		string const & alleged_text,
-		base64<rsa_sha1_signature> const & signature)
+                rsa_keypair_id const & id, 
+                base64<rsa_pub_key> const & pub_encoded,
+                string const & alleged_text,
+                base64<rsa_sha1_signature> const & signature)
 {
   // examine pubkey
 
@@ -344,10 +344,10 @@ check_signature(lua_hooks & lua,
       StringSource keysource(pub_block.data(), pub_block.size(), true);
       L(F("building verifier for %d-byte pub key\n") % pub_block.size());
       verifier = shared_ptr<RSASSA_PKCS1v15_SHA_Verifier>
-	(new RSASSA_PKCS1v15_SHA_Verifier(keysource));
+        (new RSASSA_PKCS1v15_SHA_Verifier(keysource));
       
       if (persist_phrase)
-	verifiers.insert(make_pair(id, verifier));
+        verifiers.insert(make_pair(id, verifier));
     }
 
   // examine signature
@@ -371,7 +371,7 @@ check_signature(lua_hooks & lua,
   catch (...)
     {
       if (vf)
-	delete vf;
+        delete vf;
       throw;
     }
 
@@ -382,8 +382,8 @@ check_signature(lua_hooks & lua,
 
 void 
 read_pubkey(string const & in, 
-	    rsa_keypair_id & id,
-	    base64<rsa_pub_key> & pub)
+            rsa_keypair_id & id,
+            base64<rsa_pub_key> & pub)
 {
   string tmp_id, tmp_key;
   size_t pos = 0;
@@ -395,8 +395,8 @@ read_pubkey(string const & in,
 
 void 
 write_pubkey(rsa_keypair_id const & id,
-	     base64<rsa_pub_key> const & pub,
-	     string & out)
+             base64<rsa_pub_key> const & pub,
+             string & out)
 {
   rsa_pub_key pub_tmp;
   decode_base64(pub, pub_tmp);
@@ -407,8 +407,8 @@ write_pubkey(rsa_keypair_id const & id,
 
 void 
 key_hash_code(rsa_keypair_id const & id,
-	      base64<rsa_pub_key> const & pub,
-	      hexenc<id> & out)
+              base64<rsa_pub_key> const & pub,
+              hexenc<id> & out)
 {
   data tdat(id() + ":" + remove_ws(pub()));
   calculate_ident(tdat, out);  
@@ -416,8 +416,8 @@ key_hash_code(rsa_keypair_id const & id,
 
 void 
 key_hash_code(rsa_keypair_id const & id,
-	      base64< arc4<rsa_priv_key> > const & priv,
-	      hexenc<id> & out)
+              base64< arc4<rsa_priv_key> > const & priv,
+              hexenc<id> & out)
 {
   data tdat(id() + ":" + remove_ws(priv()));
   calculate_ident(tdat, out);
@@ -425,9 +425,9 @@ key_hash_code(rsa_keypair_id const & id,
 
 void
 require_password(lua_hooks & lua,
-		 rsa_keypair_id const & key,
-		 base64<rsa_pub_key> const & pubkey,
-		 base64< arc4<rsa_priv_key> > const & privkey)
+                 rsa_keypair_id const & key,
+                 base64<rsa_pub_key> const & pubkey,
+                 base64< arc4<rsa_priv_key> > const & privkey)
 {
   if (lua.hook_persist_phrase_ok())
     {
@@ -435,7 +435,7 @@ require_password(lua_hooks & lua,
       base64<rsa_sha1_signature> sig;
       make_signature(lua, key, privkey, plaintext, sig);
       N(check_signature(lua, key, pubkey, plaintext, sig),
-	F("passphrase for '%s' is incorrect") % key);
+        F("passphrase for '%s' is incorrect") % key);
     }
 }
 
@@ -479,33 +479,33 @@ osrng_test()
       int i = 0;
 
       while (t_blank.BytesNeeded() != 0)
-	{
-	  t_blank.Put(static_cast<byte>(0));
-	  i++;
-	}
+        {
+          t_blank.Put(static_cast<byte>(0));
+          i++;
+        }
       L(F("%d bytes blank input -> tests as %f randomness\n") 
-	% i % t_blank.GetTestValue());
+        % i % t_blank.GetTestValue());
 
 
       i = 0;
       while (t_urandom.BytesNeeded() != 0)
-	{
-	  t_urandom.Put(rng_urandom.GenerateByte());
-	  i++;
-	}
+        {
+          t_urandom.Put(rng_urandom.GenerateByte());
+          i++;
+        }
       L(F("%d bytes urandom-seeded input -> tests as %f randomness\n") 
-	% i % t_urandom.GetTestValue());
+        % i % t_urandom.GetTestValue());
 
 
       i = 0;
       while (t_random.BytesNeeded() != 0)
-	{
-	  t_random.Put(rng_random.GenerateByte());
-	  i++;
-	}
+        {
+          t_random.Put(rng_random.GenerateByte());
+          i++;
+        }
 
       L(F("%d bytes random-seeded input -> tests as %f randomness\n") 
-	% i % t_random.GetTestValue());
+        % i % t_random.GetTestValue());
 
       BOOST_CHECK(t_blank.GetTestValue() == 0.0);
       BOOST_CHECK(t_urandom.GetTestValue() > 0.95);

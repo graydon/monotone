@@ -1,5 +1,10 @@
 2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
 
+	* keys.hh: Remove tabs.
+	* keys.cc: Likewise.
+
+2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi (Hook Reference): Clarify description of
 	'get_passphrase', following confusion on IRC.
 
