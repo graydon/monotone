@@ -1,3 +1,10 @@
+2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* tests/t_checkout_dir.at: New test triggering the bug I fixed
+	  previously in the checkout command, verifying that directory
+	  creation and chdir succeed.
+	* testsuite.at: Add new test.
+
 2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* ChangeLog: Add log entry for <jmmv@menta.net>'s last change.
