@@ -1931,8 +1931,11 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 	      cert_value tv;
 	      decode_base64(j->inner().value, tv);
 	      manifest_id id(tv());
-	      if (cycles.find(id) == cycles.end())		
-		next_frontier.insert(id);
+	      if (cycles.find(id) == cycles.end())
+		{
+		  next_frontier.insert(id);
+		  cycles.insert(id);
+		}
 	    }
 	}
       frontier = next_frontier;
