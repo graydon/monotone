@@ -1,3 +1,17 @@
+2003-11-14  graydon hoare  <graydon@pobox.com>
+
+	* database.cc, database.hh (reverse_queue): New class.
+	(compute_older_version): New functions.
+	(get_manifest_delta): Remove.
+	* network.cc, network.hh (queue_blob_for_network): Remove.
+	* packet.cc, packet.hh (queueing_packet_writer): Change UI,
+	write to queue directly, accept optional<reverse_queue>.
+	* cert.cc (write_paths_recursive): Rewrite to use constant
+	memory.
+	* commands.cc (queue, queue_edge_for_target_ancestor):
+	Install optional<reverse_queue> in qpw.
+	* monotone.texi (Transmitting Changes): Change UI output.
+
 2003-11-13  graydon hoare  <graydon@pobox.com>
 
 	* Makefile.am (AUTOMAKE_OPTIONS): Require 1.7.1

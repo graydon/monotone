@@ -26,19 +26,11 @@ void open_connection(std::string const & host,
 		     unsigned long port,
 		     boost::shared_ptr<std::iostream> & stream);
 
-void queue_aggregated_merge(manifest_id const & ancestor, 
-			    manifest_id const & merged, 
-			    std::vector<manifest_id> const & heads, 
-			    app_state & app);
-
 void post_queued_blobs_to_network(std::set<url> const & targets,
 				  app_state & app);
 
 void fetch_queued_blobs_from_network(std::set<url> const & sources,
 				     app_state & app);
 
-void queue_blob_for_network(std::set<url> const & targets,
-			    std::string const & blob,
-			    app_state & app);
 
 #endif // __NETWORK_HH__

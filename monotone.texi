@@ -1601,12 +1601,8 @@ our most recent commit would result in the following messages:
 $ monotone commit
 monotone: committing a2f12ab893e7e40feb83e19f4e707ec6a2841601 to branch testbranch
 enter passphrase for key ID [testkey@@nodomain.org] :@i{<enter your passphrase here>}
-monotone: 149 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
-monotone: 116 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
-monotone: 300 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
-monotone: 288 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
-monotone: 287 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
-monotone: 298 bytes queued to send to http://www.myisp.com/~me/depot.cgi/helloworld
+monotone: queueing packets for target http://www.myisp.com/~me/depot.cgi/helloworld
+monotone: [bytes 1566] [packets 6]
 monotone: committed a2f12ab893e7e40feb83e19f4e707ec6a2841601
 @end example
 

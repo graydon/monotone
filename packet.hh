@@ -12,8 +12,9 @@
 
 #include <boost/optional.hpp>
 
-#include "vocab.hh"
 #include "app_state.hh"
+#include "ui.hh"
+#include "vocab.hh"
 
 // the idea here is that monotone can produce and consume "packet streams",
 // where each packet is *informative* rather than transactional. that is to
@@ -63,8 +64,16 @@ struct queueing_packet_writer : public packet_consumer
 {
   app_state & app;
   std::set<url> targets;
+  boost::optional<reverse_queue> rev;
+
+  ticker n_bytes;
+  ticker n_packets;
+  
   queueing_packet_writer(app_state & a, std::set<url> const & t);
   virtual ~queueing_packet_writer() {}
+
+  void queue_blob_for_network(std::string const & str);
+
   virtual void consume_file_data(file_id const & ident, 
 				 file_data const & dat);
   virtual void consume_file_delta(file_id const & id_old, 

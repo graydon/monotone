@@ -836,14 +836,28 @@ bool database::manifest_delta_exists(manifest_id const & new_id,
   return delta_exists(old_id.inner(), new_id.inner(), "manifest_deltas");
 }
 
-void database::get_manifest_delta(manifest_id const & new_id,
-				  manifest_id const & old_id,			
-				  manifest_delta & mdel)
+void database::compute_older_version(manifest_id const & new_id,
+				     manifest_id const & old_id,
+				     data const & m_new,
+				     data & m_old)
 {
   base64< gzip<delta> > del;
   I(delta_exists(old_id.inner(), new_id.inner(), "manifest_deltas"));
   get_delta(old_id.inner(), new_id.inner(), del, "manifest_deltas");
-  mdel = manifest_delta(del);
+  patch(m_new, del, m_old);
+}
+
+void database::compute_older_version(manifest_id const & new_id,
+				     manifest_id const & old_id,
+				     manifest_data const & m_new,
+				     manifest_data & m_old)
+{
+  data old_data, new_data;
+  base64< gzip<data> > old_packed;
+  unpack(m_new.inner(), new_data);
+  compute_older_version(new_id, old_id, new_data, old_data);
+  pack(old_data, old_packed);
+  m_old = manifest_data(old_packed);
 }
 
 void database::put_file(file_id const & id,
@@ -1422,4 +1436,40 @@ transaction_guard::~transaction_guard()
 void transaction_guard::commit()
 {
   committed = true;
+}
+
+
+// reverse queue
+
+static int global_rq_refcount = 0;
+
+reverse_queue::reverse_queue(database & d) : db(d)
+{
+  if (global_rq_refcount == 0)
+    {
+      db.execute("CREATE TEMPORARY TABLE "
+		 "reverse_queue (url not null, content not null)");
+    }
+  ++global_rq_refcount;
+}
+
+void reverse_queue::reverse_queue_posting(url const & u,
+					  std::string const & contents)
+{
+  db.execute("INSERT INTO reverse_queue "
+	     "VALUES ('%q', '%q')",
+	     u().c_str(), contents.c_str());
+}
+
+reverse_queue::~reverse_queue()
+{
+  if (global_rq_refcount == 1)
+    {
+      db.execute("INSERT INTO posting_queue "
+		 "SELECT * FROM reverse_queue "
+		 "ORDER BY OID DESC");
+      
+      db.execute("DROP TABLE reverse_queue");
+    }
+  --global_rq_refcount;
 }

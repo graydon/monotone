@@ -227,8 +227,29 @@ void packet_writer::consume_private_key(rsa_keypair_id const & ident,
 // --- packet writer ---
 
 queueing_packet_writer::queueing_packet_writer(app_state & a, set<url> const & t) :
-  app(a), targets(t)
-{}
+  app(a), targets(t), n_bytes("bytes"), n_packets("packets")
+{
+  for (set<url>::const_iterator targ = targets.begin();
+       targ != targets.end(); ++targ)
+    {
+      P(F("queueing packets for target %s\n") % *targ);
+    }
+}
+
+
+void queueing_packet_writer::queue_blob_for_network(string const & str)
+{
+  ++n_packets;
+  n_bytes += str.size();
+  for (set<url>::const_iterator targ = targets.begin();
+       targ != targets.end(); ++targ)
+    {
+      if (rev)
+	rev->reverse_queue_posting(*targ, str);
+      else
+	app.db.queue_posting(*targ, str);
+    }  
+}
 
 void queueing_packet_writer::consume_file_data(file_id const & ident, 
 					       file_data const & dat)
@@ -236,7 +257,7 @@ void queueing_packet_writer::consume_file_data(file_id const & ident,
   ostringstream oss;
   packet_writer pw(oss);
   pw.consume_file_data(ident, dat);
-  queue_blob_for_network(targets, oss.str(), app);
+  queue_blob_for_network(oss.str());
 }
 
 void queueing_packet_writer::consume_file_delta(file_id const & old_id, 
@@ -246,7 +267,7 @@ void queueing_packet_writer::consume_file_delta(file_id const & old_id,
   ostringstream oss;
   packet_writer pw(oss);
   pw.consume_file_delta(old_id, new_id, del);
-  queue_blob_for_network(targets, oss.str(), app);
+  queue_blob_for_network(oss.str());
 }
 
 void queueing_packet_writer::consume_file_cert(file<cert> const & t)
@@ -254,7 +275,7 @@ void queueing_packet_writer::consume_file_cert(file<cert> const & t)
   ostringstream oss;
   packet_writer pw(oss);
   pw.consume_file_cert(t);
-  queue_blob_for_network(targets, oss.str(), app);
+  queue_blob_for_network(oss.str());
 }
 
 void queueing_packet_writer::consume_manifest_data(manifest_id const & ident, 
@@ -263,7 +284,7 @@ void queueing_packet_writer::consume_manifest_data(manifest_id const & ident,
   ostringstream oss;
   packet_writer pw(oss);
   pw.consume_manifest_data(ident, dat);
-  queue_blob_for_network(targets, oss.str(), app);
+  queue_blob_for_network(oss.str());
 }
 
 void queueing_packet_writer::consume_manifest_delta(manifest_id const & old_id, 
@@ -273,7 +294,7 @@ void queueing_packet_writer::consume_manifest_delta(manifest_id const & old_id,
   ostringstream oss;
   packet_writer pw(oss);
   pw.consume_manifest_delta(old_id, new_id, del);
-  queue_blob_for_network(targets, oss.str(), app);
+  queue_blob_for_network(oss.str());
 }
 
 void queueing_packet_writer::consume_manifest_cert(manifest<cert> const & t)
@@ -281,7 +302,7 @@ void queueing_packet_writer::consume_manifest_cert(manifest<cert> const & t)
   ostringstream oss;
   packet_writer pw(oss);
   pw.consume_manifest_cert(t);
-  queue_blob_for_network(targets, oss.str(), app);
+  queue_blob_for_network(oss.str());
 }
 
 void queueing_packet_writer::consume_public_key(rsa_keypair_id const & ident,
@@ -290,7 +311,7 @@ void queueing_packet_writer::consume_public_key(rsa_keypair_id const & ident,
   ostringstream oss;
   packet_writer pw(oss);
   pw.consume_public_key(ident, k);
-  queue_blob_for_network(targets, oss.str(), app);
+  queue_blob_for_network(oss.str());
 }
 
 void queueing_packet_writer::consume_private_key(rsa_keypair_id const & ident,
@@ -299,7 +320,7 @@ void queueing_packet_writer::consume_private_key(rsa_keypair_id const & ident,
   ostringstream oss;
   packet_writer pw(oss);
   pw.consume_private_key(ident, k);
-  queue_blob_for_network(targets, oss.str(), app);
+  queue_blob_for_network(oss.str());
 }
 
 // -- remainder just deals with the regexes for reading packets off streams

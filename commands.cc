@@ -514,7 +514,10 @@ static void queue_edge_for_target_ancestor (url const & targ,
 				  app))
     {
       // write everything from there to here
+      reverse_queue rq(app.db);
+      qpw.rev.reset(rq);
       write_ancestry_paths(targ_ancestor_id, child_id, app, qpw);
+      qpw.rev.reset();
     }
   else
     {
@@ -2249,7 +2252,10 @@ CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\
 	      patch_set_to_packets(ps, app, qpw);
 	      
 	      // queue everything between here and there
+	      reverse_queue rq(app.db);
+	      qpw.rev.reset(rq);
 	      write_ancestry_paths(*j, *i, app, qpw);
+	      qpw.rev.reset();
 	    }
 	}
       guard.commit();

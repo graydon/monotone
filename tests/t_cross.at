@@ -68,7 +68,7 @@ AT_CHECK(MONOTONE add specific.left, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add specific.alice, [], [ignore], [ignore])
 AT_CHECK(MONOTONE commit alice, [], [ignore], [ignore])
 ALICE_M_SHA=`SHA1(MT/manifest)`
-AT_CHECK(MONOTONE cert manifest $ALICE_M_SHA ancestor $LEFT_M_SHA)
+AT_CHECK(MONOTONE cert manifest $ALICE_M_SHA ancestor $LEFT_M_SHA, [], [ignore], [ignore])
 
 # revert to left
 PROBE_NODE(shared, $LEFT_M_SHA, $LEFT_F_SHA)
@@ -80,7 +80,7 @@ AT_CHECK(MONOTONE add specific.right, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add specific.bob, [], [ignore], [ignore])
 AT_CHECK(MONOTONE commit bob, [], [ignore], [ignore])
 BOB_M_SHA=`SHA1(MT/manifest)`
-AT_CHECK(MONOTONE cert manifest $BOB_M_SHA ancestor $RIGHT_M_SHA)
+AT_CHECK(MONOTONE cert manifest $BOB_M_SHA ancestor $RIGHT_M_SHA, [], [ignore], [ignore])
 
 # now merge the merges. this *should* fail.
 AT_CHECK(MONOTONE --branch=testbranch merge, [1], [ignore], [ignore])

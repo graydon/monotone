@@ -446,15 +446,3 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
   P(F("fetched %d packets\n") % dbw.count);
 }
   
-
-void queue_blob_for_network(set<url> const & targets,
-			    string const & blob,
-			    app_state & app)
-{
-  for (set<url>::const_iterator targ = targets.begin();
-       targ != targets.end(); ++targ)
-    {
-      app.db.queue_posting(*targ, blob);
-      P(F("%d bytes queued to send to %s\n") % blob.size() % *targ);      
-    }
-}

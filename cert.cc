@@ -13,6 +13,8 @@
 #include "transforms.hh"
 #include "ui.hh"
 
+#include <boost/shared_ptr.hpp>
+
 #include <boost/regex.hpp>
 
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -279,85 +281,123 @@ static void get_parents(manifest_id const & child,
 }
 
 
-static bool write_paths_recursive(manifest_id const & ancestor,
-				  manifest_id const & child,
-				  manifest_map const & child_map,
-				  app_state & app,
-				  packet_consumer & pc)
+static bool find_relevant_edges(manifest_id const & ancestor,
+				manifest_id const & child,
+				app_state & app,
+				multimap <manifest_id, manifest_id> & relevant_edges)
 {
-
   if (ancestor == child)
     return true;
-
+  
   set<manifest_id> parents;
   get_parents(child, parents, app);
   if (parents.size() == 0)
     return false;
 
-  L(F("exploring parents of %s, seeking towards %s\n")
-    % child % ancestor);
-
-  bool relevant_child = false;
-
-  data child_dat;
-  write_manifest_map (child_map, child_dat);
+  bool relevant_child = false;    
 
   for(set<manifest_id>::const_iterator i = parents.begin();
       i != parents.end(); ++i)
     {
-      manifest_map parent_map;
-
-      if (app.db.manifest_delta_exists(child, *i))
-	{
-	  manifest_delta del;
-	  data parent_dat;
-	  P(F("Loading incremental reverse delta %s -> %s\n") % child % *i);
-	  app.db.get_manifest_delta(child, *i, del);
-	  patch(child_dat, del.inner(), parent_dat);
-	  read_manifest_map(parent_dat, parent_map);
-	}
-      else
-	{
-	  P(F("Loading full manifest version %s\n") % *i);
-	  manifest_data parent_dat;
-	  app.db.get_manifest_version(*i, parent_dat);
-	  read_manifest_map(parent_dat, parent_map);
-	}
-
-      if (write_paths_recursive(ancestor, *i, parent_map, app, pc))
+      if (find_relevant_edges(ancestor, *i, app, relevant_edges))
 	{	  
 	  relevant_child = true;
-	  patch_set ps;	  
-	  L(F("edge %s -> %s is relevant, writing to consumer\n") % (*i) % child);
-	  manifests_to_patch_set(parent_map, child_map, app, ps);
-	  patch_set_to_packets(ps, app, pc);
+	  relevant_edges.insert(make_pair(child, *i));
 	}
-    }
-
-  if (relevant_child)
-    {
-      // if relevant, queue all certs on this child
-      vector< manifest<cert> > certs;
-      app.db.get_manifest_certs(child, certs);
-      for(vector< manifest<cert> >::const_iterator j = certs.begin();
-	  j != certs.end(); ++j)
-	pc.consume_manifest_cert(*j);	  
-    }
+    }  
 
   return relevant_child;
 }
 
+
 void write_ancestry_paths(manifest_id const & ancestor,
-			  manifest_id const & child,
+			  manifest_id const & begin,
 			  app_state & app,
 			  packet_consumer & pc)
 {
-  manifest_map begin;
-  manifest_data begin_data;
-  app.db.get_manifest_version (child, begin_data);
-  read_manifest_map (begin_data, begin);
-  N(write_paths_recursive(ancestor, child, begin, app, pc), 
-    F("no path found between ancestor %s and child %s") % ancestor % child);
+
+  typedef multimap < manifest_id, manifest_id > emap;
+  typedef pair< shared_ptr<data>, shared_ptr<manifest_map> > frontier_entry;
+  typedef map<manifest_id, frontier_entry> fmap;
+
+  shared_ptr<fmap> frontier(new fmap());
+  shared_ptr<fmap> next_frontier(new fmap());
+  emap relevant_edges;
+
+  find_relevant_edges(ancestor, begin, app, relevant_edges);
+
+  shared_ptr<data> begin_data(new data());
+  shared_ptr<manifest_map> begin_map(new manifest_map());
+  {
+    manifest_data mdat;
+    app.db.get_manifest_version(begin, mdat);
+    unpack(mdat.inner(), *begin_data);
+  }
+  read_manifest_map(*begin_data, *begin_map);
+
+  P(F("writing %d historical edges\n") % relevant_edges.size());
+  ticker n_edges("edges");
+
+  frontier->insert(make_pair(begin, make_pair(begin_data, begin_map)));
+
+  while (!frontier->empty())
+    {
+      for (fmap::const_iterator child = frontier->begin();
+	   child != frontier->end(); ++child)
+	{
+	  manifest_id child_id = child->first;
+
+	  pair<emap::const_iterator, emap::const_iterator> range;
+	  shared_ptr<data> child_data = child->second.first;
+	  shared_ptr<manifest_map> child_map = child->second.second;
+
+	  range = relevant_edges.equal_range(child_id);
+
+	  for (emap::const_iterator edge = range.first; 
+	       edge != range.second; ++edge)
+	    {
+	      manifest_id parent_id = edge->second;
+
+	      L(F("queueing edge %s -> %s\n") % parent_id % child_id);
+
+	      // queue all the certs for this parent
+	      vector< manifest<cert> > certs;
+	      app.db.get_manifest_certs(parent_id, certs);
+	      for(vector< manifest<cert> >::const_iterator cert = certs.begin();
+		  cert != certs.end(); ++cert)
+		pc.consume_manifest_cert(*cert);
+
+	      // construct the parent
+	      shared_ptr<data> parent_data(new data());
+	      shared_ptr<manifest_map> parent_map(new manifest_map());
+
+	      if (app.db.manifest_delta_exists(child_id, parent_id))
+		app.db.compute_older_version(child_id, parent_id,
+					     *child_data, *parent_data);
+	      else
+		{
+		  manifest_data mdata;
+		  app.db.get_manifest_version(parent_id, mdata);
+		  unpack(mdata.inner(), *parent_data);
+		}
+	      
+	      ++n_edges;
+
+	      read_manifest_map(*parent_data, *parent_map);
+
+	      // queue the delta to the parent
+	      patch_set ps;	  
+	      manifests_to_patch_set(*parent_map, *child_map, app, ps);
+	      patch_set_to_packets(ps, app, pc);
+
+	      // store the parent for the next cycle
+	      next_frontier->insert
+		(make_pair(parent_id, make_pair(parent_data, parent_map)));	      
+	    }
+	}
+      swap(frontier, next_frontier);
+      next_frontier->clear();
+    }
 }
 
 // nb: "heads" only makes sense in the context of manifests (at the

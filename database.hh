@@ -58,6 +58,7 @@ struct cert;
 // the program. I don't know if there's any way to make it clearer.
 
 class transaction_guard;
+class reverse_queue;
 struct posting;
 
 class database
@@ -148,6 +149,7 @@ class database
   void commit_transaction();
   void rollback_transaction();
   friend class transaction_guard;
+  friend class reverse_queue;
   friend void rcs_put_raw_file_edge(hexenc<id> const & old_id,
 				    hexenc<id> const & new_id,
 				    base64< gzip<delta> > const & del,
@@ -204,14 +206,21 @@ public:
 			    manifest_delta const & del);
 
 
-  // only use these two variants if you really know what you're doing,
-  // wrt. "old" and "new".
+  // only use these three variants if you really know what you're doing,
+  // wrt. "old" and "new". they will throw if you do something wrong.
+
   bool manifest_delta_exists(manifest_id const & new_id,
 			     manifest_id const & old_id);
 
-  void get_manifest_delta(manifest_id const & new_id,
-			  manifest_id const & old_id,
-			  manifest_delta & dat);
+  void compute_older_version(manifest_id const & new_id,
+			     manifest_id const & old_id,
+			     data const & m_new,
+			     data & m_old);
+
+  void compute_older_version(manifest_id const & new_id,
+			     manifest_id const & old_id,
+			     manifest_data const & m_new,
+			     manifest_data & m_old);
   
 
   // crypto key / cert operations
@@ -346,5 +355,20 @@ public:
   ~transaction_guard();
   void commit();
 };
+
+// a reverse_queue is an object which creates a temporary table for
+// postings, and then queues the postings (in reverse) to its database when
+// it is destroyed, and deletes the table.
+
+class reverse_queue
+{
+  database & db;
+public:
+  reverse_queue(database & d);
+  void reverse_queue_posting(url const & u,
+			     std::string const & contents);
+  ~reverse_queue();
+};
+
 
 #endif // __DATABASE_HH__
