@@ -1,5 +1,13 @@
 2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
 
+	* lua.cc (monotone_spawn_for_lua): Minimal change to get arguments
+	in right order.  Still needs hygienic cleanups...
+	* tests/t_can_execute.at: Run 'cp' instead of 'touch', because cp
+	will actually notice if we pass arguments out of order.
+	* testsuite.at: Remove mysterious blank line.
+	
+2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
+
 	* unix/process.cc (process_spawn): Log command line before
 	executing.
 

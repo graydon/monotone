@@ -113,7 +113,7 @@ extern "C"
     if (argv==NULL)
       return 0;
     argv[0] = (char*)path;
-    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(i));
+    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(n - i));
     argv[i] = NULL;
     ret = process_spawn(argv);
     free(argv);
