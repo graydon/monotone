@@ -98,5 +98,11 @@ AT_CHECK(MONOTONE revert sub/, [], [ignore], [ignore])
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep sub stdout, [1], [ignore])
 
+# check reverting a missing file
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(rm testfile0)
+AT_CHECK(MONOTONE status, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE revert testfile0, [], [stdout])
+AT_CHECK(MONOTONE status, [], [ignore], [ignore])
 
 AT_CLEANUP

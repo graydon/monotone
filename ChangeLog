@@ -1,3 +1,9 @@
+2004-10-22  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_rename.at: add test for renaming a file after it has
+	been moved rather than before
+	* tests/t_revert.at: add test for reverting a missing file
+
 2004-10-19  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_drop_missing.at: New test.
