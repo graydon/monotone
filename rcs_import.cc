@@ -1216,10 +1216,10 @@ import_states_recursive(ticker & n_edges,
         continue;
 
       revision_set rev;
-      change_set cs;
-      build_change_set(i->second, parent_map, cvs, cs);
+      boost::shared_ptr<change_set> cs(new change_set());
+      build_change_set(i->second, parent_map, cvs, *cs);
 
-      apply_change_set(cs, child_map);
+      apply_change_set(*cs, child_map);
       calculate_ident(child_map, child_mid);
 
       rev.new_manifest = child_mid;
@@ -1238,7 +1238,7 @@ import_states_recursive(ticker & n_edges,
                                 cvs, app, revisions, depth+1);
 
       // now apply same change set to parent_map, making parent_map == child_map
-      apply_change_set(cs, parent_map);
+      apply_change_set(*cs, parent_map);
       parent_mid = child_mid;
       parent_rid = child_rid;
       ++n_edges;

@@ -20,32 +20,6 @@
 // revision_set. every revision_set contains a number of change_sets, so
 // their i/o routines are somewhat related.
 
-basic_io::input_source::input_source(std::istream & i, std::string const & nm)
-  : line(1), col(1), in(i), name(nm), lookahead(0), c('\0')
-{    
-}
-
-void basic_io::input_source::peek()
-{
-  lookahead = in.peek();    
-}
-
-void basic_io::input_source::eat()
-{
-  in.get(c);
-  ++col;
-  if (c == '\n')
-    {
-      col = 1;
-      ++line;
-    }
-}
-
-void basic_io::input_source::advance()
-{
-  eat();
-  peek();
-}
 
 void basic_io::input_source::err(std::string const & s)
 {
@@ -54,91 +28,6 @@ void basic_io::input_source::err(std::string const & s)
 			     % name % line % col % s).str());
 }
 
-
-basic_io::tokenizer::tokenizer(input_source & i) 
-  : in(i)
-{
-}
-
-basic_io::token_type
-basic_io::tokenizer::get_token(std::string & val)
-{
-  val.clear();
-  in.peek();
-  
-  while (true)
-    {
-      if (in.lookahead == EOF)
-	return TOK_NONE;
-      if (!std::isspace(in.lookahead))
-	break;
-      in.advance();
-    }
-  
-  switch (in.lookahead)
-    {
-
-    case '"':
-      {
-	in.advance();
-	while (static_cast<char>(in.lookahead) != '"')
-	  {
-	    if (in.lookahead == EOF)
-	      in.err("input stream ended in string");
-	    if (static_cast<char>(in.lookahead) == '\\')
-	      {
-		// possible escape: we understand escaped quotes
-		// and escaped backslashes. nothing else.
-		in.advance();
-		if (!(static_cast<char>(in.lookahead) == '"' 
-		      || static_cast<char>(in.lookahead) == '\\'))
-		  {
-		    in.err("unrecognized character escape");
-		  }
-	      }
-	    in.advance();
-	    val += in.c;
-	  }
-
-	if (static_cast<char>(in.lookahead) != '"')
-	  in.err("string did not end with '\"'");
-	in.eat();
-	
-	return basic_io::TOK_STRING;
-      }
-
-    case '[':
-      {
-	in.advance();
-	while (static_cast<char>(in.lookahead) != ']')
-	  {
-	    if (in.lookahead == EOF)
-	      in.err("input stream ended in hex string");
-	    if (!std::isxdigit(in.lookahead))
-	      in.err("non-hex character in hex string");
-	    in.advance();
-	    val += in.c;
-	  }
-
-	if (static_cast<char>(in.lookahead) != ']')
-	  in.err("hex string did not end with ']'");
-	in.eat();
-	
-	return basic_io::TOK_HEX;	
-      }
-    default:
-      if (std::isalpha(in.lookahead))
-	{
-	  while (std::isalnum(in.lookahead) || in.lookahead == '_')
-	    {
-	      in.advance();
-	      val += in.c;
-	    }
-	  return basic_io::TOK_SYMBOL;
-	}
-    }
-  return basic_io::TOK_NONE;
-}
 
 void basic_io::tokenizer::err(std::string const & s)
 {
@@ -211,18 +100,6 @@ void basic_io::printer::print_stanza(stanza const & st)
     }
 }
 
-
-basic_io::parser::parser(tokenizer & t) 
-  : tok(t) 
-{
-  advance();
-}
-
-void basic_io::parser::advance()
-{
-  ttype = tok.get_token(token);
-}
-
 void basic_io::parser::err(std::string const & s)
 {
   tok.err(s);
@@ -244,41 +121,4 @@ std::string basic_io::parser::tt2str(token_type tt)
   return "TOK_UNKNOWN";
 }
 
-void basic_io::parser::eat(token_type want)
-{
-  if (ttype != want)
-    err("wanted " 
-	+ tt2str(want)
-	+ ", got "
-	+ tt2str(ttype)
-	+ (token.empty() 
-	   ? std::string("") 
-	   : (std::string(" with value ") + token)));
-  advance();
-}
-
-void basic_io::parser::str() { eat(basic_io::TOK_STRING); }
-void basic_io::parser::sym() { eat(basic_io::TOK_SYMBOL); }
-void basic_io::parser::hex() { eat(basic_io::TOK_HEX); }
-
-void basic_io::parser::str(std::string & v) { v = token; str(); }
-void basic_io::parser::sym(std::string & v) { v = token; sym(); }
-void basic_io::parser::hex(std::string & v) { v = token; hex(); }
-bool basic_io::parser::symp() { return ttype == basic_io::TOK_SYMBOL; }
-bool basic_io::parser::symp(std::string const & val)
-{
-  return ttype == basic_io::TOK_SYMBOL && token == val;
-}
-void basic_io::parser::esym(std::string const & val)
-{
-  if (!(ttype == basic_io::TOK_SYMBOL && token == val))
-    err("wanted symbol '" 
-	+ val +
-	+ "', got "
-	+ tt2str(ttype)
-	+ (token.empty() 
-	   ? std::string("") 
-	   : (std::string(" with value ") + token)));
-  advance();
-}
 
