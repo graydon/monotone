@@ -106,8 +106,10 @@ cvs_file_edge
 		 cvs_history & cvs);
   cvs_version parent_version;
   cvs_path parent_path;
+  bool parent_live_p;
   cvs_version child_version;
   cvs_path child_path;
+  bool child_live_p;
   inline bool operator<(cvs_file_edge const & other) const
   {
     return (parent_path < other.parent_path) ||
@@ -569,8 +571,10 @@ cvs_file_edge::cvs_file_edge (file_id const & pv, file_path const & pp,
 			      cvs_history & cvs) :
   parent_version(cvs.file_version_interner.intern(pv.inner()())), 
   parent_path(cvs.path_interner.intern(pp())),
+  parent_live_p(true),
   child_version(cvs.file_version_interner.intern(cv.inner()())), 
-  child_path(cvs.path_interner.intern(cp()))
+  child_path(cvs.path_interner.intern(cp())),
+  child_live_p(true)
 {
 }
 
@@ -678,6 +682,11 @@ cvs_history::set_filename(string const & file,
   string ss = file;
   ui.set_tick_trailer(ss);
   ss.resize(ss.size() - 2);
+  // remove Attic/ if present
+  std::string::size_type last_slash=ss.rfind('/');
+  if (last_slash!=std::string::npos && last_slash>=5
+  	&& ss.substr(last_slash-5,6)=="Attic/")
+     ss.erase(last_slash-5,6);
   curr_file = file_path(ss);
 }
 
