@@ -70,8 +70,8 @@ void read_hello_cmd_payload(std::string const & in,
                             rsa_keypair_id & server_keyname,
                             rsa_pub_key & server_key,
                             id & nonce);
-void write_hello_cmd_payload(std::string const & server_keyname,
-                             std::string const & server_key,
+void write_hello_cmd_payload(rsa_keypair_id const & server_keyname,
+                             rsa_pub_key const & server_key,
                              id const & nonce, 
                              std::string & out);
 

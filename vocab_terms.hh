@@ -76,6 +76,7 @@ EXTERN template class base64< rsa_sha1_signature >;
 EXTERN template class hexenc< rsa_sha1_signature >;
 EXTERN template class base64< cert_value >;
 
+EXTERN template class base64< var_name >;
 EXTERN template class base64< var_value >;
 
 EXTERN template class hexenc<prefix>;

@@ -4859,18 +4859,16 @@ form conversion, as well as having all UTF-8 codes corresponding to
 ASCII control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in
 the normal form, except @code{0x0A} (ASCII LF).
 
-@heading Var names
+@heading Var domains
 
-Read on the command line and subject to normal form conversion and
-IDNA encoding as a single component. The invariant is that a cert name
+Read on the command line and subject to normal form conversion and IDNA
+encoding as a single component. The invariant is that a var domain
 inside monotone is a single LDH ASCII string.
 
-@heading Var values
+@heading Var names and values
 
-Var values are assumed to be text, and subject to normal form
-conversion, as well as having all UTF-8 codes corresponding to ASCII
-control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in the
-normal form, except @code{0x0A} (ASCII LF).
+Var names and values are assumed to be text, and subject to normal form
+conversion.
 
 @heading Key names
 

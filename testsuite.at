@@ -342,12 +342,12 @@ NETSYNC_KILL
 sleep 1
 NETSYNC_KILLHARD
 ])
-# run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name)
+# run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name[, expected result])
 # first argument chooses whether to use the 2nd or 3rd database
 m4_define([NETSYNC_CLIENT_N_RUN], [
 AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 127.0.0.1:5555 $3, [$4], [ignore], [ignore])
 ])
-# run as NETSYNC_CLIENT_RUN(push|pull|sync, collection name)
+# run as NETSYNC_CLIENT_RUN(push|pull|sync, collection name[, expected result])
 m4_define([NETSYNC_CLIENT_RUN], [
 NETSYNC_CLIENT_N_RUN(2, $1, $2, $3)
 ])
@@ -507,3 +507,4 @@ m4_include(tests/t_vars.at)
 m4_include(tests/t_netsync_defaults.at)
 m4_include(tests/t_netsync_set_defaults.at)
 m4_include(tests/t_netsync_absorbs.at)
+m4_include(tests/t_netsync_checks_server_key.at)

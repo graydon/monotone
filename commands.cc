@@ -1929,8 +1929,7 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
         continue;
       external ext_domain, ext_name;
       externalize_var_domain(i->first.first, ext_domain);
-      externalize_var_name(i->first.second, ext_name);
-      cout << ext_domain << ": " << ext_name << " " << i->second << endl;
+      cout << ext_domain << ": " << i->first.second << " " << i->second << endl;
     }
 }
 
@@ -3752,7 +3751,7 @@ CMD(set, "vars", "DOMAIN NAME VALUE",
   var_name n;
   var_value v;
   internalize_var_domain(idx(args, 0), d);
-  internalize_var_name(idx(args, 1), n);
+  n = var_name(idx(args, 1)());
   v = var_value(idx(args, 2)());
   app.db.set_var(std::make_pair(d, n), v);
 }
@@ -3766,8 +3765,10 @@ CMD(unset, "vars", "DOMAIN NAME",
   var_domain d;
   var_name n;
   internalize_var_domain(idx(args, 0), d);
-  internalize_var_name(idx(args, 1), n);
-  app.db.clear_var(std::make_pair(d, n));
+  n = var_name(idx(args, 1)());
+  var_key k(d, n);
+  N(app.db.var_exists(k), F("no var with name %s in domain %s") % n % d);
+  app.db.clear_var(k);
 }
 
 }; // namespace commands

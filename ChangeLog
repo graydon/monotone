@@ -1,5 +1,30 @@
 2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
 
+	* vocab_terms.hh: Declare base64<var_name>.
+	* database.cc (clear_var, set_var, get_vars): base64-encode
+	var_names in the database.
+	* monotone.texi (Internationalization): Update description of
+	vars.
+	* transforms.{cc,hh} ({in,ex}ternalize_var_name): Remove.
+	* commands.cc (set, unset, ls_vars): Update accordingly.
+	(unset): Error out if the variable doesn't exist.
+	* tests/t_vars.at: Verify this works.
+
+	* netcmd.cc (test_netcmd_functions): Properly type arguments to
+	{read,write}_hello_cmd_payload.
+	(write_hello_cmd_payload): Properly type arguments.
+	* netcmd.hh (write_hello_cmd_payload):
+	* netsync.cc (queue_hello_cmd): Adjust accordingly.
+	(process_hello_cmd): More cleaning.  Also, save new server keys to
+	a var, and check old server keys against the var.
+	
+	* tests/t_netsync_checks_server_key.at: New test.
+	* testsuite.at: Add it.  Better docs for some netsync macros,
+	while I'm here...
+	* tests/t_netsync_absorbs.at: Add 'netsync' keyword.
+	
+2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_netsync_absorbs.at: New test.
 	* testsuite.at: Add it.
 

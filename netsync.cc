@@ -1145,7 +1145,7 @@ session::queue_hello_cmd(id const & server,
 
   app.db.get_pubkey(server_encoded, key_name, pub_encoded);
   decode_base64(pub_encoded, pub);
-  write_hello_cmd_payload(key_name(), pub(), nonce, cmd.payload);
+  write_hello_cmd_payload(key_name, pub, nonce, cmd.payload);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1416,25 +1416,48 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
 static const var_domain known_servers_domain = var_domain("known-servers");
 
 bool 
-session::process_hello_cmd(rsa_keypair_id const & server_keyname,
-                           rsa_pub_key const & server_key,
+session::process_hello_cmd(rsa_keypair_id const & their_keyname,
+                           rsa_pub_key const & their_key,
                            id const & nonce) 
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == 0);
   
-  id their_key_hash_decoded;
   hexenc<id> their_key_hash;
-  base64<rsa_pub_key> server_key_encoded;
-  encode_base64(server_key, server_key_encoded);
-  key_hash_code(server_keyname, server_key_encoded, their_key_hash);
+  base64<rsa_pub_key> their_key_encoded;
+  encode_base64(their_key, their_key_encoded);
+  key_hash_code(their_keyname, their_key_encoded, their_key_hash);
+  L(F("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
+  var_key their_key_key(known_servers_domain, var_name(peer_id));
+  if (app.db.var_exists(their_key_key))
+    {
+      var_value expected_key_hash;
+      app.db.get_var(their_key_key, expected_key_hash);
+      if (expected_key_hash() != their_key_hash())
+        {
+          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"));
+          P(F("@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"));
+          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"));
+          P(F("IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"));
+          P(F("it is also possible that the server key has just been changed\n"));
+          P(F("remote host sent key %s\n") % their_key_hash);
+          P(F("I expected %s\n") % expected_key_hash);
+          P(F("'monotone unset %s %s' overrides this check\n")
+            % their_key_key.first % their_key_key.second);
+          N(false, F("server key changed"));
+        }
+    }
+  else
+    {
+      W(F("first time connecting to server %s; authenticity can't be established\n") % peer_id);
+      W(F("their key is %s\n") % their_key_hash);
+      app.db.set_var(their_key_key, var_value(their_key_hash()));
+    }
   if (!app.db.public_key_exists(their_key_hash))
     {
-      W(F("inserting public %s key for %s into database\n") 
-        % their_key_hash % server_keyname);
-      app.db.put_key(server_keyname, server_key_encoded);
+      W(F("saving public key for %s to database\n") % their_keyname);
+      app.db.put_key(their_keyname, their_key_encoded);
     }
-  decode_hexenc(their_key_hash, their_key_hash_decoded);
 
   hexenc<id> hnonce;
   encode_hexenc(nonce, hnonce);
@@ -1445,7 +1468,11 @@ session::process_hello_cmd(rsa_keypair_id const & server_keyname,
   I(app.db.public_key_exists(their_key_hash));
   
   // save their identity 
-  this->remote_peer_key_hash = their_key_hash_decoded;
+  {
+    id their_key_hash_decoded;
+    decode_hexenc(their_key_hash, their_key_hash_decoded);
+    this->remote_peer_key_hash = their_key_hash_decoded;
+  }
       
   if (app.signing_key() != "")
     {
