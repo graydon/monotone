@@ -1395,8 +1395,13 @@ cert_manifest_author_default(manifest_id const & m,
 			     packet_consumer & pc)
 {
   string author;
-  N(app.lua.hook_get_author(app.branch_name(), author),
-    F("no default author name for branch '%s'") % app.branch_name);
+  if (!app.lua.hook_get_author(app.branch_name(), author))
+    {
+      rsa_keypair_id key;
+      N(guess_default_key(key, app),
+	F("no default author name for branch '%s'") % app.branch_name);
+      author = key();
+    }
   put_simple_manifest_cert(m, author_cert_name, author, app, pc);
 }
 
