@@ -1,3 +1,8 @@
+2003-10-25  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (log): Skip looking inside nonexistent
+	manifests for file comments.
+
 2003-10-24  graydon hoare  <graydon@pobox.com>
 
 	* adns/*.c, adns/*.h: Import adns library.

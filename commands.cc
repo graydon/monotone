@@ -1897,44 +1897,45 @@ CMD(log, "informative", "[ID]", "print log history in reverse order")
 	    }
 
 	  // pull any file-specific comments
-	  {
-	    manifest_data mdata;
-	    manifest_map mtmp;
-	    app.db.get_manifest_version(*i, mdata);
-	    read_manifest_map(mdata, mtmp);
-	    bool wrote_headline = false;
-	    for (manifest_map::const_iterator mi = mtmp.begin();
-		 mi != mtmp.end(); ++mi)
-	      {
-		path_id_pair pip(mi);
-		if (no_comments.find(pip.ident()) != no_comments.end())
-		  continue;
-
-		vector< file<cert> > ftmp;
-		app.db.get_file_certs(pip.ident(), comment_name, ftmp);
-		erase_bogus_certs(ftmp, app);
-		if (!ftmp.empty())
-		  {
-		    if (!wrote_headline)
-		      {
-			cout << "File Comments:" << endl << endl;
-			wrote_headline = true;
-		      }
-
-		    cout << "  " << pip.path() << endl;
-		    for (vector< file<cert> >::const_iterator j = ftmp.begin();
-			 j != ftmp.end(); ++j)
-		      {
-			cert_value tv;
-			decode_base64(j->inner().value, tv);
-			cout << "    " << j->inner().key << ": " << tv << endl;
-		      }	  
-		  }
-		else
-		  no_comments.insert(pip.ident());
-	      }
-	    if (wrote_headline)
-	      cout << endl;
+	  if (app.db.manifest_version_exists(*i))
+	    {
+	      manifest_data mdata;
+	      manifest_map mtmp;
+	      app.db.get_manifest_version(*i, mdata);
+	      read_manifest_map(mdata, mtmp);
+	      bool wrote_headline = false;
+	      for (manifest_map::const_iterator mi = mtmp.begin();
+		   mi != mtmp.end(); ++mi)
+		{
+		  path_id_pair pip(mi);
+		  if (no_comments.find(pip.ident()) != no_comments.end())
+		    continue;
+		  
+		  vector< file<cert> > ftmp;
+		  app.db.get_file_certs(pip.ident(), comment_name, ftmp);
+		  erase_bogus_certs(ftmp, app);
+		  if (!ftmp.empty())
+		    {
+		      if (!wrote_headline)
+			{
+			  cout << "File Comments:" << endl << endl;
+			  wrote_headline = true;
+			}
+		      
+		      cout << "  " << pip.path() << endl;
+		      for (vector< file<cert> >::const_iterator j = ftmp.begin();
+			   j != ftmp.end(); ++j)
+			{
+			  cert_value tv;
+			  decode_base64(j->inner().value, tv);
+			  cout << "    " << j->inner().key << ": " << tv << endl;
+			}	  
+		    }
+		  else
+		    no_comments.insert(pip.ident());
+		}
+	      if (wrote_headline)
+		cout << endl;
 	    }
 	  
 	  app.db.get_manifest_certs(*i, ancestor_name, tmp);
