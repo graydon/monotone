@@ -64,14 +64,14 @@ fi
 AC_CHECK_FUNC([pthread_mutex_lock], [],
 # But if there isn't even a stub, find the real threading library...
               [ACX_PTHREAD(
-# ...if it doesn't exist, oh well.
-                           [],
-# ...but if it does, use it.
+# ...and if it exists, use it:
                            [LIBS="$PTHREAD_LIBS $LIBS"
-                            CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS"])])
+                            CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS"],
+# ...but if it doesn't, oh well, maybe things will work out anyway:
+                           [])])
 # This is technically incorrect if Boost is for some reason compiled
-# without threads on a system that does provide threads.  But oh
-# well.
+# without threads on a system that does provide threads; we'll end up
+# compiling monotone with thread support for no reason.
 
 # Now check for Boost libraries proper.
 

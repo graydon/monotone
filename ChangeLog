@@ -1,3 +1,8 @@
+2004-01-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* configure.ac: Switch "if" and "else" branches in pthreads
+	checks.
+
 2004-01-12  Nathaniel Smith  <njs@codesourcery.com>
 
 	* configure.ac: Remove check for -lpthread.
