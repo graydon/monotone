@@ -1,5 +1,9 @@
 2004-05-09  graydon hoare  <graydon@pobox.com>
 
+	* commands.cc (ls_missing): Modify to account for work.
+
+2004-05-09  graydon hoare  <graydon@pobox.com>
+
 	* commands.cc (list missing): New command.
 	* monotone.texi, monotone.1: Update to document.
 

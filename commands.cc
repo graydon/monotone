@@ -2207,13 +2207,19 @@ ls_unknown (app_state & app, bool want_ignored)
 static void
 ls_missing (app_state & app)
 {
-  manifest_map m;
-  get_manifest_map(m);
-  for (manifest_map::const_iterator i = m.begin(); i != m.end(); ++i)
+  manifest_map m_old;
+  path_set paths;
+  work_set work;
+
+  get_manifest_map(m_old);
+  extract_path_set(m_old, paths);
+  get_work_set(work);
+  apply_work_set(work, paths);
+
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      path_id_pair pip(i);
-      if (!file_exists(pip.path()))	
-	cout << pip.path() << endl;
+      if (!file_exists(*i))	
+	cout << *i << endl;
     }
 }
 
