@@ -298,7 +298,7 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h
-BUILT_SOURCE_NOCLEAN = package_revision.txt package_revision.h \
+BUILT_SOURCES_NOCLEAN = package_revision.txt package_revision.h \
 		       package_full_revision.txt package_full_revision.h
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
 CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)

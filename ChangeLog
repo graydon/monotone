@@ -1,3 +1,19 @@
+2004-12-09  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (BUILT_SOURCES_NOCLEAN): add 'S'.
+	
+	* netsync.cc (session): Make ticker pointers into auto_ptr's.  Add
+	cert and revision tickers.
+	(session::session): Initialize new tickers.
+	(session::note_item_sent): New method.  Increment tickers.
+	(session::note_item_arrived): Increment tickers.
+	(session::read_some): Adjust for auto_ptr.
+	(session::write_some): Likewise.
+	(call_server): Conditionally initialize cert and revision
+	tickers.
+	(queue_data_cmd): Call 'note_item_sent'.
+	(queue_delta_cmd): Call 'note_item_sent'.
+
 2004-12-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_patch_vs_drop_add.at: 
