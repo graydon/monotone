@@ -1,3 +1,13 @@
+2004-12-04  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (fcommit): New command.
+	(update): Finish off merge of update command.
+
+2004-12-04  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: (complete_command): New function.
+	(explain_usage/process): Use it.
+ 
 2004-12-01  graydon hoare  <graydon@pobox.com>
 
 	* {unix,win32}/get_system_flavour.cc: New files.

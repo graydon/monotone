@@ -578,12 +578,12 @@ session::analyze_attachment(revision_id const & i,
                             map<revision_id, bool> & attached)
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
-
+  
   if (visited.find(i) != visited.end())
     return;
-
+  
   visited.insert(i);
-
+  
   bool curr_attached = false;
 
   if (app.db.revision_exists(i))
@@ -607,6 +607,7 @@ session::analyze_attachment(revision_id const & i,
                   L(F("revision %s is attached via parent %s\n") % i % edge_old_revision(k));
                   curr_attached = true;
                 }
+	    }
         }
     }
   L(F("decided that revision %s %s attached\n") % i % (curr_attached ? "is" : "is not"));
