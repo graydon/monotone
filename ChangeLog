@@ -1,5 +1,10 @@
 2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_migrate_schema.at: Switch to using pre-dumped db's, make
+	it work, un-XFAIL it.
+
+2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_persistent_server_keys_2.at: XFAIL it, add commentary on
 	solution.
 	
