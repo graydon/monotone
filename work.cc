@@ -288,7 +288,7 @@ add_to_work_set
 {    
   work_set & work;
   explicit add_to_work_set(work_set & w) : work(w) {}
-  bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
+  bool operator()(match_results<std::string::const_iterator> const & res) 
   {
     std::string action(res[1].first, res[1].second);
     I(res.size() == 3 || res.size() == 4);
@@ -411,7 +411,7 @@ add_to_options_map
 {
   options_map & options;
   explicit add_to_options_map(options_map & m): options(m) {}
-  bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
+  bool operator()(match_results<std::string::const_iterator> const & res) 
   {
     utf8 value;
     std::string key(res[1].first, res[1].second);
@@ -455,7 +455,7 @@ add_to_attr_map
 {
   attr_map & attr;
   explicit add_to_attr_map(attr_map & m): attr(m) {}
-  bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
+  bool operator()(match_results<std::string::const_iterator> const & res) 
   {
     std::string key(res[1].first, res[1].second);
     std::string value(res[2].first, res[2].second);

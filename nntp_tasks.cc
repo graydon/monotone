@@ -197,5 +197,5 @@ fetch_nntp_articles(string const & group_name,
 
   // run it
   run_proto_state_machine(&mode_reader, stream);  
-  P("nntp fetch complete\n");
+  P(F("nntp fetch complete\n"));
 }

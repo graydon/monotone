@@ -1776,8 +1776,60 @@ and 0.10. The old system is depricated and will be removed. The
 documentation for the old system has already been removed. Please
 familiarize yourself with the new system.
 
+Monotone's networking protocol is called 'netsync'. It is a pipelined,
+bidirectional protocol which synchronizes monotone databases over a
+TCP connection. Monotone can behave as either a client or server for
+netsync. No additional server software is required.
 
+@subsection Setting up the server
 
+To illustrate netsync's use, we consider the branch containing
+monotone development itself: @code{net.venge.monotone}. Suppose we
+wish to serve this branch via the netsync protocol, on a host called
+@code{off.net}. We begin by initializing a database, say
+@code{server.db}, generating a public and private keypair, and storing
+the resulting public key packet in a text file:
+
+@example
+$ monotone --db=server.db db init
+$ monotone --db=server.db genkey monotone@@off.net
+enter passphrase for key ID [monotone@@off.net] : @i{<enter passphrase here>}
+monotone: generating key-pair 'monotone@@off.net'
+monotone: storing key-pair 'monotone@@off.net' in database
+$ monotone --db=server.db pubkey montone@@off.net >server-key.txt
+@end example
+
+Now that the database is initialized, we can start monotone running as a 
+server using the @code{serve} command:
+
+@example
+$ monotone --db=server.db serve off.net net.venge.monotone
+@end example
+
+Monotone will continue to serve incoming netsync requests until it is
+terminated, for example with a @code{CTRL-C} interrupt from the
+operator's keyboard. If you want to run a monotone server permanently,
+it is a good idea to run it under a supervision program such as
+@uref{http://cr.yp.to/daemontools.html, daemontools}. 
+
+@subsection Connecting from a client
+
+In order to connect to a monotone server, a client needs to know the
+server's public key. This involves reading the key packet generated
+in the previous step.
+
+@example
+$ monotone --db=client.db read <server-key.txt
+@end example
+
+Netsync clients can then pull, push, or sync with a given server. Sync
+simply means ``push and pull'', but it is performed in a single
+connection. The server may accept or refuse connections depending on
+configuration. 
+
+@example 
+ $ monotone --db=client.db pull off.net net.venge.monotone
+@end example
 
 @node    Special Topics
 @chapter Special Topics

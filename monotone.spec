@@ -23,7 +23,8 @@ functions to client-side RSA certificates.
 ./configure --prefix=$RPM_BUILD_ROOT/usr \
             --infodir=$RPM_BUILD_ROOT%{_infodir} \
             --mandir=$RPM_BUILD_ROOT%{_mandir} \
-	    CFLAGS=-O2 CXXFLAGS=-O2
+	    CFLAGS='-O2 -msse2 -fno-strict-aliasing' \
+	    CXXFLAGS='-O2 -msse2 -fno-strict-aliasing'
 make
 
 %install

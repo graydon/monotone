@@ -13,6 +13,10 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 
+#if (BOOST_VERSION / 100 % 1000) > 30
+#include <boost/iterator/transform_iterator.hpp>
+#endif
+
 #include "proto_machine.hh"
 #include "sanity.hh"
 
@@ -56,8 +60,15 @@ struct builder {
 };
 
 typedef vector<string>::const_iterator lines_iter;
+
+#if (BOOST_VERSION / 100 % 1000) > 30
+typedef boost::transform_iterator<dot_escape, lines_iter> dot_escaper;
+typedef boost::transform_iterator<dot_unescape, lines_iter> dot_unescaper;
+#else
 typedef boost::transform_iterator_generator <dot_escape, lines_iter>::type dot_escaper;
 typedef boost::transform_iterator_generator <dot_unescape, lines_iter>::type dot_unescaper;
+#endif
+
 
 template <typename XFM, typename IN, typename OUT_ITER>
 void 

@@ -406,7 +406,7 @@ complete(app_state & app,
       for (typename set<ID>::const_iterator i = completions.begin();
 	   i != completions.end(); ++i)
 	err += (i->inner()() + "\n");
-      N(completions.size() == 1, err);
+      N(completions.size() == 1, boost::format(err));
     }
   completion = *(completions.begin());  
   P(F("expanded partial id '%s' to '%s'\n") % str % completion);
@@ -2339,7 +2339,7 @@ CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
     throw usage(name);
 
   rsa_keypair_id key;
-  N(guess_default_key(key, app), "could not guess default signing key");
+  N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
   utf8 addr(idx(args,0));
@@ -2368,7 +2368,7 @@ CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
     throw usage(name);
 
   rsa_keypair_id key;
-  N(guess_default_key(key, app), "could not guess default signing key");
+  N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
   utf8 addr(idx(args,0));
@@ -2383,7 +2383,7 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
     throw usage(name);
 
   rsa_keypair_id key;
-  N(guess_default_key(key, app), "could not guess default signing key");
+  N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
   utf8 addr(idx(args,0));
@@ -2416,7 +2416,7 @@ CMD(netsync, "network", "(client|server) (readonly|readwrite|writeonly) ADDRESS[
   else throw usage(name);
 
   rsa_keypair_id key;
-  N(guess_default_key(key, app), "could not guess default signing key");
+  N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
   utf8 addr(idx(args,2));

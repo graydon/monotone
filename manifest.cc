@@ -108,7 +108,7 @@ add_to_manifest_map
 {    
   manifest_map & man;
   explicit add_to_manifest_map(manifest_map & m) : man(m) {}
-  bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
+  bool operator()(match_results<std::string::const_iterator> const & res) 
   {
     std::string ident(res[1].first, res[1].second);
     std::string path(res[2].first, res[2].second);

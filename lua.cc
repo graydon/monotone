@@ -409,7 +409,7 @@ lua_hooks::add_rcfile(fs::path const & rc)
 	  L(F("no good\n"));
 	  throw oops("lua error while loading " + rc.string());
 	}
-      L("ok\n");
+      L(F("ok\n"));
     }
   else
     L(F("skipping nonexistent rcfile '%s'\n") % rc.string());

@@ -357,7 +357,7 @@ feed_packet_consumer
   packet_consumer & cons;
   feed_packet_consumer(size_t & count, packet_consumer & c) : count(count), cons(c)
   {}
-  bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) const
+  bool operator()(match_results<std::string::const_iterator> const & res) const
   {
     if (res.size() != 17)
       throw oops("matched impossible packet with " 

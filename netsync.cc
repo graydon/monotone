@@ -387,7 +387,7 @@ session::session(protocol_role role,
   if (voice == client_voice)
     {
       N(collections.size() == 1,
-	"client can only sync one collection at a time");
+          F("client can only sync one collection at a time"));
       this->collection = idx(collections, 0);
     }
   

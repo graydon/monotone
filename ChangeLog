@@ -1,3 +1,23 @@
+2004-03-24  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Mention Robert.
+	* configure.ac: Enable sse2 stuff.
+	* monotone.spec: Adjust CFLAGS and CXXFLAGS
+	* monotone.texi (Network Service): Expand a bit.
+
+2004-03-24  Robert Helgesson  <rycee@home.se>
+
+	* commands.cc:
+	* http_tasks.cc:
+	* lua.cc:
+	* manifest.cc: 
+	* netsync.cc:
+	* nntp_tasks.cc: 
+	* proto_machine.cc: 
+	* work.cc: 
+	* xdelta.cc:
+	Portability fixes for boost 1.31.0 
+
 2004-03-22  graydon hoare  <graydon@pobox.com>
 
 	* cryptopp/integer.cpp, integer.h: Enable SSE2 multiply code.
@@ -17,14 +37,16 @@
 	* commands.cc (log): Show tags in log.
 	* AUTHORS: Mention Olivier.
 
-2004-03-17  graydon hoare  <graydon@pobox.com>
+2004-03-17  Nathan Myers  <ncm@cantrip.org>
 
 	* boost/circular_buffer.hpp: 
 	* commands.cc:
 	* cryptopp/fltrimpl.h:
 	* cryptopp/iterhash.cpp:
 	* quick_alloc.hh:
-	Fixes from ncm@cantrip.org for gcc 3.4 compat and warnings.
+	Fixes for gcc 3.4 compat and warnings.
+
+2004-03-17  graydon hoare  <graydon@pobox.com>
 	* cryptopp/config.h: Fix for gcc aliasing optimization error.
 	* rcs_import.cc (cvs_history::note_file_edge): 
 	Fix for first changelog import bug (#5813).

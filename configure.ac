@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(monotone, 0.10, graydon@pobox.com)
+AC_INIT(monotone, 0.11, graydon@pobox.com)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -13,8 +13,15 @@ AM_CONFIG_HEADER([config.h])
 # spirit-based programs. we turn it off here unless the user turned it
 # on themselves.
 
-test "z$CXXFLAGS" = "z" && CXXFLAGS="-O0"
-test "z$CFLAGS" = "z" && CFLAGS="-O0"
+if test "z$CXXFLAGS" = "z" 
+then
+	CXXFLAGS="-O2 -fno-strict-aliasing"
+	# we have some sse2 code in cryptopp which is worth
+	# enabling if we're on a system which can build it
+	AC_CHECK_HEADERS(emmintrin.h, [CXXFLAGS="$CXXFLAGS -msse2"])
+fi
+
+test "z$CFLAGS" = "z" && CFLAGS="-O2 -fno-strict-aliasing"
 
 # Checks for programs.
 AC_PROG_CXX
@@ -54,7 +61,6 @@ int main ()
 if test "$ac_cv_locale_works" = "yes"; then
   AC_DEFINE(LOCALE_WORKS, 1, [Define if setlocale() and nl_langinfo() works.])
 fi
-
 
 # check various C++ libs which confuse autoconf
 

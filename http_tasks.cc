@@ -112,8 +112,7 @@ struct match_seq
   explicit match_seq(unsigned long & maj, 
 		     unsigned long & min,
 		     unsigned long & end) : maj(maj), min(min), end(end) {}
-  bool operator()(boost::match_results<std::string::const_iterator, 
-		  boost::regex::alloc_type> const & res) 
+  bool operator()(boost::match_results<std::string::const_iterator> const & res)
   {
     I(res.size() == 3);
     std::string maj_s(res[1].first, res[1].second);
