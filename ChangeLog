@@ -1,5 +1,12 @@
 2004-11-29  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi: Add more details to documentation of 'update
+	<revision>' command.
+
+	* ui.cc (fatal): Typo in previous commit.
+	
+2004-11-29  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ui.cc (fatal): On suggestion of Zack Weinberg, add a note to
 	fatal error messages 1) telling the user that it's a bug (i.e.,
 	not their fault), and 2) requesting a bug report.

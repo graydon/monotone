@@ -2660,7 +2660,11 @@ With a revision parameter, the @command{update} command operates
 similarly in monotone and CVS. One difference is that a subsequent
 @command{commit} will be based off the chosen revision in monotone,
 while a @command{commit} in the CVS case is not possible without going
-back to the branch head again.
+back to the branch head again.  This version of @command{update} can
+thus be very useful if, for example, you discover that the tree you are
+working against is somehow broken --- you can @command{update} to an
+older non-broken version, and continue to work normally while waiting
+for the tree to be fixed.
 
 @heading Viewing Differences
 
@@ -3025,10 +3029,10 @@ aborts, doing nothing. The stages are:
 @item
 Examine the ancestry graph of revisions in your database, and (subject
 to trust evaluation) select the set of all descendents of your working
-copy's base revision. Call this set the ``candidates'' of the update.
+copy's base revision.  Call this set the ``candidates'' of the update.
 @item
 Remove any candidates which lack acceptable testresult
-certificates. From the remaining candidates, select the deepest child
+certificates.  From the remaining candidates, select the deepest child
 by ancestry and call it the ``target'' of the update.
 @item 
 Merge the target of the update with the working copy, in memory, and
@@ -3038,6 +3042,16 @@ copy.
 
 With an explicit @var{revision} argument, the command uses that revision
 as the update target instead of finding an acceptable candidate.
+
+The effect is always to take whatever changes you have made in the
+working copy, and to ``transpose'' them onto a new revision, using
+monotone's 3-way merge algorithm to achieve good results.  Note that
+with the explicit @var{revision} argument, it is possible to update
+``backwards'' or ``sideways'' in history --- for example, reverting to
+an earlier revision, or if your branch has two heads, updating to the
+other.  In all cases, the end result will be whatever revision you
+specified, with your local changes (and only your local changes)
+applied.
 
 @end ftable
 

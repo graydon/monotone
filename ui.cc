@@ -215,7 +215,7 @@ user_interface::fatal(string const & fatal)
   inform("fatal: " + fatal);
   inform("this is almost certainly a bug in monotone.");
   inform("please send this error message, the output of 'monotone --full-version',");
-  inform("and a description of what you were doing to monotone-devel@nongnu.org.")
+  inform("and a description of what you were doing to monotone-devel@nongnu.org.");
 }
 
 
