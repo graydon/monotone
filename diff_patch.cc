@@ -904,8 +904,7 @@ bool merge3(manifest_map const & ancestor,
     }
 
   // in phase #4 we union all the (now non-conflicting) deletes, adds, and
-  // moves into a "merged" child, then apply them to get to our merged
-  // manifest path set (possibly with wrong ids)
+  // moves into a "merged" edge
 
   set_union(left_edge.f_adds.begin(), left_edge.f_adds.end(),
 	    right_edge.f_adds.begin(), right_edge.f_adds.end(), 
@@ -921,8 +920,8 @@ bool merge3(manifest_map const & ancestor,
 
   // in phase #5 we run 3-way file merges on all the files which have 
   // a delta on both edges, and union the results of the 3-way merges with
-  // all the deltas which only happen on one edge. then we apply *all* these
-  // changes to the merged manifest, altering file data (not paths).
+  // all the deltas which only happen on one edge, and dump all this into
+  // the merged edge too.
 
   try 
     {      
