@@ -10,6 +10,8 @@
 	* AUTHORS: Mention new contributors.
 	* monotone.texi (Hook Reference): Document i18n hooks.
 
+	Release point (v 0.9).	
+
 2004-01-07  graydon hoare  <graydon@pobox.com>
 
 	* cert.cc (ensure_parents_loaded)
