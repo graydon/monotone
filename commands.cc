@@ -306,6 +306,56 @@ update_any_attrs(app_state & app)
 }
 
 static void
+calculate_base_revision(app_state & app, 
+			revision_id & rid,
+			revision_set & rev,
+			manifest_id & mid,
+			manifest_map & man)
+{
+  rev.edges.clear();
+  man.clear();
+
+  get_revision_id(rid);
+
+  if (! rid.inner()().empty())
+    {
+
+      N(app.db.revision_exists(rid),
+	F("base revision %s does not exist in database\n") % rid);
+      
+      app.db.get_revision_manifest(rid, mid);
+      L(F("old manifest is %s\n") % mid);
+      
+      N(app.db.manifest_version_exists(mid),
+	F("base manifest %s does not exist in database\n") % mid);
+      
+      app.db.get_manifest(mid, man);
+    }
+
+  L(F("old manifest has %d entries\n") % man.size());
+}
+
+static void
+calculate_base_revision(app_state & app, 
+			revision_set & rev,
+			manifest_map & man)
+{
+  revision_id rid;
+  manifest_id mid;
+  calculate_base_revision(app, rid, rev, mid, man);
+}
+
+static void
+calculate_base_manifest(app_state & app, 
+			manifest_map & man)
+{
+  revision_id rid;
+  manifest_id mid;
+  revision_set rev;
+  calculate_base_revision(app, rid, rev, mid, man);
+}
+
+static void
 calculate_current_revision(app_state & app, 
 			   revision_set & rev,
 			   manifest_map & m_old,
@@ -321,23 +371,9 @@ calculate_current_revision(app_state & app,
   m_old.clear();
   m_new.clear();
 
-  get_revision_id(old_revision_id);
-  if (! old_revision_id.inner()().empty())
-    {
-
-      N(app.db.revision_exists(old_revision_id),
-	F("base revision %s does not exist in database\n") % old_revision_id);
-      
-      app.db.get_revision_manifest(old_revision_id, old_manifest_id);
-      L(F("old manifest is %s\n") % old_manifest_id);
-      
-      N(app.db.manifest_version_exists(old_manifest_id),
-	F("base manifest %s does not exist in database\n") % old_manifest_id);
-      
-      app.db.get_manifest(old_manifest_id, m_old);
-    }
-
-  L(F("old manifest has %d entries\n") % m_old.size());
+  calculate_base_revision(app, 
+			  old_revision_id, rev, 
+			  old_manifest_id, m_old);
 
   get_path_rearrangement(cs.rearrangement);
   
@@ -368,7 +404,6 @@ calculate_current_revision(app_state & app,
   rev.edges.insert(make_pair(old_revision_id,
 			     make_pair(old_manifest_id, cs)));
 }
-
 
 static string 
 get_stdin()
@@ -581,9 +616,9 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
     throw usage(name);
 
   vector<cert> certs;
-
+  
   transaction_guard guard(app.db);
-
+  
   revision_id ident;
   complete(app, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
@@ -938,12 +973,14 @@ CMD(add, "working copy", "PATHNAME...", "add files to working copy")
   if (args.size() < 1)
     throw usage(name);
 
-  manifest_map man;
+  manifest_map m_old;
+  calculate_base_manifest(app, m_old);
+
   change_set::path_rearrangement work;  
   get_path_rearrangement(work);
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_addition(file_path((*i)()), app, work);
+    build_addition(file_path((*i)()), m_old, app, work);
     
   put_path_rearrangement(work);
 
@@ -956,11 +993,14 @@ CMD(drop, "working copy", "FILE...", "drop files from working copy")
   if (args.size() < 1)
     throw usage(name);
 
+  manifest_map m_old;
+  calculate_base_manifest(app, m_old);
+
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_deletion(file_path((*i)()), work);
+    build_deletion(file_path((*i)()), m_old, work);
   
   put_path_rearrangement(work);
 
@@ -974,10 +1014,13 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   if (args.size() != 2)
     throw usage(name);
   
-  change_set::path_rearrangement work;
+  manifest_map m_old;
+  calculate_base_manifest(app, m_old);
 
+  change_set::path_rearrangement work;
   get_path_rearrangement(work);
-  build_rename(file_path(idx(args, 0)()), file_path(idx(args, 1)()), work);
+
+  build_rename(file_path(idx(args, 0)()), file_path(idx(args, 1)()), m_old, work);
   
   put_path_rearrangement(work);
   
@@ -1050,7 +1093,7 @@ CMD(status, "informative", "", "show status of working copy")
 
   calculate_current_revision(app, rs, m_old, m_new);
   write_revision_set(rs, tmp);
-  cout << tmp;
+  cout << endl << tmp << endl;
 }
 
 CMD(identify, "working copy", "[PATH]",
@@ -1824,6 +1867,10 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 		base64< gzip<data> > new_data;
 		app.db.get_file_version(delta_entry_src(i), old_data);
 		read_localized_data(delta_entry_path(i), new_data, app.lua);
+		// sanity check
+		hexenc<id> tid;
+		calculate_ident(new_data, tid);
+		I(tid == delta_entry_dst(i).inner());
 		base64< gzip<delta> > del;
 		diff(old_data.inner(), new_data, del);
 		dbw.consume_file_delta(delta_entry_src(i), 
@@ -2079,8 +2126,10 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
 
   vector<string> lines;
   split_into_lines(summary(), lines);
+  cout << "# " << endl;
   for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
     cout << "# " << *i << endl;
+  cout << "# " << endl;
 
   dump_diffs(composite.deltas, app, new_is_archived);
 }
@@ -2492,10 +2541,10 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
 CMD(revert, "working copy", "[FILE]...", 
     "revert file(s) or entire working copy")
 {
-  manifest_map m_new, m_old;
-  revision_set rev;
+  manifest_map m_old;
+  revision_set r_old;
 
-  calculate_current_revision(app, rev, m_old, m_new);
+  calculate_base_revision(app, r_old, m_old);
 
   if (args.size() == 0)
     {
@@ -2529,16 +2578,12 @@ CMD(revert, "working copy", "[FILE]...",
 	    {
 	      // simplest is to just add all files from that
 	      // directory.
-	      string dir = arg;
-	      int off = dir.find_last_not_of('/');
-	      if (off != -1)
-		dir = dir.substr(0, off + 1);
-	      dir += '/';
+	      string dir = fs::path(arg).string();
 	      for (manifest_map::const_iterator i = m_old.begin();
 		   i != m_old.end(); ++i)
 		{
 		  file_path p = i->first;
-		  if (! p().compare(0, dir.length(), dir))
+		  if (fs::path(p()).branch_path().string() == dir)
 		    work_args.push_back(p());
 		}
 	    }

@@ -20,6 +20,7 @@
 
 #include "basic_io.hh"
 #include "change_set.hh"
+#include "constants.hh"
 #include "diff_patch.hh"
 #include "file_io.hh"
 #include "interner.hh"
@@ -1652,7 +1653,7 @@ project_missing_deltas(change_set const & a,
 	    {
 	      // ... absorb identical deltas
 	      L(F("skipping common delta '%s' : '%s' -> '%s'\n") 
-		% path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
+		% path_in_merged % delta_entry_src(i) % delta_entry_dst(i));
 	    }
 
 	  else if (delta_entry_src(i) == delta_entry_dst(i))
@@ -1967,7 +1968,6 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
 
 // application stuff
 
-
 void
 apply_path_rearrangement(path_set const & old_ps,
 			 change_set::path_rearrangement const & pr,
@@ -2094,18 +2094,14 @@ namespace
 {
   namespace syms
   {
-    std::string const change_set("change_set");
-    std::string const paths("paths");
+    std::string const patch("patch");
+    std::string const from("from");
+    std::string const to("to");
     std::string const add_file("add_file");
     std::string const delete_file("delete_file");
     std::string const delete_dir("delete_dir");
     std::string const rename_file("rename_file");
     std::string const rename_dir("rename_dir");
-    std::string const src("src");
-    std::string const dst("dst");
-    std::string const deltas("deltas");
-    std::string const delta("delta");
-    std::string const path("path");
   }
 }
 
@@ -2118,52 +2114,42 @@ parse_path_rearrangement(basic_io::parser & parser,
       std::string t1, t2;
       if (parser.symp(syms::add_file)) 
 	{ 
-	  parser.key(syms::add_file);
+	  parser.sym();
 	  parser.str(t1);
 	  cs.add_file(file_path(t1));
 	}
       else if (parser.symp(syms::delete_file)) 
 	{ 
-	  parser.key(syms::delete_file);
+	  parser.sym();
 	  parser.str(t1);
 	  cs.delete_file(file_path(t1));
 	}
       else if (parser.symp(syms::delete_dir)) 
 	{ 
-	  parser.key(syms::delete_dir);
+	  parser.sym();
 	  parser.str(t1);
 	  cs.delete_dir(file_path(t1));
 	}
       else if (parser.symp(syms::rename_file)) 
 	{ 
-	  parser.key(syms::rename_file);
-	  parser.bra();
-	  parser.key(syms::src);
+	  parser.sym();
 	  parser.str(t1);
-	  parser.key(syms::dst);
+	  parser.esym(syms::to);
 	  parser.str(t2);
-	  parser.ket();
 	  cs.rename_file(file_path(t1),
 			 file_path(t2));
 	}
       else if (parser.symp(syms::rename_dir)) 
 	{ 
-	  parser.key(syms::rename_dir);
-	  parser.bra();
-	  parser.key(syms::src);
+	  parser.sym();
 	  parser.str(t1);
-	  parser.key(syms::dst);
+	  parser.esym(syms::to);
 	  parser.str(t2);
-	  parser.ket();
 	  cs.rename_dir(file_path(t1),
 			file_path(t2));
 	}
       else
-	{
-	  std::string sym;
-	  parser.sym(sym);
-	  parser.err("unrecognized symbol: " + sym);
-	}
+	break;
     }
 }
 
@@ -2176,48 +2162,43 @@ print_path_rearrangement(basic_io::printer & printer,
   for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
        i != pr.deleted_files.end(); ++i)
     {
-      printer.print_key(syms::delete_file);
-      printer.print_str((*i)());
+      basic_io::stanza st;
+      st.push_str_pair(syms::delete_file, (*i)());
+      printer.print_stanza(st);
     }
 
   for (std::set<file_path>::const_iterator i = pr.deleted_dirs.begin();
        i != pr.deleted_dirs.end(); ++i)
     {
-      printer.print_key(syms::delete_dir);
-      printer.print_str((*i)());
+      basic_io::stanza st;
+      st.push_str_pair(syms::delete_dir, (*i)());
+      printer.print_stanza(st);
     }
 
   for (std::map<file_path,file_path>::const_iterator i = pr.renamed_files.begin();
        i != pr.renamed_files.end(); ++i)
     {
-      printer.print_key(syms::rename_file, true);
-      {
-	basic_io::scope sc(printer);
-	printer.print_key(syms::src);
-	printer.print_str(i->first());
-	printer.print_key(syms::dst);      
-	printer.print_str(i->second());
-      }
+      basic_io::stanza st;
+      st.push_str_pair(syms::rename_file, i->first());
+      st.push_str_pair(syms::to, i->second());
+      printer.print_stanza(st);
     }
 
   for (std::map<file_path,file_path>::const_iterator i = pr.renamed_dirs.begin();
        i != pr.renamed_dirs.end(); ++i)
     {
-      printer.print_key(syms::rename_dir, true);
-      {
-	basic_io::scope sc(printer);
-	printer.print_key(syms::src);
-	printer.print_str(i->first());
-	printer.print_key(syms::dst);      
-	printer.print_str(i->second());
-      }
+      basic_io::stanza st;
+      st.push_str_pair(syms::rename_dir, i->first());
+      st.push_str_pair(syms::to, i->second());
+      printer.print_stanza(st);
     }
 
   for (std::set<file_path>::const_iterator i = pr.added_files.begin();
        i != pr.added_files.end(); ++i)
     {
-      printer.print_key(syms::add_file);
-      printer.print_str((*i)());
+      basic_io::stanza st;
+      st.push_str_pair(syms::add_file, (*i)());
+      printer.print_stanza(st);
     }
 }
 
@@ -2227,71 +2208,38 @@ parse_change_set(basic_io::parser & parser,
 {
   clear_change_set(cs);
 
-  parser.key(syms::change_set);
-  parser.bra();
+  parse_path_rearrangement(parser, cs);    
 
-  {
-    parser.key(syms::paths);
-    parser.bra();
-    parse_path_rearrangement(parser, cs);    
-    parser.ket();
-
-    parser.key(syms::deltas);
-    parser.bra();
-    while (parser.symp(syms::delta))
-      {
-	std::string path, src, dst;
-	parser.key(syms::delta);
-	parser.bra();
-	parser.key(syms::path);
-	parser.str(path);
-	parser.key(syms::src);
-	parser.hex(src);
-	parser.key(syms::dst);
-	parser.hex(dst);
-	parser.ket();
-	cs.deltas.insert(std::make_pair(file_path(path),
-					std::make_pair(file_id(src),
-						       file_id(dst))));
-      }
-    parser.ket();
-  }
-  parser.ket();
+  while (parser.symp(syms::patch))
+    {
+      std::string path, src, dst;
+      parser.sym();
+      parser.str(path);
+      parser.esym(syms::from);
+      parser.hex(src);
+      parser.esym(syms::to);
+      parser.hex(dst);
+      cs.deltas.insert(std::make_pair(file_path(path),
+				      std::make_pair(file_id(src),
+						     file_id(dst))));
+    }
 }
 
 void 
 print_change_set(basic_io::printer & printer,
 		 change_set const & cs)
 {
-  printer.print_key(syms::change_set, true);
-  {
-    basic_io::scope s0(printer);
-
-    printer.print_key(syms::paths, true);
+  print_path_rearrangement(printer, cs.rearrangement);
+  
+  for (change_set::delta_map::const_iterator i = cs.deltas.begin();
+       i != cs.deltas.end(); ++i)
     {
-      basic_io::scope s1(printer);
-      print_path_rearrangement(printer, cs.rearrangement);
+      basic_io::stanza st;
+      st.push_str_pair(syms::patch, i->first());
+      st.push_hex_pair(syms::from, i->second.first.inner()());
+      st.push_hex_pair(syms::to, i->second.second.inner()());
+      printer.print_stanza(st);
     }
-
-    printer.print_key(syms::deltas, true);
-    {
-      basic_io::scope s1(printer);
-      for (change_set::delta_map::const_iterator i = cs.deltas.begin();
-	   i != cs.deltas.end(); ++i)
-	{
-	  printer.print_key(syms::delta, true);
-	  {
-	    basic_io::scope s2(printer);
-	    printer.print_key(syms::path);
-	    printer.print_str(i->first());
-	    printer.print_key(syms::src);
-	    printer.print_hex(i->second.first.inner()());
-	    printer.print_key(syms::dst);
-	    printer.print_hex(i->second.second.inner()());
-	  }
-	}
-    }
-  }
 }
 
 void

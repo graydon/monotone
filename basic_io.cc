@@ -78,18 +78,6 @@ basic_io::tokenizer::get_token(std::string & val)
   switch (in.lookahead)
     {
 
-    case ':':
-      in.eat();
-      return basic_io::TOK_COLON;
-
-    case '{':
-      in.eat();
-      return basic_io::TOK_OPEN_BRACE;
-
-    case '}':
-      in.eat();
-      return basic_io::TOK_CLOSE_BRACE;
-
     case '"':
       {
 	in.advance();
@@ -157,85 +145,71 @@ void basic_io::tokenizer::err(std::string const & s)
   in.err(s);
 }
 
-basic_io::printer::printer(std::ostream & ost) 
-  : offset(0), step(2), out(ost)
+basic_io::stanza::stanza() : indent(0)
 {}
 
-void basic_io::printer::print_indent()
+void basic_io::stanza::push_hex_pair(std::string const & k, std::string const & v)
 {
-  for (size_t i = 0; i < offset; ++i) 
-    out.put(' ');
+  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
+    I(std::isalnum(*i) || *i == '_');
+
+  for (std::string::const_iterator i = v.begin(); i != v.end(); ++i)
+    I(std::isxdigit(*i));
+  
+  entries.push_back(std::make_pair(k, "[" + v + "]"));
+  if (k.size() > indent)
+    indent = k.size();
 }
 
-void basic_io::printer::print_bra()
+void basic_io::stanza::push_str_pair(std::string const & k, std::string const & v)
 {
-  print_indent(); 
-  out.put('{'); 
-  out.put('\n');
-  offset += step;
-}
+  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
+    I(std::isalnum(*i) || *i == '_');
 
-void basic_io::printer::print_ket()
-{
-  I(offset >= step);
-  offset -= step;
-  print_indent(); 
-  out.put('}'); 
-  out.put('\n');
-}
+  std::string escaped;
 
-void basic_io::printer::print_hex(std::string const & s)
-{
-  out.put('[');
-  out.write(s.data(), s.size());
-  out.put(']');
-  out.put('\n');
-}
-
-void basic_io::printer::print_str(std::string const & s)
-{
-  out.put('"');
-  for (std::string::const_iterator i = s.begin();
-       i != s.end(); ++i)
+  for (std::string::const_iterator i = v.begin();
+       i != v.end(); ++i)
     {
       switch (*i)
 	{
 	case '\\':
 	case '"':
-	  out.put('\\');
+	  escaped += '\\';
 	default:
-	  out.put(*i);
+	  escaped += *i;
 	}
     }
-  out.put('"');
-  out.put('\n');
-}
+
   
-void basic_io::printer::print_key(std::string const & s, bool eol)
-{
-  print_indent();
-  out.write(s.data(), s.size());
-  out.put(':');
-  out.put(eol ? '\n' : ' ');
+  entries.push_back(std::make_pair(k, "\"" + escaped + "\""));
+  if (k.size() > indent)
+    indent = k.size();
 }
 
-void basic_io::printer::print_sym(std::string const & s, bool eol)
-{
-  out.write(s.data(), s.size());
-  out.put(eol ? '\n' : ' ');
-}
 
-basic_io::scope::scope(basic_io::printer & p) 
-  : cp(p)
-{
-  cp.print_bra();
-}
+basic_io::printer::printer(std::ostream & ost) 
+  : empty_output(true), out(ost)
+{}
 
-basic_io::scope::~scope()
+void basic_io::printer::print_stanza(stanza const & st)
 {
-  cp.print_ket();
+  if (empty_output)
+    empty_output = false;
+  else
+    out.put('\n');
+  
+  for (std::vector<std::pair<std::string, std::string> >::const_iterator i = st.entries.begin();
+       i != st.entries.end(); ++i)
+    {
+      for (size_t k = i->first.size(); k < st.indent; ++k)
+	out.put(' ');
+      out.write(i->first.data(), i->first.size());
+      out.put(' ');
+      out.write(i->second.data(), i->second.size());
+      out.put('\n');
+    }
 }
-
 
 
 basic_io::parser::parser(tokenizer & t) 
@@ -264,12 +238,6 @@ std::string basic_io::parser::tt2str(token_type tt)
       return "TOK_SYMBOL";
     case basic_io::TOK_HEX:
       return "TOK_HEX";
-    case basic_io::TOK_OPEN_BRACE:
-      return "TOK_OPEN_BRACE";
-    case basic_io::TOK_CLOSE_BRACE:
-      return "TOK_CLOSE_BRACE";
-    case basic_io::TOK_COLON:
-      return "TOK_COLON";
     case basic_io::TOK_NONE:
       return "TOK_NONE";
     }
@@ -292,9 +260,6 @@ void basic_io::parser::eat(token_type want)
 void basic_io::parser::str() { eat(basic_io::TOK_STRING); }
 void basic_io::parser::sym() { eat(basic_io::TOK_SYMBOL); }
 void basic_io::parser::hex() { eat(basic_io::TOK_HEX); }
-void basic_io::parser::colon() { eat(basic_io::TOK_COLON); }
-void basic_io::parser::bra() { eat(basic_io::TOK_OPEN_BRACE); } 
-void basic_io::parser::ket() { eat(basic_io::TOK_CLOSE_BRACE); } 
 
 void basic_io::parser::str(std::string & v) { v = token; str(); }
 void basic_io::parser::sym(std::string & v) { v = token; sym(); }
@@ -304,12 +269,16 @@ bool basic_io::parser::symp(std::string const & val)
 {
   return ttype == basic_io::TOK_SYMBOL && token == val;
 }
-
-void basic_io::parser::key(std::string const & val)
+void basic_io::parser::esym(std::string const & val)
 {
-  std::string s;
-  sym(s);
-  if (s != val)
-    err("expected symbol " + val + ", got " + s);
-  colon();
+  if (!(ttype == basic_io::TOK_SYMBOL && token == val))
+    err("wanted symbol '" 
+	+ val +
+	+ "', got "
+	+ tt2str(ttype)
+	+ (token.empty() 
+	   ? std::string("") 
+	   : (std::string(" with value ") + token)));
+  advance();
 }
+

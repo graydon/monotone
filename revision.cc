@@ -17,6 +17,7 @@
 
 #include "basic_io.hh"
 #include "change_set.hh"
+#include "constants.hh"
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
@@ -566,12 +567,9 @@ namespace
 {
   namespace syms
   {
-    std::string const revision("revision");
-    std::string const edge("edge");
     std::string const old_revision("old_revision");
     std::string const new_manifest("new_manifest");
     std::string const old_manifest("old_manifest");
-    std::string const change_set("change_set");
   }
 }
 
@@ -580,18 +578,11 @@ void
 print_edge(basic_io::printer & printer,
 	   edge_entry const & e)
 {       
-  printer.print_key(syms::edge, true);
-  {
-    basic_io::scope sc(printer);
-
-    printer.print_key(syms::old_revision); 
-    printer.print_hex(edge_old_revision(e).inner()());
-    
-    printer.print_key(syms::old_manifest); 
-    printer.print_hex(edge_old_manifest(e).inner()());
-    
-    print_change_set(printer, edge_changes(e));
-  }
+  basic_io::stanza st;
+  st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner()());
+  st.push_hex_pair(syms::old_manifest, edge_old_manifest(e).inner()());
+  printer.print_stanza(st);
+  print_change_set(printer, edge_changes(e)); 
 }
 
 
@@ -599,17 +590,12 @@ void
 print_revision(basic_io::printer & printer,
 	       revision_set const & rev)
 {
-  printer.print_key(syms::revision, true);
-  {
-    basic_io::scope sc(printer);
-
-    printer.print_key(syms::new_manifest); 
-    printer.print_hex(rev.new_manifest.inner()());    
-
-    for (edge_map::const_iterator edge = rev.edges.begin();
-	 edge != rev.edges.end(); ++edge)
-      print_edge(printer, *edge);
-  }
+  basic_io::stanza st; 
+  st.push_hex_pair(syms::new_manifest, rev.new_manifest.inner()());
+  printer.print_stanza(st);
+  for (edge_map::const_iterator edge = rev.edges.begin();
+       edge != rev.edges.end(); ++edge)
+    print_edge(printer, *edge);
 }
 
 
@@ -621,21 +607,16 @@ parse_edge(basic_io::parser & parser,
   manifest_id old_man;
   revision_id old_rev;
   std::string tmp;
-
-  parser.key(syms::edge);
-  parser.bra();
-  {
-    parser.key(syms::old_revision);
-    parser.hex(tmp);
-    old_rev = revision_id(tmp);
-
-    parser.key(syms::old_manifest);
-    parser.hex(tmp);
-    old_man = manifest_id(tmp);
-
-    parse_change_set(parser, cs);
-  }
-  parser.ket();
+  
+  parser.esym(syms::old_revision);
+  parser.hex(tmp);
+  old_rev = revision_id(tmp);
+  
+  parser.esym(syms::old_manifest);
+  parser.hex(tmp);
+  old_man = manifest_id(tmp);
+  
+  parse_change_set(parser, cs);
 
   es.insert(std::make_pair(old_rev, std::make_pair(old_man, cs)));
 }
@@ -646,18 +627,12 @@ parse_revision(basic_io::parser & parser,
 	       revision_set & rev)
 {
   rev.edges.clear();
-
-  parser.key(syms::revision);
-  parser.bra();
-  {
-    std::string tmp;
-    parser.key(syms::new_manifest);
-    parser.hex(tmp);
-    rev.new_manifest = manifest_id(tmp);
-    while (parser.symp(syms::edge))
-      parse_edge(parser, rev.edges);
-  }
-  parser.ket();
+  std::string tmp;
+  parser.esym(syms::new_manifest);
+  parser.hex(tmp);
+  rev.new_manifest = manifest_id(tmp);
+  while (parser.symp(syms::old_revision))
+    parse_edge(parser, rev.edges);
 }
 
 void 

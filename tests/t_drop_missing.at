@@ -1,0 +1,23 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([drop missing and unknown files])
+
+MONOTONE_SETUP
+
+AT_DATA(maude, [the file maude
+])
+
+AT_CHECK(MONOTONE add maude, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit 'committed', [], [ignore], [ignore])
+
+AT_CHECK(rm maude)
+AT_CHECK(MONOTONE drop maude, [], [ignore], [stderr])
+AT_CHECK(grep 'adding maude to working copy delete set' stderr, [0], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep maude stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE drop foobar, [], [ignore], [stderr])
+AT_CHECK(grep 'skipping foobar' stderr, [0], [ignore])
+
+AT_CLEANUP

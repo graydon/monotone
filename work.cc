@@ -26,11 +26,13 @@ addition_builder
 {
   app_state & app;
   change_set & cs;
+  path_set ps;
 public:
   addition_builder(app_state & a, 
-		   change_set & cs)
-    : app(a), cs(cs)
-  {};
+		   change_set & cs,
+		   path_set & p)
+    : app(a), cs(cs), ps(p)
+  {}
   virtual void visit_file(file_path const & path);
 };
 
@@ -41,13 +43,22 @@ addition_builder::visit_file(file_path const & path)
     {
       P(F("skipping ignorable file %s\n") % path);
       return;
+    }  
+
+  if (ps.find(path) != ps.end())
+    {
+      P(F("skipping %s, already accounted for in working copy\n") % path);
+      return;
     }
-  L(F("adding %s to working copy add set\n") % path);
+
+  P(F("adding %s to working copy add set\n") % path);
+  ps.insert(path);
   cs.add_file(path);
 }
 
 void 
 build_addition(file_path const & path,
+	       manifest_map const & man,
 	       app_state & app,
 	       change_set::path_rearrangement & pr)
 {
@@ -57,41 +68,68 @@ build_addition(file_path const & path,
   change_set cs_new, cs_old, cs_concatenated;
   cs_old.rearrangement = pr;
 
-  if (directory_exists(path))
-    {
-      addition_builder build(app, cs_new);
-      walk_tree(path, build);
-    }
-  else 
-    {
-      I(file_exists(path));
-      L(F("adding %s to working copy add set\n") % path);
-      cs_new.add_file(path);
-    }
+  path_set tmp, ps;
+  extract_path_set(man, tmp);
+  apply_path_rearrangement(tmp, pr, ps);    
+
+  addition_builder build(app, cs_new, ps);
+  walk_tree(path, build);
+
   normalize_change_set(cs_new);
   concatenate_change_sets(cs_old, cs_new, cs_concatenated);
   pr = cs_concatenated.rearrangement;
 }
 
+static bool
+known_preimage_path(file_path const & p,
+		    manifest_map const & m,
+		    change_set::path_rearrangement const & pr,
+		    bool & path_is_directory)
+{
+  path_set tmp, ps;
+  extract_path_set(m, tmp);
+  apply_path_rearrangement(tmp, pr, ps);    
+
+  std::string path_as_dir = p() + "/";
+  for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)
+    {
+      if (*i == p) 
+	{
+	  path_is_directory = false;
+	  return true;
+	}
+      else if ((*i)().find(path_as_dir) == 0)
+	{
+	  path_is_directory = true;
+	  return true;
+	}
+    }
+  return false;
+}
+
 void 
 build_deletion(file_path const & path,
+	       manifest_map const & man,
 	       change_set::path_rearrangement & pr)
 {
   change_set cs_new, cs_old, cs_concatenated;
   cs_old.rearrangement = pr;
 
-  N(directory_exists(path) || file_exists(path),
-    F("path %s does not exist") % path);
+  bool dir_p = false;
   
-  P(F("adding %s to working copy delete set\n") % path);
-  if (directory_exists(path)) 
-      cs_new.delete_dir(path);
-  else 
+  if (! known_preimage_path(path, man, pr, dir_p))
     {
-      I(file_exists(path));
-      cs_new.delete_file(path);
+      P(F("skipping %s, not currently tracked") % path);
+      return;
     }
 
+  P(F("adding %s to working copy delete set\n") % path);
+
+  if (dir_p) 
+    cs_new.delete_dir(path);
+  else 
+    cs_new.delete_file(path);
+  
   normalize_change_set(cs_new);
   concatenate_change_sets(cs_old, cs_new, cs_concatenated);
   pr = cs_concatenated.rearrangement;
@@ -100,22 +138,26 @@ build_deletion(file_path const & path,
 void 
 build_rename(file_path const & src,
 	     file_path const & dst,
+	     manifest_map const & man,
 	     change_set::path_rearrangement & pr)
 {
   change_set cs_new, cs_old, cs_concatenated;
   cs_old.rearrangement = pr;
 
-  N(directory_exists(src) || file_exists(src),
-    F("path %s does not exist") % src);
+  bool dir_p = false;
+
+  if (! known_preimage_path(src, man, pr, dir_p))
+    {
+      P(F("skipping %s, not currently tracked") % src);
+      return;
+    }
 
   P(F("adding %s -> %s to working copy rename set\n") % src % dst);
-  if (directory_exists(src))
+  if (dir_p)
     cs_new.rename_dir(src, dst);
   else 
-    {
-      I(file_exists(src));
-      cs_new.rename_file(src, dst);
-    }
+    cs_new.rename_file(src, dst);
+
   normalize_change_set(cs_new);
   concatenate_change_sets(cs_old, cs_new, cs_concatenated);
   pr = cs_concatenated.rearrangement;

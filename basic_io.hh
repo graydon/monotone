@@ -13,6 +13,8 @@
 
 #include <iosfwd>
 #include <string>
+#include <vector>
+#include <map>
 
 namespace basic_io
 {
@@ -20,9 +22,6 @@ namespace basic_io
   typedef enum
     {
       TOK_SYMBOL,
-      TOK_OPEN_BRACE,
-      TOK_CLOSE_BRACE,
-      TOK_COLON,
       TOK_STRING,
       TOK_HEX,
       TOK_NONE,
@@ -52,26 +51,22 @@ namespace basic_io
   };
 
   struct 
-  printer
+  stanza
   {
-    size_t offset;
-    size_t const step;
-    std::ostream & out;
-    printer(std::ostream & ost);
-    void print_indent();
-    void print_bra();
-    void print_ket();
-    void print_hex(std::string const & s);
-    void print_str(std::string const & s);
-    void print_sym(std::string const & s, bool eol = false);
-    void print_key(std::string const & s, bool eol = false);
+    stanza();
+    size_t indent;  
+    std::vector<std::pair<std::string, std::string> > entries;
+    void push_hex_pair(std::string const & k, std::string const & v);
+    void push_str_pair(std::string const & k, std::string const & v);
   };
 
-  struct scope
+  struct 
+  printer
   {
-    printer & cp;
-    scope(printer & c);
-    ~scope();
+    bool empty_output;
+    std::ostream & out;
+    printer(std::ostream & ost);
+    void print_stanza(stanza const & st);
   };
 
   struct
@@ -91,17 +86,13 @@ namespace basic_io
     void str();
     void sym();
     void hex();
-    void colon();
-    void bra();
-    void ket();
     
     void str(std::string & v);
     void sym(std::string & v);
     void hex(std::string & v);
     bool symp();
     bool symp(std::string const & val);
-
-    void key(std::string const & val);
+    void esym(std::string const & val);
   };
 
 }

@@ -47,16 +47,19 @@ void extract_path_set(manifest_map const & man,
 
 void 
 build_addition(file_path const & path,
+	       manifest_map const & m_old,
 	       app_state & app,
 	       change_set::path_rearrangement & pr);
 
 void 
 build_deletion(file_path const & path,
+	       manifest_map const & m_old,
 	       change_set::path_rearrangement & pr);
 
 void 
 build_rename(file_path const & src,
 	     file_path const & dst,
+	     manifest_map const & m_old,
 	     change_set::path_rearrangement & pr);
 
 
