@@ -1,5 +1,7 @@
 2003-09-17  Tom Tromey  <tromey@redhat.com>
 
+	* commands.cc (list): Don't compute or use "subname".
+
 	* commands.cc (revert): Handle case where argument is a
 	directory.
 	* tests/t_revert.at: Test for revert of directory.

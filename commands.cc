@@ -1735,15 +1735,14 @@ CMD(list, "informative", "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranc
   vector<string>::const_iterator i = args.begin();
   ++i;
   vector<string> removed (i, args.end());
-  string subname = name + " " + args[0];
   if (args[0] == "certs")
-    ls_certs(subname, app, removed);
+    ls_certs(name, app, removed);
   else if (args[0] == "keys")
-    ls_keys(subname, app, removed);
+    ls_keys(name, app, removed);
   else if (args[0] == "branches")
-    ls_branches(subname, app, removed);
+    ls_branches(name, app, removed);
   else
-    throw usage(subname);
+    throw usage(name);
 }
 
 ALIAS(ls, list, "informative",  "certs (file|manifest) <id>\nkeys [<partial-id>]\nbranches", "show certs, keys, or branches")
