@@ -2922,13 +2922,16 @@ development of a single module within a larger project.
 
 
 @item monotone explicit_merge @var{id} @var{id} @var{destbranch}
+@itemx monotone explicit_merge @var{id} @var{id} @var{ancestor} @var{destbranch}
 This command merges exactly the two @var{id}s you give it, and places
 the result in branch @var{destbranch}.  It is useful when you need more
 control over the merging process than @code{propagate} or @code{merge}
 give you.  For instance, if you have a branch with three heads, and you
 only want to merge two of them, you can use this command.  Or if you
 have a branch with two heads, and you want to propagate one of them to
-another branch, again, you can use this command.
+another branch, again, you can use this command. If the optional
+@var{ancestor} argument is given, the merge uses that revision as the
+common ancestor instead of the default ancestor.
 @end ftable
 
 

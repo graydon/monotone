@@ -131,6 +131,11 @@ find_least_common_ancestor(revision_id const & left,
 			   revision_id & anc,
 			   app_state & app);
 
+bool
+is_ancestor(revision_id const & ancestor,
+	    revision_id const & descendent,
+	    app_state & app);
+
 void 
 calculate_composite_change_set(revision_id const & ancestor,
 			       revision_id const & child,

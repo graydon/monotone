@@ -6,6 +6,7 @@
 #include <cctype>
 #include <cstdlib>
 #include <iostream>
+#include <list>
 #include <map>
 #include <set>
 #include <sstream>
@@ -341,6 +342,47 @@ find_least_common_ancestor(revision_id const & left,
     }
 //      dump_bitset_map("ancestors", ancestors);
 //      dump_bitset_map("parents", parents);
+  return false;
+}
+
+
+bool
+is_ancestor(revision_id const & ancestor_id,
+            revision_id const & descendent_id,
+            app_state & app)
+{
+  L(F("checking whether %s is an ancestor of %s\n") % ancestor_id % descendent_id);
+
+  std::set<revision_id> visited;
+  std::list<revision_id> queue;
+
+  queue.push_back(descendent_id);
+
+  while (queue.size() > 0)
+    {
+      revision_id current_id = queue.front();
+      queue.pop_front();
+
+      if (current_id == ancestor_id)
+        return true;
+      else
+        {
+          revision_set rev;
+          app.db.get_revision(current_id, rev);
+
+          for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
+            {
+              revision_id parent = edge_old_revision(i);
+              if (!parent.inner()().empty() &&
+                  visited.find(parent) == visited.end())
+                {
+                  queue.push_back(parent);
+                  visited.insert(parent);
+                }
+            }
+        }
+    }
+
   return false;
 }
 

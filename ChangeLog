@@ -1,3 +1,16 @@
+2004-12-14  Joel Rosdahl  <joel@rosdahl.net>
+
+	Generalize the explicit_merge command with an optional ancestor
+	argument:
+	* revision.cc (is_ancestor): New method.
+	* revision.hh (is_ancestor): Add prototype.
+	* commands.cc (try_one_merge): Add ancestor argument. Empty
+	ancestor means use ancestor from find_common_ancestor_for_merge.
+	(merge): Pass empty ancestor to try_one_merge.
+	(propagate): Likewise.
+	(explicit_merge): Add optional ancestor argument.
+	* monotone.texi: Document new explicit_merge argument.
+
 2004-12-13  Joel Rosdahl  <joel@rosdahl.net>
 
 	* tests/t_merge_2.at: New test triggering a bad merge.

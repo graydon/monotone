@@ -2444,6 +2444,7 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
   dump_diffs(composite.deltas, app, new_is_archived);
 }
 
+
 CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor")
 {
   if (args.size() != 2)
@@ -2724,6 +2725,7 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
 static void 
 try_one_merge(revision_id const & left_id,
               revision_id const & right_id,
+              revision_id const & ancestor_id, // empty ==> use common ancestor
               revision_id & merged_id,
               app_state & app)
 {
@@ -2744,7 +2746,20 @@ try_one_merge(revision_id const & left_id,
   app.db.get_manifest(right_rev.new_manifest, right_man);
   app.db.get_manifest(left_rev.new_manifest, left_man);
   
-  if(find_common_ancestor_for_merge(left_id, right_id, anc_id, app))
+  if (!null_id(ancestor_id))
+    {
+      I(is_ancestor(ancestor_id, left_id, app));
+      I(is_ancestor(ancestor_id, right_id, app));
+
+      anc_id = ancestor_id;
+
+      app.db.get_revision(anc_id, anc_rev);
+      app.db.get_manifest(anc_rev.new_manifest, anc_man);
+
+      calculate_composite_change_set(anc_id, left_id, app, anc_to_left);
+      calculate_composite_change_set(anc_id, right_id, app, anc_to_right);
+    }
+  else if (find_common_ancestor_for_merge(left_id, right_id, anc_id, app))
     {     
       P(F("common ancestor %s found\n") % anc_id); 
       P(F("trying 3-way merge\n"));
@@ -2829,7 +2844,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 
       revision_id merged;
       transaction_guard guard(app.db);
-      try_one_merge (left, right, merged, app);
+      try_one_merge(left, right, revision_id(), merged, app);
                   
       // merged 1 edge; now we commit this, update merge source and
       // try next one
@@ -2893,7 +2908,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
 
   revision_id merged;
   transaction_guard guard(app.db);
-  try_one_merge (*src_i, *dst_i, merged, app);    
+  try_one_merge(*src_i, *dst_i, revision_id(), merged, app);
   
   packet_db_writer dbw(app);
   
@@ -2907,18 +2922,32 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   guard.commit();      
 }
 
-CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH", 
+CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
     "merge two explicitly given revisions, placing result in given branch")
 {
-  revision_id left, right;
+  revision_id left, right, ancestor;
   string branch;
 
-  if (args.size() != 3)
+  if (args.size() != 3 && args.size() != 4)
     throw usage(name);
 
-  complete(app, idx(args, 0)(), left);
-  complete(app, idx(args, 1)(), right);
-  branch = idx(args, 2)();
+  if (args.size() == 4)
+    {
+      complete(app, idx(args, 0)(), left);
+      complete(app, idx(args, 1)(), right);
+      complete(app, idx(args, 2)(), ancestor);
+      N(is_ancestor(ancestor, left, app),
+        F("%s is not an ancestor of %s") % ancestor % left);
+      N(is_ancestor(ancestor, right, app),
+        F("%s is not an ancestor of %s") % ancestor % right);
+      branch = idx(args, 3)();
+    }
+  else
+    {
+      complete(app, idx(args, 0)(), left);
+      complete(app, idx(args, 1)(), right);
+      branch = idx(args, 2)();
+    }
   
   // Somewhat redundant, but consistent with output of plain "merge" command.
   P(F("[source] %s\n") % left);
@@ -2926,7 +2955,7 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH",
 
   revision_id merged;
   transaction_guard guard(app.db);
-  try_one_merge (left, right, merged, app);    
+  try_one_merge(left, right, ancestor, merged, app);
   
   packet_db_writer dbw(app);
   
@@ -2934,8 +2963,9 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH",
   
   string log = (F("explicit_merge of %s\n"
                   "              and %s\n"
+                  "   using ancestor %s\n"
                   "to branch '%s'\n")
-                % left % right % branch).str();
+                % left % right % ancestor % branch).str();
   
   cert_revision_changelog(merged, log, app, dbw);
   
