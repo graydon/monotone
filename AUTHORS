@@ -1,0 +1,56 @@
+Graydon Hoare <graydon@pobox.com> wrote *.{sql,cc,hh} in the top level
+directory. That's me.
+
+
+D. Richard Hipp <drh@hwaci.com> wrote the files in sqlite/*, but is in no way
+affiliated with this project. I simply copied his code, which is assigned to
+the public domain. You can find the original code at http://www.sqlite.org.
+
+
+Wei Dai <weidai@eskimo.com> wrote many of the files in cryptopp/*, though
+possibly not all of them; the files themselves were assigned to the public
+domain, and Wei Dai retains copyright only over the collective work of the
+crypto++ library from whence they were copied. I make no claim to be
+representing the crypto++ collective work here; I am merely using several
+public domain files from it. You can find the original code at
+http://www.cryptopp.com.
+
+
+The files in boost/* are copies of unofficial development files from the boost
+"sandbox" CVS repository, linked off of http://www.boost.org. The only license
+obligation I can find in those files is to reproduce their license statement in
+documentation, which I am doing here:
+
+
+files in boost/sequence_algo:
+
+// (C) Copyright Craig Henderson 2002 
+//               cdm.henderson@virgin.net
+//
+// Permission to use, copy, modify, distribute and sell this software and its
+// documentation for any purpose is hereby granted without fee, provided that
+// the above copyright notice appears in all copies and that both that
+// copyright notice and this permission notice appear in supporting
+// documentation.  The author makes no representations about the suitability of
+// this software for any purpose.  It is provided "as is" without express or
+// implied warranty.
+
+
+files in boost/socket:
+
+// Copyright (C) 2002 Hugo Duncan
+//
+// Permission to use, copy, modify, distribute and sell this software and its
+// documentation for any purpose is hereby granted without fee, provided that
+// the above copyright notice appear in all copies and that both that copyright
+// notice and this permission notice appear in supporting documentation.  Hugo
+// Duncan makes no representations about the suitability of this software for
+// any purpose.  It is provided "as is" without express or implied warranty.
+
+
+I believe I am within my rights to assert my own copyright on both the files I
+wrote and the collective work including these files I copied from the public
+domain. I am licensing my publication of these copyrighted works under the GNU
+GPL. See the file COPYING for details. If you believe I am in violation of some
+existing copyrights, please contact me.
+

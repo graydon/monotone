@@ -1,0 +1,241 @@
+// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
+// all rights reserved.
+// licensed to the public under the terms of the GNU GPL (>= 2)
+// see the file COPYING for details
+
+#include <config.h>
+
+#include <popt.h>
+#include <cstdio>
+#include <iterator>
+#include <iostream>
+
+#include <stdlib.h>
+
+#include "app_state.hh"
+#include "commands.hh"
+#include "sanity.hh"
+#include "cleanup.hh"
+#include "file_io.hh"
+
+#define OPT_VERBOSE 1
+#define OPT_HELP 2
+#define OPT_NOSTD 3
+#define OPT_NORC 4
+#define OPT_RCFILE 5
+#define OPT_DB_NAME 6
+#define OPT_KEY_NAME 7
+#define OPT_BRANCH_NAME 8
+#define OPT_QUIET 9
+#define OPT_VERSION 10
+
+// main option processing and exception handling code
+
+using namespace std;
+
+char * argstr = NULL;
+
+struct poptOption options[] = 
+  {
+    {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, "send log to stderr while running", NULL},     
+    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},     
+    {"help", 0, POPT_ARG_STRING|POPT_ARGFLAG_OPTIONAL, &argstr, OPT_HELP, "display help message", "CMD"},
+    {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
+    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load a ~/.monotonerc lua file", NULL},
+    {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
+    {"key", 0, POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
+    {"db", 0, POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", "monotone.db"},
+    {"branch", 0, POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
+    {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
+    { NULL, 0, 0, NULL, 0 }
+  };
+
+// there are 3 variables which serve as roots for our system.
+//
+// "global_sanity" is a global object, which contains the error logging
+// system, which is constructed once and used by any nana logging actions.
+// see cleanup.hh for it
+//
+// "cmds" is a static table in commands.cc which associates top-level
+// commands, given on the command-line, to various version control tasks.
+//
+// "app_state" is a non-static object type which contains all the
+// application state (filesystem, database, network, lua interpreter,
+// etc). you can make more than one of these, and feed them to a command in
+// the command table.
+
+// our main function is run inside a boost execution monitor. this monitor
+// portably sets up handlers for various fatal conditions (signals, win32
+// structured exceptions, etc) and provides a uniform reporting interface
+// to any exceptions it catches. we augment this with a helper atexit()
+// which will also dump our internal logs when an explicit clean shutdown
+// flag is not set.
+//
+// in other words, this program should *never* unexpectedly terminate
+// without dumping some diagnostics.
+
+static bool clean_shutdown;
+void dumper() 
+{
+  if (!clean_shutdown)
+	global_sanity.dump_buffer();    
+}
+
+ 
+int cpp_main(int argc, char ** argv)
+{
+
+  setenv("BOOST_PRG_MON_CONFIRM", "no", 0);
+  clean_shutdown = false;
+  atexit(&dumper);
+      
+  cleanup_ptr<poptContext, poptContext> 
+    ctx(poptGetContext(NULL, argc, (char const **) argv, options, 0),
+	&poptFreeContext);
+      
+  app_state app;
+
+  // process main program options
+
+  int opt;
+  bool stdhooks = true, rcfile = true;
+  char * envstr;
+
+  app.db.set_filename("monotone.db");
+
+  poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
+
+  // initialize entries from $ENV
+
+  if ((envstr = getenv("MT_KEY")) != NULL)
+    app.signing_key = string(envstr);
+
+  if ((envstr = getenv("MT_DB")) != NULL)
+    app.db.set_filename(string(envstr));
+
+  if ((envstr = getenv("MT_BRANCH")) != NULL)
+    app.branch_name = string(envstr);
+
+
+  // read command options
+
+  vector<string> extra_rcfiles;
+
+  try 
+    {      
+      while ((opt = poptGetNextOpt(ctx())) > 0)
+	{
+	  switch(opt)
+	    {
+	    case OPT_VERBOSE:
+	      global_sanity.set_verbose();
+	      break;
+
+	    case OPT_QUIET:
+	      global_sanity.set_quiet();
+	      break;
+
+	    case OPT_NOSTD:
+	      stdhooks = false;
+	      break;
+
+	    case OPT_NORC:
+	      rcfile = false;
+	      break;
+
+	    case OPT_RCFILE:
+	      extra_rcfiles.push_back(string(argstr));
+	      break;
+
+	    case OPT_DB_NAME:
+	      app.db.set_filename(argstr);
+	      break;
+
+	    case OPT_KEY_NAME:
+	      app.signing_key = string(argstr);
+	      break;
+
+	    case OPT_BRANCH_NAME:
+	      app.branch_name = argstr;
+	      break;
+
+	    case OPT_VERSION:
+	      cout << PACKAGE_STRING << endl;
+	      clean_shutdown = true;
+	      return 0;
+
+	    case OPT_HELP:
+	    default:
+	      throw usage(argstr ? argstr : "");
+	      break;
+	    }
+	}
+
+      // build-in rc settings are defaults
+
+      if (stdhooks)
+	app.lua.add_std_hooks();
+
+      // ~/.monotonerc overrides that
+
+      if (rcfile)
+	{
+	  fs::path default_rcfile;
+	  app.lua.default_rcfilename(default_rcfile);
+	  app.lua.add_rcfile(default_rcfile);
+	}
+
+      // command-line rcfiles override even that
+
+      for (vector<string>::const_iterator i = extra_rcfiles.begin();
+	   i != extra_rcfiles.end(); ++i)
+	{
+	  app.lua.add_rcfile(fs::path(*i));
+	}
+
+      // main options processed, now invoke the 
+      // sub-command w/ remaining args
+
+      if (!poptPeekArg(ctx()))
+	{
+	  throw usage("");
+	}
+      else
+	{
+	  string cmd(poptGetArg(ctx()));
+	  vector<string> args;
+	  while(poptPeekArg(ctx())) 
+	    {
+	      args.push_back(poptGetArg(ctx()));
+	    }
+	  commands::process(app, cmd, args);
+	} 
+    }
+  catch (usage & u)
+    {
+      poptPrintHelp(ctx(), stdout, 0);
+      cout << endl;
+      commands::explain_usage(u.which, cout);
+      clean_shutdown = true;
+      return 0;
+    }
+  catch (informative_failure & inf)
+    {
+      cout << inf.what << endl;
+      clean_shutdown = true;
+      return 1;
+    }
+  catch (...)
+    {
+      // nb: we dump here because it's nicer to get the log dump followed
+      // by the exception printout, when possible. this does *not* mean you
+      // can remove the atexit() hook above, since it dumps when the
+      // execution monitor traps sigsegv / sigabrt etc.
+      global_sanity.dump_buffer();
+      clean_shutdown = true;
+      throw;
+    }
+  
+  clean_shutdown = true;
+  return 0;
+}

@@ -1,0 +1,31 @@
+Thu Sep  4 15:40:07 EDT 2003
+
+	0.4 release. monotone is now self-hosting. database
+	compatibility broken since 0.3. depot uses RSA signatures now,
+	not mac keys. many bugs removed. depot database compatibility
+	broken. database schemas should now remain stable (or be
+	provided with safe schema-upgrading function).
+
+Mon Aug 25 18:00:37 EDT 2003
+
+	0.3 release. database compatibility broken. packet format
+	compatibility broken. dropped boost sandbox library dependency.
+	redid networking to support private HTTP+CGI depots along with
+	netnews. wrote depot. added 'propagate' command to move changes
+	between branches asymmetrically. rewrote testsuite in autotest.
+	cleaned up command line processing. expanded testsuite. improved
+	user-friendly error reporting.
+
+Fri Aug  8 10:20:01 EDT 2003 
+
+	0.2 release. database compatibility broken. dropped many
+	library dependencies. hand-reimplemented xdelta, parts of
+	nana. incorporated subset of cryptopp and sqlite into
+	sources. added RCS and CVS importer. switched to piecewise
+	reconstruction. generally much more robust storage system.
+	scalability tests against real world CVS archives show
+	performance gap with CVS closing, but still present.
+
+Sun Apr 6 20:20:42 EDT 2003 
+
+	initial release

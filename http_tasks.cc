@@ -1,0 +1,189 @@
+// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
+// all rights reserved.
+// licensed to the public under the terms of the GNU GPL (>= 2)
+// see the file COPYING for details
+
+// HTTP is a much simpler protocol, so we implement the parts of it
+// we need to speak in just this one file, rather than having a 
+// separate HTTP machine abstraction.
+
+// FIXME: the layering is weak in here; we might want to stratify
+// a bit if more than a couple simple methods appear necessary to
+// talk to depots. for now it is simple.
+
+#include "network.hh"
+#include "packet.hh"
+#include "sanity.hh"
+#include "transforms.hh"
+
+#include <string>
+#include <iostream>
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+
+using namespace std;
+using boost::lexical_cast;
+using boost::shared_ptr;
+
+bool post_http_packets(string const & group_name,
+		       string const & user,
+		       string const & signature,
+		       string const & packets,
+		       string const & http_host,
+		       string const & http_path,
+		       unsigned long port,
+		       std::iostream & stream)
+{
+  string query = 
+    string("q=post&") +
+    "group=" + group_name + "&"
+    "user=" + user + "&"
+    "sig=" + signature;
+
+  string request = string("POST ")
+    + "/" + http_path 
+    + "?" + query + " HTTP/1.0";
+
+  stream << request << "\r\n";
+  L("HTTP -> '%s'\n", request.c_str());
+
+  stream << "Host: " << http_host << "\r\n";
+  L("HTTP -> 'Host: %s'\n", http_host.c_str());
+
+  stream << "Content-Length: " << packets.size() << "\r\n";
+  L("HTTP -> 'Content-Length: %d'\n", packets.size());
+
+  stream << "\r\n";
+  stream.flush();
+  
+  stream.write(packets.data(), packets.size());
+
+  // boost::socket appeared to have an incorrect implementation
+  // of overflow; I think I have fixed it. if not, comment out
+  // the above and re-enable this. it's slow but it works.
+  //
+  //   for (size_t i = 0; i < packets.size(); ++i)
+  //     { stream.put(packets.at(i)); stream.flush(); }
+
+  stream.flush();
+
+  L("HTTP -> %d bytes\n", packets.size());
+
+  stream.flush();
+
+  int response = 0; string http;
+  bool ok = (stream >> http >> response &&
+	     response >= 200 && 
+	     response < 300);
+  L("HTTP <- %s %d\n", http.c_str(), response);
+  return ok;
+}
+
+void fetch_http_packets(string const & group_name,
+			unsigned long & maj_number,
+			unsigned long & min_number,
+			packet_consumer & consumer,
+			string const & http_host,
+			string const & http_path,
+			unsigned long port,
+			std::iostream & stream)
+{
+  // step 1: make the request
+  string query = 
+    string("q=since&") +
+    "group=" + group_name + "&"
+    "maj=" + lexical_cast<string>(maj_number) + "&"
+    "min=" + lexical_cast<string>(min_number);
+
+  string request = string("GET ")
+    + "/" + http_path 
+    + "?" + query + " HTTP/1.0";
+
+  stream << request << "\r\n";
+  L("HTTP -> '%s'\n", request.c_str());
+
+  stream << "Host: " << http_host << "\r\n";
+  L("HTTP -> 'Host: %s'\n", http_host.c_str());
+
+  stream << "\r\n";
+  stream.flush();
+
+  // step 2: skip the headers. either we get packets or we don't; how we
+  // get them, or what the HTTP server thinks, is irrelevant.
+  {
+    bool in_headers = true;
+    while(stream.good() && in_headers)
+      {
+	size_t linesz = 0xfff;
+	char line[linesz];
+	memset(line, 0, linesz);
+	stream.getline(line, linesz, '\n');	
+	size_t bytes = stream.gcount();
+	N(bytes < linesz, "long header response line from server");
+	if (bytes > 0) bytes--;
+	string tmp(line, bytes);
+	if (bytes == 1 || tmp.empty() || tmp == "\r") 
+	  in_headers = false;
+	else
+	  L("HTTP <- header %d bytes: '%s'\n", bytes, tmp.c_str());
+      }
+  }
+
+  // step 3: read any packets
+  {
+    size_t linesz = 0xfff;
+    char line[linesz];
+    string packet;
+    while(stream.good())
+      {
+	// WARNING: again, we are reading from the network here.
+	// please use the utmost clarity and safety in this part.
+	stream.getline(line, linesz, '\n');
+	size_t bytes = stream.gcount();
+	N(bytes < linesz, "long response line from server");
+	if (bytes > 0) bytes--;
+	string tmp(line, bytes);
+	size_t pos = tmp.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
+					   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+					   "0123456789"
+					   "+/=_.@[] \n\t");
+	if (pos != string::npos)
+	  {
+	    L("Bad char from network: pos %d, char '%d'\n", 
+	      pos,
+	      static_cast<int>(tmp.at(pos)));
+	    continue;
+	  }
+
+	if (tmp.size() > 6 
+	    && tmp.substr(0,5) == "[seq ")
+	  {
+	    // we are at the end of a packet
+	    string junk;
+	    istringstream iss(tmp);
+	    unsigned long tmaj = 0, tmin = 0;
+	    if (iss >> junk >> tmaj >> tmin)
+	      {
+		L("got sequence numbers %lu, %lu\n", tmaj, tmin);
+		istringstream pkt(packet);
+		read_packets(pkt, consumer);
+		maj_number = tmaj;
+		min_number = tmin;
+		packet.clear();
+	      }
+	  }
+	else
+	  {
+	    // we are somewhere before the end of a packet
+	    packet.append(tmp);
+	  }
+      }
+
+    if (packet.size() != 0)
+      {
+	L("%d trailing bytes from http\n", packet.size());
+	istringstream pkt(packet);
+	read_packets(pkt, consumer);
+      }    
+  }  
+}

@@ -1,0 +1,105 @@
+#  -*- Autoconf -*-
+#
+# the monotone integration testsuite is written in bourne shell,
+# strung together with the autotest framework (part of autoconf).
+#
+# it's a bit icky but it's better than the hand-written thing we were
+# using before, and it's *certainly* more user friendly than dejagnu, 
+# and we need *some* tests which run "as the user would run them".
+# bourne shell scripts are pretty close to that.
+#
+
+AT_INIT([integration tests])
+AT_TESTED([monotone])
+
+# some command abbreviations to make life easier
+
+m4_define([MONOTONE], [monotone --rcfile=test_hooks.lua --nostd --norc --db=test.db --key=tester@test.net])
+m4_define([SHA1], [sha1sum $1 | cut -d ' ' -f 1])
+
+# the MONOTONE_SETUP macro deploys the standard lua hooks and loads the 
+# standard testing key, which we use for further tests.
+
+m4_define([MONOTONE_SETUP], [
+
+AT_DATA(test_keys, [@<:@pubkey tester@test.net@:>@
+MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
+yivrRGtmpwSItljht1bmgLQF37KiSPoMEDUb1stfKxaMsYiy8iTyoQ+M2EVFP37n2rtnNZ0H
+oVcQd2sRsCerQFh9nslRPymlkQXUlOiNFN6RlFNcdjkucqNe+YorFX21EYw7XuT5XwIBEQ==
+@<:@end@:>@
+@<:@privkey tester@test.net@:>@
+npy0jyqbZdylFkMjdR9OvlqmDHuBGXpGFPt94h96aG+Lp+OdBCmWx8GueHk8FKkexwPqhRBM
+PPopUeuwqxuSX+yEodMl5IHBmin0nLnbOeBjtasjemBFEmdNl/jPDF/AeQ2WHhanB731dSQc
+vzLOQfKAYmfk56PPULi9oJJNUxaCkvsWtvaI+HUHZrjyyV7dA4Vsc6Jvx2Yf1+MdDAEGk/Rw
+ZtP0LmuoiyvRDFqBF8aTmnotyb4kRKohnJ7VF+y6hYvmtMpM3TKnpR7EbojBzNPqKuO7nPUz
+jGxA7F84O24Vbf128PNSI5vj4istow26aPjn28qPjfRrkV30WLL/dXfYJkfkTqglYnoEXvF/
+xZoVxxNeAX58mgy0A1ErVxv8U7TwuP983GHEpLwy3gbiP+9akAJCr8r823DHmQqq5QDELibP
+cuXZfOttpfVRkcbMhjeF0M6czc4HoKgHTAnf/18hzdZwGX/WWvRIBHImbUJ+mDbp2ByDTfKf
+ErGXSvZ3HxCqBD8yx1SnXhV8IDHaBmV9wwYcN+H2cxOWGZk7g7xJS19+a3UQB3c3sSXQVJBp
+6QpCZgysxkZwzuXDzzLZPT9SLZz4K2p7+7BwMbpy9ZxcyAzmiEtpA24UP06jtjFN7WcXAdx/
+E5Gmoe9b1EiXWdReHjUGpc6k0LQ0PPXAwqrcGdwYbOLDZ5xsQ5AsEYSFtyTS60D1nHBcdNmW
+M0eOUJFdJf/uNe/2EApc3a8TyEkZtVqiYtOVV3qDB9NmU4bVOkDqzl1F7zJwATWbmasSdkM3
+6lxDkczBfCrEjH5p5Y8DU+ge4e4LRtknY9oBOJ7EQO0twYJg3k0=
+@<:@end@:>@
+])
+
+AT_DATA(test_hooks.lua, [
+-- this is the "testing" set of lua hooks for monotone
+-- it's intended to support self-tests, not for use in
+-- production. just overrides some of the std hooks.
+
+function get_passphrase(keyid)
+	return keyid
+end
+
+function non_blocking_rng_ok()
+	return 1
+end
+
+function get_author(branchname)
+        local user = getenv("USER")
+        local host = getenv("HOSTNAME")
+        if ((user == nil) or (host == nil)) then return nil end
+        return format("%s@%s", user, host)
+end
+
+function ignore_file(name)
+	if (strfind(name, "test_hooks.lua")) then return 1 end
+	if (strfind(name, "test.db")) then return 1 end
+	return nil
+end
+
+])
+
+AT_CHECK(MONOTONE read <test_keys, [], [ignore])
+AT_CHECK(rm test_keys)
+])
+
+# run as PROBE_NODE(filename, msha, fsha)
+m4_define([PROBE_NODE], [ 
+AT_CHECK(rm MT/manifest)
+AT_CHECK(rm $1)
+AT_CHECK(MONOTONE checkout $2, [], [ignore])
+PROBE_M_SHA=`SHA1(MT/manifest)`
+PROBE_F_SHA=`SHA1($1)`
+AT_CHECK(test $PROBE_M_SHA == $2)
+AT_CHECK(test $PROBE_F_SHA == $3)
+])
+
+
+# include all the sub-tests we're going to use
+
+m4_include(tests/t_null.at)
+m4_include(tests/t_scan.at)
+m4_include(tests/t_import.at)
+m4_include(tests/t_genkey.at)
+m4_include(tests/t_unidiff.at)
+m4_include(tests/t_persist_phrase.at)
+m4_include(tests/t_versions.at)
+m4_include(tests/t_fork.at)
+m4_include(tests/t_update.at)
+m4_include(tests/t_merge.at)
+m4_include(tests/t_nntp.at)
+m4_include(tests/t_http.at)
+
+

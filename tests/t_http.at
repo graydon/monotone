@@ -1,0 +1,110 @@
+#  -*- Autoconf -*-
+
+# this script uses the 'boa' HTTP server, if you don't have it the
+# test will fail.
+
+AT_SETUP([communicating with a depot through http])
+
+MONOTONE_SETUP
+AT_CHECK(cp test.db test2.db)
+
+AT_DATA(http.lua, [
+function get_post_targets(groupname)
+	return { {"http://127.0.0.1:8080/user/depot.cgi", "packets"} } 
+end
+
+function get_fetch_sources(groupname)
+	return { {"http://127.0.0.1:8080/user/depot.cgi", "packets"} } 
+end
+
+function get_http_auth(url, group)
+	return "tester@test.net"
+end
+])
+
+AT_DATA(testfile, [version 0 of test file
+])
+AT_CHECK(MONOTONE add testfile, [], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=http.lua commit blah-blah, [], [ignore])
+VER0=`SHA1(MT/manifest)`
+
+AT_DATA(testfile, [version 1 of test file
+])
+AT_CHECK(MONOTONE --rcfile=http.lua commit blah-blah, [], [ignore])
+VER1=`SHA1(MT/manifest)`
+
+DEPOT=`which depot.cgi`
+BOA=`which boa`
+AT_CHECK(test -x $BOA)
+AT_CHECK(test -x $DEPOT)
+AT_CHECK(mkdir -p http_root)
+AT_CHECK(mkdir -p http_root/docroot/user)
+AT_DATA(http_root/boa.conf, [
+Port 8080
+Listen 127.0.0.1
+ErrorLog errors
+MimeTypes mime.types
+AccessLog access
+DocumentRoot docroot
+])
+AT_DATA(http_root/mime.types, [application/x-httpd-cgi cgi
+])
+
+AT_CHECK(cp $DEPOT ./http_root/docroot/user/depot.cgi)
+AT_CHECK(chmod 0755 ./http_root/docroot/user/depot.cgi)
+AT_CHECK(./http_root/docroot/user/depot.cgi initdb)
+AT_CHECK(MONOTONE pubkey tester@test.net | ./http_root/docroot/user/depot.cgi adduser)
+AT_CHECK(mv depot.db ./http_root/docroot/user)
+AT_CHECK(chmod 0777 ./http_root/docroot/user/depot.db)
+
+# autotest knows no way of doing background processes
+
+AT_CHECK(cp $BOA ./http-test-boa)
+AT_CHECK(chmod 0755 ./http-test-boa)
+killall -q -KILL http-test-boa
+./http-test-boa -c ./http_root >/dev/null 2>&1 &
+sleep 2
+
+AT_DATA(dumpit.sql, [.dump
+])
+
+AT_CHECK(MONOTONE --rcfile=http.lua post, [], [ignore])
+AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
+AT_CHECK(grep mdata stdout, [], [stdout])
+AT_CHECK(grep $VER0 stdout, [], [ignore])
+
+AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
+AT_CHECK(grep mdelta stdout, [], [stdout])
+AT_CHECK(grep $VER0 stdout, [], [ignore])
+
+AT_CHECK(sqlite http_root/docroot/user/depot.db <dumpit.sql, [], [stdout])
+AT_CHECK(grep $VER1 stdout, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db --rcfile=http.lua fetch http://127.0.0.1:8080/user/depot.cgi packets, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db cat manifest $VER0, [], [stdout])
+AT_CHECK(grep testfile stdout, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db cat manifest $VER1, [], [stdout])
+AT_CHECK(grep testfile stdout, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db lscerts manifest $VER0, [], [stdout])
+AT_CHECK(mv stdout certs, [], [ignore])
+AT_CHECK(grep date certs, [], [ignore])
+AT_CHECK(grep author certs, [], [ignore])
+AT_CHECK(grep branch certs, [], [ignore])
+AT_CHECK(grep changelog certs, [], [ignore])
+AT_CHECK(grep bad certs, [1], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db lscerts manifest $VER1, [], [stdout])
+AT_CHECK(mv stdout certs, [], [ignore])
+AT_CHECK(grep date certs, [], [ignore])
+AT_CHECK(grep author certs, [], [ignore])
+AT_CHECK(grep branch certs, [], [ignore])
+AT_CHECK(grep changelog certs, [], [ignore])
+AT_CHECK(grep ancestor certs, [], [ignore])
+AT_CHECK(grep bad certs, [1], [ignore])
+
+killall -q -TERM http-test-boa
+
+AT_CLEANUP

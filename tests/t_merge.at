@@ -1,0 +1,64 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([creating a fork and merging])
+
+MONOTONE_SETUP
+
+# this test is kinda like update, only it *does* commit the left right
+# branch before attempting a merge. it just checks to make sure merging
+# works in the context of the "merge" command, not just the "update"
+# command.
+
+AT_DATA(testfile, [first line of the file
+second line of the file
+third line of the file
+])
+AT_CHECK(MONOTONE add testfile, [], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore])
+ROOT_M_SHA=`SHA1(MT/manifest)`
+ROOT_F_SHA=`SHA1(testfile)`
+
+AT_DATA(testfile, [first line of the file
+an insertion between first and second
+second line of the file
+third line of the file
+])
+
+AT_CHECK(MONOTONE commit blah-blah, [], [ignore])
+LEFT_M_SHA=`SHA1(MT/manifest)`
+LEFT_F_SHA=`SHA1(testfile)`
+AT_CHECK(test $LEFT_M_SHA != $ROOT_M_SHA)
+AT_CHECK(test $LEFT_F_SHA != $ROOT_F_SHA)
+
+PROBE_NODE(testfile, $ROOT_M_SHA, $ROOT_F_SHA)
+
+AT_DATA(testfile, [first line of the file
+second line of the file
+an insertion between second and third
+third line of the file
+])
+AT_CHECK(MONOTONE commit blah-blah, [], [ignore])
+RIGHT_M_SHA=`SHA1(MT/manifest)`
+RIGHT_F_SHA=`SHA1(testfile)`
+AT_CHECK(test $RIGHT_M_SHA != $ROOT_M_SHA)
+AT_CHECK(test $RIGHT_F_SHA != $ROOT_F_SHA)
+AT_CHECK(test $RIGHT_M_SHA != $LEFT_M_SHA)
+AT_CHECK(test $RIGHT_F_SHA != $LEFT_F_SHA)
+
+# first attempt at update should fail since there's an unresolved fork
+AT_CHECK(MONOTONE update, [1], [ignore], [ignore])
+
+# now merge and update again, this time successfully
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore])
+
+# files should now be merged
+AT_DATA(probe, [first line of the file
+an insertion between first and second
+second line of the file
+an insertion between second and third
+third line of the file
+])
+AT_DATA(cmp testfile probe, [], [ignore])
+
+AT_CLEANUP

@@ -1,0 +1,5 @@
+run ./autogen.sh, ./configure and make to build the basics
+
+"make html" for docs, or read the .info file and / or man page.
+
+you will need automake 1.7, autoconf 2.57, boost and lua.

@@ -1,0 +1,260 @@
+2003-09-04  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am, depot.cc, http_tasks.cc, http_tasks.hh,
+	lua.cc, lua.hh, monotone.texi, network.cc, tests/t_http.at,
+	vocab_terms.hh: 
+
+	Use public key signatures to talk to depot, not mac keys.
+
+	* commands.cc, file_io.cc, monotone.texi, monotone.1,
+	tests/t_scan.at, tests/t_import.at, work.cc, work.hh:
+
+	Remove the 'import' and 'scan' commands, in favour of generalized
+	'add' which chases subdirectories.
+
+	* configure.ac, NEWS: 
+
+	Release point (v 0.4).
+	
+2003-09-03  graydon hoare  <graydon@pobox.com>
+
+	* monotone.texi: Expand notes about setting up depot.
+
+	* update.cc: Update by ancestry. Duh.
+
+2003-08-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* configure.ac: Check for lua40/lua.h, lua40/lualib.h and -llua40,
+	-lliblua40.
+	* config.h.in: Add LUA_H, LIBLUA_H templates, remove HAVE_LIBLUA,
+	HAVE_LIBLUALIB templates.
+	* lua.cc: Include config.h.  Use LUA_H, LIBLUA_H macros.
+
+2003-09-02  graydon hoare  <graydon@pobox.com>
+
+	* boost/socket/streambuf.hpp: Bump ppos on overflow.
+
+	* packet.cc, transforms.cc, transforms.hh: Add function for
+	canonicalization of base64 encoded strings. Use on incoming cert
+	packet values.
+
+	* commands.cc: Change fetch and post to take URL/groupname params
+	rather than branchname.
+
+	* network.cc, network.hh, depot.cc, http_tasks.cc: Fix URL parser,
+	improve logging, change signatures to match needs of commands.cc
+
+	* Makefile.am: Don't install txt2c or unit_tests. 
+
+	* Makefile.am: Build depot.cgi not depot.
+
+	* database.cc, database.hh: Add "all known sources" fetching support.
+
+	* patch_set.cc: Sort in a path-lexicographic order for nicer summaries.
+
+	* monotone.texi: Expand coverage of packets and networking.
+
+	* tests/t_nntp.at, tests/t_http.at: Update to provide URL/groupname
+	pairs.
+
+2003-09-02  Tom Tromey  <tromey@redhat.com>
+
+	* aclocal.m4, monotone.info: Removed generated files.
+
+2003-08-29  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am, txt2c.cc, lua.cc, database.cc:
+	Use a C constant-building converter rather than objcopy.
+
+	* cert.cc, cert.hh, packet.cc, packet.hh, diff_patch.cc,
+	rcs_import.cc: 
+	Modify cert functions to require a packet consumer, do no implicit
+	database writing.
+
+	* commands.cc, database.cc, database.hh, schema.sql, network.cc:
+	Modify packet queueing strategy to select ancestors from known
+	network server content, rather than most recent edge.
+
+2003-08-25  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS, ChangeLog, Makefile.am, NEWS, configure.ac,
+	tests/t_http.at: Release point (v 0.3)
+
+2003-08-24  graydon hoare  <graydon@pobox.com>
+
+	* nntp_tasks.cc: Measure success from postlines state.
+	* network.cc: Print summary counts of transmissions.
+	* packet.cc: Count packets into database.
+	* depot.cc: Add administrative commands, fix a bunch of
+	little bugs.
+	* t_http.at: Testcase for depot-driven communication.
+	* monotone.texi: Update to reflect depot existence.
+	* http_tasks.cc: Pick bugs out.
+	
+2003-08-24  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc: Wash certs before output.
+	* *.cc,*.hh: Adjust cert packet format to
+	be more readable, avoid superfluous gzipping.
+
+2003-08-24  graydon hoare  <graydon@pobox.com>
+
+	* configure, Makefile.in: Remove generated files, oops.
+	* commands.cc: Implement 'propagate'.
+	* lua.cc, lua.hh, network.cc, network.hh: Remove
+	'aggregate posting' stuff.
+	* network.cc: Batch postings into larger articles.
+	* diff_patch.hh, diff_patch.cc: Implement basic
+	merge2-on-manifest.
+	
+2003-08-23  graydon hoare  <graydon@pobox.com>
+
+	* monotone.cc: Handle user-defined lua hooks as
+	overriding internal / .monotonerc hooks no matter
+	where on cmd line they occur.
+	* update.cc: Made failures more user-friendly.
+	* lua.cc: Improve logging a bit.
+	* testsuite.at, tests/*.{at,in}, testsuite/: Rewrite tests in
+	autotest framework, move to tests/ directory.
+	* boost/io/*, cryptopp/hmac.h: Add missing files.
+	
+2003-08-23  Tom Tromey  <tromey@redhat.com>
+
+	* monotone.cc (OPT_VERSION): New macro.
+	(cpp_main): Handle OPT_VERSION.
+	(options): Added `version' entry.
+	Include config.h.
+
+2003-08-21  Tom Tromey  <tromey@redhat.com>
+
+	* database.cc: Include "sqlite/sqlite.h", not <sqlite.h>.
+
+2003-08-20  graydon hoare  <graydon@pobox.com>
+
+        * boost/*:
+        incorporate boost sandbox bits, for now.
+
+        * Makefile.am, Makefile.in, configure, configure.ac, diff_patch.cc,
+	http_tasks.cc, http_tasks.hh, network.cc, nntp_machine.cc,
+	nntp_machine.hh, nntp_tasks.cc, nntp_tasks.hh, testsuite/t_nntp.sh:
+
+	fix up networking layer to pass nntp tests again
+
+2003-08-19  graydon hoare  <graydon@pobox.com>
+
+        * Makefile.am, Makefile.in, app_state.hh, cert.cc, commands.cc,
+	constants.hh, cryptopp/misc.h, database.cc, depot.cc,
+	http_tasks.cc, http_tasks.hh, keys.cc, lua.cc, lua.hh, monotone.cc,
+	network.cc, network.hh, nntp_machine.cc, nntp_machine.hh,
+	nntp_tasks.cc, nntp_tasks.hh, packet.cc, packet.hh, rcs_import.cc,
+	sanity.cc, sanity.hh, schema.sql, test_hooks.lua,
+	testsuite/runtest.sh, testsuite/t_null.sh, vocab_terms.hh:
+
+	major surgery time
+	- move to multi-protocol posting and fetching.
+	- implement nicer failure modes for sanity.
+	- redo commands to print nicer, fail nicer.	
+	
+2003-08-18  graydon hoare  <graydon@pobox.com>
+
+        * Makefile.am, Makefile.in, adler32.hh, database.cc, depot.cc,
+	mac.hh, xdelta.cc, Makefile.am, Makefile.in: 
+
+	first pass at a depot (CGI-based packet service)
+
+2003-08-08  graydon hoare  <graydon@pobox.com>
+
+        * Makefile.am, Makefile.in AUTHORS, ChangeLog, Makefile.am,
+	Makefile.in, NEWS, monotone.1, monotone.info, monotone.texi:
+
+	release point (v 0.2)
+
+2003-08-08  graydon hoare  <graydon@pobox.com>
+
+        * cert.cc, cert.hh, interner.hh, rcs_import.cc: 
+
+	auxilliary certs
+
+        * cert.cc, cert.hh, cycle_detector.hh, interner.hh, patch_set.cc,
+	rcs_import.cc: 
+
+	improvements to cycle detection stuff
+
+2003-08-05  graydon hoare  <graydon@pobox.com>
+
+        * rcs_import.cc:
+        
+	almost even more seemingly correct CVS graph reconstruction (still slow)
+
+        * sqlite/* cryptopp/* Makefile.am, Makefile.in, aclocal.m4,
+	config.h.in, configure, configure.ac, file_io.cc, keys.cc,
+	sanity.cc, sanity.hh, transforms.cc: 
+
+	minimizing dependencies on 3rd party libs by importing the
+	necessary bits and rewriting others.
+
+        * cert.cc, cert.hh, rcs_import.cc:	
+        
+	cvs import seems to be working, but several linear algorithms need
+	replacement
+
+2003-07-28  graydon hoare  <graydon@pobox.com>
+
+        * Makefile.am, Makefile.in, cert.cc, commands.cc, database.cc,
+	database.hh, manifest.cc, rcs_file.cc, rcs_import.cc,
+	rcs_import.hh, vocab.cc, xdelta.cc:
+
+	cvs graph reconstruction hobbling along.
+
+2003-07-21  graydon hoare  <graydon@pobox.com>
+
+        * database.cc, xdelta.cc, xdelta.hh: 
+
+	piecewise xdelta; improves speed a fair bit.
+
+2003-07-11  graydon hoare  <graydon@pobox.com>
+
+        * Makefile.am, Makefile.in, config.h.in, configure, configure.ac,
+	transforms.cc, xdelta.cc, xdelta.hh:
+
+	implement xdelta by hand, forget 3rd party delta libs.
+
+2003-07-02  graydon hoare  <graydon@pobox.com>
+
+        * database.cc, rcs_import.cc, transforms.cc, transforms.hh:
+
+	speedups all around in the storage system
+
+2003-07-01  graydon hoare  <graydon@pobox.com>
+
+        * database.hh, rcs_import.cc, transforms.cc, transforms.hh: speed
+
+	improvements to RCS import
+
+2003-06-30  graydon hoare  <graydon@pobox.com>
+
+        * rcs_import.cc, transforms.cc: 
+
+	some speed improvements to RCS import
+
+2003-06-29  graydon hoare  <graydon@pobox.com>
+
+        * commands.cc, database.hh, rcs_import.cc, transforms.cc: 
+
+	RCS file import successfully (albeit slowly) pulls in some pretty
+	large (multi-hundred revision, >1MB) test cases from GCC CVS
+
+        * Makefile.in, commands.cc, rcs_file.cc, rcs_file.hh,
+	rcs_import.cc, rcs_import.hh, 
+
+	Makefile.am: preliminary support for reading and walking RCS files
+
+2003-04-09  graydon hoare  <graydon@pobox.com>
+
+        * autogen.sh: oops
+	* */*: savannah import
+
+2003-04-06  graydon hoare  <graydon@pobox.com>
+
+	* initial release. 
+

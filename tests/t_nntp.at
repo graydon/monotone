@@ -1,0 +1,100 @@
+#  -*- Autoconf -*-
+
+# this script uses the 'sn' news server and the 'tcpserver' network package 
+# from ucspi-tcp. if you do not have them installed, it will fail.
+
+AT_SETUP([communicating with a news server])
+
+MONOTONE_SETUP
+AT_CHECK(cp test.db test2.db)
+
+AT_DATA(nntp.lua, [
+function get_post_targets(groupname)
+	return { {"nntp://127.0.0.1:8119", "monotone.test.packets"} } 
+end
+
+function get_fetch_sources(groupname)
+	return { {"nntp://127.0.0.1:8119", "monotone.test.packets"} } 
+end
+
+function get_news_sender(url, group)
+	return "tester@test.net"
+end
+])
+
+AT_DATA(testfile, [version 0 of test file
+])
+AT_CHECK(MONOTONE add testfile, [], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=nntp.lua commit blah-blah, [], [ignore])
+VER0=`SHA1(MT/manifest)`
+
+AT_DATA(testfile, [version 1 of test file
+])
+AT_CHECK(MONOTONE --rcfile=nntp.lua commit blah-blah, [], [ignore])
+VER1=`SHA1(MT/manifest)`
+
+
+# silly bug: sn has a name clash with libwww-perl so I have had to install
+# them in different locations. this is nuts.
+export PATH=/usr/local/sbin:$PATH
+export SNROOT=`pwd`/snroot
+export POSTING_OK=''
+PORT=8119
+HOST=127.0.0.1
+GROUP=monotone.test.packets
+TCPSERVER=`which tcpserver`
+SNNTPD=`which snntpd`
+
+AT_CHECK(test -x $TCPSERVER)
+AT_CHECK(test -x $SNNTPD)
+AT_CHECK(mkdir -p $SNROOT)
+AT_CHECK(snnewgroup $GROUP, [], [ignore], [ignore])
+
+# autotest knows no way of doing background processes
+
+AT_CHECK(cp $TCPSERVER ./nntp-test-tcpserver)
+AT_CHECK(chmod 0755 ./nntp-test-tcpserver)
+killall -q -TERM nntp-test-tcpserver
+./nntp-test-tcpserver $HOST $PORT snntpd >/dev/null 2>&1 &
+sleep 2
+
+AT_CHECK(MONOTONE --rcfile=nntp.lua post, [], [ignore])
+AT_CHECK(sncat $GROUP, [], [stdout])
+AT_CHECK(grep mdata stdout, [], [stdout])
+AT_CHECK(grep $VER0 stdout, [], [ignore])
+
+AT_CHECK(sncat $GROUP, [], [stdout])
+AT_CHECK(grep mdelta stdout, [], [stdout])
+AT_CHECK(grep $VER0 stdout, [], [ignore])
+
+AT_CHECK(sncat $GROUP, [], [stdout])
+AT_CHECK(grep $VER1 stdout, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db --rcfile=nntp.lua fetch nntp://127.0.0.1:8119 monotone.test.packets, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db cat manifest $VER0, [], [stdout])
+AT_CHECK(grep testfile stdout, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db cat manifest $VER1, [], [stdout])
+AT_CHECK(grep testfile stdout, [], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db lscerts manifest $VER0, [], [stdout])
+AT_CHECK(mv stdout certs, [], [ignore])
+AT_CHECK(grep date certs, [], [ignore])
+AT_CHECK(grep author certs, [], [ignore])
+AT_CHECK(grep branch certs, [], [ignore])
+AT_CHECK(grep changelog certs, [], [ignore])
+AT_CHECK(grep bad certs, [1], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db lscerts manifest $VER1, [], [stdout])
+AT_CHECK(mv stdout certs, [], [ignore])
+AT_CHECK(grep date certs, [], [ignore])
+AT_CHECK(grep author certs, [], [ignore])
+AT_CHECK(grep branch certs, [], [ignore])
+AT_CHECK(grep changelog certs, [], [ignore])
+AT_CHECK(grep ancestor certs, [], [ignore])
+AT_CHECK(grep bad certs, [1], [ignore])
+
+killall -q -TERM nntp-test-tcpserver
+
+AT_CLEANUP

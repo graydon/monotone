@@ -1,0 +1,2079 @@
+\input texinfo   @c -*-texinfo-*-
+@c %**start of header
+@setfilename monotone.info
+@settitle monotone documentation
+@setchapternewpage odd
+@c %**end of header
+
+@ifinfo
+This file is documents the ``monotone'' distributed version control system.
+
+Copyright 2003 Graydon Hoare
+All rights reserved
+Licensed to the public under the terms of the GNU FDL (>= 1.1).
+See the file COPYING for details
+@end ifinfo
+
+@titlepage
+@title Monotone
+@subtitle A distributed version control system
+@author Graydon Hoare
+
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 2003 Graydon Hoare
+All rights reserved
+Licensed to the public under the terms of the GNU FDL (>= 1.1).
+See the file COPYING for details
+@end titlepage
+
+@ifnottex
+@node Top
+@top Top
+
+Monotone Documentation
+
+Monotone is a distributed version control tool. It can help automate
+many tedious and error-prone tasks in group software development.
+@itemize
+@item
+Store multiple versions of files you are working on efficiently.
+@item
+Transmit changes to files between you and your colleagues.
+@item
+Merge changes you make with those your colleagues make.
+@item
+Make notes about your opinion of the quality of versions of files.
+@item
+Make decisions about using or ignoring versions, depending on the notes
+you receive from others.
+@end itemize
+
+Please be aware that monotone is a slightly unorthodox version control
+tool, and many of its concepts are slightly similar --- but
+significantly different --- from concepts with similar names in other
+version control tools.
+
+@end ifnottex
+
+@menu
+* Concepts::            Taxonomy of monotone
+* Getting Started::     Simple use of monotone
+* Man Page::            That other document
+@end menu
+
+
+Complete table of contents
+
+@contents
+
+
+@node    Concepts
+@chapter Concepts
+
+This chapter should familliarize you with the concepts, terminology,
+and behavior described in the remainder of the user manual. Please
+take a moment to read it, as later sections will assume familliarity
+with these terms.
+
+@menu
+* Versions of files::         Tracking changes to single files
+* Versions of trees::         Tracking changes to collections of files
+* Certificates::              Tracking extended information
+* Storage and workflow::      Saving, sending, and receiving changes
+* Packets::                   How databases and network servers relate
+* Ancestry::                  Relating versions to each other
+* Forks and merges::          Managing divergence of code
+* Branches::                  Intentional divergence and automatic merging
+@end menu
+
+@node    Versions of files
+@section Versions of files
+
+Suppose you wish to modify a file @file{file.txt} on your
+computer. You begin with one @i{version} of the file, load it into
+an editor, make some changes, and save the file again. Doing so
+produces a new @i{version} of the file. We will say that the older
+version of the file was a @dfn{parent}, and the new version is a
+@dfn{child}, and that you have performed an @dfn{edit} between the
+parent and the child. We may draw the relationship between parent and
+child using a graph, where the arrow in the graph indicates the
+direction of the edit, from parent to child.
+
+@example
+     +----------------+
+     |                |
+     | parent version |
+     | of file.txt    |
+     |                |
+     +----------------+
+              |
+              |
+             \|/
+              V
+     +----------------+
+     |                |
+     | child version  |
+     | of file.txt    |
+     |                |
+     +----------------+
+@end example
+
+We may want to identify the parent and the child precisely, for sake
+of reference. To do so, we will compute a @i{cryptographic hash
+function}, called @sc{SHA1}, of each version. The deails of this
+function are beyond the scope of this document; in summary, the @sc{SHA1}
+function takes a version of a file and produces a short string of 20
+bytes, which we will use to uniquely identify the version@footnote{we
+say @sc{SHA1} values are ``unique'' here, when in fact there is a
+small probability of two different versions having the same @sc{SHA1}
+value. this probability is very small, so we discount it.}.  Now our
+graph does not refer to some ``abstract'' parent and child, but rather
+to the exact edit we performed between a specific parent and a
+specific child.
+
+@example
+     +---------------------------------------------------+
+     | parent version                                    |
+     | of file.txt                                       |
+     |                                                   |
+     | SHA1 = 65f1bde1f38262034e7c3457301e8f736ba6381b   |
+     +---------------------------------------------------+
+              |
+              |
+             \|/
+              V
+     +---------------------------------------------------+
+     | child version                                     |
+     | of file.txt                                       |
+     |                                                   |
+     | SHA1 = a91566316d208dc405795904f8d67ae3a0e765cb   |
+     +---------------------------------------------------+
+@end example
+
+When dealing with versions of files, we will dispense with writing out
+``file names'', and identify versions @i{purely} by their @sc{SHA1}
+value, which we will also refer to as their @dfn{version code}. Using
+version codes alone will often help us accomodate the fact that people
+often wish to call files by different names. So now our graph of
+parent and child is just a relationship between two versions, only
+identified by version code.
+
+@example
+     +---------------------------------------------------+
+     | parent version                                    |
+     | SHA1 = 65f1bde1f38262034e7c3457301e8f736ba6381b   |
+     +---------------------------------------------------+
+              |
+              |
+             \|/
+              V
+     +---------------------------------------------------+
+     | child version                                     |
+     | SHA1 = a91566316d208dc405795904f8d67ae3a0e765cb   |
+     +---------------------------------------------------+
+@end example
+
+Version control systems, such as monotone, are principally concerned
+with the storage and management of @i{multiple} versions of some
+files.  One way to store multiple versions of a file is, literally, to
+save a separate @i{complete} copy of the file, every time you make a
+change. When necessary, monotone will save complete copies of your
+files in their, compressed with the @command{zlib} compression format.
+
+@example
+   +--------------+  +--------------+  +--------------+
+   |              |  |              |  |              |
+   | Hello        |  | Hello,       |  | Why, Hello   |
+   |              |  | world!       |  | there world, |    . . .
+   |              |  |              |  | how do you   |
+   |              |  |              |  | do?          |
+   |              |  |              |  |              |
+   +--------------+  +--------------+  +--------------+
+
+   \______  ______/  \______  ______/  \______  ______/
+          \/                \/                \/
+      1st version       2nd version      3rd version
+@end example
+
+Often we find that successive versions of a file are very similar to
+one another, so storing multiple complete copies is a waste of
+space. In these cases, rather than store @i{complete} copies of each
+version of a file, we store a compact description of only the
+@i{changes} which are made between versions. Such a description of
+changes is called a @dfn{delta}. 
+
+Storing deltas between files is, practically speaking, as good as
+storing complete versions of files. It lets you undo changes from a
+new version, by applying the delta backwards, and lets your friends
+change their old version of the file into the new version, by applying
+the delta forwards. Deltas are usually smaller than full files, so
+when possible monotone stores deltas, using the @command{rdiff}
+format. The details of this format are beyond the scope of this
+document.
+
+@example
+                        difference
+                     between versions
+                       _____/\____
+   +--------------+   /           \    +--------------+
+   |              |                    |              |
+   | Hello        |    +[, world!]     | Hello,       |
+   |              |                    | world!       |
+   |              |                    |              |
+   |              |                    |              |
+   |              |                    |              |
+   +--------------+                    +--------------+
+
+   \______  ______/                    \______  ______/
+          \/                                  \/
+     1st version                         2nd version
+@end example
+
+@node    Versions of trees
+@section Versions of trees
+
+After you have made many different files, you may wish to capture a
+``snapshot'' of the versions of all the files in a particular collection.
+Since files are typically collected into @i{trees} in a filesystem,
+we say that you want to capture a @i{version of your tree}. Doing
+so will permit you to undo changes to multiple files at once, or send
+your friend a @i{set} of changes to many files at once.
+
+@c figure of snapshotting a tree
+
+To make a snapshot of a tree, we begin by writing a special file
+called a @dfn{manifest}. In fact, monotone will write this file for
+us, but we could write it ourselves too. It is just a plain text
+file. Each line of a manifest file contains two columns. In the first
+column we write the version code of a file in your tree, and in the
+second column we write the path to the file, from the root of our tree
+to the filename.
+
+@example
++--------------------------------------------------------------+
+|                                                              |
+|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
+|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
+|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
+|  ddc2686e000e97f670180c60a3066989e56a11a3  fs/open.c         |
+|  295d276e6c9ce64846d309a8e39507bcb0a14248  fs/namespace.c    |
+|  71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc  fs/namei.c        |
+|  1112c0f8054cebc9978aa77384e3e45c0f3b6472  fs/iobuf.c        |
+|  8ddcfcc568f33db6205316d072825d2e5c123275  fs/inode.c        |
+|                                                              |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                          an example
+                         manifest file
+@end example
+
+Now we note that a manifest is itself a file. Therefore a manifest can
+serve as input to the @sc{SHA1} function, and thus every manifest has
+a version code of its own. By calculating the @sc{SHA1} value of a
+manifest, we capture the @i{state of our tree} in a single version
+code. In other words, the version code of the manifest essentially
+captures all the version codes and file names of every file in our
+tree, combined. So we may treat manifests and their version codes as
+@i{snapshots} of a tree of files, though lacking the actual contents
+of the files themselves.
+
+@example
+  +--------------------------+
+  |   int readdir(...) @{     |
+  |     ...                  |
+  |   @}                      |
+  +--------------------------+
+
+  \____________  ___________/
+               \/
+              SHA1
+               ||
++--------------||----------------------------------------------+
+|              \/                                              |
+|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
+|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
+|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
+|                   . . .                       . . .          |
++--------------------------------------------------------------+
+
+\_____________________________  _______________________________/
+                              \/
+                             SHA1
+                              ||
+                              ||
+                              \/
+                       manifest version:
+           a2eeaa28574141a7d48fa1cc2802070150b93ec4
+@end example
+
+As with versions of files, we may decide to store manifests in their
+entirety, or else we may store only a compact description of changes
+which occur between different versions of manifests. As with files,
+when possible monotone stores compact descriptions of changes between
+manifests; when necessary it stores complete versions of manifests.
+
+
+@node    Certificates
+@section Certificates
+
+Often, you will wish to make a @i{statement} about a version of a file
+or manifest, such as stating the reason that you made some changes, or
+stating the fact that you approve of the changes which were made, or
+stating the time at which you made the changes. Statements such as
+these can be thought of, generally, as a bundle of information with
+three parts:
+
+@itemize
+@item
+a @i{version code}, indicating which file or manifest you are
+making a statement about
+@item
+a @i{name} indicating the type of statement you are making, such as
+``changelog'', ``date'' or ``approval''
+@item
+a @i{value} indicating the remaining detail of the statement, such as
+``fixed a bug'', ``March 9th'' or ``approved for shipping''
+@end itemize
+
+
+For example, if you want to say that a particular version of a
+manifest was written on April 4, 2003, you might make a statement like
+this:
+
+@example
+      +------------------------------------------------------+
+      |  version code                                        |
+      |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
+      +--------------------------+---------------------------+
+      |  statement name          |  statement value          |
+      |  "date"                  |  "2003-04-04T07:39:51"    |
+      +--------------------------+---------------------------+
+@end example
+
+In an ideal world, these are all the parts of a statement we would
+need in order to go about our work. In the real world, however, there
+are sometimes malicious people who would make false or misleading
+statements; so we need a way to verify that a particular person made a
+particular statement about a version. We therefore will add two more
+pieces of information to our bundle:
+
+@itemize
+@item
+a @i{key} which identifies the person making a statement
+@item
+a @i{signature} --- just a large number with particular properties ---
+certifying the fact that the person made the statement
+@end itemize
+
+When these 2 items accompany a statement, we call the total bundle of
+5 items a @dfn{certificate}, or @i{cert}. A cert makes a statement in
+a secure fashion. The security of the signature in a cert is derived
+from the @sc{rsa} cryptography system, the details of which are beyond
+the scope of this document.
+
+@example
+      +------------------------------------------------------+
+      |  version code                                        |
+      |  a2eeaa28574141a7d48fa1cc2802070150b93ec4            |
+      +--------------------------+---------------------------+
+      |  cert name               |  cert value               |
+      |  "date"                  |  "2003-04-04T07:39:51"    |
+      +--------------------------+---------------------------+
+      |  signed by key           |  signature                |
+      |  "jrh@@somewhere.com"     |  "a02380def....0983fe90"  |
+      +--------------------------+---------------------------+
+@end example
+
+Monotone uses certs extensively. Any extra information which needs to
+be stored, transmitted or retrieved --- above and beyond versions of
+files and manifests --- is kept in the form of certs. This includes
+ancestry information, change logs, time and date records, and
+more. When monotone makes a decision about storing, transmitting, or
+recovering some files or manifests, the decision is based on certs it
+has seen, and the trustworthyness you assign to those certs.
+
+The @sc{rsa} cryptography system --- and therefore monotone itself ---
+requires that you exchange special ``public'' numbers with your
+friends, before they will trust certificates signed by you. These
+numbers are called @dfn{public keys}. Giving someone your public key
+does not give them the power to @i{impersonate} you, only to verify
+signatures made by you. Exchanging public keys should be done over a
+trusted medium, in person, or via a trusted third party. Advanced
+secure key exchange techniques are beyond the scope of this document.
+
+
+@node    Storage and workflow
+@section Storage and workflow
+
+Monotone moves information in and out of three different
+types of storage:
+
+@itemize
+@item
+a @i{working copy} in the local filesystem
+@item
+a @i{database} in the local filesystem
+@item
+a @i{web or news server} on the network
+@end itemize
+
+All information passes @emph{through} a database, en route to some
+other destination. For example, when changes are made in a working
+copy, you may save those changes to a database, and later you may send
+those changes from a database to a web or news server. Monotone will
+not move information directly between a working copy and a network
+server.
+
+@example
+                 post, fetch
+       (untrusted network exchanges)
+            _________/\________
+           /                   \
+
+    +-------------+      +------------+      +--------------+
+    |             |      |            |      |              |
+    |  net server | <==> |  database  | <==> | working copy |
+    |             |      |            |      |              |
+    +-------------+      +------------+      +--------------+
+
+                                \________  _______/
+                                         \/
+                                  commit, update
+                            (certified local exchanges)
+@end example
+
+A @dfn{working copy} is a tree of files in your filesystem, arranged
+according to the paths and version codes in a particular manifest.
+A special directory called @file{MT} exists in the root of any
+working copy. Monotone keeps some special files in the @file{MT}
+directory, in order to track changes you make to your working copy.
+
+Aside from the special @file{MT} directory, a working copy is just a
+normal tree of files. You can directly edit the files in a working copy
+using a plain text editor or other program; monotone will
+automatically notice when you make any changes. If you wish to add
+files, remove files, or move files within your working copy, you may
+need to tell monotone explicitly what you are doing, as these actions
+cannot always be deduced.
+
+If you do not yet have a working copy, you can ``check out'' a working
+copy from a database, or construct one from scratch and ``add'' it
+into a database. As you work, you will occasionally ``commit'' changes
+you have made in a working copy to a database, and ``update'' a
+working copy to receive changes that have arrived in a
+database. Committing and updating take place purely between a database
+and a working copy; the network is not involved.
+
+@example
+   -----------------     check out,      working copy
+  (                 )    or update      +----------------
+   -----------------     ---------->    |
+  |                 |                   |  src/func.c
+  |      local      |   <----------     |  src/func.h
+  |     database    |    add,           |  src/main.c
+  |                 |    or commit      |  Makefile
+  \_________________/                   |  MT/
+                                        |
+@end example
+
+A @dfn{database} is a single, regular file. You can copy or back it up
+using standard methods. Typically you keep a database in your home
+directory. Databases are portable between different machine types. If
+a database grows too big, you can have remove information from it. You
+can have multiple databases and divide your work between them, or keep
+everything in a single database if you prefer. You can dump portions
+of your database out as text, and read them back into other databases,
+or send them to your friends.
+
+A database contains many versions and certificates, some of which are
+not immediately of interest, some of which may be unwanted or even
+false. It is a collection of information received from network servers,
+working copies, and other databases. You can inspect and modify your
+databases without affecting your working copies, and vice-versa.
+
+Monotone knows how to exchange information in your database with
+various sorts of @dfn{network servers}. It supports two common
+networking protocols: HTTP and NNTP, and can communicate natively with
+web and news servers using these protocols. If you have access to a
+web server which can run CGI programs, you can use the HTTP transport
+easily with very little setup. See the tutorial section for more
+details.
+
+@example
+                                        -----------------
+  \\\             ///                  (                 )
+   +---------------+       fetch        -----------------
+   |               |    ----------->   |                 |
+   |    network    |                   |      local      |
+   |    server     |   <-----------    |     database    |
+   |               |        post       |                 |
+   +---------------+                   \_________________/
+  ///             \\\
+@end example
+
+Communication with network servers is quite flexible, but the usual
+work pattern has 4 distinct stages:
+
+@itemize
+@item
+when you ``commit'' changes from your working copy to your database,
+monotone also makes a note in the database to queue the changes for
+transmission to a network server.
+@item
+when you ``post'' to a network server, monotone sends all changes queued
+in your database to the network server.
+@item
+when you ``fetch'' from a network server, monotone copies any new changes
+from the network server into your database.
+@item
+when you ``update'' your working copy, @i{some} of the changes which
+have arrived in your database from a network server are applied to your
+working copy.
+@end itemize
+
+The last stage is worth clarifying: monotone does @emph{not} blindly
+apply all changes it receives from a network server to your working copy.
+Doing so would be very dangerous, because network servers are not
+trustworthy systems. Rather, monotone evaluates the certificates it
+has received along with the changes, and decides which particular
+changes are safe and desirable to apply to your working copy.
+
+You can always adjust the criteria monotone uses to judge the
+trustworthyness and desirability of changes in your database. But keep
+in mind that it always uses @emph{some} criteria; receiving changes
+from the network is a @emph{different} activity than applying changes
+to a working copy. Sometimes you may receive changes which monotone
+judges to be untrusted or bad; such changes may stay in your database
+but will @emph{not} be applied to your working copy.
+
+@node    Packets
+@section Packets
+
+When monotone sends information to network servers, it converts the
+data stored in your database to a more convenient form, called
+@dfn{packets}. Each packet is a sequence of lines of ASCII text,
+beginning with a header (enclosed in square brackets) and ending with
+the single line ``[end]''. The first word in the header of a packet
+indicates the packet type. For example, a packet containing some
+manifest data might look like this:
+
+@example
+[mdata 8d4d10a037ab2f814c96fbf88002473afbfb7b75]
+H4sIAAAAAAAAAJVXzW6cOQ6891P0C6xDiRQlHQe7c9u5bB7AoCTS7on/4LaTzNtPfe72pD2Z
+yyJAEBiuT2SxqshYY1qiTWklS5J6mz1rd7FsybPNNniptf3+l5eXw/w0Hx/icHN18+rH404K
+fqWP1BPguU1R76nWYk3CB3ldhbN0+xv4+Dp23Kx6TTWP5VHaXKo5S54srWtqYqRUyMo79PBw
+fLG7u38db3cqs+blXSvjL+1VCj6SnVoLzlFz9kZd/yr57uX0LspFWdFn9MQeQXXwKBWdKorv
+kZe16bYugPd2eLjanlxtBmtEK75ygBeZSqzGNruZKJrcvvqOvD8cj4eHm53NqYMDvzu99Eyr
+LnJNI3eppsJrjVY6/8B9Ofe5Ds+g12rToavHyjXatCGNeXW1bgKu0mpJg+d+/+9be7jx/z7e
+7Nws6SyziMcQrw31ZjaMJ5U0nEZErlXpAnN1dxg38/fditwqAY3HjCtakkmMMUmVAVramKqs
+GMlv9sXjcOdXdr8jsmUp8ay1upUVc5VIPWaPUC9CuS4eSy9Qh4cdKCvecvWxolRuq47GQqmS
+4OWZiEZKeeGt//36y39++3W3hEYVKpkpddYmxbVGj7TMloOF4nWi+v0enJ9kdrtbiXxAI72v
+YZOgsl7bCIy9WpFmmVmrt7aBDg/z7nX51b3soqypXKAmaKwS96ACeagHjNJngU9COPkGu3uc
+dreBwFLhMntJlDLNPrv0DjbXZAIhtTcUBlXv96fyXp99F7l3mb2NAj2MkiHQPtrwRENDBzHE
+IaXQBWYjT0tPc5ZeuaDrXkuaq2pXH0l7y/AA5ggz7fcRh3cyNmBOrWhJXDSJr57r1BIWJbdS
+WspiXnnVCdbPbHy6nJlDrtR4yYDYUaC7w76K9DAMJ0lbEUlG/EDj+dPDoT16oUEzicnIlfpy
+55oxhIA+4cWACNIH6PX94emIKYpTIFdaXzFQgPRSqlGvNmrrxaJyzgQX7vfH5/nJ7p5u7e3l
+uavWGsiCDYKsYpiBPwXecVV0MOB3JALTJfLxGFefd8ZeHK/yYk0wAlyTkEcjGjTYa5dM1Vf0
+M/L5/vwiXqslp+gjYxgLY1KwI6aptG6DpaBm+PoH7vjH8SsenOJjroHwaiSG322aVIZ0UieD
+i5dhwqIn4PLxeoPn1mBFGEHFs3shyIlpjKqCf4Mih+yreIoTCiW++PEFuGYKtTE0DHLHdCU8
+V5LhZ2hUSZntlIQb7oCoeu/PQpD5mzTzRH6nWHAd5S1VUSO8bkiJVC+Arw+H71uDyNwG4ihA
+fSBDE6vEDLDDAodGloEMWCfk7/bVrp/t27U9bc9CHGTIIOQwOiQ0iKmkyiigtkW1O0NUI53A
+99q+nOtFrSQdkbKx4Ap7dicnWbA9NW9YeGh/+BkIwX06JfED56vjbkZ1Vk6ClWNdI6PT2VIM
+Q5RqQOwqGPL4Cf74Bs+jwXDZqw6BZxdMN3XSKM3huc6Y2ehul/BT2YSoCStRuCfMAepfhikN
+RD62KiBpJW1+WfZW8OddziitTJ7Zc0Lep16wWIWxZLrygDYE6SZyAXx8AxIqy8hpbOzO2ZUt
+TOuWZ9bwPrsI1PuupKfHb/78BAG/jZYdC7su0KqTuVNBhgl2ExHoX3OmzOgz80/Ya8TncQu1
+z7vCpooUc6yuUdwgzNaxHkDc21KP1hZ+nD5+Y9nzN2zoz9uiFYfeCdugwUlhKfJG+sYignvi
+SllQ2T/BL6roM9uqDOdx2+Ic+bp8NaQqBbzLW44YVvbHz5xmFuS5dispIyeM4XKFSBduFEQq
+2BSIVVr+GXt97mKCyKWZypbRqhUR0qPYFAQ9Dg5bEytm4Nz5Wxd3h4fX7ypvLDApLFGWl1o8
+Q2toxszxoRYdYZ1SkfXP+AsaFspHAiICIdxBi3MpYzudihJymCxWI2T4x+88Pc2Lb2hNiEDc
+dLNqWgtnkML0WHXwHAZSh6BVnFQfv3FOww5FwZ5bOmGn4/LAVsP5s1BKgzUGW0JN9M7lsz9d
+z0OAQVQGN2PbRCG4HHyPORbHMsoJmzYWkxGfgT8CBhck9thCyTgyah29I25xOiHqpJWMcMH7
+YudAPELk56mDH2FrWEK41KLo6EoVIVkJJxh0ZDWzq/gF8NxjmUh5hFZ19AaZqk6D0QvW63at
+COliNHwOxOPtO84GlQkG8KuecQc3xLZhk28ZhzArzvDSnPmMe7Lnd4VKG1m0ru3MnliqKW9h
+r30OmTjiKweH4CeXyK9t00NjzAsRj/CYCJZZS8uRDMtO4bNJLhD5X+ycgP1tq3Xs+OW8zQ9x
+jagGpdJCJurGRsAaHamdX3z548mPqBM6gelxFSJCCk9c2AWrj2DAbKams04M5Z2Z703P/cGZ
+Cxt7NVlh+O8I4TCtC6sUGxz/y0g4xyyw0T/gYBysidoguIXpq0vGkR2aPKwxauQtyKL00rZL
++x35PowG3nHj5QmCcJngtE8IsLqpt1hdeJncKP0Abuvwzaz/n8k2KELiLav/BAdGJBi0DQAA
+[end]
+@end example
+
+The contents of this packet is a gzipped, base64-encoded copy of a
+manifest. Other packets have slightly different contents, but
+packets have two very important properties:
+
+@itemize
+@item 
+Packets are @emph{informative}. A packet represents only a piece of
+information, not a conversation or a promise to do anything. Transmitting
+a packet does not require or imply any sort of promise about actions
+taken by the sender or receiver. Packets can always be ignored or deleted.
+No packet carries any obligation to act with it.
+@item
+Packets describe database state @emph{completely}. No matter how else
+a monotone database chooses to store data, all of its state is
+captured in a dump of packets, and can be reconstructed by reading
+through the packets.
+@end itemize
+
+Because of these strong properties, the network servers used by
+monotone act as @emph{dumb transports}. A network server is only used
+to move packets between various monotone clients; servers to
+@emph{not} interpret packets when they exchange them. 
+
+@node    Ancestry
+@section Ancestry
+
+We previously described ``old'' and ``new'' versions of a file as
+``parents'' and ``children'' in a directed graph. The relationship
+between a child and its parents is called the @dfn{ancestry} of the
+child.
+
+Since monotone often stores related versions as deltas, it may
+sometimes be @i{possible} to infer ancestry relationships by analyzing
+the deltas. For technical reasons we will not dwell on here, monotone
+does not do this. Instead, ancestry relationships are stored as
+certs. The cert name @code{ancestor} is reserved by monotone for
+expressing this relationship; the cert value of an @code{ancestor}
+cert is the @sc{sha1} of the parent version.
+
+For example, suppose the version
+994fe79ae852133ff9a93ba0146d520192977078 is logically a child of the
+version 53f48d87d6ffbbb5a980f1393159e83a4921841e, as shown:
+
+@example
+     +---------------------------------------------------+
+     | parent version                                    |
+     | SHA1 = 53f48d87d6ffbbb5a980f1393159e83a4921841e   |
+     +---------------------------------------------------+
+              |
+              |
+             \|/
+              V
+     +---------------------------------------------------+
+     | child version                                     |
+     | SHA1 = 994fe79ae852133ff9a93ba0146d520192977078   |
+     +---------------------------------------------------+
+@end example
+
+Then the following cert would express the ancestry relationship:
+
+@example
+  +----------------------------------------------------------+
+  | version code                                             |
+  | 994fe79ae852133ff9a93ba0146d520192977078                 |
+  +-----------------+----------------------------------------+
+  | cert name  |  cert value                                 |
+  | "ancestor" |  "53f48d87d6ffbbb5a980f1393159e83a4921841e" |
+  +--------------------------+-------------------------------+
+  | signed by key           |  signature                     |
+  | "jrh@@somewhere.com"     |  "ac9c489c8...5d6b1c26c"       |
+  +--------------------------+-------------------------------+
+@end example
+
+
+@node    Forks and merges
+@section Forks and merges
+
+So far we have been talking about versions of files as though each new
+version logically follows the version before it, in a simple sequence
+of versions.
+
+@example
+       +----------------+
+       | parent version |
+       +----------------+
+                |
+                |
+       +----------------+
+       | child version  |
+       +----------------+
+                |
+                |
+     +---------------------+
+     | grandchild version  |
+     +---------------------+
+@end example
+
+This is a rosy picture, but sometimes it does not work out this
+way. Sometimes when you make new versions of files, other people are
+@i{simultaneously} making new versions too, and their new versions
+might be derived from the same parent as yours. Without loss of
+generality, we will assume simultaneous edits only happen
+two-at-a-time; in fact many more edits may happen at once but our
+reasoning will be the same.
+
+We call this situation of simultaneous edits a @dfn{fork}, and will
+refer to the two children of a fork as the @i{left child} and
+@i{right child}. In a large collection of files with many people
+editing versions, especially on many different computers spread all
+around the world, forks are a common occurrence.
+
+
+@example
+             +----------------+
+             | parent version |
+             +----------------+
+                    |   |
+           +--------+   +---------+
+           |                      |
+     +-------------+     +--------------+
+     | left child  |     | right child  |
+     +-------------+     +--------------+
+@end example
+
+
+If we analyze the changes in each child version, we will often find
+that the changes made between the parent and the left child are
+unrelated to the changes made between the parent and the right
+child. When this happens, we can usually @dfn{merge} the fork,
+producing a common grandchild version which contains both sets of
+changes. 
+
+@example
+             +----------------+
+             | parent version |
+             +----------------+
+                    |   |
+           +--------+   +---------+
+           |                      |
+     +-------------+     +--------------+
+     | left child  |     | right child  |
+     +-------------+     +--------------+
+           |                      |
+           +--------+   +---------+
+                    |   |
+             +----------------+
+             | merged version |
+             +----------------+
+@end example
+
+@node    Branches
+@section Branches
+
+Sometimes, people intentionally produce forks which are @emph{not
+supposed to be merged}; perhaps they have agreed to work independently
+for a time, or wish to change their files in ways which are not
+logically compatible with each other. When someone produces a fork
+which is supposed to last for a while (or perhaps permanently) we say
+that the fork has produced a new @dfn{branch}. Branches tell monotone
+which versions you would like to merge, and which you would like to
+keep separate.
+
+Branches are indicated with certs.  The cert name @code{branch} is
+reserved for use by monotone, for the purpose of identifying the
+members of a branch. A @code{branch} cert has a symbolic ``branch
+name'' as its value. When we refer to ``a branch'', we mean all
+versions with a common branch name in their @code{branch} certs.
+
+For example, suppose you are working on a program called ``wobbler''.
+You might develop many versions of wobbler and then decide to split
+your versions into a ``stable branch'' and an ``unstable branch'', to
+help organize your work. In this case, you might call the new branches
+``wobbler-stable'' and ``wobbler-unstable''. From then on, all
+versions in the stable branch would get a cert with name @code{branch}
+and value @code{wobbler-stable}; all versions in the unstable branch
+would get a cert with name @code{branch} and value
+@code{wobbler-unstable}. When a @code{wobbler-stable} version forks,
+the children of the fork will be merged. When a
+@code{wobbler-unstable} version forks, the children of the fork will
+be merged. However, the @code{wobbler-stable} and
+@code{wobbler-unstable} branches will not be merged together, despite
+having a common ancestor.
+
+@example
+                   +-------------------------+
+                   | common ancestor version |
+                   +-------------------------+
+                          |          |
+                +---------+          +---------+
+                |                              |
+       +----------------+              +------------------+           
+       | stable version |              | unstable version |           
+       +----------------+              +------------------+           
+              | |                               | |                   
+      +-------+ +-------+               +-------+ +-------+           
+      |                 |               |                 |           
++-------------+ +--------------+  +---------------+ +----------------+
+| left stable | | right stable |  | left unstable | | right unstable |
+|   child     | |     child    |  |   child       | |     child      |
++-------------+ +--------------+  +---------------+ +----------------+
+      |                  |              |                  |          
+      +-------+ +--------+              +-------+ +--------+          
+              | |                               | |                   
+       +----------------+                +------------------+         
+       | merged stable  |                | merged unstable  |         
+       |    version     |                |      version     |         
+       +----------------+                +------------------+ 
+
+\_____________  _______________/  \_______________  _________________/
+              \/                                  \/
+         stable branch                     unstable branch
+@end example
+
+
+For each branch, the set of versions with @emph{no children} is called
+the @dfn{heads} of the branch. Monotone can automatically locate, and
+attempt to merge, the heads of a branch. If it fails to automatically
+merge the heads, it may ask you for assistance or else fail cleanly,
+leaving the branch alone.
+
+For example, if a fork's left child has a child of its own (a ``left
+grandchild''), monotone will merge the fork's right child with the
+left grandchild, since those versions are the heads of the branch. It
+will not merge the left child with the right child, because the left
+child is not a member of the heads.
+
+@example
+               +----------------+
+               | parent version |
+               +----------------+
+                      |       |
+             +--------+       |
+             |                |
+       +-------------+        |
+       | left child  |        |
+       +-------------+        |
+             |                |         
+*************|****************|************
+*            |                |           *
+*  +-----------------+  +-------------+   *
+*  | left grandchild |  | right child |   *  the heads of the branch
+*  +-----------------+  +-------------+   *    (before the merge)
+*            |                |           *
+*************|****************|************
+             |                |         
+             +--------+   +---+
+                      |   |
+               +----------------+
+               | merged version |
+               +----------------+
+@end example
+
+When there is only one version in the heads of a branch, we say that
+@i{the heads are merged}, or more generally that @i{the branch is
+merged}, since the heads is the logical set of candidates for any
+merging activity. If there are two or more version in the heads of a
+branch, monotone will merge them two-at-a-time until there is only
+one.
+
+@node    Getting Started
+@chapter Getting Started
+
+Getting started using monotone is easy. This chapter is a tutorial,
+which illustrates the basic use of monotone by means of a small
+example software project: the canonical ``hello world'' program. We
+will assume the following files exist:
+
+@example
+src/hello.c
+include/hello.h
+Makefile
+@end example
+
+Before operating monotone, two options should be explained.
+
+@itemize
+@item
+most commands operate on a @i{database}, which is selected with
+the @option{--db} option, or the @var{MT_DB} environment variable.
+@item
+many commands operate on a subset of the database, called a
+@i{branch}, which is selected with the @option{--branch} option, or
+the @var{MT_BRANCH} environment variable.
+@end itemize
+
+We therefore begin our tutorial by exporting two environment
+variables, which we will assume remain active throughout the tutorial.
+
+@example
+$ export MT_DB=~/test.db
+$ export MT_BRANCH=testbranch
+@end example
+
+We are now ready to explore some version control tasks.
+
+@menu
+* Generating Keys::       Generate an RSA public/private key pair
+* Adding Files::          Import the state of the tree to the database
+* Making Changes::        Edit a file and examine work
+* Committing Changes::    Save your work in the database
+* Checking Out::          Move to a different version of a tree
+* Forking and Merging::   Make multiple changes from the same base version
+* Updating::              Moving a working copy to a ``newer'' version
+* Transmitting Changes::  Post your work to a network server
+@end menu
+
+
+@node    Generating Keys
+@section Generating Keys
+
+The first step is to generate an RSA key pair for ourselves. This step requires
+choosing a key identifier. Typical key identifiers are similar to email addresses,
+possibly modified with some prefix or suffix to distinguish multiple keys held by
+the same owner. We will use the key identifier ``testkey@@nodomain.org''. When we
+ask for a key to be generated, monotone will ask us for a passphrase. This phrase
+is used to encrypt the key when storing it on disk, as a security measure.
+
+@example
+$ monotone genkey testkey@@nodomain.org
+enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter passphrase here>}
+storing key-pair 'testkey@@nodomain.org' in database
+@end example
+
+We have now generated a key pair and placed it in the database
+@file{~/test.db}. We can list the keys in this database, to ensure the
+correct key was generated.
+
+@example
+$ monotone lskeys
+
+[public keys]
+testkey@@nodomain.org
+
+
+[private keys]
+testkey@@nodomain.org
+
+@end example
+
+This indicates that our keys have been successfully generated and
+stored. On subsequent commands, we will need to re-enter our
+passphrase to produce signatures on various tags.
+
+
+@node    Adding Files
+@section Adding Files
+
+Next we add all our files to our database. We can specify directories
+or filenames; monotone will recursively scan any directories we
+mention.
+
+@example
+$ monotone add Makefile include src
+adding Makefile to working copy add set
+adding include/hello.h to working copy add set
+adding src/hello.c to working copy add set
+@end example
+
+This command has now added our files to the @dfn{work list}, as
+``additions''.  The work list is a special file called @file{work},
+stored in a special control directory monotone just created, called
+@file{MT}. There is only one control directory for the entire working
+copy.
+
+If we look at the work list, we see it contains instructions to add
+these files.
+
+@example
+$ cat MT/work
++ Makefile
++ include/hello.h
++ src/hello.c
+@end example
+
+Now we are ready to commit our additions. We will provide a ``log
+message'' for our commit as an argument on the command line.
+
+@example
+$ monotone commit 'initial addition of files'
+enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter your passphrase here>}
+committed 577c21252290d4b66240efb1f917a9f3c4136fe5
+@end example
+
+Now we can check to see that monotone is tracking these files in the
+working copy manifest.  The working copy manifest is held in the file
+@file{MT/manifest}. 
+
+@example
+$ cat MT/manifest
+84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
+c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
+97dfc6fd4f486df95868d85b4b81197014ae2a84  src/hello.c
+@end example
+
+The column on the left contains cryptographic hashes of the files
+listed in the column on the right. Such a hash is called the ``version
+code'' of each file. The manifest is a plain text file, and can be
+manipulated with standard tools. If a file appears in a manifest, and
+you do not want to manage the file with monotone, you can remove that
+line of the manifest.
+
+We can also check to see which certificates monotone generated when
+we commited our work, using the @code{lscerts} command:
+
+@example
+$ monotone lscerts manifest 577c21252290d4b66240efb1f917a9f3c4136fe5
+ok sig from [testkey@@nodomain.org] : [author] = [jrh@@nodomain.org]
+ok sig from [testkey@@nodomain.org] : [branch] = [testbranch]
+ok sig from [testkey@@nodomain.org] : [changelog] = [initial addition of files]
+ok sig from [testkey@@nodomain.org] : [date] = [2003-04-04T07:39:51]
+@end example
+
+The output of this command has a line for each cert found. Each line
+has 4 significant pieces of information. The first indicates whether
+this cert is ``ok'', meaning whether the RSA signature provided is
+correct for the cert data. The second indicates the signer of the
+cert, in this case @code{testkey@@nodomain.org}. The third is the cert
+name, and the fourth is the cert value. This list shows us that
+monotone has confirmed that, according to
+@code{testkey@@nodomain.org}, the manifest
+@code{577c21252290d4b66240efb1f917a9f3c4136fe5} is a member of the
+branch @code{testbranch}, written by @code{jrh@@nodomain.org}, with
+the given date and changelog.
+
+It is important to keep in mind that manifests are not ``in'' or
+``out'' of a branch in any global sense, nor are any of these cert
+values @i{true} or @i{false} in any global sense. Each cert indicates
+that @i{some person} would like to associate a manifest with some
+value; it is up to you to decide if you want to accept that
+association.
+
+We can check status of our branch with the following command:
+
+@example
+$ monotone heads
+branch 'testbranch' is currently merged:
+577c21252290d4b66240efb1f917a9f3c4136fe5
+@end example
+
+The output of this command tells us that there is only one current
+``head'' version in the branch @code{testbranch}, and it is the manifest
+we just imported. A head version is one without any descendents. Since
+we have not committed any changes to this manifest yet, it has no
+descendents. 
+
+Finally, if we wanted to manually transmit the manifest to someone
+else, we could issue the following command:
+
+@example
+$ monotone mdata 577c21252290d4b66240efb1f917a9f3c4136fe5
+[mdata 577c21252290d4b66240efb1f917a9f3c4136fe5]
+H4sIAAAAAAAAAC3MWwoCMQxA0f9ZRVegkzbNYxEuIk1SRiwKivtXwd8D9wpm9bZb7QwjqLKC
+RGZCEkGLhkloVbOUi91yXlduTmCzJnEOHQKJ1DqP0Rx3NbXejD2mUynXu6935PnItR6nY1P+
++QycKBRTu5CE9IHfDSjvgJbVBEt5Pf1f+fYBPkTTgaMAAAA=
+[end]
+@end example
+
+This command produces an @code{mdata} packet, which is short for
+``manifest data''. The @code{mdata} packet does not contain the files
+or the certs. The body of the @code{mdata} packet is a base64 encoded,
+gzipped copy of the manifest found in @file{MT/manifest}. We will see
+in later sections how to transmit more packet types.
+
+@node    Making Changes
+@section Making Changes
+
+Initially, the contents of the file @file{src/hello.c} were as follows:
+
+@example
+#include "hello.h"
+
+void say_hello()
+@{
+	printf("hello, world\n");
+@}
+
+int main()
+@{
+	say_hello();
+@}
+@end example
+
+Suppose now that we would like to make a change to this file, say to
+the message which is printed out. We can edit the file directly, and
+save the following new version:
+
+@example
+#include "hello.h"
+
+void say_hello()
+@{
+	printf("hello, smelly world\n");
+@}
+
+int main()
+@{
+	say_hello();
+@}
+@end example
+
+If we would like to see a compact listing of the change we have made,
+relative to the version of the file recorded in our current manifest,
+we can use the following command:
+
+@example
+$ monotone status
+  patch src/hello.c 97dfc6fd4f486df95868d85b4b81197014ae2a84 -> 8574638d5f34493e05e62d9e48b3c338169e7558
+@end example
+
+The output of this command tells us that our edits, so far, constitute
+only a simple edit to a single file. If we would like to see that edit
+in closer detail, we can also print out a difference listing in GNU
+``unified diff'' format:
+
+@example
+$ monotone diff
+--- src/hello.c
++++ src/hello.c
+@@@@ -1,8 +1,8 @@@@
+ #include "hello.h"
+
+ void say_hello()
+ @{
+-       printf("hello, world\n");
++       printf("hello, smelly world\n");
+ @}
+
+ int main()
+@end example
+
+Suppose now we would also like to move our @code{say_hello}
+function to a secondary source file, and modify our @file{Makefile} to
+build it separately. We can make these changes directly:
+
+@example
+$ head -n 6 src/hello.c >src/say-hello.c
+$ vi src/hello.c
+         @i{<remove the function from this source file>}
+$ vi Makefile
+         @i{<add a rule to build the new object file>}
+@end example
+
+We must then add the new file to monotone's working record:
+
+@example
+$ monotone add src/say-hello.c
+@end example
+
+This command does not modify the @file{MT/manifest} file, but rather
+makes a note in a persistent log file @file{MT/work}, stating that you
+wish to add the file @file{src/say-hello.c}. The @file{MT/work} file
+is processed when you commit your work. Before we commit anything, We
+can show the current status of our working copy once more, which will 
+include any changes between the @file{MT/manifest} file and the files
+in our working copy, as well as any additions or deletions written in
+the @file{MT/work} file: 
+
+@example
+$ monotone status
+  add src/say-hello.c as 84afbb102eca7e5f802ce381987ad7100ff7a1a9
+  patch Makefile 84e2c30a2571bd627918deee1e6613d34e64a29e -> b506d36ac5a6ea0fd588acacf1ebaa0317601abe
+  patch src/hello.c 97dfc6fd4f486df95868d85b4b81197014ae2a84 -> eac552f8ee3d29198884368d592de67db5cb77e2
+@end example
+
+And, as before, we can view the full difference listing:
+
+@example
+$ monotone diff
+--- Makefile
++++ Makefile
+@@@@ -1,2 +1,6 @@@@
+-hello: include/hello.h src/hello.c
+-       gcc -o hello -I include src/hello.c
++hello: include/hello.h src/say-hello.o src/hello.c
++       gcc -o hello say-hello.o src/hello.c
++
++say-hello.o: include/hello.h src/say-hello.c
++       gcc -c say-hello.o src/say-hello.c
++
+--- src/hello.c
++++ src/hello.c
+@@@@ -1,10 +1,5 @@@@
+ #include "hello.h"
+
+-void say_hello()
+-@{
+-       printf("hello, world\n");
+-@}
+-
+ int main()
+ @{
+        say_hello();
+@end example
+
+@node    Committing Changes
+@section Committing Changes
+
+Now that we have made changes, we can commit them to the
+database. Doing so will replace the ``head'' version of our branch with
+the new, changed version, and store the older version as a reverse
+delta from the new version.
+
+@example
+$ monotone commit
+@end example
+
+This will first place us in a ``log message editor'' --- typically an editor
+like @command{vi} --- with an explanation of the changes being committed and
+the opportunity to enter a log message.
+
+@example
+example commit log
+MT: ----------------------------------------------------------------------
+MT: Enter Log.  Lines beginning with `MT:' are removed automatically
+MT:
+MT: Summary of changes:
+MT:
+MT:   add src/say-hello.c as 84afbb102eca7e5f802ce381987ad7100ff7a1a9
+MT:   patch Makefile 84e2c30a2571bd627918deee1e6613d34e64a29e -> b506d36ac5a6ea0fd588acacf1ebaa0317601abe
+MT:   patch src/hello.c 97dfc6fd4f486df95868d85b4b81197014ae2a84 -> eac552f8ee3d29198884368d592de67db5cb77e2
+MT: ----------------------------------------------------------------------
+MT:
+@end example
+
+We have entered a single line above the explanatory message, saying
+``example commit log''. We then save the file and quit the
+editor. Monotone will delete all the lines beginning with ``MT:'' and
+leave only our message. Returning to the shell, we are prompted for our passphrase.
+
+@example
+enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter your passphrase here>}
+committed 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
+@end example
+
+A commit typically involves making several certs, as well as storing
+new versions of files and the manifest in the database. We can show the
+certs produced, using the @command{lscerts} command.
+
+@example
+$ monotone lscerts manifest 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
+ok sig from [testkey@@nodomain.org] : [ancestor] = [577c21252290d4b66240efb1f917a9f3c4136fe5]
+ok sig from [testkey@@nodomain.org] : [author] = [jrh@@nodomain.org]
+ok sig from [testkey@@nodomain.org] : [branch] = [testbranch]
+ok sig from [testkey@@nodomain.org] : [changelog] = [example commit log
+                                                    ]
+ok sig from [testkey@@nodomain.org] : [date] = [2003-04-04T07:44:54]
+@end example
+
+In this commit, monotone produced a @code{branch} cert which relates
+the new version to the branch @code{testbranch}, an @code{ancestor}
+cert which relates old version to the new one, and several informative
+meta-data certs such as @code{author}, @code{date}, and
+@code{changelog}.
+
+If we would like to examine the ancestry graph at any time, we can
+produce a representation of it suitable for viewing with the popular
+@command{xvcg} graph visualization tool, with the following command:
+
+@example
+$ monotone agraph
+graph:
+@{
+node: @{ title : "0b34c61bd098a9c37cece9cbf7b765cc4d7b587e"@}
+node: @{ title : "577c21252290d4b66240efb1f917a9f3c4136fe5"@}
+edge: @{ sourcename : "577c21252290d4b66240efb1f917a9f3c4136fe5"
+        targetname : "0b34c61bd098a9c37cece9cbf7b765cc4d7b587e" @}
+@}
+@end example
+
+@node    Checking Out
+@section Checking Out
+
+Now that we have committed one version, the @file{MT/manifest} file
+has been updated to reflect the current contents of the files we are working on:
+
+@example
+$ cat MT/manifest
+b506d36ac5a6ea0fd588acacf1ebaa0317601abe  Makefile
+c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
+eac552f8ee3d29198884368d592de67db5cb77e2  src/hello.c
+84afbb102eca7e5f802ce381987ad7100ff7a1a9  src/say-hello.c
+@end example
+
+This version of the tree is safely stored in the database, however, so
+we can feel free to ``checkout'' previous versions from the database,
+without fear of losing our work:
+
+@example
+$ monotone checkout 577c21252290d4b66240efb1f917a9f3c4136fe5
+$ cat MT/manifest
+84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
+c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
+97dfc6fd4f486df95868d85b4b81197014ae2a84  src/hello.c
+$ cat src/hello.c
+#include "hello.h"
+
+void say_hello()
+@{
+        printf("hello, world\n");
+@}
+
+int main()
+@{
+        say_hello();
+@}
+@end example
+
+Note that monotone has reverted the tree to its original contents. It
+has @emph{not}, however, deleted the file @file{src/say-hello.c} which
+we added to our second version; it has merely removed it from the
+manifest.
+
+@node    Forking and Merging
+@section Forking and Merging
+
+Suppose that we (or some other user) happen to produce a different
+modified version of our example project, derived from the same initial
+version. We call this situation a @dfn{fork}. Monotone does not
+prevent you from making forks, even when it can detect them.
+
+@example
+$ cat >>src/hello.c
+
+void say_goodbye()
+@{
+        printf("goodbye\n");
+@}
+^D
+@end example
+
+We can view our differences, as before:
+
+@example
+$ monotone diff
+--- src/hello.c
++++ src/hello.c
+@@@@ -9,3 +9,8 @@@@
+ @{
+        say_hello();
+ @}
++
++void say_goodbye()
++@{
++       printf("goodbye\n");
++@}
+@end example
+
+And commit our change, this time providing the changelog message on
+the command line as a third argument to the @command{commit} command.
+
+@example
+$ monotone commit "a fork"
+enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter your passphrase here>}
+committed 57d3afae9e806b930130a674befec2a52bd85cd1
+@end example
+
+Monotone does not prohibit us from making a fork. However, if we check
+the heads of our branch, we will now find that it is unmerged. In
+other words, it has an unresolved fork:
+
+@example
+$ monotone heads
+branch 'testbranch' is currently unmerged:
+0b34c61bd098a9c37cece9cbf7b765cc4d7b587e
+57d3afae9e806b930130a674befec2a52bd85cd1
+@end example
+
+This state does not, in itself, constitute a threat to the branch; we
+can still commit new changes, check out versions, show differences,
+etc. without resolving this fork. However, we will probably want to
+resolve it eventually, if for no other reason than to incorporate the
+positive features of both edges into a common head version.
+
+Merging a fork can be quite simple:
+
+@example
+$ monotone merge
+enter passphrase for key ID [testkey@@nodomain.org] : @i{<enter your passphrase here>}
+[source] 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e 
+[source] 57d3afae9e806b930130a674befec2a52bd85cd1 
+[merged] ecec7c49374ab9a7706a500339a2a0d6157372f1
+@end example
+
+This case is quite trivial and was handled automatically by the built
+in 3-way merge algorithm. In more complicated merges, a hook is called
+and the user may provide an external merge tool. By default, this hook
+runs an emacs process with a batch command invoking @code{ediff} mode
+with the conflicting files, to interactively merge the difference, but
+this can be overridden if you prefer some other tool. If we
+investigate the resulting manifest, we see the following.
+
+@example
+$ monotone lscerts manifest ecec7c49374ab9a7706a500339a2a0d6157372f1
+ok sig from [testkey@@nodomain.org] [ancestor] = [57d3afae9e806b930130a674befec2a52bd85cd1]
+ok sig from [testkey@@nodomain.org] [ancestor] = [0b34c61bd098a9c37cece9cbf7b765cc4d7b587e]
+ok sig from [testkey@@nodomain.org] [author] = [jrh@@nodomain.org]
+ok sig from [testkey@@nodomain.org] [branch] = [testbranch]
+ok sig from [testkey@@nodomain.org] [changelog] = [merge of 0b34c61bd098a9c37cece9cbf7b765cc4d7b587e and 57d3afae9e806b930130a674befec2a52bd85cd1]
+ok sig from [testkey@@nodomain.org] [date] = [2003-04-04T08:00:09]
+@end example
+
+In the process of merging, monotone generated a merged copy of our
+forked file, a merged copy of our forked manifest, and a number of
+certs relating the fork and merge:
+
+@itemize
+@item
+an @code{ancestor} cert relating the @i{left} ancestor version of
+@file{src/hello.c} to the merged version
+@item
+an @code{ancestor} cert relating the @i{right} ancestor version of
+@file{src/hello.c} to the merged version
+@item
+an @code{ancestor} cert relating the @i{left} ancestor manifest to the merged version
+@item
+an @code{ancestor} cert relating the @i{right} ancestor manifest to the merged version
+@item
+a @code{branch} cert associating the merged manifest with @code{testbranch}
+@item
+the usual @code{author}, @code{date}, and @code{changelog} certs for the merged manifest
+@end itemize
+
+Each cert is recorded separately. An interesting affect of this
+independent record is that once you have performed a merge between two
+file versions, the merge will automatically be reused in any future
+tree merges which involve the same two files, even if they appear in
+different branches.
+
+We can now check the status of our branch's heads, to ensure that only
+one merged copy remains.
+
+@example
+$ monotone heads
+branch 'testbranch' is currently merged:
+ecec7c49374ab9a7706a500339a2a0d6157372f1
+@end example
+
+@node    Updating
+@section Updating
+
+Now that we've merged our fork, we notice that the current version of
+our working copy is no longer the ``newest'', in the sense that it has
+a live descendent version in the database (the merged version).
+
+Updating our working copy is quite straightforward in this simple
+case.
+
+@example
+$ monotone update
+updated to base version ecec7c49374ab9a7706a500339a2a0d6157372f1
+@end example
+
+If we check our version of @file{src/hello.c}, we now see we have a
+merge of the two previous files.
+
+@example
+$ cat src/hello.c
+#include "hello.h"
+
+int main()
+@{
+        say_hello();
+@}
+
+void say_goodbye()
+@{
+        printf("goodbye\n");
+@}
+@end example
+
+An update actually consists of three distinct phases.
+
+@itemize
+
+@item
+In the @dfn{select phase}, monotone selects all descendants of the
+manifest version the current working copy is based on, and sorts them
+based on ancestry, as well as any user-specified certs. This
+sorting should select an ideal ``new base version'' for your working
+copy. If the select phase does not arrive at a @emph{unique} new base
+version, the update stops.
+
+@item
+In the @dfn{merge phase}, monotone performs an in-memory merge between
+the new base version and your working copy. Just as during a
+@code{merge} command, if the built in 3-way merge fails then monotone
+will run a user-provided hook. If this merge fails, the update stops.
+
+@item
+In the @dfn{write phase}, the new base version's manifest is written into
+your @file{MT/manifest} file, and the merged files are written to your
+working copy. This happens after the update is @emph{known} to
+succeed, so it is an all-or-nothing phase.
+@end itemize
+
+The update operation essentially ``re-parents'' your working copy,
+changing it from being a child of the version it was initially checked
+out as, to being a child of the new base version. Your changes
+relative to your previous parent are moved forward during the merge
+phase.
+
+One interesting feature of the update operation is that you can
+override or extend the logic monotone uses to sort update candidates,
+with lua hook functions. This feature is still partially unfinished,
+but in the future you should be able to transparently filter out
+versions lacking sufficient approval from code reviewrs, with
+testsuite results showing regressions, or similar ``quality control''
+orderings expressed as custom certs.
+
+
+@node    Transmitting Changes
+@section Transmitting Changes
+
+After doing some work, typically we want to send these changes to
+other users. We have seen previously that monotone can produce
+sequences of ``packets'' which encode, in a safe and portable manner,
+any type of work recorded in its database. To make life easier, we can
+ask monotone to send sequences of packets to directly to a network
+server, after we commit work. Monotone supports two kinds of network
+servers: news servers and web servers. We will use a web server in
+this example. To use a web server with monotone, we must install a
+program on the web server called @dfn{depot}, which is a CGI
+program. The @code{depot} program contains a subset of the
+functionality of a news server, just enough to exchange packets.
+
+To make our depot work, we need to do two things:
+
+@menu
+* Set up a Depot::        Prepare a web server to receive packets
+* Configure the Client::  Edit our @file{.monotonerc} to use the depot
+@end menu
+
+Once we have a working depot that monotone knows about, when we make a
+change, monotone will queue network transmissions to the appropriate
+server. Supposing we had set up our @file{.monotonerc} file earlier,
+our most recent commit would result in the following messages:
+
+@example
+$ monotone commit
+enter passphrase for key ID [testkey@@nodomain.org] :@i{<enter your passphrase here>}
+149 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+116 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+300 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+288 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+287 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+298 bytes queued to send to group helloworld at http://www.myisp.com/~me/depot
+committed a2f12ab893e7e40feb83e19f4e707ec6a2841601
+@end example
+
+This commit is similar to the previous one, but each cert and delta
+which was previously committed to the database has also been
+@i{queued} for transmission to our depot. Later, when we are connected
+to the network and ready to send our work, we can issue a separate
+posting command to communicate with the network servers:
+
+@example
+$ monotone post
+posted 6 / 6 packets ok
+@end example
+
+Elsewhere, we may wish to receive changes from a network server. This
+is also quite straightforward. We add another hook function to our 
+configuration file specifying which URLs and logical group names we would
+like to fetch from:
+
+@example
+$ cat >>~/.monotonerc
+function get_fetch_sources(branchname)
+	return @{ @{"http://www.myisp.com/~me/depot", "helloworld"         @} @} 
+end
+@end example
+
+Then we can fetch depot postings and integrate them into our database
+directly.
+
+@example
+$ monotone fetch 
+fetched 6 packets
+@end example
+
+Monotone remembers ``sequence numbers'' for each URL and logical group
+name, so that it can fetch only unseen packets.
+
+It is worth noting that the packets transmitted are the @i{smallest}
+patch-set that monotone could compose at the time of
+transmission. Therefore files which were ``added'' may wind up being
+transmitted as deltas, and files which were committed as deltas but
+which subsequently had their ancestors erased may wind up being
+transmitted as full files. If a recipient is unhappy with a particular
+type of packet they receive from a network server, they can always
+request a personal retransmission, via email for example.
+
+@node       Set up a Depot
+@subsection Set up a Depot
+
+The first step in setting up a depot is to extract our RSA public key
+packet from our monotone database. This will enable us to communicate
+securely with the depot. We will extract the key to the file
+@file{key-packet.txt}:
+
+@example
+$ monotone pubkey testkey@@nodomain.org >key-packet.txt
+@end example
+
+The packet generated is a plain text encoding of an RSA public key
+number. It looks pretty much like any other packet:
+
+@example
+$ cat key-packet.txt
+[pubkey testkey@@nodomain.org]
+MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQDDEs10/X6ZDYKB7snQuESSgoAxwsk8b0au
+rBroCig2qz14oIHX9DIvTlfPfiSjncnBS/zQ+seLjqEmhcegU9d/dsIEIvWlfXHlwBEkCKKL
+VP0cx6WFpq1xPfrRCn6MJ1/NxYbgIFeuoNkCJR9GTM3WLV/1CaWSYGVEX+aIooRYRwIBEQ==
+[end]
+@end example
+
+Next we need to set up a CGI program on a web server somewhere. For
+this example, we say we will put the CGI at the (nonexistant) URL
+@code{http://www.myisp.com/~me/depot.cgi}. Your URL will obviously be
+different, depending on where you host your web server.
+
+We copy the @file{depot.cgi} program to our web server, along with the
+packet file @file{key-packet.txt}, and configure our web server to
+execute CGI programs on our behalf. The CGI configuration step is
+beyond the scope of this tutorial, but it is well documented
+elsewhere.
+
+One important point, when configuring a writable depot, is that the
+directory the depot is contained in must be writable by the user which
+will execute CGI programs. On some web servers this is the user owning
+the directory, and on others it is a special user such as @code{www},
+@code{cgi} or @code{nobody}.
+
+Next we run an initialization command to build a small database file
+for the depot program, then add the public key packet to the database
+as an authorized uploader.
+
+@example
+$ ./depot.cgi initdb
+$ ./depot.cgi adduser <key-packet.txt
+@end example
+
+Now one key --- @code{testkey@@nodomain.org} --- is authorized to
+upload packets to the database, and anyone can download packets from
+it. We are finished on the web server. To check that the depot is
+ready to accept packets, we can load a status URL in a standard web
+client, from our client site.
+
+@example
+$ wget -O - http://www.myisp.com/~me/depot.cgi?q=status
+depot operational with 0 packets.
+@end example
+
+
+@node       Configure the Client
+@subsection Configure the Client
+
+For monotone to fetch from our newly created depot, we must edit our
+@file{.monotonerc} file, which is a collection of functions written in
+the @command{lua} programming language. We will write some entries
+which tell monotone which network server and logical group name to
+post to, and which user name we would like to post as. Configuration
+in monotone is always done as @i{hook functions}, which calculate
+configuration variables based on some parameters (or, in rare cases,
+no parameters):
+
+@example
+$ cat >~/.monotonerc
+function get_post_targets(branchname)
+	return @{ @{"http://www.myisp.com/~me/depot", "helloworld"         @} @} 
+end
+
+function get_http_auth(url, group)
+	return "testkey@@nodomain.org"
+end
+^D
+@end example
+
+We have written two hook functions. The first takes a branch name and
+returns a lua table of values. You may return different results
+depending on the branch name provided, but for this example we ignore
+the branch name and always return the same table. Each value in the
+table is a pair (a sub-table) containing a URL and a @dfn{logical
+group name}. Logical group names are analogous to newsgroups on news
+servers: they collect some subset of the data on the depot --- perhaps
+multiple branches, perhaps all your work --- into a collection that can
+be requested by name.
+
+Usually you will post all your data to a single logical group name on
+a given depot, but you may occasionally wish to have more than one, if
+your depot is carrying many different sorts of data, and you want to
+be able to fetch only part of the data at a time.
+
+The second hook function takes a URL and logical group name, and
+returns the name of an RSA keypair in your database, to use for
+authenticating transmissions to the depot. This will generally be the
+name of the key you use to sign certificates.
+
+
+
+@node    Man Page
+@chapter Man Page
+@c DEBUG: print_menu("Top")
+
+@ifnottex
+@menu
+* NAME::
+* SYNOPSIS::
+* DESCRIPTION::
+* OPTIONS::
+* ENVIRONMENT::
+* FILES::
+* NOTES::
+* SEE ALSO::
+* BUGS::
+* AUTHOR::
+
+@end menu
+@end ifnottex
+
+
+@comment TROFF INPUT: .SH NAME
+
+@node NAME
+
+@section NAME
+@c DEBUG: print_menu("NAME")
+
+monotone @minus{} distributed version control system
+@comment TROFF INPUT: .SH SYNOPSIS
+
+@node SYNOPSIS
+
+@section SYNOPSIS
+@c DEBUG: print_menu("SYNOPSIS")
+
+@ifnottex
+@menu
+* Note::
+* Commands::
+
+@end menu
+@end ifnottex
+
+
+@b{monotone} @i{[options] <command> [parameters]}
+@comment TROFF INPUT: .P
+@comment .P
+Options, which affect global behavior or set default values, come
+first in the argument list. A single command must follow, indicating
+the operation to perform, followed by parameters which vary depending
+on the command.
+@comment TROFF INPUT: .SS Note
+
+@node Note
+
+@subsection Note
+
+This manpage is a summary of some of the features and commands of
+@b{monotone}, but it is not the most detailed source of information
+available. For a complete discussion of the concepts and a tutorial on
+its use, please refer to the texinfo manual (via the @b{info
+monotone} command, or online).
+@comment TROFF INPUT: .SS Commands
+
+@node Commands
+
+@subsection Commands
+
+@comment TROFF INPUT: .TP
+
+@c ---------------------------------------------------------------------
+@table @code
+@item @b{comment} @i{(file|manifest) <id>}
+Write a comment cert for a file or manifest version.
+@comment TROFF INPUT: .TP
+
+@item @b{approve} @i{(file|manifest) <id>}
+Make a cert approving of a file or manifest version.
+@comment TROFF INPUT: .TP
+
+@item @b{disapprove} @i{(file|manifest) <id>}
+Make a cert disapproving of a file or manifest version.
+@comment TROFF INPUT: .TP
+
+@item @b{tag} @i{<id> <tagname>}
+Put a symbolic tag cert on a manifest version.
+@comment TROFF INPUT: .TP
+
+@item @b{agraph}
+Dump ancestry graph to stdout.
+@comment TROFF INPUT: .TP
+
+@item @b{diff}
+Show diffs between working copy and database.
+@comment TROFF INPUT: .TP
+
+@item @b{status}
+Show status of working copy.
+@comment TROFF INPUT: .TP
+
+@item @b{cert} @i{(file|manifest) <id> <certname> [certval]}
+Create a custom cert for a file or manifest. Reads cert value
+from stdin if no value given on command line.
+@comment TROFF INPUT: .TP
+
+@item @b{genkey} @i{<keyid>}
+Generate an RSA key-pair and store it in the database.
+@comment TROFF INPUT: .TP
+
+@item @b{lscerts} @i{(file|manifest) <id>}
+List certs associated with manifest or file.
+@comment TROFF INPUT: .TP
+
+@item @b{lskeys} @i{[partial-id]}
+List keys matching glob, or list all keys if no glob given.
+@comment TROFF INPUT: .TP
+
+@item @b{fetch} @i{[URL] [groupname]}
+Fetch recent packets from network servers. Does not read public
+or private key packets; use the @b{read} command instead.
+@comment TROFF INPUT: .TP
+
+@item @b{post}
+Post queued packets to network servers.
+@comment TROFF INPUT: .TP
+
+@item @b{fcerts} @i{<id>}
+Write file cert packets to stdout.
+@comment TROFF INPUT: .TP
+
+@item @b{fdata} @i{<id>}
+Write file data packet to stdout.
+@comment TROFF INPUT: .TP
+
+@item @b{fdelta} @i{<oldid> <newid>}
+Write file delta packet to stdout.
+@comment TROFF INPUT: .TP
+
+@item @b{mcerts} @i{<id>}
+Write manifest cert packets to stdout.
+@comment TROFF INPUT: .TP
+
+@item @b{mdata} @i{<id>}
+Write manifest data packet to stdout.
+@comment TROFF INPUT: .TP
+
+@item @b{privkey} @i{<id>}
+Write private key packet to stdout.
+@comment TROFF INPUT: .TP
+
+@item @b{pubkey} @i{<id>}
+Write public key packet to stdout.
+@comment TROFF INPUT: .TP
+
+@item @b{read}
+Read packets from stdin. This is the only way of reading cryptographic
+key packets; the @b{fetch} command will not read public or private
+keys from the network. It is very important to @b{only read keys from
+trusted sources}; all other trust relationships are built out of the
+trust assigned to keys.
+@comment TROFF INPUT: .TP
+
+@item @b{cvs_import} @i{<cvsroot>}
+Import all versions in CVS repository. Reconstructs ancestry edges and
+converts metadata to certificates. A private signing key must alreay
+exist in the database.
+@comment TROFF INPUT: .TP
+
+@item @b{rcs_import} @i{<rcsfile> ...}
+Import all versions in RCS files. Does not reconstruct ancestry edges
+or convert ancestry edges.
+@comment TROFF INPUT: .TP
+
+@item @b{checkout} @i{<manifest-id>}
+Check out tree state from database.
+@comment TROFF INPUT: .TP
+
+@item @b{cat} @i{(file|manifest) <id>}
+Write file or manifest from database to stdout.
+@comment TROFF INPUT: .TP
+
+@item @b{heads}
+Show unmerged heads of branch, or report when branch is merged.
+@comment TROFF INPUT: .TP
+
+@item @b{merge}
+Merge unmerged heads of branch.
+@comment TROFF INPUT: .TP
+
+@item @b{add} @i{<pathname> [...]}
+Add files to working copy. adding a file does not copy it into the database,
+merely adds it to the manifest. You must @b{commit} your changes in order
+to copy added files to the database.
+@comment TROFF INPUT: .TP
+
+@item @b{commit} @i{[log message]}
+Commit working copy to database. If a log message is provided on the command
+line, it is used; otherwise a log message editor will be invoked.
+@comment TROFF INPUT: .TP
+
+@item @b{drop} @i{<pathname> [...]}
+Drop files from working copy. Files are not deleted from working copy,
+merely removed from the manifest.
+@comment TROFF INPUT: .TP
+
+@item @b{update} @i{[sort keys...]}
+Update working copy, relative to sorting keys.
+@comment TROFF INPUT: .SH DESCRIPTION
+
+@end table
+
+@c ---------------------------------------------------------------------
+
+@node DESCRIPTION
+
+@section DESCRIPTION
+@c DEBUG: print_menu("DESCRIPTION")
+
+Monotone is a version control system, which allows you to keep old
+versions of files, as well as special @i{manifest files} which
+describe the location of files in a tree. Unlike other systems,
+versions in monotone are @i{identified} by cryptographic hash, and
+operations are authenticated by individual users' evaluating
+cryptographic signatures on meta-data, rather than any central
+authority.
+
+Monotone keeps a collection of versions in a single-file relational
+database. It is essentially serverless, using network servers only as
+untrusted communication facilities. A monotone database is a regular
+file, which contains all the information needed to extract previous
+versions of files, verify signatures, merge and modify versions, and
+communicate with network servers.
+@comment TROFF INPUT: .SH OPTIONS
+
+@node OPTIONS
+
+@section OPTIONS
+@c DEBUG: print_menu("OPTIONS")
+
+@comment TROFF INPUT: .TP
+
+@c ---------------------------------------------------------------------
+@table @code
+@item @b{--help}
+Print help message.
+@comment TROFF INPUT: .TP
+
+@item @b{--verbose}
+Trace execution verbosely. default is to be silent, unless
+an error occurs, in which case failure log is dumped.
+@comment TROFF INPUT: .TP
+
+@item @b{--nostd}
+Do not evaluate "standard" lua hooks compiled into @b{monotone}.
+@comment TROFF INPUT: .TP
+
+@item @b{--norc}
+Do not load lua hooks from user's @b{~/.monotonerc} file.
+@comment TROFF INPUT: .TP
+
+@item @b{--rcfile=}@i{<file>}
+Load extra lua hooks from @i{file} (may be given multiple times).
+@comment TROFF INPUT: .TP
+
+@item @b{--db=}@i{<file>}
+Use database in @i{file}. default is @b{monotone.db}.
+@comment TROFF INPUT: .TP
+
+@item @b{--key=}@i{<keyid>}
+Use @i{keyid} for operations which produce RSA signatures. Default
+is inferred from presence of unique private key in database. Can also
+be set with environment variable @b{MT@t{_}KEY} or customized on a per-branch
+basis with hook function @b{get@t{_}branch@t{_}key(branchname)}.
+@comment TROFF INPUT: .TP
+
+@item @b{--branch=}@i{<branchname>}
+Use @i{branchname} for operations on a branch. Default is inferred
+in operations on existing branches (commit, update, etc). Can also be set
+with environment variable @b{MT@t{_}BRANCH}.
+@comment TROFF INPUT: .SH ENVIRONMENT
+
+@end table
+
+@c ---------------------------------------------------------------------
+
+@node ENVIRONMENT
+
+@section ENVIRONMENT
+@c DEBUG: print_menu("ENVIRONMENT")
+
+@comment TROFF INPUT: .TP
+
+@c ---------------------------------------------------------------------
+@table @code
+@item @b{MT@t{_}DB}
+Database file to use
+(same as @b{--db} option).
+@comment TROFF INPUT: .TP
+
+@item @b{MT@t{_}KEY}
+Key to use for operations which produce RSA signatures
+(same as @b{--key} option).
+@comment TROFF INPUT: .TP
+
+@item @b{MT@t{_}BRANCH}
+Branch name to use for operations on a branch
+(same as --branch option).
+@comment TROFF INPUT: .TP
+
+@item @b{EDITOR}
+Used to edit comments, log messages, etc.
+@comment TROFF INPUT: .TP
+
+@item @b{VISUAL}
+Used in preference to @b{EDITOR}, if set.
+@comment TROFF INPUT: .SH FILES
+
+@end table
+
+@c ---------------------------------------------------------------------
+
+@node FILES
+
+@section FILES
+@c DEBUG: print_menu("FILES")
+
+@comment TROFF INPUT: .TP
+
+@c ---------------------------------------------------------------------
+@table @code
+@item @b{$HOME/.monotonerc}
+A lua script, used as a customization file.
+@comment TROFF INPUT: .SH NOTES
+
+@end table
+
+@c ---------------------------------------------------------------------
+
+@node NOTES
+
+@section NOTES
+@c DEBUG: print_menu("NOTES")
+
+@comment TROFF INPUT: .IP \(bu
+
+Command line options override environment variables.
+@comment TROFF INPUT: .IP \(bu
+
+Settings in lua scripts (such as @b{.monotonerc})
+override command line options and environment variables.
+@comment TROFF INPUT: .SH "SEE ALSO"
+
+@node SEE ALSO
+
+@section SEE ALSO
+@c DEBUG: print_menu("SEE ALSO")
+
+@b{info monotone}
+@comment TROFF INPUT: .SH BUGS
+
+@node BUGS
+
+@section BUGS
+@c DEBUG: print_menu("BUGS")
+
+None known, please report any found.
+@comment TROFF INPUT: .SH AUTHOR
+
+@node AUTHOR
+
+@section AUTHOR
+@c DEBUG: print_menu("AUTHOR")
+
+graydon hoare <graydon@@pobox.com>
+
+@bye

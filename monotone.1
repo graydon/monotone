@@ -1,0 +1,201 @@
+.TH "monotone" 1
+.SH NAME
+monotone \- distributed version control system
+.SH SYNOPSIS
+\fBmonotone\fP \fI[options] <command> [parameters]\fP
+.P
+Options, which affect global behavior or set default values, come
+first in the argument list. A single command must follow, indicating
+the operation to perform, followed by parameters which vary depending
+on the command.
+.SS Note
+This manpage is a summary of some of the features and commands of
+\fBmonotone\fP, but it is not the most detailed source of information
+available. For a complete discussion of the concepts and a tutorial on
+its use, please refer to the texinfo manual (via the \fBinfo
+monotone\fP command, or online).
+.SS Commands
+.TP 
+\fBcomment\fP \fI(file|manifest) <id>\fP
+Write a comment cert for a file or manifest version.
+.TP
+\fBapprove\fP \fI(file|manifest) <id>\fP
+Make a cert approving of a file or manifest version.
+.TP
+\fBdisapprove\fP \fI(file|manifest) <id>\fP
+Make a cert disapproving of a file or manifest version.
+.TP
+\fBtag\fP \fI<id> <tagname>\fP
+Put a symbolic tag cert on a manifest version.
+.TP
+\fBagraph\fP
+Dump ancestry graph to stdout.
+.TP
+\fBdiff\fP
+Show diffs between working copy and database.
+.TP
+\fBstatus\fP
+Show status of working copy.
+.TP
+\fBcert\fP \fI(file|manifest) <id> <certname> [certval]\fP
+Create a custom cert for a file or manifest. Reads cert value
+from stdin if no value given on command line.
+.TP
+\fBgenkey\fP \fI<keyid>\fP
+Generate an RSA key-pair and store it in the database.
+.TP
+\fBlscerts\fP \fI(file|manifest) <id>\fP
+List certs associated with manifest or file.
+.TP
+\fBlskeys\fP \fI[partial-id]\fP
+List keys matching glob, or list all keys if no glob given.
+.TP
+\fBfetch\fP \fI[URL] [groupname]\fP
+Fetch recent packets from network servers. Does not read public
+or private key packets; use the \fBread\fP command instead.
+.TP
+\fBpost\fP
+Post queued packets to network servers.
+.TP
+\fBfcerts\fP \fI<id>\fP
+Write file cert packets to stdout.
+.TP
+\fBfdata\fP \fI<id>\fP
+Write file data packet to stdout.
+.TP
+\fBfdelta\fP \fI<oldid> <newid>\fP
+Write file delta packet to stdout.
+.TP
+\fBmcerts\fP \fI<id>\fP
+Write manifest cert packets to stdout.
+.TP
+\fBmdata\fP \fI<id>\fP
+Write manifest data packet to stdout.
+.TP
+\fBprivkey\fP \fI<id>\fP
+Write private key packet to stdout.
+.TP
+\fBpubkey\fP \fI<id>\fP
+Write public key packet to stdout.
+.TP
+\fBread\fP
+Read packets from stdin. This is the only way of reading cryptographic
+key packets; the \fBfetch\fP command will not read public or private
+keys from the network. It is very important to \fBonly read keys from
+trusted sources\fP; all other trust relationships are built out of the
+trust assigned to keys.
+.TP
+\fBcvs_import\fP \fI<cvsroot>\fP
+import all versions in CVS repository
+.TP
+\fBrcs_import\fP \fI<rcsfile> ...\fP
+import all versions in RCS files
+.TP
+\fBcheckout\fP \fI<manifest-id>\fP
+Check out tree state from database.
+.TP
+\fBcat\fP \fI(file|manifest) <id>\fP
+Write file or manifest from database to stdout.
+.TP
+\fBheads\fP
+Show unmerged heads of branch, or report when branch is merged.
+.TP
+\fBmerge\fP
+Merge unmerged heads of branch.
+.TP
+\fBadd\fP \fI<pathname> [...]\fP
+Add files to working copy. adding a file does not copy it into the database,
+merely adds it to the manifest. You must \fBcommit\fP your changes in order
+to copy added files to the database.
+.TP
+\fBcommit\fP \fI[log message]\fP
+Commit working copy to database. If a log message is provided on the command
+line, it is used; otherwise a log message editor will be invoked.
+.TP
+\fBdrop\fP \fI<pathname> [...]\fP
+Drop files from working copy. Files are not deleted from working copy, 
+merely removed from the manifest.
+.TP
+\fBupdate\fP \fI[sort keys...]\fP
+Update working copy, relative to sorting keys.
+.SH DESCRIPTION
+Monotone is a version control system, which allows you to keep old
+versions of files, as well as special \fImanifest files\fP which
+describe the location of files in a tree. Unlike other systems,
+versions in monotone are \fIidentified\fP by cryptographic hash, and
+operations are authenticated by individual users' evaluating
+cryptographic signatures on meta-data, rather than any central
+authority.
+
+Monotone keeps a collection of versions in a single-file relational
+database. It is essentially serverless, using network servers only as
+untrusted communication facilities. A monotone database is a regular
+file, which contains all the information needed to extract previous
+versions of files, verify signatures, merge and modify versions, and
+communicate with network servers.
+.SH OPTIONS
+.TP
+\fB--help\fP
+Print help message.
+.TP
+\fB--verbose\fP
+Trace execution verbosely. default is to be silent, unless 
+an error occurs, in which case failure log is dumped.
+.TP
+\fB--nostd\fP
+Do not evaluate "standard" lua hooks compiled into \fBmonotone\fP.
+.TP
+\fB--norc\fP
+Do not load lua hooks from user's \fB~/.monotonerc\fP file.
+.TP
+\fB--rcfile=\fP\fI<file>\fP
+Load extra lua hooks from \fIfile\fP (may be given multiple times).
+.TP
+\fB--db=\fP\fI<file>\fP
+Use database in \fIfile\fP. default is \fBmonotone.db\fP.
+.TP
+\fB--key=\fP\fI<keyid>\fP
+Use \fIkeyid\fP for operations which produce RSA signatures. Default
+is inferred from presence of unique private key in database. Can also
+be set with environment variable \fBMT_KEY\fP or customized on a per-branch
+basis with hook function \fBget_branch_key(branchname)\fP.
+.TP
+\fB--branch=\fP\fI<branchname>\fP
+Use \fIbranchname\fP for operations on a branch. Default is inferred
+in operations on existing branches (commit, update, etc). Can also be set
+with environment variable \fBMT_BRANCH\fP.
+.SH ENVIRONMENT
+.TP
+\fBMT_DB\fP
+Database file to use 
+(same as \fB--db\fP option).
+.TP
+\fBMT_KEY\fP
+Key to use for operations which produce RSA signatures 
+(same as \fB--key\fP option).
+.TP
+\fBMT_BRANCH\fP
+Branch name to use for operations on a branch 
+(same as --branch option).
+.TP
+\fBEDITOR\fP
+Used to edit comments, log messages, etc.
+.TP
+\fBVISUAL\fP
+Used in preference to \fBEDITOR\fP, if set.
+.SH FILES
+.TP
+\fB$HOME/.monotonerc\fP
+A lua script, used as a customization file.
+.SH NOTES
+.IP \(bu
+Command line options override environment variables.
+.IP \(bu
+Settings in lua scripts (such as \fB.monotonerc\fP)
+override command line options and environment variables.
+.SH "SEE ALSO"
+\fBinfo monotone\fP
+.SH BUGS
+None known, please report any found.
+.SH AUTHOR
+graydon hoare <graydon@pobox.com>
