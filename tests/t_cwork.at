@@ -14,6 +14,7 @@ AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore]
 V1=`SHA1(MT/manifest)`
 AT_CHECK(MONOTONE add testfile1, [], [ignore], [ignore])
 AT_CHECK(test -e MT/work, [], [ignore])
+AT_CHECK(rm -rf MT)
 AT_CHECK(MONOTONE checkout $V1 ., [], [ignore], [ignore])
 AT_CHECK(test ! -e MT/work, [], [ignore])
 

@@ -32,7 +32,7 @@ public:
   void add_std_hooks();
   void working_copy_rcfilename(fs::path & file);
   void default_rcfilename(fs::path & file);
-  void add_rcfile(fs::path const & file);
+  void load_rcfile(fs::path const & file);
 
   // cert hooks
   bool hook_expand_selector(std::string const & sel, std::string & exp);

@@ -31,20 +31,33 @@ public:
   utf8 branch_name;
   database db;
   lua_hooks lua;
-  bool options_changed;
+  bool stdhooks;
+  bool rcfiles;
   options_map options;
+  std::vector<utf8> extra_rcfiles;
   std::vector<restriction> restrictions;
+
+  void initialize(bool working_copy);
+  void initialize(std::string const & dir);
 
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
+
+  void set_stdhooks(bool b);
+  void set_rcfiles(bool b);
+  void add_rcfile(utf8 const & filename);
+
   void add_restriction(bool restrict, utf8 const & path);
   bool is_restricted(file_path const & path);
-  void write_options();
 
   explicit app_state();
   ~app_state();
+
 private:
+  void load_rcfiles();
+  void read_options();
+  void write_options();
 };
 
 #endif // __APP_STATE_HH__

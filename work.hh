@@ -25,6 +25,7 @@
 //
 // MT/manifest       -- the check-out manifest, as defined in manifest.hh
 // MT/work           -- (optional) a set of added, deleted or moved pathnames
+// MT/options        -- the database, branch and key options currently in use 
 //
 // as work proceeds, the files in the working directory either change their
 // sha1 fingerprints from those listed in the manifest file, or else are

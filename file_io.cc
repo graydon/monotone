@@ -36,6 +36,53 @@ void
 save_initial_path()
 {
   fs::initial_path();
+  L(F("initial path is %s\n") % fs::initial_path().string());
+}
+
+bool
+find_working_copy(fs::path & working_copy_root, fs::path & working_copy_restriction) 
+{
+  L(F("searching for '%s' directory\n") % book_keeping_dir);
+
+  fs::path bookdir = mkpath(book_keeping_dir);
+  fs::path current = fs::initial_path();
+  fs::path removed;
+  fs::path check = current / bookdir;
+
+  while (current.has_branch_path() && current.has_leaf() && !fs::exists(check))
+    {
+      L(F("not found at '%s' with '%s' removed\n") % check.string() % removed.string());
+      removed = mkpath(current.leaf()) / removed;
+      current = current.branch_path();
+      check = current / bookdir;
+    }
+
+  L(F("found '%s' at '%s' with '%s' removed\n") 
+    % book_keeping_dir % check.string() % removed.string());
+
+  if (!fs::exists(check))
+    {
+      L(F("'%s' does not exist\n") % check.string());
+      return false;
+    }
+
+  if (!fs::is_directory(check))
+    {
+      L(F("'%s' is not a directory\n") % check.string());
+      return false;
+    }
+
+  // check for MT/. and MT/.. to see if mt dir is readable
+  if (!fs::exists(check / ".") || !fs::exists(check / ".."))
+    {
+      L(F("problems with '%s' (missing '.' or '..')\n") % check.string());
+      return false;
+    }
+
+  working_copy_root = current;
+  working_copy_restriction = removed;
+
+  return true;
 }
 
 fs::path 
@@ -83,7 +130,7 @@ absolutify(string const & path)
 {
   fs::path tmp = mkpath(path);
   if (! tmp.has_root_path())
-    tmp = fs::initial_path() / tmp;
+    tmp = fs::current_path() / tmp;
   I(tmp.has_root_path());
   return tmp.string();
 }

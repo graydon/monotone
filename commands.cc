@@ -191,20 +191,7 @@ CMD(C, group, params, desc)				\
   process(app, string(#realcommand), args);		\
 }
 
-// this might be better in work.cc
-
-static bool 
-bookdir_exists()
-{
-  return directory_exists(local_path(book_keeping_dir));
-}
-
-static void 
-ensure_bookdir()
-{
-  mkdir_p(local_path(book_keeping_dir));
-}
-
+  
 static void 
 get_manifest_path(local_path & m_path)
 {
@@ -222,10 +209,10 @@ get_work_path(local_path & w_path)
 static void 
 get_manifest_map(manifest_map & m)
 {
-  ensure_bookdir();
   local_path m_path;
   base64< gzip<data> > m_data;
   get_manifest_path(m_path);
+
   if (file_exists(m_path))
     {
       L(F("loading manifest file %s\n") % m_path);      
@@ -242,7 +229,6 @@ get_manifest_map(manifest_map & m)
 static void 
 put_manifest_map(manifest_map const & m)
 {
-  ensure_bookdir();
   local_path m_path;
   manifest_data m_data;
   get_manifest_path(m_path);
@@ -255,7 +241,6 @@ put_manifest_map(manifest_map const & m)
 static void 
 get_work_set(work_set & w)
 {
-  ensure_bookdir();
   local_path w_path;
   get_work_path(w_path);
   if (file_exists(w_path))
@@ -272,8 +257,6 @@ get_work_set(work_set & w)
       L(F("no un-committed work file %s\n") % w_path);
     }
 }
-
-// this might also be better in work.cc
 
 static void 
 remove_work_set()
@@ -294,7 +277,6 @@ put_work_set(work_set & w)
       || w.dels.size() > 0
       || w.renames.size() > 0)
     {
-      ensure_bookdir();
       data w_data;
       write_work_set(w_data, w);
       write_data(w_path, w_data);
@@ -745,6 +727,8 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   vector<cert> certs;
 
   transaction_guard guard(app.db);
@@ -824,6 +808,8 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
   vector<rsa_keypair_id> pubkeys;
   vector<rsa_keypair_id> privkeys;
 
+  app.initialize(false);
+
   transaction_guard guard(app.db);
 
   if (args.size() == 0)
@@ -876,13 +862,15 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   if (args.size() != 1)
     throw usage(name);
   
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
   N(! app.db.key_exists(ident),
     F("key '%s' already exists in database") % ident);
-  
+
   base64<rsa_pub_key> pub;
   base64< arc4<rsa_priv_key> > priv;
   P(F("generating key-pair '%s'\n") % ident);
@@ -898,6 +886,8 @@ CMD(cert, "key and cert", "ID CERTNAME [CERTVAL]",
 {
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
+
+  app.initialize(false);
 
   transaction_guard guard(app.db);
 
@@ -938,6 +928,8 @@ CMD(vcheck, "key and cert", "create [MANIFEST]\ncheck [MANIFEST]",
 {
   if (args.size() < 1 || args.size() > 2)
     throw usage(name);
+
+  app.initialize(false);
 
   set<manifest_id> ids;
   if (args.size() == 1)
@@ -980,6 +972,9 @@ CMD(tag, "certificate", "ID TAGNAME",
 {
   if (args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
+
   manifest_id m;
   complete(app, idx(args, 0)(), m);
   packet_db_writer dbw(app);
@@ -991,6 +986,9 @@ CMD(testresult, "certificate", "ID (true|false)",
 {
   if (args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
+
   manifest_id m;
   complete(app, idx(args, 0)(), m);
   packet_db_writer dbw(app);
@@ -1002,6 +1000,8 @@ CMD(approve, "certificate", "ID1 ID2",
 {
   if (args.size() != 2)
     throw usage(name);  
+
+  app.initialize(false);
 
   manifest_id m1, m2;
   complete(app, idx(args, 0)(), m1);
@@ -1016,6 +1016,8 @@ CMD(disapprove, "certificate", "ID1 ID2",
   if (args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   manifest_id m1, m2;
   complete(app, idx(args, 0)(), m1);
   complete(app, idx(args, 1)(), m2);
@@ -1029,6 +1031,8 @@ CMD(comment, "certificate", "ID [COMMENT]",
 {
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
 
   string comment;
   if (args.size() == 2)
@@ -1052,6 +1056,8 @@ CMD(add, "working copy", "PATHNAME...", "add files to working copy")
   if (args.size() < 1)
     throw usage(name);
 
+  app.initialize(true);
+
   manifest_map man;
   work_set work;  
   get_manifest_map(man);
@@ -1065,13 +1071,14 @@ CMD(add, "working copy", "PATHNAME...", "add files to working copy")
     put_work_set(work);
 
   update_any_attrs(app);
-  app.write_options();
 }
 
 CMD(drop, "working copy", "FILE...", "drop files from working copy")
 {
   if (args.size() < 1)
     throw usage(name);
+
+  app.initialize(true);
 
   manifest_map man;
   work_set work;
@@ -1086,7 +1093,6 @@ CMD(drop, "working copy", "FILE...", "drop files from working copy")
     put_work_set(work);
 
   update_any_attrs(app);
-  app.write_options();
 }
 
 
@@ -1095,6 +1101,8 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   if (args.size() != 2)
     throw usage(name);
   
+  app.initialize(true);
+
   manifest_map man;
   work_set work;
 
@@ -1109,7 +1117,6 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
     put_work_set(work);
   
   update_any_attrs(app);
-  app.write_options();  
 }
 
 
@@ -1117,6 +1124,8 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 {
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
+
+  app.initialize(true);
 
   string log_message("");
   manifest_map m_old, m_new;
@@ -1270,7 +1279,6 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   P(F("committed %s\n") % ps.m_new);
 
   update_any_attrs(app);
-  app.write_options();
 
   {
     // tell lua what happened. yes, we might lose some information here,
@@ -1296,6 +1304,8 @@ CMD(update, "working copy", "", "update working copy")
   manifest_data m_chosen_data;
   manifest_map m_old, m_working, m_chosen, m_new;
   manifest_id m_old_id, m_chosen_id;
+
+  app.initialize(true);
 
   transaction_guard guard(app.db);
 
@@ -1417,11 +1427,12 @@ CMD(update, "working copy", "", "update working copy")
   P(F("updated to base version %s\n") % m_chosen_id);
 
   update_any_attrs(app);
-  app.write_options();
 }
 
 CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy")
 {
+  app.initialize(true);
+
   manifest_map m_old;
 
   // should what get's reverted here be the subject of a restriction
@@ -1525,7 +1536,6 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
     }
 
   update_any_attrs(app);
-  app.write_options();
 }
 
 CMD(bump, "tree", "", "advance current tree state by updating nonce")
@@ -1533,6 +1543,9 @@ CMD(bump, "tree", "", "advance current tree state by updating nonce")
   string nonce;
   work_set work;
   manifest_map m_old, m_new;
+
+  app.initialize(false);
+
   get_manifest_map(m_old);
   calculate_new_manifest_map(m_old, m_new, app);
   make_nonce(app, nonce);
@@ -1551,6 +1564,8 @@ CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to 
 {
   if (args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
 
   transaction_guard guard(app.db);
 
@@ -1594,7 +1609,6 @@ CMD(cat, "tree", "(file|manifest) ID", "write file or manifest from database to 
 
 CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state from database into directory")
 {
-
   manifest_id ident;
   string dir;
 
@@ -1603,26 +1617,22 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state 
 
   if (args.size() == 1)
     {
+      dir = idx(args, 0)();
+      app.initialize(dir);
+
       set<manifest_id> heads;
       N(app.branch_name() != "", F("need --branch argument for branch-based checkout"));
       get_branch_heads(app.branch_name(), app, heads);
       N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
       N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
       ident = *(heads.begin());
-      dir = idx(args, 0)();
     }
-
   else
     {
-      complete(app, idx(args, 0)(), ident);
       dir = idx(args, 1)();
-    }
+      app.initialize(dir);
 
-  if (dir != string("."))
-    {
-      fs::path co_dir = mkpath(dir);
-      fs::create_directories(co_dir);
-      chdir(co_dir.native_directory_string().c_str());
+      complete(app, idx(args, 0)(), ident);
     }
 
   transaction_guard guard(app.db);
@@ -1656,17 +1666,30 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY", "check out tree state 
   remove_work_set();
   guard.commit();
   update_any_attrs(app);
-  app.write_options();
 }
 
 ALIAS(co, checkout, "tree", "MANIFEST-ID DIRECTORY\nDIRECTORY",
       "check out tree state from database; alias for checkout")
+
+CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
+{
+  string dir;
+
+  if (args.size() != 1)
+    throw usage(name);
+
+  dir = idx(args,0)();
+  app.initialize(dir);
+}
+
 
 CMD(heads, "tree", "", "show unmerged heads of branch")
 {
   set<manifest_id> heads;
   if (args.size() != 0)
     throw usage(name);
+
+  app.initialize(false);
 
   if (app.branch_name() == "")
     {
@@ -1723,6 +1746,8 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   if (args.size() != 0)
     throw usage(name);
 
+  app.initialize(false);
+
   if (app.branch_name() == "")
     {
       cout << "please specify a branch, with --branch=BRANCH" << endl;
@@ -1774,7 +1799,6 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 	}
     }
 
-  app.write_options();
 }
 
 
@@ -1786,6 +1810,8 @@ CMD(fload, "tree", "", "load file contents into db")
 {
   string s = get_stdin();
   base64< gzip< data > > gzd;
+
+  app.initialize(false);
 
   pack(data(s), gzd);
 
@@ -1801,7 +1827,9 @@ CMD(fload, "tree", "", "load file contents into db")
   CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result")
   {
   if (args.size() != 3)
-  throw usage(name);
+    throw usage(name);
+
+  app.initialize(false);
 
   file_id anc_id(idx(args, 0)()), left_id(idx(args, 1)()), right_id(idx(args, 2)());
   file_data anc, left, right;
@@ -1864,6 +1892,8 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   if (args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   get_branch_heads(idx(args, 0)(), app, src_heads);
   get_branch_heads(idx(args, 1)(), app, dst_heads);
 
@@ -1915,6 +1945,8 @@ CMD(complete, "informative", "(manifest|file) PARTIAL-ID", "complete partial id"
   if (args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   if (idx(args, 0)() == "manifest")
     {      
       N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
@@ -1944,6 +1976,15 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
   manifest_map m_old, m_new;
   patch_set ps;
   bool new_is_archived;
+
+  // initialize before transaction so we have a database to work with
+
+  if (args.size() == 0)
+      app.initialize(true);
+  else if (args.size() == 1)
+      app.initialize(true);
+  else if (args.size() == 2)
+      app.initialize(false);
 
   transaction_guard guard(app.db);
 
@@ -2072,22 +2113,31 @@ CMD(log, "informative", "[ID] [file]", "print log history in reverse order (whic
     throw usage(name);
 
   if (args.size() == 2)
-  {  complete(app, idx(args, 0)(), m_id);
-     file=file_path(idx(args, 1)());
+  {  
+    app.initialize(false);
+    complete(app, idx(args, 0)(), m_id);
+    file=file_path(idx(args, 1)());
   }  
   else if (args.size() == 1)
-    { std::string arg=idx(args, 0)();
+    { 
+      std::string arg=idx(args, 0)();
       if (arg.find_first_not_of(constants::legal_id_bytes) == string::npos
           && arg.size()<=constants::idlen)
-         complete(app, arg, m_id);
+        {
+          app.initialize(false);
+          complete(app, arg, m_id);
+        }
       else
-      {  file=file_path(arg);
-         get_manifest_map(m);
-         calculate_ident (m, m_id);
-      }
+        {  
+          app.initialize(true); // no id arg, must have working copy
+          file=file_path(arg);
+          get_manifest_map(m);
+          calculate_ident (m, m_id);
+        }
     }
   else
     {
+      app.initialize(true); // no id arg, must have working copy
       get_manifest_map(m);
       calculate_ident (m, m_id);
     }
@@ -2229,9 +2279,7 @@ CMD(status, "informative", "", "show status of working copy")
   patch_set ps;
   rename_edge renames;
 
-  N(bookdir_exists(),
-    F("no monotone book-keeping directory '%s' found") 
-    % book_keeping_dir);
+  app.initialize(true);
 
   transaction_guard guard(app.db);
   get_manifest_map(m_old);
@@ -2253,6 +2301,8 @@ CMD(status, "informative", "", "show status of working copy")
 static void 
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   vector< manifest<cert> > certs;
   app.db.get_manifest_certs(branch_cert_name, certs);
@@ -2303,6 +2353,8 @@ struct unknown_itemizer : public tree_walker
 static void
 ls_unknown (app_state & app, bool want_ignored)
 {
+  app.initialize(true);
+
   manifest_map m_old, m_new;
   get_manifest_map(m_old);
   calculate_new_manifest_map(m_old, m_new, app);
@@ -2316,6 +2368,8 @@ ls_missing (app_state & app)
   manifest_map m_old;
   path_set paths;
   work_set work;
+
+  app.initialize(true);
 
   get_manifest_map(m_old);
   extract_path_set(m_old, paths);
@@ -2335,6 +2389,8 @@ CMD(reindex, "network", "COLLECTION...",
   if (args.size() < 1)
     throw usage(name);
 
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   ui.set_tick_trailer("rehashing db");
   app.db.rehash();
@@ -2352,6 +2408,8 @@ CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   if (args.size() < 2)
     throw usage(name);
 
+  app.initialize(false);
+
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
@@ -2367,6 +2425,8 @@ CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   if (args.size() < 2)
     throw usage(name);
 
+  app.initialize(false);
+
   if (app.signing_key() == "")
     W(F("doing anonymous pull\n"));
   
@@ -2380,6 +2440,8 @@ CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
 {
   if (args.size() < 2)
     throw usage(name);
+
+  app.initialize(false);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
@@ -2395,6 +2457,8 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
 {
   if (args.size() < 2)
     throw usage(name);
+
+  app.initialize(false);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
@@ -2450,6 +2514,8 @@ ALIAS(ls, list, "informative",
   if (args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   packet_writer pw(cout);
 
@@ -2475,6 +2541,8 @@ CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
   if (args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   packet_writer pw(cout);
 
@@ -2497,6 +2565,8 @@ CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   packet_writer pw(cout);
 
@@ -2516,6 +2586,8 @@ CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   packet_writer pw(cout);
 
@@ -2533,6 +2605,8 @@ CMD(mcerts, "packet i/o", "ID", "write manifest cert packets to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
+
+  app.initialize(false);
 
   transaction_guard guard(app.db);
   packet_writer pw(cout);
@@ -2553,6 +2627,8 @@ CMD(fcerts, "packet i/o", "ID", "write file cert packets to stdout")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   packet_writer pw(cout);
 
@@ -2572,6 +2648,8 @@ CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   packet_writer pw(cout);
   rsa_keypair_id ident(idx(args, 0)());
@@ -2586,6 +2664,8 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   packet_writer pw(cout);
   rsa_keypair_id ident(idx(args, 0)());
@@ -2598,6 +2678,8 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
 
 CMD(read, "packet i/o", "", "read packets from stdin")
 {
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   packet_db_writer dbw(app, true);
   size_t count = read_packets(cin, dbw);
@@ -2612,6 +2694,8 @@ CMD(read, "packet i/o", "", "read packets from stdin")
 
 CMD(agraph, "debug", "", "dump ancestry graph to stdout")
 {
+  app.initialize(false);
+
   transaction_guard guard(app.db);
 
   set<string> nodes;
@@ -2674,6 +2758,8 @@ CMD(rcs_import, "rcs", "RCSFILE...", "import all versions in RCS files")
   if (args.size() < 1)
     throw usage(name);
   
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   for (vector<utf8>::const_iterator i = args.begin();
        i != args.end(); ++i)
@@ -2689,6 +2775,8 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   import_cvs_repo(mkpath(idx(args, 0)()), app);
 }
 
@@ -2696,6 +2784,7 @@ CMD(debug, "debug", "SQL", "issue SQL queries directly (dangerous)")
 {
   if (args.size() != 1)
     throw usage(name);
+  app.initialize(false);
   app.db.debug(idx(args, 0)(), cout);
 }
 
@@ -2703,6 +2792,9 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate", "manipulate data
 {
   if (args.size() != 1)
     throw usage(name);
+
+  app.initialize(false);
+
   if (idx(args, 0)() == "init")
     app.db.initialize();
   else if (idx(args, 0)() == "info")

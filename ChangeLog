@@ -1,3 +1,36 @@
+2004-09-07  Derek Scherger  <derek@echologic.com>
+
+	subdirectory restrictions
+	
+	* file_io.{hh,cc} (find_working_copy): new function
+	(absolutify) use fs::current_path
+	* work.cc (add_to_options_map): use options.insert to preserve
+	previous settings
+	* work.hh: add note about MT/options file to header comment
+	* lua.{hh,cc} (load_rcfile): renamed from add_rcfile 
+	* app_state.{cc,hh} (constructor): remove read of MT/options
+	(initialize): new methods to find/create working copy
+	(set_stdhooks,set_rcfiles,add_rcfile,load_rcfiles,read_options):
+	new methods
+	(set_database,set_branch,set_signing_key): update for new options
+	reading
+	* monotone.cc: update help for --norc option
+	(cpp_main): move loading of lua hooks to app_state after book
+	keeping dir is found
+	* commands.cc: all commands call app initialize to relocate to
+	working copy directory
+	(bookdir_exists,ensure_bookdir) remove
+	(setup) new command to create working copy
+	* tests/t_subdirs.at: new test
+	* testsuite.at: call new setup command to initialize working copy;
+	call new test
+	(PROBE_NODE): adjust for new checkout requirement that MT dir does
+	not exist
+	* tests/t_attributes.at: ditto
+	* tests/t_cwork.at: ditto
+	* tests/t_single_char_filenames.at: ditto
+	* tests/t_versions.at: ditto
+	
 2004-09-02  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_restrictions.at: rework and attempt to clean things up a

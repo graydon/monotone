@@ -25,11 +25,13 @@ AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
 UPDATE_M_SHA1=`SHA1(MT/manifest)`
 
 # Check checkouts.
+AT_CHECK(rm -rf co-dir/MT)
 AT_CHECK(MONOTONE checkout $CO_M_SHA1 co-dir, [], [stdout])
 AT_CHECK(grep "test_attr:foo:true" stdout, [], [ignore])
 AT_CHECK(grep "test_attr:a:1" stdout, [], [ignore])
 
 # Check updates.
+AT_CHECK(rm -rf co-dir/MT)
 AT_CHECK(MONOTONE checkout $UPDATE_M_SHA1 co-dir, [], [stdout])
 AT_CHECK(grep "test_attr:foo" stdout, [1], [ignore])
 AT_CHECK(grep "test_attr:a:2" stdout, [], [ignore])
