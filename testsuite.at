@@ -494,3 +494,6 @@ m4_include(tests/t_fsck.at)
 m4_include(tests/t_add_owndb.at)
 m4_include(tests/t_can_execute.at)
 
+m4_include(tests/t_diff_binary.at)
+m4_include(tests/t_command_completion.at)
+m4_include(tests/t_merge_rename_file_and_rename_dir.at)

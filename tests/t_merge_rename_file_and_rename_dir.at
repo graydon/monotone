@@ -1,0 +1,39 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([merge rename file and rename dir])
+
+MONOTONE_SETUP
+
+AT_CHECK(mkdir foo)
+AT_DATA(foo/bar, [foo bar file
+])
+
+# common ancestor
+
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+BASE=`BASE_REVISION`
+
+# rename directory
+
+AT_CHECK(mv foo foof, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename foo foof, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+# rename file in directory
+
+REVERT_TO($BASE)
+AT_CHECK(mv foo/bar foo/barf, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename foo/bar foo/barf, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+# merge heads to arrive at foof/barf
+
+AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE co dir, [], [ignore], [ignore])
+AT_CHECK(test -d dir/foof, [], [ignore], [ignore])
+AT_CHECK(test -f dir/foof/barf, [], [ignore], [ignore])
+
+find dir
+
+AT_CLEANUP
