@@ -1,3 +1,7 @@
+2004-11-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ui.cc: Remove tabs.
+
 2004-11-30  Matt Johnston  <matt@ucc.asn.au>
 
         * change_set.cc (merge_disjoint_analyses): Prevent duplicated

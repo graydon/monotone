@@ -59,7 +59,7 @@ ticker::operator+=(size_t t)
     {
       ui.some_tick_is_dirty = true;
       if (ticks % mod == 0 || (ticks / mod) > (old / mod))
-	ui.write_ticks();
+        ui.write_ticks();
     }
 }
 
@@ -79,9 +79,9 @@ void tick_write_count::write_ticks()
        i != ui.tickers.end(); ++i)
     {
       tickline +=
-	string("[")
-	+ i->first + ": " + lexical_cast<string>(i->second->ticks)
-	+ "] ";
+        string("[")
+        + i->first + ": " + lexical_cast<string>(i->second->ticks)
+        + "] ";
     }
   tickline += ui.tick_trailer;
 
@@ -125,27 +125,27 @@ void tick_write_dot::write_ticks()
       map<string,size_t>::const_iterator old = last_ticks.find(i->first);
 
       if (!ui.last_write_was_a_tick)
-	{
-	  if (!first_tick)
-	    tickline1 += ", ";
+        {
+          if (!first_tick)
+            tickline1 += ", ";
 
-	  tickline1 +=
-	    i->second->shortname + "=\"" + i->second->name + "\""
-	    + "/" + lexical_cast<string>(i->second->mod);
-	  first_tick = false;
-	}
+          tickline1 +=
+            i->second->shortname + "=\"" + i->second->name + "\""
+            + "/" + lexical_cast<string>(i->second->mod);
+          first_tick = false;
+        }
 
       if (old == last_ticks.end()
-	  || ((i->second->ticks / i->second->mod)
-	      > (old->second / i->second->mod)))
-	{
-	  tickline2 += i->second->shortname;
+          || ((i->second->ticks / i->second->mod)
+              > (old->second / i->second->mod)))
+        {
+          tickline2 += i->second->shortname;
 
-	  if (old == last_ticks.end())
-	    last_ticks.insert(make_pair(i->first, i->second->ticks));
-	  else
-	    last_ticks[i->first] = i->second->ticks;
-	}
+          if (old == last_ticks.end())
+            last_ticks.insert(make_pair(i->first, i->second->ticks));
+          else
+            last_ticks[i->first] = i->second->ticks;
+        }
     }
 
   clog << tickline1 << tickline2;
@@ -227,11 +227,11 @@ sanitize(string const & line)
   for (size_t i = 0; i < line.size(); ++i)
     {
       if ((line[i] == '\n')
-	  || (line[i] >= static_cast<char>(0x20) 
-	      && line[i] != static_cast<char>(0x7F)))
-	tmp += line[i];
+          || (line[i] >= static_cast<char>(0x20) 
+              && line[i] != static_cast<char>(0x7F)))
+        tmp += line[i];
       else
-	tmp += ' ';
+        tmp += ' ';
     }
   return tmp;
 }
