@@ -1,3 +1,8 @@
+2005-04-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/ciabot_monotone.py: New file.
+	* contrib/README: Describe it.
+
 2005-04-03  Richard Levitte  <richard@levitte.org>
 
 	* monotone.cc (my_poptStuffArgFile): Include the bundled popt.h.

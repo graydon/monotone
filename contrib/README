@@ -13,3 +13,6 @@ licenses.
      already been sent out.
      For a manual, do `perl Notify.pl --man'.
      To get a help text, do `perl Notify.pl --help'.
+
+  -- ciabot_monotone.py: A python script to watch a repository and
+     send notifications of commits to CIA (http://cia.navi.cx).
