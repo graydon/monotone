@@ -21,7 +21,8 @@ MOST_SOURCES =								\
 	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
 	 numeric_vocab.hh revision.hh change_set.hh			\
 	 mkstemp.hh mt_version.hh automate.hh database_check.hh smap.hh	\
-	 gettext.h package_revision.c package_full_revision.c
+	 gettext.h package_revision.c package_full_revision.c           \
+	 path_component.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
