@@ -38,14 +38,14 @@ AT_DATA(specific.bob, [non-conflicting mergeable data in alice
 # construct ancestor
 AT_CHECK(cp shared.anc shared)
 AT_CHECK(MONOTONE add shared, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit ancestor, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=ancestor, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 ROOT_F_SHA=`SHA1(shared)`
 
 # construct left node
 AT_CHECK(cp shared.left shared)
 AT_CHECK(MONOTONE add specific.left, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit left, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=left, [], [ignore], [ignore])
 LEFT_R_SHA=`BASE_REVISION`
 LEFT_F_SHA=`SHA1(shared)`
 AT_CHECK(test $LEFT_R_SHA != $ROOT_R_SHA)
@@ -57,7 +57,7 @@ PROBE_NODE(shared, $ROOT_R_SHA, $ROOT_F_SHA)
 # construct right node
 AT_CHECK(cp shared.right shared)
 AT_CHECK(MONOTONE add specific.right, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit right, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=right, [], [ignore], [ignore])
 RIGHT_R_SHA=`BASE_REVISION`
 RIGHT_F_SHA=`SHA1(shared)`
 AT_CHECK(test $RIGHT_R_SHA != $ROOT_R_SHA)
@@ -69,7 +69,7 @@ AT_CHECK(test $RIGHT_F_SHA != $LEFT_F_SHA)
 # in left, and an ancestor edge to left.
 AT_CHECK(MONOTONE add specific.left, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add specific.alice, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit alice, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=alice, [], [ignore], [ignore])
 ALICE_R_SHA=`BASE_REVISION`
 AT_CHECK(MONOTONE cert manifest $ALICE_R_SHA ancestor $LEFT_R_SHA, [], [ignore], [ignore])
 
@@ -81,7 +81,7 @@ AT_CHECK(grep specific.right MT/manifest, [1])
 # in right, and an ancestor edge to right.
 AT_CHECK(MONOTONE add specific.right, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add specific.bob, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit bob, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=bob, [], [ignore], [ignore])
 BOB_R_SHA=`BASE_REVISION`
 AT_CHECK(MONOTONE cert manifest $BOB_R_SHA ancestor $RIGHT_R_SHA, [], [ignore], [ignore])
 

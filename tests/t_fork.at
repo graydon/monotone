@@ -9,13 +9,13 @@ AT_DATA(testfile, [version 0 of test file
 ])
 
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 ROOT_F_SHA=`SHA1(testfile)`
 
 AT_DATA(testfile, [left version of fork
 ])
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=blah-blah, [], [ignore], [ignore])
 LEFT_R_SHA=`BASE_REVISION`
 LEFT_F_SHA=`SHA1(testfile)`
 AT_CHECK(test $LEFT_R_SHA != $ROOT_R_SHA)
@@ -29,7 +29,7 @@ PROBE_NODE(testfile, $ROOT_R_SHA, $ROOT_F_SHA)
 AT_DATA(testfile, [right version of fork
 ])
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message=blah-blah, [], [ignore], [ignore])
 RIGHT_R_SHA=`BASE_REVISION`
 RIGHT_F_SHA=`SHA1(testfile)`
 AT_CHECK(test $RIGHT_R_SHA != $ROOT_R_SHA)

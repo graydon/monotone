@@ -9,6 +9,8 @@
 class app_state;
 class lua_hooks;
 
+#include <vector>
+
 #include "database.hh"
 #include "lua.hh"
 #include "work.hh"
@@ -27,17 +29,40 @@ public:
   utf8 branch_name;
   database db;
   lua_hooks lua;
-  bool options_changed;
+  bool stdhooks;
+  bool rcfiles;
   options_map options;
+  utf8 message;
+  std::vector<utf8> manifest_selectors;
+  std::vector<utf8> extra_rcfiles;
+  std::set<file_path> restrictions;
+  file_path relative_directory;
+
+  void initialize(bool working_copy);
+  void initialize(std::string const & dir);
+
+  file_path prefix(utf8 const & path);
+  void add_restriction(utf8 const & path);
+  bool in_restriction(file_path const & path);
 
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
-  void write_options();
+
+  void set_message(utf8 const & message);
+  void add_manifest(utf8 const & selector);
+
+  void set_stdhooks(bool b);
+  void set_rcfiles(bool b);
+  void add_rcfile(utf8 const & filename);
 
   explicit app_state();
   ~app_state();
+
 private:
+  void load_rcfiles();
+  void read_options();
+  void write_options();
 };
 
 #endif // __APP_STATE_HH__

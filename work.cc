@@ -188,7 +188,8 @@ add_to_options_map
     utf8 value;
     std::string key(res[1].first, res[1].second);
     value = std::string(res[2].first, res[2].second);
-    options[key] = value;
+    // use non-replacing insert verses replacing with options[key] = value;
+    options.insert(make_pair(key, value)); 
     return true;
   }
 };

@@ -9,7 +9,7 @@ second line of the file
 third line of the file
 ])
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 ROOT_F_SHA=`SHA1(testfile)`
 

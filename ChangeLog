@@ -790,6 +790,167 @@
 	* {transforms.{hh,cc}, vocab{,_terms}.hh:
 	Infrastructure for revisions.
 
+2004-12-05  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: move more things around to help align merge regions
+	* monotone.cc: untabify a few things to help merge
+
+2004-12-02  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: more tweaking to ease changeset merge
+
+2004-12-01  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: reordered commands to help merge with changesets
+	branch
+
+2004-09-24  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (initialize,prefix,in_restriction): rename
+	restriction vars; require explicit subdir restriction with ".";
+	remove restriction if any path evaluates to working copy root	
+	* commands.cc (update): disallow restricted updates
+	(diff): use --manifest options for initialization
+	* tests/t_restrictions.at: remove restricted update test
+	* tests/t_subdirs.at: added (missed previously)
+	* vocab.cc (verify): allow "." elements in local_path
+	(test_file_path_verification): test for "." in paths
+
+2004-09-20  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh}: add message and manifest options; add subdir
+	restriction; use set instead of vector for path restrictions
+	(prefix): new method
+	(add_restriction): change signature for set of path restrictions
+	(in_restriction): renamed from is_restricted; adjust path matching
+	(set_message): new method
+	(add_manifest): new method
+	(initialize): remove code to adjust restrictions from old options
+	* commands.cc
+	(restrict_patch_set, struct unknown_itemizer): rename
+	app.is_restricted to app.in_restriction
+	(add,drop,rename,revert): prefix file args with current subdir
+	(update,status,ls_unknown,ls_missing): build restriction from args
+	(commit): build restriction from args; use --message option
+	(diff): build restriction from args; use --manifest options
+	* file_io.cc (find_working_copy): logging tweaks
+	* monotone.cc: remove --include/--exclude options; add --manifest
+	and --message options
+	* tests/t_attributes.at: add commit --message option
+	* tests/t_cross.at: commit --message
+	* tests/t_cwork.at: commit --message
+	* tests/t_disapprove.at: commit --message
+	* tests/t_drop.at: commit --message
+	* tests/t_erename.at: commit --message; diff --manifest
+	* tests/t_fork.at: commit --message
+	* tests/t_genkey.at: commit --message
+	* tests/t_i18n_file.at: commit --message
+	* tests/t_import.at: commit --message
+	* tests/t_ls_missing.at: commit --message
+	* tests/t_merge.at: commit --message
+	* tests/t_movedel.at: commit --message
+	* tests/t_movepatch.at: commit --message
+	* tests/t_netsync.at: commit --message
+	* tests/t_persist_phrase.at: commit --message
+	* tests/t_rename.at: commit --message
+	* tests/t_renamed.at: commit --message
+	* tests/t_restrictions.at: remove --include/--exlclude options
+	* tests/t_revert.at: commit --message
+	* tests/t_scan.at: commit --message
+	* tests/t_single_char_filenames.at: commit --message
+	* tests/t_testresult.at: commit --message
+	* tests/t_unidiff.at: commit --message
+	* tests/t_unidiff2.at: commit --message
+	* tests/t_update.at: commit --message
+	* tests/t_versions.at: commit --message
+
+2004-09-07  Derek Scherger  <derek@echologic.com>
+
+	subdirectory restrictions
+	
+	* file_io.{hh,cc} (find_working_copy): new function
+	(absolutify) use fs::current_path
+	* work.cc (add_to_options_map): use options.insert to preserve
+	previous settings
+	* work.hh: add note about MT/options file to header comment
+	* lua.{hh,cc} (load_rcfile): renamed from add_rcfile 
+	* app_state.{cc,hh} (constructor): remove read of MT/options
+	(initialize): new methods to find/create working copy
+	(set_stdhooks,set_rcfiles,add_rcfile,load_rcfiles,read_options):
+	new methods
+	(set_database,set_branch,set_signing_key): update for new options
+	reading
+	* monotone.cc: update help for --norc option
+	(cpp_main): move loading of lua hooks to app_state after book
+	keeping dir is found
+	* commands.cc: all commands call app initialize to relocate to
+	working copy directory
+	(bookdir_exists,ensure_bookdir) remove
+	(setup) new command to create working copy
+	* tests/t_subdirs.at: new test
+	* testsuite.at: call new setup command to initialize working copy;
+	call new test
+	(PROBE_NODE): adjust for new checkout requirement that MT dir does
+	not exist
+	* tests/t_attributes.at: ditto
+	* tests/t_cwork.at: ditto
+	* tests/t_single_char_filenames.at: ditto
+	* tests/t_versions.at: ditto
+	
+2004-09-02  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_restrictions.at: rework and attempt to clean things up a
+	bit; add test for bug in restrict_patch_set
+	* commands.cc (restrict_patch_set): fix bug in removal of
+	restricted adds/dels/moves/deltas
+
+2004-07-20  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_restrictions.at: new test
+	* testsuite.at: run it
+	* app_state.{cc,hh} (add_restriction, is_restricted): new functions
+	* monotone.cc (--include,--exclude): new options
+	* commands.cc (restrict_patch_set): new function. called by
+	commit, update, status, diff commands
+
+2004-07-05  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc (operator<): Fix wrong ordering of 
+	fields.
+
+2004-06-07  graydon hoare  <graydon@pobox.com>
+
+	* cryptopp/algebra.cpp:
+	* cryptopp/asn.h:
+	* cryptopp/hmac.h:
+	* cryptopp/iterhash.h:
+	* cryptopp/mdc.h:
+	* cryptopp/modes.h:
+	* cryptopp/osrng.h:
+	* cryptopp/pubkey.h:
+	* cryptopp/seckey.h:
+	* cryptopp/simple.h:
+	* cryptopp/smartptr.h:
+	* cryptopp/strciphr.cpp:
+	* cryptopp/strciphr.h:
+	* lcs.hh:
+	* lua.cc: Fixes for g++ 3.4 from Michael Scherer.
+	* AUTHORS: Mention Michael.
+
+2004-05-28  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_movedel.at: New test.
+	* testsuite.at: Call it.
+	* diff_patch.cc (adjust_deletes_under_renames): New function.
+	(merge3): Use it.
+
+2004-05-27  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_movepatch.at: New test.
+	* testsuite.at: Call it.
+	* diff_patch.cc (adjust_deltas_under_renames): New function.
+	(merge3): Use it.
+
 2004-05-20  graydon hoare  <graydon@pobox.com>
 
 	* NEWS: Note 0.13 release.

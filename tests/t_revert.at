@@ -9,7 +9,7 @@ AT_DATA(testfile0, [version 0 of first test file
 
 AT_CHECK(MONOTONE add testfile0, [], [ignore], [ignore])
 V1=`SHA1(testfile0)`
-AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
 
 # check reverting a single file by name
 
@@ -80,7 +80,7 @@ AT_CHECK(mkdir sub, [], [ignore])
 AT_DATA(sub/testfile2, [maude
 ])
 AT_CHECK(MONOTONE add sub/testfile2, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit 'new file', [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message='new file', [], [ignore], [ignore])
 AT_DATA(sub/testfile2, [liver
 ])
 AT_CHECK(MONOTONE status, [], [stdout])

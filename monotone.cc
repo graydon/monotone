@@ -34,6 +34,8 @@
 #define OPT_DUMP 11
 #define OPT_TICKER 12
 #define OPT_FULL_VERSION 13
+#define OPT_MANIFEST 14
+#define OPT_MESSAGE 15
 
 // main option processing and exception handling code
 
@@ -48,7 +50,7 @@ struct poptOption options[] =
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},
     {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, "display help message", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
-    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load a ~/.monotonerc lua file", NULL},
+    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotonerc or MT/monotonerc lua files", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
     {"key", 0, POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
     {"db", 0, POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
@@ -56,6 +58,8 @@ struct poptOption options[] =
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, "print detailed version number, then exit", NULL},
     {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style", NULL},
+    {"manifest", 0, POPT_ARG_STRING, &argstr, OPT_MANIFEST, "select manifest id for operation", NULL},
+    {"message", 0, POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
 
@@ -163,13 +167,10 @@ cpp_main(int argc, char ** argv)
 
   int ret = 0;
   int opt;
-  bool stdhooks = true, rcfile = true;
   bool requested_help = false;
 
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
 
-  vector<string> extra_rcfiles;
-  
   try 
     {      
       while ((opt = poptGetNextOpt(ctx())) > 0)
@@ -237,45 +238,76 @@ cpp_main(int argc, char ** argv)
               break;
             }
         }
+        {
+          switch(opt)
+            {
+            case OPT_VERBOSE:
+              global_sanity.set_verbose();
+              break;
+
+            case OPT_QUIET:
+              global_sanity.set_quiet();
+              break;
+
+            case OPT_NOSTD:
+              app.set_stdhooks(false);
+              break;
+
+            case OPT_NORC:
+              app.set_rcfiles(false);
+              break;
+
+            case OPT_RCFILE:
+              app.add_rcfile(absolutify(tilde_expand(string(argstr))));
+              break;
+
+            case OPT_DUMP:
+              break;
+
+            case OPT_DB_NAME:
+              app.set_database(absolutify(tilde_expand(string(argstr))));
+              break;
+
+            case OPT_KEY_NAME:
+              app.set_signing_key(string(argstr));
+              break;
+
+            case OPT_BRANCH_NAME:
+              app.set_branch(string(argstr));
+              break;
+
+            case OPT_VERSION:
+              cout << PACKAGE_STRING << endl;
+              clean_shutdown = true;
+              return 0;
+
+            case OPT_MANIFEST:
+               app.add_manifest(string(argstr));
+              break;
+
+            case OPT_MESSAGE:
+               app.set_message(string(argstr));
+              break;
+
+            case OPT_HELP:
+            default:
+              requested_help = true;
+              break;
+            }
+        }
 
       // stop here if they asked for help
 
       if (requested_help)
-        {
-          if (poptPeekArg(ctx()))
-            {
-              string cmd(poptGetArg(ctx()));
-              throw usage(cmd);
-            }
-          else
-            throw usage("");
-        }
-
-      // built-in rc settings are defaults
-
-      if (stdhooks)
-        app.lua.add_std_hooks();
-
-      // ~/.monotonerc overrides that, and
-      // MT/monotonerc overrides *that*
-
-      if (rcfile)
-        {
-          fs::path default_rcfile;
-          fs::path working_copy_rcfile;
-          app.lua.default_rcfilename(default_rcfile);
-          app.lua.working_copy_rcfilename(working_copy_rcfile);
-          app.lua.add_rcfile(default_rcfile);
-          app.lua.add_rcfile(working_copy_rcfile);
-        }
-
-      // command-line rcfiles override even that
-
-      for (vector<string>::const_iterator i = extra_rcfiles.begin();
-           i != extra_rcfiles.end(); ++i)
-        {
-          app.lua.add_rcfile(mkpath(*i));
-        }
+	{
+	  if (poptPeekArg(ctx()))
+	    {
+	      string cmd(poptGetArg(ctx()));
+	      throw usage(cmd);
+	    }
+	  else
+	    throw usage("");
+	}
 
       // main options processed, now invoke the 
       // sub-command w/ remaining args
