@@ -28,6 +28,34 @@
 	* automate.{cc,hh}: New files.
 	* commands.cc: New command "automate".
 
+2005-02-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Creating a Database): Fix typo, clarify
+	conventions for database management following question on mailing
+	list.
+
+2005-02-12  graydon hoare  <graydon@pobox.com>
+
+	* change_set.{cc,hh}: Correct code to pass newly-added unit tests.
+
+2005-02-10  Derek Scherger  <derek@echologic.com>
+
+	* monotone.1: update for restrictions
+	* monotone.texi: sync with manpage
+
+2005-02-09  Derek Scherger  <derek@echologic.com>
+
+	* cert.cc (cert_revision_testresult): allow pass/fail testresult
+	values
+	* commands.cc (testresult): likewise
+	* commands.cc (do_diff): disallow restriction of non-working copy
+	diffs
+	* monotone.texi: update for restrictions
+
+2005-02-08  graydon hoare  <graydon@pobox.com>
+
+	* database.cc (version_cache::set): Fix bad expiry logic.
+
 2005-02-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (check_sane): Null sources are only valid for

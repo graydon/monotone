@@ -19,26 +19,26 @@ monotone\fP command, or online).
 \fBcomment\fP \fI<id>\fP
 Write a comment cert for a revision.
 .TP
-\fBapprove\fP \fI<id1> <id2>\fP
+\fBapprove\fP \fI<id>\fP
 Make a "branch" cert approving of a revision's membership in a branch.
 .TP
-\fBdisapprove\fP \fI<id1> <id2>\fP
+\fBdisapprove\fP \fI<id1>\fP
 Disapprove of a revision, committing the inverse changes as as a
 descendant of the disapproved revision.
 .TP
 \fBtag\fP \fI<id> <tagname>\fP
 Put a symbolic tag cert on a revision.
 .TP
-\fBtestresult\fP \fI<id> (1|0)\fP
+\fBtestresult\fP \fI<id> (0|1|true|false|yes|no|pass|fail)\fP
 Indicate a passing or failing test result on a revision.
 .TP
 \fBagraph\fP
 Dump revision graph to stdout.
 .TP
-\fBdiff\fP
+\fBdiff \fI[--revision=<id1> [--revision=<id2>] ] [<pathname>...]\fP
 Show diffs between working copy and database.
 .TP
-\fBstatus\fP
+\fBstatus \fI[<pathname>...]\fP
 Show status of working copy.
 .TP
 \fBlog\fP \fI[id] \fP
@@ -52,6 +52,9 @@ from stdin if no value given on command line.
 \fBgenkey\fP \fI<keyid>\fP
 Generate an RSA key-pair and store it in the database.
 .TP
+\chkeypass\fP \fI<keyid>\fP
+Change passphrase of the private half of a key.
+.TP
 \fBlist certs\fP \fI<id>\fP
 List certs associated with revision.
 .TP
@@ -64,14 +67,14 @@ List all branches.
 \fBlist tags\fP
 List all tags.
 .TP
-\fBlist unknown\fP
+\fBlist unknown \fI[<pathname...]\fP
 List files in working directory, but not in revision's manifest or
 work list.
 .TP
-\fBlist ignored\fP
+\fBlist ignored \fI[<pathname...]\fP
 List files intentionally ignored due to the ignore_file hook.
 .TP
-\fBlist missing\fP
+\fBlist missing \fI[<pathname...]\fP
 List files in revision's manifest, but not in working directory.
 .TP
 \fBfdata\fP \fI<id>\fP
@@ -130,16 +133,17 @@ Add files to working copy. adding a file does not copy it into the database,
 merely adds it to the work list. You must \fBcommit\fP your changes in order
 to copy added files to the database.
 .TP
-\fBcommit\fP \fI[log message]\fP
-Commit working copy to database. If a log message is provided on the command
-line, it is used; otherwise a log message editor will be invoked.
-.TP
 \fBdrop\fP \fI<pathname> [...]\fP
 Drop files from working copy. Files are not deleted from working copy, 
 merely noted as removals in the work list.
 .TP
 \fBrename\fP \fI<src> \fI<dst>\fP
 Rename files from \fI<src> \fP to \fI<dst> \fP in working copy.
+.TP
+\fBcommit\fP \fI[--message=<log message>] [<pathname>...]\fP 
+Commit working copy to database. If a --message option is provided on
+the command ine, it is used; otherwise a log message editor will be
+invoked.
 .TP
 \fBupdate\fP 
 Update working copy.
@@ -217,6 +221,18 @@ the count for each ticker on one line, incrementing the numbers in
 place, while the \fBdot\fP method prints a continuous string of
 characters (like some programs provide a progress line of dots).
 The default is \fBcount\fP.
+.TP
+\fB--revision=<id>\fP
+Currently this option only applies to the diff command where it may be
+used to compare a working copy with a specific revision or to compare
+two specific revisions. It will likely apply to other commands in the
+future.
+.TP
+\fB--message=<log message>\fP
+Use the given message as the changelog when committing a new revision
+rather than invoking the log message editor. Currently this option only
+applies to the commit command but it may also apply to the comment
+command in the future.
 .SH ENVIRONMENT
 .TP
 \fBEDITOR\fP

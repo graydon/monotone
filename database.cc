@@ -860,13 +860,17 @@ struct version_cache
                            % rand() % rand() % rand() % rand() % rand()).str();
         std::map<hexenc<id>, base64< gzip<data> > >::const_iterator i;
         i = cache.lower_bound(hexenc<id>(key));
-        if (i != cache.end())
+        if (i == cache.end())
           {
-            L(F("version cache expiring %s\n") % i->first);
-            I(i->second().size() <= use);
-            use -= i->second().size();          
-            cache.erase(i->first);
+            // we can't find a random entry, probably there's only one
+            // entry and we missed it. delete first entry instead.
+            i = cache.begin();
           }
+        I(i != cache.end());
+        I(use >= i->second().size());
+        L(F("version cache expiring %s\n") % i->first);
+        use -= i->second().size();          
+        cache.erase(i->first);
       }
     cache.insert(std::make_pair(ident, dat));
     use += dat().size();
