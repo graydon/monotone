@@ -79,7 +79,8 @@ patch_move::patch_move(file_path const & o, file_path const & n)
 
 typedef set<entry>::const_iterator eci;
 
-struct path_id_bijection
+struct 
+path_id_bijection
 {
   size_t size()
   {
@@ -178,8 +179,9 @@ struct path_id_bijection
 };
 
 
-static void index_adds(set<entry> const & adds,
-		       path_id_bijection & mapping)
+static void 
+index_adds(set<entry> const & adds,
+	   path_id_bijection & mapping)
 {
   for(eci i = adds.begin(); i != adds.end(); ++i)
     {
@@ -190,12 +192,13 @@ static void index_adds(set<entry> const & adds,
     }
 }
 
-static void classify_dels(set<entry> const & in_dels,
-			  path_id_bijection & adds,		  
-			  version_existence_check & vc,
-			  set<file_path> & dels,
-			  set<patch_move> & moves,
-			  set<patch_delta> & deltas)
+static void 
+classify_dels(set<entry> const & in_dels,
+	      path_id_bijection & adds,		  
+	      version_existence_check & vc,
+	      set<file_path> & dels,
+	      set<patch_move> & moves,
+	      set<patch_delta> & deltas)
 {
   size_t const initial_num_adds = adds.size();
   size_t const initial_num_dels = in_dels.size();
@@ -245,7 +248,8 @@ static void classify_dels(set<entry> const & in_dels,
     }
 }
 
-struct app_based_version_check :
+struct 
+app_based_version_check :
   public version_existence_check
 {
   app_state & app;
@@ -256,30 +260,33 @@ struct app_based_version_check :
   }
 };
 
-void manifests_to_patch_set(manifest_map const & m_old,
-			    manifest_map const & m_new,
-			    app_state & app,
-			    patch_set & ps)
+void 
+manifests_to_patch_set(manifest_map const & m_old,
+		       manifest_map const & m_new,
+		       app_state & app,
+		       patch_set & ps)
 {
   app_based_version_check abc(app);
   manifests_to_patch_set(m_old, m_new, app, abc, ps);
 }
 
-void manifests_to_patch_set(manifest_map const & m_old,
-			    manifest_map const & m_new,
-			    rename_edge const & renames,
-			    app_state & app,
-			    patch_set & ps)
+void 
+manifests_to_patch_set(manifest_map const & m_old,
+		       manifest_map const & m_new,
+		       rename_edge const & renames,
+		       app_state & app,
+		       patch_set & ps)
 {
   app_based_version_check abc(app);
   manifests_to_patch_set(m_old, m_new, renames, abc, ps);  
 }
 
-void manifests_to_patch_set(manifest_map const & m_old,
-			    manifest_map const & m_new,
-			    app_state & app,
-			    version_existence_check & vc,
-			    patch_set & ps)
+void 
+manifests_to_patch_set(manifest_map const & m_old,
+		       manifest_map const & m_new,
+		       app_state & app,
+		       version_existence_check & vc,
+		       patch_set & ps)
 {
   rename_edge renames;
   manifest_id old_id, new_id;
@@ -300,11 +307,12 @@ void manifests_to_patch_set(manifest_map const & m_old,
   manifests_to_patch_set(m_old, m_new, renames, vc, ps);
 }
 
-void manifests_to_patch_set(manifest_map const & m_old,
-			    manifest_map const & m_new,
-			    rename_edge const & renames,
-			    version_existence_check & vc,
-			    patch_set & ps)
+void 
+manifests_to_patch_set(manifest_map const & m_old,
+		       manifest_map const & m_new,
+		       rename_edge const & renames,
+		       version_existence_check & vc,
+		       patch_set & ps)
 
 {
   ps.m_old = renames.parent;
@@ -384,8 +392,9 @@ void manifests_to_patch_set(manifest_map const & m_old,
 
 
 // this produces an imprecise, textual summary of the patch set
-void patch_set_to_text_summary(patch_set const & ps, 
-			       ostream & str)
+void 
+patch_set_to_text_summary(patch_set const & ps, 
+			  ostream & str)
 {
   str << "Old manifest: " << ps.m_old.inner()() << endl;
   str << "New manifest: " << ps.m_new.inner()() << endl;
@@ -416,9 +425,10 @@ void patch_set_to_text_summary(patch_set const & ps,
 }
 
 
-void patch_set_to_packets(patch_set const & ps,
-			  app_state & app,
-			  packet_consumer & cons)
+void 
+patch_set_to_packets(patch_set const & ps,
+		     app_state & app,
+		     packet_consumer & cons)
 {
   
   // manifest delta packet

@@ -40,7 +40,8 @@ struct identity {size_t operator()(u32 const & v) const { return static_cast<siz
 typedef pair<string::size_type, string::size_type> extent;
 typedef hash_map<u32, extent, identity> match_table;
 
-struct insn
+struct 
+insn
 {
   insn(char c) : code(insert), pos(0), len(0), payload("")  { payload += c; }
   insn(string s) : code(insert), pos(0), len(s.size()), payload(s)  {}
@@ -351,7 +352,9 @@ compute_delta(string const & a,
   delta = oss.str();
 }
 
-struct simple_applicator : public delta_applicator
+struct 
+simple_applicator 
+  : public delta_applicator
 {
   string src;
   string dst;
@@ -381,8 +384,9 @@ struct simple_applicator : public delta_applicator
   }
 };
 
-void apply_delta(boost::shared_ptr<delta_applicator> da,
-		 std::string const & delta)
+void 
+apply_delta(boost::shared_ptr<delta_applicator> da,
+	    std::string const & delta)
 {
   istringstream del(delta);
   for (char c = del.get(); c == 'I' || c == 'C'; c = del.get())
@@ -433,7 +437,8 @@ apply_delta(string const & a,
   da->finish(b);
 }
 
-struct size_accumulating_delta_applicator :
+struct 
+size_accumulating_delta_applicator :
   public delta_applicator
 {
   u64 & sz;
@@ -450,7 +455,8 @@ struct size_accumulating_delta_applicator :
 };
 
 
-u64 measure_delta_target_size(std::string const & delta)
+u64 
+measure_delta_target_size(std::string const & delta)
 {
   u64 sz = 0;
   boost::shared_ptr<delta_applicator> da(new size_accumulating_delta_applicator(sz));
@@ -495,7 +501,8 @@ struct chunk
 
 typedef vector<chunk> version_spec;
 
-struct piece_table
+struct 
+piece_table
 {
   vector<string> pieces;
 
@@ -538,7 +545,8 @@ apply_insert(piece_table & p, version_spec & out, string const & str)
   out.push_back(chunk(str.size(), piece, vpos, 0));
 }
 
-struct chunk_less_than
+struct 
+chunk_less_than
 {
   bool operator()(chunk const & ch, version_pos vp) const
   {
@@ -627,7 +635,9 @@ apply_copy(version_spec const & in, version_spec & out,
 }
 
 
-struct piecewise_applicator : public delta_applicator
+struct 
+piecewise_applicator 
+  : public delta_applicator
 {
   piece_table pt;
   boost::shared_ptr<version_spec> src;
@@ -675,12 +685,14 @@ struct piecewise_applicator : public delta_applicator
 
 // these just hide our implementation types from outside 
 
-boost::shared_ptr<delta_applicator> new_simple_applicator()
+boost::shared_ptr<delta_applicator> 
+new_simple_applicator()
 {
   return boost::shared_ptr<delta_applicator>(new simple_applicator());
 }
 
-boost::shared_ptr<delta_applicator> new_piecewise_applicator()
+boost::shared_ptr<delta_applicator> 
+new_piecewise_applicator()
 {
   return boost::shared_ptr<delta_applicator>(new piecewise_applicator());
 }
@@ -696,7 +708,8 @@ boost::uniform_smallint<boost::mt19937, size_t> xdelta_sizegen(xdelta_prng, 1024
 boost::uniform_smallint<boost::mt19937, size_t> xdelta_editgen(xdelta_prng, 3, 10);
 boost::uniform_smallint<boost::mt19937, size_t> xdelta_lengen(xdelta_prng, 1, 256);
 
-void xdelta_random_string(string & str)
+void 
+xdelta_random_string(string & str)
 {
   size_t sz = xdelta_sizegen();
   str.clear();
@@ -707,7 +720,8 @@ void xdelta_random_string(string & str)
     }
 }
 
-void xdelta_randomly_insert(string & str)
+void 
+xdelta_randomly_insert(string & str)
 {
   size_t nedits = xdelta_editgen();
   while (nedits > 0)
@@ -725,7 +739,8 @@ void xdelta_randomly_insert(string & str)
     }
 }
 
-void xdelta_randomly_change(string & str)
+void 
+xdelta_randomly_change(string & str)
 {
   size_t nedits = xdelta_editgen();
   while (nedits > 0)
@@ -740,7 +755,8 @@ void xdelta_randomly_change(string & str)
     }
 }
 
-void xdelta_randomly_delete(string & str)
+void 
+xdelta_randomly_delete(string & str)
 {
   size_t nedits = xdelta_editgen();
   while (nedits > 0)
@@ -754,7 +770,8 @@ void xdelta_randomly_delete(string & str)
     }
 }
 
-void xdelta_random_simple_delta_test()
+void 
+xdelta_random_simple_delta_test()
 {
   for (int i = 0; i < 100; ++i)
     {
@@ -785,7 +802,8 @@ void xdelta_random_simple_delta_test()
     }
 }
 
-void add_xdelta_tests(test_suite * suite)
+void 
+add_xdelta_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&xdelta_random_simple_delta_test));

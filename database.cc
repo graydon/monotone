@@ -67,7 +67,8 @@ database::database(fs::path const & fn) :
   transaction_level(0)
 {}
 
-void database::check_schema()
+void 
+database::check_schema()
 {
   string db_schema_id;  
   calculate_schema_id (__sql, db_schema_id);
@@ -77,7 +78,8 @@ void database::check_schema()
      % schema % db_schema_id);
 }
 
-struct sqlite * database::sql(bool init)
+struct sqlite * 
+database::sql(bool init)
 {
   if (! __sql)
     {
@@ -105,7 +107,8 @@ struct sqlite * database::sql(bool init)
 }
 
 
-void database::initialize()
+void 
+database::initialize()
 {
   if (__sql)
     throw oops("cannot initialize database while it is open");
@@ -124,7 +127,8 @@ void database::initialize()
 }
 
 
-struct dump_request
+struct 
+dump_request
 {
   dump_request() {};
   struct sqlite *sql;
@@ -132,7 +136,8 @@ struct dump_request
   ostream *out;
 };
 
-static int dump_row_cb(void *data, int n, char **vals, char **cols)
+static int 
+dump_row_cb(void *data, int n, char **vals, char **cols)
 {
   dump_request *dump = reinterpret_cast<dump_request *>(data);
   I(dump != NULL);
@@ -163,7 +168,8 @@ static int dump_row_cb(void *data, int n, char **vals, char **cols)
   return 0;
 }
 
-static int dump_table_cb(void *data, int n, char **vals, char **cols)
+static int 
+dump_table_cb(void *data, int n, char **vals, char **cols)
 {
   dump_request *dump = reinterpret_cast<dump_request *>(data);
   I(dump != NULL);
@@ -183,7 +189,8 @@ static int dump_table_cb(void *data, int n, char **vals, char **cols)
   return 0;
 }
 
-void database::dump(ostream & out)
+void 
+database::dump(ostream & out)
 {
   dump_request req;
   req.out = &out;
@@ -198,7 +205,8 @@ void database::dump(ostream & out)
   out << "COMMIT;\n";
 }
 
-void database::load(istream & in)
+void 
+database::load(istream & in)
 {
   char buf[constants::bufsz];
   string tmp;
@@ -221,7 +229,8 @@ void database::load(istream & in)
 }
 
 
-void database::debug(string const & sql, ostream & out)
+void 
+database::debug(string const & sql, ostream & out)
 {
   results res;
   fetch(res, any_cols, any_rows, sql.c_str());
@@ -238,14 +247,16 @@ void database::debug(string const & sql, ostream & out)
     }
 }
 
-unsigned long database::get_statistic(string const & query)
+unsigned long 
+database::get_statistic(string const & query)
 {
   results res;
   fetch(res, 1, 1, query.c_str());
   return lexical_cast<unsigned long>(res[0][0]);
 }
 
-void database::info(ostream & out)
+void 
+database::info(ostream & out)
 {
   string id;
   calculate_schema_id(sql(), id);
@@ -256,14 +267,16 @@ void database::info(ostream & out)
   out << "file deltas     : " << get_statistic("SELECT COUNT(*) FROM file_deltas") << endl;
 }
 
-void database::version(ostream & out)
+void 
+database::version(ostream & out)
 {
   string id;
   calculate_schema_id(sql(), id);
   out << "database schema version: " << id << endl;
 }
 
-void database::migrate()
+void 
+database::migrate()
 {  
   N(filename.string() != "",
     F("need database name"));
@@ -276,7 +289,8 @@ void database::migrate()
   sqlite_close(__sql);
 }
 
-void database::rehash()
+void 
+database::rehash()
 {
   transaction_guard guard(*this);
   ticker mcerts("mcerts", 1);
@@ -350,7 +364,8 @@ void database::rehash()
   guard.commit();
 }
 
-void database::ensure_open()
+void 
+database::ensure_open()
 {
   sqlite *s = sql();
   I(s != NULL);
@@ -365,7 +380,8 @@ database::~database()
     }
 }
 
-static void assert_sqlite_ok(int res)
+static void 
+assert_sqlite_ok(int res)
 {
   switch (res)
     {      
@@ -462,7 +478,8 @@ static void assert_sqlite_ok(int res)
     }
 }
 
-void database::execute(char const * query, ...)
+void 
+database::execute(char const * query, ...)
 {
   va_list ap;
   int res;
@@ -493,10 +510,11 @@ void database::execute(char const * query, ...)
 
 }
 
-void database::fetch(results & res, 
-	   int const want_cols, 
-	   int const want_rows, 
-	   char const * query, ...)
+void 
+database::fetch(results & res, 
+		int const want_cols, 
+		int const want_rows, 
+		char const * query, ...)
 {
   char ** result = NULL;
   int nrow;
@@ -573,7 +591,8 @@ void database::fetch(results & res,
 
 // general application-level logic
 
-void database::set_filename(fs::path const & file)
+void 
+database::set_filename(fs::path const & file)
 {
   if (__sql)
     {
@@ -582,21 +601,24 @@ void database::set_filename(fs::path const & file)
   filename = file;
 }
 
-void database::begin_transaction() 
+void 
+database::begin_transaction() 
 {
   if (transaction_level == 0)
       execute("BEGIN");
   transaction_level++;
 }
 
-void database::commit_transaction()
+void 
+database::commit_transaction()
 {
   if (transaction_level == 1)
     execute("COMMIT");
   transaction_level--;
 }
 
-void database::rollback_transaction()
+void 
+database::rollback_transaction()
 {
   if (transaction_level == 1)
     execute("ROLLBACK");
@@ -604,7 +626,8 @@ void database::rollback_transaction()
 }
 
 
-bool database::exists(hexenc<id> const & ident,
+bool 
+database::exists(hexenc<id> const & ident,
 		      string const & table)
 {
   results res;
@@ -616,8 +639,9 @@ bool database::exists(hexenc<id> const & ident,
 }
 
 
-bool database::delta_exists(hexenc<id> const & ident,
-			    string const & table)
+bool 
+database::delta_exists(hexenc<id> const & ident,
+		       string const & table)
 {
   results res;
   fetch(res, one_col, any_rows, 
@@ -626,9 +650,10 @@ bool database::delta_exists(hexenc<id> const & ident,
   return res.size() > 0;
 }
 
-bool database::delta_exists(hexenc<id> const & ident,
-			    hexenc<id> const & base,
-			    string const & table)
+bool 
+database::delta_exists(hexenc<id> const & ident,
+		       hexenc<id> const & base,
+		       string const & table)
 {
   results res;
   fetch(res, one_col, any_rows, 
@@ -638,7 +663,8 @@ bool database::delta_exists(hexenc<id> const & ident,
   return res.size() == 1;
 }
 
-int database::count(string const & table)
+int 
+database::count(string const & table)
 {
   results res;
   fetch(res, one_col, one_row, 
@@ -647,9 +673,10 @@ int database::count(string const & table)
   return lexical_cast<int>(res[0][0]);  
 }
 
-void database::get(hexenc<id> const & ident,
-		   base64< gzip<data> > & dat,
-		   string const & table)
+void 
+database::get(hexenc<id> const & ident,
+	      base64< gzip<data> > & dat,
+	      string const & table)
 {
   results res;
   fetch(res, one_col, one_row,
@@ -665,10 +692,11 @@ void database::get(hexenc<id> const & ident,
   dat = rdata;
 }
 
-void database::get_delta(hexenc<id> const & ident,
-			 hexenc<id> const & base,
-			 base64< gzip<delta> > & del,
-			 string const & table)
+void 
+database::get_delta(hexenc<id> const & ident,
+		    hexenc<id> const & base,
+		    base64< gzip<delta> > & del,
+		    string const & table)
 {
   I(ident() != "");
   I(base() != "");
@@ -679,9 +707,10 @@ void database::get_delta(hexenc<id> const & ident,
   del = res[0][0];
 }
 
-void database::put(hexenc<id> const & ident,
-		   base64< gzip<data> > const & dat,
-		   string const & table)
+void 
+database::put(hexenc<id> const & ident,
+	      base64< gzip<data> > const & dat,
+	      string const & table)
 {
   // consistency check
   I(ident() != "");
@@ -694,10 +723,11 @@ void database::put(hexenc<id> const & ident,
 }
 
 
-void database::put_delta(hexenc<id> const & ident,
-			 hexenc<id> const & base,
-			 base64<gzip<delta> > const & del,
-			 string const & table)
+void 
+database::put_delta(hexenc<id> const & ident,
+		    hexenc<id> const & base,
+		    base64<gzip<delta> > const & del,
+		    string const & table)
 {
   // nb: delta schema is (id, base, delta)
   I(ident() != "");
@@ -707,10 +737,11 @@ void database::put_delta(hexenc<id> const & ident,
 	  ident().c_str(), base().c_str(), del().c_str());
 }
 
-void database::get_version(hexenc<id> const & ident,
-			   base64< gzip<data> > & dat,
-			   string const & data_table,
-			   string const & delta_table)
+void 
+database::get_version(hexenc<id> const & ident,
+		      base64< gzip<data> > & dat,
+		      string const & data_table,
+		      string const & delta_table)
 {
   I(ident() != "");
   if (exists(ident, data_table))
@@ -843,8 +874,9 @@ void database::get_version(hexenc<id> const & ident,
 }
 
 
-void database::drop(hexenc<id> const & ident, 
-		    string const & table)
+void 
+database::drop(hexenc<id> const & ident, 
+	       string const & table)
 {
   execute("DELETE FROM '%q' WHERE id = '%q'",  
 	  table.c_str(),
@@ -852,11 +884,12 @@ void database::drop(hexenc<id> const & ident,
 }
 
 
-void database::put_version(hexenc<id> const & old_id,
-			   hexenc<id> const & new_id,
-			   base64< gzip<delta> > const & del,
-			   string const & data_table,
-			   string const & delta_table)
+void 
+database::put_version(hexenc<id> const & old_id,
+		      hexenc<id> const & new_id,
+		      base64< gzip<delta> > const & del,
+		      string const & data_table,
+		      string const & delta_table)
 {
 
   base64< gzip<data> > old_data, new_data;
@@ -886,28 +919,32 @@ void database::put_version(hexenc<id> const & old_id,
 // --                                                        --
 // ------------------------------------------------------------
 
-bool database::file_version_exists(file_id const & id)
+bool 
+database::file_version_exists(file_id const & id)
 {
   return delta_exists(id.inner(), "file_deltas") 
     || exists(id.inner(), "files");
 }
 
-bool database::manifest_version_exists(manifest_id const & id)
+bool 
+database::manifest_version_exists(manifest_id const & id)
 {
   return delta_exists(id.inner(), "manifest_deltas") 
     || exists(id.inner(), "manifests");
 }
 
-void database::get_file_version(file_id const & id,
-				file_data & dat)
+void 
+database::get_file_version(file_id const & id,
+			   file_data & dat)
 {
   base64< gzip<data> > tmp;
   get_version(id.inner(), tmp, "files", "file_deltas");
   dat = tmp;
 }
 
-void database::get_manifest_version(manifest_id const & id,
-				    manifest_data & dat)
+void 
+database::get_manifest_version(manifest_id const & id,
+			       manifest_data & dat)
 {
   base64< gzip<data> > tmp;
   get_version(id.inner(), tmp, "manifests", "manifest_deltas");
@@ -915,16 +952,18 @@ void database::get_manifest_version(manifest_id const & id,
 }
 
 
-bool database::manifest_delta_exists(manifest_id const & new_id,
-				     manifest_id const & old_id)
+bool 
+database::manifest_delta_exists(manifest_id const & new_id,
+				manifest_id const & old_id)
 {
   return delta_exists(old_id.inner(), new_id.inner(), "manifest_deltas");
 }
 
-void database::compute_older_version(manifest_id const & new_id,
-				     manifest_id const & old_id,
-				     data const & m_new,
-				     data & m_old)
+void 
+database::compute_older_version(manifest_id const & new_id,
+				manifest_id const & old_id,
+				data const & m_new,
+				data & m_old)
 {
   base64< gzip<delta> > del;
   I(delta_exists(old_id.inner(), new_id.inner(), "manifest_deltas"));
@@ -932,10 +971,11 @@ void database::compute_older_version(manifest_id const & new_id,
   patch(m_new, del, m_old);
 }
 
-void database::compute_older_version(manifest_id const & new_id,
-				     manifest_id const & old_id,
-				     manifest_data const & m_new,
-				     manifest_data & m_old)
+void 
+database::compute_older_version(manifest_id const & new_id,
+				manifest_id const & old_id,
+				manifest_data const & m_new,
+				manifest_data & m_old)
 {
   data old_data, new_data;
   base64< gzip<data> > old_packed;
@@ -945,30 +985,34 @@ void database::compute_older_version(manifest_id const & new_id,
   m_old = manifest_data(old_packed);
 }
 
-void database::put_file(file_id const & id,
-			file_data const & dat)
+void 
+database::put_file(file_id const & id,
+		   file_data const & dat)
 {
   put(id.inner(), dat.inner(), "files");
 }
 
-void database::put_file_version(file_id const & old_id,
-				file_id const & new_id,
-				file_delta const & del)
+void 
+database::put_file_version(file_id const & old_id,
+			   file_id const & new_id,
+			   file_delta const & del)
 {
   put_version(old_id.inner(), new_id.inner(), del.inner(), 
 	      "files", "file_deltas");
 }
 
 
-void database::put_manifest(manifest_id const & id,
-			    manifest_data const & dat)
+void 
+database::put_manifest(manifest_id const & id,
+		       manifest_data const & dat)
 {
   put(id.inner(), dat.inner(), "manifests");
 }
 
-void database::put_manifest_version(manifest_id const & old_id,
-				    manifest_id const & new_id,
-				    manifest_delta const & del)
+void 
+database::put_manifest_version(manifest_id const & old_id,
+			       manifest_id const & new_id,
+			       manifest_delta const & del)
 {
   put_version(old_id.inner(), new_id.inner(), del.inner(), 
 	      "manifests", "manifest_deltas");
@@ -976,9 +1020,10 @@ void database::put_manifest_version(manifest_id const & old_id,
 
 // crypto key management
 
-void database::get_key_ids(string const & pattern,
-			   vector<rsa_keypair_id> & pubkeys,
-			   vector<rsa_keypair_id> & privkeys)
+void 
+database::get_key_ids(string const & pattern,
+		      vector<rsa_keypair_id> & pubkeys,
+		      vector<rsa_keypair_id> & privkeys)
 {
   pubkeys.clear();
   privkeys.clear();
@@ -1007,7 +1052,8 @@ void database::get_key_ids(string const & pattern,
     privkeys.push_back(res[i][0]);
 }
 
-void database::get_private_keys(vector<rsa_keypair_id> & privkeys)
+void 
+database::get_private_keys(vector<rsa_keypair_id> & privkeys)
 {
   privkeys.clear();
   results res;
@@ -1016,7 +1062,8 @@ void database::get_private_keys(vector<rsa_keypair_id> & privkeys)
     privkeys.push_back(res[i][0]);
 }
 
-bool database::public_key_exists(hexenc<id> const & hash)
+bool 
+database::public_key_exists(hexenc<id> const & hash)
 {
   results res;
   fetch(res, one_col, any_rows, 
@@ -1028,7 +1075,8 @@ bool database::public_key_exists(hexenc<id> const & hash)
   return false;
 }
 
-bool database::public_key_exists(rsa_keypair_id const & id)
+bool 
+database::public_key_exists(rsa_keypair_id const & id)
 {
   results res;
   fetch(res, one_col, any_rows, 
@@ -1040,7 +1088,8 @@ bool database::public_key_exists(rsa_keypair_id const & id)
   return false;
 }
 
-bool database::private_key_exists(rsa_keypair_id const & id)
+bool 
+database::private_key_exists(rsa_keypair_id const & id)
 {
   results res;
   fetch(res, one_col, any_rows,
@@ -1052,14 +1101,16 @@ bool database::private_key_exists(rsa_keypair_id const & id)
   return false;
 }
 
-bool database::key_exists(rsa_keypair_id const & id)
+bool 
+database::key_exists(rsa_keypair_id const & id)
 {
   return public_key_exists(id) || private_key_exists(id);
 }
 
-void database::get_pubkey(hexenc<id> const & hash, 
-			  rsa_keypair_id & id,
-			  base64<rsa_pub_key> & pub_encoded)
+void 
+database::get_pubkey(hexenc<id> const & hash, 
+		     rsa_keypair_id & id,
+		     base64<rsa_pub_key> & pub_encoded)
 {
   results res;
   fetch(res, 2, one_row, 
@@ -1069,8 +1120,9 @@ void database::get_pubkey(hexenc<id> const & hash,
   pub_encoded = res[0][1];
 }
 
-void database::get_key(rsa_keypair_id const & pub_id, 
-		       base64<rsa_pub_key> & pub_encoded)
+void 
+database::get_key(rsa_keypair_id const & pub_id, 
+		  base64<rsa_pub_key> & pub_encoded)
 {
   results res;
   fetch(res, one_col, one_row, 
@@ -1079,8 +1131,9 @@ void database::get_key(rsa_keypair_id const & pub_id,
   pub_encoded = res[0][0];
 }
 
-void database::get_key(rsa_keypair_id const & priv_id, 
-		       base64< arc4<rsa_priv_key> > & priv_encoded)
+void 
+database::get_key(rsa_keypair_id const & priv_id, 
+		  base64< arc4<rsa_priv_key> > & priv_encoded)
 {
   results res;
   fetch(res, one_col, one_col, 
@@ -1090,8 +1143,9 @@ void database::get_key(rsa_keypair_id const & priv_id,
 }
 
 
-void database::put_key(rsa_keypair_id const & pub_id, 
-		       base64<rsa_pub_key> const & pub_encoded)
+void 
+database::put_key(rsa_keypair_id const & pub_id, 
+		  base64<rsa_pub_key> const & pub_encoded)
 {
   hexenc<id> thash;
   key_hash_code(pub_id, pub_encoded, thash);
@@ -1099,8 +1153,9 @@ void database::put_key(rsa_keypair_id const & pub_id,
 	  thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
 }
 
-void database::put_key(rsa_keypair_id const & priv_id, 
-		       base64< arc4<rsa_priv_key> > const & priv_encoded)
+void 
+database::put_key(rsa_keypair_id const & priv_id, 
+		  base64< arc4<rsa_priv_key> > const & priv_encoded)
 {
   
   hexenc<id> thash;
@@ -1109,9 +1164,10 @@ void database::put_key(rsa_keypair_id const & priv_id,
 	  thash().c_str(), priv_id().c_str(), priv_encoded().c_str());
 }
 
-void database::put_key_pair(rsa_keypair_id const & id, 
-			    base64<rsa_pub_key> const & pub_encoded,
-			    base64< arc4<rsa_priv_key> > const & priv_encoded)
+void 
+database::put_key_pair(rsa_keypair_id const & id, 
+		       base64<rsa_pub_key> const & pub_encoded,
+		       base64< arc4<rsa_priv_key> > const & priv_encoded)
 {
   transaction_guard guard(*this);
   put_key(id, pub_encoded);
@@ -1122,8 +1178,9 @@ void database::put_key_pair(rsa_keypair_id const & id,
 
 // cert management
 
-bool database::cert_exists(cert const & t,
-			  string const & table)
+bool 
+database::cert_exists(cert const & t,
+		      string const & table)
 {
   results res;
   fetch(res, 1, any_rows,
@@ -1140,8 +1197,9 @@ bool database::cert_exists(cert const & t,
   return res.size() == 1;
 }
 
-void database::put_cert(cert const & t,
-		       string const & table)
+void 
+database::put_cert(cert const & t,
+		   string const & table)
 {
   hexenc<id> thash;
   cert_hash_code(t, thash);
@@ -1155,8 +1213,9 @@ void database::put_cert(cert const & t,
 	  t.sig().c_str());
 }
 
-void database::results_to_certs(results const & res,
-			       vector<cert> & certs)
+void 
+database::results_to_certs(results const & res,
+			   vector<cert> & certs)
 {
   certs.clear();
   for (size_t i = 0; i < res.size(); ++i)
@@ -1171,9 +1230,10 @@ void database::results_to_certs(results const & res,
     }
 }
 
-void database::get_head_candidates(string const & branch_encoded,
-				   vector< manifest<cert> > & branch_certs,
-				   vector< manifest<cert> > & ancestry_certs)
+void 
+database::get_head_candidates(string const & branch_encoded,
+			      vector< manifest<cert> > & branch_certs,
+			      vector< manifest<cert> > & ancestry_certs)
 {
   results res;
   fetch(res, 5, any_rows,
@@ -1205,9 +1265,10 @@ void database::get_head_candidates(string const & branch_encoded,
 }
 
 
-void database::get_certs(hexenc<id> const & ident, 
-			vector<cert> & certs,			
-			string const & table)
+void 
+database::get_certs(hexenc<id> const & ident, 
+		    vector<cert> & certs,			
+		    string const & table)
 {
   results res;
   fetch(res, 5, any_rows, 
@@ -1219,9 +1280,10 @@ void database::get_certs(hexenc<id> const & ident,
 }
 
 
-void database::get_certs(cert_name const & name, 	      
-			vector<cert> & certs,
-			string const & table)
+void 
+database::get_certs(cert_name const & name, 	      
+		    vector<cert> & certs,
+		    string const & table)
 {
   results res;
   fetch(res, 5, any_rows, 
@@ -1233,10 +1295,11 @@ void database::get_certs(cert_name const & name,
 }
 
 
-void database::get_certs(hexenc<id> const & ident, 
-			cert_name const & name, 	      
-			vector<cert> & certs,
-			string const & table)
+void 
+database::get_certs(hexenc<id> const & ident, 
+		    cert_name const & name, 	      
+		    vector<cert> & certs,
+		    string const & table)
 {
   results res;
   fetch(res, 5, any_rows, 
@@ -1249,10 +1312,11 @@ void database::get_certs(hexenc<id> const & ident,
   results_to_certs(res, certs);
 }
 
-void database::get_certs(cert_name const & name,
-			base64<cert_value> const & val, 
-			vector<cert> & certs,
-			string const & table)
+void 
+database::get_certs(cert_name const & name,
+		    base64<cert_value> const & val, 
+		    vector<cert> & certs,
+		    string const & table)
 {
   results res;
   fetch(res, 5, any_rows, 
@@ -1266,11 +1330,12 @@ void database::get_certs(cert_name const & name,
 }
 
 
-void database::get_certs(hexenc<id> const & ident, 
-			cert_name const & name, 	      
-			base64<cert_value> const & value,
-			vector<cert> & certs,
-			string const & table)
+void 
+database::get_certs(hexenc<id> const & ident, 
+		    cert_name const & name, 	      
+		    base64<cert_value> const & value,
+		    vector<cert> & certs,
+		    string const & table)
 {
   results res;
   fetch(res, 5, any_rows, 
@@ -1287,20 +1352,33 @@ void database::get_certs(hexenc<id> const & ident,
 
 
 
-bool database::manifest_cert_exists(manifest<cert> const & cert)
-{ return cert_exists(cert.inner(), "manifest_certs"); }
+bool 
+database::manifest_cert_exists(manifest<cert> const & cert)
+{ 
+  return cert_exists(cert.inner(), "manifest_certs"); 
+}
 
-bool database::file_cert_exists(file<cert> const & cert)
-{ return cert_exists(cert.inner(), "file_certs"); }
+bool 
+database::file_cert_exists(file<cert> const & cert)
+{ 
+  return cert_exists(cert.inner(), "file_certs"); 
+}
 
-void database::put_manifest_cert(manifest<cert> const & cert)
-{ put_cert(cert.inner(), "manifest_certs"); }
+void 
+database::put_manifest_cert(manifest<cert> const & cert)
+{ 
+  put_cert(cert.inner(), "manifest_certs"); 
+}
 
-void database::put_file_cert(file<cert> const & cert)
-{ put_cert(cert.inner(), "file_certs"); }
+void 
+database::put_file_cert(file<cert> const & cert)
+{ 
+  put_cert(cert.inner(), "file_certs"); 
+}
 
-void database::get_file_certs(cert_name const & name, 
-			     vector< file<cert> > & ts)
+void 
+database::get_file_certs(cert_name const & name, 
+			 vector< file<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(name, certs, "file_certs");
@@ -1308,9 +1386,10 @@ void database::get_file_certs(cert_name const & name,
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
-void database::get_file_certs(file_id const & id, 
-			     cert_name const & name, 
-			     vector< file<cert> > & ts)
+void 
+database::get_file_certs(file_id const & id, 
+			 cert_name const & name, 
+			 vector< file<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(id.inner(), name, certs, "file_certs");
@@ -1318,9 +1397,10 @@ void database::get_file_certs(file_id const & id,
   copy(certs.begin(), certs.end(), back_inserter(ts));    
 }
 
-void database::get_file_certs(cert_name const & name,
-			     base64<cert_value> const & val, 
-			     vector< file<cert> > & ts)
+void 
+database::get_file_certs(cert_name const & name,
+			 base64<cert_value> const & val, 
+			 vector< file<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(name, val, certs, "file_certs");
@@ -1328,10 +1408,11 @@ void database::get_file_certs(cert_name const & name,
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
-void database::get_file_certs(file_id const & id, 
-			     cert_name const & name,
-			     base64<cert_value> const & val, 
-			     vector< file<cert> > & ts)
+void 
+database::get_file_certs(file_id const & id, 
+			 cert_name const & name,
+			 base64<cert_value> const & val, 
+			 vector< file<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(id.inner(), name, val, certs, "file_certs");
@@ -1339,8 +1420,9 @@ void database::get_file_certs(file_id const & id,
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
-void database::get_file_certs(file_id const & id, 
-			     vector< file<cert> > & ts)
+void 
+database::get_file_certs(file_id const & id, 
+			 vector< file<cert> > & ts)
 { 
   vector<cert> certs;
   get_certs(id.inner(), certs, "file_certs"); 
@@ -1349,7 +1431,8 @@ void database::get_file_certs(file_id const & id,
 }
 
 
-bool database::file_cert_exists(hexenc<id> const & hash)
+bool 
+database::file_cert_exists(hexenc<id> const & hash)
 {
   results res;
   vector<cert> certs;
@@ -1362,8 +1445,9 @@ bool database::file_cert_exists(hexenc<id> const & hash)
   return (res.size() == 1);
 }
 
-void database::get_file_cert(hexenc<id> const & hash,
-			     file<cert> & c)
+void 
+database::get_file_cert(hexenc<id> const & hash,
+			file<cert> & c)
 {
   results res;
   vector<cert> certs;
@@ -1379,10 +1463,9 @@ void database::get_file_cert(hexenc<id> const & hash,
 
 
 
-
-
-void database::get_manifest_certs(cert_name const & name, 
-				 vector< manifest<cert> > & ts)
+void 
+database::get_manifest_certs(cert_name const & name, 
+			     vector< manifest<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(name, certs, "manifest_certs");
@@ -1390,9 +1473,10 @@ void database::get_manifest_certs(cert_name const & name,
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
-void database::get_manifest_certs(manifest_id const & id, 
-				 cert_name const & name, 
-				 vector< manifest<cert> > & ts)
+void 
+database::get_manifest_certs(manifest_id const & id, 
+			     cert_name const & name, 
+			     vector< manifest<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(id.inner(), name, certs, "manifest_certs");
@@ -1400,10 +1484,11 @@ void database::get_manifest_certs(manifest_id const & id,
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
-void database::get_manifest_certs(manifest_id const & id, 
-				 cert_name const & name,
-				 base64<cert_value> const & val, 
-				 vector< manifest<cert> > & ts)
+void 
+database::get_manifest_certs(manifest_id const & id, 
+			     cert_name const & name,
+			     base64<cert_value> const & val, 
+			     vector< manifest<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(id.inner(), name, val, certs, "manifest_certs");
@@ -1411,9 +1496,10 @@ void database::get_manifest_certs(manifest_id const & id,
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
-void database::get_manifest_certs(cert_name const & name,
-				 base64<cert_value> const & val, 
-				 vector< manifest<cert> > & ts)
+void 
+database::get_manifest_certs(cert_name const & name,
+			     base64<cert_value> const & val, 
+			     vector< manifest<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(name, val, certs, "manifest_certs");
@@ -1421,8 +1507,9 @@ void database::get_manifest_certs(cert_name const & name,
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
-void database::get_manifest_certs(manifest_id const & id, 
-				 vector< manifest<cert> > & ts)
+void 
+database::get_manifest_certs(manifest_id const & id, 
+			     vector< manifest<cert> > & ts)
 { 
   vector<cert> certs;
   get_certs(id.inner(), certs, "manifest_certs"); 
@@ -1430,7 +1517,8 @@ void database::get_manifest_certs(manifest_id const & id,
   copy(certs.begin(), certs.end(), back_inserter(ts));
 }
 
-bool database::manifest_cert_exists(hexenc<id> const & hash)
+bool 
+database::manifest_cert_exists(hexenc<id> const & hash)
 {
   results res;
   vector<cert> certs;
@@ -1443,8 +1531,9 @@ bool database::manifest_cert_exists(hexenc<id> const & hash)
   return (res.size() == 1);
 }
 
-void database::get_manifest_cert(hexenc<id> const & hash,
-				 manifest<cert> & c)
+void 
+database::get_manifest_cert(hexenc<id> const & hash,
+			    manifest<cert> & c)
 {
   results res;
   vector<cert> certs;
@@ -1461,7 +1550,8 @@ void database::get_manifest_cert(hexenc<id> const & hash,
 
 // network stuff
 
-void database::get_queued_targets(set<url> & targets)
+void 
+database::get_queued_targets(set<url> & targets)
 {
   results res;
   fetch(res, 1, any_rows, 
@@ -1472,8 +1562,9 @@ void database::get_queued_targets(set<url> & targets)
     targets.insert(url(res[i][0]));
 }
 
-void database::get_queue_count(url const & u, 
-			       size_t & num_packets)
+void 
+database::get_queue_count(url const & u, 
+			  size_t & num_packets)
 {
   results res;
   fetch(res, one_col, one_row, 
@@ -1483,9 +1574,10 @@ void database::get_queue_count(url const & u,
   num_packets = lexical_cast<size_t>(res[0][0]);
 }
 
-void database::get_queued_content(url const & u, 
-				  size_t const & queue_pos,
-				  string & content)
+void 
+database::get_queued_content(url const & u, 
+			     size_t const & queue_pos,
+			     string & content)
 {
   results res;
   fetch(res, one_col, one_row, 
@@ -1496,9 +1588,10 @@ void database::get_queued_content(url const & u,
   content = res[0][0];
 }
 
-void database::get_sequences(url const & u, 
-			     unsigned long & maj, 
-			     unsigned long & min)
+void 
+database::get_sequences(url const & u, 
+			unsigned long & maj, 
+			unsigned long & min)
 {
   results res;
   fetch(res, 2, any_rows, 
@@ -1522,7 +1615,8 @@ void database::get_sequences(url const & u,
     }
 }
 
-void database::get_all_known_sources(set<url> & sources)
+void 
+database::get_all_known_sources(set<url> & sources)
 {
   results res;
   fetch(res, 1, any_rows, 
@@ -1538,9 +1632,10 @@ void database::get_all_known_sources(set<url> & sources)
     }
 }
 
-void database::put_sequences(url const & u, 
-			     unsigned long maj, 
-			     unsigned long min)
+void 
+database::put_sequences(url const & u, 
+			unsigned long maj, 
+			unsigned long min)
 {
   execute("UPDATE sequence_numbers "
 	  "SET major = %lu, minor = %lu "
@@ -1548,16 +1643,18 @@ void database::put_sequences(url const & u,
 	  maj, min, u().c_str());  
 }
 
-void database::queue_posting(url const & u,
-			     string const & content)
+void 
+database::queue_posting(url const & u,
+			string const & content)
 {
   execute("INSERT INTO posting_queue "
 	  "VALUES ('%q', '%q')",
 	  u().c_str(), content.c_str());
 }
 
-void database::delete_posting(url const & u, 
-			      size_t const & queue_pos)
+void 
+database::delete_posting(url const & u, 
+			 size_t const & queue_pos)
 {
   results res;
   fetch(res, 1, any_rows,
@@ -1570,8 +1667,9 @@ void database::delete_posting(url const & u,
   execute("DELETE FROM posting_queue WHERE OID = %d ", oid);
 }
 
-bool database::manifest_exists_on_netserver(url const & u, 
-					    manifest_id const & m)
+bool 
+database::manifest_exists_on_netserver(url const & u, 
+				       manifest_id const & m)
 {
   results res;
   fetch(res, 1, any_rows,
@@ -1584,8 +1682,9 @@ bool database::manifest_exists_on_netserver(url const & u,
   return (res.size() == 1);
 }
 
-void database::note_manifest_on_netserver (url const & u, 
-					   manifest_id const & m)
+void 
+database::note_manifest_on_netserver (url const & u, 
+				      manifest_id const & m)
 {
   if (!manifest_exists_on_netserver (u, m))
     execute("INSERT INTO netserver_manifests "
@@ -1595,8 +1694,9 @@ void database::note_manifest_on_netserver (url const & u,
 
 // completions
 
-void database::complete(string const & partial,
-			set<manifest_id> & completions)
+void 
+database::complete(string const & partial,
+		   set<manifest_id> & completions)
 {
   results res;
   completions.clear();
@@ -1618,8 +1718,9 @@ void database::complete(string const & partial,
     completions.insert(manifest_id(res[i][0]));  
 }
 
-void database::complete(string const & partial,
-			set<file_id> & completions)
+void 
+database::complete(string const & partial,
+		   set<file_id> & completions)
 {
   results res;
   completions.clear();
@@ -1643,10 +1744,11 @@ void database::complete(string const & partial,
 
 // merkle nodes
 
-bool database::merkle_node_exists(string const & type,
-				  utf8 const & collection, 
-				  size_t level,
-				  hexenc<prefix> const & prefix)
+bool 
+database::merkle_node_exists(string const & type,
+			     utf8 const & collection, 
+			     size_t level,
+			     hexenc<prefix> const & prefix)
 {
   results res;
   fetch(res, one_col, one_row, 
@@ -1662,11 +1764,12 @@ bool database::merkle_node_exists(string const & type,
   return n_nodes == 1;
 }
 
-void database::get_merkle_node(string const & type,
-			       utf8 const & collection, 
-			       size_t level,
-			       hexenc<prefix> const & prefix,
-			       base64<merkle> & node)
+void 
+database::get_merkle_node(string const & type,
+			  utf8 const & collection, 
+			  size_t level,
+			  hexenc<prefix> const & prefix,
+			  base64<merkle> & node)
 {
   results res;
   fetch(res, one_col, one_row, 
@@ -1680,11 +1783,12 @@ void database::get_merkle_node(string const & type,
   node = res[0][0];
 }
 
-void database::put_merkle_node(string const & type,
-			       utf8 const & collection, 
-			       size_t level,
-			       hexenc<prefix> const & prefix,				       
-			       base64<merkle> const & node)
+void 
+database::put_merkle_node(string const & type,
+			  utf8 const & collection, 
+			  size_t level,
+			  hexenc<prefix> const & prefix,				       
+			  base64<merkle> const & node)
 {
   execute("INSERT OR REPLACE "
 	  "INTO merkle_nodes "
@@ -1692,8 +1796,9 @@ void database::put_merkle_node(string const & type,
 	  type.c_str(), collection().c_str(), level, prefix().c_str(), node().c_str());
 }
 
-void database::erase_merkle_nodes(string const & type,
-				  utf8 const & collection)
+void 
+database::erase_merkle_nodes(string const & type,
+			     utf8 const & collection)
 {
   execute("DELETE FROM merkle_nodes "
 	  "WHERE type = '%q' "
@@ -1715,7 +1820,8 @@ transaction_guard::~transaction_guard()
     db.rollback_transaction();
 }
 
-void transaction_guard::commit()
+void 
+transaction_guard::commit()
 {
   committed = true;
 }
@@ -1740,8 +1846,9 @@ reverse_queue::reverse_queue(database & d) : db(d)
   ++global_rq_refcount;
 }
 
-void reverse_queue::reverse_queue_posting(url const & u,
-					  std::string const & contents)
+void 
+reverse_queue::reverse_queue_posting(url const & u,
+				     std::string const & contents)
 {
   db.execute("INSERT INTO reverse_queue "
 	     "VALUES ('%q', '%q')",

@@ -21,7 +21,8 @@ using boost::lexical_cast;
 using boost::tokenizer;
 using boost::char_separator;
 
-static void ws_split(string const & str, vector<string> & out)
+static void 
+ws_split(string const & str, vector<string> & out)
 {  
   out.clear();
   char_separator<char> whitespace("\r\n\t ");
@@ -30,7 +31,8 @@ static void ws_split(string const & str, vector<string> & out)
 }
 
 
-struct cursor_state : public cmd_state
+struct 
+cursor_state : public cmd_state
 {
   unsigned long & seq_number;
   explicit cursor_state(string const & cmd, unsigned long & seq)
@@ -48,7 +50,8 @@ struct cursor_state : public cmd_state
 };
 
 
-struct stat_state : public proto_state
+struct 
+stat_state : public proto_state
 {
   unsigned long & seq_number;
   explicit stat_state(unsigned long & seq)
@@ -76,7 +79,8 @@ struct stat_state : public proto_state
 };
 
 
-struct nntp_postlines_state : public proto_state
+struct 
+nntp_postlines_state : public proto_state
 {
   string const & group;
   string const & from;
@@ -102,7 +106,8 @@ struct nntp_postlines_state : public proto_state
   }  
 };
 
-struct feedlines_state : public cmd_state
+struct 
+feedlines_state : public cmd_state
 {
   ticker count;
   packet_consumer & consumer;
@@ -122,11 +127,12 @@ struct feedlines_state : public cmd_state
 };
 
 
-bool post_nntp_article(string const & group_name,
-		       string const & from,
-		       string const & subject,
-		       string const & article,
-		       std::iostream & stream)
+bool 
+post_nntp_article(string const & group_name,
+		  string const & from,
+		  string const & subject,
+		  string const & article,
+		  std::iostream & stream)
 {
   // build state machine nodes
   cmd_state              mode_reader("MODE READER");
@@ -150,10 +156,11 @@ bool post_nntp_article(string const & group_name,
 }
 
 
-void fetch_nntp_articles(string const & group_name,
-			 unsigned long & seq_number,
-			 packet_consumer & consumer,
-			 std::iostream & stream)
+void 
+fetch_nntp_articles(string const & group_name,
+		    unsigned long & seq_number,
+		    packet_consumer & consumer,
+		    std::iostream & stream)
 {
 
   // build state machine nodes

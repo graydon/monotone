@@ -12,7 +12,8 @@
 #include "sanity.hh"
 
 template <typename T>
-struct interner 
+struct 
+interner 
 {
   std::map<std::string, T> fwd;
   std::map<T, std::string> rev;    

@@ -30,7 +30,8 @@ ticker::~ticker()
   ui.finish_ticking();
 }
 
-void ticker::operator++()
+void 
+ticker::operator++()
 {
   I(ui.ticks.find(name) != ui.ticks.end());
   ui.ticks[name]++;
@@ -38,7 +39,8 @@ void ticker::operator++()
     ui.write_ticks();
 }
 
-void ticker::operator+=(size_t t)
+void 
+ticker::operator+=(size_t t)
 {
   I(ui.ticks.find(name) != ui.ticks.end());
   size_t old = ui.ticks[name];
@@ -63,7 +65,8 @@ user_interface::~user_interface()
 {
 }
 
-void user_interface::finish_ticking()
+void 
+user_interface::finish_ticking()
 {
   if (ticks.size() == 0 && 
       last_write_was_a_tick)
@@ -74,12 +77,14 @@ void user_interface::finish_ticking()
     }
 }
 
-void user_interface::set_tick_trailer(string const & t)
+void 
+user_interface::set_tick_trailer(string const & t)
 {
   tick_trailer = t;
 }
 
-void user_interface::write_ticks()
+void 
+user_interface::write_ticks()
 {
 
   string tickline = "\rmonotone: ";
@@ -98,7 +103,8 @@ void user_interface::write_ticks()
   last_write_was_a_tick = true;
 }
 
-void user_interface::warn(string const & warning)
+void 
+user_interface::warn(string const & warning)
 {
   if (issued_warnings.find(warning) == issued_warnings.end())
     inform("warning: " + warning);
@@ -106,7 +112,8 @@ void user_interface::warn(string const & warning)
 }
 
 
-static inline string sanitize(string const & line)
+static inline string 
+sanitize(string const & line)
 {
   // FIXME: you might want to adjust this if you're using a charset
   // which has safe values in the sub-0x20 range. ASCII, UTF-8, 
@@ -125,7 +132,8 @@ static inline string sanitize(string const & line)
   return tmp;
 }
 
-void user_interface::inform(string const & line)
+void 
+user_interface::inform(string const & line)
 {
   if (last_write_was_a_tick)
     clog << endl;

@@ -82,7 +82,8 @@ template string xform<CryptoPP::Gunzip>(string const &);
 
 // for use in hexenc encoding
 
-struct lowerize
+struct 
+lowerize
 {
   char operator()(char const & c) const 
   { 
@@ -90,14 +91,16 @@ struct lowerize
   }
 };
 
-string lowercase(string const & in)
+string 
+lowercase(string const & in)
 {
   string n(in);
   transform(n.begin(), n.end(), n.begin(), lowerize());
   return n;
 }
 
-struct upperize
+struct 
+upperize
 {
   char operator()(char const & c) const 
   { 
@@ -105,7 +108,8 @@ struct upperize
   }
 };
 
-string uppercase(string const & in)
+string 
+uppercase(string const & in)
 {
   string n(in);
   transform(n.begin(), n.end(), n.begin(), upperize());
@@ -116,18 +120,20 @@ string uppercase(string const & in)
 // diffing and patching
 
 
-void diff(data const & olddata,
-	  data const & newdata,
-	  base64< gzip<delta> > & del)
+void 
+diff(data const & olddata,
+     data const & newdata,
+     base64< gzip<delta> > & del)
 {
   string unpacked;
   compute_delta(olddata(), newdata(), unpacked);
   pack(delta(unpacked), del);
 }
 
-void patch(data const & olddata,
-	   base64< gzip<delta> > const & del,
-	   data & newdata)
+void 
+patch(data const & olddata,
+      base64< gzip<delta> > const & del,
+      data & newdata)
 {
   delta unpacked;
   unpack(del, unpacked);
@@ -136,18 +142,20 @@ void patch(data const & olddata,
   newdata = result;
 }
 
-void diff(manifest_map const & oldman,
-	  manifest_map const & newman,
-	  base64< gzip<delta> > & del)
+void 
+diff(manifest_map const & oldman,
+     manifest_map const & newman,
+     base64< gzip<delta> > & del)
 {
   string xd;
   compute_delta(oldman, newman, xd);
   pack(delta(xd), del);
 }
 
-void diff(base64< gzip<data> > const & olddata,
-	  base64< gzip<data> > const & newdata,
-	  base64< gzip<delta> > & del)
+void 
+diff(base64< gzip<data> > const & olddata,
+     base64< gzip<data> > const & newdata,
+     base64< gzip<delta> > & del)
 {
   gzip<data> olddata_decoded;
   gzip<data> newdata_decoded;
@@ -166,9 +174,10 @@ void diff(base64< gzip<data> > const & olddata,
        del);
 }
 
-void patch(base64< gzip<data> > const & olddata,
-	   base64< gzip<delta> > const & del,
-	   base64< gzip<data> > & newdata)
+void 
+patch(base64< gzip<data> > const & olddata,
+      base64< gzip<delta> > const & del,
+      base64< gzip<data> > & newdata)
 {
   data olddata_unpacked, newdata_unpacked;
   unpack(olddata, olddata_unpacked);
@@ -179,8 +188,9 @@ void patch(base64< gzip<data> > const & olddata,
 
 // identifier (a.k.a. sha1 signature) calculation
 
-void calculate_ident(data const & dat,
-		     hexenc<id> & ident)
+void 
+calculate_ident(data const & dat,
+		hexenc<id> & ident)
 {
   CryptoPP::SHA hash;
   hash.Update(reinterpret_cast<byte const *>(dat().c_str()), 
@@ -192,8 +202,9 @@ void calculate_ident(data const & dat,
   encode_hexenc(ident_decoded, ident);  
 }
 
-void calculate_ident(base64< gzip<data> > const & dat,
-		     hexenc<id> & ident)
+void 
+calculate_ident(base64< gzip<data> > const & dat,
+		hexenc<id> & ident)
 {
   gzip<data> data_decoded;
   data data_decompressed;  
@@ -202,16 +213,18 @@ void calculate_ident(base64< gzip<data> > const & dat,
   calculate_ident(data_decompressed, ident);
 }
 
-void calculate_ident(file_data const & dat,
-		     file_id & ident)
+void 
+calculate_ident(file_data const & dat,
+		file_id & ident)
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
   ident = tmp;
 }
 
-void calculate_ident(manifest_map const & m,
-		     manifest_id & ident)
+void 
+calculate_ident(manifest_map const & m,
+		manifest_id & ident)
 {
   CryptoPP::SHA hash;
   size_t sz = 0;
@@ -259,8 +272,9 @@ void calculate_ident(manifest_map const & m,
   ident = manifest_id(raw_ident);    
 }
 
-void calculate_ident(manifest_data const & dat,
-		     manifest_id & ident)
+void 
+calculate_ident(manifest_data const & dat,
+		manifest_id & ident)
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
@@ -268,9 +282,10 @@ void calculate_ident(manifest_data const & dat,
 }
 
 // this might reasonably go in file_io.cc too..
-void calculate_ident(file_path const & file,
-		     hexenc<id> & ident,
-		     lua_hooks & lua)
+void 
+calculate_ident(file_path const & file,
+		hexenc<id> & ident,
+		lua_hooks & lua)
 {
   string db_linesep, ext_linesep;
   string db_charset, ext_charset;
@@ -301,8 +316,9 @@ void calculate_ident(file_path const & file,
 }
 
 
-void split_into_lines(string const & in,
-		      vector<string> & out)
+void 
+split_into_lines(string const & in,
+		 vector<string> & out)
 {
   typedef boost::tokenizer<boost::char_separator<char> > 
     tokenizer;
@@ -315,22 +331,25 @@ void split_into_lines(string const & in,
     out.pop_back();
 }
 
-void join_lines(vector<string> const & in,
-		string & out,
-		string const & linesep)
+void 
+join_lines(vector<string> const & in,
+	   string & out,
+	   string const & linesep)
 {
   ostringstream oss;
   copy(in.begin(), in.end(), ostream_iterator<string>(oss, linesep.c_str()));
   out = oss.str();
 }
 
-void join_lines(vector<string> const & in,
-		string & out)
+void 
+join_lines(vector<string> const & in,
+	   string & out)
 {
   join_lines(in, out, "\n");
 }
 
-string remove_ws(string const & s)
+string 
+remove_ws(string const & s)
 {
   string tmp;
   tmp.reserve(s.size());
@@ -352,7 +371,8 @@ string remove_ws(string const & s)
   return tmp;
 }
 
-string trim_ws(string const & s)
+string 
+trim_ws(string const & s)
 {
   string tmp = s;
   string::size_type pos = tmp.find_last_not_of("\n\r\t ");
@@ -364,7 +384,8 @@ string trim_ws(string const & s)
   return tmp;
 } 
 
-string canonical_base64(string const & s)
+string 
+canonical_base64(string const & s)
 {
   return xform<CryptoPP::Base64Encoder>
     (xform<CryptoPP::Base64Decoder>(s));
@@ -373,7 +394,8 @@ string canonical_base64(string const & s)
 
 // general character code conversion routines
 
-static string system_charset()
+static string 
+system_charset()
 {
   char const * locale_charset_name = stringprep_locale_charset ();
   I(locale_charset_name != NULL);
@@ -381,10 +403,11 @@ static string system_charset()
   return sys_charset;
 }
 
-void charset_convert(string const & src_charset,
-		     string const & dst_charset,
-		     string const & src, 
-		     string & dst)
+void 
+charset_convert(string const & src_charset,
+		string const & dst_charset,
+		string const & src, 
+		string & dst)
 {
   if (src_charset == dst_charset)
     dst = src;
@@ -402,21 +425,24 @@ void charset_convert(string const & src_charset,
 }
 
 
-void system_to_utf8(external const & ext, utf8 & utf)
+void 
+system_to_utf8(external const & ext, utf8 & utf)
 {
   string out;
   charset_convert(system_charset(), "UTF-8", ext(), out);
   utf = out;
 }
 
-void utf8_to_system(utf8 const & utf, external & ext)
+void 
+utf8_to_system(utf8 const & utf, external & ext)
 {
   string out;
   charset_convert("UTF-8", system_charset(), utf(), out);
   ext = out;
 }
 
-static string decode_idna_error(int err)
+static string 
+decode_idna_error(int err)
 {
   switch (static_cast<Idna_rc>(err))
     {
@@ -435,7 +461,8 @@ static string decode_idna_error(int err)
   return "unknown error";
 }
 
-void ace_to_utf8(ace const & a, utf8 & utf)
+void 
+ace_to_utf8(ace const & a, utf8 & utf)
 {
   char *out = NULL;
   L(F("converting %d bytes from IDNA ACE to UTF-8\n") % a().size());
@@ -448,7 +475,8 @@ void ace_to_utf8(ace const & a, utf8 & utf)
   free(out);
 }
 
-void utf8_to_ace(utf8 const & utf, ace & a)
+void 
+utf8_to_ace(utf8 const & utf, ace & a)
 {
   char *out = NULL;
   L(F("converting %d bytes from UTF-8 to IDNA ACE\n") % utf().size());
@@ -461,7 +489,8 @@ void utf8_to_ace(utf8 const & utf, ace & a)
   free(out);
 }
 
-void utf8_to_urlenc(utf8 const & utf, urlenc & u)
+void 
+utf8_to_urlenc(utf8 const & utf, urlenc & u)
 {
   string tmp;
   string ok_bytes(constants::legal_url_bytes);
@@ -476,7 +505,8 @@ void utf8_to_urlenc(utf8 const & utf, urlenc & u)
   u = tmp;
 }
 
-void urlenc_to_utf8(urlenc const & u, utf8 & utf)
+void 
+urlenc_to_utf8(urlenc const & u, utf8 & utf)
 {
   istringstream iss(u());
   string ok_bytes(constants::legal_url_bytes);
@@ -506,7 +536,8 @@ void urlenc_to_utf8(urlenc const & u, utf8 & utf)
 
 // specific internal / external conversions for various vocab terms
 
-void internalize_url(utf8 const & utf, url & u)
+void
+internalize_url(utf8 const & utf, url & u)
 {
   utf8 proto, user, host, path, group;
   unsigned long port;
@@ -551,7 +582,8 @@ void internalize_url(utf8 const & utf, url & u)
   }
 }
 
-void internalize_url(external const & ext, url & u)
+void 
+internalize_url(external const & ext, url & u)
 {
   utf8 utf;
   system_to_utf8(ext, utf);
@@ -559,7 +591,8 @@ void internalize_url(external const & ext, url & u)
 }
 
 
-void externalize_url(url const & u, utf8 & utf)
+void 
+externalize_url(url const & u, utf8 & utf)
 {
   ace user, host, group;
   urlenc path;
@@ -604,40 +637,46 @@ void externalize_url(url const & u, utf8 & utf)
   }
 }
 
-void externalize_url(url const & u, external & ext)
+void 
+externalize_url(url const & u, external & ext)
 {
   utf8 utf;
   externalize_url(u, utf);
   utf8_to_system(utf, ext);
 }
 
-void internalize_cert_name(utf8 const & utf, cert_name & c)
+void 
+internalize_cert_name(utf8 const & utf, cert_name & c)
 {
   ace a;
   utf8_to_ace(utf, a);
   c = a();
 }
 
-void internalize_cert_name(external const & ext, cert_name & c)
+void 
+internalize_cert_name(external const & ext, cert_name & c)
 {
   utf8 utf;
   system_to_utf8(ext(), utf);
   internalize_cert_name(utf, c);
 }
 
-void externalize_cert_name(cert_name const & c, utf8 & utf)
+void 
+externalize_cert_name(cert_name const & c, utf8 & utf)
 {
   ace_to_utf8(ace(c()), utf);
 }
 
-void externalize_cert_name(cert_name const & c, external & ext)
+void 
+externalize_cert_name(cert_name const & c, external & ext)
 {
   utf8 utf;
   externalize_cert_name(c, utf);
   utf8_to_system(utf, ext);  
 }
 
-void internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
+void 
+internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
 {
   string tmp;
   typedef boost::tokenizer<boost::char_separator<char> > 
@@ -658,14 +697,16 @@ void internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
   key = tmp;
 }
 
-void internalize_rsa_keypair_id(external const & ext, rsa_keypair_id & key)
+void 
+internalize_rsa_keypair_id(external const & ext, rsa_keypair_id & key)
 {
   utf8 utf;
   system_to_utf8(ext, utf);
   internalize_rsa_keypair_id(utf, key);
 }
 
-void externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
+void 
+externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
 {
   string tmp;
   typedef boost::tokenizer<boost::char_separator<char> > 
@@ -687,7 +728,8 @@ void externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
   utf = tmp;
 }
 
-void externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext)
+void 
+externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext)
 {
   utf8 utf;
   externalize_rsa_keypair_id(key, utf);
@@ -695,7 +737,8 @@ void externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext)
 }
 
 
-void line_end_convert(string const & linesep, string const & src, string & dst)
+void 
+line_end_convert(string const & linesep, string const & src, string & dst)
 {
   string linesep_str("\n");
   if (linesep == "CR" || linesep == "\r")
@@ -713,7 +756,8 @@ void line_end_convert(string const & linesep, string const & src, string & dst)
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-static void enc_test()
+static void 
+enc_test()
 {
   data d2, d1("the rain in spain");
   gzip<data> gzd1, gzd2;
@@ -726,7 +770,8 @@ static void enc_test()
   BOOST_CHECK(d2 == d1);
 }
 
-static void rdiff_test()
+static void 
+rdiff_test()
 {
   data dat1(string("the first day of spring\nmakes me want to sing\n"));
   data dat2(string("the first day of summer\nis a major bummer\n"));
@@ -746,7 +791,8 @@ static void rdiff_test()
   BOOST_CHECK(dat3 == dat2);
 }
 
-static void calculate_ident_test()
+static void 
+calculate_ident_test()
 {
   data input(string("the only blender which can be turned into the most powerful vaccum cleaner"));
   hexenc<id> output;
@@ -755,7 +801,8 @@ static void calculate_ident_test()
   BOOST_CHECK(output() == ident);
 }
 
-static void caseconv_test()
+static void 
+caseconv_test()
 {
   BOOST_CHECK(uppercase("hello") == "HELLO");
   BOOST_CHECK(uppercase("heLlO") == "HELLO");
@@ -765,7 +812,8 @@ static void caseconv_test()
   BOOST_CHECK(lowercase("!@#$%^&*()") == "!@#$%^&*()");
 }
 
-static void join_lines_test()
+static void 
+join_lines_test()
 {
   vector<string> strs;
   string joined;
@@ -787,7 +835,8 @@ static void join_lines_test()
   BOOST_CHECK(joined == "hi\nthere\nuser\n");  
 }
 
-static void strip_ws_test()
+static void 
+strip_ws_test()
 {
   BOOST_CHECK(trim_ws("\n  leading space") == "leading space");
   BOOST_CHECK(trim_ws("trailing space  \n") == "trailing space");
@@ -799,7 +848,8 @@ static void strip_ws_test()
 #define IDNA_ACE_PREFIX "xn--"
 #define IDNA_SUCCESS 0
 
-struct idna
+struct 
+idna
 {
   char *name;
   size_t inlen;
@@ -957,7 +1007,8 @@ struct idna
       IDNA_SUCCESS, IDNA_SUCCESS},
   };
 
-static void check_idna_encoding()
+static void 
+check_idna_encoding()
 {
   putenv("CHARSET=UTF-8");
 
@@ -1004,7 +1055,8 @@ static void check_idna_encoding()
     }
 }
 
-static void check_url_encoding(string const & dec, string const & enc)
+static void 
+check_url_encoding(string const & dec, string const & enc)
 {
   urlenc tu;
   utf8 tutf;
@@ -1033,7 +1085,8 @@ static void encode_test()
   check_idna_encoding();
 }
 
-void add_transform_tests(test_suite * suite)
+void 
+add_transform_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&enc_test));

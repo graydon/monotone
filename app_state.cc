@@ -42,21 +42,24 @@ app_state::~app_state()
 {
 }
 
-void app_state::set_database(utf8 const & filename)
+void 
+app_state::set_database(utf8 const & filename)
 {
   options[database_option] = utf8(absolutify(filename()));
   db.set_filename(filename());
   options_changed = true;
 }
 
-void app_state::set_branch(utf8 const & branch)
+void 
+app_state::set_branch(utf8 const & branch)
 {
   options[branch_option] = branch;
   branch_name = branch();
   options_changed = true;
 }
 
-void app_state::set_signing_key(utf8 const & key)
+void 
+app_state::set_signing_key(utf8 const & key)
 {
   rsa_keypair_id k;
   internalize_rsa_keypair_id(key, k);
@@ -65,7 +68,8 @@ void app_state::set_signing_key(utf8 const & key)
   options_changed = true;
 }
 
-void app_state::write_options()
+void 
+app_state::write_options()
 {
   if (options_changed)
     {

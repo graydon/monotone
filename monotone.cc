@@ -77,14 +77,17 @@ struct poptOption options[] =
 // without dumping some diagnostics.
 
 static bool clean_shutdown;
-void dumper() 
+
+void 
+dumper() 
 {
   if (!clean_shutdown)
     global_sanity.dump_buffer();    
 }
 
 
-struct utf8_argv
+struct 
+utf8_argv
 {
   int argc;
   char **argv;
@@ -118,7 +121,8 @@ struct utf8_argv
   }
 };
  
-int cpp_main(int argc, char ** argv)
+int 
+cpp_main(int argc, char ** argv)
 {
   
   putenv("BOOST_PRG_MON_CONFIRM=no");

@@ -20,9 +20,10 @@
 using namespace std;
 using namespace boost;
 
-static netcmd_item_type read_netcmd_item_type(string const & in, 
-					      size_t & pos,
-					      string const & name)
+static netcmd_item_type 
+read_netcmd_item_type(string const & in, 
+		      size_t & pos,
+		      string const & name)
 {
   u8 tmp = extract_datum_lsb<u8>(in, pos, name);
   switch (tmp)
@@ -54,14 +55,16 @@ size_t netcmd::encoded_size()
   return 1 + 1 + tmp.size() + payload.size() + 4;
 }
 
-bool netcmd::operator==(netcmd const & other) const 
+bool 
+netcmd::operator==(netcmd const & other) const 
 {
   return version == other.version &&
     cmd_code == other.cmd_code &&
     payload == other.payload;
 }
   
-void write_netcmd(netcmd const & in, string & out)
+void 
+write_netcmd(netcmd const & in, string & out)
 {
   out += static_cast<char>(in.version);
   out += static_cast<char>(in.cmd_code);
@@ -71,7 +74,8 @@ void write_netcmd(netcmd const & in, string & out)
   insert_datum_lsb<u32>(check.sum(), out);
 }
   
-bool read_netcmd(string & inbuf, netcmd & out)
+bool 
+read_netcmd(string & inbuf, netcmd & out)
 {
   size_t pos = 0;
 
@@ -136,8 +140,9 @@ bool read_netcmd(string & inbuf, netcmd & out)
 // payload reader/writer functions follow //
 ////////////////////////////////////////////
 
-void read_error_cmd_payload(std::string const & in, 
-			    std::string & errmsg)
+void 
+read_error_cmd_payload(std::string const & in, 
+		       std::string & errmsg)
 {
   size_t pos = 0;
   // syntax is: <errmsg:vstr>
@@ -145,14 +150,18 @@ void read_error_cmd_payload(std::string const & in,
   assert_end_of_buffer(in, pos, "error netcmd payload");
 }
 
-void write_error_cmd_payload(std::string const & errmsg, 
-			     std::string & out)
+void 
+write_error_cmd_payload(std::string const & errmsg, 
+			std::string & out)
 {
   insert_variable_length_string(errmsg, out);
 }
 
 
-void read_hello_cmd_payload(string const & in, id & server, id & nonce)
+void 
+read_hello_cmd_payload(string const & in, 
+		       id & server, 
+		       id & nonce)
 {
   size_t pos = 0;
   // syntax is: <server:20 bytes sha1> <nonce:20 random bytes>
@@ -163,7 +172,10 @@ void read_hello_cmd_payload(string const & in, id & server, id & nonce)
   assert_end_of_buffer(in, pos, "hello netcmd payload");
 }
 
-void write_hello_cmd_payload(id const & server, id const & nonce, string & out)
+void 
+write_hello_cmd_payload(id const & server, 
+			id const & nonce, 
+			string & out)
 {
   I(server().size() == constants::merkle_hash_length_in_bytes);
   I(nonce().size() == constants::merkle_hash_length_in_bytes);
@@ -172,10 +184,11 @@ void write_hello_cmd_payload(id const & server, id const & nonce, string & out)
 }
 
 
-void read_anonymous_cmd_payload(std::string const & in, 
-				protocol_role & role, 
-				std::string & collection,
-				id & nonce2)
+void 
+read_anonymous_cmd_payload(std::string const & in, 
+			   protocol_role & role, 
+			   std::string & collection,
+			   id & nonce2)
 {
   size_t pos = 0;
   // syntax is: <role:1 byte> <collection: vstr> <nonce2: 20 random bytes>
@@ -191,10 +204,11 @@ void read_anonymous_cmd_payload(std::string const & in,
   assert_end_of_buffer(in, pos, "anonymous netcmd payload");
 }
 
-void write_anonymous_cmd_payload(protocol_role role, 
-				 std::string const & collection,
-				 id const & nonce2,
-				 std::string & out)
+void 
+write_anonymous_cmd_payload(protocol_role role, 
+			    std::string const & collection,
+			    id const & nonce2,
+			    std::string & out)
 {
   I(nonce2().size() == constants::merkle_hash_length_in_bytes);
   out += static_cast<char>(role);
@@ -202,13 +216,14 @@ void write_anonymous_cmd_payload(protocol_role role,
   out += nonce2();
 }
 
-void read_auth_cmd_payload(string const & in, 
-			   protocol_role & role, 
-			   string & collection,
-			   id & client, 
-			   id & nonce1, 
-			   id & nonce2,
-			   string & signature)
+void 
+read_auth_cmd_payload(string const & in, 
+		      protocol_role & role, 
+		      string & collection,
+		      id & client, 
+		      id & nonce1, 
+		      id & nonce2,
+		      string & signature)
 {
   size_t pos = 0;
   // syntax is: <role:1 byte> <collection: vstr>
@@ -231,13 +246,14 @@ void read_auth_cmd_payload(string const & in,
   assert_end_of_buffer(in, pos, "auth netcmd payload");
 }
 
-void write_auth_cmd_payload(protocol_role role, 
-			    string const & collection, 
-			    id const & client,
-			    id const & nonce1, 
-			    id const & nonce2, 
-			    string const & signature, 
-			    string & out)
+void 
+write_auth_cmd_payload(protocol_role role, 
+		       string const & collection, 
+		       id const & client,
+		       id const & nonce1, 
+		       id const & nonce2, 
+		       string const & signature, 
+		       string & out)
 {
   I(client().size() == constants::merkle_hash_length_in_bytes);
   I(nonce1().size() == constants::merkle_hash_length_in_bytes);
@@ -251,7 +267,8 @@ void write_auth_cmd_payload(protocol_role role,
 }
 			 
 
-void read_confirm_cmd_payload(string const & in, string & signature)
+void 
+read_confirm_cmd_payload(string const & in, string & signature)
 {
   size_t pos = 0;
   // syntax is: <signature: vstr>
@@ -259,23 +276,29 @@ void read_confirm_cmd_payload(string const & in, string & signature)
   assert_end_of_buffer(in, pos, "confirm netcmd payload");
 }
   
-void write_confirm_cmd_payload(string const & signature, string & out)
+void 
+write_confirm_cmd_payload(string const & signature, string & out)
 {
   insert_variable_length_string(signature, out);
 }
   
-void read_refine_cmd_payload(string const & in, merkle_node & node)
+void 
+read_refine_cmd_payload(string const & in, merkle_node & node)
 {
   // syntax is: <node: a merkle tree node>
   read_node(in, node);
 }
 
-void write_refine_cmd_payload(merkle_node const & node, string & out)
+void 
+write_refine_cmd_payload(merkle_node const & node, string & out)
 {
   write_node(node, out);
 }
 
-void read_done_cmd_payload(string const & in, size_t & level, netcmd_item_type & type)
+void 
+read_done_cmd_payload(string const & in, 
+		      size_t & level, 
+		      netcmd_item_type & type)
 {
   size_t pos = 0;
   // syntax is: <level: uleb128> <type: 1 byte>
@@ -284,15 +307,19 @@ void read_done_cmd_payload(string const & in, size_t & level, netcmd_item_type &
   assert_end_of_buffer(in, pos, "done netcmd payload");
 }
 
-void write_done_cmd_payload(size_t level, netcmd_item_type type, string & out)
+void 
+write_done_cmd_payload(size_t level, 
+		       netcmd_item_type type, 
+		       string & out)
 {
   insert_datum_uleb128<size_t>(level, out);
   out += static_cast<char>(type);
 }
 
-void read_send_data_cmd_payload(string const & in, 
-				netcmd_item_type & type,
-				id & item)
+void 
+read_send_data_cmd_payload(string const & in, 
+			   netcmd_item_type & type,
+			   id & item)
 {
   size_t pos = 0;
   // syntax is: <type: 1 byte> <id: 20 bytes sha1> 
@@ -302,19 +329,21 @@ void read_send_data_cmd_payload(string const & in,
   assert_end_of_buffer(in, pos, "send_data netcmd payload");
 }
 
-void write_send_data_cmd_payload(netcmd_item_type type,
-				 id const & item,
-				 string & out)
+void 
+write_send_data_cmd_payload(netcmd_item_type type,
+			    id const & item,
+			    string & out)
 {
   I(item().size() == constants::merkle_hash_length_in_bytes);
   out += static_cast<char>(type);
   out += item();
 }
 
-void read_send_delta_cmd_payload(string const & in, 
-				 netcmd_item_type & type,
-				 id & base,
-				 id & ident)
+void 
+read_send_delta_cmd_payload(string const & in, 
+			    netcmd_item_type & type,
+			    id & base,
+			    id & ident)
 {
   size_t pos = 0;
   // syntax is: <type: 1 byte> <src: 20 bytes sha1> <dst: 20 bytes sha1>
@@ -326,10 +355,11 @@ void read_send_delta_cmd_payload(string const & in,
   assert_end_of_buffer(in, pos, "send_delta netcmd payload");
 }
 
-void write_send_delta_cmd_payload(netcmd_item_type type,
-				  id const & base,
-				  id const & ident,
-				  string & out)
+void 
+write_send_delta_cmd_payload(netcmd_item_type type,
+			     id const & base,
+			     id const & ident,
+			     string & out)
 {
   I(base().size() == constants::merkle_hash_length_in_bytes);
   I(ident().size() == constants::merkle_hash_length_in_bytes);
@@ -338,10 +368,11 @@ void write_send_delta_cmd_payload(netcmd_item_type type,
   out += ident();
 }
 
-void read_data_cmd_payload(string const & in,
-			   netcmd_item_type & type,
-			   id & item,
-			   string & dat)
+void 
+read_data_cmd_payload(string const & in,
+		      netcmd_item_type & type,
+		      id & item,
+		      string & dat)
 {
   size_t pos = 0;
   // syntax is: <type: 1 byte> <id: 20 bytes sha1> 
@@ -359,10 +390,11 @@ void read_data_cmd_payload(string const & in,
   assert_end_of_buffer(in, pos, "data netcmd payload");
 }
 
-void write_data_cmd_payload(netcmd_item_type type,
-			    id const & item,
-			    string const & dat,
-			    string & out)
+void 
+write_data_cmd_payload(netcmd_item_type type,
+		       id const & item,
+		       string const & dat,
+		       string & out)
 {
   I(item().size() == constants::merkle_hash_length_in_bytes);
   out += static_cast<char>(type);
@@ -382,9 +414,10 @@ void write_data_cmd_payload(netcmd_item_type type,
 }
 
 
-void read_delta_cmd_payload(string const & in, 
-			    netcmd_item_type & type,
-			    id & base, id & ident, delta & del)
+void 
+read_delta_cmd_payload(string const & in, 
+		       netcmd_item_type & type,
+		       id & base, id & ident, delta & del)
 {
   size_t pos = 0;
   // syntax is: <type: 1 byte> <src: 20 bytes sha1> <dst: 20 bytes sha1>
@@ -403,9 +436,10 @@ void read_delta_cmd_payload(string const & in,
   assert_end_of_buffer(in, pos, "delta netcmd payload");
 }
 
-void write_delta_cmd_payload(netcmd_item_type & type,
-			     id const & base, id const & ident, 
-			     delta const & del, string & out)
+void 
+write_delta_cmd_payload(netcmd_item_type & type,
+			id const & base, id const & ident, 
+			delta const & del, string & out)
 {
   I(base().size() == constants::merkle_hash_length_in_bytes);
   I(ident().size() == constants::merkle_hash_length_in_bytes);
@@ -429,9 +463,10 @@ void write_delta_cmd_payload(netcmd_item_type & type,
 }
 
 
-void read_nonexistant_cmd_payload(string const & in, 
-				  netcmd_item_type & type,
-				  id & item)
+void 
+read_nonexistant_cmd_payload(string const & in, 
+			     netcmd_item_type & type,
+			     id & item)
 {
   size_t pos = 0;
   // syntax is: <type: 1 byte> <id: 20 bytes sha1> 
@@ -441,9 +476,10 @@ void read_nonexistant_cmd_payload(string const & in,
   assert_end_of_buffer(in, pos, "nonexistant netcmd payload");
 }
 
-void write_nonexistant_cmd_payload(netcmd_item_type type,
-				   id const & item,
-				   string & out)
+void 
+write_nonexistant_cmd_payload(netcmd_item_type type,
+			      id const & item,
+			      string & out)
 {
   I(item().size() == constants::merkle_hash_length_in_bytes);
   out += static_cast<char>(type);
@@ -457,7 +493,8 @@ void write_nonexistant_cmd_payload(netcmd_item_type type,
 #include "transforms.hh"
 #include <boost/lexical_cast.hpp>
 
-void test_netcmd_functions()
+void 
+test_netcmd_functions()
 {
   
   try 
@@ -721,7 +758,8 @@ void test_netcmd_functions()
     }
 }
 
-void add_netcmd_tests(test_suite * suite)
+void 
+add_netcmd_tests(test_suite * suite)
 {
   suite->add(BOOST_TEST_CASE(&test_netcmd_functions));
 }

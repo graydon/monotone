@@ -22,36 +22,44 @@ using boost::lexical_cast;
 using namespace phoenix;
 
 
-struct rcs_admin_closure : 
-  boost::spirit::closure<rcs_admin_closure, rcs_admin>
+struct 
+rcs_admin_closure : 
+boost::spirit::closure<rcs_admin_closure, rcs_admin>
 { member1 val; };
 
-struct rcs_delta_closure : 
-  boost::spirit::closure<rcs_delta_closure, rcs_delta>
+struct 
+rcs_delta_closure : 
+boost::spirit::closure<rcs_delta_closure, rcs_delta>
 { member1 val; };
 
-struct rcs_symbol_closure : 
-  boost::spirit::closure<rcs_symbol_closure, rcs_symbol>
+struct 
+rcs_symbol_closure : 
+boost::spirit::closure<rcs_symbol_closure, rcs_symbol>
 { member1 val; };
 
-struct rcs_desc_closure : 
-  boost::spirit::closure<rcs_desc_closure, string>
+struct 
+rcs_desc_closure : 
+boost::spirit::closure<rcs_desc_closure, string>
 { member1 val; };
 
-struct rcs_deltatext_closure : 
-  boost::spirit::closure<rcs_deltatext_closure, rcs_deltatext>
+struct 
+rcs_deltatext_closure : 
+boost::spirit::closure<rcs_deltatext_closure, rcs_deltatext>
 { member1 val; };
 
-struct rcs_file_closure : 
-  boost::spirit::closure<rcs_file_closure, rcs_file>
+struct 
+rcs_file_closure : 
+boost::spirit::closure<rcs_file_closure, rcs_file>
 { member1 val; };
 
-struct string_closure : 
-  boost::spirit::closure<string_closure, string>
+struct 
+string_closure : 
+boost::spirit::closure<string_closure, string>
 { member1 val; };
 
 
-string unescape_string(char const * ch, char const * end) 
+string 
+unescape_string(char const * ch, char const * end) 
 {
   static string str;
   str.reserve(static_cast<int>(end - ch));
@@ -72,7 +80,8 @@ string unescape_string(char const * ch, char const * end)
   return string(str);
 }
 
-struct rcsfile_grammar : 
+struct 
+rcsfile_grammar : 
   public grammar<rcsfile_grammar, rcs_file_closure::context_t>
 {
   template <typename ScannerT>
@@ -185,7 +194,8 @@ struct rcsfile_grammar :
   };
 };
 
-struct file_handle
+struct 
+file_handle
 {
   string const & filename;
   off_t length;
@@ -210,7 +220,8 @@ struct file_handle
     }
 };
 
-struct mmapped_handle
+struct 
+mmapped_handle
 {
   string const & filename;
   int fd;
@@ -235,7 +246,8 @@ struct mmapped_handle
     }
 };
 
-void parse_rcs_file(string const & filename, rcs_file & r)
+void 
+parse_rcs_file(string const & filename, rcs_file & r)
 {
 
   file_handle file(filename);

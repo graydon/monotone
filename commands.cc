@@ -190,29 +190,34 @@ CMD(C, group, params, desc)				\
   process(app, string(#realcommand), args);		\
 }
 
-static bool bookdir_exists()
+static bool 
+bookdir_exists()
 {
   return directory_exists(local_path(book_keeping_dir));
 }
 
-static void ensure_bookdir()
+static void 
+ensure_bookdir()
 {
   mkdir_p(local_path(book_keeping_dir));
 }
 
-static void get_manifest_path(local_path & m_path)
+static void 
+get_manifest_path(local_path & m_path)
 {
   m_path = (mkpath(book_keeping_dir) / mkpath(manifest_file_name)).string();
   L(F("manifest path is %s\n") % m_path);
 }
 
-static void get_work_path(local_path & w_path)
+static void 
+get_work_path(local_path & w_path)
 {
   w_path = (mkpath(book_keeping_dir) / mkpath(work_file_name)).string();
   L(F("work path is %s\n") % w_path);
 }
 
-static void get_manifest_map(manifest_map & m)
+static void 
+get_manifest_map(manifest_map & m)
 {
   ensure_bookdir();
   local_path m_path;
@@ -231,7 +236,8 @@ static void get_manifest_map(manifest_map & m)
     }
 }
 
-static void put_manifest_map(manifest_map const & m)
+static void 
+put_manifest_map(manifest_map const & m)
 {
   ensure_bookdir();
   local_path m_path;
@@ -243,7 +249,8 @@ static void put_manifest_map(manifest_map const & m)
   L(F("wrote %d manifest entries\n") % m.size());
 }
 
-static void get_work_set(work_set & w)
+static void 
+get_work_set(work_set & w)
 {
   ensure_bookdir();
   local_path w_path;
@@ -263,7 +270,8 @@ static void get_work_set(work_set & w)
     }
 }
 
-static void remove_work_set()
+static void 
+remove_work_set()
 {
   local_path w_path;
   get_work_path(w_path);
@@ -271,7 +279,8 @@ static void remove_work_set()
     delete_file(w_path);
 }
 
-static void put_work_set(work_set & w)
+static void 
+put_work_set(work_set & w)
 {
   local_path w_path;
   get_work_path(w_path);
@@ -291,7 +300,8 @@ static void put_work_set(work_set & w)
     }
 }
 
-static void update_any_attrs(app_state & app)
+static void 
+update_any_attrs(app_state & app)
 {
   file_path fp;
   data attr_data;
@@ -306,10 +316,11 @@ static void update_any_attrs(app_state & app)
   apply_attributes(app, attr);
 }
 
-static void calculate_new_manifest_map(manifest_map const & m_old, 
-				       manifest_map & m_new,
-				       rename_set & renames,
-				       app_state & app)
+static void 
+calculate_new_manifest_map(manifest_map const & m_old, 
+			   manifest_map & m_new,
+			   rename_set & renames,
+			   app_state & app)
 {
   path_set paths;
   work_set work;
@@ -330,16 +341,18 @@ static void calculate_new_manifest_map(manifest_map const & m_old,
 }
 
 
-static void calculate_new_manifest_map(manifest_map const & m_old, 
-				       manifest_map & m_new,
-				       app_state & app)
+static void 
+calculate_new_manifest_map(manifest_map const & m_old, 
+			   manifest_map & m_new,
+			   app_state & app)
 {
   rename_set dummy;
   calculate_new_manifest_map (m_old, m_new, dummy, app);
 }
 
 
-static string get_stdin()
+static string 
+get_stdin()
 {
   char buf[constants::bufsz];
   string tmp;
@@ -351,9 +364,10 @@ static string get_stdin()
   return tmp;
 }
 
-static void get_log_message(patch_set const & ps, 
-			    app_state & app,
-			    string & log_message)
+static void 
+get_log_message(patch_set const & ps, 
+		app_state & app,
+		string & log_message)
 {
   string commentary;
   string summary;
@@ -370,9 +384,10 @@ static void get_log_message(patch_set const & ps,
 }
 
 template <typename ID>
-static void complete(app_state & app, 
-		     string const & str, 
-		     ID & completion)
+static void 
+complete(app_state & app, 
+	 string const & str, 
+	 ID & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
     F("non-hex digits in id"));
@@ -398,9 +413,10 @@ static void complete(app_state & app,
 }
 
 
-static void find_oldest_ancestors(manifest_id const & child, 
-				  set<manifest_id> & ancs,
-				  app_state & app)
+static void 
+find_oldest_ancestors(manifest_id const & child, 
+		      set<manifest_id> & ancs,
+		      app_state & app)
 {
   cert_name tn(ancestor_cert_name);
   ancs.insert(child);  
@@ -441,10 +457,11 @@ static void find_oldest_ancestors(manifest_id const & child,
 // we use the ancestor as the source manifest when building a patchset to
 // send to that url.
 
-static bool find_ancestor_on_netserver (manifest_id const & child, 
-					url const & u,
-					manifest_id & anc,
-					app_state & app)
+static bool 
+find_ancestor_on_netserver (manifest_id const & child, 
+			    url const & u,
+			    manifest_id & anc,
+			    app_state & app)
 {
   set<manifest_id> frontier;
   cert_name tn(ancestor_cert_name);
@@ -492,10 +509,11 @@ static bool find_ancestor_on_netserver (manifest_id const & child,
 }
 
 
-static void queue_edge_for_target_ancestor (url const & targ,
-					    manifest_id const & child_id,
-					    manifest_map const & child_map,
-					    app_state & app)
+static void 
+queue_edge_for_target_ancestor(url const & targ,
+			       manifest_id const & child_id,
+			       manifest_map const & child_map,
+			       app_state & app)
 {  
   // now here is an interesting thing: we *might* be sending data to a
   // depot, or someone with indeterminate pre-existing state (say the first
@@ -548,11 +566,12 @@ static void queue_edge_for_target_ancestor (url const & targ,
 // appropriate edges from known ancestors to the new merge node, to be
 // transmitted to each of the targets provided.
 
-static void try_one_merge(manifest_id const & left,
-			  manifest_id const & right,
-			  manifest_id & merged,
-			  app_state & app, 
-			  set<url> const & targets)
+static void 
+try_one_merge(manifest_id const & left,
+	      manifest_id const & right,
+	      manifest_id & merged,
+	      app_state & app, 
+	      set<url> const & targets)
 {
   manifest_data left_data, right_data, ancestor_data, merged_data;
   manifest_map left_map, right_map, ancestor_map, merged_map;
@@ -643,7 +662,8 @@ static void try_one_merge(manifest_id const & left,
 // actual commands follow
 
 
-static void ls_certs (string name, app_state & app, vector<utf8> const & args)
+static void 
+ls_certs(string name, app_state & app, vector<utf8> const & args)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -715,7 +735,8 @@ static void ls_certs (string name, app_state & app, vector<utf8> const & args)
   guard.commit();
 }
 
-static void ls_keys (string name, app_state & app, vector<utf8> const & args)
+static void 
+ls_keys(string name, app_state & app, vector<utf8> const & args)
 {
   vector<rsa_keypair_id> pubkeys;
   vector<rsa_keypair_id> privkeys;
@@ -1732,8 +1753,8 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 // most of the time, leave them commented out. they can be helpful for certain
 // cases, though.
 
-  CMD(fload, "tree", "", "load file contents into db")
-  {
+CMD(fload, "tree", "", "load file contents into db")
+{
   string s = get_stdin();
   base64< gzip< data > > gzd;
 
@@ -1746,7 +1767,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   
   packet_db_writer dbw(app);
   dbw.consume_file_data(f_id, f_data);  
-  }
+}
 
   CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result")
   {
@@ -2164,7 +2185,8 @@ CMD(status, "informative", "", "show status of working copy")
   guard.commit();
 }
 
-static void ls_branches (string name, app_state & app, vector<utf8> const & args)
+static void 
+ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
   transaction_guard guard(app.db);
   vector< manifest<cert> > certs;

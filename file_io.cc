@@ -30,18 +30,21 @@ string const book_keeping_dir("MT");
 #include <pwd.h>
 #include <sys/types.h>
 
-void save_initial_path()
+void 
+save_initial_path()
 {
   fs::initial_path();
 }
 
-fs::path mkpath(string const & s)
+fs::path 
+mkpath(string const & s)
 {
   fs::path p(s, fs::native);
   return p;
 }
 
-string get_homedir()
+string 
+get_homedir()
 {
   char * home = getenv("HOME");
   if (home != NULL)
@@ -53,7 +56,8 @@ string get_homedir()
 }
 
 
-static fs::path localized(string const & utf)
+static fs::path 
+localized(string const & utf)
 {
   fs::path tmp = mkpath(utf), ret;
   for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
@@ -65,7 +69,8 @@ static fs::path localized(string const & utf)
   return ret;
 }
 
-string absolutify(string const & path)
+string 
+absolutify(string const & path)
 {
   fs::path tmp = mkpath(path);
   if (! tmp.has_root_path())
@@ -74,7 +79,8 @@ string absolutify(string const & path)
   return tmp.string();
 }
 
-string tilde_expand(string const & path)
+string 
+tilde_expand(string const & path)
 {
   fs::path tmp = mkpath(path);
   fs::path::iterator i = tmp.begin();
@@ -102,7 +108,8 @@ string tilde_expand(string const & path)
   return tmp.string();
 }
 
-bool book_keeping_file(fs::path const & p)
+bool 
+book_keeping_file(fs::path const & p)
 {
   using boost::filesystem::path;
   for(path::iterator i = p.begin(); i != p.end(); ++i)
@@ -113,32 +120,55 @@ bool book_keeping_file(fs::path const & p)
   return false;
 }
 
-bool book_keeping_file(local_path const & p)
+bool 
+book_keeping_file(local_path const & p)
 {
   if (p() == book_keeping_dir) return true;
   if (*(mkpath(p()).begin()) == book_keeping_dir) return true;
   return false;
 }
 
-bool directory_exists(local_path const & p) 
+bool 
+directory_exists(local_path const & p) 
 { 
   return fs::exists(localized(p())) &&
     fs::is_directory(localized(p())); 
 }
-bool file_exists(file_path const & p) { return fs::exists(localized(p())); }
-bool file_exists(local_path const & p) { return fs::exists(localized(p())); }
 
-void delete_file(local_path const & p) { fs::remove(localized(p())); }
-void delete_file(file_path const & p) { fs::remove(localized(p())); }
+bool 
+file_exists(file_path const & p) 
+{ 
+  return fs::exists(localized(p())); 
+}
 
-void move_file(file_path const & old_path,
-	       file_path const & new_path) 
+bool 
+file_exists(local_path const & p) 
+{ 
+  return fs::exists(localized(p())); 
+}
+
+void 
+delete_file(local_path const & p) 
+{ 
+  fs::remove(localized(p())); 
+}
+
+void 
+delete_file(file_path const & p) 
+{ 
+  fs::remove(localized(p())); 
+}
+
+void 
+move_file(file_path const & old_path,
+	  file_path const & new_path) 
 { 
   fs::rename(localized(old_path()), 
 	     localized(new_path()));
 }
 
-void mkdir_p(local_path const & p) 
+void 
+mkdir_p(local_path const & p) 
 { 
   fs::create_directories(localized(p())); 
 }
@@ -148,7 +178,9 @@ void mkdir_p(file_path const & p)
   fs::create_directories(localized(p())); 
 }
 
-void make_dir_for(file_path const & p) { 
+void 
+make_dir_for(file_path const & p) 
+{ 
   fs::path tmp = mkpath(p());
   if (tmp.has_branch_path())
     {
@@ -157,8 +189,9 @@ void make_dir_for(file_path const & p) {
 }
 
 
-static void read_data_impl(fs::path const & p,
-			   data & dat)
+static void 
+read_data_impl(fs::path const & p,
+	       data & dat)
 {
   if (!fs::exists(p))
     throw oops("file '" + p.string() + "' does not exist");
@@ -174,14 +207,21 @@ static void read_data_impl(fs::path const & p,
   dat = in;
 }
 
-void read_data(local_path const & path, data & dat)
-{ read_data_impl(localized(path()), dat); }
+void 
+read_data(local_path const & path, data & dat)
+{ 
+  read_data_impl(localized(path()), dat); 
+}
 
-void read_data(file_path const & path, data & dat)
-{ read_data_impl(localized(path()), dat); }
+void 
+read_data(file_path const & path, data & dat)
+{ 
+  read_data_impl(localized(path()), dat); 
+}
 
-void read_data(local_path const & path,
-	       base64< gzip<data> > & dat)
+void 
+read_data(local_path const & path,
+	  base64< gzip<data> > & dat)
 {
   data data_plain;
   read_data_impl(localized(path()), data_plain);
@@ -191,12 +231,17 @@ void read_data(local_path const & path,
   encode_base64(data_compressed, dat);
 }
 
-void read_data(file_path const & path, base64< gzip<data> > & dat)
-{ read_data(local_path(path()), dat); }
+void 
+read_data(file_path const & path, 
+	  base64< gzip<data> > & dat)
+{ 
+  read_data(local_path(path()), dat); 
+}
 
-void read_localized_data(file_path const & path,
-			 base64< gzip<data> > & dat,
-			 lua_hooks & lua)
+void 
+read_localized_data(file_path const & path,
+		    base64< gzip<data> > & dat,
+		    lua_hooks & lua)
 {
   data data_plain;
   read_localized_data(path, data_plain, lua);
@@ -206,9 +251,10 @@ void read_localized_data(file_path const & path,
   encode_base64(data_compressed, dat);
 }
 
-void read_localized_data(file_path const & path, 
-			 data & dat, 
-			 lua_hooks & lua)
+void 
+read_localized_data(file_path const & path, 
+		    data & dat, 
+		    lua_hooks & lua)
 {
   string db_linesep, ext_linesep;
   string db_charset, ext_charset;
@@ -239,8 +285,9 @@ void read_localized_data(file_path const & path,
 // but you might want to make this code a bit tighter.
 
 
-static void write_data_impl(fs::path const & p,
-			    data const & dat)
+static void 
+write_data_impl(fs::path const & p,
+		data const & dat)
 {  
   if (fs::exists(p) && fs::is_directory(p))
     throw oops("file '" + p.string() + "' cannot be over-written as data; it is a directory");
@@ -268,19 +315,22 @@ static void write_data_impl(fs::path const & p,
     F("rename of %s to %s failed") % tmp.string() % p.string());
 }
 
-void write_data(local_path const & path, data const & dat)
+void 
+write_data(local_path const & path, data const & dat)
 { 
   write_data_impl(localized(path()), dat); 
 }
 
-void write_data(file_path const & path, data const & dat)
+void 
+write_data(file_path const & path, data const & dat)
 { 
   write_data_impl(localized(path()), dat); 
 }
 
-void write_localized_data(file_path const & path, 
-			  data const & dat, 
-			  lua_hooks & lua)
+void 
+write_localized_data(file_path const & path, 
+		     data const & dat, 
+		     lua_hooks & lua)
 {
   string db_linesep, ext_linesep;
   string db_charset, ext_charset;
@@ -302,9 +352,10 @@ void write_localized_data(file_path const & path,
   write_data(path, data(tmp2));
 }
 
-void write_localized_data(file_path const & path,
-			  base64< gzip<data> > const & dat,
-			  lua_hooks & lua)
+void 
+write_localized_data(file_path const & path,
+		     base64< gzip<data> > const & dat,
+		     lua_hooks & lua)
 {
   gzip<data> data_decoded;
   data data_decompressed;      
@@ -313,8 +364,9 @@ void write_localized_data(file_path const & path,
   write_localized_data(path, data_decompressed, lua);
 }
 
-void write_data(local_path const & path,
-		base64< gzip<data> > const & dat)
+void 
+write_data(local_path const & path,
+	   base64< gzip<data> > const & dat)
 {
   gzip<data> data_decoded;
   data data_decompressed;      
@@ -323,8 +375,9 @@ void write_data(local_path const & path,
   write_data_impl(localized(path()), data_decompressed);
 }
 
-void write_data(file_path const & path,
-		base64< gzip<data> > const & dat)
+void 
+write_data(file_path const & path,
+	   base64< gzip<data> > const & dat)
 { 
   write_data(local_path(path()), dat); 
 }
@@ -332,9 +385,10 @@ void write_data(file_path const & path,
 
 tree_walker::~tree_walker() {}
 
-static void walk_tree_recursive(fs::path const & absolute,
-				fs::path const & relative,
-				tree_walker & walker)
+static void 
+walk_tree_recursive(fs::path const & absolute,
+		    fs::path const & relative,
+		    tree_walker & walker)
 {
   fs::directory_iterator ei;
   for(fs::directory_iterator di(absolute);
@@ -367,8 +421,9 @@ static void walk_tree_recursive(fs::path const & absolute,
 }
 
 // from some (safe) sub-entry of cwd
-void walk_tree(file_path const & path,
-	       tree_walker & walker)
+void 
+walk_tree(file_path const & path,
+	  tree_walker & walker)
 {
   if (! fs::is_directory(localized(path())))
     walker.visit_file(path);
@@ -381,7 +436,8 @@ void walk_tree(file_path const & path,
 }
 
 // from cwd (nb: we can't describe cwd as a file_path)
-void walk_tree(tree_walker & walker)
+void 
+walk_tree(tree_walker & walker)
 {
   walk_tree_recursive(fs::current_path(), fs::path(), walker);
 }
@@ -390,7 +446,8 @@ void walk_tree(tree_walker & walker)
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-static void test_book_keeping_file()
+static void 
+test_book_keeping_file()
 {
   // positive tests
   BOOST_CHECK(book_keeping_file(local_path("MT")));
@@ -403,7 +460,8 @@ static void test_book_keeping_file()
   BOOST_CHECK( ! book_keeping_file(local_path("MTT")));
 }
 
-void add_file_io_tests(test_suite * suite)
+void 
+add_file_io_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&test_book_keeping_file));

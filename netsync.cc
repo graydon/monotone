@@ -184,13 +184,15 @@ using namespace Netxx;
 using namespace boost;
 using namespace std;
 
-static inline void require(bool check, string const & context)
+static inline void 
+require(bool check, string const & context)
 {
   if (!check) 
     throw bad_decode(F("check of '%s' failed") % context);
 }
 
-struct done_marker
+struct 
+done_marker
 {
   bool current_level_had_refinements;
   bool tree_is_done;
@@ -200,7 +202,8 @@ struct done_marker
   {}
 };
 
-struct session
+struct 
+session
 {
   protocol_role role;
   protocol_voice const voice;
@@ -329,13 +332,9 @@ struct session
   bool process();
 };
 
-static inline string tohex(string const & s)
-{
-  return lowercase(xform<CryptoPP::HexEncoder>(s));
-}
 
-
-struct root_prefix
+struct 
+root_prefix
 {
   hexenc<prefix> val;
   root_prefix()
@@ -343,7 +342,19 @@ struct root_prefix
       encode_hexenc(prefix(""), val);
     }
 };
-static root_prefix ROOT_PREFIX;
+
+static root_prefix const & 
+get_root_prefix()
+{ 
+  // this is not a static variable for a bizarre reason: mac OSX runs
+  // static initializers in the "wrong" order (application before
+  // libraries), so the initializer for a static string in cryptopp runs
+  // after the initializer for a static variable outside a function
+  // here. therefore encode_hexenc() fails in the static initializer here
+  // and the program crashes. curious, eh?
+  static root_prefix ROOT_PREFIX;
+  return ROOT_PREFIX;
+}
 
   
 session::session(protocol_role role,
@@ -398,7 +409,8 @@ session::session(protocol_role role,
   done_refinements.insert(make_pair(key_item, done_marker()));
 }
 
-id session::mk_nonce()
+id 
+session::mk_nonce()
 {
   I(this->saved_nonce().size() == 0);
   char buf[constants::merkle_hash_length_in_bytes];
@@ -408,12 +420,14 @@ id session::mk_nonce()
   return this->saved_nonce;
 }
 
-void session::mark_recent_io()
+void 
+session::mark_recent_io()
 {
   last_io_time = ::time(NULL);
 }
 
-bool session::done_all_refinements()
+bool 
+session::done_all_refinements()
 {
   bool all = true;
   for(map< netcmd_item_type, done_marker>::const_iterator j = done_refinements.begin();
@@ -425,12 +439,14 @@ bool session::done_all_refinements()
   return all;
 }
 
-bool session::got_all_data()
+bool 
+session::got_all_data()
 {
   return requested_items.empty();
 }
 
-struct always_true_version_check :
+struct 
+always_true_version_check :
   public version_existence_check
 {
   virtual bool check(file_id i)
@@ -439,8 +455,9 @@ struct always_true_version_check :
   }
 };
 
-void session::analyze_manifest_edge(manifest_map const & parent,
-				    manifest_map const & child)
+void 
+session::analyze_manifest_edge(manifest_map const & parent,
+			       manifest_map const & child)
 {
   L(F("analyzing %d parent, %d child manifest entries\n") 
     % parent.size() % child.size());
@@ -485,7 +502,8 @@ void session::analyze_manifest_edge(manifest_map const & parent,
     }
 }
 
-void session::analyze_manifest(manifest_map const & man)
+void 
+session::analyze_manifest(manifest_map const & man)
 {
   L(F("analyzing %d entries in manifest\n") % man.size());
   for (manifest_map::const_iterator i = man.begin();
@@ -501,7 +519,9 @@ void session::analyze_manifest(manifest_map const & man)
     }
 }
 
-void session::request_manifests_recursive(id const & i, set<id> & visited)
+void 
+session::request_manifests_recursive(id const & i, 
+				     set<id> & visited)
 {
   if (visited.find(i) != visited.end())
     return;
@@ -556,7 +576,8 @@ void session::request_manifests_recursive(id const & i, set<id> & visited)
     }
 }
 
-void session::analyze_ancestry_graph()
+void 
+session::analyze_ancestry_graph()
 {
   set<id> heads;
 
@@ -594,7 +615,8 @@ void session::analyze_ancestry_graph()
     }
 }
 
-Probe::ready_type session::which_events() const
+Probe::ready_type 
+session::which_events() const
 {    
   if (outbuf.empty())
     {
@@ -612,7 +634,8 @@ Probe::ready_type session::which_events() const
     }	    
 }
 
-bool session::read_some(ticker * tick)
+bool 
+session::read_some(ticker * tick)
 {
   I(inbuf.size() < constants::netcmd_maxsz);
   char tmp[constants::bufsz];
@@ -630,7 +653,8 @@ bool session::read_some(ticker * tick)
     return false;
 }
 
-bool session::write_some(ticker * tick)
+bool 
+session::write_some(ticker * tick)
 {
   I(!outbuf.empty());    
   signed_size_type count = stream.write(outbuf.data(), 
@@ -651,7 +675,8 @@ bool session::write_some(ticker * tick)
 
 // senders
 
-void session::queue_bye_cmd() 
+void 
+session::queue_bye_cmd() 
 {
   L(F("queueing 'bye' command\n"));
   netcmd cmd;
@@ -660,7 +685,8 @@ void session::queue_bye_cmd()
   this->sent_goodbye = true;
 }
 
-void session::queue_error_cmd(string const & errmsg)
+void 
+session::queue_error_cmd(string const & errmsg)
 {
   L(F("queueing 'error' command\n"));
   netcmd cmd;
@@ -669,7 +695,9 @@ void session::queue_error_cmd(string const & errmsg)
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_done_cmd(size_t level, netcmd_item_type type) 
+void 
+session::queue_done_cmd(size_t level, 
+			netcmd_item_type type) 
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -680,8 +708,9 @@ void session::queue_done_cmd(size_t level, netcmd_item_type type)
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_hello_cmd(id const & server, 
-			      id const & nonce) 
+void 
+session::queue_hello_cmd(id const & server, 
+			 id const & nonce) 
 {
   netcmd cmd;
   cmd.cmd_code = hello_cmd;
@@ -689,9 +718,10 @@ void session::queue_hello_cmd(id const & server,
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_anonymous_cmd(protocol_role role, 
-				  string const & collection, 
-				  id const & nonce2)
+void 
+session::queue_anonymous_cmd(protocol_role role, 
+			     string const & collection, 
+			     id const & nonce2)
 {
   netcmd cmd;
   cmd.cmd_code = anonymous_cmd;
@@ -699,12 +729,13 @@ void session::queue_anonymous_cmd(protocol_role role,
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_auth_cmd(protocol_role role, 
-			     string const & collection, 
-			     id const & client, 
-			     id const & nonce1, 
-			     id const & nonce2, 
-			     string const & signature)
+void 
+session::queue_auth_cmd(protocol_role role, 
+			string const & collection, 
+			id const & client, 
+			id const & nonce1, 
+			id const & nonce2, 
+			string const & signature)
 {
   netcmd cmd;
   cmd.cmd_code = auth_cmd;
@@ -714,7 +745,8 @@ void session::queue_auth_cmd(protocol_role role,
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_confirm_cmd(string const & signature)
+void 
+session::queue_confirm_cmd(string const & signature)
 {
   netcmd cmd;
   cmd.cmd_code = confirm_cmd;
@@ -722,7 +754,8 @@ void session::queue_confirm_cmd(string const & signature)
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_refine_cmd(merkle_node const & node)
+void 
+session::queue_refine_cmd(merkle_node const & node)
 {
   string typestr;
   hexenc<prefix> hpref;
@@ -736,8 +769,9 @@ void session::queue_refine_cmd(merkle_node const & node)
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_send_data_cmd(netcmd_item_type type,
-				  id const & item)
+void 
+session::queue_send_data_cmd(netcmd_item_type type,
+			     id const & item)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -768,9 +802,10 @@ void session::queue_send_data_cmd(netcmd_item_type type,
   this->requested_items.insert(make_pair(type, item));
 }
     
-void session::queue_send_delta_cmd(netcmd_item_type type,
-				   id const & base, 
-				   id const & ident)
+void 
+session::queue_send_delta_cmd(netcmd_item_type type,
+			      id const & base, 
+			      id const & ident)
 {
   I(type == manifest_item || type == file_item);
 
@@ -805,9 +840,10 @@ void session::queue_send_delta_cmd(netcmd_item_type type,
   this->requested_items.insert(make_pair(type, ident));
 }
 
-void session::queue_data_cmd(netcmd_item_type type,
-			     id const & item, 
-			     string const & dat)
+void 
+session::queue_data_cmd(netcmd_item_type type,
+			id const & item, 
+			string const & dat)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -829,10 +865,11 @@ void session::queue_data_cmd(netcmd_item_type type,
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_delta_cmd(netcmd_item_type type,
-			      id const & base, 
-			      id const & ident, 
-			      delta const & del)
+void
+session::queue_delta_cmd(netcmd_item_type type,
+			 id const & base, 
+			 id const & ident, 
+			 delta const & del)
 {
   I(type == manifest_item || type == file_item);
   string typestr;
@@ -857,8 +894,9 @@ void session::queue_delta_cmd(netcmd_item_type type,
   write_netcmd(cmd, outbuf);
 }
 
-void session::queue_nonexistant_cmd(netcmd_item_type type,
-				    id const & item)
+void 
+session::queue_nonexistant_cmd(netcmd_item_type type,
+			       id const & item)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -881,21 +919,24 @@ void session::queue_nonexistant_cmd(netcmd_item_type type,
 
 // processors
 
-bool session::process_bye_cmd() 
+bool 
+session::process_bye_cmd() 
 {
   L(F("received 'bye' netcmd\n"));
   this->received_goodbye = true;
   return true;
 }
 
-bool session::process_error_cmd(string const & errmsg) 
+bool 
+session::process_error_cmd(string const & errmsg) 
 {
   W(F("received network error: %s\n") % errmsg);
   this->received_goodbye = true;
   return true;
 }
 
-bool session::process_done_cmd(size_t level, netcmd_item_type type) 
+bool 
+session::process_done_cmd(size_t level, netcmd_item_type type) 
 {
 
   map< netcmd_item_type, done_marker>::iterator i = done_refinements.find(type);
@@ -941,8 +982,9 @@ bool session::process_done_cmd(size_t level, netcmd_item_type type)
   return true;
 }
 
-bool session::process_hello_cmd(id const & server, 
-				id const & nonce) 
+bool 
+session::process_hello_cmd(id const & server, 
+			   id const & nonce) 
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == 0);
@@ -995,9 +1037,10 @@ bool session::process_hello_cmd(id const & server,
   return false;
 }
 
-bool session::process_anonymous_cmd(protocol_role role, 
-				    string const & collection, 
-				    id const & nonce2)
+bool 
+session::process_anonymous_cmd(protocol_role role, 
+			       string const & collection, 
+			       id const & nonce2)
 {
   hexenc<id> hnonce2;
   encode_hexenc(nonce2, hnonce2);
@@ -1069,12 +1112,13 @@ bool session::process_anonymous_cmd(protocol_role role,
   return true;
 }
 
-bool session::process_auth_cmd(protocol_role role, 
-			       string const & collection, 
-			       id const & client, 
-			       id const & nonce1, 
-			       id const & nonce2, 
-			       string const & signature)
+bool 
+session::process_auth_cmd(protocol_role role, 
+			  string const & collection, 
+			  id const & client, 
+			  id const & nonce1, 
+			  id const & nonce2, 
+			  string const & signature)
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
@@ -1209,7 +1253,8 @@ bool session::process_auth_cmd(protocol_role role,
   return false;
 }
 
-bool session::process_confirm_cmd(string const & signature)
+bool 
+session::process_confirm_cmd(string const & signature)
 {
   I(this->remote_peer_key_hash().size() == constants::merkle_hash_length_in_bytes);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
@@ -1236,15 +1281,15 @@ bool session::process_confirm_cmd(string const & signature)
 	  L(F("server signature OK, accepting authentication\n"));
 	  this->authenticated = true;
 	  merkle_node root;
-	  load_merkle_node(app, key_item, this->collection, 0, ROOT_PREFIX.val, root);
+	  load_merkle_node(app, key_item, this->collection, 0, get_root_prefix().val, root);
 	  queue_refine_cmd(root);
 	  queue_done_cmd(0, key_item);
 
-	  load_merkle_node(app, mcert_item, this->collection, 0, ROOT_PREFIX.val, root);
+	  load_merkle_node(app, mcert_item, this->collection, 0, get_root_prefix().val, root);
 	  queue_refine_cmd(root);
 	  queue_done_cmd(0, mcert_item);
 
-	  load_merkle_node(app, fcert_item, this->collection, 0, ROOT_PREFIX.val, root);
+	  load_merkle_node(app, fcert_item, this->collection, 0, get_root_prefix().val, root);
 	  queue_refine_cmd(root);
 	  queue_done_cmd(0, fcert_item);
 	  return true;
@@ -1261,9 +1306,10 @@ bool session::process_confirm_cmd(string const & signature)
   return false;
 }
 
-static bool data_exists(netcmd_item_type type, 
-			id const & item, 
-			app_state & app)
+static bool 
+data_exists(netcmd_item_type type, 
+	    id const & item, 
+	    app_state & app)
 {
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
@@ -1283,10 +1329,11 @@ static bool data_exists(netcmd_item_type type,
   return false;
 }
 
-static void load_data(netcmd_item_type type, 
-		      id const & item, 
-		      app_state & app, 
-		      string & out)
+static void 
+load_data(netcmd_item_type type, 
+	  id const & item, 
+	  app_state & app, 
+	  string & out)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1370,7 +1417,8 @@ static void load_data(netcmd_item_type type,
 }
 
 
-bool session::process_refine_cmd(merkle_node const & their_node)
+bool 
+session::process_refine_cmd(merkle_node const & their_node)
 {
   hexenc<prefix> hpref;
   their_node.get_hex_prefix(hpref);
@@ -1735,8 +1783,9 @@ bool session::process_refine_cmd(merkle_node const & their_node)
 }
 
 
-bool session::process_send_data_cmd(netcmd_item_type type,
-				    id const & item)
+bool 
+session::process_send_data_cmd(netcmd_item_type type,
+			       id const & item)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1757,9 +1806,10 @@ bool session::process_send_data_cmd(netcmd_item_type type,
   return true;
 }
 
-bool session::process_send_delta_cmd(netcmd_item_type type,
-				     id const & base,
-				     id const & ident)
+bool 
+session::process_send_delta_cmd(netcmd_item_type type,
+				id const & base,
+				id const & ident)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1829,9 +1879,10 @@ bool session::process_send_delta_cmd(netcmd_item_type type,
   return true;
 }
 
-void session::update_merkle_trees(netcmd_item_type type,
-				  hexenc<id> const & hident,
-				  bool live_p)
+void 
+session::update_merkle_trees(netcmd_item_type type,
+			     hexenc<id> const & hident,
+			     bool live_p)
 {
   id raw_id;
   decode_hexenc(hident, raw_id);
@@ -1849,9 +1900,10 @@ void session::update_merkle_trees(netcmd_item_type type,
     }
 }
 
-bool session::process_data_cmd(netcmd_item_type type,
-			       id const & item, 
-			       string const & dat)
+bool 
+session::process_data_cmd(netcmd_item_type type,
+			  id const & item, 
+			  string const & dat)
 {  
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
@@ -1961,10 +2013,11 @@ bool session::process_data_cmd(netcmd_item_type type,
       return true;
 }
 
-bool session::process_delta_cmd(netcmd_item_type type,
-				id const & base, 
-				id const & ident, 
-				delta const & del)
+bool 
+session::process_delta_cmd(netcmd_item_type type,
+			   id const & base, 
+			   id const & ident, 
+			   delta const & del)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -2058,8 +2111,9 @@ bool session::process_delta_cmd(netcmd_item_type type,
   return true;
 }
 
-bool session::process_nonexistant_cmd(netcmd_item_type type,
-				      id const & item)
+bool 
+session::process_nonexistant_cmd(netcmd_item_type type,
+				 id const & item)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -2073,7 +2127,8 @@ bool session::process_nonexistant_cmd(netcmd_item_type type,
 
 
 
-bool session::dispatch_payload(netcmd const & cmd)
+bool 
+session::dispatch_payload(netcmd const & cmd)
 {
   
   switch (cmd.cmd_code)
@@ -2231,7 +2286,8 @@ bool session::dispatch_payload(netcmd const & cmd)
 }
 
 // this kicks off the whole cascade starting from "hello"
-void session::begin_service()
+void 
+session::begin_service()
 {
   base64<rsa_pub_key> pub_encoded;
   app.db.get_key(app.signing_key, pub_encoded);
@@ -2242,14 +2298,16 @@ void session::begin_service()
   queue_hello_cmd(keyhash_raw(), mk_nonce());
 }
 
-void session::maybe_say_goodbye()
+void 
+session::maybe_say_goodbye()
 {
   if (done_all_refinements() &&
       got_all_data())
     queue_bye_cmd();
 }
 
-bool session::arm()
+bool 
+session::arm()
 {
   if (!armed)
     {
@@ -2287,13 +2345,14 @@ bool session::process()
 }
 
 
-static void call_server(protocol_role role,
-			vector<utf8> const & collections,
-			set<string> const & all_collections,
-			app_state & app,
-			utf8 const & address,
-			port_type default_port,
-			unsigned long timeout_seconds)
+static void 
+call_server(protocol_role role,
+	    vector<utf8> const & collections,
+	    set<string> const & all_collections,
+	    app_state & app,
+	    utf8 const & address,
+	    port_type default_port,
+	    unsigned long timeout_seconds)
 {
   Probe probe;
   Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
@@ -2652,8 +2711,9 @@ serve_connections(protocol_role role,
 //
 /////////////////////////////////////////////////
 
-void rebuild_merkle_trees(app_state & app,
-			  utf8 const & collection)
+void 
+rebuild_merkle_trees(app_state & app,
+		     utf8 const & collection)
 {
   transaction_guard guard(app.db);
 
@@ -2734,17 +2794,18 @@ void rebuild_merkle_trees(app_state & app,
   guard.commit();
 }
 			
-static void ensure_merkle_tree_ready(app_state & app,
-				     utf8 const & collection)
+static void 
+ensure_merkle_tree_ready(app_state & app,
+			 utf8 const & collection)
 {
   string mcert_item_str, fcert_item_str, key_item_str;
   netcmd_item_type_to_string(mcert_item, mcert_item_str);
   netcmd_item_type_to_string(mcert_item, fcert_item_str);
   netcmd_item_type_to_string(mcert_item, key_item_str);
 
-//   if (! (app.db.merkle_node_exists(mcert_item_str, collection, 0, ROOT_PREFIX.val)
-// 	 && app.db.merkle_node_exists(fcert_item_str, collection, 0, ROOT_PREFIX.val)
-// 	 && app.db.merkle_node_exists(key_item_str, collection, 0, ROOT_PREFIX.val)))
+//   if (! (app.db.merkle_node_exists(mcert_item_str, collection, 0, get_root_prefix().val)
+// 	 && app.db.merkle_node_exists(fcert_item_str, collection, 0, get_root_prefix().val)
+// 	 && app.db.merkle_node_exists(key_item_str, collection, 0, get_root_prefix().val)))
 //     {
 
   // FIXME: for now we always rebuild merkle trees. that's a bit coarse but it 
@@ -2756,11 +2817,12 @@ static void ensure_merkle_tree_ready(app_state & app,
 //     }
 }
 
-void run_netsync_protocol(protocol_voice voice, 
-			  protocol_role role, 
-			  utf8 const & addr, 
-			  vector<utf8> collections,
-			  app_state & app)
+void 
+run_netsync_protocol(protocol_voice voice, 
+		     protocol_role role, 
+		     utf8 const & addr, 
+		     vector<utf8> collections,
+		     app_state & app)
 {  
   for (vector<utf8>::const_iterator i = collections.begin();
        i != collections.end(); ++i)

@@ -13,7 +13,8 @@
 #include <string>
 #include "numeric_vocab.hh"
 
-struct adler32
+struct 
+adler32
 {
   u32 s1, s2, len;
   u32 const mask;

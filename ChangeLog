@@ -1,3 +1,10 @@
+2004-03-06  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc (get_root_prefix): Fix from Paul Snively
+	to fix static initialization order on mac OSX.
+	* montone.texi: Typo fix from Anders Petersson.
+	* *.cc: Move all function defs into column 0.
+
 2004-03-04  graydon hoare  <graydon@pobox.com>
 
 	* std_hooks.lua: Fix merger execution pessimism.
@@ -9,6 +16,7 @@
 	* netio.hh, numeric_vocab.hh (widen): Move between headers.
 	* netsync.cc: Correct role-assumption bugs.
 	* schema_migration.cc: Strip whitespace in sha1.
+	(changes received from Christof Petig)
 
 2004-03-01  graydon hoare  <graydon@pobox.com>
 

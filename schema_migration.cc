@@ -34,7 +34,8 @@ using namespace std;
 
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
-static string lowercase(string const & in)
+static string 
+lowercase(string const & in)
 {
   size_t const sz = in.size();
   char buf[sz];
@@ -43,8 +44,9 @@ static string lowercase(string const & in)
   return string(buf,sz);
 }
 
-static void massage_sql_tokens(string const & in,
-			       string & out)
+static void 
+massage_sql_tokens(string const & in,
+		   string & out)
 {
   boost::char_separator<char> sep(" \r\n\t", "(),;");
   tokenizer tokens(in, sep);
@@ -58,8 +60,9 @@ static void massage_sql_tokens(string const & in,
     }
 }
 
-static void calculate_id(string const & in,
-			 string & ident)
+static void 
+calculate_id(string const & in,
+	     string & ident)
 {
   CryptoPP::SHA hash;
   unsigned int const sz = 2 * CryptoPP::SHA::DIGESTSIZE;
@@ -72,7 +75,8 @@ static void calculate_id(string const & in,
 }
 
 
-struct is_ws
+struct 
+is_ws
 {
   bool operator()(char c) const
     {
@@ -80,7 +84,8 @@ struct is_ws
     }
 };
 
-static void sqlite_sha1_fn(sqlite_func *f, int nargs, char const ** args)
+static void 
+sqlite_sha1_fn(sqlite_func *f, int nargs, char const ** args)
 {
   string tmp, sha;
   if (nargs <= 1)
@@ -112,10 +117,11 @@ static void sqlite_sha1_fn(sqlite_func *f, int nargs, char const ** args)
   sqlite_set_result_string(f,sha.c_str(),sha.size());
 }
 
-int append_sql_stmt(void * vp, 
-		    int ncols, 
-		    char ** values,
-		    char ** colnames)
+int 
+append_sql_stmt(void * vp, 
+		int ncols, 
+		char ** values,
+		char ** colnames)
 {
   if (ncols != 1)
     return 1;
@@ -135,7 +141,8 @@ int append_sql_stmt(void * vp,
   return 0;
 }
 
-void calculate_schema_id(sqlite *sql, string & id)
+void 
+calculate_schema_id(sqlite *sql, string & id)
 {
   id.clear();
   string tmp, tmp2;
@@ -155,7 +162,8 @@ void calculate_schema_id(sqlite *sql, string & id)
 
 typedef bool (*migrator_cb)(sqlite *, char **);
 
-struct migrator
+struct 
+migrator
 {
   vector< pair<string,migrator_cb> > migration_events;
 
@@ -264,8 +272,9 @@ static bool move_table(sqlite *sql, char **errmsg,
 }
 
 
-static bool migrate_depot_split_seqnumbers_into_groups(sqlite * sql, 
-						       char ** errmsg)
+static bool 
+migrate_depot_split_seqnumbers_into_groups(sqlite * sql, 
+					   char ** errmsg)
 {
 
   // this migration event handles the bug related to sequence numbers only
@@ -351,8 +360,9 @@ static bool migrate_depot_make_seqnumbers_non_null(sqlite * sql,
 }
 
 
-static bool migrate_client_merge_url_and_group(sqlite * sql, 
-					       char ** errmsg)
+static bool 
+migrate_client_merge_url_and_group(sqlite * sql, 
+				   char ** errmsg)
 {
 
   // migrate the posting_queue table
@@ -493,8 +503,9 @@ static bool migrate_client_merge_url_and_group(sqlite * sql,
   return true;  
 }
 
-static bool migrate_client_add_hashes_and_merkle_trees(sqlite * sql, 
-						       char ** errmsg)
+static bool 
+migrate_client_add_hashes_and_merkle_trees(sqlite * sql, 
+					   char ** errmsg)
 {
 
   // add the column to manifest_certs
@@ -655,7 +666,8 @@ static bool migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   return true;
 }
 
-void migrate_depot_schema(sqlite *sql)
+void 
+migrate_depot_schema(sqlite *sql)
 {  
   migrator m;
 
@@ -671,7 +683,8 @@ void migrate_depot_schema(sqlite *sql)
     throw runtime_error("error vacuuming after migration");
 }
 
-void migrate_monotone_schema(sqlite *sql)
+void 
+migrate_monotone_schema(sqlite *sql)
 {
 
   migrator m;

@@ -50,7 +50,9 @@ typedef unsigned long cvs_version;
 typedef unsigned long cvs_path;
 
 struct cvs_history;
-struct cvs_key
+
+struct 
+cvs_key
 {
   cvs_key() {}
   cvs_key(rcs_file const & r, 
@@ -92,7 +94,8 @@ struct cvs_key
   time_t time;
 };
 
-struct cvs_file_edge
+struct 
+cvs_file_edge
 {
   cvs_file_edge (file_id const & pv, 
 		 file_path const & pp,
@@ -117,13 +120,15 @@ struct cvs_file_edge
   }
 };
 
-struct cvs_state
+struct 
+cvs_state
 {
   set<cvs_file_edge> in_edges;
   map< cvs_key, shared_ptr<cvs_state> > substates;
 };
 
-struct cvs_history
+struct 
+cvs_history
 {
 
   interner<unsigned long> branch_interner;
@@ -167,7 +172,9 @@ struct cvs_history
 // piece table stuff
 
 struct piece;
-struct piece_store
+
+struct 
+piece_store
 {
   vector< boost::shared_ptr<rcs_deltatext> > texts;
   void index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
@@ -183,7 +190,8 @@ struct piece_store
 static piece_store global_pieces;
 
 
-struct piece
+struct 
+piece
 {
   piece(string::size_type p, string::size_type l, unsigned long id) :
     pos(p), len(l), string_id(id) {}
@@ -197,8 +205,9 @@ struct piece
 };
 
 
-void piece_store::build_string(vector<piece> const & pieces,
-			       string & out)
+void 
+piece_store::build_string(vector<piece> const & pieces,
+			  string & out)
 {
   out.clear();
   out.reserve(pieces.size() * 60);
@@ -207,8 +216,9 @@ void piece_store::build_string(vector<piece> const & pieces,
     out.append(texts.at(i->string_id)->text, i->pos, i->len);
 }
 
-void piece_store::index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
-				  vector<piece> & pieces)
+void 
+piece_store::index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
+			     vector<piece> & pieces)
 {
   pieces.clear();
   pieces.reserve(dt->text.size() / 30);  
@@ -541,9 +551,10 @@ cvs_file_edge::cvs_file_edge (file_id const & pv, file_path const & pp,
 }
 
 
-string find_branch_for_version(multimap<string,string> const & symbols,
-			       string const & version,
-			       string const & base)
+string 
+find_branch_for_version(multimap<string,string> const & symbols,
+			string const & version,
+			string const & base)
 {
   typedef multimap<string,string>::const_iterator ity;
   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -634,8 +645,9 @@ cvs_history::cvs_history() :
   stk.push(shared_ptr<cvs_state>(new cvs_state()));  
 }
 
-void cvs_history::set_filename(string const & file,
-			       file_id const & ident) 
+void 
+cvs_history::set_filename(string const & file,
+			  file_id const & ident) 
 {
   L(F("importing file '%s'\n") % file);
   I(file.size() > 2);
@@ -646,10 +658,11 @@ void cvs_history::set_filename(string const & file,
   curr_file = file_path(ss);
 }
 
-bool cvs_history::find_key_and_state(rcs_file const & r, 
-				     string const & version,
-				     cvs_key & key,
-				     shared_ptr<cvs_state> & state)
+bool 
+cvs_history::find_key_and_state(rcs_file const & r, 
+				string const & version,
+				cvs_key & key,
+				shared_ptr<cvs_state> & state)
 {
   I(stk.size() > 0);
   map< cvs_key, shared_ptr<cvs_state> > & substates = stk.top()->substates;
@@ -690,8 +703,9 @@ bool cvs_history::find_key_and_state(rcs_file const & r,
   return false;
 }
 
-void cvs_history::push_branch(rcs_file const & r, 
-			      string const & branchpoint_rcs_version_num) 
+void 
+cvs_history::push_branch(rcs_file const & r, 
+			 string const & branchpoint_rcs_version_num) 
 {      
   cvs_key k;
   shared_ptr<cvs_state> s;
@@ -713,11 +727,12 @@ void cvs_history::push_branch(rcs_file const & r,
   stk.push(s);
 }
 
-void cvs_history::note_file_edge(rcs_file const & r, 
-				 string const & prev_rcs_version_num,
-				 string const & next_rcs_version_num,
-				 file_id const & prev_version,
-				 file_id const & next_version) 
+void 
+cvs_history::note_file_edge(rcs_file const & r, 
+			    string const & prev_rcs_version_num,
+			    string const & next_rcs_version_num,
+			    file_id const & prev_version,
+			    file_id const & next_version) 
 {
 
   cvs_key k;
@@ -759,7 +774,8 @@ void cvs_history::note_file_edge(rcs_file const & r,
   ++n_versions;
 }
 
-void cvs_history::pop_branch() 
+void 
+cvs_history::pop_branch() 
 {
   I(stk.size() > 1);
   I(stk.top()->substates.size() > 0);
@@ -767,7 +783,9 @@ void cvs_history::pop_branch()
 }
 
 
-class cvs_tree_walker : public tree_walker
+class 
+cvs_tree_walker 
+  : public tree_walker
 {
   cvs_history & cvs;
   database & db;
@@ -799,12 +817,13 @@ public:
 // the execution time of this program, but rather the storage system's view
 // of time.
 
-void store_branch_manifest_edge(manifest_map const & parent,
-				manifest_map const & child,
-				manifest_id const & parent_id,
-				manifest_id const & child_id,
-				app_state & app,
-				cvs_history & cvs)
+void 
+store_branch_manifest_edge(manifest_map const & parent,
+			   manifest_map const & child,
+			   manifest_id const & parent_id,
+			   manifest_id const & child_id,
+			   app_state & app,
+			   cvs_history & cvs)
 {
 
   unsigned long p, c;
@@ -843,12 +862,13 @@ void store_branch_manifest_edge(manifest_map const & parent,
 
 // this is for a trunk edge, in which the ancestry is the
 // same direction as the storage delta
-void store_trunk_manifest_edge(manifest_map const & parent,
-			       manifest_map const & child,
-			       manifest_id const & parent_id,
-			       manifest_id const & child_id,
-			       app_state & app,
-			       cvs_history & cvs)
+void 
+store_trunk_manifest_edge(manifest_map const & parent,
+			  manifest_map const & child,
+			  manifest_id const & parent_id,
+			  manifest_id const & child_id,
+			  app_state & app,
+			  cvs_history & cvs)
 {
 
   unsigned long p, c;
@@ -883,10 +903,11 @@ void store_trunk_manifest_edge(manifest_map const & parent,
     }  
 }
 
-void store_auxiliary_certs(cvs_key const & key, 
-			   manifest_id const & id, 
-			   app_state & app, 
-			   cvs_history const & cvs)
+void 
+store_auxiliary_certs(cvs_key const & key, 
+		      manifest_id const & id, 
+		      app_state & app, 
+		      cvs_history const & cvs)
 {
   packet_db_writer dbw(app);
   cert_manifest_in_branch(id, cert_value(cvs.branch_interner.lookup(key.branch)), app, dbw); 
@@ -897,9 +918,10 @@ void store_auxiliary_certs(cvs_key const & key,
 
 // we call this when we're going child -> parent, i.e. when we're walking
 // up the trunk.
-void build_parent_state(shared_ptr<cvs_state> state,
-			manifest_map & state_map,
-			cvs_history & cvs)
+void 
+build_parent_state(shared_ptr<cvs_state> state,
+		   manifest_map & state_map,
+		   cvs_history & cvs)
 {
   for (set<cvs_file_edge>::const_iterator f = state->in_edges.begin();
        f != state->in_edges.end(); ++f)
@@ -914,9 +936,10 @@ void build_parent_state(shared_ptr<cvs_state> state,
 
 // we call this when we're going parent -> child, i.e. when we're walking
 // down a branch.
-void build_child_state(shared_ptr<cvs_state> state,
-		       manifest_map & state_map,
-		       cvs_history & cvs)
+void 
+build_child_state(shared_ptr<cvs_state> state,
+		  manifest_map & state_map,
+		  cvs_history & cvs)
 {
   for (set<cvs_file_edge>::const_iterator f = state->in_edges.begin();
        f != state->in_edges.end(); ++f)
@@ -929,12 +952,13 @@ void build_child_state(shared_ptr<cvs_state> state,
     % state->in_edges.size());
 }
 
-void import_substates(ticker & n_edges, 
-		      ticker & n_branches,
-		      shared_ptr<cvs_state> state,
-		      manifest_map parent_map,
-		      cvs_history & cvs,
-		      app_state & app)
+void 
+import_substates(ticker & n_edges, 
+		 ticker & n_branches,
+		 shared_ptr<cvs_state> state,
+		 manifest_map parent_map,
+		 cvs_history & cvs,
+		 app_state & app)
 {
   manifest_id parent_id;
   calculate_ident(parent_map, parent_id);
@@ -964,9 +988,11 @@ void import_substates(ticker & n_edges,
 }
 
 
-void import_cvs_repo(fs::path const & cvsroot, app_state & app)
+void 
+import_cvs_repo(fs::path const & cvsroot, 
+		app_state & app)
 {
-
+  
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;

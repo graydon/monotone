@@ -36,17 +36,19 @@ using namespace std;
 
 using boost::shared_ptr;
 
-static void do_arc4(SecByteBlock & phrase,
-		    SecByteBlock & payload)
+static void 
+do_arc4(SecByteBlock & phrase,
+	SecByteBlock & payload)
 {
   L(F("running arc4 process on %d bytes of data\n") % payload.size());
   ARC4 a4(phrase.data(), phrase.size());
   a4.ProcessString(payload.data(), payload.size());
 }
 
-static void read_passphrase(lua_hooks & lua,
-			    rsa_keypair_id const & keyid,
-			    SecByteBlock & phrase)
+static void 
+read_passphrase(lua_hooks & lua,
+		rsa_keypair_id const & keyid,
+		SecByteBlock & phrase)
 {
   string lua_phrase;
 
@@ -115,7 +117,8 @@ static void read_passphrase(lua_hooks & lua,
 }  
 
 template <typename T>
-static void write_der(T & val, SecByteBlock & sec)
+static void 
+write_der(T & val, SecByteBlock & sec)
 {
   // FIXME: this helper is *wrong*. I don't see now to DER-encode into a
   // SecByteBlock, so we may well wind up leaving raw key bytes in malloc
@@ -142,10 +145,11 @@ static void write_der(T & val, SecByteBlock & sec)
 }  
 
 
-void generate_key_pair(lua_hooks & lua,           // to hook for phrase
-		       rsa_keypair_id const & id, // to prompting user for phrase
-		       base64<rsa_pub_key> & pub_out,
-		       base64< arc4<rsa_priv_key> > & priv_out)
+void 
+generate_key_pair(lua_hooks & lua,           // to hook for phrase
+		  rsa_keypair_id const & id, // to prompting user for phrase
+		  base64<rsa_pub_key> & pub_out,
+		  base64< arc4<rsa_priv_key> > & priv_out)
 {
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
@@ -185,11 +189,12 @@ void generate_key_pair(lua_hooks & lua,           // to hook for phrase
   L(F("generated %d-byte (encrypted) private key\n") % priv_out().size());
 }
 
-void make_signature(lua_hooks & lua,           // to hook for phrase
-		    rsa_keypair_id const & id, // to prompting user for phrase
-		    base64< arc4<rsa_priv_key> > const & priv,
-		    string const & tosign,
-		    base64<rsa_sha1_signature> & signature)
+void 
+make_signature(lua_hooks & lua,           // to hook for phrase
+	       rsa_keypair_id const & id, // to prompting user for phrase
+	       base64< arc4<rsa_priv_key> > const & priv,
+	       string const & tosign,
+	       base64<rsa_sha1_signature> & signature)
 {
   arc4<rsa_priv_key> decoded_key;
   SecByteBlock decrypted_key;
@@ -257,11 +262,12 @@ void make_signature(lua_hooks & lua,           // to hook for phrase
   encode_base64(rsa_sha1_signature(sig_string), signature);
 }
 
-bool check_signature(lua_hooks & lua,           
-		     rsa_keypair_id const & id, 
-		     base64<rsa_pub_key> const & pub_encoded,
-		     string const & alleged_text,
-		     base64<rsa_sha1_signature> const & signature)
+bool 
+check_signature(lua_hooks & lua,           
+		rsa_keypair_id const & id, 
+		base64<rsa_pub_key> const & pub_encoded,
+		string const & alleged_text,
+		base64<rsa_sha1_signature> const & signature)
 {
   // examine pubkey
 
@@ -318,9 +324,10 @@ bool check_signature(lua_hooks & lua,
   return vf->GetLastResult();
 }
 
-void read_pubkey(string const & in, 
-		 rsa_keypair_id & id,
-		 base64<rsa_pub_key> & pub)
+void 
+read_pubkey(string const & in, 
+	    rsa_keypair_id & id,
+	    base64<rsa_pub_key> & pub)
 {
   string tmp_id, tmp_key;
   size_t pos = 0;
@@ -330,9 +337,10 @@ void read_pubkey(string const & in,
   encode_base64(rsa_pub_key(tmp_key), pub);
 }
 
-void write_pubkey(rsa_keypair_id const & id,
-		  base64<rsa_pub_key> const & pub,
-		  string & out)
+void 
+write_pubkey(rsa_keypair_id const & id,
+	     base64<rsa_pub_key> const & pub,
+	     string & out)
 {
   rsa_pub_key pub_tmp;
   decode_base64(pub, pub_tmp);
@@ -341,17 +349,19 @@ void write_pubkey(rsa_keypair_id const & id,
 }
 
 
-void key_hash_code(rsa_keypair_id const & id,
-		   base64<rsa_pub_key> const & pub,
-		   hexenc<id> & out)
+void 
+key_hash_code(rsa_keypair_id const & id,
+	      base64<rsa_pub_key> const & pub,
+	      hexenc<id> & out)
 {
   data tdat(id() + ":" + remove_ws(pub()));
   calculate_ident(tdat, out);  
 }
 
-void key_hash_code(rsa_keypair_id const & id,
-		   base64< arc4<rsa_priv_key> > const & priv,
-		   hexenc<id> & out)
+void 
+key_hash_code(rsa_keypair_id const & id,
+	      base64< arc4<rsa_priv_key> > const & priv,
+	      hexenc<id> & out)
 {
   data tdat(id() + ":" + remove_ws(priv()));
   calculate_ident(tdat, out);
@@ -361,7 +371,8 @@ void key_hash_code(rsa_keypair_id const & id,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-static void signature_round_trip_test()
+static void 
+signature_round_trip_test()
 {
   lua_hooks lua;
   lua.add_std_hooks();
@@ -386,7 +397,8 @@ static void signature_round_trip_test()
   BOOST_CHECK(!check_signature(lua, key, pubkey, broken_plaintext, sig));
 }
 
-static void osrng_test()
+static void 
+osrng_test()
 {
   AutoSeededRandomPool rng_random(true), rng_urandom(false);
 
@@ -430,7 +442,8 @@ static void osrng_test()
     }
 }
 
-void add_key_tests(test_suite * suite)
+void 
+add_key_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&osrng_test));

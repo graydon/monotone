@@ -25,7 +25,9 @@ using namespace std;
 
 string const linesep("\r\n");
 
-struct dot_escape {
+struct 
+dot_escape 
+{
   typedef string result_type;
   string operator()(string const & x) const {
     if (x.size() > 0 && x.at(0) == '.')
@@ -34,7 +36,9 @@ struct dot_escape {
   }
 };
 
-struct dot_unescape {
+struct 
+dot_unescape 
+{
   typedef string result_type;
   string operator()(string const & x) const {
     if (x.size() > 0 && x.at(0) == '.')
@@ -56,15 +60,17 @@ typedef boost::transform_iterator_generator <dot_escape, lines_iter>::type dot_e
 typedef boost::transform_iterator_generator <dot_unescape, lines_iter>::type dot_unescaper;
 
 template <typename XFM, typename IN, typename OUT_ITER>
-void transform(IN const & in, OUT_ITER out)
+void 
+transform(IN const & in, OUT_ITER out)
 {
   copy(XFM(in.begin()), XFM(in.end()), out);
 }
 
 template<typename T, typename SEQ, typename OUT_ITER>
-void interleave(SEQ const & in, 
-		T const & sep,
-		OUT_ITER out)
+void 
+interleave(SEQ const & in, 
+	   T const & sep,
+	   OUT_ITER out)
 {
   typedef typename SEQ::const_iterator iter;
   if (in.size() < 1)
@@ -83,9 +89,10 @@ void interleave(SEQ const & in,
 // of the most basic "command-and-args", "code-and-response", and
 // "line-set-with-dot" forms
 
-void write_command(ostream & out,
-		   string const & cmd, 
-		   vector<string> const & args)
+void 
+write_command(ostream & out,
+	      string const & cmd, 
+	      vector<string> const & args)
 {
   out << cmd;
   if (args.size() > 0)
@@ -97,15 +104,17 @@ void write_command(ostream & out,
   out.flush();
 }
 
-void write_lines(ostream & out,
-		 vector<string> const & lines)
+void 
+write_lines(ostream & out,
+	    vector<string> const & lines)
 {
   transform<dot_escaper>(lines, ostream_iterator<string>(out, linesep.c_str()));
   out << '.' << linesep;
   out.flush();
 }
 
-void read_line(istream & in, string & result)
+void 
+read_line(istream & in, string & result)
 {
   ostringstream oss;
   in.get(*oss.rdbuf(), '\n');
@@ -119,8 +128,9 @@ void read_line(istream & in, string & result)
     result.resize(result.size() - 1);
 }
 
-void read_lines(istream & in,
-		vector<string> & result)
+void 
+read_lines(istream & in,
+	   vector<string> & result)
 {
   string tmp("");
   vector<string> tvec;
@@ -138,9 +148,10 @@ void read_lines(istream & in,
 }
 
 
-void read_status_response(istream & in,
-			  int & code,
-			  string & result)
+void 
+read_status_response(istream & in,
+		     int & code,
+		     string & result)
 {
   string tmp;
   read_line(in, tmp);
@@ -163,7 +174,8 @@ proto_edge::proto_edge(proto_state * t, int c, string const & m,
 {}
 
 
-proto_edge proto_state::handle_response(istream & net)
+proto_edge 
+proto_state::handle_response(istream & net)
 {
 
   string res;
@@ -189,8 +201,9 @@ proto_edge proto_state::handle_response(istream & net)
 }
 
 
-proto_edge proto_state::step_lines(iostream & net, 
-				   vector<string> const & send_lines)
+proto_edge 
+proto_state::step_lines(iostream & net, 
+			vector<string> const & send_lines)
 {
   if (send_lines.size() > 0)
     {
@@ -200,9 +213,10 @@ proto_edge proto_state::step_lines(iostream & net,
   return handle_response(net);
 }
 
-proto_edge proto_state::step_cmd(iostream & net, 
-				 string const & cmd,
-				 vector<string> const & args)
+proto_edge 
+proto_state::step_cmd(iostream & net, 
+		      string const & cmd,
+		      vector<string> const & args)
 {
   write_command(net, string(cmd), args);
   stringstream ss;
@@ -212,7 +226,8 @@ proto_edge proto_state::step_cmd(iostream & net,
   return handle_response(net);
 }
 
-void proto_state::add_edge(int code, proto_state * targ, bool read_lines)
+void 
+proto_state::add_edge(int code, proto_state * targ, bool read_lines)
 {
   codes[code] = pair<bool,proto_state *>(read_lines, targ);
 }
@@ -239,16 +254,18 @@ cmd_state::cmd_state(string const & c,
   args.push_back(arg2);
 }
 
-proto_edge cmd_state::drive(iostream & net, 
-			    proto_edge const & e)
+proto_edge 
+cmd_state::drive(iostream & net, 
+		 proto_edge const & e)
 {
   return step_cmd(net, cmd, args);
 }
 
 cmd_state::~cmd_state() {}
 
-void run_proto_state_machine(proto_state * machine,
-			     iostream & link)
+void 
+run_proto_state_machine(proto_state * machine,
+			iostream & link)
 {
 
   if (!machine)

@@ -23,7 +23,8 @@ using namespace boost;
 using namespace std;
 using namespace CryptoPP;
 
-void netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
+void 
+netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
 {
   typestr.clear();
   switch (t)
@@ -52,7 +53,8 @@ void netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
 // and we have to send them over the wire, we use a raw variant here
 // for compactness.
 
-string raw_sha1(string const & in)
+string 
+raw_sha1(string const & in)
 {
   SHA hash;
   hash.Update(reinterpret_cast<byte const *>(in.data()), 
@@ -71,7 +73,8 @@ merkle_node::merkle_node() : level(0), pref(0),
 			     type(manifest_item) 
 {}
 
-bool merkle_node::operator==(merkle_node const & other) const
+bool 
+merkle_node::operator==(merkle_node const & other) const
 {
   return (level == other.level
 	  && pref == other.pref
@@ -81,7 +84,8 @@ bool merkle_node::operator==(merkle_node const & other) const
 	  && type == other.type);
 }
 
-void merkle_node::check_invariants() const
+void 
+merkle_node::check_invariants() const
 {
   I(this->pref.size() == prefix_length_in_bits(this->level));
   I(this->level <= constants::merkle_num_tree_levels);
@@ -89,7 +93,8 @@ void merkle_node::check_invariants() const
   I(this->bitmap.size() == constants::merkle_bitmap_length_in_bits);
 }
 
-void merkle_node::get_raw_prefix(prefix & pref) const
+void 
+merkle_node::get_raw_prefix(prefix & pref) const
 {
   check_invariants();
   ostringstream oss;
@@ -97,14 +102,16 @@ void merkle_node::get_raw_prefix(prefix & pref) const
   pref = prefix(oss.str());
 }
 
-void merkle_node::get_hex_prefix(hexenc<prefix> & hpref) const
+void 
+merkle_node::get_hex_prefix(hexenc<prefix> & hpref) const
 {
   prefix pref;
   get_raw_prefix(pref);
   encode_hexenc(pref, hpref);
 }
 
-void merkle_node::get_raw_slot(size_t slot, id & i) const
+void 
+merkle_node::get_raw_slot(size_t slot, id & i) const
 {
   I(get_slot_state(slot) != empty_state);
   I(idx(this->slots, slot)() != "");
@@ -112,27 +119,32 @@ void merkle_node::get_raw_slot(size_t slot, id & i) const
   i = idx(this->slots, slot);
 }
 
-void merkle_node::get_hex_slot(size_t slot, hexenc<id> & val) const
+void 
+merkle_node::get_hex_slot(size_t slot, hexenc<id> & val) const
 {
   id i;
   get_raw_slot(slot, i);
   encode_hexenc(i, val);
 }
 
-void merkle_node::set_raw_slot(size_t slot, id const & val)
+void 
+merkle_node::set_raw_slot(size_t slot, id const & val)
 {
   check_invariants();
   idx(this->slots, slot) = val;
 }
 
-void merkle_node::set_hex_slot(size_t slot, hexenc<id> const & val)
+void 
+merkle_node::set_hex_slot(size_t slot, hexenc<id> const & val)
 {
   id i;
   decode_hexenc(val, i);
   set_raw_slot(slot, i);
 }
 
-void merkle_node::extended_prefix(size_t slot, dynamic_bitset<char> & extended) const
+void 
+merkle_node::extended_prefix(size_t slot, 
+			     dynamic_bitset<char> & extended) const
 {
   // remember, in a dynamic_bitset, bit size()-1 is most significant
   check_invariants();
@@ -142,7 +154,9 @@ void merkle_node::extended_prefix(size_t slot, dynamic_bitset<char> & extended) 
     extended.push_back(static_cast<bool>((slot >> i) & 1));
 }
 
-void merkle_node::extended_raw_prefix(size_t slot, prefix & extended) const
+void 
+merkle_node::extended_raw_prefix(size_t slot, 
+				 prefix & extended) const
 {
   dynamic_bitset<char> ext;
   extended_prefix(slot, ext);
@@ -151,14 +165,17 @@ void merkle_node::extended_raw_prefix(size_t slot, prefix & extended) const
   extended = prefix(oss.str());
 }
 
-void merkle_node::extended_hex_prefix(size_t slot, hexenc<prefix> & extended) const
+void 
+merkle_node::extended_hex_prefix(size_t slot, 
+				 hexenc<prefix> & extended) const
 {
   prefix pref;
   extended_raw_prefix(slot, pref);
   encode_hexenc(pref, extended);
 }
 
-slot_state merkle_node::get_slot_state(size_t n) const
+slot_state 
+merkle_node::get_slot_state(size_t n) const
 {
   check_invariants();
   I(n < constants::merkle_num_slots);
@@ -179,7 +196,8 @@ slot_state merkle_node::get_slot_state(size_t n) const
     }      
 }
 
-void merkle_node::set_slot_state(size_t n, slot_state st)
+void 
+merkle_node::set_slot_state(size_t n, slot_state st)
 {
   check_invariants();
   I(n < constants::merkle_num_slots);
@@ -193,12 +211,14 @@ void merkle_node::set_slot_state(size_t n, slot_state st)
 }    
 
 
-size_t prefix_length_in_bits(size_t level)
+size_t 
+prefix_length_in_bits(size_t level)
 {
   return level * constants::merkle_fanout_bits;
 }
 
-size_t prefix_length_in_bytes(size_t level)
+size_t 
+prefix_length_in_bytes(size_t level)
 {
   // level is the number of levels in tree this prefix has.
   // the prefix's binary *length* is the number of bytes used
@@ -210,7 +230,8 @@ size_t prefix_length_in_bytes(size_t level)
     return (num_bits / 8) + 1;
 }
 
-void write_node(merkle_node const & in, string & outbuf)
+void 
+write_node(merkle_node const & in, string & outbuf)
 {      
   ostringstream oss;
   oss.put(static_cast<u8>(in.type));
@@ -244,10 +265,13 @@ void write_node(merkle_node const & in, string & outbuf)
   outbuf = hash + oss.str();
 }
     
-void read_node(string const & inbuf, merkle_node & out)
+void 
+read_node(string const & inbuf, merkle_node & out)
 {
   size_t pos = 0;
-  string hash = extract_substring(inbuf, pos, constants::merkle_hash_length_in_bytes, "node hash");
+  string hash = extract_substring(inbuf, pos, 
+				  constants::merkle_hash_length_in_bytes, 
+				  "node hash");
   out.type = static_cast<netcmd_item_type>(extract_datum_lsb<u8>(inbuf, pos, "node type"));
   out.level = extract_datum_uleb128<size_t>(inbuf, pos, "node level");
 
@@ -292,12 +316,13 @@ void read_node(string const & inbuf, merkle_node & out)
 		     % xform<HexEncoder>(checkhash) % xform<HexEncoder>(hash));
 }
 
-void load_merkle_node(app_state & app,
-		      netcmd_item_type type,
-		      utf8 const & collection,			
-		      size_t level,
-		      hexenc<prefix> const & hpref,
-		      merkle_node & node)
+void 
+load_merkle_node(app_state & app,
+		 netcmd_item_type type,
+		 utf8 const & collection,			
+		 size_t level,
+		 hexenc<prefix> const & hpref,
+		 merkle_node & node)
 {
   base64<merkle> emerk;
   string typestr;
@@ -313,9 +338,10 @@ void load_merkle_node(app_state & app,
 // returns the first hashsz bytes of the serialized node, which is 
 // the hash of its contents.
 
-id store_merkle_node(app_state & app,
-		     utf8 const & collection,
-		     merkle_node const & node)
+id 
+store_merkle_node(app_state & app,
+		  utf8 const & collection,
+		  merkle_node const & node)
 {
   string out;
   string typestr;
@@ -333,8 +359,11 @@ id store_merkle_node(app_state & app,
   return id(out.substr(0, constants::merkle_hash_length_in_bytes));
 }
 
-void pick_slot_and_prefix_for_value(id const & val, size_t level, 
-				    size_t & slotnum, dynamic_bitset<char> & pref)
+void 
+pick_slot_and_prefix_for_value(id const & val, 
+			       size_t level, 
+			       size_t & slotnum, 
+			       dynamic_bitset<char> & pref)
 {
   pref.resize(val().size() * 8);
   from_block_range(val().begin(), val().end(), pref);
@@ -353,12 +382,13 @@ void pick_slot_and_prefix_for_value(id const & val, size_t level,
   pref.resize(level * constants::merkle_fanout_bits);
 }
 
-id insert_into_merkle_tree(app_state & app,
-			   bool live_p,
-			   netcmd_item_type type,
-			   utf8 const & collection,
-			   id const & leaf,
-			   size_t level)
+id 
+insert_into_merkle_tree(app_state & app,
+			bool live_p,
+			netcmd_item_type type,
+			utf8 const & collection,
+			id const & leaf,
+			size_t level)
 {
   I(constants::merkle_hash_length_in_bytes == leaf().size());
   I(constants::merkle_fanout_bits * (level + 1) 

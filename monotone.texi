@@ -986,7 +986,7 @@ store. Monotone will never permit one database to store two keys with
 the same name or the same fingerprint.
 
 This output shows one private and one public key stored under the name
-@code{testkey@@tester.net}, so it indicates that our keys have been
+@code{testkey@@nodomain.org}, so it indicates that our keys have been
 successfully generated and stored. On subsequent commands, we will
 need to re-enter our passphrase to produce signatures on various tags.
 
