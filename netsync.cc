@@ -471,7 +471,8 @@ session::analyze_manifest_edge(manifest_map const & parent,
     {
       if (this->app.db.file_version_exists(i->id_new))
 	{
-	  L(F("file delta target '%s' already exists on our side\n"));
+	  L(F("file delta target '%s' already exists on our side\n")
+	    % i->id_new);
 	}
       else
 	{
@@ -489,7 +490,8 @@ session::analyze_manifest_edge(manifest_map const & parent,
     {      
       if (this->app.db.file_version_exists(i->ident))
 	{
-	  L(F("added file version '%s' already exists on our side\n"));
+	  L(F("added file version '%s' already exists on our side\n")
+	    % i->ident);
 	}
       else
 	{

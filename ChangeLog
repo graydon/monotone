@@ -1,3 +1,7 @@
+2004-03-08  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc (analyze_manifest_edge): Fix broken formatter.
+
 2004-03-07  graydon hoare  <graydon@pobox.com>
 
 	* Makefile.am (BOOST_SANDBOX_SOURCES): Remove boost::socket entries.

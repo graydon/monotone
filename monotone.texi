@@ -2924,7 +2924,6 @@ equal to the @sc{sha1} value listed in the manifest, and by erasing the
 
 
 @item monotone update
-@itemx monotone update @var{sort...}
 This command incorporates ``recent'' changes found in your database
 into your working copy. It does this by performing 3 separate
 stages. If any of these stages fails, the update aborts, doing
@@ -2933,13 +2932,13 @@ nothing. The stages are:
 @itemize
 @item
 Examine the graph of ancestry certificates in your database, and
-selecting the set of all descendents of your working copy's base
-manifest. Call this set the ``candidates'' of the update.
+(subject to trust evaluation and disapproval certs) select the set of
+all descendents of your working copy's base manifest. Call this set
+the ``candidates'' of the update.
 @item
-Sort the candidates of the update by any @var{sort...} criteria you
-provide. If no criteria are provided, sort the candidates by ancestry,
-so that descendents are preferred over ancestors. Call the ``best''
-candidate, after sorting, the ``target'' of the update.
+Remove any candidates which lack acceptable testresult
+certificates. From the remaining candidates, select the deepest child
+by ancestry and call it the ``target'' of the update.
 @item 
 Merge the target of the update with the working copy, in memory, and
 if the merge is successful, write the result over top of the working
@@ -2983,7 +2982,7 @@ branches. Supposing alice's computer has hostname
 @code{alice.someisp.com}, then alice might run:
 
 @example
-$ monotone netsync serve readwrite alice.someisp.com net.venge.monotone
+$ monotone netsync server readwrite alice.someisp.com net.venge.monotone
 @end example
 
 And bob might run
