@@ -1,3 +1,9 @@
+2005-04-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_db_execute.at (db execute): New test.
+	* testsuite.at: Add it.
+	* database.cc (debug): Don't printf-interpret %-signs in input.
+
 2005-04-04  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.spec, debian/control: We no longer need external popt.
