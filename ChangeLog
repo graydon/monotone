@@ -1,3 +1,11 @@
+2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* INSTALL:
+	* Makefile.am:
+	* configure.ac: Add the --disable-large-file option to manually
+	disable large file support from the builtin sqlite (compatibility
+	with old systems and FAT).  Addresses bug #8380.
+
 2005-02-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_undo_update.at: New todo.

@@ -283,6 +283,24 @@ fi
 
 AM_CONDITIONAL(BUNDLED_SQLITE, test "x$bundled_sqlite" != "xno")
 
+# Now let the user specify whether he wants large file support or not in
+# sqlite.
+AC_ARG_ENABLE([large-file],
+   AS_HELP_STRING(
+      [--disable-large-file],
+      [Disable large file support in builtin sqlite]
+   ), , enable_large_file=yes
+)
+
+if test "x$enable_large_file" = "xno"; then
+   if test "x$bundled_sqlite" = "xno"; then
+      AC_MSG_WARN(--disable-large-file has no effect when using the bundled sqlite)
+   else
+      SQLITE_CPPFLAGS="$SQLITE_CPPFLAGS -DSQLITE_DISABLE_LFS"
+   fi
+fi
+AC_SUBST(SQLITE_CPPFLAGS)
+
 ##########
 
 
