@@ -1,5 +1,10 @@
 2005-04-04  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.spec, debian/control: We no longer need external popt.
+	* INSTALL: Ditto, plus some general updating.
+	
+2005-04-04  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_sql_unpack.at: New test.
 	* testsuite.at: Add it.
 

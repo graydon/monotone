@@ -13,8 +13,7 @@ building and installation process for monotone
   * software prerequisites:
 
     - a supported C++ compiler: g++ 3.2 or 3.3.
-    - an installed copy of boost 1.31.0.
-    - gnome popt, an option processing library.
+    - an installed copy of boost 1.31.0 or later.
 
         on debian: 
 
@@ -24,13 +23,11 @@ building and installation process for monotone
            apt-get install libboost-test-dev
            apt-get install libboost-dev
            apt-get install g++
-           apt-get install libpopt-dev
 
         on fedora: 
 
            apt-get install boost-devel 
            apt-get install g++
-           apt-get install popt
 
         on other systems:
 
@@ -40,7 +37,6 @@ building and installation process for monotone
 
                 http://gcc.gnu.org      for g++
                 http://www.boost.org    for boost
-                http://www.gnome.org    for popt
 
 1.1 building boost:
 
@@ -75,6 +71,9 @@ building and installation process for monotone
 
     ./configure CPPFLAGS="-Iboost_1_31_2" LDFLAGS="-Lboost_1_31_0/libs"
 
+  monotone does not use all of boost -- for instance, people often
+  have trouble building boost.python, which we do not use.  you don't
+  need to build any libraries that we don't use!
 
 2. configuring monotone:
 
@@ -125,6 +124,10 @@ building and installation process for monotone
        system, and use the bundled versions only if you do not have
        your own copies.
 
+       this is usually untested and not guaranteed to work.  if you
+       have strange problems, then try using the bundled lua and
+       sqlite.
+
      --disable-large-file
 
        this will disable large file support from the builtin sqlite, to
@@ -157,8 +160,8 @@ building and installation process for monotone
     confirm monotone's functionality on your system. you might also
     like to try fetching monotone's sources from our monotone
     server. this process will transfer the complete development
-    history (about 25 megabytes) to your database, and you will then be
-    free to share it with others or make changes and submit them to
+    history (about 40 megabytes) to your database, and you will then
+    be free to share it with others or make changes and submit them to
     us:
 
         monotone --db=mt.db db init
