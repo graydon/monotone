@@ -1,5 +1,12 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* vocab.hh: Remove file<cert>.
+	* vocab.cc: Likewise.
+	* packet_types.hh: Remove file.
+	* Makefile.am (MOST_SOURCES): Remove packet_types.hh and mac.hh.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netsync.cc (process_confirm_cmd): Don't try refining mcert and
 	fcert trees.
 	Remove other dead/pointless code.

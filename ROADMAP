@@ -23,6 +23,7 @@ ROADMAP
 
 - tidy up major buid/use-breaking bugs in win32, BSD, OSX versions
 - improve netsync error reporting code 
+  - one part: many 'I's should be 'require's.
 - integrate net.venge.monotone.restrictions branch
 - overhaul command-line option processing, perhaps use argp
 - move output formatting to lua hooks
