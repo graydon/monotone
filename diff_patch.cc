@@ -1568,6 +1568,7 @@ struct unidiff_hunk_writer : public hunk_consumer
   size_t ctx;
   ostream & ost;
   size_t a_begin, b_begin, a_len, b_len;
+  long skew;
   vector<string> hunk;
   unidiff_hunk_writer(vector<string> const & a,
 		      vector<string> const & b,
@@ -1585,8 +1586,8 @@ unidiff_hunk_writer::unidiff_hunk_writer(vector<string> const & a,
 					 size_t ctx,
 					 ostream & ost)
 : a(a), b(b), ctx(ctx), ost(ost),
-  a_begin(0), b_begin(0), 
-  a_len(0), b_len(0)
+  a_begin(0), b_begin(0),
+  a_len(0), b_len(0), skew(0)
 {}
 
 void unidiff_hunk_writer::insert_at(size_t b_pos)
@@ -1603,7 +1604,7 @@ void unidiff_hunk_writer::delete_at(size_t a_pos)
 
 void unidiff_hunk_writer::flush_hunk(size_t pos)
 {
-  if (hunk.size() > ctx)
+  if (hunk.size() > 0)
     {
       // insert trailing context
       size_t a_pos = a_begin + a_len;
@@ -1633,7 +1634,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
   
   // reset hunk
   hunk.clear();
-  int skew = b_len - a_len;
+  skew += b_len - a_len;
   a_begin = pos;
   b_begin = pos + skew;
   a_len = 0;

@@ -1,3 +1,15 @@
+2004-09-02  Richard Levitte  <richard@levitte.org>
+
+	fix bug 8715 and more
+	* diff_patch.cc (struct unidiff_hunk_writer,
+	unidiff_hunk_writer::flush_hunk): the skew is not just the
+	size difference between added and deleted lines in the current
+	hunk, it's the size difference between /all/ added and deleted
+	lines so far.  Therefore, the skew needs to be a member of the
+	struct rather than being something calculated for each hunk.
+	Furthermore, we need to add trailing context even if the change
+	only consisted of one line.
+
 2004-08-17  Richard Levitte  <richard@levitte.org>
 
 	* monotone.texi (Working Copy): Change the description of
