@@ -1,3 +1,8 @@
+2005-01-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_lca_1.at: New bug report.
+	* testsuite.at: Add it.
+
 2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc (merge): Improve merge chatter.
