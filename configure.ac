@@ -200,7 +200,7 @@ AC_ARG_WITH([bundled-sqlite],
    AC_HELP_STRING(
       [--with-bundled-sqlite],
       [Force use of bundled version of sqlite (default=no)]
-   ), , [bundled_sqlite=yes]
+   ), , [bundled_sqlite=no]
 )
 
 if test "x$bundled_sqlite" = "xno" ; then
