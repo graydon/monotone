@@ -44,6 +44,29 @@
 	(MONOTONE): Prefix command line with $PREEXECUTE to e.g. support
 	running under Valgrind.
 
+2005-01-23  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (restrict_rename_set): include renames if either
+	name is present in restriction
+	(calculate_base_revision): remove unused variant
+	(calculate_current_revision): remove unsed variable
+	(calculate_restricted_revision): remove unsed variable
+	(ls_missing): remove unsed variable
+	(revert): rewrite with restrictions
+	* tests/t_revert.at: test partial reverts adjust MT/work properly
+	* tests/t_revert_dirs.at: un-XFAIL
+	* tests/t_revert_rename.at: un-XFAIL; revert rename via both names
+	
+2005-01-23  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_rename.at: remove extra MONOTONE_SETUP
+	attempt revert by both original name and new name
+	
+2005-01-23  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_rename.at: New test. 
+	* testsuite.at: Add it.
+
 2005-01-22  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_revert_dirs.at: New test.
