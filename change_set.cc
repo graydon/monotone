@@ -764,36 +764,35 @@ resolve_path(std::vector<file_path> const & self_path,
       directory_node::const_iterator self_entry = self_node->find(*p);
       directory_node::const_iterator other_entry = other_node->find(*p);
 
-      bool found_self = (self_entry != self_node->end());
-      bool found_other = (other_entry != other_node->end());
-
-      if (found_self && found_other)
+      if (self_entry != self_node->end())
 	{
+	  // we just found out that self_node has a directory called p in it.
+	  // we must confirm that other_state has a directory with the same tid
+	  // (though it may be at some other pathname, for all we know)
 	  I(self_entry->second.first == change_set::ptype_directory);
-	  I(other_entry->second.first == change_set::ptype_directory);
+	  change_set::path_state::const_iterator other = other_state.find(self_entry->second.second);
+	  I(other != other_state.end());
+	  I(path_item_type(path_state_item(other)) == change_set::ptype_directory);
 	  self_tid = self_entry->second.second;
-	}
-      else if (found_self)	 
-	{
-	  I(self_entry->second.first == change_set::ptype_directory);
-	  change_set::tid child_tid = self_entry->second.second;
-	  other_node->insert(std::make_pair(*p, std::make_pair(change_set::ptype_directory, child_tid)));
-	  other_state.insert(std::make_pair(child_tid, change_set::path_item(self_tid, change_set::ptype_directory, *p)));
-	  self_tid = child_tid;
-	}
-      else if (found_other)
-	{
-	  I(other_entry->second.first == change_set::ptype_directory);
-	  change_set::tid child_tid = other_entry->second.second;
-	  self_node->insert(std::make_pair(*p, std::make_pair(change_set::ptype_directory, child_tid)));
-	  self_state.insert(std::make_pair(child_tid, change_set::path_item(self_tid, change_set::ptype_directory, *p)));
-	  self_tid = child_tid;
 	}
       else
 	{
+	  // we just found out that self_node has *no* directory called p in it.
+	  // we are therefore going to make such a directory and add it to both our
+	  // state and our directory map.
 	  change_set::tid new_tid = ts.next();
-	  self_node->insert(std::make_pair(*p, std::make_pair(change_set::ptype_directory, new_tid)));
 	  self_state.insert(std::make_pair(new_tid, change_set::path_item(self_tid, change_set::ptype_directory, *p)));
+	  self_node->insert(std::make_pair(*p, std::make_pair(change_set::ptype_directory, new_tid)));
+
+	  // while we are obliged to add this new directory to other's state,
+	  // we might not be obliged to add it to other's directory map. it
+	  // depends; if other already *has* something in that directory entry,
+	  // then our newly made directory represents an entry which has been
+	  // added to the same path as a (presumably moved-away) entry in other.
+	  // so we only add *new* entries to other's directory map.
+	  other_state.insert(std::make_pair(new_tid, change_set::path_item(self_tid, change_set::ptype_directory, *p)));
+	  if (other_entry == other_node->end())
+	    other_node->insert(std::make_pair(*p, std::make_pair(change_set::ptype_directory, new_tid)));
 	  self_tid = new_tid;
 	}
     }
@@ -1214,11 +1213,38 @@ path_edit_merger : public path_edit_analyzer
   } 
 };
 
+
+static void
+dump_trees(change_set::path_rearrangement const & t)
+{
+  L(F("BEGIN dumping tree\n"));
+  for (change_set::path_state::const_iterator i = t.first.begin();
+       i != t.first.end(); ++i)
+    {
+      L(F("state 1: tid %d, parent %d, type %s, name %s\n")
+	% path_state_tid(i) 
+	% path_item_parent(path_state_item(i))
+	% (path_item_type(path_state_item(i)) == change_set::ptype_directory ? "dir" : "file")
+	% path_item_name(path_state_item(i)));
+    }
+  for (change_set::path_state::const_iterator i = t.second.begin();
+       i != t.second.end(); ++i)
+    {
+      L(F("state 2: tid %d, parent %d, type %s, name %s\n")
+	% path_state_tid(i) 
+	% path_item_parent(path_state_item(i))
+	% (path_item_type(path_state_item(i)) == change_set::ptype_directory ? "dir" : "file")
+	% path_item_name(path_state_item(i)));
+    }
+  L(F("END dumping tree\n"));
+}
+
 static void
 normalize_change_set(change_set & norm)
-{
+{  
   L(F("normalizing changeset with %d rearrangements\n") 
     % norm.rearrangement.first.size());
+  dump_trees(norm.rearrangement);
   change_set tmp(norm);
   norm.rearrangement.first.clear();
   norm.rearrangement.second.clear();
@@ -1226,6 +1252,8 @@ normalize_change_set(change_set & norm)
   play_back_rearrangement(tmp.rearrangement, normalizer);
   L(F("normalized changeset has %d rearrangements\n") 
     % norm.rearrangement.first.size());
+  dump_trees(norm.rearrangement);
+  L(F("finished normalizing\n"));
 }
 
 
@@ -1722,30 +1750,67 @@ subtract_change_sets(change_set const & abc,
   subtract_pure_renames(abc, ab, abc_dst_map, ab_src_map, 
 			abc_renamed_dirs, ab_renamed_dirs, bc_renamed_dirs);
 
-  // subtract adds
+  {
+    // our initial playback here is for the benefit of the add analysis which
+    // happens in the next block. it will be clobbered shortly.
+    bc.rearrangement.first.clear();
+    bc.rearrangement.second.clear();
+    path_edit_merger pc(bc.rearrangement);
+    play_back_analysis(bc_deleted_files, 
+		       bc_deleted_dirs,
+		       bc_renamed_files, 
+		       bc_renamed_dirs,
+		       bc_added_files, 
+		       pc);
+  }
 
+  directory_map bc_src_map, bc_dst_map;
+  build_directory_map(bc.rearrangement.first, bc_src_map);
+  build_directory_map(bc.rearrangement.second, bc_dst_map);
+
+  // subtract adds
   for (std::set<file_path>::const_iterator abc_add = abc_added_files.begin();
        abc_add != abc_added_files.end(); ++abc_add)
     {
-      // we cannot *exactly* go by way of the a name map, because it's possible
-      // that ab has some other business happening with the name added here
-      // (for example, ab could contain a rename starting from our path; that is
-      // legal as we can add a new file in bc in the position moved away from 
-      // in ab). what we do instead is work out the target *directory* via the
-      // a name map, then check for adds with the current leaf. afaik this is
-      // the most sensible interpretation, but it might need revisiting.
-      
-      std::vector<file_path> tmp; 
-      file_path parent_in_c, parent_in_a, parent_in_b, leaf, ab_add;
-      split_path(*abc_add, tmp, leaf);
-      compose_path(tmp, parent_in_c);
-      reconstruct_path(parent_in_c, abc_dst_map, abc.rearrangement.first, parent_in_a);
-      reconstruct_path(parent_in_a, ab_src_map, ab.rearrangement.second, parent_in_b);
-      split_path(parent_in_b, tmp);
-      tmp.push_back(leaf);
-      compose_path(tmp, ab_add);
+      //
+      // we are looking at the following fact:
+      //
+      //   "in abc, the file M/N was added"
+      //
+      // more formally this means:
+      //
+      //  - a file F (with name N) exists in dir D (with name M) in state c
+      //  - the file F has name "" in state a
+      //
+      // we would like to work out whether the file was added on ab or bc.
+      // 
+      // we know which files were added on ab. what we don't know is whether
+      // any of them are *actually* the add we're currently looking at, under
+      // rename which might have happened in bc.
+      //
+      // we have, however, built enough of a partial map of bc to know which
+      // renames took place. so we reconstruct in that namespace and check.
+      //
+
+      L(F("+++ partial rearrangement for adds\n"));
+      dump_trees(bc.rearrangement);
+      L(F("--- partial rearrangement for adds\n"));
+
+      file_path ab_add;      
+      reconstruct_path(*abc_add, bc_dst_map, bc.rearrangement.first, ab_add);      
       if (ab_added_files.find(ab_add) != ab_added_files.end())
 	{
+	  // either drop add or degrade to a rename
+	  if (*abc_add == ab_add)
+	    L(F("subtracting add of '%s'\n") % *abc_add);
+	  else
+	    {
+	      L(F("subtracted add of '%s', rename of '%s' -> '%s' remains\n")
+		% *abc_add % ab_add % *abc_add);
+	      bc_renamed_files.insert(std::make_pair(ab_add, *abc_add));
+	    }
+
+	  // process deltas
 	  change_set::delta_map::const_iterator abc_delta = abc.deltas.find(*abc_add);
 	  change_set::delta_map::const_iterator ab_delta = ab.deltas.find(ab_add);
 	  I(abc_delta != abc.deltas.end());
@@ -1754,12 +1819,12 @@ subtract_change_sets(change_set const & abc,
 	  I(delta_entry_src(ab_delta).inner()().empty());
 	  if (delta_entry_dst(abc_delta) == delta_entry_dst(ab_delta))
 	    {
-	      L(F("subtracting add of '%s' at '%s', matched with add at '%s'\n")
+	      L(F("subtracting added delta to '%s' at '%s', matched with add at '%s'\n")
 		% delta_entry_dst(abc_delta) % *abc_add % ab_add);
 	    }
 	  else
 	    {
-	      L(F("converting adds '%s' at '%s' and '%s' at '%s' to delta\n")
+	      L(F("converting added delta '%s' at '%s' and '%s' at '%s' to delta\n")
 		% delta_entry_dst(abc_delta) % *abc_add 
 		% delta_entry_dst(ab_delta) % ab_add);
 	      bc.deltas.insert(std::make_pair(ab_add, 
@@ -1771,12 +1836,19 @@ subtract_change_sets(change_set const & abc,
 	{
 	  L(F("preserving add of '%s'\n") % *abc_add);
 	  bc_added_files.insert(*abc_add);
+	  change_set::delta_map::const_iterator abc_delta = abc.deltas.find(*abc_add);
+	  I(abc_delta != abc.deltas.end());
+	  bc.deltas.insert(*abc_delta);
 	}
     }
 
 
   {
-    path_edit_appender pc(bc.rearrangement);
+    // finalize the matter by playing back again, this time with the
+    // analyzed adds.
+    bc.rearrangement.first.clear();
+    bc.rearrangement.second.clear();
+    path_edit_merger pc(bc.rearrangement);
     play_back_analysis(bc_deleted_files, 
 		       bc_deleted_dirs,
 		       bc_renamed_files, 
@@ -2207,6 +2279,7 @@ spin_change_set(change_set const & cs)
     }
 }
 
+
 static void
 concatenate_and_subtract_test(std::string const & ab_str,
 			      std::string const & bc_str)
@@ -2214,8 +2287,11 @@ concatenate_and_subtract_test(std::string const & ab_str,
   change_set ab, bc, abc;
   change_set bc_check;
 
+  L(F("beginning concatenate_and_subtract_test\n"));
   read_change_set(data(ab_str), ab);
+  dump_trees(ab.rearrangement);
   read_change_set(data(bc_str), bc);
+  dump_trees(bc.rearrangement);
   dump_change_set("ab", ab);
   dump_change_set("bc", bc);
 
@@ -2229,6 +2305,7 @@ concatenate_and_subtract_test(std::string const & ab_str,
   write_change_set(bc, bc_first);
   write_change_set(bc_check, bc_second);  
   BOOST_CHECK(bc_first == bc_second);
+  L(F("finished concatenate_and_subtract_test\n"));
 }
 
 static void
@@ -2237,6 +2314,53 @@ concatenate_and_subtract_tests()
   concatenate_and_subtract_test
     ("change_set: { paths: { rename_file: { src: \"foo\" dst: \"bar\" } } deltas: {} }",
      "change_set: { paths: { rename_file: { src: \"bar\" dst: \"baz\" } } deltas: {} }");  
+
+  concatenate_and_subtract_test
+    ("change_set: { paths: { rename_file: { src: \"foo/file.txt\" dst: \"bar/file.txt\" } } deltas: {} }",
+     "change_set: { paths: { rename_file: { src: \"bar/file.txt\" dst: \"baz/file.txt\" } } deltas: {} }");  
+
+  concatenate_and_subtract_test
+    ("change_set: { paths: { add_file: \"foo/file.txt\"  } "
+     "deltas: {"
+     "delta: { path: \"foo/file.txt\" "
+     "src: [] "
+     "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }",  
+     "change_set: { paths: { rename_file: { src: \"foo/file.txt\" dst: \"foo/fun.txt\" } } deltas: {} }");  
+
+  concatenate_and_subtract_test
+    ("change_set: { paths: { delete_file: \"foo/file.txt\"  } deltas: {} }",
+     "change_set: { paths: { add_file:    \"foo/file.txt\"  } "
+     "deltas: {"
+     "delta: { path: \"foo/file.txt\" "
+     "src: [] "
+     "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }");  
+
+
+  concatenate_and_subtract_test
+    ("change_set: { paths: { delete_dir:  \"foo\"  } deltas: {} }",
+     "change_set: { paths: { add_file:    \"foo/file.txt\"  } "
+     "deltas: {"
+     "delta: { path: \"foo/file.txt\" "
+     "src: [] "
+     "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }");  
+
+  concatenate_and_subtract_test
+    (
+     "change_set: { "
+     "paths: { } "
+     "deltas: { "
+     "delta: { path: \"foo.txt\" "
+     "src: [c6a4a6196bb4a744207e1a6e90273369b8c2e925] "
+     "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }",
+     
+     "change_set: { "
+     "paths: { } "
+     "deltas: { "
+     "delta: { path: \"foo.txt\" "
+     "src: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] "
+     "dst: [435e816c30263c9184f94e7c4d5aec78ea7c028a] } } }"
+     );  
+
 }
 
 

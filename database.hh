@@ -401,6 +401,9 @@ public:
   // completion stuff
 
   void complete(std::string const & partial,
+		std::set<revision_id> & completions);
+
+  void complete(std::string const & partial,
 		std::set<manifest_id> & completions);
   
   void complete(std::string const & partial,

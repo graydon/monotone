@@ -49,7 +49,8 @@ void basic_io::input_source::advance()
 
 void basic_io::input_source::err(std::string const & s)
 {
-  throw informative_failure((F("revision:%d:%d:E: %s") 
+  L(F("error in input_source:%d:%d:E: %s") % line % col % s);
+  throw informative_failure((F("input_source:%d:%d:E: %s") 
 			     % line % col % s).str());
 }
 

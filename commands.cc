@@ -2369,6 +2369,45 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   guard.commit();      
 }
 
+CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete partial id")
+{
+  if (args.size() != 2)
+    throw usage(name);
+
+  if (idx(args, 0)() == "revision")
+    {      
+      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
+	F("non-hex digits in partial id"));
+      set<revision_id> completions;
+      app.db.complete(idx(args, 1)(), completions);
+      for (set<revision_id>::const_iterator i = completions.begin();
+	   i != completions.end(); ++i)
+	cout << i->inner()() << endl;
+    }
+  else if (idx(args, 0)() == "manifest")
+    {      
+      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
+	F("non-hex digits in partial id"));
+      set<manifest_id> completions;
+      app.db.complete(idx(args, 1)(), completions);
+      for (set<manifest_id>::const_iterator i = completions.begin();
+	   i != completions.end(); ++i)
+	cout << i->inner()() << endl;
+    }
+  else if (idx(args, 0)() == "file")
+    {
+      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
+	F("non-hex digits in partial id"));
+      set<file_id> completions;
+      app.db.complete(idx(args, 1)(), completions);
+      for (set<file_id>::const_iterator i = completions.begin();
+	   i != completions.end(); ++i)
+	cout << i->inner()() << endl;
+    }
+  else
+    throw usage(name);  
+}
+
 
 /*
 
@@ -2576,44 +2615,6 @@ CMD(revert, "working copy", "[FILE]...",
 
 
 
-CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete partial id")
-{
-  if (args.size() != 2)
-    throw usage(name);
-
-  if (idx(args, 0)() == "revision")
-    {      
-      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-	F("non-hex digits in partial id"));
-      set<revision_id> completions;
-      app.db.complete(idx(args, 1)(), completions);
-      for (set<revision_id>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	cout << i->inner()() << endl;
-    }
-  else if (idx(args, 0)() == "manifest")
-    {      
-      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-	F("non-hex digits in partial id"));
-      set<manifest_id> completions;
-      app.db.complete(idx(args, 1)(), completions);
-      for (set<manifest_id>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	cout << i->inner()() << endl;
-    }
-  else if (idx(args, 0)() == "file")
-    {
-      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-	F("non-hex digits in partial id"));
-      set<file_id> completions;
-      app.db.complete(idx(args, 1)(), completions);
-      for (set<file_id>::const_iterator i = completions.begin();
-	   i != completions.end(); ++i)
-	cout << i->inner()() << endl;
-    }
-  else
-    throw usage(name);  
-}
 
 
 CMD(log, "informative", "[ID] [file]", "print log history in reverse order (which affected file)")

@@ -1888,6 +1888,21 @@ database::get_manifest_certs(manifest_id const & id,
 
 
 // completions
+void 
+database::complete(string const & partial,
+		   set<revision_id> & completions)
+{
+  results res;
+  completions.clear();
+
+  fetch(res, 1, any_rows,
+	"SELECT id FROM revisions WHERE id GLOB '%q*'",
+	partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(revision_id(res[i][0]));  
+}
+
 
 void 
 database::complete(string const & partial,

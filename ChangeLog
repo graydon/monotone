@@ -1,5 +1,12 @@
 2004-09-19  graydon hoare  <graydon@pobox.com>
 
+	* change_set.cc: More bug fixes.
+	* basic_io.cc: Improve error reporting.
+	* commands.cc (complete): Teach about revisions.
+	* database.{cc,hh}: Add complete variant for revisions.
+
+2004-09-19  graydon hoare  <graydon@pobox.com>
+
 	* change_set.cc: Add a unit test, fix some bugs.
 
 2004-09-18  graydon hoare  <graydon@pobox.com>
