@@ -1,5 +1,12 @@
 2003-10-20  graydon hoare  <graydon@pobox.com>
 
+	* cert.cc (get_branch_heads): Fix dumb bug.
+	* diff_patch.cc (merge3): Fix dumb bug.
+	(merge2): Fix dumb bug.
+	(try_to_merge_files): Fix dumb bug.
+
+2003-10-20  graydon hoare  <graydon@pobox.com>
+
 	* file_io.cc (tilde_expand): New function.
 	* monotone.cc (cpp_main): Expand tildes in 
 	db and rcfile arguments.

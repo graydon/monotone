@@ -268,7 +268,9 @@ void get_branch_heads(cert_value const & branchname,
   vector< manifest<cert> > certs;
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
-  
+
+  set<manifest_id> heads_tmp;
+
   L(F("getting branch certs for %s\n") % branchname);
   app.db.get_manifest_certs(cert_name(branch_cert_name), branch_encoded, certs);
   erase_bogus_certs(certs, app);
@@ -285,23 +287,26 @@ void get_branch_heads(cert_value const & branchname,
       if (children.size() == 0)
 	{
 	  L(F("found head %s\n") % i->inner().ident);
-	  heads.push_back(manifest_id(i->inner().ident));
+	  heads_tmp.insert(manifest_id(i->inner().ident));
 	}
       else
 	{
 	  L(F("found non-head %s\n") % i->inner().ident);
 	}
     }
+
+  copy(heads_tmp.begin(), heads_tmp.end(), back_inserter(heads));
+
 }
 		   
 void cert_file_ancestor(file_id const & parent, 
-		       file_id const & child,
-		       app_state & app,
+			file_id const & child,
+			app_state & app,
 			packet_consumer & pc)
 {
   if (parent == child)
     {
-      W(F("parent file %d is same as child, skipping edge") % parent);
+      W(F("parent file %d is same as child, skipping edge\n") % parent);
       return;
     }
   put_simple_file_cert (child, ancestor_cert_name,
@@ -315,7 +320,7 @@ void cert_manifest_ancestor(manifest_id const & parent,
 {
   if (parent == child)
     {
-      W(F("parent manifest %d is same as child, skipping edge") % parent);
+      W(F("parent manifest %d is same as child, skipping edge\n") % parent);
       return;
     }
   put_simple_manifest_cert (child, ancestor_cert_name,

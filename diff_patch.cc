@@ -764,9 +764,17 @@ bool merge3(manifest_map const & ancestor,
 	      merged[delta->path] = delta->id_new;
 	      L("OK\n");
 	    }
+	  else if (merged[delta->path] == delta->id_new)
+	    {
+	      // they edited this file and miraculously made the same
+	      // change we did (or we're processing fused edges). no
+	      // problem.
+	      L(F("ignoring duplicate delta on %s %s -> %s.")
+		% delta->path % delta->id_old % delta->id_new);
+	    }
 	  else
 	    {
-	      // damn, they modified it too
+	      // damn, they modified it too, differently..
 	      L(F("attempting to merge conflicting deltas on %s\n") % 
 		delta->path);
 
@@ -835,7 +843,15 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
   
   L(F("trying to merge %s <-> %s (ancestor: %s)\n")
     % left.ident() % right.ident() % ancestor.ident());
-  
+
+  if (left.ident() == right.ident() &&
+      left.path() == right.path())
+    {
+      L(F("files are identical\n"));
+      merged = left;
+      return true;      
+    }  
+
   // check for an existing merge, use it if available
   {
     vector< file<cert> > left_edges, right_edges;
@@ -935,6 +951,17 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & left,
 {
   file_data left_data, right_data;
   data left_unpacked, right_unpacked, merged_unpacked;
+
+  L(F("trying to merge %s <-> %s\n")
+    % left.ident() % right.ident());
+
+  if (left.ident() == right.ident() &&
+      left.path() == right.path())
+    {
+      L(F("files are identical\n"));
+      merged = left;
+      return true;      
+    }  
 
   app.db.get_file_version(left.ident(), left_data);
   // virtual call; overridden later in the "update" command
