@@ -1,8 +1,4 @@
 AT_SETUP([only log a few entries instead of the whole log])
-
-# This test checks that 'monotone log' of deleted and renamed files shows
-# nothing in a further revision, as they are not applicable any more.
-
 MONOTONE_SETUP
 
 ADD_FILE(foo, [foo
@@ -20,10 +16,12 @@ ADD_FILE(baz, [baz
 AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of baz.",
          [], [ignore], [ignore])
 
-# We know that the lines preceding each log are exactly 65 characters.
-# with a newline, the number is 66, hence the test for 66.
-AT_CHECK(MONOTONE log --depth=1 | grep '^-------------' | wc -c, 
-[], [66
+AT_CHECK(MONOTONE log --depth=0, [1], [], [ignore])
+
+AT_CHECK(MONOTONE log --depth=1 | grep '^Revision:' | wc -l, [], [1
+], [ignore])
+
+AT_CHECK(MONOTONE log --depth=2 | grep '^Revision:' | wc -l, [], [2
 ], [ignore])
 
 AT_CLEANUP
