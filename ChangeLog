@@ -9,6 +9,22 @@
 
 	* win32/read_password.c: Remove unused file.
 
+2004-12-20  Matt Johnston  <matt@ucc.asn.au>
+
+        * keys.cc: don't cache bad passphrases, so prompt for a correct
+        password if the first ones fail.
+
+2004-12-19  Matt Johnston  <matt@ucc.asn.au>
+
+        * commands.cc: print out author/date next to ambiguous revision
+        lists from selectors.
+
+2004-12-22  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Verify that the key identifier passed to the pubkey
+	and privkey commands exists in the database.  Otherwise exit with
+	an informational message instead of an exception.
+
 2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* testsuite.at:

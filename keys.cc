@@ -280,6 +280,7 @@ make_signature(lua_hooks & lua,           // to hook for phrase
 
   static std::map<rsa_keypair_id, shared_ptr<RSASSA_PKCS1v15_SHA_Signer> > signers;
   bool persist_phrase = (!signers.empty()) || lua.hook_persist_phrase_ok();
+  bool force = false;
 
   shared_ptr<RSASSA_PKCS1v15_SHA_Signer> signer;
   if (persist_phrase && signers.find(id) != signers.end())
@@ -293,11 +294,11 @@ make_signature(lua_hooks & lua,           // to hook for phrase
           decode_base64(priv, decoded_key);
           decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
                                decoded_key().size());
-          get_passphrase(lua, id, phrase);
-          do_arc4(phrase, decrypted_key);
+          get_passphrase(lua, id, phrase, false, force);
           
           try 
             {
+              do_arc4(phrase, decrypted_key);
               L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
               StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
               signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
@@ -308,10 +309,14 @@ make_signature(lua_hooks & lua,           // to hook for phrase
               if (i >= 2)
                 throw informative_failure("failed to decrypt private RSA key, "
                                           "probably incorrect passphrase");
+              // don't use the cache bad one next time
+              force = true;
+              continue;
             }
           
           if (persist_phrase)
             signers.insert(make_pair(id,signer));
+          break;
         }
     }
 

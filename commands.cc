@@ -623,7 +623,7 @@ complete(app_state & app,
       string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
       for (set<string>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += (*i + "\n");
+        err += (describe_revision(app, revision_id(*i)) + "\n");
       N(completions.size() == 1, boost::format(err));
     }
   completion = revision_id(*(completions.begin()));  
@@ -1853,8 +1853,11 @@ CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
-  packet_writer pw(cout);
   rsa_keypair_id ident(idx(args, 0)());
+  N(app.db.public_key_exists(ident),
+    F("public key '%s' does not exist in database") % idx(args, 0)());
+
+  packet_writer pw(cout);
   base64< rsa_pub_key > key;
   app.db.get_key(ident, key);
   pw.consume_public_key(ident, key);
@@ -1865,8 +1868,11 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
-  packet_writer pw(cout);
   rsa_keypair_id ident(idx(args, 0)());
+  N(app.db.private_key_exists(ident),
+    F("private key '%s' does not exist in database") % idx(args, 0)());
+
+  packet_writer pw(cout);
   base64< arc4<rsa_priv_key> > key;
   app.db.get_key(ident, key);
   pw.consume_private_key(ident, key);
