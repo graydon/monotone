@@ -1690,7 +1690,6 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 // most of the time, leave them commented out. they can be helpful for certain
 // cases, though.
 
-/*
   CMD(fload, "tree", "", "load file contents into db")
   {
   string s = get_stdin();
@@ -1742,7 +1741,6 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
 
   }
-*/
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
     "merge from one branch to another asymmetrically")

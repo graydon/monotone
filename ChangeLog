@@ -1,3 +1,10 @@
+2004-01-02  graydon hoare  <graydon@pobox.com>
+
+	* diff_patch.cc (normalize_extents): Improve to handle an odd case. 
+	* tests/t_fmerge.at: New test, to test it.
+	* commands.cc (fload, fmerge): Permanently enable, for test. 
+	* testsuite.at: Call new test.
+
 2004-01-01  graydon hoare  <graydon@pobox.com>
 
 	* file_io.hh, file_io.cc (read_localized_data, write_localized_data): 

@@ -518,7 +518,8 @@ void calculate_extents(vector<long> const & a_b_edits,
 		       vector<long> & prefix,
 		       vector<extent> & extents,
 		       vector<long> & suffix,
-		       size_t const a_len)
+		       size_t const a_len,
+		       interner<long> & intern)
 {
   extents.reserve(a_len * 2);
 
@@ -560,7 +561,8 @@ void calculate_extents(vector<long> const & a_b_edits,
 	      extents.push_back(extent(b_pos++, 1, preserved));
 	    }
 
-	  // L(F(" -- insert at B-pos %d (A-pos = %d) : '%d'\n") % b_inserted % a_pos % b.at(b_inserted));
+	  // L(F(" -- insert at B-pos %d (A-pos = %d) : '%s'\n") 
+	  //   % b_inserted % a_pos % intern.lookup(b.at(b_inserted)));
 	  
 	  // record that there was an insertion, but a_pos did not move.
 	  if ((b_pos == 0 && extents.empty())
@@ -587,6 +589,7 @@ void calculate_extents(vector<long> const & a_b_edits,
 }
 
 void normalize_extents(vector<extent> & a_b_map,
+		       vector<long> const & a,
 		       vector<long> const & b)
 {
   for (size_t i = 0; i < a_b_map.size(); ++i)
@@ -602,8 +605,8 @@ void normalize_extents(vector<extent> & a_b_map,
 	  {
 	    // the idea here is that if preserved extent j-1 has the same
 	    // contents as the last line in changed extent j of length N,
-	    // then it's exactly the same to consider j as changed, of
-	    // length N, (starting 1 line earlier) and j-1 as preserved as
+	    // then it's exactly the same to consider j-1 as changed, of
+	    // length N, (starting 1 line earlier) and j as preserved as
 	    // length 1.
 
 	    L(F("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
@@ -614,6 +617,43 @@ void normalize_extents(vector<extent> & a_b_map,
 
 	    swap(a_b_map.at(j-1).len, a_b_map.at(j).len);
 	    swap(a_b_map.at(j-1).type, a_b_map.at(j).type);
+	    --j;
+	  }
+      }
+    }
+
+
+  for (size_t i = 0; i < a_b_map.size(); ++i)
+    {
+      if (i > 0)
+      {	
+	size_t j = i;
+	while (j > 0
+	       && a_b_map.at(j).type == changed
+	       && a_b_map.at(j-1).type == changed
+	       && a_b_map.at(j).len > 1
+	       && a_b_map.at(j-1).pos + a_b_map.at(j-1).len == a_b_map.at(j).pos)
+	  {
+	    // step 1: move a chunk from this insert extent to its
+	    // predecessor
+	    size_t piece = a_b_map.at(j).len - 1;
+	    // 	    L(F("moving change piece of len %d from pos %d to pos %d\n")
+	    // 	      % piece
+	    // 	      % a_b_map.at(j).pos
+	    // 	      % a_b_map.at(j-1).pos);
+	    a_b_map.at(j).len = 1;
+	    a_b_map.at(j).pos += piece;
+	    a_b_map.at(j-1).len += piece;
+	    
+	    // step 2: if this extene (now of length 1) has become a "changed" 
+	    // extent identical to its previous state, switch it to a "preserved"
+	    // extent.
+	    if (b.at(a_b_map.at(j).pos) == a.at(j))
+	      {
+		// 		L(F("changing normalized 'changed' extent at %d to 'preserved'\n")
+		// 		  % a_b_map.at(j).pos);
+		a_b_map.at(j).type = preserved;
+	      }
 	    --j;
 	  }
       }
@@ -634,12 +674,23 @@ void merge_extents(vector<extent> const & a_b_map,
   vector<extent>::const_iterator j = a_c_map.begin();
   merged.reserve(a_b_map.size() * 2);
 
+  //   for (; i != a_b_map.end(); ++i, ++j)
+  //     {
+  
+  //       L(F("trying to merge: [%s %d %d] vs. [%s %d %d] \n")
+  //        	% etab[i->type] % i->pos % i->len 
+  //        	% etab[j->type] % j->pos % j->len);
+  //     }
+  
+  //   i = a_b_map.begin();
+  //   j = a_c_map.begin();
+
   for (; i != a_b_map.end(); ++i, ++j)
     {
 
-      //       L(F("trying to merge: [%s %d %d] vs. [%s %d %d] ")
-      // 	% etab[i->type] % i->pos % i->len 
-      // 	% etab[j->type] % j->pos % j->len);
+      //       L(F("trying to merge: [%s %d %d] vs. [%s %d %d] \n")
+      //        	% etab[i->type] % i->pos % i->len 
+      //        	% etab[j->type] % j->pos % j->len);
       
       // mutual, identical preserves / inserts / changes
       if (((i->type == changed && j->type == changed)
@@ -746,18 +797,18 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   L(F("calculating left extents on %d edits\n") % left_edits.size());
   calculate_extents(left_edits, left_interned, 
 		    left_prefix, left_extents, left_suffix, 
-		    anc_interned.size());
+		    anc_interned.size(), in);
 
   L(F("calculating right extents on %d edits\n") % right_edits.size());
   calculate_extents(right_edits, right_interned, 
 		    right_prefix, right_extents, right_suffix, 
-		    anc_interned.size());
+		    anc_interned.size(), in);
 
   L(F("normalizing %d right extents\n") % right_extents.size());
-  normalize_extents(right_extents, right_interned);
+  normalize_extents(right_extents, anc_interned, right_interned);
 
   L(F("normalizing %d left extents\n") % left_extents.size());
-  normalize_extents(left_extents, left_interned);
+  normalize_extents(left_extents, anc_interned, left_interned);
 
 
   if ((!right_prefix.empty()) && (!left_prefix.empty()))
@@ -1159,11 +1210,17 @@ bool merge3(manifest_map const & ancestor,
 
   for(set<patch_addition>::const_iterator a = left_edge.f_adds.begin(); 
       a != left_edge.f_adds.end(); ++a)
-    left_adds.insert(a->path);
+    {
+      left_adds.insert(a->path);
+      left_add_map.insert(make_pair(a->path, a->ident));
+    }
   
   for(set<patch_addition>::const_iterator a = right_edge.f_adds.begin(); 
       a != right_edge.f_adds.end(); ++a)
-    right_adds.insert(a->path);
+    {
+      right_adds.insert(a->path);
+      right_add_map.insert(make_pair(a->path, a->ident));
+    }
 
 
   for(set<patch_move>::const_iterator m = left_edge.f_moves.begin(); 
