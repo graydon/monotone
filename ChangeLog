@@ -1,3 +1,7 @@
+2005-02-14  Matthew A. Nicholson  <mnicholson@digium.com>
+
+	* std_hooks.lua: Add vimdiff merge hooks.
+	
 2005-02-14  Nathaniel Smith  <njs@codesourcery.com>
 
 	* std_hooks.lua: Remove tabs.

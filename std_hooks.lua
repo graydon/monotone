@@ -159,6 +159,22 @@ function merge3_meld_cmd(lfile, afile, rfile)
 end
 
 
+function merge2_vim_cmd(vim, lfile, rfile, outfile)
+   return
+   function()
+      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
+                     lfile, rfile)
+   end
+end
+
+function merge3_vim_cmd(vim, lfile, afile, rfile, outfile)
+   return
+   function()
+      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
+                     lfile, afile, rfile)
+   end
+end
+
 function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
    local elisp = "(ediff-merge-files \"%s\" \"%s\" nil \"%s\")"
    return 
@@ -256,6 +272,10 @@ function merge2(left_path, right_path, merged_path, left, right)
          cmd = merge2_emacs_cmd("emacs", lfile, rfile, outfile)
       elseif program_exists_in_path("xemacs") then
          cmd = merge2_emacs_cmd("xemacs", lfile, rfile, outfile)
+      elseif program_exists_in_path("gvim") then
+         cmd = merge2_vim_cmd("gvim", lfile, rfile, outfile)
+      elseif program_exists_in_path("vim") then
+         cmd = merge2_vim_cmd("vim", lfile, rfile, outfile)
       end
 
       if cmd ~= nil
@@ -315,6 +335,10 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
          cmd = merge3_emacs_cmd("emacs", lfile, afile, rfile, outfile)
       elseif program_exists_in_path("xemacs") then
          cmd = merge3_emacs_cmd("xemacs", lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("gvim") then
+         cmd = merge3_vim_cmd("gvim", lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("vim") then
+         cmd = merge3_vim_cmd("vim", lfile, afile, rfile, outfile)
       end
       
       if cmd ~= nil
