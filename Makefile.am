@@ -296,7 +296,9 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES = std_hooks.h test_hooks.h schema.h views.h
+BUILT_SOURCES = std_hooks.h test_hooks.h schema.h views.h \
+	        package_revision.txt package_revision.h \
+	        package_full_revision.txt package_full_revision.h
 CLEANFILES = $(BUILT_SOURCES) $(EPS_FIGURES)
 
 txt2c: txt2c.cc Makefile
@@ -311,20 +313,20 @@ txt2c: txt2c.cc Makefile
 
 # A fake target so we can use MT/revision as a prerequisite, yet not
 # crash if MT/revision does not exist.
-MT/revision:
+$(srcdir)/MT/revision:
 	true
-package_revision.txt: MT/revision
-	if [ ! -f MT/revision ]; then \
+package_revision.txt: $(srcdir)/MT/revision
+	if [ ! -f $< ]; then \
 	  echo "unknown" > $@;        \
 	else                          \
-	  cp MT/revision $@;          \
+	  cp $< $@;          \
 	fi
 package_revision.h: package_revision.txt txt2c Makefile
 	./txt2c --strip-trailing $< package_revision >$@
 
 .PHONY: package_full_revision.txt
 package_full_revision.txt:
-	monotone status >$@ || echo "unknown" >$@
+	(cd $(srcdir) && monotone status) >$@ || echo "unknown" >$@
 package_full_revision.h: package_full_revision.txt txt2c Makefile
 	./txt2c $< package_full_revision >$@
 

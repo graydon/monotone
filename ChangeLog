@@ -1,5 +1,10 @@
 2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
 
+	* Makefile.am (BUILT_SOURCES): List package_*version.{h,txt}.
+	(package_{full_,}version.txt: Work when blddir != srcdir.
+
+2004-11-24  Nathaniel Smith  <njs@codesourcery.com>
+
 	* mt_version.hh: New file.
 	* mt_version.cc: New file.
 	* monotone.cc (package_revision.h): Don't include it.
