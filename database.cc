@@ -160,7 +160,7 @@ database::set_app(app_state * app)
 }
 
 static void 
-check_sqlite_format_version(fs::path filename)
+check_sqlite_format_version(fs::path const & filename)
 {
   if (fs::exists(filename))
     {
@@ -197,7 +197,7 @@ database::sql(bool init)
         }
       N(filename.string() != "",
         F("need database name"));
-      check_sqlite_format_version(filename.string());
+      check_sqlite_format_version(filename);
       int error;
       error = sqlite3_open(filename.string().c_str(), &__sql);
       if (error)

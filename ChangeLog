@@ -1,3 +1,9 @@
+2005-01-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc: Pass filename to check_sqlite_format_version as a
+	fs::path, so that it doesn't get passed as a freshly created fs::path
+	with default checker (which disallows '.foo' path components)
+
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi: Undocument mcerts, fcerts; rename rcerts to
