@@ -1671,9 +1671,9 @@ data_exists(netcmd_item_type type,
     case key_item:
       return app.db.public_key_exists(hitem);
     case fcert_item:
-      return app.db.file_cert_exists(hitem);
+      return false;
     case mcert_item:
-      return app.db.manifest_cert_exists(hitem);
+      return false;
     case manifest_item:
       return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
@@ -1773,31 +1773,11 @@ load_data(netcmd_item_type type,
       break;
 
     case mcert_item:
-      if(app.db.manifest_cert_exists(hitem))
-        {
-          manifest<cert> c;
-          app.db.get_manifest_cert(hitem, c);
-          string tmp;
-          write_cert(c.inner(), out);
-        }
-      else
-        {
-          throw bad_decode(F("mcert '%s' does not exist in our database") % hitem);
-        }
+      throw bad_decode(F("mcert '%s' not supported") % hitem);
       break;
 
     case fcert_item:
-      if(app.db.file_cert_exists(hitem))
-        {
-          file<cert> c;
-          app.db.get_file_cert(hitem, c);
-          string tmp;
-          write_cert(c.inner(), out);
-        }
-      else
-        {
-          throw bad_decode(F("fcert '%s' does not exist in our database") % hitem);
-        }
+      throw bad_decode(F("fcert '%s' not supported") % hitem);
       break;
     }
 }
