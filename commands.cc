@@ -2029,11 +2029,24 @@ CMD(cvs_import, "rcs", "<cvsroot>", "import all versions in CVS repository")
 }
 
 
-CMD(initdb, "database", "", "create a new database")
+CMD(db, "database", "(init|dump|load|info|version|migrate)", "manipulate database state")
 {
-  if (args.size() != 0)
+  if (args.size() != 1)
     throw usage(name);
-  app.db.initialize();
+  if (args[0] == "init")
+    app.db.initialize();
+  else if (args[0] == "dump")
+    app.db.dump(cout);
+  else if (args[0] == "load")
+    app.db.load(cin);
+  else if (args[0] == "info")
+    app.db.info(cout);
+  else if (args[0] == "version")
+    app.db.version(cout);
+  else if (args[0] == "migrate")
+    app.db.migrate();
+  else
+    throw usage(name);
 }
 
 

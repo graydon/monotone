@@ -79,6 +79,14 @@ bool post_http_packets(string const & group_name,
 	     response >= 200 && 
 	     response < 300);
   L("HTTP <- %s %d\n", http.c_str(), response);
+  if (! ok)
+    {
+      string s;
+      char c;
+      while (stream.get(c))
+	s += c;
+      L("HTTP ERROR: '%s'\n", s.c_str());
+    }
   return ok;
 }
 

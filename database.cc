@@ -21,6 +21,7 @@
 #include "database.hh"
 #include "nntp_tasks.hh"
 #include "sanity.hh"
+#include "schema_migration.hh"
 #include "cert.hh"
 #include "transforms.hh"
 #include "vocab.hh"
@@ -52,35 +53,24 @@ extern "C" {
 
 database::database(fs::path const & fn) :
   filename(fn),
-  schema("1.0"),
+  // nb. update this if you change the schema. unfortunately we are not
+  // using self-digesting schemas due to comment irregularities and
+  // non-alphabetic ordering of tables in sql source files. we could create
+  // a temporary db, write our intended schema into it, and read it back,
+  // but this seems like it would be too rude. possibly revisit this issue.
+  schema("edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a"),
   __sql(NULL),
   transaction_level(0)
 {}
 
 void database::check_schema()
 {
-  bool reinit_schema = false;
-
-  try 
-    {
-      results res;
-      fetch(res, one_col, one_row, "SELECT version FROM schema_version");
-      I(res[0][0] == schema);
-    }  
-  catch (oops & dbe)  
-    {
-      reinit_schema = true;
-    }
-  
-  if (reinit_schema)
-    {
-      results res;
-      fetch(res, one_col, any_rows, "SELECT name FROM sqlite_master WHERE type = 'table'");
-      for (unsigned int i = 0; i < res.size(); ++i)
-	execute("DROP TABLE '%q'", res[i][0].c_str());
-      execute(schema_constant);
-      execute("INSERT INTO schema_version VALUES('%q')", schema.c_str());
-    }
+  string db_schema_id;  
+  calculate_schema_id (__sql, db_schema_id);
+  N (schema == db_schema_id,
+     "database schemas do not match: wanted " + schema 
+     + ", got " + db_schema_id 
+     + ". try migrating database");
 }
 
 struct sqlite * database::sql(bool init)
@@ -95,10 +85,14 @@ struct sqlite * database::sql(bool init)
       if (! __sql)
 	throw oops(string("could not open database: ") + filename.string() + 
 		   (errmsg ? (": " + string(errmsg)) : ""));
+      if (init)
+	execute (schema_constant);
+
       check_schema();
     }
   return __sql;
 }
+
 
 void database::initialize()
 {
@@ -109,6 +103,40 @@ void database::initialize()
 	       filename.string() + string(": already exists"));
   sqlite *s = sql(true);
   I(s != NULL);
+}
+
+void database::dump(ostream & out)
+{
+}
+void database::load(istream & in)
+{
+}
+
+unsigned long database::get_statistic(string const & query)
+{
+  results res;
+  fetch(res, 1, 1, query.c_str());
+  return lexical_cast<unsigned long>(res[0][0]);
+}
+
+void database::info(ostream & out)
+{
+  string id;
+  calculate_schema_id(sql(), id);
+  out << "schema version  : " << id << endl;
+  out << "full manifests  : " << get_statistic("SELECT COUNT(*) FROM manifests") << endl;
+  out << "manifest deltas : " << get_statistic("SELECT COUNT(*) FROM manifest_deltas") << endl;
+  out << "full files      : " << get_statistic("SELECT COUNT(*) FROM files") << endl;
+  out << "file deltas     : " << get_statistic("SELECT COUNT(*) FROM file_deltas") << endl;
+}
+void database::version(ostream & out)
+{
+  string id;
+  calculate_schema_id(sql(), id);
+  out << "database schema version: " << id << endl;
+}
+void database::migrate()
+{
 }
 
 void database::ensure_open()
