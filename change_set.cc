@@ -506,13 +506,13 @@ sanity_check_path_item(path_item const & pi)
 static void
 confirm_proper_tree(path_state const & ps)
 {
-  smap<tid,bool> confirmed;
+  std::map<tid,bool> confirmed;
   I(ps.find(root_tid) == ps.end());
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       tid curr = i->first;
       path_item item = i->second;
-      smap<tid,bool> ancs; 
+      std::map<tid,bool> ancs; 
 
       while (confirmed.find(curr) == confirmed.end())
         {             
@@ -544,7 +544,7 @@ confirm_proper_tree(path_state const & ps)
 static void
 confirm_unique_entries_in_directories(path_state const & ps)
 {  
-  smap<std::pair<tid,path_component>, bool> entries;
+  std::map<std::pair<tid,path_component>, bool> entries;
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       if (null_name(path_item_name(i->second)))
