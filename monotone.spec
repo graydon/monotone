@@ -1,6 +1,6 @@
 Summary: monotone is a distributed version control tool
 Name: monotone
-Version: 0.11
+Version: 0.12
 Release: 1
 License: GPL
 Group: Development/Version Control
@@ -23,7 +23,6 @@ functions to client-side RSA certificates.
 ./configure --prefix=$RPM_BUILD_ROOT/usr \
             --infodir=$RPM_BUILD_ROOT%{_infodir} \
             --mandir=$RPM_BUILD_ROOT%{_mandir} \
-            --with-bundled-adns \
             --with-bundled-sqlite \
             --with-bundled-lua \
             --enable-static-boost 
@@ -54,12 +53,14 @@ fi
 %defattr(-,root,root,-)
 %doc AUTHORS COPYING NEWS README
 %{_bindir}/monotone
-%{_bindir}/depot.cgi
 %{_mandir}/man1/monotone.1.gz
 %{_infodir}/*.info*.gz
 
 
 %changelog
+* Sun May 2 2004 graydon hoare <graydon@pobox.com>
+- 0.12 release
+
 * Mon Mar 29 2004 graydon hoare <graydon@pobox.com>
 - 0.11 release
 

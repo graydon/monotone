@@ -1,3 +1,16 @@
+Sun May  2 21:03:38 EDT 2004
+
+	0.12 release. win32 port, bug fixes and optimizations.
+
+	- ported to native win32 (mingw)
+	- implemented human friendly version selectors
+	- added post-commit hook for change notification
+	- removed spirit-based parsers, reduced compile costs
+	- many netsync bugs removed, pipeline performance improved
+	- removed old, deprecated networking system
+	- several minor CVS import bugs fixed
+	- upgraded bundled netxx
+
 Sun Mar 28 12:41:07 EST 2004
 
 	0.11 release. bug fixes and optimizations. 
@@ -34,7 +47,6 @@ Sun Mar 28 12:41:07 EST 2004
 	- enable building with system-local libraries.
 	- upgraded bundled sqlite. 
 	- changed sqlite page size from 1k -> 8k
-
 
 Mon Mar  1 00:32:07 EST 2004
 
