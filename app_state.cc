@@ -134,11 +134,12 @@ app_state::prefix(utf8 const & path)
   return p2;
 }
 
-static file_path dot(".");
-
 void 
 app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & paths)
 {
+  // this can't be a file-global static, because file_path's initializer
+  // depends on another global static being defined.
+  static file_path dot(".");
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       file_path p = prefix(*i);
@@ -154,6 +155,9 @@ app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & pa
 bool
 app_state::restriction_includes(file_path const & path)
 {
+  // this can't be a file-global static, because file_path's initializer
+  // depends on another global static being defined.
+  static file_path dot(".");
   if (restrictions.empty()) 
     {
       L(F("empty restricted path set; '%s' included\n") % path());

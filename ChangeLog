@@ -1,3 +1,32 @@
+2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Corey Halpin.
+	
+	* idna/idn-int.h: New file (don't generate from configure anymore,
+	but just ship).
+	* configure.ac: Don't generate idna/idn-int.h.  Do generate
+	mt-stdint.h.
+	* Makefile.am: Adjust for idna/idn-int.h and mt-stdint.h.
+	* acinclude.m4: Remove AX_CREATE_STDINT_H, ACX_PTHREAD,
+	AC_COMPILE_CHECK_SIZEOF (let aclocal pick them up from m4/
+	instead).
+	* m4/ax_create_stdint_h.m4:
+	* m4/acx_pthread.m4: Update from http://autoconf-archive.cryp.to/
+	
+	* numeric_vocab.hh: Instead of dancing around which header to
+	include, include mt-stdint.h.
+	
+	* app_state.cc (restriction_includes, set_restriction): Move
+	global static 'dot' into these functions, because file_path
+	depends on global book_keeping_dir being initialized already, and
+	there is no guaranteed order of initialization of C++ statics.
+	(Bug reported by Matt Johnston.)
+	
+2005-02-27  Corey Halpin  <chalpin@cs.wisc.edu>
+
+	* numeric_vocab.hh: Try both stdint.h and inttypes.h.
+	* main.cc: OpenBSD has Unix signals too.
+
 2005-02-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* vocab.cc (test_file_path_verification): Re-enable some tests

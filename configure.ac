@@ -41,7 +41,6 @@ AC_LANG_POP()
 # Checks for idna stuff
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h errno.h)
-AX_CREATE_STDINT_H(idna/idn-int.h)
 AC_CACHE_CHECK([if setlocale() and nl_langinfo() works],
 	ac_cv_locale_works, [
 	AC_TRY_RUN([
@@ -322,6 +321,7 @@ AC_SUBST(SQLITE_CPPFLAGS)
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h sys/time.h termios.h unistd.h])
+AX_CREATE_STDINT_H(mt-stdint.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
