@@ -1,5 +1,9 @@
 2003-12-15  graydon hoare  <graydon@pobox.com>
 
+	* tests/t_unidiff.at, t_unidiff2.at: Check for mimencode.
+
+2003-12-15  graydon hoare  <graydon@pobox.com>
+
 	* configure.ac: Add --enable-static-boost.
 	* Makefile.am: Likewise.
 	* AUTHORS: Mention new contributors.
