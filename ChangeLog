@@ -5,6 +5,52 @@
 
 	* contrib/README: Add a quick description.
 
+2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_leaves): New function.
+	(automate_command): Add it.
+	* commands.cc (automate): Synopsify it.
+	* monotone.1: Add it.
+	* monotone.texi (Automation, Commands): Likewise.
+	
+	* tests/t_automate_leaves.at: New test.
+	* testsuite.at: Add it.
+
+2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Automation): Make newly added sample outputs
+	verbatim also.
+
+2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_automate_toposort.at: New test.
+	* tests/t_automate_ancestry_difference.at: New test.
+	* tests/t_diff_first_rev.at: New test.
+	* testsuite.at: Add them.
+	
+	* revision.cc (calculate_ancestors_from_graph): Do not keep an
+	"interesting" set and return only ancestors from this set;
+	instead, simply return all ancestors.  Returning a limited set of
+	ancestors does not speed things up, nor reduce memory usage in
+	common cases.  (The only time it would reduce memory usage is when
+	examining only a small ancestor set, which the important case,
+	'heads', does not; even then, erase_ancestors would need to intern
+	the interesting revisions first so they got low numbers, which it
+	doesn't.)
+	(erase_ancestors): Adjust accordingly.
+	(toposort, ancestry_difference): New functions.
+	* revision.hh (toposort, ancestry_difference): Declare.
+	* automate.cc (automate_toposort, automate_ancestry_difference):
+	New functions.
+	(automate_command): Add them.
+	All functions: clarify in description whether output is sorted
+	alphabetically or topologically.
+	* commands.cc (automate): Synopsify them.
+	* monotone.1: Add them.
+	* monotone.texi (Commands): Likewise.
+	(Automation): Likewise.  Also, clarify for each command whether
+	its output is alphabetically or topologically sorted.
+	
 2005-03-29  Richard Levitte  <richard@levitte.org>
 
 	* commands.cc (CMD(ls)): Update with the same information as
@@ -2019,7 +2065,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅ√ÖÅ¬Çkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅÅ√ÖÅÅ¬Çkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

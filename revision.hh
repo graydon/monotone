@@ -148,7 +148,17 @@ is_ancestor(revision_id const & ancestor,
             app_state & app);
 
 void
+toposort(std::set<revision_id> const & revisions,
+         std::vector<revision_id> & sorted,
+         app_state & app);
+
+void
 erase_ancestors(std::set<revision_id> & revisions, app_state & app);
+
+void
+ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
+                    std::set<revision_id> & new_stuff,
+                    app_state & app);
 
 void 
 calculate_composite_change_set(revision_id const & ancestor,
