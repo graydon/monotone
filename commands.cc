@@ -204,8 +204,8 @@ namespace commands
     
     if (cmds.find(completed) != cmds.end())
       {
- 	L(F("executing %s command\n") % completed);
- 	cmds[completed]->exec(app, args);
+        L(F("executing %s command\n") % completed);
+        cmds[completed]->exec(app, args);
         return 0;
       }
     else
@@ -479,6 +479,42 @@ get_log_message(revision_set const & cs,
     F("edit of log message failed"));
 }
 
+static string
+describe_revision(app_state & app, revision_id const & id)
+{
+  cert_name author_name(author_cert_name);
+  cert_name date_name(date_cert_name);
+
+  string description;
+
+  description += id.inner()();
+
+  // append authors and date of this revision
+  vector< revision<cert> > tmp;
+  app.db.get_revision_certs(id, author_name, tmp);
+  erase_bogus_certs(tmp, app);
+  for (vector< revision<cert> >::const_iterator i = tmp.begin();
+       i != tmp.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      description += " ";
+      description += tv();
+    }
+  app.db.get_revision_certs(id, date_name, tmp);
+  erase_bogus_certs(tmp, app);
+  for (vector< revision<cert> >::const_iterator i = tmp.begin();
+       i != tmp.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      description += " ";
+      description += tv();
+    }
+
+  return description;
+}
+
 static void
 decode_selector(string const & orig_sel,
                 selector_type & type,
@@ -682,6 +718,10 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       }
   }
         
+  // Make the output deterministic; this is useful for the test suite, in
+  // particular.
+  sort(certs.begin(), certs.end());
+
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_status status = check_cert(app, idx(certs, i));
@@ -1144,7 +1184,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
   app.db.get_file_version(old_fid, old_fdata);
   diff(old_fdata.inner(), new_fdata.inner(), gz_del);    
   dbw.consume_file_delta(old_fid, new_fid, 
-			 file_delta(gz_del));
+                         file_delta(gz_del));
 
   // diff and store the manifest edge
   new_man = old_man;
@@ -1152,13 +1192,13 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
   calculate_ident(new_man, new_mid);
   diff(old_man, new_man, gz_del);
   dbw.consume_manifest_delta(old_mid, new_mid, 
-			     manifest_delta(gz_del));
+                             manifest_delta(gz_del));
 
   // build and store a changeset and revision
   cs.apply_delta(pth, old_fid, new_fid);
   rev.new_manifest = new_mid;
   rev.edges.insert(std::make_pair(old_rid, 
-				  std::make_pair(old_mid, cs)));
+                                  std::make_pair(old_mid, cs)));
   calculate_ident(rev, new_rid);
   write_revision_set(rev, rdata);
   dbw.consume_revision_data(new_rid, rdata);
@@ -1424,7 +1464,7 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
   remove_path_rearrangement();
   guard.commit();
   update_any_attrs(app);
-  app.write_options();
+  app.write_options(true);
 }
 
 ALIAS(co, checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
@@ -1448,36 +1488,9 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch")
   else
     P(F("branch '%s' is currently unmerged:\n") % app.branch_name);
   
-  cert_name author_name(author_cert_name);
-  cert_name date_name(date_cert_name);
-
   for (set<revision_id>::const_iterator i = heads.begin(); 
        i != heads.end(); ++i)
-    {
-      cout << i->inner()(); 
-
-      // print authors and date of this head
-      vector< revision<cert> > tmp;
-      app.db.get_revision_certs(*i, author_name, tmp);
-      erase_bogus_certs(tmp, app);
-      for (vector< revision<cert> >::const_iterator j = tmp.begin();
-           j != tmp.end(); ++j)
-      {
-         cert_value tv;
-         decode_base64(j->inner().value, tv);
-         cout << " " << tv;
-      }
-      app.db.get_revision_certs(*i, date_name, tmp);
-      erase_bogus_certs(tmp, app);
-      for (vector< revision<cert> >::const_iterator j = tmp.begin();
-               j != tmp.end(); ++j)
-      {
-         cert_value tv;
-         decode_base64(j->inner().value, tv);
-         cout << " " << tv;
-      }
-      cout << endl;
-    }
+    cout << describe_revision(app, *i) << endl;
 }
 
 static void 
@@ -1975,28 +1988,28 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
     {
       path = idx(args, 1)();
       if (args.size() != 2 && args.size() != 3)
-	throw usage(name);
+        throw usage(name);
 
       attr_map::const_iterator i = attrs.find(path);
       if (i == attrs.end())
-	cout << "no attributes for " << path << endl;
+        cout << "no attributes for " << path << endl;
       else
-	{
-	  if (args.size() == 2)
-	    {
-	      for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
-		   j != i->second.end(); ++j)
-		cout << path << " : " << j->first << "=" << j->second << endl;
-	    }
-	  else
-	    {	    
-	      std::map<std::string, std::string>::const_iterator j = i->second.find(idx(args, 2)());
-	      if (j == i->second.end())
-		cout << "no attribute " << idx(args, 2)() << " on file " << path << endl;
-	      else
-		cout << path << " : " << j->first << "=" << j->second << endl;
-	    }
-	}
+        {
+          if (args.size() == 2)
+            {
+              for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
+                   j != i->second.end(); ++j)
+                cout << path << " : " << j->first << "=" << j->second << endl;
+            }
+          else
+            {       
+              std::map<std::string, std::string>::const_iterator j = i->second.find(idx(args, 2)());
+              if (j == i->second.end())
+                cout << "no attribute " << idx(args, 2)() << " on file " << path << endl;
+              else
+                cout << path << " : " << j->first << "=" << j->second << endl;
+            }
+        }
     }
   else 
     throw usage(name);
@@ -2516,7 +2529,20 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
     }
 
   if (args.size() == 0) {
-    pick_update_target(r_old_id, app, r_chosen_id);
+    set<revision_id> candidates;
+    pick_update_candidates(r_old_id, app, candidates);
+    N(candidates.size() != 0,
+      F("no candidates remain after selection"));
+    if (candidates.size() != 1)
+      {
+        P(F("multiple update candidates:\n"));
+        for (set<revision_id>::const_iterator i = candidates.begin();
+             i != candidates.end(); ++i)
+          P(F("  %s\n") % describe_revision(app, *i));
+        P(F("choose one with 'monotone update <id>'\n"));
+        N(false, F("multiple candidates remain after selection"));
+      }
+    r_chosen_id = *(candidates.begin());
   } else {
     complete(app, idx(args, 0)(), r_chosen_id);
   }
@@ -2800,6 +2826,42 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
   cert_revision_changelog(merged, log, app, dbw);
   
   guard.commit();      
+}
+
+CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH", 
+    "merge two explicitly given revisions, placing result in given branch")
+{
+  revision_id left, right;
+  string branch;
+
+  if (args.size() != 3)
+    throw usage(name);
+
+  complete(app, idx(args, 0)(), left);
+  complete(app, idx(args, 1)(), right);
+  branch = idx(args, 2)();
+  
+  // Somewhat redundant, but consistent with output of plain "merge" command.
+  P(F("[source] %s\n") % left);
+  P(F("[source] %s\n") % right);
+
+  revision_id merged;
+  transaction_guard guard(app.db);
+  try_one_merge (left, right, merged, app);    
+  
+  packet_db_writer dbw(app);
+  
+  cert_revision_in_branch(merged, branch, app, dbw);
+  
+  string log = (F("explicit_merge of %s\n"
+                  "              and %s\n"
+                  "to branch '%s'\n")
+                % left % right % branch).str();
+  
+  cert_revision_changelog(merged, log, app, dbw);
+  
+  guard.commit();      
+  P(F("[merged] %s\n") % merged);
 }
 
 CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete partial id")

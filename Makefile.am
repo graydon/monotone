@@ -153,12 +153,12 @@ if BUNDLED_SQLITE
 endif
 
 if STATIC_BOOST
-  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem.a \
-              @BOOST_LIBDIR@/libboost_date_time.a \
-              @BOOST_LIBDIR@/libboost_regex.a
+  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem$(BOOST_SUFFIX).a \
+              @BOOST_LIBDIR@/libboost_date_time$(BOOST_SUFFIX).a \
+              @BOOST_LIBDIR@/libboost_regex$(BOOST_SUFFIX).a
   monotone_LDADD = lib3rdparty.a $(BOOSTLIBS)
   unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
-                     @BOOST_LIBDIR@/libboost_unit_test_framework.a
+                     @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
 else
   monotone_LDADD = lib3rdparty.a
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
@@ -233,6 +233,7 @@ EXTRA_DIST = $(man1_MANS) \
              tests/atconfig.in \
              tests/atlocal.in  \
 	     package.m4 \
+	     package_revision.txt package_full_revision.txt \
              $(wildcard m4/*.m4)
 
 MAKEINFOFLAGS=-I $(top_builddir)
@@ -296,10 +297,11 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES = std_hooks.h test_hooks.h schema.h views.h \
-	        package_revision.txt package_revision.h \
-	        package_full_revision.txt package_full_revision.h
-CLEANFILES = $(BUILT_SOURCES) $(EPS_FIGURES)
+BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h
+BUILT_SOURCES_NOCLEAN = package_revision.txt package_revision.h \
+		       package_full_revision.txt package_full_revision.h
+BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
+CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
 
 txt2c: txt2c.cc Makefile
 	$(CXX) -Wall -o $@ $<
@@ -316,19 +318,23 @@ txt2c: txt2c.cc Makefile
 $(srcdir)/MT/revision:
 	true
 package_revision.txt: $(srcdir)/MT/revision
-	if [ ! -f $< ]; then \
-	  echo "unknown" > $@;        \
-	else                          \
-	  cp $< $@;          \
-	fi
+	if [ -f $< ]; then cp $< $@; fi
+	if [ ! -f $@ ]; then echo "unknown" > $@; fi
 package_revision.h: package_revision.txt txt2c Makefile
 	./txt2c --strip-trailing $< package_revision >$@
 
 .PHONY: package_full_revision.txt
 package_full_revision.txt:
-	(cd $(srcdir) && $(top_builddir)/monotone status 2>/dev/null) >$@ \
-	|| (cd $(srcdir) && monotone status 2>/dev/null) >$@ \
-	|| echo "unknown" >$@
+	(cd $(srcdir) && $(top_builddir)/monotone status 2>/dev/null) >$@.$$$$ \
+	|| (cd $(srcdir) && monotone status 2>/dev/null) >$@.$$$$ \
+	|| rm -f $@.$$$$; \
+	if [ -f $@.$$$$ ]; then \
+	  mv $@.$$$$ $@; \
+	  (echo ''; \
+	   echo '  Generated from data cached in the distribution;'; \
+	   echo '  further changes may have been made.') >> $@; \
+	fi; \
+	if [ ! -f $@ ]; then echo "unknown" >$@; fi
 package_full_revision.h: package_full_revision.txt txt2c Makefile
 	./txt2c $< package_full_revision >$@
 

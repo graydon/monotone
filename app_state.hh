@@ -34,7 +34,7 @@ public:
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
   
-  void write_options();
+  void write_options(bool force = false);
 
   explicit app_state();
   ~app_state();
