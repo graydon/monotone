@@ -12,7 +12,7 @@ AT_DATA(baz, [baz file
 # produce root
 AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
-ROOT_M_SHA=`SHA1(MT/manifest)`
+ROOT_R_SHA=`BASE_REVISION`
 ROOT_F_SHA=`SHA1(foo)`
 
 # produce move edge
@@ -22,7 +22,7 @@ AT_CHECK(cp foo bar)
 AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
 
 # revert to root
-PROBE_NODE(foo, $ROOT_M_SHA, $ROOT_F_SHA)
+PROBE_NODE(foo, $ROOT_R_SHA, $ROOT_F_SHA)
 AT_CHECK(rm bar)
 
 # make a delete edge on the move preimage
@@ -34,9 +34,11 @@ AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 
 # check that the delete landed on the renamed target
-AT_CHECK(grep baz MT/manifest, [0], [ignore], [ignore])
-AT_CHECK(grep bar MT/manifest, [1], [ignore], [ignore])
-AT_CHECK(grep foo MT/manifest, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(mv stdout manifest)
+AT_CHECK(grep baz manifest, [0], [ignore], [ignore])
+AT_CHECK(grep bar manifest, [1], [ignore], [ignore])
+AT_CHECK(grep foo manifest, [1], [ignore], [ignore])
 
 AT_CLEANUP
 

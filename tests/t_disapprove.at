@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([creating a trusted and untrusted update])
+AT_SETUP([disapproving of a revision])
 
 MONOTONE_SETUP
 
@@ -13,7 +13,7 @@ third line of the file
 ])
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
-ROOT_M_SHA=`SHA1(MT/manifest)`
+ROOT_R_SHA=`BASE_REVISION`
 ROOT_F_SHA=`SHA1(testfile)`
 
 AT_DATA(testfile, [first line of the file
@@ -22,10 +22,10 @@ second line of the file
 third line of the file
 ])
 
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
-LEFT_GOOD_M_SHA=`SHA1(MT/manifest)`
+AT_CHECK(MONOTONE commit "left good version", [], [ignore], [ignore])
+LEFT_GOOD_R_SHA=`BASE_REVISION`
 LEFT_GOOD_F_SHA=`SHA1(testfile)`
-AT_CHECK(test $LEFT_GOOD_M_SHA != $ROOT_M_SHA)
+AT_CHECK(test $LEFT_GOOD_R_SHA != $ROOT_R_SHA)
 AT_CHECK(test $LEFT_GOOD_F_SHA != $ROOT_F_SHA)
 
 AT_DATA(testfile, [first line of the file
@@ -35,13 +35,13 @@ third line of the file
 an evil line which should never be seen
 ])
 
-AT_CHECK(MONOTONE commit blah-blah, [], [ignore], [ignore])
-LEFT_BAD_M_SHA=`SHA1(MT/manifest)`
+AT_CHECK(MONOTONE commit "left bad version", [], [ignore], [ignore])
+LEFT_BAD_R_SHA=`BASE_REVISION`
 LEFT_BAD_F_SHA=`SHA1(testfile)`
-AT_CHECK(test $LEFT_BAD_M_SHA != $LEFT_GOOD_M_SHA)
+AT_CHECK(test $LEFT_BAD_R_SHA != $LEFT_GOOD_R_SHA)
 AT_CHECK(test $LEFT_BAD_F_SHA != $LEFT_GOOD_F_SHA)
 
-PROBE_NODE(testfile, $ROOT_M_SHA, $ROOT_F_SHA)
+PROBE_NODE(testfile, $ROOT_R_SHA, $ROOT_F_SHA)
 
 AT_DATA(testfile, [first line of the file
 second line of the file
@@ -50,7 +50,7 @@ third line of the file
 ])
 
 
-AT_CHECK(MONOTONE disapprove $LEFT_GOOD_M_SHA $LEFT_BAD_M_SHA, [], [ignore], [ignore])
+AT_CHECK(MONOTONE disapprove $LEFT_BAD_R_SHA, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 
 # files should now be merged

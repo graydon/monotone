@@ -667,6 +667,86 @@ migrate_client_add_hashes_and_merkle_trees(sqlite * sql,
   return true;
 }
 
+static bool 
+migrate_client_to_revisions(sqlite * sql, 
+			   char ** errmsg)
+{
+  int res;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE schema_version;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE posting_queue;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE incoming_queue;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE sequence_numbers;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE file_certs;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE netserver_manifests;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, 
+			   "CREATE TABLE merkle_nodes\n"
+			   "(\n"
+			   "type not null,                -- \"key\", \"mcert\", \"fcert\", \"rcert\"\n"
+			   "collection not null,          -- name chosen by user\n"
+			   "level not null,               -- tree level this prefix encodes\n"
+			   "prefix not null,              -- label identifying node in tree\n"
+			   "body not null,                -- binary, base64'ed node contents\n"
+			   "unique(type, collection, level, prefix)\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "CREATE TABLE revision_certs\n"
+			   "(\n"
+			   "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+			   "id not null,            -- joins with revisions.id\n"
+			   "name not null,          -- opaque string chosen by user\n"
+			   "value not null,         -- opaque blob\n"
+			   "keypair not null,       -- joins with public_keys.id\n"
+			   "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+			   "unique(name, id, value, keypair, signature)\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "CREATE TABLE revisions\n"
+			   "(\n"
+			   "id primary key,      -- SHA1(text of revision)\n"
+			   "data not null        -- compressed, encoded contents of a revision\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite_exec_printf(sql, "CREATE TABLE revision_ancestry\n"
+			   "(\n"
+			   "parent not null,     -- joins with revisions.id\n"
+			   "child not null,      -- joins with revisions.id\n"
+			   "unique(parent, child)\n"
+			   ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  
+  return true;
+}
+
 void 
 migrate_depot_schema(sqlite *sql)
 {  
@@ -696,7 +776,10 @@ migrate_monotone_schema(sqlite *sql)
   m.add("f042f3c4d0a4f98f6658cbaf603d376acf88ff4b",
 	&migrate_client_add_hashes_and_merkle_trees);
 
-  m.migrate(sql, "8929e54f40bf4d3b4aea8b037d2c9263e82abdf4");
+  m.add("8929e54f40bf4d3b4aea8b037d2c9263e82abdf4",
+	&migrate_client_to_revisions);
+
+  m.migrate(sql, "c1e86588e11ad07fa53e5d294edc043ce1d4005a");
   
   if (sqlite_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
     throw runtime_error("error vacuuming after migration");

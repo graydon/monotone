@@ -16,6 +16,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "constants.hh"
+#include "platform.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
@@ -29,7 +30,11 @@ sanity global_sanity;
 
 sanity::sanity() : 
   debug(false), quiet(false), logbuf(0xffff)
-{}
+{
+  std::string flavour;
+  get_system_flavour(flavour);
+  L(F("started up on %s\n") % flavour);
+}
 
 sanity::~sanity()
 {}
@@ -49,7 +54,7 @@ sanity::dump_buffer()
 	ui.inform("failed to write debugging log to " + filename + "\n");
     }
   else
-    ui.inform("discarding debug log\n");
+    ui.inform(string("discarding debug log\n"));
 }
 
 void 

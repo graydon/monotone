@@ -15,7 +15,9 @@ AT_TESTED([monotone])
 # some command abbreviations to make life easier
 
 m4_define([MONOTONE], [monotone --rcfile=test_hooks.lua --nostd --norc --db=test.db --key=tester@test.net])
-m4_define([SHA1], [sha1sum $1 | cut -d ' ' -f 1])
+m4_define([SHA1], [monotone identify $1])
+m4_define([BASE_REVISION], [cat MT/revision])
+m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
 
 # the MONOTONE_SETUP macro deploys the standard lua hooks and loads the 
 # standard testing key, which we use for further tests.
@@ -54,6 +56,10 @@ end
 
 function non_blocking_rng_ok()
 	return true
+end
+
+function get_revision_cert_trust(signers, id, name, val)
+   return true
 end
 
 function get_manifest_cert_trust(signers, id, name, val)
@@ -104,24 +110,101 @@ AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
 ])
 
-# run as PROBE_NODE(filename, msha, fsha)
+# run as CHECK_SAME_STDOUT(command1, command2)
+m4_define([CHECK_SAME_STDOUT], [
+AT_CHECK($1, [], [stdout], [ignore])
+AT_CHECK(mv stdout expout)
+AT_CHECK($2, [], [expout], [ignore])
+])
+
+# run as PROBE_NODE(filename, rsha, fsha)
 m4_define([PROBE_NODE], [ 
-AT_CHECK(rm MT/manifest)
+AT_CHECK(rm MT/revision)
 AT_CHECK(rm $1)
 AT_CHECK(MONOTONE checkout $2 ., [], [ignore])
-PROBE_M_SHA=`SHA1(MT/manifest)`
+PROBE_R_SHA=`BASE_REVISION`
 PROBE_F_SHA=`SHA1($1)`
-AT_CHECK(test $PROBE_M_SHA == $2)
+AT_CHECK(test $PROBE_R_SHA == $2)
 AT_CHECK(test $PROBE_F_SHA == $3)
 ])
 
-# run as REVERT_TO(msha)
+# run as REVERT_TO(rsha)
 m4_define([REVERT_TO], [ 
-AT_CHECK(rm MT/manifest)
 AT_CHECK(MONOTONE checkout $1 ., [], [ignore])
-PROBE_M_SHA=`SHA1(MT/manifest)`
-AT_CHECK(test $PROBE_M_SHA == $1)
+PROBE_R_SHA=`BASE_REVISION`
+AT_CHECK(test $PROBE_R_SHA == $1)
 ])
+
+# run as ADD_FILE(filename, data)
+m4_define([ADD_FILE], [
+AT_DATA($1, $2)
+AT_CHECK(MONOTONE add $1, [], [ignore], [ignore])
+])
+
+# run as SET_FILE(filename, data)
+m4_define([SET_FILE], [
+AT_DATA($1, $2)
+])
+
+# run as COMMIT(branch)
+m4_define([COMMIT], [
+AT_CHECK(MONOTONE --branch=$1 commit blah-blah, [], [ignore],
+[ignore])
+])
+
+# Some tests want to include data files.
+# Usage: NEED_UNB64 will cancel the test (reporting success) if we
+# can't decode base64'ed text.
+# After calling NEED_UNB64, you can use UNB64(infile, outfile) to
+# decode base64'ed text.
+m4_define([NEED_UNB64], [
+if which mimencode 2>/dev/null; then
+  UNB64_COMMAND="mimencode -u"
+elif which recode 2>/dev/null; then
+  UNB64_COMMAND="recode /Base64"
+elif perl -MMIME::Base64 -e 1 2>/dev/null; then
+  UNB64_COMMAND="perl -MMIME::Base64 -ne 'print decode_base64(\$_)'"
+elif python -c 'import sys;sys.exit(not hasattr("", "decode"))' 2>/dev/null; then
+  UNB64_COMMAND="python -c 'import sys;sys.stdout.write(sys.stdin.read().decode("'"'"base64"'"'"))'"
+else
+  exit 77
+fi
+])
+m4_define([UNB64], [AT_CHECK(eval $UNB64_COMMAND <$1 >$2)])
+
+# netsync helpers
+# NETSYNC_SETUP sets up 2 databases; RUN_NETSYNC netsyncs between
+# them, MONOTONE2 operates on the second one.
+
+m4_define([NETSYNC_SETUP], [
+
+AT_CHECK(cp test.db test2.db)
+AT_DATA(netsync.lua, [
+function get_netsync_read_permitted(collection, identity)
+	return true
+end
+
+function get_netsync_write_permitted(collection, identity)
+	return true
+end
+])
+
+])
+
+m4_define([MONOTONE2], MONOTONE --db=test2.db)
+
+# run as RUN_NETSYNC(push|pull|sync, collection name)
+# It is the second database that is always the client; take this into
+# account when choosing push|pull|sync.
+m4_define([RUN_NETSYNC], [
+killall -q -KILL monotone
+MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $2 &
+sleep 5
+AT_CHECK(MONOTONE2 --rcfile=netsync.lua $1 127.0.0.1:5555 $2, [], [ignore], [ignore])
+killall -q -KILL monotone
+])
+
+
 
 # include all the sub-tests we're going to use
 
@@ -135,6 +218,10 @@ m4_include(tests/t_versions.at)
 m4_include(tests/t_fork.at)
 m4_include(tests/t_update.at)
 m4_include(tests/t_merge.at)
+m4_include(tests/t_merge_add.at)
+m4_include(tests/t_related_merge2_data.at)
+m4_include(tests/t_merge2_add.at)
+m4_include(tests/t_merge2_data.at)
 m4_include(tests/t_unidiff2.at)
 m4_include(tests/t_cwork.at)
 m4_include(tests/t_revert.at)
@@ -149,13 +236,26 @@ m4_include(tests/t_cvsimport.at)
 m4_include(tests/t_i18n_file.at)
 m4_include(tests/t_fmerge.at)
 m4_include(tests/t_netsync.at)
+m4_include(tests/t_netsync_single.at)
+m4_include(tests/t_netsync_pubkey.at)
+m4_include(tests/t_netsync_repeated.at)
+m4_include(tests/t_netsync_unrelated.at)
 m4_include(tests/t_disapprove.at)
 m4_include(tests/t_testresult.at)
 m4_include(tests/t_singlecvs.at)
-m4_include(tests/t_singlenetsync.at)
 m4_include(tests/t_ls_missing.at)
 m4_include(tests/t_attributes.at)
 m4_include(tests/t_single_char_filenames.at)
 m4_include(tests/t_movepatch.at)
 m4_include(tests/t_movedel.at)
 m4_include(tests/t_remerge.at)
+m4_include(tests/t_update_missing.at)
+m4_include(tests/t_chkeypass.at)
+m4_include(tests/t_diff_added_file.at)
+m4_include(tests/t_update_to_revision.at)
+m4_include(tests/t_heads.at)
+m4_include(tests/t_heads_discontinuous_branch.at)
+m4_include(tests/t_merge_1.at)
+m4_include(tests/t_tags.at)
+m4_include(tests/t_add_dot.at)
+m4_include(tests/t_cleanup_empty_dir.at)

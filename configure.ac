@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.56)
-AC_INIT(monotone, 0.14, graydon@pobox.com)
+AC_INIT(monotone, 0.15, graydon@pobox.com)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -192,11 +192,12 @@ int main(void)
 )])
 
 # simple library checks 
-AC_CHECK_LIB([dl], [dlsym])
+AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))
+AH_TEMPLATE([USE_DLOPEN], [For LUA: use dlopen for loadlib])
 AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_FAILURE([popt is required]))
-AC_CHECK_LIB([resolv], [inet_aton])
-AC_CHECK_LIB([socket], [accept])
-AC_CHECK_LIB([nsl], [inet_ntoa])
+AC_SEARCH_LIBS([inet_aton], [resolv])
+AC_SEARCH_LIBS([accept], [socket])
+AC_SEARCH_LIBS([inet_ntoa], [nsl])
 
 
 ##########
@@ -261,7 +262,7 @@ AC_HAVE_INADDR_NONE
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
 AC_FUNC_STAT
-AC_CHECK_FUNCS([atexit gethostbyaddr gethostbyname inet_ntoa memset setenv socket])
+AC_CHECK_FUNCS([atexit gethostbyaddr gethostbyname inet_ntoa memset mkstemp setenv socket])
 
 AC_CHECK_FUNC(inet_pton, [AM_CONDITIONAL(MISSING_INET_PTON, false)], 
 			 [AM_CONDITIONAL(MISSING_INET_PTON, true)])

@@ -63,3 +63,12 @@ dd
 		padding-bottom: 1.5em;
 		padding-left: 2em;	
 	}
+
+img
+	{
+		padding: 2em;
+		display: block;
+		float: none;
+		clear: both;
+		margin-right: auto;
+	}

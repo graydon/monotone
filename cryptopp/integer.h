@@ -9,25 +9,32 @@
 #include <iosfwd>
 #include <algorithm>
 
+#ifdef CRYPTOPP_X86ASM_AVAILABLE
+
 #ifdef _M_IX86
-#	if (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 500)) || (defined(__ICL) && (__ICL >= 500))
-#		define SSE2_INTRINSICS_AVAILABLE
-#	elif defined(_MSC_VER)
+	#if (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 500)) || (defined(__ICL) && (__ICL >= 500))
+		#define SSE2_INTRINSICS_AVAILABLE
+		#define CRYPTOPP_MM_MALLOC_AVAILABLE
+	#elif defined(_MSC_VER)
 		// _mm_free seems to be the only way to tell if the Processor Pack is installed or not
-#		include <malloc.h>
-#		if defined(_mm_free)
-#			define SSE2_INTRINSICS_AVAILABLE
-#		endif
-#       endif
+		#include <malloc.h>
+		#if defined(_mm_free)
+			#define SSE2_INTRINSICS_AVAILABLE
+			#define CRYPTOPP_MM_MALLOC_AVAILABLE
+		#endif
+	#endif
 #endif
 
-#if defined(__i386__) && defined(__SSE2__) && defined(__GNUC__) && (__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)
-#   define SSE2_INTRINSICS_AVAILABLE
+// SSE2 intrinsics work in GCC 3.3 or later
+#if defined(__SSE2__) && (__GNUC_MAJOR__ > 3 || __GNUC_MINOR__ > 2)
+	#define SSE2_INTRINSICS_AVAILABLE
+#endif
+
 #endif
 
 NAMESPACE_BEGIN(CryptoPP)
 
-#ifdef SSE2_INTRINSICS_AVAILABLE
+#if defined(SSE2_INTRINSICS_AVAILABLE)
 	template <class T>
 	class AlignedAllocator : public AllocatorBase<T>
 	{
@@ -40,18 +47,29 @@ NAMESPACE_BEGIN(CryptoPP)
 		{
 			return StandardReallocate(*this, p, oldSize, newSize, preserve);
 		}
+
+	#if !(defined(CRYPTOPP_MALLOC_ALIGNMENT_IS_16) || defined(CRYPTOPP_MEMALIGN_AVAILABLE) || defined(CRYPTOPP_MM_MALLOC_AVAILABLE))
+	#define CRYPTOPP_NO_ALIGNED_ALLOC
+		AlignedAllocator() : m_pBlock(NULL) {}
+	protected:
+		void *m_pBlock;
+	#endif
 	};
+
+	template class CRYPTOPP_DLL AlignedAllocator<word>;
 	typedef SecBlock<word, AlignedAllocator<word> > SecAlignedWordBlock;
 #else
 	typedef SecWordBlock SecAlignedWordBlock;
 #endif
+
+void CRYPTOPP_DLL DisableSSE2();
 
 //! multiple precision integer and basic arithmetics
 /*! This class can represent positive and negative integers
 	with absolute value less than (256**sizeof(word)) ** (256**sizeof(int)).
 	\nosubgrouping
 */
-class Integer : public ASN1Object
+class CRYPTOPP_DLL Integer : public ASN1Object
 {
 public:
 	//! \name ENUMS, EXCEPTIONS, and TYPEDEFS
@@ -98,6 +116,9 @@ public:
 
 		//! convert from signed long
 		Integer(signed long value);
+
+		//! convert from lword
+		Integer(Sign s, lword value);
 
 		//! convert from two words
 		Integer(Sign s, word highWord, word lowWord);
@@ -359,9 +380,9 @@ public:
 		Integer MultiplicativeInverse() const;
 
 		//! modular multiplication
-		friend Integer a_times_b_mod_c(const Integer &x, const Integer& y, const Integer& m);
+		CRYPTOPP_DLL friend Integer a_times_b_mod_c(const Integer &x, const Integer& y, const Integer& m);
 		//! modular exponentiation
-		friend Integer a_exp_b_mod_c(const Integer &x, const Integer& e, const Integer& m);
+		CRYPTOPP_DLL friend Integer a_exp_b_mod_c(const Integer &x, const Integer& e, const Integer& m);
 
 		//! calculate r and q such that (a == d*q + r) && (0 <= r < abs(d))
 		static void Divide(Integer &r, Integer &q, const Integer &a, const Integer &d);
@@ -382,9 +403,9 @@ public:
 	//! \name INPUT/OUTPUT
 	//@{
 		//!
-		friend std::istream& operator>>(std::istream& in, Integer &a);
+		friend CRYPTOPP_DLL std::istream& operator>>(std::istream& in, Integer &a);
 		//!
-		friend std::ostream& operator<<(std::ostream& out, const Integer &a);
+		friend CRYPTOPP_DLL std::ostream& operator<<(std::ostream& out, const Integer &a);
 	//@}
 
 private:

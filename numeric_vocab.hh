@@ -8,13 +8,13 @@
 
 #include <limits>
 
-#include <boost/cstdint.hpp>
+#include <stdint.h>
 #include <boost/static_assert.hpp>
 
-typedef boost::uint8_t u8;
-typedef boost::uint16_t u16;
-typedef boost::uint32_t u32;
-typedef boost::uint64_t u64;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
 
 BOOST_STATIC_ASSERT(sizeof(char) == 1);
 BOOST_STATIC_ASSERT(CHAR_BIT == 8);

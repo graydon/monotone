@@ -1,0 +1,149 @@
+Information about the changeset branch integration
+==================================================
+
+Between versions 0.14 and 0.15 monotone underwent a major
+reorganization of its fundamental data structures. This means pre-0.14
+and post-0.15 versions of monotone are strictly incompatible:
+
+  - databases are incompatible
+  - network service is incompatible
+
+Unfortunately we were simply not able to make transparent
+interoperation possible. Too much changed. However, it is possible to
+*migrate* from the pre-0.14 representation to the post-0.15
+representation. The migration is slightly lossy, but it is the best we
+are able to provide.
+
+
+What changed
+============
+
+The change added two new objects to the vocabulary of monotone: 
+
+  - changesets
+  - revisions
+
+They are both text objects, like manifests, which monotone reads and
+writes for its own benefit. Revisions are, like manifests, also hashed
+with SHA1 to produce revision IDs. Changesets are not hashed, because
+they generally do not appear outside of revisions.
+
+These two new objects replace three previous objects: patch sets,
+rename certs, and ancestry certs. Now information about renaming and
+patch application is stored in changesets, and information about
+ancestry is stored in revisions. Obviously these objects store the
+information slightly differently than their predecessors. See the next
+section for motivation.
+
+The observable affect for the end user is moderate: most monotone
+commands work "the way they used to", except that now they take
+revision IDs where they used to take manifest IDs.  Don't worry about
+this too much: every revision has a reference to a specific manifest
+as well, revision IDs still always refer to a specific "tree state",
+they just happen to refer to a bit *more* than that as well, as we'll
+see.
+
+
+Why it changed
+==============
+
+The old objects were buggy. There were a bunch of subtle and
+difficult-to-fix problems with the way we were representing ancestry
+and renames before:
+
+  - renames of directories had to be inferred, and this could fail.
+
+  - nontrivial forms of rename chaining didn't work, and it wasn't clear
+    that they could be made to work treating renames as we did: 
+          a->b and b->a
+          a->b and c->a
+          a/b->a/c and a->d (depending on order)
+
+  - you could have multiple *irreconcilable* rename certs attached
+    to the same manifest edge, and this would cause monotone to crash.
+
+  - ancestry could form cycles, if you ever returned to a previous
+    manifest state.
+
+  - ancestry could accidentally jump from one "historical thread" to
+    another if you happened to pass through the same manifest state;
+    two branches acquiring the same state would always look like a
+    merge even when it was a coincidence.
+
+  - it wasn't clear what monotone should do if you assigned different
+    trust to existant branch, ancestry, and rename certs.
+
+These problems were with us for quite a while, even if you didn't
+encounter them. The changes at 0.15 fix the whole family of bugs by
+removing the troubling abstractions and replacing them with more
+robust ones. In particular:
+
+  - Unlike ancestry certs, revisions are chained. Each revision
+    contains *as part of its content* the revision IDs of its
+    predecessor revisions, so there can never be a loop in the
+    graph. Each new point in the graph gets a new, previously-unseen
+    ID.
+
+  - Revisions are not subject to trust evaluation, they are
+    *statements of fact*. They happen to be stating a fact which
+    describes an entire historical chain of events, but there is only
+    one trust evaluation: branch membership. The evaluation of branch
+    membership covers the entire history of events described by a
+    revision.
+
+  - Changesets have much stronger reasoning facilities about
+    overlapping renames, directory renames, etc. They actually break
+    down into a "simultaneous rearrangement of inodes" abstraction, in
+    memory, including directories as first class objects. This
+    abstraction has a clear algebra for concatenation, inversion and
+    parallel merger.
+
+
+How do I migrate?
+=================
+
+Before you start any of this, make a backup of the database. All the
+world's warnings about making backups seem to go un-heeded, but
+seriously, it's just a single "cp" command. How lazy can you get?
+
+   $ cp mydatabase.db mydatabase.db.pre-changesets
+
+Please be sure to do so. After backing up, there are two required
+steps (and one optional step) to the migration. The first step is the
+usual "thing you do when the SQL schema changes":
+
+   $ monotone --db=mydatabase.db db migrate
+
+Then there is the new step: telling monotone to convert its old
+representation of manifests to changesets. It will synthesize a lot of
+new changesets based on what it can find in your database. The newly
+synthesized information is a *slightly lossy* version of the
+information already found in your database. It is lossy in the
+following respects:
+
+  - All existing rename/edit events will be degraded to delete/add
+    events
+
+  - All existing manifest certs will be reissued as revision certs,
+    but signed *with your public key*. All previous RSA-key-identity
+    information is thereby lost.
+
+Assuming you're prepared to live with this loss, the next step is to run
+a special, otherwise undocumented "changesetification" command:
+
+  $ monotone --db=mydatabase.db db changesetify
+
+This should build the new changeset and revision structure and issue
+all the necessary certs. It will therefore take a while on a large
+database. It will not, however, delete the old manifest certs: the new
+version of monotone will simply ignore them, but they continue to
+exist in your database, should you wish to recover some of their
+information for forensic purposes in the future. If you truly wish to
+remove all manifest certs as well (they are all subsumed by revision
+certs now, anyways) you can issue one further command:
+
+  $ monotone --db=mydatabase.db db execute "delete from manifest_certs"
+
+This will purge the manifest_certs table of all its entries, but as we
+said this step is purely optional. No harm will come from old manifest
+certs remaining in your database.

@@ -40,52 +40,38 @@
 
 typedef std::set<file_path> path_set;
 extern std::string const manifest_file_name;
-typedef std::pair<file_path, file_id> entry;
-typedef std::pair<file_path const, file_id> manifest_map_entry;
+
+typedef std::pair<file_path const, file_id> manifest_entry;
+
 typedef std::map<file_path, file_id, 
 		 std::less<file_path>, 
-		 QA(manifest_map_entry) > manifest_map;
+		 QA(manifest_entry) > manifest_map;
 
-// this helper exists solely to save us writing ->first and ->second all
-// over the place when dealing with entries / members of manifest_maps. they're
-// unreadable enough to make some otherwise clear functions obscure and
-// buggy. maybe you can keep it clear in your head, but I can't always.
-
-class path_id_pair
+inline file_path const &
+manifest_entry_path(manifest_entry const & e)
 {
-  entry dat;
-public:
-  path_id_pair() {}
-  path_id_pair(manifest_map::const_iterator i) : dat(*i) {}
-  path_id_pair(entry const & e) : dat(e) {}
-  entry const & get_entry() { return dat; }
+  return e.first;
+}
 
-  file_path const & path() const { return dat.first; }
-  path_id_pair & path(file_path const & p) { dat.first = p; return *this; } 
-
-  file_id const & ident() const { return dat.second; }
-  path_id_pair & ident(file_id const & i) { dat.second = i; return *this; }   
-};
-
-// analyzed changes to a manifest_map (not just blob-delta)
-struct manifest_changes
+inline file_path const &
+manifest_entry_path(manifest_map::const_iterator i)
 {
-  std::set<entry> adds;
-  std::set<entry> dels;
-};
+  return i->first;
+}
 
-void calculate_manifest_changes(manifest_map const & a,
-				manifest_map const & b,
-				manifest_changes & changes);
+inline file_id const &
+manifest_entry_id(manifest_entry const & e)
+{
+  return e.second;
+}
 
-void apply_manifest_changes(manifest_map const & a,
-			    manifest_changes const & changes,
-			    manifest_map & b);
+inline file_id const &
+manifest_entry_id(manifest_map::const_iterator i)
+{
+  return i->second;
+}
 
-void write_manifest_changes(manifest_changes const & changes, 
-			    data & dat);
-
-std::ostream & operator<<(std::ostream & out, entry const & e);
+std::ostream & operator<<(std::ostream & out, manifest_entry const & e);
 
 class app_state;
 
@@ -101,9 +87,6 @@ void build_manifest_map(file_path const & path,
 void build_manifest_map(path_set const & paths,
 			manifest_map & man,
 			app_state & app);
-
-void append_manifest_map(manifest_map const & m1,
-			 manifest_map & m2);
 
 void read_manifest_map(data const & dat,
 		       manifest_map & man);

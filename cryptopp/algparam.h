@@ -23,7 +23,7 @@ public:
 	}
 	template <class T> ConstByteArrayParameter(const T &string, bool deepCopy = false)
 	{
-		CRYPTOPP_COMPILE_ASSERT(sizeof(string[0])==1);
+        CRYPTOPP_COMPILE_ASSERT(sizeof(CPP_TYPENAME T::value_type) == 1);
 		Assign((const byte *)string.data(), string.size(), deepCopy);
 	}
 
@@ -67,20 +67,15 @@ private:
 	unsigned int m_size;
 };
 
-class CombinedNameValuePairs : public NameValuePairs
+class CRYPTOPP_DLL CombinedNameValuePairs : public NameValuePairs
 {
 public:
 	CombinedNameValuePairs(const NameValuePairs &pairs1, const NameValuePairs &pairs2)
 		: m_pairs1(pairs1), m_pairs2(pairs2) {}
 
-	bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const
-	{
-		if (strcmp(name, "ValueNames") == 0)
-			return m_pairs1.GetVoidValue(name, valueType, pValue) && m_pairs2.GetVoidValue(name, valueType, pValue);
-		else
-			return m_pairs1.GetVoidValue(name, valueType, pValue) || m_pairs2.GetVoidValue(name, valueType, pValue);
-	}
+	bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const;
 
+private:
 	const NameValuePairs &m_pairs1, &m_pairs2;
 };
 
@@ -243,77 +238,114 @@ AssignFromHelperClass<T, T> AssignFromHelper(T *pObject, const NameValuePairs &s
 // ********************************************************
 
 // This should allow the linker to discard Integer code if not needed.
-extern bool (*AssignIntToInteger)(const std::type_info &valueType, void *pInteger, const void *pInt);
+CRYPTOPP_DLL extern bool (*AssignIntToInteger)(const std::type_info &valueType, void *pInteger, const void *pInt);
 
-const std::type_info & IntegerTypeId();
+CRYPTOPP_DLL const std::type_info & IntegerTypeId();
 
-template <class BASE, class T>
-class AlgorithmParameters : public NameValuePairs
+class CRYPTOPP_DLL AlgorithmParametersBase : public NameValuePairs
 {
 public:
-	AlgorithmParameters(const BASE &base, const char *name, const T &value)
-		: m_base(base), m_name(name), m_value(value)
-#ifndef NDEBUG
-		, m_used(false)
+	class ParameterNotUsed : public Exception
+	{
+	public: 
+		ParameterNotUsed(const char *name) : Exception(OTHER_ERROR, std::string("AlgorithmParametersBase: parameter \"") + name + "\" not used") {}
+	};
+
+	AlgorithmParametersBase(const char *name, bool throwIfNotUsed)
+		: m_name(name), m_throwIfNotUsed(throwIfNotUsed), m_used(false) {}
+
+	~AlgorithmParametersBase()
+	{
+#ifdef CRYPTOPP_UNCAUGHT_EXCEPTION_AVAILABLE
+		if (!std::uncaught_exception())
+#else
+		try
 #endif
+		{
+			if (m_throwIfNotUsed && !m_used)
+				throw ParameterNotUsed(m_name);
+		}
+#ifndef CRYPTOPP_UNCAUGHT_EXCEPTION_AVAILABLE
+		catch(...)
+		{
+		}
+#endif
+	}
+
+	bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const;
+
+protected:
+	virtual void AssignValue(const char *name, const std::type_info &valueType, void *pValue) const =0;
+	virtual const NameValuePairs & GetParent() const =0;
+
+	const char *m_name;
+	bool m_throwIfNotUsed;
+	mutable bool m_used;
+};
+
+template <class T>
+class AlgorithmParametersBase2 : public AlgorithmParametersBase
+{
+public:
+	AlgorithmParametersBase2(const char *name, const T &value, bool throwIfNotUsed) : AlgorithmParametersBase(name, throwIfNotUsed), m_value(value) {}
+
+	void AssignValue(const char *name, const std::type_info &valueType, void *pValue) const
+	{
+		// special case for retrieving an Integer parameter when an int was passed in
+		if (!(AssignIntToInteger != NULL && typeid(T) == typeid(int) && AssignIntToInteger(valueType, pValue, &m_value)))
+		{
+			ThrowIfTypeMismatch(name, typeid(T), valueType);
+			*reinterpret_cast<T *>(pValue) = m_value;
+		}
+	}
+
+protected:
+	T m_value;
+};
+
+template <class PARENT, class T>
+class AlgorithmParameters : public AlgorithmParametersBase2<T>
+{
+public:
+	AlgorithmParameters(const PARENT &parent, const char *name, const T &value, bool throwIfNotUsed)
+		: AlgorithmParametersBase2<T>(name, value, throwIfNotUsed), m_parent(parent)
 	{}
 
-#ifndef NDEBUG
 	AlgorithmParameters(const AlgorithmParameters &copy)
-		: m_base(copy.m_base), m_name(copy.m_name), m_value(copy.m_value), m_used(false)
+		: AlgorithmParametersBase2<T>(copy), m_parent(copy.m_parent)
 	{
 		copy.m_used = true;
 	}
 
-	// TODO: revisit after implementing some tracing mechanism, this won't work because of exceptions
-//	~AlgorithmParameters() {assert(m_used);}	// use assert here because we don't want to throw out of a destructor
-#endif
-
 	template <class R>
-	AlgorithmParameters<AlgorithmParameters<BASE,T>, R> operator()(const char *name, const R &value) const
+	AlgorithmParameters<AlgorithmParameters<PARENT,T>, R> operator()(const char *name, const R &value) const
 	{
-		return AlgorithmParameters<AlgorithmParameters<BASE,T>, R>(*this, name, value);
+		return AlgorithmParameters<AlgorithmParameters<PARENT,T>, R>(*this, name, value, this->m_throwIfNotUsed);
 	}
 
-	bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const
+	template <class R>
+	AlgorithmParameters<AlgorithmParameters<PARENT,T>, R> operator()(const char *name, const R &value, bool throwIfNotUsed) const
 	{
-		if (strcmp(name, "ValueNames") == 0)
-		{
-			ThrowIfTypeMismatch(name, typeid(std::string), valueType);
-			m_base.GetVoidValue(name, valueType, pValue);
-			(*reinterpret_cast<std::string *>(pValue) += m_name) += ";";
-			return true;
-		}
-		else if (strcmp(name, m_name) == 0)
-		{
-			// special case for retrieving an Integer parameter when an int was passed in
-			if (!(AssignIntToInteger != NULL && typeid(T) == typeid(int) && AssignIntToInteger(valueType, pValue, &m_value)))
-			{
-				ThrowIfTypeMismatch(name, typeid(T), valueType);
-				*reinterpret_cast<T *>(pValue) = m_value;
-			}
-#ifndef NDEBUG
-			m_used = true;
-#endif
-			return true;
-		}
-		else
-			return m_base.GetVoidValue(name, valueType, pValue);
+		return AlgorithmParameters<AlgorithmParameters<PARENT,T>, R>(*this, name, value, throwIfNotUsed);
 	}
 
 private:
-	BASE m_base;
-	const char *m_name;
-	T m_value;
-#ifndef NDEBUG
-	mutable bool m_used;
-#endif
+	const NameValuePairs & GetParent() const {return m_parent;}
+	PARENT m_parent;
 };
 
+//! Create an object that implements NameValuePairs for passing parameters
+/*! \param throwIfNotUsed if true, the object will throw an exception if the value is not accessed
+	\note throwIfNotUsed is ignored if using a compiler that does not support std::uncaught_exception(),
+	such as MSVC 7.0 and earlier.
+	\note A NameValuePairs object containing an arbitrary number of name value pairs may be constructed by
+	repeatedly using operator() on the object returned by MakeParameters, for example:
+	const NameValuePairs &parameters = MakeParameters(name1, value1)(name2, value2)(name3, value3);
+*/
 template <class T>
-AlgorithmParameters<NullNameValuePairs,T> MakeParameters(const char *name, const T &value)
+AlgorithmParameters<NullNameValuePairs,T> MakeParameters(const char *name, const T &value, bool throwIfNotUsed = true)
 {
-	return AlgorithmParameters<NullNameValuePairs,T>(g_nullNameValuePairs, name, value);
+	return AlgorithmParameters<NullNameValuePairs,T>(g_nullNameValuePairs, name, value, throwIfNotUsed);
 }
 
 #define CRYPTOPP_GET_FUNCTION_ENTRY(name)		(Name::name(), &ThisClass::Get##name)

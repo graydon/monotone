@@ -14,7 +14,6 @@
 #include "lcs.hh"
 #include "manifest.hh"
 #include "packet.hh"
-#include "patch_set.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "vocab.hh"
@@ -23,7 +22,8 @@ using namespace std;
 
 bool guess_binary(string const & s)
 {
-  // these do not occur in text files
+  // these do not occur in ASCII text files
+  // FIXME: this heuristic is (a) crap and (b) hardcoded. fix both these.
   if (s.find_first_of("\x00\x01\x02\x03\x04\x05\x06\x0e\x0f"
 		      "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
 		      "\x19\x1a\x1c\x1d\x1e\x1f") != string::npos)
@@ -234,10 +234,6 @@ void calculate_hunk_offsets(vector<string> const & ancestor,
   walk_hunk_consumer(lcs, anc_interned, left_interned, calc);
 }
 
-
-struct conflict {};
-
-// utility class which performs the merge
 
 typedef enum { preserved = 0, deleted = 1, changed = 2 } edit_t;
 static char *etab[3] = 
@@ -499,7 +495,6 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   vector<long> left_suffix, right_suffix;  
   vector<extent> left_extents, right_extents;
   vector<long> merged_interned;
-  vector<long> lcs;
   interner<long> in;
 
   //   for (int i = 0; i < std::min(std::min(left.size(), right.size()), ancestor.size()); ++i)
@@ -528,7 +523,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   edit_script(anc_interned.begin(), anc_interned.end(),
 	      left_interned.begin(), left_interned.end(),
 	      std::min(ancestor.size(), left.size()),
-	      left_edits, back_inserter(lcs));
+	      left_edits);
   
   L(F("calculating right edit script on %d -> %d lines\n")
     % anc_interned.size() % right_interned.size());
@@ -536,7 +531,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   edit_script(anc_interned.begin(), anc_interned.end(),
 	      right_interned.begin(), right_interned.end(),
 	      std::min(ancestor.size(), right.size()),
-	      right_edits, back_inserter(lcs));
+	      right_edits);
 
   L(F("calculating left extents on %d edits\n") % left_edits.size());
   calculate_extents(left_edits, left_interned, 
@@ -604,777 +599,15 @@ bool merge3(vector<string> const & ancestor,
   return true;
 }
 
-/*
 
-bool merge3_lcs(vector<string> const & ancestor,
-		vector<string> const & left,
-		vector<string> const & right,
-		vector<string> & merged)
-{
-  try 
-    {
-      vector<size_t> leftpos;
-      set<size_t> deletes;
-      set<size_t> inserts;
-      
-      L(F("calculating offsets from ancestor:[%d..%d) to left:[%d..%d)\n")
-	% 0 % ancestor.size() % 0 % left.size());
-      calculate_hunk_offsets(ancestor, left, leftpos, deletes, inserts);
-
-      L(F("sanity-checking offset table (sz=%d, ancestor=%d)\n")
-	% leftpos.size() % ancestor.size());
-      I(leftpos.size() == ancestor.size());
-      for(size_t i = 0; i < ancestor.size(); ++i)
-	{
-	  if (idx(leftpos,i) > left.size())
-	    L(F("weird offset table: leftpos[%d] = %d (left.size() = %d)\n") 
-	      % i % idx(leftpos,i) % left.size());
-	  I(idx(leftpos,i) <= left.size());
-	}
-      
-      L(F("merging differences from ancestor:[%d..%d) to right:[%d..%d)\n")
-	% 0 % ancestor.size() % 0 % right.size());
-      merge_hunks_via_offsets(left, ancestor, right, leftpos, 
-			      deletes, inserts, merged);
-    }
-  catch(conflict & c)
-    {
-      L(F("conflict detected. no merge.\n"));
-      return false;
-    }
-  return true;
-}
-
-*/
-
-// this does a merge2 on manifests. it's not as likely to succeed as the
-// merge3 on manifests, but you do what you can..
-
-bool merge2(manifest_map const & left,
-	    manifest_map const & right,
-	    app_state & app,
-	    file_merge_provider & file_merger,
-	    manifest_map & merged)
-{
-  set<file_path> paths;
-
-  for (manifest_map::const_iterator i = left.begin();
-       i != left.end(); ++i)
-    paths.insert(i->first);
-  
-  for (manifest_map::const_iterator i = right.begin();
-       i != right.end(); ++i)
-    paths.insert(i->first);
-  
-  for (set<file_path>::const_iterator i = paths.begin();
-       i != paths.end(); ++i)
-    {
-      manifest_map::const_iterator left_entry = left.find(*i);
-      manifest_map::const_iterator right_entry = right.find(*i);
-
-      bool left_exists = (left_entry != left.end());
-      bool right_exists = (right_entry != right.end());
-
-      I(left_exists || right_exists);
-
-      if (left_exists && !right_exists)
-	{
-	  L(F("taking left version of %s\n") % *i);
-	  merged.insert(*left_entry);
-	}
-      else if (!left_exists && right_exists)
-	{
-	  L(F("taking right version of %s\n") % *i);
-	  merged.insert(*right_entry);
-	}
-      else
-	{
-	  path_id_pair l_pip(left_entry), r_pip(right_entry), m_pip;
-
-	  L(F("merging existant versions of %s in both manifests\n")
-	    % l_pip.path());
-
-	  if (file_merger.try_to_merge_files(l_pip, r_pip, m_pip))
-	    {
-	      L(F("arrived at merged version %s\n") % m_pip.ident());
-	      merged.insert(m_pip.get_entry()); 
-	    }
-	  else
-	    {
-	      merged.clear();
-	      return false;
-	    }
-	}
-    }
-  return true;
-}
-
-
-void check_no_intersect(set<file_path> const & a,
-			set<file_path> const & b,
-			string const & a_name,
-			string const & b_name)
-{
-  set<file_path> tmp;
-  set_intersection(a.begin(), a.end(), b.begin(), b.end(),
-		   inserter(tmp, tmp.begin()));
-  if (tmp.empty())
-    {
-      L(F("file sets '%s' and '%s' do not intersect\n")
-	% a_name % b_name);      
-    }
-  else
-    {
-      L(F("conflict: file sets '%s' and '%s' intersect\n")
-	% a_name % b_name);
-      throw conflict();
-    }
-}
-
-template <typename K, typename V>
-void check_map_inclusion(map<K,V> const & a,
-			 map<K,V> const & b,
-			 string const & a_name,
-			 string const & b_name)
-{
-  for (typename map<K, V>::const_iterator self = a.begin();
-       self != a.end(); ++self)
-    {
-      typename map<K, V>::const_iterator other =
-	b.find(self->first);
-
-      if (other == b.end())
-	{
-	  L(F("map '%s' has unique entry for %s -> %s\n")
-	    % a_name % self->first % self->second);
-	}
-      
-      else if (other->second == self->second)
-	{
-	  L(F("maps '%s' and '%s' agree on %s -> %s\n")
-	    % a_name % b_name % self->first % self->second);
-	}
-
-      else
-	{
-	  L(F("conflict: maps %s and %s disagree: %s -> %s and %s\n") 
-	    % a_name % b_name
-	    % self->first % self->second % other->second);
-	  throw conflict();
-	}
-    }  
-}
-
-
-void merge_deltas (map<file_path, patch_delta> const & self_map,
-		   map<file_path, patch_delta> & other_map,
-		   file_merge_provider & file_merger,
-		   patch_set & merged_edge)
-{
-  for (map<file_path, patch_delta>::const_iterator delta = self_map.begin();
-       delta != self_map.end(); ++delta)
-    {
-      
-      map<file_path, patch_delta>::const_iterator other = 
-	other_map.find(delta->first);
-
-      if (other == other_map.end())
-	{
-	  merged_edge.f_deltas.insert(patch_delta(delta->second.id_old,
-						  delta->second.id_new,
-						  delta->first));
-	}
-      else
-	{
-	  // concurrent deltas! into the file merger we go..
-	  I(other->second.id_old == delta->second.id_old);
-	  //I(other->second.path == delta->second.path);
-	  L(F("attempting to merge deltas on %s : %s -> %s and %s\n")
-	    % delta->first 
-	    % delta->second.id_old 
-	    % delta->second.id_new
-	    % other->second.id_new);
-	  
-	  path_id_pair a_pip = path_id_pair(make_pair(delta->second.path, 
-						      delta->second.id_old));
-	  path_id_pair l_pip = path_id_pair(make_pair(delta->first,
-						      delta->second.id_new));
-	  path_id_pair r_pip = path_id_pair(make_pair(delta->first,
-						      other->second.id_new));
-	  path_id_pair m_pip;
-	  if (file_merger.try_to_merge_files(a_pip, l_pip, r_pip, m_pip))
-	    {
-	      L(F("concurrent deltas on %s merged to %s OK\n")
-		% delta->first % m_pip.ident());
-	      I(m_pip.path() == delta->first);
-	      other_map.erase(delta->first);
-	      merged_edge.f_deltas.insert(patch_delta(delta->second.id_old,
-						      m_pip.ident(),
-						      m_pip.path()));
-	    }
-	  else
-	    {
-	      L(F("conflicting deltas on %s, merge failed\n")
-		% delta->first);
-	      throw conflict();
-	    }	  
-	}
-    }  
-}
-
-
-static void apply_directory_moves(map<file_path, file_path> const & dir_moves,
-				  file_path & fp)
-{
-  fs::path stem = mkpath(fp());
-  fs::path rest;
-  while (stem.has_branch_path())
-    {
-      rest = mkpath(stem.leaf()) / rest;
-      stem = stem.branch_path();
-      map<file_path, file_path>::const_iterator j = 
-	dir_moves.find(file_path(stem.string()));
-      if (j != dir_moves.end())
-	{
-	  file_path old = fp;
-	  fp = file_path((mkpath(j->second()) / rest).string());
-	  L(F("applying dir rename: %s -> %s\n") % old % fp);
-	  return;
-	}      
-    }
-}
-
-static void rebuild_under_directory_moves(map<file_path, file_path> const & dir_moves,
-					  manifest_map const & in,
-					  manifest_map & out)
-{
-  for (manifest_map::const_iterator mm = in.begin();
-       mm != in.end(); ++mm)
-    {
-      file_path fp = mm->first;
-      apply_directory_moves(dir_moves, fp);
-      I(out.find(fp) == out.end());
-      out.insert(make_pair(fp, mm->second));
-    }
-}
-					  
-
-static void infer_directory_moves(manifest_map const & ancestor,
-				  manifest_map const & child,
-				  map<file_path, file_path> const & moves,
-				  map<file_path, file_path> & dir_portion)
-{
-  for (map<file_path, file_path>::const_iterator mov = moves.begin();
-       mov != moves.end(); ++mov)
-    {
-      fs::path src = mkpath(mov->first());
-      fs::path dst = mkpath(mov->second());
-
-      // we will call this a "directory move" if the branch path changed,
-      // and the new branch path didn't exist in the ancestor, and there
-      // old branch path doesn't exist in the child
-      
-      if (src.empty() 
-	  || dst.empty() 
-	  || !src.has_branch_path() 
-	  || !dst.has_branch_path())
-	continue;
-      
-      if (src.branch_path().string() != dst.branch_path().string())
-	{
-	  fs::path dp = dst.branch_path();
-	  fs::path sp = src.branch_path();
-
-	  if (dir_portion.find(file_path(sp.string())) != dir_portion.end())
-	    continue;
-
-	  bool clean_move = true;
-
-	  for (manifest_map::const_iterator mm = ancestor.begin();
-	       mm != ancestor.end(); ++mm)
-	    {
-	      fs::path mp = mkpath(mm->first());
-	      if (mp.branch_path().string() == dp.string())
-		{
-		  clean_move = false;
-		  break;
-		}
-	    }
-	  
-	  if (clean_move)
-	    for (manifest_map::const_iterator mm = child.begin();
-		 mm != child.end(); ++mm)
-	      {
-		fs::path mp = mkpath(mm->first());
-		if (mp.branch_path().string() == sp.string())
-		  {
-		    clean_move = false;
-		    break;
-		  }
-	      }
-	  
-	  
-	  if (clean_move)
-	    {
-	      L(F("inferred pure directory rename %s -> %s\n")
-		% sp.string() % dst.branch_path().string());
-	      dir_portion.insert
-		(make_pair(file_path(sp.string()),
-			   file_path(dst.branch_path().string())));
-	    }
-	  else
-	    {
-	      L(F("skipping uncertain directory rename %s -> %s\n")
-		% sp.string() % dst.branch_path().string());
-	    }
-	  
-	}
-    }
-}
-
-void 
-adjust_deltas_under_renames(set<file_path> & deltas, 
-			    map<file_path, patch_delta> & delta_map, 
-			    map<file_path, file_path> const & move_map)
-{
-  set<file_path> initial_deltas = deltas;
-  for (set<file_path>::const_iterator delta_path = initial_deltas.begin();
-       delta_path != initial_deltas.end(); ++delta_path)
-    {
-      map<file_path, file_path>::const_iterator i = move_map.find(*delta_path);
-      
-      if (i != move_map.end())
-	{
-	  I(*delta_path == i->first);
-	  if (deltas.find(i->second) != deltas.end())
-	    {
-	      L(F("patch moved from %s to %s conflicts with existing patch\n")
-		% i->first % i->second);
-	      throw conflict();
-	    }
-	  I(delta_map.find(i->second) == delta_map.end());
-
-	  map<file_path, patch_delta>::const_iterator delta = delta_map.find(*delta_path);
-	  I(delta != delta_map.end());
-	  patch_delta patch = delta->second;
-	  deltas.erase(i->first);
-	  delta_map.erase(i->first);
-	  deltas.insert(i->second);
-	  delta_map.insert(make_pair(i->second, patch));
-	}
-    }
-}
-
-void 
-adjust_deletes_under_renames(set<file_path> & deletes,
-			     set<file_path> const & deltas,
-			     set<file_path> const & adds,
-			     map<file_path, file_path> const & move_map)
-{
-  set<file_path> initial_dels = deletes;
-  for (set<file_path>::const_iterator del_path = initial_dels.begin();
-       del_path != initial_dels.end(); ++del_path)
-    {
-      map<file_path, file_path>::const_iterator i = move_map.find(*del_path);
-      
-      if (i != move_map.end())
-	{
-	  I(*del_path == i->first);
-	  if (deltas.find(i->second) != deltas.end())
-	    {
-	      L(F("delete moved from %s to %s conflicts with existing patch\n")
-		% i->first % i->second);
-	      throw conflict();
-	    }
-	  if (adds.find(i->second) != adds.end())
-	    {
-	      L(F("delete moved from %s to %s conflicts with existing addition\n")
-		% i->first % i->second);
-	      throw conflict();
-	    }
-	 
-	  deletes.erase(i->first);
-	  deletes.insert(i->second);
-	}
-    }
-}
-
-
-// this is a 3-way merge algorithm on manifests.
-
-bool merge3(manifest_map const & ancestor,
-	    manifest_map const & left,
-	    manifest_map const & right,
-	    app_state & app,
-	    file_merge_provider & file_merger,
-	    manifest_map & merged,
-	    rename_set & left_renames,
-	    rename_set & right_renames)
-{
-  // in phase #1 we make a bunch of indexes of the changes we saw on each
-  // edge.
-
-  patch_set left_edge, right_edge, merged_edge;
-  manifests_to_patch_set(ancestor, left, app, left_edge);
-  manifests_to_patch_set(ancestor, right, app, right_edge);
-
-  // this is an unusual map of deltas, in that the "path" field of the
-  // patch_delta is used to store the ancestral path of the delta, and the
-  // key of this map is used to store the merged path of the delta (in
-  // cases where the delta happened along with a merge, these differ)
-  map<file_path, patch_delta> 
-    left_delta_map, right_delta_map;
-
-  map<file_path, file_path> 
-    left_move_map, right_move_map,
-    left_dir_move_map, right_dir_move_map;
-
-  map<file_path, file_id> 
-    left_add_map, right_add_map;
-
-  set<file_path> 
-    left_adds, right_adds,
-    left_move_srcs, right_move_srcs,
-    left_move_dsts, right_move_dsts,
-    left_deltas, right_deltas;
-
-
-  for(set<patch_addition>::const_iterator a = left_edge.f_adds.begin(); 
-      a != left_edge.f_adds.end(); ++a)
-    {
-      left_adds.insert(a->path);
-      left_add_map.insert(make_pair(a->path, a->ident));
-    }
-  
-  for(set<patch_addition>::const_iterator a = right_edge.f_adds.begin(); 
-      a != right_edge.f_adds.end(); ++a)
-    {
-      right_adds.insert(a->path);
-      right_add_map.insert(make_pair(a->path, a->ident));
-    }
-
-
-  for(set<patch_move>::const_iterator m = left_edge.f_moves.begin(); 
-      m != left_edge.f_moves.end(); ++m)
-    {
-      left_move_srcs.insert(m->path_old);
-      left_move_dsts.insert(m->path_new);
-      left_move_map.insert(make_pair(m->path_old, m->path_new));
-    }
-
-  for(set<patch_move>::const_iterator m = right_edge.f_moves.begin(); 
-      m != right_edge.f_moves.end(); ++m)
-    {
-      right_move_srcs.insert(m->path_old);
-      right_move_dsts.insert(m->path_new);
-      right_move_map.insert(make_pair(m->path_old, m->path_new));
-    }
-
-  for(set<patch_delta>::const_iterator d = left_edge.f_deltas.begin();
-      d != left_edge.f_deltas.end(); ++d)
-    {
-      left_deltas.insert(d->path);
-      left_delta_map.insert(make_pair(d->path, *d));
-    }
-
-  for(set<patch_delta>::const_iterator d = right_edge.f_deltas.begin();
-      d != right_edge.f_deltas.end(); ++d)
-    {
-      right_deltas.insert(d->path);
-      right_delta_map.insert(make_pair(d->path, *d));
-    }
-
-
-  // phase #2 is a sort of "pre-processing" phase, in which we handle
-  // "interesting" move cases:
-  // 
-  //   - locating any moves which moved *directories* and modifying any adds
-  //     in the opposing edge which have the source directory as input, to go
-  //     to the target directory
-  //
-  //   - locating any moves between non-equal ids. these are move+edit
-  //     events, so we degrade them to a move + an edit (on the move target).
-  //     note that in the rest of this function, moves *must* therefore be
-  //     applied before edits. just in this function (specifically phase #6)
-  //     
-
-  // find any left-edge directory renames 
-  infer_directory_moves(ancestor, left, left_move_map, left_dir_move_map);
-  infer_directory_moves(ancestor, right, right_move_map, right_dir_move_map);
-  {
-    manifest_map left_new, right_new;
-    rebuild_under_directory_moves(left_dir_move_map, right, right_new);
-    rebuild_under_directory_moves(right_dir_move_map, left, left_new);
-    if (left != left_new || right != right_new)
-      {
-	L(F("restarting merge under propagated directory renames\n"));
-	return merge3(ancestor, left_new, right_new, app, file_merger, merged,
-		      left_renames, right_renames);
-      }
-  }
-
-  // split edit part off of left move+edits 
-  for (map<file_path, file_path>::const_iterator mov = left_move_map.begin();
-       mov != left_move_map.end(); ++mov)
-    {
-      manifest_map::const_iterator 
-	anc = ancestor.find(mov->first),
-	lf = left.find(mov->second);
-
-      if (anc != ancestor.end() && lf != left.end()
-	  && ! (anc->second == lf->second))
-	{
-	  // it's possible this one has already been split by patch_set.cc
-	  map<file_path, patch_delta>::const_iterator left_patch;
-	  left_patch = left_delta_map.find(lf->first);
-	  if (left_patch != left_delta_map.end())
-	    {
-	      I(left_patch->second.id_new == lf->second);
-	    }
-	  else
-	    {
-	      left_deltas.insert(lf->first);
-	      left_delta_map.insert
-		(make_pair
-		 (lf->first, patch_delta(anc->second, lf->second, anc->first)));
-	    }	    
-	}
-    }
-
-  // split edit part off of right move+edits 
-  for (map<file_path, file_path>::const_iterator mov = right_move_map.begin();
-       mov != right_move_map.end(); ++mov)
-    {
-      manifest_map::const_iterator 
-	anc = ancestor.find(mov->first),
-	rt = right.find(mov->second);
-
-      if (anc != ancestor.end() && rt != right.end()
-	  && ! (anc->second == rt->second))
-	{
-	  // it's possible this one has already been split by patch_set.cc
-	  map<file_path, patch_delta>::const_iterator right_patch;
-	  right_patch = right_delta_map.find(rt->first);
-	  if (right_patch != right_delta_map.end())
-	    {
-	      I(right_patch->second.id_new == rt->second);
-	    }
-	  else
-	    {
-	      right_deltas.insert(rt->first);
-	      right_delta_map.insert
-		(make_pair
-		 (rt->first, patch_delta(anc->second, rt->second, anc->first)));
-	    }
-	}
-    }
-
-
-  // phase #3 detects conflicts. any conflicts here -- including those
-  // which were a result of the actions taken in phase #2 -- result in an
-  // early return.
-
-  try 
-    {
-
-      // no adding and deleting the same file
-      check_no_intersect (left_adds, right_edge.f_dels, 
-			  "left adds", "right dels");
-      check_no_intersect (left_edge.f_dels, right_adds, 
-			  "left dels", "right adds");
-
-
-      // no initial fiddling with the destinations of a move
-      check_no_intersect (left_move_dsts, right_adds, 
-			  "left move destinations", "right adds");
-      check_no_intersect (left_adds, right_move_dsts, 
-			  "left adds", "right move destinations");
-
-      check_no_intersect (left_move_dsts, right_edge.f_dels, 
-			  "left move destinations", "right dels");
-      check_no_intersect (left_edge.f_dels, right_move_dsts, 
-			  "left dels", "right move destinations");
-
-      check_no_intersect (left_move_dsts, right_deltas, 
-			  "left move destinations", "right deltas");
-      check_no_intersect (left_deltas, right_move_dsts, 
-			  "left deltas", "right move destinations");
-
-      // intermediate phase #3.1 tries to move deltas on left to their
-      // targets on right and vice versa, provided there is not already a
-      // delta on the target.
-
-      adjust_deltas_under_renames (left_deltas, left_delta_map, right_move_map);
-      adjust_deltas_under_renames (right_deltas, right_delta_map, left_move_map);
-
-      // intermediate phase #3.2 tries to move deletes on left to their
-      // targets on right and vice versa, provided there is not already a
-      // delete (or add / patch) on the target.
-
-      adjust_deletes_under_renames (left_edge.f_dels, left_deltas, 
-				    left_adds, right_move_map);
-      adjust_deletes_under_renames (right_edge.f_dels, right_deltas, 
-				    right_adds, left_move_map);
-
-      // no remaining fiddling with the source of a move
-      check_no_intersect (left_move_srcs, right_adds, 
-			  "left move sources", "right adds");
-      check_no_intersect (left_adds, right_move_srcs, 
-			  "left adds", "right move sources");
-
-      check_no_intersect (left_move_srcs, right_edge.f_dels, 
-			  "left move sources", "right dels");
-      check_no_intersect (left_edge.f_dels, right_move_srcs, 
-			  "left dels", "right move sources");
-
-      check_no_intersect (left_move_srcs, right_deltas, 
-			  "left move sources", "right deltas");
-      check_no_intersect (left_deltas, right_move_srcs, 
-			  "left deltas", "right move sources");
-
-
-      // we're not going to do anything clever like chaining moves together
-      check_no_intersect (left_move_srcs, right_move_dsts, 
-			  "left move sources", "right move destinations");
-      check_no_intersect (left_move_dsts, right_move_srcs, 
-			  "left move destinations", "right move sources");
-
-      // check specific add-map conflicts
-      check_map_inclusion (left_add_map, right_add_map,
-			   "left add map", "right add map");
-      check_map_inclusion (right_add_map, left_add_map,
-			   "right add map", "left add map");
-
-      // check specific move-map conflicts
-      check_map_inclusion (left_move_map, right_move_map,
-			   "left move map", "right move map");
-      check_map_inclusion (right_move_map, left_move_map,
-			   "right move map", "left move map");
-
-
-    }
-  catch (conflict & c)
-    {
-      // FIXME: this catch should call out to a user-provided manifest
-      // merge resolution hook, the same way the file merger does.
-      merged.clear();
-      return false;
-    }
-
-  // in phase #4 we union all the (now non-conflicting) deletes, adds, and
-  // moves into a "merged" edge
-
-  set_union(left_edge.f_adds.begin(), left_edge.f_adds.end(),
-	    right_edge.f_adds.begin(), right_edge.f_adds.end(), 
-	    inserter(merged_edge.f_adds, merged_edge.f_adds.begin()));
-
-  set_union(left_edge.f_dels.begin(), left_edge.f_dels.end(),
-	    right_edge.f_dels.begin(), right_edge.f_dels.end(), 
-	    inserter(merged_edge.f_dels, merged_edge.f_dels.begin()));
-
-  set_union(left_edge.f_moves.begin(), left_edge.f_moves.end(),
-	    right_edge.f_moves.begin(), right_edge.f_moves.end(), 
-	    inserter(merged_edge.f_moves, merged_edge.f_moves.begin()));
-
-  // in phase #5 we run 3-way file merges on all the files which have 
-  // a delta on both edges, and union the results of the 3-way merges with
-  // all the deltas which only happen on one edge, and dump all this into
-  // the merged edge too.
-
-  try 
-    {      
-      merge_deltas (left_delta_map, right_delta_map, 
-		    file_merger, merged_edge);
-
-      merge_deltas (right_delta_map, left_delta_map, 
-		    file_merger, merged_edge);
-    }
-  catch (conflict & c)
-    {
-      merged.clear();
-      return false;
-    }
-
-  // in phase #6 (finally) we copy ancestor into our result, and apply the
-  // merged edge to it, mutating it into the merged manifest.
-
-  copy(ancestor.begin(), ancestor.end(), inserter(merged, merged.begin()));
-  
-  for (set<patch_move>::const_iterator mov = merged_edge.f_moves.begin();
-       mov != merged_edge.f_moves.end(); ++mov)
-    {
-      L(F("applying merged move of file %s -> %s\n")
-	% mov->path_old % mov->path_new);
-      I(merged.find(mov->path_old) != merged.end());
-      I(merged.find(mov->path_new) == merged.end());
-      file_id fid = merged[mov->path_old];
-      merged.erase(mov->path_old);
-      merged.insert(make_pair(mov->path_new, fid));
-    }
-
-  for (set<file_path>::const_iterator del = merged_edge.f_dels.begin();
-       del != merged_edge.f_dels.end(); ++del)
-    {
-      L(F("applying merged delete of file %s\n") % *del);
-      I(merged.find(*del) != merged.end());
-      merged.erase(*del);
-    }
-
-  for (set<patch_addition>::const_iterator add = merged_edge.f_adds.begin();
-       add != merged_edge.f_adds.end(); ++add)
-    {
-      L(F("applying merged addition of file %s: %s\n")
-	% add->path % add->ident);
-      I(merged.find(add->path) == merged.end());
-      merged.insert(make_pair(add->path, add->ident));
-    }
-
-  for (set<patch_delta>::const_iterator delta = merged_edge.f_deltas.begin();
-       delta != merged_edge.f_deltas.end(); ++delta)
-    {
-      if (merged_edge.f_dels.find(delta->path) != merged_edge.f_dels.end())
-	{
-	  L(F("skipping merged delta on deleted file %s\n") % delta->path);
-	  continue;
-	}
-      L(F("applying merged delta to file %s: %s -> %s\n")
-	% delta->path % delta->id_old % delta->id_old);
-      I(merged.find(delta->path) != merged.end());
-      I(merged[delta->path] == delta->id_old);
-      merged[delta->path] = delta->id_new;
-    }
-
-  // (phase 7, copy the renames into the disjoint rename sets for independent
-  // certification in our caller). note that we must copy the right renames
-  // into the left edge (and vice versa) because we are documenting the
-  // renames *missing* from the left side, which will be written into a cert.
-
-  right_renames.clear();
-  for (set<patch_move>::const_iterator mv = left_edge.f_moves.begin();
-       mv != left_edge.f_moves.end(); ++mv)
-    {
-      if (right.find(mv->path_old) != right.end() &&
-	  merged.find(mv->path_new) != merged.end())
-	right_renames.insert(make_pair(mv->path_old, mv->path_new));
-    }
-
-  left_renames.clear();
-  for (set<patch_move>::const_iterator mv = right_edge.f_moves.begin();
-       mv != right_edge.f_moves.end(); ++mv)
-    {
-      if (left.find(mv->path_old) != left.end() &&
-	  merged.find(mv->path_new) != merged.end())	
-	left_renames.insert(make_pair(mv->path_old, mv->path_new));
-    }
-
-  return true;
-}
-
-
-simple_merge_provider::simple_merge_provider(app_state & app) 
-  : app(app) {}
-
-void simple_merge_provider::record_merge(file_id const & left_ident, 
+merge_provider::merge_provider(app_state & app, 
+			       manifest_map const & anc_man,
+			       manifest_map const & left_man, 
+			       manifest_map const & right_man)
+  : app(app), anc_man(anc_man), left_man(left_man), right_man(right_man)
+{}
+
+void merge_provider::record_merge(file_id const & left_ident, 
 					 file_id const & right_ident, 
 					 file_id const & merged_ident,
 					 file_data const & left_data, 
@@ -1392,62 +625,81 @@ void simple_merge_provider::record_merge(file_id const & left_ident,
   guard.commit();
 }
 
-void simple_merge_provider::get_version(path_id_pair const & pip, file_data & dat)
+void merge_provider::get_version(file_path const & path,
+				 file_id const & ident,
+				 file_data & dat)
 {
-  app.db.get_file_version(pip.ident(), dat);
+  app.db.get_file_version(ident, dat);
 }
 
-bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
-					       path_id_pair const & left,
-					       path_id_pair const & right,
-					       path_id_pair & merged)
+std::string merge_provider::get_file_encoding(file_path const & path,
+					      manifest_map const & man)
+{
+  std::string enc;
+  if (get_attribute_from_db(path, encoding_attribute, man, enc, app))
+    return enc;
+  else
+    return default_encoding;
+}
+
+bool merge_provider::try_to_merge_files(file_path const & anc_path,
+					file_path const & left_path,
+					file_path const & right_path,
+					file_path const & merged_path,
+					file_id const & ancestor_id,					
+					file_id const & left_id,
+					file_id const & right_id,
+					file_id & merged_id)
 {
   
   L(F("trying to merge %s <-> %s (ancestor: %s)\n")
-    % left.ident() % right.ident() % ancestor.ident());
+    % left_id % right_id % ancestor_id);
 
-  if (left.ident() == right.ident() &&
-      left.path() == right.path())
+  if (left_id == right_id)
     {
       L(F("files are identical\n"));
-      merged = left;
+      merged_id = left_id;
       return true;      
     }  
 
   file_data left_data, right_data, ancestor_data;
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
+  string left_encoding, anc_encoding, right_encoding;
   vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
 
-  this->get_version(left, left_data);
-  this->get_version(ancestor, ancestor_data);
-  this->get_version(right, right_data);
+  this->get_version(left_path, left_id, left_data);
+  this->get_version(anc_path, ancestor_id, ancestor_data);
+  this->get_version(right_path, right_id, right_data);
+
+  left_encoding = this->get_file_encoding(left_path, left_man);
+  anc_encoding = this->get_file_encoding(anc_path, anc_man);
+  right_encoding = this->get_file_encoding(right_path, right_man);
     
   unpack(left_data.inner(), left_unpacked);
   unpack(ancestor_data.inner(), ancestor_unpacked);
   unpack(right_data.inner(), right_unpacked);
 
-  split_into_lines(left_unpacked(), left_lines);
-  split_into_lines(ancestor_unpacked(), ancestor_lines);
-  split_into_lines(right_unpacked(), right_lines);
+  split_into_lines(left_unpacked(), left_encoding, left_lines);
+  split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
+  split_into_lines(right_unpacked(), right_encoding, right_lines);
     
   if (merge3(ancestor_lines, 
 	     left_lines, 
 	     right_lines, 
 	     merged_lines))
     {
-      hexenc<id> merged_id;
+      hexenc<id> tmp_id;
       base64< gzip<data> > packed_merge;
       string tmp;
       
       L(F("internal 3-way merged ok\n"));
       join_lines(merged_lines, tmp);
-      calculate_ident(data(tmp), merged_id);
-      file_id merged_fid(merged_id);
+      calculate_ident(data(tmp), tmp_id);
+      file_id merged_fid(tmp_id);
       pack(data(tmp), packed_merge);
 
-      merged.path(left.path());
-      merged.ident(merged_fid);
-      record_merge(left.ident(), right.ident(), merged_fid, 
+      merged_id = merged_fid;
+      record_merge(left_id, right_id, merged_fid, 
 		   left_data, packed_merge);
 
       return true;
@@ -1455,17 +707,16 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
   else if (app.lua.hook_merge3(ancestor_unpacked, left_unpacked, 
 			       right_unpacked, merged_unpacked))
     {
-      hexenc<id> merged_id;
+      hexenc<id> tmp_id;
       base64< gzip<data> > packed_merge;
 
       L(F("lua merge3 hook merged ok\n"));
-      calculate_ident(merged_unpacked, merged_id);
-      file_id merged_fid(merged_id);
+      calculate_ident(merged_unpacked, tmp_id);
+      file_id merged_fid(tmp_id);
       pack(merged_unpacked, packed_merge);
 
-      merged.path(left.path());
-      merged.ident(merged_fid);
-      record_merge(left.ident(), right.ident(), merged_fid, 
+      merged_id = merged_fid;
+      record_merge(left_id, right_id, merged_fid, 
 		   left_data, packed_merge);
       return true;
     }
@@ -1473,43 +724,42 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
   return false;
 }
 
-bool simple_merge_provider::try_to_merge_files(path_id_pair const & left,
-					       path_id_pair const & right,
-					       path_id_pair & merged)
+bool merge_provider::try_to_merge_files(file_path const & path,
+					file_id const & left_id,
+					file_id const & right_id,
+					file_id & merged_id)
 {
   file_data left_data, right_data;
   data left_unpacked, right_unpacked, merged_unpacked;
 
   L(F("trying to merge %s <-> %s\n")
-    % left.ident() % right.ident());
+    % left_id % right_id);
 
-  if (left.ident() == right.ident() &&
-      left.path() == right.path())
+  if (left_id == right_id)
     {
       L(F("files are identical\n"));
-      merged = left;
+      merged_id = left_id;
       return true;      
     }  
 
-  this->get_version(left, left_data);
-  this->get_version(right, right_data);
+  this->get_version(path, left_id, left_data);
+  this->get_version(path, right_id, right_data);
     
   unpack(left_data.inner(), left_unpacked);
   unpack(right_data.inner(), right_unpacked);
 
   if (app.lua.hook_merge2(left_unpacked, right_unpacked, merged_unpacked))
     {
-      hexenc<id> merged_id;
+      hexenc<id> tmp_id;
       base64< gzip<data> > packed_merge;
       
       L(F("lua merge2 hook merged ok\n"));
-      calculate_ident(merged_unpacked, merged_id);
-      file_id merged_fid(merged_id);
+      calculate_ident(merged_unpacked, tmp_id);
+      file_id merged_fid(tmp_id);
       pack(merged_unpacked, packed_merge);
       
-      merged.path(left.path());
-      merged.ident(merged_fid);
-      record_merge(left.ident(), right.ident(), merged_fid, 
+      merged_id = merged_fid;
+      record_merge(left_id, right_id, merged_fid, 
 		   left_data, packed_merge);
       return true;
     }
@@ -1522,38 +772,55 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & left,
 // are that we take our right versions from the filesystem, not the db,
 // and we only record the merges in a transient, in-memory table.
 
-update_merge_provider::update_merge_provider(app_state & app) 
-  : simple_merge_provider(app) {}
+update_merge_provider::update_merge_provider(app_state & app,
+					     manifest_map const & anc_man,
+					     manifest_map const & left_man, 
+					     manifest_map const & right_man) 
+  : merge_provider(app, anc_man, left_man, right_man) {}
 
-void update_merge_provider::record_merge(file_id const & left_ident, 
-					 file_id const & right_ident,
-					 file_id const & merged_ident,
+void update_merge_provider::record_merge(file_id const & left_id, 
+					 file_id const & right_id,
+					 file_id const & merged_id,
 					 file_data const & left_data, 
 					 file_data const & merged_data)
 {  
   L(F("temporarily recording merge of %s <-> %s into %s\n")
-    % left_ident % right_ident % merged_ident);
-  I(temporary_store.find(merged_ident) == temporary_store.end());
-  temporary_store.insert(make_pair(merged_ident, merged_data));
+    % left_id % right_id % merged_id);
+  I(temporary_store.find(merged_id) == temporary_store.end());
+  temporary_store.insert(make_pair(merged_id, merged_data));
 }
 
-void update_merge_provider::get_version(path_id_pair const & pip, file_data & dat)
+void update_merge_provider::get_version(file_path const & path,
+					file_id const & ident, 
+					file_data & dat)
 {
-  if (app.db.file_version_exists(pip.ident()))
-      app.db.get_file_version(pip.ident(), dat);
+  if (app.db.file_version_exists(ident))
+    app.db.get_file_version(ident, dat);
   else
     {
       base64< gzip<data> > tmp;
       file_id fid;
-      N(file_exists (pip.path()),
-	F("file %s does not exist in working copy") % pip.path());
-      read_localized_data(pip.path(), tmp, app.lua);
+      N(file_exists (path),
+	F("file %s does not exist in working copy") % path);
+      read_localized_data(path, tmp, app.lua);
       calculate_ident(tmp, fid);
-      N(fid == pip.ident(),
+      N(fid == ident,
 	F("file %s in working copy has id %s, wanted %s")
-	% pip.path() % fid % pip.ident());
+	% path % fid % ident);
       dat = tmp;
     }
+}
+
+std::string update_merge_provider::get_file_encoding(file_path const & path,
+						     manifest_map const & man)
+{
+  std::string enc;
+  if (get_attribute_from_working_copy(path, encoding_attribute, enc))
+    return enc;
+  else if (get_attribute_from_db(path, encoding_attribute, man, enc, app))
+    return enc;
+  else
+    return default_encoding;
 }
 
 

@@ -8,11 +8,14 @@
 // some of its text into this file and am relicensing my derivative work
 // (this file) copyright (C) 2004 graydon hoare, as LGPL also.
 
+#include <config.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef HAVE_MKSTEMP
 
 #include "cryptopp/osrng.h"
 
@@ -51,3 +54,4 @@ monotone_mkstemp(char *tmpl)
   return -1;
 }
 
+#endif

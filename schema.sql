@@ -8,7 +8,7 @@
 -- database.cc when initializing a fresh sqlite db.
 
 
--- copyright (C) 2002 graydon hoare <graydon@pobox.com>
+-- copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 -- all rights reserved.
 -- licensed to the public under the terms of the GNU GPL 2.1+
 -- see the file COPYING for details
@@ -16,11 +16,6 @@
 
 -- primary data structures concerned with storing and 
 -- versionning state-of-tree configurations
-
-CREATE TABLE schema_version
-	(
-	version primary key
-	);
 
 CREATE TABLE files
 	(
@@ -50,6 +45,19 @@ CREATE TABLE manifest_deltas
 	unique(id, base)
 	);
 
+CREATE TABLE revisions
+	(
+	id primary key,      -- SHA1(text of revision)
+	data not null        -- compressed, encoded contents of a revision
+	);
+
+CREATE TABLE revision_ancestry
+	(
+	parent not null,     -- joins with revisions.id
+	child not null,      -- joins with revisions.id
+	unique(parent, child)
+	);
+
 -- structures for managing RSA keys and file / manifest certs
  
 CREATE TABLE public_keys
@@ -77,10 +85,10 @@ CREATE TABLE manifest_certs
 	unique(name, id, value, keypair, signature)
 	);
 
-CREATE TABLE file_certs
+CREATE TABLE revision_certs
 	(
 	hash not null unique,   -- hash of remaining fields separated by ":"
-	id not null,            -- joins with files.id or file_deltas.id
+	id not null,            -- joins with revisions.id
 	name not null,          -- opaque string chosen by user
 	value not null,         -- opaque blob
 	keypair not null,       -- joins with public_keys.id
@@ -88,46 +96,15 @@ CREATE TABLE file_certs
 	unique(name, id, value, keypair, signature)
 	);
 
--- structures for managing our relationship to netnews or depots nb:
--- these are all essentially transient data, and are not represented
--- by a dump of the packets making up the database.
-
-CREATE TABLE posting_queue
-	(
-	url not null,       -- URL we are going to send this to
-	content not null    -- the packets we're going to send
-	);
-
-CREATE TABLE incoming_queue
-	(
-	url not null,       -- URL we got this bundle from
-	content not null    -- the packets we're going to read
-	);
-
-CREATE TABLE sequence_numbers
-	(
-	url primary key,      -- URL to read from
-	major not null,       -- 0 in news servers, may be higher in depots
-	minor not null        -- last article / packet sequence number we got
-	);
-
-CREATE TABLE netserver_manifests
-	(
-	url not null,         -- url of some server
-	manifest not null,    -- manifest which exists on url
-	unique(url, manifest)
-	);
-
 -- merkle nodes
 
 CREATE TABLE merkle_nodes
 	(
-	type not null,                -- "key", "mcert", "fcert", "manifest"
+	type not null,                -- "key", "mcert", "fcert", "rcert"
 	collection not null,          -- name chosen by user
 	level not null,               -- tree level this prefix encodes
 	prefix not null,              -- label identifying node in tree
 	body not null,                -- binary, base64'ed node contents
 	unique(type, collection, level, prefix)
 	);
-
 

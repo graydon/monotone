@@ -1,0 +1,36 @@
+AT_SETUP([merging data in unrelated revisions])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+ADD_FILE(testfile, [line 1: foo
+line 2: something unexpected
+line 3: baz
+line 4: quux
+])
+COMMIT(testbranch)
+LEFT=`BASE_REVISION`
+
+AT_CHECK(rm -rf MT)
+
+ADD_FILE(testfile, [line 1: foo
+line 2: bar
+line 3: baz
+line 4: something unexpected
+])
+COMMIT(testbranch)
+RIGHT=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+
+AT_DATA(expected_data, [line 1: foo
+line 2: something unexpected
+line 3: baz
+line 4: something unexpected
+])
+
+AT_CHECK(cmp testfile expected_data, [], [ignore])
+
+AT_CLEANUP

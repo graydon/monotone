@@ -27,22 +27,41 @@ export CHARSET=utf8
 AT_CHECK(MONOTONE add "tmp/$EUROPEAN_UTF8", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_UTF8", [], [ignore], [ignore])
 
-# remove the UTF8 file, change locale, and add it again. both should work.
+AT_CHECK(MONOTONE --branch=testbranch commit 'adding european and japanese names in UTF-8', [], [ignore], [ignore])
+
+# check the names showed up in our manifest
+
+AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(mv stdout manifest)
+AT_CHECK(grep funny manifest, [], [ignore], [ignore])
+AT_CHECK(grep spaces manifest, [], [ignore], [ignore])
+AT_CHECK(grep $JAPANESE_UTF8 manifest, [], [ignore], [ignore])
+AT_CHECK(grep $EUROPEAN_UTF8 manifest, [], [ignore], [ignore])
+
+# remove the UTF8 files, change locales, and add them again. both should work.
+
 export LANG=de_DE.iso88591
 export CHARSET=iso88591
 AT_CHECK(MONOTONE drop "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --branch=testbranch commit 'adding european name in ISO 8859-1', [], [ignore], [ignore])
 
 export LANG=ja_JP.eucjp
 export CHARSET=eucjp
 AT_CHECK(MONOTONE drop "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
-AT_CHECK(grep funny MT/manifest, [], [ignore], [ignore])
-AT_CHECK(grep spaces MT/manifest, [], [ignore], [ignore])
-AT_CHECK(grep $JAPANESE_UTF8 MT/manifest, [], [ignore], [ignore])
-AT_CHECK(grep $EUROPEAN_UTF8 MT/manifest, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit 'adding japanese name in EUC-JP', [], [ignore], [ignore])
+
+# check the names showed up in our manifest
+
+AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(mv stdout manifest)
+AT_CHECK(grep funny manifest, [], [ignore], [ignore])
+AT_CHECK(grep spaces manifest, [], [ignore], [ignore])
+AT_CHECK(grep $JAPANESE_UTF8 manifest, [], [ignore], [ignore])
+AT_CHECK(grep $EUROPEAN_UTF8 manifest, [], [ignore], [ignore])
 
 AT_CHECK(rm -Rf tmp)
 

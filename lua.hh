@@ -44,6 +44,10 @@ public:
   bool hook_edit_comment(std::string const & commentary, std::string & result);  
   bool hook_persist_phrase_ok();
   bool hook_non_blocking_rng_ok();
+  bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
+				   hexenc<id> const & id,
+				   cert_name const & name,
+				   cert_value const & val);
   bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
 				    hexenc<id> const & id,
 				    cert_name const & name,
@@ -73,6 +77,16 @@ public:
 		   data const & right, 
 		   data & result);
 
+  bool hook_resolve_file_conflict(file_path const & anc,
+				  file_path const & a,
+				  file_path const & b,
+				  file_path & res);
+
+  bool hook_resolve_dir_conflict(file_path const & anc,
+				 file_path const & a,
+				 file_path const & b,
+				 file_path & res);
+
   // attribute hooks
   bool hook_apply_attribute(std::string const & attr, 
 			    file_path const & filename, 
@@ -86,7 +100,7 @@ public:
 			     std::string & db, std::string & ext);
 
   // notification hooks
-  bool hook_note_commit(manifest_id const & new_id,
+  bool hook_note_commit(revision_id const & new_id,
 			std::map<cert_name, cert_value> const & certs);
 };
 

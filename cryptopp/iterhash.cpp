@@ -6,13 +6,6 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
-template <class T, class BASE>
-IteratedHashBase<T, BASE>::IteratedHashBase(unsigned int blockSize, unsigned int digestSize)
-	: m_data(blockSize/sizeof(T)), m_digest(digestSize/sizeof(T))
-	, m_countLo(0), m_countHi(0)
-{
-}
-
 template <class T, class BASE> void IteratedHashBase<T, BASE>::Update(const byte *input, unsigned int len)
 {
 	HashWordType tmp = m_countLo;
@@ -110,13 +103,5 @@ template <class T, class BASE> void IteratedHashBase<T, BASE>::Restart()
 	m_countLo = m_countHi = 0;
 	Init();
 }
-
-#ifdef WORD64_AVAILABLE
-template class IteratedHashBase<word64, HashTransformation>;
-template class IteratedHashBase<word64, MessageAuthenticationCode>;
-#endif
-
-template class IteratedHashBase<word32, HashTransformation>;
-template class IteratedHashBase<word32, MessageAuthenticationCode>;
 
 NAMESPACE_END

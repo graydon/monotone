@@ -29,11 +29,17 @@ netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
   typestr.clear();
   switch (t)
     {
+    case revision_item:
+      typestr = "revision";
+      break;
     case manifest_item:
       typestr = "manifest";
       break;
     case file_item:
       typestr = "file";
+      break;
+    case rcert_item:
+      typestr = "rcert";
       break;
     case mcert_item:
       typestr = "mcert";
@@ -144,7 +150,7 @@ merkle_node::set_hex_slot(size_t slot, hexenc<id> const & val)
 
 void 
 merkle_node::extended_prefix(size_t slot, 
-			     dynamic_bitset<char> & extended) const
+			     dynamic_bitset<unsigned char> & extended) const
 {
   // remember, in a dynamic_bitset, bit size()-1 is most significant
   check_invariants();
@@ -158,7 +164,7 @@ void
 merkle_node::extended_raw_prefix(size_t slot, 
 				 prefix & extended) const
 {
-  dynamic_bitset<char> ext;
+  dynamic_bitset<unsigned char> ext;
   extended_prefix(slot, ext);
   ostringstream oss;
   to_block_range(ext, ostream_iterator<char>(oss));
@@ -363,7 +369,7 @@ void
 pick_slot_and_prefix_for_value(id const & val, 
 			       size_t level, 
 			       size_t & slotnum, 
-			       dynamic_bitset<char> & pref)
+			       dynamic_bitset<unsigned char> & pref)
 {
   pref.resize(val().size() * 8);
   from_block_range(val().begin(), val().end(), pref);
@@ -401,7 +407,7 @@ insert_into_merkle_tree(app_state & app,
   encode_hexenc(leaf, hleaf);
 
   size_t slotnum;
-  dynamic_bitset<char> pref;
+  dynamic_bitset<unsigned char> pref;
   pick_slot_and_prefix_for_value(leaf, level, slotnum, pref);
 
   ostringstream oss;
@@ -446,8 +452,10 @@ insert_into_merkle_tree(app_state & app,
 	      }
 	    else
 	      {
+		hexenc<id> existing_hleaf;
+		encode_hexenc(slotval, existing_hleaf);
 		L(F("pushing existing leaf %s in slot 0x%x of %s node %s, level %d into subtree\n")
-		  % hleaf % slotnum % typestr % hpref % level);
+		  % existing_hleaf % slotnum % typestr % hpref % level);
 		insert_into_merkle_tree(app, (st == live_leaf_state ? true : false),
 					type, collection, slotval, level+1);
 		id subtree_hash = insert_into_merkle_tree(app, live_p, type, collection, leaf, level+1);

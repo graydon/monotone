@@ -2,23 +2,24 @@ AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
 MOST_SOURCES =								\
-	 app_state.cc commands.cc diff_patch.cc lua.cc patch_set.cc	\
+	 app_state.cc commands.cc diff_patch.cc lua.cc			\
          transforms.cc update.cc work.cc cert.cc database.cc file_io.cc	\
          keys.cc manifest.cc packet.cc sanity.cc vocab.cc rcs_file.cc	\
-         rcs_import.cc xdelta.cc ui.cc schema_migration.cc		\
-         constants.cc netsync.cc netcmd.cc merkle_tree.cc       	\
-         mkstemp.cc                                                     \
+         xdelta.cc ui.cc schema_migration.cc				\
+         constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
+         mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
+	 change_set.cc mt_version.cc					\
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
 	 packet_types.hh transforms.hh vocab.hh				\
-	 cleanup.hh diff_patch.hh lua.hh patch_set.hh			\
+	 cleanup.hh diff_patch.hh lua.hh basic_io.hh			\
 	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
-         randomfile.hh rcs_file.hh rcs_import.hh xdelta.hh adler32.hh	\
+         randomfile.hh rcs_file.hh xdelta.hh adler32.hh			\
          lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
 	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
-	 numeric_vocab.hh                                               \
-         mkstemp.hh
+	 numeric_vocab.hh revision.hh change_set.hh			\
+         mkstemp.hh mt_version.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -40,8 +41,8 @@ CRYPTOPP_SOURCES = \
         cryptopp/algebra.cpp cryptopp/algparam.cpp cryptopp/arc4.cpp \
         cryptopp/asn.cpp cryptopp/base64.cpp cryptopp/basecode.cpp \
         cryptopp/crc.cpp cryptopp/cryptlib.cpp cryptopp/des.cpp cryptopp/dessp.cpp \
-        cryptopp/eprecomp.cpp cryptopp/files.cpp cryptopp/filters.cpp \
-        cryptopp/fips140.cpp cryptopp/gzip.cpp cryptopp/hex.cpp \
+        cryptopp/dll.cpp cryptopp/eprecomp.cpp cryptopp/files.cpp cryptopp/filters.cpp \
+        cryptopp/fips140.cpp cryptopp/gzip.cpp cryptopp/hex.cpp cryptopp/hmac.cpp \
         cryptopp/integer.cpp cryptopp/iterhash.cpp cryptopp/misc.cpp \
         cryptopp/modes.cpp cryptopp/mqueue.cpp cryptopp/nbtheory.cpp \
         cryptopp/oaep.cpp cryptopp/osrng.cpp cryptopp/pch.cpp cryptopp/pkcspad.cpp \
@@ -52,7 +53,7 @@ CRYPTOPP_SOURCES = \
 	\
         cryptopp/algebra.h cryptopp/algparam.h cryptopp/arc4.h cryptopp/argnames.h \
         cryptopp/asn.h cryptopp/base64.h cryptopp/basecode.h cryptopp/config.h \
-        cryptopp/crc.h cryptopp/cryptlib.h cryptopp/des.h cryptopp/eprecomp.h \
+        cryptopp/crc.h cryptopp/cryptlib.h cryptopp/des.h cryptopp/dll.h cryptopp/eprecomp.h \
         cryptopp/files.h cryptopp/filters.h cryptopp/fips140.h cryptopp/fltrimpl.h \
         cryptopp/gzip.h cryptopp/hex.h cryptopp/integer.h cryptopp/iterhash.h \
         cryptopp/mdc.h cryptopp/misc.h cryptopp/modarith.h cryptopp/modes.h \
@@ -60,7 +61,7 @@ CRYPTOPP_SOURCES = \
         cryptopp/osrng.h cryptopp/pch.h cryptopp/pkcspad.h cryptopp/pssr.h \
         cryptopp/pubkey.h cryptopp/queue.h cryptopp/randpool.h cryptopp/rng.h \
         cryptopp/rsa.h cryptopp/secblock.h cryptopp/seckey.h cryptopp/sha.h \
-        cryptopp/simple.h cryptopp/smartptr.h cryptopp/strciphr.h \
+        cryptopp/simple.h cryptopp/smartptr.h cryptopp/stdcpp.h cryptopp/strciphr.h \
         cryptopp/trdlocal.h cryptopp/words.h cryptopp/zdeflate.h \
         cryptopp/zinflate.h cryptopp/hmac.h
 
@@ -101,10 +102,10 @@ IDNA_SOURCES = \
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
 UNIX_PLATFORM_SOURCES = \
-	unix/read_password.cc
+	unix/read_password.cc unix/get_system_flavour.cc
 
 WIN32_PLATFORM_SOURCES = \
-	win32/read_password.cc
+	win32/read_password.cc win32/get_system_flavour.cc
 
 # primaries
 
@@ -114,6 +115,7 @@ noinst_PROGRAMS = txt2c
 
 monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
+
 txt2c_SOURCES = txt2c.cc
 
 noinst_LIBRARIES = libplatform.a lib3rdparty.a 
@@ -202,13 +204,28 @@ DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 
 # extra files
 
+PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf				\
+	figures/difference-between-versions.pdf					\
+	figures/file-id-manifest-id.pdf figures/fork.pdf			\
+	figures/general-workflow.pdf figures/linear-history.pdf			\
+	figures/local-workflow.pdf figures/manifest.pdf figures/merge.pdf	\
+	figures/network-workflow.pdf figures/parent-child-hashes.pdf		\
+	figures/parent-child-names-hashes.pdf figures/parent-child.pdf		\
+	figures/revision-chaining.pdf figures/revision.pdf			\
+	figures/statement.pdf figures/three-versions.pdf			\
+	figures/two-branches.pdf
+
+EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
+
 man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
+	     $(PDF_FIGURES) \
              INSTALL \
+             monotone.spec \
              monotone.html \
              texinfo.css \
-	     schema.sql \
+	     schema.sql views.sql \
 	     std_hooks.lua test_hooks.lua \
 	     testsuite.at \
 	     $(wildcard tests/t_*.at) \
@@ -217,6 +234,23 @@ EXTRA_DIST = $(man1_MANS) \
              tests/atlocal.in  \
 	     package.m4 \
              $(wildcard m4/*.m4)
+
+MAKEINFOFLAGS=-I $(top_builddir)
+
+monotone.pdf: monotone.texi $(PDF_FIGURES)
+
+monotone.dvi: monotone.texi $(EPS_FIGURES)
+
+%.eps: %.epsi
+	mv $< $@
+
+%.epsi: %.ps
+	ps2epsi $< $@
+
+$(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
+	mkdir -p $(top_builddir)/figures
+	acroread -toPostScript -pairs $< $@
+
 
 # testsuite stuff (could this possibly be more ugly?)
 
@@ -262,8 +296,10 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES = std_hooks.h test_hooks.h schema.h 
-CLEANFILES = $(BUILT_SOURCES)
+BUILT_SOURCES = std_hooks.h test_hooks.h schema.h views.h \
+	        package_revision.txt package_revision.h \
+	        package_full_revision.txt package_full_revision.h
+CLEANFILES = $(BUILT_SOURCES) $(EPS_FIGURES)
 
 txt2c: txt2c.cc Makefile
 	$(CXX) -Wall -o $@ $<
@@ -274,6 +310,27 @@ txt2c: txt2c.cc Makefile
 
 %.h: %.lua txt2c Makefile
 	./txt2c $< $(*F) >$@
+
+# A fake target so we can use MT/revision as a prerequisite, yet not
+# crash if MT/revision does not exist.
+$(srcdir)/MT/revision:
+	true
+package_revision.txt: $(srcdir)/MT/revision
+	if [ ! -f $< ]; then \
+	  echo "unknown" > $@;        \
+	else                          \
+	  cp $< $@;          \
+	fi
+package_revision.h: package_revision.txt txt2c Makefile
+	./txt2c --strip-trailing $< package_revision >$@
+
+.PHONY: package_full_revision.txt
+package_full_revision.txt:
+	(cd $(srcdir) && $(top_builddir)/monotone status) >$@ \
+	|| (cd $(srcdir) && monotone status) >$@ \
+	|| echo "unknown" >$@
+package_full_revision.h: package_full_revision.txt txt2c Makefile
+	./txt2c $< package_full_revision >$@
 
 # automake doesn't build html docs
 

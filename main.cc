@@ -43,7 +43,7 @@
 #define MS_STRUCTURED_EXCEPTION_HANDLING
 #include <windows.h> 
 
-#elif defined(__unix)
+#elif defined(__unix) || defined(__APPLE__)
 #define UNIX_STYLE_SIGNAL_HANDLING
 #include <unistd.h>
 #include <csignal>

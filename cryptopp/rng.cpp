@@ -1,6 +1,7 @@
 // rng.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
+
 #include "rng.h"
 
 #include <time.h>
@@ -50,6 +51,8 @@ byte LC_RNG::GenerateByte()
 }
 
 // ********************************************************
+
+#ifndef CRYPTOPP_IMPORTS
 
 X917RNG::X917RNG(BlockTransformation *c, const byte *seed, unsigned long deterministicTimeVector)
 	: cipher(c),
@@ -109,6 +112,8 @@ byte X917RNG::GenerateByte()
 	return(randbuf[--randbuf_counter]);
 }
 
+#endif
+
 MaurerRandomnessTest::MaurerRandomnessTest()
 	: sum(0.0), n(0)
 {
@@ -116,22 +121,24 @@ MaurerRandomnessTest::MaurerRandomnessTest()
 		tab[i] = 0;
 }
 
-void MaurerRandomnessTest::Put(byte inByte)
-{
-	if (n >= Q)
-		sum += log(double(n - tab[inByte]));
-	tab[inByte] = n;
-	n++;
-}
-
-void MaurerRandomnessTest::Put(const byte *inString, unsigned int length)
+unsigned int MaurerRandomnessTest::Put2(const byte *inString, unsigned int length, int messageEnd, bool blocking)
 {
 	while (length--)
-		Put(*inString++);
+	{
+		byte inByte = *inString++;
+		if (n >= Q)
+			sum += log(double(n - tab[inByte]));
+		tab[inByte] = n;
+		n++;
+	}
+	return 0;
 }
 
 double MaurerRandomnessTest::GetTestValue() const
 {
+	if (BytesNeeded() > 0)
+		throw Exception(Exception::OTHER_ERROR, "MaurerRandomnessTest: " + IntToString(BytesNeeded()) + " more bytes of input needed");
+
 	double fTu = (sum/(n-Q))/log(2.0);	// this is the test value defined by Maurer
 
 	double value = fTu * 0.1392;		// arbitrarily normalize it to

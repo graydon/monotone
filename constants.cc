@@ -141,7 +141,7 @@ namespace constants
   BOOST_STATIC_ASSERT(merkle_bitmap_length_in_bits > 0);
   BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
 
-  u8 const netcmd_current_protocol_version = 1;
+  u8 const netcmd_current_protocol_version = 2;
   size_t const netcmd_minsz = (1     // version
 			       + 1   // cmd code
 			       + 1   // smallest uleb possible
@@ -149,10 +149,10 @@ namespace constants
   
   size_t const netcmd_payload_limit = 0xffffff;
   size_t const netcmd_maxsz = netcmd_minsz + netcmd_payload_limit;
-  size_t const netcmd_minimum_bytes_to_bother_with_gzip = 64;
+  size_t const netcmd_minimum_bytes_to_bother_with_gzip = 0xfff;
 
   size_t const netsync_default_port = 5253;
-  size_t const netsync_connection_limit = 100;
-  size_t const netsync_timeout_seconds = 120;
+  size_t const netsync_connection_limit = 1024; 
+  size_t const netsync_timeout_seconds = 21600; // 6 hours
 
 }

@@ -34,9 +34,20 @@
 	}
 
 #define FILTER_OUTPUT(site, output, length, messageEnd)	\
-	FILTER_OUTPUT2(site, void(0), output, length, messageEnd)
+	FILTER_OUTPUT2(site, 0, output, length, messageEnd)
 
 #define FILTER_OUTPUT_BYTE(site, output)	\
 	FILTER_OUTPUT(site, &(const byte &)(byte)output, 1, 0)
+
+#define FILTER_OUTPUT2_MODIFIABLE(site, statement, output, length, messageEnd)	\
+	{\
+	case site:	\
+	statement;	\
+	if (OutputModifiable(site, output, length, messageEnd, blocking))	\
+		return STDMAX(1U, (unsigned int)length-m_inputPosition);\
+	}
+
+#define FILTER_OUTPUT_MODIFIABLE(site, output, length, messageEnd)	\
+	FILTER_OUTPUT2_MODIFIABLE(site, 0, output, length, messageEnd)
 
 #endif

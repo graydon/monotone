@@ -8,12 +8,13 @@
 
 #include "app_state.hh"
 #include "cert.hh"
-#include "manifest.hh"
 #include "vocab.hh"
 
 #include <string>
 #include <vector>
 #include <iostream>
+
+struct conflict {};
 
 // this file is to contain some stripped down, in-process implementations
 // of GNU-diffutils-like things (diff, diff3, maybe patch..)
@@ -31,78 +32,72 @@ bool merge3(std::vector<std::string> const & ancestor,
 	    std::vector<std::string> const & right,
 	    std::vector<std::string> & merged);
 
-
-
-struct path_id_pair;
-
-// you pass one of these in to the next function, to give it a callback
-// strategy for merging individual elements in a manifest.
-
-struct file_merge_provider
-{
-  // merge3 on a file (line by line)
-  virtual bool try_to_merge_files(path_id_pair const & ancestor,
-				  path_id_pair const & left,
-				  path_id_pair const & right,
-				  path_id_pair & merged) = 0;
-
-  // merge2 on a file (line by line)
-  virtual bool try_to_merge_files(path_id_pair const & left,
-				  path_id_pair const & right,
-				  path_id_pair & merged) = 0;
-};
-
-struct simple_merge_provider : public file_merge_provider
+struct merge_provider
 {
   app_state & app;
-  simple_merge_provider(app_state & app);
-  virtual bool try_to_merge_files(path_id_pair const & ancestor,
-				  path_id_pair const & left,
-				  path_id_pair const & right,
-				  path_id_pair & merged);
-  virtual bool try_to_merge_files(path_id_pair const & left,
-				  path_id_pair const & right,
-				  path_id_pair & merged);
+  manifest_map const & anc_man;
+  manifest_map const & left_man;
+  manifest_map const & right_man;
+  merge_provider(app_state & app, 
+		 manifest_map const & anc_man,
+		 manifest_map const & left_man, 
+		 manifest_map const & right_man);
+
+  // merge3 on a file (line by line)
+  virtual bool try_to_merge_files(file_path const & anc_path,
+				  file_path const & left_path,
+				  file_path const & right_path,
+				  file_path const & merged_path,
+				  file_id const & ancestor_id,
+				  file_id const & left_id,
+				  file_id const & right,
+				  file_id & merged_id);
+
+  // merge2 on a file (line by line)
+  virtual bool try_to_merge_files(file_path const & path,
+				  file_id const & left_id,
+				  file_id const & right_id,
+				  file_id & merged);
+
   virtual void record_merge(file_id const & left_ident, 
 			    file_id const & right_ident, 
 			    file_id const & merged_ident,
 			    file_data const & left_data, 
 			    file_data const & merged_data);
-  virtual void get_version(path_id_pair const & pip, file_data & dat);
+  
+  virtual void get_version(file_path const & path,
+			   file_id const & ident,			   
+			   file_data & dat);
 
+  virtual std::string get_file_encoding(file_path const & path,
+					manifest_map const & man);
+
+  virtual ~merge_provider() {}
 };
 
-struct update_merge_provider : public simple_merge_provider
+struct update_merge_provider : public merge_provider
 {
   std::map<file_id, file_data> temporary_store;
-  update_merge_provider(app_state & app);
+  update_merge_provider(app_state & app,
+			manifest_map const & anc_man,
+			manifest_map const & left_man, 
+			manifest_map const & right_man);
+
   virtual void record_merge(file_id const & left_ident, 
 			    file_id const & right_ident, 
 			    file_id const & merged_ident,
 			    file_data const & left_data, 
 			    file_data const & merged_data);
-  virtual void get_version(path_id_pair const & pip, file_data & dat);
+
+  virtual void get_version(file_path const & path,
+			   file_id const & ident,
+			   file_data & dat);
+
+  virtual std::string get_file_encoding(file_path const & path,
+					manifest_map const & man);
+
   virtual ~update_merge_provider() {}
 };
-
-// this does a set-theoretic merge3 on the manifests
-
-bool merge3(manifest_map const & ancestor,
-	    manifest_map const & left,
-	    manifest_map const & right,
-	    app_state & app,
-	    file_merge_provider & file_merger,
-	    manifest_map & merged,
-	    rename_set & left_renames,
-	    rename_set & right_renames);
-
-// ditto but the weaker merge2
-
-bool merge2(manifest_map const & left,
-	    manifest_map const & right,
-	    app_state & app,
-	    file_merge_provider & file_merger,
-	    manifest_map & merged);
 
 
 #endif // __DIFF_PATCH_HH__

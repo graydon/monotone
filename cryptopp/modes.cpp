@@ -1,14 +1,18 @@
 // modes.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
+
+#ifndef CRYPTOPP_IMPORTS
+
 #include "modes.h"
 
+#ifndef NDEBUG
 #include "des.h"
-
-#include "strciphr.cpp"
+#endif
 
 NAMESPACE_BEGIN(CryptoPP)
 
+#ifndef NDEBUG
 void Modes_TestInstantiations()
 {
 	CFB_Mode<DES>::Encryption m0;
@@ -18,21 +22,11 @@ void Modes_TestInstantiations()
 	ECB_Mode<DES>::Encryption m4;
 	CBC_Mode<DES>::Encryption m5;
 }
-
-// explicit instantiations for Darwin gcc-932.1
-template class CFB_CipherTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, SymmetricCipher> >;
-template class CFB_EncryptionTemplate<>;
-template class CFB_DecryptionTemplate<>;
-template class AdditiveCipherTemplate<>;
-template class CFB_CipherTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, CFB_ModePolicy> >;
-template class CFB_EncryptionTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, CFB_ModePolicy> >;
-template class CFB_DecryptionTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, CFB_ModePolicy> >;
-template class AdditiveCipherTemplate<AbstractPolicyHolder<AdditiveCipherAbstractPolicy, OFB_ModePolicy> >;
-template class AdditiveCipherTemplate<AbstractPolicyHolder<AdditiveCipherAbstractPolicy, CTR_ModePolicy> >;
+#endif
 
 void CipherModeBase::SetKey(const byte *key, unsigned int length, const NameValuePairs &params)
 {
-	UncheckedSetKey(params, key, length);	// the underlying cipher will check the key length
+	UncheckedSetKey(params, key, length, GetIVAndThrowIfInvalid(params));	// the underlying cipher will check the key length
 }
 
 void CipherModeBase::GetNextIV(byte *IV)
@@ -44,23 +38,7 @@ void CipherModeBase::GetNextIV(byte *IV)
 	memcpy(IV, m_register, BlockSize());
 }
 
-void CipherModeBase::SetIV(const byte *iv)
-{
-	if (iv)
-		Resynchronize(iv);
-	else if (IsResynchronizable())
-	{
-		if (!CanUseStructuredIVs())
-			throw InvalidArgument("CipherModeBase: this cipher mode cannot use a null IV");
-
-		// use all zeros as default IV
-		SecByteBlock iv(BlockSize());
-		memset(iv, 0, iv.size());
-		Resynchronize(iv);
-	}
-}
-
-void CTR_ModePolicy::SeekToIteration(dword iterationCount)
+void CTR_ModePolicy::SeekToIteration(lword iterationCount)
 {
 	int carry=0;
 	for (int i=BlockSize()-1; i>=0; i--)
@@ -80,8 +58,15 @@ static inline void IncrementCounterByOne(byte *inout, unsigned int s)
 
 static inline void IncrementCounterByOne(byte *output, const byte *input, unsigned int s)
 {
-	for (int i=s-1, carry=1; i>=0; i--)
-		carry = !(output[i] = input[i]+carry) && carry;
+	int i, carry;
+	for (i=s-1, carry=1; i>=0 && carry; i--)
+		carry = !(output[i] = input[i]+1);
+	memcpy(output, input, i+1);
+}
+
+void CTR_ModePolicy::GetNextIV(byte *IV)
+{
+	IncrementCounterByOne(IV, m_counterArray, BlockSize());
 }
 
 inline void CTR_ModePolicy::ProcessMultipleBlocks(byte *output, const byte *input, unsigned int n)
@@ -126,17 +111,17 @@ void CTR_ModePolicy::OperateKeystream(KeystreamOperation operation, byte *output
 void CTR_ModePolicy::CipherResynchronize(byte *keystreamBuffer, const byte *iv)
 {
 	unsigned int s = BlockSize();
-	memcpy(m_register, iv, s);
+	CopyOrZero(m_register, iv, s);
 	m_counterArray.New(s * m_cipher->OptimalNumberOfParallelBlocks());
-	memcpy(m_counterArray, iv, s);
+	CopyOrZero(m_counterArray, iv, s);
 }
 
-void BlockOrientedCipherModeBase::UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length)
+void BlockOrientedCipherModeBase::UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length, const byte *iv)
 {
 	m_cipher->SetKey(key, length, params);
 	ResizeBuffers();
-	const byte *iv = params.GetValueWithDefault(Name::IV(), (const byte *)NULL);
-	SetIV(iv);
+	if (IsResynchronizable())
+		Resynchronize(iv);
 }
 
 void BlockOrientedCipherModeBase::ProcessData(byte *outString, const byte *inString, unsigned int length)
@@ -264,3 +249,5 @@ void CBC_CTS_Decryption::ProcessLastBlock(byte *outString, const byte *inString,
 }
 
 NAMESPACE_END
+
+#endif

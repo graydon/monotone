@@ -13,10 +13,10 @@ NAMESPACE_BEGIN(CryptoPP)
 class ByteQueueNode;
 
 //! Byte Queue
-class ByteQueue : public Bufferless<BufferedTransformation>
+class CRYPTOPP_DLL ByteQueue : public Bufferless<BufferedTransformation>
 {
 public:
-	ByteQueue(unsigned int m_nodeSize=256);
+	ByteQueue(unsigned int nodeSize=0);
 	ByteQueue(const ByteQueue &copy);
 	~ByteQueue();
 
@@ -39,7 +39,7 @@ public:
 	unsigned int CopyRangeTo2(BufferedTransformation &target, unsigned long &begin, unsigned long end=ULONG_MAX, const std::string &channel=NULL_CHANNEL, bool blocking=true) const;
 
 	// these member functions are not inherited
-	void SetNodeSize(unsigned int nodeSize) {m_nodeSize = nodeSize;}
+	void SetNodeSize(unsigned int nodeSize);
 
 	unsigned long CurrentSize() const;
 	bool IsEmpty() const;
@@ -52,6 +52,7 @@ public:
 	const byte * Spy(unsigned int &contiguousSize) const;
 
 	void LazyPut(const byte *inString, unsigned int size);
+	void LazyPutModifiable(byte *inString, unsigned int size);
 	void UndoLazyPut(unsigned int size);
 	void FinalizeLazyPut();
 
@@ -98,22 +99,34 @@ private:
 	void CopyFrom(const ByteQueue &copy);
 	void Destroy();
 
+	bool m_autoNodeSize;
 	unsigned int m_nodeSize;
 	ByteQueueNode *m_head, *m_tail;
-	const byte *m_lazyString;
+	byte *m_lazyString;
 	unsigned int m_lazyLength;
+	bool m_lazyStringModifiable;
 };
 
 //! use this to make sure LazyPut is finalized in event of exception
-class LazyPutter
+class CRYPTOPP_DLL LazyPutter
 {
 public:
 	LazyPutter(ByteQueue &bq, const byte *inString, unsigned int size)
 		: m_bq(bq) {bq.LazyPut(inString, size);}
 	~LazyPutter()
 		{try {m_bq.FinalizeLazyPut();} catch(...) {}}
+protected:
+	LazyPutter(ByteQueue &bq) : m_bq(bq) {}
 private:
 	ByteQueue &m_bq;
+};
+
+//! like LazyPutter, but does a LazyPutModifiable instead
+class LazyPutterModifiable : public LazyPutter
+{
+public:
+	LazyPutterModifiable(ByteQueue &bq, byte *inString, unsigned int size)
+		: LazyPutter(bq) {bq.LazyPutModifiable(inString, size);}
 };
 
 NAMESPACE_END

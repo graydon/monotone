@@ -1,12 +1,8 @@
 #ifndef CRYPTOPP_MISC_H
 #define CRYPTOPP_MISC_H
 
-#include "config.h"
 #include "cryptlib.h"
-#include <assert.h>
-#include <string.h>		// CodeWarrior doesn't have memory.h
-#include <algorithm>
-#include <string>
+#include "smartptr.h"
 
 #ifdef INTEL_INTRINSICS
 #include <stdlib.h>
@@ -29,24 +25,30 @@ struct CompileAssert
 #endif
 
 #define CRYPTOPP_COMPILE_ASSERT(assertion) CRYPTOPP_COMPILE_ASSERT_INSTANCE(assertion, __LINE__)
+#if defined(CRYPTOPP_EXPORTS) || defined(CRYPTOPP_IMPORTS)
+#define CRYPTOPP_COMPILE_ASSERT_INSTANCE(assertion, instance)
+#else
 #define CRYPTOPP_COMPILE_ASSERT_INSTANCE(assertion, instance) \
-        UNUSED static CompileAssert<(assertion)> CRYPTOPP_ASSERT_JOIN(cryptopp_assert_, instance)
+   UNUSED static CompileAssert<(assertion)> CRYPTOPP_ASSERT_JOIN(cryptopp_assert_, instance)
+#endif
 #define CRYPTOPP_ASSERT_JOIN(X, Y) CRYPTOPP_DO_ASSERT_JOIN(X, Y)
 #define CRYPTOPP_DO_ASSERT_JOIN(X, Y) X##Y
 
 // ************** misc classes ***************
 
-class Empty
+class CRYPTOPP_DLL Empty
 {
 };
 
+//! _
 template <class BASE1, class BASE2>
-class TwoBases : public BASE1, public BASE2
+class CRYPTOPP_NO_VTABLE TwoBases : public BASE1, public BASE2
 {
 };
 
+//! _
 template <class BASE1, class BASE2, class BASE3>
-class ThreeBases : public BASE1, public BASE2, public BASE3
+class CRYPTOPP_NO_VTABLE ThreeBases : public BASE1, public BASE2, public BASE3
 {
 };
 
@@ -66,17 +68,70 @@ private:
     void operator=(const NotCopyable &);
 };
 
+template <class T>
+struct NewObject
+{
+	T* operator()() const {return new T;}
+};
+
+/*! This function safely initializes a static object in a multithreaded environment without using locks.
+	It may leak memory when two threads try to initialize the static object at the same time
+	but this should be acceptable since each static object is only initialized once per session.
+*/
+template <class T, class FACT = NewObject<T>, int instance=0>
+class Singleton
+{
+public:
+	Singleton(FACT objectFactory = FACT()) : m_objectFactory(objectFactory) {}
+
+	// VC60 workaround: use "..." to prevent this function from being inlined
+	const T & Ref(...) const;
+
+private:
+	FACT m_objectFactory;
+};
+
+template <class T, class F, int instance>
+const T & Singleton<T, F, instance>::Ref(...) const
+{
+	static simple_ptr<T> s_pObject;
+	static char s_objectState = 0;
+
+retry:
+	switch (s_objectState)
+	{
+	case 0:
+		s_objectState = 1;
+		try
+		{
+			s_pObject.m_p = m_objectFactory();
+		}
+		catch(...)
+		{
+			s_objectState = 0;
+			throw;
+		}
+		s_objectState = 2;
+		break;
+	case 1:
+		goto retry;
+	default:
+		break;
+	}
+	return *s_pObject.m_p;
+}
+
 // ************** misc functions ***************
 
 // can't use std::min or std::max in MSVC60 or Cygwin 1.1.0
-template <class _Tp> inline const _Tp& STDMIN(const _Tp& __a, const _Tp& __b)
+template <class T> inline const T& STDMIN(const T& a, const T& b)
 {
-	return __b < __a ? __b : __a;
+	return b < a ? b : a;
 }
 
-template <class _Tp> inline const _Tp& STDMAX(const _Tp& __a, const _Tp& __b)
+template <class T> inline const T& STDMAX(const T& a, const T& b)
 {
-	return  __a < __b ? __b : __a;
+	return a < b ? b : a;
 }
 
 #define RETURN_IF_NONZERO(x) unsigned int returnedValue = x; if (returnedValue) return returnedValue
@@ -87,10 +142,10 @@ template <class _Tp> inline const _Tp& STDMAX(const _Tp& __a, const _Tp& __b)
 // #define GETBYTE(x, y) (unsigned int)(((x)>>(8*(y)))&255)
 // #define GETBYTE(x, y) (((byte *)&(x))[y])
 
-unsigned int Parity(unsigned long);
-unsigned int BytePrecision(unsigned long);
-unsigned int BitPrecision(unsigned long);
-unsigned long Crop(unsigned long, unsigned int size);
+CRYPTOPP_DLL unsigned int Parity(unsigned long);
+CRYPTOPP_DLL unsigned int BytePrecision(unsigned long);
+CRYPTOPP_DLL unsigned int BitPrecision(unsigned long);
+CRYPTOPP_DLL unsigned long Crop(unsigned long, unsigned int size);
 
 inline unsigned int BitsToBytes(unsigned int bitCount)
 {
@@ -107,8 +162,13 @@ inline unsigned int BitsToWords(unsigned int bitCount)
 	return ((bitCount+WORD_BITS-1)/(WORD_BITS));
 }
 
-void xorbuf(byte *buf, const byte *mask, unsigned int count);
-void xorbuf(byte *output, const byte *input, const byte *mask, unsigned int count);
+inline unsigned int BitsToDwords(unsigned int bitCount)
+{
+	return ((bitCount+2*WORD_BITS-1)/(2*WORD_BITS));
+}
+
+CRYPTOPP_DLL void xorbuf(byte *buf, const byte *mask, unsigned int count);
+CRYPTOPP_DLL void xorbuf(byte *output, const byte *input, const byte *mask, unsigned int count);
 
 template <class T>
 inline bool IsPowerOf2(T n)
@@ -149,7 +209,7 @@ inline unsigned int GetAlignment(T *dummy=NULL)	// VC60 workaround
 
 inline bool IsAlignedOn(const void *p, unsigned int alignment)
 {
-	return IsPowerOf2(alignment) ? ModPowerOf2((unsigned int)p, alignment) == 0 : (unsigned int)p % alignment == 0;
+	return IsPowerOf2(alignment) ? ModPowerOf2((size_t)p, alignment) == 0 : (size_t)p % alignment == 0;
 }
 
 template <class T>
@@ -210,6 +270,8 @@ inline CipherDir GetCipherDir(const T &obj)
 {
 	return obj.IsForwardTransformation() ? ENCRYPTION : DECRYPTION;
 }
+
+void CallNewHandler();
 
 // ************** rotate functions ***************
 
@@ -366,7 +428,7 @@ inline word32 ByteReverse(word32 value)
 #ifdef WORD64_AVAILABLE
 inline word64 ByteReverse(word64 value)
 {
-#ifdef SLOW_WORD64
+#ifdef CRYPTOPP_SLOW_WORD64
 	return (word64(ByteReverse(word32(value))) << 32) | ByteReverse(word32(value>>32));
 #else
 	value = ((value & W64LIT(0xFF00FF00FF00FF00)) >> 8) | ((value & W64LIT(0x00FF00FF00FF00FF)) << 8);
@@ -402,7 +464,7 @@ inline word32 BitReverse(word32 value)
 #ifdef WORD64_AVAILABLE
 inline word64 BitReverse(word64 value)
 {
-#ifdef SLOW_WORD64
+#ifdef CRYPTOPP_SLOW_WORD64
 	return (word64(BitReverse(word32(value))) << 32) | BitReverse(word32(value>>32));
 #else
 	value = ((value & W64LIT(0xAAAAAAAAAAAAAAAA)) >> 1) | ((value & W64LIT(0x5555555555555555)) << 1);
@@ -487,6 +549,31 @@ inline word32 UnalignedGetWordNonTemplate(ByteOrder order, const byte *block, wo
 		: word32(block[0]) | (word32(block[1]) << 8) | (word32(block[2]) << 16) | (word32(block[3]) << 24);
 }
 
+#ifdef WORD64_AVAILABLE
+inline word64 UnalignedGetWordNonTemplate(ByteOrder order, const byte *block, word64*)
+{
+	return (order == BIG_ENDIAN_ORDER)
+		?
+		(word64(block[7]) |
+		(word64(block[6]) <<  8) |
+		(word64(block[5]) << 16) |
+		(word64(block[4]) << 24) |
+		(word64(block[3]) << 32) |
+		(word64(block[2]) << 40) |
+		(word64(block[1]) << 48) |
+		(word64(block[0]) << 56))
+		:
+		(word64(block[0]) |
+		(word64(block[1]) <<  8) |
+		(word64(block[2]) << 16) |
+		(word64(block[3]) << 24) |
+		(word64(block[4]) << 32) |
+		(word64(block[5]) << 40) |
+		(word64(block[6]) << 48) |
+		(word64(block[7]) << 56));
+}
+#endif
+
 template <class T>
 inline T UnalignedGetWord(ByteOrder order, const byte *block, T*dummy=NULL)
 {
@@ -543,6 +630,46 @@ inline void UnalignedPutWord(ByteOrder order, byte *block, word32 value, const b
 		block[3] ^= xorBlock[3];
 	}
 }
+
+#ifdef WORD64_AVAILABLE
+inline void UnalignedPutWord(ByteOrder order, byte *block, word64 value, const byte *xorBlock = NULL)
+{
+	if (order == BIG_ENDIAN_ORDER)
+	{
+		block[0] = GETBYTE(value, 7);
+		block[1] = GETBYTE(value, 6);
+		block[2] = GETBYTE(value, 5);
+		block[3] = GETBYTE(value, 4);
+		block[4] = GETBYTE(value, 3);
+		block[5] = GETBYTE(value, 2);
+		block[6] = GETBYTE(value, 1);
+		block[7] = GETBYTE(value, 0);
+	}
+	else
+	{
+		block[0] = GETBYTE(value, 0);
+		block[1] = GETBYTE(value, 1);
+		block[2] = GETBYTE(value, 2);
+		block[3] = GETBYTE(value, 3);
+		block[4] = GETBYTE(value, 4);
+		block[5] = GETBYTE(value, 5);
+		block[6] = GETBYTE(value, 6);
+		block[7] = GETBYTE(value, 7);
+	}
+
+	if (xorBlock)
+	{
+		block[0] ^= xorBlock[0];
+		block[1] ^= xorBlock[1];
+		block[2] ^= xorBlock[2];
+		block[3] ^= xorBlock[3];
+		block[4] ^= xorBlock[4];
+		block[5] ^= xorBlock[5];
+		block[6] ^= xorBlock[6];
+		block[7] ^= xorBlock[7];
+	}
+}
+#endif
 
 template <class T>
 inline T GetWord(bool assumeAligned, ByteOrder order, const byte *block)

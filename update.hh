@@ -21,8 +21,8 @@
 // if no version is better than base_ident, then this function
 // will set chosen to base_ident.
 
-void pick_update_target(manifest_id const & base_ident,
+void pick_update_target(revision_id const & base_ident,
 			app_state & app,
-			manifest_id & chosen);
+			revision_id & chosen);
 
 #endif // __UPDATE_HH__

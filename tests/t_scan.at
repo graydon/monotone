@@ -17,7 +17,9 @@ AT_DATA(foo/bar/testfile2, [version 0 of third test file
 
 AT_CHECK(MONOTONE add testfile0 foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
+AT_CHECK(MONOTONE cat manifest, [], [stdout]) 
+AT_CHECK(cp stdout manifest, [], [ignore]) 
 AT_CHECK(sha1sum foo/bar/testfile2 foo/testfile1 testfile0, [], [stdout])
-AT_CHECK(cmp stdout MT/manifest, [], [ignore]) 
+AT_CHECK(cmp stdout manifest, [], [ignore]) 
 
 AT_CLEANUP

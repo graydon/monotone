@@ -60,6 +60,9 @@ void make_simple_cert(hexenc<id> const & id,
 		      app_state & app,
 		      cert & c);
 
+void erase_bogus_certs(std::vector< revision<cert> > & certs,
+		       app_state & app);
+
 void erase_bogus_certs(std::vector< manifest<cert> > & certs,
 		       app_state & app);
 
@@ -68,144 +71,135 @@ void erase_bogus_certs(std::vector< file<cert> > & certs,
 
 // special certs -- system won't work without them
 
-extern std::string const ancestor_cert_name;
 extern std::string const branch_cert_name;
 
-void cert_manifest_in_branch(manifest_id const & manifest, 
-			     cert_value const & branchname,
-			     app_state & app,
-			     packet_consumer & pc);
-
-void get_branch_heads(cert_value const & branchname,
-		      app_state & app,
-		      std::set<manifest_id> & heads);
-
-void cert_file_ancestor(file_id const & parent, 
-			file_id const & child,
+void 
+cert_revision_in_branch(revision_id const & ctx, 
+			cert_value const & branchname,
 			app_state & app,
 			packet_consumer & pc);
 
-void cert_manifest_ancestor(manifest_id const & parent, 
-			    manifest_id const & child,
-			    app_state & app,
-			    packet_consumer & pc);
+void 
+get_branch_heads(cert_value const & branchname,
+		 app_state & app,
+		 std::set<revision_id> & heads);
 
-void write_ancestry_paths(manifest_id const & ancestor,
-			  manifest_id const & child,
-			  app_state & app,
-			  packet_consumer & pc);
-
-bool find_common_ancestor(manifest_id const & left,
-			  manifest_id const & right,
-			  manifest_id & anc,
-			  app_state & app);
+bool 
+find_common_ancestor(revision_id const & left,
+		     revision_id const & right,
+		     revision_id & anc,
+		     app_state & app);
 
 
 // stuff for dealing with rename certs / rename maps
 
-typedef std::map<file_path,file_path> rename_set;
+typedef std::map<file_path,file_path> 
+rename_set;
 
-struct rename_edge
+struct 
+rename_edge
 {
   rename_edge() {}
   rename_edge(rename_edge const & other);
-  manifest_id parent;
-  manifest_id child;
+  revision_id parent;
+  revision_id child;
   rename_set mapping;  
 };
 
-void calculate_renames(manifest_id const & ancestor,
-		       manifest_id const & child,
-		       app_state & app,
-		       rename_edge & edge);
+void 
+calculate_renames(revision_id const & ancestor,
+		  revision_id const & child,
+		  app_state & app,
+		  rename_edge & edge);
 
 
 // we also define some common cert types, to help establish useful
 // conventions. you should use these unless you have a compelling
 // reason not to.
 
-bool guess_default_key(rsa_keypair_id & key, 
-		       app_state & app);
+bool 
+guess_default_key(rsa_keypair_id & key, 
+		  app_state & app);
 
-void guess_branch(manifest_id const & id,
-		  app_state & app,
-		  cert_value & branchname);
+void 
+guess_branch(revision_id const & id,
+	     app_state & app,
+	     cert_value & branchname);
 
 extern std::string const date_cert_name;
 extern std::string const author_cert_name;
 extern std::string const tag_cert_name;
 extern std::string const changelog_cert_name;
 extern std::string const comment_cert_name;
-extern std::string const disapproval_cert_name;
 extern std::string const testresult_cert_name;
 extern std::string const rename_cert_name;
 
-void cert_manifest_date_now(manifest_id const & m, 
-			    app_state & app,
-			    packet_consumer & pc);
+void 
+cert_revision_date_now(revision_id const & m, 
+		      app_state & app,
+		      packet_consumer & pc);
 
-void cert_manifest_date_time(manifest_id const & m, 
-			     time_t time,
-			     app_state & app,
-			     packet_consumer & pc);
-
-void cert_manifest_author(manifest_id const & m, 
-			  std::string const & author,
-			  app_state & app,
-			  packet_consumer & pc);
-
-void cert_manifest_author_default(manifest_id const & m, 
-				  app_state & app,
-				  packet_consumer & pc);
-
-void cert_manifest_tag(manifest_id const & m, 
-		       std::string const & tagname,
-		       app_state & app,
-		       packet_consumer & pc);
-
-void cert_manifest_changelog(manifest_id const & m, 
-			     std::string const & changelog,
-			     app_state & app,
-			     packet_consumer & pc);
-
-void cert_file_comment(file_id const & m, 
-		       std::string const & comment,
-		       app_state & app,
-		       packet_consumer & pc);
-
-void cert_manifest_comment(manifest_id const & m, 
-			   std::string const & comment,
-			   app_state & app,
-			   packet_consumer & pc);
-
-void cert_file_approval(file_id const & f1,
-			file_id const & f2,  
-			bool const approval,
+void 
+cert_revision_date_time(revision_id const & m, 
+			time_t time,
 			app_state & app,
 			packet_consumer & pc);
 
-void cert_manifest_approval(manifest_id const & m1, 
-			    manifest_id const & m2, 
-			    bool const approval,
+void 
+cert_revision_author(revision_id const & m, 
+		    std::string const & author,
+		    app_state & app,
+		    packet_consumer & pc);
+
+void 
+cert_revision_author_default(revision_id const & m, 
 			    app_state & app,
 			    packet_consumer & pc);
 
-void cert_manifest_testresult(manifest_id const & m, 
-			      std::string const & results,
-			      app_state & app,
-			      packet_consumer & pc);
+void 
+cert_revision_tag(revision_id const & m, 
+		 std::string const & tagname,
+		 app_state & app,
+		 packet_consumer & pc);
 
-void cert_manifest_rename(manifest_id const & m, 
-			  rename_edge const & re,
-			  app_state & app,
-			  packet_consumer & pc);
+void 
+cert_revision_changelog(revision_id const & m, 
+		       std::string const & changelog,
+		       app_state & app,
+		       packet_consumer & pc);
 
-void cert_manifest_vcheck(manifest_id const & m, 
-			  app_state & app,
-			  packet_consumer & pc);
+void 
+cert_file_comment(file_id const & m, 
+		  std::string const & comment,
+		  app_state & app,
+		  packet_consumer & pc);
 
-void check_manifest_vcheck(manifest_id const & m, 
-			   app_state & app);
+void 
+cert_manifest_comment(manifest_id const & m, 
+		      std::string const & comment,
+		      app_state & app,
+		      packet_consumer & pc);
+
+void 
+cert_revision_comment(revision_id const & m, 
+		     std::string const & comment,
+		     app_state & app,
+		     packet_consumer & pc);
+
+void 
+cert_revision_testresult(revision_id const & m, 
+			 std::string const & results,
+			 app_state & app,
+			 packet_consumer & pc);
+
+void 
+cert_manifest_vcheck(manifest_id const & m, 
+		     app_state & app,
+		     packet_consumer & pc);
+
+void 
+check_manifest_vcheck(manifest_id const & m, 
+		      app_state & app);
 
 
 #endif // __CERT_HH__
