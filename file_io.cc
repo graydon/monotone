@@ -82,6 +82,17 @@ string tilde_expand(string const & path)
   return tmp.string();
 }
 
+bool book_keeping_file(fs::path const & p)
+{
+  using boost::filesystem::path;
+  for(path::iterator i = p.begin(); i != p.end(); ++i)
+    {
+      if (*i == book_keeping_dir)
+	return true;
+    }
+  return false;
+}
+
 bool book_keeping_file(local_path const & p)
 {
   if (p() == book_keeping_dir) return true;
@@ -223,6 +234,10 @@ static void walk_tree_recursive(fs::path const & absolute,
     {
       fs::path entry = *di;
       fs::path rel_entry = relative / fs::path(entry.leaf());
+
+      if (book_keeping_file (entry))
+	return;
+
       if (fs::is_directory(entry))
 	walk_tree_recursive(entry, rel_entry, walker);
       else

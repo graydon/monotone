@@ -1,3 +1,7 @@
+2003-11-10  graydon hoare  <graydon@pobox.com>
+
+	* file_io.cc (walk_tree_recursive): Ignore MT/
+
 2003-11-09  graydon hoare  <graydon@pobox.com>
 
 	* database.cc (dump, load): Implement.
