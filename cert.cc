@@ -370,6 +370,21 @@ cert_hash_code(cert const & t, hexenc<id> & out)
   calculate_ident(tdat, out);
 }
 
+bool
+priv_key_exists(app_state & app, rsa_keypair_id const & id)
+{
+
+  if (app.db.private_key_exists(id))
+    return true;
+  
+  base64< arc4<rsa_priv_key> > dummy;
+
+  if (app.lua.hook_get_priv_key(id, dummy))
+    return true;
+
+  return false;
+}
+
 /* Loads a private key for a given key id, from either a lua hook
  * or the database. This will bomb out if the same keyid exists
  * in both with differing contents. */

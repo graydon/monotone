@@ -53,6 +53,7 @@ typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 
 void cert_signable_text(cert const & t,std::string & out);
 cert_status check_cert(app_state & app, cert const & t);
+bool priv_key_exists(app_state & app, rsa_keypair_id const & id);
 void load_priv_key(app_state & app,
                     rsa_keypair_id const & id,
                     base64< arc4<rsa_priv_key> > & priv);

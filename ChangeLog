@@ -1,3 +1,9 @@
+2004-12-10  Matt Johnston  <matt@ucc.asn.au>
+
+        * cert.cc: Added priv_key_exists() function
+        * commands.cc, rcs_import.cc: use new privkey functions
+        * netsync.cc: change some bits that were missed
+
 2004-12-09  Matt Johnston  <matt@ucc.asn.au>
 
         * cert.cc, cert.hh, lua.cc, lua.hh, netsync.cc:
