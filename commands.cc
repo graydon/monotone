@@ -1693,7 +1693,7 @@ CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on s
   stringstream summary;
   patch_set_to_text_summary(ps, summary);
   vector<string> lines;
-  split_into_lines(ss.str(), lines);
+  split_into_lines(summary.str(), lines);
   for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
     cout << "# " << *i << endl;
 
