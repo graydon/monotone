@@ -212,7 +212,7 @@ void execute_post_query (string const & user,
     if ((p = tmp.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
 				   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 				   "0123456789"
-				   "+/=_.@[] \n\t"))
+				   "-+/=_.@[] \n\t"))
 	!= string::npos)
       throw runtime_error(string("illegal character in uploaded data: ") 
 			  + lexical_cast<string>(static_cast<int>(tmp.at(p))));
