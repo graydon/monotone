@@ -314,7 +314,7 @@ find_least_common_ancestor(revision_id const & left,
 {
   interner<ctx> intern;
   std::map< ctx, shared_bitmap >
-    parents, ancestors, dominators;
+    parents, ancestors;
 
   ctx ln = intern.intern(left.inner()());
   ctx rn = intern.intern(right.inner()());
@@ -339,7 +339,6 @@ find_least_common_ancestor(revision_id const & left,
         }
     }
 //      dump_bitset_map("ancestors", ancestors);
-//      dump_bitset_map("dominators", dominators);
 //      dump_bitset_map("parents", parents);
   return false;
 }

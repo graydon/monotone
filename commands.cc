@@ -2457,7 +2457,7 @@ CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor")
   if (find_least_common_ancestor(left, right, anc, app))
     std::cout << anc << std::endl;
   else
-    std::cout << "no common ancestor/dominator found" << std::endl;
+    std::cout << "no common ancestor found" << std::endl;
 }
 
 
@@ -2595,24 +2595,26 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
       r_old_id = edge_old_revision(r_working.edges.begin());
     }
 
-  if (args.size() == 0) {
-    set<revision_id> candidates;
-    pick_update_candidates(r_old_id, app, candidates);
-    N(candidates.size() != 0,
-      F("no candidates remain after selection"));
-    if (candidates.size() != 1)
-      {
-        P(F("multiple update candidates:\n"));
-        for (set<revision_id>::const_iterator i = candidates.begin();
-             i != candidates.end(); ++i)
-          P(F("  %s\n") % describe_revision(app, *i));
-        P(F("choose one with 'monotone update <id>'\n"));
-        N(false, F("multiple candidates remain after selection"));
-      }
-    r_chosen_id = *(candidates.begin());
-  } else {
+  if (args.size() == 0)
+    {
+      set<revision_id> candidates;
+      pick_update_candidates(r_old_id, app, candidates);
+      N(candidates.size() != 0,
+        F("no candidates remain after selection"));
+      if (candidates.size() != 1)
+        {
+          P(F("multiple update candidates:\n"));
+          for (set<revision_id>::const_iterator i = candidates.begin();
+               i != candidates.end(); ++i)
+            P(F("  %s\n") % describe_revision(app, *i));
+          P(F("choose one with 'monotone update <id>'\n"));
+          N(false, F("multiple candidates remain after selection"));
+        }
+      r_chosen_id = *(candidates.begin());
+    }
+  else
     complete(app, idx(args, 0)(), r_chosen_id);
-  }
+
   if (r_old_id == r_chosen_id)
     {
       P(F("already up to date at %s\n") % r_old_id);
@@ -2623,37 +2625,43 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   app.db.get_revision_manifest(r_chosen_id, m_chosen_id);
   app.db.get_manifest(m_chosen_id, m_chosen);
 
-  if (args.size() == 0) {
-    calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
-    m_ancestor = m_old;
-  } else {
-    revision_id r_ancestor_id;
-
-    N(find_least_common_ancestor(r_old_id, r_chosen_id, r_ancestor_id, app),
-      F("no common ancestor for %s and %s\n") % r_old_id % r_chosen_id);
-    L(F("old is %s\n") % r_old_id);
-    L(F("chosen is %s\n") % r_chosen_id);
-    L(F("common ancestor is %s\n") % r_ancestor_id);
-
-    app.db.get_revision_manifest(r_ancestor_id, m_ancestor_id);
-    app.db.get_manifest(m_ancestor_id, m_ancestor);
-
-    if (r_ancestor_id == r_old_id) {
+  if (args.size() == 0)
+    {
       calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
-    } else if (r_ancestor_id == r_chosen_id) {
-      change_set chosen_to_old;
-      calculate_composite_change_set(r_chosen_id, r_old_id, app, chosen_to_old);
-      invert_change_set(chosen_to_old, m_chosen, old_to_chosen);
-    } else {
-      change_set ancestor_to_old;
-      change_set old_to_ancestor;
-      change_set ancestor_to_chosen;
-      calculate_composite_change_set(r_ancestor_id, r_old_id, app, ancestor_to_old);
-      invert_change_set(ancestor_to_old, m_ancestor, old_to_ancestor);
-      calculate_composite_change_set(r_ancestor_id, r_chosen_id, app, ancestor_to_chosen);
-      concatenate_change_sets(old_to_ancestor, ancestor_to_chosen, old_to_chosen);
+      m_ancestor = m_old;
     }
-  }
+  else
+    {
+      revision_id r_ancestor_id;
+
+      N(find_least_common_ancestor(r_old_id, r_chosen_id, r_ancestor_id, app),
+        F("no common ancestor for %s and %s\n") % r_old_id % r_chosen_id);
+      L(F("old is %s\n") % r_old_id);
+      L(F("chosen is %s\n") % r_chosen_id);
+      L(F("common ancestor is %s\n") % r_ancestor_id);
+
+      app.db.get_revision_manifest(r_ancestor_id, m_ancestor_id);
+      app.db.get_manifest(m_ancestor_id, m_ancestor);
+
+      if (r_ancestor_id == r_old_id)
+        calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+      else if (r_ancestor_id == r_chosen_id)
+        {
+          change_set chosen_to_old;
+          calculate_composite_change_set(r_chosen_id, r_old_id, app, chosen_to_old);
+          invert_change_set(chosen_to_old, m_chosen, old_to_chosen);
+        }
+      else
+        {
+          change_set ancestor_to_old;
+          change_set old_to_ancestor;
+          change_set ancestor_to_chosen;
+          calculate_composite_change_set(r_ancestor_id, r_old_id, app, ancestor_to_old);
+          invert_change_set(ancestor_to_old, m_ancestor, old_to_ancestor);
+          calculate_composite_change_set(r_ancestor_id, r_chosen_id, app, ancestor_to_chosen);
+          concatenate_change_sets(old_to_ancestor, ancestor_to_chosen, old_to_chosen);
+        }
+    }
 
   update_merge_provider merger(app, m_ancestor, m_chosen, m_working);
 
