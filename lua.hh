@@ -64,6 +64,13 @@ public:
 		   data const & left, 
 		   data const & right, 
 		   data & result);
+
+  // attribute hooks
+  bool hook_apply_attribute(string const & attr, 
+			    file_path const & filename, 
+			    string const & value);
+    
+
 };
 
 #endif // __LUA_HH__

@@ -3,8 +3,34 @@
 -- user-provided files can override it or add to it.
 
 function temp_file()
-	return io.mkstemp("/tmp/mt.XXXXXX")
+	local tdir
+	tdir = os.getenv("TMPDIR")
+	if tdir == nil then tdir = os.getenv("TMP") end
+	if tdir == nil then tdir = os.getenv("TEMP") end
+	if tdir == nil then tdir = "/tmp" end
+	return io.mkstemp(string.format("%s/mt.XXXXXX", tdir))
 end
+
+
+-- attributes are persistent metadata about files (such as execute
+-- bit, ACLs, various special flags) which we want to have set and
+-- re-set any time the files are modified. the attributes themselves
+-- are stored in a file .mt-attrs, in the working copy (and
+-- manifest). each (f,k,v) triple in an atribute file turns into a
+-- call to attr_functions[k](f,v) in lua.
+
+if (attr_functions == nil) then
+	attr_functions = {}
+end
+
+
+attr_functions["execute"] = 
+  function(filename, value) 
+	if (value == "true") then
+		os.execute(string.format("chmod +x %s", filename))
+	end
+  end
+
 
 function ignore_file(name)
 	if (string.find(name, "%.o$")) then return true end

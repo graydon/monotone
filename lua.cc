@@ -607,3 +607,19 @@ bool lua_hooks::hook_get_fetch_sources(cert_value const & branchname,
   
   return ll.ok();
 }
+
+
+bool lua_hooks::hook_apply_attribute(string const & attr, 
+				     file_path const & filename, 
+				     string const & value)
+{
+  return Lua(st)
+    .push_str("attr_functions")
+    .get_tab()
+    .push_str(attr)
+    .get_fn(-2)
+    .push_str(filename())
+    .push_str(value)
+    .call(2,0)
+    .ok();
+}

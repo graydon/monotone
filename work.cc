@@ -462,3 +462,13 @@ void write_attr_map(data & dat, attr_map const & attr)
 	<< i->second << endl;
   dat = tmp.str();
 }
+
+
+void apply_attributes(app_state & app, attr_map const & attr)
+{
+  for (attr_map::const_iterator i = attr.begin();
+       i != attr.end(); ++i)
+    app.lua.hook_apply_attribute (i->first.second, 
+				  i->first.first,
+				  i->second);
+}

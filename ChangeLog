@@ -1,5 +1,14 @@
 2003-10-10  graydon hoare  <graydon@pobox.com>
 
+	* lua.hh, lua.cc (hook_apply_attribute): New hook.
+	* work.hh, work.cc (apply_attributes): New function.
+	* commands.cc (update_any_attrs): Update attrs when writing to
+	working copy. 
+	* std_hooks.lua (temp_file): Use some env vars.
+	(attr_functions): Make table of attr-setting functions.
+
+2003-10-10  graydon hoare  <graydon@pobox.com>
+
 	* work.cc: Fix add/drop inversion bug.
 	* lua/*.{c,h}: Import lua 5.0 sources.
 	* lua.cc: Rewrite lua interface completely. 	

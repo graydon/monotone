@@ -120,5 +120,8 @@ void read_attr_map(data const & dat, attr_map & attrs);
 void write_attr_map(data & dat,
 		    attr_map const & options);
 
+void apply_attributes(app_state & app, 
+		      attr_map const & attr);
+
 
 #endif // __WORK_HH__

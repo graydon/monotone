@@ -290,6 +290,21 @@ static void put_work_set(work_set & w)
     }
 }
 
+static void update_any_attrs(app_state & app)
+{
+  file_path fp;
+  data attr_data;
+  attr_map attr;
+
+  get_attr_path(fp);
+  if (!file_exists(fp))
+    return;
+
+  read_data(fp, attr_data);
+  read_attr_map(attr_data, attr);
+  apply_attributes(app, attr);
+}
+
 static void calculate_new_manifest_map(manifest_map const & m_old, 
 				       manifest_map & m_new)
 {
@@ -886,6 +901,7 @@ CMD(add, "working copy", "PATHNAME...", "add files to working copy")
   if (rewrite_work)
     put_work_set(work);
 
+  update_any_attrs(app);
   app.write_options();
 }
 
@@ -906,6 +922,7 @@ CMD(drop, "working copy", "FILE...", "drop files from working copy")
   if (rewrite_work)
     put_work_set(work);
 
+  update_any_attrs(app);
   app.write_options();
 }
 
@@ -928,6 +945,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   if (rewrite_work)
     put_work_set(work);
   
+  update_any_attrs(app);
   app.write_options();  
 }
 
@@ -1087,6 +1105,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   put_manifest_map(m_new);
   P(F("committed %s\n") % ps.m_new);
 
+  update_any_attrs(app);
   app.write_options();
 }
 
@@ -1185,6 +1204,7 @@ CMD(update, "working copy", "[SORT-KEY]...", "update working copy, relative to s
   put_manifest_map(m_chosen);
   P(F("updated to base version %s\n") % m_chosen_id);
 
+  update_any_attrs(app);
   app.write_options();
 }
 
@@ -1287,6 +1307,7 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
       put_work_set(work);
     }
 
+  update_any_attrs(app);
   app.write_options();
 }
 
@@ -1380,6 +1401,7 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY", "check out tree state from databa
     }
   remove_work_set();
   guard.commit();
+  update_any_attrs(app);
   app.write_options();
 }
 
