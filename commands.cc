@@ -2565,22 +2565,30 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
 
 CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute SQL", "manipulate database state")
 {
-  if (args.size() != 1)
-    throw usage(name);
-  if (idx(args, 0)() == "init")
-    app.db.initialize();
-  else if (idx(args, 0)() == "info")
-    app.db.info(cout);
-  else if (idx(args, 0)() == "version")
-    app.db.version(cout);
-  else if (idx(args, 0)() == "dump")
-    app.db.dump(cout);
-  else if (idx(args, 0)() == "load")
-    app.db.load(cin);
-  else if (idx(args, 0)() == "migrate")
-    app.db.migrate();
-  else if (idx(args, 0)() == "execute")
-    app.db.debug(idx(args, 1)(), cout);
+  if (args.size() == 1)
+    {
+      if (idx(args, 0)() == "init")
+	app.db.initialize();
+      else if (idx(args, 0)() == "info")
+	app.db.info(cout);
+      else if (idx(args, 0)() == "version")
+	app.db.version(cout);
+      else if (idx(args, 0)() == "dump")
+	app.db.dump(cout);
+      else if (idx(args, 0)() == "load")
+	app.db.load(cin);
+      else if (idx(args, 0)() == "migrate")
+	app.db.migrate();
+      else
+	throw usage(name);
+    }
+  else if (args.size() == 2)
+    {
+      if (idx(args, 0)() == "execute")
+	app.db.debug(idx(args, 1)(), cout);
+      else
+	throw usage(name);
+    }
   else
     throw usage(name);
 }
