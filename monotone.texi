@@ -2430,33 +2430,38 @@ directly related to a file's data content.
 Rather than try to extend the manifest file format to accommodate
 attributes, monotone requires that you place your attributes in a
 specially named file in the root of your working copy. The file is
-called @file{.mt-attrs}, and it has a simple 3-column format, for
+called @file{.mt-attrs}, and it has a simple stanza-based format, for
 example:
 
 @smallexample
 @group
-execute true src/configure
-execute true autogen.sh
+file "analyze_coverage"
+execute "true"
+
+file "autogen.sh"
+execute "true"
+otherattr "bob"
 @end group
 @end smallexample
 
-(Note that the separator is exactly 1 space character; if you use
-multiple spaces, tabs, etc., then your line will be silently ignored!)
+Each stanze of the @file{.mt-attrs} file assigns attributes to a file in
+your working copy.  The first line of each stanza is @code{file}
+followed by the quoted name of the file you want to assign attributes
+to.  Each subsequent line is the name of an attribute, followed by a
+quoted value for that attribute.  Stanzas are separated by blank lines.
 
-Each line of the @file{.mt-attrs} file assigns an attribute to a file
-in your working copy. The first column of each line contains the name
-of the attribute, the second column is the value of the attribute, and
-the third column is the file name within the working copy to which the
-attribute will be applied.
+As a convenience, you can use the @code{monotone attr} command to set
+and view the values of these attributes; see @ref{Working Copy}.
+
+You can tell monotone to automatically take actions based on these
+attributes by defining hooks; see the @code{attr_functions} entry in
+@ref{Hook Reference}.
 
 Every time your working copy is written to, monotone will look for the
 @file{.mt-attrs} file, and if it exists, run the corresponding hooks
 registered for each attribute found in the file. This way, you can
 extend the vocabulary of attributes understood by monotone simply by
 writing new hooks.
-
-For more information on defining hooks for new attributes, see the
-@code{attr_functions} entry in @ref{Hook Reference}.
 
 Aside from its special interpretation, the @file{.mt-attrs} file is a
 normal text file. If you want other people to see your attributes, you
@@ -2897,10 +2902,8 @@ selected, then their least common ancestor is located in the ancestry
 graph and these 3 revisions are provided to the built-in 3-way merge
 algorithm. The process then repeats for each additional head, using
 the result of each previous merge as an input to the next.
-@end ftable
 
 
-@ftable @command
 @item monotone propagate @var{sourcebranch} @var{destbranch}
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
@@ -2916,6 +2919,16 @@ branches for medium-length development activities, such as
 maintenance branches for stable software releases, trivial bug fix
 branches, public contribution branches, or branches devoted to the
 development of a single module within a larger project.
+
+
+@item monotone explicit_merge @var{id} @var{id} @var{destbranch}
+This command merges exactly the two @var{id}s you give it, and places
+the result in branch @var{destbranch}.  It is useful when you need more
+control over the merging process than @code{propagate} or @code{merge}
+give you.  For instance, if you have a branch with three heads, and you
+only want to merge two of them, you can use this command.  Or if you
+have a branch with two heads, and you want to propagate one of them to
+another branch, again, you can use this command.
 @end ftable
 
 
@@ -3311,6 +3324,15 @@ These commands create a new certificate with name @var{certname}, for
 a revision with version @var{id}. If @var{certval} is provided, it is
 the value of the certificate.  Otherwise the certificate value is read
 from @code{stdin}.
+
+@item monotone trusted @var{id} @var{certname} @var{certval} @var{signers}
+
+This command lets you test your revision trust hook
+@code{get_revision_cert_trust} (see @ref{Hook Reference}).  You pass it
+a revision id, a certificate name, a certificate value, and one or more
+key ids, and it will tell you whether, under your current settings,
+Monotone would trust a cert on that revision with that value signed by
+those keys.
 
 @item monotone --branch=@var{branchname} vcheck create 
 @itemx monotone vcheck create @var{id}

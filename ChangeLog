@@ -1,7 +1,130 @@
+2004-12-12  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc: Fix bug reported in t_attr.at
+	* tests/t_attr.at: Remove xfail.
+	* change_set.cc: Change unit tests syntax.
+	(read_change_set): Assert complete read.
+	* revision_ser.cc (read_revision_set): Likewise.
+	* os_specific.hh: Drop obsolete file.
+
+2004-12-12  Joel Rosdahl  <joel@rosdahl.net>
+
+	* revision.cc (find_least_common_ancestor): New function for
+	finding the vanilla LCA.
+	* revision.hh: Added prototype for find_least_common_ancestor.
+	* commands.cc (update): Use find_least_common_ancestor for finding
+	a common ancestor.
+	* commands.cc (diff): Likewise.
+	* revision.cc (find_common_ancestor): Rename to...
+	(find_common_ancestor_for_merge): ...this, for clarity.
+	* revision.hh: find_common_ancestor -->
+	find_common_ancestor_for_merge.
+	* commands.cc (try_one_merge): Call find_common_ancestor_for_merge
+	to find ancestor.
+	* commands.cc (lcad): Rename lca command to lcad.
+	* commands.cc (lca): New command for finding the vanilla LCA.
+
+2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_keys.at: Actually test what it's
+	supposed to.  Also, un-XFAIL it, since now it seems to pass.
+	
+2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_keys.at: New test.
+
+	* testsuite.at: Call it.
+	* tests/t_persistent_server_revision.at: Fix typo.
+
+2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_persistent_server_revision.at: New test.
+	* testsuite.at: Call it.  Tweak NETSYNC macros in support of it.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.hh (add_rcfile): Add 'required' argument.
+	* lua.cc (add_rcfile): Implement it.  Simplify error checking
+	logic while I'm there...
+	* monotone.cc (cpp_main): Pass new argument to add_rcfile.
+	
+	* tests/t_rcfile_required.at: New test.
+	* testsuite.at: Call it.
+	Revamp netsync support macros, to allow long-running servers.
+	Make netsync-killer try first with -TERM, in case that plays nicer
+	with gcov.
+	
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.hh: Remove tabs.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Document explicit_merge.
+	
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am: Redo full-revision support again, to properly
+	handle 'make dist' and caching.  Hopefully.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (File Attributes): Rewrite for new .mt-attrs
+	syntax.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_attr.at: New test.
+	* testsuite.at: Call it.
+
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (trusted): Print spaces between key ids.
+
+	* lua.cc (add_rcfile): Errors while loading a user-provided rc
+	file are naughtiness, not oopses.
+	
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (commands::explain_usage): Use split_into_lines to
+	do formatting of per-command usage; allow multi-line
+	descriptions.
+	(trusted): New command.
+	* monotone.texi (Key and Cert): Document 'trusted' command.
+	* tests/t_trusted.at: New test.
+	* testsuite.at: Change get_revision_cert_trust to support
+	t_trusted.at.  Call t_trusted.at.
+	
+2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (package_full_revision.txt): Redo Joel Rosdahl
+	<joel@rosdahl.net>'s change below after it got clobbered by
+	merge.
+
+2004-12-06  Joel Rosdahl  <joel@rosdahl.net>
+
+	* Makefile.am (package_full_revision.txt): Silence error messages
+	when deducing full package revision.
+
 2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc (log): Synopsize optional 'file' argument, and
 	describe both arguments in help description.
+
+2004-12-09  Derek Scherger  <derek@echologic.com>
+
+	* .mt-nonce: delete obsolete file	
+	* change_set.cc (merge_deltas): add file paths in call to
+	try_to_merge_files
+	* commands.cc (propagate): add progress logging similar to merge
+	* diff_patch.{cc,hh} (try_to_merge_files): add file paths to
+	merge2 and merge3 hooks; add logging of paths before calling merge
+	hooks
+	* lua.{cc,hh} (hook_merge2, hook_merge3): add file paths to merge
+	hooks
+	* std_hooks.lua (merge2, merge3, merge2_xxdiff_cmd,
+	merge3_xxdiff_cmd): pass file paths to xxdiff for use as titles
+	* testsuite.at (MONOTONE_SETUP): add paths to merge2 hook
 
 2004-12-10  Matt Johnston  <matt@ucc.asn.au>
 

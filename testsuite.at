@@ -59,8 +59,19 @@ function non_blocking_rng_ok()
 	return true
 end
 
+-- Everything alice signs is trusted, nothing mallory signs is
+-- trusted.  For certs signed by other people, everything is
+-- trusted except for one particular cert...
+-- For use of t_trusted.at.
 function get_revision_cert_trust(signers, id, name, val)
-   return true
+   for k, v in pairs(signers) do
+      if v == "alice@trusted.com" then return true end
+      if v == "mallory@evil.com" then return false end
+   end
+   if (id == "0000000000000000000000000000000000000000"
+       and name == "bad-cert" and val == "bad-val")
+   then return false end
+   return true             
 end
 
 function get_manifest_cert_trust(signers, id, name, val)
@@ -185,6 +196,7 @@ m4_define([UNB64], [AT_CHECK(eval $UNB64_COMMAND <$1 >$2)])
 m4_define([NETSYNC_SETUP], [
 
 AT_CHECK(cp test.db test2.db)
+AT_CHECK(cp test.db test3.db)
 AT_DATA(netsync.lua, [
 function get_netsync_read_permitted(collection, identity)
 	return true
@@ -198,16 +210,36 @@ end
 ])
 
 m4_define([MONOTONE2], MONOTONE --db=test2.db)
+m4_define([MONOTONE3], MONOTONE --db=test3.db)
 
+# run as NETSYNC_SERVE_START(collection name)
+m4_define([NETSYNC_SERVE_START], [
+killall -q -KILL monotone
+MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $1 &
+sleep 4
+])
+# run as NETSYNC_SERVE_STOP
+m4_define([NETSYNC_SERVE_STOP], [
+killall -q monotone
+sleep 1
+killall -q -KILL monotone
+])
+# run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name)
+# first argument chooses whether to use the 2nd or 3rd database
+m4_define([NETSYNC_CLIENT_N_RUN], [
+AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 127.0.0.1:5555 $3, [], [ignore], [ignore])
+])
+# run as NETSYNC_CLIENT_RUN(push|pull|sync, collection name)
+m4_define([NETSYNC_CLIENT_RUN], [
+NETSYNC_CLIENT_N_RUN(2, $1, $2)
+])
 # run as RUN_NETSYNC(push|pull|sync, collection name)
 # It is the second database that is always the client; take this into
 # account when choosing push|pull|sync.
 m4_define([RUN_NETSYNC], [
-killall -q -KILL monotone
-MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $2 &
-sleep 5
-AT_CHECK(MONOTONE2 --rcfile=netsync.lua $1 127.0.0.1:5555 $2, [], [ignore], [ignore])
-killall -q -KILL monotone
+NETSYNC_SERVE_START($2)
+NETSYNC_CLIENT_RUN($1, $2)
+NETSYNC_SERVE_STOP
 ])
 
 
@@ -275,3 +307,8 @@ m4_include(tests/t_patch_vs_drop_add.at)
 m4_include(tests/t_explicit_merge.at)
 m4_include(tests/t_ambig_update.at)
 m4_include(tests/t_checkout_options.at)
+m4_include(tests/t_trusted.at)
+m4_include(tests/t_attr.at)
+m4_include(tests/t_rcfile_required.at)
+m4_include(tests/t_persistent_server_revision.at)
+m4_include(tests/t_persistent_server_keys.at)
