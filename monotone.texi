@@ -473,20 +473,20 @@ forming a new unique ID for each point in history.
 @section Certificates
 
 Often, you will wish to make a @i{statement} about a revision, such as
-stating the reason that you made some changes, or stating the fact
-that you approve of the changes which were made, or stating the time
-at which you made the changes. Statements such as these can be thought
-of, generally, as a bundle of information with three parts:
+stating the reason that you made some changes, or stating the time at
+which you made the changes, or stating that the revision passes a test
+suite. Statements such as these can be thought of, generally, as a
+bundle of information with three parts:
 
 @itemize
 @item
 an @i{ID}, indicating which revision you are making a statement about
 @item
 a @i{name} indicating the type of statement you are making, such as
-``changelog'', ``date'' or ``disapproval''
+``changelog'', ``date'' or ``testresult''
 @item
 a @i{value} indicating the remaining detail of the statement, such as
-``fixed a bug'', ``March 9th'' or ``approved for shipping''
+``fixed a bug'', ``March 9th'' or ``1''
 @end itemize
 
 
@@ -1470,17 +1470,20 @@ $ monotone --db=jim.db diff
 @node    Committing Work
 @section Committing Work
 
-Satisfied with the work he's done, Jim then commits his working copy,
-which causes monotone to process the @file{MT/work} file and record
-the file contents, manifest, and revision into the database.
+Satisfied with the work he's done, Jim wants to save his changes. He
+chooses @code{jp.co.juicebot.jb7} as a branch name. (See @ref{Naming
+Conventions} for more information about appropriate branch names.) He
+then commits his working copy, which causes monotone to process the
+@file{MT/work} file and record the file contents, manifest, and revision
+into the database.
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=co.jp.juicebot.jb7 commit 'initial checkin of project'
+$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit 'initial checkin of project'
 monotone: beginning commit
 monotone: manifest 2098eddbe833046174de28172a813150a6cbda7b
 monotone: revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
@@ -1531,7 +1534,7 @@ $ monotone ls certs 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 Key   : jim@@juicebot.co.jp
 Sig   : ok
 Name  : branch
-Value : co.jp.juicebot.jb7
+Value : jp.co.juicebot.jb7
 -----------------------------------------------------------------
 Key   : jim@@juicebot.co.jp
 Sig   : ok
@@ -1575,13 +1578,13 @@ command, which lists all the head revisions in the branch:
 @smallexample
 @group
 $ monotone heads
-branch 'co.jp.juicebot.jb7' is currently merged:
+branch 'jp.co.juicebot.jb7' is currently merged:
 2e24d49a48adf9acf3a1b6391a080008cbef9c21 jim@@juicebot.co.jp 2004-10-26T02:53:08
 @end group
 @end smallexample
 
 The output of this command tells us that there is only one current
-``head'' revision in the branch @code{co.jp.juicebot.jb7}, and it is
+``head'' revision in the branch @code{jp.co.juicebot.jb7}, and it is
 the revision Jim just committed. A head revision is one without any
 descendents. Since Jim has not committed any changes to this revision
 yet, it has no descendents.
@@ -1623,22 +1626,22 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
 @end group
 @end smallexample
 
 This command sets up a single listener loop on the host
 @code{jim-laptop.juicebot.co.jp}, serving the
-@code{co.jp.juicebot.jb7} collection. This collection will naturally
-include the @code{co.jp.juicebot.jb7} branch, and any sub-branches.
+@code{jp.co.juicebot.jb7} collection. This collection will naturally
+include the @code{jp.co.juicebot.jb7} branch, and any sub-branches.
 
 Now Abe decides he wishes to fetch Jim's code. To do this he issues
 the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone --db=abe.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1671,12 +1674,12 @@ automatically as clients access them and trade with one another.
 Abe decides to do some work on his part of the code. He has a copy of
 Jim's database contents, but cannot edit any of that data yet.  He
 begins his editing by checking out the head of the
-@code{co.jp.juicebot.jb7} branch into a working copy, so he can edit
+@code{jp.co.juicebot.jb7} branch into a working copy, so he can edit
 it:
 
 @smallexample
 @group
-$ monotone --db=abe.db --branch=co.jp.juicebot.jb7 checkout .
+$ monotone --db=abe.db --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1728,7 +1731,7 @@ $ monotone commit
 monotone: beginning commit
 monotone: manifest b33cb337dccf21d6673f462d677a6010b60699d1
 monotone: revision 70decb4b31a8227a629c0e364495286c5c75f979
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 @end group
 @end smallexample
 
@@ -1770,13 +1773,13 @@ monotone: committed revision 70decb4b31a8227a629c0e364495286c5c75f979
 @end group
 @end smallexample
 
-Abe then sens his new revision back to Jim:
+Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
 $ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
-monotone: including branch co.jp.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 2] [rcerts: 8] 
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 630] [bytes out: 2844] 
@@ -1784,28 +1787,28 @@ monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
-Beth does a similar sequence, First she syncs her database with
+Beth does a similar sequence. First she syncs her database with
 Jim's:
 
 @smallexample
 @group
-monotone --db=beth.db sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
+monotone --db=beth.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
-Checks out a copy of the tree from her database:
+She checks out a copy of the tree from her database:
 
 @smallexample
 @group
-$ monotone --db=beth.db --branch=co.jp.juicebot.jb7 checkout .
+$ monotone --db=beth.db --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
-Edits the file @file{src/banana.c}:
+She edits the file @file{src/banana.c}:
 
 @smallexample
 @group
@@ -1814,7 +1817,7 @@ $ vi src/banana.c
 @end group
 @end smallexample
 
-Commits her work:
+She commits her work:
 
 @smallexample
 @group
@@ -1822,18 +1825,18 @@ $ monotone commit 'polling implementation of src/banana.c'
 monotone: beginning commit
 monotone: manifest eaebc3c558d9e30db6616ef543595a5a64cc6d5f
 monotone: revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 monotone: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
 @end group
 @end smallexample
 
-And syncs with Jim again:
+And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
-monotone: rebuilding merkle trees for collection co.jp.juicebot.jb7
-monotone: including branch co.jp.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 3] [rcerts: 12] 
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 630] [bytes out: 2844] 
@@ -1932,7 +1935,7 @@ $ monotone diff
 @end group
 @end smallexample
 
-Commits her work:
+She commits her work:
 
 @smallexample
 @group
@@ -1940,16 +1943,16 @@ $ monotone commit 'interrupt implementation of src/banana.c'
 monotone: beginning commit
 monotone: manifest de81e46acb24b2950effb18572d5166f83af3881
 monotone: revision 8b41b5399a564494993063287a737d26ede3dee4
-monotone: branch co.jp.juicebot.jb7
+monotone: branch jp.co.juicebot.jb7
 monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
 @end smallexample
 
-And syncs with Jim:
+And she syncs with Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
 @end group
 @end smallexample
 
@@ -1980,7 +1983,7 @@ he has new work to contribute, however, he now syncs:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp co.jp.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
 @end group
 @end smallexample
 
@@ -1991,7 +1994,7 @@ the branch:
 @smallexample
 @group
 $ monotone heads
-monotone: branch 'co.jp.juicebot.jb7' is currently unmerged:
+monotone: branch 'jp.co.juicebot.jb7' is currently unmerged:
 39969614e5a14316c7ffefc588771f491c709152 abe@@juicebot.co.jp 2004-10-26T02:53:16
 8b41b5399a564494993063287a737d26ede3dee4 beth@@juicebot.co.jp 2004-10-26T02:53:15
 @end group
@@ -2331,7 +2334,7 @@ This cert's value is the name of a branch. A @code{branch} cert
 associates a revision with a branch. The revision is said to be ``in
 the branch'' named by the cert. The cert is generated when you commit
 a revision, either directly with the @code{commit} command or
-indirectly with the @code{merge} or @code{propagage} commands. The
+indirectly with the @code{merge} or @code{propagate} commands. The
 @code{branch} certs are read and directly interpreted by @emph{many}
 monotone commands, and play a fundamental role in organizing work in
 any monotone database.
@@ -2632,6 +2635,29 @@ omit the @command{merge} step if you only want @command{update} to
 examine descendants of your base revision, and ignore other heads on
 your branch.
 
+@heading Moving Working Copy to Another Revision
+
+@multitable @columnfractions .4 .4
+@item
+@smallexample
+@group
+$ cvs update -r FOO_TAG -d
+@end group
+@end smallexample
+@tab
+@smallexample
+@group
+$ monotone update 830ac1a5f033825ab364f911608ec294fe37f7bc
+$ monotone update t:FOO_TAG
+@end group
+@end smallexample
+@end multitable
+
+With a revision parameter, the @command{update} command operates
+similarly in monotone and CVS. One difference is that a subsequent
+@command{commit} will be based off the chosen revision in monotone,
+while a @command{commit} in the CVS case is not possible without going
+back to the branch head again.
 
 @heading Viewing Differences
 
@@ -2831,6 +2857,17 @@ If no @var{id} is provided, as in the latter two commands, you
 @var{id} as the unique head of @var{branchname} if it exists.
 
 
+@item monotone disapprove @var{id}
+
+This command records a disapproval of the changes between @var{id}'s
+ancestor and @var{id}. It does this by committing the @i{inverse}
+changes as a new revision descending from @var{id}. The new revision
+will show up as a new head and thus a subsequent @command{merge} will
+incorporate the inverse of the disapproved changes in the other head(s).
+
+Note that this command only works if @var{id} has exactly one ancestor.
+
+
 @item monotone heads --branch=@var{branchname}
 This command lists the ``heads'' of @var{branchname}. 
 
@@ -2975,10 +3012,11 @@ of the entirety of your working copy.
 
 
 @item monotone update
-This command incorporates ``recent'' changes found in your database
-into your working copy. It does this by performing 3 separate
-stages. If any of these stages fails, the update aborts, doing
-nothing. The stages are:
+@itemx monotone update @var{revision}
+Without a @var{revision} argument, this command incorporates ``recent''
+changes found in your database into your working copy. It does this by
+performing 3 separate stages. If any of these stages fails, the update
+aborts, doing nothing. The stages are:
 
 @itemize
 @item
@@ -2994,9 +3032,11 @@ Merge the target of the update with the working copy, in memory, and
 if the merge is successful, write the result over top of the working
 copy.
 @end itemize
+
+With an explicit @var{revision} argument, the command uses that revision
+as the update target instead of finding an acceptable candidate.
+
 @end ftable
-
-
 
 @page
 @node    Network
@@ -3242,6 +3282,11 @@ automatically use a certain passphrase for a given key using the
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
 
+@item monotone chkeypass @var{id}
+
+This command lets you change the passphrase of the private half of the
+key @var{id}.
+
 @item monotone cert @var{id} @var{certname} 
 @itemx monotone cert @var{id} @var{certname} @var{certval}
 
@@ -3251,9 +3296,9 @@ the value of the certificate.  Otherwise the certificate value is read
 from @code{stdin}.
 
 @item monotone --branch=@var{branchname} vcheck create 
-@item monotone vcheck create @var{id}
-@item monotone --branch=@var{branchname} vcheck check
-@item monotone vcheck check @var{id}
+@itemx monotone vcheck create @var{id}
+@itemx monotone --branch=@var{branchname} vcheck check
+@itemx monotone vcheck check @var{id}
 
 These commands produce or check @code{vcheck} certs for the given
 manifest @var{id}. A @code{vcheck} cert on a manifest simply reduces
@@ -3273,15 +3318,12 @@ If you omit the @var{id}, these commands operate on the heads of
 @section Certificate
 
 @ftable @command
-@item monotone approve @var{id1} @var{id2}
+@item monotone approve @var{id}
 
-This command is a synonym for
-@code{monotone cert @var{id2} ancestor @var{id1}}
-
-@item monotone disapprove @var{id1} @var{id2}
-
-This command is a synonym for
-@code{monotone cert @var{id2} disapproval @var{id1}}
+This command is a synonym for @code{monotone cert @var{id} branch
+@var{branchname}} where @var{branchname} is the current branch name
+(either deduced from the working copy or from the @option{--branch}
+option).
 
 
 @item monotone comment @var{id}
@@ -3298,7 +3340,7 @@ This command is a synonym for @code{monotone cert @var{id} tag
 @var{tagname}}.
 
 @item monotone testresult @var{id} 0
-@item monotone testresult @var{id} 1
+@itemx monotone testresult @var{id} 1
 
 These commands are synonyms for @code{monotone cert @var{id}
 testresult 0} or @code{monotone cert @var{id} testresult 1}.
@@ -4590,11 +4632,11 @@ monotone} command, or online).
 Write a comment cert for a revision.
 @comment TROFF INPUT: .TP
 
-@item @b{approve} @i{<id1>}
+@item @b{approve} @i{<id>}
 Make a ``branch'' cert approving of a revision's membership in a branch.
 @comment TROFF INPUT: .TP
 
-@item @b{disapprove} @i{<id1>}
+@item @b{disapprove} @i{<id>}
 Disapprove of a revision, committing the inverse changes as as a
 descendant of the disapproved revision.
 @comment TROFF INPUT: .TP
@@ -4635,6 +4677,10 @@ Produce or check @code{vcheck} certs for the given manifest @i{[id]}.
 
 @item @b{genkey} @i{<keyid>}
 Generate an @sc{rsa} key-pair and store it in the database.
+@comment TROFF INPUT: .TP
+
+@item @b{chkeypass} @i{<keyid>}
+Change passphrase of the private half of a key.
 @comment TROFF INPUT: .TP
 
 @item @b{list certs} @i{<id>}
@@ -4762,7 +4808,7 @@ merely noted as removals in the work list.
 Rename files from @i{<src>} to @i{<dst>} in working copy.
 @comment TROFF INPUT: .TP
 
-@item @b{update} 
+@item @b{update} @i{[revision]}
 Update working copy.
 @comment TROFF INPUT: .SH DESCRIPTION
 

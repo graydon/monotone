@@ -3,6 +3,23 @@
 	* monotone.texi (Committing Work): Remove mistakenly added
 	redundant command line argument.
 
+2004-11-17  Joel Rosdahl  <joel@rosdahl.net>
+
+	* commands.cc (diff): Don't print hashes around diff output if
+	there is no diff to print.
+
+	Fix bugs #8714 "monotone update working copy to previous version"
+	and #9069 "update with multiple candidates":
+	* commands.cc (update): Let the update command take an optional
+	revision target parameter. Without an explicit revision target,
+	the current branch head is used just like before. Added logic for
+	updating to an older revision or another revision reachable via a
+	common ancestor.
+	* tests/t_update_to_revision.at: Add regression tests for new
+	update logic.
+	* testsuite.at: Add new test.
+	* monotone.texi: Document new update argument.
+
 2004-11-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc (request_fwd_revisions): Rename 'first_attached_edge'
@@ -75,6 +92,29 @@
 	* commands.cc (dump_diffs): Fetch delta destination, not source,
 	on new files.
 
+2004-11-15  Joel Rosdahl  <joel@rosdahl.net>
+
+	* tests/t_diff_added_file.at: Added testcase exposing a bug in
+	"monotone diff x y" where x is an ancestor of y and y adds a new
+	file.
+	* testsuite.at: Add new test.
+
+2004-11-14  Joel Rosdahl  <joel@rosdahl.net>
+
+	Fix bug #9092 "add command to change passphrase":
+	* commands.cc (chkeypass): New command.
+	* keys.cc (get_passphrase): Added parameters for prompt beginning and
+	disabling hook lookup and passphrase caching.
+	* keys.hh, keys.cc (change_key_passphrase): New function.
+	* database.hh, database.cc (delete_private_key): New function.
+	* monotone.texi (Key and Cert): Document command.
+	* tests/t_chkeypass.at: Testcase for the command.
+	* testsuite.at: Added new testcase.
+
+2004-11-14  Matt Johnston <matt@ucc.asn.au>
+
+	* tests/t_initfork.at: New test for merging two ancestor-less heads.
+
 2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_heads.at: New test.
@@ -86,6 +126,16 @@
 	(Committing Work): Add missing command line argument.
 	(Branch Names): New section.
 	Add me to the copyright block.
+
+2004-11-12  Joel Rosdahl  <joel@rosdahl.net>
+
+	* monotone.texi: Fix documentation of the approve and disapprove
+	commands. Fix jp.co.juicebot.jb7 branch name in examples. Other
+	minor fixes.
+
+2004-11-11  Joel Rosdahl  <joel@rosdahl.net>
+
+	* monotone.texi: Fix typos.
 
 2004-11-08  graydon hoare  <graydon@pobox.com>
 
