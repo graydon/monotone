@@ -1,3 +1,12 @@
+2005-02-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_add_dot.at: Run "add ." in a subdirectory, so as not to
+	add the test database.  (Reported by Jon Bright.)
+
+	* AUTHORS: Fix gettext.h copyright note, to not be in the middle
+	of libidn copyright note.
+	Add Jon Bright.
+
 2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* file_io.cc (get_homedir): Add more comments and logging to Win32

@@ -49,6 +49,7 @@ contributing authors, including:
   Wojciech MiÅkowski <wmilkowski@interia.pl>
   Georg-W. Koltermann <Georg.Koltermann@mscsoftware.com>
   Daniel Berlin <dberlin@dberlin.org>
+  Jon Bright <jon@siliconcircus.org>
 
 
 supporting files:
@@ -75,12 +76,6 @@ under the GNU LGPL version 2.1. The original sources for libidn can be
 retrieved from http://josefsson.org/libidn/. The library carries an
 additional legal requirement of reproduction of the following text in
 any copies made:
-
-
-The file gettext.h is a copy of the one included in the GNU Gettext
-package, and is Copyright (C) 1995-1998, 2000-2002 Free Software
-Foundation, Inc.  It is licensed under the GNU LGPL version 2.  For
-more information, see the message on top of that file.
 
 ---
 
@@ -130,6 +125,13 @@ Uceqods6zDrk0qo=
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
+
+---
+
+The file gettext.h is a copy of the one included in the GNU Gettext
+package, and is Copyright (C) 1995-1998, 2000-2002 Free Software
+Foundation, Inc.  It is licensed under the GNU LGPL version 2.  For
+more information, see the message on top of that file.
 
 ---
 
