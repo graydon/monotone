@@ -443,8 +443,8 @@ void post_queued_blobs_to_network(set<url> const & targets,
 	      
 	      if (posted_ok)
 		{
-		  n_bytes += postbody.size();
 		  n_packets += packets.size();
+		  n_bytes += postbody.size();
 		  for (vector<string>::const_iterator i = packets.begin();
 		       i != packets.end(); ++i)
 		    app.db.delete_posting(*targ, *i);
