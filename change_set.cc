@@ -192,6 +192,12 @@ change_set::path_rearrangement::has_renamed_file_dst(file_path const & file) con
   return false;
 }
 
+bool
+change_set::path_rearrangement::has_renamed_file_src(file_path const & file) const
+{
+  return renamed_files.find(file) != renamed_files.end();
+}
+
 bool 
 change_set::empty() const
 {
