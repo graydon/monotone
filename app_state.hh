@@ -35,7 +35,7 @@ public:
   utf8 message;
   std::vector<utf8> revision_selectors;
   std::vector<utf8> extra_rcfiles;
-  std::set<file_path> restrictions;
+  path_set restrictions;
   file_path relative_directory;
 
   void initialize(bool working_copy);
@@ -43,12 +43,11 @@ public:
 
   file_path prefix(utf8 const & path);
   void add_restriction(utf8 const & path);
-  bool in_restriction(file_path const & path);
+  bool restriction_includes(file_path const & path);
 
   void set_branch(utf8 const & name);
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
-  
 
   void set_message(utf8 const & message);
   void add_revision(utf8 const & selector);

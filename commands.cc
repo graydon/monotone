@@ -323,6 +323,75 @@ put_path_rearrangement(change_set::path_rearrangement & w)
     }
 }
 
+static void
+restrict_path_set(string const & type,
+                  path_set const & paths, 
+                  path_set & included, 
+                  path_set & excluded,
+                  app_state & app)
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      if (app.restriction_includes(*i)) 
+        {
+          L(F("restriction includes %s %s\n") % type % *i);
+          included.insert(*i);
+        }
+      else
+        {
+          L(F("restriction excludes %s %s\n") % type % *i);
+          excluded.insert(*i);
+        }
+    }
+}
+
+static void 
+restrict_rename_set(string const & type,
+                    rename_set const & renames, 
+                    rename_set & included,
+                    rename_set & excluded, 
+                    app_state & app)
+{
+  for (rename_set::const_iterator i = renames.begin();
+       i != renames.end(); ++i)
+    {
+      // exclude a rename unless both paths are included in the restriction
+      // not sure if this is the right thing to do though?!?
+
+      if (app.restriction_includes(i->first) && app.restriction_includes(i->second)) 
+        {
+          L(F("restriction includes %s %s to %s\n") % type % i->first % i->second);
+          included.insert(*i);
+        }
+      else
+        {
+          L(F("restriction excludes %s %s to %s\n") % type % i->first % i->second);
+          excluded.insert(*i);
+        }
+    }
+}
+
+static void
+restrict_path_rearrangement(change_set::path_rearrangement const & work, 
+                            change_set::path_rearrangement & included,
+                            change_set::path_rearrangement & excluded,
+                            app_state & app)
+{
+  restrict_path_set("delete file", work.deleted_files, 
+                    included.deleted_files, excluded.deleted_files, app);
+  restrict_path_set("delete dir", work.deleted_dirs, 
+                    included.deleted_dirs, excluded.deleted_dirs, app);
+
+  restrict_rename_set("rename file", work.renamed_files, 
+                      included.renamed_files, excluded.renamed_files, app);
+  restrict_rename_set("rename dir", work.renamed_dirs, 
+                      included.renamed_dirs, excluded.renamed_dirs, app);
+
+  restrict_path_set("add file", work.added_files, 
+                    included.added_files, excluded.added_files, app);
+}
+
+
 static void 
 update_any_attrs(app_state & app)
 {
@@ -439,131 +508,73 @@ calculate_current_revision(app_state & app,
                              make_pair(old_manifest_id, cs)));
 }
 
-
-/**
 static void
-restrict_patch_set(patch_set & ps, work_set & restricted_work, app_state & app) 
+calculate_restricted_revision(app_state & app, 
+                              revision_set & rev,
+                              manifest_map & m_old,
+                              manifest_map & m_new,
+                              change_set::path_rearrangement & restricted_work)
 {
-  L(F("restricting changes between %s and %s\n") % ps.m_old % ps.m_new);
+  manifest_id old_manifest_id;
+  revision_id old_revision_id;    
+  change_set cs;
+  path_set paths;
+  manifest_map m_old_rearranged;
 
-  // remove restricted adds from f_adds and remove entry from m_new
+  rev.edges.clear();
+  m_old.clear();
+  m_new.clear();
 
-  set<patch_addition> included_adds;
+  calculate_base_revision(app, 
+                          old_revision_id, rev, 
+                          old_manifest_id, m_old);
 
-  for (set<patch_addition>::iterator i = ps.f_adds.begin();
-       i != ps.f_adds.end(); ++i)
+  change_set::path_rearrangement work, included, excluded;
+
+  get_path_rearrangement(work);
+  restrict_path_rearrangement(work, included, excluded, app);
+
+  cs.rearrangement = included;
+  restricted_work = excluded;
+
+  apply_path_rearrangement(m_old, included, m_old_rearranged);
+  extract_path_set(m_old_rearranged, paths);
+  build_restricted_manifest_map(paths, m_old, m_new, app);
+
+  I(m_new.size() == m_old_rearranged.size());
+  manifest_map::const_iterator i = m_old_rearranged.begin();
+  for (manifest_map::const_iterator j = m_new.begin(); j != m_new.end(); ++j, ++i)
     {
-      if (app.in_restriction(i->path())) 
+      I(manifest_entry_path(i) == manifest_entry_path(j));
+      if (! (manifest_entry_id(i) == manifest_entry_id(j)))
         {
-          L(F("restriction includes add %s\n") % i->path());
-          included_adds.insert(*i);
-        }
-      else
-        {
-          L(F("restriction excludes add %s\n") % i->path());
-          ps.map_new.erase(i->path());
-          restricted_work.adds.insert(i->path());
+          L(F("noted delta %s -> %s on %s\n") 
+            % manifest_entry_id(i) 
+            % manifest_entry_id(j) 
+            % manifest_entry_path(i));
+          cs.deltas.insert(make_pair(manifest_entry_path(i),
+                                     make_pair(manifest_entry_id(i),
+                                               manifest_entry_id(j))));
         }
     }
+  
+  calculate_ident(m_new, rev.new_manifest);
+  L(F("new manifest is %s\n") % rev.new_manifest);
 
-  ps.f_adds = included_adds;
-
-  // remove restricted dels from f_dels and put entry in m_new with entry from m_old
-
-  set<file_path> included_dels;
-
-  for (set<file_path>::iterator i = ps.f_dels.begin();
-       i != ps.f_dels.end(); ++i)
-    {
-      if (app.in_restriction((*i)())) 
-        {
-          L(F("restriction includes delete %s\n") % (*i)());
-          included_dels.insert(*i);
-        }
-      else
-        {
-          N(ps.map_old.find(*i) != ps.map_old.end(),
-            F("nothing known about %s") % *i);
-
-          L(F("restriction excludes delete %s\n") % (*i)());
-          path_id_pair old(ps.map_old.find(*i));
-          ps.map_new.insert(entry(old.path(), old.ident()));
-          restricted_work.dels.insert((*i)());
-        }
-    }
-
-  ps.f_dels = included_dels;
-
-  // remove restricted moves from f_moves and replace entry in m_new with entry from m_old
-
-  set<patch_move> included_moves;
-
-  for (set<patch_move>::iterator i = ps.f_moves.begin();
-       i != ps.f_moves.end(); ++i)
-    {
-      // is excluding both sides of a rename the right thing to do?
-      // or should we just fail if only one side of a move is restricted? (njs's idea)
-
-      if (app.in_restriction(i->path_old()) || app.in_restriction(i->path_new())) 
-        {
-          L(F("restriction includes move %s to %s\n") % i->path_old() % i->path_new());
-          included_moves.insert(*i);
-        }
-      else
-        {
-          N(ps.map_old.find(i->path_old()) != ps.map_old.end(),
-            F("nothing known about %s") % i->path_old());
-
-          L(F("restriction excludes move %s to %s\n") % i->path_old() % i->path_new());
-          ps.map_new.erase(i->path_new());
-          path_id_pair old(ps.map_old.find(i->path_old()));
-          ps.map_new.insert(entry(old.path(), old.ident()));
-          restricted_work.renames.insert(make_pair(i->path_old(), i->path_new()));
-        }
-    }
-
-  ps.f_moves = included_moves;
-
-  // remove restricted deltas from f_deltas and replace entry in m_new with entry from m_old
-
-  set<patch_delta> included_deltas;
-
-  for (set<patch_delta>::iterator i = ps.f_deltas.begin();
-       i != ps.f_deltas.end(); ++i)
-    {
-      if (app.in_restriction(i->path()))
-        {
-          L(F("restriction includes delta %s\n") % i->path());
-          included_deltas.insert(*i);
-        }
-      else
-        {
-          N(ps.map_old.find(i->path()) != ps.map_old.end(),
-            F("nothing known about %s") % i->path());
-
-          L(F("restriction excludes delta %s\n") % i->path());
-          ps.map_new.erase(i->path());
-          path_id_pair old(ps.map_old.find(i->path()));
-          ps.map_new.insert(entry(old.path(), old.ident()));
-        }
-    }
-
-  ps.f_deltas = included_deltas;
-
-  calculate_ident(ps.map_new, ps.m_new);
-
-  L(F("restricted changes between %s and %s\n") % ps.m_old % ps.m_new);
-
+  rev.edges.insert(make_pair(old_revision_id,
+                             make_pair(old_manifest_id, cs)));
 }
 
-static void
-restrict_patch_set(patch_set & ps, app_state & app) 
-{
-  work_set work;
-  restrict_patch_set(ps, work, app);
-}
-**/
 
+static void
+calculate_restricted_revision(app_state & app, 
+                              revision_set & rev,
+                              manifest_map & m_old,
+                              manifest_map & m_new)
+{
+  change_set::path_rearrangement work;
+  calculate_restricted_revision(app, rev, m_old, m_new, work);
+}
 
 static string 
 get_stdin()
@@ -1395,8 +1406,7 @@ CMD(status, "informative", "[PATH]...", "show status of working copy")
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     app.add_restriction((*i)());
 
-  calculate_current_revision(app, rs, m_old, m_new);
-  // restrict_revision(...);
+  calculate_restricted_revision(app, rs, m_old, m_new);
 
   write_revision_set(rs, tmp);
   cout << endl << tmp << endl;
@@ -1666,6 +1676,8 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 static void 
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
@@ -1691,7 +1703,7 @@ struct unknown_itemizer : public tree_walker
     : app(a), man(m), want_ignored(i) {}
   virtual void visit_file(file_path const & path)
   {
-    if (app.in_restriction(path) && man.find(path) == man.end())
+    if (app.restriction_includes(path) && man.find(path) == man.end())
       {
       if (want_ignored)
         {
@@ -1718,7 +1730,7 @@ ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 
   revision_set rev;
   manifest_map m_old, m_new;
-  calculate_current_revision(app, rev, m_old, m_new);
+  calculate_restricted_revision(app, rev, m_old, m_new);
   unknown_itemizer u(app, m_new, want_ignored);
   walk_tree(u);
 }
@@ -1730,10 +1742,11 @@ ls_missing (app_state & app, vector<utf8> const & args)
   revision_id rid;
   manifest_id mid;
   manifest_map man, man_rearranged;
-  change_set cs;
+  change_set::path_rearrangement work, included_work, excluded_work;
   path_set paths;
 
   app.initialize(true);
+
   get_revision_id(rid);
   if (! rid.inner()().empty())
     {
@@ -1751,15 +1764,18 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     app.add_restriction((*i)());
+
   L(F("old manifest has %d entries\n") % man.size());
 
-  get_path_rearrangement(cs.rearrangement);  
-  apply_path_rearrangement(man, cs.rearrangement, man_rearranged);
+  get_path_rearrangement(work);
+  restrict_path_rearrangement(work, included_work, excluded_work, app);
+
+  apply_path_rearrangement(man, included_work, man_rearranged);
   extract_path_set(man_rearranged, paths);
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      if (app.in_restriction(*i) && !file_exists(*i))	
+      if (app.restriction_includes(*i) && !file_exists(*i))	
 	cout << *i << endl;
     }
 }
@@ -2147,10 +2163,7 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipu
 
 CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]", 
     "get or set file attributes")
-CMD(commit, "working copy", "[--message=STRING] [PATH]...", 
-    "commit working copy to database")
 {
-  app.initialize(true);
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
 
@@ -2203,20 +2216,22 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   else 
     throw usage(name);
 }
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    app.add_restriction((*i)());
-
-CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
+CMD(commit, "working copy", "[--message=STRING] [PATH]...", 
+    "commit working copy to database")
 {
   string log_message("");
   revision_set rs;
   revision_id rid;
   manifest_map m_old, m_new;
+  
+  app.initialize(true);
 
-  calculate_current_revision(app, rs, m_old, m_new);
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
 
-  // todo: restrict_revision(...);
-
+  // preserve excluded work for future commmits
+  change_set::path_rearrangement excluded_work;
+  calculate_restricted_revision(app, rs, m_old, m_new, excluded_work);
   calculate_ident(rs, rid);
 
   N(!(rs.edges.size() == 0 || 
@@ -2227,7 +2242,6 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   I(rs.edges.size() == 1);
 
   guess_branch (edge_old_revision(rs.edges.begin()), app, branchname);
-  //  restrict_patch_set(ps, restricted_work, app);
   app.set_branch(branchname());
     
   P(F("beginning commit\n"));
@@ -2341,7 +2355,7 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   guard.commit();
 
   // small race condition here...
-  remove_path_rearrangement();
+  put_path_rearrangement(excluded_work);
   put_revision_id(rid);
   P(F("committed revision %s\n") % rid);
 
@@ -2460,6 +2474,7 @@ CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]..."
   bool new_is_archived;
 
   change_set composite;
+
   // initialize before transaction so we have a database to work with
 
   if (app.revision_selectors.size() == 0)
@@ -2477,7 +2492,7 @@ CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]..."
   if (app.revision_selectors.size() == 0)
     {
       manifest_map m_old;
-      calculate_current_revision(app, r_new, m_old, m_new);
+      calculate_restricted_revision(app, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       if (r_new.edges.size() == 1)
         composite = edge_changes(r_new.edges.begin());
@@ -2491,7 +2506,7 @@ CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]..."
       N(app.db.revision_exists(r_old_id),
         F("revision %s does not exist") % r_old_id);
       app.db.get_revision(r_old_id, r_old);
-      calculate_current_revision(app, r_new, m_old, m_new);
+      calculate_restricted_revision(app, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       N(r_new.edges.size() == 1, F("current revision has no ancestor"));
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
@@ -2523,11 +2538,7 @@ CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]..."
       throw usage(name);
     }
       
-
-  //manifests_to_patch_set(m_old, m_new, app, ps);
-  //restrict_patch_set(ps, app);
-
-  if (args.size() > 0)
+  if (app.revision_selectors.size() > 0)
     {
       revision_id new_id, src_id, dst_id, anc_id;
       calculate_ident(r_old, src_id);
@@ -3060,6 +3071,8 @@ CMD(revert, "working copy", "[PATH]...",
   manifest_map m_old;
   revision_set r_old;
 
+  app.initialize(true);
+
   calculate_base_revision(app, r_old, m_old);
 
   if (args.size() == 0)
@@ -3085,6 +3098,11 @@ CMD(revert, "working copy", "[PATH]...",
       change_set::path_rearrangement work;
       get_path_rearrangement(work);
 
+      // TODO: set up restriction
+      // TODO: restrict rearrangement into included and excluded
+      // TODO: revert all included files
+      // TODO: rewrite excluded work
+
       // revert some specific files
       vector<file_path> work_args;
       for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -3101,6 +3119,7 @@ CMD(revert, "working copy", "[PATH]...",
               for (manifest_map::const_iterator i = m_old.begin();
                    i != m_old.end(); ++i)
                 {
+                  // this doesn't seem quite right... *some* branch path, not *the* branch path
                   file_path p = i->first;
                   if (fs::path(p()).branch_path().string() == dir)
                     work_args.push_back(p());

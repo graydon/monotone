@@ -135,12 +135,6 @@ void calculate_ident(revision_data const & dat,
 void calculate_ident(revision_set const & cs,
 		     revision_id & ident);
 
-void calculate_ident(revision_data const & dat,
-		     revision_id & ident);
-
-void calculate_ident(revision_set const & cs,
-		     revision_id & ident);
-
 
 // quick streamy variant which doesn't necessarily load the whole file
 

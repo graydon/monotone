@@ -118,7 +118,7 @@ app_state::add_restriction(utf8 const & path)
 }
 
 bool
-app_state::in_restriction(file_path const & path)
+app_state::restriction_includes(file_path const & path)
 {
   if (restrictions.empty()) 
     {
@@ -145,7 +145,7 @@ app_state::in_restriction(file_path const & path)
       L(F("checking restricted path set for '%s'\n") % test.string());
 
       file_path p(test.string());
-      set<file_path>::const_iterator i = restrictions.find(p);
+      path_set::const_iterator i = restrictions.find(p);
 
       if (i != restrictions.end()) 
         {

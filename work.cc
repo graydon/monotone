@@ -179,21 +179,6 @@ extract_path_set(manifest_map const & man,
 
 string const options_file_name("options");
 
-struct 
-add_to_options_map
-{
-  options_map & options;
-  explicit add_to_options_map(options_map & m): options(m) {}
-  bool operator()(match_results<std::string::const_iterator> const & res) 
-  {
-    utf8 value;
-    std::string key(res[1].first, res[1].second);
-    value = std::string(res[2].first, res[2].second);
-    // use non-replacing insert verses replacing with options[key] = value;
-    options.insert(make_pair(key, value)); 
-    return true;
-  }
-};
 
 void 
 get_options_path(local_path & o_path)
@@ -217,7 +202,9 @@ read_options_map(data const & dat, options_map & options)
     {
       parser.sym(opt);
       parser.str(val);
-      options[opt] = val;      
+      // options[opt] = val;      
+      // use non-replacing insert verses replacing with options[opt] = val;
+      options.insert(make_pair(opt, val)); 
     }
 }
 
