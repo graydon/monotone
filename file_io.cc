@@ -464,7 +464,7 @@ walk_tree(file_path const & path,
       if (require_existing_path)
 	{
 	  N(false,
-	    F("no such file or directory: %s\n") % path());
+	    F("no such file or directory: %s") % path());
 	}
       else
 	{
