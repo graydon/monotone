@@ -365,6 +365,12 @@ void lua_hooks::default_rcfilename(fs::path & file)
   file = fs::path(get_homedir()) / fs::path(".monotonerc");
 }
 
+void lua_hooks::working_copy_rcfilename(fs::path & file)
+{
+  file = fs::path(book_keeping_dir) / fs::path(".monotonerc");
+}
+
+
 void lua_hooks::add_rcfile(fs::path const & rc)
 {
   I(st);  

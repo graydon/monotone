@@ -2136,11 +2136,13 @@ static void ls_branches (string name, app_state & app, vector<string> const & ar
 
 struct unknown_itemizer : public tree_walker
 {
+  app_state & app;
   manifest_map & man;
-  unknown_itemizer(manifest_map & m) : man(m) {}
+  unknown_itemizer(app_state & a, manifest_map & m) : app(a), man(m) {}
   virtual void visit_file(file_path const & path)
   {
-    if (man.find(path) == man.end())
+    if (man.find(path) == man.end() 
+	&& !app.lua.hook_ignore_file(path))
       cout << path() << endl;
   }
 };
@@ -2162,7 +2164,7 @@ static void ls_unknown (app_state & app)
   manifest_map m_old, m_new;
   get_manifest_map(m_old);
   calculate_new_manifest_map(m_old, m_new);
-  unknown_itemizer u(m_new);
+  unknown_itemizer u(app, m_new);
   walk_tree(u);
 }
 

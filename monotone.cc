@@ -173,18 +173,22 @@ int cpp_main(int argc, char ** argv)
 	    throw usage("");
 	}
 
-      // build-in rc settings are defaults
+      // built-in rc settings are defaults
 
       if (stdhooks)
 	app.lua.add_std_hooks();
 
-      // ~/.monotonerc overrides that
+      // ~/.monotonerc overrides that, and
+      // MT/.monotonerc overrides *that*
 
       if (rcfile)
 	{
 	  fs::path default_rcfile;
+	  fs::path working_copy_rcfile;
 	  app.lua.default_rcfilename(default_rcfile);
+	  app.lua.working_copy_rcfilename(working_copy_rcfile);
 	  app.lua.add_rcfile(default_rcfile);
+	  app.lua.add_rcfile(working_copy_rcfile);
 	}
 
       // command-line rcfiles override even that

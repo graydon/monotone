@@ -1,5 +1,11 @@
 2003-12-16  graydon hoare  <graydon@pobox.com>
 
+	* lua.hh, lua.cc (working_copy_rcfilename): New function.
+	* monotone.cc: Add working copy rcfiles.
+	* commands.cc (ls_unknown, unknown_itemizer): Skip ignored files.
+
+2003-12-16  graydon hoare  <graydon@pobox.com>
+
 	* file_io.cc (walk_tree_recursive): continue on book-keeping file.
 
 2003-12-15  graydon hoare  <graydon@pobox.com>
