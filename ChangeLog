@@ -1,3 +1,7 @@
+2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_log_depth.at: Cleanupy tweaks.
+
 2005-03-31  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* monotone.texi: Tutorial updated to include example of
@@ -2105,7 +2109,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
