@@ -10,9 +10,9 @@
 **
 *************************************************************************
 ** This file contains C code routines that are called by the parser
-** to handle DELETE FROM statements.
+** in order to generate code for DELETE FROM statements.
 **
-** $Id: delete.c,v 1.92 2004/12/07 14:06:13 drh Exp $
+** $Id: delete.c,v 1.102 2005/03/16 12:15:21 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 
@@ -43,10 +43,12 @@ int sqlite3IsReadOnly(Parse *pParse, Table *pTab, int viewOk){
     sqlite3ErrorMsg(pParse, "table %s may not be modified", pTab->zName);
     return 1;
   }
+#ifndef SQLITE_OMIT_VIEW
   if( !viewOk && pTab->pSelect ){
     sqlite3ErrorMsg(pParse,"cannot modify %s because it is a view",pTab->zName);
     return 1;
   }
+#endif
   return 0;
 }
 
@@ -66,7 +68,11 @@ void sqlite3OpenTableForReading(
 
 
 /*
-** Process a DELETE FROM statement.
+** Generate code for a DELETE FROM statement.
+**
+**     DELETE FROM table_wxyz WHERE a<5 AND b NOT NULL;
+**                 \________/       \________________/
+**                  pTabList              pWhere
 */
 void sqlite3DeleteFrom(
   Parse *pParse,         /* The parser context */
@@ -84,6 +90,7 @@ void sqlite3DeleteFrom(
   sqlite3 *db;           /* Main database structure */
   AuthContext sContext;  /* Authorization context */
   int oldIdx = -1;       /* Cursor for the OLD table of AFTER triggers */
+  NameContext sNC;       /* Name context to resolve expressions in */
 
 #ifndef SQLITE_OMIT_TRIGGER
   int isView;                  /* True if attempting to delete from a view */
@@ -92,7 +99,6 @@ void sqlite3DeleteFrom(
 
   sContext.pParse = 0;
   if( pParse->nErr || sqlite3_malloc_failed ){
-    pTabList = 0;
     goto delete_from_cleanup;
   }
   db = pParse->db;
@@ -142,11 +148,14 @@ void sqlite3DeleteFrom(
     oldIdx = pParse->nTab++;
   }
 
-  /* Resolve the column names in all the expressions.
+  /* Resolve the column names in the WHERE clause.
   */
   assert( pTabList->nSrc==1 );
   iCur = pTabList->a[0].iCursor = pParse->nTab++;
-  if( sqlite3ExprResolveAndCheck(pParse, pTabList, 0, pWhere, 0, 0) ){
+  memset(&sNC, 0, sizeof(sNC));
+  sNC.pParse = pParse;
+  sNC.pSrcList = pTabList;
+  if( sqlite3ExprResolveNames(&sNC, pWhere) ){
     goto delete_from_cleanup;
   }
 
@@ -221,11 +230,12 @@ void sqlite3DeleteFrom(
 
     /* Begin the database scan
     */
-    pWInfo = sqlite3WhereBegin(pParse, pTabList, pWhere, 1, 0, 0);
+    pWInfo = sqlite3WhereBegin(pParse, pTabList, pWhere, 0, 0);
     if( pWInfo==0 ) goto delete_from_cleanup;
 
-    /* Remember the key of every item to be deleted.
+    /* Remember the rowid of every item to be deleted.
     */
+    sqlite3VdbeAddOp(v, OP_Recno, iCur, 0);
     sqlite3VdbeAddOp(v, OP_ListWrite, 0, 0);
     if( db->flags & SQLITE_CountRows ){
       sqlite3VdbeAddOp(v, OP_AddImm, 1, 0);
@@ -324,7 +334,7 @@ void sqlite3DeleteFrom(
   ** generating code because of a call to sqlite3NestedParse(), do not
   ** invoke the callback function.
   */
-  if( db->flags & SQLITE_CountRows && pParse->nested==0 ){
+  if( db->flags & SQLITE_CountRows && pParse->nested==0 && !pParse->trigStack ){
     sqlite3VdbeAddOp(v, OP_Callback, 1, 0);
     sqlite3VdbeSetNumCols(v, 1);
     sqlite3VdbeSetColName(v, 0, "rows deleted", P3_STATIC);
@@ -425,6 +435,7 @@ void sqlite3GenerateIndexKey(
       sqlite3VdbeAddOp(v, OP_Dup, j, 0);
     }else{
       sqlite3VdbeAddOp(v, OP_Column, iCur, idx);
+      sqlite3ColumnDefault(v, pTab, idx);
     }
   }
   sqlite3VdbeAddOp(v, OP_MakeRecord, pIdx->nColumn, (1<<24));

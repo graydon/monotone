@@ -13,7 +13,7 @@
 ** subsystem.  See comments in the source code for a detailed description
 ** of what each interface routine does.
 **
-** @(#) $Id: btree.h,v 1.60 2004/11/05 15:45:10 danielk1977 Exp $
+** @(#) $Id: btree.h,v 1.62 2005/02/06 02:45:42 drh Exp $
 */
 #ifndef _BTREE_H_
 #define _BTREE_H_
@@ -46,9 +46,13 @@ int sqlite3BtreeOpen(
 
 /* The flags parameter to sqlite3BtreeOpen can be the bitwise or of the
 ** following values.
+**
+** NOTE:  These values must match the corresponding PAGER_ values in
+** pager.h.
 */
 #define BTREE_OMIT_JOURNAL  1  /* Do not use journal.  No argument */
-#define BTREE_MEMORY        2  /* In-memory DB.  No argument */
+#define BTREE_NO_READLOCK   2  /* Omit readlocks on readonly files */
+#define BTREE_MEMORY        4  /* In-memory DB.  No argument */
 
 int sqlite3BtreeClose(Btree*);
 int sqlite3BtreeSetBusyHandler(Btree*,BusyHandler*);
@@ -127,8 +131,12 @@ struct Pager *sqlite3BtreePager(Btree*);
 #ifdef SQLITE_TEST
 int sqlite3BtreeCursorInfo(BtCursor*, int*, int);
 void sqlite3BtreeCursorList(Btree*);
-int sqlite3BtreePageDump(Btree*, int, int recursive);
 #endif
 
+#ifdef SQLITE_DEBUG
+int sqlite3BtreePageDump(Btree*, int, int recursive);
+#else
+#define sqlite3BtreePageDump(X,Y,Z) SQLITE_OK
+#endif
 
 #endif /* _BTREE_H_ */

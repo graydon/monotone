@@ -226,13 +226,7 @@ tilde_expand(string const & path)
 static bool 
 book_keeping_file(fs::path const & p)
 {
-  using boost::filesystem::path;
-  for(path::iterator i = p.begin(); i != p.end(); ++i)
-    {
-      if (*i == book_keeping_dir)
-        return true;
-    }
-  return false;
+  return *(p.begin()) == book_keeping_dir;
 }
 
 bool 
@@ -584,8 +578,11 @@ walk_tree_recursive(fs::path const & absolute,
       fs::path entry = mkpath(di->string());
       fs::path rel_entry = relative / mkpath(entry.leaf());
       
-      if (book_keeping_file (entry))
-        continue;
+      if (book_keeping_file(rel_entry))
+        {
+          L(F("ignoring book keeping entry %s\n") % rel_entry.string());
+          continue;
+        }
       
       if (!fs::exists(entry) 
           || di->string() == "." 
@@ -657,14 +654,26 @@ static void
 test_book_keeping_file()
 {
   // positive tests
+
   BOOST_CHECK(book_keeping_file(local_path("MT")));
   BOOST_CHECK(book_keeping_file(local_path("MT/foo")));
   BOOST_CHECK(book_keeping_file(local_path("MT/foo/bar/baz")));
+
+  BOOST_CHECK(book_keeping_file(fs::path("MT")));
+  BOOST_CHECK(book_keeping_file(fs::path("MT/foo")));
+  BOOST_CHECK(book_keeping_file(fs::path("MT/foo/bar/baz")));
+
   // negative tests
+
   BOOST_CHECK( ! book_keeping_file(local_path("safe")));
   BOOST_CHECK( ! book_keeping_file(local_path("safe/path")));
   BOOST_CHECK( ! book_keeping_file(local_path("safe/path/MT")));
   BOOST_CHECK( ! book_keeping_file(local_path("MTT")));
+
+  BOOST_CHECK( ! book_keeping_file(fs::path("safe")));
+  BOOST_CHECK( ! book_keeping_file(fs::path("safe/path")));
+  BOOST_CHECK( ! book_keeping_file(fs::path("safe/path/MT")));
+  BOOST_CHECK( ! book_keeping_file(fs::path("MTT")));
 }
 
 void 

@@ -1298,11 +1298,11 @@ keys they received into their respective databases.
 
 Before they can begin work on the project, Jim needs to create a
 @i{working copy} --- a directory whose contents monotone will keep track
-of.  Most of the time, you work on existing projects, and create working
-copies with the @code{checkout} command, which you'll learn about later.
-Jim is starting a new project, though, so he does something a little bit
-different.  He uses the @code{monotone setup} command to create a new
-working copy.
+of.  Often, one works on projects that someone else has started, and
+creates working copies with the @code{checkout} command, which you'll
+learn about later.  Jim is starting a new project, though, so he does
+something a little bit different.  He uses the @code{monotone setup}
+command to create a new working copy.
 
 This command creates the named directory (if it doesn't already exist),
 and creates the @file{MT} directory within it.  The @file{MT} directory
@@ -3506,6 +3506,16 @@ listed. Otherwise all keys in your database are listed.
 
 This command lists all known branches in your database.
 
+@item monotone list tags
+
+This command lists all known tags in your database.
+
+@item monotone list vars
+@item monotone list vars @var{domain}
+
+This command lists all vars in your database, or all vars within a given
+@var{domain}.
+
 @item monotone list unknown
 @itemx monotone list unknown @var{pathname...}
 
@@ -3710,9 +3720,29 @@ database.
 @section Database
 
 @ftable @command
+@item monotone set @var{domain} @var{name} @var{value}
+
+Associates the value @var{value} to @var{name} in domain @var{domain}.
+
+@item monotone unset @var{domain} @var{name}
+
+Deletes any value associated with @var{name} in @var{domain}.
+
 @item monotone db init --db=@var{dbfile} 
 
 This command initializes a new monotone database at @file{dbfile}.
+
+@item monotone db rebuild --db=@var{dbfile} 
+
+This command rebuilds the ancestry graph of the monotone database at
+@file{dbfile}, which may become necessary if future bugs in monotone
+allow invalid changesets to be saved in your database.  This command is
+destructive, and you should make a backup copy of your database before
+running it.  It will preserve the contents of each revision, but it will
+lose rename history.  Use it carefully, and only after understanding
+@ref{Rebuilding ancestry}.  Note that it will make your history
+incompatible with that of anyone else working on the same project!  Read
+@ref{Rebuilding ancestry}.
 
 @item monotone db info --db=@var{dbfile} 
 
@@ -3770,35 +3800,35 @@ detected:
 @itemize
 
 @item missing files 
-that are referenced by their sha1 hash from some manifest but do not
+that are referenced by their @sc{sha1} hash from some manifest but do not
 exist in the database.  This is a serious problem; it means that your
 history is not fully reconstructible.  You can fix it by finding the
 file with the given hash, and loading it into your database with
 @command{fload}.
 
 @item unreferenced files
-that exist in the database but are not referenced by their sha1 hash
-from any existing manifest.  In itself, this only indicates some wasted
-space, and is not a problem; it's possible it could arise under normal
-use (for instance, in some strange corner cases following an incomplete
-netsync).  It could also arise, though, as a symptom of some other
-more serious problem.
+that exist in the database but are not referenced by their @sc{sha1}
+hash from any existing manifest.  In itself, this only indicates some
+wasted space, and is not a problem; it's possible it could arise under
+normal use (for instance, in some strange corner cases following an
+incomplete netsync).  It could also arise, though, as a symptom of some
+other more serious problem.
 
 @item missing manifests
-that are referenced by their sha1 hash from some revision but do not
-exist in the database.  This is a serious problem; it means that your
-history is not fully reconstructible.  You can fix it by finding a
+that are referenced by their @sc{sha1} hash from some revision but do
+not exist in the database.  This is a serious problem; it means that
+your history is not fully reconstructible.  You can fix it by finding a
 database containing the manifest, and using @command{mdata} on that
 database to create a manifest data packet, which can be loaded into your
 database with @command{read}.
 
 @item unreferenced manifests
-that exist in the database but are not referenced by their sha1 hash
-from any existing revision.  In itself, this only indicates some wasted
-space, and is not a problem; it's possible it could arise under normal
-use (for instance, in some strange corner cases following an incomplete
-netsync).  It could also arise, though, as a symptom of some other
-more serious problem.
+that exist in the database but are not referenced by their @sc{sha1}
+hash from any existing revision.  In itself, this only indicates some
+wasted space, and is not a problem; it's possible it could arise under
+normal use (for instance, in some strange corner cases following an
+incomplete netsync).  It could also arise, though, as a symptom of some
+other more serious problem.
 
 @item incomplete manifests
 that exist in the database but contain references to files that do not
@@ -3806,7 +3836,7 @@ exist in the database.  For diagnosis and solution, see ``missing
 files'' above.
 
 @item missing revisions
-that are referenced by their sha1 hash from some other revision or
+that are referenced by their @sc{sha1} hash from some other revision or
 revision cert but do not exist in the database.  This may be a serious
 problem; it may indicate that your history is not fully reconstructible
 (if the reference is from another revision) or that someone is creating
@@ -4612,6 +4642,7 @@ specifics of how it works. Most users can ignore these sections.
 @menu
 * Internationalization::   Using monotone in non-English locales.
 * Hash Integrity::         Notes on probability and failure.
+* Rebuilding ancestry::    In case of corruption.
 @end menu
 
 @page
@@ -4841,6 +4872,19 @@ form conversion, as well as having all UTF-8 codes corresponding to
 ASCII control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in
 the normal form, except @code{0x0A} (ASCII LF).
 
+@heading Var names
+
+Read on the command line and subject to normal form conversion and
+IDNA encoding as a single component. The invariant is that a cert name
+inside monotone is a single LDH ASCII string.
+
+@heading Var values
+
+Var values are assumed to be text, and subject to normal form
+conversion, as well as having all UTF-8 codes corresponding to ASCII
+control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in the
+normal form, except @code{0x0A} (ASCII LF).
+
 @heading Key names
 
 Read on the command line and subject to normal form conversion and
@@ -5020,7 +5064,137 @@ communications to a group using the modified version. Monotone is free
 software, and runs atop @code{crypto++}, so it is both legal and
 relatively simple to change it to use some other algorithm.
 
+@page
+@node    Rebuilding ancestry
+@section Rebuilding ancestry
 
+As described in @ref{Historical records}, monotone revisions contain the
+@sc{sha1} hashes of their predecessors, which in turn contain the
+@sc{sha1} hashes of @emph{their} predecessors, and so on until the
+beginning of history.  This means that it is @emph{mathematically
+impossible} to modify the history of a revision, without some way to
+defeat @sc{sha1}.  This is generally a good thing; having immutable
+history is the point of a version control system, after all, and it
+turns out to be very important to building a @emph{distributed} version
+control system like monotone.
+
+It does have one unfortunate consequence, though.  It means that in the
+rare occasion where one @emph{needs} to change a historical revision, it
+will change the @sc{sha1} of that revision, which will change the text
+of its children, which will change their @sc{sha1}s, and so on;
+basically the entire history graph will diverge from that point
+(invalidating all certs in the process).
+
+In practice there are two situations where this might be necessary:
+@itemize
+@item
+bugs: monotone has occasionally allowed nonsense, uninterpretable
+changesets to be generated and stored in the database, and this was not
+detected until further work had been based off of them.
+@item
+advances in crypto: if or when @sc{sha1} is broken, we will need to
+migrate to a different secure hash.
+@end itemize
+Obviously, we hope neither of these things will happen, and we've taken
+lots of precautions against the first recurring; but it is better to be
+prepared.
+
+If either of these events occur, we will provide migration commands
+and explain how to use them for the situation in question; this much
+is necessarily somewhat unpredictable.  In the past we've used the
+@code{db rebuild} command, which extracts the ancestry graph from the
+database and then recreates revisions from the manifests only --- this
+preserves the contents of each snapshot, but breaks tracking of file
+identity across renames --- and then reissues all existing certs that
+you trust, signed with your key.@footnote{Regardless of who originally
+signed the certs, after the rebuild they will be signed by you.  This
+means you should be somewhat careful when rebuilding, but it is
+unavoidable --- if you could sign with other people's keys, that would
+be a rather serious security problem!}
+
+While the @code{db rebuild} command can reconstruct the ancestry graph
+in @emph{your} database, there are practical problems which arise when
+working in a distributed work group.  For example, suppose our group
+consists of the fictional developers Jim and Beth, and they need to
+rebuild their ancestry graph. Jim performs a rebuild, and sends Beth
+an email telling her that he has done so, but the email gets caught by
+Beth's spam filter, she doesn't see it, and she blithely syncs her
+database with Jim's. This creates a problem: Jim and Beth have
+combined the pre-rebuild and post-rebuild databases.  Their databases
+now contain two complete, parallel (but possibly overlapping) copies
+of their project's ancestry.  The ``bad'' old revisions that they were
+trying to get rid of are still there, mixed up with the ``good'' new
+revisions.
+
+To prevent such messy situations, monotone keeps a table of branch
+@dfn{epochs} in each database. An epoch is just a large bit string
+associated with a branch. Initially each branch's epoch is zero. Most
+monotone commands ignore epochs; they are relevant in only two
+circumstances:
+
+@itemize
+
+@item 
+When monotone rebuilds ancestry, it generates a new @emph{random}
+epoch for each branch in the database.
+
+@item 
+When monotone runs netsync between databases, it checks to make sure
+that all branches involved in the synchronization have the same
+epochs. If any epochs differ, the netsync is aborted with no changes
+made to either database. If either side is seeing a branch for the
+first time, it adopts the epoch of the other side.
+
+@end itemize
+
+Thus, when a user rebuilds their ancestry graph, they select a new
+epoch and thus effectively disassociate with the group of colleagues
+they had previously been communicating with. Other members of that
+group can then decide whether to follow the rebuild user into a new
+group --- by pulling the newly rebuilt ancestry --- or to remain
+behind in the old group.
+
+In our example, if Jim and Beth have epochs, Jim's rebuild creates a
+new epoch for their branch, in his database.  This causes monotone to
+reject netsync operations between Jim and Beth; it doesn't matter if
+Beth loses Jim's email. When she tries to synchronize with him, she
+receives an error message indicating that the epoch does not
+match. She must then discuss the matter with Jim and settle on a new
+course of action --- probably pulling Jim's database into a fresh
+database on Beth's end -- before future synchronizations will succeed.
+
+@heading Best practices
+
+The previous section described the theory and rationale behind rebuilds
+and epochs.  Here we discuss the practical consequences of that
+discussion.
+
+If you decide you must rebuild your ancestry graph --- generally by
+announcement of a bug from the monotone developers --- the first thing
+to do is get everyone to sync their changes with the central server;
+if people have unshared changes when the database is rebuilt, they
+will have trouble sharing them afterwards.
+
+Next, the project should pick a designated person to take down the
+netsync server, rebuild their database, and put the server back up
+with the rebuilt ancestry in it.  Everybody else should then pull this
+history into a fresh database, check out again from this database, and
+continue working as normal.
+
+In complicated situations, where people have private branches, or
+ancestries cross organizational boundaries, matters are more complex.
+The basic approach is to do a local rebuild, then after carefully
+examining the new revision IDs to convince yourself that the rebuilt
+graph is the same as the upstream subgraph, use the special @code{db
+epoch} commands to force your local epochs to match the upstream ones.
+(You may also want to do some fiddling with certs, to avoid getting
+duplicate copies of all of them; if this situation ever arises in real
+life we'll figure out how exactly that should work.)  Be very careful
+when doing this; you're explicitly telling monotone to let you shoot
+yourself in the foot, and it will let you.
+
+Fortunately, this process should be extremely rare; with luck, it will
+never happen at all.  But this way we're prepared.
 
 @node    Man Page
 @chapter Man Page

@@ -16,6 +16,21 @@
 #include "sqliteInt.h"
 #include "vdbeInt.h"
 
+/*
+** Return TRUE (non-zero) of the statement supplied as an argument needs
+** to be recompiled.  A statement needs to be recompiled whenever the
+** execution environment changes in a way that would alter the program
+** that sqlite3_prepare() generates.  For example, if new functions or
+** collating sequences are registered or if an authorizer function is
+** added or changed.
+**
+***** EXPERIMENTAL ******
+*/
+int sqlite3_expired(sqlite3_stmt *pStmt){
+  Vdbe *p = (Vdbe*)pStmt;
+  return p==0 || p->expired;
+}
+
 /**************************** sqlite3_value_  *******************************
 ** The following routines extract information from a Mem or sqlite3_value
 ** structure.
@@ -147,6 +162,12 @@ int sqlite3_step(sqlite3_stmt *pStmt){
   }
   if( p->aborted ){
     return SQLITE_ABORT;
+  }
+  if( p->pc<=0 && p->expired ){
+    if( p->rc==SQLITE_OK ){
+      p->rc = SQLITE_SCHEMA;
+    }
+    return SQLITE_ERROR;
   }
   db = p->db;
   if( sqlite3SafetyOn(db) ){
@@ -591,10 +612,12 @@ int sqlite3_bind_parameter_index(sqlite3_stmt *pStmt, const char *zName){
     return 0;
   }
   createVarMap(p); 
-  for(i=0; i<p->nVar; i++){
-    const char *z = p->azVar[i];
-    if( z && strcmp(z,zName)==0 ){
-      return i+1;
+  if( zName ){
+    for(i=0; i<p->nVar; i++){
+      const char *z = p->azVar[i];
+      if( z && strcmp(z,zName)==0 ){
+        return i+1;
+      }
     }
   }
   return 0;

@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.268 2004/11/22 19:12:20 drh Exp $
+** $Id: main.c,v 1.282 2005/03/09 12:26:51 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -257,12 +257,25 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
       /* This happens if the database was initially empty */
       db->file_format = 1;
     }
+
+    if( db->file_format==2 || db->file_format==3 ){
+      /* File format 2 is treated exactly as file format 1. New 
+      ** databases are created with file format 1.
+      */ 
+      db->file_format = 1;
+    }
   }
 
   /*
-  **  file_format==1    Version 3.0.0.
+  ** file_format==1    Version 3.0.0.
+  ** file_format==2    Version 3.1.3.
+  ** file_format==3    Version 3.1.4.
+  **
+  ** Version 3.0 can only use files with file_format==1. Version 3.1.3
+  ** can read and write files with file_format==1 or file_format==2.
+  ** Version 3.1.4 can read and write file formats 1, 2 and 3.
   */
-  if( meta[1]>1 ){
+  if( meta[1]>3 ){
     sqlite3BtreeCloseCursor(curMain);
     sqlite3SetString(pzErrMsg, "unsupported file format", (char*)0);
     return SQLITE_ERROR;
@@ -279,7 +292,7 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
   }else{
     char *zSql;
     zSql = sqlite3MPrintf(
-        "SELECT name, rootpage, sql, %s FROM '%q'.%s",
+        "SELECT name, rootpage, sql, '%s' FROM '%q'.%s",
         zDbNum, db->aDb[iDb].zName, zMasterName);
     sqlite3SafetyOff(db);
     rc = sqlite3_exec(db, zSql, sqlite3InitCallback, &initData, 0);
@@ -373,12 +386,13 @@ int sqlite3ReadSchema(Parse *pParse){
 const char rcsid3[] = "@(#) \044Id: SQLite version " SQLITE_VERSION " $";
 const char sqlite3_version[] = SQLITE_VERSION;
 const char *sqlite3_libversion(void){ return sqlite3_version; }
+int sqlite3_libversion_number(void){ return SQLITE_VERSION_NUMBER; }
 
 /*
 ** This is the default collating function named "BINARY" which is always
 ** available.
 */
-static int binaryCollatingFunc(
+static int binCollFunc(
   void *NotUsed,
   int nKey1, const void *pKey1,
   int nKey2, const void *pKey2
@@ -499,13 +513,6 @@ int sqlite3_close(sqlite3 *db){
   if( db->pErr ){
     sqlite3ValueFree(db->pErr);
   }
-
-#ifndef SQLITE_OMIT_CURSOR
-  for(j=0; j<db->nSqlCursor; j++){
-    sqlite3CursorDelete(db->apSqlCursor[j]);
-  }
-  sqliteFree(db->apSqlCursor);
-#endif
 
   db->magic = SQLITE_MAGIC_ERROR;
   sqliteFree(db);
@@ -713,6 +720,7 @@ int sqlite3_create_function(
     return SQLITE_ERROR;
   }
   
+#ifndef SQLITE_OMIT_UTF16
   /* If SQLITE_UTF16 is specified as the encoding type, transform this
   ** to one of SQLITE_UTF16LE or SQLITE_UTF16BE using the
   ** SQLITE_UTF16NATIVE macro. SQLITE_UTF16 is not used internally.
@@ -732,6 +740,25 @@ int sqlite3_create_function(
     if( rc!=SQLITE_OK ) return rc;
     enc = SQLITE_UTF16BE;
   }
+#else
+  enc = SQLITE_UTF8;
+#endif
+  
+  /* Check if an existing function is being overridden or deleted. If so,
+  ** and there are active VMs, then return SQLITE_BUSY. If a function
+  ** is being overridden/deleted but there are no active VMs, allow the
+  ** operation to continue but invalidate all precompiled statements.
+  */
+  p = sqlite3FindFunction(db, zFunctionName, nName, nArg, enc, 0);
+  if( p && p->iPrefEnc==enc && p->nArg==nArg ){
+    if( db->activeVdbeCnt ){
+      sqlite3Error(db, SQLITE_BUSY, 
+        "Unable to delete/modify user-function due to active statements");
+      return SQLITE_BUSY;
+    }else{
+      sqlite3ExpirePreparedStatements(db);
+    }
+  }
 
   p = sqlite3FindFunction(db, zFunctionName, nName, nArg, enc, 1);
   if( p==0 ) return SQLITE_NOMEM;
@@ -741,6 +768,7 @@ int sqlite3_create_function(
   p->pUserData = pUserData;
   return SQLITE_OK;
 }
+#ifndef SQLITE_OMIT_UTF16
 int sqlite3_create_function16(
   sqlite3 *db,
   const void *zFunctionName,
@@ -769,6 +797,7 @@ int sqlite3_create_function16(
       pUserData, xFunc, xStep, xFinal);
   return rc;
 }
+#endif
 
 /*
 ** Register a trace function.  The pArg from the previously registered trace
@@ -842,10 +871,10 @@ int sqlite3BtreeFactory(
   if( omitJournal ){
     btree_flags |= BTREE_OMIT_JOURNAL;
   }
+  if( db->flags & SQLITE_NoReadlock ){
+    btree_flags |= BTREE_NO_READLOCK;
+  }
   if( zFilename==0 ){
-#ifndef TEMP_STORE
-# define TEMP_STORE 1
-#endif
 #if TEMP_STORE==0
     /* Do nothing */
 #endif
@@ -1016,6 +1045,7 @@ int sqlite3_prepare(
   if( pzTail ) *pzTail = sParse.zTail;
   rc = sParse.rc;
 
+#ifndef SQLITE_OMIT_EXPLAIN
   if( rc==SQLITE_OK && sParse.pVdbe && sParse.explain ){
     sqlite3VdbeSetNumCols(sParse.pVdbe, 5);
     sqlite3VdbeSetColName(sParse.pVdbe, 0, "addr", P3_STATIC);
@@ -1024,6 +1054,7 @@ int sqlite3_prepare(
     sqlite3VdbeSetColName(sParse.pVdbe, 3, "p2", P3_STATIC);
     sqlite3VdbeSetColName(sParse.pVdbe, 4, "p3", P3_STATIC);
   } 
+#endif
 
 prepare_out:
   if( sqlite3SafetyOff(db) ){
@@ -1104,7 +1135,6 @@ static int openDatabase(
 ){
   sqlite3 *db;
   int rc, i;
-  char *zErrMsg = 0;
 
   /* Allocate the sqlite data structure */
   db = sqliteMalloc( sizeof(sqlite3) );
@@ -1115,7 +1145,7 @@ static int openDatabase(
   db->aDb = db->aDbStatic;
   db->enc = SQLITE_UTF8;
   db->autoCommit = 1;
-  /* db->flags |= SQLITE_ShortColNames; */
+  db->flags |= SQLITE_ShortColNames;
   sqlite3HashInit(&db->aFunc, SQLITE_HASH_STRING, 0);
   sqlite3HashInit(&db->aCollSeq, SQLITE_HASH_STRING, 0);
   for(i=0; i<db->nDb; i++){
@@ -1129,11 +1159,9 @@ static int openDatabase(
   ** and UTF-16, so add a version for each to avoid any unnecessary
   ** conversions. The only error that can occur here is a malloc() failure.
   */
-  sqlite3_create_collation(db, "BINARY", SQLITE_UTF8, 0,binaryCollatingFunc);
-  sqlite3_create_collation(db, "BINARY", SQLITE_UTF16LE, 0,binaryCollatingFunc);
-  sqlite3_create_collation(db, "BINARY", SQLITE_UTF16BE, 0,binaryCollatingFunc);
-  db->pDfltColl = sqlite3FindCollSeq(db, db->enc, "BINARY", 6, 0);
-  if( !db->pDfltColl ){
+  if( sqlite3_create_collation(db, "BINARY", SQLITE_UTF8, 0,binCollFunc) ||
+      sqlite3_create_collation(db, "BINARY", SQLITE_UTF16, 0,binCollFunc) ||
+      !(db->pDfltColl = sqlite3FindCollSeq(db, db->enc, "BINARY", 6, 0)) ){
     rc = db->errCode;
     assert( rc!=SQLITE_OK );
     db->magic = SQLITE_MAGIC_CLOSED;
@@ -1163,14 +1191,8 @@ static int openDatabase(
   ** is accessed.
   */
   sqlite3RegisterBuiltinFunctions(db);
-  if( rc==SQLITE_OK ){
-    sqlite3Error(db, SQLITE_OK, 0);
-    db->magic = SQLITE_MAGIC_OPEN;
-  }else{
-    sqlite3Error(db, rc, "%s", zErrMsg, 0);
-    if( zErrMsg ) sqliteFree(zErrMsg);
-    db->magic = SQLITE_MAGIC_CLOSED;
-  }
+  sqlite3Error(db, SQLITE_OK, 0);
+  db->magic = SQLITE_MAGIC_OPEN;
 
 opendb_out:
   if( sqlite3_errcode(db)==SQLITE_OK && sqlite3_malloc_failed ){
@@ -1254,7 +1276,7 @@ int sqlite3_reset(sqlite3_stmt *pStmt){
     rc = SQLITE_OK;
   }else{
     rc = sqlite3VdbeReset((Vdbe*)pStmt);
-    sqlite3VdbeMakeReady((Vdbe*)pStmt, -1, 0, 0, 0);
+    sqlite3VdbeMakeReady((Vdbe*)pStmt, -1, 0, 0, 0, 0);
   }
   return rc;
 }
@@ -1291,6 +1313,21 @@ int sqlite3_create_collation(
     );
     return SQLITE_ERROR;
   }
+
+  /* Check if this call is removing or replacing an existing collation 
+  ** sequence. If so, and there are active VMs, return busy. If there
+  ** are no active VMs, invalidate any pre-compiled statements.
+  */
+  pColl = sqlite3FindCollSeq(db, (u8)enc, zName, strlen(zName), 0);
+  if( pColl && pColl->xCmp ){
+    if( db->activeVdbeCnt ){
+      sqlite3Error(db, SQLITE_BUSY, 
+        "Unable to delete/modify collation sequence due to active statements");
+      return SQLITE_BUSY;
+    }
+    sqlite3ExpirePreparedStatements(db);
+  }
+
   pColl = sqlite3FindCollSeq(db, (u8)enc, zName, strlen(zName), 1);
   if( 0==pColl ){
    rc = SQLITE_NOMEM;

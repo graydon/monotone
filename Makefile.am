@@ -9,7 +9,7 @@ MOST_SOURCES =								\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
 	 change_set.cc mt_version.cc automate.cc database_check.cc	\
-	 path_component.cc                                              \
+	 path_component.cc epoch.cc                                     \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -22,7 +22,8 @@ MOST_SOURCES =								\
 	 numeric_vocab.hh revision.hh change_set.hh			\
 	 mkstemp.hh mt_version.hh automate.hh database_check.hh smap.hh	\
 	 gettext.h package_revision.c package_full_revision.c           \
-	 path_component.hh
+	 path_component.hh epoch.hh package_full_revision.h             \
+	 package_revision.h
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -75,11 +76,11 @@ BOOST_SANDBOX_SOURCES = \
 	boost/circular_buffer.hpp
 
 SQLITE_SOURCES = \
-        sqlite/attach.c sqlite/auth.c sqlite/btree.c \
+        sqlite/alter.c sqlite/attach.c sqlite/auth.c sqlite/btree.c \
         sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
         sqlite/hash.c sqlite/insert.c \
         sqlite/legacy.c sqlite/main.c sqlite/opcodes.c \
-        sqlite/os_mac.c sqlite/os_unix.c sqlite/os_win.c \
+        sqlite/os_unix.c sqlite/os_win.c \
         sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c \
         sqlite/random.c sqlite/select.c sqlite/table.c sqlite/tokenize.c \
         sqlite/trigger.c sqlite/update.c sqlite/utf.c \
@@ -88,7 +89,7 @@ SQLITE_SOURCES = \
         sqlite/vdbemem.c sqlite/where.c \
 	\
         sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/os_common.h sqlite/os_mac.h sqlite/os_unix.h sqlite/os_win.h \
+        sqlite/os_common.h sqlite/os_unix.h sqlite/os_win.h \
         sqlite/parse.h sqlite/sqlite3.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
 	sqlite/pager.h
 
@@ -230,6 +231,8 @@ info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
 	     $(PDF_FIGURES) \
              INSTALL \
+             README.changesets \
+             UPGRADE \
              monotone.spec \
              monotone.html \
              texinfo.css \
@@ -243,7 +246,7 @@ EXTRA_DIST = $(man1_MANS) \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
              $(wildcard m4/*.m4) \
-             sqlite/keywordhash.c
+             sqlite/keywordhash.h
 
 MAKEINFOFLAGS=-I $(top_builddir)
 

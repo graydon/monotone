@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h.in,v 1.125 2004/12/07 02:14:51 drh Exp $
+** @(#) $Id: sqlite.h.in,v 1.130 2005/02/05 07:33:35 danielk1977 Exp $
 */
 #ifndef _SQLITE3_H_
 #define _SQLITE3_H_
@@ -30,9 +30,25 @@ extern "C" {
 */
 #ifdef SQLITE_VERSION
 # undef SQLITE_VERSION
-#else
-# define SQLITE_VERSION         "3.0.8"
 #endif
+#define SQLITE_VERSION         "3.1.6"
+
+/*
+** The format of the version string is "X.Y.Z<trailing string>", where
+** X is the major version number, Y is the minor version number and Z
+** is the release number. The trailing string is often "alpha" or "beta".
+** For example "3.1.1beta".
+**
+** The SQLITE_VERSION_NUMBER is an integer with the value 
+** (X*100000 + Y*1000 + Z). For example, for version "3.1.1beta", 
+** SQLITE_VERSION_NUMBER is set to 3001001. To detect if they are using 
+** version 3.1.1 or greater at compile time, programs may use the test 
+** (SQLITE_VERSION_NUMBER>=3001001).
+*/
+#ifdef SQLITE_VERSION_NUMBER
+# undef SQLITE_VERSION_NUMBER
+#endif
+#define SQLITE_VERSION_NUMBER 3001006
 
 /*
 ** The version string is also compiled into the library so that a program
@@ -43,6 +59,12 @@ extern "C" {
 */
 extern const char sqlite3_version[];
 const char *sqlite3_libversion(void);
+
+/*
+** Return the value of the SQLITE_VERSION_NUMBER macro when the
+** library was compiled.
+*/
+int sqlite3_libversion_number(void);
 
 /*
 ** Each open sqlite database is represented by an instance of the
@@ -309,7 +331,7 @@ int sqlite3_busy_timeout(sqlite3*, int ms);
 ** pass the result data pointer to sqlite3_free_table() in order to 
 ** release the memory that was malloc-ed.  Because of the way the 
 ** malloc() happens, the calling function must not try to call 
-** malloc() directly.  Only sqlite3_free_table() is able to release 
+** free() directly.  Only sqlite3_free_table() is able to release 
 ** the memory properly and safely.
 **
 ** The return value of this routine is the same as from sqlite3_exec().
@@ -663,6 +685,13 @@ const char *sqlite3_bind_parameter_name(sqlite3_stmt*, int);
 ** return 0.
 */
 int sqlite3_bind_parameter_index(sqlite3_stmt*, const char *zName);
+
+/*
+** Set all the parameters in the compiled SQL statement to NULL.
+**
+******* THIS IS AN EXPERIMENTAL API AND IS SUBJECT TO CHANGE ******
+*/
+int sqlite3_clear_bindings(sqlite3_stmt*);
 
 /*
 ** Return the number of columns in the result set returned by the compiled
@@ -1155,17 +1184,41 @@ int sqlite3_rekey(
 );
 
 /*
-** If the following global variable is made to point to a constant
+** Sleep for a little while. The second parameter is the number of
+** miliseconds to sleep for. 
+**
+** If the operating system does not support sleep requests with 
+** milisecond time resolution, then the time will be rounded up to 
+** the nearest second. The number of miliseconds of sleep actually 
+** requested from the operating system is returned.
+**
+******* THIS IS AN EXPERIMENTAL API AND IS SUBJECT TO CHANGE ******
+*/
+int sqlite3_sleep(int);
+
+/*
+** Return TRUE (non-zero) of the statement supplied as an argument needs
+** to be recompiled.  A statement needs to be recompiled whenever the
+** execution environment changes in a way that would alter the program
+** that sqlite3_prepare() generates.  For example, if new functions or
+** collating sequences are registered or if an authorizer function is
+** added or changed.
+**
+******* THIS IS AN EXPERIMENTAL API AND IS SUBJECT TO CHANGE ******
+*/
+int sqlite3_expired(sqlite3_stmt*);
+
+/*
+** If the following global variable is made to point to a
 ** string which is the name of a directory, then all temporary files
 ** created by SQLite will be placed in that directory.  If this variable
 ** is NULL pointer, then SQLite does a search for an appropriate temporary
 ** file directory.
 **
-** This variable should only be changed when there are no open databases.
-** Once sqlite3_open() has been called, this variable should not be changed
-** until all database connections are closed.
+** Once sqlite3_open() has been called, changing this variable will invalidate the
+** current temporary database, if any.
 */
-extern const char *sqlite3_temp_directory;
+extern char *sqlite3_temp_directory;
 
 #ifdef __cplusplus
 }  /* End of the 'extern "C"' block */

@@ -27,6 +27,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "xdelta.hh"
+#include "epoch.hh"
 
 #include "cryptopp/osrng.h"
 
@@ -246,7 +247,7 @@ session
   bool sent_goodbye;
   boost::scoped_ptr<CryptoPP::AutoSeededRandomPool> prng;
 
-  packet_db_writer dbw;
+  packet_db_valve dbw;
 
   session(protocol_role role,
           protocol_voice voice,
@@ -263,12 +264,14 @@ session
   void mark_recent_io();
 
   bool done_all_refinements();
-  bool rcert_refinement_done();
+  bool cert_refinement_done();
   bool all_requested_revisions_received();
 
   void note_item_requested(netcmd_item_type ty, id const & i);
   bool item_request_outstanding(netcmd_item_type ty, id const & i);
   void note_item_arrived(netcmd_item_type ty, id const & i);
+
+  void maybe_note_epochs_finished();
 
   void note_item_sent(netcmd_item_type ty, id const & i);
 
@@ -290,6 +293,9 @@ session
   Netxx::Probe::ready_type which_events() const;
   bool read_some();
   bool write_some();
+
+  bool encountered_error;
+  void error(string const & errmsg);
 
   void write_netcmd_and_try_flush(netcmd const & cmd);
   void queue_bye_cmd();
@@ -367,6 +373,8 @@ session
 
   void rebuild_merkle_trees(app_state & app,
                             utf8 const & collection);
+
+  void load_epoch(cert_value const & branchname, epoch_id const & epoch);
   
   bool dispatch_payload(netcmd const & cmd);
   void begin_service();
@@ -429,7 +437,8 @@ session::session(protocol_role role,
   saved_nonce(""),
   received_goodbye(false),
   sent_goodbye(false),
-  dbw(app, true)
+  dbw(app, true),
+  encountered_error(false)
 {
   if (voice == client_voice)
     {
@@ -451,18 +460,16 @@ session::session(protocol_role role,
     }  
   prng.reset(new CryptoPP::AutoSeededRandomPool(request_blocking_rng));
 
-  done_refinements.insert(make_pair(rcert_item, done_marker()));
-  done_refinements.insert(make_pair(mcert_item, done_marker()));
-  done_refinements.insert(make_pair(fcert_item, done_marker()));
+  done_refinements.insert(make_pair(cert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
+  done_refinements.insert(make_pair(epoch_item, done_marker()));
   
-  requested_items.insert(make_pair(rcert_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(fcert_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(mcert_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
 
   for (vector<utf8>::const_iterator i = collections.begin();
        i != collections.end(); ++i)
@@ -503,9 +510,9 @@ session::done_all_refinements()
 
 
 bool 
-session::rcert_refinement_done()
+session::cert_refinement_done()
 {
-  return done_refinements[rcert_item].tree_is_done;
+  return done_refinements[cert_item].tree_is_done;
 }
 
 bool 
@@ -530,6 +537,23 @@ session::all_requested_revisions_received()
 }
 
 void
+session::maybe_note_epochs_finished()
+{
+  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
+    i = requested_items.find(epoch_item);
+  I(i != requested_items.end());
+  // Maybe there are outstanding epoch requests.
+  if (!i->second->empty())
+    return;
+  // And maybe we haven't even finished the refinement.
+  if (!done_refinements[epoch_item].tree_is_done)
+    return;
+  // But otherwise, we're ready to go!
+  L(F("all epochs processed, opening database valve\n"));
+  this->dbw.open_valve();
+}
+
+void
 session::note_item_requested(netcmd_item_type ty, id const & ident)
 {
   map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
@@ -548,7 +572,7 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
 
   switch (ty)
     {
-    case rcert_item:
+    case cert_item:
       if (cert_in_ticker.get() != NULL)
         ++(*cert_in_ticker);
       break;
@@ -577,7 +601,7 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
 {
   switch (ty)
     {
-    case rcert_item:
+    case cert_item:
       if (cert_out_ticker.get() != NULL)
         ++(*cert_out_ticker);
       break;
@@ -594,11 +618,36 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
 void 
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
-  write_netcmd(cmd, outbuf);
+  if (!encountered_error)
+    write_netcmd(cmd, outbuf);
+  else
+    L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
   // interfere with initial and final sequences. careful with it.
   // write_some();
   // read_some();
+}
+
+// This method triggers a special "error unwind" mode to netsync.  In this
+// mode, all received data is ignored, and no new data is queued.  We simply
+// stay connected long enough for the current write buffer to be flushed, to
+// ensure that our peer receives the error message.
+// WARNING WARNING WARNING (FIXME): this does _not_ throw an exception.  if
+// while processing any given netcmd packet you encounter an error, you can
+// _only_ call this method if you have not touched the database, because if
+// you have touched the database then you need to throw an exception to
+// trigger a rollback.
+// you could, of course, call this method and then throw an exception, but
+// there is no point in doing that, because throwing the exception will cause
+// the connection to be immediately terminated, so your call to error() will
+// actually have no effect (except to cause your error message to be printed
+// twice).
+void
+session::error(std::string const & errmsg)
+{
+  W(F("error: %s\n") % errmsg);
+  queue_error_cmd(errmsg);
+  encountered_error = true;
 }
 
 void 
@@ -912,7 +961,7 @@ session::analyze_ancestry_graph()
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
 
-  if (! (all_requested_revisions_received() && rcert_refinement_done()))
+  if (! (all_requested_revisions_received() && cert_refinement_done()))
     return;
 
   if (analyzed_ancestry)
@@ -1000,9 +1049,14 @@ session::read_some()
   I(inbuf.size() < constants::netcmd_maxsz);
   char tmp[constants::bufsz];
   Netxx::signed_size_type count = str.read(tmp, sizeof(tmp));
-  if(count > 0)
+  if (count > 0)
     {
       L(F("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
+      if (encountered_error)
+        {
+          L(F("in error unwind mode, so throwing them into the bit bucket\n"));
+          return true;
+        }
       inbuf.append(string(tmp, tmp + count));
       mark_recent_io();
       if (byte_in_ticker.get() != NULL)
@@ -1027,6 +1081,12 @@ session::write_some()
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
         (*byte_out_ticker) += count;
+      if (encountered_error && outbuf.empty())
+        {
+          // we've flushed our error message, so it's time to get out.
+          L(F("finished flushing output queue in error unwind mode, disconnecting\n"));
+          return false;
+        }
       return true;
     }
   else
@@ -1053,6 +1113,7 @@ session::queue_error_cmd(string const & errmsg)
   cmd.cmd_code = error_cmd;
   write_error_cmd_payload(errmsg, cmd.payload);
   write_netcmd_and_try_flush(cmd);
+  this->sent_goodbye = true;
 }
 
 void 
@@ -1074,7 +1135,16 @@ session::queue_hello_cmd(id const & server,
 {
   netcmd cmd;
   cmd.cmd_code = hello_cmd;
-  write_hello_cmd_payload(server, nonce, cmd.payload);
+  hexenc<id> server_encoded;
+  encode_hexenc(server, server_encoded);
+  
+  rsa_keypair_id key_name;
+  base64<rsa_pub_key> pub_encoded;
+  rsa_pub_key pub;
+
+  app.db.get_pubkey(server_encoded, key_name, pub_encoded);
+  decode_base64(pub_encoded, pub);
+  write_hello_cmd_payload(key_name(), pub(), nonce, cmd.payload);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1291,9 +1361,7 @@ session::process_bye_cmd()
 bool 
 session::process_error_cmd(string const & errmsg) 
 {
-  W(F("received network error: %s\n") % errmsg);
-  this->received_goodbye = true;
-  return true;
+  throw bad_decode(F("received network error: %s\n") % errmsg);
 }
 
 bool 
@@ -1323,6 +1391,8 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
 
       if (all_requested_revisions_received())
         analyze_ancestry_graph();      
+
+      maybe_note_epochs_finished();
     }
 
   else if (i->second.current_level_had_refinements 
@@ -1640,22 +1710,19 @@ session::process_confirm_cmd(string const & signature)
         {
           L(F("server signature OK, accepting authentication\n"));
           this->authenticated = true;
+
           merkle_ptr root;
+          load_merkle_node(epoch_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(*root);
+          queue_done_cmd(0, epoch_item);
+
           load_merkle_node(key_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, key_item);
 
-          load_merkle_node(mcert_item, this->collection, 0, get_root_prefix().val, root);
+          load_merkle_node(cert_item, this->collection, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
-          queue_done_cmd(0, mcert_item);
-
-          load_merkle_node(fcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, fcert_item);
-
-          load_merkle_node(rcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, rcert_item);
+          queue_done_cmd(0, cert_item);
           return true;
         }
       else
@@ -1681,18 +1748,16 @@ data_exists(netcmd_item_type type,
     {
     case key_item:
       return app.db.public_key_exists(hitem);
-    case fcert_item:
-      return false;
-    case mcert_item:
-      return false;
     case manifest_item:
       return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
     case revision_item:
       return app.db.revision_exists(revision_id(hitem));
-    case rcert_item:
+    case cert_item:
       return app.db.revision_cert_exists(hitem);
+    case epoch_item:
+      return app.db.epoch_exists(epoch_id(hitem));
     }
   return false;
 }
@@ -1709,6 +1774,20 @@ load_data(netcmd_item_type type,
   encode_hexenc(item, hitem);
   switch (type)
     {
+    case epoch_item:
+      if (app.db.epoch_exists(epoch_id(hitem)))
+      {
+        cert_value branch;
+        epoch_data epoch;
+        app.db.get_epoch(epoch_id(hitem), branch, epoch);
+        write_epoch(branch, epoch, out);
+      }
+      else
+        {
+          throw bad_decode(F("epoch with hash '%s' does not exist in our database")
+                           % hitem);
+        }
+      break;
     case key_item:
       if (app.db.public_key_exists(hitem))
         {
@@ -1769,7 +1848,7 @@ load_data(netcmd_item_type type,
         }
       break;
 
-    case rcert_item:
+    case cert_item:
       if(app.db.revision_cert_exists(hitem))
         {
           revision<cert> c;
@@ -1779,16 +1858,8 @@ load_data(netcmd_item_type type,
         }
       else
         {
-          throw bad_decode(F("rcert '%s' does not exist in our database") % hitem);
+          throw bad_decode(F("cert '%s' does not exist in our database") % hitem);
         }
-      break;
-
-    case mcert_item:
-      throw bad_decode(F("mcert '%s' not supported") % hitem);
-      break;
-
-    case fcert_item:
-      throw bad_decode(F("fcert '%s' not supported") % hitem);
       break;
     }
 }
@@ -2287,12 +2358,53 @@ session::process_data_cmd(netcmd_item_type type,
 
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
-  // FIXME: what does the above comment mean?  note_item_arrived does require
-  // that the item passed to it have been requested...
   note_item_arrived(type, item);
                            
   switch (type)
     {
+    case epoch_item:
+      if (this->app.db.epoch_exists(epoch_id(hitem)))
+        {
+          L(F("epoch '%s' already exists in our database\n") % hitem);
+        }
+      else
+        {
+          cert_value branch;
+          epoch_data epoch;
+          read_epoch(dat, branch, epoch);
+          L(F("received epoch %s for branch %s\n") % epoch % branch);
+          std::map<cert_value, epoch_data> epochs;
+          app.db.get_epochs(epochs);
+          std::map<cert_value, epoch_data>::const_iterator i;
+          i = epochs.find(branch);
+          if (i == epochs.end())
+            {
+              L(F("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
+              app.db.set_epoch(branch, epoch);
+              maybe_note_epochs_finished();
+            }
+          else
+            {
+              L(F("branch %s already has an epoch; checking\n") % branch);
+              // if we get here, then we know that the epoch must be
+              // different, because if it were the same then the
+              // if(epoch_exists()) branch up above would have been taken.  if
+              // somehow this is wrong, then we have broken epoch hashing or
+              // something, which is very dangerous, so play it safe...
+              I(!(i->second == epoch));
+
+              // It is safe to call 'error' here, because if we get here,
+              // then the current netcmd packet cannot possibly have
+              // written anything to the database.
+              error((F("Mismatched epoch on branch %s."
+                       "  Server has '%s', client has '%s'.")
+                     % branch
+                     % (voice == server_voice ? i->second : epoch)
+                     % (voice == server_voice ? epoch : i->second)).str());
+            }
+        }
+      break;
+      
     case key_item:
       if (this->app.db.public_key_exists(hitem))
         L(F("public key '%s' already exists in our database\n")  % hitem);
@@ -2311,13 +2423,9 @@ session::process_data_cmd(netcmd_item_type type,
         }
       break;
 
-    case mcert_item:
-      L(F("ignoring manifest cert '%s'\n") % hitem);
-      break;
-
-    case rcert_item:
+    case cert_item:
       if (this->app.db.revision_cert_exists(hitem))
-        L(F("revision cert '%s' already exists in our database\n")  % hitem);
+        L(F("cert '%s' already exists in our database\n")  % hitem);
       else
         {
           cert c;
@@ -2336,10 +2444,6 @@ session::process_data_cmd(netcmd_item_type type,
         }
       break;
 
-    case fcert_item:
-      L(F("ignoring file cert '%s'\n") % hitem);
-      break;
-
     case revision_item:
       {
         revision_id rid(hitem);
@@ -2356,7 +2460,7 @@ session::process_data_cmd(netcmd_item_type type,
             rp->first = revision_data(packed);
             read_revision_set(dat, rp->second);
             ancestry.insert(std::make_pair(rid, rp));
-            if (rcert_refinement_done())
+            if (cert_refinement_done())
               {
                 analyze_ancestry_graph();
               }
@@ -2396,7 +2500,7 @@ session::process_data_cmd(netcmd_item_type type,
       break;
 
     }
-      return true;
+  return true;
 }
 
 bool 
@@ -2540,7 +2644,26 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "hello netcmd received in client voice");
       {
         id server, nonce;
-        read_hello_cmd_payload(cmd.payload, server, nonce);
+        hexenc<id> server_encoded;
+        rsa_keypair_id server_keyname;
+        rsa_pub_key server_key;
+        base64<rsa_pub_key> server_key_encoded;
+        string skn, sk;
+        
+        read_hello_cmd_payload(cmd.payload, skn, sk, nonce);
+        server_keyname = skn;
+        server_key = sk;
+
+        encode_base64(server_key, server_key_encoded);
+        key_hash_code(server_keyname, server_key_encoded, server_encoded);
+        if (!app.db.public_key_exists(server_encoded))
+          {
+            W(F("inserting public %s key for %s into database\n") 
+              % server_encoded % server_keyname);
+            app.db.put_key(server_keyname, server_key_encoded);
+          }
+
+        decode_hexenc(server_encoded, server);
         return process_hello_cmd(server, nonce);
       }
       break;
@@ -3144,21 +3267,35 @@ make_root_node(session & sess,
 }
 
 
+// BROKEN
+void
+session::load_epoch(cert_value const & branchname, epoch_id const & epoch)
+{
+  // hash is of concat(branch name, raw epoch id).  This is unique, because
+  // the latter has a fixed length.
+  std::string tmp(branchname());
+  id raw_epoch;
+  decode_hexenc(epoch.inner(), raw_epoch);
+  tmp += raw_epoch();
+  data tdat(tmp);
+  hexenc<id> out;
+  calculate_ident(tdat, out);
+  id raw_hash;
+  decode_hexenc(out, raw_hash);
+}
+
 void 
 session::rebuild_merkle_trees(app_state & app,
                               utf8 const & collection)
 {
   P(F("rebuilding merkle trees for collection %s\n") % collection);
 
-  // we're not using these anymore..
-  make_root_node(*this, collection, mcert_item);
-  make_root_node(*this, collection, fcert_item);
-
-  boost::shared_ptr<merkle_table> rtab = make_root_node(*this, collection, rcert_item);
+  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, collection, cert_item);
   boost::shared_ptr<merkle_table> ktab = make_root_node(*this, collection, key_item);
+  boost::shared_ptr<merkle_table> etab = make_root_node(*this, collection, epoch_item);
 
-  ticker rcerts("rcerts", "r", 256);
-  ticker keys("keys", "k", 1);
+  ticker certs_ticker("certs", "c", 256);
+  ticker keys_ticker("keys", "k", 1);
 
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;
@@ -3180,15 +3317,44 @@ session::rebuild_merkle_trees(app_state & app,
             revision_ids.insert(revision_id(idx(certs, i).inner().ident));
           }
       }
+    
+    {
+      map<cert_value, epoch_data> epochs;
+      app.db.get_epochs(epochs);
+
+      epoch_data epoch_zero(std::string(constants::epochlen, '0'));
+      for (std::set<string>::const_iterator i = branchnames.begin();
+           i != branchnames.end(); ++i)
+        {
+          cert_value branch(*i);
+          std::map<cert_value, epoch_data>::const_iterator j;
+          j = epochs.find(branch);
+          // set to zero any epoch which is not yet set    
+          if (j == epochs.end())
+            {
+              L(F("setting epoch on %s to zero\n") % branch);
+              epochs.insert(std::make_pair(branch, epoch_zero));
+              app.db.set_epoch(branch, epoch_zero);
+            }
+          // then insert all epochs into merkle tree
+          j = epochs.find(branch);
+          I(j != epochs.end());
+          epoch_id eid;
+          epoch_hash_code(j->first, j->second, eid);
+          id raw_hash;
+          decode_hexenc(eid.inner(), raw_hash);
+          insert_into_merkle_tree(*etab, epoch_item, true, raw_hash(), 0);
+        }
+    }
 
     typedef std::vector< std::pair<hexenc<id>,
-      std::pair<revision_id, rsa_keypair_id> > > rcert_idx;
+      std::pair<revision_id, rsa_keypair_id> > > cert_idx;
 
-    rcert_idx idx;
+    cert_idx idx;
     app.db.get_revision_cert_index(idx);
 
     // insert all certs and keys reachable via these revisions
-    for (rcert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
+    for (cert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
       {
         hexenc<id> const & hash = i->first;
         revision_id const & ident = i->second.first;
@@ -3199,8 +3365,8 @@ session::rebuild_merkle_trees(app_state & app,
         
         id raw_hash;
         decode_hexenc(hash, raw_hash);
-        insert_into_merkle_tree(*rtab, rcert_item, true, raw_hash(), 0);
-        ++rcerts;
+        insert_into_merkle_tree(*ctab, cert_item, true, raw_hash(), 0);
+        ++certs_ticker;
         if (inserted_keys.find(key) == inserted_keys.end())
           {
             if (app.db.public_key_exists(key))
@@ -3211,15 +3377,16 @@ session::rebuild_merkle_trees(app_state & app,
                 key_hash_code(key, pub_encoded, keyhash);
                 decode_hexenc(keyhash, raw_hash);
                 insert_into_merkle_tree(*ktab, key_item, true, raw_hash(), 0);
-                ++keys;
+                ++keys_ticker;
               }
             inserted_keys.insert(key);
           }
       }
   }  
 
+  recalculate_merkle_codes(*etab, get_root_prefix().val, 0);
   recalculate_merkle_codes(*ktab, get_root_prefix().val, 0);
-  recalculate_merkle_codes(*rtab, get_root_prefix().val, 0);
+  recalculate_merkle_codes(*ctab, get_root_prefix().val, 0);
 }
 
 void 

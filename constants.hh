@@ -21,6 +21,12 @@ namespace constants
   // number of characters in a SHA1 id
   extern size_t const idlen; 
 
+  // number of characters in an encoded epoch
+  extern size_t const epochlen;
+
+  // number of characters in a raw epoch
+  extern size_t const epochlen_bytes;
+
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
   extern size_t const cvs_window; 

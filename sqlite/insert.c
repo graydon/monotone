@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle INSERT statements in SQLite.
 **
-** $Id: insert.c,v 1.128 2004/12/07 15:41:49 drh Exp $
+** $Id: insert.c,v 1.137 2005/03/16 12:15:21 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 
@@ -94,6 +94,27 @@ void sqlite3TableAffinityStr(Vdbe *v, Table *pTab){
   sqlite3VdbeChangeP3(v, -1, pTab->zColAff, 0);
 }
 
+/*
+** Return non-zero if SELECT statement p opens the table with rootpage
+** iTab in database iDb.  This is used to see if a statement of the form 
+** "INSERT INTO <iDb, iTab> SELECT ..." can run without using temporary
+** table for the results of the SELECT. 
+**
+** No checking is done for sub-selects that are part of expressions.
+*/
+static int selectReadsTable(Select *p, int iDb, int iTab){
+  int i;
+  struct SrcList_item *pItem;
+  if( p->pSrc==0 ) return 0;
+  for(i=0, pItem=p->pSrc->a; i<p->pSrc->nSrc; i++, pItem++){
+    if( pItem->pSelect ){
+      if( selectReadsTable(p, iDb, iTab) ) return 1;
+    }else{
+      if( pItem->pTab->iDb==iDb && pItem->pTab->tnum==iTab ) return 1;
+    }
+  }
+  return 0;
+}
 
 /*
 ** This routine is call to handle SQL of the following forms:
@@ -182,7 +203,7 @@ void sqlite3Insert(
   sqlite3 *db;          /* The main database structure */
   int keyColumn = -1;   /* Column that is the INTEGER PRIMARY KEY */
   int endOfLoop;        /* Label for the end of the insertion loop */
-  int useTempTable;     /* Store SELECT results in intermediate table */
+  int useTempTable = 0; /* Store SELECT results in intermediate table */
   int srcTab = 0;       /* Data comes from this temporary cursor if >=0 */
   int iSelectLoop = 0;  /* Address of code that implements the SELECT */
   int iCleanup = 0;     /* Address of the cleanup code */
@@ -312,8 +333,11 @@ void sqlite3Insert(
     iInitCode = sqlite3VdbeAddOp(v, OP_Goto, 0, 0);
     iSelectLoop = sqlite3VdbeCurrentAddr(v);
     iInsertBlock = sqlite3VdbeMakeLabel(v);
-    rc = sqlite3Select(pParse, pSelect, SRT_Subroutine, iInsertBlock, 0,0,0,0);
+
+    /* Resolve the expressions in the SELECT statement and execute it. */
+    rc = sqlite3Select(pParse, pSelect, SRT_Subroutine, iInsertBlock,0,0,0,0);
     if( rc || pParse->nErr || sqlite3_malloc_failed ) goto insert_cleanup;
+
     iCleanup = sqlite3VdbeMakeLabel(v);
     sqlite3VdbeAddOp(v, OP_Goto, 0, iCleanup);
     assert( pSelect->pEList );
@@ -327,20 +351,8 @@ void sqlite3Insert(
     ** of the tables being read by the SELECT statement.  Also use a 
     ** temp table in the case of row triggers.
     */
-    if( triggers_exist ){
+    if( triggers_exist || selectReadsTable(pSelect, pTab->iDb, pTab->tnum) ){
       useTempTable = 1;
-    }else{
-      int addr = 0;
-      useTempTable = 0;
-      while( useTempTable==0 ){
-        VdbeOp *pOp;
-        addr = sqlite3VdbeFindOp(v, addr, OP_OpenRead, pTab->tnum);
-        if( addr==0 ) break;
-        pOp = sqlite3VdbeGetOp(v, addr-2);
-        if( pOp->opcode==OP_Integer && pOp->p1==pTab->iDb ){
-          useTempTable = 1;
-        }
-      }
     }
 
     if( useTempTable ){
@@ -372,15 +384,16 @@ void sqlite3Insert(
     /* This is the case if the data for the INSERT is coming from a VALUES
     ** clause
     */
-    SrcList dummy;
+    NameContext sNC;
+    memset(&sNC, 0, sizeof(sNC));
+    sNC.pParse = pParse;
     assert( pList!=0 );
     srcTab = -1;
     useTempTable = 0;
     assert( pList );
     nColumn = pList->nExpr;
-    dummy.nSrc = 0;
     for(i=0; i<nColumn; i++){
-      if( sqlite3ExprResolveAndCheck(pParse,&dummy,0,pList->a[i].pExpr,0,0) ){
+      if( sqlite3ExprResolveNames(&sNC, pList->a[i].pExpr) ){
         goto insert_cleanup;
       }
     }
@@ -496,9 +509,8 @@ void sqlite3Insert(
       sqlite3VdbeAddOp(v, OP_Integer, -1, 0);
     }else if( useTempTable ){
       sqlite3VdbeAddOp(v, OP_Column, srcTab, keyColumn);
-    }else if( pSelect ){
-      sqlite3VdbeAddOp(v, OP_Dup, nColumn - keyColumn - 1, 1);
     }else{
+      assert( pSelect==0 );  /* Otherwise useTempTable is true */
       sqlite3ExprCode(pParse, pList->a[keyColumn].pExpr);
       sqlite3VdbeAddOp(v, OP_NotNull, -1, sqlite3VdbeCurrentAddr(v)+3);
       sqlite3VdbeAddOp(v, OP_Pop, 1, 0);
@@ -520,9 +532,8 @@ void sqlite3Insert(
         sqlite3ExprCode(pParse, pTab->aCol[i].pDflt);
       }else if( useTempTable ){
         sqlite3VdbeAddOp(v, OP_Column, srcTab, j); 
-      }else if( pSelect ){
-        sqlite3VdbeAddOp(v, OP_Dup, nColumn-j-1, 1);
       }else{
+        assert( pSelect==0 ); /* Otherwise useTempTable is true */
         sqlite3ExprCodeAndCache(pParse, pList->a[j].pExpr);
       }
     }
@@ -693,7 +704,7 @@ void sqlite3Insert(
   ** generating code because of a call to sqlite3NestedParse(), do not
   ** invoke the callback function.
   */
-  if( db->flags & SQLITE_CountRows && pParse->nested==0 ){
+  if( db->flags & SQLITE_CountRows && pParse->nested==0 && !pParse->trigStack ){
     sqlite3VdbeAddOp(v, OP_MemLoad, iCntMem, 0);
     sqlite3VdbeAddOp(v, OP_Callback, 1, 0);
     sqlite3VdbeSetNumCols(v, 1);
@@ -702,8 +713,8 @@ void sqlite3Insert(
 
 insert_cleanup:
   sqlite3SrcListDelete(pTabList);
-  if( pList ) sqlite3ExprListDelete(pList);
-  if( pSelect ) sqlite3SelectDelete(pSelect);
+  sqlite3ExprListDelete(pList);
+  sqlite3SelectDelete(pSelect);
   sqlite3IdListDelete(pColumn);
 }
 
@@ -832,6 +843,8 @@ void sqlite3GenerateConstraintChecks(
     }
     sqlite3VdbeAddOp(v, OP_Dup, nCol-1-i, 1);
     addr = sqlite3VdbeAddOp(v, OP_NotNull, 1, 0);
+    assert( onError==OE_Rollback || onError==OE_Abort || onError==OE_Fail
+        || onError==OE_Ignore || onError==OE_Replace );
     switch( onError ){
       case OE_Rollback:
       case OE_Abort:
@@ -853,7 +866,6 @@ void sqlite3GenerateConstraintChecks(
         sqlite3VdbeAddOp(v, OP_Push, nCol-i, 0);
         break;
       }
-      default: assert(0);
     }
     sqlite3VdbeChangeP2(v, addr, sqlite3VdbeCurrentAddr(v));
   }
@@ -959,6 +971,8 @@ void sqlite3GenerateConstraintChecks(
     jumpInst2 = sqlite3VdbeAddOp(v, OP_IsUnique, base+iCur+1, 0);
 
     /* Generate code that executes if the new index entry is not unique */
+    assert( onError==OE_Rollback || onError==OE_Abort || onError==OE_Fail
+        || onError==OE_Ignore || onError==OE_Replace );
     switch( onError ){
       case OE_Rollback:
       case OE_Abort:
@@ -1003,7 +1017,6 @@ void sqlite3GenerateConstraintChecks(
         seenReplace = 1;
         break;
       }
-      default: assert(0);
     }
     contAddr = sqlite3VdbeCurrentAddr(v);
     assert( contAddr<(1<<24) );
@@ -1049,11 +1062,13 @@ void sqlite3CompleteInsertion(
   }
   sqlite3VdbeAddOp(v, OP_MakeRecord, pTab->nCol, 0);
   sqlite3TableAffinityStr(v, pTab);
+#ifndef SQLITE_OMIT_TRIGGER
   if( newIdx>=0 ){
     sqlite3VdbeAddOp(v, OP_Dup, 1, 0);
     sqlite3VdbeAddOp(v, OP_Dup, 1, 0);
     sqlite3VdbeAddOp(v, OP_PutIntKey, newIdx, 0);
   }
+#endif
   if( pParse->nested ){
     pik_flags = 0;
   }else{

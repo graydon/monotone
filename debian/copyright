@@ -43,7 +43,22 @@ contributing authors, including:
   Joel Rosdahl <joel@rosdahl.net>
   Ben Elliston <bje@wasabisystems.com>
   Michael Scherer <misc@mandrake.org>
-  Richard Levitte <levitte@stacken.kth.se>
+  Richard Levitte <richard@levitte.org>
+  Derek Scherger <derek@echologic.com>
+  Ulrich Drepper <drepper@redhat.com>
+  Matt Johnston <matt@ucc.asn.au>
+  Julio M. Merino Vidal <jmmv@menta.net>
+  Badai Aqrandista <badaiaqrandista@hotmail.com>
+  Jordi Vilalta Prat <jvprat@wanadoo.es>
+  Christian Kollee <stuka@pestilenz.org>
+  Faheem Mitha <faheem@email.unc.edu>
+  Neil Conway <neilc@samurai.com>
+  Wojciech MiÅkowski <wmilkowski@interia.pl>
+  Georg-W. Koltermann <Georg.Koltermann@mscsoftware.com>
+  Daniel Berlin <dberlin@dberlin.org>
+  Jon Bright <jon@siliconcircus.org>
+  Corey Halpin <chalpin@cs.wisc.edu>
+
 
 supporting files:
 -----------------
@@ -121,6 +136,13 @@ notice and this notice are preserved.
 
 ---
 
+The file gettext.h is a copy of the one included in the GNU Gettext
+package, and is Copyright (C) 1995-1998, 2000-2002 Free Software
+Foundation, Inc.  It is licensed under the GNU LGPL version 2.  For
+more information, see the message on top of that file.
+
+---
+
 The files in netxx/* are copies of the NetXX library, which is
 Copyright (C) 2001-2003 Peter J Jones (pjones@pmade.org), and
 distributed under a BSD-like license. The license terms are reproduced
@@ -129,10 +151,13 @@ in the files, and do not require that they be reproduced here.
 ---
 
 
-The files in lua/* are copies of the lua 5.0 source distribution, from
-Tecgraf PUC-Rio. The lua distribution can be retrieved from
-www.lua.org. The files are provided under an MIT-like license,
-reproduced here:
+The files in lua/*, except lposix.c and modemuncher.c, are copies of
+the lua 5.0 source distribution, from Tecgraf PUC-Rio. lposix.c and
+modemuncher.c are from Claudio Terra and Luiz Henrique de Figueiredo,
+both of Tecgraf PUC-Rio, but as near as I can tell those two files are
+declared to be in the public domain. The lua distribution can be
+retrieved from www.lua.org. The files are provided under an MIT-like
+license, reproduced here:
 
 ---
 

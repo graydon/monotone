@@ -131,9 +131,10 @@
 #define TK_BLOB                           131
 #define TK_REGISTER                       132
 #define TK_VARIABLE                       133
-#define TK_CASE                           134
-#define TK_WHEN                           135
-#define TK_THEN                           136
-#define TK_ELSE                           137
-#define TK_INDEX                          138
-#define TK_TO                             139
+#define TK_EXISTS                         134
+#define TK_CASE                           135
+#define TK_WHEN                           136
+#define TK_THEN                           137
+#define TK_ELSE                           138
+#define TK_INDEX                          139
+#define TK_TO                             140

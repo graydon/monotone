@@ -19,6 +19,8 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "cryptopp/osrng.h"
+
 #include "basic_io.hh"
 #include "change_set.hh"
 #include "constants.hh"
@@ -1003,6 +1005,7 @@ struct anc_graph
   std::map<u64,revision_id> node_to_new_rev;
   std::multimap<u64, std::pair<cert_name, cert_value> > certs;
   std::multimap<u64, u64> ancestry;
+  std::set<std::string> branches;
   
   void add_node_ancestry(u64 child, u64 parent);  
   void write_certs();
@@ -1038,6 +1041,24 @@ void anc_graph::write_certs()
   cnames.insert(cert_name(changelog_cert_name));
   cnames.insert(cert_name(comment_cert_name));
   cnames.insert(cert_name(testresult_cert_name));
+
+
+  {
+    // regenerate epochs on all branches to random states
+    CryptoPP::AutoSeededRandomPool prng;
+    
+    for (std::set<std::string>::const_iterator i = branches.begin(); i != branches.end(); ++i)
+      {
+        char buf[constants::epochlen_bytes];
+        prng.GenerateBlock(reinterpret_cast<byte *>(buf), constants::epochlen_bytes);
+        hexenc<data> hexdata;
+        encode_hexenc(data(std::string(buf, buf + constants::epochlen_bytes)), hexdata);
+        epoch_data new_epoch(hexdata);
+        L(F("setting epoch for %s to %s\n") % *i % new_epoch);
+        app.db.set_epoch(cert_value(*i), new_epoch);
+      }
+  }
+
 
   typedef std::multimap<u64, std::pair<cert_name, cert_value> >::const_iterator ci;
     
@@ -1251,6 +1272,9 @@ u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
           ++n_certs_in;
           certs.insert(std::make_pair(node, 
                                       std::make_pair(i->inner().name, tv)));
+
+          if (i->inner().name == branch_cert_name)            
+            branches.insert(tv());
         }
     }
   else
