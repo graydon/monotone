@@ -4,3 +4,10 @@ licenses.
 
   -- Log2Gxl.java: Java code to convert output from 'monotone log' into
      GXL, an XML-based graph description language.
+
+  -- Notify.pl: a Perl hack to create email logs with recent changes
+     in a repository database.  It's designed to be run at regular
+     intervals, for example from a cron script.  It uses database
+     variables (those handled with 'monotone set/unset') in the domain
+     domain 'notify' to keep track of the last revisions that have
+     already been sent out.

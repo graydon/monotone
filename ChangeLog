@@ -1,3 +1,10 @@
+2005-03-30  Richard Levitte  <richard@levitte.org>
+
+	* contrib/Notify.pl: A new Perl hack to send change logs by
+	email.
+
+	* contrib/README: Add a quick description.
+
 2005-03-29  Richard Levitte  <richard@levitte.org>
 
 	* commands.cc (CMD(ls)): Update with the same information as
