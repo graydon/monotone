@@ -67,6 +67,10 @@ version control tools.
 @menu
 * Concepts::            Taxonomy of monotone
 * Getting Started::     Simple use of monotone
+* CVS Phrasebook::      Transitional guide for CVS users
+* Command Reference::   Details of each monotone command
+* Hook Reference::      Functions which extend monotone
+* Technical Notes::     Under the hood of monotone
 * Man Page::            That other document
 @end menu
 
@@ -74,7 +78,6 @@ version control tools.
 Complete table of contents
 
 @contents
-
 
 @node    Concepts
 @chapter Concepts
@@ -1756,6 +1759,582 @@ The second hook function takes a URL and logical group name, and
 returns the name of an RSA keypair in your database, to use for
 authenticating transmissions to the depot. This will generally be the
 name of the key you use to sign certificates.
+
+
+@node    CVS Phrasebook
+@chapter CVS Phrasebook
+
+This chapter translates common CVS commands into monotone commands. It
+is an easy alternative to reading through the complete command
+reference.
+
+@heading Checking Out a Tree
+
+@multitable @columnfractions .4 .4
+@item
+@example
+$ cvs checkout -d :pserver:cvs.foo.com/wobbler -r 1.2
+@end example
+@tab
+@example
+$ monotone fetch http://www.foo.com/depot.cgi wobbler
+$ monotone checkout fe37 ./wobbler-checkout
+@end example
+@end multitable
+
+The CVS command contacts a network server, retrieves a version, and
+stores it in your working copy. There are two cosmetic differences
+with the monotone command: network servers are denoted by URLs and
+``group names'', and versions are denoted by SHA1 values (or
+unambiguous prefixes thereof). 
+
+There is also one deep difference: fetching versions into your
+database is a separate step from checking out a single version; after
+you have fetched from a network server, your database will contain
+@emph{several} versions, possibly the entire history of a
+project. Checking out is a separate step, after communication, which
+only copies a particular version out of your database and into a named
+directory.
+
+@heading Committing Changes
+
+@multitable @columnfractions .4 .4
+@item
+@example
+$ cvs commit -m 'log message'
+@end example
+@tab
+@example
+$ monotone commit 'log message'
+$ monotone post
+@end example
+@end multitable
+
+As with other networking commands, the communication step with
+monotone is explicit: commiting changes only queues them for
+transmission. A separate command, @command{post}, sends the changes to
+their destinations on network servers.
+
+@heading Incorporating New Changes
+
+@multitable @columnfractions .4 .4
+@item
+@example
+$ cvs update -d
+@end example
+@tab
+@example
+$ monotone fetch
+$ monotone merge
+$ monotone update
+@end example
+@end multitable
+
+This command, like other networking commands, involves a separate
+communication step with monotone. The extra command, @command{merge},
+ensures that the branch your are working on has a unique head. You can
+omit the @command{merge} step if you only want @command{update} to
+examine descendants of your base version, and ignore other heads on
+your branch.
+
+
+@heading Viewing Differences
+
+@multitable @columnfractions .4 .4
+@item
+@example
+$ cvs diff
+@end example
+@tab
+@example
+$ monotone diff
+@end example
+@item
+@example
+$ cvs diff -r 1.2 -r 1.4
+@end example
+@tab
+@example
+$ monotone diff 3e7db 278df
+@end example
+@end multitable
+
+Monotone's @command{diff} command is modeled on that of CVS, so the
+main features are the same: @command{diff} alone prints the
+differences between your working copy and its base version, whereas
+@command{diff} accompanied by two version numbers prints the
+difference between those two versions. The major difference between
+CVS and monotone here is that monotone's version numbers are
+@emph{manifest versions}, so the @command{diff} command prints the
+difference between the two entire trees.
+
+@heading Showing Working Copy Status
+
+@multitable @columnfractions .4 .4
+@item
+@example
+$ cvs status
+@end example
+@tab
+@example
+$ monotone status
+@end example
+@end multitable
+
+This command operates similarly in monotone and CVS. The only major
+difference is that monotone's @command{status} command always gives a
+status of the whole tree, and outputs a more compact summary than CVS.
+
+@heading Adding Directories and Files to Working Copy
+
+@multitable @columnfractions .4 .4
+@item
+@example
+$ cvs add dir
+$ cvs add dir/subdir
+$ cvs add dir/subdir/file.txt
+@end example
+@tab
+@example
+$ monotone add dir/subdir/file.txt
+@end example
+@end multitable
+
+Monotone does not explicitly store directories, so adding a file only
+involves adding the file's complete path, including any directories.
+Directories are created as needed, and empty directories are ignored.
+
+
+@heading Removing Directories and Files from Working Copy
+
+@multitable @columnfractions .4 .4
+@item
+@example
+$ rm file.txt
+$ cvs remove file.txt
+@end example
+@tab
+@example
+$ monotone drop file.txt
+@end example
+@end multitable
+
+Monotone does not require that you erase a file from the working copy
+before you drop it. Dropping a file merely removes its entry in the
+manifest.
+
+
+@heading Initializing a Repository
+
+@multitable @columnfractions .4 .4
+@item
+@example
+$ cvs init -d /path/to/repository
+@end example
+@tab
+@example
+$ monotone db init --db=/path/to/database.db 
+@end example
+@end multitable
+
+Monotone's ``repository'' is a single-file database, which is created
+and initialized by this command. This file is only ever used by you,
+and does not need to be in any special location, or readable by other
+users.
+
+
+@node    Command Reference
+@chapter Command Reference
+
+Monotone has a large number of commands. To help navigate through them
+all, commands are grouped into logical categories.
+
+@menu
+* Tree::             Operations on tree states in your database
+* Working Copy::     Operations on your working copy
+* Network::          Communication with the network
+* Informative::      Production of descriptive reports
+* Key and Cert::     General operations on keys or certificates
+* Certificate::      Special operations on certificates
+* Packet I/O::       Production or consumption of packets
+* Database::         Manipulation of your database as a whole
+* RCS::              Importing legacy version control files
+* Debug::            Debugging interface to monotone
+@end menu
+
+
+@node    Tree
+@section Tree
+
+@table @command
+@item monotone cat file @var{id}
+@itemx monotone cat manifest @var{id}
+
+These commands write the contents of a specific file or manifest
+version @var{id} to standard output. They are useful if you wish to
+inspect a version without checking it out into your working copy.
+@end table
+
+@table @command
+@item monotone checkout @var{id} @var{directory}
+@itemx monotone co @var{id} @var{directory}
+
+This command copies a manifest version @var{id} out of your database
+and into @file{@var{directory}/MT/manifest}. Then it copies every file
+version listed in the manifest to paths under @var{directory}. For
+example, if the manifest contains these entries:
+
+@example
+84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
+c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
+97dfc6fd4f486df95868d85b4b81197014ae2a84  src/hello.c
+@end example
+
+Then the following files are created:
+@example
+@var{directory}/Makefile
+@var{directory}/include/hello.h
+@var{directory}/src/hello.c
+@end example
+
+If you wish to @command{checkout} in the current directory, you can
+supply the special name @file{.} (a single period) for
+@var{directory}.
+@end table
+
+@table @command
+@item monotone heads --branch=@var{branchname}
+This command lists the ``heads'' of @var{branchname}. 
+
+The ``heads'' of a branch is the set of manifests which are members of
+the branch, but which have no descendants. These manifests are
+generally the ``newest'' versions committed by you or your colleagues,
+at least in terms of ancestry. The heads of a branch may not be the
+newest versions, in terms of time, but synchronization of time is not
+reliable, so monotone usually ignores time.
+@end table
+
+@table @command
+@item monotone merge --branch=@var{branchname}
+This command merges the ``heads'' of @var{branchname}, if there are
+multiple heads, and commits the results to the database, marking the
+resulting manifest as a member of @var{branchname} and connecting it
+via ancestry certificates to each of its inputs. The command may also
+queue the results for posting, depending on configuration.
+
+Merging is performed by repeated pairwise merges: two heads are
+selected, then their least common ancestor is located in the ancestry
+graph and these 3 manifests are provided to the built-in 3-way merge
+algorithm. The process then repeats for each additional head, using
+the result of each previous merge as an input to the next.
+@end table
+
+
+@table @command
+@item monotone propagate @var{sourcebranch} @var{destbranch}
+This command takes a unique head from @var{sourcebranch} and merges it
+with a unique head of @var{destbranch}, using the least common
+ancestor of the two heads for a 3-way merge. The resulting manifest is
+committed to @var{destbranch}, and possibly queued for posting. If
+either @var{sourcebranch} or @var{destbranch} has multiple heads,
+@command{propagate} aborts, doing nothing.
+
+The purpose of @command{propagate} is to copy all the changes on
+@var{sourcebranch}, since the last @command{propagate}, to
+@var{destbranch}. This command supports the idea of making separate
+branches for medium-length development activities, such as
+maintainance branches for stable software releases, trivial bug fix
+branches, public contribution branches, or branches devoted to the
+development of a single module within a larger project.
+@end table
+
+
+
+@node    Working Copy
+@section Working Copy
+
+@table @command
+@item monotone add @var{filename...}
+This command places ``add'' entries for the paths specified in
+@var{filename...} in the working copy's ``work list''. The work list
+of your working copy is located at @file{MT/work}, and is a list of
+explicit pathname changes you wish to commit at some future time, such
+as addition and removal of files.
+
+While this command places an ``add'' entry on your work list, it does
+not affect your database. When you @command{commit} your working copy,
+the added files on your work list will be copied into your database
+and their paths and SHA1 values added to your working copy manifest.
+@end table
+
+@table @command
+@item monotone drop @var{filename...}
+This command places ``drop'' entries for the paths specified in
+@var{filename...} in the working copy's ``work list''. The work list
+of your working copy is located at @file{MT/work}, and is a list of
+explicit pathname changes you wish to commit at some future time, such
+as addition and removal of files.
+
+While this command places an ``drop'' entry on your work list, it does
+not affect your database. When you @command{commit} your working copy,
+the dropped files on your work list will have their entries removed
+from your working copy's manifest. 
+@end table
+
+@table @command
+@item monotone commit
+@itemx monotone commit @var{logmsg}
+This command looks at your working copy, decides which files have
+changed, and saves the changes to your database. It does this by
+calculating the difference between your @file{MT/manifest} file and
+the files in your tree, subject to the additions and deletions in your
+@file{MT/work} file.
+
+Once the changes are recorded in you database, @command{commit}
+overwrites the @file{MT/manifest} file with the changed manifest, and
+deletes the @file{MT/work} file. Depending on your configuration,
+@command{commit} will also queue the changes for posting to a network
+server.
+
+The @command{commit} command also synthesizes a number of
+certificates, which it attaches to the new manifest version and copies
+into your database:
+@itemize
+@item
+An @code{ancestor} cert, connecting the new version to its base
+version in the ancestry graph.
+@item 
+An @code{author} cert, indicating the person responsible for the changes
+leading to the new version.
+@item
+A @code{date} cert, indicating when the new version was created.
+@item
+A @code{changelog} cert, containing the ``log message'' for these
+changes.  If you provided @var{logmsg} on the command line, this text
+will be used, otherwise @command{commit} will run a lua hook, which
+typically invokes an external editor program, in which you can compose
+a log message for the change.
+@end itemize
+@end table
+
+@table @command
+@item monotone revert
+This command changes your working copy, so that changes you have made
+since the last checkout or update are discarded. It does this by
+changing every file listed in @file{MT/manifest} to have contents
+equal to the SHA1 value listed in the manifest, and by erasing the
+@file{MT/work} file.
+@end table
+
+@table @command
+@item monotone update
+@itemx monotone update @var{sort...}
+This command incorporates ``recent'' changes found in your database
+into your working copy. It does this by performing 3 separate
+stages. If any of these stages fails, the update aborts, doing
+nothing. The stages are:
+
+@itemize
+@item
+Examine the graph of ancestry certificates in your database, and
+selecting the set of all descendents of your working copy's base
+manifest. Call this set the ``candidates'' of the update.
+@item
+Sort the candidates of the update by any @var{sort...} criteria you
+provide. If no criteria are provided, sort the candidates by ancestry,
+so that descendents are preferred over ancestors. Call the ``best''
+candidate, after sorting, the ``target'' of the update.
+@item 
+Merge the target of the update with the working copy, in memory, and
+if the merge is successful, write the result over top of the working
+copy.
+@end itemize
+@end table
+
+
+
+@node    Network
+@section Network
+
+@table @command
+@item monotone fetch
+@itemx monotone fetch @var{url} @var{groupname} 
+@end table
+
+@table @command
+@item monotone post
+@end table
+
+
+
+@node    Informative
+@section Informative
+
+@table @command
+@item monotone status
+@end table
+
+@table @command
+@item monotone complete file @var{partial-id}
+@itemx monotone complete manifest @var{partial-id}
+@end table
+
+@table @command
+@item monotone diff 
+@itemx monotone diff @var{id}
+@itemx monotone diff @var{id1} @var{id2}
+@end table
+
+@table @command
+@item monotone list certs file @var{id}
+@itemx monotone list certs manifest @var{id}
+@end table
+
+@table @command
+@item monotone list keys
+@itemx monotone list keys @var{pattern}
+@end table
+
+@table @command
+@item monotone list branches
+@end table
+
+@table @command
+@item monotone list unknown
+@end table
+
+@table @command
+@item monotone list ignored
+@end table
+
+
+
+@node    Key and Cert
+@section Key and Cert
+
+@table @command
+@item monotone genkey @var{keyid}
+@end table
+
+@table @command
+@item monotone cert file @var{id} @var{certname} 
+@itemx monotone cert file @var{id} @var{certname} @var{certval}
+@itemx monotone cert manifest @var{id} @var{certname} 
+@itemx monotone cert manifest @var{id} @var{certname} @var{certval}
+@end table
+
+
+
+@node    Certificate
+@section Certificate
+
+@table @command
+@item monotone approve file @var{id}
+@itemx monotone approve manifest @var{id}
+@end table
+
+@table @command
+@item monotone approve file @var{id}
+@itemx monotone approve manifest @var{id}
+@end table
+
+@table @command
+@item monotone comment file @var{id}
+@itemx monotone comment file @var{id} @var{comment}
+@itemx monotone comment manifest @var{id}
+@itemx monotone comment manifest @var{id} @var{comment}
+@end table
+
+@table @command
+@item monotone tag @var{id} @var{tagname}
+@end table
+
+
+
+@node    Packet I/O
+@section Packet I/O
+
+@table @command
+@item monotone fcerts @var{id}
+@itemx monotone mcerts @var{id}
+@end table
+
+@table @command
+@item monotone fdata @var{id}
+@itemx monotone mdata @var{id}
+@end table
+
+@table @command
+@item monotone fdelta @var{id1} @var{id2}
+@itemx monotone mdelta @var{id1} @var{id2}
+@end table
+
+@table @command
+@item monotone privkey @var{keyid}
+@itemx monotone pubkey @var{keyid}
+@end table
+
+@table @command
+@item monotone read
+@end table
+
+
+@node    Database
+@section Database
+
+@table @command
+@item monotone db init --db=@var{database} 
+@end table
+
+@table @command
+@item monotone db dump --db=@var{database} 
+@end table
+
+@table @command
+@item monotone db load --db=@var{database} 
+@end table
+
+@table @command
+@item monotone db info --db=@var{database} 
+@end table
+
+@table @command
+@item monotone db version --db=@var{database} 
+@end table
+
+@table @command
+@item monotone db migrate --db=@var{database} 
+@end table
+
+
+@node    RCS
+@section RCS
+
+@table @command
+@item monotone rcs_import @var{filename...}
+@end table
+
+@table @command
+@item monotone cvs_import @var{pathname...}
+@end table
+
+
+@node    Debug
+@section Debug
+
+@table @command
+@item monotone debug @var{sql-statement}
+@end table
+
+
+
+
+
+@node    Hook Reference
+@chapter Hook Reference
+
+@node    Technical Notes
+@chapter Technical Notes
 
 
 

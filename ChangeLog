@@ -1,3 +1,10 @@
+2003-10-07  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc, work.cc, work.hh: Add some preliminary stuff
+	to support explicit renaming, .mt-attrs.
+	* monotone.texi: Add skeletal sections for command reference,
+	hook reference, CVS phrasebook. Fill in some parts.
+
 2003-10-02  graydon hoare  <graydon@pobox.com>
 
 	* boost/circular_buffer*.hpp: Add.

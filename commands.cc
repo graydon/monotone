@@ -253,8 +253,8 @@ static void get_work_set(work_set & w)
       data w_data;
       read_data(w_path, w_data);
       read_work_set(w_data, w);
-      L(F("read %d dels, %d adds from %s\n") %
-	w.dels.size() % w.adds.size() % w_path);
+      L(F("read %d dels, %d adds, %d renames from %s\n") %
+	w.dels.size() % w.adds.size() % w.renames.size() % w_path);
     }
   else
     {
@@ -276,7 +276,8 @@ static void put_work_set(work_set & w)
   get_work_path(w_path);
 
   if (w.adds.size() > 0
-      || w.dels.size() > 0)
+      || w.dels.size() > 0
+      || w.renames.size() > 0)
     {
       ensure_bookdir();
       data w_data;
@@ -302,6 +303,9 @@ static void calculate_new_manifest_map(manifest_map const & m_old,
   if (work.adds.size() > 0)
     L(F("adding %d files to manifest\n") % 
       work.adds.size());
+  if (work.renames.size() > 0)
+    L(F("renaming %d files in manifest\n") % 
+      work.renames.size());
   apply_work_set(work, paths);
   build_manifest_map(paths, m_new);
 }
@@ -870,8 +874,6 @@ CMD(add, "working copy", "PATHNAME...", "add files to working copy")
   if (args.size() < 1)
     throw usage(name);
 
-  transaction_guard guard(app.db);
-
   manifest_map man;
   work_set work;  
   get_manifest_map(man);
@@ -880,10 +882,7 @@ CMD(add, "working copy", "PATHNAME...", "add files to working copy")
 
   for (vector<string>::const_iterator i = args.begin(); i != args.end(); ++i)
     build_addition(file_path(*i), app, work, man, rewrite_work);
-  
-  guard.commit();
-  
-  // small race here
+    
   if (rewrite_work)
     put_work_set(work);
 
@@ -901,19 +900,37 @@ CMD(drop, "working copy", "FILE...", "drop files from working copy")
   get_work_set(work);
   bool rewrite_work = false;
 
-  transaction_guard guard(app.db);
-
   for (vector<string>::const_iterator i = args.begin(); i != args.end(); ++i)
     build_deletion(file_path(*i), app, work, man, rewrite_work);
   
-  guard.commit();
-
-  // small race here
   if (rewrite_work)
     put_work_set(work);
 
   app.write_options();
 }
+
+
+CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
+{
+  if (args.size() != 2)
+    throw usage(name);
+  
+  manifest_map man;
+  work_set work;
+
+  get_manifest_map(man);
+  get_work_set(work);
+  bool rewrite_work = false;
+
+  build_rename(file_path(args[0]), file_path(args[1]), app, work, 
+	       man, rewrite_work);
+  
+  if (rewrite_work)
+    put_work_set(work);
+  
+  app.write_options();  
+}
+
 
 CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 {
@@ -1226,7 +1243,8 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 
 	  N((m_old.find(work_args[i]) != m_old.end()) ||
 	    (work.adds.find(work_args[i]) != work.adds.end()) ||
-	    (work.dels.find(work_args[i]) != work.dels.end()),
+	    (work.dels.find(work_args[i]) != work.dels.end()) ||
+	    (work.renames.find(work_args[i]) != work.renames.end()),
 	    F("nothing known about %s") % work_args[i]);
 
 	  if (m_old.find(work_args[i]) != m_old.end())
@@ -1252,6 +1270,11 @@ CMD(revert, "working copy", "[FILE]...", "revert file(s) or entire working copy"
 		    work_args[i]);
 		  work.dels.erase(work_args[i]);
 		}
+	    }
+	  else if (work.renames.find(work_args[i]) != work.renames.end())
+	    {
+	      L(F("removing rename for %s\n") % work_args[i]);
+	      work.renames.erase(work_args[i]);
 	    }
 	  else
 	    {
@@ -1363,7 +1386,7 @@ CMD(checkout, "tree", "MANIFEST-ID DIRECTORY", "check out tree state from databa
 ALIAS(co, checkout, "tree", "MANIFEST-ID DIRECTORY",
       "check out tree state from database; alias for checkout")
 
-  CMD(heads, "tree", "", "show unmerged heads of branch")
+CMD(heads, "tree", "", "show unmerged heads of branch")
 {
   vector<manifest_id> heads;
   if (args.size() != 0)
@@ -2011,7 +2034,7 @@ CMD(read, "packet i/o", "", "read packets from stdin")
 }
 
 
-CMD(agraph, "graph visualization", "", "dump ancestry graph to stdout")
+CMD(agraph, "debug", "", "dump ancestry graph to stdout")
 {
   vector< manifest<cert> > certs;
   transaction_guard guard(app.db);

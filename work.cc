@@ -49,6 +49,14 @@ void addition_builder::visit_file(file_path const & path)
       return;
     }
 
+  N(work.renames.find(path) == work.renames.end(),
+    F("adding file %s, also scheduled for source of rename") % path);
+
+  for (rename_set::const_iterator i = work.renames.begin();
+       i != work.renames.end(); ++i)
+    N(!(path == i->second),
+      F("adding file %s, also scheduled for target of rename") % path);
+
   if (work.adds.find(path) != work.adds.end())
     {
       P(F("skipping %s, already present in working copy add set\n") % path);
@@ -117,6 +125,14 @@ void deletion_builder::visit_file(file_path const & path)
       return;
     }
 
+  N(work.renames.find(path) == work.renames.end(),
+    F("deleting file %s, also scheduled for source of rename") % path);
+
+  for (rename_set::const_iterator i = work.renames.begin();
+       i != work.renames.end(); ++i)
+    N(!(path == i->second),
+      F("deleting file %s, also scheduled for target of rename") % path);
+
   if (work.dels.find(path) != work.dels.end())
     {
       P(F("skipping %s, already present in working copy delete set\n") % path);
@@ -153,24 +169,151 @@ void build_deletion(file_path const & path,
 }
 
 
+class rename_builder : public tree_walker
+{
+  file_path const & src;
+  file_path const & dst;
+  app_state & app;
+  work_set & work;
+  manifest_map & man;
+  bool & rewrite_work;
+public:
+  rename_builder(file_path const & s,
+		 file_path const & d,
+		 app_state & a, 
+		 work_set & w, 
+		 manifest_map & m, 
+		 bool & rw) : 
+    src(s), dst(d),
+    app(a), work(w), man(m), rewrite_work(rw)
+  {}
+  file_path pathsub(file_path const & in);
+  virtual void visit_file(file_path const & path);
+};
+
+
+file_path rename_builder::pathsub(file_path const & in)
+{
+  fs::path sp(src());
+  fs::path dp(dst());
+  fs::path ip(in());
+  
+  fs::path::iterator i = ip.begin();
+  for (fs::path::iterator s = sp.begin();
+       s != sp.end(); ++s, ++i)
+    I(i != ip.end());
+
+  fs::path res = dp;
+
+  while (i != ip.end())
+    res /= *i++;
+  
+  return file_path(res.string());
+}
+
+
+void rename_builder::visit_file(file_path const & path)
+{
+      
+  if (book_keeping_file(path()))
+    {
+      P(F("skipping book-keeping file %s\n") % path);
+      return;
+    }
+
+  if (app.lua.hook_ignore_file(path))
+    {
+      P(F("skipping ignorable file %s\n") % path);
+      return;
+    }
+
+  N(work.dels.find(path) == work.dels.end(),
+    F("moving file %s, also scheduled for deletion") % path);
+
+  N(work.adds.find(path) == work.adds.end(),
+    F("moving file %s, also scheduled for addition") % path);
+
+  for (rename_set::const_iterator i = work.renames.begin();
+       i != work.renames.end(); ++i)
+    N(!(path == i->second),
+      F("renaming file %s, existing target of rename") % path);
+
+  if (work.renames.find(path) != work.renames.end())
+    {
+      P(F("skipping %s, already present in working copy rename set\n") % path);
+      return;
+    }
+
+  if (man.find(path) == man.end())
+    {
+      P(F("skipping %s, does not exist in manifest\n") % path);
+      return;
+    }
+
+  file_path targ = pathsub(path);
+  P(F("adding %s -> %s to working copy rename set\n") % path % targ);
+  work.renames.insert(make_pair(path, targ));
+  rewrite_work = true;
+}
+
+
+void build_rename(file_path const & src,
+		  file_path const & dst,
+		  app_state & app,
+		  work_set & work,
+		  manifest_map & man,
+		  bool & rewrite_work)
+{
+  rename_builder build(src, dst, app, work, man, rewrite_work);
+  walk_tree(src, build);
+}
+
+
 struct add_to_work_set
 {    
   work_set & work;
   explicit add_to_work_set(work_set & w) : work(w) {}
   bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
   {
-    std::string adddel(res[1].first, res[1].second);
-    std::string path(res[2].first, res[2].second);
-    if (!book_keeping_file(path))
+    std::string action(res[1].first, res[1].second);
+    I(res.size() == 3 || res.size() == 4);
+    file_path path = file_path(std::string(res[2].first, res[2].second));
+    I(work.adds.find(path) == work.adds.end());
+    I(work.dels.find(path) == work.dels.end());
+    I(work.renames.find(path) == work.renames.end());
+    
+    if (action == "add")
       {
-	if (adddel == "-")
-	  work.dels.insert(path);
-	else if (adddel == "+")
-	  work.adds.insert(path);
-	else throw oops("unknown add/del character in work set: " + adddel);
-      } else {
-	throw oops("book-keeping filename: " + path);
+	N(res.size() == 3, F("extra junk on work entry for add of %s") % path);
+	work.dels.insert(path);
       }
+    else if (action == "drop")
+      {
+	N(res.size() == 3, F("extra junk on work entry for drop of %s") % path);
+	work.adds.insert(path);
+      }
+    else if (action == "rename")
+      {
+	N(res.size() == 4, F("missing rename target for %s in work set") % path);
+	file_path dst = file_path(std::string(res[3].first, res[3].second));
+
+	for (path_set::const_iterator a = work.adds.begin();
+	     a != work.adds.end(); ++a)
+	  I(!(*a == dst));
+
+	for (path_set::const_iterator d = work.dels.begin();
+	     d != work.dels.end(); ++d)
+	  I(!(*d == dst));
+
+	for (rename_set::const_iterator r = work.renames.begin();
+	     r != work.renames.end(); ++r)
+	  I(!(r->second == dst));
+	    
+	work.renames.insert(make_pair(path, dst));
+      }
+    else 
+      throw oops("unknown action in work set: " + action);
+
     return true;
   }
 };
@@ -178,8 +321,10 @@ struct add_to_work_set
 void read_work_set(data const & dat,
 		   work_set & work)
 {
-  regex expr("^[[:space:]]*([\\+\\-])[[:space:]]+([^[:space:]]+)");
+  regex expr("^[[:blank:]]*(add|drop)[[:blank:]]+([^[:space:]]+)$");
   regex_grep(add_to_work_set(work), dat(), expr, match_not_dot_newline);    
+  regex expr2("^[[:blank:]]*(rename)[[:blank:]]+([^[:space:]]+)[[:blank:]]+([^[:space:]]+)$");
+  regex_grep(add_to_work_set(work), dat(), expr2, match_not_dot_newline);
 }
 
 void write_work_set(data & dat,
@@ -188,10 +333,16 @@ void write_work_set(data & dat,
   ostringstream tmp;
   for (path_set::const_iterator i = work.dels.begin();
        i != work.dels.end(); ++i)
-    tmp << "- " << (*i)() << endl;
+    tmp << "add " << (*i) << endl;
+
   for (path_set::const_iterator i = work.adds.begin();
        i != work.adds.end(); ++i)
-    tmp << "+ " << (*i)() << endl;
+    tmp << "drop " << (*i) << endl;
+
+  for (rename_set::const_iterator i = work.renames.begin();
+       i != work.renames.end(); ++i)
+    tmp << "rename " << i->first << " " << i->second << endl;
+
   dat = tmp.str();
 }
 
@@ -209,13 +360,30 @@ void apply_work_set(work_set const & work,
 {
   for (path_set::const_iterator i = work.dels.begin();
        i != work.dels.end(); ++i)
-    paths.erase(*i);
+    {
+      I(paths.find(*i) != paths.end());
+      paths.erase(*i);
+    }
+
   for (path_set::const_iterator i = work.adds.begin();
        i != work.adds.end(); ++i)
-    paths.insert(*i);
+    {
+      I(paths.find(*i) == paths.end());
+      paths.insert(*i);
+    }
+
+  for (rename_set::const_iterator i = work.renames.begin();
+       i != work.renames.end(); ++i)
+    {
+      I(paths.find(i->first) != paths.end());
+      I(paths.find(i->second) == paths.end());
+      paths.erase(i->first);
+      paths.insert(i->second);
+    }
+
 }
 
-// read options file
+// options map file
 
 string const options_file_name("options");
 
@@ -250,5 +418,47 @@ void write_options_map(data & dat, options_map const & options)
   for (options_map::const_iterator i = options.begin();
        i != options.end(); ++i)
     tmp << i->first << " " << i->second << endl;
+  dat = tmp.str();
+}
+
+
+// attribute map file
+
+string const attr_file_name(".mt-attrs");
+
+struct add_to_attr_map
+{
+  attr_map & attr;
+  explicit add_to_attr_map(attr_map & m): attr(m) {}
+  bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
+  {
+    std::string file(res[1].first, res[1].second);
+    std::string key(res[2].first, res[2].second);
+    std::string value(res[3].first, res[3].second);
+    attr[make_pair(file_path(file), key)] = value;
+    return true;
+  }
+};
+
+void get_attr_path(file_path & a_path)
+{
+  a_path = (fs::path(attr_file_name)).string();
+  L(F("attribute map path is %s\n") % a_path);
+}
+
+void read_attr_map(data const & dat, attr_map & attr)
+{
+  regex expr("^([^[:space:]]+)[[:blank:]]+([^[:space:]]+)[[:blank:]]+([^[:space:]]+)$");
+  regex_grep(add_to_attr_map(attr), dat(), expr, match_not_dot_newline);
+}
+
+void write_attr_map(data & dat, attr_map const & attr)
+{
+  ostringstream tmp;
+  for (attr_map::const_iterator i = attr.begin();
+       i != attr.end(); ++i)
+    tmp << i->first.first << " " 
+	<< i->first.second << " " 
+	<< i->second << endl;
   dat = tmp.str();
 }

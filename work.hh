@@ -13,13 +13,15 @@
 //
 // this file defines structures to deal with the "working copy" of a tree
 //
+
+//
 // working copy book-keeping files are stored in a directory called MT, off
 // the root of the working copy source tree (analogous to the CVS or SVN
 // directories). there is no hierarchy of MT directories; only one exists,
 // and it is always at the root. it contains the following files:
 //
 // MT/manifest       -- the check-out manifest, as defined in manifest.hh
-// MT/work           -- (optional) a set of added and deleted pathnames
+// MT/work           -- (optional) a set of added, deleted or moved pathnames
 //
 // as work proceeds, the files in the working directory either change their
 // sha1 fingerprints from those listed in the manifest file, or else are
@@ -37,6 +39,7 @@
 //
 
 typedef set<file_path> path_set;
+typedef map<file_path,file_path> rename_set;
 
 extern string const work_file_name;
 
@@ -45,6 +48,7 @@ struct work_set
   // imprecise, uncommitted work record
   path_set adds;
   path_set dels;
+  rename_set renames;
 };
 
 void read_work_set(data const & dat,
@@ -71,6 +75,20 @@ void build_deletion(file_path const & path,
 		    manifest_map & man,
  		    bool & rewrite_work);
 
+void build_rename(file_path const & src,
+		  file_path const & dst,
+		  app_state & app,
+		  work_set & work,
+		  manifest_map & man,
+		  bool & rewrite_work);
+
+
+// the "options map" is another administrative file, stored in
+// MT/options. it keeps a list of name/value pairs which are considered
+// "persistent options", associated with a particular the working copy and
+// implied unless overridden on the command line. the main ones are
+// --branch and --db, although some others may follow in the future.
+
 typedef map<string, string> options_map;
 
 void get_options_path(local_path & o_path);
@@ -79,5 +97,28 @@ void read_options_map(data const & dat, options_map & options);
 
 void write_options_map(data & dat,
 		       options_map const & options);
+
+// the "attribute map" is part of a working copy. it is *not* stored in MT,
+// because its contents are considered part of the "content" of a tree of
+// files. it is therefore stored in .mt-attrs, in the root of your
+// tree. you do not need a .mt-attrs file, it's just an extension
+// mechanism.
+//
+// the contents of the .mt-attrs file is a list of [file, name, value]
+// triples, each of which assigns a particular "extended attribute" to a
+// file in your manifest. example "extended attributes" are things like
+// "set the execute bit" or "this file is read-only" or whatnot. they are
+// intrinsic properties of the files, but not actually part of the file's
+// data stream. so they're kept here.
+
+typedef map<pair<file_path, string>, string > attr_map;
+
+void get_attr_path(file_path & a_path);
+
+void read_attr_map(data const & dat, attr_map & attrs);
+
+void write_attr_map(data & dat,
+		    attr_map const & options);
+
 
 #endif // __WORK_HH__

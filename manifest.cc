@@ -118,7 +118,7 @@ void read_manifest_map(manifest_data const & dat,
   data decompressed;
   decode_base64(dat.inner(), decoded);
   decode_gzip(decoded, decompressed);
-  regex expr("^[[:space:]]*([[:xdigit:]]{40})[[:space:]]+([^[:space:]]+)");
+  regex expr("^[[:blank:]]*([[:xdigit:]]{40})[[:blank:]]+([^[:space:]]+)");
   regex_grep(add_to_manifest_map(man), decompressed(), expr, match_not_dot_newline);
 }
 
