@@ -1,5 +1,11 @@
 2004-12-06  graydon hoare  <graydon@pobox.com>
 
+	* commands.cc (merge): Add newline in output.
+	* change_set.cc (project_missing_deltas): Fix very bad
+	delta-renaming bug.
+
+2004-12-06  graydon hoare  <graydon@pobox.com>
+
 	* change_set.cc:
 	* tests/t_merge_add_del.at:
 	* netsync.cc:

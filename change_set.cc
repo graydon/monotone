@@ -1149,12 +1149,13 @@ concatenate_change_sets(change_set const & a,
         concatenated.deltas.find(delta_entry_path(del));
       if (existing != concatenated.deltas.end())
         {
-          I(delta_entry_dst(existing) == delta_entry_src(del));
-          L(F("fusing deltas on %s : %s -> %s -> %s\n")
+          L(F("fusing deltas on %s : %s -> %s and %s -> %s\n")
             % delta_entry_path(del) 
             % delta_entry_src(existing) 
             % delta_entry_dst(existing)
+	    % delta_entry_src(del)
             % delta_entry_dst(del));
+          I(delta_entry_dst(existing) == delta_entry_src(del));
           std::pair<file_id, file_id> fused = std::make_pair(delta_entry_src(existing),
                                                              delta_entry_dst(del));      
           concatenated.deltas.erase(delta_entry_path(del));
@@ -1630,16 +1631,27 @@ project_missing_deltas(change_set const & a,
   for (change_set::delta_map::const_iterator i = a.deltas.begin(); 
        i != a.deltas.end(); ++i)
     {
-      tid t;
-      file_path path_in_merged, path_in_b_second;
+      file_path path_in_merged, path_in_anc, path_in_b_second;
+
+      // we have a fork like this:
+      //
+      //
+      //            +--> [a2]
+      //     [a1==b1]
+      //            +--> [b2]
+      //
+      // and we have a delta applied to a file in a2. we want to
+      // figure out what to call this delta's path in b2. this means
+      // reconstructing it in a1==b1, then reconstructing it *again*
+      // in b2.
+
+      // first work out what the path in a.first == b.first is
+      reconstruct_path(delta_entry_path(i), a_second_map, 
+		       a_analysis.first, path_in_anc);
 
       // first work out what the path in b.second is
-      if (lookup_path(delta_entry_path(i), a_second_map, t) 
-          && b_analysis.second.find(t) != b_analysis.second.end())
-        get_full_path(b_analysis.second, t, path_in_b_second);
-      else
-        reconstruct_path(delta_entry_path(i), b_first_map, 
-                         b_analysis.second, path_in_b_second);
+      reconstruct_path(path_in_anc, b_first_map, 
+		       b_analysis.second, path_in_b_second);
 
       // then work out what the path in merged is
       reconstruct_path(delta_entry_path(i), a_merged_first_map, 
@@ -1692,13 +1704,7 @@ project_missing_deltas(change_set const & a,
                 % path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
               file_id finalist;
 
-	      file_path anc_path;
-	      if (lookup_path(delta_entry_path(i), a_second_map, t))
-		get_full_path(a_analysis.first, t, anc_path);
-	      else
-		anc_path = delta_entry_path(i);
-
-              merge_deltas(anc_path,
+              merge_deltas(path_in_anc,
                            delta_entry_path(i), // left_path
                            delta_entry_path(j), // right_path
                            path_in_merged, 

@@ -2578,7 +2578,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   for (++i; i != heads.end(); ++i, ++count)
     {
       revision_id right = *i;
-      P(F("merging with revision %d / %d") % count % heads.size());
+      P(F("merging with revision %d / %d\n") % count % heads.size());
       P(F("[source] %s\n") % left);
       P(F("[source] %s\n") % right);
 
