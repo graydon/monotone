@@ -1,5 +1,9 @@
 2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* revision.cc (check_sane_history): Typo.
+	
+2005-03-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* revision.hh (check_sane_history): Take an app_state instead of a
 	database as an argument.
 	* database.cc: Pass an app_state instead of a database as its

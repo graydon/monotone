@@ -224,7 +224,7 @@ check_sane_history(revision_id const & child_id,
             % parent_left % parent_right);
           return;
         }
-      if (changesets.find(lca) == changesets.end())
+      if (changesets.find(lca) != changesets.end())
         {
           L(F("already checked common ancestor, so done\n"));
           return;
