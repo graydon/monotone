@@ -1,5 +1,11 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi: Undocument mcerts, fcerts; rename rcerts to
+	certs.
+	* monotone.1: Likewise.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (restrict_rename_set): Fix types to compile with old
 	rename_set gunk removed.
 	Alter logic to yell if a rename crosses the restriction boundary,

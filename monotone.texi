@@ -3391,12 +3391,9 @@ monotone as a utility for moving individual data items around
 manually.
 
 @ftable @command
-@item monotone fcerts @var{id}
-@itemx monotone mcerts @var{id}
-@itemx monotone rcerts @var{id}
+@itemx monotone certs @var{id}
 
-These commands print out an @code{fcert}, @code{mcert} or
-@code{rcert} packet for each file, manifest, or revision cert in your
+This command prints out an @code{rcert} packet for each cert in your
 database associated with @var{id}. These can be used to transport
 certificates safely between monotone databases.
 
@@ -4702,10 +4699,6 @@ List files intentionally ignored due to the ignore_file hook.
 List files in revision's manifest, but not in working directory.
 @comment TROFF INPUT: .TP
 
-@item @b{fcerts} @i{<id>}
-Write file cert packets to stdout.
-@comment TROFF INPUT: .TP
-
 @item @b{fdata} @i{<id>}
 Write file data packet to stdout.
 @comment TROFF INPUT: .TP
@@ -4714,10 +4707,6 @@ Write file data packet to stdout.
 Write file delta packet to stdout.
 @comment TROFF INPUT: .TP
  
-@item @b{mcerts} @i{<id>}
-Write manifest cert packets to stdout.
-@comment TROFF INPUT: .TP
-
 @item @b{mdata} @i{<id>}
 Write manifest data packet to stdout.
 @comment TROFF INPUT: .TP
