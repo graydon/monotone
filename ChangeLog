@@ -1,5 +1,11 @@
 2004-11-29  Nathaniel Smith  <njs@codesourcery.com>
 
+	* ui.cc (fatal): On suggestion of Zack Weinberg, add a note to
+	fatal error messages 1) telling the user that it's a bug (i.e.,
+	not their fault), and 2) requesting a bug report.
+
+2004-11-29  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ui.cc: Remove tabs.
 
 2004-11-30  Matt Johnston  <matt@ucc.asn.au>
