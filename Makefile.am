@@ -254,6 +254,8 @@ EXTRA_DIST = $(man1_MANS) \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
              $(wildcard m4/*.m4) \
+             popt/README popt/CHANGES popt/COPYING popt/popt.4 popt/popt.ps \
+             $wildcard(popt/test?.c) popt/testit.sh \
              sqlite/keywordhash.h \
              contrib/README \
              contrib/Notify.pl \

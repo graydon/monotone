@@ -4,6 +4,14 @@
 	people using it won't start sending commits for monotone.
 	* .mt-attrs: Make it executable.
 
+2005-04-04  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (EXTRA_DIST): Add the extra popt files.
+
+	* popt/popt.3, popt/popt.ps, popt/testit.sh: Include a few more
+	  files from popt, mostly to have documentation on hand.  post.ps
+	  is mentioned in popt/README.
+
 2005-04-03  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (EXTRA_DIST): Add contrib/ stuff to distributed
@@ -18,6 +26,8 @@
 	* contrib/README: Describe it.
 
 2005-04-03  Richard Levitte  <richard@levitte.org>
+
+	* AUTHORS: Add information about popt.
 
 	* monotone.cc (my_poptStuffArgFile): Include the bundled popt.h.
 	Since we now have a working popt, we can remove the restrictions
