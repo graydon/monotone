@@ -27,7 +27,6 @@
 #include "ui.hh"
 #include "vocab.hh"
 
-
 void revision_set::check_sane() const
 {
   manifest_map fragment;
@@ -68,6 +67,110 @@ revision_set::operator=(revision_set const & other)
   return *this;
 }
 
+
+// Traces history back 'depth' levels from 'child_id', ensuring that
+// historical information is consistent within this subgraph.
+// The child must be in the database already.
+//
+// "Consistent" currently means that we compose manifests along every path (of
+// any length) that terminates at the child, and for each one check that paths
+// that should be the same in fact are the same, and that the calculated
+// change sets can be applied to the old manifests to create the new
+// manifest.
+//
+// NB: While this function has some invariants in it itself, a lot of its
+// purpose is just to exercise all the invariants inside change_set.cc.  So
+// don't remove those invariants.  (As if you needed another reason...)
+void
+check_sane_history(revision_id const & child_id,
+                   int depth,
+                   database & db)
+{
+  L(F("Verifying revision %s has sane history (to depth %i)\n")
+    % child_id % depth);
+
+  typedef boost::shared_ptr<change_set> shared_cs;
+  // (ancestor, change_set from ancestor to child)
+  std::map<revision_id, shared_cs> changesets;
+  
+  manifest_id m_child_id;
+  db.get_revision_manifest(child_id, m_child_id);
+  manifest_map m_child;
+  db.get_manifest(m_child_id, m_child);
+
+  std::set<revision_id> frontier;
+  frontier.insert(child_id);
+    
+  while (depth-- > 0)
+    {
+      std::set<revision_id> next_frontier;
+      
+      for (std::set<revision_id>::const_iterator i = frontier.begin();
+           i != frontier.end();
+           ++i)
+        {
+          revision_id current_id = *i;
+          revision_set current;
+          db.get_revision(current_id, current);
+          // and the parents's manifests to the manifests
+          // and the change_set's to the parents to the changesets
+          for (edge_map::const_iterator j = current.edges.begin();
+               j != current.edges.end();
+               ++j)
+            {
+              revision_id old_id = edge_old_revision(j);
+              manifest_id m_old_id = edge_old_manifest(j);
+              change_set old_to_current_changes = edge_changes(j);
+              if (!null_id(old_id))
+                next_frontier.insert(old_id);
+              
+              L(F("Examining %s -> %s\n") % old_id % child_id);
+
+              // build the change_set
+              // if 
+              shared_cs old_to_child_changes_p = shared_cs(new change_set);
+              if (current_id == child_id)
+                *old_to_child_changes_p = old_to_current_changes;
+              else
+                {
+                  shared_cs current_to_child_changes_p;
+                  I(changesets.find(current_id) != changesets.end());
+                  current_to_child_changes_p = changesets.find(current_id)->second;
+                  concatenate_change_sets(old_to_current_changes,
+                                          *current_to_child_changes_p,
+                                          *old_to_child_changes_p);
+                }
+
+              // we have the change_set; now, is it one we've seen before?
+              if (changesets.find(old_id) != changesets.end())
+                {
+                  // If it is, then make sure the paths agree on the
+                  // changeset.
+                  I(*changesets.find(old_id)->second == *old_to_child_changes_p);
+                }
+              else
+                {
+                  // If not, this is the first time we've seen this.
+                  // So store it in the map for later reference:
+                  changesets.insert(std::make_pair(old_id, old_to_child_changes_p));
+                  // and check that it works:
+
+                  manifest_map m_old;
+                  if (!null_id(old_id))
+                    db.get_manifest(m_old_id, m_old);
+                  // The null revision has empty manifest, which is the
+                  // default.
+                  manifest_map purported_m_child;
+                  apply_change_set(m_old, *old_to_child_changes_p,
+                                   purported_m_child);
+                  I(purported_m_child == m_child);
+                }
+            }
+        }
+      frontier = next_frontier;
+    }
+}
+      
 
 // calculating least common ancestors is a delicate thing.
 // 
@@ -443,7 +546,7 @@ is_ancestor(revision_id const & ancestor_id,
 
 static void 
 add_bitset_to_union(shared_bitmap src,
-		    shared_bitmap dst)
+                    shared_bitmap dst)
 {
   if (dst->size() > src->size())
     src->resize(dst->size());
@@ -455,11 +558,11 @@ add_bitset_to_union(shared_bitmap src,
 
 static void 
 calculate_ancestors_from_graph(interner<ctx> & intern,
-			       revision_id const & init,
-			       std::set<revision_id> const & legal, 
-			       std::multimap<revision_id, revision_id> const & graph, 
-			       std::map< ctx, shared_bitmap > & ancestors,
-			       shared_bitmap & total_union)
+                               revision_id const & init,
+                               std::set<revision_id> const & legal, 
+                               std::multimap<revision_id, revision_id> const & graph, 
+                               std::map< ctx, shared_bitmap > & ancestors,
+                               shared_bitmap & total_union)
 {
   typedef std::multimap<revision_id, revision_id>::const_iterator gi;
   std::stack<ctx> stk;
@@ -553,7 +656,7 @@ erase_ancestors(std::set<revision_id> & revisions, app_state & app)
       ctx id = intern.intern(i->inner()());
       bool has_ancestor_in_set = id < u->size() && u->test(id);
       if (!has_ancestor_in_set)
-	tmp.insert(*i);
+        tmp.insert(*i);
     }
   
   revisions = tmp;

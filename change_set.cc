@@ -1195,6 +1195,7 @@ extend_renumbering_from_path_identities(std::map<file_path, tid> const & a,
       std::map<file_path, tid>::const_iterator j = a.find(i->first);
       if (j == a.end())
         continue;
+      I(renumbering.find(i->second) == renumbering.end());
       renumbering.insert(std::make_pair(i->second, j->second));
     }
 }
@@ -1441,6 +1442,7 @@ extend_renumbering_via_added_files(path_analysis const & a,
                   directory_node::const_iterator entry = node->find(leaf_name);
                   if (entry != node->end() && directory_entry_type(entry) == ptype_file)
                     {
+                      I(renumbering.find(path_state_tid(i)) == renumbering.end());
                       renumbering.insert(std::make_pair(path_state_tid(i), 
                                                         directory_entry_tid(entry)));
                     }

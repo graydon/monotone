@@ -25,17 +25,8 @@ namespace constants
   // if they have otherwise compatible contents (author, changelog)
   size_t const cvs_window = 3600 * 3; 
 
-  // number of bytes accepted in a database row (also used as a file upload
-  // limit in the depot code).
-  size_t const maxbytes = 0xffffff;
-
   // number of bytes in a password buffer. further bytes will be dropped.
   size_t const maxpasswd = 0xfff;
-
-  // advisory number of bytes sent in a single network transmission; not a
-  // strict limit (single packets beyond this size will post as a unit) but a
-  // "suggested maximum size" for each posting.
-  size_t const postsz = 0xffff;
 
   // number of bytes to use in buffers, for buffered i/o operations
   size_t const bufsz = 0xfff;
@@ -114,6 +105,10 @@ namespace constants
   char const * const illegal_path_bytes =
   illegal_path_bytes_arr
   ;
+
+  // how many revisions back to verify the sanity of revisions before allowing
+  // them into the database
+  int const verify_depth = 4;
 
   // merkle tree / netcmd / netsync related stuff
 

@@ -25,17 +25,8 @@ namespace constants
   // if they have otherwise compatible contents (author, changelog)
   extern size_t const cvs_window; 
 
-  // number of bytes accepted in a database row (also used as a file upload
-  // limit in the depot code).
-  extern size_t const maxbytes;
-
   // number of bytes in a password buffer. further bytes will be dropped.
   extern size_t const maxpasswd;
-
-  // advisory number of bytes sent in a single network transmission; not a
-  // strict limit (single packets beyond this size will post as a unit) but a
-  // "suggested maximum size" for each posting.
-  extern size_t const postsz;
 
   // number of bytes to use in buffers, for buffered i/o operations
   extern size_t const bufsz;
@@ -66,6 +57,9 @@ namespace constants
   // all the ASCII characters (bytes) which are illegal in a (file|local)_path
   extern char const * const illegal_path_bytes;
 
+  // how many revisions back to verify the sanity of revisions before allowing
+  // them into the database
+  extern int const verify_depth;
 
   // remaining constants are related to netsync protocol
 

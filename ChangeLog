@@ -1,3 +1,30 @@
+2005-01-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (extend_renumbering_from_path_identities): Add
+	invariant.
+	(extend_renumbering_via_added_files): Likewise.
+
+	* constants.hh (maxbytes, postsz): Remove dead constants.
+	(verify_depth): New constant.
+	* constants.cc: Likewise.
+	* revision.hh (check_sane_history): New function.
+	* revision.cc (check_sane_history): Likewise.
+	* database.cc (put_revision): Sanity check revision and revision
+	history before storing it.
+	This breaks cvs import.  Why?
+
+	* update.cc (find_deepest_acceptable_descendent): Remove.
+	(acceptable_descendent, calculate_update_set): New functions.
+	(pick_update_candidates): Use 'calculate_update_set'.
+	* tests/t_update_2.at: Un-XFAIL.
+	* tests/t_ambig_update.at: Un-XFAIL.
+	
+	* tests/t_no_rename_overwrite.at: New test.
+	* tests/t_cdiff.at: New test placeholder.
+	* testsuite.at: Add them.
+	(MONOTONE): Prefix command line with $PREEXECUTE to e.g. support
+	running under Valgrind.
+
 2005-01-22  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_revert_dirs.at: New test.
