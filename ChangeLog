@@ -1,7 +1,5 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
-	* commands.cc (ls_certs): Don't special-case rename certs.
-
 	* cert.hh (rename_edge):
 	(rename_set):
 	(calculate_renames):
@@ -21,6 +19,7 @@
 	(rcerts): Rename to...
 	(certs): ...this.  s/revision certs/certs/ in help text.
 	(trusted): s/revision cert/cert/.
+	(ls_certs): Don't special-case rename certs.
 
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
