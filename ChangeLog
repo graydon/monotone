@@ -1,3 +1,19 @@
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+	* monotone.text (Making Changes): Fix typo.
+	
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.cc (cpp_main): Remove now-unneccessary newline.
+	
+	* commands.cc (commit): Fix typo.
+	
+	* monotone.texi (Making Changes): Don't claim that writing to
+	MT/log prevents the editor from starting.  Clarify later that
+	having written to MT/log still means the editor will pop up
+	later.
+
 2005-04-01  Richard Levitte  <richard@levitte.org>
 
 	* monotone.cc: Add the long name --xargs for -@.
@@ -2127,7 +2143,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

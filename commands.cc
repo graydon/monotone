@@ -2544,7 +2544,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   // get log message
   N(!(app.message().length() > 0 && has_contents_user_log()),
     F("MT/log is non-empty and --message supplied\n"
-      "perhaps move or delete MT/log, or\n"
+      "perhaps move or delete MT/log,\n"
       "or remove --message from the command line?"));
   
   if (app.message().length() > 0)
