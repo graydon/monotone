@@ -1,5 +1,9 @@
 2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
 
+	* idna/idn-int.h: Oops, really add this time.
+
+2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
+
 	* AUTHORS: Add Corey Halpin.
 	
 	* idna/idn-int.h: New file (don't generate from configure anymore,
