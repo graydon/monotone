@@ -2,7 +2,7 @@ AT_SETUP([(minor) vcheck])
 MONOTONE_SETUP
 
 # This test is a bug report.
-AT_XFAIL(true)
+AT_XFAIL_IF(true)
 
 # There used to be a command 'vcheck', that defended against the
 # chance of (accidental or malicious) SHA1 collision.  The way it did
