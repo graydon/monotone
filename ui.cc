@@ -240,15 +240,21 @@ sanitize(string const & line)
   return tmp;
 }
 
-void 
-user_interface::inform(string const & line)
+void
+user_interface::ensure_clean_line()
 {
   if (last_write_was_a_tick)
     {
       write_ticks();
       clog << endl;
     }
+  last_write_was_a_tick = false;
+}
+
+void 
+user_interface::inform(string const & line)
+{
+  ensure_clean_line();
   clog << "monotone: " << sanitize(line);
   clog.flush();
-  last_write_was_a_tick = false;
 }

@@ -12,6 +12,8 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <iterator>
+#include <functional>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -846,8 +848,8 @@ analyze_manifest_changes(app_state & app,
   if (!null_id(parent))
     app.db.get_manifest(parent, m_parent);
 
-  if (!null_id(child))
-    app.db.get_manifest(child, m_child);
+  I(!null_id(child));
+  app.db.get_manifest(child, m_child);
 
   L(F("analyzing manifest changes from '%s' -> '%s'\n") % parent % child);
 
@@ -910,7 +912,7 @@ struct anc_graph
   
   void add_node_ancestry(u64 child, u64 parent);  
   void write_certs();
-  void rebuild_from_heads();
+  void rebuild_ancestry();
   void get_node_manifest(u64 node, manifest_id & man);
   u64 add_node_for_old_manifest(manifest_id const & man);
   u64 add_node_for_old_revision(revision_id const & rev);                     
@@ -922,8 +924,6 @@ void anc_graph::add_node_ancestry(u64 child, u64 parent)
 {
   L(F("noting ancestry from child %d -> parent %d\n") % child % parent);
   ancestry.insert(std::make_pair(child, parent));
-  heads.insert(child);
-  heads.erase(parent);
 }
 
 void anc_graph::get_node_manifest(u64 node, manifest_id & man)
@@ -992,7 +992,7 @@ void anc_graph::write_certs()
 }
 
 void
-anc_graph::rebuild_from_heads()
+anc_graph::rebuild_ancestry()
 {
   P(F("rebuilding %d nodes\n") % max_node);
   {
@@ -1000,6 +1000,19 @@ anc_graph::rebuild_from_heads()
     if (existing_graph)
       app.db.delete_existing_revs_and_certs();
     
+    std::set<u64> parents, children, heads;
+    for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
+         i != ancestry.end(); ++i)
+      {
+        children.insert(i->first);
+        parents.insert(i->second);
+      }
+    set_difference(children.begin(), children.end(),
+                   parents.begin(), parents.end(),
+                   std::inserter(heads, heads.begin()));
+
+    // FIXME: should do a depth-first traversal here, or something like,
+    // instead of being recursive.
     for (std::set<u64>::const_iterator i = heads.begin();
          i != heads.end(); ++i)
       {
@@ -1018,7 +1031,7 @@ u64 anc_graph::add_node_for_old_manifest(manifest_id const & man)
     {
       node = max_node++;
       ++n_nodes;
-      P(F("node %d = manifest %s\n") % node % man);
+      L(F("node %d = manifest %s\n") % node % man);
       old_man_to_node.insert(std::make_pair(man, node));
       node_to_old_man.insert(std::make_pair(node, man));
       
@@ -1047,6 +1060,7 @@ u64 anc_graph::add_node_for_old_manifest(manifest_id const & man)
 u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
 {
   I(existing_graph);
+  I(!null_id(rev));
   u64 node = 0;
   if (old_rev_to_node.find(rev) == old_rev_to_node.end())
     {
@@ -1054,8 +1068,7 @@ u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
       ++n_nodes;
       
       manifest_id man;
-      if (!rev.inner()().empty())
-        app.db.get_revision_manifest(rev, man);
+      app.db.get_revision_manifest(rev, man);
       
       L(F("node %d = revision %s = manifest %s\n") % node % rev % man);
       old_rev_to_node.insert(std::make_pair(rev, node));
@@ -1088,9 +1101,19 @@ u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
   return node;
 }
 
+// FIXME: this is recursive -- stack depth grows as ancestry depth -- and will
+// overflow the stack on large histories.
 revision_id
 anc_graph::construct_revision_from_ancestry(u64 child)
 {
+  L(F("processing node %d\n") % child);
+
+  if (node_to_new_rev.find(child) != node_to_new_rev.end())
+    {
+      L(F("node %d already processed, skipping\n") % child);
+      return node_to_new_rev.find(child)->second;
+    }
+
   manifest_id child_man;
   get_node_manifest(child, child_man);
 
@@ -1099,40 +1122,47 @@ anc_graph::construct_revision_from_ancestry(u64 child)
 
   typedef std::multimap<u64, u64>::const_iterator ci;
   std::pair<ci,ci> range = ancestry.equal_range(child);
-  L(F("processing node %d\n") % child);
-  for (ci i = range.first; i != range.second; ++i)
+  if (range.first == range.second)
     {
-      I(child == i->first);
-      u64 parent(i->second);
-      L(F("processing edge from child %d -> parent %d\n") % child % parent);
-      
-      revision_id parent_rid;
-      std::map<u64, revision_id>::const_iterator j = node_to_new_rev.find(parent);
-      
-      if (j != node_to_new_rev.end())
-        parent_rid = j->second;
-      else
-        {
-          parent_rid = construct_revision_from_ancestry(parent);
-          node_to_new_rev.insert(std::make_pair(parent, parent_rid));
-        }
-      
-      L(F("parent node %d = revision %s\n") % parent % parent_rid);      
-      manifest_id parent_man;
-      get_node_manifest(parent, parent_man);
+      L(F("node %d is a root node\n") % child);
+      revision_id null_rid;
+      manifest_id null_mid;
       change_set cs;
-      analyze_manifest_changes(app, parent_man, child_man, cs);
-      rev.edges.insert(std::make_pair(parent_rid,
-                                      std::make_pair(parent_man, cs)));
-    } 
-
-  revision_id rid;
-  if (rev.edges.empty())
+      analyze_manifest_changes(app, null_mid, child_man, cs);
+      rev.edges.insert(std::make_pair(null_rid,
+                                      std::make_pair(null_mid, cs)));
+    }
+  else
     {
-      L(F("ignoring empty revision for node %d\n") % child);  
-      return rid;
+      for (ci i = range.first; i != range.second; ++i)
+        {
+          I(child == i->first);
+          u64 parent(i->second);
+          L(F("processing edge from child %d -> parent %d\n") % child % parent);
+
+          revision_id parent_rid;
+          std::map<u64, revision_id>::const_iterator
+            j = node_to_new_rev.find(parent);
+
+          if (j != node_to_new_rev.end())
+            parent_rid = j->second;
+          else
+            {
+              parent_rid = construct_revision_from_ancestry(parent);
+              node_to_new_rev.insert(std::make_pair(parent, parent_rid));
+            }
+
+          L(F("parent node %d = revision %s\n") % parent % parent_rid);      
+          manifest_id parent_man;
+          get_node_manifest(parent, parent_man);
+          change_set cs;
+          analyze_manifest_changes(app, parent_man, child_man, cs);
+          rev.edges.insert(std::make_pair(parent_rid,
+                                          std::make_pair(parent_man, cs)));
+        } 
     }
 
+  revision_id rid;
   calculate_ident(rev, rid);
   node_to_new_rev.insert(std::make_pair(child, rid));
 
@@ -1144,7 +1174,7 @@ anc_graph::construct_revision_from_ancestry(u64 child)
     }
   else
     {
-      L(F("skipping additional path to revision %s\n") % rid);
+      L(F("skipping already existing revision %s\n") % rid);
     }
 
   return rid;  
@@ -1163,13 +1193,16 @@ build_changesets_from_existing_revs(app_state & app)
   for (std::multimap<revision_id, revision_id>::const_iterator i = existing_graph.begin();
        i != existing_graph.end(); ++i)
     {
-      u64 parent_node = graph.add_node_for_old_revision(i->first);
-      u64 child_node = graph.add_node_for_old_revision(i->second);
-      graph.add_node_ancestry(child_node, parent_node);
+      if (!null_id(i->first))
+        {
+          u64 parent_node = graph.add_node_for_old_revision(i->first);
+          u64 child_node = graph.add_node_for_old_revision(i->second);
+          graph.add_node_ancestry(child_node, parent_node);
+        }
     }
 
   global_sanity.set_relaxed(false);
-  graph.rebuild_from_heads();
+  graph.rebuild_ancestry();
 }
 
 
@@ -1197,7 +1230,7 @@ build_changesets_from_manifest_ancestry(app_state & app)
       graph.add_node_ancestry(child_node, parent_node);
     }
   
-  graph.rebuild_from_heads();
+  graph.rebuild_ancestry();
 }
 
 

@@ -22,6 +22,7 @@
 #include "platform.hh"
 #include "transforms.hh"
 #include "sanity.hh"
+#include "ui.hh"
 
 // copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
@@ -87,6 +88,7 @@ get_passphrase(lua_hooks & lua,
         {
           memset(pass1, 0, constants::maxpasswd);
           memset(pass2, 0, constants::maxpasswd);
+          ui.ensure_clean_line();
           read_password(prompt_beginning + " for key ID [" + keyid() + "]: ",
                         pass1, constants::maxpasswd);
           cout << endl;
@@ -94,6 +96,7 @@ get_passphrase(lua_hooks & lua,
             F("empty passphrase not allowed"));
           if (confirm_phrase)
             {
+              ui.ensure_clean_line();
               read_password(string("confirm passphrase for key ID [") + keyid() + "]: ",
                             pass2, constants::maxpasswd);
               cout << endl;

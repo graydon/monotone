@@ -663,14 +663,16 @@ cert_revision_testresult(revision_id const & r,
   bool passed = false;
   if (lowercase(results) == "true" ||
       lowercase(results) == "yes" ||
+      lowercase(results) == "pass" ||
       results == "1")
     passed = true;
   else if (lowercase(results) == "false" ||
            lowercase(results) == "no" ||
+           lowercase(results) == "fail" ||
            results == "0")
     passed = false;
   else
-    throw informative_failure("could not interpret test results, tried '0/1' 'yes/no', 'true/false'");
+    throw informative_failure("could not interpret test results, tried '0/1' 'yes/no', 'true/false', 'pass/fail'");
 
   put_simple_revision_cert(r, testresult_cert_name, lexical_cast<string>(passed), app, pc); 
 }

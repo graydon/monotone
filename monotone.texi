@@ -1071,6 +1071,7 @@ tasks involve only one member.
 * Creating a Database::
 * Generating Keys::
 * Exchanging Keys::
+* Starting a New Project::
 * Adding Files::
 * Committing Work::
 * Network Service::
@@ -1085,12 +1086,18 @@ tasks involve only one member.
 
 The first step Jim, Abe and Beth each need to perform is to create a
 new database. This is done with the @code{monotone db init} command,
-providing a @option{--db} option to speficy the location of the new
+providing a @option{--db} option to specify the location of the new
 database. Each programmer creates their own database, which will
 reside in their home directory and store all the revisions, files and
 manifests they work on. Monotone requires this step as an explicit
 command, to prevent spurious creation of databases when an invalid
 @option{--db} option is given.
+
+In real life, most people prefer to keep one database for each project
+they work on.  If we followed that convention here in the tutorial,
+though, then all the databases would be called @code{juicebot.db}, and
+that would make things more confusing to read.  So instead, we'll have
+them each name their database after themselves.
 
 Thus Jim issues the command:
 
@@ -1278,6 +1285,57 @@ monotone: read 1 packet
 Beth and Abe similarly tell monotone to read read the two new public
 keys they received into their respective databases.
 
+
+@page
+@node    Starting a New Project
+@section Starting a New Project
+
+Before they can begin work on the project Jim, Abe and Beth must each
+create a @i{working copy} directory where they will do their work.
+This is done with the @code{monotone setup} command providing a
+directory name which will be the root of the new working copy.
+
+This command creates the named directory if it doesn't already exist and
+creates the @file{MT} directory within it. Monotone requires this step
+as an explicit command, to prevent spurious creation of @file{MT}
+directories in incorrect locations. Command line values for the
+@option{--db}, @option{--branch} or @option{--key} options to the setup
+command will be cached in the new working copy.
+
+Jim creates his working copy:
+
+@smallexample
+@group
+/home/jim$ monotone setup juice
+/home/jim$ cd juice
+/home/jim/juice$
+@end group
+@end smallexample
+
+Abe creates his:
+
+@smallexample
+@group
+/home/abe$ monotone setup work
+/home/abe$ cd work
+/home/abe/work
+@end group
+@end smallexample
+
+and Beth creates hers:
+
+@smallexample
+@group
+/home/beth$ monotone setup juice-bot
+/home/beth$ cd juice-bot
+/home/beth/juice-bot$ 
+@end group
+@end smallexample
+
+Notice that Jim, Abe and Beth have each changed their current working
+directory to their newly created working copies. For the rest of this
+example we will assume that they issue all further monotone commands
+from their working copy directories.
 
 @page
 @node    Adding Files
@@ -1479,7 +1537,7 @@ into the database.
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit 'initial checkin of project'
+$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit --message='initial checkin of project'
 monotone: beginning commit
 monotone: manifest 2098eddbe833046174de28172a813150a6cbda7b
 monotone: revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
@@ -1735,10 +1793,11 @@ monotone: branch jp.co.juicebot.jb7
 @end group
 @end smallexample
 
-Abe neglected to provide a change log on the command line.  Monotone
-therefore invokes an external ``log message editor'' --- typically an
-editor like @command{vi} --- with an explanation of the changes being
-committed and the opportunity to enter a log message.
+Abe neglected to provide a @option{--message} option specifying the
+change log on the command line.  Monotone therefore invokes an external
+``log message editor'' --- typically an editor like @command{vi} ---
+with an explanation of the changes being committed and the opportunity
+to enter a log message.
 
 @smallexample
 @group
@@ -1821,7 +1880,7 @@ She commits her work:
 
 @smallexample
 @group
-$ monotone commit 'polling implementation of src/banana.c'
+$ monotone commit --message='polling implementation of src/banana.c'
 monotone: beginning commit
 monotone: manifest eaebc3c558d9e30db6616ef543595a5a64cc6d5f
 monotone: revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
@@ -1939,7 +1998,7 @@ She commits her work:
 
 @smallexample
 @group
-$ monotone commit 'interrupt implementation of src/banana.c'
+$ monotone commit --message='interrupt implementation of src/banana.c'
 monotone: beginning commit
 monotone: manifest de81e46acb24b2950effb18572d5166f83af3881
 monotone: revision 8b41b5399a564494993063287a737d26ede3dee4
@@ -1973,7 +2032,7 @@ Thus when Abe commits, he unknowingly creates a fork:
 
 @smallexample
 @group
-$ monotone commit 'interrupt implementation of src/apple.c'
+$ monotone commit --message='interrupt implementation of src/apple.c'
 @end group
 @end smallexample
 
@@ -2064,6 +2123,8 @@ familiarize yourself with its operation.
 
 @menu
 * Selectors::              Selecting revisions by certificate.
+* Restrictions::           Limit working copy changes to specified files.
+* Scripting::              Running monotone from other programs.
 * Quality Assurance::      Integrating testing and review with development.
 * Reserved Files::         File names with special meanings.
 * Reserved Certs::         Certificate names with special meanings.
@@ -2170,6 +2231,121 @@ date. For example, the selector
 the selector @code{graydon} as an unknown selector; so long as there
 are no branches or tags beginning with the string @code{graydon} this
 is just as effective as specifying @code{a:graydon}.
+
+@page
+@node    Restrictions
+@section Restrictions
+
+Several monotone commands accept optional @var{pathname...} arguments in
+order to establish a ``restriction''.  Restrictions are used to limit
+the files and directories these commands examine for changes when
+comparing the working copy to the revision it is based on. Restricting a
+command to a specified set of files or directories simply ignores
+changes to files or directories not included by the restriction.
+
+The following commands all support restrictions using optional
+@var{pathname...} arguments:
+
+@itemize
+@item @command{status}
+@item @command{diff}
+@item @command{revert}
+@item @command{commit}
+@item @command{list unknown}
+@item @command{list ignored}
+@item @command{list missing}
+@end itemize
+
+Including either the old or new name of a renamed file or directory will
+cause both names to be included in a restriction. If in doubt, the
+@command{status} command can be used to ``test'' a set of pathnames to
+ensure that the expected files are included or excluded by a
+restriction.
+
+One variant of the @command{diff} command takes two @option{--revision}
+options and does not operate on a working copy, but instead compares two
+arbitrary database revisions. In this form the @command{diff} command
+does not currently support a restriction or optional @var{pathname...}
+arguments. This may be changed in the future.
+
+The @command{update} command does not allow for updates to a
+restricted set of files, which may be slightly different than other
+version control systems. Partial updates don't really make sense in
+monotone, as they would leave the working copy based on a revision that
+doesn't exist in the database, starting an entirely new line of
+development.
+
+@heading Subdirectory restrictions
+
+The restrictions facility also allows commands to operate from within a
+subdirectory of the working copy.  By default, the @i{entire working
+copy} is always examined for changes. However, specifying an explicit
+"."  pathname to a command will restrict it to the current subdirectory.
+Note that this is quite different from other version control systems and
+may seem somewhat surprising.
+
+The expectation is that requiring a single "." to restrict to the
+current subdirectory should be simple to use. While the alternative,
+defaulting to restricting to the current subdirectory, would require a
+somewhat complicated ../../.. sequence to remove the restriction and
+operate on the whole tree.
+
+This default was chosen because monotone versions whole project trees
+and generally expects to commit all changes in the working copy as a
+single atomic unit. Other version control systems often version
+individual files or directories and may not support atomic commits at
+all.
+
+When working from within a subdirectory of the working copy all
+paths specified to monotone commands must be relative to the current
+subdirectory.
+
+@heading Finding a working copy
+
+Monotone only stores a single @file{MT} directory at the root of a
+working copy. Because of this, a search is done to find the @file{MT}
+directory in case a command is executed from within a subdirectory of a
+working copy. Before a command is executed, the search for a working
+copy directory is done by traversing parent directories until an
+@file{MT} directory is found. Upon finding an @file{MT} directory, the
+@file{MT/options} file is read for default options.
+
+Many monotone commands don't require a working copy and will simply
+proceed with no default options if no @file{MT} directory is found.
+However, some monotone commands do require a working copy and will fail
+if no @file{MT} directory can be found.
+
+The @command{checkout} and @command{setup} commands currently do not
+search for a working copy. These commands create a @i{new working copy}
+and initialize the @file{MT/options} file based on their command line
+options. These commands may be changed to search for a working copy and
+read default options in the future.
+
+
+@page
+@node    Scripting
+@section Scripting
+
+People often want to write programs that call monotone --- for example,
+to create a graphical interface to monotone's functionality, or to
+automate some task.  For most programs, if you want to do this sort of
+thing, you just call the command line interface, and do some sort of
+parsing of the output.  Monotone's output, however, is designed for
+humans: it's localized, it tries to prompt the user with helpful
+information depending on their request, if it detects that something
+unusual is happening it may give different output in an attempt to make
+this clear to the user, and so on.  As a result, it is not particularly
+suitable for programs to parse.
+
+Rather than trying to design output to work for both humans and
+computers, and serving neither audience well, we elected to create a
+separate interface to make programmatically extracting information from
+monotone easier.  The command line interface has a command
+@code{automate}; this command has subcommands that print various sorts
+of information on standard output, in simple, consistent, and easily
+parseable form.
+
+For details of this interface, see @ref{Automation}.
 
 @page
 @node    Quality Assurance
@@ -2600,7 +2776,7 @@ $ cvs commit -m 'log message'
 @tab
 @smallexample
 @group
-$ monotone commit 'log message'
+$ monotone commit --message='log message'
 $ monotone push www.foo.com com.foo.wobbler
 @end group
 @end smallexample
@@ -2809,6 +2985,7 @@ all, commands are grouped into logical categories.
 * Certificate::      Special operations on certificates
 * Packet I/O::       Production or consumption of packets
 * Database::         Manipulation of your database as a whole
+* Automation::       Running monotone from other programs
 * RCS::              Importing legacy version control files
 @end menu
 
@@ -2819,11 +2996,16 @@ all, commands are grouped into logical categories.
 
 @ftable @command
 @item monotone cat file @var{id}
+@itemx monotone cat manifest
 @itemx monotone cat manifest @var{id}
+@itemx monotone cat revision
+@itemx monotone cat revision @var{id}
 
-These commands write the contents of a specific file or manifest
-version @var{id} to standard output. They are useful if you wish to
-inspect a version without checking it out into your working copy.
+These commands write the contents of a specific file, manifest or
+revision @var{id} to standard output. They are useful if you wish to
+inspect a version without checking it out into your working copy.  An
+unspecified manifest or revision @var{id} is allowed from within a
+working copy and refers to the current manifest or revision.
 
 @item monotone checkout @var{id} @var{directory}
 @itemx monotone co @var{id} @var{directory}
@@ -2935,9 +3117,9 @@ common ancestor instead of the default ancestor.
 @section Working Copy
 
 @ftable @command
-@item monotone add @var{filename...}
+@item monotone add @var{pathname...}
 This command places ``add'' entries for the paths specified in
-@var{filename...} in the working copy's ``work list''. The work list
+@var{pathname...} in the working copy's ``work list''. The work list
 of your working copy is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal or renaming of files.
@@ -2949,9 +3131,9 @@ which it will then commit to the database. The new revision will have
 any added entries inserted in its manifest.
 
 
-@item monotone drop @var{filename...}
+@item monotone drop @var{pathname...}
 This command places ``drop'' entries for the paths specified in
-@var{filename...} in the working copy's ``work list''. The work list
+@var{pathname...} in the working copy's ``work list''. The work list
 of your working copy is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.
@@ -2978,7 +3160,10 @@ names.
 
 
 @item monotone commit
-@itemx monotone commit @var{logmsg}
+@itemx monotone commit --message=@var{logmsg}
+@itemx monotone commit @var{pathname...}
+@itemx monotone commit --message=@var{logmsg} @var{pathname...} 
+
 This command looks at your working copy, decides which files have
 changed, and saves the changes to your database. It does this by
 loading the revision named in the @file{MT/revision} file, locating
@@ -2992,6 +3177,19 @@ newly constructed manifest is recorded (as a delta) and finally the
 new revision.  Once all these objects are recorded in you database,
 @command{commit} overwrites the @file{MT/revision} file with the new
 revision ID, and deletes the @file{MT/work} file.
+
+Specifying pathnames to @command{commit} restricts the set of changes
+that are visible and results in only a partial commit of the working
+copy. Changes to files not included in the specified set of pathnames
+will be ignored and will remain in the working copy until they are
+included in a future commit. With a partial commit, only the relevant
+entries in the @file{MT/work} file will be removed and other entries
+will remain for future commits.
+
+From within a subdirectory of the working copy the @command{commit}
+command will, by default, include @emph{all changes} in the working
+copy.  Specifying only the pathname "." will restrict @command{commit}
+to files changed within the current subdirectory of the working copy.
 
 The @command{commit} command also synthesizes a number of
 certificates, which it attaches to the new manifest version and copies
@@ -3016,7 +3214,7 @@ the change.
 
 
 @item monotone revert
-@itemx monotone revert @var{filename...}
+@itemx monotone revert @var{pathname...}
 
 With no files given, this command changes your working copy, so that
 changes you have made since the last checkout or update are discarded.
@@ -3024,9 +3222,15 @@ It does this by changing every file listed in the working copy's base
 manifest to have contents equal to the @sc{sha1} value listed in the
 manifest, and by erasing the @file{MT/work} file.
 
-If files are given as arguments, only those files are affected instead
-of the entirety of your working copy.
+If files or directories are given as arguments, only those files and
+directories are affected instead of the entirety of your working copy.
 
+From within a subdirectory of the working copy the @command{revert}
+command will, by default, revert @emph{all changes} in the working copy.
+Specifying only the pathname "." will restrict @command{revert} to files
+changed within the current subdirectory of the working copy. @i{Caution
+should be used when reverting files to ensure that the correct set of
+files is reverted.}
 
 @item monotone update
 @itemx monotone update @var{revision}
@@ -3120,6 +3324,7 @@ databases.
 
 @ftable @command
 @item monotone status
+@itemx monotone status @var{pathname...}
 
 This command prints a description of the ``status'' of your working copy.
 In particular, it prints:
@@ -3139,6 +3344,17 @@ the ID which would accompany any revision you would commit, if you ran
 A list of logical changes between the base and current manifest
 versions, such as adds, drops, renames, and patches.
 @end itemize
+
+Specifying optional @var{pathname...} arguments to the @command{status}
+command restricts the set of changes that are visible and results in
+only a partial status of the working copy. Changes to files not included
+in the specified set of pathnames will be ignored.
+
+From within a subdirectory of the working copy the @command{status}
+command will, by default, include @emph{all changes} in the working
+copy.  Specifying only the pathname "." will restrict @command{status}
+to files changed within the current subdirectory of the working copy.
+
 
 @item monotone log
 @itemx monotone log @var{id}
@@ -3174,24 +3390,39 @@ about, in its database, which begin with the 4 hex digits
 completion systems, such as those in @command{bash} and @command{zsh}.
 
 @item monotone diff 
-@itemx monotone diff @var{id}
-@itemx monotone diff @var{id1} @var{id2}
+@itemx monotone diff @var{pathname...}
+@itemx monotone diff --revision=@var{id}
+@itemx monotone diff --revision=@var{id} @var{pathname...}
+@itemx monotone diff --revision=@var{id1} --revision=@var{id2}
 
-These commands print out GNU ``unified diff format'' textual
-difference listings between various manifest versions. If no extra
-arguments are given, @command{monotone diff} will print the
-differences between the base revision and the current revision in your
-working copy. If one argument @var{id} is given, monotone will print
-the differences between the revision @var{id} and the current 
-revision in your working copy. If two arguments @var{id1} and @var{id2}
-are given, monotone will print the differences between revisions
-@var{id1} and @var{id2}, ignoring your working copy.
+These commands print out GNU ``unified diff format'' textual difference
+listings between various manifest versions. With no @option{--revision}
+options, @command{diff} will print the differences between the
+base revision and the current revision in the working copy.
+
+With one @option{--revision} option, @command{diff} will print the
+differences between the revision @var{id} and the current revision in
+the working copy.  With two @option{--revision} options @command{diff}
+will print the differences between revisions @var{id1} and @var{id2},
+ignoring any working copy. Note that no @var{pathname...} arguments may
+be specified to restrict the diff output in this case. Restrictions may
+only be applied to the current, in-progress, working copy revision.
 
 In all cases, monotone will print a textual summary -- identical to
 the summary presented by @command{monotone status} -- of the logical
 differences between revisions in lines proceeding the diff. These
 lines begin with a single hash mark @code{#}, and should be ignored by
 a program processing the diff, such as @command{patch}.
+
+Specifying pathnames to the @command{diff} command restricts the set of
+changes that are visible and results in only a partial diff of the
+working copy. Changes to files not included in the specified set of
+pathnames will be ignored.
+
+From within a subdirectory of the working copy the @command{diff}
+command will, by default, include @emph{all changes} in the working
+copy.  Specifying only the pathname "." will restrict @command{diff}
+to files changed within the current subdirectory of the working copy.
 
 @item monotone list certs @var{id}
 
@@ -3263,22 +3494,52 @@ listed. Otherwise all keys in your database are listed.
 This command lists all known branches in your database.
 
 @item monotone list unknown
+@itemx monotone list unknown @var{pathname...}
 
 This command lists all files in your working copy that monotone is 
 either ignoring or knows nothing about.
 
-@item monotone list ignored
+Specifying pathnames to the @command{list unknown} command restricts the
+set of paths that are searched for unknown files. Unknown files not
+included in the specified set of pathnames will not be listed.
 
-This command lists all files in your working copy that monotone is 
-intentionally ignoring, due to the results of the @code{ignore_file (@var{filename})} hook.
+From within a subdirectory of the working copy the @command{list
+unknown} command will, by default, search the entire working copy.
+Specifying only the pathname "." will restrict the search for unknown
+files to the current subdirectory of the working copy.
+
+@item monotone list ignored
+@itemx monotone list ignored @var{pathname...}
+
+This command lists all files in your working copy that monotone is
+intentionally ignoring, due to the results of the @code{ignore_file
+(@var{filename})} hook.
+
+Specifying pathnames to the @command{list ignored} command restricts the
+set of paths that are searched for ignored files. Ignored files not
+included in the specified set of pathnames will not be listed.
+
+From within a subdirectory of the working copy the @command{list
+ignored} command will, by default, search the entire working copy.
+Specifying only the pathname "." will restrict the search for ignored
+files to the current subdirectory of the working copy.
 
 @item monotone list missing
+@itemx monotone list missing @var{pathname...}
 
 This command lists all files in your working copy's base manifest,
 which are not present in the working copy.
 
-@end ftable
+Specifying pathnames to the @command{list missing} command restricts the
+set of paths that are searched for missing files. Missing files not
+included in the specified set of pathnames will not be listed.
 
+From within a subdirectory of the working copy the @command{list
+missing} command will, by default, search the entire working copy.
+Specifying only the pathname "." will restrict the search for missing
+files to the current subdirectory of the working copy.
+
+@end ftable
 
 
 @page
@@ -3502,6 +3763,84 @@ help diagnose failures.
 
 
 @page
+@node    Automation
+@section Automation
+
+This section contains subcommands of the @code{monotone automate}
+command, used for scripting monotone.  All give output on stdout; they
+may also give useful chatter on stderr, including warnings and error
+messages.
+
+@ftable @command
+@item monotone automate interface_version
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.0
+
+@item Purpose:
+
+Prints version of the automation interface.  Major number increments
+whenever a backwards incompatible change is made to the @code{automate}
+command; minor number increments whenever any change is made (but is
+reset when major number increments).
+
+@item Sample output:
+
+1.2
+
+@item Output format:
+
+A decimal number, followed by ``.'' (full stop/period), followed by a
+decimal number, followed by a newline, followed by end-of-file.  The
+first decimal number is the major version, the second is the minor version.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+@item monotone automate heads @var{branch}
+
+@table @strong
+@item Arguments:
+
+One argument @var{branch}, a branch name.
+
+@item Added in:
+
+0.0
+
+@item Purpose:
+
+Prints the heads of branch @var{branch}.
+
+@item Sample output:
+
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+
+@item Output format:
+
+Zero or more lines, each giving the id of one head of the given branch.
+Each line consists of a revision id, in hexadecimal, followed by a
+newline.  The lines are printed in sorted order.
+
+@item Error conditions:
+
+If the given branch contains no members, then no lines are printed.
+
+@end table
+
+@end ftable
+
+@page
 @node    RCS
 @section RCS
 
@@ -3511,7 +3850,8 @@ help diagnose failures.
 This command imports all the file versions in each RCS file listed in
 @var{filename...}.  These files should be raw RCS files, ending in
 @code{,v}. Monotone parses them directly and inserts them into your
-database.
+database.  Note that this does not do any revision reconstruction, and
+is only useful for debugging.
 
 @item monotone cvs_import @var{pathname...}
 
@@ -4772,7 +5112,7 @@ descendant of the disapproved revision.
 Put a symbolic tag cert on a revision.
 @comment TROFF INPUT: .TP
 
-@item @b{testresult} @i{<id> (0|1)}
+@item @b{testresult} @i{<id> (0|1|true|false|yes|no|pass|fail)}
 Indicate a passing or failing test result on a revision.
 @comment TROFF INPUT: .TP
 
@@ -4780,11 +5120,11 @@ Indicate a passing or failing test result on a revision.
 Dump revision graph to stdout.
 @comment TROFF INPUT: .TP
 
-@item @b{diff}
+@item @b{diff} @i{[--revision=<id1> [--revision=<id2>] ] [<pathname>...]}
 Show diffs between working copy and database.
 @comment TROFF INPUT: .TP
 
-@item @b{status}
+@item @b{status} @i{[<pathname>...]}
 Show status of working copy.
 @comment TROFF INPUT: .TP
 
@@ -4826,19 +5166,19 @@ List all branches.
 List all tags.
 @comment TROFF INPUT: .TP
 
-@item @b{list unknown}
-@itemx @b{ls unknown}
+@item @b{list unknown} @i{[<pathname>...]}
+@itemx @b{ls unknown} @i{[<pathname>...]}
 List files in working directory, but not in revision's manifest or
 work list.
 @comment TROFF INPUT: .TP
 
-@item @b{list ignored}
-@itemx @b{ls ignored}
+@item @b{list ignored} @i{[<pathname>...]}
+@itemx @b{ls ignored} @i{[<pathname>...]}
 List files intentionally ignored due to the ignore_file hook.
 @comment TROFF INPUT: .TP
 
-@item @b{list missing}
-@itemx @b{ls missing}
+@item @b{list missing} @i{[<pathname>...]}
+@itemx @b{ls missing} @i{[<pathname>...]}
 List files in revision's manifest, but not in working directory.
 @comment TROFF INPUT: .TP
 
@@ -4896,7 +5236,7 @@ across the entire tree.
 Check out tree state from database, into directory.
 @comment TROFF INPUT: .TP
 
-@item @b{cat} @i{(file|manifest|revision) <id>}
+@item @b{cat} @i{(file <id>|manifest [<id>]|revision [<id>])}
 Write file, manifest or revision from database to stdout.
 @comment TROFF INPUT: .TP
 
@@ -4914,11 +5254,6 @@ database, merely adds it to the work list. You must @b{commit} your
 changes in order to copy added files to the database.
 @comment TROFF INPUT: .TP
 
-@item @b{commit} @i{[log message]}
-Commit working copy to database. If a log message is provided on the command
-line, it is used; otherwise a log message editor will be invoked.
-@comment TROFF INPUT: .TP
-
 @item @b{drop} @i{<pathname> [...]}
 Drop files from working copy. Files are not deleted from working copy,
 merely noted as removals in the work list.
@@ -4926,6 +5261,12 @@ merely noted as removals in the work list.
 
 @item @b{rename} @i{<src> <dst>}
 Rename files from @i{<src>} to @i{<dst>} in working copy.
+@comment TROFF INPUT: .TP
+
+@item @b{commit} @i{[--message=log message] [<pathname>...]}
+Commit working copy to database. If a --message @option{option} is
+provided on the command line, it is used; otherwise a log message editor
+will be invoked.
 @comment TROFF INPUT: .TP
 
 @item @b{update} @i{[revision]}
@@ -4947,6 +5288,9 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 @item @b{serve} @i{<host> <collection>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
+
+@item @b{automate} @i{(interface_version|heads)}
+Scripting interface.
 
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}
 Manipulate database state.
@@ -5038,6 +5382,19 @@ the count for each ticker on one line, incrementing the numbers in
 place, while the @b{dot} method prints a continuous string of
 characters (like some programs provide a progress line of dots).
 The default is @b{count}.
+
+@item @b{--revision=}@i{<id>}
+Currently this option only applies to the diff command where it may be
+used to compare a working copy with a specific revision or to compare
+two specific revisions. It will likely apply to other commands in the
+future.
+
+@item @b{--message=}@i{<log message>}
+Use the given message as the changelog when committing a new revision
+rather than invoking the log message editor. Currently this option only
+applies to the commit command but it may also apply to the comment
+command in the future.
+
 @comment TROFF INPUT: .SH ENVIRONMENT
 
 @end table

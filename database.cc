@@ -373,6 +373,9 @@ database::info(ostream & out)
   out << "manifest deltas : " << get_statistic("SELECT COUNT(*) FROM manifest_deltas") << endl;
   out << "full files      : " << get_statistic("SELECT COUNT(*) FROM files") << endl;
   out << "file deltas     : " << get_statistic("SELECT COUNT(*) FROM file_deltas") << endl;
+  out << "revisions       : " << get_statistic("SELECT COUNT(*) FROM revisions") << endl;
+  out << "ancestry edges  : " << get_statistic("SELECT COUNT(*) FROM revision_ancestry") << endl;
+  out << "certs           : " << get_statistic("SELECT COUNT(*) FROM revision_certs") << endl;
 }
 
 void 
@@ -833,7 +836,6 @@ database::put(hexenc<id> const & ident,
           table.c_str(), ident().c_str(), dat().c_str());
 }
 
-
 void 
 database::put_delta(hexenc<id> const & ident,
                     hexenc<id> const & base,
@@ -848,6 +850,68 @@ database::put_delta(hexenc<id> const & ident,
           ident().c_str(), base().c_str(), del().c_str());
 }
 
+// static ticker cache_hits("vcache hits", "h", 1);
+
+struct version_cache
+{
+  size_t capacity;
+  size_t use;
+  std::map<hexenc<id>, base64< gzip<data> > > cache;  
+
+  version_cache() : capacity(constants::db_version_cache_sz), use(0) 
+  {
+    srand(time(NULL));
+  }
+
+  void put(hexenc<id> const & ident,
+           base64< gzip<data> > const & dat)
+  {
+    while (!cache.empty() 
+           && use + dat().size() > capacity)
+      {      
+        std::string key = (F("%08.8x%08.8x%08.8x%08.8x%08.8x") 
+                           % rand() % rand() % rand() % rand() % rand()).str();
+        std::map<hexenc<id>, base64< gzip<data> > >::const_iterator i;
+        i = cache.lower_bound(hexenc<id>(key));
+        if (i == cache.end())
+          {
+            // we can't find a random entry, probably there's only one
+            // entry and we missed it. delete first entry instead.
+            i = cache.begin();
+          }
+        I(i != cache.end());
+        I(use >= i->second().size());
+        L(F("version cache expiring %s\n") % i->first);
+        use -= i->second().size();          
+        cache.erase(i->first);
+      }
+    cache.insert(std::make_pair(ident, dat));
+    use += dat().size();
+  }
+
+  bool exists(hexenc<id> const & ident)
+  {
+    std::map<hexenc<id>, base64< gzip<data> > >::const_iterator i;
+    i = cache.find(ident);
+    return i != cache.end();
+  }
+
+  bool get(hexenc<id> const & ident,
+           base64< gzip<data> > & dat)
+  {
+    std::map<hexenc<id>, base64< gzip<data> > >::const_iterator i;
+    i = cache.find(ident);
+    if (i == cache.end())
+      return false;
+    // ++cache_hits;
+    L(F("version cache hit on %s\n") % ident);
+    dat = i->second;
+    return true;
+  }
+};
+
+static version_cache vcache;
+
 void 
 database::get_version(hexenc<id> const & ident,
                       base64< gzip<data> > & dat,
@@ -855,10 +919,15 @@ database::get_version(hexenc<id> const & ident,
                       string const & delta_table)
 {
   I(ident() != "");
-  if (exists(ident, data_table))
+
+  if (vcache.get(ident, dat))
     {
-      // easy path
-      get(ident, dat, data_table);
+      return;
+    }
+  else if (exists(ident, data_table))
+    {
+     // easy path
+     get(ident, dat, data_table);
     }
   else
     {
@@ -906,7 +975,7 @@ database::get_version(hexenc<id> const & ident,
           for (set< hexenc<id> >::const_iterator i = frontier.begin();
                i != frontier.end(); ++i)
             {
-              if (exists(*i, data_table))
+              if (vcache.exists(*i) || exists(*i, data_table))
                 {
                   root = *i;
                   found_root = true;
@@ -951,7 +1020,14 @@ database::get_version(hexenc<id> const & ident,
       I(root() != "");
       base64< gzip<data> > begin_packed;
       data begin;      
-      get(root, begin_packed, data_table);
+
+      if (vcache.exists(root))
+        {
+          I(vcache.get(root, begin_packed));
+        }
+      else
+        get(root, begin_packed, data_table);
+
       unpack(begin_packed, begin);
       hexenc<id> curr = root;
 
@@ -965,12 +1041,23 @@ database::get_version(hexenc<id> const & ident,
           I(i->find(curr) != i->end());
           hexenc<id> const nxt = i->find(curr)->second;
 
+          if (!vcache.exists(curr))
+            {
+              string tmp;
+              base64< gzip<data> > tmp_packed;
+              app->finish(tmp);
+              pack(data(tmp), tmp_packed);
+              vcache.put(curr, tmp_packed);
+            }
+
+
           L(F("following delta %s -> %s\n") % curr % nxt);
           base64< gzip<delta> > del_packed;
           get_delta(nxt, curr, del_packed, delta_table);
           delta del;
           unpack(del_packed, del);
           apply_delta (app, del());
+          
           app->next();
           curr = nxt;
         }
@@ -984,6 +1071,7 @@ database::get_version(hexenc<id> const & ident,
       I(final == ident);
       pack(end, dat);
     }
+  vcache.put(ident, dat);
 }
 
 

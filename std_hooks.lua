@@ -159,12 +159,28 @@ function merge3_meld_cmd(lfile, afile, rfile)
 end
 
 
+function merge2_vim_cmd(vim, lfile, rfile, outfile)
+   return
+   function()
+      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
+                     lfile, rfile)
+   end
+end
+
+function merge3_vim_cmd(vim, lfile, afile, rfile, outfile)
+   return
+   function()
+      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
+                     lfile, afile, rfile)
+   end
+end
+
 function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
    local elisp = "(ediff-merge-files \"%s\" \"%s\" nil \"%s\")"
    return 
    function()
       return execute(emacs, "-no-init-file", "-eval", 
-		     string.format(elisp, lfile, rfile, outfile))
+                     string.format(elisp, lfile, rfile, outfile))
    end
 end
 
@@ -174,7 +190,7 @@ function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    return 
    function()
       execute(emacs, "-no-init-file", "-eval", 
-	      string.format(elisp, lfile, rfile, afile, outfile))
+              string.format(elisp, lfile, rfile, afile, outfile))
    end
 end
 
@@ -182,10 +198,10 @@ function merge2_xxdiff_cmd(left_path, right_path, merged_path, lfile, rfile, out
    return 
    function()
       return execute("xxdiff", 
-		     "--title1", left_path,
-		     "--title2", right_path,
-		     lfile, rfile, 
-		     "--merged-filename", outfile)
+                     "--title1", left_path,
+                     "--title2", right_path,
+                     lfile, rfile, 
+                     "--merged-filename", outfile)
    end
 end
 
@@ -194,12 +210,12 @@ function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path,
    return 
    function()
       return execute("xxdiff", 
-		     "--title1", left_path,
-		     "--title2", right_path,
-		     "--title3", merged_path,
-		     lfile, afile, rfile, 
-		     "--merge", 
-		     "--merged-filename", outfile)
+                     "--title1", left_path,
+                     "--title2", right_path,
+                     "--title3", merged_path,
+                     lfile, afile, rfile, 
+                     "--merge", 
+                     "--merged-filename", outfile)
    end
 end
    
@@ -246,8 +262,8 @@ function merge2(left_path, right_path, merged_path, left, right)
       if program_exists_in_path("meld") then
          meld_exists = true
          io.write(string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n" .. 
-				"You should merge all changes to *LEFT* file due to limitation of program\n" ..
-				   "arguments.\n\n"))
+                                "You should merge all changes to *LEFT* file due to limitation of program\n" ..
+                                   "arguments.\n\n"))
          cmd = merge2_meld_cmd(lfile, rfile) 
       elseif program_exists_in_path("xxdiff") then
          cmd = merge2_xxdiff_cmd(left_path, right_path, merged_path, 
@@ -256,21 +272,25 @@ function merge2(left_path, right_path, merged_path, left, right)
          cmd = merge2_emacs_cmd("emacs", lfile, rfile, outfile)
       elseif program_exists_in_path("xemacs") then
          cmd = merge2_emacs_cmd("xemacs", lfile, rfile, outfile)
+      elseif program_exists_in_path("gvim") then
+         cmd = merge2_vim_cmd("gvim", lfile, rfile, outfile)
+      elseif program_exists_in_path("vim") then
+         cmd = merge2_vim_cmd("vim", lfile, rfile, outfile)
       end
 
       if cmd ~= nil
       then
          io.write(string.format("executing external 2-way merge command\n"))
          cmd()
-	 if meld_exists then
+         if meld_exists then
             data = read_contents_of_file(lfile)
          else
             data = read_contents_of_file(outfile)
          end
-	 if string.len(data) == 0 
-	 then 
-	    data = nil
-	 end
+         if string.len(data) == 0 
+         then 
+            data = nil
+         end
       else
          io.write("no external 2-way merge command found\n")
       end
@@ -305,8 +325,8 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
       if program_exists_in_path("meld") then
          meld_exists = true
          io.write(string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n" .. 
-				"You should merge all changes to *CENTER* file due to limitation of program\n" ..
-				   "arguments.\n\n"))
+                                "You should merge all changes to *CENTER* file due to limitation of program\n" ..
+                                   "arguments.\n\n"))
          cmd = merge3_meld_cmd(lfile, afile, rfile)
       elseif program_exists_in_path("xxdiff") then
          cmd = merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path, 
@@ -315,6 +335,10 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
          cmd = merge3_emacs_cmd("emacs", lfile, afile, rfile, outfile)
       elseif program_exists_in_path("xemacs") then
          cmd = merge3_emacs_cmd("xemacs", lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("gvim") then
+         cmd = merge3_vim_cmd("gvim", lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("vim") then
+         cmd = merge3_vim_cmd("vim", lfile, afile, rfile, outfile)
       end
       
       if cmd ~= nil
@@ -326,10 +350,10 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
          else
             data = read_contents_of_file(outfile)
          end
-	 if string.len(data) == 0 
-	 then 
-	    data = nil
-	 end
+         if string.len(data) == 0 
+         then 
+            data = nil
+         end
       else
          io.write("no external 3-way merge command found\n")
       end
