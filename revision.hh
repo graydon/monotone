@@ -139,7 +139,7 @@ calculate_composite_change_set(revision_id const & ancestor,
 
 
 void 
-build_changesets(app_state & app);
+build_changesets_from_manifest_ancestry(app_state & app);
 
 // basic_io access to printers and parsers
 

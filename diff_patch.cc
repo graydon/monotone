@@ -340,14 +340,30 @@ void normalize_extents(vector<extent> & a_b_map,
         while (j > 0
                && (a_b_map.at(j-1).type == preserved)
                && (a_b_map.at(j).type == changed)
+               && (a.at(j) == a.at(j-1))
                && (b.at(a_b_map.at(j-1).pos) == 
                    b.at(a_b_map.at(j).pos + a_b_map.at(j).len - 1)))
           {
-            // the idea here is that if preserved extent j-1 has the same
-            // contents as the last line in changed extent j of length N,
-            // then it's exactly the same to consider j-1 as changed, of
-            // length N, (starting 1 line earlier) and j as preserved as
-            // length 1.
+
+            //
+            // Coming into this loop, we've identified this situation:
+            //
+            //       A                               B
+            //   --------                    ----------------
+            //   j-1: foo   --preserved-->   mapped[j-1]: foo
+            //     j: foo   --changed---->   mapped[  j]: bar 
+            //                                            foo
+            //
+            // The normalization we want to perform is to move all
+            // "changed" extents to the earliest possible position which
+            // still causes the same B image to be produced.
+            // 
+            //       A                               B
+            //   --------                    ----------------
+            //   j-1: foo   --changed---->   mapped[j-1]: foo
+            //                                            bar
+            //     j: foo   --preserved-->   mapped[  j]: foo
+            //
 
             L(F("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
               % a_b_map.at(j-1).pos
@@ -361,7 +377,6 @@ void normalize_extents(vector<extent> & a_b_map,
           }
       }
     }
-
 
   for (size_t i = 0; i < a_b_map.size(); ++i)
     {
