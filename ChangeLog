@@ -1,3 +1,8 @@
+2004-12-05  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (package_full_revision.txt): Use top_builddir
+	to locate monotone executable.
+
 2004-12-04  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (fcommit): New command.
