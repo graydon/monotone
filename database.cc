@@ -14,6 +14,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include "cleanup.hh"
 #include "constants.hh"
@@ -82,10 +83,13 @@ void database::check_schema()
     }
 }
 
-struct sqlite * database::sql()
+struct sqlite * database::sql(bool init)
 {
   if (! __sql)
     {
+      if (! init && ! fs::exists(filename))
+	throw oops(string("database ") + filename.string() +
+		   string(" does not exist"));
       char * errmsg = NULL;
       __sql = sqlite_open(filename.string().c_str(), 0755, &errmsg);
       if (! __sql)
@@ -94,6 +98,17 @@ struct sqlite * database::sql()
       check_schema();
     }
   return __sql;
+}
+
+void database::initialize()
+{
+  if (__sql)
+    throw oops("cannot initialize database while it is open");
+  if (fs::exists(filename))
+    throw oops(string("could not initialize database: ") +
+	       filename.string() + string(": already exists"));
+  sqlite *s = sql(true);
+  I(s != NULL);
 }
 
 void database::ensure_open()

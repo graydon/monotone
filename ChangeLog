@@ -1,5 +1,18 @@
 2003-09-17  Tom Tromey  <tromey@redhat.com>
 
+	* testsuite.at (MONOTONE_SETUP): Use "monotone initdb".
+	* monotone.1: Document "initdb".
+	* monotone.texi (Commands): Document initdb.
+	(Creating a Database): New node.
+	(Getting Started): Refer to it.
+	* commands.cc (initdb): New command.
+	* database.cc (database::sql): New argument `init'.
+	(database::initialize): New method.
+	* database.hh (database::initalize): Declare.
+	(database::sql): New argument `init'.
+
+2003-09-17  Tom Tromey  <tromey@redhat.com>
+
 	* tests/t_persist_phrase.at: Use "ls certs".
 	* tests/t_nntp.at: Use "ls certs".
 	* tests/t_genkey.at: Use "ls keys" and "ls certs".

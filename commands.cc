@@ -2010,4 +2010,12 @@ CMD(cvs_import, "rcs", "<cvsroot>", "import all versions in CVS repository")
 }
 
 
+CMD(initdb, "database", "", "create a new database")
+{
+  if (args.size() != 0)
+    throw usage(name);
+  app.db.initialize();
+}
+
+
 }; // namespace commands
