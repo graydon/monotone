@@ -27,6 +27,7 @@ static string const key_option("key");
 app_state::app_state() 
   : branch_name(""), db(""), stdhooks(true), rcfiles(true)
 {
+  db.set_app(this);
 }
 
 app_state::~app_state()
@@ -34,14 +35,24 @@ app_state::~app_state()
 }
 
 // search for working copy
-// working_copy true  MT/options must exist and is read and written
-// working_copy false MT/options may  exist and is read for defaults
+// working_copy true  ==> MT/options must exist and is read and written
+// working_copy false ==> MT/options may  exist and is read for defaults
+
+// NB: this is not done in the constructor because checkout and setup
+// must not do any searching for the MT dir and associated directory
+// changing
+
+// FIXME: this should be revisited, requiring explicit calls to
+// app.initialize(true/false) for every command seems rather primitive
 
 void
 app_state::initialize(bool working_copy)
 {
   fs::path root;
   fs::path subdir;
+
+  // a lua hook or --root option here that returns a directory prefix
+  // or regex to stop the directory search might be good
 
   bool found = find_working_copy(root, subdir);
 
@@ -68,7 +79,6 @@ app_state::initialize(bool working_copy)
           L(F("relative directory is '%s'\n") % relative_directory());
         }
     }
-  db.set_app(this);
   load_rcfiles();
 }
 
@@ -82,6 +92,8 @@ app_state::initialize(std::string const & dir)
       fs::path co_dir = mkpath(dir);
       fs::create_directories(co_dir);
       chdir(co_dir.native_directory_string().c_str());
+      // this should probably have the exception handling code 
+      // added recently to .monotone
     }
 
   local_path mt(book_keeping_dir);
@@ -136,7 +148,6 @@ app_state::restriction_includes(file_path const & path)
       L(F("restricted path set cleared; '%s' included\n") % path());
       return true;
     }
-
 
   fs::path test = mkpath(path());
 
@@ -240,8 +251,8 @@ app_state::load_rcfiles()
       fs::path working_copy_rcfile;
       lua.default_rcfilename(default_rcfile);
       lua.working_copy_rcfilename(working_copy_rcfile);
-      lua.load_rcfile(default_rcfile);
-      lua.load_rcfile(working_copy_rcfile);
+      lua.load_rcfile(default_rcfile, false);
+      lua.load_rcfile(working_copy_rcfile, false);
     }
 
   // command-line rcfiles override even that
@@ -249,7 +260,7 @@ app_state::load_rcfiles()
   for (vector<utf8>::const_iterator i = extra_rcfiles.begin();
        i != extra_rcfiles.end(); ++i)
     {
-      lua.load_rcfile(mkpath((*i)()));
+      lua.load_rcfile(mkpath((*i)()), true);
     }
 }
 

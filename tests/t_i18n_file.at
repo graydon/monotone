@@ -27,7 +27,7 @@ export CHARSET=utf8
 AT_CHECK(MONOTONE add "tmp/$EUROPEAN_UTF8", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_UTF8", [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit 'adding european and japanese names in UTF-8', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding european and japanese names in UTF-8', [], [ignore], [ignore])
 
 # check the names showed up in our manifest
 
@@ -45,14 +45,14 @@ export CHARSET=iso88591
 AT_CHECK(MONOTONE drop "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$EUROPEAN_8859_1", [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit 'adding european name in ISO 8859-1', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding european name in ISO 8859-1', [], [ignore], [ignore])
 
 export LANG=ja_JP.eucjp
 export CHARSET=eucjp
 AT_CHECK(MONOTONE drop "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "tmp/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit 'adding japanese name in EUC-JP', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding japanese name in EUC-JP', [], [ignore], [ignore])
 
 # check the names showed up in our manifest
 

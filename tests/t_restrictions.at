@@ -28,8 +28,6 @@ AT_DATA(work/file3, [version 1 of file3
 AT_DATA(work/file4, [version 1 of file4
 ])
 
-SHA_3_1=`SHA1(work/file3)`
-
 AT_CHECK(MONOTONE add work/fileX, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add work/file2, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add work/file3, [], [ignore], [ignore])
@@ -61,7 +59,6 @@ AT_CHECK(grep work/foo.o stdout, [0], [ignore])
 # initial commit
 
 AT_CHECK(MONOTONE --branch=testbranch commit --message='add file[X23]', [], [ignore], [ignore])
-M_BASE=`SHA1(MT/manifest)`
 
 # create moved, dropped, and changed work to test status, diff, commit
 
@@ -70,8 +67,6 @@ AT_CHECK(rm work/file2)
 
 AT_DATA(work/file3, [version 2 of file3 with some changes
 ])
-
-SHA_3_2=`SHA1(work/file3)`
 
 AT_CHECK(MONOTONE rename work/fileX work/file1, [], [ignore], [ignore])
 AT_CHECK(MONOTONE drop work/file2, [], [ignore], [ignore])
@@ -196,8 +191,7 @@ AT_CHECK(EXCLUDED(X 1 2 3), [0], [ignore])
 AT_CHECK(MONOTONE commit --message='add file4' work/file4, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE status, [], [stdout], [ignore])
-AT_CHECK(grep 'no changes' stdout, [0], [ignore])
-M_HEAD=`SHA1(MT/manifest)`
+AT_CHECK(EXCLUDED(X 1 2 3 4), [0], [ignore])
 
 # setup for excluded commits
 

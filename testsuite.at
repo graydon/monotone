@@ -150,7 +150,10 @@ AT_CHECK(test $PROBE_F_SHA = $3)
 
 # run as REVERT_TO(rsha)
 m4_define([REVERT_TO], [ 
+AT_CHECK(rm -rf MT.old)
+AT_CHECK(mv  MT MT.old)
 AT_CHECK(MONOTONE checkout $1 ., [], [ignore])
+AT_CHECK(mv MT.old/options MT)
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
 ])
@@ -168,7 +171,7 @@ AT_DATA($1, $2)
 
 # run as COMMIT(branch)
 m4_define([COMMIT], [
-AT_CHECK(MONOTONE --branch=$1 commit blah-blah, [], [ignore],
+AT_CHECK(MONOTONE --branch=$1 commit --message blah-blah, [], [ignore],
 [ignore])
 ])
 

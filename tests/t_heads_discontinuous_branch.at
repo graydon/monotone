@@ -20,7 +20,7 @@ AT_XFAIL_IF(true)
 AT_DATA(f, [r1 data
 ])
 AT_CHECK(MONOTONE add f, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=branch1 commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
 R1_R_SHA=`BASE_REVISION`
 
 # Sanity check first...
@@ -30,13 +30,13 @@ AT_CHECK(grep -q $R1_R_SHA stdout)
 # Now create R2
 AT_DATA(f, [r2 data
 ])
-AT_CHECK(MONOTONE --branch=branch2 commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [ignore])
 R2_R_SHA=`BASE_REVISION`
 
 # Now create R3
 AT_DATA(f, [r3 data
 ])
-AT_CHECK(MONOTONE --branch=branch1 commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
 R3_R_SHA=`BASE_REVISION`
 
 # Now check heads on branch1

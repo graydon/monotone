@@ -49,7 +49,7 @@ AT_CHECK(grep bleh manifest, [0], [ignore], [ignore])
 AT_CHECK(grep foo manifest, [1], [ignore], [ignore])
 
 # now the moment of truth: do we *think* there was a rename?
-AT_CHECK(MONOTONE diff --manifest=$ROOT_M_SHA, [], [stdout], [ignore])
+AT_CHECK(MONOTONE diff --revision $ROOT_R_SHA, [], [stdout], [ignore])
 AT_CHECK(grep rename stdout, [0], [ignore], [ignore])
 
 AT_CHECK(rm bar)

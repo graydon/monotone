@@ -26,6 +26,7 @@ CHECK_SAME_STDOUT(MONOTONE agraph, MONOTONE2 agraph)
 CHECK_SAME_STDOUT(MONOTONE ls certs $BASE, MONOTONE ls certs $BASE)
 
 AT_CHECK(rm -rf MT)
+AT_CHECK(MONOTONE setup ., [], [ignore], [ignore])
 
 ADD_FILE(testfile2, [This is test file 2
 ])

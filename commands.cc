@@ -390,6 +390,15 @@ restrict_path_rearrangement(change_set::path_rearrangement const & work,
                     included.added_files, excluded.added_files, app);
 }
 
+static void 
+get_path_rearrangement(change_set::path_rearrangement & included,
+                       change_set::path_rearrangement & excluded,
+                       app_state & app)
+{
+  change_set::path_rearrangement work;
+  get_path_rearrangement(work);
+  restrict_path_rearrangement(work, included, excluded, app);
+}
 
 static void 
 update_any_attrs(app_state & app)
@@ -501,7 +510,7 @@ calculate_restricted_revision(app_state & app,
   manifest_id old_manifest_id;
   revision_id old_revision_id;    
   change_set cs;
-  path_set paths;
+  path_set old_paths, new_paths;
   manifest_map m_old_rearranged;
 
   rev.edges.clear();
@@ -512,35 +521,19 @@ calculate_restricted_revision(app_state & app,
                           old_revision_id, rev, 
                           old_manifest_id, m_old);
 
-  change_set::path_rearrangement work, included, excluded;
+  change_set::path_rearrangement included, excluded;
 
-  get_path_rearrangement(work);
-  restrict_path_rearrangement(work, included, excluded, app);
+  get_path_rearrangement(included, excluded, app);
+
+  extract_path_set(m_old, old_paths);
+  apply_path_rearrangement(old_paths, included, new_paths);
 
   cs.rearrangement = included;
   restricted_work = excluded;
 
-  apply_path_rearrangement(m_old, included, m_old_rearranged);
-  extract_path_set(m_old_rearranged, paths);
-  build_restricted_manifest_map(paths, m_old, m_new, app);
+  build_restricted_manifest_map(new_paths, m_old, m_new, app);
+  complete_change_set(m_old, m_new, cs);
 
-  I(m_new.size() == m_old_rearranged.size());
-  manifest_map::const_iterator i = m_old_rearranged.begin();
-  for (manifest_map::const_iterator j = m_new.begin(); j != m_new.end(); ++j, ++i)
-    {
-      I(manifest_entry_path(i) == manifest_entry_path(j));
-      if (! (manifest_entry_id(i) == manifest_entry_id(j)))
-        {
-          L(F("noted delta %s -> %s on %s\n") 
-            % manifest_entry_id(i) 
-            % manifest_entry_id(j) 
-            % manifest_entry_path(i));
-          cs.deltas.insert(make_pair(manifest_entry_path(i),
-                                     make_pair(manifest_entry_id(i),
-                                               manifest_entry_id(j))));
-        }
-    }
-  
   calculate_ident(m_new, rev.new_manifest);
   L(F("new manifest is %s\n") % rev.new_manifest);
 
@@ -1161,6 +1154,8 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
 {
   if (args.size() < 4)
     throw usage(name);
+
+  app.initialize(false);
 
   revision_id rid;
   complete(app, idx(args, 0)(), rid);
@@ -1898,8 +1893,8 @@ ls_missing (app_state & app, vector<utf8> const & args)
   revision_id rid;
   manifest_id mid;
   manifest_map man, man_rearranged;
-  change_set::path_rearrangement work, included_work, excluded_work;
-  path_set paths;
+  change_set::path_rearrangement included, excluded;
+  path_set old_paths, new_paths;
 
   app.initialize(true);
 
@@ -1923,13 +1918,11 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   L(F("old manifest has %d entries\n") % man.size());
 
-  get_path_rearrangement(work);
-  restrict_path_rearrangement(work, included_work, excluded_work, app);
+  get_path_rearrangement(included, excluded, app);
+  extract_path_set(man, old_paths);
+  apply_path_rearrangement(old_paths, included, new_paths);
 
-  apply_path_rearrangement(man, included_work, man_rearranged);
-  extract_path_set(man_rearranged, paths);
-
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
       if (app.restriction_includes(*i) && !file_exists(*i))	
 	cout << *i << endl;
@@ -2367,6 +2360,8 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
 
+  app.initialize(true);
+
   data attr_data;
   file_path attr_path;
   attr_map attrs;
@@ -2720,14 +2715,13 @@ CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]..."
     {
       revision_id r_old_id;
       manifest_map m_old;
-      complete(app, idx(args, 0)(), r_old_id);
+      complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("revision %s does not exist") % r_old_id);
       app.db.get_revision(r_old_id, r_old);
       calculate_restricted_revision(app, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       N(r_new.edges.size() == 1, F("current revision has no ancestor"));
-      complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       new_is_archived = false;
     }
   else if (app.revision_selectors.size() == 2)
@@ -2838,6 +2832,8 @@ CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor")
   if (args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   revision_id anc, left, right;
 
   complete(app, idx(args, 0)(), left);
@@ -2854,6 +2850,8 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
 {
   if (args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
 
   revision_id anc, left, right;
 
@@ -3322,6 +3320,8 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
 
   if (args.size() != 3 && args.size() != 4)
     throw usage(name);
+
+  app.initialize(false);
 
   if (args.size() == 4)
     {

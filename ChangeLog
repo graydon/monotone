@@ -1,3 +1,52 @@
+2005-01-09  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (get_path_rearrangement): new function/signature for
+	splitting restricted rearrangements
+	(calculate_restricted_revision): use it and update to work
+	similarly to calculate_current_revision
+	(trusted): call app.initialize(false)
+	(ls_missing): adjust for new get_path_rearrangement
+	(attr): call app.initialize(true)
+	(diff): merge cleanup
+	(lca, lcad, explicit_merge): call app.initialize(false)
+	* app_state.cc (constructor): set database app state
+	(load_rcfiles): add required booleans
+	* lua.{cc,hh} (load_rcfile): add required boolean
+	* tests/t_add.at:
+	* tests/t_diff_added_file.at:
+	* tests/t_disapprove.at:
+	* tests/t_drop_missing.at:
+	* tests/t_heads.at:
+	* tests/t_heads_discontinuous_branch.at:
+	* tests/t_i18n_file.at:
+	* tests/t_log_nonexistent.at:
+	* tests/t_merge_add_del.at:
+	* tests/t_netsync.at:
+	* tests/t_netsync_pubkey.at:
+	* tests/t_netsync_single.at:
+	* tests/t_persistent_server_keys.at:
+	* tests/t_persistent_server_revision.at:
+	* tests/t_remerge.at:
+	* tests/t_tags.at:
+	* tests/t_update_missing.at:
+	* tests/t_update_to_revision.at: add --message option to commits 
+	* tests/t_merge2_add.at:
+	* tests/t_merge2_data.at:
+	* tests/t_netsync_unrelated.at: create working directory with new
+	setup command
+	* tests/t_erename.at: update for revisions
+	* tests/t_no_change_deltas.at: add --revision options to diff
+	* tests/t_restrictions.at: remove some cruft and update to work
+	with revisions
+	* tests/t_subdirs.at: pass correct --rcfile and --db options from
+	within subdir
+	* testsuite.at (REVERT_TO): remove MT dir before checkout, which
+	now fails if MT exists, replace checkout MT/options with old
+	MT/options
+	(COMMIT): add --message option to commit macro
+	* work.cc (read_options_map): don't overwrite option settings when
+	reading options map so that command line settings take precedence
+
 2004-12-30  graydon hoare  <graydon@pobox.com>
 
 	* constants.cc (netcmd_current_protocol_version): Set to 3.
@@ -142,6 +191,12 @@
 
 	* win32/read_password.c: Remove unused file.
 
+2004-12-22  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Verify that the key identifier passed to the pubkey
+	and privkey commands exists in the database.  Otherwise exit with
+	an informational message instead of an exception.
+
 2004-12-20  Matt Johnston  <matt@ucc.asn.au>
 
         * keys.cc: don't cache bad passphrases, so prompt for a correct
@@ -151,12 +206,6 @@
 
         * commands.cc: print out author/date next to ambiguous revision
         lists from selectors.
-
-2004-12-22  Julio M. Merino Vidal  <jmmv@menta.net>
-
-	* commands.cc: Verify that the key identifier passed to the pubkey
-	and privkey commands exists in the database.  Otherwise exit with
-	an informational message instead of an exception.
 
 2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
 
@@ -243,6 +292,20 @@
 	(struct hunk_consumer): Move next to rest of unidiff code.
 	(walk_hunk_consumer): Likewise.
 
+2004-12-18  Matt Johnston <matt@ucc.asn.au>
+
+	* change_set.cc (concatenate_change_sets): Be more careful checking
+	whether to discard deltas for deleted files (in particular take
+	care when files are removed then re-added) - fixes tests
+	t_patch_drop_add, t_add_drop_add.at, t_add_patch_drop_add,
+	t_merge2_add_drop_add
+	* change_set.cc (project_missing_deltas): don't copy deltas
+	for deleted files, and handle the case where src file ids vary when
+	files are added/removed. (fixes t_patch_vs_drop_add)
+	* t_patch_drop_add.at, t_add_drop_add.at, t_add_patch_drop_add.at,
+	  t_merge2_add_drop_add.at, t_patch_vs_drop_add.t: don't expect
+	to fail any more.
+
 2004-12-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_persistent_server_keys.at: 
@@ -267,20 +330,6 @@
 	* revision.{cc,hh} (construct_revisions): Rename to prepare for
 	next rebuild-the-graph migration.
 	* commands.cc (db): Change call name.
-
-2004-12-18  Matt Johnston <matt@ucc.asn.au>
-
-	* change_set.cc (concatenate_change_sets): Be more careful checking
-	whether to discard deltas for deleted files (in particular take
-	care when files are removed then re-added) - fixes tests
-	t_patch_drop_add, t_add_drop_add.at, t_add_patch_drop_add,
-	t_merge2_add_drop_add
-	* change_set.cc (project_missing_deltas): don't copy deltas
-	for deleted files, and handle the case where src file ids vary when
-	files are added/removed. (fixes t_patch_vs_drop_add)
-	* t_patch_drop_add.at, t_add_drop_add.at, t_add_patch_drop_add.at,
-	  t_merge2_add_drop_add.at, t_patch_vs_drop_add.t: don't expect
-	to fail any more.
 
 2004-12-16  Joel Rosdahl  <joel@rosdahl.net>
 
@@ -413,36 +462,42 @@
 	* testsuite.at: Change get_revision_cert_trust to support
 	t_trusted.at.  Call t_trusted.at.
 	
+2004-12-11  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (restriction_includes): renamed from
+	in_restriction to be less obscure; use path_set rather than
+	set<file_path>
+	* commands.cc 
+	(restrict_path_set):
+	(restrict_rename_set):
+	(restrict_path_rearrangement):
+	(calculate_restricted_revision): new restriction functions
+	(restrict_patch_set): remove old restrictions machinery
+	(status): call calculate_restricted_revision
+	(ls_tags): call app.initialize
+	(unknown_itemizer): restriction_includes renamed
+	(ls_unknown): call calculate_restricted_revision
+	(ls_missing): rework for restrictions
+	(commit): switch to --message option, optional paths and preserve
+	restricted work
+	(diff): allow restrictions for zero and one arg variants
+	(revert): note some work left to do
+	* manifest.{cc,hh} (build_manifest_map): hide unused things
+	(build_restricted_manifest_map): new function
+	* transforms.{cc,hh} (calculate_ident): clean up merge artifacts
+	* work.cc (read_options_map): merge cleanup to preserve command
+	line options
+
 2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (package_full_revision.txt): Redo Joel Rosdahl
 	<joel@rosdahl.net>'s change below after it got clobbered by
 	merge.
 
-2004-12-06  Joel Rosdahl  <joel@rosdahl.net>
-
-	* Makefile.am (package_full_revision.txt): Silence error messages
-	when deducing full package revision.
-
 2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc (log): Synopsize optional 'file' argument, and
 	describe both arguments in help description.
-
-2004-12-09  Derek Scherger  <derek@echologic.com>
-
-	* .mt-nonce: delete obsolete file	
-	* change_set.cc (merge_deltas): add file paths in call to
-	try_to_merge_files
-	* commands.cc (propagate): add progress logging similar to merge
-	* diff_patch.{cc,hh} (try_to_merge_files): add file paths to
-	merge2 and merge3 hooks; add logging of paths before calling merge
-	hooks
-	* lua.{cc,hh} (hook_merge2, hook_merge3): add file paths to merge
-	hooks
-	* std_hooks.lua (merge2, merge3, merge2_xxdiff_cmd,
-	merge3_xxdiff_cmd): pass file paths to xxdiff for use as titles
-	* testsuite.at (MONOTONE_SETUP): add paths to merge2 hook
 
 2004-12-10  Matt Johnston  <matt@ucc.asn.au>
 
@@ -643,32 +698,6 @@
 	* Makefile.am (package_full_revision.txt): Silence error messages
 	when deducing full package revision.
 
-2004-12-11  Derek Scherger  <derek@echologic.com>
-
-	* app_state.{cc,hh} (restriction_includes): renamed from
-	in_restriction to be less obscure; use path_set rather than
-	set<file_path>
-	* commands.cc 
-	(restrict_path_set):
-	(restrict_rename_set):
-	(restrict_path_rearrangement):
-	(calculate_restricted_revision): new restriction functions
-	(restrict_patch_set): remove old restrictions machinery
-	(status): call calculate_restricted_revision
-	(ls_tags): call app.initialize
-	(unknown_itemizer): restriction_includes renamed
-	(ls_unknown): call calculate_restricted_revision
-	(ls_missing): rework for restrictions
-	(commit): switch to --message option, optional paths and preserve
-	restricted work
-	(diff): allow restrictions for zero and one arg variants
-	(revert): note some work left to do
-	* manifest.{cc,hh} (build_manifest_map): hide unused things
-	(build_restricted_manifest_map): new function
-	* transforms.{cc,hh} (calculate_ident): clean up merge artifacts
-	* work.cc (read_options_map): merge cleanup to preserve command
-	line options
-
 2004-12-06  graydon hoare  <graydon@pobox.com>
 
 	* unix/get_system_flavour.cc:
@@ -761,59 +790,8 @@
 
 2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
 
-	* change_set.cc (merge_deltas): Call correct variant of
-	try_to_merge_files depending on whether ancestor is available.
-	* diff_patch.cc (try_to_merge_files -- merge3 version): Add
-	assertions about ids.
-	(try_to_merge_files -- merge2 version): Likewise.
-
-	* testsuite.at: Add a trivial working merge2 hook.
-	* tests/t_related_merge2_data.at: Update to use.
-	Mark as expected to PASS.
-	* tests/t_merge2_data.at: Likewise.
-
-2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
-
 	* change_set.cc: Remove tabs.
 	* diff_patch.cc: Likewise.
-
-2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
-
-	* change_set.cc: Remove tabs.
-	* diff_patch.cc: Likewise.
-
-2004-12-04  graydon hoare  <graydon@pobox.com>
-
-        * commands.cc (fcommit): New command.
-        (update): Finish off merge of update command.
-
-2004-12-04  Derek Scherger  <derek@echologic.com>
-
-        * commands.cc: (complete_command): New function.
-        (explain_usage/process): Use it.
-
-2004-12-02  Derek Scherger  <derek@echologic.com>
-
-	* commands.cc: more tweaking to ease changeset merge
-
-2004-12-01  Derek Scherger  <derek@echologic.com>
-
-	* commands.cc: reordered commands to help merge with changesets
-	branch
-
-2004-12-01  graydon hoare  <graydon@pobox.com>
-
-	* {unix,win32}/get_system_flavour.cc: New files.
-	* basic_io.{cc,hh}: Give names to input sources.
-	* monotone.cc: Move app_state ctor inside try.
-	* platform.hh (get_system_flavour): Declare.
-	* revision.cc: Name input source "revision".
-	* sanity.cc: Log flavour on startup.
-	* tests/t_attributes.at: Use new syntax.
-	* transforms.{cc,hh} (split_into_lines): New variant, and rewrite.
-	* work.{cc,hh}: Rewrite attributes to use basic_io.
-	(get_attribute_from_db):
-	(get_attribute_from_working_copy): New functions.
 
 2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
 
@@ -852,6 +830,15 @@
 2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* std_hooks.lua: Add missing newlines to two error messages.
+
+2004-12-02  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: more tweaking to ease changeset merge
+
+2004-12-01  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: reordered commands to help merge with changesets
+	branch
 
 2004-12-01  graydon hoare  <graydon@pobox.com>
 

@@ -27,30 +27,33 @@ AT_CHECK(MONOTONE status, [], [stdout], [])
 AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 
+ROOT=`pwd`
+m4_define([MONOTONE_SUB], [monotone --rcfile=$ROOT/test_hooks.lua --nostd --norc --db=$ROOT/test.db --key=tester@test.net])
+
 cd foo
-AT_CHECK(MONOTONE --db=../test.db status, [], [stdout], [])
+AT_CHECK(MONOTONE_SUB status, [], [stdout], [])
 AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 
-AT_CHECK(MONOTONE --db=../test.db status ., [], [stdout], [])
+AT_CHECK(MONOTONE_SUB status ., [], [stdout], [])
 AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [1], [ignore])
 
-AT_CHECK(MONOTONE --db=../test.db status .., [], [stdout], [])
+AT_CHECK(MONOTONE_SUB status .., [], [stdout], [])
 AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 cd ..
 
 cd bar
-AT_CHECK(MONOTONE --db=../test.db status, [], [stdout], [])
+AT_CHECK(MONOTONE_SUB status, [], [stdout], [])
 AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 
-AT_CHECK(MONOTONE --db=../test.db status ., [], [stdout], [])
+AT_CHECK(MONOTONE_SUB status ., [], [stdout], [])
 AT_CHECK(grep 'foo/foo' stdout, [1], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 
-AT_CHECK(MONOTONE --db=../test.db status .., [], [stdout], [])
+AT_CHECK(MONOTONE_SUB status .., [], [stdout], [])
 AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 cd ..

@@ -448,7 +448,7 @@ lua_hooks::working_copy_rcfilename(fs::path & file)
 
 
 void 
-lua_hooks::load_rcfile(fs::path const & rc)
+lua_hooks::load_rcfile(fs::path const & rc, bool required)
 {
   I(st);  
   if (fs::exists(rc))

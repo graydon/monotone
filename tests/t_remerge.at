@@ -35,28 +35,28 @@ AT_DATA(quux, [extra blah blah quux
 
 # produce state A
 AT_CHECK(MONOTONE add x, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=branch.x commit 'state A', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.x commit --message 'state A', [], [ignore], [ignore])
 A_REVISION_SHA=`BASE_REVISION`
 
 # produce state B
 echo "data of state B" >x
-AT_CHECK(MONOTONE --branch=branch.x commit 'state B', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.x commit --message 'state B', [], [ignore], [ignore])
 
 # produce state C
 echo "data of state C" >x
-AT_CHECK(MONOTONE --branch=branch.x commit 'state C', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.x commit --message 'state C', [], [ignore], [ignore])
 C_REVISION_SHA=`BASE_REVISION`
 
 # produce state E
 REVERT_TO($A_REVISION_SHA)
 AT_CHECK(MONOTONE rename x y, [], [ignore], [ignore])
 mv x y
-AT_CHECK(MONOTONE --branch=branch.y commit 'state E', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.y commit --message 'state E', [], [ignore], [ignore])
 E_REVISION_SHA=`BASE_REVISION`
 
 # produce state F
 AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=branch.y commit 'state F', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.y commit --message 'state F', [], [ignore], [ignore])
 
 # produce state G
 AT_CHECK(MONOTONE propagate branch.x branch.y, [], [ignore], [ignore])
@@ -68,12 +68,12 @@ AT_CHECK(grep 'state C' y, [], [ignore], [ignore])
 REVERT_TO($C_REVISION_SHA)
 echo "data of state D" >x
 AT_CHECK(MONOTONE add bar, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=branch.x commit 'state D', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.x commit --message 'state D', [], [ignore], [ignore])
 
 # produce state H
 REVERT_TO($G_REVISION_SHA)
 AT_CHECK(MONOTONE add baz, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=branch.y commit 'state H', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.y commit --message 'state H', [], [ignore], [ignore])
 
 # produce state I
 AT_CHECK(MONOTONE propagate branch.x branch.y, [], [ignore], [ignore])
@@ -83,7 +83,7 @@ AT_CHECK(grep 'state D' y, [], [ignore], [ignore])
 # produce state J
 REVERT_TO($E_REVISION_SHA)
 AT_CHECK(MONOTONE add quux, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=branch.y commit 'state J', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.y commit --message 'state J', [], [ignore], [ignore])
 
 # produce state K
 AT_CHECK(MONOTONE --branch=branch.y merge, [], [ignore], [ignore])

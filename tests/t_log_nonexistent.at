@@ -7,17 +7,17 @@ MONOTONE_SETUP
 
 ADD_FILE(foo, [foo
 ])
-AT_CHECK(MONOTONE --branch=testbranch commit "Addition of foo.",
+AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of foo.",
          [], [ignore], [ignore])
 
 ADD_FILE(bar, [bar
 ])
-AT_CHECK(MONOTONE --branch=testbranch commit "Addition of bar.",
+AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of bar.",
          [], [ignore], [ignore])
 
 ADD_FILE(baz, [baz
 ])
-AT_CHECK(MONOTONE --branch=testbranch commit "Addition of baz.",
+AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of baz.",
          [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE drop bar baz, [], [ignore], [ignore])
