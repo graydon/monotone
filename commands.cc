@@ -1580,10 +1580,35 @@ CMD(heads, "tree", "", "show unmerged heads of branch")
   else
     cout << "branch '" << app.branch_name << "' is currently unmerged:" << endl;
 
+  cert_name author_name(author_cert_name);
+  cert_name date_name(date_cert_name);
+
   for (set<manifest_id>::const_iterator i = heads.begin(); 
        i != heads.end(); ++i)
     {
-      cout << i->inner()() << endl;
+      cout << i->inner()(); 
+
+      // print authors and date of this head
+      vector< manifest<cert> > tmp;
+      app.db.get_manifest_certs(*i, author_name, tmp);
+      erase_bogus_certs(tmp, app);
+      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+      {
+	 cert_value tv;
+	 decode_base64(j->inner().value, tv);
+	 cout << " " << tv;
+      }
+      app.db.get_manifest_certs(*i, date_name, tmp);
+      erase_bogus_certs(tmp, app);
+      for (vector< manifest<cert> >::const_iterator j = tmp.begin();
+	       j != tmp.end(); ++j)
+      {
+	 cert_value tv;
+	 decode_base64(j->inner().value, tv);
+	 cout << " " << tv;
+      }
+      cout << endl;
     }
 }
 

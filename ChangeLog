@@ -1,5 +1,10 @@
 2004-04-28  Christof Petig <christof@petig-baender.de>
 
+	* command.cc (heads):
+		show date and author certificates for each head
+
+2004-04-28  Christof Petig <christof@petig-baender.de>
+
 	* configure.ac:
 		default to using the bundled SQLite
 
