@@ -37,7 +37,6 @@ netcmd.cc
 netcmd.hh
 netsync.cc
 netsync.hh
-os_specific.hh
 packet.cc
 packet.hh
 packet_types.hh

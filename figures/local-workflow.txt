@@ -1,9 +1,0 @@
-   -----------------     check out,      working copy
-  (                 )    or update      +----------------
-   -----------------     ---------->    |
-  |                 |                   |  src/func.c
-  |      local      |   <----------     |  src/func.h
-  |     database    |    add,           |  src/main.c
-  |                 |    or commit      |  Makefile
-  \_________________/                   |  MT/
-                                        |

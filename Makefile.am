@@ -204,9 +204,23 @@ DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 
 # extra files
 
+PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf				\
+	figures/difference-between-versions.pdf					\
+	figures/file-id-manifest-id.pdf figures/fork.pdf			\
+	figures/general-workflow.pdf figures/linear-history.pdf			\
+	figures/local-workflow.pdf figures/manifest.pdf figures/merge.pdf	\
+	figures/network-workflow.pdf figures/parent-child-hashes.pdf		\
+	figures/parent-child-names-hashes.pdf figures/parent-child.pdf		\
+	figures/revision-chaining.pdf figures/revision.pdf			\
+	figures/statement.pdf figures/three-versions.pdf			\
+	figures/two-branches.pdf
+
+EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
+
 man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
+	     $(PDF_FIGURES) \
              INSTALL \
              monotone.spec \
              monotone.html \
@@ -221,9 +235,21 @@ EXTRA_DIST = $(man1_MANS) \
 	     package.m4 \
              $(wildcard m4/*.m4)
 
-PDF_FIGURES=$(wildcard figures/*.pdf)
+MAKEINFOFLAGS=-I $(top_builddir)
 
 monotone.pdf: monotone.texi $(PDF_FIGURES)
+
+monotone.dvi: monotone.texi $(EPS_FIGURES)
+
+%.eps: %.epsi
+	mv $< $@
+
+%.epsi: %.ps
+	ps2epsi $< $@
+
+$(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
+	mkdir -p $(top_builddir)/figures
+	acroread -toPostScript -pairs $< $@
 
 
 # testsuite stuff (could this possibly be more ugly?)
@@ -271,7 +297,7 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES = std_hooks.h test_hooks.h schema.h views.h
-CLEANFILES = $(BUILT_SOURCES)
+CLEANFILES = $(BUILT_SOURCES) $(EPS_FIGURES)
 
 txt2c: txt2c.cc Makefile
 	$(CXX) -Wall -o $@ $<

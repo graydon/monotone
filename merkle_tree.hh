@@ -57,9 +57,9 @@ slot_state;
 struct merkle_node
 {    
   size_t level;
-  boost::dynamic_bitset<char> pref;
+  boost::dynamic_bitset<unsigned char> pref;
   size_t total_num_leaves;
-  boost::dynamic_bitset<char> bitmap;
+  boost::dynamic_bitset<unsigned char> bitmap;
   std::vector<id> slots;
   netcmd_item_type type;
 
@@ -76,7 +76,7 @@ struct merkle_node
   void set_raw_slot(size_t slot, id const & val);
   void set_hex_slot(size_t slot, hexenc<id> const & val);
 
-  void extended_prefix(size_t slot, boost::dynamic_bitset<char> & extended) const;
+  void extended_prefix(size_t slot, boost::dynamic_bitset<unsigned char> & extended) const;
   void extended_raw_prefix(size_t slot, prefix & extended) const;
   void extended_hex_prefix(size_t slot, hexenc<prefix> & extended) const;
 
@@ -108,7 +108,7 @@ id store_merkle_node(app_state & app,
 		     merkle_node const & node);
 
 void pick_slot_and_prefix_for_value(id const & val, size_t level, 
-				    size_t & slotnum, boost::dynamic_bitset<char> & pref);
+				    size_t & slotnum, boost::dynamic_bitset<unsigned char> & pref);
 
 // this inserts a leaf into the appropriate position in a merkle
 // tree, writing it to the db and updating any other nodes in the

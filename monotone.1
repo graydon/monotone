@@ -17,22 +17,23 @@ monotone\fP command, or online).
 .SS Commands
 .TP 
 \fBcomment\fP \fI<id>\fP
-Write a comment cert for a manifest version.
+Write a comment cert for a revision.
 .TP
 \fBapprove\fP \fI<id1> <id2>\fP
-Make a cert approving of a manifest change.
+Make a "branch" cert approving of a revision's membership in a branch.
 .TP
 \fBdisapprove\fP \fI<id1> <id2>\fP
-Make a cert disapproving of a manifest change.
+Disapprove of a revision, committing the inverse changes as as a
+descendant of the disapproved revision.
 .TP
 \fBtag\fP \fI<id> <tagname>\fP
-Put a symbolic tag cert on a manifest version.
+Put a symbolic tag cert on a revision.
 .TP
 \fBtestresult\fP \fI<id> (1|0)\fP
-Indicate a passing or failing test result on a manifest version.
+Indicate a passing or failing test result on a revision.
 .TP
 \fBagraph\fP
-Dump ancestry graph to stdout.
+Dump revision graph to stdout.
 .TP
 \fBdiff\fP
 Show diffs between working copy and database.
@@ -41,11 +42,11 @@ Show diffs between working copy and database.
 Show status of working copy.
 .TP
 \fBlog\fP \fI[id] \fP
-Show historical log of manifests, starting from working copy
-base version, or \fI[id]\fP if given.
+Show historical log of revisions, starting from working copy
+base revision, or \fI[id]\fP if given.
 .TP
 \fBcert\fP \fI<id> <certname> [certval]\fP
-Create a custom cert for a manifest. Reads cert value
+Create a custom cert for a revision. Reads cert value
 from stdin if no value given on command line.
 .TP
 \fBvcheck\fP \fI(create|check) [id]\fP
@@ -55,7 +56,7 @@ Produce or check \fBvcheck\fP certs for the given manifest \fI[id]\fP.
 Generate an RSA key-pair and store it in the database.
 .TP
 \fBlist certs\fP \fI<id>\fP
-List certs associated with manifest.
+List certs associated with revision.
 .TP
 \fBlist keys\fP \fI[partial-id]\fP
 List keys matching glob, or list all keys if no glob given.
@@ -64,13 +65,14 @@ List keys matching glob, or list all keys if no glob given.
 List all branches.
 .TP
 \fBlist unknown\fP
-List files in working directory, but not in manifest or work list.
+List files in working directory, but not in revision's manifest or
+work list.
 .TP
 \fBlist ignored\fP
 List files intentionally ignored due to the ignore_file hook.
 .TP
 \fBlist missing\fP
-List files in manifest, but not in working directory.
+List files in revision's manifest, but not in working directory.
 .TP
 \fBfcerts\fP \fI<id>\fP
 Write file cert packets to stdout.
@@ -87,6 +89,15 @@ Write manifest cert packets to stdout.
 \fBmdata\fP \fI<id>\fP
 Write manifest data packet to stdout.
 .TP
+\fBmdelta\fP \fI<oldid> <newid>\fP
+Write manifest delta packet to stdout.
+.TP
+\fBrcerts\fP \fI<id>\fP
+Write revision cert packets to stdout.
+.TP
+\fBrdata\fP \fI<id>\fP
+Write revision data packet to stdout.
+.TP
 \fBprivkey\fP \fI<id>\fP
 Write private key packet to stdout.
 .TP
@@ -97,10 +108,13 @@ Write public key packet to stdout.
 Read packets from stdin. 
 .TP
 \fBcvs_import\fP \fI<cvsroot>\fP
-import all versions in CVS repository
+Import all versions in CVS repository. Reconstructs revisions and
+converts metadata to certificates. A private signing key must already
+exist in the database.
 .TP
 \fBrcs_import\fP \fI<rcsfile> ...\fP
-import all versions in RCS files
+Import all file versions in RCS files. Does not reconstruct revisions
+across the entire tree.
 .TP
 \fBcheckout\fP \fI[manifest-id]\fP \fI<directory\fP
 Check out tree state from database.
@@ -119,7 +133,7 @@ Merge unmerged heads of branch.
 .TP
 \fBadd\fP \fI<pathname> [...]\fP
 Add files to working copy. adding a file does not copy it into the database,
-merely adds it to the manifest. You must \fBcommit\fP your changes in order
+merely adds it to the work list. You must \fBcommit\fP your changes in order
 to copy added files to the database.
 .TP
 \fBcommit\fP \fI[log message]\fP
@@ -128,7 +142,7 @@ line, it is used; otherwise a log message editor will be invoked.
 .TP
 \fBdrop\fP \fI<pathname> [...]\fP
 Drop files from working copy. Files are not deleted from working copy, 
-merely removed from the manifest.
+merely noted as removals in the work list.
 .TP
 \fBrename\fP \fI<src> \fI<dst>\fP
 Rename files from \fI<src> \fP to \fI<dst> \fP in working copy.
@@ -170,9 +184,16 @@ communicate with network servers.
 \fB--help\fP
 Print help message.
 .TP
-\fB--verbose\fP
-Trace execution verbosely. default is to be silent, unless 
-an error occurs, in which case failure log is dumped.
+\fB--debug\fP
+Turn on debugging log on standard error stream. This is very
+verbose. Default is to be silent, unless an error occurs, in which
+case failure log is dumped.
+.TP
+\fB--quiet\fP
+Turn off normal progress messages.
+.TP
+\fB--dump=\fP\fI<file>\fP
+Dump debugging log to \fIfile\fP on failure.
 .TP
 \fB--nostd\fP
 Do not evaluate "standard" lua hooks compiled into \fBmonotone\fP.
@@ -195,6 +216,13 @@ be customized on a per-branch basis with hook function
 \fB--branch=\fP\fI<branchname>\fP
 Use \fIbranchname\fP for operations on a branch. Default is inferred
 in operations on existing branches (commit, update, etc).
+.TP
+\fB--ticket=\fP\fIdot|count\fP
+Use the given method to print tickers.  The \fBcount\fP method prints
+the count for each ticker on one line, incrementing the numbers in
+place, while the \fBdot\fP method prints a continuous string of
+characters (like some programs provide a progress line of dots).
+The default is \fBcount\fP.
 .SH ENVIRONMENT
 .TP
 \fBEDITOR\fP
