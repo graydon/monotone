@@ -2092,6 +2092,12 @@ CMD(update, "working copy", "", "update working copy")
 }
 
 
+
+// this helper tries to produce merge <- mergeN(left,right); it searches
+// for a common ancestor and if none is found synthesizes a common one with
+// no contents. it then computes composite changesets via the common
+// ancestor and does a 3-way merge.
+
 static void 
 try_one_merge(revision_id const & left_id,
 	      revision_id const & right_id,
@@ -2315,16 +2321,7 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
 
 /*
 
-// this helper tries to produce merge <- mergeN(left,right); it searches
-// for a common ancestor and if none is found synthesizes a common one with
-// no contents. it then computes composite changesets via the common
-// ancestor and does a 3-way merge.
-
-
-
 // actual commands follow
-
-
 
 // conversion to revisions:
 //
@@ -2362,21 +2359,21 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
 // fcerts
 // pubkey
 // privkey
+// diff
+// update
+// merge
+// propagate
 //
 // read
-// rcs_import
-// cvs_import
 // debug
 // db
 //
 // NOT-DONE
 // --------
-// update
 // revert
-// merge
-// propagate
-// diff
 // log
+// rcs_import
+// cvs_import
 //
 // agraph
 

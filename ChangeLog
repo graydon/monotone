@@ -1,3 +1,7 @@
+2004-09-29  graydon hoare  <graydon@pobox.com>
+
+	* change_set.cc: Various bug fixes, merge unit tests.
+
 2004-09-26  graydon hoare  <graydon@pobox.com>
 
 	* predicament.{cc,hh}: Remove.

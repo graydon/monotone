@@ -205,6 +205,7 @@ path_state_item(path_state::const_iterator i)
 
 // structure dumping 
 /*
+
 static void
 dump_renumbering(std::string const & s,
 		 state_renumbering const & r)
@@ -945,7 +946,6 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
   // dump_renumbering("second", renumbering);
   apply_state_renumbering(renumbering, pa.second);
   // dump_analysis("renumbered again", pa);
-  
 
   // that should be the whole deal; if we don't have consensus at this
   // point we have done something wrong.
@@ -1277,6 +1277,59 @@ resolve_conflict(tid t, ptype ty,
 }
 
 static void
+ensure_no_rename_clobbers(path_analysis const & a, 
+			  path_analysis const & b)
+{
+  // there is a special non-mergable pair of changes which we need
+  // to identify here: 
+  //
+  //   tid i : x -> y   in change A
+  //   tid j : z -> x   in change B
+  //
+  // on the surface it looks like it ought to be mergable, since there is
+  // no conflict in the tids. except for one problem: B effectively
+  // clobbered i with j. there is nothing you can append to change B to
+  // revive the identity of i; in fact you risk having i and j identified
+  // if you form the naive merge concatenation BA. indeed, since A and B
+  // both supposedly start in the same state (in which i occupies name x),
+  // it really ought not to be possible to form B; you should have to
+  // accompany it with some sort of statement about the fate of i.
+  //
+  // as it stands, we're going to fault when we see this. if it turns out
+  // that there's a legal way of constructing such changes, one option is
+  // to synthesize a delete of i in B; essentially read "z->x" as an
+  // implicit "delete x first if it exists in post-state".
+  //
+  // however, for the time being this is a fault because we believe they
+  // should be globally illegal clobbers.
+
+  directory_map b_first_map, b_second_map;
+  build_directory_map (b.first, b_first_map);
+  build_directory_map (b.second, b_second_map);
+  tid a_tid, b_tid;
+
+  for (path_state::const_iterator i = a.first.begin(); 
+       i != a.first.end(); ++i)
+    {
+      file_path anc_path, a_second_path;
+      a_tid = path_state_tid(i);
+      get_full_path(a.first, a_tid, anc_path);
+
+      if (! lookup_path(anc_path, b_first_map, b_tid))
+	{
+	  file_path b_second_path;
+	  reconstruct_path(anc_path, b_first_map, b.second, b_second_path);
+
+	  N(! lookup_path(b_second_path, b_second_map, b_tid),
+	    (F("tid %d (%s) clobbered tid %d (%s)\n")
+	     % b_tid % b_second_path 
+	     % a_tid % anc_path));
+	}
+    }
+
+}
+
+static void
 project_missing_changes(path_analysis const & a_tmp, 
 			path_analysis const & b_tmp, 
 			path_analysis & b_merged, 
@@ -1299,7 +1352,7 @@ project_missing_changes(path_analysis const & a_tmp,
       path_item a_first_item, a_second_item;
       path_item b_first_item, b_second_item;
       I(find_items(t, a_tmp, a_first_item, a_second_item));
-      if (find_items(t, a_tmp, a_first_item, a_second_item))
+      if (find_items(t, b_tmp, b_first_item, b_second_item))
 	{
 	  I(a_first_item == b_first_item);
 	  if (a_second_item == b_second_item)
@@ -1356,10 +1409,11 @@ rebuild_analysis(path_analysis const & src,
   apply_state_renumbering(renumbering, dst);
 }
 
-
 static void
 merge_disjoint_analyses(path_analysis const & a,
 			path_analysis const & b,
+			path_analysis & a_renumbered,
+			path_analysis & b_renumbered,
 			path_analysis & a_merged,
 			path_analysis & b_merged,
 			app_state & app)
@@ -1374,6 +1428,10 @@ merge_disjoint_analyses(path_analysis const & a,
   state_renumbering renumbering;
 
   ensure_tids_disjoint(a_tmp, b_tmp);
+
+  // fault on a particular class of mal-formed changesets
+  ensure_no_rename_clobbers(a_tmp, b_tmp);
+  ensure_no_rename_clobbers(b_tmp, a_tmp);
 
   // a.first and b.first refer to the same state-of-the-world. 
   //
@@ -1411,11 +1469,9 @@ merge_disjoint_analyses(path_analysis const & a,
     extend_renumbering_from_path_identities(a_first_dirs, b_first_dirs, renumbering);
   }
 
-  apply_state_renumbering(renumbering, b_tmp);
-
-  // b_tmp has now moved a fair bit closer to a_tmp, in terms of
-  // tids. there is still one set of files we haven't accounted for,
-  // however: files added in a and b.
+  // once renamed, b_tmp will have moved a fair bit closer to a_tmp, in
+  // terms of tids. there is still one set of files we haven't accounted
+  // for, however: files added in a and b.
 
   {
     state_renumbering aux_renumbering;
@@ -1436,6 +1492,10 @@ merge_disjoint_analyses(path_analysis const & a,
   b_tmp = b;
   apply_state_renumbering(renumbering, b_tmp);
 
+  a_renumbered = a_tmp;
+  b_renumbered = b_tmp;
+
+  // now we're ready to merge (and resolve conflicts)
   path_state resolved_conflicts;
   project_missing_changes(a_tmp, b_tmp, b_merged, resolved_conflicts, app);
   project_missing_changes(b_tmp, a_tmp, a_merged, resolved_conflicts, app);
@@ -1453,6 +1513,7 @@ merge_disjoint_analyses(path_analysis const & a,
     rebuild_analysis(b, anc_b_check, ts_tmp);
     rebuild_analysis(a_merged, a_merge_check, ts_tmp);
     rebuild_analysis(b_merged, b_merge_check, ts_tmp);
+
     concatenate_disjoint_analyses(anc_a_check, a_merge_check, a_check);
     concatenate_disjoint_analyses(anc_b_check, b_merge_check, b_check);
     compose_rearrangement(a_check, a_re);
@@ -1494,27 +1555,41 @@ merge_deltas(file_path const & path_in_merged,
 static void
 project_missing_deltas(change_set const & a,
 		       change_set const & b,
-		       path_analysis const & a_analysis,
-		       path_analysis const & b_analysis,
-		       path_analysis const & b_merged_analysis,		       
+		       path_analysis const & a_analysis,		       
+		       path_analysis const & b_analysis,		       
+		       path_analysis const & a_merged_analysis,		       
 		       change_set & b_merged,
 		       merge_provider & merger,
 		       std::map<file_path, file_id> & merge_finalists)
 {
-
-  directory_map a_first_map, b_merged_first_map;
-  build_directory_map(a_analysis.first, a_first_map);
-  build_directory_map(b_merged_analysis.first, b_merged_first_map);
+  directory_map a_second_map, b_first_map, a_merged_first_map;
+  build_directory_map(a_analysis.second, a_second_map);
+  build_directory_map(b_analysis.first, b_first_map);
+  build_directory_map(a_merged_analysis.first, a_merged_first_map);
 
   for (change_set::delta_map::const_iterator i = a.deltas.begin(); 
        i != a.deltas.end(); ++i)
     {
-      file_path path_in_b, path_in_merged;
-      reconstruct_path(delta_entry_path(i), a_first_map, b_analysis.second, path_in_b);
-      reconstruct_path(path_in_b, b_merged_first_map, b_merged_analysis.second, path_in_merged);
-      change_set::delta_map::const_iterator j = b.deltas.find(path_in_b);
+      tid t;
+      file_path path_in_merged, path_in_b_second;
+
+      // first work out what the path in b.second is
+      if (lookup_path(delta_entry_path(i), a_second_map, t))
+	get_full_path(b_analysis.second, t, path_in_b_second);
+      else
+	reconstruct_path(delta_entry_path(i), b_first_map, 
+			 b_analysis.second, path_in_b_second);
+
+      // then work out what the path in merged is
+      reconstruct_path(delta_entry_path(i), a_merged_first_map, 
+		       a_merged_analysis.second, path_in_merged);
+
+      // now check to see if there was a delta on the b.second name in b
+      change_set::delta_map::const_iterator j = b.deltas.find(path_in_b_second);
+
       if (j == b.deltas.end())
 	{
+	  // if not, copy ours over using the merged name
 	  L(F("merge is copying delta '%s' : '%s' -> '%s'\n") 
 	    % path_in_merged % delta_entry_src(i) % delta_entry_dst(i));
 	  I(b_merged.deltas.find(path_in_merged) == b_merged.deltas.end());
@@ -1523,11 +1598,18 @@ project_missing_deltas(change_set const & a,
       else 
 	{
 	  I(delta_entry_src(i) == delta_entry_dst(j));
+	  // if so, either... 
+
 	  if (delta_entry_dst(i) == delta_entry_dst(j))
-	    L(F("skipping common delta '%s' : '%s' -> '%s'\n") 
-	      % path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
+	    {
+	      // ... absorb identical deltas
+	      L(F("skipping common delta '%s' : '%s' -> '%s'\n") 
+		% path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
+	    }
+
 	  else
 	    {
+	      // ... or resolve conflict
 	      L(F("merging delta '%s' : '%s' -> '%s' vs. '%s'\n") 
 		% path_in_merged % delta_entry_src(i) % delta_entry_dst(i) % delta_entry_dst(j));
 	      file_id finalist;
@@ -1539,7 +1621,12 @@ project_missing_deltas(change_set const & a,
 			   finalist, merger);
 	      L(F("resolved merge to '%s' : '%s' -> '%s'\n")
 		% path_in_merged % delta_entry_src(i) % finalist);
-	      b_merged.apply_delta(path_in_merged, delta_entry_dst(j), finalist);
+
+	      // if the conflict resolved to something other than the
+	      // existing post-state of b, add a new entry to the deltas of
+	      // b finishing the job.
+	      if (! (finalist == delta_entry_dst(j)))
+		b_merged.apply_delta(path_in_merged, delta_entry_dst(j), finalist);
 	    }
 	}
     }
@@ -1557,12 +1644,16 @@ merge_change_sets(change_set const & a,
   L(F("concatenating change sets\n"));
 
   tid_source ts;
-  path_analysis a_analysis, b_analysis, a_merged_analysis, b_merged_analysis;
+  path_analysis 
+    a_analysis, b_analysis, 
+    a_renumbered, b_renumbered, 
+    a_merged_analysis, b_merged_analysis;
 
   analyze_rearrangement(a.rearrangement, a_analysis, ts);
   analyze_rearrangement(b.rearrangement, b_analysis, ts);
 
   merge_disjoint_analyses(a_analysis, b_analysis,
+			  a_renumbered, b_renumbered,
 			  a_merged_analysis, b_merged_analysis, 
 			  app);
 
@@ -1575,20 +1666,28 @@ merge_change_sets(change_set const & a,
   std::map<file_path, file_id> merge_finalists;
 
   project_missing_deltas(a, b, 
-			 a_analysis, b_analysis,
-			 b_merged_analysis, b_merged,
+			 a_renumbered, b_renumbered,
+			 a_merged_analysis, 
+			 b_merged,
 			 merger, merge_finalists);
 
   project_missing_deltas(b, a, 
-			 b_analysis, a_analysis,
-			 a_merged_analysis, a_merged,
+			 b_renumbered, a_renumbered,
+			 b_merged_analysis, 
+			 a_merged,
 			 merger, merge_finalists);
 
   {
     // confirmation step
     change_set a_check, b_check;
+    //     dump_change_set("a", a);
+    //     dump_change_set("a_merged", a_merged);
+    //     dump_change_set("b", b);
+    //     dump_change_set("b_merged", b_merged);
     concatenate_change_sets(a, a_merged, a_check);
-    concatenate_change_sets(b, b_merged, a_check);
+    concatenate_change_sets(b, b_merged, b_check);
+    //     dump_change_set("a_check", a_check);
+    //     dump_change_set("b_check", b_check);
     I(a_check == b_check);
   }
 
@@ -2115,9 +2214,9 @@ static void dump_change_set(std::string const & ctx,
 {
   data tmp;
   write_change_set(cs, tmp);
-  std::clog << "[begin changeset '" << ctx << "']" << std::endl 
-	    << tmp 
-	    << "[end changeset '" << ctx << "']" << std::endl;  
+  L(F("[begin changeset %s]\n", ctx));
+  L(F("%s", tmp));
+  L(F("[end changeset %s]\n", ctx));
 }
 
 static void
@@ -2141,90 +2240,69 @@ spin_change_set(change_set const & cs)
     }
 }
 
-/*
 static void
-concatenate_and_subtract_test(std::string const & ab_str,
-			      std::string const & bc_str)
+disjoint_merge_test(std::string const & ab_str,
+		    std::string const & ac_str)
 {
-  change_set ab, bc, abc;
-  change_set bc_check;
+  change_set ab, ac, bm, cm;
 
-  L(F("beginning concatenate_and_subtract_test\n"));
+  app_state app;
+
+  L(F("beginning disjoint_merge_test\n"));
+
   read_change_set(data(ab_str), ab);
-  dump_trees(ab.rearrangement);
-  read_change_set(data(bc_str), bc);
-  dump_trees(bc.rearrangement);
+  read_change_set(data(ac_str), ac);
+
+  merge_provider merger(app);
+  merge_change_sets(ab, ac, bm, cm, merger, app);
+
   dump_change_set("ab", ab);
-  dump_change_set("bc", bc);
+  dump_change_set("ac", ac);
+  dump_change_set("bm", bm);
+  dump_change_set("cm", cm);
 
-  concatenate_change_sets(ab, bc, abc);
-  dump_change_set("abc", abc);
+  BOOST_CHECK(bm.rearrangement == ac.rearrangement);
+  BOOST_CHECK(cm.rearrangement == ab.rearrangement);
 
-  subtract_change_sets(abc, ab, bc_check);
-  dump_change_set("subtracted bc", bc_check);
-
-  data bc_first, bc_second;
-  write_change_set(bc, bc_first);
-  write_change_set(bc_check, bc_second);  
-  BOOST_CHECK(bc_first == bc_second);
-  L(F("finished concatenate_and_subtract_test\n"));
+  L(F("finished disjoint_merge_test\n"));
 }
 
 static void
-concatenate_and_subtract_tests()
+disjoint_merge_tests()
 {
-  concatenate_and_subtract_test
+  disjoint_merge_test
     ("change_set: { paths: { rename_file: { src: \"foo\" dst: \"bar\" } } deltas: {} }",
-     "change_set: { paths: { rename_file: { src: \"bar\" dst: \"baz\" } } deltas: {} }");  
+     "change_set: { paths: { rename_file: { src: \"apple\" dst: \"orange\" } } deltas: {} }");  
 
-  concatenate_and_subtract_test
-    ("change_set: { paths: { rename_file: { src: \"foo/file.txt\" dst: \"bar/file.txt\" } } deltas: {} }",
-     "change_set: { paths: { rename_file: { src: \"bar/file.txt\" dst: \"baz/file.txt\" } } deltas: {} }");  
+  disjoint_merge_test
+    ("change_set: { paths: { rename_file: { src: \"foo/a.txt\" dst: \"bar/b.txt\" } } deltas: {} }",
+     "change_set: { paths: { rename_file: { src: \"bar/c.txt\" dst: \"baz/d.txt\" } } deltas: {} }");  
 
-  concatenate_and_subtract_test
-    ("change_set: { paths: { add_file: \"foo/file.txt\"  } "
+  disjoint_merge_test
+    ("change_set: { paths: { } "
      "deltas: {"
      "delta: { path: \"foo/file.txt\" "
-     "src: [] "
+     "src: [c6a4a6196bb4a744207e1a6e90273369b8c2e925] "
      "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }",  
-     "change_set: { paths: { rename_file: { src: \"foo/file.txt\" dst: \"foo/fun.txt\" } } deltas: {} }");  
+     "change_set: { paths: { rename_file: { src: \"foo/file.txt\" dst: \"foo/apple.txt\" } } deltas: {} }");  
 
-  concatenate_and_subtract_test
-    ("change_set: { paths: { delete_file: \"foo/file.txt\"  } deltas: {} }",
-     "change_set: { paths: { add_file:    \"foo/file.txt\"  } "
-     "deltas: {"
-     "delta: { path: \"foo/file.txt\" "
-     "src: [] "
-     "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }");  
-
-
-  concatenate_and_subtract_test
-    ("change_set: { paths: { delete_dir:  \"foo\"  } deltas: {} }",
-     "change_set: { paths: { add_file:    \"foo/file.txt\"  } "
-     "deltas: {"
-     "delta: { path: \"foo/file.txt\" "
-     "src: [] "
-     "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }");  
-
-  concatenate_and_subtract_test
+  disjoint_merge_test
     (
      "change_set: { "
-     "paths: { } "
+     "paths: { rename_file: { src: \"apple.txt\" dst: \"pear.txt\" } } "
      "deltas: { "
      "delta: { path: \"foo.txt\" "
      "src: [c6a4a6196bb4a744207e1a6e90273369b8c2e925] "
      "dst: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] } } }",
      
      "change_set: { "
-     "paths: { } "
+     "paths: { rename_file: { src: \"foo.txt\" dst: \"bar.txt\" } } "
      "deltas: { "
-     "delta: { path: \"foo.txt\" "
+     "delta: { path: \"apple.txt\" "
      "src: [fe18ec0c55cbc72e4e51c58dc13af515a2f3a892] "
      "dst: [435e816c30263c9184f94e7c4d5aec78ea7c028a] } } }"
      );  
-
 }
-*/
 
 static void 
 basic_change_set_test()
@@ -2353,7 +2431,7 @@ add_change_set_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&basic_change_set_test));
   suite->add(BOOST_TEST_CASE(&neutralize_change_test));
   suite->add(BOOST_TEST_CASE(&non_interfering_change_test));
-  // suite->add(BOOST_TEST_CASE(&concatenate_and_subtract_tests));
+  suite->add(BOOST_TEST_CASE(&disjoint_merge_tests));
 }
 
 
