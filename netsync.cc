@@ -232,9 +232,9 @@ session :
   ticker * out_ticker;
 
   map<netcmd_item_type, done_marker> done_refinements;
-  set< pair<netcmd_item_type, id> > requested_items;
-  multimap<id,id> ancestry_edges;
-  set<id> extra_manifests;
+  map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
+  map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestry;
+  set< pair<id, id> > reverse_delta_requests;
 
   id saved_nonce;
   bool received_goodbye;
@@ -256,14 +256,29 @@ session :
 
   id mk_nonce();
   void mark_recent_io();
+
   bool done_all_refinements();
+  bool rcert_refinement_done();
+  bool all_requested_revisions_received();
+
+  void note_item_requested(netcmd_item_type ty, id const & i);
+  bool item_request_outstanding(netcmd_item_type ty, id const & i);
+  void note_item_arrived(netcmd_item_type ty, id const & i);
+
   bool got_all_data();
   void maybe_say_goodbye();
+
+  void analyze_attachment(revision_id const & i, 
+			  set<revision_id> & visited,
+			  map<revision_id, bool> & attached);
+  void request_rev_revisions(revision_id const & init, 
+			     map<revision_id, bool> attached,
+			     set<revision_id> visited);
+  void request_fwd_revisions(revision_id const & i, 
+			     map<revision_id, bool> attached,
+			     set<revision_id> & visited);
   void analyze_ancestry_graph();
   void analyze_manifest(manifest_map const & man);
-  virtual void analyze_manifest_edge(manifest_map const & parent,
-				     manifest_map const & child);
-  void request_manifests_recursive(id const & i, set<id> & visited);
 
   Netxx::Probe::ready_type which_events() const;
   bool read_some();
@@ -394,7 +409,7 @@ session::session(protocol_role role,
   saved_nonce(""),
   received_goodbye(false),
   sent_goodbye(false),
-  dbw(app, true, this)
+  dbw(app, true)
 {
   if (voice == client_voice)
     {
@@ -416,9 +431,18 @@ session::session(protocol_role role,
     }  
   prng.reset(new CryptoPP::AutoSeededRandomPool(request_blocking_rng));
 
+  done_refinements.insert(make_pair(rcert_item, done_marker()));
   done_refinements.insert(make_pair(mcert_item, done_marker()));
   done_refinements.insert(make_pair(fcert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
+  
+  requested_items.insert(make_pair(rcert_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(fcert_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(mcert_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
 }
 
 id 
@@ -451,21 +475,61 @@ session::done_all_refinements()
   return all;
 }
 
+
+bool 
+session::rcert_refinement_done()
+{
+  return done_refinements[rcert_item].tree_is_done;
+}
+
 bool 
 session::got_all_data()
 {
-  return requested_items.empty();
+  for (map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator i =
+	 requested_items.begin(); i != requested_items.end(); ++i)
+    {
+      if (! i->second->empty())
+	return false;
+    }
+  return true;
 }
 
-struct 
-always_true_version_check :
-  public version_existence_check
+bool 
+session::all_requested_revisions_received()
 {
-  virtual bool check(file_id i)
-  {
-    return true;
-  }
-};
+  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
+    i = requested_items.find(revision_item);
+  I(i != requested_items.end());
+  return i->second->empty();
+}
+
+void
+session::note_item_requested(netcmd_item_type ty, id const & ident)
+{
+  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
+    i = requested_items.find(revision_item);
+  I(i != requested_items.end());
+  i->second->insert(ident);
+}
+
+void
+session::note_item_arrived(netcmd_item_type ty, id const & ident)
+{
+  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
+    i = requested_items.find(revision_item);
+  I(i != requested_items.end());
+  i->second->erase(ident);
+}
+
+bool 
+session::item_request_outstanding(netcmd_item_type ty, id const & ident)
+{
+  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
+    i = requested_items.find(revision_item);
+  I(i != requested_items.end());
+  return i->second->find(ident) != i->second->end();
+}
+
 
 void 
 session::write_netcmd_and_try_flush(netcmd const & cmd)
@@ -478,171 +542,309 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
 }
 
 void 
-session::analyze_manifest_edge(manifest_map const & parent,
-			       manifest_map const & child)
-{
-  L(F("analyzing %d parent, %d child manifest entries\n") 
-    % parent.size() % child.size());
-
-  always_true_version_check atc;
-  patch_set ps;
-  manifests_to_patch_set(parent, child, this->app, atc, ps);
-
-  for (set<patch_delta>::const_iterator i = ps.f_deltas.begin();
-       i != ps.f_deltas.end(); ++i)
-    {
-      if (this->app.db.file_version_exists(i->id_new))
-	{
-	  L(F("file delta target '%s' already exists on our side\n")
-	    % i->id_new);
-	}
-      else
-	{
-	  L(F("requesting file delta from '%s' -> '%s' (path %s)\n") 
-	    % i->id_old % i->id_new % i->path);
-	  id tmp1, tmp2;
-	  decode_hexenc(i->id_old.inner(), tmp1);
-	  decode_hexenc(i->id_new.inner(), tmp2);
-	  queue_send_delta_cmd(file_item, tmp1, tmp2);
-	}
-    }
-
-  for (set<patch_addition>::const_iterator i = ps.f_adds.begin();
-       i != ps.f_adds.end(); ++i)
-    {      
-      if (this->app.db.file_version_exists(i->ident))
-	{
-	  L(F("added file version '%s' already exists on our side\n")
-	    % i->ident);
-	}
-      else
-	{
-	  L(F("requesting missing data for file '%s' (path %s)\n") 
-	    % i->ident % i->path);
-	  id tmp;
-	  decode_hexenc(i->ident.inner(), tmp);
-	  queue_send_data_cmd(file_item, tmp);
-	}
-    }
-}
-
-void 
 session::analyze_manifest(manifest_map const & man)
 {
   L(F("analyzing %d entries in manifest\n") % man.size());
   for (manifest_map::const_iterator i = man.begin();
        i != man.end(); ++i)
     {
-      path_id_pair pip(i);
-      if (! this->app.db.file_version_exists(pip.ident()))
+      if (! this->app.db.file_version_exists(manifest_entry_id(i)))
 	{
 	  id tmp;
-	  decode_hexenc(pip.ident().inner(), tmp);
+	  decode_hexenc(manifest_entry_id(i).inner(), tmp);
 	  queue_send_data_cmd(file_item, tmp);
 	}
     }
 }
 
-void 
-session::request_manifests_recursive(id const & i, 
-				     set<id> & visited)
+static bool 
+is_attached(revision_id const & i, 
+	    map<revision_id, bool> const & attach_map)
 {
+  map<revision_id, bool>::const_iterator j = attach_map.find(i);
+  I(j != attach_map.end());
+  return j->second;
+}
+
+// this tells us whether a particular revision is "attached" -- meaning
+// either our database contains the underlying manifest or else one of our
+// parents (recursively, and only in the current ancestry graph we're
+// requesting) is attached. if it's detached we will request it using a
+// different (more efficient and less failure-prone) algorithm
+
+void
+session::analyze_attachment(revision_id const & i, 
+			    set<revision_id> & visited,
+			    map<revision_id, bool> & attached)
+{
+  typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
+
   if (visited.find(i) != visited.end())
     return;
 
   visited.insert(i);
 
-  hexenc<id> hid;
-  encode_hexenc(i, hid);
+  bool curr_attached = false;
 
-  L(F("visiting manifest '%s'\n") % hid);
-
-  typedef multimap<id,id>::const_iterator ite;
-
-  if (ancestry_edges.find(i) == ancestry_edges.end())
+  if (app.db.revision_exists(i))
     {
-      // we are at a root, request full data
-      if (this->app.db.manifest_version_exists(manifest_id(hid)))
-	{
-	  L(F("not requesting manifest '%s' as we already have it\n") % hid);
-	}
-      else
-	{
-	  queue_send_data_cmd(manifest_item, i);
-	}
+      L(F("revision %s is attached via database\n") % i);
+      curr_attached = true;
     }
   else
     {
-      // first make sure we've requested enough to get to here by
-      // calling ourselves recursively
-      pair<ite,ite> range = ancestry_edges.equal_range(i);
-      for (ite p = range.first; p != range.second; ++p)
+      L(F("checking attachment of %s in ancestry\n") % i);
+      ancestryT::const_iterator j = ancestry.find(i);
+      if (j != ancestry.end())
 	{
-	  id const & child = p->first;
-	  id const & parent = p->second;
-	  I(i == child);
-	  request_manifests_recursive(parent, visited);
+	  for (edge_map::const_iterator k = j->second->second.edges.begin();
+	       k != j->second->second.edges.end(); ++k)
+	    {
+	      L(F("checking attachment of %s in parent %s\n") % i % edge_old_revision(k));
+	      analyze_attachment(edge_old_revision(k), visited, attached);
+	      if (is_attached(edge_old_revision(k), attached))
+		{
+		  L(F("revision %s is attached via parent %s\n") % i % edge_old_revision(k));
+		  curr_attached = true;
+		  break;
+		}
+	    }
 	}
+    }
+  L(F("decided that revision %s %s attached\n") % i % (curr_attached ? "is" : "is not"));
+  attached[i] = curr_attached;
+}
 
-      // then perhaps request the edge that leads from an arbitrary parent
-      // to here. we'll pick the first parent, why not?
-      id const & child = range.first->first;
-      id const & parent = range.first->second;
-      I(i == child);
-      if (this->app.db.manifest_version_exists(manifest_id(hid)))
+static inline id
+plain_id(manifest_id const & i)
+{
+  id tmp;
+  hexenc<id> htmp(i.inner());
+  decode_hexenc(htmp, tmp);
+  return tmp;
+}
+
+static inline id
+plain_id(file_id const & i)
+{
+  id tmp;
+  hexenc<id> htmp(i.inner());
+  decode_hexenc(htmp, tmp);
+  return tmp;
+}
+
+void 
+session::request_rev_revisions(revision_id const & init, 
+			       map<revision_id, bool> attached,
+			       set<revision_id> visited)
+{
+  typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
+
+  set<revision_id> frontier;
+  frontier.insert(init);
+  while(!frontier.empty())
+    {
+      set<revision_id> next_frontier;
+      for (set<revision_id>::const_iterator i = frontier.begin();
+	   i != frontier.end(); ++i)
 	{
-	  L(F("not requesting manifest delta to '%s' as we already have it\n") % hid);
+	  if (is_attached(*i, attached))
+	    continue;
+
+	  if (visited.find(*i) != visited.end())
+	    continue;
+
+	  visited.insert(*i);
+
+	  ancestryT::const_iterator j = ancestry.find(*i);
+	  if (j != ancestry.end())
+	    {
+
+	      for (edge_map::const_iterator k = j->second->second.edges.begin();
+		   k != j->second->second.edges.end(); ++k)
+		{
+
+		  next_frontier.insert(edge_old_revision(k));
+
+		  // check out the manifest delta edge
+		  manifest_id parent_manifest = edge_old_manifest(k);
+		  manifest_id child_manifest = j->second->second.new_manifest;	
+		  if (this->app.db.manifest_version_exists(parent_manifest))
+		    L(F("not requesting reverse manifest delta to '%s' as we already have it\n") 
+		      % parent_manifest);
+		  else
+		    {
+		      L(F("requesting reverse manifest delta %s -> %s\n")
+			% child_manifest % parent_manifest);
+
+		      reverse_delta_requests.insert(make_pair(plain_id(child_manifest),
+							      plain_id(parent_manifest)));
+		      queue_send_delta_cmd(manifest_item, 
+					   plain_id(child_manifest), 
+					   plain_id(parent_manifest));
+		    }
+		  
+		  // check out each file delta edge
+		  change_set const & cset = edge_changes(k);
+		  for (change_set::delta_map::const_iterator d = cset.deltas.begin(); 
+		       d != cset.deltas.end(); ++d)
+		    {
+		      if (this->app.db.file_version_exists(delta_entry_src(d)))
+			L(F("not requesting reverse delta %s -> %s on file %s as we already have it\n")
+			  % delta_entry_dst(d) % delta_entry_src(d) % delta_entry_path(d));
+		      else
+			{
+			  L(F("requesting reverse delta %s -> %s on file %s\n")
+			    % delta_entry_dst(d) % delta_entry_src(d) % delta_entry_path(d));
+
+			  reverse_delta_requests.insert(make_pair(plain_id(delta_entry_dst(d)),
+								  plain_id(delta_entry_src(d))));
+			  queue_send_delta_cmd(file_item, 
+					       plain_id(delta_entry_dst(d)), 
+					       plain_id(delta_entry_src(d)));
+			}
+		    }
+		}
+	      
+	      // now actually consume the data packet, which will wait on the
+	      // arrival of its prerequisites in the packet_db_writer
+	      this->dbw.consume_revision_data(j->first, j->second->first);
+	    }
 	}
+      frontier = next_frontier;
+    }
+}
+
+void 
+session::request_fwd_revisions(revision_id const & i, 
+			       map<revision_id, bool> attached,
+			       set<revision_id> & visited)
+{
+  if (visited.find(i) != visited.end())
+    return;
+  
+  visited.insert(i);
+  
+  L(F("visiting revision '%s' for forward deltas\n") % i);
+
+  typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
+  
+  ancestryT::const_iterator j = ancestry.find(i);
+  if (j != ancestry.end())
+    {
+      edge_map::const_iterator first_attached_edge = j->second->second.edges.end();
+
+      // first make sure we've requested enough to get to here by
+      // calling ourselves recursively. this is the forward path after all.
+
+      for (edge_map::const_iterator k = j->second->second.edges.begin();
+	   k != j->second->second.edges.end(); ++k)
+	{
+	  if (is_attached(edge_old_revision(k), attached))
+	    {
+	      request_fwd_revisions(edge_old_revision(k), attached, visited);
+	      first_attached_edge = k;
+	    }
+	}
+      
+      I(first_attached_edge != j->second->second.edges.end());
+      
+      // check out the manifest delta edge
+      manifest_id parent_manifest = edge_old_manifest(first_attached_edge);
+      manifest_id child_manifest = j->second->second.new_manifest;	
+      if (this->app.db.manifest_version_exists(child_manifest))
+	L(F("not requesting forward manifest delta to '%s' as we already have it\n") 
+	  % child_manifest);
       else
 	{
-	  queue_send_delta_cmd(manifest_item, parent, child);
-	}      
+	  L(F("requesting forward manifest delta %s -> %s\n")
+	    % parent_manifest % child_manifest);
+	  queue_send_delta_cmd(manifest_item, 
+			       plain_id(parent_manifest), 
+			       plain_id(child_manifest));
+	}
+
+      // check out each file delta edge
+      change_set const & first_attached_cset = first_attached_edge->second.second;
+      for (change_set::delta_map::const_iterator k = first_attached_cset.deltas.begin();
+	   k != first_attached_cset.deltas.end(); ++k)
+	{
+	  if (this->app.db.file_version_exists(delta_entry_dst(k)))
+	    L(F("not requesting forward delta %s -> %s on file %s as we already have it\n")
+	      % delta_entry_src(k) % delta_entry_dst(k) % delta_entry_path(k));
+	  else
+	    {
+	      L(F("requesting forward delta %s -> %s on file %s\n")
+		% delta_entry_src(k) % delta_entry_dst(k) % delta_entry_path(k));
+	      queue_send_delta_cmd(file_item, 
+				   plain_id(delta_entry_src(k)), 
+				   plain_id(delta_entry_dst(k)));
+	    }
+	}
+      // now actually consume the data packet, which will wait on the
+      // arrival of its prerequisites in the packet_db_writer
+      this->dbw.consume_revision_data(j->first, j->second->first);
     }
 }
 
 void 
 session::analyze_ancestry_graph()
 {
-  set<id> heads;
+  typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
 
-  L(F("analyzing %d ancestry edges\n") % ancestry_edges.size());
-
-  // each ancestry edge goes from child -> parent
-
-  for (multimap<id,id>::const_iterator i = ancestry_edges.begin();
-       i != ancestry_edges.end(); ++i)
-    {
-      // first we add all children we're aware of to the heads set
-      heads.insert(i->first);
-    }
-
-  for (set<id>::const_iterator i = extra_manifests.begin();
-       i != extra_manifests.end(); ++i)
-    {
-      // throw in any disconnected extras
-      heads.insert(*i);
-    }
-
-  for (multimap<id,id>::const_iterator i = ancestry_edges.begin();
-       i != ancestry_edges.end(); ++i)
-    {
-      // then we remove any which are also parents
-      heads.erase(i->second);
-    }
+  set<revision_id> heads;
+  {
+    set<revision_id> nodes, parents;
+    L(F("analyzing %d ancestry edges\n") % ancestry.size());
+    
+    for (ancestryT::const_iterator i = ancestry.begin(); i != ancestry.end(); ++i)
+      {
+	nodes.insert(i->first);
+	for (edge_map::const_iterator j = i->second->second.edges.begin();
+	     j != i->second->second.edges.end(); ++j)
+	  {
+	    parents.insert(edge_old_revision(j));
+	  }
+      }
+    
+    set_difference(nodes.begin(), nodes.end(),
+		   parents.begin(), parents.end(),
+		   inserter(heads, heads.begin()));
+  }
 
   L(F("isolated %d heads\n") % heads.size());
 
-  // then we walk the graph upwards, recursively, starting from
-  // each of the heads
+  // first we determine the "attachment status" of each node in our ancestry
+  // graph. 
 
-  set<id> visited;
-  for (set<id>::const_iterator i = heads.begin();
-       i != heads.end(); ++i)
+  map<revision_id, bool> attached;
+  set<revision_id> visited;
+  for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+    analyze_attachment(*i, visited, attached);
+
+  // then we walk the graph upwards, recursively, starting from each of the
+  // heads. we either walk requesting forward deltas or reverse deltas,
+  // depending on whether we are walking an attached or detached subgraph,
+  // respectively. the forward walk ignores detached nodes, the backward walk
+  // ignores attached nodes.
+
+  set<revision_id> fwd_visited, rev_visited;
+
+  for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     {
-      hexenc<id> hid;
-      encode_hexenc(*i, hid);
-      L(F("walking upwards from '%s'\n") % hid);
-      request_manifests_recursive(*i, visited);
+      map<revision_id, bool>::const_iterator k = attached.find(*i);
+      I(k != attached.end());
+      
+      if (k->second)
+	{
+	  L(F("requesting attached ancestry of revision '%s'\n") % *i);
+	  request_fwd_revisions(*i, attached, fwd_visited);
+	}
+      else
+	{
+	  L(F("requesting detached ancestry of revision '%s'\n") % *i);
+	  request_rev_revisions(*i, attached, rev_visited);
+	}	
     }
 }
 
@@ -816,8 +1018,7 @@ session::queue_send_data_cmd(netcmd_item_type type,
       return;
     }
 
-  if (this->requested_items.find(make_pair(type, item)) != 
-      this->requested_items.end())
+  if (item_request_outstanding(type, item))
     {
       L(F("not queueing request for %s '%s' as we already requested it\n") 
 	% typestr % hid);
@@ -830,7 +1031,7 @@ session::queue_send_data_cmd(netcmd_item_type type,
   cmd.cmd_code = send_data_cmd;
   write_send_data_cmd_payload(type, item, cmd.payload);
   write_netcmd_and_try_flush(cmd);
-  this->requested_items.insert(make_pair(type, item));
+  note_item_requested(type, item);
 }
     
 void 
@@ -854,8 +1055,7 @@ session::queue_send_delta_cmd(netcmd_item_type type,
       return;
     }
 
-  if (this->requested_items.find(make_pair(type, ident)) != 
-      this->requested_items.end())
+  if (item_request_outstanding(type, ident))
     {
       L(F("not queueing request for %s delta '%s' -> '%s' as we already requested the target\n") 
 	% typestr % base_hid % ident_hid);
@@ -868,7 +1068,7 @@ session::queue_send_delta_cmd(netcmd_item_type type,
   cmd.cmd_code = send_delta_cmd;
   write_send_delta_cmd_payload(type, base, ident, cmd.payload);
   write_netcmd_and_try_flush(cmd);
-  this->requested_items.insert(make_pair(type, ident));
+  note_item_requested(type, ident);
 }
 
 void 
@@ -992,9 +1192,6 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
       i->second.current_level_had_refinements = false;
       i->second.tree_is_done = true;
       
-      // if it's mcerts, look over the ancestry graph
-      if (type == mcert_item)
-	analyze_ancestry_graph();
     }
 
   else if (i->second.current_level_had_refinements 
@@ -1317,6 +1514,10 @@ session::process_confirm_cmd(string const & signature)
 	  queue_refine_cmd(root);
 	  queue_done_cmd(0, key_item);
 
+	  load_merkle_node(app, rcert_item, this->collection, 0, get_root_prefix().val, root);
+	  queue_refine_cmd(root);
+	  queue_done_cmd(0, rcert_item);
+
 	  load_merkle_node(app, mcert_item, this->collection, 0, get_root_prefix().val, root);
 	  queue_refine_cmd(root);
 	  queue_done_cmd(0, mcert_item);
@@ -1357,6 +1558,10 @@ data_exists(netcmd_item_type type,
       return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
+    case revision_item:
+      return app.db.revision_exists(revision_id(hitem));
+    case rcert_item:
+      return app.db.revision_cert_exists(hitem);
     }
   return false;
 }
@@ -1388,6 +1593,21 @@ load_data(netcmd_item_type type,
 	}
       break;
 
+    case revision_item:
+      if (app.db.revision_exists(revision_id(hitem)))
+	{
+	  revision_data mdat;
+	  data dat;
+	  app.db.get_revision(revision_id(hitem), mdat);
+	  unpack(mdat.inner(), dat);
+	  out = dat();
+	}
+      else
+	{
+	  throw bad_decode(F("revision '%s' does not exist in our database") % hitem);
+	}
+      break;
+
     case manifest_item:
       if (app.db.manifest_version_exists(manifest_id(hitem)))
 	{
@@ -1415,6 +1635,20 @@ load_data(netcmd_item_type type,
       else
 	{
 	  throw bad_decode(F("file '%s' does not exist in our database") % hitem);
+	}
+      break;
+
+    case rcert_item:
+      if(app.db.revision_cert_exists(hitem))
+	{
+	  revision<cert> c;
+	  app.db.get_revision_cert(hitem, c);
+	  string tmp;
+	  write_cert(c.inner(), out);
+	}
+      else
+	{
+	  throw bad_decode(F("rcert '%s' does not exist in our database") % hitem);
 	}
       break;
 
@@ -1942,7 +2176,7 @@ session::process_data_cmd(netcmd_item_type type,
 
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
-  requested_items.erase(make_pair(type, item));
+  note_item_arrived(type, item);
 			   
   switch (type)
     {
@@ -1978,29 +2212,22 @@ session::process_data_cmd(netcmd_item_type type,
 	    throw bad_decode(F("hash check failed for manifest cert '%s'")  % hitem);
 	  this->dbw.consume_manifest_cert(manifest<cert>(c));
 	  update_merkle_trees(mcert_item, tmp, true);
-	  if (c.name == ancestor_cert_name)
-	    {
-	      cert_value tmp_value;
-	      hexenc<id> tmp_parent;
-	      id child, parent;
+	}
+      break;
 
-	      decode_base64(c.value, tmp_value);
-	      tmp_parent = tmp_value();
-	      decode_hexenc(c.ident, child);
-	      decode_hexenc(tmp_parent, parent);
-	      L(F("noticed ancestry edge from '%s' -> '%s'\n") % tmp_parent % c.ident);
-	      this->ancestry_edges.insert(make_pair(child, parent));
-	    }
-	  else
-	    {
-	      id tmp;
-	      decode_hexenc(c.ident, tmp);
-	      if (this->ancestry_edges.find(tmp) == this->ancestry_edges.end())
-		{
-		  L(F("noticed lone manifest '%s'\n") % c.ident);
-		  this->extra_manifests.insert(tmp);
-		}
-	    }
+    case rcert_item:
+      if (this->app.db.revision_cert_exists(hitem))
+	L(F("revision cert '%s' already exists in our database\n")  % hitem);
+      else
+	{
+	  cert c;
+	  read_cert(dat, c);
+	  hexenc<id> tmp;
+	  cert_hash_code(c, tmp);
+	  if (! (tmp == hitem))
+	    throw bad_decode(F("hash check failed for revision cert '%s'")  % hitem);
+	  this->dbw.consume_revision_cert(revision<cert>(c));
+	  update_merkle_trees(rcert_item, tmp, true);
 	}
       break;
 
@@ -2018,6 +2245,30 @@ session::process_data_cmd(netcmd_item_type type,
 	  this->dbw.consume_file_cert(file<cert>(c));
 	  update_merkle_trees(fcert_item, tmp, true);
 	}
+      break;
+
+    case revision_item:
+      {
+	revision_id rid(hitem);
+	if (this->app.db.revision_exists(rid))
+	  L(F("revision '%s' already exists in our database\n") % hitem);
+	else
+	  {
+	    L(F("received revision '%s' \n") % hitem);
+	    boost::shared_ptr< pair<revision_data, revision_set > > 
+	      rp(new pair<revision_data, revision_set>());
+	    
+	    base64< gzip<data> > packed;
+	    pack(data(dat), packed);
+	    rp->first = revision_data(packed);
+	    read_revision_set(dat, rp->second);
+	    if (rcert_refinement_done() &&
+		all_requested_revisions_received())
+	      {
+		analyze_ancestry_graph();
+	      }
+	  }
+      }
       break;
 
     case manifest_item:
@@ -2067,32 +2318,52 @@ session::process_delta_cmd(netcmd_item_type type,
   encode_hexenc(base, hbase);
   encode_hexenc(ident, hident);
 
+  pair<id,id> id_pair = make_pair(base, ident);
+
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
-  requested_items.erase(make_pair(type, ident));
+  note_item_arrived(type, ident);
 
   switch (type)
     {
     case manifest_item:
       {
-	manifest_id old_manifest(hbase), new_manifest(hident);
+	manifest_id src_manifest(hbase), dst_manifest(hident);
 	base64< gzip<delta> > packed_del;
 	pack(del, packed_del);
-	this->dbw.consume_manifest_delta(old_manifest, 
-					 new_manifest,
-					 manifest_delta(packed_del));
+	if (reverse_delta_requests.find(id_pair)
+	    != reverse_delta_requests.end())
+	  {
+	    reverse_delta_requests.erase(id_pair);
+	    this->dbw.consume_manifest_reverse_delta(src_manifest, 
+						     dst_manifest,
+						     manifest_delta(packed_del));
+	  }
+	else
+	  this->dbw.consume_manifest_delta(src_manifest, 
+					   dst_manifest,
+					   manifest_delta(packed_del));
 	
       }
       break;
 
     case file_item:
       {
-	file_id old_file(hbase), new_file(hident);
+	file_id src_file(hbase), dst_file(hident);
 	base64< gzip<delta> > packed_del;
 	pack(del, packed_del);
-	this->dbw.consume_file_delta(old_file, 
-				     new_file,
-				     file_delta(packed_del));
+	if (reverse_delta_requests.find(id_pair)
+	    != reverse_delta_requests.end())
+	  {
+	    reverse_delta_requests.erase(id_pair);
+	    this->dbw.consume_file_reverse_delta(src_file, 
+						 dst_file,
+						 file_delta(packed_del));
+	  }
+	else
+	  this->dbw.consume_file_delta(src_file, 
+				       dst_file,
+				       file_delta(packed_del));
       }
       break;
       
@@ -2113,7 +2384,7 @@ session::process_nonexistant_cmd(netcmd_item_type type,
   encode_hexenc(item, hitem);
   L(F("received 'nonexistant' netcmd for %s '%s'\n") 
     % typestr % hitem);
-  requested_items.erase(make_pair(type, item));
+  note_item_arrived(type, item);
   return true;
 }
 
@@ -2725,6 +2996,11 @@ rebuild_merkle_trees(app_state & app,
   string typestr;
   merkle_node empty_root_node;
 
+  empty_root_node.type = rcert_item;
+  netcmd_item_type_to_string(rcert_item, typestr);
+  app.db.erase_merkle_nodes(typestr, collection);
+  store_merkle_node(app, collection, empty_root_node);
+
   empty_root_node.type = mcert_item;
   netcmd_item_type_to_string(mcert_item, typestr);
   app.db.erase_merkle_nodes(typestr, collection);
@@ -2746,14 +3022,14 @@ rebuild_merkle_trees(app_state & app,
   ticker mcerts("mcerts");
   ticker keys("keys");
 
-  set<manifest_id> manifest_ids;
+  set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;
 
   {
     // get all matching branch names
-    vector< manifest<cert> > certs;
+    vector< revision<cert> > certs;
     set<string> branchnames;
-    app.db.get_manifest_certs(branch_cert_name, certs);
+    app.db.get_revision_certs(branch_cert_name, certs);
     for (size_t i = 0; i < certs.size(); ++i)
       {
 	cert_value name;
@@ -2763,15 +3039,15 @@ rebuild_merkle_trees(app_state & app,
 	    if (branchnames.find(name()) == branchnames.end())
 	      P(F("including branch %s\n") % name());
 	    branchnames.insert(name());
-	    manifest_ids.insert(manifest_id(idx(certs, i).inner().ident));
+	    revision_ids.insert(revision_id(idx(certs, i).inner().ident));
 	  }
       }
 
-    // insert all certs and keys reachable via these manifests
-    for (set<manifest_id>::const_iterator man = manifest_ids.begin();
-	 man != manifest_ids.end(); ++man)
+    // insert all certs and keys reachable via these revisions
+    for (set<revision_id>::const_iterator rev = revision_ids.begin();
+	 rev != revision_ids.end(); ++rev)
       {
-	app.db.get_manifest_certs(*man, certs);
+	app.db.get_revision_certs(*rev, certs);
 	for (size_t i = 0; i < certs.size(); ++i)
 	  {
 	    hexenc<id> certhash;
@@ -2819,6 +3095,9 @@ ensure_merkle_tree_ready(app_state & app,
   // saves us having to hunt down all the possible write conditions in the packet
   // writers and make sure they update the indices properly
 
+  // FIXME: this is actually buggy anyways. we really need to fix up the merkle tree
+  // rebuilding conditions. another day, once revisions are working. sigh.
+
       rebuild_merkle_trees(app, collection);
 
 //     }
@@ -2842,9 +3121,9 @@ run_netsync_protocol(protocol_voice voice,
       all_collections.insert((*j)());
     }
 
-  vector< manifest<cert> > certs;
-  app.db.get_manifest_certs(branch_cert_name, certs);
-  for (vector< manifest<cert> >::const_iterator i = certs.begin();
+  vector< revision<cert> > certs;
+  app.db.get_revision_certs(branch_cert_name, certs);
+  for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
       cert_value name;

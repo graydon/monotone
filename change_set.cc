@@ -129,54 +129,6 @@ static bool null_name(file_path const & p)
   return p().empty();
 }
 
-change_set::tid const & 
-path_item_parent(change_set::path_item const & p) 
-{ 
-  return p.parent; 
-}
-
-change_set::ptype const & 
-path_item_type(change_set::path_item const & p) 
-{ 
-  return p.ty; 
-}
-
-file_path const & 
-path_item_name(change_set::path_item const & p) 
-{ 
-  return p.name; 
-}
-
-change_set::tid
-path_state_tid(change_set::path_state::const_iterator i)
-{
-  return i->first;
-}
-
-change_set::path_item const &
-path_state_item(change_set::path_state::const_iterator i)
-{
-  return i->second;
-}
-
-file_path const & 
-delta_entry_path(change_set::delta_map::const_iterator i)
-{
-  return i->first;
-}
-
-file_id const & 
-delta_entry_src(change_set::delta_map::const_iterator i)
-{
-  return i->second.first;
-}
-
-file_id const & 
-delta_entry_dst(change_set::delta_map::const_iterator i)
-{
-  return i->second.second;
-}
-
 static void
 sanity_check_path_item(change_set::path_item const & pi)
 {

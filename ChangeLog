@@ -1,3 +1,16 @@
+2004-09-06  graydon hoare  <graydon@pobox.com>
+
+	* Makefile.am (unit_tests): Revise.
+	* change_set.{cc,hh}: Move accessors to header.
+	* constants.cc (netcmd_current_protocol_version): Bump.
+	(netcmd_minimum_bytes_to_bother_with_gzip): Expand to 0xfff.
+	* database.{cc,hh}: Teach about reverse deltas, bug fixes.
+	* diff_patch.{cc,hh}: Remove dead code.
+	* merkle_tree.{cc,hh}: Teach about revisions.
+	* netsync.cc: Teach about revisions, reverse deltas.
+	* packet.{cc,hh}: Likewise.
+	* unit_tests.{cc,hh}: Reactivate tests.
+
 2004-08-28  graydon hoare  <graydon@pobox.com>
 
 	* Makefile.am (unit_tests): Split out working parts.

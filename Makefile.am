@@ -116,21 +116,28 @@ monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 
 # disable until we get the changeset unit tests working
 #unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
-NOT_WORKING = diff_patch.cc commands.cc packet.cc update.cc rcs_import.cc netsync.cc merkle_tree.cc netcmd.cc \
-              diff_patch.hh commands.hh packet.hh update.hh rcs_import.hh netsync.hh merkle_tree.hh netcmd.hh 
+NOT_WORKING = commands.cc update.cc rcs_import.cc   \
+               commands.hh update.hh rcs_import.hh 
 
-unit_tests_SOURCES = 	unit_tests.cc lua.cc cert.cc database.cc work.cc app_state.cc			\
-			transforms.cc file_io.cc keys.cc manifest.cc sanity.cc vocab.cc			\
-			rcs_file.cc xdelta.cc ui.cc schema_migration.cc constants.cc basic_io.cc	\
-			mkstemp.cc lcs.cc revision.cc predicament.cc					\
-			change_set.cc									\
-													\
-			file_io.hh manifest.hh database.hh cert.hh work.hh app_state.hh			\
-			sanity.hh keys.hh transforms.hh vocab.hh cleanup.hh lua.hh basic_io.hh		\
-			unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh			\
-			randomfile.hh rcs_file.hh xdelta.hh adler32.hh lcs.hh constants.hh		\
-			ui.hh schema_migration.hh quick_alloc.hh mac.hh netio.hh			\
-			numeric_vocab.hh revision.hh predicament.hh					\
+unit_tests_SOURCES = unit_tests.cc lua.cc cert.cc database.cc					\
+			diff_patch.cc work.cc							\
+			app_state.cc								\
+			transforms.cc file_io.cc keys.cc manifest.cc merkle_tree.cc netcmd.cc	\
+			netsync.cc sanity.cc vocab.cc						\
+			rcs_file.cc xdelta.cc ui.cc						\
+			schema_migration.cc constants.cc basic_io.cc				\
+			mkstemp.cc lcs.cc revision.cc packet.cc predicament.cc			\
+			change_set.cc								\
+												\
+			file_io.hh manifest.hh database.hh					\
+			diff_patch.hh cert.hh work.hh app_state.hh				\
+			sanity.hh keys.hh transforms.hh vocab.hh cleanup.hh lua.hh basic_io.hh	\
+			unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh		\
+			randomfile.hh rcs_file.hh xdelta.hh adler32.hh lcs.hh constants.hh	\
+			ui.hh schema_migration.hh quick_alloc.hh				\
+			mac.hh merkle_tree.hh netcmd.hh netio.hh				\
+			netsync.hh								\
+			numeric_vocab.hh revision.hh packet.hh predicament.hh			\
 			change_set.hh mkstemp.hh
 
 txt2c_SOURCES = txt2c.cc

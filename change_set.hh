@@ -86,6 +86,58 @@ path_edit_consumer
   virtual ~path_edit_consumer() {}
 };
 
+// simple accessors
+
+inline change_set::tid const & 
+path_item_parent(change_set::path_item const & p) 
+{ 
+  return p.parent; 
+}
+
+inline change_set::ptype const & 
+path_item_type(change_set::path_item const & p) 
+{ 
+  return p.ty; 
+}
+
+inline file_path const & 
+path_item_name(change_set::path_item const & p) 
+{ 
+  return p.name; 
+}
+
+inline change_set::tid
+path_state_tid(change_set::path_state::const_iterator i)
+{
+  return i->first;
+}
+
+inline change_set::path_item const &
+path_state_item(change_set::path_state::const_iterator i)
+{
+  return i->second;
+}
+
+inline file_path const & 
+delta_entry_path(change_set::delta_map::const_iterator i)
+{
+  return i->first;
+}
+
+inline file_id const & 
+delta_entry_src(change_set::delta_map::const_iterator i)
+{
+  return i->second.first;
+}
+
+inline file_id const & 
+delta_entry_dst(change_set::delta_map::const_iterator i)
+{
+  return i->second.second;
+}
+
+// rearrangement algebra access
+
 boost::shared_ptr<path_edit_consumer> 
 new_rearrangement_builder(change_set::path_rearrangement & pr);
 

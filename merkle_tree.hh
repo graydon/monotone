@@ -37,7 +37,9 @@ typedef enum
     file_item = 2,
     mcert_item = 3,
     fcert_item = 4,
-    key_item = 5    
+    key_item = 5,    
+    revision_item = 6,
+    rcert_item = 7
   }
 netcmd_item_type;
 

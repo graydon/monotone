@@ -898,7 +898,6 @@ database::drop(hexenc<id> const & ident,
 	  ident().c_str());
 }
 
-
 void 
 database::put_version(hexenc<id> const & old_id,
 		      hexenc<id> const & new_id,
@@ -923,6 +922,26 @@ database::put_version(hexenc<id> const & old_id,
     }
   put(new_id, new_data, data_table);
   put_delta(old_id, new_id, reverse_delta, delta_table);
+  guard.commit();
+}
+
+void 
+database::put_reverse_version(hexenc<id> const & new_id,
+			      hexenc<id> const & old_id,
+			      base64< gzip<delta> > const & reverse_del,
+			      string const & data_table,
+			      string const & delta_table)
+{
+  base64< gzip<data> > old_data, new_data;
+  
+  get_version(new_id, new_data, data_table, delta_table);
+  patch(new_data, reverse_del, old_data);
+  hexenc<id> check;
+  calculate_ident(old_data, check);
+  I(old_id == check);
+      
+  transaction_guard guard(*this);
+  put_delta(old_id, new_id, reverse_del, delta_table);
   guard.commit();
 }
 
@@ -974,39 +993,6 @@ database::get_manifest_version(manifest_id const & id,
 }
 
 
-bool 
-database::manifest_delta_exists(manifest_id const & new_id,
-				manifest_id const & old_id)
-{
-  return delta_exists(old_id.inner(), new_id.inner(), "manifest_deltas");
-}
-
-void 
-database::compute_older_version(manifest_id const & new_id,
-				manifest_id const & old_id,
-				data const & m_new,
-				data & m_old)
-{
-  base64< gzip<delta> > del;
-  I(delta_exists(old_id.inner(), new_id.inner(), "manifest_deltas"));
-  get_delta(old_id.inner(), new_id.inner(), del, "manifest_deltas");
-  patch(m_new, del, m_old);
-}
-
-void 
-database::compute_older_version(manifest_id const & new_id,
-				manifest_id const & old_id,
-				manifest_data const & m_new,
-				manifest_data & m_old)
-{
-  data old_data, new_data;
-  base64< gzip<data> > old_packed;
-  unpack(m_new.inner(), new_data);
-  compute_older_version(new_id, old_id, new_data, old_data);
-  pack(old_data, old_packed);
-  m_old = manifest_data(old_packed);
-}
-
 void 
 database::put_file(file_id const & id,
 		   file_data const & dat)
@@ -1021,6 +1007,15 @@ database::put_file_version(file_id const & old_id,
 {
   put_version(old_id.inner(), new_id.inner(), del.inner(), 
 	      "files", "file_deltas");
+}
+
+void 
+database::put_file_reverse_version(file_id const & new_id,
+				   file_id const & old_id,				   
+				   file_delta const & del)
+{
+  put_reverse_version(new_id.inner(), old_id.inner(), del.inner(), 
+		      "files", "file_deltas");
 }
 
 
@@ -1038,6 +1033,15 @@ database::put_manifest_version(manifest_id const & old_id,
 {
   put_version(old_id.inner(), new_id.inner(), del.inner(), 
 	      "manifests", "manifest_deltas");
+}
+
+void 
+database::put_manifest_reverse_version(manifest_id const & new_id,
+				       manifest_id const & old_id,				   
+				       manifest_delta const & del)
+{
+  put_reverse_version(new_id.inner(), old_id.inner(), del.inner(), 
+		      "manifests", "manifest_deltas");
 }
 
 void 
@@ -1588,6 +1592,11 @@ database::get_certs(hexenc<id> const & ident,
 
 
 
+bool 
+database::revision_cert_exists(revision<cert> const & cert)
+{ 
+  return cert_exists(cert.inner(), "revision_certs"); 
+}
 
 bool 
 database::manifest_cert_exists(manifest<cert> const & cert)
@@ -1605,6 +1614,12 @@ void
 database::put_manifest_cert(manifest<cert> const & cert)
 { 
   put_cert(cert.inner(), "manifest_certs"); 
+}
+
+void 
+database::put_revision_cert(revision<cert> const & cert)
+{ 
+  put_cert(cert.inner(), "revision_certs"); 
 }
 
 void 

@@ -56,22 +56,18 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
 
   if (t.empty() || t.find("change_set") != t.end())
     add_change_set_tests(suite);  
-  
-  /*
+
+  if (t.empty() || t.find("diff_patch") != t.end())
+    add_diff_patch_tests(suite);
+
+  if (t.empty() || t.find("xdelta") != t.end())
+    add_xdelta_tests(suite);  
 
   if (t.empty() || t.find("packet") != t.end())
     add_packet_tests(suite);
   
-  if (t.empty() || t.find("diff_patch") != t.end())
-    add_diff_patch_tests(suite);
-
   if (t.empty() || t.find("netcmd") != t.end())
     add_netcmd_tests(suite);  
-
-  if (t.empty() || t.find("xdelta") != t.end())
-    add_xdelta_tests(suite);  
-  */
-
 
   
   // all done, add our clean-shutdown-indicator

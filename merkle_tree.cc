@@ -29,11 +29,17 @@ netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
   typestr.clear();
   switch (t)
     {
+    case revision_item:
+      typestr = "revision";
+      break;
     case manifest_item:
       typestr = "manifest";
       break;
     case file_item:
       typestr = "file";
+      break;
+    case rcert_item:
+      typestr = "rcert";
       break;
     case mcert_item:
       typestr = "mcert";

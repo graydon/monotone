@@ -116,6 +116,11 @@ class database
 		   base64< gzip<delta> > const & del,
 		   std::string const & data_table,
 		   std::string const & delta_table);
+  void put_reverse_version(hexenc<id> const & new_id,
+			   hexenc<id> const & old_id,
+			   base64< gzip<delta> > const & reverse_del,
+			   std::string const & data_table,
+			   std::string const & delta_table);
 
   bool cert_exists(cert const & t,
 		  std::string const & table);
@@ -186,6 +191,12 @@ public:
   void get_file_version(file_id const & id,
 			file_data & dat);
 
+  // get file delta if it exists, else calculate it.
+  // both manifests must exist.
+  void get_file_delta(file_id const & src,
+		      file_id const & dst,
+		      file_delta & del);
+
   // put file w/o predecessor into db
   void put_file(file_id const & new_id,
 		file_data const & dat);
@@ -195,10 +206,22 @@ public:
 			file_id const & new_id,
 			file_delta const & del);
 
+  // load in a "direct" new -> old reverse edge (used during
+  // netsync and CVS load-in)
+  void put_file_reverse_version(file_id const & old_id,
+				file_id const & new_id,
+				file_delta const & del);
+
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist). 
   void get_manifest_version(manifest_id const & id,
 			    manifest_data & dat);
+
+  // get manifest delta if it exists, else calculate it.
+  // both manifests must exist.
+  void get_manifest_delta(manifest_id const & src,
+			  manifest_id const & dst,
+			  manifest_delta & del);
 
   // put manifest w/o predecessor into db
   void put_manifest(manifest_id const & new_id,
@@ -209,21 +232,12 @@ public:
 			    manifest_id const & new_id,
 			    manifest_delta const & del);
 
-  // only use these three variants if you really know what you're doing,
-  // wrt. "old" and "new". they will throw if you do something wrong.
+  // load in a "direct" new -> old reverse edge (used during
+  // netsync and CVS load-in)
+  void put_manifest_reverse_version(manifest_id const & old_id,
+				    manifest_id const & new_id,
+				    manifest_delta const & del);
 
-  bool manifest_delta_exists(manifest_id const & new_id,
-			     manifest_id const & old_id);
-
-  void compute_older_version(manifest_id const & new_id,
-			     manifest_id const & old_id,
-			     data const & m_new,
-			     data & m_old);
-
-  void compute_older_version(manifest_id const & new_id,
-			     manifest_id const & old_id,
-			     manifest_data const & m_new,
-			     manifest_data & m_old);
 
   void get_revision_parents(revision_id const & id,
 			   std::set<revision_id> & parents);
@@ -287,7 +301,7 @@ public:
   bool manifest_cert_exists(hexenc<id> const & hash);
   void put_manifest_cert(manifest<cert> const & cert);
 
-  bool revision_cert_exists(manifest<cert> const & cert);
+  bool revision_cert_exists(revision<cert> const & cert);
   bool revision_cert_exists(hexenc<id> const & hash);
 
   void put_revision_cert(revision<cert> const & cert);
