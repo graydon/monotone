@@ -1,3 +1,8 @@
+2004-10-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sanity.cc (dump_buffer): Wrap bare string in call to string(),
+	to disambiguate conversions (required by Boost 1.30).
+
 2004-10-26  graydon hoare  <graydon@pobox.com>
 
 	* tests/t_update_missing.at: New test from Bruce Stephens
