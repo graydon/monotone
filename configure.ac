@@ -128,16 +128,22 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 
 # check for static boost option
 AC_ARG_ENABLE(static-boost,
-[  --enable-static-boost       use static libs from boost])
+[  --enable-static-boost[=prefix] use static libs from boost])
 AM_CONDITIONAL(STATIC_BOOST, test "x${enable_static_boost}" != x)
 if test "x${enable_static_boost}" != x
 then
+   if echo "${enable_static_boost}" | grep '^/' >/dev/null
+   then
+      static_boost_prefixes="${enable_static_boost}"
+   else
+      static_boost_prefixes="/ /usr /opt /usr/local"
+   fi
    AC_MSG_CHECKING([location of static boost libraries])
-   for i in /lib /usr/lib /opt/lib /usr/local/lib 
+   for i in ${static_boost_prefixes}
    do
-	if test -e $i/libboost_regex.a 
+	if test -e $i/lib/libboost_regex.a 
 	then
-		BOOST_LIBDIR=$i
+		BOOST_LIBDIR=$i/lib
 	fi
    done
    if test "x${BOOST_LIBDIR}" = x
