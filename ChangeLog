@@ -1,5 +1,10 @@
 2004-09-13  graydon hoare  <graydon@pobox.com>
 
+	* change_set.cc: Bug fixes.
+	* commands.cc: Likewise.
+
+2004-09-13  graydon hoare  <graydon@pobox.com>
+
 	* change_set.{cc,hh}: Implement delta renaming and merging.
 	* commands.cc 
 	(update): Teach about revisions.

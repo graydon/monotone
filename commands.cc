@@ -1996,77 +1996,90 @@ update_writer : public change_set_consumer
 {
   app_state & app;
   update_merge_provider & merger;
+  manifest_map files_to_write;
   update_writer(app_state & app,
 		update_merge_provider & merger)
     : app(app), merger(merger)
   {}
 
-  void write_file_from_store(file_path const & pth,
-			     file_id const & ident)
+  void write_modified_files()
   {
-    L(F("writing %s to %s\n") % ident % pth);
-    file_data tmp;
-    if (file_exists(pth))
+    for (manifest_map::const_iterator i = files_to_write.begin();
+	 i != files_to_write.end(); ++i)
       {
-	base64< gzip<data> > dtmp;
-	hexenc<id> dtmp_id;
-	read_localized_data(pth, dtmp, app.lua);
-	calculate_ident(dtmp, dtmp_id);
-	if (ident.inner() == dtmp_id)
-	  {
-	    L(F("file '%s' on disk already has id %s\n") % pth % ident);
-	    return;
-	  }
+	file_path pth(manifest_entry_path(i));
+	file_id ident(manifest_entry_id(i));
+
+	if (file_exists(pth))
+	{
+	  hexenc<id> tmp_id;
+	  calculate_ident(pth, tmp_id, app.lua);
+	  if (tmp_id == ident.inner())
+	    continue;
+	}
+	
+	P(F("updating %s to %s\n") % pth % ident);
+
+	I(app.db.file_version_exists(ident)
+	  || merger.temporary_store.find(ident) != merger.temporary_store.end());
+
+	file_data tmp;
+	if (app.db.file_version_exists(ident))
+	  app.db.get_file_version(ident, tmp);
+	else if (merger.temporary_store.find(ident) != merger.temporary_store.end())
+	  tmp = merger.temporary_store[ident];    
+	app.db.get_file_version(ident, tmp);
+	write_localized_data(pth, tmp.inner(), app.lua);
       }
-
-    I(app.db.file_version_exists(ident)
-      || merger.temporary_store.find(ident) != merger.temporary_store.end());
-
-    if (app.db.file_version_exists(ident))
-      app.db.get_file_version(ident, tmp);
-    else if (merger.temporary_store.find(ident) != merger.temporary_store.end())
-      tmp = merger.temporary_store[ident];    
-    app.db.get_file_version(ident, tmp);
-    write_localized_data(pth, tmp.inner(), app.lua);
   }
   
   virtual void add_file(file_path const & pth, 
 			file_id const & ident) 
   {
-    P(F("processing add_file(%s,%s)\n") % pth % ident);
-    write_file_from_store(pth, ident);
+    L(F("processing add_file(%s,%s)\n") % pth % ident);
+    files_to_write.insert(make_pair(pth, ident));
   }
 
-  virtual void apply_delta(file_path const & path, 
+  virtual void apply_delta(file_path const & pth, 
 			   file_id const & src, 
 			   file_id const & dst)
   {
-    P(F("processing apply_delta(%s,%s,%s)\n") % path % src % dst);    
-    write_file_from_store(path, dst);
+    L(F("processing apply_delta(%s,%s,%s)\n") % pth % src % dst);    
+    hexenc<id> tmp_id;
+    calculate_ident(pth, tmp_id, app.lua);
+    N(tmp_id == src.inner(), 
+      F("file %s in working copy has unexpected content %s"));
+    files_to_write.insert(make_pair(pth, dst));
   }
 
   virtual void delete_file(file_path const & d) 
   {
-    P(F("processing delete_file(%s)\n") % d);
-    ::delete_file(d);
+    L(F("processing delete_file(%s)\n") % d);
+    // FIXME: a --prune option here to control whether or not
+    // to actually delete the file from working copy, rather than
+    // just un-register it (which happens naturally)
+    // ::delete_file(d);
   }
 
   virtual void delete_dir(file_path const & d) 
   {
     P(F("processing delete_dir(%s)\n") % d);
-    ::delete_dir_recursive(d);
+    // FIXME: a --prune-dirs option here to control whether or not
+    // to actually delete the dir from working copy, rather than
+    // just un-register it (which happens naturally)
+    // ::delete_dir_recursive(d);
   }
 
   virtual void rename_file(file_path const & a, file_path const & b) 
   {
-    P(F("processing rename_file(%s,%s)\n") % a % b);
+    P(F("renaming file '%s' as '%s'\n") % a % b);
     ::make_dir_for(b);
     ::move_file(a, b);
   }
 
   virtual void rename_dir(file_path const & a, file_path const & b) 
   {
-    P(F("processing rename_dir(%s,%s)\n") % a % b);
+    P(F("renaming directory '%s' as '%s'\n") % a % b);
     ::make_dir_for(b);
     ::move_dir(a, b);
   }
@@ -2075,12 +2088,20 @@ update_writer : public change_set_consumer
 };
 
 
+// static void dump_change_set(string const & name,
+// 			    change_set & cs)
+// {
+//   data dat;
+//   write_change_set(cs, dat);
+//   cout << "change set '" << name << "'\n" << dat << endl;
+// }
+
 CMD(update, "working copy", "", "update working copy")
 {
   manifest_map m_old, m_working;
   revision_set r_old, r_working, r_new;
   revision_id r_old_id, r_chosen_id;
-  change_set old_to_chosen, merged;
+  change_set old_to_chosen, update;
   update_merge_provider merger(app);
 
   calculate_current_revision(app, r_working, m_old, m_working);
@@ -2098,36 +2119,57 @@ CMD(update, "working copy", "", "update working copy")
       return;
     }
 
-  P(F("selected update edge %s -> %s\n") % r_old_id % r_chosen_id);
+  P(F("selected update target %s\n") % r_chosen_id);
   calculate_composite_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
 
   I(r_working.edges.size() == 1 || r_working.edges.size() == 0);
+
   if (r_working.edges.size() == 0)
     {
-      P(F("updating along chosen edge %s -> %s\n") 
+      // working copy has no changes
+      L(F("updating along chosen edge %s -> %s\n") 
 	% r_old_id % r_chosen_id);
-      merged = old_to_chosen;
+      update = old_to_chosen;
     }
   else
     {      
-      P(F("merging working copy with chosen edge %s -> %s\n") 
+      // working copy has changes from base
+      // 
+      // call these changes B->W
+      //
+      // update is B->N
+      //
+      // we therefore calculate W->B->(merge(B->W,B->N))
+
+      change_set working(edge_changes(r_working.edges.begin()));
+      change_set merged, working_inverse, composite;
+
+      L(F("inverting working copy changeset\n"));
+      invert_change_set(working, m_old, working_inverse);
+      // dump_change_set("working inverse", working_inverse);
+
+      L(F("merging working copy with chosen edge %s -> %s\n") 
 	% r_old_id % r_chosen_id);
-      merge_change_sets(old_to_chosen,
-			edge_changes(r_working.edges.begin()),
-			merger, merged);
-      L(F("updating to merged revision\n"));
+      merge_change_sets(old_to_chosen, working, merger, merged);
+      // dump_change_set("merged", merged);
+
+      L(F("concatenating inverse working copy with merged changeset\n"));
+      concatenate_change_sets(working_inverse, merged, update);
+      // dump_change_set("update", update);
+
+      L(F("updating to composite derived from chosen edge %s -> %s\n") 
+	% r_old_id % r_chosen_id);
     }
   
   update_writer updater(app, merger);
-  play_back_change_set(merged, updater);
+  play_back_change_set(update, updater);
+  updater.write_modified_files();
   
-  L(F("update successful\n"));
-
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
   // is the basis of the working copy, not the working copy itself.
   put_revision_id(r_chosen_id);
-  P(F("updated to base version %s\n") % r_chosen_id);
+  P(F("updated to base revision %s\n") % r_chosen_id);
 
   update_any_attrs(app);
   app.write_options();

@@ -623,13 +623,27 @@ reconstruct_path(file_path const & input,
       
       boost::shared_ptr<directory_node> node = dirent->second;
       directory_node::const_iterator entry = node->find(*pth);
-      if (entry == node->end() 
-	  || directory_entry_type(entry) != change_set::ptype_directory)
+      if (entry == node->end())
 	break;
-      
-      L(F("resolved directory '%s' in reconstruction\n") % *pth);
+
+      {
+	// check to see if this is the image of an added entry (i.e. null
+	// preimage name), if so it terminates our search.
+	change_set::path_state::const_iterator i = output_space.find(directory_entry_tid(entry));
+	I(i != output_space.end());
+	if (null_name(path_item_name(path_state_item(i))))
+	  {
+	    L(F("path element %s was added, mapping truncated\n") % *pth);
+	    break;
+	  }
+      }
+ 
+      L(F("resolved entry '%s' in reconstruction\n") % *pth);
       ++pth;
       t = directory_entry_tid(entry);
+
+      if (directory_entry_type(entry) != change_set::ptype_directory)
+	break;
     }
       
   get_full_path(output_space, t, rebuilt);
@@ -1190,6 +1204,11 @@ rename_deltas_under_merge(change_set const & a,
 
       reconstruct_path(a_dst_path, a_dst_map, a.rearrangement.first, src_path);
       reconstruct_path(src_path, merged_src_map, merged.rearrangement.second, merged_dst_path);
+      L(F("renamed delta '%s' -> '%s' from path '%s' to '%s'\n")
+	% delta_entry_src(i)
+	% delta_entry_src(i)
+	% delta_entry_path(i)
+	% merged_dst_path);
       a_deltas_renamed.insert(std::make_pair(merged_dst_path,
 					     std::make_pair(delta_entry_src(i),
 							    delta_entry_dst(i))));      
@@ -1202,7 +1221,9 @@ merge_change_sets(change_set const & a,
 		  merge_provider & file_merger,
 		  change_set & merged)
 {
-  merged = a;
+  merged.rearrangement = a.rearrangement;
+  merged.deltas.clear();
+
   path_edit_merger mer(merged.rearrangement);
   play_back_rearrangement(b.rearrangement, mer);
 
