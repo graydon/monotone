@@ -1710,6 +1710,8 @@ CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipu
 	app.db.load(cin);
       else if (idx(args, 0)() == "migrate")
 	app.db.migrate();
+      else if (idx(args, 0)() == "changesetify")
+	build_changesets(app);
       else
 	throw usage(name);
     }

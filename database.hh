@@ -77,6 +77,7 @@ class database
   int transaction_level;
 
   void install_functions(app_state * app);
+  void install_views();
 
   typedef std::vector< std::vector<std::string> > results;
   void execute(char const * query, ...);
@@ -343,6 +344,9 @@ public:
 			 revision<cert> & cert);
   
   void get_manifest_certs(manifest_id const & id, 
+			  std::vector< manifest<cert> > & certs);
+
+  void get_manifest_certs(cert_name const & name, 
 			  std::vector< manifest<cert> > & certs);
 
   void get_manifest_certs(manifest_id const & id, 

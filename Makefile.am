@@ -235,7 +235,7 @@ EXTRA_DIST = $(man1_MANS) \
              INSTALL \
              monotone.html \
              texinfo.css \
-	     schema.sql \
+	     schema.sql views.sql \
 	     std_hooks.lua test_hooks.lua \
 	     testsuite.at \
 	     $(wildcard tests/t_*.at) \
@@ -289,7 +289,7 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES = std_hooks.h test_hooks.h schema.h 
+BUILT_SOURCES = std_hooks.h test_hooks.h schema.h views.h
 CLEANFILES = $(BUILT_SOURCES)
 
 txt2c: txt2c.cc Makefile

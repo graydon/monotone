@@ -3,11 +3,13 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include <iostream>
-#include <sstream>
-#include <string>
 #include <cctype>
 #include <cstdlib>
+#include <iostream>
+#include <map>
+#include <set>
+#include <sstream>
+#include <string>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -398,6 +400,161 @@ calculate_composite_change_set(revision_id const & ancestor,
   std::set<revision_id> visited;
   std::map<revision_id, boost::shared_ptr<change_set> > partial;
   calculate_change_sets_recursive(ancestor, child, app, composed, partial, visited);
+}
+
+// migration stuff
+//
+// FIXME: these are temporary functions, once we've done the migration to
+// revisions / changesets, we can remove them.
+
+static void 
+analyze_manifest_changes(app_state & app,
+			 manifest_id const & parent, 
+			 manifest_id const & child, 
+			 change_set & cs)
+{
+  manifest_map m_parent, m_child;
+  app.db.get_manifest(parent, m_parent);
+  app.db.get_manifest(child, m_child);
+
+  for (manifest_map::const_iterator i = m_parent.begin(); 
+       i != m_parent.end(); ++i)
+    {
+      manifest_map::const_iterator j = m_child.find(manifest_entry_path(i));
+      if (j == m_child.end())
+	cs.delete_file(manifest_entry_path(i));
+      else if (! (manifest_entry_id(i) == manifest_entry_id(j)))
+	{
+	  cs.apply_delta(manifest_entry_path(i),
+			 manifest_entry_id(i), 
+			 manifest_entry_id(j));
+	}	
+    }
+  for (manifest_map::const_iterator i = m_child.begin(); 
+       i != m_child.end(); ++i)
+    {
+      manifest_map::const_iterator j = m_parent.find(manifest_entry_path(i));
+      if (j == m_parent.end())
+	cs.add_file(manifest_entry_path(i),
+		    manifest_entry_id(i));
+    }
+}
+
+static revision_id
+construct_revisions(app_state & app,
+		    manifest_id const & child,
+		    std::multimap< manifest_id, manifest_id > const & ancestry,
+		    std::map<manifest_id, revision_id> & mapped)
+{
+  revision_set rev;
+  typedef std::multimap< manifest_id, manifest_id >::const_iterator ci;
+  std::pair<ci,ci> range = ancestry.equal_range(child);
+  for (ci i = range.first; i != range.second; ++i)
+    {
+      manifest_id parent(i->second);
+      revision_id parent_rid;
+      std::map<manifest_id, revision_id>::const_iterator j = mapped.find(parent);
+
+      if (j != mapped.end())
+	parent_rid = j->second;
+      else
+	{
+	  parent_rid = construct_revisions(app, parent, ancestry, mapped);
+	  P(F("inserting mapping %d : %s -> %s\n") % mapped.size() % parent % parent_rid);;
+	  mapped.insert(std::make_pair(parent, parent_rid));
+	}
+      
+      change_set cs;
+      analyze_manifest_changes(app, parent, child, cs);
+      rev.edges.insert(std::make_pair(parent_rid,
+				      std::make_pair(parent, cs)));
+    } 
+
+  revision_id rid;
+  if (rev.edges.empty())
+    {
+      P(F("ignoring empty revision for manifest %s\n") % child);  
+      return rid;
+    }
+
+  rev.new_manifest = child;
+  calculate_ident(rev, rid);
+
+  if (!app.db.revision_exists (rid))
+    {
+      P(F("mapping manifest %s to revision %s\n") % child % rid);
+      app.db.put_revision(rid, rev);
+    }
+  else
+    {
+      P(F("skipping additional path to revision %s\n") % rid);
+    }
+
+  // now hoist all the interesting certs up to the revision
+  std::set<cert_name> cnames;
+  cnames.insert(cert_name(branch_cert_name));
+  cnames.insert(cert_name(date_cert_name));
+  cnames.insert(cert_name(author_cert_name));
+  cnames.insert(cert_name(tag_cert_name));
+  cnames.insert(cert_name(changelog_cert_name));
+  cnames.insert(cert_name(comment_cert_name));
+  cnames.insert(cert_name(testresult_cert_name));
+
+  std::vector< manifest<cert> > tmp;
+  app.db.get_manifest_certs(child, tmp);
+  erase_bogus_certs(tmp, app);      
+  for (std::vector< manifest<cert> >::const_iterator i = tmp.begin();
+       i != tmp.end(); ++i)
+    {
+      if (cnames.find(i->inner().name) == cnames.end())
+	continue;
+      cert new_cert;
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      make_simple_cert(rid.inner(), i->inner().name, tv, app, new_cert);
+      if (! app.db.revision_cert_exists(revision<cert>(new_cert)))
+	app.db.put_revision_cert(revision<cert>(new_cert));
+    }
+  return rid;  
+}
+
+
+void 
+build_changesets(app_state & app)
+{
+  std::vector< manifest<cert> > tmp;
+  app.db.get_manifest_certs(cert_name("ancestor"), tmp);
+  erase_bogus_certs(tmp, app);
+
+  std::multimap< manifest_id, manifest_id > ancestry;
+  std::set<manifest_id> heads;
+  std::set<manifest_id> total;
+  
+  for (std::vector< manifest<cert> >::const_iterator i = tmp.begin();
+       i != tmp.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      manifest_id child, parent;
+      child = i->inner().ident;
+      parent = hexenc<id>(tv());
+      heads.insert(child);
+      heads.erase(parent);
+      total.insert(child);
+      total.insert(parent);
+      ancestry.insert(std::make_pair(child, parent));
+    }
+  
+  P(F("found a total of %d manifests\n") % total.size());
+
+  transaction_guard guard(app.db);
+  std::map<manifest_id, revision_id> mapped;
+  for (std::set<manifest_id>::const_iterator i = heads.begin();
+       i != heads.end(); ++i)
+    {
+      construct_revisions(app, *i, ancestry, mapped);
+    }
+  guard.commit();
 }
 
 

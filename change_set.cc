@@ -3,6 +3,11 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+// this is how you "ask for" the C99 constant constructor macros.  *and*
+// you have to do so before any other files accidentally include
+// stdint.h. awesome.
+#define __STDC_CONSTANT_MACROS
+
 #include <algorithm>
 #include <iterator>
 #include <iostream>

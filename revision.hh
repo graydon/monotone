@@ -132,6 +132,9 @@ calculate_composite_change_set(revision_id const & ancestor,
 			       change_set & composed);
 
 
+void 
+build_changesets(app_state & app);
+
 // basic_io access to printers and parsers
 
 namespace basic_io { struct printer; struct parser; }

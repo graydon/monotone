@@ -35,6 +35,9 @@
 // defined in schema.sql, converted to header:
 #include "schema.h"
 
+// defined in views.sql, converted to header:
+#include "views.h"
+
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
 // the schema, and all SQL statements used to access the schema.
@@ -118,11 +121,11 @@ database::sql(bool init)
 	throw oops(string("could not open database: ") + filename.string() + 
 		   (errmsg ? (": " + string(errmsg)) : ""));
       if (init)
-	execute (schema_constant);
+	execute(schema_constant);
 
       check_schema();
-
       install_functions(__app);
+      install_views();
     }
   return __sql;
 }
@@ -199,9 +202,9 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   I(vals[1] != NULL);
   I(vals[2] != NULL);
   I(n == 3);
-  *(dump->out) << vals[2] << ";\n";
   if (string(vals[1]) == "table")
     {
+      *(dump->out) << vals[2] << ";\n";
       dump->table_name = string(vals[0]);
       sqlite_exec_printf(dump->sql, "SELECT * FROM '%q'", 
 			 dump_row_cb, data, NULL, vals[0]);
@@ -218,7 +221,7 @@ database::dump(ostream & out)
   out << "BEGIN TRANSACTION;\n";
   int res = sqlite_exec(req.sql,
 			"SELECT name, type, sql FROM sqlite_master "
-			"WHERE type!='meta' AND sql NOT NULL "
+			"WHERE type='table' AND sql NOT NULL "
 			"ORDER BY substr(type,2,1), name",
 			dump_table_cb, &req, NULL);
   I(res == SQLITE_OK);
@@ -1565,6 +1568,21 @@ database::install_functions(app_state * app)
 			    app) == 0);
 }
 
+void
+database::install_views()
+{
+  // delete any existing views
+  results res;
+  fetch(res, one_col, any_rows,
+	"SELECT name FROM sqlite_master WHERE type='view'");
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      execute("DROP VIEW '%q'", res[i][0].c_str());
+    }
+  // register any views we're going to use
+  execute(views_constant);
+}
+
 void 
 database::get_heads(base64<cert_value> const & branch,
 		    std::set<revision_id> & heads)
@@ -1913,6 +1931,17 @@ database::get_manifest_certs(manifest_id const & id,
   get_certs(id.inner(), certs, "manifest_certs"); 
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+}
+
+
+void 
+database::get_manifest_certs(cert_name const & name, 
+			    vector< manifest<cert> > & ts)
+{
+  vector<cert> certs;
+  get_certs(name, certs, "manifest_certs");
+  ts.clear();
+  copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
 
 void 

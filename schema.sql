@@ -108,39 +108,3 @@ CREATE TABLE merkle_nodes
 	unique(type, collection, level, prefix)
 	);
 
-CREATE VIEW revision_certs_with_trust AS
-	SELECT 
-		rc.id as id, rc.name as name, rc.value as value, 
-		trusted("revision", rc.hash, rc.id, rc.name, 
-	                rc.value, rc.keypair, pk.keydata, rc.signature) as trust
-	FROM revision_certs AS rc,
-	     public_keys as pk
-	WHERE pk.id == rc.keypair
-	GROUP BY rc.id, rc.name, rc.value
-	;
-
-CREATE VIEW trusted_revision_certs AS
-	SELECT id, name, value 
-	FROM revision_certs_with_trust
-	WHERE trust == 1
-	;
-
-CREATE VIEW trusted_parents_in_branch AS
-	SELECT id, value
-	FROM trusted_revision_certs
-	WHERE name = "branch" AND id IN
-		(SELECT parent FROM revision_ancestry)
-	;
-
-CREATE VIEW trusted_children_in_branch AS
-	SELECT id, value
-	FROM trusted_revision_certs
-	WHERE name = "branch" AND id IN
-		(SELECT child FROM revision_ancestry)
-	;
-
-CREATE VIEW branch_heads AS
-	SELECT id, value FROM trusted_children_in_branch
-	EXCEPT
-	SELECT id, value FROM trusted_parents_in_branch
-	;
