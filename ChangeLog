@@ -1,5 +1,23 @@
 2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
 
+	* testsuite.at:
+	* tests/t_fmerge.at:
+	* tests/t_netsync.at:
+	* tests/t_netsync_single.at:
+	* tests/t_revert.at:
+	* tests/t_tags.at: Avoid usage of test's == operator.  It's a
+	GNUism and causes unexpected failures in many tests.  The correct
+	operator to use is just an equal sign (=).
+	* tests/t_renamed.at: Don't use cp's -a flag, which is not
+	supported by some implementations of this utility (such as the
+	one in NetBSD).  Try to add some of its funcionality by using
+	the -p flag, although everything could be fine without it.
+	* tests/t_unidiff.at: Discard patch's stderr output.  Otherwise
+	it's treated as errors, but NetBSD's patch uses it to print
+	informative messages.
+
+2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+
 	* tests/t_scan.at: Instead of running sha1sum, use a prestored
 	manifest file to do the verification.  This avoids problems in
 	systems that do not have the sha1sum tool, like NetBSD.
