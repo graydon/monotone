@@ -367,7 +367,7 @@ void lua_hooks::default_rcfilename(fs::path & file)
 
 void lua_hooks::working_copy_rcfilename(fs::path & file)
 {
-  file = fs::path(book_keeping_dir) / fs::path(".monotonerc");
+  file = fs::path(book_keeping_dir) / fs::path("monotonerc");
 }
 
 

@@ -1,5 +1,9 @@
 2003-12-16  graydon hoare  <graydon@pobox.com>
 
+	* lua.cc (working_copy_rcfilename): MT/monotonerc not MT/.monotonerc.
+
+2003-12-16  graydon hoare  <graydon@pobox.com>
+
 	* lua.hh, lua.cc (working_copy_rcfilename): New function.
 	* monotone.cc: Add working copy rcfiles.
 	* commands.cc (ls_unknown, unknown_itemizer): Skip ignored files.
