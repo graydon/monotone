@@ -1,3 +1,15 @@
+2005-03-20  Derek Scherger  <derek@echologic.com>
+
+	* file_io.cc (book_keeping_file): return true only if first
+	element of path is MT, allowing embedded MT elements
+	(walk_tree_recursive): check relative paths for ignoreable book
+	keeping files, rather than absolute paths
+	(test_book_keeping_file): add fs::path tests for book keeping
+	files
+	* tests/t_add_intermediate_MT_path.at: un-XFAIL, fix some problems
+	with commas, add tests for renames and deletes with embedded MT
+	path elements.
+
 2005-03-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi: Add some missing @sc{}'s.
