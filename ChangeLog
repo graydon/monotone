@@ -1,3 +1,8 @@
+2005-02-27  Matt Johnston  <matt@ucc.asn.au>
+
+        * main.cc: ignore SIGPIPE so that monotone won't be killed
+        unexpectedly upon remote disconnection for netsync
+
 2005-02-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* AUTHORS: Add Corey Halpin.
