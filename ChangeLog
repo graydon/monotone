@@ -54,6 +54,12 @@
 	* testsuite.at: Add them.
 	(MONOTONE): Prefix command line with $PREEXECUTE to e.g. support
 	running under Valgrind.
+2005-01-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* cert.cc: ignore whitespace when comparing private keys
+	from the database and with the lua hook
+	* tests/t_lua_privkey.at: new test
+	* testsuite.at: run it
 
 2005-01-23  Derek Scherger  <derek@echologic.com>
 
