@@ -1,3 +1,7 @@
+2005-02-08  graydon hoare  <graydon@pobox.com>
+
+	* database.cc (version_cache::set): Fix bad expiry logic.
+
 2005-02-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (check_sane): Null sources are only valid for

@@ -823,6 +823,7 @@ database::put(hexenc<id> const & ident,
           table.c_str(), ident().c_str(), dat().c_str());
 }
 
+
 void 
 database::put_delta(hexenc<id> const & ident,
                     hexenc<id> const & base,
@@ -836,8 +837,6 @@ database::put_delta(hexenc<id> const & ident,
           table.c_str(), 
           ident().c_str(), base().c_str(), del().c_str());
 }
-
-// static ticker cache_hits("vcache hits", "h", 1);
 
 struct version_cache
 {
@@ -860,13 +859,17 @@ struct version_cache
                            % rand() % rand() % rand() % rand() % rand()).str();
         std::map<hexenc<id>, base64< gzip<data> > >::const_iterator i;
         i = cache.lower_bound(hexenc<id>(key));
-        if (i != cache.end())
+        if (i == cache.end())
           {
-            L(F("version cache expiring %s\n") % i->first);
-            I(i->second().size() <= use);
-            use -= i->second().size();          
-            cache.erase(i->first);
+            // we can't find a random entry, probably there's only one
+            // entry and we missed it. delete first entry instead.
+            i = cache.begin();
           }
+        I(i != cache.end());
+        I(use >= i->second().size());
+        L(F("version cache expiring %s\n") % i->first);
+        use -= i->second().size();          
+        cache.erase(i->first);
       }
     cache.insert(std::make_pair(ident, dat));
     use += dat().size();
@@ -886,7 +889,6 @@ struct version_cache
     i = cache.find(ident);
     if (i == cache.end())
       return false;
-    // ++cache_hits;
     L(F("version cache hit on %s\n") % ident);
     dat = i->second;
     return true;
