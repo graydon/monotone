@@ -68,6 +68,7 @@ version control tools.
 @menu
 * Concepts::            Taxonomy of monotone
 * Getting Started::     Simple use of monotone
+* Network Service::     How to use the networking system
 * Special Topics::      Extra explanations and details
 * CVS Phrasebook::      Transitional guide for CVS users
 * Command Reference::   Details of each monotone command
@@ -1765,6 +1766,17 @@ The second hook function takes a URL and returns the name of an
 @sc{rsa} keypair in your database, to use for authenticating
 transmissions to the depot. This will generally be the name of the key
 you use to sign certificates.
+
+
+@node    Network Service
+@chapter Network Service
+
+@emph{Note:} Monotone's networking system changed between release 0.9
+and 0.10. The old system is depricated and will be removed. The
+documentation for the old system has already been removed. Please
+familiarize yourself with the new system.
+
+
 
 
 @node    Special Topics

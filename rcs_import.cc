@@ -3,14 +3,16 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include <iostream>
-#include <string>
 #include <algorithm>
-#include <vector>
-#include <stack>
+#include <iostream>
+#include <iterator>
 #include <map>
+#include <set>
 #include <sstream>
+#include <stack>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include <unistd.h>
 
@@ -147,6 +149,10 @@ cvs_history
 
   typedef stack< shared_ptr<cvs_state> > state_stack;
 
+  map<unsigned long, 
+      pair<cvs_key, 
+	   shared_ptr<cvs_state> > > branchpoints;
+
   state_stack stk;
   file_path curr_file;
   manifest_map head_manifest;
@@ -159,12 +165,18 @@ cvs_history
   cvs_history();
   void set_filename(string const & file,
 		    file_id const & ident);
-  void push_branch(rcs_file const & r, string const & rcs_version_num);
+  void push_branch(rcs_file const & r, 
+		   string const & branchpoint_version,
+		   string const & first_branch_version);
   void note_file_edge(rcs_file const & r, 
 		      string const & prev_rcs_version_num,
 		      string const & next_rcs_version_num,
 		      file_id const & prev_version,
 		      file_id const & next_version);
+  void find_branchpoint(rcs_file const & r,
+			string const & branchpoint_version,
+			string const & first_branch_version,
+			shared_ptr<cvs_state> & branchpoint);
   void pop_branch();
 };
 
@@ -433,7 +445,7 @@ process_branch(string const & begin_version,
 	  hexenc<id> branch_id;
 	  insert_into_db(curr_data, curr_id, 
 			 branch_lines, branch_data, branch_id, db);
-	  cvs.push_branch (r, curr_version);
+	  cvs.push_branch (r, curr_version, *i);
 
 	  cvs.note_file_edge (r, curr_version, *i,
 			      file_id(curr_id), file_id(branch_id));
@@ -651,9 +663,9 @@ cvs_key::cvs_key(rcs_file const & r, string const & version,
 
 
 cvs_history::cvs_history() :
-  n_versions("versions"),
-  n_tree_branches("tree branches"),
-  n_file_branches("file branches")
+  n_versions("versions", 1),
+  n_tree_branches("tree branches", 1),
+  n_file_branches("file branches", 1)
 {
   stk.push(shared_ptr<cvs_state>(new cvs_state()));  
 }
@@ -716,28 +728,78 @@ cvs_history::find_key_and_state(rcs_file const & r,
   return false;
 }
 
-void 
-cvs_history::push_branch(rcs_file const & r, 
-			 string const & branchpoint_rcs_version_num) 
-{      
-  cvs_key k;
-  shared_ptr<cvs_state> s;
-  ++n_file_branches;
+void
+cvs_history::find_branchpoint(rcs_file const & r,
+			      string const & branchpoint_version,
+			      string const & first_branch_version,
+			      shared_ptr<cvs_state> & branchpoint)
+{
+  cvs_key k; 
+  I(find_key_and_state(r, branchpoint_version, k, branchpoint));
 
-  I(stk.size() > 0);
-  I(find_key_and_state (r, branchpoint_rcs_version_num, k, s));
-  if (s->substates.size() > 0)
+  string branch_name = find_branch_for_version(r.admin.symbols, 
+					       first_branch_version, 
+					       base_branch);
+
+  unsigned long branch = branch_interner.intern(branch_name);
+    
+  map<unsigned long, 
+    pair<cvs_key, shared_ptr<cvs_state> > >::const_iterator i 
+    = branchpoints.find(branch);
+
+  if (i == branchpoints.end())
     {
-      L(F("pushing existing branch for %s : %s\n")
-	% curr_file % branchpoint_rcs_version_num);
+      ++n_tree_branches;
+      L(F("beginning branch %s at %s : %s\n")
+	% branch_name % curr_file % branchpoint_version);
+      branchpoints.insert(make_pair(branch, 
+				    make_pair(k, branchpoint)));
     }
   else
     {
-      ++n_tree_branches;
-      L(F("pushing new branch for %s : %s\n")
-	% curr_file % branchpoint_rcs_version_num);
+      // take the earlier of the new key and the existing branchpoint
+      if (k.time < i->second.first.time)
+	{
+	  L(F("moving branch %s back to %s : %s\n")
+	    % branch_name % curr_file % branchpoint_version);
+	  shared_ptr<cvs_state> old = i->second.second;
+	  set<cvs_key> moved;
+	  for (map< cvs_key, shared_ptr<cvs_state> >::const_iterator j = 
+		 old->substates.begin(); j != old->substates.end(); ++j)
+	    {
+	      if (j->first.branch == branch)
+		{
+		  branchpoint->substates.insert(*j);
+		  moved.insert(j->first);
+		}
+	    }
+	  for (set<cvs_key>::const_iterator j = moved.begin(); j != moved.end();
+	       ++j)
+	    {
+	      old->substates.erase(*j);
+	    }
+	  branchpoints[branch] = make_pair(k, branchpoint);
+	}
+      else
+	{
+	  L(F("using existing branchpoint for %s at %s : %s\n")
+	    % branch_name % curr_file % branchpoint_version);
+	  branchpoint = i->second.second;
+	}
     }
-  stk.push(s);
+}
+
+void 
+cvs_history::push_branch(rcs_file const & r, 
+			 string const & branchpoint_version,
+			 string const & first_branch_version) 
+{      
+  shared_ptr<cvs_state> branchpoint;
+  ++n_file_branches;
+  I(stk.size() > 0);
+  find_branchpoint(r, branchpoint_version, 
+		   first_branch_version, branchpoint);
+  stk.push(branchpoint);
 }
 
 void 
@@ -1040,7 +1102,7 @@ import_cvs_repo(fs::path const & cvsroot,
 
 
   {
-    ticker n_branches("branches"), n_edges("edges");
+    ticker n_branches("branches", 1), n_edges("edges", 1);
     transaction_guard guard(app.db);
     
     // write the trunk head version
