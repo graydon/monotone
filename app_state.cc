@@ -131,12 +131,21 @@ app_state::prefix(utf8 const & path)
   return p2;
 }
 
+static file_path dot(".");
+
 void 
-app_state::add_restriction(utf8 const & path)
+app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & paths)
 {
-  file_path p = prefix(path);
-  L(F("'%s' added to restricted path set\n") % p());
-  restrictions.insert(p);
+  for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      file_path p = prefix(*i);
+
+      N(p == dot || valid_paths.find(p) != valid_paths.end(),
+        F("path '%s' not found in base manifest or current work set\n") % p());
+
+      L(F("'%s' added to restricted path set\n") % p());
+      restrictions.insert(p);
+    }
 }
 
 bool
@@ -153,7 +162,7 @@ app_state::restriction_includes(file_path const & path)
   // careful about what goes in to the restricted path set we just
   // check for this special case here.
 
-  if (restrictions.find(file_path(".")) != restrictions.end())
+  if (restrictions.find(dot) != restrictions.end())
     {
       L(F("restricted path set cleared; '%s' included\n") % path());
       return true;
