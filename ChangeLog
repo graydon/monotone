@@ -1,3 +1,8 @@
+2003-09-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (diff): Take manifest ids as arguments.  Add
+	explanatory text on files added, removed, modified.
+
 2003-09-19  Tom Tromey  <tromey@redhat.com>
 
 	* commands.cc (genkey): Use all-caps for meta-syntactic variable.

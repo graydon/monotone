@@ -1640,16 +1640,62 @@ CMD(complete, "informative", "(manifest|file) PARTIAL-ID", "complete partial id"
     throw usage(name);  
 }
 
-CMD(diff, "informative", "", "show current diffs on stdout")
+CMD(diff, "informative", "[MANIFEST-ID [MANIFEST-ID]]", "show current diffs on stdout")
 {
   manifest_map m_old, m_new;
   patch_set ps;
+  bool new_is_archived;
 
   transaction_guard guard(app.db);
 
-  get_manifest_map(m_old);
-  calculate_new_manifest_map(m_old, m_new);
+  if (args.size() == 0)
+    {
+      get_manifest_map(m_old);
+      calculate_new_manifest_map(m_old, m_new);
+      new_is_archived = false;
+    }
+  else if (args.size() == 1)
+    {
+      manifest_id m_old_id;
+      complete(app, args[0], m_old_id);
+      manifest_data m_old_data;
+      app.db.get_manifest_version(m_old_id, m_old_data);
+      read_manifest_map(m_old_data, m_old);
+
+      manifest_map parent;
+      get_manifest_map(parent);
+      calculate_new_manifest_map(parent, m_new);
+      new_is_archived = false;
+    }
+  else if (args.size() == 2)
+    {
+      manifest_id m_old_id, m_new_id;
+
+      complete(app, args[0], m_old_id);
+      complete(app, args[1], m_new_id);
+
+      manifest_data m_old_data, m_new_data;
+      app.db.get_manifest_version(m_old_id, m_old_data);
+      app.db.get_manifest_version(m_new_id, m_new_data);
+
+      read_manifest_map(m_old_data, m_old);
+      read_manifest_map(m_new_data, m_new);
+      new_is_archived = true;
+    }
+  else
+    {
+      throw usage(name);
+    }
+      
   manifests_to_patch_set(m_old, m_new, app, ps);
+
+  cout << "# Summary of changes:" << endl;
+  stringstream summary;
+  patch_set_to_text_summary(ps, summary);
+  vector<string> lines;
+  split_into_lines(ss.str(), lines);
+  for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
+    cout << "# " << *i << endl;
 
   for (set<patch_delta>::const_iterator i = ps.f_deltas.begin();
        i != ps.f_deltas.end(); ++i)
@@ -1663,7 +1709,18 @@ CMD(diff, "informative", "", "show current diffs on stdout")
       decode_base64(f_old.inner(), decoded_old);
       decode_gzip(decoded_old, decompressed_old);
 
-      read_data(i->path, decompressed_new);
+      if (new_is_archived)
+        {
+          file_data f_new;
+          gzip<data> decoded_new;
+          app.db.get_file_version(i->id_new, f_new);
+          decode_base64(f_new.inner(), decoded_new);
+          decode_gzip(decoded_new, decompressed_new);
+        }
+      else
+        {
+          read_data(i->path, decompressed_new);
+        }
 
       split_into_lines(decompressed_old(), old_lines);
       split_into_lines(decompressed_new(), new_lines);
