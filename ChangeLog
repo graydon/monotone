@@ -1,3 +1,13 @@
+2003-10-22  graydon hoare  <graydon@pobox.com>
+
+	* diff_patch.cc 
+	(infer_directory_moves): New function.
+	(rebuild_under_directory_moves): New function.
+	(apply_directory_moves): New function.
+	(merge3): Handle directory moves.
+	* tests/t_renamed.at: New test for dir renames.
+	* testsuite.at: Call it.
+
 2003-10-21  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (queue): New command.

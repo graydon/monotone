@@ -705,6 +705,115 @@ void merge_deltas (map<file_path, patch_delta> const & self_map,
 }
 
 
+static void apply_directory_moves(map<file_path, file_path> const & dir_moves,
+				  file_path & fp)
+{
+  fs::path stem = fs::path(fp());
+  fs::path rest;
+  while (stem.has_branch_path())
+    {
+      rest = stem.leaf() / rest;
+      stem = stem.branch_path();
+      map<file_path, file_path>::const_iterator j = 
+	dir_moves.find(file_path(stem.string()));
+      if (j != dir_moves.end())
+	{
+	  file_path old = fp;
+	  fp = file_path((fs::path(j->second()) / rest).string());
+	  L(F("applying dir rename: %s -> %s\n") % old % fp);
+	  return;
+	}      
+    }
+}
+
+static void rebuild_under_directory_moves(map<file_path, file_path> const & dir_moves,
+					  manifest_map const & in,
+					  manifest_map & out)
+{
+  for (manifest_map::const_iterator mm = in.begin();
+       mm != in.end(); ++mm)
+    {
+      file_path fp = mm->first;
+      apply_directory_moves(dir_moves, fp);
+      I(out.find(fp) == out.end());
+      out.insert(make_pair(fp, mm->second));
+    }
+}
+					  
+
+static void infer_directory_moves(manifest_map const & ancestor,
+				  manifest_map const & child,
+				  map<file_path, file_path> const & moves,
+				  map<file_path, file_path> & dir_portion)
+{
+  for (map<file_path, file_path>::const_iterator mov = moves.begin();
+       mov != moves.end(); ++mov)
+    {
+      fs::path src = fs::path(mov->first());
+      fs::path dst = fs::path(mov->second());
+
+      // we will call this a "directory move" if the branch path changed,
+      // and the new branch path didn't exist in the ancestor, and there
+      // old branch path doesn't exist in the child
+      
+      if (src.empty() 
+	  || dst.empty() 
+	  || !src.has_branch_path() 
+	  || !dst.has_branch_path())
+	continue;
+      
+      if (src.branch_path().string() != dst.branch_path().string())
+	{
+	  fs::path dp = dst.branch_path();
+	  fs::path sp = src.branch_path();
+
+	  if (dir_portion.find(file_path(sp.string())) != dir_portion.end())
+	    continue;
+
+	  bool clean_move = true;
+
+	  for (manifest_map::const_iterator mm = ancestor.begin();
+	       mm != ancestor.end(); ++mm)
+	    {
+	      fs::path mp = fs::path(mm->first());
+	      if (mp.branch_path().string() == dp.string())
+		{
+		  clean_move = false;
+		  break;
+		}
+	    }
+	  
+	  if (clean_move)
+	    for (manifest_map::const_iterator mm = child.begin();
+		 mm != child.end(); ++mm)
+	      {
+		fs::path mp = fs::path(mm->first());
+		if (mp.branch_path().string() == sp.string())
+		  {
+		    clean_move = false;
+		    break;
+		  }
+	      }
+	  
+	  
+	  if (clean_move)
+	    {
+	      L(F("inferred pure directory rename %s -> %s\n")
+		% sp.string() % dst.branch_path().string());
+	      dir_portion.insert
+		(make_pair(file_path(sp.string()),
+			   file_path(dst.branch_path().string())));
+	    }
+	  else
+	    {
+	      L(F("skipping uncertain directory rename %s -> %s\n")
+		% sp.string() % dst.branch_path().string());
+	    }
+	  
+	}
+    }
+}
+
 // this is a 3-way merge algorithm on manifests.
 
 bool merge3(manifest_map const & ancestor,
@@ -729,7 +838,8 @@ bool merge3(manifest_map const & ancestor,
     left_delta_map, right_delta_map;
 
   map<file_path, file_path> 
-    left_move_map, right_move_map;
+    left_move_map, right_move_map,
+    left_dir_move_map, right_dir_move_map;
 
   map<file_path, file_id> 
     left_add_map, right_add_map;
@@ -740,7 +850,6 @@ bool merge3(manifest_map const & ancestor,
     left_move_dsts, right_move_dsts,
     left_deltas, right_deltas;
 
-
   for(set<patch_addition>::const_iterator a = left_edge.f_adds.begin(); 
       a != left_edge.f_adds.end(); ++a)
     left_adds.insert(a->path);
@@ -748,6 +857,7 @@ bool merge3(manifest_map const & ancestor,
   for(set<patch_addition>::const_iterator a = right_edge.f_adds.begin(); 
       a != right_edge.f_adds.end(); ++a)
     right_adds.insert(a->path);
+
 
   for(set<patch_move>::const_iterator m = left_edge.f_moves.begin(); 
       m != left_edge.f_moves.end(); ++m)
@@ -783,15 +893,29 @@ bool merge3(manifest_map const & ancestor,
   // phase #2 is a sort of "pre-processing" phase, in which we handle
   // "interesting" move cases:
   // 
+  //   - locating any moves which moved *directories* and modifying any adds
+  //     in the opposing edge which have the source directory as input, to go
+  //     to the target directory (not yet implemented)
+  //
   //   - locating any moves between non-equal ids. these are move+edit
   //     events, so we degrade them to a move + an edit (on the move target).
   //     note that in the rest of this function, moves *must* therefore be
   //     applied before edits. just in this function (specifically phase #6)
-  //
-  //   - locating any moves which moved *directories* and modifying any adds
-  //     in the opposing edge which have the source directory as input, to go
-  //     to the target directory (not yet implemented)
   //     
+
+  // find any left-edge directory renames 
+  infer_directory_moves(ancestor, left, left_move_map, left_dir_move_map);
+  infer_directory_moves(ancestor, right, right_move_map, right_dir_move_map);
+  {
+    manifest_map left_new, right_new;
+    rebuild_under_directory_moves(left_dir_move_map, right, right_new);
+    rebuild_under_directory_moves(right_dir_move_map, left, left_new);
+    if (left != left_new || right != right_new)
+      {
+	L(F("restarting merge under propagated directory renames\n"));
+	return merge3(ancestor, left_new, right_new, app, file_merger, merged);
+      }
+  }
 
   // split edit part off of left move+edits 
   for (map<file_path, file_path>::const_iterator mov = left_move_map.begin();
