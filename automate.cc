@@ -1,0 +1,59 @@
+// copyright (C) 2004 nathaniel smith <njs@pobox.com>
+// all rights reserved.
+// licensed to the public under the terms of the GNU GPL (>= 2)
+// see the file COPYING for details
+
+#include <string>
+#include <iostream>
+
+#include "vocab.hh"
+#include "app_state.hh"
+#include "commands.hh"
+
+// Prints a version number describing the automation interface, in the form
+// "<major version>.<minor version>\n".  Backwards compatible changes will
+// increment the latter number; backwards incompatible changes will increment
+// the former number.
+static std::string const interface_version = "0.0";
+static void
+automate_interface_version(std::vector<utf8> args,
+                           std::string const & help_name,
+                           app_state & app,
+                           std::ostream & output)
+{
+  if (args.size() != 0)
+    throw usage(help_name);
+  
+  output << interface_version << std::endl;
+}
+
+// Prints the heads of branch BRANCH, one per line.
+static void
+automate_heads(std::vector<utf8> args,
+               std::string const & help_name,
+               app_state & app,
+               std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+  app.initialize(false);
+
+  std::set<revision_id> heads;
+  get_branch_heads(idx(args, 0)(), app, heads);
+  for (std::set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+    output << (*i).inner()() << std::endl;
+}
+
+void
+automate_command(utf8 cmd, std::vector<utf8> args,
+                 std::string const & root_cmd_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (cmd() == "interface_version")
+    automate_interface_version(args, root_cmd_name, app, output);
+  else if (cmd() == "heads")
+    automate_heads(args, root_cmd_name, app, output);
+  else
+    throw usage(root_cmd_name);
+}

@@ -35,6 +35,7 @@
 #include "update.hh"
 #include "vocab.hh"
 #include "work.hh"
+#include "automate.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -3611,6 +3612,21 @@ CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
   put_revision_id(null);
 }
 
+CMD(automate, "automation",
+    "heads BRANCH\n"
+    "automate_version\n",
+    "automation interface")
+{
+  if (args.size() == 0)
+    throw usage(name);
+
+  vector<utf8>::const_iterator i = args.begin();
+  utf8 cmd = *i;
+  ++i;
+  vector<utf8> cmd_args(i, args.end());
+
+  automate_command(cmd, cmd_args, name, app, cout);
+}
 
 
 }; // namespace commands

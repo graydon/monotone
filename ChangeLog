@@ -1,3 +1,8 @@
+2005-02-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.{cc,hh}: New files.
+	* commands.cc: New command "automate".
+
 2005-02-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (check_sane): Null sources are only valid for
