@@ -1,3 +1,10 @@
+2004-11-15  Joel Rosdahl  <joel@rosdahl.net>
+
+	* tests/t_diff_added_file.at: Added testcase exposing a bug in
+	"monotone diff x y" where x is an ancestor of y and y adds a new
+	file.
+	* testsuite.at: Add new test.
+
 2004-11-14  Joel Rosdahl  <joel@rosdahl.net>
 
 	Fix bug #9092 "add command to change passphrase":
