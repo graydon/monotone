@@ -658,14 +658,15 @@ get_log_message(revision_set const & cs,
                 string & log_message)
 {
   string commentary;
-  data summary;
+  data summary, user_log_message;
   write_revision_set(cs, summary);
+  read_user_log(user_log_message);
   commentary += "----------------------------------------------------------------------\n";
   commentary += "Enter Log.  Lines beginning with `MT:' are removed automatically\n";
   commentary += "\n";
   commentary += summary();
   commentary += "----------------------------------------------------------------------\n";
-  N(app.lua.hook_edit_comment(commentary, log_message),
+  N(app.lua.hook_edit_comment(commentary, user_log_message(), log_message),
     F("edit of log message failed"));
 }
 
@@ -1161,6 +1162,35 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   guard.commit();
 }
 
+CMD(dropkey, "key and cert", "KEYID", "drop a public and private key")
+{
+  bool key_deleted = false;
+  
+  if (args.size() != 1)
+    throw usage(name);
+
+  transaction_guard guard(app.db);
+  rsa_keypair_id ident(idx(args, 0)());
+  if (app.db.public_key_exists(ident))
+    {
+      P(F("dropping public key '%s' from database\n") % ident);
+      app.db.delete_public_key(ident);
+      key_deleted = true;
+    }
+
+  if (app.db.private_key_exists(ident))
+    {
+      P(F("dropping private key '%s' from database\n") % ident);
+      app.db.delete_private_key(ident);
+      key_deleted = true;
+    }
+
+  N(key_deleted,
+    F("public or private key '%s' does not exist in database") % idx(args, 0)());
+  
+  guard.commit();
+}
+
 CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key")
 {
   if (args.size() != 1)
@@ -1359,7 +1389,7 @@ CMD(comment, "review", "REVISION [COMMENT]",
   if (args.size() == 2)
     comment = idx(args, 1)();
   else
-    N(app.lua.hook_edit_comment("", comment), 
+    N(app.lua.hook_edit_comment("", "", comment), 
       F("edit comment failed"));
   
   N(comment.find_first_not_of(" \r\t\n") != string::npos, 
@@ -2056,11 +2086,13 @@ ALIAS(ls, list, "informative",
       "certs ID\n"
       "keys [PATTERN]\n"
       "branches\n"
+      "epochs [BRANCH [...]]\n"
       "tags\n"
+      "vars [DOMAIN]\n"
       "unknown\n"
       "ignored\n"
       "missing",
-      "show certs, keys, branches, unknown, intentionally ignored, or missing files; alias for list")
+      "show database objects, or unknown, intentionally ignored, or missing state files; alias for list")
 
 
 CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
@@ -2510,6 +2542,11 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   L(F("new revision %s\n") % rid);
 
   // get log message
+  N(!(app.message().length() > 0 && has_contents_user_log()),
+    F("MT/log is non-empty and --message supplied\n"
+      "perhaps move or delete MT/log,\n"
+      "or remove --message from the command line?"));
+  
   if (app.message().length() > 0)
     log_message = app.message();
   else
@@ -2618,7 +2655,9 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   put_path_rearrangement(excluded_work);
   put_revision_id(rid);
   P(F("committed revision %s\n") % rid);
-
+  
+  blank_user_log();
+  
   update_any_attrs(app);
 
   {
@@ -3290,7 +3329,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
       P(F("[merged] %s\n") % merged);
       left = merged;
     }
-
+  P(F("your working copies have not been updated\n"));
 }
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
@@ -3625,8 +3664,9 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
   cert_name comment_name(comment_cert_name);
 
   set<revision_id> seen;
+  long depth = app.depth;
 
-  while(! frontier.empty())
+  while(! frontier.empty() && (depth == -1 || depth > 0))
     {
       set< pair<file_path, revision_id> > next_frontier;
       for (set< pair<file_path, revision_id> >::const_iterator i = frontier.begin();
@@ -3716,6 +3756,10 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
           }
         }
       frontier = next_frontier;
+      if (depth > 0)
+        {
+          depth--;
+        }
     }
 }
 
@@ -3734,8 +3778,13 @@ CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
 }
 
 CMD(automate, "automation",
+    "interface_version\n"
     "heads BRANCH\n"
-    "interface_version\n",
+    "descendents REV1 [REV2 [REV3 [...]]]\n"
+    "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
+    "toposort [REV1 [REV2 [REV3 [...]]]]\n"
+    "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
+    "leaves",
     "automation interface")
 {
   if (args.size() == 0)

@@ -1793,10 +1793,11 @@ monotone: branch jp.co.juicebot.jb7
 @end smallexample
 
 Abe neglected to provide a @option{--message} option specifying the
-change log on the command line.  Monotone therefore invokes an external
-``log message editor'' --- typically an editor like @command{vi} ---
-with an explanation of the changes being committed and the opportunity
-to enter a log message.
+change log on the command line and the file @file{MT/log} is empty
+because he did not document his changes there.  Monotone therefore
+invokes an external ``log message editor'' --- typically an editor
+like @command{vi} --- with an explanation of the changes being
+committed and the opportunity to enter a log message.
 
 @smallexample
 @group
@@ -1875,11 +1876,34 @@ $ vi src/banana.c
 @end group
 @end smallexample
 
-She commits her work:
+and logs her changes in @file{MT/log} right away so she does not
+forget what she has done like Abe.
 
 @smallexample
 @group
-$ monotone commit --message='polling implementation of src/banana.c'
+$ vi MT/log
+* src/banana.c: Added polling implementation
+@end group
+@end smallexample
+
+and logs her changes in @file{MT/log} right away so she does not
+forget what she has done:
+
+@smallexample
+@group
+$ vi MT/log
+* src/banana.c: Added polling implementation
+@end group
+@end smallexample
+
+Later, she commits her work.  Monotone again invokes an external editor
+for her to edit her log message, but this time it fills in the messages
+she's written so far, and she simply checks them over one last time
+before finishing her commit:
+
+@smallexample
+@group
+$ monotone commit
 monotone: beginning commit
 monotone: manifest eaebc3c558d9e30db6616ef543595a5a64cc6d5f
 monotone: revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
@@ -2525,7 +2549,12 @@ Contains ``sticky'' command-line options such as @option{--db} or
 after checking out a particular working copy.
 @item MT/work
 Contains a list of additions, deletions, and renames which have occurred
-in the current working copy, relative to the base version. 
+in the current working copy, relative to the base version.
+@item MT/log
+Contains log messages to append to the ``changelog'' cert upon
+commit. The user may add content to this file while they work.  Upon a
+successful commit monotone will empty the file making it ready for the
+next edit/commit cycle.
 @item MT/debug
 If monotone detects a bug in itself or crashes, then before exiting it
 dumps a log of its recent activity to this file, to aid in debugging.
@@ -3249,6 +3278,14 @@ command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{commit}
 to files changed within the current subdirectory of the working copy.
 
+The @file{MT/log} file can be edited by the user during their daily work
+to record the changes made to the working copy. When running the
+@command{commit} command without a @var{logmsg} supplied, the contents
+of the @file{MT/log} file will be read and passed to the Lua hook
+@code{edit_comment} as a second parameter named @var{user_log_content}.
+If the commit is successful, the @file{MT/log} file is cleared of
+all content making it ready for another edit/commit cycle.
+
 The @command{commit} command also synthesizes a number of
 certificates, which it attaches to the new manifest version and copies
 into your database:
@@ -3265,9 +3302,9 @@ A @code{date} cert, indicating when the new revision was created.
 A @code{changelog} cert, containing the ``log message'' for these
 changes.  If you provided @var{logmsg} on the command line, this text
 will be used, otherwise @command{commit} will run the Lua hook
-@code{edit_comment (@var{commentary})}, which typically invokes an
-external editor program, in which you can compose a log message for
-the change.
+@code{edit_comment (@var{commentary}, @var{user_log_content})}, which
+typically invokes an external editor program, in which you can compose
+and/or review your log message for the change.
 @end itemize
 
 
@@ -3435,11 +3472,16 @@ to files changed within the current subdirectory of the working copy.
 
 
 @item monotone log
+@itemx monotone log --depth=@var{n}
 @itemx monotone log @var{id}
+@itemx monotone log --depth=@var{n} @var{id}
+@itemx monotone log @var{id} @var{file}
+@itemx monotone log --depth=@var{n} @var{id} @var{file}
 
 This command prints out a log, in reverse-ancestry order, of small
 history summaries.  Each summary contains author, date, changelog and
-comment information associated with a revision. If @var{id} is given,
+comment information associated with a revision.  If @var{n} is given,
+at most that many log entries will be given.  If @var{id} is given,
 the command starts tracing back through history from the revision
 @var{id}, otherwise it starts from the base revision of your working
 copy.
@@ -3657,6 +3699,13 @@ automatically use a certain passphrase for a given key using the
 @code{get_passphrase(@var{keypair_id})}, but this significantly
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
+
+@item monotone dropkey @var{keyid}
+
+This command drops the public and/or private key. If both exist, both
+are dropped, if only one exists, it is dropped. This command should
+be used with caution as changes are irreversible without a backup of
+the key(s) that were dropped.
 
 @item monotone chkeypass @var{id}
 
@@ -4000,6 +4049,7 @@ command, used for scripting monotone.  All give output on stdout; they
 may also give useful chatter on stderr, including warnings and error
 messages.
 
+
 @ftable @command
 @item monotone automate interface_version
 
@@ -4021,7 +4071,9 @@ reset when major number increments).
 
 @item Sample output:
 
+@verbatim
 1.2
+@end verbatim
 
 @item Output format:
 
@@ -4034,6 +4086,7 @@ first decimal number is the major version, the second is the minor version.
 None.
 
 @end table
+
 
 @item monotone automate heads @var{branch}
 
@@ -4052,18 +4105,228 @@ Prints the heads of branch @var{branch}.
 
 @item Sample output:
 
+@verbatim
 28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
 75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
 
 @item Output format:
 
 Zero or more lines, each giving the id of one head of the given branch.
 Each line consists of a revision id, in hexadecimal, followed by a
-newline.  The lines are printed in sorted order.
+newline.  The lines are printed in alphabetically sorted order.
 
 @item Error conditions:
 
 If the given branch contains no members, then no lines are printed.
+
+@end table
+
+
+@item monotone automate descendents @var{rev1} [@var{rev2} [...]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints the descendents of one or more revisions.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one descendent of the given
+revisions.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+The output does not include @var{rev1}, @var{rev2}, etc., except that if
+@var{rev2} is itself a descendent of @var{rev1}, then @var{rev2} will be
+included in the output.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate erase_ancestors [@var{rev1} [@var{rev2} [...]]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints all arguments, except those that are an ancestor of some other
+argument.  One way to think about this is that it prints the minimal
+elements of the given set, under the ordering imposed by the ``child
+of'' relation.  Another way to think of it is if the arguments formed a
+branch branch, then we would print the heads of that branch.  If there
+are no arguments, prints nothing.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one descendent of the given
+revisions.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate toposort [@var{rev1} [@var{rev2} [...]]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints all arguments, topologically sorted.  I.e., if @var{rev1} is an
+ancestor of @var{rev2}, then @var{rev1} will appear before @var{rev2} in
+the output; if @var{rev2} is an ancestor of @var{rev1}, then @var{rev2}
+will appear before @var{rev1} in the output; and if neither is an
+ancestor of the other, then they may appear in either order.  If there
+are no arguments, prints nothing.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+A list of revision ids, in hexadecimal, each followed by a newline.
+Revisions are printed in topologically sorted order.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate ancestry_difference @var{new} [@var{old1} [@var{old2} [...]]]
+
+@table @strong
+@item Arguments:
+
+A ``new'' revision id @var{new}, followed by zero or more ``old''
+revision ids @var{old1}, @var{old2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints all ancestors of the revision @var{new}, that are not also
+ancestors of one of the old revisions.  For purposes of this command,
+``ancestor'' is an inclusive term; for example, if @var{new} is an
+ancestor of @var{old1}, it will not be printed; but if @var{new} is not
+an ancestor of any of the ``old'' revisions, then it will be.
+Similarly, @var{old1} will never be printed, because it is considered to
+be an ancestor of itself.  The reason for the names is that if @var{new}
+a new revision, and @var{old1}, @var{old2}, etc. are revisions that you
+have processed before, then this command tells you which revisions are
+new since then.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+A list of revision ids, in hexadecimal, each followed by a newline.
+Revisions are printed in topologically sorted order.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate leaves
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints the leaves of the revision graph, i.e. all revision that have no
+children.  This is similar, but not identical to the functionality of
+@command{heads}, which prints every revision in a branch, that has no
+descendents in that branch.  If every revision in the database was in
+the same branch, then they would be identical.  Generally, every leaf is
+the head of some branch, but not every branch head is a leaf.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each a leaf of the revision graph.  Each line
+consists of a revision id, in hexadecimal, followed by a newline.  The
+lines are printed in alphabetically sorted order.
+
+@item Error conditions:
+
+None.
 
 @end table
 
@@ -4175,7 +4438,7 @@ end
 @end group
 @end smallexample
 
-@item edit_comment (@var{commentary})
+@item edit_comment (@var{commentary}, @var{user_log_message})
 
 Returns a log entry for a given set of changes, described in
 @var{commentary}.  The commentary is identical to the output of
@@ -4185,11 +4448,17 @@ change you make. The result is used as the value for a
 @code{changelog} certificate, automatically generated when you commit
 changes.
 
+The contents of @file{MT/log} are read and passed as
+@var{user_log_message}. This allows you do document your changes as
+you proceed instead of waiting until you are ready to commit. Upon
+a successful commit, the contents of @file{MT/log} are erased setting
+the system up for another edit/commit cycle.
+
 The default definition of this hook is:
 
 @smallexample
 @group
-function edit_comment(commentary)
+function edit_comment(commentary, user_log_message)
         local exe = "vi"
         local visual = os.getenv("VISUAL")
         if (visual ~= nil) then exe = visual end
@@ -4199,6 +4468,7 @@ function edit_comment(commentary)
         local tmp, tname = temp_file()
         if (tmp == nil) then return nil end
         commentary = "MT: " .. string.gsub(commentary, "\n", "\nMT: ")
+        tmp:write(user_log_message)
         tmp:write(commentary)
         io.close(tmp)
 
@@ -5382,6 +5652,10 @@ from stdin if no value given on command line.
 Generate an @sc{rsa} key-pair and store it in the database.
 @comment TROFF INPUT: .TP
 
+@item @b{dropkey} @i{<keyid>}
+Drop a public and/or private key.
+@comment TROFF INPUT: .TP
+
 @item @b{chkeypass} @i{<keyid>}
 Change passphrase of the private half of a key.
 @comment TROFF INPUT: .TP
@@ -5505,8 +5779,9 @@ Rename files from @i{<src>} to @i{<dst>} in working copy.
 
 @item @b{commit} @i{[--message=log message] [<pathname>...]}
 Commit working copy to database. If a --message @option{option} is
-provided on the command line, it is used; otherwise a log message editor
-will be invoked.
+provided on the command line, it is used; otherwise a log message
+editor will be invoked. If @i{MT/log} exists, it's content will be
+passed to the message editor.
 @comment TROFF INPUT: .TP
 
 @item @b{update} @i{[revision]}
@@ -5529,7 +5804,7 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{automate} @i{(interface_version|heads)}
+@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference|leaves)}
 Scripting interface.
 
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}

@@ -1,0 +1,49 @@
+AT_SETUP([automate leaves])
+MONOTONE_SETUP
+
+# A
+# |\
+# B C
+#  \|
+#   D
+# ^testbranch
+#   ^otherbranch
+
+AT_CHECK(MONOTONE automate leaves, [], [], [ignore])
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+REV_A=`BASE_REVISION`
+
+CHECK_SAME_STDOUT(MONOTONE automate leaves, echo $REV_A)
+
+SET_FILE(testfile, [other stuff
+])
+COMMIT(testbranch)
+REV_B=`BASE_REVISION`
+
+CHECK_SAME_STDOUT(MONOTONE automate leaves, echo $REV_B)
+
+REVERT_TO($REV_A)
+
+ADD_FILE(otherfile, [other blah blah
+])
+COMMIT(otherbranch)
+REV_C=`BASE_REVISION`
+
+AT_CHECK(echo $REV_B > bc)
+AT_CHECK(echo $REV_C >> bc)
+CHECK_SAME_STDOUT(MONOTONE automate leaves, sort < bc)
+
+AT_CHECK(MONOTONE propagate testbranch otherbranch, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REV_D=`BASE_REVISION`
+
+AT_CHECK(test $REV_D != $REV_B)
+AT_CHECK(test $REV_D != $REV_C)
+
+CHECK_SAME_STDOUT(MONOTONE automate leaves, MONOTONE automate heads otherbranch)
+CHECK_DIFFERENT_STDOUT(MONOTONE automate leaves, MONOTONE automate heads testbranch)
+
+AT_CLEANUP

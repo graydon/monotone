@@ -43,7 +43,9 @@ public:
                                    base64< arc4<rsa_priv_key> > & priv_key );
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
   bool hook_get_author(cert_value const & branchname, std::string & author);
-  bool hook_edit_comment(std::string const & commentary, std::string & result);  
+  bool hook_edit_comment(std::string const & commentary,
+                         std::string const & user_log_message,
+                         std::string & result);  
   bool hook_persist_phrase_ok();
   bool hook_non_blocking_rng_ok();
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,

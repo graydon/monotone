@@ -1605,6 +1605,13 @@ database::delete_private_key(rsa_keypair_id const & pub_id)
           pub_id().c_str());
 }
 
+void
+database::delete_public_key(rsa_keypair_id const & pub_id)
+{
+  execute("DELETE FROM public_keys WHERE id = '%q'",
+          pub_id().c_str());
+}
+
 // cert management
 
 bool 

@@ -1,0 +1,86 @@
+AT_SETUP([automate ancestry_difference])
+MONOTONE_SETUP
+
+#   A
+#  / \
+# B   C
+#     |\
+#     D E
+#     \/
+#      F
+
+ADD_FILE(testfile, [A
+])
+COMMIT(testbranch)
+REV_A=`BASE_REVISION`
+
+SET_FILE(testfile, [B
+])
+COMMIT(testbranch)
+REV_B=`BASE_REVISION`
+
+REVERT_TO($REV_A)
+
+SET_FILE(testfile, [C
+])
+COMMIT(testbranch)
+REV_C=`BASE_REVISION`
+
+SET_FILE(testfile, [D
+])
+COMMIT(testbranch)
+REV_D=`BASE_REVISION`
+
+REVERT_TO($REV_C)
+
+ADD_FILE(otherfile, [E
+])
+COMMIT(testbranch)
+REV_E=`BASE_REVISION`
+
+AT_CHECK(MONOTONE explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REV_F=`BASE_REVISION`
+
+AT_CHECK(test $REV_F != $REV_D)
+AT_CHECK(test $REV_F != $REV_E)
+
+# Now do some checks
+
+AT_CHECK(MONOTONE automate ancestry_difference c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE automate ancestry_difference $REV_A c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+
+CHECK_SAME_STDOUT(MONOTONE automate ancestry_difference $REV_A, echo $REV_A)
+AT_CHECK(MONOTONE automate ancestry_difference $REV_A $REV_A, [], [], [ignore])
+AT_CHECK(MONOTONE automate ancestry_difference $REV_A $REV_B, [], [], [ignore])
+AT_CHECK(MONOTONE automate ancestry_difference $REV_A $REV_F, [], [], [ignore])
+AT_CHECK(MONOTONE automate ancestry_difference $REV_F $REV_F, [], [], [ignore])
+
+CHECK_SAME_STDOUT(MONOTONE automate ancestry_difference $REV_B $REV_A, echo $REV_B)
+
+AT_CHECK(echo $REV_A > ab)
+AT_CHECK(echo $REV_B >> ab)
+CHECK_SAME_STDOUT(MONOTONE automate ancestry_difference $REV_B, cat ab)
+
+CHECK_SAME_STDOUT(MONOTONE automate ancestry_difference $REV_F $REV_D $REV_E, echo $REV_F)
+
+AT_CHECK(echo $REV_D > df)
+AT_CHECK(echo $REV_F >> df)
+CHECK_SAME_STDOUT(MONOTONE automate ancestry_difference $REV_F $REV_E, cat df)
+
+AT_CHECK(echo $REV_A > acdef)
+AT_CHECK(echo $REV_C >> acdef)
+AT_CHECK(echo $REV_D >> acdef)
+AT_CHECK(echo $REV_E >> acdef)
+AT_CHECK(echo $REV_F >> acdef)
+AT_CHECK(echo $REV_A > acedf)
+AT_CHECK(echo $REV_C >> acedf)
+AT_CHECK(echo $REV_E >> acedf)
+AT_CHECK(echo $REV_D >> acedf)
+AT_CHECK(echo $REV_F >> acedf)
+AT_CHECK(MONOTONE automate ancestry_difference $REV_F, [], [stdout], [ignore])
+AT_CHECK(cmp stdout acdef || cmp stdout acedf, [], [ignore], [ignore])
+
+CHECK_SAME_STDOUT(MONOTONE automate ancestry_difference $REV_B $REV_F, echo $REV_B)
+
+AT_CLEANUP

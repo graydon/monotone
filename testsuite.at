@@ -330,13 +330,13 @@ fi
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MONOTONE --db=test$1.db --rcfile=netsync.lua serve 127.0.0.1:5555 $2 &
+MONOTONE --db=test$1.db --rcfile=netsync.lua serve localhost:5555 $2 &
 sleep 4
 ])
 # run as NETSYNC_SERVE_START(collection name)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $1 &
+MONOTONE --rcfile=netsync.lua serve localhost:5555 $1 &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
@@ -348,7 +348,7 @@ NETSYNC_KILLHARD
 # run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name[, expected result])
 # first argument chooses whether to use the 2nd or 3rd database
 m4_define([NETSYNC_CLIENT_N_RUN], [
-AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 127.0.0.1:5555 $3, [$4], [ignore], [ignore])
+AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 localhost:5555 $3, [$4], [ignore], [ignore])
 ])
 # run as NETSYNC_CLIENT_RUN(push|pull|sync, collection name[, expected result])
 m4_define([NETSYNC_CLIENT_RUN], [
@@ -516,3 +516,20 @@ m4_include(tests/t_empty_id_completion.at)
 m4_include(tests/t_empty_path.at)
 m4_include(tests/t_empty_env.at)
 m4_include(tests/t_short_opts.at)
+m4_include(tests/t_netsync_sigpipe.at)
+m4_include(tests/t_setup_creates_log.at)
+m4_include(tests/t_checkout_creates_log.at)
+m4_include(tests/t_commit_log_1.at)
+m4_include(tests/t_commit_log_2.at)
+m4_include(tests/t_dropkey_1.at)
+m4_include(tests/t_dropkey_2.at)
+m4_include(tests/t_rename_attr.at)
+m4_include(tests/t_automate_descendents.at)
+m4_include(tests/t_automate_erase_ancestors.at)
+m4_include(tests/t_automate_toposort.at)
+m4_include(tests/t_diff_first_rev.at)
+m4_include(tests/t_automate_ancestry_difference.at)
+m4_include(tests/t_automate_leaves.at)
+m4_include(tests/t_log_depth.at)
+m4_include(tests/t_commit_log_3.at)
+m4_include(tests/t_at_sign.at)

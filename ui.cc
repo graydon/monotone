@@ -2,6 +2,7 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"
+#include "transforms.hh"
 
 #include <iostream>
 #include <boost/lexical_cast.hpp>
@@ -258,7 +259,9 @@ user_interface::ensure_clean_line()
 void 
 user_interface::inform(string const & line)
 {
+  string prefixedLine;
+  prefix_lines_with("monotone: ", line, prefixedLine);
   ensure_clean_line();
-  clog << "monotone: " << sanitize(line);
+  clog << sanitize(prefixedLine) << endl;
   clog.flush();
 }

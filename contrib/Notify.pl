@@ -1,0 +1,667 @@
+#! /usr/bin/perl
+
+# Copyright (c) 2005 by Richard Levitte <richard@levitte.org>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use MIME::Lite;
+use File::Spec::Functions qw(:ALL);
+
+my $VERSION = '0.5';
+
+######################################################################
+# User options
+#
+my $user_database = undef;
+my @user_branches = ();
+my $help = 0;
+my $man = 0;
+my $mail = -1;
+my $debug = 0;
+my $quiet = 0;
+my $update = -1;
+my $from = undef;
+my $to = undef;
+my $attachments = 1;
+my $workdir = undef;
+my $root = undef;
+
+GetOptions('help|?' => \$help,
+	   'man' => \$man,
+	   'db=s' => \$user_database,
+	   'root=s' => \$root,
+	   'branch=s' => \@user_branches,
+	   'update!' => \$update,
+	   'mail!' => \$mail,
+	   'attachments!' => \$attachments,
+	   'from=s' => \$from,
+	   'to=s' => \$to,
+	   'workdir=s' => \$workdir,
+	   'quiet' => \$quiet,
+	   'debug' => \$debug) or pod2usage(2);
+
+######################################################################
+# Respond to user input
+#
+
+# For starters, output help if requested
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+# Then check for certain conditions:
+  # If --debug was used and --update wasn't, force --noupdate
+$update = 0 if ($debug && $update == -1);
+  # If --debug was used and --mail wasn't, force --nomail
+$mail = 0 if ($debug && $mail == -1);
+  # If --debug was used, refuse to be quiet
+$quiet = 0 if $debug;
+
+# The check for missing mandatory options (oxymoron, I know :-))
+# Actually, they're only mandatory if $mail or $debug is true...
+if ($mail || $debug) {
+    if (!defined $from) {
+	my_errlog("You need to specify a From address with --from");
+	pod2usage(2);
+    }
+    if (!defined $to) {
+	my_errlog("You need to specify a To address with --to");
+	pod2usage(2);
+    }
+}
+
+######################################################################
+# Make sure we have a database, and that the file spec is absolute.
+#
+
+# If no database is given, check the monotone options file (MT/options).
+# Do NOT use the branch option from there.
+if (!defined $user_database) {
+    $root = rel2abs($root) if defined $root;
+    $root = rootdir() unless defined $root;
+
+    my $curdir = rel2abs(curdir());
+    while(! -f catfile($curdir, "MT", "options") && $curdir ne $root) {
+	$curdir = updir($curdir);
+    }
+    my $options = catfile($curdir, "MT", "options");
+
+    my_debug("found options file $options");
+
+    open OPTIONS, "<$options"
+	|| my_error("Couldn't open $options");
+    ($user_database) = grep(/^\s*database\s/, map { chomp; $_ } <OPTIONS>);
+    close OPTIONS;
+    $user_database =~ s/^\s*database\s"(.*)"$/$1/;
+
+    my_log("found the database $user_database in $options.");
+    my_log("the branch option from $options will NOT be used.");
+} elsif (!file_name_is_absolute($user_database)) {
+    $user_database = rel2abs($user_database);
+}
+
+######################################################################
+# Set up internal variables.
+#
+my $database = " --db=$user_database";
+my_debug("using database $user_database");
+
+my $remove_workdir = 0;
+if (!defined $workdir) {
+    $workdir = "/var/tmp/monotone_motify.work.$$";
+    mkdir $workdir;
+    $remove_workdir = 1;
+} elsif (! file_name_is_absolute($workdir)) {
+    $workdir = rel2abs($workdir);
+}
+my_debug("using work directory $workdir");
+my_debug("(to be removed after I'm done)") if $remove_workdir;
+
+my $branches_re = "^.*\$";
+if ($#user_branches >= 0) {
+    my $branches_re=
+	'^('.join('|', map { s/(\W)/\\$1/g; $_ } @user_branches).')$';
+}
+my_debug("using the regular expression /$branches_re/ to select branches");
+
+my @files_to_clean_up = ();
+
+######################################################################
+# Move to the working directory.
+#
+chdir $workdir;
+my_debug("changed current directory to $workdir");
+
+######################################################################
+# Find all the current leaves, for the branches that we want.
+#
+my_log("finding all current leaves.");
+my %current_leaves =
+    map { chomp; my_debug($_); $_ => 1 }
+	map { chomp; my_backtick("monotone$database automate heads $_") }
+	    grep(/$branches_re/,
+		 my_backtick("monotone$database list branches"));
+my_debug("found ", list_size(keys %current_leaves)," current leaves");
+
+######################################################################
+# Find the IDs of the leaves from last run.
+#
+my_log("finding all old leaves.");
+my %old_leaves =
+    map { chomp; my_debug($_); (split ' ')[1] => 1 }
+	my_backtick("monotone$database list vars notify");
+my $old_leaves = join(" ", keys %old_leaves);
+
+# We save them in a file as well, to be used with
+# 'automate ancestry_difference', to avoid problems with system
+# that have small command line size limits, in case there were
+# many heads...
+my $old_leaves_file = "old_leaves";
+open OLDLEAVES, ">$old_leaves_file"
+    || my_error("Couldn't write to $old_leaves_file: $!");
+print OLDLEAVES join("\n", keys %old_leaves),"\n";
+close OLDLEAVES;
+
+my_debug("found ", list_size(keys %old_leaves)," previous leaves");
+
+if ($mail || $debug) {
+    ##################################################################
+    # Collect IDs for all revisions we want to log.
+    #
+    # Use the old_leaves file created by the previous collection.
+    #
+    my_log("collecting all revision IDs between current and old leaves.");
+    my %revisions =
+	map { chomp; $_ => 1 }
+	    map { my_backtick("monotone$database automate ancestry_difference $_ -@ $old_leaves_file") }
+		keys %current_leaves;
+    push @files_to_clean_up, "$old_leaves_file";
+    my @revisions_keys = keys %revisions;
+    my_debug("found ",
+	     list_size(keys %revisions),
+	     " revisions to log\n (saved in $old_leaves_file)");
+
+    ##################################################################
+    # Collect all the logs.
+    #
+    # Note that if we would discard it, we skip this step and the next,
+    # so as not to waste time...
+    #
+    my_log("collecting the logs for all collected revision IDs.");
+    my %timeline = ();		# hash of revision lists, keyed by date.
+    my %revision_data = ();	# hash of logs (represented as arrays of
+				# strings), keyed by revision id.
+
+    foreach my $revision (keys %revisions) {
+	$revision_data{$revision} =
+	    [ map { chomp; $_ }
+	      my_backtick("monotone$database log --depth=1 $revision") ];
+	my $date = (split(' ', (grep(/^Date:/, @{$revision_data{$revision}}))[0]))[1];
+
+	$timeline{$date} = {} if !defined $timeline{$date};
+	$timeline{$date}->{$revision} = 1;
+    }
+
+    ##################################################################
+    # Generate messages.
+    #
+    my_log("generating messages for all collected revision IDs.");
+
+    foreach my $date (sort keys %timeline) {
+	foreach my $revision (keys %{$timeline{$date}}) {
+	    my $msg;
+	    my @files = ();	# Makes sure we have the files in
+				# correctly sorted order.
+	    my %file_info = ();	# Hold information about each file.
+
+	    my @ancestors =
+		map { (split ' ')[1] }
+		    grep(/^Ancestor:/, @{$revision_data{$revision}});
+	    # Make sure we have a null ancestor if there are none.
+	    # generate_diff will do the right thing with it.
+	    if ($#ancestors < 0) {
+		push @ancestors, "";
+	    }
+
+	    ##########################################################
+	    # Create the summary.
+	    #
+	    my $summary_file = "message.txt";
+	    open SUMMARY,">$summary_file"
+		|| my_error("Notify: couldn't create $summary_file: $!");
+	    foreach (@{$revision_data{$revision}}) {
+		print SUMMARY "$_\n";
+	    }
+	    close SUMMARY;
+	    push @files, $summary_file;
+
+	    # This information is only used when $attachments is true.
+	    $file_info{$summary_file} = { Title => 'change summary',
+					  Disposition => 'inline' };
+
+	    ##########################################################
+	    # Create the diffs.
+	    #
+	    if ($attachments) {
+		foreach my $ancestor (@ancestors) {
+		    my $diff_file = "diff.$ancestor.txt";
+		    generate_diff($database, $ancestor, $revision,
+				  ">$diff_file", 0);
+		    push @files, $diff_file;
+
+		    $file_info{$diff_file} = {
+			Title => "Diff [$ancestor] -> [$revision]",
+			Disposition => 'attachment' };
+		}
+	    } else {
+		foreach my $ancestor (@ancestors) {
+		    generate_diff($database, $ancestor, $revision,
+				  ">>$summary_file", 1);
+		}
+		open SUMMARY,">>$summary_file"
+		    || my_error("Notify: couldn't append to $summary_file: $!");
+		print SUMMARY "-" x 70,"\n";
+		close SUMMARY;
+	    }
+
+	    ##########################################################
+	    # Create the email.
+	    #
+	    if ($attachments) {
+		$msg = MIME::Lite->new(From => $from,
+				       To => $to,
+				       Subject => "Revision $revision",
+				       Type => 'multipart/mixed');
+		foreach my $file (@files) {
+		    $msg->attach(Type => 'TEXT',
+				 Path => $file,
+				 Disposition => $file_info{$file}->{Disposition},
+				 Encoding => '8bit');
+		}
+
+		# MIME:Lite has some quircks that we need to deal with
+		foreach my $part ($msg->parts()) {
+		    my $filename = $part->filename();
+		    my_debug("message part: $filename: { ",
+			  join(', ',
+			       map { "$_ => $file_info{$filename}->{$_}" }
+				   keys %{$file_info{$filename}}),
+			  " }");
+		    # Hacks to avoid having file names, and to added a
+		    # description field
+		    $part->attr("content-disposition.filename" => undef);
+		    $part->attr("content-type.name" => undef);
+		    $part->attr("content-description" =>
+				$file_info{$filename}->{Title});
+		}
+	    } else {
+		$msg = MIME::Lite->new(From => $from,
+				       To => $to,
+				       Subject => "Revision $revision",
+				       Type => 'TEXT',
+				       Path => "$summary_file",
+				       Encoding => '8bit');
+		# Hacks to avoid having file names
+		$msg->attr("content-disposition.filename" => undef);
+		$msg->attr("content-type.name" => undef);
+	    }
+
+	    ##########################################################
+	    # Send it or log it (or discard it).
+	    #
+	    if ($mail) {
+		$msg->send();
+	    } else {
+		my $debugfile = "Notify.debug";
+		open MESSAGEDBG,">>$debugfile"
+		    || my_error("Couldn't create $debugfile: $!");
+		print MESSAGEDBG "======================================================================\n";
+		$msg->print(\*MESSAGEDBG);
+		print MESSAGEDBG "======================================================================\n";
+		close MESSAGEDBG;
+	    }
+
+	    ##########################################################
+	    # Clean up the files used to create the message.
+	    #
+	    my_log("cleaning up.");
+	    unlink @files;
+	}
+    }
+}
+
+######################################################################
+# Update the database with new heads
+#
+if ($update) {
+    my_log("updating the table of last logged revisions.");
+    map { my_system("monotone$database set notify $_ 1") }
+	grep { !defined $old_leaves{$_} }
+	    keys %current_leaves;
+    map { my_system("monotone$database unset notify $_ 1") }
+	grep { !defined $current_leaves{$_} }
+	    keys %old_leaves;
+}
+
+######################################################################
+# Clean up.
+#
+my_log("cleaning up.");
+unlink @files_to_clean_up;
+rmdir $workdir if $remove_workdir;
+
+my_log("all done.");
+exit(0);
+
+######################################################################
+# Subroutines
+#
+
+# generate_diff does just that, including for the case where there is
+# no ancestor.  For that latter case, we need to synthesise the diff,
+# since monotone doesn't know how to do that
+sub generate_diff
+{
+    my ($db, $ancestor, $revision, $filespec, $decorate_p, @dummy) = @_;
+
+    open OUTPUT, $filespec
+	|| my_error("Couldn't write to $filespec: $!");
+    if ($decorate_p) {
+	print OUTPUT "-" x 70, "\n";
+	print OUTPUT "Diff [$ancestor] -> [$revision]\n";
+    }
+    if ($ancestor eq "") {
+	my @status = my_backtick("monotone$db cat revision $revision");
+	shift @status;	# remove "new_manifest ..."
+	shift @status;	# remove ""
+	shift @status;	# remove "old_revision ..."
+	shift @status;	# remove "old_manifest ..."
+	foreach (@status) {
+	    chomp;
+	    print OUTPUT ($_ eq "" ? "#" : "# $_"), "\n";
+	}
+	my $patched_file = "";
+	foreach my $line (@status) {
+	    my $id = undef;
+	    $patched_file = $1 if $line =~ /^patch\s+"(.*)"\s*$/;
+	    $id = $1 if $line =~ /^\s+to \[([0-9a-fA-F]{40})\]\s*$/;
+	    if (defined $id) {
+		my @file = my_backtick("monotone$db cat file $id");
+		print OUTPUT "--- $patched_file\n";
+		print OUTPUT "+++ $patched_file\n";
+		print OUTPUT "\@\@ -0,0 +1,",list_size(@file)," \@\@\n";
+		map { print OUTPUT "+" . $_ } @file;
+	    }
+	}
+    } else {
+	print OUTPUT my_backtick("monotone$db diff --revision=$ancestor --revision=$revision");
+    }
+    close OUTPUT;
+}
+
+# my_log will simply output all it's arguments, prefixed with "Notify: ",
+# unless $quiet is true.
+sub my_log
+{
+    if (!$quiet && $#_ >= 0) {
+	print STDERR "Notify: ", join("\nNotify: ",
+				     split("\n",
+					   join('', @_))), "\n";
+    }
+}
+
+# my_errlog will simply output all it's arguments, prefixed with "Notify: ".
+sub my_errlog
+{
+    if ($#_ >= 0) {
+	print STDERR "Notify: ", join("\nNotify: ",
+				     split("\n",
+					   join('', @_))), "\n";
+    }
+}
+
+# my_error will output all it's arguments, prefixed with "Notify: ", then die.
+sub my_error
+{
+    my $save_syserr = "$!";
+    if ($#_ >= 0) {
+	print STDERR "Notify: ", join("\nNotify: ",
+				     split("\n",
+					   join('', @_))), "\n";
+    }
+    die "$save_syserr";
+}
+
+# debug will simply output all it's arguments, prefixed with "DEBUG: ",
+# when $debug is true.
+sub my_debug
+{
+    if ($debug && $#_ >= 0) {
+	print STDERR "DEBUG: ", join("\nDEBUG: ",
+				     split("\n",
+					   join('', @_))), "\n";
+    }
+}
+
+# my_system does the same thing as system, but will print a bit of debugging
+# output when $debug is true.  It will also die if the subprocess returned
+# an error code.
+sub my_system
+{
+    my $command = shift @_;
+
+    my_debug("'$command'\n");
+    my $return = system($command);
+    my $exit = $? >> 8;
+    die "'$command' returned with exit code $exit\n" if ($exit);
+    return $return;
+}
+
+# my_backtick does the same thing as backtick commands, but will print a bit
+# of debugging output when $debug is true.  It will also die if the subprocess
+# returned an error code.
+sub my_backtick
+{
+    my $command = shift @_;
+
+    my_debug("\`$command\`\n");
+    my @return = `$command`;
+    my $exit = $? >> 8;
+    if ($exit) {
+	my_debug(map { "> ".$_ } @ return);
+	die "'$command' returned with exit code $exit\n";
+    }
+    return @return;
+}
+
+# list_size returns the size of the list.  It's better than $#{var}
+# because it doesn't require the input to be a variable, and it
+# doesn't return one less than the size.
+sub list_size
+{
+    return $#_ + 1;
+}
+
+
+__END__
+
+=head1 NAME
+
+Notify.pl - a script to send monotone change notifications by email
+
+=head1 SYNOPSIS
+
+Notify.pl [--help] [--man] [--db=database] [--root=path] [--branch=branch ...]
+[--[no]update] [--[no]mail] [--[no]attachments]
+[--from=email-sender] [--to=email-recipient] [--workdir=path]
+[--quiet] [--debug]
+
+=head1 DESCRIPTION
+
+B<Notify.pl> is used to generate emails containing monotone change logs for
+recent changes.  It uses monotone database variables in the domain 'notify'
+to keep track of the latest revisions already logged.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<--help>
+
+Print a brief help message and exit.
+
+=item B<--man>
+
+Print the manual page and exit.
+
+=item B<--db>=I<database>
+
+Sets which database to use.  If not given, the database given in MT/options
+is used.
+
+=item B<--root>=I<path>
+
+Stop the search for a working copy (containing the F<MT> directory) at the
+specified root directory rather than at the physical root of the filesystem.
+
+=item B<--branch>=I<branch>
+
+Sets a branch that should be checked.  Can be used multiple times to set
+several branches.  If not given at all, all available branches are used.
+
+=item B<--update>
+
+Has Notify.pl update the database variables at the end of the run.  This
+is the default unless B<--debug> is given.
+
+=item B<--noupdate>
+
+The inverse of B<--update>.  This is the default when B<--debug> is given.
+
+=item B<--mail>
+
+Has Notify.pl send the constructed logs as emails.  This is the default
+unless B<--debug> is given.
+
+=item B<--nomail>
+
+The inverse of B<--mail>.  This is the default when B<--debug> is given.
+
+=item B<--attachments>
+
+Add the change summary and the output of 'monotone diff' as attachments
+in the emails.  This is the default behavior.
+
+=item B<--noattachments>
+
+Have the change summary and the output of 'monotone diff' in the body of
+the email, separated by lines of dashes.
+
+=item B<--from>=I<from>
+
+Sets the sender address to be used when creating the emails.  There is
+no default, so this is a required option.
+
+=item B<--to>=I<to>
+
+Sets the recipient address to be used when creating the emails.  There
+is no default, so this is a required option.
+
+=item B<--workdir>=I<path>
+
+Sets the working directory to use for temporary files.  This working
+directory should be empty to avoid having files overwritten.  When
+B<--debug> is used and unless B<--mail> is given, there will be a file
+called C<Notify.debug> left in the work directory.
+
+The default working directory is F</var/tmp/monotone_motify.work.$$>,
+and will be removed automatically unless Notify.debug is left in it.
+
+=item B<--debug>
+
+Makes Notify.pl go to debug mode.  It means a LOT of extra output, and
+also implies B<--noupdate> and B<--nomail> unless specified differently
+on the command line.
+
+=item B<--quiet>
+
+Makes Notify.pl really silent.  It will normally produce a small log of
+it's activities, but with B<--quiet>, it will only output error messages.
+If B<--debug> was given, B<--quiet> is turned off unconditionally.
+
+=back
+
+=head1 BUGS
+
+Fewer than before.
+
+=head1 SEE ALSO
+
+L<monotone(1)>
+
+=head1 AUTHOR
+
+Richard Levitte, <richard@levitte.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2005 by Richard Levitte <richard@levitte.org>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+=over 3
+
+=item 1.
+
+Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+=item 2.
+
+Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+=back
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+=cut

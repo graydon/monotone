@@ -28,6 +28,7 @@
 #include "ui.hh"
 #include "xdelta.hh"
 #include "epoch.hh"
+#include "platform.hh"
 
 #include "botan/botan.h"
 
@@ -3445,6 +3446,7 @@ run_netsync_protocol(protocol_voice voice,
 
   try 
     {
+      start_platform_netsync();
       if (voice == server_voice)
         {
           serve_connections(role, collections, all_collections, app,
@@ -3464,7 +3466,9 @@ run_netsync_protocol(protocol_voice voice,
     }
   catch (Netxx::Exception & e)
     {      
+      end_platform_netsync();
       throw oops((F("trapped network exception: %s\n") % e.what()).str());;
     }
+  end_platform_netsync();
 }
 

@@ -177,9 +177,11 @@ void
 sanity::naughty_failure(string const & expr, format const & explain, 
                         string const & file, int line)
 {
+  string message;
   log(format("%s:%d: usage constraint '%s' violated\n") % file % line % expr,
       file.c_str(), line);
-  throw informative_failure(string("misuse: ") + explain.str());  
+  prefix_lines_with("misuse: ", explain.str(), message);
+  throw informative_failure(message);
 }
 
 void 
@@ -206,4 +208,3 @@ sanity::index_failure(string const & vec_expr,
   log(fmt, file.c_str(), line);
   throw logic_error(fmt.str());
 }
-

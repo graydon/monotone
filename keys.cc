@@ -249,9 +249,8 @@ make_signature(app_state & app,           // to hook for phrase
           decode_base64(priv, decoded_key);
           decrypted_key.set(reinterpret_cast<byte const *>(decoded_key().data()), 
                                decoded_key().size());
-          get_passphrase(app.lua, id, phrase);
+          get_passphrase(app.lua, id, phrase, false, force);
           do_arc4(phrase, decrypted_key);
-
 
           L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
 
@@ -302,6 +301,7 @@ check_signature(app_state &app,
                 base64<rsa_sha1_signature> const & signature)
 {
   // examine pubkey
+
   bool persist_phrase = (!app.verifiers.empty()) || app.lua.hook_persist_phrase_ok();
 
   shared_ptr<PK_Verifier> verifier;
@@ -318,7 +318,6 @@ check_signature(app_state &app,
       pub_block.set(reinterpret_cast<byte const *>(pub().data()), pub().size());
 
       L(F("building verifier for %d-byte pub key\n") % pub_block.size());
-
       shared_ptr<X509_PublicKey> x509_key =
           shared_ptr<X509_PublicKey>(X509::load_key(pub_block));
       pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);

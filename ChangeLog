@@ -1,3 +1,331 @@
+2005-04-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/ciabot_monotone.py (config): Genericize again, so lazy
+	people using it won't start sending commits for monotone.
+	* .mt-attrs: Make it executable.
+
+2005-04-04  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (EXTRA_DIST): Add the extra popt files.
+
+	* popt/popt.3, popt/popt.ps, popt/testit.sh: Include a few more
+	  files from popt, mostly to have documentation on hand.  post.ps
+	  is mentioned in popt/README.
+
+2005-04-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (EXTRA_DIST): Add contrib/ stuff to distributed
+	files list.
+	* contrib/ciabot_monotone.py (config.delivery): Turn on.
+	(send_change_for): Don't include "ChangeLog:" line when extracting
+	changelog.
+
+2005-04-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/ciabot_monotone.py: New file.
+	* contrib/README: Describe it.
+
+2005-04-03  Richard Levitte  <richard@levitte.org>
+
+	* AUTHORS: Add information about popt.
+
+	* monotone.cc (my_poptStuffArgFile): Include the bundled popt.h.
+	Since we now have a working popt, we can remove the restrictions
+	on the use of -@.
+	* tests/t_at_sign.at: Test that we can take more tha one -@.
+	* monotone.1: Document it.
+
+	* popt/poptint.h (struct poptContext_s): Add field to keep track
+	  of the number of allocated leftovers elements.
+	* popt/popt.c (poptGetContext): Initialise it and use it.
+	  (poptGetNextOpt): Use it and realloc leftovers when needed.
+	  Also make sure that the added element is a dynamically allocated
+	  copy of the original string, or we may end up with a dangling
+	  pointer.  These are huge bugs in popt 1.7, when using
+	  poptStuffArgs().
+	  (poptFreeContext): Free the leftovers elements when freeing
+	  leftovers.
+	  (poptSaveLong, poptSaveInt): Apply a small patch from Debian.
+
+	* popt/CHANGES, popt/COPYING, popt/README, popt/findme.c,
+	  popt/findme.h, popt/popt.c, popt/poptconfig.c, popt/popt.h,
+	  popt/popthelp.c, popt/poptint.h, popt/poptparse.c,
+	  popt/system.h, popt/test1.c, popt/test2.c, popt/test3.c: Bundle
+	  popt 1.7.
+	* configure.ac, Makefile.am: Adapt.
+
+2005-04-01  Richard Levitte  <richard@levitte.org>
+
+	* contrib/Notify.pl: Complete rewrite.  Among other things, it
+	  makes better use of some new monotone automate features.  It's
+	  also better organised and much more documented.
+
+2005-04-01  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* tests/t_dropkey_2.at: Updated to test dropkey instead of delkey
+	* tests/t_dropkey_1.at: Updated to test dropkey instead of delkey
+	* monotone.texi (Key and Cert): Changed references to delkey
+	  to dropkey
+	  (Commands): Changed references to delkey to dropkey
+	* testsuite.at: changed references from t_delkey* to t_dropkey*
+	* t_delkey_1.at: renamed to t_dropkey_1.at
+	* t_delkey_2.at: renamed to t_dropkey_2.at
+	* commands.cc (CMD(delkey)): renamed to dropkey to maintain
+	  command consistency (with existing drop command)
+
+2005-04-01  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc (my_poptStuffArgFile): An argument file might be
+	empty, and therefore contain no arguments to be parsed.  That's
+	OK.
+	* tests/t_at_sign.at: Test it.
+
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.cc: Fixup after merge.
+
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.cc (read_data_for_command_line): New function.
+	(read_data_stdin): New function.
+	* file_io.hh (read_data_for_command_line): Add prototype.
+	
+	* monotone.cc (my_poptStuffArgFile): Clean up a little.  Use
+	read_data_for_command_line.  Don't free argv, but rather return
+	it.
+	(cpp_main): Keep a list of allocated argv's, and free them.
+	(options): Tweak wording of help text on -@.
+	
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.hh: Remove tabs.
+
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.cc (cpp_main): Actually remove newline.
+
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+	* monotone.text (Making Changes): Fix typo.
+	
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.cc (cpp_main): Remove now-unneccessary newline.
+	
+	* commands.cc (commit): Fix typo.
+	
+	* monotone.texi (Making Changes): Don't claim that writing to
+	MT/log prevents the editor from starting.  Clarify later that
+	having written to MT/log still means the editor will pop up
+	later.
+
+2005-04-01  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Add the long name --xargs for -@.
+	* monotone.1: Document it.
+	* tests/t_at_sign.at: Remove extra empty line and test --xargs.
+
+	* monotone.texi (Making Changes): Cleanupy tweaks.
+
+	* monotone.cc (my_poptStuffArgFile): New function to parse a file
+	for more arguments and stuff them into the command line.
+	(cpp_main): Add the -@ option
+	* tests/t_at_sign.at, testsuite.at: Test it
+	* monotone.1: Document it.
+
+2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_log_depth.at: Cleanupy tweaks.
+
+2005-03-31  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* monotone.texi: Tutorial updated to include example of
+	  editing/committing with MT/log
+	* work.cc (has_contents_user_log) Added
+	* work.hh (has_contents_user_log) Added
+	* commands.cc (CMD(commit)): Checks to ensure both MT/log and the
+	  --message option does not exist during commit.
+	* transforms.hh (prefix_lines_with): Added
+	* transforms.cc (prefix_lines_with): Added
+	* sanity.cc (naughty_failure): Made use of prefix_lines_with()
+	* ui.cc (inform): now handles messages w/embedded newlines
+	* tests/t_commit_log_3.at: Created to test new functionality
+	  added to CMD(commit)
+	* testsuite.at: Added above test
+
+2005-03-31  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Add the --depth option...
+	* app_state.hh (class app_state),
+	  app_state.cc (app_state::set_depth): ... and the field and
+	  method to store and set it.
+	* commands.cc (CMD(log)): ... then handle it.
+
+	* tests/t_log_depth.at: Add a test for 'log --depth=n'
+	* testsuite.at: Add it.
+	* monotone.texi (Informative): Document it.
+
+2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_erase_ancestors): Accept zero arguments,
+	and in such case print nothing.  (Important for scripting.)
+	* commands.cc (automate):
+	* monotone.texi (Automation):
+	* tests/t_automate_erase_ancestors.at: Update accordingly.
+
+2005-03-31  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_toposort): Accept zero arguments, and in
+	such case print nothing.  (Important for scripting.)
+	* commands.cc (automate):
+	* monotone.texi (Automation):
+	* tests/t_automate_toposort.at: Update accordingly.
+
+2005-03-30  Richard Levitte  <richard@levitte.org>
+
+	* contrib/Notify.pl: A new Perl hack to send change logs by
+	email.
+
+	* contrib/README: Add a quick description.
+
+2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_leaves): New function.
+	(automate_command): Add it.
+	* commands.cc (automate): Synopsify it.
+	* monotone.1: Add it.
+	* monotone.texi (Automation, Commands): Likewise.
+	
+	* tests/t_automate_leaves.at: New test.
+	* testsuite.at: Add it.
+
+2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Automation): Make newly added sample outputs
+	verbatim also.
+
+2005-03-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_automate_toposort.at: New test.
+	* tests/t_automate_ancestry_difference.at: New test.
+	* tests/t_diff_first_rev.at: New test.
+	* testsuite.at: Add them.
+	
+	* revision.cc (calculate_ancestors_from_graph): Do not keep an
+	"interesting" set and return only ancestors from this set;
+	instead, simply return all ancestors.  Returning a limited set of
+	ancestors does not speed things up, nor reduce memory usage in
+	common cases.  (The only time it would reduce memory usage is when
+	examining only a small ancestor set, which the important case,
+	'heads', does not; even then, erase_ancestors would need to intern
+	the interesting revisions first so they got low numbers, which it
+	doesn't.)
+	(erase_ancestors): Adjust accordingly.
+	(toposort, ancestry_difference): New functions.
+	* revision.hh (toposort, ancestry_difference): Declare.
+	* automate.cc (automate_toposort, automate_ancestry_difference):
+	New functions.
+	(automate_command): Add them.
+	All functions: clarify in description whether output is sorted
+	alphabetically or topologically.
+	* commands.cc (automate): Synopsify them.
+	* monotone.1: Add them.
+	* monotone.texi (Commands): Likewise.
+	(Automation): Likewise.  Also, clarify for each command whether
+	its output is alphabetically or topologically sorted.
+	
+2005-03-29  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(ls)): Update with the same information as
+	CMD(list)
+
+	* monotone.texi (Automation): Make the sample output verbatim
+
+2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_erase_ancestors): New function.
+	(automate_command): Use it.
+	* commands.cc (automate): Document it.
+
+	* tests/t_automate_erase_ancestors.at: New test.
+	* testsuite.at: Add it.
+
+	* monotone.texi (Automation, Commands): Document automate
+	erase_ancestors.
+	* monotone.1: Document automate erase_ancestors.
+
+2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (interface_version): Bump to 0.1.
+	(automate_descendents): New function.
+	(automate_command): Call it.
+	* commands.cc (automate): Add it to help text.
+
+	* tests/t_automate_descendents.at: New test.
+	* testsuite.at: Add it.
+	
+	* monotone.texi (Automation, Commands): Document automate
+	descendents.
+	* monotone.1: Document automate descendents, and vars stuff.
+
+2005-03-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_attr.at: No longer a bug report.
+	* tests/t_rename_attr.at: New test.
+	* testsuite.at: Add it.
+
+2005-03-26  Joel Crisp  <jcrisp@s-r-s.co.uk>
+
+	* contrib/Log2Gxl.java: New file.
+
+2005-03-26  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/README: New file.
+
+2005-03-25  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (user_log_file_name): Remove unused variable
+	again.  Hopefully it will take this time...
+
+2005-03-25  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (user_log_file_name): Remove unused variable.
+
+2005-03-25  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* monotone.texi: Added a bit more documentation about MT/log
+	  Updated edit_comment hook and addded delkey docs
+	* commands.cc: Added delkey command
+	* t_delkey_1.at: Tests delkey command on public key
+	* t_delkey_2.at: Tests delkey command on public and private key
+	* testsuite.at: Added above tests
+	* std_hooks.lua: Transposed the MT: lines and user_log_contents,
+	  user_log_contents now appears first.
+
+2005-03-25  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* t_setup_creates_log.at: Ensures that MT/log is created
+	  on setup
+	* t_checkout_creates_log.at: Ensures that MT/log is created
+	  on checkout
+	* t_commit_log_1.at: Ensures that:
+	  1. Read and entered as the ChangeLog message
+	  2. Is blanked after a successful commit
+	* t_commit_log_2.at: Ensures that commit works w/o MT/log being
+	  present
+	* testsuite.at: Added the above tests.
+
+2005-03-25  Matt Johnston  <matt@ucc.asn.au>
+
+        * {unix,win32}/platform_netsync.cc, platform.hh, Makefile.am: new
+        functions to disable and enable sigpipe.
+        * netsync.cc, main.cc: call the functions from netsync rather than
+        globally, so that sigpipe still works for piping output of commands
+        such as 'log'.
+        * tests/t_netsync_sigpipe.at: test it.
+        * testsuite.at: add it.
+
 2005-03-25  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_database_check.at: re-encode the manifestX
@@ -12,7 +340,7 @@
 	output is split into 72 col lines.
 
 2005-03-25  Matt Johnston  <matt@ucc.asn.au>
-	
+
 	* monotone.cc: add short options -r, -b, -k, and -m
 	for --revision, --branch, --key, and --message respectively.
 	* monotone.texi, monotone.1: document them
@@ -117,6 +445,15 @@
 	* tests/t_merge_5.at: new test for a merge which ends up with
 	duplicate lines.
 	* testsuite.at: add it
+
+2005-03-22  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* AUTHORS: Added my name
+	* app_state.cc, commands.cc, lua.cc, lua.hh, monotone.texi,
+	  std_hooks.lua, work.cc, work.hh: Added functionality to
+	  read the MT/log file for commit logs. In this revision
+	  tests are not yet complete nor is documenation complete
+	  but the reading, blanking and creating of MT/log is.
 
 2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
 

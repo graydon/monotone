@@ -43,6 +43,7 @@ public:
   path_set restrictions;
   file_path relative_directory;
   bool found_working_copy;
+  long depth;
 
   // These are used to cache signers/verifiers (if the hook allows).
   // They can't be function-static variables in key.cc, since they must be
@@ -69,6 +70,7 @@ public:
   void set_signing_key(utf8 const & key);
   void set_root(utf8 const & root);
   void set_message(utf8 const & message);
+  void set_depth(long depth);
   void add_revision(utf8 const & selector);
 
   void set_stdhooks(bool b);

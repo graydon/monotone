@@ -625,14 +625,16 @@ lua_hooks::hook_get_author(cert_value const & branchname,
 }
 
 bool 
-lua_hooks::hook_edit_comment(string const & commentary, 
+lua_hooks::hook_edit_comment(string const & commentary,
+                             string const & user_log_message,
                              string & result)
 {
   return Lua(st)
     .push_str("edit_comment")
     .get_fn()
     .push_str(commentary)
-    .call(1,1)
+    .push_str(user_log_message)
+    .call(2,1)
     .extract_str(result)
     .ok();
 }
