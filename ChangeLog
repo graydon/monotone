@@ -1,3 +1,9 @@
+2005-01-19  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+	
+	* Makefile.am (%.h, package_revision.h, package_full_revision.h):
+	Don't update target file if no change has occurred, to reduce
+	unnecessary rebuilds.
+
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* rcs_import.cc (cvs_key): Initialize struct tm to all zeros, to
