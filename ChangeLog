@@ -1,5 +1,10 @@
 2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
 
+	* diff_patch.cc (normalize_extents): Add warning for anyone who
+	manages to trigger the untested part of the normalization code.
+
+2005-01-11  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_migrate_schema.at: Switch to using pre-dumped db's, make
 	it work, un-XFAIL it.
 
