@@ -236,7 +236,7 @@ static void walk_tree_recursive(fs::path const & absolute,
       fs::path rel_entry = relative / fs::path(entry.leaf());
 
       if (book_keeping_file (entry))
-	return;
+	continue;
 
       if (fs::is_directory(entry))
 	walk_tree_recursive(entry, rel_entry, walker);
