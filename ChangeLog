@@ -1,5 +1,14 @@
 2005-02-17  Nathaniel Smith  <njs@codesourcery.com>
 
+	* debian/changelog: s/graydon@mogo/graydon@pobox.com/, to make
+	lintian happy.
+	* debian/rules (config.status): Remove --with-bundled-adns.
+	* debian/control (Build-Depends): Don't Build-Depend on libpopt,
+	only libpopt-dev.
+	* .mt-attrs (debian/control): Make executable.
+	
+2005-02-17  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_undo_update.at: Stupid typo.
 	* tests/t_largish_file.at: New test.
 	* testsuite.at: Add it.
