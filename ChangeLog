@@ -1,5 +1,22 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* mac.hh: 
+	* cert.cc (vcheck_cert_name):
+	(calculate_vcheck_mac): 
+	(cert_manifest_vcheck
+	(check_manifest_vcheck):
+	* cert.hh (cert_manifest_vcheck):
+	(check_manifest_vcheck):
+	* constants.cc (constants::vchecklen):
+	* constants.hh (constants::vchecklen):
+	* commands.cc (vcheck):
+	Remove.
+
+	* tests/t_vcheck.at: New test.
+	* testsuite.at: Call it.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ROADMAP: Remove 'upgrade to sqlite3' todo item.
 
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>

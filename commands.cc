@@ -1056,57 +1056,6 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
        << "it would be: " << (trusted ? "trusted" : "UNtrusted") << endl;
 }
 
-CMD(vcheck, "key and cert", "create [REVISION]\ncheck [REVISION]", 
-    "create or check a cryptographic version-check certificate")
-{
-  if (args.size() < 1 || args.size() > 2)
-    throw usage(name);
-
-  set<manifest_id> ids;
-  if (args.size() == 1)
-    {
-      set<revision_id> rids;
-      N(app.branch_name() != "", F("need --branch argument for branch-based vcheck"));
-      get_branch_heads(app.branch_name(), app, rids);      
-      for (set<revision_id>::const_iterator i = rids.begin(); i != rids.end(); ++i)
-        {
-          manifest_id mid;
-          app.db.get_revision_manifest(*i, mid);
-          ids.insert(mid);
-        }
-    }
-  else
-    {
-      for (size_t i = 1; i < args.size(); ++i)
-        {
-          manifest_id mid;
-          revision_id rid;
-          complete(app, idx(args, i)(), rid);
-          app.db.get_revision_manifest(rid, mid);
-          ids.insert(mid);
-        }
-    }
-
-  if (idx(args, 0)() == "create")
-    for (set<manifest_id>::const_iterator i = ids.begin();
-         i != ids.end(); ++i)
-    {
-      packet_db_writer dbw(app);
-      cert_manifest_vcheck(*i, app, dbw); 
-    }
-
-  else if (idx(args, 0)() == "check")
-    for (set<manifest_id>::const_iterator i = ids.begin();
-         i != ids.end(); ++i)
-    {
-      check_manifest_vcheck(*i, app); 
-    }
-
-  else 
-    throw usage(name);
-}
-
-
 CMD(tag, "review", "REVISION TAGNAME", 
     "put a symbolic tag cert on a revision version")
 {

@@ -18,9 +18,6 @@ namespace constants
   // number of bits in an RSA key we use
   extern size_t const keylen; 
 
-  // number of bytes of random noise we seed vcheck packets with
-  extern size_t const vchecklen;
-
   // number of characters in a SHA1 id
   extern size_t const idlen; 
 

@@ -1,0 +1,40 @@
+AT_SETUP([(minor) vcheck])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL(true)
+
+# There used to be a command 'vcheck', that defended against the
+# chance of (accidental or malicious) SHA1 collision.  The way it did
+# this was by putting certs named "vcheck" on manifests, and these
+# certs contained a re-hash of that manifest with a nonce attached.
+# (So a MAC, basically.)  The idea being that even if two manifests
+# had the same SHA1, they wouldn't have the same salted SHA1.
+
+# This functionality is mostly useful for reassuring people's
+# irrational fears, but hey, that's a useful thing to do.  (This does,
+# though, probably mean that any replacement should have 0 overhead
+# for people who _aren't_ worried about SHA1 collision.)
+
+# The original 'vcheck' was ripped out when manifest and file certs
+# were removed, and never quite did the right thing anyway.  (It only
+# applied to manifests, in particular.)  It may be useful to reference
+# the code, though: see, say,
+# 727d28b35f1fcbc91c0183fca2a6cabbe7cf21d7, or t:monotone-0.16.
+# In particular, mac.hh should be useful.
+
+# There are a few ways to re-add this.  The simplest is probably to
+# have a cert on revisions that contains
+#   - a salt/nonce
+#   - a MAC of the revision
+#   - a MAC of the revision's manifest
+#   - a MAC of each file within that revision.
+# possibly the last should just be "a MAC of every file mentioned in
+# the text of the revision", so people creating mulitple vcheck certs
+# aren't checking the same unchanging files over and over again.  This
+# reduces space overhead, too.
+
+AT_CHECK(false)
+
+
+AT_CLEANUP
