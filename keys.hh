@@ -19,7 +19,9 @@ struct lua_hooks;
 void generate_key_pair(lua_hooks & lua,           // to hook for phrase
                        rsa_keypair_id const & id, // to prompting user for phrase
                        base64<rsa_pub_key> & pub,
-                       base64< arc4<rsa_priv_key> > & priv);
+                       base64< arc4<rsa_priv_key> > & priv,
+                       // Used for unit tests only:
+                       std::string const unit_test_passphrase = std::string());
 
 void change_key_passphrase(lua_hooks & lua,       // to hook for phrase
                            rsa_keypair_id const & id, // to prompting user for phrase

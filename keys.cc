@@ -45,14 +45,15 @@ do_arc4(SecByteBlock & phrase,
   a4.ProcessString(payload.data(), payload.size());
 }
 
+// 'force_from_user' means that we don't use the passphrase cache, and we
+// don't use the get_passphrase hook.
 static void 
 get_passphrase(lua_hooks & lua,
                rsa_keypair_id const & keyid,
                SecByteBlock & phrase,
                bool confirm_phrase = false,
-               string prompt_beginning = "enter passphrase",
-               bool enable_hook_lookup = true,
-               bool enable_phrase_caching = true)
+               bool force_from_user = false,
+               string prompt_beginning = "enter passphrase")
 {
   string lua_phrase;
 
@@ -60,17 +61,17 @@ get_passphrase(lua_hooks & lua,
   // they permit it) through the life of a program run. this helps when
   // you're making a half-dozen certs during a commit or merge or
   // something.
-  bool persist_phrase = enable_phrase_caching && lua.hook_persist_phrase_ok();
+  bool persist_phrase = lua.hook_persist_phrase_ok();
   static std::map<rsa_keypair_id, string> phrases;
   
-  if (persist_phrase && phrases.find(keyid) != phrases.end())
+  if (!force_from_user && phrases.find(keyid) != phrases.end())
     {
       string phr = phrases[keyid];
       phrase.Assign(reinterpret_cast<byte const *>(phr.data()), phr.size());
       return;
     }
 
-  if (enable_hook_lookup && lua.hook_get_passphrase(keyid, lua_phrase))
+  if (!force_from_user && lua.hook_get_passphrase(keyid, lua_phrase))
     {
       // user is being a slob and hooking lua to return his passphrase
       phrase.Assign(reinterpret_cast<const byte *>(lua_phrase.data()), 
@@ -162,10 +163,11 @@ write_der(T & val, SecByteBlock & sec)
 
 
 void 
-generate_key_pair(lua_hooks & lua,           // to hook for phrase
-                  rsa_keypair_id const & id, // to prompting user for phrase
+generate_key_pair(lua_hooks & lua,              // to hook for phrase
+                  rsa_keypair_id const & id,    // to prompting user for phrase
                   base64<rsa_pub_key> & pub_out,
-                  base64< arc4<rsa_priv_key> > & priv_out)
+                  base64< arc4<rsa_priv_key> > & priv_out,
+                  string const unit_test_passphrase)
 {
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
@@ -188,7 +190,11 @@ generate_key_pair(lua_hooks & lua,           // to hook for phrase
   RSAES_OAEP_SHA_Decryptor priv(rng, constants::keylen);
   write_der(priv, privkey);
 
-  get_passphrase(lua, id, phrase, true);
+  if (unit_test_passphrase.empty())
+    get_passphrase(lua, id, phrase, true, true);
+  else
+    phrase.Assign(reinterpret_cast<byte const *>(unit_test_passphrase.c_str()),
+                  unit_test_passphrase.size());
   do_arc4(phrase, privkey); 
   raw_priv_key = string(reinterpret_cast<char const *>(privkey.data()), 
                         privkey.size());
@@ -212,7 +218,7 @@ change_key_passphrase(lua_hooks & lua,
                       base64< arc4<rsa_priv_key> > & encoded_key)
 {
   SecByteBlock phrase;
-  get_passphrase(lua, id, phrase, false, "enter old passphrase", false, false);
+  get_passphrase(lua, id, phrase, false, true, "enter old passphrase");
 
   arc4<rsa_priv_key> decoded_key;
   SecByteBlock key_block;
@@ -235,7 +241,7 @@ change_key_passphrase(lua_hooks & lua,
                                 "probably incorrect passphrase");
     }
 
-  get_passphrase(lua, id, phrase, true, "enter new passphrase", false, false);
+  get_passphrase(lua, id, phrase, true, true, "enter new passphrase");
   do_arc4(phrase, key_block);
   decoded_key = string(reinterpret_cast<char const *>(key_block.data()),
                        key_block.size());
@@ -453,7 +459,7 @@ signature_round_trip_test()
   rsa_keypair_id key("bob123@test.com");
   base64<rsa_pub_key> pubkey;
   base64< arc4<rsa_priv_key> > privkey;
-  generate_key_pair(lua, key, pubkey, privkey);
+  generate_key_pair(lua, key, pubkey, privkey, "bob123@test.com");
 
   BOOST_CHECKPOINT("signing plaintext");
   string plaintext("test string to sign");

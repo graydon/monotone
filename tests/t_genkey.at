@@ -6,8 +6,14 @@ MONOTONE_SETUP
 
 TKEY=happy@bogus.com
 
+# fail to enter a passphrase
+AT_CHECK(MONOTONE genkey $TKEY </dev/null, [1], [ignore], [ignore])
+
+# fail to enter passphrase twice
+AT_CHECK(echo $TKEY | MONOTONE genkey $TKEY, [1], [ignore], [ignore])
+
 # generate a new key
-AT_CHECK(MONOTONE genkey $TKEY, [], [ignore], [ignore])
+AT_CHECK((echo $TKEY; echo $TKEY) | MONOTONE genkey $TKEY, [], [ignore], [ignore])
 
 # check key exists
 AT_CHECK(MONOTONE ls keys, [], [stdout])

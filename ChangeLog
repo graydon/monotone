@@ -1,5 +1,21 @@
 2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
 
+	* keys.cc (get_passphrase): Simplify arguments.
+	(generate_key_pair): Force new passphrases to come from the user.
+	Adapt to new 'get_passphrase' arguments.
+	(change_key_passphrase): Likewise.
+	(generate_key_pair): Add argument specifying passphrase, for
+	exclusive use of the unit tests.
+	(signature_round_trip_test): Use it.
+	* keys.hh (generate_key_pair): Adjust prototype correspondingly.
+
+	* tests/t_genkey.at: Test that 'genkey' requires the passphrase to
+	be entered.
+	* tests/t_chkeypass.at: Check that 'chkeypass' fails if no
+	passphrase is given.
+
+2004-11-30  Nathaniel Smith  <njs@codesourcery.com>
+
 	* keys.hh: Remove tabs.
 	* keys.cc: Likewise.
 
