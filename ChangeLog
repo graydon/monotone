@@ -1,4 +1,14 @@
 2005-02-27  Jon Bright  <jon@siliconcircus.com>
+	* lposix.c (win32 Pspawn): Search the path
+	(win32 Pexistsonpath): Added.  'which' isn't easily available,
+	and not available at all from a normal Win32 command shell
+	(Piswin32): Added a function for both Unix and Win32 to detect
+	if running on Windows
+	* std_hooks.lua (program_exists_in_path): Now calls 
+	posix.iswin32.  If win32, calls posix.existsonpath, otherwise
+	calls which as it always did.
+
+2005-02-27  Jon Bright  <jon@siliconcircus.com>
 	* lposix.c (win32 Pspawn): Remove dumb strlen bug resulting in
 	AVs on commit.
 

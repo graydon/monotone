@@ -416,19 +416,44 @@ static int Pspawn(lua_State *L)			/** spawn(path,[args]) */
 	}
 }
 
+
+static int Piswin32(lua_State *L)		/** iswin32() */
+{
+	return pushresult(L, 0, NULL);
+}
+
 #else
+
+static int Pexistsonpath(lua_State *L)		/** existsonpath(exe) */
+{
+	const char *exe = luaL_checkstring(L, 1);
+	if (SearchPath(NULL, exe, ".exe", 0, NULL, NULL)==0)
+		return pushresult(L, -1, NULL);
+	return pushresult(L, 0, NULL);
+}
 
 static int Pspawn(lua_State *L)			/** spawn(path,[args]) */
 {
-	const char *path = luaL_checkstring(L, 1);
+	const char *exe = luaL_checkstring(L, 1);
 	int i,n=lua_gettop(L);
 	char **argv = malloc(n*sizeof(char*));
 	int totlen = 0;
 	char *cmdline;
+	char *realexe,*filepart;
+	int realexelen;
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 	if (argv==NULL) luaL_error(L,"not enough memory");
-	argv[0] = (char*)path;
+	realexelen = strlen(exe)+1+MAX_PATH;
+	realexe = malloc(realexelen);
+	if (realexe==NULL) luaL_error(L,"not enough memory");
+	if (SearchPath(NULL, exe, ".exe", realexelen, realexe, &filepart)==0)
+	{
+		free(realexe);
+		free(argv);
+		return pushresult(L, -1, NULL);
+	}
+	argv[0] = (char*)realexe;
 	for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, i+1);
 	for (i=0; i<n; i++) totlen += strlen(argv[i])+1;
 	totlen += 2; /* The quotes around the command */
@@ -452,10 +477,22 @@ static int Pspawn(lua_State *L)			/** spawn(path,[args]) */
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(STARTUPINFO);
 	/* We don't need to set any of the STARTUPINFO members */
-	if (CreateProcess(path, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)==0)
+	if (CreateProcess(realexe, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)==0)
+	{
+		free(realexe);
+		free(cmdline);
 		return pushresult(L, -1, NULL);
+	}
+	free(realexe);
+	free(cmdline);
 	CloseHandle(pi.hThread);
 	return pushresult(L, (int)pi.hProcess, NULL);
+}
+
+
+static int Piswin32(lua_State *L)		/** iswin32() */
+{
+	return pushresult(L, 1, NULL);
 }
 
 #endif
@@ -880,6 +917,7 @@ static const luaL_reg R[] =
 	{"files",		Pfiles},
 	{"getcwd",		Pgetcwd},
 	{"getenv",		Pgetenv},
+	{"iswin32",		Piswin32},
 	{"kill",		Pkill},
 	{"mkdir",		Pmkdir},
 	{"putenv",		Pputenv},
@@ -911,6 +949,8 @@ static const luaL_reg R[] =
 	{"ttyname",		Pttyname},
 	{"umask",		Pumask},
 	{"uname",		Puname},
+#else
+	{"existsonpath",	Pexistsonpath},
 #endif
 #ifdef linux
 	{"setenv",		Psetenv},
