@@ -1,3 +1,8 @@
+2005-02-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_undo_update.at: New todo.
+	* testsuite.at: Add it.
+
 2005-02-15  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.1: Add cursory note about "automate".
