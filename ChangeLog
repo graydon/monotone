@@ -1,3 +1,10 @@
+2003-03-08  Jon Bright  <jon@siliconcircus.com>
+	* win32/read_password.cc (read_password): Now correctly hides 
+	password when run in a Windows console.  Does at least enough in
+	a MinGW rxvt console to make sure that you can't see the password.
+	* win32/process.cc: Change indentation.
+	(process_spawn): Log commands executed, as for unix process.cc
+
 2005-03-07  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_diff_restrict.at: New test.
