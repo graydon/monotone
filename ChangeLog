@@ -1,5 +1,18 @@
 2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
 
+	* change_set.cc (merge_deltas): Call correct variant of
+	try_to_merge_files depending on whether ancestor is available.
+	* diff_patch.cc (try_to_merge_files -- merge3 version): Add
+	assertions about ids.
+	(try_to_merge_files -- merge2 version): Likewise.
+
+	* testsuite.at: Add a trivial working merge2 hook.
+	* tests/t_related_merge2_data.at: Update to use.
+	Mark as expected to PASS.
+	* tests/t_merge2_data.at: Likewise.
+
+2004-12-04  Nathaniel Smith  <njs@codesourcery.com>
+
 	* change_set.cc: Remove tabs.
 	* diff_patch.cc: Likewise.
 

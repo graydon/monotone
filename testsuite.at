@@ -95,6 +95,11 @@ function ignore_file(name)
 	return false
 end
 
+function merge2(left, right)
+	io.write("running merge2 hook\n") 
+	return left
+end
+
 if (attr_functions == nil) then
   attr_functions = {}
 end

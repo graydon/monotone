@@ -634,6 +634,11 @@ bool merge_provider::try_to_merge_files(file_path const & path,
                                         file_id const & right_id,
                                         file_id & merged_id)
 {
+  // This version of try_to_merge_files should only be called when there is a
+  // real merge3 to perform.
+  I(!null_id(ancestor_id));
+  I(!null_id(left_id));
+  I(!null_id(right_id));
   
   L(F("trying to merge %s <-> %s (ancestor: %s)\n")
     % left_id % right_id % ancestor_id);
@@ -707,6 +712,9 @@ bool merge_provider::try_to_merge_files(file_path const & path,
                                         file_id const & right_id,
                                         file_id & merged_id)
 {
+  I(!null_id(left_id));
+  I(!null_id(right_id));
+
   file_data left_data, right_data;
   data left_unpacked, right_unpacked, merged_unpacked;
 

@@ -1588,9 +1588,18 @@ merge_deltas(file_path const & path_in_merged,
     }
   else
     {
-      N(merger.try_to_merge_files(path_in_merged, anc, left, right, finalist),
-        F("merge of '%s' : '%s' -> '%s' vs '%s' failed") 
-        % path_in_merged % anc % left % right);
+      if (null_id(anc))
+        {
+          N(merger.try_to_merge_files(path_in_merged, left, right, finalist),
+            F("merge of '%s' : '%s' vs. '%s' (no common ancestor) failed")
+            % path_in_merged % left % right);
+        }
+      else
+        {
+          N(merger.try_to_merge_files(path_in_merged, anc, left, right, finalist),
+            F("merge of '%s' : '%s' -> '%s' vs '%s' failed") 
+            % path_in_merged % anc % left % right);
+        }
 
       L(F("merge of '%s' : '%s' -> '%s' vs '%s' resolved to '%s'\n") 
         % path_in_merged % anc % left % right % finalist);
