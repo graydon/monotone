@@ -1,3 +1,9 @@
+2003-10-01  graydon hoare  <graydon@pobox.com>
+
+	* testsuite.at: Don't use getenv("HOSTNAME").
+	* database.cc (exec, fetch): Do va_end/va_start again in between
+	logging and executing query.
+
 2003-09-28  Tom Tromey  <tromey@redhat.com>
 
 	* monotone.texi: Added @direntry.
@@ -12,6 +18,8 @@
 	* diff_patch.cc: Rework conflict detection.
 	* rcs_import.cc: Remove some pointless slowness.
 	* monotone.spec: Install info files properly.
+
+	Release point (v 0.5).
 
 2003-09-27  graydon hoare  <graydon@pobox.com>
 

@@ -292,6 +292,9 @@ void database::execute(char const * query, ...)
   L("db.execute(\"%s\")\n", qq.c_str());
   sqlite_freemem(formatted);
 
+  va_end(ap);
+  va_start(ap, query);
+
   // do it
   res = sqlite_exec_vprintf(sql(), query, NULL, NULL, &errmsg, ap);
 
@@ -327,6 +330,9 @@ void database::fetch(results & res,
     qq = qq.substr(0, log_line_sz) + string(" ...");
   L("db.fetch(\"%s\")\n", qq.c_str());
   sqlite_freemem(formatted);
+
+  va_end(ap);
+  va_start(ap, query);
 
   // do it
   rescode = sqlite_get_table_vprintf(sql(), query, &result, &nrow, &ncol, &errmsg, ap);

@@ -57,10 +57,7 @@ function non_blocking_rng_ok()
 end
 
 function get_author(branchname)
-        local user = getenv("USER")
-        local host = getenv("HOSTNAME")
-        if ((user == nil) or (host == nil)) then return nil end
-        return format("%s@%s", user, host)
+	return "tester@test.net"
 end
 
 function ignore_file(name)
