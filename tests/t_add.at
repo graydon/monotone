@@ -30,7 +30,7 @@ AT_CHECK(grep file0 stdout, [0], [ignore])
 AT_CHECK(grep file1 stdout, [0], [ignore])
 AT_CHECK(grep file2 stdout, [0], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit 'add files', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message 'add files', [], [ignore], [ignore])
 
 # redundant additions should not appear 
 # (i.e. they should be ignored)

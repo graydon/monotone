@@ -19,22 +19,24 @@ AT_DATA(.mt-attrs,
 
 AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add .mt-attrs, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 CO_R_SHA1=`BASE_REVISION`
 
 AT_DATA(.mt-attrs, [
 file "a"
 test_attr "2"
 ])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 UPDATE_R_SHA1=`BASE_REVISION`
 
 # Check checkouts.
+AT_CHECK(rm -rf co-dir/MT)
 AT_CHECK(MONOTONE checkout $CO_R_SHA1 co-dir, [], [stdout])
 AT_CHECK(grep "test_attr:foo:true" stdout, [], [ignore])
 AT_CHECK(grep "test_attr:a:1" stdout, [], [ignore])
 
 # Check updates.
+AT_CHECK(rm -rf co-dir/MT)
 AT_CHECK(MONOTONE checkout $UPDATE_R_SHA1 co-dir, [], [stdout])
 AT_CHECK(grep "test_attr:foo" stdout, [1], [ignore])
 AT_CHECK(grep "test_attr:a:2" stdout, [], [ignore])

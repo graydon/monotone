@@ -1687,7 +1687,7 @@ Cn07IC8vIG5hbWVzcGFjZSBjb21tYW5kcwo=
 UNB64(firstfile.b64, firstfile)
 AT_CHECK(cp firstfile testfile, [], [ignore])
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 AT_CHECK(mv testfile firstfile, [], [ignore])
 
 # decode second file

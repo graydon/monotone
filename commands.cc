@@ -233,12 +233,6 @@ CMD(C, group, params, desc)                             \
 }
 
 static void 
-ensure_bookdir()
-{
-  mkdir_p(local_path(book_keeping_dir));
-}
-
-static void 
 get_work_path(local_path & w_path)
 {
   w_path = (mkpath(book_keeping_dir) / mkpath(work_file_name)).string();
@@ -256,7 +250,6 @@ static void
 get_revision_id(revision_id & c)
 {
   c = revision_id();
-  ensure_bookdir();
   local_path c_path;
   get_revision_path(c_path);
   if(file_exists(c_path))
@@ -278,7 +271,6 @@ put_revision_id(revision_id & rev)
   local_path c_path;
   get_revision_path(c_path);
   L(F("writing revision id to %s\n") % c_path);
-  ensure_bookdir();
   data c_data(rev.inner()() + "\n");
   write_data(c_path, c_data);
 }
@@ -286,7 +278,6 @@ put_revision_id(revision_id & rev)
 static void 
 get_path_rearrangement(change_set::path_rearrangement & w)
 {
-  ensure_bookdir();
   local_path w_path;
   get_work_path(w_path);
   if (file_exists(w_path))
@@ -325,11 +316,88 @@ put_path_rearrangement(change_set::path_rearrangement & w)
     }
   else
     {
-      ensure_bookdir();
       data w_data;
       write_path_rearrangement(w, w_data);
       write_data(w_path, w_data);
     }
+}
+
+static void
+restrict_path_set(string const & type,
+                  path_set const & paths, 
+                  path_set & included, 
+                  path_set & excluded,
+                  app_state & app)
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      if (app.restriction_includes(*i)) 
+        {
+          L(F("restriction includes %s %s\n") % type % *i);
+          included.insert(*i);
+        }
+      else
+        {
+          L(F("restriction excludes %s %s\n") % type % *i);
+          excluded.insert(*i);
+        }
+    }
+}
+
+static void 
+restrict_rename_set(string const & type,
+                    rename_set const & renames, 
+                    rename_set & included,
+                    rename_set & excluded, 
+                    app_state & app)
+{
+  for (rename_set::const_iterator i = renames.begin();
+       i != renames.end(); ++i)
+    {
+      // exclude a rename unless both paths are included in the restriction
+      // not sure if this is the right thing to do though?!?
+
+      if (app.restriction_includes(i->first) && app.restriction_includes(i->second)) 
+        {
+          L(F("restriction includes %s %s to %s\n") % type % i->first % i->second);
+          included.insert(*i);
+        }
+      else
+        {
+          L(F("restriction excludes %s %s to %s\n") % type % i->first % i->second);
+          excluded.insert(*i);
+        }
+    }
+}
+
+static void
+restrict_path_rearrangement(change_set::path_rearrangement const & work, 
+                            change_set::path_rearrangement & included,
+                            change_set::path_rearrangement & excluded,
+                            app_state & app)
+{
+  restrict_path_set("delete file", work.deleted_files, 
+                    included.deleted_files, excluded.deleted_files, app);
+  restrict_path_set("delete dir", work.deleted_dirs, 
+                    included.deleted_dirs, excluded.deleted_dirs, app);
+
+  restrict_rename_set("rename file", work.renamed_files, 
+                      included.renamed_files, excluded.renamed_files, app);
+  restrict_rename_set("rename dir", work.renamed_dirs, 
+                      included.renamed_dirs, excluded.renamed_dirs, app);
+
+  restrict_path_set("add file", work.added_files, 
+                    included.added_files, excluded.added_files, app);
+}
+
+static void 
+get_path_rearrangement(change_set::path_rearrangement & included,
+                       change_set::path_rearrangement & excluded,
+                       app_state & app)
+{
+  change_set::path_rearrangement work;
+  get_path_rearrangement(work);
+  restrict_path_rearrangement(work, included, excluded, app);
 }
 
 static void 
@@ -430,6 +498,58 @@ calculate_current_revision(app_state & app,
 
   rev.edges.insert(make_pair(old_revision_id,
                              make_pair(old_manifest_id, cs)));
+}
+
+static void
+calculate_restricted_revision(app_state & app, 
+                              revision_set & rev,
+                              manifest_map & m_old,
+                              manifest_map & m_new,
+                              change_set::path_rearrangement & restricted_work)
+{
+  manifest_id old_manifest_id;
+  revision_id old_revision_id;    
+  change_set cs;
+  path_set old_paths, new_paths;
+  manifest_map m_old_rearranged;
+
+  rev.edges.clear();
+  m_old.clear();
+  m_new.clear();
+
+  calculate_base_revision(app, 
+                          old_revision_id, rev, 
+                          old_manifest_id, m_old);
+
+  change_set::path_rearrangement included, excluded;
+
+  get_path_rearrangement(included, excluded, app);
+
+  extract_path_set(m_old, old_paths);
+  apply_path_rearrangement(old_paths, included, new_paths);
+
+  cs.rearrangement = included;
+  restricted_work = excluded;
+
+  build_restricted_manifest_map(new_paths, m_old, m_new, app);
+  complete_change_set(m_old, m_new, cs);
+
+  calculate_ident(m_new, rev.new_manifest);
+  L(F("new manifest is %s\n") % rev.new_manifest);
+
+  rev.edges.insert(make_pair(old_revision_id,
+                             make_pair(old_manifest_id, cs)));
+}
+
+
+static void
+calculate_restricted_revision(app_state & app, 
+                              revision_set & rev,
+                              manifest_map & m_old,
+                              manifest_map & m_new)
+{
+  change_set::path_rearrangement work;
+  calculate_restricted_revision(app, rev, m_old, m_new, work);
 }
 
 static string 
@@ -678,6 +798,8 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   vector<cert> certs;
   
   transaction_guard guard(app.db);
@@ -759,6 +881,8 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 {
   vector<rsa_keypair_id> pubkeys;
   vector<rsa_keypair_id> privkeys;
+
+  app.initialize(false);
 
   transaction_guard guard(app.db);
 
@@ -938,6 +1062,8 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   if (args.size() != 1)
     throw usage(name);
   
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
@@ -959,6 +1085,8 @@ CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key"
 {
   if (args.size() != 1)
     throw usage(name);
+
+  app.initialize(false);
 
   transaction_guard guard(app.db);
   rsa_keypair_id ident;
@@ -982,6 +1110,8 @@ CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
 {
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
+
+  app.initialize(false);
 
   transaction_guard guard(app.db);
 
@@ -1024,6 +1154,8 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
   if (args.size() < 4)
     throw usage(name);
 
+  app.initialize(false);
+
   revision_id rid;
   complete(app, idx(args, 0)(), rid);
   hexenc<id> ident(rid.inner());
@@ -1060,6 +1192,9 @@ CMD(tag, "review", "REVISION TAGNAME",
 {
   if (args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
+
   revision_id r;
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
@@ -1072,6 +1207,9 @@ CMD(testresult, "review", "ID (true|false)",
 {
   if (args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
+
   revision_id r;
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
@@ -1083,6 +1221,8 @@ CMD(approve, "review", "REVISION",
 {
   if (args.size() != 1)
     throw usage(name);  
+
+  app.initialize(false);
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
@@ -1100,6 +1240,8 @@ CMD(disapprove, "review", "REVISION",
 {
   if (args.size() != 1)
     throw usage(name);
+
+  app.initialize(false);
 
   revision_id r;
   revision_set rev, rev_inverse;
@@ -1147,6 +1289,8 @@ CMD(comment, "review", "REVISION [COMMENT]",
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   string comment;
   if (args.size() == 2)
     comment = idx(args, 1)();
@@ -1165,10 +1309,12 @@ CMD(comment, "review", "REVISION [COMMENT]",
 
 
 
-CMD(add, "working copy", "PATHNAME...", "add files to working copy")
+CMD(add, "working copy", "PATH...", "add files to working copy")
 {
   if (args.size() < 1)
     throw usage(name);
+
+  app.initialize(true);
 
   manifest_map m_old;
   calculate_base_manifest(app, m_old);
@@ -1177,18 +1323,19 @@ CMD(add, "working copy", "PATHNAME...", "add files to working copy")
   get_path_rearrangement(work);
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_addition(file_path((*i)()), m_old, app, work);
+    build_addition(app.prefix((*i)()), m_old, app, work);
     
   put_path_rearrangement(work);
 
   update_any_attrs(app);
-  app.write_options();
 }
 
-CMD(drop, "working copy", "FILE...", "drop files from working copy")
+CMD(drop, "working copy", "PATH...", "drop files from working copy")
 {
   if (args.size() < 1)
     throw usage(name);
+
+  app.initialize(true);
 
   manifest_map m_old;
   calculate_base_manifest(app, m_old);
@@ -1197,12 +1344,11 @@ CMD(drop, "working copy", "FILE...", "drop files from working copy")
   get_path_rearrangement(work);
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_deletion(file_path((*i)()), m_old, work);
+    build_deletion(app.prefix((*i)()), m_old, work);
   
   put_path_rearrangement(work);
 
   update_any_attrs(app);
-  app.write_options();
 }
 
 
@@ -1211,20 +1357,19 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   if (args.size() != 2)
     throw usage(name);
   
+  app.initialize(true);
+
   manifest_map m_old;
   calculate_base_manifest(app, m_old);
 
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
-  build_rename(file_path(idx(args, 0)()), 
-               file_path(idx(args, 1)()), 
-               m_old, work);
+  build_rename(app.prefix(idx(args, 0)()), app.prefix(idx(args, 1)()), m_old, work);
   
   put_path_rearrangement(work);
   
   update_any_attrs(app);
-  app.write_options();  
 }
 
 
@@ -1323,6 +1468,8 @@ CMD(fload, "debug", "", "load file contents into db")
   string s = get_stdin();
   base64< gzip< data > > gzd;
 
+  app.initialize(false);
+
   pack(data(s), gzd);
 
   file_id f_id;
@@ -1338,7 +1485,9 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
 {
   if (args.size() != 3)
     throw usage(name);
-  
+
+  app.initialize(false);
+
   file_id anc_id(idx(args, 0)()), left_id(idx(args, 1)()), right_id(idx(args, 2)());
   file_data anc, left, right;
   data anc_unpacked, left_unpacked, right_unpacked;
@@ -1370,13 +1519,19 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
   
 }
 
-CMD(status, "informative", "", "show status of working copy")
+CMD(status, "informative", "[PATH]...", "show status of working copy")
 {
   revision_set rs;
   manifest_map m_old, m_new;
   data tmp;
 
-  calculate_current_revision(app, rs, m_old, m_new);
+  app.initialize(true);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
+
+  calculate_restricted_revision(app, rs, m_old, m_new);
+
   write_revision_set(rs, tmp);
   cout << endl << tmp << endl;
 }
@@ -1386,6 +1541,8 @@ CMD(identify, "working copy", "[PATH]",
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
+
+  app.initialize(false);
 
   data dat;
 
@@ -1408,6 +1565,8 @@ CMD(cat, "informative", "(file|manifest|revision) [ID]",
 {
   if (!(args.size() == 1 || args.size() == 2))
     throw usage(name);
+
+  app.initialize(false);
 
   transaction_guard guard(app.db);
 
@@ -1502,41 +1661,28 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
 
   if (args.size() == 0 || args.size() == 1)
     {
-      set<revision_id> heads;
       N(app.branch_name() != "", F("need --branch argument for branch-based checkout"));
-      get_branch_heads(app.branch_name(), app, heads);
-      N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
-      N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
-      ident = *(heads.begin());
+
       // if no checkout dir specified, use branch name
       if (args.size() == 0)
           dir = app.branch_name();
       else
           dir = idx(args, 0)();
+
+      app.initialize(dir);
+
+      set<revision_id> heads;
+      get_branch_heads(app.branch_name(), app, heads);
+      N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
+      N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
+      ident = *(heads.begin());
     }
   else
     {
-      complete(app, idx(args, 0)(), ident);
       dir = idx(args, 1)();
-    }
+      app.initialize(dir);
 
-  if (dir != string("."))
-    {
-      fs::path co_dir = mkpath(dir);
-      try
-        {
-          fs::create_directories(co_dir);
-        }
-      catch (fs::filesystem_error & err)
-        {
-          throw informative_failure(string("could not create directory \"") +
-                                           dir + string("\": ") +
-                                           string(strerror(errno)));
-        }
-      if (chdir(co_dir.native_directory_string().c_str()) == -1)
-        throw informative_failure(string("could not change directory to \"") +
-                                         dir + string("\": ") +
-                                         string(strerror(errno)));
+      complete(app, idx(args, 0)(), ident);
     }
 
   transaction_guard guard(app.db);
@@ -1572,7 +1718,6 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
   remove_path_rearrangement();
   guard.commit();
   update_any_attrs(app);
-  app.write_options(true);
 }
 
 ALIAS(co, checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
@@ -1583,6 +1728,9 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch")
   set<revision_id> heads;
   if (args.size() != 0)
     throw usage(name);
+
+  app.initialize(false);
+
   
   N(app.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
@@ -1604,6 +1752,8 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch")
 static void 
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   vector< revision<cert> > certs;
   app.db.get_revision_certs(branch_cert_name, certs);
@@ -1628,6 +1778,8 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 static void 
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
@@ -1653,7 +1805,7 @@ struct unknown_itemizer : public tree_walker
     : app(a), man(m), want_ignored(i) {}
   virtual void visit_file(file_path const & path)
   {
-    if (man.find(path) == man.end())
+    if (app.restriction_includes(path) && man.find(path) == man.end())
       {
       if (want_ignored)
         {
@@ -1671,24 +1823,31 @@ struct unknown_itemizer : public tree_walker
 
 
 static void
-ls_unknown (app_state & app, bool want_ignored)
+ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 {
+  app.initialize(true);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
+
   revision_set rev;
   manifest_map m_old, m_new;
-  calculate_current_revision(app, rev, m_old, m_new);
+  calculate_restricted_revision(app, rev, m_old, m_new);
   unknown_itemizer u(app, m_new, want_ignored);
   walk_tree(u);
 }
 
 static void
-ls_missing (app_state & app)
+ls_missing (app_state & app, vector<utf8> const & args)
 {
   revision_set rev;
   revision_id rid;
   manifest_id mid;
   manifest_map man, man_rearranged;
-  change_set cs;
-  path_set paths_old, paths;
+  change_set::path_rearrangement included, excluded;
+  path_set old_paths, new_paths;
+
+  app.initialize(true);
 
   get_revision_id(rid);
   if (! rid.inner()().empty())
@@ -1705,16 +1864,19 @@ ls_missing (app_state & app)
       app.db.get_manifest(mid, man);
     }
 
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
+
   L(F("old manifest has %d entries\n") % man.size());
 
-  get_path_rearrangement(cs.rearrangement);  
-  extract_path_set(man, paths_old);
-  apply_path_rearrangement(paths_old, cs.rearrangement, paths);
+  get_path_rearrangement(included, excluded, app);
+  extract_path_set(man, old_paths);
+  apply_path_rearrangement(old_paths, included, new_paths);
 
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
-      if (!file_exists(*i))     
-        cout << *i << endl;
+      if (app.restriction_includes(*i) && !file_exists(*i))	
+	cout << *i << endl;
     }
 }
 
@@ -1744,11 +1906,11 @@ CMD(list, "informative",
   else if (idx(args, 0)() == "tags")
     ls_tags(name, app, removed);
   else if (idx(args, 0)() == "unknown")
-    ls_unknown(app, false);
+    ls_unknown(app, false, removed);
   else if (idx(args, 0)() == "ignored")
-    ls_unknown(app, true);
+    ls_unknown(app, true, removed);
   else if (idx(args, 0)() == "missing")
-    ls_missing(app);
+    ls_missing(app, removed);
   else
     throw usage(name);
 }
@@ -1768,6 +1930,8 @@ CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout"
 {
   if (args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
 
   packet_writer pw(cout);
 
@@ -1791,6 +1955,8 @@ CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
   if (args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   packet_writer pw(cout);
 
   file_id f_old_id, f_new_id;
@@ -1811,6 +1977,8 @@ CMD(rdata, "packet i/o", "ID", "write revision data packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   packet_writer pw(cout);
 
   revision_id r_id;
@@ -1826,6 +1994,8 @@ CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
+
+  app.initialize(false);
 
   packet_writer pw(cout);
 
@@ -1844,6 +2014,8 @@ CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   packet_writer pw(cout);
 
   file_id f_id;
@@ -1860,6 +2032,8 @@ CMD(certs, "packet i/o", "ID", "write cert packets to stdout")
 {
   if (args.size() != 1)
     throw usage(name);
+
+  app.initialize(false);
 
   packet_writer pw(cout);
 
@@ -1878,6 +2052,8 @@ CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   rsa_keypair_id ident(idx(args, 0)());
   N(app.db.public_key_exists(ident),
     F("public key '%s' does not exist in database") % idx(args, 0)());
@@ -1893,6 +2069,8 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
   if (args.size() != 1)
     throw usage(name);
 
+  app.initialize(false);
+
   rsa_keypair_id ident(idx(args, 0)());
   N(app.db.private_key_exists(ident),
     F("private key '%s' does not exist in database") % idx(args, 0)());
@@ -1906,6 +2084,8 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
 
 CMD(read, "packet i/o", "", "read packets from stdin")
 {
+  app.initialize(false);
+
   packet_db_writer dbw(app, true);
   size_t count = read_packets(cin, dbw);
   N(count != 0, F("no packets found on stdin"));
@@ -1921,6 +2101,8 @@ CMD(reindex, "network", "COLLECTION...",
 {
   if (args.size() < 1)
     throw usage(name);
+
+  app.initialize(false);
 
   transaction_guard guard(app.db);
   ui.set_tick_trailer("rehashing db");
@@ -1939,6 +2121,8 @@ CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   if (args.size() < 2)
     throw usage(name);
 
+  app.initialize(false);
+
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
@@ -1954,6 +2138,8 @@ CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   if (args.size() < 2)
     throw usage(name);
 
+  app.initialize(false);
+
   if (app.signing_key() == "")
     W(F("doing anonymous pull\n"));
   
@@ -1967,6 +2153,8 @@ CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
 {
   if (args.size() < 2)
     throw usage(name);
+
+  app.initialize(false);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
@@ -1982,6 +2170,8 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
 {
   if (args.size() < 2)
     throw usage(name);
+
+  app.initialize(false);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
@@ -2041,6 +2231,8 @@ check_db(app_state & app)
 
 CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipulate database state")
 {
+  app.initialize(false);
+
   if (args.size() == 1)
     {
       if (idx(args, 0)() == "init")
@@ -2080,6 +2272,8 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
+
+  app.initialize(true);
 
   data attr_data;
   file_path attr_path;
@@ -2148,18 +2342,22 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
   else 
     throw usage(name);
 }
-
-CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
+CMD(commit, "working copy", "[--message=STRING] [PATH]...", 
+    "commit working copy to database")
 {
   string log_message("");
   revision_set rs;
   revision_id rid;
   manifest_map m_old, m_new;
+  
+  app.initialize(true);
 
-  if (args.size() != 0 && args.size() != 1)
-    throw usage(name);
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
 
-  calculate_current_revision(app, rs, m_old, m_new);
+  // preserve excluded work for future commmits
+  change_set::path_rearrangement excluded_work;
+  calculate_restricted_revision(app, rs, m_old, m_new, excluded_work);
   calculate_ident(rs, rid);
 
   N(!(rs.edges.size() == 0 || 
@@ -2178,8 +2376,8 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   P(F("branch %s\n") % branchname);
 
   // get log message
-  if (args.size() == 1)
-    log_message = idx(args, 0)();
+  if (app.message().length() > 0)
+    log_message = app.message();
   else
     get_log_message(rs, app, log_message);
 
@@ -2283,12 +2481,11 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
   guard.commit();
 
   // small race condition here...
-  remove_path_rearrangement();
+  put_path_rearrangement(excluded_work);
   put_revision_id(rid);
   P(F("committed revision %s\n") % rid);
 
   update_any_attrs(app);
-  app.write_options();
 
   {
     // tell lua what happened. yes, we might lose some information here,
@@ -2396,7 +2593,10 @@ dump_diffs(change_set::delta_map const & deltas,
     }
 }
 
-void do_diff(const string & name, app_state & app, vector<utf8> const & args, diff_type type)
+void do_diff(const string & name, 
+             app_state & app, 
+             vector<utf8> const & args, 
+             diff_type type)
 {
   revision_set r_old, r_new;
   manifest_map m_new;
@@ -2404,35 +2604,49 @@ void do_diff(const string & name, app_state & app, vector<utf8> const & args, di
 
   change_set composite;
 
-  if (args.size() == 0)
+  // initialize before transaction so we have a database to work with
+
+  if (app.revision_selectors.size() == 0)
+      app.initialize(true);
+  else if (app.revision_selectors.size() == 1)
+      app.initialize(true);
+  else if (app.revision_selectors.size() == 2)
+      app.initialize(false);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    app.add_restriction((*i)());
+
+  transaction_guard guard(app.db);
+
+  if (app.revision_selectors.size() == 0)
     {
       manifest_map m_old;
-      calculate_current_revision(app, r_new, m_old, m_new);
+      calculate_restricted_revision(app, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       if (r_new.edges.size() == 1)
         composite = edge_changes(r_new.edges.begin());
       new_is_archived = false;
     }
-  else if (args.size() == 1)
+  else if (app.revision_selectors.size() == 1)
     {
       revision_id r_old_id;
       manifest_map m_old;
-      complete(app, idx(args, 0)(), r_old_id);
+      complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("revision %s does not exist") % r_old_id);
       app.db.get_revision(r_old_id, r_old);
-      calculate_current_revision(app, r_new, m_old, m_new);
+      calculate_restricted_revision(app, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       N(r_new.edges.size() == 1, F("current revision has no ancestor"));
       new_is_archived = false;
     }
-  else if (args.size() == 2)
+  else if (app.revision_selectors.size() == 2)
     {
       revision_id r_old_id, r_new_id;
       manifest_id m_new_id;
 
-      complete(app, idx(args, 0)(), r_old_id);
-      complete(app, idx(args, 1)(), r_new_id);
+      complete(app, idx(app.revision_selectors, 0)(), r_old_id);
+      complete(app, idx(app.revision_selectors, 1)(), r_new_id);
 
       N(app.db.revision_exists(r_old_id),
         F("revision %s does not exist") % r_old_id);
@@ -2452,9 +2666,7 @@ void do_diff(const string & name, app_state & app, vector<utf8> const & args, di
       throw usage(name);
     }
       
-
-
-  if (args.size() > 0)
+  if (app.revision_selectors.size() > 0)
     {
       revision_id new_id, src_id, dst_id, anc_id;
       calculate_ident(r_old, src_id);
@@ -2530,12 +2742,14 @@ void do_diff(const string & name, app_state & app, vector<utf8> const & args, di
   dump_diffs(composite.deltas, app, new_is_archived, type);
 }
 
-CMD(cdiff, "informative", "[REVISION [REVISION]]", "show current context diffs on stdout")
+CMD(cdiff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
+    "show current context diffs on stdout")
 {
   do_diff(name, app, args, context_diff);
 }
 
-CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout")
+CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
+    "show current unified diffs on stdout")
 {
   do_diff(name, app, args, unified_diff);
 }
@@ -2544,6 +2758,8 @@ CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor")
 {
   if (args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
 
   revision_id anc, left, right;
 
@@ -2562,6 +2778,8 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
   if (args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   revision_id anc, left, right;
 
   complete(app, idx(args, 0)(), left);
@@ -2576,6 +2794,8 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
 
 CMD(agraph, "debug", "", "dump ancestry graph to stdout")
 {
+  app.initialize(false);
+
   set<revision_id> nodes;
   multimap<revision_id,string> branches;
 
@@ -2690,6 +2910,7 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
 
+  app.initialize(true);
   calculate_current_revision(app, r_working, m_old, m_working);
   
   I(r_working.edges.size() == 1 || r_working.edges.size() == 0);
@@ -2814,7 +3035,6 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   P(F("updated to base revision %s\n") % r_chosen_id);
 
   update_any_attrs(app);
-  app.write_options();
 }
 
 
@@ -2936,6 +3156,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
   if (args.size() != 0)
     throw usage(name);
 
+  app.initialize(false);
   N(app.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
@@ -2974,7 +3195,6 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
       left = merged;
     }
 
-  app.write_options();
 }
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
@@ -3006,6 +3226,8 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
 
   if (args.size() != 2)
     throw usage(name);
+
+  app.initialize(false);
 
   get_branch_heads(idx(args, 0)(), app, src_heads);
   get_branch_heads(idx(args, 1)(), app, dst_heads);
@@ -3069,6 +3291,8 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
   if (args.size() != 3 && args.size() != 4)
     throw usage(name);
 
+  app.initialize(false);
+
   complete(app, idx(args, 0)(), left);
   complete(app, idx(args, 1)(), right);
   if (args.size() == 4)
@@ -3121,6 +3345,8 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
   if (args.size() != 2)
     throw usage(name);
 
+  app.initialize(false);
+
   if (idx(args, 0)() == "revision")
     {      
       N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
@@ -3156,11 +3382,13 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
 }
 
 
-CMD(revert, "working copy", "[FILE]...", 
+CMD(revert, "working copy", "[PATH]...", 
     "revert file(s) or entire working copy")
 {
   manifest_map m_old;
   revision_set r_old;
+
+  app.initialize(true);
 
   calculate_base_revision(app, r_old, m_old);
 
@@ -3187,8 +3415,16 @@ CMD(revert, "working copy", "[FILE]...",
       change_set::path_rearrangement work;
       get_path_rearrangement(work);
 
+      // TODO: set up restriction
+      // TODO: restrict rearrangement into included and excluded
+      // TODO: revert all included files
+      // TODO: rewrite excluded work
+
       // revert some specific files
-      vector<utf8> work_args (args.begin(), args.end());
+      vector<file_path> work_args;
+      for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+        work_args.push_back(app.prefix((*i)()));
+
       for (size_t i = 0; i < work_args.size(); ++i)
         {
           string arg(idx(work_args, i)());
@@ -3200,6 +3436,7 @@ CMD(revert, "working copy", "[FILE]...",
               for (manifest_map::const_iterator i = m_old.begin();
                    i != m_old.end(); ++i)
                 {
+                  // this doesn't seem quite right... *some* branch path, not *the* branch path
                   file_path p = i->first;
                   if (fs::path(p()).branch_path().string() == dir)
                     work_args.push_back(p());
@@ -3270,7 +3507,6 @@ CMD(revert, "working copy", "[FILE]...",
     }
 
   update_any_attrs(app);
-  app.write_options();
 }
 
 
@@ -3281,6 +3517,8 @@ CMD(rcs_import, "debug", "RCSFILE...",
   if (args.size() < 1)
     throw usage(name);
   
+  app.initialize(false);
+
   transaction_guard guard(app.db);
   for (vector<utf8>::const_iterator i = args.begin();
        i != args.end(); ++i)
@@ -3295,6 +3533,8 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
 {
   if (args.size() != 1)
     throw usage(name);
+
+  app.initialize(false);
 
   import_cvs_repo(mkpath(idx(args, 0)()), app);
 }
@@ -3332,6 +3572,7 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
 
   if (args.size() == 2)
   {  
+    app.initialize(false);
     complete(app, idx(args, 0)(), rid);
     file=file_path(idx(args, 1)());
   }  
@@ -3339,16 +3580,22 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
     { 
       std::string arg=idx(args, 0)();
       if (arg.find_first_not_of(constants::legal_id_bytes) == string::npos
-          && arg.size() <= constants::idlen)
-        complete(app, arg, rid);
+          && arg.size()<=constants::idlen)
+        {
+          app.initialize(false);
+          complete(app, arg, rid);
+        }
       else
         {  
+          app.initialize(true); // no id arg, must have working copy
+          file=file_path(arg);
           file = file_path(arg);
           get_revision_id(rid);
         }
     }
   else
     {
+      app.initialize(true); // no id arg, must have working copy
       get_revision_id(rid);
     }
 
@@ -3454,6 +3701,18 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
         }
       frontier = next_frontier;
     }
+}
+
+
+CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
+{
+  string dir;
+
+  if (args.size() != 1)
+    throw usage(name);
+
+  dir = idx(args,0)();
+  app.initialize(dir);
 }
 
 
