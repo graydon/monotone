@@ -1,3 +1,10 @@
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_subdir_add.at: New test.
+	* tests/t_subdir_drop.at: New test.
+	* testsuite.at: Add them.
+	* tests/t_delete_dir.at: Implement it.
+	
 2005-01-19  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netcmd.cc: Remove tabs.
