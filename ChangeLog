@@ -1,5 +1,10 @@
 2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
 
+	* cert.cc: Remove tabs.
+	* revision.hh: Likewise.
+
+2005-01-04  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_propagate_anc.at: Also check the case where we're
 	propagating a non-strict ancestor, i.e. the heads are actually
 	equal.
