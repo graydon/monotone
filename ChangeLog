@@ -1,5 +1,9 @@
 2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_load_into_existing.at: Oops, really add it too, sigh.
+
+2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_need_mt_revision.at: Oops, really add it.
 
 2005-02-03  Nathaniel Smith  <njs@codesourcery.com>
