@@ -1,3 +1,17 @@
+2004-12-18  Matt Johnston <matt@ucc.asn.au>
+
+        * change_set.cc (concatenate_change_sets): Be more careful checking
+        whether to discard deltas for deleted files (in particular take
+        care when files are removed then re-added) - fixes tests
+        t_patch_drop_add, t_add_drop_add.at, t_add_patch_drop_add,
+        t_merge2_add_drop_add
+        * change_set.cc (project_missing_deltas): don't copy deltas
+        for deleted files, and handle the case where src file ids vary when
+        files are added/removed. (fixes t_patch_vs_drop_add)
+        * t_patch_drop_add.at, t_add_drop_add.at, t_add_patch_drop_add.at,
+          t_merge2_add_drop_add.at, t_patch_vs_drop_add.t: don't expect
+        to fail any more.
+
 2004-12-16  Joel Rosdahl  <joel@rosdahl.net>
 
 	* revision.cc (is_ancestor): Use std::queue for the queue.

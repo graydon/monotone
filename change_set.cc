@@ -1136,8 +1136,22 @@ concatenate_change_sets(change_set const & a,
       reconstruct_path(delta_entry_path(del), b_src_map, b_analysis.second, new_pth);
       L(F("delta on %s in first changeset renamed to %s\n")
         % delta_entry_path(del) % new_pth);
-      if (b.rearrangement.deleted_files.find(delta_entry_path(del)) != 
-                                                  b.rearrangement.deleted_files.end())
+
+      // it doesn't make sense if the revision has a delta with a deleted file
+      // (unless there's also a corresponding add for a new file)
+      
+      if ( a.rearrangement.deleted_files.find(delta_entry_path(del)) !=
+                                      a.rearrangement.deleted_files.end()
+        && a.rearrangement.added_files.find(delta_entry_path(del)) ==
+                                      a.rearrangement.added_files.end() )
+          // FIXME: this should really be an invariant, but some
+          // revisions in monotone's tree have patches with deletions.
+          // (54b9be0d60633ca2941edd02b9b7cfe8da90cc3a for example)
+          L(F("WARNING: delta [%s]->[%s] for deleted file %s\n")
+            % delta_entry_src(del) % delta_entry_dst(del) % new_pth);
+      else if (b.rearrangement.deleted_files.find(delta_entry_path(del)) != 
+                                      b.rearrangement.deleted_files.end())
+        // the delta should be removed if the file is going to be deleted
         L(F("discarding delta [%s]->[%s] for deleted file '%s'\n")
             % delta_entry_src(del) % delta_entry_dst(del) % new_pth);
       else
@@ -1170,9 +1184,18 @@ concatenate_change_sets(change_set const & a,
         {
           L(F("delta on %s in second changeset copied forward\n")
             % delta_entry_path(del));
-          I(b.rearrangement.deleted_files.find(delta_entry_path(del)) ==
-                                          b.rearrangement.deleted_files.end());
-          concatenated.deltas.insert(*del);
+          // in general don't want deltas on deleted files. however if a
+          // file has been deleted then re-added, then a delta is valid
+          // (it applies to the newly-added file)
+          if (b.rearrangement.deleted_files.find(delta_entry_path(del)) == 
+                                          b.rearrangement.deleted_files.end()
+            || b.rearrangement.added_files.find(delta_entry_path(del)) != 
+                                          b.rearrangement.added_files.end() )
+            concatenated.deltas.insert(*del);
+          else
+            // FIXME: this should be an invariant, see fixme above.
+            L(F("WARNING: delta [%s]->[%s] for deleted file %s\n")
+              % delta_entry_src(del) % delta_entry_dst(del) % delta_entry_path(del));
         }
     }
 
@@ -1676,15 +1699,53 @@ project_missing_deltas(change_set const & a,
           // if not, copy ours over using the merged name
           L(F("merge is copying delta '%s' : '%s' -> '%s'\n") 
             % path_in_merged % delta_entry_src(i) % delta_entry_dst(i));
-          I(b_merged.deltas.find(path_in_merged) == b_merged.deltas.end());
-          b_merged.apply_delta(path_in_merged, delta_entry_src(i), delta_entry_dst(i));
+          I(b.deltas.find(path_in_merged) == b.deltas.end());
+          if (b.rearrangement.deleted_files.find(path_in_merged) !=
+                b.rearrangement.deleted_files.end())
+            // if the file was deleted on the other fork of the merge, then
+            // we don't want to keep this delta
+            L(F("skipping delta '%s'->'%s' on deleted file '%s'\n")
+                % delta_entry_src(i) % delta_entry_dst(i) % path_in_merged);
+          else
+            b_merged.apply_delta(path_in_merged, delta_entry_src(i), delta_entry_dst(i));
         }
       else 
         {
-          I(delta_entry_src(i) == delta_entry_src(j));
           // if so, either... 
 
-          if (delta_entry_dst(i) == delta_entry_dst(j))
+          if (!(delta_entry_src(i) == delta_entry_src(j)))
+            {
+              // This is a bit of a corner case where a file was added then deleted on one
+              // of the forks. The src for the addition fork will be null_id, but the src
+              // for the other fork will be the ancestor file's id.
+
+              // if neither of the forks involved a file addition delta (null_id to something)
+              // then something bad happened.
+              I(null_id(delta_entry_src(i)) || null_id(delta_entry_src(j)));
+
+              if (null_id(delta_entry_src(i)))
+                {
+                  // ... use the delta from 'a'
+                  // 'a' change_set included a delta []->[...], ie file added. We want to
+                  // follow this fork so it gets added to the b_merged changeset
+                  L(F("propagating new file addition delta on '%s' : '%s' -> '%s'\n")
+                    % path_in_merged
+                    % delta_entry_src(j) 
+                    % delta_entry_dst(i));        
+                  b_merged.apply_delta(path_in_merged, delta_entry_src(i), delta_entry_dst(i));
+                }
+              else if (null_id(delta_entry_src(j)))
+                {
+                  // ... ignore the delta
+                  // 'b' change_set included a delta []->[...], ie file added. We don't need
+                  // to add it to the b_merged changeset, since any delta in 'a' will be
+                  // ignored (as 'b' includes deletions).
+                  L(F("skipping new file addition delta on '%s' : '' -> '%s'\n")
+                    % path_in_merged
+                    % delta_entry_dst(j));        
+                }
+            }
+          else if (delta_entry_dst(i) == delta_entry_dst(j))
             {
               // ... absorb identical deltas
               L(F("skipping common delta '%s' : '%s' -> '%s'\n") 

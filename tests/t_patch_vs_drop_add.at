@@ -1,8 +1,5 @@
 AT_SETUP([(normal) merge(<patch a>, <drop a, add a>)])
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
 # In this case, the patch should be completely ignored; we shouldn't
 # even try to do a merge.
 

@@ -1,8 +1,5 @@
 AT_SETUP([(imp) merge(<>, <add a, drop a, add a>)])
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
 MONOTONE_SETUP
 
 AT_DATA(v1, [foo blah
