@@ -366,6 +366,18 @@ change_set::check_sane() const
         }
     }
 
+  for (std::set<file_path>::const_iterator i = rearrangement.deleted_files.begin(); 
+       i != rearrangement.deleted_files.end(); ++i)
+    {
+      delta_map::const_iterator j = deltas.find(*i);
+      if (!global_sanity.relaxed)
+        {
+          // we can only have deltas if the file has been re-added.
+          I(j == deltas.end() ||
+              rearrangement.added_files.find(*i) != rearrangement.added_files.end() );
+        }
+    }
+
   for (delta_map::const_iterator i = deltas.begin(); 
        i != deltas.end(); ++i)
     {
@@ -373,6 +385,7 @@ change_set::check_sane() const
         {
           I(!null_name(delta_entry_path(i)));
           I(!null_id(delta_entry_dst(i)));
+          I(!(delta_entry_src(i) == delta_entry_dst(i)));
         }
     }
 

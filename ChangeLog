@@ -1,5 +1,10 @@
 2004-12-29  Matt Johnston  <matt@ucc.asn.au>
 
+        * change_set.cc: added a sanity check for deltas with same src/dst,
+        and deleted files with deltas.
+
+2004-12-29  Matt Johnston  <matt@ucc.asn.au>
+
         * testsuite.at, tests/t_netsync_single.at: don't use -q with
         killall since it isn't portable.
 
