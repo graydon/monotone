@@ -1,3 +1,10 @@
+2004-11-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi: Fix various typos.
+	(Committing Work): Add missing command line argument.
+	(Branch Names): New section.
+	Add me to the copyright block.
+
 2004-11-12  Joel Rosdahl  <joel@rosdahl.net>
 
 	* monotone.texi: Fix documentation of the approve and disapprove
