@@ -1,5 +1,13 @@
 2005-03-25  Matt Johnston  <matt@ucc.asn.au>
 
+	* tests/t_database_check.at: re-encode the manifestX
+	data so that it doesn't use any fancy gzip features like
+	filenames (so that the botan parse can handle it).
+	( if it should be able to handle it, an additional test
+	can be added testing it explicitly).
+
+2005-03-25  Matt Johnston  <matt@ucc.asn.au>
+
 	* botan/base64.h: Change default break value so that
 	output is split into 72 col lines.
 
