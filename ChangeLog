@@ -1,3 +1,13 @@
+2003-12-15  graydon hoare  <graydon@pobox.com>
+
+	* configure.ac: Add --enable-static-boost.
+	* Makefile.am: Likewise.
+	* AUTHORS: Mention new contributors.
+
+2003-12-14  Lorenzo Campedelli <lorenzo.campedelli@libero.it>
+
+	* work.cc (add_to_attr_map): Finish change to attr map format.
+ 
 2003-12-05  graydon hoare  <graydon@pobox.com>
 
 	* lcs.hh (edit_script): New entry point.

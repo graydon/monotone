@@ -432,9 +432,9 @@ struct add_to_attr_map
   explicit add_to_attr_map(attr_map & m): attr(m) {}
   bool operator()(match_results<std::string::const_iterator, regex::alloc_type> const & res) 
   {
-    std::string key(res[1].first, res[2].second);
-    std::string value(res[2].first, res[3].second);
-    std::string file(res[3].first, res[1].second);
+    std::string key(res[1].first, res[1].second);
+    std::string value(res[2].first, res[2].second);
+    std::string file(res[3].first, res[3].second);
     attr[make_pair(file_path(file), key)] = value;
     return true;
   }

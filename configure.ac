@@ -84,6 +84,32 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_FAILURE([libboost_regex failure])])
 
 
+# check for static boost option
+AC_ARG_ENABLE(static-boost,
+[  --enable-static-boost       use static libs from boost])
+AM_CONDITIONAL(STATIC_BOOST, test "x${enable_static_boost}" != x)
+if test "x${enable_static_boost}" != x
+then
+   AC_MSG_CHECKING([location of static boost libraries])
+   for i in /lib /usr/lib /opt/lib /usr/local/lib 
+   do
+	if test -e $i/libboost_regex.a 
+	then
+		BOOST_LIBDIR=$i
+	fi
+   done
+   if test "x${BOOST_LIBDIR}" = x
+   then
+        AC_MSG_RESULT([not found])
+	AC_MSG_ERROR([cannot find boost libraries for static link])
+   else
+        AC_MSG_RESULT([${BOOST_LIBDIR}])
+	LIBS=`echo ${LIBS} | tr ' ' '\n' | grep -v boost | tr '\n' ' '`
+	AC_SUBST(BOOST_LIBDIR)
+   fi
+fi
+
+
 # simple library checks 
 AC_CHECK_LIB([dl], [dlsym])
 AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_FAILURE([popt is required]))
