@@ -125,7 +125,7 @@ namespace commands
     }
 
     return cmd;
-
+  }
 
   void explain_usage(string const & cmd, ostream & out)
   {
@@ -2819,6 +2819,10 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH",
   complete(app, idx(args, 1)(), right);
   branch = idx(args, 2)();
   
+  // Somewhat redundant, but consistent with output of plain "merge" command.
+  P(F("[source] %s\n") % left);
+  P(F("[source] %s\n") % right);
+
   revision_id merged;
   transaction_guard guard(app.db);
   try_one_merge (left, right, merged, app);    
@@ -2829,12 +2833,13 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH",
   
   string log = (F("explicit_merge of %s\n"
                   "              and %s\n"
-                  " to branch '%s'\n")
+                  "to branch '%s'\n")
                 % left % right % branch).str();
   
   cert_revision_changelog(merged, log, app, dbw);
   
   guard.commit();      
+  P(F("[merged] %s\n") % merged);
 }
 
 CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete partial id")
