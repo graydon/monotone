@@ -2052,10 +2052,90 @@ static void ls_ignored (app_state & app)
   walk_tree(i);
 }
 
+static void ls_queue (string name, app_state & app)
+{
+  vector< pair<url,group> > targets;
+  app.db.get_queued_targets(targets);
+  for (size_t i = 0; i < targets.size(); ++i)
+    {
+      vector<string> contents;
+      cout << "target " << i << ": " 
+	   << idx(targets, i).first << " " 
+	   << idx(targets, i).second << endl;
+      app.db.get_queued_contents(idx(targets, i).first, 
+				 idx(targets, i).second, 
+				 contents);
+      for (size_t j = 0; j < contents.size(); ++j)
+	{
+	  cout << "    target " << i << ", packet " << j 
+	       << ": " << idx(contents, j).size() << " bytes" << endl;
+	}      
+    }
+}
+
+
+CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL GROUP",
+    "list, print, delete, or add items to network queue")
+{
+  if (args.size() == 0)
+    throw usage(name);
+
+  if (idx(args, 0) == "list")
+    ls_queue(name, app);
+
+  else if (idx(args, 0) == "print" 
+	   || idx(args, 0) == "delete")
+    {
+      if (args.size() != 3)
+	throw usage(name);
+      size_t target = boost::lexical_cast<size_t>(idx(args,1));
+      size_t packet = boost::lexical_cast<size_t>(idx(args,2));
+
+      vector< pair<url,group> > targets;
+      app.db.get_queued_targets(targets);
+      N(target < targets.size(),
+	F("target number %d out of range") % target);
+
+      vector<string> contents;
+      app.db.get_queued_contents(idx(targets, target).first, 
+				 idx(targets, target).second, 
+				 contents);
+      N(packet < contents.size(),
+	F("packet number %d out of range for target %d")
+	% packet % target);
+
+      if (idx(args, 0) == "print")
+	{
+	  cout << idx(contents, packet);
+	}
+      else
+	{
+	  ui.inform(F("deleting %d byte posting for %s %s\n") 
+		    % idx(contents, packet).size() 
+		    % idx(targets, target).first
+		    % idx(targets, target).second);
+	  app.db.delete_posting(idx(targets, target).first,
+				idx(targets, target).second,
+				idx(contents, packet));
+	}
+    }
+
+  else if (idx(args, 0) == "add")
+    {
+      if (args.size() != 3)
+	throw usage(name);
+      url u(idx(args,1));
+      group g(idx(args,2));
+      string s = get_stdin();
+      ui.inform(F("queueing %d bytes for group %s on %s\n") % s.size() % g % u);
+      app.db.queue_posting(u, g, s);
+    }  
+}
 
 CMD(list, "informative", 
     "certs (file|manifest) ID\n"
     "keys [PATTERN]\n"
+    "queue\n"
     "branches\n"
     "unknown\n"
     "ignored", 
@@ -2071,6 +2151,8 @@ CMD(list, "informative",
     ls_certs(name, app, removed);
   else if (idx(args, 0) == "keys")
     ls_keys(name, app, removed);
+  else if (idx(args, 0) == "queue")
+    ls_queue(name, app);
   else if (idx(args, 0) == "branches")
     ls_branches(name, app, removed);
   else if (idx(args, 0) == "unknown")

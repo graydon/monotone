@@ -1,5 +1,10 @@
 2003-10-21  graydon hoare  <graydon@pobox.com>
 
+	* commands.cc (queue): New command.
+	(list): Add "queue" subcommand, too.
+
+2003-10-21  graydon hoare  <graydon@pobox.com>
+
 	* diff_patch.cc (merge_deltas): New function.
 	(check_map_inclusion): New function.
 	(check_no_intersect): New function.
