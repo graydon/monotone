@@ -373,6 +373,9 @@ database::info(ostream & out)
   out << "manifest deltas : " << get_statistic("SELECT COUNT(*) FROM manifest_deltas") << endl;
   out << "full files      : " << get_statistic("SELECT COUNT(*) FROM files") << endl;
   out << "file deltas     : " << get_statistic("SELECT COUNT(*) FROM file_deltas") << endl;
+  out << "revisions       : " << get_statistic("SELECT COUNT(*) FROM revisions") << endl;
+  out << "ancestry edges  : " << get_statistic("SELECT COUNT(*) FROM revision_ancestry") << endl;
+  out << "certs           : " << get_statistic("SELECT COUNT(*) FROM revision_certs") << endl;
 }
 
 void 

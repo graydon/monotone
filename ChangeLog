@@ -1,3 +1,25 @@
+2005-02-06  Nathaniel Smith  <njs@codesourcery.com>
+	
+	* database.cc (info): Report more statistics.
+
+	* ROADMAP: Remove finished items.
+
+	* revision.cc (analyze_manifest_changes): Childs cannot be null,
+	that makes no sense.
+	(add_node_for_old_manifest): Log node names, don't print it.
+	(construct_revision_from_ancestry): Partially rewrite to handle
+	root nodes explicitly.
+	(build_changesets_from_existing_revs): Don't put the null revision
+	in the ancestry graph, to match changesetify logic.
+	(add_node_for_old_revision): Enforce decision that the ancestry
+	graph not contain the null revision.
+
+	(anc_graph::heads): Remove.
+	(add_node_ancestry): Don't try creating it; logic was broken
+	anyway.
+	(rebuild_from_heads): Rename to...
+	(rebuild_ancestry): ...this.  Calculate head set correctly.
+
 2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (compose_path): Add more invariants.
