@@ -762,7 +762,7 @@ cvs_history::note_file_edge(rcs_file const & r,
       L(F("noting trunk edge %s : %s -> %s\n") % curr_file
 	% next_rcs_version_num
 	% prev_rcs_version_num);
-      // find_key_and_state (r, next_rcs_version_num, k, s); // just to create it if necessary
+      find_key_and_state (r, next_rcs_version_num, k, s); // just to create it if necessary
       find_key_and_state (r, prev_rcs_version_num, k, s);
       s->in_edges.insert(cvs_file_edge(next_version, curr_file, 
 				       prev_version, curr_file, 

@@ -53,7 +53,7 @@ namespace commands
 namespace std
 {
   template <>
-  struct std::greater<commands::command *>
+  struct greater<commands::command *>
   {
     bool operator()(commands::command const * a, commands::command const * b)
     {
@@ -663,7 +663,7 @@ try_one_merge(manifest_id const & left,
 
 
 static void 
-ls_certs(string name, app_state & app, vector<utf8> const & args)
+ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -736,7 +736,7 @@ ls_certs(string name, app_state & app, vector<utf8> const & args)
 }
 
 static void 
-ls_keys(string name, app_state & app, vector<utf8> const & args)
+ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 {
   vector<rsa_keypair_id> pubkeys;
   vector<rsa_keypair_id> privkeys;
@@ -1328,7 +1328,6 @@ CMD(commit, "working copy", "MESSAGE", "commit working copy to database")
 
 CMD(update, "working copy", "", "update working copy")
 {
-
   manifest_data m_chosen_data;
   manifest_map m_old, m_working, m_chosen, m_new;
   manifest_id m_old_id, m_chosen_id;
@@ -2267,7 +2266,8 @@ struct unknown_itemizer : public tree_walker
 };
 
 
-static void ls_unknown (app_state & app, bool want_ignored)
+static void
+ls_unknown (app_state & app, bool want_ignored)
 {
   manifest_map m_old, m_new;
   get_manifest_map(m_old);
@@ -2276,7 +2276,8 @@ static void ls_unknown (app_state & app, bool want_ignored)
   walk_tree(u);
 }
 
-static void ls_queue (string name, app_state & app)
+static void
+ls_queue (string const& /* name */, app_state & app)
 {
   set<url> target_set;
   app.db.get_queued_targets(target_set);

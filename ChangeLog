@@ -1,3 +1,15 @@
+2004-03-17  graydon hoare  <graydon@pobox.com>
+
+	* boost/circular_buffer.hpp: 
+	* commands.cc:
+	* cryptopp/fltrimpl.h:
+	* cryptopp/iterhash.cpp:
+	* quick_alloc.hh:
+	Fixes from ncm@cantrip.org for gcc 3.4 compat and warnings.
+	* cryptopp/config.h: Fix for gcc aliasing optimization error.
+	* rcs_import.cc (cvs_history::note_file_edge): 
+	Fix for first changelog import bug (#5813).
+
 2004-03-15  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc: Import lone versions properly.

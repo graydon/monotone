@@ -125,8 +125,8 @@ typedef unsigned short word16;
 // dword should be twice as big as word
 
 #if (defined(__GNUC__) && !defined(__alpha)) || defined(__MWERKS__)
-	typedef unsigned long word;
-	typedef unsigned long long dword;
+	typedef unsigned long __attribute__((__may_alias__)) word;
+	typedef unsigned long long __attribute__((__may_alias__)) dword;
 #elif defined(_MSC_VER) || defined(__BCPLUSPLUS__)
 	typedef unsigned __int32 word;
 	typedef unsigned __int64 dword;
