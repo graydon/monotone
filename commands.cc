@@ -638,85 +638,6 @@ complete(app_state & app,
 }
 
 
-// this helper tries to produce merge <- mergeN(left,right), possibly
-// merge3 if it can find an ancestor, otherwise merge2. 
-
-static void 
-try_one_merge(manifest_id const & left,
-	      manifest_id const & right,
-	      manifest_id & merged,
-	      app_state & app)
-{
-  manifest_data left_data, right_data, ancestor_data, merged_data;
-  manifest_map left_map, right_map, ancestor_map, merged_map;
-  manifest_id ancestor;
-  rename_edge left_renames, right_renames;
-
-  app.db.get_manifest_version(left, left_data);
-  app.db.get_manifest_version(right, right_data);
-  read_manifest_map(left_data, left_map);
-  read_manifest_map(right_data, right_map);
-  
-  simple_merge_provider merger(app);
-  
-  if(find_common_ancestor(left, right, ancestor, app))	    
-    {
-      P(F("common ancestor %s found, trying 3-way merge\n") % ancestor); 
-      app.db.get_manifest_version(ancestor, ancestor_data);
-      read_manifest_map(ancestor_data, ancestor_map);
-      N(merge3(ancestor_map, left_map, right_map, 
-	       app, merger, merged_map, left_renames.mapping, right_renames.mapping),
-	F("failed to 3-way merge manifests %s and %s via ancestor %s") 
-	% left % right % ancestor);
-    }
-  else
-    {
-      P(F("no common ancestor found, trying 2-way merge\n")); 
-      N(merge2(left_map, right_map, app, merger, merged_map),
-	F("failed to 2-way merge manifests %s and %s") % left % right);
-    }
-  
-  write_manifest_map(merged_map, merged_data);
-  calculate_ident(merged_map, merged);	  
-  
-  base64< gzip<delta> > left_edge;
-  diff(left_data.inner(), merged_data.inner(), left_edge);
-
-  // FIXME: we do *not* manufacture or store the second edge to
-  // the merged version, since doing so violates the
-  // assumptions of the db, and the 'right' version already
-  // exists in its entirety, anyways. this is a subtle issue
-  // though and I'm not sure I'm making the right
-  // decision. revisit. if you do not see that it is a subtle
-  // issue I suggest you are not thinking about it long enough.
-  //
-  // base64< gzip<delta> > right_edge;
-  // diff(right_data.inner(), merged_data.inner(), right_edge);
-  // app.db.put_manifest_version(right, merged, right_edge);
-  
-  
-  // we do of course record the left edge, and ancestry relationship to
-  // both predecessors.
-
-  {
-    packet_db_writer dbw(app);    
-
-    dbw.consume_manifest_delta(left, merged, left_edge);  
-    cert_manifest_ancestor(left, merged, app, dbw);
-    cert_manifest_ancestor(right, merged, app, dbw);
-    cert_manifest_date_now(merged, app, dbw);
-    cert_manifest_author_default(merged, app, dbw);
-
-    left_renames.parent = left;
-    left_renames.child = merged;
-    right_renames.parent = right;
-    right_renames.child = merged;
-    cert_manifest_rename(merged, left_renames, app, dbw);
-    cert_manifest_rename(merged, right_renames, app, dbw);
-  }
-}			  
-
-
 // actual commands follow
 
 
@@ -1118,7 +1039,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   update_any_attrs(app);
 }
 
-// float and fmerge are simple commands for debugging the line merger.
+// fload and fmerge are simple commands for debugging the line merger.
 // most of the time, leave them commented out. they can be helpful for certain
 // cases, though.
 
@@ -1973,6 +1894,15 @@ CMD(commit, "working copy", "[--message=STRING] [FILE]...", "commit working copy
   }
 }
 
+/**
+static void 
+dump_diffs(change_set::delta_map const & deltas,
+           app_state & app,
+           bool new_is_archived)
+{
+}
+**/
+
 CMD(diff, "informative", "[--manifest=STRING [--manifest=STRING]] [FILE]...", 
     "show current diffs on stdout")
 {
@@ -2168,6 +2098,15 @@ CMD(agraph, "debug", "", "dump ancestry graph to stdout")
   guard.commit();
 }
 
+/**
+static void
+write_file_targets(change_set const & cs,
+                   update_merge_provider & merger,
+                   app_state & app)
+{
+}
+**/
+
 CMD(update, "working copy", "", "update working copy")
 {
   manifest_data m_chosen_data;
@@ -2279,6 +2218,86 @@ CMD(update, "working copy", "", "update working copy")
 
   update_any_attrs(app);
 }
+
+
+// this helper tries to produce merge <- mergeN(left,right), possibly
+// merge3 if it can find an ancestor, otherwise merge2. 
+
+static void 
+try_one_merge(manifest_id const & left,
+	      manifest_id const & right,
+	      manifest_id & merged,
+	      app_state & app)
+{
+  manifest_data left_data, right_data, ancestor_data, merged_data;
+  manifest_map left_map, right_map, ancestor_map, merged_map;
+  manifest_id ancestor;
+  rename_edge left_renames, right_renames;
+
+  app.db.get_manifest_version(left, left_data);
+  app.db.get_manifest_version(right, right_data);
+  read_manifest_map(left_data, left_map);
+  read_manifest_map(right_data, right_map);
+  
+  simple_merge_provider merger(app);
+  
+  if(find_common_ancestor(left, right, ancestor, app))	    
+    {
+      P(F("common ancestor %s found, trying 3-way merge\n") % ancestor); 
+      app.db.get_manifest_version(ancestor, ancestor_data);
+      read_manifest_map(ancestor_data, ancestor_map);
+      N(merge3(ancestor_map, left_map, right_map, 
+	       app, merger, merged_map, left_renames.mapping, right_renames.mapping),
+	F("failed to 3-way merge manifests %s and %s via ancestor %s") 
+	% left % right % ancestor);
+    }
+  else
+    {
+      P(F("no common ancestor found, trying 2-way merge\n")); 
+      N(merge2(left_map, right_map, app, merger, merged_map),
+	F("failed to 2-way merge manifests %s and %s") % left % right);
+    }
+  
+  write_manifest_map(merged_map, merged_data);
+  calculate_ident(merged_map, merged);	  
+  
+  base64< gzip<delta> > left_edge;
+  diff(left_data.inner(), merged_data.inner(), left_edge);
+
+  // FIXME: we do *not* manufacture or store the second edge to
+  // the merged version, since doing so violates the
+  // assumptions of the db, and the 'right' version already
+  // exists in its entirety, anyways. this is a subtle issue
+  // though and I'm not sure I'm making the right
+  // decision. revisit. if you do not see that it is a subtle
+  // issue I suggest you are not thinking about it long enough.
+  //
+  // base64< gzip<delta> > right_edge;
+  // diff(right_data.inner(), merged_data.inner(), right_edge);
+  // app.db.put_manifest_version(right, merged, right_edge);
+  
+  
+  // we do of course record the left edge, and ancestry relationship to
+  // both predecessors.
+
+  {
+    packet_db_writer dbw(app);    
+
+    dbw.consume_manifest_delta(left, merged, left_edge);  
+    cert_manifest_ancestor(left, merged, app, dbw);
+    cert_manifest_ancestor(right, merged, app, dbw);
+    cert_manifest_date_now(merged, app, dbw);
+    cert_manifest_author_default(merged, app, dbw);
+
+    left_renames.parent = left;
+    left_renames.child = merged;
+    right_renames.parent = right;
+    right_renames.child = merged;
+    cert_manifest_rename(merged, left_renames, app, dbw);
+    cert_manifest_rename(merged, right_renames, app, dbw);
+  }
+}			  
+
 
 CMD(merge, "tree", "", "merge unmerged heads of branch")
 {

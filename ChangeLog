@@ -1,3 +1,7 @@
+2004-12-02  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: more tweaking to ease changeset merge
+
 2004-12-01  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc: reordered commands to help merge with changesets
