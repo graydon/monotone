@@ -108,6 +108,24 @@ void database::initialize()
 void database::dump(ostream & out)
 {
 }
+
+void database::debug(string const & sql, ostream & out)
+{
+  results res;
+  fetch(res, any_cols, any_rows, sql.c_str());
+  out << "'" << sql << "' -> " << res.size() << " rows\n" << endl;
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      for (size_t j = 0; j < res[i].size(); ++j)
+	{
+	  if (j != 0)
+	    out << " | ";
+	  out << res[i][j];
+	}
+      out << endl;
+    }
+}
+
 void database::load(istream & in)
 {
 }

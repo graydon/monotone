@@ -162,6 +162,7 @@ public:
   unsigned long get_statistic(string const & query);
   void set_filename(fs::path const & file);
   void initialize();
+  void debug(string const & sql, ostream & out);
   void dump(ostream &);
   void load(istream &);
   void info(ostream &);

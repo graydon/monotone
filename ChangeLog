@@ -1,5 +1,7 @@
-2003-09-24  graydon hoare  <graydon@redhat.com>
+2003-09-24  graydon hoare  <graydon@pobox.com>
 
+	* database.cc, database.hh (debug): New function.
+	* commands.cc (debug): New command.
 	* cert.cc, cert.hh (guess_branch): New function.
 	* commands.cc (cert): Queue certs to network servers.
 	* commands.cc (cert, commit): Use guess_branch.

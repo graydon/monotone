@@ -2133,8 +2133,14 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
   import_cvs_repo(fs::path(args.at(0)), app);
 }
 
+CMD(debug, "debug", "SQL", "issue SQL queries directly (dangerous)")
+{
+  if (args.size() != 1)
+    throw usage(name);
+  app.db.debug(args[0], cout);
+}
 
-CMD(db, "database", "(init|dump|load|info|version|migrate)", "manipulate database state")
+CMD(db, "database", "init\ndump\nload\ninfo\nversion\nmigrate", "manipulate database state")
 {
   if (args.size() != 1)
     throw usage(name);
