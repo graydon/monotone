@@ -11,6 +11,7 @@
 // a bit if more than a couple simple methods appear necessary to
 // talk to depots. for now it is simple.
 
+#include "constants.hh"
 #include "network.hh"
 #include "packet.hh"
 #include "sanity.hh"
@@ -21,6 +22,7 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/regex.hpp>
 
 using namespace std;
 using boost::lexical_cast;
@@ -80,6 +82,38 @@ bool post_http_packets(string const & group_name,
   return ok;
 }
 
+struct match_seq
+{    
+  unsigned long & maj; 
+  unsigned long & min;
+  unsigned long & end;
+  explicit match_seq(unsigned long & maj, 
+		     unsigned long & min,
+		     unsigned long & end) : maj(maj), min(min), end(end) {}
+  bool operator()(boost::match_results<std::string::const_iterator, 
+		  boost::regex::alloc_type> const & res) 
+  {
+    I(res.size() == 3);
+    std::string maj_s(res[1].first, res[1].second);
+    std::string min_s(res[2].first, res[2].second);
+    maj = lexical_cast<unsigned long>(maj_s);
+    min = lexical_cast<unsigned long>(min_s);
+    end = res.position() + res.length();
+    return true;
+  }
+};
+
+
+static bool scan_for_seq(string const & str, 
+			 unsigned long & maj, 
+			 unsigned long & min,
+			 unsigned long & end)
+{
+  boost::regex expr("^\\[seq ([[:digit:]]+) ([[:digit:]]+)\\]$");
+  return boost::regex_grep(match_seq(maj, min, end), str, expr, 
+			   boost::match_not_dot_newline) != 0;
+}
+
 void fetch_http_packets(string const & group_name,
 			unsigned long & maj_number,
 			unsigned long & min_number,
@@ -135,18 +169,17 @@ void fetch_http_packets(string const & group_name,
 
   // step 3: read any packets
   {
-    size_t linesz = 0xfff;
-    char line[linesz];
+    char buf[bufsz];
     string packet;
+    packet.reserve(bufsz);
     while(stream.good())
       {
 	// WARNING: again, we are reading from the network here.
 	// please use the utmost clarity and safety in this part.
-	stream.getline(line, linesz, '\n');
+	stream.read(buf, bufsz);
 	size_t bytes = stream.gcount();
-	N(bytes < linesz, "long response line from server");
-	if (bytes > 0) bytes--;
-	string tmp(line, bytes);
+	N(bytes <= bufsz, "long response line from server");
+	string tmp(buf, bytes);
 	size_t pos = tmp.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
 					   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 					   "0123456789"
@@ -155,32 +188,20 @@ void fetch_http_packets(string const & group_name,
 	  {
 	    L("Bad char from network: pos %d, char '%d'\n", 
 	      pos,
-	      static_cast<int>(tmp.at(pos)));
+	      static_cast<int>(packet.at(pos)));
 	    continue;
 	  }
+	
+	packet.append(tmp);
 
-	if (tmp.size() > 6 
-	    && tmp.substr(0,5) == "[seq ")
+	unsigned long end = 0;	
+	if (scan_for_seq(packet, maj_number, min_number, end))
 	  {
 	    // we are at the end of a packet
-	    string junk;
-	    istringstream iss(tmp);
-	    unsigned long tmaj = 0, tmin = 0;
-	    if (iss >> junk >> tmaj >> tmin)
-	      {
-		L("got sequence numbers %lu, %lu\n", tmaj, tmin);
-		istringstream pkt(packet);
-		++packet_ticker;
-		read_packets(pkt, consumer);
-		maj_number = tmaj;
-		min_number = tmin;
-		packet.clear();
-	      }
-	  }
-	else
-	  {
-	    // we are somewhere before the end of a packet
-	    packet.append(tmp);
+	    L("got sequence numbers %lu, %lu\n", maj_number, min_number);
+	    istringstream pkt(packet.substr(0,end));
+	    packet_ticker += read_packets(pkt, consumer);
+	    packet.erase(0, end);
 	  }
       }
 
@@ -188,8 +209,7 @@ void fetch_http_packets(string const & group_name,
       {
 	L("%d trailing bytes from http\n", packet.size());
 	istringstream pkt(packet);
-	read_packets(pkt, consumer);
-	++packet_ticker;
+	packet_ticker += read_packets(pkt, consumer);
       }    
   }
   P("http fetch complete\n");

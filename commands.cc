@@ -1308,6 +1308,8 @@ CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from da
   if (args.size() != 2)
     throw usage(name);
 
+  transaction_guard guard(app.db);
+
   if (args[1] != string("."))
     {
       local_path lp(args[1]);
@@ -1315,8 +1317,6 @@ CMD(checkout, "tree", "<manifest-id> <directory>", "check out tree state from da
       chdir(args[1].c_str());
     }
     
-  transaction_guard guard(app.db);
-
   file_data data;
   manifest_id ident;
   complete(app, args[0], ident);

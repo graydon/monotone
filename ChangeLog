@@ -1,3 +1,10 @@
+2003-09-15  graydon hoare  <graydon@redhat.com>
+
+	* http_tasks.cc: Fix networking to handle long input.
+
+	* ui.cc, ui.hh: Only pad with blanks enough to cover old output
+	when ticking.
+
 2003-09-15  Tom Tromey  <tromey@redhat.com>
 
 	* monotone.texi (Getting Started): Don't mention MT_DB or

@@ -1,6 +1,8 @@
 #ifndef __CONSTANTS_HH__
 #define __CONSTANTS_HH__
 
+#include <unistd.h>
+
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -21,7 +23,7 @@ size_t const cvs_window = 3600 * 3;
 size_t const maxbytes = 0xffffff;
 
 // number of bytes to use in buffers, for buffered i/o operations
-size_t const bufsz = 0xffff;
+size_t const bufsz = 0xfff;
 
 // size of a line of database traffic logging, beyond which lines will be
 // truncated.

@@ -2,6 +2,7 @@
 #include "sanity.hh"
 
 #include <iostream>
+#include <boost/lexical_cast.hpp>
 
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
@@ -13,10 +14,8 @@
 // writing to it directly!
 
 using namespace std;
+using boost::lexical_cast;
 struct user_interface ui;
-
-static string blankline = 
-"                                                                      ";
 
 ticker::ticker(string const & tickname) : name (tickname)
 {
@@ -47,7 +46,8 @@ void ticker::operator+=(size_t t)
 
 
 user_interface::user_interface() :
-  last_write_was_a_tick (false)
+  last_write_was_a_tick(false),
+  max_tick_len(0)
 {
 }
 
@@ -72,12 +72,20 @@ void user_interface::set_tick_trailer(string const & t)
 
 void user_interface::write_ticks()
 {
-  cerr << blankline;
-  cerr << "\rmonotone: ";
+
+  string tickline = "\rmonotone: ";
   for (map<string,size_t>::const_iterator i = ticks.begin();
        i != ticks.end(); ++i)
-    cerr << '[' << i->first << ": " << i->second << "] ";
-  cerr << tick_trailer;
+    tickline += string("[") + i->first + ": " + lexical_cast<string>(i->second) + "] ";
+  tickline += tick_trailer;
+
+  if (tickline.size() > max_tick_len)
+    max_tick_len = tickline.size();
+
+  while (tickline.size() < max_tick_len)
+    tickline += ' ';
+
+  cerr << tickline;
   last_write_was_a_tick = true;
 }
 

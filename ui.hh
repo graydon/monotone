@@ -36,6 +36,7 @@ public:
 
 private:  
   bool last_write_was_a_tick;
+  size_t max_tick_len;
   std::set<std::string> issued_warnings;  
   std::map<std::string,size_t> ticks;
 
