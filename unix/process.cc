@@ -9,6 +9,8 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include <sstream>
+
 #include "sanity.hh"
 #include "platform.hh"
 
@@ -40,6 +42,16 @@ int make_executable(const char *path)
 
 int process_spawn(const char * const argv[])
 {
+	{
+		std::ostringstream cmdline_ss;
+		for (const char *const *i = argv; *i; ++i)
+		{
+			if (i)
+				cmdline_ss << ", ";
+			cmdline_ss << "'" << *i << "'";
+		}
+		L(F("spawning command: %s\n") % cmdline_ss.str());
+	}       
 	pid_t pid;
 	pid = fork();
 	switch (pid)
