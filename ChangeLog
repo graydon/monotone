@@ -1,3 +1,10 @@
+2005-02-17  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* testsuite.at:
+	* tests/t_change_empty_file.at: Verify that modifying an empty file
+	creates a patch revision rather than an add/delete sequence.  The
+	incorrect behavior was reported in bug #9964.
+
 2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* Makefile.am: Append $(BOOST_SUFFIX) to -lboost_unit_test_framework
