@@ -1497,12 +1497,12 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 
   if (heads.size() == 0)
     {
-      cout << "branch " << args[0] << "is empty" << endl;
+      cout << "branch '" << app.branch_name << "' is empty" << endl;
       return;
     }
   else if (heads.size() == 1)
     {
-      cout << "branch " << args[0] << "is merged" << endl;
+      cout << "branch '" << app.branch_name << "' is merged" << endl;
       return;
     }
   else

@@ -1,3 +1,8 @@
+2003-10-19  Matt Kraai  <kraai@ftbfs.org>
+
+	* commands.cc (merge): Use app.branch_name instead of args[0] for
+	the branch name.
+
 2003-10-17  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (log): New command.
