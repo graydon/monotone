@@ -915,25 +915,32 @@ bool session::process_hello_cmd(id const & server,
       // save their identity 
       this->remote_peer_key_hash = server;
       
-      // get our public key for its hash identifier
-      base64<rsa_pub_key> our_pub;
-      hexenc<id> our_key_hash;
-      id our_key_hash_raw;
-      app.db.get_key(app.signing_key, our_pub);
-      key_hash_code(app.signing_key, our_pub, our_key_hash);
-      decode_hexenc(our_key_hash, our_key_hash_raw);
-      
-      // get our private key and make a signature
-      base64<rsa_sha1_signature> sig;
-      rsa_sha1_signature sig_raw;
-      base64< arc4<rsa_priv_key> > our_priv;
-      app.db.get_key(app.signing_key, our_priv);
-      make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
-      decode_base64(sig, sig_raw);
-      
-      // make a new nonce of our own and send off the 'auth'
-      queue_auth_cmd(this->role, this->collection(), our_key_hash_raw, 
-		     nonce, mk_nonce(), sig_raw());
+      if (app.signing_key() != "")
+	{
+	  // get our public key for its hash identifier
+	  base64<rsa_pub_key> our_pub;
+	  hexenc<id> our_key_hash;
+	  id our_key_hash_raw;
+	  app.db.get_key(app.signing_key, our_pub);
+	  key_hash_code(app.signing_key, our_pub, our_key_hash);
+	  decode_hexenc(our_key_hash, our_key_hash_raw);
+	  
+	  // get our private key and make a signature
+	  base64<rsa_sha1_signature> sig;
+	  rsa_sha1_signature sig_raw;
+	  base64< arc4<rsa_priv_key> > our_priv;
+	  app.db.get_key(app.signing_key, our_priv);
+	  make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
+	  decode_base64(sig, sig_raw);
+	  
+	  // make a new nonce of our own and send off the 'auth'
+	  queue_auth_cmd(this->role, this->collection(), our_key_hash_raw, 
+			 nonce, mk_nonce(), sig_raw());
+	}
+      else
+	{
+	  queue_anonymous_cmd(this->role, this->collection(), mk_nonce());
+	}
       return true;
     }
   else

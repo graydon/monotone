@@ -2283,10 +2283,9 @@ CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   if (args.size() < 2)
     throw usage(name);
 
-  rsa_keypair_id key;
-  N(guess_default_key(key, app), "could not guess default signing key");
-  app.signing_key = key;
-
+  if (app.signing_key() == "")
+    W(F("doing anonymous pull\n"));
+  
   utf8 addr(idx(args,0));
   vector<utf8> collections(args.begin() + 1, args.end());
   run_netsync_protocol(client_voice, sink_role, addr, collections, app);  
