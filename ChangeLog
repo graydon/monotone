@@ -1,3 +1,14 @@
+2004-12-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (commands::explain_usage): Use split_into_lines to
+	do formatting of per-command usage; allow multi-line
+	descriptions.
+	(trusted): New command.
+	* monotone.texi (Key and Cert): Document 'trusted' command.
+	* tests/t_trusted.at: New test.
+	* testsuite.at: Change get_revision_cert_trust to support
+	t_trusted.at.  Call t_trusted.at.
+	
 2004-12-10  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (package_full_revision.txt): Redo Joel Rosdahl

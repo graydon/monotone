@@ -140,20 +140,16 @@ namespace commands
     if (i != cmds.end())
       {
         string params = i->second->params;
-        int old = 0;
-        int j = params.find('\n');
-        while (j != -1)
-          {
-            out << "     " << i->second->name
-                << " " << params.substr(old, j - old)
-                << endl;
-            old = j + 1;
-            j = params.find('\n', old);
-          }
-        out << "     " << i->second->name
-            << " " << params.substr(old, j - old)
-            << endl
-            << "       " << i->second->desc << endl << endl;
+        vector<string> lines;
+        split_into_lines(params, lines);
+        for (vector<string>::const_iterator j = lines.begin();
+             j != lines.end(); ++j)
+          out << "     " << i->second->name << " " << *j << endl;
+        split_into_lines(i->second->desc, lines);
+        for (vector<string>::const_iterator j = lines.begin();
+             j != lines.end(); ++j)
+          out << "       " << *j << endl;
+        out << endl;
         return;
       }
 
@@ -911,6 +907,44 @@ CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
   calculate_cert(app, t);
   dbw.consume_revision_cert(revision<cert>(t));
   guard.commit();
+}
+
+CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
+    "test whether a hypothetical revision cert would be trusted\n"
+    "by current settings")
+{
+  if (args.size() < 4)
+    throw usage(name);
+
+  revision_id rid;
+  complete(app, idx(args, 0)(), rid);
+  hexenc<id> ident(rid.inner());
+  
+  cert_name name;
+  internalize_cert_name(idx(args, 1), name);
+  
+  cert_value value(idx(args, 2)());
+
+  set<rsa_keypair_id> signers;
+  for (unsigned int i = 3; i != args.size(); ++i)
+    {
+      rsa_keypair_id keyid;
+      internalize_rsa_keypair_id(idx(args, i), keyid);
+      signers.insert(keyid);
+    }
+  
+  
+  bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
+                                                      name, value);
+
+  cout << "if a revision cert on: " << ident << endl
+       << "with key: " << name << endl
+       << "and value: " << value << endl
+       << "was signed by: ";
+  for (set<rsa_keypair_id>::const_iterator i = signers.begin(); i != signers.end(); ++i)
+    cout << *i;
+  cout << endl
+       << "it would be: " << (trusted ? "trusted" : "UNtrusted") << endl;
 }
 
 CMD(vcheck, "key and cert", "create [REVISION]\ncheck [REVISION]", 

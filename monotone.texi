@@ -3312,6 +3312,15 @@ a revision with version @var{id}. If @var{certval} is provided, it is
 the value of the certificate.  Otherwise the certificate value is read
 from @code{stdin}.
 
+@item monotone trusted @var{id} @var{certname} @var{certval} @var{signers}
+
+This command lets you test your revision trust hook
+@code{get_revision_cert_trust} (see @ref{Hook Reference}).  You pass it
+a revision id, a certificate name, a certificate value, and one or more
+key ids, and it will tell you whether, under your current settings,
+Monotone would trust a cert on that revision with that value signed by
+those keys.
+
 @item monotone --branch=@var{branchname} vcheck create 
 @itemx monotone vcheck create @var{id}
 @itemx monotone --branch=@var{branchname} vcheck check
