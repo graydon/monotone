@@ -60,7 +60,7 @@ class config:
     from_address = "cia-user@FIXME"
 
     # Set to one of "xmlrpc", "email", "debug".
-    delivery = "debug"
+    delivery = "xmlrpc"
 
     # Path to monotone executable.
     monotone_exec = "/home/njs/src/monotone/opt/monotone"
@@ -200,7 +200,8 @@ def send_change_for(rid, m, c):
     files = []
     for i in range(len(pieces)):
         if (i % 2) == 1:
-            files.append(pieces[i])
+            if pieces[i] not in files:
+                files.append(pieces[i])
     substs["files"] = "\n".join(["<file>%s</file>" % escape_for_xml(f) for f in files])
     branch = None
     author = None
@@ -214,7 +215,7 @@ def send_change_for(rid, m, c):
             branch = p.split()[1]
         if p.startswith("ChangeLog:"):
             started_changelog = 1
-        if started_changelog:
+        elif started_changelog:
             changelog_pieces.append(p)
     changelog = "\n".join(changelog_pieces).strip()
     project = c.project_for_branch(branch)

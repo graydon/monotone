@@ -1,5 +1,13 @@
 2005-04-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* Makefile.am (EXTRA_DIST): Add contrib/ stuff to distributed
+	files list.
+	* contrib/ciabot_monotone.py (config.delivery): Turn on.
+	(send_change_for): Don't include "ChangeLog:" line when extracting
+	changelog.
+
+2005-04-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* contrib/ciabot_monotone.py: New file.
 	* contrib/README: Describe it.
 

@@ -254,7 +254,10 @@ EXTRA_DIST = $(man1_MANS) \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
              $(wildcard m4/*.m4) \
-             sqlite/keywordhash.h
+             sqlite/keywordhash.h \
+             contrib/README \
+             contrib/Notify.pl \
+             contrib/ciabot_monotone.py
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
