@@ -21,7 +21,6 @@ diverging data.
 ROADMAP
 =======
 
-- upgrade to sqlite3
 - tidy up major buid/use-breaking bugs in win32, BSD, OSX versions
 - improve netsync error reporting code 
 - integrate net.venge.monotone.restrictions branch

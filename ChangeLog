@@ -1,5 +1,9 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* ROADMAP: Remove 'upgrade to sqlite3' todo item.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (tag):
 	(testresult):
 	(approve):
