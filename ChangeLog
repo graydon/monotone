@@ -1,5 +1,13 @@
 2004-04-09  graydon hoare  <graydon@pobox.com>
 
+	* app_state.cc: Fix a couple file path constructions.
+	* file_io.cc (book_keeping_file): Make one variant static.
+	* manifest.cc: Remove some dead code in walkers.
+	* work.cc: Ditto.
+	* rcs_file.cc: fcntl fix from Paul Snively for OSX.
+
+2004-04-09  graydon hoare  <graydon@pobox.com>
+
 	* file_io.cc: Fix boost filesystem "." and ".." breakage.
 	* lua.cc: Fix format of log entry.
 	* monotone.cc: Log locale settings on startup.

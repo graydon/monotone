@@ -16,11 +16,15 @@
 #include "rcs_file.hh"
 #include "sanity.hh"
 
+#include "config.h"
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 using namespace std;
 using namespace boost::spirit;
 using boost::lexical_cast;
 using namespace phoenix;
-
 
 struct 
 rcs_admin_closure : 

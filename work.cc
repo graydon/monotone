@@ -39,14 +39,7 @@ public:
 
 void 
 addition_builder::visit_file(file_path const & path)
-{
-      
-  if (book_keeping_file(path()))
-    {
-      P(F("skipping book-keeping file %s\n") % path);
-      return;
-    }
-
+{     
   if (app.lua.hook_ignore_file(path))
     {
       P(F("skipping ignorable file %s\n") % path);
@@ -120,13 +113,6 @@ public:
 void 
 deletion_builder::visit_file(file_path const & path)
 {
-      
-  if (book_keeping_file(path()))
-    {
-      P(F("skipping book-keeping file %s\n") % path);
-      return;
-    }
-
   if (app.lua.hook_ignore_file(path))
     {
       P(F("skipping ignorable file %s\n") % path);
@@ -227,13 +213,6 @@ rename_builder::pathsub(file_path const & in)
 void 
 rename_builder::visit_file(file_path const & path)
 {
-      
-  if (book_keeping_file(path()))
-    {
-      P(F("skipping book-keeping file %s\n") % path);
-      return;
-    }
-
   if (app.lua.hook_ignore_file(path))
     {
       P(F("skipping ignorable file %s\n") % path);

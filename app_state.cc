@@ -3,6 +3,7 @@
 
 #include "app_state.hh"
 #include "database.hh"
+#include "file_io.hh"
 #include "transforms.hh"
 #include "work.hh"
 
@@ -32,7 +33,7 @@ app_state::app_state()
 
       string dbname = absolutify(options[database_option]());
       if (dbname != "")
-	db.set_filename(dbname);
+	db.set_filename(mkpath(dbname));
       branch_name = options[branch_option];
       internalize_rsa_keypair_id(options[key_option], signing_key);
     }
@@ -46,7 +47,7 @@ void
 app_state::set_database(utf8 const & filename)
 {
   options[database_option] = utf8(absolutify(filename()));
-  db.set_filename(filename());
+  db.set_filename(mkpath(filename()));
   options_changed = true;
 }
 

@@ -108,7 +108,7 @@ tilde_expand(string const & path)
   return tmp.string();
 }
 
-bool 
+static bool 
 book_keeping_file(fs::path const & p)
 {
   using boost::filesystem::path;

@@ -46,10 +46,7 @@ manifest_map_builder::manifest_map_builder(app_state & a, manifest_map & m)
 
 void 
 manifest_map_builder::visit_file(file_path const & path)
-{
-      
-  if (book_keeping_file(path()))
-    return;
+{      
   if (app.lua.hook_ignore_file(path))
     return;
   hexenc<id> ident;
@@ -112,10 +109,8 @@ add_to_manifest_map
   {
     std::string ident(res[1].first, res[1].second);
     std::string path(res[2].first, res[2].second);
-    if (!book_keeping_file(path))
-      man.insert(entry(path, hexenc<id>(ident)));
-    else
-      throw oops("unsafe filename: " + path);
+    file_path pth(path);
+    man.insert(entry(pth, hexenc<id>(ident)));
     return true;
   }
 };
