@@ -1,5 +1,12 @@
 2003-11-24  graydon hoare  <graydon@pobox.com>
 
+	* database.hh, database.cc (delete_posting): Change to take queue
+	sequence numbers.	
+	* commands.cc (queue): Use new API.
+	* network.cc (post_queued_blobs_to_network) Use new API.
+	
+2003-11-24  graydon hoare  <graydon@pobox.com>
+
 	* std_hooks.lua (get_http_proxy): Return nil when no ENV var.
 	* monotone.texi (get_http_proxY): Document change.
 

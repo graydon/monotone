@@ -761,9 +761,8 @@ void post_queued_blobs_to_network(set<url> const & targets,
 		{
 		  n_packets += packets.size();
 		  n_bytes += postbody.size();
-		  for (vector<string>::const_iterator i = packets.begin();
-		       i != packets.end(); ++i)
-		    app.db.delete_posting(*targ, *i);
+		  for (size_t i = 0; i < packets.size(); ++i)
+		    app.db.delete_posting(*targ, 0);
 		}
 	    }
 	  app.db.get_queue_count(*targ, queue_count);

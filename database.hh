@@ -324,7 +324,7 @@ public:
 		     std::string const & contents);
 
   void delete_posting(url const & u,
-		      std::string const & contents);
+		      size_t const & queue_pos);
 
 
   bool manifest_exists_on_netserver (url const & u, 

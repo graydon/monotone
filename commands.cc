@@ -2237,7 +2237,7 @@ CMD(queue, "network", "list\nprint TARGET PACKET\ndelete TARGET PACKET\nadd URL\
 	{
 	  ui.inform(F("deleting %d byte posting for %s\n") 
 		    % content.size() % idx(targets, target));
-	  app.db.delete_posting(idx(targets, target), content);
+	  app.db.delete_posting(idx(targets, target), packet);
 	}
     }
 

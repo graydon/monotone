@@ -1351,11 +1351,17 @@ void database::queue_posting(url const & u,
 }
 
 void database::delete_posting(url const & u, 
-			      string const & content)
+			      size_t const & queue_pos)
 {
-  execute("DELETE FROM posting_queue "
-	  "WHERE url = '%q' AND content = '%q'",
-	  u().c_str(), content.c_str());
+  results res;
+  fetch(res, 1, any_rows,
+	"SELECT OID FROM posting_queue "
+	"WHERE url = '%s' "
+	"LIMIT 1 OFFSET %d",
+	u().c_str(), queue_pos);
+  I(res.size() == 1);
+  size_t oid = lexical_cast<size_t>(res[0][0]);  
+  execute("DELETE FROM posting_queue WHERE OID = %d ", oid);
 }
 
 bool database::manifest_exists_on_netserver(url const & u, 
