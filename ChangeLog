@@ -1,3 +1,17 @@
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (tag):
+	(testresult):
+	(approve):
+	(disapprove):
+	(comment):
+	(fload):
+	(fmerge):
+	(cat):
+	(rcs_import): Change grouping for "--help" display, to make more
+	informative.
+	(rcs_import): Also add more details to help text.
+
 2005-01-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* diff_patch.cc (normalize_extents): Add missing ')'.

@@ -1107,7 +1107,7 @@ CMD(vcheck, "key and cert", "create [REVISION]\ncheck [REVISION]",
 }
 
 
-CMD(tag, "certificate", "REVISION TAGNAME", 
+CMD(tag, "review", "REVISION TAGNAME", 
     "put a symbolic tag cert on a revision version")
 {
   if (args.size() != 2)
@@ -1119,7 +1119,7 @@ CMD(tag, "certificate", "REVISION TAGNAME",
 }
 
 
-CMD(testresult, "certificate", "ID (true|false)", 
+CMD(testresult, "review", "ID (true|false)", 
     "note the results of running a test on a revision")
 {
   if (args.size() != 2)
@@ -1130,7 +1130,7 @@ CMD(testresult, "certificate", "ID (true|false)",
   cert_revision_testresult(r, idx(args, 1)(), app, dbw);
 }
 
-CMD(approve, "certificate", "REVISION", 
+CMD(approve, "review", "REVISION", 
     "approve of a particular revision")
 {
   if (args.size() != 1)
@@ -1147,7 +1147,7 @@ CMD(approve, "certificate", "REVISION",
 }
 
 
-CMD(disapprove, "certificate", "REVISION", 
+CMD(disapprove, "review", "REVISION", 
     "disapprove of a particular revision")
 {
   if (args.size() != 1)
@@ -1193,7 +1193,7 @@ CMD(disapprove, "certificate", "REVISION",
   }
 }
 
-CMD(comment, "certificate", "REVISION [COMMENT]",
+CMD(comment, "review", "REVISION [COMMENT]",
     "comment on a particular revision")
 {
   if (args.size() != 1 && args.size() != 2)
@@ -1370,7 +1370,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
 }
 
 
-CMD(fload, "tree", "", "load file contents into db")
+CMD(fload, "debug", "", "load file contents into db")
 {
   string s = get_stdin();
   base64< gzip< data > > gzd;
@@ -1386,7 +1386,7 @@ CMD(fload, "tree", "", "load file contents into db")
   dbw.consume_file_data(f_id, f_data);  
 }
 
-CMD(fmerge, "tree", "<parent> <left> <right>", "merge 3 files and output result")
+CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result")
 {
   if (args.size() != 3)
     throw usage(name);
@@ -1455,7 +1455,7 @@ CMD(identify, "working copy", "[PATH]",
   cout << ident << endl;
 }
 
-CMD(cat, "tree", "(file|manifest|revision) [ID]", 
+CMD(cat, "informative", "(file|manifest|revision) [ID]", 
     "write file, manifest, or revision from database to stdout")
 {
   if (!(args.size() == 1 || args.size() == 2))
@@ -3339,7 +3339,9 @@ CMD(revert, "working copy", "[FILE]...",
 }
 
 
-CMD(rcs_import, "rcs", "RCSFILE...", "import all versions in RCS files")
+CMD(rcs_import, "debug", "RCSFILE...",
+    "import all versions in RCS files\n"
+    "this command doesn't reconstruct revisions.  you probably want cvs_import")
 {
   if (args.size() < 1)
     throw usage(name);
@@ -3380,7 +3382,7 @@ log_certs(app_state & app, revision_id id, cert_name name, string label, bool mu
           cout << endl << endl << tv << endl;
       else
           cout << tv << endl;
-    }	  
+    }     
 }
 
 CMD(log, "informative", "[ID] [file]", "print history in reverse order starting from 'ID' (filtering by 'file')")
