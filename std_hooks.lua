@@ -107,6 +107,10 @@ function intersection(a,b)
    return t
 end
 
+function get_revision_cert_trust(signers, id, name, val)
+   return true
+end
+
 function get_manifest_cert_trust(signers, id, name, val)
    return true
 end

@@ -1,3 +1,7 @@
+2004-10-15  graydon hoare  <graydon@pobox.com>
+
+	* std_hooks.lua (get_revision_cert_trust): Add.
+
 2004-10-14  graydon hoare  <graydon@pobox.com>
 
 	* main.cc (UNIX_STYLE_SIGNAL_HANDLING): Enable on OSX.
