@@ -1,5 +1,8 @@
 2003-09-26  Tom Tromey  <tromey@redhat.com>
 
+	* monotone.1: There's no default database.
+	* monotone.texi (OPTIONS): There's no default database.
+
 	* database.cc (sql): Throw informative error if database name not
 	set.
 	* app_state.cc (app_state): Default to no database.

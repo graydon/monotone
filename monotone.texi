@@ -2004,7 +2004,7 @@ Load extra lua hooks from @i{file} (may be given multiple times).
 @comment TROFF INPUT: .TP
 
 @item @b{--db=}@i{<file>}
-Use database in @i{file}. default is @b{monotone.db}.
+Use database in @i{file}.
 @comment TROFF INPUT: .TP
 
 @item @b{--key=}@i{<keyid>}
