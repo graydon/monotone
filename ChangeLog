@@ -1,5 +1,11 @@
 2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_persistent_server_keys.at: New test.
+	* testsuite.at: Call it.
+	* tests/t_persistent_server_revision.at: Fix typo.
+
+2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_persistent_server_revision.at: New test.
 	* testsuite.at: Call it.  Tweak NETSYNC macros in support of it.
 

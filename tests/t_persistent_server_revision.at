@@ -1,5 +1,5 @@
 AT_SETUP([persistent netsync server - revs & certs])
-AT_KEYWORDS([netsync]
+AT_KEYWORDS([netsync])
 MONOTONE_SETUP
 NETSYNC_SETUP
 
