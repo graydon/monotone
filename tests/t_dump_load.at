@@ -1,0 +1,16 @@
+AT_SETUP([(imp) database dump/load])
+MONOTONE_SETUP
+
+# This test is a "bug report" -- the bug is that there is no test that
+# exercises 'db dump'/'db load'!  These commands are critical for
+# various backup/migration scenarios; write a test for them here.
+AT_XFAIL_IF(true)
+
+
+
+# This Space For Test
+AT_CHECK(false)
+
+
+
+AT_CLEANUP

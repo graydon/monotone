@@ -8,6 +8,51 @@
         * commands.cc: print out author/date next to ambiguous revision
         lists from selectors.
 
+2004-12-22  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: Verify that the key identifier passed to the pubkey
+	and privkey commands exists in the database.  Otherwise exit with
+	an informational message instead of an exception.
+
+2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* testsuite.at:
+	* tests/t_fmerge.at:
+	* tests/t_netsync.at:
+	* tests/t_netsync_single.at:
+	* tests/t_revert.at:
+	* tests/t_tags.at: Avoid usage of test's == operator.  It's a
+	GNUism and causes unexpected failures in many tests.  The correct
+	operator to use is just an equal sign (=).
+	* tests/t_renamed.at: Don't use cp's -a flag, which is not
+	supported by some implementations of this utility (such as the
+	one in NetBSD).  Try to add some of its funcionality by using
+	the -p flag, although everything could be fine without it.
+	* tests/t_unidiff.at: Discard patch's stderr output.  Otherwise
+	it's treated as errors, but NetBSD's patch uses it to print
+	informative messages.
+
+2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* tests/t_scan.at: Instead of running sha1sum, use a prestored
+	manifest file to do the verification.  This avoids problems in
+	systems that do not have the sha1sum tool, like NetBSD.
+
+2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* Makefile.am: Remove obsolete --with-bundled-adns flag from
+	DISTCHECK_CONFIGURE_FLAGS.
+
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_checkout_dir.at: Make the test directory chdir'able
+	again after the test.
+	* tests/t_delete_dir.at: Add trailing newline.
+	
+	* tests/t_dump_load.at: New bug report.
+	* tests/t_migrate_schema.at: Likewise.
+	* testsuite.at: Call them.
+
 2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.hh: Remove obsolete comment.

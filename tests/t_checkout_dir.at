@@ -17,5 +17,8 @@ mkdir test_dir3
 chmod 444 test_dir3
 AT_CHECK(MONOTONE --branch=testbranch checkout test_dir3,
          [1], [ignore], [ignore])
+# Reset the permissions so Autotest can correctly clean up our
+# temporary directory.
+chmod 700 test_dir3
 
 AT_CLEANUP

@@ -228,9 +228,9 @@ AVER=`SHA1(ancestor)`
 LVER=`SHA1(left)`
 RVER=`SHA1(right)`
 
-AT_CHECK(test $AVER == $ANC, [], [ignore], [ignore])
-AT_CHECK(test $LVER == $LEFT, [], [ignore], [ignore])
-AT_CHECK(test $RVER == $RIGHT, [], [ignore], [ignore])
+AT_CHECK(test $AVER = $ANC, [], [ignore], [ignore])
+AT_CHECK(test $LVER = $LEFT, [], [ignore], [ignore])
+AT_CHECK(test $RVER = $RIGHT, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE fload <ancestor, [], [ignore], [ignore])
 AT_CHECK(MONOTONE fload <left, [], [ignore], [ignore])

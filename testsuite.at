@@ -141,15 +141,15 @@ AT_CHECK(rm $1)
 AT_CHECK(MONOTONE checkout $2 ., [], [ignore])
 PROBE_R_SHA=`BASE_REVISION`
 PROBE_F_SHA=`SHA1($1)`
-AT_CHECK(test $PROBE_R_SHA == $2)
-AT_CHECK(test $PROBE_F_SHA == $3)
+AT_CHECK(test $PROBE_R_SHA = $2)
+AT_CHECK(test $PROBE_F_SHA = $3)
 ])
 
 # run as REVERT_TO(rsha)
 m4_define([REVERT_TO], [ 
 AT_CHECK(MONOTONE checkout $1 ., [], [ignore])
 PROBE_R_SHA=`BASE_REVISION`
-AT_CHECK(test $PROBE_R_SHA == $1)
+AT_CHECK(test $PROBE_R_SHA = $1)
 ])
 
 # run as ADD_FILE(filename, data)
@@ -316,3 +316,5 @@ m4_include(tests/t_persistent_server_revision.at)
 m4_include(tests/t_persistent_server_keys.at)
 m4_include(tests/t_fmerge_normalize.at)
 m4_include(tests/t_delete_dir.at)
+m4_include(tests/t_migrate_schema.at)
+m4_include(tests/t_dump_load.at)
