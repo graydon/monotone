@@ -1,5 +1,13 @@
 2005-04-05  Matt Johnston  <matt@ucc.asn.au>
 
+	* database.cc: remove dulicated block introduced
+	in rev 9ab3031f390769f1c455ec7764cc9c083f328a1b
+	(merge of 76f4291b9fa56a04feb2186074a731848cced81c and
+	c7917be7646df52363f39d2fc2f7d1198c9a8c27). Seems to be another
+	instance of the case tested in t_merge_5.at
+
+2005-04-05  Matt Johnston  <matt@ucc.asn.au>
+
 	* basic_io.hh: reserve() the string which we're appending to
 	frequently. Seems to give ~5% speedup in 
 	diff -r t:revision-0.16 -r t:revision-0.17 - can't hurt.
