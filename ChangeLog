@@ -1,3 +1,11 @@
+2004-05-01  Joel Rosdahl  <joel@rosdahl.net>
+
+	* manifest.cc (build_manifest_map): Handle missing file
+	gracefully.
+
+	* file_io.cc (walk_tree): Handle nonexistent file/directory
+	gracefully.
+
 2004-04-29  graydon hoare  <graydon@pobox.com>
 
 	* configure.ac: Fix up windows probe and bundling checks.

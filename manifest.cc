@@ -84,6 +84,8 @@ build_manifest_map(path_set const & paths,
   for (path_set::const_iterator i = paths.begin();
        i != paths.end(); ++i)
     {
+      N(file_exists(*i),
+	F("file disappeared but exists in manifest: %s") % *i);
       hexenc<id> ident;
       calculate_ident(*i, ident, app.lua);
       man.insert(entry(*i, file_id(ident)));

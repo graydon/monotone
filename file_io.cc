@@ -447,6 +447,9 @@ void
 walk_tree(file_path const & path,
 	  tree_walker & walker)
 {
+  N(fs::exists(localized(path())),
+    F("no such file or directory: %s\n") % path());
+
   if (! fs::is_directory(localized(path())))
     walker.visit_file(path);
   else
