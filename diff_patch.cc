@@ -89,6 +89,7 @@ void walk_hunk_consumer(vector<string> lcs,
 			vector<string> const & lines2,			
 			hunk_consumer & cons)
 {
+
   size_t a = 0, b = 0;
   if (lcs.begin() == lcs.end())
     {
@@ -106,11 +107,20 @@ void walk_hunk_consumer(vector<string> lcs,
       for (vector<string>::iterator i = lcs.begin();
 	   i != lcs.end(); ++i, ++a, ++b)
 	{      
+	  // FIXME: *weird* sometimes, lcs finds a slightly -worse- than
+	  // least common subsequence (i.e. there is actually some
+	  // commonality it doesn't notice). you will probably need to dig
+	  // into the lcs implementation to fix this, bleh.
+	  if(lines1[a] == lines2[b] &&
+	     lines1[a] != *i)
+	    { a++; b++; continue; }
+	  
 	  if (lines1[a] == *i && lines2[b] == *i)
 	    continue;
+
 	  cons.advance_to(a);
 	  while (lines1[a] != *i)
-	    cons.delete_at(a++);
+	      cons.delete_at(a++);
 	  while (lines2[b] != *i)
 	    cons.insert_at(b++);
 	}

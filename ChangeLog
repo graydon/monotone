@@ -1,3 +1,8 @@
+2003-09-11  graydon hoare  <graydon@redhat.com>
+
+	* diff_patch.cc (unidiff): Compensate for occasional miscalculation
+	of LCS.
+
 2003-09-11  graydon hoare  <graydon@pobox.com>
 
 	* tests/t_genkey.at: Remove use of 'import'.

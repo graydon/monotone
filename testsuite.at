@@ -101,5 +101,5 @@ m4_include(tests/t_update.at)
 m4_include(tests/t_merge.at)
 m4_include(tests/t_nntp.at)
 m4_include(tests/t_http.at)
-
+m4_include(tests/t_unidiff2.at)
 
