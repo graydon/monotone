@@ -230,7 +230,7 @@ void open_connection(string const & proto_name,
   using namespace boost::socket;
   string resolved_host;
 
-  // check for proxies / tunnels
+  // check for tunnels
   string host_name = host_name_in;
   unsigned long port_num = port_num_in;
   if (! app.lua.hook_get_connect_addr(proto_name,
@@ -305,11 +305,28 @@ static void post_http_blob(url const & targ,
     {
       boost::socket::connector<>::data_connection_t connection;
       boost::shared_ptr<iostream> stream;
-      open_connection("http", host, port, connection, stream, app);
+
+      bool is_proxy = false;
+      string connect_host_name = host;
+      unsigned long connect_port_num = port;
+      if (app.lua.hook_get_http_proxy(host, port,
+				      connect_host_name, 
+				      connect_port_num))
+	{
+	  is_proxy = true;
+	}
+      else
+	{
+	  connect_host_name = host;
+	  connect_port_num = port;
+	}
+
+      open_connection("http", connect_host_name, connect_port_num, 
+		      connection, stream, app);
       
       posted_ok = post_http_packets(group, keyid(), 
 				    signature_hex(), blob, host, 
-				    path, port, *stream);
+				    path, port, is_proxy, *stream);
     }
   catch (std::exception & e)
     {
@@ -506,8 +523,26 @@ void fetch_queued_blobs_from_network(set<url> const & sources,
 	  app.db.get_sequences(*src, maj, min);
 	  boost::socket::connector<>::data_connection_t connection;
 	  boost::shared_ptr<iostream> stream;
-	  open_connection("http", host, port, connection, stream, app);
-	  fetch_http_packets(group, maj, min, dbw, host, path, port, *stream);
+
+	  bool is_proxy = false;
+	  string connect_host_name = host;
+	  unsigned long connect_port_num = port;
+	  if (app.lua.hook_get_http_proxy(host, port,
+					  connect_host_name, 
+					  connect_port_num))
+	    {
+	      is_proxy = true;
+	    }
+	  else
+	    {
+	      connect_host_name = host;
+	      connect_port_num = port;
+	    }
+
+	  open_connection("http", connect_host_name, connect_port_num, 
+			  connection, stream, app);
+	  fetch_http_packets(group, maj, min, dbw, host, path, port, 
+			     is_proxy, *stream);
 	  app.db.put_sequences(*src, maj, min);
 	}
 

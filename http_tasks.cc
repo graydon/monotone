@@ -35,6 +35,7 @@ bool post_http_packets(string const & group_name,
 		       string const & http_host,
 		       string const & http_path,
 		       unsigned long port,
+		       bool is_proxy,
 		       std::iostream & stream)
 {
   string query = 
@@ -43,9 +44,18 @@ bool post_http_packets(string const & group_name,
     "user=" + user + "&"
     "sig=" + signature;
 
-  string request = string("POST ")
-    + "http://" + http_host + http_path 
-    + "?" + query + " HTTP/1.1";
+  string request = string("POST ");
+
+  // absurdly, HTTP 1.1 mandates *different* forms of request line
+  // depending on whether the client thinks it's talking to an origin
+  // server or a proxy server. clever.
+
+  if (is_proxy)
+    request += "http://" + http_host + ":" + lexical_cast<string>(port) + http_path;
+  else
+    request += http_path;
+    
+  request += "?" + query + " HTTP/1.1";
 
   stream << request << "\r\n";
   L(F("HTTP -> '%s'\n") % request);
@@ -55,6 +65,9 @@ bool post_http_packets(string const & group_name,
 
   stream << "Content-Length: " << packets.size() << "\r\n";
   L(F("HTTP -> 'Content-Length: %d'\n") % packets.size());
+
+  stream << "Connection: close\r\n";
+  L(F("HTTP -> 'Connection: close'\n"));
 
   stream << "\r\n";
   stream.flush();
@@ -188,6 +201,7 @@ void fetch_http_packets(string const & group_name,
 			string const & http_host,
 			string const & http_path,
 			unsigned long port,
+			bool is_proxy,
 			std::iostream & stream)
 {
 
@@ -201,15 +215,31 @@ void fetch_http_packets(string const & group_name,
     "maj=" + lexical_cast<string>(maj_number) + "&"
     "min=" + lexical_cast<string>(min_number);
 
-  string request = string("GET ")
-    + "http://" + http_host + http_path 
-    + "?" + query + " HTTP/1.1";
+
+  string request = string("GET ");
+
+  // absurdly, HTTP 1.1 mandates *different* forms of request line
+  // depending on whether the client thinks it's talking to an origin
+  // server or a proxy server. clever.
+
+  if (is_proxy)
+    request += "http://" + http_host + ":" + lexical_cast<string>(port) + http_path;
+  else
+    request += http_path;
+    
+  request += "?" + query + " HTTP/1.1";
 
   stream << request << "\r\n";
   L(F("HTTP -> '%s'\n") % request);
   
   stream << "Host: " << http_host << "\r\n";
   L(F("HTTP -> 'Host: %s'\n") % http_host);
+
+  stream << "Content-Length: 0\r\n";
+  L(F("HTTP -> 'Content-Length: 0'\n"));
+
+  stream << "Connection: close\r\n";
+  L(F("HTTP -> 'Connection: close'\n"));
 
   stream << "\r\n";
   stream.flush();

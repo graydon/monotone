@@ -3210,6 +3210,47 @@ entire transmission, so you need to return the name of a key which you
 have also put the public half of in the depot's database. This hook
 has no default definition.
 
+@item get_http_proxy (@var{host}, @var{port})
+
+Returns a 2-entry table which contains a string specifying a host, and
+an integer specifying a port, used as a proxy to connect to the HTTP
+server at @var{host} and @var{port}. 
+
+The default definition of this hook is:
+
+@example
+function get_http_proxy(host, port)
+	val = os.getenv("HTTP_PROXY")
+	if (val == nil) then 
+		val = os.getenv("http_proxy") 
+	end
+	if (val == nil) then 
+		return @{ host, port @} 
+	end
+	val = string.gsub(val, "http://", "")
+	b, e = string.find(val, ":")
+	if (b ~= nil and b > 0) then
+		chost = string.sub(val, 0, b-1)
+		cport = string.sub(val, b+1)
+		return @{ chost, cport @}
+	end
+	return @{ val, port @}
+end
+@end example
+
+@item get_connect_addr (@var{proto}, @var{host}, @var{port})
+
+Returns a 2-entry table which contains a string specifying a host, and
+an integer specifying a port, used as a ``connection address'' when
+sending or receiving packets. Unlike an HTTP proxy, a connection
+address has no affect on the protocol parameters after the socket is
+opened; it is intended for redirecting connections into local
+tunnels. If you want to use an HTTP proxy, you should use the
+@code{get_http_proxy} hook.
+
+This hook has no default definition.
+
+
 @item get_post_targets (@var{branchname})
 
 Returns a table of strings, each of which is a URL for a posting

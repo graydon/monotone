@@ -1,5 +1,14 @@
 2003-11-22  graydon hoare  <graydon@pobox.com>
 
+	* lua.cc, lua.hh (hook_get_http_proxy): New hook.
+	* std_hooks.lua (get_http_proxy): Default uses HTTP_PROXY.
+	(get_connect_addr): Undefine, it's for tunnels alone now.
+	* network.cc: Use new hook.
+	* http_tasks.hh, http_tasks.cc: Teach about proxies (sigh).
+	* monotone.texi: Document new hooks.
+
+2003-11-22  graydon hoare  <graydon@pobox.com>
+
 	* lua.cc, lua.hh (hook_get_connect_addr): New hook.
 	* std_hooks.lua (get_connect_addr): Default uses HTTP_PROXY.
 	* network.cc, network.hh: Use new hook.

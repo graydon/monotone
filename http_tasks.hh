@@ -21,6 +21,7 @@ bool post_http_packets(std::string const & group_name,
 		       std::string const & http_host,
 		       std::string const & http_path,
 		       unsigned long port,
+		       bool is_proxy,
 		       std::iostream & stream);
   
 void fetch_http_packets(std::string const & group_name,
@@ -30,6 +31,7 @@ void fetch_http_packets(std::string const & group_name,
 			std::string const & http_host,
 			std::string const & http_path,
 			unsigned long port,
+			bool is_proxy,
 			std::iostream & stream);
 
 #endif // __HTTP_TASKS_HH__
