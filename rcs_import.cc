@@ -706,17 +706,26 @@ cvs_key::cvs_key(rcs_file const & r, string const & version,
 
   {    
     struct tm t;
+    // We need to initialize t to all zeros, because strptime has a habit of
+    // leaving bits of the data structure alone, letting garbage sneak into
+    // our output.
+    memset(&t, 0, sizeof(t));
     char const * dp = delta->second->date.c_str();
+    L(F("Calculating time of %s\n") % dp);
 #ifdef WIN32
     I(sscanf(dp, "%d.%d.%d.%d.%d.%d", &(t.tm_year), &(t.tm_mon), 
              &(t.tm_mday), &(t.tm_hour), &(t.tm_min), &(t.tm_sec))==6);
     t.tm_mon--;
-    t.tm_year-=1900;
+    // Apparently some RCS files have 2 digit years, others four; tm always
+    // wants a 2 (or 3) digit year (years since 1900).
+    if (t.tm_year > 1900)
+        t.tm_year-=1900;
 #else
     if (strptime(dp, "%y.%m.%d.%H.%M.%S", &t) == NULL)
       I(strptime(dp, "%Y.%m.%d.%H.%M.%S", &t) != NULL);
 #endif
     time=mktime(&t);
+    L(F("= %i\n") % time);
   }
 
   string branch_name = find_branch_for_version(r.admin.symbols, 

@@ -1,5 +1,11 @@
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* rcs_import.cc (cvs_key): Initialize struct tm to all zeros, to
+	stop garbage sneaking in -- thanks to Zack Weinberg for pointing
+	this out.  Also, handle 2 digit years properly on WIN32.
+
+2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* rcs_import.cc: Remove tabs.
 
 2005-01-18  Nathaniel Smith  <njs@codesourcery.com>
