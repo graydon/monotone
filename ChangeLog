@@ -1,3 +1,10 @@
+2004-04-16  graydon hoare  <graydon@pobox.com>
+
+	* netsync.cc (session::extra_manifests): New member.
+	(session::analyze_ancestry_graph): Use it.
+	* tests/t_singlenetsync.at: New test for single manifest sync.
+	* testsuite.at: Call it.
+
 2004-04-13  Tom Tromey  <tromey@redhat.com>
 
 	* monotone.texi: Typo fixes.

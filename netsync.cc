@@ -233,6 +233,7 @@ session :
   map<netcmd_item_type, done_marker> done_refinements;
   set< pair<netcmd_item_type, id> > requested_items;
   multimap<id,id> ancestry_edges;
+  set<id> extra_manifests;
 
   id saved_nonce;
   bool received_goodbye;
@@ -599,6 +600,13 @@ session::analyze_ancestry_graph()
     {
       // first we add all children we're aware of to the heads set
       heads.insert(i->first);
+    }
+
+  for (set<id>::const_iterator i = extra_manifests.begin();
+       i != extra_manifests.end(); ++i)
+    {
+      // throw in any disconnected extras
+      heads.insert(*i);
     }
 
   for (multimap<id,id>::const_iterator i = ancestry_edges.begin();
@@ -1970,6 +1978,16 @@ session::process_data_cmd(netcmd_item_type type,
 	      decode_hexenc(tmp_parent, parent);
 	      L(F("noticed ancestry edge from '%s' -> '%s'\n") % tmp_parent % c.ident);
 	      this->ancestry_edges.insert(make_pair(child, parent));
+	    }
+	  else
+	    {
+	      id tmp;
+	      decode_hexenc(c.ident, tmp);
+	      if (this->ancestry_edges.find(tmp) == this->ancestry_edges.end())
+		{
+		  L(F("noticed lone manifest '%s'\n") % c.ident);
+		  this->extra_manifests.insert(tmp);
+		}
 	    }
 	}
       break;
