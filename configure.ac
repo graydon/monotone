@@ -8,20 +8,17 @@ AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
 AM_CONFIG_HEADER([config.h])
 
+# we have some sse2 code in cryptopp 
+# currently gcc does some surprising things here, so we disable it
+# completely.
+# AC_CHECK_HEADERS(emmintrin.h, [CXXFLAGS_MSSE2="-msse2"])
+
 # autoconf turns on -g by default unless a user overrides.  this is
 # nice for smallish programs but it makes build times insane for
 # spirit-based programs. we turn it off here unless the user turned it
 # on themselves.
 
-if test "z$CXXFLAGS" = "z" 
-then
-	CXXFLAGS="-O2 -fno-strict-aliasing"
-	# we have some sse2 code in cryptopp which is worth
-	# enabling if we're on a system which can build it
-	# FIXME: this is broken at the moment :(
-	# AC_CHECK_HEADERS(emmintrin.h, [CXXFLAGS="$CXXFLAGS -msse2"])
-fi
-
+test "z$CXXFLAGS" = "z" && CXXFLAGS="-O2 -fno-strict-aliasing"
 test "z$CFLAGS" = "z" && CFLAGS="-O2 -fno-strict-aliasing"
 
 # Checks for programs.
@@ -180,7 +177,7 @@ AC_ARG_WITH([bundled-lua],
    AC_HELP_STRING(
       [--with-bundled-lua],
       [Force use of bundled version of lua (default=no)]
-   ), , [bundled_lua=no]
+   ), , [bundled_lua=yes]
 )
 
 if test "x$bundled_lua" = "xno" ; then
@@ -203,7 +200,7 @@ AC_ARG_WITH([bundled-sqlite],
    AC_HELP_STRING(
       [--with-bundled-sqlite],
       [Force use of bundled version of sqlite (default=no)]
-   ), , [bundled_sqlite=no]
+   ), , [bundled_sqlite=yes]
 )
 
 if test "x$bundled_sqlite" = "xno" ; then

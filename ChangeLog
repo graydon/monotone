@@ -1,3 +1,10 @@
+2004-04-09  graydon hoare  <graydon@pobox.com>
+
+	* configure.ac: Comment out check for sse2,
+	set bundling to true by default.
+	* INSTALL: describe changes to bundling.
+	* Makefile.am: Remove vestiges of depot.
+
 2004-04-07  graydon hoare  <graydon@pobox.com>
 
 	* adns/*: 

@@ -99,17 +99,15 @@ building and installation process for monotone
        catalogs. you might like to do this if you do not have a
        working installation of GNU gettext.
 
-     --with-bundled-adns
-     --with-bundled-lua
-     --with-bundled-sqlite
+     --with-bundled-lua=no
+     --with-bundled-sqlite=no
 
-       build a version of monotone using the internal "bundled" 
-       copies of adns, lua, and sqlite libraries. normally monotone
-       will use copies of these libraries if it finds them on your 
+       build a version of monotone without the internal "bundled"
+       copies of lua and sqlite libraries. normally monotone will use
+       copies of these libraries it was bundled with. If you set these
+       flags to "no", it will try to use librarise it finds on your
        system, and use the bundled versions only if you do not have
-       your own copies. adding any of these flags will force monotone
-       to use the bundled version even if it finds a local copy on 
-       your system.
+       your own copies.
 
 3. building monotone
 

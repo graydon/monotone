@@ -132,11 +132,9 @@ if STATIC_BOOST
 BOOSTLIBS=@BOOST_LIBDIR@/libboost_filesystem.a @BOOST_LIBDIR@/libboost_date_time.a @BOOST_LIBDIR@/libboost_regex.a
 monotone_LDADD = lib3rdparty.a $(BOOSTLIBS) @BOOST_LIBDIR@/libboost_prg_exec_monitor.a
 unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) @BOOST_LIBDIR@/libboost_unit_test_framework.a
-depot_cgi_LDADD = lib3rdparty.a $(BOOSTLIBS)
 else
 monotone_LDADD = lib3rdparty.a -lboost_prg_exec_monitor
 unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
-depot_cgi_LDADD = lib3rdparty.a
 endif
 
 monotone_LDFLAGS = 
@@ -144,8 +142,6 @@ monotone_CPPFLAGS =
 
 unit_tests_LDFLAGS = 
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
-
-depot_cgi_LDFLAGS = 
 
 AM_CFLAGS = -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
 AM_LDFLAGS = 
@@ -162,7 +158,7 @@ EXTRA_DIST = $(man1_MANS) \
              INSTALL \
              monotone.html \
              texinfo.css \
-	     schema.sql depot_schema.sql \
+	     schema.sql \
 	     std_hooks.lua test_hooks.lua \
 	     testsuite.at \
 	     $(wildcard tests/t_*.at) \
@@ -215,7 +211,7 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES = std_hooks.h test_hooks.h schema.h depot_schema.h
+BUILT_SOURCES = std_hooks.h test_hooks.h schema.h 
 CLEANFILES = $(BUILT_SOURCES)
 
 txt2c: txt2c.cc Makefile
