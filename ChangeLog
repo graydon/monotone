@@ -1,5 +1,14 @@
 2003-11-09  graydon hoare  <graydon@pobox.com>
 
+	* database.cc (dump, load): Implement.
+	* commands.cc (db): Call db.dump, load.
+	* cycle_detector.hh: Skip when no in-edge on src.
+	* monotone.texi: Document dump and load, add some 
+	special sections.
+	* monotone.1: Mention dump and load.
+
+2003-11-09  graydon hoare  <graydon@pobox.com>
+
 	* rcs_file.hh (rcs_symbol): New structure.
 	* rcs_file.cc (symbol): New rule.
 	* rcs_import.cc (find_branch_for_version): New function.

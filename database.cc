@@ -113,9 +113,103 @@ void database::initialize()
   I(s != NULL);
 }
 
+
+struct dump_request
+{
+  dump_request() {};
+  struct sqlite *sql;
+  string table_name;
+  ostream *out;
+};
+
+static int dump_row_cb(void *data, int n, char **vals, char **cols)
+{
+  dump_request *dump = reinterpret_cast<dump_request *>(data);
+  I(dump != NULL);
+  I(vals != NULL);
+  I(dump->out != NULL);
+  *(dump->out) << F("INSERT INTO %s VALUES(") % dump->table_name;
+  for (int i = 0; i < n; ++i)
+    {
+      if (i != 0)
+	*(dump->out) << ',';
+
+      if (vals[i] == NULL)
+	*(dump->out) << "NULL";
+      else
+	{
+	  *(dump->out) << "'";
+	  for (char *cp = vals[i]; *cp; ++cp)
+	    {
+	      if (*cp == '\'')
+		*(dump->out) << "''";
+	      else
+		*(dump->out) << *cp;
+	    }
+	  *(dump->out) << "'";
+	}
+    }
+  *(dump->out) << ");\n";  
+  return 0;
+}
+
+static int dump_table_cb(void *data, int n, char **vals, char **cols)
+{
+  dump_request *dump = reinterpret_cast<dump_request *>(data);
+  I(dump != NULL);
+  I(dump->sql != NULL);
+  I(vals != NULL);
+  I(vals[0] != NULL);
+  I(vals[1] != NULL);
+  I(vals[2] != NULL);
+  I(n == 3);
+  *(dump->out) << vals[2] << ";\n";
+  if (string(vals[1]) == "table")
+    {
+      dump->table_name = string(vals[0]);
+      sqlite_exec_printf(dump->sql, "SELECT * FROM '%q'", 
+			 dump_row_cb, data, NULL, vals[0]);
+    }
+  return 0;
+}
+
 void database::dump(ostream & out)
 {
+  dump_request req;
+  req.out = &out;
+  req.sql = sql();
+  out << "BEGIN TRANSACTION;\n";
+  int res = sqlite_exec(req.sql,
+			"SELECT name, type, sql FROM sqlite_master "
+			"WHERE type!='meta' AND sql NOT NULL "
+			"ORDER BY substr(type,2,1), name",
+			dump_table_cb, &req, NULL);
+  I(res == SQLITE_OK);
+  out << "COMMIT;\n";
 }
+
+void database::load(istream & in)
+{
+  char buf[bufsz];
+  string tmp;
+
+  N(filename.string() != "",
+    F("need database name"));
+  char * errmsg = NULL;
+  __sql = sqlite_open(filename.string().c_str(), 0755, &errmsg);
+  if (! __sql)
+    throw oops(string("could not open database: ") + filename.string() + 
+	       (errmsg ? (": " + string(errmsg)) : ""));
+  
+  while(in)
+    {
+      in.read(buf, bufsz);
+      tmp.append(buf, in.gcount());
+    }
+
+  execute(tmp.c_str());
+}
+
 
 void database::debug(string const & sql, ostream & out)
 {
@@ -132,10 +226,6 @@ void database::debug(string const & sql, ostream & out)
 	}
       out << endl;
     }
-}
-
-void database::load(istream & in)
-{
 }
 
 unsigned long database::get_statistic(string const & query)

@@ -2508,7 +2508,7 @@ CMD(debug, "debug", "SQL", "issue SQL queries directly (dangerous)")
   app.db.debug(idx(args, 0), cout);
 }
 
-CMD(db, "database", "init\ninfo\nversion\nmigrate", "manipulate database state")
+CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate", "manipulate database state")
 {
   if (args.size() != 1)
     throw usage(name);
@@ -2518,6 +2518,10 @@ CMD(db, "database", "init\ninfo\nversion\nmigrate", "manipulate database state")
     app.db.info(cout);
   else if (idx(args, 0) == "version")
     app.db.version(cout);
+  else if (idx(args, 0) == "dump")
+    app.db.dump(cout);
+  else if (idx(args, 0) == "load")
+    app.db.load(cin);
   else if (idx(args, 0) == "migrate")
     app.db.migrate();
   else

@@ -1770,9 +1770,11 @@ through the taxonomy and tutorial, and possibly spent some time
 playing with the program to familliarize yourself with its operation.
 
 @menu
-* Reserved Certs::       Certificate names with special meanings.
-* Naming Conventions::   Choosing appropriate names for keys and branches.
-* File Attributes::      Marking files as executable, or other attributes.
+* Reserved Certs::         Certificate names with special meanings.
+* Naming Conventions::     Choosing appropriate names for keys and branches.
+* File Attributes::        Marking files as executable, or other attributes.
+* Migrating and Dumping::  Changing the underlying storage system.
+* Importing from CVS::     Building a monotone database from a CVS repository.
 @end menu
 
 @node    Reserved Certs
@@ -1912,6 +1914,84 @@ should @code{add} and @code{commit} the @file{.mt-attrs} file in your
 working copy. If you make changes to it which conflict with changes
 other people make, you will have to resolve those conflicts, as plain
 text, just as with any other text file in your working copy.
+
+
+@node    Migrating and Dumping
+@section Migrating and Dumping
+
+While the state of your database is logically captured in terms of a
+packet stream, it is sometimes necessary or desirable (especially
+while monotone is still in active development) to modify the SQL table
+layout or storage parameters of your version database, or to make
+backup copies of your database in plain text. These issues are not
+properly addressed by generating packet streams: instead, you must use
+@dfn{migration} or @dfn{dumping} commands.
+
+The @command{monotone db migrate} command is used to alter the SQL
+schema of a database. The schema of a monotone database is identified
+by a special hash of its generating SQL, which is stored in the
+database's auxilliary tables. Each version of monotone knows which
+schema version it is able to work with, and it will refuse to operate
+on databases with different schemas. When you run the
+@command{migrate} command, monotone looks in an internal list of SQL
+logic which can be used to perform in-place upgrades. It applies
+entries from this list, in order, attempting to change the database it
+@emph{has} into the database it @emph{wants}. Each step of this
+migration is checked to ensure no errors occurred and the resulting
+schema hashes to the intended value. The migration is attempted inside
+a transaction, so if it fails --- for example if the result of
+migration hashes to an unexpected value --- the migration is aborted.
+
+If more drastic changes to the underlying database are made, such as
+changing the page size of sqlite, or if you simply want to keep a
+plain text version of your database on hand, the @command{monotone db
+dump} command can produce a plain ASCII SQL statement which generates
+the state of your database. This dump can later be reloaded using the
+@command{monotone db load} command. 
+
+Note that when reloading a dumped database, the schema of the dumped
+database is @emph{included} in the dump, so you should not try to
+@command{init} your database before a @command{load}.
+
+@node    Importing from CVS
+@section Importing from CVS
+
+Monotone is capable of reading CVS files directly and importing them
+into a database. This feature is still somewhat immature, but
+moderately large ``real world'' CVS trees on the order of 1GB have
+successfully been imported. 
+
+Note however that the machine requirements for CVS trees of this size
+are not trivial: it can take several hours on a modern system to
+reconstruct the history of such a tree and calculate the millions of
+cryptographic certificates involved. We recommend experimenting with
+smaller trees first, to get a feel for the import process.
+
+We will assume certain values for this example which will differ in your case:
+@itemize
+@item
+Your domain name, @code{test.net} in this example.
+@item 
+Your key name, @code{import@@test.net} in this example.
+@item
+Your project name, @code{wobbler} in this example.
+@item
+Your database name, @file{test.db} in this example.
+@item
+Your CVS repository path, @file{/usr/local/cvsroot} in this example.
+@end itemize
+
+Accounting for these differences at your site, the following is an
+example procedure for importing a CVS repository ``from scratch'', and
+checking the resulting head version of the import out into a working
+copy:
+
+@example
+$ monotone --db=test.db db init
+$ monotone --db=test.db genkey import@@test.net
+$ monotone --db=test.db --branch=net.test.wobbler cvs_import /usr/local/cvsroot
+$ monotone --db=test.db --branch=net.test.wobbler checkout wobber-checkout
+@end example
 
 
 @node    CVS Phrasebook
@@ -2132,10 +2212,10 @@ inspect a version without checking it out into your working copy.
 @itemx monotone --branch=@var{branchname} checkout @var{directory}
 @itemx monotone --branch=@var{branchname} co @var{directory}
 
-This command copies a manifest version @var{id} out of your database
-and into @file{@var{directory}/MT/manifest}. Then it copies every file
-version listed in the manifest to paths under @var{directory}. For
-example, if the manifest contains these entries:
+These commands copy a manifest version @var{id} out of your database
+and into @file{@var{directory}/MT/manifest}. Then they copies every
+file version listed in the manifest to paths under
+@var{directory}. For example, if the manifest contains these entries:
 
 @example
 84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
@@ -2154,9 +2234,9 @@ If you wish to @command{checkout} in the current directory, you can
 supply the special name @file{.} (a single period) for
 @var{directory}.
 
-If no @var{id} is provided, you must provide a @var{branchname};
-monotone will attempt to infer @var{id} as the unique head of
-@var{branchname} if it exists.
+If no @var{id} is provided, as in the latter two commands, you
+@emph{must} provide a @var{branchname}; monotone will attempt to infer
+@var{id} as the unique head of @var{branchname} if it exists.
 
 
 @item monotone heads --branch=@var{branchname}
@@ -2683,11 +2763,30 @@ including its schema version and various table size statistics.
 This command prints out just the schema version of the monotone
 database @file{dbfile}.
 
+@item monotone db dump --db=@var{dbfile} 
+
+This command dumps an SQL statement representing the entire state of
+@file{dbfile} to the standard output stream. It is a very low-level
+command, and produces the most ``recoverable'' dumps of your database
+possible. It is sometimes also useful when migrating databases between
+variants of the underlying sqlite database format.
+
+@item monotone db load --db=@var{dbfile} 
+
+This command applies a raw SQL statement, read from the standard input
+stream, to the database @file{dbfile}. It is most useful when loading
+a database dumped with the @command{dump} command.
+
+Note that when reloading a dumped database, the schema of the dumped
+database is @emph{included} in the dump, so you should not try to
+@command{init} your database before a @command{load}.
+
 @item monotone db migrate --db=@var{dbfile} 
 
-This attempts to migrate the database @file{dbfile} to the newest
-schema known by the version of monotone you are currently running.
-If the migration fails, no changes should be made to the database.
+This command attempts to migrate the database @file{dbfile} to the
+newest schema known by the version of monotone you are currently
+running.  If the migration fails, no changes should be made to the
+database.
 
 If you have important information in your database, you should back up
 a copy of it before migrating, in case there is an untrapped error
@@ -2801,7 +2900,7 @@ change you make. The result is used as the value for a
 @code{changelog} certificate, automatically generated when you commit
 changes.
 
-The default definition fo this hook is:
+The default definition of this hook is:
 
 @example
 function edit_comment(commentary)
@@ -3419,7 +3518,7 @@ Rename files from @i{<src>} to @i{<dst>} in working copy.
 Update working copy, relative to sorting keys.
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{db} @i{(init|info|version|migrate)}
+@item @b{db} @i{(init|info|version|dump|load|migrate)}
 Manipulate database state.
 @comment TROFF INPUT: .SH DESCRIPTION
 

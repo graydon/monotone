@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <stack>
+#include <set>
 
 #include "quick_alloc.hh"
 #include "sanity.hh"
@@ -24,6 +25,7 @@ struct cycle_detector
   
   edge_map edges;
   edge_stack stk;
+  std::set<T> global_in_edges;
 
   void put_edge (T const & src, T const & dst)
   {
@@ -35,16 +37,20 @@ struct cycle_detector
       if (*i == dst)
 	return;
     src_edges.push_back(dst);
+    global_in_edges.insert(dst);
   }
   
 
   bool edge_makes_cycle(T const & src, T const & dst)
   {
     if (src == dst)
-      return true;
+	return true;
 
     if (dst >= edges.size() || edges.at(dst).empty())
-      return false;
+	return false;
+
+    if (global_in_edges.find(src) == global_in_edges.end())
+	return false;
 
     while (!stk.empty())
       stk.pop();
