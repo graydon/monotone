@@ -434,13 +434,31 @@ process_branch(string const & begin_version,
   
   while(! (r.deltas.find(curr_version) == r.deltas.end()))
     {
-      if (r.deltas.find(curr_version)->second->next.empty())
+      L(F("version %s has %d lines\n") % curr_version % curr_lines->size());
+      
+      string next_version = r.deltas.find(curr_version)->second->next;
+      if (!next_version.empty())
+      {  // construct this edge on our own branch
+         L(F("following RCS edge %s -> %s\n") % curr_version % next_version);
+
+         construct_version(*curr_lines, next_version, *next_lines, r);
+         L(F("constructed RCS version %s, inserting into database\n") % 
+	   next_version);
+
+         insert_into_db(curr_data, curr_id, 
+		     *next_lines, next_data, next_id, db);
+
+         cvs.note_file_edge (r, curr_version, next_version, 
+			  file_id(curr_id), file_id(next_id));
+      }
+      else
       {  L(F("revision %s has no successor\n") % curr_version);
          if (curr_version=="1.1")
          {  // mark this file as newly present since this commit
             // (and as not present before)
             
             // perhaps this should get a member function of cvs_history ?
+	    L(F("marking %s as not present in older manifests\n") % curr_version);
             cvs_key k;
             shared_ptr<cvs_state> s;
             cvs.find_key_and_state(r, curr_version, k, s);
@@ -448,23 +466,7 @@ process_branch(string const & begin_version,
             				curr_id, cvs.curr_file, false,
             				cvs));
          }
-         break;
       }
-      L(F("version %s has %d lines\n") % curr_version % curr_lines->size());
-      
-      // construct this edge on our own branch
-      string next_version = r.deltas.find(curr_version)->second->next;
-      L(F("following RCS edge %s -> %s\n") % curr_version % next_version);
-
-      construct_version(*curr_lines, next_version, *next_lines, r);
-      L(F("constructed RCS version %s, inserting into database\n") % 
-	next_version);
-
-      insert_into_db(curr_data, curr_id, 
-		     *next_lines, next_data, next_id, db);
-
-      cvs.note_file_edge (r, curr_version, next_version, 
-			  file_id(curr_id), file_id(next_id));
 
       // recursively follow any branches rooted here
       boost::shared_ptr<rcs_delta> curr_delta = r.deltas.find(curr_version)->second;
@@ -489,12 +491,15 @@ process_branch(string const & begin_version,
 	  L(F("finished RCS branch %s\n") % (*i));
 	}
 
-      // advance
-      curr_data = next_data;
-      curr_id = next_id;
-      curr_version = next_version;
-      swap(next_lines, curr_lines);
-      next_lines->clear();
+      if (!r.deltas.find(curr_version)->second->next.empty())
+      {  // advance
+         curr_data = next_data;
+         curr_id = next_id;
+         curr_version = next_version;
+         swap(next_lines, curr_lines);
+         next_lines->clear();
+      }
+      else break;
     }
 } 
 
@@ -1005,6 +1010,10 @@ store_trunk_manifest_edge(manifest_map const & parent,
   if (cvs.manifest_cycle_detector.edge_makes_cycle(p,c))
     {
       L(F("skipping cyclical trunk edge %s -> %s\n")
+	% parent_id % child_id);
+    }
+  else if (parent.empty())
+    { L(F("not storing edge to empty manifest %s -> %s\n")
 	% parent_id % child_id);
     }
   else

@@ -1,3 +1,10 @@
+2004-04-30  Christof Petig <christof@petig-baender.de>
+
+	* rcs_import.cc (store_trunk_manifest_edge):
+		skip ancestry to empty manifest
+	* rcs_import.cc (process_branch):
+		also follow branches of last/first versions
+
 2004-04-28  Christof Petig <christof@petig-baender.de>
 
 	* command.cc (heads):
