@@ -463,7 +463,6 @@ static void try_one_merge(manifest_id const & left,
   
   base64< gzip<delta> > left_edge;
   diff(left_data.inner(), merged_data.inner(), left_edge);
-  app.db.put_manifest_version(left, merged, left_edge);  
 
   // FIXME: we do *not* manufacture or store the second edge to
   // the merged version, since doing so violates the
@@ -478,11 +477,13 @@ static void try_one_merge(manifest_id const & left,
   // app.db.put_manifest_version(right, merged, right_edge);
   
   
-  // we do of course record the ancestry relationship to both
-  // predecessors.
+  // we do of course record the left edge, and ancestry relationship to
+  // both predecessors.
 
   {
     packet_db_writer dbw(app);    
+
+    dbw.consume_manifest_delta(left, merged, left_edge);  
     cert_manifest_ancestor(left, merged, app, dbw);
     cert_manifest_ancestor(right, merged, app, dbw);
     cert_manifest_date_now(merged, app, dbw);
@@ -1244,13 +1245,14 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 	  // merged 1 edge; now we commit this, update merge source and
 	  // try next one
 
+	  packet_db_writer dbw(app);
 	  queueing_packet_writer qpw(app, targets);
+	  cert_manifest_in_branch(merged, app.branch_name, app, dbw);
 	  cert_manifest_in_branch(merged, app.branch_name, app, qpw);
-	  cert_manifest_changelog(merged, 
-				  "merge of " 
-				  + left.inner()() 
-				  + " and " 
-				  + right.inner()(), app, qpw);
+
+	  string log = "merge of " + left.inner()() + " and " + right.inner()();
+	  cert_manifest_changelog(merged, log, app, dbw);
+	  cert_manifest_changelog(merged, log, app, qpw);
 	  
 	  guard.commit();
 	  P("[source] %s\n[source] %s\n[merged] %s\n",
@@ -1517,7 +1519,6 @@ CMD(pubkey, "packet i/o", "<id>", "write public key packet to stdout")
   pw.consume_public_key(ident, key);
   guard.commit();
 }
-
 
 CMD(privkey, "packet i/o", "<id>", "write private key packet to stdout")
 {

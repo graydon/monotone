@@ -1,3 +1,13 @@
+2003-09-08  graydon hoare  <graydon@pobox.com>
+
+	* tests/merge.at: Accept tromey's non-error case for update.
+
+	* commands.cc(try_one_merge): Write merged version to packet
+	writer, not directly to db.
+	(merge): Write branch, changelog cert on merged version to db.
+
+	* std_hooks.lua(merge3): Open result in mode "r", not "w+".
+	
 2003-09-06  Tom Tromey  <tromey@redhat.com>
 
 	* update.cc (pick_update_target): Not an error if nothing to

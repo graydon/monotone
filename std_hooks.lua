@@ -167,7 +167,7 @@ function merge3(ancestor, left, right)
 	end
 
 	-- read in the results
-	tmp = openfile(outfile, "w+")
+	tmp = openfile(outfile, "r")
 	if (tmp == nil) then
 		return nil
 	end

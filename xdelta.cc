@@ -227,6 +227,15 @@ compute_delta(string const & a,
 	      string & delta)
 {
   vector<insn> delta_insns;
+
+  // FIXME: in theory you can do empty files and empty deltas; write some
+  // tests to be sure you're doing it right, and in any case implement the
+  // necessary logic directly in this function, don't bother doing an
+  // xdelta. several places of the xdelta code prefer assertions which are
+  // only true with non-empty chunks anyways.
+  I(a.size() > 0);
+  I(b.size() > 0);
+
   L("computing binary delta instructions\n");
   compute_delta_insns(a, b, delta_insns);
   L("computed binary delta instructions\n");
