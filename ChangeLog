@@ -3,6 +3,20 @@
 	* file_io.cc (get_homedir): Add more comments and logging to Win32
 	version.  Also, only check HOME under Cygwin/MinGW.
 
+2005-02-21  Derek Scherger  <derek@echologic.com>
+
+	* Makefile.am: merge fixup
+	
+2005-02-21  Derek Scherger  <derek@echologic.com>
+
+	* Makefile.am: add fsck.{cc,hh}
+	* commands.cc(check_db): move to ...
+	* fsck.{cc,hh}: here and do lots more checking
+	* database.{cc,hh}(get_ids): new method
+	(get_file_ids,get_manifest_ids,get_revision_ids): more new methods
+	* tests/t_fsck.at: new test
+	* testsuite.at: call it
+	
 2005-02-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc (commit): Simplify chatter.
@@ -39,6 +53,20 @@
 	* sanity.hh: Use gettext.h rather than libintl.h so that --disable-nls
 	works.  Also improves portability, according to the GNU Gettext
 	manual.
+
+2005-02-19  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_heads): remove bogus call to 
+	app.allow_working_copy() which is called in cpp_main
+	* database.cc (check_sqlite_format_version): don't check database
+	version when "file" is really a directory; add filename to error
+	message
+	(sql): check for empty database early, even though this seems
+	impossible as absolutify changes "" into path to working dir;
+	convert to use N-style assertions; add check to ensure "file" is
+	not really a directory
+	* tests/t_db_missing.at: new test for above problems
+	* testsuite.at: call it
 
 2005-02-19  Nathaniel Smith  <njs@codesourcery.com>
 

@@ -177,6 +177,9 @@ check_sqlite_format_version(fs::path const & filename)
 {
   if (fs::exists(filename))
     {
+      N(!fs::is_directory(filename), 
+        F("database %s is a directory\n") % filename.string());
+ 
       // sqlite 3 files begin with this constant string
       // (version 2 files begin with a different one)
       std::string version_string("SQLite format 3");
@@ -189,8 +192,8 @@ check_sqlite_format_version(fs::path const & filename)
         {
           char c;
           file.get(c);
-          N(c == *i, F("database is not an sqlite version 3 file, "
-                       "try dump and reload"));            
+          N(c == *i, F("database %s is not an sqlite version 3 file, "
+                       "try dump and reload") % filename.string());            
         }
     }
 }
@@ -201,16 +204,16 @@ database::sql(bool init)
 {
   if (! __sql)
     {
+      N(!filename.empty(), F("no database specified"));
+
       if (! init)
         {
-          if (filename.string() == "")
-            throw informative_failure(string("no database specified"));
-          else if (! fs::exists(filename))
-            throw informative_failure(string("database ") + filename.string() +
-                                      string(" does not exist"));
+          N(fs::exists(filename), 
+            F("database %s does not exist") % filename.string());
+          N(!fs::is_directory(filename), 
+            F("database %s is a directory") % filename.string());
         }
-      N(filename.string() != "",
-        F("need database name"));
+
       check_sqlite_format_version(filename);
       int error;
       error = sqlite3_open(filename.string().c_str(), &__sql);
@@ -452,7 +455,7 @@ database::rehash()
       }
   }
 
-{
+  {
     // rehash all privkeys
     results res;
     fetch(res, 2, any_rows, "SELECT id, keydata FROM private_keys");
@@ -785,6 +788,19 @@ database::count(string const & table)
         "SELECT COUNT(*) FROM '%q'", 
         table.c_str());
   return lexical_cast<int>(res[0][0]);  
+}
+
+void
+database::get_ids(string const & table, set< hexenc<id> > & ids) 
+{
+  results res;
+
+  fetch(res, one_col, any_rows, "SELECT id FROM %q", table.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      ids.insert(hexenc<id>(res[i][0]));
+    }
 }
 
 void 
@@ -1159,6 +1175,34 @@ database::revision_exists(revision_id const & id)
   return exists(id.inner(), "revisions");
 }
 
+void 
+database::get_file_ids(set<file_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("files", tmp);
+  get_ids("file_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_manifest_ids(set<manifest_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("manifests", tmp);
+  get_ids("manifest_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_revision_ids(set<revision_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("revisions", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
 
 void 
 database::get_file_version(file_id const & id,

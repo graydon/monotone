@@ -22,21 +22,22 @@
 #include "constants.hh"
 
 #include "app_state.hh"
+#include "automate.hh"
+#include "cert.hh"
 #include "diff_patch.hh"
 #include "file_io.hh"
+#include "fsck.hh"
 #include "keys.hh"
 #include "manifest.hh"
 #include "netsync.hh"
 #include "packet.hh"
 #include "rcs_import.hh"
 #include "sanity.hh"
-#include "cert.hh"
 #include "transforms.hh"
 #include "ui.hh"
 #include "update.hh"
 #include "vocab.hh"
 #include "work.hh"
-#include "automate.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -2130,39 +2131,6 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   vector<utf8> collections(args.begin() + 1, args.end());
   run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
 }
-
-static void
-check_db(app_state & app)
-{
-  ticker revs("revs", ".");
-  std::multimap<revision_id, revision_id> graph;
-  app.db.get_revision_ancestry(graph);
-  std::set<revision_id> seen;
-  for (std::multimap<revision_id, revision_id>::const_iterator i = graph.begin();
-       i != graph.end(); ++i)
-    {
-      revision_set rev;
-      if (seen.find(i->first) == seen.end())
-        {
-          if (app.db.revision_exists(i->first))
-            {            
-              app.db.get_revision(i->first, rev);
-              seen.insert(i->first);
-              ++revs;
-            }
-        }
-      if (seen.find(i->second) == seen.end())
-        {      
-          if (app.db.revision_exists(i->second))
-            {            
-              app.db.get_revision(i->second, rev);
-              seen.insert(i->second);
-              ++revs;
-            }
-        }
-    }
-}
-
 
 CMD(db, "database", "init\ninfo\nversion\ndump\nload\nmigrate\nexecute", "manipulate database state")
 {
