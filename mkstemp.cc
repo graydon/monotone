@@ -9,49 +9,54 @@
 // (this file) copyright (C) 2004 graydon hoare, as LGPL also.
 
 #include <config.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#ifndef HAVE_MKSTEMP
+#include <boost/filesystem/path.hpp>
 
 #include "cryptopp/osrng.h"
+#include "file_io.hh"
 
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
 
 int
-monotone_mkstemp(char *tmpl)
+monotone_mkstemp(std::string &tmpl)
 {
-  int len = 0, i = 0;
-  char *XXXXXX = NULL;
+  unsigned int len = 0;
+  int i = 0;
   int count = 0, fd = -1;
+  std::string tmp;
+  fs::path path;
 
   static const char letters[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   static const int NLETTERS = sizeof (letters) - 1;
   static CryptoPP::AutoSeededRandomPool mkstemp_urandom;
 
-  len = strlen (tmpl);
-  if (len < 6 || strcmp (&tmpl[len - 6], "XXXXXX"))
+  len = tmpl.length();
+  if (len < 6 || tmpl.rfind("XXXXXX") != len-6)
     return -1;
-
-  XXXXXX = &tmpl[len - 6];
 
   for (count = 0; count < 100; ++count)
     {
+      tmp = tmpl.substr(0, len-6);
+
       for (i = 0; i < 6; ++i)
-	XXXXXX[i] = letters[mkstemp_urandom.GenerateByte() % NLETTERS];
-      fd = open(tmpl, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
+        tmp.append(1, letters[mkstemp_urandom.GenerateByte() % NLETTERS]);
+      fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
       if (fd >= 0)
+      {
+	fs::path path;
+	path = mkpath(tmp);
+	tmpl = path.native_directory_string();
 	return fd;
+      }
       else if (errno != EEXIST)
 	break;
     }  
   return -1;
 }
 
-#endif
