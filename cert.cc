@@ -31,15 +31,15 @@ struct bogus_cert_p
   {
   string txt;
   cert_signable_text(c.inner(), txt);
-  L("checking cert %s\n", txt.c_str());
+  L(F("checking cert %s\n") % txt);
   if (check_cert(app,c.inner()))
     {
-      L("cert ok\n");
+      L(F("cert ok\n"));
       return false;
     }
   else
     {
-      ui.warn("bad signature by '" + c.inner().key() + "' on '" + txt + "'\n");
+      ui.warn(F("bad signature by '%s' on '%s')") % c.inner().key() % txt);
       return true;
     }
   }
@@ -95,12 +95,8 @@ bool cert::operator==(cert const & other) const
 void cert_signable_text(cert const & t,
 		       string & out)
 {
-  out = 
-    string("[") 
-    + t.name() + "@" + t.ident() 
-    + ":" + remove_ws(t.value()) +  
-    + "]";
-  L("cert: signable text %s\n", out.c_str());
+  out = (F("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
+  L(F("cert: signable text %s\n") % out);
 }
 
 void calculate_cert(app_state & app, cert & t)
@@ -109,7 +105,7 @@ void calculate_cert(app_state & app, cert & t)
   base64< arc4<rsa_priv_key> > priv;
   cert_signable_text(t, signed_text);
   N(app.db.private_key_exists(t.key),
-    "no private key " + t.key() + " found in database");
+    F("no private key '%s' found in database") % t.key);
   app.db.get_key(t.key, priv);
   make_signature(app.lua, t.key, priv, signed_text, t.sig);
 }
@@ -174,12 +170,12 @@ void guess_branch(manifest_id const & id,
       erase_bogus_certs(certs, app);
 
       N(certs.size() != 0, 
-	string("no branch certs found for manifest ")
-	+ id.inner()() + ", please provide a branch name");
-
+	F("no branch certs found for manifest %s, "
+	  "please provide a branch name") % id);
+      
       N(certs.size() == 1,
-	string("multiple branch certs found for manifest ")
-	+ id.inner()() + ", please provide a branch name");
+	F("multiple branch certs found for manifest %s, "
+	  "please provide a branch name") % id);
       
       decode_base64(certs[0].inner().value, branchname);
     }
@@ -193,7 +189,7 @@ void make_simple_cert(hexenc<id> const & id,
 {
   rsa_keypair_id key;
   N(guess_default_key(key,app),
-    "no unique private key for cert construction");  
+    F("no unique private key for cert construction"));
   base64<cert_value> encoded_val;
   encode_base64(cv, encoded_val);
   cert t(id, nm, encoded_val, key);
@@ -249,10 +245,10 @@ void get_branch_heads(cert_value const & branchname,
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
   
-  L("getting branch certs for %s\n", branchname().c_str());
+  L(F("getting branch certs for %s\n") % branchname);
   app.db.get_manifest_certs(cert_name(branch_cert_name), branch_encoded, certs);
   erase_bogus_certs(certs, app);
-  L("got %d branch members\n", certs.size());
+  L(F("got %d branch members\n") % certs.size());
   for (vector< manifest<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
@@ -264,12 +260,12 @@ void get_branch_heads(cert_value const & branchname,
       erase_bogus_certs(children, app);
       if (children.size() == 0)
 	{
-	  L("found head %s\n", i->inner().ident().c_str());
+	  L(F("found head %s\n") % i->inner().ident);
 	  heads.push_back(manifest_id(i->inner().ident));
 	}
       else
 	{
-	  L("found non-head %s\n", i->inner().ident().c_str());
+	  L(F("found non-head %s\n") % i->inner().ident);
 	}
     }
 }
@@ -308,8 +304,7 @@ bool find_common_ancestor(manifest_id const & left,
   cert_name tn(ancestor_cert_name);
   left_frontier.push_back(left);
   right_frontier.push_back(right);
-  L("searching for common ancestors of %s and %s\n",
-    left.inner()().c_str(), right.inner()().c_str());
+  L(F("searching for common ancestors of %s and %s\n") % left % right);
   while(left_frontier.size() > 0 || right_frontier.size() > 0)
     {
       vector<manifest_id> next_left_frontier, next_right_frontier;
@@ -328,14 +323,13 @@ bool find_common_ancestor(manifest_id const & left,
 	      manifest_id m = manifest_id(tv());
 	      if (right_ancestors.find(m) != right_ancestors.end())
 		{
-		  L("found common ancestor %s\n", m.inner()().c_str());
+		  L(F("found common ancestor %s\n") % m);
 		  anc = m;
 		  return true;
 		}
 	      else
 		{
-		  L("recording ancestor edge %s -> %s\n",
-		    i->inner()().c_str(), m.inner()().c_str());
+		  L(F("recording ancestor edge %s -> %s\n") % (*i) % m);
 		  next_left_frontier.push_back(m);
 		  left_ancestors.insert(m);
 		}
@@ -356,14 +350,13 @@ bool find_common_ancestor(manifest_id const & left,
 	      manifest_id m = manifest_id(tv());
 	      if (left_ancestors.find(m) != left_ancestors.end())
 		{
-		  L("found common ancestor %s\n", m.inner()().c_str());
+		  L(F("found common ancestor %s\n") % m);
 		  anc = m;
 		  return true;
 		}
 	      else
 		{
-		  L("recording ancestor edge %s -> %s\n",
-		    i->inner()().c_str(), m.inner()().c_str());
+		  L(F("recording ancestor edge %s -> %s\n") % (*i) % m);
 		  next_right_frontier.push_back(m);
 		  right_ancestors.insert(m);
 		}
@@ -428,7 +421,7 @@ void cert_manifest_author_default(manifest_id const & m,
 {
   string author;
   N(app.lua.hook_get_author(app.branch_name, author),
-    (string("no default author name for branch '") + app.branch_name + "'"));
+    F("no default author name for branch '%s'") % app.branch_name);
   put_simple_manifest_cert(m, author_cert_name, author, app, pc);
 }
 

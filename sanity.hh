@@ -8,14 +8,19 @@
 
 #include <stdexcept>
 #include <string>
+#include <vector>
 
-// our assertion / sanity / error logging system was based on GNU Nana,
-// but we're only using a small section of it, so we just replicate it
-// in place rather than add Yet Another Library Dependency
+#include "boost/format.hpp"
+#include "boost/circular_buffer.hpp"
+
+// our assertion / sanity / error logging system *was* based on GNU Nana,
+// but we're only using a small section of it, and have anyways rewritten
+// that to use typesafe boost-formatter stuff.
 
 // this is for error messages where we want a clean and inoffensive error
 // message to make it to the user, not a diagnostic error indicating
 // internal failure but a suggestion that they do something differently.
+
 struct informative_failure {
   informative_failure(std::string const & s) : what(s) {}
   std::string what;
@@ -27,60 +32,82 @@ struct sanity {
   void dump_buffer();
   void set_verbose();
   void set_quiet();
+
   bool verbose;
   bool quiet;
+  boost::circular_buffer<char> logbuf;
 
-  char * logbuf;
-  size_t pos;
-  size_t size;
+  void log(boost::format const & fmt);
+  void progress(boost::format const & fmt);
+  void warning(boost::format const & fmt);
+  void naughty_failure(std::string const & expr, boost::format const & explain, 
+		       std::string const & file, int line);
+  void invariant_failure(std::string const & expr, 
+			 std::string const & file, int line);
+  void index_failure(std::string const & vec_expr, 
+		     std::string const & idx_expr, 
+		     unsigned long sz, 
+		     unsigned long idx,
+		     std::string const & file, int line);
 };
 
 typedef std::runtime_error oops;
 
 extern sanity global_sanity;
-void sanity_invariant_handler(char *expr, char *file, int line);
-void sanity_naughtyness_handler(char *expr, std::string const & explain, char *file, int line);
 
-#ifdef __GNUC__
-void sanity_log(sanity & s, const char *format, ...)
-  __attribute__((format (printf, 2, 3)));
-void sanity_progress(sanity & s, const char *format, ...)
-  __attribute__((format (printf, 2, 3)));
-#else
-void sanity_log(sanity & s, const char *format, ...);
-void sanity_progress(sanity & s, const char *format, ...);
-#endif
+// F is for when you want to build a boost formatter
+#define F(str) boost::format((str))
 
 // L is for logging, you can log all you want
-#define L(f...)                       \
-do {                                  \
-  sanity_log (global_sanity, ##f); \
-} while(0)
+#define L(fmt) global_sanity.log(fmt)
 
 // P is for progress, log only stuff which the user might
 // normally like to see some indication of progress of
-#define P(f...)                       \
-do {                                  \
-  sanity_progress (global_sanity, ##f); \
-} while(0)
+#define P(fmt) global_sanity.progress(fmt)
+
+// W is for warnings, which are handled like progress only
+// they are only issued once and are prefixed with "warning: "
+#define W(fmt) global_sanity.warning(fmt)
 
 // I is for invariants that "should" always be true
 // (if they are wrong, there is a *bug*)
-#define I(e)                                                   \
-do {                                                           \
-  if(!(e)) {                                                   \
-    sanity_invariant_handler ("I("#e")", __FILE__, __LINE__);  \
-  }                                                            \
+#define I(e) \
+do { \
+  if(!(e)) { \
+    global_sanity.invariant_failure("I("#e")", __FILE__, __LINE__); \
+  } \
 } while(0)
 
 // N is for naughtyness on behalf of the user
 // (if they are wrong, the user just did something wrong)
-#define N(e, explain)                                          \
-do {                                                           \
-  if(!(e)) {                                                   \
-    sanity_naughtyness_handler ("N("#e")", explain,            \
-                                __FILE__, __LINE__);           \
-  }                                                            \
+#define N(e, explain)\
+do { \
+  if(!(e)) { \
+    global_sanity.naughty_failure("N("#e")", (explain), __FILE__, __LINE__); \
+  } \
 } while(0)
+
+
+// we're interested in trapping index overflows early and precisely,
+// because they usually represent *very significant* logic errors.  we use
+// an inline template function because the idx(...) needs to be used as an
+// expression, not as a statement.
+
+template <typename T>
+inline T & checked_index(std::vector<T> & v, 
+			 typename std::vector<T>::size_type i,
+			 char const * vec,
+			 char const * index,
+			 char const * file,
+			 int line) 
+{ 
+  if (i >= v.size())
+    global_sanity.index_failure(vec, index, v.size(), i, file, line);
+  return v[i];
+}
+
+#define idx(v, i) checked_index((v), (i), #v, #i, __FILE__, __LINE__)
+
+
 
 #endif // __SANITY_HH__

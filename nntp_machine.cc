@@ -142,7 +142,7 @@ void read_status_response(istream & in,
 {
   string tmp;
   read_line(in, tmp);
-  L("NNTP <- %s\n", tmp.c_str());
+  L(F("NNTP <- %s\n") % tmp);
 
   stringstream ss(tmp);
 
@@ -179,7 +179,7 @@ nntp_edge nntp_state::handle_response(istream & net)
   if (codes[res_code].first)
     {
       read_lines(net, res_lines);
-      L("NNTP <- %d lines\n", res_lines.size());
+      L(F("NNTP <- %d lines\n") % res_lines.size());
     }
   
   // and, in any event, we're at an edge!
@@ -193,7 +193,7 @@ nntp_edge nntp_state::step_lines(iostream & net,
   if (send_lines.size() > 0)
     {
       write_lines(net, send_lines);  
-      L("NNTP -> %d lines\n", send_lines.size());
+      L(F("NNTP -> %d lines\n") % send_lines.size());
     }
   return handle_response(net);
 }
@@ -205,7 +205,7 @@ nntp_edge nntp_state::step_cmd(iostream & net,
   write_command(net, string(cmd), args);
   stringstream ss;
   write_command(ss, string(cmd), args);
-  L("NNTP -> %s", ss.str().c_str());
+  L(F("NNTP -> %s") % ss.str());
   net.flush();
   return handle_response(net);
 }

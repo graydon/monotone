@@ -163,13 +163,14 @@ void piece_store::build_string(vector<piece> const & pieces,
   for(vector<piece>::const_iterator i = pieces.begin();
       i != pieces.end(); ++i)
     out.append(texts.at(i->string_id)->text, i->pos, i->len);
-  L("RCS import rebuilt %d byte string fragment from %d lines\n", out.size(), pieces.size());
+  L(F("RCS import rebuilt %d byte string fragment from %d lines\n") 
+    % out.size() % pieces.size());
 }
 
 void piece_store::index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
 				  vector<piece> & pieces)
 {
-  L("RCS import indexing %d byte string\n", dt->text.size());
+  L(F("RCS import indexing %d byte string\n") % dt->text.size());
   pieces.clear();
   pieces.reserve(dt->text.size() / 30);  
   texts.push_back(dt);
@@ -189,7 +190,8 @@ void piece_store::index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
       end = dt->text.size();
       pieces.push_back(piece(begin, end - begin, id));
     }
-  L("RCS import indexed %d byte string fragment with %d lines\n", dt->text.size(), pieces.size());
+  L(F("RCS import indexed %d byte string fragment with %d lines\n") 
+    % dt->text.size() % pieces.size());
 }
 
 
@@ -280,7 +282,7 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
     {
       // we already have a way to get to this old version,
       // no need to insert another reconstruction path
-      L("existing path to %s found, skipping\n", old_id().c_str());
+      L(F("existing path to %s found, skipping\n") % old_id);
     }
   else
     {
@@ -300,7 +302,7 @@ rcs_put_raw_manifest_edge(hexenc<id> const & old_id,
     {
       // we already have a way to get to this old version,
       // no need to insert another reconstruction path
-      L("existing path to %s found, skipping\n", old_id().c_str());
+      L(F("existing path to %s found, skipping\n") % old_id);
     }
   else
     {
@@ -355,16 +357,15 @@ process_branch(string const & begin_version,
   while(! (r.deltas.find(curr_version) == r.deltas.end() ||
 	   r.deltas.find(curr_version)->second->next.empty()))
     {
-      L("version %s has %d lines\n", curr_version.c_str(), curr_lines->size());
+      L(F("version %s has %d lines\n") % curr_version % curr_lines->size());
       
       // construct this edge on our own branch
       string next_version = r.deltas.find(curr_version)->second->next;
-      L("following RCS edge %s -> %s\n", 
-	curr_version.c_str(), next_version.c_str());
+      L(F("following RCS edge %s -> %s\n") % curr_version % next_version);
 
       construct_version(*curr_lines, next_version, *next_lines, r);
-      L("constructed RCS version %s, inserting into database\n", 
-	next_version.c_str());
+      L(F("constructed RCS version %s, inserting into database\n") % 
+	next_version);
 
       insert_into_db(curr_data, curr_id, 
 		     *next_lines, next_data, next_id, db);
@@ -377,7 +378,7 @@ process_branch(string const & begin_version,
       for(vector<string>::const_iterator i = curr_delta->branches.begin();
 	  i != curr_delta->branches.end(); ++i)
 	{
-	  L("following RCS branch %s\n", i->c_str());
+	  L(F("following RCS branch %s\n") % (*i));
 	  vector< piece > branch_lines;
 	  construct_version(*curr_lines, *i, branch_lines, r);
 	  
@@ -392,7 +393,7 @@ process_branch(string const & begin_version,
 
 	  process_branch(*i, branch_lines, branch_data, branch_id, r, db, cvs);
 	  cvs.pop_branch();
-	  L("finished RCS branch %s\n", i->c_str());
+	  L(F("finished RCS branch %s\n") % (*i));
 	}
 
       // advance
@@ -409,9 +410,9 @@ void
 import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & cvs)
 {
   rcs_file r;
-  L("parsing RCS file %s\n", filename.c_str());
+  L(F("parsing RCS file %s\n") % filename);
   parse_rcs_file(filename, r);
-  L("parsed RCS file %s OK\n", filename.c_str());
+  L(F("parsed RCS file %s OK\n") % filename);
 
   {
     vector< piece > head_lines;  
@@ -566,7 +567,7 @@ cvs_history::cvs_history() :
 void cvs_history::set_filename(string const & file,
 			       file_id const & ident) 
 {
-  L("importing file '%s'\n", file.c_str());
+  L(F("importing file '%s'\n") % file);
   I(file.size() > 2);
   I(file.substr(file.size() - 2) == string(",v"));
   string ss = file;
@@ -610,14 +611,14 @@ void cvs_history::push_branch(rcs_file const & r,
   I(find_key_and_state (r, branchpoint_rcs_version_num, k, s));
   if (s->substates.size() > 0)
     {
-      L("pushing existing branch for %s : %s\n",
-	curr_file().c_str(), branchpoint_rcs_version_num.c_str());
+      L(F("pushing existing branch for %s : %s\n")
+	% curr_file % branchpoint_rcs_version_num);
     }
   else
     {
       ++n_tree_branches;
-      L("pushing new branch for %s : %s\n",
-	curr_file().c_str(), branchpoint_rcs_version_num.c_str());
+      L(F("pushing new branch for %s : %s\n")
+	% curr_file % branchpoint_rcs_version_num);
     }
   stk.push(s);
 }
@@ -640,9 +641,9 @@ void cvs_history::note_file_edge(rcs_file const & r,
   if (stk.size() == 1)
     {
       // we are on the trunk, prev is child, next is parent.
-      L("noting trunk edge %s : %s -> %s\n", curr_file().c_str(), 
-	next_rcs_version_num.c_str(),
-	prev_rcs_version_num.c_str());
+      L(F("noting trunk edge %s : %s -> %s\n") % curr_file
+	% next_rcs_version_num
+	% prev_rcs_version_num);
       // find_key_and_state (r, next_rcs_version_num, k, s); // just to create it if necessary
       find_key_and_state (r, prev_rcs_version_num, k, s);
       s->in_edges.insert(cvs_file_edge(next_version, curr_file, 
@@ -652,9 +653,9 @@ void cvs_history::note_file_edge(rcs_file const & r,
   else
     {
       // we are on a branch, prev is parent, next is child.
-      L("noting branch edge %s : %s -> %s\n", curr_file().c_str(), 
-	prev_rcs_version_num.c_str(),
-	next_rcs_version_num.c_str());
+      L(F("noting branch edge %s : %s -> %s\n") % curr_file
+	% prev_rcs_version_num
+	% next_rcs_version_num);
       find_key_and_state (r, next_rcs_version_num, k, s);
       s->in_edges.insert(cvs_file_edge(prev_version, curr_file, 
 				       next_version, curr_file, 
@@ -693,7 +694,7 @@ public:
 	import_rcs_file_with_cvs(file, db, cvs);
       }
     else
-      L("skipping non-RCS file %s\n", file.c_str());
+      L(F("skipping non-RCS file %s\n") % file);
   }
   virtual ~cvs_tree_walker() {}
 };
@@ -723,15 +724,13 @@ void store_branch_manifest_edge(manifest_map const & parent,
 
   if (cvs.manifest_cycle_detector.edge_makes_cycle(p,c))
     {
-      L("skipping cyclical branch edge %s -> %s\n",
-	parent_id.inner()().c_str(), 
-	child_id.inner()().c_str());
+      L(F("skipping cyclical branch edge %s -> %s\n")
+	% parent_id % child_id);
     }
   else
     {
-      L("storing branch manifest edge %s -> %s\n", 
-	parent_id.inner()().c_str(), 
-	child_id.inner()().c_str());
+      L(F("storing branch manifest edge %s -> %s\n") 
+	% parent_id % child_id);
 
       cvs.manifest_cycle_detector.put_edge(p,c);
 
@@ -773,15 +772,13 @@ void store_trunk_manifest_edge(manifest_map const & parent,
 
   if (cvs.manifest_cycle_detector.edge_makes_cycle(p,c))
     {
-      L("skipping cyclical trunk edge %s -> %s\n",
-	parent_id.inner()().c_str(), 
-	child_id.inner()().c_str());
+      L(F("skipping cyclical trunk edge %s -> %s\n")
+	% parent_id % child_id);
     }
   else
     {
-      L("storing trunk manifest edge %s -> %s\n", 
-	parent_id.inner()().c_str(), 
-	child_id.inner()().c_str());
+      L(F("storing trunk manifest edge %s -> %s\n") 
+	% parent_id % child_id);
 
       cvs.manifest_cycle_detector.put_edge(p,c);
 
@@ -834,11 +831,9 @@ void build_parent_state(shared_ptr<cvs_state> state,
     }
   
   calculate_manifest_map_ident(state_map, state_id);
-
-  L("logical changeset from %s -> %s has %d file deltas\n",
-    child_id.inner()().c_str(),
-    state_id.inner()().c_str(),
-    state->in_edges.size());  
+  
+  L(F("logical changeset from %s -> %s has %d file deltas\n")
+    % child_id % state_id % state->in_edges.size());  
 }
 
 // we call this when we're going parent -> child, i.e. when we're walking
@@ -861,10 +856,8 @@ void build_child_state(shared_ptr<cvs_state> state,
 
   calculate_manifest_map_ident(state_map, state_id);
 
-  L("logical changeset from %s -> %s has %d file deltas\n",
-    parent_id.inner()().c_str(),
-    state_id.inner()().c_str(),
-    state->in_edges.size());
+  L(F("logical changeset from %s -> %s has %d file deltas\n")
+    % parent_id % state_id % state->in_edges.size());
 }
 
 void import_substates(ticker & n_edges, 
@@ -914,8 +907,7 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
     guard.commit();
   }
 
-  P("phase 1 (version import) complete\n");
-  L("phase 1 complete, all versions imported\n");
+  P(F("phase 1 (version import) complete\n"));
 
   I(cvs.stk.size() == 1);
   shared_ptr<cvs_state> state = cvs.stk.top();
@@ -954,8 +946,7 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 	++n_edges;
       }
     
-    P("phase 2 (ancestry reconstruction) complete\n");
-    L("phase 2 complete, all ancestry certs written\n");
+    P(F("phase 2 (ancestry reconstruction) complete\n"));
 
     guard.commit();
   }

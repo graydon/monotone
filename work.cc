@@ -39,36 +39,36 @@ void addition_builder::visit_file(file_path const & path)
       
   if (book_keeping_file(path()))
     {
-      P("skipping book-keeping file %s\n", path().c_str());
+      P(F("skipping book-keeping file %s\n") % path);
       return;
     }
 
   if (app.lua.hook_ignore_file(path))
     {
-      P("skipping ignorable file %s\n", path().c_str());
+      P(F("skipping ignorable file %s\n") % path);
       return;
     }
 
   if (work.adds.find(path) != work.adds.end())
     {
-      P("skipping %s, already present in working copy add set\n", path().c_str());
+      P(F("skipping %s, already present in working copy add set\n") % path);
       return;
     }
   
   if (work.dels.find(path) != work.dels.end())
     {
-      P("removing %s from working copy delete set\n", path().c_str());
+      P(F("removing %s from working copy delete set\n") % path);
       work.dels.erase(path);
       rewrite_work = true;
     }
   else if (man.find(path) != man.end())
     {
-      P("skipping %s, already present in manifest\n", path().c_str());
+      P(F("skipping %s, already present in manifest\n") % path);
       return;
     }
   else
     {
-      P("adding %s to working copy add set\n", path().c_str());
+      P(F("adding %s to working copy add set\n") % path);
       work.adds.insert(path);
       rewrite_work = true;
     }
@@ -107,36 +107,36 @@ void deletion_builder::visit_file(file_path const & path)
       
   if (book_keeping_file(path()))
     {
-      P("skipping book-keeping file %s\n", path().c_str());
+      P(F("skipping book-keeping file %s\n") % path);
       return;
     }
 
   if (app.lua.hook_ignore_file(path))
     {
-      P("skipping ignorable file %s\n", path().c_str());
+      P(F("skipping ignorable file %s\n") % path);
       return;
     }
 
   if (work.dels.find(path) != work.dels.end())
     {
-      P("skipping %s, already present in working copy delete set\n", path().c_str());
+      P(F("skipping %s, already present in working copy delete set\n") % path);
       return;
     }
   
   if (work.adds.find(path) != work.adds.end())
     {
-      P("removing %s from working copy add set\n", path().c_str());
+      P(F("removing %s from working copy add set\n") % path);
       work.adds.erase(path);
       rewrite_work = true;
     }
   else if (man.find(path) == man.end())
     {
-      P("skipping %s, does not exist in manifest\n", path().c_str());
+      P(F("skipping %s, does not exist in manifest\n") % path);
       return;
     }
   else
     {
-      P("adding %s to working copy delete set\n", path().c_str());
+      P(F("adding %s to working copy delete set\n") % path);
       work.dels.insert(path);
       rewrite_work = true;
     }
@@ -235,7 +235,7 @@ struct add_to_options_map
 void get_options_path(local_path & o_path)
 {
   o_path = (fs::path(book_keeping_dir) / fs::path(options_file_name)).string();
-  L("options path is %s\n", o_path().c_str());
+  L(F("options path is %s\n") % o_path);
 }
 
 void read_options_map(data const & dat, options_map & options)

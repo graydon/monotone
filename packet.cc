@@ -31,7 +31,7 @@ void packet_db_writer::consume_file_data(file_id const & ident,
   if (!app.db.file_version_exists(ident))
     app.db.put_file(ident, dat);
   else
-    L("skipping existing file version %s\n", ident.inner()().c_str());
+    L(F("skipping existing file version %s\n") % ident);
   ++count;
 }
 
@@ -44,12 +44,11 @@ void packet_db_writer::consume_file_delta(file_id const & old_id,
       if (app.db.file_version_exists(old_id))
 	app.db.put_file_version(old_id, new_id, del);
       else
-	P("warning: file delta pre-image '%s' not found in database\n",
-	  old_id.inner()().c_str()); 
+	W(F("warning: file delta pre-image '%s' not found in database\n")
+	  % old_id); 
     }
   else
-    L("skipping delta to existing file version %s\n", 
-      new_id.inner()().c_str());
+    L(F("skipping delta to existing file version %s\n") % new_id);
   ++count;
 }
 
@@ -61,7 +60,7 @@ void packet_db_writer::consume_file_cert(file<cert> const & t)
     {
       string s;
       cert_signable_text(t.inner(), s);
-      L("skipping existing file cert %s\n", s.c_str());
+      L(F("skipping existing file cert %s\n") % s);
     }
   ++count;
 }
@@ -72,7 +71,7 @@ void packet_db_writer::consume_manifest_data(manifest_id const & ident,
   if (!app.db.manifest_version_exists(ident))
     app.db.put_manifest(ident, dat);
   else
-    L("skipping existing manifest version %s\n", ident.inner()().c_str());
+    L(F("skipping existing manifest version %s\n") % ident);
 
   ++count;
 
@@ -91,13 +90,12 @@ void packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
       if (app.db.manifest_version_exists(old_id))
 	app.db.put_manifest_version(old_id, new_id, del);
       else
-	cerr << "warning: manifest delta pre-image " << old_id.inner()() 
-	     << " not found in database" << endl;
+	W(F("manifest delta pre-image '%s' not found in database\n")
+	  % old_id); 
     }
   else
-    L("skipping delta to existing manifest version %s\n", 
-      new_id.inner()().c_str());
-
+    L(F("skipping delta to existing manifest version %s\n") % new_id);
+  
   ++count;
 
   if (server)
@@ -119,7 +117,7 @@ void packet_db_writer::consume_manifest_cert(manifest<cert> const & t)
     {
       string s;
       cert_signable_text(t.inner(), s);
-      L("skipping existing manifest cert %s\n", s.c_str());
+      L(F("skipping existing manifest cert %s\n") % s);
     }
   ++count;
 }
@@ -129,13 +127,13 @@ void packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
 {
   if (!take_keys) 
     {
-      L("skipping prohibited public key %s\n", ident().c_str());
+      W(F("skipping prohibited public key %s\n") % ident);
       return;
     }
   if (!app.db.public_key_exists(ident))
     app.db.put_key(ident, k);
   else
-    L("skipping existing public key %s\n", ident().c_str());
+    L(F("skipping existing public key %s\n") % ident);
   ++count;
 }
 
@@ -144,13 +142,13 @@ void packet_db_writer::consume_private_key(rsa_keypair_id const & ident,
 {
   if (!take_keys) 
     {
-      L("skipping prohibited private key %s\n", ident().c_str());
+      W(F("skipping prohibited private key %s\n") % ident);
       return;
     }
   if (!app.db.private_key_exists(ident))
     app.db.put_key(ident, k);
   else
-    L("skipping existing private key %s\n", ident().c_str());
+    L(F("skipping existing private key %s\n") % ident);
   ++count;
 }
 
@@ -327,7 +325,7 @@ struct feed_packet_consumer
     
     if (res[1].matched)
       {
-	L("read data packet\n");
+	L(F("read data packet\n"));
 	I(res[2].matched);
 	I(res[3].matched);
 	string head(res[1].first, res[1].second);
@@ -344,7 +342,7 @@ struct feed_packet_consumer
       }
     else if (res[4].matched)
       {
-	L("read delta packet\n");
+	L(F("read delta packet\n"));
 	I(res[5].matched);
 	I(res[6].matched);
 	I(res[7].matched);
@@ -365,7 +363,7 @@ struct feed_packet_consumer
       }
     else if (res[8].matched)
       {
-	L("read cert packet\n");
+	L(F("read cert packet\n"));
 	I(res[9].matched);
 	I(res[10].matched);
 	I(res[11].matched);
@@ -393,7 +391,7 @@ struct feed_packet_consumer
       } 
     else if (res[14].matched)
       {
-	L("read key data packet\n");
+	L(F("read key data packet\n"));
 	I(res[15].matched);
 	I(res[16].matched);
 	string head(res[14].first, res[14].second);

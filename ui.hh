@@ -13,6 +13,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <boost/format.hpp>
 
 struct user_interface;
 
@@ -31,7 +32,9 @@ public:
   user_interface();
   ~user_interface();
   void warn(std::string const & warning);
+  void warn(boost::format const & fmt) { warn(fmt.str()); }
   void inform(std::string const & line);
+  void inform(boost::format const & fmt) { inform(fmt.str()); }
   void set_tick_trailer(std::string const & trailer);
 
 private:  

@@ -172,8 +172,8 @@ void hunk_offset_calculator::advance_to(size_t ap)
 {
   while(apos < ap)
     {
-      //       L("advance to %d: [%d,%d] -> [%d,%d] (sz=%d)\n", 
-      //         ap, apos, lpos, apos+1, lpos+1, leftpos.size());
+      //       L(F("advance to %d: [%d,%d] -> [%d,%d] (sz=%d)\n") % 
+      //         ap % apos % lpos % apos+1 % lpos+1 % leftpos.size());
       apos++;
       leftpos.push_back(lpos++);
     }
@@ -181,8 +181,8 @@ void hunk_offset_calculator::advance_to(size_t ap)
 
 void hunk_offset_calculator::insert_at(size_t lp)
 {
-  //   L("insert at %d: [%d,%d] -> [%d,%d] (sz=%d)\n", 
-  //     lp, apos, lpos, apos, lpos+1, leftpos.size());
+  //   L(F("insert at %d: [%d,%d] -> [%d,%d] (sz=%d)\n") % 
+  //     lp % apos % lpos % apos % lpos+1 % leftpos.size());
   inserts.insert(apos);
   I(lpos == lp);
   lpos++;
@@ -190,8 +190,8 @@ void hunk_offset_calculator::insert_at(size_t lp)
 
 void hunk_offset_calculator::delete_at(size_t ap)
 {
-  //   L("delete at %d: [%d,%d] -> [%d,%d] (sz=%d)\n", 
-  //      ap, apos, lpos, apos+1, lpos, leftpos.size());
+  //   L(F("delete at %d: [%d,%d] -> [%d,%d] (sz=%d)\n") % 
+  //      ap % apos % lpos % apos+1 % lpos % leftpos.size());
   deletes.insert(apos);
   I(apos == ap);
   apos++;
@@ -281,7 +281,7 @@ hunk_merger::~hunk_merger()
 {
   while (lpos < left.size())
     {
-      //       L("filling in final segment %d : '%s'\n", lpos, left.at(lpos).c_str());
+      // L(F("filling in final segment %d : '%s'\n") % lpos % left.at(lpos));
       merged.push_back(left.at(lpos++));
     }
 }
@@ -314,9 +314,9 @@ void hunk_merger::advance_to(size_t ap)
 	lend = ancestor_to_leftpos_map.at(ap);
     }
 
-//   L("advance to %d / %d (lpos = %d / %d -> %d / %d)\n", 
-//     ap, ancestor.size(), lpos, left.size(),
-//     lend, left.size());
+//   L(F("advance to %d / %d (lpos = %d / %d -> %d / %d)\n") % 
+//     ap % ancestor.size() % lpos % left.size() %
+//     lend % left.size());
 
   I(lpos <= lend);
   I(lend <= left.size());
@@ -355,8 +355,8 @@ void hunk_merger::advance_to(size_t ap)
 
 void hunk_merger::insert_at(size_t rp)
 {
-//   L("insert at %d (lpos = %d) '%8s'...\n", rp, lpos,
-//     right.at(rp).c_str());
+//   L(F("insert at %d (lpos = %d) '%8s'...\n") % rp % lpos %
+//     right.at(rp));
   I(ancestor.size() == ancestor_to_leftpos_map.size());
   I(rp < right.size());
   I(apos <= ancestor_to_leftpos_map.size());
@@ -369,11 +369,11 @@ void hunk_merger::insert_at(size_t rp)
   
   else if (delete_here)
     {
-      L("insert conflict type 1 -- delete "
-	"(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
-	apos, lpos, 
-	ancestor_to_leftpos_map.at(apos),
-	ancestor_to_leftpos_map.at(apos+1));
+      L(F("insert conflict type 1 -- delete "
+	  "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n")
+	% apos % lpos 
+	% ancestor_to_leftpos_map.at(apos)
+	% ancestor_to_leftpos_map.at(apos+1));
       throw conflict();
     }
   
@@ -385,13 +385,13 @@ void hunk_merger::insert_at(size_t rp)
       
       else
 	{
-	  L("insert conflict type 2 -- insert "
-	    "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
-	    apos, lpos, 
-	    ancestor_to_leftpos_map.at(apos),
-	    ancestor_to_leftpos_map.at(apos+1));
-	  L("trying to insert '%s', with '%s' conflicting\n",
-	    right.at(rp).c_str(), left.at(lpos).c_str());
+	  L(F("insert conflict type 2 -- insert "
+	      "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n")
+	    % apos % lpos
+	    % ancestor_to_leftpos_map.at(apos)
+	    % ancestor_to_leftpos_map.at(apos+1));
+	  L(F("trying to insert '%s', with '%s' conflicting\n")
+	    % right.at(rp) % left.at(lpos));
 	  throw conflict();
 	}
     }
@@ -424,9 +424,9 @@ void hunk_merger::insert_at(size_t rp)
 
 void hunk_merger::delete_at(size_t ap)
 {
-//   L("delete at %d (apos = %d, lpos = %d, translated = %d) '%8s'...\n", 
-//     ap, apos, lpos, ancestor_to_leftpos_map.at(ap), 
-//     ancestor.at(ap).c_str());
+//   L(F("delete at %d (apos = %d, lpos = %d, translated = %d) '%8s'...\n") % 
+//     ap % apos % lpos % ancestor_to_leftpos_map.at(ap) %
+//     ancestor.at(ap));
   I(ancestor.size() == ancestor_to_leftpos_map.size());
   I(ap < ancestor_to_leftpos_map.size());
   I(ap == apos);
@@ -447,26 +447,26 @@ void hunk_merger::delete_at(size_t ap)
       
       else
 	{
-	  L("delete conflict type 1 -- delete "
-	    "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
-	    apos, lpos, 
-	    ancestor_to_leftpos_map.at(apos),
-	    ancestor_to_leftpos_map.at(apos+1));
-	  L("trying to delete '%s', with '%s' conflicting\n",
-	    ancestor.at(ap).c_str(), left.at(lpos).c_str());
+	  L(F("delete conflict type 1 -- delete "
+	      "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n")
+	    % apos % lpos
+	    % ancestor_to_leftpos_map.at(apos)
+	    % ancestor_to_leftpos_map.at(apos+1));
+	  L(F("trying to delete '%s', with '%s' conflicting\n") 
+	    % ancestor.at(ap) % left.at(lpos));
 	  throw conflict();
 	}
     }
   
   else
     {
-      L("delete conflict type 1 -- insert "
-	"(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n",
-	apos, lpos, 
-	ancestor_to_leftpos_map.at(apos),
-	ancestor_to_leftpos_map.at(apos+1));
-      L("trying to delete '%s', with '%s' conflicting\n",
-	ancestor.at(ap).c_str(), left.at(lpos).c_str());
+      L(F("delete conflict type 1 -- insert "
+	  "(apos = %d, lpos = %d, translated apos = %d, translated apos+1 = %d)\n")
+	% apos % lpos
+	% ancestor_to_leftpos_map.at(apos)
+	% ancestor_to_leftpos_map.at(apos+1));
+      L(F("trying to delete '%s', with '%s' conflicting\n")
+	% ancestor.at(ap) % left.at(lpos));
       throw conflict();
     }
 }
@@ -523,30 +523,30 @@ bool merge3(vector<string> const & ancestor,
       vector<size_t> leftpos;
       set<size_t> deletes;
       set<size_t> inserts;
-
-      L("calculating offsets from ancestor:[%d..%d) to left:[%d..%d)\n",
-	0, ancestor.size(), 0, left.size());
+      
+      L(F("calculating offsets from ancestor:[%d..%d) to left:[%d..%d)\n")
+	% 0 % ancestor.size() % 0 % left.size());
       calculate_hunk_offsets(ancestor, left, leftpos, deletes, inserts);
 
-      L("sanity-checking offset table (sz=%d, ancestor=%d)\n",
-	leftpos.size(), ancestor.size());
+      L(F("sanity-checking offset table (sz=%d, ancestor=%d)\n")
+	% leftpos.size() % ancestor.size());
       I(leftpos.size() == ancestor.size());
       for(size_t i = 0; i < ancestor.size(); ++i)
 	{
 	  if (leftpos.at(i) > left.size())
-	    L("weird offset table: leftpos[%d] = %d (left.size() = %d)\n", 
-	      i, leftpos.at(i), left.size());
+	    L(F("weird offset table: leftpos[%d] = %d (left.size() = %d)\n") 
+	      % i % leftpos.at(i) % left.size());
 	  I(leftpos.at(i) <= left.size());
 	}
       
-      L("merging differences from ancestor:[%d..%d) to right:[%d..%d)\n",
-	0, ancestor.size(), 0, right.size());
+      L(F("merging differences from ancestor:[%d..%d) to right:[%d..%d)\n")
+	% 0 % ancestor.size() % 0 % right.size());
       merge_hunks_via_offsets(left, ancestor, right, leftpos, 
 			      deletes, inserts, merged);
     }
   catch(conflict & c)
     {
-      L("conflict detected. no merge.\n");
+      L(F("conflict detected. no merge.\n"));
       return false;
     }
   return true;
@@ -573,12 +573,11 @@ bool merge2(manifest_map const & left,
 	  // right has this file, we can try to merge2 the file.
 	  path_id_pair r_pip(j);
 	  path_id_pair m_pip;
-	  L("merging existant versions of %s in both manifests\n",
-	    l_pip.path()().c_str());
+	  L(F("merging existant versions of %s in both manifests\n")
+	    % l_pip.path());
 	  if (file_merger.try_to_merge_files(l_pip, r_pip, m_pip))
 	    {
-	      L("arrived at merged version %s\n",
-		m_pip.ident().inner()().c_str());
+	      L(F("arrived at merged version %s\n") % m_pip.ident());
 	      merged.insert(m_pip.get_entry()); 
 	    }
 	  else
@@ -626,13 +625,13 @@ bool merge3(manifest_map const & ancestor,
   for (set<file_path>::const_iterator del = ps.f_dels.begin();
        del != ps.f_dels.end(); ++del)
     {
-      L("merging delete %s...", (*del)().c_str());
+      L(F("merging delete %s...") % (*del));
       merged.erase(*del);
-      L("OK\n");
+      L(F("OK\n"));
     }
 
   if (ps.f_dels.size() > 0)
-    L("merged %d deletes\n", ps.f_dels.size());
+    L(F("merged %d deletes\n") % ps.f_dels.size());
 
   /////////////////////////
   // STAGE 2: process moves
@@ -643,12 +642,12 @@ bool merge3(manifest_map const & ancestor,
     {      
       if (merged.find(mov->path_old) != merged.end())
 	{
-	  L("merging move %s -> %s...",
-	    mov->path_old().c_str(), mov->path_new().c_str());
+	  L(F("merging move %s -> %s...") 
+	    % mov->path_old % mov->path_new);
 	  file_id ident = merged[mov->path_old];
 	  merged.erase(mov->path_old);
 	  merged.insert(make_pair(mov->path_new, ident));
-	  L("OK\n");
+	  L(F("OK\n"));
 	}
       else
 	{
@@ -656,17 +655,18 @@ bool merge3(manifest_map const & ancestor,
 	  // the same way, too?
 	  if (merged.find(mov->path_new) != merged.end())
 	    {
-	      if (merged.find(mov->path_new)->second == left.find(mov->path_new)->second)
+	      if (merged.find(mov->path_new)->second 
+		  == left.find(mov->path_new)->second)
 		{
 		  // they moved it to the same destination, no problem.
-		  L("skipping duplicate move %s -> %s\n",
-		    mov->path_old().c_str(), mov->path_new().c_str());
+		  L(F("skipping duplicate move %s -> %s\n")
+		    % mov->path_old % mov->path_new);
 		}
 	      else
 		{
 		  // they moved it to a different file at the same destination. try to merge.
- 		  L("attempting to merge conflicting moves of %s -> %s\n",
-		    mov->path_old().c_str(), mov->path_new().c_str());
+ 		  L(F("attempting to merge conflicting moves of %s -> %s\n")
+		    % mov->path_old % mov->path_new);
 
 		  path_id_pair a_pip = path_id_pair(ancestor.find(mov->path_old()));
 		  path_id_pair l_pip = path_id_pair(left.find(mov->path_new()));
@@ -674,14 +674,14 @@ bool merge3(manifest_map const & ancestor,
 		  path_id_pair m_pip;
 		  if (file_merger.try_to_merge_files(a_pip, l_pip, r_pip, m_pip))
 		    {
-		      L("conflicting moves of %s -> %s merged OK\n",
-			mov->path_old().c_str(), mov->path_new().c_str());
+		      L(F("conflicting moves of %s -> %s merged OK\n")
+			% mov->path_old % mov->path_new);
 		      merged[mov->path_new()] = m_pip.ident();
 		    }
 		  else
 		    {
-		      L("conflicting moves of %s -> %s, merge failed\n",
-			mov->path_old().c_str(), mov->path_new().c_str());
+		      L(F("conflicting moves of %s -> %s, merge failed\n")
+			% mov->path_old % mov->path_new);
 		      merged.clear();
 		      return false;
 		    }
@@ -691,8 +691,8 @@ bool merge3(manifest_map const & ancestor,
 	    {
 	      // no, they moved it somewhere else, or deleted it. either
 	      // way, this is a conflict.
-	      L("conflicting move %s -> %s: no source file present\n",
-		mov->path_old().c_str(), mov->path_new().c_str());
+	      L(F("conflicting move %s -> %s: no source file present\n")
+		% mov->path_old %  mov->path_new);
 	      merged.clear();
 	      return false;
 	    }
@@ -700,7 +700,7 @@ bool merge3(manifest_map const & ancestor,
     }
 
   if (ps.f_moves.size() > 0)
-    L("merged %d moves\n", ps.f_moves.size());
+    L(F("merged %d moves\n") % ps.f_moves.size());
 
 
   ////////////////////////
@@ -712,7 +712,7 @@ bool merge3(manifest_map const & ancestor,
     {
       if (merged.find(add->path()) == merged.end())
 	{
-	  L("merging addition %s...", add->path().c_str());
+	  L(F("merging addition %s...") % add->path);
 	  merged.insert(make_pair(add->path(), add->ident.inner()()));
 	  L("OK\n");
 	}
@@ -722,27 +722,25 @@ bool merge3(manifest_map const & ancestor,
 	  if (merged[add->path()] == add->ident)
 	    {
 	      // it's ok, they added the same file
-	      L("skipping duplicate add of %s\n", add->path().c_str());
+	      L(F("skipping duplicate add of %s\n") % add->path);
 	    }
 	  else
 	    {
 	      // it's not the same file. try to merge (nb: no ancestor)
-	      L("attempting to merge conflicting adds of %s\n", 
-		add->path().c_str());
+	      L(F("attempting to merge conflicting adds of %s\n") % 
+		add->path);
 
 	      path_id_pair l_pip = path_id_pair(left.find(add->path));
 	      path_id_pair r_pip = path_id_pair(merged.find(add->path));
 	      path_id_pair m_pip;
 	      if (file_merger.try_to_merge_files(l_pip, r_pip, m_pip))
 		{
-		  L("conflicting adds of %s merged OK\n",
-		    add->path().c_str());
+		  L(F("conflicting adds of %s merged OK\n") % add->path);
 		  merged[add->path()] = m_pip.ident();
 		}
 	      else
 		{
-		  L("conflicting adds of %s, merge failed\n",
-		    add->path().c_str());
+		  L(F("conflicting adds of %s, merge failed\n") % add->path);
 		  merged.clear();
 		  return false;
 		}
@@ -751,7 +749,7 @@ bool merge3(manifest_map const & ancestor,
     }
 
   if (ps.f_adds.size() > 0)
-    L("merged %d adds\n", ps.f_adds.size());
+    L(F("merged %d adds\n") % ps.f_adds.size());
 
   //////////////////////////
   // STAGE 4: process deltas
@@ -765,18 +763,16 @@ bool merge3(manifest_map const & ancestor,
 	  if (merged[delta->path] == delta->id_old)
 	    {
 	      // they did not edit this file, and we did. no problem.
-	      L("merging delta on %s %s -> %s...", 
-		delta->path().c_str(), 
-		delta->id_old.inner()().c_str(),
-		delta->id_new.inner()().c_str());
+	      L(F("merging delta on %s %s -> %s...")
+		% delta->path % delta->id_old % delta->id_new);
 	      merged[delta->path] = delta->id_new;
 	      L("OK\n");
 	    }
 	  else
 	    {
 	      // damn, they modified it too
-	      L("attempting to merge conflicting deltas on %s\n", 
-		delta->path().c_str());
+	      L(F("attempting to merge conflicting deltas on %s\n") % 
+		delta->path);
 
 	      path_id_pair a_pip = path_id_pair(ancestor.find(delta->path()));
 	      path_id_pair l_pip = path_id_pair(left.find(delta->path()));
@@ -784,14 +780,14 @@ bool merge3(manifest_map const & ancestor,
 	      path_id_pair m_pip;
 	      if (file_merger.try_to_merge_files(a_pip, l_pip, r_pip, m_pip))
 		{
-		  L("conflicting deltas on %s merged OK\n",
-		    delta->path().c_str());
+		  L(F("conflicting deltas on %s merged OK\n")
+		    % delta->path);
 		  merged[delta->path()] = m_pip.ident();
 		}
 	      else
 		{
-		  L("conflicting deltas on %s, merge failed\n",
-		    delta->path().c_str());
+		  L(F("conflicting deltas on %s, merge failed\n")
+		    % delta->path);
 		  merged.clear();
 		  return false;
 		}
@@ -801,7 +797,7 @@ bool merge3(manifest_map const & ancestor,
     }
 
   if (ps.f_deltas.size() > 0)
-    L("merged %d deltas\n", ps.f_deltas.size());
+    L(F("merged %d deltas\n") % ps.f_deltas.size());
 
   return true;
 }
@@ -816,10 +812,8 @@ void simple_merge_provider::record_merge(file_id const & left_ident,
 					 file_data const & left_data, 
 					 file_data const & merged_data)
 {  
-  L("recording successful merge of %s <-> %s into %s\n",
-    left_ident.inner()().c_str(),
-    right_ident.inner()().c_str(),
-    merged_ident.inner()().c_str());
+  L(F("recording successful merge of %s <-> %s into %s\n")
+    % left_ident % right_ident % merged_ident);
 
   base64< gzip<delta> > merge_delta;
   transaction_guard guard(app.db);
@@ -843,10 +837,8 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
 					       path_id_pair & merged)
 {
   
-  L("trying to merge %s <-> %s (ancestor: %s)\n",
-    left.ident().inner()().c_str(),
-    right.ident().inner()().c_str(),
-    ancestor.ident().inner()().c_str());
+  L(F("trying to merge %s <-> %s (ancestor: %s)\n")
+    % left.ident() % right.ident() % ancestor.ident());
   
   // check for an existing merge, use it if available
   {
@@ -866,11 +858,9 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
 		     right_children.begin(), right_children.end(),
 		     inserter(common_children, common_children.begin()));
       
-    L("existing merges: %s <-> %s, %d found\n",
-      left.ident().inner()().c_str(),
-      right.ident().inner()().c_str(),
-      common_children.size());
-      
+    L(F("existing merges: %s <-> %s, %d found\n")
+      % left.ident() % right.ident() % common_children.size());
+    
     if (common_children.size() == 1)
       {
 	cert_value unpacked;
@@ -878,10 +868,10 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
 	file_id ident = file_id(unpacked());
 	merged.ident(ident);
 	merged.path(left.path());
-	L("reusing existing merge\n");
+	L(F("reusing existing merge\n"));
 	return true;
       }
-    L("no reusable merge\n");
+    L(F("no reusable merge\n"));
   }
 
   // no existing merges, we'll have to do it ourselves.
@@ -911,7 +901,7 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
       base64< gzip<data> > packed_merge;
       string tmp;
       
-      L("internal 3-way merged ok\n");
+      L(F("internal 3-way merged ok\n"));
       join_lines(merged_lines, tmp);
       calculate_ident(data(tmp), merged_id);
       file_id merged_fid(merged_id);
@@ -929,7 +919,7 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & ancestor,
       hexenc<id> merged_id;
       base64< gzip<data> > packed_merge;
 
-      L("lua merge3 hook merged ok\n");
+      L(F("lua merge3 hook merged ok\n"));
       calculate_ident(merged_unpacked, merged_id);
       file_id merged_fid(merged_id);
       pack(merged_unpacked, packed_merge);
@@ -962,7 +952,7 @@ bool simple_merge_provider::try_to_merge_files(path_id_pair const & left,
       hexenc<id> merged_id;
       base64< gzip<data> > packed_merge;
       
-      L("lua merge2 hook merged ok\n");
+      L(F("lua merge2 hook merged ok\n"));
       calculate_ident(merged_unpacked, merged_id);
       file_id merged_fid(merged_id);
       pack(merged_unpacked, packed_merge);
@@ -990,10 +980,8 @@ void update_merge_provider::record_merge(file_id const & left_ident,
 					 file_data const & left_data, 
 					 file_data const & merged_data)
 {  
-  L("temporarily recording merge of %s <-> %s into %s\n",
-    left_ident.inner()().c_str(),
-    right_ident.inner()().c_str(),
-    merged_ident.inner()().c_str());  
+  L(F("temporarily recording merge of %s <-> %s into %s\n")
+    % left_ident % right_ident % merged_ident);
   I(temporary_store.find(merged_ident) == temporary_store.end());
   temporary_store.insert(make_pair(merged_ident, merged_data));
 }

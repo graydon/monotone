@@ -87,16 +87,16 @@ void lua_hooks::add_rcfile(fs::path const & rc)
   I(st);  
   if (fs::exists(rc))
     {
-      L("opening rcfile '%s' ... ", rc.string().c_str());
+      L(F("opening rcfile '%s' ... ") % rc.string());
       if (lua_dofile(st, rc.string().c_str()) != 0)
 	{
-	  L("no good\n");
+	  L(F("no good\n"));
 	  throw oops("lua error while loading " + rc.string());
 	}
       L("ok\n");
     }
   else
-    L("skipping nonexistent rcfile '%s'\n", rc.string().c_str());
+    L(F("skipping nonexistent rcfile '%s'\n") % rc.string());
 }
 
 template <typename RES>
@@ -111,7 +111,7 @@ static inline string extract<string>(struct lua_State * st)
 { 
   N((lua_type(st, -1) == LUA_TSTRING ||
      lua_type(st, -1) == LUA_TNUMBER),
-    "need lua string or number value");
+    F("need lua string or number value"));
   return string(lua_tostring(st, -1), lua_strlen(st, -1)); 
 }
 
@@ -137,7 +137,7 @@ static inline vector< pair<url, group> >
 extract< vector< pair<url, group> > >(struct lua_State * st)
 { 
   vector< pair<url, group> > vec; 
-  N((lua_type(st, -1) == LUA_TTABLE), "need lua table");
+  N((lua_type(st, -1) == LUA_TTABLE), F("need lua table"));
   lua_pushnil(st);
   while (lua_next(st, -2) != 0) 
     {
@@ -183,7 +183,7 @@ pair<bool,RES> lua_hooks::call_hook(char const * name, int nargs, ...)
     {
       lua_pop(st, 1);
       RES dum = dummy<RES>();
-      L("lua hook: %s not found\n", name);
+      L(F("lua hook: %s not found\n") % string(name));
       return make_pair(false, dum);
     }
 
@@ -198,13 +198,13 @@ pair<bool,RES> lua_hooks::call_hook(char const * name, int nargs, ...)
 
   va_end(ap);
 
-  L("calling lua hook %s (%s) -> ", name, argstr.c_str());
+  L(F("calling lua hook %s (%s) -> ") % name % argstr);
   if (lua_call(st, nargs, 1) != 0)
     throw oops("lua error while running '" + string(name) + "' hook");
 
   RES res = extract<RES>(st);
   lua_pop(st, 1);
-  L(" %s\n", render_result<RES>(res).c_str());
+  L(F(" %s\n") % render_result<RES>(res));
 
   return make_pair(true, res);
 }

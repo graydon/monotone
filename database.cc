@@ -68,9 +68,9 @@ void database::check_schema()
   string db_schema_id;  
   calculate_schema_id (__sql, db_schema_id);
   N (schema == db_schema_id,
-     "database schemas do not match: wanted " + schema 
-     + ", got " + db_schema_id 
-     + ". try migrating database");
+     F("database schemas do not match: "
+       "wanted %s, got %s. try migrating database") 
+     % schema % db_schema_id);
 }
 
 struct sqlite * database::sql(bool init)
@@ -82,11 +82,11 @@ struct sqlite * database::sql(bool init)
 	  if (filename.string() == "")
 	    throw informative_failure(string("no database specified"));
 	  else if (! fs::exists(filename))
-	    throw oops(string("database ") + filename.string() +
-		       string(" does not exist"));
+	    throw informative_failure(string("database ") + filename.string() +
+				      string(" does not exist"));
 	}
       N(filename.string() != "",
-	"need database name");
+	F("need database name"));
       char * errmsg = NULL;
       __sql = sqlite_open(filename.string().c_str(), 0755, &errmsg);
       if (! __sql)
@@ -105,9 +105,9 @@ void database::initialize()
 {
   if (__sql)
     throw oops("cannot initialize database while it is open");
-  if (fs::exists(filename))
-    throw oops(string("could not initialize database: ") +
-	       filename.string() + string(": already exists"));
+  N(!fs::exists(filename),
+    F("could not initialize database: %s: already exists") 
+    % filename.string());
   sqlite *s = sql(true);
   I(s != NULL);
 }
@@ -289,7 +289,7 @@ void database::execute(char const * query, ...)
   string qq(formatted);
   if (qq.size() > db_log_line_sz) 
     qq = qq.substr(0, db_log_line_sz) + string(" ...");
-  L("db.execute(\"%s\")\n", qq.c_str());
+  L(F("db.execute(\"%s\")\n") % qq);
   sqlite_freemem(formatted);
 
   va_end(ap);
@@ -328,7 +328,7 @@ void database::fetch(results & res,
   string qq(formatted);
   if (qq.size() > log_line_sz) 
     qq = qq.substr(0, log_line_sz) + string(" ...");
-  L("db.fetch(\"%s\")\n", qq.c_str());
+  L(F("db.fetch(\"%s\")\n") % qq);
   sqlite_freemem(formatted);
 
   va_end(ap);
@@ -355,13 +355,13 @@ void database::fetch(results & res,
 
   if (want_cols != any_cols &&
       ncol != want_cols)
-    throw oops(ctx + "wanted " + lexical_cast<string>(want_cols) 
-	       + " columns, got " +  lexical_cast<string>(ncol));
+    throw oops((F("%s wanted %d columns, got %s")
+		% ctx % want_cols % ncol).str());
 
   if (want_rows != any_rows &&
       nrow != want_rows)
-    throw oops(ctx + "wanted " + lexical_cast<string>(want_rows)
-	       + " rows, got " +  lexical_cast<string>(nrow));
+    throw oops((F("%s wanted %d rows, got %s")
+		% ctx % want_rows % nrow).str());
 
   if (!result)
     throw oops(ctx + "null result set");
@@ -422,7 +422,8 @@ bool database::exists(hexenc<id> const & ident,
 		      string const & table)
 {
   results res;
-  fetch(res, one_col, any_rows, "SELECT id FROM '%q' WHERE id = '%q'",
+  fetch(res, one_col, any_rows, 
+	"SELECT id FROM '%q' WHERE id = '%q'",
 	table.c_str(), ident().c_str());
   I((res.size() == 1) || (res.size() == 0));
   return res.size() == 1;
@@ -433,7 +434,8 @@ bool database::delta_exists(hexenc<id> const & ident,
 			    string const & table)
 {
   results res;
-  fetch(res, one_col, any_rows, "SELECT id FROM '%q' WHERE id = '%q'",
+  fetch(res, one_col, any_rows, 
+	"SELECT id FROM '%q' WHERE id = '%q'",
 	table.c_str(), ident().c_str());
   return res.size() > 0;
 }
@@ -443,7 +445,8 @@ bool database::delta_exists(hexenc<id> const & ident,
 			    string const & table)
 {
   results res;
-  fetch(res, one_col, any_rows, "SELECT id FROM '%q' WHERE id = '%q' AND base = '%q'",
+  fetch(res, one_col, any_rows, 
+	"SELECT id FROM '%q' WHERE id = '%q' AND base = '%q'",
 	table.c_str(), ident().c_str(), base().c_str());
   I((res.size() == 1) || (res.size() == 0));
   return res.size() == 1;
@@ -452,7 +455,9 @@ bool database::delta_exists(hexenc<id> const & ident,
 int database::count(string const & table)
 {
   results res;
-  fetch(res, one_col, one_row, "SELECT COUNT(*) FROM '%q'", table.c_str());
+  fetch(res, one_col, one_row, 
+	"SELECT COUNT(*) FROM '%q'", 
+	table.c_str());
   return lexical_cast<int>(res[0][0]);  
 }
 
@@ -547,7 +552,7 @@ void database::get_version(hexenc<id> const & ident,
       //
       // we also maintain a cycle-detecting set, just to be safe
       
-      L("reconstructing %s in %s\n", ident().c_str(), delta_table.c_str());
+      L(F("reconstructing %s in %s\n") % ident % delta_table);
       I(delta_exists(ident, delta_table));
       
       // nb: an edge map goes in the direction of the
@@ -595,11 +600,11 @@ void database::get_version(hexenc<id> const & ident,
 
 		      if (frontier_map->find(nxt) == frontier_map->end())
 			{
-			  L("inserting edge: %s <- %s\n", (*i)().c_str(), nxt().c_str());
+			  L(F("inserting edge: %s <- %s\n") % (*i) % nxt);
 			  frontier_map->insert(make_pair(nxt, *i));
 			}
 		      else
-			L("skipping merge edge %s <- %s\n", (*i)().c_str(), nxt().c_str());
+			L(F("skipping merge edge %s <- %s\n") % (*i) % nxt);
 		    }
 		}
 	    }
@@ -630,7 +635,7 @@ void database::get_version(hexenc<id> const & ident,
 	  I(i->find(curr) != i->end());
 	  hexenc<id> const nxt = i->find(curr)->second;
 
-	  L("following delta %s -> %s\n", curr().c_str(), nxt().c_str());
+	  L(F("following delta %s -> %s\n") % curr % nxt);
 	  base64< gzip<delta> > del_packed;
 	  get_delta(nxt, curr, del_packed, delta_table);
 	  delta del;

@@ -181,8 +181,7 @@ static void index_adds(set<entry> const & adds,
 {
   for(eci i = adds.begin(); i != adds.end(); ++i)
     {
-      L("indexing add: %s %s\n",
-	i->first().c_str(), i->second.inner()().c_str());
+      L(F("indexing add: %s %s\n") % i->first % i->second);
       I(i->first() != "");
       I(i->second.inner()() != "");
       mapping.add(*i);
@@ -212,7 +211,7 @@ static void classify_dels(set<entry> const & in_dels,
 	  if (app.db.file_version_exists(pip.ident()))
 	    {
 	      // this is a "true delta"
-	      L("found true delta %s\n", pip.path()().c_str());
+	      L(F("found true delta %s\n") % pip.path());
 	      file_id new_id = adds.get(pip.path());
 	      deltas.insert(patch_delta(pip.ident(), new_id, pip.path()));
 	      adds.del(pip);
@@ -221,8 +220,8 @@ static void classify_dels(set<entry> const & in_dels,
 	    {
 	      // this is a recoverable error: treat as a true delete
 	      // (accompanied by a true insert)
-	      L("found probable delta %s %s but no pre-version in database\n", 
-		pip.path()().c_str(), pip.ident().inner()().c_str());
+	      L(F("found probable delta %s %s but no pre-version in database\n") 
+		% pip.path() % pip.ident());
 	      dels.insert(pip.path());
 	    }
 	}
@@ -231,14 +230,14 @@ static void classify_dels(set<entry> const & in_dels,
 	  // there is a matching add of a file with the same id, so this is
 	  // a "simple delta" (a move)
 	  file_path dest = adds.get(pip.ident());
-	  L("found move %s -> %s\n", pip.path()().c_str(), dest().c_str());
+	  L(F("found move %s -> %s\n") % pip.path() % dest);
 	  moves.insert(patch_move(pip.path(), dest));
 	  adds.del(pip);
 	}
       else
 	{
 	  // this is a "true delete"
-	  L("found delete %s\n", pip.path()().c_str());
+	  L(F("found delete %s\n") % pip.path());
 	  dels.insert(pip.path());
 	}
     }
@@ -260,13 +259,13 @@ void manifests_to_patch_set(manifest_map const & m_old,
   // calculate ids
   calculate_manifest_map_ident(m_old, ps.m_old);
   calculate_manifest_map_ident(m_new, ps.m_new);  
-  L("building patch set %s -> %s\n", ps.m_old.inner()().c_str(), ps.m_new.inner()().c_str());
+  L(F("building patch set %s -> %s\n") % ps.m_old % ps.m_new);
 
   // calculate manifest_changes structure
   manifest_changes changes;
   calculate_manifest_changes(m_old, m_new, changes);
-  L("constructed manifest_changes (%d dels, %d adds)\n", 
-    changes.dels.size(), changes.adds.size());
+  L(F("constructed manifest_changes (%d dels, %d adds)\n")
+    % changes.dels.size() % changes.adds.size());
   
   // analyze adds and dels in manifest_changes
   path_id_bijection add_mapping;
@@ -280,13 +279,13 @@ void manifests_to_patch_set(manifest_map const & m_old,
 
   // all done, log and assert to be sure.
   if (ps.f_adds.size() > 0)
-    L("found %d plain additions\n", ps.f_adds.size());
+    L(F("found %d plain additions\n") % ps.f_adds.size());
   if (ps.f_dels.size() > 0)
-    L("found %d plain deletes\n", ps.f_dels.size());  
+    L(F("found %d plain deletes\n") % ps.f_dels.size());  
   if (ps.f_deltas.size() > 0)
-    L("matched %d del/add pairs as deltas\n", ps.f_deltas.size());  
+    L(F("matched %d del/add pairs as deltas\n") % ps.f_deltas.size());  
   if (ps.f_moves.size() > 0)
-    L("matched %d del/add pairs as moves\n", ps.f_moves.size());
+    L(F("matched %d del/add pairs as moves\n") % ps.f_moves.size());
   I(ps.f_dels.size() + ps.f_moves.size() + ps.f_deltas.size() == changes.dels.size());
   I(ps.f_adds.size() + ps.f_moves.size() + ps.f_deltas.size() == num_add_candidates);
 }

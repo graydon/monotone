@@ -1,3 +1,15 @@
+2003-10-02  graydon hoare  <graydon@pobox.com>
+
+	* boost/circular_buffer*.hpp: Add.
+	* AUTHORS, cert.cc, commands.cc, database.cc,
+	diff_patch.cc, http_tasks.cc, keys.cc, lua.cc, manifest.cc,
+	network.cc, nntp_machine.cc, packet.cc, patch_set.cc, 
+	rcs_import.cc, sanity.cc, sanity.hh, ui.hh, update.cc,
+	vocab_terms.hh, work.cc:	
+	remove existing circular buffer code, replace all
+	logging and asserty stuff with boost::format objects
+	rather than vsnprintf.
+
 2003-10-01  graydon hoare  <graydon@pobox.com>
 
 	* testsuite.at: Don't use getenv("HOSTNAME").

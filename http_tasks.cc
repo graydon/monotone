@@ -48,13 +48,13 @@ bool post_http_packets(string const & group_name,
     + "?" + query + " HTTP/1.0";
 
   stream << request << "\r\n";
-  L("HTTP -> '%s'\n", request.c_str());
+  L(F("HTTP -> '%s'\n") % request);
 
   stream << "Host: " << http_host << "\r\n";
-  L("HTTP -> 'Host: %s'\n", http_host.c_str());
+  L(F("HTTP -> 'Host: %s'\n") % http_host);
 
   stream << "Content-Length: " << packets.size() << "\r\n";
-  L("HTTP -> 'Content-Length: %d'\n", packets.size());
+  L(F("HTTP -> 'Content-Length: %d'\n") % packets.size());
 
   stream << "\r\n";
   stream.flush();
@@ -70,7 +70,7 @@ bool post_http_packets(string const & group_name,
 
   stream.flush();
 
-  L("HTTP -> %d bytes\n", packets.size());
+  L(F("HTTP -> %d bytes\n") % packets.size());
 
   stream.flush();
 
@@ -78,14 +78,14 @@ bool post_http_packets(string const & group_name,
   bool ok = (stream >> http >> response &&
 	     response >= 200 && 
 	     response < 300);
-  L("HTTP <- %s %d\n", http.c_str(), response);
+  L(F("HTTP <- %s %d\n") % http % response);
   if (! ok)
     {
       string s;
       char c;
       while (stream.get(c))
 	s += c;
-      L("HTTP ERROR: '%s'\n", s.c_str());
+      L(F("HTTP ERROR: '%s'\n") % s);
     }
   return ok;
 }
@@ -146,10 +146,10 @@ void fetch_http_packets(string const & group_name,
     + "?" + query + " HTTP/1.0";
 
   stream << request << "\r\n";
-  L("HTTP -> '%s'\n", request.c_str());
-
+  L(F("HTTP -> '%s'\n") % request);
+  
   stream << "Host: " << http_host << "\r\n";
-  L("HTTP -> 'Host: %s'\n", http_host.c_str());
+  L(F("HTTP -> 'Host: %s'\n") % http_host);
 
   stream << "\r\n";
   stream.flush();
@@ -165,13 +165,13 @@ void fetch_http_packets(string const & group_name,
 	memset(line, 0, linesz);
 	stream.getline(line, linesz, '\n');	
 	size_t bytes = stream.gcount();
-	N(bytes < linesz, "long header response line from server");
+	N(bytes < linesz, F("long header response line from server"));
 	if (bytes > 0) bytes--;
 	string tmp(line, bytes);
 	if (bytes == 1 || tmp.empty() || tmp == "\r") 
 	  in_headers = false;
 	else
-	  L("HTTP <- header %d bytes: '%s'\n", bytes, tmp.c_str());
+	  L(F("HTTP <- header %d bytes: '%s'\n") % bytes % tmp);
       }
   }
 
@@ -186,7 +186,7 @@ void fetch_http_packets(string const & group_name,
 	// please use the utmost clarity and safety in this part.
 	stream.read(buf, bufsz);
 	size_t bytes = stream.gcount();
-	N(bytes <= bufsz, "long response line from server");
+	N(bytes <= bufsz, F("long read from server"));
 	string tmp(buf, bytes);
 	size_t pos = tmp.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
 					   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -194,9 +194,8 @@ void fetch_http_packets(string const & group_name,
 					   "+/=_.@[] \n\t");
 	if (pos != string::npos)
 	  {
-	    L("Bad char from network: pos %d, char '%d'\n", 
-	      pos,
-	      static_cast<int>(packet.at(pos)));
+	    W(F("Bad char from network: pos %d, char '%d'\n")
+	      % pos % static_cast<int>(packet.at(pos)));
 	    continue;
 	  }
 	
@@ -206,7 +205,7 @@ void fetch_http_packets(string const & group_name,
 	if (scan_for_seq(packet, maj_number, min_number, end))
 	  {
 	    // we are at the end of a packet
-	    L("got sequence numbers %lu, %lu\n", maj_number, min_number);
+	    L(F("got sequence numbers %lu, %lu\n") % maj_number % min_number);
 	    istringstream pkt(packet.substr(0,end));
 	    packet_ticker += read_packets(pkt, consumer);
 	    packet.erase(0, end);
@@ -215,10 +214,10 @@ void fetch_http_packets(string const & group_name,
 
     if (packet.size() != 0)
       {
-	L("%d trailing bytes from http\n", packet.size());
+	L(F("%d trailing bytes from http\n") % packet.size());
 	istringstream pkt(packet);
 	packet_ticker += read_packets(pkt, consumer);
       }    
   }
-  P("http fetch complete\n");
+  P(F("http fetch complete\n"));
 }

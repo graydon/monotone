@@ -94,28 +94,24 @@ void open_connection(string const & host_name,
     struct in_addr iad;
     iad.s_addr = * reinterpret_cast<unsigned long *>(hent->h_addr);
     resolved_host = string(inet_ntoa(iad));    
-    L("resolved '%s' as '%s'\n", host_name.c_str(), resolved_host.c_str());
+    L(F("resolved '%s' as '%s'\n") % host_name % resolved_host);
   }
 
   addr.ip(resolved_host.c_str());
   addr.port(port_num);
 
-  L("connecting to port number %lu\n", port_num);
+  L(F("connecting to port number %d\n") % port_num);
   
   boost::socket::connector<> connector;
 
   N(connector.connect(connection, proto, addr) == 0,
-    "unable to connect to server " 
-    + host_name 
-    + ":" + lexical_cast<string>(port_num));
+    F("unable to connect to server %s:%d") % host_name % port_num); 
 
   boost::shared_ptr< basic_socket_stream<char> > 
     link(new basic_socket_stream<char>(connection));
 
   N(link->good(),
-    "bad network link, connecting to " 
-    + host_name 
-    + ":" + lexical_cast<string>(port_num));
+    F("bad network link, connecting to %s:%d") % host_name % port_num);
 
   stream = link;
 }
@@ -125,7 +121,7 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 				  app_state & app)
 {
 
-  L("found %d targets for posting\n", targets.size());
+  L(F("found %d targets for posting\n") % targets.size());
 
   size_t good_packets = 0, total_packets = 0;
 
@@ -135,10 +131,10 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
       string proto, host, path;
       unsigned long port;
       N(parse_url(targ->first, proto, host, path, port),
-	("cannot parse url '" + targ->first() + "'"));
+	F("cannot parse url '%s'") % targ->first);
 
       N((proto == "http" || proto == "nntp"),
-	("unknown protocol '" + proto + "', only know nntp and http"));
+	F("unknown protocol '%s', only know nntp and http") % proto);
 
       string postbody;
       vector<string> contents;
@@ -158,11 +154,11 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 	  hexenc<rsa_sha1_signature> signature_hex;
 
 	  N(app.lua.hook_get_http_auth(targ->first, targ->second, keyid),
-	    ("missing pubkey for '" 
-	     + targ->first() + "', group " + targ->second())); 
+	    F("missing pubkey for '%s', group %s")
+	    % targ->first % targ->second); 
 
 	  N(app.db.private_key_exists(keyid),
-	    "missing private key data for '" + keyid() + "'");
+	    F("missing private key data for '%s'") % keyid);
 	  
 	  app.db.get_key(keyid, privkey);
 	  make_signature(app.lua, keyid, privkey, postbody, signature_base64);
@@ -181,7 +177,7 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 	    }
 	  catch (std::exception & e)
 	    {
-	      L("got exception from network: %s\n", e.what());
+	      L(F("got exception from network: %s\n") % string(e.what()));
 	    }
 	}
       
@@ -189,8 +185,8 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 	{
 	  string sender;
 	  N(app.lua.hook_get_news_sender(targ->first, targ->second, sender),
-	    ("missing sender address for '" 
-	     + targ->first() + "', group " + targ->second())); 
+	    F("missing sender address for '%s', group %s") 
+	    % targ->first % targ->second); 
 	  
 	  try 
 	    {
@@ -204,7 +200,7 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 	    }
 	  catch (std::exception & e)
 	    {
-	      L("got exception from network: %s\n", e.what());
+	      L(F("got exception from network: %s\n") % string(e.what()));
 	    }
 	  
 	}
@@ -217,7 +213,7 @@ void post_queued_blobs_to_network(vector< pair<url,group> > const & targets,
 	  }
       total_packets += contents.size();
     }
-  P("posted %d / %d packets ok\n", good_packets, total_packets);
+  P(F("posted %d / %d packets ok\n") % good_packets % total_packets);
 }
 
 void fetch_queued_blobs_from_network(vector< pair<url,group> > const & sources,
@@ -232,14 +228,13 @@ void fetch_queued_blobs_from_network(vector< pair<url,group> > const & sources,
       string proto, host, path;
       unsigned long port;            
       N(parse_url(src->first, proto, host, path, port),
-	("cannot parse url '" + src->first() + "'"));
+	F("cannot parse url '%s'") % src->first);
       
       N((proto == "http" || proto == "nntp"),
-	("unknown protocol '" + proto + "', only know nntp and http"));
+	F("unknown protocol '%s', only know nntp and http") % proto);
       
-      P("fetching packets from group %s at %s\n", 
-	src->second().c_str(),
-	src->first().c_str());
+      P(F("fetching packets from group %s at %s\n")
+	% src->second % src->first);
 
       dbw.server.reset(*src);
       
@@ -265,7 +260,7 @@ void fetch_queued_blobs_from_network(vector< pair<url,group> > const & sources,
 	  app.db.put_sequences(src->first, src->second, maj, min);
 	}
     }
-  P("fetched %d packets\n", dbw.count);
+  P(F("fetched %d packets\n") % dbw.count);
 }
   
 
@@ -279,14 +274,12 @@ void queue_blob_for_network(vector< pair<url,group> > const & targets,
       string proto, host, path;
       unsigned long port;      
       N(parse_url(targ->first, proto, host, path, port),
-	("cannot parse url '" + targ->first() + "'"));
+	F("cannot parse url '%s'") % targ->first);
 
       app.db.queue_posting(targ->first, targ->second, blob);
 
-      P("%d bytes queued to send to group %s at %s\n", 
-	blob.size(),
-	targ->second().c_str(),
-	targ->first().c_str());
+      P(F("%d bytes queued to send to group %s at %s\n") 
+	% blob.size() % targ->second % targ->first);
 
     }
 }

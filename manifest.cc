@@ -50,7 +50,7 @@ void manifest_map_builder::visit_file(file_path const & path)
   if (app.lua.hook_ignore_file(path))
     return;
   hexenc<id> ident;
-  L("scanning file %s\n", path().c_str());
+  L(F("scanning file %s\n") % path);
   calculate_ident(path, ident);
   man.insert(entry(path, file_id(ident)));
 }

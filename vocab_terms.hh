@@ -9,7 +9,7 @@
 
 ATOMIC(id);                   // hash of data
 ATOMIC(data);                 // meaningless blob
-ATOMIC(delta);                // rdiff between 2 datas
+ATOMIC(delta);                // xdelta between 2 datas
 
 ATOMIC(local_path);           // non-absolute file
 ATOMIC(file_path);            // non-absolute, non-bookeeping file
@@ -57,4 +57,26 @@ EXTERN template class base64< rsa_sha1_signature >;
 EXTERN template class hexenc< rsa_sha1_signature >;
 EXTERN template class base64< cert_value >;
 
+// instantiate those bits of the stream operator vocab (again) actually in
+// use. "again" since stream operators are friends, not members.
 
+EXTERN template ostream & operator<< <>(ostream &,           hexenc<id>   const &);
+EXTERN template ostream & operator<< <>(ostream &, manifest< hexenc<id> > const &);
+EXTERN template ostream & operator<< <>(ostream &,     file< hexenc<id> > const &);
+
+EXTERN template ostream & operator<< <>(ostream &,                   gzip<data>     const &);
+EXTERN template ostream & operator<< <>(ostream &,           base64< gzip<data> >   const &);
+EXTERN template ostream & operator<< <>(ostream &, manifest< base64< gzip<data> > > const &);
+EXTERN template ostream & operator<< <>(ostream &,     file< base64< gzip<data> > > const &);
+
+EXTERN template ostream & operator<< <>(ostream &,                   gzip<delta>     const &);
+EXTERN template ostream & operator<< <>(ostream &,           base64< gzip<delta> >   const &);
+EXTERN template ostream & operator<< <>(ostream &, manifest< base64< gzip<delta> > > const &);
+EXTERN template ostream & operator<< <>(ostream &,     file< base64< gzip<delta> > > const &);
+
+EXTERN template ostream & operator<< <>(ostream &,         arc4<rsa_priv_key>     const &);
+EXTERN template ostream & operator<< <>(ostream &, base64< arc4<rsa_priv_key> >   const &);
+EXTERN template ostream & operator<< <>(ostream &, base64< rsa_pub_key > const &);
+EXTERN template ostream & operator<< <>(ostream &, base64< rsa_sha1_signature > const &);
+EXTERN template ostream & operator<< <>(ostream &, hexenc< rsa_sha1_signature > const &);
+EXTERN template ostream & operator<< <>(ostream &, base64< cert_value > const &);

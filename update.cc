@@ -61,8 +61,8 @@ static void find_descendents(manifest_id const & ident,
 	    {
 	      manifest_id nxt = j->inner().ident;
 	      if (descendents.find(nxt) != descendents.end())
-		L("skipping cyclical ancestry edge %s -> %s\n",
-		  i->inner()().c_str(), nxt.inner()().c_str());
+		L(F("skipping cyclical ancestry edge %s -> %s\n")
+		  % (*i) % nxt);
 	      else
 		{
 		  done = false;
@@ -158,7 +158,7 @@ static bool pick_sorter(string const & certname,
 {
   string sort_type;
 
-  L("picking sort operator for cert name '%s'\n", certname.c_str());
+  L(F("picking sort operator for cert name '%s'\n") % certname);
 
   if (certname == ancestor_cert_name)
     {
@@ -236,7 +236,7 @@ static void filter_by_sorting(vector<string> const & certnames,
 
       if (!pick_sorter(certname, app, sort))
 	{
-	  L("warning: skipping cert '%s', no sort operator found\n", certname.c_str());
+	  W(F("skipping cert '%s', no sort operator found\n") % certname);
 	  continue;
 	}
       
@@ -256,7 +256,7 @@ static void filter_by_sorting(vector<string> const & certnames,
 	max_element(certs.begin(), certs.end(), sort_adaptor(sort));
       if (max == certs.end())
 	{
-	  L("skipping sort cert '%s' with no maximum value\n", certname.c_str());
+	  L(F("skipping sort cert '%s' with no maximum value\n") % certname);
 	  continue;
 	}
 
@@ -286,7 +286,7 @@ void pick_update_target(manifest_id const & base_ident,
   if (find(sort_certs.begin(), sort_certs.end(), ancestor_cert_name) 
       == sort_certs.end())
     {
-      L("adding ancestry as final sort operator\n");
+      L(F("adding ancestry as final sort operator\n"));
       sort_certs.push_back (ancestor_cert_name);
     }
   
@@ -301,7 +301,7 @@ void pick_update_target(manifest_id const & base_ident,
       set<manifest_id> branch;
       filter_by_branch(app, candidates, branch);
       N(branch.size() != 0,
-	"no update candidates after selecting branch");
+	F("no update candidates after selecting branch"));
       candidates = branch;
     }
     
@@ -310,15 +310,15 @@ void pick_update_target(manifest_id const & base_ident,
       set<manifest_id> sorted;
       filter_by_sorting(sort_certs, candidates, app, sorted);
       N(sorted.size() != 0,
-	"no update candidates after sorting");
+	F("no update candidates after sorting"));
       candidates = sorted;
     }
 
   N(candidates.size() != 0,
-    "no candidates remain after selection");
+    F("no candidates remain after selection"));
 
   N(candidates.size() == 1,
-    "multiple candidates remain after selection");
+    F("multiple candidates remain after selection"));
   
   chosen = *(candidates.begin());
 }

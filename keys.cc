@@ -34,7 +34,7 @@ using namespace std;
 static void do_arc4(SecByteBlock & phrase,
 		    SecByteBlock & payload)
 {
-  L("running arc4 process on %d bytes of data\n", payload.size());
+  L(F("running arc4 process on %d bytes of data\n") % payload.size());
   ARC4 a4(phrase.data(), phrase.size());
   a4.ProcessString(payload.data(), payload.size());
 }
@@ -124,7 +124,7 @@ static void write_der(T & val, SecByteBlock & sec)
       der_sink.MessageEnd();
       sec.Assign(reinterpret_cast<byte const *>(der_encoded.data()), 
 		 der_encoded.size());
-      L("wrote %d bytes of DER-encoded data\n", der_encoded.size());
+      L(F("wrote %d bytes of DER-encoded data\n") % der_encoded.size());
     }
   catch (...)
     {
@@ -176,8 +176,8 @@ void generate_key_pair(lua_hooks & lua,           // to hook for phrase
   // if all that worked, we can return our results to caller
   encode_base64(raw_priv_key, priv_out);
   encode_base64(raw_pub_key, pub_out);
-  L("generated %d-byte public key\n", pub_out().size());
-  L("generated %d-byte (encrypted) private key\n", priv_out().size());
+  L(F("generated %d-byte public key\n") % pub_out().size());
+  L(F("generated %d-byte (encrypted) private key\n") % priv_out().size());
 }
 
 void make_signature(lua_hooks & lua,           // to hook for phrase
@@ -204,14 +204,14 @@ void make_signature(lua_hooks & lua,           // to hook for phrase
     }  
   AutoSeededRandomPool rng(request_blocking_rng);
   
-  L("base64-decoding %d-byte private key\n", priv().size());
+  L(F("base64-decoding %d-byte private key\n") % priv().size());
   decode_base64(priv, decoded_key);
   decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
 		       decoded_key().size());
   read_passphrase(lua, id, phrase);
   do_arc4(phrase, decrypted_key);
   
-  L("building signer from %d-byte decrypted private key\n", decrypted_key.size());
+  L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
   StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
   RSASSA_PKCS1v15_SHA_Signer signer(keysource);
   StringSource tmp(tosign, true, 
@@ -219,7 +219,7 @@ void make_signature(lua_hooks & lua,           // to hook for phrase
 		   (rng, signer, 
 		    new StringSink(sig_string)));  
   
-  L("produced %d-byte signature\n", sig_string.size());
+  L(F("produced %d-byte signature\n") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 }
 
@@ -233,7 +233,7 @@ bool check_signature(base64<rsa_pub_key> const & pub_encoded,
   SecByteBlock pub_block;
   pub_block.Assign(reinterpret_cast<byte const *>(pub().data()), pub().size());
   StringSource keysource(pub_block.data(), pub_block.size(), true);
-  L("building verifier for %d-byte pub key\n", pub_block.size());
+  L(F("building verifier for %d-byte pub key\n") % pub_block.size());
   RSASSA_PKCS1v15_SHA_Verifier verifier(keysource);
 
   // examine signature
@@ -243,8 +243,8 @@ bool check_signature(base64<rsa_pub_key> const & pub_encoded,
     return false;
 
   // check the text+sig against the key
-  L("checking %d-byte (%d decoded) signature with %d-byte pub key\n", 
-    signature().size(), sig_decoded().size(), pub_block.size());
+  L(F("checking %d-byte (%d decoded) signature with %d-byte pub key\n") % 
+    signature().size() % sig_decoded().size() % pub_block.size());
   VerifierFilter * vf = NULL;
 
   // crypto++ likes to use pointers in ways which boost and std:: smart
