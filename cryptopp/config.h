@@ -39,10 +39,6 @@
 // and you want a (possibly) faster IDEA implementation using log tables
 // #define IDEA_LARGECACHE
 
-// Try this if you have a large cache or your CPU is slow manipulating
-// individual bytes.
-// #define DIAMOND_USE_PERMTABLE
-
 // Define this if, for the linear congruential RNG, you want to use
 // the original constants as specified in S.K. Park and K.W. Miller's
 // CACM paper.
@@ -65,14 +61,17 @@
 // Defining this will cause Crypto++ to make only one call to CryptAcquireContext.
 #define WORKAROUND_MS_BUG_Q258000
 
-// Avoid putting "CryptoPP::" in front of everything in Doxygen output
 #ifdef CRYPTOPP_DOXYGEN_PROCESSING
+// Avoid putting "CryptoPP::" in front of everything in Doxygen output
 #	define CryptoPP
 #	define NAMESPACE_BEGIN(x)
 #	define NAMESPACE_END
+// Get Doxygen to generate better documentation for these typedefs
+#	define DOCUMENTED_TYPEDEF(x, y) class y : public x {};
 #else
 #	define NAMESPACE_BEGIN(x) namespace x {
 #	define NAMESPACE_END }
+#	define DOCUMENTED_TYPEDEF(x, y) typedef x y;
 #endif
 #define ANONYMOUS_NAMESPACE_BEGIN namespace {
 #define USING_NAMESPACE(x) using namespace x;
@@ -95,77 +94,63 @@
 #	define __USE_W32_SOCKETS
 #endif
 
-typedef unsigned char byte;     // moved outside namespace for Borland C++Builder 5
+typedef unsigned char byte;		// put in global namespace to avoid ambiguity with other byte typedefs
 
 NAMESPACE_BEGIN(CryptoPP)
 
 typedef unsigned short word16;
-#if ( defined(__alpha) || defined(__x86_64) ) && !defined(_MSC_VER)
-	typedef unsigned int word32;
-#else
-	typedef unsigned long word32;
-#endif
+typedef unsigned int word32;
 
 #if defined(__GNUC__) || defined(__MWERKS__)
-#	define WORD64_AVAILABLE
+	#define WORD64_AVAILABLE
 	typedef unsigned long long word64;
-#	define W64LIT(x) x##LL
+	#define W64LIT(x) x##LL
 #elif defined(_MSC_VER) || defined(__BCPLUSPLUS__)
-#	define WORD64_AVAILABLE
+	#define WORD64_AVAILABLE
 	typedef unsigned __int64 word64;
-#	define W64LIT(x) x##ui64
+	#define W64LIT(x) x##ui64
 #endif
 
-// defined this if your CPU is not 64-bit
-#if defined(WORD64_AVAILABLE) && !defined(__alpha) && !defined(__x86_64)
-#	define SLOW_WORD64
-#endif
-
-// word should have the same size as your CPU registers
-// dword should be twice as big as word
-
-#if (defined(__GNUC__) && !defined(__alpha)) && !defined(__x86_64) || defined(__MWERKS__)
-	typedef unsigned long __attribute__((__may_alias__)) word;
-	typedef unsigned long long __attribute__((__may_alias__)) dword;
-#elif defined(_MSC_VER) || defined(__BCPLUSPLUS__)
-	typedef unsigned __int32 word;
-	typedef unsigned __int64 dword;
+// define largest word type
+#ifdef WORD64_AVAILABLE
+	typedef word64 lword;
 #else
-	typedef unsigned int word;
-	typedef unsigned long dword;
+	typedef word32 lword;
+#endif
+
+#if defined(__alpha__) || defined(__ia64__) || defined(_ARCH_PPC64) || defined(__x86_64__) || defined(__mips64)
+	// These platforms have 64-bit CPU registers. Unfortunately most C++ compilers doesn't
+	// allow any way to access the 64-bit by 64-bit multiply instruction without using
+	// assembly, so in order to use word64 as word, the assembly instruction must be defined
+	// in Dword::Multiply().
+	typedef word32 hword;
+	typedef word64 word;
+#else
+	#define CRYPTOPP_NATIVE_DWORD_AVAILABLE
+	#ifdef WORD64_AVAILABLE
+		#define CRYPTOPP_SLOW_WORD64 // defined this if your CPU is not 64-bit to use alternative code that avoids word64
+		typedef word16 hword;
+		typedef word32 word;
+		typedef word64 dword;
+	#else
+		typedef word8 hword;
+		typedef word16 word;
+		typedef word32 dword;
+	#endif
 #endif
 
 const unsigned int WORD_SIZE = sizeof(word);
 const unsigned int WORD_BITS = WORD_SIZE * 8;
 
-#define LOW_WORD(x) (word)(x)
-
-union dword_union
-{
-	dword_union (const dword &dw) : dw(dw) {}
-	dword dw;
-	word w[2];
-};
-
-#ifdef IS_LITTLE_ENDIAN
-#	define HIGH_WORD(x) (dword_union(x).w[1])
-#else
-#	define HIGH_WORD(x) (dword_union(x).w[0])
-#endif
-
-// if the above HIGH_WORD macro doesn't work (if you are not sure, compile it
-// and run the validation tests), try this:
-// #define HIGH_WORD(x) (word)((x)>>WORD_BITS)
-
 #if defined(_MSC_VER) || defined(__BCPLUSPLUS__)
-#	define INTEL_INTRINSICS
-#	define FAST_ROTATE
+	#define INTEL_INTRINSICS
+	#define FAST_ROTATE
 #elif defined(__MWERKS__) && TARGET_CPU_PPC
-#	define PPC_INTRINSICS
-#	define FAST_ROTATE
+	#define PPC_INTRINSICS
+	#define FAST_ROTATE
 #elif defined(__GNUC__) && defined(__i386__)
 	// GCC does peephole optimizations which should result in using rotate instructions
-#	define FAST_ROTATE
+	#define FAST_ROTATE
 #endif
 
 NAMESPACE_END
@@ -178,12 +163,34 @@ NAMESPACE_END
 #endif
 
 #ifdef _MSC_VER
+#define CRYPTOPP_NO_VTABLE __declspec(novtable)
+#else
+#define CRYPTOPP_NO_VTABLE
+#endif
+
+#ifdef _MSC_VER
+	// 4231: nonstandard extension used : 'extern' before template explicit instantiation
 	// 4250: dominance
+	// 4251: member needs to have dll-interface
+	// 4275: base needs to have dll-interface
 	// 4660: explicitly instantiating a class that's already implicitly instantiated
 	// 4661: no suitable definition provided for explicit template instantiation request
 	// 4786: identifer was truncated in debug information
 	// 4355: 'this' : used in base member initializer list
-#	pragma warning(disable: 4250 4660 4661 4786 4355)
+#	pragma warning(disable: 4231 4250 4251 4275 4660 4661 4786 4355)
+#endif
+
+#if (defined(_MSC_VER) && _MSC_VER <= 1300) || defined(__MWERKS__) || defined(_STLPORT_VERSION)
+#define CRYPTOPP_DISABLE_UNCAUGHT_EXCEPTION
+#endif
+
+#ifndef CRYPTOPP_DISABLE_UNCAUGHT_EXCEPTION
+#define CRYPTOPP_UNCAUGHT_EXCEPTION_AVAILABLE
+#endif
+
+// CodeWarrior defines _MSC_VER
+#if !defined(CRYPTOPP_DISABLE_X86ASM) && ((defined(_MSC_VER) && !defined(__MWERKS__) && defined(_M_IX86)) || (defined(__GNUC__) && defined(__i386__)))
+#define CRYPTOPP_X86ASM_AVAILABLE
 #endif
 
 // ***************** determine availability of OS features ********************
@@ -198,7 +205,7 @@ NAMESPACE_END
 #define CRYPTOPP_UNIX_AVAILABLE
 #endif
 
-#if defined(WORD64_AVAILABLE) && (defined(CRYPTOPP_WIN32_AVAILABLE) || defined(CRYPTOPP_UNIX_AVAILABLE) || defined(macintosh))
+#if defined(WORD64_AVAILABLE) && (defined(CRYPTOPP_WIN32_AVAILABLE) || defined(CRYPTOPP_UNIX_AVAILABLE))
 #	define HIGHRES_TIMER_AVAILABLE
 #endif
 
@@ -229,7 +236,7 @@ NAMESPACE_END
 #	define OS_RNG_AVAILABLE
 #endif
 
-#ifdef CRYPTOPP_UNIX_AVAILABLE
+#if defined(CRYPTOPP_UNIX_AVAILABLE) || defined(CRYPTOPP_DOXYGEN_PROCESSING)
 #	define NONBLOCKING_RNG_AVAILABLE
 #	define BLOCKING_RNG_AVAILABLE
 #	define OS_RNG_AVAILABLE
@@ -242,6 +249,55 @@ NAMESPACE_END
 #	define THREADS_AVAILABLE
 #endif
 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#	define CRYPTOPP_MALLOC_ALIGNMENT_IS_16
+#endif
+
+#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
+#	define CRYPTOPP_MEMALIGN_AVAILABLE
+#endif
+
 #endif	// NO_OS_DEPENDENCE
+
+// ***************** DLL related ********************
+
+#ifdef CRYPTOPP_WIN32_AVAILABLE
+
+#ifdef CRYPTOPP_EXPORTS
+#define CRYPTOPP_IS_DLL
+#define CRYPTOPP_DLL __declspec(dllexport)
+#elif defined(CRYPTOPP_IMPORTS)
+#define CRYPTOPP_IS_DLL
+#define CRYPTOPP_DLL __declspec(dllimport)
+#else
+#define CRYPTOPP_DLL
+#endif
+
+#define CRYPTOPP_API __stdcall
+#define CRYPTOPP_CDECL __cdecl
+
+#else	// CRYPTOPP_WIN32_AVAILABLE
+
+#define CRYPTOPP_DLL
+#define CRYPTOPP_API
+#define CRYPTOPP_CDECL
+
+#endif	// CRYPTOPP_WIN32_AVAILABLE
+
+#if defined(CRYPTOPP_MANUALLY_INSTANTIATE_TEMPLATES) && !defined(CRYPTOPP_IMPORTS)
+#define CRYPTOPP_DLL_TEMPLATE_CLASS template class CRYPTOPP_DLL
+#elif defined(__MWERKS__)
+#define CRYPTOPP_DLL_TEMPLATE_CLASS extern class CRYPTOPP_DLL
+#else
+#define CRYPTOPP_DLL_TEMPLATE_CLASS extern template class CRYPTOPP_DLL
+#endif
+
+#if defined(CRYPTOPP_MANUALLY_INSTANTIATE_TEMPLATES) && !defined(CRYPTOPP_EXPORTS)
+#define CRYPTOPP_STATIC_TEMPLATE_CLASS template class
+#elif defined(__MWERKS__)
+#define CRYPTOPP_STATIC_TEMPLATE_CLASS extern class
+#else
+#define CRYPTOPP_STATIC_TEMPLATE_CLASS extern template class
+#endif
 
 #endif

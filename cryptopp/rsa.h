@@ -13,8 +13,8 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
-//! .
-class RSAFunction : public TrapdoorFunction, public X509PublicKey
+//! _
+class CRYPTOPP_DLL RSAFunction : public TrapdoorFunction, public X509PublicKey
 {
 	typedef RSAFunction ThisClass;
 
@@ -48,8 +48,8 @@ protected:
 	Integer m_n, m_e;
 };
 
-//! .
-class InvertibleRSAFunction : public RSAFunction, public TrapdoorFunctionInverse, public PKCS8PrivateKey
+//! _
+class CRYPTOPP_DLL InvertibleRSAFunction : public RSAFunction, public TrapdoorFunctionInverse, public PKCS8PrivateKey
 {
 	typedef InvertibleRSAFunction ThisClass;
 
@@ -94,14 +94,11 @@ public:
 	void SetMultiplicativeInverseOfPrime2ModPrime1(const Integer &u) {m_u = u;}
 
 protected:
-	virtual void DEREncodeOptionalAttributes(BufferedTransformation &bt) const {}
-	virtual void BERDecodeOptionalAttributes(BufferedTransformation &bt) {}
-
 	Integer m_d, m_p, m_q, m_dp, m_dq, m_u;
 };
 
-//! .
-struct RSA
+//! RSA
+struct CRYPTOPP_DLL RSA
 {
 	static std::string StaticAlgorithmName() {return "RSA";}
 	typedef RSAFunction PublicKey;

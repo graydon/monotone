@@ -1,6 +1,9 @@
 // strciphr.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
+
+#ifndef CRYPTOPP_IMPORTS
+
 #include "strciphr.h"
 
 NAMESPACE_BEGIN(CryptoPP)
@@ -88,7 +91,7 @@ void AdditiveCipherTemplate<S>::Resynchronize(const byte *iv)
 }
 
 template <class BASE>
-void AdditiveCipherTemplate<BASE>::Seek(dword position)
+void AdditiveCipherTemplate<BASE>::Seek(lword position)
 {
 	PolicyInterface &policy = this->AccessPolicy();
 	unsigned int bytesPerIteration = policy.GetBytesPerIteration();
@@ -116,6 +119,8 @@ void CFB_CipherTemplate<BASE>::Resynchronize(const byte *iv)
 template <class BASE>
 void CFB_CipherTemplate<BASE>::ProcessData(byte *outString, const byte *inString, unsigned int length)
 {
+	assert(length % this->MandatoryBlockSize() == 0);
+
 	PolicyInterface &policy = this->AccessPolicy();
 	unsigned int bytesPerIteration = policy.GetBytesPerIteration();
 	unsigned int alignment = policy.GetAlignment();
@@ -186,3 +191,5 @@ void CFB_DecryptionTemplate<BASE>::CombineMessageAndShiftRegister(byte *output, 
 }
 
 NAMESPACE_END
+
+#endif

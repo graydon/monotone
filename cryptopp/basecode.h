@@ -3,22 +3,24 @@
 
 #include "filters.h"
 #include "algparam.h"
+#include "argnames.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-class BaseN_Encoder : public Unflushable<Filter>
+//! base n encoder, where n is a power of 2
+class CRYPTOPP_DLL BaseN_Encoder : public Unflushable<Filter>
 {
 public:
 	BaseN_Encoder(BufferedTransformation *attachment=NULL)
-		: Unflushable<Filter>(attachment) {}
+		{Detach(attachment);}
 
 	BaseN_Encoder(const byte *alphabet, int log2base, BufferedTransformation *attachment=NULL, int padding=-1)
-		: Unflushable<Filter>(attachment)
 	{
-		IsolatedInitialize(MakeParameters("EncodingLookupArray", alphabet)
-			("Log2Base", log2base)
-			("Pad", padding != -1)
-			("PaddingByte", byte(padding)));
+		Detach(attachment);
+		IsolatedInitialize(MakeParameters(Name::EncodingLookupArray(), alphabet)
+			(Name::Log2Base(), log2base)
+			(Name::Pad(), padding != -1)
+			(Name::PaddingByte(), byte(padding)));
 	}
 
 	void IsolatedInitialize(const NameValuePairs &parameters);
@@ -31,22 +33,23 @@ private:
 	SecByteBlock m_outBuf;
 };
 
-class BaseN_Decoder : public Unflushable<Filter>
+//! base n decoder, where n is a power of 2
+class CRYPTOPP_DLL BaseN_Decoder : public Unflushable<Filter>
 {
 public:
 	BaseN_Decoder(BufferedTransformation *attachment=NULL)
-		: Unflushable<Filter>(attachment) {}
+		{Detach(attachment);}
 
 	BaseN_Decoder(const int *lookup, int log2base, BufferedTransformation *attachment=NULL)
-		: Unflushable<Filter>(attachment)
 	{
-		IsolatedInitialize(MakeParameters("DecodingLookupArray", lookup)("Log2Base", log2base));
+		Detach(attachment);
+		IsolatedInitialize(MakeParameters(Name::DecodingLookupArray(), lookup)(Name::Log2Base(), log2base));
 	}
 
 	void IsolatedInitialize(const NameValuePairs &parameters);
 	unsigned int Put2(const byte *begin, unsigned int length, int messageEnd, bool blocking);
 
-	static void InitializeDecodingLookupArray(int *lookup, const byte *alphabet, unsigned int log2base, bool caseInsensitive);
+	static void InitializeDecodingLookupArray(int *lookup, const byte *alphabet, unsigned int base, bool caseInsensitive);
 
 private:
 	const int *m_lookup;
@@ -55,18 +58,19 @@ private:
 	SecByteBlock m_outBuf;
 };
 
-class Grouper : public Bufferless<Filter>
+//! filter that breaks input stream into groups of fixed size
+class CRYPTOPP_DLL Grouper : public Bufferless<Filter>
 {
 public:
 	Grouper(BufferedTransformation *attachment=NULL)
-		: Bufferless<Filter>(attachment) {}
+		{Detach(attachment);}
 
 	Grouper(int groupSize, const std::string &separator, const std::string &terminator, BufferedTransformation *attachment=NULL)
-		: Bufferless<Filter>(attachment)
 	{
-		IsolatedInitialize(MakeParameters("GroupSize", groupSize)
-			("Separator", ConstByteArrayParameter(separator))
-			("Terminator", ConstByteArrayParameter(terminator)));
+		Detach(attachment);
+		IsolatedInitialize(MakeParameters(Name::GroupSize(), groupSize)
+			(Name::Separator(), ConstByteArrayParameter(separator))
+			(Name::Terminator(), ConstByteArrayParameter(terminator)));
 	}
 
 	void IsolatedInitialize(const NameValuePairs &parameters);

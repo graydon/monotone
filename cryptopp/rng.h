@@ -1,3 +1,5 @@
+// rng.h - misc RNG related classes, see also osrng.h, randpool.h
+
 #ifndef CRYPTOPP_RNG_H
 #define CRYPTOPP_RNG_H
 
@@ -29,7 +31,7 @@ private:
 
 //! RNG derived from ANSI X9.17 Appendix C
 
-class X917RNG : public RandomNumberGenerator
+class CRYPTOPP_DLL X917RNG : public RandomNumberGenerator, public NotCopyable
 {
 public:
 	// cipher will be deleted by destructor, deterministicTimeVector = 0 means obtain time vector from system
@@ -50,17 +52,12 @@ private:
     it is intended for measuring the randomness of *PHYSICAL* RNGs.
     For more details see his paper in Journal of Cryptology, 1992. */
 
-class MaurerRandomnessTest : public Sink
+class MaurerRandomnessTest : public Bufferless<Sink>
 {
 public:
 	MaurerRandomnessTest();
 
-	/** these two I just added in to make it compile. naughty bit-rot. graydon@pobox.com */
-	virtual unsigned int Put2(const byte *inString, unsigned int length, int messageEnd, bool blocking) { return 0; }
-	virtual bool IsolatedFlush(bool hardFlush, bool blocking) { return false; }
-
-	void Put(byte inByte);
-	void Put(const byte *inString, unsigned int length);
+	unsigned int Put2(const byte *inString, unsigned int length, int messageEnd, bool blocking);
 
 	// BytesNeeded() returns how many more bytes of input is needed by the test
 	// GetTestValue() should not be called before BytesNeeded()==0

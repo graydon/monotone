@@ -5,9 +5,8 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
-//! <a href="http://www.weidai.com/scan-mirror/cs.html#RC4">Alleged RC4</a>
-/*! You can #ARC4 typedef rather than this class directly. */
-class ARC4_Base : public VariableKeyLength<16, 1, 256>, public RandomNumberGenerator, public SymmetricCipher
+//! _
+class CRYPTOPP_NO_VTABLE ARC4_Base : public VariableKeyLength<16, 1, 256>, public RandomNumberGenerator, public SymmetricCipher, public SymmetricCipherDocumentation
 {
 public:
 	~ARC4_Base();
@@ -23,36 +22,35 @@ public:
 	bool IsSelfInverting() const {return true;}
 	bool IsForwardTransformation() const {return true;}
 
-	typedef SymmetricCipherFinalTemplate<ARC4_Base> Encryption;
-	typedef SymmetricCipherFinalTemplate<ARC4_Base> Decryption;
+	typedef SymmetricCipherFinal<ARC4_Base> Encryption;
+	typedef SymmetricCipherFinal<ARC4_Base> Decryption;
 
 protected:
-	void UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length);
+	void UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length, const byte *iv);
 	virtual unsigned int GetDefaultDiscardBytes() const {return 0;}
 
     FixedSizeSecBlock<byte, 256> m_state;
     byte m_x, m_y;
 };
 
-//! .
-typedef SymmetricCipherFinalTemplate<ARC4_Base> ARC4;
+//! <a href="http://www.weidai.com/scan-mirror/cs.html#RC4">Alleged RC4</a>
+DOCUMENTED_TYPEDEF(SymmetricCipherFinal<ARC4_Base>, ARC4)
 
-//! Modified ARC4: it discards the first 256 bytes of keystream which may be weaker than the rest
-/*! You can #MARC4 typedef rather than this class directly. */
-class MARC4_Base : public ARC4_Base
+//! _
+class CRYPTOPP_NO_VTABLE MARC4_Base : public ARC4_Base
 {
 public:
 	static const char *StaticAlgorithmName() {return "MARC4";}
 
-	typedef SymmetricCipherFinalTemplate<MARC4_Base> Encryption;
-	typedef SymmetricCipherFinalTemplate<MARC4_Base> Decryption;
+	typedef SymmetricCipherFinal<MARC4_Base> Encryption;
+	typedef SymmetricCipherFinal<MARC4_Base> Decryption;
 
 protected:
 	unsigned int GetDefaultDiscardBytes() const {return 256;}
 };
 
-//! .
-typedef SymmetricCipherFinalTemplate<MARC4_Base> MARC4;
+//! Modified ARC4: it discards the first 256 bytes of keystream which may be weaker than the rest
+DOCUMENTED_TYPEDEF(SymmetricCipherFinal<MARC4_Base>, MARC4)
 
 NAMESPACE_END
 

@@ -4,20 +4,22 @@
 	classes that provide a uniform interface to this library.
 */
 
-/*!	\mainpage <a href="http://www.cryptopp.com">Crypto++</a><sup><small>TM</small></sup> Library 5.1 Reference Manual
+/*!	\mainpage <a href="http://www.cryptopp.com">Crypto++</a><sup><small>TM</small></sup> Library 5.2.1 Reference Manual
 <dl>
 <dt>Abstract Base Classes<dd>
 	cryptlib.h
 <dt>Symmetric Ciphers<dd>
 	SymmetricCipherDocumentation
 <dt>Hash Functions<dd>
-	HAVAL, MD2, MD4, MD5, PanamaHash, RIPEMD160, SHA, SHA256, SHA384, SHA512, Tiger
+	HAVAL, MD2, MD4, MD5, PanamaHash, RIPEMD160, RIPEMD320, RIPEMD128, RIPEMD256, SHA, SHA256, SHA384, SHA512, Tiger, Whirlpool
 <dt>Non-Cryptographic Checksums<dd>
 	CRC32, Adler32
 <dt>Message Authentication Codes<dd>
-	#MD5MAC, XMACC, HMAC, CBC_MAC, DMAC, PanamaMAC
+	#MD5MAC, XMACC, HMAC, CBC_MAC, DMAC, PanamaMAC, TTMAC
 <dt>Random Number Generators<dd>
 	NullRNG(), LC_RNG, RandomPool, BlockingRng, NonblockingRng, AutoSeededRandomPool, AutoSeededX917RNG
+<dt>Password-based Cryptography<dd>
+	PasswordBasedKeyDerivationFunction
 <dt>Public Key Cryptosystems<dd>
 	DLIES, ECIES, LUCES, RSAES, RabinES, LUC_IES
 <dt>Public Key Signature Schemes<dd>
@@ -39,11 +41,31 @@
 <dt>Filter Wrappers<dd>
 	StreamTransformationFilter, HashFilter, HashVerificationFilter, SignerFilter, SignatureVerificationFilter
 <dt>Binary to Text Encoders and Decoders<dd>
-	HexEncoder, HexDecoder, Base64Encoder, Base64Decoder
+	HexEncoder, HexDecoder, Base64Encoder, Base64Decoder, Base32Encoder, Base32Decoder
 <dt>Wrappers for OS features<dd>
-	Timer, Socket, WindowsHandle, ThreadLocalStorage
+	Timer, Socket, WindowsHandle, ThreadLocalStorage, ThreadUserTimer
 <dt>FIPS 140 related<dd>
 	fips140.h
+</dl>
+
+In the FIPS 140-2 validated DLL version of Crypto++, only the following implementation class are available.
+<dl>
+<dt>Block Ciphers<dd>
+	AES, DES_EDE2, DES_EDE3, SKIPJACK
+<dt>Cipher Modes (replace template parameter BC with one of the block ciphers above)<dd>
+	ECB_Mode\<BC\>, CTR_Mode\<BC\>, CBC_Mode\<BC\>, CFB_Mode\<BC\>, OFB_Mode\<BC\>
+<dt>Hash Functions<dd>
+	SHA
+<dt>Public Key Signature Schemes<dd>
+	RSASS\<PKCS1v15, SHA\>, DSA, ECDSA\<ECP, SHA\>, ECDSA\<EC2N, SHA\>
+<dt>Message Authentication Codes<dd>
+	HMAC\<SHA\>, CBC_MAC\<DES_EDE2\>, CBC_MAC\<DES_EDE3\>
+<dt>Random Number Generators<dd>
+	AutoSeededX917RNG\<DES_EDE3\>
+<dt>Key Agreement<dd>
+	#DH
+<dt>Public Key Cryptosystems<dd>
+	RSAES\<OAEP\<SHA\> \>
 </dl>
 
 <p>This reference manual is a work in progress. Some classes are still lacking detailed descriptions.
@@ -56,11 +78,7 @@ and getting me started with this manual.
 #define CRYPTOPP_CRYPTLIB_H
 
 #include "config.h"
-#include <limits.h>
-#include <exception>
-#include <string>
-#include <typeinfo>
-#include <assert.h>
+#include "stdcpp.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
@@ -85,7 +103,7 @@ typedef EnumToType<ByteOrder, LITTLE_ENDIAN_ORDER> LittleEndian;
 typedef EnumToType<ByteOrder, BIG_ENDIAN_ORDER> BigEndian;
 
 //! base class for all exceptions thrown by Crypto++
-class Exception : public std::exception
+class CRYPTOPP_DLL Exception : public std::exception
 {
 public:
 	//! error types
@@ -120,45 +138,45 @@ private:
 };
 
 //! exception thrown when an invalid argument is detected
-class InvalidArgument : public Exception
+class CRYPTOPP_DLL InvalidArgument : public Exception
 {
 public:
 	explicit InvalidArgument(const std::string &s) : Exception(INVALID_ARGUMENT, s) {}
 };
 
 //! exception thrown by decryption filters when trying to decrypt an invalid ciphertext
-class InvalidDataFormat : public Exception
+class CRYPTOPP_DLL InvalidDataFormat : public Exception
 {
 public:
 	explicit InvalidDataFormat(const std::string &s) : Exception(INVALID_DATA_FORMAT, s) {}
 };
 
 //! exception thrown by decryption filters when trying to decrypt an invalid ciphertext
-class InvalidCiphertext : public InvalidDataFormat
+class CRYPTOPP_DLL InvalidCiphertext : public InvalidDataFormat
 {
 public:
 	explicit InvalidCiphertext(const std::string &s) : InvalidDataFormat(s) {}
 };
 
 //! exception thrown by a class if a non-implemented method is called
-class NotImplemented : public Exception
+class CRYPTOPP_DLL NotImplemented : public Exception
 {
 public:
 	explicit NotImplemented(const std::string &s) : Exception(NOT_IMPLEMENTED, s) {}
 };
 
 //! exception thrown by a class when Flush(true) is called but it can't completely flush its buffers
-class CannotFlush : public Exception
+class CRYPTOPP_DLL CannotFlush : public Exception
 {
 public:
 	explicit CannotFlush(const std::string &s) : Exception(CANNOT_FLUSH, s) {}
 };
 
 //! error reported by the operating system
-class OS_Error : public Exception
+class CRYPTOPP_DLL OS_Error : public Exception
 {
 public:
-	OS_Error(ErrorType errorType, const std::string s, const std::string& operation, int errorCode)
+	OS_Error(ErrorType errorType, const std::string &s, const std::string& operation, int errorCode)
 		: Exception(errorType, s), m_operation(operation), m_errorCode(errorCode) {}
 	~OS_Error() throw() {}
 
@@ -173,7 +191,7 @@ protected:
 };
 
 //! used to return decoding results
-struct DecodingResult
+struct CRYPTOPP_DLL DecodingResult
 {
 	explicit DecodingResult() : isValidCoding(false), messageLength(0) {}
 	explicit DecodingResult(unsigned int len) : isValidCoding(true), messageLength(len) {}
@@ -190,24 +208,26 @@ struct DecodingResult
 };
 
 //! interface for retrieving values given their names
-/*! This class is used to safely pass a variable number of arbitrarily typed arguments to functions
+/*! \note This class is used to safely pass a variable number of arbitrarily typed arguments to functions
 	and to read values from keys and crypto parameters.
-	To get a value, you need to know the name and the type of the value. 
+	\note To obtain an object that implements NameValuePairs for the purpose of parameter
+	passing, use the MakeParameters() function.
+	\note To get a value from NameValuePairs, you need to know the name and the type of the value. 
 	Call GetValueNames() on a NameValuePairs object to obtain a list of value names that it supports.
 	Then look at the Name namespace documentation to see what the type of each value is, or
 	alternatively, call GetIntValue() with the value name, and if the type is not int, a
 	ValueTypeMismatch exception will be thrown and you can get the actual type from the exception object.
 */
-class NameValuePairs
+class CRYPTOPP_NO_VTABLE NameValuePairs
 {
 public:
 	virtual ~NameValuePairs() {}
 
 	//! exception thrown when trying to retrieve a value using a different type than expected
-	class ValueTypeMismatch : public InvalidArgument
+	class CRYPTOPP_DLL ValueTypeMismatch : public InvalidArgument
 	{
 	public:
-		ValueTypeMismatch(std::string name, const std::type_info &stored, const std::type_info &retrieving)
+		ValueTypeMismatch(const std::string &name, const std::type_info &stored, const std::type_info &retrieving)
 			: InvalidArgument("NameValuePairs: type mismatch for '" + name + "', stored '" + stored.name() + "', trying to retrieve '" + retrieving.name() + "'")
 			, m_stored(stored), m_retrieving(retrieving) {}
 
@@ -249,21 +269,21 @@ public:
 	}
 
 	//! get a list of value names that can be retrieved
-	std::string GetValueNames() const
+	CRYPTOPP_DLL std::string GetValueNames() const
 		{std::string result; GetValue("ValueNames", result); return result;}
 
 	//! get a named value with type int
 	/*! used to ensure we don't accidentally try to get an unsigned int
 		or some other type when we mean int (which is the most common case) */
-	bool GetIntValue(const char *name, int &value) const
+	CRYPTOPP_DLL bool GetIntValue(const char *name, int &value) const
 		{return GetValue(name, value);}
 
 	//! get a named value with type int, with default
-	int GetIntValueWithDefault(const char *name, int defaultValue) const
+	CRYPTOPP_DLL int GetIntValueWithDefault(const char *name, int defaultValue) const
 		{return GetValueWithDefault(name, defaultValue);}
 
 	//! used by derived classes to check for type mismatch
-	static void ThrowIfTypeMismatch(const char *name, const std::type_info &stored, const std::type_info &retrieving)
+	CRYPTOPP_DLL static void ThrowIfTypeMismatch(const char *name, const std::type_info &stored, const std::type_info &retrieving)
 		{if (stored != retrieving) throw ValueTypeMismatch(name, stored, retrieving);}
 
 	template <class T>
@@ -273,14 +293,14 @@ public:
 			throw InvalidArgument(std::string(className) + ": missing required parameter '" + name + "'");
 	}
 
-	void GetRequiredIntParameter(const char *className, const char *name, int &value) const
+	CRYPTOPP_DLL void GetRequiredIntParameter(const char *className, const char *name, int &value) const
 	{
 		if (!GetIntValue(name, value))
 			throw InvalidArgument(std::string(className) + ": missing required parameter '" + name + "'");
 	}
 
 	//! to be implemented by derived classes, users should use one of the above functions instead
-	virtual bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const =0;
+	CRYPTOPP_DLL virtual bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const =0;
 };
 
 //! namespace containing value name definitions
@@ -293,20 +313,20 @@ DOCUMENTED_NAMESPACE_BEGIN(Name)
 // more names defined in argnames.h
 DOCUMENTED_NAMESPACE_END
 
-//! .
-class NullNameValuePairs : public NameValuePairs
+//! empty set of name-value pairs
+class CRYPTOPP_DLL NullNameValuePairs : public NameValuePairs
 {
 public:
 	bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const {return false;}
 };
 
-//! .
-extern const NullNameValuePairs g_nullNameValuePairs;
+//! _
+extern CRYPTOPP_DLL const NullNameValuePairs g_nullNameValuePairs;
 
 // ********************************************************
 
 //! interface for cloning objects, this is not implemented by most classes yet
-class Clonable
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE Clonable
 {
 public:
 	virtual ~Clonable() {}
@@ -316,7 +336,7 @@ public:
 
 //! interface for all crypto algorithms
 
-class Algorithm : public Clonable
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE Algorithm : public Clonable
 {
 public:
 	/*! When FIPS 140-2 compliance is enabled and checkSelfTestStatus == true,
@@ -328,7 +348,7 @@ public:
 
 //! keying interface for crypto algorithms that take byte strings as keys
 
-class SimpleKeyingInterface
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE SimpleKeyingInterface
 {
 public:
 	//! returns smallest valid key length in bytes */
@@ -381,6 +401,9 @@ public:
 
 protected:
 	void ThrowIfInvalidKeyLength(const Algorithm &algorithm, unsigned int length);
+	void ThrowIfResynchronizable();			// to be called when no IV is passed
+	void ThrowIfInvalidIV(const byte *iv);	// check for NULL IV if it can't be used
+	const byte * GetIVAndThrowIfInvalid(const NameValuePairs &params);
 
 	inline void AssertValidKeyLength(unsigned int length) const
 	{
@@ -396,7 +419,7 @@ protected:
 	These classes should not be used directly, but only in combination with
 	a mode class (see CipherModeDocumentation in modes.h).
 */
-class BlockTransformation : public Algorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE BlockTransformation : public Algorithm
 {
 public:
 	//! encrypt or decrypt inBlock, xor with xorBlock, and write to outBlock
@@ -432,7 +455,7 @@ public:
 
 //! interface for the data processing part of stream ciphers
 
-class StreamTransformation : public Algorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE StreamTransformation : public Algorithm
 {
 public:
 	//! return a reference to this object, 
@@ -475,7 +498,7 @@ public:
 	//! returns whether this cipher supports random access
 	virtual bool IsRandomAccess() const =0;
 	//! for random access ciphers, seek to an absolute position
-	virtual void Seek(dword n)
+	virtual void Seek(lword n)
 	{
 		assert(!IsRandomAccess());
 		throw NotImplemented("StreamTransformation: this object doesn't support random access");
@@ -495,7 +518,7 @@ public:
 	be hashed in pieces by calling Update() on each piece followed by
 	calling Final().
 */
-class HashTransformation : public Algorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE HashTransformation : public Algorithm
 {
 public:
 	//! process more input
@@ -515,6 +538,9 @@ public:
 
 	//! size of the hash returned by Final()
 	virtual unsigned int DigestSize() const =0;
+
+	//! block size of underlying compression function, or 0 if not block based
+	virtual unsigned int BlockSize() const {return 0;}
 
 	//! input to Update() should have length a multiple of this for optimal speed
 	virtual unsigned int OptimalBlockSize() const {return 1;}
@@ -554,21 +580,21 @@ protected:
 	void ThrowIfInvalidTruncatedSize(unsigned int size) const;
 };
 
-//! .
+typedef HashTransformation HashFunction;
+
 template <class T>
-class SimpleKeyedTransformation : public T, public SimpleKeyingInterface
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE SimpleKeyedTransformation : public T, public SimpleKeyingInterface
 {
 public:
 	void ThrowIfInvalidKeyLength(unsigned int length)
 		{SimpleKeyingInterface::ThrowIfInvalidKeyLength(*this, length);}
 };
 
-//! .
-typedef HashTransformation HashFunction;
 #ifdef CRYPTOPP_DOXYGEN_PROCESSING
-//! These objects usually should not be used directly. See BlockTransformation for more details.
+//! interface for one direction (encryption or decryption) of a block cipher
+/*! \note These objects usually should not be used directly. See BlockTransformation for more details. */
 class BlockCipher : public BlockTransformation, public SimpleKeyingInterface {};
-//! interface for stream ciphers
+//! interface for one direction (encryption or decryption) of a stream cipher or cipher mode
 class SymmetricCipher : public StreamTransformation, public SimpleKeyingInterface {};
 //! interface for message authentication codes
 class MessageAuthenticationCode : public HashTransformation, public SimpleKeyingInterface {};
@@ -578,6 +604,10 @@ typedef SimpleKeyedTransformation<StreamTransformation> SymmetricCipher;
 typedef SimpleKeyedTransformation<HashTransformation> MessageAuthenticationCode;
 #endif
 
+CRYPTOPP_DLL_TEMPLATE_CLASS SimpleKeyedTransformation<BlockTransformation>;
+CRYPTOPP_DLL_TEMPLATE_CLASS SimpleKeyedTransformation<StreamTransformation>;
+CRYPTOPP_DLL_TEMPLATE_CLASS SimpleKeyedTransformation<HashTransformation>;
+
 #ifdef CRYPTOPP_MAINTAIN_BACKWARDS_COMPATIBILITY
 typedef SymmetricCipher StreamCipher;
 #endif
@@ -585,7 +615,7 @@ typedef SymmetricCipher StreamCipher;
 //! interface for random number generators
 /*! All return values are uniformly distributed over the range specified.
 */
-class RandomNumberGenerator : public Algorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE RandomNumberGenerator : public Algorithm
 {
 public:
 	//! generate new random byte and return it
@@ -623,13 +653,13 @@ public:
 };
 
 //! returns a reference that can be passed to functions that ask for a RNG but doesn't actually use it
-RandomNumberGenerator & NullRNG();
+CRYPTOPP_DLL RandomNumberGenerator & NullRNG();
 
 class WaitObjectContainer;
 
 //! interface for objects that you can wait for
 
-class Waitable
+class CRYPTOPP_NO_VTABLE Waitable
 {
 public:
 	//! maximum number of wait objects that this object can return
@@ -667,7 +697,7 @@ public:
 
 	\nosubgrouping
 */
-class BufferedTransformation : public Algorithm, public Waitable
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE BufferedTransformation : public Algorithm, public Waitable
 {
 public:
 	// placed up here for CW8
@@ -753,7 +783,7 @@ public:
 		/*! There should be a MessageEnd immediately before MessageSeriesEnd. */
 		virtual bool MessageSeriesEnd(int propagation=-1, bool blocking=true);
 
-		//! set propagation of automatically generated and transfered signals
+		//! set propagation of automatically generated and transferred signals
 		/*! propagation == 0 means do not automaticly generate signals */
 		virtual void SetAutoSignalPropagation(int propagation) {}
 
@@ -854,7 +884,6 @@ public:
 
 	//!	\name NON-BLOCKING TRANSFER OF OUTPUT
 	//@{
-		//! .
 		virtual unsigned int TransferTo2(BufferedTransformation &target, unsigned long &byteCount, const std::string &channel=NULL_CHANNEL, bool blocking=true) =0;
 		virtual unsigned int CopyRangeTo2(BufferedTransformation &target, unsigned long &begin, unsigned long end=ULONG_MAX, const std::string &channel=NULL_CHANNEL, bool blocking=true) const =0;
 		unsigned int TransferMessagesTo2(BufferedTransformation &target, unsigned int &messageCount, const std::string &channel=NULL_CHANNEL, bool blocking=true);
@@ -887,7 +916,6 @@ public:
 		virtual unsigned int ChannelPut2(const std::string &channel, const byte *begin, unsigned int length, int messageEnd, bool blocking);
 		virtual unsigned int ChannelPutModifiable2(const std::string &channel, byte *begin, unsigned int length, int messageEnd, bool blocking);
 
-		virtual void ChannelInitialize(const std::string &channel, const NameValuePairs &parameters=g_nullNameValuePairs, int propagation=-1);
 		virtual bool ChannelFlush(const std::string &channel, bool hardFlush, int propagation=-1, bool blocking=true);
 		virtual bool ChannelMessageSeriesEnd(const std::string &channel, int propagation=-1, bool blocking=true);
 
@@ -926,11 +954,11 @@ BufferedTransformation & TheBitBucket();
 
 //! interface for crypto material, such as public and private keys, and crypto parameters
 
-class CryptoMaterial : public NameValuePairs
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE CryptoMaterial : public NameValuePairs
 {
 public:
 	//! exception thrown when invalid crypto material is detected
-	class InvalidMaterial : public InvalidDataFormat
+	class CRYPTOPP_DLL InvalidMaterial : public InvalidDataFormat
 	{
 	public:
 		explicit InvalidMaterial(const std::string &s) : InvalidDataFormat(s) {}
@@ -987,7 +1015,7 @@ public:
 
 //! interface for generatable crypto material, such as private keys and crypto parameters
 
-class GeneratableCryptoMaterial : virtual public CryptoMaterial
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE GeneratableCryptoMaterial : virtual public CryptoMaterial
 {
 public:
 	//! generate a random key or crypto parameters
@@ -1002,25 +1030,25 @@ public:
 
 //! interface for public keys
 
-class PublicKey : virtual public CryptoMaterial
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PublicKey : virtual public CryptoMaterial
 {
 };
 
 //! interface for private keys
 
-class PrivateKey : public GeneratableCryptoMaterial
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PrivateKey : public GeneratableCryptoMaterial
 {
 };
 
 //! interface for crypto prameters
 
-class CryptoParameters : public GeneratableCryptoMaterial
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE CryptoParameters : public GeneratableCryptoMaterial
 {
 };
 
 //! interface for asymmetric algorithms
 
-class AsymmetricAlgorithm : public Algorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE AsymmetricAlgorithm : public Algorithm
 {
 public:
 	//! returns a reference to the crypto material used by this object
@@ -1038,7 +1066,7 @@ public:
 
 //! interface for asymmetric algorithms using public keys
 
-class PublicKeyAlgorithm : public AsymmetricAlgorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PublicKeyAlgorithm : public AsymmetricAlgorithm
 {
 public:
 	// VC60 workaround: no co-variant return type
@@ -1051,7 +1079,7 @@ public:
 
 //! interface for asymmetric algorithms using private keys
 
-class PrivateKeyAlgorithm : public AsymmetricAlgorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PrivateKeyAlgorithm : public AsymmetricAlgorithm
 {
 public:
 	CryptoMaterial & AccessMaterial() {return AccessPrivateKey();}
@@ -1063,7 +1091,7 @@ public:
 
 //! interface for key agreement algorithms
 
-class KeyAgreementAlgorithm : public AsymmetricAlgorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE KeyAgreementAlgorithm : public AsymmetricAlgorithm
 {
 public:
 	CryptoMaterial & AccessMaterial() {return AccessCryptoParameters();}
@@ -1078,18 +1106,30 @@ public:
 /*! This class provides an interface common to encryptors and decryptors
 	for querying their plaintext and ciphertext lengths.
 */
-class PK_CryptoSystem
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PK_CryptoSystem
 {
 public:
 	virtual ~PK_CryptoSystem() {}
 
 	//! maximum length of plaintext for a given ciphertext length
-	/*! \note This function returns 0 if cipherTextLength is not valid (too long or too short). */
-	virtual unsigned int MaxPlaintextLength(unsigned int cipherTextLength) const =0;
+	/*! \note This function returns 0 if ciphertextLength is not valid (too long or too short). */
+	virtual unsigned int MaxPlaintextLength(unsigned int ciphertextLength) const =0;
 
 	//! calculate length of ciphertext given length of plaintext
-	/*! \note This function returns 0 if plainTextLength is not valid (too long). */
-	virtual unsigned int CiphertextLength(unsigned int plainTextLength) const =0;
+	/*! \note This function returns 0 if plaintextLength is not valid (too long). */
+	virtual unsigned int CiphertextLength(unsigned int plaintextLength) const =0;
+
+	//! this object supports the use of the parameter with the given name
+	/*! some possible parameter names: EncodingParameters, KeyDerivationParameters */
+	virtual bool ParameterSupported(const char *name) const =0;
+
+	//! return fixed ciphertext length, if one exists, otherwise return 0
+	/*! \note "Fixed" here means length of ciphertext does not depend on length of plaintext.
+		It usually does depend on the key length. */
+	virtual unsigned int FixedCiphertextLength() const {return 0;}
+
+	//! return maximum plaintext length given the fixed ciphertext length, if one exists, otherwise return 0
+	virtual unsigned int FixedMaxPlaintextLength() const {return 0;}
 
 #ifdef CRYPTOPP_MAINTAIN_BACKWARDS_COMPATIBILITY
 	unsigned int MaxPlainTextLength(unsigned int cipherTextLength) const {return MaxPlaintextLength(cipherTextLength);}
@@ -1098,109 +1138,79 @@ public:
 };
 
 //! interface for public-key encryptors
-
-class PK_Encryptor : virtual public PK_CryptoSystem, public PublicKeyAlgorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PK_Encryptor : virtual public PK_CryptoSystem, public PublicKeyAlgorithm
 {
 public:
-	//! .
-	class InvalidPlaintextLength : public Exception
+	//! exception thrown when trying to encrypt plaintext of invalid length
+	class CRYPTOPP_DLL InvalidPlaintextLength : public Exception
 	{
 	public:
 		InvalidPlaintextLength() : Exception(OTHER_ERROR, "PK_Encryptor: invalid plaintext length") {}
 	};
 
 	//! encrypt a byte string
-	/*! \pre CipherTextLength(plainTextLength) != 0 (i.e., plainText isn't too long)
-		\pre size of cipherText == CipherTextLength(plainTextLength)
+	/*! \pre CiphertextLength(plaintextLength) != 0 (i.e., plaintext isn't too long)
+		\pre size of ciphertext == CiphertextLength(plaintextLength)
 	*/
-	virtual void Encrypt(RandomNumberGenerator &rng, const byte *plainText, unsigned int plainTextLength, byte *cipherText) const =0;
+	virtual void Encrypt(RandomNumberGenerator &rng, 
+		const byte *plaintext, unsigned int plaintextLength, 
+		byte *ciphertext, const NameValuePairs &parameters = g_nullNameValuePairs) const =0;
 
 	//! create a new encryption filter
-	/*! \note caller is responsible for deleting the returned pointer
+	/*! \note The caller is responsible for deleting the returned pointer.
+		\note Encoding parameters should be passed in the "EP" channel.
 	*/
-	virtual BufferedTransformation * CreateEncryptionFilter(RandomNumberGenerator &rng, BufferedTransformation *attachment=NULL) const;
+	virtual BufferedTransformation * CreateEncryptionFilter(RandomNumberGenerator &rng, 
+		BufferedTransformation *attachment=NULL, const NameValuePairs &parameters = g_nullNameValuePairs) const;
 };
 
 //! interface for public-key decryptors
 
-class PK_Decryptor : virtual public PK_CryptoSystem, public PrivateKeyAlgorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PK_Decryptor : virtual public PK_CryptoSystem, public PrivateKeyAlgorithm
 {
 public:
 	//! decrypt a byte string, and return the length of plaintext
-	/*! \pre size of plainText == MaxPlainTextLength(cipherTextLength) bytes.
-		\return the actual length of the plaintext, or 0 if decryption fails.
+	/*! \pre size of plaintext == MaxPlaintextLength(ciphertextLength) bytes.
+		\return the actual length of the plaintext, indication that decryption failed.
 	*/
-	virtual DecodingResult Decrypt(RandomNumberGenerator &rng, const byte *cipherText, unsigned int cipherTextLength, byte *plainText) const =0;
+	virtual DecodingResult Decrypt(RandomNumberGenerator &rng, 
+		const byte *ciphertext, unsigned int ciphertextLength, 
+		byte *plaintext, const NameValuePairs &parameters = g_nullNameValuePairs) const =0;
 
 	//! create a new decryption filter
 	/*! \note caller is responsible for deleting the returned pointer
 	*/
-	virtual BufferedTransformation * CreateDecryptionFilter(RandomNumberGenerator &rng, BufferedTransformation *attachment=NULL) const;
+	virtual BufferedTransformation * CreateDecryptionFilter(RandomNumberGenerator &rng, 
+		BufferedTransformation *attachment=NULL, const NameValuePairs &parameters = g_nullNameValuePairs) const;
+
+	//! decrypt a fixed size ciphertext
+	DecodingResult FixedLengthDecrypt(RandomNumberGenerator &rng, const byte *ciphertext, byte *plaintext, const NameValuePairs &parameters = g_nullNameValuePairs) const
+		{return Decrypt(rng, ciphertext, FixedCiphertextLength(), plaintext, parameters);}
 };
 
-//! interface for encryptors and decryptors with fixed length ciphertext
-
-/*! A simplified interface is provided for crypto systems (such
-	as RSA) whose ciphertext length and maximum plaintext length
-	depend only on the key.
-*/
-class PK_FixedLengthCryptoSystem : virtual public PK_CryptoSystem
-{
-public:
-	//!
-	virtual unsigned int FixedMaxPlaintextLength() const =0;
-	//!
-	virtual unsigned int FixedCiphertextLength() const =0;
-
-	unsigned int MaxPlaintextLength(unsigned int cipherTextLength) const;
-	unsigned int CiphertextLength(unsigned int plainTextLength) const;
-	
 #ifdef CRYPTOPP_MAINTAIN_BACKWARDS_COMPATIBILITY
-	unsigned int MaxPlainTextLength(unsigned int cipherTextLength) const {return MaxPlaintextLength(cipherTextLength);}
-	unsigned int CipherTextLength(unsigned int plainTextLength) const {return CiphertextLength(plainTextLength);}
-	unsigned int MaxPlainTextLength() const {return FixedMaxPlaintextLength();}
-	unsigned int CipherTextLength() const {return FixedCiphertextLength();}
+typedef PK_CryptoSystem PK_FixedLengthCryptoSystem;
+typedef PK_Encryptor PK_FixedLengthEncryptor;
+typedef PK_Decryptor PK_FixedLengthDecryptor;
 #endif
-};
-
-//! interface for encryptors with fixed length ciphertext
-
-class PK_FixedLengthEncryptor : public PK_Encryptor, virtual public PK_FixedLengthCryptoSystem
-{
-};
-
-//! interface for decryptors with fixed length ciphertext
-
-class PK_FixedLengthDecryptor : public PK_Decryptor, virtual public PK_FixedLengthCryptoSystem
-{
-public:
-	//! decrypt a byte string, and return the length of plaintext
-	/*! \pre length of cipherText == CipherTextLength()
-		\pre size of plainText == MaxPlainTextLength()
-		\return the actual length of the plaintext, or 0 if decryption fails.
-	*/
-	virtual DecodingResult FixedLengthDecrypt(RandomNumberGenerator &rng, const byte *cipherText, byte *plainText) const =0;
-
-	DecodingResult Decrypt(RandomNumberGenerator &rng, const byte *cipherText, unsigned int cipherTextLength, byte *plainText) const;
-};
 
 //! interface for public-key signers and verifiers
 
 /*! This class provides an interface common to signers and verifiers
 	for querying scheme properties.
 */
-class PK_SignatureScheme
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PK_SignatureScheme
 {
 public:
 	//! invalid key exception, may be thrown by any function in this class if the private or public key has a length that can't be used
-	class InvalidKeyLength : public Exception
+	class CRYPTOPP_DLL InvalidKeyLength : public Exception
 	{
 	public:
 		InvalidKeyLength(const std::string &message) : Exception(OTHER_ERROR, message) {}
 	};
 
 	//! key too short exception, may be thrown by any function in this class if the private or public key is too short to sign or verify anything
-	class KeyTooShort : public InvalidKeyLength
+	class CRYPTOPP_DLL KeyTooShort : public InvalidKeyLength
 	{
 	public:
 		KeyTooShort() : InvalidKeyLength("PK_Signer: key too short for this signature scheme") {}
@@ -1238,7 +1248,7 @@ public:
 /*! Only Update() should be called
 	on this class. No other functions inherited from HashTransformation should be called.
 */
-class PK_MessageAccumulator : public HashTransformation
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PK_MessageAccumulator : public HashTransformation
 {
 public:
 	//! should not be called on PK_MessageAccumulator
@@ -1251,11 +1261,11 @@ public:
 
 //! interface for public-key signers
 
-class PK_Signer : virtual public PK_SignatureScheme, public PrivateKeyAlgorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PK_Signer : public PK_SignatureScheme, public PrivateKeyAlgorithm
 {
 public:
 	//! create a new HashTransformation to accumulate the message to be signed
-	virtual PK_MessageAccumulator * NewSignatureAccumulator(RandomNumberGenerator &rng = NullRNG()) const =0;
+	virtual PK_MessageAccumulator * NewSignatureAccumulator(RandomNumberGenerator &rng) const =0;
 
 	virtual void InputRecoverableMessage(PK_MessageAccumulator &messageAccumulator, const byte *recoverableMessage, unsigned int recoverableMessageLength) const =0;
 
@@ -1292,7 +1302,7 @@ public:
 	recovery and the signature contains a non-empty recoverable message part. The
 	Recovery* functions should be used in that case.
 */
-class PK_Verifier : virtual public PK_SignatureScheme, public PublicKeyAlgorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE PK_Verifier : public PK_SignatureScheme, public PublicKeyAlgorithm
 {
 public:
 	//! create a new HashTransformation to accumulate the message to be verified
@@ -1335,7 +1345,7 @@ public:
 	by two parties in a key agreement protocol, along with the algorithms
 	for generating key pairs and deriving agreed values.
 */
-class SimpleKeyAgreementDomain : public KeyAgreementAlgorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE SimpleKeyAgreementDomain : public KeyAgreementAlgorithm
 {
 public:
 	//! return length of agreed value produced
@@ -1354,8 +1364,8 @@ public:
 	/*! \note equivalent to calling GeneratePrivateKey() and then GeneratePublicKey() */
 	virtual void GenerateKeyPair(RandomNumberGenerator &rng, byte *privateKey, byte *publicKey) const;
 	//! derive agreed value from your private key and couterparty's public key, return false in case of failure
-	/*! \note If you have previously validated the public key, use validateOtherPublicKey=false to save time. */
-	/*! \pre size of agreedValue == AgreedValueLength()
+	/*! \note If you have previously validated the public key, use validateOtherPublicKey=false to save time.
+		\pre size of agreedValue == AgreedValueLength()
 		\pre length of privateKey == PrivateKeyLength()
 		\pre length of otherPublicKey == PublicKeyLength()
 	*/
@@ -1373,7 +1383,7 @@ public:
 	key pairs. The long-lived key pair is called the static key pair,
 	and the short-lived key pair is called the ephemeral key pair.
 */
-class AuthenticatedKeyAgreementDomain : public KeyAgreementAlgorithm
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE AuthenticatedKeyAgreementDomain : public KeyAgreementAlgorithm
 {
 public:
 	//! return length of agreed value produced
@@ -1530,7 +1540,7 @@ public:
 #endif
 
 //! BER Decode Exception Class, may be thrown during an ASN1 BER decode operation
-class BERDecodeErr : public InvalidArgument
+class CRYPTOPP_DLL BERDecodeErr : public InvalidArgument
 {
 public: 
 	BERDecodeErr() : InvalidArgument("BER decode error") {}
@@ -1538,7 +1548,7 @@ public:
 };
 
 //! interface for encoding and decoding ASN1 objects
-class ASN1Object
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE ASN1Object
 {
 public:
 	virtual ~ASN1Object() {}
@@ -1552,11 +1562,9 @@ public:
 };
 
 #ifdef CRYPTOPP_MAINTAIN_BACKWARDS_COMPATIBILITY
-typedef PK_SignatureScheme PK_SignatureSystem
-typedef PK_SignatureSchemeWithRecovery PK_SignatureSystemWithRecovery
-typedef SimpleKeyAgreementDomain PK_SimpleKeyAgreementDomain
-typedef AuthenticatedKeyAgreementDomain PK_AuthenticatedKeyAgreementDomain
-typedef WithPrecomputation PK_WithPrecomputation
+typedef PK_SignatureScheme PK_SignatureSystem;
+typedef SimpleKeyAgreementDomain PK_SimpleKeyAgreementDomain;
+typedef AuthenticatedKeyAgreementDomain PK_AuthenticatedKeyAgreementDomain;
 #endif
 
 NAMESPACE_END

@@ -6,7 +6,15 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
-template<class T> class member_ptr
+template <class T> class simple_ptr
+{
+public:
+	simple_ptr() : m_p(NULL) {}
+	~simple_ptr() {delete m_p;}
+	T *m_p;
+};
+
+template <class T> class member_ptr
 {
 public:
 	explicit member_ptr(T *p = NULL) : m_p(p) {}
@@ -182,32 +190,32 @@ template <class T> class vector_member_ptrs
 {
 public:
 	vector_member_ptrs(unsigned int size=0)
-		: _size(size) {ptr = new member_ptr<T>[_size];}
+		: m_size(size), m_ptr(new member_ptr<T>[size]) {}
 	~vector_member_ptrs()
-		{delete [] ptr;}
+		{delete [] this->m_ptr;}
 
 	member_ptr<T>& operator[](unsigned int index)
-		{assert(index<_size); return ptr[index];}
+		{assert(index<this->m_size); return this->m_ptr[index];}
 	const member_ptr<T>& operator[](unsigned int index) const
-		{assert(index<_size); return ptr[index];}
+		{assert(index<this->m_size); return this->m_ptr[index];}
 
-	unsigned int size() const {return _size;}
+	unsigned int size() const {return this->m_size;}
 	void resize(unsigned int newSize)
 	{
 		member_ptr<T> *newPtr = new member_ptr<T>[newSize];
-		for (unsigned int i=0; i<this->STDMIN(_size, newSize); i++)
-			newPtr[i].reset(ptr[i].release());
-		delete [] ptr;
-		_size = newSize;
-		ptr = newPtr;
+		for (unsigned int i=0; i<this->m_size && i<newSize; i++)
+			newPtr[i].reset(this->m_ptr[i].release());
+		delete [] this->m_ptr;
+		this->m_size = newSize;
+		this->m_ptr = newPtr;
 	}
 
 private:
 	vector_member_ptrs(const vector_member_ptrs<T> &c);	// copy not allowed
 	void operator=(const vector_member_ptrs<T> &x);		// assignment not allowed
 
-	unsigned int _size;
-	member_ptr<T> *ptr;
+	unsigned int m_size;
+	member_ptr<T> *m_ptr;
 };
 
 NAMESPACE_END

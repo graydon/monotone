@@ -14,14 +14,14 @@
 	(since it's an additive cipher, i.e., it xors a keystream into the plaintext).
 	See this line in seal.h:
 
-	typedef SymmetricCipherFinalTemplate<ConcretePolicyHolder<SEAL_Policy<B>, AdditiveCipherTemplate<> > > Encryption;
+	typedef SymmetricCipherFinal\<ConcretePolicyHolder\<SEAL_Policy\<B\>, AdditiveCipherTemplate\<\> \> \> Encryption;
 
 	AdditiveCipherTemplate and CFB_CipherTemplate are designed so that they don't need
 	to take a policy class as a template parameter (although this is allowed), so that
 	their code is not duplicated for each new cipher. Instead they each
 	get a reference to an abstract policy interface by calling AccessPolicy() on itself, so
 	AccessPolicy() must be overriden to return the actual policy reference. This is done
-	by the ConceretePolicyHolder class. Finally, SymmetricCipherFinalTemplate implements the constructors and
+	by the ConceretePolicyHolder class. Finally, SymmetricCipherFinal implements the constructors and
 	other functions that must be implemented by the most derived class.
 */
 
@@ -30,11 +30,12 @@
 
 #include "seckey.h"
 #include "secblock.h"
+#include "argnames.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
 template <class POLICY_INTERFACE, class BASE = Empty>
-class AbstractPolicyHolder : public BASE
+class CRYPTOPP_NO_VTABLE AbstractPolicyHolder : public BASE
 {
 public:
 	typedef POLICY_INTERFACE PolicyInterface;
@@ -54,7 +55,7 @@ protected:
 
 enum KeystreamOperation {WRITE_KEYSTREAM, XOR_KEYSTREAM, XOR_KEYSTREAM_INPLACE};
 
-struct AdditiveCipherAbstractPolicy
+struct CRYPTOPP_DLL CRYPTOPP_NO_VTABLE AdditiveCipherAbstractPolicy
 {
 	virtual unsigned int GetAlignment() const =0;
 	virtual unsigned int GetBytesPerIteration() const =0;
@@ -65,11 +66,11 @@ struct AdditiveCipherAbstractPolicy
 	virtual void CipherSetKey(const NameValuePairs &params, const byte *key, unsigned int length) =0;
 	virtual void CipherResynchronize(byte *keystreamBuffer, const byte *iv) {throw NotImplemented("StreamTransformation: this object doesn't support resynchronization");}
 	virtual bool IsRandomAccess() const =0;
-	virtual void SeekToIteration(dword iterationCount) {assert(!IsRandomAccess()); throw NotImplemented("StreamTransformation: this object doesn't support random access");}
+	virtual void SeekToIteration(lword iterationCount) {assert(!IsRandomAccess()); throw NotImplemented("StreamTransformation: this object doesn't support random access");}
 };
 
 template <typename WT, unsigned int W, unsigned int X = 1, class BASE = AdditiveCipherAbstractPolicy>
-struct AdditiveCipherConcretePolicy : public BASE
+struct CRYPTOPP_NO_VTABLE AdditiveCipherConcretePolicy : public BASE
 {
 	typedef WT WordType;
 
@@ -117,7 +118,7 @@ struct AdditiveCipherConcretePolicy : public BASE
 };
 
 template <class BASE = AbstractPolicyHolder<AdditiveCipherAbstractPolicy, TwoBases<SymmetricCipher, RandomNumberGenerator> > >
-class AdditiveCipherTemplate : public BASE
+class CRYPTOPP_NO_VTABLE AdditiveCipherTemplate : public BASE
 {
 public:
     byte GenerateByte();
@@ -129,24 +130,29 @@ public:
 	bool IsSelfInverting() const {return true;}
 	bool IsForwardTransformation() const {return true;}
 	bool IsRandomAccess() const {return this->GetPolicy().IsRandomAccess();}
-	void Seek(dword position);
+	void Seek(lword position);
 
 	typedef typename BASE::PolicyInterface PolicyInterface;
 
 protected:
-	void UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length);
+	void UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length, const byte *iv);
 
 	unsigned int GetBufferByteSize(const PolicyInterface &policy) const {return policy.GetBytesPerIteration() * policy.GetIterationsToBuffer();}
 
-	inline byte * KeystreamBufferBegin() {return m_buffer.data();}
-	inline byte * KeystreamBufferEnd() {return (m_buffer.data() + m_buffer.size());}
+	inline byte * KeystreamBufferBegin() {return this->m_buffer.data();}
+	inline byte * KeystreamBufferEnd() {return (this->m_buffer.data() + this->m_buffer.size());}
 
 	SecByteBlock m_buffer;
 	unsigned int m_leftOver;
 };
 
-struct CFB_CipherAbstractPolicy
+CRYPTOPP_DLL_TEMPLATE_CLASS TwoBases<SymmetricCipher, RandomNumberGenerator>;
+CRYPTOPP_DLL_TEMPLATE_CLASS AbstractPolicyHolder<AdditiveCipherAbstractPolicy, TwoBases<SymmetricCipher, RandomNumberGenerator> >;
+CRYPTOPP_DLL_TEMPLATE_CLASS AdditiveCipherTemplate<>;
+
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE CFB_CipherAbstractPolicy
 {
+public:
 	virtual unsigned int GetAlignment() const =0;
 	virtual unsigned int GetBytesPerIteration() const =0;
 	virtual byte * GetRegisterBegin() =0;
@@ -158,7 +164,7 @@ struct CFB_CipherAbstractPolicy
 };
 
 template <typename WT, unsigned int W, class BASE = CFB_CipherAbstractPolicy>
-struct CFB_CipherConcretePolicy : public BASE
+struct CRYPTOPP_NO_VTABLE CFB_CipherConcretePolicy : public BASE
 {
 	typedef WT WordType;
 
@@ -210,13 +216,13 @@ struct CFB_CipherConcretePolicy : public BASE
 };
 
 template <class BASE>
-class CFB_CipherTemplate : public BASE
+class CRYPTOPP_NO_VTABLE CFB_CipherTemplate : public BASE
 {
 public:
 	void ProcessData(byte *outString, const byte *inString, unsigned int length);
 	void Resynchronize(const byte *iv);
 	unsigned int OptimalBlockSize() const {return this->GetPolicy().GetBytesPerIteration();}
-	unsigned int GetOptimalNextBlockSize() const {return this->m_leftOver;}
+	unsigned int GetOptimalNextBlockSize() const {return m_leftOver;}
 	unsigned int OptimalDataAlignment() const {return this->GetPolicy().GetAlignment();}
 	bool IsRandomAccess() const {return false;}
 	bool IsSelfInverting() const {return false;}
@@ -226,60 +232,80 @@ public:
 protected:
 	virtual void CombineMessageAndShiftRegister(byte *output, byte *reg, const byte *message, unsigned int length) =0;
 
-	void UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length);
+	void UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length, const byte *iv);
 
 	unsigned int m_leftOver;
 };
 
 template <class BASE = AbstractPolicyHolder<CFB_CipherAbstractPolicy, SymmetricCipher> >
-class CFB_EncryptionTemplate : public CFB_CipherTemplate<BASE>
+class CRYPTOPP_NO_VTABLE CFB_EncryptionTemplate : public CFB_CipherTemplate<BASE>
 {
 	bool IsForwardTransformation() const {return true;}
 	void CombineMessageAndShiftRegister(byte *output, byte *reg, const byte *message, unsigned int length);
 };
 
 template <class BASE = AbstractPolicyHolder<CFB_CipherAbstractPolicy, SymmetricCipher> >
-class CFB_DecryptionTemplate : public CFB_CipherTemplate<BASE>
+class CRYPTOPP_NO_VTABLE CFB_DecryptionTemplate : public CFB_CipherTemplate<BASE>
 {
 	bool IsForwardTransformation() const {return false;}
 	void CombineMessageAndShiftRegister(byte *output, byte *reg, const byte *message, unsigned int length);
 };
 
-template <class BASE, class INFO = BASE>
-class SymmetricCipherFinalTemplate : public AlgorithmImpl<SimpleKeyingInterfaceImpl<BASE, INFO>, INFO>
+template <class BASE>
+class CFB_RequireFullDataBlocks : public BASE
 {
 public:
- 	SymmetricCipherFinalTemplate() {}
-	SymmetricCipherFinalTemplate(const byte *key)
+	unsigned int MandatoryBlockSize() const {return this->OptimalBlockSize();}
+};
+
+// for Darwin
+CRYPTOPP_DLL_TEMPLATE_CLASS CFB_CipherTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, SymmetricCipher> >;
+CRYPTOPP_DLL_TEMPLATE_CLASS CFB_EncryptionTemplate<>;
+CRYPTOPP_DLL_TEMPLATE_CLASS CFB_DecryptionTemplate<>;
+
+//! _
+template <class BASE, class INFO = BASE>
+class SymmetricCipherFinal : public AlgorithmImpl<SimpleKeyingInterfaceImpl<BASE, INFO>, INFO>
+{
+public:
+ 	SymmetricCipherFinal() {}
+	SymmetricCipherFinal(const byte *key)
 		{SetKey(key, this->DEFAULT_KEYLENGTH);}
-	SymmetricCipherFinalTemplate(const byte *key, unsigned int length)
+	SymmetricCipherFinal(const byte *key, unsigned int length)
 		{SetKey(key, length);}
-	SymmetricCipherFinalTemplate(const byte *key, unsigned int length, const byte *iv)
-		{SetKey(key, length); this->Resynchronize(iv);}
+	SymmetricCipherFinal(const byte *key, unsigned int length, const byte *iv)
+		{this->SetKeyWithIV(key, length, iv);}
 
 	void SetKey(const byte *key, unsigned int length, const NameValuePairs &params = g_nullNameValuePairs)
 	{
 		this->ThrowIfInvalidKeyLength(length);
-		this->UncheckedSetKey(params, key, length);
+		this->UncheckedSetKey(params, key, length, this->GetIVAndThrowIfInvalid(params));
 	}
 
-	Clonable * Clone() const {return static_cast<SymmetricCipher *>(new SymmetricCipherFinalTemplate<BASE, INFO>(*this));}
+	Clonable * Clone() const {return static_cast<SymmetricCipher *>(new SymmetricCipherFinal<BASE, INFO>(*this));}
 };
 
 template <class S>
-void AdditiveCipherTemplate<S>::UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length)
+void AdditiveCipherTemplate<S>::UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length, const byte *iv)
 {
 	PolicyInterface &policy = this->AccessPolicy();
 	policy.CipherSetKey(params, key, length);
-	m_buffer.New(GetBufferByteSize(policy));
 	m_leftOver = 0;
+	m_buffer.New(GetBufferByteSize(policy));
+
+	if (this->IsResynchronizable())
+		policy.CipherResynchronize(m_buffer, iv);
 }
 
 template <class BASE>
-void CFB_CipherTemplate<BASE>::UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length)
+void CFB_CipherTemplate<BASE>::UncheckedSetKey(const NameValuePairs &params, const byte *key, unsigned int length, const byte *iv)
 {
 	PolicyInterface &policy = this->AccessPolicy();
 	policy.CipherSetKey(params, key, length);
+
+	if (this->IsResynchronizable())
+		policy.CipherResynchronize(iv);
+
 	m_leftOver = policy.GetBytesPerIteration();
 }
 

@@ -1,6 +1,9 @@
 // basecode.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
+
+#ifndef CRYPTOPP_IMPORTS
+
 #include "basecode.h"
 #include "fltrimpl.h"
 #include <ctype.h>
@@ -9,16 +12,16 @@ NAMESPACE_BEGIN(CryptoPP)
 
 void BaseN_Encoder::IsolatedInitialize(const NameValuePairs &parameters)
 {
-	parameters.GetRequiredParameter("BaseN_Encoder", "EncodingLookupArray", m_alphabet);
+	parameters.GetRequiredParameter("BaseN_Encoder", Name::EncodingLookupArray(), m_alphabet);
 
-	parameters.GetRequiredIntParameter("BaseN_Encoder", "Log2Base", m_bitsPerChar);
+	parameters.GetRequiredIntParameter("BaseN_Encoder", Name::Log2Base(), m_bitsPerChar);
 	if (m_bitsPerChar <= 0 || m_bitsPerChar >= 8)
 		throw InvalidArgument("BaseN_Encoder: Log2Base must be between 1 and 7 inclusive");
 
 	byte padding;
 	bool pad;
-	if (parameters.GetValue("PaddingByte", padding))
-		pad = parameters.GetValueWithDefault("Pad", true);
+	if (parameters.GetValue(Name::PaddingByte(), padding))
+		pad = parameters.GetValueWithDefault(Name::Pad(), true);
 	else
 		pad = false;
 	m_padding = pad ? padding : -1;
@@ -102,9 +105,9 @@ unsigned int BaseN_Encoder::Put2(const byte *begin, unsigned int length, int mes
 
 void BaseN_Decoder::IsolatedInitialize(const NameValuePairs &parameters)
 {
-	parameters.GetRequiredParameter("BaseN_Decoder", "DecodingLookupArray", m_lookup);
+	parameters.GetRequiredParameter("BaseN_Decoder", Name::DecodingLookupArray(), m_lookup);
 
-	parameters.GetRequiredIntParameter("BaseN_Decoder", "Log2Base", m_bitsPerChar);
+	parameters.GetRequiredIntParameter("BaseN_Decoder", Name::Log2Base(), m_bitsPerChar);
 	if (m_bitsPerChar <= 0 || m_bitsPerChar >= 8)
 		throw InvalidArgument("BaseN_Decoder: Log2Base must be between 1 and 7 inclusive");
 
@@ -186,11 +189,13 @@ void BaseN_Decoder::InitializeDecodingLookupArray(int *lookup, const byte *alpha
 
 void Grouper::IsolatedInitialize(const NameValuePairs &parameters)
 {
-	m_groupSize = parameters.GetIntValueWithDefault("GroupSize", 0);
+	m_groupSize = parameters.GetIntValueWithDefault(Name::GroupSize(), 0);
 	ConstByteArrayParameter separator, terminator;
 	if (m_groupSize)
-		parameters.GetRequiredParameter("Grouper", "Separator", separator);
-	parameters.GetValue("Terminator", terminator);
+		parameters.GetRequiredParameter("Grouper", Name::Separator(), separator);
+	else
+		parameters.GetValue(Name::Separator(), separator);
+	parameters.GetValue(Name::Terminator(), terminator);
 
 	m_separator.Assign(separator.begin(), separator.size());
 	m_terminator.Assign(terminator.begin(), terminator.size());
@@ -221,8 +226,13 @@ unsigned int Grouper::Put2(const byte *begin, unsigned int length, int messageEn
 		FILTER_OUTPUT(3, begin, length, 0);
 
 	if (messageEnd)
+	{
 		FILTER_OUTPUT(4, m_terminator, m_terminator.size(), messageEnd);
+		m_counter = 0;
+	}
 	FILTER_END_NO_MESSAGE_END
 }
 
 NAMESPACE_END
+
+#endif

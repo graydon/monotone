@@ -1,6 +1,9 @@
 // filters.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
+
+#ifndef CRYPTOPP_IMPORTS
+
 #include "filters.h"
 #include "mqueue.h"
 #include "fltrimpl.h"
@@ -37,14 +40,12 @@ const BufferedTransformation *Filter::AttachedTransformation() const
 void Filter::Detach(BufferedTransformation *newOut)
 {
 	m_attachment.reset(newOut);
-	NotifyAttachmentChange();
 }
 
 void Filter::Insert(Filter *filter)
 {
 	filter->m_attachment.reset(m_attachment.release());
 	m_attachment.reset(filter);
-	NotifyAttachmentChange();
 }
 
 unsigned int Filter::CopyRangeTo2(BufferedTransformation &target, unsigned long &begin, unsigned long end, const std::string &channel, bool blocking) const
@@ -92,10 +93,19 @@ bool Filter::MessageSeriesEnd(int propagation, bool blocking)
 	return false;
 }
 
-void Filter::PropagateInitialize(const NameValuePairs &parameters, int propagation, const std::string &channel)
+void Filter::PropagateInitialize(const NameValuePairs &parameters, int propagation)
 {
 	if (propagation)
-		AttachedTransformation()->ChannelInitialize(channel, parameters, propagation-1);
+		AttachedTransformation()->Initialize(parameters, propagation-1);
+}
+
+unsigned int Filter::OutputModifiable(int outputSite, byte *inString, unsigned int length, int messageEnd, bool blocking, const std::string &channel)
+{
+	if (messageEnd)
+		messageEnd--;
+	unsigned int result = AttachedTransformation()->PutModifiable2(inString, length, messageEnd, blocking);
+	m_continueAt = result ? outputSite : 0;
+	return result;
 }
 
 unsigned int Filter::Output(int outputSite, const byte *inString, unsigned int length, int messageEnd, bool blocking, const std::string &channel)
@@ -145,8 +155,29 @@ unsigned int MeterFilter::Put2(const byte *begin, unsigned int length, int messa
 			m_currentSeriesMessages++;
 			m_totalMessages++;
 		}
-		
+
 		FILTER_OUTPUT(1, begin, length, messageEnd);
+		FILTER_END_NO_MESSAGE_END;
+	}
+	return 0;
+}
+
+unsigned int MeterFilter::PutModifiable2(byte *begin, unsigned int length, int messageEnd, bool blocking)
+{
+	if (m_transparent)
+	{
+		FILTER_BEGIN;
+		m_currentMessageBytes += length;
+		m_totalBytes += length;
+
+		if (messageEnd)
+		{
+			m_currentMessageBytes = 0;
+			m_currentSeriesMessages++;
+			m_totalMessages++;
+		}
+		
+		FILTER_OUTPUT_MODIFIABLE(1, begin, length, messageEnd);
 		FILTER_END_NO_MESSAGE_END;
 	}
 	return 0;
@@ -376,16 +407,13 @@ void FilterWithBufferedInput::NextPutMultiple(const byte *inString, unsigned int
 
 // *************************************************************
 
-void Redirector::ChannelInitialize(const std::string &channel, const NameValuePairs &parameters, int propagation)
+void Redirector::Initialize(const NameValuePairs &parameters, int propagation)
 {
-	if (channel.empty())
-	{
-		m_target = parameters.GetValueWithDefault("RedirectionTargetPointer", (BufferedTransformation*)NULL);
-		m_passSignal = parameters.GetValueWithDefault("PassSignal", true);
-	}
+	m_target = parameters.GetValueWithDefault("RedirectionTargetPointer", (BufferedTransformation*)NULL);
+	m_behavior = parameters.GetIntValueWithDefault("RedirectionBehavior", PASS_EVERYTHING);
 
-	if (m_target && m_passSignal)
-		m_target->ChannelInitialize(channel, parameters, propagation);
+	if (m_target && GetPassSignals())
+		m_target->Initialize(parameters, propagation);
 }
 
 // *************************************************************
@@ -414,10 +442,16 @@ void ProxyFilter::SetFilter(Filter *filter)
 	}
 }
 
-void ProxyFilter::NextPutMultiple(const byte *s, unsigned int len) 
+void ProxyFilter::NextPutMultiple(const byte *s, unsigned int len)
 {
 	if (m_filter.get())
 		m_filter->Put(s, len);
+}
+
+void ProxyFilter::NextPutModifiable(byte *s, unsigned int len)
+{
+	if (m_filter.get())
+		m_filter->PutModifiable(s, len);
 }
 
 // *************************************************************
@@ -583,7 +617,7 @@ void StreamTransformationFilter::LastPut(const byte *inString, unsigned int leng
 			}
 			else
 			{
-				space[length] = 1;
+				space[length] = 0x80;
 				memset(space+length+1, 0, s-length-1);
 			}
 			m_cipher.ProcessData(space, space, s);
@@ -603,9 +637,9 @@ void StreamTransformationFilter::LastPut(const byte *inString, unsigned int leng
 			}
 			else
 			{
-				while (length > 1 && space[length-1] == '\0')
+				while (length > 1 && space[length-1] == 0)
 					--length;
-				if (space[--length] != '\1')
+				if (space[--length] != 0x80)
 					throw InvalidCiphertext("StreamTransformationFilter: invalid ones-and-zeros padding found");
 			}
 			AttachedTransformation()->Put(space, length);
@@ -707,7 +741,7 @@ void HashVerificationFilter::LastPut(const byte *inString, unsigned int length)
 void SignerFilter::IsolatedInitialize(const NameValuePairs &parameters)
 {
 	m_putMessage = parameters.GetValueWithDefault(Name::PutMessage(), false);
-	m_messageAccumulator.reset(m_signer.NewSignatureAccumulator());
+	m_messageAccumulator.reset(m_signer.NewSignatureAccumulator(m_rng));
 }
 
 unsigned int SignerFilter::Put2(const byte *inString, unsigned int length, int messageEnd, bool blocking)
@@ -721,7 +755,7 @@ unsigned int SignerFilter::Put2(const byte *inString, unsigned int length, int m
 		m_buf.New(m_signer.SignatureLength());
 		m_signer.Sign(m_rng, m_messageAccumulator.release(), m_buf);
 		FILTER_OUTPUT(2, m_buf, m_buf.size(), messageEnd);
-		m_messageAccumulator.reset(m_signer.NewSignatureAccumulator());
+		m_messageAccumulator.reset(m_signer.NewSignatureAccumulator(m_rng));
 	}
 	FILTER_END_NO_MESSAGE_END;
 }
@@ -737,7 +771,7 @@ void SignatureVerificationFilter::InitializeDerivedAndReturnNewSizes(const NameV
 {
 	m_flags = parameters.GetValueWithDefault(Name::SignatureVerificationFilterFlags(), (word32)DEFAULT_FLAGS);
 	m_messageAccumulator.reset(m_verifier.NewVerificationAccumulator());
-	unsigned int size =	m_verifier.SignatureLength();
+	unsigned int size = m_verifier.SignatureLength();
 	assert(size != 0);	// TODO: handle recoverable signature scheme
 	m_verified = false;
 	firstSize = m_flags & SIGNATURE_AT_BEGIN ? size : 0;
@@ -860,14 +894,20 @@ unsigned int StringStore::CopyRangeTo2(BufferedTransformation &target, unsigned 
 	return blockedBytes;
 }
 
+void RandomNumberStore::StoreInitialize(const NameValuePairs &parameters)
+{
+	parameters.GetRequiredParameter("RandomNumberStore", "RandomNumberGeneratorPointer", m_rng);
+	parameters.GetRequiredIntParameter("RandomNumberStore", "RandomNumberStoreSize", m_length);
+}
+
 unsigned int RandomNumberStore::TransferTo2(BufferedTransformation &target, unsigned long &transferBytes, const std::string &channel, bool blocking)
 {
 	if (!blocking)
 		throw NotImplemented("RandomNumberStore: nonblocking transfer is not implemented by this object");
 
 	unsigned long transferMax = transferBytes;
-	for (transferBytes = 0; transferBytes<transferMax && m_count < m_length; ++transferBytes, ++m_count)
-		target.ChannelPut(channel, m_rng.GenerateByte());
+	for (transferBytes = 0; transferBytes<transferMax && m_count < (unsigned long)m_length; ++transferBytes, ++m_count)
+		target.ChannelPut(channel, m_rng->GenerateByte());
 	return 0;
 }
 
@@ -895,3 +935,5 @@ unsigned int NullStore::TransferTo2(BufferedTransformation &target, unsigned lon
 }
 
 NAMESPACE_END
+
+#endif

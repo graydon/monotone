@@ -1,22 +1,18 @@
 // misc.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
+
+#ifndef CRYPTOPP_IMPORTS
+
 #include "misc.h"
 #include "words.h"
+#include <new>
 
 NAMESPACE_BEGIN(CryptoPP)
 
-byte OAEP_P_DEFAULT[1];
-
-template<> void ByteReverse(word16 *, const word16 *, unsigned int);
-template<> void ByteReverse(word32 *, const word32 *, unsigned int);
-#ifdef WORD64_AVAILABLE
-template<> void ByteReverse(word64 *, const word64 *, unsigned int);
-#endif
-
 void xorbuf(byte *buf, const byte *mask, unsigned int count)
 {
-	if (((unsigned int)buf | (unsigned int)mask | count) % WORD_SIZE == 0)
+	if (((size_t)buf | (size_t)mask | count) % WORD_SIZE == 0)
 		XorWords((word *)buf, (const word *)mask, count/WORD_SIZE);
 	else
 	{
@@ -27,7 +23,7 @@ void xorbuf(byte *buf, const byte *mask, unsigned int count)
 
 void xorbuf(byte *output, const byte *input, const byte *mask, unsigned int count)
 {
-	if (((unsigned int)output | (unsigned int)input | (unsigned int)mask | count) % WORD_SIZE == 0)
+	if (((size_t)output | (size_t)input | (size_t)mask | count) % WORD_SIZE == 0)
 		XorWords((word *)output, (const word *)input, (const word *)mask, count/WORD_SIZE);
 	else
 	{
@@ -80,4 +76,23 @@ unsigned long Crop(unsigned long value, unsigned int size)
 		return value;
 }
 
+#if !(defined(_MSC_VER) && (_MSC_VER < 1300))
+using std::new_handler;
+using std::set_new_handler;
+#endif
+
+void CallNewHandler()
+{
+	new_handler newHandler = set_new_handler(NULL);
+	if (newHandler)
+		set_new_handler(newHandler);
+
+	if (newHandler)
+		newHandler();
+	else
+		throw std::bad_alloc();
+}
+
 NAMESPACE_END
+
+#endif

@@ -18,7 +18,7 @@ class AllocatorBase
 public:
 	typedef T value_type;
 	typedef size_t size_type;
-#if (defined(_MSC_VER) && _MSC_VER < 1300)
+#ifdef CRYPTOPP_MSVCRT6
 	typedef ptrdiff_t difference_type;
 #else
 	typedef std::ptrdiff_t difference_type;
@@ -32,7 +32,14 @@ public:
 	const_pointer address(const_reference r) const {return (&r); }
 	void construct(pointer p, const T& val) {new (p) T(val);}
 	void destroy(pointer p) {p->~T();}
-	size_type max_size() const {return size_type(-1)/sizeof(T);}
+	size_type max_size() const {return ~size_type(0)/sizeof(T);}	// switch to std::numeric_limits<T>::max later
+
+protected:
+	static void CheckSize(size_t n)
+	{
+		if (n > ~size_t(0) / sizeof(T))
+			throw InvalidArgument("AllocatorBase: requested size would cause integer overflow");
+	}
 };
 
 #define CRYPTOPP_INHERIT_ALLOCATOR_TYPES	\
@@ -52,9 +59,11 @@ typename A::pointer StandardReallocate(A& a, T *p, typename A::size_type oldSize
 
 	if (preserve)
 	{
-		typename A::pointer newPointer = a.allocate(newSize, NULL);
+		A b;
+		typename A::pointer newPointer = b.allocate(newSize, NULL);
 		memcpy(newPointer, p, sizeof(T)*STDMIN(oldSize, newSize));
 		a.deallocate(p, oldSize);
+		std::swap(a, b);
 		return newPointer;
 	}
 	else
@@ -72,10 +81,10 @@ public:
 
 	pointer allocate(size_type n, const void * = NULL)
 	{
-		if (n > 0)
-			return new T[n];
-		else
+		CheckSize(n);
+		if (n == 0)
 			return NULL;
+		return new T[n];
 	}
 
 	void deallocate(void *p, size_type n)
@@ -94,6 +103,10 @@ public:
     template <class U> struct rebind { typedef AllocatorWithCleanup<U> other; };
 };
 
+CRYPTOPP_DLL_TEMPLATE_CLASS AllocatorWithCleanup<byte>;
+CRYPTOPP_DLL_TEMPLATE_CLASS AllocatorWithCleanup<word16>;
+CRYPTOPP_DLL_TEMPLATE_CLASS AllocatorWithCleanup<word32>;
+
 template <class T>
 class NullAllocator : public AllocatorBase<T>
 {
@@ -110,23 +123,26 @@ public:
 	{
 		assert(false);
 	}
+
+	size_type max_size() const {return 0;}
 };
 
-// this allocator can't be used with standard collections
-template <class T, unsigned int S, class A = NullAllocator<T> >
+// This allocator can't be used with standard collections because
+// they require that all objects of the same allocator type are equivalent.
+// So this is for use with SecBlock only.
+template <class T, size_t S, class A = NullAllocator<T> >
 class FixedSizeAllocatorWithCleanup : public AllocatorBase<T>
 {
 public:
 	CRYPTOPP_INHERIT_ALLOCATOR_TYPES
 
+	FixedSizeAllocatorWithCleanup() : m_allocated(false) {}
+
 	pointer allocate(size_type n)
 	{
-		if (n <= S)
+		if (n <= S && !m_allocated)
 		{
-			assert(!m_allocated);
-#ifndef NDEBUG
 			m_allocated = true;
-#endif
 			return m_array;
 		}
 		else
@@ -135,12 +151,9 @@ public:
 
 	pointer allocate(size_type n, const void *hint)
 	{
-		if (n <= S)
+		if (n <= S && !m_allocated)
 		{
-			assert(!m_allocated);
-#ifndef NDEBUG
 			m_allocated = true;
-#endif
 			return m_array;
 		}
 		else
@@ -149,13 +162,11 @@ public:
 
 	void deallocate(void *p, size_type n)
 	{
-		if (n <= S)
+		if (p == m_array)
 		{
+			assert(n <= S);
 			assert(m_allocated);
-			assert(p == m_array);
-#ifndef NDEBUG
 			m_allocated = false;
-#endif
 			memset(p, 0, n*sizeof(T));
 		}
 		else
@@ -164,23 +175,27 @@ public:
 
 	pointer reallocate(pointer p, size_type oldSize, size_type newSize, bool preserve)
 	{
-		if (oldSize <= S && newSize <= S)
+		if (p == m_array && newSize <= S)
+		{
+			assert(oldSize <= S);
+			if (oldSize > newSize)
+				memset(p + newSize, 0, (oldSize-newSize)*sizeof(T));
 			return p;
+		}
 
-		return StandardReallocate(*this, p, oldSize, newSize, preserve);
+		pointer newPointer = allocate(newSize, NULL);
+		if (preserve)
+			memcpy(newPointer, p, sizeof(T)*STDMIN(oldSize, newSize));
+		deallocate(p, oldSize);
+		return newPointer;
 	}
 
-	size_type max_size() const {return m_fallbackAllocator.max_size();}
+	size_type max_size() const {return STDMAX(m_fallbackAllocator.max_size(), S);}
 
 private:
-	A m_fallbackAllocator;
 	T m_array[S];
-
-#ifndef NDEBUG
-public:
-	FixedSizeAllocatorWithCleanup() : m_allocated(false) {}
+	A m_fallbackAllocator;
 	bool m_allocated;
-#endif
 };
 
 //! a block of memory allocated using A
@@ -188,7 +203,7 @@ template <class T, class A = AllocatorWithCleanup<T> >
 class SecBlock
 {
 public:
-	explicit SecBlock(unsigned int size=0)
+    explicit SecBlock(unsigned int size=0)
 		: m_size(size) {m_ptr = m_alloc.allocate(size, NULL);}
 	SecBlock(const SecBlock<T, A> &t)
 		: m_size(t.m_size) {m_ptr = m_alloc.allocate(m_size, NULL); memcpy(m_ptr, t.m_ptr, m_size*sizeof(T));}
@@ -205,13 +220,11 @@ public:
 	~SecBlock()
 		{m_alloc.deallocate(m_ptr, m_size);}
 
-#if defined(__GNUC__) || defined(__BCPLUSPLUS__)
 	operator const void *() const
 		{return m_ptr;}
 	operator void *()
 		{return m_ptr;}
-#endif
-#if defined(__GNUC__)	// reduce warnings
+#if defined(__GNUC__) && __GNUC__ < 3	// reduce warnings
 	operator const void *()
 		{return m_ptr;}
 #endif
@@ -220,7 +233,7 @@ public:
 		{return m_ptr;}
 	operator T *()
 		{return m_ptr;}
-#if defined(__GNUC__)	// reduce warnings
+#if defined(__GNUC__) && __GNUC__ < 3	// reduce warnings
 	operator const T *()
 		{return m_ptr;}
 #endif
@@ -241,6 +254,7 @@ public:
 	const T& operator[](I index) const
 		{assert(index >= 0 && (unsigned int)index < m_size); return m_ptr[index];}
 
+	typedef typename A::value_type value_type;
 	typedef typename A::pointer iterator;
 	typedef typename A::const_pointer const_iterator;
 	typedef typename A::size_type size_type;
@@ -325,20 +339,18 @@ public:
 		m_size = newSize;
 	}
 
-	void swap(SecBlock<T, A> &b);
+	void swap(SecBlock<T, A> &b)
+	{
+		std::swap(m_alloc, b.m_alloc);
+		std::swap(m_size, b.m_size);
+		std::swap(m_ptr, b.m_ptr);
+	}
 
 //private:
 	A m_alloc;
 	unsigned int m_size;
 	T *m_ptr;
 };
-
-template <class T, class A> void SecBlock<T, A>::swap(SecBlock<T, A> &b)
-{
-	std::swap(m_alloc, b.m_alloc);
-	std::swap(m_size, b.m_size);
-	std::swap(m_ptr, b.m_ptr);
-}
 
 typedef SecBlock<byte> SecByteBlock;
 typedef SecBlock<word> SecWordBlock;

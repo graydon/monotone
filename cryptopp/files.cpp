@@ -1,6 +1,9 @@
 // files.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
+
+#ifndef CRYPTOPP_IMPORTS
+
 #include "files.h"
 
 NAMESPACE_BEGIN(CryptoPP)
@@ -16,19 +19,20 @@ void Files_TestInstantiations()
 
 void FileStore::StoreInitialize(const NameValuePairs &parameters)
 {
+	m_file.reset(new std::ifstream);
 	const char *fileName;
-	if (parameters.GetValue("InputFileName", fileName))
+	if (parameters.GetValue(Name::InputFileName(), fileName))
 	{
-		ios::openmode binary = parameters.GetValueWithDefault("InputBinaryMode", true) ? ios::binary : ios::openmode(0);
-		m_file.open(fileName, ios::in | binary);
-		if (!m_file)
+		ios::openmode binary = parameters.GetValueWithDefault(Name::InputBinaryMode(), true) ? ios::binary : ios::openmode(0);
+		m_file->open(fileName, ios::in | binary);
+		if (!*m_file)
 			throw OpenErr(fileName);
-		m_stream = &m_file;
+		m_stream = m_file.get();
 	}
 	else
 	{
 		m_stream = NULL;
-		parameters.GetValue("InputStreamPointer", m_stream);
+		parameters.GetValue(Name::InputStreamPointer(), m_stream);
 	}
 	m_waiting = false;
 }
@@ -137,21 +141,29 @@ unsigned int FileStore::CopyRangeTo2(BufferedTransformation &target, unsigned lo
 	return 0;
 }
 
+unsigned long FileStore::Skip(unsigned long skipMax)
+{
+	unsigned long oldPos = m_stream->tellg();
+	m_stream->seekg(skipMax, ios::cur);
+	return (unsigned long)m_stream->tellg() - oldPos;
+}
+
 void FileSink::IsolatedInitialize(const NameValuePairs &parameters)
 {
+	m_file.reset(new std::ofstream);
 	const char *fileName;
-	if (parameters.GetValue("OutputFileName", fileName))
+	if (parameters.GetValue(Name::OutputFileName(), fileName))
 	{
-		ios::openmode binary = parameters.GetValueWithDefault("OutputBinaryMode", true) ? ios::binary : ios::openmode(0);
-		m_file.open(fileName, ios::out | ios::trunc | binary);
-		if (!m_file)
+		ios::openmode binary = parameters.GetValueWithDefault(Name::OutputBinaryMode(), true) ? ios::binary : ios::openmode(0);
+		m_file->open(fileName, ios::out | ios::trunc | binary);
+		if (!*m_file)
 			throw OpenErr(fileName);
-		m_stream = &m_file;
+		m_stream = m_file.get();
 	}
 	else
 	{
 		m_stream = NULL;
-		parameters.GetValue("OutputStreamPointer", m_stream);
+		parameters.GetValue(Name::OutputStreamPointer(), m_stream);
 	}
 }
 
@@ -184,3 +196,5 @@ unsigned int FileSink::Put2(const byte *inString, unsigned int length, int messa
 }
 
 NAMESPACE_END
+
+#endif

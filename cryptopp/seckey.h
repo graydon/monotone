@@ -16,7 +16,7 @@ inline CipherDir ReverseCipherDir(CipherDir dir)
 	return (dir == ENCRYPTION) ? DECRYPTION : ENCRYPTION;
 }
 
-//! .
+//! to be inherited by block ciphers with fixed block size
 template <unsigned int N>
 class FixedBlockSize
 {
@@ -26,7 +26,7 @@ public:
 
 // ************** rounds ***************
 
-//! .
+//! to be inherited by ciphers with fixed number of rounds
 template <unsigned int R>
 class FixedRounds
 {
@@ -45,7 +45,7 @@ protected:
 	}
 };
 
-//! .
+//! to be inherited by ciphers with variable number of rounds
 template <unsigned int D, unsigned int N=1, unsigned int M=INT_MAX>		// use INT_MAX here because enums are treated as signed ints
 class VariableRounds
 {
@@ -56,7 +56,7 @@ public:
 protected:
 	static inline void AssertValidRounds(unsigned int rounds)
 	{
-		assert(rounds >= MIN_ROUNDS && rounds <= MAX_ROUNDS);
+		assert(rounds >= (unsigned int)MIN_ROUNDS && rounds <= (unsigned int)MAX_ROUNDS);
 	}
 
 	template <class T>
@@ -64,7 +64,7 @@ protected:
 	{
 		obj->ThrowIfInvalidKeyLength(length);
 		int rounds = param.GetIntValueWithDefault("Rounds", obj->StaticGetDefaultRounds(length));
-		if (rounds < (unsigned int)MIN_ROUNDS || rounds > (unsigned int)MAX_ROUNDS)
+		if (rounds < (int)MIN_ROUNDS || rounds > (int)MAX_ROUNDS)
 			throw InvalidRounds(obj->AlgorithmName(), rounds);
 		obj->UncheckedSetKey(dir, key, length, rounds);
 	}
@@ -72,7 +72,7 @@ protected:
 
 // ************** key length ***************
 
-//! .
+//! to be inherited by keyed algorithms with fixed key length
 template <unsigned int N, unsigned int IV_REQ = SimpleKeyingInterface::NOT_RESYNCHRONIZABLE>
 class FixedKeyLength
 {
@@ -137,9 +137,9 @@ static inline void CheckedSetKey(T *obj, CipherDir dir, const byte *key, unsigne
 	obj->UncheckedSetKey(dir, key, length);
 }
 
-//! .
+//! _
 template <class BASE, class INFO = BASE>
-class SimpleKeyingInterfaceImpl : public BASE
+class CRYPTOPP_NO_VTABLE SimpleKeyingInterfaceImpl : public BASE
 {
 public:
 	unsigned int MinKeyLength() const {return INFO::MIN_KEYLENGTH;}
@@ -152,24 +152,24 @@ protected:
 	void AssertValidKeyLength(unsigned int length) {assert(GetValidKeyLength(length) == length);}
 };
 
-template <class INFO, class INTERFACE = BlockCipher>
-class BlockCipherBaseTemplate : public AlgorithmImpl<SimpleKeyingInterfaceImpl<TwoBases<INFO, INTERFACE> > >
+template <class INFO, class BASE = BlockCipher>
+class CRYPTOPP_NO_VTABLE BlockCipherImpl : public AlgorithmImpl<SimpleKeyingInterfaceImpl<TwoBases<BASE, INFO> > >
 {
 public:
 	unsigned int BlockSize() const {return this->BLOCKSIZE;}
 };
 
-//! .
+//! _
 template <CipherDir DIR, class BASE>
-class BlockCipherTemplate : public BASE
+class BlockCipherFinal : public ClonableImpl<BlockCipherFinal<DIR, BASE>, BASE>
 {
 public:
- 	BlockCipherTemplate() {}
-	BlockCipherTemplate(const byte *key)
+ 	BlockCipherFinal() {}
+	BlockCipherFinal(const byte *key)
 		{SetKey(key, this->DEFAULT_KEYLENGTH);}
-	BlockCipherTemplate(const byte *key, unsigned int length)
+	BlockCipherFinal(const byte *key, unsigned int length)
 		{SetKey(key, length);}
-	BlockCipherTemplate(const byte *key, unsigned int length, unsigned int rounds)
+	BlockCipherFinal(const byte *key, unsigned int length, unsigned int rounds)
 		{this->SetKeyWithRounds(key, length, rounds);}
 
 	bool IsForwardTransformation() const {return DIR == ENCRYPTION;}
@@ -178,34 +178,29 @@ public:
 	{
 		CheckedSetKey(this, DIR, key, length, param);
 	}
-
-	Clonable * Clone() const {return new BlockCipherTemplate<DIR, BASE>(*this);}
 };
 
-//! .
-template <class BASE>
-class MessageAuthenticationCodeTemplate : public 
-#ifdef CRYPTOPP_DOXYGEN_PROCESSING
-	MessageAuthenticationCode
-#else
-	SimpleKeyingInterfaceImpl<BASE>
-#endif
+//! _
+template <class BASE, class INFO = BASE>
+class MessageAuthenticationCodeImpl : public AlgorithmImpl<SimpleKeyingInterfaceImpl<BASE, INFO>, INFO>
 {
 public:
- 	MessageAuthenticationCodeTemplate() {}
-	MessageAuthenticationCodeTemplate(const byte *key)
-		{SetKey(key, this->DEFAULT_KEYLENGTH);}
-	MessageAuthenticationCodeTemplate(const byte *key, unsigned int length)
-		{SetKey(key, length);}
-
-	std::string AlgorithmName() const {return this->StaticAlgorithmName();}
-
-	void SetKey(const byte *key, unsigned int length, const NameValuePairs &param = g_nullNameValuePairs)
+	void SetKey(const byte *key, unsigned int length, const NameValuePairs &params = g_nullNameValuePairs)
 	{
-		CheckedSetKey(this, Empty(), key, length, param);
+		CheckedSetKey(this, Empty(), key, length, params);
 	}
+};
 
-	Clonable * Clone() const {return new MessageAuthenticationCodeTemplate<BASE>(*this);}
+//! _
+template <class BASE>
+class MessageAuthenticationCodeFinal : public ClonableImpl<MessageAuthenticationCodeFinal<BASE>, MessageAuthenticationCodeImpl<BASE> >
+{
+public:
+ 	MessageAuthenticationCodeFinal() {}
+	MessageAuthenticationCodeFinal(const byte *key)
+		{SetKey(key, this->DEFAULT_KEYLENGTH);}
+	MessageAuthenticationCodeFinal(const byte *key, unsigned int length)
+		{this->SetKey(key, length);}
 };
 
 // ************** documentation ***************
@@ -222,8 +217,10 @@ struct BlockCipherDocumentation
 };
 
 /*! \brief Each class derived from this one defines two types, Encryption and Decryption, 
-	both of which implement the SymmetricCipher interface. See CipherModeDocumentation
-	for information about using block ciphers. */
+	both of which implement the SymmetricCipher interface. Two types of classes derive
+	from this class: stream ciphers and block cipher modes. Stream ciphers can be used
+	alone, cipher mode classes need to be used with a block cipher. See CipherModeDocumentation
+	for more for information about using cipher modes and block ciphers. */
 struct SymmetricCipherDocumentation
 {
 	//! implements the SymmetricCipher interface

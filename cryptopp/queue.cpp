@@ -1,10 +1,15 @@
 // queue.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
+
+#ifndef CRYPTOPP_IMPORTS
+
 #include "queue.h"
 #include "filters.h"
 
 NAMESPACE_BEGIN(CryptoPP)
+
+static const unsigned int s_maxAutoNodeSize = 16*1024;
 
 // this class for use by ByteQueue only
 class ByteQueueNode
@@ -34,19 +39,11 @@ public:
 		m_head = m_tail = 0;
 	}
 
-/*	inline unsigned int Put(byte inByte)
-	{
-		if (MaxSize()==m_tail)
-			return 0;
-
-		buf[m_tail++]=inByte;
-		return 1;
-	}
-*/
 	inline unsigned int Put(const byte *begin, unsigned int length)
 	{
 		unsigned int l = STDMIN(length, MaxSize()-m_tail);
-		memcpy(buf+m_tail, begin, l);
+		if (buf+m_tail != begin)
+			memcpy(buf+m_tail, begin, l);
 		m_tail += l;
 		return l;
 	}
@@ -131,10 +128,17 @@ public:
 
 // ********************************************************
 
-ByteQueue::ByteQueue(unsigned int m_nodeSize)
-	: m_nodeSize(m_nodeSize), m_lazyLength(0)
+ByteQueue::ByteQueue(unsigned int nodeSize)
+	: m_lazyLength(0)
 {
+	SetNodeSize(nodeSize);
 	m_head = m_tail = new ByteQueueNode(m_nodeSize);
+}
+
+void ByteQueue::SetNodeSize(unsigned int nodeSize)
+{
+	m_autoNodeSize = !nodeSize;
+	m_nodeSize = m_autoNodeSize ? 256 : nodeSize;
 }
 
 ByteQueue::ByteQueue(const ByteQueue &copy)
@@ -145,6 +149,7 @@ ByteQueue::ByteQueue(const ByteQueue &copy)
 void ByteQueue::CopyFrom(const ByteQueue &copy)
 {
 	m_lazyLength = 0;
+	m_autoNodeSize = copy.m_autoNodeSize;
 	m_nodeSize = copy.m_nodeSize;
 	m_head = m_tail = new ByteQueueNode(*copy.m_head);
 
@@ -166,9 +171,7 @@ ByteQueue::~ByteQueue()
 
 void ByteQueue::Destroy()
 {
-	ByteQueueNode *next;
-
-	for (ByteQueueNode *current=m_head; current; current=next)
+	for (ByteQueueNode *next, *current=m_head; current; current=next)
 	{
 		next=current->next;
 		delete current;
@@ -198,8 +201,15 @@ bool ByteQueue::IsEmpty() const
 
 void ByteQueue::Clear()
 {
-	Destroy();
-	m_head = m_tail = new ByteQueueNode(m_nodeSize);
+	for (ByteQueueNode *next, *current=m_head->next; current; current=next)
+	{
+		next=current->next;
+		delete current;
+	}
+
+	m_tail = m_head;
+	m_head->Clear();
+	m_head->next = NULL;
 	m_lazyLength = 0;
 }
 
@@ -211,10 +221,16 @@ unsigned int ByteQueue::Put2(const byte *inString, unsigned int length, int mess
 	unsigned int len;
 	while ((len=m_tail->Put(inString, length)) < length)
 	{
-		m_tail->next = new ByteQueueNode(m_nodeSize);
-		m_tail = m_tail->next;
 		inString += len;
 		length -= len;
+		if (m_autoNodeSize && m_nodeSize < s_maxAutoNodeSize)
+			do
+			{
+				m_nodeSize *= 2;
+			}
+			while (m_nodeSize < length && m_nodeSize < s_maxAutoNodeSize);
+		m_tail->next = new ByteQueueNode(STDMAX(m_nodeSize, length));
+		m_tail = m_tail->next;
 	}
 
 	return 0;
@@ -237,8 +253,24 @@ void ByteQueue::LazyPut(const byte *inString, unsigned int size)
 {
 	if (m_lazyLength > 0)
 		FinalizeLazyPut();
+
+	if (inString == m_tail->buf+m_tail->m_tail)
+		Put(inString, size);
+	else
+	{
+		m_lazyString = const_cast<byte *>(inString);
+		m_lazyLength = size;
+		m_lazyStringModifiable = false;
+	}
+}
+
+void ByteQueue::LazyPutModifiable(byte *inString, unsigned int size)
+{
+	if (m_lazyLength > 0)
+		FinalizeLazyPut();
 	m_lazyString = inString;
 	m_lazyLength = size;
+	m_lazyStringModifiable = true;
 }
 
 void ByteQueue::UndoLazyPut(unsigned int size)
@@ -312,7 +344,10 @@ unsigned int ByteQueue::TransferTo2(BufferedTransformation &target, unsigned lon
 		unsigned int len = (unsigned int)STDMIN(bytesLeft, (unsigned long)m_lazyLength);
 		if (len)
 		{
-			target.ChannelPut(channel, m_lazyString, len);
+			if (m_lazyStringModifiable)
+				target.ChannelPutModifiable(channel, m_lazyString, len);
+			else
+				target.ChannelPut(channel, m_lazyString, len);
 			m_lazyString += len;
 			m_lazyLength -= len;
 			bytesLeft -= len;
@@ -346,11 +381,18 @@ void ByteQueue::Unget(byte inByte)
 
 void ByteQueue::Unget(const byte *inString, unsigned int length)
 {
-	// TODO: make this more efficient
-	ByteQueueNode *newHead = new ByteQueueNode(length);
-	newHead->next = m_head;
-	m_head = newHead;
-	m_head->Put(inString, length);
+	unsigned int len = STDMIN(length, m_head->m_head);
+	length -= len;
+	m_head->m_head -= len;
+	memcpy(m_head->buf + m_head->m_head, inString + length, len);
+
+	if (length > 0)
+	{
+		ByteQueueNode *newHead = new ByteQueueNode(length);
+		newHead->next = m_head;
+		m_head = newHead;
+		m_head->Put(inString, length);
+	}
 }
 
 const byte * ByteQueue::Spy(unsigned int &contiguousSize) const
@@ -372,7 +414,7 @@ byte * ByteQueue::CreatePutSpace(unsigned int &size)
 
 	if (m_tail->m_tail == m_tail->MaxSize())
 	{
-		m_tail->next = new ByteQueueNode(size < m_nodeSize ? m_nodeSize : STDMAX(m_nodeSize, 1024U));
+		m_tail->next = new ByteQueueNode(STDMAX(m_nodeSize, size));
 		m_tail = m_tail->next;
 	}
 
@@ -420,11 +462,13 @@ byte ByteQueue::operator[](unsigned long i) const
 
 void ByteQueue::swap(ByteQueue &rhs)
 {
+	std::swap(m_autoNodeSize, rhs.m_autoNodeSize);
 	std::swap(m_nodeSize, rhs.m_nodeSize);
 	std::swap(m_head, rhs.m_head);
 	std::swap(m_tail, rhs.m_tail);
 	std::swap(m_lazyString, rhs.m_lazyString);
 	std::swap(m_lazyLength, rhs.m_lazyLength);
+	std::swap(m_lazyStringModifiable, rhs.m_lazyStringModifiable);
 }
 
 // ********************************************************
@@ -516,3 +560,5 @@ unsigned int ByteQueue::Walker::CopyRangeTo2(BufferedTransformation &target, uns
 }
 
 NAMESPACE_END
+
+#endif

@@ -33,6 +33,7 @@ CRYPTOPP_DEFINE_NAME_STRING(Cofactor)			//!< Integer
 CRYPTOPP_DEFINE_NAME_STRING(SubgroupGenerator)	//!< Integer, ECP::Point, or EC2N::Point
 CRYPTOPP_DEFINE_NAME_STRING(Curve)				//!< ECP or EC2N
 CRYPTOPP_DEFINE_NAME_STRING(GroupOID)			//!< OID
+CRYPTOPP_DEFINE_NAME_STRING(PointerToPrimeSelector)		//!< const PrimeSelector *
 CRYPTOPP_DEFINE_NAME_STRING(Prime1)				//!< Integer
 CRYPTOPP_DEFINE_NAME_STRING(Prime2)				//!< Integer
 CRYPTOPP_DEFINE_NAME_STRING(ModPrime1PrivateExponent)	//!< Integer
@@ -46,6 +47,25 @@ CRYPTOPP_DEFINE_NAME_STRING(SignatureVerificationFilterFlags)	//!< word32
 CRYPTOPP_DEFINE_NAME_STRING(InputBuffer)		//!< ConstByteArrayParameter
 CRYPTOPP_DEFINE_NAME_STRING(OutputBuffer)		//!< ByteArrayParameter
 CRYPTOPP_DEFINE_NAME_STRING(XMACC_Counter)		//!< word32
+CRYPTOPP_DEFINE_NAME_STRING(InputFileName)		//!< const char *
+CRYPTOPP_DEFINE_NAME_STRING(InputStreamPointer)	//!< std::istream *
+CRYPTOPP_DEFINE_NAME_STRING(InputBinaryMode)	//!< bool
+CRYPTOPP_DEFINE_NAME_STRING(OutputFileName)		//!< const char *
+CRYPTOPP_DEFINE_NAME_STRING(OutputStreamPointer)	//!< std::ostream *
+CRYPTOPP_DEFINE_NAME_STRING(OutputBinaryMode)	//!< bool
+CRYPTOPP_DEFINE_NAME_STRING(EncodingParameters)	//!< ConstByteArrayParameter
+CRYPTOPP_DEFINE_NAME_STRING(KeyDerivationParameters)	//!< ConstByteArrayParameter
+CRYPTOPP_DEFINE_NAME_STRING(Separator)			//< ConstByteArrayParameter
+CRYPTOPP_DEFINE_NAME_STRING(Terminator)			//< ConstByteArrayParameter
+CRYPTOPP_DEFINE_NAME_STRING(Uppercase)			//< bool
+CRYPTOPP_DEFINE_NAME_STRING(GroupSize)			//< int
+CRYPTOPP_DEFINE_NAME_STRING(Pad)				//< bool
+CRYPTOPP_DEFINE_NAME_STRING(PaddingByte)		//< byte
+CRYPTOPP_DEFINE_NAME_STRING(Log2Base)			//< int
+CRYPTOPP_DEFINE_NAME_STRING(EncodingLookupArray)	//< const byte *
+CRYPTOPP_DEFINE_NAME_STRING(DecodingLookupArray)	//< const byte *
+CRYPTOPP_DEFINE_NAME_STRING(InsertLineBreaks)	//< bool
+CRYPTOPP_DEFINE_NAME_STRING(MaxLineLength)		//< int
 
 DOCUMENTED_NAMESPACE_END
 

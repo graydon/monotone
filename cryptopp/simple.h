@@ -11,37 +11,40 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
-template <class BASE, class ALGORITHM_INFO = BASE>
-class AlgorithmImpl : public BASE
+//! _
+template <class DERIVED, class BASE>
+class CRYPTOPP_NO_VTABLE ClonableImpl : public BASE
 {
 public:
+	Clonable * Clone() const {return new DERIVED(*static_cast<const DERIVED *>(this));}
+};
+
+//! _
+template <class BASE, class ALGORITHM_INFO=BASE>
+class CRYPTOPP_NO_VTABLE AlgorithmImpl : public BASE
+{
+public:
+	static std::string StaticAlgorithmName() {return ALGORITHM_INFO::StaticAlgorithmName();}
 	std::string AlgorithmName() const {return ALGORITHM_INFO::StaticAlgorithmName();}
 };
 
-//! .
-class InvalidKeyLength : public InvalidArgument
+//! _
+class CRYPTOPP_DLL InvalidKeyLength : public InvalidArgument
 {
 public:
 	explicit InvalidKeyLength(const std::string &algorithm, unsigned int length) : InvalidArgument(algorithm + ": " + IntToString(length) + " is not a valid key length") {}
 };
 
-//! .
-class InvalidRounds : public InvalidArgument
+//! _
+class CRYPTOPP_DLL InvalidRounds : public InvalidArgument
 {
 public:
 	explicit InvalidRounds(const std::string &algorithm, unsigned int rounds) : InvalidArgument(algorithm + ": " + IntToString(rounds) + " is not a valid number of rounds") {}
 };
 
-class HashTransformationWithDefaultTruncation : public HashTransformation
-{
-public:
-	virtual void Final(byte *digest) =0;
-	void TruncatedFinal(byte *digest, unsigned int digestSize);
-};
-
-//! .
+//! _
 // TODO: look into this virtual inheritance
-class ASN1CryptoMaterial : virtual public ASN1Object, virtual public CryptoMaterial
+class CRYPTOPP_DLL ASN1CryptoMaterial : virtual public ASN1Object, virtual public CryptoMaterial
 {
 public:
 	void Save(BufferedTransformation &bt) const
@@ -52,23 +55,21 @@ public:
 
 // *****************************
 
+//! _
 template <class T>
-class Bufferless : public T
+class CRYPTOPP_NO_VTABLE Bufferless : public T
 {
 public:
-	Bufferless() {}
-	Bufferless(BufferedTransformation *q) : T(q) {}
 	bool IsolatedFlush(bool hardFlush, bool blocking) {return false;}
 };
 
+//! _
 template <class T>
-class Unflushable : public T
+class CRYPTOPP_NO_VTABLE Unflushable : public T
 {
 public:
-	Unflushable() {}
-	Unflushable(BufferedTransformation *q) : T(q) {}
 	bool Flush(bool completeFlush, int propagation=-1, bool blocking=true)
-		{return ChannelFlush(this->NULL_CHANNEL, completeFlush, propagation);}
+		{return ChannelFlush(this->NULL_CHANNEL, completeFlush, propagation, blocking);}
 	bool IsolatedFlush(bool hardFlush, bool blocking)
 		{assert(false); return false;}
 	bool ChannelFlush(const std::string &channel, bool hardFlush, int propagation=-1, bool blocking=true)
@@ -86,14 +87,11 @@ protected:
 	virtual bool InputBufferIsEmpty() const {return false;}
 };
 
+//! _
 template <class T>
-class InputRejecting : public T
+class CRYPTOPP_NO_VTABLE InputRejecting : public T
 {
 public:
-	InputRejecting() {}
-	InputRejecting(BufferedTransformation *q) : T(q) {}
-
-protected:
 	struct InputRejected : public NotImplemented
 		{InputRejected() : NotImplemented("BufferedTransformation: this object doesn't allow input") {}};
 
@@ -108,30 +106,33 @@ protected:
 	bool ChannelMessageSeriesEnd(const std::string &, int, bool) {throw InputRejected();}
 };
 
+//! _
 template <class T>
-class CustomSignalPropagation : public T
+class CRYPTOPP_NO_VTABLE CustomFlushPropagation : public T
 {
 public:
-	CustomSignalPropagation() {}
-	CustomSignalPropagation(BufferedTransformation *q) : T(q) {}
-
-	virtual void Initialize(const NameValuePairs &parameters=g_nullNameValuePairs, int propagation=-1) =0;
 	virtual bool Flush(bool hardFlush, int propagation=-1, bool blocking=true) =0;
 
 private:
-	void IsolatedInitialize(const NameValuePairs &parameters) {assert(false);}
 	bool IsolatedFlush(bool hardFlush, bool blocking) {assert(false); return false;}
 };
 
+//! _
 template <class T>
-class Multichannel : public CustomSignalPropagation<T>
+class CRYPTOPP_NO_VTABLE CustomSignalPropagation : public CustomFlushPropagation<T>
 {
 public:
-	Multichannel() {}
-	Multichannel(BufferedTransformation *q) : CustomSignalPropagation<T>(q) {}
+	virtual void Initialize(const NameValuePairs &parameters=g_nullNameValuePairs, int propagation=-1) =0;
 
-	void Initialize(const NameValuePairs &parameters, int propagation)
-		{ChannelInitialize(this->NULL_CHANNEL, parameters, propagation);}
+private:
+	void IsolatedInitialize(const NameValuePairs &parameters) {assert(false);}
+};
+
+//! _
+template <class T>
+class CRYPTOPP_NO_VTABLE Multichannel : public CustomFlushPropagation<T>
+{
+public:
 	bool Flush(bool hardFlush, int propagation=-1, bool blocking=true)
 		{return ChannelFlush(this->NULL_CHANNEL, hardFlush, propagation, blocking);}
 	bool MessageSeriesEnd(int propagation=-1, bool blocking=true)
@@ -154,16 +155,15 @@ public:
 	unsigned int ChannelPutModifiable2(const std::string &channel, byte *begin, unsigned int length, int messageEnd, bool blocking)
 		{return ChannelPut2(channel, begin, length, messageEnd, blocking);}
 
-	virtual void ChannelInitialize(const std::string &channel, const NameValuePairs &parameters=g_nullNameValuePairs, int propagation=-1) =0;
 	virtual bool ChannelFlush(const std::string &channel, bool hardFlush, int propagation=-1, bool blocking=true) =0;
 };
 
+//! _
 template <class T>
-class AutoSignaling : public T
+class CRYPTOPP_NO_VTABLE AutoSignaling : public T
 {
 public:
 	AutoSignaling(int propagation=-1) : m_autoSignalPropagation(propagation) {}
-	AutoSignaling(BufferedTransformation *q, int propagation=-1) : T(q), m_autoSignalPropagation(propagation) {}
 
 	void SetAutoSignalPropagation(int propagation)
 		{m_autoSignalPropagation = propagation;}
@@ -175,7 +175,7 @@ private:
 };
 
 //! A BufferedTransformation that only contains pre-existing data as "output"
-class Store : public AutoSignaling<InputRejecting<BufferedTransformation> >
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE Store : public AutoSignaling<InputRejecting<BufferedTransformation> >
 {
 public:
 	Store() : m_messageEnd(false) {}
@@ -197,7 +197,7 @@ protected:
 };
 
 //! A BufferedTransformation that doesn't produce any retrievable output
-class Sink : public BufferedTransformation
+class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE Sink : public BufferedTransformation
 {
 protected:
 	// make these functions protected to help prevent unintentional calls to them
@@ -216,7 +216,7 @@ protected:
 		{return 0;}
 };
 
-class BitBucket : public Bufferless<Sink>
+class CRYPTOPP_DLL BitBucket : public Bufferless<Sink>
 {
 public:
 	std::string AlgorithmName() const {return "BitBucket";}

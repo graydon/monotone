@@ -10,15 +10,9 @@
 #include "algparam.h"
 #include "fips140.h"
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(CRYPTOPP_IS_DLL)
 #include "pssr.h"
-#endif
-
-#include "oaep.cpp"
-
 NAMESPACE_BEGIN(CryptoPP)
-
-#ifndef NDEBUG
 void RSA_TestInstantiations()
 {
 	RSASS<PKCS1v15, SHA>::Verifier x1(1, 1);
@@ -39,9 +33,12 @@ void RSA_TestInstantiations()
 
 	x4 = x2.GetKey();
 }
+NAMESPACE_END
 #endif
 
-template class OAEP<SHA>;
+#ifndef CRYPTOPP_IMPORTS
+
+NAMESPACE_BEGIN(CryptoPP)
 
 OID RSAFunction::GetAlgorithmID() const
 {
@@ -107,19 +104,19 @@ public:
 void InvertibleRSAFunction::GenerateRandom(RandomNumberGenerator &rng, const NameValuePairs &alg)
 {
 	int modulusSize = 2048;
-	alg.GetIntValue("ModulusSize", modulusSize) || alg.GetIntValue("KeySize", modulusSize);
+	alg.GetIntValue(Name::ModulusSize(), modulusSize) || alg.GetIntValue(Name::KeySize(), modulusSize);
 
 	if (modulusSize < 16)
 		throw InvalidArgument("InvertibleRSAFunction: specified modulus size is too small");
 
-	m_e = alg.GetValueWithDefault("PublicExponent", Integer(17));
+	m_e = alg.GetValueWithDefault(Name::PublicExponent(), Integer(17));
 
 	if (m_e < 3 || m_e.IsEven())
 		throw InvalidArgument("InvertibleRSAFunction: invalid public exponent");
 
 	RSAPrimeSelector selector(m_e);
 	const NameValuePairs &primeParam = MakeParametersForTwoPrimesOfEqualSize(modulusSize)
-		("PointerToPrimeSelector", selector.GetSelectorPointer());
+		(Name::PointerToPrimeSelector(), selector.GetSelectorPointer());
 	m_p.GenerateRandom(rng, primeParam);
 	m_q.GenerateRandom(rng, primeParam);
 
@@ -145,18 +142,25 @@ void InvertibleRSAFunction::GenerateRandom(RandomNumberGenerator &rng, const Nam
 
 void InvertibleRSAFunction::Initialize(RandomNumberGenerator &rng, unsigned int keybits, const Integer &e)
 {
-	GenerateRandom(rng, MakeParameters("ModulusSize", (int)keybits)("PublicExponent", e+e.IsEven()));
+	GenerateRandom(rng, MakeParameters(Name::ModulusSize(), (int)keybits)(Name::PublicExponent(), e+e.IsEven()));
 }
 
 void InvertibleRSAFunction::Initialize(const Integer &n, const Integer &e, const Integer &d)
 {
+	if (n.IsEven() || e.IsEven() | d.IsEven())
+		throw InvalidArgument("InvertibleRSAFunction: input is not a valid RSA private key");
+
 	m_n = n;
 	m_e = e;
 	m_d = d;
 
 	Integer r = --(d*e);
+	unsigned int s = 0;
 	while (r.IsEven())
+	{
 		r >>= 1;
+		s++;
+	}
 
 	ModularArithmetic modn(n);
 	for (Integer i = 2; ; ++i)
@@ -165,7 +169,8 @@ void InvertibleRSAFunction::Initialize(const Integer &n, const Integer &e, const
 		if (a == 1)
 			continue;
 		Integer b;
-		while (a != -1)
+		unsigned int j = 0;
+		while (a != n-1)
 		{
 			b = modn.Square(a);
 			if (b == 1)
@@ -177,6 +182,8 @@ void InvertibleRSAFunction::Initialize(const Integer &n, const Integer &e, const
 				m_u = m_q.InverseMod(m_p);
 				return;
 			}
+			if (++j == s)
+				throw InvalidArgument("InvertibleRSAFunction: input is not a valid RSA private key");
 			a = b;
 		}
 	}
@@ -217,13 +224,17 @@ Integer InvertibleRSAFunction::CalculateInverse(RandomNumberGenerator &rng, cons
 {
 	DoQuickSanityCheck();
 	ModularArithmetic modn(m_n);
-	Integer r(rng, Integer::One(), m_n - Integer::One());
+	Integer r, rInv;
+	do {	// do this loop for people using small numbers for testing
+		r.Randomize(rng, Integer::One(), m_n - Integer::One());
+		rInv = modn.MultiplicativeInverse(r);
+	} while (rInv.IsZero());
 	Integer re = modn.Exponentiate(r, m_e);
 	re = modn.Multiply(re, x);			// blind
 	// here we follow the notation of PKCS #1 and let u=q inverse mod p
 	// but in ModRoot, u=p inverse mod q, so we reverse the order of p and q
 	Integer y = ModularRoot(re, m_dq, m_dp, m_q, m_p, m_u);
-	y = modn.Divide(y, r);				// unblind
+	y = modn.Multiply(y, rInv);				// unblind
 	if (modn.Exponentiate(y, m_e) != x)		// check
 		throw Exception(Exception::OTHER_ERROR, "InvertibleRSAFunction: computational error during private key operation");
 	return y;
@@ -275,3 +286,5 @@ void InvertibleRSAFunction::AssignFrom(const NameValuePairs &source)
 }
 
 NAMESPACE_END
+
+#endif
