@@ -48,14 +48,15 @@ void extract_path_set(manifest_map const & man,
                       path_set & paths);
 
 void 
-build_addition(file_path const & path,
+build_additions(std::vector<file_path> const & args,
                manifest_map const & m_old,
                app_state & app,
                change_set::path_rearrangement & pr);
 
 void 
-build_deletion(file_path const & path,
+build_deletions(std::vector<file_path> const & args,
                manifest_map const & m_old,
+                app_state & app,
                change_set::path_rearrangement & pr);
 
 void 

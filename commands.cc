@@ -1386,9 +1386,12 @@ CMD(add, "working copy", "PATH...", "add files to working copy")
   change_set::path_rearrangement work;  
   get_path_rearrangement(work);
 
+  vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_addition(app.prefix((*i)()), m_old, app, work);
-    
+    paths.push_back(app.prefix(*i));
+
+  build_additions(paths, m_old, app, work);
+
   put_path_rearrangement(work);
 
   update_any_attrs(app);
@@ -1407,9 +1410,12 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy")
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
+  vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_deletion(app.prefix((*i)()), m_old, work);
-  
+    paths.push_back(app.prefix(*i));
+
+  build_deletions(paths, m_old, app, work);
+
   put_path_rearrangement(work);
 
   update_any_attrs(app);
@@ -2437,7 +2443,9 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
             P(F("registering %s file in working copy\n") % attr_path);
               change_set::path_rearrangement work;  
               get_path_rearrangement(work);
-              build_addition(attr_path, man, app, work);
+              vector<file_path> paths;
+              paths.push_back(attr_path);
+              build_additions(paths, man, app, work);
               put_path_rearrangement(work);
           }        
       }

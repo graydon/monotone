@@ -22,4 +22,7 @@ int process_wait(int pid, int *res);
 int process_kill(int pid, int signal);
 int process_sleep(unsigned int seconds);
 
+// for term selection
+bool have_smart_terminal();
+
 #endif // __PLATFORM_HH__
