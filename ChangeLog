@@ -1,3 +1,13 @@
+2003-10-26  graydon hoare  <graydon@pobox.com>
+
+	* cert.cc (get_parents): New function.
+	(write_paths_recursive): New function.
+	(write_ancestry_paths): New function.
+	* cert.hh (write_ancestry_paths): Declare.
+	* commands.cc (queue_edge_for_target_ancestor):
+	Call write_ancestry_paths for "reposting" queue
+	strategy.
+
 2003-10-25  graydon hoare  <graydon@pobox.com>
 
 	* commands.cc (log): Skip looking inside nonexistent

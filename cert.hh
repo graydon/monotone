@@ -82,6 +82,11 @@ void cert_manifest_ancestor(manifest_id const & parent,
 			    app_state & app,
 			    packet_consumer & pc);
 
+void write_ancestry_paths(manifest_id const & ancestor,
+			  manifest_id const & child,
+			  app_state & app,
+			  packet_consumer & pc);
+
 bool find_common_ancestor(manifest_id const & left,
 			  manifest_id const & right,
 			  manifest_id & anc,

@@ -466,8 +466,6 @@ static void queue_edge_for_target_ancestor (pair<url,group> const & targ,
   one_target.push_back(targ);
   queueing_packet_writer qpw(app, one_target);
   
-  manifest_data targ_ancestor_data;
-  manifest_map targ_ancestor_map;
   manifest_id targ_ancestor_id;
   
   if (find_ancestor_on_netserver (child_id, 
@@ -475,18 +473,18 @@ static void queue_edge_for_target_ancestor (pair<url,group> const & targ,
 				  targ.second, 
 				  targ_ancestor_id, 
 				  app))
-    {	    
-      app.db.get_manifest_version(targ_ancestor_id, targ_ancestor_data);
-      read_manifest_map(targ_ancestor_data, targ_ancestor_map);
-      
-      // very important: queue an edge directly from any found ancestor
-      // to the new child. regardless of other certs we may have.
-      cert_manifest_ancestor(targ_ancestor_id, child_id, app, qpw);
+    {
+      // write everything from there to here
+      write_ancestry_paths(targ_ancestor_id, child_id, app, qpw);
     }
-
-  patch_set ps;
-  manifests_to_patch_set(targ_ancestor_map, child_map, app, ps);
-  patch_set_to_packets(ps, app, qpw);
+  else
+    {
+      // or just write a complete version of "here"
+      manifest_map empty_manifest;
+      patch_set ps;
+      manifests_to_patch_set(empty_manifest, child_map, app, ps);
+      patch_set_to_packets(ps, app, qpw);
+    }
 
   // now that we've queued the data, we can note this new child
   // node as existing (well .. soon-to-exist) on the server

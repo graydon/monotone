@@ -9,6 +9,7 @@
 #include "app_state.hh"
 #include "keys.hh"
 #include "sanity.hh"
+#include "patch_set.hh"
 #include "transforms.hh"
 #include "ui.hh"
 
@@ -256,6 +257,85 @@ void cert_manifest_in_branch(manifest_id const & man,
 }
 
 
+static void get_parents(manifest_id const & child,
+			set<manifest_id> & parents,
+			app_state & app)
+{
+  vector< manifest<cert> > certs;
+  parents.clear();
+  app.db.get_manifest_certs(child, ancestor_cert_name, certs);
+  erase_bogus_certs(certs, app);
+  for(vector< manifest<cert> >::const_iterator i = certs.begin();
+      i != certs.end(); ++i)
+    {
+      cert_value tv;
+      decode_base64(i->inner().value, tv);
+      parents.insert(manifest_id(tv()));
+    }
+}
+
+
+static bool write_paths_recursive(manifest_id const & ancestor,
+				  manifest_id const & child,
+				  app_state & app,
+				  packet_consumer & pc)
+{
+
+  if (ancestor == child)
+    return true;
+
+  set<manifest_id> parents;
+  get_parents(child, parents, app);
+  if (parents.size() == 0)
+    return false;
+
+  L(F("exploring parents of %s, seeking towards %s\n")
+    % child % ancestor);
+
+  bool relevant_child = false;
+
+  for(set<manifest_id>::const_iterator i = parents.begin();
+      i != parents.end(); ++i)
+    {
+      if (write_paths_recursive(ancestor, *i, app, pc))
+	{
+	  manifest_map m_old, m_new;
+	  manifest_data m_old_data, m_new_data;
+	  patch_set ps;
+	  
+	  L(F("edge %s -> %s is relevant, writing to consumer\n") % (*i) % child);
+	  relevant_child = true;
+	  app.db.get_manifest_version(*i, m_old_data);
+	  app.db.get_manifest_version(child, m_new_data);	  
+	  read_manifest_map(m_old_data, m_old);
+	  read_manifest_map(m_new_data, m_new);
+	  manifests_to_patch_set(m_old, m_new, app, ps);
+	  patch_set_to_packets(ps, app, pc);
+	}
+    }
+
+  if (relevant_child)
+    {
+      // if relevant, queue all certs on this child
+      vector< manifest<cert> > certs;
+      app.db.get_manifest_certs(child, certs);
+      for(vector< manifest<cert> >::const_iterator j = certs.begin();
+	  j != certs.end(); ++j)
+	pc.consume_manifest_cert(*j);	  
+    }
+
+  return relevant_child;
+}
+
+void write_ancestry_paths(manifest_id const & ancestor,
+			  manifest_id const & child,
+			  app_state & app,
+			  packet_consumer & pc)
+{
+  N(write_paths_recursive(ancestor, child, app, pc), 
+    F("no path found between ancestor %s and child %s") % ancestor % child);
+}
+
 // nb: "heads" only makes sense in the context of manifests (at the
 // moment). we'll see if anyone cares to try branch certs on files. it
 // doesn't sound terribly useful, but who knows.
@@ -379,7 +459,6 @@ static bool find_common_ancestor_recursive(manifest_id const & left,
   N(limit > 0,
     F("recursion limit hit looking for common ancestor, giving up\n"));
 
-  cert_name ancestor(ancestor_cert_name);
   L(F("searching for common ancestors of %s and %s\n") % left % right);
 
   manifest_id curr_left = left, curr_right = right;
@@ -390,18 +469,7 @@ static bool find_common_ancestor_recursive(manifest_id const & left,
   while(true)
     {      
       // advance left edge
-      immediate_parents.clear();
-      ancestor_certs.clear();
-      app.db.get_manifest_certs(curr_left, ancestor, ancestor_certs);      
-      erase_bogus_certs(ancestor_certs, app);
-      for(vector< manifest<cert> >::const_iterator j = ancestor_certs.begin();
-	  j != ancestor_certs.end(); ++j)
-	{
-	  cert_value tv;
-	  decode_base64(j->inner().value, tv);
-	  immediate_parents.insert(manifest_id(tv()));
-	}
-      
+      get_parents (curr_left, immediate_parents, app);
       if (immediate_parents.size() == 0
 	  || !resolve_to_single_ancestor(immediate_parents, app, 
 					 next_left, limit - 1))
@@ -418,18 +486,7 @@ static bool find_common_ancestor_recursive(manifest_id const & left,
       swap(next_left, curr_left);
 
       // advance right edge
-      immediate_parents.clear();
-      ancestor_certs.clear();
-      app.db.get_manifest_certs(curr_right, ancestor, ancestor_certs);      
-      erase_bogus_certs(ancestor_certs, app);
-      for(vector< manifest<cert> >::const_iterator j = ancestor_certs.begin();
-	  j != ancestor_certs.end(); ++j)
-	{
-	  cert_value tv;
-	  decode_base64(j->inner().value, tv);
-	  immediate_parents.insert(manifest_id(tv()));
-	}
-      
+      get_parents (curr_right, immediate_parents, app);
       if (immediate_parents.size() == 0
 	  || !resolve_to_single_ancestor(immediate_parents, app, 
 					 next_right, limit - 1))
