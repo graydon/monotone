@@ -1,5 +1,25 @@
 2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
 
+	* file_io.cc (read_data_for_command_line): New function.
+	(read_data_stdin): New function.
+	* file_io.hh (read_data_for_command_line): Add prototype.
+	
+	* monotone.cc (my_poptStuffArgFile): Clean up a little.  Use
+	read_data_for_command_line.  Don't free argv, but rather return
+	it.
+	(cpp_main): Keep a list of allocated argv's, and free them.
+	(options): Tweak wording of help text on -@.
+	
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.hh: Remove tabs.
+
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.cc (cpp_main): Actually remove newline.
+
+2005-04-01  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ChangeLog: Fixup after merge.
 	* monotone.text (Making Changes): Fix typo.
 	
