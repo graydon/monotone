@@ -326,8 +326,8 @@ package_revision.h: package_revision.txt txt2c Makefile
 
 .PHONY: package_full_revision.txt
 package_full_revision.txt:
-	(cd $(srcdir) && $(top_builddir)/monotone status) >$@ \
-	|| (cd $(srcdir) && monotone status) >$@ \
+	(cd $(srcdir) && $(top_builddir)/monotone status 2>/dev/null) >$@ \
+	|| (cd $(srcdir) && monotone status 2>/dev/null) >$@ \
 	|| echo "unknown" >$@
 package_full_revision.h: package_full_revision.txt txt2c Makefile
 	./txt2c $< package_full_revision >$@
