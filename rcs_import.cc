@@ -883,10 +883,10 @@ void store_trunk_manifest_edge(manifest_map const & parent,
     }  
 }
 
-void store_auxilliary_certs(cvs_key const & key, 
-			    manifest_id const & id, 
-			    app_state & app, 
-			    cvs_history const & cvs)
+void store_auxiliary_certs(cvs_key const & key, 
+			   manifest_id const & id, 
+			   app_state & app, 
+			   cvs_history const & cvs)
 {
   packet_db_writer dbw(app);
   cert_manifest_in_branch(id, cert_value(cvs.branch_interner.lookup(key.branch)), app, dbw); 
@@ -952,7 +952,7 @@ void import_substates(ticker & n_edges,
       build_child_state(i->second, child_map, cvs);
       calculate_ident(child_map, child_id);
       store_branch_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
-      store_auxilliary_certs(i->first, child_id, app, cvs);
+      store_auxiliary_certs(i->first, child_id, app, cvs);
       if (i->second->substates.size() > 0)
 	import_substates(n_edges, n_branches, i->second, child_map, cvs, app);
 
@@ -1025,7 +1025,7 @@ void import_cvs_repo(fs::path const & cvsroot, app_state & app)
 	build_parent_state(i->second, parent_map, cvs);
 	calculate_ident(parent_map, parent_id);
 	store_trunk_manifest_edge(parent_map, child_map, parent_id, child_id, app, cvs);
-	store_auxilliary_certs(i->first, child_id, app, cvs);
+	store_auxiliary_certs(i->first, child_id, app, cvs);
 	if (i->second->substates.size() > 0)
 	  import_substates(n_edges, n_branches, i->second, parent_map, cvs, app);
 

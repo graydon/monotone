@@ -1,5 +1,8 @@
 2003-11-29  Tom Tromey  <tromey@redhat.com>
 
+	* rcs_import.cc (store_auxiliary_certs): Renamed to fix typo.
+	Updated all callers.
+
 	* http_tasks.cc (check_received_bytes): Allow "-" as well.
 	* depot.cc (execute_post_query): Allow "-" as well.
 
