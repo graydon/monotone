@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <iterator>
 #include <iostream>
+#include <sstream>
 
 #include <stdlib.h>
 
@@ -146,6 +147,17 @@ cpp_main(int argc, char ** argv)
   setlocale(LC_MESSAGES, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
+  
+  {
+    std::ostringstream cmdline_ss;
+    for (int i = 0; i < argc; ++i)
+      {
+        if (i)
+          cmdline_ss << ", ";
+        cmdline_ss << "'" << argv[i] << "'";
+      }
+    L(F("command line: %s\n") % cmdline_ss.str());
+  }       
 
   L(F("set locale: LC_CTYPE=%s, LC_MESSAGES=%s\n")
     % (setlocale(LC_CTYPE, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL))
@@ -258,15 +270,15 @@ cpp_main(int argc, char ** argv)
       // stop here if they asked for help
 
       if (requested_help)
-	{
-	  if (poptPeekArg(ctx()))
-	    {
-	      string cmd(poptGetArg(ctx()));
-	      throw usage(cmd);
-	    }
-	  else
-	    throw usage("");
-	}
+        {
+          if (poptPeekArg(ctx()))
+            {
+              string cmd(poptGetArg(ctx()));
+              throw usage(cmd);
+            }
+          else
+            throw usage("");
+        }
 
       // main options processed, now invoke the 
       // sub-command w/ remaining args

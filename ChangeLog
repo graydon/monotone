@@ -1,5 +1,10 @@
 2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.cc (cpp_main): Log command line, to help interpret the
+	logs people send in.
+
+2005-02-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* revision.cc (check_sane): Turn off this invariant when
 	global_sanity.relaxed.
 
