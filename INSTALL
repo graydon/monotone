@@ -135,6 +135,9 @@ building and installation process for monotone
 
          ./configure BOOST_SUFFIX=-gcc
 
+       note that, sometimes, the configure script will be able to guess
+       the correct suffix by itself.
+
 3. building monotone
 
   * type "make". this should produce a monotone binary in your current
