@@ -2159,10 +2159,14 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
 
   vector<string> lines;
   split_into_lines(summary(), lines);
-  cout << "# " << endl;
+  if (lines.size() > 0) {
+    cout << "# " << endl;
+  }
   for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
     cout << "# " << *i << endl;
-  cout << "# " << endl;
+  if (lines.size() > 0) {
+    cout << "# " << endl;
+  }
 
   dump_diffs(composite.deltas, app, new_is_archived);
 }

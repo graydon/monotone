@@ -1,5 +1,8 @@
 2004-11-17  Joel Rosdahl  <joel@rosdahl.net>
 
+	* commands.cc (diff): Don't print hashes around diff output if
+	there is no diff to print.
+
 	Fix bugs #8714 "monotone update working copy to previous version"
 	and #9069 "update with multiple candidates":
 	* commands.cc (update): Let the update command take an optional
