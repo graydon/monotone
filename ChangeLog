@@ -1,3 +1,8 @@
+2003-09-27  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc: Remove "monotone.db" default to --db
+	option in help text.
+
 2003-09-27  graydon hoare  <graydon@pobox.com>
 
 	* diff_patch.cc: Rework conflict detection.

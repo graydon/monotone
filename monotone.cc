@@ -45,7 +45,7 @@ struct poptOption options[] =
     {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load a ~/.monotonerc lua file", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
     {"key", 0, POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
-    {"db", 0, POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", "monotone.db"},
+    {"db", 0, POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
     {"branch", 0, POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
     { NULL, 0, 0, NULL, 0 }
