@@ -62,7 +62,7 @@ void sanity_log(sanity & s, const char *format, ...)
   // wherever that may be.
 
   buf[sz - 1] = '\0';
-  wrote = strnlen(buf, sz);
+  wrote = strlen(buf);
 
   if (wrote == 0)
     return;
@@ -103,7 +103,7 @@ void sanity_progress(sanity & s, const char *format, ...)
   // wherever that may be.
 
   buf[sz - 1] = '\0';
-  wrote = strnlen(buf, sz);
+  wrote = strlen(buf);
 
   if (wrote == 0)
     return;
