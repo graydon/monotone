@@ -1,3 +1,11 @@
+2004-02-24  graydon hoare  <graydon@pobox.com>
+
+	* commands.cc (ls_keys): Write key hash codes.
+	* constands.cc (netsync_timeout_seconds): Up to 120.
+	* netsync.cc: Fix a bunch of bugs.
+	* patch_set.cc (manifests_to_patch_set): Fix bug in overload
+	default construction.
+
 2004-02-22  graydon hoare  <graydon@pobox.com>
 
 	* patch_set.cc, patch_set.hh: Parameterize yet further.

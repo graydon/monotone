@@ -733,7 +733,15 @@ static void ls_keys (string name, app_state & app, vector<utf8> const & args)
     {
       cout << endl << "[public keys]" << endl;
       for (size_t i = 0; i < pubkeys.size(); ++i)
-	cout << idx(pubkeys, i)() << endl;
+	{
+	  rsa_keypair_id keyid = idx(pubkeys, i)();
+	  base64<rsa_pub_key> pub_encoded;
+	  hexenc<id> hash_code;
+
+	  app.db.get_key(keyid, pub_encoded); 
+	  key_hash_code(keyid, pub_encoded, hash_code);
+	  cout << hash_code << " " << keyid << endl;
+	}
       cout << endl;
     }
 
@@ -741,7 +749,14 @@ static void ls_keys (string name, app_state & app, vector<utf8> const & args)
     {
       cout << endl << "[private keys]" << endl;
       for (size_t i = 0; i < privkeys.size(); ++i)
-	cout << idx(privkeys, i)() << endl;
+	{
+	  rsa_keypair_id keyid = idx(privkeys, i)();
+	  base64< arc4<rsa_priv_key> > priv_encoded;
+	  hexenc<id> hash_code;
+	  app.db.get_key(keyid, priv_encoded); 
+	  key_hash_code(keyid, priv_encoded, hash_code);
+	  cout << hash_code << " " << keyid << endl;
+	}
       cout << endl;
     }
 

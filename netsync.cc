@@ -119,9 +119,12 @@
 // drop the tcp stream at any point, if too much data is received or too
 // much idle time passes; no commitments or transactions are made.
 //
-// one special command, "bye", is used to force a connection to end
-// "nicely" rather than by disconnecting the socket. receipt by either peer
-// of the command "bye" causes immediate termination of the exchange.
+// one special command, "bye", is used to shut down a connection
+// gracefully.  once each side has received all the data they want, they
+// can send a "bye" command to the other side. as soon as either side has
+// both sent and received a "bye" command, they drop the connection. if
+// either side sees an i/o failure (dropped connection) after they have
+// sent a "bye" command, they consider the shutdown successful.
 //
 // the exchange begins in a non-authenticated state. the server sends a
 // "hello <id> <nonce>" command, which identifies the server's RSA key and
@@ -212,6 +215,10 @@ struct session
   string inbuf; 
   string outbuf;
 
+  netcmd cmd;
+  bool armed;
+  bool arm();
+
   utf8 collection;
   id remote_peer_key_hash;
   bool authenticated;
@@ -223,6 +230,7 @@ struct session
   multimap<id,id> ancestry_edges;
 
   id saved_nonce;
+  bool received_goodbye;
   bool sent_goodbye;
   boost::scoped_ptr<CryptoPP::AutoSeededRandomPool> prng;
 
@@ -239,6 +247,7 @@ struct session
   void mark_recent_io();
   bool done_all_refinements();
   bool got_all_data();
+  void maybe_say_goodbye();
   void analyze_ancestry_graph();
   void analyze_manifest(manifest_map const & man);
   void analyze_manifest_edge(manifest_map const & parent,
@@ -347,11 +356,13 @@ session::session(protocol_role role,
   stream(sock, to),
   inbuf(""),
   outbuf(""),
+  armed(false),
   collection(""),
   remote_peer_key_hash(""),
   authenticated(false),
   last_io_time(::time(NULL)),
   saved_nonce(""),
+  received_goodbye(false),
   sent_goodbye(false)
 {
   if (voice == client_voice)
@@ -439,7 +450,7 @@ void session::analyze_manifest_edge(manifest_map const & parent,
 	}
       else
 	{
-	  L(F("requesting file delta from '%s' -> '%s' (path %s)") 
+	  L(F("requesting file delta from '%s' -> '%s' (path %s)\n") 
 	    % i->id_old % i->id_new % i->path);
 	  id tmp1, tmp2;
 	  decode_hexenc(i->id_old.inner(), tmp1);
@@ -457,7 +468,7 @@ void session::analyze_manifest_edge(manifest_map const & parent,
 	}
       else
 	{
-	  L(F("requesting missing data for file '%s' (path %s)") 
+	  L(F("requesting missing data for file '%s' (path %s)\n") 
 	    % i->ident % i->path);
 	  id tmp;
 	  decode_hexenc(i->ident.inner(), tmp);
@@ -495,9 +506,8 @@ void session::request_manifests_recursive(id const & i, set<id> & visited)
   L(F("visiting manifest '%s'\n") % hid);
 
   typedef multimap<id,id>::const_iterator ite;
-  pair<ite,ite> range = ancestry_edges.equal_range(i);
 
-  if (range.first == ancestry_edges.end())
+  if (ancestry_edges.find(i) == ancestry_edges.end())
     {
       // we are at a root, request full data
       if (this->app.db.manifest_version_exists(manifest_id(hid)))
@@ -513,6 +523,7 @@ void session::request_manifests_recursive(id const & i, set<id> & visited)
     {
       // first make sure we've requested enough to get to here by
       // calling ourselves recursively
+      pair<ite,ite> range = ancestry_edges.equal_range(i);
       for (ite p = range.first; p != range.second; ++p)
 	{
 	  id const & child = p->first;
@@ -579,14 +590,14 @@ Probe::ready_type session::which_events() const
 {    
   if (outbuf.empty())
     {
-      if (inbuf.size() < constants::netcmd_maxsz && !this->sent_goodbye)
+      if (inbuf.size() < constants::netcmd_maxsz)
 	return Probe::ready_read | Probe::ready_oobd;
       else
 	return Probe::ready_oobd;
     }
   else
     {
-      if (inbuf.size() < constants::netcmd_maxsz && !this->sent_goodbye)
+      if (inbuf.size() < constants::netcmd_maxsz)
 	return Probe::ready_write | Probe::ready_read | Probe::ready_oobd;
       else
 	return Probe::ready_write | Probe::ready_oobd;
@@ -614,7 +625,8 @@ bool session::read_some(ticker * tick)
 bool session::write_some(ticker * tick)
 {
   I(!outbuf.empty());    
-  signed_size_type count = stream.write(outbuf.data(), outbuf.size());
+  signed_size_type count = stream.write(outbuf.data(), 
+					std::min(outbuf.size(), constants::bufsz));
   if(count > 0)
     {
       outbuf.erase(0, count);
@@ -633,7 +645,7 @@ bool session::write_some(ticker * tick)
 
 void session::queue_bye_cmd() 
 {
-  if (this->sent_goodbye) return;
+  L(F("queueing 'bye' command\n"));
   netcmd cmd;
   cmd.cmd_code = bye_cmd;
   write_netcmd(cmd, outbuf);
@@ -642,7 +654,9 @@ void session::queue_bye_cmd()
 
 void session::queue_done_cmd(size_t level, netcmd_item_type type) 
 {
-  if (this->sent_goodbye) return;
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(F("queueing 'done' command for %s level %s\n") % typestr % level);
   netcmd cmd;
   cmd.cmd_code = done_cmd;
   write_done_cmd_payload(level, type, cmd.payload);
@@ -652,7 +666,6 @@ void session::queue_done_cmd(size_t level, netcmd_item_type type)
 void session::queue_hello_cmd(id const & server, 
 			      id const & nonce) 
 {
-  if (this->sent_goodbye) return;
   netcmd cmd;
   cmd.cmd_code = hello_cmd;
   write_hello_cmd_payload(server, nonce, cmd.payload);
@@ -666,7 +679,6 @@ void session::queue_auth_cmd(protocol_role role,
 			     id const & nonce2, 
 			     string const & signature)
 {
-  if (this->sent_goodbye) return;
   netcmd cmd;
   cmd.cmd_code = auth_cmd;
   write_auth_cmd_payload(role, collection, client, 
@@ -677,7 +689,6 @@ void session::queue_auth_cmd(protocol_role role,
 
 void session::queue_confirm_cmd(string const & signature)
 {
-  if (this->sent_goodbye) return;
   netcmd cmd;
   cmd.cmd_code = confirm_cmd;
   write_confirm_cmd_payload(signature, cmd.payload);
@@ -686,7 +697,6 @@ void session::queue_confirm_cmd(string const & signature)
 
 void session::queue_refine_cmd(merkle_node const & node)
 {
-  if (this->sent_goodbye) return;
   string typestr;
   hexenc<prefix> hpref;
   node.get_hex_prefix(hpref);
@@ -702,7 +712,6 @@ void session::queue_refine_cmd(merkle_node const & node)
 void session::queue_send_data_cmd(netcmd_item_type type,
 				  id const & item)
 {
-  if (this->sent_goodbye) return;
 
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -730,7 +739,6 @@ void session::queue_send_delta_cmd(netcmd_item_type type,
 				   id const & base, 
 				   id const & ident)
 {
-  if (this->sent_goodbye) return;
 
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -744,7 +752,7 @@ void session::queue_send_delta_cmd(netcmd_item_type type,
       hexenc<id> ident_hid;
       encode_hexenc(ident, ident_hid);
       L(F("not queueing request for %s delta '%s' -> '%s' as we already requested the target\n") 
-	% typestr % base_hid % ident_hid % ident_hid);
+	% typestr % base_hid % ident_hid);
       return;
     }
 
@@ -761,7 +769,6 @@ void session::queue_data_cmd(netcmd_item_type type,
 			     id const & item, 
 			     string const & dat)
 {
-  if (this->sent_goodbye) return;
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   L(F("queueing %d bytes of data for %s item '%s'\n")
@@ -777,7 +784,6 @@ void session::queue_delta_cmd(netcmd_item_type type,
 			      id const & ident, 
 			      delta const & del)
 {
-  if (this->sent_goodbye) return;
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   L(F("queueing %s delta '%s' -> '%s'\n")
@@ -791,7 +797,6 @@ void session::queue_delta_cmd(netcmd_item_type type,
 void session::queue_nonexistant_cmd(netcmd_item_type type,
 				    id const & item)
 {
-  if (this->sent_goodbye) return;
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   L(F("queueing note of nonexistance of %s item '%s'\n")
@@ -807,7 +812,8 @@ void session::queue_nonexistant_cmd(netcmd_item_type type,
 bool session::process_bye_cmd() 
 {
   L(F("received 'bye' netcmd\n"));
-  return false;
+  this->received_goodbye = true;
+  return true;
 }
 
 bool session::process_done_cmd(size_t level, netcmd_item_type type) 
@@ -1606,7 +1612,7 @@ bool session::process_send_delta_cmd(netcmd_item_type type,
 	    string tmp;	    
 	    unpack(base_fdat.inner(), base_dat);
 	    unpack(ident_fdat.inner(), ident_dat);
-	    compute_delta(base_dat(), ident(), tmp);
+	    compute_delta(base_dat(), ident_dat(), tmp);
 	    del = delta(tmp);
 	  }
 	else
@@ -1826,9 +1832,10 @@ bool session::process_delta_cmd(netcmd_item_type type,
 		pack(del, packed_del);		
 		this->app.db.put_manifest_version(old_manifest, new_manifest, 
 						  manifest_delta(packed_del));
-		manifest_map man;
-		read_manifest_map(data(tmp), man);
-		analyze_manifest(man);
+		manifest_map parent_man, child_man;
+		read_manifest_map(old_unpacked, parent_man);
+		read_manifest_map(data(tmp), child_man);
+		analyze_manifest_edge(parent_man, child_man);
 	      }					      
 	  }
       }
@@ -2035,25 +2042,43 @@ void session::begin_service()
   decode_hexenc(keyhash, keyhash_raw);
   queue_hello_cmd(keyhash_raw(), mk_nonce());
 }
-      
+
+void session::maybe_say_goodbye()
+{
+  if (done_all_refinements() &&
+      got_all_data())
+    queue_bye_cmd();
+}
+
+bool session::arm()
+{
+  if (!armed)
+    {
+      if (read_netcmd(inbuf, cmd))
+	{
+	  inbuf.erase(0, cmd.encoded_size());	  
+	  armed = true;
+	}
+    }
+  return armed;
+}      
+
 bool session::process()
 {
+  if (!arm())
+    return true;
+
   try 
     {
-      netcmd cmd;
+      transaction_guard guard(app.db);
+      armed = false;
       L(F("processing %d byte input buffer from peer %s\n") % inbuf.size() % peer_id);
-      while (read_netcmd(inbuf, cmd))
-	{
-	  inbuf.erase(0, cmd.encoded_size());
-	  if (!dispatch_payload(cmd))
-	    return false;
-	}
+      bool ret = dispatch_payload(cmd);
       if (inbuf.size() >= constants::netcmd_maxsz)
-	{
-	  W(F("input buffer for peer %s is overfull after netcmd dispatch\n") % peer_id);
-	  return false;
-	}
-      return true;
+	W(F("input buffer for peer %s is overfull after netcmd dispatch\n") % peer_id);
+      guard.commit();
+      maybe_say_goodbye();
+      return ret;
     }
   catch (bad_decode & bd)
     {
@@ -2071,9 +2096,8 @@ static void call_server(protocol_role role,
 			port_type default_port,
 			unsigned long timeout_seconds)
 {
-  transaction_guard guard(app.db);
   Probe probe;
-  Timeout timeout(static_cast<long>(timeout_seconds));
+  Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
 
   // FIXME: split into labels and convert to ace here.
 
@@ -2085,36 +2109,29 @@ static void call_server(protocol_role role,
   ticker input("bytes in"), output("bytes out");
 
   while (true)
-    { 
-      if (sess.done_all_refinements() && sess.got_all_data())
-	sess.queue_bye_cmd();
-      
+    {       
+      bool armed = sess.arm();
+
       probe.clear();
       probe.add(sess.stream, sess.which_events());
-
-      Probe::result_type res = probe.ready(timeout);
+      Probe::result_type res = probe.ready(armed ? instant : timeout);
       Probe::ready_type event = res.second;
       socket_type fd = res.first;
       
-      if (fd == -1) 
+      if (fd == -1 && !armed) 
 	{
 	  P(F("timed out waiting for I/O with peer %s, disconnecting\n") % sess.peer_id);
 	  return;
 	}
-
+      
       if (event & Probe::ready_read)
 	{
 	  if (sess.read_some(&input))
 	    {
-	      if (!sess.process())
-		{
-		  P(F("processing on fd %d (peer %s) finished, disconnecting\n") % fd % sess.peer_id);
-		  guard.commit();
-		  return;
-		}
+	      armed = sess.arm();
 	    }
 	  else
-	    {
+	    {	      
 	      P(F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
 	      return;
 	    }
@@ -2131,18 +2148,28 @@ static void call_server(protocol_role role,
       
       if (event & Probe::ready_oobd)
 	{
-	  P(F("got OOB data on fd %d (peer %s), disconnecting\n") % fd % sess.peer_id);
+	  P(F("got OOB data on fd %d (peer %s), disconnecting\n") 
+	    % fd % sess.peer_id);
 	  return;
 	}      
 
-      if (sess.sent_goodbye && sess.outbuf.empty())
+      if (armed)
 	{
-	  P(F("sent goodbye and flushed output on fd %d (peer %s), disconnecting\n") % fd % sess.peer_id);
-	  guard.commit();
+	  if (!sess.process())
+	    {
+	      P(F("processing on fd %d (peer %s) finished, disconnecting\n") 
+		% fd % sess.peer_id);
+	      return;
+	    }
+	}
+
+      if (sess.sent_goodbye && sess.outbuf.empty() && sess.received_goodbye)
+	{
+	  P(F("exchanged goodbyes and flushed output on fd %d (peer %s), disconnecting\n") 
+	    % fd % sess.peer_id);
 	  return;
 	}	  
     }  
-  guard.commit();
 }
 
 static void serve_connections(protocol_role role,
@@ -2155,11 +2182,17 @@ static void serve_connections(protocol_role role,
 			      unsigned long session_limit)
 {
   Probe probe;  
-  Timeout forever, timeout(static_cast<long>(timeout_seconds));
+
+  Timeout 
+    forever, 
+    timeout(static_cast<long>(timeout_seconds)), 
+    instant(0,1);
+
   Address addr(address().c_str(), default_port, true);
   StreamServer server(addr, timeout);
   
   map<socket_type, shared_ptr<session> > sessions;
+  set<socket_type> armed_sessions;
 
   P(F("beginning service on %s : %d\n") 
     % addr.get_name() % addr.get_port());
@@ -2167,6 +2200,7 @@ static void serve_connections(protocol_role role,
   while (true)
     {      
       probe.clear();
+      armed_sessions.clear();
 
       if (sessions.size() >= session_limit)
 	{
@@ -2179,16 +2213,27 @@ static void serve_connections(protocol_role role,
 
       for (map<socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
 	   i != sessions.end(); ++i)
-	probe.add(i->second->stream, i->second->which_events());
-      
-      Probe::result_type res = probe.ready(sessions.empty() ? forever : timeout);
+	{
+	  if (i->second->arm())
+	    {
+	      L(F("fd %d is armed\n") % i->first);
+	      armed_sessions.insert(i->first);
+	    }
+	  probe.add(i->second->stream, i->second->which_events());
+	}
+
+      L(F("i/o probe with %d armed\n") % armed_sessions.size());      
+      Probe::result_type res = probe.ready(sessions.empty() ? forever 
+					   : (armed_sessions.empty() ? timeout 
+					      : instant));
       Probe::ready_type event = res.second;
       socket_type fd = res.first;
       
-      if (fd == -1) 
+      if (fd == -1)
 	{
-	  L(F("timed out waiting for I/O (listening on %s : %d)\n") 
-	    % addr.get_name() % addr.get_port());
+	  if (armed_sessions.empty()) 
+	    L(F("timed out waiting for I/O (listening on %s : %d)\n") 
+	      % addr.get_name() % addr.get_port());
 	}
       
       // we either got a new connection
@@ -2231,12 +2276,8 @@ static void serve_connections(protocol_role role,
 		{
 		  if (sess->read_some())
 		    {
-		      if (!sess->process())
-			{
-			  P(F("fd %d (peer %s) processing finished, disconnecting\n") 
-			    % fd % sess->peer_id);
-			  sessions.erase(i);
-			}
+		      if (sess->arm())
+			armed_sessions.insert(fd);
 		    }
 		  else
 		    {
@@ -2263,7 +2304,28 @@ static void serve_connections(protocol_role role,
 		}
 	    }
 	}
+
+      // now process any clients which are armed (have read a command)
+      for (set<socket_type>::const_iterator i = armed_sessions.begin();
+	   i != armed_sessions.end(); ++i)
+	{
+	  map<socket_type, shared_ptr<session> >::iterator j;
+	  j = sessions.find(*i);
+	  if (j == sessions.end())
+	    continue;
+	  else
+	    {
+	      shared_ptr<session> sess = j->second;
+	      if (!sess->process())
+		{
+		  P(F("fd %d (peer %s) processing finished, disconnecting\n") 
+		    % fd % sess->peer_id);
+		  sessions.erase(j);
+		}
+	    }
+	}
 	
+
       // kill any clients which haven't done any i/o inside the timeout period
       // or who have said goodbye and flushed their output buffers
       set<socket_type> dead_clients;
@@ -2278,9 +2340,9 @@ static void serve_connections(protocol_role role,
 		% i->first % i->second->peer_id);
 	      dead_clients.insert(i->first);
 	    }
-	  if (i->second->sent_goodbye && i->second->outbuf.empty())
+	  if (i->second->sent_goodbye && i->second->outbuf.empty() && i->second->received_goodbye)
 	    {
-	      P(F("fd %d (peer %s) sent goodbye and flushed output, disconnecting\n") 
+	      P(F("fd %d (peer %s) exchanged goodbyes and flushed output, disconnecting\n") 
 		% i->first % i->second->peer_id);
 	      dead_clients.insert(i->first);
 	    }

@@ -297,7 +297,7 @@ void manifests_to_patch_set(manifest_map const & m_old,
   else
     I(renames.child == new_id);
 
-  manifests_to_patch_set(m_old, m_new, renames, app, ps);
+  manifests_to_patch_set(m_old, m_new, renames, vc, ps);
 }
 
 void manifests_to_patch_set(manifest_map const & m_old,
