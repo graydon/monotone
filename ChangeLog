@@ -1,5 +1,20 @@
 2005-02-02  Nathaniel Smith  <njs@codesourcery.com>
 
+	* change_set.cc (extract_first): Rename to...
+	(extract_pairs_and_insert): ...this.
+	(path_rearrangement::check_sane): Use it to add additional
+	checks.
+
+	* work.hh: Update comments (MT/manifest doesn't exist
+	anymore...).
+
+	* tests/t_need_mt_revision.at: New test.
+	* testsuite.at: Add it.
+	* commands.cc (get_revision_id): Require MT/revision to exist.
+	(setup): Create MT/revision.
+
+2005-02-02  Nathaniel Smith  <njs@codesourcery.com>
+
 	* work.hh: Remove tabs.
 
 2005-02-03  graydon hoare  <graydon@pobox.com>

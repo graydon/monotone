@@ -331,35 +331,36 @@ change_set::path_rearrangement::operator=(path_rearrangement const & other)
 }
 
 static void
-extract_first(std::map<file_path, file_path> const & in,
-              std::set<file_path> & out)
+extract_pairs_and_insert(std::map<file_path, file_path> const & in,
+                         std::set<file_path> & firsts,
+                         std::set<file_path> & seconds)
 {
-  out.clear();
   for (std::map<file_path, file_path>::const_iterator i = in.begin();
        i != in.end(); ++i)
     {
-      out.insert(i->first);
+      firsts.insert(i->first);
+      seconds.insert(i->second);
     }
 }
-
 
 void 
 change_set::path_rearrangement::check_sane() const
 {
   // FIXME: extend this as you manage to think of more invariants
   // which are cheap enough to check at this level.
-  std::set<file_path> renamed_file_set, renamed_dir_set;
-  extract_first(renamed_files, renamed_file_set);
-  extract_first(renamed_dirs, renamed_dir_set);
+  std::set<file_path> renamed_srcs, renamed_dsts;
+  extract_pairs_and_insert(renamed_files, renamed_srcs, renamed_dsts);
+  extract_pairs_and_insert(renamed_dirs, renamed_srcs, renamed_dsts);
+
+  // Files cannot be split nor joined by renames.
+  I(renamed_files.size() + renamed_dirs.size() == renamed_srcs.size());
+  I(renamed_files.size() + renamed_dirs.size() == renamed_dsts.size());
 
   check_sets_disjoint(deleted_files, deleted_dirs);
-  check_sets_disjoint(deleted_files, renamed_file_set);
-  check_sets_disjoint(deleted_files, renamed_dir_set);
+  check_sets_disjoint(deleted_files, renamed_srcs);
+  check_sets_disjoint(deleted_dirs, renamed_srcs);
 
-  check_sets_disjoint(deleted_dirs, renamed_file_set);
-  check_sets_disjoint(deleted_dirs, renamed_dir_set);
-
-  check_sets_disjoint(renamed_file_set, renamed_dir_set);
+  check_sets_disjoint(added_files, renamed_dsts);
 }
 
 change_set::change_set(change_set const & other)

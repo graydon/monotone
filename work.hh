@@ -24,14 +24,15 @@
 // directories). there is no hierarchy of MT directories; only one exists,
 // and it is always at the root. it contains the following files:
 //
-// MT/manifest       -- the check-out manifest, as defined in manifest.hh
+// MT/revision       -- contains the id of the checked out revision
 // MT/work           -- (optional) a set of added, deleted or moved pathnames
 //                      this file is, syntactically, a path_rearrangement
 // MT/options        -- the database, branch and key options currently in use 
 //
 // as work proceeds, the files in the working directory either change their
-// sha1 fingerprints from those listed in the manifest file, or else are
-// added or deleted (and the paths of those changes recorded in 'MT/work').
+// sha1 fingerprints from those listed in the revision's manifest, or else are
+// added or deleted or renamed (and the paths of those changes recorded in
+// 'MT/work').
 // 
 // when it comes time to commit, the change_set is calculated by applying
 // the path_rearrangement to the manifest and then calculating the

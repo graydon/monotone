@@ -252,17 +252,14 @@ get_revision_id(revision_id & c)
   c = revision_id();
   local_path c_path;
   get_revision_path(c_path);
-  if(file_exists(c_path))
-    {
-      data c_data;
-      L(F("loading revision id from %s\n") % c_path);
-      read_data(c_path, c_data);
-      c = revision_id(remove_ws(c_data()));
-    }
-  else
-    {
-      L(F("no revision id file %s\n") % c_path);
-    }
+
+  N(file_exists(c_path),
+    F("working copy is corrupt: %s does not exist\n") % c_path);
+
+  data c_data;
+  L(F("loading revision id from %s\n") % c_path);
+  read_data(c_path, c_data);
+  c = revision_id(remove_ws(c_data()));
 }
 
 static void 
@@ -3614,6 +3611,8 @@ CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
 
   dir = idx(args,0)();
   app.initialize(dir);
+  revision_id null;
+  put_revision_id(null);
 }
 
 
