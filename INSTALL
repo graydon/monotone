@@ -82,12 +82,25 @@ building and installation process for monotone
     configuration options are available; type "configure --help" for a
     list of all of them. some special options are shown here:
 
-     --enable-static-boost
+     --enable-ipv6[=auto|no|yes]
+
+       specify whether IPv6 support has to be enabled or disabled.  the
+       default is to try automatic detection (auto) and use the guessed
+       results.  however, you can force IPv6 detection by saying 'yes'
+       or completely disable it using 'no'.
+
+     --enable-static-boost[=prefix]
 
        this will attempt to link a "mostly static" version of monotone
        using the .a files supplied with your installation of
        boost. the resulting binary will be larger but more portable
        than a normal (dynamic) link.
+
+       you can optionally pass a prefix to the option, which will be
+       used to look for the static libraries; otherwise a list of
+       predefined directories will be used.  for example:
+
+         ./configure --enable-static-boost=/usr/local/boost
 
      --disable-nls
 
@@ -104,6 +117,17 @@ building and installation process for monotone
        flags to "no", it will try to use librarise it finds on your
        system, and use the bundled versions only if you do not have
        your own copies.
+
+     BOOST_SUFFIX=string
+
+       this variable, to be set on configure's command line, can be used
+       to specify a special string suffix to be appended to boost library
+       names.  many Linux distributions provide symlinks to hide this
+       suffix, but others do not.  therefore, you need to pass it to the
+       configure script through this variable for correct detection of
+       boost.  for example:
+
+         ./configure BOOST_SUFFIX=-gcc
 
 3. building monotone
 
