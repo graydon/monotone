@@ -1,5 +1,10 @@
 2004-12-13  Joel Rosdahl  <joel@rosdahl.net>
 
+	* tests/t_merge_2.at: New test triggering a bad merge.
+	* testsuite.at: Add new test.
+
+2004-12-13  Joel Rosdahl  <joel@rosdahl.net>
+
 	* revision.cc (find_least_common_ancestor): Add a missing "return
 	true;" that mysteriously was removed in
 	c853237f9d8d155431f88aca12932d2cdaaa31fe.
