@@ -1,3 +1,12 @@
+2004-04-22  Christof Petig <christof@petig-baender.de>
+
+	* rcs_file.cc, rcs_file.hh: read and remember 'state' of revision
+	* rcs_import.cc: remove Attic/ part from path
+
+2004-04-21  Christof Petig <christof@petig-baender.de>
+
+	* configure.ac: enable use of installed SQLite library
+
 2004-04-20  graydon hoare  <graydon@pobox.com>
 
 	* lua.hh, lua.cc (hook_note_commit): New hook.
