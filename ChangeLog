@@ -1,5 +1,10 @@
 2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_delete_dir.at: New bug report.
+	* testsuite.at: Call it.
+
+2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ChangeLog: Add log entry for <jmmv@menta.net>'s last change.
 	* std_hooks.lua: Check exit status of external merge commands.
 	
