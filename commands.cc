@@ -3275,9 +3275,8 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
             {
               cert_value tv;
               decode_base64(j->inner().value, tv);
-              cout << "Author: " << tv;
+              cout << "Author: " << tv << endl;
             }     
-          cout << endl;
 
           app.db.get_revision_certs(rid, date_name, tmp);
           erase_bogus_certs(tmp, app);
@@ -3286,9 +3285,8 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
             {
               cert_value tv;
               decode_base64(j->inner().value, tv);
-              cout << "Date: " << tv;
+              cout << "Date: " << tv << endl;
             }     
-          cout << endl;
 
           app.db.get_revision_certs(rid, tag_name, tmp);
           erase_bogus_certs(tmp, app);
@@ -3301,7 +3299,6 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
                   decode_base64(j->inner().value, tv);
                   cout << "Tag: " << tv << endl;
                 }         
-              cout << endl;
             }
 
           app.db.get_revision_certs(rid, changelog_name, tmp);
@@ -3313,7 +3310,6 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
               decode_base64(j->inner().value, tv);
               cout << "ChangeLog:" << endl << endl << tv << endl;
             }     
-          cout << endl;
 
           app.db.get_revision_certs(rid, comment_name, tmp);
           erase_bogus_certs(tmp, app);
@@ -3327,7 +3323,6 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
                   decode_base64(j->inner().value, tv);
                   cout << j->inner().key << ": " << tv << endl;
                 }         
-              cout << endl;
             }
           }
         }

@@ -1,3 +1,11 @@
+2004-12-25  Julio M. Merino Vidal  <jmmv@menta.net>
+
+	* commands.cc: During 'log', print duplicate certificates (by
+	different people) in separate lines, rather than showing them
+	together without any spacing.  While here, homogenize new lines
+	in other messages as well; this also avoids printing some of
+	them in case of missing certificates).
+
 2004-12-24  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_disapprove.at: Enable previously disabled test.
