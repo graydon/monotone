@@ -2091,7 +2091,7 @@ CMD(reindex, "network", "",
   guard.commit();
 }
 
-CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION",
     "push COLLECTION to netsync server at ADDRESS")
 {
   if (args.size() < 2)
@@ -2108,7 +2108,7 @@ CMD(push, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   run_netsync_protocol(client_voice, source_role, addr, collections, app);  
 }
 
-CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION",
     "pull COLLECTION from netsync server at ADDRESS")
 {
   if (args.size() < 2)
@@ -2124,7 +2124,7 @@ CMD(pull, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   run_netsync_protocol(client_voice, sink_role, addr, collections, app);  
 }
 
-CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
+CMD(sync, "network", "ADDRESS[:PORTNUMBER] COLLECTION",
     "sync COLLECTION with netsync server at ADDRESS")
 {
   if (args.size() < 2)

@@ -1,3 +1,12 @@
+2005-02-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_undo_update.at: Stupid typo.
+	* tests/t_largish_file.at: New test.
+	* testsuite.at: Add it.
+	
+	* commands.cc (push, pull, sync): Remove misleading "..." from
+	help text.
+
 2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
 
 	* Makefile.am: Append $(BOOST_SUFFIX) to -lboost_unit_test_framework
