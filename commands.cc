@@ -2365,7 +2365,7 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
           dst_id = edge_old_revision(r_new.edges.begin());
         }
 
-      N(find_common_ancestor(src_id, dst_id, anc_id, app),
+      N(find_least_common_ancestor(src_id, dst_id, anc_id, app),
         F("no common ancestor for %s and %s") % src_id % dst_id);
 
       if (src_id == anc_id)
@@ -2428,7 +2428,7 @@ CMD(diff, "informative", "[REVISION [REVISION]]", "show current diffs on stdout"
   dump_diffs(composite.deltas, app, new_is_archived);
 }
 
-CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
+CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor")
 {
   if (args.size() != 2)
     throw usage(name);
@@ -2438,7 +2438,24 @@ CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
   complete(app, idx(args, 0)(), left);
   complete(app, idx(args, 1)(), right);
 
-  if (find_common_ancestor(left, right, anc, app))
+  if (find_least_common_ancestor(left, right, anc, app))
+    std::cout << anc << std::endl;
+  else
+    std::cout << "no common ancestor/dominator found" << std::endl;
+}
+
+
+CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
+{
+  if (args.size() != 2)
+    throw usage(name);
+
+  revision_id anc, left, right;
+
+  complete(app, idx(args, 0)(), left);
+  complete(app, idx(args, 1)(), right);
+
+  if (find_common_ancestor_for_merge(left, right, anc, app))
     std::cout << anc << std::endl;
   else
     std::cout << "no common ancestor/dominator found" << std::endl;
@@ -2596,7 +2613,7 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   } else {
     revision_id r_ancestor_id;
 
-    N(find_common_ancestor(r_old_id, r_chosen_id, r_ancestor_id, app),
+    N(find_least_common_ancestor(r_old_id, r_chosen_id, r_ancestor_id, app),
       F("no common ancestor for %s and %s\n") % r_old_id % r_chosen_id);
     L(F("old is %s\n") % r_old_id);
     L(F("chosen is %s\n") % r_chosen_id);
@@ -2703,7 +2720,7 @@ try_one_merge(revision_id const & left_id,
   app.db.get_manifest(right_rev.new_manifest, right_man);
   app.db.get_manifest(left_rev.new_manifest, left_man);
   
-  if(find_common_ancestor(left_id, right_id, anc_id, app))
+  if(find_common_ancestor_for_merge(left_id, right_id, anc_id, app))
     {     
       P(F("common ancestor %s found\n") % anc_id); 
       P(F("trying 3-way merge\n"));

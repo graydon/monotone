@@ -120,10 +120,16 @@ write_revision_set(revision_set const & rev,
 // graph walking
 
 bool 
-find_common_ancestor(revision_id const & left,
-		     revision_id const & right,
-		     revision_id & anc,
-		     app_state & app);
+find_common_ancestor_for_merge(revision_id const & left,
+			       revision_id const & right,
+			       revision_id & anc,
+			       app_state & app);
+
+bool 
+find_least_common_ancestor(revision_id const & left,
+			   revision_id const & right,
+			   revision_id & anc,
+			   app_state & app);
 
 void 
 calculate_composite_change_set(revision_id const & ancestor,

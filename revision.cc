@@ -243,7 +243,7 @@ find_intersecting_node(bitmap & fst,
 }
 
 //  static void
-//  dump_bitset_map(string const & hdr,
+//  dump_bitset_map(std::string const & hdr,
 //              std::map< ctx, shared_bitmap > const & mm)
 //  {
 //    L(F("dumping [%s] (%d entries)\n") % hdr % mm.size());
@@ -255,10 +255,10 @@ find_intersecting_node(bitmap & fst,
 //  }
 
 bool 
-find_common_ancestor(revision_id const & left,
-                     revision_id const & right,
-                     revision_id & anc,
-                     app_state & app)
+find_common_ancestor_for_merge(revision_id const & left,
+                               revision_id const & right,
+                               revision_id & anc,
+                               app_state & app)
 {
   interner<ctx> intern;
   std::map< ctx, shared_bitmap > 
@@ -301,6 +301,45 @@ find_common_ancestor(revision_id const & left,
     }
 //      dump_bitset_map("ancestors", ancestors);
 //      dump_bitset_map("dominators", dominators);
+//      dump_bitset_map("parents", parents);
+  return false;
+}
+
+
+bool
+find_least_common_ancestor(revision_id const & left,
+                           revision_id const & right,
+                           revision_id & anc,
+                           app_state & app)
+{
+  interner<ctx> intern;
+  std::map< ctx, shared_bitmap >
+    parents, ancestors, dominators;
+
+  ctx ln = intern.intern(left.inner()());
+  ctx rn = intern.intern(right.inner()());
+
+  shared_bitmap lanc = shared_bitmap(new bitmap());
+  shared_bitmap ranc = shared_bitmap(new bitmap());
+
+  ancestors.insert(make_pair(ln, lanc));
+  ancestors.insert(make_pair(rn, ranc));
+
+  L(F("searching for least common ancestor, left=%s right=%s\n") % left % right);
+
+  while (expand_ancestors(parents, ancestors, intern, app))
+    {
+      L(F("least common ancestor scan [par=%d,anc=%d]\n") %
+        parents.size() % ancestors.size());
+
+      if (find_intersecting_node(*lanc, *ranc, intern, anc))
+        {
+          L(F("found node %d, ancestor of left %s and right %s\n")
+            % anc % left % right);
+          return true;
+        }
+    }
+//      dump_bitset_map("ancestors", ancestors);
 //      dump_bitset_map("parents", parents);
   return false;
 }

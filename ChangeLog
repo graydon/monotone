@@ -1,3 +1,20 @@
+2004-12-12  Joel Rosdahl  <joel@rosdahl.net>
+
+	* revision.cc (find_least_common_ancestor): New function for
+	finding the vanilla LCA.
+	* revision.hh: Added prototype for find_least_common_ancestor.
+	* commands.cc (update): Use find_least_common_ancestor for finding
+	a common ancestor.
+	* commands.cc (diff): Likewise.
+	* revision.cc (find_common_ancestor): Rename to...
+	(find_common_ancestor_for_merge): ...this, for clarity.
+	* revision.hh: find_common_ancestor -->
+	find_common_ancestor_for_merge.
+	* commands.cc (try_one_merge): Call find_common_ancestor_for_merge
+	to find ancestor.
+	* commands.cc (lcad): Rename lca command to lcad.
+	* commands.cc (lca): New command for finding the vanilla LCA.
+
 2004-12-12  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_persistent_server_keys.at: Actually test what it's
