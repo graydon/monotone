@@ -1,3 +1,7 @@
+2003-10-19  Tom Tromey  <tromey@redhat.com>
+
+	* commands.cc (log): Add each seen id to `cycles'.
+
 2003-10-19  graydon hoare  <graydon@pobox.com>
 
 	* AUTHORS: Mention Tecgraf PUC-Rio and their
