@@ -57,14 +57,14 @@ struct poptOption options[] =
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
     {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotonerc or MT/monotonerc lua files", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
-    {"key", 0, POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
-    {"db", 0, POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
-    {"branch", 0, POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
+    {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
+    {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
+    {"branch", 'b', POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, "print detailed version number, then exit", NULL},
-    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot) [count]", NULL},
-    {"revision", 0, POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
-    {"message", 0, POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
+    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot|none) [count]", NULL},
+    {"revision", 'r', POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
+    {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
     { NULL, 0, 0, NULL, 0 }
   };
@@ -138,6 +138,17 @@ utf8_argv
   }
 };
 
+// Stupid type system tricks: to use a cleanup_ptr, we need to know the return
+// type of the cleanup function.  But popt silently changed the return type of
+// poptFreeContext at some point, I guess because they thought it would be
+// "backwards compatible".  We don't actually _use_ the return value of
+// poptFreeContext, so this little wrapper works.
+static void
+my_poptFreeContext(poptContext con)
+{
+  poptFreeContext(con);
+}
+
 int 
 cpp_main(int argc, char ** argv)
 {
@@ -175,9 +186,9 @@ cpp_main(int argc, char ** argv)
 
   // prepare for arg parsing
       
-  cleanup_ptr<poptContext, poptContext> 
+  cleanup_ptr<poptContext, void> 
     ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
-        &poptFreeContext);
+        &my_poptFreeContext);
 
   // process main program options
 
@@ -229,6 +240,8 @@ cpp_main(int argc, char ** argv)
                 ui.set_tick_writer(new tick_write_dot);
               else if (string(argstr) == "count")
                 ui.set_tick_writer(new tick_write_count);
+              else if (string(argstr) == "none")
+                ui.set_tick_writer(new tick_write_nothing);
               else
                 requested_help = true;
               break;
@@ -326,16 +339,6 @@ cpp_main(int argc, char ** argv)
       ui.inform(inf.what + string("\n"));
       clean_shutdown = true;
       return 1;
-    }
-  catch (...)
-    {
-      // nb: we dump here because it's nicer to get the log dump followed
-      // by the exception printout, when possible. this does *not* mean you
-      // can remove the atexit() hook above, since it dumps when the
-      // execution monitor traps sigsegv / sigabrt etc.
-      global_sanity.dump_buffer();
-      clean_shutdown = true;
-      throw;
     }
 
   clean_shutdown = true;

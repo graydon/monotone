@@ -649,36 +649,6 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext)
 }
 
 void 
-internalize_var_name(utf8 const & utf, var_name & n)
-{
-  ace a;
-  utf8_to_ace(utf, a);
-  n = a();
-}
-
-void 
-internalize_var_name(external const & ext, var_name & n)
-{
-  utf8 utf;
-  system_to_utf8(ext(), utf);
-  internalize_var_name(utf, n);
-}
-
-void 
-externalize_var_name(var_name const & n, utf8 & utf)
-{
-  ace_to_utf8(ace(n()), utf);
-}
-
-void 
-externalize_var_name(var_name const & n, external & ext)
-{
-  utf8 utf;
-  externalize_var_name(n, utf);
-  utf8_to_system(utf, ext);  
-}
-
-void 
 internalize_var_domain(utf8 const & utf, var_domain & d)
 {
   ace a;

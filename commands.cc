@@ -1389,9 +1389,12 @@ CMD(add, "working copy", "PATH...", "add files to working copy")
   change_set::path_rearrangement work;  
   get_path_rearrangement(work);
 
+  vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_addition(app.prefix((*i)()), m_old, app, work);
-    
+    paths.push_back(app.prefix(*i));
+
+  build_additions(paths, m_old, app, work);
+
   put_path_rearrangement(work);
 
   update_any_attrs(app);
@@ -1410,9 +1413,12 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy")
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
+  vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    build_deletion(app.prefix((*i)()), m_old, work);
-  
+    paths.push_back(app.prefix(*i));
+
+  build_deletions(paths, m_old, app, work);
+
   put_path_rearrangement(work);
 
   update_any_attrs(app);
@@ -1932,8 +1938,7 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
         continue;
       external ext_domain, ext_name;
       externalize_var_domain(i->first.first, ext_domain);
-      externalize_var_name(i->first.second, ext_name);
-      cout << ext_domain << ": " << ext_name << " " << i->second << endl;
+      cout << ext_domain << ": " << i->first.second << " " << i->second << endl;
     }
 }
 
@@ -2441,7 +2446,9 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
             P(F("registering %s file in working copy\n") % attr_path);
               change_set::path_rearrangement work;  
               get_path_rearrangement(work);
-              build_addition(attr_path, man, app, work);
+              vector<file_path> paths;
+              paths.push_back(attr_path);
+              build_additions(paths, man, app, work);
               put_path_rearrangement(work);
           }        
       }
@@ -3757,7 +3764,7 @@ CMD(set, "vars", "DOMAIN NAME VALUE",
   var_name n;
   var_value v;
   internalize_var_domain(idx(args, 0), d);
-  internalize_var_name(idx(args, 1), n);
+  n = var_name(idx(args, 1)());
   v = var_value(idx(args, 2)());
   app.db.set_var(std::make_pair(d, n), v);
 }
@@ -3771,8 +3778,10 @@ CMD(unset, "vars", "DOMAIN NAME",
   var_domain d;
   var_name n;
   internalize_var_domain(idx(args, 0), d);
-  internalize_var_name(idx(args, 1), n);
-  app.db.clear_var(std::make_pair(d, n));
+  n = var_name(idx(args, 1)());
+  var_key k(d, n);
+  N(app.db.var_exists(k), F("no var with name %s in domain %s") % n % d);
+  app.db.clear_var(k);
 }
 
 }; // namespace commands

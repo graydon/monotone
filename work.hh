@@ -49,14 +49,15 @@ void extract_path_set(manifest_map const & man,
                       path_set & paths);
 
 void 
-build_addition(file_path const & path,
+build_additions(std::vector<file_path> const & args,
                manifest_map const & m_old,
                app_state & app,
                change_set::path_rearrangement & pr);
 
 void 
-build_deletion(file_path const & path,
+build_deletions(std::vector<file_path> const & args,
                manifest_map const & m_old,
+                app_state & app,
                change_set::path_rearrangement & pr);
 
 void 
@@ -92,6 +93,11 @@ void read_options_map(data const & dat, options_map & options);
 
 void write_options_map(data & dat,
                        options_map const & options);
+
+// the "local dump file' is a debugging file, stored in MT/debug.  if we
+// crash, we save some debugging information here.
+
+void get_local_dump_path(local_path & d_path);
 
 // the "attribute map" is part of a working copy. it is *not* stored in MT,
 // because its contents are considered part of the "content" of a tree of

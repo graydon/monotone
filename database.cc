@@ -2095,38 +2095,45 @@ void database::complete(selector_type ty,
   // in the limit and then INTERSECTing them all.
 
   string lim = "(";
-  bool first_limit = true;
-  for (vector<pair<selector_type, string> >::const_iterator i = limit.begin();
-       i != limit.end(); ++i)
+  if (limit.empty())
     {
-      if (first_limit)
-        first_limit = false;
-      else
-        lim += " INTERSECT ";
-      
-      if (i->first == commands::sel_ident)
+      lim += "SELECT id FROM revision_certs";
+    }
+  else
+    {
+      bool first_limit = true;
+      for (vector<pair<selector_type, string> >::const_iterator i = limit.begin();
+           i != limit.end(); ++i)
         {
-          lim += "SELECT id FROM revision_certs ";
-          lim += (F("WHERE id GLOB '%s*'") 
-                  % i->second).str();
-        }
-      else if (i->first == commands::sel_unknown)
-        {
-          lim += "SELECT id FROM revision_certs ";
-          lim += (F(" WHERE (name='%s' OR name='%s' OR name='%s')")
-                  % author_cert_name 
-                  % tag_cert_name 
-                  % branch_cert_name).str();
-          lim += (F(" AND unbase64(value) glob '*%s*'")
-                  % i->second).str();     
-        }
-      else
-        {
-          string certname;
-          selector_to_certname(i->first, certname);
-          lim += "SELECT id FROM revision_certs ";
-          lim += (F("WHERE name='%s' AND unbase64(value) glob '*%s*'")
-                  % certname % i->second).str();
+          if (first_limit)
+            first_limit = false;
+          else
+            lim += " INTERSECT ";
+          
+          if (i->first == commands::sel_ident)
+            {
+              lim += "SELECT id FROM revision_certs ";
+              lim += (F("WHERE id GLOB '%s*'") 
+                      % i->second).str();
+            }
+          else if (i->first == commands::sel_unknown)
+            {
+              lim += "SELECT id FROM revision_certs ";
+              lim += (F(" WHERE (name='%s' OR name='%s' OR name='%s')")
+                      % author_cert_name 
+                      % tag_cert_name 
+                      % branch_cert_name).str();
+              lim += (F(" AND unbase64(value) glob '*%s*'")
+                      % i->second).str();     
+            }
+          else
+            {
+              string certname;
+              selector_to_certname(i->first, certname);
+              lim += "SELECT id FROM revision_certs ";
+              lim += (F("WHERE name='%s' AND unbase64(value) glob '*%s*'")
+                      % certname % i->second).str();
+            }
         }
     }
   lim += ")";
@@ -2255,7 +2262,9 @@ database::get_vars(std::map<var_key, var_value> & vars)
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
       var_domain domain(idx(*i, 0));
-      var_name name(idx(*i, 1));
+      base64<var_name> name_encoded(idx(*i, 1));
+      var_name name;
+      decode_base64(name_encoded, name);
       base64<var_value> value_encoded(idx(*i, 2));
       var_value value;
       decode_base64(value_encoded, value);
@@ -2288,19 +2297,23 @@ database::var_exists(var_key const & key)
 void
 database::set_var(var_key const & key, var_value const & value)
 {
+  base64<var_name> name_encoded;
+  encode_base64(key.second, name_encoded);
   base64<var_value> value_encoded;
   encode_base64(value, value_encoded);
   execute("INSERT OR REPLACE INTO db_vars VALUES('%q', '%q', '%q')",
           key.first().c_str(),
-          key.second().c_str(),
+          name_encoded().c_str(),
           value_encoded().c_str());
 }
 
 void
 database::clear_var(var_key const & key)
 {
+  base64<var_name> name_encoded;
+  encode_base64(key.second, name_encoded);
   execute("DELETE FROM db_vars WHERE domain = '%q' AND name = '%q'",
-          key.first().c_str(), key.second().c_str());
+          key.first().c_str(), name_encoded().c_str());
 }
 
 // transaction guards

@@ -162,28 +162,31 @@ write_error_cmd_payload(std::string const & errmsg,
 
 void 
 read_hello_cmd_payload(string const & in, 
-                       string & server_keyname,
-                       string & server_key,
+                       rsa_keypair_id & server_keyname,
+                       rsa_pub_key & server_key,
                        id & nonce)
 {
   size_t pos = 0;
   // syntax is: <server keyname:vstr> <server pubkey:vstr> <nonce:20 random bytes>
-  extract_variable_length_string(in, server_keyname, pos, "hello netcmd, server key name");
-  extract_variable_length_string(in, server_key, pos, "hello netcmd, server key");
+  string skn_str, sk_str;
+  extract_variable_length_string(in, skn_str, pos, "hello netcmd, server key name");
+  server_keyname = rsa_keypair_id(skn_str);
+  extract_variable_length_string(in, sk_str, pos, "hello netcmd, server key");
+  server_key = rsa_pub_key(sk_str);
   nonce = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
                                "hello netcmd, nonce"));
   assert_end_of_buffer(in, pos, "hello netcmd payload");
 }
 
 void 
-write_hello_cmd_payload(string const & server_keyname,
-                        string const & server_key,
+write_hello_cmd_payload(rsa_keypair_id const & server_keyname,
+                        rsa_pub_key const & server_key,
                         id const & nonce, 
                         string & out)
 {
   I(nonce().size() == constants::merkle_hash_length_in_bytes);
-  insert_variable_length_string(server_keyname, out);
-  insert_variable_length_string(server_key, out);
+  insert_variable_length_string(server_keyname(), out);
+  insert_variable_length_string(server_key(), out);
   out += nonce();
 }
 
@@ -540,10 +543,8 @@ test_netcmd_functions()
         L(F("checking i/o round trip on hello_cmd\n"));
         netcmd out_cmd, in_cmd;
         string buf;
-        string 
-          out_server_key("9387938749238792874"), 
-          out_server_keyname("server@there"),
-          in_server_key, in_server_keyname;
+        rsa_keypair_id out_server_keyname("server@there"), in_server_keyname;
+        rsa_pub_key out_server_key("9387938749238792874"), in_server_key;
         id out_nonce(raw_sha1("nonce it up")), in_nonce;
         out_cmd.cmd_code = hello_cmd;
         write_hello_cmd_payload(out_server_keyname, out_server_key, out_nonce, out_cmd.payload);

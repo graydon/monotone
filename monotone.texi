@@ -1719,7 +1719,8 @@ In practice, most people like to use at least one central server that is
 always running; this way, everyone always knows where to go to get the
 latest changes, and people can push their changes out without first
 calling their friends and making sure that they have their servers
-running.
+running.  To support this style of working, monotone remembers the first
+server you use, and makes that the default for future operations.
 
 @page
 @node    Making Changes
@@ -2124,6 +2125,7 @@ familiarize yourself with its operation.
 * Restrictions::           Limit working copy changes to specified files.
 * Scripting::              Running monotone from other programs.
 * Quality Assurance::      Integrating testing and review with development.
+* Vars::                   Simple per-database configuration information.
 * Reserved Files::         File names with special meanings.
 * Reserved Certs::         Certificate names with special meanings.
 * Naming Conventions::     Choosing appropriate names for keys and branches.
@@ -2406,6 +2408,59 @@ to merge into your working copy.
 For details on these hooks, see the @ref{Hook Reference}.
 
 @page
+@node    Vars
+@section Vars
+
+Every monotone database has a set of @emph{vars} associated with it.
+Vars are simple configuration variables that monotone refers to in some
+circumstances; they are used for configuration that monotone needs to be
+able to modify itself, and that should be per-database (rather than
+per-user or per-working copy, both of which are supported by
+@file{monotonerc} scripts).  Vars are local to a database, and never
+transferred by netsync.
+
+A var is a @emph{name} = @emph{value} pairing inside a @emph{domain}.
+Domains define what the vars inside it are used for; for instance, one
+domain might contain database-global settings, and particular vars
+inside it would define things like that database's default netsync
+server.  Another domain might contain key fingerprints for servers that
+monotone has interacted with in the past, to detect man-in-the-middle
+attacks; the vars inside this domain would map server names to their
+fingerprints.
+
+You can set vars with the @command{set} command, delete them with the
+@command{unset} command, and see them with the @command{ls vars}
+command.  See the documentation for these specific commands for more
+details.
+
+@heading Existing vars
+
+There are several pre-defined domains that monotone knows about:
+
+@table @code
+
+@item database
+Contains database-global configuration information.  Defined names are:
+@table @code
+@item default-server
+The default server for netsync operations to use.  Automatically set
+by first use of netsync.
+@item default-collection
+The default collection for netsync operations to use.  Automatically
+set by first use of netsync.
+@end table
+
+@item known-servers
+Contains key hashes for servers that we have netsynced with in the
+past.  Analogous to @command{ssh}'s @file{known_hosts} file, this is
+needed to detect man-in-the-middle attacks.  Automatically set the first
+time you netsync with any given server.  If that server's key later
+changes, monotone will notice, and refuse to connect until you have run
+@command{monotone unset known-servers @var{server-name}}.
+
+@end table
+
+@page
 @node    Reserved Files
 @section Reserved Files
 
@@ -2476,6 +2531,9 @@ Contains log messages to append to the ``changelog'' cert upon
 commit. The user may add content to this file while they work.  Upon a
 successful commit monotone will empty the file making it ready for the
 next edit/commit cycle.
+@item MT/debug
+If monotone detects a bug in itself or crashes, then before exiting it
+dumps a log of its recent activity to this file, to aid in debugging.
 @end table
 
 
@@ -3288,9 +3346,9 @@ applied.
 
 @ftable @command
 @item monotone serve @var{address} @var{collection}
-@itemx monotone pull @var{address} @var{collection}
-@itemx monotone push @var{address} @var{collection}
-@itemx monotone sync @var{address} @var{collection}
+@itemx monotone pull [@var{address} [@var{collection}]]
+@itemx monotone push [@var{address} [@var{collection}]]
+@itemx monotone sync [@var{address} [@var{collection}]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -3304,10 +3362,10 @@ and a port number. The @var{collection} parameter indicates a set of
 branches to exchange; every branch for which @var{collection} is a
 prefix will be indexed and made available for synchronization.
 
-For example, supposing bob and alice wish to synchronize their
+For example, supposing Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
-branches. Supposing alice's computer has hostname
-@code{alice.someisp.com}, then alice might run:
+branches. Supposing Alice's computer has hostname
+@code{alice.someisp.com}, then Alice might run:
 
 @smallexample
 @group
@@ -3315,7 +3373,7 @@ $ monotone serve alice.someisp.com net.venge.monotone
 @end group
 @end smallexample
 
-And bob might run
+And Bob might run
 
 @smallexample
 @group
@@ -3324,8 +3382,28 @@ $ monotone sync alice.someisp.com net.venge.monotone
 @end smallexample
 
 When the operation completes, all branches beginning with
-@code{net.venge.monotone} will be synchronized between alice and bob's
+@code{net.venge.monotone} will be synchronized between Alice and Bob's
 databases.
+
+The @command{pull}, @command{push}, and @command{sync} commands only
+require you pass @var{address} and @var{collection} the first time you
+use one of them; monotone will memorize this use and in the future
+default to the same server and collection.  For instance, if Bob wants
+to @command{sync} with Alice again, he can simply run:
+
+@smallexample
+@group
+$ monotone sync
+@end group
+@end smallexample
+
+Of course, he can still @command{sync} with other people and other
+branches by passing an address or address plus collection on the command
+line; this will not affect his default affinity for Alice.  If you ever
+do want to change your defaults, use @code{monotone unset database
+default-server} or @code{monotone unset database default-collection};
+these will clear your defaults, and cause them to be reset to the next
+person you netsync with.
 
 @end ftable
 
@@ -3514,7 +3592,7 @@ This command lists all known tags in your database.
 @item monotone list vars @var{domain}
 
 This command lists all vars in your database, or all vars within a given
-@var{domain}.
+@var{domain}.  See @ref{Vars} for more information.
 
 @item monotone list unknown
 @itemx monotone list unknown @var{pathname...}
@@ -3723,10 +3801,12 @@ database.
 @item monotone set @var{domain} @var{name} @var{value}
 
 Associates the value @var{value} to @var{name} in domain @var{domain}.
+See @ref{Vars} for more information.
 
 @item monotone unset @var{domain} @var{name}
 
-Deletes any value associated with @var{name} in @var{domain}.
+Deletes any value associated with @var{name} in @var{domain}.  See
+@ref{Vars} for more information.
 
 @item monotone db init --db=@var{dbfile} 
 
@@ -4872,18 +4952,16 @@ form conversion, as well as having all UTF-8 codes corresponding to
 ASCII control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in
 the normal form, except @code{0x0A} (ASCII LF).
 
-@heading Var names
+@heading Var domains
 
-Read on the command line and subject to normal form conversion and
-IDNA encoding as a single component. The invariant is that a cert name
+Read on the command line and subject to normal form conversion and IDNA
+encoding as a single component. The invariant is that a var domain
 inside monotone is a single LDH ASCII string.
 
-@heading Var values
+@heading Var names and values
 
-Var values are assumed to be text, and subject to normal form
-conversion, as well as having all UTF-8 codes corresponding to ASCII
-control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in the
-normal form, except @code{0x0A} (ASCII LF).
+Var names and values are assumed to be text, and subject to normal form
+conversion.
 
 @heading Key names
 
@@ -5540,6 +5618,7 @@ Use database in @i{file}.
 @comment TROFF INPUT: .TP
 
 @item @b{--key=}@i{<keyid>}
+@itemx @b{-k} @i{<keyid>}
 Use @i{keyid} for operations which produce @sc{rsa}
 signatures. Default is inferred from presence of unique private key in
 database. Can also be customized on a per-branch basis with hook
@@ -5547,6 +5626,7 @@ function @b{get@t{_}branch@t{_}key(branchname)}.
 @comment TROFF INPUT: .TP
 
 @item @b{--branch=}@i{<branchname>}
+@itemx @b{-b} @i{<branchname>}
 Use @i{branchname} for operations on a branch. Default is inferred
 in operations on existing branches (commit, update, etc). 
 @comment TROFF INPUT: .TP
@@ -5559,12 +5639,14 @@ characters (like some programs provide a progress line of dots).
 The default is @b{count}.
 
 @item @b{--revision=}@i{<id>}
+@itemx @b{-r} @i{<id>}
 Currently this option only applies to the diff command where it may be
 used to compare a working copy with a specific revision or to compare
 two specific revisions. It will likely apply to other commands in the
 future.
 
 @item @b{--message=}@i{<log message>}
+@itemx @b{-m} @i{<log message>}
 Use the given message as the changelog when committing a new revision
 rather than invoking the log message editor. Currently this option only
 applies to the commit command but it may also apply to the comment

@@ -57,6 +57,12 @@ private:
   std::map<std::string,size_t> last_ticks;
 };
 
+struct tick_write_nothing : virtual public tick_writer
+{
+public:
+  void write_ticks() {}
+};
+
 struct user_interface
 {
 public:

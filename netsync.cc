@@ -28,6 +28,7 @@
 #include "ui.hh"
 #include "xdelta.hh"
 #include "epoch.hh"
+#include "platform.hh"
 
 #include "cryptopp/osrng.h"
 
@@ -332,7 +333,8 @@ session
   bool process_bye_cmd();
   bool process_error_cmd(string const & errmsg);
   bool process_done_cmd(size_t level, netcmd_item_type type);
-  bool process_hello_cmd(id const & server, 
+  bool process_hello_cmd(rsa_keypair_id const & server_keyname,
+                         rsa_pub_key const & server_key,
                          id const & nonce);
   bool process_anonymous_cmd(protocol_role role, 
                              string const & collection, 
@@ -1144,7 +1146,7 @@ session::queue_hello_cmd(id const & server,
 
   app.db.get_pubkey(server_encoded, key_name, pub_encoded);
   decode_base64(pub_encoded, pub);
-  write_hello_cmd_payload(key_name(), pub(), nonce, cmd.payload);
+  write_hello_cmd_payload(key_name, pub, nonce, cmd.payload);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1412,59 +1414,95 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
   return true;
 }
 
+static const var_domain known_servers_domain = var_domain("known-servers");
+
 bool 
-session::process_hello_cmd(id const & server, 
+session::process_hello_cmd(rsa_keypair_id const & their_keyname,
+                           rsa_pub_key const & their_key,
                            id const & nonce) 
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == 0);
   
-  hexenc<id> hnonce;
-  encode_hexenc(nonce, hnonce);
   hexenc<id> their_key_hash;
-  encode_hexenc(server, their_key_hash);
-  
-  L(F("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
-    % their_key_hash % hnonce);
-  
-  if (app.db.public_key_exists(their_key_hash))
+  base64<rsa_pub_key> their_key_encoded;
+  encode_base64(their_key, their_key_encoded);
+  key_hash_code(their_keyname, their_key_encoded, their_key_hash);
+  L(F("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
+  var_key their_key_key(known_servers_domain, var_name(peer_id));
+  if (app.db.var_exists(their_key_key))
     {
-      // save their identity 
-      this->remote_peer_key_hash = server;
-      
-      if (app.signing_key() != "")
+      var_value expected_key_hash;
+      app.db.get_var(their_key_key, expected_key_hash);
+      if (expected_key_hash() != their_key_hash())
         {
-          // get our public key for its hash identifier
-          base64<rsa_pub_key> our_pub;
-          hexenc<id> our_key_hash;
-          id our_key_hash_raw;
-          app.db.get_key(app.signing_key, our_pub);
-          key_hash_code(app.signing_key, our_pub, our_key_hash);
-          decode_hexenc(our_key_hash, our_key_hash_raw);
-          
-          // get our private key and make a signature
-          base64<rsa_sha1_signature> sig;
-          rsa_sha1_signature sig_raw;
-          base64< arc4<rsa_priv_key> > our_priv;
-          load_priv_key(app, app.signing_key, our_priv);
-          make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
-          decode_base64(sig, sig_raw);
-          
-          // make a new nonce of our own and send off the 'auth'
-          queue_auth_cmd(this->role, this->collection(), our_key_hash_raw, 
-                         nonce, mk_nonce(), sig_raw());
+          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"));
+          P(F("@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"));
+          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"));
+          P(F("IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"));
+          P(F("it is also possible that the server key has just been changed\n"));
+          P(F("remote host sent key %s\n") % their_key_hash);
+          P(F("I expected %s\n") % expected_key_hash);
+          P(F("'monotone unset %s %s' overrides this check\n")
+            % their_key_key.first % their_key_key.second);
+          N(false, F("server key changed"));
         }
-      else
-        {
-          queue_anonymous_cmd(this->role, this->collection(), mk_nonce());
-        }
-      return true;
     }
   else
     {
-      W(F("unknown server key.  disconnecting.\n"));
+      W(F("first time connecting to server %s; authenticity can't be established\n") % peer_id);
+      W(F("their key is %s\n") % their_key_hash);
+      app.db.set_var(their_key_key, var_value(their_key_hash()));
     }
-  return false;
+  if (!app.db.public_key_exists(their_key_hash))
+    {
+      W(F("saving public key for %s to database\n") % their_keyname);
+      app.db.put_key(their_keyname, their_key_encoded);
+    }
+  
+  {
+    hexenc<id> hnonce;
+    encode_hexenc(nonce, hnonce);
+    L(F("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
+      % their_key_hash % hnonce);
+  }
+  
+  I(app.db.public_key_exists(their_key_hash));
+  
+  // save their identity 
+  {
+    id their_key_hash_decoded;
+    decode_hexenc(their_key_hash, their_key_hash_decoded);
+    this->remote_peer_key_hash = their_key_hash_decoded;
+  }
+      
+  if (app.signing_key() != "")
+    {
+      // get our public key for its hash identifier
+      base64<rsa_pub_key> our_pub;
+      hexenc<id> our_key_hash;
+      id our_key_hash_raw;
+      app.db.get_key(app.signing_key, our_pub);
+      key_hash_code(app.signing_key, our_pub, our_key_hash);
+      decode_hexenc(our_key_hash, our_key_hash_raw);
+      
+      // get our private key and make a signature
+      base64<rsa_sha1_signature> sig;
+      rsa_sha1_signature sig_raw;
+      base64< arc4<rsa_priv_key> > our_priv;
+      load_priv_key(app, app.signing_key, our_priv);
+      make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
+      decode_base64(sig, sig_raw);
+      
+      // make a new nonce of our own and send off the 'auth'
+      queue_auth_cmd(this->role, this->collection(), our_key_hash_raw, 
+                     nonce, mk_nonce(), sig_raw());
+    }
+  else
+    {
+      queue_anonymous_cmd(this->role, this->collection(), mk_nonce());
+    }
+  return true;
 }
 
 bool 
@@ -2643,28 +2681,11 @@ session::dispatch_payload(netcmd const & cmd)
       require(! authenticated, "hello netcmd received when not authenticated");
       require(voice == client_voice, "hello netcmd received in client voice");
       {
-        id server, nonce;
-        hexenc<id> server_encoded;
         rsa_keypair_id server_keyname;
         rsa_pub_key server_key;
-        base64<rsa_pub_key> server_key_encoded;
-        string skn, sk;
-        
-        read_hello_cmd_payload(cmd.payload, skn, sk, nonce);
-        server_keyname = skn;
-        server_key = sk;
-
-        encode_base64(server_key, server_key_encoded);
-        key_hash_code(server_keyname, server_key_encoded, server_encoded);
-        if (!app.db.public_key_exists(server_encoded))
-          {
-            W(F("inserting public %s key for %s into database\n") 
-              % server_encoded % server_keyname);
-            app.db.put_key(server_keyname, server_key_encoded);
-          }
-
-        decode_hexenc(server_encoded, server);
-        return process_hello_cmd(server, nonce);
+        id nonce;
+        read_hello_cmd_payload(cmd.payload, server_keyname, server_key, nonce);
+        return process_hello_cmd(server_keyname, server_key, nonce);
       }
       break;
 
@@ -3426,6 +3447,7 @@ run_netsync_protocol(protocol_voice voice,
 
   try 
     {
+      start_platform_netsync();
       if (voice == server_voice)
         {
           serve_connections(role, collections, all_collections, app,
@@ -3445,7 +3467,9 @@ run_netsync_protocol(protocol_voice voice,
     }
   catch (Netxx::Exception & e)
     {      
+      end_platform_netsync();
       throw oops((F("trapped network exception: %s\n") % e.what()).str());;
     }
+  end_platform_netsync();
 }
 

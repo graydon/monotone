@@ -67,6 +67,14 @@ app_state::allow_working_copy()
           relative_directory = file_path(current.native_directory_string());
           L(F("relative directory is '%s'\n") % relative_directory());
         }
+
+      if (global_sanity.filename == "")
+        {
+          local_path dump_path;
+          get_local_dump_path(dump_path);
+          L(F("setting dump path to %s\n") % dump_path);
+          global_sanity.filename = dump_path();
+        }
     }
   load_rcfiles();
 }
@@ -81,6 +89,8 @@ app_state::require_working_copy()
 void 
 app_state::create_working_copy(std::string const & dir)
 {
+  N(dir.size(), F("invalid directory ''"));
+
   // cd back to where we started from
   N(chdir(fs::initial_path().native_directory_string().c_str()) != -1,
     F("cannot change to initial directory %s\n") 

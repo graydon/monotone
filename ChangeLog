@@ -1,3 +1,160 @@
+2005-03-25  Matt Johnston  <matt@ucc.asn.au>
+
+        * {unix,win32}/platform_netsync.cc, platform.hh, Makefile.am: new
+        functions to disable and enable sigpipe.
+        * netsync.cc, main.cc: call the functions from netsync rather than
+        globally, so that sigpipe still works for piping output of commands
+        such as 'log'.
+        * tests/t_netsync_sigpipe.at: test it.
+        * testsuite.at: add it.
+
+2005-03-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.cc: add short options -r, -b, -k, and -m
+	for --revision, --branch, --key, and --message respectively.
+	* monotone.texi, monotone.1: document them
+	* tests/t_short_opts.at: test them
+	* testsuite.at: add it
+
+2005-03-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_empty_env.at: New test.
+	* testsuite.at: Add it.  Absolutify path to monotone so it will
+	work.
+	
+	* unix/have_smart_terminal.cc (have_smart_terminal): Handle the
+	case where TERM is unset or empty.
+
+2005-03-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ui.hh (tick_write_nothing): New class.
+	* monotone.cc (cpp_main): Enable it.
+
+2005-03-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc (build_deletions, build_additions): Fixup after merge.
+
+2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_cat_file_by_name.at: Check for attempting to cat
+	non-existent files.
+	* tests/t_empty_id_completion.at: New test.
+	* tests/t_empty_path.at: New test.
+	* testsuite.at: Add them.
+	
+	* database.cc (complete): Always generate some sort of limit term,
+	even a degenerate one.
+	
+	* app_state.cc (create_working_copy): Check for null directory.
+
+	* work.cc (build_deletion, build_addition, build_rename): Check
+	for null paths.
+
+2005-03-23  Derek Scherger  <derek@echologic.com>
+
+	* Makefile.am UNIX_PLATFORM_SOURCES:
+	WIN32_PLATFORM_SOURCES: add have_smart_terminal.cc
+	* platform.hh (have_smart_terminal): prototype
+	* ui.cc (user_interface): set ticker to dot/count based on
+	have_smart_terminal
+	* unix/have_smart_terminal.cc: 
+	* win32/have_smart_terminal.cc: new file
+	
+2005-03-23  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (add): pass list of prefixed file_path's to
+	build_additions
+	(drop): pass list of prefixed file_path's to build_deletions
+	(attr): pass attr_path as a 1 element vector to build_additions
+	* work.{cc,hh} (build_addition): rename to...
+	(build_additions): this, and accept a vector of paths to be added
+	in a single path_rearrangement
+	(build_deletion): rename to ...
+	(build_deletions): this, and accept a vector of paths to be
+	dropped in a single path_rearrangement
+	(known_preimage_path): replace manifest and path_rearrangement
+	args with a path_set to avoid extracting paths for every file
+	(build_rename): adjust for change to known_preimage_path
+
+2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.cc (my_poptFreeContext, cpp_main): Apparently
+	poptFreeContext silently changed its return type at some unknown
+	time.  Hack around this.
+
+2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.cc (cpp_main): Remove the special code to dump before
+	printing exception information, since we no longer dump to the
+	screen, so it's always better to have the little status message
+	saying what happened to the log buffer at the end of everything.
+	* sanity.cc (dump_buffer): Give a hint on how to get debug
+	information, when discarding it.
+	* work.{hh,cc} (get_local_dump_path): New function.
+	* app_state.cc (allow_working_copy): Use it for default
+	global_sanity dump path.
+	* monotone.texi (Reserved Files): Document MT/debug.
+	(Network): Capitalize Bob and Alice (sorry graydon).
+	Document new defaulting behavior.
+
+2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc, sanity.cc: Remove tabs.
+
+2005-03-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network Service): Mention that monotone remembers
+	your server/collection.
+	(Vars): New section.
+	* netsync.cc (process_hello_cmd): Touch more cleaning.
+	* tests/t_merge_5.at: More commentary.
+	
+2005-03-23  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_merge_5.at: new test for a merge which ends up with
+	duplicate lines.
+	* testsuite.at: add it
+
+2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* vocab_terms.hh: Declare base64<var_name>.
+	* database.cc (clear_var, set_var, get_vars): base64-encode
+	var_names in the database.
+	* monotone.texi (Internationalization): Update description of
+	vars.
+	* transforms.{cc,hh} ({in,ex}ternalize_var_name): Remove.
+	* commands.cc (set, unset, ls_vars): Update accordingly.
+	(unset): Error out if the variable doesn't exist.
+	* tests/t_vars.at: Verify this works.
+
+	* netcmd.cc (test_netcmd_functions): Properly type arguments to
+	{read,write}_hello_cmd_payload.
+	(write_hello_cmd_payload): Properly type arguments.
+	* netcmd.hh (write_hello_cmd_payload):
+	* netsync.cc (queue_hello_cmd): Adjust accordingly.
+	(process_hello_cmd): More cleaning.  Also, save new server keys to
+	a var, and check old server keys against the var.
+	
+	* tests/t_netsync_checks_server_key.at: New test.
+	* testsuite.at: Add it.  Better docs for some netsync macros,
+	while I'm here...
+	* tests/t_netsync_absorbs.at: Add 'netsync' keyword.
+	
+2005-03-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_netsync_absorbs.at: New test.
+	* testsuite.at: Add it.
+
+	* netcmd.{cc,hh} (read_hello_cmd_payload): Properly type
+	arguments.
+	* netsync.cc (dispatch_payload): Adjust accordingly.  Move some
+	logic into process_hello_cmd.
+	(known_servers_domain): New constant.
+	(process_hello_cmd): Tweak arguments appropriately.  Include logic
+	formerly in dispatch_payload.  Cleanup.
+
+	No semantic changes.
+	
 2005-03-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Starting a New Project): Tweak phrasing.
