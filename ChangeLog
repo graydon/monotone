@@ -1,3 +1,11 @@
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* vocab.cc (verify): Cache known-good strings, to speed up
+	repeated processing of related changesets.
+
+	* change_set.cc (basic_change_set_test): Revert last change; the
+	old version _was_ valid.
+
 2005-04-06  Nathaniel Smith  <njs@codesourcery.com>
 
 	* work.cc (build_deletions): Issue warning when generating
