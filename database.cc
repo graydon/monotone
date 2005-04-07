@@ -1073,16 +1073,6 @@ database::get_version(hexenc<id> const & ident,
             }
 
 
-          if (!vcache.exists(curr))
-            {
-              string tmp;
-              base64< gzip<data> > tmp_packed;
-              app->finish(tmp);
-              pack(data(tmp), tmp_packed);
-              vcache.put(curr, tmp_packed);
-            }
-
-
           L(F("following delta %s -> %s\n") % curr % nxt);
           base64< gzip<delta> > del_packed;
           get_delta(nxt, curr, del_packed, delta_table);
