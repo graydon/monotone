@@ -2618,7 +2618,9 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
                 // sanity check
                 hexenc<id> tid;
                 calculate_ident(new_data, tid);
-                I(tid == delta_entry_dst(i).inner());
+                N(tid == delta_entry_dst(i).inner(),
+                  F("file '%s' modified during commit, aborting")
+                  % delta_entry_path(i));
                 base64< gzip<delta> > del;
                 diff(old_data.inner(), new_data, del);
                 dbw.consume_file_delta(delta_entry_src(i), 
@@ -2633,7 +2635,9 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
                 // sanity check
                 hexenc<id> tid;
                 calculate_ident(new_data, tid);
-                I(tid == delta_entry_dst(i).inner());
+                N(tid == delta_entry_dst(i).inner(),
+                  F("file '%s' modified during commit, aborting")
+                  % delta_entry_path(i));
                 dbw.consume_file_data(delta_entry_dst(i), file_data(new_data));
               }
           }

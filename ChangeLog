@@ -1,3 +1,21 @@
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (basic_change_set_test): Test a _valid_
+	change_set.
+	(directory_node): Make a std::map, instead of an smap.  Add a
+	comment explaining the bug that makes this temporarily necessary.
+
+	* smap.hh (smap): Don't check for duplicates at insert time,
+	unless we've decided not to mark things damaged; don't return
+	iterators from insert.  Do check for duplicates at sort time, and
+	always sort, instead of sometimes doing linear search.  This makes
+	insert O(1), while still preserving the invariant that keys must
+	be unique.
+	
+	* commands.cc (commit): Explain why we're aborting, in the case
+	that we detect that a file has changed under us in the middle of a
+	commit.
+
 2005-04-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_db_execute.at (db execute): New test.
