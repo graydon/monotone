@@ -1,5 +1,10 @@
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_final_space.at: New test.
+	* testsuite.at: Add it.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi (Dealing with a Fork): 'merge' has slightly
 	different output.
 

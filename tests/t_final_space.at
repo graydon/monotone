@@ -1,0 +1,8 @@
+AT_SETUP([files with spaces at the end])
+MONOTONE_SETUP
+
+AT_CHECK(touch "foo bar ")
+AT_CHECK(MONOTONE add "foo bar ", [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CLEANUP
