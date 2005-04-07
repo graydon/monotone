@@ -1,5 +1,12 @@
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Dealing with a Fork): 'merge' has slightly
+	different output.
+
+	* NEWS: Summarize changes of last 2.5 weeks.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
 	* database.{cc,hh} (space_usage): New method.
 	* database.cc (info): Use it.
 

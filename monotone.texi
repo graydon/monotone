@@ -2097,6 +2097,7 @@ monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
 monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 found
 monotone: trying 3-way merge
 monotone: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+monotone: your working copies have not been updated
 @end group
 @end smallexample
 
