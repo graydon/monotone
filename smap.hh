@@ -197,7 +197,7 @@ public:
   void
   insert(value_type const & v)
   {
-    I(v.first != (begin() + size() - 1)->first);
+    I(size() == 0 || v.first != vec.back().first);
     if (size() > 0 && val_cmp(v, *(begin() + size() - 1)))
     {
       damaged = true;

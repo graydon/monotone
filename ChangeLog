@@ -6,6 +6,10 @@
 
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
+	* smap.hh (insert): Fix stupid bug in assertion condition.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
 	* change_set.cc (basic_change_set_test): Test a _valid_
 	change_set.
 	(directory_node): Make a std::map, instead of an smap.  Add a
