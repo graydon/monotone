@@ -1,3 +1,7 @@
+2005-04-07  Richard Levitte  <richard@levitte.org>
+
+	* cryptopp/config.h: typo...
+
 2005-04-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_db_execute.at (db execute): New test.

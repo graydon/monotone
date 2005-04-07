@@ -55,7 +55,7 @@
 
 // namespace support is now required
 #ifdef NO_NAMESPACE
-#	error namespace support is now required
+#	error namespace support is not required
 #endif
 
 // Define this to workaround a Microsoft CryptoAPI bug where
