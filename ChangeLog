@@ -1,5 +1,10 @@
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
+	* database.{cc,hh} (space_usage): New method.
+	* database.cc (info): Use it.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
 	* vocab.cc (verify): Cache known-good strings, to speed up
 	repeated processing of related changesets.
 

@@ -379,14 +379,50 @@ database::info(ostream & out)
 {
   string id;
   calculate_schema_id(sql(), id);
-  out << "schema version  : " << id << endl;
-  out << "full manifests  : " << count("manifests") << endl;
-  out << "manifest deltas : " << count("manifest_deltas") << endl;
-  out << "full files      : " << count("files") << endl;
-  out << "file deltas     : " << count("file_deltas") << endl;
-  out << "revisions       : " << count("revisions") << endl;
-  out << "ancestry edges  : " << count("revision_ancestry") << endl;
-  out << "certs           : " << count("revision_certs") << endl;
+  unsigned long space = 0, tmp;
+  out << "schema version    : " << id << endl;
+
+  out << "counts:" << endl;
+  out << "  full manifests  : " << count("manifests") << endl;
+  out << "  manifest deltas : " << count("manifest_deltas") << endl;
+  out << "  full files      : " << count("files") << endl;
+  out << "  file deltas     : " << count("file_deltas") << endl;
+  out << "  revisions       : " << count("revisions") << endl;
+  out << "  ancestry edges  : " << count("revision_ancestry") << endl;
+  out << "  certs           : " << count("revision_certs") << endl;
+
+  out << "bytes:" << endl;
+  // FIXME: surely there is a less lame way to do this, that doesn't require
+  // updating every time the schema changes?
+  tmp = space_usage("manifests", "id || data");
+  space += tmp;
+  out << "  full manifests  : " << tmp << endl;
+
+  tmp = space_usage("manifest_deltas", "id || base || delta");
+  space += tmp;
+  out << "  manifest deltas : " << tmp << endl;
+
+  tmp = space_usage("files", "id || data");
+  space += tmp;
+  out << "  full files      : " << tmp << endl;
+
+  tmp = space_usage("file_deltas", "id || base || delta");
+  space += tmp;
+  out << "  file deltas     : " << tmp << endl;
+
+  tmp = space_usage("revisions", "id || data");
+  space += tmp;
+  out << "  revisions       : " << tmp << endl;
+
+  tmp = space_usage("revision_ancestry", "parent || child");
+  space += tmp;
+  out << "  cached ancestry : " << tmp << endl;
+
+  tmp = space_usage("revision_certs", "hash || id || name || value || keypair || signature");
+  space += tmp;
+  out << "  certs           : " << tmp << endl;
+
+  out << "  total           : " << space << endl;
 }
 
 void 
@@ -795,6 +831,16 @@ database::count(string const & table)
         "SELECT COUNT(*) FROM '%q'", 
         table.c_str());
   return lexical_cast<unsigned long>(res[0][0]);  
+}
+
+unsigned long
+database::space_usage(string const & table, string const & concatenated_columns)
+{
+  results res;
+  fetch(res, one_col, one_row,
+        "SELECT SUM(LENGTH(%s)) FROM '%q'",
+        concatenated_columns.c_str(), table.c_str());
+  return lexical_cast<unsigned long>(res[0][0]);
 }
 
 void
