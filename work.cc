@@ -237,7 +237,6 @@ has_contents_user_log()
 
 string const options_file_name("options");
 
-
 void 
 get_options_path(local_path & o_path)
 {
@@ -284,12 +283,48 @@ write_options_map(data & dat, options_map const & options)
 
 // local dump file
 
-string const local_dump_file_name("debug");
+static string const local_dump_file_name("debug");
 
 void get_local_dump_path(local_path & d_path)
 {
   d_path = (mkpath(book_keeping_dir) / mkpath(local_dump_file_name)).string();
   L(F("local dump path is %s\n") % d_path);
+}
+
+// inodeprint file
+
+static string const inodeprints_file_name("inodeprints");
+
+void
+get_inodeprints_path(local_path & ip_path)
+{
+  ip_path = (mkpath(book_keeping_dir) / mkpath(inodeprints_file_name)).string();
+}
+
+bool
+in_inodeprints_mode()
+{
+  local_path ip_path;
+  get_inodeprints_path(ip_path);
+  return file_exists(ip_path);
+}
+
+void
+read_inodeprints_log(data & dat)
+{
+  I(in_inodeprints_mode());
+  local_path ip_path;
+  get_inodeprints_path(ip_path);
+  read_data(ip_path, dat);
+}
+
+void
+write_inodeprints(data const & dat)
+{
+  I(in_inodeprints_mode());
+  local_path ip_path;
+  get_inodeprints_path(ip_path);
+  write_data(ip_path, dat);
 }
 
 // attribute map file

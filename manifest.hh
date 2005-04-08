@@ -39,7 +39,6 @@
 // times in a manifest.
 
 typedef std::set<file_path> path_set;
-extern std::string const manifest_file_name;
 
 typedef std::pair<file_path const, file_id> manifest_entry;
 

@@ -29,8 +29,6 @@
 using namespace boost;
 using namespace std;
 
-string const manifest_file_name("manifest");
-
 // building manifest_maps
 
 class 

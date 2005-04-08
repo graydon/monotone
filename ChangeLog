@@ -1,3 +1,18 @@
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* {win32,unix}/fingerprint.cc: Rename to...
+	* {win32,unix}/inodeprint.cc: ...this.  Change function name and
+	calling conventions.
+	* platform.hh (inodeprint_file): Likewise.
+	* inodeprint.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES, UNIX_PLATFORM_SOURCES,
+	WIN32_PLATFORM_SOURCES): Fixup accordingly.
+	* vocab_terms.hh (inodeprint): New ATOMIC.
+	* work.hh: Prototype inodeprint working copy functions.
+	* work.cc: Implement them.
+
+	* manifest.{hh,cc} (manifest_file_name): Remove unused variable.
+
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
 	* manifest.{hh,cc}: Remove some commented out unused functions.

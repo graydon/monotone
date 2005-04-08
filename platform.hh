@@ -32,9 +32,9 @@ void start_platform_netsync();
 void end_platform_netsync();
 
 // for "reckless mode" working copy change detection.
-// returns 'true' if it has generated a valid fingerprint; returns 'false' if
-// there was a problem, in which case we should act as if the fingerprint has
+// returns 'true' if it has generated a valid inodeprint; returns 'false' if
+// there was a problem, in which case we should act as if the inodeprint has
 // changed.
-bool fingerprint_file(file_path const & file, id & fpr);
+bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
 
 #endif // __PLATFORM_HH__

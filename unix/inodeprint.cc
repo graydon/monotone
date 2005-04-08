@@ -8,6 +8,7 @@
 #include "cryptopp/sha.h"
 
 #include "platform.hh"
+#include "transforms.hh"
 
 namespace
 {
@@ -22,7 +23,7 @@ namespace
   }
 };
 
-bool fingerprint_file(file_path const & file, id & fpr)
+bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
 {
   struct stat st;
   if (stat(file().c_str(), &st) < 0)
@@ -44,5 +45,7 @@ bool fingerprint_file(file_path const & file, id & fpr)
   char digest[CryptoPP::SHA::DIGESTSIZE];
   hash.Final(reinterpret_cast<byte *>(digest));
   std::string out(digest, CryptoPP::SHA::DIGESTSIZE);
-  fpr = out;
+  inodeprint ip_raw(out);
+  encode_hexenc(ip_raw, ip);
+  return true;
 }

@@ -29,6 +29,8 @@
 //                      this file is, syntactically, a path_rearrangement
 // MT/options        -- the database, branch and key options currently in use
 // MT/log            -- user edited log file
+// MT/inodeprints    -- file fingerprint cache, presence turns on "reckless"
+//                      mode
 //
 // as work proceeds, the files in the working directory either change their
 // sha1 fingerprints from those listed in the revision's manifest, or else are
@@ -40,6 +42,7 @@
 // delta_set between the modified manifest and the files in the working
 // copy.
 //
+// MT/inodes, if prsent, can be used to speed up this last step.
 
 typedef std::set<file_path> path_set;
 
@@ -100,6 +103,16 @@ void write_options_map(data & dat,
 // crash, we save some debugging information here.
 
 void get_local_dump_path(local_path & d_path);
+
+// the 'fingerprint file' contains inode fingerprints 
+
+void get_inodeprints_path(local_path & ip_path);
+
+bool in_inodeprints_mode();
+
+void read_inodeprints(data & dat);
+
+void write_inodeprints(data const & dat);
 
 // the "attribute map" is part of a working copy. it is *not* stored in MT,
 // because its contents are considered part of the "content" of a tree of
