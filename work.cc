@@ -204,6 +204,9 @@ get_user_log_path(local_path & ul_path)
   L(F("user log path is %s\n") % ul_path);
 }
 
+/**
+ * Read MT/log into dat if it exists.
+ */
 void
 read_user_log(data & dat)
 {
@@ -216,6 +219,9 @@ read_user_log(data & dat)
     }
 }
 
+/**
+ * Blanks or creates MT/log
+ */
 void
 blank_user_log()
 {
@@ -225,6 +231,9 @@ blank_user_log()
   write_data(ul_path, empty);
 }
 
+/**
+ * Does MT/log contain any data?
+ */
 bool
 has_contents_user_log()
 {
