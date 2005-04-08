@@ -1,9 +1,11 @@
-upgrading monotone to 0.17
+upgrading monotone to 0.18
 ==========================
 
 if you are upgrading from:
+  - 0.17: simply make a backup of your databases, just in case, and
+    run "db migrate" on each.
+  - 0.15 or 0.16: see below
   - 0.14 or earlier: see file README.changesets
-  - 0.15 or later: see below
 
 upgrading from 0.15 or 0.16
 ---------------------------

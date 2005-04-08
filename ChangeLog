@@ -1,5 +1,13 @@
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_inodeprints.at:
+	* tests/t_inodeprints_update.at: New tests.
+	* testsuite.at: Add them.
+	
+	* UPGRADE: Document 0.17 -> 0.18 upgrade path.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* {win32,unix}/fingerprint.cc: Rename to...
 	* {win32,unix}/inodeprint.cc: ...this.  Change function name and
 	calling conventions.
