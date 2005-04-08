@@ -11,6 +11,8 @@
 
 #include <string>
 
+#include "vocab.hh"
+
 void read_password(std::string const & prompt, char * buf, size_t bufsz);
 void get_system_flavour(std::string & ident);
 
@@ -28,5 +30,11 @@ bool have_smart_terminal();
 // for netsync
 void start_platform_netsync();
 void end_platform_netsync();
+
+// for "reckless mode" working copy change detection.
+// returns 'true' if it has generated a valid fingerprint; returns 'false' if
+// there was a problem, in which case we should act as if the fingerprint has
+// changed.
+bool fingerprint_file(file_path const & file, id & fpr);
 
 #endif // __PLATFORM_HH__

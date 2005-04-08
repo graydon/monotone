@@ -59,31 +59,6 @@ manifest_map_builder::visit_file(file_path const & path)
   man.insert(manifest_entry(path, file_id(ident)));
 }
 
-/** these seem to be unused
-
-void 
-build_manifest_map(file_path const & path,
-                   app_state & app,
-                   manifest_map & man)
-{
-  man.clear();
-  manifest_map_builder build(app,man);
-  walk_tree(path, build);
-}
-
-void 
-build_manifest_map(app_state & app,
-                   manifest_map & man)
-{
-  man.clear();
-  manifest_map_builder build(app,man);
-  walk_tree(build);
-}
-
-**/
-
-
-
 void 
 build_manifest_map(path_set const & paths,
                    manifest_map & man, 
