@@ -18,9 +18,17 @@ AT_CHECK(cp r1testfile testfile)
 COMMIT(testbranch)
 R1=`BASE_REVISION`
 
-CHECK_SAME_STDOUT(MONOTONE cat file $R0 testfile, cat r0testfile)
-CHECK_SAME_STDOUT(MONOTONE cat file $R0 otherfile, cat r0otherfile)
-CHECK_SAME_STDOUT(MONOTONE cat file $R1 testfile, cat r1testfile)
+AT_CHECK(MONOTONE cat file $R0 testfile, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp stdout r0testfile, [], [ignore])
+
+AT_CHECK(MONOTONE cat file $R0 otherfile, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp stdout r0otherfile, [], [ignore])
+
+AT_CHECK(MONOTONE cat file $R1 testfile, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp stdout r1testfile, [], [ignore])
 
 AT_CHECK(MONOTONE cat file $R0 no_such_file, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE cat file $R0 "", [1], [ignore], [ignore])

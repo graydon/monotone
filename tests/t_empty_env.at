@@ -1,6 +1,10 @@
 AT_SETUP([empty environment])
 MONOTONE_SETUP
 
+AT_CHECK(if test "$OSTYPE" == "msys"; then
+  cp $(which libiconv-2.dll) .
+fi)
+
 AT_CHECK(env -i MONOTONE --help, [], [ignore], [ignore])
 AT_DATA(testfile, [blah blah
 ])

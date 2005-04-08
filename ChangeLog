@@ -1,5 +1,23 @@
 2005-04-08  Jon Bright <jon@siliconcircus.com>
-	* win32/inodeprint.c: Change the function name to match the one
+	* tests/t_cat_file_by_name.at: CHECK_SAME_STDOUT can only be used
+	to check two 'cat' processes or two monotone processes on Win32,
+	not to check monotone and 'cat'.  Change to go through an 
+	intermediate stdout
+	* tests/t_automate_erase_ancestors.at: Ditto
+	* tests/t_automate_toposort.at: Ditto
+	* tests/t_automate_ancestry_difference.at: Ditto
+	* tests/t_vars.at: Call CANONICALISE for stdout output.
+	* tests/t_netsync_absorbs.at: Ditto.
+	* tests/t_empty_env.at: For Win32, copy libiconv-2.dll to the 
+	current dir before the test, otherwise Win32 will search the
+	(empty) path for it and not find it.
+	* tests/t_automate_descendents.at: Ditto
+	* win32/inodeprint.cc: Implement inodeprint_file for Win32, based
+	on mode, device, size, create time and write time.
+	
+	
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* win32/inodeprint.cc: Change the function name to match the one
 	on Unix.
 
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
