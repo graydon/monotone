@@ -1,3 +1,36 @@
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* win32/inodeprint.c: Change the function name to match the one
+	on Unix.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* {win32,unix}/fingerprint.cc: Rename to...
+	* {win32,unix}/inodeprint.cc: ...this.  Change function name and
+	calling conventions.
+	* platform.hh (inodeprint_file): Likewise.
+	* inodeprint.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES, UNIX_PLATFORM_SOURCES,
+	WIN32_PLATFORM_SOURCES): Fixup accordingly.
+	* vocab_terms.hh (inodeprint): New ATOMIC.
+	* work.hh: Prototype inodeprint working copy functions.
+	* work.cc: Implement them.
+
+	* manifest.{hh,cc} (manifest_file_name): Remove unused variable.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.{hh,cc}: Remove some commented out unused functions.
+
+	* win32/have_smart_terminal.cc: Include platform.hh.
+	* unix/fingerprint.cc: New file, with new function.
+	* win32/fingerprint.cc: New file, with stub function.
+	* Makefile.am (UNIX_PLATFORM_SOURCES, WIN32_PLATFORM_SOURCES): Add
+	them.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.hh, manifest.cc: Remove tabs.
+
 2005-04-08  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* doxygen.cfg: added
