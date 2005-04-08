@@ -44,8 +44,8 @@ extern std::string const manifest_file_name;
 typedef std::pair<file_path const, file_id> manifest_entry;
 
 typedef std::map<file_path, file_id, 
-		 std::less<file_path>, 
-		 QA(manifest_entry) > manifest_map;
+                 std::less<file_path>, 
+                 QA(manifest_entry) > manifest_map;
 
 inline file_path const &
 manifest_entry_path(manifest_entry const & e)
@@ -79,18 +79,18 @@ class app_state;
 
 // from cwd
 void build_manifest_map(app_state & app,
-			manifest_map & man);
+                        manifest_map & man);
 
 // from some safe sub-dir within cwd
 void build_manifest_map(file_path const & path,
-			app_state & app,
-			manifest_map & man);
+                        app_state & app,
+                        manifest_map & man);
 
 **/
 
 void build_manifest_map(path_set const & paths,
-			manifest_map & man,
-			app_state & app);
+                        manifest_map & man,
+                        app_state & app);
 
 void build_restricted_manifest_map(path_set const & paths,
                                    manifest_map const & m_old, 
@@ -98,15 +98,15 @@ void build_restricted_manifest_map(path_set const & paths,
                                    app_state & app);
 
 void read_manifest_map(data const & dat,
-		       manifest_map & man);
+                       manifest_map & man);
 
 void read_manifest_map(manifest_data const & dat,
-		       manifest_map & man);
+                       manifest_map & man);
 
 void write_manifest_map(manifest_map const & man, 
-			manifest_data & dat);
+                        manifest_data & dat);
 
 void write_manifest_map(manifest_map const & man, 
-			data & dat);
+                        data & dat);
 
 #endif // __MANIFEST_HH__

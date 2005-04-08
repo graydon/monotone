@@ -1,5 +1,9 @@
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
+	* manifest.hh, manifest.cc: Remove tabs.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_final_space.at: New test.
 	* testsuite.at: Add it.
 
