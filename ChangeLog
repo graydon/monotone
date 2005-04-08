@@ -1,5 +1,23 @@
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (calculate_current_revision): Defer to
+	calculate_restricted_revision instead of special casing.
+	(put_revision_id): constify argument.
+	(maybe_update_inodeprints): New function.
+	(commit, update, checkout): Call it.
+	
+	* manifest.{cc,hh} (build_manifest_map): Remove, since only caller
+	was removed.
+	(build_restricted_manifest_map): Go faster if the user is using
+	inode signatures.
+
+	* tests/t_inodeprints.at:
+	* tests/t_inodeprints_update.at: Typoes.
+	
+	* work.cc (read_inodeprints): Typo.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_inodeprints.at:
 	* tests/t_inodeprints_update.at: New tests.
 	* testsuite.at: Add them.

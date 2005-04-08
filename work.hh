@@ -104,7 +104,7 @@ void write_options_map(data & dat,
 
 void get_local_dump_path(local_path & d_path);
 
-// the 'fingerprint file' contains inode fingerprints 
+// the 'inodeprints file' contains inode fingerprints 
 
 void get_inodeprints_path(local_path & ip_path);
 

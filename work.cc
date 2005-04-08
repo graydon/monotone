@@ -310,7 +310,7 @@ in_inodeprints_mode()
 }
 
 void
-read_inodeprints_log(data & dat)
+read_inodeprints(data & dat)
 {
   I(in_inodeprints_mode());
   local_path ip_path;

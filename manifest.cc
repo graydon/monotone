@@ -21,6 +21,8 @@
 #include "manifest.hh"
 #include "transforms.hh"
 #include "sanity.hh"
+#include "inodeprint.hh"
+#include "platform.hh"
 
 // this file defines the class of manifest_map objects, and various comparison
 // and i/o functions on them. a manifest specifies exactly which versions
@@ -58,34 +60,40 @@ manifest_map_builder::visit_file(file_path const & path)
 }
 
 void 
-build_manifest_map(path_set const & paths,
-                   manifest_map & man, 
-                   app_state & app)
-{
-  man.clear();
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      N(fs::exists(mkpath((*i)())),
-        F("file disappeared but exists in manifest: %s") % (*i)());
-      hexenc<id> ident;
-      calculate_ident(*i, ident, app.lua);
-      man.insert(manifest_entry(*i, file_id(ident)));
-    }
-}
-
-
-void 
 build_restricted_manifest_map(path_set const & paths,
                               manifest_map const & m_old, 
                               manifest_map & m_new, 
                               app_state & app)
 {
   m_new.clear();
+  inodeprint_map ipm;
+  if (in_inodeprints_mode())
+    {
+      data dat;
+      read_inodeprints(dat);
+      read_inodeprint_map(dat, ipm);
+    }
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       if (app.restriction_includes(*i))
         {
           // compute the current sha1 id for included files
+          // we might be able to avoid it, if we have an inode fingerprint...
+          inodeprint_map::const_iterator old_ip = ipm.find(*i);
+          if (old_ip != ipm.end())
+            {
+              hexenc<inodeprint> ip;
+              if (inodeprint_file(*i, ip) && ip == old_ip->second)
+                {
+                  // the inode fingerprint hasn't changed, so we assume the file
+                  // hasn't either.
+                  manifest_map::const_iterator k = m_old.find(*i);
+                  I(k != m_old.end());
+                  m_new.insert(*k);
+                  continue;
+                }
+            }
+          // ...ah, well, no good fingerprint, just check directly.
           N(fs::exists(mkpath((*i)())),
             F("file disappeared but exists in new manifest: %s") % (*i)());
           hexenc<id> ident;

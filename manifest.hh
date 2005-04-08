@@ -74,10 +74,6 @@ std::ostream & operator<<(std::ostream & out, manifest_entry const & e);
 
 class app_state;
 
-void build_manifest_map(path_set const & paths,
-                        manifest_map & man,
-                        app_state & app);
-
 void build_restricted_manifest_map(path_set const & paths,
                                    manifest_map const & m_old, 
                                    manifest_map & m_new, 

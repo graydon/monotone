@@ -32,7 +32,7 @@ AT_CHECK(grep -q "stuff stuff" stdout)
 # Make sure partial commit doesn't screw things up
 ADD_FILE(otherfile, [other stuff
 ])
-AT_CHECK(MONOTONE commit otherfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit otherfile --message=foo, [], [ignore], [ignore])
 
 # Should have changed the inodeprints file
 AT_CHECK(cmp MT/inodeprints ip1, [1], [ignore], [ignore])
