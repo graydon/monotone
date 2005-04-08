@@ -18,10 +18,13 @@ AT_DATA(domain2_vars, [domain2: key1 other_domain_value
 AT_CHECK(cat domain1_vars domain2_vars > all_vars)
 
 AT_CHECK(MONOTONE ls vars, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp all_vars stdout)
 AT_CHECK(MONOTONE ls vars domain1, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp domain1_vars stdout)
 AT_CHECK(MONOTONE ls vars domain2, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp domain2_vars stdout)
 
 AT_CLEANUP

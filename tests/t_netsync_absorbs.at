@@ -37,6 +37,7 @@ NETSYNC_CLIENT_RUN(pull, testbranch)
 NETSYNC_SERVE_STOP
 
 AT_CHECK(MONOTONE2 pubkey foo@bar, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp foo_public stdout)
 
 AT_CLEANUP
