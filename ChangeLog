@@ -1,5 +1,9 @@
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* ChangeLog: Fixup after merge.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (calculate_current_revision): Defer to
 	calculate_restricted_revision instead of special casing.
 	(put_revision_id): constify argument.
@@ -23,8 +27,6 @@
 	* testsuite.at: Add them.
 	
 	* UPGRADE: Document 0.17 -> 0.18 upgrade path.
-
-2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
 2005-04-08  Jon Bright <jon@siliconcircus.com>
 	* win32/inodeprint.c: Change the function name to match the one
