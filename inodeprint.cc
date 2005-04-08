@@ -22,47 +22,6 @@
 // this file defines the inodeprint_map structure, and some operations on it.
 // it is currently heavily based on manifest.cc.
 
-void 
-build_inodeprint_map(path_set const & paths,
-                     inodeprint_map & ipm, 
-                     app_state & app)
-{
-  ipm.clear();
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      hexenc<inodeprint> ip;
-      if (inodeprint_file((*i)(), ip))
-        ipm.insert(inodeprint_entry(*i, ip));
-    }
-}
-
-
-void 
-build_restricted_inodeprint_map(path_set const & paths,
-                                inodeprint_map const & ipm_old, 
-                                inodeprint_map & ipm_new, 
-                                app_state & app)
-{
-  ipm_new.clear();
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      if (app.restriction_includes(*i))
-        {
-          // get the new inodeprint
-          hexenc<inodeprint> ip;
-          if (inodeprint_file((*i)(), ip))
-            ipm_new.insert(inodeprint_entry(*i, ip));
-        }
-      else
-        {
-          // copy the old inodeprint entry for excluded files
-          inodeprint_map::const_iterator old = ipm_old.find(*i);
-          if (old != ipm_old.end())
-            ipm_new.insert(*old);
-        }
-    }
-}
-
 // reading inodeprint_maps
 
 struct 
@@ -93,7 +52,7 @@ read_inodeprint_map(data const & dat,
 std::ostream & 
 operator<<(std::ostream & out, inodeprint_entry const & e)
 {
-  return (out << e.second << "  " << e.second << "\n");
+  return (out << e.second << "  " << e.first << "\n");
 }
 
 

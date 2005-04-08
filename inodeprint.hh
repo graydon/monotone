@@ -19,15 +19,6 @@ std::ostream & operator<<(std::ostream & out, inodeprint_entry const & e);
 
 class app_state;
 
-void build_indodeprint_map(path_set const & paths,
-                           inodeprint_map & ino,
-                           app_state & app);
-
-void build_restricted_inodeprint_map(path_set const & paths,
-                                     inodeprint_map const & m_old, 
-                                     inodeprint_map & m_new, 
-                                     app_state & app);
-
 void read_inodeprint_map(data const & dat,
                          inodeprint_map & man);
 

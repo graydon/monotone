@@ -1,5 +1,12 @@
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* inodeprint.cc (operator<<): Typo.
+
+	* inodeprint.{hh,cc} (build_inodeprint_map,
+	build_restricted_inodeprint_map): Remove unused functions.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* work.cc: Remove doxygen comments.  Comments are good; comments
 	that are longer than the function they document, and give less
 	information, are not so good...
