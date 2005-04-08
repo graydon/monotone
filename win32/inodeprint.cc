@@ -6,7 +6,7 @@
 #include "platform.hh"
 #include "sanity.hh"
 
-bool fingerprint_file(file_path const & file, hexenc<inodeprint> & ip)
+bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
 {
   W(F("sorry -- reckless mode is not yet supported on win32\n"));
   return false;

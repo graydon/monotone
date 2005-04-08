@@ -1,3 +1,7 @@
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* win32/inodeprint.c: Change the function name to match the one
+	on Unix.
+
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* {win32,unix}/fingerprint.cc: Rename to...
