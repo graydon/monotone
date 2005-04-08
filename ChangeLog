@@ -26,6 +26,12 @@
 
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* win32/inodeprint.c: Change the function name to match the one
+	on Unix.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* {win32,unix}/fingerprint.cc: Rename to...
 	* {win32,unix}/inodeprint.cc: ...this.  Change function name and
 	calling conventions.
@@ -52,6 +58,11 @@
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
 	* manifest.hh, manifest.cc: Remove tabs.
+
+2005-04-08  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* doxygen.cfg: added
+	* Makefile.am: added apidocs target (builds doxygen docs)
 
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 

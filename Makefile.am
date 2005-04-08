@@ -326,6 +326,9 @@ txt2c: txt2c.cc Makefile
 	$(CXX) -Wall -o $@ $<
 	chmod 0755 $@$(EXEEXT)
 
+apidocs:
+	doxygen doxygen.cfg
+
 %.h: %.sql txt2c Makefile
 	./txt2c $< $(*F) >$@.tmp
 	cmp $@.tmp $@ || mv $@.tmp $@
@@ -348,7 +351,7 @@ package_revision.c: package_revision.txt txt2c Makefile
 	cmp $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
-.PHONY: package_full_revision.txt
+.PHONY: package_full_revision.txt apidocs
 package_full_revision.txt:
 	REAL_BLDDIR=$$PWD/$(top_builddir); \
 	(cd $(srcdir) && $$REAL_BLDDIR/monotone status) 2>/dev/null >$@ \
