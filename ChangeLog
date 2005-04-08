@@ -1,3 +1,8 @@
+2005-04-08  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* doxygen.cfg: added
+	* Makefile.am: added apidocs target (builds doxygen docs)
+
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_final_space.at: New test.
