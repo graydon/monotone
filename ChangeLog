@@ -1,3 +1,19 @@
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* win32/inodeprint.cc (inodeprint_file): Still close the file if
+	getting its time failed.
+	* tests/t_netsync_sigpipe.at: Don't bother doing a kill -PIPE on
+	Win32.  There is no real SIGPIPE on Win32 and sockets don't get this
+	signal if their pipe goes away.  MinGW's kill seems to translate
+	-PIPE to some signal that *does* kill monotone, so it seems like the
+	easiest solution is just not to send the signal in the first place
+	here.
+	* tests/t_automate_ancestry_difference.at: Remove old 
+	CHECK_SAME_STDOUT call which I'd left by accident.
+	* tests/t_automate_leaves.at: Canonicalise monotone output before
+	passing to CHECK_SAME_STDOUT
+	* tests/t_log_depth.at: Check line count with arithmetic comparison
+	rather than autotest's string comparison
+
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* inodeprint.cc (operator<<): Typo.

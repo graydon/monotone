@@ -42,7 +42,10 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
 
   FILETIME create,write;
   if (GetFileTime(filehandle, &create, NULL, &write) == 0)
-    return false;
+    {
+      CloseHandle(filehandle);
+      return false;
+    }
 
   add_hash(hash, create);
   add_hash(hash, write);

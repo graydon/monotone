@@ -18,10 +18,10 @@ AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of baz.",
 
 AT_CHECK(MONOTONE log --depth=0, [1], [], [ignore])
 
-AT_CHECK(MONOTONE log --depth=1 | grep '^Revision:' | wc -l, [], [1
-], [ignore])
+AT_CHECK(MONOTONE log --depth=1 | grep '^Revision:', [], [stdout], [ignore])
+AT_CHECK(test 1 -eq "`wc -l <stdout`")
 
-AT_CHECK(MONOTONE log --depth=2 | grep '^Revision:' | wc -l, [], [2
-], [ignore])
+AT_CHECK(MONOTONE log --depth=2 | grep '^Revision:', [], [stdout], [ignore])
+AT_CHECK(test 2 -eq "`wc -l <stdout`")
 
 AT_CLEANUP
