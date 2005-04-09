@@ -268,7 +268,6 @@ if ($mail || $debug) {
 	    my_debug("Rejecting $revision because it's too old ($date < $since (--since))\n");
 	    next;
 	}
-	next if $date lt $since;
 	$timeline{$date} = {} if !defined $timeline{$date};
 	$timeline{$date}->{$revision} = 1;
     }
