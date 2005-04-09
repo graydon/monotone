@@ -220,6 +220,12 @@ AT_CHECK(MONOTONE --branch=$1 commit --message blah-blah, [], [ignore],
 [ignore])
 ])
 
+m4_define([NOT_ON_WIN32], [
+if test "$OSTYPE" == "msys"; then
+  exit 77
+fi
+])
+
 # Some tests want to include data files.
 # Usage: NEED_UNB64 will cancel the test (reporting success) if we
 # can't decode base64'ed text.

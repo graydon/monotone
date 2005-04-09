@@ -1,4 +1,12 @@
 2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* testsuite.at (NOT_ON_WIN32): Add a function to prevent tests from
+	running on Win32 (for cases where the functionality being tested 
+	makes no sense on Win32.  Not for cases where the functionality
+	just isn't there yet on Win32.)
+	* tests/t_final_space.at: Use NOT_ON_WIN32.  The filenames "a b" 
+	and "a b " refer to the same file on Win32, obviating this test
+
+2005-04-08  Jon Bright <jon@siliconcircus.com>
 	* win32/inodeprint.cc (inodeprint_file): Still close the file if
 	getting its time failed.
 	* tests/t_netsync_sigpipe.at: Don't bother doing a kill -PIPE on
