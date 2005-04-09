@@ -1,5 +1,11 @@
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (revert): Call maybe_update_inodeprints.
+	* app_state.cc (set_restriction): Clear any old restrictions
+	first.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
 	* inodeprint.cc (operator<<): Typo.
 
 	* inodeprint.{hh,cc} (build_inodeprint_map,

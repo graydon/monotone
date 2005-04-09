@@ -3577,6 +3577,7 @@ CMD(revert, "working copy", "[PATH]...",
   // race
   put_path_rearrangement(excluded);
   update_any_attrs(app);
+  maybe_update_inodeprints(app);
 }
 
 
