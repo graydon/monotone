@@ -4,7 +4,7 @@
 #ifdef WIN32
 #include <io.h> /* for chdir() */
 #endif
-#include <cstdlib>		// for strtoul()
+#include <cstdlib>              // for strtoul()
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -153,6 +153,7 @@ app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & pa
   // this can't be a file-global static, because file_path's initializer
   // depends on another global static being defined.
   static file_path dot(".");
+  restrictions.clear();
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       file_path p = prefix(*i);

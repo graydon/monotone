@@ -1,3 +1,9 @@
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (revert): Call maybe_update_inodeprints.
+	* app_state.cc (set_restriction): Clear any old restrictions
+	first.
+
 2005-04-08  Jon Bright <jon@siliconcircus.com>
 	* testsuite.at (NOT_ON_WIN32): Add a function to prevent tests from
 	running on Win32 (for cases where the functionality being tested 
@@ -2492,7 +2498,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÃ…Â‚kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
