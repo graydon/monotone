@@ -95,6 +95,5 @@ AT_CHECK(cmp stdout acdef || cmp stdout acedf, [], [ignore], [ignore])
 AT_CHECK(MONOTONE automate ancestry_difference $REV_B $REV_F, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_B)
-CHECK_SAME_STDOUT(MONOTONE automate ancestry_difference $REV_B $REV_F, echo $REV_B)
 
 AT_CLEANUP

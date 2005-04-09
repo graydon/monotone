@@ -16,14 +16,18 @@ ADD_FILE(testfile, [blah blah
 COMMIT(testbranch)
 REV_A=`BASE_REVISION`
 
-CHECK_SAME_STDOUT(MONOTONE automate leaves, echo $REV_A)
+AT_CHECK(MONOTONE automate leaves, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+CHECK_SAME_STDOUT(cat stdout, echo $REV_A)
 
 SET_FILE(testfile, [other stuff
 ])
 COMMIT(testbranch)
 REV_B=`BASE_REVISION`
 
-CHECK_SAME_STDOUT(MONOTONE automate leaves, echo $REV_B)
+AT_CHECK(MONOTONE automate leaves, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+CHECK_SAME_STDOUT(cat stdout, echo $REV_B)
 
 REVERT_TO($REV_A)
 
@@ -34,7 +38,9 @@ REV_C=`BASE_REVISION`
 
 AT_CHECK(echo $REV_B > bc)
 AT_CHECK(echo $REV_C >> bc)
-CHECK_SAME_STDOUT(MONOTONE automate leaves, sort < bc)
+AT_CHECK(MONOTONE automate leaves, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+CHECK_SAME_STDOUT(cat stdout, sort < bc)
 
 AT_CHECK(MONOTONE propagate testbranch otherbranch, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])

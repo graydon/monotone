@@ -1,3 +1,13 @@
+2005-04-09  Richard Levitte  <richard@levitte.org>
+
+	* contrib/Notify.pl: Allow globbing branches.  Make the revision
+	records branch specific.  Show what records you would have updated
+	even with --noupdate.  Add --before and --since, so users can
+	select datetime ranges to create logs for.  Remove --to and add
+	--difflogs-to and --nodifflogs-to to send logs with diffs to one
+	address and logs without diffs to another (both can be given at
+	once).  More and better documentation.
+
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (basic_change_set): Remove problematic
@@ -9,6 +19,30 @@
 	* commands.cc (revert): Call maybe_update_inodeprints.
 	* app_state.cc (set_restriction): Clear any old restrictions
 	first.
+
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* testsuite.at (NOT_ON_WIN32): Add a function to prevent tests from
+	running on Win32 (for cases where the functionality being tested 
+	makes no sense on Win32.  Not for cases where the functionality
+	just isn't there yet on Win32.)
+	* tests/t_final_space.at: Use NOT_ON_WIN32.  The filenames "a b" 
+	and "a b " refer to the same file on Win32, obviating this test
+
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* win32/inodeprint.cc (inodeprint_file): Still close the file if
+	getting its time failed.
+	* tests/t_netsync_sigpipe.at: Don't bother doing a kill -PIPE on
+	Win32.  There is no real SIGPIPE on Win32 and sockets don't get this
+	signal if their pipe goes away.  MinGW's kill seems to translate
+	-PIPE to some signal that *does* kill monotone, so it seems like the
+	easiest solution is just not to send the signal in the first place
+	here.
+	* tests/t_automate_ancestry_difference.at: Remove old 
+	CHECK_SAME_STDOUT call which I'd left by accident.
+	* tests/t_automate_leaves.at: Canonicalise monotone output before
+	passing to CHECK_SAME_STDOUT
+	* tests/t_log_depth.at: Check line count with arithmetic comparison
+	rather than autotest's string comparison
 
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -2480,7 +2514,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Mi�Å�kowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÃÂkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
