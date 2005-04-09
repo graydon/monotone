@@ -1,3 +1,13 @@
+2005-04-09  Richard Levitte  <richard@levitte.org>
+
+	* contrib/Notify.pl: Allow globbing branches.  Make the revision
+	records branch specific.  Show what records you would have updated
+	even with --noupdate.  Add --before and --since, so users can
+	select datetime ranges to create logs for.  Remove --to and add
+	--difflogs-to and --nodifflogs-to to send logs with diffs to one
+	address and logs without diffs to another (both can be given at
+	once).  More and better documentation.
+
 2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc (revert): Call maybe_update_inodeprints.
