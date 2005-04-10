@@ -33,7 +33,7 @@ use Pod::Usage;
 use MIME::Lite;
 use File::Spec::Functions qw(:ALL);
 
-my $VERSION = '0.5';
+my $VERSION = '1.0';
 
 ######################################################################
 # User options
@@ -277,6 +277,8 @@ if ($mail || $debug) {
     #
     my_log("generating messages for all collected revision IDs.");
 
+    my $message_count = 0;	# It's nice with a little bit of statistics.
+
     foreach my $date (sort keys %timeline) {
 	foreach my $revision (keys %{$timeline{$date}}) {
 	    foreach my $sendinfo (([ 1, "Notify.debug-diffs", $difflogs_to ],
@@ -403,15 +405,18 @@ if ($mail || $debug) {
 		    print MESSAGEDBG "======================================================================\n";
 		    close MESSAGEDBG;
 		}
+		$message_count++;
 
 		######################################################
 		# Clean up the files used to create the message.
 		#
-		my_log("cleaning up.");
+		my_debug("cleaning up.");
 		unlink @files;
 	    }
 	}
     }
+
+    my_log("$message_count messages were sent.");
 }
 
 ######################################################################

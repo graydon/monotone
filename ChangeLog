@@ -1,3 +1,9 @@
+2005-04-10  Richard Levitte  <richard@levitte.org>
+
+	* contrib/Notify.pl: Count the number of messages sent, and
+	display the count at the end.
+	Version bumped to 1.0.
+
 2005-04-10  Matt Johnston  <matt@ucc.asn.au>
 
 	* unix/inodeprint.cc, configure.ac: don't use the nsec time
