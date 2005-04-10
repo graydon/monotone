@@ -1973,6 +1973,25 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
     }
 }
 
+static void
+ls_known (app_state & app, vector<utf8> const & args)
+{
+  revision_set rs;
+  manifest_map m_old, m_new;
+  data tmp;
+
+  app.require_working_copy();
+
+  calculate_restricted_revision(app, args, rs, m_old, m_new);
+
+  for (manifest_map::const_iterator p = m_new.begin(); p != m_new.end(); ++p)
+    {
+      file_path const & path(p->first);
+      if (app.restriction_includes(path))
+        cout << p->first << '\n';
+    }
+}
+
 struct unknown_itemizer : public tree_walker
 {
   app_state & app;
@@ -2053,10 +2072,12 @@ CMD(list, "informative",
     "epochs [BRANCH [...]]\n"
     "tags\n"
     "vars [DOMAIN]\n"
+    "known\n"
     "unknown\n"
     "ignored\n"
     "missing",
-    "show database objects, or unknown, intentionally ignored, or missing state files")
+    "show database objects, or the current working copy manifest, "
+    "or unknown, intentionally ignored, or missing state files")
 {
   if (args.size() == 0)
     throw usage(name);
@@ -2076,6 +2097,8 @@ CMD(list, "informative",
     ls_tags(name, app, removed);
   else if (idx(args, 0)() == "vars")
     ls_vars(name, app, removed);
+  else if (idx(args, 0)() == "known")
+    ls_known(app, removed);
   else if (idx(args, 0)() == "unknown")
     ls_unknown(app, false, removed);
   else if (idx(args, 0)() == "ignored")
@@ -2093,10 +2116,12 @@ ALIAS(ls, list, "informative",
       "epochs [BRANCH [...]]\n"
       "tags\n"
       "vars [DOMAIN]\n"
+      "known\n"
       "unknown\n"
       "ignored\n"
       "missing",
-      "show database objects, or unknown, intentionally ignored, or missing state files; alias for list")
+      "show database objects, or the current working copy manifest, "
+      "or unknown, intentionally ignored, or missing state files; alias for list")
 
 
 CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")

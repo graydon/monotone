@@ -1,3 +1,15 @@
+2005-04-10  Florian Weimer  <fw@deneb.enyo.de>
+
+	* commands.cc (ls_known): New function which prints all known
+	files in the working copy.
+	(CMD(list)): Invoke ls_known for "list known".  Update help
+	message.
+	(ALIAS(ls)): Update help message.
+
+	* monotone.texi: Document "list known".
+	* tests/t_ls_known.at: New file.
+	* testsuite.at: Include it.
+
 2005-04-10  Matt Johnston  <matt@ucc.asn.au>
 
 	* unix/inodeprint.cc, configure.ac: don't use the nsec time
