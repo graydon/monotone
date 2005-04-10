@@ -15,6 +15,9 @@ namespace
   template <typename T> void
   add_hash(CryptoPP::SHA & hash, T obj)
   {
+      // FIXME: this is not endian safe, which will cause problems
+      // if the inodeprint listing is shared between machines of
+      // different types (over NFS etc).
       size_t size = sizeof(obj);
       hash.Update(reinterpret_cast<byte const *>(&size),
                   sizeof(size));
@@ -32,9 +35,18 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
   CryptoPP::SHA hash;
 
   add_hash(hash, st.st_ctime);
+  // TODO: there are non-Linux variants which could be used.
+#ifdef HAVE_STRUCT_STAT_ST_CTIM_TV_NSEC
   add_hash(hash, st.st_ctim.tv_nsec);
+#else
+  add_hash(hash, (long)0);
+#endif
   add_hash(hash, st.st_mtime);
+#ifdef HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
   add_hash(hash, st.st_mtim.tv_nsec);
+#else
+  add_hash(hash, (long)0);
+#endif
   add_hash(hash, st.st_mode);
   add_hash(hash, st.st_ino);
   add_hash(hash, st.st_dev);

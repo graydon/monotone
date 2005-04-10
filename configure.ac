@@ -361,6 +361,9 @@ AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_HAVE_INADDR_NONE
 
+AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec, struct stat.st_mtim.tv_nsec])
+        
+
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
 AC_FUNC_STAT

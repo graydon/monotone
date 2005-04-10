@@ -1,3 +1,9 @@
+2005-04-10  Matt Johnston  <matt@ucc.asn.au>
+
+	* unix/inodeprint.cc, configure.ac: don't use the nsec time
+	on non-Linux-style systems (quick compile fix for OS X and probably
+	others, can be made generic later).
+
 2005-04-10  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* contrib/monotone.el: Some elisp code for running monotone from
