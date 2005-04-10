@@ -18,3 +18,5 @@ licenses.
      send notifications of commits to CIA (http://cia.navi.cx).
 
   -- monotone.bash_completion: command line completion code for bash.
+
+  -- monotone.el: A basic Emacs interface.
