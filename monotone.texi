@@ -5700,12 +5700,12 @@ List all tags.
 @item @b{list known} @i{[<pathname>...]}
 @itemx @b{ls known} @i{[<pathname>...]}
 List files which are in revision's manifest, or are on the work list of
-the working directory.
+the working copy.
 @comment TROFF INPUT: .TP
 
 @item @b{list unknown} @i{[<pathname>...]}
 @itemx @b{ls unknown} @i{[<pathname>...]}
-List files in working directory, but not in revision's manifest or
+List files in working copy, but not in revision's manifest or
 work list.
 @comment TROFF INPUT: .TP
 
@@ -5716,7 +5716,7 @@ List files intentionally ignored due to the ignore_file hook.
 
 @item @b{list missing} @i{[<pathname>...]}
 @itemx @b{ls missing} @i{[<pathname>...]}
-List files in revision's manifest, but not in working directory.
+List files in revision's manifest, but not in working copy.
 @comment TROFF INPUT: .TP
 
 @item @b{fdata} @i{<id>}
