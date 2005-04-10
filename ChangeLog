@@ -1,5 +1,10 @@
 2005-04-10  Florian Weimer  <fw@deneb.enyo.de>
 
+	* monotone.texi (Commands): Use "working copy" instead of "working
+	directory", to match the rest of the manual.
+
+2005-04-10  Florian Weimer  <fw@deneb.enyo.de>
+
 	* commands.cc (ls_known): New function which prints all known
 	files in the working copy.
 	(CMD(list)): Invoke ls_known for "list known".  Update help
