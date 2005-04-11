@@ -1,3 +1,9 @@
+2005-04-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (BUILT_SOURCES_CLEAN): Add package_revision.txt.
+
+	This is the 0.18 release.
+
 2005-04-11  Matthew Gregan <kinetik@orcon.net.nz>
 
 	* unix/inodeprint.cc, configure.ac: Use nanosecond time resolution for
