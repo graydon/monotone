@@ -264,7 +264,8 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/ciabot_monotone.py \
              contrib/monotone.el \
              contrib/monotone.bash_completion \
-             win32/monotone.iss
+             win32/monotone.iss \
+             debian/*
 
 MAKEINFOFLAGS=-I $(top_builddir)
 

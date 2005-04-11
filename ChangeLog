@@ -1,4 +1,7 @@
 2005-04-11  Jon Bright <jon@siliconcircus.com>
+	* Makefile.am (EXTRA_DIST): Add debian/*
+
+2005-04-11  Jon Bright <jon@siliconcircus.com>
 	* Makefile.am (EXTRA_DIST): Add win32/monotone.iss, PNG_FIGURES
 	(PNG_FIGURES): Add, constructing in same way as EPS_FIGURES
 	(monotone.html): Use .perlbak workaround so that this works on Win32
