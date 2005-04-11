@@ -448,18 +448,6 @@ session::session(protocol_role role,
       this->collection = idx(collections, 0);
     }
     
-  // we will panic here if the user doesn't like urandom and we can't give
-  // them a real entropy-driven random.  
-  bool request_blocking_rng = false;
-  if (!app.lua.hook_non_blocking_rng_ok())
-    {
-#ifndef BLOCKING_RNG_AVAILABLE 
-      throw oops("no blocking RNG available and non-blocking RNG rejected");
-#else
-      request_blocking_rng = true;
-#endif
-    }  
-
   done_refinements.insert(make_pair(cert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
   done_refinements.insert(make_pair(epoch_item, done_marker()));

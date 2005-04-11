@@ -233,14 +233,6 @@ has_contents_user_log()
   return user_log_message().length() > 0;
 }
 
-bool
-has_contents_user_log()
-{
-  data user_log_message;
-  read_user_log(user_log_message);
-  return user_log_message().length() > 0;
-}
-
 // options map file
 
 string const options_file_name("options");

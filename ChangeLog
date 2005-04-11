@@ -1,3 +1,8 @@
+2005-04-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* unix/inodeprint.cc: use botan for sha1
+	* various merge fixups
+
 2005-04-10  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (BUILT_SOURCES_CLEAN): Add package_revision.txt.
