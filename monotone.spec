@@ -1,6 +1,6 @@
 Summary: monotone is a distributed version control tool
 Name: monotone
-Version: 0.17
+Version: 0.18
 Release: 1
 License: GPL
 Group: Development/Tools
@@ -59,6 +59,9 @@ fi
 
 
 %changelog
+* Sun Apr 10 2005 nathaniel smith <njs@pobox.com>
+- 0.18 release
+
 * Fri Mar 3 2005 nathaniel smith <njs@pobox.com>
 - 0.17 release
 

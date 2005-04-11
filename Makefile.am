@@ -253,13 +253,15 @@ EXTRA_DIST = $(man1_MANS) \
              tests/atlocal.in  \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
-             $(wildcard m4/*.m4) \
-             popt/README popt/CHANGES popt/COPYING popt/popt.4 popt/popt.ps \
-             $wildcard(popt/test?.c) popt/testit.sh \
+             $(wildcard $(srcdir)/m4/*.m4) \
+             popt/README popt/CHANGES popt/COPYING popt/popt.3 popt/popt.ps \
+             $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
              sqlite/keywordhash.h \
              contrib/README \
              contrib/Notify.pl \
-             contrib/ciabot_monotone.py
+             contrib/ciabot_monotone.py \
+             contrib/monotone.el \
+             contrib/monotone.bash_completion
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -275,7 +277,8 @@ monotone.dvi: monotone.texi $(EPS_FIGURES)
 
 $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 	mkdir -p $(top_builddir)/figures
-	acroread -toPostScript -pairs $< $@
+#	acroread -toPostScript -pairs $< $@
+	pdftops $< $@
 
 
 # testsuite stuff (could this possibly be more ugly?)

@@ -1,8 +1,10 @@
-????????????????????????????
+Sun Apr 10 17:49:25 PDT 2005
 
         0.18 release.  performance improvements, features, and bug fixes.
+	This release is dedicated to Shweta Narayan.
 
-        - many common operations sped up by 1-3 orders of magnitude.
+        - most operations sped up by a factor of 2 or better; many sped up
+	  by up several orders of magnitude.
                 - special thanks to Matt Johnston <matt@ucc.asn.au>, Derek
                   Scherger <derek@echologic.com>, Linus Torvalds
                   <torvalds@osdl.org>.
@@ -22,6 +24,12 @@
                   previously synced with, to prevent man-in-the-middle
                   attacks.
                 - several powerful new "automate" commands added.
+		- new command 'ls known', lists files that are under version
+		  control.  Thanks to Florian Weimer <fw@deneb.enyo.de>.
+		- preliminary "inodeprints" functionality -- speeds up diff,
+		  status, etc.  No UI or documentation yet -- in a working
+		  copy, 'touch MT/inodeprints' to enable, then commit or
+		  update to populate cache.
         - UI improvements:
                 - Added short options -r, -b, -k, -m.
                 - default to 'dot' ticker-style when stderr is
@@ -41,8 +49,11 @@
           discarding.
         - new contributed scripts: CIA (cia.navi.cx) notification,
           email notification, Bash completion.
-        - 29 new integration tests.  total line coverage: ~82%.
+        - 33 new integration tests.  total line coverage: ~82%.
         - many bug fixes
+		- Special thanks to Matt Johnston <matt@ucc.asn.au>,
+		  for going above and beyond to track down the last
+		  release blocker.
 
                 - upgrading from 0.17 requires only a 'db migrate'.
 

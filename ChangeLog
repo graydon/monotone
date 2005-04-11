@@ -1,3 +1,14 @@
+2005-04-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am: Use pstopdf instead of acroread.
+	(EXTRA_DIST): Include new contrib/ files, and fix wildcards.
+	* NEWS: Update for 0.18.
+	* configure.ac: Bump version number.
+	* debian/changelog: Mention new release.
+	* debian/copyright: Update from AUTHORS.
+	* monotone.spec: Mention new release.
+	* po/monotone.pot: Regenerate.
+
 2005-04-10  Florian Weimer  <fw@deneb.enyo.de>
 
 	* monotone.texi (Commands): Use "working copy" instead of "working
