@@ -232,12 +232,14 @@ PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf				\
 	figures/statement.pdf figures/three-versions.pdf			\
 	figures/two-branches.pdf
 
+PNG_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.png)))
 EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
 
 man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
 	     $(PDF_FIGURES) \
+	     $(PNG_FIGURES) \
              INSTALL \
              README.changesets \
              UPGRADE \
@@ -261,7 +263,8 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/Notify.pl \
              contrib/ciabot_monotone.py \
              contrib/monotone.el \
-             contrib/monotone.bash_completion
+             contrib/monotone.bash_completion \
+             win32/monotone.iss
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -375,7 +378,8 @@ package_full_revision.c: package_full_revision.txt txt2c Makefile
 
 monotone.html: monotone.texi texinfo.css
 	makeinfo --no-split --no-headers --output $@ --html $<
-	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
+	rm -f monotone.html.perlbak
 
 # The .perlbak thing is needed, otherwise the perl executions fails on MinGW
 
