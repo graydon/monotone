@@ -135,7 +135,11 @@ build_deletions(vector<file_path> const & paths,
       P(F("adding %s to working copy delete set\n") % *i);
 
       if (dir_p) 
-        pr_new.deleted_dirs.insert(*i);
+        {
+          W(F("SORRY -- 'drop somedir' is not going to work.\n"));
+          W(F("Revert and try 'find somedir -type f | xargs monotone drop'\n"));
+          pr_new.deleted_dirs.insert(*i);
+        }
       else 
         pr_new.deleted_files.insert(*i);
   }
@@ -229,10 +233,17 @@ has_contents_user_log()
   return user_log_message().length() > 0;
 }
 
+bool
+has_contents_user_log()
+{
+  data user_log_message;
+  read_user_log(user_log_message);
+  return user_log_message().length() > 0;
+}
+
 // options map file
 
 string const options_file_name("options");
-
 
 void 
 get_options_path(local_path & o_path)
@@ -280,12 +291,48 @@ write_options_map(data & dat, options_map const & options)
 
 // local dump file
 
-string const local_dump_file_name("debug");
+static string const local_dump_file_name("debug");
 
 void get_local_dump_path(local_path & d_path)
 {
   d_path = (mkpath(book_keeping_dir) / mkpath(local_dump_file_name)).string();
   L(F("local dump path is %s\n") % d_path);
+}
+
+// inodeprint file
+
+static string const inodeprints_file_name("inodeprints");
+
+void
+get_inodeprints_path(local_path & ip_path)
+{
+  ip_path = (mkpath(book_keeping_dir) / mkpath(inodeprints_file_name)).string();
+}
+
+bool
+in_inodeprints_mode()
+{
+  local_path ip_path;
+  get_inodeprints_path(ip_path);
+  return file_exists(ip_path);
+}
+
+void
+read_inodeprints(data & dat)
+{
+  I(in_inodeprints_mode());
+  local_path ip_path;
+  get_inodeprints_path(ip_path);
+  read_data(ip_path, dat);
+}
+
+void
+write_inodeprints(data const & dat)
+{
+  I(in_inodeprints_mode());
+  local_path ip_path;
+  get_inodeprints_path(ip_path);
+  write_data(ip_path, dat);
 }
 
 // attribute map file

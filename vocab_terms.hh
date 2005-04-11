@@ -14,6 +14,7 @@ ATOMIC(ace);                  // unknown string in ACE form
 ATOMIC(id);                   // hash of data
 ATOMIC(data);                 // meaningless blob
 ATOMIC(delta);                // xdelta between 2 datas
+ATOMIC(inodeprint);           // fingerprint of an inode
 
 ATOMIC(local_path);           // non-absolute file
 ATOMIC(file_path);            // non-absolute, non-bookeeping file
@@ -55,6 +56,8 @@ EXTERN template class manifest< hexenc<id> >;
 EXTERN template class     file< hexenc<id> >;
 EXTERN template class    epoch< hexenc<id> >;
 
+EXTERN template class     hexenc<inodeprint>;
+
 EXTERN template class           hexenc<data>;
 EXTERN template class    epoch< hexenc<data> >;
 
@@ -91,6 +94,8 @@ EXTERN template std::ostream & operator<< <>(std::ostream &, revision< hexenc<id
 EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,     file< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<id> > const &);
+
+EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint>   const &);
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<data> const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<data> > const &);

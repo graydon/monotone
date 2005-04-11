@@ -9,7 +9,7 @@ MOST_SOURCES =								\
          constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
          mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
 	 change_set.cc mt_version.cc automate.cc database_check.cc	\
-	 path_component.cc epoch.cc                                     \
+	 path_component.cc epoch.cc inodeprint.cc                       \
 									\
          app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
 	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
@@ -23,7 +23,7 @@ MOST_SOURCES =								\
 	 mkstemp.hh mt_version.hh automate.hh database_check.hh smap.hh	\
 	 gettext.h package_revision.c package_full_revision.c           \
 	 path_component.hh epoch.hh package_full_revision.h             \
-	 package_revision.h
+	 package_revision.h inodeprint.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -131,11 +131,11 @@ POPT_SOURCES = \
 
 UNIX_PLATFORM_SOURCES = \
 	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/have_smart_terminal.cc \
-	unix/platform_netsync.cc
+	unix/platform_netsync.cc unix/inodeprint.cc
 
 WIN32_PLATFORM_SOURCES = \
 	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/have_smart_terminal.cc \
-	win32/platform_netsync.cc
+	win32/platform_netsync.cc win32/inodeprint.cc
 
 # primaries
 
@@ -269,13 +269,15 @@ EXTRA_DIST = $(man1_MANS) \
              tests/atlocal.in  \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
-             $(wildcard m4/*.m4) \
-             popt/README popt/CHANGES popt/COPYING popt/popt.4 popt/popt.ps \
-             $wildcard(popt/test?.c) popt/testit.sh \
+             $(wildcard $(srcdir)/m4/*.m4) \
+             popt/README popt/CHANGES popt/COPYING popt/popt.3 popt/popt.ps \
+             $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
              sqlite/keywordhash.h \
              contrib/README \
              contrib/Notify.pl \
-             contrib/ciabot_monotone.py
+             contrib/ciabot_monotone.py \
+             contrib/monotone.el \
+             contrib/monotone.bash_completion
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -291,7 +293,8 @@ monotone.dvi: monotone.texi $(EPS_FIGURES)
 
 $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 	mkdir -p $(top_builddir)/figures
-	acroread -toPostScript -pairs $< $@
+#	acroread -toPostScript -pairs $< $@
+	pdftops $< $@
 
 
 # testsuite stuff (could this possibly be more ugly?)
@@ -332,7 +335,7 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
-                      package_revision.c \
+                      package_revision.txt package_revision.c \
                       package_full_revision.txt package_full_revision.c
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
@@ -341,6 +344,9 @@ CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
 txt2c: txt2c.cc Makefile
 	$(CXX) -Wall -o $@ $<
 	chmod 0755 $@$(EXEEXT)
+
+apidocs:
+	doxygen doxygen.cfg
 
 %.h: %.sql txt2c Makefile
 	./txt2c $< $(*F) >$@.tmp
@@ -364,7 +370,7 @@ package_revision.c: package_revision.txt txt2c Makefile
 	cmp $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
-.PHONY: package_full_revision.txt
+.PHONY: package_full_revision.txt apidocs
 package_full_revision.txt:
 	REAL_BLDDIR=$$PWD/$(top_builddir); \
 	(cd $(srcdir) && $$REAL_BLDDIR/monotone status) 2>/dev/null >$@ \

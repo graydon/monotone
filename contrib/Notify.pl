@@ -33,7 +33,7 @@ use Pod::Usage;
 use MIME::Lite;
 use File::Spec::Functions qw(:ALL);
 
-my $VERSION = '0.5';
+my $VERSION = '1.0';
 
 ######################################################################
 # User options
@@ -47,8 +47,12 @@ my $debug = 0;
 my $quiet = 0;
 my $update = -1;
 my $from = undef;
+my $difflogs_to = undef;
+my $nodifflogs_to = undef;
 my $to = undef;
 my $attachments = 1;
+my $before = undef;
+my $since = undef;
 my $workdir = undef;
 my $root = undef;
 
@@ -61,7 +65,10 @@ GetOptions('help|?' => \$help,
 	   'mail!' => \$mail,
 	   'attachments!' => \$attachments,
 	   'from=s' => \$from,
-	   'to=s' => \$to,
+	   'difflogs-to=s' => \$difflogs_to,
+	   'nodifflogs-to=s' => \$nodifflogs_to,
+	   'before=s' => \$before,
+	   'since=s' => \$since,
 	   'workdir=s' => \$workdir,
 	   'quiet' => \$quiet,
 	   'debug' => \$debug) or pod2usage(2);
@@ -89,7 +96,7 @@ if ($mail || $debug) {
 	my_errlog("You need to specify a From address with --from");
 	pod2usage(2);
     }
-    if (!defined $to) {
+    if (!defined $difflogs_to && !defined $nodifflogs_to) {
 	my_errlog("You need to specify a To address with --to");
 	pod2usage(2);
     }
@@ -144,8 +151,10 @@ my_debug("(to be removed after I'm done)") if $remove_workdir;
 
 my $branches_re = "^.*\$";
 if ($#user_branches >= 0) {
-    my $branches_re=
-	'^('.join('|', map { s/(\W)/\\$1/g; $_ } @user_branches).')$';
+    $branches_re=
+	'^('.join('|', map { s/([^a-zA-Z0-9\[\]\*_])/\\$1/g;
+			     s/\*/.\*/g;
+			     $_ } @user_branches).')$';
 }
 my_debug("using the regular expression /$branches_re/ to select branches");
 
@@ -158,24 +167,51 @@ chdir $workdir;
 my_debug("changed current directory to $workdir");
 
 ######################################################################
+# Save all the branches that we want to look at
+#
+my %branches =
+    map { $_ => 1 }
+	grep (/$branches_re/,
+	      map { chomp; $_ }
+		  my_backtick("monotone$database list branches"));
+my_debug("collected the following branches:\n",
+	 map { "  $_\n" } keys %branches);
+
+######################################################################
 # Find all the current leaves, for the branches that we want.
 #
 my_log("finding all current leaves.");
-my %current_leaves =
-    map { chomp; my_debug($_); $_ => 1 }
-	map { chomp; my_backtick("monotone$database automate heads $_") }
-	    grep(/$branches_re/,
-		 my_backtick("monotone$database list branches"));
+# Format: revision => { branch1 => 1, branch2 => 1, ... }
+my %current_leaves = ();
+foreach my $branch (keys %branches) {
+    foreach my $revision (my_backtick("monotone$database automate heads $branch")) {
+	chomp $revision;
+	$current_leaves{$revision} = {} if !defined $current_leaves{$revision};
+	$current_leaves{$revision}->{$branch} = 1;
+	my_debug("$revision\@$branch\n");
+    }
+}
 my_debug("found ", list_size(keys %current_leaves)," current leaves");
 
 ######################################################################
 # Find the IDs of the leaves from last run.
 #
 my_log("finding all old leaves.");
-my %old_leaves =
-    map { chomp; my_debug($_); (split ' ')[1] => 1 }
-	my_backtick("monotone$database list vars notify");
-my $old_leaves = join(" ", keys %old_leaves);
+my %old_leaves = ();
+foreach my $notify_entry (my_backtick("monotone$database list vars notify")) {
+    chomp $notify_entry;
+    if ($notify_entry =~ /^notify:\s([0-9a-fA-F]{40})\@([^\s]+)\s1$/) {
+	# Found the new format that keeps track of which branches each
+	# revision is part of.
+	if (defined $branches{$2}) {
+	    $old_leaves{$1} = {} if !defined $current_leaves{$1};
+	    $old_leaves{$1}->{$2} = 1;
+	}
+    } elsif ($notify_entry =~ /^notify:\s([0-9a-fA-F]{40})\s1$/) {
+	$old_leaves{$1} = {} if !defined $current_leaves{$1};
+	$old_leaves{$1}->{"*"} = 1;
+    }
+}
 
 # We save them in a file as well, to be used with
 # 'automate ancestry_difference', to avoid problems with system
@@ -187,7 +223,8 @@ open OLDLEAVES, ">$old_leaves_file"
 print OLDLEAVES join("\n", keys %old_leaves),"\n";
 close OLDLEAVES;
 
-my_debug("found ", list_size(keys %old_leaves)," previous leaves");
+my_debug("found ", list_size(keys %old_leaves),
+	 " previous leaves\n (saved in $old_leaves_file)");
 
 if ($mail || $debug) {
     ##################################################################
@@ -204,7 +241,7 @@ if ($mail || $debug) {
     my @revisions_keys = keys %revisions;
     my_debug("found ",
 	     list_size(keys %revisions),
-	     " revisions to log\n (saved in $old_leaves_file)");
+	     " revisions to log");
 
     ##################################################################
     # Collect all the logs.
@@ -223,6 +260,14 @@ if ($mail || $debug) {
 	      my_backtick("monotone$database log --depth=1 $revision") ];
 	my $date = (split(' ', (grep(/^Date:/, @{$revision_data{$revision}}))[0]))[1];
 
+	if (defined $before && $date ge $before) {
+	    my_debug("Rejecting $revision because it's too recent ($date >= $before (--before))\n");
+	    next;
+	}
+	if (defined $since && $date lt $since) {
+	    my_debug("Rejecting $revision because it's too old ($date < $since (--since))\n");
+	    next;
+	}
 	$timeline{$date} = {} if !defined $timeline{$date};
 	$timeline{$date}->{$revision} = 1;
     }
@@ -232,141 +277,173 @@ if ($mail || $debug) {
     #
     my_log("generating messages for all collected revision IDs.");
 
+    my $message_count = 0;	# It's nice with a little bit of statistics.
+
     foreach my $date (sort keys %timeline) {
 	foreach my $revision (keys %{$timeline{$date}}) {
-	    my $msg;
-	    my @files = ();	# Makes sure we have the files in
+	    foreach my $sendinfo (([ 1, "Notify.debug-diffs", $difflogs_to ],
+				   [ 0, "Notify.debug-nodiffs", $nodifflogs_to ])) {
+		my $diffs = $sendinfo->[0];
+		my $debugfile = $sendinfo->[1];
+		my $to = $sendinfo->[2];
+		next if !defined $to;
+
+		# If --nodiffs was used, it's silly to use attachments
+		my $attach = $attachments;
+		$attach = 0 if $diffs == 0;
+
+		my $msg;
+		my @files = ();	# Makes sure we have the files in
 				# correctly sorted order.
-	    my %file_info = ();	# Hold information about each file.
+		my %file_info = (); # Hold information about each file.
 
-	    my @ancestors =
-		map { (split ' ')[1] }
-		    grep(/^Ancestor:/, @{$revision_data{$revision}});
-	    # Make sure we have a null ancestor if there are none.
-	    # generate_diff will do the right thing with it.
-	    if ($#ancestors < 0) {
-		push @ancestors, "";
-	    }
-
-	    ##########################################################
-	    # Create the summary.
-	    #
-	    my $summary_file = "message.txt";
-	    open SUMMARY,">$summary_file"
-		|| my_error("Notify: couldn't create $summary_file: $!");
-	    foreach (@{$revision_data{$revision}}) {
-		print SUMMARY "$_\n";
-	    }
-	    close SUMMARY;
-	    push @files, $summary_file;
-
-	    # This information is only used when $attachments is true.
-	    $file_info{$summary_file} = { Title => 'change summary',
-					  Disposition => 'inline' };
-
-	    ##########################################################
-	    # Create the diffs.
-	    #
-	    if ($attachments) {
-		foreach my $ancestor (@ancestors) {
-		    my $diff_file = "diff.$ancestor.txt";
-		    generate_diff($database, $ancestor, $revision,
-				  ">$diff_file", 0);
-		    push @files, $diff_file;
-
-		    $file_info{$diff_file} = {
-			Title => "Diff [$ancestor] -> [$revision]",
-			Disposition => 'attachment' };
+		my @ancestors =
+		    map { (split ' ')[1] }
+			grep(/^Ancestor:/, @{$revision_data{$revision}});
+		# Make sure we have a null ancestor if there are none.
+		# generate_diff will do the right thing with it.
+		if ($#ancestors < 0) {
+		    push @ancestors, "";
 		}
-	    } else {
-		foreach my $ancestor (@ancestors) {
-		    generate_diff($database, $ancestor, $revision,
-				  ">>$summary_file", 1);
+
+		######################################################
+		# Create the summary.
+		#
+		my $summary_file = "message.txt";
+		open SUMMARY,">$summary_file"
+		    || my_error("Notify: couldn't create $summary_file: $!");
+		foreach (@{$revision_data{$revision}}) {
+		    print SUMMARY "$_\n";
 		}
-		open SUMMARY,">>$summary_file"
-		    || my_error("Notify: couldn't append to $summary_file: $!");
-		print SUMMARY "-" x 70,"\n";
+		if (!$diffs) {
+		    print SUMMARY "\n";
+		}
 		close SUMMARY;
-	    }
+		push @files, $summary_file;
 
-	    ##########################################################
-	    # Create the email.
-	    #
-	    if ($attachments) {
-		$msg = MIME::Lite->new(From => $from,
-				       To => $to,
-				       Subject => "Revision $revision",
-				       Type => 'multipart/mixed');
-		foreach my $file (@files) {
-		    $msg->attach(Type => 'TEXT',
-				 Path => $file,
-				 Disposition => $file_info{$file}->{Disposition},
-				 Encoding => '8bit');
+		# This information is only used when $attachments is true.
+		$file_info{$summary_file} = { Title => 'change summary',
+					      Disposition => 'inline' };
+
+		######################################################
+		# Create the diffs.
+		#
+		if ($attach) {
+		    foreach my $ancestor (@ancestors) {
+			my $diff_file = "diff.$ancestor.txt";
+			generate_diff($database, $ancestor, $revision,
+				      ">$diff_file", $diffs, 0);
+			push @files, $diff_file;
+
+			$file_info{$diff_file} = {
+			    Title => "Diff [$ancestor] -> [$revision]",
+			    Disposition => 'attachment' };
+		    }
+		} else {
+		    foreach my $ancestor (@ancestors) {
+			generate_diff($database, $ancestor, $revision,
+				      ">>$summary_file", $diffs, 1);
+		    }
+		    open SUMMARY,">>$summary_file"
+			|| my_error("Notify: couldn't append to $summary_file: $!");
+		    print SUMMARY "-" x 70,"\n";
+		    close SUMMARY;
 		}
 
-		# MIME:Lite has some quircks that we need to deal with
-		foreach my $part ($msg->parts()) {
-		    my $filename = $part->filename();
-		    my_debug("message part: $filename: { ",
-			  join(', ',
-			       map { "$_ => $file_info{$filename}->{$_}" }
-				   keys %{$file_info{$filename}}),
-			  " }");
-		    # Hacks to avoid having file names, and to added a
-		    # description field
-		    $part->attr("content-disposition.filename" => undef);
-		    $part->attr("content-type.name" => undef);
-		    $part->attr("content-description" =>
-				$file_info{$filename}->{Title});
+		######################################################
+		# Create the email.
+		#
+		if ($attach) {
+		    $msg = MIME::Lite->new(From => $from,
+					   To => $to,
+					   Subject => "Revision $revision",
+					   Type => 'multipart/mixed');
+		    foreach my $file (@files) {
+			$msg->attach(Type => 'TEXT',
+				     Path => $file,
+				     Disposition => $file_info{$file}->{Disposition},
+				     Encoding => '8bit');
+		    }
+
+		    # MIME:Lite has some quircks that we need to deal with
+		    foreach my $part ($msg->parts()) {
+			my $filename = $part->filename();
+			my_debug("message part: $filename: { ",
+				 join(', ',
+				      map { "$_ => $file_info{$filename}->{$_}" }
+				      keys %{$file_info{$filename}}),
+				 " }");
+			# Hacks to avoid having file names, and to added a
+			# description field
+			$part->attr("content-disposition.filename" => undef);
+			$part->attr("content-type.name" => undef);
+			$part->attr("content-description" =>
+				    $file_info{$filename}->{Title});
+		    }
+		} else {
+		    $msg = MIME::Lite->new(From => $from,
+					   To => $to,
+					   Subject => "Revision $revision",
+					   Type => 'TEXT',
+					   Path => "$summary_file",
+					   Encoding => '8bit');
+		    # Hacks to avoid having file names
+		    $msg->attr("content-disposition.filename" => undef);
+		    $msg->attr("content-type.name" => undef);
 		}
-	    } else {
-		$msg = MIME::Lite->new(From => $from,
-				       To => $to,
-				       Subject => "Revision $revision",
-				       Type => 'TEXT',
-				       Path => "$summary_file",
-				       Encoding => '8bit');
-		# Hacks to avoid having file names
-		$msg->attr("content-disposition.filename" => undef);
-		$msg->attr("content-type.name" => undef);
-	    }
 
-	    ##########################################################
-	    # Send it or log it (or discard it).
-	    #
-	    if ($mail) {
-		$msg->send();
-	    } else {
-		my $debugfile = "Notify.debug";
-		open MESSAGEDBG,">>$debugfile"
-		    || my_error("Couldn't create $debugfile: $!");
-		print MESSAGEDBG "======================================================================\n";
-		$msg->print(\*MESSAGEDBG);
-		print MESSAGEDBG "======================================================================\n";
-		close MESSAGEDBG;
-	    }
+		######################################################
+		# Send it or log it (or discard it).
+		#
+		if ($mail) {
+		    $msg->send();
+		} else {
+		    open MESSAGEDBG,">>$debugfile"
+			|| my_error("Couldn't create $debugfile: $!");
+		    print MESSAGEDBG "======================================================================\n";
+		    $msg->print(\*MESSAGEDBG);
+		    print MESSAGEDBG "======================================================================\n";
+		    close MESSAGEDBG;
+		}
+		$message_count++;
 
-	    ##########################################################
-	    # Clean up the files used to create the message.
-	    #
-	    my_log("cleaning up.");
-	    unlink @files;
+		######################################################
+		# Clean up the files used to create the message.
+		#
+		my_debug("cleaning up.");
+		unlink @files;
+	    }
 	}
     }
+
+    my_log("$message_count messages were sent.");
 }
 
 ######################################################################
 # Update the database with new heads
 #
-if ($update) {
-    my_log("updating the table of last logged revisions.");
-    map { my_system("monotone$database set notify $_ 1") }
-	grep { !defined $old_leaves{$_} }
-	    keys %current_leaves;
-    map { my_system("monotone$database unset notify $_ 1") }
-	grep { !defined $current_leaves{$_} }
-	    keys %old_leaves;
-}
+my %new_notifications =
+    map { my $rev = $_;
+	  map { my $key = "$rev\@$_"; $key => 1 }
+	      keys %{$current_leaves{$rev}} }
+	keys %current_leaves;
+my %old_notifications =
+    map { my $rev = $_;
+	  map { my $key = "$rev\@$_"; $key => 1 }
+	      keys %{$old_leaves{$rev}} }
+	keys %old_leaves;
+
+my_log("updating the table of last logged revisions.");
+
+map { my_conditional_system($update,
+			    "monotone$database set notify $_ 1") }
+    grep { !defined $old_notifications{$_} && $_ !~ /\@\*$/ }
+	keys %new_notifications;
+map { s/\@\*$//;
+      my_conditional_system($update,
+			    "monotone$database unset notify $_") }
+    grep { !defined $new_notifications{$_} }
+	keys %old_notifications;
 
 ######################################################################
 # Clean up.
@@ -387,15 +464,21 @@ exit(0);
 # since monotone doesn't know how to do that
 sub generate_diff
 {
-    my ($db, $ancestor, $revision, $filespec, $decorate_p, @dummy) = @_;
+    my ($db, $ancestor, $revision, $filespec, $really_show_diffs,
+	$decorate_p, @dummy) = @_;
 
     open OUTPUT, $filespec
 	|| my_error("Couldn't write to $filespec: $!");
-    if ($decorate_p) {
+    if ($really_show_diffs && $decorate_p) {
 	print OUTPUT "-" x 70, "\n";
 	print OUTPUT "Diff [$ancestor] -> [$revision]\n";
     }
     if ($ancestor eq "") {
+	if ($really_show_diffs) {
+	    print OUTPUT "This is the first commit, and there's no easy way to create a diff\n";
+	    print OUTPUT "These are the commands to view the individual files of that commit instead:\n";
+	    print OUTPUT "\n";
+	}
 	my @status = my_backtick("monotone$db cat revision $revision");
 	shift @status;	# remove "new_manifest ..."
 	shift @status;	# remove ""
@@ -411,15 +494,23 @@ sub generate_diff
 	    $patched_file = $1 if $line =~ /^patch\s+"(.*)"\s*$/;
 	    $id = $1 if $line =~ /^\s+to \[([0-9a-fA-F]{40})\]\s*$/;
 	    if (defined $id) {
-		my @file = my_backtick("monotone$db cat file $id");
-		print OUTPUT "--- $patched_file\n";
-		print OUTPUT "+++ $patched_file\n";
-		print OUTPUT "\@\@ -0,0 +1,",list_size(@file)," \@\@\n";
-		map { print OUTPUT "+" . $_ } @file;
+		if ($really_show_diffs) {
+		    my @file = my_backtick("monotone$db cat file $id");
+		    print OUTPUT "--- $patched_file\n";
+		    print OUTPUT "+++ $patched_file\n";
+		    print OUTPUT "\@\@ -0,0 +1,",list_size(@file)," \@\@\n";
+		    map { print OUTPUT "+" . $_ } @file;
+		} else {
+		    print OUTPUT "monotone --db={your.database} cat file $id\n";
+		}
 	    }
 	}
     } else {
-	print OUTPUT my_backtick("monotone$db diff --revision=$ancestor --revision=$revision");
+	if ($really_show_diffs) {
+	    print OUTPUT my_backtick("monotone$db diff --revision=$ancestor --revision=$revision");
+	} else {
+	    print OUTPUT "monotone --db={your.database} diff --revision=$ancestor --revision=$revision\n";
+	}
     }
     close OUTPUT;
 }
@@ -482,6 +573,27 @@ sub my_system
     return $return;
 }
 
+# my_conditional_system does the same thing as system, but will print a bit
+# of debugging output when $debug is true, and will only actually run the
+# command if the condition is true.  It will also die if the subprocess
+# returned an error code.
+sub my_conditional_system
+{
+    my $condition = shift @_;
+    my $command = shift @_;
+    my $return = 0;		# exit code for 'true'
+
+    my_debug("'$command'\n");
+    if ($condition) {
+	$return = system($command);
+	my $exit = $? >> 8;
+	die "'$command' returned with exit code $exit\n" if ($exit);
+    } else {
+	my_debug("... not actually executed.\n");
+    }
+    return $return;
+}
+
 # my_backtick does the same thing as backtick commands, but will print a bit
 # of debugging output when $debug is true.  It will also die if the subprocess
 # returned an error code.
@@ -518,14 +630,16 @@ Notify.pl - a script to send monotone change notifications by email
 
 Notify.pl [--help] [--man] [--db=database] [--root=path] [--branch=branch ...]
 [--[no]update] [--[no]mail] [--[no]attachments]
-[--from=email-sender] [--to=email-recipient] [--workdir=path]
+[--from=email-sender]
+[--difflogs-to=email-recipient] [--nodifflogs-to=email-recipient]
+[--workdir=path] [--before=yyyy-mm-ddThh:mm:ss] [--since=yyyy-mm-ddThh:mm:ss]
 [--quiet] [--debug]
 
 =head1 DESCRIPTION
 
-B<Notify.pl> is used to generate emails containing monotone change logs for
-recent changes.  It uses monotone database variables in the domain 'notify'
-to keep track of the latest revisions already logged.
+B<Notify.pl> is used to generate emails containing monotone change
+logs for recent changes.  It uses monotone database variables in the
+domain 'notify' to keep track of the latest revisions already logged.
 
 =head1 OPTIONS
 
@@ -541,80 +655,123 @@ Print the manual page and exit.
 
 =item B<--db>=I<database>
 
-Sets which database to use.  If not given, the database given in MT/options
-is used.
+Sets which database to use.  If not given, the database given in
+MT/options is used.
 
 =item B<--root>=I<path>
 
-Stop the search for a working copy (containing the F<MT> directory) at the
-specified root directory rather than at the physical root of the filesystem.
+Stop the search for a working copy (containing the F<MT> directory) at
+the specified root directory rather than at the physical root of the
+filesystem.
 
 =item B<--branch>=I<branch>
 
-Sets a branch that should be checked.  Can be used multiple times to set
-several branches.  If not given at all, all available branches are used.
+Sets a branch that should be checked.  Can be used multiple times to
+set several branches.  If not given at all, all available branches are
+used.
 
 =item B<--update>
 
-Has Notify.pl update the database variables at the end of the run.  This
-is the default unless B<--debug> is given.
+Has Notify.pl update the database variables at the end of the run.
+This is the default unless B<--debug> is given.
 
 =item B<--noupdate>
 
-The inverse of B<--update>.  This is the default when B<--debug> is given.
+The inverse of B<--update>.  This is the default when B<--debug> is
+given.
 
 =item B<--mail>
 
-Has Notify.pl send the constructed logs as emails.  This is the default
-unless B<--debug> is given.
+Has Notify.pl send the constructed logs as emails.  This is the
+default unless B<--debug> is given.
 
 =item B<--nomail>
 
-The inverse of B<--mail>.  This is the default when B<--debug> is given.
+The inverse of B<--mail>.  This is the default when B<--debug> is
+given.
 
 =item B<--attachments>
 
-Add the change summary and the output of 'monotone diff' as attachments
-in the emails.  This is the default behavior.
+Add the change summary and the output of 'monotone diff' as
+attachments in the emails.  This is the default behavior.
 
 =item B<--noattachments>
 
-Have the change summary and the output of 'monotone diff' in the body of
-the email, separated by lines of dashes.
+Have the change summary and the output of 'monotone diff' in the body
+of the email, separated by lines of dashes.
 
 =item B<--from>=I<from>
 
 Sets the sender address to be used when creating the emails.  There is
 no default, so this is a required option.
 
-=item B<--to>=I<to>
+=item B<--difflogs-to>=I<to>
 
-Sets the recipient address to be used when creating the emails.  There
-is no default, so this is a required option.
+Sets the recipient address to be used when creating the emails with
+logs containing diffs.  This or B<--nodifflogs-to> MUST be used, and
+both can be given at the same time (thereby generating two emails for
+each log).
+
+=item B<--nodifflogs-to>=I<to>
+
+Sets the recipient address to be used when creating the emails with
+logs without diffs.  This or B<--difflogs-to> MUST be used, and both
+can be given at the same time (thereby generating two emails for each
+log).
+
+=item B<--before>=I<yyyy-mm-ddThh:mm:ss>
+
+Only log revisions where the datetime is less than the one given.
+
+=item B<--since>=I<yyyy-mm-ddThh:mm:ss>
+
+Only log revisions where the datetime is greater or equal to than the
+one given.
 
 =item B<--workdir>=I<path>
 
 Sets the working directory to use for temporary files.  This working
 directory should be empty to avoid having files overwritten.  When
-B<--debug> is used and unless B<--mail> is given, there will be a file
-called C<Notify.debug> left in the work directory.
+B<--debug> is used and unless B<--mail> is given, one or both of the
+two files F<Notify.debug-diffs> and F<Notify.debug-nodiffs> will be
+left in the work directory.
 
 The default working directory is F</var/tmp/monotone_motify.work.$$>,
-and will be removed automatically unless Notify.debug is left in it.
+and will be removed automatically unless F<Notify.debug-diffs> or
+F<Notify.debug-nodiffs> are left in it.
 
 =item B<--debug>
 
 Makes Notify.pl go to debug mode.  It means a LOT of extra output, and
-also implies B<--noupdate> and B<--nomail> unless specified differently
-on the command line.
+also implies B<--noupdate> and B<--nomail> unless specified
+differently on the command line.
 
 =item B<--quiet>
 
-Makes Notify.pl really silent.  It will normally produce a small log of
-it's activities, but with B<--quiet>, it will only output error messages.
-If B<--debug> was given, B<--quiet> is turned off unconditionally.
+Makes Notify.pl really silent.  It will normally produce a small log
+of it's activities, but with B<--quiet>, it will only output error
+messages.  If B<--debug> was given, B<--quiet> is turned off
+unconditionally.
 
 =back
+
+=head1 NOTES
+
+You might notice that a series of logs for some branch may span over
+other branches.  This is because some development may actually go
+through those other branches by virtue of 'monotone propagate' and
+other means to move changes from one branch to another.
+
+This behavior isn't entirely deterministic, as it depends on when the
+last run of Notify.pl was done, and what head revisions were active at
+that time.  It might be seen as a bug, but if corrected, it might miss
+out on development that moves entirely to another branch and moves
+back later in time, thereby creating a hole in the branch currently
+looked at.  This has actually happened in the development of monotone
+itself.
+
+For now, it's assumed that a little too much information is better
+than (unjust) lack of information.
 
 =head1 BUGS
 

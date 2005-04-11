@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.17, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.18, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -361,6 +361,11 @@ AC_C_INLINE
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_HAVE_INADDR_NONE
+
+AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec, struct stat.st_mtim.tv_nsec])
+AC_CHECK_MEMBERS([struct stat.st_ctimespec.tv_nsec, struct stat.st_mtimespec.tv_nsec])
+AC_CHECK_MEMBERS([struct stat.st_ctimensec, struct stat.st_mtimensec])
+
 
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL

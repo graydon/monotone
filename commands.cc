@@ -39,6 +39,8 @@
 #include "vocab.hh"
 #include "work.hh"
 #include "automate.hh"
+#include "inodeprint.hh"
+#include "platform.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -267,7 +269,7 @@ get_revision_id(revision_id & c)
 }
 
 static void 
-put_revision_id(revision_id & rev)
+put_revision_id(revision_id const & rev)
 {
   local_path c_path;
   get_revision_path(c_path);
@@ -528,39 +530,6 @@ calculate_base_manifest(app_state & app,
 }
 
 static void
-calculate_current_revision(app_state & app, 
-                           revision_set & rev,
-                           manifest_map & m_old,
-                           manifest_map & m_new)
-{
-  manifest_id old_manifest_id;
-  revision_id old_revision_id;  
-  boost::shared_ptr<change_set> cs(new change_set());
-  path_set old_paths, new_paths;
-
-  rev.edges.clear();
-  m_old.clear();
-  m_new.clear();
-
-  calculate_base_revision(app, 
-                          old_revision_id,
-                          old_manifest_id, m_old);
-  
-
-  get_path_rearrangement(cs->rearrangement);
-  extract_path_set(m_old, old_paths);
-  apply_path_rearrangement(old_paths, cs->rearrangement, new_paths);
-  build_manifest_map(new_paths, m_new, app);
-  complete_change_set(m_old, m_new, *cs);
-  
-  calculate_ident(m_new, rev.new_manifest);
-  L(F("new manifest is %s\n") % rev.new_manifest);
-
-  rev.edges.insert(make_pair(old_revision_id,
-                             make_pair(old_manifest_id, cs)));
-}
-
-static void
 calculate_restricted_revision(app_state & app, 
                               vector<utf8> const & args,
                               revision_set & rev,
@@ -620,6 +589,16 @@ calculate_restricted_revision(app_state & app,
 }
 
 static void
+calculate_current_revision(app_state & app, 
+                           revision_set & rev,
+                           manifest_map & m_old,
+                           manifest_map & m_new)
+{
+  vector<utf8> empty;
+  calculate_restricted_revision(app, empty, rev, m_old, m_new);
+}
+
+static void
 calculate_restricted_change_set(app_state & app, 
                                 vector<utf8> const & args,
                                 change_set const & cs,
@@ -637,6 +616,30 @@ calculate_restricted_change_set(app_state & app,
                               included.rearrangement, excluded.rearrangement, app);
 
   restrict_delta_map(cs.deltas, included.deltas, excluded.deltas, app);
+}
+
+static void
+maybe_update_inodeprints(app_state & app)
+{
+  if (!in_inodeprints_mode())
+    return;
+  inodeprint_map ipm_new;
+  revision_set rev;
+  manifest_map man_old, man_new;
+  calculate_current_revision(app, rev, man_old, man_new);
+  for (manifest_map::const_iterator i = man_new.begin(); i != man_new.end(); ++i)
+    {
+      manifest_map::const_iterator o = man_old.find(i->first);
+      if (o != man_old.end() && o->second == i->second)
+        {
+          hexenc<inodeprint> ip;
+          if (inodeprint_file(i->first, ip))
+            ipm_new.insert(inodeprint_entry(i->first, ip));
+        }
+    }
+  data dat;
+  write_inodeprint_map(ipm_new, dat);
+  write_inodeprints(dat);
 }
 
 static string 
@@ -1848,6 +1851,7 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
   remove_path_rearrangement();
   guard.commit();
   update_any_attrs(app);
+  maybe_update_inodeprints(app);
 }
 
 ALIAS(co, checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
@@ -1969,6 +1973,25 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
     }
 }
 
+static void
+ls_known (app_state & app, vector<utf8> const & args)
+{
+  revision_set rs;
+  manifest_map m_old, m_new;
+  data tmp;
+
+  app.require_working_copy();
+
+  calculate_restricted_revision(app, args, rs, m_old, m_new);
+
+  for (manifest_map::const_iterator p = m_new.begin(); p != m_new.end(); ++p)
+    {
+      file_path const & path(p->first);
+      if (app.restriction_includes(path))
+        cout << p->first << '\n';
+    }
+}
+
 struct unknown_itemizer : public tree_walker
 {
   app_state & app;
@@ -2049,10 +2072,12 @@ CMD(list, "informative",
     "epochs [BRANCH [...]]\n"
     "tags\n"
     "vars [DOMAIN]\n"
+    "known\n"
     "unknown\n"
     "ignored\n"
     "missing",
-    "show database objects, or unknown, intentionally ignored, or missing state files")
+    "show database objects, or the current working copy manifest, "
+    "or unknown, intentionally ignored, or missing state files")
 {
   if (args.size() == 0)
     throw usage(name);
@@ -2072,6 +2097,8 @@ CMD(list, "informative",
     ls_tags(name, app, removed);
   else if (idx(args, 0)() == "vars")
     ls_vars(name, app, removed);
+  else if (idx(args, 0)() == "known")
+    ls_known(app, removed);
   else if (idx(args, 0)() == "unknown")
     ls_unknown(app, false, removed);
   else if (idx(args, 0)() == "ignored")
@@ -2089,10 +2116,12 @@ ALIAS(ls, list, "informative",
       "epochs [BRANCH [...]]\n"
       "tags\n"
       "vars [DOMAIN]\n"
+      "known\n"
       "unknown\n"
       "ignored\n"
       "missing",
-      "show database objects, or unknown, intentionally ignored, or missing state files; alias for list")
+      "show database objects, or the current working copy manifest, "
+      "or unknown, intentionally ignored, or missing state files; alias for list")
 
 
 CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
@@ -2618,7 +2647,9 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
                 // sanity check
                 hexenc<id> tid;
                 calculate_ident(new_data, tid);
-                I(tid == delta_entry_dst(i).inner());
+                N(tid == delta_entry_dst(i).inner(),
+                  F("file '%s' modified during commit, aborting")
+                  % delta_entry_path(i));
                 base64< gzip<delta> > del;
                 diff(old_data.inner(), new_data, del);
                 dbw.consume_file_delta(delta_entry_src(i), 
@@ -2633,7 +2664,9 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
                 // sanity check
                 hexenc<id> tid;
                 calculate_ident(new_data, tid);
-                I(tid == delta_entry_dst(i).inner());
+                N(tid == delta_entry_dst(i).inner(),
+                  F("file '%s' modified during commit, aborting")
+                  % delta_entry_path(i));
                 dbw.consume_file_data(delta_entry_dst(i), file_data(new_data));
               }
           }
@@ -2659,6 +2692,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   blank_user_log();
   
   update_any_attrs(app);
+  maybe_update_inodeprints(app);
 
   {
     // tell lua what happened. yes, we might lose some information here,
@@ -3168,6 +3202,7 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   P(F("updated to base revision %s\n") % r_chosen_id);
 
   update_any_attrs(app);
+  maybe_update_inodeprints(app);
 }
 
 
@@ -3567,6 +3602,7 @@ CMD(revert, "working copy", "[PATH]...",
   // race
   put_path_rearrangement(excluded);
   update_any_attrs(app);
+  maybe_update_inodeprints(app);
 }
 
 

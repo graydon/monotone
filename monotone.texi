@@ -2097,6 +2097,7 @@ monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
 monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 found
 monotone: trying 3-way merge
 monotone: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+monotone: your working copies have not been updated
 @end group
 @end smallexample
 
@@ -2275,6 +2276,7 @@ The following commands all support restrictions using optional
 @item @command{diff}
 @item @command{revert}
 @item @command{commit}
+@item @command{list known}
 @item @command{list unknown}
 @item @command{list ignored}
 @item @command{list missing}
@@ -3622,6 +3624,21 @@ This command lists all known tags in your database.
 
 This command lists all vars in your database, or all vars within a given
 @var{domain}.  See @ref{Vars} for more information.
+
+@item monotone list known
+@itemx monotone list known @var{pathname...}
+
+This command lists all files which would become part of the manifest of
+the next revision if you comitted your working copy at this point.
+
+Specifying pathnames to the @command{list known} command restricts
+the set of paths that are searched for manifest files. Files not
+included in the specified set of pathnames will not be listed.
+
+From within a subdirectory of the working copy the @command{list
+known} command will, by default, search the entire working copy.
+Specifying only the pathname "." will restrict the search for unknown
+files to the current subdirectory of the working copy.
 
 @item monotone list unknown
 @itemx monotone list unknown @var{pathname...}
@@ -5680,9 +5697,15 @@ List all branches.
 List all tags.
 @comment TROFF INPUT: .TP
 
+@item @b{list known} @i{[<pathname>...]}
+@itemx @b{ls known} @i{[<pathname>...]}
+List files which are in revision's manifest, or are on the work list of
+the working copy.
+@comment TROFF INPUT: .TP
+
 @item @b{list unknown} @i{[<pathname>...]}
 @itemx @b{ls unknown} @i{[<pathname>...]}
-List files in working directory, but not in revision's manifest or
+List files in working copy, but not in revision's manifest or
 work list.
 @comment TROFF INPUT: .TP
 
@@ -5693,7 +5716,7 @@ List files intentionally ignored due to the ignore_file hook.
 
 @item @b{list missing} @i{[<pathname>...]}
 @itemx @b{ls missing} @i{[<pathname>...]}
-List files in revision's manifest, but not in working directory.
+List files in revision's manifest, but not in working copy.
 @comment TROFF INPUT: .TP
 
 @item @b{fdata} @i{<id>}

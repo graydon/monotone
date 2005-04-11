@@ -21,6 +21,8 @@
 #include "manifest.hh"
 #include "transforms.hh"
 #include "sanity.hh"
+#include "inodeprint.hh"
+#include "platform.hh"
 
 // this file defines the class of manifest_map objects, and various comparison
 // and i/o functions on them. a manifest specifies exactly which versions
@@ -28,8 +30,6 @@
 
 using namespace boost;
 using namespace std;
-
-string const manifest_file_name("manifest");
 
 // building manifest_maps
 
@@ -59,48 +59,6 @@ manifest_map_builder::visit_file(file_path const & path)
   man.insert(manifest_entry(path, file_id(ident)));
 }
 
-/** these seem to be unused
-
-void 
-build_manifest_map(file_path const & path,
-		   app_state & app,
-		   manifest_map & man)
-{
-  man.clear();
-  manifest_map_builder build(app,man);
-  walk_tree(path, build);
-}
-
-void 
-build_manifest_map(app_state & app,
-		   manifest_map & man)
-{
-  man.clear();
-  manifest_map_builder build(app,man);
-  walk_tree(build);
-}
-
-**/
-
-
-
-void 
-build_manifest_map(path_set const & paths,
-		   manifest_map & man, 
-		   app_state & app)
-{
-  man.clear();
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      N(fs::exists(mkpath((*i)())),
-	F("file disappeared but exists in manifest: %s") % (*i)());
-      hexenc<id> ident;
-      calculate_ident(*i, ident, app.lua);
-      man.insert(manifest_entry(*i, file_id(ident)));
-    }
-}
-
-
 void 
 build_restricted_manifest_map(path_set const & paths,
                               manifest_map const & m_old, 
@@ -108,11 +66,34 @@ build_restricted_manifest_map(path_set const & paths,
                               app_state & app)
 {
   m_new.clear();
+  inodeprint_map ipm;
+  if (in_inodeprints_mode())
+    {
+      data dat;
+      read_inodeprints(dat);
+      read_inodeprint_map(dat, ipm);
+    }
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       if (app.restriction_includes(*i))
         {
           // compute the current sha1 id for included files
+          // we might be able to avoid it, if we have an inode fingerprint...
+          inodeprint_map::const_iterator old_ip = ipm.find(*i);
+          if (old_ip != ipm.end())
+            {
+              hexenc<inodeprint> ip;
+              if (inodeprint_file(*i, ip) && ip == old_ip->second)
+                {
+                  // the inode fingerprint hasn't changed, so we assume the file
+                  // hasn't either.
+                  manifest_map::const_iterator k = m_old.find(*i);
+                  I(k != m_old.end());
+                  m_new.insert(*k);
+                  continue;
+                }
+            }
+          // ...ah, well, no good fingerprint, just check directly.
           N(fs::exists(mkpath((*i)())),
             F("file disappeared but exists in new manifest: %s") % (*i)());
           hexenc<id> ident;
@@ -149,7 +130,7 @@ add_to_manifest_map
 
 void 
 read_manifest_map(data const & dat,
-		  manifest_map & man)
+                  manifest_map & man)
 {
   regex expr("^([[:xdigit:]]{40})  ([^[:space:]].*)$");
   regex_grep(add_to_manifest_map(man), dat(), expr, match_not_dot_newline);  
@@ -157,7 +138,7 @@ read_manifest_map(data const & dat,
 
 void 
 read_manifest_map(manifest_data const & dat,
-		  manifest_map & man)
+                  manifest_map & man)
 {  
   gzip<data> decoded;
   data decompressed;
@@ -179,7 +160,7 @@ operator<<(std::ostream & out, manifest_entry const & e)
 
 void 
 write_manifest_map(manifest_map const & man,
-		   manifest_data & dat)
+                   manifest_data & dat)
 {
   ostringstream sstr;
   copy(man.begin(),
@@ -198,7 +179,7 @@ write_manifest_map(manifest_map const & man,
 
 void 
 write_manifest_map(manifest_map const & man,
-		   data & dat)
+                   data & dat)
 {
   ostringstream sstr;
   for (manifest_map::const_iterator i = man.begin();

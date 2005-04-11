@@ -96,6 +96,8 @@ class database
                     std::string const & table);
 
   unsigned long count(std::string const & table);
+  unsigned long space_usage(std::string const & table,
+                            std::string const & concatenated_columns);
 
   void get_ids(std::string const & table, std::set< hexenc<id> > & ids); 
 

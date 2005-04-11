@@ -2,6 +2,7 @@
 #define __SMAP_HH__
 
 // copyright (C) 2005 graydon hoare <graydon@pobox.com>,
+// copyright (C) 2005 nathaniel smith <njs@pobox.com>,
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
@@ -10,10 +11,24 @@
 #include <numeric>
 #include <vector>
 
-// this is a linear-for-smaller-maps, sorted-binary-search-for-larger maps
-// map. for small key sets which don't change much it's faster than other
-// types of maps. it's a derived version of stl_map.h from libstdc++; I
-// *believe* deriving from its text and upgrading to GPL is kosher.
+#include <iostream>
+
+// this is a map that works by storing a sorted vector and doing binary
+// search.  for maps that are filled once and then used many times, it is
+// faster than other types of maps.  it's a derived version of stl_map.h from
+// libstdc++; I *believe* deriving from its text and upgrading to GPL is
+// kosher.
+
+// this is _not_ fully compatible with a std::map; in fact, it's not even a
+// Unique Sorted Associative Container.  this is because:
+//   -- our 'insert' operations return void, rather than an iterator
+//      (this could be fixed by creating a very clever sort of iterator, that
+//      knew how to sort the map and then initialize itself when dereferenced)
+//   -- if you 'insert' two items with the same key, then later on find() will
+//      throw an assertion
+//      (this could be fixed by using stable_sort instead of sort, and then
+//      deleting duplicates instead of asserting.)
+// it is, however, still close enough that STL algorithms generally work.
 
 // FIXME: it is not clear how much of a win this really is; replacing our uses
 // of it with hash_map's in change_set.cc caused an 8% slowdown, but that may
@@ -69,6 +84,13 @@ protected:
     if (damaged)
       {
         std::sort(vec.begin(), vec.end(), val_cmp);
+        // make sure we don't have any duplicate entries
+        const_iterator leader, lagged;
+        lagged = begin();
+        leader = begin();
+        ++leader;
+        for (; leader != end(); ++lagged, ++leader)
+          I(lagged->first != leader->first);
         damaged = false;
       }
   }
@@ -172,36 +194,21 @@ public:
     return v.second;
   }
 
-  std::pair<iterator, bool>
+  void
   insert(value_type const & v)
   {
-    iterator i = find(v.first);
-    if (i != end())
-    {
-      return std::make_pair(vec.end(), false);
-    }
+    I(size() == 0 || v.first != vec.back().first);
     if (size() > 0 && val_cmp(v, *(begin() + size() - 1)))
     {
       damaged = true;
     }
     vec.push_back(v);
-    return std::make_pair(begin() + (size() - 1), true);
   }
 
-  iterator
+  void
   insert(iterator pos, value_type const & v)
   {
-    iterator i = find(v.first);
-    if (i != end())
-    {
-      return i;
-    }
-    if (size() > 0 && val_cmp(v, *(begin() + size() - 1)))
-    {
-      damaged = true;
-    }
-    vec.push_back(v);
-    return begin() + (size() - 1);
+    insert(v);
   }
 
   template <typename InputIterator>
@@ -274,57 +281,24 @@ public:
   iterator
   find(key_type const & k)
   {
-    if (size() < 256) 
+    iterator i = lower_bound(k);
+    if (i != end() && i->first == k)
     {
-      // linear search
-      iterator e = end();
-      for (iterator i = begin(); i != e; ++i)
-      {
-        if (i->first == k)
-          {
-            return i;
-          }
-      }
-      return e;
+      return i;
     }
-    else
-    {
-      // maybe-sort + binary search
-      iterator i = lower_bound(k);
-      if (i != end() && i->first == k)
-      {
-        return i;
-      }
-      return end();
-    }
+    return end();
   }
 
   const_iterator
   find(key_type const & k) const
   {
-    if (size() < 256) 
+    // maybe-sort + binary search
+    const_iterator i = lower_bound(k);
+    if (i != end() && i->first == k)
     {
-      // linear search
-      const_iterator e = end();
-      for (const_iterator i = begin(); i != e; ++i)
-      {
-        if (i->first == k)
-          {
-            return i;
-          }
-      }
-      return e;
+      return i;
     }
-    else
-    {
-      // maybe-sort + binary search
-      const_iterator i = lower_bound(k);
-      if (i != end() && i->first == k)
-      {
-        return i;
-      }
-      return end();
-    }
+    return end();
   }
 
   size_type

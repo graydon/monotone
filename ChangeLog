@@ -1,3 +1,291 @@
+2005-04-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (BUILT_SOURCES_CLEAN): Add package_revision.txt.
+
+	This is the 0.18 release.
+
+2005-04-11  Matthew Gregan <kinetik@orcon.net.nz>
+
+	* unix/inodeprint.cc, configure.ac: Use nanosecond time resolution for
+	inodeprints on BSDs and other platforms if available.
+
+2005-04-10  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am: Use pdftops instead of acroread.
+	(EXTRA_DIST): Include new contrib/ files, and fix wildcards.
+	* NEWS: Update for 0.18.
+	* configure.ac: Bump version number.
+	* debian/changelog: Mention new release.
+	* debian/copyright: Update from AUTHORS.
+	* monotone.spec: Mention new release.
+	* po/monotone.pot: Regenerate.
+
+2005-04-10  Florian Weimer  <fw@deneb.enyo.de>
+
+	* monotone.texi (Commands): Use "working copy" instead of "working
+	directory", to match the rest of the manual.
+
+2005-04-10  Florian Weimer  <fw@deneb.enyo.de>
+
+	* commands.cc (ls_known): New function which prints all known
+	files in the working copy.
+	(CMD(list)): Invoke ls_known for "list known".  Update help
+	message.
+	(ALIAS(ls)): Update help message.
+
+	* monotone.texi: Document "list known".
+	* tests/t_ls_known.at: New file.
+	* testsuite.at: Include it.
+
+2005-04-10  Richard Levitte  <richard@levitte.org>
+
+	* contrib/Notify.pl: Count the number of messages sent, and
+	display the count at the end.
+	Version bumped to 1.0.
+
+2005-04-10  Matt Johnston  <matt@ucc.asn.au>
+
+	* unix/inodeprint.cc, configure.ac: don't use the nsec time
+	on non-Linux-style systems (quick compile fix for OS X and probably
+	others, can be made generic later).
+
+2005-04-10  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* contrib/monotone.el: Some elisp code for running monotone from
+	inside Emacs. Supports diff, status, add, drop, revert and commit.
+
+2005-04-09  Richard Levitte  <richard@levitte.org>
+
+	* contrib/Notify.pl: Allow globbing branches.  Make the revision
+	records branch specific.  Show what records you would have updated
+	even with --noupdate.  Add --before and --since, so users can
+	select datetime ranges to create logs for.  Remove --to and add
+	--difflogs-to and --nodifflogs-to to send logs with diffs to one
+	address and logs without diffs to another (both can be given at
+	once).  More and better documentation.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (basic_change_set): Remove problematic
+	rename_dir/add combination, until directory semantics are
+	fixed.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (revert): Call maybe_update_inodeprints.
+	* app_state.cc (set_restriction): Clear any old restrictions
+	first.
+
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* testsuite.at (NOT_ON_WIN32): Add a function to prevent tests from
+	running on Win32 (for cases where the functionality being tested 
+	makes no sense on Win32.  Not for cases where the functionality
+	just isn't there yet on Win32.)
+	* tests/t_final_space.at: Use NOT_ON_WIN32.  The filenames "a b" 
+	and "a b " refer to the same file on Win32, obviating this test
+
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* win32/inodeprint.cc (inodeprint_file): Still close the file if
+	getting its time failed.
+	* tests/t_netsync_sigpipe.at: Don't bother doing a kill -PIPE on
+	Win32.  There is no real SIGPIPE on Win32 and sockets don't get this
+	signal if their pipe goes away.  MinGW's kill seems to translate
+	-PIPE to some signal that *does* kill monotone, so it seems like the
+	easiest solution is just not to send the signal in the first place
+	here.
+	* tests/t_automate_ancestry_difference.at: Remove old 
+	CHECK_SAME_STDOUT call which I'd left by accident.
+	* tests/t_automate_leaves.at: Canonicalise monotone output before
+	passing to CHECK_SAME_STDOUT
+	* tests/t_log_depth.at: Check line count with arithmetic comparison
+	rather than autotest's string comparison
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* inodeprint.cc (operator<<): Typo.
+
+	* inodeprint.{hh,cc} (build_inodeprint_map,
+	build_restricted_inodeprint_map): Remove unused functions.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc: Remove doxygen comments.  Comments are good; comments
+	that are longer than the function they document, and give less
+	information, are not so good...
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (calculate_current_revision): Defer to
+	calculate_restricted_revision instead of special casing.
+	(put_revision_id): constify argument.
+	(maybe_update_inodeprints): New function.
+	(commit, update, checkout): Call it.
+	
+	* manifest.{cc,hh} (build_manifest_map): Remove, since only caller
+	was removed.
+	(build_restricted_manifest_map): Go faster if the user is using
+	inode signatures.
+
+	* tests/t_inodeprints.at:
+	* tests/t_inodeprints_update.at: Typoes.
+	
+	* work.cc (read_inodeprints): Typo.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_inodeprints.at:
+	* tests/t_inodeprints_update.at: New tests.
+	* testsuite.at: Add them.
+	
+	* UPGRADE: Document 0.17 -> 0.18 upgrade path.
+
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* tests/t_cat_file_by_name.at: CHECK_SAME_STDOUT can only be used
+	to check two 'cat' processes or two monotone processes on Win32,
+	not to check monotone and 'cat'.  Change to go through an 
+	intermediate stdout
+	* tests/t_automate_erase_ancestors.at: Ditto
+	* tests/t_automate_toposort.at: Ditto
+	* tests/t_automate_ancestry_difference.at: Ditto
+	* tests/t_vars.at: Call CANONICALISE for stdout output.
+	* tests/t_netsync_absorbs.at: Ditto.
+	* tests/t_empty_env.at: For Win32, copy libiconv-2.dll to the 
+	current dir before the test, otherwise Win32 will search the
+	(empty) path for it and not find it.
+	* tests/t_automate_descendents.at: Ditto
+	* win32/inodeprint.cc: Implement inodeprint_file for Win32, based
+	on mode, device, size, create time and write time.
+	
+	
+2005-04-08  Jon Bright <jon@siliconcircus.com>
+	* win32/inodeprint.cc: Change the function name to match the one
+	on Unix.
+
+2005-04-08  Nathaniel Smith  <njs@codesourcery.com>
+
+	* {win32,unix}/fingerprint.cc: Rename to...
+	* {win32,unix}/inodeprint.cc: ...this.  Change function name and
+	calling conventions.
+	* platform.hh (inodeprint_file): Likewise.
+	* inodeprint.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES, UNIX_PLATFORM_SOURCES,
+	WIN32_PLATFORM_SOURCES): Fixup accordingly.
+	* vocab_terms.hh (inodeprint): New ATOMIC.
+	* work.hh: Prototype inodeprint working copy functions.
+	* work.cc: Implement them.
+
+	* manifest.{hh,cc} (manifest_file_name): Remove unused variable.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.{hh,cc}: Remove some commented out unused functions.
+
+	* win32/have_smart_terminal.cc: Include platform.hh.
+	* unix/fingerprint.cc: New file, with new function.
+	* win32/fingerprint.cc: New file, with stub function.
+	* Makefile.am (UNIX_PLATFORM_SOURCES, WIN32_PLATFORM_SOURCES): Add
+	them.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.hh, manifest.cc: Remove tabs.
+
+2005-04-08  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* doxygen.cfg: added
+	* Makefile.am: added apidocs target (builds doxygen docs)
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_final_space.at: New test.
+	* testsuite.at: Add it.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Dealing with a Fork): 'merge' has slightly
+	different output.
+
+	* NEWS: Summarize changes of last 2.5 weeks.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* database.{cc,hh} (space_usage): New method.
+	* database.cc (info): Use it.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* vocab.cc (verify): Cache known-good strings, to speed up
+	repeated processing of related changesets.
+
+	* change_set.cc (basic_change_set_test): Revert last change; the
+	old version _was_ valid.
+
+2005-04-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc (build_deletions): Issue warning when generating
+	delete_dir's; they're totally broken, but I don't want to disable
+	them, because then our tests won't see when they're fixed...
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* smap.hh (insert): Fix stupid bug in assertion condition.
+
+2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (basic_change_set_test): Test a _valid_
+	change_set.
+	(directory_node): Make a std::map, instead of an smap.  Add a
+	comment explaining the bug that makes this temporarily necessary.
+
+	* smap.hh (smap): Don't check for duplicates at insert time,
+	unless we've decided not to mark things damaged; don't return
+	iterators from insert.  Do check for duplicates at sort time, and
+	always sort, instead of sometimes doing linear search.  This makes
+	insert O(1), while still preserving the invariant that keys must
+	be unique.
+	
+	* commands.cc (commit): Explain why we're aborting, in the case
+	that we detect that a file has changed under us in the middle of a
+	commit.
+
+2005-04-07  Richard Levitte  <richard@levitte.org>
+
+	* cryptopp/config.h: typo...
+
+2005-04-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_db_execute.at (db execute): New test.
+	* testsuite.at: Add it.
+	* database.cc (debug): Don't printf-interpret %-signs in input.
+
+2005-04-05  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc: remove dulicated block introduced
+	in rev 9ab3031f390769f1c455ec7764cc9c083f328a1b
+	(merge of 76f4291b9fa56a04feb2186074a731848cced81c and
+	c7917be7646df52363f39d2fc2f7d1198c9a8c27). Seems to be another
+	instance of the case tested in t_merge_5.at
+
+2005-04-05  Matt Johnston  <matt@ucc.asn.au>
+
+	* basic_io.hh: reserve() the string which we're appending to
+	frequently. Seems to give ~5% speedup in 
+	diff -r t:revision-0.16 -r t:revision-0.17 - can't hurt.
+
+2005-04-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.spec, debian/control: We no longer need external popt.
+	* INSTALL: Ditto, plus some general updating.
+	
+2005-04-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_sql_unpack.at: New test.
+	* testsuite.at: Add it.
+
 2005-04-04  Matt Johnston  <matt@ucc.asn.au>
 
 	* file_io.cc (read_data_stdin): make it use botan

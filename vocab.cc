@@ -136,13 +136,19 @@ verify(local_path & val)
 static inline void 
 verify(file_path & val)
 {
+  static std::set<std::string> known_good;
+
   if (val.ok)
     return;
   
-  local_path loc(val());
-  verify(loc);
-  N(!book_keeping_file(loc),
-    F("prohibited book-keeping path in '%s'") % val);
+  if (known_good.find(val()) == known_good.end())
+    {
+      local_path loc(val());
+      verify(loc);
+      N(!book_keeping_file(loc),
+        F("prohibited book-keeping path in '%s'") % val);
+      known_good.insert(val());
+    }
   
   val.ok = true;
 }
