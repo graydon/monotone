@@ -35,18 +35,30 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
   CryptoPP::SHA hash;
 
   add_hash(hash, st.st_ctime);
-  // TODO: there are non-Linux variants which could be used.
+
+  // aah, portability.
 #ifdef HAVE_STRUCT_STAT_ST_CTIM_TV_NSEC
   add_hash(hash, st.st_ctim.tv_nsec);
+#elif defined(HAVE_STRUCT_STAT_ST_CTIMESPEC_TV_NSEC)
+  add_hash(hash, st.st_ctimespec.tv_nsec);
+#elif defined(HAVE_STRUCT_STAT_ST_CTIMENSEC)
+  add_hash(hash, st.st_ctimensec);
 #else
   add_hash(hash, (long)0);
 #endif
+
   add_hash(hash, st.st_mtime);
+
 #ifdef HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
   add_hash(hash, st.st_mtim.tv_nsec);
+#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
+  add_hash(hash, st.st_mtimespec.tv_nsec);
+#elif defined(HAVE_STRUCT_STAT_ST_MTIMENSEC)
+  add_hash(hash, st.st_mtimensec);
 #else
   add_hash(hash, (long)0);
 #endif
+
   add_hash(hash, st.st_mode);
   add_hash(hash, st.st_ino);
   add_hash(hash, st.st_dev);

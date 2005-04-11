@@ -1,3 +1,8 @@
+2005-04-11  Matthew Gregan <kinetik@orcon.net.nz>
+
+	* unix/inodeprint.cc, configure.ac: Use nanosecond time resolution for
+	inodeprints on BSDs and other platforms if available.
+
 2005-04-10  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am: Use pstopdf instead of acroread.
