@@ -1,3 +1,17 @@
+2005-04-12  Jon Bright <jon@siliconcircus.com>
+	* tests/t_cvsimport_samelog.at: Add test for the deltas.find 
+	cvs import problem as sent to the ML by Emile Snyder.
+	* testsuite.at: Call it
+	* rcs_import.cc (cvs_key): Add an ID for debug output purposes,
+	sprinkle a little more debug output about what's being compared to
+	what
+	* rcs_import.cc (cvs_key): Maintain a map of file paths and CVS
+	versions appearing in this CVS key.
+	(cvs_key::similar_enough): A key is only similar enough if it doesn't
+	include a different version of the same file path.
+	(cvs_history::find_key_and_state): Add files to cvs_keys as
+	appropriate
+
 2005-04-11  Jon Bright <jon@siliconcircus.com>
 	* Makefile.am (EXTRA_DIST): Add debian/*
 
