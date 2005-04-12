@@ -2897,8 +2897,8 @@ call_server(protocol_role role,
   session sess(role, client_voice, collections, all_collections, app, 
                address(), server.get_socketfd(), timeout);
 
-  sess.byte_in_ticker.reset(new ticker("bytes in", ">", 256));
-  sess.byte_out_ticker.reset(new ticker("bytes out", "<", 256));
+  sess.byte_in_ticker.reset(new ticker("bytes in", ">", 256, true));
+  sess.byte_out_ticker.reset(new ticker("bytes out", "<", 256, true));
   if (role == sink_role)
     {
       sess.cert_in_ticker.reset(new ticker("certs in", "c", 3));
