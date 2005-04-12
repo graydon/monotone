@@ -116,11 +116,11 @@ POPT_SOURCES = \
 	popt/popt.c    popt/popthelp.c    popt/system.h
 
 UNIX_PLATFORM_SOURCES = \
-	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/have_smart_terminal.cc \
+	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
 	unix/platform_netsync.cc unix/inodeprint.cc
 
 WIN32_PLATFORM_SOURCES = \
-	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/have_smart_terminal.cc \
+	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
 	win32/platform_netsync.cc win32/inodeprint.cc
 
 # primaries
@@ -319,7 +319,7 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
-                      package_revision.c \
+                      package_revision.txt package_revision.c \
                       package_full_revision.txt package_full_revision.c
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
