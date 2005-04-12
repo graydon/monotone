@@ -1777,6 +1777,7 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
   if (args.size() == 0 || args.size() == 1)
     {
       N(app.branch_name() != "", F("need --branch argument for branch-based checkout"));
+      app.make_branch_sticky();
 
       // if no checkout dir specified, use branch name
       if (args.size() == 0)
@@ -1799,6 +1800,7 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
 
       if (!app.branch_name().empty()) 
         {
+          app.make_branch_sticky();
           cert_value branch_name(app.branch_name());
           base64<cert_value> branch_encoded;
           encode_base64(branch_name, branch_encoded);
@@ -2549,6 +2551,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   revision_id rid;
   manifest_map m_old, m_new;
   
+  app.make_branch_sticky();
   app.require_working_copy();
 
   // preserve excluded work for future commmits
@@ -3112,6 +3115,8 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
 
+  if (!app.branch_name().empty())
+    app.make_branch_sticky();
   app.require_working_copy();
 
   calculate_current_revision(app, r_working, m_old, m_working);

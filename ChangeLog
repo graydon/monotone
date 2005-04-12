@@ -1,3 +1,22 @@
+2005-04-12  Florian Weimer  <fw@deneb.enyo.de>
+
+	* app_state.cc (app_state::allow_working_copy): Only update
+	branch_name from the options file if it has not yet been set.  Log
+	the branch name.
+	(app_state::set_branch): No longer update the options map.
+	(app_state::make_branch_sticky): New function which copies the
+	stored branch name to the options map.  Only commands which call
+	this function change the branch default stored in the working
+	copy.
+
+	* commands.cc (CMD(checkout)): Mark branch argument as sticky.
+	(CMD(commit)): Likewise.
+	(CMD(update)): Likewise.
+
+	* monotone.texi (Working Copy): Mention that the "commit" and
+	"update" commands update the stored default branch ("checkout"
+	does, too, but this one should be obvious).
+
 2005-04-12  Jon Bright <jon@siliconcircus.com>
 	* tests/t_cvsimport_samelog.at: Add test for the deltas.find 
 	cvs import problem as sent to the ML by Emile Snyder.

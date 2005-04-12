@@ -49,7 +49,15 @@ public:
   void set_restriction(path_set const & valid_paths, std::vector<utf8> const & paths);
   bool restriction_includes(file_path const & path);
 
+  // Set the branch name.  If you only invoke set_branch, the branch
+  // name is not sticky (and won't be written to the working copy and
+  // reused by subsequent monotone invocations).  Commands which
+  // switch the working to a different branch should invoke
+  // make_branch_sticky (before require_working_copy because this
+  // function updates the working copy).
   void set_branch(utf8 const & name);
+  void make_branch_sticky();
+
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
   void set_root(utf8 const & root);

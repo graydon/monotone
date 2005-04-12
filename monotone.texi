@@ -3288,6 +3288,10 @@ of the @file{MT/log} file will be read and passed to the Lua hook
 If the commit is successful, the @file{MT/log} file is cleared of
 all content making it ready for another edit/commit cycle.
 
+If a @option{--branch} option is specified, the @command{commit} command
+commits to this branch (creating it if necessary).  The branch becomes
+the new default branch of the working copy.
+
 The @command{commit} command also synthesizes a number of
 certificates, which it attaches to the new manifest version and copies
 into your database:
@@ -3363,6 +3367,11 @@ an earlier revision, or if your branch has two heads, updating to the
 other.  In all cases, the end result will be whatever revision you
 specified, with your local changes (and only your local changes)
 applied.
+
+If a @option{--branch} option is specified, the @command{update} command
+tries to select the revision to update to from this branch.  The branch
+becomes the new default branch of the working copy (even if you also
+specify an explicit @var{revision} argument).
 
 @end ftable
 
