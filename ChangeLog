@@ -22,6 +22,10 @@
 	* unix/inodeprint.cc, configure.ac: Use nanosecond time resolution for
 	inodeprints on BSDs and other platforms if available.
 
+2005-04-10  Derek Scherger  <derek@echologic.com>
+
+	* monotone.texi (Informative): fix typo in ls known docs
+
 2005-04-10  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am: Use pdftops instead of acroread.
