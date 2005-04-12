@@ -20,9 +20,11 @@ using namespace std;
 using boost::lexical_cast;
 struct user_interface ui;
 
-ticker::ticker(string const & tickname, std::string const & s, size_t mod) :
+ticker::ticker(string const & tickname, std::string const & s, size_t mod,
+    bool kilocount) :
   ticks(0),
   mod(mod),
+  kilocount(kilocount),
   name(tickname),
   shortname(s)
 {
@@ -77,14 +79,22 @@ tick_write_count::~tick_write_count()
 
 void tick_write_count::write_ticks()
 {
-  string tickline = "\rmonotone: ";
+  string tickline = "\rmonotone:";
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
+      string suffix;
+      int div = 1;
+      if (i->second->kilocount && i->second->ticks >= 10000)
+        {
+          div = 1024;
+          suffix = "k";
+        }
       tickline +=
-        string("[")
-        + i->first + ": " + lexical_cast<string>(i->second->ticks)
-        + "] ";
+        string(" [")
+        + i->first + ": " + lexical_cast<string>(i->second->ticks / div)
+        + suffix
+        + "]";
     }
   tickline += ui.tick_trailer;
 

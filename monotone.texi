@@ -3637,7 +3637,7 @@ included in the specified set of pathnames will not be listed.
 
 From within a subdirectory of the working copy the @command{list
 known} command will, by default, search the entire working copy.
-Specifying only the pathname "." will restrict the search for unknown
+Specifying only the pathname "." will restrict the search for known
 files to the current subdirectory of the working copy.
 
 @item monotone list unknown

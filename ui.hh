@@ -21,9 +21,11 @@ struct ticker
 {
   size_t ticks;
   size_t mod;
+  bool kilocount;
   std::string name;
   std::string shortname;
-  ticker(std::string const & n, std::string const & s, size_t mod = 64);
+  ticker(std::string const & n, std::string const & s, size_t mod = 64, 
+      bool kilocount=false);
   void operator++();
   void operator+=(size_t t);
   ~ticker();
