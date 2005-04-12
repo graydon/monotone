@@ -1,17 +1,15 @@
 2005-04-12  Nathaniel Smith  <njs@codesourcery.com>
 
+	* ChangeLog: Fixup after merge.
+
+2005-04-12  Nathaniel Smith  <njs@codesourcery.com>
+
 	* platform.hh (terminal_width): New function.
 	* {unix,win32}/have_smart_terminal.cc: Rename to...
 	* {unix,win32}/terminal.cc: ...these.  Implement terminal_width.
 	* ui.cc (write_ticks): Call it.
 	* Makefile.am: Update for renames.
 	
-2005-04-10  Nathaniel Smith  <njs@codesourcery.com>
-
-	* Makefile.am (BUILT_SOURCES_CLEAN): Add package_revision.txt.
-
-	This is the 0.18 release.
-
 2005-04-11  Matt Johnston <matt@ucc.asn.au>
 
 	* ui.{cc,hh}, netsync.cc: netsync progress ticker in kilobytes to
