@@ -1797,25 +1797,23 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
         cert_value b;
         guess_branch(ident, app, b);
       }
-
-      if (!app.branch_name().empty()) 
-        {
-          app.make_branch_sticky();
-          cert_value branch_name(app.branch_name());
-          base64<cert_value> branch_encoded;
-          encode_base64(branch_name, branch_encoded);
-  
-          vector< revision<cert> > certs;
-          app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
-
-          L(F("found %d %s branch certs on revision %s\n") 
-            % certs.size()
-            % app.branch_name
-            % ident);
-
-          N(certs.size() != 0, F("revision %s is not a member of branch %s\n") 
-            % ident % app.branch_name);
-        }
+      {
+        I(!app.branch_name().empty());
+        cert_value branch_name(app.branch_name());
+        base64<cert_value> branch_encoded;
+        encode_base64(branch_name, branch_encoded);
+        
+        vector< revision<cert> > certs;
+        app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
+          
+        L(F("found %d %s branch certs on revision %s\n") 
+          % certs.size()
+          % app.branch_name
+          % ident);
+        
+        N(certs.size() != 0, F("revision %s is not a member of branch %s\n") 
+          % ident % app.branch_name);
+      }
 
       app.create_working_copy(dir);
     }
@@ -3151,8 +3149,24 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
       P(F("already up to date at %s\n") % r_old_id);
       return;
     }
-
+  
   P(F("selected update target %s\n") % r_chosen_id);
+
+  if (!app.branch_name().empty())
+    {
+      cert_value branch_name(app.branch_name());
+      base64<cert_value> branch_encoded;
+      encode_base64(branch_name, branch_encoded);
+  
+      vector< revision<cert> > certs;
+      app.db.get_revision_certs(r_chosen_id, branch_cert_name, branch_encoded, certs);
+
+      N(certs.size() != 0,
+        F("revision %s is not a member of branch %s\n"
+          "try again with explicit --branch\n")
+        % r_chosen_id % app.branch_name);
+    }
+
   app.db.get_revision_manifest(r_chosen_id, m_chosen_id);
   app.db.get_manifest(m_chosen_id, m_chosen);
 
