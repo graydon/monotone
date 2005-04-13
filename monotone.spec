@@ -21,18 +21,21 @@ functions to client-side RSA certificates.
 %setup -q
 
 %build
+CFLAGS="$RPM_OPT_FLAGS" \
+CXXFLAGS="$RPM_OPT_FLAGS" \
 ./configure --prefix=$RPM_BUILD_ROOT/usr \
             --infodir=$RPM_BUILD_ROOT%{_infodir} \
             --mandir=$RPM_BUILD_ROOT%{_mandir} \
             --with-bundled-sqlite \
-            --with-bundled-lua \
-            --enable-static-boost 
+            --with-bundled-lua
 make
 
 %install
 rm -rf $RPM_BUILD_ROOT
 make install
 rm -f $RPM_BUILD_ROOT%{_infodir}/dir
+# remove x permission in contrib to avoid messing the dependencies
+chmod -x contrib/*
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -52,7 +55,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc AUTHORS COPYING NEWS README README.changesets UPGRADE
+%doc AUTHORS COPYING NEWS README README.changesets UPGRADE contrib
 %{_bindir}/monotone
 %{_mandir}/man1/monotone.1.gz
 %{_infodir}/*.info*.gz
