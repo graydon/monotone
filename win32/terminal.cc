@@ -4,6 +4,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <windows.h>
+
 #include "platform.hh"
 
 bool have_smart_terminal()
@@ -13,6 +15,16 @@ bool have_smart_terminal()
 
 unsigned int terminal_width()
 {
-  // apparently there is no such thing as a non-80-character win32 terminal.
+  HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+  if (h != INVALID_HANDLE_VALUE)
+    {
+      CONSOLE_SCREEN_BUFFER_INFO ci;
+      if (GetConsoleScreenBufferInfo(h, &ci) != 0)
+        {
+          return static_cast<unsigned int>(ci.dwSize.X);
+        }
+    }
+  
+  // default to 80 columns if the width query failed.
   return 80;
 }

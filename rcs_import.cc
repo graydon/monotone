@@ -75,12 +75,17 @@ cvs_key
     {
       map<file_path,string>::const_iterator otherit;
 
+L(F("checking %s %s\n") % it->first % it->second);
       otherit = other.files.find(it->first);
       if (otherit != other.files.end() && it->second!=otherit->second)
       {
 	L(F("!similar_enough: %d/%d\n") % id % other.id);
 	return false;
       }
+else if (otherit != other.files.end())
+{
+L(F("Same file, different version: %s and %s\n") % it->second % otherit->second);
+}
     }
     L(F("similar_enough: %d/%d\n") % id % other.id);
     return true;
@@ -827,6 +832,8 @@ cvs_history::find_key_and_state(rcs_file const & r,
           key = i->first;
           state = i->second;
           key.add_file(curr_file, version);
+          substates.erase(i->first);
+          substates.insert(make_pair(key, state));
           return true;
         }
     }
