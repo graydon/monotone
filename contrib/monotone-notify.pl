@@ -279,8 +279,6 @@ if ($mail || $debug) {
 
     my $message_count = 0;	# It's nice with a little bit of statistics.
 
-    my $message_count = 0;	# It's nice with a little bit of statistics.
-
     foreach my $date (sort keys %timeline) {
 	foreach my $revision (keys %{$timeline{$date}}) {
 	    foreach my $sendinfo (([ 1, "Notify.debug-diffs", $difflogs_to ],
