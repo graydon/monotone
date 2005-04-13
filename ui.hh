@@ -13,7 +13,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <iomanip>
 #include <boost/format.hpp>
 
 struct user_interface;
