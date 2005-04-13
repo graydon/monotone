@@ -260,7 +260,7 @@ EXTRA_DIST = $(man1_MANS) \
              $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
              sqlite/keywordhash.h \
              contrib/README \
-             contrib/Notify.pl \
+             contrib/monotone-notify.pl \
              contrib/ciabot_monotone.py \
              contrib/monotone.el \
              contrib/monotone.bash_completion \
