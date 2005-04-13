@@ -77,7 +77,8 @@ tick_write_count::~tick_write_count()
 {
 }
 
-void tick_write_count::write_ticks()
+/// write_ticks flushes progress line with all tickers to 'clog'
+ * void tick_write_count::write_ticks()
 {
   string tickline = "\rmonotone:";
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
@@ -104,7 +105,7 @@ void tick_write_count::write_ticks()
   last_tick_len = curr_sz;
 
   unsigned int tw = terminal_width();
-  if (tw && tickline.size() > tw)
+  if (tickline.size() > tw)
     {
       // first character in tickline is "\r", which does not take up any
       // width, so we add 1 to compensate.
