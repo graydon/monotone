@@ -43,9 +43,7 @@ _monotone_branches() {
 }
 
 _monotone() {
-  local cur=${COMP_WORDS[COMP_CWORD]}
-  local prev=${COMP_WORDS[COMP_CWORD-1]}
-  local mono_db
+  local cur prev mono_db
 
   for w in ${COMP_WORDS[@]} ; do
     if [[ "$w" == --db=* ]] ; then
@@ -55,11 +53,15 @@ _monotone() {
   if [ -z "$mono_db" ] ; then
     for i in ${!COMP_WORDS[@]} ; do
       [ $i -eq 0 ] && continue
-      if [ "${COMP_WORDS[$i-1]}" == --db ] ; then
+      prev="${COMP_WORDS[$i-1]}"
+      if [ $prev == --db -o $prev == -d ] ; then
         mono_db="--db=${COMP_WORDS[$i]}" ; break
       fi
     done
   fi
+
+  cur=${COMP_WORDS[COMP_CWORD]}
+  prev=${COMP_WORDS[COMP_CWORD-1]}
 
   case $cur in
     --db=* | --rcfile=* | --dump=* )
