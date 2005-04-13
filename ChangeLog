@@ -1,3 +1,7 @@
+2005-04-13  Matthew Gregan  <kinetik@orcon.net.nz>
+	* cryptopp/integer.h: Fix detection of GCC version for SSE2
+	builds.
+
 2005-04-12  Jon Bright <jon@siliconcircus.com>
 	* rcs_import.cc (find_key_and_state): Fix stupid bug in storing the
 	list of files a cvs_key contains.  CVS delta invariant failure now
