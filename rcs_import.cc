@@ -64,17 +64,36 @@ cvs_key
 
   inline bool similar_enough(cvs_key const & other) const
   {
+    L(F("Checking similarity of %d and %d\n") % id % other.id);
     if (changelog != other.changelog)
       return false;
     if (author != other.author)
       return false;
     if (labs(time - other.time) > constants::cvs_window)
       return false;
+    for (map<file_path,string>::const_iterator it = files.begin(); it!=files.end(); it++)
+    {
+      map<file_path,string>::const_iterator otherit;
+
+L(F("checking %s %s\n") % it->first % it->second);
+      otherit = other.files.find(it->first);
+      if (otherit != other.files.end() && it->second!=otherit->second)
+      {
+	L(F("!similar_enough: %d/%d\n") % id % other.id);
+	return false;
+      }
+else if (otherit != other.files.end())
+{
+L(F("Same file, different version: %s and %s\n") % it->second % otherit->second);
+}
+    }
+    L(F("similar_enough: %d/%d\n") % id % other.id);
     return true;
   }
 
   inline bool operator==(cvs_key const & other) const
   {
+    L(F("Checking equality of %d and %d\n") % id % other.id);
     return branch == other.branch &&
       changelog == other.changelog &&
       author == other.author &&
@@ -99,11 +118,23 @@ cvs_key
        && branch > other.branch);
   }
 
+  inline void add_file(file_path const &file, string const &version)
+  {
+    L(F("Adding file %s version %s to %d\n") % file % version % id);
+    files.insert( make_pair(file, version) );
+  }
+
   cvs_branchname branch;
   cvs_changelog changelog;
   cvs_author author;
   time_t time;
+  map<file_path, string> files; // Maps file to version
+  int id; // Only used for debug output
+
+  static int nextid; // Used to initialise id
 };
+
+int cvs_key::nextid = 0;
 
 struct 
 cvs_file_edge
@@ -726,6 +757,7 @@ cvs_key::cvs_key(rcs_file const & r, string const & version,
 #endif
     time=mktime(&t);
     L(F("= %i\n") % time);
+    id = nextid++;
   }
 
   string branch_name = find_branch_for_version(r.admin.symbols, 
@@ -772,6 +804,7 @@ cvs_history::find_key_and_state(rcs_file const & r,
   map< cvs_key, shared_ptr<cvs_state> > & substates = stk.top()->substates;
   cvs_key nk(r, version, *this);
 
+  nk.add_file(curr_file, version);
   // key+(window/2) is in the future, key-(window/2) is in the past. the
   // past is considered "greater than" the future in this map, so we take:
   // 
@@ -798,6 +831,9 @@ cvs_history::find_key_and_state(rcs_file const & r,
         {
           key = i->first;
           state = i->second;
+          key.add_file(curr_file, version);
+          substates.erase(i->first);
+          substates.insert(make_pair(key, state));
           return true;
         }
     }
