@@ -1,3 +1,9 @@
+2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (import_cvs_repo): Check that user isn't trying to
+	import a whole CVS repo.
+	* tests/t_cvsimport.at: Test new check.
+	
 2005-04-13  Richard Levitte  <richard@levitte.org>
 
 	* contrib/Notify.pl: Rename ...

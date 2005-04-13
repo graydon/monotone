@@ -79,8 +79,8 @@ L(F("checking %s %s\n") % it->first % it->second);
       otherit = other.files.find(it->first);
       if (otherit != other.files.end() && it->second!=otherit->second)
       {
-	L(F("!similar_enough: %d/%d\n") % id % other.id);
-	return false;
+        L(F("!similar_enough: %d/%d\n") % id % other.id);
+        return false;
       }
 else if (otherit != other.files.end())
 {
@@ -1285,6 +1285,10 @@ void
 import_cvs_repo(fs::path const & cvsroot, 
                 app_state & app)
 {
+  N(!fs::exists(cvsroot / "CVSROOT"),
+    F("%s appears to be a CVS repository root directory\n"
+      "try importing a module instead, with 'cvs_import %s/<module_name>")
+    % cvsroot.native_directory_string() % cvsroot.native_directory_string());
   
   {
     // early short-circuit to avoid failure after lots of work
