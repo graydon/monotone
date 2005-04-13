@@ -60,7 +60,9 @@ app_state::allow_working_copy()
 
       string dbname = absolutify(options[database_option]());
       if (dbname != "") db.set_filename(mkpath(dbname));
-      branch_name = options[branch_option];
+      if (branch_name().empty())
+        branch_name = options[branch_option];
+      L(F("branch name is '%s'\n") % branch_name());
       internalize_rsa_keypair_id(options[key_option], signing_key);
 
       if (!current.empty()) 
@@ -130,6 +132,8 @@ app_state::create_working_copy(std::string const & dir)
     % book_keeping_dir % target);
 
   mkdir_p(mt);
+
+  make_branch_sticky();
 
   write_options();
 
@@ -234,8 +238,12 @@ void
 app_state::set_branch(utf8 const & branch)
 {
   branch_name = branch();
+}
 
-  options[branch_option] = branch;
+void
+app_state::make_branch_sticky()
+{
+  options[branch_option] = branch_name();
 }
 
 void 

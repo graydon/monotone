@@ -26,6 +26,10 @@ int process_sleep(unsigned int seconds);
 
 // for term selection
 bool have_smart_terminal();
+// this function cannot call W/P/L, because it is called by the tick printing
+// code.
+// return value of 0 means "unlimited"
+unsigned int terminal_width();
 
 // for netsync
 void start_platform_netsync();

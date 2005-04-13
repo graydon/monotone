@@ -1329,8 +1329,7 @@ CMD(approve, "review", "REVISION",
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
   cert_value branchname;
-  guess_branch (r, app, branchname);
-  app.set_branch(branchname());
+  guess_branch(r, app, branchname);
   N(app.branch_name() != "", F("need --branch argument for approval"));  
   cert_revision_in_branch(r, app.branch_name(), app, dbw);
 }
@@ -1352,8 +1351,7 @@ CMD(disapprove, "review", "REVISION",
     F("revision %s has %d changesets, cannot invert\n") % r % rev.edges.size());
 
   cert_value branchname;
-  guess_branch (r, app, branchname);
-  app.set_branch(branchname());
+  guess_branch(r, app, branchname);
   N(app.branch_name() != "", F("need --branch argument for disapproval"));  
   
   edge_entry const & old_edge (*rev.edges.begin());
@@ -1545,8 +1543,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
   dbw.consume_revision_data(new_rid, rdata);
 
   // take care of any extra certs
-  guess_branch (old_rid, app, branchname);
-  app.set_branch(branchname());
+  guess_branch(old_rid, app, branchname);
 
   if (args.size() == 3)
     log_message = idx(args, 2)();
@@ -1777,7 +1774,6 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
   if (args.size() == 0 || args.size() == 1)
     {
       N(app.branch_name() != "", F("need --branch argument for branch-based checkout"));
-
       // if no checkout dir specified, use branch name
       if (args.size() == 0)
           dir = app.branch_name();
@@ -1796,24 +1792,28 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
     {
       dir = idx(args, 1)();
       complete(app, idx(args, 0)(), ident);
-
-      if (!app.branch_name().empty()) 
-        {
-          cert_value branch_name(app.branch_name());
-          base64<cert_value> branch_encoded;
-          encode_base64(branch_name, branch_encoded);
-  
-          vector< revision<cert> > certs;
-          app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
-
-          L(F("found %d %s branch certs on revision %s\n") 
-            % certs.size()
-            % app.branch_name
-            % ident);
-
-          N(certs.size() != 0, F("revision %s is not a member of branch %s\n") 
-            % ident % app.branch_name);
-        }
+      
+      {
+        cert_value b;
+        guess_branch(ident, app, b);
+      }
+      {
+        I(!app.branch_name().empty());
+        cert_value branch_name(app.branch_name());
+        base64<cert_value> branch_encoded;
+        encode_base64(branch_name, branch_encoded);
+        
+        vector< revision<cert> > certs;
+        app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
+          
+        L(F("found %d %s branch certs on revision %s\n") 
+          % certs.size()
+          % app.branch_name
+          % ident);
+        
+        N(certs.size() != 0, F("revision %s is not a member of branch %s\n") 
+          % ident % app.branch_name);
+      }
 
       app.create_working_copy(dir);
     }
@@ -2549,6 +2549,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   revision_id rid;
   manifest_map m_old, m_new;
   
+  app.make_branch_sticky();
   app.require_working_copy();
 
   // preserve excluded work for future commmits
@@ -2563,8 +2564,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   cert_value branchname;
   I(rs.edges.size() == 1);
 
-  guess_branch (edge_old_revision(rs.edges.begin()), app, branchname);
-  app.set_branch(branchname());
+  guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
     
   P(F("beginning commit on branch '%s'\n") % branchname);
   L(F("new manifest %s\n") % rs.new_manifest);
@@ -3112,6 +3112,8 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   if (args.size() != 0 && args.size() != 1)
     throw usage(name);
 
+  if (!app.branch_name().empty())
+    app.make_branch_sticky();
   app.require_working_copy();
 
   calculate_current_revision(app, r_working, m_old, m_working);
@@ -3147,8 +3149,24 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
       P(F("already up to date at %s\n") % r_old_id);
       return;
     }
-
+  
   P(F("selected update target %s\n") % r_chosen_id);
+
+  if (!app.branch_name().empty())
+    {
+      cert_value branch_name(app.branch_name());
+      base64<cert_value> branch_encoded;
+      encode_base64(branch_name, branch_encoded);
+  
+      vector< revision<cert> > certs;
+      app.db.get_revision_certs(r_chosen_id, branch_cert_name, branch_encoded, certs);
+
+      N(certs.size() != 0,
+        F("revision %s is not a member of branch %s\n"
+          "try again with explicit --branch\n")
+        % r_chosen_id % app.branch_name);
+    }
+
   app.db.get_revision_manifest(r_chosen_id, m_chosen_id);
   app.db.get_manifest(m_chosen_id, m_chosen);
 
