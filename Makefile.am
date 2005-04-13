@@ -338,12 +338,12 @@ apidocs:
 
 %.h: %.sql txt2c Makefile
 	./txt2c $< $(*F) >$@.tmp
-	cmp $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
 %.h: %.lua txt2c Makefile
 	./txt2c $< $(*F) >$@.tmp
-	cmp $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
 # A fake target so we can use MT/revision as a prerequisite, yet not
@@ -355,7 +355,7 @@ package_revision.txt: $(srcdir)/MT/revision
 	if [ ! -f $@ ]; then echo "unknown" > $@; fi
 package_revision.c: package_revision.txt txt2c Makefile
 	./txt2c --strip-trailing --no-static $< package_revision >$@.tmp
-	cmp $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
 .PHONY: package_full_revision.txt apidocs
@@ -372,7 +372,7 @@ package_full_revision_dist.txt: package_full_revision.txt
 	 echo '  further changes may have been made.') >> $@
 package_full_revision.c: package_full_revision.txt txt2c Makefile
 	./txt2c --no-static $< package_full_revision >$@.tmp
-	cmp $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv $@.tmp $@
 	rm -f $@.tmp
 
 # automake doesn't build html docs
