@@ -1,3 +1,17 @@
+2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* cert.cc (guess_branch): Call app.set_branch.
+	* app_state.cc (create_working_copy): Call make_branch_sticky
+	here...
+	* commands.cc (checkout): ...instead of here.
+	(approve, disapprove, fcommit, commit): Don't call app.set_branch
+	on guess_branch's output.
+	(checkout): Call guess_branch.
+	
+	* tests/t_sticky_branch.at: 
+	* tests/t_checkout_id_sets_branch.at: New tests.
+	* testsuite.at: Add them.
+
 2005-04-12  Florian Weimer  <fw@deneb.enyo.de>
 
 	* app_state.cc (app_state::allow_working_copy): Only update

@@ -488,6 +488,7 @@ guess_branch(revision_id const & ident,
           "please provide a branch name") % ident);
       
       decode_base64(certs[0].inner().value, branchname);
+      app.set_branch(branchname());
     }
 }
 

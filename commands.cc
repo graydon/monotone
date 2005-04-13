@@ -1329,8 +1329,7 @@ CMD(approve, "review", "REVISION",
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
   cert_value branchname;
-  guess_branch (r, app, branchname);
-  app.set_branch(branchname());
+  guess_branch(r, app, branchname);
   N(app.branch_name() != "", F("need --branch argument for approval"));  
   cert_revision_in_branch(r, app.branch_name(), app, dbw);
 }
@@ -1352,8 +1351,7 @@ CMD(disapprove, "review", "REVISION",
     F("revision %s has %d changesets, cannot invert\n") % r % rev.edges.size());
 
   cert_value branchname;
-  guess_branch (r, app, branchname);
-  app.set_branch(branchname());
+  guess_branch(r, app, branchname);
   N(app.branch_name() != "", F("need --branch argument for disapproval"));  
   
   edge_entry const & old_edge (*rev.edges.begin());
@@ -1545,8 +1543,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
   dbw.consume_revision_data(new_rid, rdata);
 
   // take care of any extra certs
-  guess_branch (old_rid, app, branchname);
-  app.set_branch(branchname());
+  guess_branch(old_rid, app, branchname);
 
   if (args.size() == 3)
     log_message = idx(args, 2)();
@@ -1777,8 +1774,6 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
   if (args.size() == 0 || args.size() == 1)
     {
       N(app.branch_name() != "", F("need --branch argument for branch-based checkout"));
-      app.make_branch_sticky();
-
       // if no checkout dir specified, use branch name
       if (args.size() == 0)
           dir = app.branch_name();
@@ -1797,6 +1792,11 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
     {
       dir = idx(args, 1)();
       complete(app, idx(args, 0)(), ident);
+      
+      {
+        cert_value b;
+        guess_branch(ident, app, b);
+      }
 
       if (!app.branch_name().empty()) 
         {
@@ -2566,8 +2566,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   cert_value branchname;
   I(rs.edges.size() == 1);
 
-  guess_branch (edge_old_revision(rs.edges.begin()), app, branchname);
-  app.set_branch(branchname());
+  guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
     
   P(F("beginning commit on branch '%s'\n") % branchname);
   L(F("new manifest %s\n") % rs.new_manifest);
