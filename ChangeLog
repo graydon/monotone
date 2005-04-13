@@ -1,3 +1,9 @@
+2005-04-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_netsync_largish_file.at: Add test for netsyncing largish
+	(32MB) files.  This test is failing at present.
+	* testsuite.at: Add new test.
+
 2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* rcs_import.cc (import_cvs_repo): Check that user isn't trying to
