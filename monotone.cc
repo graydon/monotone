@@ -133,16 +133,12 @@ utf8_argv
     }
   }
 
-  ~utf8_argv() 
-  {
-    if (argv != NULL)
-      {
-        for (int i = 0; i < argc; ++i)
-          if (argv[i] != NULL)
-            free(argv[i]);
-        free(argv);
-      }    
-  }
+~utf8_argv()
+{
+  for (int i = 0; i < argc; ++i)
+    if (argv[i] != NULL)
+      free(argv[i]);
+  free(argv);
 };
 
 // Stupid type system tricks: to use a cleanup_ptr, we need to know the return
