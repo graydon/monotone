@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 
-# bash completion for monotone 0.17
+# bash completion for monotone 0.18
 # Author: Olivier Andrieu <oandrieu@nerim.net>
 
 # source this file from your .bashrc
@@ -52,6 +52,14 @@ _monotone() {
       mono_db="$w" ; break
     fi
   done
+  if [ -z "$mono_db" ] ; then
+    for i in ${!COMP_WORDS[@]} ; do
+      [ $i -eq 0 ] && continue
+      if [ "${COMP_WORDS[$i-1]}" == --db ] ; then
+        mono_db="--db=${COMP_WORDS[$i]}" ; break
+      fi
+    done
+  fi
 
   case $cur in
     --db=* | --rcfile=* | --dump=* )
@@ -72,17 +80,32 @@ _monotone() {
       _monotone_complete revision
       ;;
     -* )
-      COMPREPLY=( $(compgen -W '--debug --dump= --quiet --help --nostd --norc\
-                                --rcfile= --key= --db= --branch= --version --full-version\
-                                --ticker= --revision= --message=' -- $cur) )
+      COMPREPLY=( $(compgen -W '--debug --dump --quiet --help --nostd --norc\
+                                --rcfile --key --db --branch --version --full-version\
+                                --ticker --revision --message' -- $cur) )
       ;;
     * )
       case $prev in
+        --db | -d | --rcfile | --dump )
+          _filedir
+          ;;
+        --branch | -b )
+          _monotone_branches
+          ;;
+        --key | -k )
+          _monotone_keys pubkey
+          ;;
+        --ticker )
+          COMPREPLY=( $(compgen -W 'count dot' -- $cur ) )
+          ;;
+        --revision | -r )
+          _monotone_complete revision
+          ;;
 	db )
 	  COMPREPLY=( $(compgen -W 'init info version dump load migrate execute check changesetify rebuild' -- $cur ) )
 	  ;;
 	cdiff | diff )
-          COMPREPLY=( $(compgen -W '--revision=' -- $cur ) )
+          COMPREPLY=( $(compgen -W '--revision' -- $cur ) )
 	  _filedir
 	  ;;
 	log | approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )

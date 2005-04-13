@@ -31,6 +31,15 @@
 	"update" commands update the stored default branch ("checkout"
 	does, too, but this one should be obvious).
 
+2005-04-13  Matthew Gregan  <kinetik@orcon.net.nz>
+	* cryptopp/integer.h: Fix detection of GCC version for SSE2
+	builds.
+
+2005-04-12  Jon Bright <jon@siliconcircus.com>
+	* rcs_import.cc (find_key_and_state): Fix stupid bug in storing the
+	list of files a cvs_key contains.  CVS delta invariant failure now
+	really fixed.  The rearrangement failure still exists, though.
+
 2005-04-12  Jon Bright <jon@siliconcircus.com>
 	* tests/t_cvsimport_samelog.at: Add test for the deltas.find 
 	cvs import problem as sent to the ML by Emile Snyder.
@@ -45,6 +54,12 @@
 	(cvs_history::find_key_and_state): Add files to cvs_keys as
 	appropriate
 
+2005-04-12  Matthew Gregan <kinetik@orcon.net.nz>
+
+	* win32/terminal.cc (terminal_width): Use
+	GetConsoleScreenBufferInfo to request width information for
+	terminals.
+	
 2005-04-12  Nathaniel Smith  <njs@codesourcery.com>
 
 	* ChangeLog: Fixup after merge.
