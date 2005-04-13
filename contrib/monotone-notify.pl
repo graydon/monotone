@@ -624,11 +624,12 @@ __END__
 
 =head1 NAME
 
-Notify.pl - a script to send monotone change notifications by email
+monotone-notify.pl - a script to send monotone change notifications by email
 
 =head1 SYNOPSIS
 
-Notify.pl [--help] [--man] [--db=database] [--root=path] [--branch=branch ...]
+monotone-notify.pl [--help] [--man]
+[--db=database] [--root=path] [--branch=branch ...]
 [--[no]update] [--[no]mail] [--[no]attachments]
 [--from=email-sender]
 [--difflogs-to=email-recipient] [--nodifflogs-to=email-recipient]
@@ -637,9 +638,10 @@ Notify.pl [--help] [--man] [--db=database] [--root=path] [--branch=branch ...]
 
 =head1 DESCRIPTION
 
-B<Notify.pl> is used to generate emails containing monotone change
-logs for recent changes.  It uses monotone database variables in the
-domain 'notify' to keep track of the latest revisions already logged.
+B<monotone-notify.pl> is used to generate emails containing monotone
+change logs for recent changes.  It uses monotone database variables
+in the domain 'notify' to keep track of the latest revisions already
+logged.
 
 =head1 OPTIONS
 
@@ -672,8 +674,8 @@ used.
 
 =item B<--update>
 
-Has Notify.pl update the database variables at the end of the run.
-This is the default unless B<--debug> is given.
+Has B<monotone-notify.pl> update the database variables at the end of
+the run.  This is the default unless B<--debug> is given.
 
 =item B<--noupdate>
 
@@ -682,8 +684,8 @@ given.
 
 =item B<--mail>
 
-Has Notify.pl send the constructed logs as emails.  This is the
-default unless B<--debug> is given.
+Has B<monotone-notify.pl> send the constructed logs as emails.  This
+is the default unless B<--debug> is given.
 
 =item B<--nomail>
 
@@ -742,15 +744,15 @@ F<Notify.debug-nodiffs> are left in it.
 
 =item B<--debug>
 
-Makes Notify.pl go to debug mode.  It means a LOT of extra output, and
-also implies B<--noupdate> and B<--nomail> unless specified
-differently on the command line.
+Makes B<monotone-notify.pl> go to debug mode.  It means a LOT of extra
+output, and also implies B<--noupdate> and B<--nomail> unless
+specified differently on the command line.
 
 =item B<--quiet>
 
-Makes Notify.pl really silent.  It will normally produce a small log
-of it's activities, but with B<--quiet>, it will only output error
-messages.  If B<--debug> was given, B<--quiet> is turned off
+Makes B<monotone-notify.pl> really silent.  It will normally produce a
+small log of it's activities, but with B<--quiet>, it will only output
+error messages.  If B<--debug> was given, B<--quiet> is turned off
 unconditionally.
 
 =back
@@ -763,12 +765,12 @@ through those other branches by virtue of 'monotone propagate' and
 other means to move changes from one branch to another.
 
 This behavior isn't entirely deterministic, as it depends on when the
-last run of Notify.pl was done, and what head revisions were active at
-that time.  It might be seen as a bug, but if corrected, it might miss
-out on development that moves entirely to another branch and moves
-back later in time, thereby creating a hole in the branch currently
-looked at.  This has actually happened in the development of monotone
-itself.
+last run of B<monotone-notify.pl> was done, and what head revisions
+were active at that time.  It might be seen as a bug, but if
+corrected, it might miss out on development that moves entirely to
+another branch and moves back later in time, thereby creating a hole
+in the branch currently looked at.  This has actually happened in the
+development of monotone itself.
 
 For now, it's assumed that a little too much information is better
 than (unjust) lack of information.
