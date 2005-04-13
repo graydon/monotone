@@ -7,6 +7,8 @@
 #include <windows.h>
 #include <io.h>
 
+#include <string>
+
 #include "platform.hh"
 
 bool have_smart_terminal()
