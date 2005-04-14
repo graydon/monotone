@@ -34,13 +34,16 @@ int process_spawn(const char * const argv[])
   realexelen = strlen(argv[0])+1+MAX_PATH;
   realexe = (char*)malloc(realexelen);
   if (realexe==NULL) return 0;
+  L(F("searching for exe: %s\n") % argv[0]);
   if (SearchPath(NULL, argv[0], ".exe", realexelen, realexe, &filepart)==0)
     {
+      L(F("SearchPath failed, err=%d\n") % GetLastError());
       free(realexe);
       return -1;
     }
 
   std::ostringstream cmdline_ss;
+  L(F("building command line\n"));
   cmdline_ss << realexe;
   for (const char *const *i = argv+1; *i; ++i)
     {
@@ -73,6 +76,7 @@ int process_spawn(const char * const argv[])
   /* We don't need to set any of the STARTUPINFO members */
   if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)==0)
     {
+      L(F("CreateProcess failed, err=%d\n") % GetLastError());
       free(realexe);
       return -1;
     }

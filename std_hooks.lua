@@ -15,7 +15,7 @@ function execute(path, ...)
    local pid
    local ret = -1
    pid = spawn(path, unpack(arg))
-   ret, pid = wait(pid)
+   if (pid ~= -1) then ret, pid = wait(pid) end
    return ret
 end
 
