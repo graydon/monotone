@@ -3525,6 +3525,7 @@ completion systems, such as those in @command{bash} and @command{zsh}.
 @itemx monotone diff --revision=@var{id}
 @itemx monotone diff --revision=@var{id} @var{pathname...}
 @itemx monotone diff --revision=@var{id1} --revision=@var{id2}
+@itemx monotone diff --revision=@var{id1} --revision=@var{id2} @var{pathname...}
 
 These commands print out GNU ``unified diff format'' textual difference
 listings between various manifest versions. With no @option{--revision}

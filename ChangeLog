@@ -1,3 +1,10 @@
+2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Informative): 'diff' with two revision arguments
+	can now be filtered by file.
+	
+	* constants.cc (netcmd_payload_limit): Bump to 256 megs.
+
 2005-04-14  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* Makefile.am: silence cmp
