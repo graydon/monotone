@@ -3,6 +3,17 @@
 	* win32/process.cc: Fix build on MingW 3.2.0-rc[123] by adding
 	<sstream> include.
 
+2005-04-14  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_unique_entries_in_directories): use a
+	  std::vector rather than std::map for better performance (only sort
+	  once).
+	* smap.hh: an invariant
+
+2005-04-14  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_vcheck.at: Update notes.
+
 2005-04-14  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* monotone.texi (Making Changes): Fixed duplicate paragraph
