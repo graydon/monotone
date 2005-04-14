@@ -550,8 +550,8 @@ confirm_proper_tree(path_state const & ps)
 
 static void
 confirm_unique_entries_in_directories(path_state const & ps)
-{  
-  std::map<std::pair<tid,path_component>, bool> entries;
+{
+  std::vector<std::pair<tid,path_component> > entries;
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       if (null_name(path_item_name(i->second)))
@@ -562,9 +562,27 @@ confirm_unique_entries_in_directories(path_state const & ps)
           
       std::pair<tid,path_component> p = std::make_pair(path_item_parent(i->second), 
                                                        path_item_name(i->second));
-      I(entries.find(p) == entries.end());
-      entries.insert(std::make_pair(p,true));
+      entries.push_back(p);
     }
+
+  // Now we check that entries is unique
+  if (entries.empty())
+      return;
+
+  std::sort(entries.begin(), entries.end());
+
+  std::vector<std::pair<tid,path_component> >::const_iterator leader, lagged;
+  leader = entries.begin();
+  lagged = entries.begin();
+
+  I(leader != entries.end());
+  ++leader;
+  while (leader != entries.end())
+  {
+    I(*leader != *lagged);
+    ++leader;
+    ++lagged;
+  }
 }
 
 static void

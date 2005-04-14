@@ -88,6 +88,7 @@ protected:
         const_iterator leader, lagged;
         lagged = begin();
         leader = begin();
+        I(leader != end());
         ++leader;
         for (; leader != end(); ++lagged, ++leader)
           I(lagged->first != leader->first);
