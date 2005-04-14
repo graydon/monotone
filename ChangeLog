@@ -1,3 +1,7 @@
+2005-04-14  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_vcheck.at: Update notes.
+
 2005-04-14  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* monotone.texi (Making Changes): Fixed duplicate paragraph
