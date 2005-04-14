@@ -5,12 +5,25 @@
 // see the file COPYING for details
 
 #include <windows.h>
+#include <io.h>
+
+#include <string>
 
 #include "platform.hh"
 
 bool have_smart_terminal()
 {
-  return true;
+  std::string term;
+  if (const char* term_cstr = getenv("TERM"))
+    term = term_cstr;
+  else
+    term = "";
+
+  if (term == "" || term == "emacs" || term == "dumb"
+      || !_isatty(_fileno(stdout)))
+    return false;
+  else
+    return true;
 }
 
 unsigned int terminal_width()

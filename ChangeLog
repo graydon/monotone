@@ -2,6 +2,10 @@
 
 	* Makefile.am: silence cmp
 
+2005-04-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/terminal.cc (have_smart_terminal): Implement for Win32.
+
 2005-04-13  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_netsync_largish_file.at: Add test for netsyncing largish
