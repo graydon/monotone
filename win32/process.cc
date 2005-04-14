@@ -4,6 +4,7 @@
 // see the file COPYING for details
 
 #include <string>
+#include <sstream>
 #include <windows.h>
 
 #include "sanity.hh"
