@@ -41,7 +41,7 @@ Sun Apr 10 17:49:25 PDT 2005
                 - New "--depth" argument to 'log'.  Thanks to Richard
                   Levitte <richard@levitte.org>.
                 - 'db info' gives statistics on space usage.
-                - new command 'dropkey'.  Thanks to Jeremey Cowgar
+                - new command 'dropkey'.  Thanks to Jeremy Cowgar
                   <jeremy@cowgar.com>.
         - robustness improvement: if monotone crashes in a working
           directory and --dump and --debug were not specified, saves
