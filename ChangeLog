@@ -1,3 +1,8 @@
+2005-04-15  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* diff_patch.cc(guess_binary): do not use '\x00' as first
+	character of a C string ...
+
 2005-04-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/process.cc: Fix build on MingW 3.2.0-rc[123] by adding
@@ -2733,7 +2738,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

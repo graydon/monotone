@@ -25,7 +25,8 @@ bool guess_binary(string const & s)
 {
   // these do not occur in ASCII text files
   // FIXME: this heuristic is (a) crap and (b) hardcoded. fix both these.
-  if (s.find_first_of("\x00\x01\x02\x03\x04\x05\x06\x0e\x0f"
+  if (s.find_first_of('\x00') != string::npos ||
+      s.find_first_of("\x01\x02\x03\x04\x05\x06\x0e\x0f"
                       "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
                       "\x19\x1a\x1c\x1d\x1e\x1f") != string::npos)
     return true;
