@@ -1,5 +1,10 @@
 2005-04-14  Derek Scherger  <derek@echologic.com>
 
+	* database_check.cc (check_db): fail with N(...) when problems are
+	detected to exit with a non-zero status
+
+2005-04-14  Derek Scherger  <derek@echologic.com>
+
 	* monotone.texi (Informative): update description of 'diff' with
 	two revision arguments
 	

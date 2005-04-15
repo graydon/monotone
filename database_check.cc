@@ -671,7 +671,8 @@ check_db(app_state & app)
     missing_keys;
 
   if (total > 0)
-    P(F("check complete: %d files; %d manifests; %d revisions; %d keys; %d certs; %d problems detected\n") 
+    N(total == 0, 
+      F("check complete: %d files; %d manifests; %d revisions; %d keys; %d certs; %d problems detected\n") 
       % checked_files.size()
       % checked_manifests.size()
       % checked_revisions.size()
