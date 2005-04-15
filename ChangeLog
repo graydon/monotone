@@ -3,6 +3,12 @@
 	* diff_patch.cc(guess_binary): do not use '\x00' as first
 	character of a C string ...
 
+2005-04-15  Sebastian Spaeth  <Sebastian@SSpaeth.de>
+
+	* ui.cc: print byte progress to one decimal place
+	  in k or M.
+	* netsync.cc: update dot ticker every 1024 bytes.
+
 2005-04-15  Matt Johnston  <matt@ucc.asn.au>
 
 	* change_set.cc (confirm_proper_tree): use bitsets rather than maps
@@ -2755,7 +2761,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

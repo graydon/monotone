@@ -5,6 +5,7 @@
 #include "transforms.hh"
 
 #include <iostream>
+#include <iomanip>
 #include <boost/lexical_cast.hpp>
 
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
@@ -84,15 +85,28 @@ void tick_write_count::write_ticks()
        i != ui.tickers.end(); ++i)
     {
       string suffix;
-      int div = 1;
+      ostringstream disptick;
       if (i->second->kilocount && i->second->ticks >= 10000)
-        {
-          div = 1024;
-          suffix = "k";
+        { // automatic unit conversion is enabled
+          float div;
+          if (i->second->ticks >= 1048576) {
+          // ticks >=1MB, use Mb
+            div = 1048576;
+            suffix = "M";
+          } else {
+          // ticks <1MB, use kb
+            div = 1024;
+            suffix = "k";
+          }
+          disptick << std::fixed << std::setprecision(1) <<
+              (i->second->ticks / div);
+        } else {
+          // no automatic unit conversion.
+          disptick << i->second->ticks;
         }
       tickline +=
         string(" [")
-        + i->first + ": " + lexical_cast<string>(i->second->ticks / div)
+        + i->first + ": " + disptick.str()
         + suffix
         + "]";
     }
