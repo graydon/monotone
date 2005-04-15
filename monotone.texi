@@ -3526,9 +3526,7 @@ With one @option{--revision} option, @command{diff} will print the
 differences between the revision @var{id} and the current revision in
 the working copy.  With two @option{--revision} options @command{diff}
 will print the differences between revisions @var{id1} and @var{id2},
-ignoring any working copy. Note that no @var{pathname...} arguments may
-be specified to restrict the diff output in this case. Restrictions may
-only be applied to the current, in-progress, working copy revision.
+ignoring any working copy.
 
 In all cases, monotone will print a textual summary -- identical to
 the summary presented by @command{monotone status} -- of the logical
@@ -3537,8 +3535,8 @@ lines begin with a single hash mark @code{#}, and should be ignored by
 a program processing the diff, such as @command{patch}.
 
 Specifying pathnames to the @command{diff} command restricts the set of
-changes that are visible and results in only a partial diff of the
-working copy. Changes to files not included in the specified set of
+changes that are visible and results in only a partial diff between
+two revisions. Changes to files not included in the specified set of
 pathnames will be ignored.
 
 From within a subdirectory of the working copy the @command{diff}
