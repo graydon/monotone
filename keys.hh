@@ -27,13 +27,13 @@ void change_key_passphrase(lua_hooks & lua,       // to hook for phrase
                            rsa_keypair_id const & id, // to prompting user for phrase
                            base64< arc4<rsa_priv_key> > & encoded_key);
 
-void make_signature(lua_hooks & lua,           // to hook for phrase
+void make_signature(app_state & app,           // to hook for phrase
                     rsa_keypair_id const & id, // to prompting user for phrase
                     base64< arc4<rsa_priv_key> > const & priv,
                     std::string const & tosign,
                     base64<rsa_sha1_signature> & signature);
 
-bool check_signature(lua_hooks & lua,
+bool check_signature(app_state & app,
                      rsa_keypair_id const & id,
                      base64<rsa_pub_key> const & pub,
                      std::string const & alleged_text,

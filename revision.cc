@@ -19,7 +19,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "cryptopp/osrng.h"
+#include "botan/botan.h"
 
 #include "basic_io.hh"
 #include "change_set.hh"
@@ -1142,12 +1142,11 @@ void anc_graph::write_certs()
 
   {
     // regenerate epochs on all branches to random states
-    CryptoPP::AutoSeededRandomPool prng;
     
     for (std::set<std::string>::const_iterator i = branches.begin(); i != branches.end(); ++i)
       {
         char buf[constants::epochlen_bytes];
-        prng.GenerateBlock(reinterpret_cast<byte *>(buf), constants::epochlen_bytes);
+        Botan::Global_RNG::randomize(reinterpret_cast<Botan::byte *>(buf), constants::epochlen_bytes);
         hexenc<data> hexdata;
         encode_hexenc(data(std::string(buf, buf + constants::epochlen_bytes)), hexdata);
         epoch_data new_epoch(hexdata);
