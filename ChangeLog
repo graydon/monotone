@@ -1,3 +1,10 @@
+2005-04-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): use bitsets rather than maps
+	for tracking set membership.
+	* smap.hh: return reverse iterators properly, iterate over the vector
+	rather than self in ensure_sort()
+
 2005-04-14  Derek Scherger  <derek@echologic.com>
 
 	* database_check.cc (check_db): fail with N(...) when problems are
