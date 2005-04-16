@@ -1,5 +1,10 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* testsuite.at: Use a random server port.
+	
+	* .mt-attrs, contrib/README: Update for Notify.pl ->
+	monotone-notify.pl rename.
+	
 	* monotone.1: Warn people off rcs_import.
 	* monotone.texi (Commands): Likewise.
 
