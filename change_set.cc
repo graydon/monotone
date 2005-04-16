@@ -18,6 +18,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include "basic_io.hh"
 #include "change_set.hh"
@@ -513,19 +514,30 @@ sanity_check_path_item(path_item const & pi)
 static void
 confirm_proper_tree(path_state const & ps)
 {
-  std::map<tid,bool> confirmed;
-  I(ps.find(root_tid) == ps.end());
+  if (ps.empty())
+    return;
+
+  I(ps.find(root_tid) == ps.end()); // Note that this find() also ensures
+                                    // sortedness of ps.
+
+  tid min_tid = ps.begin()->first;
+  tid max_tid = ps.rbegin()->first;
+  size_t tid_range = max_tid - min_tid + 1;
+  
+  boost::dynamic_bitset<> confirmed(tid_range);
+  boost::dynamic_bitset<> ancs(tid_range);
+
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       tid curr = i->first;
       path_item item = i->second;
-      std::map<tid,bool> ancs; 
+      ancs.reset();
 
-      while (confirmed.find(curr) == confirmed.end())
+      while (confirmed.test(curr - min_tid) == false)
         {             
           sanity_check_path_item(item);
-          I(ancs.find(curr) == ancs.end());
-          ancs.insert(std::make_pair(curr,true));
+          I(ancs.test(curr - min_tid) == false);
+          ancs.set(curr - min_tid);
           if (path_item_parent(item) == root_tid)
             break;
           else
@@ -542,10 +554,8 @@ confirm_proper_tree(path_state const & ps)
               I(path_item_type(item) == ptype_directory);
             }
         }
-      std::copy(ancs.begin(), ancs.end(), 
-                inserter(confirmed, confirmed.begin()));      
+      confirmed |= ancs;
     }
-  I(confirmed.find(root_tid) == confirmed.end());
 }
 
 static void
@@ -751,15 +761,19 @@ compose_rearrangement(path_analysis const & pa,
 
       if (old_path == new_path)
         {
+          /*
           L(F("skipping preserved %s %d : '%s'\n")
             % (path_item_type(old_item) == ptype_directory ? "directory" : "file")
             % curr % old_path);
+          */
           continue;
         }
       
+      /*
       L(F("analyzing %s %d : '%s' -> '%s'\n")
         % (path_item_type(old_item) == ptype_directory ? "directory" : "file")
         % curr % old_path % new_path);
+      */
       
       if (null_name(path_item_name(old_item)))
         {

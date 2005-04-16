@@ -13,6 +13,39 @@
 	* tests/t_rename_dir_add_dir_with_old_name.at: New test.
 	* testsuite.at: Add it.
 	
+2005-04-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (compose_rearrangement): remove logging statements
+	that were using noticable CPU time.
+
+2005-04-15  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* diff_patch.cc(guess_binary): do not use '\x00' as first
+	character of a C string ...
+
+2005-04-15  Sebastian Spaeth  <Sebastian@SSpaeth.de>
+
+	* ui.cc: print byte progress to one decimal place
+	  in k or M.
+	* netsync.cc: update dot ticker every 1024 bytes.
+
+2005-04-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): use bitsets rather than maps
+	for tracking set membership.
+	* smap.hh: return reverse iterators properly, iterate over the vector
+	rather than self in ensure_sort()
+
+2005-04-14  Derek Scherger  <derek@echologic.com>
+
+	* database_check.cc (check_db): fail with N(...) when problems are
+	detected to exit with a non-zero status
+
+2005-04-14  Derek Scherger  <derek@echologic.com>
+
+	* monotone.texi (Informative): update description of 'diff' with
+	two revision arguments
+	
 2005-04-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/process.cc: Fix build on MingW 3.2.0-rc[123] by adding
