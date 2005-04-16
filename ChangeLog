@@ -3,16 +3,83 @@
 	* monotone.cc: Fix warnings: add missing initializers.
 	* netsync.cc: Fix warnings: inline static vs static inline.
 
-2005-04-15  Sebastian Spaeth  <Sebastian@SSpaeth.de>
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
-	* ui.cc: print byte progress to one decimal place
-	  in k or M.
-	* netsync.cc: update dot ticker every 1024 bytes.
+	* testsuite.at: Use a random server port.
+	
+	* .mt-attrs, contrib/README: Update for Notify.pl ->
+	monotone-notify.pl rename.
+	
+	* monotone.1: Warn people off rcs_import.
+	* monotone.texi (Commands): Likewise.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Emile Snyder <emile@alumni.reed.edu>.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_lf_crlf.at: New test from Emile Snyder
+	<emile@alumni.reed.edu>, with tweaks.
+	* testsuite.at: Add it.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Small fixups.
+
+2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
+	
+	* tests/t_cvsimport2.at: new test; CVS Attic files fail test
+	reported by: hjlipp@web.de 15.04.2005 02:45
+
+2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
+	
+	* tests/t_rcs_import.at: new test; problematic CVS import as
+	reported in the list. However it works just fine here, so it
+	really tests for a successful pass
+
+2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
+
+	* tests/README: new file, on how to create/run tests
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_rename_dir_add_dir_with_old_name.at: XFAIL.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_diff_binary.at: Un-XFAIL.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network Service): Rewrite to include former
+	Exchanging Keys section.
+	(Branching and Merging): New tutorial section, inspired by a patch
+	from Martin Kihlgren <zond@troja.ath.cx>.
+	(CVS Phrasebook): Add "Importing a New Project".
+
+	* AUTHORS: Add Martin Dvorak.
+	
+2005-04-15 Martin Dvorak <jezek2@advel.cz>
+	
+	* tests/t_rename_dir_add_dir_with_old_name.at: New test.
+	* testsuite.at: Add it.
+	
+2005-04-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (compose_rearrangement): remove logging statements
+	that were using noticable CPU time.
 
 2005-04-15  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* diff_patch.cc(guess_binary): do not use '\x00' as first
 	character of a C string ...
+
+2005-04-15  Sebastian Spaeth  <Sebastian@SSpaeth.de>
+
+	* ui.cc: print byte progress to one decimal place
+	  in k or M.
+	* netsync.cc: update dot ticker every 1024 bytes.
 
 2005-04-15  Matt Johnston  <matt@ucc.asn.au>
 

@@ -761,15 +761,19 @@ compose_rearrangement(path_analysis const & pa,
 
       if (old_path == new_path)
         {
+          /*
           L(F("skipping preserved %s %d : '%s'\n")
             % (path_item_type(old_item) == ptype_directory ? "directory" : "file")
             % curr % old_path);
+          */
           continue;
         }
       
+      /*
       L(F("analyzing %s %d : '%s' -> '%s'\n")
         % (path_item_type(old_item) == ptype_directory ? "directory" : "file")
         % curr % old_path % new_path);
+      */
       
       if (null_name(path_item_name(old_item)))
         {
