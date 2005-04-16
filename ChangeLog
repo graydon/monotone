@@ -1,5 +1,9 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_rename_dir_add_dir_with_old_name.at: XFAIL.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_diff_binary.at: Un-XFAIL.
 
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
