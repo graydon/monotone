@@ -1,4 +1,8 @@
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
+	* add tests/t_cvsimport2.at: CVS Attic files fail test
+	reported by: hjlipp@web.de 15.04.2005 02:45
+
+2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
 	* add tests/t_rcs_import.at: problematic CVS import as reported 
 	in the list. However it works just fine here, so it really tests for 
 	a successful pass
