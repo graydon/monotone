@@ -1,3 +1,7 @@
+2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
+
+	* add tests/README on how to create/run tests
+	
 2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_setup_checkout_modify_new_dir.at:
