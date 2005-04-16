@@ -1,5 +1,9 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* AUTHORS: Add Emile Snyder <emile@alumni.reed.edu>.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_lf_crlf.at: New test from Emile Snyder
 	<emile@alumni.reed.edu>, with tweaks.
 	* testsuite.at: Add it.
