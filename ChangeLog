@@ -1,4 +1,7 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+
 2005-04-16  Emile Snyder <emile@alumni.reed.edu>
 
 	* tests/t_add_vs_commit.at: New test for failing case.  If you
