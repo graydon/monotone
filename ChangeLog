@@ -1,3 +1,18 @@
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network Service): Rewrite to include former
+	Exchanging Keys section.
+	(Branching and Merging): New tutorial section, inspired by a patch
+	from Martin Kihlgren <zond@troja.ath.cx>.
+	(CVS Phrasebook): Add "Importing a New Project".
+
+	* AUTHORS: Add Martin Dvorak.
+	
+2005-04-15 Martin Dvorak <jezek2@advel.cz>
+	
+	* tests/t_rename_dir_add_dir_with_old_name.at: New test.
+	* testsuite.at: Add it.
+	
 2005-04-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/process.cc: Fix build on MingW 3.2.0-rc[123] by adding
