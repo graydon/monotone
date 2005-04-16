@@ -5849,7 +5849,8 @@ exist in the database.
 
 @item @b{rcs_import} @i{<rcsfile> ...}
 Import all file versions in RCS files. Does not reconstruct revisions
-across the entire tree.
+across the entire tree.  You do not want this command, it is for
+debugging; use cvs_import.
 @comment TROFF INPUT: .TP
 
 @item @b{checkout} @i{[manifest-id]} @i{<directory>}

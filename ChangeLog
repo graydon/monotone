@@ -1,3 +1,4 @@
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 2005-04-16  Emile Snyder <emile@alumni.reed.edu>
 
 	* tests/t_add_vs_commit.at: New test for failing case.  If you
@@ -6,6 +7,24 @@
 	directory.
 	* testsuite.at: Add it.
 	
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (checkout): Move check for existence of revision
+	earlier.
+	
+	* tests/t_netsync_defaults.at, tests/t_netsync_single.at:
+	Don't hard-code netsync port.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* testsuite.at: Use a random server port.
+	
+	* .mt-attrs, contrib/README: Update for Notify.pl ->
+	monotone-notify.pl rename.
+	
+	* monotone.1: Warn people off rcs_import.
+	* monotone.texi (Commands): Likewise.
+
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* AUTHORS: Add Emile Snyder <emile@alumni.reed.edu>.

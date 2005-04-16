@@ -35,7 +35,7 @@ AT_CHECK(MONOTONE2 checkout --branch=otherbranch $OTHERBRANCH_R testdir2, [], [i
 AT_CHECK(test -f testdir2/testfile)
 
 # And finally, 
-AT_CHECK(MONOTONE2 set database default-server 127.0.0.1:5555, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 set database default-server 127.0.0.1:$_PORT, [], [ignore], [ignore])
 AT_CHECK(MONOTONE2 set database default-collection thirdbranch, [], [ignore], [ignore])
 AT_CHECK(MONOTONE2 sync, [], [ignore], [ignore])
 AT_CHECK(MONOTONE2 checkout --branch=thirdbranch $THIRDBRANCH_R testdir3, [], [ignore], [ignore])
