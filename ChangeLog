@@ -1,4 +1,9 @@
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
+	* add tests/t_rcs_import.at: problematic CVS import as reported 
+	in the list. However it works just fine here, so it really tests for 
+	a successful pass
+
+2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
 
 	* add tests/README on how to create/run tests
 
