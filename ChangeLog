@@ -1,15 +1,21 @@
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Small fixups.
+
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
-	* add tests/t_cvsimport2.at: CVS Attic files fail test
+	
+	* tests/t_cvsimport2.at: new test; CVS Attic files fail test
 	reported by: hjlipp@web.de 15.04.2005 02:45
 
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
-	* add tests/t_rcs_import.at: problematic CVS import as reported 
-	in the list. However it works just fine here, so it really tests for 
-	a successful pass
+	
+	* tests/t_rcs_import.at: new test; problematic CVS import as
+	reported in the list. However it works just fine here, so it
+	really tests for a successful pass
 
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
 
-	* add tests/README on how to create/run tests
+	* tests/README: new file, on how to create/run tests
 
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -123,8 +129,6 @@
 	* commands.cc (checkout): Tweak branch checking logic.
 	(update): Make user explicitly switch branches.
 
-####### Ancestor
-======= end
 2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* rcs_import.cc (import_cvs_repo): Check that user isn't trying to
