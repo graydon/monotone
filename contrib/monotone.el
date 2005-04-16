@@ -1,13 +1,17 @@
 ;;; monotone.el --- Run monotone from within Emacs.
 ;; Copyright 2005 by Olivier Andrieu <oandrieu@nerim.net>
+;; Version 0.2 2005-04-13
 
 ;; This defines `monotone-diff', `monotone-status', `monotone-add',
-;; `monotone-drop', `monotone-revert' and `monotone-commit'. They call
-;; monotone on the current file. With a prefix argument (C-u) the
-;; command is applied on the whole tree.
+;; `monotone-drop', `monotone-revert' and `monotone-commit'. These
+;; functions call the corresponding monotone command, restricted to
+;; the current file. With a prefix argument (C-u) the command is
+;; applied unrestricted (on the whole tree). As an exception,
+;; `monotone-status' has the opposite behaviour: it is unrestricted by
+;; default, restricted with a prefix argument.
 
 ;; /!\ beware of bugs: `monotone-commit' is more dangerous than the
-;; other two as it modifies the database.
+;; others since it writes to the database.
 
 
 (defvar monotone-program
@@ -24,20 +28,21 @@
       (append other-args (list arg))
     other-args))
 
-(defun monotone-run (command &optional arg)
-  (unless buffer-file-name
-    (error "This buffer is not associated with a file"))
-  (let ((file
-	 (if arg 
-	     nil
-	   (file-name-nondirectory buffer-file-name)))
-	(dir (file-name-directory buffer-file-name)))
+(defun monotone-run (command &optional global)
+  (let (monotone-arg 
+	(dir default-directory))
+    (unless global
+      (setq monotone-arg 
+	    (if buffer-file-name
+		(file-name-nondirectory buffer-file-name)
+	      ".")))
+
     (pop-to-buffer monotone-buffer)
     (setq buffer-read-only nil)
     (erase-buffer)
     (cd dir)
     (apply 'call-process monotone-program nil t nil 
-	   (may-append file command))
+	   (may-append monotone-arg command))
     (goto-char (point-min))
     (fundamental-mode)
     (setq buffer-read-only t)
@@ -54,11 +59,11 @@ a prefix argument, do it for the whole tree."
     (diff-mode)))
 
 (defun monotone-status (arg)
-  "Run `monotone status' on the current buffer's file. When called with
-a prefix argument, do it for the whole tree."
+  "Run `monotone status'. When called with a prefix argument, do it
+for the current buffer's file only."
   (interactive "P")
   (save-selected-window
-    (monotone-run "status" arg)))
+    (monotone-run "status" (not arg))))
 
 (defun monotone-add ()
   "Run `monotone add' on the current buffer's file."
@@ -75,12 +80,12 @@ a prefix argument, do it for the whole tree."
 (defun monotone-revert ()
   "Run `monotone revert' on the current buffer's file."
   (interactive)
-  (if (and buffer-file-name
-	   (yes-or-no-p 
-	    (format "Are you sure you want monotone to revert '%s' ? " buffer-file-name)))
-      (save-selected-window
-	(monotone-run "revert")
-	(revert-buffer t t))))
+  (when (yes-or-no-p 
+	 (format "Are you sure you want monotone to revert '%s' ? " 
+		 (or buffer-file-name default-directory)))
+    (save-selected-window
+      (monotone-run "revert"))
+    (revert-buffer t t)))
 
 (defun monotone-install-keymap ()
   (unless monotone-map
@@ -122,36 +127,32 @@ a prefix argument, do it for the whole tree."
   "Run `monotone commit' on the current buffer's file. When called
 with a prefix argument, do it on the whole tree."
   (interactive "P")
-  (if (null buffer-file-name)
-      (error "This buffer is not associated with a file"))
-  (let ((file
-	 (if arg 
-	     nil
-	   (file-name-nondirectory buffer-file-name)))
-	(dir (file-name-directory buffer-file-name)))
+  (setq monotone-commit-arg 
+	(cond (arg nil)
+	      (buffer-file-name (file-name-nondirectory buffer-file-name))
+	      (t "."))
+	monotone-commit-dir default-directory)
 
-    (pop-to-buffer "*monotone ChangeLog*")
-    (setq monotone-commit-arg file
-	  monotone-commit-dir dir)
-    (setq buffer-read-only nil)
-    (erase-buffer)
-    (cd dir)
-    (apply 'call-process monotone-program nil t nil 
-	   (may-append file "status"))
-    (goto-char (point-min))
-    (while (progn
-	     (insert "MT: ")
-	     (= 0 (forward-line 1))))
-    (goto-char (point-min))
-    (dolist 
-	(l '(""
-	     "MT: ----------------------------------------------------------------------"
-	     "MT: Enter Log.  Lines beginning with `MT:' are removed automatically."
-	     "MT: Type C-c C-c to commit, kill the buffer to abort."))
-      (insert l "\n"))
-    (goto-char (point-max))
-    (insert "----------------------------------------------------------------------\n")
-    (text-mode)
-    (monotone-install-keymap)
-    (goto-char (point-min))
-    (shrink-window-if-larger-than-buffer)))
+  (pop-to-buffer "*monotone ChangeLog*")
+  (setq buffer-read-only nil)
+  (erase-buffer)
+  (cd monotone-commit-dir)
+  (apply 'call-process monotone-program nil t nil 
+	 (may-append monotone-commit-arg "status"))
+  (goto-char (point-min))
+  (while (progn
+	   (insert "MT: ")
+	   (= 0 (forward-line 1))))
+  (goto-char (point-min))
+  (dolist 
+      (l '(""
+	   "MT: ----------------------------------------------------------------------"
+	   "MT: Enter Log.  Lines beginning with `MT:' are removed automatically."
+	   "MT: Type C-c C-c to commit, kill the buffer to abort."))
+    (insert l "\n"))
+  (goto-char (point-max))
+  (insert "----------------------------------------------------------------------\n")
+  (text-mode)
+  (monotone-install-keymap)
+  (goto-char (point-min))
+  (shrink-window-if-larger-than-buffer))

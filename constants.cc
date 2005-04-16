@@ -148,7 +148,9 @@ namespace constants
                                + 1   // smallest uleb possible
                                + 4); // adler32    
   
-  size_t const netcmd_payload_limit = 0xffffff;
+  // allow payloads up to 256 megs (this sets the in-practice maximum size of
+  // a compressed file/manifest).
+  size_t const netcmd_payload_limit = 2 << 27;
   size_t const netcmd_maxsz = netcmd_minsz + netcmd_payload_limit;
   size_t const netcmd_minimum_bytes_to_bother_with_gzip = 0xfff;
 

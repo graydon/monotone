@@ -212,11 +212,11 @@ is just a relationship between two versions, only identified by ID.
 @end ifnotinfo
 
 Version control systems, such as monotone, are principally concerned
-with the storage and management of @i{multiple} versions of some
-files.  One way to store multiple versions of a file is, literally, to
-save a separate @i{complete} copy of the file, every time you make a
+with the storage and management of @i{multiple} versions of some files.
+One way to store multiple versions of a file is, literally, to save a
+separate @i{complete} copy of the file, every time you make a
 change. When necessary, monotone will save complete copies of your
-files in their, compressed with the @command{zlib} compression format.
+files, compressed with the @command{zlib} compression format.
 
 @ifinfo
 @smallexample
@@ -1071,13 +1071,13 @@ example team; other tasks involve only one member.
 @menu
 * Creating a Database::
 * Generating Keys::
-* Exchanging Keys::
 * Starting a New Project::
 * Adding Files::
 * Committing Work::
 * Network Service::
 * Making Changes::
 * Dealing with a Fork::
+* Branching and Merging::
 @end menu
 
 
@@ -1221,82 +1221,10 @@ configuration file.
 Abe and Beth do the same, with their secret passphrases.
 
 @page
-@node    Exchanging Keys
-@section Exchanging Keys
-
-Jim, Abe and Beth all wish to work with one another, and trust one
-another. For monotone to accept this situation, the team members will
-need to exchange the public parts of their @sc{rsa} key with each
-other. 
-
-First, Jim exports his public key:
-
-@smallexample
-@group
-$ monotone --db=~/jim.db pubkey jim@@juicebot.co.jp >~/jim.pubkey
-@end group
-@end smallexample
-
-His public key is just a plain block of ASCII text:
-
-@smallexample
-@group
-$ cat ~/jim.pubkey
-[pubkey jim@@juicebot.co.jp]
-MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCbaVff9SF78FiB/1nUdmjbU/TtPyQqe/fW
-CDg7hSg1yY/hWgClXE9FI0bHtjPMIx1kBOig09AkCT7tBXM9z6iGWxTBhSR7D/qsJQGPorOD
-DO7xovIHthMbZZ9FnvyB/BCyiibdWgGT0Gtq94OKdvCRNuT59e5v9L4pBkvajb+IzQIBEQ==
-[end]
-@end group
-@end smallexample
-
-Abe also exports his public key:
-
-@smallexample
-@group
-$ monotone --db=~/abe.db pubkey abe@@juicebot.co.jp >~/abe.pubkey
-@end group
-@end smallexample
-
-As does Beth:
-
-@smallexample
-@group
-$ monotone --db=~/beth.db pubkey beth@@juicebot.co.jp >~/beth.pubkey
-@end group
-@end smallexample
-
-Then all three team members exchange keys. The keys are not secret,
-but the team members must be relatively certain that they are
-communicating with the person they intend to trust, when exchanging
-keys, and not some malicious person pretending to be a team
-member. Key exchange may involve sending keys over an encrypted
-medium, or meeting in person to exchange physical copies, or any
-number of techniques. All that matters, ultimately, is for each team
-member to receive the keys of the others.
-
-So eventually, after key exchange, Jim has Beth's and Abe's public key
-files in his home directory, along with his own. He tells monotone to
-read the associated key packets into his database:
-
-@smallexample
-@group
-$ monotone --db=~/jim.db read <~/abe.pubkey
-monotone: read 1 packet
-$ monotone --db=~/jim.db read <~/beth.pubkey
-monotone: read 1 packet
-@end group
-@end smallexample
-
-Beth and Abe similarly tell monotone to read read the two new public
-keys they received into their respective databases.
-
-
-@page
 @node    Starting a New Project
 @section Starting a New Project
 
-Before they can begin work on the project, Jim needs to create a
+Before he can begin work on the project, Jim needs to create a
 @i{working copy} --- a directory whose contents monotone will keep track
 of.  Often, one works on projects that someone else has started, and
 creates working copies with the @code{checkout} command, which you'll
@@ -1529,10 +1457,7 @@ into the database.
 @smallexample
 @group
 $ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit --message='initial checkin of project'
-monotone: beginning commit
-monotone: manifest 2098eddbe833046174de28172a813150a6cbda7b
-monotone: revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
-monotone: branch jp.co.juicebot.jb7
+monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
@@ -1643,9 +1568,65 @@ yet, it has no descendents.
 @section Network Service
 
 Jim now decides he will make his base revision available to his
-employees. To do this first adds a small amount of extra information
-to his @file{.monotonerc} file, permitting Abe and Beth to access his
-database:
+employees. To do this he gives Abe and Beth permission to access his
+database.  There are two parts to this: first, he has to get a copy of
+each of their public keys; then, he has to tell monotone that the
+holders of those keys are permitted to access his database.
+
+First, Abe exports his public key:
+
+@smallexample
+@group
+$ monotone --db=~/abe.db pubkey abe@@juicebot.co.jp >~/abe.pubkey
+@end group
+@end smallexample
+
+His public key is just a plain block of ASCII text:
+
+@smallexample
+@group
+$ cat ~/abe.pubkey
+[pubkey abe@@juicebot.co.jp]
+MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCbaVff9SF78FiB/1nUdmjbU/TtPyQqe/fW
+CDg7hSg1yY/hWgClXE9FI0bHtjPMIx1kBOig09AkCT7tBXM9z6iGWxTBhSR7D/qsJQGPorOD
+DO7xovIHthMbZZ9FnvyB/BCyiibdWgGT0Gtq94OKdvCRNuT59e5v9L4pBkvajb+IzQIBEQ==
+[end]
+@end group
+@end smallexample
+
+Beth also exports her public key:
+
+@smallexample
+@group
+$ monotone --db=~/beth.db pubkey beth@@juicebot.co.jp >~/beth.pubkey
+@end group
+@end smallexample
+
+Then Abe and Beth both send their keys to Jim.  The keys are not secret,
+but the team members must be relatively certain that they are
+communicating with the person they intend to trust, when exchanging
+keys, and not some malicious person pretending to be a team
+member. Key exchange may involve sending keys over an encrypted
+medium, or meeting in person to exchange physical copies, or any
+number of techniques. All that matters, ultimately, is that Jim receive
+both Abe and Beth's key.
+
+So eventually, after key exchange, Jim has the public key files in his
+home directory. He tells monotone to read the associated key packets
+into his database:
+
+@smallexample
+@group
+$ monotone --db=~/jim.db read <~/abe.pubkey
+monotone: read 1 packet
+$ monotone --db=~/jim.db read <~/beth.pubkey
+monotone: read 1 packet
+@end group
+@end smallexample
+
+Now Jim's monotone is able to identify Beth and Abe, and he is ready to
+give them permission to access his database.  He does this by adding a
+small amount of extra information to his @file{.monotonerc} file:
 
 @smallexample
 @group
@@ -1719,8 +1700,9 @@ In practice, most people like to use at least one central server that is
 always running; this way, everyone always knows where to go to get the
 latest changes, and people can push their changes out without first
 calling their friends and making sure that they have their servers
-running.  To support this style of working, monotone remembers the first
-server you use, and makes that the default for future operations.
+running.  To make this style of working more convenient, monotone
+remembers the first server you use, and makes that the default for
+future operations.
 
 @page
 @node    Making Changes
@@ -1785,10 +1767,8 @@ Satisfied with his day's work, Abe decides to commit.
 @smallexample
 @group
 $ monotone commit 
-monotone: beginning commit
-monotone: manifest b33cb337dccf21d6673f462d677a6010b60699d1
-monotone: revision 70decb4b31a8227a629c0e364495286c5c75f979
-monotone: branch jp.co.juicebot.jb7
+monotone: beginning commit on branch 'jp.co.juicebot.jb7'
+monotone: commited revision 70decb4b31a8227a629c0e364495286c5c75f979
 @end group
 @end smallexample
 
@@ -1886,16 +1866,6 @@ $ vi MT/log
 @end group
 @end smallexample
 
-and logs her changes in @file{MT/log} right away so she does not
-forget what she has done:
-
-@smallexample
-@group
-$ vi MT/log
-* src/banana.c: Added polling implementation
-@end group
-@end smallexample
-
 Later, she commits her work.  Monotone again invokes an external editor
 for her to edit her log message, but this time it fills in the messages
 she's written so far, and she simply checks them over one last time
@@ -1904,10 +1874,7 @@ before finishing her commit:
 @smallexample
 @group
 $ monotone commit
-monotone: beginning commit
-monotone: manifest eaebc3c558d9e30db6616ef543595a5a64cc6d5f
-monotone: revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
-monotone: branch jp.co.juicebot.jb7
+monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
 @end group
 @end smallexample
@@ -2022,10 +1989,7 @@ She commits her work:
 @smallexample
 @group
 $ monotone commit --message='interrupt implementation of src/banana.c'
-monotone: beginning commit
-monotone: manifest de81e46acb24b2950effb18572d5166f83af3881
-monotone: revision 8b41b5399a564494993063287a737d26ede3dee4
-monotone: branch jp.co.juicebot.jb7
+monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
 @end smallexample
@@ -2135,6 +2099,95 @@ of the pre-merge state: if you commit your work first, and merge after
 committing, the merge can fail (due to difficulty in a manual merge
 step) and your committed state is still safe. It is therefore
 recommended that you commit your work @emph{first}, before merging.
+
+@page
+@node    Branching and Merging
+@section Branching and Merging
+
+So by now you're familiar with making changes, sharing them with other
+people, and integrating your changes with their changes.  Sometimes,
+though, you may want to make some changes, and @emph{not} integrate them
+with other people's --- or at least not right away.  One way to do this
+would be to simply never run @command{monotone merge}; but it would
+quickly become confusing to try and keep track of which changes were in
+which revisions.  This is where @emph{branches} are useful.
+
+Continuing our example, suppose that Jim is so impressed by Beth's work
+on banana juice support that he assigns her to work on the JuiceBot 7's
+surprise new feature: muffins.  In the mean time, Abe will continue
+working on the JuiceBot's basic juice-related function.
+
+The changes required to support muffins are somewhat complicated, and
+Beth is worried that her work might destabilize the program, and
+interfere with Abe's work.  In fact, she isn't even sure her first
+attempt will turn out to be the right approach; she might work on it for
+a while and then decide it was a bad idea, and should be discarded.  For
+all these reasons, she decides that she will work on a branch, and then
+once she is satisfied with the new code, she will merge back onto the
+mainline.
+
+She decides that since main development is in branch
+@code{jp.co.juicebot.jb7}, she will use branch
+@code{jp.co.juicebot.jb7.muffins}.  So, she makes the first few edits to
+the new muffins code, and commits it on a new branch by simply passing
+@option{--branch} to commit:
+
+@smallexample
+@group
+$ monotone commit --branch=jp.co.juicebot.jb7.muffins --message='initial autobake framework'
+monotone: beginning commit on branch 'jp.co.juicebot.jb7.muffins'
+monotone: committed revision d33caefd61823ecbb605c39ffb84705dec449857
+@end group
+@end smallexample
+
+That's all there is to it --- now there is a
+@code{jp.co.juicebot.jb7.muffins} branch, with her initial checkin on
+it.  She can make further checkins from the same working copy, and they
+will automatically go to the muffins branch; if anyone else wants to
+help her work on muffins, they can check out that branch as usual.
+
+Of course, while Beth is working on the new muffins code, Abe is still
+making fixes to the main line.  Occasionally, Beth wants to integrate
+his latest work into the muffins branch, so that her version doesn't
+fall too far behind.  She does this by using the @command{propagate}
+command:
+
+@smallexample
+@group
+$ monotone propagate jp.co.juicebot.jb7 jp.co.juicebot.jb7.muffins
+monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
+monotone: [source] da003f115752ac6e4750b89aaca9dbba178ac80c
+monotone: [target] d0e5c93bb61e5fd25a0dadf41426f209b73f40af
+monotone: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab found
+@end group
+@end smallexample
+
+The @command{propagate} merges all of the new changes on one branch onto
+another.
+
+When the muffins code is eventually stable and ready to be integrated
+into the main line of development, she simple propagates the other way:
+
+@smallexample
+@group
+$ monotone propagate jp.co.juicebot.jb7.muffins jp.co.juicebot.jb7
+monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
+monotone: [source] 4e48e2c9a3d2ca8a708cb0cc545700544efb5021
+monotone: [target] bd29b2bfd07644ab370f50e0d68f26dcfd3bb4af
+monotone: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 found
+@end group
+@end smallexample
+
+Monotone always records the full history of all merges, and is designed
+to handle an arbitrarily complicated graph of changes.  You can make a
+branch, then branch off from that branch, propagate changes between
+arbitrary branches, and so on; monotone will track all of it, and do
+something sensible for each merge.  Of course, it is still probably a
+good idea to come up with some organization of branches and a plan for
+which should be merged to which other ones.  Monotone may keep track of
+graphs of arbitrary complexity; but, you will have more trouble.
+Whatever arrangement of branches you come up with, though, monotone
+should be able to handle it.
 
 @node    Advanced Uses
 @chapter Advanced Uses
@@ -2952,7 +3005,7 @@ $ cvs diff -r 1.2 -r 1.4
 @tab
 @smallexample
 @group
-$ monotone diff 3e7db 278df
+$ monotone diff -r 3e7db -r 278df
 @end group
 @end smallexample
 @end multitable
@@ -3033,6 +3086,29 @@ Monotone does not require that you erase a file from the working copy
 before you drop it. Dropping a file merely removes its entry in the
 manifest of the current revision.
 
+
+@heading Importing a New Project
+
+@multitable @columnfractions .4 .4
+@item
+@smallexample
+@group
+$ cvs import wobbler vendor start
+@end group
+@end smallexample
+@tab
+@smallexample
+@group
+$ monotone --db=/path/to/database.db --branch=com.foo.wobbler setup .
+$ monotone add .
+$ monotone commit
+@end group
+@end smallexample
+@end multitable
+
+The @command{setup} command turns an ordinary directory into a
+monotone working copy.  After that, you can add your files and commit
+them as usual.
 
 @heading Initializing a Repository
 
@@ -3525,6 +3601,7 @@ completion systems, such as those in @command{bash} and @command{zsh}.
 @itemx monotone diff --revision=@var{id}
 @itemx monotone diff --revision=@var{id} @var{pathname...}
 @itemx monotone diff --revision=@var{id1} --revision=@var{id2}
+@itemx monotone diff --revision=@var{id1} --revision=@var{id2} @var{pathname...}
 
 These commands print out GNU ``unified diff format'' textual difference
 listings between various manifest versions. With no @option{--revision}
@@ -3535,9 +3612,7 @@ With one @option{--revision} option, @command{diff} will print the
 differences between the revision @var{id} and the current revision in
 the working copy.  With two @option{--revision} options @command{diff}
 will print the differences between revisions @var{id1} and @var{id2},
-ignoring any working copy. Note that no @var{pathname...} arguments may
-be specified to restrict the diff output in this case. Restrictions may
-only be applied to the current, in-progress, working copy revision.
+ignoring any working copy.
 
 In all cases, monotone will print a textual summary -- identical to
 the summary presented by @command{monotone status} -- of the logical
@@ -3546,8 +3621,8 @@ lines begin with a single hash mark @code{#}, and should be ignored by
 a program processing the diff, such as @command{patch}.
 
 Specifying pathnames to the @command{diff} command restricts the set of
-changes that are visible and results in only a partial diff of the
-working copy. Changes to files not included in the specified set of
+changes that are visible and results in only a partial diff between
+two revisions. Changes to files not included in the specified set of
 pathnames will be ignored.
 
 From within a subdirectory of the working copy the @command{diff}

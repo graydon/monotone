@@ -1,7 +1,110 @@
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
 
 	* add tests/README on how to create/run tests
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_rename_dir_add_dir_with_old_name.at: XFAIL.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_diff_binary.at: Un-XFAIL.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network Service): Rewrite to include former
+	Exchanging Keys section.
+	(Branching and Merging): New tutorial section, inspired by a patch
+	from Martin Kihlgren <zond@troja.ath.cx>.
+	(CVS Phrasebook): Add "Importing a New Project".
+
+	* AUTHORS: Add Martin Dvorak.
 	
+2005-04-15 Martin Dvorak <jezek2@advel.cz>
+	
+	* tests/t_rename_dir_add_dir_with_old_name.at: New test.
+	* testsuite.at: Add it.
+	
+2005-04-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (compose_rearrangement): remove logging statements
+	that were using noticable CPU time.
+
+2005-04-15  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* diff_patch.cc(guess_binary): do not use '\x00' as first
+	character of a C string ...
+
+2005-04-15  Sebastian Spaeth  <Sebastian@SSpaeth.de>
+
+	* ui.cc: print byte progress to one decimal place
+	  in k or M.
+	* netsync.cc: update dot ticker every 1024 bytes.
+
+2005-04-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): use bitsets rather than maps
+	for tracking set membership.
+	* smap.hh: return reverse iterators properly, iterate over the vector
+	rather than self in ensure_sort()
+
+2005-04-14  Derek Scherger  <derek@echologic.com>
+
+	* database_check.cc (check_db): fail with N(...) when problems are
+	detected to exit with a non-zero status
+
+2005-04-14  Derek Scherger  <derek@echologic.com>
+
+	* monotone.texi (Informative): update description of 'diff' with
+	two revision arguments
+	
+2005-04-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/process.cc: Fix build on MingW 3.2.0-rc[123] by adding
+	<sstream> include.
+
+2005-04-14  Jon Bright  <jon@siliconcircus.com>
+	* win32/process.cc (process_spawn): Add some extra debug info
+	* std_hooks.lua (execute): If pid is -1, don't try and wait on
+	the process
+
+2005-04-14  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_unique_entries_in_directories): use a
+	  std::vector rather than std::map for better performance (only sort
+	  once).
+	* smap.hh: an invariant
+
+2005-04-14  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_vcheck.at: Update notes.
+
+2005-04-14  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* monotone.texi (Making Changes): Fixed duplicate paragraph
+	* NEWS: Corrected spelling error in my name.
+
+2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Informative): 'diff' with two revision arguments
+	can now be filtered by file.
+	
+	* constants.cc (netcmd_payload_limit): Bump to 256 megs.
+
+2005-04-14  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* Makefile.am: silence cmp
+
+2005-04-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/terminal.cc (have_smart_terminal): Implement for Win32.
+
+2005-04-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_netsync_largish_file.at: Add test for netsyncing largish
+	(32MB) files.  This test is failing at present.
+	* testsuite.at: Add new test.
+
 2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_setup_checkout_modify_new_dir.at:
@@ -11,6 +114,8 @@
 	* commands.cc (checkout): Tweak branch checking logic.
 	(update): Make user explicitly switch branches.
 
+####### Ancestor
+======= end
 2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* rcs_import.cc (import_cvs_repo): Check that user isn't trying to
@@ -2690,7 +2795,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Mi�Å�kowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

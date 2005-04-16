@@ -2,9 +2,6 @@ AT_SETUP([diff a binary file])
 MONOTONE_SETUP
 NEED_UNGZB64
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
 # diff should probably not display the contents of binary files
 
 AT_DATA(binary.gz.b64, 
