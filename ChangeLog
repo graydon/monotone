@@ -1,5 +1,9 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_diff_binary.at: Un-XFAIL.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi (Network Service): Rewrite to include former
 	Exchanging Keys section.
 	(Branching and Merging): New tutorial section, inspired by a patch
