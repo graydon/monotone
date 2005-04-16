@@ -1,5 +1,13 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (checkout): Move check for existence of revision
+	earlier.
+	
+	* tests/t_netsync_defaults.at, tests/t_netsync_single.at:
+	Don't hard-code netsync port.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* testsuite.at: Use a random server port.
 	
 	* .mt-attrs, contrib/README: Update for Notify.pl ->

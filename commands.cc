@@ -1793,6 +1793,9 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
       dir = idx(args, 1)();
       complete(app, idx(args, 0)(), ident);
       
+      N(app.db.revision_exists(ident),
+        F("no revision %s found in database") % ident);
+
       {
         cert_value b;
         guess_branch(ident, app, b);
@@ -1823,9 +1826,6 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
   file_data data;
   manifest_id mid;
   manifest_map m;
-
-  N(app.db.revision_exists(ident),
-    F("no revision %s found in database") % ident);
 
   app.db.get_revision_manifest(ident, mid);
   put_revision_id(ident);
