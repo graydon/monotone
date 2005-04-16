@@ -1,19 +1,11 @@
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+
 2005-04-17  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* monotone.cc: Fix warnings: add missing initializers.
 	* netsync.cc: Fix warnings: inline static vs static inline.
-
-2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
-
-	* testsuite.at: Use a random server port.
-	
-	* .mt-attrs, contrib/README: Update for Notify.pl ->
-	monotone-notify.pl rename.
-	
-	* monotone.1: Warn people off rcs_import.
-	* monotone.texi (Commands): Likewise.
-
-2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
