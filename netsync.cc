@@ -725,7 +725,7 @@ session::analyze_attachment(revision_id const & i,
   attached[i] = curr_attached;
 }
 
-static inline id
+inline static id
 plain_id(manifest_id const & i)
 {
   id tmp;
@@ -734,7 +734,7 @@ plain_id(manifest_id const & i)
   return tmp;
 }
 
-static inline id
+inline static id
 plain_id(file_id const & i)
 {
   id tmp;

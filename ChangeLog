@@ -1,3 +1,20 @@
+2005-04-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Fix warnings: add missing initializers.
+	* netsync.cc: Fix warnings: inline static vs static inline.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* testsuite.at: Use a random server port.
+	
+	* .mt-attrs, contrib/README: Update for Notify.pl ->
+	monotone-notify.pl rename.
+	
+	* monotone.1: Warn people off rcs_import.
+	* monotone.texi (Commands): Likewise.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_update_nonexistent.at: New test.
@@ -2856,7 +2873,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
