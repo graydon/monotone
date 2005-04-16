@@ -1,5 +1,11 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_lf_crlf.at: New test from Emile Snyder
+	<emile@alumni.reed.edu>, with tweaks.
+	* testsuite.at: Add it.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ChangeLog: Small fixups.
 
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
