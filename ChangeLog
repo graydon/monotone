@@ -1,5 +1,13 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_update_nonexistent.at: New test.
+	* testsuite.at: Add it.
+	
+	* commands.cc (update): Verify that user's requested revision
+	exists.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ChangeLog: Fixup after merge.
 
 2005-04-16  Emile Snyder <emile@alumni.reed.edu>

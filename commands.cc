@@ -3142,7 +3142,11 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
       r_chosen_id = *(candidates.begin());
     }
   else
-    complete(app, idx(args, 0)(), r_chosen_id);
+    {
+      complete(app, idx(args, 0)(), r_chosen_id);
+      N(app.db.revision_exists(r_chosen_id),
+        F("no revision %s found in database") % r_chosen_id);
+    }
 
   if (r_old_id == r_chosen_id)
     {
