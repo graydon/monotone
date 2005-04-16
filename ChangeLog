@@ -1,3 +1,8 @@
+2005-04-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Fix warnings: add missing initializers.
+	* netsync.cc: Fix warnings: inline static vs static inline.
+
 2005-04-15  Sebastian Spaeth  <Sebastian@SSpaeth.de>
 
 	* ui.cc: print byte progress to one decimal place
