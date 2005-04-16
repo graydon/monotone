@@ -102,34 +102,34 @@ class database
   void get_ids(std::string const & table, std::set< hexenc<id> > & ids); 
 
   void get(hexenc<id> const & new_id,
-           base64< gzip<data> > & dat,
+           data & dat,
            std::string const & table);
   void get_delta(hexenc<id> const & ident,
                  hexenc<id> const & base,
-                 base64< gzip<delta> > & del,
+                 delta & del,
                  std::string const & table);
   void get_version(hexenc<id> const & id,
-                   base64< gzip<data> > & dat,
+                   data & dat,
                    std::string const & data_table,
                    std::string const & delta_table);
   
   void put(hexenc<id> const & new_id,
-           base64< gzip<data> > const & dat,
+           data const & dat,
            std::string const & table);
   void drop(hexenc<id> const & base,
             std::string const & table);
   void put_delta(hexenc<id> const & id,
                  hexenc<id> const & base,
-                 base64< gzip<delta> > const & del,
+                 delta const & del,
                  std::string const & table);
   void put_version(hexenc<id> const & old_id,
                    hexenc<id> const & new_id,
-                   base64< gzip<delta> > const & del,
+                   delta const & del,
                    std::string const & data_table,
                    std::string const & delta_table);
   void put_reverse_version(hexenc<id> const & new_id,
                            hexenc<id> const & old_id,
-                           base64< gzip<delta> > const & reverse_del,
+                           delta const & reverse_del,
                            std::string const & data_table,
                            std::string const & delta_table);
 
@@ -174,11 +174,11 @@ class database
   friend class transaction_guard;
   friend void rcs_put_raw_file_edge(hexenc<id> const & old_id,
                                     hexenc<id> const & new_id,
-                                    base64< gzip<delta> > const & del,
+                                    delta const & del,
                                     database & db);
   friend void rcs_put_raw_manifest_edge(hexenc<id> const & old_id,
                                         hexenc<id> const & new_id,
-                                        base64< gzip<delta> > const & del,
+                                        delta const & del,
                                         database & db);
 
 public:

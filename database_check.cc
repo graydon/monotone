@@ -105,8 +105,6 @@ check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
        i != files.end(); ++i) 
     {
       L(F("checking file %s\n") % *i);
-      file_data data;
-      app.db.get_file_version(*i, data);
       checked_files[*i].found = true;
       ++ticks;
     }
@@ -130,21 +128,7 @@ check_manifests(app_state & app,
        i != manifests.end(); ++i) 
     {
       L(F("checking manifest %s\n") % *i);
-      manifest_data data;
-      app.db.get_manifest_version(*i, data);
       checked_manifests[*i].found = true;
-
-      manifest_map man;
-      read_manifest_map(data, man);
-
-      for (manifest_map::const_iterator entry = man.begin(); entry != man.end();
-           ++entry)
-        {
-          checked_files[manifest_entry_id(entry)].manifest_refs++;
-
-          if (!checked_files[manifest_entry_id(entry)].found)
-            checked_manifests[*i].missing_files++;
-        }
 
       ++ticks;
     }
@@ -168,50 +152,7 @@ check_revisions(app_state & app,
        i != revisions.end(); ++i) 
     {
       L(F("checking revision %s\n") % *i);
-      revision_data data;
-      app.db.get_revision(*i, data);
       checked_revisions[*i].found = true;
-
-      revision_set rev;
-      read_revision_set(data, rev);
-
-      checked_manifests[rev.new_manifest].revision_refs++;
-
-      if (!checked_manifests[rev.new_manifest].found) 
-        checked_revisions[*i].missing_manifests++;
-
-      if (checked_manifests[rev.new_manifest].missing_files > 0) 
-        checked_revisions[*i].incomplete_manifests++;
-
-      for (edge_map::const_iterator edge = rev.edges.begin(); 
-           edge != rev.edges.end(); ++edge)
-        {
-          // ignore [] -> [...] manifests
-
-          if (!null_id(edge_old_manifest(edge)))
-            {
-              checked_manifests[edge_old_manifest(edge)].revision_refs++;
-
-              if (!checked_manifests[edge_old_manifest(edge)].found)
-                checked_revisions[*i].missing_manifests++;
-
-              if (checked_manifests[edge_old_manifest(edge)].missing_files > 0)
-                checked_revisions[*i].incomplete_manifests++;
-            }
-            
-          // ignore [] -> [...] revisions
-
-          // delay checking parents until we've processed all revisions
-          if (!null_id(edge_old_revision(edge))) 
-            {
-              checked_revisions[edge_old_revision(edge)].revision_refs++;
-              checked_revisions[*i].parents.insert(edge_old_revision(edge));
-            }
-
-          // also check that change_sets applied to old manifests == new
-          // manifests (which might be a merge)
-        }
-      
       ++ticks;
     }
 

@@ -601,7 +601,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
         {
           file_id confirm;
           file_data old_dat;
-          base64< gzip<data> > new_dat;
+          data new_dat;
           pimpl->app.db.get_file_version(old_id, old_dat);
           patch(old_dat.inner(), del.inner(), new_dat);
           calculate_ident(file_data(new_dat), confirm);
@@ -645,7 +645,7 @@ packet_db_writer::consume_file_reverse_delta(file_id const & new_id,
         {
           file_id confirm;
           file_data new_dat;
-          base64< gzip<data> > old_dat;
+          data old_dat;
           pimpl->app.db.get_file_version(new_id, new_dat);
           patch(new_dat.inner(), del.inner(), old_dat);
           calculate_ident(file_data(old_dat), confirm);
@@ -706,7 +706,7 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
         {
           manifest_id confirm;
           manifest_data old_dat;
-          base64< gzip<data> > new_dat;
+          data new_dat;
           pimpl->app.db.get_manifest_version(old_id, old_dat);
           patch(old_dat.inner(), del.inner(), new_dat);
           calculate_ident(manifest_data(new_dat), confirm);
@@ -750,7 +750,7 @@ packet_db_writer::consume_manifest_reverse_delta(manifest_id const & new_id,
         {
           manifest_id confirm;
           manifest_data new_dat;
-          base64< gzip<data> > old_dat;
+          data old_dat;
           pimpl->app.db.get_manifest_version(new_id, new_dat);
           patch(new_dat.inner(), del.inner(), old_dat);
           calculate_ident(manifest_data(old_dat), confirm);
@@ -1359,20 +1359,16 @@ packet_roundabout_test()
     packet_writer pw(oss);
 
     // an fdata packet
-    base64< gzip<data> > gzdata;
-    pack(data("this is some file data"), gzdata);
-    file_data fdata(gzdata);
+    file_data fdata("this is some file data");
     file_id fid;
     calculate_ident(fdata, fid);
     pw.consume_file_data(fid, fdata);
 
     // an fdelta packet    
-    base64< gzip<data> > gzdata2;
-    pack(data("this is some file data which is not the same as the first one"), gzdata2);
-    file_data fdata2(gzdata2);
+    file_data fdata2("this is some file data which is not the same as the first one");
     file_id fid2;
     calculate_ident(fdata2, fid);
-    base64< gzip<delta> > del;
+    delta del;
     diff(fdata.inner(), fdata2.inner(), del);
     pw.consume_file_delta(fid, fid2, file_delta(del));
 
@@ -1408,7 +1404,7 @@ packet_roundabout_test()
                          file_id(hexenc<id>("54f373ed07b4c5a88eaa93370e1bbac02dc432a8"))));
     write_manifest_map(mm2, mdata2);
     calculate_ident(mdata2, mid2);
-    base64< gzip<delta> > del2;
+    delta del2;
     diff(mdata.inner(), mdata2.inner(), del2);
     pw.consume_manifest_delta(mid, mid2, manifest_delta(del));
     
