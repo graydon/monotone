@@ -2418,6 +2418,7 @@ CMD(db, "database",
     "load\n"
     "migrate\n"
     "execute\n"
+    "kill_rev_locally <ID>\n"
     "check\n"
     "changesetify\n"
     "rebuild\n"
@@ -2451,6 +2452,8 @@ CMD(db, "database",
     {
       if (idx(args, 0)() == "execute")
         app.db.debug(idx(args, 1)(), cout);
+      else if (idx(args, 0)() == "kill_rev_locally")
+        app.db.delete_existing_revs_and_certs(idx(args, 1)());
       else if (idx(args, 0)() == "clear_epoch")
         app.db.clear_epoch(cert_value(idx(args, 1)()));
       else
