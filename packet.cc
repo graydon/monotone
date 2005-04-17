@@ -1073,8 +1073,10 @@ void
 packet_writer::consume_file_data(file_id const & ident, 
                                  file_data const & dat)
 {
+  base64<gzip<data> > packed;
+  pack(dat.inner(), packed);
   ost << "[fdata " << ident.inner()() << "]" << endl 
-      << trim_ws(dat.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -1083,9 +1085,11 @@ packet_writer::consume_file_delta(file_id const & old_id,
                                   file_id const & new_id,
                                   file_delta const & del)
 {
+  base64<gzip<delta> > packed;
+  pack(del.inner(), packed);
   ost << "[fdelta " << old_id.inner()() << endl 
       << "        " << new_id.inner()() << "]" << endl 
-      << trim_ws(del.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -1094,9 +1098,11 @@ packet_writer::consume_file_reverse_delta(file_id const & new_id,
                                           file_id const & old_id,
                                           file_delta const & del)
 {
+  base64<gzip<delta> > packed;
+  pack(del.inner(), packed);
   ost << "[frdelta " << new_id.inner()() << endl 
       << "         " << old_id.inner()() << "]" << endl 
-      << trim_ws(del.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -1104,8 +1110,10 @@ void
 packet_writer::consume_manifest_data(manifest_id const & ident, 
                                      manifest_data const & dat)
 {
+  base64<gzip<data> > packed;
+  pack(dat.inner(), packed);
   ost << "[mdata " << ident.inner()() << "]" << endl 
-      << trim_ws(dat.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -1113,8 +1121,10 @@ void
 packet_writer::consume_revision_data(revision_id const & ident, 
                                      revision_data const & dat)
 {
+  base64<gzip<data> > packed;
+  pack(dat.inner(), packed);
   ost << "[rdata " << ident.inner()() << "]" << endl 
-      << trim_ws(dat.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -1123,9 +1133,11 @@ packet_writer::consume_manifest_delta(manifest_id const & old_id,
                                       manifest_id const & new_id,
                                       manifest_delta const & del)
 {
+  base64<gzip<delta> > packed;
+  pack(del.inner(), packed);
   ost << "[mdelta " << old_id.inner()() << endl 
       << "        " << new_id.inner()() << "]" << endl 
-      << trim_ws(del.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -1134,9 +1146,11 @@ packet_writer::consume_manifest_reverse_delta(manifest_id const & new_id,
                                               manifest_id const & old_id,
                                               manifest_delta const & del)
 {
+  base64<gzip<delta> > packed;
+  pack(del.inner(), packed);
   ost << "[mrdelta " << new_id.inner()() << endl 
       << "         " << old_id.inner()() << "]" << endl 
-      << trim_ws(del.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -1193,7 +1207,9 @@ feed_packet_consumer
         I(res[3].matched);
         string head(res[1].first, res[1].second);
         string ident(res[2].first, res[2].second);
-        string body(trim_ws(string(res[3].first, res[3].second)));
+        base64<gzip<data> > body_packed(trim_ws(string(res[3].first, res[3].second)));
+        data body;
+        unpack(body_packed, body);
         if (head == "rdata")
           cons.consume_revision_data(revision_id(hexenc<id>(ident)), 
                                      revision_data(body));
@@ -1215,7 +1231,9 @@ feed_packet_consumer
         string head(res[4].first, res[4].second);
         string src_id(res[5].first, res[5].second);
         string dst_id(res[6].first, res[6].second);
-        string body(trim_ws(string(res[7].first, res[7].second)));
+        base64<gzip<delta> > body_packed(trim_ws(string(res[7].first, res[7].second)));
+        delta body;
+        unpack(body_packed, body);
         if (head == "mdelta")
           cons.consume_manifest_delta(manifest_id(hexenc<id>(src_id)), 
                                       manifest_id(hexenc<id>(dst_id)),
@@ -1248,7 +1266,7 @@ feed_packet_consumer
         string certname(res[10].first, res[10].second);
         string key(res[11].first, res[11].second);
         string val(res[12].first, res[12].second);
-        string body(res[13].first, res[13].second);
+        string body(trim_ws(string(res[13].first, res[13].second)));
 
         // canonicalize the base64 encodings to permit searches
         cert t = cert(hexenc<id>(ident),
