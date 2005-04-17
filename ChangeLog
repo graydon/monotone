@@ -1,3 +1,8 @@
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* Move base64<gzip> code as close to the database as possible,
+	to avoid unnecessary inflating and deflating.
+
 2005-04-16  Matt Johnston  <matt@ucc.asn.au>
 
 	* change_set.cc (compose_rearrangement): remove logging statements
