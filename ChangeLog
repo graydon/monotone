@@ -1,3 +1,13 @@
+2005-04-16  Derek Scherger  <derek@echologic.com>
+
+	* work.cc (known_preimage_path): rename to...
+	(known_path): this, since it's image agnostic
+	(build_deletions): update for renamed function
+	(build_rename): ensure rename source exists in current revision
+	and rename target does not exist in current revision
+
+	* tests/t_no_rename_overwrite.at: un-XFAIL 
+
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* app_state.{cc,hh} (set_author, set_date): New methods.
