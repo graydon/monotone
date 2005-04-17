@@ -1,3 +1,7 @@
+2005-04-17  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* transforms.cc: fix glob_to_regexp assertions
+
 2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
 	
 	* tests/t_db_kill_rev_locally.at: new test; 
