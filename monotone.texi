@@ -3374,12 +3374,19 @@ into your database:
 @itemize
 @item 
 An @code{author} cert, indicating the person responsible for the changes
-leading to the new revision.
+leading to the new revision.  Normally this defaults to your signing key
+or the return value of the @code{get_author} hook; you may override this
+by passing the @option{--author} option to commit.  This is useful when
+committing a patch on behalf of someone else, or when importing ``by
+hand'' from another version control system.
 @item 
 A @code{branch} cert, indicating the branch the committed revision
 belongs to.
 @item
 A @code{date} cert, indicating when the new revision was created.
+Normally this defaults to the current time; you may override this by
+passing the @option{--date} option to commit.  This is useful when
+importing ``by hand'' from another version control system.
 @item
 A @code{changelog} cert, containing the ``log message'' for these
 changes.  If you provided @var{logmsg} on the command line, this text
@@ -6021,6 +6028,17 @@ Use the given message as the changelog when committing a new revision
 rather than invoking the log message editor. Currently this option only
 applies to the commit command but it may also apply to the comment
 command in the future.
+
+@item @b{--author=}@i{<author email>}
+Use the given author as the value of the "author" cert when committing
+a new revision, rather than the default author.  Useful when
+committing a patch on behalf of someone else, or when importing
+history from another version control system.
+
+@item @b{--date=}@i{<date and time>}
+Use the given given date and time as value of the "date" cert when
+committing a new revision, rather than the current time.  Useful when
+importing history from another version control system.
 
 @item @b{--root=}@i{<root dir>}
 Stop the search for a working copy (containing the @file{MT} directory)

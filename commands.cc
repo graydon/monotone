@@ -17,6 +17,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/exception.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "commands.hh"
 #include "constants.hh"
@@ -2541,6 +2542,33 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
   else 
     throw usage(name);
 }
+
+static boost::posix_time::ptime
+string_to_datetime(std::string const & s)
+{
+  try
+    {
+      // boost::posix_time is lame: it can parse "basic" ISO times, of the
+      // form 20000101T120000, but not "extended" ISO times, of the form
+      // 2000-01-01T12:00:00.  So do something stupid to convert one to the
+      // other.
+      std::string tmp = s;
+      std::string::size_type pos = 0;
+      while ((pos = tmp.find_first_of("-:")) != string::npos)
+        tmp.erase(pos, 1);
+      return boost::posix_time::from_iso_string(tmp);
+    }
+  catch (std::out_of_range &e)
+    {
+      N(false, F("failed to parse date string '%s': %s") % s % e.what());
+    }
+  catch (std::exception &)
+    {
+      N(false, F("failed to parse date string '%s'") % s);
+    }
+  I(false);
+}
+
 CMD(commit, "working copy", "[--message=STRING] [PATH]...", 
     "commit working copy to database")
 {
@@ -2677,8 +2705,14 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
     dbw.consume_revision_data(rid, rdat);
   
     cert_revision_in_branch(rid, branchname, app, dbw); 
-    cert_revision_date_now(rid, app, dbw);
-    cert_revision_author_default(rid, app, dbw);
+    if (app.date().length() > 0)
+      cert_revision_date_time(rid, string_to_datetime(app.date()), app, dbw);
+    else
+      cert_revision_date_now(rid, app, dbw);
+    if (app.author().length() > 0)
+      cert_revision_author(rid, app.author(), app, dbw);
+    else
+      cert_revision_author_default(rid, app, dbw);
     cert_revision_changelog(rid, log_message, app, dbw);
   }
   

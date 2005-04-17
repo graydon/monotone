@@ -1,5 +1,23 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* app_state.{cc,hh} (set_author, set_date): New methods.
+	* cert.cc (cert_revision_date): Rename to...
+	(cert_revision_date_time): ...an overloaded version of this.
+	(cert_revision_author_default): Check app.date.
+	* cert.hh: Expose cert_revision_date_time.
+	* commands.cc (commit): Handle --date.
+	* main.cc: Parse --date and --author options.
+	* monotone.1: Document --date, --author.
+	* monotone.texi (Working Copy, OPTIONS): Likewise.
+
+	* tests/t_override_author_date.at: New test.
+	* testsuite.at: Add it.
+	
+	This commit heavily based on a patch by Markus Schiltknecht
+	<markus@bluegap.ch>.
+	
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ChangeLog: Fixup after merge.
 
 2005-04-17  Matthew Gregan  <kinetik@orcon.net.nz>

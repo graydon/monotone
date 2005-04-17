@@ -566,11 +566,11 @@ string const comment_cert_name = "comment";
 string const testresult_cert_name = "testresult";
 
 
-static void 
-cert_revision_date(revision_id const & m, 
-                   boost::posix_time::ptime t,
-                   app_state & app,
-                   packet_consumer & pc)
+void 
+cert_revision_date_time(revision_id const & m, 
+                        boost::posix_time::ptime t,
+                        app_state & app,
+                        packet_consumer & pc)
 {
   string val = boost::posix_time::to_iso_extended_string(t);
   put_simple_revision_cert(m, date_cert_name, val, app, pc);
@@ -585,7 +585,7 @@ cert_revision_date_time(revision_id const & m,
   // make sure you do all your CVS conversions by 2038!
   boost::posix_time::ptime tmp(boost::gregorian::date(1970,1,1), 
                                boost::posix_time::seconds(static_cast<long>(t)));
-  cert_revision_date(m, tmp, app, pc);
+  cert_revision_date_time(m, tmp, app, pc);
 }
 
 void 
@@ -593,7 +593,7 @@ cert_revision_date_now(revision_id const & m,
                        app_state & app,
                        packet_consumer & pc)
 {
-  cert_revision_date(m, boost::posix_time::second_clock::universal_time(), app, pc);
+  cert_revision_date_time(m, boost::posix_time::second_clock::universal_time(), app, pc);
 }
 
 void 
@@ -620,8 +620,7 @@ cert_revision_author_default(revision_id const & m,
         % app.branch_name);
       author = key();
     }
-  put_simple_revision_cert(m, author_cert_name, 
-                           author, app, pc);
+  cert_revision_author(m, author, app, pc);
 }
 
 void 

@@ -12,6 +12,7 @@
 #include <map>
 #include <vector>
 #include <time.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 // certs associate an opaque name/value pair with a particular identifier in
 // the system (eg. a manifest or file id) and are accompanied by an RSA
@@ -116,6 +117,12 @@ void
 cert_revision_date_now(revision_id const & m, 
                       app_state & app,
                       packet_consumer & pc);
+
+void 
+cert_revision_date_time(revision_id const & m, 
+                        boost::posix_time::ptime t,
+                        app_state & app,
+                        packet_consumer & pc);
 
 void 
 cert_revision_date_time(revision_id const & m, 
