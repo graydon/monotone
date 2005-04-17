@@ -725,11 +725,6 @@ line_end_convert(string const & linesep, string const & src, string & dst)
 // - ] directly following an unescaped [ is escaped.
 string glob_to_regexp(const string & glob)
 {
-  struct bad_glob {
-    bad_glob() : what("Bad glob syntax") {}
-    string what;
-  };
-
   int in_braces = 0;		// counter for levels if {}
   bool in_brackets = false;	// flags if we're inside a [], which
 				// has higher precedence than {}.
@@ -804,8 +799,8 @@ string glob_to_regexp(const string & glob)
 	      tmp += '(';
 	      break;
 	    case '}':
-	      if (in_braces == 0)
-		throw bad_glob();
+	      N(in_braces == 0,
+		F("trying to end a brace expression in a glob when none is started"));
 	      tmp += ')';
 	      in_braces--;
 	      break;
@@ -833,8 +828,10 @@ string glob_to_regexp(const string & glob)
 	}
     }
 
-  if (in_braces != 0 || in_brackets)
-    throw bad_glob();
+  N(in_brackets,
+    F("run-away bracket expression in glob"));
+  N(in_braces != 0,
+    F("run-away brace expression in glob"));
 
 #ifdef BUILD_UNIT_TESTS
   cerr << "DEBUG[glob_to_regexp]: output = \"" << tmp << "\"" << endl;
