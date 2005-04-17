@@ -1,3 +1,11 @@
+2005-04-17  Richard Levitte  <richard@levitte.org>
+
+	* transforms.cc (glob_to_regexp): New function that takes a glob
+	expression and transforms it into a regexp.  This will be useful
+	for globbing branch expressions when collections are exchanged to
+	branch globs and regexps.
+	(glob_to_regexp_test): A unit test for glob_to_regexp().
+
 2005-04-16  Emile Snyder  <emile@alumni.reed.edu>
 
 	* tests/t_add_stomp_file.at: New test for failing case.  
