@@ -437,10 +437,23 @@ prefix_lines_with(string const & prefix, string const & lines, string & out)
 string 
 remove_ws(string const & s)
 {
-  string tmp = s;
-  string::size_type pos = 0;
-  while ((pos = tmp.find_first_of("\n\r\t ")) != string::npos)
-    tmp.erase(pos,1);
+  string tmp;
+  tmp.reserve(s.size());
+  for (string::const_iterator i = s.begin();
+       i != s.end(); ++i)
+    {
+      switch (*i)
+        {
+        case '\n':
+        case '\r':
+        case '\t':
+        case ' ':
+          break;
+        default:
+          tmp += *i;
+          break;
+        }
+    }
   return tmp;
 }
 
