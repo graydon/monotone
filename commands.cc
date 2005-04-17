@@ -1184,7 +1184,10 @@ CMD(dropkey, "key and cert", "KEYID", "drop a public and private key")
 
   if (app.db.private_key_exists(ident))
     {
-      P(F("dropping private key '%s' from database\n") % ident);
+      P(F("dropping private key '%s' from database\n\n") % ident);
+      W(F("the private key data may not have been erased from the"));
+      W(F("database. it is recommended that you use 'db dump' and"));
+      W(F("'db load' to be sure."));
       app.db.delete_private_key(ident);
       key_deleted = true;
     }

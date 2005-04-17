@@ -1,3 +1,14 @@
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc: warn that dropkey won't truly erase the privkey
+	from the database
+	* monotone.texi: same
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc: mention that it could be the filesystem that
+	is full in the SQLITE_FULL error message
+
 2005-04-16  Derek Scherger  <derek@echologic.com>
 
 	* work.cc (known_preimage_path): rename to...
