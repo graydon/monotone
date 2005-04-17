@@ -88,9 +88,9 @@ build_additions(vector<file_path> const & paths,
 }
 
 static bool
-known_preimage_path(file_path const & p,
-                    path_set const & ps,
-                    bool & path_is_directory)
+known_path(file_path const & p,
+           path_set const & ps,
+           bool & path_is_directory)
 {
   std::string path_as_dir = p() + "/";
   for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)
@@ -126,7 +126,7 @@ build_deletions(vector<file_path> const & paths,
   
       N((*i)() != "", F("invalid path ''"));
 
-      if (! known_preimage_path(*i, ps, dir_p))
+      if (! known_path(*i, ps, dir_p))
         {
           P(F("skipping %s, not currently tracked\n") % *i);
           continue;
@@ -163,16 +163,17 @@ build_rename(file_path const & src,
   extract_path_set(man, ps);
   apply_path_rearrangement(pr, ps);    
 
-  bool dir_p = false;
+  bool src_dir_p = false;
+  bool dst_dir_p = false;
 
-  if (! known_preimage_path(src, ps, dir_p))
-    {
-      P(F("skipping %s, not currently tracked\n") % src);
-      return;
-    }
+  N(known_path(src, ps, src_dir_p), 
+    F("%s does not exist in current revision\n") % src);
+
+  N(!known_path(dst, ps, dst_dir_p), 
+    F("%s already exists in current revision\n") % dst);
 
   P(F("adding %s -> %s to working copy rename set\n") % src % dst);
-  if (dir_p)
+  if (src_dir_p)
     pr_new.renamed_dirs.insert(std::make_pair(src, dst));
   else 
     pr_new.renamed_files.insert(std::make_pair(src, dst));
