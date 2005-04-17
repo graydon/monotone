@@ -1499,8 +1499,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
   boost::shared_ptr<change_set> cs(new change_set());
 
   string log_message("");
-  base64< gzip< data > > gz_dat;
-  base64< gzip< delta > > gz_del;
+  delta del;
   file_path pth(idx(args, 1)());
 
   transaction_guard guard(app.db);
@@ -1518,24 +1517,23 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
 
   // fetch the new file input
   string s = get_stdin();
-  pack(data(s), gz_dat);    
-  new_fdata = file_data(gz_dat);  
+  new_fdata = file_data(s);
   calculate_ident(new_fdata, new_fid);
 
   // diff and store the file edge
   old_fid = manifest_entry_id(i);
   app.db.get_file_version(old_fid, old_fdata);
-  diff(old_fdata.inner(), new_fdata.inner(), gz_del);    
+  diff(old_fdata.inner(), new_fdata.inner(), del);    
   dbw.consume_file_delta(old_fid, new_fid, 
-                         file_delta(gz_del));
+                         file_delta(del));
 
   // diff and store the manifest edge
   new_man = old_man;
   new_man[pth] = new_fid;
   calculate_ident(new_man, new_mid);
-  diff(old_man, new_man, gz_del);
+  diff(old_man, new_man, del);
   dbw.consume_manifest_delta(old_mid, new_mid, 
-                             manifest_delta(gz_del));
+                             manifest_delta(del));
 
   // build and store a changeset and revision
   cs->apply_delta(pth, old_fid, new_fid);
@@ -1570,12 +1568,9 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
 CMD(fload, "debug", "", "load file contents into db")
 {
   string s = get_stdin();
-  base64< gzip< data > > gzd;
-
-  pack(data(s), gzd);
 
   file_id f_id;
-  file_data f_data(gzd);
+  file_data f_data(s);
   
   calculate_ident (f_data, f_id);
   
@@ -1590,7 +1585,6 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
 
   file_id anc_id(idx(args, 0)()), left_id(idx(args, 1)()), right_id(idx(args, 2)());
   file_data anc, left, right;
-  data anc_unpacked, left_unpacked, right_unpacked;
 
   N(app.db.file_version_exists (anc_id),
   F("ancestor file id does not exist"));
@@ -1605,15 +1599,11 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
   app.db.get_file_version(left_id, left);
   app.db.get_file_version(right_id, right);
 
-  unpack(left.inner(), left_unpacked);
-  unpack(anc.inner(), anc_unpacked);
-  unpack(right.inner(), right_unpacked);
-
   vector<string> anc_lines, left_lines, right_lines, merged_lines;
 
-  split_into_lines(anc_unpacked(), anc_lines);
-  split_into_lines(left_unpacked(), left_lines);
-  split_into_lines(right_unpacked(), right_lines);
+  split_into_lines(anc.inner()(), anc_lines);
+  split_into_lines(left.inner()(), left_lines);
+  split_into_lines(right.inner()(), right_lines);
   N(merge3(anc_lines, left_lines, right_lines, merged_lines), F("merge failed"));
   copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
   
@@ -1696,9 +1686,7 @@ CMD(cat, "informative",
       file_data dat;
       L(F("dumping file %s\n") % ident);
       app.db.get_file_version(ident, dat);
-      data unpacked;
-      unpack(dat.inner(), unpacked);
-      cout.write(unpacked().data(), unpacked().size());
+      cout.write(dat.inner()().data(), dat.inner()().size());
     }
   else if (idx(args, 0)() == "manifest")
     {
@@ -1725,9 +1713,7 @@ CMD(cat, "informative",
         }
 
       L(F("dumping manifest %s\n") % ident);
-      data unpacked;
-      unpack(dat.inner(), unpacked);
-      cout.write(unpacked().data(), unpacked().size());
+      cout.write(dat.inner()().data(), dat.inner()().size());
     }
 
   else if (idx(args, 0)() == "revision")
@@ -1754,9 +1740,7 @@ CMD(cat, "informative",
         }
 
       L(F("dumping revision %s\n") % ident);
-      data unpacked;
-      unpack(dat.inner(), unpacked);
-      cout.write(unpacked().data(), unpacked().size());
+      cout.write(dat.inner()().data(), dat.inner()().size());
     }
   else 
     throw usage(name);
@@ -2144,7 +2128,7 @@ CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout"
   app.db.get_manifest(m_old_id, m_old);
   app.db.get_manifest(m_new_id, m_new);
 
-  base64< gzip<delta> > del;
+  delta del;
   diff(m_old, m_new, del);
   pw.consume_manifest_delta(m_old_id, m_new_id, 
                             manifest_delta(del));
@@ -2165,7 +2149,7 @@ CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
 
   app.db.get_file_version(f_old_id, f_old_data);
   app.db.get_file_version(f_new_id, f_new_data);
-  base64< gzip<delta> > del;
+  delta del;
   diff(f_old_data.inner(), f_new_data.inner(), del);
   pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));  
 }
@@ -2642,7 +2626,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
             L(F("inserting manifest delta %s -> %s\n") 
               % edge_old_manifest(edge) 
               % rs.new_manifest);
-            base64< gzip<delta> > del;
+            delta del;
             diff(m_old, m_new, del);
             dbw.consume_manifest_delta(edge_old_manifest(edge), 
                                        rs.new_manifest, 
@@ -2672,7 +2656,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
                 L(F("inserting delta %s -> %s\n") 
                   % delta_entry_src(i) % delta_entry_dst(i));
                 file_data old_data;
-                base64< gzip<data> > new_data;
+                data new_data;
                 app.db.get_file_version(delta_entry_src(i), old_data);
                 read_localized_data(delta_entry_path(i), new_data, app.lua);
                 // sanity check
@@ -2681,7 +2665,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
                 N(tid == delta_entry_dst(i).inner(),
                   F("file '%s' modified during commit, aborting")
                   % delta_entry_path(i));
-                base64< gzip<delta> > del;
+                delta del;
                 diff(old_data.inner(), new_data, del);
                 dbw.consume_file_delta(delta_entry_src(i), 
                                        delta_entry_dst(i), 
@@ -2690,7 +2674,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
             else
               {
                 L(F("inserting full version %s\n") % delta_entry_dst(i));
-                base64< gzip<data> > new_data;
+                data new_data;
                 read_localized_data(delta_entry_path(i), new_data, app.lua);
                 // sanity check
                 hexenc<id> tid;
@@ -2770,7 +2754,7 @@ dump_diffs(change_set::delta_map const & deltas,
             {
               file_data dat;
               app.db.get_file_version(delta_entry_dst(i), dat);
-              unpack(dat.inner(), unpacked);
+              unpacked = dat.inner();
             }
           else
             {
@@ -2799,35 +2783,31 @@ dump_diffs(change_set::delta_map const & deltas,
       else
         {
           file_data f_old;
-          gzip<data> decoded_old;
-          data decompressed_old, decompressed_new;
+          data data_old, data_new;
           vector<string> old_lines, new_lines;
           
           app.db.get_file_version(delta_entry_src(i), f_old);
-          decode_base64(f_old.inner(), decoded_old);
-          decode_gzip(decoded_old, decompressed_old);
+          data_old = f_old.inner();
           
           if (new_is_archived)
             {
               file_data f_new;
-              gzip<data> decoded_new;
               app.db.get_file_version(delta_entry_dst(i), f_new);
-              decode_base64(f_new.inner(), decoded_new);
-              decode_gzip(decoded_new, decompressed_new);
+              data_new = f_new.inner();
             }
           else
             {
               read_localized_data(delta_entry_path(i), 
-                                  decompressed_new, app.lua);
+                                  data_new, app.lua);
             }
 
-          if (guess_binary(decompressed_new()) || 
-              guess_binary(decompressed_old()))
+          if (guess_binary(data_new()) || 
+              guess_binary(data_old()))
             cout << "# " << delta_entry_path(i) << " is binary\n";
           else
             {
-              split_into_lines(decompressed_old(), old_lines);
-              split_into_lines(decompressed_new(), new_lines);
+              split_into_lines(data_old(), old_lines);
+              split_into_lines(data_new(), new_lines);
               make_diff(delta_entry_path(i)(), 
                         delta_entry_path(i)(), 
                         old_lines, new_lines,
@@ -3352,7 +3332,7 @@ try_one_merge(revision_id const & left_id,
     apply_change_set(anc_man, *anc_to_left, tmp);
     apply_change_set(tmp, *left_to_merged, merged_man);
     calculate_ident(merged_man, merged_rev.new_manifest);
-    base64< gzip<delta> > left_mdelta, right_mdelta;
+    delta left_mdelta, right_mdelta;
     diff(left_man, merged_man, left_mdelta);
     diff(right_man, merged_man, right_mdelta);
     if (left_mdelta().size() < right_mdelta().size())

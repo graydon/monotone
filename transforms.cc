@@ -123,68 +123,32 @@ uppercase(string const & in)
 void 
 diff(data const & olddata,
      data const & newdata,
-     base64< gzip<delta> > & del)
+     delta & del)
 {
   string unpacked;
   compute_delta(olddata(), newdata(), unpacked);
-  pack(delta(unpacked), del);
+  del = delta(unpacked);
 }
 
 void 
 patch(data const & olddata,
-      base64< gzip<delta> > const & del,
+      delta const & del,
       data & newdata)
 {
-  delta unpacked;
-  unpack(del, unpacked);
   string result;
-  apply_delta(olddata(), unpacked(), result);
+  apply_delta(olddata(), del(), result);
   newdata = result;
 }
 
 void 
 diff(manifest_map const & oldman,
      manifest_map const & newman,
-     base64< gzip<delta> > & del)
+     delta & del)
 {
   string xd;
   compute_delta(oldman, newman, xd);
-  pack(delta(xd), del);
+  del = delta(xd);
 }
-
-void 
-diff(base64< gzip<data> > const & olddata,
-     base64< gzip<data> > const & newdata,
-     base64< gzip<delta> > & del)
-{
-  gzip<data> olddata_decoded;
-  gzip<data> newdata_decoded;
-
-  decode_base64(olddata, olddata_decoded);
-  decode_base64(newdata, newdata_decoded);
-
-  data olddata_decompressed;
-  data newdata_decompressed;
-
-  decode_gzip(olddata_decoded, olddata_decompressed);
-  decode_gzip(newdata_decoded, newdata_decompressed);
-
-  diff(olddata_decompressed,
-       newdata_decompressed,
-       del);
-}
-
-void 
-patch(base64< gzip<data> > const & olddata,
-      base64< gzip<delta> > const & del,
-      base64< gzip<data> > & newdata)
-{
-  data olddata_unpacked, newdata_unpacked;
-  unpack(olddata, olddata_unpacked);
-  patch(olddata_unpacked, del, newdata_unpacked);
-  pack(newdata_unpacked, newdata);
-}
-
 
 // identifier (a.k.a. sha1 signature) calculation
 
@@ -286,9 +250,7 @@ void calculate_ident(revision_data const & dat,
                      revision_id & ident)
 {
   hexenc<id> tmp;
-  data unpacked;
-  unpack(dat.inner(), unpacked);
-  calculate_ident(unpacked, tmp);
+  calculate_ident(dat.inner(), tmp);
   ident = tmp;
 }
 

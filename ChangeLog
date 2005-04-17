@@ -1,5 +1,10 @@
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 
+	* Move base64<gzip> code as close to the database as possible,
+	to avoid unnecessary inflating and deflating.
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
 	* commands.cc: warn that dropkey won't truly erase the privkey
 	from the database
 	* monotone.texi: same
