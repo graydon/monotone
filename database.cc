@@ -589,7 +589,7 @@ assert_sqlite3_ok(int res)
       break;
 
     case SQLITE_FULL:
-      throw oops("Insertion failed because database is full");
+      throw oops("Insertion failed because database (or filesystem) is full");
       break;
 
     case SQLITE_CANTOPEN:
