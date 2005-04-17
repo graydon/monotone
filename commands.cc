@@ -2453,7 +2453,7 @@ CMD(db, "database",
       if (idx(args, 0)() == "execute")
         app.db.debug(idx(args, 1)(), cout);
       else if (idx(args, 0)() == "kill_rev_locally")
-        app.db.delete_existing_revs_and_certs(idx(args, 1)());
+        kill_rev_locally(app,idx(args, 1)());
       else if (idx(args, 0)() == "clear_epoch")
         app.db.clear_epoch(cert_value(idx(args, 1)()));
       else
@@ -2469,6 +2469,24 @@ CMD(db, "database",
     }
   else
     throw usage(name);
+}
+
+/// Deletes a revision from the local database
+/// This can be used to 'undo' a changed revision from a local database without
+/// leaving a trace.
+void kill_rev_locally(app_state& app, std::string const& id){
+  revision_id ident;
+  complete(app, id, ident);
+      N(app.db.revision_exists(ident),
+        F("no revision %s found in database") % ident);
+
+  //check that the revision does not have any children
+  set<revision_id> children;
+  app.db.get_revision_children(ident, children);
+      N(!children.size(),
+        F("revision %s already has children. We cannot kill it.") % ident);
+
+  app.db.delete_existing_rev_and_certs(ident);
 }
 
 CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]", 

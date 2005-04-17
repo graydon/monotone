@@ -1,3 +1,8 @@
+2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
+
+	* commands.cc,database.cc: add 'db kill_rev_locally <id>' command
+	still missing: documentation and autotests. Otherwise seems ok.
+	
 2005-04-17  Richard Levitte  <richard@levitte.org>
 
 	* transforms.cc: Remove tabs and make sure emacs doesn't add
