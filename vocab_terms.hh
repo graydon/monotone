@@ -63,9 +63,6 @@ EXTERN template class    epoch< hexenc<data> >;
 
 EXTERN template class                   gzip<data>;
 EXTERN template class           base64< gzip<data> >;
-//EXTERN template class revision< base64< gzip<data> > >;
-//EXTERN template class manifest< base64< gzip<data> > >;
-//EXTERN template class     file< base64< gzip<data> > >;
 
 EXTERN template class revision< data >;
 EXTERN template class manifest< data >;
@@ -73,8 +70,6 @@ EXTERN template class     file< data >;
 
 EXTERN template class                   gzip<delta>;
 EXTERN template class           base64< gzip<delta> >;
-//EXTERN template class manifest< base64< gzip<delta> > >;
-//EXTERN template class     file< base64< gzip<delta> > >;
 
 EXTERN template class manifest< delta >;
 EXTERN template class     file< delta >;

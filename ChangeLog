@@ -1,5 +1,9 @@
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 
+	* vocab_terms.hh: remove commented out lines.
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
 	* Move base64<gzip> code as close to the database as possible,
 	to avoid unnecessary inflating and deflating.
 
