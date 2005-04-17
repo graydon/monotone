@@ -1445,13 +1445,14 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
           P(F("I expected %s\n") % expected_key_hash);
           P(F("'monotone unset %s %s' overrides this check\n")
             % their_key_key.first % their_key_key.second);
-          N(false, F("server key changed"));
+          E(false, F("server key changed"));
         }
     }
   else
     {
-      W(F("first time connecting to server %s; authenticity can't be established\n") % peer_id);
-      W(F("their key is %s\n") % their_key_hash);
+      P(F("first time connecting to server %s\n") % peer_id);
+      P(F("I'll assume it's really them, but you might want to\n"));
+      P(F("double-check their key's fingerprint: %s\n") % their_key_hash);
       app.db.set_var(their_key_key, var_value(their_key_hash()));
     }
   if (!app.db.public_key_exists(their_key_hash))

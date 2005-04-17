@@ -185,6 +185,17 @@ sanity::naughty_failure(string const & expr, format const & explain,
 }
 
 void 
+sanity::error_failure(string const & expr, format const & explain, 
+                        string const & file, int line)
+{
+  string message;
+  log(format("%s:%d: detected error '%s' violated\n") % file % line % expr,
+      file.c_str(), line);
+  prefix_lines_with("error: ", explain.str(), message);
+  throw informative_failure(message);
+}
+
+void 
 sanity::invariant_failure(string const & expr, 
                           string const & file, int line)
 {

@@ -1,3 +1,16 @@
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sanity.{hh,cc} (E, error_failure): New sort of invariant.
+	* netsync.cc (process_hello_cmd): Make initial pull message
+	more clear and friendly.
+	Also, if the key has changed, that is an error, not naughtiness.
+	* database_check.cc (check_db): Database problems are also errors,
+	not naughtiness.  Revamp output in case of errors, to better
+	distinguish non-serious errors and serious errors.
+	* tests/t_database_check.at: Update accordingly.
+	* tests/t_database_check_minor.at: New test.
+	* testsuite.at: Add it.
+	
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* app_state.{cc,hh} (set_author, set_date): New methods.

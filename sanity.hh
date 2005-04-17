@@ -44,20 +44,22 @@ struct sanity {
   std::string filename;
 
   void log(boost::format const & fmt, 
-	   char const * file, int line);
+           char const * file, int line);
   void progress(boost::format const & fmt,
-		char const * file, int line);
+                char const * file, int line);
   void warning(boost::format const & fmt, 
-	       char const * file, int line);
+               char const * file, int line);
   void naughty_failure(std::string const & expr, boost::format const & explain, 
-		       std::string const & file, int line);
+                       std::string const & file, int line);
+  void error_failure(std::string const & expr, boost::format const & explain, 
+                     std::string const & file, int line);
   void invariant_failure(std::string const & expr, 
-			 std::string const & file, int line);
+                         std::string const & file, int line);
   void index_failure(std::string const & vec_expr, 
-		     std::string const & idx_expr, 
-		     unsigned long sz, 
-		     unsigned long idx,
-		     std::string const & file, int line);
+                     std::string const & idx_expr, 
+                     unsigned long sz, 
+                     unsigned long idx,
+                     std::string const & file, int line);
 };
 
 typedef std::runtime_error oops;
@@ -107,6 +109,15 @@ do { \
   } \
 } while(0)
 
+// E is for errors; they are normal (i.e., not a bug), but not necessarily
+// attributable to user naughtiness
+#define E(e, explain)\
+do { \
+  if(UNLIKELY(!(e))) { \
+    global_sanity.error_failure("E("#e")", (explain), __FILE__, __LINE__); \
+  } \
+} while(0)
+
 
 // we're interested in trapping index overflows early and precisely,
 // because they usually represent *very significant* logic errors.  we use
@@ -115,11 +126,11 @@ do { \
 
 template <typename T>
 inline T & checked_index(std::vector<T> & v, 
-			 typename std::vector<T>::size_type i,
-			 char const * vec,
-			 char const * index,
-			 char const * file,
-			 int line) 
+                         typename std::vector<T>::size_type i,
+                         char const * vec,
+                         char const * index,
+                         char const * file,
+                         int line) 
 { 
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
@@ -128,11 +139,11 @@ inline T & checked_index(std::vector<T> & v,
 
 template <typename T>
 inline T const & checked_index(std::vector<T> const & v, 
-			       typename std::vector<T>::size_type i,
-			       char const * vec,
-			       char const * index,
-			       char const * file,
-			       int line) 
+                               typename std::vector<T>::size_type i,
+                               char const * vec,
+                               char const * index,
+                               char const * file,
+                               int line) 
 { 
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
