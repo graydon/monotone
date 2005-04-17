@@ -1467,6 +1467,20 @@ database::delete_existing_revs_and_certs()
   execute("DELETE from revision_certs");
 }
 
+/// Deletes one revision from the local database. 
+/// This can be used to 'undo' a changed revision from a local database without
+/// leaving a trace
+void
+database::delete_existing_revs_and_certs(std::string const & rid){
+
+  //FIXME perform a completion here instead of blindly assigning  
+  revision_id ident = (revision_id)rid;
+
+      N(revision_exists(ident),
+        F("no revision %s found in database") % ident);
+
+  cout << "This is a noop for now!!! It should delete rev: "<<ident<<"\n";
+}
 
 // crypto key management
 
