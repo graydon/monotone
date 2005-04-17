@@ -3813,7 +3813,10 @@ careful using this hook.
 This command drops the public and/or private key. If both exist, both
 are dropped, if only one exists, it is dropped. This command should
 be used with caution as changes are irreversible without a backup of
-the key(s) that were dropped.
+the key(s) that were dropped. Note also that the private key is not
+guaranteed to actually be erased from your database file - if you are
+going to make the database file public, you should use 'db dump'
+and 'db load' to import into a fresh database.
 
 @item monotone chkeypass @var{id}
 
