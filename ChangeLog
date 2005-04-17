@@ -11,6 +11,44 @@
 	* tests/t_database_check_minor.at: New test.
 	* testsuite.at: Add it.
 	
+2005-04-17  Richard Levitte  <richard@levitte.org>
+
+	* transforms.cc (glob_to_regexp): New function that takes a glob
+	expression and transforms it into a regexp.  This will be useful
+	for globbing branch expressions when collections are exchanged to
+	branch globs and regexps.
+	(glob_to_regexp_test): A unit test for glob_to_regexp().
+
+2005-04-16  Emile Snyder  <emile@alumni.reed.edu>
+
+	* tests/t_add_stomp_file.at: New test for failing case.  
+        If you have a file foo in your working dir (not monotone 
+        controlled) and someone else adds a file foo and commits, 
+        update should at least warn you before stomping your 
+        non-recoverable foo file.
+	* testsuite.at: Add it.
+	
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc: warn that dropkey won't truly erase the privkey
+	from the database
+	* monotone.texi: same
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc: mention that it could be the filesystem that
+	is full in the SQLITE_FULL error message
+
+2005-04-16  Derek Scherger  <derek@echologic.com>
+
+	* work.cc (known_preimage_path): rename to...
+	(known_path): this, since it's image agnostic
+	(build_deletions): update for renamed function
+	(build_rename): ensure rename source exists in current revision
+	and rename target does not exist in current revision
+
+	* tests/t_no_rename_overwrite.at: un-XFAIL 
+
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* app_state.{cc,hh} (set_author, set_date): New methods.
