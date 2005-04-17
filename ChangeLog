@@ -1,3 +1,8 @@
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (path_item, sanity_check_path_item): Mark things
+	inline.
+
 2005-04-17  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* transforms.cc: fix glob_to_regexp assertions
