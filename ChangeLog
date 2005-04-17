@@ -1,4 +1,9 @@
 2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
+	
+	* tests/t_db_kill_rev_locally.at: new test; 
+	make sure that db kill_rev_locally works as intended
+
+2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
 
 	* commands.cc,database.cc: add 'db kill_rev_locally <id>' command
 	still missing: documentation and autotests. Otherwise seems ok.
