@@ -1,3 +1,8 @@
+2005-04-17  Richard Levitte  <richard@levitte.org>
+
+	* transforms.cc: Remove tabs and make sure emacs doesn't add
+	them.
+
 2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* sanity.{hh,cc} (E, error_failure): New sort of invariant.
@@ -2934,7 +2939,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Mi�łkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

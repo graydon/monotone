@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -740,8 +741,8 @@ string glob_to_regexp(const string & glob)
 {
   int in_braces = 0;		// counter for levels if {}
   bool in_brackets = false;	// flags if we're inside a [], which
-				// has higher precedence than {}.
-				// Also, [ is accepted inside [] unescaped.
+                                // has higher precedence than {}.
+                                // Also, [ is accepted inside [] unescaped.
   bool this_was_opening_bracket = false;
   string tmp;
 
@@ -759,86 +760,86 @@ string glob_to_regexp(const string & glob)
 
       // Special case ^ and ! at the beginning of a [] expression.
       if (in_brackets && last_was_opening_bracket
-	  && (c == '!' || c == '^'))
-	{
-	  tmp += '^';
-	  if (++i == glob.end())
-	    break;
-	  c = *i;
-	}
+          && (c == '!' || c == '^'))
+        {
+          tmp += '^';
+          if (++i == glob.end())
+            break;
+          c = *i;
+        }
 
       if (c == '\\')
-	{
-	  tmp += c;
-	  if (++i == glob.end())
-	    break;
-	  tmp += *i;
-	}
+        {
+          tmp += c;
+          if (++i == glob.end())
+            break;
+          tmp += *i;
+        }
       else if (in_brackets)
-	{
-	  switch(c)
-	    {
-	    case ']':
-	      if (!last_was_opening_bracket)
-		{
-		  in_brackets = false;
-		  tmp += c;
-		  break;
-		}
-	      // Trickling through to the standard character conversion,
-	      // because ] as the first character of a set is regarded as
-	      // a normal character.
-	    default:
-	      if (!(isalnum(c) || c == '_'))
-		{
-		  tmp += '\\';
-		}
-	      tmp += c;
-	      break;
-	    }
-	}
+        {
+          switch(c)
+            {
+            case ']':
+              if (!last_was_opening_bracket)
+                {
+                  in_brackets = false;
+                  tmp += c;
+                  break;
+                }
+              // Trickling through to the standard character conversion,
+              // because ] as the first character of a set is regarded as
+              // a normal character.
+            default:
+              if (!(isalnum(c) || c == '_'))
+                {
+                  tmp += '\\';
+                }
+              tmp += c;
+              break;
+            }
+        }
       else
-	{
-	  switch(c)
-	    {
-	    case '*':
-	      tmp += ".*";
-	      break;
-	    case '?':
-	      tmp += '.';
-	      break;
-	    case '{':
-	      in_braces++;
-	      tmp += '(';
-	      break;
-	    case '}':
-	      N(in_braces == 0,
-		F("trying to end a brace expression in a glob when none is started"));
-	      tmp += ')';
-	      in_braces--;
-	      break;
-	    case '[':
-	      in_brackets = true;
-	      this_was_opening_bracket = true;
-	      tmp += c;
-	      break;
-	    case ',':
-	      if (in_braces > 0)
-		{
-		  tmp += '|';
-		  break;
-		}
-	      // Trickling through to default: here, since a comma outside of
-	      // brace notation is just a normal character.
-	    default:
-	      if (!(isalnum(c) || c == '_'))
-		{
-		  tmp += '\\';
-		}
-	      tmp += c;
-	      break;
-	    }
-	}
+        {
+          switch(c)
+            {
+            case '*':
+              tmp += ".*";
+              break;
+            case '?':
+              tmp += '.';
+              break;
+            case '{':
+              in_braces++;
+              tmp += '(';
+              break;
+            case '}':
+              N(in_braces == 0,
+                F("trying to end a brace expression in a glob when none is started"));
+              tmp += ')';
+              in_braces--;
+              break;
+            case '[':
+              in_brackets = true;
+              this_was_opening_bracket = true;
+              tmp += c;
+              break;
+            case ',':
+              if (in_braces > 0)
+                {
+                  tmp += '|';
+                  break;
+                }
+              // Trickling through to default: here, since a comma outside of
+              // brace notation is just a normal character.
+            default:
+              if (!(isalnum(c) || c == '_'))
+                {
+                  tmp += '\\';
+                }
+              tmp += c;
+              break;
+            }
+        }
     }
 
   N(in_brackets,
