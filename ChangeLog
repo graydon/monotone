@@ -1,3 +1,12 @@
+2005-04-16  Emile Snyder  <emile@alumni.reed.edu>
+
+	* tests/t_add_stomp_file.at: New test for failing case.  
+        If you have a file foo in your working dir (not monotone 
+        controlled) and someone else adds a file foo and commits, 
+        update should at least warn you before stomping your 
+        non-recoverable foo file.
+	* testsuite.at: Add it.
+	
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc: warn that dropkey won't truly erase the privkey
