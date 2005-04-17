@@ -9,17 +9,17 @@
 ;;; Commentary:
 ;;
 ;; This defines `monotone-diff', `monotone-status', `monotone-add',
-;; `monotone-drop', `monotone-revert' and `monotone-commit'. These
+;; `monotone-drop', `monotone-revert' and `monotone-commit'.  These
 ;; functions call the corresponding monotone command, restricted to
-;; the current file. With a prefix argument (C-u) the command is
-;; applied unrestricted (on the whole tree). As an exception,
+;; the current file.  With a prefix argument (C-u) the command is
+;; applied unrestricted (on the whole tree).  As an exception,
 ;; `monotone-status' has the opposite behaviour: it is unrestricted by
 ;; default, restricted with a prefix argument.
 ;;
 ;; /!\ beware of bugs: `monotone-commit' is more dangerous than the
 ;; others since it writes to the database.
 ;; 
-;; To use monotone from within emacs, decide what options you would
+;; To use monotone from within Emacs, decide what options you would
 ;; like and set the vars before loading monotone.el
 ;;
 ;;   (require 'monotone)
@@ -32,7 +32,7 @@
   "*The path to the monotone program.")
 
 (defvar monotone-password-remember nil
-  "*Should emacs remember your password?
+  "*Should Emacs remember your password?
 This is a security risk as it could be extracted from memory or core dumps.")
 
 (defvar monotone-password nil
@@ -67,7 +67,7 @@ This is used to pass state -- best be left nil.")
 (make-variable-buffer-local 'monotone-commit-mode)
 (add-to-list 'minor-mode-alist '(monotone-commit-mode " Monotone Commit"))
 
-(defvar monotone-commit-mode-map 
+(defvar monotone-commit-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-c" 'monotone-commit-it)
     map))
@@ -86,7 +86,7 @@ MT: --------------------------------------------------"
   "*The hook for monotone-commit-mode.")
 
 ;;; Key maps
-(defvar monotone-vc-map 
+(defvar monotone-vc-map
   (let ((map (make-sparse-keymap)))
     (define-key map "=" 'monotone-vc-diff)
     (define-key map "l" 'monotone-vc-print-log)
@@ -94,13 +94,15 @@ MT: --------------------------------------------------"
     map))
 (fset 'monotone-vc-map monotone-vc-map)
 
+;;; Code:
+
 ;; install the keymaps
 (when monotone-vc-key
   (define-key global-map monotone-vc-key 'monotone-vc-map))
 
 (defun monotone-toggle-vc-map (&optional arg)
-  "Toggle between the default and monotone vc-maps. 
-With arg 0 use the default vc-prefix-map.
+  "Toggle between the default and monotone vc-maps, ARG set map.
+With arg 0 use the default variable `vc-prefix-map'.
 With t use monotone-vc-prefix-map."
   (interactive "P")
   (message "Arg: %s" arg)
@@ -114,11 +116,12 @@ With t use monotone-vc-prefix-map."
 
 ;; Utility functions
 (defun monotone-file-parent-directory (file)
-  "Returns the parent directory of file."
+  "Return the parent directory of FILE."
   (file-name-directory (directory-file-name file)))
 
 (defun monotone-find-MT-top (&optional path)
-  "Find the directory which contains the 'MT' directory."
+  "Find the directory which contains the 'MT' directory.
+Optional argument PATH ."
   (when (null path)
     (setq path default-directory))
   (block nil
@@ -133,7 +136,7 @@ With t use monotone-vc-prefix-map."
 ;;(monotone-find-MT-top "/disk/amelie1/harley/monotone-dev/contrib/monotone.el")
 
 (defun monotone-extract-MT-path (path &optional mt-top)
-  "Get the path minus the MT-top."
+  "Get the PATH minus the MT-TOP."
   (let ((mt-top (or mt-top monotone-MT-top (monotone-find-MT-top path))))
     (if (not mt-top)
       nil
@@ -151,6 +154,7 @@ Nothing for now."
 
 ;; Run a monotone command which does not require IO. (ie: a passwd)
 (defun monotone-cmd (&rest args)
+  "Execute the monotone command with ARGS in the monotone top directory."
   (let ((mt-top monotone-MT-top))
     (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
       (setq mt-top (monotone-find-MT-top))
@@ -169,19 +173,23 @@ Nothing for now."
 
 ;; a simple catch all
 (defun monotone-do (string)
-  "Prompt for and do the monotone command.
-With no password prompting."
+  "Prompt for argument STRING to run monotone with.  Display output.
+The monotone command is expected to run without input."
   (interactive "sMonotone: ")
   (monotone-cmd string))
 
 ;;
 (defun monotone-list-branches ()
+  "List the monotone branches known."
   (interactive)
   (monotone-cmd "list" "branches"))
 
 ;; check for common errors and args.
 (defun monotone-cmd-buf (global buf cmd)
-  "Run the simple monotone command for this buffer."
+  "Run a simple monotone command for this buffer.  (passwordless)
+GLOBAL runs the command without the buffer.
+BUF is the buffer if not global.
+CMD is the command to execute."
   (let ((bfn (buffer-file-name)))
     (when (not bfn)
       (error "No file-name for buffer"))
@@ -194,22 +202,24 @@ With no password prompting."
 ;; NOTE: The command names are modeled after the vc command names.
 
 (defun monotone-vc-print-log (&optional arg)
-  "Print the log for this buffer. With prefix ARG the global log."
+  "Print the log for this buffer.  With prefix ARG the global log."
   (interactive "P")
   (monotone-cmd-buf arg (current-buffer) "log"))
 
 ;; (monotone-print-log)
 
 (defun monotone-vc-diff (&optional arg)
-  "Print the diffs for this buffer. With prefix ARG, the global diffs."
+  "Print the diffs for this buffer.  With prefix ARG, the global diffs."
   (interactive "P")
   (monotone-cmd-buf arg (current-buffer) "diff"))
 
 (defun monotone-vc-register ()
+  "Register this file with monotone for the next commit."
   (interactive)
   (monotone-cmd-buf nil (current-buffer) "add"))
 
 (defun monotone-vc-update-change-log ()
+  "Edit the monotone change log."
   (interactive)
   (let ((mt-top (monotone-find-MT-top)))
     (when (not mt-top)
