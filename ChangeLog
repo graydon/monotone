@@ -1,3 +1,7 @@
+2005-04-17  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* transforms.cc: fix glob_to_regexp assertions
+
 2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
 	
 	* tests/t_db_kill_rev_locally.at: new test; 
@@ -2949,7 +2953,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Mi�łkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

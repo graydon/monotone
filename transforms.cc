@@ -813,7 +813,7 @@ string glob_to_regexp(const string & glob)
               tmp += '(';
               break;
             case '}':
-              N(in_braces == 0,
+              N(in_braces != 0,
                 F("trying to end a brace expression in a glob when none is started"));
               tmp += ')';
               in_braces--;
@@ -842,9 +842,9 @@ string glob_to_regexp(const string & glob)
         }
     }
 
-  N(in_brackets,
+  N(!in_brackets,
     F("run-away bracket expression in glob"));
-  N(in_braces != 0,
+  N(in_braces == 0,
     F("run-away brace expression in glob"));
 
 #ifdef BUILD_UNIT_TESTS
