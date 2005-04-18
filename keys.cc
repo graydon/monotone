@@ -7,13 +7,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "cryptopp/arc4.h"
-#include "cryptopp/base64.h"
-#include "cryptopp/hex.h"
-#include "cryptopp/cryptlib.h"
-#include "cryptopp/osrng.h"
-#include "cryptopp/sha.h"
-#include "cryptopp/rsa.h"
+#include "botan/botan.h"
+#include "botan/rsa.h"
+#include "botan/keypair.h"
 
 #include "constants.hh"
 #include "keys.hh"
@@ -32,18 +28,20 @@
 // there will probably forever be bugs in this file. it's very
 // hard to get right, portably and securely. sorry about that.
 
-using namespace CryptoPP;
+using namespace Botan;
 using namespace std;
 
 using boost::shared_ptr;
+using boost::shared_dynamic_cast;
 
 static void 
-do_arc4(SecByteBlock & phrase,
-        SecByteBlock & payload)
+do_arc4(SecureVector<byte> & phrase,
+        SecureVector<byte> & payload)
 {
   L(F("running arc4 process on %d bytes of data\n") % payload.size());
-  ARC4 a4(phrase.data(), phrase.size());
-  a4.ProcessString(payload.data(), payload.size());
+  Pipe enc(get_cipher("ARC4", phrase, ENCRYPTION));
+  enc.process_msg(payload);
+  payload = enc.read_all();
 }
 
 // 'force_from_user' means that we don't use the passphrase cache, and we
@@ -51,7 +49,7 @@ do_arc4(SecByteBlock & phrase,
 static void 
 get_passphrase(lua_hooks & lua,
                rsa_keypair_id const & keyid,
-               SecByteBlock & phrase,
+               SecureVector<byte> & phrase,
                bool confirm_phrase = false,
                bool force_from_user = false,
                string prompt_beginning = "enter passphrase")
@@ -68,14 +66,14 @@ get_passphrase(lua_hooks & lua,
   if (!force_from_user && phrases.find(keyid) != phrases.end())
     {
       string phr = phrases[keyid];
-      phrase.Assign(reinterpret_cast<byte const *>(phr.data()), phr.size());
+      phrase.set(reinterpret_cast<byte const *>(phr.data()), phr.size());
       return;
     }
 
   if (!force_from_user && lua.hook_get_passphrase(keyid, lua_phrase))
     {
       // user is being a slob and hooking lua to return his passphrase
-      phrase.Assign(reinterpret_cast<const byte *>(lua_phrase.data()), 
+      phrase.set(reinterpret_cast<const byte *>(lua_phrase.data()), 
                     lua_phrase.size());
       N(lua_phrase != "",
         F("got empty passphrase from get_passphrase() hook"));
@@ -119,7 +117,7 @@ get_passphrase(lua_hooks & lua,
 
       try 
         {
-          phrase.Assign(reinterpret_cast<byte const *>(pass1), strlen(pass1));
+          phrase.set(reinterpret_cast<byte const *>(pass1), strlen(pass1));
 
           // permit security relaxation. maybe.
           if (persist_phrase)
@@ -138,34 +136,6 @@ get_passphrase(lua_hooks & lua,
     }
 }  
 
-template <typename T>
-static void 
-write_der(T & val, SecByteBlock & sec)
-{
-  // FIXME: this helper is *wrong*. I don't see how to DER-encode into a
-  // SecByteBlock, so we may well wind up leaving raw key bytes in malloc
-  // regions if we're not lucky. but we want to. maybe muck with
-  // AllocatorWithCleanup<T>?  who knows..  please fix!
-  string der_encoded;
-  try
-    {
-      StringSink der_sink(der_encoded);
-      val.DEREncode(der_sink);
-      der_sink.MessageEnd();
-      sec.Assign(reinterpret_cast<byte const *>(der_encoded.data()), 
-                 der_encoded.size());
-      L(F("wrote %d bytes of DER-encoded data\n") % der_encoded.size());
-    }
-  catch (...)
-    {
-      for (size_t i = 0; i < der_encoded.size(); ++i)
-        der_encoded[i] = '\0';
-      throw;
-    }
-  for (size_t i = 0; i < der_encoded.size(); ++i)
-    der_encoded[i] = '\0';
-}  
-
 
 void 
 generate_key_pair(lua_hooks & lua,              // to hook for phrase
@@ -174,41 +144,33 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
                   base64< arc4<rsa_priv_key> > & priv_out,
                   string const unit_test_passphrase)
 {
-  // we will panic here if the user doesn't like urandom and we can't give
-  // them a real entropy-driven random.  
-  bool request_blocking_rng = false;
-  if (!lua.hook_non_blocking_rng_ok())
-    {
-#ifndef BLOCKING_RNG_AVAILABLE 
-      throw oops("no blocking RNG available and non-blocking RNG rejected");
-#else
-      request_blocking_rng = true;
-#endif
-    }
   
-  AutoSeededRandomPool rng(request_blocking_rng);
-  SecByteBlock phrase, pubkey, privkey;
+  SecureVector<byte> phrase, pubkey, privkey;
   rsa_pub_key raw_pub_key;
   arc4<rsa_priv_key> raw_priv_key;
   
   // generate private key (and encrypt it)
-  RSAES_OAEP_SHA_Decryptor priv(rng, constants::keylen);
-  write_der(priv, privkey);
+  RSA_PrivateKey priv(constants::keylen);
 
+  Pipe p;
+  p.start_msg();
+  PKCS8::encode(priv, p, RAW_BER);
+  privkey = p.read_all();
+  
   if (unit_test_passphrase.empty())
     get_passphrase(lua, id, phrase, true, true);
   else
-    phrase.Assign(reinterpret_cast<byte const *>(unit_test_passphrase.c_str()),
+    phrase.set(reinterpret_cast<byte const *>(unit_test_passphrase.c_str()),
                   unit_test_passphrase.size());
   do_arc4(phrase, privkey); 
-  raw_priv_key = string(reinterpret_cast<char const *>(privkey.data()), 
-                        privkey.size());
+  raw_priv_key = string(reinterpret_cast<char const *>(privkey.begin()), privkey.size());
   
   // generate public key
-  RSAES_OAEP_SHA_Encryptor pub(priv);
-  write_der(pub, pubkey);
-  raw_pub_key = string(reinterpret_cast<char const *>(pubkey.data()), 
-                       pubkey.size());
+  Pipe p2;
+  p2.start_msg();
+  X509::encode(priv, p2, RAW_BER);
+  pubkey = p2.read_all();
+  raw_pub_key = string(reinterpret_cast<char const *>(pubkey.begin()), pubkey.size());
   
   // if all that worked, we can return our results to caller
   encode_base64(raw_priv_key, priv_out);
@@ -222,23 +184,23 @@ change_key_passphrase(lua_hooks & lua,
                       rsa_keypair_id const & id,
                       base64< arc4<rsa_priv_key> > & encoded_key)
 {
-  SecByteBlock phrase;
+  SecureVector<byte> phrase;
   get_passphrase(lua, id, phrase, false, true, "enter old passphrase");
 
   arc4<rsa_priv_key> decoded_key;
-  SecByteBlock key_block;
+  SecureVector<byte> key_block;
   decode_base64(encoded_key, decoded_key);
-  key_block.Assign(reinterpret_cast<byte const *>(decoded_key().data()),
+  key_block.set(reinterpret_cast<byte const *>(decoded_key().data()),
                    decoded_key().size());
   do_arc4(phrase, key_block);
 
   try
     {
       L(F("building signer from %d-byte decrypted private key\n") % key_block.size());
-      StringSource keysource(key_block.data(), key_block.size(), true);
-      shared_ptr<RSASSA_PKCS1v15_SHA_Signer> signer;
-      signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
-        (new RSASSA_PKCS1v15_SHA_Signer(keysource));
+      Pipe p;
+      p.process_msg(key_block);
+      shared_ptr<PKCS8_PrivateKey> pkcs8_key = 
+        shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p));
     }
   catch (...)
     {
@@ -248,48 +210,36 @@ change_key_passphrase(lua_hooks & lua,
 
   get_passphrase(lua, id, phrase, true, true, "enter new passphrase");
   do_arc4(phrase, key_block);
-  decoded_key = string(reinterpret_cast<char const *>(key_block.data()),
+  decoded_key = string(reinterpret_cast<char const *>(key_block.begin()),
                        key_block.size());
   encode_base64(decoded_key, encoded_key);
 }
 
 void 
-make_signature(lua_hooks & lua,           // to hook for phrase
+make_signature(app_state & app,           // to hook for phrase
                rsa_keypair_id const & id, // to prompting user for phrase
                base64< arc4<rsa_priv_key> > const & priv,
                string const & tosign,
                base64<rsa_sha1_signature> & signature)
 {
   arc4<rsa_priv_key> decoded_key;
-  SecByteBlock decrypted_key;
-  SecByteBlock phrase;
+  SecureVector<byte> decrypted_key;
+  SecureVector<byte> phrase;
+  SecureVector<byte> sig;
   string sig_string;
-
-  // we will panic here if the user doesn't like urandom and we can't give
-  // them a real entropy-driven random.  
-  bool request_blocking_rng = false;
-  if (!lua.hook_non_blocking_rng_ok())
-    {
-#ifndef BLOCKING_RNG_AVAILABLE 
-      throw oops("no blocking RNG available and non-blocking RNG rejected");
-#else
-      request_blocking_rng = true;
-#endif
-    }  
-  AutoSeededRandomPool rng(request_blocking_rng);
 
   // we permit the user to relax security here, by caching a decrypted key
   // (if they permit it) through the life of a program run. this helps when
   // you're making a half-dozen certs during a commit or merge or
   // something.
 
-  static std::map<rsa_keypair_id, shared_ptr<RSASSA_PKCS1v15_SHA_Signer> > signers;
-  bool persist_phrase = (!signers.empty()) || lua.hook_persist_phrase_ok();
+  bool persist_phrase = (!app.signers.empty()) || app.lua.hook_persist_phrase_ok();
   bool force = false;
 
-  shared_ptr<RSASSA_PKCS1v15_SHA_Signer> signer;
-  if (persist_phrase && signers.find(id) != signers.end())
-    signer = signers[id];
+  shared_ptr<PK_Signer> signer;
+  shared_ptr<RSA_PrivateKey> priv_key;
+  if (persist_phrase && app.signers.find(id) != app.signers.end())
+    signer = app.signers[id].first;
 
   else
     {
@@ -297,17 +247,19 @@ make_signature(lua_hooks & lua,           // to hook for phrase
         {
           L(F("base64-decoding %d-byte private key\n") % priv().size());
           decode_base64(priv, decoded_key);
-          decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
+          decrypted_key.set(reinterpret_cast<byte const *>(decoded_key().data()), 
                                decoded_key().size());
-          get_passphrase(lua, id, phrase, false, force);
-          
+          get_passphrase(app.lua, id, phrase, false, force);
+          do_arc4(phrase, decrypted_key);
+
+          L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
+
+          shared_ptr<PKCS8_PrivateKey> pkcs8_key;
           try 
             {
-              do_arc4(phrase, decrypted_key);
-              L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
-              StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
-              signer = shared_ptr<RSASSA_PKCS1v15_SHA_Signer>
-                (new RSASSA_PKCS1v15_SHA_Signer(keysource));
+              Pipe p;
+              p.process_msg(decrypted_key);
+              pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p));
             }
           catch (...)
             {
@@ -318,24 +270,31 @@ make_signature(lua_hooks & lua,           // to hook for phrase
               force = true;
               continue;
             }
+
+          priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
+          if (!priv_key)
+              throw informative_failure("Failed to get RSA signing key");
+
+          signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
           
+          /* XXX This is ugly. We need to keep the key around as long
+           * as the signer is around, but the shared_ptr for the key will go
+           * away after we leave this scope. Hence we store a pair of
+           * <verifier,key> so they both exist. */
           if (persist_phrase)
-            signers.insert(make_pair(id,signer));
-          break;
+            app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
         }
     }
 
-  StringSource tmp(tosign, true, 
-                   new SignerFilter
-                   (rng, *signer, 
-                    new StringSink(sig_string)));  
+  sig = signer->sign_message(reinterpret_cast<byte const *>(tosign.data()), tosign.size());
+  sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
   
   L(F("produced %d-byte signature\n") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 }
 
 bool 
-check_signature(lua_hooks & lua,           
+check_signature(app_state &app,
                 rsa_keypair_id const & id, 
                 base64<rsa_pub_key> const & pub_encoded,
                 string const & alleged_text,
@@ -343,57 +302,51 @@ check_signature(lua_hooks & lua,
 {
   // examine pubkey
 
-  static std::map<rsa_keypair_id, shared_ptr<RSASSA_PKCS1v15_SHA_Verifier> > verifiers;
-  bool persist_phrase = (!verifiers.empty()) || lua.hook_persist_phrase_ok();
+  bool persist_phrase = (!app.verifiers.empty()) || app.lua.hook_persist_phrase_ok();
 
-  shared_ptr<RSASSA_PKCS1v15_SHA_Verifier> verifier;
+  shared_ptr<PK_Verifier> verifier;
+  shared_ptr<RSA_PublicKey> pub_key;
   if (persist_phrase 
-      && verifiers.find(id) != verifiers.end())
-    verifier = verifiers[id];
+      && app.verifiers.find(id) != app.verifiers.end())
+    verifier = app.verifiers[id].first;
 
   else
     {
       rsa_pub_key pub;
       decode_base64(pub_encoded, pub);
-      SecByteBlock pub_block;
-      pub_block.Assign(reinterpret_cast<byte const *>(pub().data()), pub().size());
-      StringSource keysource(pub_block.data(), pub_block.size(), true);
+      SecureVector<byte> pub_block;
+      pub_block.set(reinterpret_cast<byte const *>(pub().data()), pub().size());
+
       L(F("building verifier for %d-byte pub key\n") % pub_block.size());
-      verifier = shared_ptr<RSASSA_PKCS1v15_SHA_Verifier>
-        (new RSASSA_PKCS1v15_SHA_Verifier(keysource));
-      
+      shared_ptr<X509_PublicKey> x509_key =
+          shared_ptr<X509_PublicKey>(X509::load_key(pub_block));
+      pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
+      if (!pub_key)
+          throw informative_failure("Failed to get RSA verifying key");
+
+      verifier = shared_ptr<PK_Verifier>(get_pk_verifier(*pub_key, "EMSA3(SHA-1)"));
+
+      /* XXX This is ugly. We need to keep the key around 
+       * as long as the verifier is around, but the shared_ptr will go 
+       * away after we leave this scope. Hence we store a pair of
+       * <verifier,key> so they both exist. */
       if (persist_phrase)
-        verifiers.insert(make_pair(id, verifier));
+        app.verifiers.insert(make_pair(id, make_pair(verifier, pub_key)));
     }
 
   // examine signature
   rsa_sha1_signature sig_decoded;
   decode_base64(signature, sig_decoded);
-  if (sig_decoded().size() != verifier->SignatureLength())
-    return false;
 
   // check the text+sig against the key
   L(F("checking %d-byte (%d decoded) signature\n") % 
     signature().size() % sig_decoded().size());
-  VerifierFilter * vf = NULL;
 
-  // crypto++ likes to use pointers in ways which boost and std:: smart
-  // pointers aren't really good with, unfortunately.
-  try 
-    {
-      vf = new VerifierFilter(*verifier);
-      vf->Put(reinterpret_cast<byte const *>(sig_decoded().data()), sig_decoded().size());
-    } 
-  catch (...)
-    {
-      if (vf)
-        delete vf;
-      throw;
-    }
+  bool valid_sig = verifier->verify_message(
+          reinterpret_cast<byte const*>(alleged_text.data()), alleged_text.size(),
+          reinterpret_cast<byte const*>(sig_decoded().data()), sig_decoded().size());
 
-  I(vf);
-  StringSource tmp(alleged_text, true, vf);
-  return vf->GetLastResult();
+  return valid_sig;
 }
 
 void 
@@ -455,8 +408,8 @@ require_password(rsa_keypair_id const & key,
     {
       string plaintext("hi maude");
       base64<rsa_sha1_signature> sig;
-      make_signature(app.lua, key, priv, plaintext, sig);
-      N(check_signature(app.lua, key, pub, plaintext, sig),
+      make_signature(app, key, priv, plaintext, sig);
+      N(check_signature(app, key, pub, plaintext, sig),
         F("passphrase for '%s' is incorrect") % key);
     }
 }
@@ -464,82 +417,64 @@ require_password(rsa_keypair_id const & key,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
+static void
+arc4_test()
+{
+
+  string pt("new fascist tidiness regime in place");
+  string phr("still spring water");
+
+  SecureVector<byte> phrase(reinterpret_cast<byte const*>(phr.data()),
+    phr.size());
+
+  SecureVector<byte> orig(reinterpret_cast<byte const*>(pt.data()),
+    pt.size());
+
+  SecureVector<byte> data(orig);
+
+  BOOST_CHECKPOINT("encrypting data");
+  do_arc4(phrase, data);
+
+  BOOST_CHECK(data != orig);
+
+  BOOST_CHECKPOINT("decrypting data");
+  do_arc4(phrase, data);
+
+  BOOST_CHECK(data == orig);
+
+}
+
 static void 
 signature_round_trip_test()
 {
-  lua_hooks lua;
-  lua.add_std_hooks();
-  lua.add_test_hooks();
-  
+  app_state app;
+  app.lua.add_std_hooks();
+  app.lua.add_test_hooks();
+
   BOOST_CHECKPOINT("generating key pairs");
   rsa_keypair_id key("bob123@test.com");
   base64<rsa_pub_key> pubkey;
   base64< arc4<rsa_priv_key> > privkey;
-  generate_key_pair(lua, key, pubkey, privkey, "bob123@test.com");
+  generate_key_pair(app.lua, key, pubkey, privkey, "bob123@test.com");
 
   BOOST_CHECKPOINT("signing plaintext");
   string plaintext("test string to sign");
   base64<rsa_sha1_signature> sig;
-  make_signature(lua, key, privkey, plaintext, sig);
+  make_signature(app, key, privkey, plaintext, sig);
   
   BOOST_CHECKPOINT("checking signature");
-  BOOST_CHECK(check_signature(lua, key, pubkey, plaintext, sig));
+  BOOST_CHECK(check_signature(app, key, pubkey, plaintext, sig));
   
   string broken_plaintext = plaintext + " ...with a lie";
   BOOST_CHECKPOINT("checking non-signature");
-  BOOST_CHECK(!check_signature(lua, key, pubkey, broken_plaintext, sig));
-}
-
-static void 
-osrng_test()
-{
-  AutoSeededRandomPool rng_random(true), rng_urandom(false);
-
-  for (int round = 0; round < 20; ++round)
-    {
-      MaurerRandomnessTest t_blank, t_urandom, t_random;
-      int i = 0;
-
-      while (t_blank.BytesNeeded() != 0)
-        {
-          t_blank.Put(static_cast<byte>(0));
-          i++;
-        }
-      L(F("%d bytes blank input -> tests as %f randomness\n") 
-        % i % t_blank.GetTestValue());
-
-
-      i = 0;
-      while (t_urandom.BytesNeeded() != 0)
-        {
-          t_urandom.Put(rng_urandom.GenerateByte());
-          i++;
-        }
-      L(F("%d bytes urandom-seeded input -> tests as %f randomness\n") 
-        % i % t_urandom.GetTestValue());
-
-
-      i = 0;
-      while (t_random.BytesNeeded() != 0)
-        {
-          t_random.Put(rng_random.GenerateByte());
-          i++;
-        }
-
-      L(F("%d bytes random-seeded input -> tests as %f randomness\n") 
-        % i % t_random.GetTestValue());
-
-      BOOST_CHECK(t_blank.GetTestValue() == 0.0);
-      BOOST_CHECK(t_urandom.GetTestValue() > 0.95);
-      BOOST_CHECK(t_random.GetTestValue() > 0.95);
-    }
+  BOOST_CHECK(!check_signature(app, key, pubkey, broken_plaintext, sig));
 }
 
 void 
 add_key_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&osrng_test));
+  suite->add(BOOST_TEST_CASE(&arc4_test));
   suite->add(BOOST_TEST_CASE(&signature_round_trip_test));
 }
 
