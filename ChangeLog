@@ -1,5 +1,8 @@
 2005-04-18  Richard Levitte  <richard@levitte.org>
 
+	* contrib/monotone-import.pl: New script to mimic "cvs import".
+	* contrib/README: describe it.
+
 	* commands.cc (CMD(attr)): Make it possible to drop file
 	attributes.
 
