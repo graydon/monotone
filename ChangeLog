@@ -1,3 +1,8 @@
+2005-04-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Dealing with a Fork): Clarify (hopefully) what we
+	mean when we say that "update" is a dangerous command.
+
 2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Branching and Merging): A few small edits.
