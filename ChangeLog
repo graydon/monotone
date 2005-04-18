@@ -9,8 +9,10 @@
 	behavior to not produce diffs on merges and propagates where the
 	ancestors hve already been shown.
 
+	* tests/t_attr_drop.at: New test to check that 'attr drop'
+	correctly drops the given entry.
 	* tests/t_drop_attr.at: New test, similar to t_rename_attr.at.
-	* testsuite.at: Add it.
+	* testsuite.at: Add them.
 
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 
