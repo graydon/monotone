@@ -1,5 +1,8 @@
 2005-04-18  Richard Levitte  <richard@levitte.org>
 
+	* commands.cc (CMD(attr)): Make it possible to drop file
+	attributes.
+
 	* contrib/monotone-notify.pl (my_exit): The comment was incorrect,
 	there are no network connections to close gracefully.
 	Implement --ignore-merges, which is on by default, and changes the
