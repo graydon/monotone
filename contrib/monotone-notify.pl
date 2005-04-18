@@ -38,23 +38,23 @@ my $VERSION = '1.0';
 ######################################################################
 # User options
 #
-my $user_database = undef;
-my @user_branches = ();
 my $help = 0;
 my $man = 0;
-my $mail = -1;
-my $debug = 0;
-my $quiet = 0;
+my $user_database = undef;
+my $root = undef;
+my @user_branches = ();
 my $update = -1;
+my $mail = -1;
+my $attachments = 1;
+my $ignore_merges = 1;
 my $from = undef;
 my $difflogs_to = undef;
 my $nodifflogs_to = undef;
-my $to = undef;
-my $attachments = 1;
 my $before = undef;
 my $since = undef;
 my $workdir = undef;
-my $root = undef;
+my $quiet = 0;
+my $debug = 0;
 
 GetOptions('help|?' => \$help,
 	   'man' => \$man,
@@ -64,6 +64,7 @@ GetOptions('help|?' => \$help,
 	   'update!' => \$update,
 	   'mail!' => \$mail,
 	   'attachments!' => \$attachments,
+	   'ignore-merges!' => \$ignore_merges,
 	   'from=s' => \$from,
 	   'difflogs-to=s' => \$difflogs_to,
 	   'nodifflogs-to=s' => \$nodifflogs_to,
@@ -296,6 +297,34 @@ if ($mail || $debug) {
 		my $to = $sendinfo->[2];
 		next if !defined $to;
 
+		my @ancestors =
+		    map { (split ' ')[1] }
+			grep(/^Ancestor:/, @{$revision_data{$revision}});
+
+		# If this revision has more than one ancestor, it's the
+		# result of a merge.  If we have already shown the
+		# participating ancestors, let's not show the diffs again.
+		if ($ignore_merges && $diffs && $#ancestors > 0) {
+		    my $will_ignore = 1;
+		    my %revision_branches =
+			map { (split ' ')[1] => 1 }
+			    grep /^Branch:/, @{$revision_data{$revision}};
+		    my_debug("Checking if $revision's ancestor have already been shown (probably).");
+		    foreach (@ancestors) {
+			if (!revision_is_in_branch($_,
+						   { %branches,
+						     %revision_branches },
+						   { %revision_data })) {
+			    my_debug("Not ignoring this one!");
+			    $will_ignore = 0;
+			}
+		    }
+		    if ($will_ignore) {
+			$diffs = 0;
+			my_debug("Not showing diff for revision $revision, because all it's ancestors\nhave already been shown.");
+		    }
+		}
+
 		# If --nodiffs was used, it's silly to use attachments
 		my $attach = $attachments;
 		$attach = 0 if $diffs == 0;
@@ -305,9 +334,6 @@ if ($mail || $debug) {
 				# correctly sorted order.
 		my %file_info = (); # Hold information about each file.
 
-		my @ancestors =
-		    map { (split ' ')[1] }
-			grep(/^Ancestor:/, @{$revision_data{$revision}});
 		# Make sure we have a null ancestor if there are none.
 		# generate_diff will do the right thing with it.
 		if ($#ancestors < 0) {
@@ -518,6 +544,36 @@ sub generate_diff
     close OUTPUT;
 }
 
+# revision_is_in_branch checks if the given revision is in one of the
+# given branches.  The latter is given in form of a hash.
+sub revision_is_in_branch
+{
+    my ($revision, $branches, $revision_data) = @_;
+    my $bool = 0;
+
+    my_debug("Checking if $revision has already been shown in one of
+    these branches:\n  ",
+	     join("\n  ", keys %$branches));
+
+    if (!defined $$revision_data{$revision}) {
+	$$revision_data{$revision} =
+	    [ map { chomp; $_ }
+	      my_backtick("monotone$database log --depth=1 $revision") ];
+    }
+
+    map {
+	my $branch = (split ' ')[1];
+	if (defined $$branches{$branch}) {
+	    $bool = 1;
+	    my_debug("Found it in $branch");
+	}
+    } grep /^Branch:/, @{$$revision_data{$revision}};
+
+    my_debug("Didn't find it in any of the branches...") if !$bool;
+
+    return $bool;
+}
+
 # my_log will simply output all it's arguments, prefixed with "Notify: ",
 # unless $quiet is true.
 sub my_log
@@ -643,7 +699,7 @@ monotone-notify.pl - a script to send monotone change notifications by email
 
 monotone-notify.pl [--help] [--man]
 [--db=database] [--root=path] [--branch=branch ...]
-[--[no]update] [--[no]mail] [--[no]attachments]
+[--[no]update] [--[no]mail] [--[no]attachments] [--[no]ignore-merges]
 [--from=email-sender]
 [--difflogs-to=email-recipient] [--nodifflogs-to=email-recipient]
 [--workdir=path] [--before=yyyy-mm-ddThh:mm:ss] [--since=yyyy-mm-ddThh:mm:ss]
@@ -714,6 +770,16 @@ attachments in the emails.  This is the default behavior.
 
 Have the change summary and the output of 'monotone diff' in the body
 of the email, separated by lines of dashes.
+
+=item B<--ignore-merges>
+
+Do not create difflogs for merges (revisions with more than one
+ancestor), if the ancestors are in at least one of the branches that
+are monotored.  This is the default behavior.
+
+=item B<--noignore-merges>
+
+Always create difflogs, even for merges.
 
 =item B<--from>=I<from>
 

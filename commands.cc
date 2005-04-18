@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -2473,8 +2474,8 @@ void kill_rev_locally(app_state& app, std::string const& id){
   app.db.delete_existing_rev_and_certs(ident);
 }
 
-CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]", 
-    "get or set file attributes")
+CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE", 
+    "set, get or drop file attributes")
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
@@ -2495,31 +2496,30 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
   file_path path = app.prefix(idx(args,1)());
   N(file_exists(path), F("file '%s' not found") % path);
 
+  bool attrs_modified = false;
+
   if (idx(args, 0)() == "set")
     {
       if (args.size() != 4)
         throw usage(name);
       attrs[path][idx(args, 2)()] = idx(args, 3)();
-      write_attr_map(attr_data, attrs);
-      write_data(attr_path, attr_data);
 
-      {
-        // check to make sure .mt-attr exists in 
-        // current manifest.
-        manifest_map man;
-        calculate_base_manifest(app, man);
-        if (man.find(attr_path) == man.end())
-          {
-            P(F("registering %s file in working copy\n") % attr_path);
-              change_set::path_rearrangement work;  
-              get_path_rearrangement(work);
-              vector<file_path> paths;
-              paths.push_back(attr_path);
-              build_additions(paths, man, app, work);
-              put_path_rearrangement(work);
-          }        
-      }
+      attrs_modified = true;
+    }
+  else if (idx(args, 0)() == "drop")
+    {
+      if (args.size() == 1)
+        {
+          attrs.erase(path);
+        }
+      else if (args.size() == 2)
+        {
+          attrs[path].erase(idx(args, 2)());
+        }
+      else
+        throw usage(name);
 
+      attrs_modified = true;
     }
   else if (idx(args, 0)() == "get")
     {
@@ -2549,6 +2549,29 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
     }
   else 
     throw usage(name);
+
+  if (attrs_modified)
+    {
+      write_attr_map(attr_data, attrs);
+      write_data(attr_path, attr_data);
+
+      {
+        // check to make sure .mt-attr exists in 
+        // current manifest.
+        manifest_map man;
+        calculate_base_manifest(app, man);
+        if (man.find(attr_path) == man.end())
+          {
+            P(F("registering %s file in working copy\n") % attr_path);
+            change_set::path_rearrangement work;
+            get_path_rearrangement(work);
+            vector<file_path> paths;
+            paths.push_back(attr_path);
+            build_additions(paths, man, app, work);
+            put_path_rearrangement(work);
+          }
+      }
+    }
 }
 
 static boost::posix_time::ptime

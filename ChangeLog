@@ -2,6 +2,9 @@
 
 	* contrib/monotone-notify.pl (my_exit): The comment was incorrect,
 	there are no network connections to close gracefully.
+	Implement --ignore-merges, which is on by default, and changes the
+	behavior to not produce diffs on merges and propagates where the
+	ancestors hve already been shown.
 
 	* tests/t_drop_attr.at: New test, similar to t_rename_attr.at.
 	* testsuite.at: Add it.
