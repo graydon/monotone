@@ -2508,11 +2508,11 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE",
     }
   else if (idx(args, 0)() == "drop")
     {
-      if (args.size() == 1)
+      if (args.size() == 2)
         {
           attrs.erase(path);
         }
-      else if (args.size() == 2)
+      else if (args.size() == 3)
         {
           attrs[path].erase(idx(args, 2)());
         }
