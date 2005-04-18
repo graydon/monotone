@@ -1,3 +1,219 @@
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* vocab_terms.hh: remove commented out lines.
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* Move base64<gzip> code as close to the database as possible,
+	to avoid unnecessary inflating and deflating.
+
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Branching and Merging): A few small edits.
+
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (path_item, sanity_check_path_item): Mark things
+	inline.
+
+2005-04-17  Henrik Holmboe <henrik@holmboe.se>
+
+	* contrib/monotone-notify.pl: Add signal handlers.  Correct some
+	typos.
+	(my_exit): New function that does a cleanup and exit.
+
+2005-04-17  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* transforms.cc: fix glob_to_regexp assertions
+
+2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
+	
+	* tests/t_db_kill_rev_locally.at: new test; 
+	make sure that db kill_rev_locally works as intended
+
+2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
+
+	* commands.cc,database.cc: add 'db kill_rev_locally <id>' command
+	still missing: documentation and autotests. Otherwise seems ok.
+	
+2005-04-17  Richard Levitte  <richard@levitte.org>
+
+	* transforms.cc: Remove tabs and make sure emacs doesn't add
+	them.
+
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sanity.{hh,cc} (E, error_failure): New sort of invariant.
+	* netsync.cc (process_hello_cmd): Make initial pull message
+	more clear and friendly.
+	Also, if the key has changed, that is an error, not naughtiness.
+	* database_check.cc (check_db): Database problems are also errors,
+	not naughtiness.  Revamp output in case of errors, to better
+	distinguish non-serious errors and serious errors.
+	* tests/t_database_check.at: Update accordingly.
+	* tests/t_database_check_minor.at: New test.
+	* testsuite.at: Add it.
+	
+2005-04-17  Richard Levitte  <richard@levitte.org>
+
+	* transforms.cc (glob_to_regexp): New function that takes a glob
+	expression and transforms it into a regexp.  This will be useful
+	for globbing branch expressions when collections are exchanged to
+	branch globs and regexps.
+	(glob_to_regexp_test): A unit test for glob_to_regexp().
+
+2005-04-16  Emile Snyder  <emile@alumni.reed.edu>
+
+	* tests/t_add_stomp_file.at: New test for failing case.  
+        If you have a file foo in your working dir (not monotone 
+        controlled) and someone else adds a file foo and commits, 
+        update should at least warn you before stomping your 
+        non-recoverable foo file.
+	* testsuite.at: Add it.
+	
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc: warn that dropkey won't truly erase the privkey
+	from the database
+	* monotone.texi: same
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc: mention that it could be the filesystem that
+	is full in the SQLITE_FULL error message
+
+2005-04-16  Derek Scherger  <derek@echologic.com>
+
+	* work.cc (known_preimage_path): rename to...
+	(known_path): this, since it's image agnostic
+	(build_deletions): update for renamed function
+	(build_rename): ensure rename source exists in current revision
+	and rename target does not exist in current revision
+
+	* tests/t_no_rename_overwrite.at: un-XFAIL 
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* app_state.{cc,hh} (set_author, set_date): New methods.
+	* cert.cc (cert_revision_date): Rename to...
+	(cert_revision_date_time): ...an overloaded version of this.
+	(cert_revision_author_default): Check app.date.
+	* cert.hh: Expose cert_revision_date_time.
+	* commands.cc (commit): Handle --date.
+	* main.cc: Parse --date and --author options.
+	* monotone.1: Document --date, --author.
+	* monotone.texi (Working Copy, OPTIONS): Likewise.
+
+	* tests/t_override_author_date.at: New test.
+	* testsuite.at: Add it.
+	
+	This commit heavily based on a patch by Markus Schiltknecht
+	<markus@bluegap.ch>.
+	
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+
+2005-04-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Fix warnings: add missing initializers.
+	* netsync.cc: Fix warnings: inline static vs static inline.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_update_nonexistent.at: New test.
+	* testsuite.at: Add it.
+	
+	* commands.cc (update): Verify that user's requested revision
+	exists.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+
+2005-04-16  Emile Snyder <emile@alumni.reed.edu>
+
+	* tests/t_add_vs_commit.at: New test for failing case.  If you
+	add a file in you working dir, someone else adds the same file
+	and commits, then you do an update it messes up your working
+	directory.
+	* testsuite.at: Add it.
+	
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (checkout): Move check for existence of revision
+	earlier.
+	
+	* tests/t_netsync_defaults.at, tests/t_netsync_single.at:
+	Don't hard-code netsync port.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* testsuite.at: Use a random server port.
+	
+	* .mt-attrs, contrib/README: Update for Notify.pl ->
+	monotone-notify.pl rename.
+	
+	* monotone.1: Warn people off rcs_import.
+	* monotone.texi (Commands): Likewise.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Emile Snyder <emile@alumni.reed.edu>.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_lf_crlf.at: New test from Emile Snyder
+	<emile@alumni.reed.edu>, with tweaks.
+	* testsuite.at: Add it.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Small fixups.
+
+2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
+	
+	* tests/t_cvsimport2.at: new test; CVS Attic files fail test
+	reported by: hjlipp@web.de 15.04.2005 02:45
+
+2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
+	
+	* tests/t_rcs_import.at: new test; problematic CVS import as
+	reported in the list. However it works just fine here, so it
+	really tests for a successful pass
+
+2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
+
+	* tests/README: new file, on how to create/run tests
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_rename_dir_add_dir_with_old_name.at: XFAIL.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_diff_binary.at: Un-XFAIL.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network Service): Rewrite to include former
+	Exchanging Keys section.
+	(Branching and Merging): New tutorial section, inspired by a patch
+	from Martin Kihlgren <zond@troja.ath.cx>.
+	(CVS Phrasebook): Add "Importing a New Project".
+
+	* AUTHORS: Add Martin Dvorak.
+	
+2005-04-15 Martin Dvorak <jezek2@advel.cz>
+	
+	* tests/t_rename_dir_add_dir_with_old_name.at: New test.
+	* testsuite.at: Add it.
+	
+2005-04-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (compose_rearrangement): remove logging statements
+	that were using noticable CPU time.
+
 2005-04-15  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* diff_patch.cc(guess_binary): do not use '\x00' as first
@@ -2796,7 +3012,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

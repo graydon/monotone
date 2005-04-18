@@ -712,7 +712,7 @@ session::analyze_attachment(revision_id const & i,
   attached[i] = curr_attached;
 }
 
-static inline id
+inline static id
 plain_id(manifest_id const & i)
 {
   id tmp;
@@ -721,7 +721,7 @@ plain_id(manifest_id const & i)
   return tmp;
 }
 
-static inline id
+inline static id
 plain_id(file_id const & i)
 {
   id tmp;
@@ -1432,13 +1432,14 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
           P(F("I expected %s\n") % expected_key_hash);
           P(F("'monotone unset %s %s' overrides this check\n")
             % their_key_key.first % their_key_key.second);
-          N(false, F("server key changed"));
+          E(false, F("server key changed"));
         }
     }
   else
     {
-      W(F("first time connecting to server %s; authenticity can't be established\n") % peer_id);
-      W(F("their key is %s\n") % their_key_hash);
+      P(F("first time connecting to server %s\n") % peer_id);
+      P(F("I'll assume it's really them, but you might want to\n"));
+      P(F("double-check their key's fingerprint: %s\n") % their_key_hash);
       app.db.set_var(their_key_key, var_value(their_key_hash()));
     }
   if (!app.db.public_key_exists(their_key_hash))
@@ -1834,8 +1835,7 @@ load_data(netcmd_item_type type,
           revision_data mdat;
           data dat;
           app.db.get_revision(revision_id(hitem), mdat);
-          unpack(mdat.inner(), dat);
-          out = dat();
+          out = mdat.inner()();
         }
       else
         {
@@ -1849,8 +1849,7 @@ load_data(netcmd_item_type type,
           manifest_data mdat;
           data dat;
           app.db.get_manifest_version(manifest_id(hitem), mdat);
-          unpack(mdat.inner(), dat);
-          out = dat();
+          out = mdat.inner()();
         }
       else
         {
@@ -1864,8 +1863,7 @@ load_data(netcmd_item_type type,
           file_data fdat;
           data dat;
           app.db.get_file_version(file_id(hitem), fdat);
-          unpack(fdat.inner(), dat);
-          out = dat();
+          out = fdat.inner()();
         }
       else
         {
@@ -2330,8 +2328,8 @@ session::process_send_delta_cmd(netcmd_item_type type,
             this->app.db.get_file_version(fbase, base_fdat);
             this->app.db.get_file_version(fident, ident_fdat);      
             string tmp;     
-            unpack(base_fdat.inner(), base_dat);
-            unpack(ident_fdat.inner(), ident_dat);
+            base_dat = base_fdat.inner();
+            ident_dat = ident_fdat.inner();
             compute_delta(base_dat(), ident_dat(), tmp);
             del = delta(tmp);
           }
@@ -2354,8 +2352,8 @@ session::process_send_delta_cmd(netcmd_item_type type,
             this->app.db.get_manifest_version(mbase, base_mdat);
             this->app.db.get_manifest_version(mident, ident_mdat);
             string tmp;
-            unpack(base_mdat.inner(), base_dat);
-            unpack(ident_mdat.inner(), ident_dat);
+            base_dat = base_mdat.inner();
+            ident_dat = ident_mdat.inner();
             compute_delta(base_dat(), ident_dat(), tmp);
             del = delta(tmp);
           }
@@ -2480,9 +2478,7 @@ session::process_data_cmd(netcmd_item_type type,
             boost::shared_ptr< pair<revision_data, revision_set > > 
               rp(new pair<revision_data, revision_set>());
             
-            base64< gzip<data> > packed;
-            pack(data(dat), packed);
-            rp->first = revision_data(packed);
+            rp->first = revision_data(dat);
             read_revision_set(dat, rp->second);
             ancestry.insert(std::make_pair(rid, rp));
             if (cert_refinement_done())
@@ -2500,9 +2496,7 @@ session::process_data_cmd(netcmd_item_type type,
           L(F("manifest version '%s' already exists in our database\n") % hitem);
         else
           {
-            base64< gzip<data> > packed_dat;
-            pack(data(dat), packed_dat);
-            this->dbw.consume_manifest_data(mid, manifest_data(packed_dat));
+            this->dbw.consume_manifest_data(mid, manifest_data(dat));
             manifest_map man;
             read_manifest_map(data(dat), man);
             analyze_manifest(man);
@@ -2517,9 +2511,7 @@ session::process_data_cmd(netcmd_item_type type,
           L(F("file version '%s' already exists in our database\n") % hitem);
         else
           {
-            base64< gzip<data> > packed_dat;
-            pack(data(dat), packed_dat);
-            this->dbw.consume_file_data(fid, file_data(packed_dat));
+            this->dbw.consume_file_data(fid, file_data(dat));
           }
       }
       break;
@@ -2553,20 +2545,18 @@ session::process_delta_cmd(netcmd_item_type type,
     case manifest_item:
       {
         manifest_id src_manifest(hbase), dst_manifest(hident);
-        base64< gzip<delta> > packed_del;
-        pack(del, packed_del);
         if (reverse_delta_requests.find(id_pair)
             != reverse_delta_requests.end())
           {
             reverse_delta_requests.erase(id_pair);
             this->dbw.consume_manifest_reverse_delta(src_manifest, 
                                                      dst_manifest,
-                                                     manifest_delta(packed_del));
+                                                     manifest_delta(del));
           }
         else
           this->dbw.consume_manifest_delta(src_manifest, 
                                            dst_manifest,
-                                           manifest_delta(packed_del));
+                                           manifest_delta(del));
         
       }
       break;
@@ -2574,20 +2564,18 @@ session::process_delta_cmd(netcmd_item_type type,
     case file_item:
       {
         file_id src_file(hbase), dst_file(hident);
-        base64< gzip<delta> > packed_del;
-        pack(del, packed_del);
         if (reverse_delta_requests.find(id_pair)
             != reverse_delta_requests.end())
           {
             reverse_delta_requests.erase(id_pair);
             this->dbw.consume_file_reverse_delta(src_file, 
                                                  dst_file,
-                                                 file_delta(packed_del));
+                                                 file_delta(del));
           }
         else
           this->dbw.consume_file_delta(src_file, 
                                        dst_file,
-                                       file_delta(packed_del));
+                                       file_delta(del));
       }
       break;
       

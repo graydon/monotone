@@ -94,23 +94,16 @@ void unpack(base64< gzip<T> > const & in, T & out)
 
 void diff(data const & olddata,
           data const & newdata,
-          base64< gzip<delta> > & del);
+          delta & del);
 
 void diff(manifest_map const & oldman,
           manifest_map const & newman,
-          base64< gzip<delta> > & del);
-
-void diff(base64< gzip<data> > const & old_data,
-          base64< gzip<data> > const & new_data,
-          base64< gzip<delta> > & delta);
+          delta & del);
 
 void patch(data const & olddata,
-           base64< gzip<delta> > const & del,
+           delta const & del,
            data & newdata);
 
-void patch(base64< gzip<data> > const & old_data,
-           base64< gzip<delta> > const & delta,
-           base64< gzip<data> > & new_data);
 
 // version (a.k.a. sha1 fingerprint) calculation
 

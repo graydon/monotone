@@ -61,11 +61,11 @@ path_item
   tid parent;
   ptype ty;
   path_component name;      
-  path_item() {}
-  path_item(tid p, ptype t, path_component n);
-  path_item(path_item const & other);
-  path_item const & operator=(path_item const & other);
-  bool operator==(path_item const & other) const;
+  inline path_item() {}
+  inline path_item(tid p, ptype t, path_component n);
+  inline path_item(path_item const & other);
+  inline path_item const & operator=(path_item const & other);
+  inline bool operator==(path_item const & other) const;
 };
 
 
@@ -506,7 +506,7 @@ change_set::check_sane() const
 
 }
 
-static void
+inline static void
 sanity_check_path_item(path_item const & pi)
 {
 }
@@ -761,15 +761,19 @@ compose_rearrangement(path_analysis const & pa,
 
       if (old_path == new_path)
         {
+          /*
           L(F("skipping preserved %s %d : '%s'\n")
             % (path_item_type(old_item) == ptype_directory ? "directory" : "file")
             % curr % old_path);
+          */
           continue;
         }
       
+      /*
       L(F("analyzing %s %d : '%s' -> '%s'\n")
         % (path_item_type(old_item) == ptype_directory ? "directory" : "file")
         % curr % old_path % new_path);
+      */
       
       if (null_name(path_item_name(old_item)))
         {

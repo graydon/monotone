@@ -37,6 +37,8 @@ public:
   bool rcfiles;
   options_map options;
   utf8 message;
+  utf8 date;
+  utf8 author;
   utf8 search_root;
   std::vector<utf8> revision_selectors;
   std::vector<utf8> extra_rcfiles;
@@ -78,6 +80,8 @@ public:
   void set_signing_key(utf8 const & key);
   void set_root(utf8 const & root);
   void set_message(utf8 const & message);
+  void set_date(utf8 const & date);
+  void set_author(utf8 const & author);
   void set_depth(long depth);
   void add_revision(utf8 const & selector);
 

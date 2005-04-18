@@ -73,6 +73,11 @@ GetOptions('help|?' => \$help,
 	   'quiet' => \$quiet,
 	   'debug' => \$debug) or pod2usage(2);
 
+$SIG{HUP} = \&my_exit;
+$SIG{KILL} = \&my_exit;
+$SIG{TERM} = \&my_exit;
+$SIG{INT} = \&my_exit;
+
 ######################################################################
 # Respond to user input
 #
@@ -97,7 +102,7 @@ if ($mail || $debug) {
 	pod2usage(2);
     }
     if (!defined $difflogs_to && !defined $nodifflogs_to) {
-	my_errlog("You need to specify a To address with --to");
+	my_errlog("You need to specify a To address with --diffslogs-to or --nodiffslogs-to");
 	pod2usage(2);
     }
 }
@@ -140,11 +145,14 @@ my_debug("using database $user_database");
 
 my $remove_workdir = 0;
 if (!defined $workdir) {
-    $workdir = "/var/tmp/monotone_motify.work.$$";
+    $workdir = "/var/tmp/monotone_notify.work.$$";
     mkdir $workdir;
     $remove_workdir = 1;
 } elsif (! file_name_is_absolute($workdir)) {
     $workdir = rel2abs($workdir);
+}
+if (! -d $workdir && ! -w $workdir && ! -r $workdir) {
+    my_error("work directory $workdir not accessible, exiting");
 }
 my_debug("using work directory $workdir");
 my_debug("(to be removed after I'm done)") if $remove_workdir;
@@ -448,12 +456,7 @@ map { s/\@\*$//;
 ######################################################################
 # Clean up.
 #
-my_log("cleaning up.");
-unlink @files_to_clean_up;
-rmdir $workdir if $remove_workdir;
-
-my_log("all done.");
-exit(0);
+my_exit();
 
 ######################################################################
 # Subroutines
@@ -592,6 +595,17 @@ sub my_conditional_system
 	my_debug("... not actually executed.\n");
     }
     return $return;
+}
+
+# my_exit removes temporary files and gracefully closes network
+# connections.
+sub my_exit
+{
+    my_log("cleaning up.");
+    unlink @files_to_clean_up;
+    rmdir $workdir if $remove_workdir;
+    my_log("all done.");
+    exit(0);
 }
 
 # my_backtick does the same thing as backtick commands, but will print a bit
@@ -738,7 +752,7 @@ B<--debug> is used and unless B<--mail> is given, one or both of the
 two files F<Notify.debug-diffs> and F<Notify.debug-nodiffs> will be
 left in the work directory.
 
-The default working directory is F</var/tmp/monotone_motify.work.$$>,
+The default working directory is F</var/tmp/monotone_notify.work.$$>,
 and will be removed automatically unless F<Notify.debug-diffs> or
 F<Notify.debug-nodiffs> are left in it.
 

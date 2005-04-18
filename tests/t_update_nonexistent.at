@@ -1,0 +1,10 @@
+AT_SETUP([update to non-existent rev])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE update 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore], [ignore])
+
+AT_CLEANUP
