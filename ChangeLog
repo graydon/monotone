@@ -7,9 +7,20 @@
 	* change_set.cc (path_item, sanity_check_path_item): Mark things
 	inline.
 
+2005-04-17  Henrik Holmboe <henrik@holmboe.se>
+
+	* contrib/monotone-notify.pl: Add signal handlers.  Correct some
+	typos.
+	(my_exit): New function that does a cleanup and exit.
+
 2005-04-17  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* transforms.cc: fix glob_to_regexp assertions
+
+2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
+	
+	* tests/t_db_kill_rev_locally.at: new test; 
+	make sure that db kill_rev_locally works as intended
 
 2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
 
