@@ -2096,9 +2096,26 @@ Monotone makes very little distinction between a ``pre-commit'' merge
 (an update) and a ``post-commit'' merge. Both sorts of merge use the
 exact same algorithm. The major difference concerns the recoverability
 of the pre-merge state: if you commit your work first, and merge after
-committing, the merge can fail (due to difficulty in a manual merge
-step) and your committed state is still safe. It is therefore
-recommended that you commit your work @emph{first}, before merging.
+committing, then even if the merge somehow fails (due to difficulty in a
+manual merge step, for instance), your committed state is still safe.
+If you update, on the other hand, you are requesting that monotone
+directly modify your working copy, and while monotone will try hard not
+to break anything, this process is inherently more open to error.  It is
+therefore recommended that you commit your work @emph{first}, before
+merging.
+
+If you have previously used another version control system, this may at
+first seem surprising; there are some systems where you are
+@emph{required} to update, and risk the above problems, before you can
+commit.  Monotone, however, was designed with this problem in mind, and
+thus @emph{always} allows you to commit before merging.  A good rule of
+thumb is to only use @command{update} in working copies with no local
+modifications, or when you actually want to work against a different
+base revision (perhaps because finishing your change turns out to
+require some fixes made in another revision, or because you discover
+that you have accidentally started working against a revision that
+contains unrelated bugs, and need to back out to a working revision for
+testing).
 
 @page
 @node    Branching and Merging
