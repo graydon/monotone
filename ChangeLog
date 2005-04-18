@@ -1,6 +1,7 @@
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 
 	* packet.cc: fix up unit test compilation.
+	* transforms.cc: fix up unit test compilation.
 
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 

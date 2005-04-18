@@ -838,19 +838,11 @@ rdiff_test()
 {
   data dat1(string("the first day of spring\nmakes me want to sing\n"));
   data dat2(string("the first day of summer\nis a major bummer\n"));
-  data dat3;
-  gzip<data> dat1_gz, dat2_gz, dat3_gz;
-  base64< gzip<data> > dat1_bgz, dat2_bgz, dat3_bgz;
-  encode_gzip(dat1, dat1_gz);
-  encode_gzip(dat2, dat2_gz);
-  encode_base64(dat1_gz, dat1_bgz);
-  encode_base64(dat2_gz, dat2_bgz);
-  base64< gzip<delta> > del_bgz;
-  diff(dat1_bgz, dat2_bgz, del_bgz);
+  delta del;
+  diff(dat1, dat2, del);
   
-  patch(dat1_bgz, del_bgz, dat3_bgz);
-  decode_base64(dat3_bgz, dat3_gz);
-  decode_gzip(dat3_gz, dat3);
+  data dat3;
+  patch(dat1, del, dat3);
   BOOST_CHECK(dat3 == dat2);
 }
 
