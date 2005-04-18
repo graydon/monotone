@@ -1,5 +1,9 @@
 2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Branching and Merging): A few small edits.
+
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
 	* change_set.cc (path_item, sanity_check_path_item): Mark things
 	inline.
 

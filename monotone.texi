@@ -2115,7 +2115,7 @@ which revisions.  This is where @emph{branches} are useful.
 Continuing our example, suppose that Jim is so impressed by Beth's work
 on banana juice support that he assigns her to work on the JuiceBot 7's
 surprise new feature: muffins.  In the mean time, Abe will continue
-working on the JuiceBot's basic juice-related function.
+working on the JuiceBot's basic juice-related functions.
 
 The changes required to support muffins are somewhat complicated, and
 Beth is worried that her work might destabilize the program, and
@@ -2134,13 +2134,13 @@ the new muffins code, and commits it on a new branch by simply passing
 
 @smallexample
 @group
-$ monotone commit --branch=jp.co.juicebot.jb7.muffins --message='initial autobake framework'
+$ monotone commit --branch=jp.co.juicebot.jb7.muffins --message='autobake framework'
 monotone: beginning commit on branch 'jp.co.juicebot.jb7.muffins'
 monotone: committed revision d33caefd61823ecbb605c39ffb84705dec449857
 @end group
 @end smallexample
 
-That's all there is to it --- now there is a
+That's all there is to it --- there is now a
 @code{jp.co.juicebot.jb7.muffins} branch, with her initial checkin on
 it.  She can make further checkins from the same working copy, and they
 will automatically go to the muffins branch; if anyone else wants to
