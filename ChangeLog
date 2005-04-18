@@ -7,6 +7,70 @@
 	* Move base64<gzip> code as close to the database as possible,
 	to avoid unnecessary inflating and deflating.
 
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Branching and Merging): A few small edits.
+
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (path_item, sanity_check_path_item): Mark things
+	inline.
+
+2005-04-17  Henrik Holmboe <henrik@holmboe.se>
+
+	* contrib/monotone-notify.pl: Add signal handlers.  Correct some
+	typos.
+	(my_exit): New function that does a cleanup and exit.
+
+2005-04-17  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* transforms.cc: fix glob_to_regexp assertions
+
+2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
+	
+	* tests/t_db_kill_rev_locally.at: new test; 
+	make sure that db kill_rev_locally works as intended
+
+2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
+
+	* commands.cc,database.cc: add 'db kill_rev_locally <id>' command
+	still missing: documentation and autotests. Otherwise seems ok.
+	
+2005-04-17  Richard Levitte  <richard@levitte.org>
+
+	* transforms.cc: Remove tabs and make sure emacs doesn't add
+	them.
+
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sanity.{hh,cc} (E, error_failure): New sort of invariant.
+	* netsync.cc (process_hello_cmd): Make initial pull message
+	more clear and friendly.
+	Also, if the key has changed, that is an error, not naughtiness.
+	* database_check.cc (check_db): Database problems are also errors,
+	not naughtiness.  Revamp output in case of errors, to better
+	distinguish non-serious errors and serious errors.
+	* tests/t_database_check.at: Update accordingly.
+	* tests/t_database_check_minor.at: New test.
+	* testsuite.at: Add it.
+	
+2005-04-17  Richard Levitte  <richard@levitte.org>
+
+	* transforms.cc (glob_to_regexp): New function that takes a glob
+	expression and transforms it into a regexp.  This will be useful
+	for globbing branch expressions when collections are exchanged to
+	branch globs and regexps.
+	(glob_to_regexp_test): A unit test for glob_to_regexp().
+
+2005-04-16  Emile Snyder  <emile@alumni.reed.edu>
+
+	* tests/t_add_stomp_file.at: New test for failing case.  
+        If you have a file foo in your working dir (not monotone 
+        controlled) and someone else adds a file foo and commits, 
+        update should at least warn you before stomping your 
+        non-recoverable foo file.
+	* testsuite.at: Add it.
+	
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc: warn that dropkey won't truly erase the privkey

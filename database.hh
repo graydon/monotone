@@ -288,6 +288,8 @@ public:
   
   void delete_existing_revs_and_certs();
 
+  void delete_existing_rev_and_certs(revision_id const & rid);
+
   // crypto key / cert operations
 
   void get_key_ids(std::string const & pattern,

@@ -1480,6 +1480,24 @@ database::delete_existing_revs_and_certs()
   execute("DELETE from revision_certs");
 }
 
+/// Deletes one revision from the local database. 
+/// @see kill_rev_locally
+void
+database::delete_existing_rev_and_certs(revision_id const & rid){
+
+  //check that the revision exists and doesn't have any children
+  I(revision_exists(rid));
+  set<revision_id> children;
+  get_revision_children(rid, children);
+  I(!children.size());
+
+  // perform the actual SQL transactions to kill rev rid here
+  L(F("Killing revision %s locally\n") % rid);
+  execute("DELETE from revision_certs WHERE id = '%s'",rid.inner()().c_str());
+  execute("DELETE from revision_ancestry WHERE child = '%s'",
+	  rid.inner()().c_str());
+  execute("DELETE from revisions WHERE id = '%s'",rid.inner()().c_str());
+}
 
 // crypto key management
 
