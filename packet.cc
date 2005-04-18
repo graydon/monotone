@@ -1377,13 +1377,13 @@ packet_roundabout_test()
     packet_writer pw(oss);
 
     // an fdata packet
-    file_data fdata("this is some file data");
+    file_data fdata(data("this is some file data"));
     file_id fid;
     calculate_ident(fdata, fid);
     pw.consume_file_data(fid, fdata);
 
     // an fdelta packet    
-    file_data fdata2("this is some file data which is not the same as the first one");
+    file_data fdata2(data("this is some file data which is not the same as the first one"));
     file_id fid2;
     calculate_ident(fdata2, fid);
     delta del;
