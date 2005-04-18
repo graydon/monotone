@@ -31,14 +31,14 @@
 (defvar monotone-program "monotone"
   "*The path to the monotone program.")
 
-(defvar monotone-password-remember nil
-  "*Should Emacs remember your password?
+(defvar monotone-passwd-remember nil
+  "*Should Emacs remember your monotone passwords?
 This is a security risk as it could be extracted from memory or core dumps.")
 
-(defvar monotone-password-list nil
+(defvar monotone-passwd-alist nil
   "*The password to be used when monotone asks for one.
 List of of (pubkey_id . password ).
-If monotone-password-remember is t it will be remembered here.")
+If monotone-passwd-remember is t it will be remembered here.")
 
 ;; This is set to [f5] for testing.
 ;; Should be nil for general release, as we dont want to
@@ -103,7 +103,7 @@ MT: --------------------------------------------------"
     (define-key map "l" 'monotone-vc-print-log)
     (define-key map "i" 'monotone-vc-register)
     (define-key map "p" 'monotone-vc-pull)
-    (define-key map "P" 'monotone-vc-push)
+    ;;(define-key map "P" 'monotone-push)
     map))
 (fset 'monotone-vc-map monotone-vc-map)
 
@@ -165,24 +165,60 @@ Nothing for now."
   (text-mode)
   (run-hooks monotone-output-mode-hooks))
 
-;; Run a monotone command which does not require IO. (ie: a passwd)
+(define-derived-mode monotone-shell-mode comint-mode "Monotone")
+
+;; Run a monotone command
 (defun monotone-cmd (&rest args)
   "Execute the monotone command with ARGS in the monotone top directory."
-  (let ((mt-top monotone-MT-top))
+  (let ((mt-top monotone-MT-top)
+        (mt-buf (get-buffer-create monotone-buffer))
+        ;;(mt-pgm "ls") ;; easy debugging
+        (mt-pgm monotone-program)
+        mt-cmd)
+    ;; where to run
     (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
       (setq mt-top (monotone-find-MT-top))
       (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
         (error "monotone-MT-top is not a directory.")))
-    (let ((buf (get-buffer-create monotone-buffer))
-          (cmd-args (append (list monotone-program) args)))
-      (switch-to-buffer-other-window buf)
-      (toggle-read-only -1)
-      (erase-buffer)
-      (cd mt-top)
-      (shell-command (mapconcat 'identity cmd-args " ") buf)
-      (goto-char (point-min))
-      ;; this should be monotone-output-mode
-      (view-mode))))
+    ;;
+    (switch-to-buffer-other-window mt-buf)
+    (if (get-buffer-process mt-buf)
+      (error "Monotone is currently running"))
+    (toggle-read-only -1)
+    (erase-buffer)
+    (setq default-directory mt-top)
+    (let ((p (apply #'start-process monotone-buffer mt-buf mt-pgm args)))
+      (while (eq (process-status p) 'run)
+        (accept-process-output p)
+        (goto-char (point-max))
+        ;; look for passwd prompt
+        (beginning-of-line)
+        (when (looking-at "^enter passphrase for key ID \\(.*\\)")
+          (let ((pass (monotone-read-passwd (match-string 1))))
+            (insert "********\n") ;; 
+            (process-send-string p (concat pass "\n")))))
+      (let ((mt-status (process-exit-status p)))
+        (if (not (zerop mt-status))
+          (error (format "%s: exited with status %s" mt-pgm mt-status)))))
+    (goto-char (point-min))
+    (view-mode)))
+;; (monotone-cmd "list" "branches")
+
+(defun monotone-read-passwd (keypairid)
+  (let ((rec (assoc keypairid monotone-passwd-alist))
+        prompt passwd)
+    (setq prompt (format "Password for '%s'%s: " keypairid 
+                         (if rec " [return for default]" "")))
+    (setq passwd (read-passwd prompt nil (cdr rec)))
+    (when monotone-passwd-remember
+      (if rec 
+        (setcdr rec passwd)
+        (setq monotone-passwd-alist 
+              (cons (cons keypairid passwd) monotone-passwd-alist))))
+    passwd))
+;; (monotone-read-passwd "bar1")
+;; (setq monotone-passwd-remember t)
+;; monotone-passwd-alist
 
 ;; a simple catch all
 (defun monotone-do (string)
@@ -226,39 +262,6 @@ With an arg of 0, clear default server and collection."
   (monotone-pull monotone-server monotone-collection))
 ;; (monotone-vc-pull)
 
-(defun monotone-server-prompt ()
-  (let ((svr (or monotone-server "")))
-    (setq monotone-server
-          (read-from-minibuffer 
-           "Server (address[:port])? " nil
-           'monotone-server-hist svr 
-
-  (when (string= monotone-server "nil")
-    (setq monotone-server nil)))
-;; (monotone-server-prompt)
-
-(read-string nil (format "foo"))
-
-
-;;(defun monotone-pull (&optional arg)
-;;  "Pull updates from a remote server, prompt 
-;;Prompt for acollection"
-;;  (interactive "P")
-;;  (if 
-;;  (let ((cmd (list "--ticker=dot" "pull")))
-;;    ;; given address?
-;;    (when (and (stringp monotone-pull-address)
-;;               (not (string= monotone-pull-address "")))
-;;      (setq cmd (append cmd (list monotone-pull-address)))
-;;      ;; given collection?
-;;      (when (and (stringp monotone-collection)
-;;                 (not (string= monotone-collection "")))
-;;        (setq cmd (append cmd (list monotone-collection)))))
-;;    ;;
-;;    (apply 'monotone-cmd cmd)))
-
-
-;;;;
 
 ;; check for common errors and args.
 (defun monotone-cmd-buf (global buf cmd)
