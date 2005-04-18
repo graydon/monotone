@@ -1,3 +1,8 @@
+2005-04-18  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_drop_attr.at: New test, similar to t_rename_attr.at.
+	* testsuite.at: Add it.
+
 2005-04-17  Henrik Holmboe <henrik@holmboe.se>
 
 	* contrib/monotone-notify.pl: Add signal handlers.  Correct some
