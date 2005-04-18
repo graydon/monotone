@@ -1,3 +1,7 @@
+2005-04-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (string_to_datetime): Fix warning.
+
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 
 	* packet.cc: fix up unit test compilation.
