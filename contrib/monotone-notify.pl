@@ -597,8 +597,7 @@ sub my_conditional_system
     return $return;
 }
 
-# my_exit removes temporary files and gracefully closes network
-# connections.
+# my_exit removes temporary files and then exits.
 sub my_exit
 {
     my_log("cleaning up.");

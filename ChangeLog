@@ -1,5 +1,8 @@
 2005-04-18  Richard Levitte  <richard@levitte.org>
 
+	* contrib/monotone-notify.pl (my_exit): The comment was incorrect,
+	there are no network connections to close gracefully.
+
 	* tests/t_drop_attr.at: New test, similar to t_rename_attr.at.
 	* testsuite.at: Add it.
 
