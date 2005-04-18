@@ -1,5 +1,7 @@
 2005-04-18  Richard Levitte  <richard@levitte.org>
 
+	* Makefile.am (EXTRA_DIST): Add contrib/monotone-import.pl.
+
 	* contrib/monotone-import.pl: New script to mimic "cvs import".
 	* contrib/README: describe it.
 
