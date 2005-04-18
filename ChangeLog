@@ -1,3 +1,8 @@
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): remove incorrect code
+	setting confirmed nodes.
+
 2005-04-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Dealing with a Fork): Clarify (hopefully) what we

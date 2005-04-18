@@ -539,7 +539,6 @@ confirm_proper_tree(path_state const & ps)
           sanity_check_path_item(item);
           I(ancs.find(curr) == ancs.end());
           ancs.insert(curr);
-          confirmed.set(curr - min_tid);
           if (path_item_parent(item) == root_tid)
             break;
           else
