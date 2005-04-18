@@ -35,8 +35,9 @@
   "*Should Emacs remember your password?
 This is a security risk as it could be extracted from memory or core dumps.")
 
-(defvar monotone-password nil
+(defvar monotone-password-list nil
   "*The password to be used when monotone asks for one.
+List of of (pubkey_id . password ).
 If monotone-password-remember is t it will be remembered here.")
 
 ;; This is set to [f5] for testing.
@@ -85,12 +86,24 @@ MT: --------------------------------------------------"
 (defvar monotone-commit-mode-hook nil
   "*The hook for monotone-commit-mode.")
 
+
+(defvar monotone-server nil
+  "The default server for pulls and pushes.")
+(defvar monotone-collection nil
+  "The default collection for pulls and pushes.")
+(defvar monotone-server-hist nil
+  "A history of servers.")
+(defvar monotone-collection-hist nil
+  "A history of collections.")
+
 ;;; Key maps
 (defvar monotone-vc-map
   (let ((map (make-sparse-keymap)))
     (define-key map "=" 'monotone-vc-diff)
     (define-key map "l" 'monotone-vc-print-log)
     (define-key map "i" 'monotone-vc-register)
+    (define-key map "p" 'monotone-vc-pull)
+    (define-key map "P" 'monotone-vc-push)
     map))
 (fset 'monotone-vc-map monotone-vc-map)
 
@@ -184,6 +197,69 @@ The monotone command is expected to run without input."
   (interactive)
   (monotone-cmd "list" "branches"))
 
+(defun monotone-pull (&optional server collection)
+  ;;(interactive "sServer: \nsCollection: \n")
+  (let ((cmd (list "--ticker=dot" "pull"))
+        (svr (or server monotone-server ""))
+        (col (or collection monotone-collection "")))
+    ;; given address?
+    (when (and (stringp svr) (not (string= svr "")))
+      (setq cmd (append cmd (list svr)))
+      ;; given collection?
+      (when (and (stringp col) (not (string= col "")))
+        (setq cmd (append cmd (list col)))))
+    ;;
+    (apply 'monotone-cmd cmd)))
+;; (monotone-pull)
+
+(defun monotone-vc-pull ()
+  "Pull updates from a remote server. With ARG prompt for server and collection.
+With an arg of 0, clear default server and collection."
+  (interactive)
+  ;; read-string docs say not to use initial-input but "compile" does.
+  (setq monotone-server 
+        (read-string "Monotone server: " monotone-server
+                     'monotone-server-hist))
+  (setq monotone-collection
+        (read-string "Monotone collection: " monotone-collection
+                     'monotone-collection-hist))
+  (monotone-pull monotone-server monotone-collection))
+;; (monotone-vc-pull)
+
+(defun monotone-server-prompt ()
+  (let ((svr (or monotone-server "")))
+    (setq monotone-server
+          (read-from-minibuffer 
+           "Server (address[:port])? " nil
+           'monotone-server-hist svr 
+
+  (when (string= monotone-server "nil")
+    (setq monotone-server nil)))
+;; (monotone-server-prompt)
+
+(read-string nil (format "foo"))
+
+
+;;(defun monotone-pull (&optional arg)
+;;  "Pull updates from a remote server, prompt 
+;;Prompt for acollection"
+;;  (interactive "P")
+;;  (if 
+;;  (let ((cmd (list "--ticker=dot" "pull")))
+;;    ;; given address?
+;;    (when (and (stringp monotone-pull-address)
+;;               (not (string= monotone-pull-address "")))
+;;      (setq cmd (append cmd (list monotone-pull-address)))
+;;      ;; given collection?
+;;      (when (and (stringp monotone-collection)
+;;                 (not (string= monotone-collection "")))
+;;        (setq cmd (append cmd (list monotone-collection)))))
+;;    ;;
+;;    (apply 'monotone-cmd cmd)))
+
+
+;;;;
+
 ;; check for common errors and args.
 (defun monotone-cmd-buf (global buf cmd)
   "Run a simple monotone command for this buffer.  (passwordless)
@@ -211,7 +287,8 @@ CMD is the command to execute."
 (defun monotone-vc-diff (&optional arg)
   "Print the diffs for this buffer.  With prefix ARG, the global diffs."
   (interactive "P")
-  (monotone-cmd-buf arg (current-buffer) "diff"))
+  (monotone-cmd-buf arg (current-buffer) "diff")
+  (diff-mode))
 
 (defun monotone-vc-register ()
   "Register this file with monotone for the next commit."
