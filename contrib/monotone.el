@@ -5,8 +5,14 @@
 ;;
 ;; Licence: GPL v2 (same as monotone)
 ;; Keymaps and other stuff added by harley@panix.com
+;;
 
 ;;; Commentary:
+;; To use monotone from within Emacs, decide what options you would
+;; like and set the vars before loading 'monotone.el'. For example:
+;;    (setq monotone-passwd-remember t
+;;          monotone-vc-key          [f5])
+;;    (require 'monotone)
 ;;
 ;; This defines `monotone-diff', `monotone-status', `monotone-add',
 ;; `monotone-drop', `monotone-revert' and `monotone-commit'.  These
@@ -18,11 +24,6 @@
 ;;
 ;; /!\ beware of bugs: `monotone-commit' is more dangerous than the
 ;; others since it writes to the database.
-;;
-;; To use monotone from within Emacs, decide what options you would
-;; like and set the vars before loading monotone.el
-;;
-;;   (require 'monotone)
 ;;
 
 ;; FIXME: handle aborts better and kill monotone.
@@ -45,7 +46,7 @@ If `monotone-passwd-remember' is t it will be remembered here.")
 ;; This is set to [f5] for testing.
 ;; Should be nil for general release, as we dont want to
 ;; remove keys without the users consent.
-(defvar monotone-vc-key  [f5] ;; "\C-xv" nil
+(defvar monotone-vc-key  nil ;; [f5] "\C-xv" nil
   "The prefix key to use for the monotone vc key map.
 You may wish to change this before loading monotone.el.
 Habitual monotone users can set it to '\C-xv'.")
@@ -262,7 +263,7 @@ Nothing for now."
     (let ((buf (get-buffer-create monotone-buffer)))
       (get-buffer-process buf))))
 ;; (monotone-is-running)
-    
+
 
 ;; (monotone-cmd "list" "branches")
 ;; (monotone-cmd "list" "keys")
