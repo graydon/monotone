@@ -84,6 +84,13 @@ This is used to pass state -- best be left nil.")
 (add-to-list 'minor-mode-alist '(monotone-commit-mode " Monotone Commit"))
 (add-to-list 'minor-mode-map-alist (cons 'monotone-commit-mode monotone-commit-mode-map))
 
+(defvar monotone-msg t
+  "When non-nil log stuff to *Messages*")
+
+(defmacro monotone-msg (&rest args)
+  `(when monotone-msg
+     (message ,@args)))
+;; (monotone-msg "%s" '("foo" 1 2 3))
 
 (defvar monotone-output-mode-hook nil
   "*The hook for monotone output.")
@@ -113,13 +120,14 @@ Type C-c C-c to commit, kill the buffer to abort.
 (defvar monotone-vc-map
   (let ((map (make-sparse-keymap)))
     (define-key map "="    'monotone-vc-diff)
-    (define-key map "\C-q" 'monotone-vc-commit)
-    (define-key map "q"    'monotone-vc-commit) ;; i am a lazy typist
-    (define-key map "l"    'monotone-vc-print-log)
-    (define-key map "i"    'monotone-vc-register)
-    (define-key map "p"    'monotone-vc-pull)
     (define-key map "P"    'monotone-vc-push)
-    ;;
+    (define-key map "\C-q" 'monotone-vc-commit)
+    (define-key map "i"    'monotone-vc-register)
+    (define-key map "i"    'monotone-vc-register)
+    (define-key map "l"    'monotone-vc-print-log)
+    (define-key map "p"    'monotone-vc-pull)
+    (define-key map "q"    'monotone-vc-commit) ;; i am a lazy typist
+    (define-key map "s"    'monotone-vc-status)
     map))
 (fset 'monotone-vc-map monotone-vc-map)
 
@@ -153,6 +161,8 @@ With t use monotone-vc-prefix-map."
 Optional argument PATH ."
   (when (null path)
     (setq path default-directory))
+  ;; work with full path names
+  (setq path (expand-file-name path))
   (block nil
     (let ((prev-path nil))
       (while (not (equal path prev-path))
@@ -167,6 +177,10 @@ Optional argument PATH ."
 (defun monotone-extract-MT-path (path &optional mt-top)
   "Get the PATH minus the MT-TOP."
   (let ((mt-top (or mt-top monotone-MT-top (monotone-find-MT-top path))))
+    ;; work with full names
+    (setq path (expand-file-name path)
+          mt-top (expand-file-name mt-top))
+    ;;
     (if (not mt-top)
       nil
       (substring path (length mt-top)))))
@@ -186,6 +200,7 @@ Nothing for now."
 ;; Run a monotone command
 (defun monotone-cmd (&rest args)
   "Execute the monotone command with ARGS in the monotone top directory."
+  (monotone-msg "%s" args)
   (let ((mt-top monotone-MT-top)
         (mt-buf (get-buffer-create monotone-buffer))
         ;;(mt-pgm "ls") ;; easy debugging
@@ -196,8 +211,10 @@ Nothing for now."
       (setq mt-top (monotone-find-MT-top))
       (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
         (error "monotone-MT-top is not a directory.")))
-    (set-buffer mt-buf)
-    (switch-to-buffer-other-window mt-buf)
+    ;; show the window
+    (if (not (equal (current-buffer) mt-buf))
+      (switch-to-buffer-other-window mt-buf))
+    ;; still going?
     (if (get-buffer-process mt-buf)
       (error "Monotone is currently running"))
     ;; prep the buffer for output
@@ -408,8 +425,13 @@ CMD is the command to execute."
 (defun monotone-vc-diff (&optional arg)
   "Print the diffs for this buffer.  With prefix ARG, the global diffs."
   (interactive "P")
-  (monotone-cmd-buf arg (current-buffer) "diff")
-  (diff-mode))
+  (let ((mt-top (monotone-find-MT-top))
+        (bfn (buffer-file-name)))
+    (monotone-cmd "diff"
+                  (if bfn
+                    (monotone-extract-MT-path bfn mt-top)
+                    "."))
+    (diff-mode)))
 
 (defun monotone-vc-register ()
   "Register this file with monotone for the next commit."
@@ -417,6 +439,10 @@ CMD is the command to execute."
   (if buffer-file-name
     (monotone-cmd-buf nil (current-buffer) "add")
     (error "This buffer does not have a file name")))
+
+(defun monotone-vc-status ()
+  (interactive)
+  (monotone-cmd "status"))
 
 (defun monotone-vc-update-change-log ()
   "Edit the monotone change log."
