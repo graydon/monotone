@@ -235,9 +235,10 @@ Nothing for now."
         (beginning-of-line)
         (when (looking-at "^enter passphrase for key ID \\(.*\\)")
           (let ((pass (monotone-read-passwd (match-string 1))))
-            (end-of-line)
-            (insert "********\n") ;; filler text
-            (process-send-string p (concat pass "\n")))))
+            ;;(end-of-line)
+            ;;(insert "********\n") ;; filler text
+            (process-send-string p pass)
+            (process-send-string p "\n"))))
       (setq mt-status (process-exit-status p)))
     ;; make the buffer nice.
     (goto-char (point-min))
