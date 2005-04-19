@@ -292,8 +292,7 @@ sub my_backtick
     return @return;
 }
 
-# my_exit removes temporary files and gracefully closes network
-# connections.
+# my_exit removes temporary files and directories, then exits.
 sub my_exit
 {
     my_log("cleaning up.");

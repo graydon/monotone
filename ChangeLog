@@ -1,5 +1,8 @@
 2005-04-19  Richard Levitte  <richard@levitte.org>
 
+	* contrib/monotone-import.pl (my_exit): As in monotone-notify.pl,
+	my_exit doesn't close any network connections.
+
 	* testsuite.at (REVERT_TO): Make it possible to revert to a
 	specific branch.  This is useful to resolve ambiguities.
 	* tests/t_merge_add_del.at: Use it.
