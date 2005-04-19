@@ -60,8 +60,10 @@ Habitual monotone users can set it to '\C-xv'.")
 (defvar monotone-commit-edit-status nil
   "The sentinel for completion of editing the log.")
 (make-variable-buffer-local 'monotone-commit-edit-status)
+(defvar monotone-commit-args nil
+  "The args for the commit.")
+(make-variable-buffer-local 'monotone-commit-args)
 
-(defvar monotone-commit-arg nil)
 (defvar monotone-commit-dir nil)
 
 (defvar monotone-MT-top nil
@@ -72,19 +74,23 @@ This is used to pass state -- best be left nil.")
 ;;; monotone-commit-mode is used when editing the commit message.
 (defvar monotone-commit-mode nil)
 (make-variable-buffer-local 'monotone-commit-mode)
-(add-to-list 'minor-mode-alist '(monotone-commit-mode " Monotone Commit"))
 
 (defvar monotone-commit-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-c" 'monotone-commit-complete)
     map))
 
+;; hook it in
+(add-to-list 'minor-mode-alist '(monotone-commit-mode " Monotone Commit"))
+(add-to-list 'minor-mode-map-alist (cons 'monotone-commit-mode monotone-commit-mode-map))
+
+
 (defvar monotone-output-mode-hook nil
   "*The hook for monotone output.")
 
 (defvar monotone-commit-instructions
   "--------------------------------------------------
-Enter Log.  Lines beginning with `MT:' are removed automatically.
+Enter Log.  Lines beginning with 'MT:' are removed automatically.
 Type C-c C-c to commit, kill the buffer to abort.
 --------------------------------------------------"
   "Instructional text to insert into the commit buffer. 
@@ -108,6 +114,7 @@ Type C-c C-c to commit, kill the buffer to abort.
   (let ((map (make-sparse-keymap)))
     (define-key map "="    'monotone-vc-diff)
     (define-key map "\C-q" 'monotone-vc-commit)
+    (define-key map "q"    'monotone-vc-commit) ;; i am a lazy typist
     (define-key map "l"    'monotone-vc-print-log)
     (define-key map "i"    'monotone-vc-register)
     (define-key map "p"    'monotone-vc-pull)
@@ -171,7 +178,7 @@ Optional argument PATH ."
   "In the future this will provide some fontification.
 Nothing for now."
   (interactive)
-  (text-mode)
+  (fundamental-mode) ;;(text-mode)
   (run-hooks monotone-output-mode-hooks))
 
 ;;(define-derived-mode monotone-shell-mode comint-mode "Monotone")
@@ -289,7 +296,7 @@ With an arg of 0, clear default server and collection."
 
 ;;; Commiting...
 
-(defun monotone-vc-commit (&optional arg)
+(defun monotone-vc-commit (&rest args)
   "Commit the current buffer.  With ARG do a global commit."
   (interactive "P")
   (let ((buf (get-buffer-create monotone-commit-buffer))
@@ -297,8 +304,9 @@ With an arg of 0, clear default server and collection."
     ;; found MT?
     (when (not monotone-MT-top)
       (error "Cant find MT directory"))
-    ;; show it 
-    (show-buffer buf) ;;(display-buffer buf)
+    ;; show it  
+    (when (not (equal (current-buffer) buf))
+      (switch-to-buffer-other-window buf))
     (set-buffer buf)
     ;; Have the contents been commited?
     (when (eq monotone-commit-edit-status 'started)
@@ -306,7 +314,6 @@ With an arg of 0, clear default server and collection."
     (when (or (null monotone-commit-edit-status) (eq monotone-commit-edit-status 'done))
       (erase-buffer)
       (setq default-directory monotone-MT-top)
-       (setq monotone-commit-edit-status 'started)
       (let ((mt-log-path (concat monotone-MT-top "MT/log")))
         (when (file-readable-p mt-log-path)
           (insert-file mt-log-path)))
@@ -318,37 +325,54 @@ With an arg of 0, clear default server and collection."
     ;; update the "MT:" lines by replacing them.
     (monotone-remove-MT-lines)
     (end-of-buffer)
+    (when (not (looking-at "^"))
+      (insert "\n"))
     (let ((eo-message (point)))
+      ;; what is being commited?
+      (mapc (function (lambda (a) (insert "args: " (format "%s" a) "\n"))) args)
+      ;;(insert (format "Commit arg = %s" arg) "\n")
       ;; instructional text
       (when (stringp monotone-commit-instructions)
         (insert monotone-commit-instructions)
         (when (not (looking-at "^"))
           (insert "\n")))
       ;; what is being committed?
+      ;; FIXME: handle args -- this is doing a global status
       (monotone-cmd-hide "status")
       (insert-buffer-substring monotone-buffer)
       ;; insert "MT: " prefix
       (goto-char eo-message)
       (while (search-forward-regexp "^" (point-max) t)
         (insert "MT: ")))
-    ;; ready for edit
-    (beginning-of-buffer)))
-
+    ;; ready for edit -- put this last avoid being cleared on mode switch.
+    (beginning-of-buffer)
+    (setq monotone-commit-edit-status 'started
+          monotone-commit-args args)))
 
 (defun monotone-commit-mode ()
   "Mode for editing a monotone commit message."
   ;; turn on the minor mode for keybindings and run hooks.
-  (text-mode)
+  (fundamental-mode) ;; (text-mode)
   (setq monotone-commit-mode t)
   (run-hooks monotone-commit-mode-hook))
 
 (defun monotone-commit-complete ()
   (interactive)
   (monotone-remove-MT-lines)
+  (let ((buf (current-buffer))
+        (message (buffer-substring-no-properties (point-min) (point-max)))
+        (args (list "commit")))
+    (switch-to-buffer (get-buffer-create monotone-buffer))
+    ;; assemble and run the command
+    (setq args (append args (list  "--message" message)))
+    ;; FIXME: global subtree file list...
+    (when monotone-commit-args
+      (setq args (append args (list "."))))
+    (apply #'monotone-cmd args)
+    ;; mark it done
+    (set-buffer buf)
+    (setq monotone-commit-edit-status 'done)))
   
-    
-  ;; finished w/o errors?
-  (setq monotone-commit-edit-status 'done))
 
 (defun monotone-remove-MT-lines ()
   (interactive)
