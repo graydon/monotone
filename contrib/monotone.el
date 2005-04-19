@@ -38,7 +38,7 @@ This is a security risk as it could be extracted from memory or core dumps.")
 (defvar monotone-passwd-alist nil
   "*The password to be used when monotone asks for one.
 List of of (pubkey_id . password ).
-If monotone-passwd-remember is t it will be remembered here.")
+If `monotone-passwd-remember' is t it will be remembered here.")
 
 ;; This is set to [f5] for testing.
 ;; Should be nil for general release, as we dont want to
@@ -85,9 +85,10 @@ This is used to pass state -- best be left nil.")
 (add-to-list 'minor-mode-map-alist (cons 'monotone-commit-mode monotone-commit-mode-map))
 
 (defvar monotone-msg nil
-  "When non-nil log stuff to *Messages*")
+  "When non-nil log stuff to *Messages*.")
 
 (defmacro monotone-msg (&rest args)
+  "Print ARGS to *Messages* when variable `monotone-msg' is non-nil."
   `(when monotone-msg
      (message ,@args)))
 ;; (monotone-msg "%s" '("foo" 1 2 3))
@@ -100,11 +101,11 @@ This is used to pass state -- best be left nil.")
 Enter Log.  Lines beginning with 'MT:' are removed automatically.
 Type C-c C-c to commit, kill the buffer to abort.
 --------------------------------------------------"
-  "Instructional text to insert into the commit buffer. 
+  "Instructional text to insert into the commit buffer.
 'MT: ' is added when inserted.")
 
 (defvar monotone-commit-mode-hook nil
-  "*The hook for monotone-commit-mode.")
+  "*The hook for function `monotone-commit-mode'.")
 
 
 (defvar monotone-server nil
@@ -246,7 +247,7 @@ Nothing for now."
     mt-status))
 
 (defun monotone-cmd-hide (&rest args)
-  "Run the command without showing the output."
+  "Run monotone with ARGS without showing the output."
   (save-window-excursion
     (apply #'monotone-cmd args)))
   
@@ -257,15 +258,16 @@ Nothing for now."
 ;; (let ((monotone-cmd-hide t)) (monotone-cmd "status"))
 
 (defun monotone-read-passwd (keypairid)
-  (let ((rec (assoc keypairid monotone-passwd-alist))
+  "Read the password for KEYPAIRID."
+(let ((rec (assoc keypairid monotone-passwd-alist))
         prompt passwd)
-    (setq prompt (format "Password for '%s'%s: " keypairid 
+    (setq prompt (format "Password for '%s'%s: " keypairid
                          (if rec " [return for default]" "")))
     (setq passwd (read-passwd prompt nil (cdr rec)))
     (when monotone-passwd-remember
-      (if rec 
+      (if rec
         (setcdr rec passwd)
-        (setq monotone-passwd-alist 
+        (setq monotone-passwd-alist
               (cons (cons keypairid passwd) monotone-passwd-alist))))
     passwd))
 ;; (monotone-read-passwd "bar1")
@@ -286,6 +288,7 @@ The monotone command is expected to run without input."
   (monotone-cmd "list" "branches"))
 
 (defun monotone-pull (&optional server collection)
+  "Pull data from the optinal SERVER and COLLECTION."
   ;;(interactive "sServer: \nsCollection: \n")
   (let ((cmd (list "--ticker=dot" "pull"))
         (svr (or server monotone-server ""))
@@ -305,7 +308,7 @@ The monotone command is expected to run without input."
 With an arg of 0, clear default server and collection."
   (interactive)
   ;; read-string docs say not to use initial-input but "compile" does.
-  (setq monotone-server 
+  (setq monotone-server
         (read-string "Monotone server: " monotone-server
                      'monotone-server-hist))
   (setq monotone-collection
@@ -317,14 +320,14 @@ With an arg of 0, clear default server and collection."
 ;;; Commiting...
 
 (defun monotone-vc-commit (&rest args)
-  "Commit the current buffer.  With ARG do a global commit."
+  "Commit the current buffer.  With ARGS do a global commit."
   (interactive "P")
   (let ((buf (get-buffer-create monotone-commit-buffer))
         (monotone-MT-top (monotone-find-MT-top)))
     ;; found MT?
     (when (not monotone-MT-top)
       (error "Cant find MT directory"))
-    ;; show it  
+    ;; show it
     (when (not (equal (current-buffer) buf))
       (switch-to-buffer-other-window buf))
     (set-buffer buf)
@@ -377,6 +380,7 @@ With an arg of 0, clear default server and collection."
   (run-hooks monotone-commit-mode-hook))
 
 (defun monotone-commit-complete ()
+  "Complete the message and commit the work."
   (interactive)
   (monotone-remove-MT-lines)
   (let ((buf (current-buffer))
@@ -395,6 +399,7 @@ With an arg of 0, clear default server and collection."
   
 
 (defun monotone-remove-MT-lines ()
+  "Remove lines starting with 'MT:' from the buffer."
   (interactive)
   (beginning-of-buffer)
   (while (search-forward-regexp "^MT:.*$" (point-max) t)
@@ -444,6 +449,7 @@ CMD is the command to execute."
     (error "This buffer does not have a file name")))
 
 (defun monotone-vc-status ()
+  "Print the status of the current branch."
   (interactive)
   (monotone-cmd "status"))
 
