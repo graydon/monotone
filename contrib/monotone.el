@@ -18,12 +18,14 @@
 ;;
 ;; /!\ beware of bugs: `monotone-commit' is more dangerous than the
 ;; others since it writes to the database.
-;; 
+;;
 ;; To use monotone from within Emacs, decide what options you would
 ;; like and set the vars before loading monotone.el
 ;;
 ;;   (require 'monotone)
 ;;
+
+;; FIXME: handle aborts better and kill monotone.
 
 ;;; User vars:
 ;; These vars are likley to be changed by the user.
@@ -218,8 +220,9 @@ Nothing for now."
     ;; show the window
     (if (not (equal (current-buffer) mt-buf))
       (switch-to-buffer-other-window mt-buf))
+    (set-buffer mt-buf)
     ;; still going?
-    (if (get-buffer-process mt-buf)
+    (when (get-buffer-process mt-buf)
       (error "Monotone is currently running"))
     ;; prep the buffer for output
     (toggle-read-only -1)
@@ -233,7 +236,7 @@ Nothing for now."
         (goto-char (point-max))
         ;; look for passwd prompt
         (beginning-of-line)
-        (when (looking-at "^enter passphrase for key ID \\(.*\\)")
+        (when (looking-at "^enter passphrase for key ID \\[\\(.*\\)\\]")
           (let ((pass (monotone-read-passwd (match-string 1))))
             ;;(end-of-line)
             ;;(insert "********\n") ;; filler text
@@ -252,7 +255,14 @@ Nothing for now."
   "Run monotone with ARGS without showing the output."
   (save-window-excursion
     (apply #'monotone-cmd args)))
-  
+
+(defun monotone-is-running ()
+  "Return  if monotone is running."
+  (save-window-excursion
+    (let ((buf (get-buffer-create monotone-buffer)))
+      (get-buffer-process buf))))
+;; (monotone-is-running)
+    
 
 ;; (monotone-cmd "list" "branches")
 ;; (monotone-cmd "list" "keys")
@@ -319,11 +329,16 @@ With an arg of 0, clear default server and collection."
   (monotone-pull monotone-server monotone-collection))
 ;; (monotone-vc-pull)
 
-;;; Commiting...
-
+;;; Start if the commit process...
 (defun monotone-vc-commit (&rest args)
   "Commit the current buffer.  With ARGS do a global commit."
   (interactive "P")
+  ;; dont run two processes
+  (when (monotone-is-running)
+    (switch-to-buffer (get-buffer-create monotone-buffer))
+    (error "You have a monotone process running."))
+  ;; flush buffers
+  (save-some-buffers)
   (let ((buf (get-buffer-create monotone-commit-buffer))
         (monotone-MT-top (monotone-find-MT-top)))
     ;; found MT?
@@ -333,6 +348,7 @@ With an arg of 0, clear default server and collection."
     (when (not (equal (current-buffer) buf))
       (switch-to-buffer-other-window buf))
     (set-buffer buf)
+    (toggle-read-only -1)
     ;; Have the contents been commited?
     (when (eq monotone-commit-edit-status 'started)
       (message "Continuing commit message already started."))
@@ -398,7 +414,7 @@ With an arg of 0, clear default server and collection."
     ;; mark it done
     (set-buffer buf)
     (setq monotone-commit-edit-status 'done)))
-  
+
 
 (defun monotone-remove-MT-lines ()
   "Remove lines starting with 'MT:' from the buffer."
@@ -407,7 +423,7 @@ With an arg of 0, clear default server and collection."
   (while (search-forward-regexp "^MT:.*$" (point-max) t)
     (beginning-of-line)
     (kill-line 1)))
-  
+
 ;; check for common errors and args.
 (defun monotone-cmd-buf (global buf cmd)
   "Run a simple monotone command for this buffer.  (passwordless)
