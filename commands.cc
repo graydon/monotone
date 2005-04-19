@@ -3726,7 +3726,7 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
   if (args.size() == 2)
   {  
     complete(app, idx(args, 0)(), rid);
-    file=file_path(idx(args, 1)());
+    file = file_path(idx(args, 1)());
   }  
   else if (args.size() == 1)
     { 
@@ -3740,7 +3740,6 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
         {  
           app.require_working_copy(); // no id arg, must have working copy
 
-          file=file_path(arg);
           file = file_path(arg);
           get_revision_id(rid);
         }
@@ -3850,13 +3849,14 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
 
             log_certs(app, rid, changelog_name, "ChangeLog: ", true);
             log_certs(app, rid, comment_name,   "Comments: ",  true);
+
+            if (depth > 0)
+              {
+                depth--;
+              }
           }
         }
       frontier = next_frontier;
-      if (depth > 0)
-        {
-          depth--;
-        }
     }
 }
 
