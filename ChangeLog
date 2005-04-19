@@ -342,7 +342,7 @@
 	<sstream> include.
 
 2005-04-14  Jon Bright  <jon@siliconcircus.com>
-	* win32/process.cc (process_spawn): Add some extra debug info.
+	* win32/process.cc (process_spawn): Add some extra debug info
 	* std_hooks.lua (execute): If pid is -1, don't try and wait on
 	the process
 
