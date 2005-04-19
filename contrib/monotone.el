@@ -27,6 +27,7 @@
 ;;
 
 ;; FIXME: handle aborts better and kill monotone.
+;; FEATURE: given an id, suck out the file with "monotone cat"
 
 ;;; User vars:
 ;; These vars are likley to be changed by the user.
@@ -68,6 +69,9 @@ Habitual monotone users can set it to '\C-xv'.")
 (make-variable-buffer-local 'monotone-commit-args)
 
 (defvar monotone-commit-dir nil)
+
+(defvar monotone-wait-time 5
+  "Time to wait for monotone to produce output.")
 
 (defvar monotone-MT-top nil
   "The directory which contains the MT directory.
@@ -219,8 +223,9 @@ Nothing for now."
         (error "Unable to find the MT top directory")))
     (setq monotone-MT-top mt-top)
     ;; show the window
-    (if (not (equal (current-buffer) mt-buf))
-      (switch-to-buffer-other-window mt-buf))
+    ;;(if (not (equal (current-buffer) mt-buf))
+    (switch-to-buffer-other-window mt-buf);;)
+    (sit-for 0)
     (set-buffer mt-buf)
     ;; still going?
     (when (get-buffer-process mt-buf)
@@ -233,7 +238,10 @@ Nothing for now."
     ;; run
     (let ((p (apply #'start-process monotone-buffer mt-buf mt-pgm args)))
       (while (eq (process-status p) 'run)
-        (accept-process-output p)
+        ;; FIXME: rather than printing messages, abort after too long a wait.
+        (when (not (accept-process-output p monotone-wait-time))
+          (message "waiting for monotone..."))
+        (sit-for 0)
         (goto-char (point-max))
         ;; look for passwd prompt
         (beginning-of-line)
@@ -331,6 +339,7 @@ With an arg of 0, clear default server and collection."
 ;; (monotone-vc-pull)
 
 ;;; Start if the commit process...
+;; FIXME: the default should be a global commit.
 (defun monotone-vc-commit (&rest args)
   "Commit the current buffer.  With ARGS do a global commit."
   (interactive "P")
