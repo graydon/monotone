@@ -114,7 +114,8 @@ exist in the database.
 .TP
 \fBrcs_import\fP \fI<rcsfile> ...\fP
 Import all file versions in RCS files. Does not reconstruct revisions
-across the entire tree.
+across the entire tree.  You do not want this command, it is for
+debugging; use cvs_import.
 .TP
 \fBcheckout\fP \fI[manifest-id]\fP \fI<directory\fP
 Check out tree state from database.
@@ -258,6 +259,17 @@ command in the future.
 .TP
 \fB-m \fI<log message>\fP
 An alias for \fB--message=\fI<log message>\fP
+.TP
+\fB--author=\fI<author email>\fP
+Use the given author as the value of the "author" cert when committing
+a new revision, rather than the default author.  Useful when
+committing a patch on behalf of someone else, or when importing
+history from another version control system.
+.TP
+\fB--date=\fI<date and time>\fP
+Use the given given date and time as value of the "date" cert when
+committing a new revision, rather than the current time.  Useful when
+importing history from another version control system.
 .TP
 \fB--root=\fI<root dir>\fP
 Stop the search for a working copy (containing the @file{MT} directory)

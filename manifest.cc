@@ -140,11 +140,7 @@ void
 read_manifest_map(manifest_data const & dat,
                   manifest_map & man)
 {  
-  gzip<data> decoded;
-  data decompressed;
-  decode_base64(dat.inner(), decoded);
-  decode_gzip(decoded, decompressed);
-  read_manifest_map(decompressed, man);
+  read_manifest_map(dat.inner(), man);
 }
 
 
@@ -167,14 +163,7 @@ write_manifest_map(manifest_map const & man,
        man.end(),
        ostream_iterator<manifest_entry>(sstr));
 
-  data raw;
-  gzip<data> compressed;
-  base64< gzip<data> > encoded;
-
-  raw = sstr.str();
-  encode_gzip(raw, compressed);
-  encode_base64(compressed, encoded);
-  dat = manifest_data(encoded);
+  dat = manifest_data(sstr.str());
 }
 
 void 

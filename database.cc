@@ -589,7 +589,7 @@ assert_sqlite3_ok(int res)
       break;
 
     case SQLITE_FULL:
-      throw oops("Insertion failed because database is full");
+      throw oops("Insertion failed because database (or filesystem) is full");
       break;
 
     case SQLITE_CANTOPEN:
@@ -858,7 +858,7 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
 
 void 
 database::get(hexenc<id> const & ident,
-              base64< gzip<data> > & dat,
+              data & dat,
               string const & table)
 {
   results res;
@@ -868,17 +868,20 @@ database::get(hexenc<id> const & ident,
 
   // consistency check
   base64<gzip<data> > rdata(res[0][0]);
+  data rdata_unpacked;
+  unpack(rdata, rdata_unpacked);
+
   hexenc<id> tid;
-  calculate_ident(rdata, tid);
+  calculate_ident(rdata_unpacked, tid);
   I(tid == ident);
 
-  dat = rdata;
+  dat = rdata_unpacked;
 }
 
 void 
 database::get_delta(hexenc<id> const & ident,
                     hexenc<id> const & base,
-                    base64< gzip<delta> > & del,
+                    delta & del,
                     string const & table)
 {
   I(ident() != "");
@@ -887,12 +890,14 @@ database::get_delta(hexenc<id> const & ident,
   fetch(res, one_col, one_row,
         "SELECT delta FROM '%q' WHERE id = '%q' AND base = '%q'", 
         table.c_str(), ident().c_str(), base().c_str());
-  del = res[0][0];
+
+  base64<gzip<delta> > del_packed = res[0][0];
+  unpack(del_packed, del);
 }
 
 void 
 database::put(hexenc<id> const & ident,
-              base64< gzip<data> > const & dat,
+              data const & dat,
               string const & table)
 {
   // consistency check
@@ -900,22 +905,29 @@ database::put(hexenc<id> const & ident,
   hexenc<id> tid;
   calculate_ident(dat, tid);
   I(tid == ident);
+
+  base64<gzip<data> > dat_packed;
+  pack(dat, dat_packed);
   
   execute("INSERT INTO '%q' VALUES('%q', '%q')", 
-          table.c_str(), ident().c_str(), dat().c_str());
+          table.c_str(), ident().c_str(), dat_packed().c_str());
 }
 void 
 database::put_delta(hexenc<id> const & ident,
                     hexenc<id> const & base,
-                    base64<gzip<delta> > const & del,
+                    delta const & del,
                     string const & table)
 {
   // nb: delta schema is (id, base, delta)
   I(ident() != "");
   I(base() != "");
+
+  base64<gzip<delta> > del_packed;
+  pack(del, del_packed);
+  
   execute("INSERT INTO '%q' VALUES('%q', '%q', '%q')", 
           table.c_str(), 
-          ident().c_str(), base().c_str(), del().c_str());
+          ident().c_str(), base().c_str(), del_packed().c_str());
 }
 
 // static ticker cache_hits("vcache hits", "h", 1);
@@ -924,22 +936,21 @@ struct version_cache
 {
   size_t capacity;
   size_t use;
-  std::map<hexenc<id>, base64< gzip<data> > > cache;  
+  std::map<hexenc<id>, data> cache;  
 
   version_cache() : capacity(constants::db_version_cache_sz), use(0) 
   {
     srand(time(NULL));
   }
 
-  void put(hexenc<id> const & ident,
-           base64< gzip<data> > const & dat)
+  void put(hexenc<id> const & ident, data const & dat)
   {
     while (!cache.empty() 
            && use + dat().size() > capacity)
       {      
         std::string key = (F("%08.8x%08.8x%08.8x%08.8x%08.8x") 
                            % rand() % rand() % rand() % rand() % rand()).str();
-        std::map<hexenc<id>, base64< gzip<data> > >::const_iterator i;
+        std::map<hexenc<id>, data>::const_iterator i;
         i = cache.lower_bound(hexenc<id>(key));
         if (i == cache.end())
           {
@@ -959,15 +970,14 @@ struct version_cache
 
   bool exists(hexenc<id> const & ident)
   {
-    std::map<hexenc<id>, base64< gzip<data> > >::const_iterator i;
+    std::map<hexenc<id>, data>::const_iterator i;
     i = cache.find(ident);
     return i != cache.end();
   }
 
-  bool get(hexenc<id> const & ident,
-           base64< gzip<data> > & dat)
+  bool get(hexenc<id> const & ident, data & dat)
   {
-    std::map<hexenc<id>, base64< gzip<data> > >::const_iterator i;
+    std::map<hexenc<id>, data>::const_iterator i;
     i = cache.find(ident);
     if (i == cache.end())
       return false;
@@ -982,7 +992,7 @@ static version_cache vcache;
 
 void 
 database::get_version(hexenc<id> const & ident,
-                      base64< gzip<data> > & dat,
+                      data & dat,
                       string const & data_table,
                       string const & delta_table)
 {
@@ -1086,17 +1096,17 @@ database::get_version(hexenc<id> const & ident,
 
       I(found_root);
       I(root() != "");
-      base64< gzip<data> > begin_packed;
       data begin;      
 
       if (vcache.exists(root))
         {
-          I(vcache.get(root, begin_packed));
+          I(vcache.get(root, begin));
         }
       else
-        get(root, begin_packed, data_table);
+        {
+          get(root, begin, data_table);
+        }
 
-      unpack(begin_packed, begin);
       hexenc<id> curr = root;
 
       boost::shared_ptr<delta_applicator> app = new_piecewise_applicator();
@@ -1112,18 +1122,14 @@ database::get_version(hexenc<id> const & ident,
           if (!vcache.exists(curr))
             {
               string tmp;
-              base64< gzip<data> > tmp_packed;
               app->finish(tmp);
-              pack(data(tmp), tmp_packed);
-              vcache.put(curr, tmp_packed);
+              vcache.put(curr, tmp);
             }
 
 
           L(F("following delta %s -> %s\n") % curr % nxt);
-          base64< gzip<delta> > del_packed;
-          get_delta(nxt, curr, del_packed, delta_table);
           delta del;
-          unpack(del_packed, del);
+          get_delta(nxt, curr, del, delta_table);
           apply_delta (app, del());
           
           app->next();
@@ -1132,12 +1138,11 @@ database::get_version(hexenc<id> const & ident,
 
       string tmp;
       app->finish(tmp);
-      data end(tmp);
+      dat = data(tmp);
 
       hexenc<id> final;
-      calculate_ident(end, final);
+      calculate_ident(dat, final);
       I(final == ident);
-      pack(end, dat);
     }
   vcache.put(ident, dat);
 }
@@ -1155,13 +1160,13 @@ database::drop(hexenc<id> const & ident,
 void 
 database::put_version(hexenc<id> const & old_id,
                       hexenc<id> const & new_id,
-                      base64< gzip<delta> > const & del,
+                      delta const & del,
                       string const & data_table,
                       string const & delta_table)
 {
 
-  base64< gzip<data> > old_data, new_data;
-  base64< gzip<delta> > reverse_delta;
+  data old_data, new_data;
+  delta reverse_delta;
   
   get_version(old_id, old_data, data_table, delta_table);
   patch(old_data, del, new_data);
@@ -1182,11 +1187,11 @@ database::put_version(hexenc<id> const & old_id,
 void 
 database::put_reverse_version(hexenc<id> const & new_id,
                               hexenc<id> const & old_id,
-                              base64< gzip<delta> > const & reverse_del,
+                              delta const & reverse_del,
                               string const & data_table,
                               string const & delta_table)
 {
-  base64< gzip<data> > old_data, new_data;
+  data old_data, new_data;
   
   get_version(new_id, new_data, data_table, delta_table);
   patch(new_data, reverse_del, old_data);
@@ -1260,7 +1265,7 @@ void
 database::get_file_version(file_id const & id,
                            file_data & dat)
 {
-  base64< gzip<data> > tmp;
+  data tmp;
   get_version(id.inner(), tmp, "files", "file_deltas");
   dat = tmp;
 }
@@ -1269,7 +1274,7 @@ void
 database::get_manifest_version(manifest_id const & id,
                                manifest_data & dat)
 {
-  base64< gzip<data> > tmp;
+  data tmp;
   get_version(id.inner(), tmp, "manifests", "manifest_deltas");
   dat = tmp;
 }
@@ -1404,14 +1409,19 @@ database::get_revision(revision_id const & id,
         "SELECT data FROM revisions WHERE id = '%q'",
         id.inner()().c_str());
 
-  dat = revision_data(res[0][0]);
+  base64<gzip<data> > rdat_packed;
+  rdat_packed = base64<gzip<data> >(res[0][0]);
+  data rdat;
+  unpack(rdat_packed, rdat);
 
   // verify that we got a revision with the right id
   {
     revision_id tmp;
-    calculate_ident(dat, tmp);
+    calculate_ident(rdat, tmp);
     I(id == tmp);
   }
+
+  dat = rdat;
 }
 
 void 
@@ -1430,11 +1440,14 @@ database::put_revision(revision_id const & new_id,
   calculate_ident(d, tmp);
   I(tmp == new_id);
 
+  base64<gzip<data> > d_packed;
+  pack(d.inner(), d_packed);
+
   transaction_guard guard(*this);
 
   execute("INSERT INTO revisions VALUES('%q', '%q')", 
           new_id.inner()().c_str(), 
-          d.inner()().c_str());
+          d_packed().c_str());
 
   for (edge_map::const_iterator e = rev.edges.begin();
        e != rev.edges.end(); ++e)
@@ -1467,6 +1480,24 @@ database::delete_existing_revs_and_certs()
   execute("DELETE from revision_certs");
 }
 
+/// Deletes one revision from the local database. 
+/// @see kill_rev_locally
+void
+database::delete_existing_rev_and_certs(revision_id const & rid){
+
+  //check that the revision exists and doesn't have any children
+  I(revision_exists(rid));
+  set<revision_id> children;
+  get_revision_children(rid, children);
+  I(!children.size());
+
+  // perform the actual SQL transactions to kill rev rid here
+  L(F("Killing revision %s locally\n") % rid);
+  execute("DELETE from revision_certs WHERE id = '%s'",rid.inner()().c_str());
+  execute("DELETE from revision_ancestry WHERE child = '%s'",
+	  rid.inner()().c_str());
+  execute("DELETE from revisions WHERE id = '%s'",rid.inner()().c_str());
+}
 
 // crypto key management
 

@@ -115,12 +115,12 @@ typedef     file< hexenc<id> >      file_id;
 typedef    epoch< hexenc<id> >     epoch_id;
 typedef    epoch< hexenc<data> > epoch_data;
 
-typedef revision< base64< gzip<data> > >   revision_data;
-typedef manifest< base64< gzip<data> > >   manifest_data;
-typedef     file< base64< gzip<data> > >       file_data;
+typedef revision< data >   revision_data;
+typedef manifest< data >   manifest_data;
+typedef     file< data >       file_data;
 
-typedef manifest< base64< gzip<delta> > >  manifest_delta;
-typedef     file< base64< gzip<delta> > >      file_delta;
+typedef manifest< delta >  manifest_delta;
+typedef     file< delta >      file_delta;
 
 typedef std::pair<var_domain, var_name> var_key;
 

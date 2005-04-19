@@ -393,7 +393,7 @@ construct_version(vector< piece > const & source_lines,
 void 
 rcs_put_raw_file_edge(hexenc<id> const & old_id,
                       hexenc<id> const & new_id,
-                      base64< gzip<delta> > const & del,
+                      delta const & del,
                       database & db)
 {
   if (old_id == new_id)
@@ -419,7 +419,7 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
 void 
 rcs_put_raw_manifest_edge(hexenc<id> const & old_id,
                           hexenc<id> const & new_id,
-                          base64< gzip<delta> > const & del,
+                          delta const & del,
                           database & db)
 {
   if (old_id == new_id)
@@ -458,7 +458,7 @@ insert_into_db(data const & curr_data,
     global_pieces.build_string(next_lines, tmp);
     next_data = tmp;
   }
-  base64< gzip<delta> > del;
+  delta del;
   diff(curr_data, next_data, del);
   calculate_ident(next_data, next_id);
   rcs_put_raw_file_edge(next_id, curr_id, del, db);
@@ -571,7 +571,6 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
     I(r.deltas.find(r.admin.head) != r.deltas.end());
 
     hexenc<id> id; 
-    base64< gzip<data> > packed;
     data dat(r.deltatexts.find(r.admin.head)->second->text);
     calculate_ident(dat, id);
     file_id fid = id;
@@ -580,9 +579,7 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
 
     if (! db.file_version_exists (fid))
       {
-        pack(dat, packed);
-        file_data fdat = packed;
-        db.put_file(fid, fdat); 
+        db.put_file(fid, dat); 
       }
         
     {
@@ -1083,7 +1080,7 @@ store_manifest_edge(manifest_map const & parent,
       // tree version, which can be constructed from the 'newer' child. so
       // the delta should run from child (new) -> parent (old).
       
-      base64< gzip<delta> > del;              
+      delta del;
       diff(child, parent, del);
       rcs_put_raw_manifest_edge(parent_mid.inner(),
                                 child_mid.inner(),
@@ -1102,7 +1099,7 @@ store_manifest_edge(manifest_map const & parent,
       // from temporally new -> temporally old. so the delta should go from
       // parent (new) -> child (old)
       
-      base64< gzip<delta> > del;              
+      delta del;
       diff(parent, child, del);
       rcs_put_raw_manifest_edge(child_mid.inner(),
                                 parent_mid.inner(),                             

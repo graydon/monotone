@@ -61,11 +61,11 @@ path_item
   tid parent;
   ptype ty;
   path_component name;      
-  path_item() {}
-  path_item(tid p, ptype t, path_component n);
-  path_item(path_item const & other);
-  path_item const & operator=(path_item const & other);
-  bool operator==(path_item const & other) const;
+  inline path_item() {}
+  inline path_item(tid p, ptype t, path_component n);
+  inline path_item(path_item const & other);
+  inline path_item const & operator=(path_item const & other);
+  inline bool operator==(path_item const & other) const;
 };
 
 
@@ -506,7 +506,7 @@ change_set::check_sane() const
 
 }
 
-static void
+inline static void
 sanity_check_path_item(path_item const & pi)
 {
 }
@@ -525,19 +525,20 @@ confirm_proper_tree(path_state const & ps)
   size_t tid_range = max_tid - min_tid + 1;
   
   boost::dynamic_bitset<> confirmed(tid_range);
-  boost::dynamic_bitset<> ancs(tid_range);
 
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       tid curr = i->first;
       path_item item = i->second;
-      ancs.reset();
+      std::set<tid> ancs; // a set is more efficient, at least in normal
+                          // trees where the number of ancestors is
+                          // significantly less than tid_range
 
       while (confirmed.test(curr - min_tid) == false)
         {             
           sanity_check_path_item(item);
-          I(ancs.test(curr - min_tid) == false);
-          ancs.set(curr - min_tid);
+          I(ancs.find(curr) == ancs.end());
+          ancs.insert(curr);
           if (path_item_parent(item) == root_tid)
             break;
           else
@@ -554,7 +555,10 @@ confirm_proper_tree(path_state const & ps)
               I(path_item_type(item) == ptype_directory);
             }
         }
-      confirmed |= ancs;
+      for (std::set<tid>::const_iterator a = ancs.begin(); a != ancs.end(); a++)
+        {
+          confirmed.set(*a - min_tid);
+        }
     }
 }
 

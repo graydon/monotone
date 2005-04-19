@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -123,68 +124,32 @@ uppercase(string const & in)
 void 
 diff(data const & olddata,
      data const & newdata,
-     base64< gzip<delta> > & del)
+     delta & del)
 {
   string unpacked;
   compute_delta(olddata(), newdata(), unpacked);
-  pack(delta(unpacked), del);
+  del = delta(unpacked);
 }
 
 void 
 patch(data const & olddata,
-      base64< gzip<delta> > const & del,
+      delta const & del,
       data & newdata)
 {
-  delta unpacked;
-  unpack(del, unpacked);
   string result;
-  apply_delta(olddata(), unpacked(), result);
+  apply_delta(olddata(), del(), result);
   newdata = result;
 }
 
 void 
 diff(manifest_map const & oldman,
      manifest_map const & newman,
-     base64< gzip<delta> > & del)
+     delta & del)
 {
   string xd;
   compute_delta(oldman, newman, xd);
-  pack(delta(xd), del);
+  del = delta(xd);
 }
-
-void 
-diff(base64< gzip<data> > const & olddata,
-     base64< gzip<data> > const & newdata,
-     base64< gzip<delta> > & del)
-{
-  gzip<data> olddata_decoded;
-  gzip<data> newdata_decoded;
-
-  decode_base64(olddata, olddata_decoded);
-  decode_base64(newdata, newdata_decoded);
-
-  data olddata_decompressed;
-  data newdata_decompressed;
-
-  decode_gzip(olddata_decoded, olddata_decompressed);
-  decode_gzip(newdata_decoded, newdata_decompressed);
-
-  diff(olddata_decompressed,
-       newdata_decompressed,
-       del);
-}
-
-void 
-patch(base64< gzip<data> > const & olddata,
-      base64< gzip<delta> > const & del,
-      base64< gzip<data> > & newdata)
-{
-  data olddata_unpacked, newdata_unpacked;
-  unpack(olddata, olddata_unpacked);
-  patch(olddata_unpacked, del, newdata_unpacked);
-  pack(newdata_unpacked, newdata);
-}
-
 
 // identifier (a.k.a. sha1 signature) calculation
 
@@ -286,9 +251,7 @@ void calculate_ident(revision_data const & dat,
                      revision_id & ident)
 {
   hexenc<id> tmp;
-  data unpacked;
-  unpack(dat.inner(), unpacked);
-  calculate_ident(unpacked, tmp);
+  calculate_ident(dat.inner(), tmp);
   ident = tmp;
 }
 
@@ -718,6 +681,141 @@ line_end_convert(string const & linesep, string const & src, string & dst)
     dst += linesep_str;
 }
 
+// glob_to_regexp converts a sh file glob to a regexp.  The regexp should
+// be usable by the Boost regexp library.
+//
+// Pattern tranformation:
+//
+// - Any character except those described below are copied as they are.
+// - The backslash (\) escapes the following character.  The escaping
+//   backslash is copied to the regexp along with the following character.
+// - * is transformed to .* in the regexp.
+// - ? is transformed to . in the regexp.
+// - { is transformed to ( in the regexp, unless within [ and ].
+// - } is transformed to ) in the regexp, unless within [ and ].
+// - , is transformed to | in the regexp, if within { and } and not
+//    within [ and ].
+// - ^ is escaped unless it comes directly after an unescaped [.
+// - ! is transformed to ^ in the regexp if it comes directly after an
+//   unescaped [.
+// - ] directly following an unescaped [ is escaped.
+string glob_to_regexp(const string & glob)
+{
+  int in_braces = 0;		// counter for levels if {}
+  bool in_brackets = false;	// flags if we're inside a [], which
+                                // has higher precedence than {}.
+                                // Also, [ is accepted inside [] unescaped.
+  bool this_was_opening_bracket = false;
+  string tmp;
+
+  tmp.reserve(glob.size() * 2);
+
+#ifdef BUILD_UNIT_TESTS
+  cerr << "DEBUG[glob_to_regexp]: input = \"" << glob << "\"" << endl;
+#endif
+
+  for (string::const_iterator i = glob.begin(); i != glob.end(); ++i)
+    {
+      char c = *i;
+      bool last_was_opening_bracket = this_was_opening_bracket;
+      this_was_opening_bracket = false;
+
+      // Special case ^ and ! at the beginning of a [] expression.
+      if (in_brackets && last_was_opening_bracket
+          && (c == '!' || c == '^'))
+        {
+          tmp += '^';
+          if (++i == glob.end())
+            break;
+          c = *i;
+        }
+
+      if (c == '\\')
+        {
+          tmp += c;
+          if (++i == glob.end())
+            break;
+          tmp += *i;
+        }
+      else if (in_brackets)
+        {
+          switch(c)
+            {
+            case ']':
+              if (!last_was_opening_bracket)
+                {
+                  in_brackets = false;
+                  tmp += c;
+                  break;
+                }
+              // Trickling through to the standard character conversion,
+              // because ] as the first character of a set is regarded as
+              // a normal character.
+            default:
+              if (!(isalnum(c) || c == '_'))
+                {
+                  tmp += '\\';
+                }
+              tmp += c;
+              break;
+            }
+        }
+      else
+        {
+          switch(c)
+            {
+            case '*':
+              tmp += ".*";
+              break;
+            case '?':
+              tmp += '.';
+              break;
+            case '{':
+              in_braces++;
+              tmp += '(';
+              break;
+            case '}':
+              N(in_braces != 0,
+                F("trying to end a brace expression in a glob when none is started"));
+              tmp += ')';
+              in_braces--;
+              break;
+            case '[':
+              in_brackets = true;
+              this_was_opening_bracket = true;
+              tmp += c;
+              break;
+            case ',':
+              if (in_braces > 0)
+                {
+                  tmp += '|';
+                  break;
+                }
+              // Trickling through to default: here, since a comma outside of
+              // brace notation is just a normal character.
+            default:
+              if (!(isalnum(c) || c == '_'))
+                {
+                  tmp += '\\';
+                }
+              tmp += c;
+              break;
+            }
+        }
+    }
+
+  N(!in_brackets,
+    F("run-away bracket expression in glob"));
+  N(in_braces == 0,
+    F("run-away brace expression in glob"));
+
+#ifdef BUILD_UNIT_TESTS
+  cerr << "DEBUG[glob_to_regexp]: output = \"" << tmp << "\"" << endl;
+#endif
+
+  return tmp;
+}
+
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
@@ -740,19 +838,11 @@ rdiff_test()
 {
   data dat1(string("the first day of spring\nmakes me want to sing\n"));
   data dat2(string("the first day of summer\nis a major bummer\n"));
-  data dat3;
-  gzip<data> dat1_gz, dat2_gz, dat3_gz;
-  base64< gzip<data> > dat1_bgz, dat2_bgz, dat3_bgz;
-  encode_gzip(dat1, dat1_gz);
-  encode_gzip(dat2, dat2_gz);
-  encode_base64(dat1_gz, dat1_bgz);
-  encode_base64(dat2_gz, dat2_bgz);
-  base64< gzip<delta> > del_bgz;
-  diff(dat1_bgz, dat2_bgz, del_bgz);
+  delta del;
+  diff(dat1, dat2, del);
   
-  patch(dat1_bgz, del_bgz, dat3_bgz);
-  decode_base64(dat3_bgz, dat3_gz);
-  decode_gzip(dat3_gz, dat3);
+  data dat3;
+  patch(dat1, del, dat3);
   BOOST_CHECK(dat3 == dat2);
 }
 
@@ -1004,6 +1094,15 @@ static void encode_test()
   check_idna_encoding();
 }
 
+static void glob_to_regexp_test()
+{
+  BOOST_CHECK(glob_to_regexp("abc,v") == "abc\\,v");
+  BOOST_CHECK(glob_to_regexp("foo[12m,]") == "foo[12m\\,]");
+  // A full fledged, use all damn features test...
+  BOOST_CHECK(glob_to_regexp("foo.{bar*,cookie?{haha,hehe[^\\123!,]}}[!]a^b]")
+	      == "foo\\.(bar.*|cookie.(haha|hehe[^\\123\\!\\,]))[^\\]a\\^b]");
+}
+
 void 
 add_transform_tests(test_suite * suite)
 {
@@ -1015,6 +1114,7 @@ add_transform_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&join_lines_test));
   suite->add(BOOST_TEST_CASE(&strip_ws_test));
   suite->add(BOOST_TEST_CASE(&encode_test));
+  suite->add(BOOST_TEST_CASE(&glob_to_regexp_test));
 }
 
 #endif // BUILD_UNIT_TESTS

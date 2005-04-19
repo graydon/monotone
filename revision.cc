@@ -1699,9 +1699,7 @@ void
 read_revision_set(revision_data const & dat,
                   revision_set & rev)
 {
-  data unpacked;
-  unpack(dat.inner(), unpacked);
-  read_revision_set(unpacked, rev);
+  read_revision_set(dat.inner(), rev);
   rev.check_sane();
 }
 
@@ -1723,9 +1721,7 @@ write_revision_set(revision_set const & rev,
   rev.check_sane();
   data d;
   write_revision_set(rev, d);
-  base64< gzip<data> > packed;
-  pack(d, packed);
-  dat = revision_data(packed);
+  dat = revision_data(d);
 }
 
 #ifdef BUILD_UNIT_TESTS

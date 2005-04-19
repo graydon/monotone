@@ -56,6 +56,7 @@ void basic_io::stanza::push_str_pair(std::string const & k, std::string const & 
     I(std::isalnum(*i) || *i == '_');
 
   std::string escaped;
+  escaped.reserve(v.size() + 8);
 
   for (std::string::const_iterator i = v.begin();
        i != v.end(); ++i)
