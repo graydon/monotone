@@ -67,7 +67,7 @@ class Gzip_Decompression : public Filter
       Gzip_Decompression();
       ~Gzip_Decompression() { clear(); }
    private:
-      u32bit write_footer(const byte input[], u32bit length);
+      u32bit eat_footer(const byte input[], u32bit length);
       void check_footer();
       void clear();
       SecureVector<byte> buffer;

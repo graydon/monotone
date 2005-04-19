@@ -216,7 +216,7 @@ void Gzip_Compression::put_footer()
 
       send(buf.begin(), buf.size());
 
-      // Length - LSB first
+     // Length - LSB first
      for (int i = 0; i < 4; i++)
         buf[3-i] = get_byte(i, count);
 
@@ -262,11 +262,11 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
    // If we're in the footer, take what we need, then go to the next block
    if (in_footer)
       {
-      u32bit eat_len = write_footer(input, length);
-          input += eat_len;
-          length -= eat_len;
-          if (length == 0)
-                  return;
+         u32bit eat_len = eat_footer(input, length);
+         input += eat_len;
+         length -= eat_len;
+         if (length == 0)
+            return;
       }
 
    // Check the gzip header
@@ -317,7 +317,7 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
       if(rc == Z_STREAM_END)
          {
          u32bit read_from_block = length - zlib->stream.avail_in;
-         u32bit eat_len = write_footer((Bytef*)input + read_from_block, zlib->stream.avail_in);
+         u32bit eat_len = eat_footer((Bytef*)input + read_from_block, zlib->stream.avail_in);
          read_from_block += eat_len;
          input += read_from_block;
          length -= read_from_block;
@@ -330,7 +330,7 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
 /*************************************************
 * Store the footer bytes                         *
 *************************************************/
-u32bit Gzip_Decompression::write_footer(const byte input[], u32bit length)
+u32bit Gzip_Decompression::eat_footer(const byte input[], u32bit length)
    {
       if (footer.size() >= GZIP::FOOTER_LENGTH)
          throw Decoding_Error("Gzip_Decompression: Data integrity error in footer");
