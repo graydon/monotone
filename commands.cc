@@ -3898,7 +3898,7 @@ CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
 
 CMD(automate, "automation",
     "interface_version\n"
-    "heads BRANCH\n"
+    "heads [BRANCH]\n"
     "descendents REV1 [REV2 [REV3 [...]]]\n"
     "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
     "toposort [REV1 [REV2 [REV3 [...]]]]\n"

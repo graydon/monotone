@@ -37,7 +37,7 @@ automate_interface_version(std::vector<utf8> args,
 
 // Name: heads
 // Arguments:
-//   1: a branch name
+//   1: branch name (optional, default branch is used if non-existant)
 // Added in: 0.0
 // Purpose: Prints the heads of the given branch.
 // Output format: A list of revision ids, in hexadecimal, each followed by a
@@ -50,11 +50,15 @@ automate_heads(std::vector<utf8> args,
                app_state & app,
                std::ostream & output)
 {
-  if (args.size() != 1)
+  if (args.size() > 1)
     throw usage(help_name);
 
+  if (args.size() ==1 ) {
+    // branchname was explicitly given, use that
+    app.set_branch(idx(args, 0));
+  }
   std::set<revision_id> heads;
-  get_branch_heads(idx(args, 0)(), app, heads);
+  get_branch_heads(app.branch_name(), app, heads);
   for (std::set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << std::endl;
 }
