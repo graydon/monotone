@@ -338,6 +338,13 @@ With an arg of 0, clear default server and collection."
   (monotone-pull monotone-server monotone-collection))
 ;; (monotone-vc-pull)
 
+
+(defun monotone-vc-push ()
+  "FIXME: This is a lame-ass push without args.
+I want to do the first push of monotone.el from within emacs."
+  (interactive)
+  (monotone-cmd "--ticker=dot" "push"))
+
 ;;; Start if the commit process...
 ;; FIXME: the default should be a global commit.
 (defun monotone-vc-commit (&rest args)
