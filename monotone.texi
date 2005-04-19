@@ -4217,12 +4217,12 @@ None.
 @end table
 
 
-@item monotone automate heads @var{branch}
+@item monotone automate heads [@var{branch}]
 
 @table @strong
 @item Arguments:
 
-One argument @var{branch}, a branch name.
+One branch name,  @var{branch}. If none is given, the current default branch is used.
 
 @item Added in:
 
@@ -4247,7 +4247,7 @@ newline.  The lines are printed in alphabetically sorted order.
 
 @item Error conditions:
 
-If the given branch contains no members, then no lines are printed.
+If the given branch contains no members or does not exist, then no lines are printed.
 
 @end table
 

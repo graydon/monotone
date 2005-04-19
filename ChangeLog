@@ -1,7 +1,15 @@
 2005-04-19  Sebastian Spaeth  <Sebastian@SSpaeth.de>
+
+	* monotone.texi: modified documentation to match changes due to
+	previous checking.
+	* AUTHORS: Adding myself
+	
+2005-04-19  Sebastian Spaeth  <Sebastian@SSpaeth.de>
+
 	* automate.cc: make BRANCH optional in "automate heads BRANCH"
 	we use the default branch as given in MT/options if not specified
 	* commands.cc: BRANCH -> [BRANCH] in cmd description
+
 2005-04-19  Richard Levitte  <richard@levitte.org>
 
 	* contrib/monotone-import.pl (my_exit): As in monotone-notify.pl,
