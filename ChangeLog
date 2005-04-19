@@ -1,3 +1,9 @@
+2005-04-19  Richard Levitte  <richard@levitte.org>
+
+	* testsuite.at (REVERT_TO): Make it possible to revert to a
+	specific branch.  This is useful to resolve ambiguities.
+	* tests/t_merge_add_del.at: Use it.
+
 2005-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* commands.cc (log): 'depth' option did not handle the single file
