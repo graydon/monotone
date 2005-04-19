@@ -55,6 +55,12 @@ Habitual monotone users can set it to '\C-xv'.")
 (defvar monotone-buffer "*monotone*"
   "The buffer used for displaying monotone output.")
 
+(defvar monotone-commit-buffer "*monotone commit*"
+  "The name of the buffer for the commit message.")
+(defvar monotone-commit-edit-status nil
+  "The sentinel for completion of editing the log.")
+(make-variable-buffer-local 'monotone-commit-edit-status)
+
 (defvar monotone-commit-arg nil)
 (defvar monotone-commit-dir nil)
 
@@ -70,18 +76,19 @@ This is used to pass state -- best be left nil.")
 
 (defvar monotone-commit-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\C-c\C-c" 'monotone-commit-it)
+    (define-key map "\C-c\C-c" 'monotone-commit-complete)
     map))
 
 (defvar monotone-output-mode-hook nil
   "*The hook for monotone output.")
 
 (defvar monotone-commit-instructions
-  "MT: --------------------------------------------------
-MT: Enter Log.  Lines beginning with `MT:' are removed automatically.
-MT: Type C-c C-c to commit, kill the buffer to abort.
-MT: --------------------------------------------------"
-  "Instructional text to insert into the commit buffer.")
+  "--------------------------------------------------
+Enter Log.  Lines beginning with `MT:' are removed automatically.
+Type C-c C-c to commit, kill the buffer to abort.
+--------------------------------------------------"
+  "Instructional text to insert into the commit buffer. 
+'MT: ' is added when inserted.")
 
 (defvar monotone-commit-mode-hook nil
   "*The hook for monotone-commit-mode.")
@@ -99,11 +106,13 @@ MT: --------------------------------------------------"
 ;;; Key maps
 (defvar monotone-vc-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "=" 'monotone-vc-diff)
-    (define-key map "l" 'monotone-vc-print-log)
-    (define-key map "i" 'monotone-vc-register)
-    (define-key map "p" 'monotone-vc-pull)
-    ;;(define-key map "P" 'monotone-push)
+    (define-key map "="    'monotone-vc-diff)
+    (define-key map "\C-q" 'monotone-vc-commit)
+    (define-key map "l"    'monotone-vc-print-log)
+    (define-key map "i"    'monotone-vc-register)
+    (define-key map "p"    'monotone-vc-pull)
+    (define-key map "P"    'monotone-vc-push)
+    ;;
     map))
 (fset 'monotone-vc-map monotone-vc-map)
 
@@ -165,7 +174,7 @@ Nothing for now."
   (text-mode)
   (run-hooks monotone-output-mode-hooks))
 
-(define-derived-mode monotone-shell-mode comint-mode "Monotone")
+;;(define-derived-mode monotone-shell-mode comint-mode "Monotone")
 
 ;; Run a monotone command
 (defun monotone-cmd (&rest args)
@@ -174,19 +183,22 @@ Nothing for now."
         (mt-buf (get-buffer-create monotone-buffer))
         ;;(mt-pgm "ls") ;; easy debugging
         (mt-pgm monotone-program)
-        mt-cmd)
+        mt-cmd mt-status)
     ;; where to run
     (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
       (setq mt-top (monotone-find-MT-top))
       (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
         (error "monotone-MT-top is not a directory.")))
-    ;;
+    (set-buffer mt-buf)
     (switch-to-buffer-other-window mt-buf)
     (if (get-buffer-process mt-buf)
       (error "Monotone is currently running"))
+    ;; prep the buffer for output
     (toggle-read-only -1)
     (erase-buffer)
+    (buffer-disable-undo (current-buffer))
     (setq default-directory mt-top)
+    ;; run
     (let ((p (apply #'start-process monotone-buffer mt-buf mt-pgm args)))
       (while (eq (process-status p) 'run)
         (accept-process-output p)
@@ -197,12 +209,25 @@ Nothing for now."
           (let ((pass (monotone-read-passwd (match-string 1))))
             (insert "********\n") ;; 
             (process-send-string p (concat pass "\n")))))
-      (let ((mt-status (process-exit-status p)))
-        (if (not (zerop mt-status))
-          (error (format "%s: exited with status %s" mt-pgm mt-status)))))
+      (setq mt-status (process-exit-status p)))
+    ;; make the buffer nice.
     (goto-char (point-min))
-    (view-mode)))
+    (view-mode)
+    ;; did we part on good terms?
+    (if (not (zerop mt-status))
+      (error (format "%s: exited with status %s" mt-pgm mt-status)))
+    mt-status))
+
+(defun monotone-cmd-hide (&rest args)
+  "Run the command without showing the output."
+  (save-window-excursion
+    (apply #'monotone-cmd args)))
+  
+
 ;; (monotone-cmd "list" "branches")
+;; (monotone-cmd "list" "keys")
+;; (monotone-cmd  "pubkey" "harley@panix.com")
+;; (let ((monotone-cmd-hide t)) (monotone-cmd "status"))
 
 (defun monotone-read-passwd (keypairid)
   (let ((rec (assoc keypairid monotone-passwd-alist))
@@ -262,7 +287,76 @@ With an arg of 0, clear default server and collection."
   (monotone-pull monotone-server monotone-collection))
 ;; (monotone-vc-pull)
 
+;;; Commiting...
 
+(defun monotone-vc-commit (&optional arg)
+  "Commit the current buffer.  With ARG do a global commit."
+  (interactive "P")
+  (let ((buf (get-buffer-create monotone-commit-buffer))
+        (monotone-MT-top (monotone-find-MT-top)))
+    ;; found MT?
+    (when (not monotone-MT-top)
+      (error "Cant find MT directory"))
+    ;; show it 
+    (show-buffer buf) ;;(display-buffer buf)
+    (set-buffer buf)
+    ;; Have the contents been commited?
+    (when (eq monotone-commit-edit-status 'started)
+      (message "Continuing commit message already started."))
+    (when (or (null monotone-commit-edit-status) (eq monotone-commit-edit-status 'done))
+      (erase-buffer)
+      (setq default-directory monotone-MT-top)
+       (setq monotone-commit-edit-status 'started)
+      (let ((mt-log-path (concat monotone-MT-top "MT/log")))
+        (when (file-readable-p mt-log-path)
+          (insert-file mt-log-path)))
+      ;; blank line for message.
+      (beginning-of-buffer)
+      (insert "\n")
+      (beginning-of-buffer)
+      (monotone-commit-mode))
+    ;; update the "MT:" lines by replacing them.
+    (monotone-remove-MT-lines)
+    (end-of-buffer)
+    (let ((eo-message (point)))
+      ;; instructional text
+      (when (stringp monotone-commit-instructions)
+        (insert monotone-commit-instructions)
+        (when (not (looking-at "^"))
+          (insert "\n")))
+      ;; what is being committed?
+      (monotone-cmd-hide "status")
+      (insert-buffer-substring monotone-buffer)
+      ;; insert "MT: " prefix
+      (goto-char eo-message)
+      (while (search-forward-regexp "^" (point-max) t)
+        (insert "MT: ")))
+    ;; ready for edit
+    (beginning-of-buffer)))
+
+
+(defun monotone-commit-mode ()
+  "Mode for editing a monotone commit message."
+  ;; turn on the minor mode for keybindings and run hooks.
+  (text-mode)
+  (setq monotone-commit-mode t)
+  (run-hooks monotone-commit-mode-hook))
+
+(defun monotone-commit-complete ()
+  (interactive)
+  (monotone-remove-MT-lines)
+  
+    
+  ;; finished w/o errors?
+  (setq monotone-commit-edit-status 'done))
+
+(defun monotone-remove-MT-lines ()
+  (interactive)
+  (beginning-of-buffer)
+  (while (search-forward-regexp "^MT:.*$" (point-max) t)
+    (beginning-of-line)
+    (kill-line 1)))
+  
 ;; check for common errors and args.
 (defun monotone-cmd-buf (global buf cmd)
   "Run a simple monotone command for this buffer.  (passwordless)
@@ -296,7 +390,9 @@ CMD is the command to execute."
 (defun monotone-vc-register ()
   "Register this file with monotone for the next commit."
   (interactive)
-  (monotone-cmd-buf nil (current-buffer) "add"))
+  (if buffer-file-name
+    (monotone-cmd-buf nil (current-buffer) "add")
+    (error "This buffer does not have a file name")))
 
 (defun monotone-vc-update-change-log ()
   "Edit the monotone change log."
