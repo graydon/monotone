@@ -1199,13 +1199,14 @@ This output shows one private and one public key stored under the name
 been successfully generated and stored. On subsequent commands, Jim
 will need to re-enter our passphrase in order to perform
 security-sensitive tasks. To simplify matters, Jim decides to store
-his security passphrase in his @code{.monotonerc} file, by writing a
+his security passphrase in his @code{monotonerc} file, by writing a
 @emph{hook function} which returns the passphrase, so that he does not
 need to repeatedly be prompted for it:
 
 @smallexample
 @group
-$ cat >>~/.monotonerc
+$ mkdir ~/.monotone
+$ cat >>~/.monotone/monotonerc
 function get_passphrase(keypair_id)
   return "jimsekret"
 end
@@ -1626,11 +1627,11 @@ monotone: read 1 packet
 
 Now Jim's monotone is able to identify Beth and Abe, and he is ready to
 give them permission to access his database.  He does this by adding a
-small amount of extra information to his @file{.monotonerc} file:
+small amount of extra information to his @file{monotonerc} file:
 
 @smallexample
 @group
-$ cat >>~/.monotonerc
+$ cat >>~/.monotone/monotonerc
 function get_netsync_read_permitted (collection, identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
@@ -4498,10 +4499,10 @@ function definition which suits your preferences, monotone will
 execute it. This way you can modify how monotone behaves.
 
 You can put new definitions for any of these hook functions in a file
-@file{$HOME/.monotonerc}, or in your working copy in
+@file{$HOME/.monotone/monotonerc}, or in your working copy in
 @file{MT/monotonerc}, both of which will be read every time monotone
 runs. Definitions in @file{MT/monotonerc} shadow (override)
-definitions made in your @file{$HOME/.monotonerc}. You can also tell
+definitions made in your @file{$HOME/.monotone/monotonerc}. You can also tell
 monotone to interpret extra hook functions from any other @var{file}
 using the @option{--rcfile=@var{file}} option; hooks defined in files
 specified on the command-line will shadow hooks from the the automatic
@@ -6003,7 +6004,8 @@ Do not evaluate "standard" Lua hooks compiled into @b{monotone}.
 @comment TROFF INPUT: .TP
 
 @item @b{--norc}
-Do not load Lua hooks from user's @b{~/.monotonerc} file.
+Do not load Lua hooks from user's @b{~/.monotone/monotonerc} or the
+working copy's @b{MT/monotonerc} file.
 @comment TROFF INPUT: .TP
 
 @item @b{--rcfile=}@i{<file>}
@@ -6102,7 +6104,7 @@ Used in preference to @b{EDITOR}, if set.
 
 @c ---------------------------------------------------------------------
 @table @code
-@item @b{$HOME/.monotonerc}
+@item @b{$HOME/.monotone/monotonerc}
 A Lua script, used as a customization file.
 @comment TROFF INPUT: .SH NOTES
 
@@ -6118,7 +6120,7 @@ A Lua script, used as a customization file.
 @comment TROFF INPUT: .IP \(bu
 
 Command line options override environment variables and
-settings in Lua scripts (such as @b{.monotonerc})
+settings in Lua scripts (such as @b{monotonerc})
 
 @comment TROFF INPUT: .SH "SEE ALSO"
 

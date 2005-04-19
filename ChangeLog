@@ -1,5 +1,16 @@
 2005-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* lua.cc (default_rcfilename): Use ~/.monotone/monotonerc.  This
+	change is to prepare for the upcoming support for storing user
+	keys outside of the database (in ~/.monotone/keys/).
+	* app_state.cc (load_rcfiles): Refer to new rc file location in
+	comments.
+	* monotone.cc (options): Refer to new rc file location.
+	* monotone.texi: Refer to new rc file location.  Also change bare
+	references to the rc file from '.monotonerc' to 'monotonerc'.
+
+2005-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* commands.cc (log): 'depth' option did not handle the single file
 	case correctly. Also a couple of minor cleanups.
 	* tests/t_log_depth_single.at: New test.

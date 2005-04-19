@@ -506,7 +506,7 @@ lua_hooks::add_std_hooks()
 void 
 lua_hooks::default_rcfilename(fs::path & file)
 {
-  file = mkpath(get_homedir()) / mkpath(".monotonerc");
+  file = mkpath(get_homedir()) / mkpath(".monotone/monotonerc");
 }
 
 void 
