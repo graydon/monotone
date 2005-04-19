@@ -84,7 +84,7 @@ This is used to pass state -- best be left nil.")
 (add-to-list 'minor-mode-alist '(monotone-commit-mode " Monotone Commit"))
 (add-to-list 'minor-mode-map-alist (cons 'monotone-commit-mode monotone-commit-mode-map))
 
-(defvar monotone-msg t
+(defvar monotone-msg nil
   "When non-nil log stuff to *Messages*")
 
 (defmacro monotone-msg (&rest args)
@@ -159,8 +159,9 @@ With t use monotone-vc-prefix-map."
 (defun monotone-find-MT-top (&optional path)
   "Find the directory which contains the 'MT' directory.
 Optional argument PATH ."
+  (setq path (or path (buffer-file-name) default-directory))
   (when (null path)
-    (setq path default-directory))
+    (error "Cant find top for %s" path))
   ;; work with full path names
   (setq path (expand-file-name path))
   (block nil
@@ -201,16 +202,18 @@ Nothing for now."
 (defun monotone-cmd (&rest args)
   "Execute the monotone command with ARGS in the monotone top directory."
   (monotone-msg "%s" args)
-  (let ((mt-top monotone-MT-top)
+  (let ((mt-top (or monotone-MT-top (monotone-find-MT-top)))
         (mt-buf (get-buffer-create monotone-buffer))
         ;;(mt-pgm "ls") ;; easy debugging
         (mt-pgm monotone-program)
+        monotone-MT-top
         mt-cmd mt-status)
     ;; where to run
     (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
       (setq mt-top (monotone-find-MT-top))
       (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
-        (error "monotone-MT-top is not a directory.")))
+        (error "Unable to find the MT top directory")))
+    (setq monotone-MT-top mt-top)
     ;; show the window
     (if (not (equal (current-buffer) mt-buf))
       (switch-to-buffer-other-window mt-buf))
