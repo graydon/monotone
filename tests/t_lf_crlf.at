@@ -1,44 +1,40 @@
 AT_SETUP([use get_linesep_conv hook])
 MONOTONE_SETUP
-NEED_UNB64
-
-# This test is a bug report.
-AT_XFAIL_IF(true)
 
 # This test excercises the common case of wanting to do newline 
 # character conversion so that win32 users can have native line endings
 # in their working copies.
 
+AT_CHECK(printf "foo\r\n", [], [stdout])
+AT_CHECK(mv stdout foo.crlf)
 
-# wrote files with 'foo\r\n' and 'foo\r\nfoo\r\n' and used mimencode
-# to generate the following b64 encoded contents.
-#
-# Note the newline before the closing ']', it's necessary.
-#
-AT_DATA(foo.lfcr.b64,    [Zm9vDQo=
-])
-AT_DATA(foofoo.lfcr.b64, [Zm9vDQpmb28NCg==
-])
+AT_CHECK(printf "foo\r\nfoo\r\n", [], [stdout])
+AT_CHECK(mv stdout foofoo.crlf)
 
-UNB64(foo.lfcr.b64, foo.lfcr)
-UNB64(foofoo.lfcr.b64, foofoo.lfcr)
-
-AT_DATA(linesep.lua, [
+AT_DATA(linesep.conv.lua, [
 function get_linesep_conv(name)
         return {"LF", "CRLF"}
 end
 ])
 
-AT_CHECK(cp foo.lfcr foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --rcfile=linesep.lua add foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --rcfile=linesep.lua --branch=foo commit -m foo, [], [ignore], [ignore])
+AT_DATA(linesep.null.lua, [])
+
+AT_CHECK(cp linesep.conv.lua linesep.lua)
+
+AT_CHECK(cp foo.crlf foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --debug --rcfile=linesep.lua add foo, [], [], [stderr])
+AT_CHECK(mv stderr log.0)
+AT_CHECK(MONOTONE --debug --rcfile=linesep.lua --branch=foo commit -m foo, [], [ignore], [stderr])
+AT_CHECK(mv stderr log.1)
 FOO_REV=`BASE_REVISION`
 
-AT_CHECK(cp foofoo.lfcr foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --rcfile=linesep.lua commit -m foofoo, [], [ignore], [ignore])
+AT_CHECK(cp foofoo.crlf foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --debug --rcfile=linesep.lua commit -m foofoo, [], [ignore], [stderr])
+AT_CHECK(mv stderr log.2)
 FOO_FOO_REV=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --rcfile=linesep.lua update $FOO_REV, [], [ignore], [ignore])
-AT_CHECK(cmp foo foo.lfcr, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --debug --rcfile=linesep.lua update $FOO_REV, [], [ignore], [stderr])
+AT_CHECK(mv stderr log.3)
+AT_CHECK(cmp foo foo.crlf, [], [ignore], [ignore])
 
 AT_CLEANUP

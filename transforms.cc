@@ -675,9 +675,8 @@ line_end_convert(string const & linesep, string const & src, string & dst)
   vector<string> tmp;
   split_into_lines(src, tmp);
   join_lines(tmp, dst, linesep_str);
-  if (src.size() >= 1 &&
-      (src[src.size() - 1] == '\r' ||
-       src[src.size() - 1] == '\n'))
+  if (src.size() >= linesep.size() &&
+      (src.compare(src.size() - linesep.size(), linesep.size(), linesep) == 0))
     dst += linesep_str;
 }
 
