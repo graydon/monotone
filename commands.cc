@@ -2598,7 +2598,6 @@ string_to_datetime(std::string const & s)
       N(false, F("failed to parse date string '%s'") % s);
     }
   I(false);
-  return boost::posix_time::ptime(boost::date_time::not_a_date_time);
 }
 
 CMD(commit, "working copy", "[--message=STRING] [PATH]...", 

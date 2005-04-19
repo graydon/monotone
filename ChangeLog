@@ -1,5 +1,13 @@
 2005-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* sanity.hh: Mark {naughty,error,invariant,index}_failure methods
+	as NORETURN.
+	* commands.cc (string_to_datetime): Drop earlier attempt at
+	warning fix, it did not work with Boost 1.31.0.  Warning fixed by
+	change to sanity.hh.
+
+2005-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* lua.cc (default_rcfilename): Use ~/.monotone/monotonerc.  This
 	change is to prepare for the upcoming support for storing user
 	keys outside of the database (in ~/.monotone/keys/).
@@ -41,15 +49,15 @@
 	* tests/t_drop_attr.at: New test, similar to t_rename_attr.at.
 	* testsuite.at: Add them.
 
-2005-04-17  Matt Johnston  <matt@ucc.asn.au>
-
-	* change_set.cc (confirm_proper_tree): remove incorrect code
-	setting confirmed nodes.
-
 2005-04-18  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Dealing with a Fork): Clarify (hopefully) what we
 	mean when we say that "update" is a dangerous command.
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): remove incorrect code
+	setting confirmed nodes.
 
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 
