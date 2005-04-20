@@ -1,3 +1,9 @@
+2005-04-20  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone.el: define-after-key's KEY argument has to be a
+	vector with only one element.  The code I used is taken directly
+	from the Emacs Lisp Reference Manual, section "Modifying Menus".
+
 2005-04-19 Emile Snyder <emile@alumni.reed.edu>
 	
 	* file_io.cc: Fix bugs with read/write_localized_data when using

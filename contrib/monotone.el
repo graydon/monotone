@@ -619,7 +619,9 @@ I want to do the first push of monotone.el from within emacs."
     map))
 
 (when monotone-menu-name
-  (define-key-after global-map [menu-bar monotone] (cons monotone-menu-name monotone-menu)))
+  (define-key-after
+    (lookup-key global-map [menu-bar])
+    [monotone] (cons monotone-menu-name monotone-menu)))
 
 (provide 'monotone)
 ;;; monotone.el ends here
