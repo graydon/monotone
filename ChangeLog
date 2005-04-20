@@ -1,3 +1,9 @@
+2005-04-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.cc (read_localized_data, write_localized_data): Remove
+	logging of complete file contents.
+	* tests/t_lf_crlf.at: Remove --debugs, clean up, test more.
+
 2005-04-19 Emile Snyder <emile@alumni.reed.edu>
 	
 	* file_io.cc: Fix bugs with read/write_localized_data when using
