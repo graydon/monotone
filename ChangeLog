@@ -1,3 +1,27 @@
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	Most of this patch from Joel Reed, with only small tweaks myself.
+	
+	* AUTHORS: Add Joel Reed.
+
+	* platform.hh (is_executable): New function.
+	* {unix,win32}/process.cc: Define it.
+
+	* lua.cc (monotone_is_executable_for_lua): New function.
+	(lua_hooks): Register it.
+	(Lua::push_nil): New method.
+	(lua_hooks::hook_init_attributes): New hook.
+	* lua.hh: Declare it.
+	* monotone.texi (Hook Reference): Document it.
+
+	* work.cc (addition_builder): Call new hook, collect attributes
+	for added files.
+	(build_additions): Set attributes on new files.
+
+	* tests/t_attr_init.at: New test.
+	* tests/t_add_executable.at: New test.
+	* testsuite.at: Add them.
+	
 2005-04-19  Nathaniel Smith  <njs@codesourcery.com>
 
 	* file_io.cc (read_localized_data, write_localized_data): Remove

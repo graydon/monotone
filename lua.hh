@@ -95,6 +95,8 @@ public:
                                  file_path & res);
 
   // attribute hooks
+  bool hook_init_attributes(file_path const & filename,
+                            std::map<std::string, std::string> & attrs);
   bool hook_apply_attribute(std::string const & attr, 
                             file_path const & filename, 
                             std::string const & value);
