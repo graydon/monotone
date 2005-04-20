@@ -62,6 +62,7 @@ AT_DATA(codir/foo, [more more
 AT_CHECK(cd codir && MONOTONE commit --message=foo, [], [ignore], [ignore])
 # we check that this didn't create a new head of branch third
 AT_CHECK(MONOTONE automate heads third, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp stdout old-third-heads)
 
 AT_CLEANUP

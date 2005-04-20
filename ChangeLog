@@ -1,3 +1,11 @@
+2005-04-20  Jon Bright  <jon@siliconcircus.com>
+	* tests/t_sticky_branch.at: Canonicalise stdout before comparison
+	* tests/t_setup_checkout_modify_new_dir.at: Ditto
+	* tests/t_netsync_largish_file.at: Check the file out rather
+	than catting it, then canonicalisation is unneeded.  
+	Canonicalisation is bad here, because the file is random
+	binary data, not text with line-ending conventions
+
 2005-04-19  Richard Levitte  <richard@levitte.org>
 
 	* testsuite.at (REVERT_TO): Make it possible to revert to a

@@ -12,7 +12,10 @@ AT_CHECK(MONOTONE setup setupdir --branch=otherbranch, [], [ignore], [ignore])
 SET_FILE(foo, [stuff stuff
 ])
 AT_CHECK(MONOTONE commit --message=foo, [], [ignore], [ignore])
-CHECK_SAME_STDOUT(BASE_REVISION, MONOTONE automate heads testbranch)
+AT_CHECK(MONOTONE automate heads testbranch, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(mv stdout headsout)
+CHECK_SAME_STDOUT(BASE_REVISION, cat headsout)
 
 # now create a revision in otherbranch...
 AT_DATA(setupdir/blah, [yum yum
@@ -25,6 +28,9 @@ AT_CHECK(MONOTONE checkout codir --branch=otherbranch, [], [ignore], [ignore])
 SET_FILE(foo, [more more
 ])
 AT_CHECK(MONOTONE commit --message=foo, [], [ignore], [ignore])
-CHECK_SAME_STDOUT(BASE_REVISION, MONOTONE automate heads testbranch)
+AT_CHECK(MONOTONE automate heads testbranch, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(mv stdout headsout)
+CHECK_SAME_STDOUT(BASE_REVISION, cat headsout)
 
 AT_CLEANUP
