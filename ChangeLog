@@ -1,5 +1,11 @@
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_log_depth_single.at: 
+	* tests/t_add_stomp_file.at: 
+	* tests/t_log_depth.at: Shorten blurbs.
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	* std_hooks.lua (ignore_file): Ignore compiled python files.
 
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
