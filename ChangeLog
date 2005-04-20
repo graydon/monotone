@@ -1,3 +1,7 @@
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (ignore_file): Ignore compiled python files.
+
 2005-04-20  Jon Bright  <jon@siliconcircus.com>
 	* tests/t_sticky_branch.at: Canonicalise stdout before comparison
 	* tests/t_setup_checkout_modify_new_dir.at: Ditto
