@@ -378,6 +378,15 @@ write_inodeprints(data const & dat)
   write_data(ip_path, dat);
 }
 
+void
+enable_inodeprints()
+{
+  local_path ip_path;
+  get_inodeprints_path(ip_path);
+  data dat;
+  write_data(ip_path, dat);
+}
+
 // attribute map file
 
 string const attr_file_name(".mt-attrs");

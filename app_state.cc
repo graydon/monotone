@@ -139,6 +139,9 @@ app_state::create_working_copy(std::string const & dir)
 
   blank_user_log();
 
+  if (lua.hook_use_inodeprints())
+    enable_inodeprints();
+
   load_rcfiles();
 }
 

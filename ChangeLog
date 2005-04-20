@@ -1,5 +1,23 @@
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (mdelta, mdata, fdelta, fdata, rdata): Check for
+	existence of command line arguments.
+
+	* lua.{cc,hh} (hook_use_inodeprints): New hook.
+	* std_hooks.lua (use_inodeprints): Default definition.
+	* monotone.texi (Inodeprints): New section.
+	(Reserved Files): Document MT/inodeprints.
+	(Hook Reference): Document use_inodeprints.
+	* work.{cc,hh} (enable_inodeprints): New function.
+	* app_state.cc (create_working_copy): Maybe call
+	enable_inodeprints.
+	
+	* tests/t_inodeprints_hook.at: New test.
+	* tests/t_bad_packets.at: New test.
+	* testsuite.at: Add them.
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	* AUTHORS: Actually add Joel Reed (oops).
 
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>

@@ -433,3 +433,7 @@ function expand_selector(str)
 
    return nil
 end
+
+function use_inodeprints()
+   return false
+end
