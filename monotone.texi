@@ -4293,6 +4293,47 @@ If the given branch contains no members or does not exist, then no lines are pri
 @end table
 
 
+@item monotone automate ancestors @var{rev1} [@var{rev2} [...]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints the ancestors of one or more revisions.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one ancestor of the given
+revisions.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+The output does not include @var{rev1}, @var{rev2}, etc., except if
+@var{rev2} is itself an ancestor of @var{rev1}, then @var{rev2} will be
+included in the output.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
 @item monotone automate descendents @var{rev1} [@var{rev2} [...]]
 
 @table @strong
