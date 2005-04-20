@@ -29,11 +29,13 @@ addition_builder
   app_state & app;
   change_set::path_rearrangement & pr;
   path_set ps;
+  attr_map & am_attrs;
 public:
   addition_builder(app_state & a, 
                    change_set::path_rearrangement & pr,
-                   path_set & p)
-    : app(a), pr(pr), ps(p)
+                   path_set & p,
+                   attr_map & am)
+    : app(a), pr(pr), ps(p), am_attrs(am)
   {}
   virtual void visit_file(file_path const & path);
 };
@@ -56,6 +58,11 @@ addition_builder::visit_file(file_path const & path)
   P(F("adding %s to working copy add set\n") % path);
   ps.insert(path);
   pr.added_files.insert(path);
+
+  map<string, string> attrs;
+  app.lua.hook_init_attributes(path, attrs);
+  if (attrs.size() > 0)
+    am_attrs[path] = attrs;
 }
 
 void
@@ -68,10 +75,11 @@ build_additions(vector<file_path> const & paths,
   change_set cs_new;
 
   path_set ps;
+  attr_map am_attrs;
   extract_path_set(man, ps);
   apply_path_rearrangement(pr, ps);    
 
-  addition_builder build(app, pr_new, ps);
+  addition_builder build(app, pr_new, ps, am_attrs);
 
   for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
@@ -80,6 +88,48 @@ build_additions(vector<file_path> const & paths,
         F("path %s does not exist\n") % *i);
 
       walk_tree(*i, build);
+    }
+
+  if (am_attrs.size () > 0)
+    {
+      // add .mt-attrs to manifest if not already registered
+      file_path attr_path;
+      get_attr_path(attr_path);
+
+      if ((man.find(attr_path) == man.end ()) && 
+          (pr_new.added_files.find(attr_path) == pr_new.added_files.end()))
+        {
+          P(F("registering %s file in working copy\n") % attr_path);
+          pr.added_files.insert(attr_path);
+        }
+
+      // read attribute map if available
+      data attr_data;
+      attr_map attrs;
+
+      if (file_exists(attr_path))
+        {
+          read_data(attr_path, attr_data);
+          read_attr_map(attr_data, attrs);
+        }
+
+      // add new attribute entries
+      for (attr_map::const_iterator i = am_attrs.begin();
+           i != am_attrs.end(); ++i)
+        {
+          map<string, string> m = i->second;
+          
+          for (map<string, string>::const_iterator j = m.begin();
+               j != m.end(); ++j)
+            {
+              P(F("adding attribute '%s' to file %s to .mt_attrs\n") % j->first % i->first);
+              attrs[i->first][j->first] = j->second;
+            }
+        }
+
+      // write out updated map
+      write_attr_map(attr_data, attrs);
+      write_data(attr_path, attr_data);
     }
 
   normalize_path_rearrangement(pr_new);
@@ -325,6 +375,15 @@ write_inodeprints(data const & dat)
   I(in_inodeprints_mode());
   local_path ip_path;
   get_inodeprints_path(ip_path);
+  write_data(ip_path, dat);
+}
+
+void
+enable_inodeprints()
+{
+  local_path ip_path;
+  get_inodeprints_path(ip_path);
+  data dat;
   write_data(ip_path, dat);
 }
 

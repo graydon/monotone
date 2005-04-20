@@ -15,6 +15,7 @@
 
 void read_password(std::string const & prompt, char * buf, size_t bufsz);
 void get_system_flavour(std::string & ident);
+bool is_executable(const char *path);
 
 // For LUA
 int existsonpath(const char *exe);

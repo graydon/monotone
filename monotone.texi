@@ -1199,13 +1199,14 @@ This output shows one private and one public key stored under the name
 been successfully generated and stored. On subsequent commands, Jim
 will need to re-enter our passphrase in order to perform
 security-sensitive tasks. To simplify matters, Jim decides to store
-his security passphrase in his @code{.monotonerc} file, by writing a
+his security passphrase in his @code{monotonerc} file, by writing a
 @emph{hook function} which returns the passphrase, so that he does not
 need to repeatedly be prompted for it:
 
 @smallexample
 @group
-$ cat >>~/.monotonerc
+$ mkdir ~/.monotone
+$ cat >>~/.monotone/monotonerc
 function get_passphrase(keypair_id)
   return "jimsekret"
 end
@@ -1626,11 +1627,11 @@ monotone: read 1 packet
 
 Now Jim's monotone is able to identify Beth and Abe, and he is ready to
 give them permission to access his database.  He does this by adding a
-small amount of extra information to his @file{.monotonerc} file:
+small amount of extra information to his @file{monotonerc} file:
 
 @smallexample
 @group
-$ cat >>~/.monotonerc
+$ cat >>~/.monotone/monotonerc
 function get_netsync_read_permitted (collection, identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
@@ -2219,6 +2220,7 @@ familiarize yourself with its operation.
 * Selectors::              Selecting revisions by certificate.
 * Restrictions::           Limit working copy changes to specified files.
 * Scripting::              Running monotone from other programs.
+* Inodeprints::            Trading off safety for speed in your working copy.
 * Quality Assurance::      Integrating testing and review with development.
 * Vars::                   Simple per-database configuration information.
 * Reserved Files::         File names with special meanings.
@@ -2444,6 +2446,43 @@ parseable form.
 For details of this interface, see @ref{Automation}.
 
 @page
+@node    Inodeprints
+@section Inodeprints
+
+Fairly often, in order to accomplish its job, monotone has to look at
+your working copy and figure out what has been changed in it since your
+last commit.  Commands that do this include @command{status},
+@command{diff}, @command{update}, @command{commit}, and others.  There
+are two different techniques it can use to do this.  The default, which
+is sufficient for most projects, is to simply read every file in the
+working copy, compute their @sc{sha1} hash, and compare them to the
+hashes monotone has stored.  This is very safe and reliable, and turns
+out to be fast enough for most projects.  However, on very large
+projects, ones whose source trees are many megabytes in size, it can
+become unacceptably slow.
+
+The other technique, known as @emph{inodeprints}, is designed for this
+situation.  When running in inodeprints mode, monotone does not read the
+whole working copy; rather, it keeps a cache of interesting information
+about each file (its size, its last modification time, and so on), and
+skips reading any file for which these values have not changed.  This is
+inherently somewhat less safe, and, as mentioned above, unnecessary for
+most projects, so it is disabled by default.
+
+If you do determine that it is necessary to use inodeprints with your
+project, it is simple to enable them.  A working copy is in inodeprints
+mode if a file @file{MT/inodeprints} exist.  You can simply create an
+empty file with this name, and the next time you commit or update,
+monotone will automatically populate it with cache information.  You can
+at any point delete this file or truncate it; monotone uses it only as a
+cache and will operate correctly if it is removed.
+
+Normally, instead of enabling this up on a per-working-copy basis, you
+will want to simply define the @code{use_inodeprints} hook to return
+@code{true}; this will automatically enable inodeprints mode in any new
+working copies you create.  See @ref{Hook Reference} for details.
+
+@page
 @node    Quality Assurance
 @section Quality Assurance
 
@@ -2627,6 +2666,9 @@ Contains log messages to append to the ``changelog'' cert upon
 commit. The user may add content to this file while they work.  Upon a
 successful commit monotone will empty the file making it ready for the
 next edit/commit cycle.
+@item MT/inodeprints
+If this file exists, monotone considers the directory to be in
+@ref{Inodeprints} mode, and uses this file to cache the inodeprints.
 @item MT/debug
 If monotone detects a bug in itself or crashes, then before exiting it
 dumps a log of its recent activity to this file, to aid in debugging.
@@ -4216,12 +4258,12 @@ None.
 @end table
 
 
-@item monotone automate heads @var{branch}
+@item monotone automate heads [@var{branch}]
 
 @table @strong
 @item Arguments:
 
-One argument @var{branch}, a branch name.
+One branch name,  @var{branch}. If none is given, the current default branch is used.
 
 @item Added in:
 
@@ -4246,7 +4288,7 @@ newline.  The lines are printed in alphabetically sorted order.
 
 @item Error conditions:
 
-If the given branch contains no members, then no lines are printed.
+If the given branch contains no members or does not exist, then no lines are printed.
 
 @end table
 
@@ -4498,10 +4540,10 @@ function definition which suits your preferences, monotone will
 execute it. This way you can modify how monotone behaves.
 
 You can put new definitions for any of these hook functions in a file
-@file{$HOME/.monotonerc}, or in your working copy in
+@file{$HOME/.monotone/monotonerc}, or in your working copy in
 @file{MT/monotonerc}, both of which will be read every time monotone
 runs. Definitions in @file{MT/monotonerc} shadow (override)
-definitions made in your @file{$HOME/.monotonerc}. You can also tell
+definitions made in your @file{$HOME/.monotone/monotonerc}. You can also tell
 monotone to interpret extra hook functions from any other @var{file}
 using the @option{--rcfile=@var{file}} option; hooks defined in files
 specified on the command-line will shadow hooks from the the automatic
@@ -4655,6 +4697,22 @@ The default definition of this hook is:
 @group
 function non_blocking_rng_ok()
         return true
+end
+@end group
+@end smallexample
+
+
+@item use_inodeprints ()
+
+Returns @code{true} if you want monotone to automatically enable
+@ref{Inodeprints} support in all working copies.  Only affects working
+copies created after you modify the hook.
+
+The default definition of this hook is:
+@smallexample
+@group
+function use_inodeprints()
+        return false
 end
 @end group
 @end smallexample
@@ -5088,7 +5146,32 @@ attribute. Its definition is:
 attr_functions["execute"] = 
   function(filename, value) 
         if (value == "true") then
-                os.execute(string.format("chmod +x %s", filename))
+         make_executable(filename)
+      end
+   end
+@end group
+@end smallexample
+
+@item attr_init_functions [@var{attribute}] (@var{filename})
+
+This is not a hook function, but a @emph{table} of hook
+functions. Each entry in the table @code{attr_init_functions}, at table
+entry @var{attribute}, is a function taking a file name
+@var{filename}. Each function defines the attributes that should be
+stored in @file{.mt-attrs} for the given @var{filename}. This table of
+hook functions is called once for each file during an @dfn{add}.
+
+By default, there is only one entry in this table, for the @code{execute}
+attribute. Its definition is:
+
+@smallexample
+@group
+attr_init_functions["execute"] = 
+   function(filename)
+      if (is_executable(filename)) then 
+        return "true" 
+      else 
+        return nil 
         end
   end
 @end group
@@ -6003,7 +6086,8 @@ Do not evaluate "standard" Lua hooks compiled into @b{monotone}.
 @comment TROFF INPUT: .TP
 
 @item @b{--norc}
-Do not load Lua hooks from user's @b{~/.monotonerc} file.
+Do not load Lua hooks from user's @b{~/.monotone/monotonerc} or the
+working copy's @b{MT/monotonerc} file.
 @comment TROFF INPUT: .TP
 
 @item @b{--rcfile=}@i{<file>}
@@ -6102,7 +6186,7 @@ Used in preference to @b{EDITOR}, if set.
 
 @c ---------------------------------------------------------------------
 @table @code
-@item @b{$HOME/.monotonerc}
+@item @b{$HOME/.monotone/monotonerc}
 A Lua script, used as a customization file.
 @comment TROFF INPUT: .SH NOTES
 
@@ -6118,7 +6202,7 @@ A Lua script, used as a customization file.
 @comment TROFF INPUT: .IP \(bu
 
 Command line options override environment variables and
-settings in Lua scripts (such as @b{.monotonerc})
+settings in Lua scripts (such as @b{monotonerc})
 
 @comment TROFF INPUT: .SH "SEE ALSO"
 

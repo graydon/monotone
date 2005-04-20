@@ -89,6 +89,14 @@ extern "C"
   }
 
   static int
+  monotone_is_executable_for_lua(lua_State *L)
+  {
+    const char *path = lua_tostring(L, -1);
+    lua_pushboolean(L, is_executable(path));
+    return 1;
+  }
+
+  static int
   monotone_make_executable_for_lua(lua_State *L)
   {
     const char *path = lua_tostring(L, -1);
@@ -168,6 +176,7 @@ lua_hooks::lua_hooks()
   // add monotone-specific functions
   lua_register(st, "mkstemp", monotone_mkstemp_for_lua);
   lua_register(st, "existsonpath", monotone_existsonpath_for_lua);
+  lua_register(st, "is_executable", monotone_is_executable_for_lua);
   lua_register(st, "make_executable", monotone_make_executable_for_lua);
   lua_register(st, "spawn", monotone_spawn_for_lua);
   lua_register(st, "wait", monotone_wait_for_lua);
@@ -412,6 +421,14 @@ Lua
     return *this; 
   }
 
+  Lua & push_nil() 
+  { 
+    if (failed) return *this;
+    I(lua_checkstack (st, 1));
+    lua_pushnil(st); 
+    return *this; 
+  }
+
   Lua & push_table() 
   { 
     if (failed) return *this;
@@ -506,7 +523,7 @@ lua_hooks::add_std_hooks()
 void 
 lua_hooks::default_rcfilename(fs::path & file)
 {
-  file = mkpath(get_homedir()) / mkpath(".monotonerc");
+  file = mkpath(get_homedir()) / mkpath(".monotone/monotonerc");
 }
 
 void 
@@ -866,6 +883,20 @@ lua_hooks::hook_resolve_dir_conflict(file_path const & anc,
 }
 
 
+bool
+lua_hooks::hook_use_inodeprints()
+{
+  bool use = false, exec_ok = false;
+
+  exec_ok = Lua(st)
+    .push_str("use_inodeprints")
+    .get_fn()
+    .call(0, 1)
+    .extract_bool(use)
+    .ok();
+  return use && exec_ok;
+}
+
 bool 
 lua_hooks::hook_get_netsync_read_permitted(std::string const & collection, 
                                            rsa_keypair_id const & identity)
@@ -918,6 +949,38 @@ lua_hooks::hook_get_netsync_write_permitted(std::string const & collection,
   return exec_ok && permitted;  
 }
 
+bool 
+lua_hooks::hook_init_attributes(file_path const & filename,
+                                std::map<std::string, std::string> & attrs)
+{
+  Lua ll(st);
+
+  ll
+    .push_str("attr_init_functions")
+    .get_tab()
+    .push_nil();
+
+  while (ll.next())
+    {
+      ll.push_str(filename());
+      ll.call(1, 1);
+
+      if (lua_isstring(st, -1))
+        {
+          string key, value;
+
+          ll.extract_str(value);
+          ll.pop();
+          ll.extract_str(key);
+
+          attrs[key] = value;
+        }
+      else
+        ll.pop();
+    }
+
+  return ll.pop().ok();
+}
 
 bool 
 lua_hooks::hook_apply_attribute(string const & attr, 

@@ -28,6 +28,19 @@ end
 -- manifest). each (f,k,v) triple in an atribute file turns into a
 -- call to attr_functions[k](f,v) in lua.
 
+if (attr_init_functions == nil) then
+   attr_init_functions = {}
+end
+
+attr_init_functions["execute"] = 
+   function(filename)
+      if (is_executable(filename)) then 
+        return "true" 
+      else 
+        return nil 
+      end 
+   end
+
 if (attr_functions == nil) then
    attr_functions = {}
 end
@@ -419,4 +432,8 @@ function expand_selector(str)
    end
 
    return nil
+end
+
+function use_inodeprints()
+   return false
 end

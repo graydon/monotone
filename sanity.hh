@@ -16,6 +16,12 @@
 #include <config.h> // Required for ENABLE_NLS
 #include "gettext.h"
 
+#ifdef __GNUC__
+#define NORETURN __attribute__((noreturn))
+#else
+#define NORETURN
+#endif
+
 // our assertion / sanity / error logging system *was* based on GNU Nana,
 // but we're only using a small section of it, and have anyways rewritten
 // that to use typesafe boost-formatter stuff.
@@ -50,16 +56,16 @@ struct sanity {
   void warning(boost::format const & fmt, 
                char const * file, int line);
   void naughty_failure(std::string const & expr, boost::format const & explain, 
-                       std::string const & file, int line);
+                       std::string const & file, int line) NORETURN;
   void error_failure(std::string const & expr, boost::format const & explain, 
-                     std::string const & file, int line);
+                     std::string const & file, int line) NORETURN;
   void invariant_failure(std::string const & expr, 
-                         std::string const & file, int line);
+                         std::string const & file, int line) NORETURN;
   void index_failure(std::string const & vec_expr, 
                      std::string const & idx_expr, 
                      unsigned long sz, 
                      unsigned long idx,
-                     std::string const & file, int line);
+                     std::string const & file, int line) NORETURN;
 };
 
 typedef std::runtime_error oops;

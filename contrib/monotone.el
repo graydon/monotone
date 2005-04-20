@@ -8,11 +8,24 @@
 ;;
 
 ;;; Commentary:
-;; To use monotone from within Emacs, decide what options you would
-;; like and set the vars before loading 'monotone.el'. For example:
-;;    (setq monotone-passwd-remember t
-;;          monotone-vc-key          [f5])
-;;    (require 'monotone)
+;;
+;; To use monotone from within Emacs, all you should need to
+;; do is require the package.  There are many options but
+;; then only one you should have to set is the prefix key for
+;; the keybindings. Something like the following should work:
+;;
+;;   (require 'monotone)
+;;   (monotone-set-vc-prefix-key [f5]) ;; or "\C-xv"
+;;   (setq monotone-passwd-remember t)
+;;
+;; Monotone prefers to work with the global working set.
+;; "monotone.el" has its defaults set to match.
+;; Commands run without a prefix work on the global working set.
+;; One C-u is the subtree (".") and C-u C-u is the current file.
+;; (There are exceptions)
+;;
+
+
 ;;
 ;; This defines `monotone-diff', `monotone-status', `monotone-add',
 ;; `monotone-drop', `monotone-revert' and `monotone-commit'.  These
@@ -47,10 +60,13 @@ If `monotone-passwd-remember' is t it will be remembered here.")
 ;; This is set to [f5] for testing.
 ;; Should be nil for general release, as we dont want to
 ;; remove keys without the users consent.
-(defvar monotone-vc-key  nil ;; [f5] "\C-xv" nil
+(defvar monotone-vc-prefix-key  nil ;; [f5] "\C-xv" nil
   "The prefix key to use for the monotone vc key map.
 You may wish to change this before loading monotone.el.
 Habitual monotone users can set it to '\C-xv'.")
+
+(defvar monotone-menu-name "Monotone"
+  "The name of the monotone menu.")
 
 
 ;;; System Vars:
@@ -68,6 +84,11 @@ Habitual monotone users can set it to '\C-xv'.")
   "The args for the commit.")
 (make-variable-buffer-local 'monotone-commit-args)
 
+(defvar monotone-cmd-last-args nil
+  "The args for the last command.")
+;;(make-variable-buffer-local 'monotone-cmd-args)
+
+
 (defvar monotone-commit-dir nil)
 
 (defvar monotone-wait-time 5
@@ -77,6 +98,9 @@ Habitual monotone users can set it to '\C-xv'.")
   "The directory which contains the MT directory.
 This is used to pass state -- best be left nil.")
 
+(defvar monotone-log-depth 100
+  "The depth to limit output of 'monotone log' entries.
+Zero is unlimited.")
 
 ;;; monotone-commit-mode is used when editing the commit message.
 (defvar monotone-commit-mode nil)
@@ -125,7 +149,7 @@ Type C-c C-c to commit, kill the buffer to abort.
   "A history of collections.")
 
 ;;; Key maps
-(defvar monotone-vc-map
+(defvar monotone-vc-prefix-map
   (let ((map (make-sparse-keymap)))
     (define-key map "="    'monotone-vc-diff)
     (define-key map "P"    'monotone-vc-push)
@@ -137,27 +161,34 @@ Type C-c C-c to commit, kill the buffer to abort.
     (define-key map "q"    'monotone-vc-commit) ;; i am a lazy typist
     (define-key map "s"    'monotone-vc-status)
     map))
-(fset 'monotone-vc-map monotone-vc-map)
+(fset 'monotone-vc-prefix-map monotone-vc-prefix-map)
 
 ;;; Code:
 
-;; install the keymaps
-(when monotone-vc-key
-  (define-key global-map monotone-vc-key 'monotone-vc-map))
+(defun monotone-set-vc-prefix-key (key)
+  "Set KEY to be the prefix for monotone in the global keymap."
+  (setq monotone-vc-prefix-key key)
+  (define-key global-map monotone-vc-prefix-key 'monotone-vc-prefix-map))
 
-(defun monotone-toggle-vc-map (&optional arg)
+;; install it if set.
+(when monotone-vc-prefix-key
+  (monotone-set-vc-prefix-key monotone-vc-prefix-key))
+
+
+(defun monotone-toggle-vc-prefix-map (&optional arg)
   "Toggle between the default and monotone vc-maps, ARG set map.
 With arg 0 use the default variable `vc-prefix-map'.
-With t use monotone-vc-prefix-map."
+With t use monotone-vc-prefix-map.
+This permits quick switches between the classic vc and monotone keymaps."
   (interactive "P")
   (message "Arg: %s" arg)
   (define-key ctl-x-map "v"
     (let ((current (lookup-key ctl-x-map "v")))
       (if (and (not (eq arg 0))
-               (or arg (not (eq current monotone-vc-map))))
+               (or arg (not (eq current monotone-vc-prefix-map))))
         monotone-vc-prefix-map
         vc-prefix-map))))
-;; (monotone-toggle-vc-map t)
+;; (monotone-toggle-vc-prefix-map t)
 
 ;; Utility functions
 (defun monotone-file-parent-directory (file)
@@ -202,14 +233,43 @@ Optional argument PATH ."
 Nothing for now."
   (interactive)
   (fundamental-mode) ;;(text-mode)
-  (run-hooks monotone-output-mode-hooks))
+  (run-hooks monotone-output-mode-hook))
 
 ;;(define-derived-mode monotone-shell-mode comint-mode "Monotone")
 
+(defun monotone-arg-decode (arg)
+  "Decode the arg into the scope monotone should work on."
+  (interactive "p")
+  (message "%s" arg)
+  (cond
+   ((= arg  1) 'global)
+   ((= arg  4) 'tree)
+   ((= arg 16) 'file)
+   (t (error "Prefix should be in (1,4,16)"))))
+;; (monotone-arg-decode 4)
+
+(defun monotone-arg-scope (scope filename)
+  (when (numberp scope)
+    (setq scope (monotone-arg-decode scope)))
+  (when (bufferp filename)
+    (setq filename (buffer-file-name filename)))
+  (cond
+   ((eq scope 'global) nil)
+   ((eq scope 'tree) ".")
+   ((eq scope 'file) (monotone-extract-MT-path filename))
+   (t (error "Bad scope: %s" scope))))
+;; (monotone-arg-scope 'file (current-buffer))
+
 ;; Run a monotone command
-(defun monotone-cmd (&rest args)
+(defun monotone-cmd (args)
   "Execute the monotone command with ARGS in the monotone top directory."
   (monotone-msg "%s" args)
+  ;; coerce args to what we expect
+  (when (stringp args)
+    (setq args (split-string args nil)))
+  (when (not (listp args))
+    (setq args (list args)))
+  ;;
   (let ((mt-top (or monotone-MT-top (monotone-find-MT-top)))
         (mt-buf (get-buffer-create monotone-buffer))
         ;;(mt-pgm "ls") ;; easy debugging
@@ -224,7 +284,7 @@ Nothing for now."
     (setq monotone-MT-top mt-top)
     ;; show the window
     ;;(if (not (equal (current-buffer) mt-buf))
-    (switch-to-buffer-other-window mt-buf);;)
+    (switch-to-buffer-other-window mt-buf) ;;)
     (sit-for 0)
     (set-buffer mt-buf)
     ;; still going?
@@ -235,78 +295,120 @@ Nothing for now."
     (erase-buffer)
     (buffer-disable-undo (current-buffer))
     (setq default-directory mt-top)
+    ;; remeber the args
+    (setq monotone-cmd-last-args args)
     ;; run
     (let ((p (apply #'start-process monotone-buffer mt-buf mt-pgm args)))
       (while (eq (process-status p) 'run)
         ;; FIXME: rather than printing messages, abort after too long a wait.
         (when (not (accept-process-output p monotone-wait-time))
-          (message "waiting for monotone..."))
-        (sit-for 0)
-        (goto-char (point-max))
-        ;; look for passwd prompt
-        (beginning-of-line)
-        (when (looking-at "^enter passphrase for key ID \\[\\(.*\\)\\]")
-          (let ((pass (monotone-read-passwd (match-string 1))))
-            ;;(end-of-line)
-            ;;(insert "********\n") ;; filler text
-            (process-send-string p pass)
-            (process-send-string p "\n"))))
-      (setq mt-status (process-exit-status p)))
-    ;; make the buffer nice.
-    (goto-char (point-min))
-    (view-mode)
-    ;; did we part on good terms?
-    (if (not (zerop mt-status))
-      (error (format "%s: exited with status %s" mt-pgm mt-status)))
-    mt-status))
+          ;;(message "waiting for monotone..."))
+          ;; update the screen
+          (goto-char (point-max))
+          (sit-for 0)
+          ;; look for passwd prompt
+          (beginning-of-line)
+          (when (looking-at "^enter passphrase for key ID \\[\\(.*\\)\\]")
+            (let ((pass (monotone-passwd-prompt (match-string 1))))
+              ;;(end-of-line)
+              ;;(insert "********\n") ;; filler text
+              (process-send-string p pass)
+              (process-send-string p "\n"))))
+        (setq mt-status (process-exit-status p)))
+      ;; make the buffer nice.
+      (goto-char (point-min))
+      (view-mode)
+      ;; FIXME: (set-buffer-modified-p nil)
+      ;; did we part on good terms?
+      (when (not (zerop mt-status))
+        (message "%s: exited with status %s" mt-pgm mt-status)
+        (beep)
+        (sit-for 3))
+      mt-status)))
 
-(defun monotone-cmd-hide (&rest args)
+;; (monotone-cmd '("list" "branches"))
+;; (monotone-cmd '("list" "keys"))
+;; (monotone-cmd "pubkey harley@panix.com")
+;; (monotone-cmd '("status error"))
+
+(defun monotone-cmd-hide (args)
   "Run monotone with ARGS without showing the output."
   (save-window-excursion
-    (apply #'monotone-cmd args)))
+    (monotone-cmd args)))
 
-(defun monotone-is-running ()
+;; run
+(defun monotone (string)
+  "Prompt for a STRING and run monotone with the split string."
+  (interactive "smonotone ")
+  (monotone-cmd string))
+
+(defun monotone-rerun ()
+  "Rerun the last monotone command."
+  (interactive)
+  (let ((args monotone-cmd-last-args))
+    (when (or (null args) (not (listp args)))
+      (error "no last args to rerun"))
+    (monotone-cmd args)))
+;; (monotone-cmd "list known")
+
+;; check for common errors and args.
+(defun monotone-cmd-buf (global buf cmds)
+  "Run a simple monotone command for this buffer.  (passwordless)
+GLOBAL runs the command without the buffer.
+BUF is the buffer if not global.
+CMD is the command to execute."
+  (let ((bfn (buffer-file-name)))
+    (when (not bfn)
+      (error "No file-name for buffer"))
+    (let* ((monotone-MT-top (monotone-find-MT-top bfn))
+           (bmn (monotone-extract-MT-path bfn)))
+      (if global
+        (monotone-cmd cmds)
+        (monotone-cmd (append cmds (list bmn)))) )))
+
+(defun monotone-cmd-is-running ()
   "Return  if monotone is running."
   (save-window-excursion
     (let ((buf (get-buffer-create monotone-buffer)))
       (get-buffer-process buf))))
-;; (monotone-is-running)
+;; (monotone-cmd-is-running)
 
 
-;; (monotone-cmd "list" "branches")
-;; (monotone-cmd "list" "keys")
-;; (monotone-cmd  "pubkey" "harley@panix.com")
-;; (let ((monotone-cmd-hide t)) (monotone-cmd "status"))
+;;;;;;;;;;
+(defun monotone-passwd-remember (keypairid passwd)
+  "Remember the password."
+  (let ((rec (assoc keypairid monotone-passwd-alist)))
+    (if rec
+      (setcdr rec passwd)
+      (progn
+        (setq rec (cons keypairid passwd))
+        (setq monotone-passwd-alist (cons rec monotone-passwd-alist))))
+    rec))
+;; (monotone-passwd-remember "foo" "bar")
+;; (setq monotone-passwd-alist nil)
 
-(defun monotone-read-passwd (keypairid)
+(defun monotone-passwd-find (keypairid)
+  (cdr (assoc keypairid monotone-passwd-alist)))
+;; (monotone-passwd-find "foo")
+
+(defun monotone-passwd-prompt (keypairid)
   "Read the password for KEYPAIRID."
-(let ((rec (assoc keypairid monotone-passwd-alist))
-        prompt passwd)
+  (let ((passwd (monotone-passwd-find keypairid))
+        prompt)
     (setq prompt (format "Password for '%s'%s: " keypairid
-                         (if rec " [return for default]" "")))
-    (setq passwd (read-passwd prompt nil (cdr rec)))
+                         (if passwd " [return for default]" "")))
+    (setq passwd (read-passwd prompt nil passwd))
     (when monotone-passwd-remember
-      (if rec
-        (setcdr rec passwd)
-        (setq monotone-passwd-alist
-              (cons (cons keypairid passwd) monotone-passwd-alist))))
+      (monotone-passwd-remember keypairid passwd))
     passwd))
-;; (monotone-read-passwd "bar1")
+;; (monotone-passwd-prompt "foo@bar.com")
 ;; (setq monotone-passwd-remember t)
-;; monotone-passwd-alist
-
-;; a simple catch all
-(defun monotone-do (string)
-  "Prompt for argument STRING to run monotone with.  Display output.
-The monotone command is expected to run without input."
-  (interactive "sMonotone: ")
-  (monotone-cmd string))
 
 ;;
 (defun monotone-list-branches ()
   "List the monotone branches known."
   (interactive)
-  (monotone-cmd "list" "branches"))
+  (monotone-cmd '("list" "branches")))
 
 (defun monotone-pull (&optional server collection)
   "Pull data from the optinal SERVER and COLLECTION."
@@ -321,7 +423,7 @@ The monotone command is expected to run without input."
       (when (and (stringp col) (not (string= col "")))
         (setq cmd (append cmd (list col)))))
     ;;
-    (apply 'monotone-cmd cmd)))
+    (monotone-cmd cmd)))
 ;; (monotone-pull)
 
 (defun monotone-vc-pull ()
@@ -343,7 +445,7 @@ With an arg of 0, clear default server and collection."
   "FIXME: This is a lame-ass push without args.
 I want to do the first push of monotone.el from within emacs."
   (interactive)
-  (monotone-cmd "--ticker=dot" "push"))
+  (monotone-cmd '("--ticker=dot" "push")))
 
 ;;; Start if the commit process...
 ;; FIXME: the default should be a global commit.
@@ -351,7 +453,7 @@ I want to do the first push of monotone.el from within emacs."
   "Commit the current buffer.  With ARGS do a global commit."
   (interactive "P")
   ;; dont run two processes
-  (when (monotone-is-running)
+  (when (monotone-cmd-is-running)
     (switch-to-buffer (get-buffer-create monotone-buffer))
     (error "You have a monotone process running."))
   ;; flush buffers
@@ -375,7 +477,7 @@ I want to do the first push of monotone.el from within emacs."
       (let ((mt-log-path (concat monotone-MT-top "MT/log")))
         (when (file-readable-p mt-log-path)
           (insert-file mt-log-path)))
-      ;; blank line for message.
+      ;; blank line for user to type
       (beginning-of-buffer)
       (insert "\n")
       (beginning-of-buffer)
@@ -407,12 +509,19 @@ I want to do the first push of monotone.el from within emacs."
     (setq monotone-commit-edit-status 'started
           monotone-commit-args args)))
 
-(defun monotone-commit-mode ()
-  "Mode for editing a monotone commit message."
-  ;; turn on the minor mode for keybindings and run hooks.
+(defun monotone-commit-mode (&optional arg)
+  "Mode for editing a monotone commit message.  ARG turns on"
+  (interactive "p")
   (fundamental-mode) ;; (text-mode)
-  (setq monotone-commit-mode t)
-  (run-hooks monotone-commit-mode-hook))
+  (run-hooks monotone-commit-mode-hook)
+  ;; must be last to avoid being cleared.
+  (setq monotone-commit-mode t))
+;; (if (null arg)
+;; (not monotone-commit-mode)
+;; (> (prefix-numeric-value arg) 0)))
+;; (when monotone-commit-mode
+;; turn on the minor mode for keybindings and run hooks.
+
 
 (defun monotone-commit-complete ()
   "Complete the message and commit the work."
@@ -427,54 +536,49 @@ I want to do the first push of monotone.el from within emacs."
     ;; FIXME: global subtree file list...
     (when monotone-commit-args
       (setq args (append args (list "."))))
-    (apply #'monotone-cmd args)
+    (monotone-cmd args)
     ;; mark it done
     (set-buffer buf)
     (setq monotone-commit-edit-status 'done)))
 
-
 (defun monotone-remove-MT-lines ()
   "Remove lines starting with 'MT:' from the buffer."
-  (interactive)
+  ;; doesnt need to be (interactive)
   (beginning-of-buffer)
   (while (search-forward-regexp "^MT:.*$" (point-max) t)
     (beginning-of-line)
     (kill-line 1)))
 
-;; check for common errors and args.
-(defun monotone-cmd-buf (global buf cmd)
-  "Run a simple monotone command for this buffer.  (passwordless)
-GLOBAL runs the command without the buffer.
-BUF is the buffer if not global.
-CMD is the command to execute."
-  (let ((bfn (buffer-file-name)))
-    (when (not bfn)
-      (error "No file-name for buffer"))
-    (let* ((monotone-MT-top (monotone-find-MT-top bfn))
-           (bmn (monotone-extract-MT-path bfn)))
-      (if global
-        (monotone-cmd cmd)
-        (monotone-cmd cmd bmn)))))
 
 ;; NOTE: The command names are modeled after the vc command names.
 
+(defun monotone-log-depth (arg)
+  (interactive "NEnter max depth of log entries to report (0=all): ")
+  (setq monotone-log-depth arg))
+;; (monotone-log-depth 10)
+
 (defun monotone-vc-print-log (&optional arg)
   "Print the log for this buffer.  With prefix ARG the global log."
-  (interactive "P")
-  (monotone-cmd-buf arg (current-buffer) "log"))
-
+  (interactive "p")
+  (let ((cmd (list "log")))
+    (when (and (numberp monotone-log-depth) (< 0 monotone-log-depth))
+      (setq cmd (append cmd (list (format "--depth=%d" monotone-log-depth)))))
+    (monotone-cmd-buf arg (current-buffer) cmd)
+    (rename-buffer "*monotone log*" t)))
 ;; (monotone-print-log)
 
 (defun monotone-vc-diff (&optional arg)
   "Print the diffs for this buffer.  With prefix ARG, the global diffs."
   (interactive "P")
+  (save-some-buffers)
   (let ((mt-top (monotone-find-MT-top))
-        (bfn (buffer-file-name)))
-    (monotone-cmd "diff"
-                  (if bfn
-                    (monotone-extract-MT-path bfn mt-top)
-                    "."))
-    (diff-mode)))
+        (bfn (buffer-file-name))
+        (args (list "diff")))
+    (let ((what (if bfn (monotone-extract-MT-path bfn mt-top) ".")))
+      (setq args (append args (list what)))
+      (monotone-cmd args)
+      (rename-buffer (format "*monotone diff %s*" what) t)
+      (diff-mode))))
 
 (defun monotone-vc-register ()
   "Register this file with monotone for the next commit."
@@ -497,6 +601,81 @@ CMD is the command to execute."
     (find-file-other-window (concat mt-top "MT/log"))))
 
 ;; (monotone-vc-update-change-log)
+
+(defun monotone-vc-revision ()
+  (monotone-cmd '("cat" "revision")))
+
+;;;;;;;;;;
+
+(defvar monotone-id-regexp "\\([0-9A-Fa-f]\\{40\\}\\)"
+  "A regexp matching a monotone id.")
+
+(defun monotone-id-at-point ()
+  (interactive)
+  (save-excursion
+    (skip-chars-backward "0-9A-Fa-f" (- (point) 40))
+    (if (looking-at monotone-id-regexp)
+      (match-string 1)
+      nil)))
+
+(defun monotone-id-at-point-prompt (what)
+  "Get the id at point or prompt for one."
+  (let ((id (monotone-id-at-point)))
+    (when (not id)
+      (let ((prompt (capitalize (format "%s: " what))))
+        (setq id (read-string prompt))))
+    id))
+;; (monotone-id-at-point-prompt 'file)
+
+(defun monotone-cat-id (what id)
+  (when id
+    (let ((what (format "%s" what))
+          (name (format "*monotone %s %s*" what id)))
+      (monotone-cmd (list "cat" what id))
+      ;; dont duplicate the buffers
+      (if (get-buffer name)
+        (kill-buffer name))
+      (rename-buffer name))))
+
+
+(defun monotone-cat-fileid (&optional id)
+  "Display the file with ID."
+  (interactive)
+  (monotone-cat-id 'file (or id (monotone-id-at-point-prompt 'file))))
+
+(defun monotone-cat-manifestid (&optional id)
+  "Display the manifest with ID."
+  (interactive)
+  (monotone-cat-id 'manifest (or id (monotone-id-at-point-prompt 'manifest))))
+
+(defun monotone-cat-revisionid (&optional id)
+  "Display the revision with ID."
+  (interactive)
+  (monotone-cat-id 'revision (or id (monotone-id-at-point-prompt 'revision))))
+
+
+;;;;;;;;;;
+
+(defvar monotone-menu
+  (let ((map (make-sparse-keymap "Monotone")))
+    ;;(define-key map [monotone-vc-] '(menu-item "" monotone-vc-))
+    (define-key map [monotone-vc-diff]   '(menu-item "Diff" monotone-vc-diff))
+    (define-key map [monotone-vc-log]    '(menu-item "Log" monotone-vc-log))
+    (define-key map [monotone-vc-status] '(menu-item "Status" monotone-vc-status))
+    (define-key map [monotone-separator] '("--"))
+    (define-key map [monotone-cat-fid]   '(menu-item "Cat this file     id" monotone-cat-fileid))
+    (define-key map [monotone-cat-mid]   '(menu-item "Cat this manifest id" monotone-cat-manifestid))
+    (define-key map [monotone-cat-rid]   '(menu-item "Cat this revision id" monotone-cat-revisionid))
+    (define-key map [monotone-separator] '("--"))
+    (define-key map [monotone-vc-pull]   '(menu-item "DB Pull" monotone-vc-pull))
+    (define-key map [monotone-vc-push]   '(menu-item "DB Push" monotone-vc-push))
+    (define-key map [monotone-vc-sync]   '(menu-item "DB Sync" monotone-vc-sync))
+    map))
+
+(when monotone-menu-name
+  (define-key-after
+    (lookup-key global-map [menu-bar])
+    [monotone] (cons monotone-menu-name monotone-menu)))
 
 (provide 'monotone)
 ;;; monotone.el ends here
