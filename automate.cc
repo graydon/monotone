@@ -12,7 +12,7 @@
 #include "commands.hh"
 #include "revision.hh"
 
-static std::string const interface_version = "0.1";
+static std::string const interface_version = "0.2";
 
 // Name: interface_version
 // Arguments: none
@@ -66,7 +66,7 @@ automate_heads(std::vector<utf8> args,
 // Name: ancestors
 // Arguments:
 //   1 or more: revision ids
-// Added in: 0.1
+// Added in: 0.2
 // Purpose: Prints the ancestors (exclusive) of the given revisions
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline. Revision ids are printed in alphabetically sorted order.
@@ -93,22 +93,26 @@ automate_ancestors(std::vector<utf8> args,
     {
       revision_id rid = frontier.back();
       frontier.pop_back();
-      std::set<revision_id> parents;
-      app.db.get_revision_parents(rid, ancestors);
-      for (std::set<revision_id>::const_iterator i = parents.begin();
-           i != parents.end(); ++i)
-        {
-          if (ancestors.find(*i) == ancestors.end())
-            {
-              frontier.push_back(*i);
-              ancestors.insert(*i);
-            }
-        }
+      if(!null_id(rid)) {
+	std::set<revision_id> parents;
+	app.db.get_revision_parents(rid, parents);
+	for (std::set<revision_id>::const_iterator i = parents.begin();
+	     i != parents.end(); ++i)
+	  {
+	    if (ancestors.find(*i) == ancestors.end())
+	      {
+		frontier.push_back(*i);
+		ancestors.insert(*i);
+	      }
+	  }
+      }
     }
   for (std::set<revision_id>::const_iterator i = ancestors.begin();
        i != ancestors.end(); ++i)
-    output << (*i).inner()() << std::endl;
+    if (!null_id(*i))
+      output << (*i).inner()() << std::endl;
 }
+
 
 // Name: descendents
 // Arguments:

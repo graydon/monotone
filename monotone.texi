@@ -4302,7 +4302,7 @@ One or more revision ids, @var{rev1}, @var{rev2}, etc.
 
 @item Added in:
 
-0.1
+0.2
 
 @item Purpose:
 

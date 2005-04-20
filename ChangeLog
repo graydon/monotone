@@ -1,4 +1,10 @@
 2005-04-20 Sebastian Spaeth <Sebastian@SSpaeth.de>
+	* automate.cc: fix typo, add sanity check to avoid empty r_id's
+	bein passed in. The automate version was bumped to 0.2 due to
+	popular request of a single person.
+	* t_automate_ancestors.at: adapt test; it passes now
+
+2005-04-20 Sebastian Spaeth <Sebastian@SSpaeth.de>
 	* testuite.at:
 	* t_automate_ancestors.at: new test; automate ancestors. This is still
 	_failing_ as a) it outputs empty newlines when no ancestor exists and
