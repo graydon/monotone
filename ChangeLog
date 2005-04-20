@@ -1,4 +1,10 @@
 2005-04-20 Sebastian Spaeth <Sebastian@SSpaeth.de>
+	* testuite.at:
+	* t_automate_ancestors.at: new test; automate ancestors. This is still
+	_failing_ as a) it outputs empty newlines when no ancestor exists and
+	b) does not output all ancestors if multiple ids are supplied as input
+	
+2005-04-20 Sebastian Spaeth <Sebastian@SSpaeth.de>
 
 	* commands.cc:
 	* automate.cc: new command: automate ancestors
