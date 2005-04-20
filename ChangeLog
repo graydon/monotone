@@ -1,5 +1,9 @@
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* std_hooks.lua (ignore_file): Ignore compiled python files.
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (mdelta, mdata, fdelta, fdata, rdata): Check for
 	existence of command line arguments.
 
