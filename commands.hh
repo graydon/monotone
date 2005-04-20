@@ -25,7 +25,6 @@ struct usage
 namespace commands {
   void explain_usage(std::string const & cmd, std::ostream & out);
   int process(app_state & app, std::string const & cmd, std::vector<utf8> const & args);
-  void kill_rev_locally(app_state& app, std::string const & id);
   typedef enum 
     {
       sel_author, 

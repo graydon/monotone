@@ -1023,6 +1023,25 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
     }
 }
 
+// Deletes a revision from the local database.  This can be used to 'undo' a
+// changed revision from a local database without leaving (much of) a trace.
+static void
+kill_rev_locally(app_state& app, std::string const& id)
+{
+  revision_id ident;
+  complete(app, id, ident);
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+
+  //check that the revision does not have any children
+  set<revision_id> children;
+  app.db.get_revision_children(ident, children);
+  N(!children.size(),
+    F("revision %s already has children. We cannot kill it.") % ident);
+
+  app.db.delete_existing_rev_and_certs(ident);
+}
+
 // The changes_summary structure holds a list all of files and directories
 // affected in a revision, and is useful in the 'log' command to print this
 // information easily.  It has to be constructed from all change_set objects
@@ -2461,24 +2480,6 @@ CMD(db, "database",
     }
   else
     throw usage(name);
-}
-
-/// Deletes a revision from the local database
-/// This can be used to 'undo' a changed revision from a local database without
-/// leaving a trace.
-void kill_rev_locally(app_state& app, std::string const& id){
-  revision_id ident;
-  complete(app, id, ident);
-      N(app.db.revision_exists(ident),
-        F("no revision %s found in database") % ident);
-
-  //check that the revision does not have any children
-  set<revision_id> children;
-  app.db.get_revision_children(ident, children);
-      N(!children.size(),
-        F("revision %s already has children. We cannot kill it.") % ident);
-
-  app.db.delete_existing_rev_and_certs(ident);
 }
 
 CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE", 
