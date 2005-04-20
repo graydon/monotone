@@ -1,4 +1,4 @@
-AT_SETUP([make sure update does not stomp non-monotone file])
+AT_SETUP([update does not stomp non-monotone files])
 MONOTONE_SETUP
 
 # This test is a bug report
