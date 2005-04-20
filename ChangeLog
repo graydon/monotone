@@ -1,5 +1,9 @@
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* AUTHORS: Actually add Joel Reed (oops).
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	Most of this patch from Joel Reed, with only small tweaks myself.
 	
 	* AUTHORS: Add Joel Reed.
