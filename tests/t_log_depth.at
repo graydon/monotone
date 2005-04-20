@@ -1,4 +1,4 @@
-AT_SETUP([only log a few entries instead of the whole log])
+AT_SETUP([log --depth=N])
 MONOTONE_SETUP
 
 ADD_FILE(foo, [foo

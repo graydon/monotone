@@ -20,8 +20,11 @@ AT_CHECK(cd codir && MONOTONE log --branch=otherbranch, [], [ignore], [ignore])
 AT_DATA(codir/foo, [more more
 ])
 AT_CHECK(cd codir && MONOTONE commit --message=foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE ls branches, [], [testbranch
+AT_DATA(expbranches, [testbranch
 ], [])
+AT_CHECK(MONOTONE ls branches, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp expbranches stdout)
 
 # commit saves given branch
 AT_DATA(codir/foo, [newbranch newbranch

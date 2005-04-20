@@ -6,6 +6,33 @@
 
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_log_depth_single.at: 
+	* tests/t_add_stomp_file.at: 
+	* tests/t_log_depth.at: Shorten blurbs.
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (ignore_file): Ignore compiled python files.
+
+2005-04-20  Jon Bright  <jon@siliconcircus.com>
+	* tests/t_sticky_branch.at: Really fix this test
+
+2005-04-20  Jon Bright  <jon@siliconcircus.com>
+	* tests/t_sticky_branch.at: Canonicalise stdout before comparison
+	* tests/t_setup_checkout_modify_new_dir.at: Ditto
+	* tests/t_netsync_largish_file.at: Check the file out rather
+	than catting it, so that canonicalisation is unneeded.  
+	Canonicalisation is bad here, because the file is random
+	binary data, not text with line-ending conventions
+
+2005-04-20  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone.el: define-after-key's KEY argument has to be a
+	vector with only one element.  The code I used is taken directly
+	from the Emacs Lisp Reference Manual, section "Modifying Menus".
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (mdelta, mdata, fdelta, fdata, rdata): Check for
 	existence of command line arguments.
 
