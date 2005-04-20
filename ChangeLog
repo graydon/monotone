@@ -4,6 +4,58 @@
 	vector with only one element.  The code I used is taken directly
 	from the Emacs Lisp Reference Manual, section "Modifying Menus".
 
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (mdelta, mdata, fdelta, fdata, rdata): Check for
+	existence of command line arguments.
+
+	* lua.{cc,hh} (hook_use_inodeprints): New hook.
+	* std_hooks.lua (use_inodeprints): Default definition.
+	* monotone.texi (Inodeprints): New section.
+	(Reserved Files): Document MT/inodeprints.
+	(Hook Reference): Document use_inodeprints.
+	* work.{cc,hh} (enable_inodeprints): New function.
+	* app_state.cc (create_working_copy): Maybe call
+	enable_inodeprints.
+	
+	* tests/t_inodeprints_hook.at: New test.
+	* tests/t_bad_packets.at: New test.
+	* testsuite.at: Add them.
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Actually add Joel Reed (oops).
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	Most of this patch from Joel Reed, with only small tweaks myself.
+	
+	* AUTHORS: Add Joel Reed.
+
+	* platform.hh (is_executable): New function.
+	* {unix,win32}/process.cc: Define it.
+
+	* lua.cc (monotone_is_executable_for_lua): New function.
+	(lua_hooks): Register it.
+	(Lua::push_nil): New method.
+	(lua_hooks::hook_init_attributes): New hook.
+	* lua.hh: Declare it.
+	* monotone.texi (Hook Reference): Document it.
+
+	* work.cc (addition_builder): Call new hook, collect attributes
+	for added files.
+	(build_additions): Set attributes on new files.
+
+	* tests/t_attr_init.at: New test.
+	* tests/t_add_executable.at: New test.
+	* testsuite.at: Add them.
+	
+2005-04-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.cc (read_localized_data, write_localized_data): Remove
+	logging of complete file contents.
+	* tests/t_lf_crlf.at: Remove --debugs, clean up, test more.
+
 2005-04-19 Emile Snyder <emile@alumni.reed.edu>
 	
 	* file_io.cc: Fix bugs with read/write_localized_data when using
@@ -3086,7 +3138,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Mi�łkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

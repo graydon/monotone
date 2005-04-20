@@ -342,6 +342,15 @@ Nothing for now."
   (interactive "smonotone ")
   (monotone-cmd string))
 
+(defun monotone-rerun ()
+  "Rerun the last monotone command."
+  (interactive)
+  (let ((args monotone-cmd-last-args))
+    (when (or (null args) (not (listp args)))
+      (error "no last args to rerun"))
+    (monotone-cmd args)))
+;; (monotone-cmd "list known")
+
 ;; check for common errors and args.
 (defun monotone-cmd-buf (global buf cmds)
   "Run a simple monotone command for this buffer.  (passwordless)
@@ -591,17 +600,58 @@ I want to do the first push of monotone.el from within emacs."
       (error "Unable to find MT directory"))
     (find-file-other-window (concat mt-top "MT/log"))))
 
-
-(defun monotone-rerun ()
-  "Rerun the last monotone command."
-  (interactive)
-  (let ((args monotone-cmd-last-args))
-    (when (or (null args) (not (listp args)))
-      (error "no last args to rerun"))
-    (monotone-cmd args)))
-;; (monotone-cmd "list known")
-
 ;; (monotone-vc-update-change-log)
+
+(defun monotone-vc-revision ()
+  (monotone-cmd '("cat" "revision")))
+
+;;;;;;;;;;
+
+(defvar monotone-id-regexp "\\([0-9A-Fa-f]\\{40\\}\\)"
+  "A regexp matching a monotone id.")
+
+(defun monotone-id-at-point ()
+  (interactive)
+  (save-excursion
+    (skip-chars-backward "0-9A-Fa-f" (- (point) 40))
+    (if (looking-at monotone-id-regexp)
+      (match-string 1)
+      nil)))
+
+(defun monotone-id-at-point-prompt (what)
+  "Get the id at point or prompt for one."
+  (let ((id (monotone-id-at-point)))
+    (when (not id)
+      (let ((prompt (capitalize (format "%s: " what))))
+        (setq id (read-string prompt))))
+    id))
+;; (monotone-id-at-point-prompt 'file)
+
+(defun monotone-cat-id (what id)
+  (when id
+    (let ((what (format "%s" what))
+          (name (format "*monotone %s %s*" what id)))
+      (monotone-cmd (list "cat" what id))
+      ;; dont duplicate the buffers
+      (if (get-buffer name)
+        (kill-buffer name))
+      (rename-buffer name))))
+
+
+(defun monotone-cat-fileid (&optional id)
+  "Display the file with ID."
+  (interactive)
+  (monotone-cat-id 'file (or id (monotone-id-at-point-prompt 'file))))
+
+(defun monotone-cat-manifestid (&optional id)
+  "Display the manifest with ID."
+  (interactive)
+  (monotone-cat-id 'manifest (or id (monotone-id-at-point-prompt 'manifest))))
+
+(defun monotone-cat-revisionid (&optional id)
+  "Display the revision with ID."
+  (interactive)
+  (monotone-cat-id 'revision (or id (monotone-id-at-point-prompt 'revision))))
 
 
 ;;;;;;;;;;
@@ -612,6 +662,10 @@ I want to do the first push of monotone.el from within emacs."
     (define-key map [monotone-vc-diff]   '(menu-item "Diff" monotone-vc-diff))
     (define-key map [monotone-vc-log]    '(menu-item "Log" monotone-vc-log))
     (define-key map [monotone-vc-status] '(menu-item "Status" monotone-vc-status))
+    (define-key map [monotone-separator] '("--"))
+    (define-key map [monotone-cat-fid]   '(menu-item "Cat this file     id" monotone-cat-fileid))
+    (define-key map [monotone-cat-mid]   '(menu-item "Cat this manifest id" monotone-cat-manifestid))
+    (define-key map [monotone-cat-rid]   '(menu-item "Cat this revision id" monotone-cat-revisionid))
     (define-key map [monotone-separator] '("--"))
     (define-key map [monotone-vc-pull]   '(menu-item "DB Pull" monotone-vc-pull))
     (define-key map [monotone-vc-push]   '(menu-item "DB Push" monotone-vc-push))

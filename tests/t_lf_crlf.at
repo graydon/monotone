@@ -7,34 +7,43 @@ MONOTONE_SETUP
 
 AT_CHECK(printf "foo\r\n", [], [stdout])
 AT_CHECK(mv stdout foo.crlf)
+AT_CHECK(printf "foo\n", [], [stdout])
+AT_CHECK(mv stdout foo.lf)
 
 AT_CHECK(printf "foo\r\nfoo\r\n", [], [stdout])
 AT_CHECK(mv stdout foofoo.crlf)
+AT_CHECK(printf "foo\nfoo\n", [], [stdout])
+AT_CHECK(mv stdout foofoo.lf)
 
-AT_DATA(linesep.conv.lua, [
+AT_DATA(linesep.lua, [
 function get_linesep_conv(name)
         return {"LF", "CRLF"}
 end
 ])
 
-AT_DATA(linesep.null.lua, [])
-
-AT_CHECK(cp linesep.conv.lua linesep.lua)
-
 AT_CHECK(cp foo.crlf foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --debug --rcfile=linesep.lua add foo, [], [], [stderr])
-AT_CHECK(mv stderr log.0)
-AT_CHECK(MONOTONE --debug --rcfile=linesep.lua --branch=foo commit -m foo, [], [ignore], [stderr])
-AT_CHECK(mv stderr log.1)
+AT_CHECK(MONOTONE --rcfile=linesep.lua add foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=linesep.lua --branch=foo commit -m foo, [], [ignore], [ignore])
 FOO_REV=`BASE_REVISION`
 
 AT_CHECK(cp foofoo.crlf foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --debug --rcfile=linesep.lua commit -m foofoo, [], [ignore], [stderr])
-AT_CHECK(mv stderr log.2)
+AT_CHECK(MONOTONE --rcfile=linesep.lua commit -m foofoo, [], [ignore], [ignore])
 FOO_FOO_REV=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --debug --rcfile=linesep.lua update $FOO_REV, [], [ignore], [stderr])
-AT_CHECK(mv stderr log.3)
+AT_CHECK(MONOTONE --rcfile=linesep.lua update $FOO_REV, [], [ignore], [ignore])
 AT_CHECK(cmp foo foo.crlf, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --rcfile=linesep.lua checkout $FOO_REV foo_crlf, [], [ignore], [ignore])
+AT_CHECK(cmp foo.crlf foo_crlf/foo)
+
+AT_CHECK(MONOTONE --rcfile=linesep.lua checkout $FOO_FOO_REV foo_foo_crlf, [], [ignore], [ignore])
+AT_CHECK(cmp foofoo.crlf foo_foo_crlf/foo)
+
+# no rcfile here
+AT_CHECK(MONOTONE checkout $FOO_REV foo_lf, [], [ignore], [ignore])
+AT_CHECK(cmp foo.lf foo_lf/foo)
+
+AT_CHECK(MONOTONE checkout $FOO_FOO_REV foo_foo_lf, [], [ignore], [ignore])
+AT_CHECK(cmp foofoo.lf foo_foo_lf/foo)
 
 AT_CLEANUP

@@ -463,7 +463,6 @@ read_localized_data(file_path const & path,
     tmp1 = tmp2;
     charset_convert(ext_charset, db_charset, tmp1, tmp2);
   }
-  L(F("read_localized_data: from path '%s' got data\n%s\n") % path % tmp1);
   if (do_lineconv) {
     tmp1 = tmp2;
     line_end_convert(db_linesep, tmp1, tmp2);
@@ -549,7 +548,6 @@ write_localized_data(file_path const & path,
   
   string tmp1, tmp2;
   tmp2 = dat();
-  L(F("write_localized_data: from path '%s' got data\n%s\n") % path % tmp2);
   if (do_lineconv) {
     tmp1 = tmp2;
     line_end_convert(ext_linesep, tmp1, tmp2);
