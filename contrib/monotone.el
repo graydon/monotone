@@ -281,7 +281,7 @@ Nothing for now."
     ;; prep the buffer for output
     (toggle-read-only -1)
     (erase-buffer)
-    (buffer-disable-undo (current-buffer))
+    ;;(buffer-disable-undo (current-buffer))
     (setq default-directory mt-top)
     ;; remeber the args
     (setq monotone-cmd-last-args args)
@@ -591,13 +591,18 @@ the buffer if not global."
   (setq prefix (monotone-arg-decode prefix)) ;; what is the scope?
   (setq buf (or buf (current-buffer))) ;; default
   (cond
+   ;; no args
    ((eq prefix 'global)
     (monotone-cmd cmds))
+   ;; path/.
    ((eq prefix 'tree)
-    ;; MONOTONE BUG: when using "." the command must be run in the dir
-    ;; all other commands are run in MT-top
-    ;; FIXME: cd to the correct place in the tree
-    (monotone-cmd (append cmds (list "."))))
+    (let ((path (buffer-file-name buf)))
+      (when (not path)
+        (error "This buffer is not a file"))
+      (setq 
+       path (concat (file-name-directory (monotone-extract-MT-path path)) "."))
+      (monotone-cmd (append cmds (list path)))))
+   ;; path/file
    ((eq prefix 'file)
     (let ((name (buffer-file-name buf)))
       (if name
@@ -625,12 +630,19 @@ the buffer if not global."
 (defun monotone-vc-print-log (&optional arg)
   "Print the log for this buffer.  With prefix ARG the global log."
   (interactive "p")
-  (let ((cmds (list "log")))
-    (when (and (numberp monotone-log-depth) (< 0 monotone-log-depth))
-      (setq cmds (append cmds (list (format "--depth=%d" monotone-log-depth)))))
+  ;; MONOTONE BUG: when using "log ." the command must be run in that dir.
+  ;; monotone.el runs its commands in the top dir so
+  ;; just report it for now
+  (when (eq 'tree (monotone-arg-decode arg))
+    (error "monotone subtree log is busted"))
+  ;; 
+  (let ((cmds (list "log"))
+        (depth monotone-log-depth))
+    (when (and (numberp depth) (< 0 depth))
+      (setq cmds (append cmds (list (format "--depth=%d" depth)))))
     (monotone-cmd-buf arg cmds)
     (rename-buffer "*monotone log*" t)))
-;; (monotone-print-log)
+;; (monotone-vc-print-log)
 
 (defun monotone-vc-diff (&optional arg)
   "Print the diffs for this buffer.  With prefix ARG, the global diffs."
@@ -718,57 +730,58 @@ Grab the ids you want from the buffer and then yank back when needed."
            (kill-buffer name))
       (rename-buffer name))))
 
+(defun monotone-cat-id-pd (what default)
+  "A helper function."
+  (monotone-cat-id what (or id (monotone-id-at-point-prompt what default))))
+
 (defun monotone-cat-fileid (&optional id)
   "Display the file with ID."
   (interactive)
-  (monotone-cat-id 'file (or id (monotone-id-at-point-prompt 'file monotone-last-fileid)))
+  (monotone-cat-id-pd 'file monotone-last-fileid)
   (setq monotone-last-fileid monotone-last-id))
 
 (defun monotone-cat-manifestid (&optional id)
   "Display the manifest with ID."
   (interactive)
-  (monotone-cat-id 'manifest (or id (monotone-id-at-point-prompt 'manifest monotone-last-manifestid)))
+  (monotone-cat-id-pd 'manifest monotone-last-manifestid)
   (setq monotone-last-revisionid monotone-last-id))
 
 (defun monotone-cat-revisionid (&optional id)
   "Display the revision with ID."
   (interactive)
-  (monotone-cat-id 'revision (or id (monotone-id-at-point-prompt 'revision monotone-last-revisionid)))
+  (monotone-cat-id-pd 'revision monotone-last-revisionid)
   (setq monotone-last-revisionid monotone-last-id))
 
 ;;;;;;;;;;
 
 (defvar monotone-menu
   (let ((map (make-sparse-keymap "Monotone")))
-    ;;(define-key map [monotone-vc-] '(menu-item "" monotone-vc-))
-    ;; The menu items are defined in REVERSE order. So we reverse them here.
-    ;;    (reverse
-    ;;     (list
-    (define-key map [monotone-vc-log]
-      '(menu-item "Log" monotone-vc-log))
+    ;; These need to be in reverse order
+    (define-key map [monotone-sync]
+      '(menu-item "DB Sync" monotone-sync))
+    (define-key map [monotone-push]
+      '(menu-item "DB Push" monotone-push))
+    (define-key map [monotone-pull]
+      '(menu-item "DB Pull" monotone-pull))
+    (define-key map [monotone-separator] '("--"))
+    ;;
+    (define-key map [monotone-cat-rid]
+      '(menu-item "Cat this revision id" monotone-cat-revisionid))
+    (define-key map [monotone-cat-mid]
+      '(menu-item "Cat this manifest id" monotone-cat-manifestid))
+    (define-key map [monotone-cat-fid]
+      '(menu-item "Cat this file     id" monotone-cat-fileid))
+    (define-key map [monotone-separator] '("--"))
+    ;;
+    (define-key map [monotone-grab-id]
+      '(menu-item "Grab ID" monotone-grab-id))
     (define-key map [monotone-vc-status]
       '(menu-item "Status" monotone-vc-status))
     (define-key map [monotone-vc-diff]
       '(menu-item "Diff" monotone-vc-diff))
-    (define-key map [monotone-grab-id]
-      '(menu-item "Grab ID" monotone-grab-id))
+    (define-key map [monotone-vc-log]
+      '(menu-item "Log" monotone-vc-log))
     ;;
-    (define-key map [monotone-separator] '("--"))
-    (define-key map [monotone-cat-fid]
-      '(menu-item "Cat this file     id" monotone-cat-fileid))
-    (define-key map [monotone-cat-mid]
-      '(menu-item "Cat this manifest id" monotone-cat-manifestid))
-    (define-key map [monotone-cat-rid]
-      '(menu-item "Cat this revision id" monotone-cat-revisionid))
-    ;;
-    (define-key map [monotone-separator] '("--"))
-    (define-key map [monotone-pull]
-      '(menu-item "DB Pull" monotone-pull))
-    (define-key map [monotone-push]
-      '(menu-item "DB Push" monotone-push))
-    (define-key map [monotone-sync]
-      '(menu-item "DB Sync" monotone-sync))
-    ;;))
     map))
 
 (when monotone-menu-name
