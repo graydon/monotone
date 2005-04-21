@@ -43,6 +43,7 @@
 #include "automate.hh"
 #include "inodeprint.hh"
 #include "platform.hh"
+#include "annotate.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -3763,6 +3764,83 @@ log_certs(app_state & app, revision_id id, cert_name name, string label, bool mu
       else
           cout << tv << endl;
     }     
+}
+
+
+void 
+do_annotate (app_state &app, file_path fpath, file_id fid, revision_id rid)
+{
+  L(F("annotating file %s with id %s in revision %s\n") % fpath % fid % rid);
+
+  // get the file length...
+  file_data fdata;
+  data fdata_unpacked;
+  app.db.get_file_version(fid, fdata);
+  //unpack(fdata.inner(), fdata_unpacked);
+  fdata_unpacked = fdata.inner();
+    
+  boost::shared_ptr<annotate_context> acp(new annotate_context(fid, app));
+  boost::shared_ptr<annotate_lineage> lineage(new annotate_lineage(std::make_pair(0, fdata_unpacked().size())));
+
+  // build node work unit
+  std::deque<annotate_node_work> nodes_to_process;
+  std::set<revision_id> nodes_seen;
+  annotate_node_work workunit(acp, lineage, rid, fid, fpath);
+  nodes_to_process.push_back(workunit);
+
+  while (nodes_to_process.size() && !acp->is_complete()) {
+    annotate_node_work work = nodes_to_process.front();
+    nodes_to_process.pop_front();
+    do_annotate_node(work, app, nodes_to_process, nodes_seen);
+  }
+  if (!acp->is_complete()) {
+    L(F("do_annotate acp remains incomplete after processing all nodes\n"));
+    revision_id null_revision;
+    I(!(acp->get_root_revision() == null_revision));
+    acp->complete(acp->get_root_revision());
+  }
+
+  acp->dump();
+  boost::shared_ptr<annotation_formatter> frmt(new annotation_text_formatter()); 
+  write_annotations(acp, frmt); // automatically write to stdout, or make take a stream argument?
+}
+
+CMD(annotate, "informative", "[ID] file", "print annotated copy of 'file' from revision 'ID')")
+{
+  revision_id rid;
+  file_path file;
+
+  if ((args.size() > 2) || (args.size() < 1))
+    throw usage(name);
+
+  if (args.size() == 2)
+    {  
+      complete(app, idx(args, 0)(), rid);
+      file=file_path(idx(args, 1)());
+    }  
+  else if (args.size() == 1)
+    { 
+      app.require_working_copy(); // no id arg, must have working copy
+
+      file = file_path(idx(args, 0)());
+      get_revision_id(rid);
+    }
+
+  L(F("annotate file file_path '%s'\n") % file);
+
+  // find the version of the file requested
+  manifest_map mm;
+  revision_set rev;
+  app.db.get_revision(rid, rev);
+  app.db.get_manifest(rev.new_manifest, mm);
+  manifest_map::const_iterator i = mm.find(file);
+  //N(i != mm.end(),
+  //  L(F("No such file '%s' in revision %s\n") % file % rid));
+  I(i != mm.end());
+  file_id fid = manifest_entry_id(*i);
+  L(F("annotate for file_id %s\n") % manifest_entry_id(*i));
+
+  do_annotate(app, file, fid, rid);
 }
 
 CMD(log, "informative", "[ID] [file]", "print history in reverse order starting from 'ID' (filtering by 'file')")
