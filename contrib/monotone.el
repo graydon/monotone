@@ -423,7 +423,7 @@ With ARG of 0, clear default server and collection."
   (interactive "P")
   (monotone-db-action arg "pull"))
 
-(defun monotone-push ()
+(defun monotone-push (arg)
   "Push the DB contents to a remote server.  ARG prompts."
   (interactive "P")
   (monotone-db-action arg "push"))
