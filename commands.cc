@@ -2631,7 +2631,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
 
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
-  unsigned int head_size = heads.size();
+  unsigned int old_head_size = heads.size();
 
   guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
 
@@ -2767,7 +2767,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   blank_user_log();
 
   get_branch_heads(app.branch_name(), app, heads);
-  if (heads.size() > head_size) {
+  if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run 'monotone merge'"));
   }

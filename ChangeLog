@@ -1,3 +1,13 @@
+2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* tests/t_multiple_heads_msg.at: Now checks to ensure 'multiple head'
+	  message does not occur on first commit (which creates a new head
+	  but not multiple heads).
+	* commands.cc (CMD(commit)): renamed head_size to better described
+	  old_head_size, now checks that old_head_size is larger than 0 as
+	  well otherwise, on commit of a brand new project, a new head was
+	  detected and a divergence message was displayed.
+
 2005-04-21  Richard Levitte  <richard@levitte.org>
 
 	* commands.cc (ALIAS): refactor so you don't have to repeat all
@@ -3229,7 +3239,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Mi�łkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

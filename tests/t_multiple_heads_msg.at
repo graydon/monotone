@@ -14,7 +14,8 @@ AT_DATA(f, [base data
 ])
 
 AT_CHECK(MONOTONE add f, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [stderr])
+AT_CHECK(grep -qv 'has multiple heads' stderr, [])
 ROOT_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
