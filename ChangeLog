@@ -1,3 +1,7 @@
+2005-04-21 Sebastian Spaeth <Sebastian@SSpaeth.de>
+
+	* monotone.texi: add command reference docs about kill_rev_locally
+	
 2005-04-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (apply_path_rearrangement_can_fastpath) 
@@ -3216,7 +3220,13 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
+<<<<<<< variant A
+2005-01-17  Wojciech MiÅ‚kowski  <wmilkowski@interia.pl>
+>>>>>>> variant B
 2005-01-17  Wojciech MiÅ‚kowski  <wmilkowski@interia.pl>
+####### Ancestor
+2005-01-17  Wojciech MiÂÃ…ÂÂ‚kowski  <wmilkowski@interia.pl>
+======= end
 
 	* std_hooks.lua: Teach about meld.
 

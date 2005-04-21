@@ -4200,6 +4200,18 @@ which can be loaded into your database with @command{read}.
 This command also verifies that the @sc{sha1} of every file, manifest,
 and revision is correct.
 
+@item monotone db kill_rev_locally @var{rev1}
+
+This will simply delete a revision with revision id @var{rev1} from your
+local database.  If you already synchronized with another database this
+command is senseless, as it will come back to you.  It might leave some
+unreferenced 'manifest ids' and 'file deltas' in your database which is
+non-fatal but annoying.  Generally, this is not the preferred way of
+doing things, you might want to use @var{disapprove} to undo changes
+instead. @var{kill_rev_locally} basically belongs in the category of
+useful but
+``@var{Very-Dangerous-Command-That-We-Told-You-Not-To-Use}''-category.
+
 @item monotone db execute @var{sql-statement}
 
 This is a debugging command which executes @var{sql-statement} against
