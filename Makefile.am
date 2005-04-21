@@ -274,11 +274,14 @@ monotone.pdf: monotone.texi $(PDF_FIGURES)
 
 monotone.dvi: monotone.texi $(EPS_FIGURES)
 
-%.eps: %.epsi
-	mv $< $@
+#%.eps: %.epsi
+#	mv $< $@
+#
+#%.epsi: %.ps
+#	ps2epsi $< $@
 
-%.epsi: %.ps
-	ps2epsi $< $@
+%.eps : %.ps
+	ps2eps $< $@
 
 $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 	mkdir -p $(top_builddir)/figures
