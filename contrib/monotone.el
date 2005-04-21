@@ -450,7 +450,7 @@ With ARG of 0, clear default server and collection."
     (error "You have a monotone process running"))
   ;; flush buffers
   (save-some-buffers)
-  ;; 
+  ;;
   (let ((buf (get-buffer-create monotone-commit-buffer))
         (monotone-MT-top (monotone-find-MT-top)))
     ;; found MT?
@@ -596,7 +596,7 @@ the buffer if not global."
    ((eq prefix 'tree)
     ;; MONOTONE BUG: when using "." the command must be run in the dir
     ;; all other commands are run in MT-top
-    ;; FIXME: cd to the correct place in the tree 
+    ;; FIXME: cd to the correct place in the tree
     (monotone-cmd (append cmds (list "."))))
    ((eq prefix 'file)
     (let ((name (buffer-file-name buf)))
@@ -640,7 +640,7 @@ the buffer if not global."
         (name (buffer-file-name)))
     (monotone-cmd-buf what '("diff"))
     (diff-mode)
-    (rename-buffer 
+    (rename-buffer
      (format "*monotone diff %s*"
              (case what
                ('file (monotone-extract-MT-path name))
