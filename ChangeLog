@@ -2,7 +2,7 @@
 
 	* commands.cc (ALIAS): refactor so you don't have to repeat all
 	the strings given to the original command.
-	(ALIAS(ci)): added as a short form for CMD(checkout).
+	(ALIAS(ci)): added as a short form for CMD(commit).
 
 	* Makefile.am (%.eps): create .eps files directly from .ps files,
 	using ps2eps.
