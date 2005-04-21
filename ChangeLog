@@ -1,3 +1,11 @@
+2005-04-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (apply_path_rearrangement_can_fastpath) 
+	(apply_path_rearrangement_fastpath) 
+	(apply_path_rearrangement_slowpath, apply_path_rearrangement):
+	Refactor into pieces, so all versions of apply_path_rearrangement
+	can take a fast-path when possible.
+
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (EXTRA_DIST): Put $(wildcard) around "debian/*", so

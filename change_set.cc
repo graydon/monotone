@@ -2464,18 +2464,6 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
 // application stuff
 
 void
-apply_path_rearrangement(path_set const & old_ps,
-                         change_set::path_rearrangement const & pr,
-                         path_set & new_ps)
-{
-  pr.check_sane();
-  change_set::path_rearrangement a, b, c;
-  a.added_files = old_ps;
-  concatenate_rearrangements(a, pr, c);
-  new_ps = c.added_files;
-}
-
-void
 build_pure_addition_change_set(manifest_map const & man,
                                change_set & cs)
 {
@@ -2568,30 +2556,70 @@ apply_change_set(manifest_map const & old_man,
     }
 }
 
-// quick, optimistic and destructive version
+static inline bool
+apply_path_rearrangement_can_fastpath(change_set::path_rearrangement const & pr)
+{
+  return pr.added_files.empty()
+    && pr.renamed_files.empty()
+    && pr.renamed_dirs.empty()
+    && pr.deleted_dirs.empty();
+}
+
+static inline void
+apply_path_rearrangement_fastpath(change_set::path_rearrangement const & pr,
+                                  path_set & ps)
+{
+  pr.check_sane();
+  // fast path for simple drop-or-nothing file operations
+  for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
+       i != pr.deleted_files.end(); ++i)
+    {
+      I(ps.find(*i) != ps.end());
+      ps.erase(*i);
+    }
+}
+
+static inline void
+apply_path_rearrangement_slowpath(path_set const & old_ps,
+                                  change_set::path_rearrangement const & pr,
+                                  path_set & new_ps)
+{
+  pr.check_sane();
+  change_set::path_rearrangement a, b;
+  a.added_files = old_ps;
+  concatenate_rearrangements(a, pr, b);
+  new_ps = b.added_files;
+}
+
+void
+apply_path_rearrangement(path_set const & old_ps,
+                         change_set::path_rearrangement const & pr,
+                         path_set & new_ps)
+{
+  if (apply_path_rearrangement_can_fastpath(pr))
+    {
+      new_ps = old_ps;
+      apply_path_rearrangement_fastpath(pr, new_ps);
+    }
+  else
+    {
+      apply_path_rearrangement_slowpath(old_ps, pr, new_ps);
+    }
+}
+
+// destructive version
 void
 apply_path_rearrangement(change_set::path_rearrangement const & pr,
                          path_set & ps)
 {
-  pr.check_sane();
-  if (pr.added_files.empty()
-      && pr.renamed_files.empty() 
-      && pr.renamed_dirs.empty()
-      && pr.deleted_dirs.empty())
+  if (apply_path_rearrangement_can_fastpath(pr))
     {
-      // fast path for simple drop-or-nothing file operations
-      for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
-           i != pr.deleted_files.end(); ++i)
-        {
-          I(ps.find(*i) != ps.end());
-          ps.erase(*i);
-        }
+      apply_path_rearrangement_fastpath(pr, ps);
     }
   else
     {
-      // fall back to the slow way
-      path_set tmp;
-      apply_path_rearrangement(ps, pr, tmp);
+      path_set tmp = ps;
+      apply_path_rearrangement_slowpath(ps, pr, tmp);
       ps = tmp;
     }
 }
