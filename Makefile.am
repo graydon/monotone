@@ -249,7 +249,7 @@ EXTRA_DIST = $(man1_MANS) \
 	     schema.sql views.sql \
 	     std_hooks.lua test_hooks.lua \
 	     testsuite.at \
-	     $(wildcard tests/t_*.at) \
+	     $(wildcard $(srcdir)/tests/t_*.at) \
 	     testsuite \
              tests/atconfig.in \
              tests/atlocal.in  \

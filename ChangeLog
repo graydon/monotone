@@ -1,3 +1,8 @@
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (EXTRA_DIST): Include tests, even when not building
+	packages out in the source directory.
+
 2005-04-20 Sebastian Spaeth <Sebastian@SSpaeth.de>
 	* automate.cc: fix typo, add sanity check to avoid empty r_id's
 	bein passed in. The automate version was bumped to 0.2 due to
