@@ -265,7 +265,7 @@ EXTRA_DIST = $(man1_MANS) \
 	     schema.sql views.sql \
 	     std_hooks.lua test_hooks.lua \
 	     testsuite.at \
-	     $(wildcard tests/t_*.at) \
+	     $(wildcard $(srcdir)/tests/t_*.at) \
 	     testsuite \
              tests/atconfig.in \
              tests/atlocal.in  \
@@ -277,11 +277,12 @@ EXTRA_DIST = $(man1_MANS) \
              sqlite/keywordhash.h \
              contrib/README \
              contrib/monotone-notify.pl \
+             contrib/monotone-import.pl \
              contrib/ciabot_monotone.py \
              contrib/monotone.el \
              contrib/monotone.bash_completion \
              win32/monotone.iss \
-             debian/*
+             $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 

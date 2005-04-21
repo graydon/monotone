@@ -64,7 +64,7 @@ struct poptOption options[] =
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},
     {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, "display help message", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
-    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotonerc or MT/monotonerc lua files", NULL},
+    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotone/monotonerc or MT/monotonerc lua files", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},

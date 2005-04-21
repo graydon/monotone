@@ -29,6 +29,16 @@ int existsonpath(const char *exe)
 	return -1;
 }
 
+bool is_executable(const char *path)
+{
+	struct stat s;
+
+	int rc = stat(path, &s);
+	N(rc != -1, F("stat() error on file %s)") % path);
+
+	return s.st_mode & S_IXUSR;
+}
+
 int make_executable(const char *path)
 {
 	mode_t mode;

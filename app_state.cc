@@ -135,9 +135,14 @@ app_state::create_working_copy(std::string const & dir)
 
   make_branch_sticky();
 
+  make_branch_sticky();
+
   write_options();
 
   blank_user_log();
+
+  if (lua.hook_use_inodeprints())
+    enable_inodeprints();
 
   load_rcfiles();
 }
@@ -316,9 +321,9 @@ app_state::add_rcfile(utf8 const & filename)
   extra_rcfiles.push_back(filename);
 }
 
-// rc files are loaded after we've changed to the working copy
-// directory so that MT/monotonerc can be loaded between .monotonerc
-// and other rcfiles
+// rc files are loaded after we've changed to the working copy directory so
+// that MT/monotonerc can be loaded between ~/.monotone/monotonerc and other
+// rcfiles
 
 void
 app_state::load_rcfiles()
@@ -328,7 +333,7 @@ app_state::load_rcfiles()
   if (stdhooks)
     lua.add_std_hooks();
 
-  // ~/.monotonerc overrides that, and
+  // ~/.monotone/monotonerc overrides that, and
   // MT/monotonerc overrides *that*
 
   if (rcfiles)
