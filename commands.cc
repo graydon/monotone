@@ -676,7 +676,7 @@ get_log_message(revision_set const & cs,
 }
 
 static void
-maybe_show_multiple_heads(app_state & app) {
+notify_if_multiple_heads(app_state & app) {
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
   if (heads.size() > 1) {
@@ -2643,7 +2643,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
 
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
-  unsigned int headSize = heads.size();
+  unsigned int head_size = heads.size();
 
   guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
 
@@ -2779,7 +2779,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   blank_user_log();
 
   get_branch_heads(app.branch_name(), app, heads);
-  if (heads.size() > headSize) {
+  if (heads.size() > head_size) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run 'monotone merge'"));
   }
@@ -3237,7 +3237,7 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
         F("no revision %s found in database") % r_chosen_id);
     }
 
-  maybe_show_multiple_heads(app);
+  notify_if_multiple_heads(app);
   
   if (r_old_id == r_chosen_id)
     {

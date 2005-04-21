@@ -1,3 +1,10 @@
+2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* commands.cc: Renamed maybe_show_multiple_heads to
+	  notify_if_multiple_heads, renamed headSize to head_size for
+	  coding standards/consistency.
+	* tests/t_multiple_heads_msg.at: Added to monotone this time.
+
 2005-04-20  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* commands.cc: Added maybe_show_multiple_heads, update now notifies
