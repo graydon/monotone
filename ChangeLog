@@ -20,6 +20,12 @@
 	* automate.cc: new command: automate ancestors
 	* monotone.texi: adapt documentation
 	
+2005-04-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (kill_rev_locally): Move up with rest of non-CMD()
+	functions.  Mark static.  Minor whitespace cleanup.
+	* commands.hh (kill_rev_locally): Declaration not needed now.
+
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_log_depth_single.at: 
