@@ -6,6 +6,21 @@
 	Refactor into pieces, so all versions of apply_path_rearrangement
 	can take a fast-path when possible.
 
+2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* commands.cc: Renamed maybe_show_multiple_heads to
+	  notify_if_multiple_heads, renamed headSize to head_size for
+	  coding standards/consistency.
+	* tests/t_multiple_heads_msg.at: Added to monotone this time.
+
+2005-04-20  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* commands.cc: Added maybe_show_multiple_heads, update now notifies
+	  user of multiple heads if they exist, commit now notifies user
+	  if their commit created a divergence.
+	* tests/t_multiple_heads_msg.at: Added
+	* testsuite.at: Added above test
+
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (EXTRA_DIST): Put $(wildcard) around "debian/*", so
@@ -15,6 +30,12 @@
 
 	* Makefile.am (EXTRA_DIST): Include tests, even when not building
 	packages out in the source directory.
+
+2005-04-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (kill_rev_locally): Move up with rest of non-CMD()
+	functions.  Mark static.  Minor whitespace cleanup.
+	* commands.hh (kill_rev_locally): Declaration not needed now.
 
 2005-04-20 Sebastian Spaeth <Sebastian@SSpaeth.de>
 	* automate.cc: fix typo, add sanity check to avoid empty r_id's
@@ -34,12 +55,6 @@
 	* automate.cc: new command: automate ancestors
 	* monotone.texi: adapt documentation
 	
-2005-04-20  Matthew Gregan  <kinetik@orcon.net.nz>
-
-	* commands.cc (kill_rev_locally): Move up with rest of non-CMD()
-	functions.  Mark static.  Minor whitespace cleanup.
-	* commands.hh (kill_rev_locally): Declaration not needed now.
-
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_log_depth_single.at: 
@@ -3201,7 +3216,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Mi�łkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
