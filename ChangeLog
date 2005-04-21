@@ -1,5 +1,10 @@
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* Makefile.am (EXTRA_DIST): Put $(wildcard) around "debian/*", so
+	it will actually work.
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	* Makefile.am (EXTRA_DIST): Include tests, even when not building
 	packages out in the source directory.
 

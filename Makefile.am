@@ -266,7 +266,7 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/monotone.el \
              contrib/monotone.bash_completion \
              win32/monotone.iss \
-             debian/*
+             $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
