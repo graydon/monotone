@@ -1,3 +1,18 @@
+2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* commands.cc: Renamed maybe_show_multiple_heads to
+	  notify_if_multiple_heads, renamed headSize to head_size for
+	  coding standards/consistency.
+	* tests/t_multiple_heads_msg.at: Added to monotone this time.
+
+2005-04-20  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* commands.cc: Added maybe_show_multiple_heads, update now notifies
+	  user of multiple heads if they exist, commit now notifies user
+	  if their commit created a divergence.
+	* tests/t_multiple_heads_msg.at: Added
+	* testsuite.at: Added above test
+
 2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (EXTRA_DIST): Put $(wildcard) around "debian/*", so
