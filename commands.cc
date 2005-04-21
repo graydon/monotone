@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -17,6 +18,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/exception.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "commands.hh"
 #include "constants.hh"
@@ -1031,6 +1033,25 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
     }
 }
 
+// Deletes a revision from the local database.  This can be used to 'undo' a
+// changed revision from a local database without leaving (much of) a trace.
+static void
+kill_rev_locally(app_state& app, std::string const& id)
+{
+  revision_id ident;
+  complete(app, id, ident);
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+
+  //check that the revision does not have any children
+  set<revision_id> children;
+  app.db.get_revision_children(ident, children);
+  N(!children.size(),
+    F("revision %s already has children. We cannot kill it.") % ident);
+
+  app.db.delete_existing_rev_and_certs(ident);
+}
+
 // The changes_summary structure holds a list all of files and directories
 // affected in a revision, and is useful in the 'log' command to print this
 // information easily.  It has to be constructed from all change_set objects
@@ -1193,7 +1214,10 @@ CMD(dropkey, "key and cert", "KEYID", "drop a public and private key")
 
   if (app.db.private_key_exists(ident))
     {
-      P(F("dropping private key '%s' from database\n") % ident);
+      P(F("dropping private key '%s' from database\n\n") % ident);
+      W(F("the private key data may not have been erased from the"));
+      W(F("database. it is recommended that you use 'db dump' and"));
+      W(F("'db load' to be sure."));
       app.db.delete_private_key(ident);
       key_deleted = true;
     }
@@ -1505,8 +1529,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
   boost::shared_ptr<change_set> cs(new change_set());
 
   string log_message("");
-  base64< gzip< data > > gz_dat;
-  base64< gzip< delta > > gz_del;
+  delta del;
   file_path pth(idx(args, 1)());
 
   transaction_guard guard(app.db);
@@ -1524,24 +1547,23 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
 
   // fetch the new file input
   string s = get_stdin();
-  pack(data(s), gz_dat);    
-  new_fdata = file_data(gz_dat);  
+  new_fdata = file_data(s);
   calculate_ident(new_fdata, new_fid);
 
   // diff and store the file edge
   old_fid = manifest_entry_id(i);
   app.db.get_file_version(old_fid, old_fdata);
-  diff(old_fdata.inner(), new_fdata.inner(), gz_del);    
+  diff(old_fdata.inner(), new_fdata.inner(), del);    
   dbw.consume_file_delta(old_fid, new_fid, 
-                         file_delta(gz_del));
+                         file_delta(del));
 
   // diff and store the manifest edge
   new_man = old_man;
   new_man[pth] = new_fid;
   calculate_ident(new_man, new_mid);
-  diff(old_man, new_man, gz_del);
+  diff(old_man, new_man, del);
   dbw.consume_manifest_delta(old_mid, new_mid, 
-                             manifest_delta(gz_del));
+                             manifest_delta(del));
 
   // build and store a changeset and revision
   cs->apply_delta(pth, old_fid, new_fid);
@@ -1576,12 +1598,9 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
 CMD(fload, "debug", "", "load file contents into db")
 {
   string s = get_stdin();
-  base64< gzip< data > > gzd;
-
-  pack(data(s), gzd);
 
   file_id f_id;
-  file_data f_data(gzd);
+  file_data f_data(s);
   
   calculate_ident (f_data, f_id);
   
@@ -1596,7 +1615,6 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
 
   file_id anc_id(idx(args, 0)()), left_id(idx(args, 1)()), right_id(idx(args, 2)());
   file_data anc, left, right;
-  data anc_unpacked, left_unpacked, right_unpacked;
 
   N(app.db.file_version_exists (anc_id),
   F("ancestor file id does not exist"));
@@ -1611,15 +1629,11 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
   app.db.get_file_version(left_id, left);
   app.db.get_file_version(right_id, right);
 
-  unpack(left.inner(), left_unpacked);
-  unpack(anc.inner(), anc_unpacked);
-  unpack(right.inner(), right_unpacked);
-
   vector<string> anc_lines, left_lines, right_lines, merged_lines;
 
-  split_into_lines(anc_unpacked(), anc_lines);
-  split_into_lines(left_unpacked(), left_lines);
-  split_into_lines(right_unpacked(), right_lines);
+  split_into_lines(anc.inner()(), anc_lines);
+  split_into_lines(left.inner()(), left_lines);
+  split_into_lines(right.inner()(), right_lines);
   N(merge3(anc_lines, left_lines, right_lines, merged_lines), F("merge failed"));
   copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
   
@@ -1702,9 +1716,7 @@ CMD(cat, "informative",
       file_data dat;
       L(F("dumping file %s\n") % ident);
       app.db.get_file_version(ident, dat);
-      data unpacked;
-      unpack(dat.inner(), unpacked);
-      cout.write(unpacked().data(), unpacked().size());
+      cout.write(dat.inner()().data(), dat.inner()().size());
     }
   else if (idx(args, 0)() == "manifest")
     {
@@ -1731,9 +1743,7 @@ CMD(cat, "informative",
         }
 
       L(F("dumping manifest %s\n") % ident);
-      data unpacked;
-      unpack(dat.inner(), unpacked);
-      cout.write(unpacked().data(), unpacked().size());
+      cout.write(dat.inner()().data(), dat.inner()().size());
     }
 
   else if (idx(args, 0)() == "revision")
@@ -1760,9 +1770,7 @@ CMD(cat, "informative",
         }
 
       L(F("dumping revision %s\n") % ident);
-      data unpacked;
-      unpack(dat.inner(), unpacked);
-      cout.write(unpacked().data(), unpacked().size());
+      cout.write(dat.inner()().data(), dat.inner()().size());
     }
   else 
     throw usage(name);
@@ -1803,6 +1811,9 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
       dir = idx(args, 1)();
       complete(app, idx(args, 0)(), ident);
       
+      N(app.db.revision_exists(ident),
+        F("no revision %s found in database") % ident);
+
       {
         cert_value b;
         guess_branch(ident, app, b);
@@ -1833,9 +1844,6 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
   file_data data;
   manifest_id mid;
   manifest_map m;
-
-  N(app.db.revision_exists(ident),
-    F("no revision %s found in database") % ident);
 
   app.db.get_revision_manifest(ident, mid);
   put_revision_id(ident);
@@ -2147,10 +2155,12 @@ CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout"
   complete(app, idx(args, 0)(), m_old_id);
   complete(app, idx(args, 1)(), m_new_id);
 
+  N(app.db.manifest_version_exists(m_old_id), F("no such manifest %s") % m_old_id);
   app.db.get_manifest(m_old_id, m_old);
+  N(app.db.manifest_version_exists(m_new_id), F("no such manifest %s") % m_new_id);
   app.db.get_manifest(m_new_id, m_new);
 
-  base64< gzip<delta> > del;
+  delta del;
   diff(m_old, m_new, del);
   pw.consume_manifest_delta(m_old_id, m_new_id, 
                             manifest_delta(del));
@@ -2169,9 +2179,11 @@ CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
   complete(app, idx(args, 0)(), f_old_id);
   complete(app, idx(args, 1)(), f_new_id);
 
+  N(app.db.file_version_exists(f_old_id), F("no such file %s") % f_old_id);
   app.db.get_file_version(f_old_id, f_old_data);
+  N(app.db.file_version_exists(f_new_id), F("no such file %s") % f_new_id);
   app.db.get_file_version(f_new_id, f_new_data);
-  base64< gzip<delta> > del;
+  delta del;
   diff(f_old_data.inner(), f_new_data.inner(), del);
   pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));  
 }
@@ -2188,6 +2200,7 @@ CMD(rdata, "packet i/o", "ID", "write revision data packet to stdout")
 
   complete(app, idx(args, 0)(), r_id);
 
+  N(app.db.revision_exists(r_id), F("no such revision %s") % r_id);
   app.db.get_revision(r_id, r_data);
   pw.consume_revision_data(r_id, r_data);  
 }
@@ -2204,6 +2217,7 @@ CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
 
   complete(app, idx(args, 0)(), m_id);
 
+  N(app.db.manifest_version_exists(m_id), F("no such manifest %s") % m_id);
   app.db.get_manifest_version(m_id, m_data);
   pw.consume_manifest_data(m_id, m_data);  
 }
@@ -2221,6 +2235,7 @@ CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
 
   complete(app, idx(args, 0)(), f_id);
 
+  N(app.db.file_version_exists(f_id), F("no such file %s") % f_id);
   app.db.get_file_version(f_id, f_data);
   pw.consume_file_data(f_id, f_data);  
 }
@@ -2424,6 +2439,7 @@ CMD(db, "database",
     "load\n"
     "migrate\n"
     "execute\n"
+    "kill_rev_locally <ID>\n"
     "check\n"
     "changesetify\n"
     "rebuild\n"
@@ -2457,6 +2473,8 @@ CMD(db, "database",
     {
       if (idx(args, 0)() == "execute")
         app.db.debug(idx(args, 1)(), cout);
+      else if (idx(args, 0)() == "kill_rev_locally")
+        kill_rev_locally(app,idx(args, 1)());
       else if (idx(args, 0)() == "clear_epoch")
         app.db.clear_epoch(cert_value(idx(args, 1)()));
       else
@@ -2474,8 +2492,8 @@ CMD(db, "database",
     throw usage(name);
 }
 
-CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]", 
-    "get or set file attributes")
+CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE", 
+    "set, get or drop file attributes")
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
@@ -2496,31 +2514,30 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
   file_path path = app.prefix(idx(args,1)());
   N(file_exists(path), F("file '%s' not found") % path);
 
+  bool attrs_modified = false;
+
   if (idx(args, 0)() == "set")
     {
       if (args.size() != 4)
         throw usage(name);
       attrs[path][idx(args, 2)()] = idx(args, 3)();
-      write_attr_map(attr_data, attrs);
-      write_data(attr_path, attr_data);
 
-      {
-        // check to make sure .mt-attr exists in 
-        // current manifest.
-        manifest_map man;
-        calculate_base_manifest(app, man);
-        if (man.find(attr_path) == man.end())
-          {
-            P(F("registering %s file in working copy\n") % attr_path);
-              change_set::path_rearrangement work;  
-              get_path_rearrangement(work);
-              vector<file_path> paths;
-              paths.push_back(attr_path);
-              build_additions(paths, man, app, work);
-              put_path_rearrangement(work);
-          }        
-      }
+      attrs_modified = true;
+    }
+  else if (idx(args, 0)() == "drop")
+    {
+      if (args.size() == 2)
+        {
+          attrs.erase(path);
+        }
+      else if (args.size() == 3)
+        {
+          attrs[path].erase(idx(args, 2)());
+        }
+      else
+        throw usage(name);
 
+      attrs_modified = true;
     }
   else if (idx(args, 0)() == "get")
     {
@@ -2550,7 +2567,57 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]",
     }
   else 
     throw usage(name);
+
+  if (attrs_modified)
+    {
+      write_attr_map(attr_data, attrs);
+      write_data(attr_path, attr_data);
+
+      {
+        // check to make sure .mt-attr exists in 
+        // current manifest.
+        manifest_map man;
+        calculate_base_manifest(app, man);
+        if (man.find(attr_path) == man.end())
+          {
+            P(F("registering %s file in working copy\n") % attr_path);
+            change_set::path_rearrangement work;
+            get_path_rearrangement(work);
+            vector<file_path> paths;
+            paths.push_back(attr_path);
+            build_additions(paths, man, app, work);
+            put_path_rearrangement(work);
+          }
+      }
+    }
 }
+
+static boost::posix_time::ptime
+string_to_datetime(std::string const & s)
+{
+  try
+    {
+      // boost::posix_time is lame: it can parse "basic" ISO times, of the
+      // form 20000101T120000, but not "extended" ISO times, of the form
+      // 2000-01-01T12:00:00.  So do something stupid to convert one to the
+      // other.
+      std::string tmp = s;
+      std::string::size_type pos = 0;
+      while ((pos = tmp.find_first_of("-:")) != string::npos)
+        tmp.erase(pos, 1);
+      return boost::posix_time::from_iso_string(tmp);
+    }
+  catch (std::out_of_range &e)
+    {
+      N(false, F("failed to parse date string '%s': %s") % s % e.what());
+    }
+  catch (std::exception &)
+    {
+      N(false, F("failed to parse date string '%s'") % s);
+    }
+  I(false);
+}
+
 CMD(commit, "working copy", "[--message=STRING] [PATH]...", 
     "commit working copy to database")
 {
@@ -2625,7 +2692,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
             L(F("inserting manifest delta %s -> %s\n") 
               % edge_old_manifest(edge) 
               % rs.new_manifest);
-            base64< gzip<delta> > del;
+            delta del;
             diff(m_old, m_new, del);
             dbw.consume_manifest_delta(edge_old_manifest(edge), 
                                        rs.new_manifest, 
@@ -2655,7 +2722,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
                 L(F("inserting delta %s -> %s\n") 
                   % delta_entry_src(i) % delta_entry_dst(i));
                 file_data old_data;
-                base64< gzip<data> > new_data;
+                data new_data;
                 app.db.get_file_version(delta_entry_src(i), old_data);
                 read_localized_data(delta_entry_path(i), new_data, app.lua);
                 // sanity check
@@ -2664,7 +2731,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
                 N(tid == delta_entry_dst(i).inner(),
                   F("file '%s' modified during commit, aborting")
                   % delta_entry_path(i));
-                base64< gzip<delta> > del;
+                delta del;
                 diff(old_data.inner(), new_data, del);
                 dbw.consume_file_delta(delta_entry_src(i), 
                                        delta_entry_dst(i), 
@@ -2673,7 +2740,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
             else
               {
                 L(F("inserting full version %s\n") % delta_entry_dst(i));
-                base64< gzip<data> > new_data;
+                data new_data;
                 read_localized_data(delta_entry_path(i), new_data, app.lua);
                 // sanity check
                 hexenc<id> tid;
@@ -2691,8 +2758,14 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
     dbw.consume_revision_data(rid, rdat);
   
     cert_revision_in_branch(rid, branchname, app, dbw); 
-    cert_revision_date_now(rid, app, dbw);
-    cert_revision_author_default(rid, app, dbw);
+    if (app.date().length() > 0)
+      cert_revision_date_time(rid, string_to_datetime(app.date()), app, dbw);
+    else
+      cert_revision_date_now(rid, app, dbw);
+    if (app.author().length() > 0)
+      cert_revision_author(rid, app.author(), app, dbw);
+    else
+      cert_revision_author_default(rid, app, dbw);
     cert_revision_changelog(rid, log_message, app, dbw);
   }
   
@@ -2753,7 +2826,7 @@ dump_diffs(change_set::delta_map const & deltas,
             {
               file_data dat;
               app.db.get_file_version(delta_entry_dst(i), dat);
-              unpack(dat.inner(), unpacked);
+              unpacked = dat.inner();
             }
           else
             {
@@ -2782,35 +2855,31 @@ dump_diffs(change_set::delta_map const & deltas,
       else
         {
           file_data f_old;
-          gzip<data> decoded_old;
-          data decompressed_old, decompressed_new;
+          data data_old, data_new;
           vector<string> old_lines, new_lines;
           
           app.db.get_file_version(delta_entry_src(i), f_old);
-          decode_base64(f_old.inner(), decoded_old);
-          decode_gzip(decoded_old, decompressed_old);
+          data_old = f_old.inner();
           
           if (new_is_archived)
             {
               file_data f_new;
-              gzip<data> decoded_new;
               app.db.get_file_version(delta_entry_dst(i), f_new);
-              decode_base64(f_new.inner(), decoded_new);
-              decode_gzip(decoded_new, decompressed_new);
+              data_new = f_new.inner();
             }
           else
             {
               read_localized_data(delta_entry_path(i), 
-                                  decompressed_new, app.lua);
+                                  data_new, app.lua);
             }
 
-          if (guess_binary(decompressed_new()) || 
-              guess_binary(decompressed_old()))
+          if (guess_binary(data_new()) || 
+              guess_binary(data_old()))
             cout << "# " << delta_entry_path(i) << " is binary\n";
           else
             {
-              split_into_lines(decompressed_old(), old_lines);
-              split_into_lines(decompressed_new(), new_lines);
+              split_into_lines(data_old(), old_lines);
+              split_into_lines(data_new(), new_lines);
               make_diff(delta_entry_path(i)(), 
                         delta_entry_path(i)(), 
                         old_lines, new_lines,
@@ -3162,7 +3231,11 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
       r_chosen_id = *(candidates.begin());
     }
   else
-    complete(app, idx(args, 0)(), r_chosen_id);
+    {
+      complete(app, idx(args, 0)(), r_chosen_id);
+      N(app.db.revision_exists(r_chosen_id),
+        F("no revision %s found in database") % r_chosen_id);
+    }
 
   maybe_show_multiple_heads(app);
   
@@ -3333,7 +3406,7 @@ try_one_merge(revision_id const & left_id,
     apply_change_set(anc_man, *anc_to_left, tmp);
     apply_change_set(tmp, *left_to_merged, merged_man);
     calculate_ident(merged_man, merged_rev.new_manifest);
-    base64< gzip<delta> > left_mdelta, right_mdelta;
+    delta left_mdelta, right_mdelta;
     diff(left_man, merged_man, left_mdelta);
     diff(right_man, merged_man, right_mdelta);
     if (left_mdelta().size() < right_mdelta().size())
@@ -3705,7 +3778,7 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
   if (args.size() == 2)
   {  
     complete(app, idx(args, 0)(), rid);
-    file=file_path(idx(args, 1)());
+    file = file_path(idx(args, 1)());
   }  
   else if (args.size() == 1)
     { 
@@ -3719,7 +3792,6 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
         {  
           app.require_working_copy(); // no id arg, must have working copy
 
-          file=file_path(arg);
           file = file_path(arg);
           get_revision_id(rid);
         }
@@ -3829,13 +3901,14 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
 
             log_certs(app, rid, changelog_name, "ChangeLog: ", true);
             log_certs(app, rid, comment_name,   "Comments: ",  true);
+
+            if (depth > 0)
+              {
+                depth--;
+              }
           }
         }
       frontier = next_frontier;
-      if (depth > 0)
-        {
-          depth--;
-        }
     }
 }
 
@@ -3855,7 +3928,8 @@ CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
 
 CMD(automate, "automation",
     "interface_version\n"
-    "heads BRANCH\n"
+    "heads [BRANCH]\n"
+    "ancestors REV1 [REV2 [REV3 [...]]]\n"
     "descendents REV1 [REV2 [REV3 [...]]]\n"
     "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
     "toposort [REV1 [REV2 [REV3 [...]]]]\n"

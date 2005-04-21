@@ -86,10 +86,11 @@ protected:
         std::sort(vec.begin(), vec.end(), val_cmp);
         // make sure we don't have any duplicate entries
         const_iterator leader, lagged;
-        lagged = begin();
-        leader = begin();
+        lagged = vec.begin();
+        leader = vec.begin();
+        I(leader != vec.end());
         ++leader;
-        for (; leader != end(); ++lagged, ++leader)
+        for (; leader != vec.end(); ++lagged, ++leader)
           I(lagged->first != leader->first);
         damaged = false;
       }
@@ -164,13 +165,13 @@ public:
   
   iterator begin() { return vec.begin(); }
   iterator end() { return vec.end(); }
-  iterator rbegin() { return vec.rbegin(); }
-  iterator rend() { return vec.rend(); }
+  reverse_iterator rbegin() { return vec.rbegin(); }
+  reverse_iterator rend() { return vec.rend(); }
 
   const_iterator begin() const { return vec.begin(); }
   const_iterator end() const { return vec.end(); }
-  const_iterator rbegin() const { return vec.rbegin(); }
-  const_iterator rend() const { return vec.rend(); }
+  const_reverse_iterator rbegin() const { return vec.rbegin(); }
+  const_reverse_iterator rend() const { return vec.rend(); }
 
   bool empty() const { return vec.empty(); }
   size_type size() const { return vec.size(); }

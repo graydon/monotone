@@ -459,11 +459,14 @@ read_localized_data(file_path const & path,
   
   string tmp1, tmp2;
   tmp2 = tdat();
-  if (do_charconv)
-      charset_convert(ext_charset, db_charset, tmp1, tmp2);
-  tmp1 = tmp2;
-  if (do_lineconv)
-      line_end_convert(db_linesep, tmp1, tmp2);
+  if (do_charconv) {
+    tmp1 = tmp2;
+    charset_convert(ext_charset, db_charset, tmp1, tmp2);
+  }
+  if (do_lineconv) {
+    tmp1 = tmp2;
+    line_end_convert(db_linesep, tmp1, tmp2);
+  }
   dat = tmp2;
 }
 
@@ -545,11 +548,14 @@ write_localized_data(file_path const & path,
   
   string tmp1, tmp2;
   tmp2 = dat();
-  if (do_lineconv)
-      line_end_convert(ext_linesep, tmp1, tmp2);
-  tmp1 = tmp2;
-  if (do_charconv)
-      charset_convert(db_charset, ext_charset, tmp1, tmp2);
+  if (do_lineconv) {
+    tmp1 = tmp2;
+    line_end_convert(ext_linesep, tmp1, tmp2);
+  }
+  if (do_charconv) {
+    tmp1 = tmp2;
+    charset_convert(db_charset, ext_charset, tmp1, tmp2);
+  }
 
   write_data(path, data(tmp2));
 }

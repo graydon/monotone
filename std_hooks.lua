@@ -15,7 +15,7 @@ function execute(path, ...)
    local pid
    local ret = -1
    pid = spawn(path, unpack(arg))
-   ret, pid = wait(pid)
+   if (pid ~= -1) then ret, pid = wait(pid) end
    return ret
 end
 
@@ -27,6 +27,19 @@ end
 -- are stored in a file .mt-attrs, in the working copy (and
 -- manifest). each (f,k,v) triple in an atribute file turns into a
 -- call to attr_functions[k](f,v) in lua.
+
+if (attr_init_functions == nil) then
+   attr_init_functions = {}
+end
+
+attr_init_functions["execute"] = 
+   function(filename)
+      if (is_executable(filename)) then 
+        return "true" 
+      else 
+        return nil 
+      end 
+   end
 
 if (attr_functions == nil) then
    attr_functions = {}
@@ -59,6 +72,8 @@ function ignore_file(name)
    if (string.find(name, "/%.svn/")) then return true end
    if (string.find(name, "^SCCS/")) then return true end
    if (string.find(name, "/SCCS/")) then return true end
+   if (string.find(name, "%.pyc$")) then return true end
+   if (string.find(name, "%.pyo$")) then return true end
    return false;
 end
 
@@ -419,4 +434,8 @@ function expand_selector(str)
    end
 
    return nil
+end
+
+function use_inodeprints()
+   return false
 end

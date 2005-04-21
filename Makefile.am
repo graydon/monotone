@@ -261,6 +261,7 @@ EXTRA_DIST = $(man1_MANS) \
              sqlite/keywordhash.h \
              contrib/README \
              contrib/monotone-notify.pl \
+             contrib/monotone-import.pl \
              contrib/ciabot_monotone.py \
              contrib/monotone.el \
              contrib/monotone.bash_completion \

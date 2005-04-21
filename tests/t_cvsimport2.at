@@ -1,0 +1,41 @@
+AT_SETUP([test failing cvs import (Attic)])
+MONOTONE_SETUP
+
+# This test imports a cvs archive with files in the Attic which fails
+#monotone: fatal: std::logic_error: change_set.cc:2546: invariant 'I(b.rearrangement.deleted_files.empty())' violated
+
+# reported by: hjlipp@web.de 15.04.2005 02:45
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+AT_DATA(prepare.sh,[#!/bin/sh
+export CVSROOT=$PWD/cvsroot
+
+cvs init
+mkdir src
+echo FOO > src/foo
+(
+	cd src
+	cvs import -m import mod vtag rtag
+)
+rm -rf src
+
+mkdir src
+(
+	cd src
+	cvs co mod
+	cd mod
+	cvs tag -b branch
+	cvs up -r branch
+	echo BAR > bar
+	cvs add bar
+	cvs ci -m 'add bar'
+)
+])
+
+AT_CHECK(sh prepare.sh, [], ignore, ignore)
+
+AT_CHECK(MONOTONE --branch=test cvs_import ., [], ignore, ignore)
+
+AT_CLEANUP
+(END)

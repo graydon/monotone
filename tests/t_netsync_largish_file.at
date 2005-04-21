@@ -26,9 +26,8 @@ NETSYNC_CLIENT_RUN(pull, testbranch)
 
 NETSYNC_SERVE_STOP
 
-AT_CHECK(MONOTONE --db=test2.db cat file $F_VER0, [], [stdout])
-AT_CHECK(CANONICALISE(stdout))
-CHK=`SHA1(stdout)`
+AT_CHECK(MONOTONE --db=test2.db --branch=testbranch checkout other, [], [ignore], [ignore])
+CHK=`SHA1(other/largish)`
 AT_CHECK(test $CHK = $F_VER0)
 
 AT_CLEANUP
