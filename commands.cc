@@ -234,10 +234,11 @@ static cmd_ ## C C ## _cmd;                      \
 void cmd_ ## C::exec(app_state & app,            \
                      vector<utf8> const & args)  \
 
-#define ALIAS(C, realcommand, group, params, desc)      \
-CMD(C, group, params, desc)                             \
-{                                                       \
-  process(app, string(#realcommand), args);             \
+#define ALIAS(C, realcommand)                                 \
+CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,  \
+    realcommand##_cmd.desc + "\nAlias for " #realcommand)     \
+{                                                             \
+  process(app, string(#realcommand), args);                   \
 }
 
 static void 
@@ -1779,7 +1780,7 @@ CMD(cat, "informative",
 }
 
 
-CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n", 
+CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
     "check out revision from database into directory")
 {
 
@@ -1872,8 +1873,7 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
   maybe_update_inodeprints(app);
 }
 
-ALIAS(co, checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
-      "check out revision from database; alias for checkout")
+ALIAS(co, checkout)
 
 CMD(heads, "tree", "", "show unmerged head revisions of branch")
 {
@@ -2094,7 +2094,7 @@ CMD(list, "informative",
     "unknown\n"
     "ignored\n"
     "missing",
-    "show database objects, or the current working copy manifest, "
+    "show database objects, or the current working copy manifest,\n"
     "or unknown, intentionally ignored, or missing state files")
 {
   if (args.size() == 0)
@@ -2127,19 +2127,7 @@ CMD(list, "informative",
     throw usage(name);
 }
 
-ALIAS(ls, list, "informative",  
-      "certs ID\n"
-      "keys [PATTERN]\n"
-      "branches\n"
-      "epochs [BRANCH [...]]\n"
-      "tags\n"
-      "vars [DOMAIN]\n"
-      "known\n"
-      "unknown\n"
-      "ignored\n"
-      "missing",
-      "show database objects, or the current working copy manifest, "
-      "or unknown, intentionally ignored, or missing state files; alias for list")
+ALIAS(ls, list)
 
 
 CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
@@ -2805,6 +2793,8 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
     app.lua.hook_note_commit(rid, certs);
   }
 }
+
+ALIAS(ci, commit);
 
 
 static void 

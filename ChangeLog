@@ -1,5 +1,9 @@
 2005-04-21  Richard Levitte  <richard@levitte.org>
 
+	* commands.cc (ALIAS): refactor so you don't have to repeat all
+	the strings given to the original command.
+	(ALIAS(ci)): added as a short form for CMD(checkout).
+
 	* Makefile.am (%.eps): create .eps files directly from .ps files,
 	using ps2eps.
 
