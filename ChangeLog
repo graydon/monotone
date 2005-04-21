@@ -1,3 +1,11 @@
+2005-04-20  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* commands.cc: Added maybe_show_multiple_heads, update now notifies
+	  user of multiple heads if they exist, commit now notifies user
+	  if their commit created a divergence.
+	* tests/t_multiple_heads_msg.at: Added
+	* testsuite.at: Added above test
+
 2005-04-14  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* monotone.texi (Making Changes): Fixed duplicate paragraph

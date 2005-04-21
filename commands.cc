@@ -673,6 +673,16 @@ get_log_message(revision_set const & cs,
     F("edit of log message failed"));
 }
 
+static void
+maybe_show_multiple_heads(app_state & app) {
+  set<revision_id> heads;
+  get_branch_heads(app.branch_name(), app, heads);
+  if (heads.size() > 1) {
+    P(F("note: branch '%s' has multiple heads\nnote: perhaps consider 'monotone merge'")
+      % app.branch_name);
+  }
+}
+
 static string
 describe_revision(app_state & app, revision_id const & id)
 {
@@ -2564,8 +2574,12 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   cert_value branchname;
   I(rs.edges.size() == 1);
 
+  set<revision_id> heads;
+  get_branch_heads(app.branch_name(), app, heads);
+  unsigned int headSize = heads.size();
+
   guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
-    
+
   P(F("beginning commit on branch '%s'\n") % branchname);
   L(F("new manifest %s\n") % rs.new_manifest);
   L(F("new revision %s\n") % rid);
@@ -2690,7 +2704,13 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   P(F("committed revision %s\n") % rid);
   
   blank_user_log();
-  
+
+  get_branch_heads(app.branch_name(), app, heads);
+  if (heads.size() > headSize) {
+    P(F("note: this revision creates divergence\n"
+        "note: you may (or may not) wish to run 'monotone merge'"));
+  }
+    
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 
@@ -3144,6 +3164,8 @@ CMD(update, "working copy", "\nREVISION", "update working copy to be based off a
   else
     complete(app, idx(args, 0)(), r_chosen_id);
 
+  maybe_show_multiple_heads(app);
+  
   if (r_old_id == r_chosen_id)
     {
       P(F("already up to date at %s\n") % r_old_id);
@@ -3382,7 +3404,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
       P(F("[merged] %s\n") % merged);
       left = merged;
     }
-  P(F("your working copies have not been updated\n"));
+  P(F("note: your working copies have not been updated\n"));
 }
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
