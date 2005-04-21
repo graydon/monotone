@@ -95,69 +95,6 @@ This is used for defaults.")
 ;;(make-variable-buffer-local 'monotone-cmd-args)
 
 
-;;
-;; This defines `monotone-diff', `monotone-status', `monotone-add',
-;; `monotone-drop', `monotone-revert' and `monotone-commit'.  These
-;; functions call the corresponding monotone command, restricted to
-;; the current file.  With a prefix argument (C-u) the command is
-;; applied unrestricted (on the whole tree).  As an exception,
-;; `monotone-status' has the opposite behaviour: it is unrestricted by
-;; default, restricted with a prefix argument.
-;;
-;; /!\ beware of bugs: `monotone-commit' is more dangerous than the
-;; others since it writes to the database.
-;;
-
-;; FIXME: handle aborts better and kill monotone.
-;; FEATURE: given an id, suck out the file with "monotone cat"
-
-;;; User vars:
-;; These vars are likley to be changed by the user.
-
-(defvar monotone-program "monotone"
-  "*The path to the monotone program.")
-
-(defvar monotone-passwd-remember nil
-  "*Should Emacs remember your monotone passwords?
-This is a security risk as it could be extracted from memory or core dumps.")
-
-(defvar monotone-passwd-alist nil
-  "*The password to be used when monotone asks for one.
-List of of (pubkey_id . password ).
-If `monotone-passwd-remember' is t it will be remembered here.")
-
-;; This is set to [f5] for testing.
-;; Should be nil for general release, as we dont want to
-;; remove keys without the users consent.
-(defvar monotone-vc-prefix-key  nil ;; [f5] "\C-xv" nil
-  "The prefix key to use for the monotone vc key map.
-You may wish to change this before loading monotone.el.
-Habitual monotone users can set it to '\C-xv'.")
-
-(defvar monotone-menu-name "Monotone"
-  "The name of the monotone menu.")
-
-
-;;; System Vars:
-;; It is unlikely for users to change these.
-
-(defvar monotone-buffer "*monotone*"
-  "The buffer used for displaying monotone output.")
-
-(defvar monotone-commit-buffer "*monotone commit*"
-  "The name of the buffer for the commit message.")
-(defvar monotone-commit-edit-status nil
-  "The sentinel for completion of editing the log.")
-(make-variable-buffer-local 'monotone-commit-edit-status)
-(defvar monotone-commit-args nil
-  "The args for the commit.")
-(make-variable-buffer-local 'monotone-commit-args)
-
-(defvar monotone-cmd-last-args nil
-  "The args for the last command.")
-;;(make-variable-buffer-local 'monotone-cmd-args)
-
-
 (defvar monotone-commit-dir nil)
 
 (defvar monotone-wait-time 5
