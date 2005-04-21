@@ -771,10 +771,10 @@ Grab the ids you want from the buffer and then yank back when needed."
     ;;))
     map))
 
-;; FIXME: an error was reported with define-key-after -- why?
 (when monotone-menu-name
-  (define-key-after global-map [menu-bar monotone]
-    (cons monotone-menu-name monotone-menu)))
+  (define-key-after
+    (lookup-key global-map [menu-bar])
+    [monotone] (cons monotone-menu-name monotone-menu)))
 
 (provide 'monotone)
 ;;; monotone.el ends here

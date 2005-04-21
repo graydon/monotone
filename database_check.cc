@@ -669,22 +669,28 @@ check_db(app_state & app)
     missing_certs + mismatched_certs +
     unchecked_sigs + bad_sigs +
     missing_keys;
+  // unreferenced files and manifests and mismatched certs are not actually
+  // serious errors; odd, but nothing will break.
+  size_t serious = missing_files + 
+    missing_manifests + incomplete_manifests +
+    missing_revisions + incomplete_revisions + 
+    mismatched_parents + mismatched_children +
+    bad_history +
+    missing_certs +
+    unchecked_sigs + bad_sigs +
+    missing_keys;
 
-  if (total > 0)
-    N(total == 0, 
-      F("check complete: %d files; %d manifests; %d revisions; %d keys; %d certs; %d problems detected\n") 
-      % checked_files.size()
-      % checked_manifests.size()
-      % checked_revisions.size()
-      % checked_keys.size()
-      % total_certs
-      % total);
+  P(F("check complete: %d files; %d manifests; %d revisions; %d keys; %d certs\n")
+    % checked_files.size()
+    % checked_manifests.size()
+    % checked_revisions.size()
+    % checked_keys.size()
+    % total_certs);
+  P(F("total problems detected: %d (%d serious)\n") % total % serious);
+  if (serious)
+    E(false, F("serious problems detected"));
+  else if (total)
+    P(F("minor problems detected\n"));
   else
-    P(F("check complete: %d files; %d manifests; %d revisions; %d keys; %d certs; database is good\n") 
-      % checked_files.size()
-      % checked_manifests.size()
-      % checked_revisions.size()
-      % checked_keys.size()
-      % total_certs
-      );
+    P(F("database is good\n"));
 }

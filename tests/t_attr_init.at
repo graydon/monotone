@@ -1,0 +1,33 @@
+AT_SETUP([attr init functions])
+MONOTONE_SETUP
+
+AT_DATA(hook.lua, [
+if (attr_init_functions == nil) then
+  attr_init_functions = {}
+end
+attr_init_functions[["test_attr"]] =
+  function(filename)
+     if filename == "magic" then
+        return "bob"
+     else
+        return nil
+     end
+  end
+])
+
+AT_DATA(testfile, [foo
+])
+AT_CHECK(MONOTONE --rcfile=hook.lua add testfile, [], [ignore], [ignore])
+AT_DATA(magic, [stuff
+])
+AT_CHECK(MONOTONE --rcfile=hook.lua add magic, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE attr get testfile, [], [stdout], [ignore])
+AT_CHECK(grep -q test_attr stdout, [1])
+AT_CHECK(grep -q bob stdout, [1])
+
+AT_CHECK(MONOTONE attr get magic, [], [stdout], [ignore])
+AT_CHECK(grep -q test_attr stdout, [])
+AT_CHECK(grep -q bob stdout, [])
+
+AT_CLEANUP

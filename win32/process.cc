@@ -17,6 +17,11 @@ int existsonpath(const char *exe)
   return 0;
 }
 
+bool is_executable(const char *path)
+{
+  return false; /* Basically meaningless on win32 */
+}
+
 int make_executable(const char *path)
 {
   return 0; /* Basically meaningless on win32 */

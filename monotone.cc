@@ -45,6 +45,8 @@
 #define OPT_ROOT 16
 #define OPT_DEPTH 17
 #define OPT_ARGFILE 18
+#define OPT_DATE 19
+#define OPT_AUTHOR 20
 
 // main option processing and exception handling code
 
@@ -60,7 +62,7 @@ struct poptOption options[] =
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},
     {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, "display help message", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
-    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotonerc or MT/monotonerc lua files", NULL},
+    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotone/monotonerc or MT/monotonerc lua files", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
@@ -70,10 +72,12 @@ struct poptOption options[] =
     {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot|none) [count]", NULL},
     {"revision", 'r', POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
     {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
+    {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
+    {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
     {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
     {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "insert command line arguments taken from the given file", NULL},
-    { NULL, 0, 0, NULL, 0 }
+    { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
 // there are 3 variables which serve as roots for our system.
@@ -185,8 +189,8 @@ my_poptStuffArgFile(poptContext con, utf8 const & filename)
       // the argv array be null-terminated.
       I(argv[argc] == NULL);
       N((rc = poptStuffArgs(con, argv)) >= 0,
-	F("weird error when stuffing arguments read from %s: %s\n")
-	% filename % poptStrerror(rc));
+        F("weird error when stuffing arguments read from %s: %s\n")
+        % filename % poptStrerror(rc));
     }
   else
     {
@@ -324,6 +328,14 @@ cpp_main(int argc, char ** argv)
               app.set_message(string(argstr));
               break;
 
+            case OPT_DATE:
+              app.set_date(string(argstr));
+              break;
+
+            case OPT_AUTHOR:
+              app.set_author(string(argstr));
+              break;
+
             case OPT_ROOT:
               app.set_root(string(argstr));
               break;
@@ -334,7 +346,7 @@ cpp_main(int argc, char ** argv)
 
             case OPT_ARGFILE:
               sub_argvs.push_back(my_poptStuffArgFile(ctx(),
-						      utf8(string(argstr))));
+                                                      utf8(string(argstr))));
               break;
 
             case OPT_HELP:

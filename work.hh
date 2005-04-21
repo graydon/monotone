@@ -114,6 +114,8 @@ void read_inodeprints(data & dat);
 
 void write_inodeprints(data const & dat);
 
+void enable_inodeprints();
+
 // the "attribute map" is part of a working copy. it is *not* stored in MT,
 // because its contents are considered part of the "content" of a tree of
 // files. it is therefore stored in .mt-attrs, in the root of your

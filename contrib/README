@@ -5,14 +5,21 @@ licenses.
   -- Log2Gxl.java: Java code to convert output from 'monotone log' into
      GXL, an XML-based graph description language.
 
-  -- Notify.pl: a Perl hack to create email logs with recent changes
-     in a repository database.  It's designed to be run at regular
+  -- monotone-notify.pl: a Perl hack to create email logs with recent
+     changes in a repository database.  It's designed to be run at regular
      intervals, for example from a cron script.  It uses database
      variables (those handled with 'monotone set/unset') in the domain
      domain 'notify' to keep track of the last revisions that have
      already been sent out.
      For a manual, do `perl Notify.pl --man'.
      To get a help text, do `perl Notify.pl --help'.
+
+  -- monotone-import.pl: a Perl hack to provide an approximate of what
+     what 'cvs import' does.  The difference is that you have to decide
+     yourself what the import branch is called, and you have to propagate
+     the resulting revision to your development branch if you have one.
+     For a manual, do `perl monotone-import.pl --man'.
+     To get a help text, do `perl monotone-import.pl --help'.
 
   -- ciabot_monotone.py: A python script to watch a repository and
      send notifications of commits to CIA (http://cia.navi.cx).

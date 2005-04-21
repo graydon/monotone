@@ -1,15 +1,421 @@
+2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* commands.cc: Renamed maybe_show_multiple_heads to
+	  notify_if_multiple_heads, renamed headSize to head_size for
+	  coding standards/consistency.
+	* tests/t_multiple_heads_msg.at: Added to monotone this time.
+
+2005-04-20  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* commands.cc: Added maybe_show_multiple_heads, update now notifies
+	  user of multiple heads if they exist, commit now notifies user
+	  if their commit created a divergence.
+	* tests/t_multiple_heads_msg.at: Added
+	* testsuite.at: Added above test
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (EXTRA_DIST): Put $(wildcard) around "debian/*", so
+	it will actually work.
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* Makefile.am (EXTRA_DIST): Include tests, even when not building
+	packages out in the source directory.
+
+2005-04-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (kill_rev_locally): Move up with rest of non-CMD()
+	functions.  Mark static.  Minor whitespace cleanup.
+	* commands.hh (kill_rev_locally): Declaration not needed now.
+
+2005-04-20 Sebastian Spaeth <Sebastian@SSpaeth.de>
+	* automate.cc: fix typo, add sanity check to avoid empty r_id's
+	bein passed in. The automate version was bumped to 0.2 due to
+	popular request of a single person.
+	* t_automate_ancestors.at: adapt test; it passes now
+
+2005-04-20 Sebastian Spaeth <Sebastian@SSpaeth.de>
+	* testuite.at:
+	* t_automate_ancestors.at: new test; automate ancestors. This is still
+	_failing_ as a) it outputs empty newlines when no ancestor exists and
+	b) does not output all ancestors if multiple ids are supplied as input
+	
+2005-04-20 Sebastian Spaeth <Sebastian@SSpaeth.de>
+
+	* commands.cc:
+	* automate.cc: new command: automate ancestors
+	* monotone.texi: adapt documentation
+	
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_log_depth_single.at: 
+	* tests/t_add_stomp_file.at: 
+	* tests/t_log_depth.at: Shorten blurbs.
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (ignore_file): Ignore compiled python files.
+
+2005-04-20  Jon Bright  <jon@siliconcircus.com>
+	* tests/t_sticky_branch.at: Really fix this test
+
+2005-04-20  Jon Bright  <jon@siliconcircus.com>
+	* tests/t_sticky_branch.at: Canonicalise stdout before comparison
+	* tests/t_setup_checkout_modify_new_dir.at: Ditto
+	* tests/t_netsync_largish_file.at: Check the file out rather
+	than catting it, so that canonicalisation is unneeded.  
+	Canonicalisation is bad here, because the file is random
+	binary data, not text with line-ending conventions
+
+2005-04-20  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone.el: define-after-key's KEY argument has to be a
+	vector with only one element.  The code I used is taken directly
+	from the Emacs Lisp Reference Manual, section "Modifying Menus".
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (mdelta, mdata, fdelta, fdata, rdata): Check for
+	existence of command line arguments.
+
+	* lua.{cc,hh} (hook_use_inodeprints): New hook.
+	* std_hooks.lua (use_inodeprints): Default definition.
+	* monotone.texi (Inodeprints): New section.
+	(Reserved Files): Document MT/inodeprints.
+	(Hook Reference): Document use_inodeprints.
+	* work.{cc,hh} (enable_inodeprints): New function.
+	* app_state.cc (create_working_copy): Maybe call
+	enable_inodeprints.
+	
+	* tests/t_inodeprints_hook.at: New test.
+	* tests/t_bad_packets.at: New test.
+	* testsuite.at: Add them.
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Actually add Joel Reed (oops).
+
+2005-04-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	Most of this patch from Joel Reed, with only small tweaks myself.
+	
+	* AUTHORS: Add Joel Reed.
+
+	* platform.hh (is_executable): New function.
+	* {unix,win32}/process.cc: Define it.
+
+	* lua.cc (monotone_is_executable_for_lua): New function.
+	(lua_hooks): Register it.
+	(Lua::push_nil): New method.
+	(lua_hooks::hook_init_attributes): New hook.
+	* lua.hh: Declare it.
+	* monotone.texi (Hook Reference): Document it.
+
+	* work.cc (addition_builder): Call new hook, collect attributes
+	for added files.
+	(build_additions): Set attributes on new files.
+
+	* tests/t_attr_init.at: New test.
+	* tests/t_add_executable.at: New test.
+	* testsuite.at: Add them.
+	
+2005-04-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.cc (read_localized_data, write_localized_data): Remove
+	logging of complete file contents.
+	* tests/t_lf_crlf.at: Remove --debugs, clean up, test more.
+
+2005-04-19 Emile Snyder <emile@alumni.reed.edu>
+	
+	* file_io.cc: Fix bugs with read/write_localized_data when using
+	CRLF line ending conversion.
+	* transforms.cc: Fix line_end_convert to add correct end of line
+	string if the split_into_lines() call causes us to lose one from
+	the end.
+	* tests/t_lf_crlf.at: Clean up and no longer XFAIL.
+ 
+2005-04-19  Sebastian Spaeth  <Sebastian@SSpaeth.de>
+
+	* monotone.texi: modified documentation to match changes due to
+	previous checking.
+	* AUTHORS: Adding myself
+	
+2005-04-19  Sebastian Spaeth  <Sebastian@SSpaeth.de>
+
+	* automate.cc: make BRANCH optional in "automate heads BRANCH"
+	we use the default branch as given in MT/options if not specified
+	* commands.cc: BRANCH -> [BRANCH] in cmd description
+
+2005-04-19  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-import.pl (my_exit): As in monotone-notify.pl,
+	my_exit doesn't close any network connections.
+
+	* testsuite.at (REVERT_TO): Make it possible to revert to a
+	specific branch.  This is useful to resolve ambiguities.
+	* tests/t_merge_add_del.at: Use it.
+
+2005-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sanity.hh: Mark {naughty,error,invariant,index}_failure methods
+	as NORETURN.
+	* commands.cc (string_to_datetime): Drop earlier attempt at
+	warning fix, it did not work with Boost 1.31.0.  Warning fixed by
+	change to sanity.hh.
+
+2005-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua.cc (default_rcfilename): Use ~/.monotone/monotonerc.  This
+	change is to prepare for the upcoming support for storing user
+	keys outside of the database (in ~/.monotone/keys/).
+	* app_state.cc (load_rcfiles): Refer to new rc file location in
+	comments.
+	* monotone.cc (options): Refer to new rc file location.
+	* monotone.texi: Refer to new rc file location.  Also change bare
+	references to the rc file from '.monotonerc' to 'monotonerc'.
+
+2005-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (log): 'depth' option did not handle the single file
+	case correctly. Also a couple of minor cleanups.
+	* tests/t_log_depth_single.at: New test.
+	* testsuite.at: Add test.
+
+2005-04-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (string_to_datetime): Fix warning.
+
+2005-04-18  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (EXTRA_DIST): Add contrib/monotone-import.pl.
+
+	* contrib/monotone-import.pl: New script to mimic "cvs import".
+	* contrib/README: describe it.
+
+	* commands.cc (CMD(attr)): Make it possible to drop file
+	attributes.
+
+	* contrib/monotone-notify.pl (my_exit): The comment was incorrect,
+	there are no network connections to close gracefully.
+	Implement --ignore-merges, which is on by default, and changes the
+	behavior to not produce diffs on merges and propagates where the
+	ancestors hve already been shown.
+
+	* tests/t_attr_drop.at: New test to check that 'attr drop'
+	correctly drops the given entry.
+	* tests/t_drop_attr.at: New test, similar to t_rename_attr.at.
+	* testsuite.at: Add them.
+
+2005-04-18  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Dealing with a Fork): Clarify (hopefully) what we
+	mean when we say that "update" is a dangerous command.
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): remove incorrect code
+	setting confirmed nodes.
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): use a std::set rather than
+	dynamic_bitset for the ancestor list, improving performance for
+	common tree structures.
+	* basic_io.cc: reserve() a string
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* packet.cc: fix up unit test compilation.
+	* transforms.cc: fix up unit test compilation.
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* vocab_terms.hh: remove commented out lines.
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* Move base64<gzip> code as close to the database as possible,
+	to avoid unnecessary inflating and deflating.
+
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Branching and Merging): A few small edits.
+
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (path_item, sanity_check_path_item): Mark things
+	inline.
+
+2005-04-17  Henrik Holmboe <henrik@holmboe.se>
+
+	* contrib/monotone-notify.pl: Add signal handlers.  Correct some
+	typos.
+	(my_exit): New function that does a cleanup and exit.
+
+2005-04-17  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* transforms.cc: fix glob_to_regexp assertions
+
+2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
+	
+	* tests/t_db_kill_rev_locally.at: new test; 
+	make sure that db kill_rev_locally works as intended
+
+2005-04-17  Sebastian Spaeth <Sebastian@sspaeth.de>
+
+	* commands.cc,database.cc: add 'db kill_rev_locally <id>' command
+	still missing: documentation and autotests. Otherwise seems ok.
+	
+2005-04-17  Richard Levitte  <richard@levitte.org>
+
+	* transforms.cc: Remove tabs and make sure emacs doesn't add
+	them.
+
+2005-04-17  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sanity.{hh,cc} (E, error_failure): New sort of invariant.
+	* netsync.cc (process_hello_cmd): Make initial pull message
+	more clear and friendly.
+	Also, if the key has changed, that is an error, not naughtiness.
+	* database_check.cc (check_db): Database problems are also errors,
+	not naughtiness.  Revamp output in case of errors, to better
+	distinguish non-serious errors and serious errors.
+	* tests/t_database_check.at: Update accordingly.
+	* tests/t_database_check_minor.at: New test.
+	* testsuite.at: Add it.
+	
+2005-04-17  Richard Levitte  <richard@levitte.org>
+
+	* transforms.cc (glob_to_regexp): New function that takes a glob
+	expression and transforms it into a regexp.  This will be useful
+	for globbing branch expressions when collections are exchanged to
+	branch globs and regexps.
+	(glob_to_regexp_test): A unit test for glob_to_regexp().
+
+2005-04-16  Emile Snyder  <emile@alumni.reed.edu>
+
+	* tests/t_add_stomp_file.at: New test for failing case.  
+        If you have a file foo in your working dir (not monotone 
+        controlled) and someone else adds a file foo and commits, 
+        update should at least warn you before stomping your 
+        non-recoverable foo file.
+	* testsuite.at: Add it.
+	
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc: warn that dropkey won't truly erase the privkey
+	from the database
+	* monotone.texi: same
+
+2005-04-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc: mention that it could be the filesystem that
+	is full in the SQLITE_FULL error message
+
+2005-04-16  Derek Scherger  <derek@echologic.com>
+
+	* work.cc (known_preimage_path): rename to...
+	(known_path): this, since it's image agnostic
+	(build_deletions): update for renamed function
+	(build_rename): ensure rename source exists in current revision
+	and rename target does not exist in current revision
+
+	* tests/t_no_rename_overwrite.at: un-XFAIL 
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* app_state.{cc,hh} (set_author, set_date): New methods.
+	* cert.cc (cert_revision_date): Rename to...
+	(cert_revision_date_time): ...an overloaded version of this.
+	(cert_revision_author_default): Check app.date.
+	* cert.hh: Expose cert_revision_date_time.
+	* commands.cc (commit): Handle --date.
+	* main.cc: Parse --date and --author options.
+	* monotone.1: Document --date, --author.
+	* monotone.texi (Working Copy, OPTIONS): Likewise.
+
+	* tests/t_override_author_date.at: New test.
+	* testsuite.at: Add it.
+	
+	This commit heavily based on a patch by Markus Schiltknecht
+	<markus@bluegap.ch>.
+	
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+
+2005-04-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Fix warnings: add missing initializers.
+	* netsync.cc: Fix warnings: inline static vs static inline.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_update_nonexistent.at: New test.
+	* testsuite.at: Add it.
+	
+	* commands.cc (update): Verify that user's requested revision
+	exists.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+
+2005-04-16  Emile Snyder <emile@alumni.reed.edu>
+
+	* tests/t_add_vs_commit.at: New test for failing case.  If you
+	add a file in you working dir, someone else adds the same file
+	and commits, then you do an update it messes up your working
+	directory.
+	* testsuite.at: Add it.
+	
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (checkout): Move check for existence of revision
+	earlier.
+	
+	* tests/t_netsync_defaults.at, tests/t_netsync_single.at:
+	Don't hard-code netsync port.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* testsuite.at: Use a random server port.
+	
+	* .mt-attrs, contrib/README: Update for Notify.pl ->
+	monotone-notify.pl rename.
+	
+	* monotone.1: Warn people off rcs_import.
+	* monotone.texi (Commands): Likewise.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Emile Snyder <emile@alumni.reed.edu>.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_lf_crlf.at: New test from Emile Snyder
+	<emile@alumni.reed.edu>, with tweaks.
+	* testsuite.at: Add it.
+
+2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Small fixups.
+
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
-	* add tests/t_cvsimport2.at: CVS Attic files fail test
+	
+	* tests/t_cvsimport2.at: new test; CVS Attic files fail test
 	reported by: hjlipp@web.de 15.04.2005 02:45
 
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
-	* add tests/t_rcs_import.at: problematic CVS import as reported 
-	in the list. However it works just fine here, so it really tests for 
-	a successful pass
+	
+	* tests/t_rcs_import.at: new test; problematic CVS import as
+	reported in the list. However it works just fine here, so it
+	really tests for a successful pass
 
 2005-04-16  Sebastian Spaeth <Sebastian@sspaeth.de>
 
-	* add tests/README on how to create/run tests
+	* tests/README: new file, on how to create/run tests
 
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -123,8 +529,6 @@
 	* commands.cc (checkout): Tweak branch checking logic.
 	(update): Make user explicitly switch branches.
 
-####### Ancestor
-======= end
 2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
 
 	* rcs_import.cc (import_cvs_repo): Check that user isn't trying to
@@ -2804,7 +3208,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Mi�łkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
