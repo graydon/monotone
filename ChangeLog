@@ -1,3 +1,8 @@
+2005-04-22  Joel Reed  <joelwreed@comcast.net>
+
+	* work.cc (build_deletions) : on drop FILE also drop attributes.
+	* tests/t_drop_attr.at : test for success now, fixed bug.
+
 2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* tests/t_multiple_heads_msg.at: Now checks to ensure 'multiple head'
