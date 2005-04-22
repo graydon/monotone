@@ -1,3 +1,31 @@
+2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.{cc,hh} (localized): Take file_path/local_path instead
+	of string; expose in public interface.  Adjust rest of file to
+	match.
+	(walk_tree): Don't convert the (OS-supplied) current directory
+	from UTF-8 to current locale.
+	
+	* transforms.{cc,hh} (charset_convert): Be more informative on
+	error.
+	(calculate_ident): Localize the filename, even on the fast-path.
+	Also assert file exists and is not a directory, since Crypto++
+	will happily hash directories.  (They are like empty files,
+	apparently.)
+	
+	* manifest.cc (build_restricted_manifest_map): Use file_exists
+	instead of fs::exists, to handle localized paths.
+	* {win32,unix}/inodeprint.cc (inodeprint_file): Use localized
+	filenames to stat.
+
+	* tests/t_i18n_file.at: Rewrite to work right.
+
+	* tests/t_normalized_filenames.at: New test.
+	* testsuite.at: Add it.
+	* vocab.cc (test_file_path_verification): MT/path is not a valid
+	file_path either.
+	(test_file_path_normalization): New unit-test.
+
 2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* tests/t_multiple_heads_msg.at: Now checks to ensure 'multiple head'

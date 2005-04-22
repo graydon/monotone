@@ -94,7 +94,7 @@ build_restricted_manifest_map(path_set const & paths,
                 }
             }
           // ...ah, well, no good fingerprint, just check directly.
-          N(fs::exists(mkpath((*i)())),
+          N(file_exists(*i),
             F("file disappeared but exists in new manifest: %s") % (*i)());
           hexenc<id> ident;
           calculate_ident(*i, ident, app.lua);

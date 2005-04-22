@@ -247,6 +247,7 @@ static void test_file_path_verification()
                              "foo/../../escape",
                              "/rooted",
                              "foo//nonsense",
+                             "MT/foo",
 #ifdef _WIN32
                              "c:\\windows\\rooted",
                              "c:/windows/rooted",
@@ -280,10 +281,18 @@ static void test_file_path_verification()
     BOOST_CHECK_NOT_THROW(file_path p(*c), informative_failure);
 }
 
+static void test_file_path_normalization()
+{
+  BOOST_CHECK(file_path("./foo") == file_path("foo"));
+  BOOST_CHECK(file_path("foo/bar/./baz") == file_path("foo/bar/baz"));
+  BOOST_CHECK(file_path("foo/bar/../baz") == file_path("foo/baz"));
+}
+
 void add_vocab_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&test_file_path_verification));
+  suite->add(BOOST_TEST_CASE(&test_file_path_normalization));
 }
 
 #endif // BUILD_UNIT_TESTS
