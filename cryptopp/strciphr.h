@@ -148,7 +148,6 @@ protected:
 
 CRYPTOPP_DLL_TEMPLATE_CLASS TwoBases<SymmetricCipher, RandomNumberGenerator>;
 CRYPTOPP_DLL_TEMPLATE_CLASS AbstractPolicyHolder<AdditiveCipherAbstractPolicy, TwoBases<SymmetricCipher, RandomNumberGenerator> >;
-CRYPTOPP_DLL_TEMPLATE_CLASS AdditiveCipherTemplate<>;
 
 class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE CFB_CipherAbstractPolicy
 {
@@ -257,11 +256,6 @@ class CFB_RequireFullDataBlocks : public BASE
 public:
 	unsigned int MandatoryBlockSize() const {return this->OptimalBlockSize();}
 };
-
-// for Darwin
-CRYPTOPP_DLL_TEMPLATE_CLASS CFB_CipherTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, SymmetricCipher> >;
-CRYPTOPP_DLL_TEMPLATE_CLASS CFB_EncryptionTemplate<>;
-CRYPTOPP_DLL_TEMPLATE_CLASS CFB_DecryptionTemplate<>;
 
 //! _
 template <class BASE, class INFO = BASE>
