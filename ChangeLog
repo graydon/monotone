@@ -1,3 +1,7 @@
+2005-04-22  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: update to sqlite 3.2.1
+
 2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* tests/t_multiple_heads_msg.at: Now checks to ensure 'multiple head'
