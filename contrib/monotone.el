@@ -66,6 +66,10 @@ Habitual monotone users can set it to '\C-xv'.")
 ;;; System Vars:
 ;; It is unlikely for users to need to change these.
 
+(defvar monotone-program-args-always '("--ticker=dot")
+  "Args which will always be passed to monotone.
+The arg '--ticker=dot' should be here to avoid lots of output.")
+
 (defvar monotone-last-id nil
   "The last id which was worked with or grabbed.
 This could be a file, manifest or revision.
@@ -166,6 +170,7 @@ Type C-c C-c to commit, kill the buffer to abort.
     (define-key map "p"    'monotone-pull)
     (define-key map "q"    'monotone-vc-commit) ;; i am a lazy typist
     (define-key map "s"    'monotone-vc-status)
+    (define-key map "x"    'monotone)
     map))
 (fset 'monotone-vc-prefix-map monotone-vc-prefix-map)
 
@@ -250,7 +255,7 @@ Nothing for now."
 
 (defun monotone-process-sentinel (process event)
   "This sentinel suppresses the text from PROCESS on EVENT."
-  (message "monotone: %s %s" process event)
+  (message "monotone: process %s received %s" process event)
   nil)
 
 ;; Run a monotone command
@@ -278,7 +283,6 @@ Nothing for now."
     ;; show the window
     ;;(if (not (equal (current-buffer) mt-buf))
     (switch-to-buffer-other-window mt-buf) ;;)
-    (sit-for 0)
     (set-buffer mt-buf)
     ;; still going?
     (when (get-buffer-process mt-buf)
@@ -286,13 +290,17 @@ Nothing for now."
     ;; prep the buffer for output
     (toggle-read-only -1)
     (erase-buffer)
+    (sit-for 0)
     ;;(buffer-disable-undo (current-buffer))
     (setq default-directory mt-top)
     ;; remeber the args
     (setq monotone-cmd-last-args args)
+    ;;
+    (when monotone-program-args-always
+      (setq args (append monotone-program-args-always args)))
     ;; run
     (let ((p (apply #'start-process monotone-buffer mt-buf mt-pgm args)))
-      ;;
+      ;; dont dirty the output
       (set-process-sentinel p #'monotone-process-sentinel)
       (while (eq (process-status p) 'run)
         ;; FIXME: rather than printing messages, abort after too long a wait.
@@ -411,7 +419,7 @@ Nothing for now."
   (when prefix
     (monotone-db-prompt))
   ;;
-  (let ((cmd (list "--ticker=dot" (format "%s" action)))
+  (let ((cmd (list (format "%s" action)))
         (svr (or monotone-server ""))
         (col (or monotone-collection "")))
     ;; given address?
