@@ -248,6 +248,11 @@ Nothing for now."
 
 ;;(define-derived-mode monotone-shell-mode comint-mode "Monotone")
 
+(defun monotone-process-sentinel (process event)
+  "This sentinel suppresses the text from PROCESS on EVENT."
+  (message "monotone: %s %s" process event)
+  nil)
+
 ;; Run a monotone command
 (defun monotone-cmd (args)
   "Execute the monotone command with ARGS in the monotone top directory."
@@ -287,6 +292,8 @@ Nothing for now."
     (setq monotone-cmd-last-args args)
     ;; run
     (let ((p (apply #'start-process monotone-buffer mt-buf mt-pgm args)))
+      ;;
+      (set-process-sentinel p #'monotone-process-sentinel)
       (while (eq (process-status p) 'run)
         ;; FIXME: rather than printing messages, abort after too long a wait.
         (when (not (accept-process-output p monotone-wait-time))
