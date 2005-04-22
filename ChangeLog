@@ -1,3 +1,8 @@
+2005-04-22  Jon Bright <jon@siliconcircus.com>
+	* monotone.texi: Changed all quoting of example command lines to
+	use " instead of ', since this works everywhere, but ' doesn't
+	work on Win32
+
 2005-04-08  Jon Bright <jon@siliconcircus.com>
 	* testsuite.at (NOT_ON_WIN32): Add a function to prevent tests from
 	running on Win32 (for cases where the functionality being tested 
