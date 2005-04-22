@@ -1,3 +1,8 @@
+2005-04-22  Jon Bright <jon@siliconcircus.com>
+	* monotone.texi: Changed all quoting of example command lines to
+	use " instead of ', since this works everywhere, but ' doesn't
+	work on Win32
+
 2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* tests/t_multiple_heads_msg.at: Now checks to ensure 'multiple head'
