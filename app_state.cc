@@ -187,7 +187,6 @@ app_state::restriction_includes(file_path const & path)
   static file_path dot(".");
   if (restrictions.empty()) 
     {
-      L(F("empty restricted path set; '%s' included\n") % path());
       return true;
     }
   
@@ -198,7 +197,6 @@ app_state::restriction_includes(file_path const & path)
 
   if (restrictions.find(dot) != restrictions.end())
     {
-      L(F("restricted path set cleared; '%s' included\n") % path());
       return true;
     }
 
@@ -273,6 +271,18 @@ void
 app_state::set_message(utf8 const & m)
 {
   message = m;
+}
+
+void
+app_state::set_date(utf8 const & d)
+{
+  date = d;
+}
+
+void
+app_state::set_author(utf8 const & a)
+{
+  author = a;
 }
 
 void
