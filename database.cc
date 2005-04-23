@@ -1495,7 +1495,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid){
   L(F("Killing revision %s locally\n") % rid);
   execute("DELETE from revision_certs WHERE id = '%s'",rid.inner()().c_str());
   execute("DELETE from revision_ancestry WHERE child = '%s'",
-	  rid.inner()().c_str());
+          rid.inner()().c_str());
   execute("DELETE from revisions WHERE id = '%s'",rid.inner()().c_str());
 }
 
@@ -1641,6 +1641,9 @@ database::put_key(rsa_keypair_id const & pub_id,
 {
   hexenc<id> thash;
   key_hash_code(pub_id, pub_encoded, thash);
+  I(!public_key_exists(thash));
+  E(!public_key_exists(pub_id),
+    F("another key with name '%s' already exists") % pub_id);
   execute("INSERT INTO public_keys VALUES('%q', '%q', '%q')", 
           thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
 }
@@ -1649,9 +1652,10 @@ void
 database::put_key(rsa_keypair_id const & priv_id, 
                   base64< arc4<rsa_priv_key> > const & priv_encoded)
 {
-  
   hexenc<id> thash;
   key_hash_code(priv_id, priv_encoded, thash);
+  E(!private_key_exists(priv_id),
+    F("another key with name '%s' already exists") % priv_id);
   execute("INSERT INTO private_keys VALUES('%q', '%q', '%q')", 
           thash().c_str(), priv_id().c_str(), priv_encoded().c_str());
 }

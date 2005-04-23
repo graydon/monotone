@@ -1,5 +1,11 @@
 2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
 
+	* database.cc (put_key): Check for existence of keys with
+	conflicting key ids, give more informative message than former SQL
+	constraint error.
+
+2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
+
 	* transforms.cc (filesystem_is_ascii_extension_impl): Add EUC to
 	the list of ascii-extending encodings.
 
