@@ -94,6 +94,7 @@ public:
   void evaluate(revision_id rev);
 
   void set_copied(int index);
+  void set_touched(int index);
 
   void set_root_revision(revision_id rev) { root_revision = rev; }
   revision_id get_root_revision() const { return root_revision; }
@@ -111,10 +112,14 @@ private:
   std::vector<long> file_interned;
   std::vector<revision_id> annotations;
 
-  // given a node and it's set of parents, we need to keep track
-  // of which of our lines was copied back by *some* node -> parent
-  // transition. we do it here.
-  std::vector<bool> copied_lines;
+  size_t annotated_lines_completed;
+
+  // elements of the set are indexes into the array of lines in the UDOI
+  // lineages add entries here when they notice that they copied a line from the UDOI
+  std::set<size_t> copied_lines;
+
+  // similarly, lineages add entries here for all the lines from the UDOI they know about that they didn't copy
+  std::set<size_t> touched_lines;
 
   revision_id root_revision;
 };
@@ -140,10 +145,9 @@ private:
 
   static interner<long> in; // FIX, testing hack 
 
-  //std::vector<std::string> file_lines;
   std::vector<long> file_interned;
 
-  // same length as file_lines. if file_lines[i] came from line 4, mapping[i] = 4
+  // same length as file_lines. if file_lines[i] came from line 4 in the UDOI, mapping[i] = 4
   std::vector<int> mapping;
 };
 
@@ -151,8 +155,11 @@ private:
 interner<long> annotate_lineage_mapping::in;
 
 
-// a set of data that specifies the input data needed to process 
-// the annotation for a given childrev -> parentrev edge.
+/*
+  annotate_node_work encapsulates the input data needed to process 
+  the annotations for a given childrev, considering all the
+  childrev -> parentrevN edges.
+*/
 struct annotate_node_work {
   annotate_node_work (boost::shared_ptr<annotate_context> annotations_,
                       boost::shared_ptr<annotate_lineage_mapping> lineage_,
@@ -176,6 +183,7 @@ struct annotate_node_work {
 
 
 annotate_context::annotate_context(file_id fid, app_state &app)
+  : annotated_lines_completed(0)
 {
   // initialize file_lines
   file_data fpacked;
@@ -201,10 +209,9 @@ annotate_context::annotate_context(file_id fid, app_state &app)
   annotations.insert(annotations.begin(), file_lines.size(), nullid);
   L(F("annotate_context::annotate_context initialized with %d entries in annotations\n") % annotations.size());
 
-  // initialize copied_lines
+  // initialize copied_lines and touched_lines
   copied_lines.clear();
-  copied_lines.reserve(file_lines.size());
-  copied_lines.insert(copied_lines.begin(), file_lines.size(), false);
+  touched_lines.clear();
 }
 
 
@@ -222,8 +229,10 @@ annotate_context::complete(revision_id rev)
   revision_id nullid;
   std::vector<revision_id>::iterator i;
   for (i=annotations.begin(); i != annotations.end(); i++) {
-    if (*i == nullid) 
+    if (*i == nullid) {
       *i = rev;
+      annotated_lines_completed++;
+    }
   }
 }
 
@@ -231,19 +240,30 @@ void
 annotate_context::evaluate(revision_id rev)
 {
   revision_id nullid;
-  I(copied_lines.size() == annotations.size());
-  for (size_t i=0; i<copied_lines.size(); i++) {
-    if (!copied_lines[i] && annotations[i] == nullid) {
-      L(F("evaluate setting annotations[%d] -> %s, since copied_lines[%d] was %d and annotations[%d] was %s\n") 
-        % i % rev % i % copied_lines[i] % i % annotations[i]);
-      annotations[i] = rev;
-    } else {
-      L(F("evaluate LEAVING annotations[%d] -> %s, since copied_lines[%d] was %d and annotations[%d] was %s\n") 
-        % i % annotations[i] % i % copied_lines[i] % i % annotations[i]);
-    }
+  I(copied_lines.size() <= annotations.size());
+  I(touched_lines.size() <= annotations.size());
 
-    copied_lines[i] = false; // reset as we go
+  // Find the lines that we touched but that no other parent copied.
+  std::set<size_t> credit_lines;
+  std::set_difference(touched_lines.begin(), touched_lines.end(),
+                      copied_lines.begin(), copied_lines.end(),
+                      inserter(credit_lines, credit_lines.begin()));
+
+  std::set<size_t>::const_iterator i;
+  for (i = credit_lines.begin(); i != credit_lines.end(); i++) {
+    I(*i >= 0 && *i < annotations.size());
+    if (annotations[*i] == nullid) {
+      L(F("evaluate setting annotations[%d] -> %s, since touched_lines contained %d, copied_lines didn't and annotations[%d] was nullid\n") 
+        % *i % rev % *i % *i);
+      annotations[*i] = rev;
+      annotated_lines_completed++;
+    } else {
+      L(F("evaluate LEAVING annotations[%d] -> %s\n") % *i % annotations[*i]);
+    }
   }
+
+  copied_lines.clear();
+  touched_lines.clear();
 }
 
 void 
@@ -253,8 +273,19 @@ annotate_context::set_copied(int index)
   if (index == -1)
     return;
 
-  I(index >= 0 && index < (int)copied_lines.size());
-  copied_lines[(size_t)index] = true;
+  I(index >= 0 && index < (int)file_lines.size());
+  copied_lines.insert(index);
+}
+
+void 
+annotate_context::set_touched(int index)
+{
+  L(F("annotate_context::set_touched %d\n") % index);
+  if (index == -1)
+    return;
+
+  I(index >= 0 && index <= (int)file_lines.size());
+  touched_lines.insert(index);
 }
 
 
@@ -268,16 +299,11 @@ annotate_context::get_file_lines() const
 bool
 annotate_context::is_complete() const
 {
-  // FIX: cache value as we walk it each go round.
+  if (annotated_lines_completed == annotations.size())
+    return true;
 
-  revision_id nullid;
-  std::vector<revision_id>::const_iterator i;
-  for (i=annotations.begin(); i != annotations.end(); i++) {
-    if (*i == nullid)
-      return false;
-  }
-
-  return true;
+  I(annotated_lines_completed < annotations.size());
+  return false;
 }
 
 
@@ -286,12 +312,10 @@ annotate_context::dump() const
 {
   revision_id nullid;
 
-  std::vector<revision_id>::const_iterator i;
-  for (i = annotations.begin(); i != annotations.end(); i++) {
-    if (*i == nullid)
-      std::cout << "(unassigned)" << std::endl;
-    else 
-      std::cout << *i << std::endl;
+  I(annotations.size() == file_lines.size());
+  for (size_t i=0; i<file_lines.size(); i++) {
+    I(! (annotations[i] == nullid) );
+    std::cout << annotations[i] << ": " << file_lines[i] << std::endl;
   }
 }
 
@@ -361,12 +385,20 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
       acp->set_copied(mapping[i]);
       lcs_src_lines[j] = mapping[i];
       j++;
+    } else {
+      acp->set_touched(mapping[i]);
     }
 
     i++;
   }
   L(F("loop ended with i: %d, j: %d, lcs.size(): %d\n") % i % j % lcs.size());
   I(j == lcs.size());
+
+  // set touched for the rest of the lines in the file
+  while (i < file_interned.size()) {
+    acp->set_touched(mapping[i]);
+    i++;
+  }
 
   // determine the mapping for parent lineage
   L(F("build_parent_lineage: building mapping now\n"));
@@ -428,17 +460,15 @@ do_annotate_node (const annotate_node_work &work_unit,
 
     change_set cs;
     calculate_arbitrary_change_set (*parent, work_unit.node_revision, app, cs);
-
-    file_path parent_fpath = apply_change_set_inverse(cs, work_unit.node_fpath);
-    L(F("file %s in parent revision %s is %s\n") % work_unit.node_fpath % *parent % parent_fpath);
-
-    if (parent_fpath == std::string("")) {
-      // I(work_unit.node_revision added work_unit.node_fid)
-      L(F("revision %s added file %s (file id %s), terminating annotation processing\n") 
-        % work_unit.node_revision % work_unit.node_fpath % work_unit.node_fid);
+    if (cs.rearrangement.added_files.find(work_unit.node_fpath) != cs.rearrangement.added_files.end()) {
+      L(F("file %s added in %s\n") % work_unit.node_fpath % work_unit.node_revision);
       work_unit.annotations->complete(work_unit.node_revision);
       return;
     }
+
+    file_path parent_fpath = apply_change_set_inverse(cs, work_unit.node_fpath);
+    L(F("file %s in parent revision %s is %s\n") % work_unit.node_fpath % *parent % parent_fpath);
+    I(!(parent_fpath == std::string("")));
     file_id parent_fid = find_file_id_in_revision(app, parent_fpath, *parent);
 
     boost::shared_ptr<annotate_lineage_mapping> parent_lineage;
