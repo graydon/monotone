@@ -28,6 +28,8 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
+CRYPTOPP_DLL_TEMPLATE_CLASS AutoSeededX917RNG<DES_EDE3>;
+
 #if defined(NONBLOCKING_RNG_AVAILABLE) || defined(BLOCKING_RNG_AVAILABLE)
 OS_RNG_Err::OS_RNG_Err(const std::string &operation)
 	: Exception(OTHER_ERROR, "OS_Rng: " + operation + " operation failed with error " + 

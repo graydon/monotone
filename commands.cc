@@ -568,6 +568,7 @@ calculate_restricted_revision(app_state & app,
                               revision_set & rev,
                               manifest_map & m_old,
                               manifest_map & m_new,
+                              path_set & missing_files,
                               change_set::path_rearrangement & restricted_work)
 {
   manifest_id old_manifest_id;
@@ -600,7 +601,7 @@ calculate_restricted_revision(app_state & app,
   cs->rearrangement = included;
   restricted_work = excluded;
 
-  build_restricted_manifest_map(new_paths, m_old, m_new, app);
+  build_restricted_manifest_map(new_paths, m_old, m_new, missing_files, app);
   complete_change_set(m_old, m_new, *cs);
 
   calculate_ident(m_new, rev.new_manifest);
@@ -608,6 +609,28 @@ calculate_restricted_revision(app_state & app,
 
   rev.edges.insert(make_pair(old_revision_id,
                              make_pair(old_manifest_id, cs)));
+
+}
+
+static void
+calculate_restricted_revision(app_state & app, 
+                              vector<utf8> const & args,
+                              revision_set & rev,
+                              manifest_map & m_old,
+                              manifest_map & m_new,
+                              change_set::path_rearrangement & restricted_work)
+{
+  path_set missing_files;
+  calculate_restricted_revision(app, args, rev, m_old, m_new, missing_files, restricted_work);
+
+  for (path_set::const_iterator i = missing_files.begin(); 
+       i != missing_files.end(); ++i)
+    {
+      W(F("missing %s") % (*i)());
+    }
+
+  N(missing_files.size() == 0, 
+    F("%d missing files\n") % missing_files.size());
 }
 
 static void

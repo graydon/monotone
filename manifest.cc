@@ -63,19 +63,25 @@ void
 build_restricted_manifest_map(path_set const & paths,
                               manifest_map const & m_old, 
                               manifest_map & m_new, 
+                              path_set & missing_files,
                               app_state & app)
 {
   m_new.clear();
   inodeprint_map ipm;
+
   if (in_inodeprints_mode())
     {
       data dat;
       read_inodeprints(dat);
       read_inodeprint_map(dat, ipm);
     }
+
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      if (app.restriction_includes(*i))
+      bool exists = file_exists(*i);
+      bool included = app.restriction_includes(*i);
+
+      if (included && exists)
         {
           // compute the current sha1 id for included files
           // we might be able to avoid it, if we have an inode fingerprint...
@@ -94,11 +100,19 @@ build_restricted_manifest_map(path_set const & paths,
                 }
             }
           // ...ah, well, no good fingerprint, just check directly.
-          N(fs::exists(mkpath((*i)())),
-            F("file disappeared but exists in new manifest: %s") % (*i)());
           hexenc<id> ident;
           calculate_ident(*i, ident, app.lua);
           m_new.insert(manifest_entry(*i, file_id(ident)));
+        }
+      else if (included && !exists)
+        {
+          missing_files.insert(*i);
+        
+          // copy the old manifest entry for missing files
+          manifest_map::const_iterator old = m_old.find(*i);
+          N(old != m_old.end(),
+            F("file missing but does not exist in old manifest: %s") % *i);
+          m_new.insert(*old);
         }
       else
         {

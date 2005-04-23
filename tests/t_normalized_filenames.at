@@ -1,0 +1,25 @@
+AT_SETUP([normalized filenames])
+MONOTONE_SETUP
+
+AT_DATA(foo, [blah blah
+])
+# The UI used to fix these, while later code did not, so let's check
+# the inner code directly.
+AT_DATA(MT/work, [add_file "."
+])
+AT_CHECK(MONOTONE cat manifest, [3], [ignore], [ignore])
+
+AT_DATA(MT/work, [add_file "./bar"
+])
+AT_DATA(bar, [blah blah
+])
+
+AT_CHECK(MONOTONE cat manifest, [], [stdout], [ignore])
+AT_CHECK(grep -q ' bar' stdout)
+AT_CHECK(MONOTONE cat revision, [], [stdout], [ignore])
+AT_CHECK(grep -q '"bar"' stdout)
+AT_CHECK(MONOTONE commit --message=foo --branch=foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE cat revision `BASE_REVISION`, [], [stdout], [ignore])
+AT_CHECK(grep -q '"bar"' stdout)
+
+AT_CLEANUP

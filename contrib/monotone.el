@@ -206,6 +206,15 @@ This permits quick switches between the classic vc and monotone keymaps."
   "Return the parent directory of FILE."
   (file-name-directory (directory-file-name file)))
 
+(defun monotone-MT-revision ()
+  "The current revision as read from 'MT/revision'."
+  (let ((dir (monotone-find-MT-top)))
+    (when (not dir)
+      (error "No MT top"))
+    (save-window-excursion
+      (find-file (concat dir "/MT/revision"))
+      (buffer-substring 1 41))))
+
 (defun monotone-find-MT-top (&optional path)
   "Find the directory which contains the 'MT' directory.
 Optional argument PATH ."
@@ -253,9 +262,16 @@ Nothing for now."
 
 ;;(define-derived-mode monotone-shell-mode comint-mode "Monotone")
 
+(defun monotone-string-chomp (str)
+  "Remove the last char if it is a newline."
+  (when (char-equal 10 (elt str (1- (length str))))
+    (setq str (substring str 0 (1- (length str)))))
+  str)
+;; (monotone-string-chomp "aaa")
+
 (defun monotone-process-sentinel (process event)
   "This sentinel suppresses the text from PROCESS on EVENT."
-  (message "monotone: process %s received %s" process event)
+  (message "monotone: process %s received %s" process (monotone-string-chomp event))
   nil)
 
 ;; Run a monotone command
@@ -280,9 +296,9 @@ Nothing for now."
       (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
         (error "Unable to find the MT top directory")))
     (setq monotone-MT-top mt-top)
-    ;; show the window
-    ;;(if (not (equal (current-buffer) mt-buf))
-    (switch-to-buffer-other-window mt-buf) ;;)
+    ;; show buffer in a window
+    (if (not (equal (current-buffer) mt-buf))
+      (switch-to-buffer-other-window mt-buf))
     (set-buffer mt-buf)
     ;; still going?
     (when (get-buffer-process mt-buf)
@@ -799,10 +815,19 @@ Grab the ids you want from the buffer and then yank back when needed."
     ;;
     map))
 
-(when monotone-menu-name
-  (define-key-after
-    (lookup-key global-map [menu-bar])
-    [monotone] (cons monotone-menu-name monotone-menu)))
+;; People have reported problems with the menu.
+;; dont report an error for now.
+(let ((ok nil))
+  (condition-case nil
+      (progn
+        (when monotone-menu-name
+          (define-key-after
+            (lookup-key global-map [menu-bar])
+            [monotone] (cons monotone-menu-name monotone-menu)))
+        (setq ok t))
+    (error nil))
+  (when (not ok)
+    (message "Menu bar failed to load.")))
 
 (provide 'monotone)
 ;;; monotone.el ends here

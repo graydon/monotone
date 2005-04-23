@@ -45,6 +45,8 @@ bool find_working_copy(fs::path const & search_root,
 fs::path mkpath(std::string const & s);
 
 std::string get_homedir();
+fs::path localized(file_path const & fp);
+fs::path localized(local_path const & fp);
 std::string absolutify(std::string const & path);
 std::string tilde_expand(std::string const & path);
 
