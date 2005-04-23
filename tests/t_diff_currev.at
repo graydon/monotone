@@ -14,14 +14,12 @@ AT_CHECK(MONOTONE --branch=testbranch commit --message blah, [], [ignore], [igno
 parent=`BASE_REVISION`
 
 # should return 'no changes' (i.e. same as diff without --revision=<current>)
-AT_CHECK(MONOTONE diff --revision=$parent, [], [stdout], [ignore])
-AT_CHECK(grep -q 'no changes' stdout)
+CHECK_SAME_STDOUT(MONOTONE diff, MONOTONE diff --revision=$parent)
 
 AT_DATA(foo1, [foo changed file
 ])
 
 # should show local changes against wc's base rev
-AT_CHECK(MONOTONE diff --revision=$parent, [], [stdout], [ignore])
-AT_CHECK(grep -q 'foo changed file' stdout)
+CHECK_SAME_STDOUT(MONOTONE diff, MONOTONE diff --revision=$parent)
 
 AT_CLEANUP

@@ -1,5 +1,9 @@
 2005-04-23  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_diff_currev.at: Use CHECK_SAME_STDOUT.
+
+2005-04-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* tests/t_diff_currev.at: New test.
 	* testsuite.at: Add new test.
 
