@@ -78,7 +78,7 @@ build_restricted_manifest_map(path_set const & paths,
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      bool exists = fs::exists(mkpath((*i)()));
+      bool exists = file_exists(*i);
       bool included = app.restriction_includes(*i);
 
       if (included && exists)

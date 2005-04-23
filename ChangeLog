@@ -1,3 +1,8 @@
+2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.cc (build_restricted_manifest_map): Fixup after merge
+	-- use file_exists instead of fs::exists.
+
 2005-04-22  Derek Scherger  <derek@echologic.com>
 
 	* manifest.{cc,hh} (build_restricted_manifest_map): keep and
