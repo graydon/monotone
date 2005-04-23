@@ -286,18 +286,6 @@ app_state::set_author(utf8 const & a)
 }
 
 void
-app_state::set_date(utf8 const & d)
-{
-  date = d;
-}
-
-void
-app_state::set_author(utf8 const & a)
-{
-  author = a;
-}
-
-void
 app_state::set_depth(long d)
 {
   N(d > 0,

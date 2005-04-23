@@ -1,3 +1,9 @@
+2005-04-23  Derek Scherger  <derek@echologic.com>
+
+	* app_state.cc:
+	* database.cc:
+	* file_io.{cc, hh}: fix bad merge
+
 2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
 
 	* database.cc (put_key): Check for existence of keys with
