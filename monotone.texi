@@ -1457,7 +1457,7 @@ into the database.
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit --message='initial checkin of project'
+$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit --message="initial checkin of project"
 monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
@@ -1989,7 +1989,7 @@ She commits her work:
 
 @smallexample
 @group
-$ monotone commit --message='interrupt implementation of src/banana.c'
+$ monotone commit --message="interrupt implementation of src/banana.c"
 monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
@@ -2020,7 +2020,7 @@ Thus when Abe commits, he unknowingly creates a fork:
 
 @smallexample
 @group
-$ monotone commit --message='interrupt implementation of src/apple.c'
+$ monotone commit --message="interrupt implementation of src/apple.c"
 @end group
 @end smallexample
 
@@ -2253,7 +2253,7 @@ Some selector examples are helpful in clarifying the idea:
 Revision IDs beginning with the string @code{a432}
 @item graydon@@pobox.com/2004-04
 Revisions written by @code{graydon@@pobox.com} in April 2004.
-@item 'jrh@@example.org/2 weeks ago'
+@item "jrh@@example.org/2 weeks ago"
 Revisions written by @code{jrh@@example.org} 2 weeks ago.
 @item graydon/net.venge.monotone.win32/yesterday
 Revisions in the @code{net.venge.monotone.win32} branch, written by
@@ -2969,13 +2969,13 @@ directory.
 @item
 @smallexample
 @group
-$ cvs commit -m 'log message'
+$ cvs commit -m "log message"
 @end group
 @end smallexample
 @tab
 @smallexample
 @group
-$ monotone commit --message='log message'
+$ monotone commit --message="log message"
 $ monotone push www.foo.com com.foo.wobbler
 @end group
 @end smallexample
