@@ -5,6 +5,10 @@
 
 #include <string>
 #include <sstream>
+#include <deque>
+#include <set>
+
+#include <boost/shared_ptr.hpp>
 
 #include "platform.hh"
 #include "vocab.hh"
@@ -14,147 +18,264 @@
 #include "app_state.hh"
 #include "manifest.hh"
 #include "transforms.hh"
+#include "lcs.hh"
 #include "annotate.hh"
+
+
+/* 
+   file of interest, 'foo', is made up of 6 lines, while foo's 
+   parent (foo') is 5 lines:
+
+   foo     foo'
+   A       A
+   B       z
+   C       B
+   D       C
+   E       y
+   F
+
+   The longest common subsequence between foo and foo' is
+   [A,B,C] and we know that foo' lines map to foo lines like
+   so:
+   
+   foo'
+   A    0 -> 0
+   z    1 -> (none)
+   B    2 -> 1
+   C    3 -> 2
+   y    4 -> (none)
+   
+   How do we know?  Because we walk the file along with the LCS,
+   having initialized the copy_count at 0, and do:
+
+   i = j = copy_count = 0;
+   while (i < foo'.size()) {
+     map[i] = -1;
+     if (foo'[i] == LCS[j]) { 
+       map[i] = lcs_src_lines[j];
+       i++; j++; copy_count++;
+       continue;
+     }
+     i++;
+   }
+
+   If we're trying to annotate foo, we want to assign each line
+   of foo that we can't find in the LCS to the foo revision (since 
+   it can't have come from further back in time.)  So at each edge
+   we do the following:
+
+   1. build the LCS
+   2. walk over the child (foo) and the LCS simultaneously, using the
+      lineage map of the child and the LCS to assign
+      blame as we go for lines that aren't in the LCS.  Also generate
+      a vector, lcs_src_lines, with the same length as LCS whose 
+      elements are the line in foo which that LCS entry represents. 
+      So for foo, it would be [0, 1, 2] because [A,B,C] is the first
+      3 elements.
+   3. walk over the parent (foo'), using our exising lineage map and the 
+      LCS, to build the parent's lineage map (which will be used
+      at the next phase.)
+
+*/   
+
+class annotate_lineage_mapping;
+
+class annotate_context {
+public:
+  annotate_context(file_id fid, app_state &app);
+
+  boost::shared_ptr<annotate_lineage_mapping> initial_lineage() const;
+
+  /// credit any remaining unassigned lines to rev
+  void complete(revision_id rev);
+
+  /// credit any uncopied lines (as recorded in copied_lines) to
+  /// rev, and reset copied_lines.
+  void evaluate(revision_id rev);
+
+  void set_copied(int index);
+
+  void set_root_revision(revision_id rev) { root_revision = rev; }
+  revision_id get_root_revision() const { return root_revision; }
+
+  /// return an immutable reference to our vector of string data for external use
+  const std::vector<std::string>& get_file_lines() const;
+
+  /// return true if we have no more unassigned lines
+  bool is_complete() const;
+
+  void dump() const;
+
+private:
+  std::vector<std::string> file_lines;
+  std::vector<long> file_interned;
+  std::vector<revision_id> annotations;
+
+  // given a node and it's set of parents, we need to keep track
+  // of which of our lines was copied back by *some* node -> parent
+  // transition. we do it here.
+  std::vector<bool> copied_lines;
+
+  revision_id root_revision;
+};
+
+
+
+/*
+  An annotate_lineage_mapping tells you, for each line of a file, where in the 
+  ultimate descendent of interest (UDOI) the line came from (a line not
+  present in the UDOI is represented as -1).
+*/
+class annotate_lineage_mapping {
+public:
+  annotate_lineage_mapping(const file_data &data);
+  annotate_lineage_mapping(const std::vector<std::string> &lines);
+
+  /// need a better name.  does the work of setting copied bits in the context object.
+  boost::shared_ptr<annotate_lineage_mapping> 
+  build_parent_lineage(boost::shared_ptr<annotate_context> acp, revision_id parent_rev, const file_data &parent_data) const;
+
+private:
+  void init_with_lines(const std::vector<std::string> &lines);
+
+  static interner<long> in; // FIX, testing hack 
+
+  //std::vector<std::string> file_lines;
+  std::vector<long> file_interned;
+
+  // same length as file_lines. if file_lines[i] came from line 4, mapping[i] = 4
+  std::vector<int> mapping;
+};
+
+
+interner<long> annotate_lineage_mapping::in;
+
+
+// a set of data that specifies the input data needed to process 
+// the annotation for a given childrev -> parentrev edge.
+struct annotate_node_work {
+  annotate_node_work (boost::shared_ptr<annotate_context> annotations_,
+                      boost::shared_ptr<annotate_lineage_mapping> lineage_,
+                      revision_id node_revision_, file_id node_fid_, file_path node_fpath_)
+    : annotations(annotations_), 
+      lineage(lineage_),
+      node_revision(node_revision_), 
+      node_fid(node_fid_), 
+      node_fpath(node_fpath_)
+  {}
+
+  boost::shared_ptr<annotate_context> annotations;
+  boost::shared_ptr<annotate_lineage_mapping> lineage;
+  revision_id node_revision;
+  file_id     node_fid;
+  file_path   node_fpath;
+};
+
+
+
 
 
 annotate_context::annotate_context(file_id fid, app_state &app)
 {
-  // get the file data (and store it here?)
+  // initialize file_lines
   file_data fpacked;
-  data funpacked;
   app.db.get_file_version(fid, fpacked);
-  //unpack(fpacked.inner(), funpacked);
-  funpacked = fpacked.inner();
-  fdata = funpacked();
+  std::string encoding = default_encoding; // FIXME
+  split_into_lines(fpacked.inner()(), encoding, file_lines);
+  L(F("annotate_context::annotate_context initialized with %d file lines\n") % file_lines.size());
+
+  // initialize file_interned
+  interner<long> in;
+  file_interned.clear();
+  file_interned.reserve(file_lines.size());
+  file_interned.clear();
+  for (size_t i = 0; i < file_lines.size(); i++) {
+    file_interned.push_back(in.intern(file_lines[i]));
+  }
+  L(F("annotate_context::annotate_context initialized with %d entries in file_interned\n") % file_interned.size());
+
+  // initialize annotations
+  revision_id nullid;
+  annotations.clear();
+  annotations.reserve(file_lines.size());
+  annotations.insert(annotations.begin(), file_lines.size(), nullid);
+  L(F("annotate_context::annotate_context initialized with %d entries in annotations\n") % annotations.size());
+
+  // initialize copied_lines
+  copied_lines.clear();
+  copied_lines.reserve(file_lines.size());
+  copied_lines.insert(copied_lines.begin(), file_lines.size(), false);
 }
 
 
-void
-annotate_context::copy_block(off_t start, off_t end)
+boost::shared_ptr<annotate_lineage_mapping> 
+annotate_context::initial_lineage() const
 {
-  L(F("annotate_context::copy_block [%d, %d)\n") % start % end);
-  pending_copy_blocks.insert(std::make_pair(start, end));
+  boost::shared_ptr<annotate_lineage_mapping> res(new annotate_lineage_mapping(file_lines));
+  return res;
 }
 
 
-void
-annotate_context::evaluate(revision_id responsible_revision)
+void 
+annotate_context::complete(revision_id rev)
 {
-  pack_blockset(pending_copy_blocks);
-
-  // any block that is not either copied or already assigned is assigned to rev.
-  // So build a set of all copies and assignments and pack it, then walk over it 
-  // to find the gaps.
-  std::set<block, lt_block> copied_or_assigned;
-
-  std::set<block, lt_block>::const_iterator i;
-  std::set<block, lt_block>::const_iterator next;
-
-  for (i = pending_copy_blocks.begin(); i != pending_copy_blocks.end(); i++) {
-    copied_or_assigned.insert(*i);
+  revision_id nullid;
+  std::vector<revision_id>::iterator i;
+  for (i=annotations.begin(); i != annotations.end(); i++) {
+    if (*i == nullid) 
+      *i = rev;
   }
-  std::set< std::pair<block, revision_id> >::const_iterator j;
-  for (j = assigned_blocks.begin(); j != assigned_blocks.end(); j++) {
-    copied_or_assigned.insert(j->first);
-  }
-  L(F("packing copied_or_assigned\n"));
-  pack_blockset(copied_or_assigned);
-  if (copied_or_assigned.size() > 0) {
-    i = copied_or_assigned.begin();
-    if (i->first > 0) {
-      block b(0, i->first);
-      L(F("assigning block [%d, %d) <- %s\n") % b.first % b.second % responsible_revision);
-      assigned_blocks.insert(std::make_pair(b, responsible_revision));
-    }
-    next = i;
-    next++;
-    while (next != copied_or_assigned.end()) {
-      I(i != copied_or_assigned.end());
-      I(i->second <= next->first);
-      if (i->second < next->first) {
-        block b(i->second, next->first);
-        L(F("assigning block [%d, %d) <- %s\n") % b.first % b.second % responsible_revision);
-        assigned_blocks.insert(std::make_pair(b, responsible_revision));
-      }
-      i++;
-      next++;
-    }
-
-    if (fdata.size() > i->second) {
-      block b(i->second, fdata.size());
-      L(F("assigning block [%d, %d) <- %s\n") % b.first % b.second % responsible_revision);
-      assigned_blocks.insert(std::make_pair(b, responsible_revision));
-    }
-  }
-
-  pending_copy_blocks.clear();
 }
 
-
-void
-annotate_context::complete(revision_id initial_revision)
+void 
+annotate_context::evaluate(revision_id rev)
 {
-  if (fdata.size() == 0) 
+  revision_id nullid;
+  I(copied_lines.size() == annotations.size());
+  for (size_t i=0; i<copied_lines.size(); i++) {
+    if (!copied_lines[i] && annotations[i] == nullid) {
+      L(F("evaluate setting annotations[%d] -> %s, since copied_lines[%d] was %d and annotations[%d] was %s\n") 
+        % i % rev % i % copied_lines[i] % i % annotations[i]);
+      annotations[i] = rev;
+    } else {
+      L(F("evaluate LEAVING annotations[%d] -> %s, since copied_lines[%d] was %d and annotations[%d] was %s\n") 
+        % i % annotations[i] % i % copied_lines[i] % i % annotations[i]);
+    }
+
+    copied_lines[i] = false; // reset as we go
+  }
+}
+
+void 
+annotate_context::set_copied(int index)
+{
+  L(F("annotate_context::set_copied %d\n") % index);
+  if (index == -1)
     return;
 
-  std::set< std::pair<block, revision_id> >::const_iterator i;
-  std::set< std::pair<block, revision_id> >::const_iterator next;
+  I(index >= 0 && index < (int)copied_lines.size());
+  copied_lines[(size_t)index] = true;
+}
 
-  i = assigned_blocks.begin();
 
-  if (i == assigned_blocks.end())
-    return;
-
-  if (i->first.first > 0)
-    i = assigned_blocks.insert(i, std::make_pair(std::make_pair(0, i->first.first), initial_revision));
-
-  next = i; next++;
-  while (next != assigned_blocks.end()) {
-    I(i->first.second <= next->first.first);
-
-    if (i->first.second != next->first.first) {
-      i = assigned_blocks.insert(i, std::make_pair(std::make_pair(i->first.second, next->first.first), initial_revision));
-      next = i;
-      next++;
-      continue;
-    }
-        
-    i++;
-    next++;
-  }
-
-  if (i->first.second < fdata.size())
-    assigned_blocks.insert(std::make_pair(std::make_pair(i->first.second, fdata.size()), initial_revision));
+const std::vector<std::string>& 
+annotate_context::get_file_lines() const
+{
+  return file_lines;
 }
 
 
 bool
 annotate_context::is_complete() const
 {
-  if (fdata.size() == 0) 
-    return true;
+  // FIX: cache value as we walk it each go round.
 
-  std::set< std::pair<block, revision_id> >::const_iterator i;
-  std::set< std::pair<block, revision_id> >::const_iterator next;
-
-  i = assigned_blocks.begin();
-
-  if (i == assigned_blocks.end())
-    return false;
-  if (i->first.first > 0)
-    return false;
-
-  next = i; next++;
-  while (next != assigned_blocks.end()) {
-    I(i->first.second <= next->first.first);
-    if (i->first.second != next->first.first)
+  revision_id nullid;
+  std::vector<revision_id>::const_iterator i;
+  for (i=annotations.begin(); i != annotations.end(); i++) {
+    if (*i == nullid)
       return false;
-    i++;
-    next++;
   }
-
-  if (i->first.second < fdata.size())
-    return false;
 
   return true;
 }
@@ -163,225 +284,111 @@ annotate_context::is_complete() const
 void
 annotate_context::dump() const
 {
-  std::set< std::pair<block, revision_id> >::const_iterator i;
-  for (i = assigned_blocks.begin(); i != assigned_blocks.end(); i++) {
-    L(F("annotate_context::dump [%d, %d) <- %s\n") % i->first.first % i->first.second % i->second);
+  revision_id nullid;
+
+  std::vector<revision_id>::const_iterator i;
+  for (i = annotations.begin(); i != annotations.end(); i++) {
+    if (*i == nullid)
+      std::cout << "(unassigned)" << std::endl;
+    else 
+      std::cout << *i << std::endl;
   }
 }
 
+
+annotate_lineage_mapping::annotate_lineage_mapping(const file_data &data)
+{
+  // split into lines
+  std::vector<std::string> lines;
+  std::string encoding = default_encoding; // FIXME
+  split_into_lines (data.inner()().data(), encoding, lines);
+
+  init_with_lines(lines);
+}
+
+annotate_lineage_mapping::annotate_lineage_mapping(const std::vector<std::string> &lines)
+{
+  init_with_lines(lines);
+}
 
 void
-annotate_context::pack_blockset(std::set<block, lt_block> &blocks)
+annotate_lineage_mapping::init_with_lines(const std::vector<std::string> &lines)
 {
-  L(F("annotate_context::pack_blockset blocks.size() == %d\n") % blocks.size());
+  file_interned.clear();
+  file_interned.reserve(lines.size());
+  mapping.clear();
+  mapping.reserve(lines.size());
 
-  if (blocks.size() < 2)
-    return;
+  //interner<long> in;
 
-  std::set<block, lt_block>::iterator i, next;
-  i = blocks.begin();
-  next = i;
-  next++;
+  int count;
+  std::vector<std::string>::const_iterator i;
+  for (count=0, i = lines.begin(); i != lines.end(); i++, count++) {
+    file_interned.push_back(in.intern(*i));
+    mapping.push_back(count);
+  }
+  L(F("annotate_lineage_mapping::init_with_lines  ending with %d entries in mapping\n") % mapping.size());
+}
 
-  while (i != blocks.end() && next != blocks.end()) {
-    L(F("annotate_context::pack_blockset test [%d, %d) and [%d, %d) for overlap\n")
-      % i->first % i->second % next->first % next->second);
 
-    if (i->second > next->first) {
-      L(F("merging\n"));
-      if (i->second < next->second) {
-        block newb(i->first, next->second);
-        L(F("new block is [%d, %d)\n") % newb.first % newb.second);
-        blocks.erase(next);
-        blocks.erase(i);
-        i = blocks.insert(i, newb);
-        next = i;
-        next++;
-        continue;
-      } else {
-        L(F("next is contained in i, deleting next\n"));
-        blocks.erase(next);
-        next = i;
-        next++;
-        continue;
-      }
+boost::shared_ptr<annotate_lineage_mapping>
+annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_context> acp, 
+                                                revision_id parent_rev, 
+                                                const file_data &parent_data) const
+{
+  boost::shared_ptr<annotate_lineage_mapping> parent_lineage(new annotate_lineage_mapping(parent_data));
+
+  std::vector<long> lcs;
+  longest_common_subsequence(file_interned.begin(), 
+                             file_interned.end(),
+                             parent_lineage->file_interned.begin(), 
+                             parent_lineage->file_interned.end(),
+                             std::min(file_interned.size(), parent_lineage->file_interned.size()),
+                             std::back_inserter(lcs));
+
+  L(F("build_parent_lineage: file_lines.size() == %d, parent.file_lines.size() == %d, lcs.size() == %d\n")
+    % file_interned.size() % parent_lineage->file_interned.size() % lcs.size());
+
+  // do the copied lines thing for our annotate_context
+  std::vector<long> lcs_src_lines;
+  lcs_src_lines.reserve(lcs.size());
+  size_t i, j;
+  i = j = 0;
+  while (i < file_interned.size() && j < lcs.size()) {
+    L(F("file_interned[%d]: %ld    lcs[%d]: %ld\n") % i % file_interned[i] % j % lcs[j]);
+
+    if (file_interned[i] == lcs[j]) {
+      acp->set_copied(mapping[i]);
+      lcs_src_lines[j] = mapping[i];
+      j++;
     }
 
-    L(F("incrementing\n"));
     i++;
-    next++;
   }
-}
+  L(F("loop ended with i: %d, j: %d, lcs.size(): %d\n") % i % j % lcs.size());
+  I(j == lcs.size());
 
-
-
-annotate_lineage::annotate_lineage()
-  : current_len(0)
-{
-  // do nothing, we'll get built by calls to copy() and insert() using the
-  // child lineage
-}
-
-annotate_lineage::annotate_lineage(const block &initialfileblock)
-  : current_len(initialfileblock.second)
-{
-  blocks.insert(lineage_block(initialfileblock, initialfileblock));
-}
-
-void 
-annotate_lineage::copy(boost::shared_ptr<annotate_context> acp,
-                       boost::shared_ptr<annotate_lineage> child, block b)
-{
-  std::set<lineage_block, lt_lineage_block> child_block_view = child->translate_block(b);
-
-  std::set<lineage_block, lt_lineage_block>::const_iterator i;
-  for (i=child_block_view.begin(); i != child_block_view.end(); i++) {
-    off_t blen = i->local_block.second - i->local_block.first;
-    blocks.insert(lineage_block(std::make_pair(current_len, current_len+blen),
-                                i->final_block));
-
-    L(F("annotate_lineage::copy now mapping [%d, %d) -> [%d, %d)\n") 
-      % current_len % (current_len + blen) % i->final_block.first % i->final_block.second);
-
-    current_len += blen;
-    if (i->final_block.second > i->final_block.first)
-      acp->copy_block(i->final_block.first, i->final_block.second);
-  }
-}
-
-void 
-annotate_lineage::insert(off_t length)
-{
-  L(F("annotate::insert called with length %d and current_len %d\n") % length % current_len);
-
-  blocks.insert(lineage_block(std::make_pair(current_len, current_len + length),
-                              std::make_pair(0, 0)));
-
-  L(F("annotate_lineage::insert now mapping [%d, %d) -> [0, 0)\n") 
-    % current_len % (current_len + length));
-
-  current_len += length;
-}
-
-std::set<lineage_block, lt_lineage_block> 
-annotate_lineage::translate_block(block b)
-{
-  I(b.second <= current_len);
-
-  std::set<lineage_block, lt_lineage_block> result;
-
-  std::set<lineage_block, lt_lineage_block>::const_iterator i;
-  for (i=blocks.begin(); i != blocks.end(); i++) {
-    L(F("annotate_lineage::translate_block b [%d, %d), i [%d, %d) -> [%d, %d)\n") 
-      % b.first % b.second % i->local_block.first % i->local_block.second % i->final_block.first % i->final_block.second);
-
-    if (i->local_block.second < b.first) { // b comes after i
-      L(F("b after i -- continue\n"));
-      continue;
-    }
-
-    if (i->local_block.first >= b.second) { // b comes before i
-      // local blocks are sorted, so this means no match
-      L(F("b before i -- break\n"));
-      break;
-    }
-
-    // we must have copied all earlier portions of b already
-    I(b.first >= i->local_block.first);
-
-    bool final_block_exists = i->final_block.second > i->final_block.first;
-
-    block bc, bf;
-    off_t final_delta_start;
-
-    if (b.first > i->local_block.first) {
-      bc.first = b.first;
-      final_delta_start = b.first - i->local_block.first;
+  // determine the mapping for parent lineage
+  L(F("build_parent_lineage: building mapping now\n"));
+  i = j = 0;
+  while (i < parent_lineage->file_interned.size() && j < lcs.size()) {
+    if (parent_lineage->file_interned[i] == lcs[j]) {
+      parent_lineage->mapping[i] = lcs_src_lines[j];
+      j++;
     } else {
-      bc.first = i->local_block.first;
-      final_delta_start = 0;
+      parent_lineage->mapping[i] = -1;
     }
-
-    if (b.second < i->local_block.second) {
-      bc.second = b.second;
-      bf = i->final_block;
-      if (final_block_exists) {
-        bf.first += final_delta_start;
-        bf.second -= i->local_block.second - b.second;
-      }
-
-      result.insert(lineage_block(bc, bf));
-      break;
-    } else {
-      bc.second = i->local_block.second;
-      bf = i->final_block;
-      if (final_block_exists)
-        bf.first += final_delta_start;
-      result.insert(lineage_block(bc, bf));
-      b.first = i->local_block.second;
-    }
+    L(F("mapping[%d] -> %d\n") % i % parent_lineage->mapping[i]);
+    
+    i++;
   }
-
-  return result;
-}
-
-
-
-
-boost::shared_ptr<annotate_lineage>
-apply_delta_annotation (const annotate_node_work &work, file_delta d)
-{
-  delta dd;
-  //unpack(d.inner(), dd);
-  dd = d.inner();
-  std::string delta_string = dd();
-  L(F("file delta to child %s:\n%s\n") % work.node_revision % dd);
-
-  boost::shared_ptr<annotate_lineage> parent_lineage(new annotate_lineage());
-
-  // parse the delta; consists of C blocks and I blocks
-  // patterned on xdelta.cc:apply_delta()
-
-  std::istringstream del(delta_string);
-  for (char c = del.get(); c == 'I' || c == 'C'; c = del.get()) {
-    I(del.good());
-    if (c == 'I') {
-      std::string::size_type len = std::string::npos;
-      del >> len;
-      I(del.good());
-      I(len != std::string::npos);
-      //string tmp;
-      //tmp.reserve(len);
-      I(del.get(c).good());
-      I(c == '\n');
-
-      parent_lineage->insert(len);
-
-      while (len--) {
-        I(del.get(c).good());
-        //tmp += c;
-      }
-      I(del.get(c).good());
-      I(c == '\n');
-            
-      // do our thing with the string tmp?
-
-    } else { // c == 'C'
-      std::string::size_type pos = std::string::npos, len = std::string::npos;
-      del >> pos >> len;
-      I(del.good());
-      I(len != std::string::npos);
-      I(del.get(c).good());
-      I(c == '\n');
-
-      parent_lineage->copy(work.annotations, work.lineage, std::make_pair(pos, pos + len));
-    }
-  }
+  I(j == lcs.size());
 
   return parent_lineage;
 }
 
-file_id
+
+static file_id
 find_file_id_in_revision(app_state &app, file_path fpath, revision_id rid)
 {
   // find the version of the file requested
@@ -395,7 +402,7 @@ find_file_id_in_revision(app_state &app, file_path fpath, revision_id rid)
   return fid;
 }
 
-void
+static void
 do_annotate_node (const annotate_node_work &work_unit, 
                   app_state &app,
                   std::deque<annotate_node_work> &nodes_to_process,
@@ -434,12 +441,15 @@ do_annotate_node (const annotate_node_work &work_unit,
     }
     file_id parent_fid = find_file_id_in_revision(app, parent_fpath, *parent);
 
-    boost::shared_ptr<annotate_lineage> parent_lineage;
+    boost::shared_ptr<annotate_lineage_mapping> parent_lineage;
 
     if (! (work_unit.node_fid == parent_fid)) {
-      file_delta delta;
-      app.db.get_file_delta(parent_fid, work_unit.node_fid, delta);
-      parent_lineage = apply_delta_annotation(work_unit, delta);
+      file_data data;
+      app.db.get_file_version(parent_fid, data);
+
+      parent_lineage = work_unit.lineage->build_parent_lineage(work_unit.annotations,
+                                                               work_unit.node_revision,
+                                                               data);
     } else {
       parent_lineage = work_unit.lineage;
     }
@@ -456,8 +466,46 @@ do_annotate_node (const annotate_node_work &work_unit,
 }
 
 
+void 
+do_annotate (app_state &app, file_path fpath, file_id fid, revision_id rid)
+{
+  L(F("annotating file %s with id %s in revision %s\n") % fpath % fid % rid);
+
+  // get the file length...
+  //file_data fdata;
+  //app.db.get_file_version(fid, fdata);
+    
+  boost::shared_ptr<annotate_context> acp(new annotate_context(fid, app));
+  boost::shared_ptr<annotate_lineage_mapping> lineage = acp->initial_lineage();
+
+  // build node work unit
+  std::deque<annotate_node_work> nodes_to_process;
+  std::set<revision_id> nodes_seen;
+  annotate_node_work workunit(acp, lineage, rid, fid, fpath);
+  nodes_to_process.push_back(workunit);
+
+  while (nodes_to_process.size() && !acp->is_complete()) {
+    annotate_node_work work = nodes_to_process.front();
+    nodes_to_process.pop_front();
+    do_annotate_node(work, app, nodes_to_process, nodes_seen);
+  }
+  if (!acp->is_complete()) {
+    L(F("do_annotate acp remains incomplete after processing all nodes\n"));
+    revision_id null_revision;
+    I(!(acp->get_root_revision() == null_revision));
+    acp->complete(acp->get_root_revision());
+  }
+
+  acp->dump();
+  //boost::shared_ptr<annotation_formatter> frmt(new annotation_text_formatter()); 
+  //write_annotations(acp, frmt); // automatically write to stdout, or make take a stream argument?
+}
+
+
+/*
 void
 write_annotations (boost::shared_ptr<annotate_context> acp, 
                    boost::shared_ptr<annotation_formatter> frmt) 
 {
 }
+*/
