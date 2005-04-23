@@ -149,13 +149,16 @@ verify(local_path & val)
         
     }
   
+  // save back the normalized string
+  val.s = p.string();
+
   val.ok = true;
 }
 
 inline void 
 verify(file_path & val)
 {
-  static std::set<std::string> known_good;
+  static std::map<std::string, std::string> known_good;
 
   if (val.ok)
     return;
@@ -166,8 +169,11 @@ verify(file_path & val)
       verify(loc);
       N(!book_keeping_file(loc),
         F("prohibited book-keeping path in '%s'") % val);
-      known_good.insert(val());
+      const std::string & normalized_val = loc();
+      known_good.insert(std::make_pair(val(), normalized_val));
     }
+
+  val.s = known_good.find(val())->second;
   
   val.ok = true;
 }

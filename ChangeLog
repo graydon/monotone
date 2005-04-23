@@ -1,5 +1,12 @@
 2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
 
+	* vocab.cc (verify(file_path), verify(local_path)): Normalize
+	paths on the way in.
+	* tests/t_normalized_filenames.at: Fix to match behavior
+	eventually declared "correct".
+
+2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
+
 	* vocab.{cc,hh}: Make verify functions public, make ATOMIC(foo)'s
 	verify function a friend of foo, add ATOMIC_NOVERIFY macro, add
 	long comment explaining all this.
