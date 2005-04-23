@@ -1,3 +1,9 @@
+2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.{cc,hh} (localized): Move from here...
+	* transforms.{cc,hh} (localized): ...to here.  Add lots of gunk to
+	avoid calling iconv whenever possible.
+
 2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
 
 	* manifest.cc (build_restricted_manifest_map): Fixup after merge

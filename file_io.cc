@@ -163,38 +163,6 @@ get_homedir()
 #endif
 }
 
-
-inline static fs::path 
-localized_impl(string const & utf)
-{
-  fs::path tmp = mkpath(utf), ret;
-  for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
-    {
-      external ext;
-      utf8_to_system(utf8(*i), ext);
-      ret /= mkpath(ext());
-    }
-  return ret;
-}
-
-fs::path 
-localized(file_path const & fp)
-{
-  return localized_impl(fp());
-}
-
-fs::path 
-localized(local_path const & lp)
-{
-  return localized_impl(lp());
-}
-
-static fs::path
-localized(utf8 const & utf)
-{
-  return localized_impl(utf());
-}
-
 string 
 absolutify(string const & path)
 {

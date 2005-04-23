@@ -170,6 +170,10 @@ void utf8_to_system(utf8 const & utf, external & system);
 void ace_to_utf8(ace const & ac, utf8 & utf);
 void utf8_to_ace(utf8 const & utf, ace & a);
 
+fs::path localized(file_path const & path);
+fs::path localized(local_path const & path);
+fs::path localized(utf8 const & path);
+
 // specific internal / external conversions for various vocab terms
 void internalize_cert_name(utf8 const & utf, cert_name & c);
 void internalize_cert_name(external const & ext, cert_name & c);
