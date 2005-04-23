@@ -1,5 +1,12 @@
 2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
 
+	* vocab.{cc,hh}: Make verify functions public, make ATOMIC(foo)'s
+	verify function a friend of foo, add ATOMIC_NOVERIFY macro, add
+	long comment explaining all this.
+	* vocab_terms.hh: Add _NOVERIFY to some types.
+
+2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
+
 	* file_io.{cc,hh} (localized): Take file_path/local_path instead
 	of string; expose in public interface.  Adjust rest of file to
 	match.
