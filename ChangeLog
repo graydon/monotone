@@ -1,3 +1,8 @@
+2005-04-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_diff_currev.at: New test.
+	* testsuite.at: Add new test.
+
 2005-04-22  Jon Bright <jon@siliconcircus.com>
 	* monotone.texi: Changed all quoting of example command lines to
 	use " instead of ', since this works everywhere, but ' doesn't
