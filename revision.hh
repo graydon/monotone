@@ -20,37 +20,31 @@
 // sub-components are separately serialized (they could be but there is no
 // call for it). a grammar (aside from the parsing code) for the serialized
 // form will show up here eventually. until then, here is an example.
+// form will show up here eventually. until then, here is an example.
 //
-// revision:
-// {
-//   new_manifest: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//   edge:
-//   {
-//     old_revision: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//     old_manifest: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//     change_set:
-//     {
-//       paths:
-//       {
-//          rename_file:
-//          {
-//            src: "usr/bin/sh"
-//            dst: "usr/bin/foo"
-//          }
-//          delete_dir: "usr/bin"
-//          add_file: "tmp/foo/bar.txt"
-//       }
-//       deltas:
-//       {
-//         delta:
-//         {
-//           path: "tmp/foo/bar.txt"
-//           src: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
-//           dst: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//         }
-//     }
-//   }
-// }
+// new_manifest [16afa28e8783987223993d67f54700f0ecfedfaa]
+//
+// old_revision [d023242b16cbdfd46686a5d217af14e3c339f2b4]
+// old_manifest [2dc4a99e27a0026395fbd4226103614928c55c77]
+//
+// delete_file "deleted-file.cc"
+//
+// rename_file "old-file.cc"
+//          to "new-file.cc"
+//
+// add_file "added-file.cc"
+//
+// patch "added-file.cc"
+//  from []
+//    to [da39a3ee5e6b4b0d3255bfef95601890afd80709]
+//
+// patch "changed-file.cc"
+//  from [588fd8a7bcde43a46f0bde1dd1d13e9e77cf25a1]
+//    to [559133b166c3154c864f912e9f9452bfc452dfdd]
+//
+// patch "new-file.cc"
+//  from [95b50ede90037557fd0fbbfad6a9fdd67b0bf413]
+//    to [bd39086b9da776fc22abd45734836e8afb59c8c0]
 
 extern std::string revision_file_name;
 
