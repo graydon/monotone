@@ -1,5 +1,10 @@
 2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
 
+	* app_state.cc (restriction_includes): Remove some L()'s that were
+	taking 5-6% of time in large tree diff.
+
+2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
+
 	* file_io.{cc,hh} (localized): Move from here...
 	* transforms.{cc,hh} (localized): ...to here.  Add lots of gunk to
 	avoid calling iconv whenever possible.
