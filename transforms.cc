@@ -577,7 +577,12 @@ filesystem_is_ascii_extension_impl()
   // it here for a speed boost.
   return (lc_encoding.find("ascii") != std::string::npos
           || lc_encoding.find("8859") != std::string::npos
-          || lc_encoding.find("ansi_x3.4") != std::string::npos);
+          || lc_encoding.find("ansi_x3.4") != std::string::npos
+          // http://www.cs.mcgill.ca/~aelias4/encodings.html -- "EUC (Extended
+          // Unix Code) is a simple and clean encoding, standard on Unix
+          // systems.... It is backwards-compatible with ASCII (i.e. valid
+          // ASCII implies valid EUC)."
+          || lc_encoding.find("euc") != std::string::npos);
 }
 
 static inline bool
