@@ -10,6 +10,7 @@
 
 #include "platform.hh"
 #include "transforms.hh"
+#include "file_io.hh"
 
 namespace
 {
@@ -27,7 +28,7 @@ namespace
 bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
 {
   struct _stati64 st;
-  if (_stati64(file().c_str(), &st) < 0)
+  if (_stati64(localized(file).native_file_string().c_str(), &st) < 0)
     return false;
 
   CryptoPP::SHA hash;

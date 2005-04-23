@@ -13,6 +13,7 @@
 #include <vector>
 
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/tokenizer.hpp>
 
 #include "cryptopp/filters.h"
@@ -265,7 +266,7 @@ void calculate_ident(revision_set const & cs,
   ident = tid;
 }
 
-// this might reasonably go in file_io.cc too..
+// this might reasonably go in file_io.cc too...
 void 
 calculate_ident(file_path const & file,
                 hexenc<id> & ident,
@@ -289,10 +290,16 @@ calculate_ident(file_path const & file,
   else
     {
       // no conversions necessary, use streaming form
+      // still have to localize the filename
+      fs::path localized_file = localized(file);
+      // crypto++'s FileSource will simply treat directories as empty files,
+      // so we'd better check ourselves.
+      I(fs::exists(localized_file) && !fs::is_directory(localized_file));
       CryptoPP::SHA hash;
       unsigned int const sz = 2 * CryptoPP::SHA::DIGESTSIZE;
       char buffer[sz];
-      CryptoPP::FileSource f(file().c_str(), true, new CryptoPP::HashFilter
+      CryptoPP::FileSource f(localized_file.native_file_string().c_str(),
+                             true, new CryptoPP::HashFilter
                              (hash, new CryptoPP::HexEncoder
                               (new CryptoPP::ArraySink(reinterpret_cast<byte *>(buffer), sz))));
       ident = lowercase(string(buffer, sz));
@@ -467,7 +474,9 @@ charset_convert(string const & src_charset,
       char * converted = stringprep_convert(src.c_str(),
                                             dst_charset.c_str(),
                                             src_charset.c_str());
-      I(converted != NULL);
+      E(converted != NULL,
+        F("failed to convert string from %s to %s: '%s'")
+         % src_charset % dst_charset % src);
       dst = string(converted);
       free(converted);
     }
@@ -700,8 +709,8 @@ line_end_convert(string const & linesep, string const & src, string & dst)
 // - ] directly following an unescaped [ is escaped.
 string glob_to_regexp(const string & glob)
 {
-  int in_braces = 0;		// counter for levels if {}
-  bool in_brackets = false;	// flags if we're inside a [], which
+  int in_braces = 0;            // counter for levels if {}
+  bool in_brackets = false;     // flags if we're inside a [], which
                                 // has higher precedence than {}.
                                 // Also, [ is accepted inside [] unescaped.
   bool this_was_opening_bracket = false;
@@ -1099,7 +1108,7 @@ static void glob_to_regexp_test()
   BOOST_CHECK(glob_to_regexp("foo[12m,]") == "foo[12m\\,]");
   // A full fledged, use all damn features test...
   BOOST_CHECK(glob_to_regexp("foo.{bar*,cookie?{haha,hehe[^\\123!,]}}[!]a^b]")
-	      == "foo\\.(bar.*|cookie.(haha|hehe[^\\123\\!\\,]))[^\\]a\\^b]");
+              == "foo\\.(bar.*|cookie.(haha|hehe[^\\123\\!\\,]))[^\\]a\\^b]");
 }
 
 void 
