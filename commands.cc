@@ -597,7 +597,7 @@ calculate_restricted_revision(app_state & app,
 
   apply_path_rearrangement(old_paths, cs->rearrangement, new_paths);
 
-  build_restricted_manifest_map(new_paths, m_old, m_new, missing_files, app);
+  build_restricted_manifest_map(new_paths, m_old, m_new, app);
   complete_change_set(m_old, m_new, *cs);
 
   calculate_ident(m_new, rev.new_manifest);
