@@ -496,10 +496,10 @@ update_any_attrs(app_state & app)
 }
 
 static void
-calculate_base_revision(app_state & app, 
-                        revision_id & rid,
-                        manifest_id & mid,
-                        manifest_map & man)
+get_base_revision(app_state & app, 
+                  revision_id & rid,
+                  manifest_id & mid,
+                  manifest_map & man)
 {
   man.clear();
 
@@ -524,12 +524,12 @@ calculate_base_revision(app_state & app,
 }
 
 static void
-calculate_base_manifest(app_state & app, 
-                        manifest_map & man)
+get_base_manifest(app_state & app, 
+                  manifest_map & man)
 {
   revision_id rid;
   manifest_id mid;
-  calculate_base_revision(app, rid, mid, man);
+  get_base_revision(app, rid, mid, man);
 }
 
 static void
@@ -538,7 +538,6 @@ calculate_restricted_revision(app_state & app,
                               revision_set & rev,
                               manifest_map & m_old,
                               manifest_map & m_new,
-                              path_set & missing_files,
                               change_set::path_rearrangement & restricted_work)
 {
   manifest_id old_manifest_id;
@@ -551,9 +550,9 @@ calculate_restricted_revision(app_state & app,
   m_old.clear();
   m_new.clear();
 
-  calculate_base_revision(app, 
-                          old_revision_id,
-                          old_manifest_id, m_old);
+  get_base_revision(app, 
+                    old_revision_id,
+                    old_manifest_id, m_old);
 
   get_path_rearrangement(work);
   extract_path_set(m_old, old_paths);
@@ -571,7 +570,7 @@ calculate_restricted_revision(app_state & app,
   cs->rearrangement = included;
   restricted_work = excluded;
 
-  build_restricted_manifest_map(new_paths, m_old, m_new, missing_files, app);
+  build_restricted_manifest_map(new_paths, m_old, m_new, app);
   complete_change_set(m_old, m_new, *cs);
 
   calculate_ident(m_new, rev.new_manifest);
@@ -580,27 +579,6 @@ calculate_restricted_revision(app_state & app,
   rev.edges.insert(make_pair(old_revision_id,
                              make_pair(old_manifest_id, cs)));
 
-}
-
-static void
-calculate_restricted_revision(app_state & app, 
-                              vector<utf8> const & args,
-                              revision_set & rev,
-                              manifest_map & m_old,
-                              manifest_map & m_new,
-                              change_set::path_rearrangement & restricted_work)
-{
-  path_set missing_files;
-  calculate_restricted_revision(app, args, rev, m_old, m_new, missing_files, restricted_work);
-
-  for (path_set::const_iterator i = missing_files.begin(); 
-       i != missing_files.end(); ++i)
-    {
-      W(F("missing %s") % (*i)());
-    }
-
-  N(missing_files.size() == 0, 
-    F("%d missing files\n") % missing_files.size());
 }
 
 static void
@@ -1470,7 +1448,7 @@ CMD(add, "working copy", "PATH...", "add files to working copy")
   app.require_working_copy();
 
   manifest_map m_old;
-  calculate_base_manifest(app, m_old);
+  get_base_manifest(app, m_old);
 
   change_set::path_rearrangement work;  
   get_path_rearrangement(work);
@@ -1494,7 +1472,7 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy")
   app.require_working_copy();
 
   manifest_map m_old;
-  calculate_base_manifest(app, m_old);
+  get_base_manifest(app, m_old);
 
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
@@ -1519,7 +1497,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   app.require_working_copy();
 
   manifest_map m_old;
-  calculate_base_manifest(app, m_old);
+  get_base_manifest(app, m_old);
 
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
@@ -2083,7 +2061,7 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   app.require_working_copy();
 
-  calculate_base_revision(app, rid, mid, man);
+  get_base_revision(app, rid, mid, man);
 
   get_path_rearrangement(work);
   extract_path_set(man, old_paths);
@@ -2588,7 +2566,7 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE",
         // check to make sure .mt-attr exists in 
         // current manifest.
         manifest_map man;
-        calculate_base_manifest(app, man);
+        get_base_manifest(app, man);
         if (man.find(attr_path) == man.end())
           {
             P(F("registering %s file in working copy\n") % attr_path);
@@ -3683,9 +3661,9 @@ CMD(revert, "working copy", "[PATH]...",
  
   app.require_working_copy();
 
-  calculate_base_revision(app, 
-                          old_revision_id,
-                          old_manifest_id, m_old);
+  get_base_revision(app, 
+                    old_revision_id,
+                    old_manifest_id, m_old);
 
   get_path_rearrangement(work);
   extract_path_set(m_old, old_paths);
