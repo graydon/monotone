@@ -311,11 +311,17 @@ void
 annotate_context::dump() const
 {
   revision_id nullid;
-
   I(annotations.size() == file_lines.size());
+
+  revision_id lastid = nullid;
   for (size_t i=0; i<file_lines.size(); i++) {
     I(! (annotations[i] == nullid) );
-    std::cout << annotations[i] << ": " << file_lines[i] << std::endl;
+    if (false) //(lastid == annotations[i])
+      std::cout << "                                        : " << file_lines[i] << std::endl;
+    else
+      std::cout << annotations[i] << ": " << file_lines[i] << std::endl;
+
+    lastid = annotations[i];
   }
 }
 
@@ -462,7 +468,7 @@ do_annotate_node (const annotate_node_work &work_unit,
     calculate_arbitrary_change_set (*parent, work_unit.node_revision, app, cs);
     if (cs.rearrangement.added_files.find(work_unit.node_fpath) != cs.rearrangement.added_files.end()) {
       L(F("file %s added in %s\n") % work_unit.node_fpath % work_unit.node_revision);
-      work_unit.annotations->complete(work_unit.node_revision);
+      work_unit.annotations->set_root_revision(work_unit.node_revision);
       return;
     }
 
