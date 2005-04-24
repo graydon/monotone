@@ -1,5 +1,13 @@
 2005-04-23  Derek Scherger  <derek@echologic.com>
 
+	* (calculate_restricted_revision): remove redundant variables,
+	avoiding path_rearrangement assignments and associated sanity
+	checks
+	(calculate_current_revision): rename empty to empty_args for
+	clarity
+
+2005-04-23  Derek Scherger  <derek@echologic.com>
+
 	* commands.cc (calculate_base_revision): rename to ...
 	(get_base_revision): ... this, since it's not calculating anything
 	(calculate_base_manifest): rename to ...

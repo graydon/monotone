@@ -538,13 +538,13 @@ calculate_restricted_revision(app_state & app,
                               revision_set & rev,
                               manifest_map & m_old,
                               manifest_map & m_new,
-                              change_set::path_rearrangement & restricted_work)
+                              change_set::path_rearrangement & excluded)
 {
   manifest_id old_manifest_id;
   revision_id old_revision_id;    
   boost::shared_ptr<change_set> cs(new change_set());
   path_set old_paths, new_paths;
-  change_set::path_rearrangement work, included, excluded;
+  change_set::path_rearrangement work;
 
   rev.edges.clear();
   m_old.clear();
@@ -563,12 +563,9 @@ calculate_restricted_revision(app_state & app,
 
   app.set_restriction(valid_paths, args); 
 
-  restrict_path_rearrangement(work, included, excluded, app);
+  restrict_path_rearrangement(work, cs->rearrangement, excluded, app);
 
-  apply_path_rearrangement(old_paths, included, new_paths);
-
-  cs->rearrangement = included;
-  restricted_work = excluded;
+  apply_path_rearrangement(old_paths, cs->rearrangement, new_paths);
 
   build_restricted_manifest_map(new_paths, m_old, m_new, app);
   complete_change_set(m_old, m_new, *cs);
@@ -598,8 +595,8 @@ calculate_current_revision(app_state & app,
                            manifest_map & m_old,
                            manifest_map & m_new)
 {
-  vector<utf8> empty;
-  calculate_restricted_revision(app, empty, rev, m_old, m_new);
+  vector<utf8> empty_args;
+  calculate_restricted_revision(app, empty_args, rev, m_old, m_new);
 }
 
 static void
