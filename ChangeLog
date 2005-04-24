@@ -1,3 +1,35 @@
+2005-04-23  Derek Scherger  <derek@echologic.com>
+
+	* (calculate_restricted_revision): remove redundant variables,
+	avoiding path_rearrangement assignments and associated sanity
+	checks
+	(calculate_current_revision): rename empty to empty_args for
+	clarity
+
+2005-04-23  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (calculate_base_revision): rename to ...
+	(get_base_revision): ... this, since it's not calculating anything
+	(calculate_base_manifest): rename to ...
+	(get_base_manifest): ... this, and call get_base_revision
+	(calculate_restricted_revision): call get_base_revision and remove
+	missing files stuff
+	(add):
+	(drop):
+	(rename):
+	(attr): call get_base_manifest
+	(ls_missing): 
+	(revert): call get_base_revision
+	* manifest.{cc,hh} (build_restricted_manifest_map): don't return
+	missing files and don't produce invalid manifests; do report on
+	all missing files before failing
+	
+2005-04-23  Derek Scherger  <derek@echologic.com>
+
+	* app_state.cc:
+	* database.cc:
+	* file_io.{cc, hh}: fix bad merge
+
 2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
 
 	* database.cc (put_key): Check for existence of keys with

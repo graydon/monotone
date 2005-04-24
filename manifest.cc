@@ -99,6 +99,7 @@ build_restricted_manifest_map(path_set const & paths,
                   continue;
                 }
             }
+
           // ...ah, well, no good fingerprint, just check directly.
           hexenc<id> ident;
           calculate_ident(*i, ident, app.lua);
@@ -118,11 +119,13 @@ build_restricted_manifest_map(path_set const & paths,
         {
           // copy the old manifest entry for excluded files
           manifest_map::const_iterator old = m_old.find(*i);
-          N(old != m_old.end(),
-            F("file restricted but does not exist in old manifest: %s") % *i);
-          m_new.insert(*old);
+          if (old != m_old.end()) m_new.insert(*old);
         }
     }
+
+  N(missing_files == 0, 
+    F("%d missing files\n") % missing_files);
+
 }
 
 // reading manifest_maps
