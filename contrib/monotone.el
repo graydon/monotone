@@ -66,6 +66,10 @@ Habitual monotone users can set it to '\C-xv'.")
 ;;; System Vars:
 ;; It is unlikely for users to need to change these.
 
+(defvar monotone-cmd-show t
+  "Show the outout of the monotone command?
+This is normally rebound when the output should not be shown.")
+
 (defvar monotone-program-args-always '("--ticker=dot")
   "Args which will always be passed to monotone.
 The arg '--ticker=dot' should be here to avoid lots of output.")
@@ -111,6 +115,9 @@ This is used to pass state -- best be left nil.")
 (defvar monotone-log-depth 100
   "The depth to limit output of 'monotone log' entries.
 Zero is unlimited.")
+
+(defvar monotone-MT-revision nil
+  "")
 
 ;;; monotone-commit-mode is used when editing the commit message.
 (defvar monotone-commit-mode nil)
@@ -210,10 +217,14 @@ This permits quick switches between the classic vc and monotone keymaps."
   "The current revision as read from 'MT/revision'."
   (let ((dir (monotone-find-MT-top)))
     (when (not dir)
-      (error "No MT top"))
-    (save-window-excursion
-      (find-file (concat dir "/MT/revision"))
-      (buffer-substring 1 41))))
+      (error "No MT top directory."))
+    (let ((file (concat dir "/MT/revision")))
+      (with-temp-buffer
+        (insert-file-contents-literally file nil)
+        (setq monotone-MT-revision (buffer-substring 1 41)))
+      monotone-MT-revision)))
+;; (monotone-MT-revision)      
+
 
 (defun monotone-find-MT-top (&optional path)
   "Find the directory which contains the 'MT' directory.
@@ -271,8 +282,10 @@ Nothing for now."
 
 (defun monotone-process-sentinel (process event)
   "This sentinel suppresses the text from PROCESS on EVENT."
-  (message "monotone: process %s received %s" process (monotone-string-chomp event))
-  nil)
+  (when monotone-cmd-show
+    (message "monotone: process %s received %s" process
+             (monotone-string-chomp event))
+    nil))
 
 ;; Run a monotone command
 (defun monotone-cmd (args)
@@ -296,9 +309,10 @@ Nothing for now."
       (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
         (error "Unable to find the MT top directory")))
     (setq monotone-MT-top mt-top)
-    ;; show buffer in a window
-    (if (not (equal (current-buffer) mt-buf))
-      (switch-to-buffer-other-window mt-buf))
+    ;; show buffer in a window 
+    (when monotone-cmd-show
+      (pop-to-buffer mt-buf)
+      (sit-for 0))
     (set-buffer mt-buf)
     ;; still going?
     (when (get-buffer-process mt-buf)
@@ -306,7 +320,6 @@ Nothing for now."
     ;; prep the buffer for output
     (toggle-read-only -1)
     (erase-buffer)
-    (sit-for 0)
     ;;(buffer-disable-undo (current-buffer))
     (setq default-directory mt-top)
     ;; remeber the args
@@ -322,9 +335,9 @@ Nothing for now."
         ;; FIXME: rather than printing messages, abort after too long a wait.
         (when (not (accept-process-output p monotone-wait-time))
           ;;(message "waiting for monotone..."))
-          ;; update the screen
-          (goto-char (point-max))
-          (sit-for 0)
+          (when monotone-cmd-show ;; update the screen
+            (goto-char (point-max))
+            (sit-for 0))
           ;; look for passwd prompt
           (beginning-of-line)
           (when (looking-at "^enter passphrase for key ID \\[\\(.*\\)\\]")
@@ -337,12 +350,14 @@ Nothing for now."
       ;; make the buffer nice.
       (goto-char (point-min))
       (view-mode)
-      ;; FIXME: (set-buffer-modified-p nil)
+      (set-buffer-modified-p nil)
       ;; did we part on good terms?
       (when (not (zerop mt-status))
         (message "%s: exited with status %s" mt-pgm mt-status)
         (beep)
         (sit-for 3))
+      ;; this seems to be needed for the sentinel to catch up.
+      (sit-for 1)
       mt-status)))
 
 ;; (monotone-cmd '("list" "branches"))
@@ -502,9 +517,9 @@ With ARG of 0, clear default server and collection."
         (when (file-readable-p mt-log-path)
           (insert-file mt-log-path)))
       ;; blank line for user to type
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (insert "\n")
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (monotone-commit-mode))
     ;; update the "MT:" lines by replacing them.
     (monotone-remove-MT-lines)
@@ -530,7 +545,7 @@ With ARG of 0, clear default server and collection."
       (while (search-forward-regexp "^" (point-max) t)
         (insert "MT: ")))
     ;; ready for edit -- put this last avoid being cleared on mode switch.
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (setq monotone-commit-edit-status 'started
           monotone-commit-args args)))
 
@@ -579,7 +594,7 @@ With ARG of 0, clear default server and collection."
 (defun monotone-remove-MT-lines ()
   "Remove lines starting with 'MT:' from the buffer."
   ;; doesnt need to be (interactive)
-  (beginning-of-buffer)
+  (goto-char (point-min))
   (while (search-forward-regexp "^MT:.*$" (point-max) t)
     (beginning-of-line)
     (kill-line 1)))
@@ -620,7 +635,7 @@ With ARG of 0, clear default server and collection."
 PREFIX selects the scope.  CMDS is the command to execute. BUF is
 the buffer if not global."
   (setq prefix (monotone-arg-decode prefix)) ;; what is the scope?
-  (setq buf (or buf (current-buffer))) ;; default
+  (setq buf (or buf (current-buffer)))       ;; default
   (cond
    ;; no args
    ((eq prefix 'global)
@@ -758,7 +773,7 @@ Grab the ids you want from the buffer and then yank back when needed."
       (setq monotone-last-id id)
       ;; dont duplicate the buffers
       (if (get-buffer name)
-           (kill-buffer name))
+        (kill-buffer name))
       (rename-buffer name))))
 
 (defun monotone-cat-id-pd (what default)

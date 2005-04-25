@@ -77,7 +77,6 @@ class app_state;
 void build_restricted_manifest_map(path_set const & paths,
                                    manifest_map const & m_old, 
                                    manifest_map & m_new, 
-                                   path_set & missing_files,
                                    app_state & app);
 
 void read_manifest_map(data const & dat,

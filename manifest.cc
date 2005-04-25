@@ -64,7 +64,6 @@ void
 build_restricted_manifest_map(path_set const & paths,
                               manifest_map const & m_old, 
                               manifest_map & m_new, 
-                              path_set & missing_files,
                               app_state & app)
 {
   m_new.clear();
@@ -77,13 +76,11 @@ build_restricted_manifest_map(path_set const & paths,
       read_inodeprint_map(dat, ipm);
     }
 
+  size_t missing_files = 0;
+
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      bool included = app.restriction_includes(*i);
-
-      // first, make a try to see if we have a current inodeprint.  if we do,
-      // we skip the rest of this block to go around the loop again.
-      if (included)
+      if (app.restriction_includes(*i))
         {
           // compute the current sha1 id for included files
           // we might be able to avoid it, if we have an inode fingerprint...
@@ -101,37 +98,31 @@ build_restricted_manifest_map(path_set const & paths,
                   continue;
                 }
             }
-        }
-      // ...ah, well, no good inodeprint, let's do proper checking.
-      // note that we carefully do not call file_exists() until _after_ we've
-      // given inodeprints a chance; this halves the number of stat calls in a
-      // typical large tree using inodeprints.
-      bool exists = file_exists(*i);
-      if (included && exists)
-        {
-          hexenc<id> ident;
-          calculate_ident(*i, ident, app.lua);
-          m_new.insert(manifest_entry(*i, file_id(ident)));
-        }
-      else if (included && !exists)
-        {
-          missing_files.insert(*i);
-        
-          // copy the old manifest entry for missing files
-          manifest_map::const_iterator old = m_old.find(*i);
-          N(old != m_old.end(),
-            F("file missing but does not exist in old manifest: %s") % *i);
-          m_new.insert(*old);
+
+          // ...ah, well, no good fingerprint, just check directly.
+          if (file_exists(*i))
+            {
+              hexenc<id> ident;
+              calculate_ident(*i, ident, app.lua);
+              m_new.insert(manifest_entry(*i, file_id(ident)));
+            }
+          else
+            {
+              W(F("missing %s") % (*i)());
+              missing_files++;
+            }
         }
       else
         {
           // copy the old manifest entry for excluded files
           manifest_map::const_iterator old = m_old.find(*i);
-          N(old != m_old.end(),
-            F("file restricted but does not exist in old manifest: %s") % *i);
-          m_new.insert(*old);
+          if (old != m_old.end()) m_new.insert(*old);
         }
     }
+
+  N(missing_files == 0, 
+    F("%d missing files\n") % missing_files);
+
 }
 
 // reading manifest_maps
