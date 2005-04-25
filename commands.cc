@@ -2193,7 +2193,8 @@ print_inventory(std::string const & status,
 }
 
 CMD(inventory, "informative", "[PATH]...", 
-    "inventory of every file in working copy with associated status")
+    "inventory of every file in working copy with associated status",
+    % OPT_DB_NAME % OPT_BRANCH_NAME % OPT_ALL_FILES)
 {
   manifest_id old_manifest_id;
   revision_id old_revision_id;
