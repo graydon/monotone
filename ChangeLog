@@ -42,6 +42,18 @@
 	* tests/t_inventory.at: new test
 	* testsuite.at: include new test
 	
+2005-04-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+
+2005-04-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.cc (build_restricted_manifest_map): Careful to only
+	stat things once on the inodeprints fast-path.
+	(read_manifest_map): Hand-code a parser, instead of using
+	boost::regex.
+	* inodeprint.cc (read_inodeprint_map): Likewise.
+
 2005-04-23  Derek Scherger  <derek@echologic.com>
 
 	* (calculate_restricted_revision): remove redundant variables,
