@@ -1,4 +1,4 @@
-AT_SETUP([(normal) status with missing files])
+AT_SETUP([status with missing files])
 MONOTONE_SETUP
 
 ADD_FILE(testfile1, [foo

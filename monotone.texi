@@ -3623,6 +3623,62 @@ command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{status}
 to files changed within the current subdirectory of the working copy.
 
+@item monotone inventory
+@itemx monotone inventory @var{pathname...}
+
+This command prints the ``inventory'' of files in a working copy. Each
+file is prefixed by a single character indicating the status of the
+associated file.
+@itemize
+@item ! missing file
+@item - dropped file
+@item % renamed file
+@item + added file
+@item # changed file
+@item = unchanged file
+@item ? unknown file
+@item ~ ignored file
+@end itemize
+
+By default the @command{inventory} command lists only ``interesting''
+files, considered to be those with a status of missing, dropped,
+renamed, added or changed. If the @option{--all-files} option is
+specified the @command{inventory} command lists every file in the
+working copy, including those with a status of unchanged, unknown and
+ignored.
+
+Specifying optional @var{pathname...} arguments to the @command{inventory}
+command restricts the set of changes that are visible and results in
+only a partial inventory of the working copy. Changes to files not included
+in the specified set of pathnames will be ignored.
+
+From within a subdirectory of the working copy the @command{inventory}
+command will, by default, include @emph{all changes} in the working
+copy.  Specifying only the pathname "." will restrict @command{inventory}
+to files changed within the current subdirectory of the working copy.
+
+If the @option{--all-files} option is specified the @command{inventory}
+command will list all files in the working copy. However, the changes
+that are will be restricted as described above.
+
+Renamed files have both the old and new name of the file listed on
+the same line in the inventory, in that order.  
+
+A file may be missing and also added or the target of a rename, or it
+may be added or the target of a rename and also changed. The
+@command{inventory} command lists each file only once and in these cases
+the status with the highest priority will be displayed. The missing
+status takes precedence over both added or renamed and these values take
+precedence over the changed status.
+
+Since pathnames may contain spaces, quotes and other ``special''
+characters, the @command{inventory} command lists quoted filenames to
+avoid any ambiguities.
+
+Full support for versioned directories is not yet complete and the
+@command{inventory} command will only list entries for renamed or
+dropped directories. Directory entries will be designated by pathnames
+ending with the "/" character.
 
 @item monotone log
 @itemx monotone log --depth=@var{n}
@@ -5902,6 +5958,10 @@ Show diffs between working copy and database.
 Show status of working copy.
 @comment TROFF INPUT: .TP
 
+@item @b{inventory} @i{[<pathname>...]}
+Show inventory of files in working copy.
+@comment TROFF INPUT: .TP
+
 @item @b{log} @i{[id]}
 Show historical log of revisions, starting from working copy
 base revision, or @i{[id]} if given.
@@ -6201,6 +6261,20 @@ importing history from another version control system.
 Stop the search for a working copy (containing the @file{MT} directory)
 at the specified root directory rather than at the physical root of the
 filesystem.
+
+@item @b{--xargs=}@i{<file>}
+Inject the contents of the file in place among the command line
+arguments.  This may be useful in case the command line would otherwise
+become too long for your system.  This option can be used more than once
+if needed.
+
+@item @b{-@@} @i{<file>}
+An alias for @b{--xargs=}@i{<file>}.
+
+@item @b{--all-files}
+Include every file available in the working copy in the inventory
+list. By default inventory only lists ``interesting'' files. This option
+is specific to the @command{inventory} command.
 
 @comment TROFF INPUT: .SH ENVIRONMENT
 

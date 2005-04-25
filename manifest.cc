@@ -59,6 +59,88 @@ manifest_map_builder::visit_file(file_path const & path)
   man.insert(manifest_entry(path, file_id(ident)));
 }
 
+inline static bool
+inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
+{
+  inodeprint_map::const_iterator old_ip = ipm.find(path);
+  if (old_ip != ipm.end())
+    {
+      hexenc<inodeprint> ip;
+      if (inodeprint_file(path, ip) && ip == old_ip->second)
+          return true; // unchanged
+      else
+          return false; // changed or unavailable
+    }
+  else
+    return false; // unavailable
+}
+
+void 
+classify_paths(app_state & app,
+               path_set const & paths,
+               manifest_map const & m_old, 
+               path_set & missing,
+               path_set & changed,
+               path_set & unchanged)
+{
+  inodeprint_map ipm;
+
+  if (in_inodeprints_mode())
+    {
+      data dat;
+      read_inodeprints(dat);
+      read_inodeprint_map(dat, ipm);
+    }
+
+  // this code is speed critical, hence the use of inode fingerprints so be
+  // careful when making changes in here and preferably do some timing tests
+
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      if (app.restriction_includes(*i))
+        {
+          // compute the current sha1 id for included files
+          // we might be able to avoid it, if we have an inode fingerprint...
+          if (inodeprint_unchanged(ipm, *i))
+            {
+              // the inode fingerprint hasn't changed, so we assume the file
+              // hasn't either.
+              manifest_map::const_iterator k = m_old.find(*i);
+              I(k != m_old.end());
+              unchanged.insert(*i);
+              continue;
+            }
+
+          // ...ah, well, no good fingerprint, just check directly.
+          if (file_exists(*i))
+            {
+              hexenc<id> ident;
+              calculate_ident(*i, ident, app.lua);
+              manifest_map::const_iterator k = m_old.find(*i); 
+
+              if (k != m_old.end())
+                {
+                  if (ident == k->second.inner())
+                    unchanged.insert(*i);
+                  else
+                    changed.insert(*i);
+                }
+
+              // if the path was not found in the old manifest it must have
+              // been added or renamed ad it's ignored here
+                
+            }
+          else
+            missing.insert(*i);
+        }
+      else
+        {
+          // changes to excluded files are ignored
+          unchanged.insert(*i);
+        }
+    }
+}
+
 void 
 build_restricted_manifest_map(path_set const & paths,
                               manifest_map const & m_old, 
@@ -77,25 +159,23 @@ build_restricted_manifest_map(path_set const & paths,
 
   size_t missing_files = 0;
 
+  // this code is speed critical, hence the use of inode fingerprints so be
+  // careful when making changes in here and preferably do some timing tests
+
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       if (app.restriction_includes(*i))
         {
           // compute the current sha1 id for included files
           // we might be able to avoid it, if we have an inode fingerprint...
-          inodeprint_map::const_iterator old_ip = ipm.find(*i);
-          if (old_ip != ipm.end())
+          if (inodeprint_unchanged(ipm, *i))
             {
-              hexenc<inodeprint> ip;
-              if (inodeprint_file(*i, ip) && ip == old_ip->second)
-                {
-                  // the inode fingerprint hasn't changed, so we assume the file
-                  // hasn't either.
-                  manifest_map::const_iterator k = m_old.find(*i);
-                  I(k != m_old.end());
-                  m_new.insert(*k);
-                  continue;
-                }
+              // the inode fingerprint hasn't changed, so we assume the file
+              // hasn't either.
+              manifest_map::const_iterator k = m_old.find(*i);
+              I(k != m_old.end());
+              m_new.insert(*k);
+              continue;
             }
 
           // ...ah, well, no good fingerprint, just check directly.

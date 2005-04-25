@@ -1,3 +1,47 @@
+2005-04-24  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (app_state): add all_files flag to the constructor
+	(set_all_files): new method for setting flag
+
+	* basic_io.{cc,hh} (escape): expose public method to quote and
+	escape file_paths
+	(push_str_pair): use it internally
+
+	* commands.cc (calculate_restricted_rearrangement): new function
+	factored out of calculate_restricted_revision
+	(calculate_restricted_revision): use new function
+	(struct unknown_itemizer): rename to ...
+	(struct file_itemizer): ... this; use a path_set rather than a
+	manifest map; build path sets of unknown and ignored files, rather
+	than simply printing them
+	(ls_unknown): adjust to compensate for itemizer changes
+	(print_inventory): new functions for printing inventory lines from
+	path sets and rename maps
+	(inventory): new command for printing inventory of working copy
+	files
+
+	* manifest.cc (inodeprint_unchanged): new function factored out
+	from build_restricted_manifest_map
+	(classify_paths): new function to split paths from an old manifest
+	into unchanged, changed or missing sets for inventory
+	(build_restricted_manifest_map): adjust to use
+	inodeprint_unchanged
+	* manifest.hh (classify_paths): new public function
+	
+	* monotone.1: document new inventory command and associated
+	--all-files option
+
+	* monotone.cc: add new --all-files option which will be specific
+	to the inventory command asap
+
+	* monotone.texi (Informative): document new inventory command
+	(Commands): add manpage entry for inventory
+	(OPTIONS): add entries for --xargs, -@ and --all-files
+
+	* tests/t_status_missing.at: remove bug priority flag
+	* tests/t_inventory.at: new test
+	* testsuite.at: include new test
+	
 2005-04-23  Derek Scherger  <derek@echologic.com>
 
 	* (calculate_restricted_revision): remove redundant variables,
