@@ -18,33 +18,38 @@
 #include "inodeprint.hh"
 #include "sanity.hh"
 #include "platform.hh"
+#include "constants.hh"
 
 // this file defines the inodeprint_map structure, and some operations on it.
 // it is currently heavily based on manifest.cc.
 
 // reading inodeprint_maps
 
-struct 
-add_to_inodeprint_map
-{    
-  inodeprint_map & ipm;
-  explicit add_to_inodeprint_map(inodeprint_map & ipm) : ipm(ipm) {}
-  bool operator()(boost::match_results<std::string::const_iterator> const & res) 
-  {
-    std::string ident(res[1].first, res[1].second);
-    std::string path(res[2].first, res[2].second);
-    file_path pth(path);
-    ipm.insert(inodeprint_entry(pth, hexenc<inodeprint>(ident)));
-    return true;
-  }
-};
-
 void 
 read_inodeprint_map(data const & dat,
                     inodeprint_map & ipm)
 {
-  boost::regex expr("^([[:xdigit:]]{40})  ([^[:space:]].*)$");
-  boost::regex_grep(add_to_inodeprint_map(ipm), dat(), expr, boost::match_not_dot_newline);  
+  std::string::size_type pos = 0;
+  while (pos != dat().size())
+    {
+      // whenever we get here, pos points to the beginning of a inodeprint
+      // line
+      // inodeprint file has 40 characters hash, then 2 characters space, then
+      // everything until next \n is filename.
+      std::string ident = dat().substr(pos, constants::idlen);
+      std::string::size_type file_name_begin = pos + constants::idlen + 2;
+      pos = dat().find('\n', file_name_begin);
+      std::string file_name;
+      if (pos == std::string::npos)
+        file_name = dat().substr(file_name_begin);
+      else
+        file_name = dat().substr(file_name_begin, pos - file_name_begin);
+      ipm.insert(inodeprint_entry(file_path(file_name),
+                                  hexenc<inodeprint>(ident)));
+      // skip past the '\n'
+      ++pos;
+    }
+  return;
 }
 
 // writing inodeprint_maps

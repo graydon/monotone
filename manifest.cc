@@ -23,6 +23,7 @@
 #include "sanity.hh"
 #include "inodeprint.hh"
 #include "platform.hh"
+#include "constants.hh"
 
 // this file defines the class of manifest_map objects, and various comparison
 // and i/o functions on them. a manifest specifies exactly which versions
@@ -78,10 +79,11 @@ build_restricted_manifest_map(path_set const & paths,
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      bool exists = file_exists(*i);
       bool included = app.restriction_includes(*i);
 
-      if (included && exists)
+      // first, make a try to see if we have a current inodeprint.  if we do,
+      // we skip the rest of this block to go around the loop again.
+      if (included)
         {
           // compute the current sha1 id for included files
           // we might be able to avoid it, if we have an inode fingerprint...
@@ -99,7 +101,14 @@ build_restricted_manifest_map(path_set const & paths,
                   continue;
                 }
             }
-          // ...ah, well, no good fingerprint, just check directly.
+        }
+      // ...ah, well, no good inodeprint, let's do proper checking.
+      // note that we carefully do not call file_exists() until _after_ we've
+      // given inodeprints a chance; this halves the number of stat calls in a
+      // typical large tree using inodeprints.
+      bool exists = file_exists(*i);
+      if (included && exists)
+        {
           hexenc<id> ident;
           calculate_ident(*i, ident, app.lua);
           m_new.insert(manifest_entry(*i, file_id(ident)));
@@ -127,27 +136,30 @@ build_restricted_manifest_map(path_set const & paths,
 
 // reading manifest_maps
 
-struct 
-add_to_manifest_map
-{    
-  manifest_map & man;
-  explicit add_to_manifest_map(manifest_map & m) : man(m) {}
-  bool operator()(match_results<std::string::const_iterator> const & res) 
-  {
-    std::string ident(res[1].first, res[1].second);
-    std::string path(res[2].first, res[2].second);
-    file_path pth(path);
-    man.insert(manifest_entry(pth, hexenc<id>(ident)));
-    return true;
-  }
-};
-
 void 
 read_manifest_map(data const & dat,
                   manifest_map & man)
 {
-  regex expr("^([[:xdigit:]]{40})  ([^[:space:]].*)$");
-  regex_grep(add_to_manifest_map(man), dat(), expr, match_not_dot_newline);  
+  std::string::size_type pos = 0;
+  while (pos != dat().size())
+    {
+      // whenever we get here, pos points to the beginning of a manifest
+      // line
+      // manifest file has 40 characters hash, then 2 characters space, then
+      // everything until next \n is filename.
+      std::string ident = dat().substr(pos, constants::idlen);
+      std::string::size_type file_name_begin = pos + constants::idlen + 2;
+      pos = dat().find('\n', file_name_begin);
+      std::string file_name;
+      if (pos == std::string::npos)
+        file_name = dat().substr(file_name_begin);
+      else
+        file_name = dat().substr(file_name_begin, pos - file_name_begin);
+      man.insert(manifest_entry(file_path(file_name), hexenc<id>(ident)));
+      // skip past the '\n'
+      ++pos;
+    }
+  return;
 }
 
 void 
