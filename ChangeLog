@@ -1,3 +1,16 @@
+2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_parents, automate_children) 
+	(automate_graph): New automate commands.
+	(automate_command): Add them.
+	* commands.cc (automate): Synopsisfy them.
+	* monotone.texi (Automation): Document them.
+	* tests/t_automate_graph.at, test/t_parents_children.at: Test
+	them.
+	* testsuite.at: Add the tests.
+
+	* tests/t_automate_ancestors.at: Remove obsolete comment.
+	
 2005-04-24  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Database): Document 'db kill_rev_locally'.
