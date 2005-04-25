@@ -27,4 +27,5 @@
 #define OPT_ARGFILE 18
 #define OPT_DATE 19
 #define OPT_AUTHOR 20
+#define OPT_ALL_FILES 21
 
