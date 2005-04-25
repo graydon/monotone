@@ -1,5 +1,12 @@
 2005-04-24  Derek Scherger  <derek@echologic.com>
 
+	* tests/t_rename_file_to_dir.at:
+	* tests/t_replace_file_with_dir.at:
+	* tests/t_replace_dir_with_file.at: new bug reports
+	* testsuite.at: include new tests
+
+2005-04-24  Derek Scherger  <derek@echologic.com>
+
 	* app_state.{cc,hh} (app_state): add all_files flag to the constructor
 	(set_all_files): new method for setting flag
 
