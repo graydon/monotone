@@ -4139,6 +4139,37 @@ command is for.  It systematically checks the database @file{dbfile} to
 ensure that it is complete and consistent. The following problems are
 detected:
 
+@item monotone db kill_rev_locally @var{id}
+
+This command ``kills'', i.e., deletes, a given revision, as well as any
+certs attached to it.  It has an ugly name because it is a dangerous
+command; it permanently and irrecovably deletes historical information
+from your database.  There are a number of caveats:
+@itemize
+@item
+It can only be applied to revisions that have no descendents.  If you
+want to kill a revision that has descendents, you must kill all of the
+descendents first.
+@item
+It only removes the revision from your local database (hence the
+``locally'' in the command name).  If you have already pushed this
+revision out to another database, then the next time you pull from that
+database it may come back again.  There is no way to delete a revision
+from somebody else's database except to ask them to delete it for you.
+@item
+It does not actually delete the revision's files or manifest from your
+database.  If you run this command, and then run @command{db check}, it
+will note that you have an ``unreferenced manifest''.  If you wish to
+eliminate this data for good (and thus free up the space), you may use
+netsync to @command{pull} from your current database into a new
+database; this creates a copy of your old database, without the
+unreferenced data.  However, having this data in your database will not
+cause any problems, and acts as a safety net; if you later realize that
+you do, after all, need to retrieve the data in @var{id}, then
+@command{db check} will let you see which manifest it was, and with some
+work you can extract @var{id}'s data.
+@end itemize
+
 @itemize
 
 @item missing files 

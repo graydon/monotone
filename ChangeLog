@@ -44,6 +44,10 @@
 	
 2005-04-24  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Database): Document 'db kill_rev_locally'.
+
+2005-04-24  Nathaniel Smith  <njs@codesourcery.com>
+
 	* ChangeLog: Fixup after merge.
 
 2005-04-24  Nathaniel Smith  <njs@codesourcery.com>
