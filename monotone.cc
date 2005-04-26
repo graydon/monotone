@@ -361,6 +361,10 @@ cpp_main(int argc, char ** argv)
               app.set_all_files(true);
               break;
 
+            case OPT_ALL_FILES:
+              app.set_all_files(true);
+              break;
+
             case OPT_HELP:
             default:
               requested_help = true;

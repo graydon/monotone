@@ -49,7 +49,6 @@ AT_CHECK(test $REV_F != $REV_E)
 
 # Now do some checks
 
-#next test would still fail as it outputs an empty line. Why? descendents does not output an empty line and this is just copy'n paste???
 AT_CHECK(MONOTONE automate ancestors $REV_A, [], [], [ignore])
 
 AT_CHECK(MONOTONE automate ancestors $REV_B, [], [stdout], [ignore])

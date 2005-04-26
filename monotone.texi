@@ -4433,6 +4433,44 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
+@item monotone automate parents @var{rev}
+
+@table @strong
+@item Arguments:
+
+One revision id, @var{rev}.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints the immediate parents of a revision.  This is like a
+non-recursive version of @command{automate ancestors}.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one parent of the given
+revision.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+@item Error conditions:
+
+If the given revision @var{rev} does not exist, prints nothing to
+stdout, prints an error message to stderr, and exits with status 1.
+
+@end table
+
+
 @item monotone automate descendents @var{rev1} [@var{rev2} [...]]
 
 @table @strong
@@ -4470,6 +4508,89 @@ included in the output.
 
 If any of the revisions do not exist, prints nothing to stdout, prints
 an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate children @var{rev}
+
+@table @strong
+@item Arguments:
+
+One revision id, @var{rev}.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints the immediate children of a revision.  This is like a
+non-recursive version of @command{automate descendents}.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one child of the given
+revision.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+@item Error conditions:
+
+If the given revision @var{rev} does not exist, prints nothing to
+stdout, prints an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate graph
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints out the complete ancestry graph of this database.
+
+@item Sample output:
+
+@verbatim
+0c05e8ec9c6af4224672c7cc4c9ef05ae8bdb794
+27ebcae50e1814e35274cb89b5031a423c29f95a 5830984dec5c41d994bcadfeab4bf1bf67747b89
+4e284617c80bec7da03925062a84f715c1b042bd 27ebcae50e1814e35274cb89b5031a423c29f95a 657c756d24fb65213d59f4ae07e117d830dcc95b
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving ancestry information for one revision.
+Each line begins with a revision id.  Following this are zero or more
+space-prefixed revision ids.  Each revision id after the first is a
+parent (in the sense of @command{automate parents}) of the first.  For
+instance, in the above sample output,
+0c05e8ec9c6af4224672c7cc4c9ef05ae8bdb794 is a root node,
+27ebcae50e1814e35274cb89b5031a423c29f95a has one parent, and
+4e284617c80bec7da03925062a84f715c1b042bd has two parents, i.e., is a
+merge node.
+
+The output as a whole is alphabetically sorted by line; additionally,
+the parents within each line are alphabetically sorted.
+
+@item Error conditions:
+
+None.
 
 @end table
 
