@@ -1,3 +1,7 @@
+2005-04-26  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc, commands.cc: Make some more options global.
+
 2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* automate.cc (automate_parents, automate_children) 

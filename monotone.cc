@@ -42,7 +42,6 @@ long arglong = 0;
 struct poptOption coptions[] =
   {
     {"branch", 'b', POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
-    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot|none) [count]", NULL},
     {"revision", 'r', POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
     {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
     {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
@@ -61,10 +60,7 @@ struct poptOption options[] =
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, "print detailed version number, then exit", NULL},
     {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "insert command line arguments taken from the given file", NULL},
-
-    // Personally, I think these should be command-specific.  However, the
-    // monotone test suite requires these to be global, it seems...
-    //                                                  -- Richard Levitte
+    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot|none) [count]", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
     {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotone/monotonerc or MT/monotonerc lua files", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
