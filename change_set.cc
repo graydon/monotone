@@ -1102,7 +1102,7 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
 {
   directory_map first_map, second_map;
   state_renumbering renumbering;
-  std::set<tid> damaged_in_first, damaged_in_second;
+  std::set<tid> damaged_in_second;
 
   pa.first.clear();
   pa.second.clear();
@@ -1112,7 +1112,6 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
     {
       tid x = ensure_file_in_map(*f, first_map, pa.first, ts);
       pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_file, make_null_component())));
-      damaged_in_first.insert(x);
     }
 
   for (std::set<file_path>::const_iterator d = pr.deleted_dirs.begin();
@@ -1120,7 +1119,6 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
     {
       tid x = ensure_dir_in_map(*d, first_map, pa.first, ts);
       pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_directory, make_null_component())));
-      damaged_in_first.insert(x);
     }
 
   for (std::map<file_path,file_path>::const_iterator rf = pr.renamed_files.begin();
@@ -1130,7 +1128,6 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
       tid b = ensure_file_in_map(rf->second, second_map, pa.second, ts);
       I(renumbering.find(a) == renumbering.end());
       renumbering.insert(std::make_pair(b,a));
-      damaged_in_first.insert(a);
       damaged_in_second.insert(b);
     }
 
@@ -1141,7 +1138,6 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
       tid b = ensure_dir_in_map(rd->second, second_map, pa.second, ts);
       I(renumbering.find(a) == renumbering.end());
       renumbering.insert(std::make_pair(b,a));
-      damaged_in_first.insert(a);
       damaged_in_second.insert(b);
     }
 

@@ -1,5 +1,10 @@
 2005-04-26  Matt Johnston  <matt@ucc.asn.au>
 
+	* change_set.cc (analyze_rearrangement): get rid of damaged_in_first
+	since it is not used.
+
+2005-04-26  Matt Johnston  <matt@ucc.asn.au>
+
 	* monotone.texi: fix mashed up merge of docs for kill_rev_locally
 	and db check.
 
