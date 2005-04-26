@@ -53,6 +53,9 @@ struct poptOption coptions[] =
 
 struct poptOption options[] =
   {
+    // Use the coptions table as well.
+    { NULL, 0, POPT_ARG_INCLUDE_TABLE, coptions, 0, NULL, NULL },
+
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, "print debug log to stderr while running", NULL},
     {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, "file to dump debugging log to, on failure", NULL},
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},
@@ -67,9 +70,6 @@ struct poptOption options[] =
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
-
-    // Use the coptions table as well.
-    { NULL, 0, POPT_ARG_INCLUDE_TABLE, coptions, 0, "Command-specific options", NULL },
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -422,18 +422,30 @@ cpp_main(int argc, char ** argv)
       // Make sure to hide documentation that's not part of
       // the current command.
       set<int> command_options = commands::command_options(u.which);
+      int count = 0;
       for (poptOption *o = coptions; o->val != 0; o++)
         {
           if (command_options.find(o->val) != command_options.end())
             {
               o->argInfo &= ~POPT_ARGFLAG_DOC_HIDDEN;
               L(F("Removed 'hidden' from option # %d\n") % o->argInfo);
+              count++;
             }
           else
             {
               o->argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
               L(F("Added 'hidden' to option # %d\n") % o->argInfo);
             }
+        }
+      free((void *)options[0].descrip); options[0].descrip = NULL;
+      if (count != 0)
+        {
+          ostringstream sstr;
+          sstr << "Options specific to 'monotone " << u.which << "':";
+          options[0].descrip = strdup(sstr.str().c_str());
+
+          options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
+          L(F("Added 'hidden' to option # %d\n") % options[0].argInfo);
         }
 
       poptPrintHelp(ctx(), stdout, 0);
