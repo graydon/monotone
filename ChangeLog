@@ -15,6 +15,11 @@
 
 2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_i18n_file_data.at: New test.
+	* testsuite.at: Add it.
+
+2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
+
 	* automate.cc (automate_parents, automate_children) 
 	(automate_graph): New automate commands.
 	(automate_command): Add them.
@@ -149,6 +154,10 @@
 	* file_io.{cc,hh} (localized): Move from here...
 	* transforms.{cc,hh} (localized): ...to here.  Add lots of gunk to
 	avoid calling iconv whenever possible.
+
+2005-04-22  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: update to sqlite 3.2.1
 
 2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -3467,7 +3476,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Mi��Å�kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
