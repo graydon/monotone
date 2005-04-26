@@ -1,5 +1,10 @@
 2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_i18n_file_data.at: New test.
+	* testsuite.at: Add it.
+
+2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
+
 	* automate.cc (automate_parents, automate_children) 
 	(automate_graph): New automate commands.
 	(automate_command): Add them.
