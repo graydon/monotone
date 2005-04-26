@@ -109,9 +109,9 @@ public:
 
 private:
   std::vector<std::string> file_lines;
-  std::vector<long> file_interned;
   std::vector<revision_id> annotations;
 
+  /// keep a count so we can tell quickly whether we can terminate
   size_t annotated_lines_completed;
 
   // elements of the set are indexes into the array of lines in the UDOI
@@ -191,16 +191,6 @@ annotate_context::annotate_context(file_id fid, app_state &app)
   std::string encoding = default_encoding; // FIXME
   split_into_lines(fpacked.inner()(), encoding, file_lines);
   L(F("annotate_context::annotate_context initialized with %d file lines\n") % file_lines.size());
-
-  // initialize file_interned
-  interner<long> in;
-  file_interned.clear();
-  file_interned.reserve(file_lines.size());
-  file_interned.clear();
-  for (size_t i = 0; i < file_lines.size(); i++) {
-    file_interned.push_back(in.intern(file_lines[i]));
-  }
-  L(F("annotate_context::annotate_context initialized with %d entries in file_interned\n") % file_interned.size());
 
   // initialize annotations
   revision_id nullid;
@@ -455,21 +445,30 @@ do_annotate_node (const annotate_node_work &work_unit,
   app.db.get_revision_parents(work_unit.node_revision, parents);
   L(F("do_annotate_node found %d parents for node %s\n") % parents.size() % work_unit.node_revision);
 
+  int added_in_parent_count = 0;
+
   std::set<revision_id>::const_iterator parent;
   for (parent = parents.begin(); parent != parents.end(); parent++) {
+    L(F("do_annotate_node processing edge from parent %s to child %s\n") 
+      % *parent % work_unit.node_revision);
+
     if (*parent == null_revision) {
       // work_unit.node_revision is the root node
+      I(parents.size() == 1);
       L(F("do_annotate_node setting root revision as %s\n") % work_unit.node_revision);
       work_unit.annotations->set_root_revision(work_unit.node_revision);
       return;
     }
 
+    // FIX this seems like alot of work to just follow the one file back, write
+    // dedicated follow_file(child_rev, parent_rev) function
     change_set cs;
     calculate_arbitrary_change_set (*parent, work_unit.node_revision, app, cs);
     if (cs.rearrangement.added_files.find(work_unit.node_fpath) != cs.rearrangement.added_files.end()) {
-      L(F("file %s added in %s\n") % work_unit.node_fpath % work_unit.node_revision);
-      work_unit.annotations->set_root_revision(work_unit.node_revision);
-      return;
+      L(F("file %s added in %s, continuing\n") 
+        % work_unit.node_fpath % work_unit.node_revision);
+      added_in_parent_count++;
+      continue;
     }
 
     file_path parent_fpath = apply_change_set_inverse(cs, work_unit.node_fpath);
@@ -498,6 +497,17 @@ do_annotate_node (const annotate_node_work &work_unit,
     }
   }
 
+  I(added_in_parent_count >= 0);
+  I((size_t)added_in_parent_count <= parents.size());
+  if (added_in_parent_count == parents.size()) {
+    N(parents.size() == 1,
+      F("annotate is confused by one file added on separate branches or forks of a branch\n"));
+    L(F("added_in_parent_count == parents.size(), set_root_revision %s\n") 
+      % work_unit.node_revision);
+    work_unit.annotations->set_root_revision(work_unit.node_revision);
+    return;
+  }
+
   work_unit.annotations->evaluate(work_unit.node_revision);
 }
 
@@ -507,10 +517,6 @@ do_annotate (app_state &app, file_path fpath, file_id fid, revision_id rid)
 {
   L(F("annotating file %s with id %s in revision %s\n") % fpath % fid % rid);
 
-  // get the file length...
-  //file_data fdata;
-  //app.db.get_file_version(fid, fdata);
-    
   boost::shared_ptr<annotate_context> acp(new annotate_context(fid, app));
   boost::shared_ptr<annotate_lineage_mapping> lineage = acp->initial_lineage();
 

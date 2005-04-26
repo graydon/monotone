@@ -3639,6 +3639,13 @@ the command starts tracing back through history from the revision
 @var{id}, otherwise it starts from the base revision of your working
 copy.
 
+@item monotone annotate @var{file}
+@item monotone annotate @var{file} @var{id}
+
+Dumps an annotated copy of the file to stdout.  Each line of the file
+is translated to <revision id>: <line> in the output, where <revision id>
+is the revision in which that line of the file was last edited.
+
 @item monotone complete file @var{partial-id}
 @itemx monotone complete manifest @var{partial-id}
 @itemx monotone complete revision @var{partial-id}
