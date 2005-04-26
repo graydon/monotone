@@ -26,28 +26,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "mt_version.hh"
-
-#define OPT_DEBUG 1
-#define OPT_HELP 2
-#define OPT_NOSTD 3
-#define OPT_NORC 4
-#define OPT_RCFILE 5
-#define OPT_DB_NAME 6
-#define OPT_KEY_NAME 7
-#define OPT_BRANCH_NAME 8
-#define OPT_QUIET 9
-#define OPT_VERSION 10
-#define OPT_DUMP 11
-#define OPT_TICKER 12
-#define OPT_FULL_VERSION 13
-#define OPT_REVISION 14
-#define OPT_MESSAGE 15
-#define OPT_ROOT 16
-#define OPT_DEPTH 17
-#define OPT_ARGFILE 18
-#define OPT_DATE 19
-#define OPT_AUTHOR 20
-#define OPT_ALL_FILES 21
+#include "options.hh"
 
 // main option processing and exception handling code
 
@@ -56,29 +35,41 @@ using namespace std;
 char * argstr = NULL;
 long arglong = 0;
 
+// Options are divide into two tables.  The first one is command-specific
+// options (hence the `c' in `coptions').  The second is the global one
+// with options that aren't tied to specific commands.
+
+struct poptOption coptions[] =
+  {
+    {"branch", 'b', POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
+    {"revision", 'r', POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
+    {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
+    {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
+    {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
+    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
+    {"all-files", 0, POPT_ARG_NONE, NULL, OPT_ALL_FILES, "inventory all working copy files", NULL},
+    { NULL, 0, 0, NULL, 0, NULL, NULL }
+  };
+
 struct poptOption options[] =
   {
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, "print debug log to stderr while running", NULL},
     {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, "file to dump debugging log to, on failure", NULL},
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},
     {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, "display help message", NULL},
+    {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
+    {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, "print detailed version number, then exit", NULL},
+    {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "insert command line arguments taken from the given file", NULL},
+    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot|none) [count]", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
     {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotone/monotonerc or MT/monotonerc lua files", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
-    {"branch", 'b', POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
-    {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
-    {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, "print detailed version number, then exit", NULL},
-    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot|none) [count]", NULL},
-    {"revision", 'r', POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
-    {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
-    {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
-    {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
-    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
-    {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "insert command line arguments taken from the given file", NULL},
-    {"all-files", 0, POPT_ARG_NONE, NULL, OPT_ALL_FILES, "inventory all working copy files", NULL},
+
+    // Use the coptions table as well.
+    { NULL, 0, POPT_ARG_INCLUDE_TABLE, coptions, 0, "Command-specific options", NULL },
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -164,7 +155,7 @@ my_poptFreeContext(poptContext con)
 
 // Read arguments from a file.  The special file '-' means stdin.
 // Returned value must be free()'d, after arg parsing has completed.
-static const char **
+static void
 my_poptStuffArgFile(poptContext con, utf8 const & filename)
 {
   utf8 argstr;
@@ -174,7 +165,7 @@ my_poptStuffArgFile(poptContext con, utf8 const & filename)
     external ext(dat());
     system_to_utf8(ext, argstr);
   }
-  
+
   const char **argv = 0;
   int argc = 0;
   int rc;
@@ -194,19 +185,28 @@ my_poptStuffArgFile(poptContext con, utf8 const & filename)
         F("weird error when stuffing arguments read from %s: %s\n")
         % filename % poptStrerror(rc));
     }
-  else
-    {
-      free(argv);               // just in case there was something...
-      argv = 0;
-    }
 
-  return argv;
+  free(argv);
+}
+
+static string
+coption_string(int o)
+{
+  char buf[2] = { 0,0 };
+  for(struct poptOption *opt = coptions; opt->val; opt++)
+    if (o == opt->val)
+      {
+        buf[0] = opt->shortName;
+        return opt->longName
+          ? string("--") + string(opt->longName)
+          : string("-") + string(buf);
+      }
+  return string();
 }
 
 int 
 cpp_main(int argc, char ** argv)
 {
-  
   clean_shutdown = false;
 
   atexit(&dumper);
@@ -217,7 +217,7 @@ cpp_main(int argc, char ** argv)
   setlocale(LC_MESSAGES, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
-  
+
   {
     std::ostringstream cmdline_ss;
     for (int i = 0; i < argc; ++i)
@@ -227,42 +227,45 @@ cpp_main(int argc, char ** argv)
         cmdline_ss << "'" << argv[i] << "'";
       }
     L(F("command line: %s\n") % cmdline_ss.str());
-  }       
+  }
 
   L(F("set locale: LC_CTYPE=%s, LC_MESSAGES=%s\n")
     % (setlocale(LC_CTYPE, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL))
     % (setlocale(LC_MESSAGES, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL)));
-  
+
   // decode all argv values into a UTF-8 array
 
   save_initial_path();
   utf8_argv uv(argc, argv);
 
   // prepare for arg parsing
-      
+
   cleanup_ptr<poptContext, void> 
     ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
         &my_poptFreeContext);
+
+  set<int> local_options;
+  for (poptOption *opt = coptions; opt->val; opt++)
+    local_options.insert(opt->val);
 
   // process main program options
 
   int ret = 0;
   int opt;
   bool requested_help = false;
-
-  // keep a list of argv vectors created by get_args_from_file, since they
-  // must be individually free()'d, but not until arg parsing is done.
-  std::vector<const char**> sub_argvs;
+  set<int> used_local_options;
 
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
 
   try
     {
-
       app_state app;
 
       while ((opt = poptGetNextOpt(ctx())) > 0)
         {
+          if (local_options.find(opt) != local_options.end())
+            used_local_options.insert(opt);
+
           switch(opt)
             {
             case OPT_DEBUG:
@@ -347,8 +350,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_ARGFILE:
-              sub_argvs.push_back(my_poptStuffArgFile(ctx(),
-                                                      utf8(string(argstr))));
+              my_poptStuffArgFile(ctx(), utf8(string(argstr)));
               break;
 
             case OPT_ALL_FILES:
@@ -397,22 +399,43 @@ cpp_main(int argc, char ** argv)
       else
         {
           string cmd(poptGetArg(ctx()));
+
+          // Make sure the local options used are really used by the
+          // given command.
+          set<int> command_options = commands::command_options(cmd);
+          for (set<int>::const_iterator i = used_local_options.begin();
+               i != used_local_options.end(); ++i)
+            N(command_options.find(*i) != command_options.end(),
+              F("monotone %s doesn't use the option %s")
+              % cmd % coption_string(*i));
+
           vector<utf8> args;
           while(poptPeekArg(ctx()))
             {
               args.push_back(utf8(string(poptGetArg(ctx()))));
             }
-          // we've copied everything we want from the command line into our
-          // own data structures, so we can finally delete popt's malloc'ed
-          // argv stuff.
-          for (std::vector<const char**>::const_iterator i = sub_argvs.begin();
-               i != sub_argvs.end(); ++i)
-            free(*i);
           ret = commands::process(app, cmd, args);
         }
     }
   catch (usage & u)
     {
+      // Make sure to hide documentation that's not part of
+      // the current command.
+      set<int> command_options = commands::command_options(u.which);
+      for (poptOption *o = coptions; o->val != 0; o++)
+        {
+          if (command_options.find(o->val) != command_options.end())
+            {
+              o->argInfo &= ~POPT_ARGFLAG_DOC_HIDDEN;
+              L(F("Removed 'hidden' from option # %d\n") % o->argInfo);
+            }
+          else
+            {
+              o->argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
+              L(F("Added 'hidden' to option # %d\n") % o->argInfo);
+            }
+        }
+
       poptPrintHelp(ctx(), stdout, 0);
       cout << endl;
       commands::explain_usage(u.which, cout);

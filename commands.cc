@@ -44,6 +44,7 @@
 #include "automate.hh"
 #include "inodeprint.hh"
 #include "platform.hh"
+#include "options.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -81,16 +82,29 @@ namespace commands
 
   static map<string,command *> cmds;
 
+  struct command_opts
+  {
+    set<int> opts;
+    command_opts() {}
+    command_opts & operator%(int o)
+    { opts.insert(o); return *this; }
+    command_opts & operator%(command_opts const &o)
+    { opts.insert(o.opts.begin(), o.opts.end()); return *this; }
+  };
+
   struct command 
   {
     string name;
     string cmdgroup;
     string params;
     string desc;
+    command_opts options;
     command(string const & n,
             string const & g,
             string const & p,
-            string const & d) : name(n), cmdgroup(g), params(p), desc(d) 
+            string const & d,
+            command_opts const & o)
+      : name(n), cmdgroup(g), params(p), desc(d), options(o)
     { cmds[n] = this; }
     virtual ~command() {}
     virtual void exec(app_state & app, vector<utf8> const & args) = 0;
@@ -223,26 +237,42 @@ namespace commands
       }
   }
 
-#define CMD(C, group, params, desc)              \
-struct cmd_ ## C : public command                \
-{                                                \
-  cmd_ ## C() : command(#C, group, params, desc) \
-  {}                                             \
-  virtual void exec(app_state & app,             \
-                    vector<utf8> const & args);  \
-};                                               \
-static cmd_ ## C C ## _cmd;                      \
-void cmd_ ## C::exec(app_state & app,            \
-                     vector<utf8> const & args)  \
+  set<int> command_options(string const & cmd)
+  {
+    string completed = complete_command(cmd);
+    
+    if (cmds.find(completed) != cmds.end())
+      {
+        return cmds[completed]->options.opts;
+      }
+    else
+      {
+        return set<int>();
+      }
+  }
 
-#define ALIAS(C, realcommand)                                 \
-CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,  \
-    realcommand##_cmd.desc + "\nAlias for " #realcommand)     \
-{                                                             \
-  process(app, string(#realcommand), args);                   \
+#define CMD(C, group, params, desc, opts)                            \
+struct cmd_ ## C : public command                                    \
+{                                                                    \
+  cmd_ ## C() : command(#C, group, params, desc,                     \
+                        command_opts() opts)                         \
+  {}                                                                 \
+  virtual void exec(app_state & app,                                 \
+                    vector<utf8> const & args);                      \
+};                                                                   \
+static cmd_ ## C C ## _cmd;                                          \
+void cmd_ ## C::exec(app_state & app,                                \
+                     vector<utf8> const & args)                      \
+
+#define ALIAS(C, realcommand)                                        \
+CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,         \
+    realcommand##_cmd.desc + "\nAlias for " #realcommand,            \
+    % realcommand##_cmd.options)                                     \
+{                                                                    \
+  process(app, string(#realcommand), args);                          \
 }
 
-static void 
+static void
 get_work_path(local_path & w_path)
 {
   w_path = (mkpath(book_keeping_dir) / mkpath(work_file_name)).string();
@@ -1192,7 +1222,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
 #undef PRINT_INDENTED_SET
 }
 
-CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
+CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair",)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1214,7 +1244,7 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair")
   guard.commit();
 }
 
-CMD(dropkey, "key and cert", "KEYID", "drop a public and private key")
+CMD(dropkey, "key and cert", "KEYID", "drop a public and private key",)
 {
   bool key_deleted = false;
   
@@ -1246,7 +1276,8 @@ CMD(dropkey, "key and cert", "KEYID", "drop a public and private key")
   guard.commit();
 }
 
-CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key")
+CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key",
+    )
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1269,7 +1300,7 @@ CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key"
 }
 
 CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
-    "create a cert for a revision")
+    "create a cert for a revision",)
 {
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
@@ -1310,7 +1341,7 @@ CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
 
 CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
     "test whether a hypothetical cert would be trusted\n"
-    "by current settings")
+    "by current settings",)
 {
   if (args.size() < 4)
     throw usage(name);
@@ -1346,8 +1377,8 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
        << "it would be: " << (trusted ? "trusted" : "UNtrusted") << endl;
 }
 
-CMD(tag, "review", "REVISION TAGNAME", 
-    "put a symbolic tag cert on a revision version")
+CMD(tag, "review", "REVISION TAGNAME",
+    "put a symbolic tag cert on a revision version",)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1360,7 +1391,7 @@ CMD(tag, "review", "REVISION TAGNAME",
 
 
 CMD(testresult, "review", "ID (pass|fail|true|false|yes|no|1|0)", 
-    "note the results of running a test on a revision")
+    "note the results of running a test on a revision",)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1372,7 +1403,8 @@ CMD(testresult, "review", "ID (pass|fail|true|false|yes|no|1|0)",
 }
 
 CMD(approve, "review", "REVISION", 
-    "approve of a particular revision")
+    "approve of a particular revision",
+    % OPT_BRANCH_NAME)
 {
   if (args.size() != 1)
     throw usage(name);  
@@ -1388,7 +1420,8 @@ CMD(approve, "review", "REVISION",
 
 
 CMD(disapprove, "review", "REVISION", 
-    "disapprove of a particular revision")
+    "disapprove of a particular revision",
+    % OPT_BRANCH_NAME)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -1433,7 +1466,7 @@ CMD(disapprove, "review", "REVISION",
 }
 
 CMD(comment, "review", "REVISION [COMMENT]",
-    "comment on a particular revision")
+    "comment on a particular revision",)
 {
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);
@@ -1456,7 +1489,7 @@ CMD(comment, "review", "REVISION [COMMENT]",
 
 
 
-CMD(add, "working copy", "PATH...", "add files to working copy")
+CMD(add, "working copy", "PATH...", "add files to working copy",)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -1480,7 +1513,7 @@ CMD(add, "working copy", "PATH...", "add files to working copy")
   update_any_attrs(app);
 }
 
-CMD(drop, "working copy", "PATH...", "drop files from working copy")
+CMD(drop, "working copy", "PATH...", "drop files from working copy",)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -1505,7 +1538,7 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy")
 }
 
 
-CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
+CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1531,7 +1564,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
 // (such as automated processes might want to do).
 
 CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]", 
-    "commit change to a single file")
+    "commit change to a single file",)
 {
   if (args.size() != 2 && args.size() != 3)
     throw usage(name);
@@ -1613,7 +1646,7 @@ CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]",
 }
 
 
-CMD(fload, "debug", "", "load file contents into db")
+CMD(fload, "debug", "", "load file contents into db",)
 {
   string s = get_stdin();
 
@@ -1626,7 +1659,7 @@ CMD(fload, "debug", "", "load file contents into db")
   dbw.consume_file_data(f_id, f_data);  
 }
 
-CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result")
+CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result",)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -1657,7 +1690,7 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
   
 }
 
-CMD(status, "informative", "[PATH]...", "show status of working copy")
+CMD(status, "informative", "[PATH]...", "show status of working copy",)
 {
   revision_set rs;
   manifest_map m_old, m_new;
@@ -1671,8 +1704,7 @@ CMD(status, "informative", "[PATH]...", "show status of working copy")
   cout << endl << tmp << endl;
 }
 
-CMD(identify, "working copy", "[PATH]",
-    "calculate identity of PATH or stdin")
+CMD(identify, "working copy", "[PATH]", "calculate identity of PATH or stdin",)
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
@@ -1696,7 +1728,7 @@ CMD(identify, "working copy", "[PATH]",
 CMD(cat, "informative",
     "(file|manifest|revision) [ID]\n"
     "file REVISION FILENAME", 
-    "write file, manifest, or revision from database to stdout")
+    "write file, manifest, or revision from database to stdout",)
 {
   if (args.size() < 1 || args.size() > 3)
     throw usage(name);
@@ -1798,7 +1830,8 @@ CMD(cat, "informative",
 
 
 CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
-    "check out revision from database into directory")
+    "check out revision from database into directory",
+    % OPT_BRANCH_NAME)
 {
 
   revision_id ident;
@@ -1892,7 +1925,8 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
 
 ALIAS(co, checkout)
 
-CMD(heads, "tree", "", "show unmerged head revisions of branch")
+CMD(heads, "tree", "", "show unmerged head revisions of branch",
+    % OPT_BRANCH_NAME)
 {
   set<revision_id> heads;
   if (args.size() != 0)
@@ -2141,7 +2175,8 @@ print_inventory(std::string const & status,
 }
 
 CMD(inventory, "informative", "[PATH]...", 
-    "inventory of every file in working copy with associated status")
+    "inventory of every file in working copy with associated status",
+    % OPT_BRANCH_NAME % OPT_ALL_FILES)
 {
   manifest_id old_manifest_id;
   revision_id old_revision_id;
@@ -2201,7 +2236,7 @@ CMD(list, "informative",
     "ignored\n"
     "missing",
     "show database objects, or the current working copy manifest,\n"
-    "or unknown, intentionally ignored, or missing state files")
+    "or unknown, intentionally ignored, or missing state files",)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -2236,7 +2271,8 @@ CMD(list, "informative",
 ALIAS(ls, list)
 
 
-CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
+CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout",
+    )
 {
   if (args.size() != 2)
     throw usage(name);
@@ -2260,7 +2296,7 @@ CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout"
                             manifest_delta(del));
 }
 
-CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
+CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout",)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -2282,7 +2318,7 @@ CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout")
   pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));  
 }
 
-CMD(rdata, "packet i/o", "ID", "write revision data packet to stdout")
+CMD(rdata, "packet i/o", "ID", "write revision data packet to stdout",)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -2299,7 +2335,7 @@ CMD(rdata, "packet i/o", "ID", "write revision data packet to stdout")
   pw.consume_revision_data(r_id, r_data);  
 }
 
-CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
+CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout",)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -2317,7 +2353,7 @@ CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout")
 }
 
 
-CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
+CMD(fdata, "packet i/o", "ID", "write file data packet to stdout",)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -2335,7 +2371,7 @@ CMD(fdata, "packet i/o", "ID", "write file data packet to stdout")
 }
 
 
-CMD(certs, "packet i/o", "ID", "write cert packets to stdout")
+CMD(certs, "packet i/o", "ID", "write cert packets to stdout",)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -2352,7 +2388,7 @@ CMD(certs, "packet i/o", "ID", "write cert packets to stdout")
     pw.consume_revision_cert(idx(certs, i));
 }
 
-CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
+CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout",)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -2367,7 +2403,7 @@ CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout")
   pw.consume_public_key(ident, key);
 }
 
-CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
+CMD(privkey, "packet i/o", "ID", "write private key packet to stdout",)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -2383,7 +2419,7 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout")
 }
 
 
-CMD(read, "packet i/o", "", "read packets from stdin")
+CMD(read, "packet i/o", "", "read packets from stdin",)
 {
   packet_db_writer dbw(app, true);
   size_t count = read_packets(cin, dbw);
@@ -2395,8 +2431,8 @@ CMD(read, "packet i/o", "", "read packets from stdin")
 }
 
 
-CMD(reindex, "network", "", 
-    "rebuild the indices used to sync over the network")
+CMD(reindex, "network", "",
+    "rebuild the indices used to sync over the network",)
 {
   if (args.size() > 0)
     throw usage(name);
@@ -2465,7 +2501,7 @@ process_netsync_client_args(std::string const & name,
 }
 
 CMD(push, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
-    "push COLLECTION to netsync server at ADDRESS")
+    "push COLLECTION to netsync server at ADDRESS",)
 {
   utf8 addr;
   vector<utf8> collections;
@@ -2479,7 +2515,7 @@ CMD(push, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
 }
 
 CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
-    "pull COLLECTION from netsync server at ADDRESS")
+    "pull COLLECTION from netsync server at ADDRESS",)
 {
   utf8 addr;
   vector<utf8> collections;
@@ -2492,7 +2528,7 @@ CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
 }
 
 CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
-    "sync COLLECTION with netsync server at ADDRESS")
+    "sync COLLECTION with netsync server at ADDRESS",)
 {
   utf8 addr;
   vector<utf8> collections;
@@ -2506,7 +2542,7 @@ CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
 }
 
 CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
-    "listen on ADDRESS and serve COLLECTION to connecting clients")
+    "listen on ADDRESS and serve COLLECTION to connecting clients",)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -2538,7 +2574,7 @@ CMD(db, "database",
     "changesetify\n"
     "rebuild\n"
     "set_epoch BRANCH EPOCH\n", 
-    "manipulate database state")
+    "manipulate database state",)
 {
   if (args.size() == 1)
     {
@@ -2587,7 +2623,7 @@ CMD(db, "database",
 }
 
 CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE", 
-    "set, get or drop file attributes")
+    "set, get or drop file attributes",)
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
@@ -2712,8 +2748,9 @@ string_to_datetime(std::string const & s)
   I(false);
 }
 
-CMD(commit, "working copy", "[--message=STRING] [PATH]...", 
-    "commit working copy to database")
+CMD(commit, "working copy", "[PATH]...", 
+    "commit working copy to database",
+    % OPT_BRANCH_NAME % OPT_MESSAGE % OPT_DATE % OPT_AUTHOR)
 {
   string log_message("");
   revision_set rs;
@@ -2758,11 +2795,11 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
 
   N(log_message.find_first_not_of(" \r\t\n") != string::npos,
     F("empty log message"));
-  
+
   transaction_guard guard(app.db);
   {
     packet_db_writer dbw(app);
-  
+
     if (app.db.revision_exists(rid))
       {
         W(F("revision %s already in database\n") % rid);
@@ -2771,11 +2808,11 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
       {
         // new revision
         L(F("inserting new revision %s\n") % rid);
-      
+
         I(rs.edges.size() == 1);
         edge_map::const_iterator edge = rs.edges.begin();
         I(edge != rs.edges.end());
-      
+
         // process manifest delta or new manifest
         if (app.db.manifest_version_exists(rs.new_manifest))
           {
@@ -2783,13 +2820,13 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
           }
         else if (app.db.manifest_version_exists(edge_old_manifest(edge)))
           {
-            L(F("inserting manifest delta %s -> %s\n") 
-              % edge_old_manifest(edge) 
+            L(F("inserting manifest delta %s -> %s\n")
+              % edge_old_manifest(edge)
               % rs.new_manifest);
             delta del;
             diff(m_old, m_new, del);
-            dbw.consume_manifest_delta(edge_old_manifest(edge), 
-                                       rs.new_manifest, 
+            dbw.consume_manifest_delta(edge_old_manifest(edge),
+                                       rs.new_manifest,
                                        manifest_delta(del));
           }
         else
@@ -2799,7 +2836,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
             write_manifest_map(m_new, m_new_data);
             dbw.consume_manifest_data(rs.new_manifest, m_new_data);
           }
-      
+
         // process file deltas or new files
         for (change_set::delta_map::const_iterator i = edge_changes(edge).deltas.begin();
              i != edge_changes(edge).deltas.end(); ++i)
@@ -2807,13 +2844,13 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
             if (! delta_entry_src(i).inner()().empty() && 
                 app.db.file_version_exists(delta_entry_dst(i)))
               {
-                L(F("skipping file delta %s, already in database\n") 
+                L(F("skipping file delta %s, already in database\n")
                   % delta_entry_dst(i));
               }
             else if (! delta_entry_src(i).inner()().empty() && 
                      app.db.file_version_exists(delta_entry_src(i)))
               {
-                L(F("inserting delta %s -> %s\n") 
+                L(F("inserting delta %s -> %s\n")
                   % delta_entry_src(i) % delta_entry_dst(i));
                 file_data old_data;
                 data new_data;
@@ -2827,7 +2864,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
                   % delta_entry_path(i));
                 delta del;
                 diff(old_data.inner(), new_data, del);
-                dbw.consume_file_delta(delta_entry_src(i), 
+                dbw.consume_file_delta(delta_entry_src(i),
                                        delta_entry_dst(i), 
                                        file_delta(del));
               }
@@ -2926,7 +2963,7 @@ dump_diffs(change_set::delta_map const & deltas,
             }
           else
             {
-              read_localized_data(delta_entry_path(i), 
+              read_localized_data(delta_entry_path(i),
                                   unpacked, app.lua);
             }
           
@@ -3136,18 +3173,20 @@ void do_diff(const string & name,
 }
 
 CMD(cdiff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
-    "show current context diffs on stdout")
+    "show current context diffs on stdout",
+    % OPT_BRANCH_NAME % OPT_REVISION)
 {
   do_diff(name, app, args, context_diff);
 }
 
 CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
-    "show current unified diffs on stdout")
+    "show current unified diffs on stdout",
+    % OPT_BRANCH_NAME % OPT_REVISION)
 {
   do_diff(name, app, args, unified_diff);
 }
 
-CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor")
+CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor",)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -3164,7 +3203,7 @@ CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor")
 }
 
 
-CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
+CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator",)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -3181,7 +3220,7 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator")
 }
 
 
-CMD(agraph, "debug", "", "dump ancestry graph to stdout in VCG format")
+CMD(agraph, "debug", "", "dump ancestry graph to stdout in VCG format",)
 {
   set<revision_id> nodes;
   multimap<revision_id,string> branches;
@@ -3286,7 +3325,8 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, "working copy", "\nREVISION", "update working copy to be based off another revision")
+CMD(update, "working copy", "\nREVISION", "update working copy to be based off another revision",
+    % OPT_BRANCH_NAME)
 {
   manifest_map m_old, m_ancestor, m_working, m_chosen;
   manifest_id m_ancestor_id, m_chosen_id;
@@ -3528,7 +3568,8 @@ try_one_merge(revision_id const & left_id,
 }                         
 
 
-CMD(merge, "tree", "", "merge unmerged heads of branch")
+CMD(merge, "tree", "", "merge unmerged heads of branch",
+    % OPT_BRANCH_NAME)
 {
   set<revision_id> heads;
 
@@ -3577,7 +3618,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch")
 }
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
-    "merge from one branch to another asymmetrically")
+    "merge from one branch to another asymmetrically",)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less
@@ -3660,7 +3701,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
 }
 
 CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
-    "merge two explicitly given revisions, placing result in given branch")
+    "merge two explicitly given revisions, placing result in given branch",)
 {
   revision_id left, right, ancestor;
   string branch;
@@ -3715,7 +3756,8 @@ CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVI
   P(F("[merged] %s\n") % merged);
 }
 
-CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete partial id")
+CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID",
+    "complete partial id",)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -3756,7 +3798,7 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID", "complete pa
 
 
 CMD(revert, "working copy", "[PATH]...", 
-    "revert file(s), dir(s) or entire working copy")
+    "revert file(s), dir(s) or entire working copy",)
 {
   manifest_map m_old;
   revision_id old_revision_id;
@@ -3817,7 +3859,8 @@ CMD(revert, "working copy", "[PATH]...",
 
 CMD(rcs_import, "debug", "RCSFILE...",
     "import all versions in RCS files\n"
-    "this command doesn't reconstruct revisions.  you probably want cvs_import")
+    "this command doesn't reconstruct revisions.  you probably want cvs_import",
+    % OPT_BRANCH_NAME)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -3832,7 +3875,8 @@ CMD(rcs_import, "debug", "RCSFILE...",
 }
 
 
-CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository")
+CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository",
+    % OPT_BRANCH_NAME)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -3861,7 +3905,8 @@ log_certs(app_state & app, revision_id id, cert_name name, string label, bool mu
     }     
 }
 
-CMD(log, "informative", "[ID] [file]", "print history in reverse order starting from 'ID' (filtering by 'file')")
+CMD(log, "informative", "[ID] [file]", "print history in reverse order starting from 'ID' (filtering by 'file')",
+    % OPT_DEPTH)
 {
   revision_set rev;
   revision_id rid;
@@ -4009,7 +4054,8 @@ CMD(log, "informative", "[ID] [file]", "print history in reverse order starting 
 }
 
 
-CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory")
+CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory",
+    % OPT_BRANCH_NAME)
 {
   string dir;
 
@@ -4034,7 +4080,7 @@ CMD(automate, "automation",
     "toposort [REV1 [REV2 [REV3 [...]]]]\n"
     "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
     "leaves",
-    "automation interface")
+    "automation interface",)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -4048,7 +4094,7 @@ CMD(automate, "automation",
 }
 
 CMD(set, "vars", "DOMAIN NAME VALUE",
-    "set the database variable NAME to VALUE, in domain DOMAIN")
+    "set the database variable NAME to VALUE, in domain DOMAIN",)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -4063,7 +4109,7 @@ CMD(set, "vars", "DOMAIN NAME VALUE",
 }
 
 CMD(unset, "vars", "DOMAIN NAME",
-    "remove the database variable NAME in domain DOMAIN")
+    "remove the database variable NAME in domain DOMAIN",)
 {
   if (args.size() != 2)
     throw usage(name);

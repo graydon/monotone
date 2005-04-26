@@ -514,6 +514,7 @@ sanity_check_path_item(path_item const & pi)
 static void
 confirm_proper_tree(path_state const & ps)
 {
+<<<<<<< variant A
   if (ps.empty())
     return;
 
@@ -532,6 +533,23 @@ confirm_proper_tree(path_state const & ps)
   tid curr;
   path_item item;
 
+>>>>>>> variant B
+  if (ps.empty())
+    return;
+
+  I(ps.find(root_tid) == ps.end()); // Note that this find() also ensures
+                                    // sortedness of ps.
+
+  tid min_tid = ps.begin()->first;
+  tid max_tid = ps.rbegin()->first;
+  size_t tid_range = max_tid - min_tid + 1;
+  
+  boost::dynamic_bitset<> confirmed(tid_range);
+
+####### Ancestor
+  std::map<tid,bool> confirmed;
+  I(ps.find(root_tid) == ps.end());
+======= end
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       ancs.clear();
