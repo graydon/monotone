@@ -525,20 +525,26 @@ confirm_proper_tree(path_state const & ps)
   size_t tid_range = max_tid - min_tid + 1;
   
   boost::dynamic_bitset<> confirmed(tid_range);
+  boost::dynamic_bitset<> ancbits(tid_range);
+  std::vector<tid> ancs; // a set is more efficient, at least in normal
+                      // trees where the number of ancestors is
+                      // significantly less than tid_range
+  tid curr;
+  path_item item;
 
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
-      tid curr = i->first;
-      path_item item = i->second;
-      std::set<tid> ancs; // a set is more efficient, at least in normal
-                          // trees where the number of ancestors is
-                          // significantly less than tid_range
+      ancs.clear();
+      ancbits.reset();
+      curr = i->first;
+      item = i->second;
 
       while (confirmed.test(curr - min_tid) == false)
         {             
           sanity_check_path_item(item);
-          I(ancs.find(curr) == ancs.end());
-          ancs.insert(curr);
+          I(ancbits.test(curr-min_tid) == false);
+          ancs.push_back(curr);
+          ancbits.set(curr-min_tid);
           if (path_item_parent(item) == root_tid)
             break;
           else
@@ -555,7 +561,7 @@ confirm_proper_tree(path_state const & ps)
               I(path_item_type(item) == ptype_directory);
             }
         }
-      for (std::set<tid>::const_iterator a = ancs.begin(); a != ancs.end(); a++)
+      for (std::vector<tid>::const_iterator a = ancs.begin(); a != ancs.end(); a++)
         {
           confirmed.set(*a - min_tid);
         }
