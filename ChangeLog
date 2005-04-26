@@ -1,3 +1,8 @@
+2005-04-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.texi: fix mashed up merge of docs for kill_rev_locally
+	and db check.
+
 2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* automate.cc (automate_parents, automate_children) 
