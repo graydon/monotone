@@ -6,6 +6,10 @@
 
 	* tests/t_cvsimport2.at: Un-XFAIL, improve description.
 
+2005-04-22  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: update to sqlite 3.2.1
+
 2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_i18n_file_data.at: New test.
