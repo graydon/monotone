@@ -72,21 +72,21 @@ cvs_key
     if (labs(time - other.time) > constants::cvs_window)
       return false;
     for (map<file_path,string>::const_iterator it = files.begin(); it!=files.end(); it++)
-    {
-      map<file_path,string>::const_iterator otherit;
-
-L(F("checking %s %s\n") % it->first % it->second);
-      otherit = other.files.find(it->first);
-      if (otherit != other.files.end() && it->second!=otherit->second)
       {
-        L(F("!similar_enough: %d/%d\n") % id % other.id);
-        return false;
+        map<file_path,string>::const_iterator otherit;
+        
+        L(F("checking %s %s\n") % it->first % it->second);
+        otherit = other.files.find(it->first);
+        if (otherit != other.files.end() && it->second!=otherit->second)
+          {
+            L(F("!similar_enough: %d/%d\n") % id % other.id);
+            return false;
+          }
+        else if (otherit != other.files.end())
+          {
+            L(F("Same file, different version: %s and %s\n") % it->second % otherit->second);
+          }
       }
-else if (otherit != other.files.end())
-{
-L(F("Same file, different version: %s and %s\n") % it->second % otherit->second);
-}
-    }
     L(F("similar_enough: %d/%d\n") % id % other.id);
     return true;
   }
@@ -515,8 +515,8 @@ process_branch(string const & begin_version,
             I(r.deltas.find(curr_version) != r.deltas.end());
             bool live_p = r.deltas.find(curr_version)->second->state != "dead";
             s->in_edges.insert(cvs_file_edge(curr_id, cvs.curr_file, false,
-                                        curr_id, cvs.curr_file, live_p,
-                                        cvs));
+                                             curr_id, cvs.curr_file, live_p,
+                                             cvs));
             ++cvs.n_versions;
          }
       }
@@ -1136,10 +1136,22 @@ build_change_set(shared_ptr<cvs_state> state,
       file_id fid(cvs.file_version_interner.lookup(f->child_version));
       file_path pth(cvs.path_interner.lookup(f->child_path));
       if (!f->child_live_p)
-      {  
-        L(F("deleting entry state '%s' on '%s'\n") % fid % pth);              
-        cs.delete_file(pth);
-      }
+        {  
+          if (f->parent_live_p)
+            {
+              L(F("deleting entry state '%s' on '%s'\n") % fid % pth);              
+              cs.delete_file(pth);
+            }
+          else
+            {
+              // it can actually happen that we have a file that went from
+              // dead to dead.  when a file is created on a branch, cvs first
+              // _commits a deleted file_ on mainline, and then branches from
+              // it and resurrects it.  In such cases, we should just ignore
+              // the file, it doesn't actually exist.  So, in this block, we
+              // do nothing.
+            }
+        }
       else 
         {
           manifest_map::const_iterator i = state_map.find(pth);
