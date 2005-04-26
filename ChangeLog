@@ -1,3 +1,11 @@
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (struct cvs_key, process_branch): Fix
+	indentation.
+	(build_change_set): Handle the case where a file is "added dead".
+
+	* tests/t_cvsimport2.at: Un-XFAIL, improve description.
+
 2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_i18n_file_data.at: New test.
