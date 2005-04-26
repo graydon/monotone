@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.282 2005/03/09 12:26:51 danielk1977 Exp $
+** $Id: main.c,v 1.284 2005/03/29 03:10:59 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -25,6 +25,16 @@
 ** SQLITE_LITTLEENDIAN macros.
 */
 const int sqlite3one = 1;
+
+#ifndef SQLITE_OMIT_GLOBALRECOVER
+/*
+** Linked list of all open database handles. This is used by the 
+** sqlite3_global_recover() function. Entries are added to the list
+** by openDatabase() and removed by sqlite3_close().
+*/
+static sqlite3 *pDbList = 0;
+#endif
+
 
 /*
 ** Fill the InitData structure with an error message that indicates
@@ -123,7 +133,7 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
   int meta[10];
   InitData initData;
   char const *zMasterSchema;
-  char const *zMasterName;
+  char const *zMasterName = SCHEMA_TABLE(iDb);
 
   /*
   ** The master database table has a structure like this
@@ -137,6 +147,7 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
      "  sql text\n"
      ")"
   ;
+#ifndef SQLITE_OMIT_TEMPDB
   static const char temp_master_schema[] = 
      "CREATE TEMP TABLE sqlite_temp_master(\n"
      "  type text,\n"
@@ -146,6 +157,9 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
      "  sql text\n"
      ")"
   ;
+#else
+  #define temp_master_schema 0
+#endif
 
   assert( iDb>=0 && iDb<db->nDb );
 
@@ -153,13 +167,12 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
   ** and initialisation script appropriate for the database being
   ** initialised. zMasterName is the name of the master table.
   */
-  if( iDb==1 ){
+  if( !OMIT_TEMPDB && iDb==1 ){
     zMasterSchema = temp_master_schema;
-    zMasterName = TEMP_MASTER_NAME;
   }else{
     zMasterSchema = master_schema;
-    zMasterName = MASTER_NAME;
   }
+  zMasterName = SCHEMA_TABLE(iDb);
 
   /* Construct the schema tables.  */
   sqlite3SafetyOff(db);
@@ -185,7 +198,7 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
   /* Create a cursor to hold the database open
   */
   if( db->aDb[iDb].pBt==0 ){
-    if( iDb==1 ) DbSetProperty(db, 1, DB_SchemaLoaded);
+    if( !OMIT_TEMPDB && iDb==1 ) DbSetProperty(db, 1, DB_SchemaLoaded);
     return SQLITE_OK;
   }
   rc = sqlite3BtreeCursor(db->aDb[iDb].pBt, MASTER_ROOT, 0, 0, 0, &curMain);
@@ -341,12 +354,14 @@ int sqlite3Init(sqlite3 *db, char **pzErrMsg){
   ** for the TEMP database. This is loaded last, as the TEMP database
   ** schema may contain references to objects in other databases.
   */
+#ifndef SQLITE_OMIT_TEMPDB
   if( rc==SQLITE_OK && db->nDb>1 && !DbHasProperty(db, 1, DB_SchemaLoaded) ){
     rc = sqlite3InitOne(db, 1, pzErrMsg);
     if( rc ){
       sqlite3ResetInternalSchema(db, 1);
     }
   }
+#endif
 
   db->init.busy = 0;
   if( rc==SQLITE_OK ){
@@ -513,6 +528,23 @@ int sqlite3_close(sqlite3 *db){
   if( db->pErr ){
     sqlite3ValueFree(db->pErr);
   }
+
+#ifndef SQLITE_OMIT_GLOBALRECOVER
+  {
+    sqlite3 *pPrev = pDbList;
+    sqlite3OsEnterMutex();
+    while( pPrev && pPrev->pNext!=db ){
+      pPrev = pPrev->pNext;
+    }
+    if( pPrev ){
+      pPrev->pNext = db->pNext;
+    }else{
+      assert( pDbList==db );
+      pDbList = db->pNext;
+    }
+    sqlite3OsLeaveMutex();
+  }
+#endif
 
   db->magic = SQLITE_MAGIC_ERROR;
   sqliteFree(db);
@@ -1178,13 +1210,17 @@ static int openDatabase(
     db->magic = SQLITE_MAGIC_CLOSED;
     goto opendb_out;
   }
-  db->aDb[0].zName = "main";
-  db->aDb[1].zName = "temp";
 
-  /* The default safety_level for the main database is 'full' for the temp
-  ** database it is 'NONE'. This matches the pager layer defaults.  */
+  /* The default safety_level for the main database is 'full'; for the temp
+  ** database it is 'NONE'. This matches the pager layer defaults.  
+  */
+  db->aDb[0].zName = "main";
   db->aDb[0].safety_level = 3;
+#ifndef SQLITE_OMIT_TEMPDB
+  db->aDb[1].zName = "temp";
   db->aDb[1].safety_level = 1;
+#endif
+
 
   /* Register all built-in functions, but do not attempt to read the
   ** database schema yet. This is delayed until the first time the database
@@ -1199,6 +1235,14 @@ opendb_out:
     sqlite3Error(db, SQLITE_NOMEM, 0);
   }
   *ppDb = db;
+#ifndef SQLITE_OMIT_GLOBALRECOVER
+  if( db ){
+    sqlite3OsEnterMutex();
+    db->pNext = pDbList;
+    pDbList = db;
+    sqlite3OsLeaveMutex();
+  }
+#endif
   return sqlite3_errcode(db);
 }
 
@@ -1400,3 +1444,39 @@ int sqlite3_collation_needed16(
   return SQLITE_OK;
 }
 #endif /* SQLITE_OMIT_UTF16 */
+
+#ifndef SQLITE_OMIT_GLOBALRECOVER
+/*
+** This function is called to recover from a malloc failure that occured
+** within SQLite. 
+**
+** This function is *not* threadsafe. Calling this from within a threaded
+** application when threads other than the caller have used SQLite is 
+** dangerous and will almost certainly result in malfunctions.
+*/
+int sqlite3_global_recover(){
+  int rc = SQLITE_OK;
+
+  if( sqlite3_malloc_failed ){
+    sqlite3 *db;
+    int i;
+    sqlite3_malloc_failed = 0;
+    for(db=pDbList; db; db=db->pNext ){
+      sqlite3ExpirePreparedStatements(db);
+      for(i=0; i<db->nDb; i++){
+        Btree *pBt = db->aDb[i].pBt;
+        if( pBt && (rc=sqlite3BtreeReset(pBt)) ){
+          goto recover_out;
+        }
+      } 
+      db->autoCommit = 1;
+    }
+  }
+
+recover_out:
+  if( rc!=SQLITE_OK ){
+    sqlite3_malloc_failed = 1;
+  }
+  return rc;
+}
+#endif
