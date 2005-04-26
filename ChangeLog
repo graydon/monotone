@@ -1,3 +1,8 @@
+2005-04-26  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc (cpp_main): Count the number of command specific
+	options exist.  If there is any, add a title for them.
+
 2005-04-27  Matt Johnston  <matt@ucc.asn.au>
 
 	* change_set.cc (confirm_proper_tree): move things out of the loops
