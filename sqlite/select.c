@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.241 2005/02/12 08:59:57 danielk1977 Exp $
+** $Id: select.c,v 1.243 2005/03/28 03:39:56 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -890,6 +890,11 @@ Table *sqlite3ResultSetOfSelect(Parse *pParse, char *zTabName, Select *pSelect){
       zName = sqlite3MPrintf("column%d", i+1);
     }
     sqlite3Dequote(zName);
+    if( sqlite3_malloc_failed ){
+      sqliteFree(zName);
+      sqlite3DeleteTable(0, pTab);
+      return 0;
+    }
 
     /* Make sure the column name is unique.  If the name is not unique,
     ** append a integer to the name so that it becomes unique.
@@ -899,6 +904,7 @@ Table *sqlite3ResultSetOfSelect(Parse *pParse, char *zTabName, Select *pSelect){
       if( sqlite3StrICmp(aCol[j].zName, zName)==0 ){
         zName = sqlite3MPrintf("%s:%d", zBasename, ++cnt);
         j = -1;
+        if( zName==0 ) break;
       }
     }
     if( zBasename!=zName ){
@@ -955,7 +961,7 @@ static int prepSelectStmt(Parse *pParse, Select *p){
   Table *pTab;
   struct SrcList_item *pFrom;
 
-  if( p==0 || p->pSrc==0 ) return 1;
+  if( p==0 || p->pSrc==0 || sqlite3_malloc_failed ) return 1;
   pTabList = p->pSrc;
   pEList = p->pEList;
 
