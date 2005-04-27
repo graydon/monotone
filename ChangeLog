@@ -1,5 +1,9 @@
 2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
 
+	* work.cc: Don't include boost/regex.hpp.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
 	* manifest.cc, inodeprint.cc: Don't include boost/regex.hpp.
 
 2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
