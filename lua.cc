@@ -886,7 +886,6 @@ lua_hooks::hook_resolve_dir_conflict(file_path const & anc,
 }
 
 
-<<<<<<< variant A
 bool
 lua_hooks::hook_use_inodeprints()
 {
@@ -900,23 +899,6 @@ lua_hooks::hook_use_inodeprints()
   return use && exec_ok;
 }
 
->>>>>>> variant B
-bool
-lua_hooks::hook_use_inodeprints()
-{
-  bool use = false, exec_ok = false;
-
-  exec_ok = Lua(st)
-    .push_str("use_inodeprints")
-    .get_fn()
-    .call(0, 1)
-    .extract_bool(use)
-    .ok();
-  return use && exec_ok;
-}
-
-####### Ancestor
-======= end
 bool 
 lua_hooks::hook_get_netsync_read_permitted(std::string const & collection, 
                                            rsa_keypair_id const & identity)
