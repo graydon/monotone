@@ -385,6 +385,12 @@ end
 
 function expand_selector(str)
 
+   -- something which looks like a generic cert pattern
+   if string.find(str, "^[^=]*=.*$")
+   then
+      return ("c:" .. str)
+   end
+
    -- simple date patterns
    if string.find(str, "^19%d%d%-%d%d")
       or string.find(str, "^20%d%d%-%d%d")

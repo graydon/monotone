@@ -51,13 +51,16 @@ void decode_base64(base64<T> const & in, T & out)
 std::string uppercase(std::string const & in);
 std::string lowercase(std::string const & in);
 
+std::string encode_hexenc(std::string const & in);
+std::string decode_hexenc(std::string const & in);
+
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)
-{ out = xform<CryptoPP::HexDecoder>(uppercase(in())); }
+{ out = decode_hexenc(in()); }
 
 template <typename T>
 void encode_hexenc(T const & in, hexenc<T> & out)
-{ out = lowercase(xform<CryptoPP::HexEncoder>(in())); }
+{ out = encode_hexenc(in()); }
 
 
 // gzip

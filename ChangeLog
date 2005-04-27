@@ -1,3 +1,15 @@
+2005-04-27  Richard Levitte  <richard@levitte.org>
+
+	* commands.hh: Add new selector to find arbitrary cert name and
+	value pairs.  The syntax is 'c:{name}={value}'.
+	* commands.cc (decode_selector): Recognise it.
+	* database.cc (complete): Parse it.
+	* std_hooks.lua (expand_selector): Add an expansion for it.
+	* monotone.texi (Selectors): Document it.
+
+	* tests/t_select_cert.at: Add test.
+	* testsuite.at: Use it.
+
 2005-04-27  Matt Johnston  <matt@ucc.asn.au>
 
 	* vocab.cc (verify(file_path)): don't find() twice.
@@ -3522,7 +3534,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅ¬Çkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅÅ¬Çkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

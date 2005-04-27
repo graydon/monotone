@@ -15,7 +15,7 @@
 namespace
 {
   template <typename T> void
-  add_hash(CryptoPP::SHA & hash, T obj)
+  inline add_hash(CryptoPP::SHA & hash, T obj)
   {
       size_t size = sizeof(obj);
       hash.Update(reinterpret_cast<byte const *>(&size),

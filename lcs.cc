@@ -49,11 +49,11 @@ struct work_vec
 {
   long lo;
   long hi;
-  static std::vector<long> vec;
+  static std::vector<long, QA(long)> vec;
   work_vec(long lo, long hi) : 
     lo(lo), hi(hi)
   {
-    I(hi >= lo);
+    // I(hi >= lo);
     size_t len = (hi - lo) + 1;
     vec.resize(len);
     vec.assign(len, -1);
@@ -61,12 +61,12 @@ struct work_vec
 
   inline long & operator[](long t) 
   {
-    I(t >= lo && t <= hi);
+    // I(t >= lo && t <= hi);
     return vec[t-lo]; 
   }
 };
 
-std::vector<long> work_vec::vec;
+std::vector<long, QA(long)> work_vec::vec;
 
 template <typename A,
 	  typename B,
@@ -74,8 +74,8 @@ template <typename A,
 struct jaffer_edit_calculator
 {
 
-  typedef std::vector<long> cost_vec;
-  typedef std::vector<long> edit_vec;
+  typedef std::vector<long, QA(long)> cost_vec;
+  typedef std::vector<long, QA(long)> edit_vec;
 
   template <typename T>
   struct subarray
@@ -89,7 +89,7 @@ struct jaffer_edit_calculator
     subarray(T b, long s, long e) : 
       base(b), start(s), end(e) {}
 
-    long size() const
+    inline long size() const
     {
       if (end < start)
 	return start - end;
@@ -97,12 +97,12 @@ struct jaffer_edit_calculator
 	return end - start;
     }
     
-    subarray subset(long s, long e) const
+    inline subarray subset(long s, long e) const
     {
       return subarray(base + std::min(start, end), s, e);
     }
     
-    vt const & operator[](size_t idx) const
+    inline vt const & operator[](size_t idx) const
     {
       if (end < start)
 	  return *(base + (start - (idx + 1)));
@@ -321,7 +321,7 @@ struct jaffer_edit_calculator
   // trims and calls diff_to_ez
   static long diff_to_et(subarray<A> const & a, long start_a, long end_a,
 			 subarray<B> const & b, long start_b, long end_b,
-			 std::vector<long> & edits,
+			 std::vector<long, QA(long)> & edits,
 			 long edx,
 			 long polarity,
 			 long p_lim)
@@ -363,7 +363,7 @@ struct jaffer_edit_calculator
   
   static long diff_to_ez(subarray<A> const & a, long start_a, long end_a,
 			 subarray<B> const & b, long start_b, long end_b,
-			 std::vector<long> & edits,
+			 std::vector<long, QA(long)> & edits,
 			 long edx1,
 			 long polarity,
 			 long p_lim)
@@ -447,7 +447,7 @@ struct jaffer_edit_calculator
   
   static void diff_to_edits(subarray<A> const & a, long m,
 			    subarray<B> const & b, long n,
-			    std::vector<long> & edits,
+			    std::vector<long, QA(long)> & edits,
 			    long p_lim)
   {
     I(m <= n);
@@ -462,13 +462,13 @@ struct jaffer_edit_calculator
     I(cost == edit_distance);
   }
   
-  static void edits_to_lcs (std::vector<long> const & edits, 
+  static void edits_to_lcs (std::vector<long, QA(long)> const & edits, 
 			    subarray<A> const a, long m, long n,
 			    LCS output)
   {
     long edx = 0, sdx = 0, adx = 0;
     typedef typename std::iterator_traits<A>::value_type vt;
-    std::vector<vt> lcs(((m + n) - edits.size()) / 2);
+    std::vector<vt, QA(vt)> lcs(((m + n) - edits.size()) / 2);
     while (true)
       {
 	long edit = (edx < static_cast<long>(edits.size())) ? edits[edx] : 0;
@@ -496,7 +496,7 @@ template <typename A,
 void _edit_script(A begin_a, A end_a,
 		  B begin_b, B end_b,
 		  long p_lim,
-		  std::vector<long> & edits_out,
+		  std::vector<long, QA(long)> & edits_out,
 		  LCS ignored_out)
 {
   typedef jaffer_edit_calculator<A,B,LCS> calc_t;
@@ -558,12 +558,12 @@ void _longest_common_subsequence(A begin_a, A end_a,
 
 
 void 
-longest_common_subsequence(std::vector<long>::const_iterator begin_a,
-			   std::vector<long>::const_iterator end_a,
-			   std::vector<long>::const_iterator begin_b,
-			   std::vector<long>::const_iterator end_b,
+longest_common_subsequence(std::vector<long, QA(long)>::const_iterator begin_a,
+			   std::vector<long, QA(long)>::const_iterator end_a,
+			   std::vector<long, QA(long)>::const_iterator begin_b,
+			   std::vector<long, QA(long)>::const_iterator end_b,
 			   long p_lim,
-			   std::back_insert_iterator< std::vector<long> > lcs)
+			   std::back_insert_iterator< std::vector<long, QA(long)> > lcs)
 {
   _longest_common_subsequence(begin_a, end_a,
 			      begin_b, end_b,
@@ -571,14 +571,14 @@ longest_common_subsequence(std::vector<long>::const_iterator begin_a,
 }
 
 void 
-edit_script(std::vector<long>::const_iterator begin_a,
-	    std::vector<long>::const_iterator end_a,
-	    std::vector<long>::const_iterator begin_b,
-	    std::vector<long>::const_iterator end_b,
+edit_script(std::vector<long, QA(long)>::const_iterator begin_a,
+	    std::vector<long, QA(long)>::const_iterator end_a,
+	    std::vector<long, QA(long)>::const_iterator begin_b,
+	    std::vector<long, QA(long)>::const_iterator end_b,
 	    long p_lim,
-	    std::vector<long> & edits_out)
+	    std::vector<long, QA(long)> & edits_out)
 {
-  std::vector<long> lcs;
+  std::vector<long, QA(long)> lcs;
   _edit_script(begin_a, end_a, 
 	       begin_b, end_b, 
 	       p_lim, edits_out,
