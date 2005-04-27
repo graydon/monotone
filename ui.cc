@@ -129,6 +129,11 @@ void tick_write_count::write_ticks()
   clog.flush();
 }
 
+void tick_write_count::clear_line()
+{
+  clog << endl;
+}
+
 
 tick_write_dot::tick_write_dot()
 {
@@ -187,6 +192,11 @@ void tick_write_dot::write_ticks()
   clog.flush();
 }
 
+void tick_write_dot::clear_line()
+{
+  clog << endl;
+}
+
 
 user_interface::user_interface() :
   last_write_was_a_tick(false),
@@ -212,7 +222,7 @@ user_interface::finish_ticking()
       last_write_was_a_tick)
     {
       tick_trailer = "";
-      clog << endl;
+      t_writer->clear_line();
       last_write_was_a_tick = false;
     }
 }
@@ -283,7 +293,7 @@ user_interface::ensure_clean_line()
   if (last_write_was_a_tick)
     {
       write_ticks();
-      clog << endl;
+      t_writer->clear_line();
     }
   last_write_was_a_tick = false;
 }
