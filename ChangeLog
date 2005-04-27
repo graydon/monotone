@@ -1,5 +1,9 @@
 2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
 
+	* manifest.cc, inodeprint.cc: Don't include boost/regex.hpp.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
 	* sqlite/vdbeaux.c (MAX_6BYTE): Apply patch from
 	http://www.sqlite.org/cvstrac/chngview?cn=2445.  It shouldn't
 	affect monotone's usage, but just in case.
