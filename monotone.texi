@@ -4757,6 +4757,41 @@ None.
 
 @end table
 
+
+@item monotone automate select @var{selector}
+
+@table @strong
+@item Arguments:
+
+One selector (or combined selector).
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Print all revisions that match the given selector.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one revision that matches the
+given selector.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.
+
+@item Error conditions:
+
+None.
+
+@end table
+
 @end ftable
 
 @page

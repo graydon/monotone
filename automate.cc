@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2004 nathaniel smith <njs@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -6,6 +7,8 @@
 #include <string>
 #include <iostream>
 #include <iterator>
+#include <vector>
+#include <algorithm>
 
 #include "vocab.hh"
 #include "app_state.hh"
@@ -417,6 +420,36 @@ automate_graph(std::vector<utf8> args,
     }
 }
       
+// Name: select
+// Arguments:
+//   1: selector
+// Added in: 0.2
+// Purpose: Prints all the revisions that match the given selector.
+// Output format: A list of revision ids, in hexadecimal, each followed by a
+//   newline. Revision ids are printed in alphabetically sorted order.
+// Error conditions: None.
+static void
+automate_select(std::vector<utf8> args,
+               std::string const & help_name,
+               app_state & app,
+               std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  std::vector<std::pair<selectors::selector_type, std::string> >
+    sels(selectors::parse_selector(args[0](), app));
+
+  // we jam through an "empty" selection on sel_ident type
+  std::set<std::string> completions;
+  selectors::selector_type ty = selectors::sel_ident;
+  selectors::complete_selector("", sels, ty, completions, app);
+
+  for (std::set<std::string>::const_iterator i = completions.begin();
+       i != completions.end(); ++i)
+    output << *i << std::endl;
+}
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -445,6 +478,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_children(args, root_cmd_name, app, output);
   else if (cmd() == "graph")
     automate_graph(args, root_cmd_name, app, output);
+  else if (cmd() == "select")
+    automate_select(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

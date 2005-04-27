@@ -1,3 +1,19 @@
+2005-04-28  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc, commands.hh: Selector functions and type are moved
+	to...
+	* selectors.cc, selectors.hh: ... these files.
+	* database.cc, database.hh: Adapt to this change.
+	* automate.cc (automate_select): New function, implements
+	'automate select'.
+	(automate_command): Use it.
+	* monotone.texi (Automation): Document it.
+
+	* tests/t_automate_select.at: New test.
+	* testsuite.at: Use it.
+
+	* Makefile.am (MOST_SOURCES): reorganise.  Add selectors.{cc,hh}.
+
 2005-04-27  Richard Levitte  <richard@levitte.org>
 
 	* quick_alloc.hh: Define QA_SUPPORTED when quick allocation is
