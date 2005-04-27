@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -2156,6 +2157,7 @@ static void selector_to_certname(selector_type ty,
       s = tag_cert_name;
       break;
     case commands::sel_ident:
+    case commands::sel_cert:
     case commands::sel_unknown:
       I(false); // don't do this.
       break;
@@ -2195,6 +2197,33 @@ void database::complete(selector_type ty,
               lim += "SELECT id FROM revision_certs ";
               lim += (F("WHERE id GLOB '%s*'") 
                       % i->second).str();
+            }
+	  else if (i->first == commands::sel_cert)
+            {
+              if (i->second.length() > 0)
+                {
+                  size_t spot = i->second.find("=");
+
+                  if (spot != (size_t)-1)
+                    {
+                      string certname;
+                      string certvalue;
+
+                      certname = i->second.substr(0, spot);
+                      spot++;
+                      certvalue = i->second.substr(spot);
+                      lim += "SELECT id FROM revision_certs ";
+                      lim += (F("WHERE name='%s' AND unbase64(value) glob '%s'")
+                              % certname % certvalue).str();
+                    }
+                  else
+                    {
+                      lim += "SELECT id FROM revision_certs ";
+                      lim += (F("WHERE name='%s'")
+                              % i->second).str();
+                    }
+
+                }
             }
           else if (i->first == commands::sel_unknown)
             {

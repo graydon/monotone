@@ -3,6 +3,67 @@
 	* work.cc: on rename move attributes as well.
 	* tests/t_rename_attr.at: No longer a bug.
 
+2005-04-27  Richard Levitte  <richard@levitte.org>
+
+	* database.cc (selector_to_certname): Add a case for
+	commands::sel_cert.
+
+2005-04-27  Richard Levitte  <richard@levitte.org>
+
+	* sanity.hh: Add a couple of variants of checked_index() to
+	accomodate for indexes over vector<T, QA(T)>.
+
+	* commands.hh: Add new selector to find arbitrary cert name and
+	value pairs.  The syntax is 'c:{name}={value}'.
+	* commands.cc (decode_selector): Recognise it.
+	* database.cc (complete): Parse it.
+	* std_hooks.lua (expand_selector): Add an expansion for it.
+	* monotone.texi (Selectors): Document it.
+
+	* tests/t_select_cert.at: Add test.
+	* testsuite.at: Use it.
+
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* vocab.cc (verify(file_path)): don't find() twice.
+	* change_set.cc (extend_state): remove commented out line 
+
+2005-04-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_cvsimport_manifest_cycle.at: New test.
+	* testsuite.at: Add test.
+	* AUTHORS: Add self.
+
+2005-04-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Timothy Brownawell.
+
+2005-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* ui.{cc,hh}: Delegate tick line blanking to tick_writers.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc: Don't include boost/regex.hpp.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.cc, inodeprint.cc: Don't include boost/regex.hpp.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sqlite/vdbeaux.c (MAX_6BYTE): Apply patch from
+	http://www.sqlite.org/cvstrac/chngview?cn=2445.  It shouldn't
+	affect monotone's usage, but just in case.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (struct cvs_key, process_branch): Fix
+	indentation.
+	(build_change_set): Handle the case where a file is "added dead".
+
+	* tests/t_cvsimport2.at: Un-XFAIL, improve description.
+
 2005-04-22  Christof Petig <christof@petig-baender.de>
 
 	* sqlite/*: update to sqlite 3.2.1
@@ -11,6 +72,21 @@
 
 	* tests/t_i18n_file_data.at: New test.
 	* testsuite.at: Add it.
+
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (extend_state): don't mix find() and insert() on
+	the path_state, to avoid hitting the smap's worst-case.
+
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): move things out of the loops
+	for better performance.
+
+2005-04-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (analyze_rearrangement): get rid of damaged_in_first
+	since it is not used.
 
 2005-04-26  Matt Johnston  <matt@ucc.asn.au>
 
@@ -3471,7 +3547,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÂkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

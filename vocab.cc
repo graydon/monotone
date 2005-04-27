@@ -163,18 +163,22 @@ verify(file_path & val)
   if (val.ok)
     return;
   
-  if (known_good.find(val()) == known_good.end())
+  std::map<std::string, std::string>::const_iterator j = known_good.find(val());
+  if (j == known_good.end())
     {
       local_path loc(val());
       verify(loc);
       N(!book_keeping_file(loc),
         F("prohibited book-keeping path in '%s'") % val);
       const std::string & normalized_val = loc();
+      val.s = normalized_val;
       known_good.insert(std::make_pair(val(), normalized_val));
     }
+  else
+    {
+      val.s = j->second;
+    }
 
-  val.s = known_good.find(val())->second;
-  
   val.ok = true;
 }
 
