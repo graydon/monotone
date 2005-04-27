@@ -1,5 +1,12 @@
 2005-04-27  Richard Levitte  <richard@levitte.org>
 
+	* quick_alloc.hh: Define QA_SUPPORTED when quick allocation is
+	supported.
+	* sanity.hh: Only defined the QA(T) variants of checked_index()
+	when QA_SUPPORTED is defined.
+
+2005-04-27  Richard Levitte  <richard@levitte.org>
+
 	* database.cc (selector_to_certname): Add a case for
 	commands::sel_cert.
 
