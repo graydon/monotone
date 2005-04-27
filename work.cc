@@ -259,6 +259,35 @@ build_rename(file_path const & src,
   else 
     pr_new.renamed_files.insert(std::make_pair(src, dst));
 
+  // read attribute map if available
+  file_path attr_path;
+  get_attr_path(attr_path);
+
+  data attr_data;
+  attr_map attrs;
+
+  if (file_exists(attr_path))
+  {
+    read_data(attr_path, attr_data);
+    read_attr_map(attr_data, attrs);
+
+    // only write out a new attribute map if we find attrs to move
+    attr_map::iterator a = attrs.find(src);
+    if (a != attrs.end())
+    {
+      N(attrs.find(dst) == attrs.end(), 
+        F("refusing to overwrite existing attributes on %s") % dst);
+
+      attrs[dst] = (*a).second;
+      attrs.erase(a);
+
+      P(F("moving attributes for %s to %s\n") % src % dst);
+
+      write_attr_map(attr_data, attrs);
+      write_data(attr_path, attr_data);
+    }
+  }
+
   normalize_path_rearrangement(pr_new);
   concatenate_rearrangements(pr, pr_new, pr_concatenated);
   pr = pr_concatenated;
