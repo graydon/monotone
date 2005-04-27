@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.372 2005/03/09 12:26:51 danielk1977 Exp $
+** @(#) $Id: sqliteInt.h,v 1.375 2005/03/29 03:10:59 danielk1977 Exp $
 */
 #ifndef _SQLITEINT_H_
 #define _SQLITEINT_H_
@@ -65,6 +65,17 @@
 # define TEMP_PAGES SQLITE_DEFAULT_TEMP_CACHE_SIZE
 #else
 # define TEMP_PAGES   500
+#endif
+
+/*
+** OMIT_TEMPDB is set to 1 if SQLITE_OMIT_TEMPDB is defined, or 0
+** afterward. Having this macro allows us to cause the C compiler 
+** to omit code used by TEMP tables without messy #ifndef statements.
+*/
+#ifdef SQLITE_OMIT_TEMPDB
+#define OMIT_TEMPDB 1
+#else
+#define OMIT_TEMPDB 0
 #endif
 
 /*
@@ -292,7 +303,7 @@ extern int sqlite3_iMallocReset; /* Set iMallocFail to this when it reaches 0 */
 /*
 ** The name of the schema table.
 */
-#define SCHEMA_TABLE(x)  (x==1?TEMP_MASTER_NAME:MASTER_NAME)
+#define SCHEMA_TABLE(x)  ((!OMIT_TEMPDB)&&(x==1)?TEMP_MASTER_NAME:MASTER_NAME)
 
 /*
 ** A convenience macro that returns the number of elements in
@@ -452,6 +463,9 @@ struct sqlite3 {
   sqlite3_value *pErr;          /* Most recent error message */
   char *zErrMsg;                /* Most recent error message (UTF-8 encoded) */
   char *zErrMsg16;              /* Most recent error message (UTF-16 encoded) */
+#ifndef SQLITE_OMIT_GLOBALRECOVER
+  sqlite3 *pNext;               /* Linked list of open db handles. */
+#endif
 };
 
 /*
@@ -611,6 +625,9 @@ struct Table {
   Trigger *pTrigger; /* List of SQL triggers on this table */
   FKey *pFKey;       /* Linked list of all foreign keys in this table */
   char *zColAff;     /* String defining the affinity of each column */
+#ifndef SQLITE_OMIT_ALTERTABLE
+  int addColOffset;  /* Offset in CREATE TABLE statement to add a new column */
+#endif
 };
 
 /*
@@ -1367,7 +1384,7 @@ void sqlite3AddPrimaryKey(Parse*, ExprList*, int, int);
 void sqlite3AddColumnType(Parse*,Token*,Token*);
 void sqlite3AddDefaultValue(Parse*,Expr*);
 void sqlite3AddCollateType(Parse*, const char*, int);
-void sqlite3EndTable(Parse*,Token*,Select*);
+void sqlite3EndTable(Parse*,Token*,Token*,Select*);
 
 #ifndef SQLITE_OMIT_VIEW
   void sqlite3CreateView(Parse*,Token*,Token*,Token*,Select*,int);
@@ -1554,5 +1571,7 @@ void sqlite3ExpirePreparedStatements(sqlite3*);
 void sqlite3CodeSubselect(Parse *, Expr *);
 int sqlite3SelectResolve(Parse *, Select *, NameContext *);
 void sqlite3ColumnDefault(Vdbe *, Table *, int);
+void sqlite3AlterFinishAddColumn(Parse *, Token *);
+void sqlite3AlterBeginAddColumn(Parse *, SrcList *);
 
 #endif

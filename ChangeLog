@@ -1,3 +1,26 @@
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sqlite/vdbeaux.c (MAX_6BYTE): Apply patch from
+	http://www.sqlite.org/cvstrac/chngview?cn=2445.  It shouldn't
+	affect monotone's usage, but just in case.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (struct cvs_key, process_branch): Fix
+	indentation.
+	(build_change_set): Handle the case where a file is "added dead".
+
+	* tests/t_cvsimport2.at: Un-XFAIL, improve description.
+
+2005-04-22  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: update to sqlite 3.2.1
+
+2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_i18n_file_data.at: New test.
+	* testsuite.at: Add it.
+
 2005-04-27  Matt Johnston  <matt@ucc.asn.au>
 
 	* change_set.cc (extend_state): don't mix find() and insert() on
@@ -3472,7 +3495,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Mi�kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
