@@ -96,9 +96,6 @@ public:
   void set_copied(int index);
   void set_touched(int index);
 
-  void set_root_revision(revision_id rev) { root_revision = rev; }
-  revision_id get_root_revision() const { return root_revision; }
-
   /// return an immutable reference to our vector of string data for external use
   const std::vector<std::string>& get_file_lines() const;
 
@@ -139,6 +136,8 @@ public:
   /// need a better name.  does the work of setting copied bits in the context object.
   boost::shared_ptr<annotate_lineage_mapping> 
   build_parent_lineage(boost::shared_ptr<annotate_context> acp, revision_id parent_rev, const file_data &parent_data) const;
+
+  void credit_mapped_lines (boost::shared_ptr<annotate_context> acp) const;
 
 private:
   void init_with_lines(const std::vector<std::string> &lines);
@@ -339,8 +338,6 @@ annotate_lineage_mapping::init_with_lines(const std::vector<std::string> &lines)
   mapping.clear();
   mapping.reserve(lines.size());
 
-  //interner<long> in;
-
   int count;
   std::vector<std::string>::const_iterator i;
   for (count=0, i = lines.begin(); i != lines.end(); i++, count++) {
@@ -416,6 +413,16 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
 }
 
 
+void
+annotate_lineage_mapping::credit_mapped_lines (boost::shared_ptr<annotate_context> acp) const
+{
+  std::vector<int>::const_iterator i;
+  for (i=mapping.begin(); i != mapping.end(); i++) {
+    acp->set_touched(*i);
+  }
+}
+
+
 static file_id
 find_file_id_in_revision(app_state &app, file_path fpath, revision_id rid)
 {
@@ -429,6 +436,7 @@ find_file_id_in_revision(app_state &app, file_path fpath, revision_id rid)
   file_id fid = manifest_entry_id(*i);
   return fid;
 }
+
 
 static void
 do_annotate_node (const annotate_node_work &work_unit, 
@@ -455,8 +463,9 @@ do_annotate_node (const annotate_node_work &work_unit,
     if (*parent == null_revision) {
       // work_unit.node_revision is the root node
       I(parents.size() == 1);
-      L(F("do_annotate_node setting root revision as %s\n") % work_unit.node_revision);
-      work_unit.annotations->set_root_revision(work_unit.node_revision);
+      L(F("do_annotate_node credit_mapped_lines to revision %s\n") % work_unit.node_revision);
+      work_unit.lineage->credit_mapped_lines(work_unit.annotations);
+      work_unit.annotations->evaluate(work_unit.node_revision);
       return;
     }
 
@@ -499,13 +508,10 @@ do_annotate_node (const annotate_node_work &work_unit,
 
   I(added_in_parent_count >= 0);
   I((size_t)added_in_parent_count <= parents.size());
-  if (added_in_parent_count == parents.size()) {
-    N(parents.size() == 1,
-      F("annotate is confused by one file added on separate branches or forks of a branch\n"));
-    L(F("added_in_parent_count == parents.size(), set_root_revision %s\n") 
+  if ((size_t)added_in_parent_count == parents.size()) {
+    L(F("added_in_parent_count == parents.size(), credit_mapped_lines to %s\n") 
       % work_unit.node_revision);
-    work_unit.annotations->set_root_revision(work_unit.node_revision);
-    return;
+    work_unit.lineage->credit_mapped_lines(work_unit.annotations);
   }
 
   work_unit.annotations->evaluate(work_unit.node_revision);
@@ -531,12 +537,7 @@ do_annotate (app_state &app, file_path fpath, file_id fid, revision_id rid)
     nodes_to_process.pop_front();
     do_annotate_node(work, app, nodes_to_process, nodes_seen);
   }
-  if (!acp->is_complete()) {
-    L(F("do_annotate acp remains incomplete after processing all nodes\n"));
-    revision_id null_revision;
-    I(!(acp->get_root_revision() == null_revision));
-    acp->complete(acp->get_root_revision());
-  }
+  I(acp->is_complete());
 
   acp->dump();
   //boost::shared_ptr<annotation_formatter> frmt(new annotation_text_formatter()); 

@@ -1,0 +1,61 @@
+AT_SETUP([annotate file added on different forks])
+MONOTONE_SETUP
+
+AT_DATA(foo.left, [z
+a
+b
+x
+])
+
+AT_DATA(foo.right, [z
+j
+k
+x
+])
+
+ADD_FILE(initialfile, [a
+b
+c
+])
+COMMIT(testbranch)
+REV0=`BASE_REVISION`
+
+
+AT_CHECK(cp foo.left foo)
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+REVL=`BASE_REVISION`
+
+REVERT_TO($REV0)
+AT_CHECK(cp foo.right foo)
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+REVR=`BASE_REVISION`
+
+AT_DATA(merge2.lua, [
+function merge2 (left, right)
+        data = "z\na\nk\nx\n"
+        return data
+end
+])
+
+AT_CHECK(MONOTONE --rcfile=merge2.lua merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REV1=`BASE_REVISION`
+
+#
+# annotate foo should now be
+# REVC: z
+# REVL: a
+# REVR: k
+# REVC: x
+#
+# where REVC (choice) is either REVL or REVR
+
+AT_CHECK(MONOTONE annotate foo, [], [stdout], [ignore])
+#AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REVL, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REVR, [0], [ignore], [ignore])
+#AT_CHECK(head -n 4 stdout | tail -n 1 | grep $REV1, [0], [ignore], [ignore])
+
+AT_CLEANUP

@@ -96,7 +96,6 @@ AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REV3, [0], [ignore], [ignore])
 # Try add of file on one side of branch
 #
 
-
 # Making left side of fork, we won't add the file here
 AT_DATA(foo0, [foo
 now has other data
