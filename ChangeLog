@@ -1,5 +1,10 @@
 2005-04-27  Matt Johnston  <matt@ucc.asn.au>
 
+	* change_set.cc (extend_state): don't mix find() and insert() on
+	the path_state, to avoid hitting the smap's worst-case.
+
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
 	* change_set.cc (confirm_proper_tree): move things out of the loops
 	for better performance.
 

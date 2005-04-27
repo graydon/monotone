@@ -1300,12 +1300,18 @@ static void
 extend_state(path_state const & src, 
              path_state & dst)
 {
+  std::vector< std::pair<tid, path_item> > tmp;
   for (path_state::const_iterator i = src.begin();
        i != src.end(); ++i)
     {
       if (dst.find(path_state_tid(i)) == dst.end())
-        dst.insert(*i);
+        tmp.push_back(*i);
+        //dst.insert(*i);
     }
+
+  for (std::vector<std::pair<tid, path_item> >::const_iterator i = tmp.begin();
+      i != tmp.end(); i++)
+    dst.insert(*i);
 }
 
 static void
