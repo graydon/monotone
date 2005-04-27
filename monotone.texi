@@ -3523,6 +3523,13 @@ tries to select the revision to update to from this branch.  The branch
 becomes the new default branch of the working copy (even if you also
 specify an explicit @var{revision} argument).
 
+@item monotone update_inodeprints
+This command puts the current working copy into @ref{Inodeprints} mode,
+if it was not already, and forces a full inodeprints cache refresh.
+After running this command, you are guaranteed that your working copy is
+in inodeprints mode, and that the inodeprints cache is accurate and up
+to date.
+
 @end ftable
 
 @page
@@ -6266,6 +6273,9 @@ passed to the message editor.
 @item @b{update} @i{[revision]}
 Update working copy.
 @comment TROFF INPUT: .SH DESCRIPTION
+
+@item @b{update_inodeprints}
+Turn on inodeprints mode, and force a cache refresh.
 
 @item @b{push} @i{<host> <collection>}
 Push contents of @i{<collection>} to database on @i{<host>}

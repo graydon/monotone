@@ -152,13 +152,16 @@ Commit working copy to database. If a --message option is provided on
 the command ine, it is used; otherwise a log message editor will be
 invoked.
 .TP
-\fBupdate\fP 
+\fBupdate\fP  \fI[revision-id]\fP
 Update working copy.
 .TP
-\fBpush\fP \fI<host> <collection>\fP 
+\fBupdate_inodeprints\fP 
+Turn on inodeprints mode, and force a cache refresh.
+.TP
+\fBpush\fP \fI[<host> [<collection>]]\fP 
 Push contents of \fI<collection>\fP to database on \fI<host>\fP 
 .TP
-\fBpull\fP \fI<host> <collection>\fP 
+\fBpull\fP \fI[<host> [<collection>]]\fP 
 Push contents of \fI<collection>\fP from database on \fI<host>\fP 
 .TP
 \fBsync\fP \fI<host> <collection>\fP 

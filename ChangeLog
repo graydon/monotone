@@ -1,3 +1,11 @@
+2005-04-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Working Copy, Commands): Document update_inodeprints.
+	* monotone.1: Likewise.
+
+	* tests/t_update_inodeprints.at: New test.
+	* testsuite.at: Add it.
+
 2005-04-27  Richard Levitte  <richard@levitte.org>
 
 	* database.cc (selector_to_certname): Add a case for
