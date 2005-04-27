@@ -1,5 +1,10 @@
 2005-04-27  Matt Johnston  <matt@ucc.asn.au>
 
+	* vocab.cc (verify(file_path)): don't find() twice.
+	* change_set.cc (extend_state): remove commented out line 
+
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
 	* change_set.cc (extend_state): don't mix find() and insert() on
 	the path_state, to avoid hitting the smap's worst-case.
 

@@ -1306,7 +1306,6 @@ extend_state(path_state const & src,
     {
       if (dst.find(path_state_tid(i)) == dst.end())
         tmp.push_back(*i);
-        //dst.insert(*i);
     }
 
   for (std::vector<std::pair<tid, path_item> >::const_iterator i = tmp.begin();
