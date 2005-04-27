@@ -584,3 +584,6 @@ m4_include(tests/t_replace_file_with_dir.at)
 m4_include(tests/t_replace_dir_with_file.at)
 m4_include(tests/t_parents_children.at)
 m4_include(tests/t_automate_graph.at)
+m4_include(tests/t_i18n_file_data.at)
+m4_include(tests/t_cvsimport_manifest_cycle.at)
+

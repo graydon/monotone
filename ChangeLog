@@ -3,6 +3,51 @@
 	* vocab.cc (verify(file_path)): don't find() twice.
 	* change_set.cc (extend_state): remove commented out line 
 
+2005-04-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_cvsimport_manifest_cycle.at: New test.
+	* testsuite.at: Add test.
+	* AUTHORS: Add self.
+
+2005-04-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Timothy Brownawell.
+
+2005-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* ui.{cc,hh}: Delegate tick line blanking to tick_writers.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc: Don't include boost/regex.hpp.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.cc, inodeprint.cc: Don't include boost/regex.hpp.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sqlite/vdbeaux.c (MAX_6BYTE): Apply patch from
+	http://www.sqlite.org/cvstrac/chngview?cn=2445.  It shouldn't
+	affect monotone's usage, but just in case.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (struct cvs_key, process_branch): Fix
+	indentation.
+	(build_change_set): Handle the case where a file is "added dead".
+
+	* tests/t_cvsimport2.at: Un-XFAIL, improve description.
+
+2005-04-22  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: update to sqlite 3.2.1
+
+2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_i18n_file_data.at: New test.
+	* testsuite.at: Add it.
+
 2005-04-27  Matt Johnston  <matt@ucc.asn.au>
 
 	* change_set.cc (extend_state): don't mix find() and insert() on
@@ -3477,7 +3522,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Mi�kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

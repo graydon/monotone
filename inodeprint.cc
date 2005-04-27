@@ -11,8 +11,6 @@
 #include <algorithm>
 #include <iterator>
 
-#include <boost/regex.hpp>
-
 #include "app_state.hh"
 #include "manifest.hh"
 #include "inodeprint.hh"

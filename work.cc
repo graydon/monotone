@@ -3,7 +3,6 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include <boost/regex.hpp>
 #include <sstream>
 
 #include "app_state.hh"
