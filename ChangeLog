@@ -1,5 +1,10 @@
 2005-04-27  Richard Levitte  <richard@levitte.org>
 
+	* database.cc (selector_to_certname): Add a case for
+	commands::sel_cert.
+
+2005-04-27  Richard Levitte  <richard@levitte.org>
+
 	* sanity.hh: Add a couple of variants of checked_index() to
 	accomodate for indexes over vector<T, QA(T)>.
 

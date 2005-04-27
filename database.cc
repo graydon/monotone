@@ -2157,6 +2157,7 @@ static void selector_to_certname(selector_type ty,
       s = tag_cert_name;
       break;
     case commands::sel_ident:
+    case commands::sel_cert:
     case commands::sel_unknown:
       I(false); // don't do this.
       break;
