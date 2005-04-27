@@ -2271,11 +2271,19 @@ of selectors follows.
 
 A selector is a combination of a selector type, which is a single
 ASCII character, followed by a @code{:} character and a selector
-value. The value is matched against identifiers or certs, depending on
-its type, in an attempt to match a single revision. Selectors are
-matched as prefixes. The current set of selection types are:
+string. All selectors strings except for selector type @code{c}
+are just values. The value is matched against identifiers or certs,
+depending on its type, in an attempt to match a single revision.
+Selectors are matched as prefixes. The current set of selection
+types are:
 
 @table @asis
+@item Generic cert selector
+Uses selector type @code{c}.  The selector string has the syntax
+@var{name} or @var{name}@code{=}@var{value}.  The former syntax will
+select any revision that has a cert with that name, regardless of
+value, the latter will match any revision that has a cert with that
+name and value.  Values to match for can have wildcards.
 @item Author selection
 Uses selector type @code{a}. For example, @code{a:graydon} matches
 @code{author} certs where the cert value begins with @code{graydon}.

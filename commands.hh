@@ -32,6 +32,7 @@ namespace commands {
       sel_date, 
       sel_tag,
       sel_ident, 
+      sel_cert,
       sel_unknown
     } 
   selector_type;

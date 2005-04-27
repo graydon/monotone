@@ -782,6 +782,9 @@ decode_selector(string const & orig_sel,
         case 't':
           type = sel_tag;
           break;
+        case 'c':
+          type = sel_cert;
+          break;
         default:          
           W(F("unknown selector type: %c\n") % sel[0]);
           break;
