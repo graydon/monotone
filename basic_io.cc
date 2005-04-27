@@ -34,6 +34,30 @@ void basic_io::tokenizer::err(std::string const & s)
   in.err(s);
 }
 
+std::string basic_io::escape(std::string const & s)
+{
+  std::string escaped;
+  escaped.reserve(s.size() + 8);
+
+  escaped += "\"";
+
+  for (std::string::const_iterator i = s.begin(); i != s.end(); ++i)
+    {
+      switch (*i)
+	{
+	case '\\':
+	case '"':
+	  escaped += '\\';
+	default:
+	  escaped += *i;
+	}
+    }
+
+  escaped += "\"";
+
+  return escaped;
+}
+
 basic_io::stanza::stanza() : indent(0)
 {}
 
@@ -55,24 +79,7 @@ void basic_io::stanza::push_str_pair(std::string const & k, std::string const & 
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
     I(std::isalnum(*i) || *i == '_');
 
-  std::string escaped;
-  escaped.reserve(v.size() + 8);
-
-  for (std::string::const_iterator i = v.begin();
-       i != v.end(); ++i)
-    {
-      switch (*i)
-	{
-	case '\\':
-	case '"':
-	  escaped += '\\';
-	default:
-	  escaped += *i;
-	}
-    }
-
-  
-  entries.push_back(std::make_pair(k, "\"" + escaped + "\""));
+  entries.push_back(std::make_pair(k, escape(v)));
   if (k.size() > indent)
     indent = k.size();
 }

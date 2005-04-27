@@ -13,6 +13,7 @@
 #include <vector>
 
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/tokenizer.hpp>
 
 #include "cryptopp/filters.h"
@@ -304,7 +305,7 @@ void calculate_ident(revision_set const & cs,
   ident = tid;
 }
 
-// this might reasonably go in file_io.cc too..
+// this might reasonably go in file_io.cc too...
 void 
 calculate_ident(file_path const & file,
                 hexenc<id> & ident,
@@ -328,10 +329,16 @@ calculate_ident(file_path const & file,
   else
     {
       // no conversions necessary, use streaming form
+      // still have to localize the filename
+      fs::path localized_file = localized(file);
+      // crypto++'s FileSource will simply treat directories as empty files,
+      // so we'd better check ourselves.
+      I(fs::exists(localized_file) && !fs::is_directory(localized_file));
       CryptoPP::SHA hash;
       unsigned int const sz = 2 * CryptoPP::SHA::DIGESTSIZE;
       char buffer[sz];
-      CryptoPP::FileSource f(file().c_str(), true, new CryptoPP::HashFilter
+      CryptoPP::FileSource f(localized_file.native_file_string().c_str(),
+                             true, new CryptoPP::HashFilter
                              (hash, new CryptoPP::HexEncoder
                               (new CryptoPP::ArraySink(reinterpret_cast<byte *>(buffer), sz))));
       ident = lowercase(string(buffer, sz));
@@ -506,7 +513,9 @@ charset_convert(string const & src_charset,
       char * converted = stringprep_convert(src.c_str(),
                                             dst_charset.c_str(),
                                             src_charset.c_str());
-      I(converted != NULL);
+      E(converted != NULL,
+        F("failed to convert string from %s to %s: '%s'")
+         % src_charset % dst_charset % src);
       dst = string(converted);
       free(converted);
     }
@@ -575,6 +584,98 @@ utf8_to_ace(utf8 const & utf, ace & a)
     % decode_idna_error(res));
   a = string(out);
   free(out);
+}
+
+// Lots of gunk to avoid charset conversion as much as possible.  Running
+// iconv over every element of every path in a 30,000 file manifest takes
+// multiple seconds, which then is a minimum bound on pretty much any
+// operation we do...
+static inline bool
+filesystem_is_utf8_impl()
+{
+  std::string lc_encoding = lowercase(system_charset());
+  return (lc_encoding == "utf-8"
+          || lc_encoding == "utf_8"
+          || lc_encoding == "utf8");
+}
+
+static inline bool
+filesystem_is_utf8()
+{
+  static bool it_is = filesystem_is_utf8_impl();
+  return it_is;
+}
+
+static inline bool
+filesystem_is_ascii_extension_impl()
+{
+  if (filesystem_is_utf8())
+    return true;
+  std::string lc_encoding = lowercase(system_charset());
+  // if your character set is identical to ascii in the lower 7 bits, then add
+  // it here for a speed boost.
+  return (lc_encoding.find("ascii") != std::string::npos
+          || lc_encoding.find("8859") != std::string::npos
+          || lc_encoding.find("ansi_x3.4") != std::string::npos
+          // http://www.cs.mcgill.ca/~aelias4/encodings.html -- "EUC (Extended
+          // Unix Code) is a simple and clean encoding, standard on Unix
+          // systems.... It is backwards-compatible with ASCII (i.e. valid
+          // ASCII implies valid EUC)."
+          || lc_encoding.find("euc") != std::string::npos);
+}
+
+static inline bool
+filesystem_is_ascii_extension()
+{
+  static bool it_is = filesystem_is_ascii_extension_impl();
+  return it_is;
+}
+
+inline static fs::path 
+localized_impl(string const & utf)
+{
+  if (filesystem_is_utf8())
+    return mkpath(utf);
+  if (filesystem_is_ascii_extension())
+    {
+      bool is_all_ascii = true;
+      // could speed this up by vectorization -- mask against 0x80808080,
+      // process a whole word at at time...
+      for (std::string::const_iterator i = utf.begin(); i != utf.end(); ++i)
+        if (0x80 & *i)
+          {
+            is_all_ascii = false;
+            break;
+          }
+      if (is_all_ascii)
+        return mkpath(utf);
+    }
+  fs::path tmp = mkpath(utf), ret;
+  for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
+    {
+      external ext;
+      utf8_to_system(utf8(*i), ext);
+      ret /= mkpath(ext());
+    }
+  return ret;
+}
+
+fs::path 
+localized(file_path const & fp)
+{
+  return localized_impl(fp());
+}
+
+fs::path 
+localized(local_path const & lp)
+{
+  return localized_impl(lp());
+}
+
+fs::path
+localized(utf8 const & utf)
+{
+  return localized_impl(utf());
 }
 
 
@@ -739,8 +840,8 @@ line_end_convert(string const & linesep, string const & src, string & dst)
 // - ] directly following an unescaped [ is escaped.
 string glob_to_regexp(const string & glob)
 {
-  int in_braces = 0;		// counter for levels if {}
-  bool in_brackets = false;	// flags if we're inside a [], which
+  int in_braces = 0;            // counter for levels if {}
+  bool in_brackets = false;     // flags if we're inside a [], which
                                 // has higher precedence than {}.
                                 // Also, [ is accepted inside [] unescaped.
   bool this_was_opening_bracket = false;
@@ -1138,7 +1239,7 @@ static void glob_to_regexp_test()
   BOOST_CHECK(glob_to_regexp("foo[12m,]") == "foo[12m\\,]");
   // A full fledged, use all damn features test...
   BOOST_CHECK(glob_to_regexp("foo.{bar*,cookie?{haha,hehe[^\\123!,]}}[!]a^b]")
-	      == "foo\\.(bar.*|cookie.(haha|hehe[^\\123\\!\\,]))[^\\]a\\^b]");
+              == "foo\\.(bar.*|cookie.(haha|hehe[^\\123\\!\\,]))[^\\]a\\^b]");
 }
 
 void 

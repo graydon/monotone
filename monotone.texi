@@ -1457,7 +1457,7 @@ into the database.
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit --message='initial checkin of project'
+$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit --message="initial checkin of project"
 monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
@@ -1989,7 +1989,7 @@ She commits her work:
 
 @smallexample
 @group
-$ monotone commit --message='interrupt implementation of src/banana.c'
+$ monotone commit --message="interrupt implementation of src/banana.c"
 monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
@@ -2020,7 +2020,7 @@ Thus when Abe commits, he unknowingly creates a fork:
 
 @smallexample
 @group
-$ monotone commit --message='interrupt implementation of src/apple.c'
+$ monotone commit --message="interrupt implementation of src/apple.c"
 @end group
 @end smallexample
 
@@ -2253,7 +2253,7 @@ Some selector examples are helpful in clarifying the idea:
 Revision IDs beginning with the string @code{a432}
 @item graydon@@pobox.com/2004-04
 Revisions written by @code{graydon@@pobox.com} in April 2004.
-@item 'jrh@@example.org/2 weeks ago'
+@item "jrh@@example.org/2 weeks ago"
 Revisions written by @code{jrh@@example.org} 2 weeks ago.
 @item graydon/net.venge.monotone.win32/yesterday
 Revisions in the @code{net.venge.monotone.win32} branch, written by
@@ -2271,11 +2271,19 @@ of selectors follows.
 
 A selector is a combination of a selector type, which is a single
 ASCII character, followed by a @code{:} character and a selector
-value. The value is matched against identifiers or certs, depending on
-its type, in an attempt to match a single revision. Selectors are
-matched as prefixes. The current set of selection types are:
+string. All selectors strings except for selector type @code{c}
+are just values. The value is matched against identifiers or certs,
+depending on its type, in an attempt to match a single revision.
+Selectors are matched as prefixes. The current set of selection
+types are:
 
 @table @asis
+@item Generic cert selector
+Uses selector type @code{c}.  The selector string has the syntax
+@var{name} or @var{name}@code{=}@var{value}.  The former syntax will
+select any revision that has a cert with that name, regardless of
+value, the latter will match any revision that has a cert with that
+name and value.  Values to match for can have wildcards.
 @item Author selection
 Uses selector type @code{a}. For example, @code{a:graydon} matches
 @code{author} certs where the cert value begins with @code{graydon}.
@@ -2969,13 +2977,13 @@ directory.
 @item
 @smallexample
 @group
-$ cvs commit -m 'log message'
+$ cvs commit -m "log message"
 @end group
 @end smallexample
 @tab
 @smallexample
 @group
-$ monotone commit --message='log message'
+$ monotone commit --message="log message"
 $ monotone push www.foo.com com.foo.wobbler
 @end group
 @end smallexample
@@ -3623,6 +3631,62 @@ command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{status}
 to files changed within the current subdirectory of the working copy.
 
+@item monotone inventory
+@itemx monotone inventory @var{pathname...}
+
+This command prints the ``inventory'' of files in a working copy. Each
+file is prefixed by a single character indicating the status of the
+associated file.
+@itemize
+@item ! missing file
+@item - dropped file
+@item % renamed file
+@item + added file
+@item # changed file
+@item = unchanged file
+@item ? unknown file
+@item ~ ignored file
+@end itemize
+
+By default the @command{inventory} command lists only ``interesting''
+files, considered to be those with a status of missing, dropped,
+renamed, added or changed. If the @option{--all-files} option is
+specified the @command{inventory} command lists every file in the
+working copy, including those with a status of unchanged, unknown and
+ignored.
+
+Specifying optional @var{pathname...} arguments to the @command{inventory}
+command restricts the set of changes that are visible and results in
+only a partial inventory of the working copy. Changes to files not included
+in the specified set of pathnames will be ignored.
+
+From within a subdirectory of the working copy the @command{inventory}
+command will, by default, include @emph{all changes} in the working
+copy.  Specifying only the pathname "." will restrict @command{inventory}
+to files changed within the current subdirectory of the working copy.
+
+If the @option{--all-files} option is specified the @command{inventory}
+command will list all files in the working copy. However, the changes
+that are will be restricted as described above.
+
+Renamed files have both the old and new name of the file listed on
+the same line in the inventory, in that order.  
+
+A file may be missing and also added or the target of a rename, or it
+may be added or the target of a rename and also changed. The
+@command{inventory} command lists each file only once and in these cases
+the status with the highest priority will be displayed. The missing
+status takes precedence over both added or renamed and these values take
+precedence over the changed status.
+
+Since pathnames may contain spaces, quotes and other ``special''
+characters, the @command{inventory} command lists quoted filenames to
+avoid any ambiguities.
+
+Full support for versioned directories is not yet complete and the
+@command{inventory} command will only list entries for renamed or
+dropped directories. Directory entries will be designated by pathnames
+ending with the "/" character.
 
 @item monotone log
 @itemx monotone log --depth=@var{n}
@@ -4197,20 +4261,39 @@ which can be loaded into your database with @command{read}.
 
 @end itemize
 
-This command also verifies that the @sc{sha1} of every file, manifest,
+This command also verifies that the @sc{sha1} hash of every file, manifest,
 and revision is correct.
 
-@item monotone db kill_rev_locally @var{rev1}
+@item monotone db kill_rev_locally @var{id}
 
-This will simply delete a revision with revision id @var{rev1} from your
-local database.  If you already synchronized with another database this
-command is senseless, as it will come back to you.  It might leave some
-unreferenced 'manifest ids' and 'file deltas' in your database which is
-non-fatal but annoying.  Generally, this is not the preferred way of
-doing things, you might want to use @var{disapprove} to undo changes
-instead. @var{kill_rev_locally} basically belongs in the category of
-useful but
-``@var{Very-Dangerous-Command-That-We-Told-You-Not-To-Use}''-category.
+This command ``kills'', i.e., deletes, a given revision, as well as any
+certs attached to it.  It has an ugly name because it is a dangerous
+command; it permanently and irrecovably deletes historical information
+from your database.  There are a number of caveats:
+@itemize
+@item
+It can only be applied to revisions that have no descendents.  If you
+want to kill a revision that has descendents, you must kill all of the
+descendents first.
+@item
+It only removes the revision from your local database (hence the
+``locally'' in the command name).  If you have already pushed this
+revision out to another database, then the next time you pull from that
+database it may come back again.  There is no way to delete a revision
+from somebody else's database except to ask them to delete it for you.
+@item
+It does not actually delete the revision's files or manifest from your
+database.  If you run this command, and then run @command{db check}, it
+will note that you have an ``unreferenced manifest''.  If you wish to
+eliminate this data for good (and thus free up the space), you may use
+netsync to @command{pull} from your current database into a new
+database; this creates a copy of your old database, without the
+unreferenced data.  However, having this data in your database will not
+cause any problems, and acts as a safety net; if you later realize that
+you do, after all, need to retrieve the data in @var{id}, then
+@command{db check} will let you see which manifest it was, and with some
+work you can extract @var{id}'s data.
+@end itemize
 
 @item monotone db execute @var{sql-statement}
 
@@ -4346,6 +4429,44 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
+@item monotone automate parents @var{rev}
+
+@table @strong
+@item Arguments:
+
+One revision id, @var{rev}.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints the immediate parents of a revision.  This is like a
+non-recursive version of @command{automate ancestors}.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one parent of the given
+revision.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+@item Error conditions:
+
+If the given revision @var{rev} does not exist, prints nothing to
+stdout, prints an error message to stderr, and exits with status 1.
+
+@end table
+
+
 @item monotone automate descendents @var{rev1} [@var{rev2} [...]]
 
 @table @strong
@@ -4383,6 +4504,89 @@ included in the output.
 
 If any of the revisions do not exist, prints nothing to stdout, prints
 an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate children @var{rev}
+
+@table @strong
+@item Arguments:
+
+One revision id, @var{rev}.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints the immediate children of a revision.  This is like a
+non-recursive version of @command{automate descendents}.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one child of the given
+revision.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+@item Error conditions:
+
+If the given revision @var{rev} does not exist, prints nothing to
+stdout, prints an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate graph
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints out the complete ancestry graph of this database.
+
+@item Sample output:
+
+@verbatim
+0c05e8ec9c6af4224672c7cc4c9ef05ae8bdb794
+27ebcae50e1814e35274cb89b5031a423c29f95a 5830984dec5c41d994bcadfeab4bf1bf67747b89
+4e284617c80bec7da03925062a84f715c1b042bd 27ebcae50e1814e35274cb89b5031a423c29f95a 657c756d24fb65213d59f4ae07e117d830dcc95b
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving ancestry information for one revision.
+Each line begins with a revision id.  Following this are zero or more
+space-prefixed revision ids.  Each revision id after the first is a
+parent (in the sense of @command{automate parents}) of the first.  For
+instance, in the above sample output,
+0c05e8ec9c6af4224672c7cc4c9ef05ae8bdb794 is a root node,
+27ebcae50e1814e35274cb89b5031a423c29f95a has one parent, and
+4e284617c80bec7da03925062a84f715c1b042bd has two parents, i.e., is a
+merge node.
+
+The output as a whole is alphabetically sorted by line; additionally,
+the parents within each line are alphabetically sorted.
+
+@item Error conditions:
+
+None.
 
 @end table
 
@@ -5902,6 +6106,10 @@ Show diffs between working copy and database.
 Show status of working copy.
 @comment TROFF INPUT: .TP
 
+@item @b{inventory} @i{[<pathname>...]}
+Show inventory of files in working copy.
+@comment TROFF INPUT: .TP
+
 @item @b{log} @i{[id]}
 Show historical log of revisions, starting from working copy
 base revision, or @i{[id]} if given.
@@ -6201,6 +6409,20 @@ importing history from another version control system.
 Stop the search for a working copy (containing the @file{MT} directory)
 at the specified root directory rather than at the physical root of the
 filesystem.
+
+@item @b{--xargs=}@i{<file>}
+Inject the contents of the file in place among the command line
+arguments.  This may be useful in case the command line would otherwise
+become too long for your system.  This option can be used more than once
+if needed.
+
+@item @b{-@@} @i{<file>}
+An alias for @b{--xargs=}@i{<file>}.
+
+@item @b{--all-files}
+Include every file available in the working copy in the inventory
+list. By default inventory only lists ``interesting'' files. This option
+is specific to the @command{inventory} command.
 
 @comment TROFF INPUT: .SH ENVIRONMENT
 

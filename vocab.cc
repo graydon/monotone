@@ -18,12 +18,33 @@
 
 using namespace std;
 
+// the verify() stuff gets a little complicated; there doesn't seem to be a
+// really nice way to achieve what we want with c++'s type system.  the
+// problem is this: we want to give verify(file_path) and verify(local_path)
+// access to the internals of file_path and local_path, i.e. make them
+// friends, so they can normalize the file paths they're given.  this means
+// that verify() needs to be declared publically, so that the definition of
+// these classes can refer to them.  it also means that they -- and all other
+// ATOMIC types -- cannot fall back on a templated version of verify if no
+// other version is defined, because, well, the friend thing and the template
+// thing just don't work out, as far as I can tell.  So, every ATOMIC type
+// needs an explicitly defined verify() function, so we have both ATOMIC() and
+// ATOMIC_NOVERIFY() macros, the latter of which defines a type-specific noop
+// verify function.  DECORATE and ENCODING, on the other hand, cannot make use
+// of a trick like these, because they are template types themselves, and we
+// want to be able to define verify(hexenc<id>) without defining
+// verify(hexenc<data>) at the same time, for instance.  Fortunately, these
+// types never need to be friends with their verify functions (yet...), so we
+// _can_ use a templated fallback function.  This templated function is used
+// _only_ by DECORATE and ENCODING; it would be nice to make it take an
+// argument of type T1<T2> to document that, but for some reason that doesn't
+// work either.
 template <typename T>
 static inline void
 verify(T & val)
 {}
 
-static inline void 
+inline void 
 verify(hexenc<id> & val)
 {
   if (val.ok)
@@ -41,7 +62,7 @@ verify(hexenc<id> & val)
   val.ok = true;
 }
 
-static inline void 
+inline void 
 verify(ace & val)
 {
   if (val.ok)
@@ -55,7 +76,7 @@ verify(ace & val)
 }
 
 
-static inline void 
+inline void 
 verify(cert_name & val)
 {
   if (val.ok)
@@ -68,7 +89,7 @@ verify(cert_name & val)
   val.ok = true;
 }
 
-static inline void 
+inline void 
 verify(rsa_keypair_id & val)
 {
   if (val.ok)
@@ -82,7 +103,7 @@ verify(rsa_keypair_id & val)
 }
 
 
-static inline void 
+inline void 
 verify(local_path & val)
 {
 
@@ -94,9 +115,7 @@ verify(local_path & val)
   try 
     {
       p = mkpath(val());
-#if BOOST_VERSION >= 103100
       p = p.normalize();
-#endif
     }
   catch (std::runtime_error &re)
     {
@@ -130,13 +149,16 @@ verify(local_path & val)
         
     }
   
+  // save back the normalized string
+  val.s = p.string();
+
   val.ok = true;
 }
 
-static inline void 
+inline void 
 verify(file_path & val)
 {
-  static std::set<std::string> known_good;
+  static std::map<std::string, std::string> known_good;
 
   if (val.ok)
     return;
@@ -147,8 +169,11 @@ verify(file_path & val)
       verify(loc);
       N(!book_keeping_file(loc),
         F("prohibited book-keeping path in '%s'") % val);
-      known_good.insert(val());
+      const std::string & normalized_val = loc();
+      known_good.insert(std::make_pair(val(), normalized_val));
     }
+
+  val.s = known_good.find(val())->second;
   
   val.ok = true;
 }
@@ -174,6 +199,7 @@ ostream & operator<<(ostream & o,            \
                      ty const & a)           \
 { return (o << a.s); }
 
+#define ATOMIC_NOVERIFY(ty) ATOMIC(ty)
 
 
 
@@ -247,6 +273,7 @@ static void test_file_path_verification()
                              "foo/../../escape",
                              "/rooted",
                              "foo//nonsense",
+                             "MT/foo",
 #ifdef _WIN32
                              "c:\\windows\\rooted",
                              "c:/windows/rooted",
@@ -280,10 +307,18 @@ static void test_file_path_verification()
     BOOST_CHECK_NOT_THROW(file_path p(*c), informative_failure);
 }
 
+static void test_file_path_normalization()
+{
+  BOOST_CHECK(file_path("./foo") == file_path("foo"));
+  BOOST_CHECK(file_path("foo/bar/./baz") == file_path("foo/bar/baz"));
+  BOOST_CHECK(file_path("foo/bar/../baz") == file_path("foo/baz"));
+}
+
 void add_vocab_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&test_file_path_verification));
+  suite->add(BOOST_TEST_CASE(&test_file_path_normalization));
 }
 
 #endif // BUILD_UNIT_TESTS

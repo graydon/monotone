@@ -7,33 +7,33 @@
 // in order to facilitate external instantiation of most of the
 // vocabulary, minimize code duplication, speed up compilation, etc.
 
-ATOMIC(external);             // "external" string in unknown system charset
-ATOMIC(utf8);                 // unknown string in UTF8 charset
+ATOMIC_NOVERIFY(external);    // "external" string in unknown system charset
+ATOMIC_NOVERIFY(utf8);        // unknown string in UTF8 charset
 ATOMIC(ace);                  // unknown string in ACE form
 
-ATOMIC(id);                   // hash of data
-ATOMIC(data);                 // meaningless blob
-ATOMIC(delta);                // xdelta between 2 datas
-ATOMIC(inodeprint);           // fingerprint of an inode
+ATOMIC_NOVERIFY(id);          // hash of data
+ATOMIC_NOVERIFY(data);        // meaningless blob
+ATOMIC_NOVERIFY(delta);       // xdelta between 2 datas
+ATOMIC_NOVERIFY(inodeprint);  // fingerprint of an inode
 
 ATOMIC(local_path);           // non-absolute file
 ATOMIC(file_path);            // non-absolute, non-bookeeping file
 
 ATOMIC(cert_name);            // symbol-of-your-choosing
-ATOMIC(cert_value);           // symbol-of-your-choosing
+ATOMIC_NOVERIFY(cert_value);  // symbol-of-your-choosing
 
 // some domains: "database" (+ default_server, default_collection),
 //   server_key (+ servername/key)
 //   branch_alias (+ short form/long form)
 //   trust_seed (+ branch/seed)
-ATOMIC(var_domain);           // symbol-of-your-choosing
-ATOMIC(var_name);             // symbol-of-your-choosing
-ATOMIC(var_value);            // symbol-of-your-choosing
+ATOMIC_NOVERIFY(var_domain);  // symbol-of-your-choosing
+ATOMIC_NOVERIFY(var_name);    // symbol-of-your-choosing
+ATOMIC_NOVERIFY(var_value);   // symbol-of-your-choosing
 
-ATOMIC(rsa_keypair_id);       // keyname@domain.you.own
-ATOMIC(rsa_pub_key);          // some nice numbers
-ATOMIC(rsa_priv_key);         // some nice numbers
-ATOMIC(rsa_sha1_signature);   // some other nice numbers
+ATOMIC(rsa_keypair_id);              // keyname@domain.you.own
+ATOMIC_NOVERIFY(rsa_pub_key);        // some nice numbers
+ATOMIC_NOVERIFY(rsa_priv_key);       // some nice numbers
+ATOMIC_NOVERIFY(rsa_sha1_signature); // some other nice numbers
 
 DECORATE(revision);           // thing associated with a revision
 DECORATE(manifest);           // thing associated with a manifest
@@ -45,8 +45,8 @@ ENCODING(hexenc);             // thing which is hex-encoded
 ENCODING(base64);             // thing which is base64-encoded
 ENCODING(arc4);               // thing which is arc4-encrypted
 
-ATOMIC(prefix);               // raw encoding of a merkle tree prefix
-ATOMIC(merkle);               // raw encoding of a merkle tree node
+ATOMIC_NOVERIFY(prefix);      // raw encoding of a merkle tree prefix
+ATOMIC_NOVERIFY(merkle);      // raw encoding of a merkle tree node
 
 // instantiate those bits of the template vocabulary actually in use.
 
