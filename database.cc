@@ -733,9 +733,8 @@ unsigned long
 database::count(string const & table)
 {
   results res;
-  fetch(res, one_col, one_row, 
-        "SELECT COUNT(*) FROM '%q'", 
-        table.c_str());
+  std::string query="SELECT COUNT(*) FROM "+table;
+  fetch(res, one_col, one_row, query.c_str());
   return lexical_cast<unsigned long>(res[0][0]);  
 }
 
@@ -744,8 +743,7 @@ database::space_usage(string const & table, string const & concatenated_columns)
 {
   results res;
   fetch(res, one_col, one_row,
-        "SELECT SUM(LENGTH(%s)) FROM '%q'",
-        concatenated_columns.c_str(), table.c_str());
+        ("SELECT SUM(LENGTH("+concatenated_columns+")) FROM "+table).c_str());
   return lexical_cast<unsigned long>(res[0][0]);
 }
 
@@ -754,7 +752,7 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
 {
   results res;
 
-  fetch(res, one_col, any_rows, "SELECT id FROM %q", table.c_str());
+  fetch(res, one_col, any_rows, ("SELECT id FROM "+table).c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
     {
@@ -793,8 +791,8 @@ database::get_delta(hexenc<id> const & ident,
   I(base() != "");
   results res;
   fetch(res, one_col, one_row,
-        "SELECT delta FROM '%q' WHERE id = '%q' AND base = '%q'", 
-        table.c_str(), ident().c_str(), base().c_str());
+        ("SELECT delta FROM "+table+" WHERE id = ? AND base = ?").c_str(), 
+        ident().c_str(), base().c_str());
 
   base64<gzip<delta> > del_packed = res[0][0];
   unpack(del_packed, del);
@@ -814,8 +812,8 @@ database::put(hexenc<id> const & ident,
   base64<gzip<data> > dat_packed;
   pack(dat, dat_packed);
   
-  execute("INSERT INTO '%q' VALUES('%q', '%q')", 
-          table.c_str(), ident().c_str(), dat_packed().c_str());
+  execute(("INSERT INTO "+table+" VALUES(?, ?)").c_str(), 
+          ident().c_str(), dat_packed().c_str());
 }
 void 
 database::put_delta(hexenc<id> const & ident,
@@ -830,8 +828,7 @@ database::put_delta(hexenc<id> const & ident,
   base64<gzip<delta> > del_packed;
   pack(del, del_packed);
   
-  execute("INSERT INTO '%q' VALUES('%q', '%q', '%q')", 
-          table.c_str(), 
+  execute(("INSERT INTO "+table+" VALUES(?, ?, ?)").c_str(), 
           ident().c_str(), base().c_str(), del_packed().c_str());
 }
 
@@ -1446,7 +1443,7 @@ database::get_keys(string const & table, vector<rsa_keypair_id> & keys)
 {
   keys.clear();
   results res;
-  fetch(res, one_col, any_rows,  "SELECT id from '%q'", table.c_str());
+  fetch(res, one_col, any_rows,  ("SELECT id from "+table).c_str());
   for (size_t i = 0; i < res.size(); ++i)
     keys.push_back(res[i][0]);
 }
@@ -1552,7 +1549,7 @@ database::put_key(rsa_keypair_id const & pub_id,
   I(!public_key_exists(thash));
   E(!public_key_exists(pub_id),
     F("another key with name '%s' already exists") % pub_id);
-  execute("INSERT INTO public_keys VALUES('%q', '%q', '%q')", 
+  execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
           thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
 }
 
@@ -1564,7 +1561,7 @@ database::put_key(rsa_keypair_id const & priv_id,
   key_hash_code(priv_id, priv_encoded, thash);
   E(!private_key_exists(priv_id),
     F("another key with name '%s' already exists") % priv_id);
-  execute("INSERT INTO private_keys VALUES('%q', '%q', '%q')", 
+  execute("INSERT INTO private_keys VALUES(?, ?, ?)", 
           thash().c_str(), priv_id().c_str(), priv_encoded().c_str());
 }
 
@@ -1582,14 +1579,14 @@ database::put_key_pair(rsa_keypair_id const & id,
 void
 database::delete_private_key(rsa_keypair_id const & pub_id)
 {
-  execute("DELETE FROM private_keys WHERE id = '%q'",
+  execute("DELETE FROM private_keys WHERE id = ?",
           pub_id().c_str());
 }
 
 void
 database::delete_public_key(rsa_keypair_id const & pub_id)
 {
-  execute("DELETE FROM public_keys WHERE id = '%q'",
+  execute("DELETE FROM public_keys WHERE id = ?",
           pub_id().c_str());
 }
 
@@ -1696,8 +1693,7 @@ database::get_certs(vector<cert> & certs,
 {
   results res;
   fetch(res, 5, any_rows, 
-        "SELECT id, name, value, keypair, signature FROM '%q' ",
-        table.c_str());
+        ("SELECT id, name, value, keypair, signature FROM "+table).c_str());
   results_to_certs(res, certs);
 }
 
@@ -2210,7 +2206,7 @@ database::get_epoch(epoch_id const & eid,
   results res;
   fetch(res, 2, any_rows,
         "SELECT branch, epoch FROM branch_epochs"
-        " WHERE hash = '%q'",
+        " WHERE hash = ?",
         eid.inner()().c_str());
   I(res.size() == 1);
   base64<cert_value> encoded(idx(idx(res, 0), 0));
@@ -2223,7 +2219,7 @@ database::epoch_exists(epoch_id const & eid)
 {
   results res;
   fetch(res, one_col, any_rows,
-        "SELECT hash FROM branch_epochs WHERE hash = '%q'",
+        "SELECT hash FROM branch_epochs WHERE hash = ?",
         eid.inner()().c_str());
   I(res.size() == 1 || res.size() == 0);
   return res.size() == 1;
@@ -2237,7 +2233,7 @@ database::set_epoch(cert_value const & branch, epoch_data const & epo)
   encode_base64(branch, encoded);
   epoch_hash_code(branch, epo, eid);
   I(epo.inner()().size() == constants::epochlen);
-  execute("INSERT OR REPLACE INTO branch_epochs VALUES('%q', '%q', '%q')", 
+  execute("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)", 
           eid.inner()().c_str(), encoded().c_str(), epo.inner()().c_str());
 }
 
@@ -2246,7 +2242,7 @@ database::clear_epoch(cert_value const & branch)
 {
   base64<cert_value> encoded;
   encode_base64(branch, encoded);
-  execute("DELETE FROM branch_epochs WHERE branch = '%q'", encoded().c_str());
+  execute("DELETE FROM branch_epochs WHERE branch = ?", encoded().c_str());
 }
 
 // vars
@@ -2299,7 +2295,7 @@ database::set_var(var_key const & key, var_value const & value)
   encode_base64(key.second, name_encoded);
   base64<var_value> value_encoded;
   encode_base64(value, value_encoded);
-  execute("INSERT OR REPLACE INTO db_vars VALUES('%q', '%q', '%q')",
+  execute("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)",
           key.first().c_str(),
           name_encoded().c_str(),
           value_encoded().c_str());
@@ -2310,7 +2306,7 @@ database::clear_var(var_key const & key)
 {
   base64<var_name> name_encoded;
   encode_base64(key.second, name_encoded);
-  execute("DELETE FROM db_vars WHERE domain = '%q' AND name = '%q'",
+  execute("DELETE FROM db_vars WHERE domain = ? AND name = ?",
           key.first().c_str(), name_encoded().c_str());
 }
 
