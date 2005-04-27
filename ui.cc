@@ -125,14 +125,6 @@ void tick_write_count::write_ticks()
       tickline.resize(tw + 1);
     }
 
-  unsigned int tw = terminal_width();
-  if (tw && tickline.size() > tw)
-    {
-      // first character in tickline is "\r", which does not take up any
-      // width, so we add 1 to compensate.
-      tickline.resize(tw + 1);
-    }
-
   clog << tickline;
   clog.flush();
 }
