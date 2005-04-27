@@ -1401,10 +1401,10 @@ database::delete_existing_rev_and_certs(revision_id const & rid){
 
   // perform the actual SQL transactions to kill rev rid here
   L(F("Killing revision %s locally\n") % rid);
-  execute("DELETE from revision_certs WHERE id = '%s'",rid.inner()().c_str());
-  execute("DELETE from revision_ancestry WHERE child = '%s'",
+  execute("DELETE from revision_certs WHERE id = ?",rid.inner()().c_str());
+  execute("DELETE from revision_ancestry WHERE child = ?",
           rid.inner()().c_str());
-  execute("DELETE from revisions WHERE id = '%s'",rid.inner()().c_str());
+  execute("DELETE from revisions WHERE id = ?",rid.inner()().c_str());
 }
 
 // crypto key management
