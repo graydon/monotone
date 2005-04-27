@@ -1,5 +1,8 @@
 2005-04-27  Richard Levitte  <richard@levitte.org>
 
+	* sanity.hh: Add a couple of variants of checked_index() to
+	accomodate for indexes over vector<T, QA(T)>.
+
 	* commands.hh: Add new selector to find arbitrary cert name and
 	value pairs.  The syntax is 'c:{name}={value}'.
 	* commands.cc (decode_selector): Recognise it.

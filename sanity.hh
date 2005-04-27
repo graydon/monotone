@@ -16,6 +16,8 @@
 #include <config.h> // Required for ENABLE_NLS
 #include "gettext.h"
 
+#include "quick_alloc.hh" // to get the QA() macro
+
 #ifdef __GNUC__
 #define NORETURN __attribute__((noreturn))
 #else
@@ -145,6 +147,32 @@ inline T & checked_index(std::vector<T> & v,
 
 template <typename T>
 inline T const & checked_index(std::vector<T> const & v, 
+                               typename std::vector<T>::size_type i,
+                               char const * vec,
+                               char const * index,
+                               char const * file,
+                               int line) 
+{ 
+  if (UNLIKELY(i >= v.size()))
+    global_sanity.index_failure(vec, index, v.size(), i, file, line);
+  return v[i];
+}
+
+template <typename T>
+inline T & checked_index(std::vector<T, QA(T)> & v, 
+                         typename std::vector<T>::size_type i,
+                         char const * vec,
+                         char const * index,
+                         char const * file,
+                         int line) 
+{ 
+  if (UNLIKELY(i >= v.size()))
+    global_sanity.index_failure(vec, index, v.size(), i, file, line);
+  return v[i];
+}
+
+template <typename T>
+inline T const & checked_index(std::vector<T, QA(T)> const & v, 
                                typename std::vector<T>::size_type i,
                                char const * vec,
                                char const * index,
