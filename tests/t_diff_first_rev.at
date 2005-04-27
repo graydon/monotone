@@ -1,0 +1,10 @@
+AT_SETUP([diff in a never-committed project])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [flagella
+])
+AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(grep -q testfile stdout)
+AT_CHECK(grep -q flagella stdout)
+
+AT_CLEANUP

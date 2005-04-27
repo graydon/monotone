@@ -1,0 +1,16 @@
+AT_SETUP([db load must create a new db])
+MONOTONE_SETUP
+
+ADD_FILE(foo, [stuff
+])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE db dump, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(MONOTONE --db=test2.db db load <stdout, [], [ignore], [ignore])
+AT_CHECK(mkdir test3.db)
+AT_CHECK(MONOTONE --db=test3.db db load <stdout, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE --db=test4.db db init, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --db=test4.db db load <stdout, [1], [ignore], [ignore])
+
+AT_CLEANUP

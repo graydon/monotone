@@ -1,7 +1,11 @@
-#include "ui.hh"
+#include "config.h"
+#include "platform.hh"
 #include "sanity.hh"
+#include "ui.hh"
+#include "transforms.hh"
 
 #include <iostream>
+#include <iomanip>
 #include <boost/lexical_cast.hpp>
 
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
@@ -17,9 +21,11 @@ using namespace std;
 using boost::lexical_cast;
 struct user_interface ui;
 
-ticker::ticker(string const & tickname, std::string const & s, size_t mod) :
+ticker::ticker(string const & tickname, std::string const & s, size_t mod,
+    bool kilocount) :
   ticks(0),
   mod(mod),
+  kilocount(kilocount),
   name(tickname),
   shortname(s)
 {
@@ -74,14 +80,35 @@ tick_write_count::~tick_write_count()
 
 void tick_write_count::write_ticks()
 {
-  string tickline = "\rmonotone: ";
+  string tickline = "\rmonotone:";
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
+      string suffix;
+      ostringstream disptick;
+      if (i->second->kilocount && i->second->ticks >= 10000)
+        { // automatic unit conversion is enabled
+          float div;
+          if (i->second->ticks >= 1048576) {
+          // ticks >=1MB, use Mb
+            div = 1048576;
+            suffix = "M";
+          } else {
+          // ticks <1MB, use kb
+            div = 1024;
+            suffix = "k";
+          }
+          disptick << std::fixed << std::setprecision(1) <<
+              (i->second->ticks / div);
+        } else {
+          // no automatic unit conversion.
+          disptick << i->second->ticks;
+        }
       tickline +=
-        string("[")
-        + i->first + ": " + lexical_cast<string>(i->second->ticks)
-        + "] ";
+        string(" [")
+        + i->first + ": " + disptick.str()
+        + suffix
+        + "]";
     }
   tickline += ui.tick_trailer;
 
@@ -89,6 +116,14 @@ void tick_write_count::write_ticks()
   if (curr_sz < last_tick_len)
     tickline += string(last_tick_len - curr_sz, ' ');
   last_tick_len = curr_sz;
+
+  unsigned int tw = terminal_width();
+  if (tw && tickline.size() > tw)
+    {
+      // first character in tickline is "\r", which does not take up any
+      // width, so we add 1 to compensate.
+      tickline.resize(tw + 1);
+    }
 
   clog << tickline;
   clog.flush();
@@ -159,7 +194,10 @@ user_interface::user_interface() :
 {
   clog.sync_with_stdio(false);
   clog.unsetf(ios_base::unitbuf);
-  set_tick_writer(new tick_write_count);
+  if (have_smart_terminal()) 
+    set_tick_writer(new tick_write_count);
+  else
+    set_tick_writer(new tick_write_dot);
 }
 
 user_interface::~user_interface()
@@ -215,7 +253,7 @@ user_interface::fatal(string const & fatal)
   inform("fatal: " + fatal);
   inform("this is almost certainly a bug in monotone.\n");
   inform("please send this error message, the output of 'monotone --full-version',\n");
-  inform("and a description of what you were doing to monotone-devel@nongnu.org.\n");
+  inform("and a description of what you were doing to " PACKAGE_BUGREPORT ".\n");
 }
 
 
@@ -239,15 +277,23 @@ sanitize(string const & line)
   return tmp;
 }
 
-void 
-user_interface::inform(string const & line)
+void
+user_interface::ensure_clean_line()
 {
   if (last_write_was_a_tick)
     {
       write_ticks();
       clog << endl;
     }
-  clog << "monotone: " << sanitize(line);
-  clog.flush();
   last_write_was_a_tick = false;
+}
+
+void 
+user_interface::inform(string const & line)
+{
+  string prefixedLine;
+  prefix_lines_with("monotone: ", line, prefixedLine);
+  ensure_clean_line();
+  clog << sanitize(prefixedLine) << endl;
+  clog.flush();
 }

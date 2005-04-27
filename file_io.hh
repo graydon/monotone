@@ -38,7 +38,9 @@
 struct lua_hooks;
 
 void save_initial_path();
-bool find_working_copy(fs::path & working_copy_root, fs::path & working_copy_restriction);
+bool find_working_copy(fs::path const & search_root, 
+                       fs::path & working_copy_root, 
+                       fs::path & working_copy_restriction);
 
 fs::path mkpath(std::string const & s);
 
@@ -66,36 +68,39 @@ void delete_dir_recursive(file_path const & path);
 void delete_dir_recursive(local_path const & path);
 
 void move_file(file_path const & old_path,
-	       file_path const & new_path);
+               file_path const & new_path);
 void move_file(local_path const & old_path,
-	       local_path const & new_path);
+               local_path const & new_path);
 
 void move_dir(file_path const & old_path,
-	      file_path const & new_path);
+              file_path const & new_path);
 void move_dir(local_path const & old_path,
-	      local_path const & new_path);
+              local_path const & new_path);
 
 void read_data(local_path const & path, data & data);
 void read_data(local_path const & path, base64< gzip<data> > & data);
 void read_data(file_path const & path, data & data);
 void read_data(file_path const & path, base64< gzip<data> > & data);
 void read_localized_data(file_path const & path, 
-			 data & dat, 
-			 lua_hooks & lua);
+                         data & dat, 
+                         lua_hooks & lua);
 void read_localized_data(file_path const & path,
-			 base64< gzip<data> > & dat,
-			 lua_hooks & lua);
+                         base64< gzip<data> > & dat,
+                         lua_hooks & lua);
+
+// This function knows that "-" means "stdin".
+void read_data_for_command_line(utf8 const & path, data & dat);
 
 void write_data(local_path const & path, data const & data);
 void write_data(local_path const & path, base64< gzip<data> > const & data);
 void write_data(file_path const & path, data const & data);
 void write_data(file_path const & path, base64< gzip<data> > const & data);
 void write_localized_data(file_path const & path, 
-			  data const & dat, 
-			  lua_hooks & lua);
+                          data const & dat, 
+                          lua_hooks & lua);
 void write_localized_data(file_path const & path,
-			  base64< gzip<data> > const & dat,
-			  lua_hooks & lua);
+                          base64< gzip<data> > const & dat,
+                          lua_hooks & lua);
 
 class tree_walker
 {
@@ -109,8 +114,8 @@ void walk_tree(tree_walker & walker);
 
 // from some safe sub-dir of cwd
 void walk_tree(file_path const & path,
-	       tree_walker & walker,
-	       bool require_existing_path = true);
+               tree_walker & walker,
+               bool require_existing_path = true);
 
 
 

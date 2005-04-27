@@ -27,6 +27,8 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "xdelta.hh"
+#include "epoch.hh"
+#include "platform.hh"
 
 #include "cryptopp/osrng.h"
 
@@ -201,8 +203,7 @@ done_marker
 };
 
 struct 
-session :
-  public manifest_edge_analyzer
+session
 {
   protocol_role role;
   protocol_voice const voice;
@@ -233,6 +234,9 @@ session :
   auto_ptr<ticker> revision_in_ticker;
   auto_ptr<ticker> revision_out_ticker;
 
+  map< std::pair<utf8, netcmd_item_type>, 
+       boost::shared_ptr<merkle_table> > merkle_tables;
+
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
   map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestry;
@@ -244,7 +248,7 @@ session :
   bool sent_goodbye;
   boost::scoped_ptr<CryptoPP::AutoSeededRandomPool> prng;
 
-  packet_db_writer dbw;
+  packet_db_valve dbw;
 
   session(protocol_role role,
           protocol_voice voice,
@@ -261,12 +265,14 @@ session :
   void mark_recent_io();
 
   bool done_all_refinements();
-  bool rcert_refinement_done();
+  bool cert_refinement_done();
   bool all_requested_revisions_received();
 
   void note_item_requested(netcmd_item_type ty, id const & i);
   bool item_request_outstanding(netcmd_item_type ty, id const & i);
   void note_item_arrived(netcmd_item_type ty, id const & i);
+
+  void maybe_note_epochs_finished();
 
   void note_item_sent(netcmd_item_type ty, id const & i);
 
@@ -288,9 +294,9 @@ session :
   Netxx::Probe::ready_type which_events() const;
   bool read_some();
   bool write_some();
-  void update_merkle_trees(netcmd_item_type type,
-                           hexenc<id> const & hident,
-                           bool live_p);
+
+  bool encountered_error;
+  void error(string const & errmsg);
 
   void write_netcmd_and_try_flush(netcmd const & cmd);
   void queue_bye_cmd();
@@ -327,7 +333,8 @@ session :
   bool process_bye_cmd();
   bool process_error_cmd(string const & errmsg);
   bool process_done_cmd(size_t level, netcmd_item_type type);
-  bool process_hello_cmd(id const & server, 
+  bool process_hello_cmd(rsa_keypair_id const & server_keyname,
+                         rsa_pub_key const & server_key,
                          id const & nonce);
   bool process_anonymous_cmd(protocol_role role, 
                              string const & collection, 
@@ -355,6 +362,21 @@ session :
   bool process_nonexistant_cmd(netcmd_item_type type,
                                id const & item);
 
+  bool merkle_node_exists(netcmd_item_type type,
+                          utf8 const & collection,                      
+                          size_t level,
+                          prefix const & pref);
+
+  void load_merkle_node(netcmd_item_type type,
+                        utf8 const & collection,                        
+                        size_t level,
+                        prefix const & pref,
+                        merkle_ptr & node);
+
+  void rebuild_merkle_trees(app_state & app,
+                            utf8 const & collection);
+
+  void load_epoch(cert_value const & branchname, epoch_id const & epoch);
   
   bool dispatch_payload(netcmd const & cmd);
   void begin_service();
@@ -365,11 +387,9 @@ session :
 struct 
 root_prefix
 {
-  hexenc<prefix> val;
-  root_prefix()
-    {
-      encode_hexenc(prefix(""), val);
-    }
+  prefix val;
+  root_prefix() : val("")
+  {}
 };
 
 static root_prefix const & 
@@ -419,7 +439,8 @@ session::session(protocol_role role,
   saved_nonce(""),
   received_goodbye(false),
   sent_goodbye(false),
-  dbw(app, true)
+  dbw(app, true),
+  encountered_error(false)
 {
   if (voice == client_voice)
     {
@@ -427,7 +448,7 @@ session::session(protocol_role role,
           F("client can only sync one collection at a time"));
       this->collection = idx(collections, 0);
     }
-  
+    
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
   bool request_blocking_rng = false;
@@ -441,18 +462,22 @@ session::session(protocol_role role,
     }  
   prng.reset(new CryptoPP::AutoSeededRandomPool(request_blocking_rng));
 
-  done_refinements.insert(make_pair(rcert_item, done_marker()));
-  done_refinements.insert(make_pair(mcert_item, done_marker()));
-  done_refinements.insert(make_pair(fcert_item, done_marker()));
+  done_refinements.insert(make_pair(cert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
+  done_refinements.insert(make_pair(epoch_item, done_marker()));
   
-  requested_items.insert(make_pair(rcert_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(fcert_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(mcert_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
+  requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
+
+  for (vector<utf8>::const_iterator i = collections.begin();
+       i != collections.end(); ++i)
+    {
+      rebuild_merkle_trees(app, *i);
+    }
 }
 
 id 
@@ -487,9 +512,9 @@ session::done_all_refinements()
 
 
 bool 
-session::rcert_refinement_done()
+session::cert_refinement_done()
 {
-  return done_refinements[rcert_item].tree_is_done;
+  return done_refinements[cert_item].tree_is_done;
 }
 
 bool 
@@ -514,6 +539,23 @@ session::all_requested_revisions_received()
 }
 
 void
+session::maybe_note_epochs_finished()
+{
+  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
+    i = requested_items.find(epoch_item);
+  I(i != requested_items.end());
+  // Maybe there are outstanding epoch requests.
+  if (!i->second->empty())
+    return;
+  // And maybe we haven't even finished the refinement.
+  if (!done_refinements[epoch_item].tree_is_done)
+    return;
+  // But otherwise, we're ready to go!
+  L(F("all epochs processed, opening database valve\n"));
+  this->dbw.open_valve();
+}
+
+void
 session::note_item_requested(netcmd_item_type ty, id const & ident)
 {
   map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
@@ -532,7 +574,7 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
 
   switch (ty)
     {
-    case rcert_item:
+    case cert_item:
       if (cert_in_ticker.get() != NULL)
         ++(*cert_in_ticker);
       break;
@@ -561,7 +603,7 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
 {
   switch (ty)
     {
-    case rcert_item:
+    case cert_item:
       if (cert_out_ticker.get() != NULL)
         ++(*cert_out_ticker);
       break;
@@ -578,11 +620,36 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
 void 
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
-  write_netcmd(cmd, outbuf);
+  if (!encountered_error)
+    write_netcmd(cmd, outbuf);
+  else
+    L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
   // interfere with initial and final sequences. careful with it.
   // write_some();
   // read_some();
+}
+
+// This method triggers a special "error unwind" mode to netsync.  In this
+// mode, all received data is ignored, and no new data is queued.  We simply
+// stay connected long enough for the current write buffer to be flushed, to
+// ensure that our peer receives the error message.
+// WARNING WARNING WARNING (FIXME): this does _not_ throw an exception.  if
+// while processing any given netcmd packet you encounter an error, you can
+// _only_ call this method if you have not touched the database, because if
+// you have touched the database then you need to throw an exception to
+// trigger a rollback.
+// you could, of course, call this method and then throw an exception, but
+// there is no point in doing that, because throwing the exception will cause
+// the connection to be immediately terminated, so your call to error() will
+// actually have no effect (except to cause your error message to be printed
+// twice).
+void
+session::error(std::string const & errmsg)
+{
+  W(F("error: %s\n") % errmsg);
+  queue_error_cmd(errmsg);
+  encountered_error = true;
 }
 
 void 
@@ -658,7 +725,7 @@ session::analyze_attachment(revision_id const & i,
   attached[i] = curr_attached;
 }
 
-static inline id
+inline static id
 plain_id(manifest_id const & i)
 {
   id tmp;
@@ -667,7 +734,7 @@ plain_id(manifest_id const & i)
   return tmp;
 }
 
-static inline id
+inline static id
 plain_id(file_id const & i)
 {
   id tmp;
@@ -860,7 +927,7 @@ session::request_fwd_revisions(revision_id const & i,
         }
 
       // check out each file delta edge
-      change_set const & an_attached_cset = an_attached_edge->second.second;
+      change_set const & an_attached_cset = edge_changes(an_attached_edge);
       for (change_set::delta_map::const_iterator k = an_attached_cset.deltas.begin();
            k != an_attached_cset.deltas.end(); ++k)
         {
@@ -896,7 +963,7 @@ session::analyze_ancestry_graph()
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
 
-  if (! (all_requested_revisions_received() && rcert_refinement_done()))
+  if (! (all_requested_revisions_received() && cert_refinement_done()))
     return;
 
   if (analyzed_ancestry)
@@ -984,9 +1051,14 @@ session::read_some()
   I(inbuf.size() < constants::netcmd_maxsz);
   char tmp[constants::bufsz];
   Netxx::signed_size_type count = str.read(tmp, sizeof(tmp));
-  if(count > 0)
+  if (count > 0)
     {
       L(F("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
+      if (encountered_error)
+        {
+          L(F("in error unwind mode, so throwing them into the bit bucket\n"));
+          return true;
+        }
       inbuf.append(string(tmp, tmp + count));
       mark_recent_io();
       if (byte_in_ticker.get() != NULL)
@@ -1011,6 +1083,12 @@ session::write_some()
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
         (*byte_out_ticker) += count;
+      if (encountered_error && outbuf.empty())
+        {
+          // we've flushed our error message, so it's time to get out.
+          L(F("finished flushing output queue in error unwind mode, disconnecting\n"));
+          return false;
+        }
       return true;
     }
   else
@@ -1037,6 +1115,7 @@ session::queue_error_cmd(string const & errmsg)
   cmd.cmd_code = error_cmd;
   write_error_cmd_payload(errmsg, cmd.payload);
   write_netcmd_and_try_flush(cmd);
+  this->sent_goodbye = true;
 }
 
 void 
@@ -1058,7 +1137,16 @@ session::queue_hello_cmd(id const & server,
 {
   netcmd cmd;
   cmd.cmd_code = hello_cmd;
-  write_hello_cmd_payload(server, nonce, cmd.payload);
+  hexenc<id> server_encoded;
+  encode_hexenc(server, server_encoded);
+  
+  rsa_keypair_id key_name;
+  base64<rsa_pub_key> pub_encoded;
+  rsa_pub_key pub;
+
+  app.db.get_pubkey(server_encoded, key_name, pub_encoded);
+  decode_base64(pub_encoded, pub);
+  write_hello_cmd_payload(key_name, pub, nonce, cmd.payload);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1275,9 +1363,7 @@ session::process_bye_cmd()
 bool 
 session::process_error_cmd(string const & errmsg) 
 {
-  W(F("received network error: %s\n") % errmsg);
-  this->received_goodbye = true;
-  return true;
+  throw bad_decode(F("received network error: %s\n") % errmsg);
 }
 
 bool 
@@ -1307,6 +1393,8 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
 
       if (all_requested_revisions_received())
         analyze_ancestry_graph();      
+
+      maybe_note_epochs_finished();
     }
 
   else if (i->second.current_level_had_refinements 
@@ -1326,59 +1414,96 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
   return true;
 }
 
+static const var_domain known_servers_domain = var_domain("known-servers");
+
 bool 
-session::process_hello_cmd(id const & server, 
+session::process_hello_cmd(rsa_keypair_id const & their_keyname,
+                           rsa_pub_key const & their_key,
                            id const & nonce) 
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == 0);
   
-  hexenc<id> hnonce;
-  encode_hexenc(nonce, hnonce);
   hexenc<id> their_key_hash;
-  encode_hexenc(server, their_key_hash);
-  
-  L(F("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
-    % their_key_hash % hnonce);
-  
-  if (app.db.public_key_exists(their_key_hash))
+  base64<rsa_pub_key> their_key_encoded;
+  encode_base64(their_key, their_key_encoded);
+  key_hash_code(their_keyname, their_key_encoded, their_key_hash);
+  L(F("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
+  var_key their_key_key(known_servers_domain, var_name(peer_id));
+  if (app.db.var_exists(their_key_key))
     {
-      // save their identity 
-      this->remote_peer_key_hash = server;
-      
-      if (app.signing_key() != "")
+      var_value expected_key_hash;
+      app.db.get_var(their_key_key, expected_key_hash);
+      if (expected_key_hash() != their_key_hash())
         {
-          // get our public key for its hash identifier
-          base64<rsa_pub_key> our_pub;
-          hexenc<id> our_key_hash;
-          id our_key_hash_raw;
-          app.db.get_key(app.signing_key, our_pub);
-          key_hash_code(app.signing_key, our_pub, our_key_hash);
-          decode_hexenc(our_key_hash, our_key_hash_raw);
-          
-          // get our private key and make a signature
-          base64<rsa_sha1_signature> sig;
-          rsa_sha1_signature sig_raw;
-          base64< arc4<rsa_priv_key> > our_priv;
-          load_priv_key(app, app.signing_key, our_priv);
-          make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
-          decode_base64(sig, sig_raw);
-          
-          // make a new nonce of our own and send off the 'auth'
-          queue_auth_cmd(this->role, this->collection(), our_key_hash_raw, 
-                         nonce, mk_nonce(), sig_raw());
+          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"));
+          P(F("@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"));
+          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"));
+          P(F("IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"));
+          P(F("it is also possible that the server key has just been changed\n"));
+          P(F("remote host sent key %s\n") % their_key_hash);
+          P(F("I expected %s\n") % expected_key_hash);
+          P(F("'monotone unset %s %s' overrides this check\n")
+            % their_key_key.first % their_key_key.second);
+          E(false, F("server key changed"));
         }
-      else
-        {
-          queue_anonymous_cmd(this->role, this->collection(), mk_nonce());
-        }
-      return true;
     }
   else
     {
-      W(F("unknown server key.  disconnecting.\n"));
+      P(F("first time connecting to server %s\n") % peer_id);
+      P(F("I'll assume it's really them, but you might want to\n"));
+      P(F("double-check their key's fingerprint: %s\n") % their_key_hash);
+      app.db.set_var(their_key_key, var_value(their_key_hash()));
     }
-  return false;
+  if (!app.db.public_key_exists(their_key_hash))
+    {
+      W(F("saving public key for %s to database\n") % their_keyname);
+      app.db.put_key(their_keyname, their_key_encoded);
+    }
+  
+  {
+    hexenc<id> hnonce;
+    encode_hexenc(nonce, hnonce);
+    L(F("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
+      % their_key_hash % hnonce);
+  }
+  
+  I(app.db.public_key_exists(their_key_hash));
+  
+  // save their identity 
+  {
+    id their_key_hash_decoded;
+    decode_hexenc(their_key_hash, their_key_hash_decoded);
+    this->remote_peer_key_hash = their_key_hash_decoded;
+  }
+      
+  if (app.signing_key() != "")
+    {
+      // get our public key for its hash identifier
+      base64<rsa_pub_key> our_pub;
+      hexenc<id> our_key_hash;
+      id our_key_hash_raw;
+      app.db.get_key(app.signing_key, our_pub);
+      key_hash_code(app.signing_key, our_pub, our_key_hash);
+      decode_hexenc(our_key_hash, our_key_hash_raw);
+      
+      // get our private key and make a signature
+      base64<rsa_sha1_signature> sig;
+      rsa_sha1_signature sig_raw;
+      base64< arc4<rsa_priv_key> > our_priv;
+      load_priv_key(app, app.signing_key, our_priv);
+      make_signature(app.lua, app.signing_key, our_priv, nonce(), sig);
+      decode_base64(sig, sig_raw);
+      
+      // make a new nonce of our own and send off the 'auth'
+      queue_auth_cmd(this->role, this->collection(), our_key_hash_raw, 
+                     nonce, mk_nonce(), sig_raw());
+    }
+  else
+    {
+      queue_anonymous_cmd(this->role, this->collection(), mk_nonce());
+    }
+  return true;
 }
 
 bool 
@@ -1624,22 +1749,19 @@ session::process_confirm_cmd(string const & signature)
         {
           L(F("server signature OK, accepting authentication\n"));
           this->authenticated = true;
-          merkle_node root;
-          load_merkle_node(app, key_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
+
+          merkle_ptr root;
+          load_merkle_node(epoch_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(*root);
+          queue_done_cmd(0, epoch_item);
+
+          load_merkle_node(key_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(*root);
           queue_done_cmd(0, key_item);
 
-          load_merkle_node(app, mcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
-          queue_done_cmd(0, mcert_item);
-
-          load_merkle_node(app, fcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
-          queue_done_cmd(0, fcert_item);
-
-          load_merkle_node(app, rcert_item, this->collection, 0, get_root_prefix().val, root);
-          queue_refine_cmd(root);
-          queue_done_cmd(0, rcert_item);
+          load_merkle_node(cert_item, this->collection, 0, get_root_prefix().val, root);
+          queue_refine_cmd(*root);
+          queue_done_cmd(0, cert_item);
           return true;
         }
       else
@@ -1665,18 +1787,16 @@ data_exists(netcmd_item_type type,
     {
     case key_item:
       return app.db.public_key_exists(hitem);
-    case fcert_item:
-      return false;
-    case mcert_item:
-      return false;
     case manifest_item:
       return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
     case revision_item:
       return app.db.revision_exists(revision_id(hitem));
-    case rcert_item:
+    case cert_item:
       return app.db.revision_cert_exists(hitem);
+    case epoch_item:
+      return app.db.epoch_exists(epoch_id(hitem));
     }
   return false;
 }
@@ -1693,6 +1813,20 @@ load_data(netcmd_item_type type,
   encode_hexenc(item, hitem);
   switch (type)
     {
+    case epoch_item:
+      if (app.db.epoch_exists(epoch_id(hitem)))
+      {
+        cert_value branch;
+        epoch_data epoch;
+        app.db.get_epoch(epoch_id(hitem), branch, epoch);
+        write_epoch(branch, epoch, out);
+      }
+      else
+        {
+          throw bad_decode(F("epoch with hash '%s' does not exist in our database")
+                           % hitem);
+        }
+      break;
     case key_item:
       if (app.db.public_key_exists(hitem))
         {
@@ -1714,8 +1848,7 @@ load_data(netcmd_item_type type,
           revision_data mdat;
           data dat;
           app.db.get_revision(revision_id(hitem), mdat);
-          unpack(mdat.inner(), dat);
-          out = dat();
+          out = mdat.inner()();
         }
       else
         {
@@ -1729,8 +1862,7 @@ load_data(netcmd_item_type type,
           manifest_data mdat;
           data dat;
           app.db.get_manifest_version(manifest_id(hitem), mdat);
-          unpack(mdat.inner(), dat);
-          out = dat();
+          out = mdat.inner()();
         }
       else
         {
@@ -1744,8 +1876,7 @@ load_data(netcmd_item_type type,
           file_data fdat;
           data dat;
           app.db.get_file_version(file_id(hitem), fdat);
-          unpack(fdat.inner(), dat);
-          out = dat();
+          out = fdat.inner()();
         }
       else
         {
@@ -1753,7 +1884,7 @@ load_data(netcmd_item_type type,
         }
       break;
 
-    case rcert_item:
+    case cert_item:
       if(app.db.revision_cert_exists(hitem))
         {
           revision<cert> c;
@@ -1763,16 +1894,8 @@ load_data(netcmd_item_type type,
         }
       else
         {
-          throw bad_decode(F("rcert '%s' does not exist in our database") % hitem);
+          throw bad_decode(F("cert '%s' does not exist in our database") % hitem);
         }
-      break;
-
-    case mcert_item:
-      throw bad_decode(F("mcert '%s' not supported") % hitem);
-      break;
-
-    case fcert_item:
-      throw bad_decode(F("fcert '%s' not supported") % hitem);
       break;
     }
 }
@@ -1781,7 +1904,9 @@ load_data(netcmd_item_type type,
 bool 
 session::process_refine_cmd(merkle_node const & their_node)
 {
+  prefix pref;
   hexenc<prefix> hpref;
+  their_node.get_raw_prefix(pref);
   their_node.get_hex_prefix(hpref);
   string typestr;
 
@@ -1791,8 +1916,8 @@ session::process_refine_cmd(merkle_node const & their_node)
   L(F("received 'refine' netcmd on %s node '%s', level %d\n") 
     % typestr % hpref % lev);
   
-  if (!app.db.merkle_node_exists(typestr, this->collection, 
-                                 their_node.level, hpref))
+  if (!merkle_node_exists(their_node.type, this->collection, 
+                          their_node.level, pref))
     {
       L(F("no corresponding %s merkle node for prefix '%s', level %d\n")
         % typestr % hpref % lev);
@@ -1851,15 +1976,15 @@ session::process_refine_cmd(merkle_node const & their_node)
       // to the following switch condition. it is awful. sorry.
       L(F("found corresponding %s merkle node for prefix '%s', level %d\n")
         % typestr % hpref % lev);
-      merkle_node our_node;
-      load_merkle_node(app, their_node.type, this->collection, 
-                       their_node.level, hpref, our_node);
+      merkle_ptr our_node;
+      load_merkle_node(their_node.type, this->collection, 
+                       their_node.level, pref, our_node);
       for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
         {         
           switch (their_node.get_slot_state(slot))
             {
             case empty_state:
-              switch (our_node.get_slot_state(slot))
+              switch (our_node->get_slot_state(slot))
                 {
 
                 case empty_state:
@@ -1874,10 +1999,10 @@ session::process_refine_cmd(merkle_node const & their_node)
                   L(F("(#2) they have an empty slot %d in %s node '%s', level %d, we have a live leaf\n")
                     % slot % typestr % hpref % lev);
                   {
-                    I(their_node.type == our_node.type);
+                    I(their_node.type == our_node->type);
                     string tmp;
                     id slotval;
-                    our_node.get_raw_slot(slot, slotval);
+                    our_node->get_raw_slot(slot, slotval);
                     load_data(their_node.type, slotval, this->app, tmp);
                     queue_data_cmd(their_node.type, slotval, tmp);
                   }
@@ -1895,14 +2020,14 @@ session::process_refine_cmd(merkle_node const & their_node)
                   L(F("(#4) they have an empty slot %d in %s node '%s', level %d, we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
-                    hexenc<prefix> subprefix;
-                    our_node.extended_hex_prefix(slot, subprefix);
-                    merkle_node our_subtree;
-                    I(our_node.type == their_node.type);
-                    load_merkle_node(app, their_node.type, this->collection, 
-                                     our_node.level + 1, subprefix, our_subtree);
-                    I(our_node.type == our_subtree.type);
-                    queue_refine_cmd(our_subtree);
+                    prefix subprefix;
+                    our_node->extended_raw_prefix(slot, subprefix);
+                    merkle_ptr our_subtree;
+                    I(our_node->type == their_node.type);
+                    load_merkle_node(their_node.type, this->collection, 
+                                     our_node->level + 1, subprefix, our_subtree);
+                    I(our_node->type == our_subtree->type);
+                    queue_refine_cmd(*our_subtree);
                   }
                   break;
 
@@ -1911,7 +2036,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
 
             case live_leaf_state:
-              switch (our_node.get_slot_state(slot))
+              switch (our_node->get_slot_state(slot))
                 {
 
                 case empty_state:
@@ -1932,7 +2057,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                   {
                     id our_slotval, their_slotval;
                     their_node.get_raw_slot(slot, their_slotval);
-                    our_node.get_raw_slot(slot, our_slotval);               
+                    our_node->get_raw_slot(slot, our_slotval);               
                     if (their_slotval == our_slotval)
                       {
                         hexenc<id> hslotval;
@@ -1942,11 +2067,11 @@ session::process_refine_cmd(merkle_node const & their_node)
                       }
                     else
                       {
-                        I(their_node.type == our_node.type);
+                        I(their_node.type == our_node->type);
                         string tmp;
-                        load_data(our_node.type, our_slotval, this->app, tmp);
+                        load_data(our_node->type, our_slotval, this->app, tmp);
                         queue_send_data_cmd(their_node.type, their_slotval);
-                        queue_data_cmd(our_node.type, our_slotval, tmp);
+                        queue_data_cmd(our_node->type, our_slotval, tmp);
                       }
                   }
                   break;
@@ -1957,7 +2082,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                     % slot % typestr % hpref % lev);
                   {
                     id our_slotval, their_slotval;
-                    our_node.get_raw_slot(slot, our_slotval);
+                    our_node->get_raw_slot(slot, our_slotval);
                     their_node.get_raw_slot(slot, their_slotval);
                     if (their_slotval == our_slotval)
                       {
@@ -1996,12 +2121,12 @@ session::process_refine_cmd(merkle_node const & their_node)
                     
                     L(F("(#8) sending our subtree for refinement, in slot %d of %s node '%s', level %d\n")
                       % slot % typestr % hpref % lev);
-                    hexenc<prefix> subprefix;
-                    our_node.extended_hex_prefix(slot, subprefix);
-                    merkle_node our_subtree;
-                    load_merkle_node(app, our_node.type, this->collection, 
-                                     our_node.level + 1, subprefix, our_subtree);
-                    queue_refine_cmd(our_subtree);
+                    prefix subprefix;
+                    our_node->extended_raw_prefix(slot, subprefix);
+                    merkle_ptr our_subtree;
+                    load_merkle_node(our_node->type, this->collection, 
+                                     our_node->level + 1, subprefix, our_subtree);
+                    queue_refine_cmd(*our_subtree);
                   }
                   break;
                 }
@@ -2009,7 +2134,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
 
             case dead_leaf_state:
-              switch (our_node.get_slot_state(slot))
+              switch (our_node->get_slot_state(slot))
                 {
                 case empty_state:
                   // 9: theirs == dead, ours == empty 
@@ -2025,9 +2150,9 @@ session::process_refine_cmd(merkle_node const & their_node)
                   {
                     id our_slotval, their_slotval;
                     their_node.get_raw_slot(slot, their_slotval);
-                    our_node.get_raw_slot(slot, our_slotval);
+                    our_node->get_raw_slot(slot, our_slotval);
                     hexenc<id> hslotval;
-                    our_node.get_hex_slot(slot, hslotval);
+                    our_node->get_hex_slot(slot, hslotval);
                     if (their_slotval == our_slotval)
                       {
                         L(F("(#10) we both have %s leaf %s, theirs is dead\n") 
@@ -2036,10 +2161,10 @@ session::process_refine_cmd(merkle_node const & their_node)
                       }
                     else
                       {
-                        I(their_node.type == our_node.type);
+                        I(their_node.type == our_node->type);
                         string tmp;
-                        load_data(our_node.type, our_slotval, this->app, tmp);
-                        queue_data_cmd(our_node.type, our_slotval, tmp);
+                        load_data(our_node->type, our_slotval, this->app, tmp);
+                        queue_data_cmd(our_node->type, our_slotval, tmp);
                       }
                   }
                   break;
@@ -2056,12 +2181,12 @@ session::process_refine_cmd(merkle_node const & their_node)
                   L(F("(#12) they have a dead leaf in slot %d of %s node '%s', we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
-                    hexenc<prefix> subprefix;
-                    our_node.extended_hex_prefix(slot, subprefix);
-                    merkle_node our_subtree;
-                    load_merkle_node(app, our_node.type, this->collection, 
-                                     our_node.level + 1, subprefix, our_subtree);
-                    queue_refine_cmd(our_subtree);
+                    prefix subprefix;
+                    our_node->extended_raw_prefix(slot, subprefix);
+                    merkle_ptr our_subtree;
+                    load_merkle_node(our_node->type, this->collection, 
+                                     our_node->level + 1, subprefix, our_subtree);
+                    queue_refine_cmd(*our_subtree);
                   }
                   break;
                 }
@@ -2069,7 +2194,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
 
             case subtree_state:
-              switch (our_node.get_slot_state(slot))
+              switch (our_node->get_slot_state(slot))
                 {
                 case empty_state:
                   // 13: theirs == subtree, ours == empty 
@@ -2092,18 +2217,18 @@ session::process_refine_cmd(merkle_node const & their_node)
                     size_t subslot;
                     id our_slotval;
                     merkle_node our_fake_subtree;
-                    our_node.get_raw_slot(slot, our_slotval);
+                    our_node->get_raw_slot(slot, our_slotval);
                     hexenc<id> hslotval;
                     encode_hexenc(our_slotval, hslotval);
                     
-                    pick_slot_and_prefix_for_value(our_slotval, our_node.level + 1, subslot, 
+                    pick_slot_and_prefix_for_value(our_slotval, our_node->level + 1, subslot, 
                                                    our_fake_subtree.pref);
                     L(F("(#14) pushed our leaf '%s' into fake subtree slot %d, level %d\n")
                       % hslotval % subslot % (lev + 1));
                     our_fake_subtree.type = their_node.type;
-                    our_fake_subtree.level = our_node.level + 1;
+                    our_fake_subtree.level = our_node->level + 1;
                     our_fake_subtree.set_raw_slot(subslot, our_slotval);
-                    our_fake_subtree.set_slot_state(subslot, our_node.get_slot_state(slot));
+                    our_fake_subtree.set_slot_state(subslot, our_node->get_slot_state(slot));
                     queue_refine_cmd(our_fake_subtree);
                   }
                   break;
@@ -2116,13 +2241,13 @@ session::process_refine_cmd(merkle_node const & their_node)
                     size_t subslot;
                     id our_slotval;
                     merkle_node our_fake_subtree;
-                    our_node.get_raw_slot(slot, our_slotval);
-                    pick_slot_and_prefix_for_value(our_slotval, our_node.level + 1, subslot, 
+                    our_node->get_raw_slot(slot, our_slotval);
+                    pick_slot_and_prefix_for_value(our_slotval, our_node->level + 1, subslot, 
                                                    our_fake_subtree.pref);
                     our_fake_subtree.type = their_node.type;
-                    our_fake_subtree.level = our_node.level + 1;
+                    our_fake_subtree.level = our_node->level + 1;
                     our_fake_subtree.set_raw_slot(subslot, our_slotval);
-                    our_fake_subtree.set_slot_state(subslot, our_node.get_slot_state(slot));
+                    our_fake_subtree.set_slot_state(subslot, our_node->get_slot_state(slot));
                     queue_refine_cmd(our_fake_subtree);    
                   }
                   break;
@@ -2135,8 +2260,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                     id our_slotval, their_slotval;
                     hexenc<id> hslotval;
                     their_node.get_raw_slot(slot, their_slotval);
-                    our_node.get_raw_slot(slot, our_slotval);
-                    our_node.get_hex_slot(slot, hslotval);
+                    our_node->get_raw_slot(slot, our_slotval);
+                    our_node->get_hex_slot(slot, hslotval);
                     if (their_slotval == our_slotval)
                       {
                         L(F("(#16) we both have %s subtree '%s'\n") % typestr % hslotval);
@@ -2145,12 +2270,12 @@ session::process_refine_cmd(merkle_node const & their_node)
                     else
                       {
                         L(F("(#16) %s subtrees at slot %d differ, refining ours\n") % typestr % slot);
-                        hexenc<prefix> subprefix;
-                        our_node.extended_hex_prefix(slot, subprefix);
-                        merkle_node our_subtree;
-                        load_merkle_node(app, our_node.type, this->collection, 
-                                         our_node.level + 1, subprefix, our_subtree);
-                        queue_refine_cmd(our_subtree);
+                        prefix subprefix;
+                        our_node->extended_raw_prefix(slot, subprefix);
+                        merkle_ptr our_subtree;
+                        load_merkle_node(our_node->type, this->collection, 
+                                         our_node->level + 1, subprefix, our_subtree);
+                        queue_refine_cmd(*our_subtree);
                       }
                   }
                   break;
@@ -2216,8 +2341,8 @@ session::process_send_delta_cmd(netcmd_item_type type,
             this->app.db.get_file_version(fbase, base_fdat);
             this->app.db.get_file_version(fident, ident_fdat);      
             string tmp;     
-            unpack(base_fdat.inner(), base_dat);
-            unpack(ident_fdat.inner(), ident_dat);
+            base_dat = base_fdat.inner();
+            ident_dat = ident_fdat.inner();
             compute_delta(base_dat(), ident_dat(), tmp);
             del = delta(tmp);
           }
@@ -2240,8 +2365,8 @@ session::process_send_delta_cmd(netcmd_item_type type,
             this->app.db.get_manifest_version(mbase, base_mdat);
             this->app.db.get_manifest_version(mident, ident_mdat);
             string tmp;
-            unpack(base_mdat.inner(), base_dat);
-            unpack(ident_mdat.inner(), ident_dat);
+            base_dat = base_mdat.inner();
+            ident_dat = ident_mdat.inner();
             compute_delta(base_dat(), ident_dat(), tmp);
             del = delta(tmp);
           }
@@ -2259,27 +2384,6 @@ session::process_send_delta_cmd(netcmd_item_type type,
   return true;
 }
 
-void 
-session::update_merkle_trees(netcmd_item_type type,
-                             hexenc<id> const & hident,
-                             bool live_p)
-{
-  id raw_id;
-  decode_hexenc(hident, raw_id);
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
-  for (set<string>::const_iterator i = this->all_collections.begin();
-       i != this->all_collections.end(); ++i)
-    {
-      if (this->collection().find(*i) == 0)
-        {
-          L(F("updating %s collection '%s' with item %s\n")
-            % typestr % *i % hident);
-          insert_into_merkle_tree(this->app, live_p, type, *i, raw_id(), 0); 
-        }
-    }
-}
-
 bool 
 session::process_data_cmd(netcmd_item_type type,
                           id const & item, 
@@ -2290,12 +2394,53 @@ session::process_data_cmd(netcmd_item_type type,
 
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
-  // FIXME: what does the above comment mean?  note_item_arrived does require
-  // that the item passed to it have been requested...
   note_item_arrived(type, item);
                            
   switch (type)
     {
+    case epoch_item:
+      if (this->app.db.epoch_exists(epoch_id(hitem)))
+        {
+          L(F("epoch '%s' already exists in our database\n") % hitem);
+        }
+      else
+        {
+          cert_value branch;
+          epoch_data epoch;
+          read_epoch(dat, branch, epoch);
+          L(F("received epoch %s for branch %s\n") % epoch % branch);
+          std::map<cert_value, epoch_data> epochs;
+          app.db.get_epochs(epochs);
+          std::map<cert_value, epoch_data>::const_iterator i;
+          i = epochs.find(branch);
+          if (i == epochs.end())
+            {
+              L(F("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
+              app.db.set_epoch(branch, epoch);
+              maybe_note_epochs_finished();
+            }
+          else
+            {
+              L(F("branch %s already has an epoch; checking\n") % branch);
+              // if we get here, then we know that the epoch must be
+              // different, because if it were the same then the
+              // if(epoch_exists()) branch up above would have been taken.  if
+              // somehow this is wrong, then we have broken epoch hashing or
+              // something, which is very dangerous, so play it safe...
+              I(!(i->second == epoch));
+
+              // It is safe to call 'error' here, because if we get here,
+              // then the current netcmd packet cannot possibly have
+              // written anything to the database.
+              error((F("Mismatched epoch on branch %s."
+                       "  Server has '%s', client has '%s'.")
+                     % branch
+                     % (voice == server_voice ? i->second : epoch)
+                     % (voice == server_voice ? epoch : i->second)).str());
+            }
+        }
+      break;
+      
     case key_item:
       if (this->app.db.public_key_exists(hitem))
         L(F("public key '%s' already exists in our database\n")  % hitem);
@@ -2311,17 +2456,12 @@ session::process_data_cmd(netcmd_item_type type,
                                " wanted '%s' got '%s'")  
                              % hitem % keyid % hitem % tmp);
           this->dbw.consume_public_key(keyid, pub);
-          update_merkle_trees(key_item, tmp, true);
         }
       break;
 
-    case mcert_item:
-      L(F("ignoring manifest cert '%s'\n") % hitem);
-      break;
-
-    case rcert_item:
+    case cert_item:
       if (this->app.db.revision_cert_exists(hitem))
-        L(F("revision cert '%s' already exists in our database\n")  % hitem);
+        L(F("cert '%s' already exists in our database\n")  % hitem);
       else
         {
           cert c;
@@ -2337,12 +2477,7 @@ session::process_data_cmd(netcmd_item_type type,
               decode_hexenc(c.ident, rid);
               queue_send_data_cmd(revision_item, rid);
             }
-          update_merkle_trees(rcert_item, tmp, true);
         }
-      break;
-
-    case fcert_item:
-      L(F("ignoring file cert '%s'\n") % hitem);
       break;
 
     case revision_item:
@@ -2356,12 +2491,10 @@ session::process_data_cmd(netcmd_item_type type,
             boost::shared_ptr< pair<revision_data, revision_set > > 
               rp(new pair<revision_data, revision_set>());
             
-            base64< gzip<data> > packed;
-            pack(data(dat), packed);
-            rp->first = revision_data(packed);
+            rp->first = revision_data(dat);
             read_revision_set(dat, rp->second);
             ancestry.insert(std::make_pair(rid, rp));
-            if (rcert_refinement_done())
+            if (cert_refinement_done())
               {
                 analyze_ancestry_graph();
               }
@@ -2376,9 +2509,7 @@ session::process_data_cmd(netcmd_item_type type,
           L(F("manifest version '%s' already exists in our database\n") % hitem);
         else
           {
-            base64< gzip<data> > packed_dat;
-            pack(data(dat), packed_dat);
-            this->dbw.consume_manifest_data(mid, manifest_data(packed_dat));
+            this->dbw.consume_manifest_data(mid, manifest_data(dat));
             manifest_map man;
             read_manifest_map(data(dat), man);
             analyze_manifest(man);
@@ -2393,15 +2524,13 @@ session::process_data_cmd(netcmd_item_type type,
           L(F("file version '%s' already exists in our database\n") % hitem);
         else
           {
-            base64< gzip<data> > packed_dat;
-            pack(data(dat), packed_dat);
-            this->dbw.consume_file_data(fid, file_data(packed_dat));
+            this->dbw.consume_file_data(fid, file_data(dat));
           }
       }
       break;
 
     }
-      return true;
+  return true;
 }
 
 bool 
@@ -2429,20 +2558,18 @@ session::process_delta_cmd(netcmd_item_type type,
     case manifest_item:
       {
         manifest_id src_manifest(hbase), dst_manifest(hident);
-        base64< gzip<delta> > packed_del;
-        pack(del, packed_del);
         if (reverse_delta_requests.find(id_pair)
             != reverse_delta_requests.end())
           {
             reverse_delta_requests.erase(id_pair);
             this->dbw.consume_manifest_reverse_delta(src_manifest, 
                                                      dst_manifest,
-                                                     manifest_delta(packed_del));
+                                                     manifest_delta(del));
           }
         else
           this->dbw.consume_manifest_delta(src_manifest, 
                                            dst_manifest,
-                                           manifest_delta(packed_del));
+                                           manifest_delta(del));
         
       }
       break;
@@ -2450,20 +2577,18 @@ session::process_delta_cmd(netcmd_item_type type,
     case file_item:
       {
         file_id src_file(hbase), dst_file(hident);
-        base64< gzip<delta> > packed_del;
-        pack(del, packed_del);
         if (reverse_delta_requests.find(id_pair)
             != reverse_delta_requests.end())
           {
             reverse_delta_requests.erase(id_pair);
             this->dbw.consume_file_reverse_delta(src_file, 
                                                  dst_file,
-                                                 file_delta(packed_del));
+                                                 file_delta(del));
           }
         else
           this->dbw.consume_file_delta(src_file, 
                                        dst_file,
-                                       file_delta(packed_del));
+                                       file_delta(del));
       }
       break;
       
@@ -2488,6 +2613,37 @@ session::process_nonexistant_cmd(netcmd_item_type type,
   return true;
 }
 
+bool
+session::merkle_node_exists(netcmd_item_type type,
+                            utf8 const & collection,                    
+                            size_t level,
+                            prefix const & pref)
+{
+  map< std::pair<utf8, netcmd_item_type>, 
+       boost::shared_ptr<merkle_table> >::const_iterator i = 
+    merkle_tables.find(std::make_pair(collection,type));
+  
+  I(i != merkle_tables.end());
+  merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
+  return (j != i->second->end());
+}
+
+void 
+session::load_merkle_node(netcmd_item_type type,
+                          utf8 const & collection,                      
+                          size_t level,
+                          prefix const & pref,
+                          merkle_ptr & node)
+{
+  map< std::pair<utf8, netcmd_item_type>, 
+       boost::shared_ptr<merkle_table> >::const_iterator i = 
+    merkle_tables.find(std::make_pair(collection,type));
+  
+  I(i != merkle_tables.end());
+  merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
+  I(j != i->second->end());
+  node = j->second;
+}
 
 
 bool 
@@ -2513,9 +2669,11 @@ session::dispatch_payload(netcmd const & cmd)
       require(! authenticated, "hello netcmd received when not authenticated");
       require(voice == client_voice, "hello netcmd received in client voice");
       {
-        id server, nonce;
-        read_hello_cmd_payload(cmd.payload, server, nonce);
-        return process_hello_cmd(server, nonce);
+        rsa_keypair_id server_keyname;
+        rsa_pub_key server_key;
+        id nonce;
+        read_hello_cmd_payload(cmd.payload, server_keyname, server_key, nonce);
+        return process_hello_cmd(server_keyname, server_key, nonce);
       }
       break;
 
@@ -2727,8 +2885,8 @@ call_server(protocol_role role,
   session sess(role, client_voice, collections, all_collections, app, 
                address(), server.get_socketfd(), timeout);
 
-  sess.byte_in_ticker.reset(new ticker("bytes in", ">", 256));
-  sess.byte_out_ticker.reset(new ticker("bytes out", "<", 256));
+  sess.byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
+  sess.byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
   if (role == sink_role)
     {
       sess.cert_in_ticker.reset(new ticker("certs in", "c", 3));
@@ -3100,39 +3258,53 @@ serve_connections(protocol_role role,
 //
 /////////////////////////////////////////////////
 
-void 
-rebuild_merkle_trees(app_state & app,
-                     utf8 const & collection)
+static boost::shared_ptr<merkle_table>
+make_root_node(session & sess,
+               utf8 const & coll,
+               netcmd_item_type ty)
 {
-  transaction_guard guard(app.db);
+  boost::shared_ptr<merkle_table> tab = 
+    boost::shared_ptr<merkle_table>(new merkle_table());
+  
+  merkle_ptr tmp = merkle_ptr(new merkle_node());
+  tmp->type = ty;
 
+  tab->insert(std::make_pair(std::make_pair(get_root_prefix().val, 0), tmp));
+
+  sess.merkle_tables[std::make_pair(coll, ty)] = tab;
+  return tab;
+}
+
+
+// BROKEN
+void
+session::load_epoch(cert_value const & branchname, epoch_id const & epoch)
+{
+  // hash is of concat(branch name, raw epoch id).  This is unique, because
+  // the latter has a fixed length.
+  std::string tmp(branchname());
+  id raw_epoch;
+  decode_hexenc(epoch.inner(), raw_epoch);
+  tmp += raw_epoch();
+  data tdat(tmp);
+  hexenc<id> out;
+  calculate_ident(tdat, out);
+  id raw_hash;
+  decode_hexenc(out, raw_hash);
+}
+
+void 
+session::rebuild_merkle_trees(app_state & app,
+                              utf8 const & collection)
+{
   P(F("rebuilding merkle trees for collection %s\n") % collection);
 
-  string typestr;
-  merkle_node empty_root_node;
+  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, collection, cert_item);
+  boost::shared_ptr<merkle_table> ktab = make_root_node(*this, collection, key_item);
+  boost::shared_ptr<merkle_table> etab = make_root_node(*this, collection, epoch_item);
 
-  empty_root_node.type = rcert_item;
-  netcmd_item_type_to_string(rcert_item, typestr);
-  app.db.erase_merkle_nodes(typestr, collection);
-  store_merkle_node(app, collection, empty_root_node);
-
-  empty_root_node.type = mcert_item;
-  netcmd_item_type_to_string(mcert_item, typestr);
-  app.db.erase_merkle_nodes(typestr, collection);
-  store_merkle_node(app, collection, empty_root_node);
-
-  empty_root_node.type = fcert_item;
-  netcmd_item_type_to_string(fcert_item, typestr);
-  app.db.erase_merkle_nodes(typestr, collection);
-  store_merkle_node(app, collection, empty_root_node);
-
-  empty_root_node.type = key_item;
-  netcmd_item_type_to_string(key_item, typestr);
-  app.db.erase_merkle_nodes(typestr, collection);
-  store_merkle_node(app, collection, empty_root_node);
-
-  ticker rcerts("rcerts", "r", 32);
-  ticker keys("keys", "k", 1);
+  ticker certs_ticker("certs", "c", 256);
+  ticker keys_ticker("keys", "k", 1);
 
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;
@@ -3154,60 +3326,76 @@ rebuild_merkle_trees(app_state & app,
             revision_ids.insert(revision_id(idx(certs, i).inner().ident));
           }
       }
+    
+    {
+      map<cert_value, epoch_data> epochs;
+      app.db.get_epochs(epochs);
+
+      epoch_data epoch_zero(std::string(constants::epochlen, '0'));
+      for (std::set<string>::const_iterator i = branchnames.begin();
+           i != branchnames.end(); ++i)
+        {
+          cert_value branch(*i);
+          std::map<cert_value, epoch_data>::const_iterator j;
+          j = epochs.find(branch);
+          // set to zero any epoch which is not yet set    
+          if (j == epochs.end())
+            {
+              L(F("setting epoch on %s to zero\n") % branch);
+              epochs.insert(std::make_pair(branch, epoch_zero));
+              app.db.set_epoch(branch, epoch_zero);
+            }
+          // then insert all epochs into merkle tree
+          j = epochs.find(branch);
+          I(j != epochs.end());
+          epoch_id eid;
+          epoch_hash_code(j->first, j->second, eid);
+          id raw_hash;
+          decode_hexenc(eid.inner(), raw_hash);
+          insert_into_merkle_tree(*etab, epoch_item, true, raw_hash(), 0);
+        }
+    }
+
+    typedef std::vector< std::pair<hexenc<id>,
+      std::pair<revision_id, rsa_keypair_id> > > cert_idx;
+
+    cert_idx idx;
+    app.db.get_revision_cert_index(idx);
 
     // insert all certs and keys reachable via these revisions
-    for (set<revision_id>::const_iterator rev = revision_ids.begin();
-         rev != revision_ids.end(); ++rev)
+    for (cert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
       {
-        app.db.get_revision_certs(*rev, certs);
-        for (size_t i = 0; i < certs.size(); ++i)
+        hexenc<id> const & hash = i->first;
+        revision_id const & ident = i->second.first;
+        rsa_keypair_id const & key = i->second.second;
+
+        if (revision_ids.find(ident) == revision_ids.end())
+          continue;
+        
+        id raw_hash;
+        decode_hexenc(hash, raw_hash);
+        insert_into_merkle_tree(*ctab, cert_item, true, raw_hash(), 0);
+        ++certs_ticker;
+        if (inserted_keys.find(key) == inserted_keys.end())
           {
-            hexenc<id> certhash;
-            id raw_id;
-            cert_hash_code(idx(certs, i).inner(), certhash);
-            decode_hexenc(certhash, raw_id);
-            insert_into_merkle_tree(app, true, rcert_item, collection, raw_id(), 0);
-            ++rcerts;
-            rsa_keypair_id const & k = idx(certs, i).inner().key;
-            if (inserted_keys.find(k) == inserted_keys.end())
+            if (app.db.public_key_exists(key))
               {
-                if (app.db.public_key_exists(k))
-                  {
-                    base64<rsa_pub_key> pub_encoded;
-                    app.db.get_key(k, pub_encoded);
-                    hexenc<id> keyhash;
-                    key_hash_code(k, pub_encoded, keyhash);
-                    decode_hexenc(keyhash, raw_id);
-                    insert_into_merkle_tree(app, true, key_item, collection, raw_id(), 0);
-                    ++keys;
-                  }
-                inserted_keys.insert(k);
+                base64<rsa_pub_key> pub_encoded;
+                app.db.get_key(key, pub_encoded);
+                hexenc<id> keyhash;
+                key_hash_code(key, pub_encoded, keyhash);
+                decode_hexenc(keyhash, raw_hash);
+                insert_into_merkle_tree(*ktab, key_item, true, raw_hash(), 0);
+                ++keys_ticker;
               }
+            inserted_keys.insert(key);
           }
       }
   }  
-  guard.commit();
-}
-                        
-static void 
-ensure_merkle_tree_ready(app_state & app,
-                         utf8 const & collection)
-{
-//   if (! (app.db.merkle_node_exists(mcert_item_str, collection, 0, get_root_prefix().val)
-//       && app.db.merkle_node_exists(fcert_item_str, collection, 0, get_root_prefix().val)
-//       && app.db.merkle_node_exists(key_item_str, collection, 0, get_root_prefix().val)))
-//     {
 
-  // FIXME: for now we always rebuild merkle trees. that's a bit coarse but it 
-  // saves us having to hunt down all the possible write conditions in the packet
-  // writers and make sure they update the indices properly
-
-  // FIXME: this is actually buggy anyways. we really need to fix up the merkle tree
-  // rebuilding conditions. another day, once revisions are working. sigh.
-
-      rebuild_merkle_trees(app, collection);
-
-//     }
+  recalculate_merkle_codes(*etab, get_root_prefix().val, 0);
+  recalculate_merkle_codes(*ktab, get_root_prefix().val, 0);
+  recalculate_merkle_codes(*ctab, get_root_prefix().val, 0);
 }
 
 void 
@@ -3217,9 +3405,6 @@ run_netsync_protocol(protocol_voice voice,
                      vector<utf8> collections,
                      app_state & app)
 {  
-  for (vector<utf8>::const_iterator i = collections.begin();
-       i != collections.end(); ++i)
-    ensure_merkle_tree_ready(app, *i);
 
   set<string> all_collections;
   for (vector<utf8>::const_iterator j = collections.begin(); 
@@ -3250,6 +3435,7 @@ run_netsync_protocol(protocol_voice voice,
 
   try 
     {
+      start_platform_netsync();
       if (voice == server_voice)
         {
           serve_connections(role, collections, all_collections, app,
@@ -3269,7 +3455,9 @@ run_netsync_protocol(protocol_voice voice,
     }
   catch (Netxx::Exception & e)
     {      
+      end_platform_netsync();
       throw oops((F("trapped network exception: %s\n") % e.what()).str());;
     }
+  end_platform_netsync();
 }
 

@@ -1,0 +1,20 @@
+AT_SETUP([MT/revision is required])
+MONOTONE_SETUP
+
+ADD_FILE(foo, [blah blah
+])
+ADD_FILE(bar, [blah blah
+])
+AT_CHECK(rm -f foo)
+AT_CHECK(MONOTONE ls missing, [], [ignore], [ignore])
+AT_CHECK(MONOTONE drop foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE ls missing, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(rm -f bar)
+AT_CHECK(MONOTONE ls missing, [], [ignore], [ignore])
+
+AT_CHECK(rm -f MT/revision)
+AT_CHECK(MONOTONE ls missing, [1], [ignore], [ignore])
+
+AT_CLEANUP

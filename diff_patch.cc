@@ -9,6 +9,7 @@
 #include <string>
 #include <iostream>
 
+#include "config.h"
 #include "diff_patch.hh"
 #include "interner.hh"
 #include "lcs.hh"
@@ -24,7 +25,8 @@ bool guess_binary(string const & s)
 {
   // these do not occur in ASCII text files
   // FIXME: this heuristic is (a) crap and (b) hardcoded. fix both these.
-  if (s.find_first_of("\x00\x01\x02\x03\x04\x05\x06\x0e\x0f"
+  if (s.find_first_of('\x00') != string::npos ||
+      s.find_first_of("\x01\x02\x03\x04\x05\x06\x0e\x0f"
                       "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
                       "\x19\x1a\x1c\x1d\x1e\x1f") != string::npos)
     return true;
@@ -207,13 +209,14 @@ void normalize_extents(vector<extent> & a_b_map,
             //     j: foo   --preserved-->   mapped[  j]: foo
             //
 
-            // This code is currently untested, because we haven't been able to find
-            // any test case that would exercise it!
-            // Maybe this text will make us look bad when/if someone discovers it, but
-            // better to have a bad reputation and good software than vice-versa.
+            // This code is almost untested, because we've only been able to
+            // find one test case that exercises it!  Maybe this text will
+            // make us look bad when/if someone discovers it, but better to
+            // have a bad reputation and good software than vice-versa.
             W(F("You've found files that trigger a strange edge-case of the merge logic.\n"));
-            W(F("We think it will work, but please tell us; and, if possible, send us the files\n"));
-            W(F("for inclusion in our test suite (monotone-devel@nongnu.org).  Thanks!\n"));
+            W(F("We believe it works, but don't have many tests; so, if you could send us\n"));
+            W(F("a note, and, if possible, the files that triggered it for inclusion in our\n"));
+            W(F("test suite, we'd appreciate it.  Address: " PACKAGE_BUGREPORT ".  Thanks!\n"));
 
             L(F("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
               % a_b_map.at(j-1).pos
@@ -481,7 +484,7 @@ void merge_provider::record_merge(file_id const & left_ident,
   L(F("recording successful merge of %s <-> %s into %s\n")
     % left_ident % right_ident % merged_ident);
 
-  base64< gzip<delta> > merge_delta;
+  delta merge_delta;
   transaction_guard guard(app.db);
 
   diff(left_data.inner(), merged_data.inner(), merge_delta);  
@@ -545,9 +548,9 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
   anc_encoding = this->get_file_encoding(anc_path, anc_man);
   right_encoding = this->get_file_encoding(right_path, right_man);
     
-  unpack(left_data.inner(), left_unpacked);
-  unpack(ancestor_data.inner(), ancestor_unpacked);
-  unpack(right_data.inner(), right_unpacked);
+  left_unpacked = left_data.inner();
+  ancestor_unpacked = ancestor_data.inner();
+  right_unpacked = right_data.inner();
 
   split_into_lines(left_unpacked(), left_encoding, left_lines);
   split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
@@ -559,18 +562,18 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
              merged_lines))
     {
       hexenc<id> tmp_id;
-      base64< gzip<data> > packed_merge;
+      file_data merge_data;
       string tmp;
       
       L(F("internal 3-way merged ok\n"));
       join_lines(merged_lines, tmp);
       calculate_ident(data(tmp), tmp_id);
       file_id merged_fid(tmp_id);
-      pack(data(tmp), packed_merge);
+      merge_data = file_data(tmp);
 
       merged_id = merged_fid;
       record_merge(left_id, right_id, merged_fid, 
-                   left_data, packed_merge);
+                   left_data, merge_data);
 
       return true;
     }
@@ -586,16 +589,16 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
                           right_unpacked, merged_unpacked))
     {
       hexenc<id> tmp_id;
-      base64< gzip<data> > packed_merge;
+      file_data merge_data;
 
       L(F("lua merge3 hook merged ok\n"));
       calculate_ident(merged_unpacked, tmp_id);
       file_id merged_fid(tmp_id);
-      pack(merged_unpacked, packed_merge);
+      merge_data = file_data(merged_unpacked);
 
       merged_id = merged_fid;
       record_merge(left_id, right_id, merged_fid, 
-                   left_data, packed_merge);
+                   left_data, merge_data);
       return true;
     }
 
@@ -628,8 +631,8 @@ bool merge_provider::try_to_merge_files(file_path const & left_path,
   this->get_version(left_path, left_id, left_data);
   this->get_version(right_path, right_id, right_data);
     
-  unpack(left_data.inner(), left_unpacked);
-  unpack(right_data.inner(), right_unpacked);
+  left_unpacked = left_data.inner();
+  right_unpacked = right_data.inner();
 
   P(F("help required for 2-way merge\n"));
   P(F("[    left] %s\n") % left_path);
@@ -640,16 +643,16 @@ bool merge_provider::try_to_merge_files(file_path const & left_path,
                           left_unpacked, right_unpacked, merged_unpacked))
     {
       hexenc<id> tmp_id;
-      base64< gzip<data> > packed_merge;
+      file_data merge_data;
       
       L(F("lua merge2 hook merged ok\n"));
       calculate_ident(merged_unpacked, tmp_id);
       file_id merged_fid(tmp_id);
-      pack(merged_unpacked, packed_merge);
+      merge_data = file_data(merged_unpacked);
       
       merged_id = merged_fid;
       record_merge(left_id, right_id, merged_fid, 
-                   left_data, packed_merge);
+                   left_data, merge_data);
       return true;
     }
   
@@ -687,7 +690,7 @@ void update_merge_provider::get_version(file_path const & path,
     app.db.get_file_version(ident, dat);
   else
     {
-      base64< gzip<data> > tmp;
+      data tmp;
       file_id fid;
       N(file_exists (path),
         F("file %s does not exist in working copy") % path);
@@ -1041,7 +1044,7 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
           from_file.push_back(string("  ") + a[a_begin + a_len]);
           to_file.push_back(string("  ") + a[a_begin + a_len]);
           a_len++;
-          b_len++;	  
+          b_len++;        
         }
     }
 }

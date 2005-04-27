@@ -42,14 +42,6 @@ private:
 	T m_countLo, m_countHi;
 };
 
-#ifdef WORD64_AVAILABLE
-CRYPTOPP_STATIC_TEMPLATE_CLASS IteratedHashBase<word64, HashTransformation>;
-CRYPTOPP_STATIC_TEMPLATE_CLASS IteratedHashBase<word64, MessageAuthenticationCode>;
-#endif
-
-CRYPTOPP_DLL_TEMPLATE_CLASS IteratedHashBase<word32, HashTransformation>;
-CRYPTOPP_STATIC_TEMPLATE_CLASS IteratedHashBase<word32, MessageAuthenticationCode>;
-
 //! _
 template <class T, class B, class BASE>
 class CRYPTOPP_NO_VTABLE IteratedHashBase2 : public IteratedHashBase<T, BASE>

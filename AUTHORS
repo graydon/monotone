@@ -47,7 +47,15 @@ contributing authors, including:
   Faheem Mitha <faheem@email.unc.edu>
   Neil Conway <neilc@samurai.com>
   Wojciech Miłkowski <wmilkowski@interia.pl>
-
+  Georg-W. Koltermann <Georg.Koltermann@mscsoftware.com>
+  Daniel Berlin <dberlin@dberlin.org>
+  Jon Bright <jon@siliconcircus.org>
+  Corey Halpin <chalpin@cs.wisc.edu>
+  Jeremy Cowgar <jeremy@cowgar.com>
+  Martin Dvorak <jezek2@advel.cz>
+  Emile Snyder <emile@alumni.reed.edu>
+  Sebastian Spaeth <Sebastian@SSpaeth.de>
+  Joel Reed <joelwreed@comcast.net>
 
 supporting files:
 -----------------
@@ -125,6 +133,13 @@ notice and this notice are preserved.
 
 ---
 
+The file gettext.h is a copy of the one included in the GNU Gettext
+package, and is Copyright (C) 1995-1998, 2000-2002 Free Software
+Foundation, Inc.  It is licensed under the GNU LGPL version 2.  For
+more information, see the message on top of that file.
+
+---
+
 The files in netxx/* are copies of the NetXX library, which is
 Copyright (C) 2001-2003 Peter J Jones (pjones@pmade.org), and
 distributed under a BSD-like license. The license terms are reproduced
@@ -133,10 +148,13 @@ in the files, and do not require that they be reproduced here.
 ---
 
 
-The files in lua/* are copies of the lua 5.0 source distribution, from
-Tecgraf PUC-Rio. The lua distribution can be retrieved from
-www.lua.org. The files are provided under an MIT-like license,
-reproduced here:
+The files in lua/*, except lposix.c and modemuncher.c, are copies of
+the lua 5.0 source distribution, from Tecgraf PUC-Rio. lposix.c and
+modemuncher.c are from Claudio Terra and Luiz Henrique de Figueiredo,
+both of Tecgraf PUC-Rio, but as near as I can tell those two files are
+declared to be in the public domain. The lua distribution can be
+retrieved from www.lua.org. The files are provided under an MIT-like
+license, reproduced here:
 
 ---
 
@@ -178,6 +196,15 @@ files in boost/ related to circular buffers:
 // Permission to modify the code and to distribute modified code is granted,
 // provided the above notices are retained, and a notice that the code was
 // modified is included with the above copyright notice.
+
+---
+
+The files in popt/* are copies of the original popt 1.7 as provided by
+Debian (their own version number is 1.7-5).  According to the README
+(reproduced as popt/README), it was written by a (former?) RedHat
+employee using the address ewt@redhat.com.  popt is licensed with the
+X Consortium public license, nowadays called the "X.Net, Inc. License".
+It's reproduced in popt/COPYING.
 
 
 copyright status:

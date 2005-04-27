@@ -34,14 +34,12 @@ read_netcmd_item_type(string const & in,
       return manifest_item;
     case static_cast<u8>(file_item):
       return file_item;
-    case static_cast<u8>(mcert_item):
-      return mcert_item;
-    case static_cast<u8>(fcert_item):
-      return fcert_item;
-    case static_cast<u8>(rcert_item):
-      return rcert_item;
+    case static_cast<u8>(cert_item):
+      return cert_item;
     case static_cast<u8>(key_item):
       return key_item;      
+    case static_cast<u8>(epoch_item):
+      return epoch_item;      
     default:
       throw bad_decode(F("unknown item type 0x%x for '%s'") 
                        % static_cast<int>(tmp) % name);
@@ -164,26 +162,31 @@ write_error_cmd_payload(std::string const & errmsg,
 
 void 
 read_hello_cmd_payload(string const & in, 
-                       id & server, 
+                       rsa_keypair_id & server_keyname,
+                       rsa_pub_key & server_key,
                        id & nonce)
 {
   size_t pos = 0;
-  // syntax is: <server:20 bytes sha1> <nonce:20 random bytes>
-  server = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
-                                "hello netcmd, server identifier"));
+  // syntax is: <server keyname:vstr> <server pubkey:vstr> <nonce:20 random bytes>
+  string skn_str, sk_str;
+  extract_variable_length_string(in, skn_str, pos, "hello netcmd, server key name");
+  server_keyname = rsa_keypair_id(skn_str);
+  extract_variable_length_string(in, sk_str, pos, "hello netcmd, server key");
+  server_key = rsa_pub_key(sk_str);
   nonce = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
                                "hello netcmd, nonce"));
   assert_end_of_buffer(in, pos, "hello netcmd payload");
 }
 
 void 
-write_hello_cmd_payload(id const & server, 
+write_hello_cmd_payload(rsa_keypair_id const & server_keyname,
+                        rsa_pub_key const & server_key,
                         id const & nonce, 
                         string & out)
 {
-  I(server().size() == constants::merkle_hash_length_in_bytes);
   I(nonce().size() == constants::merkle_hash_length_in_bytes);
-  out += server();
+  insert_variable_length_string(server_keyname(), out);
+  insert_variable_length_string(server_key(), out);
   out += nonce();
 }
 
@@ -272,16 +275,19 @@ write_auth_cmd_payload(protocol_role role,
                          
 
 void 
-read_confirm_cmd_payload(string const & in, string & signature)
+read_confirm_cmd_payload(string const & in, 
+                         string & signature)
 {
   size_t pos = 0;
+
   // syntax is: <signature: vstr>
   extract_variable_length_string(in, signature, pos, "confirm netcmd, signature");
   assert_end_of_buffer(in, pos, "confirm netcmd payload");
 }
   
 void 
-write_confirm_cmd_payload(string const & signature, string & out)
+write_confirm_cmd_payload(string const & signature, 
+                          string & out)
 {
   insert_variable_length_string(signature, out);
 }
@@ -537,14 +543,17 @@ test_netcmd_functions()
         L(F("checking i/o round trip on hello_cmd\n"));
         netcmd out_cmd, in_cmd;
         string buf;
-        id out_server(raw_sha1("happy server day")), out_nonce(raw_sha1("nonce it up")), in_server, in_nonce;
+        rsa_keypair_id out_server_keyname("server@there"), in_server_keyname;
+        rsa_pub_key out_server_key("9387938749238792874"), in_server_key;
+        id out_nonce(raw_sha1("nonce it up")), in_nonce;
         out_cmd.cmd_code = hello_cmd;
-        write_hello_cmd_payload(out_server, out_nonce, out_cmd.payload);
+        write_hello_cmd_payload(out_server_keyname, out_server_key, out_nonce, out_cmd.payload);
         write_netcmd(out_cmd, buf);
         BOOST_CHECK(read_netcmd(buf, in_cmd));
-        read_hello_cmd_payload(in_cmd.payload, in_server, in_nonce);
+        read_hello_cmd_payload(in_cmd.payload, in_server_keyname, in_server_key, in_nonce);
         BOOST_CHECK(in_cmd == out_cmd);
-        BOOST_CHECK(in_server == out_server);
+        BOOST_CHECK(in_server_keyname == out_server_keyname);
+        BOOST_CHECK(in_server_key == out_server_key);
         BOOST_CHECK(in_nonce == out_nonce);
         L(F("hello_cmd test done, buffer was %d bytes\n") % buf.size());
       }

@@ -35,11 +35,10 @@ typedef enum
   {
     manifest_item = 1,
     file_item = 2,
-    mcert_item = 3,
-    fcert_item = 4,
-    key_item = 5,    
-    revision_item = 6,
-    rcert_item = 7
+    key_item = 3,    
+    revision_item = 4,
+    cert_item = 5,
+    epoch_item = 6,
   }
 netcmd_item_type;
 
@@ -84,6 +83,9 @@ struct merkle_node
   void set_slot_state(size_t n, slot_state st);
 };
 
+typedef boost::shared_ptr<merkle_node> merkle_ptr;
+typedef std::map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
+
 size_t prefix_length_in_bits(size_t level);
 size_t prefix_length_in_bytes(size_t level);
 void write_node(merkle_node const & in, std::string & outbuf);
@@ -91,34 +93,25 @@ void read_node(std::string const & inbuf, merkle_node & out);
 
 std::string raw_sha1(std::string const & in);
 
-// these operate against the database
- 
-void load_merkle_node(app_state & app,
-		      netcmd_item_type type,
-		      utf8 const & collection,			
-		      size_t level,
-		      hexenc<prefix> const & hpref,
-		      merkle_node & node);
-
-// returns the first hashsz bytes of the serialized node, which is 
-// the hash of its contents.
-
-id store_merkle_node(app_state & app,
-		     utf8 const & collection,
-		     merkle_node const & node);
-
 void pick_slot_and_prefix_for_value(id const & val, size_t level, 
-				    size_t & slotnum, boost::dynamic_bitset<unsigned char> & pref);
+                                    size_t & slotnum, boost::dynamic_bitset<unsigned char> & pref);
 
-// this inserts a leaf into the appropriate position in a merkle
-// tree, writing it to the db and updating any other nodes in the
-// tree which are affected by the insertion.
+// inserts an item into a tree
 
-id insert_into_merkle_tree(app_state & app,
-			   bool live_p,
-			   netcmd_item_type type,
-			   utf8 const & collection,
-			   id const & leaf,
-			   size_t level);
+void 
+insert_into_merkle_tree(merkle_table & tab,
+                        netcmd_item_type type,
+                        bool live_p,
+                        id const & leaf,
+                        size_t level);
 
+// recalculates the hashes in the given tree.  must be called after
+// insert_into_merkle_tree, and before using tree (but you can batch up
+// multiple calls to insert_into_merkle_tree and then only call this once).
+
+id 
+recalculate_merkle_codes(merkle_table & tab,
+                         prefix const & pref, 
+                         size_t level);
+  
 #endif // __MERKLE_TREE_HH__

@@ -23,6 +23,8 @@ using namespace std;
 
 // --- packet db writer --
 //
+// FIXME: this comment is out of date, and untrustworthy.
+// 
 // the packet_db_writer::impl class (see below) manages writes to the
 // database. it also ensures that those writes follow the semantic
 // dependencies implied by the objects being written.
@@ -78,6 +80,12 @@ using namespace std;
 // a prerequisite no longer has any dependents, it is dropped from the
 // packet_db_writer::impl, destroying it.
 //
+/////////////////////////////////////////////////////////////////
+// 
+// this same machinery is also re-used for the "valved" packet writer, as a
+// convenient way to queue up commands in memory while the valve is closed.
+// in this usage, we simply never add any prerequisites to any packet, and
+// just call apply_delayed_packet when the valve opens.
 
 typedef enum 
   {
@@ -208,6 +216,21 @@ public:
 };
 
 class 
+delayed_file_data_packet 
+  : public delayed_packet
+{
+  file_id ident;
+  file_data dat;
+public:
+  delayed_file_data_packet(file_id const & i, 
+                           file_data const & fd) 
+    : ident(i), dat(fd)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_file_data_packet();
+};
+
+class 
 delayed_file_delta_packet 
   : public delayed_packet
 {
@@ -258,6 +281,36 @@ public:
   virtual ~delayed_revision_cert_packet();
 };
 
+class 
+delayed_public_key_packet 
+  : public delayed_packet
+{
+  rsa_keypair_id id;
+  base64<rsa_pub_key> key;
+public:
+  delayed_public_key_packet(rsa_keypair_id const & id,
+                            base64<rsa_pub_key> key)
+    : id(id), key(key)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_public_key_packet();
+};
+
+class 
+delayed_private_key_packet 
+  : public delayed_packet
+{
+  rsa_keypair_id id;
+  base64< arc4<rsa_priv_key> > key;
+public:
+  delayed_private_key_packet(rsa_keypair_id const & id,
+                             base64< arc4<rsa_priv_key> > key)
+    : id(id), key(key)
+  {}
+  virtual void apply_delayed_packet(packet_db_writer & pw);
+  virtual ~delayed_private_key_packet();
+};
+
 void 
 delayed_revision_data_packet::apply_delayed_packet(packet_db_writer & pw)
 {
@@ -282,6 +335,19 @@ delayed_manifest_data_packet::~delayed_manifest_data_packet()
 {
   if (!all_prerequisites_satisfied())
     W(F("discarding manifest data packet with unmet dependencies\n"));
+}
+
+void 
+delayed_file_data_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed file data packet for %s\n") % ident);
+  pw.consume_file_data(ident, dat);
+}
+
+delayed_file_data_packet::~delayed_file_data_packet()
+{
+  // files have no prerequisites
+  I(all_prerequisites_satisfied());
 }
 
 void 
@@ -332,7 +398,34 @@ delayed_revision_cert_packet::apply_delayed_packet(packet_db_writer & pw)
 delayed_revision_cert_packet::~delayed_revision_cert_packet()
 {
   if (!all_prerequisites_satisfied())
-    W(F("discarding revision cert packet with unmet dependencies\n"));
+    W(F("discarding revision cert packet %s with unmet dependencies\n")
+      % c.inner().ident);
+}
+
+void 
+delayed_public_key_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed public key %s\n") % id());
+  pw.consume_public_key(id, key);
+}
+
+delayed_public_key_packet::~delayed_public_key_packet()
+{
+  // keys don't have dependencies
+  I(all_prerequisites_satisfied());
+}
+
+void 
+delayed_private_key_packet::apply_delayed_packet(packet_db_writer & pw)
+{
+  L(F("writing delayed private key %s\n") % id());
+  pw.consume_private_key(id, key);
+}
+
+delayed_private_key_packet::~delayed_private_key_packet()
+{
+  // keys don't have dependencies
+  I(all_prerequisites_satisfied());
 }
 
 struct packet_db_writer::impl
@@ -508,7 +601,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
         {
           file_id confirm;
           file_data old_dat;
-          base64< gzip<data> > new_dat;
+          data new_dat;
           pimpl->app.db.get_file_version(old_id, old_dat);
           patch(old_dat.inner(), del.inner(), new_dat);
           calculate_ident(file_data(new_dat), confirm);
@@ -552,7 +645,7 @@ packet_db_writer::consume_file_reverse_delta(file_id const & new_id,
         {
           file_id confirm;
           file_data new_dat;
-          base64< gzip<data> > old_dat;
+          data old_dat;
           pimpl->app.db.get_file_version(new_id, new_dat);
           patch(new_dat.inner(), del.inner(), old_dat);
           calculate_ident(file_data(old_dat), confirm);
@@ -613,7 +706,7 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
         {
           manifest_id confirm;
           manifest_data old_dat;
-          base64< gzip<data> > new_dat;
+          data new_dat;
           pimpl->app.db.get_manifest_version(old_id, old_dat);
           patch(old_dat.inner(), del.inner(), new_dat);
           calculate_ident(manifest_data(new_dat), confirm);
@@ -647,7 +740,7 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
 
 void
 packet_db_writer::consume_manifest_reverse_delta(manifest_id const & new_id,
-                                                 manifest_id const & old_id,                                             
+                                                 manifest_id const & old_id,
                                                  manifest_delta const & del)
 {
   transaction_guard guard(pimpl->app.db);
@@ -657,7 +750,7 @@ packet_db_writer::consume_manifest_reverse_delta(manifest_id const & new_id,
         {
           manifest_id confirm;
           manifest_data new_dat;
-          base64< gzip<data> > old_dat;
+          data old_dat;
           pimpl->app.db.get_manifest_version(new_id, new_dat);
           patch(new_dat.inner(), del.inner(), old_dat);
           calculate_ident(manifest_data(old_dat), confirm);
@@ -850,6 +943,128 @@ packet_db_writer::consume_private_key(rsa_keypair_id const & ident,
 }
 
 
+// --- valved packet writer ---
+
+struct packet_db_valve::impl
+{
+  packet_db_writer writer;
+  std::vector< boost::shared_ptr<delayed_packet> > packets;
+  bool valve_is_open;
+  impl(app_state & app, bool take_keys)
+    : writer(app, take_keys),
+      valve_is_open(false)
+  {}
+  void do_packet(boost::shared_ptr<delayed_packet> packet)
+  {
+    if (valve_is_open)
+      packet->apply_delayed_packet(writer);
+    else
+      packets.push_back(packet);
+  }
+};
+
+packet_db_valve::packet_db_valve(app_state & app, bool take_keys)
+  : pimpl(new impl(app, take_keys))
+{}
+    
+packet_db_valve::~packet_db_valve()
+{}
+
+void
+packet_db_valve::open_valve()
+{
+  L(F("packet valve opened\n"));
+  pimpl->valve_is_open = true;
+  int written = 0;
+  for (std::vector< boost::shared_ptr<delayed_packet> >::reverse_iterator
+         i = pimpl->packets.rbegin();
+       i != pimpl->packets.rend();
+       ++i)
+    {
+      pimpl->do_packet(*i);
+      ++written;
+    }
+  pimpl->packets.clear();
+  L(F("wrote %i queued packets\n") % written);
+}
+
+#define DOIT(x) pimpl->do_packet(boost::shared_ptr<delayed_packet>(new x));
+
+void
+packet_db_valve::consume_file_data(file_id const & ident, 
+                                   file_data const & dat)
+{
+  DOIT(delayed_file_data_packet(ident, dat));
+}
+
+void
+packet_db_valve::consume_file_delta(file_id const & id_old, 
+                                    file_id const & id_new,
+                                    file_delta const & del)
+{
+  DOIT(delayed_file_delta_packet(id_old, id_new, del, true));
+}
+
+void
+packet_db_valve::consume_file_reverse_delta(file_id const & id_new,
+                                            file_id const & id_old,
+                                            file_delta const & del)
+{
+  DOIT(delayed_file_delta_packet(id_old, id_new, del, false));
+}
+
+void
+packet_db_valve::consume_manifest_data(manifest_id const & ident, 
+                                       manifest_data const & dat)
+{
+  DOIT(delayed_manifest_data_packet(ident, dat));
+}
+
+void
+packet_db_valve::consume_manifest_delta(manifest_id const & id_old, 
+                                        manifest_id const & id_new,
+                                        manifest_delta const & del)
+{
+  DOIT(delayed_manifest_delta_packet(id_old, id_new, del, true));
+}
+
+void
+packet_db_valve::consume_manifest_reverse_delta(manifest_id const & id_new,
+                                                manifest_id const & id_old,
+                                                manifest_delta const & del)
+{
+  DOIT(delayed_manifest_delta_packet(id_old, id_new, del, false));
+}
+
+void
+packet_db_valve::consume_revision_data(revision_id const & ident, 
+                                       revision_data const & dat)
+{
+  DOIT(delayed_revision_data_packet(ident, dat));
+}
+
+void
+packet_db_valve::consume_revision_cert(revision<cert> const & t)
+{
+  DOIT(delayed_revision_cert_packet(t));
+}
+
+void
+packet_db_valve::consume_public_key(rsa_keypair_id const & ident,
+                                    base64< rsa_pub_key > const & k)
+{
+  DOIT(delayed_public_key_packet(ident, k));
+}
+
+void
+packet_db_valve::consume_private_key(rsa_keypair_id const & ident,
+                                     base64< arc4<rsa_priv_key> > const & k)
+{
+  DOIT(delayed_private_key_packet(ident, k));
+}
+
+#undef DOIT
+
 // --- packet writer ---
 
 packet_writer::packet_writer(ostream & o) : ost(o) {}
@@ -858,8 +1073,10 @@ void
 packet_writer::consume_file_data(file_id const & ident, 
                                  file_data const & dat)
 {
+  base64<gzip<data> > packed;
+  pack(dat.inner(), packed);
   ost << "[fdata " << ident.inner()() << "]" << endl 
-      << trim_ws(dat.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -868,9 +1085,11 @@ packet_writer::consume_file_delta(file_id const & old_id,
                                   file_id const & new_id,
                                   file_delta const & del)
 {
+  base64<gzip<delta> > packed;
+  pack(del.inner(), packed);
   ost << "[fdelta " << old_id.inner()() << endl 
       << "        " << new_id.inner()() << "]" << endl 
-      << trim_ws(del.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -879,9 +1098,11 @@ packet_writer::consume_file_reverse_delta(file_id const & new_id,
                                           file_id const & old_id,
                                           file_delta const & del)
 {
+  base64<gzip<delta> > packed;
+  pack(del.inner(), packed);
   ost << "[frdelta " << new_id.inner()() << endl 
       << "         " << old_id.inner()() << "]" << endl 
-      << trim_ws(del.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -889,8 +1110,10 @@ void
 packet_writer::consume_manifest_data(manifest_id const & ident, 
                                      manifest_data const & dat)
 {
+  base64<gzip<data> > packed;
+  pack(dat.inner(), packed);
   ost << "[mdata " << ident.inner()() << "]" << endl 
-      << trim_ws(dat.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -898,8 +1121,10 @@ void
 packet_writer::consume_revision_data(revision_id const & ident, 
                                      revision_data const & dat)
 {
+  base64<gzip<data> > packed;
+  pack(dat.inner(), packed);
   ost << "[rdata " << ident.inner()() << "]" << endl 
-      << trim_ws(dat.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -908,9 +1133,11 @@ packet_writer::consume_manifest_delta(manifest_id const & old_id,
                                       manifest_id const & new_id,
                                       manifest_delta const & del)
 {
+  base64<gzip<delta> > packed;
+  pack(del.inner(), packed);
   ost << "[mdelta " << old_id.inner()() << endl 
       << "        " << new_id.inner()() << "]" << endl 
-      << trim_ws(del.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -919,9 +1146,11 @@ packet_writer::consume_manifest_reverse_delta(manifest_id const & new_id,
                                               manifest_id const & old_id,
                                               manifest_delta const & del)
 {
+  base64<gzip<delta> > packed;
+  pack(del.inner(), packed);
   ost << "[mrdelta " << new_id.inner()() << endl 
       << "         " << old_id.inner()() << "]" << endl 
-      << trim_ws(del.inner()()) << endl
+      << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
@@ -978,7 +1207,9 @@ feed_packet_consumer
         I(res[3].matched);
         string head(res[1].first, res[1].second);
         string ident(res[2].first, res[2].second);
-        string body(trim_ws(string(res[3].first, res[3].second)));
+        base64<gzip<data> > body_packed(trim_ws(string(res[3].first, res[3].second)));
+        data body;
+        unpack(body_packed, body);
         if (head == "rdata")
           cons.consume_revision_data(revision_id(hexenc<id>(ident)), 
                                      revision_data(body));
@@ -1000,7 +1231,9 @@ feed_packet_consumer
         string head(res[4].first, res[4].second);
         string src_id(res[5].first, res[5].second);
         string dst_id(res[6].first, res[6].second);
-        string body(trim_ws(string(res[7].first, res[7].second)));
+        base64<gzip<delta> > body_packed(trim_ws(string(res[7].first, res[7].second)));
+        delta body;
+        unpack(body_packed, body);
         if (head == "mdelta")
           cons.consume_manifest_delta(manifest_id(hexenc<id>(src_id)), 
                                       manifest_id(hexenc<id>(dst_id)),
@@ -1033,7 +1266,7 @@ feed_packet_consumer
         string certname(res[10].first, res[10].second);
         string key(res[11].first, res[11].second);
         string val(res[12].first, res[12].second);
-        string body(res[13].first, res[13].second);
+        string body(trim_ws(string(res[13].first, res[13].second)));
 
         // canonicalize the base64 encodings to permit searches
         cert t = cert(hexenc<id>(ident),
@@ -1144,20 +1377,16 @@ packet_roundabout_test()
     packet_writer pw(oss);
 
     // an fdata packet
-    base64< gzip<data> > gzdata;
-    pack(data("this is some file data"), gzdata);
-    file_data fdata(gzdata);
+    file_data fdata(data("this is some file data"));
     file_id fid;
     calculate_ident(fdata, fid);
     pw.consume_file_data(fid, fdata);
 
     // an fdelta packet    
-    base64< gzip<data> > gzdata2;
-    pack(data("this is some file data which is not the same as the first one"), gzdata2);
-    file_data fdata2(gzdata2);
+    file_data fdata2(data("this is some file data which is not the same as the first one"));
     file_id fid2;
     calculate_ident(fdata2, fid);
-    base64< gzip<delta> > del;
+    delta del;
     diff(fdata.inner(), fdata2.inner(), del);
     pw.consume_file_delta(fid, fid2, file_delta(del));
 
@@ -1193,7 +1422,7 @@ packet_roundabout_test()
                          file_id(hexenc<id>("54f373ed07b4c5a88eaa93370e1bbac02dc432a8"))));
     write_manifest_map(mm2, mdata2);
     calculate_ident(mdata2, mid2);
-    base64< gzip<delta> > del2;
+    delta del2;
     diff(mdata.inner(), mdata2.inner(), del2);
     pw.consume_manifest_delta(mid, mid2, manifest_delta(del));
     

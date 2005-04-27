@@ -1,0 +1,41 @@
+AT_SETUP([reading private keys from lua hooks])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE privkey tester@test.net > privkey, [], [ignore], [ignore])
+
+KEY=tester@test.net
+m4_define([RCMONOTONE], [monotone --rcfile=test_key_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net])
+
+# check it works originally
+
+ADD_FILE(testfile, [acc murphy woz 'ere
+])
+COMMIT(a)
+SOMEREV=`BASE_REVISION`
+
+# check that it works with just the rcfile key
+
+# m4 note: @<:@ is equiv to [, @:>@ is equiv to ]
+AT_CHECK(cp $_ROOT_DIR/test_hooks.lua test_key_hooks.lua, [], [ignore], [ignore])
+AT_CHECK(echo "function get_priv_key(keyid)" >> test_key_hooks.lua, [], [ignore], [ignore])
+AT_CHECK(echo 'return @<:@@<:@ ' >> test_key_hooks.lua, [], [ignore], [ignore])
+AT_CHECK(grep -v '\@<:@' privkey >> test_key_hooks.lua, [], [ignore], [ignore])
+AT_CHECK(echo '	@:>@@:>@ end' >> test_key_hooks.lua, [], [ignore], [ignore])
+
+AT_CHECK(RCMONOTONE db execute "delete from private_keys", [], [ignore], [ignore])
+
+AT_CHECK(RCMONOTONE comment $SOMEREV boing)
+
+# check it works if both keys exist and match (after base64 decoding)
+AT_CHECK(RCMONOTONE read < privkey, [], [ignore], [ignore])
+
+AT_CHECK(RCMONOTONE comment $SOMEREV matching)
+
+# check that it fails if the keys differ
+AT_CHECK(RCMONOTONE db execute "delete from private_keys", [], [ignore], [ignore])
+AT_CHECK(RCMONOTONE db execute "delete from public_keys", [], [ignore], [ignore])
+AT_CHECK((echo $KEY; echo $KEY) | RCMONOTONE genkey $KEY, [], [ignore], [ignore])
+
+AT_CHECK(RCMONOTONE comment $SOMEREV aintworking, [1], [ignore], [ignore])
+
+AT_CLEANUP

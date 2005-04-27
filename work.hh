@@ -24,45 +24,65 @@
 // directories). there is no hierarchy of MT directories; only one exists,
 // and it is always at the root. it contains the following files:
 //
-// MT/manifest       -- the check-out manifest, as defined in manifest.hh
+// MT/revision       -- contains the id of the checked out revision
 // MT/work           -- (optional) a set of added, deleted or moved pathnames
 //                      this file is, syntactically, a path_rearrangement
-// MT/options        -- the database, branch and key options currently in use 
+// MT/options        -- the database, branch and key options currently in use
+// MT/log            -- user edited log file
+// MT/inodeprints    -- file fingerprint cache, presence turns on "reckless"
+//                      mode
 //
 // as work proceeds, the files in the working directory either change their
-// sha1 fingerprints from those listed in the manifest file, or else are
-// added or deleted (and the paths of those changes recorded in 'MT/work').
+// sha1 fingerprints from those listed in the revision's manifest, or else are
+// added or deleted or renamed (and the paths of those changes recorded in
+// 'MT/work').
 // 
 // when it comes time to commit, the change_set is calculated by applying
 // the path_rearrangement to the manifest and then calculating the
 // delta_set between the modified manifest and the files in the working
 // copy.
 //
+// MT/inodes, if prsent, can be used to speed up this last step.
 
 typedef std::set<file_path> path_set;
 
 extern std::string const work_file_name;
 
 void extract_path_set(manifest_map const & man,
-		      path_set & paths);
+                      path_set & paths);
 
 void 
-build_addition(file_path const & path,
-	       manifest_map const & m_old,
-	       app_state & app,
-	       change_set::path_rearrangement & pr);
+build_additions(std::vector<file_path> const & args,
+               manifest_map const & m_old,
+               app_state & app,
+               change_set::path_rearrangement & pr);
 
 void 
-build_deletion(file_path const & path,
-	       manifest_map const & m_old,
-	       change_set::path_rearrangement & pr);
+build_deletions(std::vector<file_path> const & args,
+               manifest_map const & m_old,
+                app_state & app,
+               change_set::path_rearrangement & pr);
 
 void 
 build_rename(file_path const & src,
-	     file_path const & dst,
-	     manifest_map const & m_old,
-	     change_set::path_rearrangement & pr);
+             file_path const & dst,
+             manifest_map const & m_old,
+             change_set::path_rearrangement & pr);
 
+
+// the "user log" is a file the user can edit as they program to record
+// changes they make to their source code. Upon commit the file is read
+// and passed to the edit_comment lua hook. If the commit is a success,
+// the user log is then blanked. If the commit does not succeed, no
+// change is made to the user log file.
+
+void get_user_log_path(local_path & ul_path);
+
+void read_user_log(data & dat);
+
+void blank_user_log();
+
+bool has_contents_user_log();
 
 // the "options map" is another administrative file, stored in
 // MT/options. it keeps a list of name/value pairs which are considered
@@ -77,7 +97,24 @@ void get_options_path(local_path & o_path);
 void read_options_map(data const & dat, options_map & options);
 
 void write_options_map(data & dat,
-		       options_map const & options);
+                       options_map const & options);
+
+// the "local dump file' is a debugging file, stored in MT/debug.  if we
+// crash, we save some debugging information here.
+
+void get_local_dump_path(local_path & d_path);
+
+// the 'inodeprints file' contains inode fingerprints 
+
+void get_inodeprints_path(local_path & ip_path);
+
+bool in_inodeprints_mode();
+
+void read_inodeprints(data & dat);
+
+void write_inodeprints(data const & dat);
+
+void enable_inodeprints();
 
 // the "attribute map" is part of a working copy. it is *not* stored in MT,
 // because its contents are considered part of the "content" of a tree of
@@ -99,22 +136,22 @@ void get_attr_path(file_path & a_path);
 void read_attr_map(data const & dat, attr_map & attrs);
 
 void write_attr_map(data & dat,
-		    attr_map const & options);
+                    attr_map const & options);
 
 void apply_attributes(app_state & app, 
-		      attr_map const & attr);
+                      attr_map const & attr);
 
 extern std::string const encoding_attribute;
 
 bool get_attribute_from_db(file_path const & file,
-			   std::string const & attr_key,
-			   manifest_map const & man,
-			   std::string & attr_val,
-			   app_state & app); 
+                           std::string const & attr_key,
+                           manifest_map const & man,
+                           std::string & attr_val,
+                           app_state & app); 
 
 bool get_attribute_from_working_copy(file_path const & file,
-				     std::string const & attr_key,
-				     std::string & attr_val); 
+                                     std::string const & attr_key,
+                                     std::string & attr_val); 
 
 extern std::string const binary_encoding;
 extern std::string const default_encoding;

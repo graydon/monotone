@@ -1,3 +1,109 @@
+Sun Apr 10 17:49:25 PDT 2005
+
+        0.18 release.  performance improvements, features, and bug fixes.
+	This release is dedicated to Shweta Narayan.
+
+        - most operations sped up by a factor of 2 or better; many sped up
+	  by up several orders of magnitude.
+                - special thanks to Matt Johnston <matt@ucc.asn.au>, Derek
+                  Scherger <derek@echologic.com>, Linus Torvalds
+                  <torvalds@osdl.org>.
+        - new concept: "database vars".  Used in several features below.
+        - new features:
+                - new file "MT/log" can be edited while you work,
+                  sets default changelog.  (no change in behaviour if
+                  you do not edit it.)  Thanks to Jeremy Cowgar
+                  <jeremy@cowgar.com>.
+                - monotone now stores default netsync
+                  server/collection, initialized on first use of
+                  netsync.
+                - you no longer need to manually import server
+                  keys, monotone will fetch the key from the server on
+                  first netsync.
+                - monotone keeps track of keys of servers you have
+                  previously synced with, to prevent man-in-the-middle
+                  attacks.
+                - several powerful new "automate" commands added.
+		- new command 'ls known', lists files that are under version
+		  control.  Thanks to Florian Weimer <fw@deneb.enyo.de>.
+		- preliminary "inodeprints" functionality -- speeds up diff,
+		  status, etc.  No UI or documentation yet -- in a working
+		  copy, 'touch MT/inodeprints' to enable, then commit or
+		  update to populate cache.
+        - UI improvements:
+                - Added short options -r, -b, -k, -m.
+                - default to 'dot' ticker-style when stderr is
+                  not a tty, thanks to Derek Scherger
+                  <derek@echologic.com>.
+                - New "-@/--xargs" option, helpful when using new
+                  automate commands.  Thanks to Richard Levitte
+                  <richard@levitte.org>.
+                - New "--depth" argument to 'log'.  Thanks to Richard
+                  Levitte <richard@levitte.org>.
+                - 'db info' gives statistics on space usage.
+                - new command 'dropkey'.  Thanks to Jeremy Cowgar
+                  <jeremy@cowgar.com>.
+        - robustness improvement: if monotone crashes in a working
+          directory and --dump and --debug were not specified, saves
+          debug dump to "MT/debug" for analysis, instead of
+          discarding.
+        - new contributed scripts: CIA (cia.navi.cx) notification,
+          email notification, Bash completion.
+        - 33 new integration tests.  total line coverage: ~82%.
+        - many bug fixes
+		- Special thanks to Matt Johnston <matt@ucc.asn.au>,
+		  for going above and beyond to track down the last
+		  release blocker.
+
+                - upgrading from 0.17 requires only a 'db migrate'.
+
+Fri Mar 18 15:38:52 PST 2005
+
+        0.17 release. bug fixes and features.
+
+        - many, many robustness improvements
+                - more careful checking everywhere
+                - much more thorough test suite
+                - all revisions subject to careful checks before
+                  entering database
+                        - not yet fully optimized; "pull" may be very
+                          slow and use lots of cpu
+                - support for "epochs", to safely manage future
+                  rebuilds, hash migration, etc.
+                - new "db check" command, thanks to Derek Scherger
+                  <derek@echologic.com>.
+        - now uses sqlite3, thanks to Christof Petig
+          <christof@petig-baender.de>.
+                - removes most former size limitations
+        - "restrictions" support, thanks to Derek Scherger
+          <derek@echologic.com>.
+                - most commands now take a list of files to limit
+                  their actions to
+                - monotone can now be run from anywhere in the working
+                  directory (not just the root)
+                - new command "monotone setup" required to create a
+                  working directory for a new project
+        - important security fix -- don't use shell when calling
+          external merge commands.
+        - format change for "MT/options", ".mt-attrs"; you may have to
+          edit these files
+                - new command "attr" for managing .mt-attrs.
+        - builds merkle tries in-memory -- netsync starts up many
+          times faster
+        - start of new "automate" interface, for shell scripts and
+          others.
+        - new command "cdiff": generates context diffs.
+        - remove most of now-obsolete manifest/file cert support.
+        - 60+ new integration tests.
+        - many portability fixes
+                - in particular, major win32 cleanups, thanks to Jon
+                  Bright <jon@siliconcircus.com>.  win32 is once again
+                  fully and natively supported.
+        - many bug fixes
+
+                - several incompatible changes: see file UPGRADE for
+                  migration information
+
 Thu Dec 30 01:37:54 EST 2004
 
 	0.16 release. bug fixes.

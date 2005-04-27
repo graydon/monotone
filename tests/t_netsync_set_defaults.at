@@ -1,0 +1,26 @@
+AT_SETUP([default server/collection setting])
+AT_KEYWORDS(netsync)
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+
+RUN_NETSYNC(pull, testbranch)
+
+SET_FILE(testfile, [other stuff
+])
+COMMIT(testbranch)
+NEW_R=`BASE_REVISION`
+
+NETSYNC_SERVE_START(testbranch)
+# Having done an explicit pull once, future ones should default to the
+# same
+AT_CHECK(MONOTONE2 pull, [], [ignore], [ignore])
+NETSYNC_SERVE_STOP(testbranch)
+
+AT_CHECK(MONOTONE2 checkout $NEW_R testdir, [], [ignore], [ignore])
+AT_CHECK(cmp testfile testdir/testfile)
+
+AT_CLEANUP

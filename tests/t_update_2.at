@@ -1,14 +1,9 @@
 AT_SETUP([(normal) update 2])
 MONOTONE_SETUP
 
-# This test is a bug report
-AT_XFAIL_IF(true)
-
-# Bug: update isn't able to jump over discontinuities in branches.  If
-# we have A1 -> B1 -> A2, then updating branch A from A1 doesn't get
-# to A2.
-
-# Discussion of solution to this is in t_ambig_update.at.
+# testing that update is able to jump over discontinuities in
+# branches.  If we have A1 -> B1 -> A2, then updating branch A from A1
+# should get to A2.
 
 ADD_FILE(testfile, [main branch data
 ])

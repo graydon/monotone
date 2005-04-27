@@ -31,29 +31,48 @@ public:
   lua_hooks lua;
   bool stdhooks;
   bool rcfiles;
+  bool all_files;
   options_map options;
   utf8 message;
+  utf8 date;
+  utf8 author;
+  utf8 search_root;
   std::vector<utf8> revision_selectors;
   std::vector<utf8> extra_rcfiles;
   path_set restrictions;
   file_path relative_directory;
+  bool found_working_copy;
+  long depth;
 
-  void initialize(bool working_copy);
-  void initialize(std::string const & dir);
+  void allow_working_copy();
+  void require_working_copy();
+  void create_working_copy(std::string const & dir);
 
   file_path prefix(utf8 const & path);
-  void add_restriction(utf8 const & path);
+  void set_restriction(path_set const & valid_paths, std::vector<utf8> const & paths);
   bool restriction_includes(file_path const & path);
 
+  // Set the branch name.  If you only invoke set_branch, the branch
+  // name is not sticky (and won't be written to the working copy and
+  // reused by subsequent monotone invocations).  Commands which
+  // switch the working to a different branch should invoke
+  // make_branch_sticky (before require_working_copy because this
+  // function updates the working copy).
   void set_branch(utf8 const & name);
+  void make_branch_sticky();
+
   void set_database(utf8 const & filename);
   void set_signing_key(utf8 const & key);
-
+  void set_root(utf8 const & root);
   void set_message(utf8 const & message);
+  void set_date(utf8 const & date);
+  void set_author(utf8 const & author);
+  void set_depth(long depth);
   void add_revision(utf8 const & selector);
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);
+  void set_all_files(bool b);
   void add_rcfile(utf8 const & filename);
 
   explicit app_state();

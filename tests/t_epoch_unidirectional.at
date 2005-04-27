@@ -1,0 +1,24 @@
+AT_SETUP([epochs are not sent upstream by pull])
+AT_KEYWORDS([netsync])
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+# This is important, because if I only have read-only access to your
+# database, I shouldn't be able to clutter it with random epochs...
+
+ADD_FILE(testfile, [some data
+])
+COMMIT(testbranch)
+
+AT_CHECK(rm -rf MT)
+AT_CHECK(MONOTONE2 setup .)
+AT_DATA(otherfile, [some data
+])
+AT_CHECK(MONOTONE2 add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 commit --message=foo --branch=testbranch.subbranch, [], [ignore], [ignore])
+
+RUN_NETSYNC(pull, testbranch)
+
+CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
+
+AT_CLEANUP

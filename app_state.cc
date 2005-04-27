@@ -1,10 +1,15 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#ifdef WIN32
+#include <io.h> /* for chdir() */
+#endif
+#include <cstdlib>              // for strtoul()
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
+#include <boost/filesystem/exception.hpp>
 
 #include "app_state.hh"
 #include "database.hh"
@@ -25,7 +30,8 @@ static string const branch_option("branch");
 static string const key_option("key");
 
 app_state::app_state() 
-  : branch_name(""), db(""), stdhooks(true), rcfiles(true)
+  : branch_name(""), db(""), stdhooks(true), rcfiles(true), all_files(false),
+    search_root("/"), depth(-1)
 {
   db.set_app(this);
 }
@@ -34,80 +40,107 @@ app_state::~app_state()
 {
 }
 
-// search for working copy
-// working_copy true  ==> MT/options must exist and is read and written
-// working_copy false ==> MT/options may  exist and is read for defaults
-
-// NB: this is not done in the constructor because checkout and setup
-// must not do any searching for the MT dir and associated directory
-// changing
-
-// FIXME: this should be revisited, requiring explicit calls to
-// app.initialize(true/false) for every command seems rather primitive
-
 void
-app_state::initialize(bool working_copy)
+app_state::allow_working_copy()
 {
-  fs::path root;
-  fs::path subdir;
+  fs::path root = mkpath(search_root());
+  fs::path working;
+  fs::path current;
 
-  // a lua hook or --root option here that returns a directory prefix
-  // or regex to stop the directory search might be good
+  found_working_copy = find_working_copy(root, working, current);
 
-  bool found = find_working_copy(root, subdir);
-
-  N(!working_copy || found, F("working copy directory required but not found"));
-
-  if (found) 
+  if (found_working_copy) 
     {
       L(F("initializing from directory %s\n") % fs::initial_path().string());
-      L(F("found working copy directory %s\n") % root.string());
-      chdir(root.native_directory_string().c_str());
+      L(F("found working copy directory %s\n") % working.string());
+      N(chdir(working.native_directory_string().c_str()) != -1,
+        F("cannot change to directory to %s\n") % working.native_directory_string());
 
       read_options();
 
       string dbname = absolutify(options[database_option]());
       if (dbname != "") db.set_filename(mkpath(dbname));
-      branch_name = options[branch_option];
+      if (branch_name().empty())
+        branch_name = options[branch_option];
+      L(F("branch name is '%s'\n") % branch_name());
       internalize_rsa_keypair_id(options[key_option], signing_key);
 
-      if (working_copy) write_options();
-
-      if (!subdir.empty()) 
+      if (!current.empty()) 
         {
-          relative_directory = file_path(subdir.native_directory_string());
+          relative_directory = file_path(current.native_directory_string());
           L(F("relative directory is '%s'\n") % relative_directory());
+        }
+
+      if (global_sanity.filename == "")
+        {
+          local_path dump_path;
+          get_local_dump_path(dump_path);
+          L(F("setting dump path to %s\n") % dump_path);
+          global_sanity.filename = dump_path();
         }
     }
   load_rcfiles();
 }
 
-// create new working copy, create MT dir and write MT/options
-
-void
-app_state::initialize(std::string const & dir)
+void 
+app_state::require_working_copy()
 {
-  if (dir != string("."))
-    {
-      fs::path co_dir = mkpath(dir);
-      fs::create_directories(co_dir);
-      chdir(co_dir.native_directory_string().c_str());
-      // this should probably have the exception handling code 
-      // added recently to .monotone
-    }
+  N(found_working_copy, F("working copy directory required but not found"));
+  write_options();
+}
+
+void 
+app_state::create_working_copy(std::string const & dir)
+{
+  N(dir.size(), F("invalid directory ''"));
+
+  // cd back to where we started from
+  N(chdir(fs::initial_path().native_directory_string().c_str()) != -1,
+    F("cannot change to initial directory %s\n") 
+    % fs::initial_path().native_directory_string());
+
+  string target = absolutify(dir);
+  L(F("create working copy in %s\n") % target);
+  
+  {
+    fs::path new_dir = mkpath(target);
+    try
+      {
+        fs::create_directories(new_dir);
+      }
+    catch (fs::filesystem_error & err)
+      {
+        N(false,
+          F("could not create directory: %s: %s\n")
+          % err.path1().native_directory_string()
+          % strerror(err.native_error()));
+      }
+    N(chdir(new_dir.native_directory_string().c_str()) != -1,
+      F("cannot change to new directory %s\n") 
+      % new_dir.native_directory_string());
+    
+    relative_directory = file_path();
+  }
 
   local_path mt(book_keeping_dir);
 
   N(!directory_exists(mt),
     F("monotone book-keeping directory '%s' already exists in '%s'\n") 
-    % book_keeping_dir % dir);
+    % book_keeping_dir % target);
 
   L(F("creating book-keeping directory '%s' for working copy in '%s'\n")
-    % book_keeping_dir % dir);
+    % book_keeping_dir % target);
 
   mkdir_p(mt);
 
+  make_branch_sticky();
+
   write_options();
+
+  blank_user_log();
+
+  if (lua.hook_use_inodeprints())
+    enable_inodeprints();
 
   load_rcfiles();
 }
@@ -116,25 +149,44 @@ file_path
 app_state::prefix(utf8 const & path)
 {
   fs::path p1 = mkpath(relative_directory()) / mkpath(path());
-  file_path p2(p1.normalize().native_directory_string());
+  file_path p2(p1.normalize().string());
   L(F("'%s' prefixed to '%s'\n") % path() % p2());
   return p2;
 }
 
 void 
-app_state::add_restriction(utf8 const & path)
+app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & paths)
 {
-  file_path p = prefix(path);
-  L(F("'%s' added to restricted path set\n") % p());
-  restrictions.insert(p);
+  // this can't be a file-global static, because file_path's initializer
+  // depends on another global static being defined.
+  static file_path dot(".");
+  restrictions.clear();
+  for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      file_path p = prefix(*i);
+
+      if (lua.hook_ignore_file(p)) 
+        {
+          L(F("'%s' ignored by restricted path set\n") % p());
+          continue;
+        }
+
+      N(p == dot || valid_paths.find(p) != valid_paths.end(),
+        F("unknown path '%s'\n") % p());
+
+      L(F("'%s' added to restricted path set\n") % p());
+      restrictions.insert(p);
+    }
 }
 
 bool
 app_state::restriction_includes(file_path const & path)
 {
+  // this can't be a file-global static, because file_path's initializer
+  // depends on another global static being defined.
+  static file_path dot(".");
   if (restrictions.empty()) 
     {
-      L(F("empty restricted path set; '%s' included\n") % path());
       return true;
     }
   
@@ -143,9 +195,8 @@ app_state::restriction_includes(file_path const & path)
   // careful about what goes in to the restricted path set we just
   // check for this special case here.
 
-  if (restrictions.find(file_path(".")) != restrictions.end())
+  if (restrictions.find(dot) != restrictions.end())
     {
-      L(F("restricted path set cleared; '%s' included\n") % path());
       return true;
     }
 
@@ -188,8 +239,12 @@ void
 app_state::set_branch(utf8 const & branch)
 {
   branch_name = branch();
+}
 
-  options[branch_option] = branch;
+void
+app_state::make_branch_sticky()
+{
+  options[branch_option] = branch_name();
 }
 
 void 
@@ -200,10 +255,42 @@ app_state::set_signing_key(utf8 const & key)
   options[key_option] = key;
 }
 
+void 
+app_state::set_root(utf8 const & path)
+{
+  search_root = absolutify(path());
+  fs::path root = mkpath(search_root());
+  N(fs::exists(root),
+    F("search root '%s' does not exist\n") % search_root);
+  N(fs::is_directory(root),
+    F("search root '%s' is not a directory\n") % search_root);
+  L(F("set search root to %s\n") % search_root);
+}
+
 void
 app_state::set_message(utf8 const & m)
 {
   message = m;
+}
+
+void
+app_state::set_date(utf8 const & d)
+{
+  date = d;
+}
+
+void
+app_state::set_author(utf8 const & a)
+{
+  author = a;
+}
+
+void
+app_state::set_depth(long d)
+{
+  N(d > 0,
+    F("negative or zero depth not allowed\n"));
+  depth = d;
 }
 
 void
@@ -225,14 +312,20 @@ app_state::set_rcfiles(bool b)
 }
 
 void
+app_state::set_all_files(bool b)
+{
+  all_files = b;
+}
+
+void
 app_state::add_rcfile(utf8 const & filename)
 {
   extra_rcfiles.push_back(filename);
 }
 
-// rc files are loaded after we've changed to the working copy
-// directory so that MT/monotonerc can be loaded between .monotonerc
-// and other rcfiles
+// rc files are loaded after we've changed to the working copy directory so
+// that MT/monotonerc can be loaded between ~/.monotone/monotonerc and other
+// rcfiles
 
 void
 app_state::load_rcfiles()
@@ -242,7 +335,7 @@ app_state::load_rcfiles()
   if (stdhooks)
     lua.add_std_hooks();
 
-  // ~/.monotonerc overrides that, and
+  // ~/.monotone/monotonerc overrides that, and
   // MT/monotonerc overrides *that*
 
   if (rcfiles)

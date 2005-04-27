@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -5,12 +6,17 @@
 
 #include <config.h>
 
-#include <popt.h>
+#include "popt/popt.h"
 #include <cstdio>
 #include <iterator>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include <stdlib.h>
+#ifdef WIN32
+#include <libintl.h>
+#endif
 
 #include "app_state.hh"
 #include "commands.hh"
@@ -36,12 +42,19 @@
 #define OPT_FULL_VERSION 13
 #define OPT_REVISION 14
 #define OPT_MESSAGE 15
+#define OPT_ROOT 16
+#define OPT_DEPTH 17
+#define OPT_ARGFILE 18
+#define OPT_DATE 19
+#define OPT_AUTHOR 20
+#define OPT_ALL_FILES 21
 
 // main option processing and exception handling code
 
 using namespace std;
 
 char * argstr = NULL;
+long arglong = 0;
 
 struct poptOption options[] =
   {
@@ -50,17 +63,23 @@ struct poptOption options[] =
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, "suppress log and progress messages", NULL},
     {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, "display help message", NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, "do not load standard lua hooks", NULL},
-    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotonerc or MT/monotonerc lua files", NULL},
+    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, "do not load ~/.monotone/monotonerc or MT/monotonerc lua files", NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, "load extra rc file", NULL},
-    {"key", 0, POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
-    {"db", 0, POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
-    {"branch", 0, POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
+    {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
+    {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
+    {"branch", 'b', POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, "print version number, then exit", NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, "print detailed version number, then exit", NULL},
-    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot) [count]", NULL},
-    {"revision", 0, POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
-    {"message", 0, POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
-    { NULL, 0, 0, NULL, 0 }
+    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, "set ticker style (count|dot|none) [count]", NULL},
+    {"revision", 'r', POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
+    {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
+    {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
+    {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
+    {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
+    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
+    {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, "insert command line arguments taken from the given file", NULL},
+    {"all-files", 0, POPT_ARG_NONE, NULL, OPT_ALL_FILES, "inventory all working copy files", NULL},
+    { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
 // there are 3 variables which serve as roots for our system.
@@ -132,6 +151,58 @@ utf8_argv
   }
 };
 
+// Stupid type system tricks: to use a cleanup_ptr, we need to know the return
+// type of the cleanup function.  But popt silently changed the return type of
+// poptFreeContext at some point, I guess because they thought it would be
+// "backwards compatible".  We don't actually _use_ the return value of
+// poptFreeContext, so this little wrapper works.
+static void
+my_poptFreeContext(poptContext con)
+{
+  poptFreeContext(con);
+}
+
+// Read arguments from a file.  The special file '-' means stdin.
+// Returned value must be free()'d, after arg parsing has completed.
+static const char **
+my_poptStuffArgFile(poptContext con, utf8 const & filename)
+{
+  utf8 argstr;
+  {
+    data dat;
+    read_data_for_command_line(filename, dat);
+    external ext(dat());
+    system_to_utf8(ext, argstr);
+  }
+  
+  const char **argv = 0;
+  int argc = 0;
+  int rc;
+
+  // Parse the string.  It's OK if there are no arguments.
+  rc = poptParseArgvString(argstr().c_str(), &argc, &argv);
+  N(rc >= 0 || rc == POPT_ERROR_NOARG,
+    F("problem parsing arguments from file %s: %s")
+    % filename % poptStrerror(rc));
+
+  if (rc != POPT_ERROR_NOARG)
+    {
+      // poptStuffArgs does not take an argc argument, but rather requires that
+      // the argv array be null-terminated.
+      I(argv[argc] == NULL);
+      N((rc = poptStuffArgs(con, argv)) >= 0,
+        F("weird error when stuffing arguments read from %s: %s\n")
+        % filename % poptStrerror(rc));
+    }
+  else
+    {
+      free(argv);               // just in case there was something...
+      argv = 0;
+    }
+
+  return argv;
+}
+
 int 
 cpp_main(int argc, char ** argv)
 {
@@ -146,6 +217,17 @@ cpp_main(int argc, char ** argv)
   setlocale(LC_MESSAGES, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
+  
+  {
+    std::ostringstream cmdline_ss;
+    for (int i = 0; i < argc; ++i)
+      {
+        if (i)
+          cmdline_ss << ", ";
+        cmdline_ss << "'" << argv[i] << "'";
+      }
+    L(F("command line: %s\n") % cmdline_ss.str());
+  }       
 
   L(F("set locale: LC_CTYPE=%s, LC_MESSAGES=%s\n")
     % (setlocale(LC_CTYPE, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL))
@@ -158,9 +240,9 @@ cpp_main(int argc, char ** argv)
 
   // prepare for arg parsing
       
-  cleanup_ptr<poptContext, poptContext> 
+  cleanup_ptr<poptContext, void> 
     ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
-        &poptFreeContext);
+        &my_poptFreeContext);
 
   // process main program options
 
@@ -168,10 +250,14 @@ cpp_main(int argc, char ** argv)
   int opt;
   bool requested_help = false;
 
+  // keep a list of argv vectors created by get_args_from_file, since they
+  // must be individually free()'d, but not until arg parsing is done.
+  std::vector<const char**> sub_argvs;
+
   poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
 
-  try 
-    {      
+  try
+    {
 
       app_state app;
 
@@ -212,6 +298,8 @@ cpp_main(int argc, char ** argv)
                 ui.set_tick_writer(new tick_write_dot);
               else if (string(argstr) == "count")
                 ui.set_tick_writer(new tick_write_count);
+              else if (string(argstr) == "none")
+                ui.set_tick_writer(new tick_write_nothing);
               else
                 requested_help = true;
               break;
@@ -235,11 +323,36 @@ cpp_main(int argc, char ** argv)
               return 0;
 
             case OPT_REVISION:
-               app.add_revision(string(argstr));
+              app.add_revision(string(argstr));
               break;
 
             case OPT_MESSAGE:
-               app.set_message(string(argstr));
+              app.set_message(string(argstr));
+              break;
+
+            case OPT_DATE:
+              app.set_date(string(argstr));
+              break;
+
+            case OPT_AUTHOR:
+              app.set_author(string(argstr));
+              break;
+
+            case OPT_ROOT:
+              app.set_root(string(argstr));
+              break;
+
+            case OPT_DEPTH:
+              app.set_depth(arglong);
+              break;
+
+            case OPT_ARGFILE:
+              sub_argvs.push_back(my_poptStuffArgFile(ctx(),
+                                                      utf8(string(argstr))));
+              break;
+
+            case OPT_ALL_FILES:
+              app.set_all_files(true);
               break;
 
             case OPT_HELP:
@@ -258,15 +371,21 @@ cpp_main(int argc, char ** argv)
       // stop here if they asked for help
 
       if (requested_help)
-	{
-	  if (poptPeekArg(ctx()))
-	    {
-	      string cmd(poptGetArg(ctx()));
-	      throw usage(cmd);
-	    }
-	  else
-	    throw usage("");
-	}
+        {
+          if (poptPeekArg(ctx()))
+            {
+              string cmd(poptGetArg(ctx()));
+              throw usage(cmd);
+            }
+          else
+            throw usage("");
+        }
+
+      // at this point we allow a working copy (meaning search for it
+      // and if found read MT/options) but don't require it. certain
+      // commands may subsequently require a working copy or fail
+
+      app.allow_working_copy();
 
       // main options processed, now invoke the 
       // sub-command w/ remaining args
@@ -279,12 +398,18 @@ cpp_main(int argc, char ** argv)
         {
           string cmd(poptGetArg(ctx()));
           vector<utf8> args;
-          while(poptPeekArg(ctx())) 
+          while(poptPeekArg(ctx()))
             {
               args.push_back(utf8(string(poptGetArg(ctx()))));
             }
+          // we've copied everything we want from the command line into our
+          // own data structures, so we can finally delete popt's malloc'ed
+          // argv stuff.
+          for (std::vector<const char**>::const_iterator i = sub_argvs.begin();
+               i != sub_argvs.end(); ++i)
+            free(*i);
           ret = commands::process(app, cmd, args);
-        } 
+        }
     }
   catch (usage & u)
     {
@@ -296,19 +421,9 @@ cpp_main(int argc, char ** argv)
     }
   catch (informative_failure & inf)
     {
-      ui.inform(inf.what + string("\n"));
+      ui.inform(inf.what);
       clean_shutdown = true;
       return 1;
-    }
-  catch (...)
-    {
-      // nb: we dump here because it's nicer to get the log dump followed
-      // by the exception printout, when possible. this does *not* mean you
-      // can remove the atexit() hook above, since it dumps when the
-      // execution monitor traps sigsegv / sigabrt etc.
-      global_sanity.dump_buffer();
-      clean_shutdown = true;
-      throw;
     }
 
   clean_shutdown = true;

@@ -1,0 +1,17 @@
+AT_SETUP([add executable])
+MONOTONE_SETUP
+
+NOT_ON_WIN32
+
+AT_DATA(foo, [blah blah
+])
+AT_CHECK(chmod 755 foo)
+# Have to use RAW_MONOTONE, because we're testing the standard hooks...
+AT_CHECK(RAW_MONOTONE --rcfile=test_hooks.lua add foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+# Have to use RAW_MONOTONE, because we're testing the standard hooks...
+AT_CHECK(RAW_MONOTONE --rcfile=test_hooks.lua checkout --branch=testbranch codir, [], [ignore], [ignore])
+AT_CHECK(test -x codir/foo)
+
+AT_CLEANUP

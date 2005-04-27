@@ -1,0 +1,30 @@
+AT_SETUP([vars])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE set domain1 key1 orig_value, [], [ignore], [ignore])
+AT_CHECK(MONOTONE set domain1 key1 overwritten_value, [], [ignore], [ignore])
+AT_CHECK(MONOTONE set domain1 key2 other_value, [], [ignore], [ignore])
+AT_CHECK(MONOTONE set domain2 key1 other_domain_value, [], [ignore], [ignore])
+AT_CHECK(MONOTONE set domain2 key2 yet_another_value, [], [ignore], [ignore])
+AT_CHECK(MONOTONE unset domain2 key2)
+AT_CHECK(MONOTONE unset domain2 key2, [1], [ignore], [ignore])
+
+# FIXME: use a less lame output format
+AT_DATA(domain1_vars, [domain1: key1 overwritten_value
+domain1: key2 other_value
+])
+AT_DATA(domain2_vars, [domain2: key1 other_domain_value
+])
+AT_CHECK(cat domain1_vars domain2_vars > all_vars)
+
+AT_CHECK(MONOTONE ls vars, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp all_vars stdout)
+AT_CHECK(MONOTONE ls vars domain1, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp domain1_vars stdout)
+AT_CHECK(MONOTONE ls vars domain2, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp domain2_vars stdout)
+
+AT_CLEANUP

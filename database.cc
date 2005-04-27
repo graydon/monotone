@@ -27,11 +27,11 @@
 #include "keys.hh"
 #include "sanity.hh"
 #include "schema_migration.hh"
-#include "cert.hh"
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
 #include "xdelta.hh"
+#include "epoch.hh"
 
 // defined in schema.sql, converted to header:
 #include "schema.h"
@@ -100,7 +100,7 @@ database::database(fs::path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("c1e86588e11ad07fa53e5d294edc043ce1d4005a"),
+  schema("e372b508bea9b991816d1c74680f7ae10d2a6d94"),
   __sql(NULL),
   transaction_level(0)
 
@@ -144,6 +144,19 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
+static void
+sqlite3_unpack_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
+{
+  if (nargs != 1)
+    {
+      sqlite3_result_error(f, "need exactly 1 arg to unpack()", -1);
+      return;
+    }
+  data unpacked;
+  unpack(base64< gzip<data> >(string(sqlite3_value_text_s(args[0]))), unpacked);
+  sqlite3_result_blob(f, unpacked().c_str(), unpacked().size(), SQLITE_TRANSIENT);
+}
+
 void 
 database::set_app(app_state * app)
 {
@@ -155,19 +168,23 @@ check_sqlite_format_version(fs::path const & filename)
 {
   if (fs::exists(filename))
     {
+      N(!fs::is_directory(filename), 
+        F("database %s is a directory\n") % filename.string());
+ 
       // sqlite 3 files begin with this constant string
       // (version 2 files begin with a different one)
       std::string version_string("SQLite format 3");
 
       std::ifstream file(filename.string().c_str());
       N(file, F("unable to probe database version in file %s") % filename.string());
+
       for (std::string::const_iterator i = version_string.begin();
            i != version_string.end(); ++i)
         {
           char c;
           file.get(c);
-          N(c == *i, F("database is not an sqlite version 3 file, "
-                       "try dump and reload"));            
+          N(c == *i, F("database %s is not an sqlite version 3 file, "
+                       "try dump and reload") % filename.string());            
         }
     }
 }
@@ -193,16 +210,16 @@ database::sql(bool init)
 {
   if (! __sql)
     {
+      N(!filename.empty(), F("no database specified"));
+
       if (! init)
         {
-          if (filename.string() == "")
-            throw informative_failure(string("no database specified"));
-          else if (! fs::exists(filename))
-            throw informative_failure(string("database ") + filename.string() +
-                                      string(" does not exist"));
+          N(fs::exists(filename), 
+            F("database %s does not exist") % filename.string());
+          N(!fs::is_directory(filename), 
+            F("database %s is a directory") % filename.string());
         }
-      N(filename.string() != "",
-        F("need database name"));
+
       check_sqlite_format_version(filename);
       int error;
       error = sqlite3_open(filename.string().c_str(), &__sql);
@@ -329,6 +346,8 @@ database::load(istream & in)
 
   N(filename.string() != "",
     F("need database name"));
+  N(!fs::exists(filename),
+    F("cannot create %s; it already exists\n") % filename.string());
   int error = sqlite3_open(filename.string().c_str(), &__sql);
   if (error)
     throw oops(string("could not open database: ") + filename.string() + 
@@ -349,7 +368,9 @@ void
 database::debug(string const & sql, ostream & out)
 {
   results res;
-  fetch(res, any_cols, any_rows, sql.c_str());
+  // "%s" construction prevents interpretation of %-signs in the query string
+  // as formatting commands.
+  fetch(res, any_cols, any_rows, "%s", sql.c_str());
   out << "'" << sql << "' -> " << res.size() << " rows\n" << endl;
   for (size_t i = 0; i < res.size(); ++i)
     {
@@ -363,31 +384,72 @@ database::debug(string const & sql, ostream & out)
     }
 }
 
-unsigned long 
-database::get_statistic(string const & query)
-{
-  results res;
-  fetch(res, 1, 1, query.c_str());
-  return lexical_cast<unsigned long>(res[0][0]);
-}
-
 void 
 database::info(ostream & out)
 {
   string id;
   calculate_schema_id(sql(), id);
-  out << "schema version  : " << id << endl;
-  out << "full manifests  : " << get_statistic("SELECT COUNT(*) FROM manifests") << endl;
-  out << "manifest deltas : " << get_statistic("SELECT COUNT(*) FROM manifest_deltas") << endl;
-  out << "full files      : " << get_statistic("SELECT COUNT(*) FROM files") << endl;
-  out << "file deltas     : " << get_statistic("SELECT COUNT(*) FROM file_deltas") << endl;
+  unsigned long space = 0, tmp;
+  out << "schema version    : " << id << endl;
+
+  out << "counts:" << endl;
+  out << "  full manifests  : " << count("manifests") << endl;
+  out << "  manifest deltas : " << count("manifest_deltas") << endl;
+  out << "  full files      : " << count("files") << endl;
+  out << "  file deltas     : " << count("file_deltas") << endl;
+  out << "  revisions       : " << count("revisions") << endl;
+  out << "  ancestry edges  : " << count("revision_ancestry") << endl;
+  out << "  certs           : " << count("revision_certs") << endl;
+
+  out << "bytes:" << endl;
+  // FIXME: surely there is a less lame way to do this, that doesn't require
+  // updating every time the schema changes?
+  tmp = space_usage("manifests", "id || data");
+  space += tmp;
+  out << "  full manifests  : " << tmp << endl;
+
+  tmp = space_usage("manifest_deltas", "id || base || delta");
+  space += tmp;
+  out << "  manifest deltas : " << tmp << endl;
+
+  tmp = space_usage("files", "id || data");
+  space += tmp;
+  out << "  full files      : " << tmp << endl;
+
+  tmp = space_usage("file_deltas", "id || base || delta");
+  space += tmp;
+  out << "  file deltas     : " << tmp << endl;
+
+  tmp = space_usage("revisions", "id || data");
+  space += tmp;
+  out << "  revisions       : " << tmp << endl;
+
+  tmp = space_usage("revision_ancestry", "parent || child");
+  space += tmp;
+  out << "  cached ancestry : " << tmp << endl;
+
+  tmp = space_usage("revision_certs", "hash || id || name || value || keypair || signature");
+  space += tmp;
+  out << "  certs           : " << tmp << endl;
+
+  out << "  total           : " << space << endl;
 }
 
 void 
 database::version(ostream & out)
 {
   string id;
-  calculate_schema_id(sql(), id);
+  N(filename.string() != "",
+    F("need database name"));
+  int error = sqlite3_open(filename.string().c_str(), &__sql);
+  if (error)
+    {
+      sqlite3_close(__sql);
+      throw oops(string("could not open database: ") + filename.string() + 
+                 (": " + string(sqlite3_errmsg(__sql))));
+    }
+  calculate_schema_id(__sql, id);
+  sqlite3_close(__sql);
   out << "database schema version: " << id << endl;
 }
 
@@ -398,8 +460,11 @@ database::migrate()
     F("need database name"));
   int error = sqlite3_open(filename.string().c_str(), &__sql);
   if (error)
-    throw oops(string("could not open database: ") + filename.string() + 
-               (": " + string(sqlite3_errmsg(__sql))));
+    {
+      sqlite3_close(__sql);
+      throw oops(string("could not open database: ") + filename.string() + 
+                 (": " + string(sqlite3_errmsg(__sql))));
+    }
   migrate_monotone_schema(__sql);
   sqlite3_close(__sql);
 }
@@ -409,7 +474,6 @@ database::rehash()
 {
   transaction_guard guard(*this);
   ticker mcerts("mcerts", "m", 1);
-  ticker fcerts("fcerts", "f", 1);
   ticker pubkeys("pubkeys", "+", 1);
   ticker privkeys("privkeys", "!", 1);
   
@@ -444,7 +508,7 @@ database::rehash()
       }
   }
 
-{
+  {
     // rehash all privkeys
     results res;
     fetch(res, 2, any_rows, "SELECT id, keydata FROM private_keys");
@@ -665,18 +729,42 @@ database::delta_exists(hexenc<id> const & ident,
   return res.size() == 1;
 }
 
-int 
+unsigned long
 database::count(string const & table)
 {
   results res;
-  string query = "SELECT COUNT(*) FROM " + table;
-  fetch(res, one_col, one_row, query.c_str());
-  return lexical_cast<int>(res[0][0]);  
+  fetch(res, one_col, one_row, 
+        "SELECT COUNT(*) FROM '%q'", 
+        table.c_str());
+  return lexical_cast<unsigned long>(res[0][0]);  
+}
+
+unsigned long
+database::space_usage(string const & table, string const & concatenated_columns)
+{
+  results res;
+  fetch(res, one_col, one_row,
+        "SELECT SUM(LENGTH(%s)) FROM '%q'",
+        concatenated_columns.c_str(), table.c_str());
+  return lexical_cast<unsigned long>(res[0][0]);
+}
+
+void
+database::get_ids(string const & table, set< hexenc<id> > & ids) 
+{
+  results res;
+
+  fetch(res, one_col, any_rows, "SELECT id FROM %q", table.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      ids.insert(hexenc<id>(res[i][0]));
+    }
 }
 
 void 
 database::get(hexenc<id> const & ident,
-              base64< gzip<data> > & dat,
+              data & dat,
               string const & table)
 {
   results res;
@@ -685,31 +773,36 @@ database::get(hexenc<id> const & ident,
 
   // consistency check
   base64<gzip<data> > rdata(res[0][0]);
+  data rdata_unpacked;
+  unpack(rdata, rdata_unpacked);
+
   hexenc<id> tid;
-  calculate_ident(rdata, tid);
+  calculate_ident(rdata_unpacked, tid);
   I(tid == ident);
 
-  dat = rdata;
+  dat = rdata_unpacked;
 }
 
 void 
 database::get_delta(hexenc<id> const & ident,
                     hexenc<id> const & base,
-                    base64< gzip<delta> > & del,
+                    delta & del,
                     string const & table)
 {
   I(ident() != "");
   I(base() != "");
   results res;
-  string query = "SELECT delta FROM " + table + " WHERE id = ? AND base = ?";
-  fetch(res, one_col, one_row, query.c_str(), 
-        ident().c_str(), base().c_str());
-  del = res[0][0];
+  fetch(res, one_col, one_row,
+        "SELECT delta FROM '%q' WHERE id = '%q' AND base = '%q'", 
+        table.c_str(), ident().c_str(), base().c_str());
+
+  base64<gzip<delta> > del_packed = res[0][0];
+  unpack(del_packed, del);
 }
 
 void 
 database::put(hexenc<id> const & ident,
-              base64< gzip<data> > const & dat,
+              data const & dat,
               string const & table)
 {
   // consistency check
@@ -717,40 +810,107 @@ database::put(hexenc<id> const & ident,
   hexenc<id> tid;
   calculate_ident(dat, tid);
   I(tid == ident);
+
+  base64<gzip<data> > dat_packed;
+  pack(dat, dat_packed);
   
-  string insert = "INSERT INTO " + table + " VALUES(?, ?)";
-  execute(insert.c_str(), 
-          ident().c_str(), dat().c_str());
+  execute("INSERT INTO '%q' VALUES('%q', '%q')", 
+          table.c_str(), ident().c_str(), dat_packed().c_str());
 }
-
-
 void 
 database::put_delta(hexenc<id> const & ident,
                     hexenc<id> const & base,
-                    base64<gzip<delta> > const & del,
+                    delta const & del,
                     string const & table)
 {
   // nb: delta schema is (id, base, delta)
   I(ident() != "");
   I(base() != "");
 
-  string insert = "INSERT INTO " + table + " VALUES(?, ?, ?)";
+  base64<gzip<delta> > del_packed;
+  pack(del, del_packed);
   
-  execute(insert.c_str(), 
-          ident().c_str(), base().c_str(), del().c_str());
+  execute("INSERT INTO '%q' VALUES('%q', '%q', '%q')", 
+          table.c_str(), 
+          ident().c_str(), base().c_str(), del_packed().c_str());
 }
+
+// static ticker cache_hits("vcache hits", "h", 1);
+
+struct version_cache
+{
+  size_t capacity;
+  size_t use;
+  std::map<hexenc<id>, data> cache;  
+
+  version_cache() : capacity(constants::db_version_cache_sz), use(0) 
+  {
+    srand(time(NULL));
+  }
+
+  void put(hexenc<id> const & ident, data const & dat)
+  {
+    while (!cache.empty() 
+           && use + dat().size() > capacity)
+      {      
+        std::string key = (F("%08.8x%08.8x%08.8x%08.8x%08.8x") 
+                           % rand() % rand() % rand() % rand() % rand()).str();
+        std::map<hexenc<id>, data>::const_iterator i;
+        i = cache.lower_bound(hexenc<id>(key));
+        if (i == cache.end())
+          {
+            // we can't find a random entry, probably there's only one
+            // entry and we missed it. delete first entry instead.
+            i = cache.begin();
+          }
+        I(i != cache.end());
+        I(use >= i->second().size());
+        L(F("version cache expiring %s\n") % i->first);
+        use -= i->second().size();          
+        cache.erase(i->first);
+      }
+    cache.insert(std::make_pair(ident, dat));
+    use += dat().size();
+  }
+
+  bool exists(hexenc<id> const & ident)
+  {
+    std::map<hexenc<id>, data>::const_iterator i;
+    i = cache.find(ident);
+    return i != cache.end();
+  }
+
+  bool get(hexenc<id> const & ident, data & dat)
+  {
+    std::map<hexenc<id>, data>::const_iterator i;
+    i = cache.find(ident);
+    if (i == cache.end())
+      return false;
+    // ++cache_hits;
+    L(F("version cache hit on %s\n") % ident);
+    dat = i->second;
+    return true;
+  }
+};
+
+static version_cache vcache;
 
 void 
 database::get_version(hexenc<id> const & ident,
-                      base64< gzip<data> > & dat,
+                      data & dat,
                       string const & data_table,
                       string const & delta_table)
 {
   I(ident() != "");
-  if (exists(ident, data_table))
+
+  if (vcache.get(ident, dat))
     {
-      // easy path
-      get(ident, dat, data_table);
+      return;
+    }
+  else if (exists(ident, data_table))
+    {
+     // easy path
+     get(ident, dat, data_table);
     }
   else
     {
@@ -800,7 +960,7 @@ database::get_version(hexenc<id> const & ident,
           for (set< hexenc<id> >::const_iterator i = frontier.begin();
                i != frontier.end(); ++i)
             {
-              if (exists(*i, data_table))
+              if (vcache.exists(*i) || exists(*i, data_table))
                 {
                   root = *i;
                   found_root = true;
@@ -845,10 +1005,17 @@ database::get_version(hexenc<id> const & ident,
 
       I(found_root);
       I(root() != "");
-      base64< gzip<data> > begin_packed;
       data begin;      
-      get(root, begin_packed, data_table);
-      unpack(begin_packed, begin);
+
+      if (vcache.exists(root))
+        {
+          I(vcache.get(root, begin));
+        }
+      else
+        {
+          get(root, begin, data_table);
+        }
+
       hexenc<id> curr = root;
 
       boost::shared_ptr<delta_applicator> app = new_piecewise_applicator();
@@ -861,25 +1028,32 @@ database::get_version(hexenc<id> const & ident,
           I(i->find(curr) != i->end());
           hexenc<id> const nxt = i->find(curr)->second;
 
+          if (!vcache.exists(curr))
+            {
+              string tmp;
+              app->finish(tmp);
+              vcache.put(curr, tmp);
+            }
+
+
           L(F("following delta %s -> %s\n") % curr % nxt);
-          base64< gzip<delta> > del_packed;
-          get_delta(nxt, curr, del_packed, delta_table);
           delta del;
-          unpack(del_packed, del);
+          get_delta(nxt, curr, del, delta_table);
           apply_delta (app, del());
+          
           app->next();
           curr = nxt;
         }
 
       string tmp;
       app->finish(tmp);
-      data end(tmp);
+      dat = data(tmp);
 
       hexenc<id> final;
-      calculate_ident(end, final);
+      calculate_ident(dat, final);
       I(final == ident);
-      pack(end, dat);
     }
+  vcache.put(ident, dat);
 }
 
 
@@ -894,13 +1068,13 @@ database::drop(hexenc<id> const & ident,
 void 
 database::put_version(hexenc<id> const & old_id,
                       hexenc<id> const & new_id,
-                      base64< gzip<delta> > const & del,
+                      delta const & del,
                       string const & data_table,
                       string const & delta_table)
 {
 
-  base64< gzip<data> > old_data, new_data;
-  base64< gzip<delta> > reverse_delta;
+  data old_data, new_data;
+  delta reverse_delta;
   
   get_version(old_id, old_data, data_table, delta_table);
   patch(old_data, del, new_data);
@@ -921,11 +1095,11 @@ database::put_version(hexenc<id> const & old_id,
 void 
 database::put_reverse_version(hexenc<id> const & new_id,
                               hexenc<id> const & old_id,
-                              base64< gzip<delta> > const & reverse_del,
+                              delta const & reverse_del,
                               string const & data_table,
                               string const & delta_table)
 {
-  base64< gzip<data> > old_data, new_data;
+  data old_data, new_data;
   
   get_version(new_id, new_data, data_table, delta_table);
   patch(new_data, reverse_del, old_data);
@@ -966,12 +1140,40 @@ database::revision_exists(revision_id const & id)
   return exists(id.inner(), "revisions");
 }
 
+void 
+database::get_file_ids(set<file_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("files", tmp);
+  get_ids("file_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_manifest_ids(set<manifest_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("manifests", tmp);
+  get_ids("manifest_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
+database::get_revision_ids(set<revision_id> & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("revisions", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
 
 void 
 database::get_file_version(file_id const & id,
                            file_data & dat)
 {
-  base64< gzip<data> > tmp;
+  data tmp;
   get_version(id.inner(), tmp, "files", "file_deltas");
   dat = tmp;
 }
@@ -980,7 +1182,7 @@ void
 database::get_manifest_version(manifest_id const & id,
                                manifest_data & dat)
 {
-  base64< gzip<data> > tmp;
+  data tmp;
   get_version(id.inner(), tmp, "manifests", "manifest_deltas");
   dat = tmp;
 }
@@ -1115,14 +1317,19 @@ database::get_revision(revision_id const & id,
         "SELECT data FROM revisions WHERE id = ?",
         id.inner()().c_str());
 
-  dat = revision_data(res[0][0]);
+  base64<gzip<data> > rdat_packed;
+  rdat_packed = base64<gzip<data> >(res[0][0]);
+  data rdat;
+  unpack(rdat_packed, rdat);
 
   // verify that we got a revision with the right id
   {
     revision_id tmp;
-    calculate_ident(dat, tmp);
+    calculate_ident(rdat, tmp);
     I(id == tmp);
   }
+
+  dat = rdat;
 }
 
 void 
@@ -1134,16 +1341,21 @@ database::put_revision(revision_id const & new_id,
   I(!revision_exists(new_id));
   revision_data d;
 
+  rev.check_sane();
+
   write_revision_set(rev, d);
   revision_id tmp;
   calculate_ident(d, tmp);
   I(tmp == new_id);
 
+  base64<gzip<data> > d_packed;
+  pack(d.inner(), d_packed);
+
   transaction_guard guard(*this);
 
   execute("INSERT INTO revisions VALUES(?, ?)", 
           new_id.inner()().c_str(), 
-          d.inner()().c_str());
+          d_packed().c_str());
 
   for (edge_map::const_iterator e = rev.edges.begin();
        e != rev.edges.end(); ++e)
@@ -1152,6 +1364,8 @@ database::put_revision(revision_id const & new_id,
               edge_old_revision(e).inner()().c_str(),
               new_id.inner()().c_str());
     }
+
+  check_sane_history(new_id, constants::verify_depth, *__app);
 
   guard.commit();
 }
@@ -1174,6 +1388,24 @@ database::delete_existing_revs_and_certs()
   execute("DELETE FROM revision_certs");
 }
 
+/// Deletes one revision from the local database. 
+/// @see kill_rev_locally
+void
+database::delete_existing_rev_and_certs(revision_id const & rid){
+
+  //check that the revision exists and doesn't have any children
+  I(revision_exists(rid));
+  set<revision_id> children;
+  get_revision_children(rid, children);
+  I(!children.size());
+
+  // perform the actual SQL transactions to kill rev rid here
+  L(F("Killing revision %s locally\n") % rid);
+  execute("DELETE from revision_certs WHERE id = '%s'",rid.inner()().c_str());
+  execute("DELETE from revision_ancestry WHERE child = '%s'",
+          rid.inner()().c_str());
+  execute("DELETE from revisions WHERE id = '%s'",rid.inner()().c_str());
+}
 
 // crypto key management
 
@@ -1210,13 +1442,25 @@ database::get_key_ids(string const & pattern,
 }
 
 void 
-database::get_private_keys(vector<rsa_keypair_id> & privkeys)
+database::get_keys(string const & table, vector<rsa_keypair_id> & keys)
 {
-  privkeys.clear();
+  keys.clear();
   results res;
-  fetch(res, one_col, any_rows,  "SELECT id FROM private_keys");
+  fetch(res, one_col, any_rows,  "SELECT id from '%q'", table.c_str());
   for (size_t i = 0; i < res.size(); ++i)
-    privkeys.push_back(res[i][0]);
+    keys.push_back(res[i][0]);
+}
+
+void 
+database::get_private_keys(vector<rsa_keypair_id> & keys)
+{
+  get_keys("private_keys", keys);
+}
+
+void 
+database::get_public_keys(vector<rsa_keypair_id> & keys)
+{
+  get_keys("public_keys", keys);
 }
 
 bool 
@@ -1299,14 +1543,16 @@ database::get_key(rsa_keypair_id const & priv_id,
   priv_encoded = res[0][0];
 }
 
-
 void 
 database::put_key(rsa_keypair_id const & pub_id, 
                   base64<rsa_pub_key> const & pub_encoded)
 {
   hexenc<id> thash;
   key_hash_code(pub_id, pub_encoded, thash);
-  execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
+  I(!public_key_exists(thash));
+  E(!public_key_exists(pub_id),
+    F("another key with name '%s' already exists") % pub_id);
+  execute("INSERT INTO public_keys VALUES('%q', '%q', '%q')", 
           thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
 }
 
@@ -1314,10 +1560,11 @@ void
 database::put_key(rsa_keypair_id const & priv_id, 
                   base64< arc4<rsa_priv_key> > const & priv_encoded)
 {
-  
   hexenc<id> thash;
   key_hash_code(priv_id, priv_encoded, thash);
-  execute("INSERT INTO private_keys VALUES(?, ?, ?)", 
+  E(!private_key_exists(priv_id),
+    F("another key with name '%s' already exists") % priv_id);
+  execute("INSERT INTO private_keys VALUES('%q', '%q', '%q')", 
           thash().c_str(), priv_id().c_str(), priv_encoded().c_str());
 }
 
@@ -1335,7 +1582,14 @@ database::put_key_pair(rsa_keypair_id const & id,
 void
 database::delete_private_key(rsa_keypair_id const & pub_id)
 {
-  execute("DELETE FROM private_keys WHERE id = ?",
+  execute("DELETE FROM private_keys WHERE id = '%q'",
+          pub_id().c_str());
+}
+
+void
+database::delete_public_key(rsa_keypair_id const & pub_id)
+{
+  execute("DELETE FROM public_keys WHERE id = '%q'",
           pub_id().c_str());
 }
 
@@ -1404,7 +1658,13 @@ database::install_functions(app_state * app)
   // register any functions we're going to use
   I(sqlite3_create_function(sql(), "unbase64", -1, 
                            SQLITE_UTF8, NULL,
-			   &sqlite3_unbase64_fn, 
+                           &sqlite3_unbase64_fn, 
+                           NULL, NULL) == 0);
+
+
+  I(sqlite3_create_function(sql(), "unpack", -1, 
+                           SQLITE_UTF8, NULL,
+                           &sqlite3_unpack_fn, 
                            NULL, NULL) == 0);
 }
 
@@ -1429,6 +1689,18 @@ database::install_views()
   execute(views_constant);
   */
 }
+
+void 
+database::get_certs(vector<cert> & certs,                       
+                    string const & table)
+{
+  results res;
+  fetch(res, 5, any_rows, 
+        "SELECT id, name, value, keypair, signature FROM '%q' ",
+        table.c_str());
+  results_to_certs(res, certs);
+}
+
 
 void 
 database::get_certs(hexenc<id> const & ident, 
@@ -1537,8 +1809,35 @@ database::put_revision_cert(revision<cert> const & cert)
   put_cert(cert.inner(), "revision_certs"); 
 }
 
+void database::get_revision_cert_index(std::vector< std::pair<hexenc<id>,
+                                       std::pair<revision_id, rsa_keypair_id> > > & idx)
+{
+  results res;
+  fetch(res, 3, any_rows, 
+        "SELECT hash, id, keypair "
+        "FROM 'revision_certs'");
+
+  idx.clear();
+  idx.resize(res.size());
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    {
+      idx.push_back(std::make_pair(hexenc<id>((*i)[0]), 
+                                   std::make_pair(revision_id((*i)[1]),
+                                                  rsa_keypair_id((*i)[2]))));
+    }
+}
+
 void 
-database::get_revision_certs(cert_name const & name, 
+database::get_revision_certs(vector< revision<cert> > & ts)
+{
+  vector<cert> certs;
+  get_certs(certs, "revision_certs");
+  ts.clear();
+  copy(certs.begin(), certs.end(), back_inserter(ts));  
+}
+
+void 
+database::get_revision_certs(cert_name const & name,
                             vector< revision<cert> > & ts)
 {
   vector<cert> certs;
@@ -1549,8 +1848,8 @@ database::get_revision_certs(cert_name const & name,
 
 void 
 database::get_revision_certs(revision_id const & id, 
-                            cert_name const & name, 
-                            vector< revision<cert> > & ts)
+                             cert_name const & name, 
+                             vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(id.inner(), name, certs, "revision_certs");
@@ -1560,9 +1859,9 @@ database::get_revision_certs(revision_id const & id,
 
 void 
 database::get_revision_certs(revision_id const & id, 
-                            cert_name const & name,
-                            base64<cert_value> const & val, 
-                            vector< revision<cert> > & ts)
+                             cert_name const & name,
+                             base64<cert_value> const & val, 
+                             vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(id.inner(), name, val, certs, "revision_certs");
@@ -1572,8 +1871,8 @@ database::get_revision_certs(revision_id const & id,
 
 void 
 database::get_revision_certs(cert_name const & name,
-                            base64<cert_value> const & val, 
-                            vector< revision<cert> > & ts)
+                             base64<cert_value> const & val, 
+                             vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(name, val, certs, "revision_certs");
@@ -1583,7 +1882,7 @@ database::get_revision_certs(cert_name const & name,
 
 void 
 database::get_revision_certs(revision_id const & id, 
-                            vector< revision<cert> > & ts)
+                             vector< revision<cert> > & ts)
 { 
   vector<cert> certs;
   get_certs(id.inner(), certs, "revision_certs"); 
@@ -1593,7 +1892,7 @@ database::get_revision_certs(revision_id const & id,
 
 void 
 database::get_revision_cert(hexenc<id> const & hash,
-                           revision<cert> & c)
+                            revision<cert> & c)
 {
   results res;
   vector<cert> certs;
@@ -1794,38 +2093,45 @@ void database::complete(selector_type ty,
   // in the limit and then INTERSECTing them all.
 
   string lim = "(";
-  bool first_limit = true;
-  for (vector<pair<selector_type, string> >::const_iterator i = limit.begin();
-       i != limit.end(); ++i)
+  if (limit.empty())
     {
-      if (first_limit)
-        first_limit = false;
-      else
-        lim += " INTERSECT ";
-      
-      if (i->first == commands::sel_ident)
+      lim += "SELECT id FROM revision_certs";
+    }
+  else
+    {
+      bool first_limit = true;
+      for (vector<pair<selector_type, string> >::const_iterator i = limit.begin();
+           i != limit.end(); ++i)
         {
-          lim += "SELECT id FROM revision_certs ";
-          lim += (F("WHERE id GLOB '%s*'") 
-                  % i->second).str();
-        }
-      else if (i->first == commands::sel_unknown)
-        {
-          lim += "SELECT id FROM revision_certs ";
-          lim += (F(" WHERE (name='%s' OR name='%s' OR name='%s')")
-                  % author_cert_name 
-                  % tag_cert_name 
-                  % branch_cert_name).str();
-          lim += (F(" AND unbase64(value) glob '*%s*'")
-                  % i->second).str();     
-        }
-      else
-        {
-          string certname;
-          selector_to_certname(i->first, certname);
-          lim += "SELECT id FROM revision_certs ";
-          lim += (F("WHERE name='%s' AND unbase64(value) glob '*%s*'")
-                  % certname % i->second).str();
+          if (first_limit)
+            first_limit = false;
+          else
+            lim += " INTERSECT ";
+          
+          if (i->first == commands::sel_ident)
+            {
+              lim += "SELECT id FROM revision_certs ";
+              lim += (F("WHERE id GLOB '%s*'") 
+                      % i->second).str();
+            }
+          else if (i->first == commands::sel_unknown)
+            {
+              lim += "SELECT id FROM revision_certs ";
+              lim += (F(" WHERE (name='%s' OR name='%s' OR name='%s')")
+                      % author_cert_name 
+                      % tag_cert_name 
+                      % branch_cert_name).str();
+              lim += (F(" AND unbase64(value) glob '*%s*'")
+                      % i->second).str();     
+            }
+          else
+            {
+              string certname;
+              selector_to_certname(i->first, certname);
+              lim += "SELECT id FROM revision_certs ";
+              lim += (F("WHERE name='%s' AND unbase64(value) glob '*%s*'")
+                      % certname % i->second).str();
+            }
         }
     }
   lim += ")";
@@ -1878,85 +2184,134 @@ void database::complete(selector_type ty,
     }
 }
 
+// epochs 
 
-// merkle nodes
+void 
+database::get_epochs(std::map<cert_value, epoch_data> & epochs)
+{
+  epochs.clear();
+  results res;
+  fetch(res, 2, any_rows, "SELECT branch, epoch FROM branch_epochs");
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    {      
+      base64<cert_value> encoded(idx(*i, 0));
+      cert_value decoded;
+      decode_base64(encoded, decoded);
+      I(epochs.find(decoded) == epochs.end());
+      epochs.insert(std::make_pair(decoded, epoch_data(idx(*i, 1))));
+    }
+}
 
-bool 
-database::merkle_node_exists(string const & type,
-                             utf8 const & collection, 
-                             size_t level,
-                             hexenc<prefix> const & prefix)
+void
+database::get_epoch(epoch_id const & eid,
+                    cert_value & branch, epoch_data & epo)
+{
+  I(epoch_exists(eid));
+  results res;
+  fetch(res, 2, any_rows,
+        "SELECT branch, epoch FROM branch_epochs"
+        " WHERE hash = '%q'",
+        eid.inner()().c_str());
+  I(res.size() == 1);
+  base64<cert_value> encoded(idx(idx(res, 0), 0));
+  decode_base64(encoded, branch);
+  epo = epoch_data(idx(idx(res, 0), 1));
+}
+
+bool
+database::epoch_exists(epoch_id const & eid)
 {
   results res;
-  std::ostringstream oss;
-  oss << level;
-  fetch(res, one_col, one_row, 
-        "SELECT COUNT(*) "
-        "FROM merkle_nodes "
-        "WHERE type = ? "
-        "AND collection = ? "
-        "AND level = ? "
-        "AND prefix = ? ",
-        type.c_str(), 
-        collection().c_str(), 
-        oss.str().c_str(), 
-        prefix().c_str());
-  size_t n_nodes = lexical_cast<size_t>(res[0][0]);
-  I(n_nodes == 0 || n_nodes == 1);
-  return n_nodes == 1;
+  fetch(res, one_col, any_rows,
+        "SELECT hash FROM branch_epochs WHERE hash = '%q'",
+        eid.inner()().c_str());
+  I(res.size() == 1 || res.size() == 0);
+  return res.size() == 1;
 }
 
 void 
-database::get_merkle_node(string const & type,
-                          utf8 const & collection, 
-                          size_t level,
-                          hexenc<prefix> const & prefix,
-                          base64<merkle> & node)
+database::set_epoch(cert_value const & branch, epoch_data const & epo)
 {
+  epoch_id eid;
+  base64<cert_value> encoded;
+  encode_base64(branch, encoded);
+  epoch_hash_code(branch, epo, eid);
+  I(epo.inner()().size() == constants::epochlen);
+  execute("INSERT OR REPLACE INTO branch_epochs VALUES('%q', '%q', '%q')", 
+          eid.inner()().c_str(), encoded().c_str(), epo.inner()().c_str());
+}
+
+void 
+database::clear_epoch(cert_value const & branch)
+{
+  base64<cert_value> encoded;
+  encode_base64(branch, encoded);
+  execute("DELETE FROM branch_epochs WHERE branch = '%q'", encoded().c_str());
+}
+
+// vars
+
+void
+database::get_vars(std::map<var_key, var_value> & vars)
+{
+  vars.clear();
   results res;
-  std::ostringstream oss;
-  oss << level;
-  fetch(res, one_col, one_row, 
-        "SELECT body "
-        "FROM merkle_nodes "
-        "WHERE type = ? "
-        "AND collection = ? "
-        "AND level = ? "
-        "AND prefix = ?",
-        type.c_str(), 
-        collection().c_str(), 
-        oss.str().c_str(), 
-        prefix().c_str());
-  node = res[0][0];
+  fetch(res, 3, any_rows, "SELECT domain, name, value FROM db_vars");
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    {
+      var_domain domain(idx(*i, 0));
+      base64<var_name> name_encoded(idx(*i, 1));
+      var_name name;
+      decode_base64(name_encoded, name);
+      base64<var_value> value_encoded(idx(*i, 2));
+      var_value value;
+      decode_base64(value_encoded, value);
+      I(vars.find(std::make_pair(domain, name)) == vars.end());
+      vars.insert(std::make_pair(std::make_pair(domain, name), value));
+    }
 }
 
-void 
-database::put_merkle_node(string const & type,
-                          utf8 const & collection, 
-                          size_t level,
-                          hexenc<prefix> const & prefix,                                       
-                          base64<merkle> const & node)
+void
+database::get_var(var_key const & key, var_value & value)
 {
-  std::ostringstream oss;
-  oss << level;
-  execute("INSERT OR REPLACE "
-          "INTO merkle_nodes "
-          "VALUES (?, ?, ?, ?, ?)",
-          type.c_str(), 
-          collection().c_str(), 
-          oss.str().c_str(), 
-          prefix().c_str(), 
-          node().c_str());
+  // FIXME: sillyly inefficient.  Doesn't really matter, though.
+  std::map<var_key, var_value> vars;
+  get_vars(vars);
+  std::map<var_key, var_value>::const_iterator i = vars.find(key);
+  I(i != vars.end());
+  value = i->second;
 }
 
-void 
-database::erase_merkle_nodes(string const & type,
-                             utf8 const & collection)
+bool
+database::var_exists(var_key const & key)
 {
-  execute("DELETE FROM merkle_nodes "
-          "WHERE type = ? "
-          "AND collection = ?",
-          type.c_str(), collection().c_str());
+  // FIXME: sillyly inefficient.  Doesn't really matter, though.
+  std::map<var_key, var_value> vars;
+  get_vars(vars);
+  std::map<var_key, var_value>::const_iterator i = vars.find(key);
+  return i != vars.end();
+}
+
+void
+database::set_var(var_key const & key, var_value const & value)
+{
+  base64<var_name> name_encoded;
+  encode_base64(key.second, name_encoded);
+  base64<var_value> value_encoded;
+  encode_base64(value, value_encoded);
+  execute("INSERT OR REPLACE INTO db_vars VALUES('%q', '%q', '%q')",
+          key.first().c_str(),
+          name_encoded().c_str(),
+          value_encoded().c_str());
+}
+
+void
+database::clear_var(var_key const & key)
+{
+  base64<var_name> name_encoded;
+  encode_base64(key.second, name_encoded);
+  execute("DELETE FROM db_vars WHERE domain = '%q' AND name = '%q'",
+          key.first().c_str(), name_encoded().c_str());
 }
 
 // transaction guards

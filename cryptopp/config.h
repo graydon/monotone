@@ -1,6 +1,8 @@
 #ifndef CRYPTOPP_CONFIG_H
 #define CRYPTOPP_CONFIG_H
 
+#include "mt-stdint.h"
+
 // ***************** Important Settings ********************
 
 // define this if running on a big-endian CPU
@@ -53,7 +55,7 @@
 
 // namespace support is now required
 #ifdef NO_NAMESPACE
-#	error namespace support is now required
+#	error namespace support is not required
 #endif
 
 // Define this to workaround a Microsoft CryptoAPI bug where
@@ -94,16 +96,16 @@
 #	define __USE_W32_SOCKETS
 #endif
 
-typedef unsigned char byte;		// put in global namespace to avoid ambiguity with other byte typedefs
+typedef uint8_t byte;		// put in global namespace to avoid ambiguity with other byte typedefs
 
 NAMESPACE_BEGIN(CryptoPP)
 
-typedef unsigned short word16;
-typedef unsigned int word32;
+typedef uint16_t word16;
+typedef uint32_t word32;
 
 #if defined(__GNUC__) || defined(__MWERKS__)
 	#define WORD64_AVAILABLE
-	typedef unsigned long long word64;
+	typedef uint64_t word64;
 	#define W64LIT(x) x##LL
 #elif defined(_MSC_VER) || defined(__BCPLUSPLUS__)
 	#define WORD64_AVAILABLE

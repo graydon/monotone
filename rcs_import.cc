@@ -64,17 +64,36 @@ cvs_key
 
   inline bool similar_enough(cvs_key const & other) const
   {
+    L(F("Checking similarity of %d and %d\n") % id % other.id);
     if (changelog != other.changelog)
       return false;
     if (author != other.author)
       return false;
     if (labs(time - other.time) > constants::cvs_window)
       return false;
+    for (map<file_path,string>::const_iterator it = files.begin(); it!=files.end(); it++)
+    {
+      map<file_path,string>::const_iterator otherit;
+
+L(F("checking %s %s\n") % it->first % it->second);
+      otherit = other.files.find(it->first);
+      if (otherit != other.files.end() && it->second!=otherit->second)
+      {
+        L(F("!similar_enough: %d/%d\n") % id % other.id);
+        return false;
+      }
+else if (otherit != other.files.end())
+{
+L(F("Same file, different version: %s and %s\n") % it->second % otherit->second);
+}
+    }
+    L(F("similar_enough: %d/%d\n") % id % other.id);
     return true;
   }
 
   inline bool operator==(cvs_key const & other) const
   {
+    L(F("Checking equality of %d and %d\n") % id % other.id);
     return branch == other.branch &&
       changelog == other.changelog &&
       author == other.author &&
@@ -99,11 +118,23 @@ cvs_key
        && branch > other.branch);
   }
 
+  inline void add_file(file_path const &file, string const &version)
+  {
+    L(F("Adding file %s version %s to %d\n") % file % version % id);
+    files.insert( make_pair(file, version) );
+  }
+
   cvs_branchname branch;
   cvs_changelog changelog;
   cvs_author author;
   time_t time;
+  map<file_path, string> files; // Maps file to version
+  int id; // Only used for debug output
+
+  static int nextid; // Used to initialise id
 };
+
+int cvs_key::nextid = 0;
 
 struct 
 cvs_file_edge
@@ -362,7 +393,7 @@ construct_version(vector< piece > const & source_lines,
 void 
 rcs_put_raw_file_edge(hexenc<id> const & old_id,
                       hexenc<id> const & new_id,
-                      base64< gzip<delta> > const & del,
+                      delta const & del,
                       database & db)
 {
   if (old_id == new_id)
@@ -388,7 +419,7 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
 void 
 rcs_put_raw_manifest_edge(hexenc<id> const & old_id,
                           hexenc<id> const & new_id,
-                          base64< gzip<delta> > const & del,
+                          delta const & del,
                           database & db)
 {
   if (old_id == new_id)
@@ -427,7 +458,7 @@ insert_into_db(data const & curr_data,
     global_pieces.build_string(next_lines, tmp);
     next_data = tmp;
   }
-  base64< gzip<delta> > del;
+  delta del;
   diff(curr_data, next_data, del);
   calculate_ident(next_data, next_id);
   rcs_put_raw_file_edge(next_id, curr_id, del, db);
@@ -540,7 +571,6 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
     I(r.deltas.find(r.admin.head) != r.deltas.end());
 
     hexenc<id> id; 
-    base64< gzip<data> > packed;
     data dat(r.deltatexts.find(r.admin.head)->second->text);
     calculate_ident(dat, id);
     file_id fid = id;
@@ -549,9 +579,7 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
 
     if (! db.file_version_exists (fid))
       {
-        pack(dat, packed);
-        file_data fdat = packed;
-        db.put_file(fid, fdat); 
+        db.put_file(fid, dat); 
       }
         
     {
@@ -726,6 +754,7 @@ cvs_key::cvs_key(rcs_file const & r, string const & version,
 #endif
     time=mktime(&t);
     L(F("= %i\n") % time);
+    id = nextid++;
   }
 
   string branch_name = find_branch_for_version(r.admin.symbols, 
@@ -772,6 +801,7 @@ cvs_history::find_key_and_state(rcs_file const & r,
   map< cvs_key, shared_ptr<cvs_state> > & substates = stk.top()->substates;
   cvs_key nk(r, version, *this);
 
+  nk.add_file(curr_file, version);
   // key+(window/2) is in the future, key-(window/2) is in the past. the
   // past is considered "greater than" the future in this map, so we take:
   // 
@@ -798,6 +828,9 @@ cvs_history::find_key_and_state(rcs_file const & r,
         {
           key = i->first;
           state = i->second;
+          key.add_file(curr_file, version);
+          substates.erase(i->first);
+          substates.insert(make_pair(key, state));
           return true;
         }
     }
@@ -971,21 +1004,17 @@ public:
 
 
 static void 
-store_edge(revision_id const & rid,
-           revision_set const & rev,
-           manifest_map const & parent,
-           manifest_map const & child,
-           manifest_id const & parent_mid,
-           manifest_id const & child_mid,
-           app_state & app,
-           cvs_history & cvs,
-           unsigned long depth,
-           bool head_manifest_p)
+store_manifest_edge(manifest_map const & parent,
+                    manifest_map const & child,
+                    manifest_id const & parent_mid,
+                    manifest_id const & child_mid,
+                    app_state & app,
+                    cvs_history & cvs,
+                    unsigned long depth,
+                    bool head_manifest_p)
 {
 
-  L(F("storing revision %s\n") % rid);
-  if (! app.db.revision_exists(rid))
-    app.db.put_revision(rid, rev);
+  L(F("storing manifest %s (base %s)\n") % parent_mid % child_mid);
 
   if (depth == 0 && head_manifest_p)
     {
@@ -999,6 +1028,12 @@ store_edge(revision_id const & rid,
           write_manifest_map(child, mdat);
           app.db.put_manifest(child_mid, mdat);
         }
+    }
+
+  if (null_id(parent_mid))
+    {
+      L(F("skipping null manifest\n"));
+      return;
     }
 
   unsigned long p, c;
@@ -1045,7 +1080,7 @@ store_edge(revision_id const & rid,
       // tree version, which can be constructed from the 'newer' child. so
       // the delta should run from child (new) -> parent (old).
       
-      base64< gzip<delta> > del;              
+      delta del;
       diff(child, parent, del);
       rcs_put_raw_manifest_edge(parent_mid.inner(),
                                 child_mid.inner(),
@@ -1064,7 +1099,7 @@ store_edge(revision_id const & rid,
       // from temporally new -> temporally old. so the delta should go from
       // parent (new) -> child (old)
       
-      base64< gzip<delta> > del;              
+      delta del;
       diff(parent, child, del);
       rcs_put_raw_manifest_edge(child_mid.inner(),
                                 parent_mid.inner(),                             
@@ -1141,6 +1176,7 @@ import_states_recursive(ticker & n_edges,
                         manifest_map parent_map,
                         cvs_history & cvs,
                         app_state & app,
+                        vector< pair<cvs_key, revision_set> > & revisions,
                         unsigned long depth);
 
 static void 
@@ -1152,6 +1188,7 @@ import_states_by_branch(ticker & n_edges,
                         manifest_map const & parent_map,
                         cvs_history & cvs,
                         app_state & app,
+                        vector< pair<cvs_key, revision_set> > & revisions,
                         unsigned long depth)
 {
   set<cvs_branchname> branches;
@@ -1167,7 +1204,7 @@ import_states_by_branch(ticker & n_edges,
     {
       import_states_recursive(n_edges, n_branches, state, *branch, 
                               parent_rid, parent_mid, parent_map, 
-                              cvs, app, depth);
+                              cvs, app, revisions, depth);
     }
 }
 
@@ -1181,6 +1218,7 @@ import_states_recursive(ticker & n_edges,
                         manifest_map parent_map,
                         cvs_history & cvs,
                         app_state & app,
+                        vector< pair<cvs_key, revision_set> > & revisions,
                         unsigned long depth)
 {
   if (state->substates.size() > 0)
@@ -1211,30 +1249,29 @@ import_states_recursive(ticker & n_edges,
         continue;
 
       revision_set rev;
-      change_set cs;
-      build_change_set(i->second, parent_map, cvs, cs);
+      boost::shared_ptr<change_set> cs(new change_set());
+      build_change_set(i->second, parent_map, cvs, *cs);
 
-      apply_change_set(cs, child_map);
+      apply_change_set(*cs, child_map);
       calculate_ident(child_map, child_mid);
 
       rev.new_manifest = child_mid;
       rev.edges.insert(make_pair(parent_rid, make_pair(parent_mid, cs)));
       calculate_ident(rev, child_rid);
 
-      store_edge(child_rid, rev, 
-                 parent_map, child_map, 
-                 parent_mid, child_mid, 
-                 app, cvs, depth, i == newest_branch_state);
+      revisions.push_back(make_pair(i->first, rev));
 
-      store_auxiliary_certs(i->first, child_rid, app, cvs);
+      store_manifest_edge(parent_map, child_map, 
+                          parent_mid, child_mid, 
+                          app, cvs, depth, i == newest_branch_state);
 
       if (i->second->substates.size() > 0)
         import_states_by_branch(n_edges, n_branches, i->second, 
                                 child_rid, child_mid, child_map, 
-                                cvs, app, depth+1);
+                                cvs, app, revisions, depth+1);
 
       // now apply same change set to parent_map, making parent_map == child_map
-      apply_change_set(cs, parent_map);
+      apply_change_set(*cs, parent_map);
       parent_mid = child_mid;
       parent_rid = child_rid;
       ++n_edges;
@@ -1245,23 +1282,17 @@ void
 import_cvs_repo(fs::path const & cvsroot, 
                 app_state & app)
 {
+  N(!fs::exists(cvsroot / "CVSROOT"),
+    F("%s appears to be a CVS repository root directory\n"
+      "try importing a module instead, with 'cvs_import %s/<module_name>")
+    % cvsroot.native_directory_string() % cvsroot.native_directory_string());
   
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
     N(guess_default_key(key,app),
       F("no unique private key for cert construction"));
-    N(priv_key_exists(app, key),
-      F("no private key '%s' found in database or get_priv_key hook") % key);
-    // Require the password early on, so that we don't do lots of work
-    // and then die.
-    N(app.db.public_key_exists(key),
-      F("no public key '%s' found in database") % key);
-    base64<rsa_pub_key> pub;
-    app.db.get_key(key, pub);
-    base64< arc4<rsa_priv_key> > priv;
-    load_priv_key(app, key, priv);
-    require_password(app.lua, key, pub, priv);
+    require_password(key, app);
   }
 
   cvs_history cvs;
@@ -1287,6 +1318,7 @@ import_cvs_repo(fs::path const & cvsroot,
   I(cvs.stk.size() == 1);
   shared_ptr<cvs_state> state = cvs.stk.top();
 
+  vector< pair<cvs_key, revision_set> > revisions;
   {
     ticker n_branches("finished branches", "b", 1);
     ticker n_edges("finished edges", "e", 1);
@@ -1295,11 +1327,28 @@ import_cvs_repo(fs::path const & cvsroot,
     manifest_id root_mid;
     revision_id root_rid; 
 
-    calculate_ident(root_manifest, root_mid);
     import_states_by_branch(n_edges, n_branches, state, 
                             root_rid, root_mid,
-                            root_manifest, cvs, app, 0);
+                            root_manifest, cvs, app, revisions, 0);
     P(F("phase 2 (ancestry reconstruction) complete\n"));
+    guard.commit();
+  }
+  
+  {
+    ticker n_revisions("written revisions", "r", 1);
+    ui.set_tick_trailer("");
+    transaction_guard guard(app.db);
+    for (vector< pair<cvs_key, revision_set> >::const_iterator
+           i = revisions.begin(); i != revisions.end(); ++i)
+      {
+        revision_id rid;
+        calculate_ident(i->second, rid);
+        if (! app.db.revision_exists(rid))
+          app.db.put_revision(rid, i->second);
+        store_auxiliary_certs(i->first, rid, app, cvs);
+        ++n_revisions;
+      }
+    P(F("phase 3 (writing revisions) complete\n"));
     guard.commit();
   }
 }

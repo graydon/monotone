@@ -14,19 +14,32 @@ AT_TESTED([monotone])
 
 # some command abbreviations to make life easier
 
-m4_define([MONOTONE], [monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net])
-m4_define([RAW_MONOTONE], [monotone])
-m4_define([SHA1], [monotone identify $1])
+# Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
+m4_define([MONOTONE], [$PREEXECUTE $_MT_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net --root=$_ROOT_DIR])
+m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
+m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
-m4_define([WORKING_REVISION], [monotone cat revision | monotone identify])
+m4_define([WORKING_REVISION], [monotone --norc cat revision | monotone --norc identify])
+m4_define([CANONICALISE], [
+if test "$OSTYPE" == "msys"; then
+  dos2unix -q -o $1
+fi
+])
 
 # the MONOTONE_SETUP macro deploys the standard lua hooks and loads the 
 # standard testing key, which we use for further tests.
 
 m4_define([MONOTONE_SETUP], [
 
+# Absolutify monotone path
+_MT_EXEC=`which monotone`
+
 # Save the PWD so MONOTONE macro can refer back to it
-_ROOT_DIR=$PWD
+_ROOT_DIR=`pwd -P`
+
+# Pick a random port, so running multiple testsuites concurrently on
+# the same machine has a hope of working.
+_PORT=`awk 'BEGIN {srand()} END {printf "%.0f\n", (rand() * 450 + 20050)}'< /dev/null`
 
 AT_DATA(test_keys, [@<:@pubkey tester@test.net@:>@
 MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
@@ -138,6 +151,15 @@ AT_CHECK(mv stdout expout)
 AT_CHECK($2, [], [expout], [ignore])
 ])
 
+# run as CHECK_DIFFERENT_STDOUT(command1, command2)
+m4_define([CHECK_DIFFERENT_STDOUT], [
+AT_CHECK($1, [], [stdout], [ignore])
+AT_CHECK(mv stdout firstout)
+AT_CHECK($2, [], [stdout], [ignore])
+AT_CHECK(mv stdout secondout)
+AT_CHECK(cmp firstout secondout, [1], [ignore], [ignore])
+])
+
 # run as CHECK_SAME_DB_CONTENTS(db1, db2)
 m4_define([CHECK_SAME_DB_CONTENTS], [
 CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
@@ -175,11 +197,13 @@ AT_CHECK(test $PROBE_R_SHA = $2)
 AT_CHECK(test $PROBE_F_SHA = $3)
 ])
 
-# run as REVERT_TO(rsha)
+# run as REVERT_TO(rsha[,branch])
 m4_define([REVERT_TO], [ 
 AT_CHECK(rm -rf MT.old)
 AT_CHECK(mv  MT MT.old)
-AT_CHECK(MONOTONE checkout $1 ., [], [ignore])
+m4_case([$2],
+        [], [AT_CHECK(MONOTONE checkout $1 ., [], [ignore])],
+        [AT_CHECK(MONOTONE --branch=$2 checkout $1 ., [], [ignore])])
 AT_CHECK(mv MT.old/options MT)
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
@@ -200,6 +224,12 @@ AT_DATA($1, $2)
 m4_define([COMMIT], [
 AT_CHECK(MONOTONE --branch=$1 commit --message blah-blah, [], [ignore],
 [ignore])
+])
+
+m4_define([NOT_ON_WIN32], [
+if test "$OSTYPE" == "msys"; then
+  exit 77
+fi
 ])
 
 # Some tests want to include data files.
@@ -226,7 +256,13 @@ fi
 # Poor man's logging:
 AT_CHECK(echo $UNB64_COMMAND, [], [ignore], [ignore])
 ])
-m4_define([UNB64], [AT_CHECK(eval $UNB64_COMMAND <$1 >$2)])
+m4_define([UNB64], [AT_CHECK(
+if test "$OSTYPE" == "msys"; then
+  mimencode -u -o $2 $1
+else
+  eval $UNB64_COMMAND <$1 >$2
+fi
+)])
 
 # Usage: NEED_UNGZ will cancel the test (reporting success) if we
 # can't decode gzipped text.
@@ -243,7 +279,12 @@ fi
 # Poor man's logging:
 AT_CHECK(echo $UNGZ_COMMAND, [], [ignore], [ignore])
 ])
-m4_define([UNGZ], [AT_CHECK(eval $UNGZ_COMMAND <$1 >$2)])
+m4_define([UNGZ], [AT_CHECK(
+eval $UNGZ_COMMAND <$1 >$2
+if test "$OSTYPE" == "msys"; then
+  dos2unix -q -o $2
+fi
+)])
 
 # Usage: NEED_UNGZB64 will XFAIL the test if we can't decode base64'ed
 # gzipped text.
@@ -281,33 +322,56 @@ end
 m4_define([MONOTONE2], MONOTONE --db=test2.db)
 m4_define([MONOTONE3], MONOTONE --db=test3.db)
 
+m4_define([NETSYNC_KILL], [
+if test "$OSTYPE" == "msys"; then
+  ps |awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill " $a);}'
+  # MinGW has no killall.  The weird a=1 thing is to avoid autotest treating $1 as its own parameter
+else
+  killall monotone 2>/dev/null
+fi
+])
+m4_define([NETSYNC_KILLHARD], [
+if test "$OSTYPE" == "msys"; then
+  ps |awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL " $a);}'
+else
+  killall -KILL monotone 2>/dev/null
+fi
+])
+
+# run as NETSYNC_SERVE_N_START(2|3, collection name)
+# note that NETSYNC_SERVE_START is _not_ a special case of this macro.
+m4_define([NETSYNC_SERVE_N_START], [
+NETSYNC_KILLHARD
+MONOTONE --db=test$1.db --rcfile=netsync.lua serve localhost:$_PORT $2 &
+sleep 4
+])
 # run as NETSYNC_SERVE_START(collection name)
 m4_define([NETSYNC_SERVE_START], [
-killall -KILL monotone 2> /dev/null
-MONOTONE --rcfile=netsync.lua serve 127.0.0.1:5555 $1 &
+NETSYNC_KILLHARD
+MONOTONE --rcfile=netsync.lua serve localhost:$_PORT $1 &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
 m4_define([NETSYNC_SERVE_STOP], [
-killall monotone 2> /dev/null
+NETSYNC_KILL
 sleep 1
-killall -KILL monotone 2> /dev/null
+NETSYNC_KILLHARD
 ])
-# run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name)
+# run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name[, expected result])
 # first argument chooses whether to use the 2nd or 3rd database
 m4_define([NETSYNC_CLIENT_N_RUN], [
-AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 127.0.0.1:5555 $3, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 localhost:$_PORT $3, [$4], [ignore], [ignore])
 ])
-# run as NETSYNC_CLIENT_RUN(push|pull|sync, collection name)
+# run as NETSYNC_CLIENT_RUN(push|pull|sync, collection name[, expected result])
 m4_define([NETSYNC_CLIENT_RUN], [
-NETSYNC_CLIENT_N_RUN(2, $1, $2)
+NETSYNC_CLIENT_N_RUN(2, $1, $2, $3)
 ])
 # run as RUN_NETSYNC(push|pull|sync, collection name)
 # It is the second database that is always the client; take this into
 # account when choosing push|pull|sync.
 m4_define([RUN_NETSYNC], [
 NETSYNC_SERVE_START($2)
-NETSYNC_CLIENT_RUN($1, $2)
+NETSYNC_CLIENT_RUN($1, $2, 0)
 NETSYNC_SERVE_STOP
 ])
 
@@ -409,6 +473,7 @@ m4_include(tests/t_subdir_add.at)
 m4_include(tests/t_subdir_drop.at)
 m4_include(tests/t_subdir_revert.at)
 m4_include(tests/t_subdir_rename.at)
+m4_include(tests/t_subdir_attr.at)
 m4_include(tests/t_lca_1.at)
 m4_include(tests/t_update_2.at)
 m4_include(tests/t_rename_dir_cross_level.at)
@@ -416,3 +481,107 @@ m4_include(tests/t_rename_added_in_rename.at)
 m4_include(tests/t_rename_conflict.at)
 m4_include(tests/t_rename_dir_patch.at)
 m4_include(tests/t_delete_dir_patch.at)
+m4_include(tests/t_revert_dirs.at)
+m4_include(tests/t_revert_rename.at)
+m4_include(tests/t_revert_unchanged.at)
+m4_include(tests/t_cdiff.at)
+m4_include(tests/t_no_rename_overwrite.at)
+m4_include(tests/t_checkout_noop_on_fail.at)
+m4_include(tests/t_monotone_agent.at)
+m4_include(tests/t_approval_semantics.at)
+m4_include(tests/t_rebuild.at)
+m4_include(tests/t_lua_privkey.at)
+m4_include(tests/t_i18n_changelog.at)
+m4_include(tests/t_restrictions_warn_on_unknown.at)
+m4_include(tests/t_need_mt_revision.at)
+m4_include(tests/t_update_null_revision.at)
+m4_include(tests/t_branch_checkout.at)
+m4_include(tests/t_load_into_existing.at)
+m4_include(tests/t_automate_version.at)
+m4_include(tests/t_automate_heads.at)
+m4_include(tests/t_merge_normalization_edge_case.at)
+m4_include(tests/t_undo_update.at)
+m4_include(tests/t_change_empty_file.at)
+m4_include(tests/t_largish_file.at)
+m4_include(tests/t_add_intermediate_MT_path.at)
+m4_include(tests/t_merge_3.at)
+m4_include(tests/t_merge_4.at)
+m4_include(tests/t_db_missing.at)
+m4_include(tests/t_database_check.at)
+m4_include(tests/t_add_owndb.at)
+m4_include(tests/t_can_execute.at)
+m4_include(tests/t_diff_binary.at)
+m4_include(tests/t_command_completion.at)
+m4_include(tests/t_merge_rename_file_and_rename_dir.at)
+m4_include(tests/t_diff_restrict.at)
+m4_include(tests/t_cat_file_by_name.at)
+m4_include(tests/t_epoch.at)
+m4_include(tests/t_epoch_server.at)
+m4_include(tests/t_epoch_unidirectional.at)
+m4_include(tests/t_vars.at)
+m4_include(tests/t_netsync_defaults.at)
+m4_include(tests/t_netsync_set_defaults.at)
+m4_include(tests/t_netsync_absorbs.at)
+m4_include(tests/t_netsync_checks_server_key.at)
+m4_include(tests/t_merge_5.at)
+m4_include(tests/t_empty_id_completion.at)
+m4_include(tests/t_empty_path.at)
+m4_include(tests/t_empty_env.at)
+m4_include(tests/t_short_opts.at)
+m4_include(tests/t_netsync_sigpipe.at)
+m4_include(tests/t_setup_creates_log.at)
+m4_include(tests/t_checkout_creates_log.at)
+m4_include(tests/t_commit_log_1.at)
+m4_include(tests/t_commit_log_2.at)
+m4_include(tests/t_dropkey_1.at)
+m4_include(tests/t_dropkey_2.at)
+m4_include(tests/t_rename_attr.at)
+m4_include(tests/t_automate_ancestors.at)
+m4_include(tests/t_automate_descendents.at)
+m4_include(tests/t_automate_erase_ancestors.at)
+m4_include(tests/t_automate_toposort.at)
+m4_include(tests/t_diff_first_rev.at)
+m4_include(tests/t_automate_ancestry_difference.at)
+m4_include(tests/t_automate_leaves.at)
+m4_include(tests/t_log_depth.at)
+m4_include(tests/t_commit_log_3.at)
+m4_include(tests/t_at_sign.at)
+m4_include(tests/t_db_execute.at)
+m4_include(tests/t_sql_unpack.at)
+m4_include(tests/t_final_space.at)
+m4_include(tests/t_inodeprints.at)
+m4_include(tests/t_inodeprints_update.at)
+m4_include(tests/t_ls_known.at)
+m4_include(tests/t_cvsimport_samelog.at)
+m4_include(tests/t_sticky_branch.at)
+m4_include(tests/t_checkout_id_sets_branch.at)
+m4_include(tests/t_netsync_largish_file.at)
+m4_include(tests/t_update_off_branch.at)
+m4_include(tests/t_setup_checkout_modify_new_dir.at)
+m4_include(tests/t_rename_dir_add_dir_with_old_name.at)
+m4_include(tests/t_rcs_import.at)
+m4_include(tests/t_cvsimport2.at)
+m4_include(tests/t_lf_crlf.at)
+m4_include(tests/t_add_vs_commit.at)
+m4_include(tests/t_update_nonexistent.at)
+m4_include(tests/t_override_author_date.at)
+m4_include(tests/t_add_stomp_file.at)
+m4_include(tests/t_database_check_minor.at)
+m4_include(tests/t_db_kill_rev_locally.at)
+m4_include(tests/t_drop_attr.at)
+m4_include(tests/t_attr_drop.at)
+m4_include(tests/t_log_depth_single.at)
+m4_include(tests/t_attr_init.at)
+m4_include(tests/t_add_executable.at)
+m4_include(tests/t_inodeprints_hook.at)
+m4_include(tests/t_bad_packets.at)
+m4_include(tests/t_multiple_heads_msg.at)
+m4_include(tests/t_diff_currev.at)
+m4_include(tests/t_normalized_filenames.at)
+m4_include(tests/t_inventory.at)
+m4_include(tests/t_rename_file_to_dir.at)
+m4_include(tests/t_replace_file_with_dir.at)
+m4_include(tests/t_replace_dir_with_file.at)
+m4_include(tests/t_parents_children.at)
+m4_include(tests/t_automate_graph.at)
+m4_include(tests/t_i18n_file_data.at)

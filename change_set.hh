@@ -25,6 +25,9 @@
 struct
 change_set
 {  
+
+  typedef std::map<file_path, std::pair<file_id, file_id> > delta_map;
+
   struct
   path_rearrangement
   {
@@ -40,14 +43,13 @@ change_set
     bool operator==(path_rearrangement const & other) const;
     bool empty() const;
     void check_sane() const;
+    void check_sane(delta_map const &) const;
 
     bool has_added_file(file_path const & file) const;
     bool has_deleted_file(file_path const & file) const;
     bool has_renamed_file_dst(file_path const & file) const;
     bool has_renamed_file_src(file_path const & file) const;
   };
-
-  typedef std::map<file_path, std::pair<file_id, file_id> > delta_map;
   
   path_rearrangement rearrangement;
   delta_map deltas;
@@ -77,6 +79,12 @@ null_name(file_path const & p)
 
 inline bool 
 null_id(file_id const & i)
+{
+  return i.inner()().empty();
+}
+
+inline bool 
+null_id(manifest_id const & i)
 {
   return i.inner()().empty();
 }
@@ -175,12 +183,16 @@ apply_change_set(manifest_map const & old_man,
                  change_set const & cs,
                  manifest_map & new_man);
 
-// utility for log walker
+// quick, optimistic and destructive versions
+
+void
+apply_path_rearrangement(change_set::path_rearrangement const & pr,
+                         path_set & ps);
+
 file_path
-apply_change_set_inverse(change_set const & cs,
+apply_change_set_inverse(change_set const & cs, 
                          file_path const & file_in_second);
 
-// quick, optimistic and destructive version for rcs importer
 void
 apply_change_set(change_set const & cs,
                  manifest_map & man);

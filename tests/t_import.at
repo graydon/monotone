@@ -6,12 +6,14 @@ MONOTONE_SETUP
 
 AT_DATA(importme, [version 0 of test file
 ])
+AT_CHECK(CANONICALISE(importme))
 
 TSHA=`SHA1(importme)`
 
 AT_CHECK(MONOTONE add importme, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
 AT_CHECK(MONOTONE cat file $TSHA, [], [stdout])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp importme stdout, [], [ignore])
 
 AT_CLEANUP

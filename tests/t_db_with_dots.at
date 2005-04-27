@@ -5,4 +5,11 @@ AT_CHECK(mkdir foo)
 AT_CHECK( (cd foo && MONOTONE --db=../new.db db init), [], [ignore], [ignore])
 AT_CHECK( (cd foo && MONOTONE --db=../new.db ls branches), [], [ignore], [ignore])
 
+# paths in MT/options should be absolute and not contain ..
+
+AT_CHECK(mkdir bar)
+AT_CHECK( (cd bar && MONOTONE --db=../new.db setup .), [], [ignore], [ignore])
+AT_CHECK(grep new.db bar/MT/options, [], [ignore], [ignore])
+AT_CHECK(grep new.db bar/MT/options | grep -v '\.\.', [], [ignore], [ignore])
+
 AT_CLEANUP

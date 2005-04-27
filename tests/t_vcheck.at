@@ -1,4 +1,4 @@
-AT_SETUP([(minor) vcheck])
+AT_SETUP([(todo) vcheck])
 MONOTONE_SETUP
 
 # This test is a bug report.
@@ -19,10 +19,9 @@ AT_XFAIL_IF(true)
 # The original 'vcheck' was ripped out when manifest and file certs
 # were removed, and never quite did the right thing anyway.  (It only
 # applied to manifests, in particular.)  It may be useful to reference
-# the code, though: see, say,
-# 727d28b35f1fcbc91c0183fca2a6cabbe7cf21d7, or t:monotone-0.16.  In
-# particular, mac.hh should be useful.  Note also the section
-# "Accidental collision" in monotone.texi.
+# the code, though: see t:monotone-0.16.  In particular, mac.hh should
+# be useful.  Note also the section "Accidental collision" in
+# monotone.texi.
 
 # There are a few ways to re-add this.  The simplest is probably to
 # have a cert on revisions that contains
@@ -31,9 +30,23 @@ AT_XFAIL_IF(true)
 #   - a MAC of the revision's manifest
 #   - a MAC of each file within that revision.
 # possibly the last should just be "a MAC of every file mentioned in
-# the text of the revision", so people creating mulitple vcheck certs
-# aren't checking the same unchanging files over and over again.  This
-# reduces space overhead, too.
+# that revision's list of diff's", so people creating multiple vcheck
+# certs aren't checking the same unchanging files over and over again.
+# This reduces space overhead, too, since certs's space usage adds up,
+# and does so for project members who aren't worried about SHA1
+# collisions too...
+#
+# an alternative approach would be to contain:
+#   - a salt/nonce
+#   - a MAC of (length-prefixed revision) + (length prefixed manifest)
+#     + (length prefixed versions of each file in the manifest, in manifest order)
+# this is small, and just as safe.  it is rather expensive to create
+# or check, though, since you have to load all that data, so maybe the
+# optimization above where you only hash mentioned files would be
+# good.  OTOH, if you hash everything, then you can use them
+# sparingly, and be sure that the versions so certed really are safe;
+# if you only hash some pieces, you have to cert your entire history
+# in order to "trust" any one snapshot at all.
 
 AT_CHECK(false)
 

@@ -21,9 +21,11 @@ struct ticker
 {
   size_t ticks;
   size_t mod;
+  bool kilocount;
   std::string name;
   std::string shortname;
-  ticker(std::string const & n, std::string const & s, size_t mod = 64);
+  ticker(std::string const & n, std::string const & s, size_t mod = 64, 
+      bool kilocount=false);
   void operator++();
   void operator+=(size_t t);
   ~ticker();
@@ -57,6 +59,12 @@ private:
   std::map<std::string,size_t> last_ticks;
 };
 
+struct tick_write_nothing : virtual public tick_writer
+{
+public:
+  void write_ticks() {}
+};
+
 struct user_interface
 {
 public:
@@ -70,6 +78,7 @@ public:
   void inform(boost::format const & fmt) { inform(fmt.str()); }
   void set_tick_trailer(std::string const & trailer);
   void set_tick_writer(tick_writer * t_writer);
+  void ensure_clean_line();
 
 private:  
   std::set<std::string> issued_warnings;  

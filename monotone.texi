@@ -13,7 +13,8 @@ This manual is for the ``monotone'' distributed version control system.
 This edition documents version @value{VERSION}.
 
 Copyright 2003, 2004 Graydon Hoare
-Copyright 2004 Nathaniel Smith
+Copyright 2004, 2005 Nathaniel Smith
+Copyright 2005 Derek Scherger
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -211,11 +212,11 @@ is just a relationship between two versions, only identified by ID.
 @end ifnotinfo
 
 Version control systems, such as monotone, are principally concerned
-with the storage and management of @i{multiple} versions of some
-files.  One way to store multiple versions of a file is, literally, to
-save a separate @i{complete} copy of the file, every time you make a
+with the storage and management of @i{multiple} versions of some files.
+One way to store multiple versions of a file is, literally, to save a
+separate @i{complete} copy of the file, every time you make a
 change. When necessary, monotone will save complete copies of your
-files in their, compressed with the @command{zlib} compression format.
+files, compressed with the @command{zlib} compression format.
 
 @ifinfo
 @smallexample
@@ -1063,19 +1064,20 @@ usually @emph{disconnected} from the network. They share no storage
 system. Thus when each programmer enters a command, it affects only
 his or her own computer, unless otherwise stated.
 
-Our fictional project will work through the following version control
-tasks. Some tasks must be done by each member of our example team, other
-tasks involve only one member.
+In the following, our fictional project team will work through several
+version control tasks. Some tasks must be done by each member of our
+example team; other tasks involve only one member.
 
 @menu
 * Creating a Database::
 * Generating Keys::
-* Exchanging Keys::
+* Starting a New Project::
 * Adding Files::
 * Committing Work::
 * Network Service::
 * Making Changes::
 * Dealing with a Fork::
+* Branching and Merging::
 @end menu
 
 
@@ -1085,12 +1087,18 @@ tasks involve only one member.
 
 The first step Jim, Abe and Beth each need to perform is to create a
 new database. This is done with the @code{monotone db init} command,
-providing a @option{--db} option to speficy the location of the new
+providing a @option{--db} option to specify the location of the new
 database. Each programmer creates their own database, which will
 reside in their home directory and store all the revisions, files and
 manifests they work on. Monotone requires this step as an explicit
 command, to prevent spurious creation of databases when an invalid
 @option{--db} option is given.
+
+In real life, most people prefer to keep one database for each project
+they work on.  If we followed that convention here in the tutorial,
+though, then all the databases would be called @code{juicebot.db}, and
+that would make things more confusing to read.  So instead, we'll have
+them each name their database after themselves.
 
 Thus Jim issues the command:
 
@@ -1180,7 +1188,7 @@ $ monotone --db=~/jim.db list keys
 @end group
 @end smallexample
 
-The hexidecimal string printed out before each key name is a
+The hexadecimal string printed out before each key name is a
 @emph{fingerprint} of the key, and can be used to verify that the key
 you have stored under a given name is the one you intended to
 store. Monotone will never permit one database to store two keys with
@@ -1191,13 +1199,14 @@ This output shows one private and one public key stored under the name
 been successfully generated and stored. On subsequent commands, Jim
 will need to re-enter our passphrase in order to perform
 security-sensitive tasks. To simplify matters, Jim decides to store
-his security passphrase in his @code{.monotonerc} file, by writing a
+his security passphrase in his @code{monotonerc} file, by writing a
 @emph{hook function} which returns the passphrase, so that he does not
 need to repeatedly be prompted for it:
 
 @smallexample
 @group
-$ cat >~/.monotonerc
+$ mkdir ~/.monotone
+$ cat >>~/.monotone/monotonerc
 function get_passphrase(keypair_id)
   return "jimsekret"
 end
@@ -1205,79 +1214,48 @@ end
 @end group
 @end smallexample
 
+Note that we are appending the new hook to the (possibly existing) file.
+We do this to avoid loosing other changes by mistake; therefore, be sure
+to check that no other @code{get_passphrase} function appears in the
+configuration file.
+
 Abe and Beth do the same, with their secret passphrases.
 
 @page
-@node    Exchanging Keys
-@section Exchanging Keys
+@node    Starting a New Project
+@section Starting a New Project
 
-Jim, Abe and Beth all wish to work with one another, and trust one
-another. For monotone to accept this situation, the team members will
-need to exchange the public parts of their @sc{rsa} key with each
-other. 
+Before he can begin work on the project, Jim needs to create a
+@i{working copy} --- a directory whose contents monotone will keep track
+of.  Often, one works on projects that someone else has started, and
+creates working copies with the @code{checkout} command, which you'll
+learn about later.  Jim is starting a new project, though, so he does
+something a little bit different.  He uses the @code{monotone setup}
+command to create a new working copy.
 
-First, Jim exports his public key:
+This command creates the named directory (if it doesn't already exist),
+and creates the @file{MT} directory within it.  The @file{MT} directory
+is how monotone recognizes that a directory is a working copy, and
+monotone stores some bookkeeping files within it.  For instance, command
+line values for the @option{--db}, @option{--branch} or @option{--key}
+options to the @code{setup} command will be cached in a file called
+@file{MT/options}, so you don't have to keep passing them to monotone
+all the time.
 
-@smallexample
-@group
-$ monotone --db=~/jim.db pubkey jim@@juicebot.co.jp >~/jim.pubkey
-@end group
-@end smallexample
-
-His public key is just a plain block of ASCII text:
-
-@smallexample
-@group
-$ cat ~/jim.pubkey
-[pubkey jim@@juicebot.co.jp]
-MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCbaVff9SF78FiB/1nUdmjbU/TtPyQqe/fW
-CDg7hSg1yY/hWgClXE9FI0bHtjPMIx1kBOig09AkCT7tBXM9z6iGWxTBhSR7D/qsJQGPorOD
-DO7xovIHthMbZZ9FnvyB/BCyiibdWgGT0Gtq94OKdvCRNuT59e5v9L4pBkvajb+IzQIBEQ==
-[end]
-@end group
-@end smallexample
-
-Abe also exports his public key:
+Jim creates his working copy:
 
 @smallexample
 @group
-$ monotone --db=~/abe.db pubkey abe@@juicebot.co.jp >~/abe.pubkey
+/home/jim$ monotone setup juice
+/home/jim$ cd juice
+/home/jim/juice$
 @end group
 @end smallexample
 
-As does Beth:
-
-@smallexample
-@group
-$ monotone --db=~/beth.db pubkey beth@@juicebot.co.jp >~/beth.pubkey
-@end group
-@end smallexample
-
-Then all three team members exchange keys. The keys are not secret,
-but the team members must be relatively certain that they are
-communicating with the person they intend to trust, when exchanging
-keys, and not some malicious person pretending to be a team
-member. Key exchange may involve sending keys over an encrypted
-medium, or meeting in person to exchange physical copies, or any
-number of techniques. All that matters, ultimately, is for each team
-member to receive the keys of the others.
-
-So eventually, after key exchange, Jim has Beth's and Abe's public key
-files in his home directory, along with his own. He tells monotone to
-read the associated key packets into his database:
-
-@smallexample
-@group
-$ monotone --db=~/jim.db read <~/abe.pubkey
-monotone: read 1 packet
-$ monotone --db=~/jim.db read <~/beth.pubkey
-monotone: read 1 packet
-@end group
-@end smallexample
-
-Beth and Abe similarly tell monotone to read read the two new public
-keys they received into their respective databases.
-
+Notice that Jim has changed his current directory to his newly created
+working copy. For the rest of this example we will assume that everyone
+issues all further monotone commands from their working copy
+directories.
 
 @page
 @node    Adding Files
@@ -1479,11 +1457,8 @@ into the database.
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit 'initial checkin of project'
-monotone: beginning commit
-monotone: manifest 2098eddbe833046174de28172a813150a6cbda7b
-monotone: revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
-monotone: branch jp.co.juicebot.jb7
+$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit --message="initial checkin of project"
+monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
@@ -1594,13 +1569,69 @@ yet, it has no descendents.
 @section Network Service
 
 Jim now decides he will make his base revision available to his
-employees. To do this first adds a small amount of extra information
-to his @file{.monotonerc} file, permitting Abe and Beth to access his
-database:
+employees. To do this he gives Abe and Beth permission to access his
+database.  There are two parts to this: first, he has to get a copy of
+each of their public keys; then, he has to tell monotone that the
+holders of those keys are permitted to access his database.
+
+First, Abe exports his public key:
 
 @smallexample
 @group
-$ cat >>~/.monotonerc
+$ monotone --db=~/abe.db pubkey abe@@juicebot.co.jp >~/abe.pubkey
+@end group
+@end smallexample
+
+His public key is just a plain block of ASCII text:
+
+@smallexample
+@group
+$ cat ~/abe.pubkey
+[pubkey abe@@juicebot.co.jp]
+MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCbaVff9SF78FiB/1nUdmjbU/TtPyQqe/fW
+CDg7hSg1yY/hWgClXE9FI0bHtjPMIx1kBOig09AkCT7tBXM9z6iGWxTBhSR7D/qsJQGPorOD
+DO7xovIHthMbZZ9FnvyB/BCyiibdWgGT0Gtq94OKdvCRNuT59e5v9L4pBkvajb+IzQIBEQ==
+[end]
+@end group
+@end smallexample
+
+Beth also exports her public key:
+
+@smallexample
+@group
+$ monotone --db=~/beth.db pubkey beth@@juicebot.co.jp >~/beth.pubkey
+@end group
+@end smallexample
+
+Then Abe and Beth both send their keys to Jim.  The keys are not secret,
+but the team members must be relatively certain that they are
+communicating with the person they intend to trust, when exchanging
+keys, and not some malicious person pretending to be a team
+member. Key exchange may involve sending keys over an encrypted
+medium, or meeting in person to exchange physical copies, or any
+number of techniques. All that matters, ultimately, is that Jim receive
+both Abe and Beth's key.
+
+So eventually, after key exchange, Jim has the public key files in his
+home directory. He tells monotone to read the associated key packets
+into his database:
+
+@smallexample
+@group
+$ monotone --db=~/jim.db read <~/abe.pubkey
+monotone: read 1 packet
+$ monotone --db=~/jim.db read <~/beth.pubkey
+monotone: read 1 packet
+@end group
+@end smallexample
+
+Now Jim's monotone is able to identify Beth and Abe, and he is ready to
+give them permission to access his database.  He does this by adding a
+small amount of extra information to his @file{monotonerc} file:
+
+@smallexample
+@group
+$ cat >>~/.monotone/monotonerc
 function get_netsync_read_permitted (collection, identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
@@ -1658,14 +1689,21 @@ ways, bringing each party up to date with the work of the other.
 At this point Jim is operating as a sort of ``central server'' for the
 company. If Jim wants to, he can leave his server running forever, or
 even put his server on a dedicated computer with better network
-connectivity. But if Jim is ever unable to play this role of ``central
+connectivity.  But if Jim is ever unable to play this role of ``central
 server'', perhaps due to a network failure, either Beth or Abe can run
 the @command{serve} command and provide access for the other to
-@command{sync} with. In fact, each employee can run a server if they
-like, concurrently, to help minimize the risk of service disruption
-from hardware failures. Changes will flow between servers
-automatically as clients access them and trade with one another.
+@command{sync} with.  In fact, each employee can run a server if they
+like, concurrently, to help minimize the risk of service disruption from
+hardware failures.  Changes will flow between servers automatically as
+clients access them and trade with one another.
 
+In practice, most people like to use at least one central server that is
+always running; this way, everyone always knows where to go to get the
+latest changes, and people can push their changes out without first
+calling their friends and making sure that they have their servers
+running.  To make this style of working more convenient, monotone
+remembers the first server you use, and makes that the default for
+future operations.
 
 @page
 @node    Making Changes
@@ -1683,9 +1721,11 @@ $ monotone --db=abe.db --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
-Monotone unpacks the set of files in the head revision's manifest into
-Abe's current directory. Abe then opens up one of the files,
-@file{src/apple.c}, and edits it:
+Monotone unpacks the set of files in the head revision's manifest
+directly into Abe's current directory.  (If he had specified something
+other than @file{.} at the end, monotone would have created that
+directory and unpacked the files into it.)  Abe then opens up one of the
+files, @file{src/apple.c}, and edits it:
 
 @smallexample
 @group
@@ -1728,16 +1768,16 @@ Satisfied with his day's work, Abe decides to commit.
 @smallexample
 @group
 $ monotone commit 
-monotone: beginning commit
-monotone: manifest b33cb337dccf21d6673f462d677a6010b60699d1
-monotone: revision 70decb4b31a8227a629c0e364495286c5c75f979
-monotone: branch jp.co.juicebot.jb7
+monotone: beginning commit on branch 'jp.co.juicebot.jb7'
+monotone: commited revision 70decb4b31a8227a629c0e364495286c5c75f979
 @end group
 @end smallexample
 
-Abe neglected to provide a change log on the command line.  Monotone
-therefore invokes an external ``log message editor'' --- typically an
-editor like @command{vi} --- with an explanation of the changes being
+Abe neglected to provide a @option{--message} option specifying the
+change log on the command line and the file @file{MT/log} is empty
+because he did not document his changes there.  Monotone therefore
+invokes an external ``log message editor'' --- typically an editor
+like @command{vi} --- with an explanation of the changes being
 committed and the opportunity to enter a log message.
 
 @smallexample
@@ -1817,15 +1857,25 @@ $ vi src/banana.c
 @end group
 @end smallexample
 
-She commits her work:
+and logs her changes in @file{MT/log} right away so she does not
+forget what she has done like Abe.
 
 @smallexample
 @group
-$ monotone commit 'polling implementation of src/banana.c'
-monotone: beginning commit
-monotone: manifest eaebc3c558d9e30db6616ef543595a5a64cc6d5f
-monotone: revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
-monotone: branch jp.co.juicebot.jb7
+$ vi MT/log
+* src/banana.c: Added polling implementation
+@end group
+@end smallexample
+
+Later, she commits her work.  Monotone again invokes an external editor
+for her to edit her log message, but this time it fills in the messages
+she's written so far, and she simply checks them over one last time
+before finishing her commit:
+
+@smallexample
+@group
+$ monotone commit
+monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
 @end group
 @end smallexample
@@ -1939,11 +1989,8 @@ She commits her work:
 
 @smallexample
 @group
-$ monotone commit 'interrupt implementation of src/banana.c'
-monotone: beginning commit
-monotone: manifest de81e46acb24b2950effb18572d5166f83af3881
-monotone: revision 8b41b5399a564494993063287a737d26ede3dee4
-monotone: branch jp.co.juicebot.jb7
+$ monotone commit --message="interrupt implementation of src/banana.c"
+monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
 @end smallexample
@@ -1973,7 +2020,7 @@ Thus when Abe commits, he unknowingly creates a fork:
 
 @smallexample
 @group
-$ monotone commit 'interrupt implementation of src/apple.c'
+$ monotone commit --message="interrupt implementation of src/apple.c"
 @end group
 @end smallexample
 
@@ -2015,6 +2062,7 @@ monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
 monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 found
 monotone: trying 3-way merge
 monotone: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+monotone: your working copies have not been updated
 @end group
 @end smallexample
 
@@ -2049,9 +2097,115 @@ Monotone makes very little distinction between a ``pre-commit'' merge
 (an update) and a ``post-commit'' merge. Both sorts of merge use the
 exact same algorithm. The major difference concerns the recoverability
 of the pre-merge state: if you commit your work first, and merge after
-committing, the merge can fail (due to difficulty in a manual merge
-step) and your committed state is still safe. It is therefore
-recommended that you commit your work @emph{first}, before merging.
+committing, then even if the merge somehow fails (due to difficulty in a
+manual merge step, for instance), your committed state is still safe.
+If you update, on the other hand, you are requesting that monotone
+directly modify your working copy, and while monotone will try hard not
+to break anything, this process is inherently more open to error.  It is
+therefore recommended that you commit your work @emph{first}, before
+merging.
+
+If you have previously used another version control system, this may at
+first seem surprising; there are some systems where you are
+@emph{required} to update, and risk the above problems, before you can
+commit.  Monotone, however, was designed with this problem in mind, and
+thus @emph{always} allows you to commit before merging.  A good rule of
+thumb is to only use @command{update} in working copies with no local
+modifications, or when you actually want to work against a different
+base revision (perhaps because finishing your change turns out to
+require some fixes made in another revision, or because you discover
+that you have accidentally started working against a revision that
+contains unrelated bugs, and need to back out to a working revision for
+testing).
+
+@page
+@node    Branching and Merging
+@section Branching and Merging
+
+So by now you're familiar with making changes, sharing them with other
+people, and integrating your changes with their changes.  Sometimes,
+though, you may want to make some changes, and @emph{not} integrate them
+with other people's --- or at least not right away.  One way to do this
+would be to simply never run @command{monotone merge}; but it would
+quickly become confusing to try and keep track of which changes were in
+which revisions.  This is where @emph{branches} are useful.
+
+Continuing our example, suppose that Jim is so impressed by Beth's work
+on banana juice support that he assigns her to work on the JuiceBot 7's
+surprise new feature: muffins.  In the mean time, Abe will continue
+working on the JuiceBot's basic juice-related functions.
+
+The changes required to support muffins are somewhat complicated, and
+Beth is worried that her work might destabilize the program, and
+interfere with Abe's work.  In fact, she isn't even sure her first
+attempt will turn out to be the right approach; she might work on it for
+a while and then decide it was a bad idea, and should be discarded.  For
+all these reasons, she decides that she will work on a branch, and then
+once she is satisfied with the new code, she will merge back onto the
+mainline.
+
+She decides that since main development is in branch
+@code{jp.co.juicebot.jb7}, she will use branch
+@code{jp.co.juicebot.jb7.muffins}.  So, she makes the first few edits to
+the new muffins code, and commits it on a new branch by simply passing
+@option{--branch} to commit:
+
+@smallexample
+@group
+$ monotone commit --branch=jp.co.juicebot.jb7.muffins --message='autobake framework'
+monotone: beginning commit on branch 'jp.co.juicebot.jb7.muffins'
+monotone: committed revision d33caefd61823ecbb605c39ffb84705dec449857
+@end group
+@end smallexample
+
+That's all there is to it --- there is now a
+@code{jp.co.juicebot.jb7.muffins} branch, with her initial checkin on
+it.  She can make further checkins from the same working copy, and they
+will automatically go to the muffins branch; if anyone else wants to
+help her work on muffins, they can check out that branch as usual.
+
+Of course, while Beth is working on the new muffins code, Abe is still
+making fixes to the main line.  Occasionally, Beth wants to integrate
+his latest work into the muffins branch, so that her version doesn't
+fall too far behind.  She does this by using the @command{propagate}
+command:
+
+@smallexample
+@group
+$ monotone propagate jp.co.juicebot.jb7 jp.co.juicebot.jb7.muffins
+monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
+monotone: [source] da003f115752ac6e4750b89aaca9dbba178ac80c
+monotone: [target] d0e5c93bb61e5fd25a0dadf41426f209b73f40af
+monotone: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab found
+@end group
+@end smallexample
+
+The @command{propagate} merges all of the new changes on one branch onto
+another.
+
+When the muffins code is eventually stable and ready to be integrated
+into the main line of development, she simple propagates the other way:
+
+@smallexample
+@group
+$ monotone propagate jp.co.juicebot.jb7.muffins jp.co.juicebot.jb7
+monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
+monotone: [source] 4e48e2c9a3d2ca8a708cb0cc545700544efb5021
+monotone: [target] bd29b2bfd07644ab370f50e0d68f26dcfd3bb4af
+monotone: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 found
+@end group
+@end smallexample
+
+Monotone always records the full history of all merges, and is designed
+to handle an arbitrarily complicated graph of changes.  You can make a
+branch, then branch off from that branch, propagate changes between
+arbitrary branches, and so on; monotone will track all of it, and do
+something sensible for each merge.  Of course, it is still probably a
+good idea to come up with some organization of branches and a plan for
+which should be merged to which other ones.  Monotone may keep track of
+graphs of arbitrary complexity; but, you will have more trouble.
+Whatever arrangement of branches you come up with, though, monotone
+should be able to handle it.
 
 @node    Advanced Uses
 @chapter Advanced Uses
@@ -2064,7 +2218,11 @@ familiarize yourself with its operation.
 
 @menu
 * Selectors::              Selecting revisions by certificate.
+* Restrictions::           Limit working copy changes to specified files.
+* Scripting::              Running monotone from other programs.
+* Inodeprints::            Trading off safety for speed in your working copy.
 * Quality Assurance::      Integrating testing and review with development.
+* Vars::                   Simple per-database configuration information.
 * Reserved Files::         File names with special meanings.
 * Reserved Certs::         Certificate names with special meanings.
 * Naming Conventions::     Choosing appropriate names for keys and branches.
@@ -2079,7 +2237,7 @@ familiarize yourself with its operation.
 @section Selectors
 
 Revisions can be specified on the monotone command line, precisely, by
-entering the entire 40-character hexidecimal @sc{sha1} code. This can
+entering the entire 40-character hexadecimal @sc{sha1} code. This can
 be cumbersome, so monotone also allows a more general syntax called
 ``selectors'' which is less precise but more ``human friendly''. Any
 command which expects a precise revision ID can also accept a selector
@@ -2095,7 +2253,7 @@ Some selector examples are helpful in clarifying the idea:
 Revision IDs beginning with the string @code{a432}
 @item graydon@@pobox.com/2004-04
 Revisions written by @code{graydon@@pobox.com} in April 2004.
-@item 'jrh@@example.org/2 weeks ago'
+@item "jrh@@example.org/2 weeks ago"
 Revisions written by @code{jrh@@example.org} 2 weeks ago.
 @item graydon/net.venge.monotone.win32/yesterday
 Revisions in the @code{net.venge.monotone.win32} branch, written by
@@ -2172,6 +2330,159 @@ are no branches or tags beginning with the string @code{graydon} this
 is just as effective as specifying @code{a:graydon}.
 
 @page
+@node    Restrictions
+@section Restrictions
+
+Several monotone commands accept optional @var{pathname...} arguments in
+order to establish a ``restriction''.  Restrictions are used to limit
+the files and directories these commands examine for changes when
+comparing the working copy to the revision it is based on. Restricting a
+command to a specified set of files or directories simply ignores
+changes to files or directories not included by the restriction.
+
+The following commands all support restrictions using optional
+@var{pathname...} arguments:
+
+@itemize
+@item @command{status}
+@item @command{diff}
+@item @command{revert}
+@item @command{commit}
+@item @command{list known}
+@item @command{list unknown}
+@item @command{list ignored}
+@item @command{list missing}
+@end itemize
+
+Including either the old or new name of a renamed file or directory will
+cause both names to be included in a restriction. If in doubt, the
+@command{status} command can be used to ``test'' a set of pathnames to
+ensure that the expected files are included or excluded by a
+restriction.
+
+One variant of the @command{diff} command takes two @option{--revision}
+options and does not operate on a working copy, but instead compares two
+arbitrary database revisions. In this form the @command{diff} command
+does not currently support a restriction or optional @var{pathname...}
+arguments. This may be changed in the future.
+
+The @command{update} command does not allow for updates to a
+restricted set of files, which may be slightly different than other
+version control systems. Partial updates don't really make sense in
+monotone, as they would leave the working copy based on a revision that
+doesn't exist in the database, starting an entirely new line of
+development.
+
+@heading Subdirectory restrictions
+
+The restrictions facility also allows commands to operate from within a
+subdirectory of the working copy.  By default, the @i{entire working
+copy} is always examined for changes. However, specifying an explicit
+"."  pathname to a command will restrict it to the current subdirectory.
+Note that this is quite different from other version control systems and
+may seem somewhat surprising.
+
+The expectation is that requiring a single "." to restrict to the
+current subdirectory should be simple to use. While the alternative,
+defaulting to restricting to the current subdirectory, would require a
+somewhat complicated ../../.. sequence to remove the restriction and
+operate on the whole tree.
+
+This default was chosen because monotone versions whole project trees
+and generally expects to commit all changes in the working copy as a
+single atomic unit. Other version control systems often version
+individual files or directories and may not support atomic commits at
+all.
+
+When working from within a subdirectory of the working copy all
+paths specified to monotone commands must be relative to the current
+subdirectory.
+
+@heading Finding a working copy
+
+Monotone only stores a single @file{MT} directory at the root of a
+working copy. Because of this, a search is done to find the @file{MT}
+directory in case a command is executed from within a subdirectory of a
+working copy. Before a command is executed, the search for a working
+copy directory is done by traversing parent directories until an
+@file{MT} directory is found or the filesystem root is reached. Upon
+finding an @file{MT} directory, the @file{MT/options} file is read for
+default options. The @option{--root} option may be used to stop the 
+search early, before reaching the root of the physical filesystem.
+
+Many monotone commands don't require a working copy and will simply
+proceed with no default options if no @file{MT} directory is found.
+However, some monotone commands do require a working copy and will fail
+if no @file{MT} directory can be found.
+
+The @command{checkout} and @command{setup} commands create a @i{new
+working copy} and initialize a new @file{MT/options} file based on their
+current option settings.
+
+
+@page
+@node    Scripting
+@section Scripting
+
+People often want to write programs that call monotone --- for example,
+to create a graphical interface to monotone's functionality, or to
+automate some task.  For most programs, if you want to do this sort of
+thing, you just call the command line interface, and do some sort of
+parsing of the output.  Monotone's output, however, is designed for
+humans: it's localized, it tries to prompt the user with helpful
+information depending on their request, if it detects that something
+unusual is happening it may give different output in an attempt to make
+this clear to the user, and so on.  As a result, it is not particularly
+suitable for programs to parse.
+
+Rather than trying to design output to work for both humans and
+computers, and serving neither audience well, we elected to create a
+separate interface to make programmatically extracting information from
+monotone easier.  The command line interface has a command
+@code{automate}; this command has subcommands that print various sorts
+of information on standard output, in simple, consistent, and easily
+parseable form.
+
+For details of this interface, see @ref{Automation}.
+
+@page
+@node    Inodeprints
+@section Inodeprints
+
+Fairly often, in order to accomplish its job, monotone has to look at
+your working copy and figure out what has been changed in it since your
+last commit.  Commands that do this include @command{status},
+@command{diff}, @command{update}, @command{commit}, and others.  There
+are two different techniques it can use to do this.  The default, which
+is sufficient for most projects, is to simply read every file in the
+working copy, compute their @sc{sha1} hash, and compare them to the
+hashes monotone has stored.  This is very safe and reliable, and turns
+out to be fast enough for most projects.  However, on very large
+projects, ones whose source trees are many megabytes in size, it can
+become unacceptably slow.
+
+The other technique, known as @emph{inodeprints}, is designed for this
+situation.  When running in inodeprints mode, monotone does not read the
+whole working copy; rather, it keeps a cache of interesting information
+about each file (its size, its last modification time, and so on), and
+skips reading any file for which these values have not changed.  This is
+inherently somewhat less safe, and, as mentioned above, unnecessary for
+most projects, so it is disabled by default.
+
+If you do determine that it is necessary to use inodeprints with your
+project, it is simple to enable them.  A working copy is in inodeprints
+mode if a file @file{MT/inodeprints} exist.  You can simply create an
+empty file with this name, and the next time you commit or update,
+monotone will automatically populate it with cache information.  You can
+at any point delete this file or truncate it; monotone uses it only as a
+cache and will operate correctly if it is removed.
+
+Normally, instead of enabling this up on a per-working-copy basis, you
+will want to simply define the @code{use_inodeprints} hook to return
+@code{true}; this will automatically enable inodeprints mode in any new
+working copies you create.  See @ref{Hook Reference} for details.
+
+@page
 @node    Quality Assurance
 @section Quality Assurance
 
@@ -2230,6 +2541,59 @@ deemed ``acceptable'' does monotone actually select an update target
 to merge into your working copy. 
 
 For details on these hooks, see the @ref{Hook Reference}.
+
+@page
+@node    Vars
+@section Vars
+
+Every monotone database has a set of @emph{vars} associated with it.
+Vars are simple configuration variables that monotone refers to in some
+circumstances; they are used for configuration that monotone needs to be
+able to modify itself, and that should be per-database (rather than
+per-user or per-working copy, both of which are supported by
+@file{monotonerc} scripts).  Vars are local to a database, and never
+transferred by netsync.
+
+A var is a @emph{name} = @emph{value} pairing inside a @emph{domain}.
+Domains define what the vars inside it are used for; for instance, one
+domain might contain database-global settings, and particular vars
+inside it would define things like that database's default netsync
+server.  Another domain might contain key fingerprints for servers that
+monotone has interacted with in the past, to detect man-in-the-middle
+attacks; the vars inside this domain would map server names to their
+fingerprints.
+
+You can set vars with the @command{set} command, delete them with the
+@command{unset} command, and see them with the @command{ls vars}
+command.  See the documentation for these specific commands for more
+details.
+
+@heading Existing vars
+
+There are several pre-defined domains that monotone knows about:
+
+@table @code
+
+@item database
+Contains database-global configuration information.  Defined names are:
+@table @code
+@item default-server
+The default server for netsync operations to use.  Automatically set
+by first use of netsync.
+@item default-collection
+The default collection for netsync operations to use.  Automatically
+set by first use of netsync.
+@end table
+
+@item known-servers
+Contains key hashes for servers that we have netsynced with in the
+past.  Analogous to @command{ssh}'s @file{known_hosts} file, this is
+needed to detect man-in-the-middle attacks.  Automatically set the first
+time you netsync with any given server.  If that server's key later
+changes, monotone will notice, and refuse to connect until you have run
+@command{monotone unset known-servers @var{server-name}}.
+
+@end table
 
 @page
 @node    Reserved Files
@@ -2296,7 +2660,18 @@ Contains ``sticky'' command-line options such as @option{--db} or
 after checking out a particular working copy.
 @item MT/work
 Contains a list of additions, deletions, and renames which have occurred
-in the current working copy, relative to the base version. 
+in the current working copy, relative to the base version.
+@item MT/log
+Contains log messages to append to the ``changelog'' cert upon
+commit. The user may add content to this file while they work.  Upon a
+successful commit monotone will empty the file making it ready for the
+next edit/commit cycle.
+@item MT/inodeprints
+If this file exists, monotone considers the directory to be in
+@ref{Inodeprints} mode, and uses this file to cache the inodeprints.
+@item MT/debug
+If monotone detects a bug in itself or crashes, then before exiting it
+dumps a log of its recent activity to this file, to aid in debugging.
 @end table
 
 
@@ -2594,13 +2969,13 @@ directory.
 @item
 @smallexample
 @group
-$ cvs commit -m 'log message'
+$ cvs commit -m "log message"
 @end group
 @end smallexample
 @tab
 @smallexample
 @group
-$ monotone commit 'log message'
+$ monotone commit --message="log message"
 $ monotone push www.foo.com com.foo.wobbler
 @end group
 @end smallexample
@@ -2689,7 +3064,7 @@ $ cvs diff -r 1.2 -r 1.4
 @tab
 @smallexample
 @group
-$ monotone diff 3e7db 278df
+$ monotone diff -r 3e7db -r 278df
 @end group
 @end smallexample
 @end multitable
@@ -2771,6 +3146,29 @@ before you drop it. Dropping a file merely removes its entry in the
 manifest of the current revision.
 
 
+@heading Importing a New Project
+
+@multitable @columnfractions .4 .4
+@item
+@smallexample
+@group
+$ cvs import wobbler vendor start
+@end group
+@end smallexample
+@tab
+@smallexample
+@group
+$ monotone --db=/path/to/database.db --branch=com.foo.wobbler setup .
+$ monotone add .
+$ monotone commit
+@end group
+@end smallexample
+@end multitable
+
+The @command{setup} command turns an ordinary directory into a
+monotone working copy.  After that, you can add your files and commit
+them as usual.
+
 @heading Initializing a Repository
 
 @multitable @columnfractions .4 .4
@@ -2809,6 +3207,7 @@ all, commands are grouped into logical categories.
 * Certificate::      Special operations on certificates
 * Packet I/O::       Production or consumption of packets
 * Database::         Manipulation of your database as a whole
+* Automation::       Running monotone from other programs
 * RCS::              Importing legacy version control files
 @end menu
 
@@ -2819,11 +3218,18 @@ all, commands are grouped into logical categories.
 
 @ftable @command
 @item monotone cat file @var{id}
+@itemx monotone cat file @var{rid} @var{path}
+@itemx monotone cat manifest
 @itemx monotone cat manifest @var{id}
+@itemx monotone cat revision
+@itemx monotone cat revision @var{id}
 
-These commands write the contents of a specific file or manifest
-version @var{id} to standard output. They are useful if you wish to
-inspect a version without checking it out into your working copy.
+These commands write the contents of a specific file, manifest or
+revision @var{id} to standard output, or the contents of the file
+@var{path} as it was at revision @var{rid}. They are useful if you wish
+to inspect a version without checking it out into your working copy.  An
+unspecified manifest or revision @var{id} is allowed from within a
+working copy and refers to the current manifest or revision.
 
 @item monotone checkout @var{id} @var{directory}
 @itemx monotone co @var{id} @var{directory}
@@ -2935,9 +3341,9 @@ common ancestor instead of the default ancestor.
 @section Working Copy
 
 @ftable @command
-@item monotone add @var{filename...}
+@item monotone add @var{pathname...}
 This command places ``add'' entries for the paths specified in
-@var{filename...} in the working copy's ``work list''. The work list
+@var{pathname...} in the working copy's ``work list''. The work list
 of your working copy is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal or renaming of files.
@@ -2949,9 +3355,9 @@ which it will then commit to the database. The new revision will have
 any added entries inserted in its manifest.
 
 
-@item monotone drop @var{filename...}
+@item monotone drop @var{pathname...}
 This command places ``drop'' entries for the paths specified in
-@var{filename...} in the working copy's ``work list''. The work list
+@var{pathname...} in the working copy's ``work list''. The work list
 of your working copy is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.
@@ -2978,7 +3384,10 @@ names.
 
 
 @item monotone commit
-@itemx monotone commit @var{logmsg}
+@itemx monotone commit --message=@var{logmsg}
+@itemx monotone commit @var{pathname...}
+@itemx monotone commit --message=@var{logmsg} @var{pathname...} 
+
 This command looks at your working copy, decides which files have
 changed, and saves the changes to your database. It does this by
 loading the revision named in the @file{MT/revision} file, locating
@@ -2993,30 +3402,62 @@ new revision.  Once all these objects are recorded in you database,
 @command{commit} overwrites the @file{MT/revision} file with the new
 revision ID, and deletes the @file{MT/work} file.
 
+Specifying pathnames to @command{commit} restricts the set of changes
+that are visible and results in only a partial commit of the working
+copy. Changes to files not included in the specified set of pathnames
+will be ignored and will remain in the working copy until they are
+included in a future commit. With a partial commit, only the relevant
+entries in the @file{MT/work} file will be removed and other entries
+will remain for future commits.
+
+From within a subdirectory of the working copy the @command{commit}
+command will, by default, include @emph{all changes} in the working
+copy.  Specifying only the pathname "." will restrict @command{commit}
+to files changed within the current subdirectory of the working copy.
+
+The @file{MT/log} file can be edited by the user during their daily work
+to record the changes made to the working copy. When running the
+@command{commit} command without a @var{logmsg} supplied, the contents
+of the @file{MT/log} file will be read and passed to the Lua hook
+@code{edit_comment} as a second parameter named @var{user_log_content}.
+If the commit is successful, the @file{MT/log} file is cleared of
+all content making it ready for another edit/commit cycle.
+
+If a @option{--branch} option is specified, the @command{commit} command
+commits to this branch (creating it if necessary).  The branch becomes
+the new default branch of the working copy.
+
 The @command{commit} command also synthesizes a number of
 certificates, which it attaches to the new manifest version and copies
 into your database:
 @itemize
 @item 
 An @code{author} cert, indicating the person responsible for the changes
-leading to the new revision.
+leading to the new revision.  Normally this defaults to your signing key
+or the return value of the @code{get_author} hook; you may override this
+by passing the @option{--author} option to commit.  This is useful when
+committing a patch on behalf of someone else, or when importing ``by
+hand'' from another version control system.
 @item 
 A @code{branch} cert, indicating the branch the committed revision
 belongs to.
 @item
 A @code{date} cert, indicating when the new revision was created.
+Normally this defaults to the current time; you may override this by
+passing the @option{--date} option to commit.  This is useful when
+importing ``by hand'' from another version control system.
 @item
 A @code{changelog} cert, containing the ``log message'' for these
 changes.  If you provided @var{logmsg} on the command line, this text
 will be used, otherwise @command{commit} will run the Lua hook
-@code{edit_comment (@var{commentary})}, which typically invokes an
-external editor program, in which you can compose a log message for
-the change.
+@code{edit_comment (@var{commentary}, @var{user_log_content})}, which
+typically invokes an external editor program, in which you can compose
+and/or review your log message for the change.
 @end itemize
 
 
 @item monotone revert
-@itemx monotone revert @var{filename...}
+@itemx monotone revert @var{pathname...}
 
 With no files given, this command changes your working copy, so that
 changes you have made since the last checkout or update are discarded.
@@ -3024,9 +3465,15 @@ It does this by changing every file listed in the working copy's base
 manifest to have contents equal to the @sc{sha1} value listed in the
 manifest, and by erasing the @file{MT/work} file.
 
-If files are given as arguments, only those files are affected instead
-of the entirety of your working copy.
+If files or directories are given as arguments, only those files and
+directories are affected instead of the entirety of your working copy.
 
+From within a subdirectory of the working copy the @command{revert}
+command will, by default, revert @emph{all changes} in the working copy.
+Specifying only the pathname "." will restrict @command{revert} to files
+changed within the current subdirectory of the working copy. @i{Caution
+should be used when reverting files to ensure that the correct set of
+files is reverted.}
 
 @item monotone update
 @itemx monotone update @var{revision}
@@ -3063,6 +3510,11 @@ other.  In all cases, the end result will be whatever revision you
 specified, with your local changes (and only your local changes)
 applied.
 
+If a @option{--branch} option is specified, the @command{update} command
+tries to select the revision to update to from this branch.  The branch
+becomes the new default branch of the working copy (even if you also
+specify an explicit @var{revision} argument).
+
 @end ftable
 
 @page
@@ -3071,9 +3523,9 @@ applied.
 
 @ftable @command
 @item monotone serve @var{address} @var{collection}
-@itemx monotone pull @var{address} @var{collection}
-@itemx monotone push @var{address} @var{collection}
-@itemx monotone sync @var{address} @var{collection}
+@itemx monotone pull [@var{address} [@var{collection}]]
+@itemx monotone push [@var{address} [@var{collection}]]
+@itemx monotone sync [@var{address} [@var{collection}]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -3087,10 +3539,10 @@ and a port number. The @var{collection} parameter indicates a set of
 branches to exchange; every branch for which @var{collection} is a
 prefix will be indexed and made available for synchronization.
 
-For example, supposing bob and alice wish to synchronize their
+For example, supposing Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
-branches. Supposing alice's computer has hostname
-@code{alice.someisp.com}, then alice might run:
+branches. Supposing Alice's computer has hostname
+@code{alice.someisp.com}, then Alice might run:
 
 @smallexample
 @group
@@ -3098,7 +3550,7 @@ $ monotone serve alice.someisp.com net.venge.monotone
 @end group
 @end smallexample
 
-And bob might run
+And Bob might run
 
 @smallexample
 @group
@@ -3107,8 +3559,28 @@ $ monotone sync alice.someisp.com net.venge.monotone
 @end smallexample
 
 When the operation completes, all branches beginning with
-@code{net.venge.monotone} will be synchronized between alice and bob's
+@code{net.venge.monotone} will be synchronized between Alice and Bob's
 databases.
+
+The @command{pull}, @command{push}, and @command{sync} commands only
+require you pass @var{address} and @var{collection} the first time you
+use one of them; monotone will memorize this use and in the future
+default to the same server and collection.  For instance, if Bob wants
+to @command{sync} with Alice again, he can simply run:
+
+@smallexample
+@group
+$ monotone sync
+@end group
+@end smallexample
+
+Of course, he can still @command{sync} with other people and other
+branches by passing an address or address plus collection on the command
+line; this will not affect his default affinity for Alice.  If you ever
+do want to change your defaults, use @code{monotone unset database
+default-server} or @code{monotone unset database default-collection};
+these will clear your defaults, and cause them to be reset to the next
+person you netsync with.
 
 @end ftable
 
@@ -3120,6 +3592,7 @@ databases.
 
 @ftable @command
 @item monotone status
+@itemx monotone status @var{pathname...}
 
 This command prints a description of the ``status'' of your working copy.
 In particular, it prints:
@@ -3140,12 +3613,84 @@ A list of logical changes between the base and current manifest
 versions, such as adds, drops, renames, and patches.
 @end itemize
 
+Specifying optional @var{pathname...} arguments to the @command{status}
+command restricts the set of changes that are visible and results in
+only a partial status of the working copy. Changes to files not included
+in the specified set of pathnames will be ignored.
+
+From within a subdirectory of the working copy the @command{status}
+command will, by default, include @emph{all changes} in the working
+copy.  Specifying only the pathname "." will restrict @command{status}
+to files changed within the current subdirectory of the working copy.
+
+@item monotone inventory
+@itemx monotone inventory @var{pathname...}
+
+This command prints the ``inventory'' of files in a working copy. Each
+file is prefixed by a single character indicating the status of the
+associated file.
+@itemize
+@item ! missing file
+@item - dropped file
+@item % renamed file
+@item + added file
+@item # changed file
+@item = unchanged file
+@item ? unknown file
+@item ~ ignored file
+@end itemize
+
+By default the @command{inventory} command lists only ``interesting''
+files, considered to be those with a status of missing, dropped,
+renamed, added or changed. If the @option{--all-files} option is
+specified the @command{inventory} command lists every file in the
+working copy, including those with a status of unchanged, unknown and
+ignored.
+
+Specifying optional @var{pathname...} arguments to the @command{inventory}
+command restricts the set of changes that are visible and results in
+only a partial inventory of the working copy. Changes to files not included
+in the specified set of pathnames will be ignored.
+
+From within a subdirectory of the working copy the @command{inventory}
+command will, by default, include @emph{all changes} in the working
+copy.  Specifying only the pathname "." will restrict @command{inventory}
+to files changed within the current subdirectory of the working copy.
+
+If the @option{--all-files} option is specified the @command{inventory}
+command will list all files in the working copy. However, the changes
+that are will be restricted as described above.
+
+Renamed files have both the old and new name of the file listed on
+the same line in the inventory, in that order.  
+
+A file may be missing and also added or the target of a rename, or it
+may be added or the target of a rename and also changed. The
+@command{inventory} command lists each file only once and in these cases
+the status with the highest priority will be displayed. The missing
+status takes precedence over both added or renamed and these values take
+precedence over the changed status.
+
+Since pathnames may contain spaces, quotes and other ``special''
+characters, the @command{inventory} command lists quoted filenames to
+avoid any ambiguities.
+
+Full support for versioned directories is not yet complete and the
+@command{inventory} command will only list entries for renamed or
+dropped directories. Directory entries will be designated by pathnames
+ending with the "/" character.
+
 @item monotone log
+@itemx monotone log --depth=@var{n}
 @itemx monotone log @var{id}
+@itemx monotone log --depth=@var{n} @var{id}
+@itemx monotone log @var{id} @var{file}
+@itemx monotone log --depth=@var{n} @var{id} @var{file}
 
 This command prints out a log, in reverse-ancestry order, of small
 history summaries.  Each summary contains author, date, changelog and
-comment information associated with a revision. If @var{id} is given,
+comment information associated with a revision.  If @var{n} is given,
+at most that many log entries will be given.  If @var{id} is given,
 the command starts tracing back through history from the revision
 @var{id}, otherwise it starts from the base revision of your working
 copy.
@@ -3174,24 +3719,38 @@ about, in its database, which begin with the 4 hex digits
 completion systems, such as those in @command{bash} and @command{zsh}.
 
 @item monotone diff 
-@itemx monotone diff @var{id}
-@itemx monotone diff @var{id1} @var{id2}
+@itemx monotone diff @var{pathname...}
+@itemx monotone diff --revision=@var{id}
+@itemx monotone diff --revision=@var{id} @var{pathname...}
+@itemx monotone diff --revision=@var{id1} --revision=@var{id2}
+@itemx monotone diff --revision=@var{id1} --revision=@var{id2} @var{pathname...}
 
-These commands print out GNU ``unified diff format'' textual
-difference listings between various manifest versions. If no extra
-arguments are given, @command{monotone diff} will print the
-differences between the base revision and the current revision in your
-working copy. If one argument @var{id} is given, monotone will print
-the differences between the revision @var{id} and the current 
-revision in your working copy. If two arguments @var{id1} and @var{id2}
-are given, monotone will print the differences between revisions
-@var{id1} and @var{id2}, ignoring your working copy.
+These commands print out GNU ``unified diff format'' textual difference
+listings between various manifest versions. With no @option{--revision}
+options, @command{diff} will print the differences between the
+base revision and the current revision in the working copy.
+
+With one @option{--revision} option, @command{diff} will print the
+differences between the revision @var{id} and the current revision in
+the working copy.  With two @option{--revision} options @command{diff}
+will print the differences between revisions @var{id1} and @var{id2},
+ignoring any working copy.
 
 In all cases, monotone will print a textual summary -- identical to
 the summary presented by @command{monotone status} -- of the logical
 differences between revisions in lines proceeding the diff. These
 lines begin with a single hash mark @code{#}, and should be ignored by
 a program processing the diff, such as @command{patch}.
+
+Specifying pathnames to the @command{diff} command restricts the set of
+changes that are visible and results in only a partial diff between
+two revisions. Changes to files not included in the specified set of
+pathnames will be ignored.
+
+From within a subdirectory of the working copy the @command{diff}
+command will, by default, include @emph{all changes} in the working
+copy.  Specifying only the pathname "." will restrict @command{diff}
+to files changed within the current subdirectory of the working copy.
 
 @item monotone list certs @var{id}
 
@@ -3262,23 +3821,78 @@ listed. Otherwise all keys in your database are listed.
 
 This command lists all known branches in your database.
 
+@item monotone list tags
+
+This command lists all known tags in your database.
+
+@item monotone list vars
+@item monotone list vars @var{domain}
+
+This command lists all vars in your database, or all vars within a given
+@var{domain}.  See @ref{Vars} for more information.
+
+@item monotone list known
+@itemx monotone list known @var{pathname...}
+
+This command lists all files which would become part of the manifest of
+the next revision if you comitted your working copy at this point.
+
+Specifying pathnames to the @command{list known} command restricts
+the set of paths that are searched for manifest files. Files not
+included in the specified set of pathnames will not be listed.
+
+From within a subdirectory of the working copy the @command{list
+known} command will, by default, search the entire working copy.
+Specifying only the pathname "." will restrict the search for known
+files to the current subdirectory of the working copy.
+
 @item monotone list unknown
+@itemx monotone list unknown @var{pathname...}
 
 This command lists all files in your working copy that monotone is 
 either ignoring or knows nothing about.
 
-@item monotone list ignored
+Specifying pathnames to the @command{list unknown} command restricts the
+set of paths that are searched for unknown files. Unknown files not
+included in the specified set of pathnames will not be listed.
 
-This command lists all files in your working copy that monotone is 
-intentionally ignoring, due to the results of the @code{ignore_file (@var{filename})} hook.
+From within a subdirectory of the working copy the @command{list
+unknown} command will, by default, search the entire working copy.
+Specifying only the pathname "." will restrict the search for unknown
+files to the current subdirectory of the working copy.
+
+@item monotone list ignored
+@itemx monotone list ignored @var{pathname...}
+
+This command lists all files in your working copy that monotone is
+intentionally ignoring, due to the results of the @code{ignore_file
+(@var{filename})} hook.
+
+Specifying pathnames to the @command{list ignored} command restricts the
+set of paths that are searched for ignored files. Ignored files not
+included in the specified set of pathnames will not be listed.
+
+From within a subdirectory of the working copy the @command{list
+ignored} command will, by default, search the entire working copy.
+Specifying only the pathname "." will restrict the search for ignored
+files to the current subdirectory of the working copy.
 
 @item monotone list missing
+@itemx monotone list missing @var{pathname...}
 
 This command lists all files in your working copy's base manifest,
 which are not present in the working copy.
 
-@end ftable
+Specifying pathnames to the @command{list missing} command restricts the
+set of paths that are searched for missing files. Missing files not
+included in the specified set of pathnames will not be listed.
 
+From within a subdirectory of the working copy the @command{list
+missing} command will, by default, search the entire working copy.
+Specifying only the pathname "." will restrict the search for missing
+files to the current subdirectory of the working copy.
+
+@end ftable
 
 
 @page
@@ -3308,6 +3922,16 @@ automatically use a certain passphrase for a given key using the
 @code{get_passphrase(@var{keypair_id})}, but this significantly
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
+
+@item monotone dropkey @var{keyid}
+
+This command drops the public and/or private key. If both exist, both
+are dropped, if only one exists, it is dropped. This command should
+be used with caution as changes are irreversible without a backup of
+the key(s) that were dropped. Note also that the private key is not
+guaranteed to actually be erased from your database file - if you are
+going to make the database file public, you should use 'db dump'
+and 'db load' to import into a fresh database.
 
 @item monotone chkeypass @var{id}
 
@@ -3436,9 +4060,31 @@ database.
 @section Database
 
 @ftable @command
+@item monotone set @var{domain} @var{name} @var{value}
+
+Associates the value @var{value} to @var{name} in domain @var{domain}.
+See @ref{Vars} for more information.
+
+@item monotone unset @var{domain} @var{name}
+
+Deletes any value associated with @var{name} in @var{domain}.  See
+@ref{Vars} for more information.
+
 @item monotone db init --db=@var{dbfile} 
 
 This command initializes a new monotone database at @file{dbfile}.
+
+@item monotone db rebuild --db=@var{dbfile} 
+
+This command rebuilds the ancestry graph of the monotone database at
+@file{dbfile}, which may become necessary if future bugs in monotone
+allow invalid changesets to be saved in your database.  This command is
+destructive, and you should make a backup copy of your database before
+running it.  It will preserve the contents of each revision, but it will
+lose rename history.  Use it carefully, and only after understanding
+@ref{Rebuilding ancestry}.  Note that it will make your history
+incompatible with that of anyone else working on the same project!  Read
+@ref{Rebuilding ancestry}.
 
 @item monotone db info --db=@var{dbfile} 
 
@@ -3479,6 +4125,168 @@ If you have important information in your database, you should back up
 a copy of it before migrating, in case there is an untrapped error
 during migration.
 
+@item monotone db check --db=@var{dbfile} 
+
+Monotone always works hard to verify the data it creates and accesses.
+For instance, if you have hard drive problems that corrupt data in
+monotone's database, and you attempt to retrieve this data, then
+monotone will notice the problem and stop, instead of silently giving
+you garbage data.
+
+However, it's also nice to notice such problems early, and in rarely
+used parts of history, while you still have backups.  That's what this
+command is for.  It systematically checks the database @file{dbfile} to
+ensure that it is complete and consistent. The following problems are
+detected:
+
+@itemize
+
+@item missing files 
+that are referenced by their @sc{sha1} hash from some manifest but do not
+exist in the database.  This is a serious problem; it means that your
+history is not fully reconstructible.  You can fix it by finding the
+file with the given hash, and loading it into your database with
+@command{fload}.
+
+@item unreferenced files
+that exist in the database but are not referenced by their @sc{sha1}
+hash from any existing manifest.  In itself, this only indicates some
+wasted space, and is not a problem; it's possible it could arise under
+normal use (for instance, in some strange corner cases following an
+incomplete netsync).  It could also arise, though, as a symptom of some
+other more serious problem.
+
+@item missing manifests
+that are referenced by their @sc{sha1} hash from some revision but do
+not exist in the database.  This is a serious problem; it means that
+your history is not fully reconstructible.  You can fix it by finding a
+database containing the manifest, and using @command{mdata} on that
+database to create a manifest data packet, which can be loaded into your
+database with @command{read}.
+
+@item unreferenced manifests
+that exist in the database but are not referenced by their @sc{sha1}
+hash from any existing revision.  In itself, this only indicates some
+wasted space, and is not a problem; it's possible it could arise under
+normal use (for instance, in some strange corner cases following an
+incomplete netsync).  It could also arise, though, as a symptom of some
+other more serious problem.
+
+@item incomplete manifests
+that exist in the database but contain references to files that do not
+exist in the database.  For diagnosis and solution, see ``missing
+files'' above.
+
+@item missing revisions
+that are referenced by their @sc{sha1} hash from some other revision or
+revision cert but do not exist in the database.  This may be a serious
+problem; it may indicate that your history is not fully reconstructible
+(if the reference is from another revision) or that someone is creating
+bogus certs (if the reference is from a cert).  You can fix it by
+finding a database containing the revision, and using @command{rdata} on
+that database to create a revision data packet, which can be loaded into
+your database with @command{read}.
+
+@item incomplete revisions
+that exist in the database but contain references to missing manifests,
+incomplete manifests or missing revisions.  This always occurs with some
+more detailed error; see above.
+
+@item revisions with mismatched parents
+that disagree with the cached revision ancestry on their parent
+revisions.  This may cause problems in using the database, and suggests
+the presence of a bug in monotone's caching system, but does not involve
+data loss.
+
+@item revisions with mismatched children
+that disagree with the cached revision ancestry on their child
+revisions.  This may cause problems in using the database, and suggests
+the presence of a bug in monotone's caching system, but does not involve
+data loss.
+
+@item revisions with bad history
+that exist in the database but fail monotone's normal sanity checks for
+consistent and correct history.  This is a serious problem; it indicates
+that your history record is somehow malformed.  This should not be
+possible, since monotone carefully checks every revision before storing
+it into the database, but if it does, then please request assistance on
+the monotone mailing list.  Fixing this generally means you may lose
+some history --- for instance, renames may be degraded into delete/add
+pairs --- but the actual contents of every revision will still be
+reproducible.
+
+@item revisions with missing certs
+that exist in the database lacking at least one author, branch,
+changelog or date cert. All revisions are expected to have at least one
+of each of these certs.  In itself, this is not necessarily a problem,
+but it is peculiar, and some operations such as netsync may behave
+strangely.
+
+@item revisions with mismatched certs
+that exist in the database with differing numbers of author, changelog
+and date certs. These certs are expected to appear together, as each
+revision committed should have an author, changelog and date associated
+with it.  In itself, this is not a problem, but it is peculiar.  All
+operations should behave normally.
+
+@item missing keys
+that have been used to sign certs but do not exist in the database.  In
+itself, this is not a problem, except that monotone will ignore any
+certs signed by the missing key.  You can fix it by finding a database
+containing the key in question, and using @command{pubkey} on that
+database to create a public key packet, which can be loaded into your
+database with @command{read}.
+
+@item certs with bad signatures
+that exist in the database with signatures that are invalid.  In itself,
+this is not a problem, except that monotone will ignore any such certs.
+You may also wish to find out who is creating certs with bad
+signatures; it may indicate some kind of security attack.
+
+@item certs with unchecked signatures
+that exist in the database but cannot have their signatures checked
+because the signing key is missing.  In itself, this is not a problem,
+except that monotone will ignore any certs signed by the missing key.
+You can fix it by finding a database containing the key in question, and
+using @command{pubkey} on that database to create a public key packet,
+which can be loaded into your database with @command{read}.
+
+@end itemize
+
+This command also verifies that the @sc{sha1} hash of every file, manifest,
+and revision is correct.
+
+@item monotone db kill_rev_locally @var{id}
+
+This command ``kills'', i.e., deletes, a given revision, as well as any
+certs attached to it.  It has an ugly name because it is a dangerous
+command; it permanently and irrecovably deletes historical information
+from your database.  There are a number of caveats:
+@itemize
+@item
+It can only be applied to revisions that have no descendents.  If you
+want to kill a revision that has descendents, you must kill all of the
+descendents first.
+@item
+It only removes the revision from your local database (hence the
+``locally'' in the command name).  If you have already pushed this
+revision out to another database, then the next time you pull from that
+database it may come back again.  There is no way to delete a revision
+from somebody else's database except to ask them to delete it for you.
+@item
+It does not actually delete the revision's files or manifest from your
+database.  If you run this command, and then run @command{db check}, it
+will note that you have an ``unreferenced manifest''.  If you wish to
+eliminate this data for good (and thus free up the space), you may use
+netsync to @command{pull} from your current database into a new
+database; this creates a copy of your old database, without the
+unreferenced data.  However, having this data in your database will not
+cause any problems, and acts as a safety net; if you later realize that
+you do, after all, need to retrieve the data in @var{id}, then
+@command{db check} will let you see which manifest it was, and with some
+work you can extract @var{id}'s data.
+@end itemize
+
 @item monotone db execute @var{sql-statement}
 
 This is a debugging command which executes @var{sql-statement} against
@@ -3490,6 +4298,460 @@ help diagnose failures.
 
 
 @page
+@node    Automation
+@section Automation
+
+This section contains subcommands of the @code{monotone automate}
+command, used for scripting monotone.  All give output on stdout; they
+may also give useful chatter on stderr, including warnings and error
+messages.
+
+
+@ftable @command
+@item monotone automate interface_version
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.0
+
+@item Purpose:
+
+Prints version of the automation interface.  Major number increments
+whenever a backwards incompatible change is made to the @code{automate}
+command; minor number increments whenever any change is made (but is
+reset when major number increments).
+
+@item Sample output:
+
+@verbatim
+1.2
+@end verbatim
+
+@item Output format:
+
+A decimal number, followed by ``.'' (full stop/period), followed by a
+decimal number, followed by a newline, followed by end-of-file.  The
+first decimal number is the major version, the second is the minor version.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+
+@item monotone automate heads [@var{branch}]
+
+@table @strong
+@item Arguments:
+
+One branch name,  @var{branch}. If none is given, the current default branch is used.
+
+@item Added in:
+
+0.0
+
+@item Purpose:
+
+Prints the heads of branch @var{branch}.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one head of the given branch.
+Each line consists of a revision id, in hexadecimal, followed by a
+newline.  The lines are printed in alphabetically sorted order.
+
+@item Error conditions:
+
+If the given branch contains no members or does not exist, then no lines are printed.
+
+@end table
+
+
+@item monotone automate ancestors @var{rev1} [@var{rev2} [...]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints the ancestors of one or more revisions.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one ancestor of the given
+revisions.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+The output does not include @var{rev1}, @var{rev2}, etc., except if
+@var{rev2} is itself an ancestor of @var{rev1}, then @var{rev2} will be
+included in the output.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate parents @var{rev}
+
+@table @strong
+@item Arguments:
+
+One revision id, @var{rev}.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints the immediate parents of a revision.  This is like a
+non-recursive version of @command{automate ancestors}.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one parent of the given
+revision.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+@item Error conditions:
+
+If the given revision @var{rev} does not exist, prints nothing to
+stdout, prints an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate descendents @var{rev1} [@var{rev2} [...]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints the descendents of one or more revisions.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one descendent of the given
+revisions.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+The output does not include @var{rev1}, @var{rev2}, etc., except that if
+@var{rev2} is itself a descendent of @var{rev1}, then @var{rev2} will be
+included in the output.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate children @var{rev}
+
+@table @strong
+@item Arguments:
+
+One revision id, @var{rev}.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints the immediate children of a revision.  This is like a
+non-recursive version of @command{automate descendents}.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one child of the given
+revision.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+@item Error conditions:
+
+If the given revision @var{rev} does not exist, prints nothing to
+stdout, prints an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate graph
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints out the complete ancestry graph of this database.
+
+@item Sample output:
+
+@verbatim
+0c05e8ec9c6af4224672c7cc4c9ef05ae8bdb794
+27ebcae50e1814e35274cb89b5031a423c29f95a 5830984dec5c41d994bcadfeab4bf1bf67747b89
+4e284617c80bec7da03925062a84f715c1b042bd 27ebcae50e1814e35274cb89b5031a423c29f95a 657c756d24fb65213d59f4ae07e117d830dcc95b
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving ancestry information for one revision.
+Each line begins with a revision id.  Following this are zero or more
+space-prefixed revision ids.  Each revision id after the first is a
+parent (in the sense of @command{automate parents}) of the first.  For
+instance, in the above sample output,
+0c05e8ec9c6af4224672c7cc4c9ef05ae8bdb794 is a root node,
+27ebcae50e1814e35274cb89b5031a423c29f95a has one parent, and
+4e284617c80bec7da03925062a84f715c1b042bd has two parents, i.e., is a
+merge node.
+
+The output as a whole is alphabetically sorted by line; additionally,
+the parents within each line are alphabetically sorted.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+
+@item monotone automate erase_ancestors [@var{rev1} [@var{rev2} [...]]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints all arguments, except those that are an ancestor of some other
+argument.  One way to think about this is that it prints the minimal
+elements of the given set, under the ordering imposed by the ``child
+of'' relation.  Another way to think of it is if the arguments formed a
+branch branch, then we would print the heads of that branch.  If there
+are no arguments, prints nothing.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the id of one descendent of the given
+revisions.  Each line consists of a revision id, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate toposort [@var{rev1} [@var{rev2} [...]]]
+
+@table @strong
+@item Arguments:
+
+One or more revision ids, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints all arguments, topologically sorted.  I.e., if @var{rev1} is an
+ancestor of @var{rev2}, then @var{rev1} will appear before @var{rev2} in
+the output; if @var{rev2} is an ancestor of @var{rev1}, then @var{rev2}
+will appear before @var{rev1} in the output; and if neither is an
+ancestor of the other, then they may appear in either order.  If there
+are no arguments, prints nothing.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+A list of revision ids, in hexadecimal, each followed by a newline.
+Revisions are printed in topologically sorted order.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate ancestry_difference @var{new} [@var{old1} [@var{old2} [...]]]
+
+@table @strong
+@item Arguments:
+
+A ``new'' revision id @var{new}, followed by zero or more ``old''
+revision ids @var{old1}, @var{old2}, etc.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints all ancestors of the revision @var{new}, that are not also
+ancestors of one of the old revisions.  For purposes of this command,
+``ancestor'' is an inclusive term; for example, if @var{new} is an
+ancestor of @var{old1}, it will not be printed; but if @var{new} is not
+an ancestor of any of the ``old'' revisions, then it will be.
+Similarly, @var{old1} will never be printed, because it is considered to
+be an ancestor of itself.  The reason for the names is that if @var{new}
+a new revision, and @var{old1}, @var{old2}, etc. are revisions that you
+have processed before, then this command tells you which revisions are
+new since then.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+A list of revision ids, in hexadecimal, each followed by a newline.
+Revisions are printed in topologically sorted order.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
+@item monotone automate leaves
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.1
+
+@item Purpose:
+
+Prints the leaves of the revision graph, i.e. all revision that have no
+children.  This is similar, but not identical to the functionality of
+@command{heads}, which prints every revision in a branch, that has no
+descendents in that branch.  If every revision in the database was in
+the same branch, then they would be identical.  Generally, every leaf is
+the head of some branch, but not every branch head is a leaf.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each a leaf of the revision graph.  Each line
+consists of a revision id, in hexadecimal, followed by a newline.  The
+lines are printed in alphabetically sorted order.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+@end ftable
+
+@page
 @node    RCS
 @section RCS
 
@@ -3499,7 +4761,8 @@ help diagnose failures.
 This command imports all the file versions in each RCS file listed in
 @var{filename...}.  These files should be raw RCS files, ending in
 @code{,v}. Monotone parses them directly and inserts them into your
-database.
+database.  Note that this does not do any revision reconstruction, and
+is only useful for debugging.
 
 @item monotone cvs_import @var{pathname...}
 
@@ -3526,10 +4789,10 @@ function definition which suits your preferences, monotone will
 execute it. This way you can modify how monotone behaves.
 
 You can put new definitions for any of these hook functions in a file
-@file{$HOME/.monotonerc}, or in your working copy in
+@file{$HOME/.monotone/monotonerc}, or in your working copy in
 @file{MT/monotonerc}, both of which will be read every time monotone
 runs. Definitions in @file{MT/monotonerc} shadow (override)
-definitions made in your @file{$HOME/.monotonerc}. You can also tell
+definitions made in your @file{$HOME/.monotone/monotonerc}. You can also tell
 monotone to interpret extra hook functions from any other @var{file}
 using the @option{--rcfile=@var{file}} option; hooks defined in files
 specified on the command-line will shadow hooks from the the automatic
@@ -3594,7 +4857,7 @@ end
 @end group
 @end smallexample
 
-@item edit_comment (@var{commentary})
+@item edit_comment (@var{commentary}, @var{user_log_message})
 
 Returns a log entry for a given set of changes, described in
 @var{commentary}.  The commentary is identical to the output of
@@ -3604,11 +4867,17 @@ change you make. The result is used as the value for a
 @code{changelog} certificate, automatically generated when you commit
 changes.
 
+The contents of @file{MT/log} are read and passed as
+@var{user_log_message}. This allows you do document your changes as
+you proceed instead of waiting until you are ready to commit. Upon
+a successful commit, the contents of @file{MT/log} are erased setting
+the system up for another edit/commit cycle.
+
 The default definition of this hook is:
 
 @smallexample
 @group
-function edit_comment(commentary)
+function edit_comment(commentary, user_log_message)
         local exe = "vi"
         local visual = os.getenv("VISUAL")
         if (visual ~= nil) then exe = visual end
@@ -3618,6 +4887,7 @@ function edit_comment(commentary)
         local tmp, tname = temp_file()
         if (tmp == nil) then return nil end
         commentary = "MT: " .. string.gsub(commentary, "\n", "\nMT: ")
+        tmp:write(user_log_message)
         tmp:write(commentary)
         io.close(tmp)
 
@@ -3676,6 +4946,22 @@ The default definition of this hook is:
 @group
 function non_blocking_rng_ok()
         return true
+end
+@end group
+@end smallexample
+
+
+@item use_inodeprints ()
+
+Returns @code{true} if you want monotone to automatically enable
+@ref{Inodeprints} support in all working copies.  Only affects working
+copies created after you modify the hook.
+
+The default definition of this hook is:
+@smallexample
+@group
+function use_inodeprints()
+        return false
 end
 @end group
 @end smallexample
@@ -4085,7 +5371,7 @@ information on character set conversion, see the section on
 @ref{Internationalization}.
 
 
-@item attr_functions [@var{arrtibute}] (@var{filename}, @var{value})
+@item attr_functions [@var{attribute}] (@var{filename}, @var{value})
 
 This is not a hook function, but a @emph{table} of hook
 functions. Each entry in the table @code{attr_functions}, at table
@@ -4109,7 +5395,32 @@ attribute. Its definition is:
 attr_functions["execute"] = 
   function(filename, value) 
         if (value == "true") then
-                os.execute(string.format("chmod +x %s", filename))
+         make_executable(filename)
+      end
+   end
+@end group
+@end smallexample
+
+@item attr_init_functions [@var{attribute}] (@var{filename})
+
+This is not a hook function, but a @emph{table} of hook
+functions. Each entry in the table @code{attr_init_functions}, at table
+entry @var{attribute}, is a function taking a file name
+@var{filename}. Each function defines the attributes that should be
+stored in @file{.mt-attrs} for the given @var{filename}. This table of
+hook functions is called once for each file during an @dfn{add}.
+
+By default, there is only one entry in this table, for the @code{execute}
+attribute. Its definition is:
+
+@smallexample
+@group
+attr_init_functions["execute"] = 
+   function(filename)
+      if (is_executable(filename)) then 
+        return "true" 
+      else 
+        return nil 
         end
   end
 @end group
@@ -4128,6 +5439,7 @@ specifics of how it works. Most users can ignore these sections.
 @menu
 * Internationalization::   Using monotone in non-English locales.
 * Hash Integrity::         Notes on probability and failure.
+* Rebuilding ancestry::    In case of corruption.
 @end menu
 
 @page
@@ -4357,6 +5669,17 @@ form conversion, as well as having all UTF-8 codes corresponding to
 ASCII control codes (@code{0x0..0x1F} and @code{0x7F}) prohibited in
 the normal form, except @code{0x0A} (ASCII LF).
 
+@heading Var domains
+
+Read on the command line and subject to normal form conversion and IDNA
+encoding as a single component. The invariant is that a var domain
+inside monotone is a single LDH ASCII string.
+
+@heading Var names and values
+
+Var names and values are assumed to be text, and subject to normal form
+conversion.
+
 @heading Key names
 
 Read on the command line and subject to normal form conversion and
@@ -4536,7 +5859,137 @@ communications to a group using the modified version. Monotone is free
 software, and runs atop @code{crypto++}, so it is both legal and
 relatively simple to change it to use some other algorithm.
 
+@page
+@node    Rebuilding ancestry
+@section Rebuilding ancestry
 
+As described in @ref{Historical records}, monotone revisions contain the
+@sc{sha1} hashes of their predecessors, which in turn contain the
+@sc{sha1} hashes of @emph{their} predecessors, and so on until the
+beginning of history.  This means that it is @emph{mathematically
+impossible} to modify the history of a revision, without some way to
+defeat @sc{sha1}.  This is generally a good thing; having immutable
+history is the point of a version control system, after all, and it
+turns out to be very important to building a @emph{distributed} version
+control system like monotone.
+
+It does have one unfortunate consequence, though.  It means that in the
+rare occasion where one @emph{needs} to change a historical revision, it
+will change the @sc{sha1} of that revision, which will change the text
+of its children, which will change their @sc{sha1}s, and so on;
+basically the entire history graph will diverge from that point
+(invalidating all certs in the process).
+
+In practice there are two situations where this might be necessary:
+@itemize
+@item
+bugs: monotone has occasionally allowed nonsense, uninterpretable
+changesets to be generated and stored in the database, and this was not
+detected until further work had been based off of them.
+@item
+advances in crypto: if or when @sc{sha1} is broken, we will need to
+migrate to a different secure hash.
+@end itemize
+Obviously, we hope neither of these things will happen, and we've taken
+lots of precautions against the first recurring; but it is better to be
+prepared.
+
+If either of these events occur, we will provide migration commands
+and explain how to use them for the situation in question; this much
+is necessarily somewhat unpredictable.  In the past we've used the
+@code{db rebuild} command, which extracts the ancestry graph from the
+database and then recreates revisions from the manifests only --- this
+preserves the contents of each snapshot, but breaks tracking of file
+identity across renames --- and then reissues all existing certs that
+you trust, signed with your key.@footnote{Regardless of who originally
+signed the certs, after the rebuild they will be signed by you.  This
+means you should be somewhat careful when rebuilding, but it is
+unavoidable --- if you could sign with other people's keys, that would
+be a rather serious security problem!}
+
+While the @code{db rebuild} command can reconstruct the ancestry graph
+in @emph{your} database, there are practical problems which arise when
+working in a distributed work group.  For example, suppose our group
+consists of the fictional developers Jim and Beth, and they need to
+rebuild their ancestry graph. Jim performs a rebuild, and sends Beth
+an email telling her that he has done so, but the email gets caught by
+Beth's spam filter, she doesn't see it, and she blithely syncs her
+database with Jim's. This creates a problem: Jim and Beth have
+combined the pre-rebuild and post-rebuild databases.  Their databases
+now contain two complete, parallel (but possibly overlapping) copies
+of their project's ancestry.  The ``bad'' old revisions that they were
+trying to get rid of are still there, mixed up with the ``good'' new
+revisions.
+
+To prevent such messy situations, monotone keeps a table of branch
+@dfn{epochs} in each database. An epoch is just a large bit string
+associated with a branch. Initially each branch's epoch is zero. Most
+monotone commands ignore epochs; they are relevant in only two
+circumstances:
+
+@itemize
+
+@item 
+When monotone rebuilds ancestry, it generates a new @emph{random}
+epoch for each branch in the database.
+
+@item 
+When monotone runs netsync between databases, it checks to make sure
+that all branches involved in the synchronization have the same
+epochs. If any epochs differ, the netsync is aborted with no changes
+made to either database. If either side is seeing a branch for the
+first time, it adopts the epoch of the other side.
+
+@end itemize
+
+Thus, when a user rebuilds their ancestry graph, they select a new
+epoch and thus effectively disassociate with the group of colleagues
+they had previously been communicating with. Other members of that
+group can then decide whether to follow the rebuild user into a new
+group --- by pulling the newly rebuilt ancestry --- or to remain
+behind in the old group.
+
+In our example, if Jim and Beth have epochs, Jim's rebuild creates a
+new epoch for their branch, in his database.  This causes monotone to
+reject netsync operations between Jim and Beth; it doesn't matter if
+Beth loses Jim's email. When she tries to synchronize with him, she
+receives an error message indicating that the epoch does not
+match. She must then discuss the matter with Jim and settle on a new
+course of action --- probably pulling Jim's database into a fresh
+database on Beth's end -- before future synchronizations will succeed.
+
+@heading Best practices
+
+The previous section described the theory and rationale behind rebuilds
+and epochs.  Here we discuss the practical consequences of that
+discussion.
+
+If you decide you must rebuild your ancestry graph --- generally by
+announcement of a bug from the monotone developers --- the first thing
+to do is get everyone to sync their changes with the central server;
+if people have unshared changes when the database is rebuilt, they
+will have trouble sharing them afterwards.
+
+Next, the project should pick a designated person to take down the
+netsync server, rebuild their database, and put the server back up
+with the rebuilt ancestry in it.  Everybody else should then pull this
+history into a fresh database, check out again from this database, and
+continue working as normal.
+
+In complicated situations, where people have private branches, or
+ancestries cross organizational boundaries, matters are more complex.
+The basic approach is to do a local rebuild, then after carefully
+examining the new revision IDs to convince yourself that the rebuilt
+graph is the same as the upstream subgraph, use the special @code{db
+epoch} commands to force your local epochs to match the upstream ones.
+(You may also want to do some fiddling with certs, to avoid getting
+duplicate copies of all of them; if this situation ever arises in real
+life we'll figure out how exactly that should work.)  Be very careful
+when doing this; you're explicitly telling monotone to let you shoot
+yourself in the foot, and it will let you.
+
+Fortunately, this process should be extremely rare; with luck, it will
+never happen at all.  But this way we're prepared.
 
 @node    Man Page
 @chapter Man Page
@@ -4629,20 +6082,24 @@ descendant of the disapproved revision.
 Put a symbolic tag cert on a revision.
 @comment TROFF INPUT: .TP
 
-@item @b{testresult} @i{<id> (0|1)}
+@item @b{testresult} @i{<id> (0|1|true|false|yes|no|pass|fail)}
 Indicate a passing or failing test result on a revision.
 @comment TROFF INPUT: .TP
 
 @item @b{agraph}
-Dump revision graph to stdout.
+Dump revision graph to stdout in VCG format.
 @comment TROFF INPUT: .TP
 
-@item @b{diff}
+@item @b{diff} @i{[--revision=<id1> [--revision=<id2>] ] [<pathname>...]}
 Show diffs between working copy and database.
 @comment TROFF INPUT: .TP
 
-@item @b{status}
+@item @b{status} @i{[<pathname>...]}
 Show status of working copy.
+@comment TROFF INPUT: .TP
+
+@item @b{inventory} @i{[<pathname>...]}
+Show inventory of files in working copy.
 @comment TROFF INPUT: .TP
 
 @item @b{log} @i{[id]}
@@ -4657,6 +6114,10 @@ from stdin if no value given on command line.
 
 @item @b{genkey} @i{<keyid>}
 Generate an @sc{rsa} key-pair and store it in the database.
+@comment TROFF INPUT: .TP
+
+@item @b{dropkey} @i{<keyid>}
+Drop a public and/or private key.
 @comment TROFF INPUT: .TP
 
 @item @b{chkeypass} @i{<keyid>}
@@ -4683,20 +6144,26 @@ List all branches.
 List all tags.
 @comment TROFF INPUT: .TP
 
-@item @b{list unknown}
-@itemx @b{ls unknown}
-List files in working directory, but not in revision's manifest or
+@item @b{list known} @i{[<pathname>...]}
+@itemx @b{ls known} @i{[<pathname>...]}
+List files which are in revision's manifest, or are on the work list of
+the working copy.
+@comment TROFF INPUT: .TP
+
+@item @b{list unknown} @i{[<pathname>...]}
+@itemx @b{ls unknown} @i{[<pathname>...]}
+List files in working copy, but not in revision's manifest or
 work list.
 @comment TROFF INPUT: .TP
 
-@item @b{list ignored}
-@itemx @b{ls ignored}
+@item @b{list ignored} @i{[<pathname>...]}
+@itemx @b{ls ignored} @i{[<pathname>...]}
 List files intentionally ignored due to the ignore_file hook.
 @comment TROFF INPUT: .TP
 
-@item @b{list missing}
-@itemx @b{ls missing}
-List files in revision's manifest, but not in working directory.
+@item @b{list missing} @i{[<pathname>...]}
+@itemx @b{ls missing} @i{[<pathname>...]}
+List files in revision's manifest, but not in working copy.
 @comment TROFF INPUT: .TP
 
 @item @b{fdata} @i{<id>}
@@ -4745,7 +6212,8 @@ exist in the database.
 
 @item @b{rcs_import} @i{<rcsfile> ...}
 Import all file versions in RCS files. Does not reconstruct revisions
-across the entire tree.
+across the entire tree.  You do not want this command, it is for
+debugging; use cvs_import.
 @comment TROFF INPUT: .TP
 
 @item @b{checkout} @i{[manifest-id]} @i{<directory>}
@@ -4753,7 +6221,7 @@ across the entire tree.
 Check out tree state from database, into directory.
 @comment TROFF INPUT: .TP
 
-@item @b{cat} @i{(file|manifest|revision) <id>}
+@item @b{cat} @i{(file <id>|manifest [<id>]|revision [<id>])}
 Write file, manifest or revision from database to stdout.
 @comment TROFF INPUT: .TP
 
@@ -4771,11 +6239,6 @@ database, merely adds it to the work list. You must @b{commit} your
 changes in order to copy added files to the database.
 @comment TROFF INPUT: .TP
 
-@item @b{commit} @i{[log message]}
-Commit working copy to database. If a log message is provided on the command
-line, it is used; otherwise a log message editor will be invoked.
-@comment TROFF INPUT: .TP
-
 @item @b{drop} @i{<pathname> [...]}
 Drop files from working copy. Files are not deleted from working copy,
 merely noted as removals in the work list.
@@ -4783,6 +6246,13 @@ merely noted as removals in the work list.
 
 @item @b{rename} @i{<src> <dst>}
 Rename files from @i{<src>} to @i{<dst>} in working copy.
+@comment TROFF INPUT: .TP
+
+@item @b{commit} @i{[--message=log message] [<pathname>...]}
+Commit working copy to database. If a --message @option{option} is
+provided on the command line, it is used; otherwise a log message
+editor will be invoked. If @i{MT/log} exists, it's content will be
+passed to the message editor.
 @comment TROFF INPUT: .TP
 
 @item @b{update} @i{[revision]}
@@ -4804,6 +6274,9 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 @item @b{serve} @i{<host> <collection>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
+
+@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference|leaves)}
+Scripting interface.
 
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}
 Manipulate database state.
@@ -4866,7 +6339,8 @@ Do not evaluate "standard" Lua hooks compiled into @b{monotone}.
 @comment TROFF INPUT: .TP
 
 @item @b{--norc}
-Do not load Lua hooks from user's @b{~/.monotonerc} file.
+Do not load Lua hooks from user's @b{~/.monotone/monotonerc} or the
+working copy's @b{MT/monotonerc} file.
 @comment TROFF INPUT: .TP
 
 @item @b{--rcfile=}@i{<file>}
@@ -4878,6 +6352,7 @@ Use database in @i{file}.
 @comment TROFF INPUT: .TP
 
 @item @b{--key=}@i{<keyid>}
+@itemx @b{-k} @i{<keyid>}
 Use @i{keyid} for operations which produce @sc{rsa}
 signatures. Default is inferred from presence of unique private key in
 database. Can also be customized on a per-branch basis with hook
@@ -4885,6 +6360,7 @@ function @b{get@t{_}branch@t{_}key(branchname)}.
 @comment TROFF INPUT: .TP
 
 @item @b{--branch=}@i{<branchname>}
+@itemx @b{-b} @i{<branchname>}
 Use @i{branchname} for operations on a branch. Default is inferred
 in operations on existing branches (commit, update, etc). 
 @comment TROFF INPUT: .TP
@@ -4895,6 +6371,51 @@ the count for each ticker on one line, incrementing the numbers in
 place, while the @b{dot} method prints a continuous string of
 characters (like some programs provide a progress line of dots).
 The default is @b{count}.
+
+@item @b{--revision=}@i{<id>}
+@itemx @b{-r} @i{<id>}
+Currently this option only applies to the diff command where it may be
+used to compare a working copy with a specific revision or to compare
+two specific revisions. It will likely apply to other commands in the
+future.
+
+@item @b{--message=}@i{<log message>}
+@itemx @b{-m} @i{<log message>}
+Use the given message as the changelog when committing a new revision
+rather than invoking the log message editor. Currently this option only
+applies to the commit command but it may also apply to the comment
+command in the future.
+
+@item @b{--author=}@i{<author email>}
+Use the given author as the value of the "author" cert when committing
+a new revision, rather than the default author.  Useful when
+committing a patch on behalf of someone else, or when importing
+history from another version control system.
+
+@item @b{--date=}@i{<date and time>}
+Use the given given date and time as value of the "date" cert when
+committing a new revision, rather than the current time.  Useful when
+importing history from another version control system.
+
+@item @b{--root=}@i{<root dir>}
+Stop the search for a working copy (containing the @file{MT} directory)
+at the specified root directory rather than at the physical root of the
+filesystem.
+
+@item @b{--xargs=}@i{<file>}
+Inject the contents of the file in place among the command line
+arguments.  This may be useful in case the command line would otherwise
+become too long for your system.  This option can be used more than once
+if needed.
+
+@item @b{-@@} @i{<file>}
+An alias for @b{--xargs=}@i{<file>}.
+
+@item @b{--all-files}
+Include every file available in the working copy in the inventory
+list. By default inventory only lists ``interesting'' files. This option
+is specific to the @command{inventory} command.
+
 @comment TROFF INPUT: .SH ENVIRONMENT
 
 @end table
@@ -4932,7 +6453,7 @@ Used in preference to @b{EDITOR}, if set.
 
 @c ---------------------------------------------------------------------
 @table @code
-@item @b{$HOME/.monotonerc}
+@item @b{$HOME/.monotone/monotonerc}
 A Lua script, used as a customization file.
 @comment TROFF INPUT: .SH NOTES
 
@@ -4948,7 +6469,7 @@ A Lua script, used as a customization file.
 @comment TROFF INPUT: .IP \(bu
 
 Command line options override environment variables and
-settings in Lua scripts (such as @b{.monotonerc})
+settings in Lua scripts (such as @b{monotonerc})
 
 @comment TROFF INPUT: .SH "SEE ALSO"
 

@@ -105,4 +105,32 @@ AT_CHECK(MONOTONE status, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE revert testfile0, [], [stdout])
 AT_CHECK(MONOTONE status, [], [ignore], [ignore])
 
+# check reverting some changes and leaving others
+
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout])
+
+AT_CHECK(cp testfile0 foofile0, [])
+AT_CHECK(cp sub/testfile2 sub/foofile2, [])
+
+AT_CHECK(MONOTONE rename testfile0 foofile0, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename sub/testfile2 sub/foofile2, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep foofile0 stdout, [0], [ignore])
+AT_CHECK(grep foofile2 stdout, [0], [ignore])
+AT_CHECK(test -e MT/work, [], [ignore])
+
+AT_CHECK(MONOTONE revert sub/foofile2, [], [stdout])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep foofile0 stdout, [0], [ignore])
+AT_CHECK(grep foofile2 stdout, [1], [ignore])
+AT_CHECK(test -e MT/work, [], [ignore])
+
+AT_CHECK(MONOTONE revert foofile0, [], [stdout])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep foofile0 stdout, [1], [ignore])
+AT_CHECK(grep foofile2 stdout, [1], [ignore])
+AT_CHECK(test ! -e MT/work, [], [ignore])
+
 AT_CLEANUP

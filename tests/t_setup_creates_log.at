@@ -1,0 +1,9 @@
+# -*- Autoconf -*-
+
+AT_SETUP([setup creates MT/log])
+
+MONOTONE_SETUP
+
+AT_CHECK(test -f MT/log -a ! -s MT/log)
+        
+AT_CLEANUP

@@ -669,6 +669,51 @@ migrate_client_to_revisions(sqlite3 * sql,
 }
 
 
+static bool 
+migrate_client_to_epochs(sqlite3 * sql, 
+                         char ** errmsg)
+{
+  int res;
+
+  res = sqlite3_exec_printf(sql, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+
+  res = sqlite3_exec_printf(sql, 
+
+                            "CREATE TABLE branch_epochs\n"
+                            "(\n"
+                            "hash not null unique,         -- hash of remaining fields separated by \":\"\n"
+                            "branch not null unique,       -- joins with revision_certs.value\n"
+                            "epoch not null                -- random hex-encoded id\n"
+                            ");", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  return true;
+}
+
+static bool
+migrate_client_to_vars(sqlite3 * sql,
+                       char ** errmsg)
+{
+  int res;
+  
+  res = sqlite3_exec_printf(sql,
+                            "CREATE TABLE db_vars\n"
+                            "(\n"
+                            "domain not null,      -- scope of application of a var\n"
+                            "name not null,        -- var key\n"
+                            "value not null,       -- var value\n"
+                            "unique(domain, name)\n"
+                            ");", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  return true;
+}
+
 void 
 migrate_monotone_schema(sqlite3 *sql)
 {
@@ -684,11 +729,17 @@ migrate_monotone_schema(sqlite3 *sql)
   m.add("8929e54f40bf4d3b4aea8b037d2c9263e82abdf4",
         &migrate_client_to_revisions);
 
+  m.add("c1e86588e11ad07fa53e5d294edc043ce1d4005a",
+        &migrate_client_to_epochs);
+
+  m.add("40369a7bda66463c5785d160819ab6398b9d44f4",
+        &migrate_client_to_vars);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "c1e86588e11ad07fa53e5d294edc043ce1d4005a");
+  m.migrate(sql, "e372b508bea9b991816d1c74680f7ae10d2a6d94");
   
   if (sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
     throw runtime_error("error vacuuming after migration");

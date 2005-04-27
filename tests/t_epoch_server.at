@@ -1,0 +1,63 @@
+AT_SETUP([server aborbs and checks epochs])
+AT_KEYWORDS([netsync])
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+AT_DATA(testfile, [some data
+])
+AT_CHECK(MONOTONE2 add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 commit --message=foo --branch=testbranch, [], [ignore], [ignore])
+VER0=`BASE_REVISION`
+
+RUN_NETSYNC(push, testbranch)
+
+# check that the first db got our epoch
+CHECK_SAME_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
+
+# check that epochs are only sent for netsync'ed branches
+AT_CHECK(MONOTONE list epochs, [], [stdout], [ignore])
+AT_CHECK(mv stdout orig-epochs)
+AT_DATA(otherfile, [other data
+])
+AT_CHECK(MONOTONE2 add otherfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 commit --message=foo --branch=otherbranch, [], [ignore], [ignore])
+# Run an irrelevant netsync, just to force epochs to be regenerated
+NETSYNC_SERVE_N_START(2, otherbranch)
+NETSYNC_CLIENT_N_RUN(3, sync, otherbranch, 0)
+NETSYNC_SERVE_STOP
+# Run the real netsync
+RUN_NETSYNC(push, testbranch)
+AT_CHECK(MONOTONE list epochs, [], [stdout], [ignore])
+AT_CHECK(mv stdout new-epochs)
+AT_CHECK(cmp orig-epochs new-epochs)
+CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
+
+AT_DATA(testfile, [new version of data
+])
+AT_CHECK(MONOTONE2 commit --message=foo --branch=testbranch, [], [ignore], [ignore])
+VER1=`BASE_REVISION`
+
+# change the epochs in the second db
+AT_CHECK(MONOTONE2 db rebuild, [], [ignore], [ignore])
+
+# this should *fail* to sync 
+NETSYNC_SERVE_START(testbranch)
+# This should probably expect an exit value of 1, but ATM the netsync
+# client doesn't report errors in its exit value.
+#NETSYNC_CLIENT_RUN(pull, testbranch, 1)
+NETSYNC_CLIENT_RUN(pull, testbranch, 0)
+NETSYNC_SERVE_STOP
+
+AT_CHECK(MONOTONE list epochs, [], [stdout])
+AT_CHECK(grep testbranch stdout, [0], [ignore])
+AT_CHECK(MONOTONE2 list epochs, [], [stdout])
+AT_CHECK(grep testbranch stdout, [0], [ignore])
+CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
+
+# double-check that the revisions didn't change (because otherwise our
+# next test is unreliable):
+AT_CHECK(MONOTONE2 cat revision $VER1, [], [ignore], [ignore])
+# confirm, we did not get the new revision
+AT_CHECK(MONOTONE cat revision $VER1, [1], [ignore], [ignore])
+
+AT_CLEANUP

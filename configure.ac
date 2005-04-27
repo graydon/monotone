@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.16, graydon@pobox.com)
+AC_INIT(monotone, 0.18, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -41,7 +41,6 @@ AC_LANG_POP()
 # Checks for idna stuff
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h errno.h)
-AX_CREATE_STDINT_H(idna/idn-int.h)
 AC_CACHE_CHECK([if setlocale() and nl_langinfo() works],
 	ac_cv_locale_works, [
 	AC_TRY_RUN([
@@ -94,21 +93,32 @@ AC_SUBST(BOOST_SUFFIX)
 
 # Now check for Boost libraries proper.
 
-LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $OLD_LIBS"
-AC_MSG_CHECKING(libboost_unit_test_framework library)
-AC_LINK_IFELSE([AC_LANG_SOURCE([[
+found=no
+suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -sunpro"}
+for BOOST_SUFFIX in ${suffixes}
+do
+    test "x${BOOST_SUFFIX}" = "xnone" && BOOST_SUFFIX=
+    LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $OLD_LIBS"
+    AC_MSG_CHECKING(for the libboost_unit_test_framework${BOOST_SUFFIX} library)
+    AC_LINK_IFELSE([AC_LANG_SOURCE([[
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/test_tools.hpp>
 using boost::unit_test_framework::test_suite;
 test_suite * init_unit_test_suite(int argc, char * argv[]) 
 { return NULL; }
 ]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_unit_test_framework failure])])
-LIBS=$OLD_LIBS
+     [AC_MSG_RESULT([yes])
+      found=yes],
+     [AC_MSG_RESULT([no])])
+    LIBS=$OLD_LIBS
+    test "x${found}" = "xyes" && break
+done
+if test "x${found}" = "xno"; then
+    AC_MSG_FAILURE([libboost_unit_test_framework failure])
+fi
 
 LIBS="-lboost_filesystem${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(libboost_filesystem library)
+AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/filesystem/path.hpp>
   #include <boost/filesystem/operations.hpp>
@@ -119,7 +129,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_FAILURE([libboost_filesystem failure])])
 
 LIBS="-lboost_date_time${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(libboost_date_time library)
+AC_MSG_CHECKING(for the libboost_date_time${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/date_time/posix_time/posix_time.hpp>
   #include <iostream>
@@ -131,7 +141,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 
 
 LIBS="-lboost_regex${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(libboost_regex library)
+AC_MSG_CHECKING(for the libboost_regex${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/regex.hpp>
   using namespace boost; 
@@ -157,6 +167,10 @@ then
    AC_MSG_CHECKING([location of static boost libraries])
    for i in ${static_boost_prefixes}
    do
+	if test -e $i/lib64/libboost_regex${BOOST_SUFFIX}.a
+	then
+		BOOST_LIBDIR=$i/lib64
+	fi
 	if test -e $i/lib/libboost_regex${BOOST_SUFFIX}.a 
 	then
 		BOOST_LIBDIR=$i/lib
@@ -233,7 +247,6 @@ AM_CONDITIONAL(MISSING_INET6, test x"${ac_inet6}" = x"no")
 # simple library checks 
 AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))
 AH_TEMPLATE([USE_DLOPEN], [For LUA: use dlopen for loadlib])
-AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_FAILURE([popt is required]))
 AC_SEARCH_LIBS([inet_aton], [resolv])
 AC_SEARCH_LIBS([accept], [socket])
 AC_SEARCH_LIBS([inet_ntoa], [nsl])
@@ -283,12 +296,62 @@ fi
 
 AM_CONDITIONAL(BUNDLED_SQLITE, test "x$bundled_sqlite" != "xno")
 
+# Now let the user specify whether he wants large file support or not in
+# sqlite.
+AC_ARG_ENABLE([large-file],
+   AS_HELP_STRING(
+      [--disable-large-file],
+      [Disable large file support in builtin sqlite]
+   ), , enable_large_file=yes
+)
+
+if test "x$enable_large_file" = "xno"; then
+   if test "x$bundled_sqlite" = "xno"; then
+      AC_MSG_WARN(--disable-large-file has no effect when using the bundled sqlite)
+   else
+      SQLITE_CPPFLAGS="$SQLITE_CPPFLAGS -DSQLITE_DISABLE_LFS"
+   fi
+fi
+AC_SUBST(SQLITE_CPPFLAGS)
+
+##########
+# Checks for bundled popt.  We use it unconditionally, because the external
+# one has serious bugs that we can't live with.  Maybe some time in the
+# future...
+# The following was simply taken from the configure.in that comes with popt.
+#AC_LANG_PUSH(C)
+AC_CHECK_HEADERS([alloca.h float.h libintl.h mcheck.h])
+AC_MSG_CHECKING(for /usr/ucblib in LIBS)
+if test -d /usr/ucblib ; then
+	if test "$build" = "mips-sni-sysv4" ; then
+		addlib /usr/ccs/lib -lc
+	fi
+
+	addlib /usr/ucblib
+	
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_CHECK_FUNCS(strerror mtrace getuid geteuid)
+AC_CHECK_FUNC(setreuid, [], [
+    AC_CHECK_LIB(ucb, setreuid, [if echo $LIBS | grep -- -lucb >/dev/null ;then :; else LIBS="$LIBS -lc -lucb" USEUCB=y;fi])
+])
+
+POPT_SOURCE_PATH="`pwd`"
+AC_DEFINE_UNQUOTED(POPT_SOURCE_PATH, "$POPT_SOURCE_PATH",
+	[Full path to popt top_sourcedir.])
+AC_SUBST(POPT_SOURCE_PATH)
+#AC_LANG_POP()
+
+
 ##########
 
 
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h sys/time.h termios.h unistd.h])
+AX_CREATE_STDINT_H(mt-stdint.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
@@ -297,6 +360,11 @@ AC_C_INLINE
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_HAVE_INADDR_NONE
+
+AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec, struct stat.st_mtim.tv_nsec])
+AC_CHECK_MEMBERS([struct stat.st_ctimespec.tv_nsec, struct stat.st_mtimespec.tv_nsec])
+AC_CHECK_MEMBERS([struct stat.st_ctimensec, struct stat.st_mtimensec])
+
 
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL

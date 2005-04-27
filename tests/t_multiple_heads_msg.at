@@ -1,0 +1,87 @@
+# -*- Autoconf -*-
+
+AT_SETUP([commit/update multiple heads message])
+
+MONOTONE_SETUP
+
+# Create a single revision in branch1
+# 
+#          root (branch1)
+#          
+# branch1 heads: root
+
+AT_DATA(f, [base data
+])
+
+AT_CHECK(MONOTONE add f, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [stderr])
+AT_CHECK(grep -q 'creates divergence' stderr, [1])
+ROOT_R_SHA=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(grep -q $ROOT_R_SHA stdout)
+
+# Create a child
+# 
+#          root (branch1)
+#          /
+#    child1 (branch1)
+#
+# branch1 heads: child1
+
+AT_DATA(f, [child1 data
+])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [stderr])
+AT_CHECK(grep -q 'creates divergence' stderr, [1])
+CHILD1_R_SHA=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD1_R_SHA stdout)
+
+# Create another child
+# 
+#          root (branch1)
+#          /           \
+#    child1 (branch1)   child2 (branch1)
+#
+# branch1 heads: child1, child2
+
+REVERT_TO($ROOT_R_SHA)
+AT_DATA(f, [child2 data
+])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [stderr])
+CHILD2_R_SHA=`BASE_REVISION`
+AT_CHECK(grep -q 'this revision creates divergence' stderr, [])
+
+AT_CHECK(MONOTONE --branch=branch1 update, [], [ignore], [stderr])
+AT_CHECK(grep -q 'has multiple heads' stderr, [])
+        
+# Create a new branch
+# 
+#          root (branch1)
+#          /           \
+#    child1 (branch1)   child2 (branch1)
+#        /
+#     new1 (branch2)
+#
+# branch1 heads: child1, child2
+# branch2 heads: new2
+
+REVERT_TO($CHILD1_R_SHA)
+
+AT_DATA(f, [new1 data
+])
+AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [stderr])
+NEW1_R_SHA=`BASE_REVISION`
+AT_CHECK(grep -q 'this revision creates divergence' stderr, [1])
+
+REVERT_TO($CHILD2_R_SHA)
+
+AT_DATA(f, [new2 data
+])
+AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [stderr])
+NEW2_R_SHA=`BASE_REVISION`
+AT_CHECK(grep -q 'this revision creates divergence' stderr, [])
+
+AT_CLEANUP

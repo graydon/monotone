@@ -19,27 +19,30 @@ monotone\fP command, or online).
 \fBcomment\fP \fI<id>\fP
 Write a comment cert for a revision.
 .TP
-\fBapprove\fP \fI<id1> <id2>\fP
+\fBapprove\fP \fI<id>\fP
 Make a "branch" cert approving of a revision's membership in a branch.
 .TP
-\fBdisapprove\fP \fI<id1> <id2>\fP
+\fBdisapprove\fP \fI<id1>\fP
 Disapprove of a revision, committing the inverse changes as as a
 descendant of the disapproved revision.
 .TP
 \fBtag\fP \fI<id> <tagname>\fP
 Put a symbolic tag cert on a revision.
 .TP
-\fBtestresult\fP \fI<id> (1|0)\fP
+\fBtestresult\fP \fI<id> (0|1|true|false|yes|no|pass|fail)\fP
 Indicate a passing or failing test result on a revision.
 .TP
 \fBagraph\fP
-Dump revision graph to stdout.
+Dump revision graph to stdout in VCG format.
 .TP
-\fBdiff\fP
+\fBdiff \fI[--revision=<id1> [--revision=<id2>] ] [<pathname>...]\fP
 Show diffs between working copy and database.
 .TP
-\fBstatus\fP
+\fBstatus \fI[<pathname>...]\fP
 Show status of working copy.
+.TP
+\fBinventory \fI[<pathname>...]\fP
+Show inventory of files in the working copy.
 .TP
 \fBlog\fP \fI[id] \fP
 Show historical log of revisions, starting from working copy
@@ -51,6 +54,9 @@ from stdin if no value given on command line.
 .TP
 \fBgenkey\fP \fI<keyid>\fP
 Generate an RSA key-pair and store it in the database.
+.TP
+\chkeypass\fP \fI<keyid>\fP
+Change passphrase of the private half of a key.
 .TP
 \fBlist certs\fP \fI<id>\fP
 List certs associated with revision.
@@ -64,14 +70,17 @@ List all branches.
 \fBlist tags\fP
 List all tags.
 .TP
-\fBlist unknown\fP
+\fBlist vars \fI[<domain>]\fP
+List all vars (possibly limited by domain).
+.TP
+\fBlist unknown \fI[<pathname...]\fP
 List files in working directory, but not in revision's manifest or
 work list.
 .TP
-\fBlist ignored\fP
+\fBlist ignored \fI[<pathname...]\fP
 List files intentionally ignored due to the ignore_file hook.
 .TP
-\fBlist missing\fP
+\fBlist missing \fI[<pathname...]\fP
 List files in revision's manifest, but not in working directory.
 .TP
 \fBfdata\fP \fI<id>\fP
@@ -108,7 +117,8 @@ exist in the database.
 .TP
 \fBrcs_import\fP \fI<rcsfile> ...\fP
 Import all file versions in RCS files. Does not reconstruct revisions
-across the entire tree.
+across the entire tree.  You do not want this command, it is for
+debugging; use cvs_import.
 .TP
 \fBcheckout\fP \fI[manifest-id]\fP \fI<directory\fP
 Check out tree state from database.
@@ -130,16 +140,17 @@ Add files to working copy. adding a file does not copy it into the database,
 merely adds it to the work list. You must \fBcommit\fP your changes in order
 to copy added files to the database.
 .TP
-\fBcommit\fP \fI[log message]\fP
-Commit working copy to database. If a log message is provided on the command
-line, it is used; otherwise a log message editor will be invoked.
-.TP
 \fBdrop\fP \fI<pathname> [...]\fP
 Drop files from working copy. Files are not deleted from working copy, 
 merely noted as removals in the work list.
 .TP
 \fBrename\fP \fI<src> \fI<dst>\fP
 Rename files from \fI<src> \fP to \fI<dst> \fP in working copy.
+.TP
+\fBcommit\fP \fI[--message=<log message>] [<pathname>...]\fP 
+Commit working copy to database. If a --message option is provided on
+the command ine, it is used; otherwise a log message editor will be
+invoked.
 .TP
 \fBupdate\fP 
 Update working copy.
@@ -156,7 +167,17 @@ Sync contents of \fI<collection>\fP with database on \fI<host>\fP
 \fBserve\fP \fI<host> <collection>\fP 
 Serve contents of \fI<collection>\fP at network address \fI<host>\fP 
 .TP
-\fBdb\fP \fI(init|info|version|migrate)\fP
+\fBset\fP \fI<domain> <name> <value>\fP 
+Set the db var \fI<name>\fP in domain \fI<domain>\fP to value
+\fI<value>\fP. 
+.TP
+\fBunset\fP \fI<domain> <name>\fP 
+Delete any setting for db var \fI<name>\fP in domain \fI<domain>\fP.
+.TP
+\fBautomate\fP \fI(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference|leaves)\fP
+Scripting interface.
+.TP
+\fBdb\fP \fI(init|info|version|dump|load|migrate|rebuild|execute|check)\fP
 Manipulate database state.
 .SH DESCRIPTION
 Monotone is a version control system, which allows you to keep old
@@ -207,9 +228,15 @@ is inferred from presence of unique private key in database. Can also
 be customized on a per-branch basis with hook function 
 \fBget_branch_key(branchname)\fP.
 .TP
+\fB-k\fP \fI<keyid>\fP
+An alias for \fB--key=\fP\fI<keyid>\fP
+.TP
 \fB--branch=\fP\fI<branchname>\fP
 Use \fIbranchname\fP for operations on a branch. Default is inferred
 in operations on existing branches (commit, update, etc).
+.TP
+\fB-b\fP \fI<branchname>\fP
+An alias for \fB--branch=\fP\fI<branchname>\fP
 .TP
 \fB--ticket=\fP\fIdot|count\fP
 Use the given method to print tickers.  The \fBcount\fP method prints
@@ -217,6 +244,55 @@ the count for each ticker on one line, incrementing the numbers in
 place, while the \fBdot\fP method prints a continuous string of
 characters (like some programs provide a progress line of dots).
 The default is \fBcount\fP.
+.TP
+\fB--revision=\fP\fI<id>\fP
+Currently this option only applies to the diff command where it may be
+used to compare a working copy with a specific revision or to compare
+two specific revisions. It will likely apply to other commands in the
+future.
+.TP
+\fB-r\fP \fI<id>\fP
+An alias for \fB--revision=\fP\fI<id>\fP
+.TP
+\fB--message=\fI<log message>\fP
+Use the given message as the changelog when committing a new revision
+rather than invoking the log message editor. Currently this option only
+applies to the commit command but it may also apply to the comment
+command in the future.
+.TP
+\fB-m \fI<log message>\fP
+An alias for \fB--message=\fI<log message>\fP
+.TP
+\fB--author=\fI<author email>\fP
+Use the given author as the value of the "author" cert when committing
+a new revision, rather than the default author.  Useful when
+committing a patch on behalf of someone else, or when importing
+history from another version control system.
+.TP
+\fB--date=\fI<date and time>\fP
+Use the given given date and time as value of the "date" cert when
+committing a new revision, rather than the current time.  Useful when
+importing history from another version control system.
+.TP
+\fB--root=\fI<root dir>\fP
+Stop the search for a working copy (containing the @file{MT} directory)
+at the specified root directory rather than at the physical root of the
+filesystem.
+.TP
+\fB--xargs=\fI<file>\fP
+Inject the contents of the file in place among the command line
+arguments.  This may be useful in case the command line would
+otherwise become too long for your system.  This option can be used
+more than once if needed.
+.TP
+\fB-@ \fI<file>\fP
+An alias for \fB--xargs=\fI<file>\fP
+.TP
+\fB--all-files\fP
+Include every file available in the working copy in the inventory
+list. By default inventory only lists ``interesting'' files. This option
+is specific to the @command{inventory} command.
+
 .SH ENVIRONMENT
 .TP
 \fBEDITOR\fP

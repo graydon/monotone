@@ -318,10 +318,6 @@ void CipherModeFinalTemplate_ExternalCipher<BASE>::SetCipherWithIV(BlockCipher &
 		this->Resynchronize(iv);
 }
 
-CRYPTOPP_DLL_TEMPLATE_CLASS CFB_CipherTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, CFB_ModePolicy> >;
-CRYPTOPP_DLL_TEMPLATE_CLASS CFB_EncryptionTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, CFB_ModePolicy> >;
-CRYPTOPP_DLL_TEMPLATE_CLASS CFB_DecryptionTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, CFB_ModePolicy> >;
-
 //! CFB mode
 template <class CIPHER>
 struct CFB_Mode : public CipherModeDocumentation
@@ -352,8 +348,6 @@ struct CFB_FIPS_Mode_ExternalCipher : public CipherModeDocumentation
 	typedef CipherModeFinalTemplate_ExternalCipher<ConcretePolicyHolder<Empty, CFB_RequireFullDataBlocks<CFB_DecryptionTemplate<AbstractPolicyHolder<CFB_CipherAbstractPolicy, CFB_ModePolicy> > > > > Decryption;
 };
 
-CRYPTOPP_DLL_TEMPLATE_CLASS AdditiveCipherTemplate<AbstractPolicyHolder<AdditiveCipherAbstractPolicy, OFB_ModePolicy> >;
-
 //! OFB mode
 template <class CIPHER>
 struct OFB_Mode : public CipherModeDocumentation
@@ -368,8 +362,6 @@ struct OFB_Mode_ExternalCipher : public CipherModeDocumentation
 	typedef CipherModeFinalTemplate_ExternalCipher<ConcretePolicyHolder<Empty, AdditiveCipherTemplate<AbstractPolicyHolder<AdditiveCipherAbstractPolicy, OFB_ModePolicy> > > > Encryption;
 	typedef Encryption Decryption;
 };
-
-CRYPTOPP_DLL_TEMPLATE_CLASS AdditiveCipherTemplate<AbstractPolicyHolder<AdditiveCipherAbstractPolicy, CTR_ModePolicy> >;
 
 //! CTR mode
 template <class CIPHER>

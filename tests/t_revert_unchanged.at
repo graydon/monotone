@@ -1,0 +1,49 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([revert unchanged file preserves mtime])
+
+MONOTONE_SETUP
+
+AT_DATA(file1, [file 1 version 1
+])
+AT_DATA(time1, [time point 1
+])
+
+AT_CHECK(MONOTONE add file1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
+
+# ensure file modification time changes are detected
+
+AT_CHECK(sleep 2)
+AT_DATA(file1, [file 1 version 2
+])
+
+AT_CHECK(ls -l, [], [ignore], [ignore])
+AT_CHECK(find . -newer time1, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [0], [ignore], [ignore])
+
+# revert the file and ensure that its modification time changes
+
+AT_DATA(time2, [time point 2
+])
+
+AT_CHECK(sleep 2)
+AT_CHECK(MONOTONE revert file1, [], [ignore], [ignore])
+
+AT_CHECK(ls -l, [], [ignore], [ignore])
+AT_CHECK(find . -newer time2, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [0], [ignore], [ignore])
+
+# revert the file again and ensure that its modification time does NOT change
+
+AT_DATA(time3, [time point 3
+])
+
+AT_CHECK(sleep 1)
+AT_CHECK(MONOTONE revert file1, [], [ignore], [ignore])
+
+AT_CHECK(ls -l, [], [ignore], [ignore])
+AT_CHECK(find . -newer time3, [], [stdout], [ignore])
+AT_CHECK(grep file1 stdout, [1], [ignore], [ignore])
+
+AT_CLEANUP

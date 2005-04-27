@@ -327,9 +327,9 @@ priv_key_exists(app_state & app, rsa_keypair_id const & id)
   return false;
 }
 
-/* Loads a private key for a given key id, from either a lua hook
- * or the database. This will bomb out if the same keyid exists
- * in both with differing contents. */
+// Loads a private key for a given key id, from either a lua hook
+// or the database. This will bomb out if the same keyid exists
+// in both with differing contents.
 void
 load_priv_key(app_state & app,
               rsa_keypair_id const & id,
@@ -360,11 +360,16 @@ load_priv_key(app_state & app,
       N(havedb || havelua,
         F("no private key '%s' found in database or get_priv_key hook") % id);
 
-      /* Pick either, but make sure they don't both exist but differ */
       if (havelua)
         {
-          N(!havedb || luakey == dbkey,
-              F("mismatch between private key '%s' in database and get_priv_key hook") % id);
+          if (havedb)
+            {
+              // We really don't want the database key and the rcfile key
+              // to differ.
+              N(remove_ws(dbkey()) == remove_ws(luakey()),
+                  F("mismatch between private key '%s' in database"
+                    " and get_priv_key hook") % id);
+            }
           priv = luakey;
         }
       else if (havedb)
@@ -483,6 +488,7 @@ guess_branch(revision_id const & ident,
           "please provide a branch name") % ident);
       
       decode_base64(certs[0].inner().value, branchname);
+      app.set_branch(branchname());
     }
 }
 
@@ -560,11 +566,11 @@ string const comment_cert_name = "comment";
 string const testresult_cert_name = "testresult";
 
 
-static void 
-cert_revision_date(revision_id const & m, 
-                   boost::posix_time::ptime t,
-                   app_state & app,
-                   packet_consumer & pc)
+void 
+cert_revision_date_time(revision_id const & m, 
+                        boost::posix_time::ptime t,
+                        app_state & app,
+                        packet_consumer & pc)
 {
   string val = boost::posix_time::to_iso_extended_string(t);
   put_simple_revision_cert(m, date_cert_name, val, app, pc);
@@ -579,7 +585,7 @@ cert_revision_date_time(revision_id const & m,
   // make sure you do all your CVS conversions by 2038!
   boost::posix_time::ptime tmp(boost::gregorian::date(1970,1,1), 
                                boost::posix_time::seconds(static_cast<long>(t)));
-  cert_revision_date(m, tmp, app, pc);
+  cert_revision_date_time(m, tmp, app, pc);
 }
 
 void 
@@ -587,7 +593,7 @@ cert_revision_date_now(revision_id const & m,
                        app_state & app,
                        packet_consumer & pc)
 {
-  cert_revision_date(m, boost::posix_time::second_clock::universal_time(), app, pc);
+  cert_revision_date_time(m, boost::posix_time::second_clock::universal_time(), app, pc);
 }
 
 void 
@@ -614,8 +620,7 @@ cert_revision_author_default(revision_id const & m,
         % app.branch_name);
       author = key();
     }
-  put_simple_revision_cert(m, author_cert_name, 
-                           author, app, pc);
+  cert_revision_author(m, author, app, pc);
 }
 
 void 
@@ -658,14 +663,16 @@ cert_revision_testresult(revision_id const & r,
   bool passed = false;
   if (lowercase(results) == "true" ||
       lowercase(results) == "yes" ||
+      lowercase(results) == "pass" ||
       results == "1")
     passed = true;
   else if (lowercase(results) == "false" ||
            lowercase(results) == "no" ||
+           lowercase(results) == "fail" ||
            results == "0")
     passed = false;
   else
-    throw informative_failure("could not interpret test results, tried '0/1' 'yes/no', 'true/false'");
+    throw informative_failure("could not interpret test results, tried '0/1' 'yes/no', 'true/false', 'pass/fail'");
 
   put_simple_revision_cert(r, testresult_cert_name, lexical_cast<string>(passed), app, pc); 
 }

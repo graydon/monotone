@@ -1,0 +1,13 @@
+AT_SETUP([db missing])
+MONOTONE_SETUP
+
+AT_CHECK(mkdir foo)
+
+AT_DATA(foo/foo.db, [foo file
+])
+
+AT_CHECK( (cd foo && MONOTONE --db= ls keys), [1], [ignore], [ignore])
+AT_CHECK( (cd foo && MONOTONE --db=foo.db ls keys), [1], [ignore], [ignore])
+AT_CHECK( (cd foo && MONOTONE --db=missing.db ls keys), [1], [ignore], [ignore])
+
+AT_CLEANUP
