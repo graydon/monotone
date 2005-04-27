@@ -1,12 +1,10 @@
-AT_SETUP([test failing cvs import (Attic)])
+AT_SETUP([cvs_import with file added on a branch])
 MONOTONE_SETUP
 
-# This test imports a cvs archive with files in the Attic which fails
-#monotone: fatal: std::logic_error: change_set.cc:2546: invariant 'I(b.rearrangement.deleted_files.empty())' violated
-
-# reported by: hjlipp@web.de 15.04.2005 02:45
-# This test is a bug report.
-AT_XFAIL_IF(true)
+# This tests the case where a file was added on a branch in CVS; CVS
+# records this in a strange way (with a delete of the non-existent
+# file on mainline, followed by an add of the file on the branch).
+# Make sure we handle it correct.
 
 AT_DATA(prepare.sh,[#!/bin/sh
 export CVSROOT=$PWD/cvsroot
