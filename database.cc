@@ -370,7 +370,7 @@ database::debug(string const & sql, ostream & out)
   results res;
   // "%s" construction prevents interpretation of %-signs in the query string
   // as formatting commands.
-  fetch(res, any_cols, any_rows, "%s", sql.c_str());
+  fetch(res, any_cols, any_rows, sql.c_str());
   out << "'" << sql << "' -> " << res.size() << " rows\n" << endl;
   for (size_t i = 0; i < res.size(); ++i)
     {
