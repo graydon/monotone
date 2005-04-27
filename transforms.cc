@@ -83,6 +83,45 @@ template string xform<CryptoPP::Gunzip>(string const &);
 
 // for use in hexenc encoding
 
+string encode_hexenc(string const & in)
+{
+  char buf[in.size() * 2];
+  static char const *tab = "0123456789abcdef";
+  char *c = buf;
+  for (string::const_iterator i = in.begin();
+       i != in.end(); ++i)
+    {
+      *c++ = tab[(*i >> 4) & 0xf];
+      *c++ = tab[*i & 0xf];
+    }
+  return string(buf, in.size() * 2);        
+}
+
+static inline char decode_hex_char(char c)
+{
+  if (c >= '0' && c <= '9')
+    return c - '0';
+  if (c >= 'a' && c <= 'f')
+    return c - 'a' + 10;
+  I(false);
+}
+
+string decode_hexenc(string const & in)
+{
+  I(in.size() % 2 == 0);
+  char buf[in.size() / 2];
+  char *c = buf;
+  for (string::const_iterator i = in.begin();
+       i != in.end(); ++i)
+    {
+      char t = decode_hex_char(*i++);
+      t <<= 4;
+      t |= decode_hex_char(*i);
+      *c++ = t;
+    }
+  return string(buf, in.size() / 2);        
+}
+
 struct 
 lowerize
 {

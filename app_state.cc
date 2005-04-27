@@ -187,7 +187,7 @@ app_state::restriction_includes(file_path const & path)
   static file_path dot(".");
   if (restrictions.empty()) 
     {
-      L(F("empty restricted path set; '%s' included\n") % path());
+      // L(F("empty restricted path set; '%s' included\n") % path());
       return true;
     }
   

@@ -2897,8 +2897,6 @@ void do_diff(const string & name,
   else if (app.revision_selectors.size() == 1)
     app.require_working_copy();
 
-  transaction_guard guard(app.db);
-
   if (app.revision_selectors.size() == 0)
     {
       manifest_map m_old;
@@ -3026,7 +3024,6 @@ void do_diff(const string & name,
   cout << "# " << endl;
 
   dump_diffs(composite.deltas, app, new_is_archived, type);
-
 }
 
 CMD(cdiff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
@@ -3551,6 +3548,12 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
 
       guard.commit();      
     }
+}
+
+CMD(update_inodeprints, "tree", "", "update the inodeprint cache")
+{
+  enable_inodeprints();
+  maybe_update_inodeprints(app);
 }
 
 CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
