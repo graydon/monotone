@@ -3,7 +3,6 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include <boost/regex.hpp>
 #include <sstream>
 
 #include "app_state.hh"
@@ -170,6 +169,21 @@ build_deletions(vector<file_path> const & paths,
   extract_path_set(man, ps);
   apply_path_rearrangement(pr, ps);    
 
+  // read attribute map if available
+  file_path attr_path;
+  get_attr_path(attr_path);
+
+  data attr_data;
+  attr_map attrs;
+
+  if (file_exists(attr_path))
+  {
+    read_data(attr_path, attr_data);
+    read_attr_map(attr_data, attrs);
+  }
+
+  bool updated_attr_map = false;
+
   for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       bool dir_p = false;
@@ -191,12 +205,28 @@ build_deletions(vector<file_path> const & paths,
           pr_new.deleted_dirs.insert(*i);
         }
       else 
-        pr_new.deleted_files.insert(*i);
+        {
+          pr_new.deleted_files.insert(*i);
+
+          // delete any associated attributes for this file
+          if (1 == attrs.erase(*i))
+            {
+              updated_attr_map = true;
+              P(F("dropped attributes for file %s from .mt_attrs\n") % (*i) );
+            }
+        }
   }
 
   normalize_path_rearrangement(pr_new);
   concatenate_rearrangements(pr, pr_new, pr_concatenated);
   pr = pr_concatenated;
+
+  // write out updated map if necessary
+  if (updated_attr_map)
+    {
+      write_attr_map(attr_data, attrs);
+      write_data(attr_path, attr_data);
+    }
 }
 
 void 
@@ -227,6 +257,35 @@ build_rename(file_path const & src,
     pr_new.renamed_dirs.insert(std::make_pair(src, dst));
   else 
     pr_new.renamed_files.insert(std::make_pair(src, dst));
+
+  // read attribute map if available
+  file_path attr_path;
+  get_attr_path(attr_path);
+
+  data attr_data;
+  attr_map attrs;
+
+  if (file_exists(attr_path))
+  {
+    read_data(attr_path, attr_data);
+    read_attr_map(attr_data, attrs);
+
+    // only write out a new attribute map if we find attrs to move
+    attr_map::iterator a = attrs.find(src);
+    if (a != attrs.end())
+    {
+      N(attrs.find(dst) == attrs.end(), 
+        F("refusing to overwrite existing attributes on %s") % dst);
+
+      attrs[dst] = (*a).second;
+      attrs.erase(a);
+
+      P(F("moving attributes for %s to %s\n") % src % dst);
+
+      write_attr_map(attr_data, attrs);
+      write_data(attr_path, attr_data);
+    }
+  }
 
   normalize_path_rearrangement(pr_new);
   concatenate_rearrangements(pr, pr_new, pr_concatenated);

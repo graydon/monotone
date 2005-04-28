@@ -201,6 +201,7 @@ Lua
 {
   lua_State * st;
   bool failed;
+  static std::set<string> missing_functions;
 
   Lua(lua_State * s) : 
     st(s), failed(false)
@@ -473,7 +474,27 @@ Lua
     lua_pop(st, count); 
     return *this; 
   }
+
+  Lua & func(string const & fname)
+  {
+    if (!failed) 
+      {
+	if (missing_functions.find(fname) != missing_functions.end())
+	  failed = true;
+	else
+	  {
+	    push_str(fname);
+	    get_fn();
+	    if (failed)
+	      missing_functions.insert(fname);
+	  }
+      }
+    return *this;
+  }
+
 };
+
+std::set<string> Lua::missing_functions;
 
 static bool 
 run_string(lua_State * st, string const &str)
@@ -481,8 +502,7 @@ run_string(lua_State * st, string const &str)
   I(st);
   return 
     Lua(st)
-    .push_str("loadstring")
-    .get_fn()
+    .func("loadstring")
     .push_str(str)
     .call(1,1)
     .call(0,0)
@@ -495,8 +515,7 @@ run_file(lua_State * st, string const &filename)
   I(st);
   return 
     Lua(st)
-    .push_str("loadfile")
-    .get_fn()
+    .func("loadfile")
     .push_str(filename)
     .call(1,1)
     .call(0,0)
@@ -560,8 +579,7 @@ bool
 lua_hooks::hook_get_passphrase(rsa_keypair_id const & k, string & phrase)
 {
   return Lua(st)
-    .push_str("get_passphrase")
-    .get_fn()
+    .func("get_passphrase")
     .push_str(k())
     .call(1,1)
     .extract_str(phrase)
@@ -573,8 +591,7 @@ lua_hooks::hook_persist_phrase_ok()
 {
   bool persist_ok = false;
   bool executed_ok = Lua(st)
-    .push_str("persist_phrase_ok")
-    .get_fn()
+    .func("persist_phrase_ok")
     .call(0,1)
     .extract_bool(persist_ok)
     .ok();
@@ -586,8 +603,7 @@ lua_hooks::hook_expand_selector(std::string const & sel,
                                 std::string & exp)
 {
   return Lua(st)
-    .push_str("expand_selector")
-    .get_fn()
+    .func("expand_selector")
     .push_str(sel)
     .call(1,1)
     .extract_str(exp)
@@ -600,8 +616,7 @@ lua_hooks::hook_get_branch_key(cert_value const & branchname,
 {
   string key;
   bool ok = Lua(st)
-    .push_str("get_branch_key")
-    .get_fn()
+    .func("get_branch_key")
     .push_str(branchname())
     .call(1,1)
     .extract_str(key)
@@ -617,8 +632,7 @@ lua_hooks::hook_get_priv_key(rsa_keypair_id const & k,
 {
   string key;
   bool ok = Lua(st)
-    .push_str("get_priv_key")
-    .get_fn()
+    .func("get_priv_key")
     .push_str(k())
     .call(1,1)
     .extract_str(key)
@@ -633,8 +647,7 @@ lua_hooks::hook_get_author(cert_value const & branchname,
                            string & author)
 {
   return Lua(st)
-    .push_str("get_author")
-    .get_fn()
+    .func("get_author")
     .push_str(branchname())
     .call(1,1)
     .extract_str(author)
@@ -647,8 +660,7 @@ lua_hooks::hook_edit_comment(string const & commentary,
                              string & result)
 {
   return Lua(st)
-    .push_str("edit_comment")
-    .get_fn()
+    .func("edit_comment")
     .push_str(commentary)
     .push_str(user_log_message)
     .call(2,1)
@@ -661,8 +673,7 @@ lua_hooks::hook_ignore_file(file_path const & p)
 {
   bool ignore_it = false;
   bool exec_ok = Lua(st)
-    .push_str("ignore_file")
-    .get_fn()
+    .func("ignore_file")
     .push_str(p())
     .call(1,1)
     .extract_bool(ignore_it)
@@ -675,8 +686,7 @@ lua_hooks::hook_ignore_branch(std::string const & branch)
 {
   bool ignore_it = false;
   bool exec_ok = Lua(st)
-    .push_str("ignore_branch")
-    .get_fn()
+    .func("ignore_branch")
     .push_str(branch)
     .call(1,1)
     .extract_bool(ignore_it)
@@ -689,8 +699,7 @@ lua_hooks::hook_non_blocking_rng_ok()
 {
   bool ok = false;
   bool exec_ok = Lua(st)
-    .push_str("non_blocking_rng_ok")
-    .get_fn()
+    .func("non_blocking_rng_ok")
     .call(0,1)
     .extract_bool(ok)
     .ok();
@@ -704,8 +713,7 @@ shared_trust_function_body(Lua & ll,
                            cert_name const & name,
                            cert_value const & val)
 {
-  ll.get_fn() 
-    .push_table();
+  ll.push_table();
   
   int k = 0;
   for (set<rsa_keypair_id>::const_iterator v = signers.begin();
@@ -736,7 +744,7 @@ lua_hooks::hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers
                                        cert_value const & val)
 {
   Lua ll(st);
-  ll.push_str("get_revision_cert_trust");  
+  ll.func("get_revision_cert_trust");  
   return shared_trust_function_body(ll, signers, id, name, val);
 }
 
@@ -747,7 +755,7 @@ lua_hooks::hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers
                                         cert_value const & val)
 {
   Lua ll(st);
-  ll.push_str("get_manifest_cert_trust");
+  ll.func("get_manifest_cert_trust");
   return shared_trust_function_body(ll, signers, id, name, val);
 }
 
@@ -757,8 +765,7 @@ lua_hooks::hook_accept_testresult_change(map<rsa_keypair_id, bool> const & old_r
 {
   Lua ll(st);
   ll
-    .push_str("accept_testresult_change")
-    .get_fn()
+    .func("accept_testresult_change")
     .push_table();
 
   for (map<rsa_keypair_id, bool>::const_iterator i = old_results.begin();
@@ -800,8 +807,7 @@ lua_hooks::hook_merge2(file_path const & left_path,
 {
   string res;
   bool ok = Lua(st)
-    .push_str("merge2")
-    .get_fn()
+    .func("merge2")
     .push_str(left_path())
     .push_str(right_path())
     .push_str(merged_path())
@@ -826,8 +832,7 @@ lua_hooks::hook_merge3(file_path const & anc_path,
 {
   string res;
   bool ok = Lua(st)
-    .push_str("merge3")
-    .get_fn()
+    .func("merge3")
     .push_str(anc_path())
     .push_str(left_path())
     .push_str(right_path())
@@ -850,8 +855,7 @@ lua_hooks::hook_resolve_file_conflict(file_path const & anc,
 {
   string tmp;
   bool ok = Lua(st)
-    .push_str("resolve_file_conflict")
-    .get_fn()
+    .func("resolve_file_conflict")
     .push_str(anc())
     .push_str(a())
     .push_str(b())
@@ -870,8 +874,7 @@ lua_hooks::hook_resolve_dir_conflict(file_path const & anc,
 {
   string tmp;
   bool ok = Lua(st)
-    .push_str("resolve_dir_conflict")
-    .get_fn()
+    .func("resolve_dir_conflict")
     .push_str(anc())
     .push_str(a())
     .push_str(b())
@@ -889,8 +892,7 @@ lua_hooks::hook_use_inodeprints()
   bool use = false, exec_ok = false;
 
   exec_ok = Lua(st)
-    .push_str("use_inodeprints")
-    .get_fn()
+    .func("use_inodeprints")
     .call(0, 1)
     .extract_bool(use)
     .ok();
@@ -904,8 +906,7 @@ lua_hooks::hook_get_netsync_read_permitted(std::string const & collection,
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
-    .push_str("get_netsync_read_permitted")
-    .get_fn()
+    .func("get_netsync_read_permitted")
     .push_str(collection)
     .push_str(identity())
     .call(2,1)
@@ -921,8 +922,7 @@ lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & collect
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
-    .push_str("get_netsync_anonymous_read_permitted")
-    .get_fn()
+    .func("get_netsync_anonymous_read_permitted")
     .push_str(collection)
     .call(1,1)
     .extract_bool(permitted)
@@ -938,8 +938,7 @@ lua_hooks::hook_get_netsync_write_permitted(std::string const & collection,
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
-    .push_str("get_netsync_write_permitted")
-    .get_fn()
+    .func("get_netsync_write_permitted")
     .push_str(collection)
     .push_str(identity())
     .call(2,1)
@@ -1003,8 +1002,7 @@ bool
 lua_hooks::hook_get_system_linesep(string & linesep)
 {
   return Lua(st)
-    .push_str("get_system_linesep")
-    .get_fn()
+    .func("get_system_linesep")
     .call(0,1)
     .extract_str(linesep)
     .ok();
@@ -1017,8 +1015,7 @@ lua_hooks::hook_get_charset_conv(file_path const & p,
 {
   Lua ll(st);
   ll
-    .push_str("get_charset_conv")
-    .get_fn()
+    .func("get_charset_conv")
     .push_str(p())
     .call(1,1)
     .begin();
@@ -1038,8 +1035,7 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
 {
   Lua ll(st);
   ll
-    .push_str("get_linesep_conv")
-    .get_fn()
+    .func("get_linesep_conv")
     .push_str(p())
     .call(1,1)
     .begin();
@@ -1058,8 +1054,7 @@ lua_hooks::hook_note_commit(revision_id const & new_id,
 {
   Lua ll(st);
   ll
-    .push_str("note_commit")
-    .get_fn()
+    .func("note_commit")
     .push_str(new_id.inner()());
 
   ll.push_table();

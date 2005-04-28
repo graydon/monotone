@@ -1,0 +1,21 @@
+AT_SETUP([rename file to dir])
+MONOTONE_SETUP
+
+# this test is a bug report
+# the situation where a file is renamed to a dir should be trapped and 
+# reported with N(...) or something
+
+AT_XFAIL_IF(true)
+
+ADD_FILE(file, [file
+])
+COMMIT(testbranch)
+
+AT_CHECK(mkdir dir)
+AT_CHECK(MONOTONE rename file dir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [3], [ignore], [ignore])
+AT_CHECK(MONOTONE diff, [3], [ignore], [ignore])
+
+AT_CHECK(false)
+
+AT_CLEANUP

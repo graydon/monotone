@@ -1,0 +1,65 @@
+AT_SETUP([automate graph])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE automate graph, [], [], [ignore])
+
+#   A
+#  / \
+# B   C
+#     |\
+#     D E
+#     \/
+#      F
+
+ADD_FILE(testfile, [A
+])
+COMMIT(testbranch)
+REV_A=`BASE_REVISION`
+
+SET_FILE(testfile, [B
+])
+COMMIT(testbranch)
+REV_B=`BASE_REVISION`
+
+REVERT_TO($REV_A)
+
+SET_FILE(testfile, [C
+])
+COMMIT(testbranch)
+REV_C=`BASE_REVISION`
+
+SET_FILE(testfile, [D
+])
+COMMIT(testbranch)
+REV_D=`BASE_REVISION`
+
+REVERT_TO($REV_C)
+
+ADD_FILE(otherfile, [E
+])
+COMMIT(testbranch)
+REV_E=`BASE_REVISION`
+
+AT_CHECK(MONOTONE explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REV_F=`BASE_REVISION`
+
+AT_CHECK(test $REV_F != $REV_D)
+AT_CHECK(test $REV_F != $REV_E)
+
+# Now do some checks
+
+AT_CHECK(MONOTONE automate graph, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+
+AT_CHECK(echo $REV_A >>graph)
+AT_CHECK(echo $REV_B $REV_A >>graph)
+AT_CHECK(echo $REV_C $REV_A >>graph)
+AT_CHECK(echo $REV_D $REV_C >>graph)
+AT_CHECK(echo $REV_E $REV_C >>graph)
+AT_CHECK(echo $REV_F `(echo $REV_D; echo $REV_E) | sort` >>graph)
+AT_CHECK(sort graph > graph.sorted)
+
+AT_CHECK(cmp stdout graph.sorted)
+
+AT_CLEANUP

@@ -35,6 +35,7 @@ public:
   lua_hooks lua;
   bool stdhooks;
   bool rcfiles;
+  bool all_files;
   options_map options;
   utf8 message;
   utf8 date;
@@ -87,6 +88,7 @@ public:
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);
+  void set_all_files(bool b);
   void add_rcfile(utf8 const & filename);
 
   explicit app_state();

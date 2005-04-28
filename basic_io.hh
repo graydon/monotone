@@ -141,6 +141,8 @@ namespace basic_io
    void err(std::string const & s);
   };
 
+  std::string escape(std::string const & s);
+
   struct 
   stanza
   {

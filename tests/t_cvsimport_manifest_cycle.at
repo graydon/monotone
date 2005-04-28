@@ -1,0 +1,41 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([import from CVS, file deleted on head and branch])
+NEED_UNGZB64
+
+AT_XFAIL_IF(true)
+
+MONOTONE_SETUP
+
+CVSROOT=`pwd`/cvs-repository
+AT_CHECK(cvs -q -d $CVSROOT init)
+AT_CHECK(test -e $CVSROOT)
+AT_CHECK(test -e $CVSROOT/CVSROOT)
+AT_CHECK(test -e $CVSROOT/CVSROOT/history)
+
+AT_DATA(cvsfile.gz.enc, [H4sICLNeb0ICA2EsdgB9j8FuwyAQRM/sVyDlvgKcKHK50Er5gn4BgW1s1UBkSJr+fbGJ0laqKnEaZt7MDmQ9k6g0WOcoZw35MxzTlNnL8+vhSaLUMCX3njXPZR5d0eBSCBQLMxtuNADUNHhbiCkhJIodqh6VQtFjpzSzlzKkmYd0yaRZLtXIfS3VcJxtdAPVyki3wtaqCpMN1vcLQVa4xK3ETv6NOtzO3yRYILhdQCuy8Rbh58A9iqoIlHvsdg9qtrHYfwcut3rKDoy5Xz2lE5iZQroSfxsnQgOlOsGUYcy8PttkaAHZAtZ7Hunj8dUid8s6drUFmk/Eh7qEj7Ek3tb8DnwBs3bpVb4BAAA=
+])
+
+AT_CHECK(mkdir $CVSROOT/attest, [], [ignore])
+UNGZB64(cvsfile.gz.enc, cvsfile)
+# Autotest doesn't like files with commas in the name, so we rename it
+# ourselves.
+mv cvsfile $CVSROOT/attest/cvsfile,v
+
+AT_CHECK(cvs -d $CVSROOT co attest)
+TSHA0=`SHA1(attest/cvsfile)`
+
+# import into monotone and check presence of files
+
+AT_CHECK(MONOTONE --branch=testbranch cvs_import $CVSROOT/attest, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE cat file $TSHA0, [], [ignore])
+
+# also check that history is okay -- has a unique head, and it's the
+# right one.
+
+AT_CHECK(MONOTONE checkout --branch=testbranch mtcodir, [], [ignore], [ignore])
+AT_CHECK(cmp attest/cvsfile mtcodir/cvsfile)
+
+AT_CLEANUP
+

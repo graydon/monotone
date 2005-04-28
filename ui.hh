@@ -37,6 +37,7 @@ public:
   tick_writer() {}
   virtual ~tick_writer() {}
   virtual void write_ticks() = 0;
+  virtual void clear_line() = 0;
 };
 
 struct tick_write_count : virtual public tick_writer
@@ -45,6 +46,7 @@ public:
   tick_write_count();
   ~tick_write_count();
   void write_ticks();
+  void clear_line();
 private:
   size_t last_tick_len;
 };
@@ -55,6 +57,7 @@ public:
   tick_write_dot();
   ~tick_write_dot();
   void write_ticks();
+  void clear_line();
 private:
   std::map<std::string,size_t> last_ticks;
 };
@@ -63,6 +66,7 @@ struct tick_write_nothing : virtual public tick_writer
 {
 public:
   void write_ticks() {}
+  void clear_line() {}
 };
 
 struct user_interface

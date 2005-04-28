@@ -1,0 +1,37 @@
+AT_SETUP([check automate select])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [this is just a file
+])
+AT_CHECK(cp testfile testfile1)
+COMMIT(testbranch)
+FIRST=`BASE_REVISION`
+
+AT_DATA(testfile, [Now, this is a different file
+])
+AT_CHECK(cp testfile testfile2)
+COMMIT(testbranch)
+SECOND=`BASE_REVISION`
+
+AT_DATA(testfile, [And we change it a third time
+])
+AT_CHECK(cp testfile testfile3)
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE cert $FIRST testcert 'value=with=equal=signs')
+AT_CHECK(MONOTONE cert $SECOND testcert 'value')
+
+# Check that inexact values fail...
+CHECK_SAME_STDOUT(MONOTONE automate select 'c:testcert=value=' | wc -l, echo 0)
+
+# Check that wild cards succeed (this one becomes a misuse, because it will
+# match two revisions)...
+CHECK_SAME_STDOUT(MONOTONE automate select 'c:testcert=value*' | wc -l, echo 2)
+
+# Check that no value succeeds...
+CHECK_SAME_STDOUT(MONOTONE automate select 'c:testcert' | wc -l, echo 2)
+
+# Check that exact value succeed...
+CHECK_SAME_STDOUT(MONOTONE automate select 'c:testcert=value' | wc -l, echo 1)
+
+AT_CLEANUP

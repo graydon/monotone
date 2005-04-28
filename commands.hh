@@ -25,16 +25,6 @@ struct usage
 namespace commands {
   void explain_usage(std::string const & cmd, std::ostream & out);
   int process(app_state & app, std::string const & cmd, std::vector<utf8> const & args);
-  typedef enum 
-    {
-      sel_author, 
-      sel_branch,
-      sel_date, 
-      sel_tag,
-      sel_ident, 
-      sel_unknown
-    } 
-  selector_type;
 };
 
 #endif

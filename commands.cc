@@ -25,6 +25,7 @@
 
 #include "app_state.hh"
 #include "automate.hh"
+#include "basic_io.hh"
 #include "cert.hh"
 #include "database_check.hh"
 #include "diff_patch.hh"
@@ -43,6 +44,7 @@
 #include "automate.hh"
 #include "inodeprint.hh"
 #include "platform.hh"
+#include "selectors.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -234,10 +236,11 @@ static cmd_ ## C C ## _cmd;                      \
 void cmd_ ## C::exec(app_state & app,            \
                      vector<utf8> const & args)  \
 
-#define ALIAS(C, realcommand, group, params, desc)      \
-CMD(C, group, params, desc)                             \
-{                                                       \
-  process(app, string(#realcommand), args);             \
+#define ALIAS(C, realcommand)                                 \
+CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,  \
+    realcommand##_cmd.desc + "\nAlias for " #realcommand)     \
+{                                                             \
+  process(app, string(#realcommand), args);                   \
 }
 
 static void 
@@ -495,10 +498,10 @@ update_any_attrs(app_state & app)
 }
 
 static void
-calculate_base_revision(app_state & app, 
-                        revision_id & rid,
-                        manifest_id & mid,
-                        manifest_map & man)
+get_base_revision(app_state & app, 
+                  revision_id & rid,
+                  manifest_id & mid,
+                  manifest_map & man)
 {
   man.clear();
 
@@ -523,38 +526,34 @@ calculate_base_revision(app_state & app,
 }
 
 static void
-calculate_base_manifest(app_state & app, 
-                        manifest_map & man)
+get_base_manifest(app_state & app, 
+                  manifest_map & man)
 {
   revision_id rid;
   manifest_id mid;
-  calculate_base_revision(app, rid, mid, man);
+  get_base_revision(app, rid, mid, man);
 }
 
 static void
-calculate_restricted_revision(app_state & app, 
-                              vector<utf8> const & args,
-                              revision_set & rev,
-                              manifest_map & m_old,
-                              manifest_map & m_new,
-                              change_set::path_rearrangement & restricted_work)
+calculate_restricted_rearrangement(app_state & app, 
+                                   vector<utf8> const & args,
+                                   manifest_id & old_manifest_id,
+                                   revision_id & old_revision_id,
+                                   manifest_map & m_old,
+                                   path_set & old_paths, 
+                                   path_set & new_paths,
+                                   change_set::path_rearrangement & included,
+                                   change_set::path_rearrangement & excluded)
 {
-  manifest_id old_manifest_id;
-  revision_id old_revision_id;    
-  boost::shared_ptr<change_set> cs(new change_set());
-  path_set old_paths, new_paths;
-  change_set::path_rearrangement work, included, excluded;
+  change_set::path_rearrangement work;
 
-  rev.edges.clear();
-  m_old.clear();
-  m_new.clear();
+  get_base_revision(app, 
+                    old_revision_id,
+                    old_manifest_id, m_old);
 
-  calculate_base_revision(app, 
-                          old_revision_id,
-                          old_manifest_id, m_old);
+  extract_path_set(m_old, old_paths);
 
   get_path_rearrangement(work);
-  extract_path_set(m_old, old_paths);
 
   path_set valid_paths(old_paths);
   extract_rearranged_paths(work, valid_paths);
@@ -565,9 +564,29 @@ calculate_restricted_revision(app_state & app,
   restrict_path_rearrangement(work, included, excluded, app);
 
   apply_path_rearrangement(old_paths, included, new_paths);
+}
 
-  cs->rearrangement = included;
-  restricted_work = excluded;
+static void
+calculate_restricted_revision(app_state & app, 
+                              vector<utf8> const & args,
+                              revision_set & rev,
+                              manifest_map & m_old,
+                              manifest_map & m_new,
+                              change_set::path_rearrangement & excluded)
+{
+  manifest_id old_manifest_id;
+  revision_id old_revision_id;
+  boost::shared_ptr<change_set> cs(new change_set());
+  path_set old_paths, new_paths;
+
+  rev.edges.clear();
+  m_old.clear();
+  m_new.clear();
+
+  calculate_restricted_rearrangement(app, args, 
+                                     old_manifest_id, old_revision_id,
+                                     m_old, old_paths, new_paths, 
+                                     cs->rearrangement, excluded);
 
   build_restricted_manifest_map(new_paths, m_old, m_new, app);
   complete_change_set(m_old, m_new, *cs);
@@ -596,8 +615,8 @@ calculate_current_revision(app_state & app,
                            manifest_map & m_old,
                            manifest_map & m_new)
 {
-  vector<utf8> empty;
-  calculate_restricted_revision(app, empty, rev, m_old, m_new);
+  vector<utf8> empty_args;
+  calculate_restricted_revision(app, empty_args, rev, m_old, m_new);
 }
 
 static void
@@ -721,76 +740,14 @@ describe_revision(app_state & app, revision_id const & id)
   return description;
 }
 
-static void
-decode_selector(string const & orig_sel,
-                selector_type & type,
-                string & sel,
-                app_state & app)
-{
-  sel = orig_sel;
-
-  L(F("decoding selector '%s'\n") % sel);
-
-  if (sel.size() < 2 || sel[1] != ':')
-    {
-      string tmp;
-      if (!app.lua.hook_expand_selector(sel, tmp))
-        {
-          L(F("expansion of selector '%s' failed\n") % sel);
-        }
-      else
-        {
-          P(F("expanded selector '%s' -> '%s'\n") % sel % tmp);
-          sel = tmp;
-        }
-    }
-  
-  if (sel.size() >= 2 && sel[1] == ':')
-    {
-      switch (sel[0])
-        {
-        case 'a': 
-          type = sel_author;
-          break;
-        case 'b':
-          type = sel_branch;
-          break;
-        case 'd':
-          type = sel_date;
-          break;
-        case 'i':
-          type = sel_ident;
-          break;
-        case 't':
-          type = sel_tag;
-          break;
-        default:          
-          W(F("unknown selector type: %c\n") % sel[0]);
-          break;
-        }
-      sel.erase(0,2);
-    }
-}
-
-static void
-complete_selector(string const & orig_sel,
-                  vector<pair<selector_type, string> > const & limit,             
-                  selector_type & type,
-                  set<string> & completions,
-                  app_state & app)
-{  
-  string sel;
-  decode_selector(orig_sel, type, sel, app);
-  app.db.complete(type, sel, limit, completions);
-}
-
-
 static void 
 complete(app_state & app, 
          string const & str, 
          revision_id & completion)
 {
-
+  // This copies the start of selectors::parse_selector().to avoid
+  // getting a log when there's no expansion happening...:
+  //
   // this rule should always be enabled, even if the user specifies
   // --norc: if you provide a revision id, you get a revision id.
   if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
@@ -799,29 +756,16 @@ complete(app_state & app,
       completion = revision_id(str);
       return;
     }
-  
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-  boost::char_separator<char> slash("/");
-  tokenizer tokens(str, slash);
 
-  vector<string> selector_strings;
-  vector<pair<selector_type, string> > selectors;  
-  copy(tokens.begin(), tokens.end(), back_inserter(selector_strings));
-  for (vector<string>::const_iterator i = selector_strings.begin();
-       i != selector_strings.end(); ++i)
-    {
-      string sel;
-      selector_type type = sel_unknown;
-      decode_selector(*i, type, sel, app);
-      selectors.push_back(make_pair(type, sel));
-    }
+  vector<pair<selectors::selector_type, string> >
+    sels(selectors::parse_selector(str, app));
 
   P(F("expanding selection '%s'\n") % str);
 
   // we jam through an "empty" selection on sel_ident type
   set<string> completions;
-  selector_type ty = sel_ident;
-  complete_selector("", selectors, ty, completions, app);
+  selectors::selector_type ty = selectors::sel_ident;
+  selectors::complete_selector("", sels, ty, completions, app);
 
   N(completions.size() != 0,
     F("no match for selection '%s'") % str);
@@ -1446,7 +1390,7 @@ CMD(add, "working copy", "PATH...", "add files to working copy")
   app.require_working_copy();
 
   manifest_map m_old;
-  calculate_base_manifest(app, m_old);
+  get_base_manifest(app, m_old);
 
   change_set::path_rearrangement work;  
   get_path_rearrangement(work);
@@ -1470,7 +1414,7 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy")
   app.require_working_copy();
 
   manifest_map m_old;
-  calculate_base_manifest(app, m_old);
+  get_base_manifest(app, m_old);
 
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
@@ -1495,7 +1439,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy")
   app.require_working_copy();
 
   manifest_map m_old;
-  calculate_base_manifest(app, m_old);
+  get_base_manifest(app, m_old);
 
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
@@ -1779,7 +1723,7 @@ CMD(cat, "informative",
 }
 
 
-CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n", 
+CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
     "check out revision from database into directory")
 {
 
@@ -1872,8 +1816,7 @@ CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
   maybe_update_inodeprints(app);
 }
 
-ALIAS(co, checkout, "tree", "REVISION DIRECTORY\nDIRECTORY",
-      "check out revision from database; alias for checkout")
+ALIAS(co, checkout)
 
 CMD(heads, "tree", "", "show unmerged head revisions of branch")
 {
@@ -2010,31 +1953,25 @@ ls_known (app_state & app, vector<utf8> const & args)
     }
 }
 
-struct unknown_itemizer : public tree_walker
+struct file_itemizer : public tree_walker
 {
   app_state & app;
-  manifest_map & man;
-  bool want_ignored;
-  unknown_itemizer(app_state & a, manifest_map & m, bool i) 
-    : app(a), man(m), want_ignored(i) {}
+  path_set & known;
+  path_set & unknown;
+  path_set & ignored;
+  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i) 
+    : app(a), known(k), unknown(u), ignored(i) {}
   virtual void visit_file(file_path const & path)
   {
-    if (app.restriction_includes(path) && man.find(path) == man.end())
+    if (app.restriction_includes(path) && known.find(path) == known.end())
       {
-      if (want_ignored)
-        {
-          if (app.lua.hook_ignore_file(path))
-            cout << path() << endl;
-        }
-      else
-        {
-          if (!app.lua.hook_ignore_file(path))
-            cout << path() << endl;
-        }
+        if (app.lua.hook_ignore_file(path))
+          ignored.insert(path);
+        else
+          unknown.insert(path);
       }
   }
 };
-
 
 static void
 ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
@@ -2043,9 +1980,25 @@ ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 
   revision_set rev;
   manifest_map m_old, m_new;
+  path_set known, unknown, ignored;
+
   calculate_restricted_revision(app, args, rev, m_old, m_new);
-  unknown_itemizer u(app, m_new, want_ignored);
+
+  extract_path_set(m_new, known);
+  file_itemizer u(app, known, unknown, ignored);
   walk_tree(u);
+
+  if (want_ignored)
+    for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
+      {
+        cout << *i << endl;
+      }
+  else 
+    for (path_set::const_iterator i = unknown.begin(); i != unknown.end(); ++i)
+      {
+        cout << *i << endl;
+      }
+
 }
 
 static void
@@ -2060,7 +2013,7 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   app.require_working_copy();
 
-  calculate_base_revision(app, rid, mid, man);
+  get_base_revision(app, rid, mid, man);
 
   get_path_rearrangement(work);
   extract_path_set(man, old_paths);
@@ -2082,6 +2035,85 @@ ls_missing (app_state & app, vector<utf8> const & args)
     }
 }
 
+static void
+print_inventory(std::string const & status,
+                std::string const & suffix,
+                path_set const & files,
+                path_set const & excluded)
+{
+  for (path_set::const_iterator i = files.begin(); i != files.end(); ++i)
+    {
+      if (excluded.find(*i) == excluded.end())
+        cout << status << " " << basic_io::escape((*i)() + suffix) << endl;
+    }
+}
+
+static void
+print_inventory(std::string const & status,
+                std::string const & suffix,
+                std::map<file_path, file_path> const & renames,
+                path_set const & excluded)
+                
+{
+  for (std::map<file_path, file_path>::const_iterator i = renames.begin();
+       i != renames.end(); ++i)
+    {
+      if (excluded.find(i->second) == excluded.end())
+        cout << status 
+             << " " << basic_io::escape(i->first() + suffix) 
+             << " " << basic_io::escape(i->second() + suffix) 
+             << endl;
+    }
+}
+
+CMD(inventory, "informative", "[PATH]...", 
+    "inventory of every file in working copy with associated status")
+{
+  manifest_id old_manifest_id;
+  revision_id old_revision_id;
+  manifest_map m_old;
+  path_set old_paths, new_paths, empty;
+  change_set::path_rearrangement included, excluded;
+  path_set missing, changed, unchanged, unknown, ignored;
+
+  app.require_working_copy();
+
+  calculate_restricted_rearrangement(app, args, 
+                                     old_manifest_id, old_revision_id,
+                                     m_old, old_paths, new_paths,
+                                     included, excluded);
+
+  file_itemizer u(app, new_paths, unknown, ignored);
+  walk_tree(u);
+
+  classify_paths(app, new_paths, m_old, missing, changed, unchanged);
+
+  print_inventory("!", "", missing, empty);
+
+  // a file may be missing and also added or the target of a rename. or it may
+  // be added or the target of a rename and also changed. inventory lists each
+  // file only once with the highest priority status. missing takes precedence
+  // over added or renamed. added or renamed takes precedence over changed.
+
+  print_inventory("-", "", included.deleted_files, empty);
+  print_inventory("-", "/", included.deleted_dirs, empty);
+
+  // ensure missing has precedence over renamed
+  print_inventory("%", "", included.renamed_files, missing);
+  print_inventory("%", "/", included.renamed_dirs, missing);
+  
+  // ensure missing has precedence over added
+  print_inventory("+", "", included.added_files, missing);
+  
+  print_inventory("#", "", changed, empty);
+
+  if (app.all_files)
+    {
+      print_inventory("=", "", unchanged, empty);
+      print_inventory("?", "", unknown, empty);
+      print_inventory("~", "", ignored, empty);
+    }
+}
 
 CMD(list, "informative", 
     "certs ID\n"
@@ -2094,7 +2126,7 @@ CMD(list, "informative",
     "unknown\n"
     "ignored\n"
     "missing",
-    "show database objects, or the current working copy manifest, "
+    "show database objects, or the current working copy manifest,\n"
     "or unknown, intentionally ignored, or missing state files")
 {
   if (args.size() == 0)
@@ -2127,19 +2159,7 @@ CMD(list, "informative",
     throw usage(name);
 }
 
-ALIAS(ls, list, "informative",  
-      "certs ID\n"
-      "keys [PATTERN]\n"
-      "branches\n"
-      "epochs [BRANCH [...]]\n"
-      "tags\n"
-      "vars [DOMAIN]\n"
-      "known\n"
-      "unknown\n"
-      "ignored\n"
-      "missing",
-      "show database objects, or the current working copy manifest, "
-      "or unknown, intentionally ignored, or missing state files; alias for list")
+ALIAS(ls, list)
 
 
 CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout")
@@ -2577,7 +2597,7 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE",
         // check to make sure .mt-attr exists in 
         // current manifest.
         manifest_map man;
-        calculate_base_manifest(app, man);
+        get_base_manifest(app, man);
         if (man.find(attr_path) == man.end())
           {
             P(F("registering %s file in working copy\n") % attr_path);
@@ -2643,7 +2663,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
 
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
-  unsigned int head_size = heads.size();
+  unsigned int old_head_size = heads.size();
 
   guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
 
@@ -2779,7 +2799,7 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
   blank_user_log();
 
   get_branch_heads(app.branch_name(), app, heads);
-  if (heads.size() > head_size) {
+  if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run 'monotone merge'"));
   }
@@ -2805,6 +2825,8 @@ CMD(commit, "working copy", "[--message=STRING] [PATH]...",
     app.lua.hook_note_commit(rid, certs);
   }
 }
+
+ALIAS(ci, commit);
 
 
 static void 
@@ -2906,8 +2928,6 @@ void do_diff(const string & name,
     app.require_working_copy();
   else if (app.revision_selectors.size() == 1)
     app.require_working_copy();
-
-  transaction_guard guard(app.db);
 
   if (app.revision_selectors.size() == 0)
     {
@@ -3036,7 +3056,6 @@ void do_diff(const string & name,
   cout << "# " << endl;
 
   dump_diffs(composite.deltas, app, new_is_archived, type);
-
 }
 
 CMD(cdiff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
@@ -3563,6 +3582,12 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
     }
 }
 
+CMD(update_inodeprints, "tree", "", "update the inodeprint cache")
+{
+  enable_inodeprints();
+  maybe_update_inodeprints(app);
+}
+
 CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
     "merge two explicitly given revisions, placing result in given branch")
 {
@@ -3670,9 +3695,9 @@ CMD(revert, "working copy", "[PATH]...",
  
   app.require_working_copy();
 
-  calculate_base_revision(app, 
-                          old_revision_id,
-                          old_manifest_id, m_old);
+  get_base_revision(app, 
+                    old_revision_id,
+                    old_manifest_id, m_old);
 
   get_path_rearrangement(work);
   extract_path_set(m_old, old_paths);
@@ -3930,7 +3955,10 @@ CMD(automate, "automation",
     "interface_version\n"
     "heads [BRANCH]\n"
     "ancestors REV1 [REV2 [REV3 [...]]]\n"
+    "parents REV\n"
     "descendents REV1 [REV2 [REV3 [...]]]\n"
+    "children REV\n"
+    "graph\n"
     "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
     "toposort [REV1 [REV2 [REV3 [...]]]]\n"
     "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"

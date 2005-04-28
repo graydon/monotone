@@ -66,6 +66,14 @@ Habitual monotone users can set it to '\C-xv'.")
 ;;; System Vars:
 ;; It is unlikely for users to need to change these.
 
+(defvar monotone-cmd-show t
+  "Show the outout of the monotone command?
+This is normally rebound when the output should not be shown.")
+
+(defvar monotone-program-args-always '("--ticker=dot")
+  "Args which will always be passed to monotone.
+The arg '--ticker=dot' should be here to avoid lots of output.")
+
 (defvar monotone-last-id nil
   "The last id which was worked with or grabbed.
 This could be a file, manifest or revision.
@@ -107,6 +115,9 @@ This is used to pass state -- best be left nil.")
 (defvar monotone-log-depth 100
   "The depth to limit output of 'monotone log' entries.
 Zero is unlimited.")
+
+(defvar monotone-MT-revision nil
+  "")
 
 ;;; monotone-commit-mode is used when editing the commit message.
 (defvar monotone-commit-mode nil)
@@ -166,6 +177,7 @@ Type C-c C-c to commit, kill the buffer to abort.
     (define-key map "p"    'monotone-pull)
     (define-key map "q"    'monotone-vc-commit) ;; i am a lazy typist
     (define-key map "s"    'monotone-vc-status)
+    (define-key map "x"    'monotone)
     map))
 (fset 'monotone-vc-prefix-map monotone-vc-prefix-map)
 
@@ -200,6 +212,19 @@ This permits quick switches between the classic vc and monotone keymaps."
 (defun monotone-file-parent-directory (file)
   "Return the parent directory of FILE."
   (file-name-directory (directory-file-name file)))
+
+(defun monotone-MT-revision ()
+  "The current revision as read from 'MT/revision'."
+  (let ((dir (monotone-find-MT-top)))
+    (when (not dir)
+      (error "No MT top directory."))
+    (let ((file (concat dir "/MT/revision")))
+      (with-temp-buffer
+        (insert-file-contents-literally file nil)
+        (setq monotone-MT-revision (buffer-substring 1 41)))
+      monotone-MT-revision)))
+;; (monotone-MT-revision)      
+
 
 (defun monotone-find-MT-top (&optional path)
   "Find the directory which contains the 'MT' directory.
@@ -248,6 +273,20 @@ Nothing for now."
 
 ;;(define-derived-mode monotone-shell-mode comint-mode "Monotone")
 
+(defun monotone-string-chomp (str)
+  "Remove the last char if it is a newline."
+  (when (char-equal 10 (elt str (1- (length str))))
+    (setq str (substring str 0 (1- (length str)))))
+  str)
+;; (monotone-string-chomp "aaa")
+
+(defun monotone-process-sentinel (process event)
+  "This sentinel suppresses the text from PROCESS on EVENT."
+  (when monotone-cmd-show
+    (message "monotone: process %s received %s" process
+             (monotone-string-chomp event))
+    nil))
+
 ;; Run a monotone command
 (defun monotone-cmd (args)
   "Execute the monotone command with ARGS in the monotone top directory."
@@ -270,10 +309,10 @@ Nothing for now."
       (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
         (error "Unable to find the MT top directory")))
     (setq monotone-MT-top mt-top)
-    ;; show the window
-    ;;(if (not (equal (current-buffer) mt-buf))
-    (switch-to-buffer-other-window mt-buf) ;;)
-    (sit-for 0)
+    ;; show buffer in a window 
+    (when monotone-cmd-show
+      (pop-to-buffer mt-buf)
+      (sit-for 0))
     (set-buffer mt-buf)
     ;; still going?
     (when (get-buffer-process mt-buf)
@@ -281,19 +320,24 @@ Nothing for now."
     ;; prep the buffer for output
     (toggle-read-only -1)
     (erase-buffer)
-    (buffer-disable-undo (current-buffer))
+    ;;(buffer-disable-undo (current-buffer))
     (setq default-directory mt-top)
     ;; remeber the args
     (setq monotone-cmd-last-args args)
+    ;;
+    (when monotone-program-args-always
+      (setq args (append monotone-program-args-always args)))
     ;; run
     (let ((p (apply #'start-process monotone-buffer mt-buf mt-pgm args)))
+      ;; dont dirty the output
+      (set-process-sentinel p #'monotone-process-sentinel)
       (while (eq (process-status p) 'run)
         ;; FIXME: rather than printing messages, abort after too long a wait.
         (when (not (accept-process-output p monotone-wait-time))
           ;;(message "waiting for monotone..."))
-          ;; update the screen
-          (goto-char (point-max))
-          (sit-for 0)
+          (when monotone-cmd-show ;; update the screen
+            (goto-char (point-max))
+            (sit-for 0))
           ;; look for passwd prompt
           (beginning-of-line)
           (when (looking-at "^enter passphrase for key ID \\[\\(.*\\)\\]")
@@ -306,12 +350,14 @@ Nothing for now."
       ;; make the buffer nice.
       (goto-char (point-min))
       (view-mode)
-      ;; FIXME: (set-buffer-modified-p nil)
+      (set-buffer-modified-p nil)
       ;; did we part on good terms?
       (when (not (zerop mt-status))
         (message "%s: exited with status %s" mt-pgm mt-status)
         (beep)
         (sit-for 3))
+      ;; this seems to be needed for the sentinel to catch up.
+      (sit-for 1)
       mt-status)))
 
 ;; (monotone-cmd '("list" "branches"))
@@ -404,7 +450,7 @@ Nothing for now."
   (when prefix
     (monotone-db-prompt))
   ;;
-  (let ((cmd (list "--ticker=dot" (format "%s" action)))
+  (let ((cmd (list (format "%s" action)))
         (svr (or monotone-server ""))
         (col (or monotone-collection "")))
     ;; given address?
@@ -471,9 +517,9 @@ With ARG of 0, clear default server and collection."
         (when (file-readable-p mt-log-path)
           (insert-file mt-log-path)))
       ;; blank line for user to type
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (insert "\n")
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (monotone-commit-mode))
     ;; update the "MT:" lines by replacing them.
     (monotone-remove-MT-lines)
@@ -499,7 +545,7 @@ With ARG of 0, clear default server and collection."
       (while (search-forward-regexp "^" (point-max) t)
         (insert "MT: ")))
     ;; ready for edit -- put this last avoid being cleared on mode switch.
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (setq monotone-commit-edit-status 'started
           monotone-commit-args args)))
 
@@ -548,7 +594,7 @@ With ARG of 0, clear default server and collection."
 (defun monotone-remove-MT-lines ()
   "Remove lines starting with 'MT:' from the buffer."
   ;; doesnt need to be (interactive)
-  (beginning-of-buffer)
+  (goto-char (point-min))
   (while (search-forward-regexp "^MT:.*$" (point-max) t)
     (beginning-of-line)
     (kill-line 1)))
@@ -589,15 +635,20 @@ With ARG of 0, clear default server and collection."
 PREFIX selects the scope.  CMDS is the command to execute. BUF is
 the buffer if not global."
   (setq prefix (monotone-arg-decode prefix)) ;; what is the scope?
-  (setq buf (or buf (current-buffer))) ;; default
+  (setq buf (or buf (current-buffer)))       ;; default
   (cond
+   ;; no args
    ((eq prefix 'global)
     (monotone-cmd cmds))
+   ;; path/.
    ((eq prefix 'tree)
-    ;; MONOTONE BUG: when using "." the command must be run in the dir
-    ;; all other commands are run in MT-top
-    ;; FIXME: cd to the correct place in the tree
-    (monotone-cmd (append cmds (list "."))))
+    (let ((path (buffer-file-name buf)))
+      (when (not path)
+        (error "This buffer is not a file"))
+      (setq 
+       path (concat (file-name-directory (monotone-extract-MT-path path)) "."))
+      (monotone-cmd (append cmds (list path)))))
+   ;; path/file
    ((eq prefix 'file)
     (let ((name (buffer-file-name buf)))
       (if name
@@ -625,12 +676,19 @@ the buffer if not global."
 (defun monotone-vc-print-log (&optional arg)
   "Print the log for this buffer.  With prefix ARG the global log."
   (interactive "p")
-  (let ((cmds (list "log")))
-    (when (and (numberp monotone-log-depth) (< 0 monotone-log-depth))
-      (setq cmds (append cmds (list (format "--depth=%d" monotone-log-depth)))))
+  ;; MONOTONE BUG: when using "log ." the command must be run in that dir.
+  ;; monotone.el runs its commands in the top dir so
+  ;; just report it for now
+  (when (eq 'tree (monotone-arg-decode arg))
+    (error "monotone subtree log is busted"))
+  ;; 
+  (let ((cmds (list "log"))
+        (depth monotone-log-depth))
+    (when (and (numberp depth) (< 0 depth))
+      (setq cmds (append cmds (list (format "--depth=%d" depth)))))
     (monotone-cmd-buf arg cmds)
     (rename-buffer "*monotone log*" t)))
-;; (monotone-print-log)
+;; (monotone-vc-print-log)
 
 (defun monotone-vc-diff (&optional arg)
   "Print the diffs for this buffer.  With prefix ARG, the global diffs."
@@ -715,66 +773,76 @@ Grab the ids you want from the buffer and then yank back when needed."
       (setq monotone-last-id id)
       ;; dont duplicate the buffers
       (if (get-buffer name)
-           (kill-buffer name))
+        (kill-buffer name))
       (rename-buffer name))))
+
+(defun monotone-cat-id-pd (what default)
+  "A helper function."
+  (monotone-cat-id what (or id (monotone-id-at-point-prompt what default))))
 
 (defun monotone-cat-fileid (&optional id)
   "Display the file with ID."
   (interactive)
-  (monotone-cat-id 'file (or id (monotone-id-at-point-prompt 'file monotone-last-fileid)))
+  (monotone-cat-id-pd 'file monotone-last-fileid)
   (setq monotone-last-fileid monotone-last-id))
 
 (defun monotone-cat-manifestid (&optional id)
   "Display the manifest with ID."
   (interactive)
-  (monotone-cat-id 'manifest (or id (monotone-id-at-point-prompt 'manifest monotone-last-manifestid)))
+  (monotone-cat-id-pd 'manifest monotone-last-manifestid)
   (setq monotone-last-revisionid monotone-last-id))
 
 (defun monotone-cat-revisionid (&optional id)
   "Display the revision with ID."
   (interactive)
-  (monotone-cat-id 'revision (or id (monotone-id-at-point-prompt 'revision monotone-last-revisionid)))
+  (monotone-cat-id-pd 'revision monotone-last-revisionid)
   (setq monotone-last-revisionid monotone-last-id))
 
 ;;;;;;;;;;
 
 (defvar monotone-menu
   (let ((map (make-sparse-keymap "Monotone")))
-    ;;(define-key map [monotone-vc-] '(menu-item "" monotone-vc-))
-    ;; The menu items are defined in REVERSE order. So we reverse them here.
-    ;;    (reverse
-    ;;     (list
-    (define-key map [monotone-vc-log]
-      '(menu-item "Log" monotone-vc-log))
+    ;; These need to be in reverse order
+    (define-key map [monotone-sync]
+      '(menu-item "DB Sync" monotone-sync))
+    (define-key map [monotone-push]
+      '(menu-item "DB Push" monotone-push))
+    (define-key map [monotone-pull]
+      '(menu-item "DB Pull" monotone-pull))
+    (define-key map [monotone-separator] '("--"))
+    ;;
+    (define-key map [monotone-cat-rid]
+      '(menu-item "Cat this revision id" monotone-cat-revisionid))
+    (define-key map [monotone-cat-mid]
+      '(menu-item "Cat this manifest id" monotone-cat-manifestid))
+    (define-key map [monotone-cat-fid]
+      '(menu-item "Cat this file     id" monotone-cat-fileid))
+    (define-key map [monotone-separator] '("--"))
+    ;;
+    (define-key map [monotone-grab-id]
+      '(menu-item "Grab ID" monotone-grab-id))
     (define-key map [monotone-vc-status]
       '(menu-item "Status" monotone-vc-status))
     (define-key map [monotone-vc-diff]
       '(menu-item "Diff" monotone-vc-diff))
-    (define-key map [monotone-grab-id]
-      '(menu-item "Grab ID" monotone-grab-id))
+    (define-key map [monotone-vc-log]
+      '(menu-item "Log" monotone-vc-log))
     ;;
-    (define-key map [monotone-separator] '("--"))
-    (define-key map [monotone-cat-fid]
-      '(menu-item "Cat this file     id" monotone-cat-fileid))
-    (define-key map [monotone-cat-mid]
-      '(menu-item "Cat this manifest id" monotone-cat-manifestid))
-    (define-key map [monotone-cat-rid]
-      '(menu-item "Cat this revision id" monotone-cat-revisionid))
-    ;;
-    (define-key map [monotone-separator] '("--"))
-    (define-key map [monotone-pull]
-      '(menu-item "DB Pull" monotone-pull))
-    (define-key map [monotone-push]
-      '(menu-item "DB Push" monotone-push))
-    (define-key map [monotone-sync]
-      '(menu-item "DB Sync" monotone-sync))
-    ;;))
     map))
 
-(when monotone-menu-name
-  (define-key-after
-    (lookup-key global-map [menu-bar])
-    [monotone] (cons monotone-menu-name monotone-menu)))
+;; People have reported problems with the menu.
+;; dont report an error for now.
+(let ((ok nil))
+  (condition-case nil
+      (progn
+        (when monotone-menu-name
+          (define-key-after
+            (lookup-key global-map [menu-bar])
+            [monotone] (cons monotone-menu-name monotone-menu)))
+        (setq ok t))
+    (error nil))
+  (when (not ok)
+    (message "Menu bar failed to load.")))
 
 (provide 'monotone)
 ;;; monotone.el ends here
