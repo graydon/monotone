@@ -1,5 +1,9 @@
 2005-04-28  Richard Levitte  <richard@levitte.org>
 
+	* tests/t_automate_select.at: silly ignores not needed any more.
+
+2005-04-28  Richard Levitte  <richard@levitte.org>
+
 	* commands.cc (complete): Don't talk of there really was no
 	expansion.
 
