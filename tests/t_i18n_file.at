@@ -21,8 +21,11 @@ AT_CHECK(touch "weird/file name with spaces", [], [ignore], [ignore])
 AT_CHECK(touch "weird/$FUNNY_FILENAME", [], [ignore], [ignore])
 AT_CHECK(touch "utf8/$EUROPEAN_UTF8", [], [ignore], [ignore])
 AT_CHECK(touch "utf8/$JAPANESE_UTF8", [], [ignore], [ignore])
-AT_CHECK(touch "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
-AT_CHECK(touch "euc/$JAPANESE_EUC_JP", [], [ignore], [ignore])
+
+if test `uname` != "Darwin"; then
+	AT_CHECK(touch "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
+	AT_CHECK(touch "euc/$JAPANESE_EUC_JP", [], [ignore], [ignore])
+fi
 
 AT_CHECK(MONOTONE add "weird/file name with spaces", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "weird/$FUNNY_FILENAME", [], [ignore], [ignore])
@@ -60,13 +63,17 @@ AT_CHECK(grep $EUROPEAN_UTF8 manifest, [], [ignore], [ignore])
 AT_CHECK(MONOTONE drop "utf8/$EUROPEAN_UTF8" "utf8/$JAPANESE_UTF8", [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message 'cleaning up utf8 files', [], [ignore], [ignore])
 
-# now try iso-8859-1
+# OS X expects data passed to the OS to be utf8, so these tests don't make
+# sense.
+if test `uname` != "Darwin"; then
+	# now try iso-8859-1
 
-export LANG=de_DE.iso-8859-1
-export CHARSET=iso-8859-1
-AT_CHECK(MONOTONE add "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
+	export LANG=de_DE.iso-8859-1
+	export CHARSET=iso-8859-1
+	AT_CHECK(MONOTONE add "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding european name in ISO 8859-1', [], [ignore], [ignore])
+	AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding european name in ISO 8859-1', [], [ignore], [ignore])
+fi
 
 # check the names showed up in our manifest
 
@@ -74,21 +81,26 @@ AT_CHECK(MONOTONE cat manifest, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep funny manifest, [], [ignore], [ignore])
 AT_CHECK(grep spaces manifest, [], [ignore], [ignore])
-AT_CHECK(grep "8859-1/$EUROPEAN_UTF8" manifest, [], [ignore], [ignore])
+if test `uname` != "Darwin"; then
+  AT_CHECK(grep "8859-1/$EUROPEAN_UTF8" manifest, [], [ignore], [ignore])
+fi
 
 # okay, clean up again
 
-AT_CHECK(MONOTONE drop "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit --message 'cleaning up 8859-1 files', [], [ignore], [ignore])
-
+if test `uname` != "Darwin"; then
+	AT_CHECK(MONOTONE drop "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
+	AT_CHECK(MONOTONE --branch=testbranch commit --message 'cleaning up 8859-1 files', [], [ignore], [ignore])
+fi
 
 # now try euc
 
-export LANG=ja_JP.euc-jp
-export CHARSET=euc-jp
-AT_CHECK(MONOTONE add "euc/$JAPANESE_EUC_JP", [], [ignore], [ignore])
+if test `uname` != "Darwin"; then
+	export LANG=ja_JP.euc-jp
+	export CHARSET=euc-jp
+	AT_CHECK(MONOTONE add "euc/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding japanese name in EUC-JP', [], [ignore], [ignore])
+	AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding japanese name in EUC-JP', [], [ignore], [ignore])
+fi
 
 # check the names showed up in our manifest
 
@@ -96,6 +108,8 @@ AT_CHECK(MONOTONE cat manifest, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep funny manifest, [], [ignore], [ignore])
 AT_CHECK(grep spaces manifest, [], [ignore], [ignore])
-AT_CHECK(grep "euc/$JAPANESE_UTF8" manifest, [], [ignore], [ignore])
+if test `uname` != "Darwin"; then
+	AT_CHECK(grep "euc/$JAPANESE_UTF8" manifest, [], [ignore], [ignore])
+fi
 
 AT_CLEANUP

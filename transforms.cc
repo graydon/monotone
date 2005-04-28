@@ -634,6 +634,10 @@ filesystem_is_ascii_extension()
 inline static fs::path 
 localized_impl(string const & utf)
 {
+#ifdef __APPLE__
+  // on OS X paths for the filesystem/kernel are UTF-8 encoded.
+  return mkpath(utf);
+#else
   if (filesystem_is_utf8())
     return mkpath(utf);
   if (filesystem_is_ascii_extension())
@@ -658,6 +662,7 @@ localized_impl(string const & utf)
       ret /= mkpath(ext());
     }
   return ret;
+#endif
 }
 
 fs::path 

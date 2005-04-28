@@ -1,3 +1,8 @@
+2005-04-28  Matt Johnston  <matt@ucc.asn.au.
+
+	* tests/t_i18n_file.at, transforms.cc: OS X expects all paths to be
+	utf-8, don't try to use other encodings in the test.
+
 2005-04-28  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_automate_select.at: silly ignores not needed any more.
