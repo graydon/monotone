@@ -158,6 +158,7 @@ inline T const & checked_index(std::vector<T> const & v,
   return v[i];
 }
 
+#ifdef QA_SUPPORTED
 template <typename T>
 inline T & checked_index(std::vector<T, QA(T)> & v, 
                          typename std::vector<T>::size_type i,
@@ -183,6 +184,7 @@ inline T const & checked_index(std::vector<T, QA(T)> const & v,
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
 }
+#endif // QA_SUPPORTED
 
 
 #define idx(v, i) checked_index((v), (i), #v, #i, __FILE__, __LINE__)

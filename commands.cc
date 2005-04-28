@@ -44,6 +44,7 @@
 #include "automate.hh"
 #include "inodeprint.hh"
 #include "platform.hh"
+#include "selectors.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -739,110 +740,20 @@ describe_revision(app_state & app, revision_id const & id)
   return description;
 }
 
-static void
-decode_selector(string const & orig_sel,
-                selector_type & type,
-                string & sel,
-                app_state & app)
-{
-  sel = orig_sel;
-
-  L(F("decoding selector '%s'\n") % sel);
-
-  if (sel.size() < 2 || sel[1] != ':')
-    {
-      string tmp;
-      if (!app.lua.hook_expand_selector(sel, tmp))
-        {
-          L(F("expansion of selector '%s' failed\n") % sel);
-        }
-      else
-        {
-          P(F("expanded selector '%s' -> '%s'\n") % sel % tmp);
-          sel = tmp;
-        }
-    }
-  
-  if (sel.size() >= 2 && sel[1] == ':')
-    {
-      switch (sel[0])
-        {
-        case 'a': 
-          type = sel_author;
-          break;
-        case 'b':
-          type = sel_branch;
-          break;
-        case 'd':
-          type = sel_date;
-          break;
-        case 'i':
-          type = sel_ident;
-          break;
-        case 't':
-          type = sel_tag;
-          break;
-        case 'c':
-          type = sel_cert;
-          break;
-        default:          
-          W(F("unknown selector type: %c\n") % sel[0]);
-          break;
-        }
-      sel.erase(0,2);
-    }
-}
-
-static void
-complete_selector(string const & orig_sel,
-                  vector<pair<selector_type, string> > const & limit,             
-                  selector_type & type,
-                  set<string> & completions,
-                  app_state & app)
-{  
-  string sel;
-  decode_selector(orig_sel, type, sel, app);
-  app.db.complete(type, sel, limit, completions);
-}
-
-
 static void 
 complete(app_state & app, 
          string const & str, 
          revision_id & completion)
 {
-
-  // this rule should always be enabled, even if the user specifies
-  // --norc: if you provide a revision id, you get a revision id.
-  if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
-      && str.size() == constants::idlen)
-    {
-      completion = revision_id(str);
-      return;
-    }
-  
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-  boost::char_separator<char> slash("/");
-  tokenizer tokens(str, slash);
-
-  vector<string> selector_strings;
-  vector<pair<selector_type, string> > selectors;  
-  copy(tokens.begin(), tokens.end(), back_inserter(selector_strings));
-  for (vector<string>::const_iterator i = selector_strings.begin();
-       i != selector_strings.end(); ++i)
-    {
-      string sel;
-      selector_type type = sel_unknown;
-      decode_selector(*i, type, sel, app);
-      selectors.push_back(make_pair(type, sel));
-    }
+  vector<pair<selectors::selector_type, string> >
+    sels(selectors::parse_selector(str, app));
 
   P(F("expanding selection '%s'\n") % str);
 
   // we jam through an "empty" selection on sel_ident type
   set<string> completions;
-  selector_type ty = sel_ident;
-  complete_selector("", selectors, ty, completions, app);
+  selectors::selector_type ty = selectors::sel_ident;
+  selectors::complete_selector("", sels, ty, completions, app);
 
   N(completions.size() != 0,
     F("no match for selection '%s'") % str);

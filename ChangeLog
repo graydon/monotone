@@ -1,3 +1,31 @@
+2005-04-28  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc, commands.hh: Selector functions and type are moved
+	to...
+	* selectors.cc, selectors.hh: ... these files.
+	* database.cc, database.hh: Adapt to this change.
+	* automate.cc (automate_select): New function, implements
+	'automate select'.
+	(automate_command): Use it.
+	* monotone.texi (Automation): Document it.
+
+	* tests/t_automate_select.at: New test.
+	* testsuite.at: Use it.
+
+	* Makefile.am (MOST_SOURCES): reorganise.  Add selectors.{cc,hh}.
+
+2005-04-27  Richard Levitte  <richard@levitte.org>
+
+	* quick_alloc.hh: Define QA_SUPPORTED when quick allocation is
+	supported.
+	* sanity.hh: Only defined the QA(T) variants of checked_index()
+	when QA_SUPPORTED is defined.
+
+2005-04-27  Joel Reed  <joelwreed@comcast.com>
+
+	* work.cc: on rename move attributes as well.
+	* tests/t_rename_attr.at: No longer a bug.
+
 2005-04-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Working Copy, Commands): Document update_inodeprints.
@@ -3550,7 +3578,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Mikowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÂkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
