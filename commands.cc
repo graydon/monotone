@@ -3767,26 +3767,22 @@ log_certs(app_state & app, revision_id id, cert_name name, string label, bool mu
 }
 
 
-CMD(annotate, "informative", "[ID] file", "print annotated copy of 'file' from revision 'ID')")
+CMD(annotate, "informative", "[--revision=REVISION] PATH", "print annotated copy of the file from REVISION")
 {
   revision_id rid;
   file_path file;
 
-  if ((args.size() > 2) || (args.size() < 1))
+  if (app.revision_selectors.size() == 0)
+    app.require_working_copy();
+
+  if ((args.size() != 1) || (app.revision_selectors.size() > 1))
     throw usage(name);
 
-  if (args.size() == 2)
-    {  
-      complete(app, idx(args, 0)(), rid);
-      file=file_path(idx(args, 1)());
-    }  
-  else if (args.size() == 1)
-    { 
-      app.require_working_copy(); // no id arg, must have working copy
-
-      file = file_path(idx(args, 0)());
-      get_revision_id(rid);
-    }
+  file=file_path(idx(args, 0)());
+  if (app.revision_selectors.size() == 0)
+    get_revision_id(rid);
+  else 
+    complete(app, idx(app.revision_selectors, 0)(), rid);
 
   L(F("annotate file file_path '%s'\n") % file);
 
@@ -3796,9 +3792,8 @@ CMD(annotate, "informative", "[ID] file", "print annotated copy of 'file' from r
   app.db.get_revision(rid, rev);
   app.db.get_manifest(rev.new_manifest, mm);
   manifest_map::const_iterator i = mm.find(file);
-  //N(i != mm.end(),
-  //  L(F("No such file '%s' in revision %s\n") % file % rid));
-  I(i != mm.end());
+  N(i != mm.end(),
+    F("No such file '%s' in revision %s\n") % file % rid);
   file_id fid = manifest_entry_id(*i);
   L(F("annotate for file_id %s\n") % manifest_entry_id(*i));
 

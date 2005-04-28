@@ -3640,7 +3640,7 @@ the command starts tracing back through history from the revision
 copy.
 
 @item monotone annotate @var{file}
-@item monotone annotate @var{file} @var{id}
+@item monotone annotate --revision=@var{id} @var{file}
 
 Dumps an annotated copy of the file to stdout.  Each line of the file
 is translated to <revision id>: <line> in the output, where <revision id>

@@ -895,42 +895,6 @@ database::get_delta(hexenc<id> const & ident,
   unpack(del_packed, del);
 }
 
-
-void
-database::get_file_delta(file_id const & src,
-                         file_id const & dst,
-                         file_delta & del)
-{
-  results res;
-  // FIXME: testing, only ever do it the hard way
-  if (0) { //try {
-    fetch(res, one_col, one_row,
-          "SELECT delta from '%q' WHERE id = '%q' AND base = '%q'",
-          "file_deltas", (src.inner())().c_str(), (dst.inner())().c_str());
-    del = file_delta(res[0][0]);
-  } else { //} catch (...) {
-    // no delta, try to fetch each file and construct delta
-    file_data src_data, dst_data;
-
-    get_file_version(src, src_data);
-    get_file_version(dst, dst_data);
-
-    data src_unpacked, dst_unpacked;
-    //unpack(src_data.inner(), src_unpacked);
-    //unpack(dst_data.inner(), dst_unpacked);
-    src_unpacked = src_data.inner();
-    dst_unpacked = dst_data.inner();
-
-    // do the xdelta
-    string result;
-    compute_delta(src_unpacked(), dst_unpacked(), result);
-    //compute_delta(dst_unpacked(), src_unpacked(), result);
-    base64< gzip<delta> > del_inner;
-    pack(delta(result), del_inner);
-    del = file_delta(delta(result)); //del_inner);
-  }
-}
-
 void 
 database::put(hexenc<id> const & ident,
               data const & dat,
