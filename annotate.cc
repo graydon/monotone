@@ -304,7 +304,7 @@ annotate_context::dump() const
 
   revision_id lastid = nullid;
   for (size_t i=0; i<file_lines.size(); i++) {
-    I(! (annotations[i] == nullid) );
+    //I(! (annotations[i] == nullid) );
     if (false) //(lastid == annotations[i])
       std::cout << "                                        : " << file_lines[i] << std::endl;
     else
@@ -363,8 +363,8 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
                              std::min(file_interned.size(), parent_lineage->file_interned.size()),
                              std::back_inserter(lcs));
 
-  L(F("build_parent_lineage: file_lines.size() == %d, parent.file_lines.size() == %d, lcs.size() == %d\n")
-    % file_interned.size() % parent_lineage->file_interned.size() % lcs.size());
+  //L(F("build_parent_lineage: file_lines.size() == %d, parent.file_lines.size() == %d, lcs.size() == %d\n")
+  //  % file_interned.size() % parent_lineage->file_interned.size() % lcs.size());
 
   // do the copied lines thing for our annotate_context
   std::vector<long> lcs_src_lines;
@@ -372,7 +372,7 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
   size_t i, j;
   i = j = 0;
   while (i < file_interned.size() && j < lcs.size()) {
-    L(F("file_interned[%d]: %ld    lcs[%d]: %ld\n") % i % file_interned[i] % j % lcs[j]);
+    //L(F("file_interned[%d]: %ld    lcs[%d]: %ld\n") % i % file_interned[i] % j % lcs[j]);
 
     if (file_interned[i] == lcs[j]) {
       acp->set_copied(mapping[i]);
@@ -384,7 +384,7 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
 
     i++;
   }
-  L(F("loop ended with i: %d, j: %d, lcs.size(): %d\n") % i % j % lcs.size());
+  //L(F("loop ended with i: %d, j: %d, lcs.size(): %d\n") % i % j % lcs.size());
   I(j == lcs.size());
 
   // set touched for the rest of the lines in the file
@@ -394,7 +394,7 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
   }
 
   // determine the mapping for parent lineage
-  L(F("build_parent_lineage: building mapping now\n"));
+  //L(F("build_parent_lineage: building mapping now\n"));
   i = j = 0;
   while (i < parent_lineage->file_interned.size() && j < lcs.size()) {
     if (parent_lineage->file_interned[i] == lcs[j]) {
@@ -403,7 +403,7 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
     } else {
       parent_lineage->mapping[i] = -1;
     }
-    L(F("mapping[%d] -> %d\n") % i % parent_lineage->mapping[i]);
+    //L(F("mapping[%d] -> %d\n") % i % parent_lineage->mapping[i]);
     
     i++;
   }
@@ -461,7 +461,7 @@ do_annotate_node (const annotate_node_work &work_unit,
       % *parent % work_unit.node_revision);
 
     if (*parent == null_revision) {
-      // work_unit.node_revision is the root node
+      // work_unit.node_revision is a root node
       I(parents.size() == 1);
       L(F("do_annotate_node credit_mapped_lines to revision %s\n") % work_unit.node_revision);
       work_unit.lineage->credit_mapped_lines(work_unit.annotations);
@@ -470,7 +470,7 @@ do_annotate_node (const annotate_node_work &work_unit,
     }
 
     // FIX this seems like alot of work to just follow the one file back, write
-    // dedicated follow_file(child_rev, parent_rev) function
+    // dedicated follow_file(child_rev, parent_rev) function?
     change_set cs;
     calculate_arbitrary_change_set (*parent, work_unit.node_revision, app, cs);
     if (cs.rearrangement.added_files.find(work_unit.node_fpath) != cs.rearrangement.added_files.end()) {
@@ -537,7 +537,10 @@ do_annotate (app_state &app, file_path fpath, file_id fid, revision_id rid)
     nodes_to_process.pop_front();
     do_annotate_node(work, app, nodes_to_process, nodes_seen);
   }
-  I(acp->is_complete());
+  //I(acp->is_complete());
+  if (!acp->is_complete()) {
+      W(F("annotate was unable to assign blame to some lines.  This is a bug.\n"));
+  }
 
   acp->dump();
   //boost::shared_ptr<annotation_formatter> frmt(new annotation_text_formatter()); 
