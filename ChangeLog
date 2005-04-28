@@ -1,4 +1,10 @@
-2005-04-28  Matt Johnston  <matt@ucc.asn.au.
+2005-04-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_merge_6.at, testsuite.at: add a new test for the case where
+	duplicate lines appear in a file during a merge. This testcase can
+	be correctly handled by merge(1).
+
+2005-04-28  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_i18n_file.at, transforms.cc: OS X expects all paths to be
 	utf-8, don't try to use other encodings in the test.
