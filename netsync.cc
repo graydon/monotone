@@ -3453,6 +3453,11 @@ run_netsync_protocol(protocol_voice voice,
           guard.commit();
         }
     }
+  catch (Netxx::NetworkException & e)
+    {      
+      end_platform_netsync();
+      throw informative_failure((F("network exception: %s") % e.what()).str());
+    }
   catch (Netxx::Exception & e)
     {      
       end_platform_netsync();

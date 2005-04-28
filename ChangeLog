@@ -1,3 +1,18 @@
+2005-04-29  Grahame Bowland  <grahame@angrygoats.net>
+
+	* netxx/types.h: Add new NetworkException type network 
+	issue not caused by calling program
+	* netsync.cc: Catch Netxx::NetworkException and display 
+	as informative_error.
+	* netxx/address.cxx: NetworkException for unparsable URIs.
+	* netxx/datagram.cxx: NetworkException for connection failure.
+	* netxx/resolve_getaddrinfo.cxx, resolve_gethostbyname.cxx:
+	NetworkException when DNS resolution fails.
+	* netxx/serverbase.cxx: NetworkException if unable to bind 
+	to server port.
+	* netxx/streambase.cxx: NetworkException if unable to 
+	connect.
+
 2005-04-28  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_merge_6.at: narrow the testcase down considerably.
