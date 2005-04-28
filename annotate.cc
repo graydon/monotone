@@ -144,7 +144,7 @@ private:
 
   static interner<long> in; // FIX, testing hack 
 
-  std::vector<long> file_interned;
+  std::vector<long, QA(long)> file_interned;
 
   // same length as file_lines. if file_lines[i] came from line 4 in the UDOI, mapping[i] = 4
   std::vector<int> mapping;
@@ -355,7 +355,8 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
 {
   boost::shared_ptr<annotate_lineage_mapping> parent_lineage(new annotate_lineage_mapping(parent_data));
 
-  std::vector<long> lcs;
+  std::vector<long, QA(long)> lcs;
+  std::back_insert_iterator< std::vector<long, QA(long)> > bii(lcs);
   longest_common_subsequence(file_interned.begin(), 
                              file_interned.end(),
                              parent_lineage->file_interned.begin(), 

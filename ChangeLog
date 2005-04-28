@@ -1,3 +1,10 @@
+2005-04-2008  Emile Snyder <emile@alumni.reed.edu>
+
+	* annotate.cc: Fix broken build after propagate from .annotate
+	branch to mainline.  The lcs stuff was changed to use
+	quick_allocator, so our use of it had to change as well.
+
+	
 2005-04-28  Emile Snyder  <emile@alumni.reed.edu>
 
 	* commands.cc: New command "annotate"
