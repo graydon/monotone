@@ -1,3 +1,14 @@
+2005-04-28  Emile Snyder  <emile@alumni.reed.edu>
+
+	* commands.cc: New command "annotate"
+	* annotate.{cc,hh}: New files implement it.
+	* Makefile.am: Build it.
+	* monotone.texi: Document it.	
+	* tests/t_annotate.at:
+	* tests/t_annotate_add_collision.at:
+	* tests/t_annotate_branch_collision.at: 
+	* testsuite.at: Test it.
+	
 2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* commands.cc: Renamed maybe_show_multiple_heads to
