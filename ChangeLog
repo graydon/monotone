@@ -9,6 +9,415 @@
 	* tests/t_annotate_branch_collision.at: 
 	* testsuite.at: Test it.
 	
+2005-04-29  Grahame Bowland  <grahame@angrygoats.net>
+
+	* netxx/types.h: Add new NetworkException type network 
+	issue not caused by calling program
+	* netsync.cc: Catch Netxx::NetworkException and display 
+	as informative_error.
+	* netxx/address.cxx: NetworkException for unparsable URIs.
+	* netxx/datagram.cxx: NetworkException for connection failure.
+	* netxx/resolve_getaddrinfo.cxx, resolve_gethostbyname.cxx:
+	NetworkException when DNS resolution fails.
+	* netxx/serverbase.cxx: NetworkException if unable to bind 
+	to server port.
+	* netxx/streambase.cxx: NetworkException if unable to 
+	connect.
+
+2005-04-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_merge_6.at: narrow the testcase down considerably.
+
+2005-04-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_merge_6.at, testsuite.at: add a new test for the case where
+	duplicate lines appear in a file during a merge. This testcase can
+	be correctly handled by merge(1).
+
+2005-04-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_i18n_file.at, transforms.cc: OS X expects all paths to be
+	utf-8, don't try to use other encodings in the test.
+
+2005-04-28  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_automate_select.at: silly ignores not needed any more.
+
+2005-04-28  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (complete): Don't talk of there really was no
+	expansion.
+
+2005-04-28  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc, commands.hh: Selector functions and type are moved
+	to...
+	* selectors.cc, selectors.hh: ... these files.
+	* database.cc, database.hh: Adapt to this change.
+	* automate.cc (automate_select): New function, implements
+	'automate select'.
+	(automate_command): Use it.
+	* monotone.texi (Automation): Document it.
+
+	* tests/t_automate_select.at: New test.
+	* testsuite.at: Use it.
+
+	* Makefile.am (MOST_SOURCES): reorganise.  Add selectors.{cc,hh}.
+
+2005-04-27  Richard Levitte  <richard@levitte.org>
+
+	* quick_alloc.hh: Define QA_SUPPORTED when quick allocation is
+	supported.
+	* sanity.hh: Only defined the QA(T) variants of checked_index()
+	when QA_SUPPORTED is defined.
+
+2005-04-27  Joel Reed  <joelwreed@comcast.com>
+
+	* work.cc: on rename move attributes as well.
+	* tests/t_rename_attr.at: No longer a bug.
+
+2005-04-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Working Copy, Commands): Document update_inodeprints.
+	* monotone.1: Likewise.
+
+	* tests/t_update_inodeprints.at: New test.
+	* testsuite.at: Add it.
+
+2005-04-27  Richard Levitte  <richard@levitte.org>
+
+	* database.cc (selector_to_certname): Add a case for
+	commands::sel_cert.
+
+2005-04-27  Richard Levitte  <richard@levitte.org>
+
+	* sanity.hh: Add a couple of variants of checked_index() to
+	accomodate for indexes over vector<T, QA(T)>.
+
+	* commands.hh: Add new selector to find arbitrary cert name and
+	value pairs.  The syntax is 'c:{name}={value}'.
+	* commands.cc (decode_selector): Recognise it.
+	* database.cc (complete): Parse it.
+	* std_hooks.lua (expand_selector): Add an expansion for it.
+	* monotone.texi (Selectors): Document it.
+
+	* tests/t_select_cert.at: Add test.
+	* testsuite.at: Use it.
+
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* vocab.cc (verify(file_path)): don't find() twice.
+	* change_set.cc (extend_state): remove commented out line 
+
+2005-04-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_cvsimport_manifest_cycle.at: New test.
+	* testsuite.at: Add test.
+	* AUTHORS: Add self.
+
+2005-04-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Timothy Brownawell.
+
+2005-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* ui.{cc,hh}: Delegate tick line blanking to tick_writers.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc: Don't include boost/regex.hpp.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.cc, inodeprint.cc: Don't include boost/regex.hpp.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* sqlite/vdbeaux.c (MAX_6BYTE): Apply patch from
+	http://www.sqlite.org/cvstrac/chngview?cn=2445.  It shouldn't
+	affect monotone's usage, but just in case.
+
+2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
+
+	* rcs_import.cc (struct cvs_key, process_branch): Fix
+	indentation.
+	(build_change_set): Handle the case where a file is "added dead".
+
+	* tests/t_cvsimport2.at: Un-XFAIL, improve description.
+
+2005-04-22  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: update to sqlite 3.2.1
+
+2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_i18n_file_data.at: New test.
+	* testsuite.at: Add it.
+
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (extend_state): don't mix find() and insert() on
+	the path_state, to avoid hitting the smap's worst-case.
+
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): move things out of the loops
+	for better performance.
+
+2005-04-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (analyze_rearrangement): get rid of damaged_in_first
+	since it is not used.
+
+2005-04-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.texi: fix mashed up merge of docs for kill_rev_locally
+	and db check.
+
+2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* automate.cc (automate_parents, automate_children) 
+	(automate_graph): New automate commands.
+	(automate_command): Add them.
+	* commands.cc (automate): Synopsisfy them.
+	* monotone.texi (Automation): Document them.
+	* tests/t_automate_graph.at, test/t_parents_children.at: Test
+	them.
+	* testsuite.at: Add the tests.
+
+	* tests/t_automate_ancestors.at: Remove obsolete comment.
+	
+2005-04-24  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_rename_file_to_dir.at:
+	* tests/t_replace_file_with_dir.at:
+	* tests/t_replace_dir_with_file.at: new bug reports
+	* testsuite.at: include new tests
+
+2005-04-24  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (app_state): add all_files flag to the constructor
+	(set_all_files): new method for setting flag
+
+	* basic_io.{cc,hh} (escape): expose public method to quote and
+	escape file_paths
+	(push_str_pair): use it internally
+
+	* commands.cc (calculate_restricted_rearrangement): new function
+	factored out of calculate_restricted_revision
+	(calculate_restricted_revision): use new function
+	(struct unknown_itemizer): rename to ...
+	(struct file_itemizer): ... this; use a path_set rather than a
+	manifest map; build path sets of unknown and ignored files, rather
+	than simply printing them
+	(ls_unknown): adjust to compensate for itemizer changes
+	(print_inventory): new functions for printing inventory lines from
+	path sets and rename maps
+	(inventory): new command for printing inventory of working copy
+	files
+
+	* manifest.cc (inodeprint_unchanged): new function factored out
+	from build_restricted_manifest_map
+	(classify_paths): new function to split paths from an old manifest
+	into unchanged, changed or missing sets for inventory
+	(build_restricted_manifest_map): adjust to use
+	inodeprint_unchanged
+	* manifest.hh (classify_paths): new public function
+	
+	* monotone.1: document new inventory command and associated
+	--all-files option
+
+	* monotone.cc: add new --all-files option which will be specific
+	to the inventory command asap
+
+	* monotone.texi (Informative): document new inventory command
+	(Commands): add manpage entry for inventory
+	(OPTIONS): add entries for --xargs, -@ and --all-files
+
+	* tests/t_status_missing.at: remove bug priority flag
+	* tests/t_inventory.at: new test
+	* testsuite.at: include new test
+	
+2005-04-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Database): Document 'db kill_rev_locally'.
+
+2005-04-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup after merge.
+
+2005-04-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.cc (build_restricted_manifest_map): Careful to only
+	stat things once on the inodeprints fast-path.
+	(read_manifest_map): Hand-code a parser, instead of using
+	boost::regex.
+	* inodeprint.cc (read_inodeprint_map): Likewise.
+
+2005-04-23  Derek Scherger  <derek@echologic.com>
+
+	* (calculate_restricted_revision): remove redundant variables,
+	avoiding path_rearrangement assignments and associated sanity
+	checks
+	(calculate_current_revision): rename empty to empty_args for
+	clarity
+
+2005-04-23  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (calculate_base_revision): rename to ...
+	(get_base_revision): ... this, since it's not calculating anything
+	(calculate_base_manifest): rename to ...
+	(get_base_manifest): ... this, and call get_base_revision
+	(calculate_restricted_revision): call get_base_revision and remove
+	missing files stuff
+	(add):
+	(drop):
+	(rename):
+	(attr): call get_base_manifest
+	(ls_missing): 
+	(revert): call get_base_revision
+	* manifest.{cc,hh} (build_restricted_manifest_map): don't return
+	missing files and don't produce invalid manifests; do report on
+	all missing files before failing
+	
+2005-04-23  Derek Scherger  <derek@echologic.com>
+
+	* app_state.cc:
+	* database.cc:
+	* file_io.{cc, hh}: fix bad merge
+
+2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* database.cc (put_key): Check for existence of keys with
+	conflicting key ids, give more informative message than former SQL
+	constraint error.
+
+2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* transforms.cc (filesystem_is_ascii_extension_impl): Add EUC to
+	the list of ascii-extending encodings.
+
+	* tests/t_multiple_heads_msg.at: Make more robust, add tests for
+	branching.
+
+2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* app_state.cc (restriction_includes): Remove some L()'s that were
+	taking 5-6% of time in large tree diff.
+
+2005-04-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.{cc,hh} (localized): Move from here...
+	* transforms.{cc,hh} (localized): ...to here.  Add lots of gunk to
+	avoid calling iconv whenever possible.
+
+2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* manifest.cc (build_restricted_manifest_map): Fixup after merge
+	-- use file_exists instead of fs::exists.
+
+2005-04-22  Derek Scherger  <derek@echologic.com>
+
+	* manifest.{cc,hh} (build_restricted_manifest_map): keep and
+	return a set of missing files rather than failing on first missing
+	file
+	* commands.cc (calculate_restricted_revision): handle set of
+	missing files
+	* revision.hh: update comment on the format of a revision
+	* tests/t_status_missing.at: un-XFAIL and add a few tests
+	
+2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* vocab.cc (verify(file_path), verify(local_path)): Normalize
+	paths on the way in.
+	* tests/t_normalized_filenames.at: Fix to match behavior
+	eventually declared "correct".
+
+2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* vocab.{cc,hh}: Make verify functions public, make ATOMIC(foo)'s
+	verify function a friend of foo, add ATOMIC_NOVERIFY macro, add
+	long comment explaining all this.
+	* vocab_terms.hh: Add _NOVERIFY to some types.
+
+2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.{cc,hh} (localized): Take file_path/local_path instead
+	of string; expose in public interface.  Adjust rest of file to
+	match.
+	(walk_tree): Don't convert the (OS-supplied) current directory
+	from UTF-8 to current locale.
+	
+	* transforms.{cc,hh} (charset_convert): Be more informative on
+	error.
+	(calculate_ident): Localize the filename, even on the fast-path.
+	Also assert file exists and is not a directory, since Crypto++
+	will happily hash directories.  (They are like empty files,
+	apparently.)
+	
+	* manifest.cc (build_restricted_manifest_map): Use file_exists
+	instead of fs::exists, to handle localized paths.
+	* {win32,unix}/inodeprint.cc (inodeprint_file): Use localized
+	filenames to stat.
+
+	* tests/t_i18n_file.at: Rewrite to work right.
+
+	* tests/t_normalized_filenames.at: New test.
+	* testsuite.at: Add it.
+	* vocab.cc (test_file_path_verification): MT/path is not a valid
+	file_path either.
+	(test_file_path_normalization): New unit-test.
+
+2005-04-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_diff_currev.at: Use CHECK_SAME_STDOUT.
+
+2005-04-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_diff_currev.at: New test.
+	* testsuite.at: Add new test.
+
+2005-04-22  Joel Reed  <joelwreed@comcast.net>
+
+	* work.cc (build_deletions) : on drop FILE also drop attributes.
+	* tests/t_drop_attr.at : test for success now, fixed bug.
+
+2005-04-22  Jon Bright <jon@siliconcircus.com>
+	* monotone.texi: Changed all quoting of example command lines to
+	use " instead of ', since this works everywhere, but ' doesn't
+	work on Win32
+
+2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* tests/t_multiple_heads_msg.at: Now checks to ensure 'multiple head'
+	  message does not occur on first commit (which creates a new head
+	  but not multiple heads).
+	* commands.cc (CMD(commit)): renamed head_size to better described
+	  old_head_size, now checks that old_head_size is larger than 0 as
+	  well otherwise, on commit of a brand new project, a new head was
+	  detected and a divergence message was displayed.
+
+2005-04-21  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (ALIAS): refactor so you don't have to repeat all
+	the strings given to the original command.
+	(ALIAS(ci)): added as a short form for CMD(commit).
+
+	* Makefile.am (%.eps): create .eps files directly from .ps files,
+	using ps2eps.
+
+2005-04-21 Sebastian Spaeth <Sebastian@SSpaeth.de>
+
+	* monotone.texi: add command reference docs about kill_rev_locally
+	
+2005-04-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (apply_path_rearrangement_can_fastpath) 
+	(apply_path_rearrangement_fastpath) 
+	(apply_path_rearrangement_slowpath, apply_path_rearrangement):
+	Refactor into pieces, so all versions of apply_path_rearrangement
+	can take a fast-path when possible.
+
 2005-04-21  Jeremy Cowgar  <jeremy@cowgar.com>
 
 	* commands.cc: Renamed maybe_show_multiple_heads to
@@ -3219,7 +3628,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Mi�łkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÂkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

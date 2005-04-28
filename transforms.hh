@@ -51,13 +51,16 @@ void decode_base64(base64<T> const & in, T & out)
 std::string uppercase(std::string const & in);
 std::string lowercase(std::string const & in);
 
+std::string encode_hexenc(std::string const & in);
+std::string decode_hexenc(std::string const & in);
+
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)
-{ out = xform<CryptoPP::HexDecoder>(uppercase(in())); }
+{ out = decode_hexenc(in()); }
 
 template <typename T>
 void encode_hexenc(T const & in, hexenc<T> & out)
-{ out = lowercase(xform<CryptoPP::HexEncoder>(in())); }
+{ out = encode_hexenc(in()); }
 
 
 // gzip
@@ -169,6 +172,10 @@ void system_to_utf8(external const & system, utf8 & utf);
 void utf8_to_system(utf8 const & utf, external & system);
 void ace_to_utf8(ace const & ac, utf8 & utf);
 void utf8_to_ace(utf8 const & utf, ace & a);
+
+fs::path localized(file_path const & path);
+fs::path localized(local_path const & path);
+fs::path localized(utf8 const & path);
 
 // specific internal / external conversions for various vocab terms
 void internalize_cert_name(utf8 const & utf, cert_name & c);

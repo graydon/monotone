@@ -525,20 +525,26 @@ confirm_proper_tree(path_state const & ps)
   size_t tid_range = max_tid - min_tid + 1;
   
   boost::dynamic_bitset<> confirmed(tid_range);
+  boost::dynamic_bitset<> ancbits(tid_range);
+  std::vector<tid> ancs; // a set is more efficient, at least in normal
+                      // trees where the number of ancestors is
+                      // significantly less than tid_range
+  tid curr;
+  path_item item;
 
   for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
-      tid curr = i->first;
-      path_item item = i->second;
-      std::set<tid> ancs; // a set is more efficient, at least in normal
-                          // trees where the number of ancestors is
-                          // significantly less than tid_range
+      ancs.clear();
+      ancbits.reset();
+      curr = i->first;
+      item = i->second;
 
       while (confirmed.test(curr - min_tid) == false)
         {             
           sanity_check_path_item(item);
-          I(ancs.find(curr) == ancs.end());
-          ancs.insert(curr);
+          I(ancbits.test(curr-min_tid) == false);
+          ancs.push_back(curr);
+          ancbits.set(curr-min_tid);
           if (path_item_parent(item) == root_tid)
             break;
           else
@@ -555,7 +561,7 @@ confirm_proper_tree(path_state const & ps)
               I(path_item_type(item) == ptype_directory);
             }
         }
-      for (std::set<tid>::const_iterator a = ancs.begin(); a != ancs.end(); a++)
+      for (std::vector<tid>::const_iterator a = ancs.begin(); a != ancs.end(); a++)
         {
           confirmed.set(*a - min_tid);
         }
@@ -1102,7 +1108,7 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
 {
   directory_map first_map, second_map;
   state_renumbering renumbering;
-  std::set<tid> damaged_in_first, damaged_in_second;
+  std::set<tid> damaged_in_second;
 
   pa.first.clear();
   pa.second.clear();
@@ -1112,7 +1118,6 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
     {
       tid x = ensure_file_in_map(*f, first_map, pa.first, ts);
       pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_file, make_null_component())));
-      damaged_in_first.insert(x);
     }
 
   for (std::set<file_path>::const_iterator d = pr.deleted_dirs.begin();
@@ -1120,7 +1125,6 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
     {
       tid x = ensure_dir_in_map(*d, first_map, pa.first, ts);
       pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_directory, make_null_component())));
-      damaged_in_first.insert(x);
     }
 
   for (std::map<file_path,file_path>::const_iterator rf = pr.renamed_files.begin();
@@ -1130,7 +1134,6 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
       tid b = ensure_file_in_map(rf->second, second_map, pa.second, ts);
       I(renumbering.find(a) == renumbering.end());
       renumbering.insert(std::make_pair(b,a));
-      damaged_in_first.insert(a);
       damaged_in_second.insert(b);
     }
 
@@ -1141,7 +1144,6 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
       tid b = ensure_dir_in_map(rd->second, second_map, pa.second, ts);
       I(renumbering.find(a) == renumbering.end());
       renumbering.insert(std::make_pair(b,a));
-      damaged_in_first.insert(a);
       damaged_in_second.insert(b);
     }
 
@@ -1298,12 +1300,17 @@ static void
 extend_state(path_state const & src, 
              path_state & dst)
 {
+  std::vector< std::pair<tid, path_item> > tmp;
   for (path_state::const_iterator i = src.begin();
        i != src.end(); ++i)
     {
       if (dst.find(path_state_tid(i)) == dst.end())
-        dst.insert(*i);
+        tmp.push_back(*i);
     }
+
+  for (std::vector<std::pair<tid, path_item> >::const_iterator i = tmp.begin();
+      i != tmp.end(); i++)
+    dst.insert(*i);
 }
 
 static void
@@ -2464,18 +2471,6 @@ apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
 // application stuff
 
 void
-apply_path_rearrangement(path_set const & old_ps,
-                         change_set::path_rearrangement const & pr,
-                         path_set & new_ps)
-{
-  pr.check_sane();
-  change_set::path_rearrangement a, b, c;
-  a.added_files = old_ps;
-  concatenate_rearrangements(a, pr, c);
-  new_ps = c.added_files;
-}
-
-void
 build_pure_addition_change_set(manifest_map const & man,
                                change_set & cs)
 {
@@ -2568,30 +2563,70 @@ apply_change_set(manifest_map const & old_man,
     }
 }
 
-// quick, optimistic and destructive version
+static inline bool
+apply_path_rearrangement_can_fastpath(change_set::path_rearrangement const & pr)
+{
+  return pr.added_files.empty()
+    && pr.renamed_files.empty()
+    && pr.renamed_dirs.empty()
+    && pr.deleted_dirs.empty();
+}
+
+static inline void
+apply_path_rearrangement_fastpath(change_set::path_rearrangement const & pr,
+                                  path_set & ps)
+{
+  pr.check_sane();
+  // fast path for simple drop-or-nothing file operations
+  for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
+       i != pr.deleted_files.end(); ++i)
+    {
+      I(ps.find(*i) != ps.end());
+      ps.erase(*i);
+    }
+}
+
+static inline void
+apply_path_rearrangement_slowpath(path_set const & old_ps,
+                                  change_set::path_rearrangement const & pr,
+                                  path_set & new_ps)
+{
+  pr.check_sane();
+  change_set::path_rearrangement a, b;
+  a.added_files = old_ps;
+  concatenate_rearrangements(a, pr, b);
+  new_ps = b.added_files;
+}
+
+void
+apply_path_rearrangement(path_set const & old_ps,
+                         change_set::path_rearrangement const & pr,
+                         path_set & new_ps)
+{
+  if (apply_path_rearrangement_can_fastpath(pr))
+    {
+      new_ps = old_ps;
+      apply_path_rearrangement_fastpath(pr, new_ps);
+    }
+  else
+    {
+      apply_path_rearrangement_slowpath(old_ps, pr, new_ps);
+    }
+}
+
+// destructive version
 void
 apply_path_rearrangement(change_set::path_rearrangement const & pr,
                          path_set & ps)
 {
-  pr.check_sane();
-  if (pr.added_files.empty()
-      && pr.renamed_files.empty() 
-      && pr.renamed_dirs.empty()
-      && pr.deleted_dirs.empty())
+  if (apply_path_rearrangement_can_fastpath(pr))
     {
-      // fast path for simple drop-or-nothing file operations
-      for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
-           i != pr.deleted_files.end(); ++i)
-        {
-          I(ps.find(*i) != ps.end());
-          ps.erase(*i);
-        }
+      apply_path_rearrangement_fastpath(pr, ps);
     }
   else
     {
-      // fall back to the slow way
-      path_set tmp;
-      apply_path_rearrangement(ps, pr, tmp);
+      path_set tmp = ps;
+      apply_path_rearrangement_slowpath(ps, pr, tmp);
       ps = tmp;
     }
 }

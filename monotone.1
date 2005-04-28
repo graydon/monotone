@@ -41,6 +41,9 @@ Show diffs between working copy and database.
 \fBstatus \fI[<pathname>...]\fP
 Show status of working copy.
 .TP
+\fBinventory \fI[<pathname>...]\fP
+Show inventory of files in the working copy.
+.TP
 \fBlog\fP \fI[id] \fP
 Show historical log of revisions, starting from working copy
 base revision, or \fI[id]\fP if given.
@@ -149,13 +152,16 @@ Commit working copy to database. If a --message option is provided on
 the command ine, it is used; otherwise a log message editor will be
 invoked.
 .TP
-\fBupdate\fP 
+\fBupdate\fP  \fI[revision-id]\fP
 Update working copy.
 .TP
-\fBpush\fP \fI<host> <collection>\fP 
+\fBupdate_inodeprints\fP 
+Turn on inodeprints mode, and force a cache refresh.
+.TP
+\fBpush\fP \fI[<host> [<collection>]]\fP 
 Push contents of \fI<collection>\fP to database on \fI<host>\fP 
 .TP
-\fBpull\fP \fI<host> <collection>\fP 
+\fBpull\fP \fI[<host> [<collection>]]\fP 
 Push contents of \fI<collection>\fP from database on \fI<host>\fP 
 .TP
 \fBsync\fP \fI<host> <collection>\fP 
@@ -276,7 +282,7 @@ Stop the search for a working copy (containing the @file{MT} directory)
 at the specified root directory rather than at the physical root of the
 filesystem.
 .TP
-\fB-xargs=\fI<file>\fP
+\fB--xargs=\fI<file>\fP
 Inject the contents of the file in place among the command line
 arguments.  This may be useful in case the command line would
 otherwise become too long for your system.  This option can be used
@@ -284,6 +290,11 @@ more than once if needed.
 .TP
 \fB-@ \fI<file>\fP
 An alias for \fB--xargs=\fI<file>\fP
+.TP
+\fB--all-files\fP
+Include every file available in the working copy in the inventory
+list. By default inventory only lists ``interesting'' files. This option
+is specific to the @command{inventory} command.
 
 .SH ENVIRONMENT
 .TP

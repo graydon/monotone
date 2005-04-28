@@ -97,11 +97,11 @@ struct extent
   edit_t type;
 };
 
-void calculate_extents(vector<long> const & a_b_edits,
-                       vector<long> const & b,
-                       vector<long> & prefix,
+void calculate_extents(vector<long, QA(long)> const & a_b_edits,
+                       vector<long, QA(long)> const & b,
+                       vector<long, QA(long)> & prefix,
                        vector<extent> & extents,
-                       vector<long> & suffix,
+                       vector<long, QA(long)> & suffix,
                        size_t const a_len,
                        interner<long> & intern)
 {
@@ -109,7 +109,7 @@ void calculate_extents(vector<long> const & a_b_edits,
 
   size_t a_pos = 0, b_pos = 0;
 
-  for (vector<long>::const_iterator i = a_b_edits.begin(); 
+  for (vector<long, QA(long)>::const_iterator i = a_b_edits.begin(); 
        i != a_b_edits.end(); ++i)
     {
       // L(F("edit: %d") % *i);
@@ -173,8 +173,8 @@ void calculate_extents(vector<long> const & a_b_edits,
 }
 
 void normalize_extents(vector<extent> & a_b_map,
-                       vector<long> const & a,
-                       vector<long> const & b)
+                       vector<long, QA(long)> const & a,
+                       vector<long, QA(long)> const & b)
 {
   for (size_t i = 0; i < a_b_map.size(); ++i)
     {
@@ -271,10 +271,10 @@ void normalize_extents(vector<extent> & a_b_map,
 
 void merge_extents(vector<extent> const & a_b_map,
                    vector<extent> const & a_c_map,
-                   vector<long> const & b,
-                   vector<long> const & c,
+                   vector<long, QA(long)> const & b,
+                   vector<long, QA(long)> const & c,
                    interner<long> const & in,
-                   vector<long> & merged)
+                   vector<long, QA(long)> & merged)
 {
   I(a_b_map.size() == a_c_map.size());
 
@@ -356,13 +356,13 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
                             vector<string> const & right,
                             vector<string> & merged)
 {
-  vector<long> anc_interned;  
-  vector<long> left_interned, right_interned;  
-  vector<long> left_edits, right_edits;  
-  vector<long> left_prefix, right_prefix;  
-  vector<long> left_suffix, right_suffix;  
+  vector<long, QA(long)> anc_interned;  
+  vector<long, QA(long)> left_interned, right_interned;  
+  vector<long, QA(long)> left_edits, right_edits;  
+  vector<long, QA(long)> left_prefix, right_prefix;  
+  vector<long, QA(long)> left_suffix, right_suffix;  
   vector<extent> left_extents, right_extents;
-  vector<long> merged_interned;
+  vector<long, QA(long)> merged_interned;
   interner<long> in;
 
   //   for (int i = 0; i < std::min(std::min(left.size(), right.size()), ancestor.size()); ++i)
@@ -444,7 +444,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   copy(right_suffix.begin(), right_suffix.end(), back_inserter(merged_interned));
 
   merged.reserve(merged_interned.size());
-  for (vector<long>::const_iterator i = merged_interned.begin();
+  for (vector<long, QA(long)>::const_iterator i = merged_interned.begin();
        i != merged_interned.end(); ++i)
     merged.push_back(in.lookup(*i));
 }
@@ -730,9 +730,9 @@ struct hunk_consumer
   virtual ~hunk_consumer() {}
 };
 
-void walk_hunk_consumer(vector<long> const & lcs,
-                        vector<long> const & lines1,
-                        vector<long> const & lines2,                    
+void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
+                        vector<long, QA(long)> const & lines1,
+                        vector<long, QA(long)> const & lines2,                    
                         hunk_consumer & cons)
 {
 
@@ -750,7 +750,7 @@ void walk_hunk_consumer(vector<long> const & lcs,
   else
     {
       // normal case: files have something in common
-      for (vector<long>::const_iterator i = lcs.begin();
+      for (vector<long, QA(long)>::const_iterator i = lcs.begin();
            i != lcs.end(); ++i, ++a, ++b)
         {         
           if (idx(lines1, a) == *i && idx(lines2, b) == *i)
@@ -1056,9 +1056,9 @@ void make_diff(string const & filename1,
                ostream & ost,
                diff_type type)
 {
-  vector<long> left_interned;  
-  vector<long> right_interned;  
-  vector<long> lcs;  
+  vector<long, QA(long)> left_interned;  
+  vector<long, QA(long)> right_interned;  
+  vector<long, QA(long)> lcs;  
 
   interner<long> in;
 

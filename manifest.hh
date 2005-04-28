@@ -74,6 +74,13 @@ std::ostream & operator<<(std::ostream & out, manifest_entry const & e);
 
 class app_state;
 
+void classify_paths(app_state & app,
+                    path_set const & paths,
+                    manifest_map const & m_old, 
+                    path_set & missing,
+                    path_set & changed,
+                    path_set & unchanged);
+
 void build_restricted_manifest_map(path_set const & paths,
                                    manifest_map const & m_old, 
                                    manifest_map & m_new, 

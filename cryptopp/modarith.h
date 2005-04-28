@@ -10,10 +10,6 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
-CRYPTOPP_DLL_TEMPLATE_CLASS AbstractGroup<Integer>;
-CRYPTOPP_DLL_TEMPLATE_CLASS AbstractRing<Integer>;
-CRYPTOPP_DLL_TEMPLATE_CLASS AbstractEuclideanDomain<Integer>;
-
 //! ring of congruence classes modulo n
 /*! \note this implementation represents each congruence class as the smallest non-negative integer in that class */
 class CRYPTOPP_DLL ModularArithmetic : public AbstractRing<Integer>

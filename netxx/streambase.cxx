@@ -87,7 +87,7 @@ void Netxx::StreamBase::make_connection (Socket &socket, const Address &address)
     if (!connected) {
 	std::string error("failed to connect: ");
 	error += message;
-	throw Exception(error);
+	throw NetworkException(error);
     }
 }
 //####################################################################

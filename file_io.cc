@@ -163,20 +163,6 @@ get_homedir()
 #endif
 }
 
-
-static fs::path 
-localized(string const & utf)
-{
-  fs::path tmp = mkpath(utf), ret;
-  for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
-    {
-      external ext;
-      utf8_to_system(utf8(*i), ext);
-      ret /= mkpath(ext());
-    }
-  return ret;
-}
-
 string 
 absolutify(string const & path)
 {
@@ -240,27 +226,27 @@ book_keeping_file(local_path const & p)
 bool 
 directory_exists(local_path const & p) 
 { 
-  return fs::exists(localized(p())) &&
-    fs::is_directory(localized(p())); 
+  return fs::exists(localized(p)) &&
+    fs::is_directory(localized(p)); 
 }
 
 bool 
 directory_exists(file_path const & p) 
 { 
-  return fs::exists(localized(p())) &&
-    fs::is_directory(localized(p())); 
+  return fs::exists(localized(p)) &&
+    fs::is_directory(localized(p)); 
 }
 
 bool 
 file_exists(file_path const & p) 
 { 
-  return fs::exists(localized(p())); 
+  return fs::exists(localized(p)); 
 }
 
 bool 
 file_exists(local_path const & p) 
 { 
-  return fs::exists(localized(p())); 
+  return fs::exists(localized(p)); 
 }
 
 void 
@@ -268,7 +254,7 @@ delete_file(local_path const & p)
 { 
   N(file_exists(p), 
     F("file to delete '%s' does not exist") % p);
-  fs::remove(localized(p())); 
+  fs::remove(localized(p)); 
 }
 
 void 
@@ -276,7 +262,7 @@ delete_file(file_path const & p)
 { 
   N(file_exists(p), 
     F("file to delete '%s' does not exist") % p);
-  fs::remove(localized(p())); 
+  fs::remove(localized(p)); 
 }
 
 void 
@@ -284,7 +270,7 @@ delete_dir_recursive(file_path const & p)
 { 
   N(directory_exists(p), 
     F("directory to delete '%s' does not exist") % p);
-  fs::remove_all(localized(p())); 
+  fs::remove_all(localized(p)); 
 }
 
 void 
@@ -292,7 +278,7 @@ delete_dir_recursive(local_path const & p)
 { 
   N(directory_exists(p), 
     F("directory to delete '%s' does not exist") % p);
-  fs::remove_all(localized(p())); 
+  fs::remove_all(localized(p)); 
 }
 
 void 
@@ -303,8 +289,8 @@ move_file(file_path const & old_path,
     F("rename source file '%s' does not exist") % old_path);
   N(! file_exists(new_path), 
     F("rename target file '%s' already exists") % new_path);
-  fs::rename(localized(old_path()), 
-             localized(new_path()));
+  fs::rename(localized(old_path), 
+             localized(new_path));
 }
 
 void 
@@ -315,8 +301,8 @@ move_file(local_path const & old_path,
     F("rename source file '%s' does not exist") % old_path);
   N(! file_exists(new_path), 
     F("rename target file '%s' already exists") % new_path);
-  fs::rename(localized(old_path()), 
-             localized(new_path()));
+  fs::rename(localized(old_path), 
+             localized(new_path));
 }
 
 void 
@@ -327,8 +313,8 @@ move_dir(file_path const & old_path,
     F("rename source dir '%s' does not exist") % old_path);
   N(!directory_exists(new_path), 
     F("rename target dir '%s' already exists") % new_path);
-  fs::rename(localized(old_path()), 
-             localized(new_path()));
+  fs::rename(localized(old_path), 
+             localized(new_path));
 }
 
 void 
@@ -339,26 +325,26 @@ move_dir(local_path const & old_path,
     F("rename source dir '%s' does not exist") % old_path);
   N(!directory_exists(new_path), 
     F("rename target dir '%s' already exists") % new_path);
-  fs::rename(localized(old_path()), 
-             localized(new_path()));
+  fs::rename(localized(old_path), 
+             localized(new_path));
 }
 
 void 
 mkdir_p(local_path const & p) 
 { 
-  fs::create_directories(localized(p())); 
+  fs::create_directories(localized(p)); 
 }
 
 void 
 mkdir_p(file_path const & p) 
 { 
-  fs::create_directories(localized(p())); 
+  fs::create_directories(localized(p)); 
 }
 
 void 
 make_dir_for(file_path const & p) 
 { 
-  fs::path tmp = localized(p());
+  fs::path tmp = localized(p);
   if (tmp.has_branch_path())
     {
       fs::create_directories(tmp.branch_path()); 
@@ -399,13 +385,13 @@ read_data_stdin(data & dat)
 void 
 read_data(local_path const & path, data & dat)
 { 
-  read_data_impl(localized(path()), dat); 
+  read_data_impl(localized(path), dat); 
 }
 
 void 
 read_data(file_path const & path, data & dat)
 { 
-  read_data_impl(localized(path()), dat); 
+  read_data_impl(localized(path), dat); 
 }
 
 void 
@@ -413,7 +399,7 @@ read_data(local_path const & path,
           base64< gzip<data> > & dat)
 {
   data data_plain;
-  read_data_impl(localized(path()), data_plain);
+  read_data_impl(localized(path), data_plain);
   gzip<data> data_compressed;
   base64< gzip<data> > data_encoded;  
   encode_gzip(data_plain, data_compressed);
@@ -477,8 +463,9 @@ read_data_for_command_line(utf8 const & path, data & dat)
   if (path() == "-")
     read_data_stdin(dat);
   else
-    read_data_impl(localized(path()), dat);
+    read_data_impl(localized(path), dat);
 }
+
 
 // FIXME: this is probably not enough brains to actually manage "atomic
 // filesystem writes". at some point you have to draw the line with even
@@ -523,13 +510,13 @@ write_data_impl(fs::path const & p,
 void 
 write_data(local_path const & path, data const & dat)
 { 
-  write_data_impl(localized(path()), dat); 
+  write_data_impl(localized(path), dat); 
 }
 
 void 
 write_data(file_path const & path, data const & dat)
 { 
-  write_data_impl(localized(path()), dat); 
+  write_data_impl(localized(path), dat); 
 }
 
 void 
@@ -580,7 +567,7 @@ write_data(local_path const & path,
   data data_decompressed;      
   decode_base64(dat, data_decoded);
   decode_gzip(data_decoded, data_decompressed);      
-  write_data_impl(localized(path()), data_decompressed);
+  write_data_impl(localized(path), data_decompressed);
 }
 
 void 
@@ -641,14 +628,15 @@ walk_tree(file_path const & path,
           tree_walker & walker,
           bool require_existing_path)
 {
-  if (fs::exists(localized(path())))
+  if (fs::exists(localized(path)))
     {
-      if (! fs::is_directory(localized(path())))
+      if (! fs::is_directory(localized(path)))
         walker.visit_file(path);
       else
         {
-          fs::path root(localized(fs::current_path().string()));
-          fs::path rel(localized(path()));
+          // the current path does not need localization
+          fs::path root(fs::current_path());
+          fs::path rel(localized(path));
           walk_tree_recursive(root / rel, rel, walker);
         }
     }

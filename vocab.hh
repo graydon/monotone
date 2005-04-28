@@ -91,11 +91,15 @@ public:                                                \
   ty const & operator=(ty const & other);              \
   bool operator==(ty const & other) const              \
     { return s == other(); }                           \
+  friend void verify(ty &);                            \
   friend std::ostream & operator<<(std::ostream &,     \
                                    ty const &);        \
 };                                                     \
 std::ostream & operator<<(std::ostream &, ty const &);
 
+#define ATOMIC_NOVERIFY(ty)                            \
+ATOMIC(ty)                                             \
+inline void verify(ty &) {}
 
 #define EXTERN extern
 
@@ -103,6 +107,7 @@ std::ostream & operator<<(std::ostream &, ty const &);
 
 #undef EXTERN
 #undef ATOMIC
+#undef ATOMIC_NOVERIFY
 #undef DECORATE
 #undef ENCODING
 

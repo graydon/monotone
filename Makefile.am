@@ -2,28 +2,49 @@ AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
 MOST_SOURCES =								\
-	 app_state.cc commands.cc diff_patch.cc lua.cc			\
-         transforms.cc update.cc work.cc cert.cc database.cc file_io.cc	\
-         keys.cc manifest.cc packet.cc sanity.cc vocab.cc rcs_file.cc	\
-         xdelta.cc ui.cc schema_migration.cc				\
-         constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
-         mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
-	 change_set.cc mt_version.cc automate.cc database_check.cc	\
-	 path_component.cc epoch.cc inodeprint.cc annotate.cc           \
+	 app_state.cc app_state.hh					\
+         commands.cc commands.hh					\
+         diff_patch.cc diff_patch.hh					\
+         lua.cc lua.hh							\
+         transforms.cc transforms.hh					\
+         update.cc update.hh						\
+         work.cc work.hh						\
+         cert.cc cert.hh						\
+         database.cc database.hh					\
+         file_io.cc file_io.hh						\
+         keys.cc keys.hh						\
+         manifest.cc manifest.hh					\
+         packet.cc packet.hh						\
+         sanity.cc sanity.hh						\
+         vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
+         rcs_file.cc rcs_file.hh					\
+         xdelta.cc xdelta.hh						\
+         ui.cc ui.hh							\
+         schema_migration.cc schema_migration.hh			\
+         constants.cc constants.hh					\
+         netsync.cc netsync.hh						\
+         netcmd.cc netcmd.hh						\
+         merkle_tree.cc merkle_tree.hh					\
+         basic_io.cc basic_io.hh					\
+         mkstemp.cc mkstemp.hh						\
+         lcs.cc lcs.hh							\
+         rcs_import.cc rcs_import.hh					\
+         revision.cc revision.hh					\
+	 change_set.cc change_set.hh					\
+         mt_version.cc mt_version.hh					\
+         automate.cc automate.hh					\
+         database_check.cc database_check.hh				\
+	 path_component.cc path_component.hh				\
+         epoch.cc epoch.hh						\
+         inodeprint.cc inodeprint.hh					\
+         selectors.cc selectors.hh					\
+	 annotate.cc annotate.hh                                        \
 									\
-         app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
-	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
-	 transforms.hh vocab.hh				\
-	 cleanup.hh diff_patch.hh lua.hh basic_io.hh			\
-	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
-         randomfile.hh rcs_file.hh xdelta.hh adler32.hh			\
-         lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
-	 netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
-	 numeric_vocab.hh revision.hh change_set.hh			\
-	 mkstemp.hh mt_version.hh automate.hh database_check.hh smap.hh	\
-	 gettext.h package_revision.c package_full_revision.c           \
-	 path_component.hh epoch.hh package_full_revision.h             \
-	 package_revision.h inodeprint.hh annotate.hh
+	 cleanup.hh unit_tests.hh interner.hh				\
+         cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
+	 netio.hh smap.hh gettext.h					\
+         package_revision.c package_revision.h				\
+         package_full_revision.c package_full_revision.h
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -274,11 +295,14 @@ monotone.pdf: monotone.texi $(PDF_FIGURES)
 
 monotone.dvi: monotone.texi $(EPS_FIGURES)
 
-%.eps: %.epsi
-	mv $< $@
+#%.eps: %.epsi
+#	mv $< $@
+#
+#%.epsi: %.ps
+#	ps2epsi $< $@
 
-%.epsi: %.ps
-	ps2epsi $< $@
+%.eps : %.ps
+	ps2eps $< $@
 
 $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 	mkdir -p $(top_builddir)/figures

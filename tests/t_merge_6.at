@@ -1,0 +1,92 @@
+AT_SETUP([test a merge 6])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+NEED_UNB64
+
+# Another real merge error. This is the diff between the correct
+# result and the file produced by the merge:
+#
+# --- correct     Thu Apr 28 15:38:27 2005
+# +++ testfile    Thu Apr 28 15:38:36 2005
+# @@ -5,6 +5,10 @@
+#  3
+#  4
+#  a
+# +2
+# +3
+# +4
+# +a
+#  q
+#  d
+#  g
+
+# merge(1) can handle this merge correctly. Experimenting with the input files,
+# it seems that the second 'a' character in the left and right files has some
+# importance.
+
+AT_DATA(parent, [
+o
+a
+q
+e
+g
+])
+
+AT_DATA(left, [
+o
+a
+2
+3
+4
+a
+q
+d
+g
+])
+
+AT_DATA(right, [
+o
+a
+2
+3
+4
+a
+q
+e
+g
+])
+
+AT_DATA(correct, [
+o
+a
+2
+3
+4
+a
+q
+d
+g
+])
+
+AT_CHECK(cp -f parent testfile)
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+COMMIT(testbranch)
+PARENT_SHA=`BASE_REVISION`
+
+AT_CHECK(cp -f left testfile)
+COMMIT(testbranch)
+
+REVERT_TO($PARENT_SHA)
+
+AT_CHECK(cp -f right testfile)
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(cmp testfile correct)
+
+AT_CLEANUP

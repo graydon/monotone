@@ -134,7 +134,7 @@ void Netxx::Address::add_address(const char *uri, port_type default_port)
 
     if (!parse_uri(uri, protocol, name_, tmp_port, path_)) {
 	std::string error("can't parse URI: "); error += uri;
-	throw Exception(error);
+	throw NetworkException(error);
     }
 
     if (!protocol.empty() && std::strcmp(protocol.c_str(), const_local_service) == 0) {
