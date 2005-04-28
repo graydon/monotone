@@ -1978,15 +1978,10 @@ ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
-      {
-        cout << *i << endl;
-      }
+      cout << *i << endl;
   else 
     for (path_set::const_iterator i = unknown.begin(); i != unknown.end(); ++i)
-      {
-        cout << *i << endl;
-      }
-
+      cout << *i << endl;
 }
 
 static void
@@ -2023,37 +2018,73 @@ ls_missing (app_state & app, vector<utf8> const & args)
     }
 }
 
-static void
-print_inventory(std::string const & status,
-                std::string const & suffix,
-                path_set const & files,
-                path_set const & excluded)
+struct inventory_item
 {
-  for (path_set::const_iterator i = files.begin(); i != files.end(); ++i)
+  enum pstat 
+    { UNCHANGED_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH, UNKNOWN_PATH, IGNORED_PATH } 
+    path_status;
+
+  enum dstat 
+    { UNCHANGED_DATA, PATCHED_DATA, MISSING_DATA } 
+    data_status;
+
+  enum ptype
+    { FILE, DIRECTORY } 
+    path_type;
+
+  file_path old_path;
+
+  inventory_item():
+    path_status(UNCHANGED_PATH), data_status(UNCHANGED_DATA), path_type(FILE), old_path() {}
+};
+
+typedef std::map<file_path, inventory_item> inventory_map;
+
+static void
+inventory_paths(inventory_map & inventory,
+                path_set const & paths,
+                inventory_item::pstat path_status, 
+                inventory_item::ptype path_type = inventory_item::FILE)
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      if (excluded.find(*i) == excluded.end())
-        cout << status << " " << basic_io::escape((*i)() + suffix) << endl;
+      L(F("%d %d %s\n") % inventory[*i].path_status % path_status % *i);
+      I(inventory[*i].path_status == inventory_item::UNCHANGED_PATH);
+      inventory[*i].path_status = path_status;
+      inventory[*i].path_type = path_type;
     }
 }
 
 static void
-print_inventory(std::string const & status,
-                std::string const & suffix,
-                std::map<file_path, file_path> const & renames,
-                path_set const & excluded)
-                
+inventory_paths(inventory_map & inventory,
+                path_set const & paths,
+                inventory_item::dstat data_status)
 {
-  for (std::map<file_path, file_path>::const_iterator i = renames.begin();
-       i != renames.end(); ++i)
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      if (excluded.find(i->second) == excluded.end())
-        cout << status 
-             << " " << basic_io::escape(i->first() + suffix) 
-             << " " << basic_io::escape(i->second() + suffix) 
-             << endl;
+      L(F("%d %d %s\n") % inventory[*i].data_status % data_status % *i);
+      I(inventory[*i].data_status == inventory_item::UNCHANGED_DATA);
+      inventory[*i].data_status = data_status;
     }
 }
 
+static void
+inventory_paths(inventory_map & inventory,
+                std::map<file_path,file_path> const & renames,
+                inventory_item::pstat path_status, 
+                inventory_item::ptype path_type = inventory_item::FILE)
+{
+  for (std::map<file_path,file_path>::const_iterator i = renames.begin(); 
+       i != renames.end(); i++)
+    {
+      L(F("%d %d %s %s\n") % inventory[i->second].path_status % path_status % i->first % i->second);
+      I(inventory[i->second].path_status == inventory_item::UNCHANGED_PATH);
+      inventory[i->second].path_status = inventory_item::RENAMED_PATH;
+      inventory[i->second].path_type = path_type;
+      inventory[i->second].old_path = i->first;
+    }
+}
+               
 CMD(inventory, "informative", "[PATH]...", 
     "inventory of every file in working copy with associated status")
 {
@@ -2063,6 +2094,7 @@ CMD(inventory, "informative", "[PATH]...",
   path_set old_paths, new_paths, empty;
   change_set::path_rearrangement included, excluded;
   path_set missing, changed, unchanged, unknown, ignored;
+  inventory_map inventory;
 
   app.require_working_copy();
 
@@ -2074,33 +2106,77 @@ CMD(inventory, "informative", "[PATH]...",
   file_itemizer u(app, new_paths, unknown, ignored);
   walk_tree(u);
 
+  // remove deleted paths from the set of unknown paths
+
+  for (path_set::const_iterator i = included.deleted_files.begin();
+         i != included.deleted_files.end(); ++i)
+    unknown.erase(*i);
+
+  for (path_set::const_iterator i = included.deleted_dirs.begin();
+         i != included.deleted_dirs.end(); ++i)
+    unknown.erase(*i);
+
   classify_paths(app, new_paths, m_old, missing, changed, unchanged);
 
-  print_inventory("!", "", missing, empty);
+  inventory_paths(inventory, missing, inventory_item::MISSING_DATA);
 
-  // a file may be missing and also added or the target of a rename. or it may
-  // be added or the target of a rename and also changed. inventory lists each
-  // file only once with the highest priority status. missing takes precedence
-  // over added or renamed. added or renamed takes precedence over changed.
+  inventory_paths(inventory, included.deleted_files, inventory_item::DROPPED_PATH);
+  inventory_paths(inventory, included.deleted_dirs, inventory_item::DROPPED_PATH, inventory_item::DIRECTORY);
 
-  print_inventory("-", "", included.deleted_files, empty);
-  print_inventory("-", "/", included.deleted_dirs, empty);
+  inventory_paths(inventory, included.renamed_files, inventory_item::RENAMED_PATH);
+  inventory_paths(inventory, included.renamed_dirs, inventory_item::RENAMED_PATH, inventory_item::DIRECTORY);
 
-  // ensure missing has precedence over renamed
-  print_inventory("%", "", included.renamed_files, missing);
-  print_inventory("%", "/", included.renamed_dirs, missing);
+  inventory_paths(inventory, included.added_files, inventory_item::ADDED_PATH);
+  inventory_paths(inventory, changed, inventory_item::PATCHED_DATA);
   
-  // ensure missing has precedence over added
-  print_inventory("+", "", included.added_files, missing);
-  
-  print_inventory("#", "", changed, empty);
-
   if (app.all_files)
     {
-      print_inventory("=", "", unchanged, empty);
-      print_inventory("?", "", unknown, empty);
-      print_inventory("~", "", ignored, empty);
+      inventory_paths(inventory, unchanged, inventory_item::UNCHANGED_DATA);
+      inventory_paths(inventory, unknown, inventory_item::UNKNOWN_PATH);
+      inventory_paths(inventory, ignored, inventory_item::IGNORED_PATH);
     }
+
+  for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end(); ++i)
+    {
+      switch (inventory[i->first].path_status) 
+        {
+        case inventory_item::UNCHANGED_PATH: cout << " "; break;
+        case inventory_item::ADDED_PATH:     cout << "+"; break;
+        case inventory_item::DROPPED_PATH:   cout << "-"; break;
+        case inventory_item::RENAMED_PATH:   cout << "%"; break;
+        case inventory_item::UNKNOWN_PATH:   cout << "?"; break;
+        case inventory_item::IGNORED_PATH:   cout << "~"; break;
+        }
+
+      switch (inventory[i->first].data_status) 
+        {
+        case inventory_item::UNCHANGED_DATA: cout << " "; break;
+        case inventory_item::PATCHED_DATA:   cout << "#"; break;
+        case inventory_item::MISSING_DATA:   cout << "!"; break;
+        }
+
+      cout << " ";
+
+      switch (inventory[i->first].path_type) 
+        {
+        case inventory_item::FILE: 
+          if (inventory[i->first].path_status == inventory_item::RENAMED_PATH)
+            cout << basic_io::escape(inventory[i->first].old_path()) << " "; 
+          
+          cout << basic_io::escape(i->first()); 
+          break;
+
+        case inventory_item::DIRECTORY: 
+          if (inventory[i->first].path_status == inventory_item::RENAMED_PATH)
+            cout << basic_io::escape(inventory[i->first].old_path() + "/") << " "; 
+         
+          cout << basic_io::escape(i->first() + "/"); 
+          break;
+        }
+      
+      cout << endl;
+    }
+ 
 }
 
 CMD(list, "informative", 

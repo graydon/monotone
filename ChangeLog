@@ -1,3 +1,13 @@
+2005-04-27  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (ls_unknown): remove unneeded braces
+	(struct inventory_item): new struct for tracking inventories
+	(print_inventory): removed old output functions 
+	(inventory_paths): new functions for paths, data and renames
+	(inventory): rework to display two column status codes
+	* monotone.texi (Informative): update for new status codes
+	* tests/t_inventory.at: update for two column status codes
+	
 2005-04-28  Richard Levitte  <richard@levitte.org>
 
 	* commands.cc, commands.hh: Selector functions and type are moved

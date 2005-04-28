@@ -3642,17 +3642,24 @@ to files changed within the current subdirectory of the working copy.
 @itemx monotone inventory @var{pathname...}
 
 This command prints the ``inventory'' of files in a working copy. Each
-file is prefixed by a single character indicating the status of the
-associated file.
+file is prefixed by two characters indicating the current status of the
+file's path and associated data or contents.
+
+The first status character may be one of the following:
 @itemize
-@item ! missing file
-@item - dropped file
-@item % renamed file
-@item + added file
-@item # changed file
-@item = unchanged file
-@item ? unknown file
-@item ~ ignored file
+@item ' ' the path is unchanged from the current manifest 
+@item '+' the path has been added to the current manifest
+@item '-' the path has been dropped from the current manifest
+@item '%' the path has been renamed in the current manifest, both the old and new name are listed
+@item '?' the path is unknown, it exists in the working copy but not in the current manifest
+@item '~' the path is ignored by the current ignore_file lua hook setting
+@end itemize
+
+The second status character may be one of the following:
+@itemize
+@item ' ' the data is unchanged, its sha1 version matches the version in the base manifest
+@item '#' the data is changed, its sha1 version differs from the version in the base manifest
+@item '!' the data is missing and its sha1 version cannot be computed
 @end itemize
 
 By default the @command{inventory} command lists only ``interesting''
@@ -3679,20 +3686,13 @@ that are will be restricted as described above.
 Renamed files have both the old and new name of the file listed on
 the same line in the inventory, in that order.  
 
-A file may be missing and also added or the target of a rename, or it
-may be added or the target of a rename and also changed. The
-@command{inventory} command lists each file only once and in these cases
-the status with the highest priority will be displayed. The missing
-status takes precedence over both added or renamed and these values take
-precedence over the changed status.
-
 Since pathnames may contain spaces, quotes and other ``special''
 characters, the @command{inventory} command lists quoted filenames to
 avoid any ambiguities.
 
 Full support for versioned directories is not yet complete and the
 @command{inventory} command will only list entries for renamed or
-dropped directories. Directory entries will be designated by pathnames
+dropped directories. Directory entries are designated by pathnames
 ending with the "/" character.
 
 @item monotone log
