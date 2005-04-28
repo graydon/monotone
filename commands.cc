@@ -745,6 +745,18 @@ complete(app_state & app,
          string const & str, 
          revision_id & completion)
 {
+  // This copies the start of selectors::parse_selector().to avoid
+  // getting a log when there's no expansion happening...:
+  //
+  // this rule should always be enabled, even if the user specifies
+  // --norc: if you provide a revision id, you get a revision id.
+  if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
+      && str.size() == constants::idlen)
+    {
+      completion = revision_id(str);
+      return;
+    }
+
   vector<pair<selectors::selector_type, string> >
     sels(selectors::parse_selector(str, app));
 

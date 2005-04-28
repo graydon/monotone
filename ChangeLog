@@ -1,5 +1,10 @@
 2005-04-28  Richard Levitte  <richard@levitte.org>
 
+	* commands.cc (complete): Don't talk of there really was no
+	expansion.
+
+2005-04-28  Richard Levitte  <richard@levitte.org>
+
 	* commands.cc, commands.hh: Selector functions and type are moved
 	to...
 	* selectors.cc, selectors.hh: ... these files.
