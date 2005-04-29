@@ -3365,10 +3365,12 @@ any added entries inserted in its manifest.
 
 @item monotone drop @var{pathname...}
 This command places ``drop'' entries for the paths specified in
-@var{pathname...} in the working copy's ``work list''. The work list
-of your working copy is located at @file{MT/work}, and is a list of
+@var{pathname...} in the working copy's ``work list''. The work list of
+your working copy is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
-as addition, removal, or renaming of files.
+as addition, removal, or renaming of files.  This command also removes
+any attributes on @var{pathname}; see @ref{File Attributes} for more
+details.
 
 While this command places a ``drop'' entry on your work list, it does
 not immediately affect your database. When you @command{commit} your
@@ -3376,12 +3378,19 @@ working copy, monotone will use the work list to build a new revision,
 which it will then commit to the database. The new revision will have
 any dropped entries removed from its manifest.
 
+Currently this command does @emph{not} actually delete the file
+@var{src} in your filesystem; if you want to actually delete the file,
+you should run @command{drop}, and then perform the actual delete using
+whatever mechanism you normally use to delete files.
+
 @item monotone rename @var{src} @var{dst}
 This command places ``rename'' entries for the paths specified in
 @var{src} and @var{dst} in the working copy's ``work list''. The work
-list of your working copy is located at @file{MT/work}, and is a list
-of explicit pathname changes you wish to commit at some future time,
-such as addition, removal, or renaming of files.
+list of your working copy is located at @file{MT/work}, and is a list of
+explicit pathname changes you wish to commit at some future time, such
+as addition, removal, or renaming of files.  This command also moves any
+attributes on @var{src} to @var{dst}; see @ref{File Attributes} for more
+details.
 
 While this command places a ``rename'' entry on your work list, it
 does not immediately affect your database. When you @command{commit}
@@ -3390,6 +3399,10 @@ revision, which it will then commit to the database. The new revision
 will have any renamed entries in its manifest adjusted to their new
 names.
 
+Currently this command does @emph{not} actually rename the file
+@var{src} in your filesystem; after you run this command, you should do
+the actual rename, using whatever mechanism you normally use to rename
+files.
 
 @item monotone commit
 @itemx monotone commit --message=@var{logmsg}

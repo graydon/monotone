@@ -262,21 +262,22 @@ build_rename(file_path const & src,
   file_path attr_path;
   get_attr_path(attr_path);
 
-  data attr_data;
-  attr_map attrs;
-
   if (file_exists(attr_path))
   {
+    data attr_data;
     read_data(attr_path, attr_data);
+    attr_map attrs;
     read_attr_map(attr_data, attrs);
+
+    // make sure there aren't pre-existing attributes that we'd accidentally
+    // pick up
+    N(attrs.find(dst) == attrs.end(), 
+      F("%s has existing attributes in .mt-attrs; clean them up first") % dst);
 
     // only write out a new attribute map if we find attrs to move
     attr_map::iterator a = attrs.find(src);
     if (a != attrs.end())
     {
-      N(attrs.find(dst) == attrs.end(), 
-        F("refusing to overwrite existing attributes on %s") % dst);
-
       attrs[dst] = (*a).second;
       attrs.erase(a);
 
