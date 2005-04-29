@@ -6,7 +6,7 @@ MONOTONE_SETUP
 
 touch a
 
-AT_CHECK(MONOTONE --branch=a add a, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add a, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=a commit --message "commit a", [], [ignore], [ignore])
 
 ROOT_R_SHA=`BASE_REVISION`
@@ -15,7 +15,7 @@ ROOT_F_SHA=`SHA1(a)`
 mkdir b
 touch b/c
 
-AT_CHECK(MONOTONE --branch=a add b, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add b, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=a commit --message "commit b/c", [], [ignore], [ignore])
 
 PROBE_NODE(a, $ROOT_R_SHA, $ROOT_F_SHA)
@@ -24,7 +24,7 @@ rm b/c
 rmdir b
 touch d
 
-AT_CHECK(MONOTONE --branch=a add d, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add d, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=a commit --message "commit d", [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE --branch=a merge, [], [ignore], [ignore])
