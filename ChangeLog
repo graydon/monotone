@@ -1,5 +1,20 @@
 2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (update_inodeprints): Rename to...
+	(refresh_inodeprints): ...this, so 'monotone up' continues to mean
+	update.
+	
+	* monotone.texi (Inodeprints): Mention refresh_inodeprints in the
+	Inodeprints section.
+	
+	* testsuite.at: 
+	* tests/t_update_inodeprints.at: 
+	* tests/t_refresh_inodeprints.at: 
+	* monotone.texi (Working Copy, Commands): 
+	* monotone.1: Update accordingly.
+
+2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
+
 	* change_set.cc (dump_change_set): Don't truncate output.
 	(invert_change_test): New unit test.
 	(invert_change_set): Make it pass.  This fixes (some?)

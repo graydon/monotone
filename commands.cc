@@ -3519,7 +3519,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
     }
 }
 
-CMD(update_inodeprints, "tree", "", "update the inodeprint cache")
+CMD(refresh_inodeprints, "tree", "", "refresh the inodeprint cache")
 {
   enable_inodeprints();
   maybe_update_inodeprints(app);

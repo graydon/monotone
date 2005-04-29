@@ -2478,12 +2478,12 @@ inherently somewhat less safe, and, as mentioned above, unnecessary for
 most projects, so it is disabled by default.
 
 If you do determine that it is necessary to use inodeprints with your
-project, it is simple to enable them.  A working copy is in inodeprints
-mode if a file @file{MT/inodeprints} exist.  You can simply create an
-empty file with this name, and the next time you commit or update,
-monotone will automatically populate it with cache information.  You can
-at any point delete this file or truncate it; monotone uses it only as a
-cache and will operate correctly if it is removed.
+project, it is simple to enable them.  Simply run @command{monotone
+refresh_inodeprints}; this will enable inodeprints mode and generate an
+initial cache.  If you ever wish to turn them off again, simply delete
+the file @file{MT/inodeprints}.  You can at any time delete or truncate
+the @file{MT/inodeprints} file; monotone uses it only as a cache and
+will continue to operate correctly.
 
 Normally, instead of enabling this up on a per-working-copy basis, you
 will want to simply define the @code{use_inodeprints} hook to return
@@ -3536,7 +3536,7 @@ tries to select the revision to update to from this branch.  The branch
 becomes the new default branch of the working copy (even if you also
 specify an explicit @var{revision} argument).
 
-@item monotone update_inodeprints
+@item monotone refresh_inodeprints
 This command puts the current working copy into @ref{Inodeprints} mode,
 if it was not already, and forces a full inodeprints cache refresh.
 After running this command, you are guaranteed that your working copy is
@@ -6329,7 +6329,7 @@ passed to the message editor.
 Update working copy.
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{update_inodeprints}
+@item @b{refresh_inodeprints}
 Turn on inodeprints mode, and force a cache refresh.
 
 @item @b{push} @i{<host> <collection>}
