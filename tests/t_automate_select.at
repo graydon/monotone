@@ -18,8 +18,8 @@ AT_DATA(testfile, [And we change it a third time
 AT_CHECK(cp testfile testfile3)
 COMMIT(testbranch)
 
-AT_CHECK(MONOTONE cert $FIRST testcert 'value=with=equal=signs', [], [ignore], [ignore])
-AT_CHECK(MONOTONE cert $SECOND testcert 'value', [], [ignore], [ignore])
+AT_CHECK(MONOTONE cert $FIRST testcert 'value=with=equal=signs')
+AT_CHECK(MONOTONE cert $SECOND testcert 'value')
 
 # Check that inexact values fail...
 CHECK_SAME_STDOUT(MONOTONE automate select 'c:testcert=value=' | wc -l, echo 0)
