@@ -3697,13 +3697,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-<<<<<<< variant A
-2005-01-17  Wojciech MiÃÂkowski  <wmilkowski@interia.pl>
->>>>>>> variant B
-2005-01-17  Wojciech MiÂkowski  <wmilkowski@interia.pl>
-####### Ancestor
-2005-01-17  Wojciech MiÃÂkowski  <wmilkowski@interia.pl>
-======= end
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
