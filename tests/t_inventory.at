@@ -31,6 +31,7 @@ AT_DATA(ignored~, [ignored~
 ])
 
 AT_CHECK(rm missing)
+
 AT_CHECK(mv original renamed)
 AT_DATA(changed, [something has changed
 ])
@@ -43,33 +44,33 @@ AT_CHECK(MONOTONE drop dropped, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE inventory, [], [stdout], [ignore])
 
-AT_CHECK(grep '^! "missing"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^+ "added"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^- "dropped"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^% "original" "renamed"' stdout, [], [ignore], [ignore])
-#AT_CHECK(grep '^# "changed"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^ ! "missing"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^+  "added"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^-  "dropped"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^%  "original" "renamed"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^ . "changed"' stdout, [], [ignore], [ignore])
 
-AT_CHECK(grep '^= "unchanged"' stdout, [1], [ignore], [ignore])
-AT_CHECK(grep '^? "unknown"' stdout, [1], [ignore], [ignore])
-AT_CHECK(grep '^~ "ignored~"' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep '^   "unchanged"' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep '^?  "unknown"' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep '^~  "ignored~"' stdout, [1], [ignore], [ignore])
 
 # with --all-files they're all listed
 
 AT_CHECK(MONOTONE inventory --all-files --rcfile inventory_hooks.lua, [], [stdout], [ignore])
 
-AT_CHECK(grep '^= "unchanged"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^? "unknown"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^~ "ignored~"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^   "unchanged"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^?  "unknown"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^~  "ignored~"' stdout, [], [ignore], [ignore])
 
-# renamed takes precedence over changed
+# renamed and changed
 
 AT_DATA(renamed, [renamed and changed
 ])
 
 AT_CHECK(MONOTONE inventory, [], [stdout], [ignore])
 
-#AT_CHECK(grep '^# "renamed"' stdout, [1], [ignore], [ignore])
-AT_CHECK(grep '^% "original" "renamed"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^%. "renamed"' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep '^%  "original" "renamed"' stdout, [], [ignore], [ignore])
 
 # missing renamed and added files
 
@@ -77,17 +78,9 @@ AT_CHECK(rm renamed added)
 
 AT_CHECK(MONOTONE inventory, [], [stdout], [ignore])
 
-AT_CHECK(grep '^! "added"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^! "renamed"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^% "original" "renamed"' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep '^+! "added"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^%! "original" "renamed"' stdout, [], [ignore], [ignore])
 
 # need tests for deleted and renamed directories, once these actually work!
-
-# check the inventory finds the right number of files
-
-I_FILES=`MONOTONE inventory --all-files | wc -l`
-F_FILES=`find . -type f | wc -l`
-
-AT_CHECK(test $I_FILES -eq $F_FILES)
 
 AT_CLEANUP
