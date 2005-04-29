@@ -1,3 +1,14 @@
+2005-04-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_rename_attr.at: Fix a bit; also test that rename refuses
+	to move a file to a name that already has attrs.
+	* work.cc (build_rename): Cleanup a bit; refuse to move a file to
+	a name that already has attrs.
+
+	* monotone.texi (Working Copy): Document explicitly that "drop"
+	and "rename" do not modify the filesystem directly, and do affect
+	attributes.
+
 2005-04-28  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (get_work_path): 
