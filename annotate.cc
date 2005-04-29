@@ -242,12 +242,12 @@ annotate_context::evaluate(revision_id rev)
   for (i = credit_lines.begin(); i != credit_lines.end(); i++) {
     I(*i >= 0 && *i < annotations.size());
     if (annotations[*i] == nullid) {
-      L(F("evaluate setting annotations[%d] -> %s, since touched_lines contained %d, copied_lines didn't and annotations[%d] was nullid\n") 
-        % *i % rev % *i % *i);
+      //L(F("evaluate setting annotations[%d] -> %s, since touched_lines contained %d, copied_lines didn't and annotations[%d] was nullid\n") 
+      //  % *i % rev % *i % *i);
       annotations[*i] = rev;
       annotated_lines_completed++;
     } else {
-      L(F("evaluate LEAVING annotations[%d] -> %s\n") % *i % annotations[*i]);
+      //L(F("evaluate LEAVING annotations[%d] -> %s\n") % *i % annotations[*i]);
     }
   }
 
@@ -258,7 +258,7 @@ annotate_context::evaluate(revision_id rev)
 void 
 annotate_context::set_copied(int index)
 {
-  L(F("annotate_context::set_copied %d\n") % index);
+  //L(F("annotate_context::set_copied %d\n") % index);
   if (index == -1)
     return;
 
@@ -269,7 +269,7 @@ annotate_context::set_copied(int index)
 void 
 annotate_context::set_touched(int index)
 {
-  L(F("annotate_context::set_touched %d\n") % index);
+  //L(F("annotate_context::set_touched %d\n") % index);
   if (index == -1)
     return;
 
@@ -445,35 +445,34 @@ do_annotate_node (const annotate_node_work &work_unit,
                   std::deque<annotate_node_work> &nodes_to_process,
                   std::set<revision_id> &nodes_seen)
 {
-  L(F("do_annotate_node for node %s\n") % work_unit.node_revision);
+  //L(F("do_annotate_node for node %s\n") % work_unit.node_revision);
   nodes_seen.insert(work_unit.node_revision);
   revision_id null_revision; // initialized to 0 by default?
 
   // get the revisions parents
   std::set<revision_id> parents;
   app.db.get_revision_parents(work_unit.node_revision, parents);
-  L(F("do_annotate_node found %d parents for node %s\n") % parents.size() % work_unit.node_revision);
+  //L(F("do_annotate_node found %d parents for node %s\n") % parents.size() % work_unit.node_revision);
 
   int added_in_parent_count = 0;
 
-  std::set<revision_id>::const_iterator parent;
-  for (parent = parents.begin(); parent != parents.end(); parent++) {
+  revision_set rev;
+  app.db.get_revision(work_unit.node_revision, rev);
+
+  if (rev.edges.size() == 0) {
+    // work_unit.node_revision is a root node
+    I(parents.size() == 1);
+    L(F("do_annotate_node credit_mapped_lines to revision %s\n") % work_unit.node_revision);
+    work_unit.lineage->credit_mapped_lines(work_unit.annotations);
+    work_unit.annotations->evaluate(work_unit.node_revision);
+    return;
+  }
+
+  for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); i++) {
     L(F("do_annotate_node processing edge from parent %s to child %s\n") 
-      % *parent % work_unit.node_revision);
+      % edge_old_revision(i) % work_unit.node_revision);
 
-    if (*parent == null_revision) {
-      // work_unit.node_revision is a root node
-      I(parents.size() == 1);
-      L(F("do_annotate_node credit_mapped_lines to revision %s\n") % work_unit.node_revision);
-      work_unit.lineage->credit_mapped_lines(work_unit.annotations);
-      work_unit.annotations->evaluate(work_unit.node_revision);
-      return;
-    }
-
-    // FIX this seems like alot of work to just follow the one file back, write
-    // dedicated follow_file(child_rev, parent_rev) function?
-    change_set cs;
-    calculate_arbitrary_change_set (*parent, work_unit.node_revision, app, cs);
+    change_set cs = edge_changes(i);
     if (cs.rearrangement.added_files.find(work_unit.node_fpath) != cs.rearrangement.added_files.end()) {
       L(F("file %s added in %s, continuing\n") 
         % work_unit.node_fpath % work_unit.node_revision);
@@ -482,9 +481,9 @@ do_annotate_node (const annotate_node_work &work_unit,
     }
 
     file_path parent_fpath = apply_change_set_inverse(cs, work_unit.node_fpath);
-    L(F("file %s in parent revision %s is %s\n") % work_unit.node_fpath % *parent % parent_fpath);
+    L(F("file %s in parent revision %s is %s\n") % work_unit.node_fpath % edge_old_revision(i) % parent_fpath);
     I(!(parent_fpath == std::string("")));
-    file_id parent_fid = find_file_id_in_revision(app, parent_fpath, *parent);
+    file_id parent_fid = find_file_id_in_revision(app, parent_fpath, edge_old_revision(i));
 
     boost::shared_ptr<annotate_lineage_mapping> parent_lineage;
 
@@ -500,9 +499,9 @@ do_annotate_node (const annotate_node_work &work_unit,
     }
 
     // if this parent has not yet been queued for processing, create the work unit for it.
-    if (nodes_seen.find(*parent) == nodes_seen.end()) {
-      nodes_seen.insert(*parent);
-      annotate_node_work newunit(work_unit.annotations, parent_lineage, *parent, parent_fid, parent_fpath);
+    if (nodes_seen.find(edge_old_revision(i)) == nodes_seen.end()) {
+      nodes_seen.insert(edge_old_revision(i));
+      annotate_node_work newunit(work_unit.annotations, parent_lineage, edge_old_revision(i), parent_fid, parent_fpath);
       nodes_to_process.push_back(newunit);
     }
   }
@@ -510,8 +509,8 @@ do_annotate_node (const annotate_node_work &work_unit,
   I(added_in_parent_count >= 0);
   I((size_t)added_in_parent_count <= parents.size());
   if ((size_t)added_in_parent_count == parents.size()) {
-    L(F("added_in_parent_count == parents.size(), credit_mapped_lines to %s\n") 
-      % work_unit.node_revision);
+    //L(F("added_in_parent_count == parents.size(), credit_mapped_lines to %s\n") 
+    //  % work_unit.node_revision);
     work_unit.lineage->credit_mapped_lines(work_unit.annotations);
   }
 

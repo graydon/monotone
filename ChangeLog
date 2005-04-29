@@ -1,3 +1,9 @@
+2005-04-29  Emile Snyder  <emile@alumni.reed.edu>
+
+	* annotate.cc (do_annotate_node): Stop doing expensive
+	calculate_arbitrary_change_set when we already know we have parent
+	and child revisions.  Cuts annotate run time in half.
+	
 2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (dump_change_set): Don't truncate output.
