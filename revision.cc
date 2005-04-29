@@ -1606,8 +1606,6 @@ build_changesets_from_manifest_ancestry(app_state & app)
 
 // i/o stuff
 
-std::string revision_file_name("revision");
-
 namespace 
 {
   namespace syms

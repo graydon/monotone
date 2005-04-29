@@ -74,6 +74,8 @@ std::ostream & operator<<(std::ostream & out, manifest_entry const & e);
 
 class app_state;
 
+void extract_path_set(manifest_map const & man, path_set & paths);
+
 void classify_paths(app_state & app,
                     path_set const & paths,
                     manifest_map const & m_old, 

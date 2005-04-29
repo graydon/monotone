@@ -42,14 +42,9 @@
 // delta_set between the modified manifest and the files in the working
 // copy.
 //
-// MT/inodes, if prsent, can be used to speed up this last step.
+// MT/inodes, if present, can be used to speed up this last step.
 
 typedef std::set<file_path> path_set;
-
-extern std::string const work_file_name;
-
-void extract_path_set(manifest_map const & man,
-                      path_set & paths);
 
 void 
 build_additions(std::vector<file_path> const & args,
@@ -69,6 +64,24 @@ build_rename(file_path const & src,
              manifest_map const & m_old,
              change_set::path_rearrangement & pr);
 
+
+// the "work" file contains the current path rearrangement representing
+// uncommitted add/drop/rename operations in the serialized change set format
+
+void get_path_rearrangement(change_set::path_rearrangement & w);
+void remove_path_rearrangement();
+void put_path_rearrangement(change_set::path_rearrangement & w);
+
+// the "revision" file contains the base revision id that the current working
+// copy was checked out from
+
+void get_revision_id(revision_id & c);
+void put_revision_id(revision_id const & rev);
+void get_base_revision(app_state & app, 
+                       revision_id & rid,
+                       manifest_id & mid,
+                       manifest_map & man);
+void get_base_manifest(app_state & app, manifest_map & man);
 
 // the "user log" is a file the user can edit as they program to record
 // changes they make to their source code. Upon commit the file is read
@@ -138,9 +151,6 @@ void read_attr_map(data const & dat, attr_map & attrs);
 void write_attr_map(data & dat,
                     attr_map const & options);
 
-void apply_attributes(app_state & app, 
-                      attr_map const & attr);
-
 extern std::string const encoding_attribute;
 
 bool get_attribute_from_db(file_path const & file,
@@ -152,6 +162,8 @@ bool get_attribute_from_db(file_path const & file,
 bool get_attribute_from_working_copy(file_path const & file,
                                      std::string const & attr_key,
                                      std::string & attr_val); 
+
+void update_any_attrs(app_state & app);
 
 extern std::string const binary_encoding;
 extern std::string const default_encoding;

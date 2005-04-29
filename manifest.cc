@@ -58,6 +58,15 @@ manifest_map_builder::visit_file(file_path const & path)
   man.insert(manifest_entry(path, file_id(ident)));
 }
 
+void 
+extract_path_set(manifest_map const & man, path_set & paths)
+{
+  paths.clear();
+  for (manifest_map::const_iterator i = man.begin();
+       i != man.end(); ++i)
+    paths.insert(manifest_entry_path(i));
+}
+
 inline static bool
 inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
 {

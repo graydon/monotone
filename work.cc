@@ -19,8 +19,6 @@
 using namespace boost;
 using namespace std;
 
-std::string const work_file_name("work");
-
 class 
 addition_builder 
   : public tree_walker
@@ -292,16 +290,131 @@ build_rename(file_path const & src,
   pr = pr_concatenated;
 }
 
+// work file containing rearrangement from uncommitted adds/drops/renames
 
-void 
-extract_path_set(manifest_map const & man,
-                 path_set & paths)
+std::string const work_file_name("work");
+
+static void get_work_path(local_path & w_path)
 {
-  paths.clear();
-  for (manifest_map::const_iterator i = man.begin();
-       i != man.end(); ++i)
-    paths.insert(manifest_entry_path(i));
+  w_path = (mkpath(book_keeping_dir) / mkpath(work_file_name)).string();
+  L(F("work path is %s\n") % w_path);
 }
+
+void get_path_rearrangement(change_set::path_rearrangement & w)
+{
+  local_path w_path;
+  get_work_path(w_path);
+  if (file_exists(w_path))
+    {
+      L(F("checking for un-committed work file %s\n") % w_path);
+      data w_data;
+      read_data(w_path, w_data);
+      read_path_rearrangement(w_data, w);
+      L(F("read rearrangement from %s\n") % w_path);
+    }
+  else
+    {
+      L(F("no un-committed work file %s\n") % w_path);
+    }
+}
+
+void remove_path_rearrangement()
+{
+  local_path w_path;
+  get_work_path(w_path);
+  if (file_exists(w_path))
+    delete_file(w_path);
+}
+
+void put_path_rearrangement(change_set::path_rearrangement & w)
+{
+  local_path w_path;
+  get_work_path(w_path);
+  
+  if (w.empty())
+    {
+      if (file_exists(w_path))
+        delete_file(w_path);
+    }
+  else
+    {
+      data w_data;
+      write_path_rearrangement(w, w_data);
+      write_data(w_path, w_data);
+    }
+}
+
+// revision file name 
+
+std::string revision_file_name("revision");
+
+static void get_revision_path(local_path & m_path)
+{
+  m_path = (mkpath(book_keeping_dir) / mkpath(revision_file_name)).string();
+  L(F("revision path is %s\n") % m_path);
+}
+
+void get_revision_id(revision_id & c)
+{
+  c = revision_id();
+  local_path c_path;
+  get_revision_path(c_path);
+
+  N(file_exists(c_path),
+    F("working copy is corrupt: %s does not exist\n") % c_path);
+
+  data c_data;
+  L(F("loading revision id from %s\n") % c_path);
+  read_data(c_path, c_data);
+  c = revision_id(remove_ws(c_data()));
+}
+
+void put_revision_id(revision_id const & rev)
+{
+  local_path c_path;
+  get_revision_path(c_path);
+  L(F("writing revision id to %s\n") % c_path);
+  data c_data(rev.inner()() + "\n");
+  write_data(c_path, c_data);
+}
+
+void
+get_base_revision(app_state & app, 
+                  revision_id & rid,
+                  manifest_id & mid,
+                  manifest_map & man)
+{
+  man.clear();
+
+  get_revision_id(rid);
+
+  if (!null_id(rid))
+    {
+
+      N(app.db.revision_exists(rid),
+        F("base revision %s does not exist in database\n") % rid);
+      
+      app.db.get_revision_manifest(rid, mid);
+      L(F("old manifest is %s\n") % mid);
+      
+      N(app.db.manifest_version_exists(mid),
+        F("base manifest %s does not exist in database\n") % mid);
+      
+      app.db.get_manifest(mid, man);
+    }
+
+  L(F("old manifest has %d entries\n") % man.size());
+}
+
+void
+get_base_manifest(app_state & app, 
+                  manifest_map & man)
+{
+  revision_id rid;
+  manifest_id mid;
+  get_base_revision(app, rid, mid, man);
+}
+
 
 // user log file
 
@@ -516,7 +629,7 @@ write_attr_map(data & dat, attr_map const & attr)
 }
 
 
-void 
+static void 
 apply_attributes(app_state & app, attr_map const & attr)
 {
   for (attr_map::const_iterator i = attr.begin();
@@ -590,4 +703,19 @@ bool get_attribute_from_working_copy(file_path const & file,
   read_attr_map(attr_data, attr);
 
   return find_in_attr_map(attr, file, attr_key, attr_val);
+}
+
+void update_any_attrs(app_state & app)
+{
+  file_path fp;
+  data attr_data;
+  attr_map attr;
+
+  get_attr_path(fp);
+  if (!file_exists(fp))
+    return;
+
+  read_data(fp, attr_data);
+  read_attr_map(attr_data, attr);
+  apply_attributes(app, attr);
 }

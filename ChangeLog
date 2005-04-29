@@ -1,5 +1,35 @@
 2005-04-28  Derek Scherger  <derek@echologic.com>
 
+	* commands.cc (get_work_path): 
+	(get_revision_path): 
+	(get_revision_id):
+	(put_revision_id):
+	(get_path_rearrangement):
+	(remove_path_rearrangement):
+	(put_path_rearrangement):
+	(update_any_attrs):
+	(get_base_revision):
+	(get_base_manifest): move to work.{cc,hh}
+	(update): indicate optional revision with [ and ]
+	(explicit_merge): indicate optional ancestor with [ and ] 
+
+	* manifest.{cc,hh} (extract_path_set): move here from work.{cc,hh}
+	* revision.{cc,hh} (revision_file_name): move to work.{cc,hh}
+
+	* work.{cc,hh} (extract_path_set): move to manifest.{cc,hh}
+	(get_work_path): 
+	(get_path_rearrangement): 
+	(remove_path_rearrangement): 
+	(put_path_rearrangement): 
+	(get_revision_path): 
+	(get_revision_id): 
+	(put_revision_id): 
+	(get_base_revision): 
+	(get_base_manifest): 
+	(update_any_attrs): move here from commands.cc
+	
+2005-04-28  Derek Scherger  <derek@echologic.com>
+
 	* ChangeLog: 
 	* Makefile.am
 	* tests/t_automate_select.at: merge fixups

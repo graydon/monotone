@@ -46,8 +46,6 @@
 //  from [95b50ede90037557fd0fbbfad6a9fdd67b0bf413]
 //    to [bd39086b9da776fc22abd45734836e8afb59c8c0]
 
-extern std::string revision_file_name;
-
 typedef std::map<revision_id, std::pair<manifest_id, boost::shared_ptr<change_set> > > 
 edge_map;
 

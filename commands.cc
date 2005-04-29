@@ -244,93 +244,6 @@ CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,  \
   process(app, string(#realcommand), args);                   \
 }
 
-static void 
-get_work_path(local_path & w_path)
-{
-  w_path = (mkpath(book_keeping_dir) / mkpath(work_file_name)).string();
-  L(F("work path is %s\n") % w_path);
-}
-
-static void 
-get_revision_path(local_path & m_path)
-{
-  m_path = (mkpath(book_keeping_dir) / mkpath(revision_file_name)).string();
-  L(F("revision path is %s\n") % m_path);
-}
-
-static void 
-get_revision_id(revision_id & c)
-{
-  c = revision_id();
-  local_path c_path;
-  get_revision_path(c_path);
-
-  N(file_exists(c_path),
-    F("working copy is corrupt: %s does not exist\n") % c_path);
-
-  data c_data;
-  L(F("loading revision id from %s\n") % c_path);
-  read_data(c_path, c_data);
-  c = revision_id(remove_ws(c_data()));
-}
-
-static void 
-put_revision_id(revision_id const & rev)
-{
-  local_path c_path;
-  get_revision_path(c_path);
-  L(F("writing revision id to %s\n") % c_path);
-  data c_data(rev.inner()() + "\n");
-  write_data(c_path, c_data);
-}
-
-static void 
-get_path_rearrangement(change_set::path_rearrangement & w)
-{
-  local_path w_path;
-  get_work_path(w_path);
-  if (file_exists(w_path))
-    {
-      L(F("checking for un-committed work file %s\n") % w_path);
-      data w_data;
-      read_data(w_path, w_data);
-      read_path_rearrangement(w_data, w);
-      L(F("read rearrangement from %s\n") % w_path);
-    }
-  else
-    {
-      L(F("no un-committed work file %s\n") % w_path);
-    }
-}
-
-static void 
-remove_path_rearrangement()
-{
-  local_path w_path;
-  get_work_path(w_path);
-  if (file_exists(w_path))
-    delete_file(w_path);
-}
-
-static void 
-put_path_rearrangement(change_set::path_rearrangement & w)
-{
-  local_path w_path;
-  get_work_path(w_path);
-  
-  if (w.empty())
-    {
-      if (file_exists(w_path))
-        delete_file(w_path);
-    }
-  else
-    {
-      data w_data;
-      write_path_rearrangement(w, w_data);
-      write_data(w_path, w_data);
-    }
-}
-
 static void
 extract_rearranged_paths(change_set::path_rearrangement const & rearrangement, path_set & paths)
 {
@@ -480,59 +393,6 @@ restrict_delta_map(change_set::delta_map const & deltas,
           excluded.insert(*i);
         }
     }
-}
-
-static void 
-update_any_attrs(app_state & app)
-{
-  file_path fp;
-  data attr_data;
-  attr_map attr;
-
-  get_attr_path(fp);
-  if (!file_exists(fp))
-    return;
-
-  read_data(fp, attr_data);
-  read_attr_map(attr_data, attr);
-  apply_attributes(app, attr);
-}
-
-static void
-get_base_revision(app_state & app, 
-                  revision_id & rid,
-                  manifest_id & mid,
-                  manifest_map & man)
-{
-  man.clear();
-
-  get_revision_id(rid);
-
-  if (!null_id(rid))
-    {
-
-      N(app.db.revision_exists(rid),
-        F("base revision %s does not exist in database\n") % rid);
-      
-      app.db.get_revision_manifest(rid, mid);
-      L(F("old manifest is %s\n") % mid);
-      
-      N(app.db.manifest_version_exists(mid),
-        F("base manifest %s does not exist in database\n") % mid);
-      
-      app.db.get_manifest(mid, man);
-    }
-
-  L(F("old manifest has %d entries\n") % man.size());
-}
-
-static void
-get_base_manifest(app_state & app, 
-                  manifest_map & man)
-{
-  revision_id rid;
-  manifest_id mid;
-  get_base_revision(app, rid, mid, man);
 }
 
 static void
@@ -3276,7 +3136,7 @@ write_file_targets(change_set const & cs,
       write_localized_data(pth, tmp.inner(), app.lua);
     }
 }
-  
+
 
 // static void dump_change_set(string const & name,
 //                          change_set & cs)
@@ -3286,7 +3146,7 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, "working copy", "\nREVISION", "update working copy to be based off another revision")
+CMD(update, "working copy", "[REVISION]", "update working copy to be based off another revision")
 {
   manifest_map m_old, m_ancestor, m_working, m_chosen;
   manifest_id m_ancestor_id, m_chosen_id;
@@ -3665,7 +3525,9 @@ CMD(update_inodeprints, "tree", "", "update the inodeprint cache")
   maybe_update_inodeprints(app);
 }
 
-CMD(explicit_merge, "tree", "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\nLEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
+CMD(explicit_merge, "tree", 
+    "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
+    "LEFT-REVISION RIGHT-REVISION [COMMON-ANCESTOR] DEST-BRANCH",
     "merge two explicitly given revisions, placing result in given branch")
 {
   revision_id left, right, ancestor;
