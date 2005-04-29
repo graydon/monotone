@@ -1,3 +1,7 @@
+2005-04-29  Joel Rosdahl  <joel@rosdahl.net>
+
+	* monotone.texi: Minor corrections.
+
 2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
 
 	* change_set.cc (dump_change_set): Don't truncate output.
