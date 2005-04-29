@@ -2273,6 +2273,8 @@ invert_change_set(change_set const & a2b,
 
   b2a.deltas.clear();
 
+  std::set<file_path> moved_deltas;
+
   // existing deltas are in "b space"
   for (path_state::const_iterator b = b2a_analysis.first.begin();
        b != b2a_analysis.first.end(); ++b)
@@ -2310,7 +2312,7 @@ invert_change_set(change_set const & a2b,
               get_full_path(b2a_analysis.first, path_state_tid(b), b_pth);
               get_full_path(b2a_analysis.second, path_state_tid(a), a_pth);
               change_set::delta_map::const_iterator del = a2b.deltas.find(b_pth);
-              if (del == a2b.deltas.end())
+               if (del == a2b.deltas.end())
                 continue;
               file_id src_id(delta_entry_src(del)), dst_id(delta_entry_dst(del));
               L(F("converting delta %s -> %s on %s\n")
@@ -2318,6 +2320,7 @@ invert_change_set(change_set const & a2b,
               L(F("inverse is delta %s -> %s on %s\n")
                 % dst_id % src_id % a_pth);
               b2a.deltas.insert(std::make_pair(a_pth, std::make_pair(dst_id, src_id)));
+              moved_deltas.insert(b_pth);
             }
         }
     }
@@ -2331,8 +2334,11 @@ invert_change_set(change_set const & a2b,
       if (null_id(delta_entry_src(del)))
         continue;
       // check to make sure this isn't one of the already-moved deltas
-      if (b2a.deltas.find(delta_entry_path(del)) != b2a.deltas.end())
+      if (moved_deltas.find(delta_entry_path(del)) != moved_deltas.end())
         continue;
+      // we shouldn't have created a delta earlier, if this file really is
+      // untouched...
+      I(b2a.deltas.find(delta_entry_path(del)) == b2a.deltas.end());
       b2a.deltas.insert(std::make_pair(delta_entry_path(del),
                                        std::make_pair(delta_entry_dst(del),
                                                       delta_entry_src(del))));
@@ -2893,6 +2899,7 @@ write_path_rearrangement(change_set::path_rearrangement const & re,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 #include "sanity.hh"
+#include "transforms.hh"
 
 static void dump_change_set(std::string const & ctx,
                             change_set const & cs)
@@ -2900,7 +2907,11 @@ static void dump_change_set(std::string const & ctx,
   data tmp;
   write_change_set(cs, tmp);
   L(F("[begin changeset %s]\n") % ctx);
-  L(F("%s") % tmp);
+  std::vector<std::string> lines;
+  split_into_lines(tmp(), lines);
+  for (std::vector<std::string>::const_iterator i = lines.begin();
+       i != lines.end(); ++i)
+    L(F("%s") % *i);
   L(F("[end changeset %s]\n") % ctx);
 }
 
@@ -3029,6 +3040,46 @@ basic_change_set_test()
     {
       L(F("runtime error: %s\n") % exn.what());
     }
+}
+
+static void
+invert_change_test()
+{
+  L(F("STARTING invert_change_test\n"));
+  change_set cs;
+  manifest_map a;
+
+  a.insert(std::make_pair(file_path("usr/lib/zombie"),
+                          file_id(hexenc<id>("92ceb3cd922db36e48d5c30764e0f5488cdfca28"))));
+  cs.delete_file(file_path("usr/lib/zombie"));
+  cs.add_file(file_path("usr/bin/cat"),
+              file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
+  cs.add_file(file_path("usr/local/dog"),
+              file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
+  a.insert(std::make_pair(file_path("usr/foo"),
+                          file_id(hexenc<id>("9a4d3ae90b0cc26758e17e1f80229a13f57cad6e"))));
+  cs.rename_file(file_path("usr/foo"), file_path("usr/bar"));
+  cs.apply_delta(file_path("usr/bar"),
+                 file_id(hexenc<id>("9a4d3ae90b0cc26758e17e1f80229a13f57cad6e")),
+                 file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892")));
+  a.insert(std::make_pair(file_path("usr/quuux"),
+                          file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892"))));
+  cs.apply_delta(file_path("usr/quuux"),
+                 file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892")),
+                 file_id(hexenc<id>("c6a4a6196bb4a744207e1a6e90273369b8c2e925")));
+
+  manifest_map b;
+  apply_change_set(a, cs, b);
+
+  dump_change_set("invert_change_test, cs", cs);
+  change_set cs2, cs3;
+  invert_change_set(cs, a, cs2);
+  dump_change_set("invert_change_test, cs2", cs2);
+  invert_change_set(cs2, b, cs3);
+  dump_change_set("invert_change_test, cs3", cs3);
+  BOOST_CHECK(cs.rearrangement == cs3.rearrangement);
+  BOOST_CHECK(cs.deltas == cs3.deltas);
+  L(F("ENDING invert_change_test\n"));
 }
 
 static void 
@@ -3527,6 +3578,7 @@ add_change_set_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&non_interfering_change_test));
   suite->add(BOOST_TEST_CASE(&disjoint_merge_tests));
   suite->add(BOOST_TEST_CASE(&bad_concatenate_change_tests));
+  suite->add(BOOST_TEST_CASE(&invert_change_test));
 }
 
 

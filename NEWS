@@ -1,3 +1,72 @@
+????????????????????????????
+
+        0.19 release.  performance improvements, features, ui
+        improvements, and bug fixes.
+
+        - many operations sped up by another factor of 2 or better.
+                - special thanks to Matt Johnston <matt@ucc.asn.au>.
+        - new major features:
+                - "annotate" command; still requires optimization.
+                  Thanks to Emile Snyder <emile@alumni.reed.edu>.
+                - "inodeprints" for fast change detection in large
+                  working dirs now fully supported; see manual for
+                  details.
+        - new minor features:
+                - new selector "c:name=value" for selecting on
+                  arbitrary certs.  Thanks to Richard Levitte
+                  <richard@levitte.org>.
+                - new automate command "select", to do selector
+                  expansion.  Thanks to Richard Levitte
+                  <richard@levitte.org>.
+                - new automate commands "graph", "parents",
+                  "children", "ancestors", to easily inspect history.
+                  Special thanks to Sebastian Spaeth
+                  <Sebastian@SSpaeth.de>.
+                - new command "db kill_rev_locally".  Thanks to
+                  Sebastian Spaeth <Sebastian@sspaeth.de>.
+                - new arguments to "commit": --author, --date; useful
+                  for patch attribution and importing history.
+        - ui improvements:
+                - netsync progress ticker in kilobytes/megabytes.
+                  Thanks to Matt Johnston <matt@ucc.asn.au>, 
+                - tickers do not cause annoying scrolling when wider
+                  than window.  Special thanks to Matthew Gregan
+                  <kinetik@orcon.net.nz>.
+                - warn users when a commit creates divergence, and
+                  when an update ignores it.  Thanks to Jeremy Cowgar
+                  <jeremy@cowgar.com>.
+        - many bug fixes:
+                - many cvs_import bugs fixed.  Special thanks to Jon
+                  Bright <jon@siliconcircus.com>, Emile Snyder
+                  <emile@alumni.reed.edu>, Hansjoerg Lipp
+                  <hjlipp@web.de>, Matthew Gregan
+                  <kinetik@orcon.net.nz>.
+                - windows/unix working copy line conversion now works
+                  correctly.  Thanks to Emile Snyder
+                  <emile@alumni.reed.edu>.
+                - many fixes to locale-specific filename support
+                - "drop" and "rename" now affect file attributes as
+                  well.  Thanks to Richard Levitte
+                  <richard@levitte.org> and Joel Reed
+                  <joelwreed@comcast.com>.
+                - better error reporting in netsync.  Thanks to
+                  Grahame Bowland <grahame@angrygoats.net>.
+                - only set working directory's default branch on some
+                  commands (update, commit).  Thanks to Florian Weimer
+                  <fw@deneb.enyo.de>.
+                - "db check" now sets exit status correctly, for use
+                  in scripts.  Thanks to Derek Scherger
+                  <derek@echologic.com>.
+                - many others...
+        - fantastic emacs integration in contrib/monotone.el.  Thanks
+          to Harley Gorrell <harley@panix.com>.
+
+                - upgrading from 0.18: database and working copies are
+                  fully compatible.  NOTE that the configuration file
+                  is now ~/.monotone/monotonerc, rather than old
+                  ~/.monotonerc.  Simply create ~/.monotone, and
+                  rename any existing configuration file.
+
 Sun Apr 10 17:49:25 PDT 2005
 
         0.18 release.  performance improvements, features, and bug fixes.

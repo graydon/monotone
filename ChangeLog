@@ -1,3 +1,15 @@
+2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* change_set.cc (dump_change_set): Don't truncate output.
+	(invert_change_test): New unit test.
+	(invert_change_set): Make it pass.  This fixes (some?)
+	isect.empty() invariant failures.
+	
+	* NEWS: Start updating for 0.19.
+
+	* revision.cc (check_sane_history): Make comment more
+	informative.
+
 2005-04-28  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_netsync_error.at: New test.
