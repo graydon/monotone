@@ -1,5 +1,10 @@
 2005-04-28  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_netsync_error.at: New test.
+	* testsuite.at: Add it.
+
+2005-04-28  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_rename_attr.at: Fix a bit; also test that rename refuses
 	to move a file to a name that already has attrs.
 	* work.cc (build_rename): Cleanup a bit; refuse to move a file to
