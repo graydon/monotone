@@ -472,6 +472,7 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_ancestry_difference(args, root_cmd_name, app, output);
   else if (cmd() == "leaves")
     automate_leaves(args, root_cmd_name, app, output);
+<<<<<<< variant A
   else if (cmd() == "parents")
     automate_parents(args, root_cmd_name, app, output);
   else if (cmd() == "children")
@@ -480,6 +481,15 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_graph(args, root_cmd_name, app, output);
   else if (cmd() == "select")
     automate_select(args, root_cmd_name, app, output);
+>>>>>>> variant B
+  else if (cmd() == "parents")
+    automate_parents(args, root_cmd_name, app, output);
+  else if (cmd() == "children")
+    automate_children(args, root_cmd_name, app, output);
+  else if (cmd() == "graph")
+    automate_graph(args, root_cmd_name, app, output);
+####### Ancestor
+======= end
   else
     throw usage(root_cmd_name);
 }

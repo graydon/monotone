@@ -36,7 +36,7 @@ AT_CHECK(echo $FOUR_R >>wanted_heads_unsorted)
 
 AT_CHECK(sort wanted_heads_unsorted >wanted_heads)
 
-AT_CHECK(MONOTONE --branch=otherbranch automate heads testbranch, [], [stdout], [ignore])
+AT_CHECK(MONOTONE automate heads testbranch, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp wanted_heads stdout)
 

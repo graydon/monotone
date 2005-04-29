@@ -167,14 +167,10 @@
 
 	* tests/t_cvsimport2.at: Un-XFAIL, improve description.
 
-2005-04-22  Christof Petig <christof@petig-baender.de>
+2005-04-26  Richard Levitte  <richard@levitte.org>
 
-	* sqlite/*: update to sqlite 3.2.1
-
-2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
-
-	* tests/t_i18n_file_data.at: New test.
-	* testsuite.at: Add it.
+	* monotone.cc (cpp_main): Count the number of command specific
+	options exist.  If there is any, add a title for them.
 
 2005-04-27  Matt Johnston  <matt@ucc.asn.au>
 
@@ -195,6 +191,15 @@
 
 	* monotone.texi: fix mashed up merge of docs for kill_rev_locally
 	and db check.
+
+2005-04-26  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc, commands.cc: Make some more options global.
+
+2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_i18n_file_data.at: New test.
+	* testsuite.at: Add it.
 
 2005-04-25  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -332,6 +337,48 @@
 	* file_io.{cc,hh} (localized): Move from here...
 	* transforms.{cc,hh} (localized): ...to here.  Add lots of gunk to
 	avoid calling iconv whenever possible.
+
+2005-04-23  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc, options.hh: Move the option numbers to options.hh,
+	so they can be easily retrieved by other modules.
+	* monotone.cc: split the options table in global options and
+	command specific options.  The former are always understood, while
+	the latter are only understood by the commands that declare it
+	(see below).
+	(my_poptStuffArgFile): There's no need to keep a copy of the
+	stuffed argv.  This was really never a problem.
+	(coption_string): New function to find the option string from an
+	option number.
+	(cpp_main): Keep track of which command-specific options were
+	given, and check that the given command really uses them.  Make
+	sure that when the help is written, only the appropriate command-
+	specific options are shown.  We do this by hacking the command-
+	specific options table.
+	Throw away sub_argvs, as it's not needed any more (and realy never
+	was).
+
+	* commands.cc: Include options.hh to get the option numbers.
+	(commands_ops): New structure to hold the option
+	numbers used by a command.
+	(commands): Use it.
+	(command_options): Function to get the set of command-specific
+	options for a specific command.
+	(CMD): Changed to take a new parameter describing which command-
+	specific options this command takes.  Note that for commands that
+	do not take command-specific options, this new parameter must
+	still be given, just left empty.
+	Update all commands with this new parameter.
+	* commands.hh: Declare command_options.
+
+	* tests/t_automate_heads.at: 'automate heads' never used the value
+	of --branch.
+	* tests/t_sticky_branch.at: and neither did 'log'...
+	* tests/t_update_missing.at: nor did 'add'...
+
+2005-04-22  Christof Petig <christof@petig-baender.de>
+
+	* sqlite/*: update to sqlite 3.2.1
 
 2005-04-22  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -3650,7 +3697,13 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
+<<<<<<< variant A
+2005-01-17  Wojciech MiÃÂkowski  <wmilkowski@interia.pl>
+>>>>>>> variant B
 2005-01-17  Wojciech MiÂkowski  <wmilkowski@interia.pl>
+####### Ancestor
+2005-01-17  Wojciech MiÃÂkowski  <wmilkowski@interia.pl>
+======= end
 
 	* std_hooks.lua: Teach about meld.
 
