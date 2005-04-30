@@ -1,3 +1,18 @@
+2005-04-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* vocab.cc (trivially_safe_file_path): New function.
+	(verify): Use it.
+	(test_file_path_verification, test_file_path_normalization): Add a
+	few more checks.
+
+	* transforms.{cc,hh} (localized_as_string): New function.
+	* {win32,unix}/inodeprint.cc (inodeprint_file): Use it, to avoid
+	mkpath().
+
+	* commands.cc (add_intermediate_paths): Hand-code intermediate
+	path generator, taking advantage of normalization of file_path's,
+	to avoid mkpath().
+
 2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc (ls_tags): Sort output.

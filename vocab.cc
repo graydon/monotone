@@ -155,6 +155,33 @@ verify(local_path & val)
   val.ok = true;
 }
 
+// returns true if the given string is obviously a normalized file path (no
+// . or .. components, a relative path, no doubled //s, does not end in /,
+// does not start with MT)
+inline bool
+trivially_safe_file_path(std::string const & f)
+{
+  const static std::string bad_chars = std::string("\\:") + constants::illegal_path_bytes + std::string(1, '\0');
+  const static char sep_char('/');
+  const static std::string bad_after_sep_chars("./");
+  if (f.empty())
+    return true;
+  char prev = sep_char;
+  for (std::string::const_iterator i = f.begin(); i != f.end(); ++i)
+    {
+      if (bad_chars.find(*i) != std::string::npos)
+        return false;
+      if (prev == sep_char && bad_after_sep_chars.find(*i) != std::string::npos)
+        return false;
+      prev = *i;
+    }
+  if (prev == sep_char)
+    return false;
+  if (f.size() >= 2 && f[0] == 'M' && f[1] == 'T')
+    return false;
+  return true;
+}
+
 inline void 
 verify(file_path & val)
 {
@@ -166,13 +193,18 @@ verify(file_path & val)
   std::map<std::string, std::string>::const_iterator j = known_good.find(val());
   if (j == known_good.end())
     {
-      local_path loc(val());
-      verify(loc);
-      N(!book_keeping_file(loc),
-        F("prohibited book-keeping path in '%s'") % val);
-      const std::string & normalized_val = loc();
-      val.s = normalized_val;
-      known_good.insert(std::make_pair(val(), normalized_val));
+      if (trivially_safe_file_path(val()))
+        known_good.insert(std::make_pair(val(), val()));
+      else
+        {
+          local_path loc(val());
+          verify(loc);
+          N(!book_keeping_file(loc),
+            F("prohibited book-keeping path in '%s'") % val);
+          const std::string & normalized_val = loc();
+          val.s = normalized_val;
+          known_good.insert(std::make_pair(val(), normalized_val));
+        }
     }
   else
     {
@@ -297,6 +329,7 @@ static void test_file_path_verification()
       badboy[1] = *c;
       BOOST_CHECK_THROW(file_path p(badboy), informative_failure);
     }
+  BOOST_CHECK_THROW(file_path p(std::string(1, '\0')), informative_failure);
   
   char const * goodies [] = {"unrooted", 
                              "unrooted.txt",
@@ -316,6 +349,7 @@ static void test_file_path_normalization()
   BOOST_CHECK(file_path("./foo") == file_path("foo"));
   BOOST_CHECK(file_path("foo/bar/./baz") == file_path("foo/bar/baz"));
   BOOST_CHECK(file_path("foo/bar/../baz") == file_path("foo/baz"));
+  BOOST_CHECK(file_path("foo/bar/baz/") == file_path("foo/bar/baz"));
 }
 
 void add_vocab_tests(test_suite * suite)

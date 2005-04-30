@@ -28,7 +28,7 @@ namespace
 bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
 {
   struct _stati64 st;
-  if (_stati64(localized(file).native_file_string().c_str(), &st) < 0)
+  if (_stati64(localized_as_string(file).c_str(), &st) < 0)
     return false;
 
   CryptoPP::SHA hash;

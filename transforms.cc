@@ -631,6 +631,17 @@ filesystem_is_ascii_extension()
   return it_is;
 }
 
+inline static bool
+is_all_ascii(string const & utf)
+{
+  // could speed this up by vectorization -- mask against 0x80808080,
+  // process a whole word at at time...
+  for (std::string::const_iterator i = utf.begin(); i != utf.end(); ++i)
+    if (0x80 & *i)
+      return false;
+  return true;
+}
+
 inline static fs::path 
 localized_impl(string const & utf)
 {
@@ -640,20 +651,8 @@ localized_impl(string const & utf)
 #else
   if (filesystem_is_utf8())
     return mkpath(utf);
-  if (filesystem_is_ascii_extension())
-    {
-      bool is_all_ascii = true;
-      // could speed this up by vectorization -- mask against 0x80808080,
-      // process a whole word at at time...
-      for (std::string::const_iterator i = utf.begin(); i != utf.end(); ++i)
-        if (0x80 & *i)
-          {
-            is_all_ascii = false;
-            break;
-          }
-      if (is_all_ascii)
-        return mkpath(utf);
-    }
+  if (filesystem_is_ascii_extension() && is_all_ascii(utf))
+    return mkpath(utf);
   fs::path tmp = mkpath(utf), ret;
   for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
     {
@@ -662,6 +661,21 @@ localized_impl(string const & utf)
       ret /= mkpath(ext());
     }
   return ret;
+#endif
+}
+
+std::string
+localized_as_string(file_path const & fp)
+{
+#ifdef __APPLE__
+  // on OS X paths for the filesystem/kernel are UTF-8 encoded.
+  return fp();
+#else
+  if (filesystem_is_utf8())
+    return fp();
+  if (filesystem_is_ascii_extension() && is_all_ascii(fp()))
+    return fp();
+  return localized(fp).native_file_string();
 #endif
 }
 

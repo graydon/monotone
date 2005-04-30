@@ -176,6 +176,7 @@ void utf8_to_ace(utf8 const & utf, ace & a);
 fs::path localized(file_path const & path);
 fs::path localized(local_path const & path);
 fs::path localized(utf8 const & path);
+std::string localized_as_string(file_path const & path);
 
 // specific internal / external conversions for various vocab terms
 void internalize_cert_name(utf8 const & utf, cert_name & c);

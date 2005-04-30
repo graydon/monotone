@@ -290,17 +290,16 @@ add_intermediate_paths(path_set & paths)
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      fs::path p = mkpath((*i)());
-      while (p.has_branch_path())
+      // we know that file_path's are normalized relative paths.  So we can
+      // find intermediate paths simply by searching for /.
+      std::string::size_type j = std::string::npos;
+      while ((j = (*i)().rfind('/', j)) != std::string::npos)
         {
-          p = p.branch_path();
-          file_path dir(p.string());
-
-          // once we hit a subdir that exists or has been added we're done.
-          if (paths.find(dir) != paths.end()) break;
+          file_path dir((*i)().substr(0, j));
           if (intermediate_paths.find(dir) != intermediate_paths.end()) break;
-
+          if (paths.find(dir) != paths.end()) break;
           intermediate_paths.insert(dir);
+          --j;
         }
     }
 
