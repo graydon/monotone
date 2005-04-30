@@ -1814,26 +1814,6 @@ ls_known (app_state & app, vector<utf8> const & args)
     }
 }
 
-struct file_itemizer : public tree_walker
-{
-  app_state & app;
-  path_set & known;
-  path_set & unknown;
-  path_set & ignored;
-  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i) 
-    : app(a), known(k), unknown(u), ignored(i) {}
-  virtual void visit_file(file_path const & path)
-  {
-    if (app.restriction_includes(path) && known.find(path) == known.end())
-      {
-        if (app.lua.hook_ignore_file(path))
-          ignored.insert(path);
-        else
-          unknown.insert(path);
-      }
-  }
-};
-
 static void
 ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 {
