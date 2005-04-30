@@ -469,9 +469,9 @@ calculate_restricted_revision(app_state & app,
   boost::shared_ptr<change_set> cs(new change_set());
   path_set old_paths, new_paths;
 
-  get_base_revision(app, 
-                    old_revision_id,
-                    old_manifest_id, m_old);
+  rev.edges.clear();
+  m_old.clear();
+  m_new.clear();
 
   calculate_restricted_rearrangement(app, args, 
                                      old_manifest_id, old_revision_id,

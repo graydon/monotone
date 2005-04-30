@@ -1,8 +1,8 @@
 2005-04-30  Richard Levitte  <richard@levitte.org>
 
-	* tests/t_options.at: New test to check that some options really
-	are command-specific.
-	* testsuite.at: Use it.
+	* contrib/monotone-nav.el (mnav-rev-make): Move it so it's defined
+	after the definition of the macro mnav-rev-id.  Otherwise, the
+	byte compiler complains there is no setf method for mnav-rev-id.
 
 2005-04-30  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -70,6 +70,21 @@
 
 	* revision.cc (check_sane_history): Make comment more
 	informative.
+
+2005-04-29  Grahame Bowland  <grahame@angrygoats.net>
+
+	* netxx/types.h: Add new NetworkException type network 
+	issue not caused by calling program
+	* netsync.cc: Catch Netxx::NetworkException and display 
+	as informative_error.
+	* netxx/address.cxx: NetworkException for unparsable URIs.
+	* netxx/datagram.cxx: NetworkException for connection failure.
+	* netxx/resolve_getaddrinfo.cxx, resolve_gethostbyname.cxx:
+	NetworkException when DNS resolution fails.
+	* netxx/serverbase.cxx: NetworkException if unable to bind 
+	to server port.
+	* netxx/streambase.cxx: NetworkException if unable to 
+	connect.
 
 2005-04-28  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -140,21 +155,6 @@
 	* tests/t_annotate_branch_collision.at: 
 	* testsuite.at: Test it.
 	
-2005-04-29  Grahame Bowland  <grahame@angrygoats.net>
-
-	* netxx/types.h: Add new NetworkException type network 
-	issue not caused by calling program
-	* netsync.cc: Catch Netxx::NetworkException and display 
-	as informative_error.
-	* netxx/address.cxx: NetworkException for unparsable URIs.
-	* netxx/datagram.cxx: NetworkException for connection failure.
-	* netxx/resolve_getaddrinfo.cxx, resolve_gethostbyname.cxx:
-	NetworkException when DNS resolution fails.
-	* netxx/serverbase.cxx: NetworkException if unable to bind 
-	to server port.
-	* netxx/streambase.cxx: NetworkException if unable to 
-	connect.
-
 2005-04-28  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_merge_6.at: narrow the testcase down considerably.
@@ -264,6 +264,16 @@
 
 	* ui.{cc,hh}: Delegate tick line blanking to tick_writers.
 
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (extend_state): don't mix find() and insert() on
+	the path_state, to avoid hitting the smap's worst-case.
+
+2005-04-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (confirm_proper_tree): move things out of the loops
+	for better performance.
+
 2005-04-26  Nathaniel Smith  <njs@codesourcery.com>
 
 	* work.cc: Don't include boost/regex.hpp.
@@ -290,16 +300,6 @@
 
 	* monotone.cc (cpp_main): Count the number of command specific
 	options exist.  If there is any, add a title for them.
-
-2005-04-27  Matt Johnston  <matt@ucc.asn.au>
-
-	* change_set.cc (extend_state): don't mix find() and insert() on
-	the path_state, to avoid hitting the smap's worst-case.
-
-2005-04-27  Matt Johnston  <matt@ucc.asn.au>
-
-	* change_set.cc (confirm_proper_tree): move things out of the loops
-	for better performance.
 
 2005-04-26  Matt Johnston  <matt@ucc.asn.au>
 
@@ -495,6 +495,15 @@
 	* tests/t_sticky_branch.at: and neither did 'log'...
 	* tests/t_update_missing.at: nor did 'add'...
 
+2005-04-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_diff_currev.at: Use CHECK_SAME_STDOUT.
+
+2005-04-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_diff_currev.at: New test.
+	* testsuite.at: Add new test.
+
 2005-04-22  Christof Petig <christof@petig-baender.de>
 
 	* sqlite/*: update to sqlite 3.2.1
@@ -555,15 +564,6 @@
 	* vocab.cc (test_file_path_verification): MT/path is not a valid
 	file_path either.
 	(test_file_path_normalization): New unit-test.
-
-2005-04-23  Matthew Gregan  <kinetik@orcon.net.nz>
-
-	* tests/t_diff_currev.at: Use CHECK_SAME_STDOUT.
-
-2005-04-23  Matthew Gregan  <kinetik@orcon.net.nz>
-
-	* tests/t_diff_currev.at: New test.
-	* testsuite.at: Add new test.
 
 2005-04-22  Joel Reed  <joelwreed@comcast.net>
 
@@ -901,15 +901,6 @@
 	branch globs and regexps.
 	(glob_to_regexp_test): A unit test for glob_to_regexp().
 
-2005-04-16  Emile Snyder  <emile@alumni.reed.edu>
-
-	* tests/t_add_stomp_file.at: New test for failing case.  
-        If you have a file foo in your working dir (not monotone 
-        controlled) and someone else adds a file foo and commits, 
-        update should at least warn you before stomping your 
-        non-recoverable foo file.
-	* testsuite.at: Add it.
-	
 2005-04-17  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc: warn that dropkey won't truly erase the privkey
@@ -921,6 +912,20 @@
 	* database.cc: mention that it could be the filesystem that
 	is full in the SQLITE_FULL error message
 
+2005-04-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Fix warnings: add missing initializers.
+	* netsync.cc: Fix warnings: inline static vs static inline.
+
+2005-04-16  Emile Snyder  <emile@alumni.reed.edu>
+
+	* tests/t_add_stomp_file.at: New test for failing case.  
+        If you have a file foo in your working dir (not monotone 
+        controlled) and someone else adds a file foo and commits, 
+        update should at least warn you before stomping your 
+        non-recoverable foo file.
+	* testsuite.at: Add it.
+	
 2005-04-16  Derek Scherger  <derek@echologic.com>
 
 	* work.cc (known_preimage_path): rename to...
@@ -952,11 +957,6 @@
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* ChangeLog: Fixup after merge.
-
-2005-04-17  Matthew Gregan  <kinetik@orcon.net.nz>
-
-	* monotone.cc: Fix warnings: add missing initializers.
-	* netsync.cc: Fix warnings: inline static vs static inline.
 
 2005-04-16  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -1043,16 +1043,16 @@
 
 	* AUTHORS: Add Martin Dvorak.
 	
-2005-04-15 Martin Dvorak <jezek2@advel.cz>
-	
-	* tests/t_rename_dir_add_dir_with_old_name.at: New test.
-	* testsuite.at: Add it.
-	
 2005-04-16  Matt Johnston  <matt@ucc.asn.au>
 
 	* change_set.cc (compose_rearrangement): remove logging statements
 	that were using noticable CPU time.
 
+2005-04-15 Martin Dvorak <jezek2@advel.cz>
+	
+	* tests/t_rename_dir_add_dir_with_old_name.at: New test.
+	* testsuite.at: Add it.
+	
 2005-04-15  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* diff_patch.cc(guess_binary): do not use '\x00' as first
@@ -1107,13 +1107,6 @@
 	* monotone.texi (Making Changes): Fixed duplicate paragraph
 	* NEWS: Corrected spelling error in my name.
 
-2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
-
-	* monotone.texi (Informative): 'diff' with two revision arguments
-	can now be filtered by file.
-	
-	* constants.cc (netcmd_payload_limit): Bump to 256 megs.
-
 2005-04-14  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* Makefile.am: silence cmp
@@ -1121,6 +1114,13 @@
 2005-04-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/terminal.cc (have_smart_terminal): Implement for Win32.
+
+2005-04-13  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Informative): 'diff' with two revision arguments
+	can now be filtered by file.
+	
+	* constants.cc (netcmd_payload_limit): Bump to 256 megs.
 
 2005-04-13  Matthew Gregan  <kinetik@orcon.net.nz>
 
@@ -1167,6 +1167,10 @@
 	* tests/t_checkout_id_sets_branch.at: New tests.
 	* testsuite.at: Add them.
 
+2005-04-13  Matthew Gregan  <kinetik@orcon.net.nz>
+	* cryptopp/integer.h: Fix detection of GCC version for SSE2
+	builds.
+
 2005-04-12  Florian Weimer  <fw@deneb.enyo.de>
 
 	* app_state.cc (app_state::allow_working_copy): Only update
@@ -1185,10 +1189,6 @@
 	* monotone.texi (Working Copy): Mention that the "commit" and
 	"update" commands update the stored default branch ("checkout"
 	does, too, but this one should be obvious).
-
-2005-04-13  Matthew Gregan  <kinetik@orcon.net.nz>
-	* cryptopp/integer.h: Fix detection of GCC version for SSE2
-	builds.
 
 2005-04-12  Jon Bright <jon@siliconcircus.com>
 	* rcs_import.cc (find_key_and_state): Fix stupid bug in storing the
@@ -1240,16 +1240,16 @@
 	(PNG_FIGURES): Add, constructing in same way as EPS_FIGURES
 	(monotone.html): Use .perlbak workaround so that this works on Win32
 
+2005-04-11  Matthew Gregan <kinetik@orcon.net.nz>
+
+	* unix/inodeprint.cc, configure.ac: Use nanosecond time resolution for
+	inodeprints on BSDs and other platforms if available.
+
 2005-04-10  Nathaniel Smith  <njs@codesourcery.com>
 
 	* Makefile.am (BUILT_SOURCES_CLEAN): Add package_revision.txt.
 
 	This is the 0.18 release.
-
-2005-04-11  Matthew Gregan <kinetik@orcon.net.nz>
-
-	* unix/inodeprint.cc, configure.ac: Use nanosecond time resolution for
-	inodeprints on BSDs and other platforms if available.
 
 2005-04-10  Derek Scherger  <derek@echologic.com>
 
@@ -1426,6 +1426,11 @@
 
 	* manifest.{hh,cc} (manifest_file_name): Remove unused variable.
 
+2005-04-08  Jeremy Cowgar  <jeremy@cowgar.com>
+
+	* doxygen.cfg: added
+	* Makefile.am: added apidocs target (builds doxygen docs)
+
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
 	* manifest.{hh,cc}: Remove some commented out unused functions.
@@ -1439,11 +1444,6 @@
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
 	* manifest.hh, manifest.cc: Remove tabs.
-
-2005-04-08  Jeremy Cowgar  <jeremy@cowgar.com>
-
-	* doxygen.cfg: added
-	* Makefile.am: added apidocs target (builds doxygen docs)
 
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -1470,12 +1470,6 @@
 	* change_set.cc (basic_change_set_test): Revert last change; the
 	old version _was_ valid.
 
-2005-04-06  Nathaniel Smith  <njs@codesourcery.com>
-
-	* work.cc (build_deletions): Issue warning when generating
-	delete_dir's; they're totally broken, but I don't want to disable
-	them, because then our tests won't see when they're fixed...
-
 2005-04-07  Nathaniel Smith  <njs@codesourcery.com>
 
 	* smap.hh (insert): Fix stupid bug in assertion condition.
@@ -1501,6 +1495,12 @@
 2005-04-07  Richard Levitte  <richard@levitte.org>
 
 	* cryptopp/config.h: typo...
+
+2005-04-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc (build_deletions): Issue warning when generating
+	delete_dir's; they're totally broken, but I don't want to disable
+	them, because then our tests won't see when they're fixed...
 
 2005-04-05  Nathaniel Smith  <njs@codesourcery.com>
 
@@ -3816,7 +3816,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
