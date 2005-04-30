@@ -78,12 +78,6 @@ Users can use `define-key' to modifiy the mappings.")
 ;;;;;;;;;;
 
 ;;; the Revision structure
-(defun mnav-rev-make (id)
-  "Create a mnav-rev structure. ID is required."
-  (let ((rec (make-list 11 nil)))
-    (setf (car rec) 'rev)
-    (setf (mnav-rev-id rec) id)
-    rec))
 (defmacro mnav-rev-id (rec)
   "Fetch id from REC."
   `(nth 1 ,rec))
@@ -116,6 +110,12 @@ This is not from the DB but used by mnav-pick."
   "Fetch the current link selected from REC.
 This is not from the DB but used by mnav-pick."
   `(nth 10 ,rec))
+(defun mnav-rev-make (id)
+  "Create a mnav-rev structure. ID is required."
+  (let ((rec (make-list 11 nil)))
+    (setf (car rec) 'rev)
+    (setf (mnav-rev-id rec) id)
+    rec))
 (defun mnav-rev-p (rec)
   "Is this an mnav-rec?"
   (and (listp rec) (equal (car rec) 'rev)))

@@ -1,3 +1,9 @@
+2005-04-30  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-nav.el (mnav-rev-make): Move it so it's defined
+	after the definition of the macro mnav-rev-id.  Otherwise, the
+	byte compiler complains there is no setf method for mnav-rev-id.
+
 2005-04-30  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Database): Minor correction.
@@ -3763,7 +3769,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÂkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
