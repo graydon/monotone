@@ -1,3 +1,10 @@
+2005-04-30  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc: Add a placeholder OPT_NONE for commands that don't
+	take any command-specific options; use it everywhere.  Now the
+	last argument to CMD never starts with %, and the last argument is
+	always required to be present.
+
 2005-04-30  Richard Levitte  <richard@levitte.org>
 
 	* contrib/monotone-nav.el (mnav-rev-make): Move it so it's defined
