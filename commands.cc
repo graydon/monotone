@@ -1755,13 +1755,20 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
 
+  std::map<cert_value, revision<cert> > sorted_certs;
+
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_value name;
       decode_base64(idx(certs, i).inner().value, name);
-      cout << name << " " 
-           << idx(certs,i).inner().ident  << " "
-           << idx(certs,i).inner().key  << endl;
+      sorted_certs.insert(std::make_pair(name, idx(certs, i)));
+    }
+  for (std::map<cert_value, revision<cert> >::const_iterator i = sorted_certs.begin();
+       i != sorted_certs.end(); ++i)
+    {
+      cout << i->first << " " 
+           << i->second.inner().ident  << " "
+           << i->second.inner().key  << endl;
     }
 }
 

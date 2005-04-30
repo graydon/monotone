@@ -1,3 +1,8 @@
+2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (ls_tags): Sort output.
+	* tests/t_tags.at: Test that output is sorted.
+
 2005-04-29  Emile Snyder  <emile@alumni.reed.edu>
 
 	* annotate.cc (do_annotate_node): Stop doing expensive
