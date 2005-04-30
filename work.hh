@@ -46,6 +46,17 @@
 
 typedef std::set<file_path> path_set;
 
+struct file_itemizer : public tree_walker
+{
+  app_state & app;
+  path_set & known;
+  path_set & unknown;
+  path_set & ignored;
+  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i) 
+    : app(a), known(k), unknown(u), ignored(i) {}
+  virtual void file_itemizer::visit_file(file_path const & path);
+};
+
 void 
 build_additions(std::vector<file_path> const & args,
                manifest_map const & m_old,

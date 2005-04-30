@@ -2,6 +2,17 @@
 
 	* monotone.texi: Minor corrections.
 
+2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (ls_tags): Sort output.
+	* tests/t_tags.at: Test that output is sorted.
+
+2005-04-29  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (struct file_itemizer): move to ...
+	* work.hh (file_itemizer} ... here
+	* work.cc (file_itemizer::visit_file} ... and here
+
 2005-04-29  Emile Snyder  <emile@alumni.reed.edu>
 
 	* annotate.cc (do_annotate_node): Stop doing expensive

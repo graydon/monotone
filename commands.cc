@@ -1755,13 +1755,20 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
 
+  std::map<cert_value, revision<cert> > sorted_certs;
+
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_value name;
       decode_base64(idx(certs, i).inner().value, name);
-      cout << name << " " 
-           << idx(certs,i).inner().ident  << " "
-           << idx(certs,i).inner().key  << endl;
+      sorted_certs.insert(std::make_pair(name, idx(certs, i)));
+    }
+  for (std::map<cert_value, revision<cert> >::const_iterator i = sorted_certs.begin();
+       i != sorted_certs.end(); ++i)
+    {
+      cout << i->first << " " 
+           << i->second.inner().ident  << " "
+           << i->second.inner().key  << endl;
     }
 }
 
@@ -1813,26 +1820,6 @@ ls_known (app_state & app, vector<utf8> const & args)
         cout << p->first << '\n';
     }
 }
-
-struct file_itemizer : public tree_walker
-{
-  app_state & app;
-  path_set & known;
-  path_set & unknown;
-  path_set & ignored;
-  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i) 
-    : app(a), known(k), unknown(u), ignored(i) {}
-  virtual void visit_file(file_path const & path)
-  {
-    if (app.restriction_includes(path) && known.find(path) == known.end())
-      {
-        if (app.lua.hook_ignore_file(path))
-          ignored.insert(path);
-        else
-          unknown.insert(path);
-      }
-  }
-};
 
 static void
 ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)

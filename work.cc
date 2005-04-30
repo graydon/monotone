@@ -19,6 +19,18 @@
 using namespace boost;
 using namespace std;
 
+void 
+file_itemizer::visit_file(file_path const & path)
+{
+  if (app.restriction_includes(path) && known.find(path) == known.end())
+    {
+      if (app.lua.hook_ignore_file(path))
+        ignored.insert(path);
+      else
+        unknown.insert(path);
+    }
+}
+
 class 
 addition_builder 
   : public tree_walker

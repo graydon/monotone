@@ -38,6 +38,10 @@ AT_CHECK(MONOTONE ls tags, [], [stdout], [ignore])
 AT_CHECK(grep tag1 stdout, [], [ignore], [ignore])
 AT_CHECK(grep tag2 stdout, [], [ignore], [ignore])
 AT_CHECK(grep tag3 stdout, [], [ignore], [ignore])
+# make sure 'ls tags' sorts output is sorted
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(sort <stdout >sorted-stdout)
+AT_CHECK(cmp stdout sorted-stdout)
 
 AT_CHECK(rm -rf MT file1 file2 file3)
 
