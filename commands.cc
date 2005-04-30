@@ -3171,7 +3171,7 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, "working copy", "\nREVISION", "update working copy to be based off another revision",
+CMD(update, "working copy", "[REVISION]", "update working copy to be based off another revision",
     % OPT_BRANCH_NAME)
 {
   manifest_map m_old, m_ancestor, m_working, m_chosen;
@@ -3546,7 +3546,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
     }
 }
 
-CMD(refresh_inodeprints, "tree", "", "refresh the inodeprint cache")
+CMD(refresh_inodeprints, "tree", "", "refresh the inodeprint cache",)
 {
   enable_inodeprints();
   maybe_update_inodeprints(app);
