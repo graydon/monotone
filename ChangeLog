@@ -1,5 +1,9 @@
 2005-04-30  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Database): Minor correction.
+
+2005-04-30  Nathaniel Smith  <njs@codesourcery.com>
+
 	* vocab.cc (trivially_safe_file_path): New function.
 	(verify): Use it.
 	(test_file_path_verification, test_file_path_normalization): Add a

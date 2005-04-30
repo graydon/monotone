@@ -4295,7 +4295,7 @@ and revision is correct.
 
 This command ``kills'', i.e., deletes, a given revision, as well as any
 certs attached to it.  It has an ugly name because it is a dangerous
-command; it permanently and irrecoverably deletes historical information
+command; it permanently and irrevocably deletes historical information
 from your database.  There are a number of caveats:
 @itemize
 @item
