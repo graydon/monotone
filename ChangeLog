@@ -1,3 +1,9 @@
+2005-04-30  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_options.at: New test to check that some options really
+	are command-specific.
+	* testsuite.at: Use it.
+
 2005-04-30  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Database): Minor correction.
