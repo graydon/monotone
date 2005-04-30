@@ -1,3 +1,8 @@
+2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (ls_tags): Sort output.
+	* tests/t_tags.at: Test that output is sorted.
+
 2005-04-29  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (struct file_itemizer): move to ...
