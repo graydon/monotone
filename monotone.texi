@@ -1609,8 +1609,8 @@ communicating with the person they intend to trust, when exchanging
 keys, and not some malicious person pretending to be a team
 member. Key exchange may involve sending keys over an encrypted
 medium, or meeting in person to exchange physical copies, or any
-number of techniques. All that matters, ultimately, is that Jim receive
-both Abe and Beth's key.
+number of techniques. All that matters, ultimately, is that Jim receives
+both Abe's and Beth's key.
 
 So eventually, after key exchange, Jim has the public key files in his
 home directory. He tells monotone to read the associated key packets
@@ -2282,7 +2282,7 @@ types are:
 Uses selector type @code{c}.  The selector string has the syntax
 @var{name} or @var{name}@code{=}@var{value}.  The former syntax will
 select any revision that has a cert with that name, regardless of
-value, the latter will match any revision that has a cert with that
+value; the latter will match any revision that has a cert with that
 name and value.  Values to match for can have wildcards.
 @item Author selection
 Uses selector type @code{a}. For example, @code{a:graydon} matches
@@ -2508,10 +2508,10 @@ each branch is a subgraph of the revision graph, containing only the
 nodes carrying a particular @code{branch} cert.
 
 Many of monotone's operations involve searching the revision graph for
-the ancestors or descendants of a particular revision, or extracting
+the ancestors or descendents of a particular revision, or extracting
 the ``heads'' of a subgraph, which is the subgraph's set of nodes with
-no descendants. For example, when you run the @code{update} command,
-monotone searches the subgraph consisting of descendants of the base
+no descendents. For example, when you run the @code{update} command,
+monotone searches the subgraph consisting of descendents of the base
 revision of the current working copy, trying to locate a unique head to
 update the base revision to.
 
@@ -2536,7 +2536,7 @@ set of lua hooks: @code{get_revision_cert_trust},
 @code{get_manifest_cert_trust} and @code{get_file_cert_trust}. These
 hooks are only called when a cert has at least one good signature from
 a known key, and are passed @emph{all} the keys which have signed the
-cert, as well as the cert's id, name and value. The hook can then
+cert, as well as the cert's ID, name and value. The hook can then
 evaluate the set of signers, as a group, and decide whether to grant
 or deny trust to the assertion made by the cert.
 
@@ -3017,7 +3017,7 @@ This command, like other networking commands, involves a separate
 communication step with monotone. The extra command, @command{merge},
 ensures that the branch your are working on has a unique head. You can
 omit the @command{merge} step if you only want @command{update} to
-examine descendants of your base revision, and ignore other heads on
+examine descendents of your base revision, and ignore other heads on
 your branch.
 
 @heading Moving Working Copy to Another Revision
@@ -3292,7 +3292,7 @@ Note that this command only works if @var{id} has exactly one ancestor.
 This command lists the ``heads'' of @var{branchname}. 
 
 The ``heads'' of a branch is the set of revisions which are members of
-the branch, but which have no descendants. These revisions are
+the branch, but which have no descendents. These revisions are
 generally the ``newest'' revisions committed by you or your
 colleagues, at least in terms of ancestry. The heads of a branch may
 not be the newest revisions, in terms of time, but synchronization of
@@ -3628,7 +3628,7 @@ In particular, it prints:
 @item 
 The ``base revision ID'' and ``base manifest ID'', which are
 referenced by the file @file{MT/revision}, and which your working copy
-is an in-progress descendant of.
+is an in-progress descendent of.
 @item
 The ``current manifest ID'', which is the ID of the manifest which
 results from applying @file{MT/work} to the base manifest, and
@@ -3964,9 +3964,9 @@ This command drops the public and/or private key. If both exist, both
 are dropped, if only one exists, it is dropped. This command should
 be used with caution as changes are irreversible without a backup of
 the key(s) that were dropped. Note also that the private key is not
-guaranteed to actually be erased from your database file - if you are
-going to make the database file public, you should use 'db dump'
-and 'db load' to import into a fresh database.
+guaranteed to actually be erased from your database file --- if you are
+going to make the database file public, you should use @command{db dump}
+and @command{db load} to import into a fresh database.
 
 @item monotone chkeypass @var{id}
 
@@ -3985,8 +3985,8 @@ from @code{stdin}.
 
 This command lets you test your revision trust hook
 @code{get_revision_cert_trust} (see @ref{Hook Reference}).  You pass it
-a revision id, a certificate name, a certificate value, and one or more
-key ids, and it will tell you whether, under your current settings,
+a revision ID, a certificate name, a certificate value, and one or more
+key IDs, and it will tell you whether, under your current settings,
 Monotone would trust a cert on that revision with that value signed by
 those keys.
 
@@ -4295,7 +4295,7 @@ and revision is correct.
 
 This command ``kills'', i.e., deletes, a given revision, as well as any
 certs attached to it.  It has an ugly name because it is a dangerous
-command; it permanently and irrecovably deletes historical information
+command; it permanently and irrecoverably deletes historical information
 from your database.  There are a number of caveats:
 @itemize
 @item
@@ -4404,8 +4404,8 @@ Prints the heads of branch @var{branch}.
 
 @item Output format:
 
-Zero or more lines, each giving the id of one head of the given branch.
-Each line consists of a revision id, in hexadecimal, followed by a
+Zero or more lines, each giving the ID of one head of the given branch.
+Each line consists of a revision ID, in hexadecimal, followed by a
 newline.  The lines are printed in alphabetically sorted order.
 
 @item Error conditions:
@@ -4420,7 +4420,7 @@ If the given branch contains no members or does not exist, then no lines are pri
 @table @strong
 @item Arguments:
 
-One or more revision ids, @var{rev1}, @var{rev2}, etc.
+One or more revision IDs, @var{rev1}, @var{rev2}, etc.
 
 @item Added in:
 
@@ -4439,8 +4439,8 @@ Prints the ancestors of one or more revisions.
 
 @item Output format:
 
-Zero or more lines, each giving the id of one ancestor of the given
-revisions.  Each line consists of a revision id, in hexadecimal,
+Zero or more lines, each giving the ID of one ancestor of the given
+revisions.  Each line consists of a revision ID, in hexadecimal,
 followed by a newline.  The lines are printed in alphabetically sorted
 order.
 
@@ -4461,7 +4461,7 @@ an error message to stderr, and exits with status 1.
 @table @strong
 @item Arguments:
 
-One revision id, @var{rev}.
+One revision ID, @var{rev}.
 
 @item Added in:
 
@@ -4481,8 +4481,8 @@ non-recursive version of @command{automate ancestors}.
 
 @item Output format:
 
-Zero or more lines, each giving the id of one parent of the given
-revision.  Each line consists of a revision id, in hexadecimal,
+Zero or more lines, each giving the ID of one parent of the given
+revision.  Each line consists of a revision ID, in hexadecimal,
 followed by a newline.  The lines are printed in alphabetically sorted
 order.
 
@@ -4499,7 +4499,7 @@ stdout, prints an error message to stderr, and exits with status 1.
 @table @strong
 @item Arguments:
 
-One or more revision ids, @var{rev1}, @var{rev2}, etc.
+One or more revision IDs, @var{rev1}, @var{rev2}, etc.
 
 @item Added in:
 
@@ -4518,8 +4518,8 @@ Prints the descendents of one or more revisions.
 
 @item Output format:
 
-Zero or more lines, each giving the id of one descendent of the given
-revisions.  Each line consists of a revision id, in hexadecimal,
+Zero or more lines, each giving the ID of one descendent of the given
+revisions.  Each line consists of a revision ID, in hexadecimal,
 followed by a newline.  The lines are printed in alphabetically sorted
 order.
 
@@ -4540,7 +4540,7 @@ an error message to stderr, and exits with status 1.
 @table @strong
 @item Arguments:
 
-One revision id, @var{rev}.
+One revision ID, @var{rev}.
 
 @item Added in:
 
@@ -4560,8 +4560,8 @@ non-recursive version of @command{automate descendents}.
 
 @item Output format:
 
-Zero or more lines, each giving the id of one child of the given
-revision.  Each line consists of a revision id, in hexadecimal,
+Zero or more lines, each giving the ID of one child of the given
+revision.  Each line consists of a revision ID, in hexadecimal,
 followed by a newline.  The lines are printed in alphabetically sorted
 order.
 
@@ -4599,8 +4599,8 @@ Prints out the complete ancestry graph of this database.
 @item Output format:
 
 Zero or more lines, each giving ancestry information for one revision.
-Each line begins with a revision id.  Following this are zero or more
-space-prefixed revision ids.  Each revision id after the first is a
+Each line begins with a revision ID.  Following this are zero or more
+space-prefixed revision IDs.  Each revision ID after the first is a
 parent (in the sense of @command{automate parents}) of the first.  For
 instance, in the above sample output,
 0c05e8ec9c6af4224672c7cc4c9ef05ae8bdb794 is a root node,
@@ -4623,7 +4623,7 @@ None.
 @table @strong
 @item Arguments:
 
-One or more revision ids, @var{rev1}, @var{rev2}, etc.
+One or more revision IDs, @var{rev1}, @var{rev2}, etc.
 
 @item Added in:
 
@@ -4635,7 +4635,7 @@ Prints all arguments, except those that are an ancestor of some other
 argument.  One way to think about this is that it prints the minimal
 elements of the given set, under the ordering imposed by the ``child
 of'' relation.  Another way to think of it is if the arguments formed a
-branch branch, then we would print the heads of that branch.  If there
+branch, then we would print the heads of that branch.  If there
 are no arguments, prints nothing.
 
 @item Sample output:
@@ -4647,8 +4647,8 @@ are no arguments, prints nothing.
 
 @item Output format:
 
-Zero or more lines, each giving the id of one descendent of the given
-revisions.  Each line consists of a revision id, in hexadecimal,
+Zero or more lines, each giving the ID of one descendent of the given
+revisions.  Each line consists of a revision ID, in hexadecimal,
 followed by a newline.  The lines are printed in alphabetically sorted
 order.
 
@@ -4665,7 +4665,7 @@ an error message to stderr, and exits with status 1.
 @table @strong
 @item Arguments:
 
-One or more revision ids, @var{rev1}, @var{rev2}, etc.
+One or more revision IDs, @var{rev1}, @var{rev2}, etc.
 
 @item Added in:
 
@@ -4689,7 +4689,7 @@ are no arguments, prints nothing.
 
 @item Output format:
 
-A list of revision ids, in hexadecimal, each followed by a newline.
+A list of revision IDs, in hexadecimal, each followed by a newline.
 Revisions are printed in topologically sorted order.
 
 @item Error conditions:
@@ -4705,8 +4705,8 @@ an error message to stderr, and exits with status 1.
 @table @strong
 @item Arguments:
 
-A ``new'' revision id @var{new}, followed by zero or more ``old''
-revision ids @var{old1}, @var{old2}, etc.
+A ``new'' revision ID @var{new}, followed by zero or more ``old''
+revision IDs @var{old1}, @var{old2}, etc.
 
 @item Added in:
 
@@ -4734,7 +4734,7 @@ new since then.
 
 @item Output format:
 
-A list of revision ids, in hexadecimal, each followed by a newline.
+A list of revision IDs, in hexadecimal, each followed by a newline.
 Revisions are printed in topologically sorted order.
 
 @item Error conditions:
@@ -4775,7 +4775,7 @@ the head of some branch, but not every branch head is a leaf.
 @item Output format:
 
 Zero or more lines, each a leaf of the revision graph.  Each line
-consists of a revision id, in hexadecimal, followed by a newline.  The
+consists of a revision ID, in hexadecimal, followed by a newline.  The
 lines are printed in alphabetically sorted order.
 
 @item Error conditions:
@@ -4809,8 +4809,8 @@ Print all revisions that match the given selector.
 
 @item Output format:
 
-Zero or more lines, each giving the id of one revision that matches the
-given selector.  Each line consists of a revision id, in hexadecimal,
+Zero or more lines, each giving the ID of one revision that matches the
+given selector.  Each line consists of a revision ID, in hexadecimal,
 followed by a newline.
 
 @item Error conditions:
@@ -4938,7 +4938,7 @@ change you make. The result is used as the value for a
 changes.
 
 The contents of @file{MT/log} are read and passed as
-@var{user_log_message}. This allows you do document your changes as
+@var{user_log_message}. This allows you to document your changes as
 you proceed instead of waiting until you are ready to commit. Upon
 a successful commit, the contents of @file{MT/log} are erased setting
 the system up for another edit/commit cycle.
@@ -5045,11 +5045,11 @@ manifests, and files associated with the netsync index
 @var{collection}; otherwise @code{false}. This hook has no default
 definition, therefore the default behavior is to deny all reads.
 
-Note that the @var{identity} value is a key id (such as
+Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
 key fingerprint (hash) in your database. Monotone will not permit two
-keys in your database to have the same id. Make sure you confirm the
-key fingerprints of each key in your database, as key id strings are
+keys in your database to have the same ID. Make sure you confirm the
+key fingerprints of each key in your database, as key ID strings are
 ``convenience names'', not security tokens.
 
 @item get_netsync_anonymous_read_permitted (@var{collection})
@@ -5068,11 +5068,11 @@ manifests, and files associated with the netsync index
 @var{collection}; otherwise @code{false}. This hook has no default
 definition, therefore the default behavior is to deny all writes.
 
-Note that the @var{identity} value is a key id (such as
+Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
 key fingerprint (hash) in your database. Monotone will not permit two
-keys in your database to have the same id. Make sure you confirm the
-key fingerprints of each key in your database, as key id strings are
+keys in your database to have the same ID. Make sure you confirm the
+key fingerprints of each key in your database, as key ID strings are
 ``convenience names'', not security tokens.
 
 @item ignore_file (@var{filename})
@@ -6145,7 +6145,7 @@ Make a ``branch'' cert approving of a revision's membership in a branch.
 
 @item @b{disapprove} @i{<id>}
 Disapprove of a revision, committing the inverse changes as as a
-descendant of the disapproved revision.
+descendent of the disapproved revision.
 @comment TROFF INPUT: .TP
 
 @item @b{tag} @i{<id> <tagname>}
@@ -6321,7 +6321,7 @@ Rename files from @i{<src>} to @i{<dst>} in working copy.
 @item @b{commit} @i{[--message=log message] [<pathname>...]}
 Commit working copy to database. If a --message @option{option} is
 provided on the command line, it is used; otherwise a log message
-editor will be invoked. If @i{MT/log} exists, it's content will be
+editor will be invoked. If @i{MT/log} exists, its content will be
 passed to the message editor.
 @comment TROFF INPUT: .TP
 
@@ -6460,13 +6460,13 @@ applies to the commit command but it may also apply to the comment
 command in the future.
 
 @item @b{--author=}@i{<author email>}
-Use the given author as the value of the "author" cert when committing
+Use the given author as the value of the @code{author} cert when committing
 a new revision, rather than the default author.  Useful when
 committing a patch on behalf of someone else, or when importing
 history from another version control system.
 
 @item @b{--date=}@i{<date and time>}
-Use the given given date and time as value of the "date" cert when
+Use the given given date and time as value of the @code{date} cert when
 committing a new revision, rather than the current time.  Useful when
 importing history from another version control system.
 

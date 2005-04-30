@@ -13,6 +13,10 @@
 	path generator, taking advantage of normalization of file_path's,
 	to avoid mkpath().
 
+2005-04-29  Joel Rosdahl  <joel@rosdahl.net>
+
+	* monotone.texi: Minor corrections.
+
 2005-04-29  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc (ls_tags): Sort output.
