@@ -1,3 +1,7 @@
+2005-05-01  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi: Document the change in 'monotone log'.
+
 2005-05-01  rghetta <birrachiara@tin.it>
 
 	* commands.cc (CMD(log)): Use --revision.
