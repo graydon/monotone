@@ -164,11 +164,9 @@ namespace commands
   {
     map<string,command *>::const_iterator i;
 
-    string completed = complete_command(cmd);
-
     // try to get help on a specific command
 
-    i = cmds.find(completed);
+    i = cmds.find(cmd);
 
     if (i != cmds.end())
       {
@@ -229,12 +227,10 @@ namespace commands
 
   int process(app_state & app, string const & cmd, vector<utf8> const & args)
   {
-    string completed = complete_command(cmd);
-    
-    if (cmds.find(completed) != cmds.end())
+    if (cmds.find(cmd) != cmds.end())
       {
-        L(F("executing %s command\n") % completed);
-        cmds[completed]->exec(app, args);
+        L(F("executing %s command\n") % cmd);
+        cmds[cmd]->exec(app, args);
         return 0;
       }
     else
@@ -246,11 +242,9 @@ namespace commands
 
   set<int> command_options(string const & cmd)
   {
-    string completed = complete_command(cmd);
-    
-    if (cmds.find(completed) != cmds.end())
+    if (cmds.find(cmd) != cmds.end())
       {
-        return cmds[completed]->options.opts;
+        return cmds[cmd]->options.opts;
       }
     else
       {

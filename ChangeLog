@@ -1,3 +1,14 @@
+2005-05-01  Richard Levitte  <richard@levitte.org>
+
+	* commands.hh: Expose complete_commands().
+	* commands.cc (explain_usage, command_options, process): Don't
+	call complete_command().  Except the caller to have done that
+	already.
+	* monotone.cc (cpp_main): Start with completing the command after
+	processing the options.  Use the result everywhere the command is
+	required.  This avoids giving the user duplicate (or in some case,
+	triplicate) messages about command expansion.
+
 2005-04-30  Derek Scherger  <derek@echologic.com>
 
 	* app_state.{cc,hh}: remove --all-files option
