@@ -1,3 +1,8 @@
+2005-05-02  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_override_author_date.at: Adapt to the new way to give
+	revision IDs to 'monotone log'.
+
 2005-05-01  Richard Levitte  <richard@levitte.org>
 
 	* monotone.texi: Document the change in 'monotone log'.
