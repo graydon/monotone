@@ -47,7 +47,6 @@ struct poptOption coptions[] =
     {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
     {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
     {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
-    {"all-files", 0, POPT_ARG_NONE, NULL, OPT_ALL_FILES, "inventory all working copy files", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -351,10 +350,6 @@ cpp_main(int argc, char ** argv)
 
             case OPT_ARGFILE:
               my_poptStuffArgFile(ctx(), utf8(string(argstr)));
-              break;
-
-            case OPT_ALL_FILES:
-              app.set_all_files(true);
               break;
 
             case OPT_HELP:

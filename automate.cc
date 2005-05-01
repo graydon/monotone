@@ -10,10 +10,12 @@
 #include <vector>
 #include <algorithm>
 
-#include "vocab.hh"
 #include "app_state.hh"
+#include "basic_io.hh"
 #include "commands.hh"
+#include "restrictions.hh"
 #include "revision.hh"
+#include "vocab.hh"
 
 static std::string const interface_version = "0.2";
 
@@ -450,6 +452,199 @@ automate_select(std::vector<utf8> args,
     output << *i << std::endl;
 }
 
+struct inventory_item
+{
+  enum pstat 
+    { UNCHANGED_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH, UNKNOWN_PATH, IGNORED_PATH } 
+    path_status;
+
+  enum dstat 
+    { UNCHANGED_DATA, PATCHED_DATA, MISSING_DATA } 
+    data_status;
+
+  enum ptype
+    { FILE, DIRECTORY } 
+    path_type;
+
+  file_path old_path;
+
+  inventory_item():
+    path_status(UNCHANGED_PATH), data_status(UNCHANGED_DATA), path_type(FILE), old_path() {}
+};
+
+typedef std::map<file_path, inventory_item> inventory_map;
+
+static void
+inventory_paths(inventory_map & inventory,
+                path_set const & paths,
+                inventory_item::pstat path_status, 
+                inventory_item::ptype path_type = inventory_item::FILE)
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
+    {
+      L(F("%d %d %s\n") % inventory[*i].path_status % path_status % *i);
+      I(inventory[*i].path_status == inventory_item::UNCHANGED_PATH);
+      inventory[*i].path_status = path_status;
+      inventory[*i].path_type = path_type;
+    }
+}
+
+static void
+inventory_paths(inventory_map & inventory,
+                path_set const & paths,
+                inventory_item::dstat data_status)
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
+    {
+      L(F("%d %d %s\n") % inventory[*i].data_status % data_status % *i);
+      I(inventory[*i].data_status == inventory_item::UNCHANGED_DATA);
+      inventory[*i].data_status = data_status;
+    }
+}
+
+static void
+inventory_paths(inventory_map & inventory,
+                std::map<file_path,file_path> const & renames,
+                inventory_item::pstat path_status, 
+                inventory_item::ptype path_type = inventory_item::FILE)
+{
+  for (std::map<file_path,file_path>::const_iterator i = renames.begin(); 
+       i != renames.end(); i++)
+    {
+      L(F("%d %d %s %s\n") % inventory[i->second].path_status % path_status % i->first % i->second);
+      I(inventory[i->second].path_status == inventory_item::UNCHANGED_PATH);
+      inventory[i->second].path_status = inventory_item::RENAMED_PATH;
+      inventory[i->second].path_type = path_type;
+      inventory[i->second].old_path = i->first;
+    }
+}
+               
+// Name: inventory
+// Arguments: none
+// Added in: 0.2
+// Purpose: Prints all the files found in a working copy or current manifest
+//   prefixed by 2 status code characters. The first status code character
+//   indicates the status of the path itsself and is drawn from the following 
+//   set:
+//
+//   ' ' the path is unchanged from the current manifest 
+//   '+' the path has been added to the current manifest
+//   '-' the path has been dropped from the current manifest
+//   '%' the path has been renamed in the current manifest, both the old and new name are listed
+//   '?' the path is unknown, it exists in the working copy but not in the current manifest
+//   '~' the path is ignored by the current ignore_file lua hook setting
+//  
+//   The second status code character indicates the status of the data associated
+//   with the path and is drawn from the following set:
+//
+//   ' ' the data is unchanged, its sha1 version matches the version in the base manifest
+//   '#' the data is changed, its sha1 version differs from the version in the base manifest
+//   '!' the data is missing and its sha1 version cannot be computed
+//
+// Output format: Each file is printed on its own line, prefixed by a
+//   two character status code and a single space character. All filenames are
+//   quoted with double quotes (") to support filenames containg spaces. Intervening quotes
+//   are escaped with \". Directories are identified by paths ending with '/' characters. 
+//   Rename lines list the old name first, followed by the new name.
+// Error conditions: If no working copy book keeping MT directory is found,
+//   prints an error message to stderr, and exits with status 1.
+static void
+automate_inventory(std::vector<utf8> args,
+                   std::string const & help_name,
+                   app_state & app,
+                   std::ostream & output)
+{
+  if (args.size() != 0)
+    throw usage(help_name);
+
+  manifest_id old_manifest_id;
+  revision_id old_revision_id;
+  manifest_map m_old;
+  path_set old_paths, new_paths, empty;
+  change_set::path_rearrangement included, excluded;
+  path_set missing, changed, unchanged, unknown, ignored;
+  inventory_map inventory;
+
+  app.require_working_copy();
+
+  calculate_restricted_rearrangement(app, args, 
+                                     old_manifest_id, old_revision_id,
+                                     m_old, old_paths, new_paths,
+                                     included, excluded);
+
+  file_itemizer u(app, new_paths, unknown, ignored);
+  walk_tree(u);
+
+  // remove deleted paths from the set of unknown paths
+
+  for (path_set::const_iterator i = included.deleted_files.begin();
+         i != included.deleted_files.end(); ++i)
+    unknown.erase(*i);
+
+  for (path_set::const_iterator i = included.deleted_dirs.begin();
+         i != included.deleted_dirs.end(); ++i)
+    unknown.erase(*i);
+
+  classify_paths(app, new_paths, m_old, missing, changed, unchanged);
+
+  inventory_paths(inventory, missing, inventory_item::MISSING_DATA);
+
+  inventory_paths(inventory, included.deleted_files, inventory_item::DROPPED_PATH);
+  inventory_paths(inventory, included.deleted_dirs, inventory_item::DROPPED_PATH, inventory_item::DIRECTORY);
+
+  inventory_paths(inventory, included.renamed_files, inventory_item::RENAMED_PATH);
+  inventory_paths(inventory, included.renamed_dirs, inventory_item::RENAMED_PATH, inventory_item::DIRECTORY);
+
+  inventory_paths(inventory, included.added_files, inventory_item::ADDED_PATH);
+  inventory_paths(inventory, changed, inventory_item::PATCHED_DATA);
+  
+  inventory_paths(inventory, unchanged, inventory_item::UNCHANGED_DATA);
+  inventory_paths(inventory, unknown, inventory_item::UNKNOWN_PATH);
+  inventory_paths(inventory, ignored, inventory_item::IGNORED_PATH);
+
+  for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end(); ++i)
+    {
+      switch (inventory[i->first].path_status) 
+        {
+        case inventory_item::UNCHANGED_PATH: output << " "; break;
+        case inventory_item::ADDED_PATH:     output << "+"; break;
+        case inventory_item::DROPPED_PATH:   output << "-"; break;
+        case inventory_item::RENAMED_PATH:   output << "%"; break;
+        case inventory_item::UNKNOWN_PATH:   output << "?"; break;
+        case inventory_item::IGNORED_PATH:   output << "~"; break;
+        }
+
+      switch (inventory[i->first].data_status) 
+        {
+        case inventory_item::UNCHANGED_DATA: output << " "; break;
+        case inventory_item::PATCHED_DATA:   output << "#"; break;
+        case inventory_item::MISSING_DATA:   output << "!"; break;
+        }
+
+      output << " ";
+
+      switch (inventory[i->first].path_type) 
+        {
+        case inventory_item::FILE: 
+          if (inventory[i->first].path_status == inventory_item::RENAMED_PATH)
+            output << basic_io::escape(inventory[i->first].old_path()) << " "; 
+          
+          output << basic_io::escape(i->first()); 
+          break;
+
+        case inventory_item::DIRECTORY: 
+          if (inventory[i->first].path_status == inventory_item::RENAMED_PATH)
+            output << basic_io::escape(inventory[i->first].old_path() + "/") << " "; 
+         
+          output << basic_io::escape(i->first() + "/"); 
+          break;
+        }
+      
+      output << std::endl;
+    }
+ 
+}
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -480,6 +675,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_graph(args, root_cmd_name, app, output);
   else if (cmd() == "select")
     automate_select(args, root_cmd_name, app, output);
+  else if (cmd() == "inventory")
+    automate_inventory(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

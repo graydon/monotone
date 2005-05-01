@@ -3651,63 +3651,6 @@ command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{status}
 to files changed within the current subdirectory of the working copy.
 
-@item monotone inventory
-@itemx monotone inventory @var{pathname...}
-
-This command prints the ``inventory'' of files in a working copy. Each
-file is prefixed by two characters indicating the current status of the
-file's path and associated data or contents.
-
-The first status character may be one of the following:
-@itemize
-@item ' ' the path is unchanged from the current manifest 
-@item '+' the path has been added to the current manifest
-@item '-' the path has been dropped from the current manifest
-@item '%' the path has been renamed in the current manifest, both the old and new name are listed
-@item '?' the path is unknown, it exists in the working copy but not in the current manifest
-@item '~' the path is ignored by the current ignore_file lua hook setting
-@end itemize
-
-The second status character may be one of the following:
-@itemize
-@item ' ' the data is unchanged, its sha1 version matches the version in the base manifest
-@item '#' the data is changed, its sha1 version differs from the version in the base manifest
-@item '!' the data is missing and its sha1 version cannot be computed
-@end itemize
-
-By default the @command{inventory} command lists only ``interesting''
-files, considered to be those with a status of missing, dropped,
-renamed, added or changed. If the @option{--all-files} option is
-specified the @command{inventory} command lists every file in the
-working copy, including those with a status of unchanged, unknown and
-ignored.
-
-Specifying optional @var{pathname...} arguments to the @command{inventory}
-command restricts the set of changes that are visible and results in
-only a partial inventory of the working copy. Changes to files not included
-in the specified set of pathnames will be ignored.
-
-From within a subdirectory of the working copy the @command{inventory}
-command will, by default, include @emph{all changes} in the working
-copy.  Specifying only the pathname "." will restrict @command{inventory}
-to files changed within the current subdirectory of the working copy.
-
-If the @option{--all-files} option is specified the @command{inventory}
-command will list all files in the working copy. However, the changes
-that are will be restricted as described above.
-
-Renamed files have both the old and new name of the file listed on
-the same line in the inventory, in that order.  
-
-Since pathnames may contain spaces, quotes and other ``special''
-characters, the @command{inventory} command lists quoted filenames to
-avoid any ambiguities.
-
-Full support for versioned directories is not yet complete and the
-@command{inventory} command will only list entries for renamed or
-dropped directories. Directory entries are designated by pathnames
-ending with the "/" character.
-
 @item monotone log
 @itemx monotone log --depth=@var{n}
 @itemx monotone log @var{id}
@@ -4816,6 +4759,80 @@ followed by a newline.
 @item Error conditions:
 
 None.
+
+@end table
+
+@item monotone automate inventory
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+0.2
+
+@item Purpose:
+
+Prints the inventory of all files found in the current working copy
+prefixed by 2 status code characters. 
+
+@item Sample output:
+
+@verbatim
++  "added-file"
++! "added-and-missing-file"
+-  "dropped-file"
+ # "edited-file"
+%  "file-before-rename" "file-after-rename"
+%# "file-before-rename" "file-after-rename-and-edit"
+~  "ignored-file"
+ ! "missing-file"
+   "unchanged-file"
+?  "unknown-file"
+@end verbatim
+
+@item Output format:
+
+Each file is printed on its own line, prefixed by a two character status
+code characters and a single space character. All filenames are quoted
+with double quotes (") to support filenames containg spaces. Intervening
+quotes are escaped with \". Directories are identified by paths ending
+with '/' characters. Rename lines list the old name first, followed by
+the new name. Lines are ordered by their pathname, with renames using
+the new name is used for ordering.
+
+The first status character indicates the status of the path itsself and
+may be one of the following:
+
+@itemize
+@item ' ' the path is unchanged from the current manifest 
+@item '+' the path has been added to the current manifest
+@item '-' the path has been dropped from the current manifest
+@item '%' the path has been renamed in the current manifest, both the old and new name are listed
+@item '?' the path is unknown, it exists in the working copy but not in the current manifest
+@item '~' the path is ignored by the current ignore_file lua hook setting
+@end itemize
+
+The second status character indicates the status of the data associated
+witth the path and may be one of the following:
+
+@itemize
+@item ' ' the data is unchanged, its sha1 version matches the version in the base manifest
+@item '#' the data is changed, its sha1 version differs from the version in the base manifest
+@item '!' the data is missing and its sha1 version cannot be computed
+@end itemize
+
+Full support for versioned directories is not yet complete and the
+inventory will only list entries for renamed or dropped
+directories. Directory entries are designated by pathnames ending with
+"/" characters.
+
+@item Error conditions:
+
+When executed from outside of a working copy directory, prints an error
+message to stderr, and exits with status 1.
 
 @end table
 
@@ -6168,10 +6185,6 @@ Show diffs between working copy and database.
 Show status of working copy.
 @comment TROFF INPUT: .TP
 
-@item @b{inventory} @i{[<pathname>...]}
-Show inventory of files in working copy.
-@comment TROFF INPUT: .TP
-
 @item @b{log} @i{[id]}
 Show historical log of revisions, starting from working copy
 base revision, or @i{[id]} if given.
@@ -6348,7 +6361,7 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference|leaves)}
+@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference|leaves|inventory)}
 Scripting interface.
 
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}
@@ -6483,11 +6496,6 @@ if needed.
 
 @item @b{-@@} @i{<file>}
 An alias for @b{--xargs=}@i{<file>}.
-
-@item @b{--all-files}
-Include every file available in the working copy in the inventory
-list. By default inventory only lists ``interesting'' files. This option
-is specific to the @command{inventory} command.
 
 @comment TROFF INPUT: .SH ENVIRONMENT
 

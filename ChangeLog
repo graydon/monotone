@@ -1,5 +1,17 @@
 2005-04-30  Derek Scherger  <derek@echologic.com>
 
+	* app_state.{cc,hh}: remove --all-files option
+	* automate.cc: move inventory command and associated stuff here from ...
+	* commands.cc: ... here, where it has been removed
+	* monotone.1: relocate inventory command, remove --all-files option
+	* monotone.cc: remove --all-files option
+	* monotone.texi: relocate inventory documentation to automation
+	section, remove --all-files option
+	* tests/t_automate_inventory.at: renamed and updated for move to automate
+	* testsuite.at: adjust for rename
+
+2005-04-30  Derek Scherger  <derek@echologic.com>
+
 	* Makefile.am (MOST_SOURCES): add restrictions.{cc,hh} 
 	* commands.cc (extract_rearranged_paths): 
 	(extract_delta_paths):

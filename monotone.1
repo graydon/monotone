@@ -41,9 +41,6 @@ Show diffs between working copy and database.
 \fBstatus \fI[<pathname>...]\fP
 Show status of working copy.
 .TP
-\fBinventory \fI[<pathname>...]\fP
-Show inventory of files in the working copy.
-.TP
 \fBlog\fP \fI[id] \fP
 Show historical log of revisions, starting from working copy
 base revision, or \fI[id]\fP if given.
@@ -177,7 +174,7 @@ Set the db var \fI<name>\fP in domain \fI<domain>\fP to value
 \fBunset\fP \fI<domain> <name>\fP 
 Delete any setting for db var \fI<name>\fP in domain \fI<domain>\fP.
 .TP
-\fBautomate\fP \fI(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference|leaves)\fP
+\fBautomate\fP \fI(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference|leaves|inventory)\fP
 Scripting interface.
 .TP
 \fBdb\fP \fI(init|info|version|dump|load|migrate|rebuild|execute|check)\fP
@@ -291,10 +288,6 @@ more than once if needed.
 \fB-@ \fI<file>\fP
 An alias for \fB--xargs=\fI<file>\fP
 .TP
-\fB--all-files\fP
-Include every file available in the working copy in the inventory
-list. By default inventory only lists ``interesting'' files. This option
-is specific to the @command{inventory} command.
 
 .SH ENVIRONMENT
 .TP

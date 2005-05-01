@@ -30,7 +30,7 @@ static string const branch_option("branch");
 static string const key_option("key");
 
 app_state::app_state() 
-  : branch_name(""), db(""), stdhooks(true), rcfiles(true), all_files(false),
+  : branch_name(""), db(""), stdhooks(true), rcfiles(true),
     search_root("/"), depth(-1)
 {
   db.set_app(this);
@@ -309,12 +309,6 @@ void
 app_state::set_rcfiles(bool b)
 {
   rcfiles = b;
-}
-
-void
-app_state::set_all_files(bool b)
-{
-  all_files = b;
 }
 
 void
