@@ -370,17 +370,19 @@ cpp_main(int argc, char ** argv)
         F("syntax error near the \"%s\" option: %s") %
           poptBadOption(ctx(), POPT_BADOPTION_NOALIAS) % poptStrerror(opt));
 
+      // complete the command if necessary
+
+      string cmd;
+      if (poptPeekArg(ctx()))
+        {
+          cmd = commands::complete_command(poptGetArg(ctx()));
+        }
+
       // stop here if they asked for help
 
       if (requested_help)
         {
-          if (poptPeekArg(ctx()))
-            {
-              string cmd(poptGetArg(ctx()));
-              throw usage(cmd);
-            }
-          else
-            throw usage("");
+          throw usage(cmd);     // cmd may be empty, and that's fine.
         }
 
       // at this point we allow a working copy (meaning search for it
@@ -392,14 +394,12 @@ cpp_main(int argc, char ** argv)
       // main options processed, now invoke the 
       // sub-command w/ remaining args
 
-      if (!poptPeekArg(ctx()))
+      if (cmd.empty())
         {
           throw usage("");
         }
       else
         {
-          string cmd(poptGetArg(ctx()));
-
           // Make sure the local options used are really used by the
           // given command.
           set<int> command_options = commands::command_options(cmd);

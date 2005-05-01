@@ -24,6 +24,7 @@ struct usage
 
 namespace commands {
   void explain_usage(std::string const & cmd, std::ostream & out);
+  std::string complete_command(std::string const & cmd);
   int process(app_state & app, std::string const & cmd, std::vector<utf8> const & args);
   std::set<int> command_options(std::string const & cmd);
 };
