@@ -3401,45 +3401,29 @@ CMD(annotate, "informative", "PATH",
   do_annotate(app, file, fid, rid);
 }
 
-CMD(log, "informative", "[ID] [file]",
-    "print history in reverse order starting from 'ID' (filtering by 'file')",
-    OPT_DEPTH)
+CMD(log, "informative", "[file]",
+    "print history in reverse order (filtering by 'file').  If a revision is\n"
+    "given, use it as a starting point.",
+    OPT_DEPTH % OPT_REVISION)
 {
-  revision_set rev;
   revision_id rid;
-  set< pair<file_path, revision_id> > frontier;
   file_path file;
 
-  if (args.size() > 2)
+  if (app.revision_selectors.size() == 0)
+    app.require_working_copy();
+
+  if (args.size() > 1 || app.revision_selectors.size() > 1)
     throw usage(name);
 
-  if (args.size() == 2)
-  {  
-    complete(app, idx(args, 0)(), rid);
-    file = file_path(idx(args, 1)());
-  }  
-  else if (args.size() == 1)
-    { 
-      std::string arg=idx(args, 0)();
-      if (arg.find_first_not_of(constants::legal_id_bytes) == string::npos
-          && arg.size()<=constants::idlen)
-        {
-          complete(app, arg, rid);
-        }
-      else
-        {  
-          app.require_working_copy(); // no id arg, must have working copy
+  if (args.size() > 0)
+     file=file_path(idx(args, 0)()); /* specified a file */
 
-          file = file_path(arg);
-          get_revision_id(rid);
-        }
-    }
+  if (app.revision_selectors.size() == 0)
+    get_revision_id(rid);
   else
-    {
-      app.require_working_copy(); // no id arg, must have working copy
-      get_revision_id(rid);
-    }
+    complete(app, idx(app.revision_selectors, 0)(), rid);
 
+  set< pair<file_path, revision_id> > frontier;
   frontier.insert(make_pair(file, rid));
   
   cert_name author_name(author_cert_name);
@@ -3452,6 +3436,7 @@ CMD(log, "informative", "[ID] [file]",
   set<revision_id> seen;
   long depth = app.depth;
 
+  revision_set rev;
   while(! frontier.empty() && (depth == -1 || depth > 0))
     {
       set< pair<file_path, revision_id> > next_frontier;
