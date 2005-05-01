@@ -1,3 +1,26 @@
+2005-04-30  Derek Scherger  <derek@echologic.com>
+
+	* Makefile.am (MOST_SOURCES): add restrictions.{cc,hh} 
+	* commands.cc (extract_rearranged_paths): 
+	(extract_delta_paths):
+	(extract_changed_paths):
+	(add_intermediate_paths):
+	(restrict_path_set):
+	(restrict_rename_set):
+	(restrict_path_rearrangement):
+	(restrict_delta_map):
+	(calculate_restricted_rearrangement):
+	(calculate_restricted_revision):
+	(calculate_current_revision):
+	(calculate_restricted_change_set): move to restrictions.{cc,hh}
+	(maybe_update_inodeprints):
+	(cat):
+	(dodiff):
+	(update): rename calculate_current_revision to
+	calculate_unrestricted_revision
+	* database_check.hh: update header guard #define
+	* restrictions.{cc,hh}: add new files
+
 2005-04-30  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc: Add a placeholder OPT_NONE for commands that don't

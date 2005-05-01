@@ -1,5 +1,5 @@
-#ifndef __FSCK_HH__
-#define __FSCK_HH__
+#ifndef __DATABASE_CHECK_HH__
+#define __DATABASE_CHECK_HH__
 
 // copyright (C) 2005 derek scherger <derek@echologic.com>
 // all rights reserved.
