@@ -1,3 +1,9 @@
+2005-05-01  Matt Johnston  <matt@ucc.asn.au>
+
+	* diff_patch.cc (normalize_extents): broaden the condition when
+	changes can be normalised.
+	* tests/t_merge_6.at: now passes.
+
 2005-05-01  Emile Snyder  <emile@alumni.reed.edu>
 
 	* annotate.cc: Fix bug that njs pointed out when a merge has one
