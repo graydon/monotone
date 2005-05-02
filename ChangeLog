@@ -1,3 +1,11 @@
+2005-05-01  Emile Snyder  <emile@alumni.reed.edu>
+
+	* annotate.cc: Fix bug that njs pointed out when a merge has one
+	side with no changes.  Be smarter about how we get parent
+	file_id's to do file diffs; give another big speedup.
+	* tests/t_annotate_copy_all.at: New test for the bug that is fixed.
+	* testsuite.at: Add the new test.
+
 2005-05-02  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_override_author_date.at: Adapt to the new way to give
