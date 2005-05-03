@@ -1,10 +1,12 @@
-????????????????????????????
+Tue May  3 00:31:37 PDT 2005
 
         0.19 release.  performance improvements, features, ui
         improvements, and bug fixes.
 
         - many operations sped up by another factor of 2 or better.
                 - special thanks to Matt Johnston <matt@ucc.asn.au>.
+                - first steps towards automated benchmarking.  Thanks
+                  to Timothy Brownawell <tbrownaw@gmail.com>.
         - new major features:
                 - "annotate" command; still requires optimization.
                   Thanks to Emile Snyder <emile@alumni.reed.edu>.
@@ -47,7 +49,7 @@
                   no rule that such options must appear after the
                   command on the command line, though).  Thanks to
                   Richard Levitte <richard@levitte.org>.
-        - many bug fixes:
+        - bug fixes:
                 - many cvs_import bugs fixed.  Special thanks to Jon
                   Bright <jon@siliconcircus.com>, Emile Snyder
                   <emile@alumni.reed.edu>, Hansjoerg Lipp
@@ -72,6 +74,7 @@
                 - many others...
         - fantastic emacs integration in contrib/monotone.el.  Thanks
           to Harley Gorrell <harley@panix.com>.
+        - 45 new integration tests.  total line coverage: ~84%.
 
                 - upgrading from 0.18: database and working copies are
                   fully compatible.  NOTE that the configuration file

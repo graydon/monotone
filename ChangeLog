@@ -1,3 +1,11 @@
+2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* UPGRADE: Mention upgrading from 0.18.
+	* debian/copyright: Re-sync with AUTHORS.
+	* win32/monotone.iss, monotone.spec, debian/changelog: Bump
+	version numbers to 0.19.
+	* NEWS: Finish updating for 0.19.
+
 2005-05-03  Jon Bright  <jon@siliconcircus.com>
 	* win32/monotone.iss: Bump version to 0.19
 	
