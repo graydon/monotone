@@ -22,16 +22,24 @@ AT_CHECK(MONOTONE cert $FIRST testcert 'value=with=equal=signs')
 AT_CHECK(MONOTONE cert $SECOND testcert 'value')
 
 # Check that inexact values fail...
-CHECK_SAME_STDOUT(MONOTONE automate select 'c:testcert=value=' | wc -l, echo 0)
+AT_CHECK(MONOTONE automate select 'c:testcert=value=', [], [stdout], [ignore])
+AT_CHECK(mv stdout a_s)
+AT_CHECK(test 0 -eq "`wc -l <a_s`")
 
 # Check that wild cards succeed (this one becomes a misuse, because it will
 # match two revisions)...
-CHECK_SAME_STDOUT(MONOTONE automate select 'c:testcert=value*' | wc -l, echo 2)
+AT_CHECK(MONOTONE automate select 'c:testcert=value*', [], [stdout], [ignore])
+AT_CHECK(mv stdout a_s)
+AT_CHECK(test 2 -eq "`wc -l <a_s`")
 
 # Check that no value succeeds...
-CHECK_SAME_STDOUT(MONOTONE automate select 'c:testcert' | wc -l, echo 2)
+AT_CHECK(MONOTONE automate select 'c:testcert', [], [stdout], [ignore])
+AT_CHECK(mv stdout a_s)
+AT_CHECK(test 2 -eq "`wc -l <a_s`")
 
 # Check that exact value succeed...
-CHECK_SAME_STDOUT(MONOTONE automate select 'c:testcert=value' | wc -l, echo 1)
+AT_CHECK(MONOTONE automate select 'c:testcert=value', [], [stdout], [ignore])
+AT_CHECK(mv stdout a_s)
+AT_CHECK(test 1 -eq "`wc -l <a_s`")
 
 AT_CLEANUP
