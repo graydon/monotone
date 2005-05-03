@@ -1,3 +1,7 @@
+2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (load_epoch): Remove unused function.
+
 2005-05-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_cvsimport_manifest_cycle.at: Add missing symbols.

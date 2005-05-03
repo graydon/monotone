@@ -376,8 +376,6 @@ session
   void rebuild_merkle_trees(app_state & app,
                             utf8 const & collection);
 
-  void load_epoch(cert_value const & branchname, epoch_id const & epoch);
-  
   bool dispatch_payload(netcmd const & cmd);
   void begin_service();
   bool process();
@@ -3273,24 +3271,6 @@ make_root_node(session & sess,
 
   sess.merkle_tables[std::make_pair(coll, ty)] = tab;
   return tab;
-}
-
-
-// BROKEN
-void
-session::load_epoch(cert_value const & branchname, epoch_id const & epoch)
-{
-  // hash is of concat(branch name, raw epoch id).  This is unique, because
-  // the latter has a fixed length.
-  std::string tmp(branchname());
-  id raw_epoch;
-  decode_hexenc(epoch.inner(), raw_epoch);
-  tmp += raw_epoch();
-  data tdat(tmp);
-  hexenc<id> out;
-  calculate_ident(tdat, out);
-  id raw_hash;
-  decode_hexenc(out, raw_hash);
 }
 
 void 
