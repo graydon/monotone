@@ -184,39 +184,39 @@ void normalize_extents(vector<extent> & a_b_map,
         while (j > 0
                && (a_b_map.at(j-1).type == preserved)
                && (a_b_map.at(j).type == changed)
-               && (a.at(j) == a.at(j-1))
-               && (b.at(a_b_map.at(j-1).pos) == 
-                   b.at(a_b_map.at(j).pos + a_b_map.at(j).len - 1)))
+               && (a.at(j) == b.at(a_b_map.at(j).pos + a_b_map.at(j).len - 1)))
           {
+            // This is implied by (a_b_map.at(j-1).type == preserved)
+            I(a.at(j-1) == b.at(a_b_map.at(j-1).pos));
 
+            // Coming into loop we have:
+            //                     i
+            //  z   --pres-->  z   0
+            //  o   --pres-->  o   1
+            //  a   --chng-->  a   2   The important thing here is that 'a' in
+            //                 t       the LHS matches with ...
+            //                 u
+            //                 v
+            //                 a       ... the a on the RHS here. Hence we can
+            //  q  --pres-->   q   3   'shift' the entire 'changed' block 
+            //  e  --chng-->   d   4   upwards, leaving a 'preserved' line
+            //  g  --pres-->   g   5   'a'->'a'
             //
-            // Coming into this loop, we've identified this situation:
+            //  Want to end up with:
+            //                     i
+            //  z   --pres-->  z   0
+            //  o   --chng-->  o   1
+            //                 a   
+            //                 t
+            //                 u
+            //                 v
+            //  a  --pres-->   a   2
+            //  q  --pres-->   q   3
+            //  e  --chng-->   d   4
+            //  g  --pres-->   g   5
             //
-            //       A                               B
-            //   --------                    ----------------
-            //   j-1: foo   --preserved-->   mapped[j-1]: foo
-            //     j: foo   --changed---->   mapped[  j]: bar 
-            //                                            foo
-            //
-            // The normalization we want to perform is to move all
-            // "changed" extents to the earliest possible position which
-            // still causes the same B image to be produced.
-            // 
-            //       A                               B
-            //   --------                    ----------------
-            //   j-1: foo   --changed---->   mapped[j-1]: foo
-            //                                            bar
-            //     j: foo   --preserved-->   mapped[  j]: foo
-            //
-
-            // This code is almost untested, because we've only been able to
-            // find one test case that exercises it!  Maybe this text will
-            // make us look bad when/if someone discovers it, but better to
-            // have a bad reputation and good software than vice-versa.
-            W(F("You've found files that trigger a strange edge-case of the merge logic.\n"));
-            W(F("We believe it works, but don't have many tests; so, if you could send us\n"));
-            W(F("a note, and, if possible, the files that triggered it for inclusion in our\n"));
-            W(F("test suite, we'd appreciate it.  Address: " PACKAGE_BUGREPORT ".  Thanks!\n"));
+            // Now all the 'changed' extents are normalised to the
+            // earliest possible position.
 
             L(F("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
               % a_b_map.at(j-1).pos

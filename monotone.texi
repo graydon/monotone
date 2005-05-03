@@ -3653,10 +3653,10 @@ to files changed within the current subdirectory of the working copy.
 
 @item monotone log
 @itemx monotone log --depth=@var{n}
-@itemx monotone log @var{id}
-@itemx monotone log --depth=@var{n} @var{id}
-@itemx monotone log @var{id} @var{file}
-@itemx monotone log --depth=@var{n} @var{id} @var{file}
+@itemx monotone log --revision=@var{id}
+@itemx monotone log --depth=@var{n} --revision=@var{id}
+@itemx monotone log --revision=@var{id} @var{file}
+@itemx monotone log --depth=@var{n} --revision=@var{id} @var{file}
 
 This command prints out a log, in reverse-ancestry order, of small
 history summaries.  Each summary contains author, date, changelog and

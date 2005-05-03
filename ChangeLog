@@ -4,6 +4,49 @@
 	* rcs_import.cc (store_manifest_edge): Fix some edge cases.
 	* tests/t_cvsimport_manifest_cycle.at: Make work.  Un-XFAIL.
 
+2005-05-01  Matt Johnston  <matt@ucc.asn.au>
+
+	* diff_patch.cc (normalize_extents): broaden the condition when
+	changes can be normalised.
+	* tests/t_merge_6.at: now passes.
+
+2005-05-01  Emile Snyder  <emile@alumni.reed.edu>
+
+	* annotate.cc: Fix bug that njs pointed out when a merge has one
+	side with no changes.  Be smarter about how we get parent
+	file_id's to do file diffs; give another big speedup.
+	* tests/t_annotate_copy_all.at: New test for the bug that is fixed.
+	* testsuite.at: Add the new test.
+
+2005-05-02  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_override_author_date.at: Adapt to the new way to give
+	revision IDs to 'monotone log'.
+
+2005-05-01  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi: Document the change in 'monotone log'.
+
+2005-05-01  rghetta <birrachiara@tin.it>
+
+	* commands.cc (CMD(log)): Use --revision.
+
+2005-05-02  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc (process_auth_cmd): make it clearer what the "unknown
+	key hash" refers to.
+
+2005-05-01  Richard Levitte  <richard@levitte.org>
+
+	* commands.hh: Expose complete_commands().
+	* commands.cc (explain_usage, command_options, process): Don't
+	call complete_command().  Except the caller to have done that
+	already.
+	* monotone.cc (cpp_main): Start with completing the command after
+	processing the options.  Use the result everywhere the command is
+	required.  This avoids giving the user duplicate (or in some case,
+	triplicate) messages about command expansion.
+
 2005-04-30  Derek Scherger  <derek@echologic.com>
 
 	* app_state.{cc,hh}: remove --all-files option

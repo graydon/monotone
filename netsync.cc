@@ -1645,7 +1645,7 @@ session::process_auth_cmd(protocol_role role,
 
   if (!app.db.public_key_exists(their_key_hash))
     {
-      W(F("unknown key hash '%s'\n") % their_key_hash);
+      W(F("remote public key hash '%s' is unknown\n") % their_key_hash);
       this->saved_nonce = id("");
       return false;
     }
