@@ -1,3 +1,7 @@
+2005-05-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_cvsimport_manifest_cycle.at: Add missing symbols.
+
 2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
 
 	* UPGRADE: Mention upgrading from 0.18.

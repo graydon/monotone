@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([import from CVS, file deleted on head and branch])
+AT_SETUP([cvs import, file dead on head and branch])
 AT_KEYWORDS(cvs)
 NEED_UNGZB64
 
@@ -12,7 +12,7 @@ AT_CHECK(test -e $CVSROOT)
 AT_CHECK(test -e $CVSROOT/CVSROOT)
 AT_CHECK(test -e $CVSROOT/CVSROOT/history)
 
-AT_DATA(cvsfile.gz.enc, [H4sICLNeb0ICA2EsdgB9j8FuwyAQRM/sVyDlvgKcKHK50Er5gn4BgW1s1UBkSJr+fbGJ0laqKnEaZt7MDmQ9k6g0WOcoZw35MxzTlNnL8+vhSaLUMCX3njXPZR5d0eBSCBQLMxtuNADUNHhbiCkhJIodqh6VQtFjpzSzlzKkmYd0yaRZLtXIfS3VcJxtdAPVyki3wtaqCpMN1vcLQVa4xK3ETv6NOtzO3yRYILhdQCuy8Rbh58A9iqoIlHvsdg9qtrHYfwcut3rKDoy5Xz2lE5iZQroSfxsnQgOlOsGUYcy8PttkaAHZAtZ7Hunj8dUid8s6drUFmk/Eh7qEj7Ek3tb8DnwBs3bpVb4BAAA=
+AT_DATA(cvsfile.gz.enc, [H4sICJBDd0ICA2N2c2ZpbGUsdgB9kU+PwiAQxc+dT0Gyd1LqX5ZLq/G6Fy/aS4Mt2sYWDKBxv/1C2ygaswmXefPmxxuoBa8ighMGvCyFMQzMb3dQrYEoW62L7f5nXWTfzhDUq6HO8/yl/6jH/m6f5/tdQQrqaoJjTOJQLFbZduM7gbgcnctQ+2RcjMZ5qAVGl3V0TIfgz9ZNVroglFKSxMs37HwcCtPPH7MMWlWeDUPG6qa0DErVdULaKP1CKQMAv3bFrYiSOHaYGU4oThIcUzxJWMSvtlYadepqBIuMdUZUuedncNBclrVwjy/F3Ub9VeCT9TBKPYE4OMFTgifkM2pzvzxJ4CF46kE9cuB5IQy4wLFT3Mcs8GT2oBouLf83oN+1EqaENB23btUJUi06dRPo2LQCQwrWWSG1dWOQOxy1jRRIHZHXfX9YsZ9suovS9m1ydPShe1cn9Emg2iXqMfoqz6iRViH3wWiI+Dr9B+M+Ez/dAgAA
 ])
 
 AT_CHECK(mkdir $CVSROOT/attest, [], [ignore])
