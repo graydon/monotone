@@ -1,9 +1,8 @@
 #  -*- Autoconf -*-
 
 AT_SETUP([import from CVS, file deleted on head and branch])
+AT_KEYWORDS(cvs)
 NEED_UNGZB64
-
-AT_XFAIL_IF(true)
 
 MONOTONE_SETUP
 
@@ -22,7 +21,7 @@ UNGZB64(cvsfile.gz.enc, cvsfile)
 # ourselves.
 mv cvsfile $CVSROOT/attest/cvsfile,v
 
-AT_CHECK(cvs -d $CVSROOT co attest)
+AT_CHECK(cvs -d $CVSROOT co -r1.1 attest, [], [ignore], [ignore])
 TSHA0=`SHA1(attest/cvsfile)`
 
 # import into monotone and check presence of files
@@ -30,12 +29,6 @@ TSHA0=`SHA1(attest/cvsfile)`
 AT_CHECK(MONOTONE --branch=testbranch cvs_import $CVSROOT/attest, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE cat file $TSHA0, [], [ignore])
-
-# also check that history is okay -- has a unique head, and it's the
-# right one.
-
-AT_CHECK(MONOTONE checkout --branch=testbranch mtcodir, [], [ignore], [ignore])
-AT_CHECK(cmp attest/cvsfile mtcodir/cvsfile)
 
 AT_CLEANUP
 

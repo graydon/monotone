@@ -1,3 +1,32 @@
+2005-05-02  Nathaniel Smith  <njs@codesourcery.com>
+
+	* configure.ac: Bump version to 0.19.
+	* NEWS: Tweaks.
+	* Makefile.am (MOST_SOURCES): Add options.hh.
+	(%.eps): Fix ps2eps calling convention.
+	* po/monotone.pot: Regenerate.
+	* testsuite.at (CHECK_SAME_CANONICALISED_STDOUT): New macro.
+
+2005-05-02  Nathaniel Smith  <njs@codesourcery.com>
+
+	* NEWS: More updates.
+	* rcs_import.cc (store_manifest_edge): Fix some edge cases.
+	* tests/t_cvsimport_manifest_cycle.at: Make work.  Un-XFAIL.
+
+2005-05-01  Matt Johnston  <matt@ucc.asn.au>
+
+	* diff_patch.cc (normalize_extents): broaden the condition when
+	changes can be normalised.
+	* tests/t_merge_6.at: now passes.
+
+2005-05-01  Emile Snyder  <emile@alumni.reed.edu>
+
+	* annotate.cc: Fix bug that njs pointed out when a merge has one
+	side with no changes.  Be smarter about how we get parent
+	file_id's to do file diffs; give another big speedup.
+	* tests/t_annotate_copy_all.at: New test for the bug that is fixed.
+	* testsuite.at: Add the new test.
+
 2005-05-02  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_override_author_date.at: Adapt to the new way to give

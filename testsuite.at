@@ -151,6 +151,17 @@ AT_CHECK(mv stdout expout)
 AT_CHECK($2, [], [expout], [ignore])
 ])
 
+# run as CHECK_SAME_CANONICALISED_STDOUT(command1, command2)
+m4_define([CHECK_SAME_CANONICALISED_STDOUT], [
+AT_CHECK($1, [], [stdout], [ignore])
+AT_CHECK(mv stdout output1)
+AT_CHECK(CANONICALISE(output1))
+AT_CHECK($2, [], [stdout], [ignore])
+AT_CHECK(mv stdout output2)
+AT_CHECK(CANONICALISE(output2))
+AT_CHECK(cmp output1 output2)
+])
+
 # run as CHECK_DIFFERENT_STDOUT(command1, command2)
 m4_define([CHECK_DIFFERENT_STDOUT], [
 AT_CHECK($1, [], [stdout], [ignore])
@@ -595,3 +606,4 @@ m4_include(tests/t_annotate_add_collision.at)
 m4_include(tests/t_annotate_branch_collision.at)
 m4_include(tests/t_netsync_error.at)
 m4_include(tests/t_options.at)
+m4_include(tests/t_annotate_copy_all.at)
