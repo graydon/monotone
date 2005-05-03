@@ -56,7 +56,7 @@
                 - windows/unix working copy line ending conversion now
                   works correctly.  Thanks to Emile Snyder
                   <emile@alumni.reed.edu>.
-                - many fixes to locale-specific filename support
+                - many fixes to i18n-ized filename support
                 - "drop" and "rename" now affect file attributes as
                   well.  Thanks to Richard Levitte
                   <richard@levitte.org> and Joel Reed

@@ -1,5 +1,14 @@
 2005-05-02  Nathaniel Smith  <njs@codesourcery.com>
 
+	* configure.ac: Bump version to 0.19.
+	* NEWS: Tweaks.
+	* Makefile.am (MOST_SOURCES): Add options.hh.
+	(%.eps): Fix ps2eps calling convention.
+	* po/monotone.pot: Regenerate.
+	* testsuite.at (CHECK_SAME_CANONICALISED_STDOUT): New macro.
+
+2005-05-02  Nathaniel Smith  <njs@codesourcery.com>
+
 	* NEWS: More updates.
 	* rcs_import.cc (store_manifest_edge): Fix some edge cases.
 	* tests/t_cvsimport_manifest_cycle.at: Make work.  Un-XFAIL.
