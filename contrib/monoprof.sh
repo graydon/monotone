@@ -1,17 +1,44 @@
 #!/bin/bash
+#Timothy Brownawell
 
+#Bash script for profiling.
+#This uses oprofile, which I believe needs to be run as root.
+#You are assumed to be using a debug version of libc, and to have a
+#version of libstdc++ compiled with both normal optimizations and debugging
+#symbols left in. (-O2 -g1 seems to be about right)
+#This script assumes that the debug libc is used by default.
+#This script probably assume a lot more, too.
+
+#The directory holding the files to test with
 DATADIR=/mnt/bigdisk
+
+#Database to use with the server for pull
 MTDB=mt.db
+
+#A database holding only a keypair.
 EMPTYDB=empty.db
+
+#${KPATCH} is the "small patch" to add to the kernel.
+#file ${KVER}.tar.bz2 is the kernel tarball to use
 KPATCH=patch-2.6.11.7.bz2
 KVER=linux-2.6.11
+
+#Full path of the monotone binary to use.
 MONOTONE=/mnt/bigdisk/src-managed/monotone-src/monotone
-VERSION=$(${MONOTONE} --version | sed 's/.*: \(.*\))/\1/')
+
+#Full path of the debug c++ library to use.
 #DBG_LIB=/usr/lib/debug/libstdc++.so
 DBG_LIB=/usr/local/src/gcc-3.3-3.3.5/gcc-3.3.5/libstdc++-v3/src/.libs/libstdc++.so.5.0.7
+
+#Directory to store the generated profiles in.
 PROFDIR=/mnt/bigdisk/monotone-profiles
+
+
 TIME=/usr/bin/time
 
+VERSION=$(${MONOTONE} --version | sed 's/.*: \(.*\))/\1/')
+
+#Select the most "interesting" looking parts of the generated profiles.
 hilights()
 {
 	F=$(tempfile)
