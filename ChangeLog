@@ -1,3 +1,12 @@
+2005-05-03  Jon Bright  <jon@siliconcircus.com>
+	* tests/t_automate_select.at: Use arithmetic comparison for
+	checking output of wc, since wc pads its results with initial
+	spaces on MinGW.
+	
+2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_cvsimport2.at: Pass correct module directory.
+
 2005-05-02  Nathaniel Smith  <njs@codesourcery.com>
 
 	* configure.ac: Bump version to 0.19.
