@@ -1,4 +1,7 @@
 2005-05-03  Jon Bright  <jon@siliconcircus.com>
+	* win32/monotone.iss: Bump version to 0.19
+	
+2005-05-03  Jon Bright  <jon@siliconcircus.com>
 	* tests/t_automate_select.at: Use arithmetic comparison for
 	checking output of wc, since wc pads its results with initial
 	spaces on MinGW.
