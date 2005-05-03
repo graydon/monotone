@@ -1,6 +1,8 @@
 2005-05-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_cvsimport_manifest_cycle.at: Add missing symbols.
+	* tests/t_cvsimport_deleted_invar.at: Add new test.
+	* testsuite.at: New test.
 
 2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
 

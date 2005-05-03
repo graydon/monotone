@@ -1,0 +1,37 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([cvs import, deleted file invariant])
+AT_KEYWORDS(cvs)
+AT_XFAIL_IF(true)
+NEED_UNGZB64
+
+MONOTONE_SETUP
+
+CVSROOT=`pwd`/cvs-repository
+AT_CHECK(cvs -q -d $CVSROOT init)
+AT_CHECK(test -e $CVSROOT)
+AT_CHECK(test -e $CVSROOT/CVSROOT)
+AT_CHECK(test -e $CVSROOT/CVSROOT/history)
+
+AT_DATA(cvsrepo.gz.enc, [H4sICOVTd0ICA2F0dGVzdC50YXIA7VfJbtswFPTV/AoCPRQoApak9upQJ0GuveSS+GLIEhML1hJIdJr+fUltphV6QQvHaMGBAVmPw+dHPXqGijhnNf86OSewgOc48ko8B6vXHhOCqeW4DvEImWBiOZhMoDP5AGxqHlUQTtZpwXi63ss7Nt4vpL/+I4ja/kdPacauXs/Xf9u29/WfWBbt+m97nif2CbE9l04gNv0/O1YsSqYE0RBEcczqOgT1r3xZZjWYXt/cLu4ff9wurr8JgnJ/097P5/Od8eG+G394nM8fHxZkEYh7gjAiWA0ubq7v7+SIEvQ7pq/GdESvI7pqTCGKWjuG3Ra+HXotkmpBgiAgFPujtG43Sa3eHeaGICvjdR3CmldpzEMQl3nOCj6dfYKzEAAgl51EnE2p2NUIO4gGiFKEA2TRcBpt+KqsYF5uahZOxbbjDCbi8YdgWUVFvGLi4RfsjU+bnwKysiZZEMgMRCQnyCbIIvpUd28v20xAJkG2TNSkbPPJgFqgh7CIiMZ4yHKGrHVU8OhggXKtCatjMJt1q87KZzCrWF6+MiilBIEZ4IIKZnyV1lB8IpiJfxAsn6CMy/F2ic3MKElG07rhpuKGkrPqmUG5XZsc1aZYw7TgJRTdhW19u7MnBqfr//KS+u9Zbu//mHpWo/+Oa/T/f9N/Sk/Vf4pPNQDiH3UA4v6JBRBb6wFK0OmZ6rIcHdPWGaCtY1oaA7R0RKoxQKojkq0PbmM6ItZ4H76497nSpSjuXIoEJ3sfccfmJyOXcr+6zFljfFBwKmFjFTvZApu6z+WBnf7HF9R/6oh3w/79z+n037WM/l9Y/0fKcEgdkE5zDukO0qnZIUVDOp08pJVIJ8EHZRi9l3c6WvGg7nTkGHS0UldH9Dqi1rLoyAbpuFBfxwx6ptZat0HaNJHu+hrddlBlkp7pq0Edk/aPCKtBHdPqmTtBHdPumWqdto45NMhVgzpm3yGqrsjVMfsWWeqK1B61xwra7lPlVEFPOi/1T9ZtT0vbucfOUuMTiwyxIikr9d+236Phl5FJy3dKMcNq3FV4LNH7346v7nFop/FQH2EfOeLBeUOmZZplhwz6nT//RUrFmnXePJjiz1XEP9dQ2vJ3mMqvu++lV7BOq6POnBBIwGDPPS8tUp5GGWwbA9P8paz4jh+b100DAwMDAwMDAwMDAwMDAwMDgw/Gbz8GWA0AKAAA
+])
+
+UNGZB64(cvsrepo.gz.enc, cvsrepo.tar)
+AT_CHECK(tar -C $CVSROOT -xf cvsrepo.tar)
+AT_CHECK(test -d $CVSROOT/attest)
+
+AT_CHECK(cvs -d $CVSROOT co -r1.1 attest, [], [ignore], [ignore])
+TSHA0=`SHA1(attest/afile)`
+TSHA1=`SHA1(attest/bfile)`
+TSHA2=`SHA1(attest/cfile)`
+
+# import into monotone and check presence of files
+
+AT_CHECK(MONOTONE --branch=testbranch cvs_import $CVSROOT/attest, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE cat file $TSHA0, [], [ignore])
+AT_CHECK(MONOTONE cat file $TSHA1, [], [ignore])
+AT_CHECK(MONOTONE cat file $TSHA2, [], [ignore])
+
+AT_CLEANUP
+
