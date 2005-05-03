@@ -33,7 +33,7 @@ mkdir src
 
 AT_CHECK(sh prepare.sh, [], ignore, ignore)
 
-AT_CHECK(MONOTONE --branch=test cvs_import ., [], ignore, ignore)
+AT_CHECK(MONOTONE --branch=test cvs_import $PWD/cvsroot/mod, [], ignore, ignore)
 
 AT_CLEANUP
 (END)
