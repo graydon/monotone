@@ -15,6 +15,10 @@
                 - new selector "c:name=value" for selecting on
                   arbitrary certs.  Thanks to Richard Levitte
                   <richard@levitte.org>.
+                - new hooks to automatically initialize attributes on
+                  add; monotone now automatically sets execute bit on
+                  executables.  Thanks to Joel Reed
+                  <joelwreed@comcast.net>.
                 - new automate command "select", to do selector
                   expansion.  Thanks to Richard Levitte
                   <richard@levitte.org>.
@@ -26,23 +30,31 @@
                   Sebastian Spaeth <Sebastian@sspaeth.de>.
                 - new arguments to "commit": --author, --date; useful
                   for patch attribution and importing history.
+                - new automate command "inventory" (output format will
+                  change in next release, however).  Thanks to Derek
+                  Scherger <derek@echologic.com>.
         - ui improvements:
                 - netsync progress ticker in kilobytes/megabytes.
-                  Thanks to Matt Johnston <matt@ucc.asn.au>, 
+                  Thanks to Matt Johnston <matt@ucc.asn.au> and
+                  Sebastian Spaeth <Sebastian@sspaeth.de>.
                 - tickers do not cause annoying scrolling when wider
                   than window.  Special thanks to Matthew Gregan
                   <kinetik@orcon.net.nz>.
                 - warn users when a commit creates divergence, and
                   when an update ignores it.  Thanks to Jeremy Cowgar
                   <jeremy@cowgar.com>.
+                - support for command-specific options (there is still
+                  no rule that such options must appear after the
+                  command on the command line, though).  Thanks to
+                  Richard Levitte <richard@levitte.org>.
         - many bug fixes:
                 - many cvs_import bugs fixed.  Special thanks to Jon
                   Bright <jon@siliconcircus.com>, Emile Snyder
                   <emile@alumni.reed.edu>, Hansjoerg Lipp
                   <hjlipp@web.de>, Matthew Gregan
                   <kinetik@orcon.net.nz>.
-                - windows/unix working copy line conversion now works
-                  correctly.  Thanks to Emile Snyder
+                - windows/unix working copy line ending conversion now
+                  works correctly.  Thanks to Emile Snyder
                   <emile@alumni.reed.edu>.
                 - many fixes to locale-specific filename support
                 - "drop" and "rename" now affect file attributes as

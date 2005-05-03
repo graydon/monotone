@@ -1014,7 +1014,10 @@ store_manifest_edge(manifest_map const & parent,
                     bool head_manifest_p)
 {
 
-  L(F("storing manifest %s (base %s)\n") % parent_mid % child_mid);
+  if (depth == 0)
+    L(F("storing trunk manifest %s (base %s)\n") % parent_mid % child_mid);
+  else
+    L(F("storing branch manifest %s (base %s)\n") % child_mid % parent_mid);
 
   if (depth == 0 && head_manifest_p)
     {
@@ -1036,19 +1039,22 @@ store_manifest_edge(manifest_map const & parent,
       return;
     }
 
-  unsigned long p, c;
+  unsigned long p, c, older, newer;
   p = cvs.manifest_version_interner.intern(parent_mid.inner()());
   c = cvs.manifest_version_interner.intern(child_mid.inner()());
-  if (cvs.manifest_cycle_detector.edge_makes_cycle(p,c))        
+  older = (depth == 0) ? p : c;
+  newer = (depth == 0) ? c : p;
+  if (cvs.manifest_cycle_detector.edge_makes_cycle(older,newer))        
     {
-      L(F("skipping cyclical trunk manifest delta %s -> %s\n") 
-        % parent_mid % child_mid);
       if (depth == 0)
         {
+          L(F("skipping cyclical trunk manifest delta %s -> %s\n") 
+            % parent_mid % child_mid);
           // if this is on the trunk, we are potentially breaking the chain
           // one would use to get to p. we need to make sure p exists.
           if (!app.db.manifest_version_exists(parent_mid))
             {
+              L(F("writing full manifest %s\n") % parent_mid);
               manifest_data mdat;
               write_manifest_map(parent, mdat);
               app.db.put_manifest(parent_mid, mdat);
@@ -1056,10 +1062,13 @@ store_manifest_edge(manifest_map const & parent,
         }
       else
         {
-          // if this is on the trunk, we are potentially breaking the chain
-          // one would use to get to c. we need to make sure c exists.
+          L(F("skipping cyclical branch manifest delta %s -> %s\n") 
+            % child_mid % parent_mid);
+          // if this is on a branch, we are potentially breaking the chain one
+          // would use to get to c. we need to make sure c exists.
           if (!app.db.manifest_version_exists(child_mid))
             {
+              L(F("writing full manifest %s\n") % child_mid);
               manifest_data mdat;
               write_manifest_map(child, mdat);
               app.db.put_manifest(child_mid, mdat);
@@ -1068,7 +1077,7 @@ store_manifest_edge(manifest_map const & parent,
       return;
     }
   
-  cvs.manifest_cycle_detector.put_edge(p,c);        
+  cvs.manifest_cycle_detector.put_edge(older,newer);        
   if (depth == 0)
     {
       L(F("storing trunk manifest delta %s -> %s\n") 
@@ -1104,7 +1113,7 @@ store_manifest_edge(manifest_map const & parent,
       rcs_put_raw_manifest_edge(child_mid.inner(),
                                 parent_mid.inner(),                             
                                 del, app.db);
-    }  
+    }
 }
 
 

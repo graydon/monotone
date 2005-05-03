@@ -1,3 +1,9 @@
+2005-05-02  Nathaniel Smith  <njs@codesourcery.com>
+
+	* NEWS: More updates.
+	* rcs_import.cc (store_manifest_edge): Fix some edge cases.
+	* tests/t_cvsimport_manifest_cycle.at: Make work.  Un-XFAIL.
+
 2005-04-30  Derek Scherger  <derek@echologic.com>
 
 	* app_state.{cc,hh}: remove --all-files option
