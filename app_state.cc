@@ -347,7 +347,7 @@ app_state::load_rcfiles()
   for (vector<utf8>::const_iterator i = extra_rcfiles.begin();
        i != extra_rcfiles.end(); ++i)
     {
-      lua.load_rcfile(mkpath((*i)()), true);
+      lua.load_rcfile(*i, true);
     }
 }
 

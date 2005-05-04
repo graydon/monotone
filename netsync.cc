@@ -3436,12 +3436,12 @@ run_netsync_protocol(protocol_voice voice,
   catch (Netxx::NetworkException & e)
     {      
       end_platform_netsync();
-      throw informative_failure((F("network exception: %s") % e.what()).str());
+      throw informative_failure((F("network error: %s") % e.what()).str());
     }
   catch (Netxx::Exception & e)
     {      
       end_platform_netsync();
-      throw oops((F("trapped network exception: %s\n") % e.what()).str());;
+      throw oops((F("network error: %s\n") % e.what()).str());;
     }
   end_platform_netsync();
 }
