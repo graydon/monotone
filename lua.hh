@@ -34,6 +34,7 @@ public:
   void add_std_hooks();
   void working_copy_rcfilename(fs::path & file);
   void default_rcfilename(fs::path & file);
+  void load_rcfile(utf8 const & file);
   void load_rcfile(fs::path const & file, bool required);
 
   // cert hooks

@@ -26,6 +26,10 @@ KVER=linux-2.6.11
 #Full path of the monotone binary to use.
 MONOTONE=/mnt/bigdisk/src-managed/monotone-src/monotone
 
+#sudo command, if not set you must be root
+#used to run opcontrol
+SUDO=/usr/bin/sudo
+
 #Full path of the debug c++ library to use.
 #DBG_LIB=/usr/lib/debug/libstdc++.so
 DBG_LIB=/usr/local/src/gcc-3.3-3.3.5/gcc-3.3.5/libstdc++-v3/src/.libs/libstdc++.so.5.0.7
@@ -55,14 +59,14 @@ run_tests()
 	TIME2=$(tempfile)
 	TIME3=$(tempfile)
 	TIME4=$(tempfile)
-	opcontrol --separate=lib --callgraph=10 --image=${MONOTONE} --no-vmlinux
+	${SUDO} opcontrol --separate=lib --callgraph=10 --image=${MONOTONE} --no-vmlinux
 
 
 	echo 'Pull (and serve) net.venge.monotone...'
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
 	cp ${DATADIR}/${MTDB}    ${DATADIR}/test-serve.db
-	opcontrol --reset
-	opcontrol --start 
+	${SUDO} opcontrol --reset
+	${SUDO} opcontrol --start 
 	${TIME} -o ${TIME1_server} ${MONOTONE} --db=${DATADIR}/test-serve.db --ticker=none --quiet serve localhost net.venge.monotone &
 	sleep 5 #wait for server to be ready
 	${TIME} -o ${TIME1_client} ${MONOTONE} --db=${DATADIR}/test.db --ticker=none --quiet pull localhost net.venge.monotone
@@ -70,7 +74,7 @@ run_tests()
 	kill $(ps -Af|grep 'monotone.*serve\ localhost' | grep -v time | awk '{print $2}')
 	opcontrol --dump
 	opstack ${MONOTONE} > ${PDIR}/profile-netsync
-	opcontrol --shutdown
+	${SUDO} opcontrol --shutdown
 	hilights ${PDIR}/profile-netsync >${PDIR}/hilights-netsync
 	rm ${DATADIR}/test.db ${DATADIR}/test-serve.db
 
@@ -82,31 +86,31 @@ run_tests()
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
 
 	echo 'Commit the kernel to an empty database...'
-	opcontrol --reset
-	opcontrol --start
+	${SUDO} opcontrol --reset
+	${SUDO} opcontrol --start
 	${TIME} -o ${TIME2} ${MONOTONE} --branch=linux-kernel --db=${DATADIR}/test.db --quiet commit --message="Commit message."
 	opcontrol --dump
 	opstack ${MONOTONE} > ${PDIR}/profile-commitfirst
-	opcontrol --shutdown
+	${SUDO} opcontrol --shutdown
 	hilights ${PDIR}/profile-commitfirst >${PDIR}/hilights-commitfirst
 
 	echo 'Commit a small patch to the kernel...'
 	bzip2 -dc ${DATADIR}/${KPATCH} | patch -p1 >/dev/null
-	opcontrol --reset
-	opcontrol --start
+	${SUDO} opcontrol --reset
+	${SUDO} opcontrol --start
 	${TIME} -o ${TIME3} ${MONOTONE} --branch=linux-kernel --db=${DATADIR}/test.db --quiet commit --message="Commit #2"
 	opcontrol --dump
 	opstack ${MONOTONE} > ${PDIR}/profile-commit
-	opcontrol --shutdown
+	${SUDO} opcontrol --shutdown
 	hilights ${PDIR}/profile-commit > ${PDIR}/hilights-commit
 
 	echo 'Recommit the kernel without changes...'
-	opcontrol --reset
-	opcontrol --start
+	${SUDO} opcontrol --reset
+	${SUDO} opcontrol --start
 	${TIME} -o ${TIME4} ${MONOTONE} --branch=linux-kernel --db=${DATADIR}/test.db --quiet commit --message="no change"
 	opcontrol --dump
 	opstack ${MONOTONE} > ${PDIR}/profile-commitsame
-	opcontrol --shutdown
+	${SUDO} opcontrol --shutdown
 	hilights ${PDIR}/profile-commitsame > ${PDIR}/hilights-commitsame
 
 	popd

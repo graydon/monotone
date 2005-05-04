@@ -10,6 +10,16 @@
 
 2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* lua.cc (load_rcfile): Make a version that takes utf8 strings,
+	and understands -.
+	* app_state.cc (load_rcfiles): Use it.
+	* file_io.{cc,hh} (absolutify_for_command_line): New function.
+	* monotone.cc (cpp_main): Use it.
+	* tests/t_rcfile_stdin.at: New test.
+	* testsuite.at: Include it.
+
+2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netsync.cc (load_epoch): Remove unused function.
 
 2005-05-03  Matthew Gregan  <kinetik@orcon.net.nz>
@@ -17,6 +27,11 @@
 	* tests/t_cvsimport_manifest_cycle.at: Add missing symbols.
 	* tests/t_cvsimport_deleted_invar.at: Add new test.
 	* testsuite.at: New test.
+
+2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (run_netsync_protocol): Don't use the word
+	"exception" in error messages.
 
 2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
 
