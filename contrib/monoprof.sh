@@ -2,7 +2,7 @@
 #Timothy Brownawell
 
 #Bash script for profiling.
-#This uses oprofile, which I believe needs to be run as root.
+#The user running this script must have sudo permission for opcontrol.
 #You are assumed to be using a debug version of libc, and to have a
 #version of libstdc++ compiled with both normal optimizations and debugging
 #symbols left in. (-O2 -g1 seems to be about right)
@@ -31,6 +31,8 @@ MONOTONE=/mnt/bigdisk/src-managed/monotone-src/monotone
 SUDO=/usr/bin/sudo
 
 #Full path of the debug c++ library to use.
+#You probably have to build this yourself, since your distro's packaged
+#debug library probably isn't optimized.
 #DBG_LIB=/usr/lib/debug/libstdc++.so
 DBG_LIB=/usr/local/src/gcc-3.3-3.3.5/gcc-3.3.5/libstdc++-v3/src/.libs/libstdc++.so.5.0.7
 
@@ -42,89 +44,160 @@ TIME=/usr/bin/time
 
 VERSION=$(${MONOTONE} --version | sed 's/.*: \(.*\))/\1/')
 
-#Select the most "interesting" looking parts of the generated profiles.
+#This picks the top 20 functions for execution time in the function,
+#and the top 20 for execution time in children of the function.
+#Function and template arguments are replaced with "...".
 hilights()
 {
-	F=$(tempfile)
+	local F=$(tempfile)
 	egrep -v '^(  [[:digit:]]|-)' < $1 | \
 	sed 's/([^()]*)/(...)/g' | \
 	sed ':x ; s/<\(<\.\.\.>\|[^<>]\)*[^<>\.]>/<...>/g ; t x' > $F
-	cat <(head -n1 $1) <(sort -rnk3 $F |head -n 20) <(echo) <(sort -rnk1 $F | head -n 20)
+	cat <(head -n1 $1) <(sort -rnk3 $F |head -n 20) <(echo) \
+		<(sort -rnk1 $F | head -n 20)
+	rm $F
 }
 
-run_tests()
+#Individual tests to run.
+#Each test or set of tests should clean up after itself.
+
+TESTS="${TESTS} test_netsync"
+test_netsync()
 {
-	TIME1_server=$(tempfile)
-	TIME1_client=$(tempfile)
-	TIME2=$(tempfile)
-	TIME3=$(tempfile)
-	TIME4=$(tempfile)
-	${SUDO} opcontrol --separate=lib --callgraph=10 --image=${MONOTONE} --no-vmlinux
-
-
-	echo 'Pull (and serve) net.venge.monotone...'
+	local TIME_SERVER=$(tempfile);
+	local TIME_CLIENT=$(tempfile);
+	local SHORTNAME="netsync"
+	echo "Pull (and serve) net.venge.monotone..."
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
 	cp ${DATADIR}/${MTDB}    ${DATADIR}/test-serve.db
 	${SUDO} opcontrol --reset
 	${SUDO} opcontrol --start 
-	${TIME} -o ${TIME1_server} ${MONOTONE} --db=${DATADIR}/test-serve.db --ticker=none --quiet serve localhost net.venge.monotone &
+	${TIME} -o ${TIME_SERVER} ${MONOTONE} --db=${DATADIR}/test-serve.db \
+		--ticker=none --quiet serve localhost net.venge.monotone &
 	sleep 5 #wait for server to be ready
-	${TIME} -o ${TIME1_client} ${MONOTONE} --db=${DATADIR}/test.db --ticker=none --quiet pull localhost net.venge.monotone
+	${TIME} -o ${TIME_CLIENT} ${MONOTONE} --db=${DATADIR}/test.db \
+		--ticker=none --quiet pull localhost net.venge.monotone
 	#If we kill the time process, we don't get our statistics.
-	kill $(ps -Af|grep 'monotone.*serve\ localhost' | grep -v time | awk '{print $2}')
+	kill $(ps -Af|grep 'monotone.*serve\ localhost' | \
+		grep -v time | awk '{print $2}')
 	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-netsync
+	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
 	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-netsync >${PDIR}/hilights-netsync
+	hilights ${PDIR}/profile-${SHORTNAME} >${PDIR}/hilights-${SHORTNAME}
 	rm ${DATADIR}/test.db ${DATADIR}/test-serve.db
+	
+	echo "Serve net.venge.monotone :" >>${PDIR}/timing
+	cat ${TIME_SERVER} >>${PDIR}/timing
+	echo -e "\nPull net.venge.monotone :" >>${PDIR}/timing
+	cat ${TIME_CLIENT} >>${PDIR}/timing
+	
+	rm ${TIME_SERVER} ${TIME_CLIENT}
+}
 
-
+#The next 3 use the same working copy and database.
+TESTS="${TESTS} test_commit"
+test_commit()
+{
+	local RUNTIME=$(tempfile)
+	local TESTNAME="Commit kernel ${KVER} to an empty database"
+	local SHORTNAME="commitfirst"
+	echo "${TESTNAME}..."
 	bzip2 -dc ${DATADIR}/${KVER}.tar.bz2 | tar -C ${DATADIR} -xf -
 	pushd ${DATADIR}/${KVER}
 	${MONOTONE} setup .
 	${MONOTONE} --quiet add $(ls|grep -v '^MT')
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
 
-	echo 'Commit the kernel to an empty database...'
 	${SUDO} opcontrol --reset
 	${SUDO} opcontrol --start
-	${TIME} -o ${TIME2} ${MONOTONE} --branch=linux-kernel --db=${DATADIR}/test.db --quiet commit --message="Commit message."
+	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
+		--db=${DATADIR}/test.db --quiet commit \
+		--message="Commit message."
 	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-commitfirst
+	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
 	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-commitfirst >${PDIR}/hilights-commitfirst
+	hilights ${PDIR}/profile-${SHORTNAME} >${PDIR}/hilights-${SHORTNAME}
+	echo -e "\n${TESTNAME}:" >>${PDIR}/timing
+	cat ${RUNTIME} >>${PDIR}/timing
+	rm ${RUNTIME}
+}
 
-	echo 'Commit a small patch to the kernel...'
+TESTS="${TESTS} test_minor_commit"
+test_minor_commit()
+{
+	local RUNTIME=$(tempfile)
+	local TESTNAME="Commit a small patch (${KPATCH}) to the kernel"
+	local SHORTNAME="commit"
+	
+	echo "${TESTNAME}..."
 	bzip2 -dc ${DATADIR}/${KPATCH} | patch -p1 >/dev/null
 	${SUDO} opcontrol --reset
 	${SUDO} opcontrol --start
-	${TIME} -o ${TIME3} ${MONOTONE} --branch=linux-kernel --db=${DATADIR}/test.db --quiet commit --message="Commit #2"
+	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
+		--db=${DATADIR}/test.db --quiet commit --message="Commit #2"
 	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-commit
+	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
 	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-commit > ${PDIR}/hilights-commit
+	hilights ${PDIR}/profile-${SHORTNAME} > ${PDIR}/hilights-${SHORTNAME}
+	
+	echo -e "\n$TESTNAME}:" >>${PDIR}/timing
+	cat ${RUNTIME} >>${PDIR}/timing
+	rm ${RUNTIME}
+}
 
-	echo 'Recommit the kernel without changes...'
+TESTS="${TESTS} test_unchanged_commit"
+test_unchanged_commit()
+{
+	local RUNTIME=$(tempfile)
+	local TESTNAME="Recommit the kernel without changes"
+	local SHORTNAME="commitsame"
+	echo "${TESTNAME}..."
 	${SUDO} opcontrol --reset
 	${SUDO} opcontrol --start
-	${TIME} -o ${TIME4} ${MONOTONE} --branch=linux-kernel --db=${DATADIR}/test.db --quiet commit --message="no change"
+	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
+		--db=${DATADIR}/test.db --quiet commit --message="no change"
 	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-commitsame
+	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
 	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-commitsame > ${PDIR}/hilights-commitsame
+	hilights ${PDIR}/profile-${SHORTNAME} > ${PDIR}/hilights-${SHORTNAME}
 
 	popd
 	rm ${DATADIR}/test.db
 	rm -rf ${DATADIR}/${KVER}
+	echo -e "\n$TESTNAME}:" >>${PDIR}/timing
+	cat ${RUNTIME} >>${PDIR}/timing
+	rm ${RUNTIME}
+}
 
+#TESTS="${TESTS} test_name"
+#test_name()
+#{
+#	local RUNTIME=$(tempfile)
+#	local TESTNAME=""
+#	local SHORTNAME=""
+#	echo "${TESTNAME}..."
+#
+#	${SUDO} opcontrol --reset
+#	${SUDO} opcontrol --start
+#	
+#	opcontrol --dump
+#	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
+#	${SUDO} opcontrol --shutdown
+#	hilights ${PDIR}/profile-${SHORTNAME} > ${PDIR}/hilights-${SHORTNAME}
+#
+#	echo -e "\n$TESTNAME}:" >>${PDIR}/timing
+#	cat ${RUNTIME} >>${PDIR}/timing
+#	rm ${RUNTIME}
+#}
 
-	cat <(echo "Serve net.venge.monotone :") ${TIME1_server} >${PDIR}/timing
-	cat <(echo -e "\nPull net.venge.monotone :") ${TIME1_client} >>${PDIR}/timing
-	cat <(echo -e "\nCommit the kernel (${KVER})to an empty db :") ${TIME2} >>${PDIR}/timing
-	cat <(echo -e "\nCommit a small patch (${KPATCH}) to the kernel :") ${TIME3} >>${PDIR}/timing
-	cat <(echo -e "\nCommit the kernel without changes :") ${TIME4} >>${PDIR}/timing
+run_tests()
+{
+	${SUDO} opcontrol --separate=lib --callgraph=10 \
+		--image=${MONOTONE} --no-vmlinux
+	for i in ${TESTS}; do
+		$i
+	done
 
-	rm ${TIME1_server} ${TIME1_client} ${TIME2} ${TIME3} ${TIME4}
 }
 
 BEGINTIME=$(date +%s)
@@ -133,6 +206,7 @@ mkdir -p ${PROFDIR}/${VERSION}$1
 export LD_PRELOAD=${DBG_LIB}
 PDIR=${PROFDIR}/${VERSION}$1
 echo "Profiling..."
+rm -f ${PDIR}/timing
 run_tests
 
 chmod -R a+rX ${PROFDIR}/${VERSION}$1
