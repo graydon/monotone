@@ -1,3 +1,8 @@
+2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* file_io.cc (read_data_for_command_line): Check that file exists,
+	if reading a file.
+
 2005-05-04  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* configure.ac: Add TYPE_SOCKLEN_T function from the Autoconf

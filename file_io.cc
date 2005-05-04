@@ -470,7 +470,10 @@ read_data_for_command_line(utf8 const & path, data & dat)
   if (path() == "-")
     read_data_stdin(dat);
   else
-    read_data_impl(localized(path), dat);
+    {
+      N(fs::exists(localized(path)), F("file '%s' does not exist") % path);
+      read_data_impl(localized(path), dat);
+    }
 }
 
 
