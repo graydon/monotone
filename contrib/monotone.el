@@ -708,7 +708,7 @@ the buffer if not global."
   "Register this file with monotone for the next commit."
   (interactive)
   (if buffer-file-name
-    (monotone-cmd-buf 'file "add" (current-buffer))
+    (monotone-cmd-buf 'file '("add") (current-buffer))
     (error "This buffer does not have a file name")))
 
 (defun monotone-vc-status ()
