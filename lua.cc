@@ -553,9 +553,15 @@ lua_hooks::working_copy_rcfilename(fs::path & file)
 
 
 void
-lua_hooks::load_rcfile(utf8 const & rc, bool required)
+lua_hooks::load_rcfile(utf8 const & rc)
 {
-  
+  I(st);
+  data dat;
+  L(F("opening rcfile '%s' ...\n") % rc);
+  read_data_for_command_line(rc, dat);
+  N(run_string(st, dat()),
+    F("lua error while loading rcfile '%s'") % rc);
+  L(F("'%s' is ok\n") % rc);
 }
 
 void 

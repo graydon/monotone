@@ -46,6 +46,7 @@ fs::path mkpath(std::string const & s);
 
 std::string get_homedir();
 std::string absolutify(std::string const & path);
+std::string absolutify_for_command_line(std::string const & path);
 std::string tilde_expand(std::string const & path);
 
 extern std::string const book_keeping_dir;
