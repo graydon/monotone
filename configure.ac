@@ -365,6 +365,23 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec, struct stat.st_mtim.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_ctimespec.tv_nsec, struct stat.st_mtimespec.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_ctimensec, struct stat.st_mtimensec])
 
+# Check type of socklen_t; int on Cygwin, OS X <= 10.3, Win32.  TYPE_SOCKLEN_T
+# function supplied by <lars@nocrew.org> via http://autoconf-archive.cryp.to/
+AC_DEFUN([TYPE_SOCKLEN_T],
+[AC_CACHE_CHECK([for socklen_t], ac_cv_type_socklen_t,
+[
+  AC_TRY_COMPILE(
+  [#include <sys/types.h>
+   #include <sys/socket.h>],
+  [socklen_t len = 42; return 0;],
+  ac_cv_type_socklen_t=yes,
+  ac_cv_type_socklen_t=no)
+])
+  if test $ac_cv_type_socklen_t = yes; then
+    AC_DEFINE(HAVE_SOCKLEN_T, 1, [Define if platform has real socklen_t.])
+  fi
+])
+TYPE_SOCKLEN_T
 
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL

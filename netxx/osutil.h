@@ -76,20 +76,22 @@
 # include <errno.h>
 #endif
 
+#include "config.h"
+
 namespace Netxx 
 {
     typedef int error_type;
     error_type get_last_error (void);
 
 
-#if defined(WIN32) || defined(__APPLE__) || defined (__CYGWIN__)
-    typedef int  os_socklen_type;
-    typedef int* os_socklen_ptr_type;
-#   define get_socklen_ptr(x) reinterpret_cast<int*>(&x)
-#else
+#if defined(HAVE_SOCKLEN_T)
     typedef socklen_t  os_socklen_type;
     typedef socklen_t* os_socklen_ptr_type;
 #   define get_socklen_ptr(x) &x
+#else
+    typedef int  os_socklen_type;
+    typedef int* os_socklen_ptr_type;
+#   define get_socklen_ptr(x) reinterpret_cast<int*>(&x)
 #endif
 
 } // end Netxx namespace

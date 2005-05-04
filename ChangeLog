@@ -1,3 +1,13 @@
+2005-05-04  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Add TYPE_SOCKLEN_T function from the Autoconf
+	archive.	
+	* cryptopp/cryptlib.h (NameValuePairs): Change GetVoidValue from a
+	pure virtual to an implemented (but never called) member function
+	to work around build problem with GCC 4 on OS X 10.4
+	* netxx/osutil.h: Include config.h, use new HAVE_SOCKLEN_T define
+	to determine socklen_t type.
+
 2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc (load_epoch): Remove unused function.
