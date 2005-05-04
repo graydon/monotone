@@ -479,15 +479,15 @@ Lua
   {
     if (!failed) 
       {
-	if (missing_functions.find(fname) != missing_functions.end())
-	  failed = true;
-	else
-	  {
-	    push_str(fname);
-	    get_fn();
-	    if (failed)
-	      missing_functions.insert(fname);
-	  }
+        if (missing_functions.find(fname) != missing_functions.end())
+          failed = true;
+        else
+          {
+            push_str(fname);
+            get_fn();
+            if (failed)
+              missing_functions.insert(fname);
+          }
       }
     return *this;
   }
@@ -551,6 +551,12 @@ lua_hooks::working_copy_rcfilename(fs::path & file)
   file = mkpath(book_keeping_dir) / mkpath("monotonerc");
 }
 
+
+void
+lua_hooks::load_rcfile(utf8 const & rc, bool required)
+{
+  
+}
 
 void 
 lua_hooks::load_rcfile(fs::path const & rc, bool required)

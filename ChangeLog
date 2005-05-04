@@ -1,5 +1,10 @@
 2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc (run_netsync_protocol): Don't use the word
+	"exception" in error messages.
+
+2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* UPGRADE: Fix version number.
 
 2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
