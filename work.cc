@@ -19,6 +19,10 @@
 using namespace boost;
 using namespace std;
 
+// attribute map file
+
+string const attr_file_name(".mt-attrs");
+
 void 
 file_itemizer::visit_file(file_path const & path)
 {
@@ -131,7 +135,7 @@ build_additions(vector<file_path> const & paths,
           for (map<string, string>::const_iterator j = m.begin();
                j != m.end(); ++j)
             {
-              P(F("adding attribute '%s' to file %s to .mt_attrs\n") % j->first % i->first);
+              P(F("adding attribute '%s' to file %s to %s\n") % j->first % i->first % attr_file_name);
               attrs[i->first][j->first] = j->second;
             }
         }
@@ -222,7 +226,7 @@ build_deletions(vector<file_path> const & paths,
           if (1 == attrs.erase(*i))
             {
               updated_attr_map = true;
-              P(F("dropped attributes for file %s from .mt_attrs\n") % (*i) );
+              P(F("dropped attributes for file %s from %s\n") % (*i) % attr_file_name);
             }
         }
   }
@@ -282,7 +286,7 @@ build_rename(file_path const & src,
     // make sure there aren't pre-existing attributes that we'd accidentally
     // pick up
     N(attrs.find(dst) == attrs.end(), 
-      F("%s has existing attributes in .mt-attrs; clean them up first") % dst);
+      F("%s has existing attributes in %s; clean them up first") % dst % attr_file_name);
 
     // only write out a new attribute map if we find attrs to move
     attr_map::iterator a = attrs.find(src);
@@ -572,10 +576,6 @@ enable_inodeprints()
   write_data(ip_path, dat);
 }
 
-// attribute map file
-
-string const attr_file_name(".mt-attrs");
-
 void 
 get_attr_path(file_path & a_path)
 {
@@ -595,7 +595,7 @@ void
 read_attr_map(data const & dat, attr_map & attr)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss, ".mt-attrs");
+  basic_io::input_source src(iss, attr_file_name);
   basic_io::tokenizer tok(src);
   basic_io::parser parser(tok);
 

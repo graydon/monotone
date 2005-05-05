@@ -1,3 +1,7 @@
+2005-05-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* work.cc: Use attr_file_name rather than hardcoded strings.
+
 2005-05-03  Nathaniel Smith  <njs@codesourcery.com>
 
 	* file_io.cc (read_data_for_command_line): Check that file exists,
