@@ -1,3 +1,7 @@
+2005-05-05  Richard Levitte  <richard@levitte.org>
+
+	* AUTHORS: Add rghetta.
+
 2005-05-04  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_monotone_up.at: New test.
