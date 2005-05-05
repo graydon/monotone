@@ -50,7 +50,7 @@ int make_executable(const char *path)
 	return chmod(path, mode);
 }
 
-int process_spawn(const char * const argv[])
+pid_t process_spawn(const char * const argv[])
 {
 	{
 		std::ostringstream cmdline_ss;
@@ -72,14 +72,14 @@ int process_spawn(const char * const argv[])
 			execvp(argv[0], (char * const *)argv);
 			return -1;
 		default: /* Parent */
-			return (int)pid;
+			return pid;
 	}
 }
 
-int process_wait(int pid, int *res)
+int process_wait(pid_t pid, int *res)
 {
 	int status;
-	pid = waitpid((pid_t)pid, &status, 0);
+	pid = waitpid(pid, &status, 0);
 	if (WIFEXITED(status))	  
 		*res = WEXITSTATUS(status);
 	else
@@ -87,12 +87,17 @@ int process_wait(int pid, int *res)
 	return 0;
 }
 
-int process_kill(int pid, int signal)
+int process_kill(pid_t pid, int signal)
 {
-	return kill((pid_t)pid, signal);
+	return kill(pid, signal);
 }
 
 int process_sleep(unsigned int seconds)
 {
 	return sleep(seconds);
+}
+
+pid_t get_process_id()
+{
+  return getpid();
 }

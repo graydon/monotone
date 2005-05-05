@@ -24,7 +24,7 @@ F_VER0=`SHA1(testfile)`
 VER0=`BASE_REVISION`
 
 NETSYNC_KILLHARD
-         MONOTONE --rcfile=netsync.lua               serve 127.0.0.1:$_PORT testbranch &
+         MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve 127.0.0.1:$_PORT testbranch &
 sleep 5
 AT_CHECK(MONOTONE --rcfile=netsync.lua --db=test2.db pull 127.0.0.1:$_PORT testbranch, [], [ignore], [ignore])
 NETSYNC_KILLHARD

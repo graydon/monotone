@@ -12,6 +12,7 @@
 #include <string>
 
 #include "vocab.hh"
+#include "config.h"
 
 void read_password(std::string const & prompt, char * buf, size_t bufsz);
 void get_system_flavour(std::string & ident);
@@ -20,9 +21,9 @@ bool is_executable(const char *path);
 // For LUA
 int existsonpath(const char *exe);
 int make_executable(const char *path);
-int process_spawn(const char * const argv[]);
-int process_wait(int pid, int *res);
-int process_kill(int pid, int signal);
+pid_t process_spawn(const char * const argv[]);
+int process_wait(pid_t pid, int *res);
+int process_kill(pid_t pid, int signal);
 int process_sleep(unsigned int seconds);
 
 // for term selection
@@ -41,5 +42,8 @@ void end_platform_netsync();
 // there was a problem, in which case we should act as if the inodeprint has
 // changed.
 bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
+
+// for netsync 'serve' pidfile support
+pid_t get_process_id();
 
 #endif // __PLATFORM_HH__

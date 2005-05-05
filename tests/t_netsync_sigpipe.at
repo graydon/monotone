@@ -5,13 +5,9 @@ AT_KEYWORDS([netsync])
 
 m4_define([NETSYNC_KILLPIPE], [
 if test "$OSTYPE" == "msys"; then
-  #ps |awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -PIPE " $a);}'
-  # If we really wanted to do this on Windows, the above is correct.  But
-  # there is no SIGPIPE on Windows and hence we don't really need to test this
-  # behaviour there.  Hence, we just do nothing.
   echo "No SIGPIPE on MinGW"
 else
-  killall -PIPE monotone 2>/dev/null
+  kill -PIPE `cat monotone_at.pid` 2>/dev/null
 fi
 ])
 

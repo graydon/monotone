@@ -1,5 +1,25 @@
 2005-05-05  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* monotone.texi: Document --pid-file option for serve command.
+	* app_state.{cc,hh} (set_pidfile, pidfile): New function, new
+	member.
+	* commands.cc (pid_file): New class.
+	(CMD(serve)): Use pid_file.
+	* monotone.cc (coptions, cppmain): Add command-specific option
+	--pid-file.
+	* options.hh (OPT_PIDFILE): New option.
+	* {unix,win32}/process.cc (get_process_id): New function.
+	(process_{spawn,wait,kill}): Use pid_t.
+	* platform.hh (process_{spawn,wait,kill}): Use pid_t.
+	(get_process_id): New function
+	* configure.ac: Test for pid_t.
+	* lua.cc (monotone_{spawn,wait,kill}_for_lua): Use pid_t.
+	* testsuite.at: Update netsync kill functions to use pid file.
+	* tests/t_netsync_sigpipe.at: Update to use pid file.
+	* tests/t_netsync_single.at: Update to use pid file.
+
+2005-05-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* work.cc: Use attr_file_name rather than hardcoded strings.
 
 2005-05-04  Brian Campbell  <ubergeek@dartmouth.edu>
