@@ -1,3 +1,7 @@
+2005-05-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* work.cc: Use attr_file_name rather than hardcoded strings.
+
 2005-05-04  Brian Campbell  <ubergeek@dartmouth.edu>
 
 	* contrib/monotone.el (monotone-vc-register): Fix arguments to
