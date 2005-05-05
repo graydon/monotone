@@ -1,3 +1,8 @@
+2005-05-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_monotone_up.at: New test.
+	* testsuite.at: Add it.
+
 2005-05-05  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* work.cc: Use attr_file_name rather than hardcoded strings.
