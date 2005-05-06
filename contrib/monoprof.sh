@@ -1,6 +1,12 @@
 #!/bin/bash
 #Timothy Brownawell
 
+#Arguments:
+#    --build       Rebuild monotone before profiling.
+#    --update      Run "monotone update" before building. Implies --build
+#    --pull        Run "monotone pull" before update. Implies --update, --build
+#    --append x    Append ".x" to the profile directory name
+
 #Bash script for profiling.
 #The user running this script must have sudo permission for opcontrol.
 #You are assumed to be using a debug version of libc, and to have a
@@ -12,7 +18,7 @@
 #The directory holding the files to test with
 DATADIR=/mnt/bigdisk
 
-#Database to use with the server for pull
+#Database holding net.venge.monotone
 MTDB=mt.db
 
 #A database holding only a keypair.
@@ -23,8 +29,10 @@ EMPTYDB=empty.db
 KPATCH=patch-2.6.11.7.bz2
 KVER=linux-2.6.11
 
+#Directory containing monotone sources
+BUILDDIR=/mnt/bigdisk/src-managed/monotone-src
 #Full path of the monotone binary to use.
-MONOTONE=/mnt/bigdisk/src-managed/monotone-src/monotone
+MONOTONE=${BUILDDIR}/monotone
 
 #sudo command, if not set you must be root
 #used to run opcontrol
@@ -58,6 +66,24 @@ hilights()
 	rm $F
 }
 
+profstart()
+{
+	echo "${TESTNAME}..."
+	${SUDO} opcontrol --reset
+	${SUDO} opcontrol --start
+}
+
+profend()
+{
+	opcontrol --dump
+	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
+	${SUDO} opcontrol --shutdown
+	hilights ${PDIR}/profile-${SHORTNAME} > ${PDIR}/hilights-${SHORTNAME}
+	echo -e "\n${TESTNAME}:" >>${PDIR}/timing
+	cat ${RUNTIME} >>${PDIR}/timing
+	rm ${RUNTIME}
+}
+
 #Individual tests to run.
 #Each test or set of tests should clean up after itself.
 
@@ -76,7 +102,7 @@ test_netsync()
 		--ticker=none --quiet serve localhost net.venge.monotone &
 	sleep 5 #wait for server to be ready
 	${TIME} -o ${TIME_CLIENT} ${MONOTONE} --db=${DATADIR}/test.db \
-		--ticker=none --quiet pull localhost net.venge.monotone
+		pull localhost net.venge.monotone
 	#If we kill the time process, we don't get our statistics.
 	kill $(ps -Af|grep 'monotone.*serve\ localhost' | \
 		grep -v time | awk '{print $2}')
@@ -101,25 +127,17 @@ test_commit()
 	local RUNTIME=$(tempfile)
 	local TESTNAME="Commit kernel ${KVER} to an empty database"
 	local SHORTNAME="commitfirst"
-	echo "${TESTNAME}..."
 	bzip2 -dc ${DATADIR}/${KVER}.tar.bz2 | tar -C ${DATADIR} -xf -
 	pushd ${DATADIR}/${KVER}
 	${MONOTONE} setup .
 	${MONOTONE} --quiet add $(ls|grep -v '^MT')
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
 
-	${SUDO} opcontrol --reset
-	${SUDO} opcontrol --start
+	profstart
 	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
-		--db=${DATADIR}/test.db --quiet commit \
+		--db=${DATADIR}/test.db commit \
 		--message="Commit message."
-	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
-	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-${SHORTNAME} >${PDIR}/hilights-${SHORTNAME}
-	echo -e "\n${TESTNAME}:" >>${PDIR}/timing
-	cat ${RUNTIME} >>${PDIR}/timing
-	rm ${RUNTIME}
+	profend
 }
 
 TESTS="${TESTS} test_minor_commit"
@@ -129,20 +147,11 @@ test_minor_commit()
 	local TESTNAME="Commit a small patch (${KPATCH}) to the kernel"
 	local SHORTNAME="commit"
 	
-	echo "${TESTNAME}..."
 	bzip2 -dc ${DATADIR}/${KPATCH} | patch -p1 >/dev/null
-	${SUDO} opcontrol --reset
-	${SUDO} opcontrol --start
+	profstart
 	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
-		--db=${DATADIR}/test.db --quiet commit --message="Commit #2"
-	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
-	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-${SHORTNAME} > ${PDIR}/hilights-${SHORTNAME}
-	
-	echo -e "\n$TESTNAME}:" >>${PDIR}/timing
-	cat ${RUNTIME} >>${PDIR}/timing
-	rm ${RUNTIME}
+		--db=${DATADIR}/test.db commit --message="Commit #2"
+	profend
 }
 
 TESTS="${TESTS} test_unchanged_commit"
@@ -151,22 +160,32 @@ test_unchanged_commit()
 	local RUNTIME=$(tempfile)
 	local TESTNAME="Recommit the kernel without changes"
 	local SHORTNAME="commitsame"
-	echo "${TESTNAME}..."
-	${SUDO} opcontrol --reset
-	${SUDO} opcontrol --start
+	
+	profstart
 	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
-		--db=${DATADIR}/test.db --quiet commit --message="no change"
-	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
-	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-${SHORTNAME} > ${PDIR}/hilights-${SHORTNAME}
+		--db=${DATADIR}/test.db commit --message="no change"
+	profend
 
 	popd
 	rm ${DATADIR}/test.db
 	rm -rf ${DATADIR}/${KVER}
-	echo -e "\n$TESTNAME}:" >>${PDIR}/timing
-	cat ${RUNTIME} >>${PDIR}/timing
-	rm ${RUNTIME}
+}
+
+TESTS="${TESTS} test_lcad"
+test_lcad()
+{
+	local RUNTIME=$(tempfile)
+	local TESTNAME="Find lcad of ebf14142 and 68fe12e6"
+	local SHORTNAME="lcad"
+
+	cp ${DATADIR}/${MTDB} ${DATADIR}/test.db
+	profstart
+	${TIME} -o ${RUNTIME} ${MONOTONE} --db=${DATADIR}/test.db \
+		lcad ebf14142331667146d7a3aabb406945648ea00de \
+		     68fe12e6f1de7d161eb9e27dd757e7d230049520
+	
+	profend
+	rm ${DATADIR}/test.db
 }
 
 #TESTS="${TESTS} test_name"
@@ -175,43 +194,67 @@ test_unchanged_commit()
 #	local RUNTIME=$(tempfile)
 #	local TESTNAME=""
 #	local SHORTNAME=""
-#	echo "${TESTNAME}..."
+##setup:
 #
-#	${SUDO} opcontrol --reset
-#	${SUDO} opcontrol --start
-#	
-#	opcontrol --dump
-#	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
-#	${SUDO} opcontrol --shutdown
-#	hilights ${PDIR}/profile-${SHORTNAME} > ${PDIR}/hilights-${SHORTNAME}
+#	profstart
+##run:	
 #
-#	echo -e "\n$TESTNAME}:" >>${PDIR}/timing
-#	cat ${RUNTIME} >>${PDIR}/timing
-#	rm ${RUNTIME}
+#	profend
+##cleanup:
+#
 #}
 
 run_tests()
 {
+	local PDIR=${PROFDIR}/${VERSION}${APPEND}
+	[ -d ${PDIR} ] && (echo "Already profiled this version.";
+		echo "If you've made changes since then, use --append" ;
+		echo "to place the new results in a new directory."; exit 1)
+	mkdir -p ${PDIR}
+	export LD_PRELOAD=${DBG_LIB}
+	echo "Profiling..."
+	rm -f ${PDIR}/timing
 	${SUDO} opcontrol --separate=lib --callgraph=10 \
 		--image=${MONOTONE} --no-vmlinux
 	for i in ${TESTS}; do
 		$i
 	done
-
+	chmod -R a+rX ${PDIR}
+	echo "Monotone version: ${VERSION}"
+	cat <(echo -e "Timing for each run:\n") ${PROFDIR}/${VERSION}$1/timing
 }
 
 BEGINTIME=$(date +%s)
 
-mkdir -p ${PROFDIR}/${VERSION}$1
-export LD_PRELOAD=${DBG_LIB}
-PDIR=${PROFDIR}/${VERSION}$1
-echo "Profiling..."
-rm -f ${PDIR}/timing
+BUILD=false
+UPDATE=false
+PULL=false
+APPEND=""
+
+while ! [ $# -eq 0 ] ; do
+	case "$1" in
+		--build) BUILD=true ;;
+		--update) UPDATE=true ; BUILD=true ;;
+		--pull) PULL=true ; UPDATE=true ; BUILD=true ;;
+		--append) shift; APPEND=".$1" ;;
+		*) ;;
+	esac
+	shift
+done
+
+pushd ${BUILDDIR}
+if [ ${PULL} = "true" ] ; then
+	monotone pull
+fi
+if [ ${UPDATE} = "true" ] ; then
+	monotone update
+fi
+if [ ${BUILD} = "true" ] ; then
+	make || ( echo -e "Build failed.\nNot profiling." >2 ; exit 1 )
+fi
+popd
+
 run_tests
-
-chmod -R a+rX ${PROFDIR}/${VERSION}$1
-
-echo "Monotone version: ${VERSION}"
-cat <(echo -e "Timing for each run:\n") ${PROFDIR}/${VERSION}$1/timing
 TOTALTIME=$(($(date +%s)-${BEGINTIME}))
-echo "Time elapsed (all runs): $((${TOTALTIME}/60)):$((${TOTALTIME}%60))"
+ELAPSED=$((${TOTALTIME}/60)):$((${TOTALTIME}%60))
+echo -e "\nTime elapsed: ${ELAPSED}\n"

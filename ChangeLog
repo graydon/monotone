@@ -1,3 +1,8 @@
+2005-05-06 Timothy Brownawell <tbrownaw@gmail.com>
+
+	* contrib/monoprof.sh: Add lcad test.
+		Add options to pull/rebuild before profiling.
+
 2005-05-06  Nathaniel Smith  <njs@codesourcery.com>
 
 	* INSTALL: s/g++ 3.2 or 3.3/g++ 3.2 or later/.
