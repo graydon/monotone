@@ -88,10 +88,10 @@ pid_t process_spawn(const char * const argv[])
     }
   free(realexe);
   CloseHandle(pi.hThread);
-  return pi.hProcess;
+  return (pid_t)pi.hProcess;
 }
 
-pid_t process_wait(pid_t pid, int *res)
+int process_wait(pid_t pid, int *res)
 {
   HANDLE hProcess = (HANDLE)pid;
   if (WaitForSingleObject(hProcess, INFINITE)==WAIT_FAILED)

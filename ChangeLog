@@ -1,3 +1,12 @@
+2005-05-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (pid_file): Remove leftover debugging output.
+	* configure.ac: Correct typos in TYPE_PID_T test.
+	* testsuite.at: Use some trickery on MingW/Cygwin to map the
+	Windows pid to the Cygwin pid.
+	* win32/process.cc (process_wait): Correct return type.
+	(process_spawn): Replace dropped cast on return.
+
 2005-05-05  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* monotone.texi: Document --pid-file option for serve command.

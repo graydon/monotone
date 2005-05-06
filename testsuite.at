@@ -334,12 +334,22 @@ m4_define([MONOTONE2], MONOTONE --db=test2.db)
 m4_define([MONOTONE3], MONOTONE --db=test3.db)
 
 m4_define([NETSYNC_KILL], [
+if test "$OSTYPE" == "msys"; then
+  # The a=4/1 thing is to avoid autotest treating $1 as its own parameter.
+  ps | awk -v pid=$(<monotone_at.pid) -- '{a=4;p=$a;a=1;if(p=="WINPID")next;if(p==pid)system("kill " $a);}'
+else
   kill `cat monotone_at.pid` 2>/dev/null
-  rm -f monotone_at.pid 2>/dev/null
+fi
+rm -f monotone_at.pid 2>/dev/null
 ])
 m4_define([NETSYNC_KILLHARD], [
+if test "$OSTYPE" == "msys"; then
+  # The a=4/1 thing is to avoid autotest treating $1 as its own parameter.
+  ps | awk -v pid=$(<monotone_at.pid) -- '{a=4;p=$a;a=1;if(p=="WINPID")next;if(p==pid)system("kill -KILL " $a);}'
+else
   kill -KILL `cat monotone_at.pid` 2>/dev/null
-  rm -f monotone_at.pid 2>/dev/null
+fi
+rm -f monotone_at.pid 2>/dev/null
 ])
 
 # run as NETSYNC_SERVE_N_START(2|3, collection name)

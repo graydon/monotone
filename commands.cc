@@ -287,7 +287,6 @@ struct pid_file
     file.open(path);
     file << get_process_id();
     file.flush();
-    P(F("pid file '%s' created for pid '%d'") % path.string() % get_process_id());
   }
 
   ~pid_file()
