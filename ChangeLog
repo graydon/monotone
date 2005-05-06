@@ -1,5 +1,9 @@
 2005-05-06  Nathaniel Smith  <njs@codesourcery.com>
 
+	* INSTALL: s/g++ 3.2 or 3.3/g++ 3.2 or later/.
+
+2005-05-06  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.1: 
 	* monotone.texi (Commands, Importing from CVS, RCS): Clarify
 	cvs_import documentation on cvsroot vs. module issues.

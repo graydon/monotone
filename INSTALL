@@ -12,7 +12,7 @@ building and installation process for monotone
 
   * software prerequisites:
 
-    - a supported C++ compiler: g++ 3.2 or 3.3.
+    - a supported C++ compiler: g++ 3.2 or later.
     - an installed copy of boost 1.31.0 or later.
 
         on debian: 
