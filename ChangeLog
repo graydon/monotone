@@ -1,3 +1,9 @@
+2005-05-06  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.1: 
+	* monotone.texi (Commands, Importing from CVS, RCS): Clarify
+	cvs_import documentation on cvsroot vs. module issues.
+
 2005-05-05  Richard Levitte  <richard@levitte.org>
 
 	* AUTHORS: Add rghetta.

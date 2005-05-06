@@ -2913,6 +2913,8 @@ Your project name, @code{wobbler} in this example.
 Your database name, @file{test.db} in this example.
 @item
 Your CVS repository path, @file{/usr/local/cvsroot} in this example.
+@item
+The CVS module name for your project, @code{wobbler} in this example.
 @end itemize
 
 Accounting for these differences at your site, the following is an
@@ -2924,7 +2926,7 @@ copy:
 @group
 $ monotone --db=test.db db init
 $ monotone --db=test.db genkey import@@example.net
-$ monotone --db=test.db --branch=net.example.wobbler cvs_import /usr/local/cvsroot
+$ monotone --db=test.db --branch=net.example.wobbler cvs_import /usr/local/cvsroot/wobbler
 $ monotone --db=test.db --branch=net.example.wobbler checkout wobber-checkout
 @end group
 @end smallexample
@@ -4851,16 +4853,21 @@ This command imports all the file versions in each RCS file listed in
 database.  Note that this does not do any revision reconstruction, and
 is only useful for debugging.
 
-@item monotone cvs_import @var{pathname...}
+@item monotone cvs_import @var{pathname}
 
-This command imports all the file versions in each RCS file found in
-the tree of files starting at @var{pathname...}, then reconstructs the
+This command imports all the file versions in each RCS file found in the
+tree of files starting at @var{pathname}, then reconstructs the
 tree-wide history of logical changes by comparing RCS time stamps and
 change log entries. For each logical tree-wide change, monotone
 synthesizes a manifest and revision, and commits them (along with all
-associated file deltas) to your database. It also copies all change
-log entries, author identifiers, and date stamps to manifest
-certificates.
+associated file deltas) to your database. It also copies all change log
+entries, author identifiers, and date stamps to manifest certificates.
+
+In normal use, @var{pathname} will be a CVS module, though it is
+possible to point it at a directory within a module as well.  Whatever
+directory you point it at will become the root of monotone's version of
+the tree.
+
 @end ftable
 
 
@@ -6287,10 +6294,10 @@ from trusted sources}; all other trust relationships are built out of
 the trust assigned to keys.
 @comment TROFF INPUT: .TP
 
-@item @b{cvs_import} @i{<cvsroot>}
-Import all versions in CVS repository. Reconstructs revisions and
-converts metadata to certificates. A private signing key must already
-exist in the database.
+@item @b{cvs_import} @i{<cvsroot>/<module>}
+Import all versions in a CVS module. Reconstructs revisions and converts
+metadata to certificates. A private signing key must already exist in
+the database.
 @comment TROFF INPUT: .TP
 
 @item @b{rcs_import} @i{<rcsfile> ...}

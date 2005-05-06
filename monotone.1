@@ -107,10 +107,10 @@ Write public key packet to stdout.
 \fBread\fP
 Read packets from stdin. 
 .TP
-\fBcvs_import\fP \fI<cvsroot>\fP
-Import all versions in CVS repository. Reconstructs revisions and
-converts metadata to certificates. A private signing key must already
-exist in the database.
+\fBcvs_import\fP \fI<cvsroot>/<module>\fP
+Import all versions in CVS module. Reconstructs revisions and converts
+metadata to certificates. A private signing key must already exist in
+the database.
 .TP
 \fBrcs_import\fP \fI<rcsfile> ...\fP
 Import all file versions in RCS files. Does not reconstruct revisions
