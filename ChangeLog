@@ -1,3 +1,11 @@
+2005-05-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Drop pid mapping trickery, it doesn't work
+	consistently.  We now try and use SysInternal's pskill to kill the
+	process.  If pskill is not available, we fall back to the old
+	'kill all monotone processes' method. These changes affect
+	Win32/MingW only.
+
 2005-05-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* commands.cc (pid_file): Remove leftover debugging output.
