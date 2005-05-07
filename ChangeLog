@@ -1,5 +1,9 @@
-2005-05-08  Timothy Brownawell  <tbrownaw@gmail.com>
+2005-05-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* monotone.1: Document --pid-file option.  Also make some minor
+	spelling and punctuation fixes.
+
+2005-05-08  Timothy Brownawell  <tbrownaw@gmail.com>
 	* app_state.cc: {read,write}_options now print a warning instead of
 	failing on unreadable/unwritable MT/options .
 	* tests/t_unreadable_MT.at: add matching test

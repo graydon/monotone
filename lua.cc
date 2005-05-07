@@ -447,12 +447,11 @@ Lua
     return *this; 
   }
 
-
   Lua & call(int in, int out) 
   { 
     if (failed) return *this;
     I(lua_checkstack (st, out));
-    if (lua_pcall(st, in, out, 0) != 0) 
+    if (lua_pcall(st, in, out, 0) != 0)
       { 
         I(lua_isstring (st, -1));
         string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
