@@ -146,7 +146,7 @@ Rename files from \fI<src> \fP to \fI<dst> \fP in working copy.
 .TP
 \fBcommit\fP \fI[--message=<log message>] [<pathname>...]\fP 
 Commit working copy to database. If a --message option is provided on
-the command ine, it is used; otherwise a log message editor will be
+the command line, it is used; otherwise a log message editor will be
 invoked.
 .TP
 \fBupdate\fP  \fI[revision-id]\fP
@@ -156,16 +156,18 @@ Update working copy.
 Turn on inodeprints mode, and force a cache refresh.
 .TP
 \fBpush\fP \fI[<host> [<collection>]]\fP 
-Push contents of \fI<collection>\fP to database on \fI<host>\fP 
+Push contents of \fI<collection>\fP to database on \fI<host>\fP.
 .TP
 \fBpull\fP \fI[<host> [<collection>]]\fP 
-Push contents of \fI<collection>\fP from database on \fI<host>\fP 
+Push contents of \fI<collection>\fP from database on \fI<host>\fP.
 .TP
 \fBsync\fP \fI<host> <collection>\fP 
-Sync contents of \fI<collection>\fP with database on \fI<host>\fP 
+Sync contents of \fI<collection>\fP with database on \fI<host>\fP.
 .TP
-\fBserve\fP \fI<host> <collection>\fP 
-Serve contents of \fI<collection>\fP at network address \fI<host>\fP 
+\fBserve\fP \fI[--pid-file=<path>] <host> <collection>\fP 
+Serve contents of \fI<collection>\fP at network address \fI<host>\fP. If a
+--pid-file option is provided on the command line, monotone will store the
+process id of the server in the specified file.
 .TP
 \fBset\fP \fI<domain> <name> <value>\fP 
 Set the db var \fI<name>\fP in domain \fI<domain>\fP to value

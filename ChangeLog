@@ -1,5 +1,10 @@
 2005-05-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* monotone.1: Document --pid-file option.  Also make some minor
+	spelling and punctuation fixes.
+
+2005-05-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* monotone.texi: Right words, wrong order.
 	* testsuite.at: Drop pid mapping trickery, it doesn't work
 	consistently.  We now try and use SysInternal's pskill to kill the
