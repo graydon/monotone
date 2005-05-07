@@ -1,5 +1,6 @@
 2005-05-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* monotone.texi: Right words, wrong order.
 	* testsuite.at: Drop pid mapping trickery, it doesn't work
 	consistently.  We now try and use SysInternal's pskill to kill the
 	process.  If pskill is not available, we fall back to the old

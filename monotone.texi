@@ -3612,7 +3612,7 @@ default-server} or @code{monotone unset database default-collection};
 these will clear your defaults, and cause them to be reset to the next
 person you netsync with.
 
-If a option @option{--pid-file} is specified, the command
+If a @option{--pid-file} option is specified, the command
 @command{serve} will create the specified file and record the process
 identifier of the server in the file.  This file can then be read to
 identify specific monotone server processes.
