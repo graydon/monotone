@@ -98,7 +98,7 @@ _monotone() {
           _monotone_keys pubkey
           ;;
         --ticker )
-          COMPREPLY=( $(compgen -W 'count dot' -- $cur ) )
+          COMPREPLY=( $(compgen -W 'count dot none' -- $cur ) )
           ;;
         --revision | -r )
           _monotone_complete revision
@@ -106,7 +106,7 @@ _monotone() {
 	db )
 	  COMPREPLY=( $(compgen -W 'init info version dump load migrate execute check changesetify rebuild' -- $cur ) )
 	  ;;
-	cdiff | diff )
+	cdiff | diff | annotate )
           COMPREPLY=( $(compgen -W '--revision' -- $cur ) )
 	  _filedir
 	  ;;
@@ -114,13 +114,10 @@ _monotone() {
 	  _monotone_complete revision
 	  ;;
 	ls | list )
-	  COMPREPLY=( $(compgen -W 'certs keys branches tags unknown ignored missing' -- $cur ) )
+	  COMPREPLY=( $(compgen -W 'certs keys branches epochs tags vars known unknown ignored missing' -- $cur ) )
 	  ;;
 	attr )
-	  COMPREPLY=( $(compgen -W 'get set' -- $cur ) )
-	  ;;
-	setup )
-	  _filedir -d
+	  COMPREPLY=( $(compgen -W 'get set drop' -- $cur ) )
 	  ;;
 	co | checkout )
 	  _filedir -d
@@ -138,7 +135,7 @@ _monotone() {
 	pubkey | privkey )
 	  _monotone_keys $prev
 	  ;;
-	chkeypass )
+	chkeypass | dropkey )
 	  _monotone_keys privkey
 	  ;;
 	propagate | reindex )
@@ -148,10 +145,10 @@ _monotone() {
 	  if (( $COMP_CWORD >= 2 )) ; then
 	    local prev2=${COMP_WORDS[COMP_CWORD-2]}
 	    case $prev2 in
-	      diff | explicit_merge )
+	      cdiff | diff | explicit_merge )
 		_monotone_complete revision
 		;;
-	      co | checkout | rename )
+	      co | checkout | rename | annotate )
 		_filedir -d
 		;;
 	      cat )
@@ -190,13 +187,14 @@ _monotone() {
 	  fi
 	  if [ -z "$prev2" ] ; then
 	    COMPREPLY=( $(compgen -W 'db agraph \
-                                      cat cdiff complete diff list log ls status \
-                                      cert chkeypass genkey trusted \
+                                      annotate cat cdiff complete diff list log ls status \
+                                      cert chkeypass dropkey genkey trusted \
                                       pull push reindex serve sync \
                                       privkey pubkey read \
                                       cvs_import \
                                       approve comment disapprove tag testresult \
-                                      checkout co explicit_merge heads merge propagate setup \
+                                      checkout co explicit_merge heads merge propagate refresh_inodeprints setup \
+                                      set unset \
                                       add attr commit drop identify rename revert update' -- $cur) )
 	  fi
 	  ;;
