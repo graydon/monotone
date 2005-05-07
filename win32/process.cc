@@ -27,7 +27,7 @@ int make_executable(const char *path)
   return 0; /* Basically meaningless on win32 */
 }
 
-int process_spawn(const char * const argv[])
+pid_t process_spawn(const char * const argv[])
 {
   int i;
   char *realexe,*filepart;
@@ -88,10 +88,10 @@ int process_spawn(const char * const argv[])
     }
   free(realexe);
   CloseHandle(pi.hThread);
-  return (int)pi.hProcess;
+  return (pid_t)pi.hProcess;
 }
 
-int process_wait(int pid, int *res)
+int process_wait(pid_t pid, int *res)
 {
   HANDLE hProcess = (HANDLE)pid;
   if (WaitForSingleObject(hProcess, INFINITE)==WAIT_FAILED)
@@ -105,7 +105,7 @@ int process_wait(int pid, int *res)
   return 0;
 }
 
-int process_kill(int pid, int signal)
+int process_kill(pid_t pid, int signal)
 {
   HANDLE hProcess = (HANDLE)pid;
   if (TerminateProcess(hProcess, 1)==0)
@@ -118,3 +118,9 @@ int process_sleep(unsigned int seconds)
   Sleep(seconds*1000);
   return 0;
 }
+
+pid_t get_process_id()
+{
+  return GetCurrentProcessId();
+}
+

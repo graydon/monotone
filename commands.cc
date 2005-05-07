@@ -15,6 +15,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/exception.hpp>
@@ -274,6 +275,36 @@ CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,         \
 {                                                                    \
   process(app, string(#realcommand), args);                          \
 }
+
+struct pid_file
+{
+  explicit pid_file(fs::path const & p)
+    : path(p)
+  {
+    if (path == "")
+      return;
+    N(!fs::exists(path), F("pid file '%s' already exists") % path.string());
+    file.open(path);
+    file << get_process_id();
+    file.flush();
+  }
+
+  ~pid_file()
+  {
+    if (path == "")
+      return;
+    pid_t pid;
+    fs::ifstream(path) >> pid;
+    if (pid == get_process_id()) {
+      file.close();
+      fs::remove(path);
+    }
+  }
+
+private:
+  fs::ofstream file;
+  fs::path path;
+};
 
 static void
 maybe_update_inodeprints(app_state & app)
@@ -1989,10 +2020,12 @@ CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
 }
 
 CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
-    "listen on ADDRESS and serve COLLECTION to connecting clients", OPT_NONE)
+    "listen on ADDRESS and serve COLLECTION to connecting clients", OPT_PIDFILE)
 {
   if (args.size() < 2)
     throw usage(name);
+
+  pid_file pid(app.pidfile);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));

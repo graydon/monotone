@@ -28,4 +28,4 @@
 #define OPT_DATE 19
 #define OPT_AUTHOR 20
 #define OPT_ALL_FILES 21
-
+#define OPT_PIDFILE 22

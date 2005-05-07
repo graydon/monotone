@@ -378,10 +378,25 @@ AC_DEFUN([TYPE_SOCKLEN_T],
   ac_cv_type_socklen_t=no)
 ])
   if test $ac_cv_type_socklen_t = yes; then
-    AC_DEFINE(HAVE_SOCKLEN_T, 1, [Define if platform has real socklen_t.])
+    AC_DEFINE(HAVE_SOCKLEN_T, 1, [Define if platform has socklen_t.])
   fi
 ])
 TYPE_SOCKLEN_T
+
+AC_DEFUN([TYPE_PID_T],
+[AC_CACHE_CHECK([for pid_t], ac_cv_type_pid_t,
+[
+  AC_TRY_COMPILE(
+  [#include <sys/types.h>],
+  [pid_t pid = 42; return 0;],
+  ac_cv_type_pid_t=yes,
+  ac_cv_type_pid_t=no)
+])
+  if test $ac_cv_type_pid_t = no; then
+    AC_DEFINE(pid_t, long, [pid_t substitute.])
+  fi
+])
+TYPE_PID_T
 
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL

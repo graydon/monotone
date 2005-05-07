@@ -110,7 +110,8 @@ extern "C"
     int n = lua_gettop(L);
     const char *path = lua_tostring(L, -n);
     char **argv = (char**)malloc((n+1)*sizeof(char*));
-    int ret, i;
+    int i;
+    pid_t ret;
     if (argv==NULL)
       return 0;
     argv[0] = (char*)path;
@@ -125,7 +126,7 @@ extern "C"
   static int
   monotone_wait_for_lua(lua_State *L)
   {
-    int pid = (int)lua_tonumber(L, -1);
+    pid_t pid = (pid_t)lua_tonumber(L, -1);
     int res;
     int ret;
     ret = process_wait(pid, &res);
@@ -138,7 +139,7 @@ extern "C"
   monotone_kill_for_lua(lua_State *L)
   {
     int n = lua_gettop(L);
-    int pid = (int)lua_tonumber(L, -2);
+    pid_t pid = (pid_t)lua_tonumber(L, -2);
     int sig;
     if (n>1)
       sig = (int)lua_tonumber(L, -1);
