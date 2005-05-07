@@ -19,6 +19,7 @@ Creating tests:
 ---------------
 -  Copy and paste is your friend :)
 -  TODO: need more here...
+-  Remember to add a line at the end of testsuite.at
 
 
 Template for a test (name t_<testname>.at

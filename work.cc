@@ -382,7 +382,14 @@ void get_revision_id(revision_id & c)
 
   data c_data;
   L(F("loading revision id from %s\n") % c_path);
-  read_data(c_path, c_data);
+  try
+    {
+      read_data(c_path, c_data);
+    }
+  catch(std::exception & e)
+    {
+      N(false, F("Problem with working directory: %s is unreadable") % c_path);
+    }
   c = revision_id(remove_ws(c_data()));
 }
 

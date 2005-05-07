@@ -1,3 +1,13 @@
+2005-05-08  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.cc: {read,write}_options now print a warning instead of
+	failing on unreadable/unwritable MT/options .
+	* tests/t_unreadable_MT.at: add matching test
+	* testsuite.at: add test
+	* tests/README: Mention that new tests must be added to testsuite.at
+	* work.cc: (get_revision_id) Friendlier error message for
+	unreadable MT/revision .
+
 2005-05-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* monotone.texi: Right words, wrong order.

@@ -362,12 +362,18 @@ app_state::read_options()
 {
   local_path o_path;
   get_options_path(o_path);
-
-  if (file_exists(o_path))
+  try
     {
-      data dat;
-      read_data(o_path, dat);
-      read_options_map(dat, options);
+      if (file_exists(o_path))
+        {
+          data dat;
+          read_data(o_path, dat);
+          read_options_map(dat, options);
+        }
+    }
+  catch(std::exception & e)
+    {
+      W(F("Failed to read options file %s") % o_path);
     }
 }
 
@@ -376,8 +382,14 @@ app_state::write_options()
 {
   local_path o_path;
   get_options_path(o_path);
-
-  data dat;
-  write_options_map(dat, options);
-  write_data(o_path, dat);
+  try
+    {
+      data dat;
+      write_options_map(dat, options);
+      write_data(o_path, dat);
+    }
+  catch(std::exception & e)
+    {
+      W(F("Failed to write options file %s") % o_path);
+    }
 }
