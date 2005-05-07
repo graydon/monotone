@@ -302,7 +302,7 @@ dump_state(std::string const & s,
        i != st.end(); ++i)
     {
       std::vector<path_component> tmp_v;
-      tmp.push_back(path_item_name(path_state_item(i)));
+      tmp_v.push_back(path_item_name(path_state_item(i)));
       file_path tmp_fp;
       compose_path(tmp_v, tmp_fp);
       L(F("state '%s': tid %d, parent %d, type %s, name %s\n")
@@ -2079,19 +2079,21 @@ project_missing_deltas(change_set const & a,
       // now check to see if there was a delta on the b.second name in b
       change_set::delta_map::const_iterator j = b.deltas.find(path_in_b_second);
 
+      // if the file was deleted in b, we don't want to copy this delta.
+      if (b.rearrangement.has_deleted_file(path_in_anc))
+        {
+          L(F("skipping delta '%s'->'%s' on deleted file '%s'\n")
+                % delta_entry_src(i) % delta_entry_dst(i) % path_in_anc);
+          continue;
+        }
+
       if (j == b.deltas.end())
         {
-          // if not, copy ours over using the merged name
+          // if no deltas in b, copy ours over using the merged name
           L(F("merge is copying delta '%s' : '%s' -> '%s'\n") 
             % path_in_merged % delta_entry_src(i) % delta_entry_dst(i));
           I(b.deltas.find(path_in_merged) == b.deltas.end());
-          if (b.rearrangement.has_deleted_file(path_in_merged))
-            // if the file was deleted on the other fork of the merge, then
-            // we don't want to keep this delta.
-            L(F("skipping delta '%s'->'%s' on deleted file '%s'\n")
-                % delta_entry_src(i) % delta_entry_dst(i) % path_in_merged);
-          else
-            b_merged.apply_delta(path_in_merged, delta_entry_src(i), delta_entry_dst(i));
+          b_merged.apply_delta(path_in_merged, delta_entry_src(i), delta_entry_dst(i));
         }
       else 
         {

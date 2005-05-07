@@ -1,3 +1,11 @@
+2005-05-07  Matt Johnston <matt@ucc.asn.au>
+
+	* change_set.cc: fix the code which skips deltas on deleted files,
+	  it was looking at the merged filename not the ancestor
+	  filename.
+	* tests/t_drop_vs_patch_rename.at: a test for the above fix
+	* testsuite.at: add it
+
 2005-05-06 Timothy Brownawell <tbrownaw@gmail.com>
 
 	* contrib/monoprof.sh: Add lcad test.
