@@ -1,14 +1,20 @@
 monotone (0.19-1) unstable; urgency=low
 
-  * New upstream release
+  * New upstream release.
+  * Closes: #304935: apt-cache search revision fails to print a
+    reference to 'monotone'
+  * Closes: #305687: Duplicate sentence in monotone.info
+  * Closes: #305688: Spelling mistake in package description.
+  * Closes: #308076: v0.19 is out
 
- -- nathaniel smith <njs@pobox.com>  Tue, 03 May 2005 00:33:14 -0700
+ -- Tomas Fasth <tomfa@debian.org>  Sat,  7 May 2005 22:03:48 +0000
 
 monotone (0.18-1) unstable; urgency=low
 
-  * New upstream release
+  * New upstream release.
+  * First upload to Debian Archives.
 
- -- nathaniel smith <njs@pobox.com>  Sat, 09 Apr 2005 12:47:41 -0700
+ -- Tomas Fasth <tomfa@debian.org>  Tue, 12 Apr 2005 13:28:25 +0000
 
 monotone (0.17-1) unstable; urgency=low
 

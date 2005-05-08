@@ -1,15 +1,15 @@
 Source: monotone
 Section: devel
 Priority: optional
-Maintainer: graydon hoare <graydon@pobox.com>
-Build-Depends: debhelper (>> 4.0.0), libboost-dev (>= 1.30.2), libboost-regex-dev (>= 1.30.2), libboost-date-time-dev (>= 1.30.2), libboost-test-dev (>= 1.30.2), libboost-filesystem-dev (>= 1.31.0)
-Standards-Version: 3.5.9
+Maintainer: Tomas Fasth <tomfa@debian.org>
+Build-Depends: debhelper (>= 4.0.0), autotools-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-regex-dev, libboost-test-dev, libboost-dev, g++, libpopt-dev, liblua50-dev, liblualib50-dev, libsqlite3-dev
+Standards-Version: 3.6.1
 
 Package: monotone
 Architecture: any
-Depends: ${shlibs:Depends} ${misc:Depends}
-Description: a distributed version control system
- monotone is a free, distributed version control system. it provides
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A distributed version (revision) control system
+ Monotone is a free, distributed version control system. It provides
  fully disconnected operation, manages complete tree versions, keeps
  its state in a local transactional database, supports overlapping
  branches and extensible metadata, exchanges work over plain network

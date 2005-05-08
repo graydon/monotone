@@ -1,4 +1,8 @@
+ABOUT-NLS
+AUTHORS
+COPYING
 NEWS
 README
-html
-contrib
+README.changesets
+UPGRADE
+monotone.html
