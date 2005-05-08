@@ -1,5 +1,17 @@
 2005-05-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* lua.cc (report_error, load{file,string}): New member functions.
+	Error handling in call moved into report_error.
+	(call): Call report_error.
+	(run_{file,string}): Call load{file,string} member functions to
+	load Lua code into the VM.  Allows us to report syntax errors when
+	loading rc files.
+	* testsuite.at: test_hooks.lua was calling nonexistent (obsolete)
+	strfind function and failing silently.  The improved error
+	reporting from Lua caught this and cause testsuite failures.
+
+2005-05-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* monotone.1: Document --pid-file option.  Also make some minor
 	spelling and punctuation fixes.
 

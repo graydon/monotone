@@ -118,8 +118,8 @@ function get_author(branchname)
 end
 
 function ignore_file(name)
-	if (strfind(name, "test_hooks.lua")) then return true end
-	if (strfind(name, "test.db")) then return true end
+	if (string.find(name, "test_hooks.lua")) then return true end
+	if (string.find(name, "test.db")) then return true end
 	return false
 end
 

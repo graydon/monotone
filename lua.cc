@@ -8,6 +8,7 @@
 extern "C" {
 #include <lua.h>
 #include <lualib.h>
+#include <lauxlib.h>
 }
 
 #include <errno.h>
@@ -216,6 +217,15 @@ Lua
   bool ok() 
   { 
     return !failed; 
+  }
+
+  void report_error()
+  {
+    I(lua_isstring(st, -1));
+    string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
+    W(F("%s\n") % err);
+    lua_pop(st, 1);
+    failed = true;
   }
  
   // getters
@@ -453,11 +463,7 @@ Lua
     I(lua_checkstack (st, out));
     if (lua_pcall(st, in, out, 0) != 0)
       { 
-        I(lua_isstring (st, -1));
-        string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
-        L(F("lua pcall() failed: %s\n") % err); 
-        lua_pop(st, 1); 
-        failed = true; 
+        report_error();
       } 
     return *this; 
   }
@@ -492,6 +498,29 @@ Lua
     return *this;
   }
 
+  Lua & loadstring(string const & str)
+  {
+    if (!failed)
+      {
+        if (luaL_loadbuffer(st, str.c_str(), str.size(), "<internal>"))
+          {
+            report_error();
+          }
+      }
+    return *this;
+  }
+
+  Lua & loadfile(string const & filename)
+  {
+    if (!failed)
+      {
+        if (luaL_loadfile(st, filename.c_str()))
+          {
+            report_error();
+          }
+      }
+    return *this;
+  }
 };
 
 std::set<string> Lua::missing_functions;
@@ -502,10 +531,8 @@ run_string(lua_State * st, string const &str)
   I(st);
   return 
     Lua(st)
-    .func("loadstring")
-    .push_str(str)
-    .call(1,1)
-    .call(0,0)
+    .loadstring(str)
+    .call(0,1)
     .ok();
 }
 
@@ -515,10 +542,8 @@ run_file(lua_State * st, string const &filename)
   I(st);
   return 
     Lua(st)
-    .func("loadfile")
-    .push_str(filename)
-    .call(1,1)
-    .call(0,0)
+    .loadfile(filename)
+    .call(0,1)
     .ok();
 }
 
