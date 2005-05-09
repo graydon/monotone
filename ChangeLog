@@ -1,5 +1,11 @@
 2005-05-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* lua.cc (loadstring, run_string): New parameter to identify the
+	source of the Lua string being loaded.
+	(add_{std,test}_hooks, load_rcfile): Pass an identity through.
+
+2005-05-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* monotone.cc: Absolutify and tilde expand pid file.
 
 2005-05-09  Matthew Gregan  <kinetik@orcon.net.nz>

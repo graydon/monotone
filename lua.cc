@@ -498,11 +498,11 @@ Lua
     return *this;
   }
 
-  Lua & loadstring(string const & str)
+  Lua & loadstring(string const & str, string const & identity)
   {
     if (!failed)
       {
-        if (luaL_loadbuffer(st, str.c_str(), str.size(), "<internal>"))
+        if (luaL_loadbuffer(st, str.c_str(), str.size(), identity.c_str()))
           {
             report_error();
           }
@@ -526,12 +526,12 @@ Lua
 std::set<string> Lua::missing_functions;
 
 static bool 
-run_string(lua_State * st, string const &str)
+run_string(lua_State * st, string const &str, string const & identity)
 {
   I(st);
   return 
     Lua(st)
-    .loadstring(str)
+    .loadstring(str, identity)
     .call(0,1)
     .ok();
 }
@@ -552,7 +552,7 @@ run_file(lua_State * st, string const &filename)
 void 
 lua_hooks::add_test_hooks()
 {
-  if (!run_string(st, test_hooks_constant))
+  if (!run_string(st, test_hooks_constant, string("<test hooks>")))
     throw oops("lua error while setting up testing hooks");
 }
 #endif
@@ -560,7 +560,7 @@ lua_hooks::add_test_hooks()
 void 
 lua_hooks::add_std_hooks()
 {
-  if (!run_string(st, std_hooks_constant))
+  if (!run_string(st, std_hooks_constant, string("<std hooks>")))
     throw oops("lua error while setting up standard hooks");
 }
 
@@ -584,7 +584,7 @@ lua_hooks::load_rcfile(utf8 const & rc)
   data dat;
   L(F("opening rcfile '%s' ...\n") % rc);
   read_data_for_command_line(rc, dat);
-  N(run_string(st, dat()),
+  N(run_string(st, dat(), rc().c_str()),
     F("lua error while loading rcfile '%s'") % rc);
   L(F("'%s' is ok\n") % rc);
 }
