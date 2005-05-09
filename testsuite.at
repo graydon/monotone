@@ -334,32 +334,55 @@ m4_define([MONOTONE2], MONOTONE --db=test2.db)
 m4_define([MONOTONE3], MONOTONE --db=test3.db)
 
 m4_define([NETSYNC_KILL], [
-if test "$OSTYPE" == "msys"; then
-  ps |awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill " $a);}'
-  # MinGW has no killall.  The weird a=1 thing is to avoid autotest treating $1 as its own parameter
-else
-  killall monotone 2>/dev/null
+# kill last seen pid if there is no pid file (needed for cases where
+# NETSYNC_KILL{,HARD} is used more than once on a single process.
+if test -e monotone_at.pid; then
+       mt_pid=`cat monotone_at.pid`
 fi
+if test "$OSTYPE" == "msys"; then
+  # we can't use MingW's kill because it can't target Win32 pids.
+  pskill=`which pskill`
+  if test $pskill && test -x $pskill; then
+    $pskill $mt_pid 2>/dev/null
+  else
+    ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill " $a);}'
+  fi
+else
+  kill $mt_pid 2>/dev/null
+fi
+rm -f monotone_at.pid 2>/dev/null
 ])
 m4_define([NETSYNC_KILLHARD], [
-if test "$OSTYPE" == "msys"; then
-  ps |awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL " $a);}'
-else
-  killall -KILL monotone 2>/dev/null
+# kill last seen pid if there is no pid file (needed for cases where
+# NETSYNC_KILL{,HARD} is used more than once on a single process.
+if test -e monotone_at.pid; then
+       mt_pid=`cat monotone_at.pid`
 fi
+if test "$OSTYPE" == "msys"; then
+  # we can't use MingW's kill because it can't target Win32 pids.
+  pskill=`which pskill`
+  if test $pskill && test -x $pskill; then
+    $pskill $mt_pid 2>/dev/null
+  else
+    ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL" $a);}'
+  fi
+else
+  kill -KILL $mt_pid 2>/dev/null
+fi
+rm -f monotone_at.pid 2>/dev/null
 ])
 
 # run as NETSYNC_SERVE_N_START(2|3, collection name)
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MONOTONE --db=test$1.db --rcfile=netsync.lua serve localhost:$_PORT $2 &
+MONOTONE --db=test$1.db --rcfile=netsync.lua --pid-file=monotone_at.pid serve localhost:$_PORT $2 &
 sleep 4
 ])
 # run as NETSYNC_SERVE_START(collection name)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MONOTONE --rcfile=netsync.lua serve localhost:$_PORT $1 &
+MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve localhost:$_PORT $1 &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
