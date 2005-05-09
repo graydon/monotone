@@ -1,5 +1,9 @@
 2005-05-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* monotone.cc: Absolutify and tilde expand pid file.
+
+2005-05-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* testsuite.at: Revert bogus changes committed in revision 9d478.
 
 2005-05-09  Matt Johnston  <matt@ucc.asn.au>

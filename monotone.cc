@@ -350,7 +350,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_PIDFILE:
-              app.set_pidfile(string(argstr));
+              app.set_pidfile(absolutify(tilde_expand(string(argstr))));
               break;
 
             case OPT_ARGFILE:
