@@ -1,3 +1,8 @@
+2005-05-09  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (pid_file): use fs::path .empty() rather than ==, since
+	boost 1.31 doesn't seem to have the latter.
+
 2005-05-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* lua.cc (report_error, load{file,string}): New member functions.

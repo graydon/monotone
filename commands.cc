@@ -281,7 +281,7 @@ struct pid_file
   explicit pid_file(fs::path const & p)
     : path(p)
   {
-    if (path == "")
+    if (path.empty())
       return;
     N(!fs::exists(path), F("pid file '%s' already exists") % path.string());
     file.open(path);
@@ -291,7 +291,7 @@ struct pid_file
 
   ~pid_file()
   {
-    if (path == "")
+    if (path.empty())
       return;
     pid_t pid;
     fs::ifstream(path) >> pid;
