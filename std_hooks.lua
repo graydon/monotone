@@ -232,6 +232,31 @@ function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path,
    end
 end
    
+function merge2_kdiff3_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
+   return 
+   function()
+      return execute("kdiff3", 
+                     "--L1", left_path,
+                     "--L2", right_path,
+                     lfile, rfile, 
+                     "-o", outfile)
+   end
+end
+
+function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path, 
+                           lfile, afile, rfile, outfile)
+   return 
+   function()
+      return execute("kdiff3", 
+                     "--L1", anc_path,
+                     "--L2", left_path,
+                     "--L3", right_path,
+                     afile, lfile, rfile, 
+                     "--merge", 
+                     "--o", outfile)
+   end
+end
+
 function write_to_temporary_file(data)
    tmp, filename = temp_file()
    if (tmp == nil) then 
@@ -272,7 +297,10 @@ function merge2(left_path, right_path, merged_path, left, right)
       outfile ~= nil 
    then 
       local cmd = nil
-      if program_exists_in_path("meld") then
+      if program_exists_in_path("kdiff3") then
+         cmd = merge2_kdiff3_cmd(left_path, right_path, merged_path, 
+                                 lfile, rfile, outfile)
+      elseif program_exists_in_path("meld") then
          meld_exists = true
          io.write(string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n" .. 
                                 "You should merge all changes to *LEFT* file due to limitation of program\n" ..
@@ -335,7 +363,10 @@ function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, ri
       outfile ~= nil 
    then 
       local cmd = nil
-      if program_exists_in_path("meld") then
+      if program_exists_in_path("kdiff3") then
+         cmd = merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path, 
+                                 lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("meld") then
          meld_exists = true
          io.write(string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n" .. 
                                 "You should merge all changes to *CENTER* file due to limitation of program\n" ..

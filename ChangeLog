@@ -9,6 +9,15 @@
 
 	* ui.cc: Make tick_write_count take less horizontal space
 
+2005-05-09  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Give Riccardo his real name.
+	* ChangeLog: Likewise.
+
+2005-05-09  Riccardo Ghetta <birrachiara@tin.it>
+	
+	* std_hooks.lua: Support kdiff3.
+
 2005-05-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* lua.cc (loadstring, run_string): New parameter to identify the
