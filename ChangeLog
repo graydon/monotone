@@ -1,4 +1,9 @@
-2005-05-09  rghetta <birrachiara@tin.it>
+2005-05-09  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Give Riccardo his real name.
+	* ChangeLog: Likewise.
+
+2005-05-09  Riccardo Ghetta <birrachiara@tin.it>
 	
 	* std_hooks.lua: Support kdiff3.
 	
@@ -232,7 +237,7 @@
 
 	* monotone.texi: Document the change in 'monotone log'.
 
-2005-05-01  rghetta <birrachiara@tin.it>
+2005-05-01  Riccardo Ghetta <birrachiara@tin.it>
 
 	* commands.cc (CMD(log)): Use --revision.
 
