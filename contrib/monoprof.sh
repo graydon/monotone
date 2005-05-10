@@ -250,7 +250,7 @@ if [ ${UPDATE} = "true" ] ; then
 	monotone update
 fi
 if [ ${BUILD} = "true" ] ; then
-	make || ( echo -e "Build failed.\nNot profiling." >2 ; exit 1 )
+	make || ( echo -e "Build failed.\nNot profiling." >&2 ; exit 1 )
 fi
 popd
 
