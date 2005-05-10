@@ -1,5 +1,12 @@
 2005-05-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* packet.{cc,hh}: Give packet_consumer and children a callback to call
+	after writing out a revision.
+	* netsync.cc: Use this callback to add a "revisions written" ticker,
+	to provide user feedback while sanity checking.
+
+2005-05-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* ui.cc: Make tick_write_count take less horizontal space
 
 2005-05-09  Matthew Gregan  <kinetik@orcon.net.nz>

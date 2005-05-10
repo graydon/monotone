@@ -12,6 +12,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 #include "app_state.hh"
 #include "cert.hh"
@@ -233,6 +234,7 @@ session
   auto_ptr<ticker> cert_out_ticker;
   auto_ptr<ticker> revision_in_ticker;
   auto_ptr<ticker> revision_out_ticker;
+  auto_ptr<ticker> revision_checked_ticker;
 
   map< std::pair<utf8, netcmd_item_type>, 
        boost::shared_ptr<merkle_table> > merkle_tables;
@@ -260,6 +262,8 @@ session
           Netxx::Timeout const & to);
 
   virtual ~session() {}
+  
+  void rev_written_callback();
 
   id mk_nonce();
   void mark_recent_io();
@@ -433,6 +437,7 @@ session::session(protocol_role role,
   cert_out_ticker(NULL),
   revision_in_ticker(NULL),
   revision_out_ticker(NULL),
+  revision_checked_ticker(NULL),
   analyzed_ancestry(false),
   saved_nonce(""),
   received_goodbye(false),
@@ -447,6 +452,9 @@ session::session(protocol_role role,
       this->collection = idx(collections, 0);
     }
     
+  dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
+                                          this));
+  
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
   bool request_blocking_rng = false;
@@ -476,6 +484,11 @@ session::session(protocol_role role,
     {
       rebuild_merkle_trees(app, *i);
     }
+}
+
+void session::rev_written_callback()
+{
+  if(revision_checked_ticker.get()) ++(*revision_checked_ticker);
 }
 
 id 
@@ -2887,6 +2900,7 @@ call_server(protocol_role role,
   sess.byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
   if (role == sink_role)
     {
+      sess.revision_checked_ticker.reset(new ticker("revs written", "w", 1));
       sess.cert_in_ticker.reset(new ticker("certs in", "c", 3));
       sess.revision_in_ticker.reset(new ticker("revs in", "r", 1));
     }
@@ -2898,6 +2912,7 @@ call_server(protocol_role role,
   else
     {
       I(role == source_and_sink_role);
+      sess.revision_checked_ticker.reset(new ticker("revs written", "w", 1));
       sess.revision_in_ticker.reset(new ticker("revs in", "r", 1));
       sess.revision_out_ticker.reset(new ticker("revs out", "R", 1));
     }
