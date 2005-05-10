@@ -332,8 +332,8 @@ expand_dominators(std::map<ctx, shared_bitmap> & parents,
   nodes.reserve(dominators.size());
 
   // pass 1, pull out all the node numbers we're going to scan this time around
-  for (std::map<ctx, shared_bitmap>::const_iterator e = dominators.begin(); 
-       e != dominators.end(); ++e)
+  for (std::map<ctx, shared_bitmap>::reverse_iterator e = dominators.rbegin(); 
+       e != dominators.rend(); ++e)
     nodes.push_back(e->first);
   
   // pass 2, update any of the dominator entries we can
@@ -398,8 +398,8 @@ expand_ancestors(std::map<ctx, shared_bitmap> & parents,
   nodes.reserve(ancestors.size());
 
   // pass 1, pull out all the node numbers we're going to scan this time around
-  for (std::map<ctx, shared_bitmap>::const_iterator e = ancestors.begin(); 
-       e != ancestors.end(); ++e)
+  for (std::map<ctx, shared_bitmap>::reverse_iterator e = ancestors.rbegin(); 
+       e != ancestors.rend(); ++e)
     nodes.push_back(e->first);
   
   // pass 2, update any of the ancestor entries we can

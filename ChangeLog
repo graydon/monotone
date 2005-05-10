@@ -1,5 +1,11 @@
 2005-05-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* revision.cc: Make expand_{ancestors,dominators} twice as fast.
+	Loop over revisions in the other direction so that changes at the
+	frontier propogate fully in 1 pass, instead of one level at a time.
+
+2005-05-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* packet.{cc,hh}: Give packet_consumer and children a callback to call
 	after writing out a revision.
 	* netsync.cc: Use this callback to add a "revisions written" ticker,
