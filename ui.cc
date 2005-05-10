@@ -80,15 +80,36 @@ tick_write_count::~tick_write_count()
 
 void tick_write_count::write_ticks()
 {
-  string tickline = "\rmonotone:";
+  string tickline1, tickline2;
+  bool first_tick = true;
+
+  tickline1 = "monotone: ";
+  tickline2 = "\rmonotone:";
+  
+  unsigned int width;
+  unsigned int minwidth = 7;
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
-      string suffix;
-      ostringstream disptick;
+      width = 1 + i->second->name.size();
+      if (!first_tick)
+        {
+          tickline1 += " | ";
+          tickline2 += " |";
+        }
+      first_tick = false;
+      if(i->second->name.size() < minwidth)
+        {
+          tickline1.append(minwidth - i->second->name.size(),' ');
+          width += minwidth - i->second->name.size();
+        }
+      tickline1 += i->second->name;
+      
+      string count;
       if (i->second->kilocount && i->second->ticks >= 10000)
         { // automatic unit conversion is enabled
           float div;
+          string suffix;
           if (i->second->ticks >= 1048576) {
           // ticks >=1MB, use Mb
             div = 1048576;
@@ -98,34 +119,49 @@ void tick_write_count::write_ticks()
             div = 1024;
             suffix = "k";
           }
-          disptick << std::fixed << std::setprecision(1) <<
-              (i->second->ticks / div);
-        } else {
-          // no automatic unit conversion.
-          disptick << i->second->ticks;
+          count = (F("%.1f%s") % (i->second->ticks / div) % suffix).str();
         }
-      tickline +=
-        string(" [")
-        + i->first + ": " + disptick.str()
-        + suffix
-        + "]";
+      else
+        {
+          count = (F("%d") % i->second->ticks).str();
+        }
+        
+      if(count.size() < width)
+        {
+          tickline2.append(width-count.size(),' ');
+        }
+      else if(count.size() > width)
+        {
+          count = count.substr(count.size() - width);
+        }
+      tickline2 += count;
     }
-  tickline += ui.tick_trailer;
 
-  size_t curr_sz = tickline.size();
+  tickline1 += ui.tick_trailer;
+  
+  size_t curr_sz = tickline2.size();
   if (curr_sz < last_tick_len)
-    tickline += string(last_tick_len - curr_sz, ' ');
+    tickline2.append(last_tick_len - curr_sz, ' ');
   last_tick_len = curr_sz;
 
   unsigned int tw = terminal_width();
-  if (tw && tickline.size() > tw)
+  if(!ui.last_write_was_a_tick)
+    {
+      if (tw && tickline1.size() > tw)
+        {
+          // first character in tickline is "\r", which does not take up any
+          // width, so we add 1 to compensate.
+          tickline1.resize(tw + 1);
+        }
+      clog << tickline1 << "\n";
+    }
+  if (tw && tickline2.size() > tw)
     {
       // first character in tickline is "\r", which does not take up any
       // width, so we add 1 to compensate.
-      tickline.resize(tw + 1);
+      tickline2.resize(tw + 1);
     }
-
-  clog << tickline;
+  clog << tickline2;
   clog.flush();
 }
 
