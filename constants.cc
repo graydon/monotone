@@ -35,7 +35,7 @@ namespace constants
   size_t const maxpasswd = 0xfff;
 
   // number of bytes to use in buffers, for buffered i/o operations
-  size_t const bufsz = 0xfff;
+  size_t const bufsz = 0x3ffff;
 
   // size of a line of database traffic logging, beyond which lines will be
   // truncated.
