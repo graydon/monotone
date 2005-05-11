@@ -9,6 +9,8 @@
 #include <iosfwd>
 #include <memory>
 
+#include <boost/function.hpp>
+
 #include "app_state.hh"
 #include "ui.hh"
 #include "vocab.hh"
@@ -34,6 +36,12 @@
 
 struct packet_consumer
 {
+protected:
+  boost::function0<void> on_revision_written;
+public:
+  
+  virtual void set_on_revision_written(boost::function0<void> const & x);
+  
   virtual ~packet_consumer() {}
   virtual void consume_file_data(file_id const & ident, 
                                  file_data const & dat) = 0;
@@ -154,6 +162,7 @@ public:
   packet_db_valve(app_state & app,
                   bool take_keys = false);
   virtual ~packet_db_valve();
+  virtual void set_on_revision_written(boost::function0<void> const & x);
   virtual void consume_file_data(file_id const & ident, 
                                  file_data const & dat);
   virtual void consume_file_delta(file_id const & id_old, 
