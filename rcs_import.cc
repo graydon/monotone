@@ -189,6 +189,19 @@ cvs_state
   map< cvs_key, shared_ptr<cvs_state> > substates;
 };
 
+struct
+branch_point
+{
+  branch_point() {}
+  branch_point(cvs_key const & k,
+               shared_ptr<cvs_state> const & s,
+               size_t l)
+               : key(k), state(s), rev_comp_len(l) {}
+  cvs_key key;
+  shared_ptr<cvs_state> state;
+  size_t rev_comp_len;
+};
+
 struct 
 cvs_history
 {
@@ -209,9 +222,7 @@ cvs_history
 
   typedef stack< shared_ptr<cvs_state> > state_stack;
 
-  map<unsigned long, 
-      pair<cvs_key, 
-           shared_ptr<cvs_state> > > branchpoints;
+  map<unsigned long, branch_point> branchpoints;
 
   state_stack stk;
   file_path curr_file;
@@ -235,7 +246,7 @@ cvs_history
   void find_branchpoint(rcs_file const & r,
                         string const & branchpoint_version,
                         string const & first_branch_version,
-                        shared_ptr<cvs_state> & branchpoint);
+                        shared_ptr<cvs_state> & bp_state);
   void pop_branch();
 };
 
@@ -662,6 +673,17 @@ cvs_file_edge::cvs_file_edge (file_id const & pv, file_path const & pp, bool pl,
 {
 }
 
+static void
+version_to_components(string const & version,
+                      vector<string> & components)
+{
+  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  boost::char_separator<char> sep(".");
+  tokenizer tokens(version, sep);
+
+  components.clear();
+  copy(tokens.begin(), tokens.end(), back_inserter(components));
+}
 
 static string 
 find_branch_for_version(multimap<string,string> const & symbols,
@@ -669,14 +691,11 @@ find_branch_for_version(multimap<string,string> const & symbols,
                         string const & base)
 {
   typedef multimap<string,string>::const_iterator ity;
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
   L(F("looking up branch name for %s\n") % version);
 
-  boost::char_separator<char> sep(".");
-  tokenizer tokens(version, sep);
   vector<string> components;
-  copy(tokens.begin(), tokens.end(), back_inserter(components));
+  version_to_components(version, components);
 
   if (components.size() < 4)
     {
@@ -844,10 +863,10 @@ void
 cvs_history::find_branchpoint(rcs_file const & r,
                               string const & branchpoint_version,
                               string const & first_branch_version,
-                              shared_ptr<cvs_state> & branchpoint)
+                              shared_ptr<cvs_state> & bp_state)
 {
   cvs_key k; 
-  I(find_key_and_state(r, branchpoint_version, k, branchpoint));
+  I(find_key_and_state(r, branchpoint_version, k, bp_state));
 
   string branch_name = find_branch_for_version(r.admin.symbols, 
                                                first_branch_version, 
@@ -855,9 +874,13 @@ cvs_history::find_branchpoint(rcs_file const & r,
 
   unsigned long branch = branch_interner.intern(branch_name);
     
-  map<unsigned long, 
-    pair<cvs_key, shared_ptr<cvs_state> > >::const_iterator i 
+  map<unsigned long, branch_point>::const_iterator i 
     = branchpoints.find(branch);
+
+  vector<string> new_components;
+  version_to_components(branchpoint_version, new_components);
+  size_t newlen = new_components.size();
+
 
   if (i == branchpoints.end())
     {
@@ -865,23 +888,30 @@ cvs_history::find_branchpoint(rcs_file const & r,
       L(F("beginning branch %s at %s : %s\n")
         % branch_name % curr_file % branchpoint_version);
       branchpoints.insert(make_pair(branch, 
-                                    make_pair(k, branchpoint)));
+                                    branch_point(k, bp_state, newlen)));
     }
   else
     {
+      // if this version comes off the main trunk, but the previous branchpoint
+      // version comes off a branch (such as an import 1.1.1.1), then we want
+      // to take the one closest to the trunk. 
+      // TODO perhaps we need to reconsider branching in general for cvs_import,
+      // this is pretty much just a workaround for 1.1<->1.1.1.1 equivalence
+
       // take the earlier of the new key and the existing branchpoint
-      if (k.time < i->second.first.time)
+      if ((k.time < i->second.key.time && newlen <= i->second.rev_comp_len)
+              || newlen < i->second.rev_comp_len)
         {
           L(F("moving branch %s back to %s : %s\n")
             % branch_name % curr_file % branchpoint_version);
-          shared_ptr<cvs_state> old = i->second.second;
+          shared_ptr<cvs_state> old = i->second.state;
           set<cvs_key> moved;
           for (map< cvs_key, shared_ptr<cvs_state> >::const_iterator j = 
                  old->substates.begin(); j != old->substates.end(); ++j)
             {
               if (j->first.branch == branch)
                 {
-                  branchpoint->substates.insert(*j);
+                  bp_state->substates.insert(*j);
                   moved.insert(j->first);
                 }
             }
@@ -890,13 +920,13 @@ cvs_history::find_branchpoint(rcs_file const & r,
             {
               old->substates.erase(*j);
             }
-          branchpoints[branch] = make_pair(k, branchpoint);
+          branchpoints[branch] = branch_point(k, bp_state, newlen);
         }
       else
         {
           L(F("using existing branchpoint for %s at %s : %s\n")
             % branch_name % curr_file % branchpoint_version);
-          branchpoint = i->second.second;
+          bp_state = i->second.state;
         }
     }
 }
@@ -906,11 +936,11 @@ cvs_history::push_branch(rcs_file const & r,
                          string const & branchpoint_version,
                          string const & first_branch_version) 
 {      
-  shared_ptr<cvs_state> branchpoint;
+  shared_ptr<cvs_state> bp_state;
   I(stk.size() > 0);
   find_branchpoint(r, branchpoint_version, 
-                   first_branch_version, branchpoint);
-  stk.push(branchpoint);
+                   first_branch_version, bp_state);
+  stk.push(bp_state);
 }
 
 void 
