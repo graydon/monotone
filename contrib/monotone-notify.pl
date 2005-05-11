@@ -309,7 +309,7 @@ if ($mail || $debug) {
 		    my %revision_branches =
 			map { (split ' ')[1] => 1 }
 			    grep /^Branch:/, @{$revision_data{$revision}};
-		    my_debug("Checking if $revision's ancestor have already been shown (probably).");
+		    my_debug("Checking if ${revision}'s ancestor have already been shown (probably).");
 		    foreach (@ancestors) {
 			if (!revision_is_in_branch($_,
 						   { %branches,
@@ -625,10 +625,10 @@ sub my_system
 {
     my $command = shift @_;
 
-    my_debug("'$command'\n");
+    my_debug("'${command}'\n");
     my $return = system($command);
     my $exit = $? >> 8;
-    die "'$command' returned with exit code $exit\n" if ($exit);
+    die "'${command}' returned with exit code $exit\n" if ($exit);
     return $return;
 }
 
@@ -642,11 +642,11 @@ sub my_conditional_system
     my $command = shift @_;
     my $return = 0;		# exit code for 'true'
 
-    my_debug("'$command'\n");
+    my_debug("'${command}'\n");
     if ($condition) {
 	$return = system($command);
 	my $exit = $? >> 8;
-	die "'$command' returned with exit code $exit\n" if ($exit);
+	die "'${command}' returned with exit code $exit\n" if ($exit);
     } else {
 	my_debug("... not actually executed.\n");
     }
@@ -675,7 +675,7 @@ sub my_backtick
     my $exit = $? >> 8;
     if ($exit) {
 	my_debug(map { "> ".$_ } @ return);
-	die "'$command' returned with exit code $exit\n";
+	die "'${command}' returned with exit code $exit\n";
     }
     return @return;
 }

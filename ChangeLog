@@ -1,3 +1,8 @@
+2005-05-11  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify.pl: Change all occurences of $symbol' to
+	${symbol}' to avoid a confusing Perl warning.
+
 2005-05-11  Joel Reed  <joelwreed@comcast.com>
 
 	* contrib/monotone.zsh_completion: add zsh completion contrib.
