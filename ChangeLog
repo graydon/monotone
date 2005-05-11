@@ -1,3 +1,7 @@
+2005-05-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* work.cc (build_deletions): Disable delete_dir.
+
 2005-05-09  Nathaniel Smith  <njs@codesourcery.com>
 
 	* AUTHORS: Give Riccardo his real name.

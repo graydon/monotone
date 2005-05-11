@@ -214,8 +214,8 @@ build_deletions(vector<file_path> const & paths,
 
       if (dir_p) 
         {
-          W(F("SORRY -- 'drop somedir' is not going to work.\n"));
-          W(F("Revert and try 'find somedir -type f | xargs monotone drop'\n"));
+          E(false, F("sorry -- 'drop <directory>' is currently broken.\n"
+                     "try 'find %s -type f | monotone drop -@-'\n") % (*i));
           pr_new.deleted_dirs.insert(*i);
         }
       else 
