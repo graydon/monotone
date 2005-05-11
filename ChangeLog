@@ -1,3 +1,8 @@
+2005-05-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* rcs_import.cc (find_branchpoint): if a branch is derived from two 
+	differing parent branches, take the one closest to the trunk.
+
 2005-05-09  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc (pid_file): use fs::path .empty() rather than ==, since
