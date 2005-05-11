@@ -1,4 +1,12 @@
-2005-05-06 Timothy Brownawell <tbrownaw@gmail.com>
+2005-05-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* revision.cc (expand_dominators): Fix bitmap size-matching.
+		(find_common_ancestor_for_merge): Do not wait for ancestors
+		to be expanded to the beginning of time before expanding
+		dominators. Requires above fix for correct behavior.
+	* ChangeLog: Fix date on previous entry.
+
+2005-05-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/monoprof.sh: Add profiling test for "netsync large file".
 		Add options to only run specific profile tests.
