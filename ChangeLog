@@ -1,3 +1,8 @@
+2005-05-11  Stanislav Karchebny <stanislav.karchebny@skype.net>
+
+	* contrib/monotone-notify.pl: 'monotone log' takes a revision
+	through the --revision= option.
+
 2005-05-11  Richard Levitte  <richard@levitte.org>
 
 	* contrib/monotone-notify.pl: Change all occurences of $symbol' to

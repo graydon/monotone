@@ -266,7 +266,7 @@ if ($mail || $debug) {
     foreach my $revision (keys %revisions) {
 	$revision_data{$revision} =
 	    [ map { chomp; $_ }
-	      my_backtick("monotone$database log --depth=1 $revision") ];
+	      my_backtick("monotone$database log --depth=1 --revision=$revision") ];
 	my $date = (split(' ', (grep(/^Date:/, @{$revision_data{$revision}}))[0]))[1];
 
 	if (defined $before && $date ge $before) {
