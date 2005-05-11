@@ -1,8 +1,14 @@
 2005-05-11  Matt Johnston  <matt@ucc.asn.au>
 
+	* tests/t_add_intermediate_MT_path.at: remove the drop dir part
+	* tests/t_delete_dir.at: add a note about re-enabling the above test
+	* tests/t_cvsimport3.at: ignore stderr
+
+2005-05-11  Matt Johnston  <matt@ucc.asn.au>
+
 	* rcs_import.cc (find_branchpoint): if a branch is derived from two 
 	differing parent branches, take the one closest to the trunk.
-	* t_cvsimport3.at: add a test for cvs_importing where branches
+	* tests/t_cvsimport3.at: add a test for cvs_importing where branches
 	come off a vendor import.
 	* testsuite.at: add it
 

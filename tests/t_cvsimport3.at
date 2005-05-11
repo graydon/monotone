@@ -84,7 +84,7 @@ AT_CHECK(cp changelog.3 testsrc/changelog)
 AT_CHECK(cvs -d $CVSROOT commit -m 'commit on branch' testsrc, [], [ignore], [ignore])
 
 # and create some mainline changes after the branch
-AT_CHECK(cvs -d $CVSROOT up -A testsrc, [], [ignore])
+AT_CHECK(cvs -d $CVSROOT up -A testsrc, [], [ignore], [ignore])
 AT_CHECK(cp changelog.2 testsrc/changelog)
 AT_CHECK(cvs -d $CVSROOT commit -m 'commit on mainline after branch' testsrc, [], [ignore], [ignore])
 

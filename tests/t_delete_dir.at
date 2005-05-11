@@ -2,6 +2,8 @@ AT_SETUP([(imp) deleting directories])
 MONOTONE_SETUP
 
 # This test is a bug report
+# TODO: when this is fixed, re-enabled the drop dir part of 
+# t_add_intermediate_MT_path.at
 AT_XFAIL_IF(true)
 
 # Directory deletion is currently completely broken.
