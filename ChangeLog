@@ -2,6 +2,9 @@
 
 	* rcs_import.cc (find_branchpoint): if a branch is derived from two 
 	differing parent branches, take the one closest to the trunk.
+	* t_cvsimport3.at: add a test for cvs_importing where branches
+	come off a vendor import.
+	* testsuite.at: add it
 
 2005-05-09  Matt Johnston  <matt@ucc.asn.au>
 
