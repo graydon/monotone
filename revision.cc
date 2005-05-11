@@ -363,11 +363,11 @@ expand_dominators(std::map<ctx, shared_bitmap> & parents,
                                              shared_bitmap(new bitmap())));
           shared_bitmap pbits = dominators[parent];
 
-          if (bits->size() > pbits->size())
-            pbits->resize(bits->size());
+          if (intersection.size() > pbits->size())
+            pbits->resize(intersection.size());
 
-          if (pbits->size() > bits->size())
-            bits->resize(pbits->size());
+          if (pbits->size() > intersection.size())
+            intersection.resize(pbits->size());
 
           if (first)
             {
@@ -378,6 +378,11 @@ expand_dominators(std::map<ctx, shared_bitmap> & parents,
             intersection &= (*pbits);
         }
 
+      if (intersection.size() > bits->size())
+        bits->resize(intersection.size());
+
+      if (bits->size() > intersection.size())
+        intersection.resize(bits->size());
       (*bits) |= intersection;
       if (*bits != saved)
         something_changed = true;
@@ -506,7 +511,7 @@ find_common_ancestor_for_merge(revision_id const & left,
   
   L(F("searching for common ancestor, left=%s right=%s\n") % left % right);
   
-  while (expand_ancestors(parents, ancestors, intern, app) ||
+  while (expand_ancestors(parents, ancestors, intern, app) |
          expand_dominators(parents, dominators, intern, app))
     {
       L(F("common ancestor scan [par=%d,anc=%d,dom=%d]\n") % 

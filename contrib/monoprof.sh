@@ -1,11 +1,20 @@
 #!/bin/bash
 #Timothy Brownawell
 
-#Arguments:
-#    --build       Rebuild monotone before profiling.
-#    --update      Run "monotone update" before building. Implies --build
-#    --pull        Run "monotone pull" before update. Implies --update, --build
-#    --append x    Append ".x" to the profile directory name
+print_help()
+{
+cat <<EOF
+Arguments: [flags ...] [testname ...]
+    --build       Rebuild monotone before profiling.
+    --update      Run "monotone update" before building. Implies --build
+    --pull        Run "monotone pull" before update. Implies --update, --build
+    --append x    Append ".x" to the profile directory name
+    --list        List available profile tests
+    --overwrite   Allow results to be placed in an already existing directory
+    --help        Print this message
+    testname      Only run selected profile tests
+EOF
+}
 
 #Bash script for profiling.
 #The user running this script must have sudo permission for opcontrol.
@@ -40,7 +49,7 @@ SUDO=/usr/bin/sudo
 
 #Full path of the debug c++ library to use.
 #You probably have to build this yourself, since your distro's packaged
-#debug library probably isn't optimized.
+#debug library probably isn't optimized (and so will give bogus profiles).
 #DBG_LIB=/usr/lib/debug/libstdc++.so
 DBG_LIB=/usr/local/src/gcc-3.3-3.3.5/gcc-3.3.5/libstdc++-v3/src/.libs/libstdc++.so.5.0.7
 
@@ -85,7 +94,9 @@ profend()
 }
 
 #Individual tests to run.
-#Each test or set of tests should clean up after itself.
+#Each test should clean up after itself.
+#Since which tests to run can now be specified on the command line,
+#all tests should be independent.
 
 TESTS="${TESTS} test_netsync"
 test_netsync()
@@ -93,11 +104,10 @@ test_netsync()
 	local TIME_SERVER=$(tempfile);
 	local TIME_CLIENT=$(tempfile);
 	local SHORTNAME="netsync"
-	echo "Pull (and serve) net.venge.monotone..."
+	local TESTNAME="Pull (and serve) net.venge.monotone"
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
 	cp ${DATADIR}/${MTDB}    ${DATADIR}/test-serve.db
-	${SUDO} opcontrol --reset
-	${SUDO} opcontrol --start 
+	profstart 
 	${TIME} -o ${TIME_SERVER} ${MONOTONE} --db=${DATADIR}/test-serve.db \
 		--ticker=none --quiet serve localhost net.venge.monotone &
 	sleep 5 #wait for server to be ready
@@ -106,21 +116,20 @@ test_netsync()
 	#If we kill the time process, we don't get our statistics.
 	kill $(ps -Af|grep 'monotone.*serve\ localhost' | \
 		grep -v time | awk '{print $2}')
+	#profend
 	opcontrol --dump
 	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
 	${SUDO} opcontrol --shutdown
 	hilights ${PDIR}/profile-${SHORTNAME} >${PDIR}/hilights-${SHORTNAME}
-	rm ${DATADIR}/test.db ${DATADIR}/test-serve.db
-	
-	echo "Serve net.venge.monotone :" >>${PDIR}/timing
+	echo -e "\nServe net.venge.monotone :" >>${PDIR}/timing
 	cat ${TIME_SERVER} >>${PDIR}/timing
 	echo -e "\nPull net.venge.monotone :" >>${PDIR}/timing
 	cat ${TIME_CLIENT} >>${PDIR}/timing
-	
 	rm ${TIME_SERVER} ${TIME_CLIENT}
+	
+	rm ${DATADIR}/test.db ${DATADIR}/test-serve.db
 }
 
-#The next 3 use the same working copy and database.
 TESTS="${TESTS} test_commit"
 test_commit()
 {
@@ -138,28 +147,20 @@ test_commit()
 		--db=${DATADIR}/test.db commit \
 		--message="Commit message."
 	profend
-}
-
-TESTS="${TESTS} test_minor_commit"
-test_minor_commit()
-{
-	local RUNTIME=$(tempfile)
-	local TESTNAME="Commit a small patch (${KPATCH}) to the kernel"
-	local SHORTNAME="commit"
+	
+	RUNTIME=$(tempfile)
+	TESTNAME="Commit a small patch (${KPATCH}) to the kernel"
+	SHORTNAME="commitpatch"
 	
 	bzip2 -dc ${DATADIR}/${KPATCH} | patch -p1 >/dev/null
 	profstart
 	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
 		--db=${DATADIR}/test.db commit --message="Commit #2"
 	profend
-}
-
-TESTS="${TESTS} test_unchanged_commit"
-test_unchanged_commit()
-{
-	local RUNTIME=$(tempfile)
-	local TESTNAME="Recommit the kernel without changes"
-	local SHORTNAME="commitsame"
+	
+	RUNTIME=$(tempfile)
+	TESTNAME="Recommit the kernel without changes"
+	SHORTNAME="commitsame"
 	
 	profstart
 	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
@@ -188,6 +189,62 @@ test_lcad()
 	rm ${DATADIR}/test.db
 }
 
+#Based on tests/t_netsync_largish_file.at
+TESTS="${TESTS} test_bigfile"
+test_bigfile()
+{
+	local TIME_SERVER=$(tempfile);
+	local TIME_CLIENT=$(tempfile);
+	local RUNTIME=$(tempfile)
+	local TESTNAME=""#"Netsync a big file."
+	local SHORTNAME=""#"bigfile"
+#setup:
+	pushd ${DATADIR}
+	cp ${EMPTYDB} test.db
+	cp ${EMPTYDB} test2.db
+	${MONOTONE} --db=test.db setup testdir
+	pushd testdir
+	awk -- 'BEGIN{srand(5253);for(a=0;a<32*1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish
+	${MONOTONE} add largish
+	
+	TESTNAME="Commit a big file"
+	SHORTNAME="bigfile-commit"
+	profstart
+	${MONOTONE} commit --branch=bigfile --message="log message" \
+		--db=${DATADIR}/test.db
+	profend
+	
+	TESTNAME="Netsync a big file"
+	SHORTNAME="bigfile-sync"
+	profstart
+#run:	
+	${TIME} -o ${TIME_SERVER} ${MONOTONE} --db=${DATADIR}/test.db \
+		--ticker=none --quiet serve localhost bigfile &
+	sleep 5 #wait for server to be ready
+	${TIME} -o ${TIME_CLIENT} ${MONOTONE} --db=${DATADIR}/test2.db \
+		pull localhost bigfile
+	#If we kill the time process, we don't get our statistics.
+	kill $(ps -Af|grep 'monotone.*serve\ localhost' | \
+		grep -v time | awk '{print $2}')
+
+	#profend
+	opcontrol --dump
+	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
+	${SUDO} opcontrol --shutdown
+	hilights ${PDIR}/profile-${SHORTNAME} >${PDIR}/hilights-${SHORTNAME}
+	echo -e "\nServe an uncompressible 32MB file :" >>${PDIR}/timing
+	cat ${TIME_SERVER} >>${PDIR}/timing
+	echo -e "\nPull an uncompressible 32MB file :" >>${PDIR}/timing
+	cat ${TIME_CLIENT} >>${PDIR}/timing
+	
+	rm ${TIME_SERVER} ${TIME_CLIENT}
+#cleanup:
+	popd
+	rm -rf testdir/
+	rm test.db test2.db
+	popd
+}
+
 #TESTS="${TESTS} test_name"
 #test_name()
 #{
@@ -207,13 +264,16 @@ test_lcad()
 run_tests()
 {
 	local PDIR=${PROFDIR}/${VERSION}${APPEND}
-	[ -d ${PDIR} ] && (echo "Already profiled this version.";
-		echo "If you've made changes since then, use --append" ;
-		echo "to place the new results in a new directory."; exit 1)
+	if [ -d ${PDIR} ] && [ ${OVERWRITE} = "false" ] ; then
+		echo "Already profiled this version." >&2
+		echo "If you've made changes since then use --append" >&2
+		echo "to place the new results in a new directory," >&2
+		echo "or specify --overwrite." >&2
+		exit 1
+	fi
 	mkdir -p ${PDIR}
 	export LD_PRELOAD=${DBG_LIB}
 	echo "Profiling..."
-	rm -f ${PDIR}/timing
 	${SUDO} opcontrol --separate=lib --callgraph=10 \
 		--image=${MONOTONE} --no-vmlinux
 	for i in ${TESTS}; do
@@ -221,7 +281,7 @@ run_tests()
 	done
 	chmod -R a+rX ${PDIR}
 	echo "Monotone version: ${VERSION}"
-	cat <(echo -e "Timing for each run:\n") ${PROFDIR}/${VERSION}$1/timing
+	cat <(echo -e "Timing for each run:") ${PROFDIR}/${VERSION}$1/timing
 }
 
 BEGINTIME=$(date +%s)
@@ -230,14 +290,19 @@ BUILD=false
 UPDATE=false
 PULL=false
 APPEND=""
+RESTRICT=""
+OVERWRITE=false
 
 while ! [ $# -eq 0 ] ; do
 	case "$1" in
-		--build) BUILD=true ;;
-		--update) UPDATE=true ; BUILD=true ;;
-		--pull) PULL=true ; UPDATE=true ; BUILD=true ;;
-		--append) shift; APPEND=".$1" ;;
-		*) ;;
+		--build) BUILD=true;;
+		--update) UPDATE=true; BUILD=true;;
+		--pull) PULL=true; UPDATE=true; BUILD=true;;
+		--append) shift; APPEND=".$1";;
+		--list) for i in ${TESTS}; do echo -e "\t$i"; done; exit 0;;
+		--overwrite) OVERWRITE="true";;
+		--help) print_help; exit 0;;
+		*) RESTRICT="${RESTRICT} $1";;
 	esac
 	shift
 done
@@ -253,7 +318,9 @@ if [ ${BUILD} = "true" ] ; then
 	make || ( echo -e "Build failed.\nNot profiling." >&2 ; exit 1 )
 fi
 popd
-
+if ! [ "${RESTRICT}" = "" ] ; then
+	TESTS="${RESTRICT}"
+fi
 run_tests
 TOTALTIME=$(($(date +%s)-${BEGINTIME}))
 ELAPSED=$((${TOTALTIME}/60)):$((${TOTALTIME}%60))
