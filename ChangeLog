@@ -1,3 +1,7 @@
+2005-05-11  Joel Reed  <joelwreed@comcast.com>
+
+	* contrib/monotone.zsh_completion: add zsh completion contrib.
+
 2005-05-11  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_add_intermediate_MT_path.at: remove the drop dir part
