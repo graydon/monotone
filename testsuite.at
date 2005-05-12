@@ -364,7 +364,7 @@ if test "$OSTYPE" == "msys"; then
   if test $pskill && test -x $pskill; then
     $pskill $mt_pid 2>/dev/null
   else
-    ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL" $a);}'
+    ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL " $a);}'
   fi
 else
   kill -KILL $mt_pid 2>/dev/null

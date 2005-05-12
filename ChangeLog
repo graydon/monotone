@@ -1,3 +1,9 @@
+2005-05-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Fix typo error in Win32 kill logic that was
+	causing the testsuites to hang on Win32 machines that don't have
+	pskill installed.
+
 2005-05-12  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* file_io.cc (write_data_impl): Use portable boost::filesystem
