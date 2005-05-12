@@ -3,8 +3,6 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include <stdio.h>             // for rename(2)
-
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
@@ -509,12 +507,10 @@ write_data_impl(fs::path const & p,
     // data.tmp closes
   }
 
-  // god forgive my portability sins
   if (fs::exists(p))
-    N(unlink(p.string().c_str()) == 0,
-      F("unlinking %s failed") % p.string());
-  N(rename(tmp.string().c_str(), p.string().c_str()) == 0,
-    F("rename of %s to %s failed") % tmp.string() % p.string());
+    N(fs::remove(p),
+      F("removing %s failed") % p.string());
+  fs::rename(tmp, p);
 }
 
 void 

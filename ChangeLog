@@ -1,3 +1,8 @@
+2005-05-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* file_io.cc (write_data_impl): Use portable boost::filesystem
+	calls in place of unlink(2)/remove(2).
+
 2005-05-11  Nathaniel Smith  <njs@codesourcery.com>
 
 	* std_hooks.lua (ignore_file): Organize a bit more, add
