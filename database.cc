@@ -2198,7 +2198,7 @@ void database::complete(selector_type ty,
               lim += (F("WHERE id GLOB '%s*'") 
                       % i->second).str();
             }
-	  else if (i->first == selectors::sel_cert)
+          else if (i->first == selectors::sel_cert)
             {
               if (i->second.length() > 0)
                 {

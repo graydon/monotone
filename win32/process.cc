@@ -54,7 +54,7 @@ pid_t process_spawn(const char * const argv[])
   for (const char *const *i = argv+1; *i; ++i)
     {
       if (i)
-	cmdline_ss << ", ";
+        cmdline_ss << ", ";
       cmdline_ss << "'" << *i << "'";
     }
   L(F("spawning command: %s\n") % cmdline_ss.str());

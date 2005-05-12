@@ -49,13 +49,13 @@ monotone_mkstemp(std::string &tmpl)
       fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
       if (fd >= 0)
       {
-	fs::path path;
-	path = mkpath(tmp);
-	tmpl = path.native_directory_string();
-	return fd;
+        fs::path path;
+        path = mkpath(tmp);
+        tmpl = path.native_directory_string();
+        return fd;
       }
       else if (errno != EEXIST)
-	break;
+        break;
     }  
   return -1;
 }

@@ -35,9 +35,9 @@ void make_diff(std::string const & filename1,
                diff_type type);
 
 bool merge3(std::vector<std::string> const & ancestor,
-	    std::vector<std::string> const & left,
-	    std::vector<std::string> const & right,
-	    std::vector<std::string> & merged);
+            std::vector<std::string> const & left,
+            std::vector<std::string> const & right,
+            std::vector<std::string> & merged);
 
 struct merge_provider
 {
@@ -46,40 +46,40 @@ struct merge_provider
   manifest_map const & left_man;
   manifest_map const & right_man;
   merge_provider(app_state & app, 
-		 manifest_map const & anc_man,
-		 manifest_map const & left_man, 
-		 manifest_map const & right_man);
+                 manifest_map const & anc_man,
+                 manifest_map const & left_man, 
+                 manifest_map const & right_man);
 
   // merge3 on a file (line by line)
   virtual bool try_to_merge_files(file_path const & anc_path,
-				  file_path const & left_path,
-				  file_path const & right_path,
-				  file_path const & merged_path,
-				  file_id const & ancestor_id,
-				  file_id const & left_id,
-				  file_id const & right,
-				  file_id & merged_id);
+                                  file_path const & left_path,
+                                  file_path const & right_path,
+                                  file_path const & merged_path,
+                                  file_id const & ancestor_id,
+                                  file_id const & left_id,
+                                  file_id const & right,
+                                  file_id & merged_id);
 
   // merge2 on a file (line by line)
   virtual bool try_to_merge_files(file_path const & left_path,
                                   file_path const & right_path,
                                   file_path const & merged_path,
-				  file_id const & left_id,
-				  file_id const & right_id,
-				  file_id & merged);
+                                  file_id const & left_id,
+                                  file_id const & right_id,
+                                  file_id & merged);
 
   virtual void record_merge(file_id const & left_ident, 
-			    file_id const & right_ident, 
-			    file_id const & merged_ident,
-			    file_data const & left_data, 
-			    file_data const & merged_data);
+                            file_id const & right_ident, 
+                            file_id const & merged_ident,
+                            file_data const & left_data, 
+                            file_data const & merged_data);
   
   virtual void get_version(file_path const & path,
-			   file_id const & ident,			   
-			   file_data & dat);
+                           file_id const & ident,                           
+                           file_data & dat);
 
   virtual std::string get_file_encoding(file_path const & path,
-					manifest_map const & man);
+                                        manifest_map const & man);
 
   virtual ~merge_provider() {}
 };
@@ -88,22 +88,22 @@ struct update_merge_provider : public merge_provider
 {
   std::map<file_id, file_data> temporary_store;
   update_merge_provider(app_state & app,
-			manifest_map const & anc_man,
-			manifest_map const & left_man, 
-			manifest_map const & right_man);
+                        manifest_map const & anc_man,
+                        manifest_map const & left_man, 
+                        manifest_map const & right_man);
 
   virtual void record_merge(file_id const & left_ident, 
-			    file_id const & right_ident, 
-			    file_id const & merged_ident,
-			    file_data const & left_data, 
-			    file_data const & merged_data);
+                            file_id const & right_ident, 
+                            file_id const & merged_ident,
+                            file_data const & left_data, 
+                            file_data const & merged_data);
 
   virtual void get_version(file_path const & path,
-			   file_id const & ident,
-			   file_data & dat);
+                           file_id const & ident,
+                           file_data & dat);
 
   virtual std::string get_file_encoding(file_path const & path,
-					manifest_map const & man);
+                                        manifest_map const & man);
 
   virtual ~update_merge_provider() {}
 };

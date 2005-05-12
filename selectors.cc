@@ -14,9 +14,9 @@ namespace selectors
 
   static void
   decode_selector(std::string const & orig_sel,
-		  selector_type & type,
-		  std::string & sel,
-		  app_state & app)
+                  selector_type & type,
+                  std::string & sel,
+                  app_state & app)
   {
     sel = orig_sel;
 
@@ -24,54 +24,54 @@ namespace selectors
 
     if (sel.size() < 2 || sel[1] != ':')
       {
-	std::string tmp;
-	if (!app.lua.hook_expand_selector(sel, tmp))
-	  {
-	    L(F("expansion of selector '%s' failed\n") % sel);
-	  }
-	else
-	  {
-	    P(F("expanded selector '%s' -> '%s'\n") % sel % tmp);
-	    sel = tmp;
-	  }
+        std::string tmp;
+        if (!app.lua.hook_expand_selector(sel, tmp))
+          {
+            L(F("expansion of selector '%s' failed\n") % sel);
+          }
+        else
+          {
+            P(F("expanded selector '%s' -> '%s'\n") % sel % tmp);
+            sel = tmp;
+          }
       }
 
     if (sel.size() >= 2 && sel[1] == ':')
       {
-	switch (sel[0])
-	  {
-	  case 'a':
-	    type = sel_author;
-	    break;
-	  case 'b':
-	    type = sel_branch;
-	    break;
-	  case 'd':
-	    type = sel_date;
-	    break;
-	  case 'i':
-	    type = sel_ident;
-	    break;
-	  case 't':
-	    type = sel_tag;
-	    break;
-	  case 'c':
-	    type = sel_cert;
-	    break;
-	  default:
-	    W(F("unknown selector type: %c\n") % sel[0]);
-	    break;
-	  }
-	sel.erase(0,2);
+        switch (sel[0])
+          {
+          case 'a':
+            type = sel_author;
+            break;
+          case 'b':
+            type = sel_branch;
+            break;
+          case 'd':
+            type = sel_date;
+            break;
+          case 'i':
+            type = sel_ident;
+            break;
+          case 't':
+            type = sel_tag;
+            break;
+          case 'c':
+            type = sel_cert;
+            break;
+          default:
+            W(F("unknown selector type: %c\n") % sel[0]);
+            break;
+          }
+        sel.erase(0,2);
       }
   }
 
   void
   complete_selector(std::string const & orig_sel,
-		    std::vector<std::pair<selector_type, std::string> > const & limit,
-		    selector_type & type,
-		    std::set<std::string> & completions,
-		    app_state & app)
+                    std::vector<std::pair<selector_type, std::string> > const & limit,
+                    selector_type & type,
+                    std::set<std::string> & completions,
+                    app_state & app)
   {
     std::string sel;
     decode_selector(orig_sel, type, sel, app);
@@ -80,35 +80,35 @@ namespace selectors
 
   std::vector<std::pair<selector_type, std::string> >
   parse_selector(std::string const & str,
-		 app_state & app)
+                 app_state & app)
   {
     std::vector<std::pair<selector_type, std::string> > sels;
 
     // this rule should always be enabled, even if the user specifies
     // --norc: if you provide a revision id, you get a revision id.
     if (str.find_first_not_of(constants::legal_id_bytes) == std::string::npos
-	&& str.size() == constants::idlen)
+        && str.size() == constants::idlen)
       {
-	sels.push_back(std::make_pair(sel_ident, str));
+        sels.push_back(std::make_pair(sel_ident, str));
       }
     else
       {
-	typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-	boost::char_separator<char> slash("/");
-	tokenizer tokens(str, slash);
+        typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+        boost::char_separator<char> slash("/");
+        tokenizer tokens(str, slash);
 
-	std::vector<std::string> selector_strings;
-	copy(tokens.begin(), tokens.end(), back_inserter(selector_strings));
+        std::vector<std::string> selector_strings;
+        copy(tokens.begin(), tokens.end(), back_inserter(selector_strings));
 
-	for (std::vector<std::string>::const_iterator i = selector_strings.begin();
-	     i != selector_strings.end(); ++i)
-	  {
-	    std::string sel;
-	    selector_type type = sel_unknown;
+        for (std::vector<std::string>::const_iterator i = selector_strings.begin();
+             i != selector_strings.end(); ++i)
+          {
+            std::string sel;
+            selector_type type = sel_unknown;
 
-	    decode_selector(*i, type, sel, app);
-	    sels.push_back(std::make_pair(type, sel));
-	  }
+            decode_selector(*i, type, sel, app);
+            sels.push_back(std::make_pair(type, sel));
+          }
       }
 
     return sels;
