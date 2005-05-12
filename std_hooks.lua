@@ -55,25 +55,39 @@ attr_functions["execute"] =
 
 
 function ignore_file(name)
+   -- c/c++
    if (string.find(name, "%.a$")) then return true end
    if (string.find(name, "%.so$")) then return true end
    if (string.find(name, "%.o$")) then return true end
    if (string.find(name, "%.la$")) then return true end
    if (string.find(name, "%.lo$")) then return true end
+   if (string.find(name, "^core$")) then return true end
+   if (string.find(name, "/core$")) then return true end
+   -- python
+   if (string.find(name, "%.pyc$")) then return true end
+   if (string.find(name, "%.pyo$")) then return true end
+   -- TeX
    if (string.find(name, "%.aux$")) then return true end
+   -- backup files
    if (string.find(name, "%.bak$")) then return true end
    if (string.find(name, "%.orig$")) then return true end
    if (string.find(name, "%.rej$")) then return true end
    if (string.find(name, "%~$")) then return true end
-   if (string.find(name, "/core$")) then return true end
+   -- autotools detritus:
+   if (string.find(name, "^autom4te.cache/")) then return true end
+   if (string.find(name, "/autom4te.cache/")) then return true end
+   if (string.find(name, "^.deps/")) then return true end
+   if (string.find(name, "/.deps/")) then return true end
+   -- other VCSes:
    if (string.find(name, "^CVS/")) then return true end
    if (string.find(name, "/CVS/")) then return true end
    if (string.find(name, "^%.svn/")) then return true end
    if (string.find(name, "/%.svn/")) then return true end
    if (string.find(name, "^SCCS/")) then return true end
    if (string.find(name, "/SCCS/")) then return true end
-   if (string.find(name, "%.pyc$")) then return true end
-   if (string.find(name, "%.pyo$")) then return true end
+   if (string.find(name, "^_darcs/")) then return true end
+   if (string.find(name, "^.cdv/")) then return true end
+   if (string.find(name, "^.git/")) then return true end
    return false;
 end
 
