@@ -1,3 +1,9 @@
+2005-05-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (ignore_file): Organize a bit more, add
+	patterns for autotools cache files, and darcs, codeville, git
+	metadata directories.
+
 2005-05-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* revision.cc (expand_dominators): Fix bitmap size-matching.
