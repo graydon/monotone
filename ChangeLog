@@ -1,3 +1,14 @@
+2005-05-12  Riccardo Ghetta <birrachiara@tin.it>
+
+	* options.hh (OPT_MSGFILE): New option.
+	* monotone.cc (message-file): New option.
+	(cpp_main): Handle it.
+	* app_state.{cc,hh} (set_message_file): New function.
+	* commands.cc (commit): Accept and handle new option.
+	* monotone.1, monotone.texi: Document it.
+	* tests/t_commit_message_file.at: New test.
+	* testsuite.at: Add it.
+	
 2005-05-12  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* (20 files): Do not indent with both tabs and spaces in the same file.

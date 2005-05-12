@@ -29,3 +29,4 @@
 #define OPT_AUTHOR 20
 #define OPT_ALL_FILES 21
 #define OPT_PIDFILE 22
+#define OPT_MSGFILE 23

@@ -2232,7 +2232,7 @@ string_to_datetime(std::string const & s)
 
 CMD(commit, "working copy", "[PATH]...", 
     "commit working copy to database",
-    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_DATE % OPT_AUTHOR)
+    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR)
 {
   string log_message("");
   revision_set rs;
@@ -2264,11 +2264,27 @@ CMD(commit, "working copy", "[PATH]...",
   L(F("new manifest %s\n") % rs.new_manifest);
   L(F("new revision %s\n") % rid);
 
-  // get log message
-  N(!(app.message().length() > 0 && has_contents_user_log()),
+  // can't have both a --message and a --message-file ...
+  N(app.message().length() == 0 || app.message_file().length() == 0,
+    F("--message and --message-file are mutually exclusive"));
+
+  N(!( app.message().length() > 0 && has_contents_user_log()),
     F("MT/log is non-empty and --message supplied\n"
       "perhaps move or delete MT/log,\n"
       "or remove --message from the command line?"));
+  
+  N(!( app.message_file().length() > 0 && has_contents_user_log()),
+    F("MT/log is non-empty and --message-file supplied\n"
+      "perhaps move or delete MT/log,\n"
+      "or remove --message-file from the command line?"));
+  
+  // fill app.message with message_file contents
+  if (app.message_file().length() > 0)
+  {
+    data dat;
+    read_data_for_command_line(app.message_file(), dat);
+    app.message = dat();
+  }
   
   if (app.message().length() > 0)
     log_message = app.message();

@@ -3408,16 +3408,18 @@ files.
 
 @item monotone commit
 @itemx monotone commit --message=@var{logmsg}
+@itemx monotone commit --message-file=@var{logfile}
 @itemx monotone commit @var{pathname...}
 @itemx monotone commit --message=@var{logmsg} @var{pathname...} 
+@itemx monotone commit --message-file=@var{logfile} @var{pathname...} 
 
 This command looks at your working copy, decides which files have
-changed, and saves the changes to your database. It does this by
-loading the revision named in the @file{MT/revision} file, locating
-the base manifest for your working copy, applying any changes
-described in the @file{MT/work} file, and then comparing the updated
-base manifest to the files it finds in your working copy, to determine
-which files have been edited.
+changed, and saves the changes to your database. It does this by loading
+the revision named in the @file{MT/revision} file, locating the base
+manifest for your working copy, applying any changes described in the
+@file{MT/work} file, and then comparing the updated base manifest to the
+files it finds in your working copy, to determine which files have been
+edited.
 
 For each edited file, a delta is copied into the database. Then the
 newly constructed manifest is recorded (as a delta) and finally the
@@ -3437,6 +3439,11 @@ From within a subdirectory of the working copy the @command{commit}
 command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{commit}
 to files changed within the current subdirectory of the working copy.
+
+The @option{--message} and @option{--message-file} options are mutually
+exclusive.  Both provide a @var{logmsg} describing the commit. 
+@option{--message-file} actually specifies the name of the file containing
+the log message, while @option{--message} provides it directly.
 
 The @file{MT/log} file can be edited by the user during their daily work
 to record the changes made to the working copy. When running the
@@ -6343,11 +6350,17 @@ merely noted as removals in the work list.
 Rename files from @i{<src>} to @i{<dst>} in working copy.
 @comment TROFF INPUT: .TP
 
-@item @b{commit} @i{[--message=log message] [<pathname>...]}
-Commit working copy to database. If a --message @option{option} is
-provided on the command line, it is used; otherwise a log message
-editor will be invoked. If @i{MT/log} exists, its content will be
-passed to the message editor.
+@item @b{commit} @i{[--message=log message | --message-file=log message file] [<pathname>...]}
+Commit working copy to database.  Each commit has a changelog message
+associated with it.  If @option{--message} is provided on the command
+line, it is used; if @option{--message-file} is provided, the content of
+the named file will be used as a commit message.  If the filename is '-'
+the commit message will be read from standard input.  Otherwise a log
+message editor will be invoked.  If the file @file{MT/log} exists and is
+non-empty, its content is used to prefill the editor.  You cannot
+specify both @option{--message} and @option{--message-file} at the same
+time, and if @file{MT/log} exists and is non-empty, you can cannot
+specify either of them at all.
 @comment TROFF INPUT: .TP
 
 @item @b{update} @i{[revision]}
@@ -6476,6 +6489,13 @@ Currently this option only applies to the diff command where it may be
 used to compare a working copy with a specific revision or to compare
 two specific revisions. It will likely apply to other commands in the
 future.
+
+@item @b{--message-file=}@i{<log message file>}
+Use the content of the given file as the changelog when committing a new
+revision rather than invoking the log message editor.  If the filename
+is '-' the changelog is read from standard input.  Currently this option
+only applies to the commit command, but it may also apply to the comment
+command in the future.
 
 @item @b{--message=}@i{<log message>}
 @itemx @b{-m} @i{<log message>}

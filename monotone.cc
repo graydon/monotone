@@ -44,6 +44,7 @@ struct poptOption coptions[] =
     {"branch", 'b', POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, "select branch cert for operation", NULL},
     {"revision", 'r', POPT_ARG_STRING, &argstr, OPT_REVISION, "select revision id for operation", NULL},
     {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, "set commit changelog message", NULL},
+    {"message-file", 0, POPT_ARG_STRING, &argstr, OPT_MSGFILE, "set filename containing commit changelog message", NULL},
     {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
     {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
     {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
@@ -331,6 +332,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_MESSAGE:
               app.set_message(string(argstr));
+              break;
+
+            case OPT_MSGFILE:
+              app.set_message_file(absolutify_for_command_line(tilde_expand(string(argstr))));
               break;
 
             case OPT_DATE:
