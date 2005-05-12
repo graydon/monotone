@@ -334,12 +334,13 @@ process_one_hunk(vector< piece > const & source,
   assert(directive.size() > 1);
   ++i;
 
-  char code;
-  int pos, len;
-  sscanf(directive.c_str(), " %c %d %d", &code, &pos, &len);
-
   try 
     {
+      char code;
+      int pos, len;
+      if (sscanf(directive.c_str(), " %c %d %d", &code, &pos, &len) != 3)
+	      throw oops("illformed directive '" + directive + "'");
+
       if (code == 'a')
         {
           // 'ax y' means "copy from source to dest until cursor == x, then

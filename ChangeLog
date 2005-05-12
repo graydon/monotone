@@ -1,3 +1,8 @@
+2005-05-13  Ulrich Drepper  <drepper@redhat.com>
+
+	* rcs_import.cc (process_one_hunk): Improve handling of corrupt
+	RCS files.
+
 2005-05-13  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* testsuite.at: Fix typo error in Win32 kill logic that was
