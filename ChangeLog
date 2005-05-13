@@ -1,3 +1,17 @@
+2005-05-12  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc: bump version number to 1.0
+	(struct inventory_item): add pre/post states
+	(inventory_paths): remove obsolete function
+	(inventory_pre_state, inventory_post_state, inventory_file_state,
+	inventory_renames): add fancy new functions
+	(automate_inventory): rework for new output format
+	* manifest.{cc,hh} (classify_paths): rename to ...
+	(classify_manifest_paths): ... this and work solely from manifest
+	* monotone.texi: (Automation): update inventory docs
+	* tests/t_automate_inventory.at: update for new format and add
+	some more tests
+	
 2005-05-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* revision.cc (expand_dominators): Fix bitmap size-matching.

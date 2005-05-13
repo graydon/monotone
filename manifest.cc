@@ -84,12 +84,11 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
 }
 
 void 
-classify_paths(app_state & app,
-               path_set const & paths,
-               manifest_map const & m_old, 
-               path_set & missing,
-               path_set & changed,
-               path_set & unchanged)
+classify_manifest_paths(app_state & app,
+                        manifest_map const & man, 
+                        path_set & missing,
+                        path_set & changed,
+                        path_set & unchanged)
 {
   inodeprint_map ipm;
 
@@ -103,48 +102,41 @@ classify_paths(app_state & app,
   // this code is speed critical, hence the use of inode fingerprints so be
   // careful when making changes in here and preferably do some timing tests
 
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (manifest_map::const_iterator i = man.begin(); i != man.end(); ++i)
     {
-      if (app.restriction_includes(*i))
+      if (app.restriction_includes(i->first))
         {
           // compute the current sha1 id for included files
           // we might be able to avoid it, if we have an inode fingerprint...
-          if (inodeprint_unchanged(ipm, *i))
+          if (inodeprint_unchanged(ipm, i->first))
             {
               // the inode fingerprint hasn't changed, so we assume the file
               // hasn't either.
-              manifest_map::const_iterator k = m_old.find(*i);
-              I(k != m_old.end());
-              unchanged.insert(*i);
+              manifest_map::const_iterator k = man.find(i->first);
+              I(k != man.end());
+              unchanged.insert(i->first);
               continue;
             }
 
           // ...ah, well, no good fingerprint, just check directly.
-          if (file_exists(*i))
+          if (file_exists(i->first))
             {
               hexenc<id> ident;
-              calculate_ident(*i, ident, app.lua);
-              manifest_map::const_iterator k = m_old.find(*i); 
+              calculate_ident(i->first, ident, app.lua);
 
-              if (k != m_old.end())
-                {
-                  if (ident == k->second.inner())
-                    unchanged.insert(*i);
-                  else
-                    changed.insert(*i);
-                }
+              if (ident == i->second.inner())
+                unchanged.insert(i->first);
+              else
+                changed.insert(i->first);
 
-              // if the path was not found in the old manifest it must have
-              // been added or renamed ad it's ignored here
-                
             }
           else
-            missing.insert(*i);
+            missing.insert(i->first);
         }
       else
         {
           // changes to excluded files are ignored
-          unchanged.insert(*i);
+          unchanged.insert(i->first);
         }
     }
 }

@@ -18,10 +18,12 @@ ADD_FILE(original, [original
 ADD_FILE(unchanged, [unchanged
 ])
 
-ADD_FILE(changed, [changed
+ADD_FILE(patched, [patched
 ])
 
 COMMIT(testbranch)
+
+# single status changes
 
 ADD_FILE(added, [added
 ])
@@ -31,9 +33,9 @@ AT_DATA(ignored~, [ignored~
 ])
 
 AT_CHECK(rm missing)
-
+AT_CHECK(rm dropped)
 AT_CHECK(mv original renamed)
-AT_DATA(changed, [something has changed
+AT_DATA(patched, [something has changed
 ])
 
 AT_CHECK(MONOTONE add added, [], [ignore], [ignore])
@@ -41,34 +43,130 @@ AT_CHECK(MONOTONE rename original renamed, [], [ignore], [ignore])
 AT_CHECK(MONOTONE drop dropped, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^  M 0 0 missing$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^ AP 0 0 added$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^D   0 0 dropped$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^R   1 0 original$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^ R  0 1 renamed$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^  P 0 0 patched$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^    0 0 unchanged$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^  U 0 0 unknown$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^  I 0 0 ignored~$' stdout, [], [ignore], [ignore])
 
-AT_CHECK(grep '^ ! "missing"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^+  "added"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^-  "dropped"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^%  "original" "renamed"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^ . "changed"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^   "unchanged"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^?  "unknown"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^~  "ignored~"' stdout, [], [ignore], [ignore])
+# swapped but not moved
 
-# renamed and changed
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
 
-AT_DATA(renamed, [renamed and changed
+AT_CHECK(MONOTONE rename unchanged temporary, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename original unchanged, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename temporary original, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^RRP 1 2 original$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^RRP 2 1 unchanged$' stdout, [], [ignore], [ignore])
+
+# swapped and moved
+
+AT_CHECK(mv unchanged temporary)
+AT_CHECK(mv original unchanged)
+AT_CHECK(mv temporary original)
+
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^RR  1 2 original$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^RR  2 1 unchanged$' stdout, [], [ignore], [ignore])
+
+# rename foo bar; add foo
+
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE rename original renamed, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add original, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^RAP 1 0 original$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^ R  0 1 renamed$' stdout, [], [ignore], [ignore])
+
+# rotated but not moved
+# - note that things are listed and numbered in path collating order
+#   dropped -> missing -> original -> dropped
+
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE rename original temporary, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename missing original, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename dropped missing, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename temporary dropped, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^RRP 1 3 dropped$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^RRP 2 1 missing$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^RRP 3 2 original$' stdout, [], [ignore], [ignore])
+
+# rotated and moved
+
+AT_CHECK(mv original temporary)
+AT_CHECK(mv missing original)
+AT_CHECK(mv dropped missing)
+AT_CHECK(mv temporary dropped)
+
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^RR  1 3 dropped$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^RR  2 1 missing$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^RR  3 2 original$' stdout, [], [ignore], [ignore])
+
+# dropped but not removed and thus unknown
+
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE drop dropped, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^D U 0 0 dropped$' stdout, [], [ignore], [ignore])
+
+# added but removed and thus missing
+
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE add added, [], [ignore], [ignore])
+AT_CHECK(rm added, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^ AM 0 0 added$' stdout, [], [ignore], [ignore])
+
+# renamed but not moved and thus unknown source and  missing target
+
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+
+AT_CHECK(rm renamed)
+AT_CHECK(MONOTONE rename original renamed, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^R U 1 0 original$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^ RM 0 1 renamed$' stdout, [], [ignore], [ignore])
+
+# moved but not renamed and thus missing source and unknown target
+
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+
+AT_CHECK(mv original renamed, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
+AT_CHECK(grep '^  M 0 0 original$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^  U 0 0 renamed$' stdout, [], [ignore], [ignore])
+
+# renamed and patched
+
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+
+AT_DATA(renamed, [renamed and patched
 ])
+AT_CHECK(rm original, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE automate inventory, [], [stdout], [ignore])
+AT_CHECK(MONOTONE rename original renamed, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate inventory --rcfile=inventory_hooks.lua, [], [stdout], [ignore])
 
-AT_CHECK(grep '^%. "renamed"' stdout, [1], [ignore], [ignore])
-AT_CHECK(grep '^%  "original" "renamed"' stdout, [], [ignore], [ignore])
-
-# missing renamed and added files
-
-AT_CHECK(rm renamed added)
-
-AT_CHECK(MONOTONE automate inventory, [], [stdout], [ignore])
-
-AT_CHECK(grep '^+! "added"' stdout, [], [ignore], [ignore])
-AT_CHECK(grep '^%! "original" "renamed"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^R   1 0 original$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^ RP 0 1 renamed$' stdout, [], [ignore], [ignore])
 
 # need tests for deleted and renamed directories, once these actually work!
 

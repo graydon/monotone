@@ -4778,63 +4778,111 @@ None.
 
 @item Added in:
 
-0.2
+1.0
 
 @item Purpose:
 
-Prints the inventory of all files found in the current working copy
-prefixed by 2 status code characters. 
+Prints the inventory of every file found in the working copy or its
+associated base manifest. Each unique path is listed on a line prefixed by
+three status characters and two numeric values used for identifying
+renames. 
 
 @item Sample output:
 
 @verbatim
-+  "added-file"
-+! "added-and-missing-file"
--  "dropped-file"
- # "edited-file"
-%  "file-before-rename" "file-after-rename"
-%# "file-before-rename" "file-after-rename-and-edit"
-~  "ignored-file"
- ! "missing-file"
-   "unchanged-file"
-?  "unknown-file"
+  M 0 0 missing
+ AP 0 0 added patched
+D   0 0 dropped
+R   1 0 renamed-from-this
+ R  0 1 renamed-to-this
+  P 0 0 patched
+    0 0 unchanged
+  U 0 0 unknown
+  I 0 0 ignored
+
+# swapped but not moved
+
+RRP 1 2 unchanged
+RRP 2 1 original
+
+# swapped and moved
+
+RR  1 2 unchanged
+RR  2 1 original
+
+# rename foo bar; add foo
+
+RAP 1 0 foo
+ R  0 1 bar
+
+# rotated but not moved dropped -> missing -> original -> dropped
+
+RRP 1 3 dropped
+RRP 2 1 missing
+RRP 3 2 original
+
+# rotated and moved
+
+RR  1 3 dropped
+RR  2 1 missing
+RR  3 2 original
+
+# dropped but not removed and thus unknown
+
+D U 0 0 dropped
+
+# added but removed and thus missing
+
+ AM 0 0 added
+
+# renamed but not moved and thus unknown source and missing target
+
+R U 1 0 original
+ RM 0 1 renamed
+
+# moved but not renamed and thus missing source and unknown target
+
+  M 0 0 original
+  U 0 0 renamed
+
+# renamed and patched
+
+R   1 0 original
+ RP 0 1 renamed
+
 @end verbatim
 
 @item Output format:
 
-Each file is printed on its own line, prefixed by a two character status
-code characters and a single space character. All filenames are quoted
-with double quotes (") to support filenames containg spaces. Intervening
-quotes are escaped with \". Directories are identified by paths ending
-with '/' characters. Rename lines list the old name first, followed by
-the new name. Lines are ordered by their pathname, with renames using
-the new name is used for ordering.
+Each path is printed on its own line, prefixed by three status
+characters described below. The status is followed by a single space and
+two numbers, each separated by a single space, used for identifying renames.
+The numbers are followed by a single space and then the pathname, which 
+includes the rest of the line. Directory paths are identified as ending with
+the "/" character, file paths do not end in this character.
 
-The first status character indicates the status of the path itsself and
-may be one of the following:
+The three status characters are as follows.
 
-@itemize
-@item ' ' the path is unchanged from the current manifest 
-@item '+' the path has been added to the current manifest
-@item '-' the path has been dropped from the current manifest
-@item '%' the path has been renamed in the current manifest, both the old and new name are listed
-@item '?' the path is unknown, it exists in the working copy but not in the current manifest
-@item '~' the path is ignored by the current ignore_file lua hook setting
-@end itemize
-
-The second status character indicates the status of the data associated
-witth the path and may be one of the following:
-
-@itemize
-@item ' ' the data is unchanged, its sha1 version matches the version in the base manifest
-@item '#' the data is changed, its sha1 version differs from the version in the base manifest
-@item '!' the data is missing and its sha1 version cannot be computed
-@end itemize
+@verbatim
+column 1 pre-state
+      ' ' the path was unchanged in the pre-state
+      'D' the path was deleted from the pre-state
+      'R' the path was renamed from the pre-state name
+column 2 post-state
+      ' ' the path was unchanged in the post-state
+      'R' the path was renamed to the post-state name
+      'A' the path was added to the post-state
+column 3 file-state
+      ' ' the file is known and unchanged from the current manifest version
+      'P' the file is patched to a new version
+      'U' the file is unknown and not included in the current manifest
+      'I' the file is ignored and not included in the current manifest
+      'M' the file is missing but is included in the current manifest
+@end verbatim
 
 Full support for versioned directories is not yet complete and the
 inventory will only list entries for renamed or dropped
-directories. Directory entries are designated by pathnames ending with
-"/" characters.
+directories. 
 
 @item Error conditions:
 

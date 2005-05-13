@@ -15,9 +15,10 @@
 #include "commands.hh"
 #include "restrictions.hh"
 #include "revision.hh"
+#include "transforms.hh"
 #include "vocab.hh"
 
-static std::string const interface_version = "0.2";
+static std::string const interface_version = "1.0";
 
 // Name: interface_version
 // Arguments: none
@@ -452,102 +453,158 @@ automate_select(std::vector<utf8> args,
     output << *i << std::endl;
 }
 
+// consider a changeset with the following
+//
+// deletions
+// renames from to
+// additions
+//
+// pre-state  corresponds to deletions and the "from" side of renames
+// post-state corresponds to the "to" side of renames and additions
+// file-state corresponds to the state of the file with the given name
+//
+// pre and post state are related to the path rearrangement specified in MT/work
+// file state is related to the details of the resulting file
+
 struct inventory_item
 {
-  enum pstat 
-    { UNCHANGED_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH, UNKNOWN_PATH, IGNORED_PATH } 
-    path_status;
+  enum pstate 
+    { KNOWN_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH } 
+    pre_state, post_state;
 
-  enum dstat 
-    { UNCHANGED_DATA, PATCHED_DATA, MISSING_DATA } 
-    data_status;
+  enum fstate
+    { KNOWN_FILE, PATCHED_FILE, MISSING_FILE, UNKNOWN_FILE, IGNORED_FILE } 
+    file_state;
 
   enum ptype
     { FILE, DIRECTORY } 
     path_type;
 
-  file_path old_path;
+  size_t pre_id, post_id;
 
   inventory_item():
-    path_status(UNCHANGED_PATH), data_status(UNCHANGED_DATA), path_type(FILE), old_path() {}
+    pre_state(KNOWN_PATH), post_state(KNOWN_PATH), 
+    file_state(KNOWN_FILE), 
+    path_type(FILE),
+    pre_id(0), post_id(0) {}
 };
 
 typedef std::map<file_path, inventory_item> inventory_map;
 
 static void
-inventory_paths(inventory_map & inventory,
-                path_set const & paths,
-                inventory_item::pstat path_status, 
-                inventory_item::ptype path_type = inventory_item::FILE)
+inventory_pre_state(inventory_map & inventory,
+                    path_set const & paths,
+                    inventory_item::pstate pre_state, 
+                    size_t id = 0,
+                    inventory_item::ptype path_type = inventory_item::FILE)
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(F("%d %d %s\n") % inventory[*i].path_status % path_status % *i);
-      I(inventory[*i].path_status == inventory_item::UNCHANGED_PATH);
-      inventory[*i].path_status = path_status;
+      L(F("%d %d %s\n") % inventory[*i].pre_state % pre_state % *i);
+      I(inventory[*i].pre_state == inventory_item::KNOWN_PATH);
+      inventory[*i].pre_state = pre_state;
       inventory[*i].path_type = path_type;
+      if (id != 0) 
+        {
+          I(inventory[*i].pre_id == 0);
+          inventory[*i].pre_id = id;
+        }
     }
 }
 
 static void
-inventory_paths(inventory_map & inventory,
-                path_set const & paths,
-                inventory_item::dstat data_status)
+inventory_post_state(inventory_map & inventory,
+                     path_set const & paths,
+                     inventory_item::pstate post_state, 
+                     size_t id = 0,
+                     inventory_item::ptype path_type = inventory_item::FILE)
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(F("%d %d %s\n") % inventory[*i].data_status % data_status % *i);
-      I(inventory[*i].data_status == inventory_item::UNCHANGED_DATA);
-      inventory[*i].data_status = data_status;
+      L(F("%d %d %s\n") % inventory[*i].post_state % post_state % *i);
+      I(inventory[*i].post_state == inventory_item::KNOWN_PATH);
+      inventory[*i].post_state = post_state;
+      inventory[*i].path_type = path_type;
+      if (id != 0) 
+        {
+          I(inventory[*i].post_id == 0);
+          inventory[*i].post_id = id;
+        }
     }
 }
 
 static void
-inventory_paths(inventory_map & inventory,
-                std::map<file_path,file_path> const & renames,
-                inventory_item::pstat path_status, 
-                inventory_item::ptype path_type = inventory_item::FILE)
+inventory_file_state(inventory_map & inventory,
+                     path_set const & paths,
+                     inventory_item::fstate file_state)
 {
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
+    {
+      L(F("%d %d %s\n") % inventory[*i].file_state % file_state % *i);
+      I(inventory[*i].file_state == inventory_item::KNOWN_FILE);
+      inventory[*i].file_state = file_state;
+    }
+}
+
+static void
+inventory_renames(inventory_map & inventory,
+                  std::map<file_path,file_path> const & renames,
+                  inventory_item::ptype path_type = inventory_item::FILE)
+{
+  path_set old_name;
+  path_set new_name;
+
+  static size_t id = 1;
+
   for (std::map<file_path,file_path>::const_iterator i = renames.begin(); 
        i != renames.end(); i++)
     {
-      L(F("%d %d %s %s\n") % inventory[i->second].path_status % path_status % i->first % i->second);
-      I(inventory[i->second].path_status == inventory_item::UNCHANGED_PATH);
-      inventory[i->second].path_status = inventory_item::RENAMED_PATH;
-      inventory[i->second].path_type = path_type;
-      inventory[i->second].old_path = i->first;
+      old_name.insert(i->first);
+      new_name.insert(i->second);
+
+      inventory_pre_state(inventory, old_name, inventory_item::RENAMED_PATH, id, path_type);
+      inventory_post_state(inventory, new_name, inventory_item::RENAMED_PATH, id, path_type);
+
+      id++;
+
+      old_name.clear();
+      new_name.clear();
     }
 }
                
 // Name: inventory
 // Arguments: none
-// Added in: 0.2
-// Purpose: Prints all the files found in a working copy or current manifest
-//   prefixed by 2 status code characters. The first status code character
-//   indicates the status of the path itsself and is drawn from the following 
-//   set:
+// Added in: 1.0
+// Purpose: Prints a summary of every file found in the working copy or its
+//   associated base manifest. Each unique path is listed on a line prefixed by
+//   three status characters and two numeric values used for identifying
+//   renames. The three status characters are as follows.
 //
-//   ' ' the path is unchanged from the current manifest 
-//   '+' the path has been added to the current manifest
-//   '-' the path has been dropped from the current manifest
-//   '%' the path has been renamed in the current manifest, both the old and new name are listed
-//   '?' the path is unknown, it exists in the working copy but not in the current manifest
-//   '~' the path is ignored by the current ignore_file lua hook setting
-//  
-//   The second status code character indicates the status of the data associated
-//   with the path and is drawn from the following set:
+//   column 1 pre-state
+//         ' ' the path was unchanged in the pre-state
+//         'D' the path was deleted from the pre-state
+//         'R' the path was renamed from the pre-state name
+//   column 2 post-state
+//         ' ' the path was unchanged in the post-state
+//         'R' the path was renamed to the post-state name
+//         'A' the path was added to the post-state
+//   column 3 file-state
+//         ' ' the file is known and unchanged from the current manifest version
+//         'P' the file is patched to a new version
+//         'U' the file is unknown and not included in the current manifest
+//         'I' the file is ignored and not included in the current manifest
+//         'M' the file is missing but is included in the current manifest
 //
-//   ' ' the data is unchanged, its sha1 version matches the version in the base manifest
-//   '#' the data is changed, its sha1 version differs from the version in the base manifest
-//   '!' the data is missing and its sha1 version cannot be computed
+// Output format: Each path is printed on its own line, prefixed by three status
+//   characters as described above. The status is followed by a single space and
+//   two numbers, each separated by a single space, used for identifying renames.
+//   The numbers are followed by a single space and then the pathname, which 
+//   includes the rest of the line. Directory paths are identified as ending with
+//   the "/" character, file paths do not end in this character.
 //
-// Output format: Each file is printed on its own line, prefixed by a
-//   two character status code and a single space character. All filenames are
-//   quoted with double quotes (") to support filenames containg spaces. Intervening quotes
-//   are escaped with \". Directories are identified by paths ending with '/' characters. 
-//   Rename lines list the old name first, followed by the new name.
 // Error conditions: If no working copy book keeping MT directory is found,
 //   prints an error message to stderr, and exits with status 1.
+
 static void
 automate_inventory(std::vector<utf8> args,
                    std::string const & help_name,
@@ -559,12 +616,12 @@ automate_inventory(std::vector<utf8> args,
 
   manifest_id old_manifest_id;
   revision_id old_revision_id;
-  manifest_map m_old;
+  manifest_map m_old, m_new;
   path_set old_paths, new_paths, empty;
   change_set::path_rearrangement included, excluded;
+  change_set cs;
   path_set missing, changed, unchanged, unknown, ignored;
   inventory_map inventory;
-
   app.require_working_copy();
 
   calculate_restricted_rearrangement(app, args, 
@@ -572,74 +629,111 @@ automate_inventory(std::vector<utf8> args,
                                      m_old, old_paths, new_paths,
                                      included, excluded);
 
+  // this is a bit screwey. we need to rearrange the old manifest 
+  // according to the included rearrangement and for that we need
+  // a complete changeset, which is normally obtained from both 
+  // the old and the new manifest. we can't do that because there 
+  // may be missing files, so instead we add our own set of deltas
+  // below.
+
+  // we have the rearrangement of the changeset from above
+  // now we need to build up the deltas for the added files
+
+  cs.rearrangement = included;
+
+  hexenc<id> null_ident;
+
+  for (path_set::const_iterator 
+         i = included.added_files.begin();
+       i != included.added_files.end(); ++i)
+    {
+      if (file_exists(*i))
+        {
+          // add path from [] to [xxx]
+          hexenc<id> ident;
+          calculate_ident(*i, ident, app.lua);
+          cs.deltas.insert(std::make_pair(*i,std::make_pair(null_ident, ident)));
+        }
+      else
+        {
+          // remove missing files from the added list since they have not deltas
+          missing.insert(*i);
+          cs.rearrangement.added_files.erase(*i);
+        }
+    }
+
+  apply_change_set(m_old, cs, m_new);
+
+  classify_manifest_paths(app, m_new, missing, changed, unchanged);
+
+  // remove the remaining added files from the unchanged set since they have been 
+  // changed in the deltas construction above. also, only consider the file as 
+  // changed if its not missing
+
+  for (path_set::const_iterator 
+         i = included.added_files.begin();
+       i != included.added_files.end(); ++i)
+    {
+      unchanged.erase(*i);
+      if (missing.find(*i) == missing.end()) 
+        changed.insert(*i);
+    }
+
   file_itemizer u(app, new_paths, unknown, ignored);
   walk_tree(u);
 
-  // remove deleted paths from the set of unknown paths
+  inventory_file_state(inventory, missing, inventory_item::MISSING_FILE);
 
-  for (path_set::const_iterator i = included.deleted_files.begin();
-         i != included.deleted_files.end(); ++i)
-    unknown.erase(*i);
+  inventory_pre_state(inventory, included.deleted_files, inventory_item::DROPPED_PATH);
+  inventory_pre_state(inventory, included.deleted_dirs, 
+                      inventory_item::DROPPED_PATH, inventory_item::DIRECTORY);
 
-  for (path_set::const_iterator i = included.deleted_dirs.begin();
-         i != included.deleted_dirs.end(); ++i)
-    unknown.erase(*i);
+  inventory_renames(inventory, included.renamed_files);
+  inventory_renames(inventory, included.renamed_dirs, inventory_item::DIRECTORY);
 
-  classify_paths(app, new_paths, m_old, missing, changed, unchanged);
+  inventory_post_state(inventory, included.added_files, inventory_item::ADDED_PATH);
 
-  inventory_paths(inventory, missing, inventory_item::MISSING_DATA);
-
-  inventory_paths(inventory, included.deleted_files, inventory_item::DROPPED_PATH);
-  inventory_paths(inventory, included.deleted_dirs, inventory_item::DROPPED_PATH, inventory_item::DIRECTORY);
-
-  inventory_paths(inventory, included.renamed_files, inventory_item::RENAMED_PATH);
-  inventory_paths(inventory, included.renamed_dirs, inventory_item::RENAMED_PATH, inventory_item::DIRECTORY);
-
-  inventory_paths(inventory, included.added_files, inventory_item::ADDED_PATH);
-  inventory_paths(inventory, changed, inventory_item::PATCHED_DATA);
-  
-  inventory_paths(inventory, unchanged, inventory_item::UNCHANGED_DATA);
-  inventory_paths(inventory, unknown, inventory_item::UNKNOWN_PATH);
-  inventory_paths(inventory, ignored, inventory_item::IGNORED_PATH);
+  inventory_file_state(inventory, changed, inventory_item::PATCHED_FILE);
+  inventory_file_state(inventory, unchanged, inventory_item::KNOWN_FILE);
+  inventory_file_state(inventory, unknown, inventory_item::UNKNOWN_FILE);
+  inventory_file_state(inventory, ignored, inventory_item::IGNORED_FILE);
 
   for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end(); ++i)
     {
-      switch (inventory[i->first].path_status) 
+      switch (inventory[i->first].pre_state) 
         {
-        case inventory_item::UNCHANGED_PATH: output << " "; break;
-        case inventory_item::ADDED_PATH:     output << "+"; break;
-        case inventory_item::DROPPED_PATH:   output << "-"; break;
-        case inventory_item::RENAMED_PATH:   output << "%"; break;
-        case inventory_item::UNKNOWN_PATH:   output << "?"; break;
-        case inventory_item::IGNORED_PATH:   output << "~"; break;
+        case inventory_item::KNOWN_PATH:   output << " "; break;
+        case inventory_item::DROPPED_PATH: output << "D"; break;
+        case inventory_item::RENAMED_PATH: output << "R"; break;
+        default: I(false); // invalid pre_state
         }
 
-      switch (inventory[i->first].data_status) 
+      switch (inventory[i->first].post_state) 
         {
-        case inventory_item::UNCHANGED_DATA: output << " "; break;
-        case inventory_item::PATCHED_DATA:   output << "#"; break;
-        case inventory_item::MISSING_DATA:   output << "!"; break;
+        case inventory_item::KNOWN_PATH:   output << " "; break;
+        case inventory_item::RENAMED_PATH: output << "R"; break;
+        case inventory_item::ADDED_PATH:   output << "A"; break;
+        default: I(false); // invalid post_state
         }
 
-      output << " ";
-
-      switch (inventory[i->first].path_type) 
+      switch (inventory[i->first].file_state) 
         {
-        case inventory_item::FILE: 
-          if (inventory[i->first].path_status == inventory_item::RENAMED_PATH)
-            output << basic_io::escape(inventory[i->first].old_path()) << " "; 
-          
-          output << basic_io::escape(i->first()); 
-          break;
-
-        case inventory_item::DIRECTORY: 
-          if (inventory[i->first].path_status == inventory_item::RENAMED_PATH)
-            output << basic_io::escape(inventory[i->first].old_path() + "/") << " "; 
-         
-          output << basic_io::escape(i->first() + "/"); 
-          break;
+        case inventory_item::KNOWN_FILE:   output << " "; break;
+        case inventory_item::PATCHED_FILE: output << "P"; break;
+        case inventory_item::UNKNOWN_FILE: output << "U"; break;
+        case inventory_item::IGNORED_FILE: output << "I"; break;
+        case inventory_item::MISSING_FILE: output << "M"; break;
         }
-      
+
+      // need directory indicators
+
+      output << " " << inventory[i->first].pre_id 
+             << " " << inventory[i->first].post_id 
+             << " " << i->first;
+
+      if (inventory[i->first].path_type  == inventory_item::DIRECTORY)
+        output << "/";
+
       output << std::endl;
     }
  

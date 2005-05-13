@@ -76,12 +76,11 @@ class app_state;
 
 void extract_path_set(manifest_map const & man, path_set & paths);
 
-void classify_paths(app_state & app,
-                    path_set const & paths,
-                    manifest_map const & m_old, 
-                    path_set & missing,
-                    path_set & changed,
-                    path_set & unchanged);
+void classify_manifest_paths(app_state & app,
+                             manifest_map const & man, 
+                             path_set & missing,
+                             path_set & changed,
+                             path_set & unchanged);
 
 void build_restricted_manifest_map(path_set const & paths,
                                    manifest_map const & m_old, 
