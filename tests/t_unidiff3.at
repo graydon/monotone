@@ -1,0 +1,21 @@
+AT_SETUP([diff against empty file])
+MONOTONE_SETUP
+
+AT_CHECK(printf "1\n2\n", [], [stdout])
+AT_CHECK(mv stdout foo)
+
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=foo commit -m foo, [], [ignore], [ignore])
+
+AT_CHECK(mv foo foo.away)
+AT_CHECK(touch foo)
+AT_CHECK(MONOTONE diff foo, [], [stdout])
+AT_CHECK(mv stdout monodiff, [], [ignore])
+
+# see whether the patch is well-formed
+AT_CHECK(patch -p0 -R < monodiff, [], [ignore], [ignore])
+
+# see whether the resulting file is the same as the original one
+AT_CHECK(cmp foo foo.away, [], [ignore])
+
+AT_CLEANUP

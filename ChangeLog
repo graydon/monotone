@@ -1,5 +1,10 @@
 2005-05-13  Joel Reed  <joelwreed@comcast.com>
 
+	* tests/t_unidiff3.at: opps. forgot to add this file which
+	should have been included as fix for bug 13072.
+
+2005-05-13  Joel Reed  <joelwreed@comcast.com>
+
 	* diff_patch.cc, transforms.cc, testsuite.at: Patch from 
 	drepper@redhat.com, who writes: "The attached patch should fix bug
 	13072.  I have no idea why the code in transform.cc insists on
