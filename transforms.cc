@@ -395,8 +395,6 @@ void split_into_lines(std::string const & in,
     {
       out.push_back(in);
     }
-  if (out.size() == 0)
-    out.push_back("");
 }
 
 

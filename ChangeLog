@@ -1,5 +1,15 @@
 2005-05-13  Joel Reed  <joelwreed@comcast.com>
 
+	* diff_patch.cc, transforms.cc, testsuite.at: Patch from 
+	drepper@redhat.com, who writes: "The attached patch should fix bug
+	13072.  I have no idea why the code in transform.cc insists on
+	adding an empty line in case the file is empty. Removing the code
+	didn't cause any regressions in the test suite and the
+	diff_patch.cc change corrects the output format.  A new test case
+	is included as well."
+
+2005-05-13  Joel Reed  <joelwreed@comcast.com>
+
 	* automate.cc: add automate attributes command
 	* commands.cc: add attributes subcommand helptext
 	* contrib/monotone.zsh_completion: use automate attributes

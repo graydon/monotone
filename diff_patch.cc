@@ -833,13 +833,23 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
         }
       
       // write hunk to stream
-      ost << "@@ -" << a_begin+1;
-      if (a_len > 1)
-        ost << "," << a_len;
+      if (a_len == 0)
+        ost << "@@ -0,0";
+      else
+        {
+          ost << "@@ -" << a_begin+1;
+          if (a_len > 1)
+            ost << "," << a_len;
+        }
       
-      ost << " +" << b_begin+1;
-      if (b_len > 1)
-    ost << "," << b_len;
+      if (b_len == 0)
+        ost << " +0,0";
+      else
+	{
+          ost << " +" << b_begin+1;
+          if (b_len > 1)
+            ost << "," << b_len;
+        }
       ost << " @@" << endl;
       
       copy(hunk.begin(), hunk.end(), ostream_iterator<string>(ost, "\n"));
