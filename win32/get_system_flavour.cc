@@ -15,15 +15,15 @@ struct table_entry
 };
 
 void key_to_string(unsigned long key, 
-		   table_entry *table,
-		   std::string & str, 
-		   std::string const & def)
+                   table_entry *table,
+                   std::string & str, 
+                   std::string const & def)
 {
   while (table->val != NULL)
     {
       if (table->key == key) {
-	str = std::string(table->val);
-	return;
+        str = std::string(table->val);
+        return;
       }
       ++table;
     }
@@ -147,16 +147,16 @@ void get_system_flavour(std::string & ident)
   else
     {
       key_to_string(si.wProcessorArchitecture, processors, processor, "unknown");
-      processor = (F("%s (level %d, rev %d)") 
-		   % processor
-		   % si.wProcessorLevel
-		   % si.wProcessorRevision).str();
+      processor = (F("%s (level %d, rev %d)")
+                   % processor
+                   % si.wProcessorLevel
+                   % si.wProcessorRevision).str();
     }
 
   ident = (F("Windows %s (%d.%d, build %d) on %s")
-	   % family 
-	   % vi.dwMajorVersion
-	   % vi.dwMinorVersion
-	   % vi.dwBuildNumber
-	   % processor).str();
+           % family 
+           % vi.dwMajorVersion
+           % vi.dwMinorVersion
+           % vi.dwBuildNumber
+           % processor).str();
 }

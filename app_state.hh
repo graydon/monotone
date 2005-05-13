@@ -33,6 +33,7 @@ public:
   bool rcfiles;
   options_map options;
   utf8 message;
+  utf8 message_file;
   utf8 date;
   utf8 author;
   utf8 search_root;
@@ -65,6 +66,7 @@ public:
   void set_signing_key(utf8 const & key);
   void set_root(utf8 const & root);
   void set_message(utf8 const & message);
+  void set_message_file(utf8 const & message_file);
   void set_date(utf8 const & date);
   void set_author(utf8 const & author);
   void set_depth(long depth);

@@ -58,9 +58,9 @@ interner
       {
         is_new = true;
         T t = rev.size();
-	fwd.insert(make_pair(s, t));
+        fwd.insert(make_pair(s, t));
         rev.push_back(s);
-	return t;
+        return t;
       }
     else
       return i->second;

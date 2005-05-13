@@ -12,6 +12,48 @@
 	* tests/t_automate_inventory.at: update for new format and add
 	some more tests
 	
+2005-05-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* HACKING: New file.  First pass at a brief document to help
+	newcomers hack on monotone.
+
+2005-05-12  Riccardo Ghetta <birrachiara@tin.it>
+
+	* options.hh (OPT_MSGFILE): New option.
+	* monotone.cc (message-file): New option.
+	(cpp_main): Handle it.
+	* app_state.{cc,hh} (set_message_file): New function.
+	* commands.cc (commit): Accept and handle new option.
+	* monotone.1, monotone.texi: Document it.
+	* tests/t_commit_message_file.at: New test.
+	* testsuite.at: Add it.
+	
+2005-05-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* (20 files): Do not indent with both tabs and spaces in the same file.
+
+2005-05-13  Ulrich Drepper  <drepper@redhat.com>
+
+	* rcs_import.cc (process_one_hunk): Improve handling of corrupt
+	RCS files.
+
+2005-05-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Fix typo error in Win32 kill logic that was
+	causing the testsuites to hang on Win32 machines that don't have
+	pskill installed.
+
+2005-05-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* file_io.cc (write_data_impl): Use portable boost::filesystem
+	calls in place of unlink(2)/remove(2).
+
+2005-05-11  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (ignore_file): Organize a bit more, add
+	patterns for autotools cache files, and darcs, codeville, git
+	metadata directories.
+
 2005-05-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* revision.cc (expand_dominators): Fix bitmap size-matching.

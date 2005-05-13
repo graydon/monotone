@@ -144,10 +144,17 @@ merely noted as removals in the work list.
 \fBrename\fP \fI<src> \fI<dst>\fP
 Rename files from \fI<src> \fP to \fI<dst> \fP in working copy.
 .TP
-\fBcommit\fP \fI[--message=<log message>] [<pathname>...]\fP 
-Commit working copy to database. If a --message option is provided on
-the command line, it is used; otherwise a log message editor will be
-invoked.
+\fBcommit\fP \fI[(--message=<log message>|--message-file=<file>)] [<pathname>...]\fP
+Commit working copy to database.  Each commit has a changelog message
+associated with it.  If --message is provided on the command line, it
+is used; if --message-file is provided, the content of the
+named file will be used as a commit message. If the filename is '-'
+the commit message will be read from standard input.  Otherwise a log
+message editor will be invoked.  If the file MT/log exists
+and is non-empty, its content is used to prefill the editor.  You
+cannot specify both --message and --message-file at the same time, and
+if MT/log exists and is non-empty, you can cannot specify either of them
+at all.
 .TP
 \fBupdate\fP  \fI[revision-id]\fP
 Update working copy.
@@ -261,9 +268,17 @@ Use the given message as the changelog when committing a new revision
 rather than invoking the log message editor. Currently this option only
 applies to the commit command but it may also apply to the comment
 command in the future.
+This option is alternative to --message-file
 .TP
 \fB-m \fI<log message>\fP
 An alias for \fB--message=\fI<log message>\fP
+.TP
+\fB--message-file=\fI<message file>\fP
+Use the content of the given file as the changelog when committing a
+new revision rather than invoking the log message editor. If the passed filename is '-' the changelog message will be read from standard input.
+Currently this option only applies to the commit command but it may also apply
+to the comment command in the future.
+This option is alternative to --message.
 .TP
 \fB--author=\fI<author email>\fP
 Use the given author as the value of the "author" cert when committing

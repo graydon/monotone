@@ -274,6 +274,12 @@ app_state::set_message(utf8 const & m)
 }
 
 void
+app_state::set_message_file(utf8 const & m)
+{
+  message_file = m;
+}
+
+void
 app_state::set_date(utf8 const & d)
 {
   date = d;

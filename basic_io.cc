@@ -25,7 +25,7 @@ void basic_io::input_source::err(std::string const & s)
 {
   L(F("error in %s:%d:%d:E: %s") % name % line % col % s);
   throw informative_failure((F("%s:%d:%d:E: %s") 
-			     % name % line % col % s).str());
+                             % name % line % col % s).str());
 }
 
 
@@ -44,13 +44,13 @@ std::string basic_io::escape(std::string const & s)
   for (std::string::const_iterator i = s.begin(); i != s.end(); ++i)
     {
       switch (*i)
-	{
-	case '\\':
-	case '"':
-	  escaped += '\\';
-	default:
-	  escaped += *i;
-	}
+        {
+        case '\\':
+        case '"':
+          escaped += '\\';
+        default:
+          escaped += *i;
+        }
     }
 
   escaped += "\"";
@@ -100,7 +100,7 @@ void basic_io::printer::print_stanza(stanza const & st)
        i != st.entries.end(); ++i)
     {
       for (size_t k = i->first.size(); k < st.indent; ++k)
-	out.put(' ');
+        out.put(' ');
       out.write(i->first.data(), i->first.size());
       out.put(' ');
       out.write(i->second.data(), i->second.size());

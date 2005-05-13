@@ -69,8 +69,8 @@ ostream & operator<<(ostream & ost, insn const & i)
 
 static inline void 
 init_match_table(string const & a,
-		 string::size_type blocksz,
-		 match_table & tab)
+                 string::size_type blocksz,
+                 match_table & tab)
 {
   string::size_type sz = a.size();
   for (string::size_type i = 0; i < sz; i += blocksz)
@@ -78,7 +78,7 @@ init_match_table(string const & a,
       string::size_type step = ((i + blocksz) >= sz) ? (sz - i) : blocksz;
       u32 sum = adler32(reinterpret_cast<u8 const *>(a.data() + i), step).sum();
       if (tab.find(sum) == tab.end())
- 	tab.insert(make_pair(sum, make_pair(i, step)));
+        tab.insert(make_pair(sum, make_pair(i, step)));
     }  
   return;
 }
@@ -86,14 +86,14 @@ init_match_table(string const & a,
 
 static inline bool
 find_match(match_table const & matches, 
-	   vector<insn> & delta,
-	   adler32 const & rolling, 
-	   string const & a, 
-	   string const & b, 
-	   string::size_type bpos, 
-	   string::size_type & apos, 
-	   string::size_type & alen,
-	   string::size_type & badvance)
+           vector<insn> & delta,
+           adler32 const & rolling, 
+           string const & a, 
+           string const & b, 
+           string::size_type bpos, 
+           string::size_type & apos, 
+           string::size_type & alen,
+           string::size_type & badvance)
 {
   u32 sum = rolling.sum();
   match_table::const_iterator e = matches.find(sum);
@@ -118,10 +118,10 @@ find_match(match_table const & matches,
 
   // see if we can extend our match forwards
   while((apos + alen >= 0)
-	&& (bpos + badvance >= 0)
-	&& (apos + alen < a.size())
- 	&& (bpos + badvance < b.size())
- 	&& (a[apos + alen] == b[bpos + badvance]))
+        && (bpos + badvance >= 0)
+        && (apos + alen < a.size())
+        && (bpos + badvance < b.size())
+        && (a[apos + alen] == b[bpos + badvance]))
     {
       ++alen;
       ++badvance;
@@ -131,26 +131,26 @@ find_match(match_table const & matches,
   if (! delta.empty() && delta.back().code == insn::insert)
     {
       while(apos > 0 
-	    && bpos > 0
-	    && a[apos - 1] == b[bpos - 1]
-	    && !delta.back().payload.empty())
-	{
-	  I(a[apos - 1] == *(delta.back().payload.rbegin()));
-	  I(delta.back().payload.size() > 0);
-	  delta.back().payload.resize(delta.back().payload.size() - 1);
-	  --apos;
-	  --bpos;
-	  ++alen;
-	  // the significant thing here is that we do not move
-	  // 'badvance' forward, just alen.
-	}
+            && bpos > 0
+            && a[apos - 1] == b[bpos - 1]
+            && !delta.back().payload.empty())
+        {
+          I(a[apos - 1] == *(delta.back().payload.rbegin()));
+          I(delta.back().payload.size() > 0);
+          delta.back().payload.resize(delta.back().payload.size() - 1);
+          --apos;
+          --bpos;
+          ++alen;
+          // the significant thing here is that we do not move
+          // 'badvance' forward, just alen.
+        }
 
       // if we've extended back to consume the *entire* insert, 
       // let's do away with it altogether.
       if (delta.back().payload.empty())
-	{
- 	  delta.pop_back();
-	}
+        {
+          delta.pop_back();
+        }
     }
   
   I(memcmp(a.data() + apos, b.data() + bpos, alen) == 0);
@@ -172,12 +172,12 @@ copy_insn(vector<insn> & delta, string::size_type i, string::size_type matchlen)
 {
   delta.push_back(insn(i, matchlen));
 }
-		      
+                      
   
 static void 
 compute_delta_insns(string const & a,
-		    string const & b,
-		    vector<insn> & delta)
+                    string const & b,
+                    vector<insn> & delta)
 {
   string::size_type blocksz = 64;
   match_table matches ((a.size() / blocksz) * 2);
@@ -186,16 +186,16 @@ compute_delta_insns(string const & a,
   if (b.size() < blocksz)
     {
       for (string::size_type i = 0; i < b.size(); ++i)
-	insert_insn(delta, b[i]);
+        insert_insn(delta, b[i]);
       return;
     }
   
   adler32 rolling(reinterpret_cast<u8 const *>(b.data()), blocksz);  
 
   for (string::size_type 
-	 sz = b.size(),
-	 lo = 0, 
-	 hi = blocksz; 
+       sz = b.size(),
+       lo = 0, 
+       hi = blocksz; 
        lo < sz; )
     {
       string::size_type apos = 0, alen = 1, badvance = 1;
@@ -204,27 +204,27 @@ compute_delta_insns(string const & a,
 
       if (found_match)
         {
-	  copy_insn(delta, apos, alen);
+          copy_insn(delta, apos, alen);
         }
       else
-	{ 
+        { 
           I(apos + alen <= a.size());
           I(alen == 1);
           I(alen < blocksz);
           I(lo >= 0);
           I(lo < b.size());
-	  insert_insn(delta, b[lo]);
-	}
+          insert_insn(delta, b[lo]);
+        }
 
       string::size_type next = lo;
       for (; next < lo + badvance; ++next)
-	{
-	  I(next >= 0);
-	  I(next < b.size());
-	  rolling.out(static_cast<u8>(b[next]));
-	  if (next + blocksz < b.size())
-	    rolling.in(static_cast<u8>(b[next + blocksz]));
-	}
+        {
+          I(next >= 0);
+          I(next < b.size());
+          rolling.out(static_cast<u8>(b[next]));
+          if (next + blocksz < b.size())
+            rolling.in(static_cast<u8>(b[next + blocksz]));
+        }
       lo = next;
       hi = lo + blocksz;
     }
@@ -248,8 +248,8 @@ flush_copy(ostringstream & oss, u32 & pos, u32 & len)
 
 void 
 compute_delta(manifest_map const & a,
-	      manifest_map const & b,
-	      string & delta)
+              manifest_map const & b,
+              string & delta)
 {
   delta.clear();
   ostringstream oss;
@@ -264,50 +264,50 @@ compute_delta(manifest_map const & a,
       size_t isz = 0;
 
       if (i != a.end())
-	  isz = i->first().size() + 2 + i->second.inner()().size() + 1;
+          isz = i->first().size() + 2 + i->second.inner()().size() + 1;
 
       if (i != a.end() && i->first == j->first)
-	{
-	  if (i->second == j->second)
-	    {
-	      // this line was copied
-	      len += isz;
-	    }
-	  else
-	    {
-	      // this line was changed, but the *entry* remained, so we
-	      // treat it as a simultaneous delete + insert. that means
-	      // advance pos over what used to be here, set len to 0, and
-	      // copy the new data.
-	      flush_copy(oss, pos, len);
-	      pos += isz;
-	      ostringstream ss;
-	      ss << *j;
-	      oss << insn(ss.str());	      
-	    }
-	  ++i; ++j;
-	}
-      else 	
-	{
+        {
+          if (i->second == j->second)
+            {
+              // this line was copied
+              len += isz;
+            }
+          else
+            {
+              // this line was changed, but the *entry* remained, so we
+              // treat it as a simultaneous delete + insert. that means
+              // advance pos over what used to be here, set len to 0, and
+              // copy the new data.
+              flush_copy(oss, pos, len);
+              pos += isz;
+              ostringstream ss;
+              ss << *j;
+              oss << insn(ss.str());              
+            }
+          ++i; ++j;
+        }
+      else         
+        {
 
-	  flush_copy(oss, pos, len);
-	  
-	  if (i != a.end() && i->first < j->first)
-	    {	      
-	      // this line was deleted	      
-	      ++i;
-	      pos += isz;
-	    }
-	  
-	  else
-	    {
-	      // this line was added
-	      ostringstream ss;
-	      ss << *j;
-	      oss << insn(ss.str());
-	      ++j;
-	    }
-	}
+          flush_copy(oss, pos, len);
+          
+          if (i != a.end() && i->first < j->first)
+            {              
+              // this line was deleted              
+              ++i;
+              pos += isz;
+            }
+          
+          else
+            {
+              // this line was added
+              ostringstream ss;
+              ss << *j;
+              oss << insn(ss.str());
+              ++j;
+            }
+        }
     }
 
   flush_copy(oss,pos,len);
@@ -317,8 +317,8 @@ compute_delta(manifest_map const & a,
 
 void 
 compute_delta(string const & a,
-	      string const & b,
-	      string & delta)
+              string const & b,
+              string & delta)
 {
   vector<insn> delta_insns;
 
@@ -391,49 +391,49 @@ simple_applicator
 
 void 
 apply_delta(boost::shared_ptr<delta_applicator> da,
-	    std::string const & delta)
+            std::string const & delta)
 {
   istringstream del(delta);
   for (char c = del.get(); c == 'I' || c == 'C'; c = del.get())
     {
       I(del.good());
       if (c == 'I')
-	{ 
-	  string::size_type len = string::npos;
-	  del >> len;
-	  I(del.good());
-	  I(len != string::npos);
-	  string tmp;
-	  tmp.reserve(len);
-	  I(del.get(c).good());
-	  I(c == '\n');
-	  while(len--)
-	    {
-	      I(del.get(c).good());
-	      tmp += c;
-	    }
-	  I(del.get(c).good());
-	  I(c == '\n');
-	  da->insert(tmp);
-	}
+        { 
+          string::size_type len = string::npos;
+          del >> len;
+          I(del.good());
+          I(len != string::npos);
+          string tmp;
+          tmp.reserve(len);
+          I(del.get(c).good());
+          I(c == '\n');
+          while(len--)
+            {
+              I(del.get(c).good());
+              tmp += c;
+            }
+          I(del.get(c).good());
+          I(c == '\n');
+          da->insert(tmp);
+        }
       else
-	{
-	  string::size_type pos = string::npos, len = string::npos;
-	  del >> pos >> len;	  
-	  I(del.good());
-	  I(len != string::npos);
-	  I(del.get(c).good());
-	  I(c == '\n');
-	  da->copy(pos, len);
-	}
+        {
+          string::size_type pos = string::npos, len = string::npos;
+          del >> pos >> len;          
+          I(del.good());
+          I(len != string::npos);
+          I(del.get(c).good());
+          I(c == '\n');
+          da->copy(pos, len);
+        }
     }    
   I(del.eof());
 }
 
 void
 apply_delta(string const & a,
-	    string const & delta,
-	    string & b)
+            string const & delta,
+            string & b)
 {
   boost::shared_ptr<delta_applicator> da(new simple_applicator());
   da->begin(a);
@@ -453,7 +453,7 @@ size_accumulating_delta_applicator :
   virtual void finish(std::string & out) {}
 
   virtual void copy(std::string::size_type pos, 
-		    std::string::size_type len) 
+                    std::string::size_type len) 
   { sz += len; }
   virtual void insert(std::string const & str) 
   { sz += str.size(); }
@@ -490,8 +490,8 @@ struct chunk
   {}
 
   chunk subchunk(version_pos vp,
-		 length ln,
-		 length offset) const
+                 length ln,
+                 length offset) const
   {
     I(ppos + offset >= ppos);
     I(ppos + offset + ln <= ppos + len);
@@ -533,9 +533,9 @@ piece_table
   {
     out.clear();
     for (version_spec::const_iterator i = in.begin();
-	 i != in.end(); ++i)
-      {	
-	append(out, i->piece, i->ppos, i->len);
+         i != in.end(); ++i)
+      {        
+        append(out, i->piece, i->ppos, i->len);
       }
   }
 };
@@ -564,7 +564,7 @@ chunk_less_than
 
 static void 
 apply_copy(version_spec const & in, version_spec & out, 
-	   version_pos src_vpos, length src_len)
+           version_pos src_vpos, length src_len)
 {
   //
   // this is a little tricky because there's *4* different extents
@@ -593,9 +593,9 @@ apply_copy(version_spec const & in, version_spec & out,
     dst_vpos = out.back().vpos + out.back().len;
   version_pos dst_final = dst_vpos + src_len;
   version_spec::const_iterator lo = lower_bound(in.begin(), 
-						in.end(), 
-						src_vpos, 
-						chunk_less_than());
+                                                in.end(), 
+                                                src_vpos, 
+                                                chunk_less_than());
   for ( ; src_len > 0; ++lo)
     {
       I(lo != in.end());
@@ -747,12 +747,12 @@ xdelta_randomly_insert(string & str)
       size_t pos = xdelta_sizegen(PRNG) % str.size();
       size_t len = xdelta_lengen(PRNG);
       if (pos+len >= str.size())
-	continue;
+        continue;
       string tmp;
       tmp.reserve(len);
       for (size_t i = 0; i < len; ++i)
-	tmp += xdelta_chargen(PRNG);
-	str.insert(pos, tmp);
+        tmp += xdelta_chargen(PRNG);
+        str.insert(pos, tmp);
       nedits--;
     }
 }
@@ -766,9 +766,9 @@ xdelta_randomly_change(string & str)
       size_t pos = xdelta_sizegen(PRNG) % str.size();
       size_t len = xdelta_lengen(PRNG);
       if (pos+len >= str.size())
-	continue;
+        continue;
       for (size_t i = 0; i < len; ++i)
-	str[pos+i] = xdelta_chargen(PRNG);
+        str[pos+i] = xdelta_chargen(PRNG);
       nedits--;
     }
 }
@@ -782,7 +782,7 @@ xdelta_randomly_delete(string & str)
       size_t pos = xdelta_sizegen(PRNG) % str.size();
       size_t len = xdelta_lengen(PRNG);
       if (pos+len >= str.size())
-	continue;
+        continue;
       str.erase(pos, len);
       --nedits;
     }
@@ -802,21 +802,21 @@ xdelta_random_simple_delta_test()
       compute_delta(a, b, fdel);
       compute_delta(b, a, rdel);
       L(F("src %d, dst %d, fdel %d, rdel %d\n")
-	% a.size() % b.size()% fdel.size() % rdel.size()) ;
+        % a.size() % b.size()% fdel.size() % rdel.size()) ;
       if (fdel.size() == 0)
-	{
-	  L(F("confirming src == dst and rdel == 0\n"));
-	  BOOST_CHECK(a == b);
-	  BOOST_CHECK(rdel.size() == 0);
-	}      
+        {
+          L(F("confirming src == dst and rdel == 0\n"));
+          BOOST_CHECK(a == b);
+          BOOST_CHECK(rdel.size() == 0);
+        }      
       else
-	{
-	  apply_delta(a, fdel, c);
-	  apply_delta(b, rdel, d);
-	  L(F("confirming dst1 %d, dst2 %d\n") % c.size() % d.size());
-	  BOOST_CHECK(b == c);
-	  BOOST_CHECK(a == d);
-	}
+        {
+          apply_delta(a, fdel, c);
+          apply_delta(b, rdel, d);
+          L(F("confirming dst1 %d, dst2 %d\n") % c.size() % d.size());
+          BOOST_CHECK(b == c);
+          BOOST_CHECK(a == d);
+        }
     }
 }
 

@@ -364,7 +364,7 @@ if test "$OSTYPE" == "msys"; then
   if test $pskill && test -x $pskill; then
     $pskill $mt_pid 2>/dev/null
   else
-    ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL" $a);}'
+    ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL " $a);}'
   fi
 else
   kill -KILL $mt_pid 2>/dev/null
@@ -636,3 +636,4 @@ m4_include(tests/t_monotone_up.at)
 m4_include(tests/t_drop_vs_patch_rename.at)
 m4_include(tests/t_unreadable_MT.at)
 m4_include(tests/t_cvsimport3.at)
+m4_include(tests/t_commit_message_file.at)

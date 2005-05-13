@@ -102,7 +102,7 @@ namespace basic_io
             if (static_cast<char>(in.lookahead) != '"')
               in.err("string did not end with '\"'");
             in.eat();
-	
+        
             return basic_io::TOK_STRING;
           }
 
@@ -122,8 +122,8 @@ namespace basic_io
             if (static_cast<char>(in.lookahead) != ']')
               in.err("hex string did not end with ']'");
             in.eat();
-	
-            return basic_io::TOK_HEX;	
+        
+            return basic_io::TOK_HEX;
           }
         default:
           if (std::isalpha(in.lookahead))

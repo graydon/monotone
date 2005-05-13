@@ -13,18 +13,18 @@
 
 void 
 compute_delta(std::string const & a,
-	      std::string const & b,
-	      std::string & delta);
+              std::string const & b,
+              std::string & delta);
 
 void
 compute_delta(manifest_map const & a,
-	      manifest_map const & b,
-	      std::string & delta);
+              manifest_map const & b,
+              std::string & delta);
 
 void
 apply_delta(std::string const & a,
-	    std::string const & delta,
-	    std::string & b);
+            std::string const & delta,
+            std::string & b);
 
 
 struct delta_applicator
@@ -42,7 +42,7 @@ boost::shared_ptr<delta_applicator> new_simple_applicator();
 boost::shared_ptr<delta_applicator> new_piecewise_applicator();
 
 void apply_delta(boost::shared_ptr<delta_applicator> da,
-		 std::string const & delta);
+                 std::string const & delta);
 
 u64 measure_delta_target_size(std::string const & delta);
 
