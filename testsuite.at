@@ -291,9 +291,13 @@ fi
 AT_CHECK(echo $UNGZ_COMMAND, [], [ignore], [ignore])
 ])
 m4_define([UNGZ], [AT_CHECK(
-eval $UNGZ_COMMAND <$1 >$2
 if test "$OSTYPE" == "msys"; then
-  dos2unix -q -o $2
+  if test "$1" != "$2.gz"; then
+    mv $1 $2.gz
+  fi
+  gunzip $2.gz
+else
+  eval $UNGZ_COMMAND <$1 >$2
 fi
 )])
 
