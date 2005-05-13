@@ -1,3 +1,8 @@
+2005-05-13  Jon Bright  <jon@siliconcircus.com>
+	* testsuite.at (UNGZ): Change the way the ungzipping works on
+	Win32, in the hope that test 206 will no longer be given invalid
+	files.
+
 2005-05-12  Derek Scherger  <derek@echologic.com>
 
 	* automate.cc: bump version number to 1.0
