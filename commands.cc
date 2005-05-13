@@ -3603,6 +3603,7 @@ CMD(automate, "automation",
     "interface_version\n"
     "heads [BRANCH]\n"
     "ancestors REV1 [REV2 [REV3 [...]]]\n"
+    "attributes [FILE]\n"
     "parents REV\n"
     "descendents REV1 [REV2 [REV3 [...]]]\n"
     "children REV\n"

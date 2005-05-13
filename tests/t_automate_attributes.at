@@ -1,0 +1,12 @@
+AT_SETUP([automate attributes])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [foo bar
+])
+AT_CHECK(MONOTONE attr set testfile unique_key unique_value, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate attributes testfile, [], [stdout], [ignore])
+AT_CHECK(grep -q unique_key stdout)
+AT_CHECK(MONOTONE automate attributes, [], [stdout], [ignore])
+AT_CHECK(grep -q testfile stdout)
+
+AT_CLEANUP

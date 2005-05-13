@@ -199,6 +199,54 @@ automate_erase_ancestors(std::vector<utf8> args,
     output << (*i).inner()() << std::endl;
 }
 
+// Name: attributes
+// Arguments:
+//   1: file name (optional, if non-existant prints all files with attributes)
+// Added in: 1.0
+// Purpose: Prints all attributes for a file, or all  all files with attributes
+//   if a file name provided.
+// Output format: A list of file names in alphabetically sorted order,
+//   or a list of attributes if a file name provided.
+// Error conditions: If the file name has no attributes, prints nothing.
+static void
+automate_attributes(std::vector<utf8> args,
+                    std::string const & help_name,
+                    app_state & app,
+                    std::ostream & output)
+{
+  if (args.size() > 1)
+    throw usage(help_name);
+
+  // is there an .mt-attrs?
+  file_path attr_path;
+  get_attr_path(attr_path);
+  if (!file_exists(attr_path)) return;
+
+  // read attribute map 
+  data attr_data;
+  attr_map attrs;
+
+  read_data(attr_path, attr_data);
+  read_attr_map(attr_data, attrs);
+
+  if (args.size() == 1) {
+    // a filename was given, if it has attributes, print them
+    file_path path = app.prefix(idx(args,0)());
+    attr_map::const_iterator i = attrs.find(path);
+    if (i == attrs.end()) return;
+
+    for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
+         j != i->second.end(); ++j)
+      output << j->first << std::endl;
+  }
+  else {
+    for (attr_map::const_iterator i = attrs.begin(); i != attrs.end(); ++i)
+      {
+        output << (*i).first << std::endl;
+      }
+  }
+}
+
 // Name: toposort
 // Arguments:
 //   0 or more: revision ids
@@ -771,6 +819,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_select(args, root_cmd_name, app, output);
   else if (cmd() == "inventory")
     automate_inventory(args, root_cmd_name, app, output);
+  else if (cmd() == "attributes")
+    automate_attributes(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

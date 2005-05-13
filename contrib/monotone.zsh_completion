@@ -75,8 +75,11 @@ _monotone_approve() {
 _monotone_attr() {
 	if (( CURRENT == 2 )); then	
 		compadd -- set get drop
+	elif (( CURRENT == 3 )); then	
+		compadd -- $(monotone automate attributes)
 	else
-		_monotone_existing_entries
+	  local fname="$words[3]";
+		compadd -- $(monotone automate attributes $fname)
 	fi
 }
 
@@ -270,16 +273,13 @@ _monotone_update() {
 
 (( $+functions[_monotone_files_unmaintained] )) ||
 _monotone_files_unmaintained() {
-	compadd -F "$_monotone_ignore_default" -- $(monotone ls unknown)
+	compadd -- $(monotone ls unknown)
 }
 
 (( $+functions[_monotone_existing_entries] )) ||
 _monotone_existing_entries() {
 	_path_files -F "$_monotone_ignore_default" -g "*"
 }
-
-(( $+_monotone_ignore_default )) ||
-_monotone_ignore_default=( "(*.Po *.a *.olb *.o *.so *.exe *.Z *.elc *.ln *.dirstamp *.rej *.orig *.BAK *.bak *.old autom4te.cache/* tags TAGS )" )
 
 (( $+functions[_monotone_branches] )) ||
 _monotone_branches() {
