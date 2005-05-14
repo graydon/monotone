@@ -791,6 +791,110 @@ void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
                  app_state & app,
+                 std::ostream & output);
+
+// Name: stdio
+// Arguments: none
+// Added in: 1.0
+// Purpose: Allow multiple automate commands to be run from one instance
+//   of monotone.
+//
+// Input format: The input is a series of lines of the form
+//   "command [args...]", where "command" is a valid "monotone automate"
+//   subcommand. Example:
+//        leaves
+//        parents 1f4ef73c3e056883c6a5ff66728dd764557db5e6
+//        inventory
+//
+// Output format: The output consists of the output of each command given,
+//   preceeded by the line "###BEGIN <command>###" and followed by the line
+//   "###END <command>###", where <command> is the command given. Example:
+//        ###BEGIN leaves###
+//        bdff75b3d1a58d5370d1b9aaeed1b5a4d0cba564
+//        ed0306ed417d258d82716bee36841199d8bb7626
+//        ee0f35591c79c9390baff5e0638b545963d1babf
+//        ###END leaves###
+//        ###BEGIN parents###
+//        094a5075b4bd7fe379f810edeb5f03283b50e13a
+//        ###END parents###
+//        ###BEGIN inventory###
+//           "work.cc"
+//           "work.hh"
+//           "xdelta.cc"
+//           "xdelta.hh"
+//        ###END inventory###
+//
+// Error conditions: If an invalid command line is recieved, prints
+//   "###ERR <command> usage###" to standard output, where <command> is the name
+//   of the command that was given.
+//   If some other error condition occurrs during execution of a command
+//   received on input, prints "###ERR <command> msg <message>###", where
+//   <command> is the name of the command, and <message> is the
+//   error message provided by that command, which would have been output on
+//   standard error if the command was invoked directly.
+//   This "###ERR <details>###" line replaces the "###END <command>###" line.
+//   Example:
+//     (Input)
+//        inventor
+//        inventory
+//     (Output)
+//        ###BEGIN inventor###
+//        ###ERR inventor usage###
+//        ###BEGIN inventory###
+//        ###ERR inventory msg misuse: working copy directory required but not found###
+//
+//   Errors do not affect the return value.
+
+static void
+automate_stdio(std::vector<utf8> args,
+                   std::string const & help_name,
+                   app_state & app,
+                   std::ostream & output)
+{
+  if (args.size() != 0)
+    throw usage(help_name);
+  while(!std::cin.eof())
+    {
+      std::string x;
+      utf8 cmd;
+      args.clear();
+      bool first=true;
+      do
+        {
+          std::cin>>x;
+          if(first)
+            cmd=utf8(x);
+          else
+            args.push_back(utf8(x));
+          first=false;
+        }
+      while(!std::cin.eof()
+            && (std::cin.peek() != '\n')
+            && (std::cin.peek() != '\r'));
+      if(cmd() != "")
+        {
+          output<<(F("###BEGIN %s###") % cmd)<<std::endl;
+          try
+            {
+              automate_command(cmd, args, help_name, app, output);
+              output<<(F("###END %s###") % cmd)<<std::endl;
+            }
+          catch(usage & u)
+            {
+              output<<(F("###ERR %s usage###") % cmd)<<std::endl;
+            }
+          catch(informative_failure & f)
+            {
+              output<<(F("###ERR %s msg %s###") % cmd % f.what)<<std::endl;
+            }
+        }
+    }
+}
+
+void
+automate_command(utf8 cmd, std::vector<utf8> args,
+                 std::string const & root_cmd_name,
+                 app_state & app,
                  std::ostream & output)
 {
   if (cmd() == "interface_version")
@@ -821,6 +925,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_inventory(args, root_cmd_name, app, output);
   else if (cmd() == "attributes")
     automate_attributes(args, root_cmd_name, app, output);
+  else if (cmd() == "stdio")
+    automate_stdio(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

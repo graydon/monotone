@@ -1,3 +1,12 @@
+2005-05-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Add "monotone automate stdio", to let the automation interface
+	take commands on standard input.
+	* automate.cc: (automate_stdio) New function.
+		(automate_command) Add it.
+	* commands.cc: Add to description for "automate".
+	* monotone.texi: Add to documentation.
+
 2005-05-13  Joel Reed  <joelwreed@comcast.com>
 
 	* tests/t_unidiff3.at: opps. forgot to add this file which

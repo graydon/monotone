@@ -3612,7 +3612,8 @@ CMD(automate, "automation",
     "toposort [REV1 [REV2 [REV3 [...]]]]\n"
     "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
     "leaves\n"
-    "inventory",
+    "inventory\n"
+    "stdio\n",
     "automation interface", 
     OPT_NONE)
 {
