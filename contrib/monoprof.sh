@@ -11,7 +11,9 @@ Arguments: [flags ...] [testname ...]
     --append x    Append ".x" to the profile directory name
     --list        List available profile tests
     --overwrite   Allow results to be placed in an already existing directory
+    --datadir x   Use x as base directory for files used, scratchwork, results
     --help        Print this message
+    --setup       Set up most of the needed files (broken?)
     testname      Only run selected profile tests
 EOF
 }
@@ -23,9 +25,49 @@ EOF
 #symbols left in. (-O2 -g1 seems to be about right)
 #This script assumes that the debug libc is used by default.
 #This script probably assume a lot more, too.
+#
+#Files (any of these can be symlinks):
+#	${DATADIR}/mt.db		db holding net.venge.monotone
+#	${DATADIR}/empty.db		db holding a keypair
+#	${DATADIR}/linux-2.6.11.tar.bz2
+#	${DATADIR}/patch-2.6.11.7.bz2
+#	${DATADIR}/monotone-src/	dir with checked-out n.v.m
+#	${DATADIR}/libstdc++.so		optimized debug stdc++ library
+#	${DATADIR}/monotone-profiles/	directory to store profiles in
+#						created if nonexistent
+#	${DATADIR}/hooks.lua		optional, hooks to use instead of
+#					the default
 
 #The directory holding the files to test with
+#Can be overridden from the command line.
 DATADIR=/mnt/bigdisk
+
+#Some other variables depend on $DATADIR, which can be set on the command line.
+#So, the option handling needs to be done here or those vars might be wrong.
+BUILD=false
+UPDATE=false
+PULL=false
+HELP=false
+LIST=false
+APPEND=""
+RESTRICT=""
+OVERWRITE=false
+SETUP=false
+while ! [ $# -eq 0 ] ; do
+	case "$1" in
+		--build) BUILD=true;;
+		--update) UPDATE=true; BUILD=true;;
+		--pull) PULL=true; UPDATE=true; BUILD=true;;
+		--append) shift; APPEND=".$1";;
+		--list) LIST="true";;
+		--overwrite) OVERWRITE="true";;
+		--datadir) shift; DATADIR=$1;;
+		--setup) SETUP=true;;
+		--help) HELP="true";;
+		*) RESTRICT="${RESTRICT} $1";;
+	esac
+	shift
+done
 
 #Database holding net.venge.monotone
 MTDB=mt.db
@@ -33,13 +75,13 @@ MTDB=mt.db
 #A database holding only a keypair.
 EMPTYDB=empty.db
 
-#${KPATCH} is the "small patch" to add to the kernel.
-#file ${KVER}.tar.bz2 is the kernel tarball to use
-KPATCH=patch-2.6.11.7.bz2
-KVER=linux-2.6.11
+#patch-${KPATCHVER}.bz2 is the "small patch" to add to the kernel.
+#file linux-${KVER}.tar.bz2 is the kernel tarball to use
+KPATCHVER=2.6.11.7
+KVER=2.6.11
 
 #Directory containing monotone sources
-BUILDDIR=/mnt/bigdisk/src-managed/monotone-src
+BUILDDIR=${DATADIR}/monotone-src
 #Full path of the monotone binary to use.
 MONOTONE=${BUILDDIR}/monotone
 
@@ -51,15 +93,20 @@ SUDO=/usr/bin/sudo
 #You probably have to build this yourself, since your distro's packaged
 #debug library probably isn't optimized (and so will give bogus profiles).
 #DBG_LIB=/usr/lib/debug/libstdc++.so
-DBG_LIB=/usr/local/src/gcc-3.3-3.3.5/gcc-3.3.5/libstdc++-v3/src/.libs/libstdc++.so.5.0.7
+DBG_LIB=${DATADIR}/libstdc++.so
 
 #Directory to store the generated profiles in.
-PROFDIR=/mnt/bigdisk/monotone-profiles
+PROFDIR=${DATADIR}/monotone-profiles
 
-
+#Note: don't just use "time"; bash has a builtin by that name.
+#The real thing is better.
 TIME=/usr/bin/time
 
-VERSION=$(${MONOTONE} --version | sed 's/.*: \(.*\))/\1/')
+VERSION=""
+[ -f ${MONOTONE} ] && VERSION=$(${MONOTONE} --version | sed 's/.*: \(.*\))/\1/')
+
+HOOKS=""
+[ -f ${DATADIR}/hooks.lua ] && HOOKS="--norc --rcfile=${DATADIR}/hooks.lua"
 
 #This picks the top 20 functions for execution time in the function,
 #and the top 20 for execution time in children of the function.
@@ -109,10 +156,11 @@ test_netsync()
 	cp ${DATADIR}/${MTDB}    ${DATADIR}/test-serve.db
 	profstart 
 	${TIME} -o ${TIME_SERVER} ${MONOTONE} --db=${DATADIR}/test-serve.db \
-		--ticker=none --quiet serve localhost net.venge.monotone &
+		${HOOKS} --ticker=none --quiet serve localhost \
+		net.venge.monotone &
 	sleep 5 #wait for server to be ready
 	${TIME} -o ${TIME_CLIENT} ${MONOTONE} --db=${DATADIR}/test.db \
-		pull localhost net.venge.monotone
+		${HOOKS} pull localhost net.venge.monotone
 	#If we kill the time process, we don't get our statistics.
 	kill $(ps -Af|grep 'monotone.*serve\ localhost' | \
 		grep -v time | awk '{print $2}')
@@ -136,25 +184,25 @@ test_commit()
 	local RUNTIME=$(tempfile)
 	local TESTNAME="Commit kernel ${KVER} to an empty database"
 	local SHORTNAME="commitfirst"
-	bzip2 -dc ${DATADIR}/${KVER}.tar.bz2 | tar -C ${DATADIR} -xf -
+	bzip2 -dc ${DATADIR}/linux-${KVER}.tar.bz2 | tar -C ${DATADIR} -xf -
 	pushd ${DATADIR}/${KVER}
-	${MONOTONE} setup .
-	${MONOTONE} --quiet add $(ls|grep -v '^MT')
+	${MONOTONE} ${HOOKS} setup .
+	${MONOTONE} ${HOOKS} --quiet add $(ls|grep -v '^MT')
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
 
 	profstart
-	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
+	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} --branch=linux-kernel \
 		--db=${DATADIR}/test.db commit \
 		--message="Commit message."
 	profend
 	
 	RUNTIME=$(tempfile)
-	TESTNAME="Commit a small patch (${KPATCH}) to the kernel"
+	TESTNAME="Commit a small patch (${KPATCHVER}) to the kernel"
 	SHORTNAME="commitpatch"
 	
-	bzip2 -dc ${DATADIR}/${KPATCH} | patch -p1 >/dev/null
+	bzip2 -dc ${DATADIR}/patch-${KPATCHVER}.bz2 | patch -p1 >/dev/null
 	profstart
-	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
+	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} --branch=linux-kernel \
 		--db=${DATADIR}/test.db commit --message="Commit #2"
 	profend
 	
@@ -163,13 +211,13 @@ test_commit()
 	SHORTNAME="commitsame"
 	
 	profstart
-	${TIME} -o ${RUNTIME} ${MONOTONE} --branch=linux-kernel \
+	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} --branch=linux-kernel \
 		--db=${DATADIR}/test.db commit --message="no change"
 	profend
 
 	popd
 	rm ${DATADIR}/test.db
-	rm -rf ${DATADIR}/${KVER}
+	rm -rf ${DATADIR}/linux-${KVER}/
 }
 
 TESTS="${TESTS} test_lcad"
@@ -181,7 +229,7 @@ test_lcad()
 
 	cp ${DATADIR}/${MTDB} ${DATADIR}/test.db
 	profstart
-	${TIME} -o ${RUNTIME} ${MONOTONE} --db=${DATADIR}/test.db \
+	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} --db=${DATADIR}/test.db \
 		lcad ebf14142331667146d7a3aabb406945648ea00de \
 		     68fe12e6f1de7d161eb9e27dd757e7d230049520
 	
@@ -202,7 +250,7 @@ test_bigfile()
 	pushd ${DATADIR}
 	cp ${EMPTYDB} test.db
 	cp ${EMPTYDB} test2.db
-	${MONOTONE} --db=test.db setup testdir
+	${MONOTONE} ${HOOKS} --db=test.db setup testdir
 	pushd testdir
 	awk -- 'BEGIN{srand(5253);for(a=0;a<32*1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish
 	${MONOTONE} add largish
@@ -210,19 +258,19 @@ test_bigfile()
 	TESTNAME="Commit a big file"
 	SHORTNAME="bigfile-commit"
 	profstart
-	${MONOTONE} commit --branch=bigfile --message="log message" \
-		--db=${DATADIR}/test.db
+	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} commit --branch=bigfile \
+		--message="log message" --db=${DATADIR}/test.db
 	profend
 	
 	TESTNAME="Netsync a big file"
 	SHORTNAME="bigfile-sync"
 	profstart
 #run:	
-	${TIME} -o ${TIME_SERVER} ${MONOTONE} --db=${DATADIR}/test.db \
+	${TIME} -o ${TIME_SERVER} ${MONOTONE} ${HOOKS} --db=${DATADIR}/test.db \
 		--ticker=none --quiet serve localhost bigfile &
 	sleep 5 #wait for server to be ready
 	${TIME} -o ${TIME_CLIENT} ${MONOTONE} --db=${DATADIR}/test2.db \
-		pull localhost bigfile
+		${HOOKS} pull localhost bigfile
 	#If we kill the time process, we don't get our statistics.
 	kill $(ps -Af|grep 'monotone.*serve\ localhost' | \
 		grep -v time | awk '{print $2}')
@@ -286,26 +334,35 @@ run_tests()
 
 BEGINTIME=$(date +%s)
 
-BUILD=false
-UPDATE=false
-PULL=false
-APPEND=""
-RESTRICT=""
-OVERWRITE=false
-
-while ! [ $# -eq 0 ] ; do
-	case "$1" in
-		--build) BUILD=true;;
-		--update) UPDATE=true; BUILD=true;;
-		--pull) PULL=true; UPDATE=true; BUILD=true;;
-		--append) shift; APPEND=".$1";;
-		--list) for i in ${TESTS}; do echo -e "\t$i"; done; exit 0;;
-		--overwrite) OVERWRITE="true";;
-		--help) print_help; exit 0;;
-		*) RESTRICT="${RESTRICT} $1";;
-	esac
-	shift
-done
+if [ ${HELP} = "true" ] ; then
+	print_help
+	exit 0
+fi
+if [ ${LIST} = "true" ] ; then
+	for i in ${TESTS}; do
+		echo -e "\t$i"
+	done
+	exit 0
+fi
+if [ ${SETUP} = "true" ] ; then
+	pushd ${DATADIR}
+	monotone --db=empty.db db init
+	echo -e "xxx\nxxx\n" | monotone --db=empty.db genkey xxx
+	echo "function get_passphrase(keypair_id)" >hooks.lua
+	echo "return \"xxx\"" >>hooks.lua
+	echo "end" >>hooks.lua
+	cp empty.db mt.db
+	monotone --db=mt.db pull off.net net.venge.monotone
+	monotone --db=mt.db --branch=net.venge.monotone co monotone-src
+	wget http://www.kernel.org/pub/linux/kernel/v2.6/patch-2.6.11.7.bz2
+	wget http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.11.tar.bz2
+	if ! [ -f ${DEBUG_LIB} ] ; then
+		echo "You still need to build a debug stdlibc++"
+		echo "and copy or symlink it to ${DEBUG_LIB}"
+	fi
+	popd
+	exit 0
+fi
 
 pushd ${BUILDDIR}
 if [ ${PULL} = "true" ] ; then
@@ -321,6 +378,12 @@ popd
 if ! [ "${RESTRICT}" = "" ] ; then
 	TESTS="${RESTRICT}"
 fi
+
+if ! [ -f ${MONOTONE} ] ; then
+	echo "Error: ${MONOTONE} does not exist." >&2
+	exit 1
+fi
+
 run_tests
 TOTALTIME=$(($(date +%s)-${BEGINTIME}))
 ELAPSED=$((${TOTALTIME}/60)):$((${TOTALTIME}%60))

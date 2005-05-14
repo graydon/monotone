@@ -1,3 +1,10 @@
+2005-05-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/monoprof.sh: Clean up variable definitions some.
+		- Add option --datadir, should now be usable without editing
+		variables to match system paths
+		- Add option --setup, generates most of the needed files
+
 2005-05-13  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Add "monotone automate stdio", to let the automation interface
