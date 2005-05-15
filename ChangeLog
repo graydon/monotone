@@ -1,3 +1,9 @@
+2005-05-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (commit): change scope of the transaction guard so that
+	the transaction will fail before MT/revision is written (which could
+	leave a non-committed revision/bad working dir).
+
 2005-05-16  Grahame Bowland  <grahame@angrygoats.net>
 
 	* monotone.texi: update "monotone log" documentation

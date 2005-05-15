@@ -2294,8 +2294,8 @@ CMD(commit, "working copy", "[PATH]...",
   N(log_message.find_first_not_of(" \r\t\n") != string::npos,
     F("empty log message"));
 
-  transaction_guard guard(app.db);
   {
+    transaction_guard guard(app.db);
     packet_db_writer dbw(app);
 
     if (app.db.revision_exists(rid))
@@ -2396,10 +2396,9 @@ CMD(commit, "working copy", "[PATH]...",
     else
       cert_revision_author_default(rid, app, dbw);
     cert_revision_changelog(rid, log_message, app, dbw);
+    guard.commit();
   }
   
-  guard.commit();
-
   // small race condition here...
   put_path_rearrangement(excluded_work);
   put_revision_id(rid);
