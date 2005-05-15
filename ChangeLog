@@ -1,3 +1,9 @@
+2005-05-12  Grahame Bowland  <grahame@angrygoats.net>
+
+	* commands.cc: Modify the "log" command to accept multiple 
+	revisions on command line, and display the log for all 
+	of those revisions.
+
 2005-05-11  Nathaniel Smith  <njs@codesourcery.com>
 
 	* std_hooks.lua (ignore_file): Organize a bit more, add
