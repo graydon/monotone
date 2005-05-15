@@ -558,7 +558,7 @@ sub revision_is_in_branch
     if (!defined $$revision_data{$revision}) {
 	$$revision_data{$revision} =
 	    [ map { chomp; $_ }
-	      my_backtick("monotone$database log --depth=1 $revision") ];
+	      my_backtick("monotone$database log --depth=1 --revision=$revision") ];
     }
 
     map {
