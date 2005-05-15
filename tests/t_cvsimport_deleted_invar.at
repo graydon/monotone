@@ -2,7 +2,6 @@
 
 AT_SETUP([cvs import, deleted file invariant])
 AT_KEYWORDS(cvs)
-AT_XFAIL_IF(true)
 NEED_UNGZB64
 
 MONOTONE_SETUP

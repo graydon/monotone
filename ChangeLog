@@ -1,3 +1,9 @@
+2005-05-15  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc: rewrite most of the branch logic to 
+	address issues raised in bugs 13032 and 13063.
+	* tests/t_cvsimport_deleted_invar.at: un-XFAIL.
+
 2005-05-14  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/monoprof.sh: Clean up variable definitions some.
@@ -4286,7 +4292,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
