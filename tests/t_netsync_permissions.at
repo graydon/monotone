@@ -1,0 +1,190 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([netsync permissions])
+
+MONOTONE_SETUP
+
+# generate a new key
+
+OTHER=other@test.net
+AT_CHECK((echo $OTHER; echo $OTHER) | MONOTONE genkey $OTHER, [], [ignore], [ignore])
+
+NETSYNC_SETUP
+
+# test with open security settings
+
+AT_DATA(open.lua, [
+function get_netsync_read_permitted(collection, identity)
+        return true
+end
+
+function get_netsync_write_permitted(collection, identity)
+        return true
+end
+
+function get_netsync_anonymous_read_permitted(collection)
+        return true
+end
+])
+
+AT_CHECK(cp test.db clean.db)
+
+ADD_FILE(testfile, [testfile
+])
+AT_CHECK(MONOTONE --branch=testbranch commit --message testfile, [], [ignore], [ignore])
+BASE=`BASE_REVISION`
+
+NETSYNC_SERVE_START(testbranch --rcfile open.lua)
+
+# anonymous pull 
+
+AT_CHECK(cp clean.db test2.db)
+NETSYNC_CLIENT_RUN(pull --key="", testbranch)
+AT_CHECK(MONOTONE2 cat revision $BASE, [0], [stdout], [stderr])
+
+# pull with default key
+
+AT_CHECK(cp clean.db test2.db)
+NETSYNC_CLIENT_RUN(pull, testbranch)
+AT_CHECK(MONOTONE2 cat revision $BASE, [0], [stdout], [stderr])
+
+# pull with other key
+
+AT_CHECK(cp clean.db test2.db)
+NETSYNC_CLIENT_RUN(pull --key=$OTHER, testbranch)
+AT_CHECK(MONOTONE2 cat revision $BASE, [0], [stdout], [stderr])
+
+# pull with unknown key fails
+
+AT_CHECK(cp clean.db test2.db)
+UNKNOWN=unknown@test.net
+AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
+NETSYNC_CLIENT_RUN(pull --key=$UNKNOWN, testbranch)
+AT_CHECK(MONOTONE2 cat revision $BASE, [1], [stdout], [stderr])
+
+# push with default key
+
+AT_CHECK(cp test.db test2.db)
+REVERT_TO($BASE)
+ADD_FILE(default, [default
+])
+AT_CHECK(MONOTONE2 commit --message default, [], [ignore], [ignore])
+DEFAULT_REV=`BASE_REVISION`
+NETSYNC_CLIENT_RUN(push, testbranch)
+
+# push with other key
+
+REVERT_TO($BASE)
+ADD_FILE(other, [other
+])
+AT_CHECK(MONOTONE2 commit --message other, [], [ignore], [ignore])
+OTHER_REV=`BASE_REVISION`
+NETSYNC_CLIENT_RUN(push --key=$OTHER , testbranch)
+
+# push with unknown key fails
+
+REVERT_TO($BASE)
+ADD_FILE(unknown, [unknown
+])
+AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])
+UNKNOWN_REV=`BASE_REVISION`
+AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
+NETSYNC_CLIENT_RUN(push --key=$UNKNOWN, testbranch)
+
+NETSYNC_SERVE_STOP
+
+AT_CHECK(MONOTONE cat revision $DEFAULT_REV, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE cat revision $OTHER_REV, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE cat revision $UNKNOWN_REV, [1], [stdout], [stderr])
+
+
+# test with closed security settings
+
+AT_DATA(closed.lua, [
+function get_netsync_read_permitted(collection, identity)
+        if (identity == "tester@test.net") then return true end
+        return false
+end
+
+function get_netsync_write_permitted(collection, identity)
+        if (identity == "tester@test.net") then return true end
+        return false
+end
+
+function get_netsync_anonymous_read_permitted(collection)
+        return false
+end
+])
+
+AT_CHECK(cp clean.db test.db)
+AT_DATA(MT/revision [])
+
+ADD_FILE(testfile, [testfile
+])
+AT_CHECK(MONOTONE --branch=testbranch commit --message testfile, [], [ignore], [ignore])
+BASE=`BASE_REVISION`
+
+NETSYNC_SERVE_START(testbranch --rcfile closed.lua)
+
+# anonymous pull fails
+
+AT_CHECK(cp clean.db test2.db)
+NETSYNC_CLIENT_RUN(pull --key="", testbranch)
+AT_CHECK(MONOTONE2 cat revision $BASE, [1], [stdout], [stderr])
+
+# pull with default key
+
+AT_CHECK(cp clean.db test2.db)
+NETSYNC_CLIENT_RUN(pull, testbranch)
+AT_CHECK(MONOTONE2 cat revision $BASE, [0], [stdout], [stderr])
+
+# pull with other key fails
+
+AT_CHECK(cp clean.db test2.db)
+NETSYNC_CLIENT_RUN(pull --key=$OTHER, testbranch)
+AT_CHECK(MONOTONE2 cat revision $BASE, [1], [stdout], [stderr])
+
+# pull with unknown key fails
+
+AT_CHECK(cp clean.db test2.db)
+UNKNOWN=unknown@test.net
+AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
+NETSYNC_CLIENT_RUN(pull --key=$UNKNOWN, testbranch)
+AT_CHECK(MONOTONE2 cat revision $BASE, [1], [stdout], [stderr])
+
+# push with default key
+
+AT_CHECK(cp test.db test2.db)
+REVERT_TO($BASE)
+ADD_FILE(default, [default
+])
+AT_CHECK(MONOTONE2 commit --message default, [], [ignore], [ignore])
+DEFAULT_REV=`BASE_REVISION`
+NETSYNC_CLIENT_RUN(push, testbranch)
+
+# push with other key
+
+REVERT_TO($BASE)
+ADD_FILE(other, [other
+])
+AT_CHECK(MONOTONE2 commit --message other, [], [ignore], [ignore])
+OTHER_REV=`BASE_REVISION`
+NETSYNC_CLIENT_RUN(push --key=$OTHER, testbranch)
+
+# push with unknown key fails
+
+REVERT_TO($BASE)
+ADD_FILE(unknown, [unknown
+])
+AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])
+UNKNOWN_REV=`BASE_REVISION`
+AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
+NETSYNC_CLIENT_RUN(push --key=$UNKNOWN, testbranch)
+
+NETSYNC_SERVE_STOP
+
+AT_CHECK(MONOTONE cat revision $DEFAULT_REV, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE cat revision $OTHER_REV, [1], [stdout], [stderr])
+AT_CHECK(MONOTONE cat revision $UNKNOWN_REV, [1], [stdout], [stderr])
+
+AT_CLEANUP
