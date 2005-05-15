@@ -1,3 +1,8 @@
+2005-05-15  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify.pl (revision_is_in_branch): Another
+	place where --revision was missing.
+
 2005-05-14  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/monoprof.sh: Clean up variable definitions some.
