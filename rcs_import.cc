@@ -239,6 +239,11 @@ cvs_history
 
   void index_branchpoint_symbols(rcs_file const & r);
 
+  void note_state_at_branch_beginning(rcs_file const & r,
+				      string const & branchname,
+				      string const & version, 
+				      file_id const & ident);
+
   void push_branch(string const & branch_name, bool private_branch);
 
   void note_file_edge(rcs_file const & r, 
@@ -594,20 +599,11 @@ process_branch(string const & begin_version,
       if (range.first != cvs.branchpoints.end() 
 	  && range.first->first == curr_version)
 	{
-	  // here we are making a slightly odd note that the file
-	  // springs into existence on the branch, with an edge from
-	  // the null id to the branchpoint. we do this because we are
-	  // transplanting the RCS file branchpoint (which is
-	  // hierarchical) onto a tree-wide branch root (which is
-	  // non-hierarchical, starting from the null revision).
-
 	  for (ity branch = range.first; branch != range.second; ++branch)
 	    {
-	      L(F("noting branchpoint for %s = %s\n") % branch->first % curr_version);
-	      cvs.push_branch(branch->second, false);
-	      cvs.note_file_edge (r, curr_version, curr_version, 
-				  file_id(), file_id(curr_id));
-	      cvs.pop_branch();
+	      cvs.note_state_at_branch_beginning(r, branch->second,
+						 curr_version, 
+						 curr_id);
 	    }
 	}
 
@@ -887,6 +883,86 @@ void cvs_history::index_branchpoint_symbols(rcs_file const & r)
     }
 }
 
+void
+cvs_history::note_state_at_branch_beginning(rcs_file const & r,
+					    string const & branchname,
+					    string const & version, 
+					    file_id const & ident)
+{
+  // here we manufacture a single synthetic commit -- the "branch
+  // birth" commit -- representing the cumulative affect of all the
+  // tag -b operations the user once performed. it has a synthetic
+  // author ("cvs_import") and a synthetic log message ("beginning of
+  // branch foo"), and occurs at the time of the *last* branchpoint of
+  // any files which entered this branch.
+  //
+  // note that this does not establish a revision-ancestry
+  // relationship between the branchpoint and the branch. the branch
+  // is considered a child of the null revision, as far as monotone is
+  // concerned.
+
+  L(F("noting branchpoint for %s = %s\n") % branchname % version);
+
+  push_branch(branchname, false);
+
+  cvs_key k;
+  shared_ptr<cvs_state> s;
+  I(stk.size() > 0);
+  shared_ptr<cvs_branch> branch = stk.top();
+
+  string branch_birth_message = "beginning of branch " + branchname;
+  string branch_birth_author = "cvs_import";
+
+  cvs_changelog clog = changelog_interner.intern(branch_birth_message);
+  cvs_author auth = author_interner.intern(branch_birth_author);
+
+  if (branch->empty())
+    {
+      find_key_and_state (r, version, k, s);
+      branch->erase(k);
+      k.changelog = clog;
+      k.author = auth;
+      k.add_file(curr_file, version);
+      branch->insert(make_pair(k, s));
+    }
+  else
+    {
+      cvs_key nk(r, version, *this);
+      
+      bool found_branch_birth = false;
+      for (cvs_branch::const_iterator i = branch->begin();
+	   i != branch->end(); ++i)
+	{
+	  if (i->first.author == auth 
+	      && i->first.changelog == clog)
+	    {
+	      k = i->first;
+	      s = i->second;
+	      found_branch_birth = true;
+	      break;
+	    }
+	}
+      I(found_branch_birth);
+      if (nk.time > k.time)
+	{
+	  branch->erase(k);
+	  k.time = nk.time;
+	  k.add_file(curr_file, version);
+	  branch->insert(make_pair(k, s));
+	}
+    }
+
+  map<string, shared_ptr<rcs_delta> >::const_iterator del;
+  del = r.deltas.find(version);
+  I(del != r.deltas.end());
+  bool alive = del->second->state != "dead";
+
+  s->in_edges.insert(cvs_file_edge(file_id(), curr_file, alive,
+				   ident, curr_file, alive,
+				   *this));
+  pop_branch();
+}
+
 bool 
 cvs_history::find_key_and_state(rcs_file const & r, 
                                 string const & version,
@@ -924,7 +1000,9 @@ cvs_history::find_key_and_state(rcs_file const & r,
         {
           key = i->first;
           state = i->second;
+	  branch->erase(i->first);
           key.add_file(curr_file, version);
+	  branch->insert(make_pair(key,state));
           return true;
         }
     }
