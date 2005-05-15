@@ -3471,6 +3471,7 @@ CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]
   if (app.revision_selectors.size() == 0)
     {
       revision_id rid;
+      get_revision_id(rid);
       frontier.insert(make_pair(file, rid));
     }
   else

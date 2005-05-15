@@ -1,3 +1,8 @@
+2005-05-16  Grahame Bowland  <grahame@angrygoats.net>
+
+	* monotone.texi: update "monotone log" documentation
+	* commands.cc: fix "monotone log" when run with no --revision args
+
 2005-05-15  Derek Scherger  <derek@echologic.com>
 
 	* netsync.cc (process_anonymous_cmd, process_auth_cmd): log
