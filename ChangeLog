@@ -1,5 +1,10 @@
 2005-05-15  Derek Scherger  <derek@echologic.com>
 
+	* tests/t_update_with_blocked_rename.at: new test
+	* testsuite.at: call it
+
+2005-05-15  Derek Scherger  <derek@echologic.com>
+
 	* netsync.cc (process_anonymous_cmd, process_auth_cmd): log
 	details of permissions allowed/denied
 	* tests/t_netsync_permissions.at: new test
