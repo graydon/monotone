@@ -1,3 +1,14 @@
+2005-05-15  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc (note_state_at_branch_beginning): collect
+	branch beginning states into a single synthetic commit.
+
+2005-05-15  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc: rewrite most of the branch logic to 
+	address issues raised in bugs 13032 and 13063.
+	* tests/t_cvsimport_deleted_invar.at: un-XFAIL.
+
 2005-05-16  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc (commit): change scope of the transaction guard so that
