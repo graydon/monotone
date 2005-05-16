@@ -1,0 +1,69 @@
+AT_SETUP([update with blocked rename])
+MONOTONE_SETUP
+
+# This test is a bug report
+AT_XFAIL_IF(true)
+
+# 1. Alice starts a project and creates some files
+# 2. Bob checks out the project and gets the files
+# 3. Bob creates a file bar, but forgets to add it
+# 4. Alice renames one of her files to bar
+# 5. Bob updates
+#
+# the update fails after moving renamed files to MT/tmp/N
+# where N is the file's tid.
+#
+# Bob is left with a bunch of missing files.
+
+AT_CHECK(mkdir alice)
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+  AT_CHECK(echo "file $i", [], [stdout])
+  AT_CHECK(mv stdout alice/file.$i)
+done
+
+# Alice starts a projectand creates foo
+AT_CHECK(MONOTONE --branch=testbranch setup alice, [], [ignore], [ignore])
+AT_CHECK( (cd alice; MONOTONE add file.*), [], [ignore], [ignore])
+AT_CHECK( (cd alice; MONOTONE commit -m 'alice adds files'), [], [ignore], [ignore])
+
+# Bob checks out project, gets files and creates file bar
+AT_CHECK(MONOTONE --branch=testbranch checkout bob, [], [ignore], [ignore])
+AT_DATA(bob/bar, [bob's bar
+])
+
+# Alice renames some files
+AT_CHECK( (cd alice; MONOTONE rename file.3 bar), [], [ignore], [ignore])
+AT_CHECK( (cd alice; MONOTONE rename file.4 bar.4), [], [ignore], [ignore])
+AT_CHECK( (cd alice; MONOTONE rename file.5 bar.5), [], [ignore], [ignore])
+AT_CHECK(mv alice/file.3 alice/bar)
+AT_CHECK(mv alice/file.4 alice/bar.4)
+AT_CHECK(mv alice/file.5 alice/bar.5)
+AT_CHECK( (cd alice; MONOTONE commit -m 'alice renames files'), [], [ignore], [ignore])
+
+# Bob updates but bar is in the way
+AT_CHECK( (cd bob; MONOTONE update), [], [ignore], [ignore])
+
+# non-renamed files remain
+
+for i in 1 2 6 7 8 9 10
+do
+  AT_CHECK(test -e bob/file.$i, [1], [stdout])
+done
+
+# renamed files are gone
+
+AT_CHECK(test -e bob/file.3, [1], [stdout])
+AT_CHECK(test -e bob/file.4, [1], [stdout])
+AT_CHECK(test -e bob/file.5, [1], [stdout])
+
+# original bar still exists
+
+AT_CHECK(test -e bob/bar, [0], [stdout])
+
+# other renames are also gone
+
+AT_CHECK(test -e bob/bar.4, [1], [stdout])
+AT_CHECK(test -e bob/bar.5, [1], [stdout])
+
+AT_CLEANUP

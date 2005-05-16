@@ -2294,8 +2294,8 @@ CMD(commit, "working copy", "[PATH]...",
   N(log_message.find_first_not_of(" \r\t\n") != string::npos,
     F("empty log message"));
 
-  transaction_guard guard(app.db);
   {
+    transaction_guard guard(app.db);
     packet_db_writer dbw(app);
 
     if (app.db.revision_exists(rid))
@@ -2396,10 +2396,9 @@ CMD(commit, "working copy", "[PATH]...",
     else
       cert_revision_author_default(rid, app, dbw);
     cert_revision_changelog(rid, log_message, app, dbw);
+    guard.commit();
   }
   
-  guard.commit();
-
   // small race condition here...
   put_path_rearrangement(excluded_work);
   put_revision_id(rid);
@@ -3450,31 +3449,40 @@ CMD(annotate, "informative", "PATH",
   do_annotate(app, file, fid, rid);
 }
 
-CMD(log, "informative", "[file]",
-    "print history in reverse order (filtering by 'file').  If a revision is\n"
-    "given, use it as a starting point.",
+CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]]",
+    "print history in reverse order (filtering by 'file').  If one or more revisions\n"
+    "are given, use them as a starting point.",
     OPT_DEPTH % OPT_REVISION)
 {
-  revision_id rid;
   file_path file;
 
   if (app.revision_selectors.size() == 0)
     app.require_working_copy();
 
-  if (args.size() > 1 || app.revision_selectors.size() > 1)
+  if (args.size() > 1)
     throw usage(name);
 
   if (args.size() > 0)
      file=file_path(idx(args, 0)()); /* specified a file */
 
-  if (app.revision_selectors.size() == 0)
-    get_revision_id(rid);
-  else
-    complete(app, idx(app.revision_selectors, 0)(), rid);
-
   set< pair<file_path, revision_id> > frontier;
-  frontier.insert(make_pair(file, rid));
-  
+
+  if (app.revision_selectors.size() == 0)
+    {
+      revision_id rid;
+      get_revision_id(rid);
+      frontier.insert(make_pair(file, rid));
+    }
+  else
+    {
+      for (std::vector<utf8>::const_iterator i = app.revision_selectors.begin();
+           i != app.revision_selectors.end(); i++) {
+        revision_id rid;
+        complete(app, (*i)(), rid);
+        frontier.insert(make_pair(file, rid));
+      }
+    }
+
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);
   cert_name branch_name(branch_cert_name);
@@ -3492,6 +3500,7 @@ CMD(log, "informative", "[file]",
       for (set< pair<file_path, revision_id> >::const_iterator i = frontier.begin();
            i != frontier.end(); ++i)
         { 
+          revision_id rid;
           file = i->first;
           rid = i->second;
 

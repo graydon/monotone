@@ -1562,6 +1562,8 @@ session::process_anonymous_cmd(protocol_role role,
   //     in our this->role field.
   //
 
+  // client must be a sink and server must be a source (anonymous read-only)
+
   if (role != sink_role)
     {
       W(F("rejected attempt at anonymous connection for write\n"));
@@ -1569,13 +1571,21 @@ session::process_anonymous_cmd(protocol_role role,
       return false;
     }
 
-  if (! ((this->role == source_role || this->role == source_and_sink_role)
-         && app.lua.hook_get_netsync_anonymous_read_permitted(collection)))
+  if (this->role != source_role && this->role != source_and_sink_role)
     {
-      W(F("anonymous read permission denied for '%s'\n") % collection);
+      W(F("rejected attempt at anonymous connection while running as sink\n"));
       this->saved_nonce = id("");
       return false;
     }
+
+  if (!app.lua.hook_get_netsync_anonymous_read_permitted(collection))
+    {
+      W(F("denied anonymous read permission for '%s'\n") % collection);
+      this->saved_nonce = id("");
+      return false;
+    }
+
+  P(F("allowed anonymous read permission for '%s'\n") % collection);
 
   // get our private key and sign back
   L(F("anonymous read permitted, signing back nonce\n"));
@@ -1666,28 +1676,48 @@ session::process_auth_cmd(protocol_role role,
   base64<rsa_pub_key> their_key;
   app.db.get_pubkey(their_key_hash, their_id, their_key);
 
+  // client as sink, server as source (reading)
+
   if (role == sink_role || role == source_and_sink_role)
     {
-      if (! ((this->role == source_role || this->role == source_and_sink_role)
-             && app.lua.hook_get_netsync_read_permitted(collection, 
-                                                        their_id())))
+      if (this->role != source_role && this->role != source_and_sink_role)
         {
-          W(F("read permission denied for '%s'\n") % collection);
+          W(F("denied '%s' read permission for '%s' while running as sink\n") 
+            % their_id % collection);
           this->saved_nonce = id("");
           return false;
         }
+
+      if (!app.lua.hook_get_netsync_read_permitted(collection, their_id()))
+        {
+          W(F("denied '%s' read permission for '%s'\n") % their_id % collection);
+          this->saved_nonce = id("");
+          return false;
+        }
+
+      P(F("allowed '%s' read permission for '%s'\n") % their_id % collection);
     }
-  
+
+  // client as source, server as sink (writing)
+
   if (role == source_role || role == source_and_sink_role)
     {
-      if (! ((this->role == sink_role || this->role == source_and_sink_role)
-             && app.lua.hook_get_netsync_write_permitted(collection, 
-                                                         their_id())))
+      if (this->role != sink_role && this->role != source_and_sink_role)
         {
-          W(F("write permission denied for '%s'\n") % collection);
+          W(F("denied '%s' write permission for '%s' while running as source\n") 
+            % their_id % collection);
           this->saved_nonce = id("");
           return false;
         }
+
+      if (!app.lua.hook_get_netsync_write_permitted(collection, their_id()))
+        {
+          W(F("denied '%s' write permission for '%s'\n") % their_id % collection);
+          this->saved_nonce = id("");
+          return false;
+        }
+
+      P(F("allowed '%s' write permission for '%s'\n") % their_id % collection);
     }
   
   // save their identity 

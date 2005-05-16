@@ -1,3 +1,31 @@
+2005-05-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (commit): change scope of the transaction guard so that
+	the transaction will fail before MT/revision is written (which could
+	leave a non-committed revision/bad working dir).
+
+2005-05-16  Grahame Bowland  <grahame@angrygoats.net>
+
+	* monotone.texi: update "monotone log" documentation
+	* commands.cc: fix "monotone log" when run with no --revision args
+
+2005-05-15  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_update_with_blocked_rename.at: new test
+	* testsuite.at: call it
+
+2005-05-15  Derek Scherger  <derek@echologic.com>
+
+	* netsync.cc (process_anonymous_cmd, process_auth_cmd): log
+	details of permissions allowed/denied
+	* tests/t_netsync_permissions.at: new test
+	* testsuite.at: call it
+
+2005-05-15  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify.pl (revision_is_in_branch): Another
+	place where --revision was missing.
+
 2005-05-14  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/monoprof.sh: Clean up variable definitions some.
@@ -92,6 +120,12 @@
 
 	* file_io.cc (write_data_impl): Use portable boost::filesystem
 	calls in place of unlink(2)/remove(2).
+
+2005-05-12  Grahame Bowland  <grahame@angrygoats.net>
+
+	* commands.cc: Modify the "log" command to accept multiple 
+	revisions on command line, and display the log for all 
+	of those revisions.
 
 2005-05-11  Nathaniel Smith  <njs@codesourcery.com>
 
