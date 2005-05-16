@@ -120,7 +120,7 @@ building and installation process for monotone
        build a version of monotone without the internal "bundled"
        copies of lua and sqlite libraries. normally monotone will use
        copies of these libraries it was bundled with. If you set these
-       flags to "no", it will try to use librarise it finds on your
+       flags to "no", it will try to use libraries it finds on your
        system, and use the bundled versions only if you do not have
        your own copies.
 

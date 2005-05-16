@@ -41,7 +41,7 @@ any problems locally rather than waiting for the build bots to alert the
 development team of a problem.
 
 All changes to monotone that alter monotone's behaviour should include a new
-test.  This includes most changes, but use your judgement about adding tests
+test.  This includes most changes, but use your judgment about adding tests
 for very small changes..  The tests are located in the source tree in the
 tests/ directory, documentation on writing tests is available in
 tests/README.
