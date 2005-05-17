@@ -4897,6 +4897,63 @@ message to stderr, and exits with status 1.
 
 @end table
 
+@item monotone automate certs @var{id}
+
+@table @strong
+@item Arguments:
+
+A revision ID @var{id}, for which any certificates will be printed.
+
+@item Added in:
+
+1.0
+
+@item Purpose:
+
+Prints all certificates associated with the given revision ID.
+Each certificate is contained in a basic IO stanza. For each certificate, 
+the following values are provided:
+ 
+@item Sample output:
+
+@verbatim
+   key "matt@ucc.asn.au"
+status "ok"
+  name "author"
+ value "matt@ucc.asn.au"
+
+   key "matt@ucc.asn.au"
+status "ok"
+  name "branch"
+ value "net.venge.monotone"
+
+   key "matt@ucc.asn.au"
+status "ok"
+  name "changelog"
+ value "merge of c48bf9be32757e804a7eca4cf717b2fa5f62b397
+     and be6e404d588dcf10b544e1d64f8d2ec4bc0982c8
+"
+
+   key "matt@ucc.asn.au"
+status "ok"
+  name "date"
+ value "2005-05-16T14:48:16"
+@end verbatim
+
+@item Output format:
+
+All stanzas are formatted by basic_io. Stanzas are seperated 
+by a blank line. Values will be escaped, '\' to '\\' and 
+'"' to '\"'.
+
+@item Error conditions:
+
+If a certificate is signed with an unknown public key, a 
+warning message is printed to stderr. If the revision specified is unknown 
+or invalid prints an error message to stderr and exits with status 1.
+
+@end table
+
 @item monotone automate stdio
 
 @table @strong

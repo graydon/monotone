@@ -1,3 +1,11 @@
+2005-05-17  Grahame Bowland  <grahame@angrygoats.net>
+
+	* commands.cc: add "automate certs ID" to the help string 
+	for the automate command
+	* automate.cc: implement "automate certs". Add to the list 
+	of commands available through "automate stdio".
+	* monotone.texi: document "automate certs"
+
 2005-05-15  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (note_state_at_branch_beginning): collect
