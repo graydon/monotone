@@ -3559,7 +3559,7 @@ to date.
 @section Network
 
 @ftable @command
-@item monotone serve @var{address} @var{collection}
+@item monotone serve @var{address} @var{collection1} [@var{collection2} ...]
 @itemx monotone pull [@var{address} [@var{collection}]]
 @itemx monotone push [@var{address} [@var{collection}]]
 @itemx monotone sync [@var{address} [@var{collection}]]
@@ -3575,6 +3575,13 @@ host name to listen on, or connect to, optionally followed by a colon
 and a port number. The @var{collection} parameter indicates a set of
 branches to exchange; every branch for which @var{collection} is a
 prefix will be indexed and made available for synchronization.
+
+The @command{serve} command can take multiple collections, and it will
+then accept clients requesting any of the listed collections.  Different
+permissions can be applied to each collection; see the hooks
+@code{get_netsync_read_permitted}, @code{get_netsync_write_permitted},
+and @code{get_netsync_anonymous_read_permitted}, all of which take a
+@var{collection} argument (see @ref{Hook Reference}).
 
 For example, supposing Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
