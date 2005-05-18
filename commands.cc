@@ -3622,7 +3622,8 @@ CMD(automate, "automation",
     "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
     "leaves\n"
     "inventory\n"
-    "stdio\n",
+    "stdio\n"
+    "certs REV\n",
     "automation interface", 
     OPT_NONE)
 {
