@@ -1,3 +1,12 @@
+2005-05-18  Richard Levitte  <richard@levitte.org>
+
+	* ui.cc: Move the copyright and license section to the top of the
+	file, and add an emacs mode specifier.
+	* ui.cc (write_ticks): Change the counter ticker so the trailer
+	comes at the end of the counter line instead of the title line.
+	This is especially important for code that changes the trailer
+	a little now and then.
+
 2005-05-15  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (note_state_at_branch_beginning): collect
