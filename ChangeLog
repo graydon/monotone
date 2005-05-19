@@ -1,4 +1,12 @@
-<<<<<<< variant A
+2005-05-18  Richard Levitte  <richard@levitte.org>
+
+	* ui.cc: Move the copyright and license section to the top of the
+	file, and add an emacs mode specifier.
+	* ui.cc (write_ticks): Change the counter ticker so the trailer
+	comes at the end of the counter line instead of the title line.
+	This is especially important for code that changes the trailer
+	a little now and then.
+
 2005-05-17  Grahame Bowland  <grahame@angrygoats.net>
 
 	* commands.cc: add "automate certs ID" to the help string 
@@ -7,14 +15,11 @@
 	of commands available through "automate stdio".
 	* monotone.texi: document "automate certs"
 
->>>>>>> variant B
 2005-05-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Network): Document 'serve' as taking more than
 	one collection argument.
 
-####### Ancestor
-======= end
 2005-05-15  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (note_state_at_branch_beginning): collect
@@ -4348,7 +4353,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
