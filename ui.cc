@@ -1,3 +1,13 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
+// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
+// all rights reserved.
+// licensed to the public under the terms of the GNU GPL (>= 2)
+// see the file COPYING for details
+
+// this file contains a couple utilities to deal with the user
+// interface. the global user_interface object 'ui' owns clog, so no
+// writing to it directly!
+
 #include "config.h"
 #include "platform.hh"
 #include "sanity.hh"
@@ -7,15 +17,6 @@
 #include <iostream>
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
-
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
-
-// this file contains a couple utilities to deal with the user
-// interface. the global user_interface object 'ui' owns clog, so no
-// writing to it directly!
 
 using namespace std;
 using boost::lexical_cast;
@@ -137,7 +138,11 @@ void tick_write_count::write_ticks()
       tickline2 += count;
     }
 
-  tickline1 += ui.tick_trailer;
+  if (ui.tick_trailer.size() > 0)
+    {
+      tickline2 += " ";
+      tickline2 += ui.tick_trailer;
+    }
   
   size_t curr_sz = tickline2.size();
   if (curr_sz < last_tick_len)
@@ -149,15 +154,13 @@ void tick_write_count::write_ticks()
     {
       if (tw && tickline1.size() > tw)
         {
-          // first character in tickline is "\r", which does not take up any
-          // width, so we add 1 to compensate.
-          tickline1.resize(tw + 1);
+          tickline1.resize(tw);
         }
       clog << tickline1 << "\n";
     }
   if (tw && tickline2.size() > tw)
     {
-      // first character in tickline is "\r", which does not take up any
+      // first character in tickline2 is "\r", which does not take up any
       // width, so we add 1 to compensate.
       tickline2.resize(tw + 1);
     }
