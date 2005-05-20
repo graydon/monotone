@@ -18,6 +18,8 @@
 #include <libintl.h>
 #endif
 
+#include "botan/botan.h"
+
 #include "app_state.hh"
 #include "commands.hh"
 #include "sanity.hh"
@@ -105,6 +107,8 @@ dumper()
 {
   if (!clean_shutdown)
     global_sanity.dump_buffer();
+  
+  Botan::Init::deinitialize();
 }
 
 

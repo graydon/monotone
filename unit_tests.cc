@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 
+#include "botan/botan.h"
+
 #include "unit_tests.hh"
 #include "sanity.hh"
 
@@ -17,6 +19,7 @@ void dumper()
 {
   if (!clean_shutdown)
         global_sanity.dump_buffer();    
+        Botan::Init::deinitialize();
 }
 
 void clean_shutdown_dummy_test()
@@ -26,6 +29,8 @@ void clean_shutdown_dummy_test()
 
 test_suite * init_unit_test_suite(int argc, char * argv[])
 {
+  Botan::Init::initialize();
+
   clean_shutdown = false;
   atexit(&dumper);
   global_sanity.set_debug();
