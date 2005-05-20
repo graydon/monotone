@@ -1,3 +1,16 @@
+2005-05-20  Emile Snyder  <emile@alumni.reed.edu>
+
+	* annotate.{hh,cc}: Rework to handle lineage dependent line
+	mappings and lines which split from a single line in a parent
+	revision into multiple lines in some descendent.  Fixes bug where
+	some lines remained unannotated.  Fixes wrong assignment of lines
+	bug.
+	* tests/t_annotate.at: Check no-changes since addition of file
+	case.
+	* tests/t_annotate_lineage_dependent.at
+	* tests/t_annotate_split_lines.at:  New tests.
+	* testsuite.at: Add them.
+	
 2005-05-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Network): Clarify that ports can be specified on
@@ -4409,7 +4422,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÃƒÂ…Ã‚Â‚kowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÃƒÂ…Ã‚Â‚kowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
