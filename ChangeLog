@@ -1,3 +1,10 @@
+2005-05-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (merge_disjoint_analyses): handle the case where
+	a file is dropped on both sides but re-added on one.
+	* tests/t_drop_vs_dropadd.at: a test for it
+	* testsuite.at
+
 2005-05-19  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (checkout): rearrange to use --revision option

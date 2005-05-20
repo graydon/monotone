@@ -2080,7 +2080,8 @@ project_missing_deltas(change_set const & a,
       change_set::delta_map::const_iterator j = b.deltas.find(path_in_b_second);
 
       // if the file was deleted in b, we don't want to copy this delta.
-      if (b.rearrangement.has_deleted_file(path_in_anc))
+      if (b.rearrangement.has_deleted_file(path_in_anc)
+          && !(a.rearrangement.has_added_file(path_in_merged)))
         {
           L(F("skipping delta '%s'->'%s' on deleted file '%s'\n")
                 % delta_entry_src(i) % delta_entry_dst(i) % path_in_anc);
