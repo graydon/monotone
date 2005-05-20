@@ -56,7 +56,7 @@ RIGHT_R=`BASE_REVISION`
 
 AT_CHECK(MONOTONE merge --branch=testbranch, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE checkout $BASE_R test_dir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$BASE_R test_dir, [], [ignore], [ignore])
 AT_CHECK( (cd test_dir && MONOTONE --branch=testbranch update), [], [ignore], [ignore])
 MERGED_R=`cd test_dir && BASE_REVISION`
 AT_CHECK(test $BASE_R != $MERGED_R)

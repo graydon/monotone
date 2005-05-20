@@ -117,11 +117,11 @@ Import all file versions in RCS files. Does not reconstruct revisions
 across the entire tree.  You do not want this command, it is for
 debugging; use cvs_import.
 .TP
-\fBcheckout\fP \fI[manifest-id]\fP \fI<directory\fP
-Check out tree state from database.
+\fBcheckout\fP \fI[--revision=revision-id]\fP \fI[<directory>]\fP
+Check out revision from database.
 .TP
-\fBco\fP \fI[manifest-id]\fP \fI<directory\fP
-Check out tree state from database; an alias for \fBcheckout\fP.
+\fBco\fP \fI[--revision=revision-id]\fP \fI[<directory>]\fP
+Check out revision from database; an alias for \fBcheckout\fP.
 .TP
 \fBcat\fP \fI(file|manifest) <id>\fP
 Write file or manifest from database to stdout.
@@ -255,10 +255,7 @@ characters (like some programs provide a progress line of dots).
 The default is \fBcount\fP.
 .TP
 \fB--revision=\fP\fI<id>\fP
-Currently this option only applies to the diff command where it may be
-used to compare a working copy with a specific revision or to compare
-two specific revisions. It will likely apply to other commands in the
-future.
+Used to specify one or more revision ids to various commands.
 .TP
 \fB-r\fP \fI<id>\fP
 An alias for \fB--revision=\fP\fI<id>\fP

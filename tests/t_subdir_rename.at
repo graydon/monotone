@@ -17,7 +17,7 @@ AT_CHECK(mv subdir/anotherdir anotherdir-renamed)
 AT_CHECK( (cd subdir && MONOTONE rename anotherdir ../anotherdir-renamed), [], [ignore], [ignore])
 COMMIT(testbranch)
 
-AT_CHECK(MONOTONE checkout $REV codir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$REV codir, [], [ignore], [ignore])
 AT_CHECK( (cd codir && MONOTONE update --branch=testbranch), [], [ignore], [ignore])
 AT_CHECK(test -f codir/subdir/foo, [1])
 AT_CHECK(test -f codir/subdir/anotherdir/bar, [1])

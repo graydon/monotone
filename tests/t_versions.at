@@ -33,7 +33,7 @@ do
   AT_CHECK(cmp stdout testfile, [], [ignore])
 
   AT_CHECK(rm -rf MT)
-  AT_CHECK(MONOTONE checkout $RSHA ., [], [stdout])
+  AT_CHECK(MONOTONE checkout --revision=$RSHA ., [], [stdout])
   AT_CHECK(SHA1(testfile), [], [stdout])
   AT_CHECK(cmp stdout fsha-$i, [], [ignore])  
 

@@ -33,17 +33,17 @@ FOO_FOO_REV=`BASE_REVISION`
 AT_CHECK(MONOTONE --rcfile=linesep.lua update $FOO_REV, [], [ignore], [ignore])
 AT_CHECK(cmp foo foo.crlf, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --rcfile=linesep.lua checkout $FOO_REV foo_crlf, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=linesep.lua checkout --revision=$FOO_REV foo_crlf, [], [ignore], [ignore])
 AT_CHECK(cmp foo.crlf foo_crlf/foo)
 
-AT_CHECK(MONOTONE --rcfile=linesep.lua checkout $FOO_FOO_REV foo_foo_crlf, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=linesep.lua checkout --revision=$FOO_FOO_REV foo_foo_crlf, [], [ignore], [ignore])
 AT_CHECK(cmp foofoo.crlf foo_foo_crlf/foo)
 
 # no rcfile here
-AT_CHECK(MONOTONE checkout $FOO_REV foo_lf, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$FOO_REV foo_lf, [], [ignore], [ignore])
 AT_CHECK(cmp foo.lf foo_lf/foo)
 
-AT_CHECK(MONOTONE checkout $FOO_FOO_REV foo_foo_lf, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$FOO_FOO_REV foo_foo_lf, [], [ignore], [ignore])
 AT_CHECK(cmp foofoo.lf foo_foo_lf/foo)
 
 AT_CLEANUP

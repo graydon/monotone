@@ -2954,7 +2954,7 @@ $ cvs -d $CVSROOT checkout -r 1.2
 @smallexample
 @group
 $ monotone pull www.foo.com com.foo.wobbler
-$ monotone checkout fe37 wobbler
+$ monotone checkout --revision=fe37 wobbler
 @end group
 @end smallexample
 @end multitable
@@ -3241,8 +3241,8 @@ to inspect a version without checking it out into your working copy.  An
 unspecified manifest or revision @var{id} is allowed from within a
 working copy and refers to the current manifest or revision.
 
-@item monotone checkout @var{id} @var{directory}
-@itemx monotone co @var{id} @var{directory}
+@item monotone checkout --revision=@var{id} @var{directory}
+@itemx monotone co --revision=@var{id} @var{directory}
 @itemx monotone --branch=@var{branchname} checkout @var{directory}
 @itemx monotone --branch=@var{branchname} co @var{directory}
 
@@ -6506,9 +6506,9 @@ across the entire tree.  You do not want this command, it is for
 debugging; use cvs_import.
 @comment TROFF INPUT: .TP
 
-@item @b{checkout} @i{[manifest-id]} @i{<directory>}
-@itemx @b{co} @i{[manifest-id]} @i{<directory>}
-Check out tree state from database, into directory.
+@item @b{checkout} @i{[--revision=revision-id]} @i{[<directory>]}
+@itemx @b{co} @i{[--revision=revision-id]} @i{[<directory>]}
+Check out revision from database, into directory.
 @comment TROFF INPUT: .TP
 
 @item @b{cat} @i{(file <id>|manifest [<id>]|revision [<id>])}

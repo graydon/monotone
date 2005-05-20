@@ -50,7 +50,7 @@ RENAME_FILE_R=`BASE_REVISION`
 
 AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE checkout $BASE_R test_dir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$BASE_R test_dir, [], [ignore], [ignore])
 AT_CHECK( (cd test_dir && MONOTONE update --branch=testbranch), [], [ignore], [ignore])
 TEST_R=`cd test_dir; BASE_REVISION`
 

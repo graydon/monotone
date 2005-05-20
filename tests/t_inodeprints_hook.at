@@ -21,17 +21,17 @@ REV=`BASE_REVISION`
 
 AT_CHECK(MONOTONE setup setup_default, [], [ignore], [ignore])
 AT_CHECK(test ! -e setup_default/MT/inodeprints)
-AT_CHECK(MONOTONE checkout $REV co_default, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$REV co_default, [], [ignore], [ignore])
 AT_CHECK(test ! -e co_default/MT/inodeprints)
 
 AT_CHECK(MONOTONE --rcfile=off.lua setup setup_off, [], [ignore], [ignore])
 AT_CHECK(test ! -e setup_off/MT/inodeprints)
-AT_CHECK(MONOTONE --rcfile=off.lua checkout $REV co_off, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=off.lua checkout --revision=$REV co_off, [], [ignore], [ignore])
 AT_CHECK(test ! -e co_off/MT/inodeprints)
 
 AT_CHECK(MONOTONE --rcfile=on.lua setup setup_on, [], [ignore], [ignore])
 AT_CHECK(test -e setup_on/MT/inodeprints)
-AT_CHECK(MONOTONE --rcfile=on.lua checkout $REV co_on, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=on.lua checkout --revision=$REV co_on, [], [ignore], [ignore])
 AT_CHECK(test -e co_on/MT/inodeprints)
 AT_CHECK(test -s co_on/MT/inodeprints)
 

@@ -14,7 +14,7 @@ SET_FILE(testfile, [other stuff
 COMMIT(testbranch)
 REV1=`BASE_REVISION`
 
-AT_CHECK(MONOTONE checkout --branch=testbranch $REV0 codir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --branch=testbranch --revision=$REV0 codir, [], [ignore], [ignore])
 AT_CHECK(cd codir && MONOTONE up, [], [ignore], [ignore])
 AT_CHECK(cmp testfile codir/testfile)
 

@@ -5,10 +5,10 @@ MONOTONE_SETUP
 # the checkout directory already exists, no MT/ directory should be
 # created.
 
-AT_CHECK(MONOTONE checkout bogus-id outdir, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=bogus-id outdir, [1], [ignore], [ignore])
 AT_CHECK(test ! -e outdir)
 AT_CHECK(mkdir outdir)
-AT_CHECK( (cd outdir && MONOTONE checkout bogus-id .), [1], [ignore], [ignore])
+AT_CHECK( (cd outdir && MONOTONE checkout --revision=bogus-id .), [1], [ignore], [ignore])
 AT_CHECK(test ! -e outdir/MT)
 
 AT_CLEANUP

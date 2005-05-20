@@ -59,7 +59,7 @@ DIR_DELETE_R=`BASE_REVISION`
 
 AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE checkout $BASE_R clean, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$BASE_R clean, [], [ignore], [ignore])
 AT_CHECK(cd clean && MONOTONE --branch=testbranch update, [], [ignore], [ignore])
 
 AT_CHECK(test -f clean/rename-out)

@@ -20,7 +20,7 @@ COMMIT(testbranch)
 
 AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE checkout $BASE_R test_dir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$BASE_R test_dir, [], [ignore], [ignore])
 AT_CHECK( (cd test_dir && MONOTONE update --branch=testbranch), [], [ignore], [ignore])
 
 AT_CHECK(test ! -f test_dir/foo/a)

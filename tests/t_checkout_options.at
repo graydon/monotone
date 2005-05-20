@@ -16,15 +16,15 @@ AT_CHECK(RAW_MONOTONE checkout test_dir1, [], [ignore], [ignore])
 AT_CHECK(RAW_MONOTONE --db=test.db checkout test_dir2, [], [ignore], [ignore])
 AT_CHECK(RAW_MONOTONE --db=test.db --branch=testbranch checkout test_dir3, [], [ignore], [ignore])
 AT_CHECK(RAW_MONOTONE --branch=testbranch checkout test_dir4, [], [ignore], [ignore])
-AT_CHECK(RAW_MONOTONE --db=test.db --branch=testbranch checkout $REV test_dir5, [], [ignore], [ignore])
-AT_CHECK(RAW_MONOTONE --branch=testbranch checkout $REV test_dir6, [], [ignore], [ignore])
-AT_CHECK(RAW_MONOTONE --db=test.db checkout $REV test_dir7, [], [ignore], [ignore])
-AT_CHECK(RAW_MONOTONE checkout $REV test_dir8, [], [ignore], [ignore])
+AT_CHECK(RAW_MONOTONE --db=test.db --branch=testbranch checkout --revision=$REV test_dir5, [], [ignore], [ignore])
+AT_CHECK(RAW_MONOTONE --branch=testbranch checkout --revision=$REV test_dir6, [], [ignore], [ignore])
+AT_CHECK(RAW_MONOTONE --db=test.db checkout --revision=$REV test_dir7, [], [ignore], [ignore])
+AT_CHECK(RAW_MONOTONE checkout --revision=$REV test_dir8, [], [ignore], [ignore])
 
 # checkout fails if the specified revision is not a member of the specified branch
-AT_CHECK(RAW_MONOTONE --branch=foobar checkout $REV test_dir9, [1], [ignore], [ignore])
+AT_CHECK(RAW_MONOTONE --branch=foobar checkout --revision=$REV test_dir9, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE cert $REV branch foobar, [], [ignore], [ignore])
-AT_CHECK(RAW_MONOTONE --branch=foobar checkout $REV test_dir10, [], [ignore], [ignore])
+AT_CHECK(RAW_MONOTONE --branch=foobar checkout --revision=$REV test_dir10, [], [ignore], [ignore])
 
 
 for DIR in test_dir{1,2,3,4,5,6,7,8}; do

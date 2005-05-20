@@ -200,7 +200,7 @@ m4_define([PROBE_NODE], [
 AT_CHECK(rm -rf MT.old)
 AT_CHECK(mv  MT MT.old)
 AT_CHECK(rm $1)
-AT_CHECK(MONOTONE checkout $2 ., [], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$2 ., [], [ignore])
 AT_CHECK(mv MT.old/options MT)
 PROBE_R_SHA=`BASE_REVISION`
 PROBE_F_SHA=`SHA1($1)`
@@ -213,8 +213,8 @@ m4_define([REVERT_TO], [
 AT_CHECK(rm -rf MT.old)
 AT_CHECK(mv  MT MT.old)
 m4_case([$2],
-        [], [AT_CHECK(MONOTONE checkout $1 ., [], [ignore])],
-        [AT_CHECK(MONOTONE --branch=$2 checkout $1 ., [], [ignore])])
+        [], [AT_CHECK(MONOTONE checkout --revision=$1 ., [], [ignore])],
+        [AT_CHECK(MONOTONE --branch=$2 checkout --revision=$1 ., [], [ignore])])
 AT_CHECK(mv MT.old/options MT)
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
