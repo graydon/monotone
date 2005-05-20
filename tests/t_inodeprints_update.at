@@ -11,7 +11,7 @@ SET_FILE(testfile, [stuff stuff
 COMMIT(testbranch)
 R1=`BASE_REVISION`
 
-AT_CHECK(MONOTONE checkout --branch=testbranch $R0 td, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --branch=testbranch --revision=$R0 td, [], [ignore], [ignore])
 AT_CHECK(touch td/MT/inodeprints)
 AT_CHECK(cd td && MONOTONE update, [], [ignore], [ignore])
 AT_CHECK(test -s td/MT/inodeprints)

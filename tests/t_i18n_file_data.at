@@ -53,9 +53,9 @@ BASE_R=`BASE_REVISION`
 AT_CHECK(MONOTONE --rcfile=8859-5.lua add ru-8859-5, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --rcfile=8859-5.lua commit --message=foo, [], [ignore], [ignore])
 RU_R=`BASE_REVISION`
-AT_CHECK(MONOTONE --rcfile=8859-5.lua checkout $RU_R co-ru-8859-5, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=8859-5.lua checkout --revision=$RU_R co-ru-8859-5, [], [ignore], [ignore])
 AT_CHECK(cmp ru-8859-5 co-ru-8859-5/ru-8859-5)
-AT_CHECK(MONOTONE checkout $RU_R co-ru-utf8, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$RU_R co-ru-utf8, [], [ignore], [ignore])
 AT_CHECK(cmp ru-utf8 co-ru-utf8/ru-8859-5)
 
 REVERT_TO($BASE_R)
@@ -65,9 +65,9 @@ REVERT_TO($BASE_R)
 AT_CHECK(MONOTONE --rcfile=euc.lua add jp-euc, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --rcfile=euc.lua commit --message=foo, [], [ignore], [ignore])
 JP_R=`BASE_REVISION`
-AT_CHECK(MONOTONE --rcfile=euc.lua checkout $JP_R co-jp-euc, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=euc.lua checkout --revision=$JP_R co-jp-euc, [], [ignore], [ignore])
 AT_CHECK(cmp jp-euc co-jp-euc/jp-euc)
-AT_CHECK(MONOTONE checkout $JP_R co-jp-utf8, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$JP_R co-jp-utf8, [], [ignore], [ignore])
 AT_CHECK(cmp jp-utf8 co-jp-utf8/jp-euc)
 
 AT_CLEANUP

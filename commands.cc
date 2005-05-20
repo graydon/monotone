@@ -1396,66 +1396,66 @@ CMD(cat, "informative",
 }
 
 
-CMD(checkout, "tree", "REVISION DIRECTORY\nDIRECTORY\n",
+CMD(checkout, "tree", "[--revision=REVISION] [DIRECTORY]\n",
     "check out revision from database into directory",
-    OPT_BRANCH_NAME)
+    OPT_BRANCH_NAME % OPT_REVISION)
 {
-
   revision_id ident;
   string dir;
 
-  if (args.size() > 2)
+  if (args.size() > 1 || app.revision_selectors.size() > 1)
     throw usage(name);
 
-  if (args.size() == 0 || args.size() == 1)
+  if (args.size() == 0)
     {
-      N(app.branch_name() != "", F("need --branch argument for branch-based checkout"));
-      // if no checkout dir specified, use branch name
-      if (args.size() == 0)
-          dir = app.branch_name();
-      else
-          dir = idx(args, 0)();
+      // no checkout dir specified, use branch name for dir
+      N(!app.branch_name().empty(), F("need --branch argument for branch-based checkout"));
+      dir = app.branch_name();
+    }
+  else
+    {
+      // checkout to specified dir
+      dir = idx(args, 0)();
+    }
 
+  if (app.revision_selectors.size() == 0)
+    {
+      // use branch head revision
+      N(!app.branch_name().empty(), F("need --branch argument for branch-based checkout"));
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
       N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
       N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
       ident = *(heads.begin());
-
-      app.create_working_copy(dir);
     }
-  else
+  else if (app.revision_selectors.size() == 1)
     {
-      dir = idx(args, 1)();
-      complete(app, idx(args, 0)(), ident);
-      
+      // use specified revision
+      complete(app, idx(app.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no revision %s found in database") % ident);
+      
+      cert_value b;
+      guess_branch(ident, app, b);
 
-      {
-        cert_value b;
-        guess_branch(ident, app, b);
-      }
-      {
-        I(!app.branch_name().empty());
-        cert_value branch_name(app.branch_name());
-        base64<cert_value> branch_encoded;
-        encode_base64(branch_name, branch_encoded);
+      I(!app.branch_name().empty());
+      cert_value branch_name(app.branch_name());
+      base64<cert_value> branch_encoded;
+      encode_base64(branch_name, branch_encoded);
         
-        vector< revision<cert> > certs;
-        app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
+      vector< revision<cert> > certs;
+      app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
           
-        L(F("found %d %s branch certs on revision %s\n") 
-          % certs.size()
-          % app.branch_name
-          % ident);
+      L(F("found %d %s branch certs on revision %s\n") 
+        % certs.size()
+        % app.branch_name
+        % ident);
         
-        N(certs.size() != 0, F("revision %s is not a member of branch %s\n") 
-          % ident % app.branch_name);
-      }
-
-      app.create_working_copy(dir);
+      N(certs.size() != 0, F("revision %s is not a member of branch %s\n") 
+        % ident % app.branch_name);
     }
+
+  app.create_working_copy(dir);
 
   transaction_guard guard(app.db);
     

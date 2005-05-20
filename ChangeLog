@@ -1,4 +1,40 @@
-<<<<<<< variant A
+2005-05-19  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (checkout): rearrange to use --revision option
+	* monotone.1: 
+	* monotone.texi: document checkout --revision option
+	* tests/t_attr.at:
+	* tests/t_attributes.at:
+	* tests/t_checkout_id_sets_branch.at:
+	* tests/t_checkout_noop_on_fail.at:
+	* tests/t_checkout_options.at:
+	* tests/t_cwork.at:
+	* tests/t_delete_dir.at:
+	* tests/t_delete_dir_patch.at:
+	* tests/t_empty_path.at:
+	* tests/t_i18n_file_data.at:
+	* tests/t_inodeprints_hook.at:
+	* tests/t_inodeprints_update.at:
+	* tests/t_largish_file.at:
+	* tests/t_lf_crlf.at:
+	* tests/t_monotone_up.at:
+	* tests/t_netsync_defaults.at:
+	* tests/t_netsync_set_defaults.at:
+	* tests/t_persistent_server_revision.at:
+	* tests/t_rename_added_in_rename.at:
+	* tests/t_rename_dir_cross_level.at:
+	* tests/t_rename_dir_patch.at:
+	* tests/t_single_char_filenames.at:
+	* tests/t_subdir_add.at:
+	* tests/t_subdir_attr.at:
+	* tests/t_subdir_drop.at:
+	* tests/t_subdir_rename.at:
+	* tests/t_subdir_revert.at:
+	* tests/t_tags.at:
+	* tests/t_update_off_branch.at:
+	* tests/t_versions.at:
+	* testsuite.at: add --revision option to checkout
+
 2005-05-17  Grahame Bowland  <grahame@angrygoats.net>
 
 	* commands.cc: add "automate certs ID" to the help string 
@@ -7,14 +43,11 @@
 	of commands available through "automate stdio".
 	* monotone.texi: document "automate certs"
 
->>>>>>> variant B
 2005-05-17  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Network): Document 'serve' as taking more than
 	one collection argument.
 
-####### Ancestor
-======= end
 2005-05-15  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (note_state_at_branch_beginning): collect

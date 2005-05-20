@@ -18,7 +18,7 @@ COMMIT(testbranch)
 REV=`BASE_REVISION`
 
 # Create a checkout we can update
-AT_CHECK(MONOTONE checkout $REV codir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$REV codir, [], [ignore], [ignore])
 
 AT_CHECK( (cd subdir && MONOTONE drop foo), [], [ignore], [ignore])
 AT_CHECK( (cd subdir && MONOTONE drop anotherdir), [], [ignore], [ignore])

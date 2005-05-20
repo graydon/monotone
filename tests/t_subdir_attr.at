@@ -23,7 +23,7 @@ REV=`BASE_REVISION`
 
 # see if they're right
 
-AT_CHECK(MONOTONE checkout $REV co-dir, [], [stdout])
+AT_CHECK(MONOTONE checkout --revision=$REV co-dir, [], [stdout])
 AT_CHECK(grep "test_attr:foo/foodata:true" stdout, [], [ignore])
 AT_CHECK(grep "test_attr:foo/bar/bardata:false" stdout, [], [ignore])
 

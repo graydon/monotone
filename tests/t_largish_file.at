@@ -299,9 +299,9 @@ MOD_R=`BASE_REVISION`
 
 AT_CHECK(mv largish largish.modified)
 
-AT_CHECK(MONOTONE checkout $BASE_R base, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$BASE_R base, [], [ignore], [ignore])
 AT_CHECK(cmp largish.orig base/largish)
-AT_CHECK(MONOTONE checkout $MOD_R modified, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$MOD_R modified, [], [ignore], [ignore])
 AT_CHECK(cmp largish.modified modified/largish)
 
 AT_CLEANUP

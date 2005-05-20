@@ -20,7 +20,7 @@ NETSYNC_SERVE_START(testbranch)
 AT_CHECK(MONOTONE2 pull, [], [ignore], [ignore])
 NETSYNC_SERVE_STOP(testbranch)
 
-AT_CHECK(MONOTONE2 checkout $NEW_R testdir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 checkout --revision=$NEW_R testdir, [], [ignore], [ignore])
 AT_CHECK(cmp testfile testdir/testfile)
 
 AT_CLEANUP
