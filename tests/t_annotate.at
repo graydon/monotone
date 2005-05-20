@@ -21,6 +21,10 @@ ADD_FILE(foo0, [a
 b
 c
 ])
+ADD_FILE(unchanged, [static
+file
+contents
+])
 COMMIT(testbranch)
 REV0=`BASE_REVISION`
 
@@ -53,6 +57,14 @@ AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
 AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
 AT_CHECK(head -n 4 stdout | tail -n 1 | grep $REV1, [0], [ignore], [ignore])
 
+
+#
+# unchanged should have all (3) lines from REV0 
+#
+AT_CHECK(MONOTONE annotate unchanged, [], [stdout], [ignore])
+AT_CHECK(head -n 1 stdout | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
 
 #
 # annotate bar0 should now be
