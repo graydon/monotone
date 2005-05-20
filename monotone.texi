@@ -3559,10 +3559,10 @@ to date.
 @section Network
 
 @ftable @command
-@item monotone serve @var{address} @var{collection1} [@var{collection2} ...]
-@itemx monotone pull [@var{address} [@var{collection}]]
-@itemx monotone push [@var{address} [@var{collection}]]
-@itemx monotone sync [@var{address} [@var{collection}]]
+@item monotone serve @var{address}[:@var{port}] @var{collection1} [@var{collection2} ...]
+@itemx monotone pull [@var{address}[:@var{port}] [@var{collection}]]
+@itemx monotone push [@var{address}[:@var{port}] [@var{collection}]]
+@itemx monotone sync [@var{address}[:@var{port}] [@var{collection}]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two

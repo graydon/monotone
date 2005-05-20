@@ -1,3 +1,8 @@
+2005-05-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network): Clarify that ports can be specified on
+	the command line to serve/pull/push/sync.
+
 2005-05-21  Matt Johnston  <matt@ucc.asn.au>
 
 	* packet.cc (db_packet_writer::~impl, prerequisite.cleanup): 
