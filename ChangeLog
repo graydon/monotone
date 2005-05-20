@@ -1,3 +1,16 @@
+2005-05-20  Emile Snyder  <emile@alumni.reed.edu>
+
+	* annotate.{hh,cc}: Rework to handle lineage dependent line
+	mappings and lines which split from a single line in a parent
+	revision into multiple lines in some descendent.  Fixes bug where
+	some lines remained unannotated.  Fixes wrong assignment of lines
+	bug.
+	* tests/t_annotate.at: Check no-changes since addition of file
+	case.
+	* tests/t_annotate_lineage_dependent.at
+	* tests/t_annotate_split_lines.at:  New tests.
+	* testsuite.at: Add them.
+	
 2005-05-21  Matt Johnston  <matt@ucc.asn.au>
 
 	* packet.cc (db_packet_writer::~impl, prerequisite.cleanup): 
