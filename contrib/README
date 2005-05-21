@@ -30,6 +30,7 @@ licenses.
 
   -- monoprof.sh: A simple monotone profiling script.
 
-  -- Log2Gxl.java: Java code to convert output from 'monotone log' into
-     GXL, an XML-based graph description language.
+  -- Log2Gxl.java: Removed. Now in branch net.venge.monotone.contrib.monotree
+
+
 
