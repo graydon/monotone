@@ -1,5 +1,12 @@
 2005-05-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* contrib/mtbrowse.sh: New file.
+	* contrib/README: Document it.  Also, document some missed files,
+	and re-order listing.
+	* Makefile.am (EXTRA_DIST): Add several missing contrib/ files.
+
+2005-05-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi (Network): Clarify that ports can be specified on
 	the command line to serve/pull/push/sync.
 
