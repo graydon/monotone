@@ -3673,21 +3673,26 @@ copy.  Specifying only the pathname "." will restrict @command{status}
 to files changed within the current subdirectory of the working copy.
 
 @item monotone log
-@itemx monotone log --depth=@var{n}
-@itemx monotone log --revision=@var{id}
-@itemx monotone log --depth=@var{n} --revision=@var{id} [[--revision=@var{id2}] [...]]
-@itemx monotone log --revision=@var{id} @var{file}
-@itemx monotone log --depth=@var{n} --revision=@var{id} [[--revision=@var{id2}] [...]] @var{file}
+@itemx monotone log [--depth=@var{n}] [--revision=@var{id} [...]] [--brief] [@var{file} [...]]
 
-This command prints out a log, in reverse-ancestry order, of small history
-summaries.  Each summary contains author, date, changelog and comment
-information associated with a revision.  If @var{n} is given, at most that
-many log entries will be given.  If one or more revision IDs are given,
-the command starts tracing back through history from these revisions,
-otherwise it starts from the base revision of your working copy.
+This command prints out a log, in reverse-ancestry order, of small
+history summaries.  Each summary contains author, date, changelog and
+comment information associated with a revision.  If @code{--brief} is
+given, the output consists of one line per revision with the revision
+ID, the author, the date and the branches (separated with commas).
+
+If @code{--depth=}@var{n} is given, at most that many log entries will be
+given.
+
+If one or more revision IDs are given, the command starts tracing back
+through history from these revisions, otherwise it starts from the base
+revision of your working copy.
+
+If one or more files are given, the command will only log the revisions
+where those files are changed.
 
 @item monotone annotate @var{file}
-@item monotone annotate --revision=@var{id} @var{file}
+@itemx monotone annotate --revision=@var{id} @var{file}
 
 Dumps an annotated copy of the file to stdout.  Each line of the file
 is translated to <revision id>: <line> in the output, where <revision id>
