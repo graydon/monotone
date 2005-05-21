@@ -3559,10 +3559,10 @@ to date.
 @section Network
 
 @ftable @command
-@item monotone serve @var{address} @var{collection1} [@var{collection2} ...]
-@itemx monotone pull [@var{address} [@var{collection}]]
-@itemx monotone push [@var{address} [@var{collection}]]
-@itemx monotone sync [@var{address} [@var{collection}]]
+@item monotone serve @var{address}[:@var{port}] @var{collection1} [@var{collection2} ...]
+@itemx monotone pull [@var{address}[:@var{port}] [@var{collection}]]
+@itemx monotone push [@var{address}[:@var{port}] [@var{collection}]]
+@itemx monotone sync [@var{address}[:@var{port}] [@var{collection}]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -4920,31 +4920,55 @@ A revision ID @var{id}, for which any certificates will be printed.
 Prints all certificates associated with the given revision ID.
 Each certificate is contained in a basic IO stanza. For each certificate, 
 the following values are provided:
+
+@verbatim
+'key'
+      a string indicating the key used to sign this certificate.
+'signature'
+      a string indicating the status of the signature. Possible 
+      values of this string are:
+            'ok'        : the signature is correct
+            'bad'       : the signature is invalid
+            'unknown'   : signature was made with an unknown key
+'name'
+      the name of this certificate
+'value'
+      the value of this certificate
+'trust'
+      is this certificate trusted by the defined trust metric?
+      Possible values of this string are:
+            'trusted'   : this certificate is trusted
+            'untrusted' : this certificate is not trusted
+@end verbatim
  
 @item Sample output:
 
 @verbatim
-   key "matt@ucc.asn.au"
-status "ok"
-  name "author"
- value "matt@ucc.asn.au"
+      key "emile@alumni.reed.edu"
+signature "ok"
+     name "author"
+    value "emile@alumni.reed.edu"
+    trust "trusted"
 
-   key "matt@ucc.asn.au"
-status "ok"
-  name "branch"
- value "net.venge.monotone"
+      key "emile@alumni.reed.edu"
+signature "ok"
+     name "branch"
+    value "net.venge.monotone"
+    trust "trusted"
 
-   key "matt@ucc.asn.au"
-status "ok"
-  name "changelog"
- value "merge of c48bf9be32757e804a7eca4cf717b2fa5f62b397
-     and be6e404d588dcf10b544e1d64f8d2ec4bc0982c8
+      key "emile@alumni.reed.edu"
+signature "ok"
+     name "changelog"
+    value "propagate from branch 'net.venge.monotone.annotate' (head 76a886ef7c8ae12a4bba5fc2bd252557bf863aff)
+            to branch 'net.venge.monotone' (head 2490479a4e4e99243fead6d627d78291fde592f0)
 "
+    trust "trusted"
 
-   key "matt@ucc.asn.au"
-status "ok"
-  name "date"
- value "2005-05-16T14:48:16"
+      key "emile@alumni.reed.edu"
+signature "ok"
+     name "date"
+    value "2005-05-20T20:19:25"
+    trust "trusted"
 @end verbatim
 
 @item Output format:

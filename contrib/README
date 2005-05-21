@@ -2,8 +2,15 @@ This directory contains various things that we're not quite sure what
 to do with, but that someone may find useful.  See individual files for
 licenses.
 
-  -- Log2Gxl.java: Java code to convert output from 'monotone log' into
-     GXL, an XML-based graph description language.
+  -- monotone.bash_completion: command line completion code for bash.
+  -- monotone.zsh_completion: command line completion code for zsh.
+
+  -- monotone.el, monotone-nav.el: An Emacs interface.
+
+  -- ciabot_monotone.py: A python script to watch a repository and
+     send notifications of commits to CIA (http://cia.navi.cx).
+
+  -- mtbrowse.sh: An interactive text-mode history browser
 
   -- monotone-notify.pl: a Perl hack to create email logs with recent
      changes in a repository database.  It's designed to be run at regular
@@ -21,9 +28,8 @@ licenses.
      For a manual, do `perl monotone-import.pl --man'.
      To get a help text, do `perl monotone-import.pl --help'.
 
-  -- ciabot_monotone.py: A python script to watch a repository and
-     send notifications of commits to CIA (http://cia.navi.cx).
+  -- monoprof.sh: A simple monotone profiling script.
 
-  -- monotone.bash_completion: command line completion code for bash.
+  -- Log2Gxl.java: Java code to convert output from 'monotone log' into
+     GXL, an XML-based graph description language.
 
-  -- monotone.el: A basic Emacs interface.

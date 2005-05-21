@@ -1,0 +1,83 @@
+AT_SETUP([annotate where lineage depends on traversal])
+MONOTONE_SETUP
+
+AT_DATA(foo.A, [a
+b
+c
+d
+e
+])
+
+AT_DATA(foo.B, [x
+b
+p
+d
+e
+])
+
+AT_DATA(foo.C, [a
+b
+q
+d changed in C
+y
+])
+
+# foo.D, the ultimate version, as created by our merge3 hook:
+# a
+# b
+# p
+# d changed in C
+# e
+# added line
+
+AT_DATA(merge.lua, [
+function merge3 (ancestor, left, right)
+        data = "a\nb\np\nd changed in C\ne\nadded line\n"
+        return data
+end
+])
+
+
+AT_CHECK(cp foo.A foo)
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+REVA=`BASE_REVISION`
+echo rev letter A $REVA
+
+AT_CHECK(cp foo.B foo)
+COMMIT(testbranch)
+REVB=`BASE_REVISION`
+echo rev letter B $REVB
+
+REVERT_TO($REVA)
+
+AT_CHECK(cp foo.C foo)
+COMMIT(testbranch)
+REVC=`BASE_REVISION`
+echo rev letter C $REVC
+
+AT_CHECK(MONOTONE --rcfile=./merge.lua merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REVD=`BASE_REVISION`
+echo rev letter D $REVD
+
+#
+# annotate foo should now be
+# REVA: a
+# REVA: b
+# REVB: p
+# REVC: d changed in C
+# REVA: e
+# REVD: added line
+#
+
+AT_CHECK(MONOTONE --debug annotate foo, [], [stdout], [stderr])
+
+AT_CHECK(head -n 1 stdout | grep $REVA, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REVA, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REVB, [0], [ignore], [ignore])
+AT_CHECK(head -n 4 stdout | tail -n 1 | grep $REVC, [0], [ignore], [ignore])
+AT_CHECK(head -n 5 stdout | tail -n 1 | grep $REVA, [0], [ignore], [ignore])
+AT_CHECK(head -n 6 stdout | tail -n 1 | grep $REVD, [0], [ignore], [ignore])
+
+AT_CLEANUP

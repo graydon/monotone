@@ -1,0 +1,54 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([automate certs])
+NEED_UNB64
+MONOTONE_SETUP
+
+AT_DATA(expected, [      key "tester@test.net"
+signature "ok"
+     name "author"
+    value "tester@test.net"
+    trust "trusted"
+
+      key "tester@test.net"
+signature "ok"
+     name "branch"
+    value "testbranch"
+    trust "trusted"
+
+      key "tester@test.net"
+signature "ok"
+     name "changelog"
+    value "blah-blah"
+    trust "trusted"
+
+      key "tester@test.net"
+signature "ok"
+     name "date"
+    value "2005-05-21T12:30:51"
+    trust "trusted"
+])
+
+AT_DATA(empty, [])
+
+ADD_FILE(foo, [blah
+])
+AT_CHECK(MONOTONE commit --date=2005-05-21T12:30:51 --branch=testbranch --message=blah-blah, [], [ignore], [ignore])
+BASE_R=`BASE_REVISION`
+
+# check that a correct usage produces correctly formatted output
+AT_CHECK(MONOTONE automate certs $BASE_R, [], [stdout], [ignore])
+AT_CHECK(cmp expected stdout)
+
+# ensure that missing revisions fail
+NOSUCHREV=0000000000000000000000000000000000000000
+AT_CHECK(MONOTONE automate certs $NOSUCHREV, [1], [stdout], [ignore])
+AT_CHECK(cmp empty stdout)
+
+# ensure that revisions are not being completed
+# (the above commit will have created rev 306c506078df4b58470f75c845ccd11c2ea8cb26)
+TRUNCATEDREV=306c506078df4b58470f75c845ccd1
+AT_CHECK(MONOTONE automate certs $TRUNCATEDREV, [1], [stdout], [ignore])
+AT_CHECK(cmp empty stdout)
+
+AT_CLEANUP

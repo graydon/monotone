@@ -282,11 +282,17 @@ EXTRA_DIST = $(man1_MANS) \
              $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
              sqlite/keywordhash.h \
              contrib/README \
+             contrib/Log2Gxl.java \
+             contrib/monoprof.sh \
              contrib/monotone-notify.pl \
              contrib/monotone-import.pl \
              contrib/ciabot_monotone.py \
              contrib/monotone.el \
+             contrib/monotone-nav.el \
              contrib/monotone.bash_completion \
+             contrib/monotone.zsh_completion \
+             contrib/monoprof.sh \
+             contrib/mtbrowse.sh \
              win32/monotone.iss \
              $(wildcard $(srcdir)/debian/*)
 

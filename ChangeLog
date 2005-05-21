@@ -11,6 +11,70 @@
 	* sanity.cc, sanity.hh (struct sanity): Add the member variable
 	and function to hold and set the brief flag.
 
+2005-05-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_short_opts.at: remove the saved MT/log message
+	from the failed commit.
+	* Makefile.am: MAKEINFOFALGS to MAKEINFOFLAGS
+
+2005-05-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (commit): write the log message to MT/log
+	during the commit, so it will be available later if the commit
+	fails.
+	* work.{cc,hh} (write_user_log): new function
+
+2005-05-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/mtbrowse.sh: New file.
+	* contrib/README: Document it.  Also, document some missed files,
+	and re-order listing.
+	* Makefile.am (EXTRA_DIST): Add several missing contrib/ files.
+
+2005-05-21  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc: (automate_certs) change "status" field 
+	to "signature". Check whether each cert is trusted, and 
+	output in the "trusted" field.
+	* testsuite.at: add t_automate_certs.at
+	* tests/t_automate_certs.at: Test that the output of 
+	"automate certs" is consistent, and that we exit with
+	error when rev is incomplete or missing.
+	* monotone.texi: update output documentation for 
+	"automate certs"
+
+2005-05-20  Emile Snyder  <emile@alumni.reed.edu>
+
+	* annotate.{hh,cc}: Rework to handle lineage dependent line
+	mappings and lines which split from a single line in a parent
+	revision into multiple lines in some descendent.  Fixes bug where
+	some lines remained unannotated.  Fixes wrong assignment of lines
+	bug.
+	* tests/t_annotate.at: Check no-changes since addition of file
+	case.
+	* tests/t_annotate_lineage_dependent.at
+	* tests/t_annotate_split_lines.at:  New tests.
+	* testsuite.at: Add them.
+	
+2005-05-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network): Clarify that ports can be specified on
+	the command line to serve/pull/push/sync.
+
+2005-05-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* packet.cc (db_packet_writer::~impl, prerequisite.cleanup): 
+	add code to remove up circular dependencies between prerequisite
+	and delayed_packet shared_ptrs upon destruction, so that unsatisified
+	dependency warnings are printed.
+
+2005-05-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (merge_disjoint_analyses): handle the case where
+	a file is dropped on both sides but re-added on one.
+	* tests/t_drop_vs_dropadd.at: a test for it
+	* testsuite.at
+
 2005-05-19  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (checkout): rearrange to use --revision option
@@ -4403,7 +4467,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÃÂkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
