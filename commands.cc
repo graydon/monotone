@@ -2291,6 +2291,10 @@ CMD(commit, "working copy", "[PATH]...",
   else
     get_log_message(rs, app, log_message);
 
+  // we write it out so that if the commit fails, the log
+  // message will be preserved for a retry
+  write_user_log(data(log_message));
+
   N(log_message.find_first_not_of(" \r\t\n") != string::npos,
     F("empty log message"));
 
