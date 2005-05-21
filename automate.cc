@@ -795,14 +795,18 @@ automate_inventory(std::vector<utf8> args,
 //   Each certificate is contained in a basic IO stanza. For each certificate, 
 //   the following values are provided:
 //   
-//   "key" : a string indicating the key used to sign this certificate.
-//   "status": a string indicating the status of the signature. Possible 
+//   'key' : a string indicating the key used to sign this certificate.
+//   'signature': a string indicating the status of the signature. Possible 
 //   values of this string are:
-//     "ok"      : the signature is correct
-//     "bad"     : the signature is invalid
-//     "unknown" : signature was made with an unknown key
-//   "name" : the name of this certificate
-//   "value" : the value of this certificate
+//     'ok'        : the signature is correct
+//     'bad'       : the signature is invalid
+//     'unknown'   : signature was made with an unknown key
+//   'name' : the name of this certificate
+//   'value' : the value of this certificate
+//   'trust' : is this certificate trusted by the defined trust metric
+//   Possible values of this string are:
+//     'trusted'   : this certificate is trusted
+//     'untrusted' : this certificate is not trusted
 //
 // Output format: All stanzas are formatted by basic_io. Stanzas are seperated 
 // by a blank line. Values will be escaped, '\' -> '\\' and '"' -> '\"'.
@@ -825,6 +829,7 @@ automate_certs(std::vector<utf8> args,
   
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  hexenc<id> ident(rid.inner());
 
   std::vector< revision<cert> > ts;
   app.db.get_revision_certs(rid, ts);
@@ -854,9 +859,18 @@ automate_certs(std::vector<utf8> args,
       basic_io::stanza st;
       cert_status status = check_cert(app, idx(certs, i));
       cert_value tv;      
+      cert_name name = idx(certs, i).name();
+      std::set<rsa_keypair_id> signers;
+
       decode_base64(idx(certs, i).value, tv);
 
-      st.push_str_pair("key", idx(certs, i).key());
+      rsa_keypair_id keyid = idx(certs, i).key();
+      signers.insert(keyid);
+
+      bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
+                                                          name, tv);
+
+      st.push_str_pair("key", keyid());
 
       std::string stat;
       switch (status)
@@ -871,9 +885,11 @@ automate_certs(std::vector<utf8> args,
           stat = "unknown";
           break;
         }
-      st.push_str_pair("status", stat);
-      st.push_str_pair("name", idx(certs, i).name());
+      st.push_str_pair("signature", stat);
+
+      st.push_str_pair("name", name());
       st.push_str_pair("value", tv());
+      st.push_str_pair("trust", (trusted ? "trusted" : "untrusted"));
 
       pr.print_stanza(st);
     }

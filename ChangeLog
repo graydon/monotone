@@ -1,3 +1,15 @@
+2005-05-17  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc: (automate_certs) change "status" field 
+	to "signature". Check whether each cert is trusted, and 
+	output in the "trusted" field.
+	* testsuite.at: add t_automate_certs.at
+	* tests/t_automate_certs.at: Test that the output of 
+	"automate certs" is consistent, and that we exit with
+	error when rev is incomplete or missing.
+	* monotone.texi: update output documentation for 
+	"automate certs"
+
 2005-05-20  Emile Snyder  <emile@alumni.reed.edu>
 
 	* annotate.{hh,cc}: Rework to handle lineage dependent line
