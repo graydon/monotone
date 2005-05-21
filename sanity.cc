@@ -74,6 +74,12 @@ sanity::set_debug()
     ui.inform((*i) + "\n");
 }
 
+void
+sanity::set_brief()
+{
+  brief = true;
+}
+
 void 
 sanity::set_quiet()
 {

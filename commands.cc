@@ -3393,9 +3393,15 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository",
 }
 
 static void
-log_certs(app_state & app, revision_id id, cert_name name, string label, bool multiline)
+log_certs(app_state & app, revision_id id, cert_name name,
+          string label, string separator,
+          bool multiline, bool newline)
 {
   vector< revision<cert> > certs;
+  bool first = true;
+
+  if (multiline)
+    newline = true;
 
   app.db.get_revision_certs(id, name, certs);
   erase_bogus_certs(certs, app);
@@ -3404,13 +3410,39 @@ log_certs(app_state & app, revision_id id, cert_name name, string label, bool mu
     {
       cert_value tv;
       decode_base64(i->inner().value, tv);
-      cout << label;
 
-      if (multiline) 
-          cout << endl << endl << tv << endl;
+      if (first)
+        cout << label;
       else
-          cout << tv << endl;
-    }     
+        cout << separator;
+
+      if (multiline)
+        {
+          cout << endl << endl << tv;
+          if (newline)
+            cout << endl;
+        }
+      else
+        {
+          cout << tv;
+          if (newline)
+            cout << endl;
+        }
+
+      first = false;
+    }
+}
+
+static void
+log_certs(app_state & app, revision_id id, cert_name name, string label, bool multiline)
+{
+  log_certs(app, id, name, label, label, multiline, true);
+}
+
+static void
+log_certs(app_state & app, revision_id id, cert_name name)
+{
+  log_certs(app, id, name, " ", ",", false, false);
 }
 
 
@@ -3452,7 +3484,7 @@ CMD(annotate, "informative", "PATH",
 CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]]",
     "print history in reverse order (filtering by 'file').  If one or more revisions\n"
     "are given, use them as a starting point.",
-    OPT_DEPTH % OPT_REVISION)
+    OPT_DEPTH % OPT_REVISION % OPT_BRIEF)
 {
   file_path file;
 
@@ -3560,28 +3592,39 @@ CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]
           
           if (print_this)
           {
-            cout << "-----------------------------------------------------------------"
-                 << endl;
-            cout << "Revision: " << rid << endl;
-
-            for (set<revision_id>::const_iterator anc = ancestors.begin(); 
-                 anc != ancestors.end(); ++anc)
-              cout << "Ancestor: " << *anc << endl;
-
-            log_certs(app, rid, author_name, "Author: ", false);
-            log_certs(app, rid, date_name,   "Date: ",   false);
-            log_certs(app, rid, branch_name, "Branch: ", false);
-            log_certs(app, rid, tag_name,    "Tag: ",    false);
-
-            if (! csum.empty)
+            if (global_sanity.brief)
               {
-                cout << endl;
-                csum.print(cout, 70);
+                cout << rid;
+                log_certs(app, rid, author_name);
+                log_certs(app, rid, date_name);
+                log_certs(app, rid, branch_name);
                 cout << endl;
               }
+            else
+              {
+                cout << "-----------------------------------------------------------------"
+                     << endl;
+                cout << "Revision: " << rid << endl;
 
-            log_certs(app, rid, changelog_name, "ChangeLog: ", true);
-            log_certs(app, rid, comment_name,   "Comments: ",  true);
+                for (set<revision_id>::const_iterator anc = ancestors.begin();
+                     anc != ancestors.end(); ++anc)
+                  cout << "Ancestor: " << *anc << endl;
+
+                log_certs(app, rid, author_name, "Author: ", false);
+                log_certs(app, rid, date_name,   "Date: ",   false);
+                log_certs(app, rid, branch_name, "Branch: ", false);
+                log_certs(app, rid, tag_name,    "Tag: ",    false);
+
+                if (! csum.empty)
+                  {
+                    cout << endl;
+                    csum.print(cout, 70);
+                    cout << endl;
+                  }
+
+                log_certs(app, rid, changelog_name, "ChangeLog: ", true);
+                log_certs(app, rid, comment_name,   "Comments: ",  true);
+              }
 
             if (depth > 0)
               {

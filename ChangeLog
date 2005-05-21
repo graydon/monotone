@@ -1,3 +1,16 @@
+2005-05-21  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (log_certs): Add two arguments; a separator string
+	to be used in front of the second to last cert for multi-valued
+	cert types, a bool to say if each cert should be ended with a
+	newline.  Overload with shortcuts.
+	(CMD(log)): Use the --brief option and implement it using the
+	shortcut variants of log_certs.
+	* monotone.cc, options.hh: Add the --brief option (OPT_BRIEF
+	internally).
+	* sanity.cc, sanity.hh (struct sanity): Add the member variable
+	and function to hold and set the brief flag.
+
 2005-05-19  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (checkout): rearrange to use --revision option

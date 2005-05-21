@@ -49,6 +49,7 @@ struct poptOption coptions[] =
     {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
     {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
     {"pid-file", 0, POPT_ARG_STRING, &argstr, OPT_PIDFILE, "record process id of server", NULL},
+    {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, "print a brief version of the normal output", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -352,6 +353,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_DEPTH:
               app.set_depth(arglong);
+              break;
+
+            case OPT_BRIEF:
+              global_sanity.set_brief();
               break;
 
             case OPT_PIDFILE:
