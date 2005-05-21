@@ -1,5 +1,11 @@
 2005-05-21  Matt Johnston  <matt@ucc.asn.au>
 
+	* tests/t_short_opts.at: remove the saved MT/log message
+	from the failed commit.
+	* Makefile.am: MAKEINFOFALGS to MAKEINFOFLAGS
+
+2005-05-21  Matt Johnston  <matt@ucc.asn.au>
+
 	* commands.cc (commit): write the log message to MT/log
 	during the commit, so it will be available later if the commit
 	fails.

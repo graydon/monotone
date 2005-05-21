@@ -296,7 +296,7 @@ EXTRA_DIST = $(man1_MANS) \
              win32/monotone.iss \
              $(wildcard $(srcdir)/debian/*)
 
-MAKEINFOFALGS=-I $(top_builddir)
+MAKEINFOFLAGS=-I $(top_builddir)
 
 monotone.pdf: monotone.texi $(PDF_FIGURES)
 
