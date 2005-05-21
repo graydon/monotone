@@ -1,3 +1,10 @@
+2005-05-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (commit): write the log message to MT/log
+	during the commit, so it will be available later if the commit
+	fails.
+	* work.{cc,hh} (write_user_log): new function
+
 2005-05-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* contrib/mtbrowse.sh: New file.

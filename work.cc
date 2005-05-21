@@ -464,6 +464,15 @@ read_user_log(data & dat)
 }
 
 void
+write_user_log(data const & dat)
+{
+  local_path ul_path;
+  get_user_log_path(ul_path);
+
+  write_data(ul_path, dat);
+}
+
+void
 blank_user_log()
 {
   data empty;

@@ -104,6 +104,8 @@ void get_user_log_path(local_path & ul_path);
 
 void read_user_log(data & dat);
 
+void write_user_log(data const & dat);
+
 void blank_user_log();
 
 bool has_contents_user_log();
