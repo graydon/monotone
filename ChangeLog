@@ -1,5 +1,10 @@
 2005-05-21  Richard Levitte  <richard@levitte.org>
 
+	* Makefile.am: Make monotone.pdf and monotone.dvi depend on
+	version.texi.
+
+2005-05-21  Richard Levitte  <richard@levitte.org>
+
 	* monotone.texi: Add a note about the --brief option with
 	'monotone log', and restructure the synopsis since it was getting
 	a bit silly with all possible variants.
