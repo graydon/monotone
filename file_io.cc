@@ -3,12 +3,13 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <iostream>
+#include <fstream>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
-#include "cryptopp/filters.h"
-#include "cryptopp/files.h"
+#include "botan/botan.h"
 
 #include "file_io.hh"
 #include "lua.hh"
@@ -368,11 +369,13 @@ read_data_impl(fs::path const & p,
   
   ifstream file(p.string().c_str(),
                 ios_base::in | ios_base::binary);
-  string in;
   if (!file)
     throw oops(string("cannot open file ") + p.string() + " for reading");
-  CryptoPP::FileSource f(file, true, new CryptoPP::StringSink(in));
-  dat = in;
+  Botan::Pipe pipe;
+  pipe.start_msg();
+  file >> pipe;
+  pipe.end_msg();
+  dat = pipe.read_all_as_string();
 }
 
 // This function can only be called once per run.
@@ -382,9 +385,11 @@ read_data_stdin(data & dat)
   static bool have_consumed_stdin = false;
   N(!have_consumed_stdin, F("Cannot read standard input multiple times"));
   have_consumed_stdin = true;
-  string in;
-  CryptoPP::FileSource f(cin, true, new CryptoPP::StringSink(in));
-  dat = in;
+  Botan::Pipe pipe;
+  pipe.start_msg();
+  cin >> pipe;
+  pipe.end_msg();
+  dat = pipe.read_all_as_string();
 }
 
 void 
@@ -503,7 +508,8 @@ write_data_impl(fs::path const & p,
                   ios_base::out | ios_base::trunc | ios_base::binary);
     if (!file)
       throw oops(string("cannot open file ") + tmp.string() + " for writing");    
-    CryptoPP::StringSource s(dat(), true, new CryptoPP::FileSink(file));
+    Botan::Pipe pipe(new Botan::DataSink_Stream(file));
+    pipe.process_msg(dat());
     // data.tmp closes
   }
 

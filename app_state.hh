@@ -9,6 +9,10 @@
 class app_state;
 class lua_hooks;
 
+#include <boost/shared_ptr.hpp>
+#include <botan/pubkey.h>
+#include <botan/rsa.h>
+
 #include <vector>
 
 #include "database.hh"
@@ -44,6 +48,16 @@ public:
   bool found_working_copy;
   long depth;
   fs::path pidfile;
+
+  // These are used to cache signers/verifiers (if the hook allows).
+  // They can't be function-static variables in key.cc, since they must be
+  // destroyed before the Botan deinitialize() function is called. */
+  std::map<rsa_keypair_id,
+    std::pair<boost::shared_ptr<Botan::PK_Signer>, 
+        boost::shared_ptr<Botan::RSA_PrivateKey> > > signers;
+  std::map<rsa_keypair_id,
+    std::pair<boost::shared_ptr<Botan::PK_Verifier>,
+        boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
 
   void allow_working_copy();
   void require_working_copy();

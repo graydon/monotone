@@ -15,8 +15,8 @@
 #include <errno.h>
 #include <boost/filesystem/path.hpp>
 
-#include "cryptopp/osrng.h"
 #include "file_io.hh"
+#include "botan/botan.h"
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -34,7 +34,6 @@ monotone_mkstemp(std::string &tmpl)
   static const char letters[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   static const int NLETTERS = sizeof (letters) - 1;
-  static CryptoPP::AutoSeededRandomPool mkstemp_urandom;
 
   len = tmpl.length();
   if (len < 6 || tmpl.rfind("XXXXXX") != len-6)
@@ -45,7 +44,7 @@ monotone_mkstemp(std::string &tmpl)
       tmp = tmpl.substr(0, len-6);
 
       for (i = 0; i < 6; ++i)
-        tmp.append(1, letters[mkstemp_urandom.GenerateByte() % NLETTERS]);
+        tmp.append(1, letters[Botan::Global_RNG::random(Botan::Nonce) % NLETTERS]);
       fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
       if (fd >= 0)
       {

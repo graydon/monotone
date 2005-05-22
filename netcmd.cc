@@ -7,7 +7,8 @@
 #include <vector>
 #include <utility>
 
-#include "cryptopp/gzip.h"
+#include "botan/botan.h"
+#include "botan/gzip.h"
 
 #include "adler32.hh"
 #include "constants.hh"
@@ -396,7 +397,7 @@ read_data_cmd_payload(string const & in,
   u8 compressed_p = extract_datum_lsb<u8>(in, pos, "data netcmd, compression flag");
   extract_variable_length_string(in, dat, pos, "data netcmd, data payload");
   if (compressed_p == 1)
-    dat = xform<CryptoPP::Gunzip>(dat);
+    dat = xform<Botan::Gzip_Decompression>(dat);
   assert_end_of_buffer(in, pos, "data netcmd payload");
 }
 
@@ -412,7 +413,7 @@ write_data_cmd_payload(netcmd_item_type type,
   if (dat.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
       string tmp;
-      tmp = xform<CryptoPP::Gzip>(dat);
+      tmp = xform<Botan::Gzip_Compression>(dat);
       out += static_cast<char>(1); // compressed flag
       insert_variable_length_string(tmp, out);
     }
@@ -441,7 +442,7 @@ read_delta_cmd_payload(string const & in,
   string tmp;
   extract_variable_length_string(in, tmp, pos, "delta netcmd, delta payload");
   if (compressed_p == 1)
-    tmp = xform<CryptoPP::Gunzip>(tmp);
+    tmp = xform<Botan::Gzip_Decompression>(tmp);
   del = delta(tmp);
   assert_end_of_buffer(in, pos, "delta netcmd payload");
 }
@@ -462,7 +463,7 @@ write_delta_cmd_payload(netcmd_item_type & type,
   if (tmp.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
       out += static_cast<char>(1); // compressed flag
-      tmp = xform<CryptoPP::Gzip>(tmp);
+      tmp = xform<Botan::Gzip_Compression>(tmp);
     }
   else
     {
