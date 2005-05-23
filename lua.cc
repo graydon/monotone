@@ -648,6 +648,20 @@ lua_hooks::hook_expand_selector(std::string const & sel,
 }
 
 bool 
+lua_hooks::hook_expand_date(std::string const & sel, 
+                            std::string & exp)
+{
+	exp.clear();
+  bool res= Lua(st)
+    .func("expand_date")
+    .push_str(sel)
+    .call(1,1)
+    .extract_str(exp)
+    .ok();
+	return res && exp.size();
+}
+
+bool 
 lua_hooks::hook_get_branch_key(cert_value const & branchname, 
                                rsa_keypair_id & k)
 {

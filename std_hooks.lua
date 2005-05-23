@@ -436,13 +436,6 @@ function expand_selector(str)
       return ("c:" .. str)
    end
 
-   -- simple date patterns
-   if string.find(str, "^19%d%d%-%d%d")
-      or string.find(str, "^20%d%d%-%d%d")
-   then
-      return ("d:" .. str)
-   end
-
    -- something which looks like an email address
    if string.find(str, "[%w%-_]+@[%w%-_]+")
    then
@@ -461,11 +454,44 @@ function expand_selector(str)
       return ("i:" .. str)
    end
 
+   -- tries to expand as a date
+   local dtstr = expand_date(str)
+   if  dtstr ~= nil
+   then
+      return ("d:" .. dtstr)
+   end
+   
+   return nil
+end
+
+-- expansion of a date expression
+function expand_date(str)
+   -- simple date patterns
+   if string.find(str, "^19%d%d%-%d%d")
+      or string.find(str, "^20%d%d%-%d%d")
+   then
+      return (str)
+   end
+
+   -- "now" 
+   if str == "now"
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("%FT%T", t)
+   end
+   
+	 -- today don't uses the time
+   if str == "today"
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("%F", t)
+   end
+   
    -- "yesterday", the source of all hangovers
    if str == "yesterday"
    then
       local t = os.time(os.date('!*t'))
-      return os.date("d:%F", t - 86400)
+      return os.date("%F", t - 86400)
    end
    
    -- "CVS style" relative dates such as "3 weeks ago"
@@ -481,9 +507,14 @@ function expand_selector(str)
    if trans[type] ~= nil
    then
       local t = os.time(os.date('!*t'))
-      return os.date("d:%F", t - (n * trans[type]))
+      if trans[type] <= 3600
+      then
+        return os.date("%FT%T", t - (n * trans[type]))
+      else	
+        return os.date("%F", t - (n * trans[type]))
+      end
    end
-
+   
    return nil
 end
 
