@@ -56,41 +56,8 @@ int const any_cols = -1;
 
 extern "C" {
 // some wrappers to ease migration
-  int sqlite3_exec_printf(sqlite3*,const char *sqlFormat,sqlite3_callback,
-                          void *,char **errmsg,...);
-  int sqlite3_exec_vprintf(sqlite3*,const char *sqlFormat,sqlite3_callback,
-                           void *,char **errmsg,va_list ap);
   const char *sqlite3_value_text_s(sqlite3_value *v);
   const char *sqlite3_column_text_s(sqlite3_stmt*, int iCol);
-}
-
-int sqlite3_exec_printf(sqlite3 * db,
-                        char const * sqlFormat,
-                        sqlite3_callback cb,
-                        void * user_data,
-                        char ** errmsg,
-                        ...)
-{ 
-  va_list ap;
-  va_start(ap, errmsg);
-  int result = sqlite3_exec_vprintf(db, sqlFormat, cb,
-                                    user_data, errmsg, ap);
-  va_end(ap);
-  return result;
-}
-
-int sqlite3_exec_vprintf(sqlite3 * db,
-                         char const * sqlFormat,
-                         sqlite3_callback cb,
-                         void * user_data,
-                         char ** errmsg,
-                         va_list ap)
-{ 
-  char * formatted = sqlite3_vmprintf(sqlFormat, ap);
-  int result = sqlite3_exec(db, formatted, cb, 
-                            user_data, errmsg);
-  sqlite3_free(formatted);
-  return result;
 }
 
 database::database(fs::path const & fn) :
@@ -200,7 +167,7 @@ assert_sqlite3_ok(sqlite3 *s)
   const char * errmsg = sqlite3_errmsg(s);
 
   ostringstream oss;
-  oss << "sqlite errcode=" << errcode << " " << errmsg;
+  oss << "sqlite error [" << errcode << "]: " << errmsg;
   
   throw oops(oss.str());
 }
@@ -316,8 +283,9 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
     {
       *(dump->out) << vals[2] << ";\n";
       dump->table_name = string(vals[0]);
-      sqlite3_exec_printf(dump->sql, "SELECT * FROM '%q'", 
-                         dump_row_cb, data, NULL, vals[0]);
+      string query = "SELECT * FROM " + string(vals[0]);
+      int result = sqlite3_exec(dump->sql, query.c_str(), dump_row_cb, data, NULL);
+
     }
   return 0;
 }

@@ -1,3 +1,16 @@
+2005-05-23  Derek Scherger  <derek@echologic.com>
+
+	* database.cc (sqlite3_exec_printf, sqlite3_exec_vprintf): remove
+	(dump_table_cb): remove use of printf exec
+	(assert_sqlite3_ok): tweak error message format
+	* database_migration.cc	(calculate_schema_id):
+	(move_table):
+	(migrate_client_merge_url_and_group):
+	(migrate_client_add_hashes_and_merkle_trees):
+	(migrate_client_to_revisions):
+	(migrate_client_to_epochs):
+	(migrate_client_to_vars): remove use of printf exec's
+	
 2005-04-27  Matt Johnston  <matt@ucc.asn.au>
 
 	* vocab.cc (verify(file_path)): don't find() twice.
