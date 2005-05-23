@@ -1,3 +1,10 @@
+2005-05-23  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (try_one_merge): Use the value of --date and
+	--author if there are any.
+	(CMD(merge), CMD(propagate), CMD(explicit_merge)): Change to
+	accept --date and --author.
+
 2005-05-21  Richard Levitte  <richard@levitte.org>
 
 	* Makefile.am: Make monotone.pdf and monotone.dvi depend on

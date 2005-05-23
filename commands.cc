@@ -3063,13 +3063,19 @@ try_one_merge(revision_id const & left_id,
   write_revision_set(merged_rev, merged_data);
   calculate_ident(merged_data, merged_id);
   dbw.consume_revision_data(merged_id, merged_data);
-  cert_revision_date_now(merged_id, app, dbw);
-  cert_revision_author_default(merged_id, app, dbw);
+  if (app.date().length() > 0)
+    cert_revision_date_time(rid, string_to_datetime(app.date()), app, dbw);
+  else
+    cert_revision_date_now(merged_id, app, dbw);
+  if (app.author().length() > 0)
+    cert_revision_author(rid, app.author(), app, dbw);
+  else
+    cert_revision_author_default(merged_id, app, dbw);
 }                         
 
 
 CMD(merge, "tree", "", "merge unmerged heads of branch",
-    OPT_BRANCH_NAME)
+    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
 {
   set<revision_id> heads;
 
@@ -3119,7 +3125,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch",
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
     "merge from one branch to another asymmetrically",
-    OPT_NONE)
+    OPT_NONE % OPT_DATE % OPT_AUTHOR)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less
@@ -3212,7 +3218,7 @@ CMD(explicit_merge, "tree",
     "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
     "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
     "merge two explicitly given revisions, placing result in given branch",
-    OPT_NONE)
+    OPT_DATE % OPT_AUTHOR)
 {
   revision_id left, right, ancestor;
   string branch;
@@ -3668,6 +3674,7 @@ CMD(automate, "automation",
     "toposort [REV1 [REV2 [REV3 [...]]]]\n"
     "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
     "leaves\n"
+    "select\n"
     "inventory\n"
     "stdio\n"
     "certs REV\n",
