@@ -1,3 +1,12 @@
+2005-05-23  Riccardo Ghetta  <birrachiara@tin.it>
+
+	* selectors.cc/.hh, database.cc: add two new selectors:
+	"earlier or equal than" and "later than".
+	* lua.cc/.hh, std-hooks.lua: create a new "expand_date" hook
+	* monotone.texi: document the changes
+	* testsuite.at, tests/t_selector_later_earlier.at: add specific tests 
+	for the new selectors
+						
 2005-05-21  Richard Levitte  <richard@levitte.org>
 
 	* Makefile.am: Make monotone.pdf and monotone.dvi depend on
