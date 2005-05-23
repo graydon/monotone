@@ -20,7 +20,7 @@ bool have_smart_terminal()
     term = "";
 
   if (term == "" || term == "emacs" || term == "dumb"
-      || !_isatty(_fileno(stdout)))
+      || !_isatty(_fileno(stderr)))
     return false;
   else
     return true;
