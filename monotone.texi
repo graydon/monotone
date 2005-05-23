@@ -2292,7 +2292,20 @@ Uses selector type @code{b}. For example, @code{b:net.venge} matches
 @code{branch} certs where the cert value begins with @code{net.venge}.
 @item Date selection
 Uses selector type @code{d}. For example, @code{d:2004-04} matches
-@code{date} certs where the cert value begins with @code{2004-04}.
+@code{date} certs where the cert value begins with
+@code{2004-04}. This selector also accepts expanded date syntax (see below).
+@item "Earlier or equal than" selection
+Uses selector type @code{e}. For example, @code{e:2004-04-25} matches
+@code{date} certs where the cert value is less or equal than
+@code{2004-04-25T00:00:00}. If the time component is unspecified,
+monotone will assume 00:00:00. This selector also accepts expanded date
+syntax (see below)
+@item "Later than" selection
+Uses selector type @code{l}. For example, @code{l:2004-04-25} matches
+@code{date} certs where the cert value is strictly less than
+@code{2004-04-25T00:00:00}. If the time component is unspecified,
+monotone will assume 00:00:00. This selector also accepts expanded date
+syntax (see below)
 @item Identifier selection
 Uses selector type @code{i}. For example, @code{i:0f3a} matches
 revision IDs which begin with @code{0f3a}.
@@ -2324,6 +2337,37 @@ selector, due to its syntactic form, so modifies it to read
 type to values which ``look like'' partial hex strings, email
 addresses, branch names, or date specifications. For the complete
 source code of the hook, see @ref{Hook Reference}.
+
+@heading Expanding dates
+
+All date-related selectors (@code{d}, @code{e}, @code{l}) support an
+english-like syntax similar to CVS.  This syntax is expanded to the
+numeric format by a lua hook: @code{expand_date}.
+The allowed date formats are:
+@table @asis
+
+@item now
+Expands to the current date and time.
+@item today
+Expands to today's date. @code{e} and @code{l} selectors assume time 00:00:00
+@item yesterday
+Expands to yesterday's date. @code{e} and @code{l} selectors assume
+time 00:00:00
+@item <number> @{minute|hour@} <ago>
+Expands to today date and time, minus the specified @code{number} of
+minutes|hours. 
+@item <number> @{day|week|month|year@} <ago>
+Expands to today date, minus the specified @code{number} of
+days|weeks|months|years. @code{e} and @code{l} selectors assume time
+00:00:00
+@item <year>-<month>[-day[Thour:minute:second]]
+Expands to the supplied year/month. The day and time component are
+optional. If missing, @code{e} and @code{l} selectors assume the first
+day of month and time 00:00:00.
+The time component, if supplied, must be complete to the second.
+@end table
+
+For the complete source code of the hook, see @ref{Hook Reference}.
 
 @heading Typeless selection
 
@@ -5580,11 +5624,10 @@ definition of this hook is:
 @group
 function expand_selector(str)
 
-   -- simple date patterns
-   if string.find(str, "^19%d%d%-%d%d")
-      or string.find(str, "^20%d%d%-%d%d")
+   -- something which looks like a generic cert pattern
+   if string.find(str, "^[^=]*=.*$")
    then
-      return ("d:" .. str)
+      return ("c:" .. str)
    end
 
    -- something which looks like an email address
@@ -5605,11 +5648,55 @@ function expand_selector(str)
       return ("i:" .. str)
    end
 
+   -- tries to expand as a date
+   local dtstr = expand_date(str)
+   if  dtstr ~= nil
+   then
+      return ("d:" .. dtstr)
+   end
+   
+   return nil
+end
+@end group
+@end smallexample
+
+@item expand_date (@var{str})
+
+Attempts to expand @var{str} as a date expression. Expansion means recognizing
+and interpreting special words such as @code{yesterday} or @code{6
+months ago} and converting them into well formed date expressions. For more
+detail on the use of selectors, see @ref{Selectors}. The default
+definition of this hook is:
+
+@smallexample
+@group
+function expand_date(str)
+   -- simple date patterns
+   if string.find(str, "^19%d%d%-%d%d")
+      or string.find(str, "^20%d%d%-%d%d")
+   then
+      return (str)
+   end
+
+   -- "now" 
+   if str == "now"
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("%FT%T", t)
+   end
+   
+    -- today don't uses the time
+   if str == "today"
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("%F", t)
+   end
+   
    -- "yesterday", the source of all hangovers
    if str == "yesterday"
    then
       local t = os.time(os.date('!*t'))
-      return os.date("d:%F", t - 86400)
+      return os.date("%F", t - 86400)
    end
    
    -- "CVS style" relative dates such as "3 weeks ago"
@@ -5621,19 +5708,22 @@ function expand_selector(str)
       month = 2678400; 
       year = 31536000 
    @}
-   local pos, len, n, type = string.find(str, "(%d+) 
-                                         ([minutehordaywk]+)s? ago")
+   local pos, len, n, type = string.find(str, "(%d+) ([minutehordaywk]+)s? ago")
    if trans[type] ~= nil
    then
       local t = os.time(os.date('!*t'))
-      return os.date("d:%F", t - (n * trans[type]))
+      if trans[type] <= 3600
+      then
+	return os.date("%FT%T", t - (n * trans[type]))
+      else	
+	return os.date("%F", t - (n * trans[type]))
+      end
    end
-
+   
    return nil
 end
 @end group
 @end smallexample
-
 
 
 @item get_system_linesep ()
