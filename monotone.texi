@@ -4916,62 +4916,54 @@ Allow multiple automate commands to be run from one instance of monotone.
 @item Sample input:
 
 @verbatim
-leaves
-parents 1f4ef73c3e056883c6a5ff66728dd764557db5e6
-inventory
+l6:leavese
+l7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378e
 @end verbatim
 
 @item Input format:
 
-The input is a series of lines of the form "command [args...]", where
-"command" is a valid "monotone automate" subcommand.
+The input is a series of commands of the form 'l' <token> [<token> ...] 'e',
+where <token> = <size> colon <string> . Characters between the ending 'e'
+of one commad and the beginning 'l' of the next are ignored.
 
 @item Sample output:
 
 @verbatim
-###BEGIN leaves###
-bdff75b3d1a58d5370d1b9aaeed1b5a4d0cba564
-ed0306ed417d258d82716bee36841199d8bb7626
-ee0f35591c79c9390baff5e0638b545963d1babf
-###END leaves###
-###BEGIN parents###
-094a5075b4bd7fe379f810edeb5f03283b50e13a
-###END parents###
-###BEGIN inventory###
-   "work.cc"
-   "work.hh"
-   "xdelta.cc"
-   "xdelta.hh"
-###END inventory###
+0:0:l:205:0e3171212f34839c2e3263e7282cdeea22fc5378
+1f4ef73c3e056883c6a5ff66728dd764557db5e6
+2133c52680aa2492b18ed902bdef7e083464c0b8
+23501f8afd1f9ee037019765309b0f8428567f8a
+2c295fcf5fe20301557b9b3a5b4d437b5ab8ec8c
+1:0:l:41:7706a422ccad41621c958affa999b1a1dd644e79
 @end verbatim
 
 @item Output format:
 
-The output consists of the output of each command given, preceeded by
-the line "###BEGIN <command>###" and followed by the line
-"###END <command>###", where <command> is the name of the command.
-If an error is encountered while running the command received, the
-"###END <command>###" line is replaced with one of the
-"###ERR name <details>###"lines shown below.
+<command number>:<err code>:<last?>:<size>:<output>
+
+<command number> is a decimal number specifying which command this output
+is from. It is 0 for the first command, and increases by one each time.
+
+<err code> is 0 for success, 1 for a syntax error, and 2 for any other error.
+
+<last?> is 'l' if this is the last piece of output for this command, and 'm'
+if there is more output to come.
+
+<size> is the number of bytes in the output.
+
+<output> is the output of the command. This will never exceed 1024 bytes.
+If a command produces more than 1024 bytes of output, it will be split into
+multiple peices, with all but the last having the <last?> field set to 'm'.
 
 @item Error conditions:
 
-If an invalid command line is recieved, prints "###ERR <command> usage###"
-to standard output, where <command> is the name of the command that was
-given. If some other error condition occurrs during execution of a command
-received on input, prints "###ERR <command> msg <message>###", where
-<command> is the name of the command, and <message> is the error message
-provided by that command, which would have been output on standard error
-if the command was invoked directly. Output with errors looks like:
-
-@verbatim
-###BEGIN inventor###
-###ERR inventor usage###
-###BEGIN inventory###
-###ERR inventory msg misuse: working copy directory required but not found###
-@end verbatim
-
-Errors do not affect the return value.
+If a badly formatted command is recieved, prints an error message to
+standard error and exits with nonzero status. Errors in the commands run
+through this interface do not affect the exit status. Instead, the <err code>
+field in the output is set to 2, and the output of the command becomes
+whatever error message would have been given. The output of an invalid
+command line will have an error code of 1, and the output text will be a help
+message.
 
 @end table
 
