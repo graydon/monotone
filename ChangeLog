@@ -1,3 +1,8 @@
+2005-05-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* win32/terminal.cc (have_smart_terminal): Call _isatty on stderr,
+	not stdout.
+
 2005-05-23  Riccardo Ghetta  <birrachiara@tin.it>
 
 	* selectors.cc/.hh, database.cc: add two new selectors:
