@@ -6686,7 +6686,7 @@ Sync contents of @i{<collection>} with database on @i{<host>}
 Serve contents of @i{<collection>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{automate} @i{(interface_version|heads|descendents|erase_ancestors|toposort|ancestry_difference|leaves|inventory)}
+@item @b{automate} @i{(interface_version|heads|ancestors|attributes|parents|descendents|children|graph|erase_ancestors|toposort|ancestry_difference|leaves|inventory|stdio|certs|select)}
 Scripting interface.
 
 @item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}
@@ -6785,10 +6785,7 @@ The default is @b{count}.
 
 @item @b{--revision=}@i{<id>}
 @itemx @b{-r} @i{<id>}
-Currently this option only applies to the diff command where it may be
-used to compare a working copy with a specific revision or to compare
-two specific revisions. It will likely apply to other commands in the
-future.
+Use the given revision with the current command. The revision id could be specified as a selector. @ref{Selectors}.
 
 @item @b{--message-file=}@i{<log message file>}
 Use the content of the given file as the changelog when committing a new

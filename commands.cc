@@ -3673,7 +3673,8 @@ CMD(automate, "automation",
     "leaves\n"
     "inventory\n"
     "stdio\n"
-    "certs REV\n",
+    "certs REV\n"
+    "select SELECTOR\n",
     "automation interface", 
     OPT_NONE)
 {
