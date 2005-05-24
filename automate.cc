@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <unistd.h>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -1002,6 +1003,7 @@ void print_some_output(int cmdnum,
       s<<size<<':'<<text.substr(pos, size);
       pos+=size;
     }
+  s.flush();
 }
 
 static void
@@ -1013,7 +1015,9 @@ automate_stdio(std::vector<utf8> args,
   if (args.size() != 0)
     throw usage(help_name);
   int cmdnum = 0;
-  while(!std::cin.eof())
+  char c;
+  ssize_t n=1;
+  while(n)//while(!EOF)
     {
       std::string x;
       utf8 cmd;
@@ -1021,9 +1025,9 @@ automate_stdio(std::vector<utf8> args,
       bool first=true;
       int toklen=0;
       bool firstchar=true;
-      for(char c=std::cin.get();c != 'l' && !std::cin.eof();c=std::cin.get())
+      for(n=read(0, &c, 1); c != 'l' && n; n=read(0, &c, 1))
         ;
-      for(char c=std::cin.get();c != 'e' && !std::cin.eof(); c=std::cin.get())
+      for(n=read(0, &c, 1); c!='e' && n; n=read(0, &c, 1))
         {
           if(c<='9' && c>='0')
             {
@@ -1031,8 +1035,10 @@ automate_stdio(std::vector<utf8> args,
             }
           else if(c == ':')
             {
-              char *tok=new char[toklen+1];
-              std::cin.get(tok, toklen+1);
+              char *tok=new char[toklen];
+              int count=0;
+              while(count<toklen)
+                count+=read(0, tok, toklen-count);
               if(first)
                 cmd=utf8(std::string(tok, toklen));
               else
@@ -1066,25 +1072,21 @@ automate_stdio(std::vector<utf8> args,
             {
               err=0;
               automate_command(cmd, args, help_name, app, s);
-              print_some_output(cmdnum, err, true, sb.str(),
-                                output, outpos, -1);
             }
           catch(usage & u)
             {
               err=1;
               commands::explain_usage(help_name, s);
-              print_some_output(cmdnum, err, true, sb.str(),
-                                output, outpos, -1);
             }
           catch(informative_failure & f)
             {
               err=2;
-              //Do this instead of using f.what directly so the output
+              //Do this instead of printing f.what directly so the output
               //will be split into properly-sized blocks automatically.
               s<<f.what;
-              print_some_output(cmdnum, err, true, sb.str(),
-                                output, outpos, -1);
             }
+            print_some_output(cmdnum, err, true, sb.str(),
+                              output, outpos, -1);
         }
       cmdnum++;
     }

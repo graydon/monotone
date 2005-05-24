@@ -1,5 +1,9 @@
 2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* automate.cc: Fix buffering for "automate stdio"
+
+2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* automate.cc: Put back lost "automate certs".
 
 2005-05-24  Matt Johnston  <matt@ucc.asn.au>
