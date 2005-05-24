@@ -15,6 +15,9 @@ namespace constants
   // this file contains magic constants which you could, in theory, tweak.
   // probably best not to tweak them though.
 
+  // block size in bytes for "automate stdio" output
+  extern size_t const automate_stdio_size;
+
   // number of bits in an RSA key we use
   extern size_t const keylen; 
 

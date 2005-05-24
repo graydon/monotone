@@ -1,3 +1,16 @@
+005-05-23  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Fix "automate stdio" input/output format according to ML discussion
+	* automate.cc: changed: automate_stdio
+		added: print_some_output, class my_stringbuf
+	* constants.{cc,hh}: add constant for automate stdio block size
+	* monotone.texi: update documentation
+
+2005-05-23  Nathaniel Smith  <njs@codesourcery.com>
+
+	* win32/terminal.cc (have_smart_terminal): Call _isatty on stderr,
+	not stdout.
+
 2005-05-23  Richard Levitte  <richard@levitte.org>
 
 	* commands.cc (try_one_merge): Use the value of --date and
