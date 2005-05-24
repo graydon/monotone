@@ -57,57 +57,8 @@ int const any_cols = -1;
 
 extern "C" {
 // some wrappers to ease migration
-  int sqlite3_exec_printf(sqlite3*,const char *sqlFormat,sqlite3_callback,
-                          void *,char **errmsg,...);
-  int sqlite3_exec_vprintf(sqlite3*,const char *sqlFormat,sqlite3_callback,
-                           void *,char **errmsg,va_list ap);
-  int sqlite3_get_table_vprintf(sqlite3*,const char *sqlFormat,char ***resultp,
-                                int *nrow,int *ncolumn,char **errmsg,va_list ap);
   const char *sqlite3_value_text_s(sqlite3_value *v);
-}
-
-int sqlite3_exec_printf(sqlite3 * db,
-                        char const * sqlFormat,
-                        sqlite3_callback cb,
-                        void * user_data,
-                        char ** errmsg,
-                        ...)
-{ 
-  va_list ap;
-  va_start(ap, errmsg);
-  int result = sqlite3_exec_vprintf(db, sqlFormat, cb,
-                                    user_data, errmsg, ap);
-  va_end(ap);
-  return result;
-}
-
-int sqlite3_exec_vprintf(sqlite3 * db,
-                         char const * sqlFormat,
-                         sqlite3_callback cb,
-                         void * user_data,
-                         char ** errmsg,
-                         va_list ap)
-{ 
-  char * formatted = sqlite3_vmprintf(sqlFormat, ap);
-  int result = sqlite3_exec(db, formatted, cb, 
-                            user_data, errmsg);
-  sqlite3_free(formatted);
-  return result;
-}
-
-int sqlite3_get_table_vprintf(sqlite3 * db,
-                              char const * sqlFormat,
-                              char *** resultp,
-                              int * nrow,
-                              int * ncolumn,
-                              char ** errmsg,
-                              va_list ap)
-{ 
-  char * formatted = sqlite3_vmprintf(sqlFormat, ap);
-  int result = sqlite3_get_table(db, formatted, resultp, 
-                                 nrow, ncolumn, errmsg);
-  sqlite3_free(formatted);
-  return result;
+  const char *sqlite3_column_text_s(sqlite3_stmt*, int iCol);
 }
 
 database::database(fs::path const & fn) :
@@ -120,6 +71,7 @@ database::database(fs::path const & fn) :
   schema("e372b508bea9b991816d1c74680f7ae10d2a6d94"),
   __sql(NULL),
   transaction_level(0)
+
 {}
 
 void 
@@ -139,6 +91,12 @@ const char *
 sqlite3_value_text_s(sqlite3_value *v)
 {  
   return (const char *)(sqlite3_value_text(v));
+}
+
+const char *
+sqlite3_column_text_s(sqlite3_stmt *stmt, int col)
+{
+  return (const char *)(sqlite3_column_text(stmt, col));
 }
 
 static void 
@@ -200,6 +158,21 @@ check_sqlite_format_version(fs::path const & filename)
 }
 
 
+static void
+assert_sqlite3_ok(sqlite3 *s) 
+{
+  int errcode = sqlite3_errcode(s);
+
+  if (errcode == SQLITE_OK) return;
+  
+  const char * errmsg = sqlite3_errmsg(s);
+
+  ostringstream oss;
+  oss << "sqlite error [" << errcode << "]: " << errmsg;
+  
+  throw oops(oss.str());
+}
+
 struct sqlite3 * 
 database::sql(bool init)
 {
@@ -222,7 +195,10 @@ database::sql(bool init)
         throw oops(string("could not open database: ") + filename.string() + 
                    (": " + string(sqlite3_errmsg(__sql))));
       if (init)
-        execute(schema_constant);
+        {
+          sqlite3_exec(__sql, schema_constant, NULL, NULL, NULL);
+          assert_sqlite3_ok(__sql);
+        }
 
       check_schema();
       install_functions(__app);
@@ -308,8 +284,9 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
     {
       *(dump->out) << vals[2] << ";\n";
       dump->table_name = string(vals[0]);
-      sqlite3_exec_printf(dump->sql, "SELECT * FROM '%q'", 
-                         dump_row_cb, data, NULL, vals[0]);
+      string query = "SELECT * FROM " + string(vals[0]);
+      int result = sqlite3_exec(dump->sql, query.c_str(), dump_row_cb, data, NULL);
+
     }
   return 0;
 }
@@ -351,7 +328,8 @@ database::load(istream & in)
       tmp.append(buf, in.gcount());
     }
 
-  execute(tmp.c_str());
+  sqlite3_exec(__sql, tmp.c_str(), NULL, NULL, NULL);
+  assert_sqlite3_ok(__sql);
 }
 
 
@@ -361,7 +339,7 @@ database::debug(string const & sql, ostream & out)
   results res;
   // "%s" construction prevents interpretation of %-signs in the query string
   // as formatting commands.
-  fetch(res, any_cols, any_rows, "%s", sql.c_str());
+  fetch(res, any_cols, any_rows, sql.c_str());
   out << "'" << sql << "' -> " << res.size() << " rows\n" << endl;
   for (size_t i = 0; i < res.size(); ++i)
     {
@@ -493,7 +471,7 @@ database::rehash()
       {
         hexenc<id> tmp;
         key_hash_code(rsa_keypair_id(res[i][0]), base64<rsa_pub_key>(res[i][1]), tmp);
-        execute("INSERT INTO public_keys VALUES('%q', '%q', '%q')", 
+        execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
                 tmp().c_str(), res[i][0].c_str(), res[i][1].c_str());
         ++pubkeys;
       }
@@ -508,7 +486,7 @@ database::rehash()
       {
         hexenc<id> tmp;
         key_hash_code(rsa_keypair_id(res[i][0]), base64< arc4<rsa_priv_key> >(res[i][1]), tmp);
-        execute("INSERT INTO private_keys VALUES('%q', '%q', '%q')", 
+        execute("INSERT INTO private_keys VALUES(?, ?, ?)", 
                 tmp().c_str(), res[i][0].c_str(), res[i][1].c_str());
         ++privkeys;
       }
@@ -526,6 +504,16 @@ database::ensure_open()
 
 database::~database() 
 {
+  L(F("statement cache statistics\n"));
+  L(F("prepared %d statements\n") % statement_cache.size());
+
+  for (map<string, statement>::const_iterator i = statement_cache.begin(); 
+       i != statement_cache.end(); ++i)
+    {
+      L(F("%d executions of %s\n") % i->second.count % i->first);
+      sqlite3_finalize(i->second.stmt);
+    }
+
   if (__sql)
     {
       sqlite3_close(__sql);
@@ -533,142 +521,14 @@ database::~database()
     }
 }
 
-static void 
-assert_sqlite3_ok(int res)
-{
-  switch (res)
-    {      
-    case SQLITE_OK: 
-      break;
-
-    case SQLITE_ERROR:
-      throw oops("SQL error or missing database");
-      break;
-
-    case SQLITE_INTERNAL:
-      throw oops("An internal logic error in SQLite");
-      break;
-
-    case SQLITE_PERM:
-      throw oops("Access permission denied");
-      break;
-
-    case SQLITE_ABORT:
-      throw oops("Callback routine requested an abort");
-      break;
-
-    case SQLITE_BUSY:
-      throw oops("The database file is locked");
-      break;
-
-    case SQLITE_LOCKED:
-      throw oops("A table in the database is locked");
-      break;
-
-    case SQLITE_NOMEM:
-      throw oops("A malloc() failed");
-      break;
-
-    case SQLITE_READONLY:
-      throw oops("Attempt to write a readonly database");
-      break;
-
-    case SQLITE_INTERRUPT:
-      throw oops("Operation terminated by sqlite3_interrupt()");
-      break;
-
-    case SQLITE_IOERR:
-      throw oops("Some kind of disk I/O error occurred");
-      break;
-
-    case SQLITE_CORRUPT:
-      throw oops("The database disk image is malformed");
-      break;
-
-    case SQLITE_NOTFOUND:
-      throw oops("(Internal Only) Table or record not found");
-      break;
-
-    case SQLITE_FULL:
-      throw oops("Insertion failed because database (or filesystem) is full");
-      break;
-
-    case SQLITE_CANTOPEN:
-      throw oops("Unable to open the database file");
-      break;
-
-    case SQLITE_PROTOCOL:
-      throw oops("database lock protocol error");
-      break;
-
-    case SQLITE_EMPTY:
-      throw oops("(Internal Only) database table is empty");
-      break;
-
-    case SQLITE_SCHEMA:
-      throw oops("The database schema changed");
-      break;
-
-    case SQLITE_TOOBIG:
-      throw oops("Too much data for one row of a table");
-      break;
-
-    case SQLITE_CONSTRAINT:
-      throw oops("Abort due to contraint violation");
-      break;
-
-    case SQLITE_MISMATCH:
-      throw oops("Data type mismatch");
-      break;
-
-    case SQLITE_MISUSE:
-      throw oops("Library used incorrectly");
-      break;
-
-    case SQLITE_NOLFS:
-      throw oops("Uses OS features not supported on host");
-      break;
-
-    case SQLITE_AUTH:
-      throw oops("Authorization denied");
-      break;
-
-    default:
-      throw oops(string("Unknown DB result code: ") + lexical_cast<string>(res));
-      break;
-    }
-}
-
 void 
 database::execute(char const * query, ...)
 {
-  va_list ap;
-  int res;
-  char * errmsg = NULL;
-
-  va_start(ap, query);
-
-  // log it
-  char * formatted = sqlite3_vmprintf(query, ap);
-  string qq(formatted);
-  if (qq.size() > constants::db_log_line_sz) 
-    qq = qq.substr(0, constants::db_log_line_sz) + string(" ...");
-  L(F("db.execute(\"%s\")\n") % qq);
-  sqlite3_free(formatted);
-
-  va_end(ap);
-  va_start(ap, query);
-
-  // do it
-  res = sqlite3_exec_vprintf(sql(), query, NULL, NULL, &errmsg, ap);
-
-  va_end(ap);
-
-  if (errmsg)
-    throw oops(string("sqlite exec error ") + errmsg);
-
-  assert_sqlite3_ok(res);
-
+  results res;
+  va_list args;
+  va_start(args, query);
+  fetch(res, 0, 0, query, args);
+  va_end(args);
 }
 
 void 
@@ -677,77 +537,93 @@ database::fetch(results & res,
                 int const want_rows, 
                 char const * query, ...)
 {
-  char ** result = NULL;
+  va_list args;
+  va_start(args, query);
+  fetch(res, want_cols, want_rows, query, args);
+  va_end(args);
+}
+
+void 
+database::fetch(results & res, 
+                int const want_cols, 
+                int const want_rows, 
+                char const * query, 
+                va_list args)
+{
   int nrow;
   int ncol;
-  char * errmsg = NULL;
   int rescode;
 
-  va_list ap;
   res.clear();
   res.resize(0);
-  va_start(ap, query);
 
-  // log it
-  char * formatted = sqlite3_vmprintf(query, ap);
-  string qq(formatted);
-  if (qq.size() > constants::log_line_sz) 
-    qq = qq.substr(0, constants::log_line_sz) + string(" ...");
-  L(F("db.fetch(\"%s\")\n") % qq);
-  sqlite3_free(formatted);
+  map<string, statement>::iterator i = statement_cache.find(query);
+  if (i == statement_cache.end()) 
+    {
+      statement_cache.insert(make_pair(query, statement()));
+      i = statement_cache.find(query);
+      I(i != statement_cache.end());
 
-  va_end(ap);
-  va_start(ap, query);
-
-  // do it
-  rescode = sqlite3_get_table_vprintf(sql(), query, &result, &nrow, &ncol, &errmsg, ap);
-
-  va_end(ap);
-
-  cleanup_ptr<char **, void> 
-    result_guard(result, &sqlite3_free_table);
+      const char * tail;
+      sqlite3_prepare(sql(), query, -1, &i->second.stmt, &tail);
+      assert_sqlite3_ok(sql());
+      L(F("prepared statement %s\n") % query);
+      I(*tail == 0); // no support for multiple statements
+    }
 
   string ctx = string("db query [") + string(query) + "]: ";
 
-  if (errmsg)
-    throw oops(ctx + string("sqlite error ") + errmsg);
-  assert_sqlite3_ok(rescode);
+  ncol = sqlite3_column_count(i->second.stmt);
 
-  if (want_cols == 0 && ncol == 0) return;
-  if (want_rows == 0 && nrow == 0) return;
-  if (want_cols == any_rows && ncol == 0) return;
-  if (want_rows == any_rows && nrow == 0) return;
-
-  if (want_cols != any_cols &&
-      ncol != want_cols)
+  if (want_cols != any_cols && ncol != want_cols)
     throw oops((F("%s wanted %d columns, got %s")
                 % ctx % want_cols % ncol).str());
 
-  if (want_rows != any_rows &&
-      nrow != want_rows)
-    throw oops((F("%s wanted %d rows, got %s")
-                % ctx % want_rows % nrow).str());
+  // bind parameters for this execution
 
-  if (!result)
-    throw oops(ctx + "null result set");
+  int params = sqlite3_bind_parameter_count(i->second.stmt);
 
-  for (int i = 0; i < ncol; ++i) 
-    if (!result[i])
-      throw oops(ctx + "null column name");
+  L(F("binding %d parameters for %s\n") % params % query);
 
-  for (int row = 0; row < nrow; ++row) 
+  for (int param = 1; param <= params; param++)
     {
-      vector<string> rowvec;
-      for (int col = 0; col < ncol; ++col)
-        {
-          int i = ((1 + row) * ncol) + col;
-          if (!result[i])
-            throw oops(ctx + "null result value");
-          else
-            rowvec.push_back(result[i]);
-        }
-      res.push_back(rowvec);
+      char *value = va_arg(args, char *);
+      // nb: transient will not be good for inserts with large data blobs
+      // however, it's no worse than the previous '%q' stuff in this regard
+      L(F("binding %d with value '%s'\n") % param % value);
+      sqlite3_bind_text(i->second.stmt, param, value, -1, SQLITE_TRANSIENT);
+      assert_sqlite3_ok(sql());
     }
+
+  // execute and process results
+
+  nrow = 0;
+  for (rescode = sqlite3_step(i->second.stmt); rescode == SQLITE_ROW; 
+       rescode = sqlite3_step(i->second.stmt))
+    {
+      vector<string> row;
+      for (int col = 0; col < ncol; col++) 
+        {
+          const char * value = sqlite3_column_text_s(i->second.stmt, col);
+          if (!value) throw oops(ctx + "null result value");
+          row.push_back(value);
+          //L(F("row %d col %d value='%s'\n") % nrow % col % value);
+        }
+      res.push_back(row);
+    }
+  
+  if (rescode != SQLITE_DONE)
+    assert_sqlite3_ok(sql());
+
+  sqlite3_reset(i->second.stmt);
+  assert_sqlite3_ok(sql());
+
+  nrow = res.size();
+
+  i->second.count++;
+
+  if (want_rows != any_rows && nrow != want_rows)
+    throw oops((F("%s wanted %d rows, got %s") % ctx % want_rows % nrow).str());
 }
 
 // general application-level logic
@@ -766,7 +642,7 @@ void
 database::begin_transaction() 
 {
   if (transaction_level == 0)
-      execute("BEGIN");
+    execute("BEGIN");
   transaction_level++;
 }
 
@@ -792,9 +668,8 @@ database::exists(hexenc<id> const & ident,
                       string const & table)
 {
   results res;
-  fetch(res, one_col, any_rows, 
-        "SELECT id FROM '%q' WHERE id = '%q'",
-        table.c_str(), ident().c_str());
+  string query = "SELECT id FROM " + table + " WHERE id = ?";
+  fetch(res, one_col, any_rows, query.c_str(), ident().c_str());
   I((res.size() == 1) || (res.size() == 0));
   return res.size() == 1;
 }
@@ -805,9 +680,8 @@ database::delta_exists(hexenc<id> const & ident,
                        string const & table)
 {
   results res;
-  fetch(res, one_col, any_rows, 
-        "SELECT id FROM '%q' WHERE id = '%q'",
-        table.c_str(), ident().c_str());
+  string query = "SELECT id FROM " + table + " WHERE id = ?";
+  fetch(res, one_col, any_rows, query.c_str(), ident().c_str());
   return res.size() > 0;
 }
 
@@ -817,9 +691,9 @@ database::delta_exists(hexenc<id> const & ident,
                        string const & table)
 {
   results res;
-  fetch(res, one_col, any_rows, 
-        "SELECT id FROM '%q' WHERE id = '%q' AND base = '%q'",
-        table.c_str(), ident().c_str(), base().c_str());
+  string query = "SELECT id FROM " + table + " WHERE id = ? AND base = ?";
+  fetch(res, one_col, any_rows, query.c_str(), 
+        ident().c_str(), base().c_str());
   I((res.size() == 1) || (res.size() == 0));
   return res.size() == 1;
 }
@@ -828,9 +702,8 @@ unsigned long
 database::count(string const & table)
 {
   results res;
-  fetch(res, one_col, one_row, 
-        "SELECT COUNT(*) FROM '%q'", 
-        table.c_str());
+  std::string query="SELECT COUNT(*) FROM "+table;
+  fetch(res, one_col, one_row, query.c_str());
   return lexical_cast<unsigned long>(res[0][0]);  
 }
 
@@ -839,8 +712,7 @@ database::space_usage(string const & table, string const & concatenated_columns)
 {
   results res;
   fetch(res, one_col, one_row,
-        "SELECT SUM(LENGTH(%s)) FROM '%q'",
-        concatenated_columns.c_str(), table.c_str());
+        ("SELECT SUM(LENGTH("+concatenated_columns+")) FROM "+table).c_str());
   return lexical_cast<unsigned long>(res[0][0]);
 }
 
@@ -849,7 +721,7 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
 {
   results res;
 
-  fetch(res, one_col, any_rows, "SELECT id FROM %q", table.c_str());
+  fetch(res, one_col, any_rows, ("SELECT id FROM "+table).c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
     {
@@ -863,9 +735,8 @@ database::get(hexenc<id> const & ident,
               string const & table)
 {
   results res;
-  fetch(res, one_col, one_row,
-        "SELECT data FROM '%q' WHERE id = '%q'", 
-        table.c_str(), ident().c_str());
+  string query = "SELECT data FROM " + table + " WHERE id = ?";
+  fetch(res, one_col, one_row, query.c_str(), ident().c_str());
 
   // consistency check
   base64<gzip<data> > rdata(res[0][0]);
@@ -889,8 +760,8 @@ database::get_delta(hexenc<id> const & ident,
   I(base() != "");
   results res;
   fetch(res, one_col, one_row,
-        "SELECT delta FROM '%q' WHERE id = '%q' AND base = '%q'", 
-        table.c_str(), ident().c_str(), base().c_str());
+        ("SELECT delta FROM "+table+" WHERE id = ? AND base = ?").c_str(), 
+        ident().c_str(), base().c_str());
 
   base64<gzip<delta> > del_packed = res[0][0];
   unpack(del_packed, del);
@@ -910,8 +781,8 @@ database::put(hexenc<id> const & ident,
   base64<gzip<data> > dat_packed;
   pack(dat, dat_packed);
   
-  execute("INSERT INTO '%q' VALUES('%q', '%q')", 
-          table.c_str(), ident().c_str(), dat_packed().c_str());
+  execute(("INSERT INTO "+table+" VALUES(?, ?)").c_str(), 
+          ident().c_str(), dat_packed().c_str());
 }
 void 
 database::put_delta(hexenc<id> const & ident,
@@ -926,8 +797,7 @@ database::put_delta(hexenc<id> const & ident,
   base64<gzip<delta> > del_packed;
   pack(del, del_packed);
   
-  execute("INSERT INTO '%q' VALUES('%q', '%q', '%q')", 
-          table.c_str(), 
+  execute(("INSERT INTO "+table+" VALUES(?, ?, ?)").c_str(), 
           ident().c_str(), base().c_str(), del_packed().c_str());
 }
 
@@ -1044,6 +914,8 @@ database::get_version(hexenc<id> const & ident,
       bool found_root = false;
       hexenc<id> root("");
 
+      string delta_query = "SELECT base FROM " + delta_table + " WHERE id = ?";
+
       while (! found_root)
         {
           set< hexenc<id> > next_frontier;
@@ -1064,8 +936,10 @@ database::get_version(hexenc<id> const & ident,
                 {
                   cycles.insert(*i);
                   results res;
-                  fetch(res, one_col, any_rows, "SELECT base from '%q' WHERE id = '%q'",
-                        delta_table.c_str(), (*i)().c_str());
+                  
+                  fetch(res, one_col, any_rows, 
+                        delta_query.c_str(), (*i)().c_str());
+
                   for (size_t k = 0; k < res.size(); ++k)
                     {
                       hexenc<id> const nxt(res[k][0]);
@@ -1153,9 +1027,8 @@ void
 database::drop(hexenc<id> const & ident, 
                string const & table)
 {
-  execute("DELETE FROM '%q' WHERE id = '%q'",  
-          table.c_str(),
-          ident().c_str());
+  string drop = "DELETE FROM " + table + " WHERE id = ?";
+  execute(drop.c_str(), ident().c_str());
 }
 
 void 
@@ -1362,7 +1235,7 @@ database::get_revision_parents(revision_id const & id,
   results res;
   parents.clear();
   fetch(res, one_col, any_rows, 
-        "SELECT parent FROM revision_ancestry WHERE child = '%q'",
+        "SELECT parent FROM revision_ancestry WHERE child = ?",
         id.inner()().c_str());
   for (size_t i = 0; i < res.size(); ++i)
     parents.insert(revision_id(res[i][0]));
@@ -1376,7 +1249,7 @@ database::get_revision_children(revision_id const & id,
   results res;
   children.clear();
   fetch(res, one_col, any_rows, 
-        "SELECT child FROM revision_ancestry WHERE parent = '%q'",
+        "SELECT child FROM revision_ancestry WHERE parent = ?",
         id.inner()().c_str());
   for (size_t i = 0; i < res.size(); ++i)
     children.insert(revision_id(res[i][0]));
@@ -1407,7 +1280,7 @@ database::get_revision(revision_id const & id,
   I(!null_id(id));
   results res;
   fetch(res, one_col, one_row, 
-        "SELECT data FROM revisions WHERE id = '%q'",
+        "SELECT data FROM revisions WHERE id = ?",
         id.inner()().c_str());
 
   base64<gzip<data> > rdat_packed;
@@ -1446,14 +1319,14 @@ database::put_revision(revision_id const & new_id,
 
   transaction_guard guard(*this);
 
-  execute("INSERT INTO revisions VALUES('%q', '%q')", 
+  execute("INSERT INTO revisions VALUES(?, ?)", 
           new_id.inner()().c_str(), 
           d_packed().c_str());
 
   for (edge_map::const_iterator e = rev.edges.begin();
        e != rev.edges.end(); ++e)
     {
-      execute("INSERT INTO revision_ancestry VALUES('%q', '%q')", 
+      execute("INSERT INTO revision_ancestry VALUES(?, ?)", 
               edge_old_revision(e).inner()().c_str(),
               new_id.inner()().c_str());
     }
@@ -1476,9 +1349,9 @@ database::put_revision(revision_id const & new_id,
 void 
 database::delete_existing_revs_and_certs()
 {
-  execute("DELETE from revisions");
-  execute("DELETE from revision_ancestry");
-  execute("DELETE from revision_certs");
+  execute("DELETE FROM revisions");
+  execute("DELETE FROM revision_ancestry");
+  execute("DELETE FROM revision_certs");
 }
 
 /// Deletes one revision from the local database. 
@@ -1494,10 +1367,10 @@ database::delete_existing_rev_and_certs(revision_id const & rid){
 
   // perform the actual SQL transactions to kill rev rid here
   L(F("Killing revision %s locally\n") % rid);
-  execute("DELETE from revision_certs WHERE id = '%s'",rid.inner()().c_str());
-  execute("DELETE from revision_ancestry WHERE child = '%s'",
+  execute("DELETE from revision_certs WHERE id = ?",rid.inner()().c_str());
+  execute("DELETE from revision_ancestry WHERE child = ?",
           rid.inner()().c_str());
-  execute("DELETE from revisions WHERE id = '%s'",rid.inner()().c_str());
+  execute("DELETE from revisions WHERE id = ?",rid.inner()().c_str());
 }
 
 // crypto key management
@@ -1513,22 +1386,22 @@ database::get_key_ids(string const & pattern,
 
   if (pattern != "")
     fetch(res, one_col, any_rows, 
-          "SELECT id from public_keys WHERE id GLOB '%q'",
+          "SELECT id FROM public_keys WHERE id GLOB ?",
           pattern.c_str());
   else
     fetch(res, one_col, any_rows, 
-          "SELECT id from public_keys");
+          "SELECT id FROM public_keys");
 
   for (size_t i = 0; i < res.size(); ++i)
     pubkeys.push_back(res[i][0]);
 
   if (pattern != "")
     fetch(res, one_col, any_rows, 
-          "SELECT id from private_keys WHERE id GLOB '%q'",
+          "SELECT id FROM private_keys WHERE id GLOB ?",
           pattern.c_str());
   else
     fetch(res, one_col, any_rows, 
-          "SELECT id from private_keys");
+          "SELECT id FROM private_keys");
 
   for (size_t i = 0; i < res.size(); ++i)
     privkeys.push_back(res[i][0]);
@@ -1539,7 +1412,7 @@ database::get_keys(string const & table, vector<rsa_keypair_id> & keys)
 {
   keys.clear();
   results res;
-  fetch(res, one_col, any_rows,  "SELECT id from '%q'", table.c_str());
+  fetch(res, one_col, any_rows,  ("SELECT id from "+table).c_str());
   for (size_t i = 0; i < res.size(); ++i)
     keys.push_back(res[i][0]);
 }
@@ -1561,7 +1434,7 @@ database::public_key_exists(hexenc<id> const & hash)
 {
   results res;
   fetch(res, one_col, any_rows, 
-        "SELECT id FROM public_keys WHERE hash = '%q'",
+        "SELECT id FROM public_keys WHERE hash = ?",
         hash().c_str());
   I((res.size() == 1) || (res.size() == 0));
   if (res.size() == 1) 
@@ -1574,7 +1447,7 @@ database::public_key_exists(rsa_keypair_id const & id)
 {
   results res;
   fetch(res, one_col, any_rows, 
-        "SELECT id FROM public_keys WHERE id = '%q'",
+        "SELECT id FROM public_keys WHERE id = ?",
         id().c_str());
   I((res.size() == 1) || (res.size() == 0));
   if (res.size() == 1) 
@@ -1587,7 +1460,7 @@ database::private_key_exists(rsa_keypair_id const & id)
 {
   results res;
   fetch(res, one_col, any_rows,
-        "SELECT id FROM private_keys WHERE id = '%q'",
+        "SELECT id FROM private_keys WHERE id = ?",
         id().c_str());
   I((res.size() == 1) || (res.size() == 0));
   if (res.size() == 1)
@@ -1608,7 +1481,7 @@ database::get_pubkey(hexenc<id> const & hash,
 {
   results res;
   fetch(res, 2, one_row, 
-        "SELECT id, keydata FROM public_keys where hash = '%q'", 
+        "SELECT id, keydata FROM public_keys WHERE hash = ?", 
         hash().c_str());
   id = res[0][0];
   pub_encoded = res[0][1];
@@ -1620,7 +1493,7 @@ database::get_key(rsa_keypair_id const & pub_id,
 {
   results res;
   fetch(res, one_col, one_row, 
-        "SELECT keydata FROM public_keys where id = '%q'", 
+        "SELECT keydata FROM public_keys WHERE id = ?", 
         pub_id().c_str());
   pub_encoded = res[0][0];
 }
@@ -1631,7 +1504,7 @@ database::get_key(rsa_keypair_id const & priv_id,
 {
   results res;
   fetch(res, one_col, one_col, 
-        "SELECT keydata FROM private_keys where id = '%q'", 
+        "SELECT keydata FROM private_keys WHERE id = ?", 
         priv_id().c_str());
   priv_encoded = res[0][0];
 }
@@ -1645,7 +1518,7 @@ database::put_key(rsa_keypair_id const & pub_id,
   I(!public_key_exists(thash));
   E(!public_key_exists(pub_id),
     F("another key with name '%s' already exists") % pub_id);
-  execute("INSERT INTO public_keys VALUES('%q', '%q', '%q')", 
+  execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
           thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
 }
 
@@ -1657,7 +1530,7 @@ database::put_key(rsa_keypair_id const & priv_id,
   key_hash_code(priv_id, priv_encoded, thash);
   E(!private_key_exists(priv_id),
     F("another key with name '%s' already exists") % priv_id);
-  execute("INSERT INTO private_keys VALUES('%q', '%q', '%q')", 
+  execute("INSERT INTO private_keys VALUES(?, ?, ?)", 
           thash().c_str(), priv_id().c_str(), priv_encoded().c_str());
 }
 
@@ -1675,14 +1548,14 @@ database::put_key_pair(rsa_keypair_id const & id,
 void
 database::delete_private_key(rsa_keypair_id const & pub_id)
 {
-  execute("DELETE FROM private_keys WHERE id = '%q'",
+  execute("DELETE FROM private_keys WHERE id = ?",
           pub_id().c_str());
 }
 
 void
 database::delete_public_key(rsa_keypair_id const & pub_id)
 {
-  execute("DELETE FROM public_keys WHERE id = '%q'",
+  execute("DELETE FROM public_keys WHERE id = ?",
           pub_id().c_str());
 }
 
@@ -1693,11 +1566,14 @@ database::cert_exists(cert const & t,
                       string const & table)
 {
   results res;
-  fetch(res, 1, any_rows,
-        "SELECT id FROM '%q' WHERE id = '%q' "
-        "AND name = '%q' AND value = '%q' " 
-        "AND keypair = '%q' AND signature = '%q' ",
-        table.c_str(),
+  string query = 
+    "SELECT id FROM " + table + " WHERE id = ? "
+    "AND name = ? "
+    "AND value = ? " 
+    "AND keypair = ? "
+    "AND signature = ?";
+    
+  fetch(res, 1, any_rows, query.c_str(),
         t.ident().c_str(),
         t.name().c_str(),
         t.value().c_str(),
@@ -1713,8 +1589,10 @@ database::put_cert(cert const & t,
 {
   hexenc<id> thash;
   cert_hash_code(t, thash);
-  execute("INSERT INTO '%q' VALUES('%q', '%q', '%q', '%q', '%q', '%q')", 
-          table.c_str(),
+
+  string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?) ";
+
+  execute(insert.c_str(), 
           thash().c_str(),
           t.ident().c_str(),
           t.name().c_str(), 
@@ -1766,9 +1644,11 @@ database::install_views()
   results res;
   fetch(res, one_col, any_rows,
         "SELECT name FROM sqlite_master WHERE type='view'");
+
   for (size_t i = 0; i < res.size(); ++i)
     {
-      execute("DROP VIEW '%q'", res[i][0].c_str());
+      string drop = "DROP VIEW " + res[i][0];
+      execute(drop.c_str());
     }
   // register any views we're going to use
   execute(views_constant);
@@ -1781,8 +1661,7 @@ database::get_certs(vector<cert> & certs,
 {
   results res;
   fetch(res, 5, any_rows, 
-        "SELECT id, name, value, keypair, signature FROM '%q' ",
-        table.c_str());
+        ("SELECT id, name, value, keypair, signature FROM "+table).c_str());
   results_to_certs(res, certs);
 }
 
@@ -1793,11 +1672,11 @@ database::get_certs(hexenc<id> const & ident,
                     string const & table)
 {
   results res;
-  fetch(res, 5, any_rows, 
-        "SELECT id, name, value, keypair, signature FROM '%q' "
-        "WHERE id = '%q'", 
-        table.c_str(),  
-        ident().c_str());
+  string query = 
+    "SELECT id, name, value, keypair, signature FROM " + table + 
+    " WHERE id = ?";
+
+  fetch(res, 5, any_rows, query.c_str(), ident().c_str());
   results_to_certs(res, certs);
 }
 
@@ -1808,11 +1687,10 @@ database::get_certs(cert_name const & name,
                     string const & table)
 {
   results res;
-  fetch(res, 5, any_rows, 
-        "SELECT id, name, value, keypair, signature "
-        "FROM '%q' WHERE name = '%q'", 
-        table.c_str(),  
-        name().c_str());
+  string query = 
+    "SELECT id, name, value, keypair, signature FROM " + table + 
+    " WHERE name = ?";
+  fetch(res, 5, any_rows, query.c_str(), name().c_str());
   results_to_certs(res, certs);
 }
 
@@ -1824,13 +1702,12 @@ database::get_certs(hexenc<id> const & ident,
                     string const & table)
 {
   results res;
-  fetch(res, 5, any_rows, 
-        "SELECT id, name, value, keypair, signature "
-        "FROM '%q' "
-        "WHERE id = '%q' AND name = '%q'", 
-        table.c_str(),  
-        ident().c_str(),
-        name().c_str());
+  string query = 
+    "SELECT id, name, value, keypair, signature FROM " + table +
+    " WHERE id = ? AND name = ?";
+
+  fetch(res, 5, any_rows, query.c_str(), 
+        ident().c_str(), name().c_str());
   results_to_certs(res, certs);
 }
 
@@ -1841,13 +1718,12 @@ database::get_certs(cert_name const & name,
                     string const & table)
 {
   results res;
-  fetch(res, 5, any_rows, 
-        "SELECT id, name, value, keypair, signature "
-        "FROM '%q' "
-        "WHERE name = '%q' AND value = '%q'", 
-        table.c_str(),  
-        name().c_str(),
-        val().c_str());
+  string query = 
+    "SELECT id, name, value, keypair, signature FROM " + table + 
+    " WHERE name = ? AND value = ?";
+
+  fetch(res, 5, any_rows, query.c_str(), 
+        name().c_str(), val().c_str());
   results_to_certs(res, certs);
 }
 
@@ -1860,11 +1736,11 @@ database::get_certs(hexenc<id> const & ident,
                     string const & table)
 {
   results res;
-  fetch(res, 5, any_rows, 
-        "SELECT id, name, value, keypair, signature "
-        "FROM '%q' "
-        "WHERE id = '%q' AND name = '%q' AND value = '%q'", 
-        table.c_str(),  
+  string query = 
+    "SELECT id, name, value, keypair, signature FROM " + table + 
+    " WHERE id = ? AND name = ? AND value = ?";
+
+  fetch(res, 5, any_rows, query.c_str(),
         ident().c_str(),
         name().c_str(),
         value().c_str());
@@ -1987,7 +1863,7 @@ database::get_revision_cert(hexenc<id> const & hash,
   fetch(res, 5, one_row, 
         "SELECT id, name, value, keypair, signature "
         "FROM revision_certs "
-        "WHERE hash = '%q'", 
+        "WHERE hash = ?", 
         hash().c_str());
   results_to_certs(res, certs);
   I(certs.size() == 1);
@@ -2002,7 +1878,7 @@ database::revision_cert_exists(hexenc<id> const & hash)
   fetch(res, one_col, any_rows, 
         "SELECT id "
         "FROM revision_certs "
-        "WHERE hash = '%q'", 
+        "WHERE hash = ?", 
         hash().c_str());
   I(res.size() == 0 || res.size() == 1);
   return (res.size() == 1);
@@ -2016,7 +1892,7 @@ database::manifest_cert_exists(hexenc<id> const & hash)
   fetch(res, one_col, any_rows, 
         "SELECT id "
         "FROM manifest_certs "
-        "WHERE hash = '%q'", 
+        "WHERE hash = ?", 
         hash().c_str());
   I(res.size() == 0 || res.size() == 1);
   return (res.size() == 1);
@@ -2031,7 +1907,7 @@ database::get_manifest_cert(hexenc<id> const & hash,
   fetch(res, 5, one_row, 
         "SELECT id, name, value, keypair, signature "
         "FROM manifest_certs "
-        "WHERE hash = '%q'", 
+        "WHERE hash = ?", 
         hash().c_str());
   results_to_certs(res, certs);
   I(certs.size() == 1);
@@ -2079,10 +1955,12 @@ database::complete(string const & partial,
   results res;
   completions.clear();
 
-  fetch(res, 1, any_rows,
-        "SELECT id FROM revisions WHERE id GLOB '%q*'",
-        partial.c_str());
+  string pattern = partial + "*";
 
+  fetch(res, 1, any_rows,
+        "SELECT id FROM revisions WHERE id GLOB ?",
+        pattern.c_str());
+  
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(revision_id(res[i][0]));  
 }
@@ -2095,9 +1973,11 @@ database::complete(string const & partial,
   results res;
   completions.clear();
 
+  string pattern = partial + "*";
+
   fetch(res, 1, any_rows,
-        "SELECT id FROM manifests WHERE id GLOB '%q*'",
-        partial.c_str());
+        "SELECT id FROM manifests WHERE id GLOB ?",
+        pattern.c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(manifest_id(res[i][0]));  
@@ -2105,8 +1985,8 @@ database::complete(string const & partial,
   res.clear();
 
   fetch(res, 1, any_rows,
-        "SELECT id FROM manifest_deltas WHERE id GLOB '%q*'",
-        partial.c_str());
+        "SELECT id FROM manifest_deltas WHERE id GLOB ?",
+        pattern.c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(manifest_id(res[i][0]));  
@@ -2119,9 +1999,11 @@ database::complete(string const & partial,
   results res;
   completions.clear();
 
+  string pattern = partial + "*";
+
   fetch(res, 1, any_rows,
-        "SELECT id FROM files WHERE id GLOB '%q*'",
-        partial.c_str());
+        "SELECT id FROM files WHERE id GLOB ?",
+        pattern.c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(file_id(res[i][0]));  
@@ -2129,8 +2011,8 @@ database::complete(string const & partial,
   res.clear();
 
   fetch(res, 1, any_rows,
-        "SELECT id FROM file_deltas WHERE id GLOB '%q*'",
-        partial.c_str());
+        "SELECT id FROM file_deltas WHERE id GLOB ?",
+        pattern.c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(file_id(res[i][0]));  
@@ -2334,7 +2216,7 @@ database::get_epoch(epoch_id const & eid,
   results res;
   fetch(res, 2, any_rows,
         "SELECT branch, epoch FROM branch_epochs"
-        " WHERE hash = '%q'",
+        " WHERE hash = ?",
         eid.inner()().c_str());
   I(res.size() == 1);
   base64<cert_value> encoded(idx(idx(res, 0), 0));
@@ -2347,7 +2229,7 @@ database::epoch_exists(epoch_id const & eid)
 {
   results res;
   fetch(res, one_col, any_rows,
-        "SELECT hash FROM branch_epochs WHERE hash = '%q'",
+        "SELECT hash FROM branch_epochs WHERE hash = ?",
         eid.inner()().c_str());
   I(res.size() == 1 || res.size() == 0);
   return res.size() == 1;
@@ -2361,7 +2243,7 @@ database::set_epoch(cert_value const & branch, epoch_data const & epo)
   encode_base64(branch, encoded);
   epoch_hash_code(branch, epo, eid);
   I(epo.inner()().size() == constants::epochlen);
-  execute("INSERT OR REPLACE INTO branch_epochs VALUES('%q', '%q', '%q')", 
+  execute("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)", 
           eid.inner()().c_str(), encoded().c_str(), epo.inner()().c_str());
 }
 
@@ -2370,7 +2252,7 @@ database::clear_epoch(cert_value const & branch)
 {
   base64<cert_value> encoded;
   encode_base64(branch, encoded);
-  execute("DELETE FROM branch_epochs WHERE branch = '%q'", encoded().c_str());
+  execute("DELETE FROM branch_epochs WHERE branch = ?", encoded().c_str());
 }
 
 // vars
@@ -2423,7 +2305,7 @@ database::set_var(var_key const & key, var_value const & value)
   encode_base64(key.second, name_encoded);
   base64<var_value> value_encoded;
   encode_base64(value, value_encoded);
-  execute("INSERT OR REPLACE INTO db_vars VALUES('%q', '%q', '%q')",
+  execute("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)",
           key.first().c_str(),
           name_encoded().c_str(),
           value_encoded().c_str());
@@ -2434,7 +2316,7 @@ database::clear_var(var_key const & key)
 {
   base64<var_name> name_encoded;
   encode_base64(key.second, name_encoded);
-  execute("DELETE FROM db_vars WHERE domain = '%q' AND name = '%q'",
+  execute("DELETE FROM db_vars WHERE domain = ? AND name = ?",
           key.first().c_str(), name_encoded().c_str());
 }
 

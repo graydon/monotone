@@ -3,6 +3,19 @@
 	* tests/t_merge_binary.at: new XFAIL test to cover monotone
 	inclination to algorithmically merge binary files.
 
+2005-05-23  Derek Scherger  <derek@echologic.com>
+
+	* database.cc (sqlite3_exec_printf, sqlite3_exec_vprintf): remove
+	(dump_table_cb): remove use of printf exec
+	(assert_sqlite3_ok): tweak error message format
+	* database_migration.cc	(calculate_schema_id):
+	(move_table):
+	(migrate_client_merge_url_and_group):
+	(migrate_client_add_hashes_and_merkle_trees):
+	(migrate_client_to_revisions):
+	(migrate_client_to_epochs):
+	(migrate_client_to_vars): remove use of printf exec's
+	
 2005-05-23  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Fix "automate stdio" input/output format according to ML discussion
@@ -4144,6 +4157,10 @@
 	* ui.cc (fatal): Likewise.
 
 	* tests/t_vcheck.at: New priority "todo", tweak descriptive text.
+
+2005-01-23  Derek Scherger  <derek@echologic.com>
+
+	* database.{cc,hh}: convert queries to use prepared statements
 
 2005-01-22  Nathaniel Smith  <njs@codesourcery.com>
 

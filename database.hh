@@ -16,6 +16,8 @@ struct cert;
 
 #include <boost/filesystem/path.hpp>
 
+#include <sqlite3.h>
+
 #include "selectors.hh"
 #include "manifest.hh"
 #include "numeric_vocab.hh"
@@ -72,6 +74,14 @@ class database
   std::string const schema;
   void check_schema();
 
+  struct statement {
+    int count;
+    statement() : count(0) {}
+    sqlite3_stmt *stmt;
+  };
+
+  std::map<std::string, statement> statement_cache;
+
   struct app_state * __app;
   struct sqlite3 * __sql;
   struct sqlite3 * sql(bool init = false);
@@ -81,12 +91,20 @@ class database
   void install_views();
 
   typedef std::vector< std::vector<std::string> > results;
+ 
   void execute(char const * query, ...);
+ 
   void fetch(results & res, 
              int const want_cols, 
              int const want_rows, 
              char const * query, ...);
-
+  
+  void fetch(results & res, 
+             int const want_cols, 
+             int const want_rows, 
+             char const * query, 
+             va_list args);
+ 
   bool exists(hexenc<id> const & ident, 
               std::string const & table);
   bool delta_exists(hexenc<id> const & ident,
