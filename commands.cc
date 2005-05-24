@@ -134,9 +134,9 @@ namespace commands
     vector<string> matched;
 
     for (map<string,command *>::const_iterator i = cmds.begin();
-         i != cmds.end(); ++i) 
+         i != cmds.end(); ++i)
       {
-        if (cmd.length() < i->first.length()) 
+        if (cmd.length() < i->first.length())
           {
             string prefix(i->first, 0, cmd.length());
             if (cmd == prefix) matched.push_back(i->first);
@@ -409,7 +409,7 @@ describe_revision(app_state & app, revision_id const & id)
 
 static void 
 complete(app_state & app, 
-         string const & str, 
+         string const & str,
          revision_id & completion)
 {
   // This copies the start of selectors::parse_selector().to avoid
@@ -450,7 +450,7 @@ complete(app_state & app,
 
 static void 
 complete(app_state & app, 
-         string const & str, 
+         string const & str,
          manifest_id & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
@@ -479,7 +479,7 @@ complete(app_state & app,
 
 static void 
 complete(app_state & app, 
-         string const & str, 
+         string const & str,
          file_id & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
@@ -2919,13 +2919,13 @@ CMD(update, "working copy", "[REVISION]", "update working copy to be based off a
         working_to_merged, 
         chosen_to_merged;
 
-      L(F("merging working copy with chosen edge %s -> %s\n") 
+      L(F("merging working copy with chosen edge %s -> %s\n")
         % r_old_id % r_chosen_id);
 
       merge_change_sets(old_to_chosen, 
-                        old_to_working, 
+                        old_to_working,
                         chosen_to_merged, 
-                        working_to_merged, 
+                        working_to_merged,
                         merger, app);
       // dump_change_set("chosen to merged", chosen_to_merged);
       // dump_change_set("working to merged", working_to_merged);
@@ -3032,7 +3032,7 @@ try_one_merge(revision_id const & left_id,
   merge_provider merger(app, anc_man, left_man, right_man);
   
   merge_change_sets(*anc_to_left, *anc_to_right, 
-                    *left_to_merged, *right_to_merged, 
+                    *left_to_merged, *right_to_merged,
                     merger, app);
   
   {
@@ -3064,14 +3064,14 @@ try_one_merge(revision_id const & left_id,
   calculate_ident(merged_data, merged_id);
   dbw.consume_revision_data(merged_id, merged_data);
   if (app.date().length() > 0)
-    cert_revision_date_time(rid, string_to_datetime(app.date()), app, dbw);
+    cert_revision_date_time(merged_id, string_to_datetime(app.date()), app, dbw);
   else
     cert_revision_date_now(merged_id, app, dbw);
   if (app.author().length() > 0)
-    cert_revision_author(rid, app.author(), app, dbw);
+    cert_revision_author(merged_id, app.author(), app, dbw);
   else
     cert_revision_author_default(merged_id, app, dbw);
-}                         
+}
 
 
 CMD(merge, "tree", "", "merge unmerged heads of branch",
