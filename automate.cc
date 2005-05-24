@@ -792,6 +792,116 @@ automate_inventory(std::vector<utf8> args,
  
 }
 
+// Name: certs
+// Arguments:
+//   1: a revision id
+// Added in: 1.0
+// Purpose: Prints all certificates associated with the given revision ID.
+//   Each certificate is contained in a basic IO stanza. For each certificate, 
+//   the following values are provided:
+//   
+//   'key' : a string indicating the key used to sign this certificate.
+//   'signature': a string indicating the status of the signature. Possible 
+//   values of this string are:
+//     'ok'        : the signature is correct
+//     'bad'       : the signature is invalid
+//     'unknown'   : signature was made with an unknown key
+//   'name' : the name of this certificate
+//   'value' : the value of this certificate
+//   'trust' : is this certificate trusted by the defined trust metric
+//   Possible values of this string are:
+//     'trusted'   : this certificate is trusted
+//     'untrusted' : this certificate is not trusted
+//
+// Output format: All stanzas are formatted by basic_io. Stanzas are seperated 
+// by a blank line. Values will be escaped, '\' -> '\\' and '"' -> '\"'.
+//
+// Error conditions: If a certificate is signed with an unknown public key, a 
+// warning message is printed to stderr. If the revision specified is unknown 
+// or invalid prints an error message to stderr and exits with status 1.
+static void
+automate_certs(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  std::vector<cert> certs;
+  
+  transaction_guard guard(app.db);
+  
+  revision_id rid(idx(args, 0)());
+  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  hexenc<id> ident(rid.inner());
+
+  std::vector< revision<cert> > ts;
+  app.db.get_revision_certs(rid, ts);
+  for (size_t i = 0; i < ts.size(); ++i)
+    certs.push_back(idx(ts, i).inner());
+
+  {
+    std::set<rsa_keypair_id> checked;      
+    for (size_t i = 0; i < certs.size(); ++i)
+      {
+        if (checked.find(idx(certs, i).key) == checked.end() &&
+            !app.db.public_key_exists(idx(certs, i).key))
+          P(F("warning: no public key '%s' found in database\n")
+            % idx(certs, i).key);
+        checked.insert(idx(certs, i).key);
+      }
+  }
+        
+  // Make the output deterministic; this is useful for the test suite, in
+  // particular.
+  sort(certs.begin(), certs.end());
+
+  basic_io::printer pr(output);
+
+  for (size_t i = 0; i < certs.size(); ++i)
+    {
+      basic_io::stanza st;
+      cert_status status = check_cert(app, idx(certs, i));
+      cert_value tv;      
+      cert_name name = idx(certs, i).name();
+      std::set<rsa_keypair_id> signers;
+
+      decode_base64(idx(certs, i).value, tv);
+
+      rsa_keypair_id keyid = idx(certs, i).key();
+      signers.insert(keyid);
+
+      bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
+                                                          name, tv);
+
+      st.push_str_pair("key", keyid());
+
+      std::string stat;
+      switch (status)
+        {
+        case cert_ok:
+          stat = "ok";
+          break;
+        case cert_bad:
+          stat = "bad";
+          break;
+        case cert_unknown:
+          stat = "unknown";
+          break;
+        }
+      st.push_str_pair("signature", stat);
+
+      st.push_str_pair("name", name());
+      st.push_str_pair("value", tv());
+      st.push_str_pair("trust", (trusted ? "trusted" : "untrusted"));
+
+      pr.print_stanza(st);
+    }
+
+  guard.commit();
+}
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -1016,6 +1126,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_attributes(args, root_cmd_name, app, output);
   else if (cmd() == "stdio")
     automate_stdio(args, root_cmd_name, app, output);
+  else if (cmd() == "certs")
+    automate_certs(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }
