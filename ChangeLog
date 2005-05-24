@@ -1,3 +1,8 @@
+2005-05-24  Riccardo Ghetta  <birrachiara@tin.it>
+
+	* tests/t_merge_binary.at: new XFAIL test to cover monotone
+	inclination to algorithmically merge binary files.
+
 2005-05-23  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Fix "automate stdio" input/output format according to ML discussion
@@ -19,7 +24,7 @@
 	* monotone.texi: document the changes
 	* testsuite.at, tests/t_selector_later_earlier.at: add specific tests 
 	for the new selectors
-						
+
 2005-05-21  Richard Levitte  <richard@levitte.org>
 
 	* Makefile.am: Make monotone.pdf and monotone.dvi depend on
@@ -8315,4 +8320,3 @@
 2003-04-06  graydon hoare  <graydon@pobox.com>
 
 	* initial release.
-
