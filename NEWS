@@ -1,3 +1,207 @@
+Tue May  3 00:31:37 PDT 2005
+
+        0.19 release.  performance improvements, features, ui
+        improvements, and bug fixes.
+
+        - many operations sped up by another factor of 2 or better.
+                - special thanks to Matt Johnston <matt@ucc.asn.au>.
+                - first steps towards automated benchmarking.  Thanks
+                  to Timothy Brownawell <tbrownaw@gmail.com>.
+        - new major features:
+                - "annotate" command; still requires optimization.
+                  Thanks to Emile Snyder <emile@alumni.reed.edu>.
+                - "inodeprints" for fast change detection in large
+                  working dirs now fully supported; see manual for
+                  details.
+        - new minor features:
+                - new selector "c:name=value" for selecting on
+                  arbitrary certs.  Thanks to Richard Levitte
+                  <richard@levitte.org>.
+                - new hooks to automatically initialize attributes on
+                  add; monotone now automatically sets execute bit on
+                  executables.  Thanks to Joel Reed
+                  <joelwreed@comcast.net>.
+                - new automate command "select", to do selector
+                  expansion.  Thanks to Richard Levitte
+                  <richard@levitte.org>.
+                - new automate commands "graph", "parents",
+                  "children", "ancestors", to easily inspect history.
+                  Special thanks to Sebastian Spaeth
+                  <Sebastian@SSpaeth.de>.
+                - new command "db kill_rev_locally".  Thanks to
+                  Sebastian Spaeth <Sebastian@sspaeth.de>.
+                - new arguments to "commit": --author, --date; useful
+                  for patch attribution and importing history.
+                - new automate command "inventory" (output format will
+                  change in next release, however).  Thanks to Derek
+                  Scherger <derek@echologic.com>.
+        - ui improvements:
+                - netsync progress ticker in kilobytes/megabytes.
+                  Thanks to Matt Johnston <matt@ucc.asn.au> and
+                  Sebastian Spaeth <Sebastian@sspaeth.de>.
+                - tickers do not cause annoying scrolling when wider
+                  than window.  Special thanks to Matthew Gregan
+                  <kinetik@orcon.net.nz>.
+                - warn users when a commit creates divergence, and
+                  when an update ignores it.  Thanks to Jeremy Cowgar
+                  <jeremy@cowgar.com>.
+                - support for command-specific options (there is still
+                  no rule that such options must appear after the
+                  command on the command line, though).  Thanks to
+                  Richard Levitte <richard@levitte.org>.
+        - bug fixes:
+                - many cvs_import bugs fixed.  Special thanks to Jon
+                  Bright <jon@siliconcircus.com>, Emile Snyder
+                  <emile@alumni.reed.edu>, Hansjoerg Lipp
+                  <hjlipp@web.de>, Matthew Gregan
+                  <kinetik@orcon.net.nz>.
+                - windows/unix working copy line ending conversion now
+                  works correctly.  Thanks to Emile Snyder
+                  <emile@alumni.reed.edu>.
+                - many fixes to i18n-ized filename support
+                - "drop" and "rename" now affect file attributes as
+                  well.  Thanks to Richard Levitte
+                  <richard@levitte.org> and Joel Reed
+                  <joelwreed@comcast.com>.
+                - better error reporting in netsync.  Thanks to
+                  Grahame Bowland <grahame@angrygoats.net>.
+                - only set working directory's default branch on some
+                  commands (update, commit).  Thanks to Florian Weimer
+                  <fw@deneb.enyo.de>.
+                - "db check" now sets exit status correctly, for use
+                  in scripts.  Thanks to Derek Scherger
+                  <derek@echologic.com>.
+                - many others...
+        - fantastic emacs integration in contrib/monotone.el.  Thanks
+          to Harley Gorrell <harley@panix.com>.
+        - 45 new integration tests.  total line coverage: ~84%.
+
+                - upgrading from 0.18: database and working copies are
+                  fully compatible.  NOTE that the configuration file
+                  is now ~/.monotone/monotonerc, rather than old
+                  ~/.monotonerc.  Simply create ~/.monotone, and
+                  rename any existing configuration file.
+
+Sun Apr 10 17:49:25 PDT 2005
+
+        0.18 release.  performance improvements, features, and bug fixes.
+	This release is dedicated to Shweta Narayan.
+
+        - most operations sped up by a factor of 2 or better; many sped up
+	  by up several orders of magnitude.
+                - special thanks to Matt Johnston <matt@ucc.asn.au>, Derek
+                  Scherger <derek@echologic.com>, Linus Torvalds
+                  <torvalds@osdl.org>.
+        - new concept: "database vars".  Used in several features below.
+        - new features:
+                - new file "MT/log" can be edited while you work,
+                  sets default changelog.  (no change in behaviour if
+                  you do not edit it.)  Thanks to Jeremy Cowgar
+                  <jeremy@cowgar.com>.
+                - monotone now stores default netsync
+                  server/collection, initialized on first use of
+                  netsync.
+                - you no longer need to manually import server
+                  keys, monotone will fetch the key from the server on
+                  first netsync.
+                - monotone keeps track of keys of servers you have
+                  previously synced with, to prevent man-in-the-middle
+                  attacks.
+                - several powerful new "automate" commands added.
+		- new command 'ls known', lists files that are under version
+		  control.  Thanks to Florian Weimer <fw@deneb.enyo.de>.
+		- preliminary "inodeprints" functionality -- speeds up diff,
+		  status, etc.  No UI or documentation yet -- in a working
+		  copy, 'touch MT/inodeprints' to enable, then commit or
+		  update to populate cache.
+        - UI improvements:
+                - Added short options -r, -b, -k, -m.
+                - default to 'dot' ticker-style when stderr is
+                  not a tty, thanks to Derek Scherger
+                  <derek@echologic.com>.
+                - New "-@/--xargs" option, helpful when using new
+                  automate commands.  Thanks to Richard Levitte
+                  <richard@levitte.org>.
+                - New "--depth" argument to 'log'.  Thanks to Richard
+                  Levitte <richard@levitte.org>.
+                - 'db info' gives statistics on space usage.
+                - new command 'dropkey'.  Thanks to Jeremy Cowgar
+                  <jeremy@cowgar.com>.
+        - robustness improvement: if monotone crashes in a working
+          directory and --dump and --debug were not specified, saves
+          debug dump to "MT/debug" for analysis, instead of
+          discarding.
+        - new contributed scripts: CIA (cia.navi.cx) notification,
+          email notification, Bash completion.
+        - 33 new integration tests.  total line coverage: ~82%.
+        - many bug fixes
+		- Special thanks to Matt Johnston <matt@ucc.asn.au>,
+		  for going above and beyond to track down the last
+		  release blocker.
+
+                - upgrading from 0.17 requires only a 'db migrate'.
+
+Fri Mar 18 15:38:52 PST 2005
+
+        0.17 release. bug fixes and features.
+
+        - many, many robustness improvements
+                - more careful checking everywhere
+                - much more thorough test suite
+                - all revisions subject to careful checks before
+                  entering database
+                        - not yet fully optimized; "pull" may be very
+                          slow and use lots of cpu
+                - support for "epochs", to safely manage future
+                  rebuilds, hash migration, etc.
+                - new "db check" command, thanks to Derek Scherger
+                  <derek@echologic.com>.
+        - now uses sqlite3, thanks to Christof Petig
+          <christof@petig-baender.de>.
+                - removes most former size limitations
+        - "restrictions" support, thanks to Derek Scherger
+          <derek@echologic.com>.
+                - most commands now take a list of files to limit
+                  their actions to
+                - monotone can now be run from anywhere in the working
+                  directory (not just the root)
+                - new command "monotone setup" required to create a
+                  working directory for a new project
+        - important security fix -- don't use shell when calling
+          external merge commands.
+        - format change for "MT/options", ".mt-attrs"; you may have to
+          edit these files
+                - new command "attr" for managing .mt-attrs.
+        - builds merkle tries in-memory -- netsync starts up many
+          times faster
+        - start of new "automate" interface, for shell scripts and
+          others.
+        - new command "cdiff": generates context diffs.
+        - remove most of now-obsolete manifest/file cert support.
+        - 60+ new integration tests.
+        - many portability fixes
+                - in particular, major win32 cleanups, thanks to Jon
+                  Bright <jon@siliconcircus.com>.  win32 is once again
+                  fully and natively supported.
+        - many bug fixes
+
+                - several incompatible changes: see file UPGRADE for
+                  migration information
+
+Thu Dec 30 01:37:54 EST 2004
+
+	0.16 release. bug fixes.
+
+	- 50+ new integration tests
+	- many NetBSD portability fixes
+	- release build on gcc 3.4 / FC3
+	- masses of changeset bugs in 0.15 fixed
+
+		- some bogus changesets were generated
+		  in the 0.16 development cycle. you will
+		  need to rebuild revision graph.
+
+
 Sun Nov  7 14:06:03 EST 2004
 
 	0.15 release. major changes.

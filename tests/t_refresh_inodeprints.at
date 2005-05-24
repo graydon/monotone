@@ -1,0 +1,14 @@
+AT_SETUP([refresh_inodeprints])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+
+AT_CHECK(test -e MT/inodeprints, [1])
+
+AT_CHECK(MONOTONE refresh_inodeprints)
+
+AT_CHECK(test -s MT/inodeprints)
+
+AT_CLEANUP

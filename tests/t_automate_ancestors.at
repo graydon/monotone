@@ -1,0 +1,89 @@
+AT_SETUP([automate ancestors])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE automate ancestors c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+
+#   A
+#  / \
+# B   C
+#     |\
+#     D E
+#     \/
+#      F
+
+ADD_FILE(testfile, [A
+])
+COMMIT(testbranch)
+REV_A=`BASE_REVISION`
+
+SET_FILE(testfile, [B
+])
+COMMIT(testbranch)
+REV_B=`BASE_REVISION`
+
+REVERT_TO($REV_A)
+
+SET_FILE(testfile, [C
+])
+COMMIT(testbranch)
+REV_C=`BASE_REVISION`
+
+SET_FILE(testfile, [D
+])
+COMMIT(testbranch)
+REV_D=`BASE_REVISION`
+
+REVERT_TO($REV_C)
+
+ADD_FILE(otherfile, [E
+])
+COMMIT(testbranch)
+REV_E=`BASE_REVISION`
+
+AT_CHECK(MONOTONE explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REV_F=`BASE_REVISION`
+
+AT_CHECK(test $REV_F != $REV_D)
+AT_CHECK(test $REV_F != $REV_E)
+
+# Now do some checks
+
+AT_CHECK(MONOTONE automate ancestors $REV_A, [], [], [ignore])
+
+AT_CHECK(MONOTONE automate ancestors $REV_B, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(echo $REV_A > tmp)
+AT_CHECK(cmp tmp stdout)
+
+AT_CHECK(MONOTONE automate ancestors $REV_E, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(echo $REV_C > tmp)
+AT_CHECK(echo $REV_A >> tmp)
+AT_CHECK(sort tmp > tmp2)
+AT_CHECK(cmp tmp2 stdout)
+
+AT_CHECK(echo $REV_D > tmp)
+AT_CHECK(echo $REV_A >> tmp)
+AT_CHECK(echo $REV_C >> tmp)
+AT_CHECK(echo $REV_E >> tmp)
+AT_CHECK(sort tmp > tmp2)
+AT_CHECK(MONOTONE automate ancestors $REV_F, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp tmp2 stdout)
+
+AT_CHECK(echo $REV_D > tmp)
+AT_CHECK(echo $REV_A >> tmp)
+AT_CHECK(echo $REV_C >> tmp)
+AT_CHECK(echo $REV_E >> tmp)
+AT_CHECK(sort tmp > tmp2)
+AT_CHECK(MONOTONE automate ancestors $REV_D $REV_F, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp tmp2 stdout)
+
+AT_CHECK(MONOTONE automate ancestors $REV_A $REV_B $REV_C, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(echo $REV_A > tmp)
+AT_CHECK(cmp tmp stdout)
+
+AT_CLEANUP

@@ -1,0 +1,37 @@
+AT_SETUP([merge(<patch a>, <drop a, add a>)])
+
+# In this case, the patch should be completely ignored; we shouldn't
+# even try to do a merge.
+
+MONOTONE_SETUP
+
+AT_DATA(base, [foo blah
+])
+AT_DATA(left, [bar blah
+])
+AT_DATA(new_right, [baz blah
+])
+
+AT_CHECK(cp base testfile)
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+COMMIT(testbranch)
+BASE_R_SHA=`BASE_REVISION`
+
+AT_CHECK(cp left testfile)
+COMMIT(testbranch)
+
+REVERT_TO($BASE_R_SHA)
+
+AT_CHECK(rm -f testfile)
+AT_CHECK(MONOTONE drop testfile, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(cp new_right testfile)
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(cmp testfile new_right, [], [ignore])
+
+AT_CLEANUP

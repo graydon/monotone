@@ -1,0 +1,73 @@
+AT_SETUP([files with non-utf8 data])
+MONOTONE_SETUP
+
+AT_DATA(ru-8859-5.gz.b64, [H4sICA/DbUICA3J1LWFscGhhYmV0Ljg4NTktNQBNzEdKQ1EAQNH5W8XZQJwJ0akjR4JZwTME
+EvhKyP8uyB3Ye++99957wR2oM6f3wG3tTNNK7BCTajm2lbK60FxoyeXz9Q25esVyrMViVqpJ
+/yQU2mOSSErZb0obQ9i2Y9eefQe+HTpy7MSpM+cuXLpy7catO/cePHry7MWrN+8+fPoKoSlW
+K1n8P+3Wo1effgO6DBoybMSoMeMmTJoybcasOfMWLFqybMWqNes2bNoK4QcEmO6X1QAAAA==
+])
+
+AT_DATA(ru-utf8.gz.b64, [H4sICL/EbUICA3V0ZjgAVc05TkJhGEbh/l/F2QB0JGhrRWUiK/glN4Hkagj32osi4ojzPI8I
+CM44u4X325FY2p5TPCMTUVTw4/iwmPejQZx0mexwIp1ODSRS5PK+5HNxUCL6Oy475sOQMIj7
+KRp0TnfoHj2gR/SEnrFV9IJ66BW9oXf0gT7RF/pGP9gkVsamsGmsgs1gVWwWq2Fz2Dy2gC1i
+S9gyVnduyBcLsf+nrqA+s4bW0QbaRGW0hbbRDtpFe2gfHaBDdISO0Qk6RWfoHF2gS3SFrlED
+3aAmaqE2ukUd1HXuF5Oh9TwXAQAA
+])
+
+AT_DATA(jp-euc.gz.b64, [H4sICHpGOzECA2pwLWV1Yy50eHQAATcAyP+ks6TspM9FVUMtSlCkx6Wzobylx6WjpfOlsKS1
+pOykv8b8y9y47KTOpdWloaWkpeukx6S5oaMKf3eNizcAAAA=
+])
+
+AT_DATA(jp-utf8.gz.b64, [H4sICPPPbUICA2pwLXV0ZjgudHh0AHvcOPlxU8/jxvWuoc66XgGPG5c/btr8uHnP4+b2x02L
+Hzdvfty04XHjVLCa+c+mL302Z82LVfMeN6573AwUXPi4acnj5tUgXY0zHzc0cQEAMBwsQE8A
+AAA=
+])
+
+NEED_UNGZB64
+
+UNGZB64(ru-8859-5.gz.b64, ru-8859-5)
+UNGZB64(ru-utf8.gz.b64, ru-utf8)
+UNGZB64(jp-euc.gz.b64, jp-euc)
+UNGZB64(jp-utf8.gz.b64, jp-utf8)
+
+AT_DATA(8859-5.lua, [
+function get_charset_conv(name)
+    return { "UTF-8", "ISO-8859-5" }
+end
+])
+
+AT_DATA(euc.lua, [
+function get_charset_conv(name)
+    return { "UTF-8", "EUC-JP" }
+end
+])
+
+# Create a mock base revision to revert back to
+ADD_FILE(blah, [foo foo
+])
+COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
+
+# Test 8859-5 (Russian) conversions.
+
+AT_CHECK(MONOTONE --rcfile=8859-5.lua add ru-8859-5, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=8859-5.lua commit --message=foo, [], [ignore], [ignore])
+RU_R=`BASE_REVISION`
+AT_CHECK(MONOTONE --rcfile=8859-5.lua checkout --revision=$RU_R co-ru-8859-5, [], [ignore], [ignore])
+AT_CHECK(cmp ru-8859-5 co-ru-8859-5/ru-8859-5)
+AT_CHECK(MONOTONE checkout --revision=$RU_R co-ru-utf8, [], [ignore], [ignore])
+AT_CHECK(cmp ru-utf8 co-ru-utf8/ru-8859-5)
+
+REVERT_TO($BASE_R)
+
+# Test EUC-JP (Japanese) conversions.
+
+AT_CHECK(MONOTONE --rcfile=euc.lua add jp-euc, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=euc.lua commit --message=foo, [], [ignore], [ignore])
+JP_R=`BASE_REVISION`
+AT_CHECK(MONOTONE --rcfile=euc.lua checkout --revision=$JP_R co-jp-euc, [], [ignore], [ignore])
+AT_CHECK(cmp jp-euc co-jp-euc/jp-euc)
+AT_CHECK(MONOTONE checkout --revision=$JP_R co-jp-utf8, [], [ignore], [ignore])
+AT_CHECK(cmp jp-utf8 co-jp-utf8/jp-euc)
+
+AT_CLEANUP

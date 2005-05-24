@@ -1,0 +1,20 @@
+AT_SETUP([database dump/load])
+MONOTONE_SETUP
+
+AT_CHECK((echo foo; echo foo) | MONOTONE genkey foo, [], [ignore], [ignore])
+ADD_FILE(testfile1, [blah balh
+])
+COMMIT(branch1)
+SET_FILE(testfile1, [stuff stuff
+])
+ADD_FILE(testfile2, [foo foo
+])
+COMMIT(branch2)
+
+AT_CHECK(MONOTONE db dump, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(MONOTONE db load <stdout --db=test2.db, [], [ignore], [ignore])
+
+CHECK_SAME_DB_CONTENTS(test.db, test2.db)
+
+AT_CLEANUP

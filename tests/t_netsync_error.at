@@ -1,0 +1,6 @@
+AT_SETUP([netsync badhost gives nice error])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE pull nosuchhost__blahblah__asdvasoih.com some.collection, [1], [ignore], [ignore])
+
+AT_CLEANUP

@@ -1,8 +1,8 @@
 # -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.56)
-AC_INIT(monotone, 0.15, graydon@pobox.com)
+AC_PREREQ(2.58)
+AC_INIT(monotone, 0.19, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -31,14 +31,16 @@ AC_LANG(C++)
 AM_PROG_CC_C_O
 
 # intl / gettext
+# the AM_GNU_GETTEXT macro test won't compile with g++
+AC_LANG_PUSH(C)
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.12.1)
 AM_ICONV
+AC_LANG_POP()
 
 # Checks for idna stuff
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h errno.h)
-AX_CREATE_STDINT_H(idna/idn-int.h)
 AC_CACHE_CHECK([if setlocale() and nl_langinfo() works],
 	ac_cv_locale_works, [
 	AC_TRY_RUN([
@@ -77,23 +79,46 @@ AC_CHECK_FUNC([pthread_mutex_lock], [],
 # without threads on a system that does provide threads; we'll end up
 # compiling monotone with thread support for no reason.
 
+# Boost libraries have a string suffix that identifies the compiler
+# they were built with, among other details.  For example, it can be
+# '-gcc', '-gcc-mt', '-gcc-mt-1_31', and many other combinations
+# depending on the build system.
+# Some systems provide symlinks that hide these suffixes, avoiding
+# this mess.  However, other systems don't; we have to provide a way
+# to let the user manually specify a suffix.  Guessing can be very
+# difficult, given the variety of possibilities.
+AC_ARG_VAR(BOOST_SUFFIX,
+           [String suffix that identifies Boost libraries (empty by default)])
+AC_SUBST(BOOST_SUFFIX)
+
 # Now check for Boost libraries proper.
 
-LIBS="-lboost_unit_test_framework $OLD_LIBS"
-AC_MSG_CHECKING(libboost_unit_test_framework library)
-AC_LINK_IFELSE([AC_LANG_SOURCE([[
+found=no
+suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -sunpro"}
+for BOOST_SUFFIX in ${suffixes}
+do
+    test "x${BOOST_SUFFIX}" = "xnone" && BOOST_SUFFIX=
+    LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $OLD_LIBS"
+    AC_MSG_CHECKING(for the libboost_unit_test_framework${BOOST_SUFFIX} library)
+    AC_LINK_IFELSE([AC_LANG_SOURCE([[
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/test_tools.hpp>
 using boost::unit_test_framework::test_suite;
 test_suite * init_unit_test_suite(int argc, char * argv[]) 
 { return NULL; }
 ]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_unit_test_framework failure])])
-LIBS=$OLD_LIBS
+     [AC_MSG_RESULT([yes])
+      found=yes],
+     [AC_MSG_RESULT([no])])
+    LIBS=$OLD_LIBS
+    test "x${found}" = "xyes" && break
+done
+if test "x${found}" = "xno"; then
+    AC_MSG_FAILURE([libboost_unit_test_framework failure])
+fi
 
-LIBS="-lboost_filesystem $LIBS"
-AC_MSG_CHECKING(libboost_filesystem library)
+LIBS="-lboost_filesystem${BOOST_SUFFIX} $LIBS"
+AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/filesystem/path.hpp>
   #include <boost/filesystem/operations.hpp>
@@ -103,8 +128,8 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_RESULT([yes])],
  [AC_MSG_FAILURE([libboost_filesystem failure])])
 
-LIBS="-lboost_date_time $LIBS"
-AC_MSG_CHECKING(libboost_date_time library)
+LIBS="-lboost_date_time${BOOST_SUFFIX} $LIBS"
+AC_MSG_CHECKING(for the libboost_date_time${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/date_time/posix_time/posix_time.hpp>
   #include <iostream>
@@ -115,8 +140,8 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_FAILURE([libboost_date_time failure])])
 
 
-LIBS="-lboost_regex $LIBS"
-AC_MSG_CHECKING(libboost_regex library)
+LIBS="-lboost_regex${BOOST_SUFFIX} $LIBS"
+AC_MSG_CHECKING(for the libboost_regex${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/regex.hpp>
   using namespace boost; 
@@ -128,16 +153,27 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 
 # check for static boost option
 AC_ARG_ENABLE(static-boost,
-[  --enable-static-boost       use static libs from boost])
+AS_HELP_STRING([--enable-static-boost@<:@=prefix@:>@],
+               [use static libs from boost]))
 AM_CONDITIONAL(STATIC_BOOST, test "x${enable_static_boost}" != x)
 if test "x${enable_static_boost}" != x
 then
+   if echo "${enable_static_boost}" | grep '^/' >/dev/null
+   then
+      static_boost_prefixes="${enable_static_boost}"
+   else
+      static_boost_prefixes="/ /usr /opt /usr/local"
+   fi
    AC_MSG_CHECKING([location of static boost libraries])
-   for i in /lib /usr/lib /opt/lib /usr/local/lib 
+   for i in ${static_boost_prefixes}
    do
-	if test -e $i/libboost_regex.a 
+	if test -e $i/lib64/libboost_regex${BOOST_SUFFIX}.a
 	then
-		BOOST_LIBDIR=$i
+		BOOST_LIBDIR=$i/lib64
+	fi
+	if test -e $i/lib/libboost_regex${BOOST_SUFFIX}.a 
+	then
+		BOOST_LIBDIR=$i/lib
 	fi
    done
    if test "x${BOOST_LIBDIR}" = x
@@ -170,9 +206,19 @@ __wont_compile_
 )])
 
 
+# Check for IPv6.  Let the user enable or disable it manually using a
+# three-state (yes|no|auto) --enable argument.
+AC_ARG_ENABLE(ipv6,
+   AS_HELP_STRING([--enable-ipv6],[enable IPv6 support (default=auto)]), ,
+   enable_ipv6=auto
+)
 AC_CACHE_CHECK([presence of IPv6],
-       ac_inet6, [
-       AC_TRY_RUN([
+   ac_inet6,
+   [
+      ac_inet6=no
+      if test x"${enable_ipv6}" = x"auto" || test x"${enable_ipv6}" = x"yes"
+      then
+         AC_TRY_RUN([
 #if defined(WIN32)
 # include <winsock2.h>
 #else
@@ -186,15 +232,21 @@ int main(void)
   sockaddr_in6 sa_in6;
 }
 ],
-   AM_CONDITIONAL(MISSING_INET6, false),
-   AM_CONDITIONAL(MISSING_INET6, true),
-   AM_CONDITIONAL(MISSING_INET6, true) 
-)])
+            ac_inet6=yes
+         )
+
+         if test x"${enable_ipv6}" = x"yes" && test x"${ac_inet6}" = x"no"
+         then
+            AC_MSG_ERROR([IPv6 explicitly requested but it could not be found])
+         fi
+      fi
+   ]
+)
+AM_CONDITIONAL(MISSING_INET6, test x"${ac_inet6}" = x"no")
 
 # simple library checks 
 AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))
 AH_TEMPLATE([USE_DLOPEN], [For LUA: use dlopen for loadlib])
-AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_FAILURE([popt is required]))
 AC_SEARCH_LIBS([inet_aton], [resolv])
 AC_SEARCH_LIBS([accept], [socket])
 AC_SEARCH_LIBS([inet_ntoa], [nsl])
@@ -204,7 +256,7 @@ AC_SEARCH_LIBS([inet_ntoa], [nsl])
 # Checks for external lua library, revert to bundled version if not found or
 # user gives --with-bundled-lua.
 AC_ARG_WITH([bundled-lua],
-   AC_HELP_STRING(
+   AS_HELP_STRING(
       [--with-bundled-lua],
       [Force use of bundled version of lua (default=yes)]
    ), [bundled_lua="$withval"], [bundled_lua=yes]
@@ -227,7 +279,7 @@ AM_CONDITIONAL(BUNDLED_LUA, test "x$bundled_lua" != "xno")
 # Checks for external sqlite library, revert to bundled version if not found or
 # user gives --with-bundled-sqlite.
 AC_ARG_WITH([bundled-sqlite],
-   AC_HELP_STRING(
+   AS_HELP_STRING(
       [--with-bundled-sqlite],
       [Force use of bundled version of sqlite (default=yes)]
    ), [bundled_sqlite="$withval"], [bundled_sqlite=yes]
@@ -235,14 +287,63 @@ AC_ARG_WITH([bundled-sqlite],
 
 if test "x$bundled_sqlite" = "xno" ; then
    bundled_sqlite=yes
-   AC_CHECK_HEADER([sqlite.h],
-      AC_CHECK_LIB([sqlite], [sqlite_open],
-         [LIBS="$LIBS -lsqlite" ; bundled_sqlite=no]
+   AC_CHECK_HEADER([sqlite3.h],
+      AC_CHECK_LIB([sqlite3], [sqlite3_open],
+         [LIBS="$LIBS -lsqlite3" ; bundled_sqlite=no]
       )
    )
 fi
 
 AM_CONDITIONAL(BUNDLED_SQLITE, test "x$bundled_sqlite" != "xno")
+
+# Now let the user specify whether he wants large file support or not in
+# sqlite.
+AC_ARG_ENABLE([large-file],
+   AS_HELP_STRING(
+      [--disable-large-file],
+      [Disable large file support in builtin sqlite]
+   ), , enable_large_file=yes
+)
+
+if test "x$enable_large_file" = "xno"; then
+   if test "x$bundled_sqlite" = "xno"; then
+      AC_MSG_WARN(--disable-large-file has no effect when using the bundled sqlite)
+   else
+      SQLITE_CPPFLAGS="$SQLITE_CPPFLAGS -DSQLITE_DISABLE_LFS"
+   fi
+fi
+AC_SUBST(SQLITE_CPPFLAGS)
+
+##########
+# Checks for bundled popt.  We use it unconditionally, because the external
+# one has serious bugs that we can't live with.  Maybe some time in the
+# future...
+# The following was simply taken from the configure.in that comes with popt.
+#AC_LANG_PUSH(C)
+AC_CHECK_HEADERS([alloca.h float.h libintl.h mcheck.h])
+AC_MSG_CHECKING(for /usr/ucblib in LIBS)
+if test -d /usr/ucblib ; then
+	if test "$build" = "mips-sni-sysv4" ; then
+		addlib /usr/ccs/lib -lc
+	fi
+
+	addlib /usr/ucblib
+	
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_CHECK_FUNCS(strerror mtrace getuid geteuid)
+AC_CHECK_FUNC(setreuid, [], [
+    AC_CHECK_LIB(ucb, setreuid, [if echo $LIBS | grep -- -lucb >/dev/null ;then :; else LIBS="$LIBS -lc -lucb" USEUCB=y;fi])
+])
+
+POPT_SOURCE_PATH="`pwd`"
+AC_DEFINE_UNQUOTED(POPT_SOURCE_PATH, "$POPT_SOURCE_PATH",
+	[Full path to popt top_sourcedir.])
+AC_SUBST(POPT_SOURCE_PATH)
+#AC_LANG_POP()
+
 
 ##########
 
@@ -250,6 +351,7 @@ AM_CONDITIONAL(BUNDLED_SQLITE, test "x$bundled_sqlite" != "xno")
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h sys/time.h termios.h unistd.h])
+AX_CREATE_STDINT_H(mt-stdint.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
@@ -258,6 +360,43 @@ AC_C_INLINE
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_HAVE_INADDR_NONE
+
+AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec, struct stat.st_mtim.tv_nsec])
+AC_CHECK_MEMBERS([struct stat.st_ctimespec.tv_nsec, struct stat.st_mtimespec.tv_nsec])
+AC_CHECK_MEMBERS([struct stat.st_ctimensec, struct stat.st_mtimensec])
+
+# Check type of socklen_t; int on Cygwin, OS X <= 10.3, Win32.  TYPE_SOCKLEN_T
+# function supplied by <lars@nocrew.org> via http://autoconf-archive.cryp.to/
+AC_DEFUN([TYPE_SOCKLEN_T],
+[AC_CACHE_CHECK([for socklen_t], ac_cv_type_socklen_t,
+[
+  AC_TRY_COMPILE(
+  [#include <sys/types.h>
+   #include <sys/socket.h>],
+  [socklen_t len = 42; return 0;],
+  ac_cv_type_socklen_t=yes,
+  ac_cv_type_socklen_t=no)
+])
+  if test $ac_cv_type_socklen_t = yes; then
+    AC_DEFINE(HAVE_SOCKLEN_T, 1, [Define if platform has socklen_t.])
+  fi
+])
+TYPE_SOCKLEN_T
+
+AC_DEFUN([TYPE_PID_T],
+[AC_CACHE_CHECK([for pid_t], ac_cv_type_pid_t,
+[
+  AC_TRY_COMPILE(
+  [#include <sys/types.h>],
+  [pid_t pid = 42; return 0;],
+  ac_cv_type_pid_t=yes,
+  ac_cv_type_pid_t=no)
+])
+  if test $ac_cv_type_pid_t = no; then
+    AC_DEFINE(pid_t, long, [pid_t substitute.])
+  fi
+])
+TYPE_PID_T
 
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL

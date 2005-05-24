@@ -496,7 +496,15 @@ static const luaL_reg iolib[] = {
   {"close", io_close},
   {"flush", io_flush},
   {"open", io_open},
-  {"popen", io_popen},
+
+  /*
+    monotone specific: we're disabling io_popen here because
+    it calls shell, and is thereby a horrible security hole in 
+    waiting. 
+  */
+
+  /*   {"popen", io_popen}, */
+
   {"read", io_read},
   {"tmpfile", io_tmpfile},
   {"type", io_type},
@@ -721,7 +729,16 @@ static const luaL_reg syslib[] = {
   {"clock",     io_clock},
   {"date",      io_date},
   {"difftime",  io_difftime},
-  {"execute",   io_execute},
+
+  /*
+    monotone specific: we're disabling io_execute here because
+    it calls shell, and is thereby a horrible security hole in 
+    waiting. use the execute() function (which uses posix.execvp)
+    in std_hooks.lua.
+  */
+
+  /*   {"execute",   io_execute}, */
+  
   {"exit",      io_exit},
   {"getenv",    io_getenv},
   {"remove",    io_remove},

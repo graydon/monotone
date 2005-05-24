@@ -1,0 +1,36 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([committing with a non-english message])
+
+MONOTONE_SETUP
+
+EUROPEAN_UTF8=`printf "\xC3\xB6\xC3\xA4\xC3\xBc\xC3\x9F"`
+EUROPEAN_8859_1=`printf "\xF6\xE4\xFC\xDF"`
+JAPANESE_UTF8=`printf "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"`
+JAPANESE_EUC_JP=`printf "\xA4\xC6\xA4\xB9\xA4\xC8"`
+
+export CHARSET=utf-8
+ADD_FILE(a, [hello there
+])
+AT_CHECK(MONOTONE --debug --branch=testbranch commit --message $EUROPEAN_UTF8, [], [ignore], [ignore])
+
+
+export CHARSET=iso-8859-1
+ADD_FILE(b, [hello there
+])
+AT_CHECK(MONOTONE --debug --branch=testbranch commit --message $EUROPEAN_8859_1, [], [ignore], [ignore])
+
+
+export CHARSET=utf-8
+ADD_FILE(c, [hello there
+])
+AT_CHECK(MONOTONE --debug --branch=testbranch commit --message $JAPANESE_UTF8, [], [ignore], [ignore])
+
+
+export CHARSET=euc-jp
+ADD_FILE(d, [hello there
+])
+AT_CHECK(MONOTONE --debug --branch=testbranch commit --message $JAPANESE_EUC_JP, [], [ignore], [ignore])
+
+
+AT_CLEANUP

@@ -11,6 +11,15 @@ function temp_file()
    return mkstemp(string.format("%s/mt.XXXXXX", tdir))
 end
 
+function execute(path, ...)   
+   local pid
+   local ret = -1
+   pid = spawn(path, unpack(arg))
+   if (pid ~= -1) then ret, pid = wait(pid) end
+   return ret
+end
+
+
 
 -- attributes are persistent metadata about files (such as execute
 -- bit, ACLs, various special flags) which we want to have set and
@@ -18,6 +27,19 @@ end
 -- are stored in a file .mt-attrs, in the working copy (and
 -- manifest). each (f,k,v) triple in an atribute file turns into a
 -- call to attr_functions[k](f,v) in lua.
+
+if (attr_init_functions == nil) then
+   attr_init_functions = {}
+end
+
+attr_init_functions["execute"] = 
+   function(filename)
+      if (is_executable(filename)) then 
+        return "true" 
+      else 
+        return nil 
+      end 
+   end
 
 if (attr_functions == nil) then
    attr_functions = {}
@@ -27,34 +49,50 @@ end
 attr_functions["execute"] = 
    function(filename, value) 
       if (value == "true") then
-         os.execute(string.format("chmod +x %s", filename))
+         make_executable(filename)
       end
    end
 
 
 function ignore_file(name)
+   -- c/c++
    if (string.find(name, "%.a$")) then return true end
    if (string.find(name, "%.so$")) then return true end
    if (string.find(name, "%.o$")) then return true end
    if (string.find(name, "%.la$")) then return true end
    if (string.find(name, "%.lo$")) then return true end
+   if (string.find(name, "^core$")) then return true end
+   if (string.find(name, "/core$")) then return true end
+   -- python
+   if (string.find(name, "%.pyc$")) then return true end
+   if (string.find(name, "%.pyo$")) then return true end
+   -- TeX
    if (string.find(name, "%.aux$")) then return true end
+   -- backup files
    if (string.find(name, "%.bak$")) then return true end
    if (string.find(name, "%.orig$")) then return true end
    if (string.find(name, "%.rej$")) then return true end
    if (string.find(name, "%~$")) then return true end
-   if (string.find(name, "/core$")) then return true end
+   -- autotools detritus:
+   if (string.find(name, "^autom4te.cache/")) then return true end
+   if (string.find(name, "/autom4te.cache/")) then return true end
+   if (string.find(name, "^.deps/")) then return true end
+   if (string.find(name, "/.deps/")) then return true end
+   -- other VCSes:
    if (string.find(name, "^CVS/")) then return true end
    if (string.find(name, "/CVS/")) then return true end
    if (string.find(name, "^%.svn/")) then return true end
    if (string.find(name, "/%.svn/")) then return true end
    if (string.find(name, "^SCCS/")) then return true end
    if (string.find(name, "/SCCS/")) then return true end
+   if (string.find(name, "^_darcs/")) then return true end
+   if (string.find(name, "^.cdv/")) then return true end
+   if (string.find(name, "^.git/")) then return true end
    return false;
 end
 
 
-function edit_comment(basetext)
+function edit_comment(basetext, user_log_message)
    local exe = "vi"
    local visual = os.getenv("VISUAL")
    if (visual ~= nil) then exe = visual end
@@ -64,10 +102,11 @@ function edit_comment(basetext)
    local tmp, tname = temp_file()
    if (tmp == nil) then return nil end
    basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ") .. "\n"
+   tmp:write(user_log_message)
    tmp:write(basetext)
    io.close(tmp)
 
-   if (os.execute(string.format("%s %s", exe, tname)) ~= 0) then
+   if (execute(exe, tname) ~= 0) then
       os.remove(tname)
       return nil
    end
@@ -132,38 +171,106 @@ end
 
 -- merger support
 
+function merge2_meld_cmd(lfile, rfile)
+   return 
+   function()
+      return execute("meld", lfile, rfile)
+   end
+end
+
+function merge3_meld_cmd(lfile, afile, rfile)
+   return 
+   function()
+      return execute("meld", lfile, afile, rfile)
+   end
+end
+
+
+function merge2_vim_cmd(vim, lfile, rfile, outfile)
+   return
+   function()
+      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
+                     lfile, rfile)
+   end
+end
+
+function merge3_vim_cmd(vim, lfile, afile, rfile, outfile)
+   return
+   function()
+      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
+                     lfile, afile, rfile)
+   end
+end
+
 function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
-   local elisp = "'(ediff-merge-files \"%s\" \"%s\" nil \"%s\")'"
-   local cmd_fmt = "%s -no-init-file -eval " .. elisp
-   return string.format(cmd_fmt, emacs, lfile, rfile, outfile)
+   local elisp = "(ediff-merge-files \"%s\" \"%s\" nil \"%s\")"
+   return 
+   function()
+      return execute(emacs, "-no-init-file", "-eval", 
+                     string.format(elisp, lfile, rfile, outfile))
+   end
 end
 
 function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
-   local elisp = "'(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")'"
+   local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
    local cmd_fmt = "%s -no-init-file -eval " .. elisp
-   return string.format(cmd_fmt, emacs, lfile, rfile, afile, outfile)
+   return 
+   function()
+      execute(emacs, "-no-init-file", "-eval", 
+              string.format(elisp, lfile, rfile, afile, outfile))
+   end
 end
 
-function merge2_xxdiff_cmd(lfile, rfile, outfile)
-   local cmd_fmt = "xxdiff %s %s --merged-filename %s "
-   local cmd_opts = " --title1 left --title2 right" 
-   return string.format(cmd_fmt .. cmd_opts, lfile, rfile, outfile)
+function merge2_xxdiff_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
+   return 
+   function()
+      return execute("xxdiff", 
+                     "--title1", left_path,
+                     "--title2", right_path,
+                     lfile, rfile, 
+                     "--merged-filename", outfile)
+   end
 end
 
-function merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
-   local cmd_fmt = "xxdiff %s %s %s --merge --merged-filename %s " 
-   local cmd_opts = " --title1 left --title2 ancestor --title3 right" 
-   return string.format(cmd_fmt .. cmd_opts, lfile, afile, rfile, outfile)
-end
-
--- For CVS-style merging.  Disabled by default.  You almost certainly
--- don't want to use this!  But it is here as documentation, because
--- it may become useful in the future.
-function merge3_merge_cmd(lfile, afile, rfile, outfile)
-   local cmd_fmt = "merge -p -L left -L ancestor -L right %s %s %s > %s"
-   return string.format(cmd_fmt, lfile, afile, rfile, outfile)
+function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path, 
+                           lfile, afile, rfile, outfile)
+   return 
+   function()
+      return execute("xxdiff", 
+                     "--title1", left_path,
+                     "--title2", right_path,
+                     "--title3", merged_path,
+                     lfile, afile, rfile, 
+                     "--merge", 
+                     "--merged-filename", outfile)
+   end
 end
    
+function merge2_kdiff3_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
+   return 
+   function()
+      return execute("kdiff3", 
+                     "--L1", left_path,
+                     "--L2", right_path,
+                     lfile, rfile, 
+                     "-o", outfile)
+   end
+end
+
+function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path, 
+                           lfile, afile, rfile, outfile)
+   return 
+   function()
+      return execute("kdiff3", 
+                     "--L1", anc_path,
+                     "--L2", left_path,
+                     "--L3", right_path,
+                     afile, lfile, rfile, 
+                     "--merge", 
+                     "--o", outfile)
+   end
+end
+
 function write_to_temporary_file(data)
    tmp, filename = temp_file()
    if (tmp == nil) then 
@@ -185,14 +292,15 @@ function read_contents_of_file(filename)
 end
 
 function program_exists_in_path(program)
-   return os.execute(string.format("which %s", program)) == 0
+   return existsonpath(program) == 0
 end
 
-function merge2(left, right)
+function merge2(left_path, right_path, merged_path, left, right)
    local lfile = nil
    local rfile = nil
    local outfile = nil
    local data = nil
+   local meld_exists = false
 
    lfile = write_to_temporary_file(left)
    rfile = write_to_temporary_file(right)
@@ -203,37 +311,60 @@ function merge2(left, right)
       outfile ~= nil 
    then 
       local cmd = nil
-      if program_exists_in_path("xxdiff") then
-         cmd = merge2_xxdiff_cmd(lfile, rfile, outfile)
+      if program_exists_in_path("kdiff3") then
+         cmd = merge2_kdiff3_cmd(left_path, right_path, merged_path, 
+                                 lfile, rfile, outfile)
+      elseif program_exists_in_path("meld") then
+         meld_exists = true
+         io.write(string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n" .. 
+                                "You should merge all changes to *LEFT* file due to limitation of program\n" ..
+                                   "arguments.\n\n"))
+         cmd = merge2_meld_cmd(lfile, rfile) 
+      elseif program_exists_in_path("xxdiff") then
+         cmd = merge2_xxdiff_cmd(left_path, right_path, merged_path, 
+                                 lfile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
          cmd = merge2_emacs_cmd("emacs", lfile, rfile, outfile)
       elseif program_exists_in_path("xemacs") then
          cmd = merge2_emacs_cmd("xemacs", lfile, rfile, outfile)
+      elseif os.getenv("DISPLAY") ~=nil and program_exists_in_path("gvim") then
+         cmd = merge2_vim_cmd("gvim", lfile, rfile, outfile)
+      elseif program_exists_in_path("vim") then
+         cmd = merge2_vim_cmd("vim", lfile, rfile, outfile)
       end
 
       if cmd ~= nil
       then
-         io.write(string.format("executing external 2-way merge command: %s\n", cmd))
-         os.execute(cmd)
-         data = read_contents_of_file(outfile)
+         io.write(string.format("executing external 2-way merge command\n"))
+         cmd()
+         if meld_exists then
+            data = read_contents_of_file(lfile)
+         else
+            data = read_contents_of_file(outfile)
+         end
+         if string.len(data) == 0 
+         then 
+            data = nil
+         end
       else
-         io.write("no external 2-way merge command found")
+         io.write("no external 2-way merge command found\n")
       end
    end
    
    os.remove(lfile)
    os.remove(rfile)
    os.remove(outfile)
-   
+
    return data
 end
 
-function merge3(ancestor, left, right)
+function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, right)
    local afile = nil
    local lfile = nil
    local rfile = nil
    local outfile = nil
    local data = nil
+   local meld_exists = false
 
    lfile = write_to_temporary_file(left)
    afile = write_to_temporary_file(ancestor)
@@ -246,21 +377,43 @@ function merge3(ancestor, left, right)
       outfile ~= nil 
    then 
       local cmd = nil
-      if program_exists_in_path("xxdiff") then
-         cmd = merge3_xxdiff_cmd(lfile, afile, rfile, outfile)
+      if program_exists_in_path("kdiff3") then
+         cmd = merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path, 
+                                 lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("meld") then
+         meld_exists = true
+         io.write(string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n" .. 
+                                "You should merge all changes to *CENTER* file due to limitation of program\n" ..
+                                   "arguments.\n\n"))
+         cmd = merge3_meld_cmd(lfile, afile, rfile)
+      elseif program_exists_in_path("xxdiff") then
+         cmd = merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path, 
+                                 lfile, afile, rfile, outfile)
       elseif program_exists_in_path("emacs") then
          cmd = merge3_emacs_cmd("emacs", lfile, afile, rfile, outfile)
       elseif program_exists_in_path("xemacs") then
          cmd = merge3_emacs_cmd("xemacs", lfile, afile, rfile, outfile)
+      elseif os.getenv("DISPLAY") ~=nil and program_exists_in_path("gvim") then
+         cmd = merge3_vim_cmd("gvim", lfile, afile, rfile, outfile)
+      elseif program_exists_in_path("vim") then
+         cmd = merge3_vim_cmd("vim", lfile, afile, rfile, outfile)
       end
-
+      
       if cmd ~= nil
       then
-         io.write(string.format("executing external 3-way merge command: %s\n", cmd))
-         os.execute(cmd)
-         data = read_contents_of_file(outfile)
+         io.write(string.format("executing external 3-way merge command\n"))
+         cmd()
+         if meld_exists then
+            data = read_contents_of_file(afile)
+         else
+            data = read_contents_of_file(outfile)
+         end
+         if string.len(data) == 0 
+         then 
+            data = nil
+         end
       else
-         io.write("no external 3-way merge command found")
+         io.write("no external 3-way merge command found\n")
       end
    end
    
@@ -277,11 +430,10 @@ end
 
 function expand_selector(str)
 
-   -- simple date patterns
-   if string.find(str, "^19%d%d%-%d%d")
-      or string.find(str, "^20%d%d%-%d%d")
+   -- something which looks like a generic cert pattern
+   if string.find(str, "^[^=]*=.*$")
    then
-      return ("d:" .. str)
+      return ("c:" .. str)
    end
 
    -- something which looks like an email address
@@ -302,11 +454,44 @@ function expand_selector(str)
       return ("i:" .. str)
    end
 
+   -- tries to expand as a date
+   local dtstr = expand_date(str)
+   if  dtstr ~= nil
+   then
+      return ("d:" .. dtstr)
+   end
+   
+   return nil
+end
+
+-- expansion of a date expression
+function expand_date(str)
+   -- simple date patterns
+   if string.find(str, "^19%d%d%-%d%d")
+      or string.find(str, "^20%d%d%-%d%d")
+   then
+      return (str)
+   end
+
+   -- "now" 
+   if str == "now"
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("%FT%T", t)
+   end
+   
+	 -- today don't uses the time
+   if str == "today"
+   then
+      local t = os.time(os.date('!*t'))
+      return os.date("%F", t)
+   end
+   
    -- "yesterday", the source of all hangovers
    if str == "yesterday"
    then
       local t = os.time(os.date('!*t'))
-      return os.date("d:%F", t - 86400)
+      return os.date("%F", t - 86400)
    end
    
    -- "CVS style" relative dates such as "3 weeks ago"
@@ -322,32 +507,17 @@ function expand_selector(str)
    if trans[type] ~= nil
    then
       local t = os.time(os.date('!*t'))
-      return os.date("d:%F", t - (n * trans[type]))
+      if trans[type] <= 3600
+      then
+        return os.date("%FT%T", t - (n * trans[type]))
+      else	
+        return os.date("%F", t - (n * trans[type]))
+      end
    end
-
+   
    return nil
 end
 
--- prompt the user for some guidance on how to solve a given
--- problem within a given predicament
-
-function get_problem_solution(problem, solutions)
-   while true
-   do
-      io.write(string.format("Problem: %s\n", problem))
-      io.write(string.format("Solution options:\n"))
-      
-      for k,v in pairs(solutions)
-      do
-	 io.write(string.format("  [%s]: %s\n", k, v))
-      end
-      io.write("select: ")
-      choice = io.read()
-      if (solutions[choice] ~= nil) then
-	 io.write(string.format("selected '%s' as solution to '%s'\n", solutions[choice], problem))
-	 return choice;
-      else
-	 io.write(string.format("selected choice '%s' is not an option\n", choice))
-      end
-   end
+function use_inodeprints()
+   return false
 end

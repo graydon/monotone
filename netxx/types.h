@@ -56,6 +56,18 @@ namespace Netxx {
     typedef signed int socket_type;
 
     /**
+     * The Netxx::NetworkException class is used by the Netxx library to signal
+     * an error condition associated with a network issue that would not result 
+     * from a bug in the calling program. It is derived from std::runtime_error 
+     * which is derived from std::exception. This makes it suitable to only catch 
+     * std::exception objects if you wish.
+    **/
+    struct NetworkException : public std::runtime_error {
+	NetworkException (const std::string &what_arg) :
+	    std::runtime_error(what_arg) { }
+    }; // end Netxx::NetworkException
+
+    /**
      * The Netxx::Exception class is used by the Netxx library to signal
      * some error condition. It is derived from std::runtime_error which is
      * dervied from std::exception. This makes it suitable to only catch

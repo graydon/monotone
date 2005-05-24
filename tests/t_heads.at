@@ -1,0 +1,115 @@
+#  -*- Autoconf -*-
+
+AT_SETUP(['heads'])
+MONOTONE_SETUP
+
+# Create a single revision in branch1
+# 
+#          root (branch1)
+#          
+# branch1 heads: root
+
+AT_DATA(f, [base data
+])
+
+AT_CHECK(MONOTONE add f, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
+ROOT_R_SHA=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(grep -q $ROOT_R_SHA stdout)
+
+# Create a child
+# 
+#          root (branch1)
+#          /
+#    child1 (branch1)
+#
+# branch1 heads: child1
+
+AT_DATA(f, [child1 data
+])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
+CHILD1_R_SHA=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD1_R_SHA stdout)
+
+# Create another child
+# 
+#          root (branch1)
+#          /           \
+#    child1 (branch1)   child2 (branch1)
+#
+# branch1 heads: child1, child2
+
+REVERT_TO($ROOT_R_SHA)
+AT_DATA(f, [child2 data
+])
+AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
+CHILD2_R_SHA=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD1_R_SHA stdout)
+AT_CHECK(grep -q $CHILD2_R_SHA stdout)
+
+# Branch from the second child into branch2
+# 
+#          root (branch1)
+#          /           \
+#    child1 (branch1)   child2 (branch1)
+#                         \
+#                          child3 (branch2)
+#
+# branch1 heads: child1, child2
+# branch2 heads: child3
+
+AT_DATA(f, [child3 data
+])
+AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [ignore])
+CHILD3_R_SHA=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD1_R_SHA stdout)
+AT_CHECK(grep -q $CHILD2_R_SHA stdout)
+AT_CHECK(grep -q $CHILD3_R_SHA stdout, [1])
+AT_CHECK(MONOTONE --branch=branch2 heads, [], [stdout], [ignore])
+AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD1_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD2_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD3_R_SHA stdout)
+
+# Branch from the first child into branch2
+# 
+#          root (branch1)
+#          /           \
+#    child1 (branch1)   child2 (branch1)
+#       /                 \
+#   child4 (branch2)       child3 (branch2)
+#
+# branch1 heads: child1, child2
+# branch2 heads: child3, child4
+
+REVERT_TO($CHILD1_R_SHA)
+AT_DATA(f, [child4 data
+])
+AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [ignore])
+CHILD4_R_SHA=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD1_R_SHA stdout)
+AT_CHECK(grep -q $CHILD2_R_SHA stdout)
+AT_CHECK(grep -q $CHILD3_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD4_R_SHA stdout, [1])
+AT_CHECK(MONOTONE --branch=branch2 heads, [], [stdout], [ignore])
+AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD1_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD2_R_SHA stdout, [1])
+AT_CHECK(grep -q $CHILD3_R_SHA stdout)
+AT_CHECK(grep -q $CHILD4_R_SHA stdout)
+
+AT_CLEANUP

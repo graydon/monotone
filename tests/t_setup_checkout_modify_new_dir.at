@@ -1,0 +1,36 @@
+AT_SETUP([setup/checkout touch new MT/options only])
+MONOTONE_SETUP
+
+ADD_FILE(foo, [blah blah
+])
+COMMIT(testbranch)
+
+# okay, now wd is on testbranch
+
+# setup a dir on otherbranch and make sure we stay on testbranch
+AT_CHECK(MONOTONE setup setupdir --branch=otherbranch, [], [ignore], [ignore])
+SET_FILE(foo, [stuff stuff
+])
+AT_CHECK(MONOTONE commit --message=foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate heads testbranch, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(mv stdout headsout)
+CHECK_SAME_STDOUT(BASE_REVISION, cat headsout)
+
+# now create a revision in otherbranch...
+AT_DATA(setupdir/blah, [yum yum
+])
+AT_CHECK(cd setupdir && MONOTONE add blah, [], [ignore], [ignore])
+AT_CHECK(cd setupdir && MONOTONE commit --message=foo, [], [ignore], [ignore])
+# and check it out
+AT_CHECK(MONOTONE checkout codir --branch=otherbranch, [], [ignore], [ignore])
+# and make sure we still stayed on testbranch
+SET_FILE(foo, [more more
+])
+AT_CHECK(MONOTONE commit --message=foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate heads testbranch, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(mv stdout headsout)
+CHECK_SAME_STDOUT(BASE_REVISION, cat headsout)
+
+AT_CLEANUP

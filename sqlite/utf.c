@@ -12,7 +12,7 @@
 ** This file contains routines used to translate between UTF-8, 
 ** UTF-16, UTF-16BE, and UTF-16LE.
 **
-** $Id: utf.c,v 1.30 2004/11/14 21:56:30 drh Exp $
+** $Id: utf.c,v 1.32 2005/01/28 01:29:08 drh Exp $
 **
 ** Notes on UTF-8:
 **
@@ -58,8 +58,8 @@
 ** sqlite3utf8LikeCompare()  - Do a LIKE match given two UTF8 char* strings.
 **
 */
-#include <assert.h>
 #include "sqliteInt.h"
+#include <assert.h>
 #include "vdbeInt.h"
 
 /*
@@ -252,7 +252,7 @@ int sqlite3VdbeMemTranslate(Mem *pMem, u8 desiredEnc){
   assert( pMem->enc!=0 );
   assert( pMem->n>=0 );
 
-#ifdef TRANSLATE_TRACE
+#if defined(TRANSLATE_TRACE) && defined(SQLITE_DEBUG)
   {
     char zBuf[100];
     sqlite3VdbeMemPrettyPrint(pMem, zBuf, 100);
@@ -368,7 +368,7 @@ int sqlite3VdbeMemTranslate(Mem *pMem, u8 desiredEnc){
   pMem->z = zOut;
 
 translate_out:
-#ifdef TRANSLATE_TRACE
+#if defined(TRANSLATE_TRACE) && defined(SQLITE_DEBUG)
   {
     char zBuf[100];
     sqlite3VdbeMemPrettyPrint(pMem, zBuf, 100);

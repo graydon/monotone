@@ -1,0 +1,16 @@
+AT_SETUP([replace dir with file])
+MONOTONE_SETUP
+
+AT_CHECK(mkdir dir)
+ADD_FILE(dir/file, [file
+])
+COMMIT(testbranch)
+
+AT_CHECK(rm -rf dir)
+AT_DATA(dir, [this isn't a directory
+])
+
+AT_CHECK(MONOTONE status, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE diff, [1], [ignore], [ignore])
+
+AT_CLEANUP

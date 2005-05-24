@@ -1,0 +1,34 @@
+AT_SETUP([monotone add .])
+MONOTONE_SETUP
+
+AT_CHECK(mkdir subdir)
+
+AT_DATA(subdir/testfile1, [foo
+])
+AT_DATA(subdir/testfile2, [bar
+])
+AT_CHECK(mkdir subdir/testdir1)
+AT_DATA(subdir/testdir1/subfile1, [baz
+])
+AT_DATA(subdir/testdir1/subfile2, [quux
+])
+
+AT_CHECK(MONOTONE setup subdir, [], [ignore], [ignore])
+
+# Make sure that "add ." works, even at the root of the tree
+AT_CHECK(cd subdir && MONOTONE add ., [], [ignore], [ignore])
+
+# Make sure that it took
+AT_CHECK(cd subdir && MONOTONE commit --message="foo" --branch=testbranch, [], [ignore], [ignore])
+
+AT_CHECK(rm subdir/testfile1)
+AT_CHECK(rm subdir/testfile2)
+AT_CHECK(rm -r subdir/testdir1)
+AT_CHECK(cd subdir && MONOTONE revert, [], [ignore], [ignore])
+
+AT_CHECK(test -f subdir/testfile1)
+AT_CHECK(test -f subdir/testfile2)
+AT_CHECK(test -f subdir/testdir1/subfile1)
+AT_CHECK(test -f subdir/testdir1/subfile2)
+
+AT_CLEANUP

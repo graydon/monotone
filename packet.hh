@@ -9,6 +9,8 @@
 #include <iosfwd>
 #include <memory>
 
+#include <boost/function.hpp>
+
 #include "app_state.hh"
 #include "ui.hh"
 #include "vocab.hh"
@@ -34,38 +36,42 @@
 
 struct packet_consumer
 {
+protected:
+  boost::function0<void> on_revision_written;
+public:
+  
+  virtual void set_on_revision_written(boost::function0<void> const & x);
+  
   virtual ~packet_consumer() {}
   virtual void consume_file_data(file_id const & ident, 
-				 file_data const & dat) = 0;
+                                 file_data const & dat) = 0;
   virtual void consume_file_delta(file_id const & id_old, 
-				  file_id const & id_new,
-				  file_delta const & del) = 0;
+                                  file_id const & id_new,
+                                  file_delta const & del) = 0;
   virtual void consume_file_reverse_delta(file_id const & id_new,
-					  file_id const & id_old, 					  
-					  file_delta const & del) = 0;
-  virtual void consume_file_cert(file<cert> const & t) = 0;
+                                          file_id const & id_old,                                         
+                                          file_delta const & del) = 0;
   
 
   virtual void consume_manifest_data(manifest_id const & ident, 
-				     manifest_data const & dat) = 0;
+                                     manifest_data const & dat) = 0;
   virtual void consume_manifest_delta(manifest_id const & id_old, 
-				      manifest_id const & id_new,
-				      manifest_delta const & del) = 0;
+                                      manifest_id const & id_new,
+                                      manifest_delta const & del) = 0;
   virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
-					      manifest_id const & id_old, 					      
-					      manifest_delta const & del) = 0;
-  virtual void consume_manifest_cert(manifest<cert> const & t) = 0;  
+                                              manifest_id const & id_old,                                             
+                                              manifest_delta const & del) = 0;
 
 
   virtual void consume_revision_data(revision_id const & ident, 
-				     revision_data const & dat) = 0;
+                                     revision_data const & dat) = 0;
   virtual void consume_revision_cert(revision<cert> const & t) = 0;  
 
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
-				  base64< rsa_pub_key > const & k) = 0;  
+                                  base64< rsa_pub_key > const & k) = 0;  
   virtual void consume_private_key(rsa_keypair_id const & ident,
-				   base64< arc4<rsa_priv_key> > const & k) = 0;  
+                                   base64< arc4<rsa_priv_key> > const & k) = 0;  
 };
 
 // this writer writes packets into a stream
@@ -76,81 +82,115 @@ struct packet_writer : public packet_consumer
   explicit packet_writer(std::ostream & o);
   virtual ~packet_writer() {}
   virtual void consume_file_data(file_id const & ident, 
-				 file_data const & dat);
+                                 file_data const & dat);
   virtual void consume_file_delta(file_id const & id_old, 
-				  file_id const & id_new,
-				  file_delta const & del);
+                                  file_id const & id_new,
+                                  file_delta const & del);
   virtual void consume_file_reverse_delta(file_id const & id_new,
-					  file_id const & id_old, 					  
-					  file_delta const & del);
-  virtual void consume_file_cert(file<cert> const & t);
+                                          file_id const & id_old,                                         
+                                          file_delta const & del);
   
   virtual void consume_manifest_data(manifest_id const & ident, 
-				     manifest_data const & dat);
+                                     manifest_data const & dat);
   virtual void consume_manifest_delta(manifest_id const & id_old, 
-				      manifest_id const & id_new,
-				      manifest_delta const & del);
+                                      manifest_id const & id_new,
+                                      manifest_delta const & del);
   virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
-					      manifest_id const & id_old, 					      
-					      manifest_delta const & del);
-  virtual void consume_manifest_cert(manifest<cert> const & t);
+                                              manifest_id const & id_old,                                             
+                                              manifest_delta const & del);
 
   virtual void consume_revision_data(revision_id const & ident, 
-				     revision_data const & dat);
+                                     revision_data const & dat);
   virtual void consume_revision_cert(revision<cert> const & t);
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
-				  base64< rsa_pub_key > const & k);
+                                  base64< rsa_pub_key > const & k);
   virtual void consume_private_key(rsa_keypair_id const & ident,
-				   base64< arc4<rsa_priv_key> > const & k);
+                                   base64< arc4<rsa_priv_key> > const & k);
 };
 
 // this writer injects packets it receives to the database.
 
-struct manifest_edge_analyzer
-{
-  virtual void analyze_manifest_edge(manifest_map const & mm_old, 
-				     manifest_map const & mm_new)
-  {
-  }
-};
-
 struct packet_db_writer : public packet_consumer
 {
+private:
   struct impl;
   std::auto_ptr<impl> pimpl;
 
+public:
   packet_db_writer(app_state & app, 
-		   bool take_keys = false);
+                   bool take_keys = false);
   virtual ~packet_db_writer();
   virtual void consume_file_data(file_id const & ident, 
-				 file_data const & dat);
+                                 file_data const & dat);
   virtual void consume_file_delta(file_id const & id_old, 
-				  file_id const & id_new,
-				  file_delta const & del);
+                                  file_id const & id_new,
+                                  file_delta const & del);
   virtual void consume_file_reverse_delta(file_id const & id_new,
-					  file_id const & id_old, 					  
-					  file_delta const & del);
-  virtual void consume_file_cert(file<cert> const & t);
+                                          file_id const & id_old,
+                                          file_delta const & del);
   
   virtual void consume_manifest_data(manifest_id const & ident, 
-				     manifest_data const & dat);
+                                     manifest_data const & dat);
   virtual void consume_manifest_delta(manifest_id const & id_old, 
-				      manifest_id const & id_new,
-				      manifest_delta const & del);
+                                      manifest_id const & id_new,
+                                      manifest_delta const & del);
   virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
-					      manifest_id const & id_old, 					      
-					      manifest_delta const & del);
-  virtual void consume_manifest_cert(manifest<cert> const & t);  
+                                              manifest_id const & id_old,
+                                              manifest_delta const & del);
 
   virtual void consume_revision_data(revision_id const & ident, 
-				     revision_data const & dat);
+                                     revision_data const & dat);
   virtual void consume_revision_cert(revision<cert> const & t);
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
-				  base64< rsa_pub_key > const & k);
+                                  base64< rsa_pub_key > const & k);
   virtual void consume_private_key(rsa_keypair_id const & ident,
-				   base64< arc4<rsa_priv_key> > const & k);
+                                   base64< arc4<rsa_priv_key> > const & k);
+};
+
+// this writer is just like packet_db_writer, except that none of your calls
+// have any effect until after calling open_valve; at that point, all previous
+// consume_* calls will suddenly take effect.
+
+struct packet_db_valve : public packet_consumer
+{
+private:
+  struct impl;
+  std::auto_ptr<impl> pimpl;
+public:  
+  packet_db_valve(app_state & app,
+                  bool take_keys = false);
+  virtual ~packet_db_valve();
+  virtual void set_on_revision_written(boost::function0<void> const & x);
+  virtual void consume_file_data(file_id const & ident, 
+                                 file_data const & dat);
+  virtual void consume_file_delta(file_id const & id_old, 
+                                  file_id const & id_new,
+                                  file_delta const & del);
+  virtual void consume_file_reverse_delta(file_id const & id_new,
+                                          file_id const & id_old,
+                                          file_delta const & del);
+  
+  virtual void consume_manifest_data(manifest_id const & ident, 
+                                     manifest_data const & dat);
+  virtual void consume_manifest_delta(manifest_id const & id_old, 
+                                      manifest_id const & id_new,
+                                      manifest_delta const & del);
+  virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
+                                              manifest_id const & id_old,
+                                              manifest_delta const & del);
+
+  virtual void consume_revision_data(revision_id const & ident, 
+                                     revision_data const & dat);
+  virtual void consume_revision_cert(revision<cert> const & t);
+
+  virtual void consume_public_key(rsa_keypair_id const & ident,
+                                  base64< rsa_pub_key > const & k);
+  virtual void consume_private_key(rsa_keypair_id const & ident,
+                                   base64< arc4<rsa_priv_key> > const & k);
+
+  virtual void open_valve();
 };
 
 size_t read_packets(std::istream & in, packet_consumer & cons);

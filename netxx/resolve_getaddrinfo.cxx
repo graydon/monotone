@@ -83,7 +83,7 @@ void Netxx::resolve_hostname (const char *hostname, port_type port, bool use_ipv
 
     if (getaddrinfo(hostname, 0, &flags, &info) != 0) {
 	std::string error("name resolution failure for "); error += hostname;
-	throw Exception(error);
+	throw NetworkException(error);
     }
 
     // auto clean up
@@ -128,7 +128,7 @@ Netxx::port_type Netxx::resolve_service (const char *service)
 
     if (getaddrinfo(0, service, &flags, &info) != 0) {
 	std::string error("service name resolution failed for: "); error += service;
-	throw Exception(error);
+	throw NetworkException(error);
     }
 
     auto_addrinfo ai(info);

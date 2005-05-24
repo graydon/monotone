@@ -1,0 +1,135 @@
+Contributing to monotone
+========================
+
+Coding standards
+----------------
+
+Code is largely formatted according to the GNU coding standards, but there
+are minor deviations.  Where the coding style differs from the standard
+please follow the coding style of the particular file you're making changes
+to so that formatting consistency is retained within that file.
+
+All source indentation should be done using spaces, with two space
+characters per indentation level.
+
+The appropriate Emacs modeline to use for editing source is:
+
+-*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+
+And something close (but not perfect) for VIM:
+
+vim: et:sw=2:sts=2:ts=2:cino={.5s,\:.5s,+.5s,t0,g0,^-2,e-2,n-2,p2s,(0,=.5s:
+
+monotone's source includes a number of third party libraries.  These have
+been imported from upstream, and should retain the original coding style of
+the particular library in all cases.  This makes life easier when a
+developer needs to send our fixes upstream or wants to import new upstream
+versions into monotone.
+
+
+Test suites, and writing test cases
+----------------------------------
+
+monotone includes a number of unit and integration tests.  These can be run
+easily by initiating a 'make check'.  The test suite (or, at least, any
+tests potentially affected by your change) should be run before you
+distribute your changes.
+
+Automated build bots run the complete test suite on a regularly basis, so
+any problems will be noticed quickly, but it is still faster to find and fix
+any problems locally rather than waiting for the build bots to alert the
+development team of a problem.
+
+All changes to monotone that alter monotone's behaviour should include a new
+test.  This includes most changes, but use your judgment about adding tests
+for very small changes..  The tests are located in the source tree in the
+tests/ directory, documentation on writing tests is available in
+tests/README.
+
+When fixing a bug, check for an existing test case for that bug and
+carefully observe the test case's behaviour before and after your fix. If no
+test case exists, it is strongly recommended to write a test case before
+attempting to fix the bug.
+
+
+Reporting errors to the user
+----------------------------
+
+monotone has a number of assertion macros available for different
+situations.  These assertion macros are divided into three categories:
+invariants, user naughtiness, and general errors.
+
+Invariants assert that monotone's internal state is in the expected state.
+An invariant failure indicates that there is a bug in monotone.  e.g.
+
+    I(r_working.edges.size() == 1);
+
+User naughtiness handles error conditions where the user has asked monotone
+to do something it is unable to.  e.g.
+
+    N(completions.size() != 0,
+        F("no match for selection '%s'") % str);
+
+Error conditions handle most other error cases, where monotone is unable to
+complete an operation due to an error, but that error is not caused by a bug
+in monotone or explicit user error.  e.g.
+
+    E(converted != NULL,
+        F("failed to convert string from %s to %s: '%s'")
+            % src_charset % dst_charset % src);
+
+Each of these assertion macros are fatal and will cause an exception to be
+thrown that will ultimately cause the monotone process to exit.  Exceptions
+are used (rather than C-style abort() based assertions) so that the stack
+will unwind and cause the destructors for objects allocated on the stack to
+run.  This allows monotone to leave the user's database and working copy in
+as logical a state as possible.  Any in-flight uncommitted database
+transactions will be aborted.  Operations occurring on a working copy may
+leave the working copy in an inconsistent state, as we do not have a way to
+atomically update the working copy.
+
+
+Patch submission guidelines
+---------------------------
+
+Mail patches to 'monotone-devel@nongnu.org' with a subject beginning with
+'[PATCH]' and followed by a brief description of the patch.  The body of the
+message should contain a description of the patch with reasoning for why the
+changes are required, followed by a prepared ChangeLog entry.  Patches may
+be included inline in a message, or attached as a text/plain, text/x-diff,
+or text/x-patch attachment.  Make sure your mailer does not mangle the
+patch (e.g. by wrapping lines in the patch) before sending your patch to the
+list.
+
+All changes to the monotone source require an accompanying ChangeLog entry.
+Any changes that affect the user interface (e.g. adding command-line
+options, changing the output format) or affect the documented behaviour of
+monotone must include appropriate appropriate changes to the documentation.
+
+The monotone development team review and comment on all patches on a
+best-efforts basis.  Patches are never ignored, but a patch may not be
+discussed or applied immediately according to the amount of spare time the
+developers have.  Don't be discouraged if you don't receive an immediate
+response, and if you feel that your patch has slipped through the cracks,
+post a follow up reminder message with a pointer to the original message in
+the mailing list archives.
+
+
+Third-party code
+----------------
+
+monotone contains parts of a number of third-party libraries, including but
+not limited to: Lua, Popt, Crypto++, SQLite, Netxx, and libidn.  See AUTHORS
+for complete details on the included third-party code and the copyrights and
+licenses of each portion.
+
+From time to time, bug fixes to this third-party code are required.  These
+fixes should be made in the monotone versions of the code first to solve the
+immediate problem.  In all cases that make sense (i.e. for general bug
+fixes), the change should also be sent to the upstream developers for
+inclusion in the next release.
+
+In a small number of cases, a change made to our local version of the
+third-party code may not make sense to send upstream.  In this case, make a
+note of this in the file you're changing and in the ChangeLog so that this
+permanent deviation is documented.

@@ -1,0 +1,109 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([importing CVS with vendor imports and branches])
+
+MONOTONE_SETUP
+
+AT_DATA(file1.0, [version 0 of test file1
+])
+
+AT_DATA(file1.1, [version 1 of test file1
+])
+
+AT_DATA(file1.2, [version 2 of test file1
+])
+
+AT_DATA(file2.0, [version 0 of test file2
+])
+
+AT_DATA(file2.1, [version 1 of test file2
+])
+
+AT_DATA(changelog.0, [first changelog entry
+])
+
+AT_DATA(changelog.1, [second changelog
+
+first changelog entry
+])
+
+AT_DATA(changelog.2, [third changelog -not on branch-
+
+second changelog
+
+first changelog entry
+])
+
+AT_DATA(changelog.3, [third changelog -on branch-
+
+second changelog
+
+first changelog entry
+])
+
+F1SHA0=`SHA1(file1.0)`
+F1SHA1=`SHA1(file1.1)`
+F1SHA2=`SHA1(file1.2)`
+F2SHA0=`SHA1(file2.0)`
+T2SHA1=`SHA1(file2.1)`
+CSHA0=`SHA1(changelog.0)`
+CSHA1=`SHA1(changelog.1)`
+CSHA2=`SHA1(changelog.2)`
+CSHA3=`SHA1(changelog.3)`
+
+# build the cvs repository
+
+CVSROOT=`pwd`/cvs-repository
+AT_CHECK(cvs -q -d $CVSROOT init)
+AT_CHECK(test -e $CVSROOT)
+AT_CHECK(test -e $CVSROOT/CVSROOT)
+AT_CHECK(test -e $CVSROOT/CVSROOT/history)
+
+# create the initial 3rd-party vendor import
+
+AT_CHECK(mkdir importdir)
+AT_CHECK(cp file1.0 importdir/file1)
+AT_CHECK(cp file2.0 importdir/file2)
+AT_CHECK(cp changelog.0 importdir/changelog)
+AT_CHECK(cd importdir && cvs -d $CVSROOT import -m "Initial import of VENDORWARE 1" testsrc VENDOR VENDOR_REL_1, [], [ignore], [ignore])
+
+# now we alter some of the files.
+AT_CHECK(cvs -d $CVSROOT co testsrc, [], [ignore], [ignore])
+AT_CHECK(cp file1.1 testsrc/file1)
+AT_CHECK(cp changelog.1 testsrc/changelog)
+AT_CHECK(cvs -d $CVSROOT commit -m 'commit 0' testsrc, [], [ignore], [ignore])
+
+# now we create a branch
+AT_CHECK(cvs -d $CVSROOT tag -b branched testsrc, [], [ignore], [ignore])
+AT_CHECK(cvs -d $CVSROOT up -r branched testsrc, [], [ignore], [ignore])
+
+# alter the files on the branch
+AT_CHECK(cp file1.2 testsrc/file1)
+AT_CHECK(cp file2.1 testsrc/file2)
+AT_CHECK(cp changelog.3 testsrc/changelog)
+AT_CHECK(cvs -d $CVSROOT commit -m 'commit on branch' testsrc, [], [ignore], [ignore])
+
+# and create some mainline changes after the branch
+AT_CHECK(cvs -d $CVSROOT up -A testsrc, [], [ignore], [ignore])
+AT_CHECK(cp changelog.2 testsrc/changelog)
+AT_CHECK(cvs -d $CVSROOT commit -m 'commit on mainline after branch' testsrc, [], [ignore], [ignore])
+
+# import into monotone and check presence of files
+
+AT_CHECK(MONOTONE --branch=test cvs_import $CVSROOT/testsrc, [], [ignore], [ignore])
+
+# also check that checkout is correct
+# right one.
+
+AT_CHECK(MONOTONE checkout --branch=test maindir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --branch=test.branched branchdir, [], [ignore], [ignore])
+
+AT_CHECK(cmp file1.1 maindir/file1)
+AT_CHECK(cmp file2.0 maindir/file2)
+AT_CHECK(cmp changelog.2 maindir/changelog)
+
+AT_CHECK(cmp file1.2 branchdir/file1)
+AT_CHECK(cmp file2.1 branchdir/file2)
+AT_CHECK(cmp changelog.3 branchdir/changelog)
+
+AT_CLEANUP

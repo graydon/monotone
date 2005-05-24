@@ -1,0 +1,27 @@
+AT_SETUP([checkout without --branch sets branch])
+MONOTONE_SETUP
+
+ADD_FILE(foo, [blah blah
+])
+COMMIT(testbranch)
+REV=`BASE_REVISION`
+
+AT_CHECK(MONOTONE checkout --revision=$REV codir1, [], [ignore], [ignore])
+AT_CHECK(cmp foo codir1/foo)
+AT_DATA(codir1/foo, [hi maude
+])
+# verify that no branch is needed for commit
+AT_CHECK(cd codir1 && MONOTONE commit --message=foo, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE cert $REV branch otherbranch)
+
+# but, now we can't checkout without a --branch...
+# need to make sure don't pick up branch from our local MT dir...
+AT_CHECK(rm -rf MT)
+AT_CHECK(MONOTONE checkout --revision=$REV codir2, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --revision=$REV --branch=testbranch codir3, [], [ignore], [ignore])
+AT_CHECK(cmp foo codir3/foo)
+AT_CHECK(MONOTONE checkout --revision=$REV --branch=otherbranch codir4, [], [ignore], [ignore])
+AT_CHECK(cmp foo codir4/foo)
+
+AT_CLEANUP

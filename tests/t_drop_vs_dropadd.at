@@ -1,0 +1,47 @@
+
+AT_SETUP([merge(<drop a>, <drop a, add a>)])
+
+MONOTONE_SETUP
+
+AT_DATA(original, [some stuff here
+])
+
+AT_DATA(replaced, [the re-added file
+])
+
+AT_DATA(nonce, [...nothing here...
+])
+
+AT_CHECK(cp original testfile)
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+COMMIT(testbranch)
+BASE_R_SHA=`BASE_REVISION`
+
+# drop it
+AT_CHECK(MONOTONE drop testfile, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+REVERT_TO($BASE_R_SHA)
+
+# on the other side of the fork, drop it ...
+AT_CHECK(MONOTONE drop testfile, [], [ignore], [ignore])
+# we add this file so that we don't end up with the same revision as
+# our first "drop" commit
+AT_CHECK(MONOTONE add nonce, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+# ... and add the replacement
+# on the other side of the fork, drop it
+AT_CHECK(cp replaced testfile)
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout -b testbranch clean, [], [ignore], [ignore])
+
+# check that the file is the replacement one
+AT_CHECK(cmp clean/testfile replaced)
+# just for good measure
+AT_CHECK(cmp clean/nonce nonce)
+
+AT_CLEANUP

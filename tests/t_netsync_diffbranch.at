@@ -1,0 +1,53 @@
+AT_SETUP([(normal) pull a netsync branch which has a parent from another branch])
+AT_KEYWORDS([netsync])
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+# The problem here is this: we have a -> b, where a is in branch A and
+# b is in branch B.  If we pull branch B, we will get b, but not a.
+# Monotone detects this case (in
+# packet_db_writer::consume_revision_data; a is noted to be a
+# prerequisite of b, a never arrives, so b eventually gets dropped on
+# the floor), but doesn't handle it terribly gracefully.
+# A short term solution would be, when this is going to happen,
+# request the prerequisite revision explicitly.  (This is suboptimal
+# because this is a really inefficient way to fetch revisions, but it
+# is probably relatively easy to implement.)
+#
+# A better way to solve this would be to change the merkle trie
+# building logic to include all ancestors of included revisions.
+# Probably it is not worth touching this logic immediately, because
+# the merkle trie logic needs to be rewritten anyway, as so:
+#   - don't store merkle tries in the database at all
+#   - when someone requests a glob, find all the certs which match the
+#     glob, including all certs on ancestors of revisions that match
+#     the glob, and stick them in a big bucket on the fly
+#   - build a merkle trie on that big bucket on the fly, hashing just
+#     once from the leaves upwards (instead of rehashing recursively
+#     as we do now)
+#
+# These two ways may well be complementary; the "short term solution"
+# is always correct, and protects us a little against buggy servers,
+# and also protects us against cases where there is a revision
+# mentioned in the ancestry graph that has no certs on it (quite
+# abnormal, but not actually impossible, and it's nice to get edge
+# cases right).
+
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+ADD_FILE(testfile, [blah stuff
+])
+COMMIT(testbranch)
+VER0=`BASE_REVISION`
+
+ADD_FILE(testfile2, [some more data
+])
+COMMIT(otherbranch)
+VER1=`BASE_REVISION`
+
+RUN_NETSYNC(pull, otherbranch)
+
+CHECK_SAME_STDOUT(MONOTONE ls certs $VER1, MONOTONE2 ls certs $VER1)
+
+AT_CLEANUP

@@ -1,0 +1,76 @@
+AT_SETUP([persistent netsync server - revs & certs])
+AT_KEYWORDS([netsync])
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+AT_DATA(testfile, [blah balh
+balh
+])
+AT_CHECK(MONOTONE2 add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 commit --branch=testbranch --message foo, [], [ignore], [ignore])
+REV1=`BASE_REVISION`
+
+AT_CHECK(rm -rf MT)
+
+AT_DATA(otherfile, [stuff stuff
+nonsense
+])
+AT_CHECK(MONOTONE3 setup ., [], [ignore], [ignore])
+AT_CHECK(MONOTONE3 add otherfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE3 commit --branch=testbranch --message foo, [], [ignore], [ignore])
+REV2=`BASE_REVISION`
+
+NETSYNC_SERVE_START(testbranch)
+
+NETSYNC_CLIENT_N_RUN(2, sync, testbranch)
+NETSYNC_CLIENT_N_RUN(3, sync, testbranch)
+
+CHECK_SAME_STDOUT(MONOTONE2 cat revision $REV1, MONOTONE3 cat revision $REV1)
+CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV1, MONOTONE3 ls certs $REV1)
+# Also exercise files and manifest
+AT_CHECK(MONOTONE3 checkout --revision=$REV1 somedir, [], [ignore], [ignore])
+
+NETSYNC_CLIENT_N_RUN(2, sync, testbranch)
+CHECK_SAME_STDOUT(MONOTONE2 cat revision $REV2, MONOTONE3 cat revision $REV2)
+CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV2, MONOTONE3 ls certs $REV2)
+# Also exercise files and manifest
+AT_CHECK(MONOTONE2 checkout --revision=$REV2 otherdir, [], [ignore], [ignore])
+
+# And now make sure it works for children, where there are diffs and all
+
+AT_DATA(otherfile, [foo bar, baz, also quux (on off days)
+])
+AT_CHECK(MONOTONE3 commit --branch=testbranch --message foo, [], [ignore], [ignore])
+REV3=`BASE_REVISION`
+
+AT_CHECK(rm -rf MT)
+AT_CHECK(MONOTONE2 checkout --revision=$REV1 ., [], [ignore], [ignore])
+AT_DATA(testfile, [ptang
+])
+AT_CHECK(MONOTONE2 commit --branch=testbranch --message foo, [], [ignore], [ignore])
+REV4=`BASE_REVISION`
+
+# And add a cert on an old revision
+AT_CHECK(MONOTONE3 comment $REV1 'sorry dave', [], [ignore], [ignore])
+
+NETSYNC_CLIENT_N_RUN(3, sync, testbranch)
+NETSYNC_CLIENT_N_RUN(2, sync, testbranch)
+
+CHECK_SAME_STDOUT(MONOTONE2 cat revision $REV3, MONOTONE3 cat revision $REV3)
+CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV3, MONOTONE3 ls certs $REV3)
+# Also exercise files and manifest
+AT_CHECK(MONOTONE2 checkout --revision=$REV3 somedir2, [], [ignore], [ignore])
+
+# And check for that extra cert
+CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV1, MONOTONE3 ls certs $REV1)
+
+NETSYNC_CLIENT_N_RUN(3, sync, testbranch)
+
+CHECK_SAME_STDOUT(MONOTONE2 cat revision $REV4, MONOTONE3 cat revision $REV4)
+CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV4, MONOTONE3 ls certs $REV4)
+# Also exercise files and manifest
+AT_CHECK(MONOTONE3 checkout --revision=$REV4 somedir3, [], [ignore], [ignore])
+
+NETSYNC_SERVE_STOP
+
+AT_CLEANUP

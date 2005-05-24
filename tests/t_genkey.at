@@ -6,8 +6,14 @@ MONOTONE_SETUP
 
 TKEY=happy@bogus.com
 
+# fail to enter a passphrase
+AT_CHECK(MONOTONE genkey $TKEY </dev/null, [1], [ignore], [ignore])
+
+# fail to enter passphrase twice
+AT_CHECK(echo $TKEY | MONOTONE genkey $TKEY, [1], [ignore], [ignore])
+
 # generate a new key
-AT_CHECK(MONOTONE genkey $TKEY, [], [ignore], [ignore])
+AT_CHECK((echo $TKEY; echo $TKEY) | MONOTONE genkey $TKEY, [], [ignore], [ignore])
 
 # check key exists
 AT_CHECK(MONOTONE ls keys, [], [stdout])
@@ -28,7 +34,7 @@ AT_DATA(input.txt, [blah blah blah
 ])
 
 AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
 TSHA=`BASE_REVISION`
 AT_CHECK(MONOTONE --key=$TKEY cert $TSHA color pink, [], [ignore], [ignore])
 AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout])

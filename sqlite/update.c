@@ -12,9 +12,44 @@
 ** This file contains C code routines that are called by the parser
 ** to handle UPDATE statements.
 **
-** $Id: update.c,v 1.95 2004/11/16 15:50:20 danielk1977 Exp $
+** $Id: update.c,v 1.105 2005/03/09 12:26:51 danielk1977 Exp $
 */
 #include "sqliteInt.h"
+
+/*
+** The most recently coded instruction was an OP_Column to retrieve column
+** 'i' of table pTab. This routine sets the P3 parameter of the 
+** OP_Column to the default value, if any.
+**
+** The default value of a column is specified by a DEFAULT clause in the 
+** column definition. This was either supplied by the user when the table
+** was created, or added later to the table definition by an ALTER TABLE
+** command. If the latter, then the row-records in the table btree on disk
+** may not contain a value for the column and the default value, taken
+** from the P3 parameter of the OP_Column instruction, is returned instead.
+** If the former, then all row-records are guaranteed to include a value
+** for the column and the P3 value is not required.
+**
+** Column definitions created by an ALTER TABLE command may only have 
+** literal default values specified: a number, null or a string. (If a more
+** complicated default expression value was provided, it is evaluated 
+** when the ALTER TABLE is executed and one of the literal values written
+** into the sqlite_master table.)
+**
+** Therefore, the P3 parameter is only required if the default value for
+** the column is a literal number, string or null. The sqlite3ValueFromExpr()
+** function is capable of transforming these types of expressions into
+** sqlite3_value objects.
+*/
+void sqlite3ColumnDefault(Vdbe *v, Table *pTab, int i){
+  if( pTab && !pTab->pSelect ){
+    sqlite3_value *pValue;
+    u8 enc = sqlite3VdbeDb(v)->enc;
+    Column *pCol = &pTab->aCol[i];
+    sqlite3ValueFromExpr(pCol->pDflt, enc, pCol->affinity, &pValue);
+    sqlite3VdbeChangeP3(v, -1, (const char *)pValue, P3_MEM);
+  }
+}
 
 /*
 ** Process an UPDATE statement.
@@ -49,12 +84,11 @@ void sqlite3Update(
   Expr *pRecnoExpr = 0;  /* Expression defining the new record number */
   int openAll = 0;       /* True if all indices need to be opened */
   AuthContext sContext;  /* The authorization context */
+  NameContext sNC;       /* The name-context to resolve expressions in */
 
 #ifndef SQLITE_OMIT_TRIGGER
   int isView;                  /* Trying to update a view */
-  int before_triggers;         /* True if there are any BEFORE triggers */
-  int after_triggers;          /* True if there are any AFTER triggers */
-  int row_triggers_exist = 0;  /* True if any row triggers exist */
+  int triggers_exist = 0;      /* True if any row triggers exist */
 #endif
 
   int newIdx      = -1;  /* index of trigger "new" temp table       */
@@ -74,16 +108,10 @@ void sqlite3Update(
   ** updated is a view
   */
 #ifndef SQLITE_OMIT_TRIGGER
-  before_triggers = sqlite3TriggersExist(pParse, pTab->pTrigger, 
-                         TK_UPDATE, TK_BEFORE, TK_ROW, pChanges);
-  after_triggers = sqlite3TriggersExist(pParse, pTab->pTrigger, 
-                         TK_UPDATE, TK_AFTER, TK_ROW, pChanges);
-  row_triggers_exist = before_triggers || after_triggers;
+  triggers_exist = sqlite3TriggersExist(pParse, pTab, TK_UPDATE, pChanges);
   isView = pTab->pSelect!=0;
 #else
-# define before_triggers 0
-# define after_triggers 0
-# define row_triggers_exist 0
+# define triggers_exist 0
 # define isView 0
 #endif
 #ifdef SQLITE_OMIT_VIEW
@@ -91,7 +119,7 @@ void sqlite3Update(
 # define isView 0
 #endif
 
-  if( sqlite3IsReadOnly(pParse, pTab, before_triggers) ){
+  if( sqlite3IsReadOnly(pParse, pTab, triggers_exist) ){
     goto update_cleanup;
   }
   if( isView ){
@@ -106,7 +134,7 @@ void sqlite3Update(
   /* If there are FOR EACH ROW triggers, allocate cursors for the
   ** special OLD and NEW tables
   */
-  if( row_triggers_exist ){
+  if( triggers_exist ){
     newIdx = pParse->nTab++;
     oldIdx = pParse->nTab++;
   }
@@ -121,6 +149,11 @@ void sqlite3Update(
     pParse->nTab++;
   }
 
+  /* Initialize the name-context */
+  memset(&sNC, 0, sizeof(sNC));
+  sNC.pParse = pParse;
+  sNC.pSrcList = pTabList;
+
   /* Resolve the column names in all the expressions of the
   ** of the UPDATE statement.  Also find the column index
   ** for each column to be updated in the pChanges array.  For each
@@ -129,8 +162,7 @@ void sqlite3Update(
   */
   chngRecno = 0;
   for(i=0; i<pChanges->nExpr; i++){
-    if( sqlite3ExprResolveAndCheck(pParse, pTabList, 0,
-             pChanges->a[i].pExpr, 0, 0) ){
+    if( sqlite3ExprResolveNames(&sNC, pChanges->a[i].pExpr) ){
       goto update_cleanup;
     }
     for(j=0; j<pTab->nCol; j++){
@@ -206,7 +238,7 @@ void sqlite3Update(
   /* Resolve the column names in all the expressions in the
   ** WHERE clause.
   */
-  if( sqlite3ExprResolveAndCheck(pParse, pTabList, 0, pWhere, 0, 0) ){
+  if( sqlite3ExprResolveNames(&sNC, pWhere) ){
     goto update_cleanup;
   }
 
@@ -235,11 +267,12 @@ void sqlite3Update(
 
   /* Begin the database scan
   */
-  pWInfo = sqlite3WhereBegin(pParse, pTabList, pWhere, 1, 0, -1);
+  pWInfo = sqlite3WhereBegin(pParse, pTabList, pWhere, 0, 0);
   if( pWInfo==0 ) goto update_cleanup;
 
   /* Remember the index of every item to be updated.
   */
+  sqlite3VdbeAddOp(v, OP_Recno, iCur, 0);
   sqlite3VdbeAddOp(v, OP_ListWrite, 0, 0);
 
   /* End the database scan loop.
@@ -252,7 +285,7 @@ void sqlite3Update(
     sqlite3VdbeAddOp(v, OP_Integer, 0, 0);
   }
 
-  if( row_triggers_exist ){
+  if( triggers_exist ){
     /* Create pseudo-tables for NEW and OLD
     */
     sqlite3VdbeAddOp(v, OP_OpenPseudo, oldIdx, 0);
@@ -284,11 +317,11 @@ void sqlite3Update(
     /* Generate the NEW table
     */
     if( chngRecno ){
-      sqlite3ExprCode(pParse, pRecnoExpr);
+      sqlite3ExprCodeAndCache(pParse, pRecnoExpr);
     }else{
       sqlite3VdbeAddOp(v, OP_Recno, iCur, 0);
     }
-    for(i=0; i<pTab->nCol; i++){ /* TODO: Factor out this loop as common code */
+    for(i=0; i<pTab->nCol; i++){
       if( i==pTab->iPKey ){
         sqlite3VdbeAddOp(v, OP_String8, 0, 0);
         continue;
@@ -296,8 +329,9 @@ void sqlite3Update(
       j = aXRef[i];
       if( j<0 ){
         sqlite3VdbeAddOp(v, OP_Column, iCur, i);
+        sqlite3ColumnDefault(v, pTab, i);
       }else{
-        sqlite3ExprCode(pParse, pChanges->a[j].pExpr);
+        sqlite3ExprCodeAndCache(pParse, pChanges->a[j].pExpr);
       }
     }
     sqlite3VdbeAddOp(v, OP_MakeRecord, pTab->nCol, 0);
@@ -312,7 +346,7 @@ void sqlite3Update(
 
     /* Fire the BEFORE and INSTEAD OF triggers
     */
-    if( sqlite3CodeRowTrigger(pParse, TK_UPDATE, pChanges, TK_BEFORE, pTab, 
+    if( sqlite3CodeRowTrigger(pParse, TK_UPDATE, pChanges, TRIGGER_BEFORE, pTab,
           newIdx, oldIdx, onError, addr) ){
       goto update_cleanup;
     }
@@ -354,7 +388,7 @@ void sqlite3Update(
     ** Also, the old data is needed to delete the old index entires.
     ** So make the cursor point at the old record.
     */
-    if( !row_triggers_exist ){
+    if( !triggers_exist ){
       sqlite3VdbeAddOp(v, OP_ListRewind, 0, 0);
       addr = sqlite3VdbeAddOp(v, OP_ListRead, 0, 0);
       sqlite3VdbeAddOp(v, OP_Dup, 0, 0);
@@ -380,6 +414,7 @@ void sqlite3Update(
       j = aXRef[i];
       if( j<0 ){
         sqlite3VdbeAddOp(v, OP_Column, iCur, i);
+        sqlite3ColumnDefault(v, pTab, i);
       }else{
         sqlite3ExprCode(pParse, pChanges->a[j].pExpr);
       }
@@ -414,7 +449,7 @@ void sqlite3Update(
   /* If there are triggers, close all the cursors after each iteration
   ** through the loop.  The fire the after triggers.
   */
-  if( row_triggers_exist ){
+  if( triggers_exist ){
     if( !isView ){
       for(i=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, i++){
         if( openAll || aIdxUsed[i] )
@@ -422,7 +457,7 @@ void sqlite3Update(
       }
       sqlite3VdbeAddOp(v, OP_Close, iCur, 0);
     }
-    if( sqlite3CodeRowTrigger(pParse, TK_UPDATE, pChanges, TK_AFTER, pTab, 
+    if( sqlite3CodeRowTrigger(pParse, TK_UPDATE, pChanges, TRIGGER_AFTER, pTab, 
           newIdx, oldIdx, onError, addr) ){
       goto update_cleanup;
     }
@@ -436,7 +471,7 @@ void sqlite3Update(
   sqlite3VdbeAddOp(v, OP_ListReset, 0, 0);
 
   /* Close all tables if there were no FOR EACH ROW triggers */
-  if( !row_triggers_exist ){
+  if( !triggers_exist ){
     for(i=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, i++){
       if( openAll || aIdxUsed[i] ){
         sqlite3VdbeAddOp(v, OP_Close, iCur+i+1, 0);

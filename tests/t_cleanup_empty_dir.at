@@ -1,0 +1,27 @@
+AT_SETUP([(minor) update cleans emptied directories])
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+MONOTONE_SETUP
+
+AT_CHECK(mkdir testdir)
+ADD_FILE(testdir/foo, [blah blah blah
+])
+COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
+
+AT_CHECK(rm -r testdir)
+AT_CHECK(MONOTONE drop testdir/foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+REVERT_TO($BASE_R)
+
+AT_CHECK(test -d testdir)
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+
+AT_CHECK(test $BASE_R != `BASE_REVISION`)
+
+AT_CHECK(test -d testdir, [1])
+
+AT_CLEANUP

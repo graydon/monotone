@@ -1,0 +1,56 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([single manifest netsync])
+AT_KEYWORDS([netsync])
+
+MONOTONE_SETUP
+AT_CHECK(cp test.db test2.db)
+
+AT_DATA(netsync.lua, [
+function get_netsync_read_permitted(collection, identity)
+	return true
+end
+
+function get_netsync_write_permitted(collection, identity)
+	return true
+end
+])
+
+AT_DATA(testfile, [version 0 of test file
+])
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=netsync.lua commit --message blah-blah, [], [ignore], [ignore])
+F_VER0=`SHA1(testfile)`
+VER0=`BASE_REVISION`
+
+NETSYNC_KILLHARD
+         MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve 127.0.0.1:$_PORT testbranch &
+sleep 5
+AT_CHECK(MONOTONE --rcfile=netsync.lua --db=test2.db pull 127.0.0.1:$_PORT testbranch, [], [ignore], [ignore])
+NETSYNC_KILLHARD
+
+AT_CHECK(MONOTONE --db=test2.db ls certs $VER0, [], [stdout])
+AT_CHECK(mv stdout certs, [], [ignore])
+AT_CHECK(grep date certs, [], [ignore])
+AT_CHECK(grep author certs, [], [ignore])
+AT_CHECK(grep branch certs, [], [ignore])
+AT_CHECK(grep changelog certs, [], [ignore])
+AT_CHECK(grep bad certs, [1], [ignore])
+
+AT_CHECK(MONOTONE --db=test2.db cat revision $VER0, [], [stdout])
+AT_CHECK(CANONICALISE(stdout))
+CHK=`SHA1(stdout)`
+AT_CHECK(test $CHK = $VER0)
+
+AT_CHECK(MONOTONE --db=test2.db cat file $F_VER0, [], [stdout])
+AT_CHECK(CANONICALISE(stdout))
+CHK=`SHA1(stdout)`
+AT_CHECK(test $CHK = $F_VER0)
+
+AT_CHECK(MONOTONE db info, [], [stdout])
+INFO1=`SHA1(stdout)`
+AT_CHECK(MONOTONE --db=test2.db db info, [], [stdout])
+INFO2=`SHA1(stdout)`
+AT_CHECK(test $INFO1 = $INFO2)
+
+AT_CLEANUP

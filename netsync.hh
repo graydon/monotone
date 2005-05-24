@@ -20,12 +20,9 @@ typedef enum
 protocol_voice;
 
 void run_netsync_protocol(protocol_voice voice, 
-			  protocol_role role, 
-			  utf8 const & addr, 
-			  std::vector<utf8> collections,
-			  app_state & app);
-
-void rebuild_merkle_trees(app_state & app,
-			  utf8 const & collection);
+                          protocol_role role, 
+                          utf8 const & addr, 
+                          std::vector<utf8> collections,
+                          app_state & app);
 
 #endif // __NETSYNC_H__

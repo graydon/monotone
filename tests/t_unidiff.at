@@ -2,10 +2,7 @@
 
 AT_SETUP([calculation of unidiffs])
 
-MIMENCODE=`which mimencode 2>/dev/null`
-if test -z "$MIMENCODE" ; then
-  exit 77
-fi
+NEED_UNB64
 
 MONOTONE_SETUP
 
@@ -4778,24 +4775,23 @@ ZGUgImd0LWMtY29tbW9uLmgiCg==
 ])
 
 # decode first file and commit to db
-AT_CHECK(mimencode -u firstfile.b64, [], [stdout])
-AT_CHECK(mv stdout firstfile, [], [ignore])
+UNB64(firstfile.b64, firstfile)
 AT_CHECK(cp firstfile testfile, [], [ignore])
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit blah-blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 AT_CHECK(mv testfile firstfile, [], [ignore])
 
 # decode second file
-AT_CHECK(mimencode -u secondfile.b64, [], [stdout])
-AT_CHECK(mv stdout secondfile, [], [ignore])
+UNB64(secondfile.b64, secondfile)
 
 # calculate diff to second file using monotone
 AT_CHECK(cp secondfile testfile, [], [ignore])
 AT_CHECK(MONOTONE diff, [], [stdout])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout monodiff, [], [ignore])
 
 # see if patch likes that
-AT_CHECK(patch firstfile <monodiff, [], [ignore])
+AT_CHECK(patch firstfile <monodiff, [], [ignore], [ignore])
 
 # see if the resulting file has been properly patched
 AT_CHECK(cmp firstfile secondfile, [], [ignore])

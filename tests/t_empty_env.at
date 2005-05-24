@@ -1,0 +1,14 @@
+AT_SETUP([empty environment])
+MONOTONE_SETUP
+
+AT_CHECK(if test "$OSTYPE" == "msys"; then
+  cp $(which libiconv-2.dll) .
+fi)
+
+AT_CHECK(env -i MONOTONE --help, [], [ignore], [ignore])
+AT_DATA(testfile, [blah blah
+])
+AT_CHECK(env -i MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(env -i MONOTONE commit --branch=testbranch --message=foo, [], [ignore], [ignore])
+
+AT_CLEANUP

@@ -1,0 +1,27 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([changing passphrase of a private key])
+
+MONOTONE_SETUP
+
+TKEY=happy@bogus.com
+
+# generate a new key
+AT_CHECK((echo $TKEY; echo $TKEY) | MONOTONE genkey $TKEY, [], [ignore], [ignore])
+
+# fail to enter any passphrase
+AT_CHECK(MONOTONE chkeypass $TKEY </dev/null, [1], [ignore], [ignore])
+
+# fail to give correct old passphrase
+AT_CHECK((echo bad; echo bad; echo bad) | MONOTONE chkeypass $TKEY, [1], [ignore], [ignore])
+
+# fail to repeat new password
+AT_CHECK((echo $TKEY; echo $TKEY-new; echo bad) | MONOTONE chkeypass $TKEY, [1], [ignore], [ignore])
+
+# change the passphrase successfully
+AT_CHECK((echo $TKEY; echo $TKEY-new; echo $TKEY-new) | MONOTONE chkeypass $TKEY, [], [ignore], [ignore])
+
+# check that the passphrase changed
+AT_CHECK((echo $TKEY-new; echo $TKEY; echo $TKEY) | MONOTONE chkeypass $TKEY, [], [ignore], [ignore])
+
+AT_CLEANUP

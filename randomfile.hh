@@ -28,10 +28,10 @@ struct file_randomizer
       return static_cast<size_t>(rand() % lines.size());
     else
       {
-	if (lines.size() == 0)
-	  return 0;
-	else
-	  return static_cast<size_t>(rand() % (lines.size() - 1));
+        if (lines.size() == 0)
+          return 0;
+        else
+          return static_cast<size_t>(rand() % (lines.size() - 1));
       }
   }
 
@@ -48,7 +48,7 @@ struct file_randomizer
   void append_to(std::vector<std::string> & other)
   {
     for (std::vector<std::string>::const_iterator i = lines.begin();
-	 i != lines.end(); ++i)
+         i != lines.end(); ++i)
       other.push_back(prefix + *i);
   }
 
@@ -56,7 +56,7 @@ struct file_randomizer
     lines.clear();
     for (int i = 0; i < num_lines; ++i)
       {
-	lines.push_back(std::string("initial ") + boost::lexical_cast<std::string>(i));
+        lines.push_back(std::string("initial ") + boost::lexical_cast<std::string>(i));
       }
   }
 
@@ -64,7 +64,7 @@ struct file_randomizer
     lines.clear();
     for (int i = 0; i < num_lines; ++i)
       {
-	lines.push_back(std::string("append ") + boost::lexical_cast<std::string>(i));
+        lines.push_back(std::string("append ") + boost::lexical_cast<std::string>(i));
       }
   }
 
@@ -72,7 +72,7 @@ struct file_randomizer
     lines.clear();
     for (int i = 0; i < num_lines; ++i)
       {
-	lines.push_back(std::string("prepend ") + boost::lexical_cast<std::string>(i));
+        lines.push_back(std::string("prepend ") + boost::lexical_cast<std::string>(i));
       }
   }
 
@@ -90,17 +90,17 @@ struct file_randomizer
     int nlines = static_cast<int>(nlines_d);
     for (int i = 0; i < nlines; ++i)
       {
-	lines.insert(lines.begin() + random_index(),
-		     std::string("insert ") + boost::lexical_cast<std::string>(i));
+        lines.insert(lines.begin() + random_index(),
+                     std::string("insert ") + boost::lexical_cast<std::string>(i));
       }
   }
 
   static void build_random_fork(std::vector<std::string> & ancestor,
-				std::vector<std::string> & left,
-				std::vector<std::string> & right,
-				std::vector<std::string> & merged,
-				int seed,
-				int n_hunks = 10)
+                                std::vector<std::string> & left,
+                                std::vector<std::string> & right,
+                                std::vector<std::string> & merged,
+                                int seed,
+                                int n_hunks = 10)
   {    
 
     file_randomizer fr;
@@ -108,71 +108,71 @@ struct file_randomizer
     // maybe prepend something to one side or the other
     if (fr.random_bool())
       {
-	fr.prepend_sequential_lines();
-	if (fr.random_bool())
-	  fr.append_to(left);
-	else
-	  fr.append_to(right);
-	fr.append_to(merged);
+        fr.prepend_sequential_lines();
+        if (fr.random_bool())
+          fr.append_to(left);
+        else
+          fr.append_to(right);
+        fr.append_to(merged);
       }
     fr.lines.clear();
 
     for (int h = 0; h < n_hunks; ++h)
       {
-	file_randomizer hr;
-	hr.seed(seed + h);
-	hr.set_prefix(std::string("hunk ") + boost::lexical_cast<std::string>(h) + " -- ");
-	hr.initial_sequential_lines(10);
-	hr.append_to(ancestor);
-	if (hr.random_bool())
-	  {
-	    // doing an insert
-	    if (hr.random_bool())
-	      {
-		// inserting in left
-		hr.append_to(right);
-		hr.insert_sequential_percent_of_lines_randomly();
-		hr.append_to(left);
-	      }
-	    else
-	      {
-		// inserting in right
-		hr.append_to(left);
-		hr.insert_sequential_percent_of_lines_randomly();
-		hr.append_to(right);
-	      }
-	    hr.append_to(merged);
-	  }
-	else
-	  {
-	    // doing a delete
-	    if (hr.random_bool())
-	      {
-		// deleting in left
-		hr.append_to(right);
-		hr.delete_percent_of_lines_randomly();
-		hr.append_to(left);
-	      }
-	    else
-	      {
-		// deleting in right
-		hr.append_to(left);
-		hr.delete_percent_of_lines_randomly();
-		hr.append_to(right);
-	      }
-	    hr.append_to(merged);
-	  }
+        file_randomizer hr;
+        hr.seed(seed + h);
+        hr.set_prefix(std::string("hunk ") + boost::lexical_cast<std::string>(h) + " -- ");
+        hr.initial_sequential_lines(10);
+        hr.append_to(ancestor);
+        if (hr.random_bool())
+          {
+            // doing an insert
+            if (hr.random_bool())
+              {
+                // inserting in left
+                hr.append_to(right);
+                hr.insert_sequential_percent_of_lines_randomly();
+                hr.append_to(left);
+              }
+            else
+              {
+                // inserting in right
+                hr.append_to(left);
+                hr.insert_sequential_percent_of_lines_randomly();
+                hr.append_to(right);
+              }
+            hr.append_to(merged);
+          }
+        else
+          {
+            // doing a delete
+            if (hr.random_bool())
+              {
+                // deleting in left
+                hr.append_to(right);
+                hr.delete_percent_of_lines_randomly();
+                hr.append_to(left);
+              }
+            else
+              {
+                // deleting in right
+                hr.append_to(left);
+                hr.delete_percent_of_lines_randomly();
+                hr.append_to(right);
+              }
+            hr.append_to(merged);
+          }
       }
 
     // maybe append something to one side or the other
     if (fr.random_bool())
       {
-	fr.append_sequential_lines();
-	if (fr.random_bool())
-	  fr.append_to(left);
-	else
-	  fr.append_to(right);
-	fr.append_to(merged);
+        fr.append_sequential_lines();
+        if (fr.random_bool())
+          fr.append_to(left);
+        else
+          fr.append_to(right);
+        fr.append_to(merged);
       }
   }
 };

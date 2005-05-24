@@ -1,0 +1,86 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([(imp) merging <add a> with <add a, drop a>])
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+MONOTONE_SETUP
+
+# We want a graph which looks like:
+#              A
+#            / | \
+#           F  C  G
+#           |/ |  |
+#           D  E  |
+#              \ /
+#               B
+
+# B and D are heads of branch.main and branch.fork respectively, we want to
+# "propagate branch.main branch.fork". 
+
+# The revs F, C, and D are members of branch.fork. 
+# A, C, E, G, and B are members of branch.main (C is shared)
+
+# C is "add bar", E is "drop bar", other revisions involve non-conflicting
+# file additions or merges.
+
+AT_DATA(foo, [extra blah blah foo
+])
+AT_DATA(bar, [extra blah blah bar
+])
+AT_DATA(quux, [extra blah blah quux
+])
+AT_DATA(iced, [stuff here
+])
+
+# produce state A
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.main commit --message 'state A - add foo', [], [ignore], [ignore])
+A_REVISION_SHA=`BASE_REVISION`
+
+# produce state C
+AT_CHECK(MONOTONE add bar, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.main commit --message 'state C - add bar', [], [ignore], [ignore])
+C_REVISION_SHA=`BASE_REVISION`
+AT_CHECK(MONOTONE cert $C_REVISION_SHA branch branch.fork)
+
+# produce state F
+REVERT_TO($A_REVISION_SHA)
+AT_CHECK(MONOTONE add iced, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.fork commit --message 'state F - add iced', [], [ignore], [ignore])
+F_REVISION_SHA=`BASE_REVISION`
+
+# merge heads of branch.fork to make D
+AT_CHECK(MONOTONE --branch=branch.fork merge, [], [ignore], [ignore])
+
+# produce state E
+REVERT_TO($C_REVISION_SHA,branch.main)
+AT_CHECK(MONOTONE --branch=branch.main drop bar, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.main commit --message 'state E - drop bar', [], [ignore], [ignore])
+E_REVISION_SHA=`BASE_REVISION`
+
+# state G
+REVERT_TO($A_REVISION_SHA)
+AT_CHECK(MONOTONE add quux, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.main commit --message 'state G - add quux', [], [ignore], [ignore])
+G_REVISION_SHA=`BASE_REVISION`
+
+# merge to get state B
+AT_CHECK(MONOTONE --branch=branch.main merge, [], [ignore], [ignore])
+
+# now try the propagate
+AT_CHECK(MONOTONE propagate branch.main branch.fork, [], [ignore], [ignore])
+
+# check
+AT_CHECK(rm -rf MT)
+AT_CHECK(MONOTONE --branch=branch.fork checkout .)
+
+AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(mv stdout manifest)
+AT_CHECK(grep bar manifest, [1], [ignore], [ignore])
+AT_CHECK(grep quux manifest, [0], [ignore], [ignore])
+AT_CHECK(grep foo manifest, [0], [ignore], [ignore])
+AT_CHECK(grep iced manifest, [0], [ignore], [ignore])
+
+AT_CLEANUP

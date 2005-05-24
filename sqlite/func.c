@@ -16,13 +16,13 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.88 2004/11/17 16:41:30 danielk1977 Exp $
+** $Id: func.c,v 1.96 2005/02/15 21:36:18 drh Exp $
 */
+#include "sqliteInt.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "sqliteInt.h"
 #include "vdbeInt.h"
 #include "os.h"
 
@@ -372,7 +372,7 @@ static int patternCompare(
         }
         zPattern++;
       }
-      if( c && sqlite3ReadUtf8(&zPattern[1])==esc ){
+      if( c && esc && sqlite3ReadUtf8(&zPattern[1])==esc ){
         u8 const *zTemp = &zPattern[1];
         sqliteNextChar(zTemp);
         c = *zTemp;
@@ -433,7 +433,7 @@ static int patternCompare(
       if( c2==0 || (seen ^ invert)==0 ) return 0;
       sqliteNextChar(zString);
       zPattern++;
-    }else if( !prevEscape && sqlite3ReadUtf8(zPattern)==esc){
+    }else if( esc && !prevEscape && sqlite3ReadUtf8(zPattern)==esc){
       prevEscape = 1;
       sqliteNextChar(zPattern);
     }else{
@@ -533,48 +533,6 @@ static void versionFunc(
   sqlite3_result_text(context, sqlite3_version, -1, SQLITE_STATIC);
 }
 
-#ifndef SQLITE_OMIT_ALTERTABLE
-/*
-** This function is used by SQL generated to implement the 
-** ALTER TABLE command. The first argument is the text of a CREATE TABLE or
-** CREATE INDEX command. The second is a table name. The table name in 
-** the CREATE TABLE or CREATE INDEX statement is replaced with the second
-** argument and the result returned. Examples:
-**
-** sqlite_alter_table('CREATE TABLE abc(a, b, c)', 'def')
-**     -> 'CREATE TABLE def(a, b, c)'
-**
-** sqlite_alter_table('CREATE INDEX i ON abc(a)', 'def')
-**     -> 'CREATE INDEX i ON def(a, b, c)'
-*/
-static void altertableFunc(
-  sqlite3_context *context,
-  int argc,
-  sqlite3_value **argv
-){
-  char const *zSql = sqlite3_value_text(argv[0]);
-  char const *zTableName = sqlite3_value_text(argv[1]);
-
-  char const *zCsr = zSql;
-  char const *zPrev;
-  char *zRet = 0;
-  int tokenType = 0;
-  int len;
-
-  assert( argc==2 );
-  if( zSql ){
-    while( tokenType!=TK_LP ){
-      zPrev = zCsr-len;
-      len = sqlite3GetToken(zCsr, &tokenType);
-      zCsr += len;
-    }
-
-    zRet = sqlite3MPrintf("%.*s%Q(%s", zPrev-zSql, zSql, zTableName, zCsr);
-    sqlite3_result_text(context, zRet, -1, SQLITE_TRANSIENT);
-    sqliteFree(zRet);
-  }
-}
-#endif
 
 /*
 ** EXPERIMENTAL - This is not an official function.  The interface may
@@ -833,6 +791,20 @@ static void test_auxdata(
 }
 #endif /* SQLITE_TEST */
 
+#ifdef SQLITE_TEST
+/*
+** A function to test error reporting from user functions. This function
+** returns a copy of it's first argument as an error.
+*/
+static void test_error(
+  sqlite3_context *pCtx, 
+  int nArg,
+  sqlite3_value **argv
+){
+  sqlite3_result_error(pCtx, sqlite3_value_text(argv[0]), 0);
+}
+#endif /* SQLITE_TEST */
+
 /*
 ** An instance of the following structure holds the context of a
 ** sum() or avg() aggregate computation.
@@ -878,33 +850,6 @@ struct StdDevCtx {
   double sum2;    /* Sum of the squares of terms */
   int cnt;        /* Number of terms counted */
 };
-
-#if 0   /* Omit because math library is required */
-/*
-** Routines used to compute the standard deviation as an aggregate.
-*/
-static void stdDevStep(sqlite3_context *context, int argc, const char **argv){
-  StdDevCtx *p;
-  double x;
-  if( argc<1 ) return;
-  p = sqlite3_aggregate_context(context, sizeof(*p));
-  if( p && argv[0] ){
-    x = sqlite3AtoF(argv[0], 0);
-    p->sum += x;
-    p->sum2 += x*x;
-    p->cnt++;
-  }
-}
-static void stdDevFinalize(sqlite3_context *context){
-  double rN = sqlite3_aggregate_count(context);
-  StdDevCtx *p = sqlite3_aggregate_context(context, sizeof(*p));
-  if( p && p->cnt>1 ){
-    double rCnt = cnt;
-    sqlite3_set_result_double(context, 
-       sqrt((p->sum2 - p->sum*p->sum/rCnt)/(rCnt-1.0)));
-  }
-}
-#endif
 
 /*
 ** The following structure keeps track of state information for the
@@ -1026,9 +971,6 @@ void sqlite3RegisterBuiltinFunctions(sqlite3 *db){
     { "last_insert_rowid",  0, 1, SQLITE_UTF8,    0, last_insert_rowid },
     { "changes",            0, 1, SQLITE_UTF8,    0, changes    },
     { "total_changes",      0, 1, SQLITE_UTF8,    0, total_changes },
-#ifndef SQLITE_OMIT_ALTERTABLE
-    { "sqlite_alter_table", 2, 0, SQLITE_UTF8,    0, altertableFunc},
-#endif
 #ifdef SQLITE_SOUNDEX
     { "soundex",            1, 0, SQLITE_UTF8, 0, soundexFunc},
 #endif
@@ -1037,6 +979,7 @@ void sqlite3RegisterBuiltinFunctions(sqlite3 *db){
     { "test_destructor",       1, 1, SQLITE_UTF8, 0, test_destructor},
     { "test_destructor_count", 0, 0, SQLITE_UTF8, 0, test_destructor_count},
     { "test_auxdata",         -1, 0, SQLITE_UTF8, 0, test_auxdata},
+    { "test_error",            1, 0, SQLITE_UTF8, 0, test_error},
 #endif
   };
   static const struct {
@@ -1053,9 +996,6 @@ void sqlite3RegisterBuiltinFunctions(sqlite3 *db){
     { "avg",    1, 0, 0, sumStep,      avgFinalize    },
     { "count",  0, 0, 0, countStep,    countFinalize  },
     { "count",  1, 0, 0, countStep,    countFinalize  },
-#if 0
-    { "stddev", 1, 0, stdDevStep,   stdDevFinalize },
-#endif
   };
   int i;
 
@@ -1075,6 +1015,9 @@ void sqlite3RegisterBuiltinFunctions(sqlite3 *db){
       }
     }
   }
+#ifndef SQLITE_OMIT_ALTERTABLE
+  sqlite3AlterFunctions(db);
+#endif
   for(i=0; i<sizeof(aAggs)/sizeof(aAggs[0]); i++){
     void *pArg = 0;
     switch( aAggs[i].argType ){

@@ -1,0 +1,43 @@
+
+This document gives a rough overview of features and changes planned
+for the future of monotone development. It does not spontaneously
+include bug fixes. We endeavour to fix bugs when possible, throughout
+the development cycle. When a specific class of bugs is targeted for
+focus in the roadmap, it is noted here.
+
+The roadmap does *not* include release points, because it is our
+intention (though at times not our demonstrated behavior) to stick as
+close as possible to time-based releases, once per month. Even if we
+happen to hold up a release for some unforeseen reason -- usually lack
+of available effort -- the *plan* is to operate in a time-based
+cycle.
+
+Note also that the roadmap is (broadly) conservative. The goal with
+monotone is to produce a stable tool which works fast, reliably,
+predictably, and helps users manage their ever-growing collections of
+diverging data. 
+
+
+ROADMAP
+=======
+
+- tidy up major buid/use-breaking bugs in win32, BSD, OSX versions
+- improve netsync error reporting code 
+  - one part: many 'I's should be 'require's.
+- overhaul command-line option processing, perhaps use argp
+- move output formatting to lua hooks
+- integrate net.venge.monotone.ssh branch
+- modify database code to use sqlite3 pre-parsed queries, blobs
+- change netsync to globbing branches, not using collections
+- implement improved ACL/permission system for default trust rules
+- implement "merge into working copy" approach to merging
+- emacs integration
+
+  ( probably call it "1.0" or "stable" around here )
+
+- work on GUIs and web UIs
+- "merge before commit" (CVS-style online commit-coordination)
+- bidirectional mirroring between monotone and CVS/SVN/arch
+- (possible) try using botan instead of cryptopp
+- an "agent" for storing decrypted private key in memory
+- "hash-migration" technology for scenarios where SHA1 falls

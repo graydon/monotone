@@ -9,6 +9,8 @@
 #include <set>
 #include <string>
 
+#include <boost/shared_ptr.hpp>
+
 #include "app_state.hh"
 #include "change_set.hh"
 #include "vocab.hh"
@@ -18,41 +20,33 @@
 // sub-components are separately serialized (they could be but there is no
 // call for it). a grammar (aside from the parsing code) for the serialized
 // form will show up here eventually. until then, here is an example.
+// form will show up here eventually. until then, here is an example.
 //
-// revision:
-// {
-//   new_manifest: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//   edge:
-//   {
-//     old_revision: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//     old_manifest: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//     change_set:
-//     {
-//       paths:
-//       {
-//          rename_file:
-//          {
-//            src: "usr/bin/sh"
-//            dst: "usr/bin/foo"
-//          }
-//          delete_dir: "usr/bin"
-//          add_file: "tmp/foo/bar.txt"
-//       }
-//       deltas:
-//       {
-//         delta:
-//         {
-//           path: "tmp/foo/bar.txt"
-//           src: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]     
-//           dst: [71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc]
-//         }
-//     }
-//   }
-// }
+// new_manifest [16afa28e8783987223993d67f54700f0ecfedfaa]
+//
+// old_revision [d023242b16cbdfd46686a5d217af14e3c339f2b4]
+// old_manifest [2dc4a99e27a0026395fbd4226103614928c55c77]
+//
+// delete_file "deleted-file.cc"
+//
+// rename_file "old-file.cc"
+//          to "new-file.cc"
+//
+// add_file "added-file.cc"
+//
+// patch "added-file.cc"
+//  from []
+//    to [da39a3ee5e6b4b0d3255bfef95601890afd80709]
+//
+// patch "changed-file.cc"
+//  from [588fd8a7bcde43a46f0bde1dd1d13e9e77cf25a1]
+//    to [559133b166c3154c864f912e9f9452bfc452dfdd]
+//
+// patch "new-file.cc"
+//  from [95b50ede90037557fd0fbbfad6a9fdd67b0bf413]
+//    to [bd39086b9da776fc22abd45734836e8afb59c8c0]
 
-extern std::string revision_file_name;
-
-typedef std::map<revision_id, std::pair<manifest_id, change_set> > 
+typedef std::map<revision_id, std::pair<manifest_id, boost::shared_ptr<change_set> > > 
 edge_map;
 
 typedef edge_map::value_type
@@ -61,6 +55,10 @@ edge_entry;
 struct 
 revision_set
 {
+  void check_sane() const;
+  revision_set() {}
+  revision_set(revision_set const & other);
+  revision_set const & operator=(revision_set const & other);
   manifest_id new_manifest;
   edge_map edges;
 };
@@ -92,48 +90,85 @@ edge_old_manifest(edge_map::const_iterator i)
 inline change_set const & 
 edge_changes(edge_entry const & e) 
 { 
-  return e.second.second; 
+  return *(e.second.second); 
 }
 
 inline change_set const & 
 edge_changes(edge_map::const_iterator i) 
 { 
-  return i->second.second; 
+  return *(i->second.second); 
 }
 
 void 
 read_revision_set(data const & dat,
-		  revision_set & rev);
+                  revision_set & rev);
 
 void 
 read_revision_set(revision_data const & dat,
-		  revision_set & rev);
+                  revision_set & rev);
 
 void
 write_revision_set(revision_set const & rev,
-		   data & dat);
+                   data & dat);
 
 void
 write_revision_set(revision_set const & rev,
-		   revision_data & dat);
+                   revision_data & dat);
+
+// sanity checking
+
+void
+check_sane_history(revision_id const & child_id, int depth, app_state & app);
 
 // graph walking
 
 bool 
-find_common_ancestor(revision_id const & left,
-		     revision_id const & right,
-		     revision_id & anc,
-		     app_state & app);
+find_common_ancestor_for_merge(revision_id const & left,
+                               revision_id const & right,
+                               revision_id & anc,
+                               app_state & app);
+
+bool 
+find_least_common_ancestor(revision_id const & left,
+                           revision_id const & right,
+                           revision_id & anc,
+                           app_state & app);
+
+bool
+is_ancestor(revision_id const & ancestor,
+            revision_id const & descendent,
+            app_state & app);
+
+void
+toposort(std::set<revision_id> const & revisions,
+         std::vector<revision_id> & sorted,
+         app_state & app);
+
+void
+erase_ancestors(std::set<revision_id> & revisions, app_state & app);
+
+void
+ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
+                    std::set<revision_id> & new_stuff,
+                    app_state & app);
 
 void 
 calculate_composite_change_set(revision_id const & ancestor,
-			       revision_id const & child,
-			       app_state & app,
-			       change_set & composed);
+                               revision_id const & child,
+                               app_state & app,
+                               change_set & composed);
 
+void
+calculate_arbitrary_change_set(revision_id const & start,
+                               revision_id const & end,
+                               app_state & app,
+                               change_set & composed);
 
 void 
-build_changesets(app_state & app);
+build_changesets_from_manifest_ancestry(app_state & app);
+
+void 
+build_changesets_from_existing_revs(app_state & app);
 
 // basic_io access to printers and parsers
 
@@ -141,18 +176,18 @@ namespace basic_io { struct printer; struct parser; }
 
 void 
 print_revision(basic_io::printer & printer,
-	       revision_set const & rev);
+               revision_set const & rev);
 
 void 
 parse_revision(basic_io::parser & parser,
-	       revision_set & rev);
+               revision_set & rev);
 
 void 
 print_edge(basic_io::printer & printer,
-	   edge_entry const & e);
+           edge_entry const & e);
 
 void 
 parse_edge(basic_io::parser & parser,
-	   edge_map & es);
+           edge_map & es);
 
 #endif // __REVISION_HH__

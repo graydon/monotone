@@ -8,12 +8,14 @@
 extern "C" {
 #include <lua.h>
 #include <lualib.h>
+#include <lauxlib.h>
 }
 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <signal.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -27,6 +29,7 @@ extern "C" {
 #include "mkstemp.hh"
 #include "sanity.hh"
 #include "vocab.hh"
+#include "platform.hh"
 
 // defined in {std,test}_hooks.lua, converted
 #include "test_hooks.h"
@@ -50,18 +53,12 @@ extern "C"
     int fd = -1;
     FILE **pf = NULL;
     char const *filename = lua_tostring (L, -1);
-    char *dup = strdup(filename);
-    
-    if (dup == NULL)
-      return 0;
+    std::string dup(filename);
     
     fd = monotone_mkstemp(dup);
     
     if (fd == -1)
-      {
-	free(dup);
-	return 0;
-      }
+      return 0;
     
     // this magic constructs a lua object which the lua io library
     // will enjoy working with
@@ -71,18 +68,94 @@ extern "C"
     lua_rawget(L, LUA_REGISTRYINDEX);
     lua_setmetatable(L, -2);  
     
-    lua_pushstring(L, dup);
-    free(dup);
+    lua_pushstring(L, dup.c_str());
     
     if (*pf == NULL) 
       {
-	lua_pushnil(L);
-	lua_pushfstring(L, "%s", strerror(errno));
-	lua_pushnumber(L, errno);
-	return 3;
+        lua_pushnil(L);
+        lua_pushfstring(L, "%s", strerror(errno));
+        lua_pushnumber(L, errno);
+        return 3;
       }
     else
       return 2;
+  }
+
+  static int
+  monotone_existsonpath_for_lua(lua_State *L)
+  {
+    const char *exe = lua_tostring(L, -1);
+    lua_pushnumber(L, existsonpath(exe));
+    return 1;
+  }
+
+  static int
+  monotone_is_executable_for_lua(lua_State *L)
+  {
+    const char *path = lua_tostring(L, -1);
+    lua_pushboolean(L, is_executable(path));
+    return 1;
+  }
+
+  static int
+  monotone_make_executable_for_lua(lua_State *L)
+  {
+    const char *path = lua_tostring(L, -1);
+    lua_pushnumber(L, make_executable(path));
+    return 1;
+  }
+
+  static int
+  monotone_spawn_for_lua(lua_State *L)
+  {
+    int n = lua_gettop(L);
+    const char *path = lua_tostring(L, -n);
+    char **argv = (char**)malloc((n+1)*sizeof(char*));
+    int i;
+    pid_t ret;
+    if (argv==NULL)
+      return 0;
+    argv[0] = (char*)path;
+    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(n - i));
+    argv[i] = NULL;
+    ret = process_spawn(argv);
+    free(argv);
+    lua_pushnumber(L, ret);
+    return 1;
+  }
+
+  static int
+  monotone_wait_for_lua(lua_State *L)
+  {
+    pid_t pid = (pid_t)lua_tonumber(L, -1);
+    int res;
+    int ret;
+    ret = process_wait(pid, &res);
+    lua_pushnumber(L, res);
+    lua_pushnumber(L, ret);
+    return 2;
+  }
+
+  static int
+  monotone_kill_for_lua(lua_State *L)
+  {
+    int n = lua_gettop(L);
+    pid_t pid = (pid_t)lua_tonumber(L, -2);
+    int sig;
+    if (n>1)
+      sig = (int)lua_tonumber(L, -1);
+    else
+      sig = SIGTERM;
+    lua_pushnumber(L, process_kill(pid, sig));
+    return 1;
+  }
+
+  static int
+  monotone_sleep_for_lua(lua_State *L)
+  {
+    int seconds = (int)lua_tonumber(L, -1);
+    lua_pushnumber(L, process_sleep(seconds));
+    return 1;
   }
 }
 
@@ -95,15 +168,22 @@ lua_hooks::lua_hooks()
   // no atpanic support in 4.x
   // lua_atpanic (st, &panic_thrower);
 
-  lua_baselibopen(st);
-  lua_iolibopen(st);
-  lua_strlibopen(st);
-  lua_mathlibopen(st);
-  lua_tablibopen(st);
-  lua_dblibopen(st);
+  luaopen_base(st);
+  luaopen_io(st);
+  luaopen_string(st);
+  luaopen_math(st);
+  luaopen_table(st);
+  luaopen_debug(st);
 
   // add monotone-specific functions
   lua_register(st, "mkstemp", monotone_mkstemp_for_lua);
+  lua_register(st, "existsonpath", monotone_existsonpath_for_lua);
+  lua_register(st, "is_executable", monotone_is_executable_for_lua);
+  lua_register(st, "make_executable", monotone_make_executable_for_lua);
+  lua_register(st, "spawn", monotone_spawn_for_lua);
+  lua_register(st, "wait", monotone_wait_for_lua);
+  lua_register(st, "kill", monotone_kill_for_lua);
+  lua_register(st, "sleep", monotone_sleep_for_lua);
 }
 
 lua_hooks::~lua_hooks()
@@ -123,6 +203,7 @@ Lua
 {
   lua_State * st;
   bool failed;
+  static std::set<string> missing_functions;
 
   Lua(lua_State * s) : 
     st(s), failed(false)
@@ -137,6 +218,15 @@ Lua
   { 
     return !failed; 
   }
+
+  void report_error()
+  {
+    I(lua_isstring(st, -1));
+    string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
+    W(F("%s\n") % err);
+    lua_pop(st, 1);
+    failed = true;
+  }
  
   // getters
 
@@ -145,15 +235,15 @@ Lua
     if (failed) return *this;
     if (!lua_istable (st, idx)) 
       { 
-	L(F("lua istable() failed\n")); 
-	failed = true; 
-	return *this; 
+        L(F("lua istable() failed\n")); 
+        failed = true; 
+        return *this; 
       }
     if (lua_gettop (st) < 1) 
       { 
-	L(F("lua stack top > 0 failed\n")); 
-	failed = true; 
-	return *this; 
+        L(F("lua stack top > 0 failed\n")); 
+        failed = true; 
+        return *this; 
       }
     lua_gettable(st, idx); 
     return *this; 
@@ -165,8 +255,8 @@ Lua
     get(idx);
     if (!lua_isfunction (st, -1)) 
       { 
-	L(F("lua isfunction() failed in get_fn\n")); 
-	failed = true; 
+        L(F("lua isfunction() failed in get_fn\n")); 
+        failed = true; 
       }
     return *this; 
   }
@@ -177,8 +267,8 @@ Lua
     get(idx);
     if (!lua_istable (st, -1)) 
       { 
-	L(F("lua istable() failed in get_tab\n")); 
-	failed = true; 
+        L(F("lua istable() failed in get_tab\n")); 
+        failed = true; 
       }
     return *this; 
   }
@@ -189,8 +279,8 @@ Lua
     get(idx);
     if (!lua_isstring (st, -1)) 
       { 
-	L(F("lua isstring() failed in get_str\n")); 
-	failed = true; 
+        L(F("lua isstring() failed in get_str\n")); 
+        failed = true; 
       }
     return *this; 
   }
@@ -201,8 +291,8 @@ Lua
     get(idx);
     if (!lua_isnumber (st, -1)) 
       { 
-	L(F("lua isnumber() failed in get_num\n")); 
-	failed = true; 
+        L(F("lua isnumber() failed in get_num\n")); 
+        failed = true; 
       }
     return *this; 
   }
@@ -213,8 +303,8 @@ Lua
     get(idx);
     if (!lua_isboolean (st, -1)) 
       { 
-	L(F("lua isboolean() failed in get_bool\n")); 
-	failed = true; 
+        L(F("lua isboolean() failed in get_bool\n")); 
+        failed = true; 
       }
     return *this; 
   }
@@ -226,9 +316,9 @@ Lua
     if (failed) return *this;
     if (!lua_isstring (st, -1)) 
       { 
-	L(F("lua isstring() failed in extract_str\n")); 
-	failed = true; 
-	return *this;
+        L(F("lua isstring() failed in extract_str\n")); 
+        failed = true; 
+        return *this;
       }
     str = string(lua_tostring(st, -1), lua_strlen(st, -1));
     return *this;
@@ -239,9 +329,9 @@ Lua
     if (failed) return *this;
     if (!lua_isnumber (st, -1)) 
       { 
-	L(F("lua isnumber() failed in extract_int\n")); 
-	failed = true; 
-	return *this;
+        L(F("lua isnumber() failed in extract_int\n")); 
+        failed = true; 
+        return *this;
       }
     i = static_cast<int>(lua_tonumber(st, -1));
     return *this;
@@ -252,9 +342,9 @@ Lua
     if (failed) return *this;
     if (!lua_isnumber (st, -1)) 
       { 
-	L(F("lua isnumber() failed in extract_double\n")); 
-	failed = true; 
-	return *this;
+        L(F("lua isnumber() failed in extract_double\n")); 
+        failed = true; 
+        return *this;
       }
     i = lua_tonumber(st, -1);
     return *this;
@@ -266,9 +356,9 @@ Lua
     if (failed) return *this;
     if (!lua_isboolean (st, -1)) 
       { 
-	L(F("lua isboolean() failed in extract_bool\n")); 
-	failed = true; 
-	return *this;
+        L(F("lua isboolean() failed in extract_bool\n")); 
+        failed = true; 
+        return *this;
       }
     i = (lua_toboolean(st, -1) == 1);
     return *this;
@@ -282,9 +372,9 @@ Lua
     if (failed) return *this;
     if (!lua_istable(st, -1)) 
       { 
-	L(F("lua istable() failed in begin\n")); 
-	failed = true; 
-	return *this;
+        L(F("lua istable() failed in begin\n")); 
+        failed = true; 
+        return *this;
       }
     I(lua_checkstack (st, 1));
     lua_pushnil(st);    
@@ -296,14 +386,14 @@ Lua
     if (failed) return false;
     if (!lua_istable(st, -2)) 
       { 
-	L(F("lua istable() failed in next\n")); 
-	failed = true; 
-	return false;
+        L(F("lua istable() failed in next\n")); 
+        failed = true; 
+        return false;
       }
     I(lua_checkstack (st, 1));
     if (lua_next(st, -2) != 0)
       {
-	return true;
+        return true;
       }
     pop();
     return false;
@@ -343,6 +433,14 @@ Lua
     return *this; 
   }
 
+  Lua & push_nil() 
+  { 
+    if (failed) return *this;
+    I(lua_checkstack (st, 1));
+    lua_pushnil(st); 
+    return *this; 
+  }
+
   Lua & push_table() 
   { 
     if (failed) return *this;
@@ -359,18 +457,13 @@ Lua
     return *this; 
   }
 
-
   Lua & call(int in, int out) 
   { 
     if (failed) return *this;
     I(lua_checkstack (st, out));
-    if (lua_pcall(st, in, out, 0) != 0) 
+    if (lua_pcall(st, in, out, 0) != 0)
       { 
-	I(lua_isstring (st, -1));
-	string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
-	L(F("lua pcall() failed: %s\n") % err); 
-	lua_pop(st, 1); 
-	failed = true; 
+        report_error();
       } 
     return *this; 
   }
@@ -380,26 +473,66 @@ Lua
     if (failed) return *this;
     if (lua_gettop (st) < count) 
       { 
-	L(F("lua stack top >= count failed\n")); 
-	failed = true; 
-	return *this; 
+        L(F("lua stack top >= count failed\n")); 
+        failed = true; 
+        return *this; 
       }
     lua_pop(st, count); 
     return *this; 
   }
+
+  Lua & func(string const & fname)
+  {
+    if (!failed) 
+      {
+        if (missing_functions.find(fname) != missing_functions.end())
+          failed = true;
+        else
+          {
+            push_str(fname);
+            get_fn();
+            if (failed)
+              missing_functions.insert(fname);
+          }
+      }
+    return *this;
+  }
+
+  Lua & loadstring(string const & str, string const & identity)
+  {
+    if (!failed)
+      {
+        if (luaL_loadbuffer(st, str.c_str(), str.size(), identity.c_str()))
+          {
+            report_error();
+          }
+      }
+    return *this;
+  }
+
+  Lua & loadfile(string const & filename)
+  {
+    if (!failed)
+      {
+        if (luaL_loadfile(st, filename.c_str()))
+          {
+            report_error();
+          }
+      }
+    return *this;
+  }
 };
 
+std::set<string> Lua::missing_functions;
+
 static bool 
-run_string(lua_State * st, string const &str)
+run_string(lua_State * st, string const &str, string const & identity)
 {
   I(st);
   return 
     Lua(st)
-    .push_str("loadstring")
-    .get_fn()
-    .push_str(str)
-    .call(1,1)
-    .call(0,0)
+    .loadstring(str, identity)
+    .call(0,1)
     .ok();
 }
 
@@ -409,11 +542,8 @@ run_file(lua_State * st, string const &filename)
   I(st);
   return 
     Lua(st)
-    .push_str("loadfile")
-    .get_fn()
-    .push_str(filename)
-    .call(1,1)
-    .call(0,0)
+    .loadfile(filename)
+    .call(0,1)
     .ok();
 }
 
@@ -422,7 +552,7 @@ run_file(lua_State * st, string const &filename)
 void 
 lua_hooks::add_test_hooks()
 {
-  if (!run_string(st, test_hooks_constant))
+  if (!run_string(st, test_hooks_constant, string("<test hooks>")))
     throw oops("lua error while setting up testing hooks");
 }
 #endif
@@ -430,14 +560,14 @@ lua_hooks::add_test_hooks()
 void 
 lua_hooks::add_std_hooks()
 {
-  if (!run_string(st, std_hooks_constant))
+  if (!run_string(st, std_hooks_constant, string("<std hooks>")))
     throw oops("lua error while setting up standard hooks");
 }
 
 void 
 lua_hooks::default_rcfilename(fs::path & file)
 {
-  file = mkpath(get_homedir()) / mkpath(".monotonerc");
+  file = mkpath(get_homedir()) / mkpath(".monotone/monotonerc");
 }
 
 void 
@@ -447,22 +577,34 @@ lua_hooks::working_copy_rcfilename(fs::path & file)
 }
 
 
+void
+lua_hooks::load_rcfile(utf8 const & rc)
+{
+  I(st);
+  data dat;
+  L(F("opening rcfile '%s' ...\n") % rc);
+  read_data_for_command_line(rc, dat);
+  N(run_string(st, dat(), rc().c_str()),
+    F("lua error while loading rcfile '%s'") % rc);
+  L(F("'%s' is ok\n") % rc);
+}
+
 void 
-lua_hooks::add_rcfile(fs::path const & rc)
+lua_hooks::load_rcfile(fs::path const & rc, bool required)
 {
   I(st);  
   if (fs::exists(rc))
     {
       L(F("opening rcfile '%s' ...\n") % rc.string());
-      if (!run_file(st, rc.string()))
-	{
-	  L(F("'%s' is no good\n") % rc.string());
-	  throw oops("lua error while loading " + rc.string());
-	}
+      N(run_file(st, rc.string()),
+        F("lua error while loading '%s'") % rc.string());
       L(F("'%s' is ok\n") % rc.string());
     }
   else
-    L(F("skipping nonexistent rcfile '%s'\n") % rc.string());
+    {
+      N(!required, F("rcfile '%s' does not exist") % rc.string());
+      L(F("skipping nonexistent rcfile '%s'\n") % rc.string());
+    }
 }
 
 
@@ -474,8 +616,7 @@ bool
 lua_hooks::hook_get_passphrase(rsa_keypair_id const & k, string & phrase)
 {
   return Lua(st)
-    .push_str("get_passphrase")
-    .get_fn()
+    .func("get_passphrase")
     .push_str(k())
     .call(1,1)
     .extract_str(phrase)
@@ -487,8 +628,7 @@ lua_hooks::hook_persist_phrase_ok()
 {
   bool persist_ok = false;
   bool executed_ok = Lua(st)
-    .push_str("persist_phrase_ok")
-    .get_fn()
+    .func("persist_phrase_ok")
     .call(0,1)
     .extract_bool(persist_ok)
     .ok();
@@ -497,11 +637,10 @@ lua_hooks::hook_persist_phrase_ok()
 
 bool 
 lua_hooks::hook_expand_selector(std::string const & sel, 
-				std::string & exp)
+                                std::string & exp)
 {
   return Lua(st)
-    .push_str("expand_selector")
-    .get_fn()
+    .func("expand_selector")
     .push_str(sel)
     .call(1,1)
     .extract_str(exp)
@@ -509,13 +648,26 @@ lua_hooks::hook_expand_selector(std::string const & sel,
 }
 
 bool 
+lua_hooks::hook_expand_date(std::string const & sel, 
+                            std::string & exp)
+{
+	exp.clear();
+  bool res= Lua(st)
+    .func("expand_date")
+    .push_str(sel)
+    .call(1,1)
+    .extract_str(exp)
+    .ok();
+	return res && exp.size();
+}
+
+bool 
 lua_hooks::hook_get_branch_key(cert_value const & branchname, 
-			       rsa_keypair_id & k)
+                               rsa_keypair_id & k)
 {
   string key;
   bool ok = Lua(st)
-    .push_str("get_branch_key")
-    .get_fn()
+    .func("get_branch_key")
     .push_str(branchname())
     .call(1,1)
     .extract_str(key)
@@ -526,12 +678,27 @@ lua_hooks::hook_get_branch_key(cert_value const & branchname,
 }
 
 bool 
+lua_hooks::hook_get_priv_key(rsa_keypair_id const & k,
+                               base64< arc4<rsa_priv_key> > & priv_key )
+{
+  string key;
+  bool ok = Lua(st)
+    .func("get_priv_key")
+    .push_str(k())
+    .call(1,1)
+    .extract_str(key)
+    .ok();
+
+  priv_key = key;
+  return ok;
+}
+
+bool 
 lua_hooks::hook_get_author(cert_value const & branchname, 
-			   string & author)
+                           string & author)
 {
   return Lua(st)
-    .push_str("get_author")
-    .get_fn()
+    .func("get_author")
     .push_str(branchname())
     .call(1,1)
     .extract_str(author)
@@ -539,14 +706,15 @@ lua_hooks::hook_get_author(cert_value const & branchname,
 }
 
 bool 
-lua_hooks::hook_edit_comment(string const & commentary, 
-			     string & result)
+lua_hooks::hook_edit_comment(string const & commentary,
+                             string const & user_log_message,
+                             string & result)
 {
   return Lua(st)
-    .push_str("edit_comment")
-    .get_fn()
+    .func("edit_comment")
     .push_str(commentary)
-    .call(1,1)
+    .push_str(user_log_message)
+    .call(2,1)
     .extract_str(result)
     .ok();
 }
@@ -556,8 +724,7 @@ lua_hooks::hook_ignore_file(file_path const & p)
 {
   bool ignore_it = false;
   bool exec_ok = Lua(st)
-    .push_str("ignore_file")
-    .get_fn()
+    .func("ignore_file")
     .push_str(p())
     .call(1,1)
     .extract_bool(ignore_it)
@@ -570,8 +737,7 @@ lua_hooks::hook_ignore_branch(std::string const & branch)
 {
   bool ignore_it = false;
   bool exec_ok = Lua(st)
-    .push_str("ignore_branch")
-    .get_fn()
+    .func("ignore_branch")
     .push_str(branch)
     .call(1,1)
     .extract_bool(ignore_it)
@@ -584,8 +750,7 @@ lua_hooks::hook_non_blocking_rng_ok()
 {
   bool ok = false;
   bool exec_ok = Lua(st)
-    .push_str("non_blocking_rng_ok")
-    .get_fn()
+    .func("non_blocking_rng_ok")
     .call(0,1)
     .extract_bool(ok)
     .ok();
@@ -594,13 +759,12 @@ lua_hooks::hook_non_blocking_rng_ok()
 
 static inline bool
 shared_trust_function_body(Lua & ll,
-			   std::set<rsa_keypair_id> const & signers,
-			   hexenc<id> const & id,
-			   cert_name const & name,
-			   cert_value const & val)
+                           std::set<rsa_keypair_id> const & signers,
+                           hexenc<id> const & id,
+                           cert_name const & name,
+                           cert_value const & val)
 {
-  ll.get_fn() 
-    .push_table();
+  ll.push_table();
   
   int k = 0;
   for (set<rsa_keypair_id>::const_iterator v = signers.begin();
@@ -626,45 +790,33 @@ shared_trust_function_body(Lua & ll,
 
 bool 
 lua_hooks::hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
-				       hexenc<id> const & id,
-				       cert_name const & name,
-				       cert_value const & val)
+                                       hexenc<id> const & id,
+                                       cert_name const & name,
+                                       cert_value const & val)
 {
   Lua ll(st);
-  ll.push_str("get_revision_cert_trust");  
+  ll.func("get_revision_cert_trust");  
   return shared_trust_function_body(ll, signers, id, name, val);
 }
 
 bool 
 lua_hooks::hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
-					hexenc<id> const & id,
-					cert_name const & name,
-					cert_value const & val)
+                                        hexenc<id> const & id,
+                                        cert_name const & name,
+                                        cert_value const & val)
 {
   Lua ll(st);
-  ll.push_str("get_manifest_cert_trust");
-  return shared_trust_function_body(ll, signers, id, name, val);
-}
-
-bool 
-lua_hooks::hook_get_file_cert_trust(std::set<rsa_keypair_id> const & signers,
-				    hexenc<id> const & id,
-				    cert_name const & name,
-				    cert_value const & val)
-{
-  Lua ll(st);
-  ll.push_str("get_file_cert_trust");
+  ll.func("get_manifest_cert_trust");
   return shared_trust_function_body(ll, signers, id, name, val);
 }
 
 bool 
 lua_hooks::hook_accept_testresult_change(map<rsa_keypair_id, bool> const & old_results,
-					 map<rsa_keypair_id, bool> const & new_results)
+                                         map<rsa_keypair_id, bool> const & new_results)
 {
   Lua ll(st);
   ll
-    .push_str("accept_testresult_change")
-    .get_fn()
+    .func("accept_testresult_change")
     .push_table();
 
   for (map<rsa_keypair_id, bool>::const_iterator i = old_results.begin();
@@ -697,17 +849,22 @@ lua_hooks::hook_accept_testresult_change(map<rsa_keypair_id, bool> const & old_r
 
 
 bool 
-lua_hooks::hook_merge2(data const & left, 
-		       data const & right, 
-		       data & result)
+lua_hooks::hook_merge2(file_path const & left_path,
+                       file_path const & right_path,
+                       file_path const & merged_path,
+                       data const & left, 
+                       data const & right, 
+                       data & result)
 {
   string res;
   bool ok = Lua(st)
-    .push_str("merge2")
-    .get_fn()
+    .func("merge2")
+    .push_str(left_path())
+    .push_str(right_path())
+    .push_str(merged_path())
     .push_str(left())
     .push_str(right())
-    .call(2,1)
+    .call(5,1)
     .extract_str(res)
     .ok();
   result = res;
@@ -715,19 +872,26 @@ lua_hooks::hook_merge2(data const & left,
 }
 
 bool 
-lua_hooks::hook_merge3(data const & ancestor, 
-		       data const & left, 
-		       data const & right, 
-		       data & result)
+lua_hooks::hook_merge3(file_path const & anc_path,
+                       file_path const & left_path,
+                       file_path const & right_path,
+                       file_path const & merged_path,
+                       data const & ancestor, 
+                       data const & left, 
+                       data const & right, 
+                       data & result)
 {
   string res;
   bool ok = Lua(st)
-    .push_str("merge3")
-    .get_fn()
+    .func("merge3")
+    .push_str(anc_path())
+    .push_str(left_path())
+    .push_str(right_path())
+    .push_str(merged_path())
     .push_str(ancestor())
     .push_str(left())
     .push_str(right())
-    .call(3,1)
+    .call(7,1)
     .extract_str(res)
     .ok();
   result = res;
@@ -736,14 +900,13 @@ lua_hooks::hook_merge3(data const & ancestor,
 
 bool 
 lua_hooks::hook_resolve_file_conflict(file_path const & anc,
-				      file_path const & a,
-				      file_path const & b,
-				      file_path & res)
+                                      file_path const & a,
+                                      file_path const & b,
+                                      file_path & res)
 {
   string tmp;
   bool ok = Lua(st)
-    .push_str("resolve_file_conflict")
-    .get_fn()
+    .func("resolve_file_conflict")
     .push_str(anc())
     .push_str(a())
     .push_str(b())
@@ -756,14 +919,13 @@ lua_hooks::hook_resolve_file_conflict(file_path const & anc,
 
 bool 
 lua_hooks::hook_resolve_dir_conflict(file_path const & anc,
-				     file_path const & a,
-				     file_path const & b,
-				     file_path & res)
+                                     file_path const & a,
+                                     file_path const & b,
+                                     file_path & res)
 {
   string tmp;
   bool ok = Lua(st)
-    .push_str("resolve_dir_conflict")
-    .get_fn()
+    .func("resolve_dir_conflict")
     .push_str(anc())
     .push_str(a())
     .push_str(b())
@@ -775,15 +937,27 @@ lua_hooks::hook_resolve_dir_conflict(file_path const & anc,
 }
 
 
+bool
+lua_hooks::hook_use_inodeprints()
+{
+  bool use = false, exec_ok = false;
+
+  exec_ok = Lua(st)
+    .func("use_inodeprints")
+    .call(0, 1)
+    .extract_bool(use)
+    .ok();
+  return use && exec_ok;
+}
+
 bool 
 lua_hooks::hook_get_netsync_read_permitted(std::string const & collection, 
-					   rsa_keypair_id const & identity)
+                                           rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
-    .push_str("get_netsync_read_permitted")
-    .get_fn()
+    .func("get_netsync_read_permitted")
     .push_str(collection)
     .push_str(identity())
     .call(2,1)
@@ -799,8 +973,7 @@ lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & collect
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
-    .push_str("get_netsync_anonymous_read_permitted")
-    .get_fn()
+    .func("get_netsync_anonymous_read_permitted")
     .push_str(collection)
     .call(1,1)
     .extract_bool(permitted)
@@ -811,13 +984,12 @@ lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & collect
 
 bool 
 lua_hooks::hook_get_netsync_write_permitted(std::string const & collection, 
-					    rsa_keypair_id const & identity)
+                                            rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
-    .push_str("get_netsync_write_permitted")
-    .get_fn()
+    .func("get_netsync_write_permitted")
     .push_str(collection)
     .push_str(identity())
     .call(2,1)
@@ -827,11 +999,43 @@ lua_hooks::hook_get_netsync_write_permitted(std::string const & collection,
   return exec_ok && permitted;  
 }
 
+bool 
+lua_hooks::hook_init_attributes(file_path const & filename,
+                                std::map<std::string, std::string> & attrs)
+{
+  Lua ll(st);
+
+  ll
+    .push_str("attr_init_functions")
+    .get_tab()
+    .push_nil();
+
+  while (ll.next())
+    {
+      ll.push_str(filename());
+      ll.call(1, 1);
+
+      if (lua_isstring(st, -1))
+        {
+          string key, value;
+
+          ll.extract_str(value);
+          ll.pop();
+          ll.extract_str(key);
+
+          attrs[key] = value;
+        }
+      else
+        ll.pop();
+    }
+
+  return ll.pop().ok();
+}
 
 bool 
 lua_hooks::hook_apply_attribute(string const & attr, 
-				file_path const & filename, 
-				string const & value)
+                                file_path const & filename, 
+                                string const & value)
 {
   return Lua(st)
     .push_str("attr_functions")
@@ -849,8 +1053,7 @@ bool
 lua_hooks::hook_get_system_linesep(string & linesep)
 {
   return Lua(st)
-    .push_str("get_system_linesep")
-    .get_fn()
+    .func("get_system_linesep")
     .call(0,1)
     .extract_str(linesep)
     .ok();
@@ -858,13 +1061,12 @@ lua_hooks::hook_get_system_linesep(string & linesep)
 
 bool 
 lua_hooks::hook_get_charset_conv(file_path const & p, 
-				 std::string & db, 
-				 std::string & ext)
+                                 std::string & db, 
+                                 std::string & ext)
 {
   Lua ll(st);
   ll
-    .push_str("get_charset_conv")
-    .get_fn()
+    .func("get_charset_conv")
     .push_str(p())
     .call(1,1)
     .begin();
@@ -879,13 +1081,12 @@ lua_hooks::hook_get_charset_conv(file_path const & p,
 
 bool 
 lua_hooks::hook_get_linesep_conv(file_path const & p, 
-				 std::string & db, 
-				 std::string & ext)
+                                 std::string & db, 
+                                 std::string & ext)
 {
   Lua ll(st);
   ll
-    .push_str("get_linesep_conv")
-    .get_fn()
+    .func("get_linesep_conv")
     .push_str(p())
     .call(1,1)
     .begin();
@@ -900,12 +1101,11 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
 
 bool 
 lua_hooks::hook_note_commit(revision_id const & new_id,
-			    map<cert_name, cert_value> const & certs)
+                            map<cert_name, cert_value> const & certs)
 {
   Lua ll(st);
   ll
-    .push_str("note_commit")
-    .get_fn()
+    .func("note_commit")
     .push_str(new_id.inner()());
 
   ll.push_table();

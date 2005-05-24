@@ -1,0 +1,46 @@
+AT_SETUP([log hides deleted/renamed files])
+
+# This test checks that 'monotone log' of deleted and renamed files shows
+# nothing in a further revision, as they are not applicable any more.
+
+MONOTONE_SETUP
+
+ADD_FILE(foo, [foo
+])
+AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of foo.",
+         [], [ignore], [ignore])
+
+ADD_FILE(bar, [bar
+])
+AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of bar.",
+         [], [ignore], [ignore])
+
+ADD_FILE(baz, [baz
+])
+AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of baz.",
+         [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE drop bar baz, [], [ignore], [ignore])
+COMMIT(testbranch)
+rm -f bar baz
+
+mv foo bar
+AT_CHECK(MONOTONE rename foo bar, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE log foo, [], [], [ignore])
+
+AT_CHECK(MONOTONE log baz, [], [], [ignore])
+
+AT_CHECK(MONOTONE log bar | grep "^Addition of @<:@a-z@:>@@<:@a-z@:>@@<:@a-z@:>@.$",
+[], [Addition of foo.
+], [ignore])
+
+AT_CHECK(MONOTONE log | grep "^Addition of @<:@a-z@:>@@<:@a-z@:>@@<:@a-z@:>@.$",
+[],
+[Addition of baz.
+Addition of bar.
+Addition of foo.
+], [ignore])
+
+AT_CLEANUP

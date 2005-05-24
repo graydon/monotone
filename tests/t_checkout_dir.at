@@ -1,0 +1,28 @@
+AT_SETUP([checkout validates target directory])
+
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [foo
+])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE --branch=testbranch checkout test_dir1,
+         [0], [ignore], [ignore])
+
+echo >test_dir2
+AT_CHECK(MONOTONE --branch=testbranch checkout test_dir2,
+         [1], [ignore], [ignore])
+
+mkdir test_dir3
+chmod 444 test_dir3
+# XFAIL if run as root (hi Gentoo!)
+AT_XFAIL_IF(test -O /)
+AT_CHECK(MONOTONE --branch=testbranch checkout test_dir3,
+         [1], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch checkout test_dir3/subdir,
+        [1], [ignore], [ignore])
+# Reset the permissions so Autotest can correctly clean up our
+# temporary directory.
+chmod 700 test_dir3
+
+AT_CLEANUP

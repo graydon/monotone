@@ -1,0 +1,22 @@
+AT_SETUP([check_same_db_contents macro])
+MONOTONE_SETUP
+
+# this test just tests that the testsuite macro CHECK_SAME_DB_CONTENTS works,
+# because other tests depend on that.
+
+ADD_FILE(testfile, [blah
+])
+COMMIT(testbranch1)
+
+ADD_FILE(testfile2, [foo
+])
+COMMIT(testbranch2)
+
+AT_CHECK(cp test.db test2.db)
+CHECK_SAME_DB_CONTENTS(test.db, test2.db)
+
+# Really really should have a test that after modifying one of the dbs, the
+# macro detects the difference, but I can't figure out how to write that in
+# autotest.
+
+AT_CLEANUP

@@ -1,0 +1,17 @@
+AT_SETUP([--author, --date])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [floooooo
+])
+AT_CHECK(MONOTONE commit --author=the_author --date=1999-12-31T12:00:00 --branch=foo --message=foo, [], [ignore], [ignore])
+REV=`BASE_REVISION`
+AT_CHECK(MONOTONE log --revision=$REV, [], [stdout], [ignore])
+
+AT_CHECK(grep -q '^Author: the_author' stdout)
+AT_CHECK(grep -q '^Date: 1999-12-31T12:00:00' stdout)
+
+SET_FILE(testfile, [oovel
+])
+AT_CHECK(MONOTONE commit --date=1999-12-31T12:00foo --branch=foo --message=foo, [1], [ignore], [ignore])
+
+AT_CLEANUP

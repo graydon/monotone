@@ -1,0 +1,19 @@
+AT_SETUP([(minor) an lca])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+# Actually, we don't have a reduced test case for this, but this test
+# can serve as a marker until someone tracks this down and makes one.
+
+# The bug is that if, on the main monotone repo, you run
+#   $ monotone lca e3623ca77d2a8b45817ecaa5b67018c453652830 7d5918d0181f7bb9adba2ee63234146d23bcf83e
+# (note that one is in branch net.venge.monotone, one in
+# net.venge.monotone.cvssync, for finding them in monotone-viz) the
+# output is ce860bae312c4bb8483d5b3b2a8cd3bebe2323d5, even though the
+# real lca is 0b17415d7aa112060e8ead9ae7a486510dc61a9d.
+
+AT_CHECK(false)
+
+AT_CLEANUP

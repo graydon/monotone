@@ -1,0 +1,18 @@
+AT_SETUP([update to off-branch rev])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+TR=`BASE_REVISION`
+
+SET_FILE(testfile, [other other
+])
+COMMIT(otherbranch)
+OR=`BASE_REVISION`
+
+AT_CHECK(MONOTONE checkout --branch=testbranch --revision=$TR codir, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE update $OR, [1], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE update --branch=otherbranch $OR, [], [ignore], [ignore])
+
+AT_CLEANUP

@@ -6,6 +6,7 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <utility>
 #include <string>
 #include <iosfwd>
 
@@ -90,11 +91,15 @@ public:                                                \
   ty const & operator=(ty const & other);              \
   bool operator==(ty const & other) const              \
     { return s == other(); }                           \
+  friend void verify(ty &);                            \
   friend std::ostream & operator<<(std::ostream &,     \
                                    ty const &);        \
 };                                                     \
 std::ostream & operator<<(std::ostream &, ty const &);
 
+#define ATOMIC_NOVERIFY(ty)                            \
+ATOMIC(ty)                                             \
+inline void verify(ty &) {}
 
 #define EXTERN extern
 
@@ -102,6 +107,7 @@ std::ostream & operator<<(std::ostream &, ty const &);
 
 #undef EXTERN
 #undef ATOMIC
+#undef ATOMIC_NOVERIFY
 #undef DECORATE
 #undef ENCODING
 
@@ -111,14 +117,17 @@ std::ostream & operator<<(std::ostream &, ty const &);
 typedef revision< hexenc<id> >  revision_id;
 typedef manifest< hexenc<id> >  manifest_id;
 typedef     file< hexenc<id> >      file_id;
+typedef    epoch< hexenc<id> >     epoch_id;
+typedef    epoch< hexenc<data> > epoch_data;
 
-typedef revision< base64< gzip<data> > >   revision_data;
-typedef manifest< base64< gzip<data> > >   manifest_data;
-typedef     file< base64< gzip<data> > >       file_data;
+typedef revision< data >   revision_data;
+typedef manifest< data >   manifest_data;
+typedef     file< data >       file_data;
 
-typedef manifest< base64< gzip<delta> > >  manifest_delta;
-typedef     file< base64< gzip<delta> > >      file_delta;
+typedef manifest< delta >  manifest_delta;
+typedef     file< delta >      file_delta;
 
+typedef std::pair<var_domain, var_name> var_key;
 
 // fs::path is our "generic" safe path type, pointing potentially anywhere
 // in the filesystem. if you want to *define* or work with any of these you
@@ -132,7 +141,6 @@ namespace fs = boost::filesystem;
 #include "cert.hh"
 extern template class revision<cert>;
 extern template class manifest<cert>;
-extern template class file<cert>;
 #endif
 
 #endif // __VOCAB_HH__

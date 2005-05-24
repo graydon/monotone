@@ -1,0 +1,81 @@
+AT_SETUP([rename_dir to non-sibling])
+MONOTONE_SETUP
+
+# Pretty rigorous test of rename_dir, in particular when the target
+# and source of the rename are not sibling directories.
+
+OLD_DIR=subdir1/the_dir
+NEW_DIR=subdir2/target_dir/the_dir
+
+AT_CHECK(mkdir subdir1)
+AT_CHECK(mkdir $OLD_DIR)
+AT_CHECK(mkdir subdir2)
+AT_CHECK(mkdir subdir2/target_dir)
+
+ADD_FILE($OLD_DIR/preexisting, [foo bar blah
+])
+ADD_FILE($OLD_DIR/rename-out-file, [asdfasdf
+])
+AT_CHECK(mkdir $OLD_DIR/rename-out-dir)
+ADD_FILE($OLD_DIR/rename-out-dir/subfile, [9
+])
+ADD_FILE(rename-in-file, [badlsakl
+])
+AT_CHECK(mkdir rename-in-dir)
+ADD_FILE(rename-in-dir/subfile, [10
+])
+ADD_FILE($OLD_DIR/doomed, [badfsda
+])
+ADD_FILE(subdir1/bystander1, [stuff stuff
+])
+COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
+
+ADD_FILE(subdir1/bystander2, [asdfasknb
+])
+ADD_FILE($OLD_DIR/new-file, [foo ping
+])
+AT_CHECK(MONOTONE rename $OLD_DIR/rename-out-file rename-out-file, [], [ignore], [ignore])
+AT_CHECK(mv $OLD_DIR/rename-out-file rename-out-file)
+AT_CHECK(MONOTONE rename $OLD_DIR/rename-out-dir rename-out-dir, [], [ignore], [ignore])
+AT_CHECK(mv $OLD_DIR/rename-out-dir rename-out-dir)
+AT_CHECK(MONOTONE rename rename-in-dir $OLD_DIR/rename-in-dir, [], [ignore], [ignore])
+AT_CHECK(mv rename-in-dir $OLD_DIR/rename-in-dir)
+AT_CHECK(MONOTONE rename rename-in-file $OLD_DIR/rename-in-file, [], [ignore], [ignore])
+AT_CHECK(mv rename-in-file $OLD_DIR/rename-in-file)
+AT_CHECK(MONOTONE drop $OLD_DIR/doomed, [], [ignore], [ignore])
+COMMIT(testbranch)
+LEFT_R=`BASE_REVISION`
+
+REVERT_TO($BASE_R)
+
+AT_CHECK(MONOTONE rename $OLD_DIR/ $NEW_DIR/, [], [ignore], [ignore])
+AT_CHECK(mv $OLD_DIR/ $NEW_DIR/)
+COMMIT(testbranch)
+RIGHT_R=`BASE_REVISION`
+
+AT_CHECK(MONOTONE merge --branch=testbranch, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE checkout --revision=$BASE_R test_dir, [], [ignore], [ignore])
+AT_CHECK( (cd test_dir && MONOTONE --branch=testbranch update), [], [ignore], [ignore])
+MERGED_R=`cd test_dir && BASE_REVISION`
+AT_CHECK(test $BASE_R != $MERGED_R)
+AT_CHECK(test $LEFT_R != $MERGED_R)
+AT_CHECK(test $RIGHT_R != $MERGED_R)
+
+T_NEW_DIR=test_dir/$NEW_DIR
+AT_CHECK(cmp $NEW_DIR/preexisting $T_NEW_DIR/preexisting)
+AT_CHECK(cmp $NEW_DIR/new-file $T_NEW_DIR/new-file)
+AT_CHECK(cmp rename-out-file test_dir/rename-out-file)
+AT_CHECK(test ! -f $T_NEW_DIR/rename-out-file)
+AT_CHECK(cmp rename-out-dir/subfile test_dir/rename-out-dir/subfile)
+AT_CHECK(test ! -f $T_NEW_DIR/rename-out-dir/subfile)
+AT_CHECK(cmp $NEW_DIR/rename-in-file $T_NEW_DIR/rename-in-file)
+AT_CHECK(test ! -f test_dir/rename-in-file)
+AT_CHECK(cmp $NEW_DIR/rename-in-dir/subfile $T_NEW_DIR/rename-in-dir/subfile)
+AT_CHECK(test ! -f test_dir/rename-in-dir/subfile)
+AT_CHECK(test ! -f $T_NEW_DIR/doomed)
+AT_CHECK(cmp subdir1/bystander1 test_dir/subdir1/bystander1)
+AT_CHECK(cmp subdir1/bystander2 test_dir/subdir1/bystander2)
+
+AT_CLEANUP

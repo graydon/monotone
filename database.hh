@@ -11,11 +11,14 @@ struct cert;
 
 #include <vector>
 #include <set>
+#include <map>
 #include <string>
 
 #include <boost/filesystem/path.hpp>
 
-#include "commands.hh"
+#include <sqlite3.h>
+
+#include "selectors.hh"
 #include "manifest.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
@@ -71,6 +74,14 @@ class database
   std::string const schema;
   void check_schema();
 
+  struct statement {
+    int count;
+    statement() : count(0) {}
+    sqlite3_stmt *stmt;
+  };
+
+  std::map<std::string, statement> statement_cache;
+
   struct app_state * __app;
   struct sqlite3 * __sql;
   struct sqlite3 * sql(bool init = false);
@@ -80,102 +91,118 @@ class database
   void install_views();
 
   typedef std::vector< std::vector<std::string> > results;
+ 
   void execute(char const * query, ...);
+ 
   void fetch(results & res, 
-	     int const want_cols, 
-	     int const want_rows, 
-	     char const * query, ...);
-
+             int const want_cols, 
+             int const want_rows, 
+             char const * query, ...);
+  
+  void fetch(results & res, 
+             int const want_cols, 
+             int const want_rows, 
+             char const * query, 
+             va_list args);
+ 
   bool exists(hexenc<id> const & ident, 
-	      std::string const & table);
+              std::string const & table);
   bool delta_exists(hexenc<id> const & ident,
-		    std::string const & table);
+                    std::string const & table);
   bool delta_exists(hexenc<id> const & ident,
-		    hexenc<id> const & base,
-		    std::string const & table);
+                    hexenc<id> const & base,
+                    std::string const & table);
 
-  int count(std::string const & table);
+  unsigned long count(std::string const & table);
+  unsigned long space_usage(std::string const & table,
+                            std::string const & concatenated_columns);
+
+  void get_ids(std::string const & table, std::set< hexenc<id> > & ids); 
 
   void get(hexenc<id> const & new_id,
-	   base64< gzip<data> > & dat,
-	   std::string const & table);
+           data & dat,
+           std::string const & table);
   void get_delta(hexenc<id> const & ident,
-		 hexenc<id> const & base,
-		 base64< gzip<delta> > & del,
-		 std::string const & table);
+                 hexenc<id> const & base,
+                 delta & del,
+                 std::string const & table);
   void get_version(hexenc<id> const & id,
-		   base64< gzip<data> > & dat,
-		   std::string const & data_table,
-		   std::string const & delta_table);
+                   data & dat,
+                   std::string const & data_table,
+                   std::string const & delta_table);
   
   void put(hexenc<id> const & new_id,
-	   base64< gzip<data> > const & dat,
-	   std::string const & table);
+           data const & dat,
+           std::string const & table);
   void drop(hexenc<id> const & base,
-	    std::string const & table);
+            std::string const & table);
   void put_delta(hexenc<id> const & id,
-		 hexenc<id> const & base,
-		 base64< gzip<delta> > const & del,
-		 std::string const & table);
+                 hexenc<id> const & base,
+                 delta const & del,
+                 std::string const & table);
   void put_version(hexenc<id> const & old_id,
-		   hexenc<id> const & new_id,
-		   base64< gzip<delta> > const & del,
-		   std::string const & data_table,
-		   std::string const & delta_table);
+                   hexenc<id> const & new_id,
+                   delta const & del,
+                   std::string const & data_table,
+                   std::string const & delta_table);
   void put_reverse_version(hexenc<id> const & new_id,
-			   hexenc<id> const & old_id,
-			   base64< gzip<delta> > const & reverse_del,
-			   std::string const & data_table,
-			   std::string const & delta_table);
+                           hexenc<id> const & old_id,
+                           delta const & reverse_del,
+                           std::string const & data_table,
+                           std::string const & delta_table);
+
+  void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
 
   bool cert_exists(cert const & t,
-		  std::string const & table);
+                  std::string const & table);
   void put_cert(cert const & t, std::string const & table);  
   void results_to_certs(results const & res,
-		       std::vector<cert> & certs);
+                       std::vector<cert> & certs);
+
+  void get_certs(std::vector< cert > & certs,
+                 std::string const & table);  
 
   void get_certs(hexenc<id> const & id, 
-		std::vector< cert > & certs,
-		std::string const & table);  
+                 std::vector< cert > & certs,
+                 std::string const & table);  
 
-  void get_certs(cert_name const & name, 	      
-		std::vector< cert > & certs,
-		std::string const & table);
-
-  void get_certs(hexenc<id> const & id,
-		cert_name const & name,
-		std::vector< cert > & certs,
-		std::string const & table);  
+  void get_certs(cert_name const & name,              
+                 std::vector< cert > & certs,
+                 std::string const & table);
 
   void get_certs(hexenc<id> const & id,
-		cert_name const & name,
-		base64<cert_value> const & val, 
-		std::vector< cert > & certs,
-		std::string const & table);  
+                 cert_name const & name,
+                 std::vector< cert > & certs,
+                 std::string const & table);  
+
+  void get_certs(hexenc<id> const & id,
+                 cert_name const & name,
+                 base64<cert_value> const & val, 
+                 std::vector< cert > & certs,
+                 std::string const & table);  
 
   void get_certs(cert_name const & name,
-		base64<cert_value> const & val, 
-		std::vector<cert> & certs,
-		std::string const & table);
+                 base64<cert_value> const & val, 
+                 std::vector<cert> & certs,
+                 std::string const & table);
 
   void begin_transaction();
   void commit_transaction();
   void rollback_transaction();
   friend class transaction_guard;
   friend void rcs_put_raw_file_edge(hexenc<id> const & old_id,
-				    hexenc<id> const & new_id,
-				    base64< gzip<delta> > const & del,
-				    database & db);
+                                    hexenc<id> const & new_id,
+                                    delta const & del,
+                                    database & db);
   friend void rcs_put_raw_manifest_edge(hexenc<id> const & old_id,
-					hexenc<id> const & new_id,
-					base64< gzip<delta> > const & del,
-					database & db);
+                                        hexenc<id> const & new_id,
+                                        delta const & del,
+                                        database & db);
 
 public:
 
   database(fs::path const & file);
 
-  unsigned long get_statistic(std::string const & query);
   void set_filename(fs::path const & file);
   void initialize();
   void debug(std::string const & sql, std::ostream & out);
@@ -190,96 +217,105 @@ public:
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
   bool revision_exists(revision_id const & id);
+
+  void get_file_ids(std::set<file_id> & ids);
+  void get_manifest_ids(std::set<manifest_id> & ids);
+  void get_revision_ids(std::set<revision_id> & ids);
+
   void set_app(app_state * app);
   
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist)
   void get_file_version(file_id const & id,
-			file_data & dat);
+                        file_data & dat);
 
   // get file delta if it exists, else calculate it.
   // both manifests must exist.
   void get_file_delta(file_id const & src,
-		      file_id const & dst,
-		      file_delta & del);
+                      file_id const & dst,
+                      file_delta & del);
 
   // put file w/o predecessor into db
   void put_file(file_id const & new_id,
-		file_data const & dat);
+                file_data const & dat);
 
   // store new version and update old version to be a delta
   void put_file_version(file_id const & old_id,
-			file_id const & new_id,
-			file_delta const & del);
+                        file_id const & new_id,
+                        file_delta const & del);
 
   // load in a "direct" new -> old reverse edge (used during
   // netsync and CVS load-in)
   void put_file_reverse_version(file_id const & old_id,
-				file_id const & new_id,
-				file_delta const & del);
+                                file_id const & new_id,
+                                file_delta const & del);
 
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist). 
   void get_manifest_version(manifest_id const & id,
-			    manifest_data & dat);
+                            manifest_data & dat);
 
   // get a constructed manifest
   void get_manifest(manifest_id const & id,
-		    manifest_map & mm);
+                    manifest_map & mm);
 
   // get manifest delta if it exists, else calculate it.
   // both manifests must exist.
   void get_manifest_delta(manifest_id const & src,
-			  manifest_id const & dst,
-			  manifest_delta & del);
+                          manifest_id const & dst,
+                          manifest_delta & del);
 
   // put manifest w/o predecessor into db
   void put_manifest(manifest_id const & new_id,
-		    manifest_data const & dat);
+                    manifest_data const & dat);
 
   // store new version and update old version to be a delta
   void put_manifest_version(manifest_id const & old_id,
-			    manifest_id const & new_id,
-			    manifest_delta const & del);
+                            manifest_id const & new_id,
+                            manifest_delta const & del);
 
   // load in a "direct" new -> old reverse edge (used during
   // netsync and CVS load-in)
   void put_manifest_reverse_version(manifest_id const & old_id,
-				    manifest_id const & new_id,
-				    manifest_delta const & del);
+                                    manifest_id const & new_id,
+                                    manifest_delta const & del);
 
 
-  void get_revision_ancestry(std::set<std::pair<revision_id, revision_id> > & graph);
+  void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
 
   void get_revision_parents(revision_id const & id,
-			   std::set<revision_id> & parents);
+                           std::set<revision_id> & parents);
 
   void get_revision_children(revision_id const & id,
-			     std::set<revision_id> & children);
+                             std::set<revision_id> & children);
 
   void get_revision_manifest(revision_id const & cid,
-			    manifest_id & mid);
+                            manifest_id & mid);
 
   void get_revision(revision_id const & id,
-		   revision_set & cs);
+                   revision_set & cs);
 
   void get_revision(revision_id const & id,
-		   revision_data & dat);
+                   revision_data & dat);
 
   void put_revision(revision_id const & new_id,
-		   revision_set const & cs);
+                   revision_set const & cs);
 
   void put_revision(revision_id const & new_id,
-		   revision_data const & dat);
+                    revision_data const & dat);
   
+  void delete_existing_revs_and_certs();
+
+  void delete_existing_rev_and_certs(revision_id const & rid);
 
   // crypto key / cert operations
 
   void get_key_ids(std::string const & pattern,
-		   std::vector<rsa_keypair_id> & pubkeys,
-		   std::vector<rsa_keypair_id> & privkeys);
+                   std::vector<rsa_keypair_id> & pubkeys,
+                   std::vector<rsa_keypair_id> & privkeys);
 
   void get_private_keys(std::vector<rsa_keypair_id> & privkeys);
+  void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
 
   bool key_exists(rsa_keypair_id const & id);
 
@@ -288,29 +324,29 @@ public:
   bool private_key_exists(rsa_keypair_id const & id);
   
   void get_pubkey(hexenc<id> const & hash, 
-		  rsa_keypair_id & id,
-		  base64<rsa_pub_key> & pub_encoded);
+                  rsa_keypair_id & id,
+                  base64<rsa_pub_key> & pub_encoded);
 
   void get_key(rsa_keypair_id const & id, 
-	       base64<rsa_pub_key> & pub_encoded);
+               base64<rsa_pub_key> & pub_encoded);
 
   void get_key(rsa_keypair_id const & id, 
-	       base64< arc4<rsa_priv_key> > & priv_encoded);
+               base64< arc4<rsa_priv_key> > & priv_encoded);
 
   void put_key(rsa_keypair_id const & id, 
-	       base64<rsa_pub_key> const & pub_encoded);
+               base64<rsa_pub_key> const & pub_encoded);
   
   void put_key(rsa_keypair_id const & id, 
-	       base64< arc4<rsa_priv_key> > const & priv_encoded);
+               base64< arc4<rsa_priv_key> > const & priv_encoded);
   
   void put_key_pair(rsa_keypair_id const & pub_id, 
-		    base64<rsa_pub_key> const & pub_encoded,
-		    base64< arc4<rsa_priv_key> > const & priv_encoded);
+                    base64<rsa_pub_key> const & pub_encoded,
+                    base64< arc4<rsa_priv_key> > const & priv_encoded);
 
+  void delete_private_key(rsa_keypair_id const & pub_id);
+  void delete_public_key(rsa_keypair_id const & pub_id);
+  
   // note: this section is ridiculous. please do something about it.
-
-  void get_heads(base64<cert_value> const & branch,
-		 std::set<revision_id> & heads);
 
   bool manifest_cert_exists(manifest<cert> const & cert);
   bool manifest_cert_exists(hexenc<id> const & hash);
@@ -321,107 +357,87 @@ public:
 
   void put_revision_cert(revision<cert> const & cert);
 
+  // this variant has to be rather coarse and fast, for netsync's use
+  void get_revision_cert_index(std::vector< std::pair<hexenc<id>,
+                               std::pair<revision_id, rsa_keypair_id> > > & idx);
+
+  void get_revision_certs(std::vector< revision<cert> > & certs);
+
   void get_revision_certs(cert_name const & name, 
-			 std::vector< revision<cert> > & certs);
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_certs(revision_id const & id, 
-			 cert_name const & name, 
-			 std::vector< revision<cert> > & certs);
+                          cert_name const & name, 
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_certs(cert_name const & name,
-			 base64<cert_value> const & val, 
-			 std::vector< revision<cert> > & certs);
+                          base64<cert_value> const & val, 
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_certs(revision_id const & id, 
-			 cert_name const & name, 
-			 base64<cert_value> const & value,
-			 std::vector< revision<cert> > & certs);
+                          cert_name const & name, 
+                          base64<cert_value> const & value,
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_certs(revision_id const & id, 
-			 std::vector< revision<cert> > & certs);
+                          std::vector< revision<cert> > & certs);
 
   void get_revision_cert(hexenc<id> const & hash,
-			 revision<cert> & cert);
+                         revision<cert> & cert);
   
   void get_manifest_certs(manifest_id const & id, 
-			  std::vector< manifest<cert> > & certs);
+                          std::vector< manifest<cert> > & certs);
 
   void get_manifest_certs(cert_name const & name, 
-			  std::vector< manifest<cert> > & certs);
+                          std::vector< manifest<cert> > & certs);
 
   void get_manifest_certs(manifest_id const & id, 
-			  cert_name const & name, 
-			  std::vector< manifest<cert> > & certs);
+                          cert_name const & name, 
+                          std::vector< manifest<cert> > & certs);
   
   void get_manifest_cert(hexenc<id> const & hash,
-			 manifest<cert> & cert);
+                         manifest<cert> & cert);
 
+  // epochs 
+
+  void get_epochs(std::map<cert_value, epoch_data> & epochs);
+
+  void get_epoch(epoch_id const & eid, cert_value & branch, epoch_data & epo);
   
-  bool file_cert_exists(file<cert> const & cert);
-  bool file_cert_exists(hexenc<id> const & hash);
+  bool epoch_exists(epoch_id const & eid);
 
-  void put_file_cert(file<cert> const & cert);
+  void set_epoch(cert_value const & branch, epoch_data const & epo);  
 
-  void get_file_certs(file_id const & id, 
-		     std::vector< file<cert> > & certs);
+  void clear_epoch(cert_value const & branch);
+ 
+  // vars
 
-  void get_file_certs(cert_name const & name, 
-		     std::vector< file<cert> > & ts);
+  void get_vars(std::map<var_key, var_value > & vars);
 
-  void get_file_certs(file_id const & id, 
-		     cert_name const & name, 
-		     std::vector< file<cert> > & ts);
+  void get_var(var_key const & key, var_value & value);
 
-  void get_file_certs(file_id const & id, 
-		     cert_name const & name,
-		     base64<cert_value> const & val, 
-		     std::vector< file<cert> > & ts);
+  bool var_exists(var_key const & key);
 
-  void get_file_certs(cert_name const & name,
-		     base64<cert_value> const & val, 
-		     std::vector< file<cert> > & certs);
+  void set_var(var_key const & key, var_value const & value);
 
-  void get_file_cert(hexenc<id> const & hash,
-		     file<cert> & cert);
-
-  // merkle tree stuff
-
-  bool merkle_node_exists(std::string const & type,
-			  utf8 const & collection, 
-			  size_t level,
-			  hexenc<prefix> const & prefix);
-  
-  void get_merkle_node(std::string const & type,
-		       utf8 const & collection, 
-		       size_t level,
-		       hexenc<prefix> const & prefix,
-		       base64<merkle> & node);
-
-  void put_merkle_node(std::string const & type,
-		       utf8 const & collection, 
-		       size_t level,
-		       hexenc<prefix> const & prefix,
-		       base64<merkle> const & node);
-
-  void erase_merkle_nodes(std::string const & type,
-			  utf8 const & collection);
+  void clear_var(var_key const & key);
 
   // completion stuff
 
   void complete(std::string const & partial,
-		std::set<revision_id> & completions);
+                std::set<revision_id> & completions);
 
   void complete(std::string const & partial,
-		std::set<manifest_id> & completions);
+                std::set<manifest_id> & completions);
   
   void complete(std::string const & partial,
-		std::set<file_id> & completions);
+                std::set<file_id> & completions);
 
-  void complete(commands::selector_type ty,
-		std::string const & partial,
-		std::vector<std::pair<commands::selector_type, 
-		                      std::string> > const & limit,
-		std::set<std::string> & completions);
+  void complete(selectors::selector_type ty,
+                std::string const & partial,
+                std::vector<std::pair<selectors::selector_type, 
+                                      std::string> > const & limit,
+                std::set<std::string> & completions);
   
   ~database();
 

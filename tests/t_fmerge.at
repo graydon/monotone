@@ -2,21 +2,12 @@
 
 AT_SETUP([external unit test of the line merger])
 
-MIMENCODE=`which mimencode 2>/dev/null`
-if test -z "$MIMENCODE" ; then
-  exit 77
-fi
-
 DIFF3=`which diff3 2>/dev/null`
 if test -z "$DIFF3" ; then
   exit 77
 fi
 
-GZIP=`which gzip 2>/dev/null`
-if test -z "$GZIP" ; then
-  exit 77
-fi
-
+NEED_UNGZB64
 
 MONOTONE_SETUP
 
@@ -216,9 +207,9 @@ CPkoGZvDIWBvLeuUvncW/Gm8/iQwL2xJeto9wMLAiEDhFR0djo6De1ujx25pulfCwbXw/A+k
 HA4KdSYAAA==
 ])
 
-mimencode -u <left.gz.enc | gunzip >left
-mimencode -u <right.gz.enc | gunzip >right
-mimencode -u <ancestor.gz.enc | gunzip >ancestor
+UNGZB64(left.gz.enc, left)
+UNGZB64(right.gz.enc, right)
+UNGZB64(ancestor.gz.enc, ancestor)
 
 ANC=cec9ec2e479b700ea267e70feb5a4eb15155190d
 LEFT=52f65363d555fecd3d2e887a207c3add0a949638
@@ -228,15 +219,16 @@ AVER=`SHA1(ancestor)`
 LVER=`SHA1(left)`
 RVER=`SHA1(right)`
 
-AT_CHECK(test $AVER == $ANC, [], [ignore], [ignore])
-AT_CHECK(test $LVER == $LEFT, [], [ignore], [ignore])
-AT_CHECK(test $RVER == $RIGHT, [], [ignore], [ignore])
+AT_CHECK(test $AVER = $ANC, [], [ignore], [ignore])
+AT_CHECK(test $LVER = $LEFT, [], [ignore], [ignore])
+AT_CHECK(test $RVER = $RIGHT, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE fload <ancestor, [], [ignore], [ignore])
 AT_CHECK(MONOTONE fload <left, [], [ignore], [ignore])
 AT_CHECK(MONOTONE fload <right, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE fmerge $ANC $LEFT $RIGHT, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout merge.monotone, [], [ignore], [ignore])
 
 AT_CHECK(diff3 -E --merge left ancestor right, [], [stdout], [ignore])

@@ -1,0 +1,12 @@
+AT_SETUP([verification of command line options])
+
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE, [0], [ignore], [ignore])
+AT_CHECK(MONOTONE --norc, [0], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile=test_hooks.lua, [0], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --unknown-option, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE --rcfile, [1], [ignore], [ignore])
+
+AT_CLEANUP

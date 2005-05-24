@@ -1,0 +1,30 @@
+AT_SETUP([merge(<patch foo/a>, <rename foo/ bar/>)])
+MONOTONE_SETUP
+
+AT_CHECK(mkdir foo)
+ADD_FILE(foo/a, [blah blah
+])
+COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
+
+AT_CHECK(mv foo bar)
+AT_CHECK(MONOTONE rename foo bar, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(mv bar foo)
+REVERT_TO($BASE_R)
+
+SET_FILE(foo/a, [some other stuff
+])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE checkout --revision=$BASE_R test_dir, [], [ignore], [ignore])
+AT_CHECK( (cd test_dir && MONOTONE update --branch=testbranch), [], [ignore], [ignore])
+
+AT_CHECK(test ! -f test_dir/foo/a)
+AT_CHECK(test -f test_dir/bar/a)
+AT_CHECK(cmp foo/a test_dir/bar/a)
+
+AT_CLEANUP

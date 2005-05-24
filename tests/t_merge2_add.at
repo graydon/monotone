@@ -1,0 +1,28 @@
+AT_SETUP([merging adds in unrelated revisions])
+MONOTONE_SETUP
+
+ADD_FILE(testfile1, [This is test file 1
+])
+COMMIT(testbranch)
+LEFT=`BASE_REVISION`
+
+AT_CHECK(rm -rf MT)
+AT_CHECK(MONOTONE setup .)
+
+ADD_FILE(testfile2, [This is test file 2
+])
+COMMIT(testbranch)
+RIGHT=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+
+AT_DATA(expected_data1, [This is test file 1
+])
+AT_DATA(expected_data2, [This is test file 2
+])
+
+AT_CHECK(cmp testfile1 expected_data1, [], [ignore])
+AT_CHECK(cmp testfile2 expected_data2, [], [ignore])
+
+AT_CLEANUP

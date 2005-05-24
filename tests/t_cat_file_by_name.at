@@ -1,0 +1,36 @@
+AT_SETUP([cat file REV PATH])
+MONOTONE_SETUP
+
+AT_DATA(r0testfile, [r0 test file
+])
+AT_DATA(r0otherfile, [r0 other file
+])
+AT_DATA(r1testfile, [r1 test file
+])
+
+AT_CHECK(cp r0testfile testfile)
+AT_CHECK(cp r0otherfile otherfile)
+AT_CHECK(MONOTONE add testfile otherfile, [], [ignore], [ignore])
+COMMIT(testbranch)
+R0=`BASE_REVISION`
+
+AT_CHECK(cp r1testfile testfile)
+COMMIT(testbranch)
+R1=`BASE_REVISION`
+
+AT_CHECK(MONOTONE cat file $R0 testfile, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp stdout r0testfile, [], [ignore])
+
+AT_CHECK(MONOTONE cat file $R0 otherfile, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp stdout r0otherfile, [], [ignore])
+
+AT_CHECK(MONOTONE cat file $R1 testfile, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp stdout r1testfile, [], [ignore])
+
+AT_CHECK(MONOTONE cat file $R0 no_such_file, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE cat file $R0 "", [1], [ignore], [ignore])
+
+AT_CLEANUP

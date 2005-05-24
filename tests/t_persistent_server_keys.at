@@ -1,0 +1,35 @@
+AT_SETUP([persistent netsync server - keys])
+AT_KEYWORDS([netsync])
+
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+AT_DATA(testfile, [blah balh
+balh
+])
+AT_CHECK(MONOTONE2 add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 commit --branch=testbranch --message foo, [], [ignore], [ignore])
+
+AT_CHECK((echo foo@foo ; echo foo@foo) | MONOTONE2 genkey foo@foo, [], [ignore], [ignore])
+
+NETSYNC_SERVE_START(testbranch)
+
+NETSYNC_CLIENT_N_RUN(2, push, testbranch)
+NETSYNC_CLIENT_N_RUN(3, pull, testbranch)
+
+AT_CHECK(MONOTONE3 ls keys, [], [stdout], [ignore])
+AT_CHECK(grep -q foo@foo stdout, [1])
+
+AT_DATA(testfile, [stuffty stuffty
+])
+AT_CHECK(MONOTONE2 commit --branch=testbranch --message foo --key=foo@foo, [], [ignore], [ignore])
+
+NETSYNC_CLIENT_N_RUN(2, push, testbranch)
+NETSYNC_CLIENT_N_RUN(3, pull, testbranch)
+
+NETSYNC_SERVE_STOP
+
+AT_CHECK(MONOTONE3 ls keys, [], [stdout], [ignore])
+AT_CHECK(grep -q foo@foo stdout)
+
+AT_CLEANUP

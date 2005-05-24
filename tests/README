@@ -1,0 +1,49 @@
+HOWTO make tests
+================
+
+Quick and dirty howto, to get you up to create and run tests.
+Very early draft. Feel free to improve.
+
+Running tests:
+--------------
+-  Starting in the monotone main dir. After having './configure'd monotone you 
+   can do 'make testsuite' to create 'testsuite'. Running './testsuite' will
+   run all tests.
+-  'testsuite -l' lists the names and numbers of all available tests
+-  'testsuite <n>' runs only test number n
+-  option -v will show the command outputs
+-  option -d will keep the testsuite.dir files for post-test debugging
+-  option -h is your friend :)
+
+Creating tests:
+---------------
+-  Copy and paste is your friend :)
+-  TODO: need more here...
+-  Remember to add a line at the end of testsuite.at
+
+
+Template for a test (name t_<testname>.at
+-------------------
+
+AT_SETUP([brief test description goes here])
+MONOTONE_SETUP
+
+#the next lines (including AT_XFAIL_IF) state that the test is
+#expected to fail as this is still a bug. Remove if it should pass!
+# This test is a bug report. It is expected to fail
+AT_XFAIL_IF(true)
+
+#AT_CHECK executes a shell command, second argument is the error
+#return code we expect, third argument is the output we expect from
+#stdout. use ignore if you don't care about the output. If oyu use
+#stdout all following commands can use file 'stdout' for further
+#processing. Same goes with 'stderr' as the last argument
+#see autoconf tutorials
+#e.g. http://www.gnu.org/software/autoconf/manual/autoconf-2.57/
+#     html_node/autoconf_167.html for further information.
+AT_CHECK(MONOTONE import foo, [], ignore, ignore)
+...
+...
+...
+AT_CLEANUP
+(END)

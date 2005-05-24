@@ -1,0 +1,158 @@
+AT_SETUP([test annotate command])
+MONOTONE_SETUP
+
+AT_DATA(foo1, [z
+a
+b
+x
+])
+
+AT_DATA(bar1, [0
+11
+2
+])
+
+AT_DATA(bar2, [0
+11
+22
+])
+
+ADD_FILE(foo0, [a
+b
+c
+])
+ADD_FILE(unchanged, [static
+file
+contents
+])
+COMMIT(testbranch)
+REV0=`BASE_REVISION`
+
+ADD_FILE(bar0, [0
+1
+2
+])
+AT_CHECK(cp foo1 foo0)
+COMMIT(testbranch)
+REV1=`BASE_REVISION`
+
+AT_CHECK(cp bar1 bar0)
+COMMIT(testbranch)
+REV2=`BASE_REVISION`
+
+AT_CHECK(cp bar2 bar0)
+COMMIT(testbranch)
+REV3=`BASE_REVISION`
+
+#
+# annotate foo0 should now be
+# REV1: z
+# REV0: a
+# REV0: b
+# REV1: x
+
+AT_CHECK(MONOTONE annotate foo0, [], [stdout], [ignore])
+AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 4 stdout | tail -n 1 | grep $REV1, [0], [ignore], [ignore])
+
+
+#
+# unchanged should have all (3) lines from REV0 
+#
+AT_CHECK(MONOTONE annotate unchanged, [], [stdout], [ignore])
+AT_CHECK(head -n 1 stdout | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
+
+#
+# annotate bar0 should now be
+# REV1: 0
+# REV2: 11
+# REV3: 22
+
+AT_CHECK(MONOTONE annotate bar0, [], [stdout], [ignore])
+AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REV2, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REV3, [0], [ignore], [ignore])
+
+
+#
+# OK, now try some renames
+#
+AT_CHECK(MONOTONE rename foo0 tmp, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename bar0 foo0, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename tmp bar0, [], [ignore], [ignore])
+AT_CHECK(mv foo0 tmp)
+AT_CHECK(mv bar0 foo0)
+AT_CHECK(mv tmp bar0)
+COMMIT(testbranch)
+REV4=`BASE_REVISION`
+
+#
+# Now the previous annotate results should be reversed
+#
+AT_CHECK(MONOTONE annotate bar0, [], [stdout], [ignore])
+AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 4 stdout | tail -n 1 | grep $REV1, [0], [ignore], [ignore])
+
+AT_CHECK(MONOTONE annotate foo0, [], [stdout], [ignore])
+AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REV2, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REV3, [0], [ignore], [ignore])
+
+#
+# Try add of file on one side of branch
+#
+
+# Making left side of fork, we won't add the file here
+AT_DATA(foo0, [foo
+now has other data
+])
+COMMIT(testbranch)
+REV5=`BASE_REVISION`
+AT_DATA(foo0, [foo
+still has other data
+])
+COMMIT(testbranch)
+REV6=`BASE_REVISION`
+
+# Now make right side
+AT_CHECK(MONOTONE update $REV4, [], [ignore], [ignore])
+AT_DATA(bar0, [bar
+on right side of fork
+])
+COMMIT(testbranch)
+REV7=`BASE_REVISION`
+ADD_FILE(forkfile, [a file
+on the
+right fork
+])
+COMMIT(testbranch)
+REV8=`BASE_REVISION`
+AT_DATA(forkfile, [a file
+changed on the
+right fork
+])
+COMMIT(testbranch)
+REV9=`BASE_REVISION`
+
+AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+#REV10=`BASE_REVISION` # how does commit create this?
+
+# 
+# ok, so annotate forkfile should be
+# REV8: a file
+# REV9: changed on the
+# REV8: right fork
+
+AT_CHECK(MONOTONE annotate forkfile, [], [stdout], [ignore])
+AT_CHECK(head -n 1 stdout | grep $REV8, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REV9, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REV8, [0], [ignore], [ignore])
+
+
+AT_CLEANUP

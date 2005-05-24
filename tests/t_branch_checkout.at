@@ -1,0 +1,19 @@
+AT_SETUP([branch-based checkout])
+MONOTONE_SETUP
+
+AT_DATA(foo.testbranch, [this is the testbranch version
+])
+AT_DATA(foo.otherbranch, [this version goes in otherbranch
+])
+
+AT_CHECK(cp foo.testbranch foo)
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(cp -f foo.otherbranch foo)
+COMMIT(otherbranch)
+
+AT_CHECK(MONOTONE --branch=testbranch checkout, [], [ignore], [ignore])
+AT_CHECK(cmp testbranch/foo foo.testbranch)
+
+AT_CLEANUP

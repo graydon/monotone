@@ -1,0 +1,19 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([diffing a revision with an added file])
+
+MONOTONE_SETUP
+
+AT_DATA(foo1, [foo file 1
+])
+AT_DATA(foo2, [foo file 2
+])
+
+AT_CHECK(MONOTONE add foo1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message blah, [], [ignore], [ignore])
+parent=`BASE_REVISION`
+AT_CHECK(MONOTONE add foo2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message bleh, [], [ignore], [ignore])
+AT_CHECK(MONOTONE diff --revision=$parent --revision=`BASE_REVISION`, [], [ignore], [ignore])
+
+AT_CLEANUP

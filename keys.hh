@@ -17,44 +17,48 @@
 struct lua_hooks;
 
 void generate_key_pair(lua_hooks & lua,           // to hook for phrase
-		       rsa_keypair_id const & id, // to prompting user for phrase
-		       base64<rsa_pub_key> & pub,
-		       base64< arc4<rsa_priv_key> > & priv);
+                       rsa_keypair_id const & id, // to prompting user for phrase
+                       base64<rsa_pub_key> & pub,
+                       base64< arc4<rsa_priv_key> > & priv,
+                       // Used for unit tests only:
+                       std::string const unit_test_passphrase = std::string());
+
+void change_key_passphrase(lua_hooks & lua,       // to hook for phrase
+                           rsa_keypair_id const & id, // to prompting user for phrase
+                           base64< arc4<rsa_priv_key> > & encoded_key);
 
 void make_signature(lua_hooks & lua,           // to hook for phrase
-		    rsa_keypair_id const & id, // to prompting user for phrase
-		    base64< arc4<rsa_priv_key> > const & priv,
-		    std::string const & tosign,
-		    base64<rsa_sha1_signature> & signature);
+                    rsa_keypair_id const & id, // to prompting user for phrase
+                    base64< arc4<rsa_priv_key> > const & priv,
+                    std::string const & tosign,
+                    base64<rsa_sha1_signature> & signature);
 
 bool check_signature(lua_hooks & lua,
-		     rsa_keypair_id const & id,
-		     base64<rsa_pub_key> const & pub,
-		     std::string const & alleged_text,
-		     base64<rsa_sha1_signature> const & signature);
+                     rsa_keypair_id const & id,
+                     base64<rsa_pub_key> const & pub,
+                     std::string const & alleged_text,
+                     base64<rsa_sha1_signature> const & signature);
 
-void require_password(lua_hooks & lua,
-		      rsa_keypair_id const & id,
-		      base64<rsa_pub_key> const & pubkey,
-		      base64< arc4<rsa_priv_key> > const & privkey);
+void require_password(rsa_keypair_id const & id,
+                      app_state & app);
 
 // netsync stuff
 
 void read_pubkey(std::string const & in, 
-		 rsa_keypair_id & id,
-		 base64<rsa_pub_key> & pub);
+                 rsa_keypair_id & id,
+                 base64<rsa_pub_key> & pub);
 
 void write_pubkey(rsa_keypair_id const & id,
-		  base64<rsa_pub_key> const & pub,
-		  std::string & out);
+                  base64<rsa_pub_key> const & pub,
+                  std::string & out);
 
 void key_hash_code(rsa_keypair_id const & id,
-		   base64<rsa_pub_key> const & pub,
-		   hexenc<id> & out);
+                   base64<rsa_pub_key> const & pub,
+                   hexenc<id> & out);
 
 void key_hash_code(rsa_keypair_id const & id,
-		   base64< arc4<rsa_priv_key> > const & priv,
-		   hexenc<id> & out);
+                   base64< arc4<rsa_priv_key> > const & priv,
+                   hexenc<id> & out);
 
 
 

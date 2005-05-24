@@ -300,7 +300,11 @@ public:
 	}
 
 	//! to be implemented by derived classes, users should use one of the above functions instead
-	CRYPTOPP_DLL virtual bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const =0;
+	// nb: this used to be a pure virtual, but OS X 10.4's GCC 4 (4061)
+	// doesn't like it, so it has been changed to an always-fails
+	// implemented virtual as a workaround.
+
+	CRYPTOPP_DLL virtual bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const { assert(false); return false; };
 };
 
 //! namespace containing value name definitions

@@ -1,0 +1,57 @@
+AT_SETUP([netsync transfers public keys])
+AT_KEYWORDS([netsync])
+
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+PUBKEY=52f32ec62128ea3541ebdd9d17400e268cfcd3fe
+PRIVKEY=6bc487f69face10123d80a053ef11b76e3d82068
+AT_DATA(newkeys.txt, [@<:@pubkey foo@test.example.com@:>@
+MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQC+6X7+HI715//0pWHWGcN/tw439uUUahtD
+wV8ckNKFTCKnWU0U4mzanMoKJCeSRttR7uRkmWPQX3e9pq8Klcpocws1/XpJr31NhDqvWmTb
+ABduS/GJeSZugrU6MYBLX12eLUCynWXoSXRGtX+9Xrjt2pAMAq3LkSDcRUUgYOCS+wIBEQ==
+@<:@end@:>@
+@<:@privkey foo@test.example.com@:>@
+V5sdpIQJk4r4nvMUBnuoaEjmV+PJXkoXn5GnYlDK++tg+JiWVQyDra7m0psmEuOACfZpN6aU
+21cdFhuSnU9pPerUBnSo7BrzAdw2d6Qenz5N/oxOn1lM+9he0ooAiwrHUmjqyrhZCPnybvGV
+6vPBSyPfFaMBjWOIgsabvGqIQEWOSxeDAjAWIwJGblzz4x8NIfBFw/NUMu9ljdvGy2XV5a8Q
+ERyzZlByYJV0u2W+4ES58L43jvirXpYc3peenus8j1kaVwgFFR6Rqvqgxt28oPBA1usV5HXz
+7CN3CxGAlhaHFO1Ke+13L3dv9uTGr5gfzGidKLm6ocBRxYx2vOKEanIxFpgSzqCrPnUgNzaC
+SQt0I+msb9CosL1x+puLv96mF78cRRzXpIULxgOlVfdukoiNzdy2sNCuBpAM593rtXPfRRR3
+PlEImiE9LJmnD70eNlKFmVEAs0EKPM2Hk0FLVrB5B8KPRfufq816+ie3gVkNytvIOqch7WrS
+T7uBHbrFwhVJG190foSqefSDwXF/D0CmqrbPZ+tjK/nC3jentNTAO14dMM1uAuNXdGVY961o
+nd2i+b4MhQwa9/uRV13Trg9/IWmmOpEplUk9FdEPLXNiAULgbc1tY+W69R4wDmdwm0IN7jb6
+Awr3xkFSMAla+oMHZ86Ytm4hDER6TfHACcK685QSNVWOuIIGNLULPht7bwnSi6qLb4wcLXV3
+tPU2bJoTyjp5hdos762XrZjp4OPM3zS9nOL/86rfGn02kHItf5qgsa2ZLTae0Kgl9Gbv9JHD
+Ppeoic6H3AxzmdvGRV85sylfNqcfarayoNMEOGK61NpW46iibA==
+@<:@end@:>@
+])
+
+AT_CHECK(MONOTONE read <newkeys.txt, [], [ignore], [ignore])
+AT_CHECK(rm -f newkeys.txt)
+
+# First commit a version that doesn't use the new key, and make sure
+# that it doesn't get transferred.
+ADD_FILE(testfile, [version 0 of test file
+])
+COMMIT(testbranch)
+
+RUN_NETSYNC(pull, testbranch)
+
+AT_CHECK(MONOTONE2 ls keys, [], [stdout], [ignore])
+AT_CHECK(grep -q $PUBKEY stdout, [1])
+AT_CHECK(grep -q $PRIVKEY stdout, [1])
+
+# Now commit a version that does use the new key, and make sure that
+# now it does get transferred.
+SET_FILE(testfile, [version 1 of test file
+])
+AT_CHECK(MONOTONE --branch=testbranch commit --message blah-blah --key=foo@test.example.com, [], [ignore], [ignore])
+
+RUN_NETSYNC(pull, testbranch)
+
+AT_CHECK(MONOTONE2 ls keys, [], [stdout], [ignore])
+AT_CHECK(grep -q $PUBKEY stdout)
+AT_CHECK(grep -q $PRIVKEY stdout, [1])
+
+AT_CLEANUP

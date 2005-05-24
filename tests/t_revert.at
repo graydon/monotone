@@ -9,7 +9,7 @@ AT_DATA(testfile0, [version 0 of first test file
 
 AT_CHECK(MONOTONE add testfile0, [], [ignore], [ignore])
 V1=`SHA1(testfile0)`
-AT_CHECK(MONOTONE --branch=testbranch commit 'blah blah', [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
 
 # check reverting a single file by name
 
@@ -20,7 +20,7 @@ AT_CHECK(grep squirrils testfile0, [0], [ignore])
 AT_CHECK(MONOTONE revert testfile0, [], [ignore], [ignore])
 AT_CHECK(grep squirrils testfile0, [1], [ignore])
 V2=`SHA1(testfile0)`
-AT_CHECK(test $V1 == $V2)
+AT_CHECK(test $V1 = $V2)
 
 
 # check reverting the whole tree
@@ -59,7 +59,7 @@ AT_CHECK(test ! -e MT/work, [], [ignore])
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep testfile0 stdout, [1], [ignore])
 V3=`SHA1(testfile0)`
-AT_CHECK(test $V1 == $V3)
+AT_CHECK(test $V1 = $V3)
 
 # check reverting an add
 
@@ -80,7 +80,7 @@ AT_CHECK(mkdir sub, [], [ignore])
 AT_DATA(sub/testfile2, [maude
 ])
 AT_CHECK(MONOTONE add sub/testfile2, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit 'new file', [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --message='new file', [], [ignore], [ignore])
 AT_DATA(sub/testfile2, [liver
 ])
 AT_CHECK(MONOTONE status, [], [stdout])
@@ -104,5 +104,33 @@ AT_CHECK(rm testfile0)
 AT_CHECK(MONOTONE status, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE revert testfile0, [], [stdout])
 AT_CHECK(MONOTONE status, [], [ignore], [ignore])
+
+# check reverting some changes and leaving others
+
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout])
+
+AT_CHECK(cp testfile0 foofile0, [])
+AT_CHECK(cp sub/testfile2 sub/foofile2, [])
+
+AT_CHECK(MONOTONE rename testfile0 foofile0, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename sub/testfile2 sub/foofile2, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep foofile0 stdout, [0], [ignore])
+AT_CHECK(grep foofile2 stdout, [0], [ignore])
+AT_CHECK(test -e MT/work, [], [ignore])
+
+AT_CHECK(MONOTONE revert sub/foofile2, [], [stdout])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep foofile0 stdout, [0], [ignore])
+AT_CHECK(grep foofile2 stdout, [1], [ignore])
+AT_CHECK(test -e MT/work, [], [ignore])
+
+AT_CHECK(MONOTONE revert foofile0, [], [stdout])
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep foofile0 stdout, [1], [ignore])
+AT_CHECK(grep foofile2 stdout, [1], [ignore])
+AT_CHECK(test ! -e MT/work, [], [ignore])
 
 AT_CLEANUP

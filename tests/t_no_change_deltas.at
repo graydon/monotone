@@ -1,0 +1,44 @@
+AT_SETUP([no-change deltas disappear])
+MONOTONE_SETUP
+
+
+# If we have a changeset representing a reversion, like
+#    changeset_1:   patch "a" [id1] -> [id2]
+#    changeset_2:   patch "a" [id2] -> [id1]
+# then concatenating these revisions should _not_ create a changeset
+# like
+#    changeset_c:   patch "a" [id1] -> [id1]
+
+ADD_FILE(testfile, [version 1
+])
+ADD_FILE(start_file, [start file
+])
+COMMIT(testbranch)
+BASE=`BASE_REVISION`
+BASE_F_SHA=`SHA1(testfile)`
+BASE_OTHER_SHA=`SHA1(start_file)`
+
+SET_FILE(testfile, [version 2
+])
+COMMIT(testbranch)
+
+SET_FILE(testfile, [version 1
+])
+ADD_FILE(end_file, [end file
+])
+AT_CHECK(MONOTONE drop start_file, [], [stdout], [ignore])
+COMMIT(testbranch)
+NEW=`BASE_REVISION`
+NEW_F_SHA=`SHA1(testfile)`
+NEW_OTHER_SHA=`SHA1(end_file)`
+
+AT_CHECK(test $BASE_F_SHA = $NEW_F_SHA)
+
+AT_CHECK(MONOTONE diff --revision $BASE --revision $NEW, [], [stdout], [ignore])
+AT_CHECK(grep -q $NEW_OTHER_SHA stdout)
+AT_CHECK(grep -q $BASE_F_SHA stdout, [1])
+AT_CHECK(MONOTONE diff --revision $NEW --revision $BASE, [], [stdout], [ignore])
+AT_CHECK(grep -q $BASE_OTHER_SHA stdout)
+AT_CHECK(grep -q $BASE_F_SHA stdout, [1])
+
+AT_CLEANUP

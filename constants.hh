@@ -15,30 +15,27 @@ namespace constants
   // this file contains magic constants which you could, in theory, tweak.
   // probably best not to tweak them though.
 
+  // block size in bytes for "automate stdio" output
+  extern size_t const automate_stdio_size;
+
   // number of bits in an RSA key we use
   extern size_t const keylen; 
 
-  // number of bytes of random noise we seed vcheck packets with
-  extern size_t const vchecklen;
-
   // number of characters in a SHA1 id
   extern size_t const idlen; 
+
+  // number of characters in an encoded epoch
+  extern size_t const epochlen;
+
+  // number of characters in a raw epoch
+  extern size_t const epochlen_bytes;
 
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
   extern size_t const cvs_window; 
 
-  // number of bytes accepted in a database row (also used as a file upload
-  // limit in the depot code).
-  extern size_t const maxbytes;
-
   // number of bytes in a password buffer. further bytes will be dropped.
   extern size_t const maxpasswd;
-
-  // advisory number of bytes sent in a single network transmission; not a
-  // strict limit (single packets beyond this size will post as a unit) but a
-  // "suggested maximum size" for each posting.
-  extern size_t const postsz;
 
   // number of bytes to use in buffers, for buffered i/o operations
   extern size_t const bufsz;
@@ -46,6 +43,9 @@ namespace constants
   // size of a line of database traffic logging, beyond which lines will be
   // truncated.
   extern size_t const db_log_line_sz;
+
+  // size in bytes of the database xdelta version reconstruction cache
+  extern size_t const db_version_cache_sz;
 
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
@@ -69,6 +69,9 @@ namespace constants
   // all the ASCII characters (bytes) which are illegal in a (file|local)_path
   extern char const * const illegal_path_bytes;
 
+  // how many revisions back to verify the sanity of revisions before allowing
+  // them into the database
+  extern int const verify_depth;
 
   // remaining constants are related to netsync protocol
 

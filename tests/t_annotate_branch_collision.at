@@ -1,0 +1,62 @@
+AT_SETUP([annotate file on multirooted branch])
+MONOTONE_SETUP
+
+#
+# If two people begin a branch with the same name,
+# then the branch does not have a unique root.  If they
+# also happened to both add a file with some shared and
+# some differing lines, we must do the right thing.
+#
+
+AT_DATA(foo.left, [z
+a
+b
+x
+])
+
+AT_DATA(foo.right, [z
+j
+k
+x
+])
+
+AT_CHECK(cp foo.left foo)
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+REVL=`BASE_REVISION`
+
+AT_CHECK(rm -r -f MT foo)
+AT_CHECK(MONOTONE setup .)
+
+AT_CHECK(cp foo.right foo)
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+REVR=`BASE_REVISION`
+
+AT_DATA(merge2.lua, [
+function merge2 (left, right)
+        data = "z\na\nk\nx\n"
+        return data
+end
+])
+
+AT_CHECK(MONOTONE --rcfile=merge2.lua merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REVM=`BASE_REVISION`
+
+#
+# annotate foo should now be
+# REVC: z
+# REVL: a
+# REVR: k
+# REVC: x
+#
+# where REVC (choice) is either REVL or REVR
+
+AT_CHECK(MONOTONE annotate foo, [], [stdout], [ignore])
+#AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REVL, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REVR, [0], [ignore], [ignore])
+#AT_CHECK(head -n 4 stdout | tail -n 1 | grep $REV1, [0], [ignore], [ignore])
+
+AT_CLEANUP

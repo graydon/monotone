@@ -1,0 +1,74 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([tags and tagging of revisions])
+
+MONOTONE_SETUP
+
+AT_DATA(file1, [file 1
+])
+AT_DATA(file2, [file 2
+])
+AT_DATA(file3, [file 3
+])
+
+# make and tag revision 1
+
+AT_CHECK(MONOTONE add file1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message 'add file1', [], [ignore], [ignore])
+REV1=`BASE_REVISION`
+AT_CHECK(MONOTONE tag $REV1 tag1, [], [ignore], [ignore])
+
+# make and tag revision 2
+
+AT_CHECK(MONOTONE add file2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message 'add file2', [], [ignore], [ignore])
+REV2=`BASE_REVISION`
+AT_CHECK(MONOTONE tag $REV2 tag2, [], [ignore], [ignore])
+
+# make and tag revision 3
+
+AT_CHECK(MONOTONE add file3, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message 'add file3', [], [ignore], [ignore])
+REV3=`BASE_REVISION`
+AT_CHECK(MONOTONE tag $REV3 tag3, [], [stdout], [stderr])
+
+# check tags created above
+
+AT_CHECK(MONOTONE ls tags, [], [stdout], [ignore])
+AT_CHECK(grep tag1 stdout, [], [ignore], [ignore])
+AT_CHECK(grep tag2 stdout, [], [ignore], [ignore])
+AT_CHECK(grep tag3 stdout, [], [ignore], [ignore])
+# make sure 'ls tags' sorts output is sorted
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(sort <stdout >sorted-stdout)
+AT_CHECK(cmp stdout sorted-stdout)
+
+AT_CHECK(rm -rf MT file1 file2 file3)
+
+AT_CHECK(MONOTONE co --revision=tag1 ., [], [ignore], [ignore])
+TAG1=`BASE_REVISION`
+AT_CHECK(test $TAG1 = $REV1)
+AT_CHECK(test -e file1, [0], [ignore], [ignore])
+AT_CHECK(test -e file2, [1], [ignore], [ignore])
+AT_CHECK(test -e file3, [1], [ignore], [ignore])
+
+AT_CHECK(rm -rf MT file1 file2 file3)
+
+AT_CHECK(MONOTONE co --revision=tag2 ., [], [ignore], [ignore])
+TAG2=`BASE_REVISION`
+AT_CHECK(test $TAG2 = $REV2)
+AT_CHECK(test -e file1, [0], [ignore], [ignore])
+AT_CHECK(test -e file2, [0], [ignore], [ignore])
+AT_CHECK(test -e file3, [1], [ignore], [ignore])
+
+AT_CHECK(rm -rf MT file1 file2 file3)
+
+AT_CHECK(MONOTONE co --revision=tag3 ., [], [ignore], [ignore])
+TAG3=`BASE_REVISION`
+AT_CHECK(test $TAG1 = $REV1)
+AT_CHECK(test -e file1, [0], [ignore], [ignore])
+AT_CHECK(test -e file2, [0], [ignore], [ignore])
+AT_CHECK(test -e file3, [0], [ignore], [ignore])
+
+
+AT_CLEANUP

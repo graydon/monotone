@@ -1,0 +1,34 @@
+AT_SETUP([(imp) merge(<patch foo/a>, <delete foo/>)])
+MONOTONE_SETUP
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+# The problem is the delete_dir is broken generally; see t_delete_dir.at.
+
+AT_CHECK(mkdir foo)
+ADD_FILE(foo/a, [blah blah
+])
+COMMIT(testbranch)
+BASE_R=`BASE_REVISION`
+
+AT_CHECK(mv foo bar)
+AT_CHECK(MONOTONE drop foo, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(mv bar foo)
+REVERT_TO($BASE_R)
+
+SET_FILE(foo/a, [some other stuff
+])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE checkout --revision=$BASE_R test_dir, [], [ignore], [ignore])
+AT_CHECK( (cd test_dir && MONOTONE update --branch=testbranch), [], [ignore], [ignore])
+
+AT_CHECK(test ! -f test_dir/foo/a)
+AT_CHECK(test ! -f test_dir/bar/a)
+
+AT_CLEANUP

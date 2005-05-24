@@ -38,6 +38,7 @@ LUALIB_API int luaopen_debug (lua_State *L);
 
 LUALIB_API int luaopen_loadlib (lua_State *L);
 
+LUALIB_API int luaopen_posix (lua_State *L);
 
 /* to help testing the libraries */
 #ifndef lua_assert

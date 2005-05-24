@@ -1,0 +1,36 @@
+This directory contains various things that we're not quite sure what
+to do with, but that someone may find useful.  See individual files for
+licenses.
+
+  -- monotone.bash_completion: command line completion code for bash.
+  -- monotone.zsh_completion: command line completion code for zsh.
+
+  -- monotone.el, monotone-nav.el: An Emacs interface.
+
+  -- ciabot_monotone.py: A python script to watch a repository and
+     send notifications of commits to CIA (http://cia.navi.cx).
+
+  -- mtbrowse.sh: An interactive text-mode history browser
+
+  -- monotone-notify.pl: a Perl hack to create email logs with recent
+     changes in a repository database.  It's designed to be run at regular
+     intervals, for example from a cron script.  It uses database
+     variables (those handled with 'monotone set/unset') in the domain
+     domain 'notify' to keep track of the last revisions that have
+     already been sent out.
+     For a manual, do `perl Notify.pl --man'.
+     To get a help text, do `perl Notify.pl --help'.
+
+  -- monotone-import.pl: a Perl hack to provide an approximate of what
+     what 'cvs import' does.  The difference is that you have to decide
+     yourself what the import branch is called, and you have to propagate
+     the resulting revision to your development branch if you have one.
+     For a manual, do `perl monotone-import.pl --man'.
+     To get a help text, do `perl monotone-import.pl --help'.
+
+  -- monoprof.sh: A simple monotone profiling script.
+
+  -- Log2Gxl.java: Removed. Now in branch net.venge.monotone.contrib.monotree
+
+
+

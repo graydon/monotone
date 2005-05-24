@@ -1,0 +1,59 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([listing working copy manifests])
+
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE ls missing, [0], [stdout], [ignore])
+AT_CHECK(cmp /dev/null stdout, [], [ignore])
+
+AT_DATA(foo, [the foo file
+])
+AT_DATA(bar, [the bar file
+])
+AT_CHECK(MONOTONE add foo bar, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls known | sort, [], [stdout], [])
+AT_CHECK(CANONICALISE(stdout))
+AT_DATA(ls_foobar, [bar
+foo
+])
+AT_CHECK(cmp stdout ls_foobar, [], [ignore]) 
+
+AT_CHECK(mkdir dir)
+AT_DATA(dir/foo, [the foo file
+])
+AT_DATA(dir/bar, [the bar file
+])
+AT_CHECK(MONOTONE add dir/foo dir/bar, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls known | sort, [], [stdout], [])
+AT_CHECK(CANONICALISE(stdout))
+AT_DATA(ls_foobar_dir, [bar
+dir/bar
+dir/foo
+foo
+])
+AT_CHECK(cmp stdout ls_foobar_dir, [], [ignore]) 
+
+AT_CHECK(MONOTONE --branch=testbranch commit --message='committed', [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls known | sort, [], [stdout], [])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp stdout ls_foobar_dir, [], [ignore]) 
+
+AT_CHECK(MONOTONE drop foo, [], [ignore], [ignore])
+AT_CHECK(mv dir dir2)
+AT_CHECK(MONOTONE rename dir dir2, [], [ignore], [ignore])
+AT_CHECK(mv bar baz)
+AT_CHECK(MONOTONE rename bar baz, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls known | sort, [], [stdout], [])
+AT_CHECK(CANONICALISE(stdout))
+AT_DATA(ls_baz_dir, [baz
+dir2/bar
+dir2/foo
+])
+AT_CHECK(cmp stdout ls_baz_dir, [], [ignore]) 
+
+AT_CLEANUP

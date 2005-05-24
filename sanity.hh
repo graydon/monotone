@@ -13,7 +13,16 @@
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
 
-#include <libintl.h>
+#include <config.h> // Required for ENABLE_NLS
+#include "gettext.h"
+
+#include "quick_alloc.hh" // to get the QA() macro
+
+#ifdef __GNUC__
+#define NORETURN __attribute__((noreturn))
+#else
+#define NORETURN
+#endif
 
 // our assertion / sanity / error logging system *was* based on GNU Nana,
 // but we're only using a small section of it, and have anyways rewritten
@@ -33,28 +42,34 @@ struct sanity {
   ~sanity();
   void dump_buffer();
   void set_debug();
+  void set_brief();
   void set_quiet();
+  void set_relaxed(bool rel);
 
   bool debug;
+  bool brief;
   bool quiet;
+  bool relaxed;
   boost::circular_buffer<char> logbuf;
   std::string filename;
 
   void log(boost::format const & fmt, 
-	   char const * file, int line);
+           char const * file, int line);
   void progress(boost::format const & fmt,
-		char const * file, int line);
+                char const * file, int line);
   void warning(boost::format const & fmt, 
-	       char const * file, int line);
+               char const * file, int line);
   void naughty_failure(std::string const & expr, boost::format const & explain, 
-		       std::string const & file, int line);
+                       std::string const & file, int line) NORETURN;
+  void error_failure(std::string const & expr, boost::format const & explain, 
+                     std::string const & file, int line) NORETURN;
   void invariant_failure(std::string const & expr, 
-			 std::string const & file, int line);
+                         std::string const & file, int line) NORETURN;
   void index_failure(std::string const & vec_expr, 
-		     std::string const & idx_expr, 
-		     unsigned long sz, 
-		     unsigned long idx,
-		     std::string const & file, int line);
+                     std::string const & idx_expr, 
+                     unsigned long sz, 
+                     unsigned long idx,
+                     std::string const & file, int line) NORETURN;
 };
 
 typedef std::runtime_error oops;
@@ -104,6 +119,15 @@ do { \
   } \
 } while(0)
 
+// E is for errors; they are normal (i.e., not a bug), but not necessarily
+// attributable to user naughtiness
+#define E(e, explain)\
+do { \
+  if(UNLIKELY(!(e))) { \
+    global_sanity.error_failure("E("#e")", (explain), __FILE__, __LINE__); \
+  } \
+} while(0)
+
 
 // we're interested in trapping index overflows early and precisely,
 // because they usually represent *very significant* logic errors.  we use
@@ -112,11 +136,11 @@ do { \
 
 template <typename T>
 inline T & checked_index(std::vector<T> & v, 
-			 typename std::vector<T>::size_type i,
-			 char const * vec,
-			 char const * index,
-			 char const * file,
-			 int line) 
+                         typename std::vector<T>::size_type i,
+                         char const * vec,
+                         char const * index,
+                         char const * file,
+                         int line) 
 { 
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
@@ -125,16 +149,44 @@ inline T & checked_index(std::vector<T> & v,
 
 template <typename T>
 inline T const & checked_index(std::vector<T> const & v, 
-			       typename std::vector<T>::size_type i,
-			       char const * vec,
-			       char const * index,
-			       char const * file,
-			       int line) 
+                               typename std::vector<T>::size_type i,
+                               char const * vec,
+                               char const * index,
+                               char const * file,
+                               int line) 
 { 
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
 }
+
+#ifdef QA_SUPPORTED
+template <typename T>
+inline T & checked_index(std::vector<T, QA(T)> & v, 
+                         typename std::vector<T>::size_type i,
+                         char const * vec,
+                         char const * index,
+                         char const * file,
+                         int line) 
+{ 
+  if (UNLIKELY(i >= v.size()))
+    global_sanity.index_failure(vec, index, v.size(), i, file, line);
+  return v[i];
+}
+
+template <typename T>
+inline T const & checked_index(std::vector<T, QA(T)> const & v, 
+                               typename std::vector<T>::size_type i,
+                               char const * vec,
+                               char const * index,
+                               char const * file,
+                               int line) 
+{ 
+  if (UNLIKELY(i >= v.size()))
+    global_sanity.index_failure(vec, index, v.size(), i, file, line);
+  return v[i];
+}
+#endif // QA_SUPPORTED
 
 
 #define idx(v, i) checked_index((v), (i), #v, #i, __FILE__, __LINE__)

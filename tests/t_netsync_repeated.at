@@ -1,0 +1,38 @@
+AT_SETUP([repeatedly exchanging work via netsync])
+AT_KEYWORDS([netsync])
+
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+ADD_FILE(testfile, [version 0 data
+])
+COMMIT(testbranch)
+VER0=`BASE_REVISION`
+
+RUN_NETSYNC(pull, testbranch)
+
+ADD_FILE(testfile2, [some data
+])
+COMMIT(testbranch)
+VER1=`BASE_REVISION`
+
+REVERT_TO($VER0)
+
+SET_FILE(testfile, [version 1 data
+])
+COMMIT(testbranch)
+VER2=`BASE_REVISION`
+
+AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+VER3=`BASE_REVISION`
+
+RUN_NETSYNC(pull, testbranch)
+
+CHECK_SAME_STDOUT(MONOTONE agraph, MONOTONE2 agraph)
+
+CHECK_SAME_STDOUT(MONOTONE ls certs $VER1, MONOTONE2 ls certs $VER1)
+CHECK_SAME_STDOUT(MONOTONE ls certs $VER2, MONOTONE2 ls certs $VER2)
+CHECK_SAME_STDOUT(MONOTONE ls certs $VER3, MONOTONE2 ls certs $VER3)
+
+AT_CLEANUP

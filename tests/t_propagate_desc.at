@@ -1,0 +1,33 @@
+AT_SETUP([propagate a descendent])
+MONOTONE_SETUP
+
+# This tests the case where we have something like A1 -> A2 -> B1 ->
+# B2, where A and B are different branches, and the user propagates B
+# to A.  The result should be B2 being certed into branch A, with no
+# merge performed.
+
+ADD_FILE(testfile, [foo
+])
+COMMIT(a)
+
+SET_FILE(testfile, [bar
+])
+COMMIT(a)
+A_HEAD_REV=`BASE_REVISION`
+
+SET_FILE(testfile, [baz
+])
+COMMIT(b)
+
+SET_FILE(testfile, [quux
+])
+COMMIT(b)
+B_HEAD_REV=`BASE_REVISION`
+
+AT_CHECK(MONOTONE propagate b a, [], [ignore], [ignore])
+AT_CHECK(MONOTONE heads --branch=b, [], [stdout], [ignore])
+AT_CHECK(grep -q $B_HEAD_REV stdout)
+AT_CHECK(MONOTONE heads --branch=a, [], [stdout], [ignore])
+AT_CHECK(grep -q $B_HEAD_REV stdout)
+
+AT_CLEANUP

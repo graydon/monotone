@@ -1,0 +1,70 @@
+AT_SETUP([sticky branches])
+MONOTONE_SETUP
+
+# setup saves given branch
+AT_CHECK(MONOTONE setup setupdir --branch=testbranch, [], [ignore], [ignore])
+AT_DATA(setupdir/foo, [blah blah
+])
+AT_CHECK(cd setupdir && MONOTONE add foo, [], [ignore], [ignore])
+AT_CHECK(cd setupdir && MONOTONE commit --message=foo, [], [ignore], [ignore])
+
+# checkout saves given branch
+AT_CHECK(MONOTONE checkout --branch=testbranch codir, [], [ignore], [ignore])
+AT_CHECK(cmp setupdir/foo codir/foo)
+AT_DATA(codir/foo, [other other
+])
+AT_CHECK(cd codir && MONOTONE commit --message=foo, [], [ignore], [ignore])
+
+# log doesn't affect given branch
+AT_CHECK(cd codir && MONOTONE log, [], [ignore], [ignore])
+AT_DATA(codir/foo, [more more
+])
+AT_CHECK(cd codir && MONOTONE commit --message=foo, [], [ignore], [ignore])
+AT_DATA(expbranches, [testbranch
+], [])
+AT_CHECK(MONOTONE ls branches, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp expbranches stdout)
+
+# commit saves given branch
+AT_DATA(codir/foo, [newbranch newbranch
+])
+AT_CHECK(cd codir && MONOTONE commit --branch=otherbranch --message=foo, [], [ignore], [ignore])
+AT_DATA(codir/foo, [newbranch 2 newbranch 2
+])
+AT_CHECK(cd codir && MONOTONE commit --message=foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE checkout --branch=otherbranch otherdir, [], [ignore], [ignore])
+AT_CHECK(cmp codir/foo otherdir/foo)
+
+# update saves the given branch
+AT_CHECK(MONOTONE checkout --branch=testbranch updir, [], [ignore], [ignore])
+AT_CHECK(cd updir && MONOTONE update --branch=otherbranch, [], [ignore], [ignore])
+AT_CHECK(cmp otherdir/foo updir/foo)
+AT_DATA(otherdir/foo, [yet another chunk of entropy
+])
+AT_CHECK(cd otherdir && MONOTONE commit --message=foo, [], [ignore], [ignore])
+AT_CHECK(cd updir && MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(cmp otherdir/foo updir/foo)
+
+# merge doesn't affect given branch
+AT_CHECK(MONOTONE setup third1, [], [ignore], [ignore])
+AT_DATA(third1/a, [1a
+])
+AT_CHECK(cd third1 && MONOTONE add a, [], [ignore], [ignore])
+AT_CHECK(cd third1 && MONOTONE commit --branch=third --message=foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup third2, [], [ignore], [ignore])
+AT_DATA(third2/b, [2b
+])
+AT_CHECK(cd third2 && MONOTONE add b, [], [ignore], [ignore])
+AT_CHECK(cd third2 && MONOTONE commit --branch=third --message=foo, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE merge --branch=third, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate heads third, [], [stdout], [ignore])
+AT_CHECK(mv stdout old-third-heads)
+AT_DATA(codir/foo, [more more
+])
+AT_CHECK(cd codir && MONOTONE commit --message=foo, [], [ignore], [ignore])
+# we check that this didn't create a new head of branch third
+AT_CHECK(MONOTONE automate heads third, [], [stdout], [ignore])
+AT_CHECK(cmp stdout old-third-heads)
+
+AT_CLEANUP

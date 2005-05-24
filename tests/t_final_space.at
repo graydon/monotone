@@ -1,0 +1,10 @@
+AT_SETUP([files with spaces at the end])
+MONOTONE_SETUP
+NOT_ON_WIN32
+# On Win32, the files "foo bar" and "foo bar " are the same, obviating this test
+
+AT_CHECK(touch "foo bar ")
+AT_CHECK(MONOTONE add "foo bar ", [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CLEANUP

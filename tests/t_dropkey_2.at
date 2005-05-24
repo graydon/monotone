@@ -1,0 +1,44 @@
+# -*- Autoconf -*-
+
+AT_SETUP([drop a public and private key])
+
+MONOTONE_SETUP
+
+AT_DATA(key.txt, [@<:@pubkey john@doe.com@:>@
+MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCPUdR/bM41m2KIpS0eXlTG91PSWvOUdwY4
+6aKd+DXZFma8Hi00Wvwmr+0JJdWqPwyxR/Dr2a2Z7Db76lUiNlhvRw3yoKP2ip9Jjfe0LReG
+5aJ5u1l5L5VPiZ5iZq9PjxNDAYASpb89yBT7BJZ6OAXuE9zHFR506Apg7UB4Em184wIBEQ==
+@<:@end@:>@
+@<:@privkey john@doe.com@:>@
+ZOC+Y7Y9QGlMneYNH5zexwV6IlWb8Q9IhW2Jn+qVhlxpocqN6AI60NXgzVupUOyNvTPsc2kP
+mwjaHGaIr3SZE6E3riS8BnMNnvvCo5FZE5R2Hm4O+MST2LOINFX1eNSNch6pXGnjmTA6MO2Z
+9YuZ1AERPdy/T2DD3EBNMZM6uylc6IJlwW8JMe6DWaAaGmoAb35NCEgw6uw1UjIEXTJRrv15
+cTMSjAP+KZCfuoRsF8aTB42cvaN+Zb5xti1UuIASiWOo8vwubkw36yg5De5mjmrMt35EQZz5
+c0NmOdrPhM4lhCLFXdnmZYLb+fVQ5l1Jps8Suw+R9tLXBXZW0naW3CTHEEq5FNKq/gs08bPC
+BwZVTkjwCca4U05TlBVw1EaKQ4p1vXMuKZ+KOuU/7mGkuGUoLiDsUdiMwE5gtdGxeDoV1xIC
+NPWRfdF1Vq4J0+enYXtR1Hsf0b6XGTEm+ROXSZoJD9YLv5s2at0ZS5NzlF7YBEVn0Sr4xst8
+J93peP//bJVR0+WvcCfkw/rxm5dJSOcmmOZDRybLxLvfaQimMcXziKBvTexBCxhMbBSZCZpm
+D4RIX398204YEXTci7aEWBKSj+PxsGa0GKpZd6MjC3LrzcBv3+aL1v2665HOxLrAqolF8Dqs
+B0ack2LFLIBVM1XSr8U5bHJfsbmfRo+ozMKW1zRbfiGxi3JU6NZdC43BXq2dtFuegsZBc4wp
+ZFUYD1E/OkiAPJFkDT5fgjjnzDY/owEY/+1waEq6FOnfce3GQSO5MCVXkRm0p3PwTGv/kURi
+I/vg5ZHwjfqj3GOWcTMO/PKumwX4hV4HSZOQHAIqgR8mTDA69yn9
+@<:@end@:>@
+])
+
+AT_CHECK(MONOTONE read < key.txt, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE privkey john@doe.com, [], [stdout], [ignore])
+
+AT_CHECK(grep -q 'john@doe.com' stdout, [])
+
+AT_CHECK(MONOTONE dropkey john@doe.com, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE privkey john@doe.com, [1], [ignore], [stderr])
+
+AT_CHECK(grep -q 'does not exist' stderr, [])
+
+AT_CHECK(MONOTONE pubkey john@doe.com, [1], [ignore], [stderr])
+
+AT_CHECK(grep -q 'does not exist' stderr, [])
+
+AT_CLEANUP

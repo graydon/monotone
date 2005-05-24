@@ -1,0 +1,44 @@
+AT_SETUP([inodeprints])
+MONOTONE_SETUP
+
+# Turn them on
+AT_CHECK(touch MT/inodeprints)
+
+AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(grep -q "no changes" stdout)
+
+ADD_FILE(testfile, [blah blah
+])
+
+AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(grep -q "blah blah" stdout)
+
+COMMIT(testbranch)
+
+# Something should have been written to it
+AT_CHECK(test -s MT/inodeprints)
+AT_CHECK(cp MT/inodeprints ip1)
+
+# And stuff should still work
+AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(grep -q "no changes" stdout)
+
+SET_FILE(testfile, [stuff stuff
+])
+
+AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(grep -q "stuff stuff" stdout)
+
+# Make sure partial commit doesn't screw things up
+ADD_FILE(otherfile, [other stuff
+])
+AT_CHECK(MONOTONE commit otherfile --message=foo, [], [ignore], [ignore])
+
+# Should have changed the inodeprints file
+AT_CHECK(cmp MT/inodeprints ip1, [1], [ignore], [ignore])
+
+# Still should think testfile is modified
+AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(grep -q "stuff stuff" stdout)
+
+AT_CLEANUP

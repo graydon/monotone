@@ -1,0 +1,79 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([files with intermediate MT path elements])
+
+MONOTONE_SETUP
+
+AT_CHECK(mkdir -p dir1/MT)
+AT_CHECK(mkdir -p dir2)
+AT_CHECK(mkdir -p dir3)
+
+# Check both implicit recursive add...
+AT_DATA(dir1/MT/testfile1, [testfile 1
+])
+AT_DATA(dir2/MT, [MT file 1
+])
+AT_CHECK(MONOTONE add dir1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add dir2, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+# ...and explicit add.
+AT_DATA(dir1/MT/testfile2, [testfile 2
+])
+AT_DATA(dir3/MT, [MT file 2
+])
+AT_CHECK(MONOTONE add dir1/MT/testfile2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add dir3/MT, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE checkout outdir1, [], [ignore], [ignore])
+AT_CHECK(cmp dir1/MT/testfile1 outdir1/dir1/MT/testfile1)
+AT_CHECK(cmp dir1/MT/testfile2 outdir1/dir1/MT/testfile2)
+AT_CHECK(cmp dir2/MT outdir1/dir2/MT)
+AT_CHECK(cmp dir3/MT outdir1/dir3/MT)
+ 
+# renames
+
+AT_CHECK(mv dir1/MT/testfile1 dir1/MT/testfile1x)
+AT_CHECK(mv dir2/MT dir2/TM)
+AT_CHECK(mv dir3 dir3x)
+
+AT_CHECK(MONOTONE rename dir1/MT/testfile1 dir1/MT/testfile1x, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename dir2/MT dir2/TM, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename dir3 dir3x, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE checkout outdir2, [], [ignore], [ignore])
+AT_CHECK(cmp dir1/MT/testfile1x outdir2/dir1/MT/testfile1x)
+AT_CHECK(cmp dir1/MT/testfile2 outdir2/dir1/MT/testfile2)
+AT_CHECK(cmp dir2/TM outdir2/dir2/TM)
+AT_CHECK(cmp dir3x/MT outdir2/dir3x/MT)
+
+# explicit drop
+
+AT_CHECK(MONOTONE drop dir1/MT/testfile2, [], [ignore], [ignore])
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE checkout outdir3, [], [ignore], [ignore])
+AT_CHECK(cmp dir1/MT/testfile1x outdir2/dir1/MT/testfile1x)
+AT_CHECK(test ! -e outdir3/dir1/MT/testfile2)
+
+# recursive drop
+
+#### FIXME This should be re-enabled when delete_dir works ####
+#AT_CHECK(MONOTONE drop dir1, [], [ignore], [ignore])
+# we expect a non-zero exist status here because directory deletion is
+# broken once that's fixed this should fail and can be changed to
+# expect commit to work
+
+#### FIXME ###
+#AT_CHECK(MONOTONE commit, [3], [ignore], [ignore])
+
+AT_CHECK(MONOTONE checkout outdir4, [], [ignore], [ignore])
+# and these will need updating to all be ! -e too
+AT_CHECK(test -e outdir4/dir1/MT/testfile1x)
+AT_CHECK(test ! -e outdir4/dir1/MT/testfile2)
+AT_CHECK(test -e outdir4/dir1/MT)
+AT_CHECK(test -e outdir4/dir1)
+
+AT_CLEANUP

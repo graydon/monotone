@@ -1,0 +1,46 @@
+AT_SETUP([default server/collection])
+AT_KEYWORDS(netsync)
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+TESTBRANCH_R=`BASE_REVISION`
+
+SET_FILE(testfile, [stuff stuff
+])
+COMMIT(otherbranch)
+OTHERBRANCH_R=`BASE_REVISION`
+
+SET_FILE(testfile, [nonsense nonsense
+])
+COMMIT(thirdbranch)
+THIRDBRANCH_R=`BASE_REVISION`
+
+NETSYNC_SERVE_START(testbranch otherbranch thirdbranch)
+
+# First make sure netsync with explicit server/collection override defaults
+AT_CHECK(MONOTONE2 set database default-server nonsense, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 set database default-collection nonsense, [], [ignore], [ignore])
+NETSYNC_CLIENT_RUN(pull, testbranch, 0)
+AT_CHECK(MONOTONE2 checkout --branch=testbranch --revision=$TESTBRANCH_R testdir1, [], [ignore], [ignore])
+AT_CHECK(test -f testdir1/testfile)
+
+# Now make sure explicit server with default collection works...
+AT_CHECK(MONOTONE2 set database default-server nonsense, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 set database default-collection otherbranch, [], [ignore], [ignore])
+NETSYNC_CLIENT_RUN(pull, [])
+AT_CHECK(MONOTONE2 checkout --branch=otherbranch --revision=$OTHERBRANCH_R testdir2, [], [ignore], [ignore])
+AT_CHECK(test -f testdir2/testfile)
+
+# And finally, 
+AT_CHECK(MONOTONE2 set database default-server 127.0.0.1:$_PORT, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 set database default-collection thirdbranch, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 sync, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 checkout --branch=thirdbranch --revision=$THIRDBRANCH_R testdir3, [], [ignore], [ignore])
+AT_CHECK(test -f testdir3/testfile)
+
+NETSYNC_SERVE_STOP
+
+AT_CLEANUP

@@ -1,0 +1,207 @@
+# -*- shell-script -*-
+
+# bash completion for monotone 0.18
+# Author: Olivier Andrieu <oandrieu@nerim.net>
+
+# source this file from your .bashrc
+# If you use the bash completion package <http://www.caliban.org/bash/>,
+# copy this file in the directory /etc/bash_completion.d for a 
+# system-wide install
+
+
+# The function _filedir is defined in /etc/bash_completion.
+# This is a weaker version, for those who do not have the 
+# bash completion package installed. 
+if ! type _filedir >& /dev/null ; then
+_filedir() {
+    local IFS=$'\t\n' arg
+    COMPREPLY=( ${COMPREPLY[@]:-} $(compgen ${1:--f} -- $cur) )
+}
+fi
+
+# Call monotone to complete IDs
+_monotone_complete() {
+  if (( "${#cur}" >=2 )) ; then
+    COMPREPLY=( ${COMPREPLY[@]:-} $(monotone $mono_db complete $1 $cur 2> /dev/null) )
+  fi
+}
+
+# Call monotone to complete key ids (private or public)
+_monotone_keys() {
+  local range
+  if [ "$1" == "privkey" ]; then
+    range='/\[private/,$'
+  else
+    range='1,/\[private/'
+  fi
+  COMPREPLY=( $(compgen -W "$(monotone $mono_db list keys 2> /dev/null |\
+                              sed -n ${range}'{/^[0-9a-f]/s/[0-9a-f]* //p}')" -- ${cur#*=} ) )
+}
+
+_monotone_branches() {
+  COMPREPLY=( $(compgen -W "$(monotone $mono_db list branches 2> /dev/null)" -- ${cur#*=} ) )
+}
+
+_monotone() {
+  local cur prev mono_db
+
+  for w in ${COMP_WORDS[@]} ; do
+    if [[ "$w" == --db=* ]] ; then
+      mono_db="$w" ; break
+    fi
+  done
+  if [ -z "$mono_db" ] ; then
+    for i in ${!COMP_WORDS[@]} ; do
+      [ $i -eq 0 ] && continue
+      prev="${COMP_WORDS[$i-1]}"
+      if [ $prev == --db -o $prev == -d ] ; then
+        mono_db="--db=${COMP_WORDS[$i]}" ; break
+      fi
+    done
+  fi
+
+  cur=${COMP_WORDS[COMP_CWORD]}
+  prev=${COMP_WORDS[COMP_CWORD-1]}
+
+  case $cur in
+    --db=* | --rcfile=* | --dump=* )
+      cur="${cur#*=}"
+      _filedir
+      ;;
+    --branch=* )
+      _monotone_branches
+      ;;
+    --key=* )
+      _monotone_keys pubkey
+      ;;
+    --ticker=* )
+      cur="${cur#*=}"
+      COMPREPLY=( $(compgen -W 'count dot' -- $cur ) )
+      ;;
+    --revision=* )
+      _monotone_complete revision
+      ;;
+    -* )
+      COMPREPLY=( $(compgen -W '--debug --dump --quiet --help --nostd --norc\
+                                --rcfile --key --db --branch --version --full-version\
+                                --ticker --revision --message' -- $cur) )
+      ;;
+    * )
+      case $prev in
+        --db | -d | --rcfile | --dump )
+          _filedir
+          ;;
+        --branch | -b )
+          _monotone_branches
+          ;;
+        --key | -k )
+          _monotone_keys pubkey
+          ;;
+        --ticker )
+          COMPREPLY=( $(compgen -W 'count dot none' -- $cur ) )
+          ;;
+        --revision | -r )
+          _monotone_complete revision
+          ;;
+	db )
+	  COMPREPLY=( $(compgen -W 'init info version dump load migrate execute check changesetify rebuild' -- $cur ) )
+	  ;;
+	cdiff | diff | annotate )
+          COMPREPLY=( $(compgen -W '--revision' -- $cur ) )
+	  _filedir
+	  ;;
+	log | approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )
+	  _monotone_complete revision
+	  ;;
+	ls | list )
+	  COMPREPLY=( $(compgen -W 'certs keys branches epochs tags vars known unknown ignored missing' -- $cur ) )
+	  ;;
+	attr )
+	  COMPREPLY=( $(compgen -W 'get set drop' -- $cur ) )
+	  ;;
+	co | checkout )
+	  _filedir -d
+	  _monotone_complete revision
+	  ;;
+	status | cvs_import | add | drop | rename | revert | identify )
+	  _filedir
+	  ;;
+	cat )
+	  COMPREPLY=( $(compgen -W 'file manifest revision' -- $cur) )
+	  ;;
+        push | pull | serve | sync )
+	  COMPREPLY=( $(compgen -A hostname -- $cur) )
+	  ;;
+	pubkey | privkey )
+	  _monotone_keys $prev
+	  ;;
+	chkeypass | dropkey )
+	  _monotone_keys privkey
+	  ;;
+	propagate | reindex )
+	  _monotone_branches
+	  ;;
+	* )
+	  if (( $COMP_CWORD >= 2 )) ; then
+	    local prev2=${COMP_WORDS[COMP_CWORD-2]}
+	    case $prev2 in
+	      cdiff | diff | explicit_merge )
+		_monotone_complete revision
+		;;
+	      co | checkout | rename | annotate )
+		_filedir -d
+		;;
+	      cat )
+		_monotone_complete $prev
+		;;
+	      log | attr )
+		_filedir
+		;;
+	      list )
+		if [ $prev == certs ] ; then
+		    _monotone_complete revision
+		    _monotone_complete manifest 
+		    _monotone_complete file
+		fi
+		;;
+	      push | pull | serve | sync | propagate )
+                _monotone_branches
+		;;
+	      * )
+		if (( $COMP_CWORD >= 3 )) ; then
+		    local prev3=${COMP_WORDS[COMP_CWORD-3]}
+		    case $prev3 in
+			explicit_merge )
+			    _monotone_complete revision
+			    _monotone_branches
+			    ;;
+			*)
+			    unset prev2
+			    unset prev3
+		    esac
+		else
+		    unset prev2
+		fi
+		;;
+	    esac
+	  fi
+	  if [ -z "$prev2" ] ; then
+	    COMPREPLY=( $(compgen -W 'db agraph \
+                                      annotate cat cdiff complete diff list log ls status \
+                                      cert chkeypass dropkey genkey trusted \
+                                      pull push reindex serve sync \
+                                      privkey pubkey read \
+                                      cvs_import \
+                                      approve comment disapprove tag testresult \
+                                      checkout co explicit_merge heads merge propagate refresh_inodeprints setup \
+                                      set unset \
+                                      add attr commit drop identify rename revert update' -- $cur) )
+	  fi
+	  ;;
+      esac
+      ;;
+  esac
+  return 0
+}
+
+complete -F _monotone -o default monotone

@@ -1,0 +1,9 @@
+AT_SETUP([update no-ops when no parent revision])
+MONOTONE_SETUP
+
+ADD_FILE(foo, [blah balh
+])
+
+AT_CHECK(MONOTONE update --branch=testbranch, [1], [ignore], [ignore])
+
+AT_CLEANUP

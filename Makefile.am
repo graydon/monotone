@@ -2,24 +2,50 @@ AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
 MOST_SOURCES =								\
-	 app_state.cc commands.cc diff_patch.cc lua.cc			\
-         transforms.cc update.cc work.cc cert.cc database.cc file_io.cc	\
-         keys.cc manifest.cc packet.cc sanity.cc vocab.cc rcs_file.cc	\
-         xdelta.cc ui.cc schema_migration.cc				\
-         constants.cc netsync.cc netcmd.cc merkle_tree.cc basic_io.cc	\
-         mkstemp.cc lcs.cc rcs_import.hh rcs_import.cc revision.cc	\
-	 change_set.cc							\
+	 app_state.cc app_state.hh					\
+         commands.cc commands.hh					\
+         diff_patch.cc diff_patch.hh					\
+         lua.cc lua.hh							\
+         transforms.cc transforms.hh					\
+         update.cc update.hh						\
+         work.cc work.hh						\
+         cert.cc cert.hh						\
+         database.cc database.hh					\
+         file_io.cc file_io.hh						\
+         keys.cc keys.hh						\
+         manifest.cc manifest.hh					\
+         packet.cc packet.hh						\
+         sanity.cc sanity.hh						\
+         vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
+         rcs_file.cc rcs_file.hh					\
+         xdelta.cc xdelta.hh						\
+         ui.cc ui.hh							\
+         schema_migration.cc schema_migration.hh			\
+         constants.cc constants.hh					\
+         netsync.cc netsync.hh						\
+         netcmd.cc netcmd.hh						\
+         merkle_tree.cc merkle_tree.hh					\
+         basic_io.cc basic_io.hh					\
+         mkstemp.cc mkstemp.hh						\
+         lcs.cc lcs.hh							\
+         rcs_import.cc rcs_import.hh					\
+         revision.cc revision.hh					\
+	 change_set.cc change_set.hh					\
+         mt_version.cc mt_version.hh					\
+         automate.cc automate.hh					\
+         database_check.cc database_check.hh				\
+	 path_component.cc path_component.hh				\
+         epoch.cc epoch.hh						\
+         inodeprint.cc inodeprint.hh					\
+         selectors.cc selectors.hh					\
+         annotate.cc annotate.hh					\
+         restrictions.cc restrictions.hh				\
 									\
-         app_state.hh commands.hh file_io.hh manifest.hh packet.hh	\
-	 sanity.hh update.hh work.hh cert.hh database.hh keys.hh	\
-	 packet_types.hh transforms.hh vocab.hh				\
-	 cleanup.hh diff_patch.hh lua.hh basic_io.hh			\
-	 unit_tests.hh vocab_terms.hh interner.hh cycle_detector.hh	\
-         randomfile.hh rcs_file.hh xdelta.hh adler32.hh			\
-         lcs.hh constants.hh ui.hh schema_migration.hh quick_alloc.hh	\
-	 mac.hh netsync.hh netcmd.hh netio.hh merkle_tree.hh		\
-	 numeric_vocab.hh revision.hh change_set.hh			\
-         mkstemp.hh
+	 cleanup.hh unit_tests.hh interner.hh				\
+         cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
+	 netio.hh smap.hh gettext.h					\
+         package_revision.c package_revision.h				\
+         package_full_revision.c package_full_revision.h options.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -72,11 +98,11 @@ BOOST_SANDBOX_SOURCES = \
 	boost/circular_buffer.hpp
 
 SQLITE_SOURCES = \
-        sqlite/attach.c sqlite/auth.c sqlite/btree.c \
+        sqlite/alter.c sqlite/attach.c sqlite/auth.c sqlite/btree.c \
         sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
         sqlite/hash.c sqlite/insert.c \
         sqlite/legacy.c sqlite/main.c sqlite/opcodes.c \
-        sqlite/os_mac.c sqlite/os_unix.c sqlite/os_win.c \
+        sqlite/os_unix.c sqlite/os_win.c \
         sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c \
         sqlite/random.c sqlite/select.c sqlite/table.c sqlite/tokenize.c \
         sqlite/trigger.c sqlite/update.c sqlite/utf.c \
@@ -85,7 +111,7 @@ SQLITE_SOURCES = \
         sqlite/vdbemem.c sqlite/where.c \
 	\
         sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/os_common.h sqlite/os_mac.h sqlite/os_unix.h sqlite/os_win.h \
+        sqlite/os_common.h sqlite/os_unix.h sqlite/os_win.h \
         sqlite/parse.h sqlite/sqlite3.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
 	sqlite/pager.h
 
@@ -106,11 +132,18 @@ IDNA_SOURCES = \
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
+POPT_SOURCES = \
+	popt/findme.c  popt/poptconfig.c  popt/poptint.h   \
+	popt/findme.h  popt/popt.h        popt/poptparse.c \
+	popt/popt.c    popt/popthelp.c    popt/system.h
+
 UNIX_PLATFORM_SOURCES = \
-	unix/read_password.cc
+	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
+	unix/platform_netsync.cc unix/inodeprint.cc
 
 WIN32_PLATFORM_SOURCES = \
-	win32/read_password.cc
+	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
+	win32/platform_netsync.cc win32/inodeprint.cc
 
 # primaries
 
@@ -128,12 +161,13 @@ libplatform_a_SOURCES = platform.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(CRYPTOPP_SOURCES) \
 			$(IDNA_SOURCES) \
+			$(POPT_SOURCES) \
 			$(NETXX_SOURCES)
 
 # flags
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -Wall $(SQLITE_CPPFLAGS)
 AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
 AM_LDFLAGS = 
 
@@ -158,19 +192,19 @@ if BUNDLED_SQLITE
 endif
 
 if STATIC_BOOST
-  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem.a \
-              @BOOST_LIBDIR@/libboost_date_time.a \
-              @BOOST_LIBDIR@/libboost_regex.a
+  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem$(BOOST_SUFFIX).a \
+              @BOOST_LIBDIR@/libboost_date_time$(BOOST_SUFFIX).a \
+              @BOOST_LIBDIR@/libboost_regex$(BOOST_SUFFIX).a
   monotone_LDADD = lib3rdparty.a $(BOOSTLIBS)
   unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
-                     @BOOST_LIBDIR@/libboost_unit_test_framework.a
+                     @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
 else
   monotone_LDADD = lib3rdparty.a
-  unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework
+  unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework$(BOOST_SUFFIX)
 endif
 
-monotone_LDADD += libplatform.a
-unit_tests_LDADD += libplatform.a
+monotone_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
+unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
@@ -220,62 +254,80 @@ PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf				\
 	figures/statement.pdf figures/three-versions.pdf			\
 	figures/two-branches.pdf
 
+PNG_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.png)))
 EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
 
 man1_MANS = monotone.1
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
 	     $(PDF_FIGURES) \
+	     $(PNG_FIGURES) \
              INSTALL \
+             README.changesets \
+             UPGRADE \
              monotone.spec \
              monotone.html \
              texinfo.css \
 	     schema.sql views.sql \
 	     std_hooks.lua test_hooks.lua \
 	     testsuite.at \
-	     $(wildcard tests/t_*.at) \
+	     $(wildcard $(srcdir)/tests/t_*.at) \
 	     testsuite \
              tests/atconfig.in \
              tests/atlocal.in  \
 	     package.m4 \
-             $(wildcard m4/*.m4)
+	     package_revision.txt package_full_revision_dist.txt \
+             $(wildcard $(srcdir)/m4/*.m4) \
+             popt/README popt/CHANGES popt/COPYING popt/popt.3 popt/popt.ps \
+             $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
+             sqlite/keywordhash.h \
+             contrib/README \
+             contrib/monoprof.sh \
+             contrib/monotone-notify.pl \
+             contrib/monotone-import.pl \
+             contrib/ciabot_monotone.py \
+             contrib/monotone.el \
+             contrib/monotone-nav.el \
+             contrib/monotone.bash_completion \
+             contrib/monotone.zsh_completion \
+             contrib/monoprof.sh \
+             contrib/mtbrowse.sh \
+             win32/monotone.iss \
+             $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
-monotone.pdf: monotone.texi $(PDF_FIGURES)
+monotone.pdf: monotone.texi version.texi $(PDF_FIGURES)
 
-monotone.dvi: monotone.texi $(EPS_FIGURES)
+monotone.dvi: monotone.texi version.texi $(EPS_FIGURES)
 
-%.eps: %.epsi
-	mv $< $@
+#%.eps: %.epsi
+#	mv $< $@
+#
+#%.epsi: %.ps
+#	ps2epsi $< $@
 
-%.epsi: %.ps
-	ps2epsi $< $@
+%.eps : %.ps
+	ps2eps <$< >$@
 
 $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 	mkdir -p $(top_builddir)/figures
-	acroread -toPostScript -pairs $< $@
+#	acroread -toPostScript -pairs $< $@
+	pdftops $< $@
 
 
 # testsuite stuff (could this possibly be more ugly?)
 
 TESTS = unit_tests $(srcdir)/testsuite
 
-MOSTLYCLEANFILES = \
-	testsuite.dir/at-check-line \
-        testsuite.dir/at-status \
-	testsuite.dir/at-stdout \
-	testsuite.dir/at-stder1 \
-	testsuite.dir/at-stderr \
-	testsuite.dir/at-times \
-	testsuite.log
+mostlyclean-local:
+	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
 
-DISTCLEANFILES = tests/atconfig \
-                 idna/idn-int.h 
+DISTCLEANFILES = tests/atconfig mt-stdint.h
 
 # distcheck stuff
 
-DISTCHECK_CONFIGURE_FLAGS = --with-bundled-adns \
+DISTCHECK_CONFIGURE_FLAGS = \
 			 --with-bundled-sqlite \
 			 --with-bundled-lua \
 			 --enable-static-boost
@@ -301,27 +353,71 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES = std_hooks.h test_hooks.h schema.h views.h
-CLEANFILES = $(BUILT_SOURCES) $(EPS_FIGURES)
+BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
+                      package_revision.txt package_revision.c \
+                      package_full_revision.txt package_full_revision.c
+BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
+BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
+CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
 
 txt2c: txt2c.cc Makefile
 	$(CXX) -Wall -o $@ $<
 	chmod 0755 $@$(EXEEXT)
 
+apidocs:
+	doxygen doxygen.cfg
+
 %.h: %.sql txt2c Makefile
-	./txt2c $< $(*F) >$@
+	./txt2c $< $(*F) >$@.tmp
+	cmp -s $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 %.h: %.lua txt2c Makefile
-	./txt2c $< $(*F) >$@
+	./txt2c $< $(*F) >$@.tmp
+	cmp -s $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
+
+# A fake target so we can use MT/revision as a prerequisite, yet not
+# crash if MT/revision does not exist.
+$(srcdir)/MT/revision:
+	true
+package_revision.txt: $(srcdir)/MT/revision
+	if [ -f $< ]; then cp $< $@; fi
+	if [ ! -f $@ ]; then echo "unknown" > $@; fi
+package_revision.c: package_revision.txt txt2c Makefile
+	./txt2c --strip-trailing --no-static $< package_revision >$@.tmp
+	cmp -s $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
+
+.PHONY: package_full_revision.txt apidocs
+package_full_revision.txt:
+	REAL_BLDDIR=$$PWD/$(top_builddir); \
+	(cd $(srcdir) && $$REAL_BLDDIR/monotone status) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && monotone status) 2>/dev/null >$@ \
+	|| (cp $(srcdir)/package_full_revision_dist.txt 2>/dev/null $@) \
+	|| (echo "unknown" >$@)
+package_full_revision_dist.txt: package_full_revision.txt
+	cp $< $@
+	(echo ''; \
+	 echo '  Generated from data cached in the distribution;'; \
+	 echo '  further changes may have been made.') >> $@
+package_full_revision.c: package_full_revision.txt txt2c Makefile
+	./txt2c --no-static $< package_full_revision >$@.tmp
+	cmp -s $@.tmp $@ || mv $@.tmp $@
+	rm -f $@.tmp
 
 # automake doesn't build html docs
 
 monotone.html: monotone.texi texinfo.css
 	makeinfo --no-split --no-headers --output $@ --html $<
-	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
+	rm -f monotone.html.perlbak
+
+# The .perlbak thing is needed, otherwise the perl executions fails on MinGW
 
 html: monotone.texi texinfo.css
 	mkdir -p html
 	makeinfo --number-sections --html --output html $<
-	perl -i -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
+	rm -f html/*.perlbak
 	cp texinfo.css html
