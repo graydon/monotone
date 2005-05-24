@@ -1,7 +1,17 @@
+2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Put back lost "automate certs".
+
 2005-05-24  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc (try_one_merge, CMD(merge), CMD(explicit_merge), 
 	CMD(propagate): allow --author flag.
+
+2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Fix comment for automate stdio to match the code.
+	* monotone.texi: Document ignored locations in automate stdio
+	input as reserved.
 
 2005-05-24  Riccardo Ghetta  <birrachiara@tin.it>
 

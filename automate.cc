@@ -915,11 +915,13 @@ automate_command(utf8 cmd, std::vector<utf8> args,
 //   of monotone.
 //
 // Input format: The input is a series of lines of the form
-//   <token> [<token> ...] newline, where <token> is
-//   <size> colon <string> .
+//   'l'<size>':'<string>[<size>':'<string>...]'e', with characters
+//   after the 'e' of one command, but before the 'l' of the next ignored.
+//   This space is reserved, and should not contain characters other
+//   than '\n'.
 //   Example:
-//     6:leaves
-//     7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378
+//     l6:leavese
+//     l7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378e
 //
 // Output format: <command number>:<err code>:<last?>:<size>:<output>
 //   <command number> is a decimal number specifying which command
