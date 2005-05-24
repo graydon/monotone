@@ -1,3 +1,9 @@
+2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Fix comment for automate stdio to match the code.
+	* monotone.texi: Document ignored locations in automate stdio
+	input as reserved.
+
 2005-05-23  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Fix "automate stdio" input/output format according to ML discussion
