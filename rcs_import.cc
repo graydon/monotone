@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -588,7 +589,7 @@ process_branch(string const & begin_version,
       thus, we give up on establishing a hierarchy between branches
       altogether. all branches exist in a flat namespace, and all are
       direct descendents of the empty revision at the root of
-      history. each branchpoint symbol mentionned in the
+      history. each branchpoint symbol mentioned in the
       administrative section of a file is considered the root of a new
       lineage.
       

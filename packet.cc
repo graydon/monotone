@@ -669,7 +669,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
 
 void 
 packet_db_writer::consume_file_reverse_delta(file_id const & new_id,
-                                             file_id const & old_id,                                         
+                                             file_id const & old_id,
                                              file_delta const & del)
 {
   transaction_guard guard(pimpl->app.db);
