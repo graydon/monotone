@@ -5060,7 +5060,8 @@ l7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378e
 
 The input is a series of commands of the form 'l' <token> [<token> ...] 'e',
 where <token> = <size> colon <string> . Characters between the ending 'e'
-of one commad and the beginning 'l' of the next are ignored.
+of one commad and the beginning 'l' of the next are ignored, but characters
+other than '\n' should not be present as this space is reserved.
 
 @item Sample output:
 

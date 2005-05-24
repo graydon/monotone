@@ -1,3 +1,9 @@
+2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Fix comment for automate stdio to match the code.
+	* monotone.texi: Document ignored locations in automate stdio
+	input as reserved.
+
 2005-05-24  Riccardo Ghetta  <birrachiara@tin.it>
 
 	* tests/t_merge_binary.at: new XFAIL test to cover monotone
@@ -8320,3 +8326,4 @@
 2003-04-06  graydon hoare  <graydon@pobox.com>
 
 	* initial release.
+
