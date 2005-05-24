@@ -1,3 +1,8 @@
+2005-05-24  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (try_one_merge, CMD(merge), CMD(explicit_merge), 
+	CMD(propagate): allow --author flag.
+
 2005-05-24  Riccardo Ghetta  <birrachiara@tin.it>
 
 	* tests/t_merge_binary.at: new XFAIL test to cover monotone
