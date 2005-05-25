@@ -1,3 +1,8 @@
+2005-05-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc ("automate stdio"): Fix block size limiting.
+		Honor "output.flush()" in commands.
+
 2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* automate.cc: Fix buffering for "automate stdio"

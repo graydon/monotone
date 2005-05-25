@@ -973,9 +973,18 @@ public:
     written+=__n;
     while(written>=last_call+call_every)
       {
-        if(on_write) on_write(call_every);
+        if(on_write)
+          on_write(call_every);
         last_call+=call_every;
       }
+    return ret;
+  }
+  virtual int sync()
+  {
+    int ret=char_stringbuf::sync();
+    if(on_write)
+      on_write(-1);
+    last_call=written;
     return ret;
   }
   void set_on_write(boost::function1<void, int> x)
@@ -992,14 +1001,24 @@ void print_some_output(int cmdnum,
                        int & pos,
                        int size)
 {
-  s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
   if(size==-1)
     {
+      while(text.size()-pos > constants::automate_stdio_size)
+        {
+          s<<cmdnum<<':'<<err<<':'<<'m'<<':';
+          s<<constants::automate_stdio_size<<':'
+           <<text.substr(pos, constants::automate_stdio_size);
+          pos+=constants::automate_stdio_size;
+          s.flush();
+        }
+      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
       s<<(text.size()-pos)<<':'<<text.substr(pos);
       pos=text.size();
     }
   else
     {
+      I(size <= constants::automate_stdio_size);
+      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
       s<<size<<':'<<text.substr(pos, size);
       pos+=size;
     }
@@ -1075,11 +1094,15 @@ automate_stdio(std::vector<utf8> args,
             }
           catch(usage & u)
             {
+              if(sb.str().size())
+                s.flush();
               err=1;
               commands::explain_usage(help_name, s);
             }
           catch(informative_failure & f)
             {
+              if(sb.str().size())
+                s.flush();
               err=2;
               //Do this instead of printing f.what directly so the output
               //will be split into properly-sized blocks automatically.
