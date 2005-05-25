@@ -1001,7 +1001,6 @@ void print_some_output(int cmdnum,
                        int & pos,
                        int size)
 {
-  s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
   if(size==-1)
     {
       while(text.size()-pos > constants::automate_stdio_size)
