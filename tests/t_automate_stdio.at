@@ -1,0 +1,12 @@
+AT_SETUP([automate stdio])
+MONOTONE_SETUP
+
+AT_DATA(output, [file contents
+])
+
+AT_CHECK(MONOTONE automate inventory, [], [stdout], [ignore])
+AT_CHECK(mv stdout output)
+AT_CHECK(echo "l9:inventorye"|MONOTONE automate stdio, [], [stdout], [ignore])
+CHECK_SAME_STDOUT(../../contrib/get_stdio.pl stdout 0, cat output)
+
+AT_CLEANUP
