@@ -1,3 +1,43 @@
+2005-05-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_automate_stdio.at: Make it self-contained.
+
+2005-05-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/get_stdio.pl (new file): Perl script to parse the output from
+	"mtn automate stdio". Used by...
+	* tests/t_automate_stdio.at (new file): Test for "mtn automate stdio".
+	* testsuite.at: Add it.
+
+2005-05-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc ("automate stdio"): Fix block size limiting.
+		Honor "output.flush()" in commands.
+
+2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Fix buffering for "automate stdio"
+
+2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Put back lost "automate certs".
+
+2005-05-24  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (try_one_merge, CMD(merge), CMD(explicit_merge), 
+	CMD(propagate): allow --author flag.
+
+2005-05-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Fix comment for automate stdio to match the code.
+	* monotone.texi: Document ignored locations in automate stdio
+	input as reserved.
+
+2005-05-24  Riccardo Ghetta  <birrachiara@tin.it>
+
+	* tests/t_merge_binary.at: new XFAIL test to cover monotone
+	inclination to algorithmically merge binary files.
+
 2005-05-24  Richard Levitte  <richard@levitte.org>
 
 	* commands.cc (try_one_merge): Change 'rid' to 'merged_id'.
@@ -30,7 +70,7 @@
 	* monotone.texi: document the changes
 	* testsuite.at, tests/t_selector_later_earlier.at: add specific tests 
 	for the new selectors
-						
+
 2005-05-21  Richard Levitte  <richard@levitte.org>
 
 	* Makefile.am: Make monotone.pdf and monotone.dvi depend on
@@ -8326,4 +8366,3 @@
 2003-04-06  graydon hoare  <graydon@pobox.com>
 
 	* initial release.
-

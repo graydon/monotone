@@ -3071,7 +3071,7 @@ try_one_merge(revision_id const & left_id,
     cert_revision_author(merged_id, app.author(), app, dbw);
   else
     cert_revision_author_default(merged_id, app, dbw);
-}
+}                         
 
 
 CMD(merge, "tree", "", "merge unmerged heads of branch",
@@ -3125,7 +3125,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch",
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
     "merge from one branch to another asymmetrically",
-    OPT_NONE % OPT_DATE % OPT_AUTHOR)
+    OPT_DATE % OPT_AUTHOR)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less
@@ -3674,10 +3674,10 @@ CMD(automate, "automation",
     "toposort [REV1 [REV2 [REV3 [...]]]]\n"
     "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
     "leaves\n"
-    "select\n"
     "inventory\n"
     "stdio\n"
-    "certs REV\n",
+    "certs REV\n"
+    "select SELECTOR\n",
     "automation interface", 
     OPT_NONE)
 {
