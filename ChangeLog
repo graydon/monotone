@@ -1,5 +1,9 @@
 2005-05-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/t_automate_stdio.at: Make it self-contained.
+
+2005-05-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* contrib/get_stdio.pl (new file): Perl script to parse the output from
 	"mtn automate stdio". Used by...
 	* tests/t_automate_stdio.at (new file): Test for "mtn automate stdio".
