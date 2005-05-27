@@ -1,3 +1,11 @@
+2005-05-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc: Allow REGEXes as well as collections.
+		Fix out-of-branch ancestor handling.
+	* tests/t_netsync_diffbranch.at: Remove bug report and XFAIL (fixed).
+	* commands.cc: Update description fields for netsync commands.
+	* monotone.texi: Update documentation.
+
 2005-05-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/t_automate_stdio.at: Make it self-contained.

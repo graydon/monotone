@@ -3603,10 +3603,10 @@ to date.
 @section Network
 
 @ftable @command
-@item monotone serve @var{address}[:@var{port}] @var{collection1} [@var{collection2} ...]
-@itemx monotone pull [@var{address}[:@var{port}] [@var{collection}]]
-@itemx monotone push [@var{address}[:@var{port}] [@var{collection}]]
-@itemx monotone sync [@var{address}[:@var{port}] [@var{collection}]]
+@item monotone serve @var{address}[:@var{port}] (@var{collection}|@var{/regex/}) [...]
+@itemx monotone pull [@var{address}[:@var{port}] [(@var{collection}|@var{/regex/})]]
+@itemx monotone push [@var{address}[:@var{port}] [(@var{collection}|@var{/regex/})]]
+@itemx monotone sync [@var{address}[:@var{port}] [(@var{collection}|@var{/regex/})]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -3619,6 +3619,8 @@ host name to listen on, or connect to, optionally followed by a colon
 and a port number. The @var{collection} parameter indicates a set of
 branches to exchange; every branch for which @var{collection} is a
 prefix will be indexed and made available for synchronization.
+Alternatively, a regex may be used instead; in that case every branch
+which matches the regex exactly will be made available.
 
 The @command{serve} command can take multiple collections, and it will
 then accept clients requesting any of the listed collections.  Different

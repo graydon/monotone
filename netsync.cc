@@ -13,6 +13,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
+#include <boost/regex.hpp>
 
 #include "app_state.hh"
 #include "cert.hh"
@@ -134,9 +135,9 @@
 // issues a nonce which must be used for a subsequent authentication.
 //
 // the client can then respond with an "auth (source|sink|both)
-// <collection> <id> <nonce1> <nonce2> <sig>" command which identifies its
+// <pattern> <id> <nonce1> <nonce2> <sig>" command which identifies its
 // RSA key, notes the role it wishes to play in the synchronization,
-// identifies the collection it wishes to sync with, signs the previous
+// identifies the pattern it wishes to sync with, signs the previous
 // nonce with its own key, and issues a nonce of its own for mutual
 // authentication.
 //
@@ -148,7 +149,7 @@
 // manifest certificate merkle nodes to the server. the server then
 // compares the root to each slot in *its* root node, and for each slot
 // either sends refined subtrees to the client, or (if it detects a missing
-// item in one collection or the other) sends either "data" or "send_data"
+// item in one pattern or the other) sends either "data" or "send_data"
 // commands corresponding to the role of the missing item (source or
 // sink). the client then receives each refined subtree and compares it
 // with its own, performing similar description/request behavior depending
@@ -208,8 +209,7 @@ session
 {
   protocol_role role;
   protocol_voice const voice;
-  vector<utf8> const & collections;
-  set<string> const & all_collections;
+  vector<utf8> collections;
   app_state & app;
 
   string peer_id;
@@ -223,7 +223,7 @@ session
   bool armed;
   bool arm();
 
-  utf8 collection;
+  utf8 pattern;
   id remote_peer_key_hash;
   bool authenticated;
 
@@ -255,7 +255,6 @@ session
   session(protocol_role role,
           protocol_voice voice,
           vector<utf8> const & collections,
-          set<string> const & all_collections,
           app_state & app,
           string const & peer,
           Netxx::socket_type sock, 
@@ -309,10 +308,10 @@ session
   void queue_hello_cmd(id const & server, 
                        id const & nonce);
   void queue_anonymous_cmd(protocol_role role, 
-                           string const & collection, 
+                           string const & pattern, 
                            id const & nonce2);
   void queue_auth_cmd(protocol_role role, 
-                      string const & collection, 
+                      string const & pattern, 
                       id const & client, 
                       id const & nonce1, 
                       id const & nonce2, 
@@ -341,10 +340,10 @@ session
                          rsa_pub_key const & server_key,
                          id const & nonce);
   bool process_anonymous_cmd(protocol_role role, 
-                             string const & collection, 
+                             string const & pattern, 
                              id const & nonce2);
   bool process_auth_cmd(protocol_role role, 
-                        string const & collection, 
+                        string const & pattern, 
                         id const & client, 
                         id const & nonce1, 
                         id const & nonce2, 
@@ -367,18 +366,18 @@ session
                                id const & item);
 
   bool merkle_node_exists(netcmd_item_type type,
-                          utf8 const & collection,                      
+                          utf8 const & pattern,                      
                           size_t level,
                           prefix const & pref);
 
   void load_merkle_node(netcmd_item_type type,
-                        utf8 const & collection,                        
+                        utf8 const & pattern,                        
                         size_t level,
                         prefix const & pref,
                         merkle_ptr & node);
 
   void rebuild_merkle_trees(app_state & app,
-                            utf8 const & collection);
+                            utf8 const & pattern);
 
   bool dispatch_payload(netcmd const & cmd);
   void begin_service();
@@ -411,7 +410,6 @@ get_root_prefix()
 session::session(protocol_role role,
                  protocol_voice voice,
                  vector<utf8> const & collections,
-                 set<string> const & all_coll,
                  app_state & app,
                  string const & peer,
                  Netxx::socket_type sock, 
@@ -419,7 +417,6 @@ session::session(protocol_role role,
   role(role),
   voice(voice),
   collections(collections),
-  all_collections(all_coll),
   app(app),
   peer_id(peer),
   fd(sock),
@@ -427,7 +424,7 @@ session::session(protocol_role role,
   inbuf(""),
   outbuf(""),
   armed(false),
-  collection(""),
+  pattern(""),
   remote_peer_key_hash(""),
   authenticated(false),
   last_io_time(::time(NULL)),
@@ -448,8 +445,8 @@ session::session(protocol_role role,
   if (voice == client_voice)
     {
       N(collections.size() == 1,
-          F("client can only sync one collection at a time"));
-      this->collection = idx(collections, 0);
+          F("client can only sync one pattern at a time"));
+      this->pattern = idx(collections, 0);
     }
     
   dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
@@ -478,12 +475,6 @@ session::session(protocol_role role,
   requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
-
-  for (vector<utf8>::const_iterator i = collections.begin();
-       i != collections.end(); ++i)
-    {
-      rebuild_merkle_trees(app, *i);
-    }
 }
 
 void session::rev_written_callback()
@@ -507,6 +498,7 @@ session::mark_recent_io()
 {
   last_io_time = ::time(NULL);
 }
+
 
 bool 
 session::done_all_refinements()
@@ -1163,18 +1155,18 @@ session::queue_hello_cmd(id const & server,
 
 void 
 session::queue_anonymous_cmd(protocol_role role, 
-                             string const & collection, 
+                             string const & pattern, 
                              id const & nonce2)
 {
   netcmd cmd;
   cmd.cmd_code = anonymous_cmd;
-  write_anonymous_cmd_payload(role, collection, nonce2, cmd.payload);
+  write_anonymous_cmd_payload(role, pattern, nonce2, cmd.payload);
   write_netcmd_and_try_flush(cmd);
 }
 
 void 
 session::queue_auth_cmd(protocol_role role, 
-                        string const & collection, 
+                        string const & pattern, 
                         id const & client, 
                         id const & nonce1, 
                         id const & nonce2, 
@@ -1182,7 +1174,7 @@ session::queue_auth_cmd(protocol_role role,
 {
   netcmd cmd;
   cmd.cmd_code = auth_cmd;
-  write_auth_cmd_payload(role, collection, client, 
+  write_auth_cmd_payload(role, pattern, client, 
                          nonce1, nonce2, signature, 
                          cmd.payload);
   write_netcmd_and_try_flush(cmd);
@@ -1507,47 +1499,29 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       decode_base64(sig, sig_raw);
       
       // make a new nonce of our own and send off the 'auth'
-      queue_auth_cmd(this->role, this->collection(), our_key_hash_raw, 
+      queue_auth_cmd(this->role, this->pattern(), our_key_hash_raw, 
                      nonce, mk_nonce(), sig_raw());
     }
   else
     {
-      queue_anonymous_cmd(this->role, this->collection(), mk_nonce());
+      queue_anonymous_cmd(this->role, this->pattern(), mk_nonce());
     }
   return true;
 }
 
 bool 
 session::process_anonymous_cmd(protocol_role role, 
-                               string const & collection, 
+                               string const & pattern, 
                                id const & nonce2)
 {
   hexenc<id> hnonce2;
   encode_hexenc(nonce2, hnonce2);
 
-  L(F("received 'anonymous' netcmd from client for collection '%s' "
+  L(F("received 'anonymous' netcmd from client for pattern '%s' "
       "in %s mode with nonce2 '%s'\n")
-    %  collection % (role == source_and_sink_role ? "source and sink" :
+    %  pattern % (role == source_and_sink_role ? "source and sink" :
                      (role == source_role ? "source " : "sink"))
     % hnonce2);
-
-  // check they're asking for a collection we're serving
-  bool collection_ok = false;
-  for (vector<utf8>::const_iterator i = collections.begin(); 
-       i != collections.end(); ++i)
-    {
-      if (*i == collection)
-        {
-          collection_ok = true;
-          break;
-        }
-    }
-  if (!collection_ok)
-    {
-      W(F("not currently serving requested collection '%s'\n") % collection);
-      this->saved_nonce = id("");
-      return false;       
-    }
   
   //
   // internally netsync thinks in terms of sources and sinks. users like
@@ -1578,14 +1552,24 @@ session::process_anonymous_cmd(protocol_role role,
       return false;
     }
 
-  if (!app.lua.hook_get_netsync_anonymous_read_permitted(collection))
+  vector<utf8> c;
+  for(vector<utf8>::const_iterator i=collections.begin();
+      i!=collections.end(); i++)
     {
-      W(F("denied anonymous read permission for '%s'\n") % collection);
+      if(app.lua.hook_get_netsync_anonymous_read_permitted((*i)()))
+        c.push_back(*i);
+    }
+  collections=c;
+  if(!collections.size())
+    {
+      W(F("denied anonymous read permission for '%s'\n") % pattern);
       this->saved_nonce = id("");
       return false;
     }
 
-  P(F("allowed anonymous read permission for '%s'\n") % collection);
+  P(F("allowed anonymous read permission for '%s'\n") % pattern);
+
+  rebuild_merkle_trees(app, pattern);
 
   // get our private key and sign back
   L(F("anonymous read permitted, signing back nonce\n"));
@@ -1596,7 +1580,7 @@ session::process_anonymous_cmd(protocol_role role,
   make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
   decode_base64(sig, sig_raw);
   queue_confirm_cmd(sig_raw());
-  this->collection = collection;
+  this->pattern = pattern;
   this->authenticated = true;
   this->role = source_role;
   return true;
@@ -1604,7 +1588,7 @@ session::process_anonymous_cmd(protocol_role role,
 
 bool 
 session::process_auth_cmd(protocol_role role, 
-                          string const & collection, 
+                          string const & pattern, 
                           id const & client, 
                           id const & nonce1, 
                           id const & nonce2, 
@@ -1619,9 +1603,9 @@ session::process_auth_cmd(protocol_role role,
   hexenc<id> their_key_hash;
   encode_hexenc(client, their_key_hash);
   
-  L(F("received 'auth' netcmd from client '%s' for collection '%s' "
+  L(F("received 'auth' netcmd from client '%s' for pattern '%s' "
       "in %s mode with nonce1 '%s' and nonce2 '%s'\n")
-    % their_key_hash % collection % (role == source_and_sink_role ? "source and sink" :
+    % their_key_hash % pattern % (role == source_and_sink_role ? "source and sink" :
                                      (role == source_role ? "source " : "sink"))
     % hnonce1 % hnonce2);
   
@@ -1632,24 +1616,7 @@ session::process_auth_cmd(protocol_role role,
       this->saved_nonce = id("");
       return false;
     }
-  
-  // check they're asking for a collection we're serving
-  bool collection_ok = false;
-  for (vector<utf8>::const_iterator i = collections.begin(); 
-       i != collections.end(); ++i)
-    {
-      if (*i == collection)
-        {
-          collection_ok = true;
-          break;
-        }
-    }
-  if (!collection_ok)
-    {
-      W(F("not currently serving requested collection '%s'\n") % collection);
-      this->saved_nonce = id("");
-      return false;       
-    }
+
 
   //
   // internally netsync thinks in terms of sources and sinks. users like
@@ -1683,19 +1650,27 @@ session::process_auth_cmd(protocol_role role,
       if (this->role != source_role && this->role != source_and_sink_role)
         {
           W(F("denied '%s' read permission for '%s' while running as sink\n") 
-            % their_id % collection);
+            % their_id % pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      if (!app.lua.hook_get_netsync_read_permitted(collection, their_id()))
+      vector<utf8> c;
+      for(vector<utf8>::const_iterator i=collections.begin();
+          i!=collections.end(); i++)
         {
-          W(F("denied '%s' read permission for '%s'\n") % their_id % collection);
+          if(app.lua.hook_get_netsync_read_permitted((*i)(), their_id()))
+            c.push_back(*i);
+        }
+      collections=c;
+      if(!collections.size())
+        {
+          W(F("denied '%s' read permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      P(F("allowed '%s' read permission for '%s'\n") % their_id % collection);
+      P(F("allowed '%s' read permission for '%s'\n") % their_id % pattern);
     }
 
   // client as source, server as sink (writing)
@@ -1705,24 +1680,34 @@ session::process_auth_cmd(protocol_role role,
       if (this->role != sink_role && this->role != source_and_sink_role)
         {
           W(F("denied '%s' write permission for '%s' while running as source\n") 
-            % their_id % collection);
+            % their_id % pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      if (!app.lua.hook_get_netsync_write_permitted(collection, their_id()))
+      vector<utf8> c;
+      for(vector<utf8>::const_iterator i=collections.begin();
+          i!=collections.end(); i++)
         {
-          W(F("denied '%s' write permission for '%s'\n") % their_id % collection);
+          if(app.lua.hook_get_netsync_write_permitted((*i)(), their_id()))
+            c.push_back(*i);
+        }
+      collections=c;
+      if(!collections.size())
+        {
+          W(F("denied '%s' write permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      P(F("allowed '%s' write permission for '%s'\n") % their_id % collection);
+      P(F("allowed '%s' write permission for '%s'\n") % their_id % pattern);
     }
-  
+
+  rebuild_merkle_trees(app, pattern);
+
   // save their identity 
   this->remote_peer_key_hash = client;
-  
+
   // check the signature
   base64<rsa_sha1_signature> sig;
   encode_base64(rsa_sha1_signature(signature), sig);
@@ -1737,7 +1722,7 @@ session::process_auth_cmd(protocol_role role,
       make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
       decode_base64(sig, sig_raw);
       queue_confirm_cmd(sig_raw());
-      this->collection = collection;
+      this->pattern = pattern;
       this->authenticated = true;
       // assume the (possibly degraded) opposite role
       switch (role)
@@ -1773,8 +1758,8 @@ session::process_confirm_cmd(string const & signature)
   encode_hexenc(id(remote_peer_key_hash), their_key_hash);
   
   // nb. this->role is our role, the server is in the opposite role
-  L(F("received 'confirm' netcmd from server '%s' for collection '%s' in %s mode\n")
-    % their_key_hash % this->collection % (this->role == source_and_sink_role ? "source and sink" :
+  L(F("received 'confirm' netcmd from server '%s' for pattern '%s' in %s mode\n")
+    % their_key_hash % this->pattern % (this->role == source_and_sink_role ? "source and sink" :
                                            (this->role == source_role ? "sink" : "source")));
   
   // check their signature
@@ -1792,15 +1777,15 @@ session::process_confirm_cmd(string const & signature)
           this->authenticated = true;
 
           merkle_ptr root;
-          load_merkle_node(epoch_item, this->collection, 0, get_root_prefix().val, root);
+          load_merkle_node(epoch_item, this->pattern, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, epoch_item);
 
-          load_merkle_node(key_item, this->collection, 0, get_root_prefix().val, root);
+          load_merkle_node(key_item, this->pattern, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, key_item);
 
-          load_merkle_node(cert_item, this->collection, 0, get_root_prefix().val, root);
+          load_merkle_node(cert_item, this->pattern, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, cert_item);
           return true;
@@ -1957,7 +1942,7 @@ session::process_refine_cmd(merkle_node const & their_node)
   L(F("received 'refine' netcmd on %s node '%s', level %d\n") 
     % typestr % hpref % lev);
   
-  if (!merkle_node_exists(their_node.type, this->collection, 
+  if (!merkle_node_exists(their_node.type, this->pattern, 
                           their_node.level, pref))
     {
       L(F("no corresponding %s merkle node for prefix '%s', level %d\n")
@@ -2018,7 +2003,7 @@ session::process_refine_cmd(merkle_node const & their_node)
       L(F("found corresponding %s merkle node for prefix '%s', level %d\n")
         % typestr % hpref % lev);
       merkle_ptr our_node;
-      load_merkle_node(their_node.type, this->collection, 
+      load_merkle_node(their_node.type, this->pattern, 
                        their_node.level, pref, our_node);
       for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
         {         
@@ -2065,7 +2050,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                     our_node->extended_raw_prefix(slot, subprefix);
                     merkle_ptr our_subtree;
                     I(our_node->type == their_node.type);
-                    load_merkle_node(their_node.type, this->collection, 
+                    load_merkle_node(their_node.type, this->pattern, 
                                      our_node->level + 1, subprefix, our_subtree);
                     I(our_node->type == our_subtree->type);
                     queue_refine_cmd(*our_subtree);
@@ -2165,7 +2150,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                     prefix subprefix;
                     our_node->extended_raw_prefix(slot, subprefix);
                     merkle_ptr our_subtree;
-                    load_merkle_node(our_node->type, this->collection, 
+                    load_merkle_node(our_node->type, this->pattern, 
                                      our_node->level + 1, subprefix, our_subtree);
                     queue_refine_cmd(*our_subtree);
                   }
@@ -2225,7 +2210,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                     prefix subprefix;
                     our_node->extended_raw_prefix(slot, subprefix);
                     merkle_ptr our_subtree;
-                    load_merkle_node(our_node->type, this->collection, 
+                    load_merkle_node(our_node->type, this->pattern, 
                                      our_node->level + 1, subprefix, our_subtree);
                     queue_refine_cmd(*our_subtree);
                   }
@@ -2314,7 +2299,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                         prefix subprefix;
                         our_node->extended_raw_prefix(slot, subprefix);
                         merkle_ptr our_subtree;
-                        load_merkle_node(our_node->type, this->collection, 
+                        load_merkle_node(our_node->type, this->pattern, 
                                          our_node->level + 1, subprefix, our_subtree);
                         queue_refine_cmd(*our_subtree);
                       }
@@ -2656,13 +2641,13 @@ session::process_nonexistant_cmd(netcmd_item_type type,
 
 bool
 session::merkle_node_exists(netcmd_item_type type,
-                            utf8 const & collection,                    
+                            utf8 const & pattern,                    
                             size_t level,
                             prefix const & pref)
 {
   map< std::pair<utf8, netcmd_item_type>, 
        boost::shared_ptr<merkle_table> >::const_iterator i = 
-    merkle_tables.find(std::make_pair(collection,type));
+    merkle_tables.find(std::make_pair(pattern,type));
   
   I(i != merkle_tables.end());
   merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
@@ -2671,14 +2656,14 @@ session::merkle_node_exists(netcmd_item_type type,
 
 void 
 session::load_merkle_node(netcmd_item_type type,
-                          utf8 const & collection,                      
+                          utf8 const & pattern,                      
                           size_t level,
                           prefix const & pref,
                           merkle_ptr & node)
 {
   map< std::pair<utf8, netcmd_item_type>, 
        boost::shared_ptr<merkle_table> >::const_iterator i = 
-    merkle_tables.find(std::make_pair(collection,type));
+    merkle_tables.find(std::make_pair(pattern,type));
   
   I(i != merkle_tables.end());
   merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
@@ -2726,10 +2711,10 @@ session::dispatch_payload(netcmd const & cmd)
               "anonymous netcmd received in source or source/sink role");
       {
         protocol_role role;
-        string collection;
+        string pattern;
         id nonce2;
-        read_anonymous_cmd_payload(cmd.payload, role, collection, nonce2);
-        return process_anonymous_cmd(role, collection, nonce2);
+        read_anonymous_cmd_payload(cmd.payload, role, pattern, nonce2);
+        return process_anonymous_cmd(role, pattern, nonce2);
       }
       break;
 
@@ -2738,10 +2723,10 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == server_voice, "auth netcmd received in server voice");
       {
         protocol_role role;
-        string collection, signature;
+        string pattern, signature;
         id client, nonce1, nonce2;
-        read_auth_cmd_payload(cmd.payload, role, collection, client, nonce1, nonce2, signature);
-        return process_auth_cmd(role, collection, client, nonce1, nonce2, signature);
+        read_auth_cmd_payload(cmd.payload, role, pattern, client, nonce1, nonce2, signature);
+        return process_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
       }
       break;
 
@@ -2910,7 +2895,6 @@ bool session::process()
 static void 
 call_server(protocol_role role,
             vector<utf8> const & collections,
-            set<string> const & all_collections,
             app_state & app,
             utf8 const & address,
             Netxx::port_type default_port,
@@ -2922,9 +2906,11 @@ call_server(protocol_role role,
   // FIXME: split into labels and convert to ace here.
 
   P(F("connecting to %s\n") % address());
-  Netxx::Stream server(address().c_str(), default_port, timeout); 
-  session sess(role, client_voice, collections, all_collections, app, 
+  Netxx::Stream server(address().c_str(), default_port, timeout);
+  session sess(role, client_voice, collections, app, 
                address(), server.get_socketfd(), timeout);
+
+  sess.rebuild_merkle_trees(app, idx(collections, 0)());
 
   sess.byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
   sess.byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
@@ -3075,7 +3061,6 @@ handle_new_connection(Netxx::Address & addr,
                       Netxx::Timeout & timeout,
                       protocol_role role,
                       vector<utf8> const & collections,
-                      set<string> const & all_collections,                    
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
                       app_state & app)
 {
@@ -3089,9 +3074,9 @@ handle_new_connection(Netxx::Address & addr,
     }
   else
     {
-      P(F("accepted new client connection from %s\n") % client);      
+      P(F("accepted new client connection from %s\n") % client);
       shared_ptr<session> sess(new session(role, server_voice, collections, 
-                                           all_collections, app,
+                                           app,
                                            lexical_cast<string>(client), 
                                            client.get_socketfd(), timeout));
       sess->begin_service();
@@ -3206,7 +3191,6 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
 static void 
 serve_connections(protocol_role role,
                   vector<utf8> const & collections,
-                  set<string> const & all_collections,
                   app_state & app,
                   utf8 const & address,
                   Netxx::port_type default_port,
@@ -3259,7 +3243,7 @@ serve_connections(protocol_role role,
       // we either got a new connection
       else if (fd == server)
         handle_new_connection(addr, server, timeout, role, 
-                              collections, all_collections, sessions, app);
+                              collections, sessions, app);
       
       // or an existing session woke up
       else
@@ -3303,7 +3287,7 @@ serve_connections(protocol_role role,
 
 static boost::shared_ptr<merkle_table>
 make_root_node(session & sess,
-               utf8 const & coll,
+               utf8 const & pat,
                netcmd_item_type ty)
 {
   boost::shared_ptr<merkle_table> tab = 
@@ -3314,19 +3298,82 @@ make_root_node(session & sess,
 
   tab->insert(std::make_pair(std::make_pair(get_root_prefix().val, 0), tmp));
 
-  sess.merkle_tables[std::make_pair(coll, ty)] = tab;
+  sess.merkle_tables[std::make_pair(pat, ty)] = tab;
   return tab;
+}
+
+void
+insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app)
+{
+  if(col.find(rev) != col.end())
+    return;
+  col.insert(rev);
+  vector<revision_id> frontier;
+  frontier.push_back(rev);
+  while (!frontier.empty())
+    {
+      revision_id rid = frontier.back();
+      frontier.pop_back();
+      if(!null_id(rid)) {
+        col.insert(rid);
+        std::set<revision_id> parents;
+        app.db.get_revision_parents(rid, parents);
+        for (std::set<revision_id>::const_iterator i = parents.begin();
+             i != parents.end(); ++i)
+          {
+            if (col.find(*i) == col.end())
+              {
+                frontier.push_back(*i);
+              }
+          }
+      }
+    }
+}
+
+string
+convert_pattern(string pattern)
+{
+  if(pattern.size() > 2 && pattern[0] == '/'
+     && pattern[pattern.size()-1] == '/')
+    {
+      pattern=pattern.substr(1, pattern.size()-2);
+    }
+  else
+    {
+      string x=pattern;
+      pattern="";
+      string e=".|*?+()[]{}^$\\";
+      for(string::const_iterator i=x.begin(); i!=x.end(); i++)
+        {
+          if(e.find(*i) != e.npos)
+            pattern+='\\';
+          pattern+=*i;
+        }
+      pattern=pattern+".*";
+    }
+  return pattern;
+}
+
+bool
+matches_one(string s, vector<boost::regex> r)
+{
+  for(vector<boost::regex>::const_iterator i=r.begin(); i!=r.end(); i++)
+    {
+      if(boost::regex_match(s, *i))
+        return true;
+    }
+  return false;
 }
 
 void 
 session::rebuild_merkle_trees(app_state & app,
-                              utf8 const & collection)
+                              utf8 const & pattern)
 {
-  P(F("rebuilding merkle trees for collection %s\n") % collection);
+  P(F("rebuilding merkle trees for pattern %s\n") % pattern);
 
-  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, collection, cert_item);
-  boost::shared_ptr<merkle_table> ktab = make_root_node(*this, collection, key_item);
-  boost::shared_ptr<merkle_table> etab = make_root_node(*this, collection, epoch_item);
+  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, pattern, cert_item);
+  boost::shared_ptr<merkle_table> ktab = make_root_node(*this, pattern, key_item);
+  boost::shared_ptr<merkle_table> etab = make_root_node(*this, pattern, epoch_item);
 
   ticker certs_ticker("certs", "c", 256);
   ticker keys_ticker("keys", "k", 1);
@@ -3338,18 +3385,36 @@ session::rebuild_merkle_trees(app_state & app,
     // get all matching branch names
     vector< revision<cert> > certs;
     set<string> branchnames;
+    set<string> badbranch;
     app.db.get_revision_certs(branch_cert_name, certs);
+    boost::regex reg(convert_pattern(pattern()));
+    vector<boost::regex> allowed;
+    for(vector<utf8>::const_iterator i=collections.begin();
+        i!=collections.end(); i++)
+      {
+        allowed.push_back(boost::regex((*i)()));
+      }
     for (size_t i = 0; i < certs.size(); ++i)
       {
         cert_value name;
         decode_base64(idx(certs, i).inner().value, name);
-        if (name().find(collection()) == 0)
+        if(branchnames.find(name()) != branchnames.end())
           {
-            if (branchnames.find(name()) == branchnames.end())
-              P(F("including branch %s\n") % name());
-            branchnames.insert(name());
-            revision_ids.insert(revision_id(idx(certs, i).inner().ident));
+            insert_with_parents(revision_id(idx(certs, i).inner().ident),
+                                revision_ids, app);
           }
+        else if (badbranch.find(name()) != badbranch.end())
+          ;
+        else if (boost::regex_match(name(), reg)
+                 && (voice == client_voice || matches_one(name(), allowed)))
+          {
+            P(F("including branch %s\n") % name());
+            branchnames.insert(name());
+            insert_with_parents(revision_id(idx(certs, i).inner().ident),
+                                revision_ids, app);
+          }
+        else
+          badbranch.insert(name());
       }
     
     {
@@ -3429,41 +3494,13 @@ run_netsync_protocol(protocol_voice voice,
                      utf8 const & addr, 
                      vector<utf8> collections,
                      app_state & app)
-{  
-
-  set<string> all_collections;
-  for (vector<utf8>::const_iterator j = collections.begin(); 
-       j != collections.end(); ++j)
-    {
-      all_collections.insert((*j)());
-    }
-
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(branch_cert_name, certs);
-  for (vector< revision<cert> >::const_iterator i = certs.begin();
-       i != certs.end(); ++i)
-    {
-      cert_value name;
-      decode_base64(i->inner().value, name);
-      for (vector<utf8>::const_iterator j = collections.begin(); 
-           j != collections.end(); ++j)
-        {       
-          if ((*j)().find(name()) == 0 
-              && all_collections.find(name()) == all_collections.end())
-            {
-              if (name() != (*j)())
-                P(F("%s included in collection %s\n") % (*j) % name);
-              all_collections.insert(name());
-            }
-        }
-    }
-
+{
   try 
     {
       start_platform_netsync();
       if (voice == server_voice)
         {
-          serve_connections(role, collections, all_collections, app,
+          serve_connections(role, collections, app,
                             addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                             static_cast<unsigned long>(constants::netsync_timeout_seconds), 
                             static_cast<unsigned long>(constants::netsync_connection_limit));
@@ -3472,7 +3509,7 @@ run_netsync_protocol(protocol_voice voice,
         {
           I(voice == client_voice);
           transaction_guard guard(app.db);
-          call_server(role, collections, all_collections, app, 
+          call_server(role, collections, app,
                       addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
           guard.commit();

@@ -1978,8 +1978,8 @@ process_netsync_client_args(std::string const & name,
   collections.push_back(collection);
 }
 
-CMD(push, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
-    "push COLLECTION to netsync server at ADDRESS", OPT_NONE)
+CMD(push, "network", "[ADDRESS[:PORTNUMBER] [(COLLECTION | /REGEX/)]]",
+    "push specified branches to netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr;
   vector<utf8> collections;
@@ -1992,8 +1992,8 @@ CMD(push, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
   run_netsync_protocol(client_voice, source_role, addr, collections, app);  
 }
 
-CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
-    "pull COLLECTION from netsync server at ADDRESS", OPT_NONE)
+CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [(COLLECTION | /REGEX/)]]",
+    "pull specified branches from netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr;
   vector<utf8> collections;
@@ -2005,8 +2005,8 @@ CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
   run_netsync_protocol(client_voice, sink_role, addr, collections, app);  
 }
 
-CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
-    "sync COLLECTION with netsync server at ADDRESS", OPT_NONE)
+CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [(COLLECTION | /REGEX/)]]",
+    "sync specified branches with netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr;
   vector<utf8> collections;
@@ -2019,8 +2019,8 @@ CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
   run_netsync_protocol(client_voice, source_and_sink_role, addr, collections, app);  
 }
 
-CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
-    "listen on ADDRESS and serve COLLECTION to connecting clients", OPT_PIDFILE)
+CMD(serve, "network", "ADDRESS[:PORTNUMBER] (COLLECTION | /REGEX/) ...",
+    "listen on ADDRESS and serve the specified branches to connecting clients", OPT_PIDFILE)
 {
   if (args.size() < 2)
     throw usage(name);
