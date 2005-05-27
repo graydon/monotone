@@ -21,7 +21,7 @@
 #  - Begin with menu "S Select revision"
 #  - Browse in branches, revisions, diff files, view logs ....
 #  - Quit menu with "Q" to save your environment.
-#    Or X to exit without save anything.
+#    Or "X" to exit without save anything.
 #
 # Needed tools:
 #  monotone 0.19 or compatible
@@ -41,6 +41,9 @@
 # 2005/5/13 Version 0.1.3 Henry@BigFoot.de
 # Diff from 'Parrent' mistaken HEAD/REVISION usage.
 # Limit count of revisions, change by config menu, default 20 (for big proj).
+# 
+# 2005/5/24 Version 0.1.4 Henry@BigFoot.de
+# Don't run "monotone log" with empty head.
 #
 # Known Bugs / ToDo-List:
 # - Working without data from "checkout" don't work in all cases.
@@ -294,7 +297,6 @@ do_revision_sel()
     if [ ! -f $TEMPFILE.certs.$BRANCH -o $DB -nt $TEMPFILE.certs.$BRANCH ]
     then
 	echo "Reading ancestors ($HEAD)"
-#set -x xtrace
 	echo "$HEAD" > $TEMPFILE.ancestors
 	monotone automate ancestors $HEAD | cut -c0-40 >> $TEMPFILE.ancestors || exit 200
 
@@ -331,9 +333,6 @@ do_revision_sel()
 	else
 		mv $TEMPFILE.certs3tmp $TEMPFILE.certs.$BRANCH
 	fi
-#echo -e "\nDONE"
-#read junk
-#set +x xtrace
     fi
 
     # Select revision
@@ -421,7 +420,7 @@ do_config()
 
 mkdir -p $TEMPDIR
 
-while dialog --menu "Main - mtbrowse v0.1.3" 0 0 0 \
+while dialog --menu "Main - mtbrowse v0.1.4" 0 0 0 \
     "S" "Select revision" \
     "I" "Input revision" \
     "F" "Change DB File [`basename $DB`]" \
@@ -489,6 +488,7 @@ do
 	# Sumary coplete LOG
 	# if not branch known, ask user
 	do_branch_sel check
+	do_head_sel check
 
 	if [ ! -f $TEMPFILE.changelog.$BRANCH -o \
 	    $DB -nt $TEMPFILE.changelog.$BRANCH ]
@@ -533,6 +533,7 @@ CACHE="$CACHE"
 TOPSORT="$TOPSORT"
 CERTS_MAX="$CERTS_MAX"
 EOF
+	echo "config saved"
 	do_clear_on_exit
 	exit 0
         ;;
