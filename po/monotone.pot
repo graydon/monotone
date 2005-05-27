@@ -3979,7 +3979,7 @@ msgstr ""
 
 #: work.cc:134
 #, c-format
-msgid "adding attribute '%s' to file %s to .mt_attrs\n"
+msgid "adding attribute '%s' to file %s to .mt-attrs\n"
 msgstr ""
 
 #: work.cc:205
@@ -4002,7 +4002,7 @@ msgstr ""
 
 #: work.cc:225
 #, c-format
-msgid "dropped attributes for file %s from .mt_attrs\n"
+msgid "dropped attributes for file %s from .mt-attrs\n"
 msgstr ""
 
 #: work.cc:248
