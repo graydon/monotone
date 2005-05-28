@@ -1,3 +1,11 @@
+2005-05-28  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.cc (read_netcmd): Reserve space in the buffer if needed,
+		swap buffers instead of copying (memory savings for sync
+		large files)
+	* netsync.cc (session::arm): Don't clear the buffer (now done
+		by read_netcmd).
+
 2005-05-27  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc: Allow REGEXes as well as collections.

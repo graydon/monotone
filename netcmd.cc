@@ -124,12 +124,23 @@ read_netcmd(string & inbuf, netcmd & out)
   
   // there might not be enough data yet in the input buffer
   if (inbuf.size() < pos + payload_len + sizeof(u32))
-    return false;
+    {
+      inbuf.reserve(pos + payload_len + sizeof(u32) + constants::bufsz);
+      return false;
+    }
 
-  out.payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
+//  out.payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
+  // Do this ourselves, so we can swap the strings instead of copying.
+  require_bytes(inbuf, pos, payload_len, "netcmd payload");
+  inbuf.erase(0, pos);
+  out.payload=inbuf.substr(payload_len);
+  inbuf.erase(payload_len, inbuf.npos);
+  inbuf.swap(out.payload);
+  pos=0;
 
   // they might have given us bogus data
   u32 checksum = extract_datum_lsb<u32>(inbuf, pos, "netcmd checksum");
+  inbuf.erase(0, pos);
   adler32 check(reinterpret_cast<u8 const *>(out.payload.data()), 
                 out.payload.size());
   if (checksum != check.sum())

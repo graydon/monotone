@@ -2860,7 +2860,7 @@ session::arm()
     {
       if (read_netcmd(inbuf, cmd))
         {
-          inbuf.erase(0, cmd.encoded_size());     
+//          inbuf.erase(0, cmd.encoded_size());     
           armed = true;
         }
     }
