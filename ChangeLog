@@ -1,3 +1,8 @@
+2005-05-29  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/monoprof.sh: Add support for using valgrind for
+	heap profiling.
+
 2005-05-28  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netcmd.cc (read_netcmd): Reserve space in the buffer if needed,
