@@ -1,3 +1,12 @@
+2005-05-30  Timothy Brownawell <tbrownaw@gmail.com>
+
+	* packet.{cc,hh}, netsync.cc: on_revision_written callback now takes
+	the revision_id as an argument.
+	* lua.{cc,hh}: New Lua hook, note_netsync_commit.
+	* netsync.cc: At end of netsync session, call new hook for each
+	revision received.
+	monotone.texi: Document new hook.
+
 2005-05-30  Matt Johnston  <matt@ucc.asn.au>
 
 	* netsync.cc: cosmetic linebreak tidying for "double-check the

@@ -5183,6 +5183,12 @@ hook is only intended as an aid for integrating monotone with informal
 commit-notification systems such as mailing lists or news services. It
 should not perform any security-critical operations.
 
+@item note_netsync_commit (@var{new_id}, @var{certs})
+
+Called by monotone after the version @var{new_id} is recieved through
+netsync. Other than the origin of @var{new_id}, this is identical to
+the note_commit hook.
+
 @item get_branch_key (@var{branchname})
 
 Returns a string which is the name of an @sc{rsa} private key used to sign

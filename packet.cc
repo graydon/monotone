@@ -434,7 +434,9 @@ delayed_private_key_packet::~delayed_private_key_packet()
 }
 
 
-void packet_consumer::set_on_revision_written(boost::function0<void> const & x)
+void
+packet_consumer::set_on_revision_written(boost::function1<void,
+                                                        revision_id> const & x)
 {
   on_revision_written=x;
 }
@@ -893,7 +895,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
       if (dp->all_prerequisites_satisfied())
         {
           pimpl->app.db.put_revision(ident, dat);
-          if(on_revision_written) on_revision_written();
+          if(on_revision_written) on_revision_written(ident);
           pimpl->accepted_revision(ident, *this);
         }
     }
@@ -1025,7 +1027,9 @@ packet_db_valve::open_valve()
 
 #define DOIT(x) pimpl->do_packet(boost::shared_ptr<delayed_packet>(new x));
 
-void packet_db_valve::set_on_revision_written(boost::function0<void> const & x)
+void
+packet_db_valve::set_on_revision_written(boost::function1<void,
+                                                        revision_id> const & x)
 {
   on_revision_written=x;
   pimpl->writer.set_on_revision_written(x);

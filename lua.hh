@@ -116,6 +116,8 @@ public:
   // notification hooks
   bool hook_note_commit(revision_id const & new_id,
                         std::map<cert_name, cert_value> const & certs);
+  bool hook_note_netsync_commit(revision_id const & new_id,
+                        std::map<cert_name, cert_value> const & certs);
 };
 
 #endif // __LUA_HH__
