@@ -38,7 +38,7 @@ AT_CHECK( (cd bobwd; MONOTONE --branch=testbranch --root=. commit -m 'bob commit
 REV=`BASE_REVISION`
 
 # Alice does her update, discovers foo has been stomped!
-AT_CHECK( (cd alicewd; MONOTONE --branch=testbranch --root=. update $REV), [], [ignore], [ignore])
+AT_CHECK( (cd alicewd; MONOTONE --branch=testbranch --root=. update --revision=$REV), [], [ignore], [ignore])
 AT_CHECK(cmp foo.alice alicewd/foo)
 
 AT_CLEANUP

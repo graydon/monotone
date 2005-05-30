@@ -1,3 +1,19 @@
+2005-05-30  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(checkout), CMD(cdiff), CMD(diff), CMD(log)):
+	Remove '[--revision=REVISION]' from command argument synopsis,
+	and add more text to the help to explain what happens when
+	--revision options are used.
+	(CMD(update)): Instead of the optional revision argument, use
+	the --revision option.  Add information on what happens when the
+	--revision option is used, and when it's not.
+
+	* tests/t_add_stomp_file.at, tests/t_add_vs_commit.at,
+	tests/t_annotate.at, tests/t_lf_crlf.at,
+	tests/t_update_nonexistent.at, tests/t_update_off_branch.at,
+	tests/t_update_to_revision.at: Update to use --revision with
+	'monotone update'.
+
 2005-05-29  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/monoprof.sh: Add support for using valgrind for
