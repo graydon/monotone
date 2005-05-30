@@ -1,5 +1,10 @@
 2005-05-30  Matt Johnston  <matt@ucc.asn.au>
 
+	* netsync.cc: cosmetic linebreak tidying for "double-check the
+	fingerprint" message.
+
+2005-05-30  Matt Johnston  <matt@ucc.asn.au>
+
 	* tests/t_fmerge.at: scrap all the diff3/ed, just compare it with
 	known-good output.
 
