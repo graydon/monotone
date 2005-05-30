@@ -3,6 +3,19 @@
 	* contrib/monoprof.sh: Add support for using valgrind for
 	heap profiling.
 
+2005-05-28  Joel Reed  <joelwreed@comcast.com>
+
+	* app_state.cc, app_state.hh, commands.cc, monotone.cc, options.h:
+	add new --depth command, and rename log's --depth to --last
+	* monotone.texi: update documentation
+	* tests/t_log_depth.at, tests/t_log_depth_single.at: update
+	log tests to use --last instead of --depth
+	* tests/t_options.at, tests/t_restrictions.at: test usage of
+	--depth for commands using restrictions
+	* contrib/ciabot_monotone.py, contrib/monotone-notify.pl,
+	contrib/monotone.el, contrib/monotone.zsh_completion,
+	contrib/mtbrowse.sh: change all occurences of "depth" to "last"
+
 2005-05-28  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netcmd.cc (read_netcmd): Reserve space in the buffer if needed,

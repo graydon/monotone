@@ -47,7 +47,8 @@ struct poptOption coptions[] =
     {"message-file", 0, POPT_ARG_STRING, &argstr, OPT_MSGFILE, "set filename containing commit changelog message", NULL},
     {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
     {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
-    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
+    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the number of levels of directories to descend", NULL},
+    {"last", 0, POPT_ARG_LONG, &arglong, OPT_LAST, "limit the log output to the given number of entries", NULL},
     {"pid-file", 0, POPT_ARG_STRING, &argstr, OPT_PIDFILE, "record process id of server", NULL},
     {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, "print a brief version of the normal output", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -349,6 +350,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_ROOT:
               app.set_root(string(argstr));
+              break;
+
+            case OPT_LAST:
+              app.set_last(arglong);
               break;
 
             case OPT_DEPTH:

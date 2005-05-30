@@ -181,7 +181,7 @@ _monotone_heads() {
 (( $+functions[_monotone_log] )) ||
 _monotone_log() {
   _arguments -s \
-    '--depth=[n]' \
+    '--last=[n]' \
 		'--revision=:revision:_monotone_revisions' \
 	  '*:added file:_monotone_existing_entries'
 }
