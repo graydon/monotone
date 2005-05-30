@@ -249,9 +249,9 @@ fi
 # After calling NEED_UNB64, you can use UNB64(infile, outfile) to
 # decode base64'ed text.
 m4_define([NEED_UNB64], [
-if which mimencode 2>/dev/null; then
+if test -n "`command -v mimencode`" 2>/dev/null; then
   UNB64_COMMAND="mimencode -u"
-elif which recode 2>/dev/null; then
+elif test -n "`command -v recode`" 2>/dev/null; then
   UNB64_COMMAND="recode /Base64"
 elif perl -MMIME::Base64 -e 1 2>/dev/null; then
   UNB64_COMMAND="perl -MMIME::Base64 -ne 'print decode_base64(\$_)'"
@@ -280,7 +280,7 @@ fi
 # After calling NEED_UNGZ, you can use UNGZ(infile, outfile) to
 # decode gzipped text.
 m4_define([NEED_UNGZ], [
-if which gunzip 2>/dev/null; then
+if test -n "`command -v gunzip`" 2>/dev/null; then
   # This is lame!  We should XFAIL the test so the user knows that
   # they're not, you know, actually testing the software.  But
   # Autotest runs XFAIL conditions in a completely different shell, so

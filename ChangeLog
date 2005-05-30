@@ -1,3 +1,10 @@
+2005-05-30  Matt Johnston  <matt@ucc.asn.au>
+
+	* testsuite.at: use "command -v" rather than "which", since
+	Solaris doesn't give useful exit codes for "which".
+	* tests/t_fmerge.at: don't use --merge with diff3, pipe to ed instead
+	so we don't rely on gnu diff3.
+
 2005-05-29  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/monoprof.sh: Add support for using valgrind for
