@@ -1,3 +1,7 @@
+2005-05-30  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* revision.cc (toposort): Better algorithm.
+
 2005-05-30  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_fmerge.at: make sure we write the file with the ed script.
