@@ -1,5 +1,9 @@
 2005-05-30  Matt Johnston  <matt@ucc.asn.au>
 
+	* tests/t_fmerge.at: make sure we write the file with the ed script.
+
+2005-05-30  Matt Johnston  <matt@ucc.asn.au>
+
 	* testsuite.at: use "command -v" rather than "which", since
 	Solaris doesn't give useful exit codes for "which".
 	* tests/t_fmerge.at: don't use --merge with diff3, pipe to ed instead
