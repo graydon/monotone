@@ -1,4 +1,4 @@
-AT_SETUP([log --depth=N])
+AT_SETUP([log --last=N])
 MONOTONE_SETUP
 
 ADD_FILE(foo, [foo
@@ -16,12 +16,12 @@ ADD_FILE(baz, [baz
 AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of baz.",
          [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE log --depth=0, [1], [], [ignore])
+AT_CHECK(MONOTONE log --last=0, [1], [], [ignore])
 
-AT_CHECK(MONOTONE log --depth=1 | grep '^Revision:', [], [stdout], [ignore])
+AT_CHECK(MONOTONE log --last=1 | grep '^Revision:', [], [stdout], [ignore])
 AT_CHECK(test 1 -eq "`wc -l <stdout`")
 
-AT_CHECK(MONOTONE log --depth=2 | grep '^Revision:', [], [stdout], [ignore])
+AT_CHECK(MONOTONE log --last=2 | grep '^Revision:', [], [stdout], [ignore])
 AT_CHECK(test 2 -eq "`wc -l <stdout`")
 
 AT_CLEANUP

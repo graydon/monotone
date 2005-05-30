@@ -31,3 +31,4 @@
 #define OPT_PIDFILE 22
 #define OPT_MSGFILE 23
 #define OPT_BRIEF 24
+#define OPT_LAST 25

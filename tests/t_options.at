@@ -11,7 +11,9 @@ AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --branch=testbranch --depth=1 log, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE --depth=1 log, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch --last=1 log, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE --last=1 log, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --depth=0 status, [], [ignore], [ignore])
 
 AT_CLEANUP

@@ -1255,7 +1255,7 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
   
 }
 
-CMD(status, "informative", "[PATH]...", "show status of working copy", OPT_NONE)
+CMD(status, "informative", "[PATH]...", "show status of working copy", OPT_DEPTH)
 {
   revision_set rs;
   manifest_map m_old, m_new;
@@ -1705,7 +1705,7 @@ CMD(list, "informative",
     "missing",
     "show database objects, or the current working copy manifest,\n"
     "or unknown, intentionally ignored, or missing state files",
-    OPT_NONE)
+    OPT_DEPTH)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -2232,7 +2232,7 @@ string_to_datetime(std::string const & s)
 
 CMD(commit, "working copy", "[PATH]...", 
     "commit working copy to database",
-    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR)
+    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR % OPT_DEPTH)
 {
   string log_message("");
   revision_set rs;
@@ -2679,7 +2679,7 @@ CMD(cdiff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...
 
 CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
     "show current unified diffs on stdout",
-    OPT_BRANCH_NAME % OPT_REVISION)
+    OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH)
 {
   do_diff(name, app, args, unified_diff);
 }
@@ -3316,7 +3316,7 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID",
 
 
 CMD(revert, "working copy", "[PATH]...", 
-    "revert file(s), dir(s) or entire working copy", OPT_NONE)
+    "revert file(s), dir(s) or entire working copy", OPT_DEPTH)
 {
   manifest_map m_old;
   revision_id old_revision_id;
@@ -3494,7 +3494,7 @@ CMD(annotate, "informative", "PATH",
 CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]]",
     "print history in reverse order (filtering by 'file').  If one or more revisions\n"
     "are given, use them as a starting point.",
-    OPT_DEPTH % OPT_REVISION % OPT_BRIEF)
+    OPT_LAST % OPT_REVISION % OPT_BRIEF)
 {
   file_path file;
 
@@ -3533,10 +3533,10 @@ CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]
   cert_name comment_name(comment_cert_name);
 
   set<revision_id> seen;
-  long depth = app.depth;
+  long last = app.last;
 
   revision_set rev;
-  while(! frontier.empty() && (depth == -1 || depth > 0))
+  while(! frontier.empty() && (last == -1 || last > 0))
     {
       set< pair<file_path, revision_id> > next_frontier;
       for (set< pair<file_path, revision_id> >::const_iterator i = frontier.begin();
@@ -3636,9 +3636,9 @@ CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]
                 log_certs(app, rid, comment_name,   "Comments: ",  true);
               }
 
-            if (depth > 0)
+            if (last > 0)
               {
-                depth--;
+                last--;
               }
           }
         }
