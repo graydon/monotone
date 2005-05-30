@@ -211,6 +211,7 @@ int
 cpp_main(int argc, char ** argv)
 {
   clean_shutdown = false;
+  int ret = 0;
 
   atexit(&dumper);
 
@@ -220,6 +221,12 @@ cpp_main(int argc, char ** argv)
   setlocale(LC_MESSAGES, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
+
+
+  // we want to catch any early informative_failures due to charset
+  // conversion etc
+  try
+  {
 
   {
     std::ostringstream cmdline_ss;
@@ -253,7 +260,6 @@ cpp_main(int argc, char ** argv)
 
   // process main program options
 
-  int ret = 0;
   int opt;
   bool requested_help = false;
   set<int> used_local_options;
@@ -469,12 +475,13 @@ cpp_main(int argc, char ** argv)
       clean_shutdown = true;
       return 0;
     }
+  }
   catch (informative_failure & inf)
-    {
-      ui.inform(inf.what);
-      clean_shutdown = true;
-      return 1;
-    }
+  {
+    ui.inform(inf.what);
+    clean_shutdown = true;
+    return 1;
+  }
 
   clean_shutdown = true;
   return ret;

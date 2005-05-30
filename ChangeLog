@@ -2,6 +2,9 @@
 
 	* netsync.cc: cosmetic linebreak tidying for "double-check the
 	fingerprint" message.
+	* main.cc: make it clearer that "unknown type" refers to an exception
+	* monotone.cc: catch early informative_failures (due to charset
+	problems etc)
 
 2005-05-30  Matt Johnston  <matt@ucc.asn.au>
 
