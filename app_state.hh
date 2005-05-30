@@ -43,6 +43,7 @@ public:
   file_path relative_directory;
   bool found_working_copy;
   long depth;
+  long last;
   fs::path pidfile;
 
   void allow_working_copy();
@@ -70,6 +71,7 @@ public:
   void set_date(utf8 const & date);
   void set_author(utf8 const & author);
   void set_depth(long depth);
+  void set_last(long last);
   void set_pidfile(utf8 const & pidfile);
   void add_revision(utf8 const & selector);
 

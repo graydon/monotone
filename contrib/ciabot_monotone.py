@@ -111,12 +111,12 @@ class Monotone:
         args = ["automate", "ancestry_difference", new_rev] + old_revs
         return self._split_revs(self._run_monotone(args))
 
-    def log(self, rev, depth=None):
-        if depth is not None:
-            depth_arg = ["--depth=%i" % (depth,)]
+    def log(self, rev, xlast=None):
+        if xlast is not None:
+            last_arg = ["--last=%i" % (xlast,)]
         else:
-            depth_arg = []
-        return self._run_monotone(["log", rev] + depth_arg)
+            last_arg = []
+        return self._run_monotone(["log", rev] + last_arg)
 
     def toposort(self, revs):
         args = ["automate", "toposort"] + revs

@@ -205,8 +205,8 @@ do_action_sel()
 	case `cat $TEMPFILE.action-select` in
 	  L)
 	    # LOG
-	    # monotone log --depth=n id file
-	    monotone --db=$DB log --depth=1 --revision=$REVISION \
+	    # monotone log --last=n id file
+	    monotone --db=$DB log --last=1 --revision=$REVISION \
 	      > $TEMPFILE.change.log || exit 200
 	    do_pager $TEMPFILE.change.log
 	    ;;
