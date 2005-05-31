@@ -185,9 +185,7 @@ AT_CHECK(MONOTONE fmerge $PARENT $LEFT $RIGHT, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout merge.monotone, [], [ignore], [ignore])
 
-AT_CHECK(diff3 -E --merge left parent right, [], [stdout], [ignore])
-AT_CHECK(mv stdout merge.diff3, [], [ignore], [ignore])
-
-AT_CHECK(cmp merge.monotone merge.diff3, [], [ignore], [ignore])
+# in this case the output should be the same as right.
+AT_CHECK(cmp merge.monotone right, [], [ignore], [ignore])
 
 AT_CLEANUP
