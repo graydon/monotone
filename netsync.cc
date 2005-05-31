@@ -383,7 +383,8 @@ session
                         merkle_ptr & node);
 
   void rebuild_merkle_trees(app_state & app,
-                            utf8 const & pattern);
+                            utf8 const & pattern,
+                            set<utf8> const & branches);
 
   bool dispatch_payload(netcmd const & cmd);
   void begin_service();
@@ -1581,6 +1582,32 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   return true;
 }
 
+bool
+matches_one(string s, vector<boost::regex> r)
+{
+  for(vector<boost::regex>::const_iterator i=r.begin(); i!=r.end(); i++)
+    {
+      if(boost::regex_match(s, *i))
+        return true;
+    }
+  return false;
+}
+
+void
+get_branches(app_state & app, vector<string> & names)
+{
+  vector< revision<cert> > certs;
+  app.db.get_revision_certs(branch_cert_name, certs);
+  for (size_t i = 0; i < certs.size(); ++i)
+    {
+      cert_value name;
+      decode_base64(idx(certs, i).inner().value, name);
+      names.push_back(name());
+    }
+  sort(names.begin(), names.end());
+  names.erase(std::unique(names.begin(), names.end()), names.end());
+}
+
 bool 
 session::process_anonymous_cmd(protocol_role role, 
                                string const & pattern, 
@@ -1624,15 +1651,27 @@ session::process_anonymous_cmd(protocol_role role,
       return false;
     }
 
-  vector<utf8> c;
+  vector<string> branchnames;
+  set<utf8> ok_branches;
+  get_branches(app, branchnames);
+  vector<boost::regex> allowed;
+  boost::regex reg(pattern);
   for(vector<utf8>::const_iterator i=patterns.begin();
-      i!=patterns.end(); i++)
+      i!=patterns.end(); ++i)
     {
-      if(app.lua.hook_get_netsync_anonymous_read_permitted((*i)()))
-        c.push_back(*i);
+      allowed.push_back(boost::regex((*i)()));
     }
-  patterns=c;
-  if(!patterns.size())
+  for(vector<string>::const_iterator i=branchnames.begin();
+      i!=branchnames.end(); i++)
+    {
+      if(boost::regex_match(*i, reg)
+         && (allowed.size()==0 || matches_one(*i, allowed)))
+        {
+          if(app.lua.hook_get_netsync_anonymous_read_permitted(*i))
+            ok_branches.insert(utf8(*i));
+        }
+    }
+  if(!ok_branches.size())
     {
       W(F("denied anonymous read permission for '%s'\n") % pattern);
       this->saved_nonce = id("");
@@ -1641,7 +1680,7 @@ session::process_anonymous_cmd(protocol_role role,
 
   P(F("allowed anonymous read permission for '%s'\n") % pattern);
 
-  rebuild_merkle_trees(app, pattern);
+  rebuild_merkle_trees(app, pattern, ok_branches);
 
   // get our private key and sign back
   L(F("anonymous read permitted, signing back nonce\n"));
@@ -1674,6 +1713,16 @@ session::process_auth_cmd(protocol_role role,
   encode_hexenc(nonce2, hnonce2);
   hexenc<id> their_key_hash;
   encode_hexenc(client, their_key_hash);
+  set<utf8> ok_branches;
+  vector<string> branchnames;
+  get_branches(app, branchnames);
+  vector<boost::regex> allowed;
+  for(vector<utf8>::const_iterator i=patterns.begin();
+      i!=patterns.end(); ++i)
+    {
+      allowed.push_back(boost::regex((*i)()));
+    }
+  boost::regex reg(pattern);
   
   L(F("received 'auth' netcmd from client '%s' for pattern '%s' "
       "in %s mode with nonce1 '%s' and nonce2 '%s'\n")
@@ -1727,15 +1776,17 @@ session::process_auth_cmd(protocol_role role,
           return false;
         }
 
-      vector<utf8> c;
-      for(vector<utf8>::const_iterator i=patterns.begin();
-          i!=patterns.end(); i++)
+      for(vector<string>::const_iterator i=branchnames.begin();
+          i!=branchnames.end(); i++)
         {
-          if(app.lua.hook_get_netsync_read_permitted((*i)(), their_id()))
-            c.push_back(*i);
+          if(boost::regex_match(*i, reg)
+             && (allowed.size()==0 || matches_one(*i, allowed)))
+            {
+              if(app.lua.hook_get_netsync_read_permitted(*i, their_id))
+                ok_branches.insert(utf8(*i));
+            }
         }
-      patterns=c;
-      if(!patterns.size())
+      if(!ok_branches.size())
         {
           W(F("denied '%s' read permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
@@ -1757,15 +1808,17 @@ session::process_auth_cmd(protocol_role role,
           return false;
         }
 
-      vector<utf8> c;
-      for(vector<utf8>::const_iterator i=patterns.begin();
-          i!=patterns.end(); i++)
+      for(vector<string>::const_iterator i=branchnames.begin();
+          i!=branchnames.end(); i++)
         {
-          if(app.lua.hook_get_netsync_write_permitted((*i)(), their_id()))
-            c.push_back(*i);
+          if(boost::regex_match(*i, reg)
+             && (allowed.size()==0 || matches_one(*i, allowed)))
+            {
+              if(app.lua.hook_get_netsync_write_permitted(*i, their_id))
+                ok_branches.insert(utf8(*i));
+            }
         }
-      patterns=c;
-      if(!patterns.size())
+      if(!ok_branches.size())
         {
           W(F("denied '%s' write permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
@@ -1775,7 +1828,7 @@ session::process_auth_cmd(protocol_role role,
       P(F("allowed '%s' write permission for '%s'\n") % their_id % pattern);
     }
 
-  rebuild_merkle_trees(app, pattern);
+  rebuild_merkle_trees(app, pattern, ok_branches);
 
   // save their identity 
   this->remote_peer_key_hash = client;
@@ -2982,7 +3035,17 @@ call_server(protocol_role role,
   session sess(role, client_voice, patterns, app, 
                address(), server.get_socketfd(), timeout);
 
-  sess.rebuild_merkle_trees(app, idx(patterns, 0)());
+  vector<string> branchnames;
+  set<utf8> ok_branches;
+  get_branches(app, branchnames);
+  boost::regex reg(idx(patterns, 0)());
+  for(vector<string>::const_iterator i=branchnames.begin();
+      i!=branchnames.end(); i++)
+    {
+      if(boost::regex_match(*i, reg))
+          ok_branches.insert(utf8(*i));
+    }
+  sess.rebuild_merkle_trees(app, idx(patterns, 0)(), ok_branches);
 
   sess.byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
   sess.byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
@@ -3402,22 +3465,15 @@ insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app)
     }
 }
 
-bool
-matches_one(string s, vector<boost::regex> r)
-{
-  for(vector<boost::regex>::const_iterator i=r.begin(); i!=r.end(); i++)
-    {
-      if(boost::regex_match(s, *i))
-        return true;
-    }
-  return false;
-}
-
 void 
 session::rebuild_merkle_trees(app_state & app,
-                              utf8 const & pattern)
+                              utf8 const & pattern,
+                              set<utf8> const & branchnames)
 {
   P(F("rebuilding merkle trees for pattern %s\n") % pattern);
+  for(set<utf8>::const_iterator i=branchnames.begin();
+      i!=branchnames.end(); ++i)
+    P(F("including branch %s") % *i);
 
   boost::shared_ptr<merkle_table> ctab = make_root_node(*this, pattern, cert_item);
   boost::shared_ptr<merkle_table> ktab = make_root_node(*this, pattern, key_item);
@@ -3432,16 +3488,7 @@ session::rebuild_merkle_trees(app_state & app,
   {
     // get all matching branch names
     vector< revision<cert> > certs;
-    set<string> branchnames;
-    set<string> badbranch;
     app.db.get_revision_certs(branch_cert_name, certs);
-    boost::regex reg(pattern());
-    vector<boost::regex> allowed;
-    for(vector<utf8>::const_iterator i=patterns.begin();
-        i!=patterns.end(); i++)
-      {
-        allowed.push_back(boost::regex((*i)()));
-      }
     for (size_t i = 0; i < certs.size(); ++i)
       {
         cert_value name;
@@ -3451,18 +3498,6 @@ session::rebuild_merkle_trees(app_state & app,
             insert_with_parents(revision_id(idx(certs, i).inner().ident),
                                 revision_ids, app);
           }
-        else if (badbranch.find(name()) != badbranch.end())
-          ;
-        else if (boost::regex_match(name(), reg)
-                 && (voice == client_voice || matches_one(name(), allowed)))
-          {
-            P(F("including branch %s\n") % name());
-            branchnames.insert(name());
-            insert_with_parents(revision_id(idx(certs, i).inner().ident),
-                                revision_ids, app);
-          }
-        else
-          badbranch.insert(name());
       }
     
     {
@@ -3470,10 +3505,10 @@ session::rebuild_merkle_trees(app_state & app,
       app.db.get_epochs(epochs);
 
       epoch_data epoch_zero(std::string(constants::epochlen, '0'));
-      for (std::set<string>::const_iterator i = branchnames.begin();
+      for (std::set<utf8>::const_iterator i = branchnames.begin();
            i != branchnames.end(); ++i)
         {
-          cert_value branch(*i);
+          cert_value branch((*i)());
           std::map<cert_value, epoch_data>::const_iterator j;
           j = epochs.find(branch);
           // set to zero any epoch which is not yet set    

@@ -1,5 +1,12 @@
 2005-05-31  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* netsync.cc: session::rebuild_merkle_trees now takes a set of
+	branches to include as an argument. On the server, calculate
+	this set at the same time the get_netsync_*_permitted hooks are
+	called; call said hooks on each branch individually.
+
+2005-05-31  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	Remove old collection support in favor of using regexes exclusively.
 	* netsync.cc (convert_pattern): Remove function.
 	* (14 files): collections are unexist; do not mention (potential
