@@ -1,4 +1,12 @@
-2005-05-30  Timothy Brownawell <tbrownaw@gmail.com>
+2005-05-30  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* lua.{cc,hh}: Replace note_netsync_commit with
+	note_netsync_{revision,cert,pubkey}_received
+	* packet.{cc,hh}: Callbacks for cert or key written to the database.
+	* netsync.cc: Use said callbacks, call note_netsync_*_received hooks.
+	* monotone.texi: Update documentation.
+
+2005-05-30  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* packet.{cc,hh}, netsync.cc: on_revision_written callback now takes
 	the revision_id as an argument.

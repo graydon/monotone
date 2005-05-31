@@ -38,9 +38,19 @@ struct packet_consumer
 {
 protected:
   boost::function1<void, revision_id> on_revision_written;
+  boost::function1<void, cert const &> on_cert_written;
+  boost::function1<void, rsa_keypair_id> on_pubkey_written;
+  boost::function1<void, rsa_keypair_id> on_privkey_written;
 public:
   
-  virtual void set_on_revision_written(boost::function1<void, revision_id> const & x);
+  virtual void set_on_revision_written(boost::function1<void, revision_id>
+                                                const & x);
+  virtual void set_on_cert_written(boost::function1<void, cert const &>
+                                                const & x);
+  virtual void set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
+                                                const & x);
+  virtual void set_on_privkey_written(boost::function1<void, rsa_keypair_id>
+                                                const & x);
   
   virtual ~packet_consumer() {}
   virtual void consume_file_data(file_id const & ident, 
@@ -162,7 +172,14 @@ public:
   packet_db_valve(app_state & app,
                   bool take_keys = false);
   virtual ~packet_db_valve();
-  virtual void set_on_revision_written(boost::function1<void, revision_id> const & x);
+  virtual void set_on_revision_written(boost::function1<void, revision_id>
+                                                const & x);
+  virtual void set_on_cert_written(boost::function1<void, cert const &>
+                                                const & x);
+  virtual void set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
+                                                const & x);
+  virtual void set_on_privkey_written(boost::function1<void, rsa_keypair_id>
+                                                const & x);
   virtual void consume_file_data(file_id const & ident, 
                                  file_data const & dat);
   virtual void consume_file_delta(file_id const & id_old, 

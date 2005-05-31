@@ -236,7 +236,9 @@ session
   auto_ptr<ticker> revision_out_ticker;
   auto_ptr<ticker> revision_checked_ticker;
   
-  vector<revision_id> written_revisions;
+  set<revision_id> written_revisions;
+  set<rsa_keypair_id> written_keys;
+  set<cert> written_certs;
 
   map< std::pair<utf8, netcmd_item_type>, 
        boost::shared_ptr<merkle_table> > merkle_tables;
@@ -265,6 +267,8 @@ session
   virtual ~session();
   
   void rev_written_callback(revision_id rid);
+  void key_written_callback(rsa_keypair_id kid);
+  void cert_written_callback(cert const & c);
 
   id mk_nonce();
   void mark_recent_io();
@@ -453,6 +457,10 @@ session::session(protocol_role role,
     
   dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
                                           this, _1));
+  dbw.set_on_cert_written(boost::bind(&session::cert_written_callback,
+                                          this, _1));
+  dbw.set_on_pubkey_written(boost::bind(&session::key_written_callback,
+                                          this, _1));
   
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
@@ -481,10 +489,17 @@ session::session(protocol_role role,
 
 session::~session()
 {
-  for(vector<revision_id>::iterator i=written_revisions.begin();
+  //Keys
+  for(set<rsa_keypair_id>::iterator i=written_keys.begin();
+      i!=written_keys.end(); ++i)
+    {
+      app.lua.hook_note_netsync_pubkey_received(*i);
+    }
+  //Revisions
+  for(set<revision_id>::iterator i=written_revisions.begin();
       i!=written_revisions.end(); ++i)
     {
-      map<cert_name, cert_value> certs;
+      set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
       vector< revision<cert> > ctmp;
       app.db.get_revision_certs(*i, ctmp);
       for (vector< revision<cert> >::const_iterator j = ctmp.begin();
@@ -492,16 +507,39 @@ session::~session()
         {
           cert_value vtmp;
           decode_base64(j->inner().value, vtmp);
-          certs.insert(make_pair(j->inner().name, vtmp));
+          certs.insert(make_pair(j->inner().key,
+                                 make_pair(j->inner().name, vtmp)));
         }
-      app.lua.hook_note_netsync_commit(*i, certs);
+      app.lua.hook_note_netsync_revision_received(*i, certs);
+    }
+  //Certs (not attached to a new revision)
+  for(set<cert>::iterator i=written_certs.begin();
+      i!=written_certs.end(); ++i)
+    {
+      if(written_revisions.find(i->ident)==written_revisions.end())
+        {
+          cert_value tmp;
+          decode_base64(i->value, tmp);
+          app.lua.hook_note_netsync_cert_received(i->ident, i->key,
+                                                  i->name, tmp);
+        }
     }
 }
 
 void session::rev_written_callback(revision_id rid)
 {
   if(revision_checked_ticker.get()) ++(*revision_checked_ticker);
-  written_revisions.push_back(rid);
+  written_revisions.insert(rid);
+}
+
+void session::key_written_callback(rsa_keypair_id kid)
+{
+  written_keys.insert(kid);
+}
+
+void session::cert_written_callback(cert const & c)
+{
+  written_certs.insert(c);
 }
 
 id 
@@ -2443,7 +2481,7 @@ session::process_data_cmd(netcmd_item_type type,
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
   note_item_arrived(type, item);
-                           
+
   switch (type)
     {
     case epoch_item:

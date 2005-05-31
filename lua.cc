@@ -1123,24 +1123,67 @@ lua_hooks::hook_note_commit(revision_id const & new_id,
 }
 
 bool 
-lua_hooks::hook_note_netsync_commit(revision_id const & new_id,
-                            map<cert_name, cert_value> const & certs)
+lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
+                            set<pair<rsa_keypair_id,
+                                     pair<cert_name,
+                                          cert_value> > > const & certs)
 {
   Lua ll(st);
   ll
-    .func("note_netsync_commit")
+    .func("note_netsync_revision_received")
     .push_str(new_id.inner()());
 
   ll.push_table();
+  
+  typedef set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > cdat;
 
-  for (map<cert_name, cert_value>::const_iterator i = certs.begin();
-       i != certs.end(); ++i)
+  int n=0;
+  for (cdat::const_iterator i = certs.begin(); i != certs.end(); ++i)
     {
+      ll.push_int(n++);
+      ll.push_table();
+      ll.push_str("key");
       ll.push_str(i->first());
-      ll.push_str(i->second());
+      ll.set_table();
+      ll.push_str("name");
+      ll.push_str(i->second.first());
+      ll.set_table();
+      ll.push_str("value");
+      ll.push_str(i->second.second());
+      ll.set_table();
       ll.set_table();
     }
-  
+
   ll.call(2, 0);
+  return ll.ok();
+}
+
+bool
+lua_hooks::hook_note_netsync_pubkey_received(rsa_keypair_id const & kid)
+{
+  Lua ll(st);
+  ll
+    .func("note_netsync_pubkey_received")
+    .push_str(kid());
+
+  ll.call(1, 0);
+  return ll.ok();
+}
+
+bool
+lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
+                                           rsa_keypair_id const & kid,
+                                           cert_name const & name,
+                                           cert_value const & value)
+{
+  Lua ll(st);
+  ll
+    .func("note_netsync_cert_received")
+    .push_str(rid.inner()())
+    .push_str(kid())
+    .push_str(name())
+    .push_str(value());
+
+  ll.call(4, 0);
   return ll.ok();
 }
