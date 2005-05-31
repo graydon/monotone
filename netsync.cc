@@ -236,9 +236,9 @@ session
   auto_ptr<ticker> revision_out_ticker;
   auto_ptr<ticker> revision_checked_ticker;
   
-  set<revision_id> written_revisions;
-  set<rsa_keypair_id> written_keys;
-  set<cert> written_certs;
+  vector<revision_id> written_revisions;
+  vector<rsa_keypair_id> written_keys;
+  vector<cert> written_certs;
 
   map< std::pair<utf8, netcmd_item_type>, 
        boost::shared_ptr<merkle_table> > merkle_tables;
@@ -489,57 +489,69 @@ session::session(protocol_role role,
 
 session::~session()
 {
+  vector<cert> unattached_certs;
+  map<revision_id, vector<cert> > revcerts;
+  for(vector<revision_id>::iterator i=written_revisions.begin();
+      i!=written_revisions.end(); ++i)
+    revcerts.insert(make_pair(*i, vector<cert>()));
+  for(vector<cert>::iterator i=written_certs.begin();
+      i!=written_certs.end(); ++i)
+    {
+      map<revision_id, vector<cert> >::iterator j;
+      j=revcerts.find(i->ident);
+      if(j==revcerts.end())
+        unattached_certs.push_back(*i);
+      else
+        j->second.push_back(*i);
+    }
+
   //Keys
-  for(set<rsa_keypair_id>::iterator i=written_keys.begin();
+  for(vector<rsa_keypair_id>::iterator i=written_keys.begin();
       i!=written_keys.end(); ++i)
     {
       app.lua.hook_note_netsync_pubkey_received(*i);
     }
   //Revisions
-  for(set<revision_id>::iterator i=written_revisions.begin();
+  for(vector<revision_id>::iterator i=written_revisions.begin();
       i!=written_revisions.end(); ++i)
     {
+      vector<cert> & ctmp(revcerts[*i]);
       set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
-      vector< revision<cert> > ctmp;
-      app.db.get_revision_certs(*i, ctmp);
-      for (vector< revision<cert> >::const_iterator j = ctmp.begin();
+      for (vector<cert>::const_iterator j = ctmp.begin();
            j != ctmp.end(); ++j)
         {
           cert_value vtmp;
-          decode_base64(j->inner().value, vtmp);
-          certs.insert(make_pair(j->inner().key,
-                                 make_pair(j->inner().name, vtmp)));
+          decode_base64(j->value, vtmp);
+          certs.insert(make_pair(j->key, make_pair(j->name, vtmp)));
         }
       app.lua.hook_note_netsync_revision_received(*i, certs);
     }
   //Certs (not attached to a new revision)
-  for(set<cert>::iterator i=written_certs.begin();
-      i!=written_certs.end(); ++i)
+  for(vector<cert>::iterator i = unattached_certs.begin();
+      i != unattached_certs.end(); ++i)
     {
-      if(written_revisions.find(i->ident)==written_revisions.end())
-        {
-          cert_value tmp;
-          decode_base64(i->value, tmp);
-          app.lua.hook_note_netsync_cert_received(i->ident, i->key,
-                                                  i->name, tmp);
-        }
+      cert_value tmp;
+      decode_base64(i->value, tmp);
+      app.lua.hook_note_netsync_cert_received(i->ident, i->key,
+                                              i->name, tmp);
+
     }
 }
 
 void session::rev_written_callback(revision_id rid)
 {
   if(revision_checked_ticker.get()) ++(*revision_checked_ticker);
-  written_revisions.insert(rid);
+  written_revisions.push_back(rid);
 }
 
 void session::key_written_callback(rsa_keypair_id kid)
 {
-  written_keys.insert(kid);
+  written_keys.push_back(kid);
 }
 
 void session::cert_written_callback(cert const & c)
 {
-  written_certs.insert(c);
+  written_certs.push_back(c);
 }
 
 id 

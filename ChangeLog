@@ -1,5 +1,10 @@
 2005-05-30  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* netsync.cc: Call note_netsync_*_received hooks in the order they're
+	written to the db (for revisions, gives topological order).
+
+2005-05-30  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* lua.{cc,hh}: Replace note_netsync_commit with
 	note_netsync_{revision,cert,pubkey}_received
 	* packet.{cc,hh}: Callbacks for cert or key written to the database.
