@@ -1632,19 +1632,19 @@ small amount of extra information to his @file{monotonerc} file:
 @smallexample
 @group
 $ cat >>~/.monotone/monotonerc
-function get_netsync_read_permitted (collection, identity)
+function get_netsync_read_permitted (regex, identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
   return false
 end
 
-function get_netsync_write_permitted (collection, identity)
+function get_netsync_write_permitted (regex, identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
   return false
 end
 
-function get_netsync_anonymous_read_permitted (collection)
+function get_netsync_anonymous_read_permitted (regex)
   return false
 end
 ^D
@@ -1657,13 +1657,13 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
 @end group
 @end smallexample
 
 This command sets up a single listener loop on the host
-@code{jim-laptop.juicebot.co.jp}, serving the
-@code{jp.co.juicebot.jb7} collection. This collection will naturally
+@code{jim-laptop.juicebot.co.jp}, serving all branches matching
+@code{jp.co.juicebot.jb7.*}. This will naturally
 include the @code{jp.co.juicebot.jb7} branch, and any sub-branches.
 
 Now Abe decides he wishes to fetch Jim's code. To do this he issues
@@ -1671,8 +1671,8 @@ the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
-monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+monotone --db=abe.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1817,8 +1817,8 @@ Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
-monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
 monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 2] [rcerts: 8] 
 monotone: connecting to jim-laptop.juicebot.co.jp
@@ -1832,8 +1832,8 @@ Jim's:
 
 @smallexample
 @group
-monotone --db=beth.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
-monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+monotone --db=beth.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1884,8 +1884,8 @@ And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
-monotone: rebuilding merkle trees for collection jp.co.juicebot.jb7
+$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
 monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 3] [rcerts: 12] 
 monotone: connecting to jim-laptop.juicebot.co.jp
@@ -2637,8 +2637,8 @@ Contains database-global configuration information.  Defined names are:
 @item default-server
 The default server for netsync operations to use.  Automatically set
 by first use of netsync.
-@item default-collection
-The default collection for netsync operations to use.  Automatically
+@item default-pattern
+The default regex pattern for netsync operations to use.  Automatically
 set by first use of netsync.
 @end table
 
@@ -3011,7 +3011,7 @@ $ monotone checkout --revision=fe37 wobbler
 The CVS command contacts a network server, retrieves a revision, and
 stores it in your working copy. There are two cosmetic differences
 with the monotone command: remote databases are specified by hostnames
-and collections, and revisions are denoted by @sc{sha1} values (or
+and regexes, and revisions are denoted by @sc{sha1} values (or
 selectors).
 
 There is also one deep difference: pulling revisions into your
@@ -3608,10 +3608,10 @@ to date.
 @section Network
 
 @ftable @command
-@item monotone serve @var{address}[:@var{port}] (@var{collection}|@var{/regex/}) [...]
-@itemx monotone pull [@var{address}[:@var{port}] [(@var{collection}|@var{/regex/})]]
-@itemx monotone push [@var{address}[:@var{port}] [(@var{collection}|@var{/regex/})]]
-@itemx monotone sync [@var{address}[:@var{port}] [(@var{collection}|@var{/regex/})]]
+@item monotone serve @var{address}[:@var{port}] @var{regex} [...]
+@itemx monotone pull [@var{address}[:@var{port}] [@var{regex}]]
+@itemx monotone push [@var{address}[:@var{port}] [@var{regex}]]
+@itemx monotone sync [@var{address}[:@var{port}] [@var{regex}]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -3621,18 +3621,16 @@ server) and the other peer (the client) to connect to the server.
 
 The network @var{address} specified in each case should be the same: a
 host name to listen on, or connect to, optionally followed by a colon
-and a port number. The @var{collection} parameter indicates a set of
-branches to exchange; every branch for which @var{collection} is a
-prefix will be indexed and made available for synchronization.
-Alternatively, a regex may be used instead; in that case every branch
-which matches the regex exactly will be made available.
+and a port number. The @var{regex} parameter indicates a set of
+branches to exchange; every branch which matches @var{regex} exactly
+will be indexed and made available for synchronization.
 
-The @command{serve} command can take multiple collections, and it will
-then accept clients requesting any of the listed collections.  Different
-permissions can be applied to each collection; see the hooks
+The @command{serve} command can take multiple regexes, and it will
+make available all branches matching any of the listed regexes.  Different
+permissions can be applied to each regex; see the hooks
 @code{get_netsync_read_permitted}, @code{get_netsync_write_permitted},
 and @code{get_netsync_anonymous_read_permitted}, all of which take a
-@var{collection} argument (see @ref{Hook Reference}).
+@var{regex} argument (see @ref{Hook Reference}).
 
 For example, supposing Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
@@ -3641,7 +3639,7 @@ branches. Supposing Alice's computer has hostname
 
 @smallexample
 @group
-$ monotone serve alice.someisp.com net.venge.monotone
+$ monotone serve alice.someisp.com net.venge.monotone.*
 @end group
 @end smallexample
 
@@ -3649,18 +3647,18 @@ And Bob might run
 
 @smallexample
 @group
-$ monotone sync alice.someisp.com net.venge.monotone
+$ monotone sync alice.someisp.com net.venge.monotone.*
 @end group
 @end smallexample
 
-When the operation completes, all branches beginning with
-@code{net.venge.monotone} will be synchronized between Alice and Bob's
+When the operation completes, all branches matching
+@code{net.venge.monotone.*} will be synchronized between Alice and Bob's
 databases.
 
 The @command{pull}, @command{push}, and @command{sync} commands only
-require you pass @var{address} and @var{collection} the first time you
+require you pass @var{address} and @var{regex} the first time you
 use one of them; monotone will memorize this use and in the future
-default to the same server and collection.  For instance, if Bob wants
+default to the same server and regex.  For instance, if Bob wants
 to @command{sync} with Alice again, he can simply run:
 
 @smallexample
@@ -3670,10 +3668,10 @@ $ monotone sync
 @end smallexample
 
 Of course, he can still @command{sync} with other people and other
-branches by passing an address or address plus collection on the command
+branches by passing an address or address plus regex on the command
 line; this will not affect his default affinity for Alice.  If you ever
 do want to change your defaults, use @code{monotone unset database
-default-server} or @code{monotone unset database default-collection};
+default-server} or @code{monotone unset database default-pattern};
 these will clear your defaults, and cause them to be reset to the next
 person you netsync with.
 
@@ -5358,12 +5356,13 @@ end
 @end smallexample
 
 
-@item get_netsync_read_permitted (@var{collection}, @var{identity})
+@item get_netsync_read_permitted (@var{regex}, @var{identity})
 
 Returns @code{true} if a peer authenticated as key @var{identity}
 should be allowed to read from your database certs, revisions,
-manifests, and files associated with the netsync index
-@var{collection}; otherwise @code{false}. This hook has no default
+manifests, and files associated with the branches matching
+@var{regex}; otherwise @code{false}. @var{regex} will be one of the
+regexes specified on the server command line. This hook has no default
 definition, therefore the default behavior is to deny all reads.
 
 Note that the @var{identity} value is a key ID (such as
@@ -5373,21 +5372,24 @@ keys in your database to have the same ID. Make sure you confirm the
 key fingerprints of each key in your database, as key ID strings are
 ``convenience names'', not security tokens.
 
-@item get_netsync_anonymous_read_permitted (@var{collection})
+@item get_netsync_anonymous_read_permitted (@var{regex})
 
 This hook has identical semantics to @code{get_netsync_read_permitted}
 except that it is called when a connecting client requests anonymous
-read access to a collection. There is no corresponding anonymous write
+read access. There is no corresponding anonymous write
 access hook. This hook has no default definition, therefore the
 default behavior is to deny all anonymous reads.
 
-@item get_netsync_write_permitted (@var{collection}, @var{identity})
+@item get_netsync_write_permitted (@var{regex}, @var{identity})
 
 Returns @code{true} if a peer authenticated as key @var{identity}
 should be allowed to write into your database certs, revisions,
-manifests, and files associated with the netsync index
-@var{collection}; otherwise @code{false}. This hook has no default
+manifests, and files associated with the branches matching
+@var{regex}; otherwise @code{false}. This hook has no default
 definition, therefore the default behavior is to deny all writes.
+
+Note that if write access is granted for one set of branches, there
+is currently no way to restrict that access to only that set of branches.
 
 Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
@@ -6701,20 +6703,20 @@ Update working copy.
 @item @b{refresh_inodeprints}
 Turn on inodeprints mode, and force a cache refresh.
 
-@item @b{push} @i{<host> <collection>}
-Push contents of @i{<collection>} to database on @i{<host>}
+@item @b{push} @i{<host> <regex>}
+Push contents of branches matching @i{<regex>} to database on @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{pull} @i{<host> <collection>}
-Pull contents of @i{<collection>} from database on @i{<host>}
+@item @b{pull} @i{<host> <regex>}
+Pull contents of branches matching @i{<regex>} from database on @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{sync} @i{<host> <collection>}
-Sync contents of @i{<collection>} with database on @i{<host>}
+@item @b{sync} @i{<host> <regex>}
+Sync contents of branches matching @i{<regex>} with database on @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{serve} @i{<host> <collection>}
-Serve contents of @i{<collection>} at network address @i{<host>}
+@item @b{serve} @i{<host> <regex>}
+Serve contents of branches matching @i{<regex>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
 @item @b{automate} @i{(interface_version|heads|ancestors|attributes|parents|descendents|children|graph|erase_ancestors|toposort|ancestry_difference|leaves|inventory|stdio|certs|select)}

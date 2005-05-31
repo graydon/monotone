@@ -14,15 +14,15 @@ NETSYNC_SETUP
 # test with open security settings
 
 AT_DATA(open.lua, [
-function get_netsync_read_permitted(collection, identity)
+function get_netsync_read_permitted(pattern, identity)
         return true
 end
 
-function get_netsync_write_permitted(collection, identity)
+function get_netsync_write_permitted(pattern, identity)
         return true
 end
 
-function get_netsync_anonymous_read_permitted(collection)
+function get_netsync_anonymous_read_permitted(pattern)
         return true
 end
 ])
@@ -101,17 +101,17 @@ AT_CHECK(MONOTONE cat revision $UNKNOWN_REV, [1], [stdout], [stderr])
 # test with closed security settings
 
 AT_DATA(closed.lua, [
-function get_netsync_read_permitted(collection, identity)
+function get_netsync_read_permitted(pattern, identity)
         if (identity == "tester@test.net") then return true end
         return false
 end
 
-function get_netsync_write_permitted(collection, identity)
+function get_netsync_write_permitted(pattern, identity)
         if (identity == "tester@test.net") then return true end
         return false
 end
 
-function get_netsync_anonymous_read_permitted(collection)
+function get_netsync_anonymous_read_permitted(pattern)
         return false
 end
 ])

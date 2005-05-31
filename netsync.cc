@@ -209,7 +209,7 @@ session
 {
   protocol_role role;
   protocol_voice const voice;
-  vector<utf8> collections;
+  vector<utf8> patterns;
   app_state & app;
 
   string peer_id;
@@ -258,7 +258,7 @@ session
 
   session(protocol_role role,
           protocol_voice voice,
-          vector<utf8> const & collections,
+          vector<utf8> const & patterns,
           app_state & app,
           string const & peer,
           Netxx::socket_type sock, 
@@ -415,14 +415,14 @@ get_root_prefix()
   
 session::session(protocol_role role,
                  protocol_voice voice,
-                 vector<utf8> const & collections,
+                 vector<utf8> const & patterns,
                  app_state & app,
                  string const & peer,
                  Netxx::socket_type sock, 
                  Netxx::Timeout const & to) : 
   role(role),
   voice(voice),
-  collections(collections),
+  patterns(patterns),
   app(app),
   peer_id(peer),
   fd(sock),
@@ -450,9 +450,9 @@ session::session(protocol_role role,
 {
   if (voice == client_voice)
     {
-      N(collections.size() == 1,
+      N(patterns.size() == 1,
           F("client can only sync one pattern at a time"));
-      this->pattern = idx(collections, 0);
+      this->pattern = idx(patterns, 0);
     }
     
   dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
@@ -1625,14 +1625,14 @@ session::process_anonymous_cmd(protocol_role role,
     }
 
   vector<utf8> c;
-  for(vector<utf8>::const_iterator i=collections.begin();
-      i!=collections.end(); i++)
+  for(vector<utf8>::const_iterator i=patterns.begin();
+      i!=patterns.end(); i++)
     {
       if(app.lua.hook_get_netsync_anonymous_read_permitted((*i)()))
         c.push_back(*i);
     }
-  collections=c;
-  if(!collections.size())
+  patterns=c;
+  if(!patterns.size())
     {
       W(F("denied anonymous read permission for '%s'\n") % pattern);
       this->saved_nonce = id("");
@@ -1728,14 +1728,14 @@ session::process_auth_cmd(protocol_role role,
         }
 
       vector<utf8> c;
-      for(vector<utf8>::const_iterator i=collections.begin();
-          i!=collections.end(); i++)
+      for(vector<utf8>::const_iterator i=patterns.begin();
+          i!=patterns.end(); i++)
         {
           if(app.lua.hook_get_netsync_read_permitted((*i)(), their_id()))
             c.push_back(*i);
         }
-      collections=c;
-      if(!collections.size())
+      patterns=c;
+      if(!patterns.size())
         {
           W(F("denied '%s' read permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
@@ -1758,14 +1758,14 @@ session::process_auth_cmd(protocol_role role,
         }
 
       vector<utf8> c;
-      for(vector<utf8>::const_iterator i=collections.begin();
-          i!=collections.end(); i++)
+      for(vector<utf8>::const_iterator i=patterns.begin();
+          i!=patterns.end(); i++)
         {
           if(app.lua.hook_get_netsync_write_permitted((*i)(), their_id()))
             c.push_back(*i);
         }
-      collections=c;
-      if(!collections.size())
+      patterns=c;
+      if(!patterns.size())
         {
           W(F("denied '%s' write permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
@@ -2966,7 +2966,7 @@ bool session::process()
 
 static void 
 call_server(protocol_role role,
-            vector<utf8> const & collections,
+            vector<utf8> const & patterns,
             app_state & app,
             utf8 const & address,
             Netxx::port_type default_port,
@@ -2979,10 +2979,10 @@ call_server(protocol_role role,
 
   P(F("connecting to %s\n") % address());
   Netxx::Stream server(address().c_str(), default_port, timeout);
-  session sess(role, client_voice, collections, app, 
+  session sess(role, client_voice, patterns, app, 
                address(), server.get_socketfd(), timeout);
 
-  sess.rebuild_merkle_trees(app, idx(collections, 0)());
+  sess.rebuild_merkle_trees(app, idx(patterns, 0)());
 
   sess.byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
   sess.byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
@@ -3132,7 +3132,7 @@ handle_new_connection(Netxx::Address & addr,
                       Netxx::StreamServer & server,
                       Netxx::Timeout & timeout,
                       protocol_role role,
-                      vector<utf8> const & collections,
+                      vector<utf8> const & patterns,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
                       app_state & app)
 {
@@ -3147,7 +3147,7 @@ handle_new_connection(Netxx::Address & addr,
   else
     {
       P(F("accepted new client connection from %s\n") % client);
-      shared_ptr<session> sess(new session(role, server_voice, collections, 
+      shared_ptr<session> sess(new session(role, server_voice, patterns, 
                                            app,
                                            lexical_cast<string>(client), 
                                            client.get_socketfd(), timeout));
@@ -3262,7 +3262,7 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
 
 static void 
 serve_connections(protocol_role role,
-                  vector<utf8> const & collections,
+                  vector<utf8> const & patterns,
                   app_state & app,
                   utf8 const & address,
                   Netxx::port_type default_port,
@@ -3315,7 +3315,7 @@ serve_connections(protocol_role role,
       // we either got a new connection
       else if (fd == server)
         handle_new_connection(addr, server, timeout, role, 
-                              collections, sessions, app);
+                              patterns, sessions, app);
       
       // or an existing session woke up
       else
@@ -3402,30 +3402,6 @@ insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app)
     }
 }
 
-string
-convert_pattern(string pattern)
-{
-  if(pattern.size() > 2 && pattern[0] == '/'
-     && pattern[pattern.size()-1] == '/')
-    {
-      pattern=pattern.substr(1, pattern.size()-2);
-    }
-  else
-    {
-      string x=pattern;
-      pattern="";
-      string e=".|*?+()[]{}^$\\";
-      for(string::const_iterator i=x.begin(); i!=x.end(); i++)
-        {
-          if(e.find(*i) != e.npos)
-            pattern+='\\';
-          pattern+=*i;
-        }
-      pattern=pattern+".*";
-    }
-  return pattern;
-}
-
 bool
 matches_one(string s, vector<boost::regex> r)
 {
@@ -3459,10 +3435,10 @@ session::rebuild_merkle_trees(app_state & app,
     set<string> branchnames;
     set<string> badbranch;
     app.db.get_revision_certs(branch_cert_name, certs);
-    boost::regex reg(convert_pattern(pattern()));
+    boost::regex reg(pattern());
     vector<boost::regex> allowed;
-    for(vector<utf8>::const_iterator i=collections.begin();
-        i!=collections.end(); i++)
+    for(vector<utf8>::const_iterator i=patterns.begin();
+        i!=patterns.end(); i++)
       {
         allowed.push_back(boost::regex((*i)()));
       }
@@ -3564,7 +3540,7 @@ void
 run_netsync_protocol(protocol_voice voice, 
                      protocol_role role, 
                      utf8 const & addr, 
-                     vector<utf8> collections,
+                     vector<utf8> patterns,
                      app_state & app)
 {
   try 
@@ -3572,7 +3548,7 @@ run_netsync_protocol(protocol_voice voice,
       start_platform_netsync();
       if (voice == server_voice)
         {
-          serve_connections(role, collections, app,
+          serve_connections(role, patterns, app,
                             addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                             static_cast<unsigned long>(constants::netsync_timeout_seconds), 
                             static_cast<unsigned long>(constants::netsync_connection_limit));
@@ -3581,7 +3557,7 @@ run_netsync_protocol(protocol_voice voice,
         {
           I(voice == client_voice);
           transaction_guard guard(app.db);
-          call_server(role, collections, app,
+          call_server(role, patterns, app,
                       addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
           guard.commit();

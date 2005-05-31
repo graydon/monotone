@@ -205,18 +205,18 @@ write_hello_cmd_payload(rsa_keypair_id const & server_keyname,
 void 
 read_anonymous_cmd_payload(std::string const & in, 
                            protocol_role & role, 
-                           std::string & collection,
+                           std::string & pattern,
                            id & nonce2)
 {
   size_t pos = 0;
-  // syntax is: <role:1 byte> <collection: vstr> <nonce2: 20 random bytes>
+  // syntax is: <role:1 byte> <pattern: vstr> <nonce2: 20 random bytes>
   u8 role_byte = extract_datum_lsb<u8>(in, pos, "anonymous netcmd, role");
   if (role_byte != static_cast<u8>(source_role)
       && role_byte != static_cast<u8>(sink_role)
       && role_byte != static_cast<u8>(source_and_sink_role))
     throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
   role = static_cast<protocol_role>(role_byte);
-  extract_variable_length_string(in, collection, pos, "anonymous netcmd, collection name");
+  extract_variable_length_string(in, pattern, pos, "anonymous netcmd, pattern");
   nonce2 = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
                                 "anonymous netcmd, nonce2"));
   assert_end_of_buffer(in, pos, "anonymous netcmd payload");
@@ -224,27 +224,27 @@ read_anonymous_cmd_payload(std::string const & in,
 
 void 
 write_anonymous_cmd_payload(protocol_role role, 
-                            std::string const & collection,
+                            std::string const & pattern,
                             id const & nonce2,
                             std::string & out)
 {
   I(nonce2().size() == constants::merkle_hash_length_in_bytes);
   out += static_cast<char>(role);
-  insert_variable_length_string(collection, out);
+  insert_variable_length_string(pattern, out);
   out += nonce2();
 }
 
 void 
 read_auth_cmd_payload(string const & in, 
                       protocol_role & role, 
-                      string & collection,
+                      string & pattern,
                       id & client, 
                       id & nonce1, 
                       id & nonce2,
                       string & signature)
 {
   size_t pos = 0;
-  // syntax is: <role:1 byte> <collection: vstr>
+  // syntax is: <role:1 byte> <pattern: vstr>
   //            <client: 20 bytes sha1> <nonce1: 20 random bytes> <nonce2: 20 random bytes>
   //            <signature: vstr>
   u8 role_byte = extract_datum_lsb<u8>(in, pos, "auth netcmd, role");
@@ -253,7 +253,7 @@ read_auth_cmd_payload(string const & in,
       && role_byte != static_cast<u8>(source_and_sink_role))
     throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
   role = static_cast<protocol_role>(role_byte);
-  extract_variable_length_string(in, collection, pos, "auth netcmd, collection name");
+  extract_variable_length_string(in, pattern, pos, "auth netcmd, pattern");
   client = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
                                 "auth netcmd, client identifier"));
   nonce1 = id(extract_substring(in, pos, constants::merkle_hash_length_in_bytes, 
@@ -266,7 +266,7 @@ read_auth_cmd_payload(string const & in,
 
 void 
 write_auth_cmd_payload(protocol_role role, 
-                       string const & collection, 
+                       string const & pattern, 
                        id const & client,
                        id const & nonce1, 
                        id const & nonce2, 
@@ -277,7 +277,7 @@ write_auth_cmd_payload(protocol_role role,
   I(nonce1().size() == constants::merkle_hash_length_in_bytes);
   I(nonce2().size() == constants::merkle_hash_length_in_bytes);
   out += static_cast<char>(role);
-  insert_variable_length_string(collection, out);
+  insert_variable_length_string(pattern, out);
   out += client();
   out += nonce1();
   out += nonce2();
@@ -576,13 +576,13 @@ test_netcmd_functions()
         protocol_role out_role = source_and_sink_role, in_role;
         string buf;
         id out_nonce2(raw_sha1("nonce start my heart")), in_nonce2;
-        string out_collection("radishes galore!"), in_collection;
+        string out_pattern("radishes galore!"), in_pattern;
 
         out_cmd.cmd_code = anonymous_cmd;
-        write_anonymous_cmd_payload(out_role, out_collection, out_nonce2, out_cmd.payload);
+        write_anonymous_cmd_payload(out_role, out_pattern, out_nonce2, out_cmd.payload);
         write_netcmd(out_cmd, buf);
         BOOST_CHECK(read_netcmd(buf, in_cmd));
-        read_anonymous_cmd_payload(in_cmd.payload, in_role, in_collection, in_nonce2);
+        read_anonymous_cmd_payload(in_cmd.payload, in_role, in_pattern, in_nonce2);
         BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_nonce2 == out_nonce2);
         BOOST_CHECK(in_role == out_role);
@@ -598,15 +598,15 @@ test_netcmd_functions()
         id out_client(raw_sha1("happy client day")), out_nonce1(raw_sha1("nonce me amadeus")), 
           out_nonce2(raw_sha1("nonce start my heart")), 
           in_client, in_nonce1, in_nonce2;
-        string out_signature(raw_sha1("burble") + raw_sha1("gorby")), out_collection("radishes galore!"), 
-          in_signature, in_collection;
+        string out_signature(raw_sha1("burble") + raw_sha1("gorby")), out_pattern("radishes galore!"), 
+          in_signature, in_pattern;
 
         out_cmd.cmd_code = auth_cmd;
-        write_auth_cmd_payload(out_role, out_collection, out_client, out_nonce1, 
+        write_auth_cmd_payload(out_role, out_pattern, out_client, out_nonce1, 
                                       out_nonce2, out_signature, out_cmd.payload);
         write_netcmd(out_cmd, buf);
         BOOST_CHECK(read_netcmd(buf, in_cmd));
-        read_auth_cmd_payload(in_cmd.payload, in_role, in_collection, in_client,
+        read_auth_cmd_payload(in_cmd.payload, in_role, in_pattern, in_client,
                               in_nonce1, in_nonce2, in_signature);
         BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_client == out_client);

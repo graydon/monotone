@@ -1927,13 +1927,13 @@ CMD(reindex, "network", "",
 
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
-static const var_key default_collection_key(var_domain("database"),
-                                            var_name("default-collection"));
+static const var_key default_pattern_key(var_domain("database"),
+                                            var_name("default-pattern"));
 
 static void
 process_netsync_client_args(std::string const & name,
                             std::vector<utf8> const & args,
-                            utf8 & addr, std::vector<utf8> & collections,
+                            utf8 & addr, std::vector<utf8> & patterns,
                             app_state & app)
 {
   if (args.size() > 2)
@@ -1957,73 +1957,74 @@ process_netsync_client_args(std::string const & name,
       addr = utf8(addr_value());
       L(F("using default server address: %s\n") % addr);
     }
-  // NB: even though the netsync code wants a vector of collections, in fact
+  // NB: even though the netsync code wants a vector of patterns, in fact
   // this only works for the server; when we're a client, our vector must have
   // length exactly 1.
-  utf8 collection;
+  utf8 pattern;
   if (args.size() >= 2)
     {
-      collection = idx(args, 1);
-      if (!app.db.var_exists(default_collection_key))
+      pattern = idx(args, 1);
+      if (!app.db.var_exists(default_pattern_key))
         {
-          P(F("setting default collection to %s\n") % collection);
-          app.db.set_var(default_collection_key, var_value(collection()));
+          P(F("setting default regex pattern to %s\n") % pattern);
+          app.db.set_var(default_pattern_key, var_value(pattern()));
         }
     }
   else
     {
-      N(app.db.var_exists(default_collection_key),
-        F("no collection given and no default collection set"));
-      var_value collection_value;
-      app.db.get_var(default_collection_key, collection_value);
-      collection = utf8(collection_value());
-      L(F("using default collection: %s\n") % collection);
+      N(app.db.var_exists(default_pattern_key),
+        F("no regex pattern given and no default pattern set"));
+      var_value pattern_value;
+      app.db.get_var(default_pattern_key, pattern_value);
+      pattern = utf8(pattern_value());
+      L(F("using default regex pattern: %s\n") % pattern);
     }
-  collections.push_back(collection);
+  patterns.push_back(pattern);
 }
 
-CMD(push, "network", "[ADDRESS[:PORTNUMBER] [(COLLECTION | /REGEX/)]]",
-    "push specified branches to netsync server at ADDRESS", OPT_NONE)
+CMD(push, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
+    "push branches matching REGEX to netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr;
-  vector<utf8> collections;
-  process_netsync_client_args(name, args, addr, collections, app);
+  vector<utf8> patterns;
+  process_netsync_client_args(name, args, addr, patterns, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  run_netsync_protocol(client_voice, source_role, addr, collections, app);  
+  run_netsync_protocol(client_voice, source_role, addr, patterns, app);  
 }
 
-CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [(COLLECTION | /REGEX/)]]",
-    "pull specified branches from netsync server at ADDRESS", OPT_NONE)
+CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
+    "pull branches matching REGEX from netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr;
-  vector<utf8> collections;
-  process_netsync_client_args(name, args, addr, collections, app);
+  vector<utf8> patterns;
+  process_netsync_client_args(name, args, addr, patterns, app);
 
   if (app.signing_key() == "")
     W(F("doing anonymous pull\n"));
   
-  run_netsync_protocol(client_voice, sink_role, addr, collections, app);  
+  run_netsync_protocol(client_voice, sink_role, addr, patterns, app);  
 }
 
-CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [(COLLECTION | /REGEX/)]]",
-    "sync specified branches with netsync server at ADDRESS", OPT_NONE)
+CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
+    "sync branches matching REGEX with netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr;
-  vector<utf8> collections;
-  process_netsync_client_args(name, args, addr, collections, app);
+  vector<utf8> patterns;
+  process_netsync_client_args(name, args, addr, patterns, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  run_netsync_protocol(client_voice, source_and_sink_role, addr, collections, app);  
+  run_netsync_protocol(client_voice, source_and_sink_role, addr, patterns,
+                       app);  
 }
 
-CMD(serve, "network", "ADDRESS[:PORTNUMBER] (COLLECTION | /REGEX/) ...",
+CMD(serve, "network", "ADDRESS[:PORTNUMBER] REGEX ...",
     "listen on ADDRESS and serve the specified branches to connecting clients", OPT_PIDFILE)
 {
   if (args.size() < 2)
@@ -2040,8 +2041,8 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] (COLLECTION | /REGEX/) ...",
   require_password(key, app);
 
   utf8 addr(idx(args,0));
-  vector<utf8> collections(args.begin() + 1, args.end());
-  run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
+  vector<utf8> patterns(args.begin() + 1, args.end());
+  run_netsync_protocol(server_voice, source_and_sink_role, addr, patterns, app);  
 }
 
 
@@ -2850,7 +2851,7 @@ CMD(update, "working copy", "",
   if (args.size() > 0)
     throw usage(name);
 
-  if (app.revision_selectors.size() > 0)
+  if (app.revision_selectors.size() > 1)
     throw usage(name);
 
   if (!app.branch_name().empty())

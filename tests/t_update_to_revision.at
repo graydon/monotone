@@ -50,7 +50,7 @@ MIDDLE_R_SHA=`BASE_REVISION`
 
 # Create leaf revision based off middle.
 AT_CHECK(cp left-leaf testfile)
-AT_CHECK(MONOTONE commit --message blah-blah, [], [ignore], [ignore])g
+AT_CHECK(MONOTONE commit --message blah-blah, [], [ignore], [ignore])
 LEFT_LEAF_R_SHA=`BASE_REVISION`
 
 # Test going backward in the revision tree.

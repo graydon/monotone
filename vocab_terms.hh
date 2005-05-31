@@ -22,7 +22,7 @@ ATOMIC(file_path);            // non-absolute, non-bookeeping file
 ATOMIC(cert_name);            // symbol-of-your-choosing
 ATOMIC_NOVERIFY(cert_value);  // symbol-of-your-choosing
 
-// some domains: "database" (+ default_server, default_collection),
+// some domains: "database" (+ default_server, default_pattern),
 //   server_key (+ servername/key)
 //   branch_alias (+ short form/long form)
 //   trust_seed (+ branch/seed)

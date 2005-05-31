@@ -1,3 +1,15 @@
+2005-05-31  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Remove old collection support in favor of using regexes exclusively.
+	* netsync.cc (convert_pattern): Remove function.
+	* (14 files): collections are unexist; do not mention (potential
+	for confusion)
+	* constants.cc: Increase netsync protocol version.
+	* monotone.texi: Update documentation.
+	* tests/t_epoch_unidirectional.at: Fix to sync subbranches.
+	* commands.cc (CMD update): Fix usage check.
+	* tests/t_select_cert.at: Fix to use --revision.
+
 2005-05-30  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc: Call note_netsync_*_received hooks in the order they're

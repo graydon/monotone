@@ -77,22 +77,22 @@ void write_hello_cmd_payload(rsa_keypair_id const & server_keyname,
 
 void read_anonymous_cmd_payload(std::string const & in, 
                                 protocol_role & role, 
-                                std::string & collection,
+                                std::string & pattern,
                                 id & nonce2);
 void write_anonymous_cmd_payload(protocol_role role, 
-                                 std::string const & collection,
+                                 std::string const & pattern,
                                  id const & nonce2,
                                  std::string & out);
 
 void read_auth_cmd_payload(std::string const & in, 
                            protocol_role & role, 
-                           std::string & collection,
+                           std::string & pattern,
                            id & client, 
                            id & nonce1, 
                            id & nonce2,
                            std::string & signature);
 void write_auth_cmd_payload(protocol_role role, 
-                            std::string const & collection, 
+                            std::string const & pattern, 
                             id const & client,
                             id const & nonce1, 
                             id const & nonce2, 
