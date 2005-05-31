@@ -1,5 +1,10 @@
 2005-05-31  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* monotone.texi: Update documentation for get_netsync_*_permitted
+	hooks to reflect that they now get individual branch names.
+
+2005-05-31  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* netsync.cc: session::rebuild_merkle_trees now takes a set of
 	branches to include as an argument. On the server, calculate
 	this set at the same time the get_netsync_*_permitted hooks are

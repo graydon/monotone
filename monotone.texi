@@ -3627,10 +3627,10 @@ will be indexed and made available for synchronization.
 
 The @command{serve} command can take multiple regexes, and it will
 make available all branches matching any of the listed regexes.  Different
-permissions can be applied to each regex; see the hooks
+permissions can be applied to each branch; see the hooks
 @code{get_netsync_read_permitted}, @code{get_netsync_write_permitted},
 and @code{get_netsync_anonymous_read_permitted}, all of which take a
-@var{regex} argument (see @ref{Hook Reference}).
+@var{branch} argument (see @ref{Hook Reference}).
 
 For example, supposing Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
@@ -5356,14 +5356,13 @@ end
 @end smallexample
 
 
-@item get_netsync_read_permitted (@var{regex}, @var{identity})
+@item get_netsync_read_permitted (@var{branch}, @var{identity})
 
 Returns @code{true} if a peer authenticated as key @var{identity}
 should be allowed to read from your database certs, revisions,
-manifests, and files associated with the branches matching
-@var{regex}; otherwise @code{false}. @var{regex} will be one of the
-regexes specified on the server command line. This hook has no default
-definition, therefore the default behavior is to deny all reads.
+manifests, and files associated with @var{branch}; otherwise @code{false}.
+This hook has no default definition, therefore the default behavior is
+to deny all reads.
 
 Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
@@ -5372,7 +5371,7 @@ keys in your database to have the same ID. Make sure you confirm the
 key fingerprints of each key in your database, as key ID strings are
 ``convenience names'', not security tokens.
 
-@item get_netsync_anonymous_read_permitted (@var{regex})
+@item get_netsync_anonymous_read_permitted (@var{branch})
 
 This hook has identical semantics to @code{get_netsync_read_permitted}
 except that it is called when a connecting client requests anonymous
@@ -5380,16 +5379,16 @@ read access. There is no corresponding anonymous write
 access hook. This hook has no default definition, therefore the
 default behavior is to deny all anonymous reads.
 
-@item get_netsync_write_permitted (@var{regex}, @var{identity})
+@item get_netsync_write_permitted (@var{branch}, @var{identity})
 
 Returns @code{true} if a peer authenticated as key @var{identity}
 should be allowed to write into your database certs, revisions,
-manifests, and files associated with the branches matching
-@var{regex}; otherwise @code{false}. This hook has no default
-definition, therefore the default behavior is to deny all writes.
+manifests, and files associated with @var{branch}; otherwise @code{false}.
+This hook has no default definition, therefore the default behavior is to deny all writes.
 
-Note that if write access is granted for one set of branches, there
-is currently no way to restrict that access to only that set of branches.
+Note that if write access is granted for one branch it is effectively
+granted for the entire database, as there is currently no way to
+restrict that access to only that branch.
 
 Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
