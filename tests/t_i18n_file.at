@@ -30,12 +30,9 @@ fi
 AT_CHECK(MONOTONE add "weird/file name with spaces", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "weird/$FUNNY_FILENAME", [], [ignore], [ignore])
 
-export LANG=en_US.UTF-8
-export CHARSET=utf-8
-
 # add some files with UTF8 names
 export LANG=en_US.utf-8
-export CHARSET=utf-8
+export CHARSET=UTF-8
 AT_CHECK(MONOTONE add "utf8/$EUROPEAN_UTF8", [], [ignore], [ignore])
 AT_CHECK(MONOTONE add "utf8/$JAPANESE_UTF8", [], [ignore], [ignore])
 
@@ -44,7 +41,7 @@ AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding european and japa
 # check the names showed up in our manifest
 
 export LANG=en_US.UTF-8
-export CHARSET=utf-8
+export CHARSET=UTF-8
 
 AT_CHECK(MONOTONE cat manifest, [], [stdout])
 AT_CHECK(mv stdout manifest)
