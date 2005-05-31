@@ -1,5 +1,13 @@
 2005-05-31  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/t_epoch_server.at: fix typo
+	* netsync.cc (session::process_auth_cmd): If no branches are allowed
+	for writing, also check for write permissions to branch "" (needed
+	for serving empty dbs). For sync, don't refuse connection if there
+	are no readable branches (only do this for pull).
+
+2005-05-31  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* monotone.texi: Update documentation for get_netsync_*_permitted
 	hooks to reflect that they now get individual branch names.
 

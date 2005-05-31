@@ -1,4 +1,4 @@
-AT_SETUP([server aborbs and checks epochs])
+AT_SETUP([server absorbs and checks epochs])
 AT_KEYWORDS([netsync])
 MONOTONE_SETUP
 NETSYNC_SETUP

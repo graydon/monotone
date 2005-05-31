@@ -1606,6 +1606,8 @@ get_branches(app_state & app, vector<string> & names)
     }
   sort(names.begin(), names.end());
   names.erase(std::unique(names.begin(), names.end()), names.end());
+  if(!names.size())
+    W(F("No branches found."));
 }
 
 bool 
@@ -1786,7 +1788,9 @@ session::process_auth_cmd(protocol_role role,
                 ok_branches.insert(utf8(*i));
             }
         }
-      if(!ok_branches.size())
+      //if we're source_and_sink_role, continue even with no branches readable
+      //ex: serve --db=empty.db
+      if(!ok_branches.size() && role == sink_role)
         {
           W(F("denied '%s' read permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
@@ -1818,7 +1822,8 @@ session::process_auth_cmd(protocol_role role,
                 ok_branches.insert(utf8(*i));
             }
         }
-      if(!ok_branches.size())
+      if(!ok_branches.size()
+         && !app.lua.hook_get_netsync_write_permitted("", their_id))
         {
           W(F("denied '%s' write permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
