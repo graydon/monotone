@@ -1,3 +1,10 @@
+2005-06-01  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_cvsimport_deleted_invar.at: don't use -C with tar
+	* tests/t_i18n_file.at: capitalise CHARSET=UTF-8, seems more standard.
+	* tests/t_merge_normalization_edge_case.at: use known-good output
+	rather than using diff3 --merge
+
 2005-05-31  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc: session::rebuild_merkle_trees now takes a set of

@@ -16,7 +16,7 @@ AT_DATA(cvsrepo.gz.enc, [H4sICOVTd0ICA2F0dGVzdC50YXIA7VfJbtswFPTV/AoCPRQoApak9up
 ])
 
 UNGZB64(cvsrepo.gz.enc, cvsrepo.tar)
-AT_CHECK(tar -C $CVSROOT -xf cvsrepo.tar)
+AT_CHECK(cd $CVSROOT && tar -xf ../cvsrepo.tar)
 AT_CHECK(test -d $CVSROOT/attest)
 
 AT_CHECK(cvs -d $CVSROOT co -r1.1 attest, [], [ignore], [ignore])
