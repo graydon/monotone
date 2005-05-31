@@ -1255,7 +1255,8 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
   
 }
 
-CMD(status, "informative", "[PATH]...", "show status of working copy", OPT_DEPTH)
+CMD(status, "informative", "[PATH]...", "show status of working copy",
+    OPT_DEPTH)
 {
   revision_set rs;
   manifest_map m_old, m_new;
@@ -1396,8 +1397,11 @@ CMD(cat, "informative",
 }
 
 
-CMD(checkout, "tree", "[--revision=REVISION] [DIRECTORY]\n",
-    "check out revision from database into directory",
+CMD(checkout, "tree", "[DIRECTORY]\n",
+    "check out revision from database into directory.\n"
+    "If a revision is given, that's the one that will be checked out.\n"
+    "Otherwise, it will be the head of the branch (given or implicit).\n"
+    "If no directory is given, the branch name will be used as directory",
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_id ident;
@@ -2670,15 +2674,21 @@ void do_diff(const string & name,
   dump_diffs(composite.deltas, app, new_is_archived, type);
 }
 
-CMD(cdiff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
-    "show current context diffs on stdout",
+CMD(cdiff, "informative", "[PATH]...", 
+    "show current context diffs on stdout.\n"
+    "If one revision is given, the diff between the working directory and\n"
+    "that revision is shown.  If two revisions are given, the diff between\n"
+    "them is given.",
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   do_diff(name, app, args, context_diff);
 }
 
-CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
-    "show current unified diffs on stdout",
+CMD(diff, "informative", "[PATH]...", 
+    "show current unified diffs on stdout.\n"
+    "If one revision is given, the diff between the working directory and\n"
+    "that revision is shown.  If two revisions are given, the diff between\n"
+    "them is given.",
     OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH)
 {
   do_diff(name, app, args, unified_diff);
@@ -2825,8 +2835,11 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, "working copy", "[REVISION]", "update working copy to be based off another revision",
-    OPT_BRANCH_NAME)
+CMD(update, "working copy", "",
+    "update working copy.\n"
+    "If a revision is given, base the update on that revision.  If not,\n"
+    "base the update on the head of the branch (given or implicit).",
+    OPT_BRANCH_NAME % OPT_REVISION)
 {
   manifest_map m_old, m_ancestor, m_working, m_chosen;
   manifest_id m_ancestor_id, m_chosen_id;
@@ -2834,7 +2847,10 @@ CMD(update, "working copy", "[REVISION]", "update working copy to be based off a
   revision_id r_old_id, r_chosen_id;
   change_set old_to_chosen, update;
 
-  if (args.size() != 0 && args.size() != 1)
+  if (args.size() > 0)
+    throw usage(name);
+
+  if (app.revision_selectors.size() > 0)
     throw usage(name);
 
   if (!app.branch_name().empty())
@@ -2849,7 +2865,7 @@ CMD(update, "working copy", "[REVISION]", "update working copy to be based off a
   N(!null_id(r_old_id),
     F("this working directory is a new project; cannot update"));
 
-  if (args.size() == 0)
+  if (app.revision_selectors.size() == 0)
     {
       set<revision_id> candidates;
       pick_update_candidates(r_old_id, app, candidates);
@@ -2868,7 +2884,7 @@ CMD(update, "working copy", "[REVISION]", "update working copy to be based off a
     }
   else
     {
-      complete(app, idx(args, 0)(), r_chosen_id);
+      complete(app, app.revision_selectors[0](), r_chosen_id);
       N(app.db.revision_exists(r_chosen_id),
         F("no revision %s found in database") % r_chosen_id);
     }
@@ -3491,9 +3507,9 @@ CMD(annotate, "informative", "PATH",
   do_annotate(app, file, fid, rid);
 }
 
-CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]]",
-    "print history in reverse order (filtering by 'file').  If one or more revisions\n"
-    "are given, use them as a starting point.",
+CMD(log, "informative", "[FILE]",
+    "print history in reverse order (filtering by 'FILE').  If one or more\n"
+    "revisions are given, use them as a starting point.",
     OPT_LAST % OPT_REVISION % OPT_BRIEF)
 {
   file_path file;
