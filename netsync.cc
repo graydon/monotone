@@ -1094,18 +1094,16 @@ session::analyze_ancestry_graph()
         i!=received_certs.end(); ++i)
       {
         //branches
-        vector<cert> & bcerts(i->second.find(bcert_name)->second);
-        for(unsigned int j=0; j != bcerts.size(); ++j)
+        vector<cert> & bcerts(i->second[bcert_name]);
+        vector<cert> keeping;
+        for(vector<cert>::iterator j=bcerts.begin(); j != bcerts.end(); ++j)
           {
             cert_value name;
-            decode_base64(bcerts[j].value, name);
+            decode_base64(j->value, name);
             if(ok_branches.find(name()) != ok_branches.end())
-              ;
+              keeping.push_back(*j);
             else if(bad_branches.find(name()) != bad_branches.end())
-              {
-                bcerts.erase(bcerts.begin()+j);
-                --j;//Don't skip the next cert.
-              }
+              ;
             else
               {
                 bool ok;
@@ -1115,16 +1113,18 @@ session::analyze_ancestry_graph()
                 else
                   ok=boost::regex_match(name(), reg);
                 if(ok)
+                  {
                     ok_branches.insert(name());
+                    keeping.push_back(*j);
+                  }
                 else
                   {
                     bad_branches.insert(name());
-                    bcerts.erase(bcerts.begin()+j);
-                    --j;//Don't skip the next cert.
                     W(F("Dropping branch certs for unwanted branch %s")
                       % name);
                   }
               }
+            bcerts=keeping;
           }
         //tags
         if(i->second.count(bcert_name) == 0)
