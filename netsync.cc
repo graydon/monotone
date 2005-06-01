@@ -1078,7 +1078,7 @@ session::analyze_ancestry_graph()
 
     // Write permissions checking:
     // remove heads w/o proper certs, add their children to heads
-    // 1) remove unwanted branch/tag certs from consideration
+    // 1) remove unwanted branch certs from consideration
     //    - server: check write permission hook
     //    - client: check against sync pattern
     // 2) remove heads w/o a branch tag, process new exposed heads
@@ -1124,11 +1124,8 @@ session::analyze_ancestry_graph()
                       % name);
                   }
               }
-            bcerts=keeping;
           }
-        //tags
-        if(i->second.count(bcert_name) == 0)
-          i->second[tcert_name].clear();
+        bcerts=keeping;
       }
     //2
     list<revision_id> tmp;

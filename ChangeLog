@@ -1,5 +1,10 @@
 2005-06-01  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* netsync.cc (analyze_ancestry_graph): Try to fix segfault.
+	Always accept tags.
+
+2005-06-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* netsync.cc (process_auth_cmd, analyze_ancestry_graph): Move
 	write-permission checking to where it belongs, *after* we know
 	exactly what we're checking permissions about. Drop things we
