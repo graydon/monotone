@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <list>
 
 #include <time.h>
 
@@ -225,6 +226,7 @@ session
 
   utf8 pattern;
   id remote_peer_key_hash;
+  rsa_keypair_id remote_peer_key_name;
   bool authenticated;
 
   time_t last_io_time;
@@ -246,6 +248,7 @@ session
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
   map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestry;
+  map<revision_id, map<cert_name, vector<cert> > > received_certs;
   set< pair<id, id> > reverse_delta_requests;
   bool analyzed_ancestry;
 
@@ -433,6 +436,7 @@ session::session(protocol_role role,
   armed(false),
   pattern(""),
   remote_peer_key_hash(""),
+  remote_peer_key_name(""),
   authenticated(false),
   last_io_time(::time(NULL)),
   byte_in_ticker(NULL),
@@ -1038,6 +1042,7 @@ void
 session::analyze_ancestry_graph()
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
+  typedef map<cert_name, vector<cert> > cert_map;
 
   if (! (all_requested_revisions_received() && cert_refinement_done()))
     return;
@@ -1048,8 +1053,9 @@ session::analyze_ancestry_graph()
   set<revision_id> heads;
   {
     set<revision_id> nodes, parents;
+    map<revision_id, int> chld_num;
     L(F("analyzing %d ancestry edges\n") % ancestry.size());
-    
+
     for (ancestryT::const_iterator i = ancestry.begin(); i != ancestry.end(); ++i)
       {
         nodes.insert(i->first);
@@ -1057,13 +1063,120 @@ session::analyze_ancestry_graph()
              j != i->second->second.edges.end(); ++j)
           {
             parents.insert(edge_old_revision(j));
+            map<revision_id, int>::iterator n;
+            n=chld_num.find(edge_old_revision(j));
+            if(n==chld_num.end())
+              chld_num.insert(make_pair(edge_old_revision(j), 1));
+            else
+              ++(n->second);
           }
       }
     
     set_difference(nodes.begin(), nodes.end(),
                    parents.begin(), parents.end(),
                    inserter(heads, heads.begin()));
+
+    // Write permissions checking:
+    // remove heads w/o proper certs, add their children to heads
+    // 1) remove unwanted branch/tag certs from consideration
+    //    - server: check write permission hook
+    //    - client: check against sync pattern
+    // 2) remove heads w/o a branch tag, process new exposed heads
+    // 3) repeat 2 until no change
+
+    //1
+    set<string> ok_branches, bad_branches;
+    cert_name bcert_name(branch_cert_name);
+    cert_name tcert_name(tag_cert_name);
+    //used for permission checking if we're the client
+    boost::regex reg(pattern());
+    for(map<revision_id, cert_map>::iterator i=received_certs.begin();
+        i!=received_certs.end(); ++i)
+      {
+        //branches
+        vector<cert> & bcerts(i->second.find(bcert_name)->second);
+        for(unsigned int j=0; j != bcerts.size(); ++j)
+          {
+            cert_value name;
+            decode_base64(bcerts[j].value, name);
+            if(ok_branches.find(name()) != ok_branches.end())
+              ;
+            else if(bad_branches.find(name()) != bad_branches.end())
+              {
+                bcerts.erase(bcerts.begin()+j);
+                --j;//Don't skip the next cert.
+              }
+            else
+              {
+                bool ok;
+                if(voice == server_voice)
+                  ok=app.lua.hook_get_netsync_write_permitted(name(),
+                                                         remote_peer_key_name);
+                else
+                  ok=boost::regex_match(name(), reg);
+                if(ok)
+                    ok_branches.insert(name());
+                else
+                  {
+                    bad_branches.insert(name());
+                    bcerts.erase(bcerts.begin()+j);
+                    --j;//Don't skip the next cert.
+                    W(F("Dropping branch certs for unwanted branch %s")
+                      % name);
+                  }
+              }
+          }
+        //tags
+        if(i->second.count(bcert_name) == 0)
+          i->second[tcert_name].clear();
+      }
+    //2
+    list<revision_id> tmp;
+    for(set<revision_id>::iterator i=heads.begin(); i!=heads.end(); ++i)
+      {
+        if(!received_certs[*i][bcert_name].size())
+          tmp.push_back(*i);
+      }
+    for(list<revision_id>::iterator i=tmp.begin(); i!=tmp.end(); ++i)
+      heads.erase(*i);
+    //3
+    while(tmp.size())
+      {
+        ancestryT::const_iterator i=ancestry.find(tmp.front());
+        if(i != ancestry.end())
+          {
+            for (edge_map::const_iterator j = i->second->second.edges.begin();
+                 j != i->second->second.edges.end(); ++j)
+              {
+                if(!--chld_num[edge_old_revision(j)])
+                  {
+                    if(received_certs[i->first][bcert_name].size())
+                      heads.insert(i->first);
+                    else
+                      tmp.push_back(edge_old_revision(j));
+                  }
+              }
+            // since we don't want this rev, we don't want it's certs either
+            received_certs[tmp.front()]=cert_map();
+          }
+          tmp.pop_front();
+      }
   }
+
+  // We've reduced the certs to those we want now, send them to dbw.
+  for(map<revision_id, cert_map>::iterator i=received_certs.begin();
+      i!=received_certs.end(); ++i)
+    {
+      for(cert_map::iterator j=i->second.begin();
+          j != i->second.end(); ++j)
+        {
+          for(vector<cert>::iterator k=j->second.begin();
+              k != j->second.end(); ++k)
+            {
+              this->dbw.consume_revision_cert(revision<cert>(*k));
+            }
+        }
+    }
 
   L(F("isolated %d heads\n") % heads.size());
 
@@ -1694,6 +1807,7 @@ session::process_anonymous_cmd(protocol_role role,
   decode_base64(sig, sig_raw);
   queue_confirm_cmd(sig_raw());
   this->pattern = pattern;
+  this->remote_peer_key_name=rsa_keypair_id("");
   this->authenticated = true;
   this->role = source_role;
   return true;
@@ -1812,22 +1926,14 @@ session::process_auth_cmd(protocol_role role,
           return false;
         }
 
-      for(vector<string>::const_iterator i=branchnames.begin();
-          i!=branchnames.end(); i++)
+      // Write permissions are now checked from analyze_ancestry_graph.
+      if(role == source_role)
         {
-          if(boost::regex_match(*i, reg)
-             && (allowed.size()==0 || matches_one(*i, allowed)))
+          for(vector<string>::const_iterator i=branchnames.begin();
+              i!=branchnames.end(); i++)
             {
-              if(app.lua.hook_get_netsync_write_permitted(*i, their_id))
-                ok_branches.insert(utf8(*i));
+              ok_branches.insert(utf8(*i));
             }
-        }
-      if(!ok_branches.size()
-         && !app.lua.hook_get_netsync_write_permitted("", their_id))
-        {
-          W(F("denied '%s' write permission for '%s'\n") % their_id % pattern);
-          this->saved_nonce = id("");
-          return false;
         }
 
       P(F("allowed '%s' write permission for '%s'\n") % their_id % pattern);
@@ -1854,6 +1960,7 @@ session::process_auth_cmd(protocol_role role,
       queue_confirm_cmd(sig_raw());
       this->pattern = pattern;
       this->authenticated = true;
+      this->remote_peer_key_name=their_id;
       // assume the (possibly degraded) opposite role
       switch (role)
         {
@@ -2626,7 +2733,8 @@ session::process_data_cmd(netcmd_item_type type,
           cert_hash_code(c, tmp);
           if (! (tmp == hitem))
             throw bad_decode(F("hash check failed for revision cert '%s'")  % hitem);
-          this->dbw.consume_revision_cert(revision<cert>(c));
+//          this->dbw.consume_revision_cert(revision<cert>(c));
+          received_certs[revision_id(c.ident)][c.name].push_back(c);
           if (!app.db.revision_exists(revision_id(c.ident)))
             {
               id rid;
