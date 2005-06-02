@@ -117,6 +117,7 @@ inline void verify(ty &) {}
 typedef revision< hexenc<id> >  revision_id;
 typedef manifest< hexenc<id> >  manifest_id;
 typedef     file< hexenc<id> >      file_id;
+typedef      key< hexenc<id> >       key_id;
 typedef    epoch< hexenc<id> >     epoch_id;
 typedef    epoch< hexenc<data> > epoch_data;
 

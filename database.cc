@@ -2136,6 +2136,30 @@ database::complete(string const & partial,
     completions.insert(file_id(res[i][0]));  
 }
 
+void 
+database::complete(string const & partial,
+                   set< pair<key_id, utf8 > > & completions)
+{
+  results res;
+  completions.clear();
+
+  fetch(res, 2, any_rows,
+        "SELECT hash, id FROM public_keys WHERE hash GLOB '%q*'",
+        partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
+
+  res.clear();
+
+  fetch(res, 2, any_rows,
+        "SELECT hash, id FROM private_keys WHERE hash GLOB '%q*'",
+        partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
+}
+
 using selectors::selector_type;
 
 static void selector_to_certname(selector_type ty,

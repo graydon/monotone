@@ -3290,17 +3290,20 @@ CMD(explicit_merge, "tree",
   P(F("[merged] %s\n") % merged);
 }
 
-CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID",
+CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
     "complete partial id",
-    OPT_NONE)
+    OPT_BRIEF)
 {
   if (args.size() != 2)
     throw usage(name);
 
+  bool brief = global_sanity.brief;
+
+  N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
+    F("non-hex digits in partial id"));
+
   if (idx(args, 0)() == "revision")
     {      
-      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-        F("non-hex digits in partial id"));
       set<revision_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<revision_id>::const_iterator i = completions.begin();
@@ -3309,8 +3312,6 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID",
     }
   else if (idx(args, 0)() == "manifest")
     {      
-      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-        F("non-hex digits in partial id"));
       set<manifest_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<manifest_id>::const_iterator i = completions.begin();
@@ -3319,13 +3320,24 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID",
     }
   else if (idx(args, 0)() == "file")
     {
-      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-        F("non-hex digits in partial id"));
       set<file_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<file_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         cout << i->inner()() << endl;
+    }
+  else if (idx(args, 0)() == "key")
+    {
+      typedef set< pair<key_id, utf8 > > completions_t;
+      completions_t completions;
+      app.db.complete(idx(args, 1)(), completions);
+      for (completions_t::const_iterator i = completions.begin();
+           i != completions.end(); ++i)
+        {
+          cout << i->first.inner()();
+          if (!brief) cout << " " << i->second();
+          cout << endl;
+        }
     }
   else
     throw usage(name);  
