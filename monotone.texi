@@ -3750,6 +3750,7 @@ is translated to <revision id>: <line> in the output, where <revision id>
 is the revision in which that line of the file was last edited.
 
 @item monotone complete file @var{partial-id}
+@itemx monotone complete key @var{partial-id}
 @itemx monotone complete manifest @var{partial-id}
 @itemx monotone complete revision @var{partial-id}
 

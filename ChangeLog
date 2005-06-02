@@ -1,3 +1,15 @@
+2005-06-02  Joel Reed  <joelwreed@comcast.com>
+
+	* commands.cc, database.cc, database.hh, vocab.hh, vocab_terms.hh:
+	add complete key subcommand and provide --brief option of zsh/bash
+	completion. See http://lists.gnu.org/archive/html/monotone-devel/2005-05/msg00461.html
+	* tests/t_rebuild.at: add tests for complete key subcommand
+	* monotone.texi: document new subcommand
+	* contrib/monotone.zsh_completion: update for new complete key
+	command, improve _monotone_existing_entries using new --depth=0
+	option,	add revision completion for cert command, and a	bugfix 
+	for cat command
+
 2005-05-28  Joel Reed  <joelwreed@comcast.com>
 
 	* app_state.cc, app_state.hh, commands.cc, monotone.cc, options.h:
