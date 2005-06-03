@@ -296,164 +296,182 @@ function program_exists_in_path(program)
 end
 
 function get_preferred_merge2_command (tbl)
-	local cmd = nil
-	local left_path = tbl.left_path
-	local right_path = tbl.right_path
-	local merged_path = tbl.merged_path
-	local lfile = tbl.lfile
-	local rfile = tbl.rfile
-	local outfile = tbl.outfile 
-	
-	if program_exists_in_path("kdiff3") then
-		cmd =	merge2_kdiff3_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
-	elseif program_exists_in_path ("meld") then 
-		tbl.meld_exists = true 
-		io.write (string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n"..
-			 "You should merge all changes to *LEFT* file due to limitation of program\n"..
-			 "arguments.\n\n")) 
-		cmd = merge2_meld_cmd (lfile, rfile) 
-	elseif program_exists_in_path ("xxdiff") then 
-		cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
-	elseif program_exists_in_path ("emacs") then 
-		cmd = merge2_emacs_cmd ("emacs", lfile, rfile, outfile) 
-	elseif program_exists_in_path ("xemacs") then 
-		cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
-	elseif os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
-		cmd = merge2_vim_cmd ("gvim", lfile, rfile, outfile) 
-	elseif program_exists_in_path ("vim") then 
-		cmd = merge2_vim_cmd ("vim", lfile, rfile, outfile) 
-	end 
-	return cmd 
+   local cmd = nil
+   local left_path = tbl.left_path
+   local right_path = tbl.right_path
+   local merged_path = tbl.merged_path
+   local lfile = tbl.lfile
+   local rfile = tbl.rfile
+   local outfile = tbl.outfile 
+
+   local editor = string.lower(os.getenv("EDITOR"))
+
+   
+   if program_exists_in_path("kdiff3") then
+      cmd =   merge2_kdiff3_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
+   elseif program_exists_in_path ("meld") then 
+      tbl.meld_exists = true 
+      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n"..
+          "You should merge all changes to *LEFT* file due to limitation of program\n"..
+          "arguments.\n\n")) 
+      cmd = merge2_meld_cmd (lfile, rfile) 
+   elseif program_exists_in_path ("xxdiff") then 
+      cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
+   else
+     if string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
+       if program_exists_in_path ("emacs") then 
+          cmd = merge2_emacs_cmd ("emacs", lfile, rfile, outfile) 
+       elseif program_exists_in_path ("xemacs") then 
+          cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
+       end
+     else if string.find(editor, "vim") ~= nil then
+       if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
+          cmd = merge2_vim_cmd ("gvim", lfile, rfile, outfile) 
+       elseif program_exists_in_path ("vim") then 
+          cmd = merge2_vim_cmd ("vim", lfile, rfile, outfile) 
+       end
+     end
+   end 
+   return cmd 
 end 
 
 function merge2 (left_path, right_path, merged_path, left, right) 
-	local ret = nil 
-	local tbl = {}
+   local ret = nil 
+   local tbl = {}
 
-	tbl.lfile = nil 
-	tbl.rfile = nil 
-	tbl.outfile = nil 
-	tbl.meld_exists = false
+   tbl.lfile = nil 
+   tbl.rfile = nil 
+   tbl.outfile = nil 
+   tbl.meld_exists = false
  
-	tbl.lfile = write_to_temporary_file (left) 
-	tbl.rfile = write_to_temporary_file (right) 
-	tbl.outfile = write_to_temporary_file ("") 
+   tbl.lfile = write_to_temporary_file (left) 
+   tbl.rfile = write_to_temporary_file (right) 
+   tbl.outfile = write_to_temporary_file ("") 
 
-	if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.outfile ~= nil 
-	then 
-		tbl.left_path = left_path 
-		tbl.right_path = right_path 
-		tbl.merged_path = merged_path 
+   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.outfile ~= nil 
+   then 
+      tbl.left_path = left_path 
+      tbl.right_path = right_path 
+      tbl.merged_path = merged_path 
 
-		local cmd = get_preferred_merge2_command (tbl) 
+      local cmd = get_preferred_merge2_command (tbl) 
 
-		if cmd ~=nil 
-		then 
-			io.write (string.format("executing external 2-way merge command\n"))
-			cmd ()
-			if tbl.meld_exists 
-			then 
-				ret = read_contents_of_file (tbl.lfile)
-			else
-				ret = read_contents_of_file (tbl.outfile) 
-			end 
-			if string.len (ret) == 0 
-			then 
-				ret = nil 
-			end
-		else
-			io.write ("no external 2-way merge command found\n")
-		end
-	end
+      if cmd ~=nil 
+      then 
+         io.write (string.format("executing external 2-way merge command\n"))
+         cmd ()
+         if tbl.meld_exists 
+         then 
+            ret = read_contents_of_file (tbl.lfile)
+         else
+            ret = read_contents_of_file (tbl.outfile) 
+         end 
+         if string.len (ret) == 0 
+         then 
+            ret = nil 
+         end
+      else
+         io.write ("no external 2-way merge command found\n")
+      end
+   end
 
-	os.remove (tbl.lfile)
-	os.remove (tbl.rfile)
-	os.remove (tbl.outfile)
-	
-	return ret
+   os.remove (tbl.lfile)
+   os.remove (tbl.rfile)
+   os.remove (tbl.outfile)
+   
+   return ret
 end
 
 function get_preferred_merge3_command (tbl)
-	local cmd = nil
-	local left_path = tbl.left_path
-	local anc_path = tbl.anc_path
-	local right_path = tbl.right_path
-	local merged_path = tbl.merged_path
-	local lfile = tbl.lfile
-	local afile = tbl.afile
-	local rfile = tbl.rfile
-	local outfile = tbl.outfile 
+   local cmd = nil
+   local left_path = tbl.left_path
+   local anc_path = tbl.anc_path
+   local right_path = tbl.right_path
+   local merged_path = tbl.merged_path
+   local lfile = tbl.lfile
+   local afile = tbl.afile
+   local rfile = tbl.rfile
+   local outfile = tbl.outfile 
 
-	if program_exists_in_path("kdiff3") then
-		cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
-	elseif program_exists_in_path ("meld") then 
-		tbl.meld_exists = true 
-		io.write (string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
-			 "You should merge all changes to *CENTER* file due to limitation of program\n"..
-			 "arguments.\n\n")) 
-		cmd = merge3_meld_cmd (lfile, afile, rfile) 
-	elseif program_exists_in_path ("xxdiff") then 
-		cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
-	elseif program_exists_in_path ("emacs") then 
-		cmd = merge3_emacs_cmd ("emacs", lfile, afile, rfile, outfile) 
-	elseif program_exists_in_path ("xemacs") then 
-		cmd = merge3_emacs_cmd ("xemacs", lfile, afile, rfile, outfile) 
-	elseif os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
-		cmd = merge3_vim_cmd ("gvim", lfile, afile, rfile, outfile) 
-	elseif program_exists_in_path ("vim") then 
-		cmd = merge3_vim_cmd ("vim", lfile, afile, rfile, outfile) 
-	end 
-	
-	return cmd 
+   local editor = string.lower(os.getenv("EDITOR"))
+
+   if program_exists_in_path("kdiff3") then
+      cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
+   elseif program_exists_in_path ("meld") then 
+      tbl.meld_exists = true 
+      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
+          "You should merge all changes to *CENTER* file due to limitation of program\n"..
+          "arguments.\n\n")) 
+      cmd = merge3_meld_cmd (lfile, afile, rfile) 
+   elseif program_exists_in_path ("xxdiff") then 
+      cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
+   else 
+     -- prefer emacs/xemacs
+     if string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
+       if program_exists_in_path ("xemacs") then 
+          cmd = merge3_emacs_cmd ("xemacs", lfile, afile, rfile, outfile) 
+       elseif program_exists_in_path ("emacs") then 
+          cmd = merge3_emacs_cmd ("emacs", lfile, afile, rfile, outfile) 
+       end
+     elseif string.find(editor, "vim") ~= nil then  -- prefer vim
+       if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
+          cmd = merge3_vim_cmd ("gvim", lfile, afile, rfile, outfile) 
+       elseif program_exists_in_path ("vim") then 
+          cmd = merge3_vim_cmd ("vim", lfile, afile, rfile, outfile) 
+       end
+     end
+   end 
+   
+   return cmd 
 end 
 
 function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, right) 
-	local ret 
-	local tbl = {}
-	
-	tbl.anc_path = anc_path 
-	tbl.left_path = left_path 
-	tbl.right_path = right_path 
+   local ret 
+   local tbl = {}
+   
+   tbl.anc_path = anc_path 
+   tbl.left_path = left_path 
+   tbl.right_path = right_path 
 
-	tbl.merged_path = merged_path 
-	tbl.afile = nil 
-	tbl.lfile = nil 
-	tbl.rfile = nil 
-	tbl.outfile = nil 
-	tbl.meld_exists = false 
-	tbl.lfile = write_to_temporary_file (left) 
-	tbl.afile =	write_to_temporary_file (ancestor) 
-	tbl.rfile =	write_to_temporary_file (right) 
-	tbl.outfile = write_to_temporary_file ("") 
-	
-	if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.afile ~= nil and tbl.outfile ~= nil 
-	then 
-		local cmd =	get_preferred_merge3_command (tbl) 
-		if cmd ~=nil 
-		then 
-			io.write (string.format("executing external 3-way merge command\n"))
-			cmd ()
-			if tbl.meld_exists 
-			then 
-				ret = read_contents_of_file (tbl.afile)
-			else
-				ret = read_contents_of_file (tbl.outfile) 
-			end 
-			if string.len (ret) == 0 
-			then 
-				ret = nil 
-			end
-		else
-			io.write ("no external 3-way merge command found\n")
-		end
-	end
-	
-	os.remove (tbl.lfile)
-	os.remove (tbl.rfile)
-	os.remove (tbl.afile)
-	os.remove (tbl.outfile)
-	
-	return ret
+   tbl.merged_path = merged_path 
+   tbl.afile = nil 
+   tbl.lfile = nil 
+   tbl.rfile = nil 
+   tbl.outfile = nil 
+   tbl.meld_exists = false 
+   tbl.lfile = write_to_temporary_file (left) 
+   tbl.afile =   write_to_temporary_file (ancestor) 
+   tbl.rfile =   write_to_temporary_file (right) 
+   tbl.outfile = write_to_temporary_file ("") 
+   
+   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.afile ~= nil and tbl.outfile ~= nil 
+   then 
+      local cmd =   get_preferred_merge3_command (tbl) 
+      if cmd ~=nil 
+      then 
+         io.write (string.format("executing external 3-way merge command\n"))
+         cmd ()
+         if tbl.meld_exists 
+         then 
+            ret = read_contents_of_file (tbl.afile)
+         else
+            ret = read_contents_of_file (tbl.outfile) 
+         end 
+         if string.len (ret) == 0 
+         then 
+            ret = nil 
+         end
+      else
+         io.write ("no external 3-way merge command found\n")
+      end
+   end
+   
+   os.remove (tbl.lfile)
+   os.remove (tbl.rfile)
+   os.remove (tbl.afile)
+   os.remove (tbl.outfile)
+   
+   return ret
 end 
 
 -- expansion of values used in selector completion
