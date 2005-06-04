@@ -1,0 +1,57 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([update with pending rename])
+
+MONOTONE_SETUP
+
+# this test is a bug report. the problem seems to be that update with a pending
+# rename doesn't remove the pending rename from MT/work if the file is also renamed
+# in the selected revision.
+#
+# as a side note, for some reason cat revision doesn't seem to work with an
+# abbreviated revision id. this seems like it might be a problem with autotest
+# or something, or possibly even (gasp) pilot error! ;)
+
+AT_XFAIL_IF(true)
+
+ADD_FILE(file, [test1
+])
+
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE --branch testbranch co codir, [], [ignore], [ignore])
+
+AT_CHECK(mv file file2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename file file2, [], [ignore], [ignore])
+
+COMMIT(testbranch)
+
+AT_CHECK(mv codir/file codir/file2, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE rename file file2, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE update, [], [ignore], [ignore])
+
+# why doesn't an abbreviated revision id work
+#AT_CHECK(cd codir && MONOTONE cat revision a12d, [1], [ignore], [ignore])
+#AT_CHECK(cd codir && MONOTONE cat revision a12d8ad50bf5861310c22979ef6c3a8b8a686522, [], [ignore], [ignore])
+
+#AT_CHECK(cd codir && MONOTONE cat manifest 6905, [], [ignore], [ignore])
+#AT_CHECK(cd codir && MONOTONE cat manifest da39, [], [ignore], [ignore])
+
+
+AT_CHECK(cat codir/MT/work, [], [ignore], [ignore])
+AT_CHECK(cat codir/MT/revision, [], [ignore], [ignore])
+
+# the working copy is now in a somewhat bad state. the revision it is based on
+# has renamed file to file2, but MT/work still contains rename_file "file"
+# "file2". pending rearrangements need to be resolved by update
+
+AT_CHECK(cd codir && MONOTONE cat revision, [3], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE cat manifest, [3], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE status, [3], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE ls unknown, [3], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE ls ignored, [3], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE ls missing, [3], [ignore], [ignore])
+
+AT_CHECK(false)
+
+AT_CLEANUP
