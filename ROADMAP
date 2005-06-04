@@ -24,9 +24,11 @@ ROADMAP
 - tidy up major buid/use-breaking bugs in win32, BSD, OSX versions
 - improve netsync error reporting code 
   - one part: many 'I's should be 'require's.
+- reimplement change_set.cc. major surgery :(
 - overhaul command-line option processing, perhaps use argp
 - move output formatting to lua hooks
 - integrate net.venge.monotone.ssh branch
+- integrate net.venge.monotone.botan branch
 - modify database code to use sqlite3 pre-parsed queries, blobs
 - change netsync to globbing branches, not using collections
 - implement improved ACL/permission system for default trust rules
@@ -38,6 +40,50 @@ ROADMAP
 - work on GUIs and web UIs
 - "merge before commit" (CVS-style online commit-coordination)
 - bidirectional mirroring between monotone and CVS/SVN/arch
-- (possible) try using botan instead of cryptopp
 - an "agent" for storing decrypted private key in memory
 - "hash-migration" technology for scenarios where SHA1 falls
+- ease long-term maintainance by writing up a real hacking guide
+  (.texi, based on expanded HACKING file, a guided tour of code,
+  and a thorough description of the more complicated algorithms) 
+  for new maintainers.
+
+
+
+there are also some issues which are very regular, mundane, tedious,
+boring, but ultimately pretty mechanical. they need doing too.
+
+JANITORIAL
+==========
+
+- fix up the namespace issue: add a "using std::foo" for each foo
+  used in the file, and strip "std::" from the uses. remove
+  "using namespace foo" from everywhere. likewise boost.
+
+- librarification: several discrete steps, each mechanical,
+  best to do a compile and commit after each.
+   - make a struct for each file.
+   - make every "plain" function in the file a static member of the struct
+   - make every global/static object in the file a static member of the struct
+   - make every reference to an out-of-file global/static happen via a
+     static reference stored inside the struct, initialized at load time
+   - remove static-ness of references, from file to file, until there is a 
+     single root value for the whole application
+
+  (nb: this is not to say that monotone will every be packaged or
+   provided as a library, simply that it's a little more flexible, 
+   and easier to see dependencies between modules, when you have 
+   things structured this way. we should have been doing so all along, 
+   but we were lazy)
+
+- as a side note: collect all the command-line options from global_sanity
+  and app_state into a single options structure, just to improve
+  legibility
+
+- split commands.cc into multiple files, one for each group of
+  commands (or even one per command).
+
+- rewrite the testsuite in some form which does not generate
+  a 6mb shell script. bonus points if it can run at a decent
+  speed on windows (nb. fork() on windows is insanely slow)
+
+- possibly purge the whole packet-reading/writing stuff. 

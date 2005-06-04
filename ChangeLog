@@ -1,3 +1,44 @@
+2005-06-04  Derek Scherger  <derek@echologic.com>
+
+	* app_state.cc (app_state): initialize diffs to false; it seemed
+	to be defaulting to true for me
+
+2005-06-04  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_update_with_pending_drop.at: 
+	* tests/t_update_with_pending_add.at: 
+	* tests/t_update_with_pending_rename.at: 
+	* tests/t_restricted_commit_with_inodeprints.at: new bug reports
+	* testsuite.at: call them
+
+2005-06-04  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc 
+	(note_state_at_branch_beginning): Move time back when
+	there are known commits on a branch.
+
+2005-06-02  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc
+	(cvs_key::is_synthetic_branch_founding_commit): New field.
+	(cvs_key::operator==): Handle synthetic case specially.
+	(cvs_key::operator<): Likewise.
+	(note_state_at_branch_beginning): Likewise.	
+	* tests/t_cvsimport_drepper.at: Converted bug testcase.
+	* testsuite.at: Call it.
+
+	* monotone.cc, commands.cc, options.hh 
+	(OPT_NO_MERGES, OPT_DIFFS): New options.
+	* app_state.cc (app_state::no_merges, app_state::diffs): Likewise.
+	* commands.cc (log): Honor no_merges, diffs.
+	* contrib/color_logs.{sh,conf}: Helpers for reviewing work in a
+	nice colorized, easy-to-read fashion.
+	* contrib/colorize: A colorization script found on the net.
+
+	* HACKING, ROADMAP: Expand a bit.
+	* commands.cc (changes_summary::print): Change macro to helper fn.
+	* contrib/monotone.el (monotone-cmd): Handle nil exit code.
+
 2005-06-02  Joel Reed  <joelwreed@comcast.com>
 
 	* commands.cc, database.cc, database.hh, vocab.hh, vocab_terms.hh:

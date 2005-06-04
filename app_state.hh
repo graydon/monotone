@@ -31,6 +31,8 @@ public:
   lua_hooks lua;
   bool stdhooks;
   bool rcfiles;
+  bool diffs;
+  bool no_merges;
   options_map options;
   utf8 message;
   utf8 message_file;

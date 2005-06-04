@@ -56,6 +56,7 @@ struct
 revision_set
 {
   void check_sane() const;
+  bool is_merge_node() const;
   revision_set() {}
   revision_set(revision_set const & other);
   revision_set const & operator=(revision_set const & other);
