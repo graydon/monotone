@@ -1,10 +1,16 @@
+2005-06-04  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc 
+	(note_state_at_branch_beginning): Move time back when
+	there are known commits on a branch.
+
 2005-06-02  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc
 	(cvs_key::is_synthetic_branch_founding_commit): New field.
 	(cvs_key::operator==): Handle synthetic case specially.
 	(cvs_key::operator<): Likewise.
-	(push_branch): Likewise.	
+	(note_state_at_branch_beginning): Likewise.	
 	* tests/t_cvsimport_drepper.at: Converted bug testcase.
 	* testsuite.at: Call it.
 

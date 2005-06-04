@@ -237,6 +237,10 @@ cvs_history
   // branch name -> branch
   map<string, shared_ptr<cvs_branch> > branches;
 
+  // branch name -> whether there are any commits on the
+  //                branch (as opposed to just branchpoints)
+  map<string, bool> branch_has_commit;
+
   // stack of branches we're injecting states into
   stack< shared_ptr<cvs_branch> > stk;
   stack< cvs_branchname > bstk;
@@ -246,7 +250,7 @@ cvs_history
   string base_branch;
 
   ticker n_versions;
-  ticker n_tree_branches;
+  ticker n_tree_branches;  
 
   cvs_history();
   void set_filename(string const & file,
@@ -254,10 +258,15 @@ cvs_history
 
   void index_branchpoint_symbols(rcs_file const & r);
 
+
+  enum note_type { note_branchpoint,
+                   note_branch_first_commit };
+
   void note_state_at_branch_beginning(rcs_file const & r,
 				      string const & branchname,
 				      string const & version, 
-				      file_id const & ident);
+				      file_id const & ident,
+                                      note_type nt);
 
   void push_branch(string const & branch_name, bool private_branch);
 
@@ -618,7 +627,8 @@ process_branch(string const & begin_version,
 	    {
 	      cvs.note_state_at_branch_beginning(r, branch->second,
 						 curr_version, 
-						 curr_id);
+						 curr_id,
+                                                 cvs_history::note_branchpoint);
 	    }
 	}
 
@@ -639,12 +649,20 @@ process_branch(string const & begin_version,
 	  L(F("following RCS branch %s = '%s'\n") % (*i) % branch);
 	  vector< piece > branch_lines;
 	  construct_version(*curr_lines, *i, branch_lines, r);
-	  
+          	  
 	  data branch_data;
 	  hexenc<id> branch_id;
 	  insert_into_db(curr_data, curr_id, 
 			 branch_lines, branch_data, branch_id, db);
-	  
+
+          // update the branch beginning time to reflect improved
+          // information, if there was a commit on the branch
+          if (!priv)
+            cvs.note_state_at_branch_beginning(r, branch,
+                                               *i, 
+                                               branch_id,
+                                               cvs_history::note_branch_first_commit);
+
 	  cvs.push_branch (branch, priv);
 	  cvs.note_file_edge (r, curr_version, *i,
 			      file_id(curr_id), file_id(branch_id));	      
@@ -903,7 +921,8 @@ void
 cvs_history::note_state_at_branch_beginning(rcs_file const & r,
 					    string const & branchname,
 					    string const & version, 
-					    file_id const & ident)
+					    file_id const & ident,
+                                            note_type nt)
 {
   // here we manufacture a single synthetic commit -- the "branch
   // birth" commit -- representing the cumulative affect of all the
@@ -932,8 +951,11 @@ cvs_history::note_state_at_branch_beginning(rcs_file const & r,
   cvs_changelog clog = changelog_interner.intern(branch_birth_message);
   cvs_author auth = author_interner.intern(branch_birth_author);
 
+  // note: SBFC is short for "synthetic branch-founding commit"
+
   if (branch->empty())
     {
+      I(nt == note_branchpoint);
       find_key_and_state (r, version, k, s);
       branch->erase(k);
       k.changelog = clog;
@@ -941,8 +963,8 @@ cvs_history::note_state_at_branch_beginning(rcs_file const & r,
       k.add_file(curr_file, version);
       k.is_synthetic_branch_founding_commit = true;
       branch->insert(make_pair(k, s));
-      L(F("added synthetic branch founding commit at id %d, time %d\n") 
-        % k.id % k.time);
+      L(F("added SBFC for %s at id %d, time %d\n") 
+        % branchname % k.id % k.time);
     }
   else
     {
@@ -957,26 +979,44 @@ cvs_history::note_state_at_branch_beginning(rcs_file const & r,
       k = i->first;
       s = i->second;
 
-      L(F("found existing synthetic branch founding commit at id %d, time %d\n") 
+      L(F("found existing SBFC at id %d, time %d\n") 
         % k.id % k.time);
-      if (nk.time > k.time)
+      if (nt == note_branchpoint 
+          && nk.time > k.time
+          && branch_has_commit[branchname] == false)
 	{
-          L(F("moving synthetic branch founding commit to %d\n") % nk.time);
+          L(F("moving SBFC for %s to later branchpoint at %d\n") 
+            % branchname % nk.time);
 	  branch->erase(i);
 	  k.time = nk.time;
 	  k.add_file(curr_file, version);
 	  branch->insert(make_pair(k, s));
 	}
+      else if (nt == note_branch_first_commit
+               && nk.time < k.time)
+	{
+          L(F("moving SBFC for %s to earlier branch commit at %d\n") 
+            % branchname % nk.time);
+	  branch->erase(i);
+	  k.time = nk.time;
+	  branch->insert(make_pair(k, s));
+          branch_has_commit[branchname] = true;
+	}
+
     }
 
-  map<string, shared_ptr<rcs_delta> >::const_iterator del;
-  del = r.deltas.find(version);
-  I(del != r.deltas.end());
-  bool alive = del->second->state != "dead";
+  if (nt == note_branchpoint)
+    {
+      map<string, shared_ptr<rcs_delta> >::const_iterator del;
+      del = r.deltas.find(version);
+      I(del != r.deltas.end());
+      bool alive = del->second->state != "dead";
+      
+      s->in_edges.insert(cvs_file_edge(file_id(), curr_file, alive,
+                                       ident, curr_file, alive,
+                                       *this));
+    }
 
-  s->in_edges.insert(cvs_file_edge(file_id(), curr_file, alive,
-				   ident, curr_file, alive,
-				   *this));
   pop_branch();
 }
 
