@@ -720,36 +720,41 @@ changes_summary::add_change_set(change_set const & cs)
     }
 }
 
+static void 
+print_indented_set(std::ostream & os, 
+                   set<file_path> const & s,
+                   size_t max_cols)
+{
+  size_t cols = 8;
+  os << "       ";
+  for (std::set<file_path>::const_iterator i = s.begin();
+       i != s.end(); i++)
+    {
+      const std::string str = (*i)();
+      if (cols > 8 && cols + str.size() + 1 >= max_cols)
+        {
+          cols = 8;
+          os << endl << "       "; 
+        }
+      os << " " << str;
+      cols += str.size() + 1;
+    }
+  os << endl;
+}
+
 void
 changes_summary::print(std::ostream & os, size_t max_cols) const
 {
-#define PRINT_INDENTED_SET(setname) \
-  size_t cols = 8; \
-  os << "       "; \
-  for (std::set<file_path>::const_iterator i = setname.begin(); \
-       i != setname.end(); i++) \
-    { \
-      const std::string str = (*i)(); \
-      if (cols > 8 && cols + str.size() + 1 >= max_cols) \
-        { \
-          cols = 8; \
-          os << endl << "       "; \
-        } \
-      os << " " << str; \
-      cols += str.size() + 1; \
-    } \
-  os << endl;
-
   if (! rearrangement.deleted_files.empty())
     {
       os << "Deleted files:" << endl;
-      PRINT_INDENTED_SET(rearrangement.deleted_files)
+      print_indented_set(os, rearrangement.deleted_files, max_cols);
     }
-
+  
   if (! rearrangement.deleted_dirs.empty())
     {
       os << "Deleted directories:" << endl;
-      PRINT_INDENTED_SET(rearrangement.deleted_dirs)
+      print_indented_set(os, rearrangement.deleted_dirs, max_cols);
     }
 
   if (! rearrangement.renamed_files.empty())
@@ -773,16 +778,14 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
   if (! rearrangement.added_files.empty())
     {
       os << "Added files:" << endl;
-      PRINT_INDENTED_SET(rearrangement.added_files)
+      print_indented_set(os, rearrangement.added_files, max_cols);
     }
 
   if (! modified_files.empty())
     {
       os << "Modified files:" << endl;
-      PRINT_INDENTED_SET(modified_files)
+      print_indented_set(os, modified_files, max_cols);
     }
-
-#undef PRINT_INDENTED_SET
 }
 
 CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair", OPT_NONE)
@@ -3523,7 +3526,7 @@ CMD(annotate, "informative", "PATH",
 CMD(log, "informative", "[FILE]",
     "print history in reverse order (filtering by 'FILE').  If one or more\n"
     "revisions are given, use them as a starting point.",
-    OPT_LAST % OPT_REVISION % OPT_BRIEF)
+    OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES)
 {
   file_path file;
 
@@ -3628,6 +3631,9 @@ CMD(log, "informative", "[FILE]",
 
               csum.add_change_set(cs);
             }
+
+          if (app.no_merges && rev.is_merge_node())
+            print_this = false;
           
           if (print_this)
           {
@@ -3663,6 +3669,16 @@ CMD(log, "informative", "[FILE]",
 
                 log_certs(app, rid, changelog_name, "ChangeLog: ", true);
                 log_certs(app, rid, comment_name,   "Comments: ",  true);
+              }
+
+            if (app.diffs)
+              {
+                for (edge_map::const_iterator e = rev.edges.begin();
+                     e != rev.edges.end(); ++e)
+                  {
+                    dump_diffs(edge_changes(e).deltas,
+                               app, true, unified_diff);
+                  }
               }
 
             if (last > 0)

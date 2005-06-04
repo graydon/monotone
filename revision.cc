@@ -64,6 +64,12 @@ void revision_set::check_sane() const
     }
 }
 
+bool 
+revision_set::is_merge_node() const
+{ 
+  return edges.size() > 1; 
+}
+
 revision_set::revision_set(revision_set const & other)
 {
   other.check_sane();
