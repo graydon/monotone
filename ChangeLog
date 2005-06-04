@@ -2,6 +2,18 @@
 
 	* automate.cc (print_some_output): Fix compiler warning.
 
+2005-06-02  Joel Reed  <joelwreed@comcast.com>
+
+	* commands.cc, database.cc, database.hh, vocab.hh, vocab_terms.hh:
+	add complete key subcommand and provide --brief option of zsh/bash
+	completion. See http://lists.gnu.org/archive/html/monotone-devel/2005-05/msg00461.html
+	* tests/t_rebuild.at: add tests for complete key subcommand
+	* monotone.texi: document new subcommand
+	* contrib/monotone.zsh_completion: update for new complete key
+	command, improve _monotone_existing_entries using new --depth=0
+	option,	add revision completion for cert command, and a	bugfix 
+	for cat command
+
 2005-06-01  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_i18n_changelog.at: capitalise UTF-8 CHARSET to keep
@@ -4711,7 +4723,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 
