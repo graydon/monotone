@@ -324,7 +324,7 @@ function get_preferred_merge2_command (tbl)
        elseif program_exists_in_path ("xemacs") then 
           cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
        end
-     else if string.find(editor, "vim") ~= nil then
+     elseif string.find(editor, "vim") ~= nil then
        if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
           cmd = merge2_vim_cmd ("gvim", lfile, rfile, outfile) 
        elseif program_exists_in_path ("vim") then 
