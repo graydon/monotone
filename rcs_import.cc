@@ -95,15 +95,28 @@ cvs_key
   inline bool operator==(cvs_key const & other) const
   {
     L(F("Checking equality of %d and %d\n") % id % other.id);
-    return branch == other.branch &&
+    return is_synthetic_branch_founding_commit == other.is_synthetic_branch_founding_commit &&
+      branch == other.branch &&
       changelog == other.changelog &&
       author == other.author &&
       time == other.time;
   }
-
   inline bool operator<(cvs_key const & other) const
   {
     // nb: this must sort as > to construct the edges in the right direction
+
+    if (is_synthetic_branch_founding_commit)
+      {
+        I(!other.is_synthetic_branch_founding_commit);
+        return false;
+      }
+
+    if (other.is_synthetic_branch_founding_commit)
+      {
+        I(!is_synthetic_branch_founding_commit);
+        return true;
+      }
+    
     return time > other.time ||
 
       (time == other.time 
@@ -121,10 +134,11 @@ cvs_key
 
   inline void add_file(file_path const &file, string const &version)
   {
-    L(F("Adding file %s version %s to %d\n") % file % version % id);
+    L(F("Adding file %s version %s to CVS key %d\n") % file % version % id);
     files.insert( make_pair(file, version) );
   }
 
+  bool is_synthetic_branch_founding_commit;
   cvs_branchname branch;
   cvs_changelog changelog;
   cvs_author author;
@@ -783,7 +797,8 @@ join_version(vector<string> const & vs, string & v)
 }
 
 cvs_key::cvs_key(rcs_file const & r, string const & version,
-                 cvs_history & cvs) 
+                 cvs_history & cvs) :
+  is_synthetic_branch_founding_commit(false)
 {
   map<string, shared_ptr<rcs_delta> >::const_iterator delta = 
     r.deltas.find(version);
@@ -924,29 +939,30 @@ cvs_history::note_state_at_branch_beginning(rcs_file const & r,
       k.changelog = clog;
       k.author = auth;
       k.add_file(curr_file, version);
+      k.is_synthetic_branch_founding_commit = true;
       branch->insert(make_pair(k, s));
+      L(F("added synthetic branch founding commit at id %d, time %d\n") 
+        % k.id % k.time);
     }
   else
     {
       cvs_key nk(r, version, *this);
       
-      bool found_branch_birth = false;
-      for (cvs_branch::const_iterator i = branch->begin();
-	   i != branch->end(); ++i)
-	{
-	  if (i->first.author == auth 
-	      && i->first.changelog == clog)
-	    {
-	      k = i->first;
-	      s = i->second;
-	      found_branch_birth = true;
-	      break;
-	    }
-	}
-      I(found_branch_birth);
+      cvs_branch::iterator i = branch->end(); 
+      i--;
+      I(i->first.is_synthetic_branch_founding_commit);
+      I(i->first.author == auth);
+      I(i->first.changelog == clog);
+      
+      k = i->first;
+      s = i->second;
+
+      L(F("found existing synthetic branch founding commit at id %d, time %d\n") 
+        % k.id % k.time);
       if (nk.time > k.time)
 	{
-	  branch->erase(k);
+          L(F("moving synthetic branch founding commit to %d\n") % nk.time);
+	  branch->erase(i);
 	  k.time = nk.time;
 	  k.add_file(curr_file, version);
 	  branch->insert(make_pair(k, s));
@@ -983,7 +999,7 @@ cvs_history::find_key_and_state(rcs_file const & r,
   //
   // and search all the nodes inside this section, from new to old bound.
 
-  map< cvs_key, shared_ptr<cvs_state> >::const_iterator i_new, i_old, i;
+  map< cvs_key, shared_ptr<cvs_state> >::iterator i_new, i_old, i;
   cvs_key k_new(nk), k_old(nk);
 
   if (static_cast<time_t>(k_new.time + constants::cvs_window / 2) > k_new.time)
@@ -1001,7 +1017,7 @@ cvs_history::find_key_and_state(rcs_file const & r,
         {
           key = i->first;
           state = i->second;
-	  branch->erase(i->first);
+	  branch->erase(i);
           key.add_file(curr_file, version);
 	  branch->insert(make_pair(key,state));
           return true;
@@ -1063,8 +1079,9 @@ cvs_history::note_file_edge(rcs_file const & r,
   bool prev_alive = prev_delta->second->state!="dead";
   bool next_alive = next_delta->second->state!="dead";
   
-  L(F("note_file_edge %s %d -> %s %d\n") % prev_rcs_version_num % prev_alive
-                % next_rcs_version_num % next_alive);
+  L(F("note_file_edge %s %d -> %s %d\n") 
+    % prev_rcs_version_num % prev_alive
+    % next_rcs_version_num % next_alive);
 
   // we always aggregate in-edges in children, but we will also create
   // parents as we encounter them.
@@ -1077,6 +1094,7 @@ cvs_history::note_file_edge(rcs_file const & r,
       find_key_and_state (r, next_rcs_version_num, k, s); // just to create it if necessary      
       find_key_and_state (r, prev_rcs_version_num, k, s);
 
+      L(F("trunk edge entering key state %d\n") % k.id);
       s->in_edges.insert(cvs_file_edge(next_version, curr_file, next_alive,
                                        prev_version, curr_file, prev_alive,
                                        *this));
@@ -1088,6 +1106,8 @@ cvs_history::note_file_edge(rcs_file const & r,
         % prev_rcs_version_num
         % next_rcs_version_num);
       find_key_and_state (r, next_rcs_version_num, k, s);
+      L(F("branch edge on %s entering key state %d\n") 
+        % branch_interner.lookup(k.branch) % k.id);
       s->in_edges.insert(cvs_file_edge(prev_version, curr_file, prev_alive,
                                        next_version, curr_file, next_alive,
                                        *this));
@@ -1289,6 +1309,12 @@ import_branch_states(ticker & n_edges,
   for (cvs_branch::reverse_iterator i = branch.rbegin(); 
        i != branch.rend(); ++i)
     {
+      L(F("importing branch %s, state [%d: %s @ %d]\n")
+        % cvs.branch_interner.lookup(i->first.branch)
+        % i->first.id
+        % cvs.author_interner.lookup(i->first.author)
+        % i->first.time);
+
       revision_set rev;
       boost::shared_ptr<change_set> cs(new change_set());
       build_change_set(i->second, parent_map, cvs, *cs);

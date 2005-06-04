@@ -352,7 +352,7 @@ Nothing for now."
       (view-mode)
       (set-buffer-modified-p nil)
       ;; did we part on good terms?
-      (when (not (zerop mt-status))
+      (when (and mt-status (not (zerop mt-status)))
         (message "%s: exited with status %s" mt-pgm mt-status)
         (beep)
         (sit-for 3))

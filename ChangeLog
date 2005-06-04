@@ -1,3 +1,25 @@
+2005-06-02  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc
+	(cvs_key::is_synthetic_branch_founding_commit): New field.
+	(cvs_key::operator==): Handle synthetic case specially.
+	(cvs_key::operator<): Likewise.
+	(push_branch): Likewise.	
+	* tests/t_cvsimport_drepper.at: Converted bug testcase.
+	* testsuite.at: Call it.
+
+	* monotone.cc, commands.cc, options.hh 
+	(OPT_NO_MERGES, OPT_DIFFS): New options.
+	* app_state.cc (app_state::no_merges, app_state::diffs): Likewise.
+	* commands.cc (log): Honor no_merges, diffs.
+	* contrib/color_logs.{sh,conf}: Helpers for reviewing work in a
+	nice colorized, easy-to-read fashion.
+	* contrib/colorize: A colorization script found on the net.
+
+	* HACKING, ROADMAP: Expand a bit.
+	* commands.cc (changes_summary::print): Change macro to helper fn.
+	* contrib/monotone.el (monotone-cmd): Handle nil exit code.
+
 2005-06-01  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_i18n_changelog.at: capitalise UTF-8 CHARSET to keep
