@@ -1,3 +1,8 @@
+2005-06-04  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (process_hello_cmd): Warn about collection/regex
+	usage when talking to an old server.
+
 2005-06-04  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (update): update MT/work based on the changes

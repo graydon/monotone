@@ -1707,12 +1707,16 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     this->remote_peer_key_hash = their_key_hash_decoded;
   }
 
+  utf8 pat(pattern);
+  if(protocol_version == 4)
+    {
+      W(F("Talking to an old server. "
+          "Using %s as a collection, not a regex.") % pattern);
+      pat=convert_pattern(pattern);
+    }
   vector<string> branchnames;
   set<utf8> ok_branches;
   get_branches(app, branchnames);
-  utf8 pat(pattern);
-  if(protocol_version == 4)
-    pat=convert_pattern(pattern);
   boost::regex reg(pat());
   for(vector<string>::const_iterator i=branchnames.begin();
       i!=branchnames.end(); i++)
