@@ -38,17 +38,20 @@ BASE_R=`BASE_REVISION`
 
 # check that a correct usage produces correctly formatted output
 AT_CHECK(MONOTONE automate certs $BASE_R, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp expected stdout)
 
 # ensure that missing revisions fail
 NOSUCHREV=0000000000000000000000000000000000000000
 AT_CHECK(MONOTONE automate certs $NOSUCHREV, [1], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp empty stdout)
 
 # ensure that revisions are not being completed
 # (the above commit will have created rev 306c506078df4b58470f75c845ccd11c2ea8cb26)
 TRUNCATEDREV=306c506078df4b58470f75c845ccd1
 AT_CHECK(MONOTONE automate certs $TRUNCATEDREV, [1], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp empty stdout)
 
 AT_CLEANUP

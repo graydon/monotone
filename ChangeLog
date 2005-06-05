@@ -1,3 +1,10 @@
+2005-05-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_epoch.at: Typo.
+	* tests/t_automate_certs.at, tests/t_selector_later_earlier.at:
+	Throw in some calls to CANONICALISE, maybe this will help on
+	Win32...
+
 2005-05-28  Joel Reed  <joelwreed@comcast.com>
 
 	* app_state.cc, app_state.hh, commands.cc, monotone.cc, options.h:
