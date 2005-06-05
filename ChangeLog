@@ -1,3 +1,10 @@
+2005-05-29  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_epoch.at: Typo.
+	* tests/t_automate_certs.at, tests/t_selector_later_earlier.at:
+	Throw in some calls to CANONICALISE, maybe this will help on
+	Win32...
+
 2005-06-05  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc, netcmd.cc: Style cleanups (mostly whitespace).
