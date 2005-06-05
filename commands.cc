@@ -2849,7 +2849,7 @@ CMD(update, "working copy", "",
   manifest_id m_ancestor_id, m_chosen_id;
   revision_set r_old, r_working, r_new;
   revision_id r_old_id, r_chosen_id;
-  change_set old_to_chosen, update;
+  change_set old_to_chosen, update, remaining;
 
   if (args.size() > 0)
     throw usage(name);
@@ -2942,6 +2942,20 @@ CMD(update, "working copy", "",
       L(F("merging working copy with chosen edge %s -> %s\n")
         % r_old_id % r_chosen_id);
 
+      // we have the following
+      //
+      // old --- working
+      //   \         \
+      //  chosen --- merged
+      //
+      // - old is the revision specified in MT/revision
+      // - working is based on old and includes the working copy's changes
+      // - chosen is the revision we're updating to and will end up in MT/revision
+      // - merged is the merge of working and chosen
+      // 
+      // we apply the working to merged changeset to the working copy
+      // and keep the rearrangement from chosen to merged changeset in MT/work
+
       merge_change_sets(old_to_chosen, 
                         old_to_working,
                         chosen_to_merged, 
@@ -2951,6 +2965,7 @@ CMD(update, "working copy", "",
       // dump_change_set("working to merged", working_to_merged);
 
       update = working_to_merged;
+      remaining = chosen_to_merged;
     }
   
   local_path tmp_root((mkpath(book_keeping_dir) / mkpath("tmp")).string());
@@ -2970,6 +2985,7 @@ CMD(update, "working copy", "",
   put_revision_id(r_chosen_id);
   P(F("updated to base revision %s\n") % r_chosen_id);
 
+  put_path_rearrangement(remaining.rearrangement);
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }

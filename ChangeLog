@@ -1,3 +1,12 @@
+2005-06-04  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (update): update MT/work based on the changes
+	between the chosen revision and the new merge revision
+	* tests/t_update_with_pending_drop.at: 
+	* tests/t_update_with_pending_add.at: 
+	* tests/t_update_with_pending_rename.at: un-XFAIL and clean up now
+	that things work
+
 2005-06-04  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netcmd.{cc,hh}, netsync.cc: Move {read,write}_*_cmd_payload
