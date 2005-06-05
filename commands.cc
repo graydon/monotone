@@ -421,6 +421,8 @@ complete(app_state & app,
       && str.size() == constants::idlen)
     {
       completion = revision_id(str);
+      N(app.db.revision_exists(completion),
+        F("no such revision '%s'") % completion);
       return;
     }
 

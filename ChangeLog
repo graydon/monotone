@@ -1,3 +1,8 @@
+2005-06-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_tags.at: 'tag' on a non-existent revid should fail.
+	* commands.cc (complete): Fail on non-existent revids.
+
 2005-05-29  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_epoch.at: Typo.
