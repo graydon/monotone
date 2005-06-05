@@ -86,9 +86,9 @@ static u8 const compatible_versions[] = {4, 0};
 
 bool is_compatible(u8 version)
 {
-  for(u8 const *x=compatible_versions; *x; ++x)
+  for (u8 const *x = compatible_versions; *x; ++x)
     {
-      if(*x == version)
+      if (*x == version)
         return true;
     }
   return false;
@@ -147,7 +147,8 @@ netcmd::read(string & inbuf)
 
   // check to see if we have even enough bytes for a complete uleb128
   size_t payload_len = 0;
-  if (!try_extract_datum_uleb128<size_t>(inbuf, pos, "netcmd payload length", payload_len))
+  if (!try_extract_datum_uleb128<size_t>(inbuf, pos, "netcmd payload length",
+      payload_len))
       return false;
   
   // they might have given us a bogus size
@@ -165,10 +166,10 @@ netcmd::read(string & inbuf)
   // Do this ourselves, so we can swap the strings instead of copying.
   require_bytes(inbuf, pos, payload_len, "netcmd payload");
   inbuf.erase(0, pos);
-  payload=inbuf.substr(payload_len);
+  payload = inbuf.substr(payload_len);
   inbuf.erase(payload_len, inbuf.npos);
   inbuf.swap(payload);
-  pos=0;
+  pos = 0;
 
   // they might have given us bogus data
   u32 checksum = extract_datum_lsb<u32>(inbuf, pos, "netcmd checksum");

@@ -496,29 +496,29 @@ session::~session()
 {
   vector<cert> unattached_certs;
   map<revision_id, vector<cert> > revcerts;
-  for(vector<revision_id>::iterator i=written_revisions.begin();
-      i!=written_revisions.end(); ++i)
+  for (vector<revision_id>::iterator i = written_revisions.begin();
+       i != written_revisions.end(); ++i)
     revcerts.insert(make_pair(*i, vector<cert>()));
-  for(vector<cert>::iterator i=written_certs.begin();
-      i!=written_certs.end(); ++i)
+  for (vector<cert>::iterator i = written_certs.begin();
+       i != written_certs.end(); ++i)
     {
       map<revision_id, vector<cert> >::iterator j;
-      j=revcerts.find(i->ident);
-      if(j==revcerts.end())
+      j = revcerts.find(i->ident);
+      if (j == revcerts.end())
         unattached_certs.push_back(*i);
       else
         j->second.push_back(*i);
     }
 
   //Keys
-  for(vector<rsa_keypair_id>::iterator i=written_keys.begin();
-      i!=written_keys.end(); ++i)
+  for (vector<rsa_keypair_id>::iterator i = written_keys.begin();
+       i != written_keys.end(); ++i)
     {
       app.lua.hook_note_netsync_pubkey_received(*i);
     }
   //Revisions
-  for(vector<revision_id>::iterator i=written_revisions.begin();
-      i!=written_revisions.end(); ++i)
+  for (vector<revision_id>::iterator i = written_revisions.begin();
+      i != written_revisions.end(); ++i)
     {
       vector<cert> & ctmp(revcerts[*i]);
       set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
@@ -532,7 +532,7 @@ session::~session()
       app.lua.hook_note_netsync_revision_received(*i, certs);
     }
   //Certs (not attached to a new revision)
-  for(vector<cert>::iterator i = unattached_certs.begin();
+  for (vector<cert>::iterator i = unattached_certs.begin();
       i != unattached_certs.end(); ++i)
     {
       cert_value tmp;
@@ -545,7 +545,8 @@ session::~session()
 
 void session::rev_written_callback(revision_id rid)
 {
-  if(revision_checked_ticker.get()) ++(*revision_checked_ticker);
+  if (revision_checked_ticker.get())
+    ++(*revision_checked_ticker);
   written_revisions.push_back(rid);
 }
 
@@ -605,8 +606,8 @@ bool
 session::done_all_refinements()
 {
   bool all = true;
-  for(map< netcmd_item_type, done_marker>::const_iterator j = done_refinements.begin();
-      j != done_refinements.end(); ++j)
+  for (map<netcmd_item_type, done_marker>::const_iterator j =
+         done_refinements.begin(); j != done_refinements.end(); ++j)
     {
       if (j->second.tree_is_done == false)
         all = false;
@@ -1088,8 +1089,8 @@ session::analyze_ancestry_graph()
           {
             parents.insert(edge_old_revision(j));
             map<revision_id, int>::iterator n;
-            n=chld_num.find(edge_old_revision(j));
-            if(n==chld_num.end())
+            n = chld_num.find(edge_old_revision(j));
+            if (n == chld_num.end())
               chld_num.insert(make_pair(edge_old_revision(j), 1));
             else
               ++(n->second);
@@ -1114,29 +1115,29 @@ session::analyze_ancestry_graph()
     cert_name tcert_name(tag_cert_name);
     //used for permission checking if we're the client
     boost::regex reg(pattern());
-    for(map<revision_id, cert_map>::iterator i=received_certs.begin();
-        i!=received_certs.end(); ++i)
+    for (map<revision_id, cert_map>::iterator i = received_certs.begin();
+        i != received_certs.end(); ++i)
       {
         //branches
         vector<cert> & bcerts(i->second[bcert_name]);
         vector<cert> keeping;
-        for(vector<cert>::iterator j=bcerts.begin(); j != bcerts.end(); ++j)
+        for (vector<cert>::iterator j = bcerts.begin(); j != bcerts.end(); ++j)
           {
             cert_value name;
             decode_base64(j->value, name);
-            if(ok_branches.find(name()) != ok_branches.end())
+            if (ok_branches.find(name()) != ok_branches.end())
               keeping.push_back(*j);
-            else if(bad_branches.find(name()) != bad_branches.end())
+            else if (bad_branches.find(name()) != bad_branches.end())
               ;
             else
               {
                 bool ok;
-                if(voice == server_voice)
-                  ok=app.lua.hook_get_netsync_write_permitted(name(),
+                if (voice == server_voice)
+                  ok = app.lua.hook_get_netsync_write_permitted(name(),
                                                          remote_peer_key_name);
                 else
-                  ok=boost::regex_match(name(), reg);
-                if(ok)
+                  ok = boost::regex_match(name(), reg);
+                if (ok)
                   {
                     ok_branches.insert(name());
                     keeping.push_back(*j);
@@ -1149,49 +1150,49 @@ session::analyze_ancestry_graph()
                   }
               }
           }
-        bcerts=keeping;
+        bcerts = keeping;
       }
     //2
     list<revision_id> tmp;
-    for(set<revision_id>::iterator i=heads.begin(); i!=heads.end(); ++i)
+    for (set<revision_id>::iterator i = heads.begin(); i != heads.end(); ++i)
       {
-        if(!received_certs[*i][bcert_name].size())
+        if (!received_certs[*i][bcert_name].size())
           tmp.push_back(*i);
       }
-    for(list<revision_id>::iterator i=tmp.begin(); i!=tmp.end(); ++i)
+    for (list<revision_id>::iterator i = tmp.begin(); i != tmp.end(); ++i)
       heads.erase(*i);
     //3
-    while(tmp.size())
+    while (tmp.size())
       {
-        ancestryT::const_iterator i=ancestry.find(tmp.front());
-        if(i != ancestry.end())
+        ancestryT::const_iterator i = ancestry.find(tmp.front());
+        if (i != ancestry.end())
           {
             for (edge_map::const_iterator j = i->second->second.edges.begin();
                  j != i->second->second.edges.end(); ++j)
               {
-                if(!--chld_num[edge_old_revision(j)])
+                if (!--chld_num[edge_old_revision(j)])
                   {
-                    if(received_certs[i->first][bcert_name].size())
+                    if (received_certs[i->first][bcert_name].size())
                       heads.insert(i->first);
                     else
                       tmp.push_back(edge_old_revision(j));
                   }
               }
             // since we don't want this rev, we don't want it's certs either
-            received_certs[tmp.front()]=cert_map();
+            received_certs[tmp.front()] = cert_map();
           }
           tmp.pop_front();
       }
   }
 
   // We've reduced the certs to those we want now, send them to dbw.
-  for(map<revision_id, cert_map>::iterator i=received_certs.begin();
-      i!=received_certs.end(); ++i)
+  for (map<revision_id, cert_map>::iterator i = received_certs.begin();
+      i != received_certs.end(); ++i)
     {
-      for(cert_map::iterator j=i->second.begin();
+      for (cert_map::iterator j = i->second.begin();
           j != i->second.end(); ++j)
         {
-          for(vector<cert>::iterator k=j->second.begin();
+          for (vector<cert>::iterator k = j->second.begin();
               k != j->second.end(); ++k)
             {
               this->dbw.consume_revision_cert(revision<cert>(*k));
@@ -1206,7 +1207,8 @@ session::analyze_ancestry_graph()
 
   map<revision_id, bool> attached;
   set<revision_id> visited;
-  for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+  for (set<revision_id>::const_iterator i = heads.begin();
+       i != heads.end(); ++i)
     analyze_attachment(*i, visited, attached);
 
   // then we walk the graph upwards, recursively, starting from each of the
@@ -1217,7 +1219,8 @@ session::analyze_ancestry_graph()
 
   set<revision_id> fwd_visited, rev_visited;
 
-  for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+  for (set<revision_id>::const_iterator i = heads.begin();
+       i != heads.end(); ++i)
     {
       map<revision_id, bool>::const_iterator k = attached.find(*i);
       I(k != attached.end());
@@ -1286,7 +1289,7 @@ session::write_some()
   Netxx::signed_size_type count = str.write(outbuf.data(), 
                                             std::min(outbuf.size(),
                                             constants::bufsz));
-  if(count > 0)
+  if (count > 0)
     {
       outbuf.erase(0, count);
       L(F("wrote %d bytes to fd %d (peer %s), %d remain in output buffer\n") 
@@ -1624,23 +1627,23 @@ get_branches(app_state & app, vector<string> & names)
     }
   sort(names.begin(), names.end());
   names.erase(std::unique(names.begin(), names.end()), names.end());
-  if(!names.size())
+  if (!names.size())
     W(F("No branches found."));
 }
 
-utf8
-convert_pattern(utf8 & pat)
+void
+convert_pattern(utf8 & pat, utf8 & conv)
 {
-  string x=pat();
-  string pattern="";
-  string e=".|*?+()[]{}^$\\";
-  for(string::const_iterator i=x.begin(); i!=x.end(); i++)
+  string x = pat();
+  string pattern = "";
+  string e = ".|*?+()[]{}^$\\";
+  for (string::const_iterator i = x.begin(); i != x.end(); i++)
     {
-      if(e.find(*i) != e.npos)
-        pattern+='\\';
-      pattern+=*i;
+      if (e.find(*i) != e.npos)
+        pattern += '\\';
+      pattern += *i;
     }
-  return utf8(pattern+".*");
+  conv = pattern + ".*";
 }
 
 
@@ -1708,20 +1711,20 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   }
 
   utf8 pat(pattern);
-  if(protocol_version == 4)
+  if (protocol_version < 5)
     {
       W(F("Talking to an old server. "
           "Using %s as a collection, not a regex.") % pattern);
-      pat=convert_pattern(pattern);
+      convert_pattern(pattern, pat);
     }
   vector<string> branchnames;
   set<utf8> ok_branches;
   get_branches(app, branchnames);
   boost::regex reg(pat());
-  for(vector<string>::const_iterator i=branchnames.begin();
-      i!=branchnames.end(); i++)
+  for (vector<string>::const_iterator i = branchnames.begin();
+      i != branchnames.end(); i++)
     {
-      if(boost::regex_match(*i, reg))
+      if (boost::regex_match(*i, reg))
           ok_branches.insert(utf8(*i));
     }
   rebuild_merkle_trees(app, ok_branches);
@@ -1760,9 +1763,9 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 bool
 matches_one(string s, vector<boost::regex> r)
 {
-  for(vector<boost::regex>::const_iterator i=r.begin(); i!=r.end(); i++)
+  for (vector<boost::regex>::const_iterator i = r.begin(); i != r.end(); i++)
     {
-      if(boost::regex_match(s, *i))
+      if (boost::regex_match(s, *i))
         return true;
     }
   return false;
@@ -1816,22 +1819,22 @@ session::process_anonymous_cmd(protocol_role role,
   get_branches(app, branchnames);
   vector<boost::regex> allowed;
   boost::regex reg(pattern);
-  for(vector<utf8>::const_iterator i=patterns.begin();
-      i!=patterns.end(); ++i)
+  for (vector<utf8>::const_iterator i = patterns.begin();
+      i != patterns.end(); ++i)
     {
       allowed.push_back(boost::regex((*i)()));
     }
-  for(vector<string>::const_iterator i=branchnames.begin();
-      i!=branchnames.end(); i++)
+  for (vector<string>::const_iterator i = branchnames.begin();
+      i != branchnames.end(); i++)
     {
-      if(boost::regex_match(*i, reg)
-         && (allowed.size()==0 || matches_one(*i, allowed)))
+      if (boost::regex_match(*i, reg)
+          && (allowed.size() == 0 || matches_one(*i, allowed)))
         {
-          if(app.lua.hook_get_netsync_anonymous_read_permitted(*i))
+          if (app.lua.hook_get_netsync_anonymous_read_permitted(*i))
             ok_branches.insert(utf8(*i));
         }
     }
-  if(!ok_branches.size())
+  if (!ok_branches.size())
     {
       W(F("denied anonymous read permission for '%s'\n") % pattern);
       this->saved_nonce = id("");
@@ -1852,7 +1855,7 @@ session::process_anonymous_cmd(protocol_role role,
   decode_base64(sig, sig_raw);
   queue_confirm_cmd(sig_raw());
   this->pattern = pattern;
-  this->remote_peer_key_name=rsa_keypair_id("");
+  this->remote_peer_key_name = rsa_keypair_id("");
   this->authenticated = true;
   this->role = source_role;
   return true;
@@ -1878,8 +1881,8 @@ session::process_auth_cmd(protocol_role role,
   vector<string> branchnames;
   get_branches(app, branchnames);
   vector<boost::regex> allowed;
-  for(vector<utf8>::const_iterator i=patterns.begin();
-      i!=patterns.end(); ++i)
+  for (vector<utf8>::const_iterator i = patterns.begin();
+      i != patterns.end(); ++i)
     {
       allowed.push_back(boost::regex((*i)()));
     }
@@ -1937,19 +1940,19 @@ session::process_auth_cmd(protocol_role role,
           return false;
         }
 
-      for(vector<string>::const_iterator i=branchnames.begin();
-          i!=branchnames.end(); i++)
+      for (vector<string>::const_iterator i = branchnames.begin();
+          i != branchnames.end(); i++)
         {
-          if(boost::regex_match(*i, reg)
-             && (allowed.size()==0 || matches_one(*i, allowed)))
+          if (boost::regex_match(*i, reg)
+              && (allowed.size() == 0 || matches_one(*i, allowed)))
             {
-              if(app.lua.hook_get_netsync_read_permitted(*i, their_id))
+              if (app.lua.hook_get_netsync_read_permitted(*i, their_id))
                 ok_branches.insert(utf8(*i));
             }
         }
       //if we're source_and_sink_role, continue even with no branches readable
       //ex: serve --db=empty.db
-      if(!ok_branches.size() && role == sink_role)
+      if (!ok_branches.size() && role == sink_role)
         {
           W(F("denied '%s' read permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
@@ -1972,10 +1975,10 @@ session::process_auth_cmd(protocol_role role,
         }
 
       // Write permissions are now checked from analyze_ancestry_graph.
-      if(role == source_role)
+      if (role == source_role)
         {
-          for(vector<string>::const_iterator i=branchnames.begin();
-              i!=branchnames.end(); i++)
+          for (vector<string>::const_iterator i = branchnames.begin();
+              i != branchnames.end(); i++)
             {
               ok_branches.insert(utf8(*i));
             }
@@ -2005,7 +2008,7 @@ session::process_auth_cmd(protocol_role role,
       queue_confirm_cmd(sig_raw());
       this->pattern = pattern;
       this->authenticated = true;
-      this->remote_peer_key_name=their_id;
+      this->remote_peer_key_name = their_id;
       // assume the (possibly degraded) opposite role
       switch (role)
         {
@@ -2193,7 +2196,7 @@ load_data(netcmd_item_type type,
       break;
 
     case cert_item:
-      if(app.db.revision_cert_exists(hitem))
+      if (app.db.revision_cert_exists(hitem))
         {
           revision<cert> c;
           app.db.get_revision_cert(hitem, c);
@@ -2976,7 +2979,7 @@ session::dispatch_payload(netcmd const & cmd)
         rsa_pub_key server_key;
         id nonce;
         cmd.read_hello_cmd(server_keyname, server_key, nonce);
-        if(cmd.get_version() < protocol_version)
+        if (cmd.get_version() < protocol_version)
           protocol_version = cmd.get_version();
         return process_hello_cmd(server_keyname, server_key, nonce);
       }
@@ -2993,7 +2996,7 @@ session::dispatch_payload(netcmd const & cmd)
         string pattern;
         id nonce2;
         cmd.read_anonymous_cmd(role, pattern, nonce2);
-        if(cmd.get_version() < protocol_version)
+        if (cmd.get_version() < protocol_version)
           protocol_version = cmd.get_version();
         return process_anonymous_cmd(role, pattern, nonce2);
       }
@@ -3007,7 +3010,7 @@ session::dispatch_payload(netcmd const & cmd)
         string pattern, signature;
         id client, nonce1, nonce2;
         cmd.read_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
-        if(cmd.get_version() < protocol_version)
+        if (cmd.get_version() < protocol_version)
           protocol_version = cmd.get_version();
         return process_auth_cmd(role, pattern, client,
                                 nonce1, nonce2, signature);
@@ -3565,7 +3568,7 @@ make_root_node(session & sess,
 void
 insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app)
 {
-  if(col.find(rev) != col.end())
+  if (col.find(rev) != col.end())
     return;
   col.insert(rev);
   vector<revision_id> frontier;
@@ -3574,19 +3577,20 @@ insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app)
     {
       revision_id rid = frontier.back();
       frontier.pop_back();
-      if(!null_id(rid)) {
-        col.insert(rid);
-        std::set<revision_id> parents;
-        app.db.get_revision_parents(rid, parents);
-        for (std::set<revision_id>::const_iterator i = parents.begin();
-             i != parents.end(); ++i)
-          {
-            if (col.find(*i) == col.end())
-              {
-                frontier.push_back(*i);
-              }
-          }
-      }
+      if (!null_id(rid))
+        {
+          col.insert(rid);
+          std::set<revision_id> parents;
+          app.db.get_revision_parents(rid, parents);
+          for (std::set<revision_id>::const_iterator i = parents.begin();
+               i != parents.end(); ++i)
+            {
+              if (col.find(*i) == col.end())
+                {
+                  frontier.push_back(*i);
+                }
+            }
+        }
     }
 }
 
@@ -3595,8 +3599,8 @@ session::rebuild_merkle_trees(app_state & app,
                               set<utf8> const & branchnames)
 {
   P(F("rebuilding merkle trees ...\n"));
-  for(set<utf8>::const_iterator i=branchnames.begin();
-      i!=branchnames.end(); ++i)
+  for (set<utf8>::const_iterator i = branchnames.begin();
+      i != branchnames.end(); ++i)
     P(F("including branch %s") % *i);
 
   boost::shared_ptr<merkle_table> ctab = make_root_node(*this, cert_item);
@@ -3617,7 +3621,7 @@ session::rebuild_merkle_trees(app_state & app,
       {
         cert_value name;
         decode_base64(idx(certs, i).inner().value, name);
-        if(branchnames.find(name()) != branchnames.end())
+        if (branchnames.find(name()) != branchnames.end())
           {
             insert_with_parents(revision_id(idx(certs, i).inner().ident),
                                 revision_ids, app);
