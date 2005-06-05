@@ -1017,7 +1017,7 @@ void print_some_output(int cmdnum,
     }
   else
     {
-      I(size <= constants::automate_stdio_size);
+      I((unsigned int)(size) <= constants::automate_stdio_size);
       s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
       s<<size<<':'<<text.substr(pos, size);
       pos+=size;

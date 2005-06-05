@@ -221,6 +221,7 @@ session
   string outbuf;
 
   netcmd cmd;
+  u8 protocol_version;
   bool armed;
   bool arm();
 
@@ -242,8 +243,7 @@ session
   vector<rsa_keypair_id> written_keys;
   vector<cert> written_certs;
 
-  map< std::pair<utf8, netcmd_item_type>, 
-       boost::shared_ptr<merkle_table> > merkle_tables;
+  map<netcmd_item_type, boost::shared_ptr<merkle_table> > merkle_tables;
 
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
@@ -275,6 +275,8 @@ session
 
   id mk_nonce();
   void mark_recent_io();
+
+  void setup_client_tickers();
 
   bool done_all_refinements();
   bool cert_refinement_done();
@@ -375,18 +377,15 @@ session
                                id const & item);
 
   bool merkle_node_exists(netcmd_item_type type,
-                          utf8 const & pattern,                      
                           size_t level,
                           prefix const & pref);
 
   void load_merkle_node(netcmd_item_type type,
-                        utf8 const & pattern,                        
                         size_t level,
                         prefix const & pref,
                         merkle_ptr & node);
 
   void rebuild_merkle_trees(app_state & app,
-                            utf8 const & pattern,
                             set<utf8> const & branches);
 
   bool dispatch_payload(netcmd const & cmd);
@@ -433,6 +432,7 @@ session::session(protocol_role role,
   str(sock, to),
   inbuf(""),
   outbuf(""),
+  protocol_version(constants::netcmd_current_protocol_version),
   armed(false),
   pattern(""),
   remote_peer_key_hash(""),
@@ -576,6 +576,30 @@ session::mark_recent_io()
   last_io_time = ::time(NULL);
 }
 
+void
+session::setup_client_tickers()
+{
+  byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
+  byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
+  if (role == sink_role)
+    {
+      revision_checked_ticker.reset(new ticker("revs written", "w", 1));
+      cert_in_ticker.reset(new ticker("certs in", "c", 3));
+      revision_in_ticker.reset(new ticker("revs in", "r", 1));
+    }
+  else if (role == source_role)
+    {
+      cert_out_ticker.reset(new ticker("certs out", "C", 3));
+      revision_out_ticker.reset(new ticker("revs out", "R", 1));
+    }
+  else
+    {
+      I(role == source_and_sink_role);
+      revision_checked_ticker.reset(new ticker("revs written", "w", 1));
+      revision_in_ticker.reset(new ticker("revs in", "r", 1));
+      revision_out_ticker.reset(new ticker("revs out", "R", 1));
+    }
+}
 
 bool 
 session::done_all_refinements()
@@ -701,7 +725,7 @@ void
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   if (!encountered_error)
-    write_netcmd(cmd, outbuf);
+    cmd.write(outbuf);
   else
     L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
@@ -1260,7 +1284,8 @@ session::write_some()
 {
   I(!outbuf.empty());    
   Netxx::signed_size_type count = str.write(outbuf.data(), 
-                                            std::min(outbuf.size(), constants::bufsz));
+                                            std::min(outbuf.size(),
+                                            constants::bufsz));
   if(count > 0)
     {
       outbuf.erase(0, count);
@@ -1287,8 +1312,8 @@ void
 session::queue_bye_cmd() 
 {
   L(F("queueing 'bye' command\n"));
-  netcmd cmd;
-  cmd.cmd_code = bye_cmd;
+  netcmd cmd(protocol_version);
+  cmd.write_bye_cmd();
   write_netcmd_and_try_flush(cmd);
   this->sent_goodbye = true;
 }
@@ -1297,9 +1322,8 @@ void
 session::queue_error_cmd(string const & errmsg)
 {
   L(F("queueing 'error' command\n"));
-  netcmd cmd;
-  cmd.cmd_code = error_cmd;
-  write_error_cmd_payload(errmsg, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_error_cmd(errmsg);
   write_netcmd_and_try_flush(cmd);
   this->sent_goodbye = true;
 }
@@ -1311,9 +1335,8 @@ session::queue_done_cmd(size_t level,
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   L(F("queueing 'done' command for %s level %s\n") % typestr % level);
-  netcmd cmd;
-  cmd.cmd_code = done_cmd;
-  write_done_cmd_payload(level, type, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_done_cmd(level, type);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1321,8 +1344,7 @@ void
 session::queue_hello_cmd(id const & server, 
                          id const & nonce) 
 {
-  netcmd cmd;
-  cmd.cmd_code = hello_cmd;
+  netcmd cmd(protocol_version);
   hexenc<id> server_encoded;
   encode_hexenc(server, server_encoded);
   
@@ -1332,7 +1354,7 @@ session::queue_hello_cmd(id const & server,
 
   app.db.get_pubkey(server_encoded, key_name, pub_encoded);
   decode_base64(pub_encoded, pub);
-  write_hello_cmd_payload(key_name, pub, nonce, cmd.payload);
+  cmd.write_hello_cmd(key_name, pub, nonce);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1341,9 +1363,8 @@ session::queue_anonymous_cmd(protocol_role role,
                              string const & pattern, 
                              id const & nonce2)
 {
-  netcmd cmd;
-  cmd.cmd_code = anonymous_cmd;
-  write_anonymous_cmd_payload(role, pattern, nonce2, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_anonymous_cmd(role, pattern, nonce2);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1355,20 +1376,16 @@ session::queue_auth_cmd(protocol_role role,
                         id const & nonce2, 
                         string const & signature)
 {
-  netcmd cmd;
-  cmd.cmd_code = auth_cmd;
-  write_auth_cmd_payload(role, pattern, client, 
-                         nonce1, nonce2, signature, 
-                         cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
   write_netcmd_and_try_flush(cmd);
 }
 
 void 
 session::queue_confirm_cmd(string const & signature)
 {
-  netcmd cmd;
-  cmd.cmd_code = confirm_cmd;
-  write_confirm_cmd_payload(signature, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_confirm_cmd(signature);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1381,9 +1398,8 @@ session::queue_refine_cmd(merkle_node const & node)
   netcmd_item_type_to_string(node.type, typestr);
   L(F("queueing request for refinement of %s node '%s', level %d\n")
     % typestr % hpref % static_cast<int>(node.level));
-  netcmd cmd;
-  cmd.cmd_code = refine_cmd;
-  write_refine_cmd_payload(node, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_refine_cmd(node);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1412,9 +1428,8 @@ session::queue_send_data_cmd(netcmd_item_type type,
 
   L(F("queueing request for data of %s item '%s'\n")
     % typestr % hid);
-  netcmd cmd;
-  cmd.cmd_code = send_data_cmd;
-  write_send_data_cmd_payload(type, item, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_send_data_cmd(type, item);
   write_netcmd_and_try_flush(cmd);
   note_item_requested(type, item);
 }
@@ -1449,9 +1464,8 @@ session::queue_send_delta_cmd(netcmd_item_type type,
 
   L(F("queueing request for contents of %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
-  netcmd cmd;
-  cmd.cmd_code = send_delta_cmd;
-  write_send_delta_cmd_payload(type, base, ident, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_send_delta_cmd(type, base, ident);
   write_netcmd_and_try_flush(cmd);
   note_item_requested(type, ident);
 }
@@ -1475,9 +1489,8 @@ session::queue_data_cmd(netcmd_item_type type,
 
   L(F("queueing %d bytes of data for %s item '%s'\n")
     % dat.size() % typestr % hid);
-  netcmd cmd;
-  cmd.cmd_code = data_cmd;
-  write_data_cmd_payload(type, item, dat, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_data_cmd(type, item, dat);
   write_netcmd_and_try_flush(cmd);
   note_item_sent(type, item);
 }
@@ -1506,9 +1519,8 @@ session::queue_delta_cmd(netcmd_item_type type,
 
   L(F("queueing %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
-  netcmd cmd;
-  cmd.cmd_code = delta_cmd;  
-  write_delta_cmd_payload(type, base, ident, del, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_delta_cmd(type, base, ident, del);
   write_netcmd_and_try_flush(cmd);
   note_item_sent(type, ident);
 }
@@ -1530,9 +1542,8 @@ session::queue_nonexistant_cmd(netcmd_item_type type,
 
   L(F("queueing note of nonexistance of %s item '%s'\n")
     % typestr % hid);
-  netcmd cmd;
-  cmd.cmd_code = nonexistant_cmd;
-  write_nonexistant_cmd_payload(type, item, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_nonexistant_cmd(type, item);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1600,6 +1611,39 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
   return true;
 }
 
+void
+get_branches(app_state & app, vector<string> & names)
+{
+  vector< revision<cert> > certs;
+  app.db.get_revision_certs(branch_cert_name, certs);
+  for (size_t i = 0; i < certs.size(); ++i)
+    {
+      cert_value name;
+      decode_base64(idx(certs, i).inner().value, name);
+      names.push_back(name());
+    }
+  sort(names.begin(), names.end());
+  names.erase(std::unique(names.begin(), names.end()), names.end());
+  if(!names.size())
+    W(F("No branches found."));
+}
+
+utf8
+convert_pattern(utf8 & pat)
+{
+  string x=pat();
+  string pattern="";
+  string e=".|*?+()[]{}^$\\";
+  for(string::const_iterator i=x.begin(); i!=x.end(); i++)
+    {
+      if(e.find(*i) != e.npos)
+        pattern+='\\';
+      pattern+=*i;
+    }
+  return utf8(pattern+".*");
+}
+
+
 static const var_domain known_servers_domain = var_domain("known-servers");
 
 bool 
@@ -1662,7 +1706,24 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     decode_hexenc(their_key_hash, their_key_hash_decoded);
     this->remote_peer_key_hash = their_key_hash_decoded;
   }
-      
+
+  vector<string> branchnames;
+  set<utf8> ok_branches;
+  get_branches(app, branchnames);
+  utf8 pat(pattern);
+  if(protocol_version == 4)
+    pat=convert_pattern(pattern);
+  boost::regex reg(pat());
+  for(vector<string>::const_iterator i=branchnames.begin();
+      i!=branchnames.end(); i++)
+    {
+      if(boost::regex_match(*i, reg))
+          ok_branches.insert(utf8(*i));
+    }
+  rebuild_merkle_trees(app, ok_branches);
+
+  setup_client_tickers();
+    
   if (app.signing_key() != "")
     {
       // get our public key for its hash identifier
@@ -1701,23 +1762,6 @@ matches_one(string s, vector<boost::regex> r)
         return true;
     }
   return false;
-}
-
-void
-get_branches(app_state & app, vector<string> & names)
-{
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(branch_cert_name, certs);
-  for (size_t i = 0; i < certs.size(); ++i)
-    {
-      cert_value name;
-      decode_base64(idx(certs, i).inner().value, name);
-      names.push_back(name());
-    }
-  sort(names.begin(), names.end());
-  names.erase(std::unique(names.begin(), names.end()), names.end());
-  if(!names.size())
-    W(F("No branches found."));
 }
 
 bool 
@@ -1792,7 +1836,7 @@ session::process_anonymous_cmd(protocol_role role,
 
   P(F("allowed anonymous read permission for '%s'\n") % pattern);
 
-  rebuild_merkle_trees(app, pattern, ok_branches);
+  rebuild_merkle_trees(app, ok_branches);
 
   // get our private key and sign back
   L(F("anonymous read permitted, signing back nonce\n"));
@@ -1936,7 +1980,7 @@ session::process_auth_cmd(protocol_role role,
       P(F("allowed '%s' write permission for '%s'\n") % their_id % pattern);
     }
 
-  rebuild_merkle_trees(app, pattern, ok_branches);
+  rebuild_merkle_trees(app, ok_branches);
 
   // save their identity 
   this->remote_peer_key_hash = client;
@@ -2011,15 +2055,15 @@ session::process_confirm_cmd(string const & signature)
           this->authenticated = true;
 
           merkle_ptr root;
-          load_merkle_node(epoch_item, this->pattern, 0, get_root_prefix().val, root);
+          load_merkle_node(epoch_item, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, epoch_item);
 
-          load_merkle_node(key_item, this->pattern, 0, get_root_prefix().val, root);
+          load_merkle_node(key_item, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, key_item);
 
-          load_merkle_node(cert_item, this->pattern, 0, get_root_prefix().val, root);
+          load_merkle_node(cert_item, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, cert_item);
           return true;
@@ -2176,8 +2220,7 @@ session::process_refine_cmd(merkle_node const & their_node)
   L(F("received 'refine' netcmd on %s node '%s', level %d\n") 
     % typestr % hpref % lev);
   
-  if (!merkle_node_exists(their_node.type, this->pattern, 
-                          their_node.level, pref))
+  if (!merkle_node_exists(their_node.type, their_node.level, pref))
     {
       L(F("no corresponding %s merkle node for prefix '%s', level %d\n")
         % typestr % hpref % lev);
@@ -2237,8 +2280,7 @@ session::process_refine_cmd(merkle_node const & their_node)
       L(F("found corresponding %s merkle node for prefix '%s', level %d\n")
         % typestr % hpref % lev);
       merkle_ptr our_node;
-      load_merkle_node(their_node.type, this->pattern, 
-                       their_node.level, pref, our_node);
+      load_merkle_node(their_node.type, their_node.level, pref, our_node);
       for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
         {         
           switch (their_node.get_slot_state(slot))
@@ -2284,8 +2326,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                     our_node->extended_raw_prefix(slot, subprefix);
                     merkle_ptr our_subtree;
                     I(our_node->type == their_node.type);
-                    load_merkle_node(their_node.type, this->pattern, 
-                                     our_node->level + 1, subprefix, our_subtree);
+                    load_merkle_node(their_node.type, our_node->level + 1,
+                                     subprefix, our_subtree);
                     I(our_node->type == our_subtree->type);
                     queue_refine_cmd(*our_subtree);
                   }
@@ -2384,8 +2426,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                     prefix subprefix;
                     our_node->extended_raw_prefix(slot, subprefix);
                     merkle_ptr our_subtree;
-                    load_merkle_node(our_node->type, this->pattern, 
-                                     our_node->level + 1, subprefix, our_subtree);
+                    load_merkle_node(our_node->type, our_node->level + 1,
+                                     subprefix, our_subtree);
                     queue_refine_cmd(*our_subtree);
                   }
                   break;
@@ -2444,8 +2486,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                     prefix subprefix;
                     our_node->extended_raw_prefix(slot, subprefix);
                     merkle_ptr our_subtree;
-                    load_merkle_node(our_node->type, this->pattern, 
-                                     our_node->level + 1, subprefix, our_subtree);
+                    load_merkle_node(our_node->type, our_node->level + 1,
+                                     subprefix, our_subtree);
                     queue_refine_cmd(*our_subtree);
                   }
                   break;
@@ -2533,8 +2575,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                         prefix subprefix;
                         our_node->extended_raw_prefix(slot, subprefix);
                         merkle_ptr our_subtree;
-                        load_merkle_node(our_node->type, this->pattern, 
-                                         our_node->level + 1, subprefix, our_subtree);
+                        load_merkle_node(our_node->type, our_node->level + 1,
+                                         subprefix, our_subtree);
                         queue_refine_cmd(*our_subtree);
                       }
                   }
@@ -2876,13 +2918,11 @@ session::process_nonexistant_cmd(netcmd_item_type type,
 
 bool
 session::merkle_node_exists(netcmd_item_type type,
-                            utf8 const & pattern,                    
                             size_t level,
                             prefix const & pref)
 {
-  map< std::pair<utf8, netcmd_item_type>, 
-       boost::shared_ptr<merkle_table> >::const_iterator i = 
-    merkle_tables.find(std::make_pair(pattern,type));
+  map<netcmd_item_type, boost::shared_ptr<merkle_table> >::const_iterator i = 
+    merkle_tables.find(type);
   
   I(i != merkle_tables.end());
   merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
@@ -2891,15 +2931,13 @@ session::merkle_node_exists(netcmd_item_type type,
 
 void 
 session::load_merkle_node(netcmd_item_type type,
-                          utf8 const & pattern,                      
                           size_t level,
                           prefix const & pref,
                           merkle_ptr & node)
 {
-  map< std::pair<utf8, netcmd_item_type>, 
-       boost::shared_ptr<merkle_table> >::const_iterator i = 
-    merkle_tables.find(std::make_pair(pattern,type));
-  
+  map<netcmd_item_type, boost::shared_ptr<merkle_table> >::const_iterator i = 
+    merkle_tables.find(type);
+
   I(i != merkle_tables.end());
   merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
   I(j != i->second->end());
@@ -2911,7 +2949,7 @@ bool
 session::dispatch_payload(netcmd const & cmd)
 {
   
-  switch (cmd.cmd_code)
+  switch (cmd.get_cmd_code())
     {
       
     case bye_cmd:
@@ -2921,7 +2959,7 @@ session::dispatch_payload(netcmd const & cmd)
     case error_cmd:
       {
         string errmsg;
-        read_error_cmd_payload(cmd.payload, errmsg);
+        cmd.read_error_cmd(errmsg);
         return process_error_cmd(errmsg);
       }
       break;
@@ -2933,7 +2971,9 @@ session::dispatch_payload(netcmd const & cmd)
         rsa_keypair_id server_keyname;
         rsa_pub_key server_key;
         id nonce;
-        read_hello_cmd_payload(cmd.payload, server_keyname, server_key, nonce);
+        cmd.read_hello_cmd(server_keyname, server_key, nonce);
+        if(cmd.get_version() < protocol_version)
+          protocol_version = cmd.get_version();
         return process_hello_cmd(server_keyname, server_key, nonce);
       }
       break;
@@ -2948,7 +2988,9 @@ session::dispatch_payload(netcmd const & cmd)
         protocol_role role;
         string pattern;
         id nonce2;
-        read_anonymous_cmd_payload(cmd.payload, role, pattern, nonce2);
+        cmd.read_anonymous_cmd(role, pattern, nonce2);
+        if(cmd.get_version() < protocol_version)
+          protocol_version = cmd.get_version();
         return process_anonymous_cmd(role, pattern, nonce2);
       }
       break;
@@ -2960,8 +3002,11 @@ session::dispatch_payload(netcmd const & cmd)
         protocol_role role;
         string pattern, signature;
         id client, nonce1, nonce2;
-        read_auth_cmd_payload(cmd.payload, role, pattern, client, nonce1, nonce2, signature);
-        return process_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
+        cmd.read_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
+        if(cmd.get_version() < protocol_version)
+          protocol_version = cmd.get_version();
+        return process_auth_cmd(role, pattern, client,
+                                nonce1, nonce2, signature);
       }
       break;
 
@@ -2970,7 +3015,7 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "confirm netcmd received in client voice");
       {
         string signature;
-        read_confirm_cmd_payload(cmd.payload, signature);
+        cmd.read_confirm_cmd(signature);
         return process_confirm_cmd(signature);
       }
       break;
@@ -2979,7 +3024,7 @@ session::dispatch_payload(netcmd const & cmd)
       require(authenticated, "refine netcmd received when authenticated");
       {
         merkle_node node;
-        read_refine_cmd_payload(cmd.payload, node);
+        cmd.read_refine_cmd(node);
         map< netcmd_item_type, done_marker>::iterator i = done_refinements.find(node.type);
         require(i != done_refinements.end(), "refinement netcmd refers to valid type");
         require(i->second.tree_is_done == false, "refinement netcmd received when tree is live");
@@ -2993,7 +3038,7 @@ session::dispatch_payload(netcmd const & cmd)
       {
         size_t level;
         netcmd_item_type type;
-        read_done_cmd_payload(cmd.payload, level, type);
+        cmd.read_done_cmd(level, type);
         return process_done_cmd(level, type);
       }
       break;
@@ -3006,7 +3051,7 @@ session::dispatch_payload(netcmd const & cmd)
       {
         netcmd_item_type type;
         id item;
-        read_send_data_cmd_payload(cmd.payload, type, item);
+        cmd.read_send_data_cmd(type, item);
         return process_send_data_cmd(type, item);
       }
       break;
@@ -3019,7 +3064,7 @@ session::dispatch_payload(netcmd const & cmd)
       {
         netcmd_item_type type;
         id base, ident;
-        read_send_delta_cmd_payload(cmd.payload, type, base, ident);
+        cmd.read_send_delta_cmd(type, base, ident);
         return process_send_delta_cmd(type, base, ident);
       }
 
@@ -3032,7 +3077,7 @@ session::dispatch_payload(netcmd const & cmd)
         netcmd_item_type type;
         id item;
         string dat;
-        read_data_cmd_payload(cmd.payload, type, item, dat);
+        cmd.read_data_cmd(type, item, dat);
         return process_data_cmd(type, item, dat);
       }
       break;
@@ -3046,7 +3091,7 @@ session::dispatch_payload(netcmd const & cmd)
         netcmd_item_type type;
         id base, ident;
         delta del;
-        read_delta_cmd_payload(cmd.payload, type, base, ident, del);
+        cmd.read_delta_cmd(type, base, ident, del);
         return process_delta_cmd(type, base, ident, del);
       }
       break;      
@@ -3059,7 +3104,7 @@ session::dispatch_payload(netcmd const & cmd)
       {
         netcmd_item_type type;
         id item;
-        read_nonexistant_cmd_payload(cmd.payload, type, item);
+        cmd.read_nonexistant_cmd(type, item);
         return process_nonexistant_cmd(type, item);
       }
       break;
@@ -3093,7 +3138,7 @@ session::arm()
 {
   if (!armed)
     {
-      if (read_netcmd(inbuf, cmd))
+      if (cmd.read(inbuf))
         {
 //          inbuf.erase(0, cmd.encoded_size());     
           armed = true;
@@ -3144,39 +3189,6 @@ call_server(protocol_role role,
   Netxx::Stream server(address().c_str(), default_port, timeout);
   session sess(role, client_voice, patterns, app, 
                address(), server.get_socketfd(), timeout);
-
-  vector<string> branchnames;
-  set<utf8> ok_branches;
-  get_branches(app, branchnames);
-  boost::regex reg(idx(patterns, 0)());
-  for(vector<string>::const_iterator i=branchnames.begin();
-      i!=branchnames.end(); i++)
-    {
-      if(boost::regex_match(*i, reg))
-          ok_branches.insert(utf8(*i));
-    }
-  sess.rebuild_merkle_trees(app, idx(patterns, 0)(), ok_branches);
-
-  sess.byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
-  sess.byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
-  if (role == sink_role)
-    {
-      sess.revision_checked_ticker.reset(new ticker("revs written", "w", 1));
-      sess.cert_in_ticker.reset(new ticker("certs in", "c", 3));
-      sess.revision_in_ticker.reset(new ticker("revs in", "r", 1));
-    }
-  else if (role == source_role)
-    {
-      sess.cert_out_ticker.reset(new ticker("certs out", "C", 3));
-      sess.revision_out_ticker.reset(new ticker("revs out", "R", 1));
-    }
-  else
-    {
-      I(role == source_and_sink_role);
-      sess.revision_checked_ticker.reset(new ticker("revs written", "w", 1));
-      sess.revision_in_ticker.reset(new ticker("revs in", "r", 1));
-      sess.revision_out_ticker.reset(new ticker("revs out", "R", 1));
-    }
   
   while (true)
     {       
@@ -3532,7 +3544,6 @@ serve_connections(protocol_role role,
 
 static boost::shared_ptr<merkle_table>
 make_root_node(session & sess,
-               utf8 const & pat,
                netcmd_item_type ty)
 {
   boost::shared_ptr<merkle_table> tab = 
@@ -3543,7 +3554,7 @@ make_root_node(session & sess,
 
   tab->insert(std::make_pair(std::make_pair(get_root_prefix().val, 0), tmp));
 
-  sess.merkle_tables[std::make_pair(pat, ty)] = tab;
+  sess.merkle_tables[ty] = tab;
   return tab;
 }
 
@@ -3577,17 +3588,16 @@ insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app)
 
 void 
 session::rebuild_merkle_trees(app_state & app,
-                              utf8 const & pattern,
                               set<utf8> const & branchnames)
 {
-  P(F("rebuilding merkle trees for pattern %s\n") % pattern);
+  P(F("rebuilding merkle trees ...\n"));
   for(set<utf8>::const_iterator i=branchnames.begin();
       i!=branchnames.end(); ++i)
     P(F("including branch %s") % *i);
 
-  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, pattern, cert_item);
-  boost::shared_ptr<merkle_table> ktab = make_root_node(*this, pattern, key_item);
-  boost::shared_ptr<merkle_table> etab = make_root_node(*this, pattern, epoch_item);
+  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, cert_item);
+  boost::shared_ptr<merkle_table> ktab = make_root_node(*this, key_item);
+  boost::shared_ptr<merkle_table> etab = make_root_node(*this, epoch_item);
 
   ticker certs_ticker("certs", "c", 256);
   ticker keys_ticker("keys", "k", 1);
