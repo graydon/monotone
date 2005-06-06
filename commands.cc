@@ -410,7 +410,8 @@ describe_revision(app_state & app, revision_id const & id)
 static void 
 complete(app_state & app, 
          string const & str,
-         revision_id & completion)
+         revision_id & completion,
+         bool must_exist=true)
 {
   // This copies the start of selectors::parse_selector().to avoid
   // getting a log when there's no expansion happening...:
@@ -421,8 +422,9 @@ complete(app_state & app,
       && str.size() == constants::idlen)
     {
       completion = revision_id(str);
-      N(app.db.revision_exists(completion),
-        F("no such revision '%s'") % completion);
+      if (must_exist)
+        N(app.db.revision_exists(completion),
+          F("no such revision '%s'") % completion);
       return;
     }
 
@@ -915,7 +917,7 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
     throw usage(name);
 
   revision_id rid;
-  complete(app, idx(args, 0)(), rid);
+  complete(app, idx(args, 0)(), rid, false);
   hexenc<id> ident(rid.inner());
   
   cert_name name;
