@@ -9,7 +9,7 @@ AT_CHECK(MONOTONE rdata 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore],
 AT_CHECK(MONOTONE pubkey foo@bar, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE privkey foo@bar, [1], [ignore], [ignore])
 
-# This one should succeed, but print nothing.
-AT_CHECK(MONOTONE certs 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [], [], [ignore])
+AT_CHECK(MONOTONE certs 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE db check, [], [ignore], [ignore])
 
 AT_CLEANUP

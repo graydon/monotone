@@ -444,7 +444,7 @@ main_with_many_flavours_of_exception(int argc, char **argv)
 
     catch( ... )
       { 
-        report_error("unknown type" ); 
+        report_error("exception of unknown type" ); 
       }
     return 0;
 }

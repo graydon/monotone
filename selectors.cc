@@ -22,9 +22,9 @@ namespace selectors
 
     L(F("decoding selector '%s'\n") % sel);
 
+    std::string tmp;
     if (sel.size() < 2 || sel[1] != ':')
       {
-        std::string tmp;
         if (!app.lua.hook_expand_selector(sel, tmp))
           {
             L(F("expansion of selector '%s' failed\n") % sel);
@@ -58,11 +58,35 @@ namespace selectors
           case 'c':
             type = sel_cert;
             break;
+          case 'l':
+            type = sel_later;
+            break;
+          case 'e':
+            type = sel_earlier;
+            break;
           default:
             W(F("unknown selector type: %c\n") % sel[0]);
             break;
           }
         sel.erase(0,2);
+
+        /* a selector date-related should be validated */	
+        if (sel_date==type || sel_later==type || sel_earlier==type)
+          {
+            N (app.lua.hook_expand_date(sel, tmp), 
+            F ("selector '%s' is not a valid date\n") % sel);
+            
+            if (tmp.size()<8 && (sel_later==type || sel_earlier==type))
+              tmp += "-01T00:00:00";
+            else if (tmp.size()<11 && (sel_later==type || sel_earlier==type))
+              tmp += "T00:00:00";
+            N(tmp.size()==19 || sel_date==type, F ("selector '%s' is not a valid date (%s)\n") % sel % tmp);
+            if (sel != tmp)
+              {
+                P (F ("expanded date '%s' -> '%s'\n") % sel % tmp);
+                sel = tmp;
+              }
+          }
       }
   }
 

@@ -15,6 +15,9 @@
 namespace constants
 {
 
+  // block size in bytes for "automate stdio" output
+  size_t const automate_stdio_size = 1024;
+
   // number of bits in an RSA key we use
   size_t const keylen = 1024; 
 
@@ -142,7 +145,7 @@ namespace constants
   BOOST_STATIC_ASSERT(merkle_bitmap_length_in_bits > 0);
   BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
 
-  u8 const netcmd_current_protocol_version = 4;
+  u8 const netcmd_current_protocol_version = 5;
   size_t const netcmd_minsz = (1     // version
                                + 1   // cmd code
                                + 1   // smallest uleb possible

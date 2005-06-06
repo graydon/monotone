@@ -35,6 +35,8 @@ public:
   lua_hooks lua;
   bool stdhooks;
   bool rcfiles;
+  bool diffs;
+  bool no_merges;
   options_map options;
   utf8 message;
   utf8 message_file;
@@ -47,7 +49,9 @@ public:
   file_path relative_directory;
   bool found_working_copy;
   long depth;
+  long last;
   fs::path pidfile;
+
 
   // These are used to cache signers/verifiers (if the hook allows).
   // They can't be function-static variables in key.cc, since they must be
@@ -84,6 +88,7 @@ public:
   void set_date(utf8 const & date);
   void set_author(utf8 const & author);
   void set_depth(long depth);
+  void set_last(long last);
   void set_pidfile(utf8 const & pidfile);
   void add_revision(utf8 const & selector);
 

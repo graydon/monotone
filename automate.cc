@@ -9,10 +9,16 @@
 #include <iterator>
 #include <vector>
 #include <algorithm>
+#include <sstream>
+#include <unistd.h>
+
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
 
 #include "app_state.hh"
 #include "basic_io.hh"
 #include "commands.hh"
+#include "constants.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "transforms.hh"
@@ -910,50 +916,114 @@ automate_command(utf8 cmd, std::vector<utf8> args,
 //   of monotone.
 //
 // Input format: The input is a series of lines of the form
-//   "command [args...]", where "command" is a valid "monotone automate"
-//   subcommand. Example:
-//        leaves
-//        parents 1f4ef73c3e056883c6a5ff66728dd764557db5e6
-//        inventory
-//
-// Output format: The output consists of the output of each command given,
-//   preceeded by the line "###BEGIN <command>###" and followed by the line
-//   "###END <command>###", where <command> is the command given. Example:
-//        ###BEGIN leaves###
-//        bdff75b3d1a58d5370d1b9aaeed1b5a4d0cba564
-//        ed0306ed417d258d82716bee36841199d8bb7626
-//        ee0f35591c79c9390baff5e0638b545963d1babf
-//        ###END leaves###
-//        ###BEGIN parents###
-//        094a5075b4bd7fe379f810edeb5f03283b50e13a
-//        ###END parents###
-//        ###BEGIN inventory###
-//           "work.cc"
-//           "work.hh"
-//           "xdelta.cc"
-//           "xdelta.hh"
-//        ###END inventory###
-//
-// Error conditions: If an invalid command line is recieved, prints
-//   "###ERR <command> usage###" to standard output, where <command> is the name
-//   of the command that was given.
-//   If some other error condition occurrs during execution of a command
-//   received on input, prints "###ERR <command> msg <message>###", where
-//   <command> is the name of the command, and <message> is the
-//   error message provided by that command, which would have been output on
-//   standard error if the command was invoked directly.
-//   This "###ERR <details>###" line replaces the "###END <command>###" line.
+//   'l'<size>':'<string>[<size>':'<string>...]'e', with characters
+//   after the 'e' of one command, but before the 'l' of the next ignored.
+//   This space is reserved, and should not contain characters other
+//   than '\n'.
 //   Example:
-//     (Input)
-//        inventor
-//        inventory
-//     (Output)
-//        ###BEGIN inventor###
-//        ###ERR inventor usage###
-//        ###BEGIN inventory###
-//        ###ERR inventory msg misuse: working copy directory required but not found###
+//     l6:leavese
+//     l7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378e
 //
-//   Errors do not affect the return value.
+// Output format: <command number>:<err code>:<last?>:<size>:<output>
+//   <command number> is a decimal number specifying which command
+//   this output is from. It is 0 for the first command, and increases
+//   by one each time.
+//   <err code> is 0 for success, 1 for a syntax error, and 2 for any
+//   other error.
+//   <last?> is 'l' if this is the last piece of output for this command,
+//   and 'm' if there is more output to come.
+//   <size> is the number of bytes in the output.
+//   <output> is the output of the command.
+//   Example:
+//     0:0:l:205:0e3171212f34839c2e3263e7282cdeea22fc5378
+//     1f4ef73c3e056883c6a5ff66728dd764557db5e6
+//     2133c52680aa2492b18ed902bdef7e083464c0b8
+//     23501f8afd1f9ee037019765309b0f8428567f8a
+//     2c295fcf5fe20301557b9b3a5b4d437b5ab8ec8c
+//     1:0:l:41:7706a422ccad41621c958affa999b1a1dd644e79
+//
+// Error conditions: Errors encountered by the commands run only set the error
+//   code in the output for that command. Malformed input results in exit with
+//   a non-zero return value and an error message.
+
+//We use our own stringbuf class so we can put in a callback on write.
+//This lets us dump output at a set length, rather than waiting until
+//we have all of the output.
+typedef std::basic_stringbuf<char,
+                             std::char_traits<char>,
+                             std::allocator<char> > char_stringbuf;
+struct my_stringbuf : public char_stringbuf
+{
+private:
+  std::streamsize written;
+  boost::function1<void, int> on_write;
+  std::streamsize last_call;
+  std::streamsize call_every;
+  bool clear;
+public:
+  my_stringbuf() : char_stringbuf(),
+                   written(0),
+                   last_call(0),
+                   call_every(constants::automate_stdio_size)
+  {}
+  virtual std::streamsize
+  xsputn(const char_stringbuf::char_type* __s, std::streamsize __n)
+  {
+    std::streamsize ret=char_stringbuf::xsputn(__s, __n);
+    written+=__n;
+    while(written>=last_call+call_every)
+      {
+        if(on_write)
+          on_write(call_every);
+        last_call+=call_every;
+      }
+    return ret;
+  }
+  virtual int sync()
+  {
+    int ret=char_stringbuf::sync();
+    if(on_write)
+      on_write(-1);
+    last_call=written;
+    return ret;
+  }
+  void set_on_write(boost::function1<void, int> x)
+  {
+    on_write = x;
+  }
+};
+
+void print_some_output(int cmdnum,
+                       int err,
+                       bool last,
+                       std::string const & text,
+                       std::ostream & s,
+                       int & pos,
+                       int size)
+{
+  if(size==-1)
+    {
+      while(text.size()-pos > constants::automate_stdio_size)
+        {
+          s<<cmdnum<<':'<<err<<':'<<'m'<<':';
+          s<<constants::automate_stdio_size<<':'
+           <<text.substr(pos, constants::automate_stdio_size);
+          pos+=constants::automate_stdio_size;
+          s.flush();
+        }
+      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
+      s<<(text.size()-pos)<<':'<<text.substr(pos);
+      pos=text.size();
+    }
+  else
+    {
+      I((unsigned int)(size) <= constants::automate_stdio_size);
+      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
+      s<<size<<':'<<text.substr(pos, size);
+      pos+=size;
+    }
+  s.flush();
+}
 
 static void
 automate_stdio(std::vector<utf8> args,
@@ -963,41 +1033,85 @@ automate_stdio(std::vector<utf8> args,
 {
   if (args.size() != 0)
     throw usage(help_name);
-  while(!std::cin.eof())
+  int cmdnum = 0;
+  char c;
+  ssize_t n=1;
+  while(n)//while(!EOF)
     {
       std::string x;
       utf8 cmd;
       args.clear();
       bool first=true;
-      do
+      int toklen=0;
+      bool firstchar=true;
+      for(n=read(0, &c, 1); c != 'l' && n; n=read(0, &c, 1))
+        ;
+      for(n=read(0, &c, 1); c!='e' && n; n=read(0, &c, 1))
         {
-          std::cin>>x;
-          if(first)
-            cmd=utf8(x);
+          if(c<='9' && c>='0')
+            {
+              toklen=(toklen*10)+(c-'0');
+            }
+          else if(c == ':')
+            {
+              char *tok=new char[toklen];
+              int count=0;
+              while(count<toklen)
+                count+=read(0, tok, toklen-count);
+              if(first)
+                cmd=utf8(std::string(tok, toklen));
+              else
+                args.push_back(utf8(std::string(tok, toklen)));
+              toklen=0;
+              delete[] tok;
+              first=false;
+            }
           else
-            args.push_back(utf8(x));
-          first=false;
+            {
+              N(false, F("Bad input to automate stdio"));
+            }
+          firstchar=false;
         }
-      while(!std::cin.eof()
-            && (std::cin.peek() != '\n')
-            && (std::cin.peek() != '\r'));
       if(cmd() != "")
         {
-          output<<(F("###BEGIN %s###") % cmd)<<std::endl;
+          int outpos=0;
+          int err;
+          std::ostringstream s;
+          my_stringbuf sb;
+          sb.set_on_write(boost::bind(print_some_output,
+                                      cmdnum,
+                                      boost::ref(err),
+                                      false,
+                                      boost::bind(&my_stringbuf::str, &sb),
+                                      boost::ref(output),
+                                      boost::ref(outpos),
+                                      _1));
+          s.std::basic_ios<char, std::char_traits<char> >::rdbuf(&sb);
           try
             {
-              automate_command(cmd, args, help_name, app, output);
-              output<<(F("###END %s###") % cmd)<<std::endl;
+              err=0;
+              automate_command(cmd, args, help_name, app, s);
             }
           catch(usage & u)
             {
-              output<<(F("###ERR %s usage###") % cmd)<<std::endl;
+              if(sb.str().size())
+                s.flush();
+              err=1;
+              commands::explain_usage(help_name, s);
             }
           catch(informative_failure & f)
             {
-              output<<(F("###ERR %s msg %s###") % cmd % f.what)<<std::endl;
+              if(sb.str().size())
+                s.flush();
+              err=2;
+              //Do this instead of printing f.what directly so the output
+              //will be split into properly-sized blocks automatically.
+              s<<f.what;
             }
+            print_some_output(cmdnum, err, true, sb.str(),
+                              output, outpos, -1);
         }
+      cmdnum++;
     }
 }
 

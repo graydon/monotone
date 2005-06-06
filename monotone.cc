@@ -49,9 +49,12 @@ struct poptOption coptions[] =
     {"message-file", 0, POPT_ARG_STRING, &argstr, OPT_MSGFILE, "set filename containing commit changelog message", NULL},
     {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
     {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
-    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
+    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the number of levels of directories to descend", NULL},
+    {"last", 0, POPT_ARG_LONG, &arglong, OPT_LAST, "limit the log output to the given number of entries", NULL},
     {"pid-file", 0, POPT_ARG_STRING, &argstr, OPT_PIDFILE, "record process id of server", NULL},
     {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, "print a brief version of the normal output", NULL},
+    {"diffs", 0, POPT_ARG_NONE, NULL, OPT_DIFFS, "print diffs along with logs", NULL},
+    {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, "skip merges when printing logs", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -214,6 +217,7 @@ int
 cpp_main(int argc, char ** argv)
 {
   clean_shutdown = false;
+  int ret = 0;
 
   atexit(&dumper);
 
@@ -223,6 +227,12 @@ cpp_main(int argc, char ** argv)
   setlocale(LC_MESSAGES, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
+
+
+  // we want to catch any early informative_failures due to charset
+  // conversion etc
+  try
+  {
 
   {
     std::ostringstream cmdline_ss;
@@ -259,7 +269,6 @@ cpp_main(int argc, char ** argv)
 
   // process main program options
 
-  int ret = 0;
   int opt;
   bool requested_help = false;
   set<int> used_local_options;
@@ -358,12 +367,24 @@ cpp_main(int argc, char ** argv)
               app.set_root(string(argstr));
               break;
 
+            case OPT_LAST:
+              app.set_last(arglong);
+              break;
+
             case OPT_DEPTH:
               app.set_depth(arglong);
               break;
 
             case OPT_BRIEF:
               global_sanity.set_brief();
+              break;
+
+            case OPT_DIFFS:
+              app.diffs = true;
+              break;
+
+            case OPT_NO_MERGES:
+              app.no_merges = true;
               break;
 
             case OPT_PIDFILE:
@@ -471,12 +492,13 @@ cpp_main(int argc, char ** argv)
       clean_shutdown = true;
       return 0;
     }
+  }
   catch (informative_failure & inf)
-    {
-      ui.inform(inf.what);
-      clean_shutdown = true;
-      return 1;
-    }
+  {
+    ui.inform(inf.what);
+    clean_shutdown = true;
+    return 1;
+  }
 
   clean_shutdown = true;
   return ret;

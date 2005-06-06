@@ -1749,7 +1749,6 @@ database::install_functions(app_state * app)
                            &sqlite3_unbase64_fn, 
                            NULL, NULL) == 0);
 
-
   I(sqlite3_create_function(sql(), "unpack", -1, 
                            SQLITE_UTF8, NULL,
                            &sqlite3_unpack_fn, 
@@ -2137,6 +2136,30 @@ database::complete(string const & partial,
     completions.insert(file_id(res[i][0]));  
 }
 
+void 
+database::complete(string const & partial,
+                   set< pair<key_id, utf8 > > & completions)
+{
+  results res;
+  completions.clear();
+
+  fetch(res, 2, any_rows,
+        "SELECT hash, id FROM public_keys WHERE hash GLOB '%q*'",
+        partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
+
+  res.clear();
+
+  fetch(res, 2, any_rows,
+        "SELECT hash, id FROM private_keys WHERE hash GLOB '%q*'",
+        partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
+}
+
 using selectors::selector_type;
 
 static void selector_to_certname(selector_type ty,
@@ -2151,6 +2174,8 @@ static void selector_to_certname(selector_type ty,
       s = branch_cert_name;
       break;
     case selectors::sel_date:
+    case selectors::sel_later:
+    case selectors::sel_earlier:
       s = date_cert_name;
       break;
     case selectors::sel_tag:
@@ -2239,9 +2264,19 @@ void database::complete(selector_type ty,
             {
               string certname;
               selector_to_certname(i->first, certname);
-              lim += "SELECT id FROM revision_certs ";
-              lim += (F("WHERE name='%s' AND unbase64(value) glob '*%s*'")
-                      % certname % i->second).str();
+              lim += (F("SELECT id FROM revision_certs WHERE name='%s' AND ") % certname).str();
+              switch (i->first)
+                {
+                case selectors::sel_earlier:
+                  lim += (F("unbase64(value) <= X'%s'") % encode_hexenc(i->second)).str();
+                  break;
+                case selectors::sel_later:
+                  lim += (F("unbase64(value) > X'%s'") % encode_hexenc(i->second)).str();
+                  break;
+                default:
+                  lim += (F("unbase64(value) glob '*%s*'") % i->second).str();
+                  break;
+                }
             }
         }
     }
@@ -2278,6 +2313,8 @@ void database::complete(selector_type ty,
       query += (F(" AND (unbase64(value) GLOB '*%s*')") % partial).str();
       query += (F(" AND (id IN %s)") % lim).str();
     }
+
+  // std::cerr << query << std::endl;    // debug expr
 
   results res;
   fetch(res, one_col, any_rows, query.c_str());
@@ -2444,4 +2481,3 @@ transaction_guard::commit()
 {
   committed = true;
 }
-

@@ -14,6 +14,7 @@
 #include <string>
 #include <iterator>
 #include <functional>
+#include <list>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -61,6 +62,12 @@ void revision_set::check_sane() const
             }
         }
     }
+}
+
+bool 
+revision_set::is_merge_node() const
+{ 
+  return edges.size() > 1; 
 }
 
 revision_set::revision_set(revision_set const & other)
@@ -713,30 +720,37 @@ toposort(std::set<revision_id> const & revisions,
 {
   sorted.clear();
   typedef std::multimap<revision_id, revision_id>::iterator gi;
+  typedef std::map<revision_id, int>::iterator pi;
   std::multimap<revision_id, revision_id> graph;
   app.db.get_revision_ancestry(graph);
   std::set<revision_id> leaves;
   app.db.get_revision_ids(leaves);
-  while (!graph.empty())
+  std::map<revision_id, int> pcount;
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    pcount.insert(std::make_pair(i->first, 0));
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    ++(pcount[i->second]);
+  // first find the set of graph roots
+  std::list<revision_id> roots;
+  for (pi i = pcount.begin(); i != pcount.end(); ++i)
+    if(i->second==0)
+      roots.push_back(i->first);
+  while (!roots.empty())
     {
-      // first find the set of current graph roots
-      std::set<revision_id> roots;
-      for (gi i = graph.begin(); i != graph.end(); ++i)
-        roots.insert(i->first);
-      for (gi i = graph.begin(); i != graph.end(); ++i)
-        roots.erase(i->second);
-      // now stick them in our ordering (if wanted), and remove them from the
-      // graph
-      for (std::set<revision_id>::const_iterator i = roots.begin();
-           i != roots.end(); ++i)
-        {
-          L(F("new root: %s\n") % (*i));
-          if (revisions.find(*i) != revisions.end())
-            sorted.push_back(*i);
-          graph.erase(*i);
-          leaves.erase(*i);
-        }
+      // now stick them in our ordering (if wanted) and remove them from the
+      // graph, calculating the new roots as we go
+      L(F("new root: %s\n") % (roots.front()));
+      if (revisions.find(roots.front()) != revisions.end())
+        sorted.push_back(roots.front());
+      for(gi i = graph.lower_bound(roots.front());
+          i != graph.upper_bound(roots.front()); i++)
+        if(--(pcount[i->second]) == 0)
+          roots.push_back(i->second);
+      graph.erase(roots.front());
+      leaves.erase(roots.front());
+      roots.pop_front();
     }
+  I(graph.empty());
   for (std::set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
     {

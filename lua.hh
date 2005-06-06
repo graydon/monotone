@@ -39,6 +39,7 @@ public:
 
   // cert hooks
   bool hook_expand_selector(std::string const & sel, std::string & exp);
+  bool hook_expand_date(std::string const & sel, std::string & exp);
   bool hook_get_branch_key(cert_value const & branchname, rsa_keypair_id & k);
   bool lua_hooks::hook_get_priv_key(rsa_keypair_id const & k,
                                    base64< arc4<rsa_priv_key> > & priv_key );
@@ -61,10 +62,10 @@ public:
                                      std::map<rsa_keypair_id, bool> const & new_results);
 
   // network hooks
-  bool hook_get_netsync_read_permitted(std::string const & collection, 
+  bool hook_get_netsync_read_permitted(std::string const & pattern, 
                                        rsa_keypair_id const & identity);
-  bool hook_get_netsync_anonymous_read_permitted(std::string const & collection);
-  bool hook_get_netsync_write_permitted(std::string const & collection, 
+  bool hook_get_netsync_anonymous_read_permitted(std::string const & pattern);
+  bool hook_get_netsync_write_permitted(std::string const & pattern, 
                                         rsa_keypair_id const & identity);
 
   // local repo hooks
@@ -115,6 +116,16 @@ public:
   // notification hooks
   bool hook_note_commit(revision_id const & new_id,
                         std::map<cert_name, cert_value> const & certs);
+
+  bool hook_note_netsync_revision_received(revision_id const & new_id,
+                        std::set<std::pair<rsa_keypair_id,
+                                         std::pair<cert_name,
+                                                cert_value> > > const & certs);
+  bool hook_note_netsync_pubkey_received(rsa_keypair_id const & kid);
+  bool hook_note_netsync_cert_received(revision_id const & rid,
+                                       rsa_keypair_id const & kid,
+                                       cert_name const & name,
+                                       cert_value const & value);
 };
 
 #endif // __LUA_HH__

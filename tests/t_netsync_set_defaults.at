@@ -1,4 +1,4 @@
-AT_SETUP([default server/collection setting])
+AT_SETUP([default server/pattern setting])
 AT_KEYWORDS(netsync)
 MONOTONE_SETUP
 NETSYNC_SETUP

@@ -94,11 +94,16 @@ _monotone_cat() {
 		compadd -- file manifest revision
 	else
 	  local mtype="$words[2]"
-		local id="$words[3]"
+		local id="$words[3]:gs/-//"
 		if (( $#id )); then
   		compadd -- $(monotone complete $mtype $id)
 		fi
 	fi
+}
+
+(( $+functions[_monotone_cert] )) ||
+_monotone_cert() {
+	_monotone_revisions
 }
 
 (( $+functions[_monotone_checkout] )) ||
@@ -127,7 +132,7 @@ _monotone_commit() {
 
 (( $+functions[_monotone_complete] )) ||
 _monotone_complete() {
-	compadd -- file manifest revision 
+	compadd -- file key manifest revision 
 }
 
 (( $+functions[_monotone_cvs_import] )) ||
@@ -181,7 +186,7 @@ _monotone_heads() {
 (( $+functions[_monotone_log] )) ||
 _monotone_log() {
   _arguments -s \
-    '--depth=[n]' \
+    '--last=[n]' \
 		'--revision=:revision:_monotone_revisions' \
 	  '*:added file:_monotone_existing_entries'
 }
@@ -278,7 +283,7 @@ _monotone_files_unmaintained() {
 
 (( $+functions[_monotone_existing_entries] )) ||
 _monotone_existing_entries() {
-	_path_files -F "$_monotone_ignore_default" -g "*"
+	for i in `monotone ls known --depth=0 .`; do compadd -- $i:t; done
 }
 
 (( $+functions[_monotone_branches] )) ||

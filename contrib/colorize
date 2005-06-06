@@ -1,0 +1,197 @@
+#!/usr/bin/perl
+use strict;
+
+our $VERSION = 0.5;
+
+# $Id: colorize,v 1.5 2004/07/19 14:50:38 cbouvi Exp $
+#
+#  Copyright (C) 2004 Cédric Bouvier
+#
+#  This program is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU General Public License as published by the Free
+#  Software Foundation; either version 2 of the License, or (at your option)
+#  any later version.
+#
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+#  Place, Suite 330, Boston, MA  02111-1307  USA
+
+# $Log: colorize,v $
+# Revision 1.5  2004/07/19 14:50:38  cbouvi
+# Updated the POD
+#
+# Revision 1.4  2004/07/19 14:19:25  cbouvi
+# Added ability to store patterns in a config file, called with --config
+#
+# Revision 1.3  2004/07/16 08:55:52  cbouvi
+# Move the test of $opt{pattern} outside the main loop.
+#
+# Revision 1.2  2004/07/15 15:58:26  cbouvi
+# Introduced "use strict;".
+# Now uses Getopt::Long instead of -s
+#
+
+sub read_conf {
+
+    my $filename = shift;
+    open my $fh, "<$filename" or die "Cannot read $filename: $!\n";
+    my @pattern;
+    while ( <$fh> ) {
+        chomp;
+        next if /^\s*(?:#.*)?$/;
+        my ($delim) = /(\S)/;
+        $delim = quotemeta $delim;
+        eval "/^\\s*$delim((?:\\\\.|[^\\\\$delim])*?)$delim\\s+(.*)\$/ and push \@pattern, [\$1, \$2]";
+    }
+    return @pattern;
+}
+
+use Getopt::Long;
+use Pod::Usage;
+
+my %opt;
+GetOptions \%opt, qw/ help|h version|v tail|tail-f|t pattern|p config|f=s /
+    or pod2usage -verbose => 0, -message => "Try $0 --help";
+
+$opt{help} and pod2usage -verbose => 1;
+if ( $opt{version} ) {
+    print "colorize version $VERSION\n";
+    exit 0;
+}
+
+require Term::ANSIColor;
+if ( $^O eq 'MSWin32' ) {
+    require Win32::Console::ANSI;
+    import Win32::Console::ANSI;
+}
+
+my @pattern = (
+    [ q/(?i)\bERROR\b/,   'bold red'    ], 
+    [ q/(?i)\bWARNING\b/, 'bold yellow' ], 
+    [ q/(?i)\bINFO\b/,    'bold green'  ], 
+    [ q/(?i)\bDEBUG\b/,   'bold cyan'   ], 
+);
+
+@pattern = read_conf($opt{config}) if $opt{config};
+
+foreach ( @pattern ) {
+    $$_[0] = qr/$$_[0]/;
+    $$_[1] = Term::ANSIColor::color($$_[1]);
+}
+
+my $reset = Term::ANSIColor::color('reset');
+
+if ( $opt{tail} ) {
+    open STDIN, "tail -f $ARGV[0] |" or die "Cannot run tail -f $ARGV[0]: $!";
+    @ARGV = ();
+}
+
+my $color_cref = $opt{pattern}
+    ? sub { $` . $_[0] . $& . $reset . $' }
+    : sub { $_[0] . $_ . $reset };
+
+while ( <> ) {
+    chomp;
+    foreach my $pat ( @pattern ) {
+        next unless /$$pat[0]/;
+        $_ = $color_cref->($$pat[1]);
+        last;
+    }
+}
+continue {
+    print "$_\n";
+}
+
+=head1 NAME
+
+colorize - adds ANSI escape sequences to colorize lines in a file
+
+=head1 SYNOPSIS
+
+    colorize [-p] [-f config] file1 file2 file3 ...
+    colorize [-f config] -t file
+
+=head1 DESCRIPTION
+
+This very simple program reads lines from text files and prints them out to the
+standard output. It tries to match each line against a series of regular
+expressions, and if one of them matches, the line is displayed in color.
+
+When no file names are given on the command line, the standard input is read
+instead.
+
+=head2 Configuring Patterns and Colors
+
+The configuration file is given by means of the C<--config> command-line
+switch.
+
+Blank lines and comment lines are ignored. Comments must stand out on a line by
+themselves and start with a hash sign (C<#>).
+
+Each line that is not blank nor a comment should contain a regular expression
+and a list of color and/or attribute keywords, separated by whitespace. If a
+line of the input file matches the regular expression, the line will be
+rendered in the color defined by the keywords. See L<Term::ANSIColor> for the
+full list of available keywords.
+
+The regular expression can be any Perl 5 compatible regular expression. It must
+be enclosed in slashes C<//>.
+
+Example (this is the built-in default):
+
+    /(?i)\bERROR\b/    bold red    
+    /(?i)\bWARNING\b/  bold yellow 
+    /(?i)\bINFO\b/     bold green  
+    /(?i)\bDEBUG\b/    bold cyan   
+
+=head2 Options
+
+=over 4
+
+=item B<-f> I<FILE>, B<--config>=I<FILE>
+
+Use I<FILE> as the configuration file.
+
+=item B<-p>, B<--pattern>
+
+Only colorizes the portion of the line that matches the pattern, not the whole
+line.
+
+=item B<-t>, B<--tail>, B<--tail-f>
+
+Runs the input file through C<tail -f>, so that C<colorize> does not stop at
+the end of the file, but keeps on waiting for new lines to arrive. There must
+be only one input file in that case, all the others will be ignored.
+
+=item B<-v>, B<--version>
+
+Prints the version and exits
+
+=item B<-h>, B<--help>
+
+Prints help message and exits.
+
+=end
+
+=head2 Note for Microsoft® Windows® users
+
+The "Dos Prompt" (F<cmd.exe>) does not support the ANSI terminal escape
+sequence. This program thus requires the module C<Win32::Console::ANSI> if it
+detects that it is running on such an OS.
+
+=head1 SEE ALSO
+
+perlre(1), L<Term::ANSIColor>, L<Win32::Console::ANSI>
+
+=head1 AUTHOR
+
+Copyright © 2004
+
+Cédric Bouvier <cbouvi@cpan.org>
+
+=cut

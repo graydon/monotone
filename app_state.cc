@@ -30,8 +30,8 @@ static string const branch_option("branch");
 static string const key_option("key");
 
 app_state::app_state() 
-  : branch_name(""), db(""), stdhooks(true), rcfiles(true),
-    search_root("/"), depth(-1)
+  : branch_name(""), db(""), stdhooks(true), rcfiles(true), diffs(false),
+    search_root("/"), depth(-1), last(-1)
 {
   db.set_app(this);
 }
@@ -177,6 +177,13 @@ app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & pa
       L(F("'%s' added to restricted path set\n") % p());
       restrictions.insert(p);
     }
+
+  // if user supplied a depth but provided no paths 
+  // assume current directory
+  if ((depth != -1) && restrictions.empty()) 
+    {
+      restrictions.insert(dot);
+    }
 }
 
 bool
@@ -189,18 +196,22 @@ app_state::restriction_includes(file_path const & path)
     {
       return true;
     }
-  
+
+  bool user_supplied_depth = (depth != -1);
+
   // a path that normalizes to "." means that the restriction has been
   // essentially cleared (all files are included). rather than be
   // careful about what goes in to the restricted path set we just
   // check for this special case here.
 
-  if (restrictions.find(dot) != restrictions.end())
+  if ((!user_supplied_depth) && restrictions.find(dot) != restrictions.end())
     {
       return true;
     }
 
   fs::path test = mkpath(path());
+  long branch_depth = 0;
+  long max_depth = depth + 1;
 
   while (!test.empty()) 
     {
@@ -220,9 +231,17 @@ app_state::restriction_includes(file_path const & path)
           L(F("path '%s' not found in restricted path set; '%s' excluded\n") 
             % test.string() % path());
         }
+
+      if (user_supplied_depth && (max_depth == branch_depth)) return false;
       test = test.branch_path();
+      ++branch_depth;
     }
-      
+
+  if (user_supplied_depth && (restrictions.find(dot) != restrictions.end()))
+    {
+      return (branch_depth <= max_depth);
+    }
+
   return false;
 }
 
@@ -294,9 +313,17 @@ app_state::set_author(utf8 const & a)
 void
 app_state::set_depth(long d)
 {
-  N(d > 0,
-    F("negative or zero depth not allowed\n"));
+  N(d >= 0,
+    F("negative depth not allowed\n"));
   depth = d;
+}
+
+void
+app_state::set_last(long l)
+{
+  N(l > 0,
+    F("negative or zero last not allowed\n"));
+  last = l;
 }
 
 void

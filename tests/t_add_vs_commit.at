@@ -41,7 +41,7 @@ AT_CHECK( (cd bobwd; MONOTONE --root=. commit -m 'bob commit'), [], [ignore], [i
 REV=`BASE_REVISION`
 
 # Alice does her update, then attempts, eg., a diff
-AT_CHECK( (cd alicewd; MONOTONE --root=. update $REV), [], [ignore], [ignore])
+AT_CHECK( (cd alicewd; MONOTONE --root=. update --revision=$REV), [], [ignore], [ignore])
 AT_CHECK( (cd alicewd; MONOTONE --root=. diff), [], [ignore], [ignore])
 
 AT_CLEANUP

@@ -415,6 +415,9 @@ public:
   void complete(std::string const & partial,
                 std::set<file_id> & completions);
 
+  void complete(std::string const & partial,
+                std::set< std::pair<key_id, utf8 > > & completions);
+
   void complete(selectors::selector_type ty,
                 std::string const & partial,
                 std::vector<std::pair<selectors::selector_type, 

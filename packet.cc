@@ -434,9 +434,32 @@ delayed_private_key_packet::~delayed_private_key_packet()
 }
 
 
-void packet_consumer::set_on_revision_written(boost::function0<void> const & x)
+void
+packet_consumer::set_on_revision_written(boost::function1<void,
+                                                        revision_id> const & x)
 {
   on_revision_written=x;
+}
+
+void
+packet_consumer::set_on_cert_written(boost::function1<void,
+                                                      cert const &> const & x)
+{
+  on_cert_written=x;
+}
+
+void
+packet_consumer::set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
+                                                  const & x)
+{
+  on_pubkey_written=x;
+}
+
+void
+packet_consumer::set_on_privkey_written(boost::function1<void, rsa_keypair_id>
+                                                  const & x)
+{
+  on_privkey_written=x;
 }
 
 
@@ -669,7 +692,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
 
 void 
 packet_db_writer::consume_file_reverse_delta(file_id const & new_id,
-                                             file_id const & old_id,                                         
+                                             file_id const & old_id,
                                              file_delta const & del)
 {
   transaction_guard guard(pimpl->app.db);
@@ -893,7 +916,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
       if (dp->all_prerequisites_satisfied())
         {
           pimpl->app.db.put_revision(ident, dat);
-          if(on_revision_written) on_revision_written();
+          if(on_revision_written) on_revision_written(ident);
           pimpl->accepted_revision(ident, *this);
         }
     }
@@ -912,6 +935,7 @@ packet_db_writer::consume_revision_cert(revision<cert> const & t)
       if (pimpl->revision_exists_in_db(revision_id(t.inner().ident)))
         {
           pimpl->app.db.put_revision_cert(t);
+          if(on_cert_written) on_cert_written(t.inner());
         }
       else
         {
@@ -946,7 +970,10 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
       return;
     }
   if (! pimpl->app.db.public_key_exists(ident))
-    pimpl->app.db.put_key(ident, k);
+    {
+      pimpl->app.db.put_key(ident, k);
+      if(on_pubkey_written) on_pubkey_written(ident);
+    }
   else
     {
       base64<rsa_pub_key> tmp;
@@ -970,7 +997,10 @@ packet_db_writer::consume_private_key(rsa_keypair_id const & ident,
       return;
     }
   if (! pimpl->app.db.private_key_exists(ident))
-    pimpl->app.db.put_key(ident, k);
+    {
+      pimpl->app.db.put_key(ident, k);
+      if(on_privkey_written) on_privkey_written(ident);
+    }
   else
     L(F("skipping existing private key %s\n") % ident);
   ++(pimpl->count);
@@ -1025,11 +1055,38 @@ packet_db_valve::open_valve()
 
 #define DOIT(x) pimpl->do_packet(boost::shared_ptr<delayed_packet>(new x));
 
-void packet_db_valve::set_on_revision_written(boost::function0<void> const & x)
+void
+packet_db_valve::set_on_revision_written(boost::function1<void,
+                                                        revision_id> const & x)
 {
   on_revision_written=x;
   pimpl->writer.set_on_revision_written(x);
 }
+
+void
+packet_db_valve::set_on_cert_written(boost::function1<void,
+                                                      cert const &> const & x)
+{
+  on_cert_written=x;
+  pimpl->writer.set_on_cert_written(x);
+}
+
+void
+packet_db_valve::set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
+                                                  const & x)
+{
+  on_pubkey_written=x;
+  pimpl->writer.set_on_pubkey_written(x);
+}
+
+void
+packet_db_valve::set_on_privkey_written(boost::function1<void, rsa_keypair_id>
+                                                  const & x)
+{
+  on_privkey_written=x;
+  pimpl->writer.set_on_privkey_written(x);
+}
+
 void
 packet_db_valve::consume_file_data(file_id const & ident, 
                                    file_data const & dat)

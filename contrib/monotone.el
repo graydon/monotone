@@ -352,7 +352,7 @@ Nothing for now."
       (view-mode)
       (set-buffer-modified-p nil)
       ;; did we part on good terms?
-      (when (not (zerop mt-status))
+      (when (and mt-status (not (zerop mt-status)))
         (message "%s: exited with status %s" mt-pgm mt-status)
         (beep)
         (sit-for 3))
@@ -685,7 +685,7 @@ the buffer if not global."
   (let ((cmds (list "log"))
         (depth monotone-log-depth))
     (when (and (numberp depth) (< 0 depth))
-      (setq cmds (append cmds (list (format "--depth=%d" depth)))))
+      (setq cmds (append cmds (list (format "--last=%d" last)))))
     (monotone-cmd-buf arg cmds)
     (rename-buffer "*monotone log*" t)))
 ;; (monotone-vc-print-log)

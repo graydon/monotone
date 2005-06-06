@@ -50,16 +50,16 @@ MIDDLE_R_SHA=`BASE_REVISION`
 
 # Create leaf revision based off middle.
 AT_CHECK(cp left-leaf testfile)
-AT_CHECK(MONOTONE commit --message blah-blah, [], [ignore], [ignore])g
+AT_CHECK(MONOTONE commit --message blah-blah, [], [ignore], [ignore])
 LEFT_LEAF_R_SHA=`BASE_REVISION`
 
 # Test going backward in the revision tree.
-AT_CHECK(MONOTONE update $ROOT_R_SHA, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update --revision=$ROOT_R_SHA, [], [ignore], [ignore])
 diff -u testfile root
 AT_CHECK(cmp testfile root, [], [ignore])
 
 # Test going forward in the revision tree.
-AT_CHECK(MONOTONE update $MIDDLE_R_SHA, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update --revision=$MIDDLE_R_SHA, [], [ignore], [ignore])
 AT_CHECK(cmp testfile middle, [], [ignore])
 
 # Create a fork from middle.
@@ -68,12 +68,12 @@ AT_CHECK(MONOTONE commit --message blah-blah, [], [ignore], [ignore])
 RIGHT_LEAF_R_SHA=`BASE_REVISION`
 
 # Test going from the right left to the left leaf via the common ancestor.
-AT_CHECK(MONOTONE update $LEFT_LEAF_R_SHA, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update --revision=$LEFT_LEAF_R_SHA, [], [ignore], [ignore])
 AT_CHECK(cmp testfile left-leaf, [], [ignore])
 
 # Test that working copy changes are kept while going backward.
 AT_CHECK(cp modified-left-leaf testfile)
-AT_CHECK(MONOTONE update $ROOT_R_SHA, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update --revision=$ROOT_R_SHA, [], [ignore], [ignore])
 AT_CHECK(cmp testfile modified-root, [], [ignore])
 
 AT_CLEANUP

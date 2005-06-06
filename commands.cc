@@ -134,9 +134,9 @@ namespace commands
     vector<string> matched;
 
     for (map<string,command *>::const_iterator i = cmds.begin();
-         i != cmds.end(); ++i) 
+         i != cmds.end(); ++i)
       {
-        if (cmd.length() < i->first.length()) 
+        if (cmd.length() < i->first.length())
           {
             string prefix(i->first, 0, cmd.length());
             if (cmd == prefix) matched.push_back(i->first);
@@ -409,8 +409,9 @@ describe_revision(app_state & app, revision_id const & id)
 
 static void 
 complete(app_state & app, 
-         string const & str, 
-         revision_id & completion)
+         string const & str,
+         revision_id & completion,
+         bool must_exist=true)
 {
   // This copies the start of selectors::parse_selector().to avoid
   // getting a log when there's no expansion happening...:
@@ -421,6 +422,9 @@ complete(app_state & app,
       && str.size() == constants::idlen)
     {
       completion = revision_id(str);
+      if (must_exist)
+        N(app.db.revision_exists(completion),
+          F("no such revision '%s'") % completion);
       return;
     }
 
@@ -450,7 +454,7 @@ complete(app_state & app,
 
 static void 
 complete(app_state & app, 
-         string const & str, 
+         string const & str,
          manifest_id & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
@@ -479,7 +483,7 @@ complete(app_state & app,
 
 static void 
 complete(app_state & app, 
-         string const & str, 
+         string const & str,
          file_id & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
@@ -720,36 +724,41 @@ changes_summary::add_change_set(change_set const & cs)
     }
 }
 
+static void 
+print_indented_set(std::ostream & os, 
+                   set<file_path> const & s,
+                   size_t max_cols)
+{
+  size_t cols = 8;
+  os << "       ";
+  for (std::set<file_path>::const_iterator i = s.begin();
+       i != s.end(); i++)
+    {
+      const std::string str = (*i)();
+      if (cols > 8 && cols + str.size() + 1 >= max_cols)
+        {
+          cols = 8;
+          os << endl << "       "; 
+        }
+      os << " " << str;
+      cols += str.size() + 1;
+    }
+  os << endl;
+}
+
 void
 changes_summary::print(std::ostream & os, size_t max_cols) const
 {
-#define PRINT_INDENTED_SET(setname) \
-  size_t cols = 8; \
-  os << "       "; \
-  for (std::set<file_path>::const_iterator i = setname.begin(); \
-       i != setname.end(); i++) \
-    { \
-      const std::string str = (*i)(); \
-      if (cols > 8 && cols + str.size() + 1 >= max_cols) \
-        { \
-          cols = 8; \
-          os << endl << "       "; \
-        } \
-      os << " " << str; \
-      cols += str.size() + 1; \
-    } \
-  os << endl;
-
   if (! rearrangement.deleted_files.empty())
     {
       os << "Deleted files:" << endl;
-      PRINT_INDENTED_SET(rearrangement.deleted_files)
+      print_indented_set(os, rearrangement.deleted_files, max_cols);
     }
-
+  
   if (! rearrangement.deleted_dirs.empty())
     {
       os << "Deleted directories:" << endl;
-      PRINT_INDENTED_SET(rearrangement.deleted_dirs)
+      print_indented_set(os, rearrangement.deleted_dirs, max_cols);
     }
 
   if (! rearrangement.renamed_files.empty())
@@ -773,16 +782,14 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
   if (! rearrangement.added_files.empty())
     {
       os << "Added files:" << endl;
-      PRINT_INDENTED_SET(rearrangement.added_files)
+      print_indented_set(os, rearrangement.added_files, max_cols);
     }
 
   if (! modified_files.empty())
     {
       os << "Modified files:" << endl;
-      PRINT_INDENTED_SET(modified_files)
+      print_indented_set(os, modified_files, max_cols);
     }
-
-#undef PRINT_INDENTED_SET
 }
 
 CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair", OPT_NONE)
@@ -910,7 +917,7 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
     throw usage(name);
 
   revision_id rid;
-  complete(app, idx(args, 0)(), rid);
+  complete(app, idx(args, 0)(), rid, false);
   hexenc<id> ident(rid.inner());
   
   cert_name name;
@@ -1255,7 +1262,8 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
   
 }
 
-CMD(status, "informative", "[PATH]...", "show status of working copy", OPT_NONE)
+CMD(status, "informative", "[PATH]...", "show status of working copy",
+    OPT_DEPTH)
 {
   revision_set rs;
   manifest_map m_old, m_new;
@@ -1396,8 +1404,11 @@ CMD(cat, "informative",
 }
 
 
-CMD(checkout, "tree", "[--revision=REVISION] [DIRECTORY]\n",
-    "check out revision from database into directory",
+CMD(checkout, "tree", "[DIRECTORY]\n",
+    "check out revision from database into directory.\n"
+    "If a revision is given, that's the one that will be checked out.\n"
+    "Otherwise, it will be the head of the branch (given or implicit).\n"
+    "If no directory is given, the branch name will be used as directory",
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_id ident;
@@ -1705,7 +1716,7 @@ CMD(list, "informative",
     "missing",
     "show database objects, or the current working copy manifest,\n"
     "or unknown, intentionally ignored, or missing state files",
-    OPT_NONE)
+    OPT_DEPTH)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -1923,13 +1934,13 @@ CMD(reindex, "network", "",
 
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
-static const var_key default_collection_key(var_domain("database"),
-                                            var_name("default-collection"));
+static const var_key default_pattern_key(var_domain("database"),
+                                            var_name("default-pattern"));
 
 static void
 process_netsync_client_args(std::string const & name,
                             std::vector<utf8> const & args,
-                            utf8 & addr, std::vector<utf8> & collections,
+                            utf8 & addr, std::vector<utf8> & patterns,
                             app_state & app)
 {
   if (args.size() > 2)
@@ -1953,74 +1964,75 @@ process_netsync_client_args(std::string const & name,
       addr = utf8(addr_value());
       L(F("using default server address: %s\n") % addr);
     }
-  // NB: even though the netsync code wants a vector of collections, in fact
+  // NB: even though the netsync code wants a vector of patterns, in fact
   // this only works for the server; when we're a client, our vector must have
   // length exactly 1.
-  utf8 collection;
+  utf8 pattern;
   if (args.size() >= 2)
     {
-      collection = idx(args, 1);
-      if (!app.db.var_exists(default_collection_key))
+      pattern = idx(args, 1);
+      if (!app.db.var_exists(default_pattern_key))
         {
-          P(F("setting default collection to %s\n") % collection);
-          app.db.set_var(default_collection_key, var_value(collection()));
+          P(F("setting default regex pattern to %s\n") % pattern);
+          app.db.set_var(default_pattern_key, var_value(pattern()));
         }
     }
   else
     {
-      N(app.db.var_exists(default_collection_key),
-        F("no collection given and no default collection set"));
-      var_value collection_value;
-      app.db.get_var(default_collection_key, collection_value);
-      collection = utf8(collection_value());
-      L(F("using default collection: %s\n") % collection);
+      N(app.db.var_exists(default_pattern_key),
+        F("no regex pattern given and no default pattern set"));
+      var_value pattern_value;
+      app.db.get_var(default_pattern_key, pattern_value);
+      pattern = utf8(pattern_value());
+      L(F("using default regex pattern: %s\n") % pattern);
     }
-  collections.push_back(collection);
+  patterns.push_back(pattern);
 }
 
-CMD(push, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
-    "push COLLECTION to netsync server at ADDRESS", OPT_NONE)
+CMD(push, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
+    "push branches matching REGEX to netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr;
-  vector<utf8> collections;
-  process_netsync_client_args(name, args, addr, collections, app);
+  vector<utf8> patterns;
+  process_netsync_client_args(name, args, addr, patterns, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  run_netsync_protocol(client_voice, source_role, addr, collections, app);  
+  run_netsync_protocol(client_voice, source_role, addr, patterns, app);  
 }
 
-CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
-    "pull COLLECTION from netsync server at ADDRESS", OPT_NONE)
+CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
+    "pull branches matching REGEX from netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr;
-  vector<utf8> collections;
-  process_netsync_client_args(name, args, addr, collections, app);
+  vector<utf8> patterns;
+  process_netsync_client_args(name, args, addr, patterns, app);
 
   if (app.signing_key() == "")
     W(F("doing anonymous pull\n"));
   
-  run_netsync_protocol(client_voice, sink_role, addr, collections, app);  
+  run_netsync_protocol(client_voice, sink_role, addr, patterns, app);  
 }
 
-CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [COLLECTION]]",
-    "sync COLLECTION with netsync server at ADDRESS", OPT_NONE)
+CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
+    "sync branches matching REGEX with netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr;
-  vector<utf8> collections;
-  process_netsync_client_args(name, args, addr, collections, app);
+  vector<utf8> patterns;
+  process_netsync_client_args(name, args, addr, patterns, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  run_netsync_protocol(client_voice, source_and_sink_role, addr, collections, app);  
+  run_netsync_protocol(client_voice, source_and_sink_role, addr, patterns,
+                       app);  
 }
 
-CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
-    "listen on ADDRESS and serve COLLECTION to connecting clients", OPT_PIDFILE)
+CMD(serve, "network", "ADDRESS[:PORTNUMBER] REGEX ...",
+    "listen on ADDRESS and serve the specified branches to connecting clients", OPT_PIDFILE)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -2036,8 +2048,8 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] COLLECTION...",
   require_password(key, app);
 
   utf8 addr(idx(args,0));
-  vector<utf8> collections(args.begin() + 1, args.end());
-  run_netsync_protocol(server_voice, source_and_sink_role, addr, collections, app);  
+  vector<utf8> patterns(args.begin() + 1, args.end());
+  run_netsync_protocol(server_voice, source_and_sink_role, addr, patterns, app);  
 }
 
 
@@ -2232,7 +2244,7 @@ string_to_datetime(std::string const & s)
 
 CMD(commit, "working copy", "[PATH]...", 
     "commit working copy to database",
-    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR)
+    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR % OPT_DEPTH)
 {
   string log_message("");
   revision_set rs;
@@ -2670,16 +2682,22 @@ void do_diff(const string & name,
   dump_diffs(composite.deltas, app, new_is_archived, type);
 }
 
-CMD(cdiff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
-    "show current context diffs on stdout",
+CMD(cdiff, "informative", "[PATH]...", 
+    "show current context diffs on stdout.\n"
+    "If one revision is given, the diff between the working directory and\n"
+    "that revision is shown.  If two revisions are given, the diff between\n"
+    "them is given.",
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   do_diff(name, app, args, context_diff);
 }
 
-CMD(diff, "informative", "[--revision=REVISION [--revision=REVISION]] [PATH]...", 
-    "show current unified diffs on stdout",
-    OPT_BRANCH_NAME % OPT_REVISION)
+CMD(diff, "informative", "[PATH]...", 
+    "show current unified diffs on stdout.\n"
+    "If one revision is given, the diff between the working directory and\n"
+    "that revision is shown.  If two revisions are given, the diff between\n"
+    "them is given.",
+    OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH)
 {
   do_diff(name, app, args, unified_diff);
 }
@@ -2825,16 +2843,22 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, "working copy", "[REVISION]", "update working copy to be based off another revision",
-    OPT_BRANCH_NAME)
+CMD(update, "working copy", "",
+    "update working copy.\n"
+    "If a revision is given, base the update on that revision.  If not,\n"
+    "base the update on the head of the branch (given or implicit).",
+    OPT_BRANCH_NAME % OPT_REVISION)
 {
   manifest_map m_old, m_ancestor, m_working, m_chosen;
   manifest_id m_ancestor_id, m_chosen_id;
   revision_set r_old, r_working, r_new;
   revision_id r_old_id, r_chosen_id;
-  change_set old_to_chosen, update;
+  change_set old_to_chosen, update, remaining;
 
-  if (args.size() != 0 && args.size() != 1)
+  if (args.size() > 0)
+    throw usage(name);
+
+  if (app.revision_selectors.size() > 1)
     throw usage(name);
 
   if (!app.branch_name().empty())
@@ -2849,7 +2873,7 @@ CMD(update, "working copy", "[REVISION]", "update working copy to be based off a
   N(!null_id(r_old_id),
     F("this working directory is a new project; cannot update"));
 
-  if (args.size() == 0)
+  if (app.revision_selectors.size() == 0)
     {
       set<revision_id> candidates;
       pick_update_candidates(r_old_id, app, candidates);
@@ -2868,7 +2892,7 @@ CMD(update, "working copy", "[REVISION]", "update working copy to be based off a
     }
   else
     {
-      complete(app, idx(args, 0)(), r_chosen_id);
+      complete(app, app.revision_selectors[0](), r_chosen_id);
       N(app.db.revision_exists(r_chosen_id),
         F("no revision %s found in database") % r_chosen_id);
     }
@@ -2919,18 +2943,33 @@ CMD(update, "working copy", "[REVISION]", "update working copy to be based off a
         working_to_merged, 
         chosen_to_merged;
 
-      L(F("merging working copy with chosen edge %s -> %s\n") 
+      L(F("merging working copy with chosen edge %s -> %s\n")
         % r_old_id % r_chosen_id);
 
+      // we have the following
+      //
+      // old --- working
+      //   \         \
+      //  chosen --- merged
+      //
+      // - old is the revision specified in MT/revision
+      // - working is based on old and includes the working copy's changes
+      // - chosen is the revision we're updating to and will end up in MT/revision
+      // - merged is the merge of working and chosen
+      // 
+      // we apply the working to merged changeset to the working copy
+      // and keep the rearrangement from chosen to merged changeset in MT/work
+
       merge_change_sets(old_to_chosen, 
-                        old_to_working, 
+                        old_to_working,
                         chosen_to_merged, 
-                        working_to_merged, 
+                        working_to_merged,
                         merger, app);
       // dump_change_set("chosen to merged", chosen_to_merged);
       // dump_change_set("working to merged", working_to_merged);
 
       update = working_to_merged;
+      remaining = chosen_to_merged;
     }
   
   local_path tmp_root((mkpath(book_keeping_dir) / mkpath("tmp")).string());
@@ -2950,6 +2989,7 @@ CMD(update, "working copy", "[REVISION]", "update working copy to be based off a
   put_revision_id(r_chosen_id);
   P(F("updated to base revision %s\n") % r_chosen_id);
 
+  put_path_rearrangement(remaining.rearrangement);
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
@@ -3032,7 +3072,7 @@ try_one_merge(revision_id const & left_id,
   merge_provider merger(app, anc_man, left_man, right_man);
   
   merge_change_sets(*anc_to_left, *anc_to_right, 
-                    *left_to_merged, *right_to_merged, 
+                    *left_to_merged, *right_to_merged,
                     merger, app);
   
   {
@@ -3063,13 +3103,19 @@ try_one_merge(revision_id const & left_id,
   write_revision_set(merged_rev, merged_data);
   calculate_ident(merged_data, merged_id);
   dbw.consume_revision_data(merged_id, merged_data);
-  cert_revision_date_now(merged_id, app, dbw);
-  cert_revision_author_default(merged_id, app, dbw);
+  if (app.date().length() > 0)
+    cert_revision_date_time(merged_id, string_to_datetime(app.date()), app, dbw);
+  else
+    cert_revision_date_now(merged_id, app, dbw);
+  if (app.author().length() > 0)
+    cert_revision_author(merged_id, app.author(), app, dbw);
+  else
+    cert_revision_author_default(merged_id, app, dbw);
 }                         
 
 
 CMD(merge, "tree", "", "merge unmerged heads of branch",
-    OPT_BRANCH_NAME)
+    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
 {
   set<revision_id> heads;
 
@@ -3119,7 +3165,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch",
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
     "merge from one branch to another asymmetrically",
-    OPT_NONE)
+    OPT_DATE % OPT_AUTHOR)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less
@@ -3212,7 +3258,7 @@ CMD(explicit_merge, "tree",
     "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
     "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
     "merge two explicitly given revisions, placing result in given branch",
-    OPT_NONE)
+    OPT_DATE % OPT_AUTHOR)
 {
   revision_id left, right, ancestor;
   string branch;
@@ -3267,17 +3313,20 @@ CMD(explicit_merge, "tree",
   P(F("[merged] %s\n") % merged);
 }
 
-CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID",
+CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
     "complete partial id",
-    OPT_NONE)
+    OPT_BRIEF)
 {
   if (args.size() != 2)
     throw usage(name);
 
+  bool brief = global_sanity.brief;
+
+  N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
+    F("non-hex digits in partial id"));
+
   if (idx(args, 0)() == "revision")
     {      
-      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-        F("non-hex digits in partial id"));
       set<revision_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<revision_id>::const_iterator i = completions.begin();
@@ -3286,8 +3335,6 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID",
     }
   else if (idx(args, 0)() == "manifest")
     {      
-      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-        F("non-hex digits in partial id"));
       set<manifest_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<manifest_id>::const_iterator i = completions.begin();
@@ -3296,13 +3343,24 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID",
     }
   else if (idx(args, 0)() == "file")
     {
-      N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
-        F("non-hex digits in partial id"));
       set<file_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<file_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         cout << i->inner()() << endl;
+    }
+  else if (idx(args, 0)() == "key")
+    {
+      typedef set< pair<key_id, utf8 > > completions_t;
+      completions_t completions;
+      app.db.complete(idx(args, 1)(), completions);
+      for (completions_t::const_iterator i = completions.begin();
+           i != completions.end(); ++i)
+        {
+          cout << i->first.inner()();
+          if (!brief) cout << " " << i->second();
+          cout << endl;
+        }
     }
   else
     throw usage(name);  
@@ -3310,7 +3368,7 @@ CMD(complete, "informative", "(revision|manifest|file) PARTIAL-ID",
 
 
 CMD(revert, "working copy", "[PATH]...", 
-    "revert file(s), dir(s) or entire working copy", OPT_NONE)
+    "revert file(s), dir(s) or entire working copy", OPT_DEPTH)
 {
   manifest_map m_old;
   revision_id old_revision_id;
@@ -3485,10 +3543,10 @@ CMD(annotate, "informative", "PATH",
   do_annotate(app, file, fid, rid);
 }
 
-CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]]",
-    "print history in reverse order (filtering by 'file').  If one or more revisions\n"
-    "are given, use them as a starting point.",
-    OPT_DEPTH % OPT_REVISION % OPT_BRIEF)
+CMD(log, "informative", "[FILE]",
+    "print history in reverse order (filtering by 'FILE').  If one or more\n"
+    "revisions are given, use them as a starting point.",
+    OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES)
 {
   file_path file;
 
@@ -3527,10 +3585,10 @@ CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]
   cert_name comment_name(comment_cert_name);
 
   set<revision_id> seen;
-  long depth = app.depth;
+  long last = app.last;
 
   revision_set rev;
-  while(! frontier.empty() && (depth == -1 || depth > 0))
+  while(! frontier.empty() && (last == -1 || last > 0))
     {
       set< pair<file_path, revision_id> > next_frontier;
       for (set< pair<file_path, revision_id> >::const_iterator i = frontier.begin();
@@ -3593,6 +3651,9 @@ CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]
 
               csum.add_change_set(cs);
             }
+
+          if (app.no_merges && rev.is_merge_node())
+            print_this = false;
           
           if (print_this)
           {
@@ -3630,9 +3691,19 @@ CMD(log, "informative", "[file] [--revision=REVISION [--revision=REVISION [...]]
                 log_certs(app, rid, comment_name,   "Comments: ",  true);
               }
 
-            if (depth > 0)
+            if (app.diffs)
               {
-                depth--;
+                for (edge_map::const_iterator e = rev.edges.begin();
+                     e != rev.edges.end(); ++e)
+                  {
+                    dump_diffs(edge_changes(e).deltas,
+                               app, true, unified_diff);
+                  }
+              }
+
+            if (last > 0)
+              {
+                last--;
               }
           }
         }
@@ -3670,7 +3741,8 @@ CMD(automate, "automation",
     "leaves\n"
     "inventory\n"
     "stdio\n"
-    "certs REV\n",
+    "certs REV\n"
+    "select SELECTOR\n",
     "automation interface", 
     OPT_NONE)
 {

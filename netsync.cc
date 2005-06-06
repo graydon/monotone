@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <list>
 
 #include <time.h>
 
@@ -13,6 +14,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
+#include <boost/regex.hpp>
 
 #include "app_state.hh"
 #include "cert.hh"
@@ -134,9 +136,9 @@
 // issues a nonce which must be used for a subsequent authentication.
 //
 // the client can then respond with an "auth (source|sink|both)
-// <collection> <id> <nonce1> <nonce2> <sig>" command which identifies its
+// <pattern> <id> <nonce1> <nonce2> <sig>" command which identifies its
 // RSA key, notes the role it wishes to play in the synchronization,
-// identifies the collection it wishes to sync with, signs the previous
+// identifies the pattern it wishes to sync with, signs the previous
 // nonce with its own key, and issues a nonce of its own for mutual
 // authentication.
 //
@@ -148,7 +150,7 @@
 // manifest certificate merkle nodes to the server. the server then
 // compares the root to each slot in *its* root node, and for each slot
 // either sends refined subtrees to the client, or (if it detects a missing
-// item in one collection or the other) sends either "data" or "send_data"
+// item in one pattern or the other) sends either "data" or "send_data"
 // commands corresponding to the role of the missing item (source or
 // sink). the client then receives each refined subtree and compares it
 // with its own, performing similar description/request behavior depending
@@ -208,8 +210,7 @@ session
 {
   protocol_role role;
   protocol_voice const voice;
-  vector<utf8> const & collections;
-  set<string> const & all_collections;
+  vector<utf8> patterns;
   app_state & app;
 
   string peer_id;
@@ -220,11 +221,13 @@ session
   string outbuf;
 
   netcmd cmd;
+  u8 protocol_version;
   bool armed;
   bool arm();
 
-  utf8 collection;
+  utf8 pattern;
   id remote_peer_key_hash;
+  rsa_keypair_id remote_peer_key_name;
   bool authenticated;
 
   time_t last_io_time;
@@ -235,13 +238,17 @@ session
   auto_ptr<ticker> revision_in_ticker;
   auto_ptr<ticker> revision_out_ticker;
   auto_ptr<ticker> revision_checked_ticker;
+  
+  vector<revision_id> written_revisions;
+  vector<rsa_keypair_id> written_keys;
+  vector<cert> written_certs;
 
-  map< std::pair<utf8, netcmd_item_type>, 
-       boost::shared_ptr<merkle_table> > merkle_tables;
+  map<netcmd_item_type, boost::shared_ptr<merkle_table> > merkle_tables;
 
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
   map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestry;
+  map<revision_id, map<cert_name, vector<cert> > > received_certs;
   set< pair<id, id> > reverse_delta_requests;
   bool analyzed_ancestry;
 
@@ -253,19 +260,22 @@ session
 
   session(protocol_role role,
           protocol_voice voice,
-          vector<utf8> const & collections,
-          set<string> const & all_collections,
+          vector<utf8> const & patterns,
           app_state & app,
           string const & peer,
           Netxx::socket_type sock, 
           Netxx::Timeout const & to);
 
-  virtual ~session() {}
+  virtual ~session();
   
-  void rev_written_callback();
+  void rev_written_callback(revision_id rid);
+  void key_written_callback(rsa_keypair_id kid);
+  void cert_written_callback(cert const & c);
 
   id mk_nonce();
   void mark_recent_io();
+
+  void setup_client_tickers();
 
   bool done_all_refinements();
   bool cert_refinement_done();
@@ -308,10 +318,10 @@ session
   void queue_hello_cmd(id const & server, 
                        id const & nonce);
   void queue_anonymous_cmd(protocol_role role, 
-                           string const & collection, 
+                           string const & pattern, 
                            id const & nonce2);
   void queue_auth_cmd(protocol_role role, 
-                      string const & collection, 
+                      string const & pattern, 
                       id const & client, 
                       id const & nonce1, 
                       id const & nonce2, 
@@ -340,10 +350,10 @@ session
                          rsa_pub_key const & server_key,
                          id const & nonce);
   bool process_anonymous_cmd(protocol_role role, 
-                             string const & collection, 
+                             string const & pattern, 
                              id const & nonce2);
   bool process_auth_cmd(protocol_role role, 
-                        string const & collection, 
+                        string const & pattern, 
                         id const & client, 
                         id const & nonce1, 
                         id const & nonce2, 
@@ -366,18 +376,16 @@ session
                                id const & item);
 
   bool merkle_node_exists(netcmd_item_type type,
-                          utf8 const & collection,                      
                           size_t level,
                           prefix const & pref);
 
   void load_merkle_node(netcmd_item_type type,
-                        utf8 const & collection,                        
                         size_t level,
                         prefix const & pref,
                         merkle_ptr & node);
 
   void rebuild_merkle_trees(app_state & app,
-                            utf8 const & collection);
+                            set<utf8> const & branches);
 
   bool dispatch_payload(netcmd const & cmd);
   void begin_service();
@@ -409,25 +417,25 @@ get_root_prefix()
   
 session::session(protocol_role role,
                  protocol_voice voice,
-                 vector<utf8> const & collections,
-                 set<string> const & all_coll,
+                 vector<utf8> const & patterns,
                  app_state & app,
                  string const & peer,
                  Netxx::socket_type sock, 
                  Netxx::Timeout const & to) : 
   role(role),
   voice(voice),
-  collections(collections),
-  all_collections(all_coll),
+  patterns(patterns),
   app(app),
   peer_id(peer),
   fd(sock),
   str(sock, to),
   inbuf(""),
   outbuf(""),
+  protocol_version(constants::netcmd_current_protocol_version),
   armed(false),
-  collection(""),
+  pattern(""),
   remote_peer_key_hash(""),
+  remote_peer_key_name(""),
   authenticated(false),
   last_io_time(::time(NULL)),
   byte_in_ticker(NULL),
@@ -446,14 +454,18 @@ session::session(protocol_role role,
 {
   if (voice == client_voice)
     {
-      N(collections.size() == 1,
-          F("client can only sync one collection at a time"));
-      this->collection = idx(collections, 0);
+      N(patterns.size() == 1,
+          F("client can only sync one pattern at a time"));
+      this->pattern = idx(patterns, 0);
     }
     
   dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
-                                          this));
-  
+                                          this, _1));
+  dbw.set_on_cert_written(boost::bind(&session::cert_written_callback,
+                                          this, _1));
+  dbw.set_on_pubkey_written(boost::bind(&session::key_written_callback,
+                                          this, _1));
+
   done_refinements.insert(make_pair(cert_item, done_marker()));
   done_refinements.insert(make_pair(key_item, done_marker()));
   done_refinements.insert(make_pair(epoch_item, done_marker()));
@@ -464,17 +476,74 @@ session::session(protocol_role role,
   requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
+}
 
-  for (vector<utf8>::const_iterator i = collections.begin();
-       i != collections.end(); ++i)
+session::~session()
+{
+  vector<cert> unattached_certs;
+  map<revision_id, vector<cert> > revcerts;
+  for (vector<revision_id>::iterator i = written_revisions.begin();
+       i != written_revisions.end(); ++i)
+    revcerts.insert(make_pair(*i, vector<cert>()));
+  for (vector<cert>::iterator i = written_certs.begin();
+       i != written_certs.end(); ++i)
     {
-      rebuild_merkle_trees(app, *i);
+      map<revision_id, vector<cert> >::iterator j;
+      j = revcerts.find(i->ident);
+      if (j == revcerts.end())
+        unattached_certs.push_back(*i);
+      else
+        j->second.push_back(*i);
+    }
+
+  //Keys
+  for (vector<rsa_keypair_id>::iterator i = written_keys.begin();
+       i != written_keys.end(); ++i)
+    {
+      app.lua.hook_note_netsync_pubkey_received(*i);
+    }
+  //Revisions
+  for (vector<revision_id>::iterator i = written_revisions.begin();
+      i != written_revisions.end(); ++i)
+    {
+      vector<cert> & ctmp(revcerts[*i]);
+      set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
+      for (vector<cert>::const_iterator j = ctmp.begin();
+           j != ctmp.end(); ++j)
+        {
+          cert_value vtmp;
+          decode_base64(j->value, vtmp);
+          certs.insert(make_pair(j->key, make_pair(j->name, vtmp)));
+        }
+      app.lua.hook_note_netsync_revision_received(*i, certs);
+    }
+  //Certs (not attached to a new revision)
+  for (vector<cert>::iterator i = unattached_certs.begin();
+      i != unattached_certs.end(); ++i)
+    {
+      cert_value tmp;
+      decode_base64(i->value, tmp);
+      app.lua.hook_note_netsync_cert_received(i->ident, i->key,
+                                              i->name, tmp);
+
     }
 }
 
-void session::rev_written_callback()
+void session::rev_written_callback(revision_id rid)
 {
-  if(revision_checked_ticker.get()) ++(*revision_checked_ticker);
+  if (revision_checked_ticker.get())
+    ++(*revision_checked_ticker);
+  written_revisions.push_back(rid);
+}
+
+void session::key_written_callback(rsa_keypair_id kid)
+{
+  written_keys.push_back(kid);
+}
+
+void session::cert_written_callback(cert const & c)
+{
+  written_certs.push_back(c);
 }
 
 id 
@@ -495,12 +564,37 @@ session::mark_recent_io()
   last_io_time = ::time(NULL);
 }
 
+void
+session::setup_client_tickers()
+{
+  byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
+  byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
+  if (role == sink_role)
+    {
+      revision_checked_ticker.reset(new ticker("revs written", "w", 1));
+      cert_in_ticker.reset(new ticker("certs in", "c", 3));
+      revision_in_ticker.reset(new ticker("revs in", "r", 1));
+    }
+  else if (role == source_role)
+    {
+      cert_out_ticker.reset(new ticker("certs out", "C", 3));
+      revision_out_ticker.reset(new ticker("revs out", "R", 1));
+    }
+  else
+    {
+      I(role == source_and_sink_role);
+      revision_checked_ticker.reset(new ticker("revs written", "w", 1));
+      revision_in_ticker.reset(new ticker("revs in", "r", 1));
+      revision_out_ticker.reset(new ticker("revs out", "R", 1));
+    }
+}
+
 bool 
 session::done_all_refinements()
 {
   bool all = true;
-  for(map< netcmd_item_type, done_marker>::const_iterator j = done_refinements.begin();
-      j != done_refinements.end(); ++j)
+  for (map<netcmd_item_type, done_marker>::const_iterator j =
+         done_refinements.begin(); j != done_refinements.end(); ++j)
     {
       if (j->second.tree_is_done == false)
         all = false;
@@ -619,7 +713,7 @@ void
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   if (!encountered_error)
-    write_netcmd(cmd, outbuf);
+    cmd.write(outbuf);
   else
     L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
@@ -960,6 +1054,7 @@ void
 session::analyze_ancestry_graph()
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
+  typedef map<cert_name, vector<cert> > cert_map;
 
   if (! (all_requested_revisions_received() && cert_refinement_done()))
     return;
@@ -970,8 +1065,9 @@ session::analyze_ancestry_graph()
   set<revision_id> heads;
   {
     set<revision_id> nodes, parents;
+    map<revision_id, int> chld_num;
     L(F("analyzing %d ancestry edges\n") % ancestry.size());
-    
+
     for (ancestryT::const_iterator i = ancestry.begin(); i != ancestry.end(); ++i)
       {
         nodes.insert(i->first);
@@ -979,13 +1075,117 @@ session::analyze_ancestry_graph()
              j != i->second->second.edges.end(); ++j)
           {
             parents.insert(edge_old_revision(j));
+            map<revision_id, int>::iterator n;
+            n = chld_num.find(edge_old_revision(j));
+            if (n == chld_num.end())
+              chld_num.insert(make_pair(edge_old_revision(j), 1));
+            else
+              ++(n->second);
           }
       }
     
     set_difference(nodes.begin(), nodes.end(),
                    parents.begin(), parents.end(),
                    inserter(heads, heads.begin()));
+
+    // Write permissions checking:
+    // remove heads w/o proper certs, add their children to heads
+    // 1) remove unwanted branch certs from consideration
+    //    - server: check write permission hook
+    //    - client: check against sync pattern
+    // 2) remove heads w/o a branch tag, process new exposed heads
+    // 3) repeat 2 until no change
+
+    //1
+    set<string> ok_branches, bad_branches;
+    cert_name bcert_name(branch_cert_name);
+    cert_name tcert_name(tag_cert_name);
+    //used for permission checking if we're the client
+    boost::regex reg(pattern());
+    for (map<revision_id, cert_map>::iterator i = received_certs.begin();
+        i != received_certs.end(); ++i)
+      {
+        //branches
+        vector<cert> & bcerts(i->second[bcert_name]);
+        vector<cert> keeping;
+        for (vector<cert>::iterator j = bcerts.begin(); j != bcerts.end(); ++j)
+          {
+            cert_value name;
+            decode_base64(j->value, name);
+            if (ok_branches.find(name()) != ok_branches.end())
+              keeping.push_back(*j);
+            else if (bad_branches.find(name()) != bad_branches.end())
+              ;
+            else
+              {
+                bool ok;
+                if (voice == server_voice)
+                  ok = app.lua.hook_get_netsync_write_permitted(name(),
+                                                         remote_peer_key_name);
+                else
+                  ok = boost::regex_match(name(), reg);
+                if (ok)
+                  {
+                    ok_branches.insert(name());
+                    keeping.push_back(*j);
+                  }
+                else
+                  {
+                    bad_branches.insert(name());
+                    W(F("Dropping branch certs for unwanted branch %s")
+                      % name);
+                  }
+              }
+          }
+        bcerts = keeping;
+      }
+    //2
+    list<revision_id> tmp;
+    for (set<revision_id>::iterator i = heads.begin(); i != heads.end(); ++i)
+      {
+        if (!received_certs[*i][bcert_name].size())
+          tmp.push_back(*i);
+      }
+    for (list<revision_id>::iterator i = tmp.begin(); i != tmp.end(); ++i)
+      heads.erase(*i);
+    //3
+    while (tmp.size())
+      {
+        ancestryT::const_iterator i = ancestry.find(tmp.front());
+        if (i != ancestry.end())
+          {
+            for (edge_map::const_iterator j = i->second->second.edges.begin();
+                 j != i->second->second.edges.end(); ++j)
+              {
+                if (!--chld_num[edge_old_revision(j)])
+                  {
+                    if (received_certs[i->first][bcert_name].size())
+                      heads.insert(i->first);
+                    else
+                      tmp.push_back(edge_old_revision(j));
+                  }
+              }
+            // since we don't want this rev, we don't want it's certs either
+            received_certs[tmp.front()] = cert_map();
+          }
+          tmp.pop_front();
+      }
   }
+
+  // We've reduced the certs to those we want now, send them to dbw.
+  for (map<revision_id, cert_map>::iterator i = received_certs.begin();
+      i != received_certs.end(); ++i)
+    {
+      for (cert_map::iterator j = i->second.begin();
+          j != i->second.end(); ++j)
+        {
+          for (vector<cert>::iterator k = j->second.begin();
+              k != j->second.end(); ++k)
+            {
+              this->dbw.consume_revision_cert(revision<cert>(*k));
+            }
+        }
+    }
 
   L(F("isolated %d heads\n") % heads.size());
 
@@ -994,7 +1194,8 @@ session::analyze_ancestry_graph()
 
   map<revision_id, bool> attached;
   set<revision_id> visited;
-  for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+  for (set<revision_id>::const_iterator i = heads.begin();
+       i != heads.end(); ++i)
     analyze_attachment(*i, visited, attached);
 
   // then we walk the graph upwards, recursively, starting from each of the
@@ -1005,7 +1206,8 @@ session::analyze_ancestry_graph()
 
   set<revision_id> fwd_visited, rev_visited;
 
-  for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+  for (set<revision_id>::const_iterator i = heads.begin();
+       i != heads.end(); ++i)
     {
       map<revision_id, bool>::const_iterator k = attached.find(*i);
       I(k != attached.end());
@@ -1072,8 +1274,9 @@ session::write_some()
 {
   I(!outbuf.empty());    
   Netxx::signed_size_type count = str.write(outbuf.data(), 
-                                            std::min(outbuf.size(), constants::bufsz));
-  if(count > 0)
+                                            std::min(outbuf.size(),
+                                            constants::bufsz));
+  if (count > 0)
     {
       outbuf.erase(0, count);
       L(F("wrote %d bytes to fd %d (peer %s), %d remain in output buffer\n") 
@@ -1099,8 +1302,8 @@ void
 session::queue_bye_cmd() 
 {
   L(F("queueing 'bye' command\n"));
-  netcmd cmd;
-  cmd.cmd_code = bye_cmd;
+  netcmd cmd(protocol_version);
+  cmd.write_bye_cmd();
   write_netcmd_and_try_flush(cmd);
   this->sent_goodbye = true;
 }
@@ -1109,9 +1312,8 @@ void
 session::queue_error_cmd(string const & errmsg)
 {
   L(F("queueing 'error' command\n"));
-  netcmd cmd;
-  cmd.cmd_code = error_cmd;
-  write_error_cmd_payload(errmsg, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_error_cmd(errmsg);
   write_netcmd_and_try_flush(cmd);
   this->sent_goodbye = true;
 }
@@ -1123,9 +1325,8 @@ session::queue_done_cmd(size_t level,
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   L(F("queueing 'done' command for %s level %s\n") % typestr % level);
-  netcmd cmd;
-  cmd.cmd_code = done_cmd;
-  write_done_cmd_payload(level, type, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_done_cmd(level, type);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1133,8 +1334,7 @@ void
 session::queue_hello_cmd(id const & server, 
                          id const & nonce) 
 {
-  netcmd cmd;
-  cmd.cmd_code = hello_cmd;
+  netcmd cmd(protocol_version);
   hexenc<id> server_encoded;
   encode_hexenc(server, server_encoded);
   
@@ -1144,43 +1344,38 @@ session::queue_hello_cmd(id const & server,
 
   app.db.get_pubkey(server_encoded, key_name, pub_encoded);
   decode_base64(pub_encoded, pub);
-  write_hello_cmd_payload(key_name, pub, nonce, cmd.payload);
+  cmd.write_hello_cmd(key_name, pub, nonce);
   write_netcmd_and_try_flush(cmd);
 }
 
 void 
 session::queue_anonymous_cmd(protocol_role role, 
-                             string const & collection, 
+                             string const & pattern, 
                              id const & nonce2)
 {
-  netcmd cmd;
-  cmd.cmd_code = anonymous_cmd;
-  write_anonymous_cmd_payload(role, collection, nonce2, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_anonymous_cmd(role, pattern, nonce2);
   write_netcmd_and_try_flush(cmd);
 }
 
 void 
 session::queue_auth_cmd(protocol_role role, 
-                        string const & collection, 
+                        string const & pattern, 
                         id const & client, 
                         id const & nonce1, 
                         id const & nonce2, 
                         string const & signature)
 {
-  netcmd cmd;
-  cmd.cmd_code = auth_cmd;
-  write_auth_cmd_payload(role, collection, client, 
-                         nonce1, nonce2, signature, 
-                         cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
   write_netcmd_and_try_flush(cmd);
 }
 
 void 
 session::queue_confirm_cmd(string const & signature)
 {
-  netcmd cmd;
-  cmd.cmd_code = confirm_cmd;
-  write_confirm_cmd_payload(signature, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_confirm_cmd(signature);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1193,9 +1388,8 @@ session::queue_refine_cmd(merkle_node const & node)
   netcmd_item_type_to_string(node.type, typestr);
   L(F("queueing request for refinement of %s node '%s', level %d\n")
     % typestr % hpref % static_cast<int>(node.level));
-  netcmd cmd;
-  cmd.cmd_code = refine_cmd;
-  write_refine_cmd_payload(node, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_refine_cmd(node);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1224,9 +1418,8 @@ session::queue_send_data_cmd(netcmd_item_type type,
 
   L(F("queueing request for data of %s item '%s'\n")
     % typestr % hid);
-  netcmd cmd;
-  cmd.cmd_code = send_data_cmd;
-  write_send_data_cmd_payload(type, item, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_send_data_cmd(type, item);
   write_netcmd_and_try_flush(cmd);
   note_item_requested(type, item);
 }
@@ -1261,9 +1454,8 @@ session::queue_send_delta_cmd(netcmd_item_type type,
 
   L(F("queueing request for contents of %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
-  netcmd cmd;
-  cmd.cmd_code = send_delta_cmd;
-  write_send_delta_cmd_payload(type, base, ident, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_send_delta_cmd(type, base, ident);
   write_netcmd_and_try_flush(cmd);
   note_item_requested(type, ident);
 }
@@ -1287,9 +1479,8 @@ session::queue_data_cmd(netcmd_item_type type,
 
   L(F("queueing %d bytes of data for %s item '%s'\n")
     % dat.size() % typestr % hid);
-  netcmd cmd;
-  cmd.cmd_code = data_cmd;
-  write_data_cmd_payload(type, item, dat, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_data_cmd(type, item, dat);
   write_netcmd_and_try_flush(cmd);
   note_item_sent(type, item);
 }
@@ -1318,9 +1509,8 @@ session::queue_delta_cmd(netcmd_item_type type,
 
   L(F("queueing %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
-  netcmd cmd;
-  cmd.cmd_code = delta_cmd;  
-  write_delta_cmd_payload(type, base, ident, del, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_delta_cmd(type, base, ident, del);
   write_netcmd_and_try_flush(cmd);
   note_item_sent(type, ident);
 }
@@ -1342,9 +1532,8 @@ session::queue_nonexistant_cmd(netcmd_item_type type,
 
   L(F("queueing note of nonexistance of %s item '%s'\n")
     % typestr % hid);
-  netcmd cmd;
-  cmd.cmd_code = nonexistant_cmd;
-  write_nonexistant_cmd_payload(type, item, cmd.payload);
+  netcmd cmd(protocol_version);
+  cmd.write_nonexistant_cmd(type, item);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1412,6 +1601,39 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
   return true;
 }
 
+void
+get_branches(app_state & app, vector<string> & names)
+{
+  vector< revision<cert> > certs;
+  app.db.get_revision_certs(branch_cert_name, certs);
+  for (size_t i = 0; i < certs.size(); ++i)
+    {
+      cert_value name;
+      decode_base64(idx(certs, i).inner().value, name);
+      names.push_back(name());
+    }
+  sort(names.begin(), names.end());
+  names.erase(std::unique(names.begin(), names.end()), names.end());
+  if (!names.size())
+    W(F("No branches found."));
+}
+
+void
+convert_pattern(utf8 & pat, utf8 & conv)
+{
+  string x = pat();
+  string pattern = "";
+  string e = ".|*?+()[]{}^$\\";
+  for (string::const_iterator i = x.begin(); i != x.end(); i++)
+    {
+      if (e.find(*i) != e.npos)
+        pattern += '\\';
+      pattern += *i;
+    }
+  conv = pattern + ".*";
+}
+
+
 static const var_domain known_servers_domain = var_domain("known-servers");
 
 bool 
@@ -1449,8 +1671,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   else
     {
       P(F("first time connecting to server %s\n") % peer_id);
-      P(F("I'll assume it's really them, but you might want to\n"));
-      P(F("double-check their key's fingerprint: %s\n") % their_key_hash);
+      P(F("I'll assume it's really them, but you might want to double-check\n"));
+      P(F("their key's fingerprint: %s\n") % their_key_hash);
       app.db.set_var(their_key_key, var_value(their_key_hash()));
     }
   if (!app.db.public_key_exists(their_key_hash))
@@ -1474,7 +1696,28 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     decode_hexenc(their_key_hash, their_key_hash_decoded);
     this->remote_peer_key_hash = their_key_hash_decoded;
   }
-      
+
+  utf8 pat(pattern);
+  if (protocol_version < 5)
+    {
+      W(F("Talking to an old server. "
+          "Using %s as a collection, not a regex.") % pattern);
+      convert_pattern(pattern, pat);
+    }
+  vector<string> branchnames;
+  set<utf8> ok_branches;
+  get_branches(app, branchnames);
+  boost::regex reg(pat());
+  for (vector<string>::const_iterator i = branchnames.begin();
+      i != branchnames.end(); i++)
+    {
+      if (boost::regex_match(*i, reg))
+          ok_branches.insert(utf8(*i));
+    }
+  rebuild_merkle_trees(app, ok_branches);
+
+  setup_client_tickers();
+    
   if (app.signing_key() != "")
     {
       // get our public key for its hash identifier
@@ -1494,47 +1737,40 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       decode_base64(sig, sig_raw);
       
       // make a new nonce of our own and send off the 'auth'
-      queue_auth_cmd(this->role, this->collection(), our_key_hash_raw, 
+      queue_auth_cmd(this->role, this->pattern(), our_key_hash_raw, 
                      nonce, mk_nonce(), sig_raw());
     }
   else
     {
-      queue_anonymous_cmd(this->role, this->collection(), mk_nonce());
+      queue_anonymous_cmd(this->role, this->pattern(), mk_nonce());
     }
   return true;
 }
 
+bool
+matches_one(string s, vector<boost::regex> r)
+{
+  for (vector<boost::regex>::const_iterator i = r.begin(); i != r.end(); i++)
+    {
+      if (boost::regex_match(s, *i))
+        return true;
+    }
+  return false;
+}
+
 bool 
 session::process_anonymous_cmd(protocol_role role, 
-                               string const & collection, 
+                               string const & pattern, 
                                id const & nonce2)
 {
   hexenc<id> hnonce2;
   encode_hexenc(nonce2, hnonce2);
 
-  L(F("received 'anonymous' netcmd from client for collection '%s' "
+  L(F("received 'anonymous' netcmd from client for pattern '%s' "
       "in %s mode with nonce2 '%s'\n")
-    %  collection % (role == source_and_sink_role ? "source and sink" :
+    %  pattern % (role == source_and_sink_role ? "source and sink" :
                      (role == source_role ? "source " : "sink"))
     % hnonce2);
-
-  // check they're asking for a collection we're serving
-  bool collection_ok = false;
-  for (vector<utf8>::const_iterator i = collections.begin(); 
-       i != collections.end(); ++i)
-    {
-      if (*i == collection)
-        {
-          collection_ok = true;
-          break;
-        }
-    }
-  if (!collection_ok)
-    {
-      W(F("not currently serving requested collection '%s'\n") % collection);
-      this->saved_nonce = id("");
-      return false;       
-    }
   
   //
   // internally netsync thinks in terms of sources and sinks. users like
@@ -1565,14 +1801,36 @@ session::process_anonymous_cmd(protocol_role role,
       return false;
     }
 
-  if (!app.lua.hook_get_netsync_anonymous_read_permitted(collection))
+  vector<string> branchnames;
+  set<utf8> ok_branches;
+  get_branches(app, branchnames);
+  vector<boost::regex> allowed;
+  boost::regex reg(pattern);
+  for (vector<utf8>::const_iterator i = patterns.begin();
+      i != patterns.end(); ++i)
     {
-      W(F("denied anonymous read permission for '%s'\n") % collection);
+      allowed.push_back(boost::regex((*i)()));
+    }
+  for (vector<string>::const_iterator i = branchnames.begin();
+      i != branchnames.end(); i++)
+    {
+      if (boost::regex_match(*i, reg)
+          && (allowed.size() == 0 || matches_one(*i, allowed)))
+        {
+          if (app.lua.hook_get_netsync_anonymous_read_permitted(*i))
+            ok_branches.insert(utf8(*i));
+        }
+    }
+  if (!ok_branches.size())
+    {
+      W(F("denied anonymous read permission for '%s'\n") % pattern);
       this->saved_nonce = id("");
       return false;
     }
 
-  P(F("allowed anonymous read permission for '%s'\n") % collection);
+  P(F("allowed anonymous read permission for '%s'\n") % pattern);
+
+  rebuild_merkle_trees(app, ok_branches);
 
   // get our private key and sign back
   L(F("anonymous read permitted, signing back nonce\n"));
@@ -1583,7 +1841,8 @@ session::process_anonymous_cmd(protocol_role role,
   make_signature(app, app.signing_key, our_priv, nonce2(), sig);
   decode_base64(sig, sig_raw);
   queue_confirm_cmd(sig_raw());
-  this->collection = collection;
+  this->pattern = pattern;
+  this->remote_peer_key_name = rsa_keypair_id("");
   this->authenticated = true;
   this->role = source_role;
   return true;
@@ -1591,7 +1850,7 @@ session::process_anonymous_cmd(protocol_role role,
 
 bool 
 session::process_auth_cmd(protocol_role role, 
-                          string const & collection, 
+                          string const & pattern, 
                           id const & client, 
                           id const & nonce1, 
                           id const & nonce2, 
@@ -1605,10 +1864,20 @@ session::process_auth_cmd(protocol_role role,
   encode_hexenc(nonce2, hnonce2);
   hexenc<id> their_key_hash;
   encode_hexenc(client, their_key_hash);
+  set<utf8> ok_branches;
+  vector<string> branchnames;
+  get_branches(app, branchnames);
+  vector<boost::regex> allowed;
+  for (vector<utf8>::const_iterator i = patterns.begin();
+      i != patterns.end(); ++i)
+    {
+      allowed.push_back(boost::regex((*i)()));
+    }
+  boost::regex reg(pattern);
   
-  L(F("received 'auth' netcmd from client '%s' for collection '%s' "
+  L(F("received 'auth' netcmd from client '%s' for pattern '%s' "
       "in %s mode with nonce1 '%s' and nonce2 '%s'\n")
-    % their_key_hash % collection % (role == source_and_sink_role ? "source and sink" :
+    % their_key_hash % pattern % (role == source_and_sink_role ? "source and sink" :
                                      (role == source_role ? "source " : "sink"))
     % hnonce1 % hnonce2);
   
@@ -1619,24 +1888,7 @@ session::process_auth_cmd(protocol_role role,
       this->saved_nonce = id("");
       return false;
     }
-  
-  // check they're asking for a collection we're serving
-  bool collection_ok = false;
-  for (vector<utf8>::const_iterator i = collections.begin(); 
-       i != collections.end(); ++i)
-    {
-      if (*i == collection)
-        {
-          collection_ok = true;
-          break;
-        }
-    }
-  if (!collection_ok)
-    {
-      W(F("not currently serving requested collection '%s'\n") % collection);
-      this->saved_nonce = id("");
-      return false;       
-    }
+
 
   //
   // internally netsync thinks in terms of sources and sinks. users like
@@ -1670,19 +1922,31 @@ session::process_auth_cmd(protocol_role role,
       if (this->role != source_role && this->role != source_and_sink_role)
         {
           W(F("denied '%s' read permission for '%s' while running as sink\n") 
-            % their_id % collection);
+            % their_id % pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      if (!app.lua.hook_get_netsync_read_permitted(collection, their_id()))
+      for (vector<string>::const_iterator i = branchnames.begin();
+          i != branchnames.end(); i++)
         {
-          W(F("denied '%s' read permission for '%s'\n") % their_id % collection);
+          if (boost::regex_match(*i, reg)
+              && (allowed.size() == 0 || matches_one(*i, allowed)))
+            {
+              if (app.lua.hook_get_netsync_read_permitted(*i, their_id))
+                ok_branches.insert(utf8(*i));
+            }
+        }
+      //if we're source_and_sink_role, continue even with no branches readable
+      //ex: serve --db=empty.db
+      if (!ok_branches.size() && role == sink_role)
+        {
+          W(F("denied '%s' read permission for '%s'\n") % their_id % pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      P(F("allowed '%s' read permission for '%s'\n") % their_id % collection);
+      P(F("allowed '%s' read permission for '%s'\n") % their_id % pattern);
     }
 
   // client as source, server as sink (writing)
@@ -1692,24 +1956,29 @@ session::process_auth_cmd(protocol_role role,
       if (this->role != sink_role && this->role != source_and_sink_role)
         {
           W(F("denied '%s' write permission for '%s' while running as source\n") 
-            % their_id % collection);
+            % their_id % pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      if (!app.lua.hook_get_netsync_write_permitted(collection, their_id()))
+      // Write permissions are now checked from analyze_ancestry_graph.
+      if (role == source_role)
         {
-          W(F("denied '%s' write permission for '%s'\n") % their_id % collection);
-          this->saved_nonce = id("");
-          return false;
+          for (vector<string>::const_iterator i = branchnames.begin();
+              i != branchnames.end(); i++)
+            {
+              ok_branches.insert(utf8(*i));
+            }
         }
 
-      P(F("allowed '%s' write permission for '%s'\n") % their_id % collection);
+      P(F("allowed '%s' write permission for '%s'\n") % their_id % pattern);
     }
-  
+
+  rebuild_merkle_trees(app, ok_branches);
+
   // save their identity 
   this->remote_peer_key_hash = client;
-  
+
   // check the signature
   base64<rsa_sha1_signature> sig;
   encode_base64(rsa_sha1_signature(signature), sig);
@@ -1724,8 +1993,9 @@ session::process_auth_cmd(protocol_role role,
       make_signature(app, app.signing_key, our_priv, nonce2(), sig);
       decode_base64(sig, sig_raw);
       queue_confirm_cmd(sig_raw());
-      this->collection = collection;
+      this->pattern = pattern;
       this->authenticated = true;
+      this->remote_peer_key_name = their_id;
       // assume the (possibly degraded) opposite role
       switch (role)
         {
@@ -1760,8 +2030,8 @@ session::process_confirm_cmd(string const & signature)
   encode_hexenc(id(remote_peer_key_hash), their_key_hash);
   
   // nb. this->role is our role, the server is in the opposite role
-  L(F("received 'confirm' netcmd from server '%s' for collection '%s' in %s mode\n")
-    % their_key_hash % this->collection % (this->role == source_and_sink_role ? "source and sink" :
+  L(F("received 'confirm' netcmd from server '%s' for pattern '%s' in %s mode\n")
+    % their_key_hash % this->pattern % (this->role == source_and_sink_role ? "source and sink" :
                                            (this->role == source_role ? "sink" : "source")));
   
   // check their signature
@@ -1779,15 +2049,15 @@ session::process_confirm_cmd(string const & signature)
           this->authenticated = true;
 
           merkle_ptr root;
-          load_merkle_node(epoch_item, this->collection, 0, get_root_prefix().val, root);
+          load_merkle_node(epoch_item, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, epoch_item);
 
-          load_merkle_node(key_item, this->collection, 0, get_root_prefix().val, root);
+          load_merkle_node(key_item, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, key_item);
 
-          load_merkle_node(cert_item, this->collection, 0, get_root_prefix().val, root);
+          load_merkle_node(cert_item, 0, get_root_prefix().val, root);
           queue_refine_cmd(*root);
           queue_done_cmd(0, cert_item);
           return true;
@@ -1913,7 +2183,7 @@ load_data(netcmd_item_type type,
       break;
 
     case cert_item:
-      if(app.db.revision_cert_exists(hitem))
+      if (app.db.revision_cert_exists(hitem))
         {
           revision<cert> c;
           app.db.get_revision_cert(hitem, c);
@@ -1944,8 +2214,7 @@ session::process_refine_cmd(merkle_node const & their_node)
   L(F("received 'refine' netcmd on %s node '%s', level %d\n") 
     % typestr % hpref % lev);
   
-  if (!merkle_node_exists(their_node.type, this->collection, 
-                          their_node.level, pref))
+  if (!merkle_node_exists(their_node.type, their_node.level, pref))
     {
       L(F("no corresponding %s merkle node for prefix '%s', level %d\n")
         % typestr % hpref % lev);
@@ -2005,8 +2274,7 @@ session::process_refine_cmd(merkle_node const & their_node)
       L(F("found corresponding %s merkle node for prefix '%s', level %d\n")
         % typestr % hpref % lev);
       merkle_ptr our_node;
-      load_merkle_node(their_node.type, this->collection, 
-                       their_node.level, pref, our_node);
+      load_merkle_node(their_node.type, their_node.level, pref, our_node);
       for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
         {         
           switch (their_node.get_slot_state(slot))
@@ -2052,8 +2320,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                     our_node->extended_raw_prefix(slot, subprefix);
                     merkle_ptr our_subtree;
                     I(our_node->type == their_node.type);
-                    load_merkle_node(their_node.type, this->collection, 
-                                     our_node->level + 1, subprefix, our_subtree);
+                    load_merkle_node(their_node.type, our_node->level + 1,
+                                     subprefix, our_subtree);
                     I(our_node->type == our_subtree->type);
                     queue_refine_cmd(*our_subtree);
                   }
@@ -2152,8 +2420,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                     prefix subprefix;
                     our_node->extended_raw_prefix(slot, subprefix);
                     merkle_ptr our_subtree;
-                    load_merkle_node(our_node->type, this->collection, 
-                                     our_node->level + 1, subprefix, our_subtree);
+                    load_merkle_node(our_node->type, our_node->level + 1,
+                                     subprefix, our_subtree);
                     queue_refine_cmd(*our_subtree);
                   }
                   break;
@@ -2212,8 +2480,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                     prefix subprefix;
                     our_node->extended_raw_prefix(slot, subprefix);
                     merkle_ptr our_subtree;
-                    load_merkle_node(our_node->type, this->collection, 
-                                     our_node->level + 1, subprefix, our_subtree);
+                    load_merkle_node(our_node->type, our_node->level + 1,
+                                     subprefix, our_subtree);
                     queue_refine_cmd(*our_subtree);
                   }
                   break;
@@ -2301,8 +2569,8 @@ session::process_refine_cmd(merkle_node const & their_node)
                         prefix subprefix;
                         our_node->extended_raw_prefix(slot, subprefix);
                         merkle_ptr our_subtree;
-                        load_merkle_node(our_node->type, this->collection, 
-                                         our_node->level + 1, subprefix, our_subtree);
+                        load_merkle_node(our_node->type, our_node->level + 1,
+                                         subprefix, our_subtree);
                         queue_refine_cmd(*our_subtree);
                       }
                   }
@@ -2423,7 +2691,7 @@ session::process_data_cmd(netcmd_item_type type,
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
   note_item_arrived(type, item);
-                           
+
   switch (type)
     {
     case epoch_item:
@@ -2498,7 +2766,8 @@ session::process_data_cmd(netcmd_item_type type,
           cert_hash_code(c, tmp);
           if (! (tmp == hitem))
             throw bad_decode(F("hash check failed for revision cert '%s'")  % hitem);
-          this->dbw.consume_revision_cert(revision<cert>(c));
+//          this->dbw.consume_revision_cert(revision<cert>(c));
+          received_certs[revision_id(c.ident)][c.name].push_back(c);
           if (!app.db.revision_exists(revision_id(c.ident)))
             {
               id rid;
@@ -2643,13 +2912,11 @@ session::process_nonexistant_cmd(netcmd_item_type type,
 
 bool
 session::merkle_node_exists(netcmd_item_type type,
-                            utf8 const & collection,                    
                             size_t level,
                             prefix const & pref)
 {
-  map< std::pair<utf8, netcmd_item_type>, 
-       boost::shared_ptr<merkle_table> >::const_iterator i = 
-    merkle_tables.find(std::make_pair(collection,type));
+  map<netcmd_item_type, boost::shared_ptr<merkle_table> >::const_iterator i = 
+    merkle_tables.find(type);
   
   I(i != merkle_tables.end());
   merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
@@ -2658,15 +2925,13 @@ session::merkle_node_exists(netcmd_item_type type,
 
 void 
 session::load_merkle_node(netcmd_item_type type,
-                          utf8 const & collection,                      
                           size_t level,
                           prefix const & pref,
                           merkle_ptr & node)
 {
-  map< std::pair<utf8, netcmd_item_type>, 
-       boost::shared_ptr<merkle_table> >::const_iterator i = 
-    merkle_tables.find(std::make_pair(collection,type));
-  
+  map<netcmd_item_type, boost::shared_ptr<merkle_table> >::const_iterator i = 
+    merkle_tables.find(type);
+
   I(i != merkle_tables.end());
   merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
   I(j != i->second->end());
@@ -2678,7 +2943,7 @@ bool
 session::dispatch_payload(netcmd const & cmd)
 {
   
-  switch (cmd.cmd_code)
+  switch (cmd.get_cmd_code())
     {
       
     case bye_cmd:
@@ -2688,7 +2953,7 @@ session::dispatch_payload(netcmd const & cmd)
     case error_cmd:
       {
         string errmsg;
-        read_error_cmd_payload(cmd.payload, errmsg);
+        cmd.read_error_cmd(errmsg);
         return process_error_cmd(errmsg);
       }
       break;
@@ -2700,7 +2965,9 @@ session::dispatch_payload(netcmd const & cmd)
         rsa_keypair_id server_keyname;
         rsa_pub_key server_key;
         id nonce;
-        read_hello_cmd_payload(cmd.payload, server_keyname, server_key, nonce);
+        cmd.read_hello_cmd(server_keyname, server_key, nonce);
+        if (cmd.get_version() < protocol_version)
+          protocol_version = cmd.get_version();
         return process_hello_cmd(server_keyname, server_key, nonce);
       }
       break;
@@ -2713,10 +2980,12 @@ session::dispatch_payload(netcmd const & cmd)
               "anonymous netcmd received in source or source/sink role");
       {
         protocol_role role;
-        string collection;
+        string pattern;
         id nonce2;
-        read_anonymous_cmd_payload(cmd.payload, role, collection, nonce2);
-        return process_anonymous_cmd(role, collection, nonce2);
+        cmd.read_anonymous_cmd(role, pattern, nonce2);
+        if (cmd.get_version() < protocol_version)
+          protocol_version = cmd.get_version();
+        return process_anonymous_cmd(role, pattern, nonce2);
       }
       break;
 
@@ -2725,10 +2994,13 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == server_voice, "auth netcmd received in server voice");
       {
         protocol_role role;
-        string collection, signature;
+        string pattern, signature;
         id client, nonce1, nonce2;
-        read_auth_cmd_payload(cmd.payload, role, collection, client, nonce1, nonce2, signature);
-        return process_auth_cmd(role, collection, client, nonce1, nonce2, signature);
+        cmd.read_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
+        if (cmd.get_version() < protocol_version)
+          protocol_version = cmd.get_version();
+        return process_auth_cmd(role, pattern, client,
+                                nonce1, nonce2, signature);
       }
       break;
 
@@ -2737,7 +3009,7 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "confirm netcmd received in client voice");
       {
         string signature;
-        read_confirm_cmd_payload(cmd.payload, signature);
+        cmd.read_confirm_cmd(signature);
         return process_confirm_cmd(signature);
       }
       break;
@@ -2746,7 +3018,7 @@ session::dispatch_payload(netcmd const & cmd)
       require(authenticated, "refine netcmd received when authenticated");
       {
         merkle_node node;
-        read_refine_cmd_payload(cmd.payload, node);
+        cmd.read_refine_cmd(node);
         map< netcmd_item_type, done_marker>::iterator i = done_refinements.find(node.type);
         require(i != done_refinements.end(), "refinement netcmd refers to valid type");
         require(i->second.tree_is_done == false, "refinement netcmd received when tree is live");
@@ -2760,7 +3032,7 @@ session::dispatch_payload(netcmd const & cmd)
       {
         size_t level;
         netcmd_item_type type;
-        read_done_cmd_payload(cmd.payload, level, type);
+        cmd.read_done_cmd(level, type);
         return process_done_cmd(level, type);
       }
       break;
@@ -2773,7 +3045,7 @@ session::dispatch_payload(netcmd const & cmd)
       {
         netcmd_item_type type;
         id item;
-        read_send_data_cmd_payload(cmd.payload, type, item);
+        cmd.read_send_data_cmd(type, item);
         return process_send_data_cmd(type, item);
       }
       break;
@@ -2786,7 +3058,7 @@ session::dispatch_payload(netcmd const & cmd)
       {
         netcmd_item_type type;
         id base, ident;
-        read_send_delta_cmd_payload(cmd.payload, type, base, ident);
+        cmd.read_send_delta_cmd(type, base, ident);
         return process_send_delta_cmd(type, base, ident);
       }
 
@@ -2799,7 +3071,7 @@ session::dispatch_payload(netcmd const & cmd)
         netcmd_item_type type;
         id item;
         string dat;
-        read_data_cmd_payload(cmd.payload, type, item, dat);
+        cmd.read_data_cmd(type, item, dat);
         return process_data_cmd(type, item, dat);
       }
       break;
@@ -2813,7 +3085,7 @@ session::dispatch_payload(netcmd const & cmd)
         netcmd_item_type type;
         id base, ident;
         delta del;
-        read_delta_cmd_payload(cmd.payload, type, base, ident, del);
+        cmd.read_delta_cmd(type, base, ident, del);
         return process_delta_cmd(type, base, ident, del);
       }
       break;      
@@ -2826,7 +3098,7 @@ session::dispatch_payload(netcmd const & cmd)
       {
         netcmd_item_type type;
         id item;
-        read_nonexistant_cmd_payload(cmd.payload, type, item);
+        cmd.read_nonexistant_cmd(type, item);
         return process_nonexistant_cmd(type, item);
       }
       break;
@@ -2860,9 +3132,9 @@ session::arm()
 {
   if (!armed)
     {
-      if (read_netcmd(inbuf, cmd))
+      if (cmd.read(inbuf))
         {
-          inbuf.erase(0, cmd.encoded_size());     
+//          inbuf.erase(0, cmd.encoded_size());     
           armed = true;
         }
     }
@@ -2896,8 +3168,7 @@ bool session::process()
 
 static void 
 call_server(protocol_role role,
-            vector<utf8> const & collections,
-            set<string> const & all_collections,
+            vector<utf8> const & patterns,
             app_state & app,
             utf8 const & address,
             Netxx::port_type default_port,
@@ -2909,30 +3180,9 @@ call_server(protocol_role role,
   // FIXME: split into labels and convert to ace here.
 
   P(F("connecting to %s\n") % address());
-  Netxx::Stream server(address().c_str(), default_port, timeout); 
-  session sess(role, client_voice, collections, all_collections, app, 
+  Netxx::Stream server(address().c_str(), default_port, timeout);
+  session sess(role, client_voice, patterns, app, 
                address(), server.get_socketfd(), timeout);
-
-  sess.byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
-  sess.byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
-  if (role == sink_role)
-    {
-      sess.revision_checked_ticker.reset(new ticker("revs written", "w", 1));
-      sess.cert_in_ticker.reset(new ticker("certs in", "c", 3));
-      sess.revision_in_ticker.reset(new ticker("revs in", "r", 1));
-    }
-  else if (role == source_role)
-    {
-      sess.cert_out_ticker.reset(new ticker("certs out", "C", 3));
-      sess.revision_out_ticker.reset(new ticker("revs out", "R", 1));
-    }
-  else
-    {
-      I(role == source_and_sink_role);
-      sess.revision_checked_ticker.reset(new ticker("revs written", "w", 1));
-      sess.revision_in_ticker.reset(new ticker("revs in", "r", 1));
-      sess.revision_out_ticker.reset(new ticker("revs out", "R", 1));
-    }
   
   while (true)
     {       
@@ -3061,8 +3311,7 @@ handle_new_connection(Netxx::Address & addr,
                       Netxx::StreamServer & server,
                       Netxx::Timeout & timeout,
                       protocol_role role,
-                      vector<utf8> const & collections,
-                      set<string> const & all_collections,                    
+                      vector<utf8> const & patterns,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
                       app_state & app)
 {
@@ -3076,9 +3325,9 @@ handle_new_connection(Netxx::Address & addr,
     }
   else
     {
-      P(F("accepted new client connection from %s\n") % client);      
-      shared_ptr<session> sess(new session(role, server_voice, collections, 
-                                           all_collections, app,
+      P(F("accepted new client connection from %s\n") % client);
+      shared_ptr<session> sess(new session(role, server_voice, patterns, 
+                                           app,
                                            lexical_cast<string>(client), 
                                            client.get_socketfd(), timeout));
       sess->begin_service();
@@ -3192,8 +3441,7 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
 
 static void 
 serve_connections(protocol_role role,
-                  vector<utf8> const & collections,
-                  set<string> const & all_collections,
+                  vector<utf8> const & patterns,
                   app_state & app,
                   utf8 const & address,
                   Netxx::port_type default_port,
@@ -3246,7 +3494,7 @@ serve_connections(protocol_role role,
       // we either got a new connection
       else if (fd == server)
         handle_new_connection(addr, server, timeout, role, 
-                              collections, all_collections, sessions, app);
+                              patterns, sessions, app);
       
       // or an existing session woke up
       else
@@ -3290,7 +3538,6 @@ serve_connections(protocol_role role,
 
 static boost::shared_ptr<merkle_table>
 make_root_node(session & sess,
-               utf8 const & coll,
                netcmd_item_type ty)
 {
   boost::shared_ptr<merkle_table> tab = 
@@ -3301,19 +3548,51 @@ make_root_node(session & sess,
 
   tab->insert(std::make_pair(std::make_pair(get_root_prefix().val, 0), tmp));
 
-  sess.merkle_tables[std::make_pair(coll, ty)] = tab;
+  sess.merkle_tables[ty] = tab;
   return tab;
+}
+
+void
+insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app)
+{
+  if (col.find(rev) != col.end())
+    return;
+  col.insert(rev);
+  vector<revision_id> frontier;
+  frontier.push_back(rev);
+  while (!frontier.empty())
+    {
+      revision_id rid = frontier.back();
+      frontier.pop_back();
+      if (!null_id(rid))
+        {
+          col.insert(rid);
+          std::set<revision_id> parents;
+          app.db.get_revision_parents(rid, parents);
+          for (std::set<revision_id>::const_iterator i = parents.begin();
+               i != parents.end(); ++i)
+            {
+              if (col.find(*i) == col.end())
+                {
+                  frontier.push_back(*i);
+                }
+            }
+        }
+    }
 }
 
 void 
 session::rebuild_merkle_trees(app_state & app,
-                              utf8 const & collection)
+                              set<utf8> const & branchnames)
 {
-  P(F("rebuilding merkle trees for collection %s\n") % collection);
+  P(F("rebuilding merkle trees ...\n"));
+  for (set<utf8>::const_iterator i = branchnames.begin();
+      i != branchnames.end(); ++i)
+    P(F("including branch %s") % *i);
 
-  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, collection, cert_item);
-  boost::shared_ptr<merkle_table> ktab = make_root_node(*this, collection, key_item);
-  boost::shared_ptr<merkle_table> etab = make_root_node(*this, collection, epoch_item);
+  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, cert_item);
+  boost::shared_ptr<merkle_table> ktab = make_root_node(*this, key_item);
+  boost::shared_ptr<merkle_table> etab = make_root_node(*this, epoch_item);
 
   ticker certs_ticker("certs", "c", 256);
   ticker keys_ticker("keys", "k", 1);
@@ -3324,18 +3603,15 @@ session::rebuild_merkle_trees(app_state & app,
   {
     // get all matching branch names
     vector< revision<cert> > certs;
-    set<string> branchnames;
     app.db.get_revision_certs(branch_cert_name, certs);
     for (size_t i = 0; i < certs.size(); ++i)
       {
         cert_value name;
         decode_base64(idx(certs, i).inner().value, name);
-        if (name().find(collection()) == 0)
+        if (branchnames.find(name()) != branchnames.end())
           {
-            if (branchnames.find(name()) == branchnames.end())
-              P(F("including branch %s\n") % name());
-            branchnames.insert(name());
-            revision_ids.insert(revision_id(idx(certs, i).inner().ident));
+            insert_with_parents(revision_id(idx(certs, i).inner().ident),
+                                revision_ids, app);
           }
       }
     
@@ -3344,10 +3620,10 @@ session::rebuild_merkle_trees(app_state & app,
       app.db.get_epochs(epochs);
 
       epoch_data epoch_zero(std::string(constants::epochlen, '0'));
-      for (std::set<string>::const_iterator i = branchnames.begin();
+      for (std::set<utf8>::const_iterator i = branchnames.begin();
            i != branchnames.end(); ++i)
         {
-          cert_value branch(*i);
+          cert_value branch((*i)());
           std::map<cert_value, epoch_data>::const_iterator j;
           j = epochs.find(branch);
           // set to zero any epoch which is not yet set    
@@ -3414,43 +3690,15 @@ void
 run_netsync_protocol(protocol_voice voice, 
                      protocol_role role, 
                      utf8 const & addr, 
-                     vector<utf8> collections,
+                     vector<utf8> patterns,
                      app_state & app)
-{  
-
-  set<string> all_collections;
-  for (vector<utf8>::const_iterator j = collections.begin(); 
-       j != collections.end(); ++j)
-    {
-      all_collections.insert((*j)());
-    }
-
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(branch_cert_name, certs);
-  for (vector< revision<cert> >::const_iterator i = certs.begin();
-       i != certs.end(); ++i)
-    {
-      cert_value name;
-      decode_base64(i->inner().value, name);
-      for (vector<utf8>::const_iterator j = collections.begin(); 
-           j != collections.end(); ++j)
-        {       
-          if ((*j)().find(name()) == 0 
-              && all_collections.find(name()) == all_collections.end())
-            {
-              if (name() != (*j)())
-                P(F("%s included in collection %s\n") % (*j) % name);
-              all_collections.insert(name());
-            }
-        }
-    }
-
+{
   try 
     {
       start_platform_netsync();
       if (voice == server_voice)
         {
-          serve_connections(role, collections, all_collections, app,
+          serve_connections(role, patterns, app,
                             addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                             static_cast<unsigned long>(constants::netsync_timeout_seconds), 
                             static_cast<unsigned long>(constants::netsync_connection_limit));
@@ -3459,7 +3707,7 @@ run_netsync_protocol(protocol_voice voice,
         {
           I(voice == client_voice);
           transaction_guard guard(app.db);
-          call_server(role, collections, all_collections, app, 
+          call_server(role, patterns, app,
                       addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
           guard.commit();

@@ -25,6 +25,8 @@ namespace selectors
       sel_tag,
       sel_ident,
       sel_cert,
+      sel_earlier,
+      sel_later,
       sel_unknown
     }
   selector_type;

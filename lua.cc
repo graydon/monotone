@@ -648,6 +648,20 @@ lua_hooks::hook_expand_selector(std::string const & sel,
 }
 
 bool 
+lua_hooks::hook_expand_date(std::string const & sel, 
+                            std::string & exp)
+{
+	exp.clear();
+  bool res= Lua(st)
+    .func("expand_date")
+    .push_str(sel)
+    .call(1,1)
+    .extract_str(exp)
+    .ok();
+	return res && exp.size();
+}
+
+bool 
 lua_hooks::hook_get_branch_key(cert_value const & branchname, 
                                rsa_keypair_id & k)
 {
@@ -937,14 +951,14 @@ lua_hooks::hook_use_inodeprints()
 }
 
 bool 
-lua_hooks::hook_get_netsync_read_permitted(std::string const & collection, 
+lua_hooks::hook_get_netsync_read_permitted(std::string const & pattern, 
                                            rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
     .func("get_netsync_read_permitted")
-    .push_str(collection)
+    .push_str(pattern)
     .push_str(identity())
     .call(2,1)
     .extract_bool(permitted)
@@ -954,13 +968,13 @@ lua_hooks::hook_get_netsync_read_permitted(std::string const & collection,
 }
 
 bool 
-lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & collection)
+lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & pattern)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
     .func("get_netsync_anonymous_read_permitted")
-    .push_str(collection)
+    .push_str(pattern)
     .call(1,1)
     .extract_bool(permitted)
     .ok();
@@ -969,14 +983,14 @@ lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & collect
 }
 
 bool 
-lua_hooks::hook_get_netsync_write_permitted(std::string const & collection, 
+lua_hooks::hook_get_netsync_write_permitted(std::string const & pattern, 
                                             rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
     .func("get_netsync_write_permitted")
-    .push_str(collection)
+    .push_str(pattern)
     .push_str(identity())
     .call(2,1)
     .extract_bool(permitted)
@@ -1105,5 +1119,71 @@ lua_hooks::hook_note_commit(revision_id const & new_id,
     }
   
   ll.call(2, 0);
+  return ll.ok();
+}
+
+bool 
+lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
+                            set<pair<rsa_keypair_id,
+                                     pair<cert_name,
+                                          cert_value> > > const & certs)
+{
+  Lua ll(st);
+  ll
+    .func("note_netsync_revision_received")
+    .push_str(new_id.inner()());
+
+  ll.push_table();
+  
+  typedef set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > cdat;
+
+  int n=0;
+  for (cdat::const_iterator i = certs.begin(); i != certs.end(); ++i)
+    {
+      ll.push_int(n++);
+      ll.push_table();
+      ll.push_str("key");
+      ll.push_str(i->first());
+      ll.set_table();
+      ll.push_str("name");
+      ll.push_str(i->second.first());
+      ll.set_table();
+      ll.push_str("value");
+      ll.push_str(i->second.second());
+      ll.set_table();
+      ll.set_table();
+    }
+
+  ll.call(2, 0);
+  return ll.ok();
+}
+
+bool
+lua_hooks::hook_note_netsync_pubkey_received(rsa_keypair_id const & kid)
+{
+  Lua ll(st);
+  ll
+    .func("note_netsync_pubkey_received")
+    .push_str(kid());
+
+  ll.call(1, 0);
+  return ll.ok();
+}
+
+bool
+lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
+                                           rsa_keypair_id const & kid,
+                                           cert_name const & name,
+                                           cert_value const & value)
+{
+  Lua ll(st);
+  ll
+    .func("note_netsync_cert_received")
+    .push_str(rid.inner()())
+    .push_str(kid())
+    .push_str(name())
+    .push_str(value());
+
+  ll.call(4, 0);
   return ll.ok();
 }
