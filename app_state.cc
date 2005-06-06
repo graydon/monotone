@@ -31,7 +31,7 @@ static string const key_option("key");
 
 app_state::app_state() 
   : branch_name(""), db(""), stdhooks(true), rcfiles(true), diffs(false),
-    search_root("/"), depth(-1), last(-1)
+    search_root("/"), depth(-1), last(-1), verbose(false)
 {
   db.set_app(this);
 }
@@ -348,6 +348,12 @@ void
 app_state::set_rcfiles(bool b)
 {
   rcfiles = b;
+}
+
+void
+app_state::set_verbose(bool b)
+{
+  verbose = b;
 }
 
 void

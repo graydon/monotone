@@ -3748,9 +3748,9 @@ is translated to <revision id>: <line> in the output, where <revision id>
 is the revision in which that line of the file was last edited.
 
 @item monotone complete file @var{partial-id}
-@itemx monotone complete key @var{partial-id}
+@itemx monotone complete [--brief] key @var{partial-id}
 @itemx monotone complete manifest @var{partial-id}
-@itemx monotone complete revision @var{partial-id}
+@itemx monotone complete [--brief] revision @var{partial-id}
 
 These commands print out all known completions of a partial @sc{sha1}
 value, listing completions which are @code{file}, @code{manifest} or
@@ -3770,6 +3770,20 @@ Then monotone is telling you that there are 3 manifests it knows
 about, in its database, which begin with the 4 hex digits
 @code{fa36}. This command is intended to be used by programmable
 completion systems, such as those in @command{bash} and @command{zsh}.
+
+The complete command for keys and revisions have a @code{--verbose} option.
+Programmable completion systems can use @code{--verbose} output to 
+present users with additional information about each completion option.
+
+For example, verbose output for @code{revision} looks like this:
+@smallexample
+@group
+$ mt complete revision 01f
+01f5da490941bee1f0000f0561fc62eabfb2fa23 graydon@@dub.net 2003-12-03T03:14:35
+01f992577bd8bcdcade0f89e724fd5dc2d2bbe8a kinetik@@orcon.nz 2005-05-11T05:19:29
+01faad191d8d0474777c70b4d606782942333a78 kinetik@@orcon.nz 2005-04-11T04:24:01
+@end group
+@end smallexample
 
 @item monotone diff 
 @itemx monotone diff @var{pathname...}

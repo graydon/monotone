@@ -75,6 +75,7 @@ struct poptOption options[] =
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
+    {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, "verbose completion output", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -293,6 +294,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_NORC:
               app.set_rcfiles(false);
+              break;
+
+            case OPT_VERBOSE:
+              app.set_verbose(true);
               break;
 
             case OPT_RCFILE:
