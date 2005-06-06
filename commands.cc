@@ -1405,7 +1405,7 @@ CMD(cat, "informative",
 
 
 CMD(checkout, "tree", "[DIRECTORY]\n",
-    "check out revision from database into directory.\n"
+    "check out a revision from database into directory.\n"
     "If a revision is given, that's the one that will be checked out.\n"
     "Otherwise, it will be the head of the branch (given or implicit).\n"
     "If no directory is given, the branch name will be used as directory",
