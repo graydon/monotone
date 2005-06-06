@@ -94,10 +94,14 @@ _monotone_cat() {
 		compadd -- file manifest revision
 	else
 	  local mtype="$words[2]"
-		local id="$words[3]:gs/-//"
-		if (( $#id )); then
-  		compadd -- $(monotone complete $mtype $id)
-		fi
+		if [[ "$mtype" == "revision" ]]; then
+			_monotone_revisions
+		else
+			local id="$words[3]"
+			if (( $#id )); then
+  			compadd -- $(monotone complete $mtype $id 2> /dev/null)
+			fi
+	  fi
 	fi
 }
 
@@ -293,16 +297,16 @@ _monotone_branches() {
 
 (( $+functions[_monotone_keys] )) ||
 _monotone_keys() {
-	local keys
-	keys=$(monotone ls keys) 
-	compadd -X $keys -n -- $(echo $keys | grep "[0-9a-f]\{40\}" | cut -f 1 -d ' ')
+	local id="$words[CURRENT]:gs/-//"
+	if (( $#id )); then
+		compadd -X "$(monotone complete key --verbose $id 2>/dev/null)" -n -- $(monotone complete key $id 2>/dev/null)
+	fi
 }
 
 (( $+functions[_monotone_revisions] )) ||
 _monotone_revisions() {
-	local id="$words[CURRENT]:gs/-//"
-	if (( $#id )); then
-		compadd -- $(monotone complete revision $id 2>/dev/null)
+	if ! compset -P '*\='; then
+		compadd -X "$(monotone complete revision --verbose $PREFIX 2>/dev/null)" -n -- $(monotone complete revision $PREFIX 2>/dev/null)
 	fi
 }
 

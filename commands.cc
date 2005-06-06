@@ -3311,12 +3311,12 @@ CMD(explicit_merge, "tree",
 
 CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
     "complete partial id",
-    OPT_BRIEF)
+    OPT_VERBOSE)
 {
   if (args.size() != 2)
     throw usage(name);
 
-  bool brief = global_sanity.brief;
+  bool verbose = app.verbose;
 
   N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
     F("non-hex digits in partial id"));
@@ -3327,7 +3327,10 @@ CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
       app.db.complete(idx(args, 1)(), completions);
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        cout << i->inner()() << endl;
+        {
+          if (!verbose) cout << i->inner()() << endl;
+          else cout << describe_revision(app, i->inner()) << endl;
+        }
     }
   else if (idx(args, 0)() == "manifest")
     {      
@@ -3354,7 +3357,7 @@ CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
            i != completions.end(); ++i)
         {
           cout << i->first.inner()();
-          if (!brief) cout << " " << i->second();
+          if (verbose) cout << " " << i->second();
           cout << endl;
         }
     }
