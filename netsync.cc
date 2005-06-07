@@ -3610,6 +3610,21 @@ session::rebuild_merkle_trees(app_state & app,
   ticker certs_ticker("certs", "c", 256);
   ticker keys_ticker("keys", "k", 1);
 
+  // this code is wrong.  the way the logic _should_ work is:
+  //   -- start with all branches we want to include
+  //   -- for each such branch, find all branch certs for that branch
+  //   -- for each such cert, note down its revision
+  //      (or these two steps can be replaced with anything else that gives us
+  //      list of all revisions in the branch)
+  //   -- expand this set of revisions to include all of their ancestors
+  //   -- for each such revision, insert all of its certs into the cert table,
+  //      and note all of its branches and keys
+  //   -- for each such branch, insert its epoch into the epoch table, and for
+  //      each such key, insert its key into the key table.
+  // this somewhat convoluted approach is necessary to handle cases where
+  // ancestors leave the branch inclusion set, where revisions carry branches
+  // that are otherwise outside of the inclusion set, etc.
+
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;
 

@@ -1,3 +1,8 @@
+2005-06-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (rebuild_merkle_trees): Add a comment describing how
+	this code should work (and why it currently doesn't quite).
+
 2005-06-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_bad_packets.at: Expect certs on a non-existent rev to
