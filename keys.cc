@@ -166,6 +166,20 @@ write_der(T & val, SecByteBlock & sec)
     der_encoded[i] = '\0';
 }  
 
+static bool
+blocking_rng(lua_hooks & lua)
+{
+  if (!lua.hook_non_blocking_rng_ok())
+    {
+#ifndef BLOCKING_RNG_AVAILABLE
+      throw oops("no blocking RNG available and non-blocking RNG rejected");
+#else
+      return true;
+#endif
+    };
+  return false;
+}
+
 
 void 
 generate_key_pair(lua_hooks & lua,              // to hook for phrase
@@ -176,17 +190,7 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
 {
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
-  bool request_blocking_rng = false;
-  if (!lua.hook_non_blocking_rng_ok())
-    {
-#ifndef BLOCKING_RNG_AVAILABLE 
-      throw oops("no blocking RNG available and non-blocking RNG rejected");
-#else
-      request_blocking_rng = true;
-#endif
-    }
-  
-  AutoSeededRandomPool rng(request_blocking_rng);
+  AutoSeededRandomPool rng(blocking_rng(lua));
   SecByteBlock phrase, pubkey, privkey;
   rsa_pub_key raw_pub_key;
   arc4<rsa_priv_key> raw_priv_key;
@@ -267,16 +271,7 @@ make_signature(lua_hooks & lua,           // to hook for phrase
 
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
-  bool request_blocking_rng = false;
-  if (!lua.hook_non_blocking_rng_ok())
-    {
-#ifndef BLOCKING_RNG_AVAILABLE 
-      throw oops("no blocking RNG available and non-blocking RNG rejected");
-#else
-      request_blocking_rng = true;
-#endif
-    }  
-  AutoSeededRandomPool rng(request_blocking_rng);
+  AutoSeededRandomPool rng(blocking_rng(lua));
 
   // we permit the user to relax security here, by caching a decrypted key
   // (if they permit it) through the life of a program run. this helps when
