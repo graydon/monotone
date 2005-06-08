@@ -304,6 +304,28 @@ netcmd::read_anonymous_cmd(protocol_role & role,
   assert_end_of_buffer(payload, pos, "anonymous netcmd payload");
 }
 
+void
+netcmd::read_anonymous_cmd_hmac(protocol_role & role,
+                                std::string & pattern,
+                                rsa_oaep_sha_data & hmac_key_encrypted) const
+{
+  size_t pos = 0;
+  // syntax is: <role:1 byte> <pattern: vstr> <hmac_key_encrypted: vstr>
+  u8 role_byte = extract_datum_lsb<u8>(payload, pos, "anonymous(hmac) netcmd, role");
+  if (role_byte != static_cast<u8>(source_role)
+      && role_byte != static_cast<u8>(sink_role)
+      && role_byte != static_cast<u8>(source_and_sink_role))
+    throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
+  role = static_cast<protocol_role>(role_byte);
+  extract_variable_length_string(payload, pattern, pos,
+                                 "anonymous(hmac) netcmd, pattern");
+  string hmac_key_string;
+  extract_variable_length_string(payload, hmac_key_string, pos,
+                                 "anonymous(hmac) netcmd, hmac_key_encrypted");
+  hmac_key_encrypted = rsa_oaep_sha_data(hmac_key_string);
+  assert_end_of_buffer(payload, pos, "anonymous(hmac) netcmd payload");
+}
+
 void 
 netcmd::write_anonymous_cmd(protocol_role role, 
                             std::string const & pattern,
@@ -314,6 +336,17 @@ netcmd::write_anonymous_cmd(protocol_role role,
   payload = static_cast<char>(role);
   insert_variable_length_string(pattern, payload);
   payload += nonce2();
+}
+
+void
+netcmd::write_anonymous_cmd_hmac(protocol_role role,
+                                 std::string const & pattern,
+                                 rsa_oaep_sha_data const & hmac_key_encrypted)
+{
+  cmd_code = anonymous_cmd;
+  payload = static_cast<char>(role);
+  insert_variable_length_string(pattern, payload);
+  insert_variable_length_string(hmac_key_encrypted(), payload);
 }
 
 void 
@@ -350,6 +383,40 @@ netcmd::read_auth_cmd(protocol_role & role,
 }
 
 void 
+netcmd::read_auth_cmd_hmac(protocol_role & role, 
+                           string & pattern,
+                           id & client, 
+                           id & nonce1, 
+                           rsa_oaep_sha_data & hmac_key_encrypted,
+                           string & signature) const
+{
+  size_t pos = 0;
+  // syntax is: <role:1 byte> <pattern: vstr>
+  //            <client: 20 bytes sha1> <nonce1: 20 random bytes>
+  //            <hmac_key_encrypted: vstr> <signature: vstr>
+  u8 role_byte = extract_datum_lsb<u8>(payload, pos, "auth netcmd, role");
+  if (role_byte != static_cast<u8>(source_role)
+      && role_byte != static_cast<u8>(sink_role)
+      && role_byte != static_cast<u8>(source_and_sink_role))
+    throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
+  role = static_cast<protocol_role>(role_byte);
+  extract_variable_length_string(payload, pattern, pos, "auth(hmac) netcmd, pattern");
+  client = id(extract_substring(payload, pos,
+                                constants::merkle_hash_length_in_bytes, 
+                                "auth(hmac) netcmd, client identifier"));
+  nonce1 = id(extract_substring(payload, pos,
+                                constants::merkle_hash_length_in_bytes, 
+                                "auth(hmac) netcmd, nonce1"));
+  string hmac_key;
+  extract_variable_length_string(payload, hmac_key, pos,
+                                 "auth(hmac) netcmd, hmac_key_encrypted");
+  hmac_key_encrypted = rsa_oaep_sha_data(hmac_key);
+  extract_variable_length_string(payload, signature, pos,
+                                 "auth(hmac) netcmd, signature");
+  assert_end_of_buffer(payload, pos, "auth(hmac) netcmd payload");
+}
+
+void 
 netcmd::write_auth_cmd(protocol_role role, 
                        string const & pattern, 
                        id const & client,
@@ -370,6 +437,25 @@ netcmd::write_auth_cmd(protocol_role role,
 }
                          
 
+void
+netcmd::write_auth_cmd_hmac(protocol_role role,
+                            string const & pattern,
+                            id const & client,
+                            id const & nonce1,
+                            rsa_oaep_sha_data const & hmac_key_encrypted,
+                            string const & signature)
+{
+  cmd_code = auth_cmd;
+  I(client().size() == constants::merkle_hash_length_in_bytes);
+  I(nonce1().size() == constants::merkle_hash_length_in_bytes);
+  payload = static_cast<char>(role);
+  insert_variable_length_string(pattern, payload);
+  payload += client();
+  payload += nonce1();
+  insert_variable_length_string(hmac_key_encrypted(), payload);
+  insert_variable_length_string(signature, payload);
+}
+
 void 
 netcmd::read_confirm_cmd(string & signature) const
 {
@@ -380,6 +466,13 @@ netcmd::read_confirm_cmd(string & signature) const
                                  "confirm netcmd, signature");
   assert_end_of_buffer(payload, pos, "confirm netcmd payload");
 }
+
+void
+netcmd::read_confirm_cmd_hmac() const
+{
+  size_t pos = 0;
+  assert_end_of_buffer(payload, pos, "confirm netcmd payload");
+}
   
 void 
 netcmd::write_confirm_cmd(string const & signature)
@@ -388,7 +481,14 @@ netcmd::write_confirm_cmd(string const & signature)
   payload.clear();
   insert_variable_length_string(signature, payload);
 }
-  
+
+void
+netcmd::write_confirm_cmd_hmac()
+{
+  cmd_code = confirm_cmd;
+  payload.clear();
+}
+
 void 
 netcmd::read_refine_cmd(merkle_node & node) const
 {
