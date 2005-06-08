@@ -166,6 +166,20 @@ write_der(T & val, SecByteBlock & sec)
     der_encoded[i] = '\0';
 }  
 
+static bool
+blocking_rng(lua_hooks & lua)
+{
+  if (!lua.hook_non_blocking_rng_ok())
+    {
+#ifndef BLOCKING_RNG_AVAILABLE
+      throw oops("no blocking RNG available and non-blocking RNG rejected");
+#else
+      return true;
+#endif
+    };
+  return false;
+}
+
 
 void 
 generate_key_pair(lua_hooks & lua,              // to hook for phrase
@@ -176,17 +190,7 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
 {
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
-  bool request_blocking_rng = false;
-  if (!lua.hook_non_blocking_rng_ok())
-    {
-#ifndef BLOCKING_RNG_AVAILABLE 
-      throw oops("no blocking RNG available and non-blocking RNG rejected");
-#else
-      request_blocking_rng = true;
-#endif
-    }
-  
-  AutoSeededRandomPool rng(request_blocking_rng);
+  AutoSeededRandomPool rng(blocking_rng(lua));
   SecByteBlock phrase, pubkey, privkey;
   rsa_pub_key raw_pub_key;
   arc4<rsa_priv_key> raw_priv_key;
@@ -267,16 +271,7 @@ make_signature(lua_hooks & lua,           // to hook for phrase
 
   // we will panic here if the user doesn't like urandom and we can't give
   // them a real entropy-driven random.  
-  bool request_blocking_rng = false;
-  if (!lua.hook_non_blocking_rng_ok())
-    {
-#ifndef BLOCKING_RNG_AVAILABLE 
-      throw oops("no blocking RNG available and non-blocking RNG rejected");
-#else
-      request_blocking_rng = true;
-#endif
-    }  
-  AutoSeededRandomPool rng(request_blocking_rng);
+  AutoSeededRandomPool rng(blocking_rng(lua));
 
   // we permit the user to relax security here, by caching a decrypted key
   // (if they permit it) through the life of a program run. this helps when
@@ -394,6 +389,75 @@ check_signature(lua_hooks & lua,
   I(vf);
   StringSource tmp(alleged_text, true, vf);
   return vf->GetLastResult();
+}
+
+void encrypt_rsa(lua_hooks & lua,
+                 rsa_keypair_id const & id,
+                 base64<rsa_pub_key> & pub_encoded,
+                 std::string const & plaintext,
+                 rsa_oaep_sha_data & ciphertext)
+{
+  AutoSeededRandomPool rng(blocking_rng(lua));
+
+  rsa_pub_key pub;
+  decode_base64(pub_encoded, pub);
+  SecByteBlock pub_block;
+  pub_block.Assign(reinterpret_cast<byte const *>(pub().data()), pub().size());
+  StringSource keysource(pub_block.data(), pub_block.size(), true);
+
+  shared_ptr<RSAES_OAEP_SHA_Encryptor> encryptor;
+  encryptor = shared_ptr<RSAES_OAEP_SHA_Encryptor>
+    (new RSAES_OAEP_SHA_Encryptor(keysource));
+
+  string ciphertext_string;
+  StringSource tmp(plaintext, true,
+                   encryptor->CreateEncryptionFilter
+                   (rng, new StringSink(ciphertext_string)));
+
+  ciphertext = rsa_oaep_sha_data(ciphertext_string);
+}
+
+void decrypt_rsa(lua_hooks & lua,
+                 rsa_keypair_id const & id,
+                 base64< arc4<rsa_priv_key> > const & priv,
+                 rsa_oaep_sha_data const & ciphertext,
+                 std::string & plaintext)
+{
+  AutoSeededRandomPool rng(blocking_rng(lua));
+  arc4<rsa_priv_key> decoded_key;
+  SecByteBlock decrypted_key;
+  SecByteBlock phrase;
+  shared_ptr<RSAES_OAEP_SHA_Decryptor> decryptor;
+
+  for (int i = 0; i < 3; i++)
+    {
+      bool force = false;
+      decode_base64(priv, decoded_key);
+      decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
+                           decoded_key().size());
+      get_passphrase(lua, id, phrase, false, force);
+
+      try 
+        {
+          do_arc4(phrase, decrypted_key);
+          StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
+          decryptor = shared_ptr<RSAES_OAEP_SHA_Decryptor>
+            (new RSAES_OAEP_SHA_Decryptor(keysource));
+        }
+      catch (...)
+        {
+          if (i >= 2)
+            throw informative_failure("failed to decrypt private RSA key, "
+                                      "probably incorrect passphrase");
+          // don't use the cache bad one next time
+          force = true;
+          continue;
+        }
+    }
+
+  StringSource tmp(ciphertext(), true,
+                   decryptor->CreateDecryptionFilter
+                   (rng, new StringSink(plaintext)));
 }
 
 void 

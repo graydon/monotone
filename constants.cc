@@ -160,5 +160,6 @@ namespace constants
   size_t const netsync_default_port = 5253;
   size_t const netsync_connection_limit = 1024; 
   size_t const netsync_timeout_seconds = 21600; // 6 hours
+  size_t const netsync_session_key_length_in_bytes = 20;     // 160 bits
 
 }

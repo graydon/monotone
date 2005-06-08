@@ -120,6 +120,9 @@ namespace constants
   // number of seconds a connection can be idle before it's dropped
   extern size_t const netsync_timeout_seconds;
 
+  // netsync HMAC key length
+  extern size_t const netsync_session_key_length_in_bytes;
+
 }
 
 #endif // __CONSTANTS_HH__
