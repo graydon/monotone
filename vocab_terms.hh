@@ -36,6 +36,8 @@ ATOMIC_NOVERIFY(rsa_priv_key);       // some nice numbers
 ATOMIC_NOVERIFY(rsa_sha1_signature); // some other nice numbers
 ATOMIC_NOVERIFY(rsa_oaep_sha_data);
 
+ATOMIC(netsync_session_key);  // key for netsync session HMAC
+
 DECORATE(revision);           // thing associated with a revision
 DECORATE(manifest);           // thing associated with a manifest
 DECORATE(file);               // thing associated with a file

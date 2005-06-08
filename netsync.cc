@@ -228,6 +228,7 @@ session
   utf8 pattern;
   id remote_peer_key_hash;
   rsa_keypair_id remote_peer_key_name;
+  netsync_session_key session_key;
   bool authenticated;
 
   time_t last_io_time;
@@ -726,7 +727,7 @@ void
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   if (!encountered_error)
-    cmd.write(outbuf);
+    cmd.write(outbuf, session_key);
   else
     L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
@@ -3145,7 +3146,7 @@ session::arm()
 {
   if (!armed)
     {
-      if (cmd.read(inbuf))
+      if (cmd.read(inbuf, session_key))
         {
 //          inbuf.erase(0, cmd.encoded_size());     
           armed = true;

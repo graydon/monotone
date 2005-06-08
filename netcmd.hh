@@ -62,8 +62,8 @@ public:
 
 
   // basic cmd i/o (including checksums)
-  void write(std::string & out) const;
-  bool read(std::string & inbuf);
+  void write(std::string & out, netsync_session_key const & key = netsync_session_key()) const;
+  bool read(std::string & inbuf, netsync_session_key const & key = netsync_session_key());
 
   // i/o functions for each type of command payload
   void read_error_cmd(std::string & errmsg) const;

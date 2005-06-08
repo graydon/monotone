@@ -102,6 +102,23 @@ verify(rsa_keypair_id & val)
   val.ok = true;
 }
 
+inline void
+verify(netsync_session_key & val)
+{
+  if (val.ok)
+    return;
+
+  if (val().length() == 0)
+    {
+      val.s.append(constants::netsync_session_key_length_in_bytes, 0);
+      return;
+    }
+
+  N(val().length() == constants::netsync_session_key_length_in_bytes,
+    F("Invalid key length of %d bytes") % val().length());
+
+  val.ok = true;
+}
 
 inline void 
 verify(local_path & val)

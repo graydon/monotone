@@ -8,6 +8,8 @@
 #include <utility>
 
 #include "cryptopp/gzip.h"
+#include "cryptopp/hmac.h"
+#include "cryptopp/sha.h"
 
 #include "adler32.hh"
 #include "constants.hh"
@@ -69,13 +71,27 @@ netcmd::operator==(netcmd const & other) const
 }
   
 void 
-netcmd::write(string & out) const
+netcmd::write(string & out, netsync_session_key const & key) const
 {
   out += static_cast<char>(version);
   out += static_cast<char>(cmd_code);
   insert_variable_length_string(payload, out);
   adler32 check(reinterpret_cast<u8 const *>(payload.data()), payload.size());
-  insert_datum_lsb<u32>(check.sum(), out);
+  if (version < 5)
+    {
+      adler32 check(reinterpret_cast<u8 const *>(payload.data()), payload.size());
+      insert_datum_lsb<u32>(check.sum(), out);
+    }
+  else
+    {
+      CryptoPP::HMAC<CryptoPP::SHA> hmac(reinterpret_cast<const byte *>(key().data()),
+                                         key().length());
+      char digest[CryptoPP::SHA::DIGESTSIZE];
+      hmac.CalculateDigest(reinterpret_cast<byte *>(digest),
+                           reinterpret_cast<const byte *>(payload.data()),
+                           payload.size());
+      out.append(digest, sizeof(digest));
+    }
 }
 
 // last should be zero (doesn't mean we're compatible with version 0).
@@ -95,7 +111,7 @@ bool is_compatible(u8 version)
 }
   
 bool 
-netcmd::read(string & inbuf)
+netcmd::read(string & inbuf, netsync_session_key const & key)
 {
   size_t pos = 0;
 
@@ -156,10 +172,21 @@ netcmd::read(string & inbuf)
     throw bad_decode(F("oversized payload of '%d' bytes") % payload_len);
   
   // there might not be enough data yet in the input buffer
-  if (inbuf.size() < pos + payload_len + sizeof(u32))
+  if (version < 5)
     {
-      inbuf.reserve(pos + payload_len + sizeof(u32) + constants::bufsz);
-      return false;
+      if (inbuf.size() < pos + payload_len + sizeof(u32))
+        {
+          inbuf.reserve(pos + payload_len + sizeof(u32) + constants::bufsz);
+          return false;
+        }
+    }
+  else
+    {
+      if (inbuf.size() < pos + payload_len + CryptoPP::SHA::DIGESTSIZE)
+        {
+          inbuf.reserve(pos + payload_len + CryptoPP::SHA::DIGESTSIZE + constants::bufsz);
+          return false;
+        }
     }
 
 //  out.payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
@@ -172,12 +199,31 @@ netcmd::read(string & inbuf)
   pos = 0;
 
   // they might have given us bogus data
-  u32 checksum = extract_datum_lsb<u32>(inbuf, pos, "netcmd checksum");
-  inbuf.erase(0, pos);
-  adler32 check(reinterpret_cast<u8 const *>(payload.data()), 
-                payload.size());
-  if (checksum != check.sum())
-    throw bad_decode(F("bad checksum 0x%x vs. 0x%x") % checksum % check.sum());
+  if (version < 5)
+    {
+      u32 checksum = extract_datum_lsb<u32>(inbuf, pos, "netcmd checksum");
+      inbuf.erase(0, pos);
+      adler32 check(reinterpret_cast<u8 const *>(payload.data()), 
+                    payload.size());
+      if (checksum != check.sum())
+        throw bad_decode(F("bad checksum 0x%x vs. 0x%x") % checksum % check.sum());
+    }
+  else
+    {
+      string cmd_digest = extract_substring(inbuf, pos, CryptoPP::SHA::DIGESTSIZE,
+                                            "netcmd HMAC");
+      inbuf.erase(0, pos);
+      char digest_buf[CryptoPP::SHA::DIGESTSIZE];
+      CryptoPP::HMAC<CryptoPP::SHA> hmac(reinterpret_cast<const byte *>(key().data()),
+                                         key().length());
+      hmac.CalculateDigest(reinterpret_cast<byte *>(digest_buf),
+                           reinterpret_cast<const byte *>(payload.data()),
+                           payload.size());
+      string digest(digest_buf, sizeof(digest_buf));
+      if (cmd_digest != digest)
+        throw bad_decode(F("bad HMAC %s vs. %s") % encode_hexenc(cmd_digest)
+                         % encode_hexenc(digest));
+    }
 
   return true;    
 }
