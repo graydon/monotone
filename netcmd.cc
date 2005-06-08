@@ -76,7 +76,6 @@ netcmd::write(string & out, netsync_session_key const & key) const
   out += static_cast<char>(version);
   out += static_cast<char>(cmd_code);
   insert_variable_length_string(payload, out);
-  adler32 check(reinterpret_cast<u8 const *>(payload.data()), payload.size());
   if (version < 5)
     {
       adler32 check(reinterpret_cast<u8 const *>(payload.data()), payload.size());
