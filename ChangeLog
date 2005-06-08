@@ -1,5 +1,9 @@
 2005-06-07  Nathaniel Smith  <njs@codesourcery.com>
 
+	* ChangeLog: Fixup.
+
+2005-06-07  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi (Storage and workflow): Attempt to thwart some
 	common misconceptions.
 
@@ -28,6 +32,7 @@
 	Throw in some calls to CANONICALISE, maybe this will help on
 	Win32...
 
+2005-06-04  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc, netcmd.cc: Style cleanups (mostly whitespace).
 
