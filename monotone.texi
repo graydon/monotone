@@ -667,12 +667,14 @@ database and a working copy; the network is not involved.
 
 A @dfn{database} is a single, regular file. You can copy or back it up
 using standard methods. Typically you keep a database in your home
-directory. Databases are portable between different machine types. If
-a database grows too big, you may choose to remove information from
-it. You can have multiple databases and divide your work between them,
-or keep everything in a single database if you prefer. You can dump
-portions of your database out as text, and read them back into other
-databases, or send them to your friends.
+directory. Databases are portable between different machine types. You
+can have multiple databases and divide your work between them, or keep
+everything in a single database if you prefer. You can dump portions of
+your database out as text, and read them back into other databases, or
+send them to your friends.  Underneath, databases are accessed using a
+standard, robust data manager, which makes using even very large
+databases efficient.  In dire emergencies, you can directly examine and
+manipulate a database using a simple SQL interface.
 
 A database contains many files, manifests, revisions, and
 certificates, some of which are not immediately of interest, some of

@@ -1,5 +1,10 @@
 2005-06-07  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Storage and workflow): Attempt to thwart some
+	common misconceptions.
+
+2005-06-07  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netsync.cc (rebuild_merkle_trees): Add a comment describing how
 	this code should work (and why it currently doesn't quite).
 
