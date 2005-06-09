@@ -2229,6 +2229,7 @@ familiarize yourself with its operation.
 * Reserved Certs::         Certificate names with special meanings.
 * Naming Conventions::     Choosing appropriate names for keys and branches.
 * File Attributes::        Marking files as executable, or other attributes.
+* Merging::                Merging with external tools, handling binary files.
 * Migrating and Dumping::  Changing the underlying storage system.
 * Importing from CVS::     Building a monotone database from a CVS repository.
 @end menu
@@ -2898,6 +2899,47 @@ working copy. If you make changes to it which conflict with changes
 other people make, you will have to resolve those conflicts, as plain
 text, just as with any other text file in your working copy.
 
+@page
+@node    Merging
+@section Merging
+
+Monotone has two merging modes, controlled by the @code{manual_merge}
+attribute.
+By default all files are merged in automatic mode, unless the
+@code{manual_merge} attribute for that file is present and
+@code{true}.
+In automatic mode files are merged without user intervention, using
+monotone internal three-way merging algorithm. 
+Only if there are conflicts or an ancestor is not available monotone
+switches to manual mode, essentially escalating the merging to the user.
+When working in manual mode, monotone invokes the merge2 (for two-way
+merging) or merge3 (three-way) hooks to start an user defined external
+merge tool.  
+If the tool terminates without writing the merged file, monotone aborts the
+merging, reverting any changes made.
+By redefining the aforementioned hooks the user can not only choose a
+preferred merge tool, but even select different programs for different
+file types.  For example, gimp for .png files, OpenOffice.org for
+.doc, and so on. 
+Starting with monotone 0.20, the @code{manual_merge} attribute is
+automatically set at add time for all ``binary'' files, i.e. all files
+for wich the @code{binary_file} hook returns true. 
+Currently, this means all files with extension gif, jpeg, png, bz2, gz
+and zip, plus files containing at least one of the following
+bytes:
+ 
+@smallexample
+@group
+0x00 thru 0x06
+0x0E thru 0x1a
+0x1c thru 0x1f
+@end group
+@end smallexample
+
+The attribute could also be manually forced or removed using the
+apposite monotone commands.
+Remember that monotone switches to manual merging even if only one of
+the files to be merged has the @code{manual_merge} attribute set. 
 
 @page
 @node    Migrating and Dumping
@@ -6008,8 +6050,8 @@ entry @var{attribute}, is a function taking a file name
 stored in @file{.mt-attrs} for the given @var{filename}. This table of
 hook functions is called once for each file during an @dfn{add}.
 
-By default, there is only one entry in this table, for the @code{execute}
-attribute. Its definition is:
+By default, there are only two entries in this table, for the
+@code{execute} and @code{manual_merge} attributes. Their definition is:
 
 @smallexample
 @group
@@ -6021,8 +6063,49 @@ attr_init_functions["execute"] =
         return nil 
         end
   end
+attr_init_functions["manual_merge"] = 
+   function(filename)
+      if (binary_file(filename)) then 
+        return "true" -- binary files must merged manually
+      else 
+        return nil
+      end 
+   end
 @end group
 @end smallexample
+
+The @code{binary_file} function is also defined as a lua hook as
+follows:
+ 
+@smallexample
+@group
+function binary_file(name)
+   local lowname=string.lower(name)
+   -- some known binaries, return true
+   if (string.find(lowname, "%.gif$")) then return true end
+   if (string.find(lowname, "%.jpe?g$")) then return true end
+   if (string.find(lowname, "%.png$")) then return true end
+   if (string.find(lowname, "%.bz2$")) then return true end
+   if (string.find(lowname, "%.gz$")) then return true end
+   if (string.find(lowname, "%.zip$")) then return true end
+   -- some known text, return false
+   if (string.find(lowname, "%.cc?$")) then return false end
+   if (string.find(lowname, "%.cxx$")) then return false end
+   if (string.find(lowname, "%.hh?$")) then return false end
+   if (string.find(lowname, "%.hxx$")) then return false end
+   if (string.find(lowname, "%.lua$")) then return false end
+   if (string.find(lowname, "%.texi$")) then return false end
+   if (string.find(lowname, "%.sql$")) then return false end
+   -- unknown - read file and use the guess-binary built-in
+   -- monotone function
+   filedata=read_contents_of_file(name)
+   if (filedata ~= nil) then return guess_binary(filedata) end
+   -- if still unknown, treat as binary
+   return true
+end
+@end group
+@end smallexample
+
 
 @end ftable
 

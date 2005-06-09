@@ -25,7 +25,7 @@ end
 -- bit, ACLs, various special flags) which we want to have set and
 -- re-set any time the files are modified. the attributes themselves
 -- are stored in a file .mt-attrs, in the working copy (and
--- manifest). each (f,k,v) triple in an atribute file turns into a
+-- manifest). each (f,k,v) triple in an attribute file turns into a
 -- call to attr_functions[k](f,v) in lua.
 
 if (attr_init_functions == nil) then
@@ -41,10 +41,18 @@ attr_init_functions["execute"] =
       end 
    end
 
+attr_init_functions["manual_merge"] = 
+   function(filename)
+      if (binary_file(filename)) then 
+        return "true" -- binary files must merged manually
+      else 
+        return nil
+      end 
+   end
+
 if (attr_functions == nil) then
    attr_functions = {}
 end
-
 
 attr_functions["execute"] = 
    function(filename, value) 
@@ -91,6 +99,32 @@ function ignore_file(name)
    return false;
 end
 
+-- return true means "binary", false means "text",
+-- nil means "unknown, try to guess"
+function binary_file(name)
+   local lowname=string.lower(name)
+   -- some known binaries, return true
+   if (string.find(lowname, "%.gif$")) then return true end
+   if (string.find(lowname, "%.jpe?g$")) then return true end
+   if (string.find(lowname, "%.png$")) then return true end
+   if (string.find(lowname, "%.bz2$")) then return true end
+   if (string.find(lowname, "%.gz$")) then return true end
+   if (string.find(lowname, "%.zip$")) then return true end
+   -- some known text, return false
+   if (string.find(lowname, "%.cc?$")) then return false end
+   if (string.find(lowname, "%.cxx$")) then return false end
+   if (string.find(lowname, "%.hh?$")) then return false end
+   if (string.find(lowname, "%.hxx$")) then return false end
+   if (string.find(lowname, "%.lua$")) then return false end
+   if (string.find(lowname, "%.texi$")) then return false end
+   if (string.find(lowname, "%.sql$")) then return false end
+   -- unknown - read file and use the guess-binary 
+   -- monotone built-in function
+   filedata=read_contents_of_file(name, "rb")
+   if (filedata ~= nil) then return guess_binary(filedata) end
+   -- if still unknown, treat as binary
+   return true
+end
 
 function edit_comment(basetext, user_log_message)
    local exe = "vi"
@@ -281,8 +315,8 @@ function write_to_temporary_file(data)
    return filename
 end
 
-function read_contents_of_file(filename)
-   tmp = io.open(filename, "r")
+function read_contents_of_file(filename, mode)
+   tmp = io.open(filename, mode) 
    if (tmp == nil) then
       return nil
    end
@@ -362,9 +396,9 @@ function merge2 (left_path, right_path, merged_path, left, right)
          cmd ()
          if tbl.meld_exists 
          then 
-            ret = read_contents_of_file (tbl.lfile)
+            ret = read_contents_of_file (tbl.lfile, "r")
          else
-            ret = read_contents_of_file (tbl.outfile) 
+            ret = read_contents_of_file (tbl.outfile, "r") 
          end 
          if string.len (ret) == 0 
          then 
@@ -453,9 +487,9 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
          cmd ()
          if tbl.meld_exists 
          then 
-            ret = read_contents_of_file (tbl.afile)
+            ret = read_contents_of_file (tbl.afile, "r")
          else
-            ret = read_contents_of_file (tbl.outfile) 
+            ret = read_contents_of_file (tbl.outfile, "r") 
          end 
          if string.len (ret) == 0 
          then 

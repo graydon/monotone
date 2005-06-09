@@ -157,6 +157,15 @@ extern "C"
     lua_pushnumber(L, process_sleep(seconds));
     return 1;
   }
+
+  static int
+  monotone_guess_binary_for_lua(lua_State *L)
+  {
+    const char *path = lua_tostring(L, -1);
+    N(path, F("guess_binary called with an invalid parameter"));
+    lua_pushboolean(L, guess_binary(std::string(path, lua_strlen(L, -1))));
+    return 1;
+  }
 }
 
 
@@ -184,6 +193,7 @@ lua_hooks::lua_hooks()
   lua_register(st, "wait", monotone_wait_for_lua);
   lua_register(st, "kill", monotone_kill_for_lua);
   lua_register(st, "sleep", monotone_sleep_for_lua);
+  lua_register(st, "guess_binary", monotone_guess_binary_for_lua);
 }
 
 lua_hooks::~lua_hooks()

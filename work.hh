@@ -165,6 +165,7 @@ void write_attr_map(data & dat,
                     attr_map const & options);
 
 extern std::string const encoding_attribute;
+extern std::string const manual_merge_attribute;
 
 bool get_attribute_from_db(file_path const & file,
                            std::string const & attr_key,

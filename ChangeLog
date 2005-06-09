@@ -1,3 +1,15 @@
+2005-06-09  Riccardo Ghetta  <birrachiara@tin.it>
+
+	* diff_patch.cc/hh: honor the new manual_merge attribute
+	* file_io.cc/hh: move here the guess_binary function
+	* lua.cc: let guess_binary available to lua
+	* std_hooks.lua: handle manual_merge as an add-time attribute and
+	initialize by default make it true if the file appears to be binary.
+	Make read_contents_of_file able to read "binary" files.
+	* tests/t_merge_manual.at: tests new behaviour, superceding the
+	old XFAIL t_merge_binary.at test.
+	* monotone.texi: document changes, adding a small section on merging.
+
 2005-06-07  Nathaniel Smith  <njs@codesourcery.com>
 
 	* ChangeLog: Fixup.
