@@ -2937,7 +2937,7 @@ bytes:
 @end smallexample
 
 The attribute could also be manually forced or removed using the
-apposite monotone commands.
+appropriate monotone commands.
 Remember that monotone switches to manual merging even if only one of
 the files to be merged has the @code{manual_merge} attribute set. 
 

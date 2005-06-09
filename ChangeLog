@@ -1,3 +1,8 @@
+2005-06-09  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Merging): I assume that "apposite" was supposed
+	to be "appropriate".
+
 2005-06-09  Riccardo Ghetta  <birrachiara@tin.it>
 
 	* diff_patch.cc/hh: honor the new manual_merge attribute
