@@ -1,3 +1,8 @@
+2005-06-10  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(diff)): Remove OPT_DEPTH, as it was never
+	used.
+
 2005-06-09  Richard Levitte  <richard@levitte.org>
 
 	* monotone.texi (Merging): I assume that "apposite" was supposed
