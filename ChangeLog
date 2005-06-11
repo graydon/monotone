@@ -1,3 +1,7 @@
+2005-06-09  Riccardo Ghetta  <birrachiara@tin.it>
+
+	* std_hooks.lua: make binary_file return nil on unreadable/empty files
+	
 2005-06-10  Joel Reed  <joelwreed@comcast.com>
 
 	* commands.cc (CMD(cdiff)): Add OPT_DEPTH to command options.

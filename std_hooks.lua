@@ -122,8 +122,8 @@ function binary_file(name)
    -- monotone built-in function
    filedata=read_contents_of_file(name, "rb")
    if (filedata ~= nil) then return guess_binary(filedata) end
-   -- if still unknown, treat as binary
-   return true
+   -- still unknown (file empty or unreadable) - report it as nil
+   return nil
 end
 
 function edit_comment(basetext, user_log_message)
