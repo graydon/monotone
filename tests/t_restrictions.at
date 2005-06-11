@@ -170,6 +170,12 @@ AT_CHECK(grep fileAB stdout, [1], [ignore])
 AT_CHECK(MONOTONE diff --depth=2 . , [], [stdout], [ignore])
 AT_CHECK(grep fileA stdout, [0], [ignore])
 
+AT_CHECK(MONOTONE cdiff --depth=0 . , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE cdiff --depth=2 . , [], [stdout], [ignore])
+AT_CHECK(grep fileA stdout, [0], [ignore])
+
 # include both source and target of rename
 
 AT_CHECK(MONOTONE diff work/fileX work/file1, [], [stdout], [ignore])

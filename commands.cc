@@ -2687,7 +2687,7 @@ CMD(cdiff, "informative", "[PATH]...",
     "If one revision is given, the diff between the working directory and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.",
-    OPT_BRANCH_NAME % OPT_REVISION)
+    OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH)
 {
   do_diff(name, app, args, context_diff);
 }

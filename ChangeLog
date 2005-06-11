@@ -1,3 +1,8 @@
+2005-06-10  Joel Reed  <joelwreed@comcast.com>
+
+	* commands.cc (CMD(cdiff)): Add OPT_DEPTH to command options.
+	* t_restrictions.at: Add to testcase.
+
 2005-06-09  Joel Reed  <joelwreed@comcast.com>
 
 	* commands.cc (CMD(diff)): Add OPT_DEPTH back in, as it is used.
