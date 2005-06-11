@@ -1,3 +1,12 @@
+2005-06-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc: revert should ignore the ignore hooks, otherwise bad
+	things happen (revert a single ignored file, resultant empty ignore list
+	reverts the whole working copy).
+	* app_state.cc, app_state.hh: give set_restriction a flag to disregard
+	file-ignore hooks.
+	* tests/t_revert_restrict.at, testsuite.at: a test
+
 2005-06-09  Riccardo Ghetta  <birrachiara@tin.it>
 
 	* std_hooks.lua: make binary_file return nil on unreadable/empty files

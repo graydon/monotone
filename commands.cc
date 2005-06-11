@@ -3392,7 +3392,7 @@ CMD(revert, "working copy", "[PATH]...",
 
   extract_rearranged_paths(work, valid_paths);
   add_intermediate_paths(valid_paths);
-  app.set_restriction(valid_paths, args);
+  app.set_restriction(valid_paths, args, false);
 
   restrict_path_rearrangement(work, included, excluded, app);
 

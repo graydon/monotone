@@ -155,7 +155,9 @@ app_state::prefix(utf8 const & path)
 }
 
 void 
-app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & paths)
+app_state::set_restriction(path_set const & valid_paths, 
+                           vector<utf8> const & paths,
+                           bool respect_ignore)
 {
   // this can't be a file-global static, because file_path's initializer
   // depends on another global static being defined.
@@ -165,7 +167,7 @@ app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & pa
     {
       file_path p = prefix(*i);
 
-      if (lua.hook_ignore_file(p)) 
+      if (respect_ignore && lua.hook_ignore_file(p)) 
         {
           L(F("'%s' ignored by restricted path set\n") % p());
           continue;
