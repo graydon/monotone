@@ -1,3 +1,16 @@
+2005-06-11  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (complete_command): log command expansion messages
+	with L instead of P to reduce chatter
+	(status): add --brief option and corresponding output
+	(identify): add trailing space to comment gcc complains about
+	* monotone.cc: fix comment typo and add additional details for
+	command specific options
+	* monotone.texi (Automation): list inventory status code
+	combinations and descriptions
+	* tests/t_status.at: new test of status command and --brief option
+	* testsuite.at: add it
+
 2005-06-11  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc: revert should ignore the ignore hooks, otherwise bad

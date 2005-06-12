@@ -1,0 +1,63 @@
+AT_SETUP([status with missing files])
+MONOTONE_SETUP
+
+# patch existing file
+# add new file (with patch)
+# rename existing file
+# rename and patch existing file
+# drop existing file
+
+# again with --brief
+
+ADD_FILE(from, [from
+])
+ADD_FILE(from_patched, [from_patched
+])
+ADD_FILE(patched, [patched
+])
+ADD_FILE(dropped, [dropped
+])
+
+COMMIT(testbranch)
+
+ADD_FILE(added, [added
+])
+
+AT_DATA(from_patched, [from_patched 
+patched
+])
+AT_DATA(patched, [patched 
+patched
+])
+
+AT_CHECK(MONOTONE drop dropped, [], [ignore], [ignore])
+
+AT_CHECK(mv from to, [], [ignore], [ignore])
+AT_CHECK(mv from_patched to_patched, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE rename from to, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename from_patched to_patched, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(grep '^delete_file "dropped"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^rename_file "from"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^         to "to"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^rename_file "from_patched"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^         to "to_patched"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^add_file "added"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^patch "added"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^patch "patched"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^patch "to_patched"' stdout, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE status --brief, [], [stdout], [ignore])
+AT_CHECK(grep '^dropped dropped' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^renamed from' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^     to to' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^renamed from_patched' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^     to to_patched' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^added   added' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^patched added' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep '^patched patched' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^patched to_patched' stdout, [], [ignore], [ignore])
+
+AT_CLEANUP

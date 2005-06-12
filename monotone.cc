@@ -35,9 +35,12 @@ using namespace std;
 char * argstr = NULL;
 long arglong = 0;
 
-// Options are divide into two tables.  The first one is command-specific
+// Options are split between two tables.  The first one is command-specific
 // options (hence the `c' in `coptions').  The second is the global one
 // with options that aren't tied to specific commands.
+//
+// the intent is to ensure that any command specific options mean the same
+// thing to all commands that use them
 
 struct poptOption coptions[] =
   {

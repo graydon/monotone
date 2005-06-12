@@ -129,7 +129,7 @@ namespace commands
   {
     if (cmd.length() == 0 || cmds.find(cmd) != cmds.end()) return cmd;
 
-    P(F("expanding command '%s'\n") % cmd);
+    L(F("expanding command '%s'\n") % cmd);
 
     vector<string> matched;
 
@@ -146,7 +146,7 @@ namespace commands
     if (matched.size() == 1) 
       {
       string completed = *matched.begin();
-      P(F("expanded command to '%s'\n") %  completed);  
+      L(F("expanded command to '%s'\n") %  completed);  
       return completed;
       }
     else if (matched.size() > 1) 
@@ -1263,7 +1263,7 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
 }
 
 CMD(status, "informative", "[PATH]...", "show status of working copy",
-    OPT_DEPTH)
+    OPT_DEPTH % OPT_BRIEF)
 {
   revision_set rs;
   manifest_map m_old, m_new;
@@ -1273,8 +1273,50 @@ CMD(status, "informative", "[PATH]...", "show status of working copy",
 
   calculate_restricted_revision(app, args, rs, m_old, m_new);
 
-  write_revision_set(rs, tmp);
-  cout << endl << tmp << endl;
+  if (global_sanity.brief)
+    {
+      I(rs.edges.size() == 1);
+      change_set const & changes = edge_changes(rs.edges.begin());
+      change_set::path_rearrangement const & rearrangement = changes.rearrangement;
+      change_set::delta_map const & deltas = changes.deltas;
+
+      for (path_set::const_iterator i = rearrangement.deleted_files.begin();
+           i != rearrangement.deleted_files.end(); ++i) 
+        cout << "dropped " << *i << endl;
+
+      for (path_set::const_iterator i = rearrangement.deleted_dirs.begin();
+           i != rearrangement.deleted_dirs.end(); ++i) 
+        cout << "dropped " << *i << "/" << endl;
+
+      for (map<file_path, file_path>::const_iterator 
+           i = rearrangement.renamed_files.begin();
+           i != rearrangement.renamed_files.end(); ++i) 
+        cout << "renamed " << i->first << endl 
+             << "     to " << i->second << endl;
+
+      for (map<file_path, file_path>::const_iterator 
+           i = rearrangement.renamed_dirs.begin();
+           i != rearrangement.renamed_dirs.end(); ++i) 
+        cout << "renamed " << i->first << "/" << endl 
+             << "     to " << i->second << "/" << endl;
+
+      for (path_set::const_iterator i = rearrangement.added_files.begin();
+           i != rearrangement.added_files.end(); ++i) 
+        cout << "added   " << *i << endl;
+
+      for (change_set::delta_map::const_iterator i = deltas.begin(); 
+           i != deltas.end(); ++i) 
+        {
+          // don't bother printing patches on added files
+          if (rearrangement.added_files.find(i->first) == rearrangement.added_files.end())
+            cout << "patched " << i->first << endl;
+        }
+    }
+  else
+    {
+      write_revision_set(rs, tmp);
+      cout << endl << tmp << endl;
+    }
 }
 
 CMD(identify, "working copy", "[PATH]", "calculate identity of PATH or stdin",
@@ -2949,7 +2991,7 @@ CMD(update, "working copy", "",
       // we have the following
       //
       // old --- working
-      //   \         \
+      //   \         \ 
       //  chosen --- merged
       //
       // - old is the revision specified in MT/revision
