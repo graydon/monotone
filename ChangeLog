@@ -1,3 +1,11 @@
+2005-06-14  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua (get_preferred_merge2_command,
+	get_preferred_merge3_command): EDITOR may be undefined.  In that
+	case, os.getenv() returns nil, on which string.lower() chokes.
+	It's much better to check for that and default to an empty
+	string.
+
 2005-06-11  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (complete_command): log command expansion messages

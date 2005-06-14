@@ -338,7 +338,8 @@ function get_preferred_merge2_command (tbl)
    local rfile = tbl.rfile
    local outfile = tbl.outfile 
 
-   local editor = string.lower(os.getenv("EDITOR"))
+   local editor = os.getenv("EDITOR")
+   if editor ~= nil then editor = string.lower(editor) else editor = "" end
 
    
    if program_exists_in_path("kdiff3") then
@@ -427,7 +428,8 @@ function get_preferred_merge3_command (tbl)
    local rfile = tbl.rfile
    local outfile = tbl.outfile 
 
-   local editor = string.lower(os.getenv("EDITOR"))
+   local editor = os.getenv("EDITOR")
+   if editor ~= nil then editor = string.lower(editor) else editor = "" end
 
    if program_exists_in_path("kdiff3") then
       cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
