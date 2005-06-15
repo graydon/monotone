@@ -226,6 +226,7 @@ session
   bool arm();
 
   utf8 pattern;
+  boost::regex pattern_re;
   id remote_peer_key_hash;
   rsa_keypair_id remote_peer_key_name;
   bool authenticated;
@@ -435,6 +436,7 @@ session::session(protocol_role role,
   protocol_version(constants::netcmd_current_protocol_version),
   armed(false),
   pattern(""),
+  pattern_re(".*"),
   remote_peer_key_hash(""),
   remote_peer_key_name(""),
   authenticated(false),
@@ -458,6 +460,7 @@ session::session(protocol_role role,
       N(patterns.size() == 1,
           F("client can only sync one pattern at a time"));
       this->pattern = idx(patterns, 0);
+      this->pattern_re = boost::regex(this->pattern());
     }
     
   dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
@@ -1113,8 +1116,6 @@ session::analyze_ancestry_graph()
     set<string> ok_branches, bad_branches;
     cert_name bcert_name(branch_cert_name);
     cert_name tcert_name(tag_cert_name);
-    //used for permission checking if we're the client
-    boost::regex reg(pattern());
     for (map<revision_id, cert_map>::iterator i = received_certs.begin();
         i != received_certs.end(); ++i)
       {
@@ -1136,7 +1137,7 @@ session::analyze_ancestry_graph()
                   ok = app.lua.hook_get_netsync_write_permitted(name(),
                                                          remote_peer_key_name);
                 else
-                  ok = boost::regex_match(name(), reg);
+                  ok = boost::regex_match(name(), pattern_re);
                 if (ok)
                   {
                     ok_branches.insert(name());
@@ -1716,15 +1717,15 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       W(F("Talking to an old server. "
           "Using %s as a collection, not a regex.") % pattern);
       convert_pattern(pattern, pat);
+      this->pattern_re = boost::regex(pat());
     }
   vector<string> branchnames;
   set<utf8> ok_branches;
   get_branches(app, branchnames);
-  boost::regex reg(pat());
   for (vector<string>::const_iterator i = branchnames.begin();
       i != branchnames.end(); i++)
     {
-      if (boost::regex_match(*i, reg))
+      if (boost::regex_match(*i, pattern_re))
           ok_branches.insert(utf8(*i));
     }
   rebuild_merkle_trees(app, ok_branches);
@@ -2007,6 +2008,7 @@ session::process_auth_cmd(protocol_role role,
       decode_base64(sig, sig_raw);
       queue_confirm_cmd(sig_raw());
       this->pattern = pattern;
+      this->pattern_re = boost::regex(this->pattern());
       this->authenticated = true;
       this->remote_peer_key_name = their_id;
       // assume the (possibly degraded) opposite role

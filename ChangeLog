@@ -1,3 +1,15 @@
+2005-06-15  Richard Levitte  <richard@levitte.org>
+
+	* netsync.cc (struct session): Add a pattern regex cache.
+	(analyze_ancestry_graph): Use the regex cache instead of the
+	pattern string itself.  This is especially important when the
+	pattern is used as an old-style collection.
+	(process_hello_cmd): Recreate the pattern regex cache with the
+	conversion of the pattern to a regex when it's used as an
+	old-style collection.
+	(process_auth_cmd): When the pattern changes, change the regex
+	cache as well.
+
 2005-06-14  Richard Levitte  <richard@levitte.org>
 
 	* std_hooks.lua (get_preferred_merge2_command,
