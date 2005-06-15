@@ -1,3 +1,7 @@
+2005-06-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.texi: clarify some netsync parts of the tutorial
+
 2005-06-15  Richard Levitte  <richard@levitte.org>
 
 	* netsync.cc (struct session): Add a pattern regex cache.
