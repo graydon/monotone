@@ -73,6 +73,7 @@ netcmd::operator==(netcmd const & other) const
 void 
 netcmd::write(string & out, netsync_session_key const & key) const
 {
+  size_t oldlen = out.size();
   out += static_cast<char>(version);
   out += static_cast<char>(cmd_code);
   insert_variable_length_string(payload, out);
@@ -87,8 +88,8 @@ netcmd::write(string & out, netsync_session_key const & key) const
                                          key().length());
       char digest[CryptoPP::SHA::DIGESTSIZE];
       hmac.CalculateDigest(reinterpret_cast<byte *>(digest),
-                           reinterpret_cast<const byte *>(payload.data()),
-                           payload.size());
+                           reinterpret_cast<const byte *>(out.data() + oldlen),
+                           out.size() - oldlen);
       out.append(digest, sizeof(digest));
     }
 }
@@ -191,15 +192,16 @@ netcmd::read(string & inbuf, netsync_session_key const & key)
 //  out.payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
   // Do this ourselves, so we can swap the strings instead of copying.
   require_bytes(inbuf, pos, payload_len, "netcmd payload");
-  inbuf.erase(0, pos);
-  payload = inbuf.substr(payload_len);
-  inbuf.erase(payload_len, inbuf.npos);
+  payload = inbuf.substr(pos + payload_len);
+  inbuf.erase(pos + payload_len, inbuf.npos);
   inbuf.swap(payload);
+  size_t payload_pos = pos;
   pos = 0;
 
   // they might have given us bogus data
   if (version < 5)
     {
+      payload.erase(0, payload_pos);
       u32 checksum = extract_datum_lsb<u32>(inbuf, pos, "netcmd checksum");
       inbuf.erase(0, pos);
       adler32 check(reinterpret_cast<u8 const *>(payload.data()), 
@@ -222,6 +224,7 @@ netcmd::read(string & inbuf, netsync_session_key const & key)
       if (cmd_digest != digest)
         throw bad_decode(F("bad HMAC %s vs. %s") % encode_hexenc(cmd_digest)
                          % encode_hexenc(digest));
+      payload.erase(0, payload_pos);
     }
 
   return true;    
