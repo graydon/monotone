@@ -62,8 +62,12 @@ public:
 
 
   // basic cmd i/o (including checksums)
-  void write(std::string & out, netsync_session_key const & key = netsync_session_key()) const;
-  bool read(std::string & inbuf, netsync_session_key const & key = netsync_session_key());
+  void write(std::string & out,
+             netsync_session_key const & key = netsync_session_key(constants::netsync_key_initializer),
+             netsync_hmac_value & hmac_val = netsync_hmac_value(constants::netsync_key_initializer)) const;
+  bool read(std::string & inbuf,
+            netsync_session_key const & key = netsync_session_key(constants::netsync_key_initializer),
+            netsync_hmac_value & hmac_val = netsync_hmac_value(constants::netsync_key_initializer));
 
   // i/o functions for each type of command payload
   void read_error_cmd(std::string & errmsg) const;

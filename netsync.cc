@@ -272,6 +272,8 @@ session
   id remote_peer_key_hash;
   rsa_keypair_id remote_peer_key_name;
   netsync_session_key session_key;
+  netsync_hmac_value read_hmac;
+  netsync_hmac_value write_hmac;
   bool authenticated;
 
   time_t last_io_time;
@@ -485,6 +487,9 @@ session::session(protocol_role role,
   pattern(""),
   remote_peer_key_hash(""),
   remote_peer_key_name(""),
+  session_key(constants::netsync_key_initializer),
+  read_hmac(constants::netsync_key_initializer),
+  write_hmac(constants::netsync_key_initializer),
   authenticated(false),
   last_io_time(::time(NULL)),
   byte_in_ticker(NULL),
@@ -774,7 +779,7 @@ void
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   if (!encountered_error)
-    cmd.write(outbuf, session_key);
+    cmd.write(outbuf, session_key, write_hmac);
   else
     L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
@@ -3298,7 +3303,7 @@ session::arm()
 {
   if (!armed)
     {
-      if (cmd.read(inbuf, session_key))
+      if (cmd.read(inbuf, session_key, read_hmac))
         {
 //          inbuf.erase(0, cmd.encoded_size());     
           armed = true;

@@ -161,5 +161,8 @@ namespace constants
   size_t const netsync_connection_limit = 1024; 
   size_t const netsync_timeout_seconds = 21600; // 6 hours
   size_t const netsync_session_key_length_in_bytes = 20;     // 160 bits
+  size_t const netsync_hmac_value_length_in_bytes = 20;      // 160 bits
+
+  std::string const & netsync_key_initializer = std::string(netsync_session_key_length_in_bytes, 0);
 
 }

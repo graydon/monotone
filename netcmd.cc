@@ -71,7 +71,8 @@ netcmd::operator==(netcmd const & other) const
 }
   
 void 
-netcmd::write(string & out, netsync_session_key const & key) const
+netcmd::write(string & out, netsync_session_key const & key,
+              netsync_hmac_value & hmac_val) const
 {
   size_t oldlen = out.size();
   out += static_cast<char>(version);
@@ -84,13 +85,21 @@ netcmd::write(string & out, netsync_session_key const & key) const
     }
   else
     {
-      CryptoPP::HMAC<CryptoPP::SHA> hmac(reinterpret_cast<const byte *>(key().data()),
-                                         key().length());
+      I(key().size() == CryptoPP::SHA::DIGESTSIZE);
+      I(key().size() == hmac_val().size());
+      byte keybuf[CryptoPP::SHA::DIGESTSIZE];
+      for (size_t i = 0; i < sizeof(keybuf); i++)
+        {
+          keybuf[i] = key()[i] ^ hmac_val()[i];
+        }
+      CryptoPP::HMAC<CryptoPP::SHA> hmac(keybuf, sizeof(keybuf));
       char digest[CryptoPP::SHA::DIGESTSIZE];
       hmac.CalculateDigest(reinterpret_cast<byte *>(digest),
                            reinterpret_cast<const byte *>(out.data() + oldlen),
                            out.size() - oldlen);
-      out.append(digest, sizeof(digest));
+      string digest_str(digest, sizeof(digest));
+      hmac_val = netsync_hmac_value(digest_str);
+      out.append(digest_str);
     }
 }
 
@@ -111,7 +120,8 @@ bool is_compatible(u8 version)
 }
   
 bool 
-netcmd::read(string & inbuf, netsync_session_key const & key)
+netcmd::read(string & inbuf, netsync_session_key const & key,
+             netsync_hmac_value & hmac_val)
 {
   size_t pos = 0;
 
@@ -214,9 +224,15 @@ netcmd::read(string & inbuf, netsync_session_key const & key)
       string cmd_digest = extract_substring(inbuf, pos, CryptoPP::SHA::DIGESTSIZE,
                                             "netcmd HMAC");
       inbuf.erase(0, pos);
+      I(key().size() == CryptoPP::SHA::DIGESTSIZE);
+      I(key().size() == hmac_val().size());
+      byte keybuf[CryptoPP::SHA::DIGESTSIZE];
+      for (size_t i = 0; i < sizeof(keybuf); i++)
+        {
+          keybuf[i] = key()[i] ^ hmac_val()[i];
+        }
+      CryptoPP::HMAC<CryptoPP::SHA> hmac(keybuf, sizeof(keybuf));
       char digest_buf[CryptoPP::SHA::DIGESTSIZE];
-      CryptoPP::HMAC<CryptoPP::SHA> hmac(reinterpret_cast<const byte *>(key().data()),
-                                         key().length());
       hmac.CalculateDigest(reinterpret_cast<byte *>(digest_buf),
                            reinterpret_cast<const byte *>(payload.data()),
                            payload.size());
@@ -224,6 +240,7 @@ netcmd::read(string & inbuf, netsync_session_key const & key)
       if (cmd_digest != digest)
         throw bad_decode(F("bad HMAC %s vs. %s") % encode_hexenc(cmd_digest)
                          % encode_hexenc(digest));
+      hmac_val = netsync_hmac_value(digest);
       payload.erase(0, payload_pos);
     }
 
