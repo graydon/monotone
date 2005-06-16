@@ -1,3 +1,8 @@
+2005-06-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc: increase the divisor as required so that we don't get spurious
+	screen updates when we're using the kilobyte/megabyte tickers
+
 2005-06-15  Matt Johnston  <matt@ucc.asn.au>
 
 	* monotone.texi: clarify some netsync parts of the tutorial
