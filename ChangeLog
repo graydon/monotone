@@ -1,3 +1,8 @@
+2005-06-16  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (ignore_file): Add Cons/SCons cache files to
+	default ignore list.
+
 2005-06-15  Richard Levitte  <richard@levitte.org>
 
 	* netsync.cc (struct session): Add a pattern regex cache.
