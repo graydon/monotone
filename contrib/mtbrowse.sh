@@ -16,12 +16,11 @@
 #  - Run from working copy of existing project.
 #    Or give full filename to database.
 #  - Change your configuration
-#    (Delete the "VISUAL", to use the "PAGER")
-#    Please "Reload DB", if to see the new configuration
+#    Delete the "VISUAL", to use the "PAGER", deleto both for internal viewer.
+#    Save configuration.
+#    Please "Reload DB", to see the new configuration
 #  - Begin with menu "S Select revision"
 #  - Browse in branches, revisions, diff files, view logs ....
-#  - Quit menu with "Q" to save your environment.
-#    Or "X" to exit without save anything.
 #
 # Needed tools:
 #  monotone 0.19 or compatible
@@ -58,10 +57,16 @@
 # Fix cache deleting on startup.
 # Xargs for revision selection with date and key.
 #
+# 2005/6/6 Version 0.1.7 Henry@BigFoot.de
+# Backtitle with head, branch and filename.
+# Default-item to remember the selection in menues.
+# Check filname for reading before MT fails.
+# Exit after --help or --version.
+#
 # Known Bugs / ToDo-List:
 # * For Monotone Version >0.19  s/--depth/--last/, remove the fallback
 
-VERSION="0.1.6"
+VERSION="0.1.7"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -131,10 +136,12 @@ if [ -n "$1" ]
 then
     case $1 in
       --version)
-        echo "mtbrowse $VERSION"
+	echo "mtbrowse $VERSION"
+	exit 0
       ;;
       --help|-h)
-        echo "mtbrowse [dbfile]"
+	echo "mtbrowse [dbfile]"
+	exit 0
       ;;
       *)
 	# Databasefile from command line
@@ -144,12 +151,18 @@ then
 	# MT change the options, if you continue with other DB here!
 	if [ -f MT/options ]
 	then
-	    echo -e "\n**********\n* WARNING!\n**********\n"
-	    echo "Your MT/options will be overwrite, if"
-	    echo "continue with different DB file or branch"
-	    echo "in exist working directory!"
-	    echo -e "\nENTER to confirm  / CTRL-C to abbort"
-	    read junk
+
+	    if ! dialog --cr-wrap --title " *********** WARNING! ********** " \
+		    --defaultno --colors --yesno "
+Your \Zb\Z1MT/options\Zn will be overwrite, if
+continue with different DB file or branch
+in exist working directory!
+
+YES confirm  /  NO abbort" 0 0
+	    then
+		echo "abbort"
+		exit 1
+	    fi
 	fi
       ;;
     esac
@@ -187,7 +200,6 @@ do_pager()
     then
 	$PAGER < $1
     else
-#	dialog --textbox $1 20 75
 	dialog --textbox $1 0 0
     fi
     rm $1
@@ -242,6 +254,20 @@ fill_date_key()
 # Is parameter given: No user select, if branch known.
 do_branch_sel()
 {
+    local OLD_BRANCH
+
+    if [ ! -f "$DB" ]
+    then
+	echo "$DB: File not found! (mtbrowse)"
+	exit 1
+    fi
+
+    if [ ! -r "$DB" ]
+    then
+	echo "$DB: Can't read file! (mtbrowse)"
+	exit 1
+    fi
+
     # is Branch set, than can return
     if [ -n "$BRANCH" -a -n "$1" ]
     then
@@ -254,6 +280,8 @@ do_branch_sel()
 	echo "$DB" > $TEMPFILE.fname
 	unset BRANCH
     fi
+    
+    SHORT_DB=`basename $DB`
 
     OLD_BRANCH=$BRANCH
 
@@ -265,9 +293,18 @@ do_branch_sel()
 	 | sed -n -r -e 's/^(.+)$/\1\t-/p' > $TEMPFILE.dlg-branches \
 	 || exit 200
     fi
+    
+    if [ ! -s $TEMPFILE.dlg-branches ]
+    then
+	echo "Error: No branches found."
+	exit 1
+    fi
 
-    dialog --begin 1 2 --menu "Select branch" 0 0 0 \
-      `cat $TEMPFILE.dlg-branches` 2> $TEMPFILE.input
+    dialog --begin 1 2 \
+	--default-item "$OLD_BRANCH" \
+	--menu "Select branch" 0 0 0 \
+	`cat $TEMPFILE.dlg-branches` \
+	2> $TEMPFILE.input
     BRANCH=`cat $TEMPFILE.input`
 
     # Clear Head, if branch changed
@@ -318,7 +355,9 @@ do_head_sel()
 do_action_sel()
 {
     # Action-Menu
-    while dialog --menu "Action for $REVISION" 0 60 0 \
+    while dialog \
+	--backtitle "h:$HEAD b:$BRANCH f:$SHORT_DB" \
+	--menu "Action for $REVISION" 0 60 0 \
 	"L" "Log view of current revision" \
 	"P" "Diff files from parent" \
 	"W" "Diff files from working copy head" \
@@ -339,7 +378,7 @@ do_action_sel()
 	      > $TEMPFILE.change.log
 	    then
 		DEPTH_LAST="--depth"
-		dialog --title "ERROR" --msgbox \
+		dialog --title " ERROR " --msgbox \
 		  "Fallback to \"$DEPTH_LAST\" usage.\nPlease try again." 6 40
 	    else
 		do_pager $TEMPFILE.change.log
@@ -356,10 +395,11 @@ do_action_sel()
 		# Set DATE/KEY information
 		fill_date_key $TEMPFILE.parents $TEMPFILE.certs3tmp
 
-		cat cat $TEMPFILE.certs3tmp | xargs dialog --begin 1 2 --menu \
-		  "Select parent for $REVISION" 0 0 0 \
-		  2> $TEMPFILE.input \
-		  && PARENT=`cat $TEMPFILE.input`
+		cat cat $TEMPFILE.certs3tmp | \
+		    xargs dialog --begin 1 2 --default-item "$PARENT" \
+			--menu "Select parent for $REVISION" 0 0 0 \
+			2> $TEMPFILE.input \
+			&& PARENT=`cat $TEMPFILE.input`
 	    else
 		# Single parent only
 		PARENT=`cat $TEMPFILE.parents`
@@ -403,7 +443,7 @@ do_action_sel()
 	    # DIFF2: from other revision (not working dir)
 	    # Select second revision
 	    if cat $TEMPFILE.certs.$BRANCH | \
-	      xargs dialog --menu \
+	      xargs dialog --default-item "$REV2" --menu \
 	      "Select _older_ revision for branch:$BRANCH\nrev:$REVISION" \
 	      0 0 0  2> $TEMPFILE.revision-select
 	    then
@@ -441,8 +481,12 @@ do_action_sel()
 # Select a revision
 do_revision_sel()
 {
+    local SHORT_REV
+
     # if branch or head not known, ask user
+    echo "branch check..."
     do_branch_sel check
+    echo "head check..."
     do_head_sel check
 
     # Building revisions list
@@ -484,25 +528,30 @@ do_revision_sel()
 	fi
     fi
 
+    SHORT_REV=`echo $REVISION | cut -c 1-$HASH_TRIM`
+
     # Select revision
     while cat $TEMPFILE.certs.$BRANCH | \
-	xargs dialog --menu "Select revision for branch:$BRANCH" \
-	0 0 0  2> $TEMPFILE.revision-select
+	xargs dialog \
+	 --backtitle "h:$HEAD b:$BRANCH f:$SHORT_DB" \
+	 --default-item "$SHORT_REV" \
+	 --menu "Select revision for branch:$BRANCH" \
+	 0 0 0  2> $TEMPFILE.revision-select
     do
 
-	REVISION=`cat $TEMPFILE.revision-select`
+	SHORT_REV=`cat $TEMPFILE.revision-select`
 
 	# Remove old marker, set new marker
 	cat $TEMPFILE.certs.$BRANCH | sed -r \
-	  -e "s/^(.+) <==\"\$/\1\"/" -e "s/^($REVISION.+)\"\$/\1 <==\"/" \
+	  -e "s/^(.+) <==\"\$/\1\"/" -e "s/^($SHORT_REV.+)\"\$/\1 <==\"/" \
 	  > $TEMPFILE.certs.$BRANCH.base
 	mv $TEMPFILE.certs.$BRANCH.base $TEMPFILE.certs.$BRANCH
 
-	# Error, on "monotone automate parent XXXXXX".  :-(
+	# Error, on "monotone automate parent XXXXXX", if short revision.  :-(
 	# Expand revision here, if short revision
 	if [ "$SHOW_KEYS" = "yes" ]
 	then
-	    REVISION=`monotone complete revision $REVISION`
+	    REVISION=`monotone complete revision $SHORT_REV`
 	fi
 
 	# OK Button: Sub Menu
@@ -606,7 +655,7 @@ CACHE="$CACHE"
 CERTS_MAX="$CERTS_MAX"
 DEPTH_LAST="$DEPTH_LAST"
 EOF
-		dialog --title "Info" --sleep 2 --infobox \
+		dialog --title " Info " --sleep 2 --infobox \
 		    "Configration wrote to\n$CONFIGFILE" 0 0
 	    echo "config saved"
     	    ;;
@@ -632,23 +681,25 @@ fi
 
 mkdir -p $TEMPDIR
 
-while dialog --menu "Main - mtbrowse v$VERSION" 0 0 0 \
-    "S" "Select revision" \
-    "I" "Input revision" \
-    "F" "Change DB File [`basename $DB`]" \
-    "B" "Branch select  [$BRANCH]" \
-    "H" "Head select    [$SHORT_HEAD]" \
-    "R" "Reload DB, clear cache" \
-    "-" "-" \
-    "l" "Sumary complete log" \
-    "t" "List Tags" \
-    "h" "List Heads" \
-    "k" "List Keys" \
-    "-" "-" \
-    "C" "Configuration" \
-    "-" "-" \
-    "X" "eXit" \
-    2> $TEMPFILE.menu
+while dialog \
+	--backtitle "h:$HEAD b:$BRANCH f:$DB" \
+	--menu "Main - mtbrowse v$VERSION" 0 0 0 \
+	"S" "Select revision" \
+	"I" "Input revision" \
+	"F" "Change DB File [`basename $DB`]" \
+	"B" "Branch select  [$BRANCH]" \
+	"H" "Head select    [$SHORT_HEAD]" \
+	"R" "Reload DB, clear cache" \
+	"-" "-" \
+	"l" "Sumary complete log" \
+	"t" "List Tags" \
+	"h" "List Heads" \
+	"k" "List Keys" \
+	"-" "-" \
+	"C" "Configuration" \
+	"-" "-" \
+	"X" "eXit" \
+	2> $TEMPFILE.menu
 do
     case `cat $TEMPFILE.menu` in
       S)
@@ -679,6 +730,8 @@ do
 	;;
       H)
         # Select head
+	# if branch or head not known, ask user
+	do_branch_sel check
 	do_head_sel
 	do_clear_cache
 	;;
@@ -740,6 +793,7 @@ do
 	;;
       X)
 	do_clear_on_exit
+	clear
 	exit 0
         ;;
       *)
@@ -750,3 +804,4 @@ do
 done
 
 do_clear_on_exit
+clear
