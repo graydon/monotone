@@ -1,3 +1,12 @@
+2005-06-17  Riccardo Ghetta  <birrachiara@tin.it>
+	Adds include()/includedir() to lua hooks and extend --rcfile
+	* lua.cc: handle --rcfile with directories, implement
+	include() and includedir()
+	* testsuite.at, t_lua_includedir.at, t_rcfile_dir.at:
+	test new functionality
+	* monotone.texi: document all functions available to hook
+	writers, including the new include() and includedir()
+
 2005-06-16  Nathaniel Smith  <njs@codesourcery.com>
 
 	* diff_patch.cc (merge_extents): Typo caught by anonymous reader.

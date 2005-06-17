@@ -5281,8 +5281,20 @@ using the @option{--rcfile=@var{file}} option; hooks defined in files
 specified on the command-line will shadow hooks from the the automatic
 files.
 
-The remainder of this section documents the existing hook functions
-and their default definitions. 
+Monotone also exports to hooks a number of helper functions exposing
+functionality not available with standard lua.
+
+@menu
+* Hooks::                     All hooks called by monotone.
+* Additional Lua Functions::  Extra functionality availabe to hook writers.
+@end menu
+
+@page
+@node   Hooks
+@section Hooks
+
+This section documents the existing hook functions and their default
+definitions. 
 
 @ftable @code
 @item note_commit (@var{new_id}, @var{certs})
@@ -6167,6 +6179,118 @@ end
 
 
 @end ftable
+
+@page
+@node   Additional Lua Functions
+@section Additional Lua Functions
+
+This section documents the additional lua functions made available to
+hook writers. 
+
+@ftable @code
+
+@item existonpath(@var{possible_command})
+
+This function receives a string containing the name of an external
+program and returns 0 if it exists on path and is executable, -1
+otherwise. 
+As an example, @code{existonpath("xxdiff")} returns 0 if the
+program xxdiff is available.
+On windows, this function automatically appends ``.exe'' to the
+program name. In the previous example, @code{existonpath} would search
+for ``xxdiff.exe''.
+
+@item guess_binary(@var{filespec})
+
+Returns true if the file appears to be binary, i.e. contains one or
+more of the following characters:
+@smallexample
+@group
+0x00 thru 0x06
+0x0E thru 0x1a
+0x1c thru 0x1f
+@end group
+@end smallexample
+
+@item include(@var{scriptfile}) 
+
+This function tries to load and execute the script contained into
+scriptfile.  It returns true for success and false if there is an
+error. 
+
+@item includedir(@var{scriptpath})
+
+This function loads and executes in alphabetical order all the scripts
+contained into the directory scriptpath.
+If one of the scripts has an error, the functions doesn't process the
+remaining scripts and immediately returns false.
+
+@item is_executable(@var{filespec})
+
+This function returns true if the file is executable, false
+otherwise.  On windows this function returns always false.
+
+@item kill(@var{pid} [, @var{signal}])
+
+This function calls the kill() C library function on posix systems and
+TerminateProcess on Win32 (in that case @var{pid} is the process
+handle).  If the optional @var{signal} parameter is missing, SIGTERM
+will be used. 
+Returns 0 on succes, -1 on error.
+
+@item make_executable(@var{filespec})
+
+This function marks the named file as executable.  On windows has no
+effect. 
+
+@item mkstemp(@var{template})
+
+Like its C library counterpart,  mkstemp creates a unique name and
+returns a file descriptor for the newly created file. 
+The value of template should be a pointer to a character buffer loaded
+with a null-terminated string that consists of contiguous, legal file
+ad path name characters followed by six Xs. 
+The function mkstemp replaces the Xs by an alpha-numeric sequence
+that is chosen to ensure that no file in the chosen directory has that
+name. 
+Furthermore, subsequent calls to mkstemp within the same process
+each yield different file names. 
+Unlike other implementations, monotone mkstemp allows the template
+string to contain a complete path, not only a filename, allowing users
+to create temporary files outside the current directory.
+
+@strong{Important notice:}@*
+To create a temporary file, you must use the @code{temp_file()}
+function, unless you need to run monotone with the @option{--nostd}
+option.  @code{temp_file()} builds on @code{mkstemp()} and creates a
+file in the standard TMP/TEMP directories.
+
+@item sleep(@var{seconds})
+
+Makes the calling process sleep for the specified number of seconds.
+
+@item spawn(@var{executable} [, @var{args ...}])
+
+Starts the named executable with the given arguments.  Returns the
+process pid on Posix systems, the process handle on Win32 or -1 if
+there was an error.
+Calls fork/execvp on Posix, CreateProcess on Win32.
+
+@strong{Important notice:}@*
+To spawn a process and wait for its completion, use the @code{execute()}
+function, unless you need to run monotone with the @option{--nostd}
+option.  @code{execute()} builds on @code{spawn()} and @code{wait()}
+in a standardized way.
+
+@item wait(@var{pid})
+
+Wait until the process with given pid (process handle on Win32) exits.
+Returns two values: a result value and the exit code of the waited-for
+process.
+The exit code is meaningful only if the result value is 0.
+
+@end ftable
+
 
 @node    Special Topics
 @chapter Special Topics
