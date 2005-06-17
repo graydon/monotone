@@ -1,3 +1,9 @@
+2005-06-17  Richard Levitte  <richard@levitte.org>
+
+	* app_state.cc (app_state::app_state()): Avoid a gcc warning by
+	having the class members initialised in the same order they are
+	defined in the class.
+
 2005-06-16  Nathaniel Smith  <njs@pobox.com>
 
 	* std_hooks.lua (ignore_file): Add Cons/SCons cache files to
