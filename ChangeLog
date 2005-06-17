@@ -1,5 +1,9 @@
 2005-06-16  Nathaniel Smith  <njs@codesourcery.com>
 
+	* diff_patch.cc (merge_extents): Typo caught by anonymous reader.
+
+2005-06-16  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (cat): Account for being in a subdir in 'cat file
 	REV PATH'.
 	* tests/t_cat_file_by_name.at: Test.
