@@ -4,10 +4,25 @@
 	REV PATH'.
 	* tests/t_cat_file_by_name.at: Test.
 
+2005-06-17  Richard Levitte  <richard@levitte.org>
+
+	* app_state.cc (app_state::app_state()): Avoid a gcc warning by
+	having the class members initialised in the same order they are
+	defined in the class.
+
 2005-06-16  Nathaniel Smith  <njs@pobox.com>
 
 	* std_hooks.lua (ignore_file): Add Cons/SCons cache files to
 	default ignore list.
+
+2005-06-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc: increase the divisor as required so that we don't get spurious
+	screen updates when we're using the kilobyte/megabyte tickers
+
+2005-06-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.texi: clarify some netsync parts of the tutorial
 
 2005-06-15  Richard Levitte  <richard@levitte.org>
 

@@ -1634,19 +1634,19 @@ small amount of extra information to his @file{monotonerc} file:
 @smallexample
 @group
 $ cat >>~/.monotone/monotonerc
-function get_netsync_read_permitted (regex, identity)
+function get_netsync_read_permitted (branch, identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
   return false
 end
 
-function get_netsync_write_permitted (regex, identity)
+function get_netsync_write_permitted (branch, identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
   return false
 end
 
-function get_netsync_anonymous_read_permitted (regex)
+function get_netsync_anonymous_read_permitted (branch)
   return false
 end
 ^D
@@ -1659,7 +1659,7 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
 @end group
 @end smallexample
 
@@ -1673,7 +1673,7 @@ the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
 monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
@@ -1819,7 +1819,7 @@ Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
 monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
 monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 2] [rcerts: 8] 
@@ -1834,7 +1834,7 @@ Jim's:
 
 @smallexample
 @group
-monotone --db=beth.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+$ monotone --db=beth.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
 monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
@@ -1886,7 +1886,7 @@ And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
 monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
 monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 3] [rcerts: 12] 
@@ -3683,7 +3683,7 @@ branches. Supposing Alice's computer has hostname
 
 @smallexample
 @group
-$ monotone serve alice.someisp.com net.venge.monotone.*
+$ monotone serve alice.someisp.com "net.venge.monotone.*"
 @end group
 @end smallexample
 
@@ -3691,7 +3691,7 @@ And Bob might run
 
 @smallexample
 @group
-$ monotone sync alice.someisp.com net.venge.monotone.*
+$ monotone sync alice.someisp.com "net.venge.monotone.*"
 @end group
 @end smallexample
 
