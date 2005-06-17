@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <stdarg.h>
+#include <string.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
@@ -643,24 +644,28 @@ void
 database::execute(char const * query, ...)
 {
   va_list ap;
-  int res;
-  char * errmsg = NULL;
 
   va_start(ap, query);
 
   // log it
   char * formatted = sqlite3_vmprintf(query, ap);
-  string qq(formatted);
-  if (qq.size() > constants::db_log_line_sz) 
-    qq = qq.substr(0, constants::db_log_line_sz) + string(" ...");
-  L(F("db.execute(\"%s\")\n") % qq);
-  sqlite3_free(formatted);
+  string qq;
 
-  va_end(ap);
-  va_start(ap, query);
+  if (strlen(formatted) > constants::db_log_line_sz)
+    {
+      qq.assign(formatted, constants::db_log_line_sz);
+      qq.append(" ...");
+    }
+  else
+    {
+      qq = formatted;
+    }
+  L(F("db.execute(\"%s\")\n") % qq);
 
   // do it
-  res = sqlite3_exec_vprintf(sql(), query, NULL, NULL, &errmsg, ap);
+  char * errmsg = NULL;
+  int res = sqlite3_exec(sql(), formatted, NULL, NULL, &errmsg);
+  sqlite3_free(formatted);
 
   va_end(ap);
 

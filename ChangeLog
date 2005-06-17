@@ -1,3 +1,9 @@
+2005-06-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (database::execute()): truncate long query log messages
+	before copying, saving memory. 
+	Patch from Eric Anderson < ea at cello hpl hp com >
+
 2005-06-17  Riccardo Ghetta  <birrachiara@tin.it>
 	Adds include()/includedir() to lua hooks and extend --rcfile
 	* lua.cc: handle --rcfile with directories, implement
