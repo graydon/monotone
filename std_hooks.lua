@@ -86,6 +86,11 @@ function ignore_file(name)
    if (string.find(name, "/autom4te.cache/")) then return true end
    if (string.find(name, "^.deps/")) then return true end
    if (string.find(name, "/.deps/")) then return true end
+   -- Cons/SCons detritus:
+   if (string.find(name, "^.consign$")) then return true end
+   if (string.find(name, "/.consign$")) then return true end
+   if (string.find(name, "^.sconsign$")) then return true end
+   if (string.find(name, "/.sconsign$")) then return true end
    -- other VCSes:
    if (string.find(name, "^CVS/")) then return true end
    if (string.find(name, "/CVS/")) then return true end
