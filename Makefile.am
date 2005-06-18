@@ -297,9 +297,9 @@ EXTRA_DIST = $(man1_MANS) \
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
-monotone.pdf: monotone.texi version.texi $(PDF_FIGURES)
+monotone.pdf: monotone.info version.texi std_hooks.lua $(PDF_FIGURES)
 
-monotone.dvi: monotone.texi version.texi $(EPS_FIGURES)
+monotone.dvi: monotone.info version.texi std_hooks.lua $(EPS_FIGURES)
 
 #%.eps: %.epsi
 #	mv $< $@

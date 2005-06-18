@@ -77,6 +77,7 @@ version control tools.
 * Hook Reference::      Functions which extend monotone
 * Special Topics::      Extra explanations and details
 * Man Page::            That other document
+* Default monotonerc::  The default monotonerc file
 * Index::               Index of concepts and functions
 @end menu
 
@@ -5280,9 +5281,14 @@ monotone to interpret extra hook functions from any other @var{file}
 using the @option{--rcfile=@var{file}} option; hooks defined in files
 specified on the command-line will shadow hooks from the the automatic
 files.
+By specifying @option{--rcfile=@var{directory}} you can automatically
+load all the files contained into @var{directory}.
 
-Monotone also exports to hooks a number of helper functions exposing
-functionality not available with standard lua.
+Monotone also makes available to hook writers a number of helper
+functions exposing functionality not available with standard lua.
+
+For the complete source of the default hooks see @ref{Default
+monotonerc}.
 
 @menu
 * Hooks::                     All hooks called by monotone.
@@ -5392,45 +5398,7 @@ you proceed instead of waiting until you are ready to commit. Upon
 a successful commit, the contents of @file{MT/log} are erased setting
 the system up for another edit/commit cycle.
 
-The default definition of this hook is:
-
-@smallexample
-@group
-function edit_comment(commentary, user_log_message)
-        local exe = "vi"
-        local visual = os.getenv("VISUAL")
-        if (visual ~= nil) then exe = visual end
-        local editor = os.getenv("EDITOR")
-        if (editor ~= nil) then exe = editor end
-
-        local tmp, tname = temp_file()
-        if (tmp == nil) then return nil end
-        commentary = "MT: " .. string.gsub(commentary, "\n", "\nMT: ")
-        tmp:write(user_log_message)
-        tmp:write(commentary)
-        io.close(tmp)
-
-        if (os.execute(string.format("%s %s", exe, tname)) ~= 0) then
-                os.remove(tname)
-                return nil
-        end
-
-        tmp = io.open(tname, "r")
-        if (tmp == nil) then os.remove(tname); return nil end
-        local res = ""
-        local line = tmp:read()
-        while(line ~= nil) do 
-                if (not string.find(line, "^MT:")) then
-                        res = res .. line .. "\n"
-                end
-                line = tmp:read()
-        end
-        io.close(tmp)
-        os.remove(tname)
-        return res
-end
-@end group
-@end smallexample
+For the default definition of this hook, see @ref{Default monotonerc}.
 
 @item persist_phrase_ok ()
 
@@ -5532,33 +5500,8 @@ key fingerprints of each key in your database, as key ID strings are
 Returns @code{true} if @var{filename} should be ignored while adding,
 dropping, or moving files. Otherwise returns @code{false}. This is
 most important when performing recursive actions on directories, which
-may affect multiple files simultaneously. The default definition of
-this hook is:
-
-@smallexample
-@group
-function ignore_file(name)
-   if (string.find(name, "%.a$")) then return true end
-   if (string.find(name, "%.so$")) then return true end
-   if (string.find(name, "%.o$")) then return true end
-   if (string.find(name, "%.la$")) then return true end
-   if (string.find(name, "%.lo$")) then return true end
-   if (string.find(name, "%.aux$")) then return true end
-   if (string.find(name, "%.bak$")) then return true end
-   if (string.find(name, "%.orig$")) then return true end
-   if (string.find(name, "%.rej$")) then return true end
-   if (string.find(name, "%~$")) then return true end
-   if (string.find(name, "/core$")) then return true end
-   if (string.find(name, "^CVS/")) then return true end
-   if (string.find(name, "/CVS/")) then return true end
-   if (string.find(name, "^%.svn/")) then return true end
-   if (string.find(name, "/%.svn/")) then return true end
-   if (string.find(name, "^SCCS/")) then return true end
-   if (string.find(name, "/SCCS/")) then return true end
-   return false;
-end
-@end group
-@end smallexample
+may affect multiple files simultaneously. 
+For the default definition of this hook, see @ref{Default monotonerc}.
 
 @item ignore_branch (@var{branchname})
 
@@ -5658,60 +5601,9 @@ Returns a string, which should be the merger of the 2 provided
 strings, which are the contents of the @var{left} and @var{right}
 nodes of a file fork which monotone was unable to automatically
 merge. The merge should either call an intelligent merge program or
-interact with the user. The default definition of this hook is:
+interact with the user.
+For the default definition of this hook, see @ref{Default monotonerc}.
 
-@smallexample
-@group
-
-function merge2 (left_path, right_path, merged_path, left, right) 
-   local ret = nil 
-   local tbl = @{@}
-
-   tbl.lfile = nil 
-   tbl.rfile = nil 
-   tbl.outfile = nil 
-   tbl.meld_exists = false
- 
-   tbl.lfile = write_to_temporary_file (left) 
-   tbl.rfile = write_to_temporary_file (right) 
-   tbl.outfile = write_to_temporary_file ("") 
-
-   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.outfile ~= nil 
-   then 
-      tbl.left_path = left_path 
-      tbl.right_path = right_path 
-      tbl.merged_path = merged_path 
-
-      local cmd = get_preferred_merge2_command (tbl) 
-
-      if cmd ~=nil 
-      then 
-         io.write (
-					string.format("executing external 2-way merge command\n"))
-         cmd ()
-         if tbl.meld_exists 
-         then 
-            ret = read_contents_of_file (tbl.lfile)
-         else
-            ret = read_contents_of_file (tbl.outfile) 
-         end 
-         if string.len (ret) == 0 
-         then 
-            ret = nil 
-         end
-      else
-         io.write ("no external 2-way merge command found\n")
-      end
-   end
-
-   os.remove (tbl.lfile)
-   os.remove (tbl.rfile)
-   os.remove (tbl.outfile)
-   
-   return ret
-end
-@end group
-@end smallexample
 
 @anchor{get_preferred_merge2_command}
 @item get_preferred_merge2_command(@var{tbl})
@@ -5722,57 +5614,6 @@ is always provided by @ref{merge2}. If there is a particular editor
 that you would like to use to perform merge2 operations, override
 this hook to specify it.
 
-@smallexample
-@group
-
-function get_preferred_merge2_command (tbl)
-   local cmd = nil
-   local left_path = tbl.left_path
-   local right_path = tbl.right_path
-   local merged_path = tbl.merged_path
-   local lfile = tbl.lfile
-   local rfile = tbl.rfile
-   local outfile = tbl.outfile 
-
-   local editor = string.lower(os.getenv("EDITOR"))
-
-   
-   if program_exists_in_path("kdiff3") then
-      cmd =   merge2_kdiff3_cmd (left_path, right_path, merged_path,
-								 lfile, rfile, outfile) 
-   elseif program_exists_in_path ("meld") then 
-      tbl.meld_exists = true 
-      io.write (string.format(
-			"\nWARNING: 'meld' was choosen to perform external 2-way merge.\n"..
-      "You should merge all changes to *LEFT* file due to limitation of program\n"..
-      "arguments.\n\n")) 
-      cmd = merge2_meld_cmd (lfile, rfile) 
-   elseif program_exists_in_path ("xxdiff") then 
-      cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, 
-							lfile, rfile, outfile) 
-   else
-     if string.find(editor, "emacs") ~= nil 
-				or string.find(editor, "gnu") ~= nil 
-		 then 
-       if program_exists_in_path ("emacs") then 
-          cmd = merge2_emacs_cmd ("emacs", lfile, rfile, outfile) 
-       elseif program_exists_in_path ("xemacs") then 
-          cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
-       end
-     else if string.find(editor, "vim") ~= nil then
-       if os.getenv ("DISPLAY") ~= nil 
-					and program_exists_in_path ("gvim") 
-			 then
-          cmd = merge2_vim_cmd ("gvim", lfile, rfile, outfile) 
-       elseif program_exists_in_path ("vim") then 
-          cmd = merge2_vim_cmd ("vim", lfile, rfile, outfile) 
-       end
-     end
-   end 
-   return cmd 
-end 
-@end group
-@end smallexample
 
 @anchor{merge3}
 @item merge3 (@var{ancestor}, @var{left}, @var{right})
@@ -5781,64 +5622,9 @@ Returns a string, which should be the merger of the 3 provided
 strings, which are the contents of @var{left} and @var{right} nodes,
 and least common @var{ancestor}, of a file fork which monotone was
 unable to automatically merge. This hook delegates the actual merge 
-to the result of @ref{get_preferred_merge3_command}. The default
-definition of this hook is:
+to the result of @ref{get_preferred_merge3_command}. 
+For the default definition of this hook, see @ref{Default monotonerc}.
 
-@smallexample
-@group
-function merge3 (anc_path, left_path, right_path, merged_path, 
-								 ancestor, left, right) 
-   local ret 
-   local tbl = @{@}
-   
-   tbl.anc_path = anc_path 
-   tbl.left_path = left_path 
-   tbl.right_path = right_path 
-
-   tbl.merged_path = merged_path 
-   tbl.afile = nil 
-   tbl.lfile = nil 
-   tbl.rfile = nil 
-   tbl.outfile = nil 
-   tbl.meld_exists = false 
-   tbl.lfile = write_to_temporary_file (left) 
-   tbl.afile =   write_to_temporary_file (ancestor) 
-   tbl.rfile =   write_to_temporary_file (right) 
-   tbl.outfile = write_to_temporary_file ("") 
-   
-   if tbl.lfile ~= nil and tbl.rfile ~= nil 
-			and tbl.afile ~= nil and tbl.outfile ~= nil 
-   then 
-      local cmd =   get_preferred_merge3_command (tbl) 
-      if cmd ~=nil 
-      then 
-         io.write (string.format(
-						"executing external 3-way merge command\n"))
-         cmd ()
-         if tbl.meld_exists 
-         then 
-            ret = read_contents_of_file (tbl.afile)
-         else
-            ret = read_contents_of_file (tbl.outfile) 
-         end 
-         if string.len (ret) == 0 
-         then 
-            ret = nil 
-         end
-      else
-         io.write ("no external 3-way merge command found\n")
-      end
-   end
-   
-   os.remove (tbl.lfile)
-   os.remove (tbl.rfile)
-   os.remove (tbl.afile)
-   os.remove (tbl.outfile)
-   
-   return ret
-end 
-@end group
-@end smallexample
 
 @anchor{get_preferred_merge3_command}
 @item get_preferred_merge3_command(@var{tbl})
@@ -5849,65 +5635,6 @@ is always provided by @ref{merge3}. If there is a particular editor
 that you would like to use to perform merge3 operations, override
 this hook to specify it. 
 
-@smallexample
-@group
-function get_preferred_merge3_command (tbl)
-   local cmd = nil
-   local left_path = tbl.left_path
-   local anc_path = tbl.anc_path
-   local right_path = tbl.right_path
-   local merged_path = tbl.merged_path
-   local lfile = tbl.lfile
-   local afile = tbl.afile
-   local rfile = tbl.rfile
-   local outfile = tbl.outfile 
-
-   local editor = string.lower(os.getenv("EDITOR"))
-
-   if program_exists_in_path("kdiff3") then
-      cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, 
-								merged_path, lfile, afile, rfile, outfile) 
-   elseif program_exists_in_path ("meld") then 
-      tbl.meld_exists = true 
-      io.write (string.format(
-					"\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
-          "You should merge all changes to *CENTER* file due to limitation of program\n"..
-          "arguments.\n\n")) 
-      cmd = merge3_meld_cmd (lfile, afile, rfile) 
-   elseif program_exists_in_path ("xxdiff") then 
-      cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, 
-								merged_path, lfile, afile, rfile, outfile) 
-   else 
-     -- prefer emacs/xemacs
-     if string.find(editor, "emacs") ~= nil 
-				or string.find(editor, "gnu") ~= nil 
-		 then 
-       if program_exists_in_path ("xemacs") then 
-          cmd = merge3_emacs_cmd ("xemacs", lfile, afile, 
-									rfile, outfile) 
-       elseif program_exists_in_path ("emacs") then 
-          cmd = merge3_emacs_cmd ("emacs", lfile, afile, 
-									rfile, outfile) 
-       end
-     elseif string.find(editor, "vim") ~= nil then  -- prefer vim
-       if os.getenv ("DISPLAY") ~= nil 
-					and program_exists_in_path ("gvim") 	
-			 then 
-          cmd = merge3_vim_cmd ("gvim", lfile, afile, 
-									rfile, outfile) 
-       elseif program_exists_in_path ("vim") then 
-          cmd = merge3_vim_cmd ("vim", lfile, afile, 
-									rfile, outfile) 
-       end
-     end
-   end 
-   
-   return cmd 
-end 
-@end group
-@end smallexample
-
-
 @item expand_selector (@var{str})
 
 Attempts to expand @var{str} as a selector. Expansion generally means
@@ -5915,113 +5642,16 @@ providing a type prefix for the selector, such as @code{a:} for
 authors or @code{d:} for dates. Expansion may also mean recognizing
 and interpreting special words such as @code{yesterday} or @code{6
 months ago} and converting them into well formed selectors. For more
-detail on the use of selectors, see @ref{Selectors}. The default
-definition of this hook is:
-
-@smallexample
-@group
-function expand_selector(str)
-
-   -- something which looks like a generic cert pattern
-   if string.find(str, "^[^=]*=.*$")
-   then
-      return ("c:" .. str)
-   end
-
-   -- something which looks like an email address
-   if string.find(str, "[%w%-_]+@@[%w%-_]+")
-   then
-      return ("a:" .. str)
-   end
-
-   -- something which looks like a branch name
-   if string.find(str, "[%w%-]+%.[%w%-]+")
-   then
-      return ("b:" .. str)
-   end
-
-   -- a sequence of nothing but hex digits
-   if string.find(str, "^%x+$")
-   then
-      return ("i:" .. str)
-   end
-
-   -- tries to expand as a date
-   local dtstr = expand_date(str)
-   if  dtstr ~= nil
-   then
-      return ("d:" .. dtstr)
-   end
-   
-   return nil
-end
-@end group
-@end smallexample
+detail on the use of selectors, see @ref{Selectors}.
+For the default definition of this hook, see @ref{Default monotonerc}.
 
 @item expand_date (@var{str})
 
 Attempts to expand @var{str} as a date expression. Expansion means recognizing
 and interpreting special words such as @code{yesterday} or @code{6
 months ago} and converting them into well formed date expressions. For more
-detail on the use of selectors, see @ref{Selectors}. The default
-definition of this hook is:
-
-@smallexample
-@group
-function expand_date(str)
-   -- simple date patterns
-   if string.find(str, "^19%d%d%-%d%d")
-      or string.find(str, "^20%d%d%-%d%d")
-   then
-      return (str)
-   end
-
-   -- "now" 
-   if str == "now"
-   then
-      local t = os.time(os.date('!*t'))
-      return os.date("%FT%T", t)
-   end
-   
-    -- today don't uses the time
-   if str == "today"
-   then
-      local t = os.time(os.date('!*t'))
-      return os.date("%F", t)
-   end
-   
-   -- "yesterday", the source of all hangovers
-   if str == "yesterday"
-   then
-      local t = os.time(os.date('!*t'))
-      return os.date("%F", t - 86400)
-   end
-   
-   -- "CVS style" relative dates such as "3 weeks ago"
-   local trans = @{ 
-      minute = 60; 
-      hour = 3600; 
-      day = 86400; 
-      week = 604800; 
-      month = 2678400; 
-      year = 31536000 
-   @}
-   local pos, len, n, type = string.find(str, "(%d+) ([minutehordaywk]+)s? ago")
-   if trans[type] ~= nil
-   then
-      local t = os.time(os.date('!*t'))
-      if trans[type] <= 3600
-      then
-	return os.date("%FT%T", t - (n * trans[type]))
-      else	
-	return os.date("%F", t - (n * trans[type]))
-      end
-   end
-   
-   return nil
-end
-@end group
-@end smallexample
+detail on the use of selectors, see @ref{Selectors}. 
+For the default definition of this hook, see @ref{Default monotonerc}.
 
 
 @item get_system_linesep ()
@@ -6145,38 +5775,8 @@ attr_init_functions["manual_merge"] =
 @end group
 @end smallexample
 
-The @code{binary_file} function is also defined as a lua hook as
-follows:
- 
-@smallexample
-@group
-function binary_file(name)
-   local lowname=string.lower(name)
-   -- some known binaries, return true
-   if (string.find(lowname, "%.gif$")) then return true end
-   if (string.find(lowname, "%.jpe?g$")) then return true end
-   if (string.find(lowname, "%.png$")) then return true end
-   if (string.find(lowname, "%.bz2$")) then return true end
-   if (string.find(lowname, "%.gz$")) then return true end
-   if (string.find(lowname, "%.zip$")) then return true end
-   -- some known text, return false
-   if (string.find(lowname, "%.cc?$")) then return false end
-   if (string.find(lowname, "%.cxx$")) then return false end
-   if (string.find(lowname, "%.hh?$")) then return false end
-   if (string.find(lowname, "%.hxx$")) then return false end
-   if (string.find(lowname, "%.lua$")) then return false end
-   if (string.find(lowname, "%.texi$")) then return false end
-   if (string.find(lowname, "%.sql$")) then return false end
-   -- unknown - read file and use the guess-binary built-in
-   -- monotone function
-   filedata=read_contents_of_file(name)
-   if (filedata ~= nil) then return guess_binary(filedata) end
-   -- if still unknown, treat as binary
-   return true
-end
-@end group
-@end smallexample
-
+The @code{binary_file} function is also defined as a lua hook. See
+@ref{Default monotonerc}. 
 
 @end ftable
 
@@ -6264,6 +5864,7 @@ To create a temporary file, you must use the @code{temp_file()}
 function, unless you need to run monotone with the @option{--nostd}
 option.  @code{temp_file()} builds on @code{mkstemp()} and creates a
 file in the standard TMP/TEMP directories.
+For the definition of @code{temp_file()}, see @ref{Default monotonerc}.
 
 @item sleep(@var{seconds})
 
@@ -7363,6 +6964,14 @@ see http://savannah.nongnu.org/bugs/?group=monotone
 @c DEBUG: print_menu("AUTHOR")
 
 graydon hoare <graydon@@pobox.com>
+
+@node Default monotonerc
+@appendix Default monotonerc
+
+This section contains the entire source code of the default monotonerc
+hook file, i.e. the hooks active if no other monotonerc is loaded.
+
+@verbatiminclude std_hooks.lua
 
 @node Index
 @unnumbered Index
