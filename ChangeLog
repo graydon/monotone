@@ -1,3 +1,10 @@
+2005-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: There's no reason for monotone.pdf or .dvi to
+	depend on monotone.info, since they are built from the .texi
+	files.  Also, make the monotone.html and html targets depend
+	on version.texi and std_hooks.lua as well.
+
 2005-06-18  Matt Johnston  <matt@ucc.asn.au>
 
 	* INSTALL: fix typo, should be -Iboost_1_31_0 not -Iboost_1_31_2
