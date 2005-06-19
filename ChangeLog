@@ -1,3 +1,7 @@
+2005-06-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* INSTALL: fix typo, should be -Iboost_1_31_0 not -Iboost_1_31_2
+
 2005-06-18  Riccardo Ghetta  <birrachiara@tin.it>
 	* monotone.texi: include std_hooks.lua as an appendix and remove long
 	lua excerpts from hook reference.
