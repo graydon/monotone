@@ -1,3 +1,7 @@
+2005-06-19  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc: Rewrite change set inference logic.
+
 2005-06-14  Richard Levitte  <richard@levitte.org>
 
 	* std_hooks.lua (get_preferred_merge2_command,
