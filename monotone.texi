@@ -77,7 +77,7 @@ version control tools.
 * Hook Reference::      Functions which extend monotone
 * Special Topics::      Extra explanations and details
 * Man Page::            That other document
-* Default monotonerc::  The default monotonerc file
+* Default hooks::       The standard hook definitions
 * Index::               Index of concepts and functions
 @end menu
 
@@ -5398,7 +5398,7 @@ you proceed instead of waiting until you are ready to commit. Upon
 a successful commit, the contents of @file{MT/log} are erased setting
 the system up for another edit/commit cycle.
 
-For the default definition of this hook, see @ref{Default monotonerc}.
+For the default definition of this hook, see @ref{Default hooks}.
 
 @item persist_phrase_ok ()
 
@@ -5501,7 +5501,7 @@ Returns @code{true} if @var{filename} should be ignored while adding,
 dropping, or moving files. Otherwise returns @code{false}. This is
 most important when performing recursive actions on directories, which
 may affect multiple files simultaneously. 
-For the default definition of this hook, see @ref{Default monotonerc}.
+For the default definition of this hook, see @ref{Default hooks}.
 
 @item ignore_branch (@var{branchname})
 
@@ -5602,7 +5602,7 @@ strings, which are the contents of the @var{left} and @var{right}
 nodes of a file fork which monotone was unable to automatically
 merge. The merge should either call an intelligent merge program or
 interact with the user.
-For the default definition of this hook, see @ref{Default monotonerc}.
+For the default definition of this hook, see @ref{Default hooks}.
 
 
 @anchor{get_preferred_merge2_command}
@@ -5623,7 +5623,7 @@ strings, which are the contents of @var{left} and @var{right} nodes,
 and least common @var{ancestor}, of a file fork which monotone was
 unable to automatically merge. This hook delegates the actual merge 
 to the result of @ref{get_preferred_merge3_command}. 
-For the default definition of this hook, see @ref{Default monotonerc}.
+For the default definition of this hook, see @ref{Default hooks}.
 
 
 @anchor{get_preferred_merge3_command}
@@ -5643,7 +5643,7 @@ authors or @code{d:} for dates. Expansion may also mean recognizing
 and interpreting special words such as @code{yesterday} or @code{6
 months ago} and converting them into well formed selectors. For more
 detail on the use of selectors, see @ref{Selectors}.
-For the default definition of this hook, see @ref{Default monotonerc}.
+For the default definition of this hook, see @ref{Default hooks}.
 
 @item expand_date (@var{str})
 
@@ -5651,7 +5651,7 @@ Attempts to expand @var{str} as a date expression. Expansion means recognizing
 and interpreting special words such as @code{yesterday} or @code{6
 months ago} and converting them into well formed date expressions. For more
 detail on the use of selectors, see @ref{Selectors}. 
-For the default definition of this hook, see @ref{Default monotonerc}.
+For the default definition of this hook, see @ref{Default hooks}.
 
 
 @item get_system_linesep ()
@@ -5776,7 +5776,7 @@ attr_init_functions["manual_merge"] =
 @end smallexample
 
 The @code{binary_file} function is also defined as a lua hook. See
-@ref{Default monotonerc}. 
+@ref{Default hooks}. 
 
 @end ftable
 
@@ -5864,7 +5864,7 @@ To create a temporary file, you must use the @code{temp_file()}
 function, unless you need to run monotone with the @option{--nostd}
 option.  @code{temp_file()} builds on @code{mkstemp()} and creates a
 file in the standard TMP/TEMP directories.
-For the definition of @code{temp_file()}, see @ref{Default monotonerc}.
+For the definition of @code{temp_file()}, see @ref{Default hooks}.
 
 @item sleep(@var{seconds})
 
@@ -6965,11 +6965,13 @@ see http://savannah.nongnu.org/bugs/?group=monotone
 
 graydon hoare <graydon@@pobox.com>
 
-@node Default monotonerc
-@appendix Default monotonerc
+@node Default hooks
+@appendix Default hooks
 
-This section contains the entire source code of the default monotonerc
-hook file, i.e. the hooks active if no other monotonerc is loaded.
+This section contains the entire source code of the standard hook file,
+that is built in to the monotone executable, and read before any user
+hooks files (unless @option{--nostd} is passed).  It contains the
+default values for all hooks.
 
 @verbatiminclude std_hooks.lua
 
