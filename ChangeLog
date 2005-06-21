@@ -1,5 +1,9 @@
 2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Hook Reference): Oops, missed a @ref.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
 	* monotone.texi (Default monotonerc): Rename section to...
 	(Default hooks): ...this, to emphasize is still read even when a
 	monotonerc exists.

@@ -5288,7 +5288,7 @@ Monotone also makes available to hook writers a number of helper
 functions exposing functionality not available with standard lua.
 
 For the complete source of the default hooks see @ref{Default
-monotonerc}.
+hooks}.
 
 @menu
 * Hooks::                     All hooks called by monotone.
