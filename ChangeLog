@@ -1,3 +1,10 @@
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (rebuild_merkle_trees): Fix FIXME comments to match
+	reality.
+	* tests/t_netsync_diffbranch.at: No longer a bug, remove
+	priority.
+
 2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Hook Reference): Oops, missed a @ref.
