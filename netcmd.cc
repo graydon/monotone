@@ -78,29 +78,22 @@ netcmd::write(string & out, netsync_session_key const & key,
   out += static_cast<char>(version);
   out += static_cast<char>(cmd_code);
   insert_variable_length_string(payload, out);
-  if (version < 5)
+
+  I(key().size() == CryptoPP::SHA::DIGESTSIZE);
+  I(key().size() == hmac_val().size());
+  byte keybuf[CryptoPP::SHA::DIGESTSIZE];
+  for (size_t i = 0; i < sizeof(keybuf); i++)
     {
-      adler32 check(reinterpret_cast<u8 const *>(payload.data()), payload.size());
-      insert_datum_lsb<u32>(check.sum(), out);
+      keybuf[i] = key()[i] ^ hmac_val()[i];
     }
-  else
-    {
-      I(key().size() == CryptoPP::SHA::DIGESTSIZE);
-      I(key().size() == hmac_val().size());
-      byte keybuf[CryptoPP::SHA::DIGESTSIZE];
-      for (size_t i = 0; i < sizeof(keybuf); i++)
-        {
-          keybuf[i] = key()[i] ^ hmac_val()[i];
-        }
-      CryptoPP::HMAC<CryptoPP::SHA> hmac(keybuf, sizeof(keybuf));
-      char digest[CryptoPP::SHA::DIGESTSIZE];
-      hmac.CalculateDigest(reinterpret_cast<byte *>(digest),
-                           reinterpret_cast<const byte *>(out.data() + oldlen),
-                           out.size() - oldlen);
-      string digest_str(digest, sizeof(digest));
-      hmac_val = netsync_hmac_value(digest_str);
-      out.append(digest_str);
-    }
+  CryptoPP::HMAC<CryptoPP::SHA> hmac(keybuf, sizeof(keybuf));
+  char digest[CryptoPP::SHA::DIGESTSIZE];
+  hmac.CalculateDigest(reinterpret_cast<byte *>(digest),
+                       reinterpret_cast<const byte *>(out.data() + oldlen),
+                       out.size() - oldlen);
+  string digest_str(digest, sizeof(digest));
+  hmac_val = netsync_hmac_value(digest_str);
+  out.append(digest_str);
 }
 
 // last should be zero (doesn't mean we're compatible with version 0).
@@ -182,21 +175,10 @@ netcmd::read(string & inbuf, netsync_session_key const & key,
     throw bad_decode(F("oversized payload of '%d' bytes") % payload_len);
   
   // there might not be enough data yet in the input buffer
-  if (version < 5)
+  if (inbuf.size() < pos + payload_len + CryptoPP::SHA::DIGESTSIZE)
     {
-      if (inbuf.size() < pos + payload_len + sizeof(u32))
-        {
-          inbuf.reserve(pos + payload_len + sizeof(u32) + constants::bufsz);
-          return false;
-        }
-    }
-  else
-    {
-      if (inbuf.size() < pos + payload_len + CryptoPP::SHA::DIGESTSIZE)
-        {
-          inbuf.reserve(pos + payload_len + CryptoPP::SHA::DIGESTSIZE + constants::bufsz);
-          return false;
-        }
+      inbuf.reserve(pos + payload_len + CryptoPP::SHA::DIGESTSIZE + constants::bufsz);
+      return false;
     }
 
 //  out.payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
@@ -209,40 +191,27 @@ netcmd::read(string & inbuf, netsync_session_key const & key,
   pos = 0;
 
   // they might have given us bogus data
-  if (version < 5)
+  string cmd_digest = extract_substring(inbuf, pos, CryptoPP::SHA::DIGESTSIZE,
+                                        "netcmd HMAC");
+  inbuf.erase(0, pos);
+  I(key().size() == CryptoPP::SHA::DIGESTSIZE);
+  I(key().size() == hmac_val().size());
+  byte keybuf[CryptoPP::SHA::DIGESTSIZE];
+  for (size_t i = 0; i < sizeof(keybuf); i++)
     {
-      payload.erase(0, payload_pos);
-      u32 checksum = extract_datum_lsb<u32>(inbuf, pos, "netcmd checksum");
-      inbuf.erase(0, pos);
-      adler32 check(reinterpret_cast<u8 const *>(payload.data()), 
-                    payload.size());
-      if (checksum != check.sum())
-        throw bad_decode(F("bad checksum 0x%x vs. 0x%x") % checksum % check.sum());
+      keybuf[i] = key()[i] ^ hmac_val()[i];
     }
-  else
-    {
-      string cmd_digest = extract_substring(inbuf, pos, CryptoPP::SHA::DIGESTSIZE,
-                                            "netcmd HMAC");
-      inbuf.erase(0, pos);
-      I(key().size() == CryptoPP::SHA::DIGESTSIZE);
-      I(key().size() == hmac_val().size());
-      byte keybuf[CryptoPP::SHA::DIGESTSIZE];
-      for (size_t i = 0; i < sizeof(keybuf); i++)
-        {
-          keybuf[i] = key()[i] ^ hmac_val()[i];
-        }
-      CryptoPP::HMAC<CryptoPP::SHA> hmac(keybuf, sizeof(keybuf));
-      char digest_buf[CryptoPP::SHA::DIGESTSIZE];
-      hmac.CalculateDigest(reinterpret_cast<byte *>(digest_buf),
-                           reinterpret_cast<const byte *>(payload.data()),
-                           payload.size());
-      string digest(digest_buf, sizeof(digest_buf));
-      if (cmd_digest != digest)
-        throw bad_decode(F("bad HMAC %s vs. %s") % encode_hexenc(cmd_digest)
-                         % encode_hexenc(digest));
-      hmac_val = netsync_hmac_value(digest);
-      payload.erase(0, payload_pos);
-    }
+  CryptoPP::HMAC<CryptoPP::SHA> hmac(keybuf, sizeof(keybuf));
+  char digest_buf[CryptoPP::SHA::DIGESTSIZE];
+  hmac.CalculateDigest(reinterpret_cast<byte *>(digest_buf),
+                       reinterpret_cast<const byte *>(payload.data()),
+                       payload.size());
+  string digest(digest_buf, sizeof(digest_buf));
+  if (cmd_digest != digest)
+    throw bad_decode(F("bad HMAC %s vs. %s") % encode_hexenc(cmd_digest)
+                     % encode_hexenc(digest));
+  hmac_val = netsync_hmac_value(digest);
+  payload.erase(0, payload_pos);
 
   return true;    
 }
@@ -303,31 +272,10 @@ netcmd::write_hello_cmd(rsa_keypair_id const & server_keyname,
 }
 
 
-void 
-netcmd::read_anonymous_cmd(protocol_role & role, 
-                           std::string & pattern,
-                           id & nonce2) const
-{
-  size_t pos = 0;
-  // syntax is: <role:1 byte> <pattern: vstr> <nonce2: 20 random bytes>
-  u8 role_byte = extract_datum_lsb<u8>(payload, pos, "anonymous netcmd, role");
-  if (role_byte != static_cast<u8>(source_role)
-      && role_byte != static_cast<u8>(sink_role)
-      && role_byte != static_cast<u8>(source_and_sink_role))
-    throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
-  role = static_cast<protocol_role>(role_byte);
-  extract_variable_length_string(payload, pattern, pos,
-                                 "anonymous netcmd, pattern");
-  nonce2 = id(extract_substring(payload, pos,
-                                constants::merkle_hash_length_in_bytes, 
-                                "anonymous netcmd, nonce2"));
-  assert_end_of_buffer(payload, pos, "anonymous netcmd payload");
-}
-
 void
-netcmd::read_anonymous_cmd_hmac(protocol_role & role,
-                                std::string & pattern,
-                                rsa_oaep_sha_data & hmac_key_encrypted) const
+netcmd::read_anonymous_cmd(protocol_role & role,
+                           std::string & pattern,
+                           rsa_oaep_sha_data & hmac_key_encrypted) const
 {
   size_t pos = 0;
   // syntax is: <role:1 byte> <pattern: vstr> <hmac_key_encrypted: vstr>
@@ -346,22 +294,10 @@ netcmd::read_anonymous_cmd_hmac(protocol_role & role,
   assert_end_of_buffer(payload, pos, "anonymous(hmac) netcmd payload");
 }
 
-void 
-netcmd::write_anonymous_cmd(protocol_role role, 
-                            std::string const & pattern,
-                            id const & nonce2)
-{
-  cmd_code = anonymous_cmd;
-  I(nonce2().size() == constants::merkle_hash_length_in_bytes);
-  payload = static_cast<char>(role);
-  insert_variable_length_string(pattern, payload);
-  payload += nonce2();
-}
-
 void
-netcmd::write_anonymous_cmd_hmac(protocol_role role,
-                                 std::string const & pattern,
-                                 rsa_oaep_sha_data const & hmac_key_encrypted)
+netcmd::write_anonymous_cmd(protocol_role role,
+                            std::string const & pattern,
+                            rsa_oaep_sha_data const & hmac_key_encrypted)
 {
   cmd_code = anonymous_cmd;
   payload = static_cast<char>(role);
@@ -374,41 +310,8 @@ netcmd::read_auth_cmd(protocol_role & role,
                       string & pattern,
                       id & client, 
                       id & nonce1, 
-                      id & nonce2,
+                      rsa_oaep_sha_data & hmac_key_encrypted,
                       string & signature) const
-{
-  size_t pos = 0;
-  // syntax is: <role:1 byte> <pattern: vstr>
-  //            <client: 20 bytes sha1> <nonce1: 20 random bytes> <nonce2: 20 random bytes>
-  //            <signature: vstr>
-  u8 role_byte = extract_datum_lsb<u8>(payload, pos, "auth netcmd, role");
-  if (role_byte != static_cast<u8>(source_role)
-      && role_byte != static_cast<u8>(sink_role)
-      && role_byte != static_cast<u8>(source_and_sink_role))
-    throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
-  role = static_cast<protocol_role>(role_byte);
-  extract_variable_length_string(payload, pattern, pos, "auth netcmd, pattern");
-  client = id(extract_substring(payload, pos,
-                                constants::merkle_hash_length_in_bytes, 
-                                "auth netcmd, client identifier"));
-  nonce1 = id(extract_substring(payload, pos,
-                                constants::merkle_hash_length_in_bytes, 
-                                "auth netcmd, nonce1"));
-  nonce2 = id(extract_substring(payload, pos,
-                                constants::merkle_hash_length_in_bytes, 
-                                "auth netcmd, nonce2"));
-  extract_variable_length_string(payload, signature, pos,
-                                 "auth netcmd, signature");
-  assert_end_of_buffer(payload, pos, "auth netcmd payload");
-}
-
-void 
-netcmd::read_auth_cmd_hmac(protocol_role & role, 
-                           string & pattern,
-                           id & client, 
-                           id & nonce1, 
-                           rsa_oaep_sha_data & hmac_key_encrypted,
-                           string & signature) const
 {
   size_t pos = 0;
   // syntax is: <role:1 byte> <pattern: vstr>
@@ -436,34 +339,13 @@ netcmd::read_auth_cmd_hmac(protocol_role & role,
   assert_end_of_buffer(payload, pos, "auth(hmac) netcmd payload");
 }
 
-void 
-netcmd::write_auth_cmd(protocol_role role, 
-                       string const & pattern, 
-                       id const & client,
-                       id const & nonce1, 
-                       id const & nonce2, 
-                       string const & signature)
-{
-  cmd_code = auth_cmd;
-  I(client().size() == constants::merkle_hash_length_in_bytes);
-  I(nonce1().size() == constants::merkle_hash_length_in_bytes);
-  I(nonce2().size() == constants::merkle_hash_length_in_bytes);
-  payload = static_cast<char>(role);
-  insert_variable_length_string(pattern, payload);
-  payload += client();
-  payload += nonce1();
-  payload += nonce2();
-  insert_variable_length_string(signature, payload);
-}
-                         
-
 void
-netcmd::write_auth_cmd_hmac(protocol_role role,
-                            string const & pattern,
-                            id const & client,
-                            id const & nonce1,
-                            rsa_oaep_sha_data const & hmac_key_encrypted,
-                            string const & signature)
+netcmd::write_auth_cmd(protocol_role role,
+                       string const & pattern,
+                       id const & client,
+                       id const & nonce1,
+                       rsa_oaep_sha_data const & hmac_key_encrypted,
+                       string const & signature)
 {
   cmd_code = auth_cmd;
   I(client().size() == constants::merkle_hash_length_in_bytes);
@@ -476,34 +358,15 @@ netcmd::write_auth_cmd_hmac(protocol_role role,
   insert_variable_length_string(signature, payload);
 }
 
-void 
-netcmd::read_confirm_cmd(string & signature) const
-{
-  size_t pos = 0;
-
-  // syntax is: <signature: vstr>
-  extract_variable_length_string(payload, signature, pos,
-                                 "confirm netcmd, signature");
-  assert_end_of_buffer(payload, pos, "confirm netcmd payload");
-}
-
 void
-netcmd::read_confirm_cmd_hmac() const
+netcmd::read_confirm_cmd() const
 {
   size_t pos = 0;
   assert_end_of_buffer(payload, pos, "confirm netcmd payload");
 }
   
-void 
-netcmd::write_confirm_cmd(string const & signature)
-{
-  cmd_code = confirm_cmd;
-  payload.clear();
-  insert_variable_length_string(signature, payload);
-}
-
 void
-netcmd::write_confirm_cmd_hmac()
+netcmd::write_confirm_cmd()
 {
   cmd_code = confirm_cmd;
   payload.clear();

@@ -375,8 +375,7 @@ session
                       id const & nonce2, 
                       string const & signature,
                       base64<rsa_pub_key> server_key_encoded);
-  void queue_confirm_cmd(string const & signature);
-  void queue_confirm_cmd_hmac();
+  void queue_confirm_cmd();
   void queue_refine_cmd(merkle_node const & node);
   void queue_send_data_cmd(netcmd_item_type type, 
                            id const & item);
@@ -406,8 +405,7 @@ session
                         id const & client, 
                         id const & nonce1, 
                         string const & signature);
-  void respond_to_auth_cmd(id const & nonce2);
-  void respond_to_auth_cmd_hmac(rsa_oaep_sha_data hmac_key_encrypted);
+  void respond_to_auth_cmd(rsa_oaep_sha_data hmac_key_encrypted);
   bool process_confirm_cmd(string const & signature);
   void respond_to_confirm_cmd();
   bool process_refine_cmd(merkle_node const & node);
@@ -1421,20 +1419,12 @@ session::queue_anonymous_cmd(protocol_role role,
                              base64<rsa_pub_key> server_key_encoded)
 {
   netcmd cmd(protocol_version);
-  if (protocol_version < 5)
-    {
-      cmd.write_anonymous_cmd(role, pattern, nonce2);
-      write_netcmd_and_try_flush(cmd);
-    }
-  else
-    {
-      rsa_oaep_sha_data hmac_key_encrypted;
-      encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
-                  nonce2(), hmac_key_encrypted);
-      cmd.write_anonymous_cmd_hmac(role, pattern, hmac_key_encrypted);
-      write_netcmd_and_try_flush(cmd);
-      session_key = netsync_session_key(nonce2());
-    }
+  rsa_oaep_sha_data hmac_key_encrypted;
+  encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+              nonce2(), hmac_key_encrypted);
+  cmd.write_anonymous_cmd(role, pattern, hmac_key_encrypted);
+  write_netcmd_and_try_flush(cmd);
+  session_key = netsync_session_key(nonce2());
 }
 
 void 
@@ -1447,35 +1437,19 @@ session::queue_auth_cmd(protocol_role role,
                         base64<rsa_pub_key> server_key_encoded)
 {
   netcmd cmd(protocol_version);
-  if (protocol_version < 5)
-    {
-      cmd.write_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
-      write_netcmd_and_try_flush(cmd);
-    }
-  else
-    {
-      rsa_oaep_sha_data hmac_key_encrypted;
-      encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
-                  nonce2(), hmac_key_encrypted);
-      cmd.write_auth_cmd_hmac(role, pattern, client, nonce1, hmac_key_encrypted, signature);
-      write_netcmd_and_try_flush(cmd);
-      session_key = netsync_session_key(nonce2());
-    }
-}
-
-void 
-session::queue_confirm_cmd(string const & signature)
-{
-  netcmd cmd(protocol_version);
-  cmd.write_confirm_cmd(signature);
+  rsa_oaep_sha_data hmac_key_encrypted;
+  encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+              nonce2(), hmac_key_encrypted);
+  cmd.write_auth_cmd(role, pattern, client, nonce1, hmac_key_encrypted, signature);
   write_netcmd_and_try_flush(cmd);
+  session_key = netsync_session_key(nonce2());
 }
 
 void
-session::queue_confirm_cmd_hmac()
+session::queue_confirm_cmd()
 {
   netcmd cmd(protocol_version);
-  cmd.write_confirm_cmd_hmac();
+  cmd.write_confirm_cmd();
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -2085,21 +2059,8 @@ session::process_auth_cmd(protocol_role role,
   return false;
 }
 
-void
-session::respond_to_auth_cmd(id const & nonce2)
-{
-  L(F("Writing netsync v4 or older confirm command"));
-  base64<rsa_sha1_signature> sig;
-  rsa_sha1_signature sig_raw;
-  base64< arc4<rsa_priv_key> > our_priv;
-  load_priv_key(app, app.signing_key, our_priv);
-  make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
-  decode_base64(sig, sig_raw);
-  queue_confirm_cmd(sig_raw());
-}
-
 void 
-session::respond_to_auth_cmd_hmac(rsa_oaep_sha_data hmac_key_encrypted)
+session::respond_to_auth_cmd(rsa_oaep_sha_data hmac_key_encrypted)
 {
   L(F("Writing HMAC confirm command"));
   base64< arc4<rsa_priv_key> > our_priv;
@@ -2107,7 +2068,7 @@ session::respond_to_auth_cmd_hmac(rsa_oaep_sha_data hmac_key_encrypted)
   string hmac_key;
   decrypt_rsa(app.lua, app.signing_key, our_priv, hmac_key_encrypted, hmac_key);
   session_key = netsync_session_key(hmac_key);
-  queue_confirm_cmd_hmac();
+  queue_confirm_cmd();
 }
 
 bool 
@@ -3076,36 +3037,16 @@ session::dispatch_payload(netcmd const & cmd)
         string pattern;
         if (cmd.get_version() < protocol_version)
           protocol_version = cmd.get_version();
-        if (protocol_version < 5)
-          {
-            id nonce2;
-            cmd.read_anonymous_cmd(role, pattern, nonce2);
-            hexenc<id> hnonce2;
-            encode_hexenc(nonce2, hnonce2);
+        rsa_oaep_sha_data hmac_key_encrypted;
+        cmd.read_anonymous_cmd(role, pattern, hmac_key_encrypted);
+        L(F("received 'anonymous' netcmd from client for pattern '%s' "
+            "in %s mode\n")
+          %  pattern % (role == source_and_sink_role ? "source and sink" :
+                        (role == source_role ? "source " : "sink")));
 
-            L(F("received 'anonymous' netcmd from client for pattern '%s' "
-                "in %s mode with nonce2 '%s'\n")
-              %  pattern % (role == source_and_sink_role ? "source and sink" :
-                            (role == source_role ? "source " : "sink"))
-              % hnonce2);
-
-            if (!process_anonymous_cmd(role, pattern))
-              return false;
-            respond_to_auth_cmd(nonce2);
-          }
-        else
-          {
-            rsa_oaep_sha_data hmac_key_encrypted;
-            cmd.read_anonymous_cmd_hmac(role, pattern, hmac_key_encrypted);
-            L(F("received 'anonymous' netcmd from client for pattern '%s' "
-                "in %s mode\n")
-              %  pattern % (role == source_and_sink_role ? "source and sink" :
-                            (role == source_role ? "source " : "sink")));
-
-            if (!process_anonymous_cmd(role, pattern))
-              return false;
-            respond_to_auth_cmd_hmac(hmac_key_encrypted);
-          }
+        if (!process_anonymous_cmd(role, pattern))
+            return false;
+        respond_to_auth_cmd(hmac_key_encrypted);
         return true;
       }
       break;
@@ -3119,47 +3060,24 @@ session::dispatch_payload(netcmd const & cmd)
         id client, nonce1, nonce2;
         if (cmd.get_version() < protocol_version)
           protocol_version = cmd.get_version();
-        if (protocol_version < 5)
-          {
-            cmd.read_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
+        rsa_oaep_sha_data hmac_key_encrypted;
+        cmd.read_auth_cmd(role, pattern, client, nonce1,
+                          hmac_key_encrypted, signature);
 
-            hexenc<id> their_key_hash;
-            encode_hexenc(client, their_key_hash);
-            hexenc<id> hnonce1, hnonce2;
-            encode_hexenc(nonce1, hnonce1);
-            encode_hexenc(nonce2, hnonce2);
+        hexenc<id> their_key_hash;
+        encode_hexenc(client, their_key_hash);
+        hexenc<id> hnonce1;
+        encode_hexenc(nonce1, hnonce1);
 
-            L(F("received 'auth' netcmd from client '%s' for pattern '%s' "
-                "in %s mode with nonce1 '%s' and nonce2 '%s'\n")
-              % their_key_hash % pattern % (role == source_and_sink_role ? "source and sink" :
-                                            (role == source_role ? "source " : "sink"))
-              % hnonce1 % hnonce2);
+        L(F("received 'auth(hmac)' netcmd from client '%s' for pattern '%s' "
+            "in %s mode with nonce1 '%s'\n")
+          % their_key_hash % pattern % (role == source_and_sink_role ? "source and sink" :
+                                        (role == source_role ? "source " : "sink"))
+          % hnonce1);
 
-            if (!process_auth_cmd(role, pattern, client, nonce1, signature))
-              return false;
-            respond_to_auth_cmd(nonce2);
-          }
-        else
-          {
-            rsa_oaep_sha_data hmac_key_encrypted;
-            cmd.read_auth_cmd_hmac(role, pattern, client, nonce1,
-                                   hmac_key_encrypted, signature);
-
-            hexenc<id> their_key_hash;
-            encode_hexenc(client, their_key_hash);
-            hexenc<id> hnonce1;
-            encode_hexenc(nonce1, hnonce1);
-
-            L(F("received 'auth(hmac)' netcmd from client '%s' for pattern '%s' "
-                "in %s mode with nonce1 '%s'\n")
-              % their_key_hash % pattern % (role == source_and_sink_role ? "source and sink" :
-                                            (role == source_role ? "source " : "sink"))
-              % hnonce1);
-
-            if (!process_auth_cmd(role, pattern, client, nonce1, signature))
-              return false;
-            respond_to_auth_cmd_hmac(hmac_key_encrypted);
-          }
+        if (!process_auth_cmd(role, pattern, client, nonce1, signature))
+            return false;
+        respond_to_auth_cmd(hmac_key_encrypted);
         return true;
       }
       break;
@@ -3169,16 +3087,7 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "confirm netcmd received in client voice");
       {
         string signature;
-        if (protocol_version < 5)
-          {
-            cmd.read_confirm_cmd(signature);
-            if (!process_confirm_cmd(signature))
-              return false;
-          }
-        else
-          {
-            cmd.read_confirm_cmd_hmac();
-          }
+        cmd.read_confirm_cmd();
         this->authenticated = true;
         respond_to_confirm_cmd();
         return true;

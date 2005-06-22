@@ -83,48 +83,28 @@ public:
                        rsa_pub_key const & server_key,
                        id const & nonce);
 
-  void read_anonymous_cmd(protocol_role & role, 
+  void read_anonymous_cmd(protocol_role & role,
                           std::string & pattern,
-                          id & nonce2) const;
-  void read_anonymous_cmd_hmac(protocol_role & role,
-                               std::string & pattern,
-                               rsa_oaep_sha_data & hmac_key_encrypted) const;
+                          rsa_oaep_sha_data & hmac_key_encrypted) const;
   void write_anonymous_cmd(protocol_role role, 
                            std::string const & pattern,
-                           id const & nonce2);
-  void write_anonymous_cmd_hmac(protocol_role role, 
-                                std::string const & pattern,
-                                rsa_oaep_sha_data const & hmac_key_encrypted);
+                           rsa_oaep_sha_data const & hmac_key_encrypted);
 
   void read_auth_cmd(protocol_role & role, 
                      std::string & pattern,
                      id & client, 
                      id & nonce1, 
-                     id & nonce2,
+                     rsa_oaep_sha_data & hmac_key_encrypted,
                      std::string & signature) const;
-  void read_auth_cmd_hmac(protocol_role & role, 
-                          std::string & pattern,
-                          id & client, 
-                          id & nonce1, 
-                          rsa_oaep_sha_data & hmac_key_encrypted,
-                          std::string & signature) const;
   void write_auth_cmd(protocol_role role, 
                       std::string const & pattern, 
                       id const & client,
                       id const & nonce1, 
-                      id const & nonce2, 
+                      rsa_oaep_sha_data const & hmac_key_encrypted,
                       std::string const & signature);
-  void write_auth_cmd_hmac(protocol_role role, 
-                           std::string const & pattern, 
-                           id const & client,
-                           id const & nonce1, 
-                           rsa_oaep_sha_data const & hmac_key_encrypted,
-                           std::string const & signature);
 
-  void read_confirm_cmd(std::string & signature) const;
-  void read_confirm_cmd_hmac() const;
-  void write_confirm_cmd(std::string const & signature);
-  void write_confirm_cmd_hmac();
+  void read_confirm_cmd() const;
+  void write_confirm_cmd();
 
   void read_refine_cmd(merkle_node & node) const;
   void write_refine_cmd(merkle_node const & node);
