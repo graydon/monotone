@@ -3633,6 +3633,7 @@ session::rebuild_merkle_trees(app_state & app,
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;
   
+  // bad_branch_certs is a set of cert hashes.
   set< hexenc<id> > bad_branch_certs;
   {
     // get all matching branch names
@@ -3648,7 +3649,11 @@ session::rebuild_merkle_trees(app_state & app,
                                 revision_ids, app);
           }
         else
-          bad_branch_certs.insert(idx(certs, i).inner().ident);
+          {
+            hexenc<id> hash;
+            cert_hash_code(idx(certs, i).inner(), hash);
+            bad_branch_certs.insert(hash);
+          }
       }
   }
     
