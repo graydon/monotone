@@ -1,5 +1,10 @@
 2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
 
+	* commands.cc (do_diff): Use calculate_arbitrary_change_set,
+	instead of reimplementing it.
+
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
 	* revision.cc (find_least_common_ancestor): Handle left == right
 	case.
 	* tests/t_diff_currev.at: Un-XFAIL.
