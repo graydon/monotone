@@ -1,5 +1,11 @@
 2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
 
+	* revision.cc (find_least_common_ancestor): Handle left == right
+	case.
+	* tests/t_diff_currev.at: Un-XFAIL.
+	
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netsync.cc (rebuild_merkle_trees): Fix FIXME comments to match
 	reality.
 	* tests/t_netsync_diffbranch.at: No longer a bug, remove
