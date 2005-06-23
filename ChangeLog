@@ -1,3 +1,8 @@
+2005-06-23  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc (import_cvs_repo): Put branch imports inside
+	transaction blocks, add a couple tickers.
+
 2005-06-22  graydon hoare  <graydon@pobox.com>
 
 	* rcs_file.cc: Track file:line numbers, accept files which violate

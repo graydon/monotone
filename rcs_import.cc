@@ -943,6 +943,7 @@ cluster_consumer
   string const & branchname;
   cvs_branch const & branch;
   map<cvs_path, cvs_version> live_files;
+  ticker & n_manifests;
   ticker & n_revisions;
 
   struct prepared_revision
@@ -968,6 +969,7 @@ cluster_consumer
                    app_state & app,
                    string const & branchname,
                    cvs_branch const & branch,
+                   ticker & n_manifests,
                    ticker & n_revs);
 
   void consume_cluster(cvs_cluster const & c, 
@@ -1000,10 +1002,11 @@ import_branch(cvs_history & cvs,
               app_state & app,
               string const & branchname,
               shared_ptr<cvs_branch> const & branch,
+              ticker & n_manifests,
               ticker & n_revs)
 {
   cluster_set clusters;
-  cluster_consumer cons(cvs, app, branchname, *branch, n_revs);
+  cluster_consumer cons(cvs, app, branchname, *branch, n_manifests, n_revs);
   unsigned long commits_remaining = branch->lineage.size();
 
   // step 1: sort the lineage
@@ -1145,28 +1148,44 @@ import_cvs_repo(fs::path const & cvsroot,
 
   I(cvs.stk.size() == 1);
 
-  ticker n_revs("finished revisions", "r", 1);
+  ticker n_revs("revisions", "r", 1);
+  ticker n_manifests("manifests", "m", 1);
 
-  for (map<string, shared_ptr<cvs_branch> >::const_iterator i = cvs.branches.begin();
-       i != cvs.branches.end(); ++i)
+  while (cvs.branches.size() > 0)
     {
-      L(F("branch %s has %d entries\n") % i->first % i->second->lineage.size());
-      import_branch(cvs, app, i->first, i->second, n_revs);
+      transaction_guard guard(app.db);
+      map<string, shared_ptr<cvs_branch> >::const_iterator i = cvs.branches.begin();
+      string branchname = i->first;
+      shared_ptr<cvs_branch> branch = i->second;
+      L(F("branch %s has %d entries\n") % branchname % branch->lineage.size());
+      import_branch(cvs, app, branchname, branch, n_manifests, n_revs);
+
+      // free up some memory
+      cvs.branches.erase(branchname); 
+      guard.commit();
     }
 
-  L(F("trunk has %d entries\n") % cvs.trunk->lineage.size());
-  import_branch(cvs, app, cvs.base_branch, cvs.trunk, n_revs);
+  {
+    transaction_guard guard(app.db);
+    L(F("trunk has %d entries\n") % cvs.trunk->lineage.size());
+    import_branch(cvs, app, cvs.base_branch, cvs.trunk, n_manifests, n_revs);
+    guard.commit();
+  }
 
   // now we have a "last" rev for each tag
   {
+    ticker n_tags("tags", "t", 1);
     packet_db_writer dbw(app);
+    transaction_guard guard(app.db);
     for (map<unsigned long, pair<time_t, revision_id> >::const_iterator i = cvs.resolved_tags.begin();
          i != cvs.resolved_tags.end(); ++i)
       {
         string tag = cvs.tag_interner.lookup(i->first);
         ui.set_tick_trailer("marking tag " + tag);
         cert_revision_tag(i->second.second, tag, app, dbw);
+        ++n_tags;
       }
+    guard.commit();
   }
 
 
@@ -1178,11 +1197,13 @@ cluster_consumer::cluster_consumer(cvs_history & cvs,
                                    app_state & app,
                                    string const & branchname,
                                    cvs_branch const & branch,
+                                   ticker & n_mans,
                                    ticker & n_revs)
   : cvs(cvs), 
     app(app), 
     branchname(branchname),
     branch(branch),
+    n_manifests(n_mans),
     n_revisions(n_revs)
 {
   if (!branch.live_at_beginning.empty())
@@ -1258,6 +1279,7 @@ void
 cluster_consumer::store_manifest_edge(bool head_p)
 {
   L(F("storing manifest '%s' (base %s)\n") % parent_mid % child_mid);
+  ++n_manifests;
 
   if (head_p)
     {
