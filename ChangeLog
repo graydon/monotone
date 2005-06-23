@@ -1,5 +1,15 @@
 2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netcmd.hh (netcmd::read, netcmd::write): Don't have defaults for
+	key/hmac arguments.
+	* netcmd.cc (do_netcmd_roundtrip): New function.
+	(test_netcmd_functions): Use it.  Also, make work with hmac
+	changes.
+	(test_netcmd_mac): New test.
+	(add_netcmd_tests): Call it.
+
+2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netcmd.cc (read): Remove unused variable.
 	* netsync.cc (call_server, process)
 	(arm_sessions_and_calculate_probe, handle_read_available): Give

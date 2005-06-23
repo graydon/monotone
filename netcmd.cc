@@ -554,6 +554,65 @@ netcmd::write_nonexistant_cmd(netcmd_item_type type, id const & item)
 #include "transforms.hh"
 #include <boost/lexical_cast.hpp>
 
+void
+test_netcmd_mac()
+{
+  netcmd out_cmd, in_cmd;
+  string buf;
+  netsync_session_key key(constants::netsync_key_initializer);
+  {
+    netsync_hmac_value mac(constants::netsync_key_initializer);
+    // mutates mac
+    out_cmd.write(buf, key, mac);
+    BOOST_CHECK_THROW(in_cmd.read(buf, key, mac), bad_decode);
+  }
+
+  {
+    netsync_hmac_value mac(constants::netsync_key_initializer);
+    out_cmd.write(buf, key, mac);
+  }
+  buf[0] ^= 0xff;
+  {
+    netsync_hmac_value mac(constants::netsync_key_initializer);
+    BOOST_CHECK_THROW(in_cmd.read(buf, key, mac), bad_decode);
+  }
+
+  {
+    netsync_hmac_value mac(constants::netsync_key_initializer);
+    out_cmd.write(buf, key, mac);
+  }
+  buf[buf.size() - 1] ^= 0xff;
+  {
+    netsync_hmac_value mac(constants::netsync_key_initializer);
+    BOOST_CHECK_THROW(in_cmd.read(buf, key, mac), bad_decode);
+  }
+
+  {
+    netsync_hmac_value mac(constants::netsync_key_initializer);
+    out_cmd.write(buf, key, mac);
+  }
+  buf += '\0';
+  {
+    netsync_hmac_value mac(constants::netsync_key_initializer);
+    BOOST_CHECK_THROW(in_cmd.read(buf, key, mac), bad_decode);
+  }
+}
+
+static void
+do_netcmd_roundtrip(netcmd const & out_cmd, netcmd & in_cmd, string & buf)
+{
+  netsync_session_key key(constants::netsync_key_initializer);
+  {
+    netsync_hmac_value mac(constants::netsync_key_initializer);
+    out_cmd.write(buf, key, mac);
+  }
+  {
+    netsync_hmac_value mac(constants::netsync_key_initializer);
+    BOOST_CHECK(in_cmd.read(buf, key, mac));
+  }
+  BOOST_CHECK(in_cmd == out_cmd);
+}
+
 void 
 test_netcmd_functions()
 {
@@ -568,10 +627,8 @@ test_netcmd_functions()
         string out_errmsg("your shoelaces are untied"), in_errmsg;
         string buf;
         out_cmd.write_error_cmd(out_errmsg);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_error_cmd(in_errmsg);
-        BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_errmsg == out_errmsg);
         L(F("errmsg_cmd test done, buffer was %d bytes\n") % buf.size());
       }
@@ -581,9 +638,7 @@ test_netcmd_functions()
         L(F("checking i/o round trip on bye_cmd\n"));   
         netcmd out_cmd, in_cmd;
         string buf;
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
-        BOOST_CHECK(in_cmd == out_cmd);
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         L(F("bye_cmd test done, buffer was %d bytes\n") % buf.size());
       }
       
@@ -596,10 +651,8 @@ test_netcmd_functions()
         rsa_pub_key out_server_key("9387938749238792874"), in_server_key;
         id out_nonce(raw_sha1("nonce it up")), in_nonce;
         out_cmd.write_hello_cmd(out_server_keyname, out_server_key, out_nonce);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_hello_cmd(in_server_keyname, in_server_key, in_nonce);
-        BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_server_keyname == out_server_keyname);
         BOOST_CHECK(in_server_key == out_server_key);
         BOOST_CHECK(in_nonce == out_nonce);
@@ -612,15 +665,15 @@ test_netcmd_functions()
         netcmd out_cmd, in_cmd;
         protocol_role out_role = source_and_sink_role, in_role;
         string buf;
-        id out_nonce2(raw_sha1("nonce start my heart")), in_nonce2;
+        // total cheat, since we don't actually verify that rsa_oaep_sha_data
+        // is sensible anywhere here...
+        rsa_oaep_sha_data out_key("nonce start my heart"), in_key;
         string out_pattern("radishes galore!"), in_pattern;
 
-        out_cmd.write_anonymous_cmd(out_role, out_pattern, out_nonce2);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
-        in_cmd.read_anonymous_cmd(in_role, in_pattern, in_nonce2);
-        BOOST_CHECK(in_cmd == out_cmd);
-        BOOST_CHECK(in_nonce2 == out_nonce2);
+        out_cmd.write_anonymous_cmd(out_role, out_pattern, out_key);
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
+        in_cmd.read_anonymous_cmd(in_role, in_pattern, in_key);
+        BOOST_CHECK(in_key == out_key);
         BOOST_CHECK(in_role == out_role);
         L(F("anonymous_cmd test done, buffer was %d bytes\n") % buf.size());
       }
@@ -632,21 +685,21 @@ test_netcmd_functions()
         protocol_role out_role = source_and_sink_role, in_role;
         string buf;
         id out_client(raw_sha1("happy client day")), out_nonce1(raw_sha1("nonce me amadeus")), 
-          out_nonce2(raw_sha1("nonce start my heart")), 
-          in_client, in_nonce1, in_nonce2;
+          in_client, in_nonce1;
+        // total cheat, since we don't actually verify that rsa_oaep_sha_data
+        // is sensible anywhere here...
+        rsa_oaep_sha_data out_key("nonce start my heart"), in_key;
         string out_signature(raw_sha1("burble") + raw_sha1("gorby")), out_pattern("radishes galore!"), 
           in_signature, in_pattern;
 
         out_cmd.write_auth_cmd(out_role, out_pattern, out_client, out_nonce1, 
-                               out_nonce2, out_signature);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+                               out_key, out_signature);
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_auth_cmd(in_role, in_pattern, in_client,
-                             in_nonce1, in_nonce2, in_signature);
-        BOOST_CHECK(in_cmd == out_cmd);
+                             in_nonce1, in_key, in_signature);
         BOOST_CHECK(in_client == out_client);
         BOOST_CHECK(in_nonce1 == out_nonce1);
-        BOOST_CHECK(in_nonce2 == out_nonce2);
+        BOOST_CHECK(in_key == out_key);
         BOOST_CHECK(in_signature == out_signature);
         BOOST_CHECK(in_role == out_role);
         L(F("auth_cmd test done, buffer was %d bytes\n") % buf.size());
@@ -657,14 +710,9 @@ test_netcmd_functions()
         L(F("checking i/o round trip on confirm_cmd\n"));
         netcmd out_cmd, in_cmd;
         string buf;
-        string out_signature(raw_sha1("egg") + raw_sha1("tomago")), in_signature;
-
-        out_cmd.write_confirm_cmd(out_signature);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
-        in_cmd.read_confirm_cmd(in_signature);
-        BOOST_CHECK(in_cmd == out_cmd);
-        BOOST_CHECK(in_signature == out_signature);
+        out_cmd.write_confirm_cmd();
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
+        in_cmd.read_confirm_cmd();
         L(F("confirm_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
@@ -685,10 +733,8 @@ test_netcmd_functions()
         out_node.set_slot_state(15, subtree_state);
 
         out_cmd.write_refine_cmd(out_node);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_refine_cmd(in_node);
-        BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_node == out_node);
         L(F("refine_cmd test done, buffer was %d bytes\n") % buf.size());
       }
@@ -702,8 +748,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_done_cmd(out_level, out_type);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_done_cmd(in_level, in_type);
         BOOST_CHECK(in_level == out_level);
         BOOST_CHECK(in_type == out_type);
@@ -719,8 +764,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_send_data_cmd(out_type, out_id);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_send_data_cmd(in_type, in_id);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_id == out_id);
@@ -737,8 +781,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_send_delta_cmd(out_type, out_head, out_base);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_send_delta_cmd(in_type, in_head, in_base);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_head == out_head);
@@ -755,8 +798,7 @@ test_netcmd_functions()
         string out_dat("thank you for flying northwest"), in_dat;
         string buf;
         out_cmd.write_data_cmd(out_type, out_id, out_dat);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_data_cmd(in_type, in_id, in_dat);
         BOOST_CHECK(in_id == out_id);
         BOOST_CHECK(in_dat == out_dat);
@@ -774,8 +816,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_delta_cmd(out_type, out_head, out_base, out_delta);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_delta_cmd(in_type, in_head, in_base, in_delta);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_head == out_head);
@@ -793,8 +834,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_nonexistant_cmd(out_type, out_id);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_nonexistant_cmd(in_type, in_id);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_id == out_id);
@@ -813,6 +853,7 @@ void
 add_netcmd_tests(test_suite * suite)
 {
   suite->add(BOOST_TEST_CASE(&test_netcmd_functions));
+  suite->add(BOOST_TEST_CASE(&test_netcmd_mac));
 }
 
 #endif // BUILD_UNIT_TESTS
