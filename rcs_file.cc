@@ -196,9 +196,23 @@ typedef enum
   } 
 token_type;
 
+static inline void
+adv(char i, size_t & line, size_t & col)
+{
+  if (i == '\n')
+    {
+      col = 0;
+      ++line;
+    }
+  else
+    ++col;
+}
+
 static token_type 
 get_token(file_source & ist,
-          std::string & str)
+          std::string & str,
+	  size_t & line, 
+	  size_t & col)
 {
   bool saw_idchar = false;
   int i = ist.peek();
@@ -210,6 +224,7 @@ get_token(file_source & ist,
     {
       if (i == EOF)
         return TOK_NONE;
+      adv(i, line, col);
       if (!isspace(i))
         break;
       ist.get(c);
@@ -220,27 +235,33 @@ get_token(file_source & ist,
     {
     case ';':
       ist.get(c); 
+      ++col;
       return TOK_SEMI; 
       break;
       
     case ':':
       ist.get(c);
+      ++col;
       return TOK_COLON;
       break;
 
     case '@':
       ist.get(c);
+      ++col;
       while (ist.get(c))
         {
           if (c == '@')
             {
               if (ist.peek() == '@')
-                { ist.get(c); str += c; }
+                { ist.get(c); str += c; ++col; }
               else
                 break;
             }
           else
-            str += c;
+	    {
+	      adv(i, line, col);
+	      str += c;
+	    }
         }
       return TOK_STRING;
       break;
@@ -252,6 +273,7 @@ get_token(file_source & ist,
              && !isspace(i))
         {
           ist.get(c);
+	  ++col;
           if (! isdigit(c) && c != '.')
             saw_idchar = true;
           str += c;
@@ -275,9 +297,11 @@ struct parser
   std::string token;
   token_type ttype;
 
+  size_t line, col;
+
   parser(file_source & s,
          rcs_file & r) 
-    : ist(s), r(r)
+    : ist(s), r(r), line(1), col(1)
   {}
   
   std::string tt2str(token_type tt)
@@ -302,7 +326,7 @@ struct parser
 
   void advance()
   {
-    ttype = get_token(ist, token);
+    ttype = get_token(ist, token, line, col);
     // std::cerr << tt2str(ttype) << ": " << token << std::endl;
   }
 
@@ -316,12 +340,8 @@ struct parser
   void eat(token_type want)
   {
     if (ttype != want)
-      throw oops("parse failure: expecting " 
-                               + tt2str(want) 
-                               + " got "
-                               + tt2str(ttype)
-                               + " with value: "
-                               + token);
+      throw oops((F("parse failure %d:%d: expecting %s, got %s with value '%s'\n")
+		  % line % col % tt2str(want) % tt2str(ttype) % token).str());
     advance();
   }
 
@@ -339,10 +359,8 @@ struct parser
   { 
     std::string tmp;
     if (!symp(expected))
-      throw oops(std::string("parse failure: ")
-                               + "expecting word '" 
-                               + expected 
-                               + "'");
+      throw oops((F("parse failure %d:%d: expecting word '%s'\n")
+		  % line % col % expected).str());
     advance();
   }
 
@@ -356,7 +374,8 @@ struct parser
   void word()
   { 
     if (!wordp())
-      throw oops("expecting word");
+      throw oops((F("parse failure %d:%d: expecting word\n")
+		  % line % col).str());
     advance();
   }
 
@@ -376,10 +395,23 @@ struct parser
     if (symp("branch")) { sym(r.admin.branch); if (nump()) num(); semi(); }
     expect("access"); while(symp()) { sym(); } semi();
     expect("symbols"); 
-    while(symp()) 
+
+    // "man rcsfile" lies: there are real files in the wild which use
+    // num tokens as the key value in a symbols entry. for example
+    // "3.1:1.1.0.2" is a real sym:num specification, despite "3.1"
+    // being a num itself, not a sym.
+
+    while(symp() || nump()) 
       { 
         std::string stmp, ntmp;
-        sym(stmp); colon(); num(ntmp); 
+	if (symp())
+	  {
+	    sym(stmp); colon(); num(ntmp); 
+	  }
+	else
+	  {
+	    num(stmp); colon(); num(ntmp); 
+	  }
         r.admin.symbols.insert(make_pair(ntmp, stmp));
       } 
     semi();

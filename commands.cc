@@ -3473,20 +3473,18 @@ CMD(revert, "working copy", "[PATH]...",
 
 
 CMD(rcs_import, "debug", "RCSFILE...",
-    "import all versions in RCS files\n"
-    "this command doesn't reconstruct revisions.  you probably want cvs_import",
+    "parse versions in RCS files\n"
+    "this command doesn't reconstruct or import revisions.  you probably want cvs_import",
     OPT_BRANCH_NAME)
 {
   if (args.size() < 1)
     throw usage(name);
   
-  transaction_guard guard(app.db);
   for (vector<utf8>::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
-      import_rcs_file(mkpath((*i)()), app.db);
+      test_parse_rcs_file(mkpath((*i)()), app.db);
     }
-  guard.commit();
 }
 
 

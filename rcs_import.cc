@@ -62,18 +62,6 @@ struct cvs_history;
 struct
 cvs_commit
 {
-  cvs_commit(time_t t,
-             cvs_author a,
-             cvs_changelog c,
-             cvs_version v,
-             cvs_path p)
-    : time(t),
-      author(a),
-      changelog(c),
-      version(v),
-      path(p)
-  {}
-
   cvs_commit(rcs_file const & r, 
              string const & rcs_version,
              file_id const & ident,
@@ -85,7 +73,8 @@ cvs_commit
   cvs_changelog changelog;
   cvs_version version;
   cvs_path path;
-
+  vector<cvs_tag> tags;
+  
   bool operator<(cvs_commit const & other) const 
   {
     return time < other.time;
@@ -101,7 +90,7 @@ cvs_branch
   time_t first_commit;
 
   map<cvs_path, cvs_version> live_at_beginning;
-  vector<cvs_commit> lineage;
+  vector<cvs_commit> lineage;  
 
   void note_commit(time_t now)
   {
@@ -142,6 +131,7 @@ cvs_history
   interner<unsigned long> changelog_interner;
   interner<unsigned long> file_version_interner;
   interner<unsigned long> path_interner;
+  interner<unsigned long> tag_interner;
   interner<unsigned long> manifest_version_interner;
 
   cycle_detector<unsigned long> manifest_cycle_detector;
@@ -162,6 +152,12 @@ cvs_history
   // stack of branches we're injecting states into
   stack< shared_ptr<cvs_branch> > stk;
   stack< cvs_branchname > bstk;
+
+  // tag -> time, revision
+  //
+  // used to resolve the *last* revision which has a given tag
+  // applied; this is the revision which wins the tag.
+  map<unsigned long, pair<time_t, revision_id> > resolved_tags;
 
   file_path curr_file;
   cvs_path curr_file_interned;
@@ -226,6 +222,18 @@ cvs_commit::cvs_commit(rcs_file const & r,
   author = cvs.author_interner.intern(delta->second->author);
   path = cvs.curr_file_interned;
   version = cvs.file_version_interner.intern(ident.inner()());
+
+  typedef multimap<string,string>::const_iterator ity;
+  pair<ity,ity> range = r.admin.symbols.equal_range(rcs_version);  
+  for (ity i = range.first; i != range.second; ++i)
+    {
+      if (i->first == rcs_version)
+        {
+          L(F("version %s -> tag %s\n") % rcs_version % i->second);
+          tags.push_back(cvs.tag_interner.intern(i->second));
+        }
+    }
+
 }
 
 
@@ -660,26 +668,18 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
 
 
 void 
-import_rcs_file(fs::path const & filename, database & db)
+test_parse_rcs_file(fs::path const & filename, database & db)
 {
   cvs_history cvs;
 
-  I(! fs::is_directory(filename));
   I(! filename.empty());
+  I(fs::exists(filename));
+  I(! fs::is_directory(filename));
 
-  fs::path leaf = mkpath(filename.leaf());
-  fs::path branch = mkpath(filename.branch_path().string());
-
-  I(! branch.empty());
-  I(! leaf.empty());
-  I( fs::is_directory(branch));
-  I( fs::exists(branch));
-
-  I(chdir(filename.branch_path().native_directory_string().c_str()) == 0); 
-
-  I(fs::exists(leaf));
-
-  import_rcs_file_with_cvs(leaf.native_file_string(), db, cvs);
+  P(F("parsing RCS file %s\n") % filename.string());
+  rcs_file r;
+  parse_rcs_file(filename.string(), r);
+  P(F("parsed RCS file %s OK\n") % filename.string());
 }
 
 
@@ -828,7 +828,14 @@ public:
     string file = path();
     if (file.substr(file.size() - 2) == string(",v"))      
       {
-        import_rcs_file_with_cvs(file, db, cvs);
+        try
+          {
+            import_rcs_file_with_cvs(file, db, cvs);
+          }
+        catch (oops const & o)
+          {
+            W(F("error reading RCS file %s: %s\n") % file % o.what());
+          }
       }
     else
       L(F("skipping non-RCS file %s\n") % file);
@@ -901,6 +908,7 @@ cvs_cluster
   time_t first_time;
   cvs_author author;
   cvs_changelog changelog;
+  set<cvs_tag> tags;
 
   cvs_cluster(time_t t, 
               cvs_author a,
@@ -947,6 +955,7 @@ cluster_consumer
     time_t time;
     cvs_author author;
     cvs_changelog changelog;
+    vector<cvs_tag> tags;
   };
 
   vector<prepared_revision> preps;
@@ -1072,6 +1081,11 @@ import_branch(cvs_history & cvs,
                                        cvs_cluster::entry(i->alive, 
                                                           i->version,
                                                           i->time)));
+      for (vector<cvs_tag>::const_iterator j = i->tags.begin();
+           j != i->tags.end(); ++j)
+        {
+          target->tags.insert(*j);          
+        }
     }
 
 
@@ -1143,6 +1157,19 @@ import_cvs_repo(fs::path const & cvsroot,
   L(F("trunk has %d entries\n") % cvs.trunk->lineage.size());
   import_branch(cvs, app, cvs.base_branch, cvs.trunk, n_revs);
 
+  // now we have a "last" rev for each tag
+  {
+    packet_db_writer dbw(app);
+    for (map<unsigned long, pair<time_t, revision_id> >::const_iterator i = cvs.resolved_tags.begin();
+         i != cvs.resolved_tags.end(); ++i)
+      {
+        string tag = cvs.tag_interner.lookup(i->first);
+        ui.set_tick_trailer("marking tag " + tag);
+        cert_revision_tag(i->second.second, tag, app, dbw);
+      }
+  }
+
+
   return;
 
 }
@@ -1197,6 +1224,11 @@ cluster_consumer::prepared_revision::prepared_revision(revision_id i,
     author(c.author), 
     changelog(c.changelog)
 {
+  for (set<cvs_tag>::const_iterator i = c.tags.begin();
+       i != c.tags.end(); ++i)
+    {
+      tags.push_back(*i);
+    }
 }
 
 
@@ -1292,6 +1324,28 @@ void
 cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
 {
   packet_db_writer dbw(app);
+
+  for (vector<cvs_tag>::const_iterator i = p.tags.begin();
+       i != p.tags.end(); ++i)
+    {
+      map<unsigned long, pair<time_t, revision_id> >::const_iterator j 
+        = cvs.resolved_tags.find(*i);
+
+      if (j != cvs.resolved_tags.end())
+        {
+          if (j->second.first < p.time)
+            {
+              // move the tag forwards
+              cvs.resolved_tags.erase(*i);
+              cvs.resolved_tags.insert(make_pair(*i, make_pair(p.time, p.rid)));
+            }
+        }
+      else
+        {
+          cvs.resolved_tags.insert(make_pair(*i, make_pair(p.time, p.rid)));
+        }
+    }
+
   cert_revision_in_branch(p.rid, cert_value(branchname), app, dbw); 
   cert_revision_author(p.rid, cvs.author_interner.lookup(p.author), app, dbw); 
   cert_revision_changelog(p.rid, cvs.changelog_interner.lookup(p.changelog), app, dbw);

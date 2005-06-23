@@ -1,3 +1,21 @@
+2005-06-22  graydon hoare  <graydon@pobox.com>
+
+	* rcs_file.cc: Track file:line numbers, accept files which violate
+	some lies in rcs file format.
+	* rcs_import.cc (cvs_tree_walker): 
+	Warn rather than crash on parse errors.
+	(cvs_history)
+	(cvs_commit)
+	(cvs_cluster)
+	(prepared_revision)
+	(import_branch)
+	(import_cvs_repo): Support non-branch tags.
+
+2005-06-21  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.{cc,hh} (import_rcs_file): Rename to test_parse_rcs_file.
+	* commands.cc (rcs_import): rename call.
+
 2005-06-19  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc: Rewrite change set inference logic.

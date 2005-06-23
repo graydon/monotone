@@ -9,7 +9,7 @@
 #include "vocab.hh"
 #include "database.hh"
 
-void import_rcs_file(fs::path const & filename, database & db);
+void test_parse_rcs_file(fs::path const & filename, database & db);
 void import_cvs_repo(fs::path const & cvsroot, app_state & app);
 
 #endif // __RCS_IMPORT_HH__
