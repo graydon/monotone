@@ -1,3 +1,11 @@
+2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc, netsync.cc: Revert backwards compatibility code; 0.19
+	and 0.20 can't be usefully compatible, and the code as it existed
+	would cause real version mismatch error reporting to not work
+	right.  (Old client with new server would give a generic "server
+	disconnected" error message instead of something useful.)
+
 2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc (rebuild_merkle_trees): Fix FIXME comments to match

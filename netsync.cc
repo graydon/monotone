@@ -221,7 +221,6 @@ session
   string outbuf;
 
   netcmd cmd;
-  u8 protocol_version;
   bool armed;
   bool arm();
 
@@ -433,7 +432,6 @@ session::session(protocol_role role,
   str(sock, to),
   inbuf(""),
   outbuf(""),
-  protocol_version(constants::netcmd_current_protocol_version),
   armed(false),
   pattern(""),
   pattern_re(".*"),
@@ -1316,7 +1314,7 @@ void
 session::queue_bye_cmd() 
 {
   L(F("queueing 'bye' command\n"));
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_bye_cmd();
   write_netcmd_and_try_flush(cmd);
   this->sent_goodbye = true;
@@ -1326,7 +1324,7 @@ void
 session::queue_error_cmd(string const & errmsg)
 {
   L(F("queueing 'error' command\n"));
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_error_cmd(errmsg);
   write_netcmd_and_try_flush(cmd);
   this->sent_goodbye = true;
@@ -1339,7 +1337,7 @@ session::queue_done_cmd(size_t level,
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   L(F("queueing 'done' command for %s level %s\n") % typestr % level);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_done_cmd(level, type);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1348,7 +1346,7 @@ void
 session::queue_hello_cmd(id const & server, 
                          id const & nonce) 
 {
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   hexenc<id> server_encoded;
   encode_hexenc(server, server_encoded);
   
@@ -1367,7 +1365,7 @@ session::queue_anonymous_cmd(protocol_role role,
                              string const & pattern, 
                              id const & nonce2)
 {
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_anonymous_cmd(role, pattern, nonce2);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1380,7 +1378,7 @@ session::queue_auth_cmd(protocol_role role,
                         id const & nonce2, 
                         string const & signature)
 {
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1388,7 +1386,7 @@ session::queue_auth_cmd(protocol_role role,
 void 
 session::queue_confirm_cmd(string const & signature)
 {
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_confirm_cmd(signature);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1402,7 +1400,7 @@ session::queue_refine_cmd(merkle_node const & node)
   netcmd_item_type_to_string(node.type, typestr);
   L(F("queueing request for refinement of %s node '%s', level %d\n")
     % typestr % hpref % static_cast<int>(node.level));
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_refine_cmd(node);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1432,7 +1430,7 @@ session::queue_send_data_cmd(netcmd_item_type type,
 
   L(F("queueing request for data of %s item '%s'\n")
     % typestr % hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_send_data_cmd(type, item);
   write_netcmd_and_try_flush(cmd);
   note_item_requested(type, item);
@@ -1468,7 +1466,7 @@ session::queue_send_delta_cmd(netcmd_item_type type,
 
   L(F("queueing request for contents of %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_send_delta_cmd(type, base, ident);
   write_netcmd_and_try_flush(cmd);
   note_item_requested(type, ident);
@@ -1493,7 +1491,7 @@ session::queue_data_cmd(netcmd_item_type type,
 
   L(F("queueing %d bytes of data for %s item '%s'\n")
     % dat.size() % typestr % hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_data_cmd(type, item, dat);
   write_netcmd_and_try_flush(cmd);
   note_item_sent(type, item);
@@ -1523,7 +1521,7 @@ session::queue_delta_cmd(netcmd_item_type type,
 
   L(F("queueing %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_delta_cmd(type, base, ident, del);
   write_netcmd_and_try_flush(cmd);
   note_item_sent(type, ident);
@@ -1546,7 +1544,7 @@ session::queue_nonexistant_cmd(netcmd_item_type type,
 
   L(F("queueing note of nonexistance of %s item '%s'\n")
     % typestr % hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_nonexistant_cmd(type, item);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1632,22 +1630,6 @@ get_branches(app_state & app, vector<string> & names)
     W(F("No branches found."));
 }
 
-void
-convert_pattern(utf8 & pat, utf8 & conv)
-{
-  string x = pat();
-  string pattern = "";
-  string e = ".|*?+()[]{}^$\\";
-  for (string::const_iterator i = x.begin(); i != x.end(); i++)
-    {
-      if (e.find(*i) != e.npos)
-        pattern += '\\';
-      pattern += *i;
-    }
-  conv = pattern + ".*";
-}
-
-
 static const var_domain known_servers_domain = var_domain("known-servers");
 
 bool 
@@ -1712,13 +1694,6 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   }
 
   utf8 pat(pattern);
-  if (protocol_version < 5)
-    {
-      W(F("Talking to an old server. "
-          "Using %s as a collection, not a regex.") % pattern);
-      convert_pattern(pattern, pat);
-      this->pattern_re = boost::regex(pat());
-    }
   vector<string> branchnames;
   set<utf8> ok_branches;
   get_branches(app, branchnames);
@@ -2981,8 +2956,6 @@ session::dispatch_payload(netcmd const & cmd)
         rsa_pub_key server_key;
         id nonce;
         cmd.read_hello_cmd(server_keyname, server_key, nonce);
-        if (cmd.get_version() < protocol_version)
-          protocol_version = cmd.get_version();
         return process_hello_cmd(server_keyname, server_key, nonce);
       }
       break;
@@ -2998,8 +2971,6 @@ session::dispatch_payload(netcmd const & cmd)
         string pattern;
         id nonce2;
         cmd.read_anonymous_cmd(role, pattern, nonce2);
-        if (cmd.get_version() < protocol_version)
-          protocol_version = cmd.get_version();
         return process_anonymous_cmd(role, pattern, nonce2);
       }
       break;
@@ -3012,8 +2983,6 @@ session::dispatch_payload(netcmd const & cmd)
         string pattern, signature;
         id client, nonce1, nonce2;
         cmd.read_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
-        if (cmd.get_version() < protocol_version)
-          protocol_version = cmd.get_version();
         return process_auth_cmd(role, pattern, client,
                                 nonce1, nonce2, signature);
       }

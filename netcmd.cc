@@ -50,9 +50,6 @@ netcmd::netcmd() : version(constants::netcmd_current_protocol_version),
                    cmd_code(bye_cmd)
 {}
 
-netcmd::netcmd(u8 _version) : version(_version), cmd_code(bye_cmd)
-{}
-
 size_t netcmd::encoded_size() 
 {
   string tmp;
@@ -78,22 +75,6 @@ netcmd::write(string & out) const
   insert_datum_lsb<u32>(check.sum(), out);
 }
 
-// last should be zero (doesn't mean we're compatible with version 0).
-// The nonzero elements are the historical netsync/netcmd versions we can
-// interoperate with. For interoperating with newer versions, assume
-// compatibility and let the remote host make the call.
-static u8 const compatible_versions[] = {4, 0};
-
-bool is_compatible(u8 version)
-{
-  for (u8 const *x = compatible_versions; *x; ++x)
-    {
-      if (*x == version)
-        return true;
-    }
-  return false;
-}
-  
 bool 
 netcmd::read(string & inbuf)
 {
@@ -102,28 +83,20 @@ netcmd::read(string & inbuf)
   if (inbuf.size() < constants::netcmd_minsz)
     return false;
 
-  u8 ver = extract_datum_lsb<u8>(inbuf, pos, "netcmd protocol number");
+  u8 extracted_ver = extract_datum_lsb<u8>(inbuf, pos, "netcmd protocol number");
   int v = version;
+  if (extracted_ver != version)
+    throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
+                     % widen<u32,u8>(version)
+                     % widen<u32,u8>(extracted_ver));
+  version = extracted_ver;
 
   u8 cmd_byte = extract_datum_lsb<u8>(inbuf, pos, "netcmd code");
   switch (cmd_byte)
     {
-    // hello may be newer than expected, or one we're compatible with
     case static_cast<u8>(hello_cmd):
-      if (ver < version && !is_compatible(ver))
-        throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
-                         % widen<u32,u8>(v) 
-                         % widen<u32,u8>(ver));
-      break;
-    // these may be older compatible versions
     case static_cast<u8>(anonymous_cmd):
     case static_cast<u8>(auth_cmd):
-      if (ver != version && (ver > version || !is_compatible(ver)))
-        throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
-                         % widen<u32,u8>(v) 
-                         % widen<u32,u8>(ver));
-      break;
-    // these must match exactly what's expected
     case static_cast<u8>(error_cmd):
     case static_cast<u8>(bye_cmd):
     case static_cast<u8>(confirm_cmd):
@@ -134,16 +107,11 @@ netcmd::read(string & inbuf)
     case static_cast<u8>(data_cmd):
     case static_cast<u8>(delta_cmd):
     case static_cast<u8>(nonexistant_cmd):
-      if (ver != version)
-        throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
-                         % widen<u32,u8>(v) 
-                         % widen<u32,u8>(ver));
+      cmd_code = static_cast<netcmd_code>(cmd_byte);
       break;
     default:
       throw bad_decode(F("unknown netcmd code 0x%x") % widen<u32,u8>(cmd_byte));
     }
-  cmd_code = static_cast<netcmd_code>(cmd_byte);
-  version = ver;
 
   // check to see if we have even enough bytes for a complete uleb128
   size_t payload_len = 0;
