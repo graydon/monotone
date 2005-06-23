@@ -42,6 +42,18 @@ bool check_signature(lua_hooks & lua,
 void require_password(rsa_keypair_id const & id,
                       app_state & app);
 
+void encrypt_rsa(lua_hooks & lua,
+                 rsa_keypair_id const & id,
+                 base64<rsa_pub_key> & pub,
+                 std::string const & plaintext,
+                 rsa_oaep_sha_data & ciphertext);
+
+void decrypt_rsa(lua_hooks & lua,
+                 rsa_keypair_id const & id,
+                 base64< arc4<rsa_priv_key> > const & priv,
+                 rsa_oaep_sha_data const & ciphertext,
+                 std::string & plaintext);
+
 // netsync stuff
 
 void read_pubkey(std::string const & in, 

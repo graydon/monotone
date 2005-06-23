@@ -112,17 +112,33 @@
 // protocol
 // --------
 //
+// The protocol is a simple binary command-packet system over TCP;
+// each packet consists of a single byte which identifies the protocol
+// version, a byte which identifies the command name inside that
+// version, a size_t sent as a uleb128 indicating the length of the
+// packet, that many bytes of payload, and finally 20 bytes of SHA-1
+// HMAC calculated over the payload.  The key for the SHA-1 HMAC is 20
+// bytes of 0 during authentication, and a 20-byte random key chosen
+// by the client after authentication (discussed below).
+//
+//---- Pre-v5 packet format ----
+//
 // the protocol is a simple binary command-packet system over tcp; each
 // packet consists of a byte which identifies the protocol version, a byte
 // which identifies the command name inside that version, a size_t sent as
 // a uleb128 indicating the length of the packet, and then that many bytes
 // of payload, and finally 4 bytes of adler32 checksum (in LSB order) over
-// the payload. decoding involves simply buffering until a sufficient
-// number of bytes are received, then advancing the buffer pointer. any
-// time an adler32 check fails, the protocol is assumed to have lost
-// synchronization, and the connection is dropped. the parties are free to
-// drop the tcp stream at any point, if too much data is received or too
-// much idle time passes; no commitments or transactions are made.
+// the payload.
+//
+// ---- end pre-v5 packet format ----
+//
+// decoding involves simply buffering until a sufficient number of
+// bytes are received, then advancing the buffer pointer. any time an
+// integrity check (adler32 for pre-v5, HMAC for post-v5) fails, the
+// protocol is assumed to have lost synchronization, and the
+// connection is dropped. the parties are free to drop the tcp stream
+// at any point, if too much data is received or too much idle time
+// passes; no commitments or transactions are made.
 //
 // one special command, "bye", is used to shut down a connection
 // gracefully.  once each side has received all the data they want, they
@@ -135,6 +151,31 @@
 // "hello <id> <nonce>" command, which identifies the server's RSA key and
 // issues a nonce which must be used for a subsequent authentication.
 //
+// The client then responds with either:
+//
+// An "auth (source|sink|both) <pattern> <id> <nonce1> <hmac key>
+// <sig>" command, which identifies its RSA key, notes the role it
+// wishes to play in the synchronization, identifies the pattern it
+// wishes to sync with, signs the previous nonce with its own key, and
+// informs the server of the HMAC key it wishes to use for this
+// session (encrypted with the server's public key); or
+//
+// An "anonymous (source|sink|both) <pattern> <hmac key>" command,
+// which identifies the role it wishes to play in the synchronization,
+// the pattern it ishes to sync with, and the HMAC key it wishes to
+// use for this session (also encrypted with the server's public key).
+//
+// The server then replies with a "confirm" command, which contains no
+// other data but will only have the correct HMAC integrity code if
+// the server received and properly decrypted the HMAC key offered by
+// the client.  This transitions the peers into an authenticated state
+// and begins refinement.
+//
+// ---- Pre-v5 authentication process notes ----
+//
+// the exchange begins in a non-authenticated state. the server sends a
+// "hello <id> <nonce>" command, which identifies the server's RSA key and
+// issues a nonce which must be used for a subsequent authentication.
 // the client can then respond with an "auth (source|sink|both)
 // <pattern> <id> <nonce1> <nonce2> <sig>" command which identifies its
 // RSA key, notes the role it wishes to play in the synchronization,
@@ -145,6 +186,8 @@
 // the server can then respond with a "confirm <sig>" command, which is
 // the signature of the second nonce sent by the client. this
 // transitions the peers into an authenticated state and begins refinement.
+//
+// ---- End pre-v5 authentication process ----
 //
 // refinement begins with the client sending its root public key and
 // manifest certificate merkle nodes to the server. the server then
@@ -228,6 +271,9 @@ session
   boost::regex pattern_re;
   id remote_peer_key_hash;
   rsa_keypair_id remote_peer_key_name;
+  netsync_session_key session_key;
+  netsync_hmac_value read_hmac;
+  netsync_hmac_value write_hmac;
   bool authenticated;
 
   time_t last_io_time;
@@ -320,14 +366,16 @@ session
                        id const & nonce);
   void queue_anonymous_cmd(protocol_role role, 
                            string const & pattern, 
-                           id const & nonce2);
+                           id const & nonce2,
+                           base64<rsa_pub_key> server_key_encoded);
   void queue_auth_cmd(protocol_role role, 
                       string const & pattern, 
                       id const & client, 
                       id const & nonce1, 
                       id const & nonce2, 
-                      string const & signature);
-  void queue_confirm_cmd(string const & signature);
+                      string const & signature,
+                      base64<rsa_pub_key> server_key_encoded);
+  void queue_confirm_cmd();
   void queue_refine_cmd(merkle_node const & node);
   void queue_send_data_cmd(netcmd_item_type type, 
                            id const & item);
@@ -351,15 +399,15 @@ session
                          rsa_pub_key const & server_key,
                          id const & nonce);
   bool process_anonymous_cmd(protocol_role role, 
-                             string const & pattern, 
-                             id const & nonce2);
+                             string const & pattern);
   bool process_auth_cmd(protocol_role role, 
                         string const & pattern, 
                         id const & client, 
                         id const & nonce1, 
-                        id const & nonce2, 
                         string const & signature);
+  void respond_to_auth_cmd(rsa_oaep_sha_data hmac_key_encrypted);
   bool process_confirm_cmd(string const & signature);
+  void respond_to_confirm_cmd();
   bool process_refine_cmd(merkle_node const & node);
   bool process_send_data_cmd(netcmd_item_type type,
                              id const & item);
@@ -437,6 +485,9 @@ session::session(protocol_role role,
   pattern_re(".*"),
   remote_peer_key_hash(""),
   remote_peer_key_name(""),
+  session_key(constants::netsync_key_initializer),
+  read_hmac(constants::netsync_key_initializer),
+  write_hmac(constants::netsync_key_initializer),
   authenticated(false),
   last_io_time(::time(NULL)),
   byte_in_ticker(NULL),
@@ -727,7 +778,7 @@ void
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   if (!encountered_error)
-    cmd.write(outbuf);
+    cmd.write(outbuf, session_key, write_hmac);
   else
     L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
@@ -1363,11 +1414,16 @@ session::queue_hello_cmd(id const & server,
 void 
 session::queue_anonymous_cmd(protocol_role role, 
                              string const & pattern, 
-                             id const & nonce2)
+                             id const & nonce2,
+                             base64<rsa_pub_key> server_key_encoded)
 {
   netcmd cmd;
-  cmd.write_anonymous_cmd(role, pattern, nonce2);
+  rsa_oaep_sha_data hmac_key_encrypted;
+  encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+              nonce2(), hmac_key_encrypted);
+  cmd.write_anonymous_cmd(role, pattern, hmac_key_encrypted);
   write_netcmd_and_try_flush(cmd);
+  session_key = netsync_session_key(nonce2());
 }
 
 void 
@@ -1376,18 +1432,23 @@ session::queue_auth_cmd(protocol_role role,
                         id const & client, 
                         id const & nonce1, 
                         id const & nonce2, 
-                        string const & signature)
+                        string const & signature,
+                        base64<rsa_pub_key> server_key_encoded)
 {
   netcmd cmd;
-  cmd.write_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
+  rsa_oaep_sha_data hmac_key_encrypted;
+  encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+              nonce2(), hmac_key_encrypted);
+  cmd.write_auth_cmd(role, pattern, client, nonce1, hmac_key_encrypted, signature);
   write_netcmd_and_try_flush(cmd);
+  session_key = netsync_session_key(nonce2());
 }
 
-void 
-session::queue_confirm_cmd(string const & signature)
+void
+session::queue_confirm_cmd()
 {
   netcmd cmd;
-  cmd.write_confirm_cmd(signature);
+  cmd.write_confirm_cmd();
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1727,11 +1788,12 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       
       // make a new nonce of our own and send off the 'auth'
       queue_auth_cmd(this->role, this->pattern(), our_key_hash_raw, 
-                     nonce, mk_nonce(), sig_raw());
+                     nonce, mk_nonce(), sig_raw(), their_key_encoded);
     }
   else
     {
-      queue_anonymous_cmd(this->role, this->pattern(), mk_nonce());
+      queue_anonymous_cmd(this->role, this->pattern(),
+                          mk_nonce(), their_key_encoded);
     }
   return true;
 }
@@ -1749,18 +1811,8 @@ matches_one(string s, vector<boost::regex> r)
 
 bool 
 session::process_anonymous_cmd(protocol_role role, 
-                               string const & pattern, 
-                               id const & nonce2)
+                               string const & pattern)
 {
-  hexenc<id> hnonce2;
-  encode_hexenc(nonce2, hnonce2);
-
-  L(F("received 'anonymous' netcmd from client for pattern '%s' "
-      "in %s mode with nonce2 '%s'\n")
-    %  pattern % (role == source_and_sink_role ? "source and sink" :
-                     (role == source_role ? "source " : "sink"))
-    % hnonce2);
-  
   //
   // internally netsync thinks in terms of sources and sinks. users like
   // thinking of repositories as "readonly", "readwrite", or "writeonly".
@@ -1821,15 +1873,6 @@ session::process_anonymous_cmd(protocol_role role,
 
   rebuild_merkle_trees(app, ok_branches);
 
-  // get our private key and sign back
-  L(F("anonymous read permitted, signing back nonce\n"));
-  base64<rsa_sha1_signature> sig;
-  rsa_sha1_signature sig_raw;
-  base64< arc4<rsa_priv_key> > our_priv;
-  load_priv_key(app, app.signing_key, our_priv);
-  make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
-  decode_base64(sig, sig_raw);
-  queue_confirm_cmd(sig_raw());
   this->pattern = pattern;
   this->remote_peer_key_name = rsa_keypair_id("");
   this->authenticated = true;
@@ -1837,20 +1880,16 @@ session::process_anonymous_cmd(protocol_role role,
   return true;
 }
 
-bool 
-session::process_auth_cmd(protocol_role role, 
-                          string const & pattern, 
-                          id const & client, 
-                          id const & nonce1, 
-                          id const & nonce2, 
+bool
+session::process_auth_cmd(protocol_role role,
+                          string const & pattern,
+                          id const & client,
+                          id const & nonce1,
                           string const & signature)
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
   
-  hexenc<id> hnonce1, hnonce2;
-  encode_hexenc(nonce1, hnonce1);
-  encode_hexenc(nonce2, hnonce2);
   hexenc<id> their_key_hash;
   encode_hexenc(client, their_key_hash);
   set<utf8> ok_branches;
@@ -1863,12 +1902,6 @@ session::process_auth_cmd(protocol_role role,
       allowed.push_back(boost::regex((*i)()));
     }
   boost::regex reg(pattern);
-  
-  L(F("received 'auth' netcmd from client '%s' for pattern '%s' "
-      "in %s mode with nonce1 '%s' and nonce2 '%s'\n")
-    % their_key_hash % pattern % (role == source_and_sink_role ? "source and sink" :
-                                     (role == source_role ? "source " : "sink"))
-    % hnonce1 % hnonce2);
   
   // check that they replied with the nonce we asked for
   if (!(nonce1 == this->saved_nonce))
@@ -1975,13 +2008,6 @@ session::process_auth_cmd(protocol_role role,
     {
       // get our private key and sign back
       L(F("client signature OK, accepting authentication\n"));
-      base64<rsa_sha1_signature> sig;
-      rsa_sha1_signature sig_raw;
-      base64< arc4<rsa_priv_key> > our_priv;
-      load_priv_key(app, app.signing_key, our_priv);
-      make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
-      decode_base64(sig, sig_raw);
-      queue_confirm_cmd(sig_raw());
       this->pattern = pattern;
       this->pattern_re = boost::regex(this->pattern());
       this->authenticated = true;
@@ -2010,6 +2036,18 @@ session::process_auth_cmd(protocol_role role,
   return false;
 }
 
+void 
+session::respond_to_auth_cmd(rsa_oaep_sha_data hmac_key_encrypted)
+{
+  L(F("Writing HMAC confirm command"));
+  base64< arc4<rsa_priv_key> > our_priv;
+  load_priv_key(app, app.signing_key, our_priv);
+  string hmac_key;
+  decrypt_rsa(app.lua, app.signing_key, our_priv, hmac_key_encrypted, hmac_key);
+  session_key = netsync_session_key(hmac_key);
+  queue_confirm_cmd();
+}
+
 bool 
 session::process_confirm_cmd(string const & signature)
 {
@@ -2036,20 +2074,6 @@ session::process_confirm_cmd(string const & signature)
       if (check_signature(app.lua, their_id, their_key, this->saved_nonce(), sig))
         {
           L(F("server signature OK, accepting authentication\n"));
-          this->authenticated = true;
-
-          merkle_ptr root;
-          load_merkle_node(epoch_item, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, epoch_item);
-
-          load_merkle_node(key_item, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, key_item);
-
-          load_merkle_node(cert_item, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, cert_item);
           return true;
         }
       else
@@ -2062,6 +2086,23 @@ session::process_confirm_cmd(string const & signature)
       W(F("unknown server key\n"));
     }
   return false;
+}
+
+void
+session::respond_to_confirm_cmd()
+{
+  merkle_ptr root;
+  load_merkle_node(epoch_item, 0, get_root_prefix().val, root);
+  queue_refine_cmd(*root);
+  queue_done_cmd(0, epoch_item);
+
+  load_merkle_node(key_item, 0, get_root_prefix().val, root);
+  queue_refine_cmd(*root);
+  queue_done_cmd(0, key_item);
+
+  load_merkle_node(cert_item, 0, get_root_prefix().val, root);
+  queue_refine_cmd(*root);
+  queue_done_cmd(0, cert_item);
 }
 
 static bool 
@@ -2969,9 +3010,17 @@ session::dispatch_payload(netcmd const & cmd)
       {
         protocol_role role;
         string pattern;
-        id nonce2;
-        cmd.read_anonymous_cmd(role, pattern, nonce2);
-        return process_anonymous_cmd(role, pattern, nonce2);
+        rsa_oaep_sha_data hmac_key_encrypted;
+        cmd.read_anonymous_cmd(role, pattern, hmac_key_encrypted);
+        L(F("received 'anonymous' netcmd from client for pattern '%s' "
+            "in %s mode\n")
+          %  pattern % (role == source_and_sink_role ? "source and sink" :
+                        (role == source_role ? "source " : "sink")));
+
+        if (!process_anonymous_cmd(role, pattern))
+            return false;
+        respond_to_auth_cmd(hmac_key_encrypted);
+        return true;
       }
       break;
 
@@ -2982,9 +3031,25 @@ session::dispatch_payload(netcmd const & cmd)
         protocol_role role;
         string pattern, signature;
         id client, nonce1, nonce2;
-        cmd.read_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
-        return process_auth_cmd(role, pattern, client,
-                                nonce1, nonce2, signature);
+        rsa_oaep_sha_data hmac_key_encrypted;
+        cmd.read_auth_cmd(role, pattern, client, nonce1,
+                          hmac_key_encrypted, signature);
+
+        hexenc<id> their_key_hash;
+        encode_hexenc(client, their_key_hash);
+        hexenc<id> hnonce1;
+        encode_hexenc(nonce1, hnonce1);
+
+        L(F("received 'auth(hmac)' netcmd from client '%s' for pattern '%s' "
+            "in %s mode with nonce1 '%s'\n")
+          % their_key_hash % pattern % (role == source_and_sink_role ? "source and sink" :
+                                        (role == source_role ? "source " : "sink"))
+          % hnonce1);
+
+        if (!process_auth_cmd(role, pattern, client, nonce1, signature))
+            return false;
+        respond_to_auth_cmd(hmac_key_encrypted);
+        return true;
       }
       break;
 
@@ -2993,8 +3058,10 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "confirm netcmd received in client voice");
       {
         string signature;
-        cmd.read_confirm_cmd(signature);
-        return process_confirm_cmd(signature);
+        cmd.read_confirm_cmd();
+        this->authenticated = true;
+        respond_to_confirm_cmd();
+        return true;
       }
       break;
 
@@ -3116,7 +3183,7 @@ session::arm()
 {
   if (!armed)
     {
-      if (cmd.read(inbuf))
+      if (cmd.read(inbuf, session_key, read_hmac))
         {
 //          inbuf.erase(0, cmd.encoded_size());     
           armed = true;
