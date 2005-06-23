@@ -3211,7 +3211,7 @@ bool session::process()
     }
   catch (bad_decode & bd)
     {
-      W(F("caught bad_decode exception processing peer %s: '%s'\n") % peer_id % bd.what);
+      W(F("protocol error while processing peer %s: '%s'\n") % peer_id % bd.what);
       return false;
     }
 }
@@ -3244,7 +3244,7 @@ call_server(protocol_role role,
         }
       catch (bad_decode & bd)
         {
-          W(F("caught bad_decode exception decoding input from peer %s: '%s'\n") 
+          W(F("protocol error while processing peer %s: '%s'\n") 
             % sess.peer_id % bd.what);
           return;         
         }
@@ -3271,7 +3271,7 @@ call_server(protocol_role role,
                 }
               catch (bad_decode & bd)
                 {
-                  W(F("caught bad_decode exception decoding input from peer %s: '%s'\n") 
+                  W(F("protocol error while processing peer %s: '%s'\n") 
                     % sess.peer_id % bd.what);
                   return;         
                 }
@@ -3345,7 +3345,7 @@ arm_sessions_and_calculate_probe(Netxx::Probe & probe,
         }
       catch (bad_decode & bd)
         {
-          W(F("caught bad_decode exception decoding input from peer %s: '%s', marking as bad\n") 
+          W(F("protocol error while processing peer %s: '%s', marking as bad\n") 
             % i->second->peer_id % bd.what);
           arm_failed.insert(i->first);
         }         
@@ -3402,7 +3402,7 @@ handle_read_available(Netxx::socket_type fd,
         }
       catch (bad_decode & bd)
         {
-          W(F("caught bad_decode exception decoding input from peer %s: '%s', disconnecting\n") 
+          W(F("protocol error while processing peer %s: '%s', disconnecting\n") 
             % sess->peer_id % bd.what);
           sessions.erase(fd);
           live_p = false;

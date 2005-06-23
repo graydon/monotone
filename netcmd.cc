@@ -103,7 +103,6 @@ netcmd::read(string & inbuf, netsync_session_key const & key,
     return false;
 
   u8 extracted_ver = extract_datum_lsb<u8>(inbuf, pos, "netcmd protocol number");
-  int v = version;
   if (extracted_ver != version)
     throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
                      % widen<u32,u8>(version)

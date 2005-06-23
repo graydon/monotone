@@ -1,5 +1,12 @@
 2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netcmd.cc (read): Remove unused variable.
+	* netsync.cc (call_server, process)
+	(arm_sessions_and_calculate_probe, handle_read_available): Give
+	better error message on bad_decode exceptions.
+
+2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netcmd.cc, netsync.cc: Revert backwards compatibility code; 0.19
 	and 0.20 can't be usefully compatible, and the code as it existed
 	would cause real version mismatch error reporting to not work
