@@ -72,17 +72,25 @@
 # Selectable format for Date, Branch, Author, ChangeLog.  Coloring author.
 # Current marker is asterix before date/time.
 #
+# 2005/6/23 Version 0.1.9 Henry@BigFoot.de
+# Cancel is "EXIT" in main menu.
+# Meter alongwith --gauge for reading certs :-)
+# Config with menu and def.item, instand radiolist and the test on/off thingy.
+# Don't remove some old files at exit.
+# Branch and head not in Main background title.
+
+# 
 # Known Bugs / ToDo-List:
 # * For Monotone Version >0.19  s/--depth/--last/, remove the fallback
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.8"
+VERSION="0.1.9"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
 CONFIGFILE="$HOME/.mtbrowserc"
 
-# Store lists for menue here
+# Store lists for menu here
 TEMPDIR="$HOME/.mtbrowse"
 TEMPFILE="$TEMPDIR/.tmp"
 
@@ -174,8 +182,9 @@ then
 	if [ -f MT/options ]
 	then
 
-	    if ! dialog --cr-wrap --title " *********** WARNING! ********** " \
-		    --defaultno --colors --yesno "
+	    if ! dialog --cr-wrap \
+		--title " *********** WARNING! ********** " \
+		--defaultno --colors --yesno "
 Your \Zb\Z1MT/options\Zn will be overwrite, if
 continue with different DB file or branch
 in exist working directory!
@@ -194,7 +203,7 @@ fi
 # Clear cached files
 do_clear_cache()
 {
-    rm -f $TEMPFILE.agraph $TEMPFILE.certs.$BRANCH \
+    rm -f $TEMPFILE.certs.$BRANCH \
       $TEMPFILE.changelog.$BRANCH
 }
 
@@ -202,7 +211,7 @@ do_clear_cache()
 # clear temp files
 do_clear_on_exit()
 {
-    rm -f $TEMPFILE.dlg-branches $TEMPFILE.agraph \
+    rm -f $TEMPFILE.branches $TEMPFILE.ancestors $TEMPFILE.topsort \
       $TEMPFILE.action-select $TEMPFILE.menu $TEMPFILE.input
 
     if [ "$CACHE" != "1" ]
@@ -229,26 +238,45 @@ do_pager()
 
 
 # Add the date and user-key to the list of revisions
+
+# Scanning for:
+# Key   : henry@bigfoot.de
+# Sig   : ok
+# Name  : date
+# Value : 2005-05-31T22:29:50		<<---
+# --------------------------------------
+# Key   : henry@bigfoot.de
+# Sig   : ok
+# Name  : changelog
+# Value : Handle merged parents		<<---
+
+# Output
+# 123456 "2005-05-31 22:29 henry@bigfoot.de  Handle merged parents"
+
 fill_date_key()
 {
     local in_file=$1
     local out_file=$2
-    local short_hash dat bra aut log
+    local short_hash dat bra aut log lineno
 
+    line_count=`wc -l < $in_file`
+    if [ "$line_count" -eq 0 ]
+    then
+	unset line_count
+    fi
+
+    lineno=0
     rm -f $out_file
     # Read Key and Date value from certs
     cat $in_file | \
     while read hash ; do
-	echo -n "."
-
-	# Scanning for
-	# Key   : henry@bigfoot.de
-	# Sig   : ok
-	# Name  : date
-	# Value : 2005-05-31T22:29:50		<<---
-
-	# Output
-	# 123456 "2005-05-31 22:29 henry@bigfoot.de"
+	if [ -n "$line_count" ]
+	then
+	    let lineno++
+	    echo "$(( 100*$lineno/line_count ))"
+	else
+	    echo -n "." 1>&2
+	fi
 
 	short_hash=`echo $hash | cut -c 1-$HASH_TRIM`
 
@@ -327,7 +355,7 @@ fill_date_key()
 	else
 	    echo "$short_hash \"$dat$bra $aut$log\"" >> $out_file
 	fi
-    done
+    done | dialog --gauge "$line_count certs reading" 6 60
     rm $TEMPFILE.c.tmp
 }
 
@@ -368,15 +396,15 @@ do_branch_sel()
     OLD_BRANCH=$BRANCH
 
     # Get branches from DB
-    if [ ! -f $TEMPFILE.dlg-branches -o $DB -nt $TEMPFILE.dlg-branches \
+    if [ ! -f $TEMPFILE.branches -o $DB -nt $TEMPFILE.branches \
 	-o "$CACHE" != "1" ]
     then
 	monotone --db=$DB list branches \
-	 | sed -n -r -e 's/^(.+)$/\1\t-/p' > $TEMPFILE.dlg-branches \
+	 | sed -n -r -e 's/^(.+)$/\1\t-/p' > $TEMPFILE.branches \
 	 || exit 200
     fi
     
-    if [ ! -s $TEMPFILE.dlg-branches ]
+    if [ ! -s $TEMPFILE.branches ]
     then
 	echo "Error: No branches found."
 	exit 1
@@ -385,7 +413,7 @@ do_branch_sel()
     dialog --begin 1 2 \
 	--default-item "$OLD_BRANCH" \
 	--menu "Select branch" 0 0 0 \
-	`cat $TEMPFILE.dlg-branches` \
+	`cat $TEMPFILE.branches` \
 	2> $TEMPFILE.input
     BRANCH=`cat $TEMPFILE.input`
 
@@ -486,6 +514,7 @@ do_action_sel()
 			--menu "Select parent for $REVISION" 0 0 0 \
 			2> $TEMPFILE.input \
 			&& PARENT=`cat $TEMPFILE.input`
+		rm $TEMPFILE.certs3tmp
 	    else
 		# Single parent only
 		PARENT=`cat $TEMPFILE.parents`
@@ -601,7 +630,6 @@ do_revision_sel()
 	fi
 
 	# Reading revisions and fill with date
-	echo -n "Reading certs"
 	fill_date_key $TEMPFILE.topsort $TEMPFILE.certs3tmp
 
 	if [ "$TOPSORT" != "T" ]
@@ -650,7 +678,10 @@ do_revision_sel()
 # Menu for configuration
 do_config()
 {
-    while dialog --menu "Configuration" 0 0 0 \
+    local item
+
+    while dialog --default-item "$item" \
+	--menu "Configuration" 0 0 0 \
 	"V" "VISUAL [$VISUAL]" \
 	"Vd" "Set VISUAL default to vim -R" \
 	"P" "PAGER  [$PAGER]" \
@@ -667,13 +698,16 @@ do_config()
 	"R" "Return to main menu" \
 	2> $TEMPFILE.menu
     do
-	case `cat $TEMPFILE.menu` in
+	item=`cat $TEMPFILE.menu`
+	case $item in
 	  V)
 	    # Setup for VISUAL
-	    dialog --inputbox \
-	     "Config for file viewer\nused in sample \"vim -R changes.diff\"" \
-	     8 70 "$VISUAL" 2> $TEMPFILE.input \
-	     && VISUAL=`cat $TEMPFILE.input`
+	    if dialog --inputbox \
+		"Config for file viewer\nuse in sample: \"vim -R changes.diff\"" \
+		8 70 "$VISUAL" 2> $TEMPFILE.input
+	    then
+		VISUAL=`cat $TEMPFILE.input`
+	    fi
 	    ;;
 	  Vd)
 	    # set Visual default
@@ -681,10 +715,12 @@ do_config()
 	    ;;
 	  P)
 	    # Setup for PAGER
-	    dialog --inputbox \
-	     "Config for pipe pager\nused in sample \"monotone log | less\"" \
-	     8 70 "$PAGER" 2> $TEMPFILE.input \
-	     && PAGER=`cat $TEMPFILE.input`
+	    if dialog --inputbox \
+		"Config for pipe pager\nuse in sample: \"monotone log | less\"" \
+		8 70 "$PAGER" 2> $TEMPFILE.input
+	    then
+		PAGER=`cat $TEMPFILE.input`
+	    fi
 	    ;;
 	  Pd)
 	    # set Pager default
@@ -692,65 +728,63 @@ do_config()
 	    ;;
 	  S)
 	    # change T=Topsort revisions, D=Date sort (reverse topsort)
-	    dialog --radiolist "Sort revisions by" 0 0 0 \
-	      "T" "Topsort, oldest top (from Monotone)" \
-	        `test "$TOPSORT" = "T" && echo "on" || echo "off"` \
-	      "D" "Date/Time (reverse topsort)" \
-	        `test "$TOPSORT" = "D" && echo "on" || echo "off"` \
-	      2> $TEMPFILE.input \
-	      && TOPSORT=`cat $TEMPFILE.input`
+	    if dialog --default-item "$TOPSORT" \
+		--menu "Sort revisions by" 0 0 0 \
+		"T" "Topsort, oldest top (from Monotone)" \
+		"D" "Date/Time (reverse topsort)" \
+		2> $TEMPFILE.input
+	    then
+		TOPSORT=`cat $TEMPFILE.input`
+	    fi
 	    ;;
 	  T)
 	    # change date/time format
-	    dialog --radiolist "Format for date" 0 0 0 \
-	      "F" "2005-12-31T23:59:59 -- Full date and time" \
-		`test "$FORMAT_DATE" = "F" && echo "on" || echo "off"` \
-	      "L" "2005-12-31 23:59    -- Long date and time" \
-		`test "$FORMAT_DATE" = "L" && echo "on" || echo "off"` \
-	      "D" "2005-21-31          -- Date only" \
-		`test "$FORMAT_DATE" = "D" && echo "on" || echo "off"` \
-	      "S" "12-31 23:59:59      -- Short date and time" \
-		`test "$FORMAT_DATE" = "S" && echo "on" || echo "off"` \
-	      "T" "23:59:59            -- Time only" \
-		`test "$FORMAT_DATE" = "T" && echo "on" || echo "off"` \
-	      "N" "no date and no time" \
-		`test "$FORMAT_DATE" = "N" && echo "on" || echo "off"` \
-	      2> $TEMPFILE.input \
-	      && FORMAT_DATE=`cat $TEMPFILE.input`
+	    if dialog --default-item "$FORMAT_DATE" \
+		--menu "Format for date and time" 0 0 0 \
+		"F" "2005-12-31T23:59:59 -- Full date and time" \
+		"L" "2005-12-31 23:59    -- Long date and time" \
+		"D" "2005-21-31          -- Date only" \
+		"S" "12-31 23:59:59      -- Short date and time" \
+		"T" "23:59:59            -- Time only" \
+		"N" "no date and no time" \
+		2> $TEMPFILE.input
+	    then
+		FORMAT_DATE=`cat $TEMPFILE.input`
+	    fi
 	    ;;
 	  B)
 	    # change branch format
-	    dialog --radiolist "Format for branch" 0 0 0 \
-	      "F" "Full author" \
-	        `test "$FORMAT_BRANCH" = "F" && echo "on" || echo "off"` \
-	      "S" "Short author, strip domain from email address" \
-	        `test "$FORMAT_BRANCH" = "S" && echo "on" || echo "off"` \
-	      "N" "no author" \
-	        `test "$FORMAT_BRANCH" = "N" && echo "on" || echo "off"` \
-	      2> $TEMPFILE.input \
-	      && FORMAT_BRANCH=`cat $TEMPFILE.input`
+	    if dialog --default-item "$FORMAT_BRANCH" \
+		--menu "Format for branch" 0 0 0 \
+		"F" "Full branch" \
+		"S" "Short branch, right side only" \
+		"N" "no branch" \
+		2> $TEMPFILE.input
+	    then
+		FORMAT_BRANCH=`cat $TEMPFILE.input`
+	    fi
 	    ;;
 	  A)
 	    # change author's format
-	    dialog --radiolist "Format for author" 0 0 0 \
-	      "F" "Full author" \
-	        `test "$FORMAT_AUTHOR" = "F" && echo "on" || echo "off"` \
-	      "S" "Short author, strip domain from email address" \
-	        `test "$FORMAT_AUTHOR" = "S" && echo "on" || echo "off"` \
-	      "N" "no author" \
-	        `test "$FORMAT_AUTHOR" = "N" && echo "on" || echo "off"` \
-	      2> $TEMPFILE.input \
-	      && FORMAT_AUTHOR=`cat $TEMPFILE.input`
+	    if dialog --default-item "$FORMAT_AUTHOR" \
+		--menu "Format for author" 0 0 0 \
+		"F" "Full author" \
+		"S" "Short author, strip domain from email address" \
+		"N" "no author" \
+		2> $TEMPFILE.input
+	    then
+		FORMAT_AUTHOR=`cat $TEMPFILE.input`
+	    fi
 	    ;;
 	  Ac)
 	    # Author coloring
-	    dialog --radiolist "Color author in selecetion" 0 0 0 \
-	      "yes" "author is color" \
-	        `test -n "$FORMAT_COLOR" && echo "on" || echo "off"` \
-	      "no" "author has no special color" \
-	        `test -z "$FORMAT_COLOR" && echo "on" || echo "off"` \
-	      2> $TEMPFILE.input \
-	      && {
+	    if dialog --default-item \
+		"`test -n \"$FORMAT_COLOR\" && echo \"yes\" || echo \"no\"`" \
+		--menu "Color author in selecetion" 0 0 0 \
+		"yes" "author is color" \
+		"no" "author has no special color" \
+		2> $TEMPFILE.input
+	    then
 		if [ "`cat $TEMPFILE.input`" = "yes" ]
 		then
 		    dialog --colors \
@@ -779,24 +813,23 @@ do_config()
 		else
 		    FORMAT_COLOR=""
 		fi
-	      }
+	    fi
 	    ;;
 	  L)
 	    # Changelog format
-	    dialog --radiolist "Format for ChangeLog in selcetion" 0 0 0 \
-	      "F" "Full changelog line" \
-	        `test "$FORMAT_LOG" = "F" && echo "on" || echo "off"` \
-	      "S" "Short changelog" \
-	        `test "$FORMAT_LOG" = "S" && echo "on" || echo "off"` \
-	      "N" "no changelog in selection" \
-	        `test "$FORMAT_LOG" = "N" && echo "on" || echo "off"` \
-	      2> $TEMPFILE.input \
-	      && FORMAT_LOG=`cat $TEMPFILE.input`
+	    dialog \
+		--default-item "$FORMAT_LOG" \
+		--menu "Format for ChangeLog in selection" 0 0 0 \
+		"F" "Full changelog line" \
+		"S" "Short changelog" \
+		"N" "no changelog in selection" \
+		2> $TEMPFILE.input \
+		&& FORMAT_LOG=`cat $TEMPFILE.input`
 	    ;;
 	  C)
 	    # Change CERTS_MAX
 	    dialog --inputbox \
-	      "Set maximum lines for revision selction menu\n(default: 0, disabled)" \
+	      "Set maximum lines for revision selction menu\n(0=disabled)" \
 	      9 70 "$CERTS_MAX" 2> $TEMPFILE.input \
 	      && CERTS_MAX=`cat $TEMPFILE.input`
 	    ;;
@@ -848,7 +881,8 @@ fi
 mkdir -p $TEMPDIR
 
 while dialog \
-	--backtitle "h:$HEAD b:$BRANCH f:$DB" \
+	--cancel-label "Exit" \
+	--backtitle "$DB" \
 	--menu "Main - mtbrowse v$VERSION" 0 0 0 \
 	"S" "Select revision" \
 	"I" "Input revision" \
@@ -891,7 +925,7 @@ do
 	;;
       B)
 	# Branch config
-	rm -f $TEMPFILE.dlg-branches
+	rm -f $TEMPFILE.branches
 	do_branch_sel
 	;;
       H)
