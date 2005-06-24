@@ -69,7 +69,7 @@ pid_t process_spawn(const char * const argv[])
                 std::ostringstream cmdline_ss;
                 for (const char *const *i = argv; *i; ++i)
                 {
-                        if (i)
+                        if (i != argv)
                                 cmdline_ss << ", ";
                         cmdline_ss << "'" << *i << "'";
                 }

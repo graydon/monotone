@@ -1,5 +1,9 @@
 2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
 
+	* unix/process.cc (process_spawn): Format log output correctly.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
 	* unix/process.cc (existsonpath): Reindent.  Add logging, and use
 	'command -v' instead of 'which' (as per Matt Johnston's discovery
 	that it is more portable).
