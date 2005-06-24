@@ -137,8 +137,6 @@ check_sane_history(revision_id const & child_id,
   std::set<revision_id> frontier;
   frontier.insert(child_id);
     
-  // FIXME: if we don't check the LCA already, check it.
-
   while (depth-- > 0)
     {
       std::set<revision_id> next_frontier;

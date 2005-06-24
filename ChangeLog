@@ -1,3 +1,11 @@
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (get_preferred_merge2_command)
+	(get_preferred_merge3_command): Move meld to the bottom of the
+	default merge tool search order.  Also, use xemacs if it appears
+	in $EDITOR, otherwise use emacs.
+	* revision.cc (check_sane_history): Remove stale comment.
+
 2005-06-24  Matt Johnston  <matt@ucc.asn.au>
 
 	* transforms.{cc,hh}: combine gzip and base64 in one
