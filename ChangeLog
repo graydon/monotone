@@ -1,5 +1,9 @@
 2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
 
+	* unix/process.cc: Remove tabs.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
 	* std_hooks.lua (get_preferred_merge2_command)
 	(get_preferred_merge3_command): Move meld to the bottom of the
 	default merge tool search order.  Also, use xemacs if it appears
