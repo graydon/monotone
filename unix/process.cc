@@ -16,17 +16,30 @@
 
 int existsonpath(const char *exe)
 {
-        const char * const args[3] = {"which", exe, NULL};
-        int pid;
-        int res;
-        pid = process_spawn(args);
-        if (pid==-1)
-                return -1;
-        if (process_wait(pid, &res))
-                return -1;
-        if (res==0)
-                return 0;
-        return -1;
+  L(F("checking for program '%s'\n") % exe);
+  // this is horribly ugly, but at least it is rather portable
+  std::string cmd_str = (F("command -v '%s' >/dev/null 2>&1") % exe).str();
+  const char * const args[] = {"sh", "-c", cmd_str.c_str(), NULL};
+  int pid;
+  int res;
+  pid = process_spawn(args);
+  if (pid==-1)
+    {
+      L(F("error in process_spawn\n"));
+      return -1;
+    }
+  if (process_wait(pid, &res))
+    {
+      L(F("error in process_wait\n"));
+      return -1;
+    }
+  if (res==0)
+    {
+      L(F("successful return; %s exists\n") % exe);
+      return 0;
+    }
+  L(F("failure; %s does not exist\n") % exe);
+  return -1;
 }
 
 bool is_executable(const char *path)
@@ -70,7 +83,7 @@ pid_t process_spawn(const char * const argv[])
                         return -1;
                 case 0: /* Child */
                         execvp(argv[0], (char * const *)argv);
-                        return -1;
+                        raise(SIGKILL);
                 default: /* Parent */
                         return pid;
         }
