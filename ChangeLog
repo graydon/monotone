@@ -1,3 +1,10 @@
+2005-06-24  Matt Johnston  <matt@ucc.asn.au>
+
+	* transforms.{cc,hh}: combine gzip and base64 in one
+	pipe for pack()/unpack() to save memory
+	* vocab.hh: add swap() to encodings/atomics
+	* file_io.cc: use swap() to avoid copying
+
 2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
 
 	* commands.cc (do_diff): Use calculate_arbitrary_change_set,

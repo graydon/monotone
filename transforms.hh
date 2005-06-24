@@ -77,20 +77,14 @@ void decode_gzip(gzip<T> const & in, T & out)
 // both at once (this is relatively common)
 
 template <typename T>
-void pack(T const & in, base64< gzip<T> > & out)
-{
-  gzip<T> tmp;
-  encode_gzip(in, tmp);
-  encode_base64(tmp, out);
-}
+void pack(T const & in, base64< gzip<T> > & out);
+extern template void pack<data>(data const &, base64< gzip<data> > &);
+extern template void pack<delta>(delta const &, base64< gzip<delta> > &);
 
 template <typename T>
-void unpack(base64< gzip<T> > const & in, T & out)
-{
-  gzip<T> tmp;
-  decode_base64(in, tmp);
-  decode_gzip(tmp, out);
-}
+void unpack(base64< gzip<T> > const & in, T & out);
+extern template void unpack<data>(base64< gzip<data> > const &, data &);
+extern template void unpack<delta>(base64< gzip<delta> > const &, delta &);
 
 
 // diffing and patching
