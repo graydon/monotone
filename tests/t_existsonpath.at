@@ -1,0 +1,22 @@
+AT_SETUP([lua function existsonpath])
+MONOTONE_SETUP
+
+# Need a way to break into the lua interpreter; our strategy is to
+# redefine the use_inodeprints function to run our code, and then
+# create a new working copy.
+
+AT_DATA(test.lua, [function use_inodeprints()
+  if (existsonpath("ls") == 0) then
+    io.write("asdfghjkl\n")
+  end
+  if (existsonpath("weaohriosfaoisd") ~= 0) then
+    io.write("qwertyuiop\n")
+  end
+  return false
+end
+])
+AT_CHECK(MONOTONE setup --rcfile=test.lua subdir, [], [stdout], [ignore])
+AT_CHECK(grep -q asdfghjkl stdout, [])
+AT_CHECK(grep -q qwertyuiop stdout, [])
+
+AT_CLEANUP
