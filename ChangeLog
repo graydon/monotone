@@ -1,3 +1,7 @@
+2005-06-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Log correct locale set for LC_MESSAGES.
+
 2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
 
 	* unix/process.cc: Remove tabs.
