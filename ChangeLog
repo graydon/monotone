@@ -1,5 +1,9 @@
 2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
 
+	* tests/t_db_kill_rev_locally.at: Clean up style.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
 	* unix/process.cc (process_spawn): Format log output correctly.
 
 2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
