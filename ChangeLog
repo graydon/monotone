@@ -1,3 +1,7 @@
+2005-06-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Ethan Blanton <elb@elitists.net>.
+
 2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netcmd.hh (netcmd::read, netcmd::write): Don't have defaults for
