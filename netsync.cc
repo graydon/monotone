@@ -132,13 +132,12 @@
 //
 // ---- end pre-v5 packet format ----
 //
-// decoding involves simply buffering until a sufficient number of
-// bytes are received, then advancing the buffer pointer. any time an
-// integrity check (adler32 for pre-v5, HMAC for post-v5) fails, the
-// protocol is assumed to have lost synchronization, and the
-// connection is dropped. the parties are free to drop the tcp stream
-// at any point, if too much data is received or too much idle time
-// passes; no commitments or transactions are made.
+// decoding involves simply buffering until a sufficient number of bytes are
+// received, then advancing the buffer pointer. any time an integrity check
+// (the HMAC) fails, the protocol is assumed to have lost synchronization, and
+// the connection is dropped. the parties are free to drop the tcp stream at
+// any point, if too much data is received or too much idle time passes; no
+// commitments or transactions are made.
 //
 // one special command, "bye", is used to shut down a connection
 // gracefully.  once each side has received all the data they want, they
