@@ -1,3 +1,9 @@
+2005-06-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_automate_stdio.at, tests/t_cvsimport_drepper.at,
+	tests/t_selector_later_earlier.at: Further canonicalisation of
+	monotone output to resolve test failures on Win32.
+
 2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_db_kill_rev_locally.at: Clean up style.
