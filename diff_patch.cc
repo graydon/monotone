@@ -307,7 +307,7 @@ void merge_extents(vector<extent> const & a_b_map,
         }
 
       // mutual or single-edge deletes
-      else if ((i->type == deleted && j->len == deleted)
+      else if ((i->type == deleted && j->type == deleted)
                || (i->type == deleted && j->type == preserved)
                || (i->type == preserved && j->type == deleted))
         { 

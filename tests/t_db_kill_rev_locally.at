@@ -4,21 +4,25 @@ MONOTONE_SETUP
 # This tests the db kill_rev_locally command
 
 # Prepare a db with two revisions
-AT_CHECK(echo "test">tmp, [], ignore, ignore)
-AT_CHECK(MONOTONE add tmp, [], ignore, ignore)
-AT_CHECK(MONOTONE --branch="test" --message="logtext" commit, [], ignore, stderr)
-ANCESTOR=`cat stderr|awk '/committed revision/ {print $4}'`
-AT_CHECK(echo "test2">>tmp, [], ignore, ignore)
-AT_CHECK(MONOTONE --message="logtext" commit, [], ignore, stderr)
-CHILD=`cat stderr|awk '/committed revision/ {print $4}'`
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+ANCESTOR=`BASE_REVISION`
+
+SET_FILE(testfile, [stuff stuff
+])
+COMMIT(testbranch)
+CHILD=`BASE_REVISION`
 
 # trying to kill the ancestor. This *is supposed to fail*
-AT_CHECK(MONOTONE db kill_rev_locally $ANCESTOR, [1], ignore, ignore)
-AT_CHECK(MONOTONE db check, [], ignore, ignore)
+AT_CHECK(MONOTONE db kill_rev_locally $ANCESTOR, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE cat revision $ANCESTOR, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db check, [], [ignore], [ignore])
 
 # killing children is ok, though :)
-AT_CHECK(MONOTONE db kill_rev_locally $CHILD, [], ignore, ignore)
+AT_CHECK(MONOTONE cat revision $CHILD, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db kill_rev_locally $CHILD, [], [ignore], [ignore])
+AT_CHECK(MONOTONE cat revision $CHILD, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE db check, [], ignore, ignore)
 
 AT_CLEANUP
-(END)

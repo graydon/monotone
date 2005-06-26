@@ -69,7 +69,7 @@ building and installation process for monotone
   standard include path, or you can pass additional configuration
   options to your monotone configure build, such as:
 
-    ./configure CPPFLAGS="-Iboost_1_31_2" LDFLAGS="-Lboost_1_31_0/libs"
+    ./configure CPPFLAGS="-Iboost_1_31_0" LDFLAGS="-Lboost_1_31_0/libs"
 
   monotone does not use all of boost -- for instance, people often
   have trouble building boost.python, which we do not use.  you don't

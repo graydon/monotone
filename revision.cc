@@ -137,8 +137,6 @@ check_sane_history(revision_id const & child_id,
   std::set<revision_id> frontier;
   frontier.insert(child_id);
     
-  // FIXME: if we don't check the LCA already, check it.
-
   while (depth-- > 0)
     {
       std::set<revision_id> next_frontier;
@@ -554,6 +552,12 @@ find_least_common_ancestor(revision_id const & left,
   interner<ctx> intern;
   std::map< ctx, shared_bitmap >
     parents, ancestors;
+
+  if (left == right)
+    {
+      anc = left;
+      return true;
+    }
 
   ctx ln = intern.intern(left.inner()());
   ctx rn = intern.intern(right.inner()());
