@@ -28,8 +28,10 @@ AT_DATA(output, [file contents
 ])
 
 AT_CHECK(MONOTONE automate inventory, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout output)
 AT_CHECK(echo "l9:inventorye"|MONOTONE automate stdio, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(chmod u+x get_stdio.pl)
 CHECK_SAME_STDOUT(./get_stdio.pl stdout 0, cat output)
 
