@@ -1,3 +1,17 @@
+2005-06-25  Brian Campbell  <brian.p.campbell@dartmouth.edu>
+
+	* commands.cc (CMD(db)): Added db kill_branch_locally command. 
+	* database.cc, database.hh (delete_branch_named): New function to
+	delete all branch certs with a given branch name.
+	* monotone.texi (Database): Added documentation for db
+	kill_branch_locally.
+	* tests/t_db_kill_branch_locally.at: New test for db
+	kill_branch_locally.
+	* testsuite.at: Add the test. 
+	* AUTHORS: Add myself.
+	* ChangeLog: Change my email address on an old contribution to 
+	match my pubkey. 
+
 2005-06-15  Richard Levitte  <richard@levitte.org>
 
 	* netsync.cc (struct session): Add a pattern regex cache.
@@ -919,7 +933,7 @@
 
 	* work.cc: Use attr_file_name rather than hardcoded strings.
 
-2005-05-04  Brian Campbell  <ubergeek@dartmouth.edu>
+2005-05-04  Brian Campbell  <brian.p.campbell@dartmouth.edu>
 
 	* contrib/monotone.el (monotone-vc-register): Fix arguments to
 	monotone-cmd-buf, to make work.
