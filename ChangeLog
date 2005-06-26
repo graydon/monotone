@@ -1,5 +1,10 @@
 2005-06-26  Matt Johnston  <matt@ucc.asn.au>
 
+	* transforms.hh: remove extraneous #ifdef
+	* hmac.cc, hmac.hh: actually add them
+
+2005-06-26  Matt Johnston  <matt@ucc.asn.au>
+
 	* netcmd.cc (netcmd::read, netcmd::write): change to using a HMACs 
 	chained by including the previous HMAC in the input data, rather
 	than altering the key each time.

@@ -78,7 +78,6 @@ template <typename T>
 void encode_gzip(std::string const & in, gzip<T> & out)
 { out = xform<CryptoPP::Gzip>(in); }
 
-#endif
 // both at once (this is relatively common)
 
 template <typename T>
