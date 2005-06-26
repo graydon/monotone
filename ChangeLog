@@ -1,5 +1,12 @@
 2005-06-26  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* app_state.cc (app_state::app_state()): Initialise no_merges to
+	false so that 'log' will show merges by default (the recently
+	added --no-merges option provides a means to disable the merge
+	entries).
+
+2005-06-26  Matthew Gregan  <kinetik@orcon.net.
+
 	* tests/t_automate_stdio.at, tests/t_cvsimport_drepper.at,
 	tests/t_selector_later_earlier.at: Further canonicalisation of
 	monotone output to resolve test failures on Win32.
