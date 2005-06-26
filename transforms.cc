@@ -157,9 +157,42 @@ uppercase(string const & in)
   return n;
 }
 
+template <typename T>
+void pack(T const & in, base64< gzip<T> > & out)
+{
+  string tmp;
+  tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
+
+  CryptoPP::StringSource 
+    str(in(), true, 
+        new CryptoPP::Gzip(
+          new CryptoPP::Base64Encoder(
+            new CryptoPP::StringSink(tmp))));
+  out.swap(tmp);
+}
+
+template <typename T>
+void unpack(base64< gzip<T> > const & in, T & out)
+{
+  string tmp;
+  tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
+
+  CryptoPP::StringSource 
+    str(in(), true, 
+        new CryptoPP::Base64Decoder(
+          new CryptoPP::Gunzip(
+            new CryptoPP::StringSink(tmp))));
+
+  out.swap(tmp);
+}
+
+// specialise them
+template void pack<data>(data const &, base64< gzip<data> > &);
+template void pack<delta>(delta const &, base64< gzip<delta> > &);
+template void unpack<data>(base64< gzip<data> > const &, data &);
+template void unpack<delta>(base64< gzip<delta> > const &, delta &);
 
 // diffing and patching
-
 
 void 
 diff(data const & olddata,

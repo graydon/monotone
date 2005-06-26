@@ -64,6 +64,57 @@
 	lua excerpts from hook reference.
 	* Makefile.am : make monotone.pdf/eps depend on monotone.info
 	
+2005-06-24  Matt Johnston  <matt@ucc.asn.au>
+
+	* transforms.{cc,hh}: combine gzip and base64 in one
+	pipe for pack()/unpack() to save memory
+	* vocab.hh: add swap() to encodings/atomics
+	* file_io.cc: use swap() to avoid copying
+
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (do_diff): Use calculate_arbitrary_change_set,
+	instead of reimplementing it.
+
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (find_least_common_ancestor): Handle left == right
+	case.
+	* tests/t_diff_currev.at: Un-XFAIL.
+	
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (rebuild_merkle_trees): Fix FIXME comments to match
+	reality.
+	* tests/t_netsync_diffbranch.at: No longer a bug, remove
+	priority.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Hook Reference): Oops, missed a @ref.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Default monotonerc): Rename section to...
+	(Default hooks): ...this, to emphasize is still read even when a
+	monotonerc exists.
+
+2005-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: There's no reason for monotone.pdf or .dvi to
+	depend on monotone.info, since they are built from the .texi
+	files.  Also, make the monotone.html and html targets depend
+	on version.texi and std_hooks.lua as well.
+
+2005-06-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* INSTALL: fix typo, should be -Iboost_1_31_0 not -Iboost_1_31_2
+
+2005-06-18  Riccardo Ghetta  <birrachiara@tin.it>
+	* monotone.texi: include std_hooks.lua as an appendix and remove long
+	lua excerpts from hook reference.
+	* Makefile.am : make monotone.pdf/eps depend on monotone.info
+	
 2005-06-17  Matt Johnston  <matt@ucc.asn.au>
 
 	* database.cc (database::execute()): truncate long query log messages

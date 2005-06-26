@@ -2659,35 +2659,7 @@ void do_diff(const string & name,
       N(find_least_common_ancestor(src_id, dst_id, anc_id, app),
         F("no common ancestor for %s and %s") % src_id % dst_id);
 
-      if (src_id == anc_id)
-        {
-          calculate_composite_change_set(src_id, dst_id, app, composite);
-          L(F("calculated diff via direct analysis\n"));
-        }
-      else if (!(src_id == anc_id) && dst_id == anc_id)
-        {
-          change_set tmp;
-          calculate_composite_change_set(dst_id, src_id, app, tmp);
-          invert_change_set(tmp, m_new, composite);
-          L(F("calculated diff via inverted direct analysis\n"));
-        }
-      else
-        {
-          change_set anc_to_src, src_to_anc, anc_to_dst;
-          manifest_id anc_m_id;
-          manifest_map m_anc;
-
-          I(!(src_id == anc_id || dst_id == anc_id));
-
-          app.db.get_revision_manifest(anc_id, anc_m_id);
-          app.db.get_manifest(anc_m_id, m_anc);
-
-          calculate_composite_change_set(anc_id, src_id, app, anc_to_src);
-          invert_change_set(anc_to_src, m_anc, src_to_anc);
-          calculate_composite_change_set(anc_id, dst_id, app, anc_to_dst);
-          concatenate_change_sets(src_to_anc, anc_to_dst, composite);
-          L(F("calculated diff via common ancestor %s\n") % anc_id);
-        }
+      calculate_arbitrary_change_set(src_id, dst_id, app, composite);
 
       if (!new_is_archived)
         {

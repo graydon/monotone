@@ -555,6 +555,12 @@ find_least_common_ancestor(revision_id const & left,
   std::map< ctx, shared_bitmap >
     parents, ancestors;
 
+  if (left == right)
+    {
+      anc = left;
+      return true;
+    }
+
   ctx ln = intern.intern(left.inner()());
   ctx rn = intern.intern(right.inner()());
 
