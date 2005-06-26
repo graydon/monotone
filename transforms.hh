@@ -73,7 +73,12 @@ template <typename T>
 void decode_gzip(gzip<T> const & in, T & out)
 { out = xform<CryptoPP::Gunzip>(in()); }
 
+// string variant for netsync
+template <typename T>
+void encode_gzip(std::string const & in, gzip<T> & out)
+{ out = xform<CryptoPP::Gzip>(in); }
 
+#endif
 // both at once (this is relatively common)
 
 template <typename T>

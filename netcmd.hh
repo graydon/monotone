@@ -12,6 +12,7 @@
 #include "merkle_tree.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
+#include "hmac.hh"
 
 typedef enum 
   { 
@@ -63,10 +64,9 @@ public:
 
   // basic cmd i/o (including checksums)
   void write(std::string & out,
-             netsync_session_key const & key,
-             netsync_hmac_value & hmac_val) const;
+             chained_hmac & hmac) const;
   bool read(std::string & inbuf,
-            netsync_session_key const & key, netsync_hmac_value & hmac_val);
+            chained_hmac & hmac);
 
   // i/o functions for each type of command payload
   void read_error_cmd(std::string & errmsg) const;

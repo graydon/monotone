@@ -1,3 +1,15 @@
+2005-06-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* netcmd.cc (netcmd::read, netcmd::write): change to using a HMACs 
+	chained by including the previous HMAC in the input data, rather
+	than altering the key each time.
+	* netcmd.cc ({read,write}_{data,delta}_cmd): use encode_gzip/decode_gzip
+	  rather than raw xform.
+	* hmac.{cc,hh}: new chained_hmac abstraction
+	* Makefile.in: add them
+	* netsync.cc: each session keeps a chained_hmac for read/write
+	* transforms.hh: add a string variant for encode_gzip
+
 2005-06-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc: Tweak comment.

@@ -32,6 +32,7 @@
 #include "xdelta.hh"
 #include "epoch.hh"
 #include "platform.hh"
+#include "hmac.hh"
 
 #include "cryptopp/osrng.h"
 
@@ -271,8 +272,8 @@ session
   id remote_peer_key_hash;
   rsa_keypair_id remote_peer_key_name;
   netsync_session_key session_key;
-  netsync_hmac_value read_hmac;
-  netsync_hmac_value write_hmac;
+  chained_hmac read_hmac;
+  chained_hmac write_hmac;
   bool authenticated;
 
   time_t last_io_time;
@@ -320,6 +321,8 @@ session
 
   id mk_nonce();
   void mark_recent_io();
+
+  void set_session_key(string const & key);
 
   void setup_client_tickers();
 
@@ -629,6 +632,14 @@ session::mark_recent_io()
 }
 
 void
+session::set_session_key(string const & key)
+{
+  session_key = netsync_session_key(key);
+  read_hmac.set_key(session_key);
+  write_hmac.set_key(session_key);
+}
+
+void
 session::setup_client_tickers()
 {
   byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
@@ -777,7 +788,7 @@ void
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   if (!encountered_error)
-    cmd.write(outbuf, session_key, write_hmac);
+    cmd.write(outbuf, write_hmac);
   else
     L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
@@ -1422,7 +1433,7 @@ session::queue_anonymous_cmd(protocol_role role,
               nonce2(), hmac_key_encrypted);
   cmd.write_anonymous_cmd(role, pattern, hmac_key_encrypted);
   write_netcmd_and_try_flush(cmd);
-  session_key = netsync_session_key(nonce2());
+  set_session_key(nonce2());
 }
 
 void 
@@ -1440,7 +1451,7 @@ session::queue_auth_cmd(protocol_role role,
               nonce2(), hmac_key_encrypted);
   cmd.write_auth_cmd(role, pattern, client, nonce1, hmac_key_encrypted, signature);
   write_netcmd_and_try_flush(cmd);
-  session_key = netsync_session_key(nonce2());
+  set_session_key(nonce2());
 }
 
 void
@@ -2043,7 +2054,7 @@ session::respond_to_auth_cmd(rsa_oaep_sha_data hmac_key_encrypted)
   load_priv_key(app, app.signing_key, our_priv);
   string hmac_key;
   decrypt_rsa(app.lua, app.signing_key, our_priv, hmac_key_encrypted, hmac_key);
-  session_key = netsync_session_key(hmac_key);
+  set_session_key(hmac_key);
   queue_confirm_cmd();
 }
 
@@ -3182,7 +3193,7 @@ session::arm()
 {
   if (!armed)
     {
-      if (cmd.read(inbuf, session_key, read_hmac))
+      if (cmd.read(inbuf, read_hmac))
         {
 //          inbuf.erase(0, cmd.encoded_size());     
           armed = true;

@@ -7,10 +7,6 @@
 #include <vector>
 #include <utility>
 
-#include "cryptopp/gzip.h"
-#include "cryptopp/hmac.h"
-#include "cryptopp/sha.h"
-
 #include "adler32.hh"
 #include "constants.hh"
 #include "netcmd.hh"
@@ -18,6 +14,7 @@
 #include "numeric_vocab.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "hmac.hh"
 
 using namespace std;
 using namespace boost;
@@ -68,34 +65,19 @@ netcmd::operator==(netcmd const & other) const
 }
   
 void 
-netcmd::write(string & out, netsync_session_key const & key,
-              netsync_hmac_value & hmac_val) const
+netcmd::write(string & out, chained_hmac & hmac) const
 {
   size_t oldlen = out.size();
   out += static_cast<char>(version);
   out += static_cast<char>(cmd_code);
   insert_variable_length_string(payload, out);
 
-  I(key().size() == CryptoPP::SHA::DIGESTSIZE);
-  I(key().size() == hmac_val().size());
-  byte keybuf[CryptoPP::SHA::DIGESTSIZE];
-  for (size_t i = 0; i < sizeof(keybuf); i++)
-    {
-      keybuf[i] = key()[i] ^ hmac_val()[i];
-    }
-  CryptoPP::HMAC<CryptoPP::SHA> hmac(keybuf, sizeof(keybuf));
-  char digest[CryptoPP::SHA::DIGESTSIZE];
-  hmac.CalculateDigest(reinterpret_cast<byte *>(digest),
-                       reinterpret_cast<const byte *>(out.data() + oldlen),
-                       out.size() - oldlen);
-  string digest_str(digest, sizeof(digest));
-  hmac_val = netsync_hmac_value(digest_str);
-  out.append(digest_str);
+  string digest = hmac.process(out, oldlen);
+  out.append(digest);
 }
 
 bool 
-netcmd::read(string & inbuf, netsync_session_key const & key,
-             netsync_hmac_value & hmac_val)
+netcmd::read(string & inbuf, chained_hmac & hmac)
 {
   size_t pos = 0;
 
@@ -142,15 +124,19 @@ netcmd::read(string & inbuf, netsync_session_key const & key,
     throw bad_decode(F("oversized payload of '%d' bytes") % payload_len);
   
   // there might not be enough data yet in the input buffer
-  if (inbuf.size() < pos + payload_len + CryptoPP::SHA::DIGESTSIZE)
+  if (inbuf.size() < pos + payload_len + constants::netsync_hmac_value_length_in_bytes)
     {
-      inbuf.reserve(pos + payload_len + CryptoPP::SHA::DIGESTSIZE + constants::bufsz);
+      inbuf.reserve(pos + payload_len + constants::netsync_hmac_value_length_in_bytes + constants::bufsz);
       return false;
     }
 
 //  out.payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
   // Do this ourselves, so we can swap the strings instead of copying.
   require_bytes(inbuf, pos, payload_len, "netcmd payload");
+
+  // grab it before the data gets munged
+  string digest = hmac.process(inbuf, 0, pos + payload_len);
+
   payload = inbuf.substr(pos + payload_len);
   inbuf.erase(pos + payload_len, inbuf.npos);
   inbuf.swap(payload);
@@ -158,26 +144,13 @@ netcmd::read(string & inbuf, netsync_session_key const & key,
   pos = 0;
 
   // they might have given us bogus data
-  string cmd_digest = extract_substring(inbuf, pos, CryptoPP::SHA::DIGESTSIZE,
+  string cmd_digest = extract_substring(inbuf, pos, 
+      constants::netsync_hmac_value_length_in_bytes,
                                         "netcmd HMAC");
   inbuf.erase(0, pos);
-  I(key().size() == CryptoPP::SHA::DIGESTSIZE);
-  I(key().size() == hmac_val().size());
-  byte keybuf[CryptoPP::SHA::DIGESTSIZE];
-  for (size_t i = 0; i < sizeof(keybuf); i++)
-    {
-      keybuf[i] = key()[i] ^ hmac_val()[i];
-    }
-  CryptoPP::HMAC<CryptoPP::SHA> hmac(keybuf, sizeof(keybuf));
-  char digest_buf[CryptoPP::SHA::DIGESTSIZE];
-  hmac.CalculateDigest(reinterpret_cast<byte *>(digest_buf),
-                       reinterpret_cast<const byte *>(payload.data()),
-                       payload.size());
-  string digest(digest_buf, sizeof(digest_buf));
   if (cmd_digest != digest)
     throw bad_decode(F("bad HMAC %s vs. %s") % encode_hexenc(cmd_digest)
                      % encode_hexenc(digest));
-  hmac_val = netsync_hmac_value(digest);
   payload.erase(0, payload_pos);
 
   return true;    
@@ -445,7 +418,13 @@ netcmd::read_data_cmd(netcmd_item_type & type,
   extract_variable_length_string(payload, dat, pos,
                                   "data netcmd, data payload");
   if (compressed_p == 1)
-    dat = xform<CryptoPP::Gunzip>(dat);
+  {
+    gzip<data> zdat;
+    data tdat;
+    zdat.swap(dat);
+    decode_gzip(zdat, tdat);
+    tdat.swap(dat);
+  }
   assert_end_of_buffer(payload, pos, "data netcmd payload");
 }
 
@@ -460,8 +439,10 @@ netcmd::write_data_cmd(netcmd_item_type type,
   payload += item();
   if (dat.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
+      gzip<data> zdat;
+      encode_gzip(dat, zdat);
       string tmp;
-      tmp = xform<CryptoPP::Gzip>(dat);
+      zdat.swap(tmp);
       payload += static_cast<char>(1); // compressed flag
       insert_variable_length_string(tmp, payload);
     }
@@ -493,8 +474,14 @@ netcmd::read_delta_cmd(netcmd_item_type & type,
   extract_variable_length_string(payload, tmp, pos,
                                  "delta netcmd, delta payload");
   if (compressed_p == 1)
-    tmp = xform<CryptoPP::Gunzip>(tmp);
-  del = delta(tmp);
+    {
+      gzip<delta> zdel(tmp);
+      decode_gzip(zdel, del);
+    }
+  else
+    {
+      del = tmp;
+    }
   assert_end_of_buffer(payload, pos, "delta netcmd payload");
 }
 
@@ -510,16 +497,19 @@ netcmd::write_delta_cmd(netcmd_item_type & type,
   payload += base();
   payload += ident();
 
-  string tmp = del();
+  string tmp;
 
   if (tmp.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
       payload += static_cast<char>(1); // compressed flag
-      tmp = xform<CryptoPP::Gzip>(tmp);
+      gzip<delta> zdel;
+      encode_gzip(del, zdel);
+      tmp = zdel();
     }
   else
     {
       payload += static_cast<char>(0); // compressed flag       
+      tmp = del();
     }
   I(tmp.size() <= constants::netcmd_payload_limit);
   insert_variable_length_string(tmp, payload);
