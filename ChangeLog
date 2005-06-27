@@ -1,3 +1,7 @@
+2005-06-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* INSTALL: Bump required version of Boost to 1.32.
+
 2005-06-26  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* app_state.cc (app_state::app_state()): Initialise no_merges to
