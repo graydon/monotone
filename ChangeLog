@@ -1,3 +1,11 @@
+2005-06-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* transforms.cc (glob_to_regex, globs_to_regex, regexes_to_regex):
+	Choose "regex" as standard spelling.  Clean up code, add code for
+	handling sets, start improving tests (don't currently pass).
+	* transforms.hh (glob_to_regex, globs_to_regex, regexes_to_regex):
+	Prototype.
+
 2005-06-25  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc: Tweak comment.
