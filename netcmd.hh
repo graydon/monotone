@@ -83,20 +83,24 @@ public:
                        id const & nonce);
 
   void read_anonymous_cmd(protocol_role & role,
-                          std::string & pattern,
+                          utf8 & include_pattern,
+                          utf8 & exclude_pattern,
                           rsa_oaep_sha_data & hmac_key_encrypted) const;
   void write_anonymous_cmd(protocol_role role, 
-                           std::string const & pattern,
+                           utf8 const & include_pattern,
+                           utf8 const & exclude_pattern,
                            rsa_oaep_sha_data const & hmac_key_encrypted);
 
   void read_auth_cmd(protocol_role & role, 
-                     std::string & pattern,
+                     utf8 & include_pattern,
+                     utf8 & exclude_pattern,
                      id & client, 
                      id & nonce1, 
                      rsa_oaep_sha_data & hmac_key_encrypted,
                      std::string & signature) const;
   void write_auth_cmd(protocol_role role, 
-                      std::string const & pattern, 
+                      utf8 const & include_pattern, 
+                      utf8 const & exclude_pattern, 
                       id const & client,
                       id const & nonce1, 
                       rsa_oaep_sha_data const & hmac_key_encrypted,

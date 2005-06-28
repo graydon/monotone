@@ -1,5 +1,11 @@
 2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netcmd.{cc,hh} (read_anonymous_cmd, write_anonymous_cmd)
+	(read_auth_cmd, write_auth_cmd): Take include_pattern and
+	exclude_pattern arguments.
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
 	* globish.{cc,hh}: New files.
 	* Makefile.am (MOST_SOURCES): Add them.
 	* transforms.{cc,hh}: Remove glob-related stuff.
