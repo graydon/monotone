@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <list>
+#include <deque>
 
 #include <time.h>
 
@@ -261,7 +262,12 @@ session
   Netxx::Stream str;  
 
   string inbuf; 
-  string outbuf;
+  // deque of pair<string data, size_t cur_pos>
+  deque< pair<string,size_t> > outbuf; 
+  // the total data stored in outbuf - this is
+  // used as a valve to stop too much data
+  // backing up
+  size_t outbuf_size;
 
   netcmd cmd;
   bool armed;
@@ -481,7 +487,7 @@ session::session(protocol_role role,
   fd(sock),
   str(sock, to),
   inbuf(""),
-  outbuf(""),
+  outbuf_size(0),
   armed(false),
   pattern(""),
   pattern_re(".*"),
@@ -788,7 +794,12 @@ void
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   if (!encountered_error)
-    cmd.write(outbuf, write_hmac);
+  {
+    string buf;
+    cmd.write(buf, write_hmac);
+    outbuf.push_back(make_pair(buf, 0));
+    outbuf_size += buf.size();
+  }
   else
     L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
@@ -1346,14 +1357,23 @@ bool
 session::write_some()
 {
   I(!outbuf.empty());    
-  Netxx::signed_size_type count = str.write(outbuf.data(), 
-                                            std::min(outbuf.size(),
+  size_t writelen = outbuf.front().first.size() - outbuf.front().second;
+  Netxx::signed_size_type count = str.write(outbuf.front().first.data() + outbuf.front().second, 
+                                            std::min(writelen,
                                             constants::bufsz));
   if (count > 0)
     {
-      outbuf.erase(0, count);
-      L(F("wrote %d bytes to fd %d (peer %s), %d remain in output buffer\n") 
-        % count % fd % peer_id % outbuf.size());
+      if ((size_t)count == writelen)
+        {
+          outbuf_size -= outbuf.front().first.size();
+          outbuf.pop_front();
+        }
+      else
+        {
+          outbuf.front().second += count;
+        }
+      L(F("wrote %d bytes to fd %d (peer %s)\n")
+        % count % fd % peer_id);
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
         (*byte_out_ticker) += count;
@@ -3193,9 +3213,11 @@ session::arm()
 {
   if (!armed)
     {
+      if (outbuf_size > constants::bufsz * 10)
+        return false; // don't pack the buffer unnecessarily
+
       if (cmd.read(inbuf, read_hmac))
         {
-//          inbuf.erase(0, cmd.encoded_size());     
           armed = true;
         }
     }

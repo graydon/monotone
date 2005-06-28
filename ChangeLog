@@ -1,3 +1,12 @@
+2005-06-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* constants.cc: increase db_version_cache_sz to 7 MB
+	* netsync.cc: use a deque<string> rather than a single
+	string buffer for outbuf.
+	* netsync.cc (arm): only queue data when there is
+	available space
+	* AUTHORS: added Eric Anderson
+
 2005-06-26  Matt Johnston  <matt@ucc.asn.au>
 
 	* transforms.hh: remove extraneous #ifdef

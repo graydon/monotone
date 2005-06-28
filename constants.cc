@@ -44,8 +44,11 @@ namespace constants
   // truncated.
   size_t const db_log_line_sz = 70;
 
-  // size in bytes of the database xdelta version reconstruction cache
-  size_t const db_version_cache_sz = 1 << 20;
+  // size in bytes of the database xdelta version reconstruction cache.
+  // the value of 7 MB was determined as the optimal point after timing
+  // various values with a pull of the monotone repository - it could
+  // be tweaked further.
+  size_t const db_version_cache_sz = 7 * (1 << 20);
 
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
