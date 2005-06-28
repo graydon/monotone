@@ -195,11 +195,4 @@ void externalize_var_domain(var_domain const & d, external & ext);
 // line-ending conversion
 void line_end_convert(std::string const & linesep, std::string const & src, std::string & dst);
 
-// glob/regex handling
-void glob_to_regex(std::string const & glob, std::string & regex);
-void globs_to_regex(std::set<std::string> const & globs, std::string & regex);
-void regexes_to_regex(std::set<std::string> const & regexes, std::string & regex);
-
-
-
 #endif // __TRANSFORMS_HH__

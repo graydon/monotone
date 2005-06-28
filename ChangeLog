@@ -1,3 +1,10 @@
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES): Add them.
+	* transforms.{cc,hh}: Remove glob-related stuff.
+	* unit_tests.{cc,hh}: Call globish unit tests.
+
 2005-06-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* transforms.cc (glob_to_regex, globs_to_regex, regexes_to_regex):

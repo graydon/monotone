@@ -837,169 +837,9 @@ line_end_convert(string const & linesep, string const & src, string & dst)
     dst += linesep_str;
 }
 
-// glob_to_regex converts a sh file glob to a regex.  The regex should
-// be usable by the Boost regex library.
-//
-// Pattern tranformation:
-//
-// - Any character except those described below are copied as they are.
-// - The backslash (\) escapes the following character.  The escaping
-//   backslash is copied to the regex along with the following character.
-// - * is transformed to .* in the regex.
-// - ? is transformed to . in the regex.
-// - { is transformed to ( in the regex, unless within [ and ].
-// - } is transformed to ) in the regex, unless within [ and ].
-// - , is transformed to | in the regex, if within { and } and not
-//    within [ and ].
-// - ^ is escaped unless it comes directly after an unescaped [.
-// - ! is transformed to ^ in the regex if it comes directly after an
-//   unescaped [.
-// - ] directly following an unescaped [ is escaped.
-void
-glob_to_regex(std::string const & glob, std::string & regex)
-{
-  int in_braces = 0;            // counter for levels if {}
-  bool in_brackets = false;     // flags if we're inside a [], which
-                                // has higher precedence than {}.
-                                // Also, [ is accepted inside [] unescaped.
-  bool this_was_opening_bracket = false;
-
-  regex.reserve(glob.size() * 2);
-
-  L(F("glob_to_regex: input = '%s'\n") % glob);
-
-  for (string::const_iterator i = glob.begin(); i != glob.end(); ++i)
-    {
-      char c = *i;
-      bool last_was_opening_bracket = this_was_opening_bracket;
-      this_was_opening_bracket = false;
-
-      // Special case ^ and ! at the beginning of a [] expression.
-      if (in_brackets && last_was_opening_bracket
-          && (c == '!' || c == '^'))
-        {
-          regex += '^';
-          if (++i == glob.end())
-            break;
-          c = *i;
-        }
-
-      if (c == '\\')
-        {
-          regex += c;
-          if (++i == glob.end())
-            break;
-          regex += *i;
-        }
-      else if (in_brackets)
-        {
-          switch(c)
-            {
-            case ']':
-              if (!last_was_opening_bracket)
-                {
-                  in_brackets = false;
-                  regex += c;
-                  break;
-                }
-              // Trickling through to the standard character conversion,
-              // because ] as the first character of a set is regarded as
-              // a normal character.
-            default:
-              if (!(isalnum(c) || c == '_'))
-                {
-                  regex += '\\';
-                }
-              regex += c;
-              break;
-            }
-        }
-      else
-        {
-          switch(c)
-            {
-            case '*':
-              regex += ".*";
-              break;
-            case '?':
-              regex += '.';
-              break;
-            case '{':
-              in_braces++;
-              regex += '(';
-              break;
-            case '}':
-              N(in_braces != 0,
-                F("trying to end a brace expression in a glob when none is started"));
-              regex += ')';
-              in_braces--;
-              break;
-            case '[':
-              in_brackets = true;
-              this_was_opening_bracket = true;
-              regex += c;
-              break;
-            case ',':
-              if (in_braces > 0)
-                {
-                  regex += '|';
-                  break;
-                }
-              // Trickling through to default: here, since a comma outside of
-              // brace notation is just a normal character.
-            default:
-              if (!(isalnum(c) || c == '_'))
-                {
-                  regex += '\\';
-                }
-              regex += c;
-              break;
-            }
-        }
-    }
-
-  N(!in_brackets,
-    F("run-away bracket expression in glob"));
-  N(in_braces == 0,
-    F("run-away brace expression in glob"));
-
-  L(F("glob_to_regex: output = '%s'\n") % regex);
-}
-
-void
-globs_to_regex(std::set<std::string> const & globs, std::string & regex)
-{
-  std::set<std::string> regexes;
-  for (std::set<std::string>::const_iterator i = globs.begin(); i != globs.end(); ++i)
-    {
-      std::string r;
-      glob_to_regex(*i, r);
-      regexes.insert(r);
-    }
-  regexes_to_regex(regexes, regex);
-}
-
-void
-regexes_to_regex(std::set<std::string> const & regexes, std::string & regex)
-{
-  I(regexes.size() > 0);
-  if (regexes.size() == 1)
-    {
-      regex = *regexes.begin();
-      return;
-    }
-  bool first = true;
-  for (std::set<std::string>::const_iterator i = regexes.begin(); i != regexes.end(); ++i)
-    {
-      if (!first)
-        regex += "|";
-      regex += "(" + *i + ")";
-    }
-}
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-#include <boost/regex.hpp>
 
 static void 
 enc_test()
@@ -1276,47 +1116,6 @@ static void encode_test()
   check_idna_encoding();
 }
 
-static void
-check_glob_to_regex(std::string const & glob, std::string const & regex)
-{
-  std::string translated_regex;
-  glob_to_regex(glob, translated_regex);
-  BOOST_CHECK(translated_regex == regex);
-}
-
-static void
-check_glob_match(std::string const & glob, std::string const & line,
-                 bool matchp)
-{
-  std::string regex;
-  glob_to_regex(glob, regex);
-  BOOST_CHECK(boost::regex_match(line, boost::regex(regex, boost::regex::extended)) == matchp);
-}
-
-static void glob_to_regex_test()
-{
-  // our converter is very conserative about metacharacters, and quotes all
-  // non-alphabetic characters
-  check_glob_to_regex("abc,v", "abc\\,v");
-  check_glob_to_regex("foo[12m,]", "foo[12m\\,]");
-  check_glob_to_regex("foo{bar,baz*}", "foo(bar|baz.*)");
-  // A full fledged, use all damn features test...
-  check_glob_to_regex("foo.{bar*,cookie?{haha,hehe[^\\123!,]}}[!]a^b]",
-                      "foo\\.(bar.*|cookie.(haha|hehe[^\\123\\!\\,]))[^\\]a\\^b]");
-
-  check_glob_match("foobar", "foobar", true);
-  check_glob_match("foobar", "foobaz", false);
-  check_glob_match("foo*", "foobar", true);
-  check_glob_match("foo{bar,baz}", "foobar", true);
-  check_glob_match("foo{bar,baz}", "foobaz", true);
-  check_glob_match("foo{bar,baz}", "bazbar", false);
-  check_glob_match("foo[123]", "foo1", true);
-  check_glob_match("foo[123]", "foo3", true);
-  check_glob_match("foo[123]", "foo5", false);
-  check_glob_match("foo[123]", "foo1a", false);
-  check_glob_match("foo,bar()", "foo,bar()", false);
-}
-
 void 
 add_transform_tests(test_suite * suite)
 {
@@ -1328,7 +1127,6 @@ add_transform_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&join_lines_test));
   suite->add(BOOST_TEST_CASE(&strip_ws_test));
   suite->add(BOOST_TEST_CASE(&encode_test));
-  suite->add(BOOST_TEST_CASE(&glob_to_regex_test));
 }
 
 #endif // BUILD_UNIT_TESTS
