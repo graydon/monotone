@@ -364,11 +364,13 @@ session
   void queue_hello_cmd(id const & server, 
                        id const & nonce);
   void queue_anonymous_cmd(protocol_role role, 
-                           string const & pattern, 
+                           utf8 const & include_pattern, 
+                           utf8 const & exclude_pattern, 
                            id const & nonce2,
                            base64<rsa_pub_key> server_key_encoded);
   void queue_auth_cmd(protocol_role role, 
-                      string const & pattern, 
+                      utf8 const & include_pattern, 
+                      utf8 const & exclude_pattern, 
                       id const & client, 
                       id const & nonce1, 
                       id const & nonce2, 
@@ -398,9 +400,11 @@ session
                          rsa_pub_key const & server_key,
                          id const & nonce);
   bool process_anonymous_cmd(protocol_role role, 
-                             string const & pattern);
+                             utf8 const & include_pattern,
+                             utf8 const & exclude_pattern);
   bool process_auth_cmd(protocol_role role, 
-                        string const & pattern, 
+                        utf8 const & include_pattern, 
+                        utf8 const & exclude_pattern, 
                         id const & client, 
                         id const & nonce1, 
                         string const & signature);
@@ -1412,7 +1416,8 @@ session::queue_hello_cmd(id const & server,
 
 void 
 session::queue_anonymous_cmd(protocol_role role, 
-                             string const & pattern, 
+                             utf8 const & include_pattern, 
+                             utf8 const & exclude_pattern, 
                              id const & nonce2,
                              base64<rsa_pub_key> server_key_encoded)
 {
@@ -1420,14 +1425,16 @@ session::queue_anonymous_cmd(protocol_role role,
   rsa_oaep_sha_data hmac_key_encrypted;
   encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
               nonce2(), hmac_key_encrypted);
-  cmd.write_anonymous_cmd(role, pattern, hmac_key_encrypted);
+  cmd.write_anonymous_cmd(role, include_pattern, exclude_pattern,
+                          hmac_key_encrypted);
   write_netcmd_and_try_flush(cmd);
   session_key = netsync_session_key(nonce2());
 }
 
 void 
 session::queue_auth_cmd(protocol_role role, 
-                        string const & pattern, 
+                        utf8 const & include_pattern, 
+                        utf8 const & exclude_pattern, 
                         id const & client, 
                         id const & nonce1, 
                         id const & nonce2, 
@@ -1438,7 +1445,8 @@ session::queue_auth_cmd(protocol_role role,
   rsa_oaep_sha_data hmac_key_encrypted;
   encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
               nonce2(), hmac_key_encrypted);
-  cmd.write_auth_cmd(role, pattern, client, nonce1, hmac_key_encrypted, signature);
+  cmd.write_auth_cmd(role, include_pattern, exclude_pattern, client,
+                     nonce1, hmac_key_encrypted, signature);
   write_netcmd_and_try_flush(cmd);
   session_key = netsync_session_key(nonce2());
 }
@@ -1810,7 +1818,8 @@ matches_one(string s, vector<boost::regex> r)
 
 bool 
 session::process_anonymous_cmd(protocol_role role, 
-                               string const & pattern)
+                               utf8 const & include_pattern,
+                               utf8 const & exclude_pattern)
 {
   //
   // internally netsync thinks in terms of sources and sinks. users like
@@ -1881,7 +1890,8 @@ session::process_anonymous_cmd(protocol_role role,
 
 bool
 session::process_auth_cmd(protocol_role role,
-                          string const & pattern,
+                          utf8 const & include_pattern,
+                          utf8 const & exclude_pattern,
                           id const & client,
                           id const & nonce1,
                           string const & signature)
@@ -3008,15 +3018,16 @@ session::dispatch_payload(netcmd const & cmd)
               "anonymous netcmd received in source or source/sink role");
       {
         protocol_role role;
-        string pattern;
+        utf8 include_pattern, exclude_pattern;
         rsa_oaep_sha_data hmac_key_encrypted;
-        cmd.read_anonymous_cmd(role, pattern, hmac_key_encrypted);
-        L(F("received 'anonymous' netcmd from client for pattern '%s' "
+        cmd.read_anonymous_cmd(role, include_pattern, exclude_pattern, hmac_key_encrypted);
+        L(F("received 'anonymous' netcmd from client for pattern '%s' excluding '%s' "
             "in %s mode\n")
-          %  pattern % (role == source_and_sink_role ? "source and sink" :
-                        (role == source_role ? "source " : "sink")));
+          % include_pattern % exclude_pattern
+          % (role == source_and_sink_role ? "source and sink" :
+             (role == source_role ? "source " : "sink")));
 
-        if (!process_anonymous_cmd(role, pattern))
+        if (!process_anonymous_cmd(role, include_pattern, exclude_pattern))
             return false;
         respond_to_auth_cmd(hmac_key_encrypted);
         return true;
@@ -3028,11 +3039,12 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == server_voice, "auth netcmd received in server voice");
       {
         protocol_role role;
-        string pattern, signature;
+        string signature;
+        utf8 include_pattern, exclude_pattern;
         id client, nonce1, nonce2;
         rsa_oaep_sha_data hmac_key_encrypted;
-        cmd.read_auth_cmd(role, pattern, client, nonce1,
-                          hmac_key_encrypted, signature);
+        cmd.read_auth_cmd(role, include_pattern, exclude_pattern, client,
+                          nonce1, hmac_key_encrypted, signature);
 
         hexenc<id> their_key_hash;
         encode_hexenc(client, their_key_hash);
@@ -3040,12 +3052,14 @@ session::dispatch_payload(netcmd const & cmd)
         encode_hexenc(nonce1, hnonce1);
 
         L(F("received 'auth(hmac)' netcmd from client '%s' for pattern '%s' "
-            "in %s mode with nonce1 '%s'\n")
-          % their_key_hash % pattern % (role == source_and_sink_role ? "source and sink" :
-                                        (role == source_role ? "source " : "sink"))
+            "exclude '%s' in %s mode with nonce1 '%s'\n")
+          % their_key_hash % include_pattern % exclude_pattern
+          % (role == source_and_sink_role ? "source and sink" :
+             (role == source_role ? "source " : "sink"))
           % hnonce1);
 
-        if (!process_auth_cmd(role, pattern, client, nonce1, signature))
+        if (!process_auth_cmd(role, include_pattern, exclude_pattern,
+                              client, nonce1, signature))
             return false;
         respond_to_auth_cmd(hmac_key_encrypted);
         return true;
