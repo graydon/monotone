@@ -77,18 +77,29 @@
 # Config with menu and def.item, instand radiolist and the test on/off thingy.
 # Don't remove some old files at exit.
 # Branch and head not in Main background title.
-
+#
 # 2005/6/24 Version 0.1.10 Henry@BigFoot.de
 # Remove TAB's from ChangeLog.
 # Some cat as stdin pipe.
 # Typofix topsort/toposort.
+#
+# 2005-06-26 Version 0.1.11 Henry@BigFoot.de
+# No double Date/Branch/Author with CR in selection list.
+# Short Author and no branche as default in list.
+# Set default revision for first selection to head.
+# "automate ancestors" without cut (have only one field).
+# Internal function for "automate ancestors" with depth limit. Speedup.
+#    real    user      sys
+# 19.925s  6.780s  13.030s  automate ancestors (net.venge.monotone)
+#  6.067s  2.920s   3.120s  automate parents as loop, depth 30
+#  4.226s  2.280s   1.910s  automate parents as loop, depth 20
+#  1.384s  0.680s   0.700s  automate parents as loop, depth 10
 
-# 
 # Known Bugs / ToDo-List:
 # * For Monotone Version >0.19  s/--depth/--last/, remove the fallback
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.10"
+VERSION="0.1.11"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -122,10 +133,10 @@ HASH_TRIM="10"
 FORMAT_DATE="L"
 
 # Format Branch Full,Short,None
-FORMAT_BRANCH="F"
+FORMAT_BRANCH="N"
 
 # Format author (strip domain from mail address)
-FORMAT_AUTHOR="F"
+FORMAT_AUTHOR="S"
 
 # Changelog format
 FORMAT_LOG="F"
@@ -138,6 +149,9 @@ FORMAT_COLOR="\\Z7\\Zb"
 # Autodetect this and fallback for a while.
 # TODO: Remove in future
 DEPTH_LAST="--last"
+
+# automate ancestors (I)nteral function, (M)onotone
+ANCESTORS="I"
 
 # read saved settings
 if [ -f $CONFIGFILE ]
@@ -293,27 +307,27 @@ fill_date_key()
 	    F) # 2005-12-31T23:59:59
 		dat=`sed -n -r -e \
 		    '/^Name  : date/,+1s/Value : (.+)$/ \1/p' \
-		    < $TEMPFILE.c.tmp`
+		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
 		;;
 	    L) # 2005-12-31 23:59
 		dat=`sed -n -r -e \
 		    '/^Name  : date/,+1s/Value : (.{10})T(.{5}).+$/ \1 \2/p' \
-		    < $TEMPFILE.c.tmp`
+		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
 		;;
 	    D) # 2005-12-31
 		dat=`sed -n -r -e \
 		    '/^Name  : date/,+1s/Value : (.+)T.+$/ \1/p' \
-		    < $TEMPFILE.c.tmp`
+		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
 		;;
 	    S) # 12-31 23:59
 		dat=`sed -n -r -e \
 		    '/^Name  : date/,+1s/Value : .{4}-(.+)T(.{5}).+$/ \1 \2/p' \
-		    < $TEMPFILE.c.tmp`
+		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
 		;;
 	    T) # 23:59:59
 		dat=`sed -n -r -e \
 		    '/^Name  : date/,+1s/Value : .{10}T(.+{8})$/ \1/p' \
-		    < $TEMPFILE.c.tmp`
+		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
 		;;
 	esac
 
@@ -336,12 +350,12 @@ fill_date_key()
 	    F) # full
 		aut=`sed -n -r -e \
 		    '/^Name  : author/,+1s/Value : (.+)$/\1/p' \
-		    < $TEMPFILE.c.tmp`
+		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
 		;;
 	    S) # short
 		aut=`sed -n -r -e \
 		    '/^Name  : author/,+1s/Value : (.{1,10}).*@.+$/\1/p' \
-		    < $TEMPFILE.c.tmp`
+		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
 		;;
 	esac
 
@@ -606,6 +620,42 @@ do_action_sel()
     done
 }
 
+# Get parents recursive.
+# Same as automate ancestors, but limit the depth
+# Function called recursive!
+do_automate_ancestors_depth()
+{
+	locale depth head rev
+
+	depth=$1
+	head=$2
+
+	# Empty parm?
+	if [ -z "$depth" -o -z "$depth" ]
+	then
+		return 0
+	fi
+
+	# Limit by depth?
+	if [ "$depth" -gt $CERTS_MAX -o "$depth" -gt 200 ]
+	then
+		return 0
+	fi
+
+	let depth++
+	monotone --db=$DB automate parents $head |\
+	while read rev
+	do
+	    if ! grep -q -l -e "$rev" $TEMPFILE.ancestors
+	    then
+		echo "$rev" >> $TEMPFILE.ancestors
+		do_automate_ancestors_depth $depth $rev || return $?
+	    fi
+	done
+	let depth--
+
+	return 0
+}
 
 # Select a revision
 do_revision_sel()
@@ -623,8 +673,14 @@ do_revision_sel()
     then
 	echo "Reading ancestors ($HEAD)"
 	echo "$HEAD" > $TEMPFILE.ancestors
-	monotone --db=$DB automate ancestors $HEAD | cut -c 1-40 \
-	  >> $TEMPFILE.ancestors || exit 200
+
+	if [ "$ANCESTORS" = "I" -a "$CERTS_MAX" -gt 0 ]
+	then
+	    do_automate_ancestors_depth 1 $HEAD || exit 200
+	else
+	    monotone --db=$DB automate ancestors $HEAD \
+	      >> $TEMPFILE.ancestors || exit 200
+	fi
 
 	if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 ]
 	then
@@ -656,7 +712,13 @@ do_revision_sel()
 	fi
     fi
 
-    SHORT_REV=`echo $REVISION | cut -c 1-$HASH_TRIM`
+    # if first rev is empty, use head instand
+    if [ -z "$REVISION" ]
+    then
+	SHORT_REV=`echo $HEAD | cut -c 1-$HASH_TRIM`
+    else
+	SHORT_REV=`echo $REVISION | cut -c 1-$HASH_TRIM`
+    fi
 
     # Select revision
     while cat $TEMPFILE.certs.$BRANCH | \
@@ -668,7 +730,6 @@ do_revision_sel()
 	 --menu "Select revision for branch:$BRANCH" \
 	 0 0 0  2> $TEMPFILE.revision-select
     do
-
 	SHORT_REV=`cat $TEMPFILE.revision-select`
 
 	# Remove old marker, set new marker
@@ -706,6 +767,7 @@ do_config()
 	"A" "Author format [$FORMAT_AUTHOR]" \
 	"Ac" "Author Color format [$FORMAT_COLOR]" \
 	"L" "changeLog format [$FORMAT_LOG]" \
+	"D" "Depth limit for ancestors [$ANCESTORS]" \
 	"C" "Certs limit in Select-List [$CERTS_MAX]" \
 	"-" "-" \
 	"W" "Write configuration file" \
@@ -840,6 +902,17 @@ do_config()
 		2> $TEMPFILE.input \
 		&& FORMAT_LOG=`cat $TEMPFILE.input`
 	    ;;
+	  D)
+	    # automate ancestors (I)nteral function, (M)onotone
+	    if dialog --default-item "$ANCESTORS" \
+		--menu "Get ancestors by using" 0 0 0 \
+		"M" "Monotone \"automate ancestor\" (save mode)" \
+		"I" "Internal function with depth limit (faster)" \
+		2> $TEMPFILE.input
+	    then
+		ANCESTORS=`cat $TEMPFILE.input`
+	    fi
+	    ;;
 	  C)
 	    # Change CERTS_MAX
 	    dialog --inputbox \
@@ -867,6 +940,7 @@ FORMAT_BRANCH="$FORMAT_BRANCH"
 FORMAT_AUTHOR="$FORMAT_AUTHOR"
 FORMAT_LOG="$FORMAT_LOG"
 FORMAT_COLOR="$FORMAT_COLOR"
+ANCESTORS="$ANCESTORS"
 EOF
 		dialog --title " Info " --sleep 2 --infobox \
 		    "Configration wrote to\n$CONFIGFILE" 0 0
