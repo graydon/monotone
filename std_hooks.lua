@@ -81,6 +81,11 @@ function ignore_file(name)
    if (string.find(name, "%.orig$")) then return true end
    if (string.find(name, "%.rej$")) then return true end
    if (string.find(name, "%~$")) then return true end
+   -- editor temp files
+   -- vim creates .foo.swp files
+   if (string.find(name, "%.[^/]*%.swp$")) then return true end
+   -- emacs creates #foo# files
+   if (string.find(name, "%#[^/]*%#$")) then return true end
    -- autotools detritus:
    if (string.find(name, "^autom4te.cache/")) then return true end
    if (string.find(name, "/autom4te.cache/")) then return true end

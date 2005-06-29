@@ -1,3 +1,8 @@
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (ignore_file): Ignore vim swap files and emacs
+	temp files.
+
 2005-06-27  Nathaniel Smith  <njs@codesourcery.com>
 
 	* INSTALL: Bump required version of Boost to 1.32.
