@@ -49,11 +49,13 @@ CHECK_SAME_CANONICALISED_STDOUT(cat second first, RAW_MONOTONE automate select "
 AT_CHECK(RAW_MONOTONE automate select "e:2005-04-30", [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout a_s)
-AT_CHECK(test 3 -eq "`wc -l <a_s`")
+LINE_COUNT=`wc -l < a_s`
+AT_CHECK(test 3 -eq $LINE_COUNT)
 AT_CHECK(RAW_MONOTONE automate select "e:2006-07", [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout a_s)
-AT_CHECK(test 3 -eq "`wc -l <a_s`")
+LINE_COUNT=`wc -l < a_s`
+AT_CHECK(test 3 -eq $LINE_COUNT)
 
 # -------------------
 # check 'later' selector
@@ -63,40 +65,42 @@ AT_CHECK(test 3 -eq "`wc -l <a_s`")
 # commit times.  Giving a time equal to that of third commit thus
 # should not match anything
 AT_CHECK(RAW_MONOTONE automate select "l:2005-04-24T07:44:39", [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout nosel)
 AT_CHECK(test -f nosel -a ! -s nosel)
 AT_CHECK(RAW_MONOTONE automate select "l:2005-05", [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout nosel)
 AT_CHECK(test -f nosel -a ! -s nosel)
 
 # these sels should extract only the last commit
 # Note: the second sel is one sec before the last commit
-AT_CHECK(cp -f third expout)
-AT_CHECK(RAW_MONOTONE automate select "l:2005-04-23", [], [expout], [ignore])
-AT_CHECK(RAW_MONOTONE automate select "l:2005-04-24T07:44:38", [], [expout], [ignore])
+CHECK_SAME_CANONICALISED_STDOUT(cat third, RAW_MONOTONE automate select "l:2005-04-23")
+CHECK_SAME_CANONICALISED_STDOUT(cat third, RAW_MONOTONE automate select "l:2005-04-24T07:44:38")
 
 # now we match the second and third commit
-AT_CHECK(cat third second, [], [stdout], [ignore])
-AT_CHECK(mv stdout expout)
-AT_CHECK(RAW_MONOTONE automate select "l:2005-04-21", [], [expout], [ignore])
+CHECK_SAME_CANONICALISED_STDOUT(cat third second, RAW_MONOTONE automate select "l:2005-04-21")
 
 # finally, all the files
 AT_CHECK(RAW_MONOTONE automate select "l:2005-03", [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout a_s)
-AT_CHECK(test 3 -eq "`wc -l <a_s`")
+LINE_COUNT=`wc -l < a_s`
+AT_CHECK(test 3 -eq $LINE_COUNT)
 AT_CHECK(RAW_MONOTONE automate select "l:2003-01", [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout a_s)
-AT_CHECK(test 3 -eq "`wc -l <a_s`")
+LINE_COUNT=`wc -l < a_s`
+AT_CHECK(test 3 -eq $LINE_COUNT)
 
 # -------------------
 # check combined selectors
 # -------------------
 
 # matching only the second commit
-AT_CHECK(cp -f second expout)
-AT_CHECK(RAW_MONOTONE automate select "l:2005-04-01/e:2005-04-23", [], [expout], [ignore])
-AT_CHECK(RAW_MONOTONE automate select "l:2005-04-01/e:2005-04-22T20:00:00", [], [expout], [ignore])
-AT_CHECK(RAW_MONOTONE automate select "l:2005-04-21T23:01:00/e:2005-04-22T20:00:00", [], [expout], [ignore])
+CHECK_SAME_CANONICALISED_STDOUT(cat second, RAW_MONOTONE automate select "l:2005-04-01/e:2005-04-23")
+CHECK_SAME_CANONICALISED_STDOUT(cat second, RAW_MONOTONE automate select "l:2005-04-01/e:2005-04-22T20:00:00")
+CHECK_SAME_CANONICALISED_STDOUT(cat second, RAW_MONOTONE automate select "l:2005-04-21T23:01:00/e:2005-04-22T20:00:00")
 
 # non overlapping intervals should not match, even if the single selector 
 # will 

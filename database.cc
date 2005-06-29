@@ -1505,6 +1505,19 @@ database::delete_existing_rev_and_certs(revision_id const & rid){
   execute("DELETE from revisions WHERE id = '%s'",rid.inner()().c_str());
 }
 
+/// Deletes all certs referring to a particular branch. 
+void
+database::delete_branch_named(cert_value const & branch)
+{
+  base64<cert_value> encoded;
+  encode_base64(branch, encoded);
+  L(F("Deleting all references to branch %s\n") % branch);
+  execute("DELETE FROM revision_certs WHERE name='branch' AND value ='%s'",
+          encoded().c_str());
+  execute("DELETE FROM branch_epochs WHERE branch='%s'",
+          encoded().c_str());
+}
+
 // crypto key management
 
 void 

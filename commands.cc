@@ -2103,7 +2103,8 @@ CMD(db, "database",
     "load\n"
     "migrate\n"
     "execute\n"
-    "kill_rev_locally <ID>\n"
+    "kill_rev_locally ID\n"
+    "kill_branch_locally BRANCH\n"
     "check\n"
     "changesetify\n"
     "rebuild\n"
@@ -2142,6 +2143,8 @@ CMD(db, "database",
         kill_rev_locally(app,idx(args, 1)());
       else if (idx(args, 0)() == "clear_epoch")
         app.db.clear_epoch(cert_value(idx(args, 1)()));
+      else if (idx(args, 0)() == "kill_branch_locally")
+        app.db.delete_branch_named(cert_value(idx(args, 1)()));
       else
         throw usage(name);
     }

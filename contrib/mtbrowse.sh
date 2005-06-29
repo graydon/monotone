@@ -18,9 +18,8 @@
 #  - Change your configuration
 #    Delete the "VISUAL", to use the "PAGER", deleto both for internal viewer.
 #    Save configuration.
-#    Please "Reload DB", to see the new configuration
 #  - Begin with menu "S Select revision"
-#  - Browse in branches, revisions, diff files, view logs ....
+#  - Browse in branches, revisions, diff files, view logs ...
 #
 # Needed tools:
 #  monotone 0.19 or compatible
@@ -35,7 +34,7 @@
 # 2005/5/9 Version 0.1.2 Henry@BigFoot.de
 # Update for MT 0.19
 # Diff from parent.
-# Topsort or Date/Time sort, config via TOPSORT
+# Toposort or Date/Time sort, config via TOPOSORT
 # 
 # 2005/5/13 Version 0.1.3 Henry@BigFoot.de
 # Diff from 'parent' mistaken HEAD/REVISION usage.
@@ -79,12 +78,17 @@
 # Don't remove some old files at exit.
 # Branch and head not in Main background title.
 
+# 2005/6/24 Version 0.1.10 Henry@BigFoot.de
+# Remove TAB's from ChangeLog.
+# Some cat as stdin pipe.
+# Typofix topsort/toposort.
+
 # 
 # Known Bugs / ToDo-List:
 # * For Monotone Version >0.19  s/--depth/--last/, remove the fallback
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.9"
+VERSION="0.1.10"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -105,8 +109,8 @@ PAGER="less"
 # 1=Certs Cached, 0=Clean at end (slow and save mode)
 CACHE="1"
 
-# T=Topsort revisions, D=Date sort (reverse topsort)
-TOPSORT="T"
+# T=Toposort revisions, D=Date sort (reverse toposort)
+TOPOSORT="T"
 
 # count of certs to get from DB, "0" for all
 CERTS_MAX="20"
@@ -114,7 +118,7 @@ CERTS_MAX="20"
 # Trim hash code
 HASH_TRIM="10"
 
-# Format Date/Time
+# Format for Date/Time
 FORMAT_DATE="L"
 
 # Format Branch Full,Short,None
@@ -149,9 +153,9 @@ then
     #database "/home/hn/mtbrowse.db"
     #     key ""
 
-    eval `cat MT/options | sed -n -r \
+    eval `sed -n -r \
       -e 's/^[ ]*(branch) \"([^\"]+)\"$/\1=\2/p' \
-      -e 's/^[ ]*(database) \"([^\"]+)\"$/\1=\2/p'`
+      -e 's/^[ ]*(database) \"([^\"]+)\"$/\1=\2/p' < MT/options`
 
     if [ -n "$database" ]
     then
@@ -211,7 +215,7 @@ do_clear_cache()
 # clear temp files
 do_clear_on_exit()
 {
-    rm -f $TEMPFILE.branches $TEMPFILE.ancestors $TEMPFILE.topsort \
+    rm -f $TEMPFILE.branches $TEMPFILE.ancestors $TEMPFILE.toposort \
       $TEMPFILE.action-select $TEMPFILE.menu $TEMPFILE.input
 
     if [ "$CACHE" != "1" ]
@@ -237,7 +241,7 @@ do_pager()
 }
 
 
-# Add the date and user-key to the list of revisions
+# Add the date, author and changlog to the list of revisions
 
 # Scanning for:
 # Key   : henry@bigfoot.de
@@ -269,7 +273,8 @@ fill_date_key()
     rm -f $out_file
     # Read Key and Date value from certs
     cat $in_file | \
-    while read hash ; do
+    while read hash
+    do
 	if [ -n "$line_count" ]
 	then
 	    let lineno++
@@ -286,62 +291,71 @@ fill_date_key()
 	# Date format
 	case $FORMAT_DATE in
 	    F) # 2005-12-31T23:59:59
-		dat=`cat $TEMPFILE.c.tmp | sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : (.+)$/ \1/p'`
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : (.+)$/ \1/p' \
+		    < $TEMPFILE.c.tmp`
 		;;
 	    L) # 2005-12-31 23:59
-		dat=`cat $TEMPFILE.c.tmp | sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : (.{10})T(.{5}).+$/ \1 \2/p'`
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : (.{10})T(.{5}).+$/ \1 \2/p' \
+		    < $TEMPFILE.c.tmp`
 		;;
 	    D) # 2005-12-31
-		dat=`cat $TEMPFILE.c.tmp | sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : (.+)T.+$/ \1/p'`
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : (.+)T.+$/ \1/p' \
+		    < $TEMPFILE.c.tmp`
 		;;
 	    S) # 12-31 23:59
-		dat=`cat $TEMPFILE.c.tmp | sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : .{4}-(.+)T(.{5}).+$/ \1 \2/p'`
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : .{4}-(.+)T(.{5}).+$/ \1 \2/p' \
+		    < $TEMPFILE.c.tmp`
 		;;
 	    T) # 23:59:59
-		dat=`cat $TEMPFILE.c.tmp | sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : .{10}T(.+{8})$/ \1/p'`
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : .{10}T(.+{8})$/ \1/p' \
+		    < $TEMPFILE.c.tmp`
 		;;
 	esac
 
 	# Branch format
 	case $FORMAT_BRANCH in
 	    F) # full
-		bra=`cat $TEMPFILE.c.tmp | sed -n -r -e \
-		    '/^Name  : branch/,+1s/Value : (.+)$/ \1/p' | \
-		    sed -n -e '1p'`
+		bra=`sed -n -r -e \
+		    '/^Name  : branch/,+1s/Value :(.+)$/\1/p' \
+		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
 		;;
 	    S) # short
-		bra=`cat $TEMPFILE.c.tmp | sed -n -r -e \
-		    '/^Name  : branch/,+1s/Value : .*\.([^\.]+)$/ \1/p' | \
-		    sed -n -e '1p'`
+		bra=`sed -n -r -e \
+		    '/^Name  : branch/,+1s/Value :.*\.([^\.]+)$/ \1/p' \
+		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
 		;;
 	esac
 
 	# Author format
 	case $FORMAT_AUTHOR in
 	    F) # full
-		aut=`cat $TEMPFILE.c.tmp | sed -n -r -e \
-		    '/^Name  : author/,+1s/Value : (.+)$/\1/p'`
+		aut=`sed -n -r -e \
+		    '/^Name  : author/,+1s/Value : (.+)$/\1/p' \
+		    < $TEMPFILE.c.tmp`
 		;;
 	    S) # short
-		aut=`cat $TEMPFILE.c.tmp | sed -n -r -e \
-		    '/^Name  : author/,+1s/Value : (.{1,10}).*@.+$/\1/p'`
+		aut=`sed -n -r -e \
+		    '/^Name  : author/,+1s/Value : (.{1,10}).*@.+$/\1/p' \
+		    < $TEMPFILE.c.tmp`
 		;;
 	esac
 
 	# Changelog format
 	case $FORMAT_LOG in
-	    F) # full
-		log=`cat $TEMPFILE.c.tmp | sed -n -r -e "y/\"/'/" -e \
-		    '/^Name  : changelog/,+1s/Value : (.+)$/ \1/p'`
+	    F) # full     TAB here ----v
+		log=`sed -n -r -e "y/\"	/' /" -e \
+		    '/^Name  : changelog/,+1s/Value : (.+)$/ \1/p' \
+		    < $TEMPFILE.c.tmp`
 		;;
 	    S) # short
-		log=`cat $TEMPFILE.c.tmp | sed -n -r -e "y/\"/'/" -e \
-		    '/^Name  : changelog/,+1s/Value : (.{1,20}).*$/ \1/p'`
+		log=`sed -n -r -e "y/\"	/' /" -e \
+		    '/^Name  : changelog/,+1s/Value : (.{1,20}).*$/ \1/p' \
+		    < $TEMPFILE.c.tmp`
 		;;
 	esac
 
@@ -443,7 +457,7 @@ do_head_sel()
     # Only one head ?
     if [ `wc -l < $TEMPFILE.heads` -eq 1 -a -n "$1" ]
     then
-	HEAD=`cat $TEMPFILE.heads | head -n 1`
+	HEAD=`head -n 1 < $TEMPFILE.heads`
     else
 	# List heads with author and date. Select by user.
 	monotone --db=$DB heads --branch=$BRANCH \
@@ -558,7 +572,7 @@ do_action_sel()
 	    # DIFF2: from other revision (not working dir)
 	    # Select second revision
 	    if cat $TEMPFILE.certs.$BRANCH | \
-	      xargs dialog --default-item "$REV2" --menu \
+	      xargs dialog --default-item "$REV2" --colors --menu \
 	      "Select _older_ revision for branch:$BRANCH\nrev:$REVISION" \
 	      0 0 0  2> $TEMPFILE.revision-select
 	    then
@@ -612,27 +626,27 @@ do_revision_sel()
 	monotone --db=$DB automate ancestors $HEAD | cut -c 1-40 \
 	  >> $TEMPFILE.ancestors || exit 200
 
-	if [ "$TOPSORT" = "T" -o "$CERTS_MAX" -gt 0 ]
+	if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 ]
 	then
-		echo "Topsort..."
+		echo "Toposort..."
 		monotone --db=$DB automate toposort `cat $TEMPFILE.ancestors` \
-		  > $TEMPFILE.topsort || exit 200
+		  > $TEMPFILE.toposort || exit 200
 
 		if [ "$CERTS_MAX" -gt 0 ]
 		then
 			# Only last certs. Remember: Last line is newest!
-			tail -n "$CERTS_MAX" < $TEMPFILE.topsort \
-			  > $TEMPFILE.topsort2
-			mv $TEMPFILE.topsort2 $TEMPFILE.topsort
+			tail -n "$CERTS_MAX" < $TEMPFILE.toposort \
+			  > $TEMPFILE.toposort2
+			mv $TEMPFILE.toposort2 $TEMPFILE.toposort
 		fi
 	else
-		mv $TEMPFILE.ancestors $TEMPFILE.topsort
+		mv $TEMPFILE.ancestors $TEMPFILE.toposort
 	fi
 
 	# Reading revisions and fill with date
-	fill_date_key $TEMPFILE.topsort $TEMPFILE.certs3tmp
+	fill_date_key $TEMPFILE.toposort $TEMPFILE.certs3tmp
 
-	if [ "$TOPSORT" != "T" ]
+	if [ "$TOPOSORT" != "T" ]
 	then
 		# Sort by date+time
 		sort -k 2 -r < $TEMPFILE.certs3tmp > $TEMPFILE.certs.$BRANCH
@@ -658,10 +672,10 @@ do_revision_sel()
 	SHORT_REV=`cat $TEMPFILE.revision-select`
 
 	# Remove old marker, set new marker
-	cat $TEMPFILE.certs.$BRANCH | sed -r \
+	sed -r \
 	  -e "s/^(.+\")\*(.+)\$/\1 \2/" \
 	  -e "s/^($SHORT_REV.* \") (.+)\$/\1\*\2/" \
-	  > $TEMPFILE.certs.$BRANCH.base
+	  < $TEMPFILE.certs.$BRANCH > $TEMPFILE.certs.$BRANCH.base
 	mv $TEMPFILE.certs.$BRANCH.base $TEMPFILE.certs.$BRANCH
 
 	# Error, on "monotone automate parent XXXXXX", if short revision.  :-(
@@ -686,7 +700,7 @@ do_config()
 	"Vd" "Set VISUAL default to vim -R" \
 	"P" "PAGER  [$PAGER]" \
 	"Pd" "set PAGER default to less" \
-	"S" "Sort by Topsort or Date [$TOPSORT]" \
+	"S" "Sort by Toposort or Date [$TOPOSORT]" \
 	"T" "Time and date format [$FORMAT_DATE]" \
 	"B" "Branch format [$FORMAT_BRANCH]" \
 	"A" "Author format [$FORMAT_AUTHOR]" \
@@ -727,14 +741,14 @@ do_config()
 	    PAGER="less"
 	    ;;
 	  S)
-	    # change T=Topsort revisions, D=Date sort (reverse topsort)
-	    if dialog --default-item "$TOPSORT" \
+	    # change T=Toposort revisions, D=Date sort (reverse toposort)
+	    if dialog --default-item "$TOPOSORT" \
 		--menu "Sort revisions by" 0 0 0 \
-		"T" "Topsort, oldest top (from Monotone)" \
-		"D" "Date/Time (reverse topsort)" \
+		"T" "Toposort, oldest top (from Monotone)" \
+		"D" "Date/Time (reverse toposort)" \
 		2> $TEMPFILE.input
 	    then
-		TOPSORT=`cat $TEMPFILE.input`
+		TOPOSORT=`cat $TEMPFILE.input`
 	    fi
 	    ;;
 	  T)
@@ -844,7 +858,7 @@ VISUAL="$VISUAL"
 PAGER="$PAGER"
 TEMPDIR="$TEMPDIR"
 TEMPFILE="$TEMPFILE"
-TOPSORT="$TOPSORT"
+TOPOSORT="$TOPOSORT"
 CACHE="$CACHE"
 CERTS_MAX="$CERTS_MAX"
 DEPTH_LAST="$DEPTH_LAST"

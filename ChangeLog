@@ -7,6 +7,33 @@
 
 	* INSTALL: Bump required version of Boost to 1.32.
 
+2005-06-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* app_state.cc (app_state::app_state()): Initialise no_merges to
+	false so that 'log' will show merges by default (the recently
+	added --no-merges option provides a means to disable the merge
+	entries).
+
+2005-06-26  Matthew Gregan  <kinetik@orcon.net.
+
+	* tests/t_automate_stdio.at, tests/t_cvsimport_drepper.at,
+	tests/t_selector_later_earlier.at: Further canonicalisation of
+	monotone output to resolve test failures on Win32.
+
+2005-06-25  Brian Campbell  <brian.p.campbell@dartmouth.edu>
+
+	* commands.cc (CMD(db)): Added db kill_branch_locally command. 
+	* database.cc, database.hh (delete_branch_named): New function to
+	delete all branch certs with a given branch name.
+	* monotone.texi (Database): Added documentation for db
+	kill_branch_locally.
+	* tests/t_db_kill_branch_locally.at: New test for db
+	kill_branch_locally.
+	* testsuite.at: Add the test. 
+	* AUTHORS: Add myself.
+	* ChangeLog: Change my email address on an old contribution to 
+	match my pubkey. 
+
 2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_db_kill_rev_locally.at: Clean up style.
@@ -1057,7 +1084,7 @@
 
 	* work.cc: Use attr_file_name rather than hardcoded strings.
 
-2005-05-04  Brian Campbell  <ubergeek@dartmouth.edu>
+2005-05-04  Brian Campbell  <brian.p.campbell@dartmouth.edu>
 
 	* contrib/monotone.el (monotone-vc-register): Fix arguments to
 	monotone-cmd-buf, to make work.
