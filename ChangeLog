@@ -1,3 +1,7 @@
+2005-06-28  Roland Illig  <roland.illig@gmx.de>
+
+	* app_state.cc: #include <unistd.h>, needed on NetBSD.
+
 2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
 
 	* std_hooks.lua (ignore_file): Ignore vim swap files and emacs
