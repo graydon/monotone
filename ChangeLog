@@ -1,3 +1,9 @@
+2005-06-30  Eric Kidd  <eric.kidd@dartmouth.edu>
+
+	* contrib/monotone-import.pl: Changed $branch to
+	$user_branch.  This script may need more work, but at least Perl
+	compiles it now.
+
 2005-06-30  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* automate.cc, basic_io.hh, cert.cc, change_set.cc,
