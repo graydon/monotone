@@ -1,3 +1,8 @@
+2005-06-29  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_cvsimport_drepper2.at: New test.
+	* testsuite.at: Call it.
+
 2005-06-23  graydon hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (import_cvs_repo): Put branch imports inside
