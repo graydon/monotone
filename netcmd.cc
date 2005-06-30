@@ -18,7 +18,6 @@
 #include "transforms.hh"
 
 using namespace std;
-using namespace boost;
 
 static netcmd_item_type 
 read_netcmd_item_type(string const & in, 

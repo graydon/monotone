@@ -18,8 +18,12 @@
 #include "sanity.hh"
 #include "transforms.hh"
 
-using namespace boost;
 using namespace std;
+using boost::shared_ptr;
+using boost::lexical_cast;
+using boost::match_default;
+using boost::match_results;
+using boost::regex;
 
 // --- packet db writer --
 //

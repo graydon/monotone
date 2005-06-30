@@ -184,8 +184,9 @@
 // material that you wouldn't have a hope of typing in manually anyways)
 //
 
-using namespace boost;
 using namespace std;
+using boost::shared_ptr;
+using boost::lexical_cast;
 
 static inline void 
 require(bool check, string const & context)

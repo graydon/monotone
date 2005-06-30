@@ -1,3 +1,10 @@
+2005-06-30  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* automate.cc, basic_io.hh, cert.cc, change_set.cc,
+	cryptopp/config.h, cryptopp/integer.cpp, main.cc, merkle_tree.cc,
+	merkle_tree.hh, monotone.cc, netcmd.cc, netsync.cc,
+	netxx/osutil.h, packet.cc: Namespace and include file cleanup.
+
 2005-06-29  graydon hoare  <graydon@pobox.com>
 
 	* tests/t_cvsimport_drepper2.at: New test.

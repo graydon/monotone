@@ -8,6 +8,7 @@
 
 #include "popt/popt.h"
 #include <cstdio>
+#include <strings.h>
 #include <iterator>
 #include <iostream>
 #include <fstream>
