@@ -1,4 +1,4 @@
-AT_SETUP([(normal) pull a netsync branch which has a parent from another branch])
+AT_SETUP([pull a netsync branch which has a parent from another branch])
 AT_KEYWORDS([netsync])
 
 

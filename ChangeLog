@@ -30,6 +30,187 @@
 
 	* rcs_import.cc: Rewrite change set inference logic.
 
+2005-06-28  Roland Illig  <roland.illig@gmx.de>
+
+	* app_state.cc: #include <unistd.h>, needed on NetBSD.
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (ignore_file): Ignore vim swap files and emacs
+	temp files.
+
+2005-06-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* INSTALL: Bump required version of Boost to 1.32.
+
+2005-06-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* app_state.cc (app_state::app_state()): Initialise no_merges to
+	false so that 'log' will show merges by default (the recently
+	added --no-merges option provides a means to disable the merge
+	entries).
+
+2005-06-26  Matthew Gregan  <kinetik@orcon.net.
+
+	* tests/t_automate_stdio.at, tests/t_cvsimport_drepper.at,
+	tests/t_selector_later_earlier.at: Further canonicalisation of
+	monotone output to resolve test failures on Win32.
+
+2005-06-25  Brian Campbell  <brian.p.campbell@dartmouth.edu>
+
+	* commands.cc (CMD(db)): Added db kill_branch_locally command. 
+	* database.cc, database.hh (delete_branch_named): New function to
+	delete all branch certs with a given branch name.
+	* monotone.texi (Database): Added documentation for db
+	kill_branch_locally.
+	* tests/t_db_kill_branch_locally.at: New test for db
+	kill_branch_locally.
+	* testsuite.at: Add the test. 
+	* AUTHORS: Add myself.
+	* ChangeLog: Change my email address on an old contribution to 
+	match my pubkey. 
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_db_kill_rev_locally.at: Clean up style.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* unix/process.cc (process_spawn): Format log output correctly.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* unix/process.cc (existsonpath): Reindent.  Add logging, and use
+	'command -v' instead of 'which' (as per Matt Johnston's discovery
+	that it is more portable).
+	(process_spawn): Handle exec failure more properly.
+	* tests/t_existsonpath.at: New test.
+	* testsuite.at: Add it.
+
+2005-06-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Log correct locale set for LC_MESSAGES.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* unix/process.cc: Remove tabs.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (get_preferred_merge2_command)
+	(get_preferred_merge3_command): Move meld to the bottom of the
+	default merge tool search order.  Also, use xemacs if it appears
+	in $EDITOR, otherwise use emacs.
+	* revision.cc (check_sane_history): Remove stale comment.
+
+2005-06-24  Matt Johnston  <matt@ucc.asn.au>
+
+	* transforms.{cc,hh}: combine gzip and base64 in one
+	pipe for pack()/unpack() to save memory
+	* vocab.hh: add swap() to encodings/atomics
+	* file_io.cc: use swap() to avoid copying
+
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (do_diff): Use calculate_arbitrary_change_set,
+	instead of reimplementing it.
+
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (find_least_common_ancestor): Handle left == right
+	case.
+	* tests/t_diff_currev.at: Un-XFAIL.
+	
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (rebuild_merkle_trees): Fix FIXME comments to match
+	reality.
+	* tests/t_netsync_diffbranch.at: No longer a bug, remove
+	priority.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Hook Reference): Oops, missed a @ref.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Default monotonerc): Rename section to...
+	(Default hooks): ...this, to emphasize is still read even when a
+	monotonerc exists.
+
+2005-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: There's no reason for monotone.pdf or .dvi to
+	depend on monotone.info, since they are built from the .texi
+	files.  Also, make the monotone.html and html targets depend
+	on version.texi and std_hooks.lua as well.
+
+2005-06-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* INSTALL: fix typo, should be -Iboost_1_31_0 not -Iboost_1_31_2
+
+2005-06-18  Riccardo Ghetta  <birrachiara@tin.it>
+	* monotone.texi: include std_hooks.lua as an appendix and remove long
+	lua excerpts from hook reference.
+	* Makefile.am : make monotone.pdf/eps depend on monotone.info
+	
+2005-06-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (database::execute()): truncate long query log messages
+	before copying, saving memory. 
+	Patch from Eric Anderson < ea at cello hpl hp com >
+
+2005-06-17  Riccardo Ghetta  <birrachiara@tin.it>
+	Adds include()/includedir() to lua hooks and extend --rcfile
+	* lua.cc: handle --rcfile with directories, implement
+	include() and includedir()
+	* testsuite.at, t_lua_includedir.at, t_rcfile_dir.at:
+	test new functionality
+	* monotone.texi: document all functions available to hook
+	writers, including the new include() and includedir()
+
+2005-06-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* diff_patch.cc (merge_extents): Typo caught by anonymous reader.
+
+2005-06-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (cat): Account for being in a subdir in 'cat file
+	REV PATH'.
+	* tests/t_cat_file_by_name.at: Test.
+
+2005-06-17  Richard Levitte  <richard@levitte.org>
+
+	* app_state.cc (app_state::app_state()): Avoid a gcc warning by
+	having the class members initialised in the same order they are
+	defined in the class.
+
+2005-06-16  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (ignore_file): Add Cons/SCons cache files to
+	default ignore list.
+
+2005-06-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc: increase the divisor as required so that we don't get spurious
+	screen updates when we're using the kilobyte/megabyte tickers
+
+2005-06-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.texi: clarify some netsync parts of the tutorial
+
+2005-06-15  Richard Levitte  <richard@levitte.org>
+
+	* netsync.cc (struct session): Add a pattern regex cache.
+	(analyze_ancestry_graph): Use the regex cache instead of the
+	pattern string itself.  This is especially important when the
+	pattern is used as an old-style collection.
+	(process_hello_cmd): Recreate the pattern regex cache with the
+	conversion of the pattern to a regex when it's used as an
+	old-style collection.
+	(process_auth_cmd): When the pattern changes, change the regex
+	cache as well.
+
 2005-06-14  Richard Levitte  <richard@levitte.org>
 
 	* std_hooks.lua (get_preferred_merge2_command,
@@ -939,7 +1120,7 @@
 
 	* work.cc: Use attr_file_name rather than hardcoded strings.
 
-2005-05-04  Brian Campbell  <ubergeek@dartmouth.edu>
+2005-05-04  Brian Campbell  <brian.p.campbell@dartmouth.edu>
 
 	* contrib/monotone.el (monotone-vc-register): Fix arguments to
 	monotone-cmd-buf, to make work.

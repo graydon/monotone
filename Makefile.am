@@ -297,9 +297,11 @@ EXTRA_DIST = $(man1_MANS) \
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
-monotone.pdf: monotone.texi version.texi $(PDF_FIGURES)
+monotone.info: monotone.texi version.texi std_hooks.lua
 
-monotone.dvi: monotone.texi version.texi $(EPS_FIGURES)
+monotone.pdf: monotone.texi version.texi std_hooks.lua $(PDF_FIGURES)
+
+monotone.dvi: monotone.texi version.texi std_hooks.lua $(EPS_FIGURES)
 
 #%.eps: %.epsi
 #	mv $< $@
@@ -408,14 +410,14 @@ package_full_revision.c: package_full_revision.txt txt2c Makefile
 
 # automake doesn't build html docs
 
-monotone.html: monotone.texi texinfo.css
+monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
 	makeinfo --no-split --no-headers --output $@ --html $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
 	rm -f monotone.html.perlbak
 
 # The .perlbak thing is needed, otherwise the perl executions fails on MinGW
 
-html: monotone.texi texinfo.css
+html: monotone.texi version.texi std_hooks.lua texinfo.css
 	mkdir -p html
 	makeinfo --number-sections --html --output html $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html

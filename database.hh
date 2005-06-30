@@ -289,6 +289,8 @@ public:
   void delete_existing_revs_and_certs();
 
   void delete_existing_rev_and_certs(revision_id const & rid);
+  
+  void delete_branch_named(cert_value const & branch);
 
   // crypto key / cert operations
 

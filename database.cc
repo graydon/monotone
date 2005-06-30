@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <stdarg.h>
+#include <string.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
@@ -643,24 +644,28 @@ void
 database::execute(char const * query, ...)
 {
   va_list ap;
-  int res;
-  char * errmsg = NULL;
 
   va_start(ap, query);
 
   // log it
   char * formatted = sqlite3_vmprintf(query, ap);
-  string qq(formatted);
-  if (qq.size() > constants::db_log_line_sz) 
-    qq = qq.substr(0, constants::db_log_line_sz) + string(" ...");
-  L(F("db.execute(\"%s\")\n") % qq);
-  sqlite3_free(formatted);
+  string qq;
 
-  va_end(ap);
-  va_start(ap, query);
+  if (strlen(formatted) > constants::db_log_line_sz)
+    {
+      qq.assign(formatted, constants::db_log_line_sz);
+      qq.append(" ...");
+    }
+  else
+    {
+      qq = formatted;
+    }
+  L(F("db.execute(\"%s\")\n") % qq);
 
   // do it
-  res = sqlite3_exec_vprintf(sql(), query, NULL, NULL, &errmsg, ap);
+  char * errmsg = NULL;
+  int res = sqlite3_exec(sql(), formatted, NULL, NULL, &errmsg);
+  sqlite3_free(formatted);
 
   va_end(ap);
 
@@ -1498,6 +1503,19 @@ database::delete_existing_rev_and_certs(revision_id const & rid){
   execute("DELETE from revision_ancestry WHERE child = '%s'",
           rid.inner()().c_str());
   execute("DELETE from revisions WHERE id = '%s'",rid.inner()().c_str());
+}
+
+/// Deletes all certs referring to a particular branch. 
+void
+database::delete_branch_named(cert_value const & branch)
+{
+  base64<cert_value> encoded;
+  encode_base64(branch, encoded);
+  L(F("Deleting all references to branch %s\n") % branch);
+  execute("DELETE FROM revision_certs WHERE name='branch' AND value ='%s'",
+          encoded().c_str());
+  execute("DELETE FROM branch_epochs WHERE branch='%s'",
+          encoded().c_str());
 }
 
 // crypto key management
