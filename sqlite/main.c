@@ -298,7 +298,7 @@ static int sqliteDefaultBusyCallback(
   sqlite3OsSleep(delay);
   return 1;
 #else
-  int timeout = (int)Timeout;
+  int timeout = ((sqlite3 *)ptr)->busyTimeout;
   if( (count+1)*1000 > timeout ){
     return 0;
   }

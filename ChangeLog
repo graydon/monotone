@@ -1,6 +1,7 @@
 2005-07-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* sqlite/*, Makefile.am: Import SQLite 3.2.2 from upstream.
+	* sqlite/main.c: Compile fix.
 
 2005-07-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
