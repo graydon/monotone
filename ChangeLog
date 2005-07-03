@@ -1,5 +1,9 @@
 2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.hh (run_netsync_protocol): Fix prototype.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* globish.hh: Document the empty pattern as never matching.
 	* globish.cc (checked_globish_to_regex): Implement it.
 	(globish_matcher_test): Check it.
