@@ -20,6 +20,9 @@
 //   {<anything1>,<anything2>,...} - match any of the given items
 // so like standard globs, except without [] character sets, and with {}
 // alternation.
+// the one strange thing is there is a special-case -- the empty pattern
+// matches nothing, not even the empty string.  this hardly ever matters, but
+// it's nice to have some way to say "don't exclude anything", for instance.
 
 #include <set>
 #include <string>

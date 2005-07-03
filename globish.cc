@@ -13,6 +13,9 @@
 //
 // Pattern tranformation:
 //
+// - As a special case, the empty pattern is translated to "$^", which cannot
+//   match any string.
+//
 // - Any character except those described below are copied as they are.
 // - The backslash (\) escapes the following character.  The escaping
 //   backslash is copied to the regex along with the following character.
@@ -45,12 +48,17 @@ checked_globish_to_regex(std::string const & glob, std::string & regex)
 
   L(F("checked_globish_to_regex: input = '%s'\n") % glob);
 
+  if (glob == "")
+    {
+      regex = "$^";
+      // and the below loop will do nothing
+    }
   for (std::string::const_iterator i = glob.begin(); i != glob.end(); ++i)
     {
       char c = *i;
-
+      
       N(in_braces < 5, F("braces nested too deep in pattern '%s'") % glob);
-
+      
       switch(c)
         {
         case '*':
@@ -84,7 +92,7 @@ checked_globish_to_regex(std::string const & glob, std::string & regex)
           break;
         }
     }
-
+  
   N(in_braces == 0,
     F("run-away brace expression in pattern '%s'") % glob);
 
@@ -195,6 +203,11 @@ globish_matcher_test()
     BOOST_CHECK(m("b"));
     BOOST_CHECK(m("bfoobar"));
     BOOST_CHECK(!m("bfoobarcfoobar"));
+  }
+  {
+    globish_matcher m(utf8("*"), utf8(""));
+    BOOST_CHECK(m("foo"));
+    BOOST_CHECK(m(""));
   }
 }
 
