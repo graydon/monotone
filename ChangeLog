@@ -2,6 +2,7 @@
 
 	* sqlite/*, Makefile.am: Import SQLite 3.2.2 from upstream.
 	* sqlite/main.c: Compile fix.
+	* sqlite/{callback.c,prepare.c}: Add new files.
 
 2005-07-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
