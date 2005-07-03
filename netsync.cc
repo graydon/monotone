@@ -1137,8 +1137,6 @@ session::analyze_ancestry_graph()
     // Write permissions checking:
     // remove heads w/o proper certs, add their children to heads
     // 1) remove unwanted branch certs from consideration
-    //    - server: check write permission hook
-    //    - client: check against sync pattern
     // 2) remove heads w/o a branch tag, process new exposed heads
     // 3) repeat 2 until no change
 
@@ -1162,13 +1160,7 @@ session::analyze_ancestry_graph()
               ;
             else
               {
-                bool ok;
-                if (voice == server_voice)
-                  ok = app.lua.hook_get_netsync_write_permitted(name(),
-                                                         remote_peer_key_name);
-                else
-                  ok = our_matcher(name());
-                if (ok)
+                if (our_matcher(name()))
                   {
                     ok_branches.insert(name());
                     keeping.push_back(*j);
@@ -1927,7 +1919,8 @@ session::process_auth_cmd(protocol_role their_role,
           return false;
         }
 
-      P(F("allowed '%s' read permission for '%s'\n") % their_id % pattern);
+      P(F("allowed '%s' read permission for '%s' excluding '%s'\n")
+        % their_id % their_include_pattern % their_exclude_pattern);
     }
 
   // client as source, server as sink (writing)
@@ -1936,23 +1929,22 @@ session::process_auth_cmd(protocol_role their_role,
     {
       if (this->role != sink_role && this->role != source_and_sink_role)
         {
-          W(F("denied '%s' write permission for '%s' while running as pure source\n")
-            % their_id % pattern);
+          W(F("denied '%s' write permission for '%s' excluding '%s' while running as pure source\n")
+            % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      // Write permissions are now checked from analyze_ancestry_graph.
-      if (their_role == source_role)
+      if (!app.lua.hook_get_netsync_write_permitted(their_id))
         {
-          for (vector<string>::const_iterator i = branchnames.begin();
-              i != branchnames.end(); i++)
-            {
-              ok_branches.insert(utf8(*i));
-            }
+          W(F("denied '%s' write permission for '%s' excluding '%s' while running as pure source\n")
+            % their_id % their_include_pattern % their_exclude_pattern);
+          this->saved_nonce = id("");
+          return false;
         }
 
-      P(F("allowed '%s' write permission for '%s'\n") % their_id % pattern);
+      P(F("allowed '%s' write permission for '%s' excluding '%s'\n")
+        % their_id % their_include_pattern % their_exclude_pattern);
     }
 
   rebuild_merkle_trees(app, ok_branches);

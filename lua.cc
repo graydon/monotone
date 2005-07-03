@@ -738,14 +738,14 @@ bool
 lua_hooks::hook_expand_date(std::string const & sel, 
                             std::string & exp)
 {
-	exp.clear();
+        exp.clear();
   bool res= Lua(st)
     .func("expand_date")
     .push_str(sel)
     .call(1,1)
     .extract_str(exp)
     .ok();
-	return res && exp.size();
+        return res && exp.size();
 }
 
 bool 
@@ -1038,14 +1038,14 @@ lua_hooks::hook_use_inodeprints()
 }
 
 bool 
-lua_hooks::hook_get_netsync_read_permitted(std::string const & pattern, 
+lua_hooks::hook_get_netsync_read_permitted(std::string const & branch, 
                                            rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
     .func("get_netsync_read_permitted")
-    .push_str(pattern)
+    .push_str(branch)
     .push_str(identity())
     .call(2,1)
     .extract_bool(permitted)
@@ -1055,13 +1055,13 @@ lua_hooks::hook_get_netsync_read_permitted(std::string const & pattern,
 }
 
 bool 
-lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & pattern)
+lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & branch)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
     .func("get_netsync_anonymous_read_permitted")
-    .push_str(pattern)
+    .push_str(branch)
     .call(1,1)
     .extract_bool(permitted)
     .ok();
@@ -1070,14 +1070,12 @@ lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & pattern
 }
 
 bool 
-lua_hooks::hook_get_netsync_write_permitted(std::string const & pattern, 
-                                            rsa_keypair_id const & identity)
+lua_hooks::hook_get_netsync_write_permitted(rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
     .func("get_netsync_write_permitted")
-    .push_str(pattern)
     .push_str(identity())
     .call(2,1)
     .extract_bool(permitted)

@@ -1,5 +1,12 @@
 2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* lua.{cc,hh} (hook_get_netsync_write_permitted): Don't take a
+	branch argument; write permission is now all or none.  (It really
+	was before anyway...)
+	* netsync.cc: Update accordingly.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netsync.cc: More updating for pattern stuff; getting there...
 
 2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
