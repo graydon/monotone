@@ -1763,13 +1763,14 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       decode_base64(sig, sig_raw);
       
       // make a new nonce of our own and send off the 'auth'
-      queue_auth_cmd(this->role, this->pattern(), our_key_hash_raw, 
-                     nonce, mk_nonce(), sig_raw(), their_key_encoded);
+      queue_auth_cmd(this->role, our_include_pattern, our_exclude_pattern,
+                     our_key_hash_raw, nonce, mk_nonce(), sig_raw(),
+                     their_key_encoded);
     }
   else
     {
-      queue_anonymous_cmd(this->role, this->pattern(),
-                          mk_nonce(), their_key_encoded);
+      queue_anonymous_cmd(this->role, our_include_pattern,
+                          our_exclude_pattern, mk_nonce(), their_key_encoded);
     }
   return true;
 }
@@ -1896,8 +1897,8 @@ session::process_auth_cmd(protocol_role their_role,
     {
       if (this->role != source_role && this->role != source_and_sink_role)
         {
-          W(F("denied '%s' read permission for '%s' while running as pure sink\n") 
-            % their_id % pattern);
+          W(F("denied '%s' read permission for '%s' excluding '%s' while running as pure sink\n") 
+            % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
           return false;
         }
@@ -1906,7 +1907,7 @@ session::process_auth_cmd(protocol_role their_role,
           i != branchnames.end(); i++)
         {
           if (our_matcher(*i) && their_matcher(*i)
-              && app.lua.hook_get_netsync_anonymous_read_permitted(*i, their_id))
+              && app.lua.hook_get_netsync_read_permitted(*i, their_id))
             ok_branches.insert(utf8(*i));
         }
       //if we're source_and_sink_role, continue even with no branches readable
@@ -2007,9 +2008,10 @@ session::process_confirm_cmd(string const & signature)
   encode_hexenc(id(remote_peer_key_hash), their_key_hash);
   
   // nb. this->role is our role, the server is in the opposite role
-  L(F("received 'confirm' netcmd from server '%s' for pattern '%s' in %s mode\n")
-    % their_key_hash % this->pattern % (this->role == source_and_sink_role ? "source and sink" :
-                                           (this->role == source_role ? "sink" : "source")));
+  L(F("received 'confirm' netcmd from server '%s' for pattern '%s' exclude '%s' in %s mode\n")
+    % their_key_hash % our_include_pattern % our_exclude_pattern
+    % (this->role == source_and_sink_role ? "source and sink" :
+       (this->role == source_role ? "sink" : "source")));
   
   // check their signature
   if (app.db.public_key_exists(their_key_hash))

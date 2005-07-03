@@ -1,5 +1,9 @@
 2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netsync.cc: Finally self-consistent.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* netsync.hh (run_netsync_protocol): Fix prototype.
 
 2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
