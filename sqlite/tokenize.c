@@ -500,8 +500,14 @@ abort_parse:
 ** is look for a semicolon that is not part of an string or comment.
 */
 int sqlite3_complete(const char *zSql){
+  const char *tmp;
+  return sqlite3_complete_last(zSql, &tmp);
+}
+
+int sqlite3_complete_last(const char *zSql, const char **last){
   u8 state = 0;   /* Current state, using numbers defined in header comment */
   u8 token;       /* Value of the next token */
+  const char* lastseen = 0;
 
 #ifndef SQLITE_OMIT_TRIGGER
   /* A complex statement machine used to detect the end of a CREATE TRIGGER
@@ -551,7 +557,7 @@ int sqlite3_complete(const char *zSql){
         }
         zSql += 2;
         while( zSql[0] && (zSql[0]!='*' || zSql[1]!='/') ){ zSql++; }
-        if( zSql[0]==0 ) return 0;
+        if( zSql[0]==0 ) { *last = lastseen; return 0; }
         zSql++;
         token = tkWS;
         break;
@@ -562,14 +568,14 @@ int sqlite3_complete(const char *zSql){
           break;
         }
         while( *zSql && *zSql!='\n' ){ zSql++; }
-        if( *zSql==0 ) return state==0;
+        if( *zSql==0 ) { *last = lastseen; return state==0; }
         token = tkWS;
         break;
       }
       case '[': {   /* Microsoft-style identifiers in [...] */
         zSql++;
         while( *zSql && *zSql!=']' ){ zSql++; }
-        if( *zSql==0 ) return 0;
+        if( *zSql==0 ) { *last = lastseen; return 0; }
         token = tkOTHER;
         break;
       }
@@ -578,7 +584,7 @@ int sqlite3_complete(const char *zSql){
         int c = *zSql;
         zSql++;
         while( *zSql && *zSql!=c ){ zSql++; }
-        if( *zSql==0 ) return 0;
+        if( *zSql==0 ) { *last = lastseen; return 0; }
         token = tkOTHER;
         break;
       }
@@ -641,8 +647,11 @@ int sqlite3_complete(const char *zSql){
       }
     }
     state = trans[state][token];
+    if (state == 0)
+      lastseen = zSql;
     zSql++;
   }
+  *last = lastseen;
   return state==0;
 }
 

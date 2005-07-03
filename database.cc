@@ -345,11 +345,19 @@ database::load(istream & in)
   if (error)
     throw oops(string("could not open database: ") + filename.string() + 
                (string(sqlite3_errmsg(__sql))));
-  
+
   while(in)
     {
       in.read(buf, constants::bufsz);
       tmp.append(buf, in.gcount());
+
+      const char* last_statement = 0;
+      sqlite3_complete_last(tmp.c_str(), &last_statement);
+      if (last_statement == 0)
+        continue;
+      string::size_type len = last_statement + 1 - tmp.c_str();
+      execute(tmp.substr(0, len).c_str());
+      tmp.erase(0, len);
     }
 
   execute(tmp.c_str());

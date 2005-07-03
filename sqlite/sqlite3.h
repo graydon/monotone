@@ -257,7 +257,9 @@ void sqlite3_interrupt(sqlite3*);
 ** false.
 */
 int sqlite3_complete(const char *sql);
+int sqlite3_complete_last(const char *sql, const char **last);
 int sqlite3_complete16(const void *sql);
+
 
 /*
 ** This routine identifies a callback function that is invoked
