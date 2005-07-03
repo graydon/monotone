@@ -1,3 +1,7 @@
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: More updating for pattern stuff; getting there...
+
 2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc: Update low-level functions to use include_pattern
