@@ -1641,7 +1641,7 @@ function get_netsync_read_permitted (branch, identity)
   return false
 end
 
-function get_netsync_write_permitted (branch, identity)
+function get_netsync_write_permitted (identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
   return false
@@ -5477,16 +5477,12 @@ read access. There is no corresponding anonymous write
 access hook. This hook has no default definition, therefore the
 default behavior is to deny all anonymous reads.
 
-@item get_netsync_write_permitted (@var{branch}, @var{identity})
+@item get_netsync_write_permitted (@var{identity})
 
-Returns @code{true} if a peer authenticated as key @var{identity}
-should be allowed to write into your database certs, revisions,
-manifests, and files associated with @var{branch}; otherwise @code{false}.
-This hook has no default definition, therefore the default behavior is to deny all writes.
-
-Note that if write access is granted for one branch it is effectively
-granted for the entire database, as there is currently no way to
-restrict that access to only that branch.
+Returns @code{true} if a peer authenticated as key @var{identity} should
+be allowed to write into your database certs, revisions, manifests, and
+files; otherwise @code{false}.  This hook has no default definition,
+therefore the default behavior is to deny all writes.
 
 Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}

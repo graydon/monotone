@@ -1,5 +1,13 @@
 2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi (Network Service, Hooks):
+	* testsuite.at: 
+	* tests/t_netsync_permissions.at: 
+	* tests/t_netsync_single.at: Update to match new
+	get_netsync_write_permitted definition.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
 	* lua.{cc,hh} (hook_get_netsync_write_permitted): Don't take a
 	branch argument; write permission is now all or none.  (It really
 	was before anyway...)
