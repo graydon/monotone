@@ -109,6 +109,7 @@ SQLITE_SOURCES = \
         sqlite/util.c sqlite/vacuum.c \
         sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c \
         sqlite/vdbemem.c sqlite/where.c \
+	sqlite/prepare.c sqlite/callback.c \
 	\
         sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
         sqlite/os_common.h sqlite/os_unix.h sqlite/os_win.h \

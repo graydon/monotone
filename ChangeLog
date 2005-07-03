@@ -1,5 +1,9 @@
 2005-07-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* sqlite/*, Makefile.am: Import SQLite 3.2.2 from upstream.
+
+2005-07-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* sqlite/{sqlite3.h,tokenize.c} (sqlite3_complete_last): New
 	function to find the last valid SQL statement in a string; based
 	on sqlite3_complete.  This change should be offered upstream, but
