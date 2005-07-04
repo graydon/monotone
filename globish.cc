@@ -13,7 +13,7 @@
 //
 // Pattern tranformation:
 //
-// - As a special case, the empty pattern is translated to "$^", which cannot
+// - As a special case, the empty pattern is translated to "$.^", which cannot
 //   match any string.
 //
 // - Any character except those described below are copied as they are.
@@ -50,7 +50,7 @@ checked_globish_to_regex(std::string const & glob, std::string & regex)
 
   if (glob == "")
     {
-      regex = "$^";
+      regex = "$.^";
       // and the below loop will do nothing
     }
   for (std::string::const_iterator i = glob.begin(); i != glob.end(); ++i)
@@ -135,7 +135,6 @@ globish_matcher::operator()(std::string const & s)
   // really pathological
   return boost::regex_match(s, r_inc) && !boost::regex_match(s, r_exc);
 }
-
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
