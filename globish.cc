@@ -208,6 +208,11 @@ globish_matcher_test()
     BOOST_CHECK(m("foo"));
     BOOST_CHECK(m(""));
   }
+  {
+    globish_matcher m(utf8("{foo}"), utf8(""));
+    BOOST_CHECK(m("foo"));
+    BOOST_CHECK(!m("bar"));
+  }
 }
 
 
