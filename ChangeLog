@@ -1,5 +1,12 @@
 2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
 
+	* monotone.texi, monotone.1: Update for new glob stuff.
+	* commands.cc (process_netsync_args, push, pull, sync, serve):
+	'serve' always requires arguments, rather than falling back on db
+	defaults.
+	
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
 	* commands.cc (process_netsync_args, push, pull, sync, serve):
 	Adapt for patterns instead of regexen; slight refactoring too.
 

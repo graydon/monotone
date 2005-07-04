@@ -1987,15 +1987,13 @@ process_netsync_args(std::string const & name,
                      std::vector<utf8> const & args,
                      utf8 & addr,
                      utf8 & include_pattern, utf8 & exclude_pattern,
+                     bool use_defaults,
                      app_state & app)
 {
-  if (args.size() > 2)
-    throw usage(name);
-
   if (args.size() >= 1)
     {
       addr = idx(args, 0);
-      if (!app.db.var_exists(default_server_key))
+      if (use_defaults && !app.db.var_exists(default_server_key))
         {
           P(F("setting default server to %s\n") % addr);
           app.db.set_var(default_server_key, var_value(addr()));
@@ -2003,6 +2001,7 @@ process_netsync_args(std::string const & name,
     }
   else
     {
+      N(use_defaults, F("no hostname given"));
       N(app.db.var_exists(default_server_key),
         F("no server given and no default server set"));
       var_value addr_value;
@@ -2014,7 +2013,7 @@ process_netsync_args(std::string const & name,
     {
       std::set<utf8> patterns(args.begin() + 1, args.end());
       combine_and_check_globish(patterns, include_pattern);
-      if (!app.db.var_exists(default_include_pattern_key))
+      if (use_defaults && !app.db.var_exists(default_include_pattern_key))
         {
           P(F("setting default branch pattern to %s\n") % include_pattern);
           app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
@@ -2022,6 +2021,7 @@ process_netsync_args(std::string const & name,
     }
   else
     {
+      N(use_defaults, F("no branch pattern given"));
       N(app.db.var_exists(default_include_pattern_key),
         F("no branch pattern given and no default pattern set"));
       var_value pattern_value;
@@ -2038,7 +2038,7 @@ CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
     "push branches matching REGEX to netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, app);
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
@@ -2052,7 +2052,7 @@ CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
     "pull branches matching REGEX from netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, app);
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   if (app.signing_key() == "")
     W(F("doing anonymous pull\n"));
@@ -2065,7 +2065,7 @@ CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
     "sync branches matching REGEX with netsync server at ADDRESS", OPT_NONE)
 {
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, app);
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
@@ -2092,7 +2092,7 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] PATTERN ...",
   require_password(key, app);
 
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, app);
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, false, app);
   run_netsync_protocol(server_voice, source_and_sink_role, addr,
                        include_pattern, exclude_pattern, app);  
 }
