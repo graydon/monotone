@@ -685,12 +685,15 @@ test_netcmd_functions()
         // total cheat, since we don't actually verify that rsa_oaep_sha_data
         // is sensible anywhere here...
         rsa_oaep_sha_data out_key("nonce start my heart"), in_key;
-        string out_pattern("radishes galore!"), in_pattern;
+        utf8 out_include_pattern("radishes galore!"), in_include_pattern;
+        utf8 out_exclude_pattern("turnips galore!"), in_exclude_pattern;
 
-        out_cmd.write_anonymous_cmd(out_role, out_pattern, out_key);
+        out_cmd.write_anonymous_cmd(out_role, out_include_pattern, out_exclude_pattern, out_key);
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
-        in_cmd.read_anonymous_cmd(in_role, in_pattern, in_key);
+        in_cmd.read_anonymous_cmd(in_role, in_include_pattern, in_exclude_pattern, in_key);
         BOOST_CHECK(in_key == out_key);
+        BOOST_CHECK(in_include_pattern == out_include_pattern);
+        BOOST_CHECK(in_exclude_pattern == out_exclude_pattern);
         BOOST_CHECK(in_role == out_role);
         L(F("anonymous_cmd test done, buffer was %d bytes\n") % buf.size());
       }
@@ -706,19 +709,22 @@ test_netcmd_functions()
         // total cheat, since we don't actually verify that rsa_oaep_sha_data
         // is sensible anywhere here...
         rsa_oaep_sha_data out_key("nonce start my heart"), in_key;
-        string out_signature(raw_sha1("burble") + raw_sha1("gorby")), out_pattern("radishes galore!"), 
-          in_signature, in_pattern;
+        string out_signature(raw_sha1("burble") + raw_sha1("gorby")), in_signature;
+        utf8 out_include_pattern("radishes galore!"), in_include_pattern;
+        utf8 out_exclude_pattern("turnips galore!"), in_exclude_pattern;
 
-        out_cmd.write_auth_cmd(out_role, out_pattern, out_client, out_nonce1, 
-                               out_key, out_signature);
+        out_cmd.write_auth_cmd(out_role, out_include_pattern, out_exclude_pattern
+                               , out_client, out_nonce1, out_key, out_signature);
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
-        in_cmd.read_auth_cmd(in_role, in_pattern, in_client,
-                             in_nonce1, in_key, in_signature);
+        in_cmd.read_auth_cmd(in_role, in_include_pattern, in_exclude_pattern,
+                             in_client, in_nonce1, in_key, in_signature);
         BOOST_CHECK(in_client == out_client);
         BOOST_CHECK(in_nonce1 == out_nonce1);
         BOOST_CHECK(in_key == out_key);
         BOOST_CHECK(in_signature == out_signature);
         BOOST_CHECK(in_role == out_role);
+        BOOST_CHECK(in_include_pattern == out_include_pattern);
+        BOOST_CHECK(in_exclude_pattern == out_exclude_pattern);
         L(F("auth_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
