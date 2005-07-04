@@ -85,7 +85,7 @@
 #
 # 2005-06-26 Version 0.1.11 Henry@BigFoot.de
 # No double Date/Branch/Author with CR in selection list.
-# Short Author and no branche as default in list.
+# Short Author and no branch as default.
 # Set default revision for first selection to head.
 # "automate ancestors" without cut (have only one field).
 # Internal function for "automate ancestors" with depth limit. Speedup.
@@ -94,12 +94,17 @@
 #  6.067s  2.920s   3.120s  automate parents as loop, depth 30
 #  4.226s  2.280s   1.910s  automate parents as loop, depth 20
 #  1.384s  0.680s   0.700s  automate parents as loop, depth 10
+#
+# 2005-06-29 Version 0.1.12 Henry@BigFoot.de
+# Automatic author color.
+# Date have inverse color for last selection.
+# Expand revision after input, if not 40 chars. (parents don't allow short rev)
 
 # Known Bugs / ToDo-List:
 # * For Monotone Version >0.19  s/--depth/--last/, remove the fallback
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.11"
+VERSION="0.1.12"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -230,7 +235,8 @@ do_clear_cache()
 do_clear_on_exit()
 {
     rm -f $TEMPFILE.branches $TEMPFILE.ancestors $TEMPFILE.toposort \
-      $TEMPFILE.action-select $TEMPFILE.menu $TEMPFILE.input
+      $TEMPFILE.action-select $TEMPFILE.menu $TEMPFILE.input \
+      $TEMPFILE.ncolor $TEMPFILE.c
 
     if [ "$CACHE" != "1" ]
     then
@@ -275,7 +281,7 @@ fill_date_key()
 {
     local in_file=$1
     local out_file=$2
-    local short_hash dat bra aut log lineno
+    local short_hash dat bra aut log lineno color count
 
     line_count=`wc -l < $in_file`
     if [ "$line_count" -eq 0 ]
@@ -299,35 +305,36 @@ fill_date_key()
 
 	short_hash=`echo $hash | cut -c 1-$HASH_TRIM`
 
-	# get all certs of revision
-	monotone --db=$DB list certs $hash > $TEMPFILE.c.tmp
+	# get all certs of revision, check cached first
+	tfc=$TEMPFILE.c
+	monotone --db=$DB list certs $hash > $tfc
 		
 	# Date format
 	case $FORMAT_DATE in
 	    F) # 2005-12-31T23:59:59
 		dat=`sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : (.+)$/ \1/p' \
-		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
+		    '/^Name  : date/,+1s/Value : (.+)$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
 		;;
 	    L) # 2005-12-31 23:59
 		dat=`sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : (.{10})T(.{5}).+$/ \1 \2/p' \
-		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
+		    '/^Name  : date/,+1s/Value : (.{10})T(.{5}).+$/\1 \2 /p' \
+		    < $tfc | sed -n -e '1p'`
 		;;
 	    D) # 2005-12-31
 		dat=`sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : (.+)T.+$/ \1/p' \
-		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
+		    '/^Name  : date/,+1s/Value : (.+)T.+$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
 		;;
 	    S) # 12-31 23:59
 		dat=`sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : .{4}-(.+)T(.{5}).+$/ \1 \2/p' \
-		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
+		    '/^Name  : date/,+1s/Value : .{4}-(.+)T(.{5}).+$/\1 \2 /p' \
+		    < $tfc | sed -n -e '1p'`
 		;;
 	    T) # 23:59:59
 		dat=`sed -n -r -e \
-		    '/^Name  : date/,+1s/Value : .{10}T(.+{8})$/ \1/p' \
-		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
+		    '/^Name  : date/,+1s/Value : .{10}T(.+{8})$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
 		;;
 	esac
 
@@ -335,13 +342,13 @@ fill_date_key()
 	case $FORMAT_BRANCH in
 	    F) # full
 		bra=`sed -n -r -e \
-		    '/^Name  : branch/,+1s/Value :(.+)$/\1/p' \
-		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
+		    '/^Name  : branch/,+1s/Value :(.+)$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
 		;;
 	    S) # short
 		bra=`sed -n -r -e \
-		    '/^Name  : branch/,+1s/Value :.*\.([^\.]+)$/ \1/p' \
-		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
+		    '/^Name  : branch/,+1s/Value :.*\.([^\.]+)$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
 		;;
 	esac
 
@@ -350,12 +357,12 @@ fill_date_key()
 	    F) # full
 		aut=`sed -n -r -e \
 		    '/^Name  : author/,+1s/Value : (.+)$/\1/p' \
-		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
+		    < $tfc | sed -n -e '1p'`
 		;;
 	    S) # short
 		aut=`sed -n -r -e \
 		    '/^Name  : author/,+1s/Value : (.{1,10}).*@.+$/\1/p' \
-		    < $TEMPFILE.c.tmp | sed -n -e '1p'`
+		    < $tfc | sed -n -e '1p'`
 		;;
 	esac
 
@@ -364,24 +371,47 @@ fill_date_key()
 	    F) # full     TAB here ----v
 		log=`sed -n -r -e "y/\"	/' /" -e \
 		    '/^Name  : changelog/,+1s/Value : (.+)$/ \1/p' \
-		    < $TEMPFILE.c.tmp`
+		    < $tfc`
 		;;
 	    S) # short
 		log=`sed -n -r -e "y/\"	/' /" -e \
 		    '/^Name  : changelog/,+1s/Value : (.{1,20}).*$/ \1/p' \
-		    < $TEMPFILE.c.tmp`
+		    < $tfc`
 		;;
 	esac
 
-	# Coloring?
+	# Author coloring?
 	if [ -n "$FORMAT_COLOR" -a "$FORMAT_AUTHOR" != "N" ]
 	then
 	    # Bug in dialog: Don't allow empty string after \\Zn
 	    test -z "$log" && log=" "
-	    echo "$short_hash \"$dat$bra $FORMAT_COLOR$aut\\Zn$log\"" \
+	    if [ "$last_aut" != "$aut" ]
+	    then
+	     # Automatic color by author?
+	     if [ "$FORMAT_COLOR" = "A" ]
+	     then
+		color=`grep -n "$aut" $TEMPFILE.ncolor | cut -d ':' -f 1`
+		if [ -z "$color" ]
+		then
+		    color=$(( `wc -l < $TEMPFILE.ncolor` % 16 + 1 ))
+		    echo "$aut" >> $TEMPFILE.ncolor
+		fi
+
+		if [ $color -le 8 ]
+		then
+		    color="\\Zb\\Z$color"
+		else
+		    color="\\Z$color"
+		fi
+	     else
+		color="$FORMAT_COLOR"
+	     fi
+	     last_aut="$aut"
+	    fi
+	    echo "$short_hash \"$dat$bra\\ZR$color$aut\\Zn$log\"" \
 		>> $out_file
 	else
-	    echo "$short_hash \"$dat$bra $aut$log\"" >> $out_file
+	    echo "$short_hash \"$dat$bra\\ZR$aut$log\"" >> $out_file
 	fi
     done | dialog --gauge "$line_count certs reading" 6 60
     rm $TEMPFILE.c.tmp
@@ -671,6 +701,10 @@ do_revision_sel()
     # Building revisions list
     if [ ! -f $TEMPFILE.certs.$BRANCH -o $DB -nt $TEMPFILE.certs.$BRANCH ]
     then
+	# Name color new
+	rm -f $TEMPFILE.ncolor
+	touch $TEMPFILE.ncolor
+
 	echo "Reading ancestors ($HEAD)"
 	echo "$HEAD" > $TEMPFILE.ancestors
 
@@ -733,13 +767,21 @@ do_revision_sel()
 	SHORT_REV=`cat $TEMPFILE.revision-select`
 
 	# Remove old marker, set new marker
-	sed -r \
-	  -e "s/^(.+\")\*(.+)\$/\1 \2/" \
-	  -e "s/^($SHORT_REV.* \") (.+)\$/\1\*\2/" \
-	  < $TEMPFILE.certs.$BRANCH > $TEMPFILE.certs.$BRANCH.base
-	mv $TEMPFILE.certs.$BRANCH.base $TEMPFILE.certs.$BRANCH
+	if [ "$FORMAT_DATE" = "N" -a "$FORMAT_BRANCH" = "N" ]
+	then
+	    sed -r \
+		-e "s/^(.+\")\*(.+)\$/\1\2/" \
+		-e "s/^($SHORT_REV.* \")(.+)\$/\1\*\2/" \
+		< $TEMPFILE.certs.$BRANCH > $TEMPFILE.marker
+	else
+	    sed -r \
+		-e "s/^(.+\")\\\\Zr(.+)\$/\1\2/" \
+		-e "s/^($SHORT_REV.* \")(.+)\$/\1\\\\Zr\2/" \
+		< $TEMPFILE.certs.$BRANCH > $TEMPFILE.marker
+	fi
+	mv $TEMPFILE.marker $TEMPFILE.certs.$BRANCH
 
-	# Error, on "monotone automate parent XXXXXX", if short revision.  :-(
+	# Error, on "monotone automate parents XXXXXX", if short revision.  :-(
 	# Expand revision here, if short revision (is alway short now)
 	REVISION=`monotone --db=$DB complete revision $SHORT_REV`
 
@@ -866,6 +908,7 @@ do_config()
 		    dialog --colors \
 		     --default-item "$FORMAT_COLOR" \
 		     --menu "Selecet color for author" 0 0 0 \
+			"A" "Automatic color" \
 			"\\Z0" "\Z0Color\Zn 0" \
 			"\\Z1" "\Z1Color\Zn 1" \
 			"\\Z2" "\Z2Color\Zn 2" \
@@ -1001,6 +1044,13 @@ do
 	  2> $TEMPFILE.input
 	then
 	    REVISION=`cat $TEMPFILE.input`
+
+	    if [ `echo "$REVISION" | wc -L` -lt 40 ]
+	    then
+		# Error, on "monotone automate parents XXXXXX", if short revision.  :-(
+		# Expand revision here, if short revision
+		REVISION=`monotone --db=$DB complete revision $REVISION`
+	    fi
 
 	    do_action_sel
 	    do_revision_sel
