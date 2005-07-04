@@ -1,3 +1,8 @@
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (process_netsync_args, push, pull, sync, serve):
+	Adapt for patterns instead of regexen; slight refactoring too.
+
 2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netsync.cc: Finally self-consistent.
