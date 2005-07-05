@@ -12,10 +12,12 @@
                   net.venge.monotone", you should instead say
                   "monotone pull net.venge.monotone*".  This may
                   require shell-quoting.
-                - 'get_netsync_{read,anonymous_read,write}_permitted'
-                  hooks now take a branch argument instead of a
-                  collection, and will be called for each branch that
-                  a client requests.
+                - 'get_netsync_write_permitted' hooks must be changed
+                  to take only one argument, the 'identity'.
+                  'get_netsync_{read,anonymous_read}_permitted' hooks
+                  now take a branch argument instead of a collection,
+                  and will be called for each branch that a client
+                  requests.
                 - 0.19 clients cannot talk to 0.20 servers, and vice-versa.
                 - special thanks to Timothy Brownawell
                   <tbrownaw@gmail.com>, Richard Levitte
