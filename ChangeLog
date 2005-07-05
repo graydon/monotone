@@ -1,3 +1,9 @@
+2005-07-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.cc (combine_and_check_globish): Don't add unnecessary
+	{}'s.
+	* tests/t_netsync_globs.at, testsuite.at: New test.
+
 2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
 
 	* netcmd.cc (do_netcmd_roundtrip, test_netcmd_mac): Update for new

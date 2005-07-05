@@ -100,10 +100,11 @@ checked_globish_to_regex(std::string const & glob, std::string & regex)
 }
 
 void
-combine_and_check_globish(std::set<utf8> const &patterns, utf8 & pattern)
+combine_and_check_globish(std::set<utf8> const & patterns, utf8 & pattern)
 {
   std::string p;
-  p += '{';
+  if (patterns.size() > 1)
+    p += '{';
   bool first = true;
   for (std::set<utf8>::const_iterator i = patterns.begin(); i != patterns.end(); ++i)
     {
@@ -115,7 +116,8 @@ combine_and_check_globish(std::set<utf8> const &patterns, utf8 & pattern)
       first = false;
       p += (*i)();
     }
-  p += '}';
+  if (patterns.size() > 1)
+    p += '}';
   pattern = utf8(p);
 }
 
