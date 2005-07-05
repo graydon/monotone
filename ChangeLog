@@ -1,5 +1,9 @@
 2005-07-05  Nathaniel Smith  <njs@codesourcery.com>
 
+	* NEWS: Add more explicit note on how to upgrade.
+
+2005-07-05  Nathaniel Smith  <njs@codesourcery.com>
+
 	* NEWS: First cut at 0.20 release notes.
 
 2005-07-03  Matthew Gregan  <kinetik@orcon.net.nz>

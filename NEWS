@@ -87,6 +87,11 @@
         - improved zsh completion in contrib/monotone.zsh_completion,
           by Joel Reed <joelwreed@comcast.com>.
 
+                - upgrading from 0.19: database and working copies are
+                  fully compatible.  netsync clients and servers need
+                  to be upgraded together, as described above.  the
+                  many ui changes may require script updates.
+
 Tue May  3 00:31:37 PDT 2005
 
         0.19 release.  performance improvements, features, ui
