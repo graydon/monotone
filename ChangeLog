@@ -1,3 +1,98 @@
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_netsync_defaults.at: Update for new var names.  All
+	tests now pass.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.cc (hook_get_netsync_write_permitted): Fix typo.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.cc (globish_matcher_test): Add check for {foo} (no
+	commas).
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.cc (checked_globish_to_regex): Make the special case for
+	the empty pattern, actually work.  Unit tests now pass.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc (test_netcmd_functions): Update for new anonymous/auth
+	packet formats.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi, monotone.1: Update for new glob stuff.
+	* commands.cc (process_netsync_args, push, pull, sync, serve):
+	'serve' always requires arguments, rather than falling back on db
+	defaults.
+	
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (process_netsync_args, push, pull, sync, serve):
+	Adapt for patterns instead of regexen; slight refactoring too.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Finally self-consistent.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.hh (run_netsync_protocol): Fix prototype.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.hh: Document the empty pattern as never matching.
+	* globish.cc (checked_globish_to_regex): Implement it.
+	(globish_matcher_test): Check it.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network Service, Hooks):
+	* testsuite.at: 
+	* tests/t_netsync_permissions.at: 
+	* tests/t_netsync_single.at: Update to match new
+	get_netsync_write_permitted definition.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.{cc,hh} (hook_get_netsync_write_permitted): Don't take a
+	branch argument; write permission is now all or none.  (It really
+	was before anyway...)
+	* netsync.cc: Update accordingly.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: More updating for pattern stuff; getting there...
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Update low-level functions to use include_pattern
+	and exclude_pattern.
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.{cc,hh} (read_anonymous_cmd, write_anonymous_cmd)
+	(read_auth_cmd, write_auth_cmd): Take include_pattern and
+	exclude_pattern arguments.
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES): Add them.
+	* transforms.{cc,hh}: Remove glob-related stuff.
+	* unit_tests.{cc,hh}: Call globish unit tests.
+
+2005-06-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* transforms.cc (glob_to_regex, globs_to_regex, regexes_to_regex):
+	Choose "regex" as standard spelling.  Clean up code, add code for
+	handling sets, start improving tests (don't currently pass).
+	* transforms.hh (glob_to_regex, globs_to_regex, regexes_to_regex):
+	Prototype.
+
 2005-06-28  Matt Johnston  <matt@ucc.asn.au>
 
 	* constants.cc: increase db_version_cache_sz to 7 MB

@@ -49,6 +49,7 @@
 #include "selectors.hh"
 #include "annotate.hh"
 #include "options.hh"
+#include "globish.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -1976,22 +1977,23 @@ CMD(reindex, "network", "",
 
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
-static const var_key default_pattern_key(var_domain("database"),
-                                            var_name("default-pattern"));
+static const var_key default_include_pattern_key(var_domain("database"),
+                                                 var_name("default-include-pattern"));
+static const var_key default_exclude_pattern_key(var_domain("database"),
+                                                 var_name("default-exclude-pattern"));
 
 static void
-process_netsync_client_args(std::string const & name,
-                            std::vector<utf8> const & args,
-                            utf8 & addr, std::vector<utf8> & patterns,
-                            app_state & app)
+process_netsync_args(std::string const & name,
+                     std::vector<utf8> const & args,
+                     utf8 & addr,
+                     utf8 & include_pattern, utf8 & exclude_pattern,
+                     bool use_defaults,
+                     app_state & app)
 {
-  if (args.size() > 2)
-    throw usage(name);
-
   if (args.size() >= 1)
     {
       addr = idx(args, 0);
-      if (!app.db.var_exists(default_server_key))
+      if (use_defaults && !app.db.var_exists(default_server_key))
         {
           P(F("setting default server to %s\n") % addr);
           app.db.set_var(default_server_key, var_value(addr()));
@@ -1999,6 +2001,7 @@ process_netsync_client_args(std::string const & name,
     }
   else
     {
+      N(use_defaults, F("no hostname given"));
       N(app.db.var_exists(default_server_key),
         F("no server given and no default server set"));
       var_value addr_value;
@@ -2006,74 +2009,73 @@ process_netsync_client_args(std::string const & name,
       addr = utf8(addr_value());
       L(F("using default server address: %s\n") % addr);
     }
-  // NB: even though the netsync code wants a vector of patterns, in fact
-  // this only works for the server; when we're a client, our vector must have
-  // length exactly 1.
-  utf8 pattern;
   if (args.size() >= 2)
     {
-      pattern = idx(args, 1);
-      if (!app.db.var_exists(default_pattern_key))
+      std::set<utf8> patterns(args.begin() + 1, args.end());
+      combine_and_check_globish(patterns, include_pattern);
+      if (use_defaults && !app.db.var_exists(default_include_pattern_key))
         {
-          P(F("setting default regex pattern to %s\n") % pattern);
-          app.db.set_var(default_pattern_key, var_value(pattern()));
+          P(F("setting default branch pattern to %s\n") % include_pattern);
+          app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
         }
     }
   else
     {
-      N(app.db.var_exists(default_pattern_key),
-        F("no regex pattern given and no default pattern set"));
+      N(use_defaults, F("no branch pattern given"));
+      N(app.db.var_exists(default_include_pattern_key),
+        F("no branch pattern given and no default pattern set"));
       var_value pattern_value;
-      app.db.get_var(default_pattern_key, pattern_value);
-      pattern = utf8(pattern_value());
-      L(F("using default regex pattern: %s\n") % pattern);
+      app.db.get_var(default_include_pattern_key, pattern_value);
+      include_pattern = utf8(pattern_value());
+      L(F("using default branch pattern: %s\n") % include_pattern);
     }
-  patterns.push_back(pattern);
+
+  // For now, don't handle excludes.
+  exclude_pattern = utf8("");
 }
 
-CMD(push, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
+CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
     "push branches matching REGEX to netsync server at ADDRESS", OPT_NONE)
 {
-  utf8 addr;
-  vector<utf8> patterns;
-  process_netsync_client_args(name, args, addr, patterns, app);
+  utf8 addr, include_pattern, exclude_pattern;
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  run_netsync_protocol(client_voice, source_role, addr, patterns, app);  
+  run_netsync_protocol(client_voice, source_role, addr,
+                       include_pattern, exclude_pattern, app);  
 }
 
-CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
+CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
     "pull branches matching REGEX from netsync server at ADDRESS", OPT_NONE)
 {
-  utf8 addr;
-  vector<utf8> patterns;
-  process_netsync_client_args(name, args, addr, patterns, app);
+  utf8 addr, include_pattern, exclude_pattern;
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   if (app.signing_key() == "")
     W(F("doing anonymous pull\n"));
   
-  run_netsync_protocol(client_voice, sink_role, addr, patterns, app);  
+  run_netsync_protocol(client_voice, sink_role, addr,
+                       include_pattern, exclude_pattern, app);  
 }
 
-CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
+CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
     "sync branches matching REGEX with netsync server at ADDRESS", OPT_NONE)
 {
-  utf8 addr;
-  vector<utf8> patterns;
-  process_netsync_client_args(name, args, addr, patterns, app);
+  utf8 addr, include_pattern, exclude_pattern;
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  run_netsync_protocol(client_voice, source_and_sink_role, addr, patterns,
-                       app);  
+  run_netsync_protocol(client_voice, source_and_sink_role, addr,
+                       include_pattern, exclude_pattern, app);  
 }
 
-CMD(serve, "network", "ADDRESS[:PORTNUMBER] REGEX ...",
+CMD(serve, "network", "ADDRESS[:PORTNUMBER] PATTERN ...",
     "listen on ADDRESS and serve the specified branches to connecting clients", OPT_PIDFILE)
 {
   if (args.size() < 2)
@@ -2089,9 +2091,10 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] REGEX ...",
     F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
   require_password(key, app);
 
-  utf8 addr(idx(args,0));
-  vector<utf8> patterns(args.begin() + 1, args.end());
-  run_netsync_protocol(server_voice, source_and_sink_role, addr, patterns, app);  
+  utf8 addr, include_pattern, exclude_pattern;
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, false, app);
+  run_netsync_protocol(server_voice, source_and_sink_role, addr,
+                       include_pattern, exclude_pattern, app);  
 }
 
 

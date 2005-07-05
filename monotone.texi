@@ -1641,7 +1641,7 @@ function get_netsync_read_permitted (branch, identity)
   return false
 end
 
-function get_netsync_write_permitted (branch, identity)
+function get_netsync_write_permitted (identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
   return false
@@ -1660,22 +1660,24 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
+$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
 This command sets up a single listener loop on the host
 @code{jim-laptop.juicebot.co.jp}, serving all branches matching
-@code{jp.co.juicebot.jb7.*}. This will naturally
-include the @code{jp.co.juicebot.jb7} branch, and any sub-branches.
+@code{jp.co.juicebot.jb7*}. This will naturally include the
+@code{jp.co.juicebot.jb7} branch, and any sub-branches.  The quotes
+around @code{"jp.co.juicebot.jb7*"} are there to protect the @code{*}
+from expansion by the shell; they have no meaning to monotone.
 
 Now Abe decides he wishes to fetch Jim's code. To do this he issues
 the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
-monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
+monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: rebuilding merkle trees ...
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1820,8 +1822,8 @@ Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
-monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
+$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: rebuilding merkle trees ...
 monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 2] [rcerts: 8] 
 monotone: connecting to jim-laptop.juicebot.co.jp
@@ -1835,8 +1837,8 @@ Jim's:
 
 @smallexample
 @group
-$ monotone --db=beth.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
-monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
+$ monotone --db=beth.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: rebuilding merkle trees ...
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1887,8 +1889,8 @@ And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7.*"
-monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
+$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: rebuilding merkle trees ...
 monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 3] [rcerts: 12] 
 monotone: connecting to jim-laptop.juicebot.co.jp
@@ -2641,9 +2643,9 @@ Contains database-global configuration information.  Defined names are:
 @item default-server
 The default server for netsync operations to use.  Automatically set
 by first use of netsync.
-@item default-pattern
-The default regex pattern for netsync operations to use.  Automatically
-set by first use of netsync.
+@item default-include-pattern
+The default branch glob pattern for netsync operations to use.
+Automatically set by first use of netsync.
 @end table
 
 @item known-servers
@@ -3047,7 +3049,7 @@ $ cvs -d $CVSROOT checkout -r 1.2
 @tab
 @smallexample
 @group
-$ monotone pull www.foo.com com.foo.wobbler
+$ monotone pull www.foo.com com.foo.wobbler*
 $ monotone checkout --revision=fe37 wobbler
 @end group
 @end smallexample
@@ -3056,7 +3058,7 @@ $ monotone checkout --revision=fe37 wobbler
 The CVS command contacts a network server, retrieves a revision, and
 stores it in your working copy. There are two cosmetic differences
 with the monotone command: remote databases are specified by hostnames
-and regexes, and revisions are denoted by @sc{sha1} values (or
+and globs, and revisions are denoted by @sc{sha1} values (or
 selectors).
 
 There is also one deep difference: pulling revisions into your
@@ -3080,7 +3082,7 @@ $ cvs commit -m "log message"
 @smallexample
 @group
 $ monotone commit --message="log message"
-$ monotone push www.foo.com com.foo.wobbler
+$ monotone push www.foo.com com.foo.wobbler*
 @end group
 @end smallexample
 @end multitable
@@ -3102,7 +3104,7 @@ $ cvs update -d
 @tab
 @smallexample
 @group
-$ monotone pull www.foo.com com.foo.wobbler
+$ monotone pull www.foo.com com.foo.wobbler*
 $ monotone merge
 $ monotone update
 @end group
@@ -3653,10 +3655,10 @@ to date.
 @section Network
 
 @ftable @command
-@item monotone serve @var{address}[:@var{port}] @var{regex} [...]
-@itemx monotone pull [@var{address}[:@var{port}] [@var{regex}]]
-@itemx monotone push [@var{address}[:@var{port}] [@var{regex}]]
-@itemx monotone sync [@var{address}[:@var{port}] [@var{regex}]]
+@item monotone serve @var{address}[:@var{port}] @var{glob} [...]
+@itemx monotone pull [@var{address}[:@var{port}] [@var{glob} [...]]]
+@itemx monotone push [@var{address}[:@var{port}] [@var{glob} [...]]]
+@itemx monotone sync [@var{address}[:@var{port}] [@var{glob} [...]]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -3666,25 +3668,25 @@ server) and the other peer (the client) to connect to the server.
 
 The network @var{address} specified in each case should be the same: a
 host name to listen on, or connect to, optionally followed by a colon
-and a port number. The @var{regex} parameter indicates a set of
-branches to exchange; every branch which matches @var{regex} exactly
+and a port number. The @var{glob} parameters indicate a set of
+branches to exchange; every branch which matches a @var{glob} exactly
 will be indexed and made available for synchronization.
 
-The @command{serve} command can take multiple regexes, and it will
-make available all branches matching any of the listed regexes.  Different
-permissions can be applied to each branch; see the hooks
+The @command{serve} command can take multiple globs, and it will make
+available all branches matching any of them.  Different permissions can
+be applied to each branch; see the hooks
 @code{get_netsync_read_permitted}, @code{get_netsync_write_permitted},
-and @code{get_netsync_anonymous_read_permitted}, all of which take a
-@var{branch} argument (see @ref{Hook Reference}).
+and @code{get_netsync_anonymous_read_permitted} (see @ref{Hook
+Reference}).
 
-For example, supposing Bob and Alice wish to synchronize their
+For example, perhaps Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
 branches. Supposing Alice's computer has hostname
 @code{alice.someisp.com}, then Alice might run:
 
 @smallexample
 @group
-$ monotone serve alice.someisp.com "net.venge.monotone.*"
+$ monotone serve alice.someisp.com "net.venge.monotone*"
 @end group
 @end smallexample
 
@@ -3692,19 +3694,19 @@ And Bob might run
 
 @smallexample
 @group
-$ monotone sync alice.someisp.com "net.venge.monotone.*"
+$ monotone sync alice.someisp.com "net.venge.monotone*"
 @end group
 @end smallexample
 
 When the operation completes, all branches matching
-@code{net.venge.monotone.*} will be synchronized between Alice and Bob's
+@code{net.venge.monotone*} will be synchronized between Alice and Bob's
 databases.
 
 The @command{pull}, @command{push}, and @command{sync} commands only
-require you pass @var{address} and @var{regex} the first time you
-use one of them; monotone will memorize this use and in the future
-default to the same server and regex.  For instance, if Bob wants
-to @command{sync} with Alice again, he can simply run:
+require you pass @var{address} and @var{glob} the first time you use one
+of them; monotone will memorize this use and in the future default to
+the same server and glob.  For instance, if Bob wants to @command{sync}
+with Alice again, he can simply run:
 
 @smallexample
 @group
@@ -3713,17 +3715,25 @@ $ monotone sync
 @end smallexample
 
 Of course, he can still @command{sync} with other people and other
-branches by passing an address or address plus regex on the command
+branches by passing an address or address plus globs on the command
 line; this will not affect his default affinity for Alice.  If you ever
 do want to change your defaults, use @code{monotone unset database
-default-server} or @code{monotone unset database default-pattern};
-these will clear your defaults, and cause them to be reset to the next
-person you netsync with.
+default-server} or @code{monotone unset database
+default-include-pattern}; these will clear your defaults, and cause them
+to be reset to the next person you netsync with.
 
 If a @option{--pid-file} option is specified, the command
 @command{serve} will create the specified file and record the process
 identifier of the server in the file.  This file can then be read to
 identify specific monotone server processes.
+
+The syntax for patterns is very simple.  @code{*} matches 0 or more
+arbitrary characters.  @code{?} matches exactly 1 arbitrary character.
+@code{@{foo,bar,baz@}} matches ``foo'', or ``bar'', or ``baz''.  These
+can be combined arbitrarily.  A backslash, @code{\}, can be prefixed to
+any character, to match exactly that character --- this might be useful
+in case someone, for some odd reason, decides to put a ``*'' into their
+branch name.
 
 @end ftable
 
@@ -5477,16 +5487,12 @@ read access. There is no corresponding anonymous write
 access hook. This hook has no default definition, therefore the
 default behavior is to deny all anonymous reads.
 
-@item get_netsync_write_permitted (@var{branch}, @var{identity})
+@item get_netsync_write_permitted (@var{identity})
 
-Returns @code{true} if a peer authenticated as key @var{identity}
-should be allowed to write into your database certs, revisions,
-manifests, and files associated with @var{branch}; otherwise @code{false}.
-This hook has no default definition, therefore the default behavior is to deny all writes.
-
-Note that if write access is granted for one branch it is effectively
-granted for the entire database, as there is currently no way to
-restrict that access to only that branch.
+Returns @code{true} if a peer authenticated as key @var{identity} should
+be allowed to write into your database certs, revisions, manifests, and
+files; otherwise @code{false}.  This hook has no default definition,
+therefore the default behavior is to deny all writes.
 
 Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
@@ -6729,20 +6735,20 @@ Update working copy.
 @item @b{refresh_inodeprints}
 Turn on inodeprints mode, and force a cache refresh.
 
-@item @b{push} @i{<host> <regex>}
-Push contents of branches matching @i{<regex>} to database on @i{<host>}
+@item @b{push} @i{<host> <glob>}
+Push contents of branches matching @i{<glob>} to database on @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{pull} @i{<host> <regex>}
-Pull contents of branches matching @i{<regex>} from database on @i{<host>}
+@item @b{pull} @i{<host> <glob>}
+Pull contents of branches matching @i{<glob>} from database on @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{sync} @i{<host> <regex>}
-Sync contents of branches matching @i{<regex>} with database on @i{<host>}
+@item @b{sync} @i{<host> <glob>}
+Sync contents of branches matching @i{<glob>} with database on @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{serve} @i{<host> <regex>}
-Serve contents of branches matching @i{<regex>} at network address @i{<host>}
+@item @b{serve} @i{<host> <glob>}
+Serve contents of branches matching @i{<glob>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
 @item @b{automate} @i{(interface_version|heads|ancestors|attributes|parents|descendents|children|graph|erase_ancestors|toposort|ancestry_difference|leaves|inventory|stdio|certs|select)}

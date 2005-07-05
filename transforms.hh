@@ -193,6 +193,4 @@ void externalize_var_domain(var_domain const & d, external & ext);
 // line-ending conversion
 void line_end_convert(std::string const & linesep, std::string const & src, std::string & dst);
 
-
-
 #endif // __TRANSFORMS_HH__
