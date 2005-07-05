@@ -37,12 +37,12 @@ class config:
         #    return "monotone"
         return "FIXME"
 
-    # Add entries of the form "server address": "collection name" to get
+    # Add entries of the form ("server address", "pattern") to get
     # this script to watch the given collections at the given monotone
     # servers.
-    watch_list = {
-        #"venge.net": "net.venge.monotone"
-        }
+    watch_list = [
+        #("venge.net", "net.venge.monotone"),
+        ]
 
     # If this is non-None, then the web interface will make any file 'foo' a
     # link to 'repository_uri/foo'.
@@ -261,7 +261,7 @@ def main(progname, args):
         c = config()
         m = Monotone(c.monotone_exec, os.path.join(state_dir, "database.db"))
         m.ensure_db_exists()
-        for server, collection in c.watch_list.items():
+        for server, collection in c.watch_list:
             m.pull(server, collection)
         lf = LeafFile(os.path.join(state_dir, "leaves"))
         new_leaves = m.leaves()
