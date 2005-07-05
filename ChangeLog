@@ -1,5 +1,9 @@
 2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
 
+	* lua.cc (hook_get_netsync_write_permitted): Fix typo.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
 	* globish.cc (globish_matcher_test): Add check for {foo} (no
 	commas).
 

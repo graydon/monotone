@@ -1077,7 +1077,7 @@ lua_hooks::hook_get_netsync_write_permitted(rsa_keypair_id const & identity)
   exec_ok = Lua(st)
     .func("get_netsync_write_permitted")
     .push_str(identity())
-    .call(2,1)
+    .call(1,1)
     .extract_bool(permitted)
     .ok();
 
