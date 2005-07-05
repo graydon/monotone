@@ -140,6 +140,210 @@
 	in $EDITOR, otherwise use emacs.
 	* revision.cc (check_sane_history): Remove stale comment.
 
+2005-07-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.cc (combine_and_check_globish): Don't add unnecessary
+	{}'s.
+	* tests/t_netsync_globs.at, testsuite.at: New test.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc (do_netcmd_roundtrip, test_netcmd_mac): Update for new
+	chained_hmac object.
+	* constants.hh (netsync_key_initializer): Update comment.
+	* hmac.hh (hmac_length): Expose length of MACs.
+	* hmac.cc: I() that it matches what CryptoPP wants to give.
+	* netcmd.cc: I() that it matches the length hard-coded into the
+	netsync protocol.
+	* vocab.cc (verify(netsync_hmac_value)): Fix error message.
+	
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_netsync_defaults.at: Update for new var names.  All
+	tests now pass.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.cc (hook_get_netsync_write_permitted): Fix typo.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.cc (globish_matcher_test): Add check for {foo} (no
+	commas).
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.cc (checked_globish_to_regex): Make the special case for
+	the empty pattern, actually work.  Unit tests now pass.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc (test_netcmd_functions): Update for new anonymous/auth
+	packet formats.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi, monotone.1: Update for new glob stuff.
+	* commands.cc (process_netsync_args, push, pull, sync, serve):
+	'serve' always requires arguments, rather than falling back on db
+	defaults.
+	
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (process_netsync_args, push, pull, sync, serve):
+	Adapt for patterns instead of regexen; slight refactoring too.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Finally self-consistent.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.hh (run_netsync_protocol): Fix prototype.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.hh: Document the empty pattern as never matching.
+	* globish.cc (checked_globish_to_regex): Implement it.
+	(globish_matcher_test): Check it.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network Service, Hooks):
+	* testsuite.at: 
+	* tests/t_netsync_permissions.at: 
+	* tests/t_netsync_single.at: Update to match new
+	get_netsync_write_permitted definition.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.{cc,hh} (hook_get_netsync_write_permitted): Don't take a
+	branch argument; write permission is now all or none.  (It really
+	was before anyway...)
+	* netsync.cc: Update accordingly.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: More updating for pattern stuff; getting there...
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Update low-level functions to use include_pattern
+	and exclude_pattern.
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.{cc,hh} (read_anonymous_cmd, write_anonymous_cmd)
+	(read_auth_cmd, write_auth_cmd): Take include_pattern and
+	exclude_pattern arguments.
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES): Add them.
+	* transforms.{cc,hh}: Remove glob-related stuff.
+	* unit_tests.{cc,hh}: Call globish unit tests.
+
+2005-06-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* transforms.cc (glob_to_regex, globs_to_regex, regexes_to_regex):
+	Choose "regex" as standard spelling.  Clean up code, add code for
+	handling sets, start improving tests (don't currently pass).
+	* transforms.hh (glob_to_regex, globs_to_regex, regexes_to_regex):
+	Prototype.
+
+2005-06-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* constants.cc: increase db_version_cache_sz to 7 MB
+	* netsync.cc: use a deque<string> rather than a single
+	string buffer for outbuf.
+	* netsync.cc (arm): only queue data when there is
+	available space
+	* AUTHORS: added Eric Anderson
+
+2005-06-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* transforms.hh: remove extraneous #ifdef
+	* hmac.cc, hmac.hh: actually add them
+
+2005-06-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* netcmd.cc (netcmd::read, netcmd::write): change to using a HMACs 
+	chained by including the previous HMAC in the input data, rather
+	than altering the key each time.
+	* netcmd.cc ({read,write}_{data,delta}_cmd): use encode_gzip/decode_gzip
+	  rather than raw xform.
+	* hmac.{cc,hh}: new chained_hmac abstraction
+	* Makefile.in: add them
+	* netsync.cc: each session keeps a chained_hmac for read/write
+	* transforms.hh: add a string variant for encode_gzip
+
+2005-06-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Tweak comment.
+
+2005-06-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Ethan Blanton <elb@elitists.net>.
+
+2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.hh (netcmd::read, netcmd::write): Don't have defaults for
+	key/hmac arguments.
+	* netcmd.cc (do_netcmd_roundtrip): New function.
+	(test_netcmd_functions): Use it.  Also, make work with hmac
+	changes.
+	(test_netcmd_mac): New test.
+	(add_netcmd_tests): Call it.
+
+2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc (read): Remove unused variable.
+	* netsync.cc (call_server, process)
+	(arm_sessions_and_calculate_probe, handle_read_available): Give
+	better error message on bad_decode exceptions.
+
+2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc, netsync.cc: Revert backwards compatibility code; 0.19
+	and 0.20 can't be usefully compatible, and the code as it existed
+	would cause real version mismatch error reporting to not work
+	right.  (Old client with new server would give a generic "server
+	disconnected" error message instead of something useful.)
+
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (rebuild_merkle_trees): Fix FIXME comments to match
+	reality.
+	* tests/t_netsync_diffbranch.at: No longer a bug, remove
+	priority.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Hook Reference): Oops, missed a @ref.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Default monotonerc): Rename section to...
+	(Default hooks): ...this, to emphasize is still read even when a
+	monotonerc exists.
+
+2005-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: There's no reason for monotone.pdf or .dvi to
+	depend on monotone.info, since they are built from the .texi
+	files.  Also, make the monotone.html and html targets depend
+	on version.texi and std_hooks.lua as well.
+
+2005-06-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* INSTALL: fix typo, should be -Iboost_1_31_0 not -Iboost_1_31_2
+
+2005-06-18  Riccardo Ghetta  <birrachiara@tin.it>
+	* monotone.texi: include std_hooks.lua as an appendix and remove long
+	lua excerpts from hook reference.
+	* Makefile.am : make monotone.pdf/eps depend on monotone.info
+	
 2005-06-24  Matt Johnston  <matt@ucc.asn.au>
 
 	* transforms.{cc,hh}: combine gzip and base64 in one

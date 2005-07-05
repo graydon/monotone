@@ -22,7 +22,8 @@ protocol_voice;
 void run_netsync_protocol(protocol_voice voice, 
                           protocol_role role, 
                           utf8 const & addr, 
-                          std::vector<utf8> patterns,
+                          utf8 const & include_pattern,
+                          utf8 const & exclude_pattern,
                           app_state & app);
 
 #endif // __NETSYNC_H__

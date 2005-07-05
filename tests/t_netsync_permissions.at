@@ -18,7 +18,7 @@ function get_netsync_read_permitted(pattern, identity)
         return true
 end
 
-function get_netsync_write_permitted(pattern, identity)
+function get_netsync_write_permitted(identity)
         return true
 end
 
@@ -106,7 +106,7 @@ function get_netsync_read_permitted(pattern, identity)
         return false
 end
 
-function get_netsync_write_permitted(pattern, identity)
+function get_netsync_write_permitted(identity)
         if (identity == "tester@test.net") then return true end
         return false
 end

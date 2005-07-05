@@ -12,6 +12,7 @@
 #include "merkle_tree.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
+#include "hmac.hh"
 
 typedef enum 
   { 
@@ -62,8 +63,10 @@ public:
 
 
   // basic cmd i/o (including checksums)
-  void write(std::string & out) const;
-  bool read(std::string & inbuf);
+  void write(std::string & out,
+             chained_hmac & hmac) const;
+  bool read(std::string & inbuf,
+            chained_hmac & hmac);
 
   // i/o functions for each type of command payload
   void read_error_cmd(std::string & errmsg) const;
@@ -79,28 +82,32 @@ public:
                        rsa_pub_key const & server_key,
                        id const & nonce);
 
-  void read_anonymous_cmd(protocol_role & role, 
-                          std::string & pattern,
-                          id & nonce2) const;
+  void read_anonymous_cmd(protocol_role & role,
+                          utf8 & include_pattern,
+                          utf8 & exclude_pattern,
+                          rsa_oaep_sha_data & hmac_key_encrypted) const;
   void write_anonymous_cmd(protocol_role role, 
-                           std::string const & pattern,
-                           id const & nonce2);
+                           utf8 const & include_pattern,
+                           utf8 const & exclude_pattern,
+                           rsa_oaep_sha_data const & hmac_key_encrypted);
 
   void read_auth_cmd(protocol_role & role, 
-                     std::string & pattern,
+                     utf8 & include_pattern,
+                     utf8 & exclude_pattern,
                      id & client, 
                      id & nonce1, 
-                     id & nonce2,
+                     rsa_oaep_sha_data & hmac_key_encrypted,
                      std::string & signature) const;
   void write_auth_cmd(protocol_role role, 
-                      std::string const & pattern, 
+                      utf8 const & include_pattern, 
+                      utf8 const & exclude_pattern, 
                       id const & client,
                       id const & nonce1, 
-                      id const & nonce2, 
+                      rsa_oaep_sha_data const & hmac_key_encrypted,
                       std::string const & signature);
 
-  void read_confirm_cmd(std::string & signature) const;
-  void write_confirm_cmd(std::string const & signature);
+  void read_confirm_cmd() const;
+  void write_confirm_cmd();
 
   void read_refine_cmd(merkle_node & node) const;
   void write_refine_cmd(merkle_node const & node);

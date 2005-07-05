@@ -327,7 +327,7 @@ function get_netsync_read_permitted(pattern, identity)
 	return true
 end
 
-function get_netsync_write_permitted(pattern, identity)
+function get_netsync_write_permitted(identity)
 	return true
 end
 ])
@@ -664,3 +664,4 @@ m4_include(tests/t_rcfile_dir.at)
 m4_include(tests/t_lua_includedir.at)
 m4_include(tests/t_existsonpath.at)
 m4_include(tests/t_db_kill_branch_locally.at)
+m4_include(tests/t_netsync_globs.at)

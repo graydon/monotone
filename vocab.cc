@@ -102,6 +102,42 @@ verify(rsa_keypair_id & val)
   val.ok = true;
 }
 
+inline void
+verify(netsync_session_key & val)
+{
+  if (val.ok)
+    return;
+
+  if (val().size() == 0)
+    {
+      val.s.append(constants::netsync_session_key_length_in_bytes, 0);
+      return;
+    }
+
+  N(val().size() == constants::netsync_session_key_length_in_bytes,
+    F("Invalid key length of %d bytes") % val().length());
+
+  val.ok = true;
+}
+
+inline void
+verify(netsync_hmac_value & val)
+{
+  if (val.ok)
+    return;
+
+  if (val().size() == 0)
+    {
+      val.s.append(constants::netsync_hmac_value_length_in_bytes, 0);
+      return;
+    }
+
+  N(val().size() == constants::netsync_hmac_value_length_in_bytes,
+    F("Invalid hmac length of %d bytes") % val().length());
+
+  val.ok = true;
+}
+
 
 inline void 
 verify(local_path & val)

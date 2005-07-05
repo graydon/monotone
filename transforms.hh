@@ -73,6 +73,10 @@ template <typename T>
 void decode_gzip(gzip<T> const & in, T & out)
 { out = xform<CryptoPP::Gunzip>(in()); }
 
+// string variant for netsync
+template <typename T>
+void encode_gzip(std::string const & in, gzip<T> & out)
+{ out = xform<CryptoPP::Gzip>(in); }
 
 // both at once (this is relatively common)
 
@@ -188,7 +192,5 @@ void externalize_var_domain(var_domain const & d, external & ext);
 
 // line-ending conversion
 void line_end_convert(std::string const & linesep, std::string const & src, std::string & dst);
-
-
 
 #endif // __TRANSFORMS_HH__

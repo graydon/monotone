@@ -62,11 +62,10 @@ public:
                                      std::map<rsa_keypair_id, bool> const & new_results);
 
   // network hooks
-  bool hook_get_netsync_read_permitted(std::string const & pattern, 
+  bool hook_get_netsync_read_permitted(std::string const & branch, 
                                        rsa_keypair_id const & identity);
-  bool hook_get_netsync_anonymous_read_permitted(std::string const & pattern);
-  bool hook_get_netsync_write_permitted(std::string const & pattern, 
-                                        rsa_keypair_id const & identity);
+  bool hook_get_netsync_anonymous_read_permitted(std::string const & branch);
+  bool hook_get_netsync_write_permitted(rsa_keypair_id const & identity);
 
   // local repo hooks
   bool hook_ignore_file(file_path const & p);

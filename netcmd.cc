@@ -7,8 +7,6 @@
 #include <vector>
 #include <utility>
 
-#include "cryptopp/gzip.h"
-
 #include "adler32.hh"
 #include "constants.hh"
 #include "netcmd.hh"
@@ -16,6 +14,7 @@
 #include "numeric_vocab.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "hmac.hh"
 
 using namespace std;
 
@@ -49,9 +48,6 @@ netcmd::netcmd() : version(constants::netcmd_current_protocol_version),
                    cmd_code(bye_cmd)
 {}
 
-netcmd::netcmd(u8 _version) : version(_version), cmd_code(bye_cmd)
-{}
-
 size_t netcmd::encoded_size() 
 {
   string tmp;
@@ -68,61 +64,39 @@ netcmd::operator==(netcmd const & other) const
 }
   
 void 
-netcmd::write(string & out) const
+netcmd::write(string & out, chained_hmac & hmac) const
 {
+  size_t oldlen = out.size();
   out += static_cast<char>(version);
   out += static_cast<char>(cmd_code);
   insert_variable_length_string(payload, out);
-  adler32 check(reinterpret_cast<u8 const *>(payload.data()), payload.size());
-  insert_datum_lsb<u32>(check.sum(), out);
+
+  string digest = hmac.process(out, oldlen);
+  I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
+  out.append(digest);
 }
 
-// last should be zero (doesn't mean we're compatible with version 0).
-// The nonzero elements are the historical netsync/netcmd versions we can
-// interoperate with. For interoperating with newer versions, assume
-// compatibility and let the remote host make the call.
-static u8 const compatible_versions[] = {4, 0};
-
-bool is_compatible(u8 version)
-{
-  for (u8 const *x = compatible_versions; *x; ++x)
-    {
-      if (*x == version)
-        return true;
-    }
-  return false;
-}
-  
 bool 
-netcmd::read(string & inbuf)
+netcmd::read(string & inbuf, chained_hmac & hmac)
 {
   size_t pos = 0;
 
   if (inbuf.size() < constants::netcmd_minsz)
     return false;
 
-  u8 ver = extract_datum_lsb<u8>(inbuf, pos, "netcmd protocol number");
-  int v = version;
+  u8 extracted_ver = extract_datum_lsb<u8>(inbuf, pos, "netcmd protocol number");
+  if (extracted_ver != version)
+    throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
+                     % widen<u32,u8>(version)
+                     % widen<u32,u8>(extracted_ver));
+  version = extracted_ver;
 
   u8 cmd_byte = extract_datum_lsb<u8>(inbuf, pos, "netcmd code");
   switch (cmd_byte)
     {
-    // hello may be newer than expected, or one we're compatible with
     case static_cast<u8>(hello_cmd):
-      if (ver < version && !is_compatible(ver))
-        throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
-                         % widen<u32,u8>(v) 
-                         % widen<u32,u8>(ver));
-      break;
-    // these may be older compatible versions
     case static_cast<u8>(anonymous_cmd):
     case static_cast<u8>(auth_cmd):
-      if (ver != version && (ver > version || !is_compatible(ver)))
-        throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
-                         % widen<u32,u8>(v) 
-                         % widen<u32,u8>(ver));
-      break;
-    // these must match exactly what's expected
     case static_cast<u8>(error_cmd):
     case static_cast<u8>(bye_cmd):
     case static_cast<u8>(confirm_cmd):
@@ -133,16 +107,11 @@ netcmd::read(string & inbuf)
     case static_cast<u8>(data_cmd):
     case static_cast<u8>(delta_cmd):
     case static_cast<u8>(nonexistant_cmd):
-      if (ver != version)
-        throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
-                         % widen<u32,u8>(v) 
-                         % widen<u32,u8>(ver));
+      cmd_code = static_cast<netcmd_code>(cmd_byte);
       break;
     default:
       throw bad_decode(F("unknown netcmd code 0x%x") % widen<u32,u8>(cmd_byte));
     }
-  cmd_code = static_cast<netcmd_code>(cmd_byte);
-  version = ver;
 
   // check to see if we have even enough bytes for a complete uleb128
   size_t payload_len = 0;
@@ -155,28 +124,35 @@ netcmd::read(string & inbuf)
     throw bad_decode(F("oversized payload of '%d' bytes") % payload_len);
   
   // there might not be enough data yet in the input buffer
-  if (inbuf.size() < pos + payload_len + sizeof(u32))
+  if (inbuf.size() < pos + payload_len + constants::netsync_hmac_value_length_in_bytes)
     {
-      inbuf.reserve(pos + payload_len + sizeof(u32) + constants::bufsz);
+      inbuf.reserve(pos + payload_len + constants::netsync_hmac_value_length_in_bytes + constants::bufsz);
       return false;
     }
 
 //  out.payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
   // Do this ourselves, so we can swap the strings instead of copying.
   require_bytes(inbuf, pos, payload_len, "netcmd payload");
-  inbuf.erase(0, pos);
-  payload = inbuf.substr(payload_len);
-  inbuf.erase(payload_len, inbuf.npos);
+
+  // grab it before the data gets munged
+  I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
+  string digest = hmac.process(inbuf, 0, pos + payload_len);
+
+  payload = inbuf.substr(pos + payload_len);
+  inbuf.erase(pos + payload_len, inbuf.npos);
   inbuf.swap(payload);
+  size_t payload_pos = pos;
   pos = 0;
 
   // they might have given us bogus data
-  u32 checksum = extract_datum_lsb<u32>(inbuf, pos, "netcmd checksum");
+  string cmd_digest = extract_substring(inbuf, pos, 
+      constants::netsync_hmac_value_length_in_bytes,
+                                        "netcmd HMAC");
   inbuf.erase(0, pos);
-  adler32 check(reinterpret_cast<u8 const *>(payload.data()), 
-                payload.size());
-  if (checksum != check.sum())
-    throw bad_decode(F("bad checksum 0x%x vs. 0x%x") % checksum % check.sum());
+  if (cmd_digest != digest)
+    throw bad_decode(F("bad HMAC %s vs. %s") % encode_hexenc(cmd_digest)
+                     % encode_hexenc(digest));
+  payload.erase(0, payload_pos);
 
   return true;    
 }
@@ -237,112 +213,123 @@ netcmd::write_hello_cmd(rsa_keypair_id const & server_keyname,
 }
 
 
-void 
-netcmd::read_anonymous_cmd(protocol_role & role, 
-                           std::string & pattern,
-                           id & nonce2) const
+void
+netcmd::read_anonymous_cmd(protocol_role & role,
+                           utf8 & include_pattern,
+                           utf8 & exclude_pattern,
+                           rsa_oaep_sha_data & hmac_key_encrypted) const
 {
   size_t pos = 0;
-  // syntax is: <role:1 byte> <pattern: vstr> <nonce2: 20 random bytes>
-  u8 role_byte = extract_datum_lsb<u8>(payload, pos, "anonymous netcmd, role");
+  // syntax is: <role:1 byte> <include_pattern: vstr> <exclude_pattern: vstr> <hmac_key_encrypted: vstr>
+  u8 role_byte = extract_datum_lsb<u8>(payload, pos, "anonymous(hmac) netcmd, role");
   if (role_byte != static_cast<u8>(source_role)
       && role_byte != static_cast<u8>(sink_role)
       && role_byte != static_cast<u8>(source_and_sink_role))
     throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
   role = static_cast<protocol_role>(role_byte);
-  extract_variable_length_string(payload, pattern, pos,
-                                 "anonymous netcmd, pattern");
-  nonce2 = id(extract_substring(payload, pos,
-                                constants::merkle_hash_length_in_bytes, 
-                                "anonymous netcmd, nonce2"));
-  assert_end_of_buffer(payload, pos, "anonymous netcmd payload");
+  std::string pattern_string;
+  extract_variable_length_string(payload, pattern_string, pos,
+                                 "anonymous(hmac) netcmd, include_pattern");
+  include_pattern = utf8(pattern_string);
+  extract_variable_length_string(payload, pattern_string, pos,
+                                 "anonymous(hmac) netcmd, exclude_pattern");
+  exclude_pattern = utf8(pattern_string);
+  string hmac_key_string;
+  extract_variable_length_string(payload, hmac_key_string, pos,
+                                 "anonymous(hmac) netcmd, hmac_key_encrypted");
+  hmac_key_encrypted = rsa_oaep_sha_data(hmac_key_string);
+  assert_end_of_buffer(payload, pos, "anonymous(hmac) netcmd payload");
 }
 
-void 
-netcmd::write_anonymous_cmd(protocol_role role, 
-                            std::string const & pattern,
-                            id const & nonce2)
+void
+netcmd::write_anonymous_cmd(protocol_role role,
+                            utf8 const & include_pattern,
+                            utf8 const & exclude_pattern,
+                            rsa_oaep_sha_data const & hmac_key_encrypted)
 {
   cmd_code = anonymous_cmd;
-  I(nonce2().size() == constants::merkle_hash_length_in_bytes);
   payload = static_cast<char>(role);
-  insert_variable_length_string(pattern, payload);
-  payload += nonce2();
+  insert_variable_length_string(include_pattern(), payload);
+  insert_variable_length_string(exclude_pattern(), payload);
+  insert_variable_length_string(hmac_key_encrypted(), payload);
 }
 
 void 
 netcmd::read_auth_cmd(protocol_role & role, 
-                      string & pattern,
+                      utf8 & include_pattern,
+                      utf8 & exclude_pattern,
                       id & client, 
                       id & nonce1, 
-                      id & nonce2,
+                      rsa_oaep_sha_data & hmac_key_encrypted,
                       string & signature) const
 {
   size_t pos = 0;
-  // syntax is: <role:1 byte> <pattern: vstr>
-  //            <client: 20 bytes sha1> <nonce1: 20 random bytes> <nonce2: 20 random bytes>
-  //            <signature: vstr>
+  // syntax is: <role:1 byte> <include_pattern: vstr> <exclude_pattern: vstr>
+  //            <client: 20 bytes sha1> <nonce1: 20 random bytes>
+  //            <hmac_key_encrypted: vstr> <signature: vstr>
   u8 role_byte = extract_datum_lsb<u8>(payload, pos, "auth netcmd, role");
   if (role_byte != static_cast<u8>(source_role)
       && role_byte != static_cast<u8>(sink_role)
       && role_byte != static_cast<u8>(source_and_sink_role))
     throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
   role = static_cast<protocol_role>(role_byte);
-  extract_variable_length_string(payload, pattern, pos, "auth netcmd, pattern");
+  std::string pattern_string;
+  extract_variable_length_string(payload, pattern_string, pos,
+                                 "auth(hmac) netcmd, include_pattern");
+  include_pattern = utf8(pattern_string);
+  extract_variable_length_string(payload, pattern_string, pos,
+                                 "auth(hmac) netcmd, exclude_pattern");
+  exclude_pattern = utf8(pattern_string);
   client = id(extract_substring(payload, pos,
                                 constants::merkle_hash_length_in_bytes, 
-                                "auth netcmd, client identifier"));
+                                "auth(hmac) netcmd, client identifier"));
   nonce1 = id(extract_substring(payload, pos,
                                 constants::merkle_hash_length_in_bytes, 
-                                "auth netcmd, nonce1"));
-  nonce2 = id(extract_substring(payload, pos,
-                                constants::merkle_hash_length_in_bytes, 
-                                "auth netcmd, nonce2"));
+                                "auth(hmac) netcmd, nonce1"));
+  string hmac_key;
+  extract_variable_length_string(payload, hmac_key, pos,
+                                 "auth(hmac) netcmd, hmac_key_encrypted");
+  hmac_key_encrypted = rsa_oaep_sha_data(hmac_key);
   extract_variable_length_string(payload, signature, pos,
-                                 "auth netcmd, signature");
-  assert_end_of_buffer(payload, pos, "auth netcmd payload");
+                                 "auth(hmac) netcmd, signature");
+  assert_end_of_buffer(payload, pos, "auth(hmac) netcmd payload");
 }
 
-void 
-netcmd::write_auth_cmd(protocol_role role, 
-                       string const & pattern, 
+void
+netcmd::write_auth_cmd(protocol_role role,
+                       utf8 const & include_pattern,
+                       utf8 const & exclude_pattern,
                        id const & client,
-                       id const & nonce1, 
-                       id const & nonce2, 
+                       id const & nonce1,
+                       rsa_oaep_sha_data const & hmac_key_encrypted,
                        string const & signature)
 {
   cmd_code = auth_cmd;
   I(client().size() == constants::merkle_hash_length_in_bytes);
   I(nonce1().size() == constants::merkle_hash_length_in_bytes);
-  I(nonce2().size() == constants::merkle_hash_length_in_bytes);
   payload = static_cast<char>(role);
-  insert_variable_length_string(pattern, payload);
+  insert_variable_length_string(include_pattern(), payload);
+  insert_variable_length_string(exclude_pattern(), payload);
   payload += client();
   payload += nonce1();
-  payload += nonce2();
+  insert_variable_length_string(hmac_key_encrypted(), payload);
   insert_variable_length_string(signature, payload);
 }
-                         
 
-void 
-netcmd::read_confirm_cmd(string & signature) const
+void
+netcmd::read_confirm_cmd() const
 {
   size_t pos = 0;
-
-  // syntax is: <signature: vstr>
-  extract_variable_length_string(payload, signature, pos,
-                                 "confirm netcmd, signature");
   assert_end_of_buffer(payload, pos, "confirm netcmd payload");
 }
   
-void 
-netcmd::write_confirm_cmd(string const & signature)
+void
+netcmd::write_confirm_cmd()
 {
   cmd_code = confirm_cmd;
   payload.clear();
-  insert_variable_length_string(signature, payload);
 }
-  
+
 void 
 netcmd::read_refine_cmd(merkle_node & node) const
 {
@@ -449,7 +436,13 @@ netcmd::read_data_cmd(netcmd_item_type & type,
   extract_variable_length_string(payload, dat, pos,
                                   "data netcmd, data payload");
   if (compressed_p == 1)
-    dat = xform<CryptoPP::Gunzip>(dat);
+  {
+    gzip<data> zdat;
+    data tdat;
+    zdat.swap(dat);
+    decode_gzip(zdat, tdat);
+    tdat.swap(dat);
+  }
   assert_end_of_buffer(payload, pos, "data netcmd payload");
 }
 
@@ -464,8 +457,10 @@ netcmd::write_data_cmd(netcmd_item_type type,
   payload += item();
   if (dat.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
+      gzip<data> zdat;
+      encode_gzip(dat, zdat);
       string tmp;
-      tmp = xform<CryptoPP::Gzip>(dat);
+      zdat.swap(tmp);
       payload += static_cast<char>(1); // compressed flag
       insert_variable_length_string(tmp, payload);
     }
@@ -497,8 +492,14 @@ netcmd::read_delta_cmd(netcmd_item_type & type,
   extract_variable_length_string(payload, tmp, pos,
                                  "delta netcmd, delta payload");
   if (compressed_p == 1)
-    tmp = xform<CryptoPP::Gunzip>(tmp);
-  del = delta(tmp);
+    {
+      gzip<delta> zdel(tmp);
+      decode_gzip(zdel, del);
+    }
+  else
+    {
+      del = tmp;
+    }
   assert_end_of_buffer(payload, pos, "delta netcmd payload");
 }
 
@@ -514,16 +515,19 @@ netcmd::write_delta_cmd(netcmd_item_type & type,
   payload += base();
   payload += ident();
 
-  string tmp = del();
+  string tmp;
 
   if (tmp.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
       payload += static_cast<char>(1); // compressed flag
-      tmp = xform<CryptoPP::Gzip>(tmp);
+      gzip<delta> zdel;
+      encode_gzip(del, zdel);
+      tmp = zdel();
     }
   else
     {
       payload += static_cast<char>(0); // compressed flag       
+      tmp = del();
     }
   I(tmp.size() <= constants::netcmd_payload_limit);
   insert_variable_length_string(tmp, payload);
@@ -558,6 +562,65 @@ netcmd::write_nonexistant_cmd(netcmd_item_type type, id const & item)
 #include "transforms.hh"
 #include <boost/lexical_cast.hpp>
 
+void
+test_netcmd_mac()
+{
+  netcmd out_cmd, in_cmd;
+  string buf;
+  netsync_session_key key(constants::netsync_key_initializer);
+  {
+    chained_hmac mac(key);
+    // mutates mac
+    out_cmd.write(buf, mac);
+    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
+  }
+
+  {
+    chained_hmac mac(key);
+    out_cmd.write(buf, mac);
+  }
+  buf[0] ^= 0xff;
+  {
+    chained_hmac mac(key);
+    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
+  }
+
+  {
+    chained_hmac mac(key);
+    out_cmd.write(buf, mac);
+  }
+  buf[buf.size() - 1] ^= 0xff;
+  {
+    chained_hmac mac(key);
+    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
+  }
+
+  {
+    chained_hmac mac(key);
+    out_cmd.write(buf, mac);
+  }
+  buf += '\0';
+  {
+    chained_hmac mac(key);
+    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
+  }
+}
+
+static void
+do_netcmd_roundtrip(netcmd const & out_cmd, netcmd & in_cmd, string & buf)
+{
+  netsync_session_key key(constants::netsync_key_initializer);
+  {
+    chained_hmac mac(key);
+    out_cmd.write(buf, mac);
+  }
+  {
+    chained_hmac mac(key);
+    BOOST_CHECK(in_cmd.read(buf, mac));
+  }
+  BOOST_CHECK(in_cmd == out_cmd);
+}
+
 void 
 test_netcmd_functions()
 {
@@ -572,10 +635,8 @@ test_netcmd_functions()
         string out_errmsg("your shoelaces are untied"), in_errmsg;
         string buf;
         out_cmd.write_error_cmd(out_errmsg);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_error_cmd(in_errmsg);
-        BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_errmsg == out_errmsg);
         L(F("errmsg_cmd test done, buffer was %d bytes\n") % buf.size());
       }
@@ -585,9 +646,7 @@ test_netcmd_functions()
         L(F("checking i/o round trip on bye_cmd\n"));   
         netcmd out_cmd, in_cmd;
         string buf;
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
-        BOOST_CHECK(in_cmd == out_cmd);
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         L(F("bye_cmd test done, buffer was %d bytes\n") % buf.size());
       }
       
@@ -600,10 +659,8 @@ test_netcmd_functions()
         rsa_pub_key out_server_key("9387938749238792874"), in_server_key;
         id out_nonce(raw_sha1("nonce it up")), in_nonce;
         out_cmd.write_hello_cmd(out_server_keyname, out_server_key, out_nonce);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_hello_cmd(in_server_keyname, in_server_key, in_nonce);
-        BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_server_keyname == out_server_keyname);
         BOOST_CHECK(in_server_key == out_server_key);
         BOOST_CHECK(in_nonce == out_nonce);
@@ -616,15 +673,18 @@ test_netcmd_functions()
         netcmd out_cmd, in_cmd;
         protocol_role out_role = source_and_sink_role, in_role;
         string buf;
-        id out_nonce2(raw_sha1("nonce start my heart")), in_nonce2;
-        string out_pattern("radishes galore!"), in_pattern;
+        // total cheat, since we don't actually verify that rsa_oaep_sha_data
+        // is sensible anywhere here...
+        rsa_oaep_sha_data out_key("nonce start my heart"), in_key;
+        utf8 out_include_pattern("radishes galore!"), in_include_pattern;
+        utf8 out_exclude_pattern("turnips galore!"), in_exclude_pattern;
 
-        out_cmd.write_anonymous_cmd(out_role, out_pattern, out_nonce2);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
-        in_cmd.read_anonymous_cmd(in_role, in_pattern, in_nonce2);
-        BOOST_CHECK(in_cmd == out_cmd);
-        BOOST_CHECK(in_nonce2 == out_nonce2);
+        out_cmd.write_anonymous_cmd(out_role, out_include_pattern, out_exclude_pattern, out_key);
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
+        in_cmd.read_anonymous_cmd(in_role, in_include_pattern, in_exclude_pattern, in_key);
+        BOOST_CHECK(in_key == out_key);
+        BOOST_CHECK(in_include_pattern == out_include_pattern);
+        BOOST_CHECK(in_exclude_pattern == out_exclude_pattern);
         BOOST_CHECK(in_role == out_role);
         L(F("anonymous_cmd test done, buffer was %d bytes\n") % buf.size());
       }
@@ -636,23 +696,26 @@ test_netcmd_functions()
         protocol_role out_role = source_and_sink_role, in_role;
         string buf;
         id out_client(raw_sha1("happy client day")), out_nonce1(raw_sha1("nonce me amadeus")), 
-          out_nonce2(raw_sha1("nonce start my heart")), 
-          in_client, in_nonce1, in_nonce2;
-        string out_signature(raw_sha1("burble") + raw_sha1("gorby")), out_pattern("radishes galore!"), 
-          in_signature, in_pattern;
+          in_client, in_nonce1;
+        // total cheat, since we don't actually verify that rsa_oaep_sha_data
+        // is sensible anywhere here...
+        rsa_oaep_sha_data out_key("nonce start my heart"), in_key;
+        string out_signature(raw_sha1("burble") + raw_sha1("gorby")), in_signature;
+        utf8 out_include_pattern("radishes galore!"), in_include_pattern;
+        utf8 out_exclude_pattern("turnips galore!"), in_exclude_pattern;
 
-        out_cmd.write_auth_cmd(out_role, out_pattern, out_client, out_nonce1, 
-                               out_nonce2, out_signature);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
-        in_cmd.read_auth_cmd(in_role, in_pattern, in_client,
-                             in_nonce1, in_nonce2, in_signature);
-        BOOST_CHECK(in_cmd == out_cmd);
+        out_cmd.write_auth_cmd(out_role, out_include_pattern, out_exclude_pattern
+                               , out_client, out_nonce1, out_key, out_signature);
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
+        in_cmd.read_auth_cmd(in_role, in_include_pattern, in_exclude_pattern,
+                             in_client, in_nonce1, in_key, in_signature);
         BOOST_CHECK(in_client == out_client);
         BOOST_CHECK(in_nonce1 == out_nonce1);
-        BOOST_CHECK(in_nonce2 == out_nonce2);
+        BOOST_CHECK(in_key == out_key);
         BOOST_CHECK(in_signature == out_signature);
         BOOST_CHECK(in_role == out_role);
+        BOOST_CHECK(in_include_pattern == out_include_pattern);
+        BOOST_CHECK(in_exclude_pattern == out_exclude_pattern);
         L(F("auth_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
@@ -661,14 +724,9 @@ test_netcmd_functions()
         L(F("checking i/o round trip on confirm_cmd\n"));
         netcmd out_cmd, in_cmd;
         string buf;
-        string out_signature(raw_sha1("egg") + raw_sha1("tomago")), in_signature;
-
-        out_cmd.write_confirm_cmd(out_signature);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
-        in_cmd.read_confirm_cmd(in_signature);
-        BOOST_CHECK(in_cmd == out_cmd);
-        BOOST_CHECK(in_signature == out_signature);
+        out_cmd.write_confirm_cmd();
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
+        in_cmd.read_confirm_cmd();
         L(F("confirm_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
@@ -689,10 +747,8 @@ test_netcmd_functions()
         out_node.set_slot_state(15, subtree_state);
 
         out_cmd.write_refine_cmd(out_node);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_refine_cmd(in_node);
-        BOOST_CHECK(in_cmd == out_cmd);
         BOOST_CHECK(in_node == out_node);
         L(F("refine_cmd test done, buffer was %d bytes\n") % buf.size());
       }
@@ -706,8 +762,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_done_cmd(out_level, out_type);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_done_cmd(in_level, in_type);
         BOOST_CHECK(in_level == out_level);
         BOOST_CHECK(in_type == out_type);
@@ -723,8 +778,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_send_data_cmd(out_type, out_id);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_send_data_cmd(in_type, in_id);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_id == out_id);
@@ -741,8 +795,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_send_delta_cmd(out_type, out_head, out_base);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_send_delta_cmd(in_type, in_head, in_base);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_head == out_head);
@@ -759,8 +812,7 @@ test_netcmd_functions()
         string out_dat("thank you for flying northwest"), in_dat;
         string buf;
         out_cmd.write_data_cmd(out_type, out_id, out_dat);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_data_cmd(in_type, in_id, in_dat);
         BOOST_CHECK(in_id == out_id);
         BOOST_CHECK(in_dat == out_dat);
@@ -778,8 +830,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_delta_cmd(out_type, out_head, out_base, out_delta);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_delta_cmd(in_type, in_head, in_base, in_delta);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_head == out_head);
@@ -797,8 +848,7 @@ test_netcmd_functions()
         string buf;
 
         out_cmd.write_nonexistant_cmd(out_type, out_id);
-        out_cmd.write(buf);
-        BOOST_CHECK(in_cmd.read(buf));
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_nonexistant_cmd(in_type, in_id);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_id == out_id);
@@ -817,6 +867,7 @@ void
 add_netcmd_tests(test_suite * suite)
 {
   suite->add(BOOST_TEST_CASE(&test_netcmd_functions));
+  suite->add(BOOST_TEST_CASE(&test_netcmd_mac));
 }
 
 #endif // BUILD_UNIT_TESTS

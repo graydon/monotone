@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <list>
+#include <deque>
 
 #include <time.h>
 
@@ -32,6 +33,8 @@
 #include "xdelta.hh"
 #include "epoch.hh"
 #include "platform.hh"
+#include "hmac.hh"
+#include "globish.hh"
 
 #include "cryptopp/osrng.h"
 
@@ -112,17 +115,32 @@
 // protocol
 // --------
 //
+// The protocol is a simple binary command-packet system over TCP;
+// each packet consists of a single byte which identifies the protocol
+// version, a byte which identifies the command name inside that
+// version, a size_t sent as a uleb128 indicating the length of the
+// packet, that many bytes of payload, and finally 20 bytes of SHA-1
+// HMAC calculated over the payload.  The key for the SHA-1 HMAC is 20
+// bytes of 0 during authentication, and a 20-byte random key chosen
+// by the client after authentication (discussed below).
+//
+//---- Pre-v5 packet format ----
+//
 // the protocol is a simple binary command-packet system over tcp; each
 // packet consists of a byte which identifies the protocol version, a byte
 // which identifies the command name inside that version, a size_t sent as
 // a uleb128 indicating the length of the packet, and then that many bytes
 // of payload, and finally 4 bytes of adler32 checksum (in LSB order) over
-// the payload. decoding involves simply buffering until a sufficient
-// number of bytes are received, then advancing the buffer pointer. any
-// time an adler32 check fails, the protocol is assumed to have lost
-// synchronization, and the connection is dropped. the parties are free to
-// drop the tcp stream at any point, if too much data is received or too
-// much idle time passes; no commitments or transactions are made.
+// the payload.
+//
+// ---- end pre-v5 packet format ----
+//
+// decoding involves simply buffering until a sufficient number of bytes are
+// received, then advancing the buffer pointer. any time an integrity check
+// (the HMAC) fails, the protocol is assumed to have lost synchronization, and
+// the connection is dropped. the parties are free to drop the tcp stream at
+// any point, if too much data is received or too much idle time passes; no
+// commitments or transactions are made.
 //
 // one special command, "bye", is used to shut down a connection
 // gracefully.  once each side has received all the data they want, they
@@ -135,16 +153,26 @@
 // "hello <id> <nonce>" command, which identifies the server's RSA key and
 // issues a nonce which must be used for a subsequent authentication.
 //
-// the client can then respond with an "auth (source|sink|both)
-// <pattern> <id> <nonce1> <nonce2> <sig>" command which identifies its
-// RSA key, notes the role it wishes to play in the synchronization,
-// identifies the pattern it wishes to sync with, signs the previous
-// nonce with its own key, and issues a nonce of its own for mutual
-// authentication.
+// The client then responds with either:
 //
-// the server can then respond with a "confirm <sig>" command, which is
-// the signature of the second nonce sent by the client. this
-// transitions the peers into an authenticated state and begins refinement.
+// An "auth (source|sink|both) <include_pattern> <exclude_pattern> <id>
+// <nonce1> <hmac key> <sig>" command, which identifies its RSA key, notes the
+// role it wishes to play in the synchronization, identifies the pattern it
+// wishes to sync with, signs the previous nonce with its own key, and informs
+// the server of the HMAC key it wishes to use for this session (encrypted
+// with the server's public key); or
+//
+// An "anonymous (source|sink|both) <include_pattern> <exclude_pattern>
+// <hmac key>" command, which identifies the role it wishes to play in the
+// synchronization, the pattern it ishes to sync with, and the HMAC key it
+// wishes to use for this session (also encrypted with the server's public
+// key).
+//
+// The server then replies with a "confirm" command, which contains no
+// other data but will only have the correct HMAC integrity code if
+// the server received and properly decrypted the HMAC key offered by
+// the client.  This transitions the peers into an authenticated state
+// and begins refinement.
 //
 // refinement begins with the client sending its root public key and
 // manifest certificate merkle nodes to the server. the server then
@@ -211,7 +239,9 @@ session
 {
   protocol_role role;
   protocol_voice const voice;
-  vector<utf8> patterns;
+  utf8 const & our_include_pattern;
+  utf8 const & our_exclude_pattern;
+  globish_matcher our_matcher;
   app_state & app;
 
   string peer_id;
@@ -219,17 +249,22 @@ session
   Netxx::Stream str;  
 
   string inbuf; 
-  string outbuf;
+  // deque of pair<string data, size_t cur_pos>
+  deque< pair<string,size_t> > outbuf; 
+  // the total data stored in outbuf - this is
+  // used as a valve to stop too much data
+  // backing up
+  size_t outbuf_size;
 
   netcmd cmd;
-  u8 protocol_version;
   bool armed;
   bool arm();
 
-  utf8 pattern;
-  boost::regex pattern_re;
   id remote_peer_key_hash;
   rsa_keypair_id remote_peer_key_name;
+  netsync_session_key session_key;
+  chained_hmac read_hmac;
+  chained_hmac write_hmac;
   bool authenticated;
 
   time_t last_io_time;
@@ -263,7 +298,8 @@ session
 
   session(protocol_role role,
           protocol_voice voice,
-          vector<utf8> const & patterns,
+          utf8 const & our_include_pattern,
+          utf8 const & our_exclude_pattern,
           app_state & app,
           string const & peer,
           Netxx::socket_type sock, 
@@ -277,6 +313,8 @@ session
 
   id mk_nonce();
   void mark_recent_io();
+
+  void set_session_key(string const & key);
 
   void setup_client_tickers();
 
@@ -321,15 +359,19 @@ session
   void queue_hello_cmd(id const & server, 
                        id const & nonce);
   void queue_anonymous_cmd(protocol_role role, 
-                           string const & pattern, 
-                           id const & nonce2);
+                           utf8 const & include_pattern, 
+                           utf8 const & exclude_pattern, 
+                           id const & nonce2,
+                           base64<rsa_pub_key> server_key_encoded);
   void queue_auth_cmd(protocol_role role, 
-                      string const & pattern, 
+                      utf8 const & include_pattern, 
+                      utf8 const & exclude_pattern, 
                       id const & client, 
                       id const & nonce1, 
                       id const & nonce2, 
-                      string const & signature);
-  void queue_confirm_cmd(string const & signature);
+                      string const & signature,
+                      base64<rsa_pub_key> server_key_encoded);
+  void queue_confirm_cmd();
   void queue_refine_cmd(merkle_node const & node);
   void queue_send_data_cmd(netcmd_item_type type, 
                            id const & item);
@@ -353,15 +395,17 @@ session
                          rsa_pub_key const & server_key,
                          id const & nonce);
   bool process_anonymous_cmd(protocol_role role, 
-                             string const & pattern, 
-                             id const & nonce2);
+                             utf8 const & their_include_pattern,
+                             utf8 const & their_exclude_pattern);
   bool process_auth_cmd(protocol_role role, 
-                        string const & pattern, 
+                        utf8 const & their_include_pattern, 
+                        utf8 const & their_exclude_pattern, 
                         id const & client, 
                         id const & nonce1, 
-                        id const & nonce2, 
                         string const & signature);
+  void respond_to_auth_cmd(rsa_oaep_sha_data hmac_key_encrypted);
   bool process_confirm_cmd(string const & signature);
+  void respond_to_confirm_cmd();
   bool process_refine_cmd(merkle_node const & node);
   bool process_send_data_cmd(netcmd_item_type type,
                              id const & item);
@@ -420,26 +464,29 @@ get_root_prefix()
   
 session::session(protocol_role role,
                  protocol_voice voice,
-                 vector<utf8> const & patterns,
+                 utf8 const & our_include_pattern,
+                 utf8 const & our_exclude_pattern,
                  app_state & app,
                  string const & peer,
                  Netxx::socket_type sock, 
                  Netxx::Timeout const & to) : 
   role(role),
   voice(voice),
-  patterns(patterns),
+  our_include_pattern(our_include_pattern),
+  our_exclude_pattern(our_exclude_pattern),
+  our_matcher(our_include_pattern, our_exclude_pattern),
   app(app),
   peer_id(peer),
   fd(sock),
   str(sock, to),
   inbuf(""),
-  outbuf(""),
-  protocol_version(constants::netcmd_current_protocol_version),
+  outbuf_size(0),
   armed(false),
-  pattern(""),
-  pattern_re(".*"),
   remote_peer_key_hash(""),
   remote_peer_key_name(""),
+  session_key(constants::netsync_key_initializer),
+  read_hmac(constants::netsync_key_initializer),
+  write_hmac(constants::netsync_key_initializer),
   authenticated(false),
   last_io_time(::time(NULL)),
   byte_in_ticker(NULL),
@@ -456,14 +503,6 @@ session::session(protocol_role role,
   dbw(app, true),
   encountered_error(false)
 {
-  if (voice == client_voice)
-    {
-      N(patterns.size() == 1,
-          F("client can only sync one pattern at a time"));
-      this->pattern = idx(patterns, 0);
-      this->pattern_re = boost::regex(this->pattern());
-    }
-    
   dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
                                           this, _1));
   dbw.set_on_cert_written(boost::bind(&session::cert_written_callback,
@@ -579,6 +618,14 @@ void
 session::mark_recent_io()
 {
   last_io_time = ::time(NULL);
+}
+
+void
+session::set_session_key(string const & key)
+{
+  session_key = netsync_session_key(key);
+  read_hmac.set_key(session_key);
+  write_hmac.set_key(session_key);
 }
 
 void
@@ -730,7 +777,12 @@ void
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   if (!encountered_error)
-    cmd.write(outbuf);
+  {
+    string buf;
+    cmd.write(buf, write_hmac);
+    outbuf.push_back(make_pair(buf, 0));
+    outbuf_size += buf.size();
+  }
   else
     L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
@@ -1108,8 +1160,6 @@ session::analyze_ancestry_graph()
     // Write permissions checking:
     // remove heads w/o proper certs, add their children to heads
     // 1) remove unwanted branch certs from consideration
-    //    - server: check write permission hook
-    //    - client: check against sync pattern
     // 2) remove heads w/o a branch tag, process new exposed heads
     // 3) repeat 2 until no change
 
@@ -1133,13 +1183,7 @@ session::analyze_ancestry_graph()
               ;
             else
               {
-                bool ok;
-                if (voice == server_voice)
-                  ok = app.lua.hook_get_netsync_write_permitted(name(),
-                                                         remote_peer_key_name);
-                else
-                  ok = boost::regex_match(name(), pattern_re);
-                if (ok)
+                if (our_matcher(name()))
                   {
                     ok_branches.insert(name());
                     keeping.push_back(*j);
@@ -1288,14 +1332,23 @@ bool
 session::write_some()
 {
   I(!outbuf.empty());    
-  Netxx::signed_size_type count = str.write(outbuf.data(), 
-                                            std::min(outbuf.size(),
+  size_t writelen = outbuf.front().first.size() - outbuf.front().second;
+  Netxx::signed_size_type count = str.write(outbuf.front().first.data() + outbuf.front().second, 
+                                            std::min(writelen,
                                             constants::bufsz));
   if (count > 0)
     {
-      outbuf.erase(0, count);
-      L(F("wrote %d bytes to fd %d (peer %s), %d remain in output buffer\n") 
-        % count % fd % peer_id % outbuf.size());
+      if ((size_t)count == writelen)
+        {
+          outbuf_size -= outbuf.front().first.size();
+          outbuf.pop_front();
+        }
+      else
+        {
+          outbuf.front().second += count;
+        }
+      L(F("wrote %d bytes to fd %d (peer %s)\n")
+        % count % fd % peer_id);
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
         (*byte_out_ticker) += count;
@@ -1317,7 +1370,7 @@ void
 session::queue_bye_cmd() 
 {
   L(F("queueing 'bye' command\n"));
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_bye_cmd();
   write_netcmd_and_try_flush(cmd);
   this->sent_goodbye = true;
@@ -1327,7 +1380,7 @@ void
 session::queue_error_cmd(string const & errmsg)
 {
   L(F("queueing 'error' command\n"));
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_error_cmd(errmsg);
   write_netcmd_and_try_flush(cmd);
   this->sent_goodbye = true;
@@ -1340,7 +1393,7 @@ session::queue_done_cmd(size_t level,
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   L(F("queueing 'done' command for %s level %s\n") % typestr % level);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_done_cmd(level, type);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1349,7 +1402,7 @@ void
 session::queue_hello_cmd(id const & server, 
                          id const & nonce) 
 {
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   hexenc<id> server_encoded;
   encode_hexenc(server, server_encoded);
   
@@ -1365,32 +1418,46 @@ session::queue_hello_cmd(id const & server,
 
 void 
 session::queue_anonymous_cmd(protocol_role role, 
-                             string const & pattern, 
-                             id const & nonce2)
+                             utf8 const & include_pattern, 
+                             utf8 const & exclude_pattern, 
+                             id const & nonce2,
+                             base64<rsa_pub_key> server_key_encoded)
 {
-  netcmd cmd(protocol_version);
-  cmd.write_anonymous_cmd(role, pattern, nonce2);
+  netcmd cmd;
+  rsa_oaep_sha_data hmac_key_encrypted;
+  encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+              nonce2(), hmac_key_encrypted);
+  cmd.write_anonymous_cmd(role, include_pattern, exclude_pattern,
+                          hmac_key_encrypted);
   write_netcmd_and_try_flush(cmd);
+  set_session_key(nonce2());
 }
 
 void 
 session::queue_auth_cmd(protocol_role role, 
-                        string const & pattern, 
+                        utf8 const & include_pattern, 
+                        utf8 const & exclude_pattern, 
                         id const & client, 
                         id const & nonce1, 
                         id const & nonce2, 
-                        string const & signature)
+                        string const & signature,
+                        base64<rsa_pub_key> server_key_encoded)
 {
-  netcmd cmd(protocol_version);
-  cmd.write_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
+  netcmd cmd;
+  rsa_oaep_sha_data hmac_key_encrypted;
+  encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+              nonce2(), hmac_key_encrypted);
+  cmd.write_auth_cmd(role, include_pattern, exclude_pattern, client,
+                     nonce1, hmac_key_encrypted, signature);
   write_netcmd_and_try_flush(cmd);
+  set_session_key(nonce2());
 }
 
-void 
-session::queue_confirm_cmd(string const & signature)
+void
+session::queue_confirm_cmd()
 {
-  netcmd cmd(protocol_version);
-  cmd.write_confirm_cmd(signature);
+  netcmd cmd;
+  cmd.write_confirm_cmd();
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1403,7 +1470,7 @@ session::queue_refine_cmd(merkle_node const & node)
   netcmd_item_type_to_string(node.type, typestr);
   L(F("queueing request for refinement of %s node '%s', level %d\n")
     % typestr % hpref % static_cast<int>(node.level));
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_refine_cmd(node);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1433,7 +1500,7 @@ session::queue_send_data_cmd(netcmd_item_type type,
 
   L(F("queueing request for data of %s item '%s'\n")
     % typestr % hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_send_data_cmd(type, item);
   write_netcmd_and_try_flush(cmd);
   note_item_requested(type, item);
@@ -1469,7 +1536,7 @@ session::queue_send_delta_cmd(netcmd_item_type type,
 
   L(F("queueing request for contents of %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_send_delta_cmd(type, base, ident);
   write_netcmd_and_try_flush(cmd);
   note_item_requested(type, ident);
@@ -1494,7 +1561,7 @@ session::queue_data_cmd(netcmd_item_type type,
 
   L(F("queueing %d bytes of data for %s item '%s'\n")
     % dat.size() % typestr % hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_data_cmd(type, item, dat);
   write_netcmd_and_try_flush(cmd);
   note_item_sent(type, item);
@@ -1524,7 +1591,7 @@ session::queue_delta_cmd(netcmd_item_type type,
 
   L(F("queueing %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_delta_cmd(type, base, ident, del);
   write_netcmd_and_try_flush(cmd);
   note_item_sent(type, ident);
@@ -1547,7 +1614,7 @@ session::queue_nonexistant_cmd(netcmd_item_type type,
 
   L(F("queueing note of nonexistance of %s item '%s'\n")
     % typestr % hid);
-  netcmd cmd(protocol_version);
+  netcmd cmd;
   cmd.write_nonexistant_cmd(type, item);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1633,22 +1700,6 @@ get_branches(app_state & app, vector<string> & names)
     W(F("No branches found."));
 }
 
-void
-convert_pattern(utf8 & pat, utf8 & conv)
-{
-  string x = pat();
-  string pattern = "";
-  string e = ".|*?+()[]{}^$\\";
-  for (string::const_iterator i = x.begin(); i != x.end(); i++)
-    {
-      if (e.find(*i) != e.npos)
-        pattern += '\\';
-      pattern += *i;
-    }
-  conv = pattern + ".*";
-}
-
-
 static const var_domain known_servers_domain = var_domain("known-servers");
 
 bool 
@@ -1712,21 +1763,13 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     this->remote_peer_key_hash = their_key_hash_decoded;
   }
 
-  utf8 pat(pattern);
-  if (protocol_version < 5)
-    {
-      W(F("Talking to an old server. "
-          "Using %s as a collection, not a regex.") % pattern);
-      convert_pattern(pattern, pat);
-      this->pattern_re = boost::regex(pat());
-    }
   vector<string> branchnames;
   set<utf8> ok_branches;
   get_branches(app, branchnames);
   for (vector<string>::const_iterator i = branchnames.begin();
       i != branchnames.end(); i++)
     {
-      if (boost::regex_match(*i, pattern_re))
+      if (our_matcher(*i))
           ok_branches.insert(utf8(*i));
     }
   rebuild_merkle_trees(app, ok_branches);
@@ -1752,41 +1795,23 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       decode_base64(sig, sig_raw);
       
       // make a new nonce of our own and send off the 'auth'
-      queue_auth_cmd(this->role, this->pattern(), our_key_hash_raw, 
-                     nonce, mk_nonce(), sig_raw());
+      queue_auth_cmd(this->role, our_include_pattern, our_exclude_pattern,
+                     our_key_hash_raw, nonce, mk_nonce(), sig_raw(),
+                     their_key_encoded);
     }
   else
     {
-      queue_anonymous_cmd(this->role, this->pattern(), mk_nonce());
+      queue_anonymous_cmd(this->role, our_include_pattern,
+                          our_exclude_pattern, mk_nonce(), their_key_encoded);
     }
   return true;
 }
 
-bool
-matches_one(string s, vector<boost::regex> r)
-{
-  for (vector<boost::regex>::const_iterator i = r.begin(); i != r.end(); i++)
-    {
-      if (boost::regex_match(s, *i))
-        return true;
-    }
-  return false;
-}
-
 bool 
 session::process_anonymous_cmd(protocol_role role, 
-                               string const & pattern, 
-                               id const & nonce2)
+                               utf8 const & their_include_pattern,
+                               utf8 const & their_exclude_pattern)
 {
-  hexenc<id> hnonce2;
-  encode_hexenc(nonce2, hnonce2);
-
-  L(F("received 'anonymous' netcmd from client for pattern '%s' "
-      "in %s mode with nonce2 '%s'\n")
-    %  pattern % (role == source_and_sink_role ? "source and sink" :
-                     (role == source_role ? "source " : "sink"))
-    % hnonce2);
-  
   //
   // internally netsync thinks in terms of sources and sinks. users like
   // thinking of repositories as "readonly", "readwrite", or "writeonly".
@@ -1819,82 +1844,50 @@ session::process_anonymous_cmd(protocol_role role,
   vector<string> branchnames;
   set<utf8> ok_branches;
   get_branches(app, branchnames);
-  vector<boost::regex> allowed;
-  boost::regex reg(pattern);
-  for (vector<utf8>::const_iterator i = patterns.begin();
-      i != patterns.end(); ++i)
-    {
-      allowed.push_back(boost::regex((*i)()));
-    }
+  globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
   for (vector<string>::const_iterator i = branchnames.begin();
       i != branchnames.end(); i++)
     {
-      if (boost::regex_match(*i, reg)
-          && (allowed.size() == 0 || matches_one(*i, allowed)))
-        {
-          if (app.lua.hook_get_netsync_anonymous_read_permitted(*i))
-            ok_branches.insert(utf8(*i));
-        }
+      if (our_matcher(*i) && their_matcher(*i)
+          && app.lua.hook_get_netsync_anonymous_read_permitted(*i))
+        ok_branches.insert(utf8(*i));
     }
-  if (!ok_branches.size())
+  if (ok_branches.empty())
     {
-      W(F("denied anonymous read permission for '%s'\n") % pattern);
+      W(F("denied anonymous read permission for '%s' excluding '%s'\n")
+        % their_include_pattern % their_exclude_pattern);
       this->saved_nonce = id("");
       return false;
     }
 
-  P(F("allowed anonymous read permission for '%s'\n") % pattern);
+  P(F("allowed anonymous read permission for '%s' excluding '%s'\n")
+    % their_include_pattern % their_exclude_pattern);
 
   rebuild_merkle_trees(app, ok_branches);
 
-  // get our private key and sign back
-  L(F("anonymous read permitted, signing back nonce\n"));
-  base64<rsa_sha1_signature> sig;
-  rsa_sha1_signature sig_raw;
-  base64< arc4<rsa_priv_key> > our_priv;
-  load_priv_key(app, app.signing_key, our_priv);
-  make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
-  decode_base64(sig, sig_raw);
-  queue_confirm_cmd(sig_raw());
-  this->pattern = pattern;
   this->remote_peer_key_name = rsa_keypair_id("");
   this->authenticated = true;
   this->role = source_role;
   return true;
 }
 
-bool 
-session::process_auth_cmd(protocol_role role, 
-                          string const & pattern, 
-                          id const & client, 
-                          id const & nonce1, 
-                          id const & nonce2, 
+bool
+session::process_auth_cmd(protocol_role their_role,
+                          utf8 const & their_include_pattern,
+                          utf8 const & their_exclude_pattern,
+                          id const & client,
+                          id const & nonce1,
                           string const & signature)
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
   
-  hexenc<id> hnonce1, hnonce2;
-  encode_hexenc(nonce1, hnonce1);
-  encode_hexenc(nonce2, hnonce2);
   hexenc<id> their_key_hash;
   encode_hexenc(client, their_key_hash);
   set<utf8> ok_branches;
   vector<string> branchnames;
   get_branches(app, branchnames);
-  vector<boost::regex> allowed;
-  for (vector<utf8>::const_iterator i = patterns.begin();
-      i != patterns.end(); ++i)
-    {
-      allowed.push_back(boost::regex((*i)()));
-    }
-  boost::regex reg(pattern);
-  
-  L(F("received 'auth' netcmd from client '%s' for pattern '%s' "
-      "in %s mode with nonce1 '%s' and nonce2 '%s'\n")
-    % their_key_hash % pattern % (role == source_and_sink_role ? "source and sink" :
-                                     (role == source_role ? "source " : "sink"))
-    % hnonce1 % hnonce2);
+  globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
   
   // check that they replied with the nonce we asked for
   if (!(nonce1 == this->saved_nonce))
@@ -1913,7 +1906,7 @@ session::process_auth_cmd(protocol_role role,
   // if the user asks to run a "read only" service, this means they are
   // willing to be a source but not a sink.
   //
-  // nb: the "role" here is the role the *client* wants to play
+  // nb: the "their_role" here is the role the *client* wants to play
   //     so we need to check that the opposite role is allowed for us,
   //     in our this->role field.
   //
@@ -1932,12 +1925,12 @@ session::process_auth_cmd(protocol_role role,
 
   // client as sink, server as source (reading)
 
-  if (role == sink_role || role == source_and_sink_role)
+  if (their_role == sink_role || their_role == source_and_sink_role)
     {
       if (this->role != source_role && this->role != source_and_sink_role)
         {
-          W(F("denied '%s' read permission for '%s' while running as sink\n") 
-            % their_id % pattern);
+          W(F("denied '%s' read permission for '%s' excluding '%s' while running as pure sink\n") 
+            % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
           return false;
         }
@@ -1945,48 +1938,46 @@ session::process_auth_cmd(protocol_role role,
       for (vector<string>::const_iterator i = branchnames.begin();
           i != branchnames.end(); i++)
         {
-          if (boost::regex_match(*i, reg)
-              && (allowed.size() == 0 || matches_one(*i, allowed)))
-            {
-              if (app.lua.hook_get_netsync_read_permitted(*i, their_id))
-                ok_branches.insert(utf8(*i));
-            }
+          if (our_matcher(*i) && their_matcher(*i)
+              && app.lua.hook_get_netsync_read_permitted(*i, their_id))
+            ok_branches.insert(utf8(*i));
         }
       //if we're source_and_sink_role, continue even with no branches readable
       //ex: serve --db=empty.db
-      if (!ok_branches.size() && role == sink_role)
+      if (ok_branches.empty() && their_role == sink_role)
         {
-          W(F("denied '%s' read permission for '%s'\n") % their_id % pattern);
+          W(F("denied '%s' read permission for '%s' excluding '%s'\n")
+            % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      P(F("allowed '%s' read permission for '%s'\n") % their_id % pattern);
+      P(F("allowed '%s' read permission for '%s' excluding '%s'\n")
+        % their_id % their_include_pattern % their_exclude_pattern);
     }
 
   // client as source, server as sink (writing)
 
-  if (role == source_role || role == source_and_sink_role)
+  if (their_role == source_role || their_role == source_and_sink_role)
     {
       if (this->role != sink_role && this->role != source_and_sink_role)
         {
-          W(F("denied '%s' write permission for '%s' while running as source\n") 
-            % their_id % pattern);
+          W(F("denied '%s' write permission for '%s' excluding '%s' while running as pure source\n")
+            % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      // Write permissions are now checked from analyze_ancestry_graph.
-      if (role == source_role)
+      if (!app.lua.hook_get_netsync_write_permitted(their_id))
         {
-          for (vector<string>::const_iterator i = branchnames.begin();
-              i != branchnames.end(); i++)
-            {
-              ok_branches.insert(utf8(*i));
-            }
+          W(F("denied '%s' write permission for '%s' excluding '%s' while running as pure source\n")
+            % their_id % their_include_pattern % their_exclude_pattern);
+          this->saved_nonce = id("");
+          return false;
         }
 
-      P(F("allowed '%s' write permission for '%s'\n") % their_id % pattern);
+      P(F("allowed '%s' write permission for '%s' excluding '%s'\n")
+        % their_id % their_include_pattern % their_exclude_pattern);
     }
 
   rebuild_merkle_trees(app, ok_branches);
@@ -2001,19 +1992,10 @@ session::process_auth_cmd(protocol_role role,
     {
       // get our private key and sign back
       L(F("client signature OK, accepting authentication\n"));
-      base64<rsa_sha1_signature> sig;
-      rsa_sha1_signature sig_raw;
-      base64< arc4<rsa_priv_key> > our_priv;
-      load_priv_key(app, app.signing_key, our_priv);
-      make_signature(app.lua, app.signing_key, our_priv, nonce2(), sig);
-      decode_base64(sig, sig_raw);
-      queue_confirm_cmd(sig_raw());
-      this->pattern = pattern;
-      this->pattern_re = boost::regex(this->pattern());
       this->authenticated = true;
       this->remote_peer_key_name = their_id;
       // assume the (possibly degraded) opposite role
-      switch (role)
+      switch (their_role)
         {
         case source_role:
           I(this->role != source_role);
@@ -2036,6 +2018,18 @@ session::process_auth_cmd(protocol_role role,
   return false;
 }
 
+void 
+session::respond_to_auth_cmd(rsa_oaep_sha_data hmac_key_encrypted)
+{
+  L(F("Writing HMAC confirm command"));
+  base64< arc4<rsa_priv_key> > our_priv;
+  load_priv_key(app, app.signing_key, our_priv);
+  string hmac_key;
+  decrypt_rsa(app.lua, app.signing_key, our_priv, hmac_key_encrypted, hmac_key);
+  set_session_key(hmac_key);
+  queue_confirm_cmd();
+}
+
 bool 
 session::process_confirm_cmd(string const & signature)
 {
@@ -2046,9 +2040,10 @@ session::process_confirm_cmd(string const & signature)
   encode_hexenc(id(remote_peer_key_hash), their_key_hash);
   
   // nb. this->role is our role, the server is in the opposite role
-  L(F("received 'confirm' netcmd from server '%s' for pattern '%s' in %s mode\n")
-    % their_key_hash % this->pattern % (this->role == source_and_sink_role ? "source and sink" :
-                                           (this->role == source_role ? "sink" : "source")));
+  L(F("received 'confirm' netcmd from server '%s' for pattern '%s' exclude '%s' in %s mode\n")
+    % their_key_hash % our_include_pattern % our_exclude_pattern
+    % (this->role == source_and_sink_role ? "source and sink" :
+       (this->role == source_role ? "sink" : "source")));
   
   // check their signature
   if (app.db.public_key_exists(their_key_hash))
@@ -2062,20 +2057,6 @@ session::process_confirm_cmd(string const & signature)
       if (check_signature(app.lua, their_id, their_key, this->saved_nonce(), sig))
         {
           L(F("server signature OK, accepting authentication\n"));
-          this->authenticated = true;
-
-          merkle_ptr root;
-          load_merkle_node(epoch_item, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, epoch_item);
-
-          load_merkle_node(key_item, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, key_item);
-
-          load_merkle_node(cert_item, 0, get_root_prefix().val, root);
-          queue_refine_cmd(*root);
-          queue_done_cmd(0, cert_item);
           return true;
         }
       else
@@ -2088,6 +2069,23 @@ session::process_confirm_cmd(string const & signature)
       W(F("unknown server key\n"));
     }
   return false;
+}
+
+void
+session::respond_to_confirm_cmd()
+{
+  merkle_ptr root;
+  load_merkle_node(epoch_item, 0, get_root_prefix().val, root);
+  queue_refine_cmd(*root);
+  queue_done_cmd(0, epoch_item);
+
+  load_merkle_node(key_item, 0, get_root_prefix().val, root);
+  queue_refine_cmd(*root);
+  queue_done_cmd(0, key_item);
+
+  load_merkle_node(cert_item, 0, get_root_prefix().val, root);
+  queue_refine_cmd(*root);
+  queue_done_cmd(0, cert_item);
 }
 
 static bool 
@@ -2982,8 +2980,6 @@ session::dispatch_payload(netcmd const & cmd)
         rsa_pub_key server_key;
         id nonce;
         cmd.read_hello_cmd(server_keyname, server_key, nonce);
-        if (cmd.get_version() < protocol_version)
-          protocol_version = cmd.get_version();
         return process_hello_cmd(server_keyname, server_key, nonce);
       }
       break;
@@ -2996,12 +2992,19 @@ session::dispatch_payload(netcmd const & cmd)
               "anonymous netcmd received in source or source/sink role");
       {
         protocol_role role;
-        string pattern;
-        id nonce2;
-        cmd.read_anonymous_cmd(role, pattern, nonce2);
-        if (cmd.get_version() < protocol_version)
-          protocol_version = cmd.get_version();
-        return process_anonymous_cmd(role, pattern, nonce2);
+        utf8 their_include_pattern, their_exclude_pattern;
+        rsa_oaep_sha_data hmac_key_encrypted;
+        cmd.read_anonymous_cmd(role, their_include_pattern, their_exclude_pattern, hmac_key_encrypted);
+        L(F("received 'anonymous' netcmd from client for pattern '%s' excluding '%s' "
+            "in %s mode\n")
+          % their_include_pattern % their_exclude_pattern
+          % (role == source_and_sink_role ? "source and sink" :
+             (role == source_role ? "source " : "sink")));
+
+        if (!process_anonymous_cmd(role, their_include_pattern, their_exclude_pattern))
+            return false;
+        respond_to_auth_cmd(hmac_key_encrypted);
+        return true;
       }
       break;
 
@@ -3010,13 +3013,30 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == server_voice, "auth netcmd received in server voice");
       {
         protocol_role role;
-        string pattern, signature;
+        string signature;
+        utf8 their_include_pattern, their_exclude_pattern;
         id client, nonce1, nonce2;
-        cmd.read_auth_cmd(role, pattern, client, nonce1, nonce2, signature);
-        if (cmd.get_version() < protocol_version)
-          protocol_version = cmd.get_version();
-        return process_auth_cmd(role, pattern, client,
-                                nonce1, nonce2, signature);
+        rsa_oaep_sha_data hmac_key_encrypted;
+        cmd.read_auth_cmd(role, their_include_pattern, their_exclude_pattern,
+                          client, nonce1, hmac_key_encrypted, signature);
+
+        hexenc<id> their_key_hash;
+        encode_hexenc(client, their_key_hash);
+        hexenc<id> hnonce1;
+        encode_hexenc(nonce1, hnonce1);
+
+        L(F("received 'auth(hmac)' netcmd from client '%s' for pattern '%s' "
+            "exclude '%s' in %s mode with nonce1 '%s'\n")
+          % their_key_hash % their_include_pattern % their_exclude_pattern
+          % (role == source_and_sink_role ? "source and sink" :
+             (role == source_role ? "source " : "sink"))
+          % hnonce1);
+
+        if (!process_auth_cmd(role, their_include_pattern, their_exclude_pattern,
+                              client, nonce1, signature))
+            return false;
+        respond_to_auth_cmd(hmac_key_encrypted);
+        return true;
       }
       break;
 
@@ -3025,8 +3045,10 @@ session::dispatch_payload(netcmd const & cmd)
       require(voice == client_voice, "confirm netcmd received in client voice");
       {
         string signature;
-        cmd.read_confirm_cmd(signature);
-        return process_confirm_cmd(signature);
+        cmd.read_confirm_cmd();
+        this->authenticated = true;
+        respond_to_confirm_cmd();
+        return true;
       }
       break;
 
@@ -3148,9 +3170,11 @@ session::arm()
 {
   if (!armed)
     {
-      if (cmd.read(inbuf))
+      if (outbuf_size > constants::bufsz * 10)
+        return false; // don't pack the buffer unnecessarily
+
+      if (cmd.read(inbuf, read_hmac))
         {
-//          inbuf.erase(0, cmd.encoded_size());     
           armed = true;
         }
     }
@@ -3176,7 +3200,7 @@ bool session::process()
     }
   catch (bad_decode & bd)
     {
-      W(F("caught bad_decode exception processing peer %s: '%s'\n") % peer_id % bd.what);
+      W(F("protocol error while processing peer %s: '%s'\n") % peer_id % bd.what);
       return false;
     }
 }
@@ -3184,7 +3208,8 @@ bool session::process()
 
 static void 
 call_server(protocol_role role,
-            vector<utf8> const & patterns,
+            utf8 const & include_pattern,
+            utf8 const & exclude_pattern,
             app_state & app,
             utf8 const & address,
             Netxx::port_type default_port,
@@ -3197,8 +3222,8 @@ call_server(protocol_role role,
 
   P(F("connecting to %s\n") % address());
   Netxx::Stream server(address().c_str(), default_port, timeout);
-  session sess(role, client_voice, patterns, app, 
-               address(), server.get_socketfd(), timeout);
+  session sess(role, client_voice, include_pattern, exclude_pattern,
+               app, address(), server.get_socketfd(), timeout);
   
   while (true)
     {       
@@ -3209,7 +3234,7 @@ call_server(protocol_role role,
         }
       catch (bad_decode & bd)
         {
-          W(F("caught bad_decode exception decoding input from peer %s: '%s'\n") 
+          W(F("protocol error while processing peer %s: '%s'\n") 
             % sess.peer_id % bd.what);
           return;         
         }
@@ -3236,7 +3261,7 @@ call_server(protocol_role role,
                 }
               catch (bad_decode & bd)
                 {
-                  W(F("caught bad_decode exception decoding input from peer %s: '%s'\n") 
+                  W(F("protocol error while processing peer %s: '%s'\n") 
                     % sess.peer_id % bd.what);
                   return;         
                 }
@@ -3310,7 +3335,7 @@ arm_sessions_and_calculate_probe(Netxx::Probe & probe,
         }
       catch (bad_decode & bd)
         {
-          W(F("caught bad_decode exception decoding input from peer %s: '%s', marking as bad\n") 
+          W(F("protocol error while processing peer %s: '%s', marking as bad\n") 
             % i->second->peer_id % bd.what);
           arm_failed.insert(i->first);
         }         
@@ -3327,7 +3352,8 @@ handle_new_connection(Netxx::Address & addr,
                       Netxx::StreamServer & server,
                       Netxx::Timeout & timeout,
                       protocol_role role,
-                      vector<utf8> const & patterns,
+                      utf8 const & include_pattern,
+                      utf8 const & exclude_pattern,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
                       app_state & app)
 {
@@ -3342,7 +3368,8 @@ handle_new_connection(Netxx::Address & addr,
   else
     {
       P(F("accepted new client connection from %s\n") % client);
-      shared_ptr<session> sess(new session(role, server_voice, patterns, 
+      shared_ptr<session> sess(new session(role, server_voice,
+                                           include_pattern, exclude_pattern,
                                            app,
                                            lexical_cast<string>(client), 
                                            client.get_socketfd(), timeout));
@@ -3367,7 +3394,7 @@ handle_read_available(Netxx::socket_type fd,
         }
       catch (bad_decode & bd)
         {
-          W(F("caught bad_decode exception decoding input from peer %s: '%s', disconnecting\n") 
+          W(F("protocol error while processing peer %s: '%s', disconnecting\n") 
             % sess->peer_id % bd.what);
           sessions.erase(fd);
           live_p = false;
@@ -3457,7 +3484,8 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
 
 static void 
 serve_connections(protocol_role role,
-                  vector<utf8> const & patterns,
+                  utf8 const & include_pattern,
+                  utf8 const & exclude_pattern,
                   app_state & app,
                   utf8 const & address,
                   Netxx::port_type default_port,
@@ -3510,7 +3538,7 @@ serve_connections(protocol_role role,
       // we either got a new connection
       else if (fd == server)
         handle_new_connection(addr, server, timeout, role, 
-                              patterns, sessions, app);
+                              include_pattern, exclude_pattern, sessions, app);
       
       // or an existing session woke up
       else
@@ -3709,7 +3737,8 @@ void
 run_netsync_protocol(protocol_voice voice, 
                      protocol_role role, 
                      utf8 const & addr, 
-                     vector<utf8> patterns,
+                     utf8 const & include_pattern,
+                     utf8 const & exclude_pattern,
                      app_state & app)
 {
   try 
@@ -3717,7 +3746,7 @@ run_netsync_protocol(protocol_voice voice,
       start_platform_netsync();
       if (voice == server_voice)
         {
-          serve_connections(role, patterns, app,
+          serve_connections(role, include_pattern, exclude_pattern, app,
                             addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                             static_cast<unsigned long>(constants::netsync_timeout_seconds), 
                             static_cast<unsigned long>(constants::netsync_connection_limit));
@@ -3726,7 +3755,7 @@ run_netsync_protocol(protocol_voice voice,
         {
           I(voice == client_voice);
           transaction_guard guard(app.db);
-          call_server(role, patterns, app,
+          call_server(role, include_pattern, exclude_pattern, app,
                       addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
           guard.commit();
