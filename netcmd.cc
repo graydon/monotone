@@ -73,6 +73,7 @@ netcmd::write(string & out, chained_hmac & hmac) const
   insert_variable_length_string(payload, out);
 
   string digest = hmac.process(out, oldlen);
+  I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
   out.append(digest);
 }
 
@@ -135,6 +136,7 @@ netcmd::read(string & inbuf, chained_hmac & hmac)
   require_bytes(inbuf, pos, payload_len, "netcmd payload");
 
   // grab it before the data gets munged
+  I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
   string digest = hmac.process(inbuf, 0, pos + payload_len);
 
   payload = inbuf.substr(pos + payload_len);
@@ -568,40 +570,40 @@ test_netcmd_mac()
   string buf;
   netsync_session_key key(constants::netsync_key_initializer);
   {
-    netsync_hmac_value mac(constants::netsync_key_initializer);
+    chained_hmac mac(key);
     // mutates mac
-    out_cmd.write(buf, key, mac);
-    BOOST_CHECK_THROW(in_cmd.read(buf, key, mac), bad_decode);
+    out_cmd.write(buf, mac);
+    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
   }
 
   {
-    netsync_hmac_value mac(constants::netsync_key_initializer);
-    out_cmd.write(buf, key, mac);
+    chained_hmac mac(key);
+    out_cmd.write(buf, mac);
   }
   buf[0] ^= 0xff;
   {
-    netsync_hmac_value mac(constants::netsync_key_initializer);
-    BOOST_CHECK_THROW(in_cmd.read(buf, key, mac), bad_decode);
+    chained_hmac mac(key);
+    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
   }
 
   {
-    netsync_hmac_value mac(constants::netsync_key_initializer);
-    out_cmd.write(buf, key, mac);
+    chained_hmac mac(key);
+    out_cmd.write(buf, mac);
   }
   buf[buf.size() - 1] ^= 0xff;
   {
-    netsync_hmac_value mac(constants::netsync_key_initializer);
-    BOOST_CHECK_THROW(in_cmd.read(buf, key, mac), bad_decode);
+    chained_hmac mac(key);
+    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
   }
 
   {
-    netsync_hmac_value mac(constants::netsync_key_initializer);
-    out_cmd.write(buf, key, mac);
+    chained_hmac mac(key);
+    out_cmd.write(buf, mac);
   }
   buf += '\0';
   {
-    netsync_hmac_value mac(constants::netsync_key_initializer);
-    BOOST_CHECK_THROW(in_cmd.read(buf, key, mac), bad_decode);
+    chained_hmac mac(key);
+    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
   }
 }
 
@@ -610,12 +612,12 @@ do_netcmd_roundtrip(netcmd const & out_cmd, netcmd & in_cmd, string & buf)
 {
   netsync_session_key key(constants::netsync_key_initializer);
   {
-    netsync_hmac_value mac(constants::netsync_key_initializer);
-    out_cmd.write(buf, key, mac);
+    chained_hmac mac(key);
+    out_cmd.write(buf, mac);
   }
   {
-    netsync_hmac_value mac(constants::netsync_key_initializer);
-    BOOST_CHECK(in_cmd.read(buf, key, mac));
+    chained_hmac mac(key);
+    BOOST_CHECK(in_cmd.read(buf, mac));
   }
   BOOST_CHECK(in_cmd == out_cmd);
 }

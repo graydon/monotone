@@ -133,7 +133,7 @@ verify(netsync_hmac_value & val)
     }
 
   N(val().size() == constants::netsync_hmac_value_length_in_bytes,
-    F("Invalid key length of %d bytes") % val().length());
+    F("Invalid hmac length of %d bytes") % val().length());
 
   val.ok = true;
 }

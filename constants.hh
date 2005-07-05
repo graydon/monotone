@@ -127,7 +127,7 @@ namespace constants
   // netsync HMAC value length
   extern size_t const netsync_hmac_value_length_in_bytes;
 
-  // netsync session key and HMAC key default initializer
+  // netsync session key default initializer
   extern std::string const & netsync_key_initializer;
 
 }

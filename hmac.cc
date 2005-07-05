@@ -11,6 +11,7 @@
 chained_hmac::chained_hmac(netsync_session_key const & session_key) :
   key(session_key)
 {
+  I(hmac_length == CryptoPP::SHA::DIGESTSIZE);
   memset(chain_val, 0, sizeof(chain_val));
 }
 

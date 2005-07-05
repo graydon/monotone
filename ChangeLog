@@ -1,5 +1,16 @@
 2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
 
+	* netcmd.cc (do_netcmd_roundtrip, test_netcmd_mac): Update for new
+	chained_hmac object.
+	* constants.hh (netsync_key_initializer): Update comment.
+	* hmac.hh (hmac_length): Expose length of MACs.
+	* hmac.cc: I() that it matches what CryptoPP wants to give.
+	* netcmd.cc: I() that it matches the length hard-coded into the
+	netsync protocol.
+	* vocab.cc (verify(netsync_hmac_value)): Fix error message.
+	
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
 	* tests/t_netsync_defaults.at: Update for new var names.  All
 	tests now pass.
 
