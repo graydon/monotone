@@ -1,5 +1,10 @@
 2005-07-05  Nathaniel Smith  <njs@pobox.com>
 
+	* debian/rules (config.status): Use bundled sqlite.
+	* debian/control (Build-Depends): Remove popt and sqlite.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Add timestamp.  Barring unforeseen issues, this is 0.20.
 
 2005-07-05  Nathaniel Smith  <njs@pobox.com>
