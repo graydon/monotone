@@ -79,7 +79,7 @@
                   Derek Scherger <derek@echologic.com>.
         - better memory/performance when handling large files.
           special thanks to Eric Anderson
-          <ea-9BKuEh7s7G@cello.hpl.hp.com>, Timothy Brownawell
+          <anderse-monotone@cello.hpl.hp.com>, Timothy Brownawell
           <tbrownaw@gmail.com>, Matt Johnston <matt@ucc.asn.au>,
           Matthew Gregan <kinetik@orcon.net.nz>.
         - new text mode browser in contrib/mtbrowse.sh, by Henry

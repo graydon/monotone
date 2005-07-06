@@ -1,3 +1,7 @@
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog, NEWS, AUTHORS: Fixup Eric Anderson's email address.
+
 2005-07-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* NEWS: First cut at 0.20 release notes.
@@ -399,7 +403,7 @@
 
 	* database.cc (database::execute()): truncate long query log messages
 	before copying, saving memory. 
-	Patch from Eric Anderson < ea at cello hpl hp com >
+	Patch from Eric Anderson <anderse-monotone@cello.hpl.hp.com>
 
 2005-06-17  Riccardo Ghetta  <birrachiara@tin.it>
 	Adds include()/includedir() to lua hooks and extend --rcfile
