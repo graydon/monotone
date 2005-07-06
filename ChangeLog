@@ -1,5 +1,9 @@
 2005-07-05  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Add timestamp.  Barring unforeseen issues, this is 0.20.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (EXTRA_DIST): Include some missed contrib/ stuff.
 
 2005-07-05  Nathaniel Smith  <njs@pobox.com>
