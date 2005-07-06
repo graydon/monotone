@@ -285,7 +285,6 @@ EXTRA_DIST = $(man1_MANS) \
              $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
              sqlite/keywordhash.h \
              contrib/README \
-             contrib/monoprof.sh \
              contrib/monotone-notify.pl \
              contrib/monotone-import.pl \
              contrib/ciabot_monotone.py \
@@ -295,6 +294,10 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/monotone.zsh_completion \
              contrib/monoprof.sh \
              contrib/mtbrowse.sh \
+             contrib/colorize \
+             contrib/color-logs.sh \
+             contrib/color-logs.conf \
+             contrib/get_stdio.pl \
              win32/monotone.iss \
              $(wildcard $(srcdir)/debian/*)
 
