@@ -1,5 +1,11 @@
 2005-07-05  Nathaniel Smith  <njs@pobox.com>
 
+	* configure.ac, debian/changelog, monotone.spec: Bump version
+	number.
+	* UPGRADE: Update for 0.20 release.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
 	* ChangeLog, NEWS, AUTHORS: Fixup Eric Anderson's email address.
 
 2005-07-05  Nathaniel Smith  <njs@pobox.com>
