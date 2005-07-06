@@ -1,5 +1,10 @@
 2005-07-05  Nathaniel Smith  <njs@pobox.com>
-	
+
+	* monotone.texi (Database): Note that db kill_rev_locally also
+	will trigger "unreferenced manifest" warnings from db check.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Oops, 'automate select' was in 0.19 after all.
 
 2005-07-05  Nathaniel Smith  <njs@pobox.com>

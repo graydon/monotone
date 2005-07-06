@@ -4280,9 +4280,10 @@ database with @command{read}.
 that exist in the database but are not referenced by their @sc{sha1}
 hash from any existing revision.  In itself, this only indicates some
 wasted space, and is not a problem; it's possible it could arise under
-normal use (for instance, in some strange corner cases following an
-incomplete netsync).  It could also arise, though, as a symptom of some
-other more serious problem.
+normal use (for instance, if you have run @command{db kill_rev_locally},
+or in some strange-but-harmless corner cases following an incomplete
+netsync).  It could also arise, though, as a symptom of some other more
+serious problem.
 
 @item incomplete manifests
 that exist in the database but contain references to files that do not
