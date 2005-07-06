@@ -68,9 +68,6 @@
                 - 'stdio', for efficient use by
                   front-ends.  special thanks to Timothy Brownawell
                   <tbrownaw@gmail.com>.
-                - 'select', for requesting the set of revisions
-                  matching a selector.  special thanks to Richard
-                  Levitte <richard@levitte.org>.
                 - 'certs', for fetching certs on a revision in a
                   parseable (basic io-based) format.  special thanks
                   to Grahame Bowland <grahame@angrygoats.net>.
@@ -86,6 +83,11 @@
           Nestler <Henry@BigFoot.de>.
         - improved zsh completion in contrib/monotone.zsh_completion,
           by Joel Reed <joelwreed@comcast.com>.
+
+                - upgrading from 0.19: database and working copies are
+                  fully compatible.  netsync clients and servers need
+                  to be upgraded together, as described above.  the
+                  many ui changes may require script updates.
 
 Tue May  3 00:31:37 PDT 2005
 

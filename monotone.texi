@@ -4290,9 +4290,10 @@ database with @command{read}.
 that exist in the database but are not referenced by their @sc{sha1}
 hash from any existing revision.  In itself, this only indicates some
 wasted space, and is not a problem; it's possible it could arise under
-normal use (for instance, in some strange corner cases following an
-incomplete netsync).  It could also arise, though, as a symptom of some
-other more serious problem.
+normal use (for instance, if you have run @command{db kill_rev_locally},
+or in some strange-but-harmless corner cases following an incomplete
+netsync).  It could also arise, though, as a symptom of some other more
+serious problem.
 
 @item incomplete manifests
 that exist in the database but contain references to files that do not
@@ -5348,7 +5349,7 @@ Called by monotone after the revision @var{new_id} is recieved through
 netsync. @var{certs} is a lua table containing one subtable for each
 cert attached to the revision @var{new_id}. These subtables have fields
 named "key", "name", and "value", containing the signing key for the cert,
-the name of the cert, and the value of the cert.There is no default
+the name of the cert, and the value of the cert. There is no default
 definition for this hook. 
 
 @item note_netsync_cert_received (@var{rev_id}, @var{key},
@@ -5358,13 +5359,13 @@ Called by monotone after a cert is received through netsync, iff the revision
 that the cert is attached to was not also received in the same netsync
 operation. @var{rev_id} is the revision id that the cert is attached to,
 @var{key} is the key that the cert is signed with, @var{name} is the name
-of the cert, and @var{value} is the cert value.There is no default
+of the cert, and @var{value} is the cert value. There is no default
 definition for this hook. 
 
 @item note_netsync_pubkey_received (@var{keyname})
 
 Called by monotone after a pubkey is received through netsync. @var{keyname}
-is the name of the key received.There is no default definition for this hook. 
+is the name of the key received. There is no default definition for this hook. 
 
 @item get_branch_key (@var{branchname})
 
