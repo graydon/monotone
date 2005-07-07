@@ -11,6 +11,10 @@
 	(process_netsync_args): Use it.
 	* tests/t_set_default.at, testsuite.at: New test.
 
+2005-07-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/monotone.iss: Bump version number.
+
 2005-07-05  Nathaniel Smith  <njs@pobox.com>
 
 	* debian/rules (config.status): Use bundled sqlite.
