@@ -3656,9 +3656,9 @@ to date.
 
 @ftable @command
 @item monotone serve @var{address}[:@var{port}] @var{glob} [...]
-@itemx monotone pull [@var{address}[:@var{port}] [@var{glob} [...]]]
-@itemx monotone push [@var{address}[:@var{port}] [@var{glob} [...]]]
-@itemx monotone sync [@var{address}[:@var{port}] [@var{glob} [...]]]
+@itemx monotone pull [--set-default] [@var{address}[:@var{port}] [@var{glob} [...]]]
+@itemx monotone push [--set-default] [@var{address}[:@var{port}] [@var{glob} [...]]]
+@itemx monotone sync [--set-default] [@var{address}[:@var{port}] [@var{glob} [...]]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -3717,10 +3717,9 @@ $ monotone sync
 Of course, he can still @command{sync} with other people and other
 branches by passing an address or address plus globs on the command
 line; this will not affect his default affinity for Alice.  If you ever
-do want to change your defaults, use @code{monotone unset database
-default-server} or @code{monotone unset database
-default-include-pattern}; these will clear your defaults, and cause them
-to be reset to the next person you netsync with.
+do want to change your defaults, simply pass the @option{--set-default}
+option when connecting to the server and branch pattern that you want to
+make the new default.
 
 If a @option{--pid-file} option is specified, the command
 @command{serve} will create the specified file and record the process

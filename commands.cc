@@ -1993,7 +1993,8 @@ process_netsync_args(std::string const & name,
   if (args.size() >= 1)
     {
       addr = idx(args, 0);
-      if (use_defaults && !app.db.var_exists(default_server_key))
+      if (use_defaults
+          && (!app.db.var_exists(default_server_key) || app.set_default))
         {
           P(F("setting default server to %s\n") % addr);
           app.db.set_var(default_server_key, var_value(addr()));
@@ -2013,7 +2014,8 @@ process_netsync_args(std::string const & name,
     {
       std::set<utf8> patterns(args.begin() + 1, args.end());
       combine_and_check_globish(patterns, include_pattern);
-      if (use_defaults && !app.db.var_exists(default_include_pattern_key))
+      if (use_defaults &&
+          (!app.db.var_exists(default_include_pattern_key) || app.set_default))
         {
           P(F("setting default branch pattern to %s\n") % include_pattern);
           app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
@@ -2035,7 +2037,7 @@ process_netsync_args(std::string const & name,
 }
 
 CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "push branches matching REGEX to netsync server at ADDRESS", OPT_NONE)
+    "push branches matching REGEX to netsync server at ADDRESS", OPT_SET_DEFAULT)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
@@ -2049,7 +2051,7 @@ CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
 }
 
 CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "pull branches matching REGEX from netsync server at ADDRESS", OPT_NONE)
+    "pull branches matching REGEX from netsync server at ADDRESS", OPT_SET_DEFAULT)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
@@ -2062,7 +2064,7 @@ CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
 }
 
 CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "sync branches matching REGEX with netsync server at ADDRESS", OPT_NONE)
+    "sync branches matching REGEX with netsync server at ADDRESS", OPT_SET_DEFAULT)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);

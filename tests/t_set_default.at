@@ -1,0 +1,44 @@
+AT_SETUP([--set-default])
+AT_KEYWORDS(netsync)
+MONOTONE_SETUP
+NETSYNC_SETUP
+
+ADD_FILE(testfile, [foo
+])
+COMMIT(testbranch)
+T1=`BASE_REVISION`
+
+# set defaults in db 2
+RUN_NETSYNC(pull, testbranch)
+AT_CHECK(MONOTONE2 cat revision $T1, [], [ignore], [ignore])
+
+SET_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+T2=`BASE_REVISION`
+
+# make sure the defaults really were set to 'testbranch'
+NETSYNC_SERVE_START(testbranch)
+AT_CHECK(MONOTONE2 pull, [], [ignore], [ignore])
+NETSYNC_SERVE_STOP
+AT_CHECK(MONOTONE2 cat revision $T2, [], [ignore], [ignore])
+
+# do a --set-default pull of another branch
+NETSYNC_SERVE_START(otherbranch)
+AT_CHECK(MONOTONE2 --set-default pull localhost:$_PORT otherbranch, [], [ignore], [ignore])
+NETSYNC_SERVE_STOP
+
+# create a new revision on that branch
+SET_FILE(testfile, [other1
+])
+COMMIT(otherbranch)
+O1=`BASE_REVISION`
+
+# and make sure that our default is now it
+NETSYNC_SERVE_START(otherbranch)
+AT_CHECK(MONOTONE2 pull, [], [ignore], [ignore])
+NETSYNC_SERVE_STOP
+
+AT_CHECK(MONOTONE2 cat revision $O1, [], [ignore], [ignore])
+
+AT_CLEANUP

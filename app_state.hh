@@ -33,6 +33,7 @@ public:
   bool rcfiles;
   bool diffs;
   bool no_merges;
+  bool set_default;
   bool verbose;
   options_map options;
   utf8 message;

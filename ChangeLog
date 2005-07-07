@@ -1,3 +1,12 @@
+2005-07-06  Nathaniel Smith  <njs@pobox.com>
+
+	* options.hh (OPT_SET_DEFAULT): 
+	* app_state.{hh,cc} (app_state::set_default):
+	* monotone.cc (coptions, cpp_main): New option.
+	* commands.cc (pull, push, sync): Accept it.
+	(process_netsync_args): Use it.
+	* tests/t_set_default.at, testsuite.at: New test.
+
 2005-07-05  Nathaniel Smith  <njs@pobox.com>
 
 	* debian/rules (config.status): Use bundled sqlite.

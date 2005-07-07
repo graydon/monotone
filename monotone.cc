@@ -57,6 +57,7 @@ struct poptOption coptions[] =
     {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, "print a brief version of the normal output", NULL},
     {"diffs", 0, POPT_ARG_NONE, NULL, OPT_DIFFS, "print diffs along with logs", NULL},
     {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, "skip merges when printing logs", NULL},
+    {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, "use the current arguments as the future default", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -387,6 +388,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_NO_MERGES:
               app.no_merges = true;
+              break;
+
+            case OPT_SET_DEFAULT:
+              app.set_default = true;
               break;
 
             case OPT_PIDFILE:
