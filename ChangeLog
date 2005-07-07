@@ -1,7 +1,11 @@
+2005-07-07  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog: fixup formatting.
+
 2005-07-06  Matt Johnston  <matt@ucc.asn.au>
 
-  * database.cc (assert_sqlite3_ok): database corruption and similar problems
-  are errors, not invariants.
+	* database.cc (assert_sqlite3_ok): database corruption and similar
+	problems are errors, not invariants.
 
 2005-07-06  Nathaniel Smith  <njs@pobox.com>
 
