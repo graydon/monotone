@@ -1,5 +1,9 @@
 2005-07-06  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (push, pull, sync): Fix --help description.	
+	
+2005-07-06  Nathaniel Smith  <njs@pobox.com>
+
 	* options.hh (OPT_SET_DEFAULT): 
 	* app_state.{hh,cc} (app_state::set_default):
 	* monotone.cc (coptions, cpp_main): New option.

@@ -2037,7 +2037,7 @@ process_netsync_args(std::string const & name,
 }
 
 CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "push branches matching REGEX to netsync server at ADDRESS", OPT_SET_DEFAULT)
+    "push branches matching PATTERN to netsync server at ADDRESS", OPT_SET_DEFAULT)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
@@ -2051,7 +2051,7 @@ CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
 }
 
 CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "pull branches matching REGEX from netsync server at ADDRESS", OPT_SET_DEFAULT)
+    "pull branches matching PATTERN from netsync server at ADDRESS", OPT_SET_DEFAULT)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
@@ -2064,7 +2064,7 @@ CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
 }
 
 CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "sync branches matching REGEX with netsync server at ADDRESS", OPT_SET_DEFAULT)
+    "sync branches matching PATTERN with netsync server at ADDRESS", OPT_SET_DEFAULT)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
