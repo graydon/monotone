@@ -1,3 +1,8 @@
+2005-07-06  Matt Johnston  <matt@ucc.asn.au>
+
+  * database.cc (assert_sqlite3_ok): database corruption and similar problems
+  are errors, not invariants.
+
 2005-07-06  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (push, pull, sync): Fix --help description.	

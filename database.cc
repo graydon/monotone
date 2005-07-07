@@ -543,109 +543,148 @@ database::~database()
 }
 
 static void 
-assert_sqlite3_ok(int res)
+assert_sqlite3_ok(int res, char const * errmsg, string const & ctx = "")
 {
+  if (res == SQLITE_OK && !errmsg)
+    {
+      // the only point of return
+      return;
+    }
+
+  bool internal_error = false;
+  string err_desc;
+
+  // first we handle "external" errors
   switch (res)
-    {      
-    case SQLITE_OK: 
-      break;
-
-    case SQLITE_ERROR:
-      throw oops("SQL error or missing database");
-      break;
-
-    case SQLITE_INTERNAL:
-      throw oops("An internal logic error in SQLite");
-      break;
-
+    {
     case SQLITE_PERM:
-      throw oops("Access permission denied");
-      break;
-
-    case SQLITE_ABORT:
-      throw oops("Callback routine requested an abort");
-      break;
-
-    case SQLITE_BUSY:
-      throw oops("The database file is locked");
-      break;
-
-    case SQLITE_LOCKED:
-      throw oops("A table in the database is locked");
-      break;
-
-    case SQLITE_NOMEM:
-      throw oops("A malloc() failed");
+      err_desc = "Access permission denied";
       break;
 
     case SQLITE_READONLY:
-      throw oops("Attempt to write a readonly database");
-      break;
-
-    case SQLITE_INTERRUPT:
-      throw oops("Operation terminated by sqlite3_interrupt()");
+      err_desc = "Attempt to write a readonly database";
       break;
 
     case SQLITE_IOERR:
-      throw oops("Some kind of disk I/O error occurred");
+      err_desc = "Some kind of disk I/O error occurred";
       break;
 
     case SQLITE_CORRUPT:
-      throw oops("The database disk image is malformed");
-      break;
-
-    case SQLITE_NOTFOUND:
-      throw oops("(Internal Only) Table or record not found");
+      err_desc = "The database disk image is malformed";
       break;
 
     case SQLITE_FULL:
-      throw oops("Insertion failed because database (or filesystem) is full");
+      err_desc = "Insertion failed because database (or filesystem) is full";
       break;
 
     case SQLITE_CANTOPEN:
-      throw oops("Unable to open the database file");
+      err_desc = "Unable to open the database file";
+      break;
+
+    // fallthrough for internal errors
+    default:
+      internal_error = true;
+    }
+
+  if (!internal_error)
+   {
+     if (errmsg)
+       err_desc = errmsg;
+
+     // ctx is ignored, since the error is most likely unrelated to the
+     // query
+     E(false, F("sqlite error: %s") % err_desc);
+   }
+
+  // ... and now we handle the internal errors
+  switch (res)
+   {
+
+    case SQLITE_OK:
+      I(errmsg);
+      err_desc = errmsg;
+      break;
+
+    case SQLITE_ERROR:
+      err_desc = "SQL error or missing database";
+      break;
+
+    case SQLITE_INTERNAL:
+      err_desc = "An internal logic error in SQLite";
+      break;
+
+    case SQLITE_ABORT:
+      err_desc = "Callback routine requested an abort";
+      break;
+
+    case SQLITE_BUSY:
+      // TODO: handle this more gracefully in calling functions,
+      // then perhaps it should be an external error?
+      err_desc = "The database file is locked";
+      break;
+
+    case SQLITE_LOCKED:
+      // TODO: see SQLITE_BUSY comment
+      err_desc = "A table in the database is locked";
+      break;
+
+    case SQLITE_NOMEM:
+      err_desc = "A malloc() failed";
+      break;
+
+    case SQLITE_INTERRUPT:
+      err_desc = "Operation terminated by sqlite3_interrupt()";
+      break;
+
+    case SQLITE_NOTFOUND:
+      err_desc = "(Internal Only) Table or record not found";
       break;
 
     case SQLITE_PROTOCOL:
-      throw oops("database lock protocol error");
+      err_desc = "database lock protocol error";
       break;
 
     case SQLITE_EMPTY:
-      throw oops("(Internal Only) database table is empty");
+      err_desc = "(Internal Only) database table is empty";
       break;
 
     case SQLITE_SCHEMA:
-      throw oops("The database schema changed");
+      err_desc = "The database schema changed";
       break;
 
     case SQLITE_TOOBIG:
-      throw oops("Too much data for one row of a table");
+      err_desc = "Too much data for one row of a table";
       break;
 
     case SQLITE_CONSTRAINT:
-      throw oops("Abort due to contraint violation");
+      err_desc = "Abort due to contraint violation";
       break;
 
     case SQLITE_MISMATCH:
-      throw oops("Data type mismatch");
+      err_desc = "Data type mismatch";
       break;
 
     case SQLITE_MISUSE:
-      throw oops("Library used incorrectly");
+      err_desc = "Library used incorrectly";
       break;
 
     case SQLITE_NOLFS:
-      throw oops("Uses OS features not supported on host");
+      err_desc = "Uses OS features not supported on host";
       break;
 
     case SQLITE_AUTH:
-      throw oops("Authorization denied");
+      err_desc = "Authorization denied";
       break;
 
     default:
-      throw oops(string("Unknown DB result code: ") + lexical_cast<string>(res));
+      err_desc = string("Unknown DB result code: ") + lexical_cast<string>(res);
       break;
     }
+
+   if (errmsg)
+      err_desc = errmsg;
+
+   throw oops(ctx + "sqlite error: " + err_desc);
 }
 
 void 
@@ -677,10 +716,7 @@ database::execute(char const * query, ...)
 
   va_end(ap);
 
-  if (errmsg)
-    throw oops(string("sqlite exec error ") + errmsg);
-
-  assert_sqlite3_ok(res);
+  assert_sqlite3_ok(res, errmsg);
 
 }
 
@@ -722,9 +758,7 @@ database::fetch(results & res,
 
   string ctx = string("db query [") + string(query) + "]: ";
 
-  if (errmsg)
-    throw oops(ctx + string("sqlite error ") + errmsg);
-  assert_sqlite3_ok(rescode);
+  assert_sqlite3_ok(rescode, errmsg, ctx);
 
   if (want_cols == 0 && ncol == 0) return;
   if (want_rows == 0 && nrow == 0) return;
