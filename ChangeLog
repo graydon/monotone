@@ -1,3 +1,7 @@
+2005-07-07  Vaclav Haisman  <V.Haisman@sh.cvut.cz>
+
+	* Makefile.am: Compile fix for FreeBSD.
+
 2005-07-07  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc (process_hello_cmd, process_anonymous_cmd) 

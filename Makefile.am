@@ -186,12 +186,14 @@ unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
 
 if BUNDLED_LUA
   lib3rdparty_a_SOURCES += $(LUA_SOURCES)
-  AM_CPPFLAGS += -I$(top_srcdir)/lua
+  monotone_CPPFLAGS += -I$(top_srcdir)/lua
+  unit_tests_CPPFLAGS += -I$(top_srcdir)/lua
 endif
 
 if BUNDLED_SQLITE
   lib3rdparty_a_SOURCES += $(SQLITE_SOURCES)
-  AM_CPPFLAGS += -I$(top_srcdir)/sqlite
+  monotone_CPPFLAGS += -I$(top_srcdir)/sqlite
+  unit_tests_CPPFLAGS += -I$(top_srcdir)/sqlite
 endif
 
 if STATIC_BOOST
