@@ -1,5 +1,13 @@
 2005-07-08  Matt Johnston  <matt@ucc.asn.au>
 
+	* tests/t_normalized_filenames.at: expect exit code of 1 not 3 for
+	"cat manifest" with a directory in MT/work
+	* file_io.cc, netcmd.cc, transforms.cc, vocab.hh: revert changes which
+	used swap() for strings and atomic types since strings are
+	copy-on-write.
+
+2005-07-08  Matt Johnston  <matt@ucc.asn.au>
+
 	* file_io.cc (ident_existing_file): new function to calculate
 	the ident of a file failing gracefully if it doesn't exist
 	or is a directory.

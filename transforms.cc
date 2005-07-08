@@ -168,7 +168,7 @@ void pack(T const & in, base64< gzip<T> > & out)
         new CryptoPP::Gzip(
           new CryptoPP::Base64Encoder(
             new CryptoPP::StringSink(tmp))));
-  out.swap(tmp);
+  out = tmp;
 }
 
 template <typename T>
@@ -183,7 +183,7 @@ void unpack(base64< gzip<T> > const & in, T & out)
           new CryptoPP::Gunzip(
             new CryptoPP::StringSink(tmp))));
 
-  out.swap(tmp);
+  out = tmp;
 }
 
 // specialise them

@@ -405,7 +405,7 @@ read_data_impl(fs::path const & p,
   if (!file)
     throw oops(string("cannot open file ") + p.string() + " for reading");
   CryptoPP::FileSource f(file, true, new CryptoPP::StringSink(in));
-  dat.swap(in);
+  dat = in;
 }
 
 // This function can only be called once per run.
@@ -417,7 +417,7 @@ read_data_stdin(data & dat)
   have_consumed_stdin = true;
   string in;
   CryptoPP::FileSource f(cin, true, new CryptoPP::StringSink(in));
-  dat.swap(in);
+  dat = in;
 }
 
 void 
@@ -482,7 +482,7 @@ read_localized_data(file_path const & path,
   read_data(path, tdat);
   
   string tmp1, tmp2;
-  tdat.swap(tmp2);
+  tmp2 = tdat();
   if (do_charconv) {
     tmp1 = tmp2;
     charset_convert(ext_charset, db_charset, tmp1, tmp2);
@@ -491,7 +491,7 @@ read_localized_data(file_path const & path,
     tmp1 = tmp2;
     line_end_convert(db_linesep, tmp1, tmp2);
   }
-  dat.swap(tmp2);
+  dat = tmp2;
 }
 
 
