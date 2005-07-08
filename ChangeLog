@@ -1,5 +1,10 @@
 2005-07-07  Nathaniel Smith  <njs@pobox.com>
 
+	* contrib/ciabot_monotone.py (Monotone.log): Fix to work with
+	0.20.
+
+2005-07-07  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (monotone_CPPFLAGS, unit_tests_CPPFLAGS): Add
 	-DBOOST_REGEX_V4_CHAR_REGEX_TRAITS_HPP to work around g++
 	4.0/boost 1.32.0 lossage.

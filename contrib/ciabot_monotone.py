@@ -116,7 +116,7 @@ class Monotone:
             last_arg = ["--last=%i" % (xlast,)]
         else:
             last_arg = []
-        return self._run_monotone(["log", rev] + last_arg)
+        return self._run_monotone(["log", "-r", rev] + last_arg)
 
     def toposort(self, revs):
         args = ["automate", "toposort"] + revs
