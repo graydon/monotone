@@ -177,10 +177,14 @@ AM_LDFLAGS =
 lib3rdparty_a_CPPFLAGS =
 
 monotone_LDFLAGS = 
-monotone_CPPFLAGS = 
+# Big fat ugly workaround for bad interaction between g++ 4.0 and
+# boost 1.32.0
+monotone_CPPFLAGS = -DBOOST_REGEX_V4_CHAR_REGEX_TRAITS_HPP
 
 unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
+# Big fat ugly workaround for bad interaction between g++ 4.0 and
+# boost 1.32.0
+unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -DBOOST_REGEX_V4_CHAR_REGEX_TRAITS_HPP
 
 # conditionals from configury
 
