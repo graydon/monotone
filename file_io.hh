@@ -59,6 +59,8 @@ bool directory_exists(file_path const & path);
 bool file_exists(local_path const & path);
 bool file_exists(file_path const & path);
 
+bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
+
 // returns true if the string content is binary according to monotone euristic
 bool guess_binary(std::string const & s);
 

@@ -254,6 +254,27 @@ file_exists(local_path const & p)
   return fs::exists(localized(p)); 
 }
 
+bool
+ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua)
+{
+  fs::path local_p(localized(p));
+
+  if (!fs::exists(local_p))
+    return false;
+
+  if (fs::is_directory(local_p))
+    {
+      W(F("expected file '%s', but it is a directory.") % p());
+      return false;
+    }
+
+  hexenc<id> id;
+  calculate_ident(p, id, lua);
+  ident = file_id(id);
+
+  return true;
+}
+
 bool guess_binary(string const & s)
 {
   // these do not occur in ASCII text files
