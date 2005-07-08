@@ -124,17 +124,6 @@
 // bytes of 0 during authentication, and a 20-byte random key chosen
 // by the client after authentication (discussed below).
 //
-//---- Pre-v5 packet format ----
-//
-// the protocol is a simple binary command-packet system over tcp; each
-// packet consists of a byte which identifies the protocol version, a byte
-// which identifies the command name inside that version, a size_t sent as
-// a uleb128 indicating the length of the packet, and then that many bytes
-// of payload, and finally 4 bytes of adler32 checksum (in LSB order) over
-// the payload.
-//
-// ---- end pre-v5 packet format ----
-//
 // decoding involves simply buffering until a sufficient number of bytes are
 // received, then advancing the buffer pointer. any time an integrity check
 // (the HMAC) fails, the protocol is assumed to have lost synchronization, and
@@ -1763,6 +1752,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     this->remote_peer_key_hash = their_key_hash_decoded;
   }
 
+  // clients always include in the synchronization set, every branch that the
+  // user requested
   vector<string> branchnames;
   set<utf8> ok_branches;
   get_branches(app, branchnames);
@@ -1770,7 +1761,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       i != branchnames.end(); i++)
     {
       if (our_matcher(*i))
-          ok_branches.insert(utf8(*i));
+        ok_branches.insert(utf8(*i));
     }
   rebuild_merkle_trees(app, ok_branches);
 
@@ -1848,16 +1839,14 @@ session::process_anonymous_cmd(protocol_role role,
   for (vector<string>::const_iterator i = branchnames.begin();
       i != branchnames.end(); i++)
     {
-      if (our_matcher(*i) && their_matcher(*i)
-          && app.lua.hook_get_netsync_anonymous_read_permitted(*i))
-        ok_branches.insert(utf8(*i));
-    }
-  if (ok_branches.empty())
-    {
-      W(F("denied anonymous read permission for '%s' excluding '%s'\n")
-        % their_include_pattern % their_exclude_pattern);
-      this->saved_nonce = id("");
-      return false;
+      if (their_matcher(*i))
+        if (our_matcher(*i) && app.lua.hook_get_netsync_anonymous_read_permitted(*i))
+          ok_branches.insert(utf8(*i));
+        else
+          {
+            error((F("anonymous access to branch '%s' denied by server") % *i).str());
+            return true;
+          }
     }
 
   P(F("allowed anonymous read permission for '%s' excluding '%s'\n")
@@ -1934,27 +1923,29 @@ session::process_auth_cmd(protocol_role their_role,
           this->saved_nonce = id("");
           return false;
         }
-
-      for (vector<string>::const_iterator i = branchnames.begin();
-          i != branchnames.end(); i++)
-        {
-          if (our_matcher(*i) && their_matcher(*i)
-              && app.lua.hook_get_netsync_read_permitted(*i, their_id))
-            ok_branches.insert(utf8(*i));
-        }
-      //if we're source_and_sink_role, continue even with no branches readable
-      //ex: serve --db=empty.db
-      if (ok_branches.empty() && their_role == sink_role)
-        {
-          W(F("denied '%s' read permission for '%s' excluding '%s'\n")
-            % their_id % their_include_pattern % their_exclude_pattern);
-          this->saved_nonce = id("");
-          return false;
-        }
-
-      P(F("allowed '%s' read permission for '%s' excluding '%s'\n")
-        % their_id % their_include_pattern % their_exclude_pattern);
     }
+
+  for (vector<string>::const_iterator i = branchnames.begin();
+       i != branchnames.end(); i++)
+    {
+      if (their_matcher(*i))
+        {
+          if (our_matcher(*i) && app.lua.hook_get_netsync_read_permitted(*i, their_id))
+            ok_branches.insert(utf8(*i));
+          else
+            {
+              W(F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n") 
+                % their_id % their_include_pattern % their_exclude_pattern % *i);
+              error((F("access to branch '%s' denied by server") % *i).str());
+              return true;
+            }
+        }
+    }
+
+  //if we're source_and_sink_role, continue even with no branches readable
+  //ex: serve --db=empty.db
+  P(F("allowed '%s' read permission for '%s' excluding '%s'\n")
+    % their_id % their_include_pattern % their_exclude_pattern);
 
   // client as source, server as sink (writing)
 
@@ -1970,7 +1961,7 @@ session::process_auth_cmd(protocol_role their_role,
 
       if (!app.lua.hook_get_netsync_write_permitted(their_id))
         {
-          W(F("denied '%s' write permission for '%s' excluding '%s' while running as pure source\n")
+          W(F("denied '%s' write permission for '%s' excluding '%s'\n")
             % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
           return false;

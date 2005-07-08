@@ -1,5 +1,13 @@
 2005-07-07  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc (process_hello_cmd, process_anonymous_cmd) 
+	(process_auth_cmd): Change permission checking -- always build
+	merkle tree (even when a pure sink), send permission denied and
+	abort whenever client tries to read/write a branch they don't have
+	access to.
+
+2005-07-07  Nathaniel Smith  <njs@pobox.com>
+
 	* ChangeLog: fixup formatting.
 
 2005-07-06  Matt Johnston  <matt@ucc.asn.au>
