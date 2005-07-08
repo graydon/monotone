@@ -162,17 +162,17 @@ Update working copy.
 \fBrefresh_inodeprints\fP 
 Turn on inodeprints mode, and force a cache refresh.
 .TP
-\fBpush\fP \fI[<host> [<collection>]]\fP 
-Push contents of \fI<collection>\fP to database on \fI<host>\fP.
+\fBpush\fP \fI[<host> [<glob>]]\fP 
+Push contents of \fI<glob>\fP to database on \fI<host>\fP.
 .TP
-\fBpull\fP \fI[<host> [<collection>]]\fP 
-Push contents of \fI<collection>\fP from database on \fI<host>\fP.
+\fBpull\fP \fI[<host> [<glob>]]\fP 
+Push contents of \fI<glob>\fP from database on \fI<host>\fP.
 .TP
-\fBsync\fP \fI<host> <collection>\fP 
-Sync contents of \fI<collection>\fP with database on \fI<host>\fP.
+\fBsync\fP \fI<host> <glob>\fP 
+Sync contents of \fI<glob>\fP with database on \fI<host>\fP.
 .TP
-\fBserve\fP \fI[--pid-file=<path>] <host> <collection>\fP 
-Serve contents of \fI<collection>\fP at network address \fI<host>\fP. If a
+\fBserve\fP \fI[--pid-file=<path>] <host> <glob>\fP 
+Serve contents of \fI<glob>\fP at network address \fI<host>\fP. If a
 --pid-file option is provided on the command line, monotone will store the
 process id of the server in the specified file.
 .TP

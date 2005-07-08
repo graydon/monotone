@@ -77,6 +77,7 @@ version control tools.
 * Hook Reference::      Functions which extend monotone
 * Special Topics::      Extra explanations and details
 * Man Page::            That other document
+* Default hooks::       The standard hook definitions
 * Index::               Index of concepts and functions
 @end menu
 
@@ -667,12 +668,14 @@ database and a working copy; the network is not involved.
 
 A @dfn{database} is a single, regular file. You can copy or back it up
 using standard methods. Typically you keep a database in your home
-directory. Databases are portable between different machine types. If
-a database grows too big, you may choose to remove information from
-it. You can have multiple databases and divide your work between them,
-or keep everything in a single database if you prefer. You can dump
-portions of your database out as text, and read them back into other
-databases, or send them to your friends.
+directory. Databases are portable between different machine types. You
+can have multiple databases and divide your work between them, or keep
+everything in a single database if you prefer. You can dump portions of
+your database out as text, and read them back into other databases, or
+send them to your friends.  Underneath, databases are accessed using a
+standard, robust data manager, which makes using even very large
+databases efficient.  In dire emergencies, you can directly examine and
+manipulate a database using a simple SQL interface.
 
 A database contains many files, manifests, revisions, and
 certificates, some of which are not immediately of interest, some of
@@ -1632,19 +1635,19 @@ small amount of extra information to his @file{monotonerc} file:
 @smallexample
 @group
 $ cat >>~/.monotone/monotonerc
-function get_netsync_read_permitted (regex, identity)
+function get_netsync_read_permitted (branch, identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
   return false
 end
 
-function get_netsync_write_permitted (regex, identity)
+function get_netsync_write_permitted (identity)
   if (identity == "abe@@juicebot.co.jp") then return true end
   if (identity == "beth@@juicebot.co.jp") then return true end
   return false
 end
 
-function get_netsync_anonymous_read_permitted (regex)
+function get_netsync_anonymous_read_permitted (branch)
   return false
 end
 ^D
@@ -1657,22 +1660,24 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
+$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
 This command sets up a single listener loop on the host
 @code{jim-laptop.juicebot.co.jp}, serving all branches matching
-@code{jp.co.juicebot.jb7.*}. This will naturally
-include the @code{jp.co.juicebot.jb7} branch, and any sub-branches.
+@code{jp.co.juicebot.jb7*}. This will naturally include the
+@code{jp.co.juicebot.jb7} branch, and any sub-branches.  The quotes
+around @code{"jp.co.juicebot.jb7*"} are there to protect the @code{*}
+from expansion by the shell; they have no meaning to monotone.
 
 Now Abe decides he wishes to fetch Jim's code. To do this he issues
 the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
-monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
+monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: rebuilding merkle trees ...
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1817,8 +1822,8 @@ Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
-monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
+$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: rebuilding merkle trees ...
 monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 2] [rcerts: 8] 
 monotone: connecting to jim-laptop.juicebot.co.jp
@@ -1832,8 +1837,8 @@ Jim's:
 
 @smallexample
 @group
-monotone --db=beth.db sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
-monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
+$ monotone --db=beth.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: rebuilding merkle trees ...
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: [bytes in: 3200] [bytes out: 673] 
 monotone: successful exchange with jim-laptop.juicebot.co.jp
@@ -1884,8 +1889,8 @@ And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7.*
-monotone: rebuilding merkle trees for pattern jp.co.juicebot.jb7.*
+$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: rebuilding merkle trees ...
 monotone: including branch jp.co.juicebot.jb7
 monotone: [keys: 3] [rcerts: 12] 
 monotone: connecting to jim-laptop.juicebot.co.jp
@@ -2227,6 +2232,7 @@ familiarize yourself with its operation.
 * Reserved Certs::         Certificate names with special meanings.
 * Naming Conventions::     Choosing appropriate names for keys and branches.
 * File Attributes::        Marking files as executable, or other attributes.
+* Merging::                Merging with external tools, handling binary files.
 * Migrating and Dumping::  Changing the underlying storage system.
 * Importing from CVS::     Building a monotone database from a CVS repository.
 @end menu
@@ -2637,9 +2643,9 @@ Contains database-global configuration information.  Defined names are:
 @item default-server
 The default server for netsync operations to use.  Automatically set
 by first use of netsync.
-@item default-pattern
-The default regex pattern for netsync operations to use.  Automatically
-set by first use of netsync.
+@item default-include-pattern
+The default branch glob pattern for netsync operations to use.
+Automatically set by first use of netsync.
 @end table
 
 @item known-servers
@@ -2896,6 +2902,47 @@ working copy. If you make changes to it which conflict with changes
 other people make, you will have to resolve those conflicts, as plain
 text, just as with any other text file in your working copy.
 
+@page
+@node    Merging
+@section Merging
+
+Monotone has two merging modes, controlled by the @code{manual_merge}
+attribute.
+By default all files are merged in automatic mode, unless the
+@code{manual_merge} attribute for that file is present and
+@code{true}.
+In automatic mode files are merged without user intervention, using
+monotone internal three-way merging algorithm. 
+Only if there are conflicts or an ancestor is not available monotone
+switches to manual mode, essentially escalating the merging to the user.
+When working in manual mode, monotone invokes the merge2 (for two-way
+merging) or merge3 (three-way) hooks to start an user defined external
+merge tool.  
+If the tool terminates without writing the merged file, monotone aborts the
+merging, reverting any changes made.
+By redefining the aforementioned hooks the user can not only choose a
+preferred merge tool, but even select different programs for different
+file types.  For example, gimp for .png files, OpenOffice.org for
+.doc, and so on. 
+Starting with monotone 0.20, the @code{manual_merge} attribute is
+automatically set at add time for all ``binary'' files, i.e. all files
+for wich the @code{binary_file} hook returns true. 
+Currently, this means all files with extension gif, jpeg, png, bz2, gz
+and zip, plus files containing at least one of the following
+bytes:
+ 
+@smallexample
+@group
+0x00 thru 0x06
+0x0E thru 0x1a
+0x1c thru 0x1f
+@end group
+@end smallexample
+
+The attribute could also be manually forced or removed using the
+appropriate monotone commands.
+Remember that monotone switches to manual merging even if only one of
+the files to be merged has the @code{manual_merge} attribute set. 
 
 @page
 @node    Migrating and Dumping
@@ -3002,7 +3049,7 @@ $ cvs -d $CVSROOT checkout -r 1.2
 @tab
 @smallexample
 @group
-$ monotone pull www.foo.com com.foo.wobbler
+$ monotone pull www.foo.com com.foo.wobbler*
 $ monotone checkout --revision=fe37 wobbler
 @end group
 @end smallexample
@@ -3011,7 +3058,7 @@ $ monotone checkout --revision=fe37 wobbler
 The CVS command contacts a network server, retrieves a revision, and
 stores it in your working copy. There are two cosmetic differences
 with the monotone command: remote databases are specified by hostnames
-and regexes, and revisions are denoted by @sc{sha1} values (or
+and globs, and revisions are denoted by @sc{sha1} values (or
 selectors).
 
 There is also one deep difference: pulling revisions into your
@@ -3035,7 +3082,7 @@ $ cvs commit -m "log message"
 @smallexample
 @group
 $ monotone commit --message="log message"
-$ monotone push www.foo.com com.foo.wobbler
+$ monotone push www.foo.com com.foo.wobbler*
 @end group
 @end smallexample
 @end multitable
@@ -3057,7 +3104,7 @@ $ cvs update -d
 @tab
 @smallexample
 @group
-$ monotone pull www.foo.com com.foo.wobbler
+$ monotone pull www.foo.com com.foo.wobbler*
 $ monotone merge
 $ monotone update
 @end group
@@ -3608,10 +3655,10 @@ to date.
 @section Network
 
 @ftable @command
-@item monotone serve @var{address}[:@var{port}] @var{regex} [...]
-@itemx monotone pull [@var{address}[:@var{port}] [@var{regex}]]
-@itemx monotone push [@var{address}[:@var{port}] [@var{regex}]]
-@itemx monotone sync [@var{address}[:@var{port}] [@var{regex}]]
+@item monotone serve @var{address}[:@var{port}] @var{glob} [...]
+@itemx monotone pull [--set-default] [@var{address}[:@var{port}] [@var{glob} [...]]]
+@itemx monotone push [--set-default] [@var{address}[:@var{port}] [@var{glob} [...]]]
+@itemx monotone sync [--set-default] [@var{address}[:@var{port}] [@var{glob} [...]]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -3621,25 +3668,25 @@ server) and the other peer (the client) to connect to the server.
 
 The network @var{address} specified in each case should be the same: a
 host name to listen on, or connect to, optionally followed by a colon
-and a port number. The @var{regex} parameter indicates a set of
-branches to exchange; every branch which matches @var{regex} exactly
+and a port number. The @var{glob} parameters indicate a set of
+branches to exchange; every branch which matches a @var{glob} exactly
 will be indexed and made available for synchronization.
 
-The @command{serve} command can take multiple regexes, and it will
-make available all branches matching any of the listed regexes.  Different
-permissions can be applied to each branch; see the hooks
+The @command{serve} command can take multiple globs, and it will make
+available all branches matching any of them.  Different permissions can
+be applied to each branch; see the hooks
 @code{get_netsync_read_permitted}, @code{get_netsync_write_permitted},
-and @code{get_netsync_anonymous_read_permitted}, all of which take a
-@var{branch} argument (see @ref{Hook Reference}).
+and @code{get_netsync_anonymous_read_permitted} (see @ref{Hook
+Reference}).
 
-For example, supposing Bob and Alice wish to synchronize their
+For example, perhaps Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
 branches. Supposing Alice's computer has hostname
 @code{alice.someisp.com}, then Alice might run:
 
 @smallexample
 @group
-$ monotone serve alice.someisp.com net.venge.monotone.*
+$ monotone serve alice.someisp.com "net.venge.monotone*"
 @end group
 @end smallexample
 
@@ -3647,19 +3694,19 @@ And Bob might run
 
 @smallexample
 @group
-$ monotone sync alice.someisp.com net.venge.monotone.*
+$ monotone sync alice.someisp.com "net.venge.monotone*"
 @end group
 @end smallexample
 
 When the operation completes, all branches matching
-@code{net.venge.monotone.*} will be synchronized between Alice and Bob's
+@code{net.venge.monotone*} will be synchronized between Alice and Bob's
 databases.
 
 The @command{pull}, @command{push}, and @command{sync} commands only
-require you pass @var{address} and @var{regex} the first time you
-use one of them; monotone will memorize this use and in the future
-default to the same server and regex.  For instance, if Bob wants
-to @command{sync} with Alice again, he can simply run:
+require you pass @var{address} and @var{glob} the first time you use one
+of them; monotone will memorize this use and in the future default to
+the same server and glob.  For instance, if Bob wants to @command{sync}
+with Alice again, he can simply run:
 
 @smallexample
 @group
@@ -3668,17 +3715,24 @@ $ monotone sync
 @end smallexample
 
 Of course, he can still @command{sync} with other people and other
-branches by passing an address or address plus regex on the command
+branches by passing an address or address plus globs on the command
 line; this will not affect his default affinity for Alice.  If you ever
-do want to change your defaults, use @code{monotone unset database
-default-server} or @code{monotone unset database default-pattern};
-these will clear your defaults, and cause them to be reset to the next
-person you netsync with.
+do want to change your defaults, simply pass the @option{--set-default}
+option when connecting to the server and branch pattern that you want to
+make the new default.
 
 If a @option{--pid-file} option is specified, the command
 @command{serve} will create the specified file and record the process
 identifier of the server in the file.  This file can then be read to
 identify specific monotone server processes.
+
+The syntax for patterns is very simple.  @code{*} matches 0 or more
+arbitrary characters.  @code{?} matches exactly 1 arbitrary character.
+@code{@{foo,bar,baz@}} matches ``foo'', or ``bar'', or ``baz''.  These
+can be combined arbitrarily.  A backslash, @code{\}, can be prefixed to
+any character, to match exactly that character --- this might be useful
+in case someone, for some odd reason, decides to put a ``*'' into their
+branch name.
 
 @end ftable
 
@@ -3748,9 +3802,9 @@ is translated to <revision id>: <line> in the output, where <revision id>
 is the revision in which that line of the file was last edited.
 
 @item monotone complete file @var{partial-id}
-@itemx monotone complete key @var{partial-id}
+@itemx monotone complete [--brief] key @var{partial-id}
 @itemx monotone complete manifest @var{partial-id}
-@itemx monotone complete revision @var{partial-id}
+@itemx monotone complete [--brief] revision @var{partial-id}
 
 These commands print out all known completions of a partial @sc{sha1}
 value, listing completions which are @code{file}, @code{manifest} or
@@ -3770,6 +3824,20 @@ Then monotone is telling you that there are 3 manifests it knows
 about, in its database, which begin with the 4 hex digits
 @code{fa36}. This command is intended to be used by programmable
 completion systems, such as those in @command{bash} and @command{zsh}.
+
+The complete command for keys and revisions have a @code{--verbose} option.
+Programmable completion systems can use @code{--verbose} output to 
+present users with additional information about each completion option.
+
+For example, verbose output for @code{revision} looks like this:
+@smallexample
+@group
+$ mt complete revision 01f
+01f5da490941bee1f0000f0561fc62eabfb2fa23 graydon@@dub.net 2003-12-03T03:14:35
+01f992577bd8bcdcade0f89e724fd5dc2d2bbe8a kinetik@@orcon.nz 2005-05-11T05:19:29
+01faad191d8d0474777c70b4d606782942333a78 kinetik@@orcon.nz 2005-04-11T04:24:01
+@end group
+@end smallexample
 
 @item monotone diff 
 @itemx monotone diff @var{pathname...}
@@ -4221,9 +4289,10 @@ database with @command{read}.
 that exist in the database but are not referenced by their @sc{sha1}
 hash from any existing revision.  In itself, this only indicates some
 wasted space, and is not a problem; it's possible it could arise under
-normal use (for instance, in some strange corner cases following an
-incomplete netsync).  It could also arise, though, as a symptom of some
-other more serious problem.
+normal use (for instance, if you have run @command{db kill_rev_locally},
+or in some strange-but-harmless corner cases following an incomplete
+netsync).  It could also arise, though, as a symptom of some other more
+serious problem.
 
 @item incomplete manifests
 that exist in the database but contain references to files that do not
@@ -4339,6 +4408,21 @@ you do, after all, need to retrieve the data in @var{id}, then
 @command{db check} will let you see which manifest it was, and with some
 work you can extract @var{id}'s data.
 @end itemize
+
+@item monotone db kill_branch_locally @var{branch}
+
+This command ``kills'' a branch by deleting all branch certs with that
+branch name. You should consider carefully whether you want to use it,
+because it can irrevocably delete important information. It does not
+modify or delete any revisions or any of the other certificates on
+revisions in the branch; it simply removes the branch certificates
+matching the given branch name. Because of this, it can leave
+revisions without any branch certificate at all. As with @command{db
+kill_rev_locally}, it only deletes the information from your local
+database; if there are other databases that you sync with which have
+revisions in this branch, the branch certificates will reappear when
+you sync, unless the owners of those databases also delete those
+certificates locally.
 
 @item monotone db execute @var{sql-statement}
 
@@ -4948,6 +5032,65 @@ column 3 file-state
       'M' the file is missing but is included in the current manifest
 @end verbatim
 
+Note that there are 45 possible status code combinations, some of which
+are not valid, detailed below.
+
+@verbatim
+'   ' unchanged
+'  P' patched (contents changed)
+'  U' unknown (exists on the filesystem but not tracked)
+'  I' ignored (exists on the filesystem but excluded by lua hook)
+'  M' missing (exists in the manifest but not on the filesystem)
+
+' A ' added (invalid, add should have associated patch)
+' AP' added and patched
+' AU' added but unknown (invalid)
+' AI' added but ignored (seems invalid, but may be possible?)
+' AM' added but missing from the filesystem
+
+' R ' rename target
+' RP' rename target and patched
+' RU' rename target but unknown (invalid)
+' RI' rename target but ignored (seems invalid, but may be possible?)
+' RM' rename target but missing from the filesystem
+
+'D  ' dropped
+'D P' dropped and patched (invalid)
+'D U' dropped and unknown (still exists on the filesystem)
+'D I' dropped and ignored (seems invalid, but may be possible?)
+'D M' dropped and missing (invalid)
+
+'DA ' dropped and added (invalid, add should have associated patch)
+'DAP' dropped and added and patched
+'DAU' dropped and added but unknown (invalid)
+'DAI' dropped and added but ignored (seems invalid, but may be possible?)
+'DAM' dropped and added but missing from the filesystem
+
+'DR ' dropped and rename target
+'DRP' dropped and rename target and patched
+'DRU' dropped and rename target but unknown (invalid)
+'DRI' dropped and rename target but ignored (invalid)
+'DRM' dropped and rename target but missing from the filesystem
+
+'R  ' rename source
+'R P' rename source and patched (invalid)
+'R U' rename source and unknown (still exists on the filesystem)
+'R I' rename source and ignored (seems invalid, but may be possible?)
+'R M' rename source and missing (invalid)
+
+'RA ' rename source and added (invalid, add should have associated patch)
+'RAP' rename source and added and patched
+'RAU' rename source and added but unknown (invalid)
+'RAI' rename source and added but ignored (seems invalid, but may be possible?)
+'RAM' rename source and added but missing from the filesystem
+
+'RR ' rename source and target
+'RRP' rename source and target and target patched
+'RRU' rename source and target and target unknown (invalid)
+'RRI' rename source and target and target ignored (seems invalid, but may be possible?)
+'RRM' rename source and target and target missing
+@end verbatim
+
 Full support for versioned directories is not yet complete and the
 inventory will only list entries for renamed or dropped
 directories. 
@@ -5163,9 +5306,26 @@ monotone to interpret extra hook functions from any other @var{file}
 using the @option{--rcfile=@var{file}} option; hooks defined in files
 specified on the command-line will shadow hooks from the the automatic
 files.
+By specifying @option{--rcfile=@var{directory}} you can automatically
+load all the files contained into @var{directory}.
 
-The remainder of this section documents the existing hook functions
-and their default definitions. 
+Monotone also makes available to hook writers a number of helper
+functions exposing functionality not available with standard lua.
+
+For the complete source of the default hooks see @ref{Default
+hooks}.
+
+@menu
+* Hooks::                     All hooks called by monotone.
+* Additional Lua Functions::  Extra functionality availabe to hook writers.
+@end menu
+
+@page
+@node   Hooks
+@section Hooks
+
+This section documents the existing hook functions and their default
+definitions. 
 
 @ftable @code
 @item note_commit (@var{new_id}, @var{certs})
@@ -5188,7 +5348,7 @@ Called by monotone after the revision @var{new_id} is recieved through
 netsync. @var{certs} is a lua table containing one subtable for each
 cert attached to the revision @var{new_id}. These subtables have fields
 named "key", "name", and "value", containing the signing key for the cert,
-the name of the cert, and the value of the cert.There is no default
+the name of the cert, and the value of the cert. There is no default
 definition for this hook. 
 
 @item note_netsync_cert_received (@var{rev_id}, @var{key},
@@ -5198,13 +5358,13 @@ Called by monotone after a cert is received through netsync, iff the revision
 that the cert is attached to was not also received in the same netsync
 operation. @var{rev_id} is the revision id that the cert is attached to,
 @var{key} is the key that the cert is signed with, @var{name} is the name
-of the cert, and @var{value} is the cert value.There is no default
+of the cert, and @var{value} is the cert value. There is no default
 definition for this hook. 
 
 @item note_netsync_pubkey_received (@var{keyname})
 
 Called by monotone after a pubkey is received through netsync. @var{keyname}
-is the name of the key received.There is no default definition for this hook. 
+is the name of the key received. There is no default definition for this hook. 
 
 @item get_branch_key (@var{branchname})
 
@@ -5263,45 +5423,7 @@ you proceed instead of waiting until you are ready to commit. Upon
 a successful commit, the contents of @file{MT/log} are erased setting
 the system up for another edit/commit cycle.
 
-The default definition of this hook is:
-
-@smallexample
-@group
-function edit_comment(commentary, user_log_message)
-        local exe = "vi"
-        local visual = os.getenv("VISUAL")
-        if (visual ~= nil) then exe = visual end
-        local editor = os.getenv("EDITOR")
-        if (editor ~= nil) then exe = editor end
-
-        local tmp, tname = temp_file()
-        if (tmp == nil) then return nil end
-        commentary = "MT: " .. string.gsub(commentary, "\n", "\nMT: ")
-        tmp:write(user_log_message)
-        tmp:write(commentary)
-        io.close(tmp)
-
-        if (os.execute(string.format("%s %s", exe, tname)) ~= 0) then
-                os.remove(tname)
-                return nil
-        end
-
-        tmp = io.open(tname, "r")
-        if (tmp == nil) then os.remove(tname); return nil end
-        local res = ""
-        local line = tmp:read()
-        while(line ~= nil) do 
-                if (not string.find(line, "^MT:")) then
-                        res = res .. line .. "\n"
-                end
-                line = tmp:read()
-        end
-        io.close(tmp)
-        os.remove(tname)
-        return res
-end
-@end group
-@end smallexample
+For the default definition of this hook, see @ref{Default hooks}.
 
 @item persist_phrase_ok ()
 
@@ -5380,16 +5502,12 @@ read access. There is no corresponding anonymous write
 access hook. This hook has no default definition, therefore the
 default behavior is to deny all anonymous reads.
 
-@item get_netsync_write_permitted (@var{branch}, @var{identity})
+@item get_netsync_write_permitted (@var{identity})
 
-Returns @code{true} if a peer authenticated as key @var{identity}
-should be allowed to write into your database certs, revisions,
-manifests, and files associated with @var{branch}; otherwise @code{false}.
-This hook has no default definition, therefore the default behavior is to deny all writes.
-
-Note that if write access is granted for one branch it is effectively
-granted for the entire database, as there is currently no way to
-restrict that access to only that branch.
+Returns @code{true} if a peer authenticated as key @var{identity} should
+be allowed to write into your database certs, revisions, manifests, and
+files; otherwise @code{false}.  This hook has no default definition,
+therefore the default behavior is to deny all writes.
 
 Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
@@ -5403,33 +5521,8 @@ key fingerprints of each key in your database, as key ID strings are
 Returns @code{true} if @var{filename} should be ignored while adding,
 dropping, or moving files. Otherwise returns @code{false}. This is
 most important when performing recursive actions on directories, which
-may affect multiple files simultaneously. The default definition of
-this hook is:
-
-@smallexample
-@group
-function ignore_file(name)
-   if (string.find(name, "%.a$")) then return true end
-   if (string.find(name, "%.so$")) then return true end
-   if (string.find(name, "%.o$")) then return true end
-   if (string.find(name, "%.la$")) then return true end
-   if (string.find(name, "%.lo$")) then return true end
-   if (string.find(name, "%.aux$")) then return true end
-   if (string.find(name, "%.bak$")) then return true end
-   if (string.find(name, "%.orig$")) then return true end
-   if (string.find(name, "%.rej$")) then return true end
-   if (string.find(name, "%~$")) then return true end
-   if (string.find(name, "/core$")) then return true end
-   if (string.find(name, "^CVS/")) then return true end
-   if (string.find(name, "/CVS/")) then return true end
-   if (string.find(name, "^%.svn/")) then return true end
-   if (string.find(name, "/%.svn/")) then return true end
-   if (string.find(name, "^SCCS/")) then return true end
-   if (string.find(name, "/SCCS/")) then return true end
-   return false;
-end
-@end group
-@end smallexample
+may affect multiple files simultaneously. 
+For the default definition of this hook, see @ref{Default hooks}.
 
 @item ignore_branch (@var{branchname})
 
@@ -5529,60 +5622,9 @@ Returns a string, which should be the merger of the 2 provided
 strings, which are the contents of the @var{left} and @var{right}
 nodes of a file fork which monotone was unable to automatically
 merge. The merge should either call an intelligent merge program or
-interact with the user. The default definition of this hook is:
+interact with the user.
+For the default definition of this hook, see @ref{Default hooks}.
 
-@smallexample
-@group
-
-function merge2 (left_path, right_path, merged_path, left, right) 
-   local ret = nil 
-   local tbl = @{@}
-
-   tbl.lfile = nil 
-   tbl.rfile = nil 
-   tbl.outfile = nil 
-   tbl.meld_exists = false
- 
-   tbl.lfile = write_to_temporary_file (left) 
-   tbl.rfile = write_to_temporary_file (right) 
-   tbl.outfile = write_to_temporary_file ("") 
-
-   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.outfile ~= nil 
-   then 
-      tbl.left_path = left_path 
-      tbl.right_path = right_path 
-      tbl.merged_path = merged_path 
-
-      local cmd = get_preferred_merge2_command (tbl) 
-
-      if cmd ~=nil 
-      then 
-         io.write (
-					string.format("executing external 2-way merge command\n"))
-         cmd ()
-         if tbl.meld_exists 
-         then 
-            ret = read_contents_of_file (tbl.lfile)
-         else
-            ret = read_contents_of_file (tbl.outfile) 
-         end 
-         if string.len (ret) == 0 
-         then 
-            ret = nil 
-         end
-      else
-         io.write ("no external 2-way merge command found\n")
-      end
-   end
-
-   os.remove (tbl.lfile)
-   os.remove (tbl.rfile)
-   os.remove (tbl.outfile)
-   
-   return ret
-end
-@end group
-@end smallexample
 
 @anchor{get_preferred_merge2_command}
 @item get_preferred_merge2_command(@var{tbl})
@@ -5593,57 +5635,6 @@ is always provided by @ref{merge2}. If there is a particular editor
 that you would like to use to perform merge2 operations, override
 this hook to specify it.
 
-@smallexample
-@group
-
-function get_preferred_merge2_command (tbl)
-   local cmd = nil
-   local left_path = tbl.left_path
-   local right_path = tbl.right_path
-   local merged_path = tbl.merged_path
-   local lfile = tbl.lfile
-   local rfile = tbl.rfile
-   local outfile = tbl.outfile 
-
-   local editor = string.lower(os.getenv("EDITOR"))
-
-   
-   if program_exists_in_path("kdiff3") then
-      cmd =   merge2_kdiff3_cmd (left_path, right_path, merged_path,
-								 lfile, rfile, outfile) 
-   elseif program_exists_in_path ("meld") then 
-      tbl.meld_exists = true 
-      io.write (string.format(
-			"\nWARNING: 'meld' was choosen to perform external 2-way merge.\n"..
-      "You should merge all changes to *LEFT* file due to limitation of program\n"..
-      "arguments.\n\n")) 
-      cmd = merge2_meld_cmd (lfile, rfile) 
-   elseif program_exists_in_path ("xxdiff") then 
-      cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, 
-							lfile, rfile, outfile) 
-   else
-     if string.find(editor, "emacs") ~= nil 
-				or string.find(editor, "gnu") ~= nil 
-		 then 
-       if program_exists_in_path ("emacs") then 
-          cmd = merge2_emacs_cmd ("emacs", lfile, rfile, outfile) 
-       elseif program_exists_in_path ("xemacs") then 
-          cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
-       end
-     else if string.find(editor, "vim") ~= nil then
-       if os.getenv ("DISPLAY") ~= nil 
-					and program_exists_in_path ("gvim") 
-			 then
-          cmd = merge2_vim_cmd ("gvim", lfile, rfile, outfile) 
-       elseif program_exists_in_path ("vim") then 
-          cmd = merge2_vim_cmd ("vim", lfile, rfile, outfile) 
-       end
-     end
-   end 
-   return cmd 
-end 
-@end group
-@end smallexample
 
 @anchor{merge3}
 @item merge3 (@var{ancestor}, @var{left}, @var{right})
@@ -5652,64 +5643,9 @@ Returns a string, which should be the merger of the 3 provided
 strings, which are the contents of @var{left} and @var{right} nodes,
 and least common @var{ancestor}, of a file fork which monotone was
 unable to automatically merge. This hook delegates the actual merge 
-to the result of @ref{get_preferred_merge3_command}. The default
-definition of this hook is:
+to the result of @ref{get_preferred_merge3_command}. 
+For the default definition of this hook, see @ref{Default hooks}.
 
-@smallexample
-@group
-function merge3 (anc_path, left_path, right_path, merged_path, 
-								 ancestor, left, right) 
-   local ret 
-   local tbl = @{@}
-   
-   tbl.anc_path = anc_path 
-   tbl.left_path = left_path 
-   tbl.right_path = right_path 
-
-   tbl.merged_path = merged_path 
-   tbl.afile = nil 
-   tbl.lfile = nil 
-   tbl.rfile = nil 
-   tbl.outfile = nil 
-   tbl.meld_exists = false 
-   tbl.lfile = write_to_temporary_file (left) 
-   tbl.afile =   write_to_temporary_file (ancestor) 
-   tbl.rfile =   write_to_temporary_file (right) 
-   tbl.outfile = write_to_temporary_file ("") 
-   
-   if tbl.lfile ~= nil and tbl.rfile ~= nil 
-			and tbl.afile ~= nil and tbl.outfile ~= nil 
-   then 
-      local cmd =   get_preferred_merge3_command (tbl) 
-      if cmd ~=nil 
-      then 
-         io.write (string.format(
-						"executing external 3-way merge command\n"))
-         cmd ()
-         if tbl.meld_exists 
-         then 
-            ret = read_contents_of_file (tbl.afile)
-         else
-            ret = read_contents_of_file (tbl.outfile) 
-         end 
-         if string.len (ret) == 0 
-         then 
-            ret = nil 
-         end
-      else
-         io.write ("no external 3-way merge command found\n")
-      end
-   end
-   
-   os.remove (tbl.lfile)
-   os.remove (tbl.rfile)
-   os.remove (tbl.afile)
-   os.remove (tbl.outfile)
-   
-   return ret
-end 
-@end group
-@end smallexample
 
 @anchor{get_preferred_merge3_command}
 @item get_preferred_merge3_command(@var{tbl})
@@ -5720,65 +5656,6 @@ is always provided by @ref{merge3}. If there is a particular editor
 that you would like to use to perform merge3 operations, override
 this hook to specify it. 
 
-@smallexample
-@group
-function get_preferred_merge3_command (tbl)
-   local cmd = nil
-   local left_path = tbl.left_path
-   local anc_path = tbl.anc_path
-   local right_path = tbl.right_path
-   local merged_path = tbl.merged_path
-   local lfile = tbl.lfile
-   local afile = tbl.afile
-   local rfile = tbl.rfile
-   local outfile = tbl.outfile 
-
-   local editor = string.lower(os.getenv("EDITOR"))
-
-   if program_exists_in_path("kdiff3") then
-      cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, 
-								merged_path, lfile, afile, rfile, outfile) 
-   elseif program_exists_in_path ("meld") then 
-      tbl.meld_exists = true 
-      io.write (string.format(
-					"\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
-          "You should merge all changes to *CENTER* file due to limitation of program\n"..
-          "arguments.\n\n")) 
-      cmd = merge3_meld_cmd (lfile, afile, rfile) 
-   elseif program_exists_in_path ("xxdiff") then 
-      cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, 
-								merged_path, lfile, afile, rfile, outfile) 
-   else 
-     -- prefer emacs/xemacs
-     if string.find(editor, "emacs") ~= nil 
-				or string.find(editor, "gnu") ~= nil 
-		 then 
-       if program_exists_in_path ("xemacs") then 
-          cmd = merge3_emacs_cmd ("xemacs", lfile, afile, 
-									rfile, outfile) 
-       elseif program_exists_in_path ("emacs") then 
-          cmd = merge3_emacs_cmd ("emacs", lfile, afile, 
-									rfile, outfile) 
-       end
-     elseif string.find(editor, "vim") ~= nil then  -- prefer vim
-       if os.getenv ("DISPLAY") ~= nil 
-					and program_exists_in_path ("gvim") 	
-			 then 
-          cmd = merge3_vim_cmd ("gvim", lfile, afile, 
-									rfile, outfile) 
-       elseif program_exists_in_path ("vim") then 
-          cmd = merge3_vim_cmd ("vim", lfile, afile, 
-									rfile, outfile) 
-       end
-     end
-   end 
-   
-   return cmd 
-end 
-@end group
-@end smallexample
-
-
 @item expand_selector (@var{str})
 
 Attempts to expand @var{str} as a selector. Expansion generally means
@@ -5786,113 +5663,16 @@ providing a type prefix for the selector, such as @code{a:} for
 authors or @code{d:} for dates. Expansion may also mean recognizing
 and interpreting special words such as @code{yesterday} or @code{6
 months ago} and converting them into well formed selectors. For more
-detail on the use of selectors, see @ref{Selectors}. The default
-definition of this hook is:
-
-@smallexample
-@group
-function expand_selector(str)
-
-   -- something which looks like a generic cert pattern
-   if string.find(str, "^[^=]*=.*$")
-   then
-      return ("c:" .. str)
-   end
-
-   -- something which looks like an email address
-   if string.find(str, "[%w%-_]+@@[%w%-_]+")
-   then
-      return ("a:" .. str)
-   end
-
-   -- something which looks like a branch name
-   if string.find(str, "[%w%-]+%.[%w%-]+")
-   then
-      return ("b:" .. str)
-   end
-
-   -- a sequence of nothing but hex digits
-   if string.find(str, "^%x+$")
-   then
-      return ("i:" .. str)
-   end
-
-   -- tries to expand as a date
-   local dtstr = expand_date(str)
-   if  dtstr ~= nil
-   then
-      return ("d:" .. dtstr)
-   end
-   
-   return nil
-end
-@end group
-@end smallexample
+detail on the use of selectors, see @ref{Selectors}.
+For the default definition of this hook, see @ref{Default hooks}.
 
 @item expand_date (@var{str})
 
 Attempts to expand @var{str} as a date expression. Expansion means recognizing
 and interpreting special words such as @code{yesterday} or @code{6
 months ago} and converting them into well formed date expressions. For more
-detail on the use of selectors, see @ref{Selectors}. The default
-definition of this hook is:
-
-@smallexample
-@group
-function expand_date(str)
-   -- simple date patterns
-   if string.find(str, "^19%d%d%-%d%d")
-      or string.find(str, "^20%d%d%-%d%d")
-   then
-      return (str)
-   end
-
-   -- "now" 
-   if str == "now"
-   then
-      local t = os.time(os.date('!*t'))
-      return os.date("%FT%T", t)
-   end
-   
-    -- today don't uses the time
-   if str == "today"
-   then
-      local t = os.time(os.date('!*t'))
-      return os.date("%F", t)
-   end
-   
-   -- "yesterday", the source of all hangovers
-   if str == "yesterday"
-   then
-      local t = os.time(os.date('!*t'))
-      return os.date("%F", t - 86400)
-   end
-   
-   -- "CVS style" relative dates such as "3 weeks ago"
-   local trans = @{ 
-      minute = 60; 
-      hour = 3600; 
-      day = 86400; 
-      week = 604800; 
-      month = 2678400; 
-      year = 31536000 
-   @}
-   local pos, len, n, type = string.find(str, "(%d+) ([minutehordaywk]+)s? ago")
-   if trans[type] ~= nil
-   then
-      local t = os.time(os.date('!*t'))
-      if trans[type] <= 3600
-      then
-	return os.date("%FT%T", t - (n * trans[type]))
-      else	
-	return os.date("%F", t - (n * trans[type]))
-      end
-   end
-   
-   return nil
-end
-@end group
-@end smallexample
+detail on the use of selectors, see @ref{Selectors}. 
+For the default definition of this hook, see @ref{Default hooks}.
 
 
 @item get_system_linesep ()
@@ -5992,8 +5772,8 @@ entry @var{attribute}, is a function taking a file name
 stored in @file{.mt-attrs} for the given @var{filename}. This table of
 hook functions is called once for each file during an @dfn{add}.
 
-By default, there is only one entry in this table, for the @code{execute}
-attribute. Its definition is:
+By default, there are only two entries in this table, for the
+@code{execute} and @code{manual_merge} attributes. Their definition is:
 
 @smallexample
 @group
@@ -6005,10 +5785,134 @@ attr_init_functions["execute"] =
         return nil 
         end
   end
+attr_init_functions["manual_merge"] = 
+   function(filename)
+      if (binary_file(filename)) then 
+        return "true" -- binary files must merged manually
+      else 
+        return nil
+      end 
+   end
 @end group
 @end smallexample
 
+The @code{binary_file} function is also defined as a lua hook. See
+@ref{Default hooks}. 
+
 @end ftable
+
+@page
+@node   Additional Lua Functions
+@section Additional Lua Functions
+
+This section documents the additional lua functions made available to
+hook writers. 
+
+@ftable @code
+
+@item existonpath(@var{possible_command})
+
+This function receives a string containing the name of an external
+program and returns 0 if it exists on path and is executable, -1
+otherwise. 
+As an example, @code{existonpath("xxdiff")} returns 0 if the
+program xxdiff is available.
+On windows, this function automatically appends ``.exe'' to the
+program name. In the previous example, @code{existonpath} would search
+for ``xxdiff.exe''.
+
+@item guess_binary(@var{filespec})
+
+Returns true if the file appears to be binary, i.e. contains one or
+more of the following characters:
+@smallexample
+@group
+0x00 thru 0x06
+0x0E thru 0x1a
+0x1c thru 0x1f
+@end group
+@end smallexample
+
+@item include(@var{scriptfile}) 
+
+This function tries to load and execute the script contained into
+scriptfile.  It returns true for success and false if there is an
+error. 
+
+@item includedir(@var{scriptpath})
+
+This function loads and executes in alphabetical order all the scripts
+contained into the directory scriptpath.
+If one of the scripts has an error, the functions doesn't process the
+remaining scripts and immediately returns false.
+
+@item is_executable(@var{filespec})
+
+This function returns true if the file is executable, false
+otherwise.  On windows this function returns always false.
+
+@item kill(@var{pid} [, @var{signal}])
+
+This function calls the kill() C library function on posix systems and
+TerminateProcess on Win32 (in that case @var{pid} is the process
+handle).  If the optional @var{signal} parameter is missing, SIGTERM
+will be used. 
+Returns 0 on succes, -1 on error.
+
+@item make_executable(@var{filespec})
+
+This function marks the named file as executable.  On windows has no
+effect. 
+
+@item mkstemp(@var{template})
+
+Like its C library counterpart,  mkstemp creates a unique name and
+returns a file descriptor for the newly created file. 
+The value of template should be a pointer to a character buffer loaded
+with a null-terminated string that consists of contiguous, legal file
+ad path name characters followed by six Xs. 
+The function mkstemp replaces the Xs by an alpha-numeric sequence
+that is chosen to ensure that no file in the chosen directory has that
+name. 
+Furthermore, subsequent calls to mkstemp within the same process
+each yield different file names. 
+Unlike other implementations, monotone mkstemp allows the template
+string to contain a complete path, not only a filename, allowing users
+to create temporary files outside the current directory.
+
+@strong{Important notice:}@*
+To create a temporary file, you must use the @code{temp_file()}
+function, unless you need to run monotone with the @option{--nostd}
+option.  @code{temp_file()} builds on @code{mkstemp()} and creates a
+file in the standard TMP/TEMP directories.
+For the definition of @code{temp_file()}, see @ref{Default hooks}.
+
+@item sleep(@var{seconds})
+
+Makes the calling process sleep for the specified number of seconds.
+
+@item spawn(@var{executable} [, @var{args ...}])
+
+Starts the named executable with the given arguments.  Returns the
+process pid on Posix systems, the process handle on Win32 or -1 if
+there was an error.
+Calls fork/execvp on Posix, CreateProcess on Win32.
+
+@strong{Important notice:}@*
+To spawn a process and wait for its completion, use the @code{execute()}
+function, unless you need to run monotone with the @option{--nostd}
+option.  @code{execute()} builds on @code{spawn()} and @code{wait()}
+in a standardized way.
+
+@item wait(@var{pid})
+
+Wait until the process with given pid (process handle on Win32) exits.
+Returns two values: a result value and the exit code of the waited-for
+process.
+The exit code is meaningful only if the result value is 0.
+
+@end ftable
+
 
 @node    Special Topics
 @chapter Special Topics
@@ -6846,20 +6750,20 @@ Update working copy.
 @item @b{refresh_inodeprints}
 Turn on inodeprints mode, and force a cache refresh.
 
-@item @b{push} @i{<host> <regex>}
-Push contents of branches matching @i{<regex>} to database on @i{<host>}
+@item @b{push} @i{<host> <glob>}
+Push contents of branches matching @i{<glob>} to database on @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{pull} @i{<host> <regex>}
-Pull contents of branches matching @i{<regex>} from database on @i{<host>}
+@item @b{pull} @i{<host> <glob>}
+Pull contents of branches matching @i{<glob>} from database on @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{sync} @i{<host> <regex>}
-Sync contents of branches matching @i{<regex>} with database on @i{<host>}
+@item @b{sync} @i{<host> <glob>}
+Sync contents of branches matching @i{<glob>} with database on @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
-@item @b{serve} @i{<host> <regex>}
-Serve contents of branches matching @i{<regex>} at network address @i{<host>}
+@item @b{serve} @i{<host> <glob>}
+Serve contents of branches matching @i{<glob>} at network address @i{<host>}
 @comment TROFF INPUT: .SH DESCRIPTION
 
 @item @b{automate} @i{(interface_version|heads|ancestors|attributes|parents|descendents|children|graph|erase_ancestors|toposort|ancestry_difference|leaves|inventory|stdio|certs|select)}
@@ -7081,6 +6985,16 @@ see http://savannah.nongnu.org/bugs/?group=monotone
 @c DEBUG: print_menu("AUTHOR")
 
 graydon hoare <graydon@@pobox.com>
+
+@node Default hooks
+@appendix Default hooks
+
+This section contains the entire source code of the standard hook file,
+that is built in to the monotone executable, and read before any user
+hooks files (unless @option{--nostd} is passed).  It contains the
+default values for all hooks.
+
+@verbatiminclude std_hooks.lua
 
 @node Index
 @unnumbered Index

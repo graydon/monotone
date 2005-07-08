@@ -3,6 +3,8 @@
 #include <vector>
 #ifdef WIN32
 #include <io.h> /* for chdir() */
+#else
+#include <unistd.h> /* for chdir() on POSIX */
 #endif
 #include <cstdlib>              // for strtoul()
 
@@ -31,7 +33,8 @@ static string const key_option("key");
 
 app_state::app_state() 
   : branch_name(""), db(""), stdhooks(true), rcfiles(true), diffs(false),
-    search_root("/"), depth(-1), last(-1)
+    no_merges(false), set_default(false), verbose(false), search_root("/"),
+    depth(-1), last(-1)
 {
   db.set_app(this);
 }
@@ -155,7 +158,9 @@ app_state::prefix(utf8 const & path)
 }
 
 void 
-app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & paths)
+app_state::set_restriction(path_set const & valid_paths, 
+                           vector<utf8> const & paths,
+                           bool respect_ignore)
 {
   // this can't be a file-global static, because file_path's initializer
   // depends on another global static being defined.
@@ -165,7 +170,7 @@ app_state::set_restriction(path_set const & valid_paths, vector<utf8> const & pa
     {
       file_path p = prefix(*i);
 
-      if (lua.hook_ignore_file(p)) 
+      if (respect_ignore && lua.hook_ignore_file(p)) 
         {
           L(F("'%s' ignored by restricted path set\n") % p());
           continue;
@@ -348,6 +353,12 @@ void
 app_state::set_rcfiles(bool b)
 {
   rcfiles = b;
+}
+
+void
+app_state::set_verbose(bool b)
+{
+  verbose = b;
 }
 
 void

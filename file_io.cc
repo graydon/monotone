@@ -255,6 +255,18 @@ file_exists(local_path const & p)
   return fs::exists(localized(p)); 
 }
 
+bool guess_binary(string const & s)
+{
+  // these do not occur in ASCII text files
+  // FIXME: this heuristic is (a) crap and (b) hardcoded. fix both these.
+  if (s.find_first_of('\x00') != string::npos ||
+      s.find_first_of("\x01\x02\x03\x04\x05\x06\x0e\x0f"
+                      "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
+                      "\x19\x1a\x1c\x1d\x1e\x1f") != string::npos)
+    return true;
+  return false;
+}
+
 void 
 delete_file(local_path const & p) 
 { 
@@ -454,7 +466,7 @@ read_localized_data(file_path const & path,
   read_data(path, tdat);
   
   string tmp1, tmp2;
-  tmp2 = tdat();
+  tdat.swap(tmp2);
   if (do_charconv) {
     tmp1 = tmp2;
     charset_convert(ext_charset, db_charset, tmp1, tmp2);
@@ -463,7 +475,7 @@ read_localized_data(file_path const & path,
     tmp1 = tmp2;
     line_end_convert(db_linesep, tmp1, tmp2);
   }
-  dat = tmp2;
+  dat.swap(tmp2);
 }
 
 

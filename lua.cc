@@ -30,6 +30,7 @@ extern "C" {
 #include "sanity.hh"
 #include "vocab.hh"
 #include "platform.hh"
+#include "transforms.hh"
 
 // defined in {std,test}_hooks.lua, converted
 #include "test_hooks.h"
@@ -44,154 +45,6 @@ static int panic_thrower(lua_State * st)
   throw oops("lua panic");
 }
 */
-
-extern "C"
-{
-  static int 
-  monotone_mkstemp_for_lua(lua_State *L) 
-  {
-    int fd = -1;
-    FILE **pf = NULL;
-    char const *filename = lua_tostring (L, -1);
-    std::string dup(filename);
-    
-    fd = monotone_mkstemp(dup);
-    
-    if (fd == -1)
-      return 0;
-    
-    // this magic constructs a lua object which the lua io library
-    // will enjoy working with
-    pf = static_cast<FILE **>(lua_newuserdata(L, sizeof(FILE *)));
-    *pf = fdopen(fd, "r+");  
-    lua_pushstring(L, "FILE*");
-    lua_rawget(L, LUA_REGISTRYINDEX);
-    lua_setmetatable(L, -2);  
-    
-    lua_pushstring(L, dup.c_str());
-    
-    if (*pf == NULL) 
-      {
-        lua_pushnil(L);
-        lua_pushfstring(L, "%s", strerror(errno));
-        lua_pushnumber(L, errno);
-        return 3;
-      }
-    else
-      return 2;
-  }
-
-  static int
-  monotone_existsonpath_for_lua(lua_State *L)
-  {
-    const char *exe = lua_tostring(L, -1);
-    lua_pushnumber(L, existsonpath(exe));
-    return 1;
-  }
-
-  static int
-  monotone_is_executable_for_lua(lua_State *L)
-  {
-    const char *path = lua_tostring(L, -1);
-    lua_pushboolean(L, is_executable(path));
-    return 1;
-  }
-
-  static int
-  monotone_make_executable_for_lua(lua_State *L)
-  {
-    const char *path = lua_tostring(L, -1);
-    lua_pushnumber(L, make_executable(path));
-    return 1;
-  }
-
-  static int
-  monotone_spawn_for_lua(lua_State *L)
-  {
-    int n = lua_gettop(L);
-    const char *path = lua_tostring(L, -n);
-    char **argv = (char**)malloc((n+1)*sizeof(char*));
-    int i;
-    pid_t ret;
-    if (argv==NULL)
-      return 0;
-    argv[0] = (char*)path;
-    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(n - i));
-    argv[i] = NULL;
-    ret = process_spawn(argv);
-    free(argv);
-    lua_pushnumber(L, ret);
-    return 1;
-  }
-
-  static int
-  monotone_wait_for_lua(lua_State *L)
-  {
-    pid_t pid = (pid_t)lua_tonumber(L, -1);
-    int res;
-    int ret;
-    ret = process_wait(pid, &res);
-    lua_pushnumber(L, res);
-    lua_pushnumber(L, ret);
-    return 2;
-  }
-
-  static int
-  monotone_kill_for_lua(lua_State *L)
-  {
-    int n = lua_gettop(L);
-    pid_t pid = (pid_t)lua_tonumber(L, -2);
-    int sig;
-    if (n>1)
-      sig = (int)lua_tonumber(L, -1);
-    else
-      sig = SIGTERM;
-    lua_pushnumber(L, process_kill(pid, sig));
-    return 1;
-  }
-
-  static int
-  monotone_sleep_for_lua(lua_State *L)
-  {
-    int seconds = (int)lua_tonumber(L, -1);
-    lua_pushnumber(L, process_sleep(seconds));
-    return 1;
-  }
-}
-
-
-lua_hooks::lua_hooks()
-{
-  st = lua_open ();  
-  I(st);
-
-  // no atpanic support in 4.x
-  // lua_atpanic (st, &panic_thrower);
-
-  luaopen_base(st);
-  luaopen_io(st);
-  luaopen_string(st);
-  luaopen_math(st);
-  luaopen_table(st);
-  luaopen_debug(st);
-
-  // add monotone-specific functions
-  lua_register(st, "mkstemp", monotone_mkstemp_for_lua);
-  lua_register(st, "existsonpath", monotone_existsonpath_for_lua);
-  lua_register(st, "is_executable", monotone_is_executable_for_lua);
-  lua_register(st, "make_executable", monotone_make_executable_for_lua);
-  lua_register(st, "spawn", monotone_spawn_for_lua);
-  lua_register(st, "wait", monotone_wait_for_lua);
-  lua_register(st, "kill", monotone_kill_for_lua);
-  lua_register(st, "sleep", monotone_sleep_for_lua);
-}
-
-lua_hooks::~lua_hooks()
-{
-  if (st)
-    lua_close (st);
-}
-
 
 // This Lua object represents a single imperative transaction with the lua
 // interpreter. if it fails at any point, all further commands in the
@@ -525,6 +378,217 @@ Lua
 
 std::set<string> Lua::missing_functions;
 
+
+
+
+extern "C"
+{
+  static int 
+  monotone_mkstemp_for_lua(lua_State *L) 
+  {
+    int fd = -1;
+    FILE **pf = NULL;
+    char const *filename = lua_tostring (L, -1);
+    std::string dup(filename);
+    
+    fd = monotone_mkstemp(dup);
+    
+    if (fd == -1)
+      return 0;
+    
+    // this magic constructs a lua object which the lua io library
+    // will enjoy working with
+    pf = static_cast<FILE **>(lua_newuserdata(L, sizeof(FILE *)));
+    *pf = fdopen(fd, "r+");  
+    lua_pushstring(L, "FILE*");
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    lua_setmetatable(L, -2);  
+    
+    lua_pushstring(L, dup.c_str());
+    
+    if (*pf == NULL) 
+      {
+        lua_pushnil(L);
+        lua_pushfstring(L, "%s", strerror(errno));
+        lua_pushnumber(L, errno);
+        return 3;
+      }
+    else
+      return 2;
+  }
+
+  static int
+  monotone_existsonpath_for_lua(lua_State *L)
+  {
+    const char *exe = lua_tostring(L, -1);
+    lua_pushnumber(L, existsonpath(exe));
+    return 1;
+  }
+
+  static int
+  monotone_is_executable_for_lua(lua_State *L)
+  {
+    const char *path = lua_tostring(L, -1);
+    lua_pushboolean(L, is_executable(path));
+    return 1;
+  }
+
+  static int
+  monotone_make_executable_for_lua(lua_State *L)
+  {
+    const char *path = lua_tostring(L, -1);
+    lua_pushnumber(L, make_executable(path));
+    return 1;
+  }
+
+  static int
+  monotone_spawn_for_lua(lua_State *L)
+  {
+    int n = lua_gettop(L);
+    const char *path = lua_tostring(L, -n);
+    char **argv = (char**)malloc((n+1)*sizeof(char*));
+    int i;
+    pid_t ret;
+    if (argv==NULL)
+      return 0;
+    argv[0] = (char*)path;
+    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(n - i));
+    argv[i] = NULL;
+    ret = process_spawn(argv);
+    free(argv);
+    lua_pushnumber(L, ret);
+    return 1;
+  }
+
+  static int
+  monotone_wait_for_lua(lua_State *L)
+  {
+    pid_t pid = (pid_t)lua_tonumber(L, -1);
+    int res;
+    int ret;
+    ret = process_wait(pid, &res);
+    lua_pushnumber(L, res);
+    lua_pushnumber(L, ret);
+    return 2;
+  }
+
+  static int
+  monotone_kill_for_lua(lua_State *L)
+  {
+    int n = lua_gettop(L);
+    pid_t pid = (pid_t)lua_tonumber(L, -2);
+    int sig;
+    if (n>1)
+      sig = (int)lua_tonumber(L, -1);
+    else
+      sig = SIGTERM;
+    lua_pushnumber(L, process_kill(pid, sig));
+    return 1;
+  }
+
+  static int
+  monotone_sleep_for_lua(lua_State *L)
+  {
+    int seconds = (int)lua_tonumber(L, -1);
+    lua_pushnumber(L, process_sleep(seconds));
+    return 1;
+  }
+
+  static int
+  monotone_guess_binary_for_lua(lua_State *L)
+  {
+    const char *path = lua_tostring(L, -1);
+    N(path, F("guess_binary called with an invalid parameter"));
+    lua_pushboolean(L, guess_binary(std::string(path, lua_strlen(L, -1))));
+    return 1;
+  }
+  
+  static int
+  monotone_include_for_lua(lua_State *L)
+  {
+    const char *path = lua_tostring(L, -1);
+    N(path, F("Include called with an invalid parameter"));
+    
+    bool res =Lua(L)
+    .loadfile(std::string(path, lua_strlen(L, -1)))
+    .call(0,1)
+    .ok();
+
+    lua_pushboolean(L, res);
+    return 1;
+  }
+  
+  static int
+  monotone_includedir_for_lua(lua_State *L)
+  {
+    const char *pathstr = lua_tostring(L, -1);
+    N(pathstr, F("IncludeDir called with an invalid parameter"));
+
+    fs::path locpath(pathstr);
+    N(fs::exists(locpath), F("Directory '%s' does not exists") % pathstr);
+    N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
+
+    // directory, iterate over it, skipping subdirs, taking every filename,
+    // sorting them and loading in sorted order
+    fs::directory_iterator it(locpath);
+    std::vector<fs::path> arr;
+    while (it != fs::directory_iterator())
+      {
+        if (!fs::is_directory(*it))
+          arr.push_back(*it);
+        ++it;
+      }
+    std::sort(arr.begin(), arr.end());
+    for (std::vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
+      {
+        bool res =Lua(L)
+        .loadfile(i->string())
+        .call(0,1)
+        .ok();
+        N(res, F("lua error while loading rcfile '%s'") % i->string());
+      }
+
+    lua_pushboolean(L, true); 
+    return 1;
+  }
+}
+
+
+lua_hooks::lua_hooks()
+{
+  st = lua_open ();  
+  I(st);
+
+  // no atpanic support in 4.x
+  // lua_atpanic (st, &panic_thrower);
+
+  luaopen_base(st);
+  luaopen_io(st);
+  luaopen_string(st);
+  luaopen_math(st);
+  luaopen_table(st);
+  luaopen_debug(st);
+
+  // add monotone-specific functions
+  lua_register(st, "mkstemp", monotone_mkstemp_for_lua);
+  lua_register(st, "existsonpath", monotone_existsonpath_for_lua);
+  lua_register(st, "is_executable", monotone_is_executable_for_lua);
+  lua_register(st, "make_executable", monotone_make_executable_for_lua);
+  lua_register(st, "spawn", monotone_spawn_for_lua);
+  lua_register(st, "wait", monotone_wait_for_lua);
+  lua_register(st, "kill", monotone_kill_for_lua);
+  lua_register(st, "sleep", monotone_sleep_for_lua);
+  lua_register(st, "guess_binary", monotone_guess_binary_for_lua);
+  lua_register(st, "include", monotone_include_for_lua);
+  lua_register(st, "includedir", monotone_includedir_for_lua);
+}
+
+lua_hooks::~lua_hooks()
+{
+  if (st)
+    lua_close (st);
+}
+
 static bool 
 run_string(lua_State * st, string const &str, string const & identity)
 {
@@ -581,6 +645,29 @@ void
 lua_hooks::load_rcfile(utf8 const & rc)
 {
   I(st);
+  if (rc() != "-")
+    {
+      fs::path locpath(localized(rc));
+      if (fs::exists(locpath) && fs::is_directory(locpath))
+        {
+          // directory, iterate over it, skipping subdirs, taking every filename,
+          // sorting them and loading in sorted order
+          fs::directory_iterator it(locpath);
+          std::vector<fs::path> arr;
+          while (it != fs::directory_iterator())
+            {
+              if (!fs::is_directory(*it))
+                arr.push_back(*it);
+              ++it;
+            }
+          std::sort(arr.begin(), arr.end());
+          for (std::vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
+            {
+              load_rcfile(*i, true);
+            }
+          return; // directory read, skip the rest ...
+        }
+    }
   data dat;
   L(F("opening rcfile '%s' ...\n") % rc);
   read_data_for_command_line(rc, dat);
@@ -651,14 +738,14 @@ bool
 lua_hooks::hook_expand_date(std::string const & sel, 
                             std::string & exp)
 {
-	exp.clear();
+        exp.clear();
   bool res= Lua(st)
     .func("expand_date")
     .push_str(sel)
     .call(1,1)
     .extract_str(exp)
     .ok();
-	return res && exp.size();
+        return res && exp.size();
 }
 
 bool 
@@ -951,14 +1038,14 @@ lua_hooks::hook_use_inodeprints()
 }
 
 bool 
-lua_hooks::hook_get_netsync_read_permitted(std::string const & pattern, 
+lua_hooks::hook_get_netsync_read_permitted(std::string const & branch, 
                                            rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
     .func("get_netsync_read_permitted")
-    .push_str(pattern)
+    .push_str(branch)
     .push_str(identity())
     .call(2,1)
     .extract_bool(permitted)
@@ -968,13 +1055,13 @@ lua_hooks::hook_get_netsync_read_permitted(std::string const & pattern,
 }
 
 bool 
-lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & pattern)
+lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & branch)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
     .func("get_netsync_anonymous_read_permitted")
-    .push_str(pattern)
+    .push_str(branch)
     .call(1,1)
     .extract_bool(permitted)
     .ok();
@@ -983,16 +1070,14 @@ lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & pattern
 }
 
 bool 
-lua_hooks::hook_get_netsync_write_permitted(std::string const & pattern, 
-                                            rsa_keypair_id const & identity)
+lua_hooks::hook_get_netsync_write_permitted(rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
     .func("get_netsync_write_permitted")
-    .push_str(pattern)
     .push_str(identity())
-    .call(2,1)
+    .call(1,1)
     .extract_bool(permitted)
     .ok();
 

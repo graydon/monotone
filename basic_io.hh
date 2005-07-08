@@ -24,7 +24,7 @@ namespace basic_io
       TOK_SYMBOL,
       TOK_STRING,
       TOK_HEX,
-      TOK_NONE,
+      TOK_NONE
     } token_type;
 
   struct 

@@ -40,6 +40,8 @@ MOST_SOURCES =								\
          selectors.cc selectors.hh					\
          annotate.cc annotate.hh					\
          restrictions.cc restrictions.hh				\
+         hmac.cc hmac.hh                  \
+         globish.cc globish.hh                                          \
 									\
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
@@ -123,6 +125,7 @@ SQLITE_SOURCES = \
         sqlite/util.c sqlite/vacuum.c \
         sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c \
         sqlite/vdbemem.c sqlite/where.c \
+	sqlite/prepare.c sqlite/callback.c \
 	\
         sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
         sqlite/os_common.h sqlite/os_unix.h sqlite/os_win.h \
@@ -308,14 +311,20 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/monotone.zsh_completion \
              contrib/monoprof.sh \
              contrib/mtbrowse.sh \
+             contrib/colorize \
+             contrib/color-logs.sh \
+             contrib/color-logs.conf \
+             contrib/get_stdio.pl \
              win32/monotone.iss \
              $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
-monotone.pdf: monotone.texi version.texi $(PDF_FIGURES)
+monotone.info: monotone.texi version.texi std_hooks.lua
 
-monotone.dvi: monotone.texi version.texi $(EPS_FIGURES)
+monotone.pdf: monotone.texi version.texi std_hooks.lua $(PDF_FIGURES)
+
+monotone.dvi: monotone.texi version.texi std_hooks.lua $(EPS_FIGURES)
 
 #%.eps: %.epsi
 #	mv $< $@
@@ -424,14 +433,14 @@ package_full_revision.c: package_full_revision.txt txt2c Makefile
 
 # automake doesn't build html docs
 
-monotone.html: monotone.texi texinfo.css
+monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
 	makeinfo --no-split --no-headers --output $@ --html $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
 	rm -f monotone.html.perlbak
 
 # The .perlbak thing is needed, otherwise the perl executions fails on MinGW
 
-html: monotone.texi texinfo.css
+html: monotone.texi version.texi std_hooks.lua texinfo.css
 	mkdir -p html
 	makeinfo --number-sections --html --output html $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html

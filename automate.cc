@@ -856,7 +856,7 @@ automate_certs(std::vector<utf8> args,
         
   // Make the output deterministic; this is useful for the test suite, in
   // particular.
-  sort(certs.begin(), certs.end());
+  std::sort(certs.begin(), certs.end());
 
   basic_io::printer pr(output);
 

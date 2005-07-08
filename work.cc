@@ -674,6 +674,8 @@ string const encoding_attribute("encoding");
 string const binary_encoding("binary");
 string const default_encoding("default");
 
+string const manual_merge_attribute("manual_merge");
+
 static bool find_in_attr_map(attr_map const & attr,
                              file_path const & file,
                              std::string const & attr_key,

@@ -1,3 +1,616 @@
+2005-07-07  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog: fixup formatting.
+
+2005-07-06  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (assert_sqlite3_ok): database corruption and similar
+	problems are errors, not invariants.
+
+2005-07-06  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (push, pull, sync): Fix --help description.	
+	
+2005-07-06  Nathaniel Smith  <njs@pobox.com>
+
+	* options.hh (OPT_SET_DEFAULT): 
+	* app_state.{hh,cc} (app_state::set_default):
+	* monotone.cc (coptions, cpp_main): New option.
+	* commands.cc (pull, push, sync): Accept it.
+	(process_netsync_args): Use it.
+	* tests/t_set_default.at, testsuite.at: New test.
+
+2005-07-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/monotone.iss: Bump version number.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* debian/rules (config.status): Use bundled sqlite.
+	* debian/control (Build-Depends): Remove popt and sqlite.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Add timestamp.  Barring unforeseen issues, this is 0.20.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (EXTRA_DIST): Include some missed contrib/ stuff.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* po/monotone.pot: Regenerate for release.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac, debian/changelog, monotone.spec: Bump version
+	number.
+	* UPGRADE: Update for 0.20 release.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog, NEWS, AUTHORS: Fixup Eric Anderson's email address.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Database): Note that db kill_rev_locally also
+	will trigger "unreferenced manifest" warnings from db check.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Oops, 'automate select' was in 0.19 after all.
+
+2005-07-05  Nathaniel Smith  <njs@pobox.com>
+	
+	* contrib/ciabot_monotone.py: Fix multiple collection support.
+
+2005-07-05  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Hooks): Add space after periods where there's
+	a lack of space.
+
+	* NEWS: Correct the blurb about
+	get_netsync_{read,anonymous_read,write}_permitted
+
+2005-07-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* NEWS: Add more explicit note on how to upgrade.
+
+2005-07-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* NEWS: First cut at 0.20 release notes.
+
+2005-07-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*, Makefile.am: Import SQLite 3.2.2 from upstream.
+	* sqlite/main.c: Compile fix.
+	* sqlite/{callback.c,prepare.c}: Add new files.
+
+2005-07-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/{sqlite3.h,tokenize.c} (sqlite3_complete_last): New
+	function to find the last valid SQL statement in a string; based
+	on sqlite3_complete.  This change should be offered upstream, but
+	probably not before sqlite3_complete_last16 is implemented.
+	* database.cc (database::load): Load and execute dump in chunks,
+	fixes bug 13570.
+
+2005-07-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_cvsimport_drepper2.at: Canonicalise monotone output so
+	that the test passes on Win32.
+
+2005-06-30  Eric Kidd  <eric.kidd@dartmouth.edu>
+
+	* contrib/monotone-import.pl: Changed $branch to
+	$user_branch.  This script may need more work, but at least Perl
+	compiles it now.
+
+2005-06-30  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* automate.cc, basic_io.hh, cert.cc, change_set.cc,
+	cryptopp/config.h, cryptopp/integer.cpp, main.cc, merkle_tree.cc,
+	merkle_tree.hh, monotone.cc, netcmd.cc, netsync.cc,
+	netxx/osutil.h, packet.cc: Namespace and include file cleanup.
+
+2005-06-29  graydon hoare  <graydon@pobox.com>
+
+	* tests/t_cvsimport_drepper2.at: New test.
+	* testsuite.at: Call it.
+
+2005-06-23  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc (import_cvs_repo): Put branch imports inside
+	transaction blocks, add a couple tickers.
+
+2005-06-22  graydon hoare  <graydon@pobox.com>
+
+	* rcs_file.cc: Track file:line numbers, accept files which violate
+	some lies in rcs file format.
+	* rcs_import.cc (cvs_tree_walker): 
+	Warn rather than crash on parse errors.
+	(cvs_history)
+	(cvs_commit)
+	(cvs_cluster)
+	(prepared_revision)
+	(import_branch)
+	(import_cvs_repo): Support non-branch tags.
+
+2005-06-21  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.{cc,hh} (import_rcs_file): Rename to test_parse_rcs_file.
+	* commands.cc (rcs_import): rename call.
+
+2005-06-19  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc: Rewrite change set inference logic.
+
+2005-06-28  Roland Illig  <roland.illig@gmx.de>
+
+	* app_state.cc: #include <unistd.h>, needed on NetBSD.
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (ignore_file): Ignore vim swap files and emacs
+	temp files.
+
+2005-06-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* INSTALL: Bump required version of Boost to 1.32.
+
+2005-06-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* app_state.cc (app_state::app_state()): Initialise no_merges to
+	false so that 'log' will show merges by default (the recently
+	added --no-merges option provides a means to disable the merge
+	entries).
+
+2005-06-26  Matthew Gregan  <kinetik@orcon.net.
+
+	* tests/t_automate_stdio.at, tests/t_cvsimport_drepper.at,
+	tests/t_selector_later_earlier.at: Further canonicalisation of
+	monotone output to resolve test failures on Win32.
+
+2005-06-25  Brian Campbell  <brian.p.campbell@dartmouth.edu>
+
+	* commands.cc (CMD(db)): Added db kill_branch_locally command. 
+	* database.cc, database.hh (delete_branch_named): New function to
+	delete all branch certs with a given branch name.
+	* monotone.texi (Database): Added documentation for db
+	kill_branch_locally.
+	* tests/t_db_kill_branch_locally.at: New test for db
+	kill_branch_locally.
+	* testsuite.at: Add the test. 
+	* AUTHORS: Add myself.
+	* ChangeLog: Change my email address on an old contribution to 
+	match my pubkey. 
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_db_kill_rev_locally.at: Clean up style.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* unix/process.cc (process_spawn): Format log output correctly.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* unix/process.cc (existsonpath): Reindent.  Add logging, and use
+	'command -v' instead of 'which' (as per Matt Johnston's discovery
+	that it is more portable).
+	(process_spawn): Handle exec failure more properly.
+	* tests/t_existsonpath.at: New test.
+	* testsuite.at: Add it.
+
+2005-06-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Log correct locale set for LC_MESSAGES.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* unix/process.cc: Remove tabs.
+
+2005-06-24  Nathaniel Smith  <njs@codesourcery.com>
+
+	* std_hooks.lua (get_preferred_merge2_command)
+	(get_preferred_merge3_command): Move meld to the bottom of the
+	default merge tool search order.  Also, use xemacs if it appears
+	in $EDITOR, otherwise use emacs.
+	* revision.cc (check_sane_history): Remove stale comment.
+
+2005-07-05  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.cc (combine_and_check_globish): Don't add unnecessary
+	{}'s.
+	* tests/t_netsync_globs.at, testsuite.at: New test.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc (do_netcmd_roundtrip, test_netcmd_mac): Update for new
+	chained_hmac object.
+	* constants.hh (netsync_key_initializer): Update comment.
+	* hmac.hh (hmac_length): Expose length of MACs.
+	* hmac.cc: I() that it matches what CryptoPP wants to give.
+	* netcmd.cc: I() that it matches the length hard-coded into the
+	netsync protocol.
+	* vocab.cc (verify(netsync_hmac_value)): Fix error message.
+	
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* tests/t_netsync_defaults.at: Update for new var names.  All
+	tests now pass.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.cc (hook_get_netsync_write_permitted): Fix typo.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.cc (globish_matcher_test): Add check for {foo} (no
+	commas).
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.cc (checked_globish_to_regex): Make the special case for
+	the empty pattern, actually work.  Unit tests now pass.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc (test_netcmd_functions): Update for new anonymous/auth
+	packet formats.
+
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi, monotone.1: Update for new glob stuff.
+	* commands.cc (process_netsync_args, push, pull, sync, serve):
+	'serve' always requires arguments, rather than falling back on db
+	defaults.
+	
+2005-07-04  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (process_netsync_args, push, pull, sync, serve):
+	Adapt for patterns instead of regexen; slight refactoring too.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Finally self-consistent.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.hh (run_netsync_protocol): Fix prototype.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.hh: Document the empty pattern as never matching.
+	* globish.cc (checked_globish_to_regex): Implement it.
+	(globish_matcher_test): Check it.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Network Service, Hooks):
+	* testsuite.at: 
+	* tests/t_netsync_permissions.at: 
+	* tests/t_netsync_single.at: Update to match new
+	get_netsync_write_permitted definition.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* lua.{cc,hh} (hook_get_netsync_write_permitted): Don't take a
+	branch argument; write permission is now all or none.  (It really
+	was before anyway...)
+	* netsync.cc: Update accordingly.
+
+2005-07-03  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: More updating for pattern stuff; getting there...
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Update low-level functions to use include_pattern
+	and exclude_pattern.
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.{cc,hh} (read_anonymous_cmd, write_anonymous_cmd)
+	(read_auth_cmd, write_auth_cmd): Take include_pattern and
+	exclude_pattern arguments.
+
+2005-06-28  Nathaniel Smith  <njs@codesourcery.com>
+
+	* globish.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES): Add them.
+	* transforms.{cc,hh}: Remove glob-related stuff.
+	* unit_tests.{cc,hh}: Call globish unit tests.
+
+2005-06-27  Nathaniel Smith  <njs@codesourcery.com>
+
+	* transforms.cc (glob_to_regex, globs_to_regex, regexes_to_regex):
+	Choose "regex" as standard spelling.  Clean up code, add code for
+	handling sets, start improving tests (don't currently pass).
+	* transforms.hh (glob_to_regex, globs_to_regex, regexes_to_regex):
+	Prototype.
+
+2005-06-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* constants.cc: increase db_version_cache_sz to 7 MB
+	* netsync.cc: use a deque<string> rather than a single
+	string buffer for outbuf.
+	* netsync.cc (arm): only queue data when there is
+	available space
+	* AUTHORS: added Eric Anderson
+
+2005-06-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* transforms.hh: remove extraneous #ifdef
+	* hmac.cc, hmac.hh: actually add them
+
+2005-06-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* netcmd.cc (netcmd::read, netcmd::write): change to using a HMACs 
+	chained by including the previous HMAC in the input data, rather
+	than altering the key each time.
+	* netcmd.cc ({read,write}_{data,delta}_cmd): use encode_gzip/decode_gzip
+	  rather than raw xform.
+	* hmac.{cc,hh}: new chained_hmac abstraction
+	* Makefile.in: add them
+	* netsync.cc: each session keeps a chained_hmac for read/write
+	* transforms.hh: add a string variant for encode_gzip
+
+2005-06-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc: Tweak comment.
+
+2005-06-25  Nathaniel Smith  <njs@codesourcery.com>
+
+	* AUTHORS: Add Ethan Blanton <elb@elitists.net>.
+
+2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.hh (netcmd::read, netcmd::write): Don't have defaults for
+	key/hmac arguments.
+	* netcmd.cc (do_netcmd_roundtrip): New function.
+	(test_netcmd_functions): Use it.  Also, make work with hmac
+	changes.
+	(test_netcmd_mac): New test.
+	(add_netcmd_tests): Call it.
+
+2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc (read): Remove unused variable.
+	* netsync.cc (call_server, process)
+	(arm_sessions_and_calculate_probe, handle_read_available): Give
+	better error message on bad_decode exceptions.
+
+2005-06-22  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netcmd.cc, netsync.cc: Revert backwards compatibility code; 0.19
+	and 0.20 can't be usefully compatible, and the code as it existed
+	would cause real version mismatch error reporting to not work
+	right.  (Old client with new server would give a generic "server
+	disconnected" error message instead of something useful.)
+
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (rebuild_merkle_trees): Fix FIXME comments to match
+	reality.
+	* tests/t_netsync_diffbranch.at: No longer a bug, remove
+	priority.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Hook Reference): Oops, missed a @ref.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Default monotonerc): Rename section to...
+	(Default hooks): ...this, to emphasize is still read even when a
+	monotonerc exists.
+
+2005-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: There's no reason for monotone.pdf or .dvi to
+	depend on monotone.info, since they are built from the .texi
+	files.  Also, make the monotone.html and html targets depend
+	on version.texi and std_hooks.lua as well.
+
+2005-06-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* INSTALL: fix typo, should be -Iboost_1_31_0 not -Iboost_1_31_2
+
+2005-06-18  Riccardo Ghetta  <birrachiara@tin.it>
+	* monotone.texi: include std_hooks.lua as an appendix and remove long
+	lua excerpts from hook reference.
+	* Makefile.am : make monotone.pdf/eps depend on monotone.info
+	
+2005-06-24  Matt Johnston  <matt@ucc.asn.au>
+
+	* transforms.{cc,hh}: combine gzip and base64 in one
+	pipe for pack()/unpack() to save memory
+	* vocab.hh: add swap() to encodings/atomics
+	* file_io.cc: use swap() to avoid copying
+
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (do_diff): Use calculate_arbitrary_change_set,
+	instead of reimplementing it.
+
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* revision.cc (find_least_common_ancestor): Handle left == right
+	case.
+	* tests/t_diff_currev.at: Un-XFAIL.
+	
+2005-06-21  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (rebuild_merkle_trees): Fix FIXME comments to match
+	reality.
+	* tests/t_netsync_diffbranch.at: No longer a bug, remove
+	priority.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Hook Reference): Oops, missed a @ref.
+
+2005-06-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Default monotonerc): Rename section to...
+	(Default hooks): ...this, to emphasize is still read even when a
+	monotonerc exists.
+
+2005-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: There's no reason for monotone.pdf or .dvi to
+	depend on monotone.info, since they are built from the .texi
+	files.  Also, make the monotone.html and html targets depend
+	on version.texi and std_hooks.lua as well.
+
+2005-06-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* INSTALL: fix typo, should be -Iboost_1_31_0 not -Iboost_1_31_2
+
+2005-06-18  Riccardo Ghetta  <birrachiara@tin.it>
+	* monotone.texi: include std_hooks.lua as an appendix and remove long
+	lua excerpts from hook reference.
+	* Makefile.am : make monotone.pdf/eps depend on monotone.info
+	
+2005-06-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (database::execute()): truncate long query log messages
+	before copying, saving memory. 
+	Patch from Eric Anderson <anderse-monotone@cello.hpl.hp.com>
+
+2005-06-17  Riccardo Ghetta  <birrachiara@tin.it>
+	Adds include()/includedir() to lua hooks and extend --rcfile
+	* lua.cc: handle --rcfile with directories, implement
+	include() and includedir()
+	* testsuite.at, t_lua_includedir.at, t_rcfile_dir.at:
+	test new functionality
+	* monotone.texi: document all functions available to hook
+	writers, including the new include() and includedir()
+
+2005-06-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* diff_patch.cc (merge_extents): Typo caught by anonymous reader.
+
+2005-06-16  Nathaniel Smith  <njs@codesourcery.com>
+
+	* commands.cc (cat): Account for being in a subdir in 'cat file
+	REV PATH'.
+	* tests/t_cat_file_by_name.at: Test.
+
+2005-06-17  Richard Levitte  <richard@levitte.org>
+
+	* app_state.cc (app_state::app_state()): Avoid a gcc warning by
+	having the class members initialised in the same order they are
+	defined in the class.
+
+2005-06-16  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (ignore_file): Add Cons/SCons cache files to
+	default ignore list.
+
+2005-06-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc: increase the divisor as required so that we don't get spurious
+	screen updates when we're using the kilobyte/megabyte tickers
+
+2005-06-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.texi: clarify some netsync parts of the tutorial
+
+2005-06-15  Richard Levitte  <richard@levitte.org>
+
+	* netsync.cc (struct session): Add a pattern regex cache.
+	(analyze_ancestry_graph): Use the regex cache instead of the
+	pattern string itself.  This is especially important when the
+	pattern is used as an old-style collection.
+	(process_hello_cmd): Recreate the pattern regex cache with the
+	conversion of the pattern to a regex when it's used as an
+	old-style collection.
+	(process_auth_cmd): When the pattern changes, change the regex
+	cache as well.
+
+2005-06-14  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua (get_preferred_merge2_command,
+	get_preferred_merge3_command): EDITOR may be undefined.  In that
+	case, os.getenv() returns nil, on which string.lower() chokes.
+	It's much better to check for that and default to an empty
+	string.
+
+2005-06-11  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (complete_command): log command expansion messages
+	with L instead of P to reduce chatter
+	(status): add --brief option and corresponding output
+	(identify): add trailing space to comment gcc complains about
+	* monotone.cc: fix comment typo and add additional details for
+	command specific options
+	* monotone.texi (Automation): list inventory status code
+	combinations and descriptions
+	* tests/t_status.at: new test of status command and --brief option
+	* testsuite.at: add it
+
+2005-06-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc: revert should ignore the ignore hooks, otherwise bad
+	things happen (revert a single ignored file, resultant empty ignore list
+	reverts the whole working copy).
+	* app_state.cc, app_state.hh: give set_restriction a flag to disregard
+	file-ignore hooks.
+	* tests/t_revert_restrict.at, testsuite.at: a test
+
+2005-06-09  Riccardo Ghetta  <birrachiara@tin.it>
+
+	* std_hooks.lua: make binary_file return nil on unreadable/empty files
+	
+2005-06-10  Joel Reed  <joelwreed@comcast.com>
+
+	* commands.cc (CMD(cdiff)): Add OPT_DEPTH to command options.
+	* t_restrictions.at: Add to testcase.
+
+2005-06-09  Joel Reed  <joelwreed@comcast.com>
+
+	* commands.cc (CMD(diff)): Add OPT_DEPTH back in, as it is used.
+	* t_restrictions.at: Add to testcase to increase likelihood of 
+	keeping it around :)
+
+2005-06-10  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(diff)): Remove OPT_DEPTH, as it was never
+	used.
+
+2005-06-09  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Merging): I assume that "apposite" was supposed
+	to be "appropriate".
+
+2005-06-09  Riccardo Ghetta  <birrachiara@tin.it>
+
+	* diff_patch.cc/hh: honor the new manual_merge attribute
+	* file_io.cc/hh: move here the guess_binary function
+	* lua.cc: let guess_binary available to lua
+	* std_hooks.lua: handle manual_merge as an add-time attribute and
+	initialize by default make it true if the file appears to be binary.
+	Make read_contents_of_file able to read "binary" files.
+	* tests/t_merge_manual.at: tests new behaviour, superceding the
+	old XFAIL t_merge_binary.at test.
+	* monotone.texi: document changes, adding a small section on merging.
+
+2005-06-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* ChangeLog: Fixup.
+
+2005-06-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Storage and workflow): Attempt to thwart some
+	common misconceptions.
+
+2005-06-07  Nathaniel Smith  <njs@codesourcery.com>
+
+	* netsync.cc (rebuild_merkle_trees): Add a comment describing how
+	this code should work (and why it currently doesn't quite).
+
 2005-06-05  Nathaniel Smith  <njs@codesourcery.com>
 
 	* tests/t_bad_packets.at: Expect certs on a non-existent rev to
@@ -18,7 +631,7 @@
 	Throw in some calls to CANONICALISE, maybe this will help on
 	Win32...
 
-2005-06-05  Timothy Brownawell  <tbrownaw@gmail.com>
+2005-06-04  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc, netcmd.cc: Style cleanups (mostly whitespace).
 
@@ -65,6 +678,14 @@
 	* rcs_import.cc 
 	(note_state_at_branch_beginning): Move time back when
 	there are known commits on a branch.
+
+2005-06-03  Joel Reed  <joelwreed@comcast.com>
+
+	* commands.cc, monotone.texi: provide --verbose option for 
+	monotone complete revision which adds date and author 
+	completion output
+	* contrib/monotone.zsh_completion: use verbose output when
+	completing revisions
 
 2005-06-02  graydon hoare  <graydon@pobox.com>
 
@@ -818,7 +1439,7 @@
 
 	* work.cc: Use attr_file_name rather than hardcoded strings.
 
-2005-05-04  Brian Campbell  <ubergeek@dartmouth.edu>
+2005-05-04  Brian Campbell  <brian.p.campbell@dartmouth.edu>
 
 	* contrib/monotone.el (monotone-vc-register): Fix arguments to
 	monotone-cmd-buf, to make work.
@@ -4839,7 +5460,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÃkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

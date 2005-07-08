@@ -37,6 +37,8 @@ public:
   bool rcfiles;
   bool diffs;
   bool no_merges;
+  bool set_default;
+  bool verbose;
   options_map options;
   utf8 message;
   utf8 message_file;
@@ -68,7 +70,9 @@ public:
   void create_working_copy(std::string const & dir);
 
   file_path prefix(utf8 const & path);
-  void set_restriction(path_set const & valid_paths, std::vector<utf8> const & paths);
+  void app_state::set_restriction(path_set const & valid_paths, 
+                             std::vector<utf8> const & paths,
+                             bool respect_ignore = true);
   bool restriction_includes(file_path const & path);
 
   // Set the branch name.  If you only invoke set_branch, the branch
@@ -94,6 +98,7 @@ public:
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);
+  void set_verbose(bool b);
   void add_rcfile(utf8 const & filename);
 
   explicit app_state();

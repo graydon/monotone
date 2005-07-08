@@ -15,7 +15,7 @@
 ** individual tokens and sends those tokens one-by-one over to the
 ** parser for analysis.
 **
-** $Id: tokenize.c,v 1.101 2005/02/26 17:31:27 drh Exp $
+** $Id: tokenize.c,v 1.103 2005/06/06 14:45:43 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -341,10 +341,10 @@ int sqlite3RunParser(Parse *pParse, const char *zSql, char **pzErrMsg){
   db->flags &= ~SQLITE_Interrupt;
   pParse->rc = SQLITE_OK;
   i = 0;
-  pEngine = sqlite3ParserAlloc((void*(*)(int))malloc);
+  pEngine = sqlite3ParserAlloc((void*(*)(int))sqlite3MallocX);
   if( pEngine==0 ){
     sqlite3SetString(pzErrMsg, "out of memory", (char*)0);
-    return 1;
+    return SQLITE_NOMEM;
   }
   assert( pParse->sLastToken.dyn==0 );
   assert( pParse->pNewTable==0 );
@@ -401,7 +401,7 @@ abort_parse:
     }
     sqlite3Parser(pEngine, 0, pParse->sLastToken, pParse);
   }
-  sqlite3ParserFree(pEngine, free);
+  sqlite3ParserFree(pEngine, sqlite3FreeX);
   if( sqlite3_malloc_failed ){
     pParse->rc = SQLITE_NOMEM;
   }
@@ -500,8 +500,14 @@ abort_parse:
 ** is look for a semicolon that is not part of an string or comment.
 */
 int sqlite3_complete(const char *zSql){
+  const char *tmp;
+  return sqlite3_complete_last(zSql, &tmp);
+}
+
+int sqlite3_complete_last(const char *zSql, const char **last){
   u8 state = 0;   /* Current state, using numbers defined in header comment */
   u8 token;       /* Value of the next token */
+  const char* lastseen = 0;
 
 #ifndef SQLITE_OMIT_TRIGGER
   /* A complex statement machine used to detect the end of a CREATE TRIGGER
@@ -551,7 +557,7 @@ int sqlite3_complete(const char *zSql){
         }
         zSql += 2;
         while( zSql[0] && (zSql[0]!='*' || zSql[1]!='/') ){ zSql++; }
-        if( zSql[0]==0 ) return 0;
+        if( zSql[0]==0 ) { *last = lastseen; return 0; }
         zSql++;
         token = tkWS;
         break;
@@ -562,14 +568,14 @@ int sqlite3_complete(const char *zSql){
           break;
         }
         while( *zSql && *zSql!='\n' ){ zSql++; }
-        if( *zSql==0 ) return state==0;
+        if( *zSql==0 ) { *last = lastseen; return state==0; }
         token = tkWS;
         break;
       }
       case '[': {   /* Microsoft-style identifiers in [...] */
         zSql++;
         while( *zSql && *zSql!=']' ){ zSql++; }
-        if( *zSql==0 ) return 0;
+        if( *zSql==0 ) { *last = lastseen; return 0; }
         token = tkOTHER;
         break;
       }
@@ -578,7 +584,7 @@ int sqlite3_complete(const char *zSql){
         int c = *zSql;
         zSql++;
         while( *zSql && *zSql!=c ){ zSql++; }
-        if( *zSql==0 ) return 0;
+        if( *zSql==0 ) { *last = lastseen; return 0; }
         token = tkOTHER;
         break;
       }
@@ -641,8 +647,11 @@ int sqlite3_complete(const char *zSql){
       }
     }
     state = trans[state][token];
+    if (state == 0)
+      lastseen = zSql;
     zSql++;
   }
+  *last = lastseen;
   return state==0;
 }
 

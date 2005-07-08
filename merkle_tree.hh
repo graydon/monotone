@@ -38,7 +38,7 @@ typedef enum
     key_item = 3,    
     revision_item = 4,
     cert_item = 5,
-    epoch_item = 6,
+    epoch_item = 6
   }
 netcmd_item_type;
 

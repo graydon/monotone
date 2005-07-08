@@ -27,7 +27,10 @@
 #include <vector>
 
 using namespace std;
-using namespace boost;
+using boost::shared_ptr;
+using boost::get;
+using boost::tuple;
+using boost::lexical_cast;
 
 // FIXME: the bogus-cert family of functions is ridiculous
 // and needs to be replaced, or at least factored.
@@ -86,7 +89,7 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
   vector< manifest<cert> > tmp_certs;
 
   // sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef boost::tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
   typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
 

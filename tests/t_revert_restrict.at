@@ -1,0 +1,58 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([revert works with restrictions])
+
+MONOTONE_SETUP
+
+AT_DATA(origfile, [some file
+])
+AT_DATA(orig.ignore, [a file type that is usually ignored
+])
+AT_DATA(orig2, [another file
+])
+AT_DATA(modified1, [this is different 1
+])
+AT_DATA(modified2, [this is different 2
+])
+AT_DATA(modified3, [this is different 3
+])
+
+AT_DATA(ignore_hook.lua, [
+function ignore_file(name)
+	if (string.find(name, "test_hooks.lua")) then return true end
+	if (string.find(name, "test.db")) then return true end
+	if (string.find(name, "%.ignore$")) then return true end
+	return false
+end
+])
+
+AT_CHECK(cp origfile testfile)
+AT_CHECK(cp orig.ignore file.ignore)
+AT_CHECK(cp orig2 file2)
+AT_CHECK(MONOTONE add testfile file.ignore file2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
+
+# modify the files, then revert the 'ignored' file
+AT_CHECK(cp modified1 testfile)
+AT_CHECK(cp modified2 file.ignore)
+
+AT_CHECK(MONOTONE --rcfile=ignore_hook.lua revert file.ignore, [], [ignore], [ignore])
+
+# check that only the 'ignored' file was reverted
+AT_CHECK(cmp testfile modified1, [0], [ignore], [ignore])
+AT_CHECK(cmp file.ignore orig.ignore, [0], [ignore], [ignore])
+
+# now run it again with two paths, one in the ignorehook list, the other normal
+AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(cp modified1 testfile)
+AT_CHECK(cp modified2 file.ignore)
+AT_CHECK(cp modified3 file2)
+
+AT_CHECK(MONOTONE --rcfile=ignore_hook.lua revert file.ignore testfile, [], [ignore], [ignore])
+
+# check that the files are correct
+AT_CHECK(cmp testfile origfile, [0], [ignore], [ignore])
+AT_CHECK(cmp file.ignore orig.ignore, [0], [ignore], [ignore])
+AT_CHECK(cmp file2 modified3, [0], [ignore], [ignore])
+
+AT_CLEANUP

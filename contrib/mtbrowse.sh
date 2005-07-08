@@ -4,7 +4,7 @@
 # Description: Text based browser for monotone source control.
 # url: http://www.venge.net/monotone/
 # Licence: GPL
-# Autor: Henry Nestler <Henry@BigFoot.de>
+# Author: Henry Nestler <Henry@BigFoot.de>
 #
 # Simple text based browser for Monotone repositories, written as shell script.
 # Can select branch, revision. Views diff from revision, logs, certs and more.
@@ -16,12 +16,10 @@
 #  - Run from working copy of existing project.
 #    Or give full filename to database.
 #  - Change your configuration
-#    (Delete the "VISUAL", to use the "PAGER")
-#    Please "Reload DB", if to see the new configuration
+#    Delete the "VISUAL", to use the "PAGER", deleto both for internal viewer.
+#    Save configuration.
 #  - Begin with menu "S Select revision"
-#  - Browse in branches, revisions, diff files, view logs ....
-#  - Quit menu with "Q" to save your environment.
-#    Or "X" to exit without save anything.
+#  - Browse in branches, revisions, diff files, view logs ...
 #
 # Needed tools:
 #  monotone 0.19 or compatible
@@ -36,7 +34,7 @@
 # 2005/5/9 Version 0.1.2 Henry@BigFoot.de
 # Update for MT 0.19
 # Diff from parent.
-# Topsort or Date/Time sort, config via TOPSORT
+# Toposort or Date/Time sort, config via TOPOSORT
 # 
 # 2005/5/13 Version 0.1.3 Henry@BigFoot.de
 # Diff from 'parent' mistaken HEAD/REVISION usage.
@@ -58,16 +56,61 @@
 # Fix cache deleting on startup.
 # Xargs for revision selection with date and key.
 #
+# 2005/6/6 Version 0.1.7 Henry@BigFoot.de
+# Backtitle with head, branch and filename.
+# Default-item to remember the selection in menues.
+# Check filname for reading before MT fails.
+# Exit after --help or --version.
+#
+# 2005/6/16 Version 0.1.8 Henry@BigFoot.de
+# automate ancestors, toposort, complete revision and
+# automate parents missing param --db (if no MT directory).
+# Switch --depth/--last without error dialog.
+# Bug: Select rev for multiple parents (from merge), remove "cat cat".
+# Use Author, not Key. Add Branch and Changelog in selection.
+# Selectable format for Date, Branch, Author, ChangeLog.  Coloring author.
+# Current marker is asterix before date/time.
+#
+# 2005/6/23 Version 0.1.9 Henry@BigFoot.de
+# Cancel is "EXIT" in main menu.
+# Meter alongwith --gauge for reading certs :-)
+# Config with menu and def.item, instand radiolist and the test on/off thingy.
+# Don't remove some old files at exit.
+# Branch and head not in Main background title.
+#
+# 2005/6/24 Version 0.1.10 Henry@BigFoot.de
+# Remove TAB's from ChangeLog.
+# Some cat as stdin pipe.
+# Typofix topsort/toposort.
+#
+# 2005-06-26 Version 0.1.11 Henry@BigFoot.de
+# No double Date/Branch/Author with CR in selection list.
+# Short Author and no branch as default.
+# Set default revision for first selection to head.
+# "automate ancestors" without cut (have only one field).
+# Internal function for "automate ancestors" with depth limit. Speedup.
+#    real    user      sys
+# 19.925s  6.780s  13.030s  automate ancestors (net.venge.monotone)
+#  6.067s  2.920s   3.120s  automate parents as loop, depth 30
+#  4.226s  2.280s   1.910s  automate parents as loop, depth 20
+#  1.384s  0.680s   0.700s  automate parents as loop, depth 10
+#
+# 2005-06-29 Version 0.1.12 Henry@BigFoot.de
+# Automatic author color.
+# Date have inverse color for last selection.
+# Expand revision after input, if not 40 chars. (parents don't allow short rev)
+
 # Known Bugs / ToDo-List:
 # * For Monotone Version >0.19  s/--depth/--last/, remove the fallback
+# * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.6"
+VERSION="0.1.12"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
 CONFIGFILE="$HOME/.mtbrowserc"
 
-# Store lists for menue here
+# Store lists for menu here
 TEMPDIR="$HOME/.mtbrowse"
 TEMPFILE="$TEMPDIR/.tmp"
 
@@ -79,14 +122,11 @@ VISUAL="vim -R"
 # Don't VISUAL and PAGER to use internal viewer.
 PAGER="less"
 
-# View date and keys in revision selection? (yes)
-SHOW_KEYS="yes"
-
 # 1=Certs Cached, 0=Clean at end (slow and save mode)
 CACHE="1"
 
-# T=Topsort revisions, D=Date sort (reverse topsort)
-TOPSORT="D"
+# T=Toposort revisions, D=Date sort (reverse toposort)
+TOPOSORT="T"
 
 # count of certs to get from DB, "0" for all
 CERTS_MAX="20"
@@ -94,11 +134,29 @@ CERTS_MAX="20"
 # Trim hash code
 HASH_TRIM="10"
 
+# Format for Date/Time
+FORMAT_DATE="L"
+
+# Format Branch Full,Short,None
+FORMAT_BRANCH="N"
+
+# Format author (strip domain from mail address)
+FORMAT_AUTHOR="S"
+
+# Changelog format
+FORMAT_LOG="F"
+
+# Author coloring?
+FORMAT_COLOR="\\Z7\\Zb"
+
 # "log --depth=n" was changed to "log --last=n", see
 # Author: joelwreed@comcast.net,  Date: 2005-05-30T00:15:27
 # Autodetect this and fallback for a while.
 # TODO: Remove in future
 DEPTH_LAST="--last"
+
+# automate ancestors (I)nteral function, (M)onotone
+ANCESTORS="I"
 
 # read saved settings
 if [ -f $CONFIGFILE ]
@@ -114,9 +172,9 @@ then
     #database "/home/hn/mtbrowse.db"
     #     key ""
 
-    eval `cat MT/options | sed -n -r \
+    eval `sed -n -r \
       -e 's/^[ ]*(branch) \"([^\"]+)\"$/\1=\2/p' \
-      -e 's/^[ ]*(database) \"([^\"]+)\"$/\1=\2/p'`
+      -e 's/^[ ]*(database) \"([^\"]+)\"$/\1=\2/p' < MT/options`
 
     if [ -n "$database" ]
     then
@@ -131,10 +189,12 @@ if [ -n "$1" ]
 then
     case $1 in
       --version)
-        echo "mtbrowse $VERSION"
+	echo "mtbrowse $VERSION"
+	exit 0
       ;;
       --help|-h)
-        echo "mtbrowse [dbfile]"
+	echo "mtbrowse [dbfile]"
+	exit 0
       ;;
       *)
 	# Databasefile from command line
@@ -144,12 +204,19 @@ then
 	# MT change the options, if you continue with other DB here!
 	if [ -f MT/options ]
 	then
-	    echo -e "\n**********\n* WARNING!\n**********\n"
-	    echo "Your MT/options will be overwrite, if"
-	    echo "continue with different DB file or branch"
-	    echo "in exist working directory!"
-	    echo -e "\nENTER to confirm  / CTRL-C to abbort"
-	    read junk
+
+	    if ! dialog --cr-wrap \
+		--title " *********** WARNING! ********** " \
+		--defaultno --colors --yesno "
+Your \Zb\Z1MT/options\Zn will be overwrite, if
+continue with different DB file or branch
+in exist working directory!
+
+YES confirm  /  NO abbort" 0 0
+	    then
+		echo "abbort"
+		exit 1
+	    fi
 	fi
       ;;
     esac
@@ -159,7 +226,7 @@ fi
 # Clear cached files
 do_clear_cache()
 {
-    rm -f $TEMPFILE.agraph $TEMPFILE.certs.$BRANCH \
+    rm -f $TEMPFILE.certs.$BRANCH \
       $TEMPFILE.changelog.$BRANCH
 }
 
@@ -167,8 +234,9 @@ do_clear_cache()
 # clear temp files
 do_clear_on_exit()
 {
-    rm -f $TEMPFILE.dlg-branches $TEMPFILE.agraph \
-      $TEMPFILE.action-select $TEMPFILE.menu $TEMPFILE.input
+    rm -f $TEMPFILE.branches $TEMPFILE.ancestors $TEMPFILE.toposort \
+      $TEMPFILE.action-select $TEMPFILE.menu $TEMPFILE.input \
+      $TEMPFILE.ncolor $TEMPFILE.c
 
     if [ "$CACHE" != "1" ]
     then
@@ -187,54 +255,166 @@ do_pager()
     then
 	$PAGER < $1
     else
-#	dialog --textbox $1 20 75
 	dialog --textbox $1 0 0
     fi
     rm $1
 }
 
 
-# Add the date and user-key to the list of revisions
+# Add the date, author and changlog to the list of revisions
+
+# Scanning for:
+# Key   : henry@bigfoot.de
+# Sig   : ok
+# Name  : date
+# Value : 2005-05-31T22:29:50		<<---
+# --------------------------------------
+# Key   : henry@bigfoot.de
+# Sig   : ok
+# Name  : changelog
+# Value : Handle merged parents		<<---
+
+# Output
+# 123456 "2005-05-31 22:29 henry@bigfoot.de  Handle merged parents"
+
 fill_date_key()
 {
-	local in_file=$1
-	local out_file=$2
-	local short_hash date key
+    local in_file=$1
+    local out_file=$2
+    local short_hash dat bra aut log lineno color count
 
-	rm -f $out_file
-	if [ "$SHOW_KEYS" = "yes" ]
+    line_count=`wc -l < $in_file`
+    if [ "$line_count" -eq 0 ]
+    then
+	unset line_count
+    fi
+
+    lineno=0
+    rm -f $out_file
+    # Read Key and Date value from certs
+    cat $in_file | \
+    while read hash
+    do
+	if [ -n "$line_count" ]
 	then
-	    # Read Key and Date value from certs
-	    cat $in_file | \
-	    while read hash ; do
-		echo -n "."
-
-		# Scanning for
-		# Key   : henry@bigfoot.de		<<---
-		# Sig   : ok
-		# Name  : date
-		# Value : 2005-05-31T22:29:50		<<---
-
-		# Output
-		# 123456 "2005-05-31T22:29:50 henry@bigfoot.de"
-
-		eval `monotone --db=$DB list certs $hash | \
-		  tail -n 6 | sed -n -r \
-		  -e 's/Key   : ([^ ]+\@[^ ]+)$/key=\1/p' \
-		  -e 's/Value : ([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8})$/date=\1/p'`
-		short_hash=`echo $hash | cut -c 1-$HASH_TRIM`
-		echo "$short_hash \"$date $key\"" >> $out_file
-	    done
+	    let lineno++
+	    echo "$(( 100*$lineno/line_count ))"
 	else
-	    # Read only Date value from certs
-	    cat $in_file | \
-	    while read hash ; do
-		echo -n "."
-		monotone --db=$DB list certs $hash | sed -n -r -e \
-		 "s/Value : ([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8})\$/$hash \"\1\"/p" \
-		 | tail -n 1 >> $out_file
-	    done
+	    echo -n "." 1>&2
 	fi
+
+	short_hash=`echo $hash | cut -c 1-$HASH_TRIM`
+
+	# get all certs of revision, check cached first
+	tfc=$TEMPFILE.c
+	monotone --db=$DB list certs $hash > $tfc
+		
+	# Date format
+	case $FORMAT_DATE in
+	    F) # 2005-12-31T23:59:59
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : (.+)$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
+		;;
+	    L) # 2005-12-31 23:59
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : (.{10})T(.{5}).+$/\1 \2 /p' \
+		    < $tfc | sed -n -e '1p'`
+		;;
+	    D) # 2005-12-31
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : (.+)T.+$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
+		;;
+	    S) # 12-31 23:59
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : .{4}-(.+)T(.{5}).+$/\1 \2 /p' \
+		    < $tfc | sed -n -e '1p'`
+		;;
+	    T) # 23:59:59
+		dat=`sed -n -r -e \
+		    '/^Name  : date/,+1s/Value : .{10}T(.+{8})$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
+		;;
+	esac
+
+	# Branch format
+	case $FORMAT_BRANCH in
+	    F) # full
+		bra=`sed -n -r -e \
+		    '/^Name  : branch/,+1s/Value :(.+)$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
+		;;
+	    S) # short
+		bra=`sed -n -r -e \
+		    '/^Name  : branch/,+1s/Value :.*\.([^\.]+)$/\1 /p' \
+		    < $tfc | sed -n -e '1p'`
+		;;
+	esac
+
+	# Author format
+	case $FORMAT_AUTHOR in
+	    F) # full
+		aut=`sed -n -r -e \
+		    '/^Name  : author/,+1s/Value : (.+)$/\1/p' \
+		    < $tfc | sed -n -e '1p'`
+		;;
+	    S) # short
+		aut=`sed -n -r -e \
+		    '/^Name  : author/,+1s/Value : (.{1,10}).*@.+$/\1/p' \
+		    < $tfc | sed -n -e '1p'`
+		;;
+	esac
+
+	# Changelog format
+	case $FORMAT_LOG in
+	    F) # full     TAB here ----v
+		log=`sed -n -r -e "y/\"	/' /" -e \
+		    '/^Name  : changelog/,+1s/Value : (.+)$/ \1/p' \
+		    < $tfc`
+		;;
+	    S) # short
+		log=`sed -n -r -e "y/\"	/' /" -e \
+		    '/^Name  : changelog/,+1s/Value : (.{1,20}).*$/ \1/p' \
+		    < $tfc`
+		;;
+	esac
+
+	# Author coloring?
+	if [ -n "$FORMAT_COLOR" -a "$FORMAT_AUTHOR" != "N" ]
+	then
+	    # Bug in dialog: Don't allow empty string after \\Zn
+	    test -z "$log" && log=" "
+	    if [ "$last_aut" != "$aut" ]
+	    then
+	     # Automatic color by author?
+	     if [ "$FORMAT_COLOR" = "A" ]
+	     then
+		color=`grep -n "$aut" $TEMPFILE.ncolor | cut -d ':' -f 1`
+		if [ -z "$color" ]
+		then
+		    color=$(( `wc -l < $TEMPFILE.ncolor` % 16 + 1 ))
+		    echo "$aut" >> $TEMPFILE.ncolor
+		fi
+
+		if [ $color -le 8 ]
+		then
+		    color="\\Zb\\Z$color"
+		else
+		    color="\\Z$color"
+		fi
+	     else
+		color="$FORMAT_COLOR"
+	     fi
+	     last_aut="$aut"
+	    fi
+	    echo "$short_hash \"$dat$bra\\ZR$color$aut\\Zn$log\"" \
+		>> $out_file
+	else
+	    echo "$short_hash \"$dat$bra\\ZR$aut$log\"" >> $out_file
+	fi
+    done | dialog --gauge "$line_count certs reading" 6 60
+    rm $TEMPFILE.c.tmp
 }
 
 
@@ -242,6 +422,22 @@ fill_date_key()
 # Is parameter given: No user select, if branch known.
 do_branch_sel()
 {
+    local OLD_BRANCH
+
+    if [ ! -f "$DB" ]
+    then
+	echo "$DB: File not found! (mtbrowse)"
+	exit 1
+    fi
+
+    if [ ! -r "$DB" ]
+    then
+	echo "$DB: Can't read file! (mtbrowse)"
+	exit 1
+    fi
+
+    SHORT_DB=`basename $DB`
+
     # is Branch set, than can return
     if [ -n "$BRANCH" -a -n "$1" ]
     then
@@ -254,20 +450,29 @@ do_branch_sel()
 	echo "$DB" > $TEMPFILE.fname
 	unset BRANCH
     fi
-
+    
     OLD_BRANCH=$BRANCH
 
     # Get branches from DB
-    if [ ! -f $TEMPFILE.dlg-branches -o $DB -nt $TEMPFILE.dlg-branches \
+    if [ ! -f $TEMPFILE.branches -o $DB -nt $TEMPFILE.branches \
 	-o "$CACHE" != "1" ]
     then
 	monotone --db=$DB list branches \
-	 | sed -n -r -e 's/^(.+)$/\1\t-/p' > $TEMPFILE.dlg-branches \
+	 | sed -n -r -e 's/^(.+)$/\1\t-/p' > $TEMPFILE.branches \
 	 || exit 200
     fi
+    
+    if [ ! -s $TEMPFILE.branches ]
+    then
+	echo "Error: No branches found."
+	exit 1
+    fi
 
-    dialog --begin 1 2 --menu "Select branch" 0 0 0 \
-      `cat $TEMPFILE.dlg-branches` 2> $TEMPFILE.input
+    dialog --begin 1 2 \
+	--default-item "$OLD_BRANCH" \
+	--menu "Select branch" 0 0 0 \
+	`cat $TEMPFILE.branches` \
+	2> $TEMPFILE.input
     BRANCH=`cat $TEMPFILE.input`
 
     # Clear Head, if branch changed
@@ -296,9 +501,9 @@ do_head_sel()
     # Only one head ?
     if [ `wc -l < $TEMPFILE.heads` -eq 1 -a -n "$1" ]
     then
-	HEAD=`cat $TEMPFILE.heads | head -n 1`
+	HEAD=`head -n 1 < $TEMPFILE.heads`
     else
-	# List heads with autor and date. Select by user.
+	# List heads with author and date. Select by user.
 	monotone --db=$DB heads --branch=$BRANCH \
 	  | sed -n -r -e 's/^([^ ]+) ([^ ]+) ([^ ]+)$/\1 \"\2 \3\"/p' \
 	  | xargs dialog --begin 1 2 --menu "Select head" 0 0 0 \
@@ -318,7 +523,9 @@ do_head_sel()
 do_action_sel()
 {
     # Action-Menu
-    while dialog --menu "Action for $REVISION" 0 60 0 \
+    while dialog \
+	--backtitle "h:$HEAD b:$BRANCH f:$SHORT_DB" \
+	--menu "Action for $REVISION" 0 60 0 \
 	"L" "Log view of current revision" \
 	"P" "Diff files from parent" \
 	"W" "Diff files from working copy head" \
@@ -339,15 +546,18 @@ do_action_sel()
 	      > $TEMPFILE.change.log
 	    then
 		DEPTH_LAST="--depth"
-		dialog --title "ERROR" --msgbox \
-		  "Fallback to \"$DEPTH_LAST\" usage.\nPlease try again." 6 40
-	    else
-		do_pager $TEMPFILE.change.log
+		echo "Fallback to --depth usage."
+
+		# Try again
+		monotone --db=$DB log $DEPTH_LAST=1 --revision=$REVISION \
+		  > $TEMPFILE.change.log || exit 200
 	    fi
+
+	    do_pager $TEMPFILE.change.log
 	    ;;
 	  P)
 	    # DIFF parent
-	    monotone automate parents $REVISION > $TEMPFILE.parents
+	    monotone --db=$DB automate parents $REVISION > $TEMPFILE.parents
 
 	    if [ `wc -l < $TEMPFILE.parents` -ne 1 ]
 	    then
@@ -356,10 +566,13 @@ do_action_sel()
 		# Set DATE/KEY information
 		fill_date_key $TEMPFILE.parents $TEMPFILE.certs3tmp
 
-		cat cat $TEMPFILE.certs3tmp | xargs dialog --begin 1 2 --menu \
-		  "Select parent for $REVISION" 0 0 0 \
-		  2> $TEMPFILE.input \
-		  && PARENT=`cat $TEMPFILE.input`
+		cat $TEMPFILE.certs3tmp | \
+		    xargs dialog --begin 1 2 --colors \
+			--default-item "$PARENT" \
+			--menu "Select parent for $REVISION" 0 0 0 \
+			2> $TEMPFILE.input \
+			&& PARENT=`cat $TEMPFILE.input`
+		rm $TEMPFILE.certs3tmp
 	    else
 		# Single parent only
 		PARENT=`cat $TEMPFILE.parents`
@@ -403,7 +616,7 @@ do_action_sel()
 	    # DIFF2: from other revision (not working dir)
 	    # Select second revision
 	    if cat $TEMPFILE.certs.$BRANCH | \
-	      xargs dialog --menu \
+	      xargs dialog --default-item "$REV2" --colors --menu \
 	      "Select _older_ revision for branch:$BRANCH\nrev:$REVISION" \
 	      0 0 0  2> $TEMPFILE.revision-select
 	    then
@@ -437,44 +650,93 @@ do_action_sel()
     done
 }
 
+# Get parents recursive.
+# Same as automate ancestors, but limit the depth
+# Function called recursive!
+do_automate_ancestors_depth()
+{
+	locale depth head rev
+
+	depth=$1
+	head=$2
+
+	# Empty parm?
+	if [ -z "$depth" -o -z "$depth" ]
+	then
+		return 0
+	fi
+
+	# Limit by depth?
+	if [ "$depth" -gt $CERTS_MAX -o "$depth" -gt 200 ]
+	then
+		return 0
+	fi
+
+	let depth++
+	monotone --db=$DB automate parents $head |\
+	while read rev
+	do
+	    if ! grep -q -l -e "$rev" $TEMPFILE.ancestors
+	    then
+		echo "$rev" >> $TEMPFILE.ancestors
+		do_automate_ancestors_depth $depth $rev || return $?
+	    fi
+	done
+	let depth--
+
+	return 0
+}
 
 # Select a revision
 do_revision_sel()
 {
+    local SHORT_REV
+
     # if branch or head not known, ask user
+    echo "branch check..."
     do_branch_sel check
+    echo "head check..."
     do_head_sel check
 
     # Building revisions list
     if [ ! -f $TEMPFILE.certs.$BRANCH -o $DB -nt $TEMPFILE.certs.$BRANCH ]
     then
+	# Name color new
+	rm -f $TEMPFILE.ncolor
+	touch $TEMPFILE.ncolor
+
 	echo "Reading ancestors ($HEAD)"
 	echo "$HEAD" > $TEMPFILE.ancestors
-	monotone automate ancestors $HEAD | cut -c 1-40 \
-	  >> $TEMPFILE.ancestors || exit 200
 
-	if [ "$TOPSORT" = "T" -o "$CERTS_MAX" -gt 0 ]
+	if [ "$ANCESTORS" = "I" -a "$CERTS_MAX" -gt 0 ]
 	then
-		echo "Topsort..."
-		monotone automate toposort `cat $TEMPFILE.ancestors` \
-		  > $TEMPFILE.topsort || exit 200
+	    do_automate_ancestors_depth 1 $HEAD || exit 200
+	else
+	    monotone --db=$DB automate ancestors $HEAD \
+	      >> $TEMPFILE.ancestors || exit 200
+	fi
+
+	if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 ]
+	then
+		echo "Toposort..."
+		monotone --db=$DB automate toposort `cat $TEMPFILE.ancestors` \
+		  > $TEMPFILE.toposort || exit 200
 
 		if [ "$CERTS_MAX" -gt 0 ]
 		then
 			# Only last certs. Remember: Last line is newest!
-			tail -n "$CERTS_MAX" < $TEMPFILE.topsort \
-			  > $TEMPFILE.topsort2
-			mv $TEMPFILE.topsort2 $TEMPFILE.topsort
+			tail -n "$CERTS_MAX" < $TEMPFILE.toposort \
+			  > $TEMPFILE.toposort2
+			mv $TEMPFILE.toposort2 $TEMPFILE.toposort
 		fi
 	else
-		mv $TEMPFILE.ancestors $TEMPFILE.topsort
+		mv $TEMPFILE.ancestors $TEMPFILE.toposort
 	fi
 
 	# Reading revisions and fill with date
-	echo -n "Reading certs"
-	fill_date_key $TEMPFILE.topsort $TEMPFILE.certs3tmp
+	fill_date_key $TEMPFILE.toposort $TEMPFILE.certs3tmp
 
-	if [ "$TOPSORT" != "T" ]
+	if [ "$TOPOSORT" != "T" ]
 	then
 		# Sort by date+time
 		sort -k 2 -r < $TEMPFILE.certs3tmp > $TEMPFILE.certs.$BRANCH
@@ -484,26 +746,44 @@ do_revision_sel()
 	fi
     fi
 
+    # if first rev is empty, use head instand
+    if [ -z "$REVISION" ]
+    then
+	SHORT_REV=`echo $HEAD | cut -c 1-$HASH_TRIM`
+    else
+	SHORT_REV=`echo $REVISION | cut -c 1-$HASH_TRIM`
+    fi
+
     # Select revision
     while cat $TEMPFILE.certs.$BRANCH | \
-	xargs dialog --menu "Select revision for branch:$BRANCH" \
-	0 0 0  2> $TEMPFILE.revision-select
+	xargs dialog \
+	 --backtitle "h:$HEAD b:$BRANCH f:$SHORT_DB" \
+	 --no-shadow \
+	 --colors \
+	 --default-item "$SHORT_REV" \
+	 --menu "Select revision for branch:$BRANCH" \
+	 0 0 0  2> $TEMPFILE.revision-select
     do
-
-	REVISION=`cat $TEMPFILE.revision-select`
+	SHORT_REV=`cat $TEMPFILE.revision-select`
 
 	# Remove old marker, set new marker
-	cat $TEMPFILE.certs.$BRANCH | sed -r \
-	  -e "s/^(.+) <==\"\$/\1\"/" -e "s/^($REVISION.+)\"\$/\1 <==\"/" \
-	  > $TEMPFILE.certs.$BRANCH.base
-	mv $TEMPFILE.certs.$BRANCH.base $TEMPFILE.certs.$BRANCH
-
-	# Error, on "monotone automate parent XXXXXX".  :-(
-	# Expand revision here, if short revision
-	if [ "$SHOW_KEYS" = "yes" ]
+	if [ "$FORMAT_DATE" = "N" -a "$FORMAT_BRANCH" = "N" ]
 	then
-	    REVISION=`monotone complete revision $REVISION`
+	    sed -r \
+		-e "s/^(.+\")\*(.+)\$/\1\2/" \
+		-e "s/^($SHORT_REV.* \")(.+)\$/\1\*\2/" \
+		< $TEMPFILE.certs.$BRANCH > $TEMPFILE.marker
+	else
+	    sed -r \
+		-e "s/^(.+\")\\\\Zr(.+)\$/\1\2/" \
+		-e "s/^($SHORT_REV.* \")(.+)\$/\1\\\\Zr\2/" \
+		< $TEMPFILE.certs.$BRANCH > $TEMPFILE.marker
 	fi
+	mv $TEMPFILE.marker $TEMPFILE.certs.$BRANCH
+
+	# Error, on "monotone automate parents XXXXXX", if short revision.  :-(
+	# Expand revision here, if short revision (is alway short now)
+	REVISION=`monotone --db=$DB complete revision $SHORT_REV`
 
 	# OK Button: Sub Menu
 	do_action_sel
@@ -515,28 +795,37 @@ do_revision_sel()
 # Menu for configuration
 do_config()
 {
-    local y n
+    local item
 
-    while dialog --menu "Configuration" 0 0 0 \
+    while dialog --default-item "$item" \
+	--menu "Configuration" 0 0 0 \
 	"V" "VISUAL [$VISUAL]" \
 	"Vd" "Set VISUAL default to vim -R" \
 	"P" "PAGER  [$PAGER]" \
 	"Pd" "set PAGER default to less" \
-	"K" "View KEY in selection [$SHOW_KEYS]" \
-	"S" "Sort by Topsort or Date [$TOPSORT]" \
+	"S" "Sort by Toposort or Date [$TOPOSORT]" \
+	"T" "Time and date format [$FORMAT_DATE]" \
+	"B" "Branch format [$FORMAT_BRANCH]" \
+	"A" "Author format [$FORMAT_AUTHOR]" \
+	"Ac" "Author Color format [$FORMAT_COLOR]" \
+	"L" "changeLog format [$FORMAT_LOG]" \
+	"D" "Depth limit for ancestors [$ANCESTORS]" \
 	"C" "Certs limit in Select-List [$CERTS_MAX]" \
 	"-" "-" \
 	"W" "Write configuration file" \
 	"R" "Return to main menu" \
 	2> $TEMPFILE.menu
     do
-	case `cat $TEMPFILE.menu` in
+	item=`cat $TEMPFILE.menu`
+	case $item in
 	  V)
 	    # Setup for VISUAL
-	    dialog --inputbox \
-	     "Config for file viewer\nused in sample \"vim -R changes.diff\"" \
-	     8 70 "$VISUAL" 2> $TEMPFILE.input \
-	     && VISUAL=`cat $TEMPFILE.input`
+	    if dialog --inputbox \
+		"Config for file viewer\nuse in sample: \"vim -R changes.diff\"" \
+		8 70 "$VISUAL" 2> $TEMPFILE.input
+	    then
+		VISUAL=`cat $TEMPFILE.input`
+	    fi
 	    ;;
 	  Vd)
 	    # set Visual default
@@ -544,48 +833,133 @@ do_config()
 	    ;;
 	  P)
 	    # Setup for PAGER
-	    dialog --inputbox \
-	     "Config for pipe pager\nused in sample \"monotone log | less\"" \
-	     8 70 "$PAGER" 2> $TEMPFILE.input \
-	     && PAGER=`cat $TEMPFILE.input`
+	    if dialog --inputbox \
+		"Config for pipe pager\nuse in sample: \"monotone log | less\"" \
+		8 70 "$PAGER" 2> $TEMPFILE.input
+	    then
+		PAGER=`cat $TEMPFILE.input`
+	    fi
 	    ;;
 	  Pd)
 	    # set Pager default
 	    PAGER="less"
 	    ;;
-	  K)
-	    # change yes=View Keys, no=date only
-
-	    if [ "$SHOW_KEYS" = "yes" ]; then
-		y="on" n="off"
-	    else
-		y="off" n="on"
-	    fi
-
-	    dialog --radiolist "View Keys in Selection?" 0 0 0 \
-	      "yes" "Short revision, date and keys" $y \
-	      "no" "Long revision and Date" $n \
-	      2> $TEMPFILE.input \
-	      && SHOW_KEYS=`cat $TEMPFILE.input`
-	    ;;
 	  S)
-	    # change T=Topsort revisions, D=Date sort (reverse topsort)
-	    if [ "$TOPSORT" = "T" ]; then
-		y="on" n="off"
-	    else
-		y="off" n="on"
+	    # change T=Toposort revisions, D=Date sort (reverse toposort)
+	    if dialog --default-item "$TOPOSORT" \
+		--menu "Sort revisions by" 0 0 0 \
+		"T" "Toposort, oldest top (from Monotone)" \
+		"D" "Date/Time (reverse toposort)" \
+		2> $TEMPFILE.input
+	    then
+		TOPOSORT=`cat $TEMPFILE.input`
 	    fi
-
-	    dialog --radiolist "Sort revisions by" 0 0 0 \
-	      "D" "Date/Time (reverse topsort)" $n \
-	      "T" "Topsort (from Monotone)" $y \
-	      2> $TEMPFILE.input \
-	      && TOPSORT=`cat $TEMPFILE.input`
+	    ;;
+	  T)
+	    # change date/time format
+	    if dialog --default-item "$FORMAT_DATE" \
+		--menu "Format for date and time" 0 0 0 \
+		"F" "2005-12-31T23:59:59 -- Full date and time" \
+		"L" "2005-12-31 23:59    -- Long date and time" \
+		"D" "2005-21-31          -- Date only" \
+		"S" "12-31 23:59:59      -- Short date and time" \
+		"T" "23:59:59            -- Time only" \
+		"N" "no date and no time" \
+		2> $TEMPFILE.input
+	    then
+		FORMAT_DATE=`cat $TEMPFILE.input`
+	    fi
+	    ;;
+	  B)
+	    # change branch format
+	    if dialog --default-item "$FORMAT_BRANCH" \
+		--menu "Format for branch" 0 0 0 \
+		"F" "Full branch" \
+		"S" "Short branch, right side only" \
+		"N" "no branch" \
+		2> $TEMPFILE.input
+	    then
+		FORMAT_BRANCH=`cat $TEMPFILE.input`
+	    fi
+	    ;;
+	  A)
+	    # change author's format
+	    if dialog --default-item "$FORMAT_AUTHOR" \
+		--menu "Format for author" 0 0 0 \
+		"F" "Full author" \
+		"S" "Short author, strip domain from email address" \
+		"N" "no author" \
+		2> $TEMPFILE.input
+	    then
+		FORMAT_AUTHOR=`cat $TEMPFILE.input`
+	    fi
+	    ;;
+	  Ac)
+	    # Author coloring
+	    if dialog --default-item \
+		"`test -n \"$FORMAT_COLOR\" && echo \"yes\" || echo \"no\"`" \
+		--menu "Color author in selecetion" 0 0 0 \
+		"yes" "author is color" \
+		"no" "author has no special color" \
+		2> $TEMPFILE.input
+	    then
+		if [ "`cat $TEMPFILE.input`" = "yes" ]
+		then
+		    dialog --colors \
+		     --default-item "$FORMAT_COLOR" \
+		     --menu "Selecet color for author" 0 0 0 \
+			"A" "Automatic color" \
+			"\\Z0" "\Z0Color\Zn 0" \
+			"\\Z1" "\Z1Color\Zn 1" \
+			"\\Z2" "\Z2Color\Zn 2" \
+			"\\Z3" "\Z3Color\Zn 3" \
+			"\\Z4" "\Z4Color\Zn 4" \
+			"\\Z5" "\Z5Color\Zn 5" \
+			"\\Z6" "\Z6Color\Zn 6" \
+			"\\Z7" "\Z7Color\Zn 7" \
+			"\\Zb\\Z0" "\Zb\Z0Color\Zn 0b" \
+			"\\Zb\\Z1" "\Zb\Z1Color\Zn 1b" \
+			"\\Zb\\Z2" "\Zb\Z2Color\Zn 2b" \
+			"\\Zb\\Z3" "\Zb\Z3Color\Zn 3b" \
+			"\\Zb\\Z4" "\Zb\Z4Color\Zn 4b" \
+			"\\Zb\\Z5" "\Zb\Z5Color\Zn 5b" \
+			"\\Zb\\Z6" "\Zb\Z6Color\Zn 6b" \
+			"\\Zb\\Z7" "\Zb\Z7Color\Zn 7b" \
+			"\\Zb" "\ZbBold\Zn b" \
+			"\\Zu" "\ZuUnderline\Zn u" \
+			2> $TEMPFILE.input \
+		    && FORMAT_COLOR=`cat $TEMPFILE.input`
+		else
+		    FORMAT_COLOR=""
+		fi
+	    fi
+	    ;;
+	  L)
+	    # Changelog format
+	    dialog \
+		--default-item "$FORMAT_LOG" \
+		--menu "Format for ChangeLog in selection" 0 0 0 \
+		"F" "Full changelog line" \
+		"S" "Short changelog" \
+		"N" "no changelog in selection" \
+		2> $TEMPFILE.input \
+		&& FORMAT_LOG=`cat $TEMPFILE.input`
+	    ;;
+	  D)
+	    # automate ancestors (I)nteral function, (M)onotone
+	    if dialog --default-item "$ANCESTORS" \
+		--menu "Get ancestors by using" 0 0 0 \
+		"M" "Monotone \"automate ancestor\" (save mode)" \
+		"I" "Internal function with depth limit (faster)" \
+		2> $TEMPFILE.input
+	    then
+		ANCESTORS=`cat $TEMPFILE.input`
+	    fi
 	    ;;
 	  C)
 	    # Change CERTS_MAX
 	    dialog --inputbox \
-	      "Set maximum lines for revision selction menu\n(default: 0, disabled)" \
+	      "Set maximum lines for revision selction menu\n(0=disabled)" \
 	      9 70 "$CERTS_MAX" 2> $TEMPFILE.input \
 	      && CERTS_MAX=`cat $TEMPFILE.input`
 	    ;;
@@ -600,13 +974,18 @@ VISUAL="$VISUAL"
 PAGER="$PAGER"
 TEMPDIR="$TEMPDIR"
 TEMPFILE="$TEMPFILE"
-SHOW_KEYS="$SHOW_KEYS"
-TOPSORT="$TOPSORT"
+TOPOSORT="$TOPOSORT"
 CACHE="$CACHE"
 CERTS_MAX="$CERTS_MAX"
 DEPTH_LAST="$DEPTH_LAST"
+FORMAT_DATE="$FORMAT_DATE"
+FORMAT_BRANCH="$FORMAT_BRANCH"
+FORMAT_AUTHOR="$FORMAT_AUTHOR"
+FORMAT_LOG="$FORMAT_LOG"
+FORMAT_COLOR="$FORMAT_COLOR"
+ANCESTORS="$ANCESTORS"
 EOF
-		dialog --title "Info" --sleep 2 --infobox \
+		dialog --title " Info " --sleep 2 --infobox \
 		    "Configration wrote to\n$CONFIGFILE" 0 0
 	    echo "config saved"
     	    ;;
@@ -632,23 +1011,26 @@ fi
 
 mkdir -p $TEMPDIR
 
-while dialog --menu "Main - mtbrowse v$VERSION" 0 0 0 \
-    "S" "Select revision" \
-    "I" "Input revision" \
-    "F" "Change DB File [`basename $DB`]" \
-    "B" "Branch select  [$BRANCH]" \
-    "H" "Head select    [$SHORT_HEAD]" \
-    "R" "Reload DB, clear cache" \
-    "-" "-" \
-    "l" "Sumary complete log" \
-    "t" "List Tags" \
-    "h" "List Heads" \
-    "k" "List Keys" \
-    "-" "-" \
-    "C" "Configuration" \
-    "-" "-" \
-    "X" "eXit" \
-    2> $TEMPFILE.menu
+while dialog \
+	--cancel-label "Exit" \
+	--backtitle "$DB" \
+	--menu "Main - mtbrowse v$VERSION" 0 0 0 \
+	"S" "Select revision" \
+	"I" "Input revision" \
+	"F" "Change DB File [`basename $DB`]" \
+	"B" "Branch select  [$BRANCH]" \
+	"H" "Head select    [$SHORT_HEAD]" \
+	"R" "Reload DB, clear cache" \
+	"-" "-" \
+	"l" "Sumary complete log" \
+	"t" "List Tags" \
+	"h" "List Heads" \
+	"k" "List Keys" \
+	"-" "-" \
+	"C" "Configuration" \
+	"-" "-" \
+	"X" "eXit" \
+	2> $TEMPFILE.menu
 do
     case `cat $TEMPFILE.menu` in
       S)
@@ -663,6 +1045,13 @@ do
 	then
 	    REVISION=`cat $TEMPFILE.input`
 
+	    if [ `echo "$REVISION" | wc -L` -lt 40 ]
+	    then
+		# Error, on "monotone automate parents XXXXXX", if short revision.  :-(
+		# Expand revision here, if short revision
+		REVISION=`monotone --db=$DB complete revision $REVISION`
+	    fi
+
 	    do_action_sel
 	    do_revision_sel
 	fi
@@ -674,11 +1063,13 @@ do
 	;;
       B)
 	# Branch config
-	rm -f $TEMPFILE.dlg-branches
+	rm -f $TEMPFILE.branches
 	do_branch_sel
 	;;
       H)
         # Select head
+	# if branch or head not known, ask user
+	do_branch_sel check
 	do_head_sel
 	do_clear_cache
 	;;
@@ -715,7 +1106,8 @@ do
 	    $DB -nt $TEMPFILE.changelog.$BRANCH ]
 	then
 	    echo "Reading log...($BRANCH)"
-	    monotone --db=$DB log --revision=$HEAD > $TEMPFILE.changelog.$BRANCH || exit 200
+	    monotone --db=$DB log --revision=$HEAD \
+	      > $TEMPFILE.changelog.$BRANCH || exit 200
 	fi
 	cp $TEMPFILE.changelog.$BRANCH $TEMPFILE.change.log
 	do_pager $TEMPFILE.change.log
@@ -740,6 +1132,7 @@ do
 	;;
       X)
 	do_clear_on_exit
+	clear
 	exit 0
         ;;
       *)
@@ -750,3 +1143,4 @@ do
 done
 
 do_clear_on_exit
+clear

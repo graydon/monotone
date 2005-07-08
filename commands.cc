@@ -49,6 +49,7 @@
 #include "selectors.hh"
 #include "annotate.hh"
 #include "options.hh"
+#include "globish.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -129,7 +130,7 @@ namespace commands
   {
     if (cmd.length() == 0 || cmds.find(cmd) != cmds.end()) return cmd;
 
-    P(F("expanding command '%s'\n") % cmd);
+    L(F("expanding command '%s'\n") % cmd);
 
     vector<string> matched;
 
@@ -146,7 +147,7 @@ namespace commands
     if (matched.size() == 1) 
       {
       string completed = *matched.begin();
-      P(F("expanded command to '%s'\n") %  completed);  
+      L(F("expanded command to '%s'\n") %  completed);  
       return completed;
       }
     else if (matched.size() > 1) 
@@ -1263,7 +1264,7 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
 }
 
 CMD(status, "informative", "[PATH]...", "show status of working copy",
-    OPT_DEPTH)
+    OPT_DEPTH % OPT_BRIEF)
 {
   revision_set rs;
   manifest_map m_old, m_new;
@@ -1273,8 +1274,50 @@ CMD(status, "informative", "[PATH]...", "show status of working copy",
 
   calculate_restricted_revision(app, args, rs, m_old, m_new);
 
-  write_revision_set(rs, tmp);
-  cout << endl << tmp << endl;
+  if (global_sanity.brief)
+    {
+      I(rs.edges.size() == 1);
+      change_set const & changes = edge_changes(rs.edges.begin());
+      change_set::path_rearrangement const & rearrangement = changes.rearrangement;
+      change_set::delta_map const & deltas = changes.deltas;
+
+      for (path_set::const_iterator i = rearrangement.deleted_files.begin();
+           i != rearrangement.deleted_files.end(); ++i) 
+        cout << "dropped " << *i << endl;
+
+      for (path_set::const_iterator i = rearrangement.deleted_dirs.begin();
+           i != rearrangement.deleted_dirs.end(); ++i) 
+        cout << "dropped " << *i << "/" << endl;
+
+      for (map<file_path, file_path>::const_iterator 
+           i = rearrangement.renamed_files.begin();
+           i != rearrangement.renamed_files.end(); ++i) 
+        cout << "renamed " << i->first << endl 
+             << "     to " << i->second << endl;
+
+      for (map<file_path, file_path>::const_iterator 
+           i = rearrangement.renamed_dirs.begin();
+           i != rearrangement.renamed_dirs.end(); ++i) 
+        cout << "renamed " << i->first << "/" << endl 
+             << "     to " << i->second << "/" << endl;
+
+      for (path_set::const_iterator i = rearrangement.added_files.begin();
+           i != rearrangement.added_files.end(); ++i) 
+        cout << "added   " << *i << endl;
+
+      for (change_set::delta_map::const_iterator i = deltas.begin(); 
+           i != deltas.end(); ++i) 
+        {
+          // don't bother printing patches on added files
+          if (rearrangement.added_files.find(i->first) == rearrangement.added_files.end())
+            cout << "patched " << i->first << endl;
+        }
+    }
+  else
+    {
+      write_revision_set(rs, tmp);
+      cout << endl << tmp << endl;
+    }
 }
 
 CMD(identify, "working copy", "[PATH]", "calculate identity of PATH or stdin",
@@ -1328,7 +1371,7 @@ CMD(cat, "informative",
         {
           revision_id rid;
           complete(app, idx(args, 1)(), rid);
-          file_path fp(idx(args, 2)());
+          file_path fp = app.prefix(idx(args, 2));
           manifest_id mid;
           app.db.get_revision_manifest(rid, mid);
           manifest_map m;
@@ -1405,7 +1448,7 @@ CMD(cat, "informative",
 
 
 CMD(checkout, "tree", "[DIRECTORY]\n",
-    "check out revision from database into directory.\n"
+    "check out a revision from database into directory.\n"
     "If a revision is given, that's the one that will be checked out.\n"
     "Otherwise, it will be the head of the branch (given or implicit).\n"
     "If no directory is given, the branch name will be used as directory",
@@ -1934,22 +1977,24 @@ CMD(reindex, "network", "",
 
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
-static const var_key default_pattern_key(var_domain("database"),
-                                            var_name("default-pattern"));
+static const var_key default_include_pattern_key(var_domain("database"),
+                                                 var_name("default-include-pattern"));
+static const var_key default_exclude_pattern_key(var_domain("database"),
+                                                 var_name("default-exclude-pattern"));
 
 static void
-process_netsync_client_args(std::string const & name,
-                            std::vector<utf8> const & args,
-                            utf8 & addr, std::vector<utf8> & patterns,
-                            app_state & app)
+process_netsync_args(std::string const & name,
+                     std::vector<utf8> const & args,
+                     utf8 & addr,
+                     utf8 & include_pattern, utf8 & exclude_pattern,
+                     bool use_defaults,
+                     app_state & app)
 {
-  if (args.size() > 2)
-    throw usage(name);
-
   if (args.size() >= 1)
     {
       addr = idx(args, 0);
-      if (!app.db.var_exists(default_server_key))
+      if (use_defaults
+          && (!app.db.var_exists(default_server_key) || app.set_default))
         {
           P(F("setting default server to %s\n") % addr);
           app.db.set_var(default_server_key, var_value(addr()));
@@ -1957,6 +2002,7 @@ process_netsync_client_args(std::string const & name,
     }
   else
     {
+      N(use_defaults, F("no hostname given"));
       N(app.db.var_exists(default_server_key),
         F("no server given and no default server set"));
       var_value addr_value;
@@ -1964,74 +2010,74 @@ process_netsync_client_args(std::string const & name,
       addr = utf8(addr_value());
       L(F("using default server address: %s\n") % addr);
     }
-  // NB: even though the netsync code wants a vector of patterns, in fact
-  // this only works for the server; when we're a client, our vector must have
-  // length exactly 1.
-  utf8 pattern;
   if (args.size() >= 2)
     {
-      pattern = idx(args, 1);
-      if (!app.db.var_exists(default_pattern_key))
+      std::set<utf8> patterns(args.begin() + 1, args.end());
+      combine_and_check_globish(patterns, include_pattern);
+      if (use_defaults &&
+          (!app.db.var_exists(default_include_pattern_key) || app.set_default))
         {
-          P(F("setting default regex pattern to %s\n") % pattern);
-          app.db.set_var(default_pattern_key, var_value(pattern()));
+          P(F("setting default branch pattern to %s\n") % include_pattern);
+          app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
         }
     }
   else
     {
-      N(app.db.var_exists(default_pattern_key),
-        F("no regex pattern given and no default pattern set"));
+      N(use_defaults, F("no branch pattern given"));
+      N(app.db.var_exists(default_include_pattern_key),
+        F("no branch pattern given and no default pattern set"));
       var_value pattern_value;
-      app.db.get_var(default_pattern_key, pattern_value);
-      pattern = utf8(pattern_value());
-      L(F("using default regex pattern: %s\n") % pattern);
+      app.db.get_var(default_include_pattern_key, pattern_value);
+      include_pattern = utf8(pattern_value());
+      L(F("using default branch pattern: %s\n") % include_pattern);
     }
-  patterns.push_back(pattern);
+
+  // For now, don't handle excludes.
+  exclude_pattern = utf8("");
 }
 
-CMD(push, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
-    "push branches matching REGEX to netsync server at ADDRESS", OPT_NONE)
+CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
+    "push branches matching PATTERN to netsync server at ADDRESS", OPT_SET_DEFAULT)
 {
-  utf8 addr;
-  vector<utf8> patterns;
-  process_netsync_client_args(name, args, addr, patterns, app);
+  utf8 addr, include_pattern, exclude_pattern;
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  run_netsync_protocol(client_voice, source_role, addr, patterns, app);  
+  run_netsync_protocol(client_voice, source_role, addr,
+                       include_pattern, exclude_pattern, app);  
 }
 
-CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
-    "pull branches matching REGEX from netsync server at ADDRESS", OPT_NONE)
+CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
+    "pull branches matching PATTERN from netsync server at ADDRESS", OPT_SET_DEFAULT)
 {
-  utf8 addr;
-  vector<utf8> patterns;
-  process_netsync_client_args(name, args, addr, patterns, app);
+  utf8 addr, include_pattern, exclude_pattern;
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   if (app.signing_key() == "")
     W(F("doing anonymous pull\n"));
   
-  run_netsync_protocol(client_voice, sink_role, addr, patterns, app);  
+  run_netsync_protocol(client_voice, sink_role, addr,
+                       include_pattern, exclude_pattern, app);  
 }
 
-CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [REGEX]]",
-    "sync branches matching REGEX with netsync server at ADDRESS", OPT_NONE)
+CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
+    "sync branches matching PATTERN with netsync server at ADDRESS", OPT_SET_DEFAULT)
 {
-  utf8 addr;
-  vector<utf8> patterns;
-  process_netsync_client_args(name, args, addr, patterns, app);
+  utf8 addr, include_pattern, exclude_pattern;
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   rsa_keypair_id key;
   N(guess_default_key(key, app), F("could not guess default signing key"));
   app.signing_key = key;
 
-  run_netsync_protocol(client_voice, source_and_sink_role, addr, patterns,
-                       app);  
+  run_netsync_protocol(client_voice, source_and_sink_role, addr,
+                       include_pattern, exclude_pattern, app);  
 }
 
-CMD(serve, "network", "ADDRESS[:PORTNUMBER] REGEX ...",
+CMD(serve, "network", "ADDRESS[:PORTNUMBER] PATTERN ...",
     "listen on ADDRESS and serve the specified branches to connecting clients", OPT_PIDFILE)
 {
   if (args.size() < 2)
@@ -2047,9 +2093,10 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] REGEX ...",
     F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
   require_password(key, app);
 
-  utf8 addr(idx(args,0));
-  vector<utf8> patterns(args.begin() + 1, args.end());
-  run_netsync_protocol(server_voice, source_and_sink_role, addr, patterns, app);  
+  utf8 addr, include_pattern, exclude_pattern;
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, false, app);
+  run_netsync_protocol(server_voice, source_and_sink_role, addr,
+                       include_pattern, exclude_pattern, app);  
 }
 
 
@@ -2061,7 +2108,8 @@ CMD(db, "database",
     "load\n"
     "migrate\n"
     "execute\n"
-    "kill_rev_locally <ID>\n"
+    "kill_rev_locally ID\n"
+    "kill_branch_locally BRANCH\n"
     "check\n"
     "changesetify\n"
     "rebuild\n"
@@ -2100,6 +2148,8 @@ CMD(db, "database",
         kill_rev_locally(app,idx(args, 1)());
       else if (idx(args, 0)() == "clear_epoch")
         app.db.clear_epoch(cert_value(idx(args, 1)()));
+      else if (idx(args, 0)() == "kill_branch_locally")
+        app.db.delete_branch_named(cert_value(idx(args, 1)()));
       else
         throw usage(name);
     }
@@ -2617,35 +2667,7 @@ void do_diff(const string & name,
       N(find_least_common_ancestor(src_id, dst_id, anc_id, app),
         F("no common ancestor for %s and %s") % src_id % dst_id);
 
-      if (src_id == anc_id)
-        {
-          calculate_composite_change_set(src_id, dst_id, app, composite);
-          L(F("calculated diff via direct analysis\n"));
-        }
-      else if (!(src_id == anc_id) && dst_id == anc_id)
-        {
-          change_set tmp;
-          calculate_composite_change_set(dst_id, src_id, app, tmp);
-          invert_change_set(tmp, m_new, composite);
-          L(F("calculated diff via inverted direct analysis\n"));
-        }
-      else
-        {
-          change_set anc_to_src, src_to_anc, anc_to_dst;
-          manifest_id anc_m_id;
-          manifest_map m_anc;
-
-          I(!(src_id == anc_id || dst_id == anc_id));
-
-          app.db.get_revision_manifest(anc_id, anc_m_id);
-          app.db.get_manifest(anc_m_id, m_anc);
-
-          calculate_composite_change_set(anc_id, src_id, app, anc_to_src);
-          invert_change_set(anc_to_src, m_anc, src_to_anc);
-          calculate_composite_change_set(anc_id, dst_id, app, anc_to_dst);
-          concatenate_change_sets(src_to_anc, anc_to_dst, composite);
-          L(F("calculated diff via common ancestor %s\n") % anc_id);
-        }
+      calculate_arbitrary_change_set(src_id, dst_id, app, composite);
 
       if (!new_is_archived)
         {
@@ -2687,7 +2709,7 @@ CMD(cdiff, "informative", "[PATH]...",
     "If one revision is given, the diff between the working directory and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.",
-    OPT_BRANCH_NAME % OPT_REVISION)
+    OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH)
 {
   do_diff(name, app, args, context_diff);
 }
@@ -2949,7 +2971,7 @@ CMD(update, "working copy", "",
       // we have the following
       //
       // old --- working
-      //   \         \
+      //   \         \ 
       //  chosen --- merged
       //
       // - old is the revision specified in MT/revision
@@ -3315,12 +3337,12 @@ CMD(explicit_merge, "tree",
 
 CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
     "complete partial id",
-    OPT_BRIEF)
+    OPT_VERBOSE)
 {
   if (args.size() != 2)
     throw usage(name);
 
-  bool brief = global_sanity.brief;
+  bool verbose = app.verbose;
 
   N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
     F("non-hex digits in partial id"));
@@ -3331,7 +3353,10 @@ CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
       app.db.complete(idx(args, 1)(), completions);
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        cout << i->inner()() << endl;
+        {
+          if (!verbose) cout << i->inner()() << endl;
+          else cout << describe_revision(app, i->inner()) << endl;
+        }
     }
   else if (idx(args, 0)() == "manifest")
     {      
@@ -3358,7 +3383,7 @@ CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
            i != completions.end(); ++i)
         {
           cout << i->first.inner()();
-          if (!brief) cout << " " << i->second();
+          if (verbose) cout << " " << i->second();
           cout << endl;
         }
     }
@@ -3389,7 +3414,7 @@ CMD(revert, "working copy", "[PATH]...",
 
   extract_rearranged_paths(work, valid_paths);
   add_intermediate_paths(valid_paths);
-  app.set_restriction(valid_paths, args);
+  app.set_restriction(valid_paths, args, false);
 
   restrict_path_rearrangement(work, included, excluded, app);
 
@@ -3428,20 +3453,18 @@ CMD(revert, "working copy", "[PATH]...",
 
 
 CMD(rcs_import, "debug", "RCSFILE...",
-    "import all versions in RCS files\n"
-    "this command doesn't reconstruct revisions.  you probably want cvs_import",
+    "parse versions in RCS files\n"
+    "this command doesn't reconstruct or import revisions.  you probably want cvs_import",
     OPT_BRANCH_NAME)
 {
   if (args.size() < 1)
     throw usage(name);
   
-  transaction_guard guard(app.db);
   for (vector<utf8>::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
-      import_rcs_file(mkpath((*i)()), app.db);
+      test_parse_rcs_file(mkpath((*i)()), app.db);
     }
-  guard.commit();
 }
 
 

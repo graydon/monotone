@@ -93,6 +93,12 @@ AT_CHECK(rm work/file2)
 AT_DATA(work/file3, [version 2 of file3 with some changes
 ])
 
+AT_DATA(work/A/fileA, [version 2 of fileA with some changes
+])
+
+AT_DATA(work/A/B/fileAB, [version 2 of fileAB with some changes
+])
+
 AT_CHECK(MONOTONE rename work/fileX work/file1, [], [ignore], [ignore])
 AT_CHECK(MONOTONE drop work/file2, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add work/file4, [], [ignore], [ignore])
@@ -157,6 +163,18 @@ AT_CHECK(EXCLUDED(X 1 2 3), [0], [ignore])
 
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
 AT_CHECK(INCLUDED(X 1 2 3 4), [0], [ignore])
+
+AT_CHECK(MONOTONE diff --depth=0 . , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE diff --depth=2 . , [], [stdout], [ignore])
+AT_CHECK(grep fileA stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE cdiff --depth=0 . , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE cdiff --depth=2 . , [], [stdout], [ignore])
+AT_CHECK(grep fileA stdout, [0], [ignore])
 
 # include both source and target of rename
 

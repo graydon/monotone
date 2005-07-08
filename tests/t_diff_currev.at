@@ -2,8 +2,6 @@
 
 AT_SETUP([diffing with explicit rev same as wc rev])
 
-AT_XFAIL_IF(true)
-
 MONOTONE_SETUP
 
 AT_DATA(foo1, [foo file 1

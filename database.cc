@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <stdarg.h>
+#include <string.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
@@ -344,11 +345,19 @@ database::load(istream & in)
   if (error)
     throw oops(string("could not open database: ") + filename.string() + 
                (string(sqlite3_errmsg(__sql))));
-  
+
   while(in)
     {
       in.read(buf, constants::bufsz);
       tmp.append(buf, in.gcount());
+
+      const char* last_statement = 0;
+      sqlite3_complete_last(tmp.c_str(), &last_statement);
+      if (last_statement == 0)
+        continue;
+      string::size_type len = last_statement + 1 - tmp.c_str();
+      execute(tmp.substr(0, len).c_str());
+      tmp.erase(0, len);
     }
 
   execute(tmp.c_str());
@@ -534,140 +543,180 @@ database::~database()
 }
 
 static void 
-assert_sqlite3_ok(int res)
+assert_sqlite3_ok(int res, char const * errmsg, string const & ctx = "")
 {
+  if (res == SQLITE_OK && !errmsg)
+    {
+      // the only point of return
+      return;
+    }
+
+  bool internal_error = false;
+  string err_desc;
+
+  // first we handle "external" errors
   switch (res)
-    {      
-    case SQLITE_OK: 
-      break;
-
-    case SQLITE_ERROR:
-      throw oops("SQL error or missing database");
-      break;
-
-    case SQLITE_INTERNAL:
-      throw oops("An internal logic error in SQLite");
-      break;
-
+    {
     case SQLITE_PERM:
-      throw oops("Access permission denied");
-      break;
-
-    case SQLITE_ABORT:
-      throw oops("Callback routine requested an abort");
-      break;
-
-    case SQLITE_BUSY:
-      throw oops("The database file is locked");
-      break;
-
-    case SQLITE_LOCKED:
-      throw oops("A table in the database is locked");
-      break;
-
-    case SQLITE_NOMEM:
-      throw oops("A malloc() failed");
+      err_desc = "Access permission denied";
       break;
 
     case SQLITE_READONLY:
-      throw oops("Attempt to write a readonly database");
-      break;
-
-    case SQLITE_INTERRUPT:
-      throw oops("Operation terminated by sqlite3_interrupt()");
+      err_desc = "Attempt to write a readonly database";
       break;
 
     case SQLITE_IOERR:
-      throw oops("Some kind of disk I/O error occurred");
+      err_desc = "Some kind of disk I/O error occurred";
       break;
 
     case SQLITE_CORRUPT:
-      throw oops("The database disk image is malformed");
-      break;
-
-    case SQLITE_NOTFOUND:
-      throw oops("(Internal Only) Table or record not found");
+      err_desc = "The database disk image is malformed";
       break;
 
     case SQLITE_FULL:
-      throw oops("Insertion failed because database (or filesystem) is full");
+      err_desc = "Insertion failed because database (or filesystem) is full";
       break;
 
     case SQLITE_CANTOPEN:
-      throw oops("Unable to open the database file");
+      err_desc = "Unable to open the database file";
+      break;
+
+    // fallthrough for internal errors
+    default:
+      internal_error = true;
+    }
+
+  if (!internal_error)
+   {
+     if (errmsg)
+       err_desc = errmsg;
+
+     // ctx is ignored, since the error is most likely unrelated to the
+     // query
+     E(false, F("sqlite error: %s") % err_desc);
+   }
+
+  // ... and now we handle the internal errors
+  switch (res)
+   {
+
+    case SQLITE_OK:
+      I(errmsg);
+      err_desc = errmsg;
+      break;
+
+    case SQLITE_ERROR:
+      err_desc = "SQL error or missing database";
+      break;
+
+    case SQLITE_INTERNAL:
+      err_desc = "An internal logic error in SQLite";
+      break;
+
+    case SQLITE_ABORT:
+      err_desc = "Callback routine requested an abort";
+      break;
+
+    case SQLITE_BUSY:
+      // TODO: handle this more gracefully in calling functions,
+      // then perhaps it should be an external error?
+      err_desc = "The database file is locked";
+      break;
+
+    case SQLITE_LOCKED:
+      // TODO: see SQLITE_BUSY comment
+      err_desc = "A table in the database is locked";
+      break;
+
+    case SQLITE_NOMEM:
+      err_desc = "A malloc() failed";
+      break;
+
+    case SQLITE_INTERRUPT:
+      err_desc = "Operation terminated by sqlite3_interrupt()";
+      break;
+
+    case SQLITE_NOTFOUND:
+      err_desc = "(Internal Only) Table or record not found";
       break;
 
     case SQLITE_PROTOCOL:
-      throw oops("database lock protocol error");
+      err_desc = "database lock protocol error";
       break;
 
     case SQLITE_EMPTY:
-      throw oops("(Internal Only) database table is empty");
+      err_desc = "(Internal Only) database table is empty";
       break;
 
     case SQLITE_SCHEMA:
-      throw oops("The database schema changed");
+      err_desc = "The database schema changed";
       break;
 
     case SQLITE_TOOBIG:
-      throw oops("Too much data for one row of a table");
+      err_desc = "Too much data for one row of a table";
       break;
 
     case SQLITE_CONSTRAINT:
-      throw oops("Abort due to contraint violation");
+      err_desc = "Abort due to contraint violation";
       break;
 
     case SQLITE_MISMATCH:
-      throw oops("Data type mismatch");
+      err_desc = "Data type mismatch";
       break;
 
     case SQLITE_MISUSE:
-      throw oops("Library used incorrectly");
+      err_desc = "Library used incorrectly";
       break;
 
     case SQLITE_NOLFS:
-      throw oops("Uses OS features not supported on host");
+      err_desc = "Uses OS features not supported on host";
       break;
 
     case SQLITE_AUTH:
-      throw oops("Authorization denied");
+      err_desc = "Authorization denied";
       break;
 
     default:
-      throw oops(string("Unknown DB result code: ") + lexical_cast<string>(res));
+      err_desc = string("Unknown DB result code: ") + lexical_cast<string>(res);
       break;
     }
+
+   if (errmsg)
+      err_desc = errmsg;
+
+   throw oops(ctx + "sqlite error: " + err_desc);
 }
 
 void 
 database::execute(char const * query, ...)
 {
   va_list ap;
-  int res;
-  char * errmsg = NULL;
 
   va_start(ap, query);
 
   // log it
   char * formatted = sqlite3_vmprintf(query, ap);
-  string qq(formatted);
-  if (qq.size() > constants::db_log_line_sz) 
-    qq = qq.substr(0, constants::db_log_line_sz) + string(" ...");
+  string qq;
+
+  if (strlen(formatted) > constants::db_log_line_sz)
+    {
+      qq.assign(formatted, constants::db_log_line_sz);
+      qq.append(" ...");
+    }
+  else
+    {
+      qq = formatted;
+    }
   L(F("db.execute(\"%s\")\n") % qq);
+
+  // do it
+  char * errmsg = NULL;
+  int res = sqlite3_exec(sql(), formatted, NULL, NULL, &errmsg);
   sqlite3_free(formatted);
 
   va_end(ap);
-  va_start(ap, query);
 
-  // do it
-  res = sqlite3_exec_vprintf(sql(), query, NULL, NULL, &errmsg, ap);
-
-  va_end(ap);
-
-  if (errmsg)
-    throw oops(string("sqlite exec error ") + errmsg);
-
-  assert_sqlite3_ok(res);
+  assert_sqlite3_ok(res, errmsg);
 
 }
 
@@ -709,9 +758,7 @@ database::fetch(results & res,
 
   string ctx = string("db query [") + string(query) + "]: ";
 
-  if (errmsg)
-    throw oops(ctx + string("sqlite error ") + errmsg);
-  assert_sqlite3_ok(rescode);
+  assert_sqlite3_ok(rescode, errmsg, ctx);
 
   if (want_cols == 0 && ncol == 0) return;
   if (want_rows == 0 && nrow == 0) return;
@@ -1500,6 +1547,19 @@ database::delete_existing_rev_and_certs(revision_id const & rid){
   execute("DELETE from revisions WHERE id = '%s'",rid.inner()().c_str());
 }
 
+/// Deletes all certs referring to a particular branch. 
+void
+database::delete_branch_named(cert_value const & branch)
+{
+  base64<cert_value> encoded;
+  encode_base64(branch, encoded);
+  L(F("Deleting all references to branch %s\n") % branch);
+  execute("DELETE FROM revision_certs WHERE name='branch' AND value ='%s'",
+          encoded().c_str());
+  execute("DELETE FROM branch_epochs WHERE branch='%s'",
+          encoded().c_str());
+}
+
 // crypto key management
 
 void 
@@ -1748,7 +1808,6 @@ database::install_functions(app_state * app)
                            SQLITE_UTF8, NULL,
                            &sqlite3_unbase64_fn, 
                            NULL, NULL) == 0);
-
   I(sqlite3_create_function(sql(), "unpack", -1, 
                            SQLITE_UTF8, NULL,
                            &sqlite3_unpack_fn, 

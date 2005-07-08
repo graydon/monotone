@@ -349,6 +349,75 @@ check_signature(app_state &app,
   return valid_sig;
 }
 
+void encrypt_rsa(lua_hooks & lua,
+                 rsa_keypair_id const & id,
+                 base64<rsa_pub_key> & pub_encoded,
+                 std::string const & plaintext,
+                 rsa_oaep_sha_data & ciphertext)
+{
+  AutoSeededRandomPool rng(blocking_rng(lua));
+
+  rsa_pub_key pub;
+  decode_base64(pub_encoded, pub);
+  SecByteBlock pub_block;
+  pub_block.Assign(reinterpret_cast<byte const *>(pub().data()), pub().size());
+  StringSource keysource(pub_block.data(), pub_block.size(), true);
+
+  shared_ptr<RSAES_OAEP_SHA_Encryptor> encryptor;
+  encryptor = shared_ptr<RSAES_OAEP_SHA_Encryptor>
+    (new RSAES_OAEP_SHA_Encryptor(keysource));
+
+  string ciphertext_string;
+  StringSource tmp(plaintext, true,
+                   encryptor->CreateEncryptionFilter
+                   (rng, new StringSink(ciphertext_string)));
+
+  ciphertext = rsa_oaep_sha_data(ciphertext_string);
+}
+
+void decrypt_rsa(lua_hooks & lua,
+                 rsa_keypair_id const & id,
+                 base64< arc4<rsa_priv_key> > const & priv,
+                 rsa_oaep_sha_data const & ciphertext,
+                 std::string & plaintext)
+{
+  AutoSeededRandomPool rng(blocking_rng(lua));
+  arc4<rsa_priv_key> decoded_key;
+  SecByteBlock decrypted_key;
+  SecByteBlock phrase;
+  shared_ptr<RSAES_OAEP_SHA_Decryptor> decryptor;
+
+  for (int i = 0; i < 3; i++)
+    {
+      bool force = false;
+      decode_base64(priv, decoded_key);
+      decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
+                           decoded_key().size());
+      get_passphrase(lua, id, phrase, false, force);
+
+      try 
+        {
+          do_arc4(phrase, decrypted_key);
+          StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
+          decryptor = shared_ptr<RSAES_OAEP_SHA_Decryptor>
+            (new RSAES_OAEP_SHA_Decryptor(keysource));
+        }
+      catch (...)
+        {
+          if (i >= 2)
+            throw informative_failure("failed to decrypt private RSA key, "
+                                      "probably incorrect passphrase");
+          // don't use the cache bad one next time
+          force = true;
+          continue;
+        }
+    }
+
+  StringSource tmp(ciphertext(), true,
+                   decryptor->CreateDecryptionFilter
+                   (rng, new StringSink(plaintext)));
+}
+
 void 
 read_pubkey(string const & in, 
             rsa_keypair_id & id,
