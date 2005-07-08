@@ -159,12 +159,10 @@ void pack(T const & in, base64< gzip<T> > & out)
   string tmp;
   tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
 
-  CryptoPP::StringSource 
-    str(in(), true, 
-        new CryptoPP::Gzip(
-          new CryptoPP::Base64Encoder(
-            new CryptoPP::StringSink(tmp))));
-  out.swap(tmp);
+  Botan::Pipe pipe(new Botan::Gzip_Compression(), new Botan::Base64_Encoder);
+  pipe.process_msg(in());
+  tmp = pipe.read_all_as_string();
+  out = tmp;
 }
 
 template <typename T>
@@ -173,13 +171,11 @@ void unpack(base64< gzip<T> > const & in, T & out)
   string tmp;
   tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
 
-  CryptoPP::StringSource 
-    str(in(), true, 
-        new CryptoPP::Base64Decoder(
-          new CryptoPP::Gunzip(
-            new CryptoPP::StringSink(tmp))));
+  Botan::Pipe pipe(new Botan::Base64_Decoder(), new Botan::Gzip_Decompression());
+  pipe.process_msg(in());
+  tmp = pipe.read_all_as_string();
 
-  out.swap(tmp);
+  out = tmp;
 }
 
 // specialise them

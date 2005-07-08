@@ -355,24 +355,23 @@ void encrypt_rsa(lua_hooks & lua,
                  std::string const & plaintext,
                  rsa_oaep_sha_data & ciphertext)
 {
-  AutoSeededRandomPool rng(blocking_rng(lua));
-
   rsa_pub_key pub;
   decode_base64(pub_encoded, pub);
-  SecByteBlock pub_block;
-  pub_block.Assign(reinterpret_cast<byte const *>(pub().data()), pub().size());
-  StringSource keysource(pub_block.data(), pub_block.size(), true);
+  SecureVector<byte> pub_block;
+  pub_block.set(reinterpret_cast<byte const *>(pub().data()), pub().size());
 
-  shared_ptr<RSAES_OAEP_SHA_Encryptor> encryptor;
-  encryptor = shared_ptr<RSAES_OAEP_SHA_Encryptor>
-    (new RSAES_OAEP_SHA_Encryptor(keysource));
+  shared_ptr<X509_PublicKey> x509_key = shared_ptr<X509_PublicKey>(X509::load_key(pub_block));
+  shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
+  if (!pub_key)
+    throw informative_failure("Failed to get RSA encrypting key");
 
-  string ciphertext_string;
-  StringSource tmp(plaintext, true,
-                   encryptor->CreateEncryptionFilter
-                   (rng, new StringSink(ciphertext_string)));
+  shared_ptr<PK_Encryptor> encryptor;
+  encryptor = shared_ptr<PK_Encryptor>(get_pk_encryptor(*pub_key, "EME(SHA-1)"));
 
-  ciphertext = rsa_oaep_sha_data(ciphertext_string);
+  SecureVector<byte> ct;
+  ct = encryptor->encrypt(
+          reinterpret_cast<byte const *>(plaintext.data()), plaintext.size());
+  ciphertext = rsa_oaep_sha_data(string(reinterpret_cast<char const *>(ct.begin()), ct.size()));
 }
 
 void decrypt_rsa(lua_hooks & lua,
@@ -381,26 +380,26 @@ void decrypt_rsa(lua_hooks & lua,
                  rsa_oaep_sha_data const & ciphertext,
                  std::string & plaintext)
 {
-  AutoSeededRandomPool rng(blocking_rng(lua));
   arc4<rsa_priv_key> decoded_key;
-  SecByteBlock decrypted_key;
-  SecByteBlock phrase;
-  shared_ptr<RSAES_OAEP_SHA_Decryptor> decryptor;
+  SecureVector<byte> decrypted_key;
+  SecureVector<byte> phrase;
+  shared_ptr<PK_Decryptor> decryptor;
+  shared_ptr<PKCS8_PrivateKey> pkcs8_key;
 
   for (int i = 0; i < 3; i++)
     {
       bool force = false;
       decode_base64(priv, decoded_key);
-      decrypted_key.Assign(reinterpret_cast<byte const *>(decoded_key().data()), 
+      decrypted_key.set(reinterpret_cast<byte const *>(decoded_key().data()), 
                            decoded_key().size());
       get_passphrase(lua, id, phrase, false, force);
+      do_arc4(phrase, decrypted_key);
 
       try 
         {
-          do_arc4(phrase, decrypted_key);
-          StringSource keysource(decrypted_key.data(), decrypted_key.size(), true);
-          decryptor = shared_ptr<RSAES_OAEP_SHA_Decryptor>
-            (new RSAES_OAEP_SHA_Decryptor(keysource));
+          Pipe p;
+          p.process_msg(decrypted_key);
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p));
         }
       catch (...)
         {
@@ -413,9 +412,15 @@ void decrypt_rsa(lua_hooks & lua,
         }
     }
 
-  StringSource tmp(ciphertext(), true,
-                   decryptor->CreateDecryptionFilter
-                   (rng, new StringSink(plaintext)));
+    shared_ptr<RSA_PrivateKey> priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
+    if (!priv_key)
+        throw informative_failure("Failed to get RSA decrypting key");
+    decryptor = shared_ptr<PK_Decryptor>(get_pk_decryptor(*priv_key, "EME1(SHA-1)"));
+
+    SecureVector<byte> plain;
+    plain = decryptor->decrypt(
+          reinterpret_cast<byte const *>(ciphertext().data()), ciphertext().size());
+    plaintext = string(reinterpret_cast<char const*>(plain.begin()), plain.size());
 }
 
 void 

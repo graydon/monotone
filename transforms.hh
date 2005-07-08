@@ -76,7 +76,7 @@ void decode_gzip(gzip<T> const & in, T & out)
 // string variant for netsync
 template <typename T>
 void encode_gzip(std::string const & in, gzip<T> & out)
-{ out = xform<CryptoPP::Gzip>(in); }
+{ out = xform<Botan::Gzip_Compression>(in); }
 
 // both at once (this is relatively common)
 
