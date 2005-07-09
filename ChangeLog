@@ -1,5 +1,9 @@
 2005-07-09  Nathaniel Smith  <njs@pobox.com>
 
+	* ChangeLog, configure.ac: Revert accidentally-committed changes.
+
+2005-07-09  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi (Generating Keys): Make it a little clearer that
 	we aren't necessarily recommending people store their passphrase
 	in plaintext.
@@ -9291,4 +9295,3 @@
 2003-04-06  graydon hoare  <graydon@pobox.com>
 
 	* initial release.
-hello
