@@ -1198,13 +1198,13 @@ store. Monotone will never permit one database to store two keys with
 the same name or the same fingerprint.
 
 This output shows one private and one public key stored under the name
-@code{jim@@juicebot.co.jp}, so it indicates that Jim's key-pair has
-been successfully generated and stored. On subsequent commands, Jim
-will need to re-enter our passphrase in order to perform
-security-sensitive tasks. To simplify matters, Jim decides to store
-his security passphrase in his @code{monotonerc} file, by writing a
-@emph{hook function} which returns the passphrase, so that he does not
-need to repeatedly be prompted for it:
+@code{jim@@juicebot.co.jp}, so it indicates that Jim's key-pair has been
+successfully generated and stored. On subsequent commands, Jim will need
+to re-enter his passphrase in order to perform security-sensitive
+tasks. Jim isn't very worried about security (and, more importantly, it
+simplifies the tutorial text to skip the passphrase prompts) so he
+decides to store his passphrase in his @code{monotonerc} file.  He does
+this by writing a @emph{hook function} which returns the passphrase:
 
 @smallexample
 @group
@@ -1217,10 +1217,11 @@ end
 @end group
 @end smallexample
 
-Note that we are appending the new hook to the (possibly existing) file.
-We do this to avoid loosing other changes by mistake; therefore, be sure
-to check that no other @code{get_passphrase} function appears in the
-configuration file.
+Now whenever monotone needs his passphrase, it will call this function
+instead of prompting him to type it.  Note that we are appending the new
+hook to the (possibly existing) file.  We do this to avoid losing other
+changes by mistake; therefore, be sure to check that no other
+@code{get_passphrase} function appears in the configuration file.
 
 Abe and Beth do the same, with their secret passphrases.
 
