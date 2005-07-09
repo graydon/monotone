@@ -33,8 +33,6 @@ public:                                                \
   enc(std::string const & s);                          \
   enc(INNER const & inner);                            \
   enc(enc<INNER> const & other);                       \
-  void swap(std::string & str)                         \
-    { i.swap(str); }                                   \
   std::string const & operator()() const               \
     { return i(); }                                    \
   bool operator<(enc<INNER> const & x) const           \
@@ -88,8 +86,6 @@ public:                                                \
   ty(ty const & other);                                \
   std::string const & operator()() const               \
     { return s; }                                      \
-  void swap(std::string & str)                         \
-    { s.swap(str); }                                   \
   bool operator<(ty const & other) const               \
     { return s < other(); }                            \
   ty const & operator=(ty const & other);              \

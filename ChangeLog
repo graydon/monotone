@@ -4,6 +4,23 @@
 	we aren't necessarily recommending people store their passphrase
 	in plaintext.
 
+2005-07-08  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_normalized_filenames.at: expect exit code of 1 not 3 for
+	"cat manifest" with a directory in MT/work
+	* file_io.cc, netcmd.cc, transforms.cc, vocab.hh: revert changes which
+	used swap() for strings and atomic types since strings are
+	copy-on-write.
+
+2005-07-08  Matt Johnston  <matt@ucc.asn.au>
+
+	* file_io.cc (ident_existing_file): new function to calculate
+	the ident of a file failing gracefully if it doesn't exist
+	or is a directory.
+	* file_io.hh (classify_manifest_paths,
+	build_restricted_manifest_map): use ident_existing_file
+	* ui.cc: cast to avoid compiler warnings
+
 2005-07-07  Nathaniel Smith  <njs@pobox.com>
 
 	* contrib/ciabot_monotone.py (Monotone.log): Fix to work with

@@ -437,11 +437,10 @@ netcmd::read_data_cmd(netcmd_item_type & type,
                                   "data netcmd, data payload");
   if (compressed_p == 1)
   {
-    gzip<data> zdat;
+    gzip<data> zdat(dat);
     data tdat;
-    zdat.swap(dat);
     decode_gzip(zdat, tdat);
-    tdat.swap(dat);
+    dat = tdat();
   }
   assert_end_of_buffer(payload, pos, "data netcmd payload");
 }
@@ -459,10 +458,8 @@ netcmd::write_data_cmd(netcmd_item_type type,
     {
       gzip<data> zdat;
       encode_gzip(dat, zdat);
-      string tmp;
-      zdat.swap(tmp);
       payload += static_cast<char>(1); // compressed flag
-      insert_variable_length_string(tmp, payload);
+      insert_variable_length_string(zdat(), payload);
     }
   else
     {
