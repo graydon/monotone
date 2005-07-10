@@ -1,3 +1,7 @@
+2005-07-10  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Check for boost >= 1.32.
+
 2005-07-09  Nathaniel Smith  <njs@pobox.com>
 
 	* ChangeLog, configure.ac: Revert accidentally-committed changes.

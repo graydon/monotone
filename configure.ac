@@ -79,6 +79,21 @@ AC_CHECK_FUNC([pthread_mutex_lock], [],
 # without threads on a system that does provide threads; we'll end up
 # compiling monotone with thread support for no reason.
 
+AC_DEFUN([BOOST_VERSION_CHECK],
+[AC_CACHE_CHECK([boost version 1.32 or newer], ac_cv_version_boost,
+[
+  AC_TRY_RUN(
+  [#include <boost/version.hpp>
+  int main() { return (BOOST_VERSION < 103200); }],
+  ac_cv_version_boost=yes,
+  ac_cv_version_boost=no)
+])
+  if test $ac_cv_version_boost = no; then
+	AC_MSG_ERROR([boost 1.32 or newer required])
+  fi
+])
+BOOST_VERSION_CHECK
+
 # Boost libraries have a string suffix that identifies the compiler
 # they were built with, among other details.  For example, it can be
 # '-gcc', '-gcc-mt', '-gcc-mt-1_31', and many other combinations
