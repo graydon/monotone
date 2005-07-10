@@ -1,5 +1,8 @@
 2005-07-10  Richard Levitte  <richard@levitte.org>
 
+	* Makefile.am (monotone_CPPFLAGS, unit_tests_CPPFLAGS): Re-remove
+	previously removed stuff.
+
 	* ChangeLog, configure.ac: Revert accidentally-recommitted changes.
 
 2005-07-10  Richard Levitte  <richard@levitte.org>
