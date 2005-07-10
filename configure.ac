@@ -79,6 +79,40 @@ AC_CHECK_FUNC([pthread_mutex_lock], [],
 # without threads on a system that does provide threads; we'll end up
 # compiling monotone with thread support for no reason.
 
+AC_DEFUN([BOOST_VERSION_CHECK],
+[AC_CACHE_CHECK([boost version 1.32 or newer], ac_cv_version_boost,
+[
+  AC_TRY_RUN(
+  [#include <boost/version.hpp>
+  int main() { return (BOOST_VERSION < 103200); }],
+  ac_cv_version_boost=yes,
+  ac_cv_version_boost=no)
+])
+  if test $ac_cv_version_boost = no; then
+	AC_MSG_ERROR([boost 1.32 or newer required])
+  fi
+])
+BOOST_VERSION_CHECK
+
+# Boost 1.32.0 has some g++ 4.0 incompatibilities.  Fortunately, it's
+# only in deprecated code that we don't use, and that is removed in
+# Boost CVS (and therefore presumably in 1.33).  So use a super-ugly
+# hack to get around it.
+AC_DEFUN([BOOST_FIX_VERSION],
+[AC_CACHE_CHECK([if boost requires extra flags to compile], ac_fix_boost,
+[
+  AC_TRY_RUN(
+  [#include <boost/version.hpp>
+  int main() { return (BOOST_VERSION != 103200); }],
+  ac_fix_boost=yes,
+  ac_fix_boost=no)
+])
+  if test $ac_fix_boost = yes; then
+    CXXFLAGS="$CXXFLAGS -DBOOST_REGEX_V4_CHAR_REGEX_TRAITS_HPP -DBOOST_REGEX_COMPILE_HPP"
+  fi
+])
+BOOST_FIX_VERSION
+
 # Boost libraries have a string suffix that identifies the compiler
 # they were built with, among other details.  For example, it can be
 # '-gcc', '-gcc-mt', '-gcc-mt-1_31', and many other combinations

@@ -157,7 +157,11 @@ calculate_schema_id(sqlite3 *sql, string & id)
   string tmp, tmp2;
   int res = sqlite3_exec_printf(sql, 
                                "SELECT sql FROM sqlite_master "
-                               "WHERE type = 'table' "
+                               "WHERE type = 'table' OR type = 'index' "
+                                // filter out NULL sql statements, because
+                                // those are auto-generated indices (for
+                                // UNIQUE constraints, etc.).
+                               "AND sql IS NOT NULL "
                                "ORDER BY name", 
                                &append_sql_stmt, &tmp, NULL);
   if (res != SQLITE_OK)
@@ -714,6 +718,36 @@ migrate_client_to_vars(sqlite3 * sql,
   return true;
 }
 
+static bool
+migrate_client_to_add_indexes(sqlite3 * sql,
+                              char ** errmsg)
+{
+  int res;
+  
+  res = sqlite3_exec_printf(sql,
+                            "CREATE INDEX revision_ancestry__child "
+                            "ON revision_ancestry (child)",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite3_exec_printf(sql,
+                            "CREATE INDEX revision_certs__id "
+                            "ON revision_certs (id);",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite3_exec_printf(sql,
+                            "CREATE INDEX revision_certs__name_value "
+                            "ON revision_certs (name, value);",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  return true;
+}
+
 void 
 migrate_monotone_schema(sqlite3 *sql)
 {
@@ -735,11 +769,14 @@ migrate_monotone_schema(sqlite3 *sql)
   m.add("40369a7bda66463c5785d160819ab6398b9d44f4",
         &migrate_client_to_vars);
 
+  m.add("e372b508bea9b991816d1c74680f7ae10d2a6d94",
+        &migrate_client_to_add_indexes);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "e372b508bea9b991816d1c74680f7ae10d2a6d94");
+  m.migrate(sql, "1509fd75019aebef5ac3da3a5edf1312393b70e9");
   
   if (sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
     throw runtime_error("error vacuuming after migration");

@@ -3,6 +3,42 @@
 	* monotone.texi (Network), monotone.1: Mention the default port
 	number.
 
+2005-07-10  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Check for boost >= 1.32.
+
+2005-07-09  Nathaniel Smith  <njs@pobox.com>
+
+	* schema.sql (revision_ancestry__child, revision_certs__id,
+	revision_certs__name_value): New indexes.
+	* database.cc (dump, dump_table_cb, dump_index_cb): Include
+	indexes in dumps.
+	(database::database): 
+	* schema_migration.cc (migrate_monotone_schema) 
+	(migrate_client_to_add_indexes): 
+	* tests/t_migrate_schema.at: Corresponding migration gunk.
+
+2005-07-09  Jordan Breeding  <jordan.breeding@mac.com>
+
+	* Makefile.am (monotone_CPPFLAGS, unit_tests_CPPFLAGS): 
+	* configure.ac (BOOST_FIX_VERSION): Restrict boost compile kluges
+	to boost 1.32.
+
+2005-07-09  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc (calculate_schema_id): Include indexes in
+	the schema id.
+
+2005-07-09  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog, configure.ac: Revert accidentally-committed changes.
+
+2005-07-09  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Generating Keys): Make it a little clearer that
+	we aren't necessarily recommending people store their passphrase
+	in plaintext.
+
 2005-07-08  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_normalized_filenames.at: expect exit code of 1 not 3 for

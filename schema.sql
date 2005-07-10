@@ -58,6 +58,8 @@ CREATE TABLE revision_ancestry
 	unique(parent, child)
 	);
 
+CREATE INDEX revision_ancestry__child ON revision_ancestry (child);
+
 -- structures for managing RSA keys and file / manifest certs
  
 CREATE TABLE public_keys
@@ -95,6 +97,9 @@ CREATE TABLE revision_certs
 	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
 	unique(name, id, value, keypair, signature)
 	);
+
+CREATE INDEX revision_certs__id ON revision_certs (id);
+CREATE INDEX revision_certs__name_value ON revision_certs (name, value);
 
 CREATE TABLE branch_epochs
 	(
