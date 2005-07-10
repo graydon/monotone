@@ -1,5 +1,10 @@
 2005-07-10  Nathaniel Smith  <njs@pobox.com>
 
+	* ChangeLog, configure.ac: Re-remove mysteriously revived
+	jibberish.
+
+2005-07-10  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_netsync_read_permissions.at: New test.
 	* testsuite.at: Run it.
 	* netsync.cc (set_session_key, dispatch_payload)
@@ -9334,4 +9339,3 @@
 2003-04-06  graydon hoare  <graydon@pobox.com>
 
 	* initial release.
-hello
