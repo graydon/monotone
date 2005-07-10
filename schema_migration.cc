@@ -157,7 +157,11 @@ calculate_schema_id(sqlite3 *sql, string & id)
   string tmp, tmp2;
   int res = sqlite3_exec_printf(sql, 
                                "SELECT sql FROM sqlite_master "
-                               "WHERE type = 'table' "
+                               "WHERE type = 'table' OR type = 'index' "
+                                // filter out NULL sql statements, because
+                                // those are auto-generated indices (for
+                                // UNIQUE constraints, etc.).
+                               "AND sql IS NOT NULL "
                                "ORDER BY name", 
                                &append_sql_stmt, &tmp, NULL);
   if (res != SQLITE_OK)

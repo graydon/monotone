@@ -9,6 +9,11 @@
 
 2005-07-09  Nathaniel Smith  <njs@pobox.com>
 
+	* schema_migration.cc (calculate_schema_id): Include indexes in
+	the schema id.
+
+2005-07-09  Nathaniel Smith  <njs@pobox.com>
+
 	* ChangeLog, configure.ac: Revert accidentally-committed changes.
 
 2005-07-09  Nathaniel Smith  <njs@pobox.com>
