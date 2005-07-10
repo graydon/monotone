@@ -3668,9 +3668,10 @@ server) and the other peer (the client) to connect to the server.
 
 The network @var{address} specified in each case should be the same: a
 host name to listen on, or connect to, optionally followed by a colon
-and a port number. The @var{glob} parameters indicate a set of
-branches to exchange; every branch which matches a @var{glob} exactly
-will be indexed and made available for synchronization.
+and a port number.  The default port number is 5253. The @var{glob}
+parameters indicate a set of branches to exchange; every branch which
+matches a @var{glob} exactly will be indexed and made available for
+synchronization.
 
 The @command{serve} command can take multiple globs, and it will make
 available all branches matching any of them.  Different permissions can

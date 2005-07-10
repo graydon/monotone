@@ -171,10 +171,11 @@ Push contents of \fI<glob>\fP from database on \fI<host>\fP.
 \fBsync\fP \fI<host> <glob>\fP 
 Sync contents of \fI<glob>\fP with database on \fI<host>\fP.
 .TP
-\fBserve\fP \fI[--pid-file=<path>] <host> <glob>\fP 
-Serve contents of \fI<glob>\fP at network address \fI<host>\fP. If a
---pid-file option is provided on the command line, monotone will store the
-process id of the server in the specified file.
+\fBserve\fP \fI[--pid-file=<path>] <host>[:<port> <glob>\fP 
+Serve contents of \fI<glob>\fP at network address \fI<host>\fP, on the
+port \fI<port>\fP.  If \fI<port>\fP isn't given, 5253 is used. If a
+--pid-file option is provided on the command line, monotone will store
+the process id of the server in the specified file.
 .TP
 \fBset\fP \fI<domain> <name> <value>\fP 
 Set the db var \fI<name>\fP in domain \fI<domain>\fP to value
