@@ -118,7 +118,7 @@ database::database(fs::path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("e372b508bea9b991816d1c74680f7ae10d2a6d94"),
+  schema("1509fd75019aebef5ac3da3a5edf1312393b70e9"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -305,13 +305,27 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   I(vals[1] != NULL);
   I(vals[2] != NULL);
   I(n == 3);
-  if (string(vals[1]) == "table")
-    {
-      *(dump->out) << vals[2] << ";\n";
-      dump->table_name = string(vals[0]);
-      sqlite3_exec_printf(dump->sql, "SELECT * FROM '%q'", 
-                         dump_row_cb, data, NULL, vals[0]);
-    }
+  I(string(vals[1]) == "table");
+  *(dump->out) << vals[2] << ";\n";
+  dump->table_name = string(vals[0]);
+  sqlite3_exec_printf(dump->sql, "SELECT * FROM '%q'", 
+                      dump_row_cb, data, NULL, vals[0]);
+  return 0;
+}
+
+static int 
+dump_index_cb(void *data, int n, char **vals, char **cols)
+{
+  dump_request *dump = reinterpret_cast<dump_request *>(data);
+  I(dump != NULL);
+  I(dump->sql != NULL);
+  I(vals != NULL);
+  I(vals[0] != NULL);
+  I(vals[1] != NULL);
+  I(vals[2] != NULL);
+  I(n == 3);
+  I(string(vals[1]) == "index");
+  *(dump->out) << vals[2] << ";\n";
   return 0;
 }
 
@@ -322,11 +336,18 @@ database::dump(ostream & out)
   req.out = &out;
   req.sql = sql();
   out << "BEGIN TRANSACTION;\n";
-  int res = sqlite3_exec(req.sql,
+  int res;
+  res = sqlite3_exec(req.sql,
                         "SELECT name, type, sql FROM sqlite_master "
                         "WHERE type='table' AND sql NOT NULL "
-                        "ORDER BY substr(type,2,1), name",
+                        "ORDER BY name",
                         dump_table_cb, &req, NULL);
+  I(res == SQLITE_OK);
+  res = sqlite3_exec(req.sql,
+                        "SELECT name, type, sql FROM sqlite_master "
+                        "WHERE type='index' AND sql NOT NULL "
+                        "ORDER BY name",
+                        dump_index_cb, &req, NULL);
   I(res == SQLITE_OK);
   out << "COMMIT;\n";
 }
