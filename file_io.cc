@@ -401,9 +401,12 @@ read_data_impl(fs::path const & p,
   
   ifstream file(p.string().c_str(),
                 ios_base::in | ios_base::binary);
-  string in;
   if (!file)
     throw oops(string("cannot open file ") + p.string() + " for reading");
+
+  string in;
+  size_t filesize = fs::file_size(p);
+  in.reserve(filesize+1); // +1 for '\0' if someone uses c_str() on this
   CryptoPP::FileSource f(file, true, new CryptoPP::StringSink(in));
   dat = in;
 }
