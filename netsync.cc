@@ -304,6 +304,7 @@ session
   void mark_recent_io();
 
   void set_session_key(string const & key);
+  void set_session_key(rsa_oaep_sha_data const & key_encrypted);
 
   void setup_client_tickers();
 
@@ -392,7 +393,6 @@ session
                         id const & client, 
                         id const & nonce1, 
                         string const & signature);
-  void respond_to_auth_cmd(rsa_oaep_sha_data hmac_key_encrypted);
   bool process_confirm_cmd(string const & signature);
   void respond_to_confirm_cmd();
   bool process_refine_cmd(merkle_node const & node);
@@ -615,6 +615,16 @@ session::set_session_key(string const & key)
   session_key = netsync_session_key(key);
   read_hmac.set_key(session_key);
   write_hmac.set_key(session_key);
+}
+
+void
+session::set_session_key(rsa_oaep_sha_data const & hmac_key_encrypted)
+{
+  base64< arc4<rsa_priv_key> > our_priv;
+  load_priv_key(app, app.signing_key, our_priv);
+  string hmac_key;
+  decrypt_rsa(app.lua, app.signing_key, our_priv, hmac_key_encrypted, hmac_key);
+  set_session_key(hmac_key);
 }
 
 void
@@ -2009,18 +2019,6 @@ session::process_auth_cmd(protocol_role their_role,
   return false;
 }
 
-void 
-session::respond_to_auth_cmd(rsa_oaep_sha_data hmac_key_encrypted)
-{
-  L(F("Writing HMAC confirm command"));
-  base64< arc4<rsa_priv_key> > our_priv;
-  load_priv_key(app, app.signing_key, our_priv);
-  string hmac_key;
-  decrypt_rsa(app.lua, app.signing_key, our_priv, hmac_key_encrypted, hmac_key);
-  set_session_key(hmac_key);
-  queue_confirm_cmd();
-}
-
 bool 
 session::process_confirm_cmd(string const & signature)
 {
@@ -2992,9 +2990,10 @@ session::dispatch_payload(netcmd const & cmd)
           % (role == source_and_sink_role ? "source and sink" :
              (role == source_role ? "source " : "sink")));
 
+        set_session_key(hmac_key_encrypted);
         if (!process_anonymous_cmd(role, their_include_pattern, their_exclude_pattern))
             return false;
-        respond_to_auth_cmd(hmac_key_encrypted);
+        queue_confirm_cmd();
         return true;
       }
       break;
@@ -3023,10 +3022,11 @@ session::dispatch_payload(netcmd const & cmd)
              (role == source_role ? "source " : "sink"))
           % hnonce1);
 
+        set_session_key(hmac_key_encrypted);
         if (!process_auth_cmd(role, their_include_pattern, their_exclude_pattern,
                               client, nonce1, signature))
             return false;
-        respond_to_auth_cmd(hmac_key_encrypted);
+        queue_confirm_cmd();
         return true;
       }
       break;

@@ -1,3 +1,16 @@
+2005-07-10  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog, configure.ac: Re-remove mysteriously revived
+	jibberish.
+
+2005-07-10  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_netsync_read_permissions.at: New test.
+	* testsuite.at: Run it.
+	* netsync.cc (set_session_key, dispatch_payload)
+	(respond_to_auth_cmd): Refactor to key HMAC earlier, so error
+	packets will get the right HMAC.
+
 2005-07-10  Richard Levitte  <richard@levitte.org>
 
 	* Makefile.am (monotone_CPPFLAGS, unit_tests_CPPFLAGS): Re-remove
@@ -182,6 +195,11 @@
 	probably not before sqlite3_complete_last16 is implemented.
 	* database.cc (database::load): Load and execute dump in chunks,
 	fixes bug 13570.
+
+2005-07-01  Eric Anderson  <anderse-monotone@cello.hpl.hp.com>
+
+	* file_io.cc: Pre-allocate space for the file read so that the
+	string doesn't have to be incrementally expanded during the read.
 
 2005-07-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
