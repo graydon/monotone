@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "botan/botan.h"
 #include "vocab.hh"
 #include "constants.hh"
 
@@ -17,7 +18,7 @@ struct chained_hmac
     size_t const hmac_length;
 
   private:
-    netsync_session_key key;
+    Botan::SymmetricKey key;
     std::string chain_val;
 };
 

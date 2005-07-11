@@ -366,7 +366,7 @@ void encrypt_rsa(lua_hooks & lua,
     throw informative_failure("Failed to get RSA encrypting key");
 
   shared_ptr<PK_Encryptor> encryptor;
-  encryptor = shared_ptr<PK_Encryptor>(get_pk_encryptor(*pub_key, "EME(SHA-1)"));
+  encryptor = shared_ptr<PK_Encryptor>(get_pk_encryptor(*pub_key, "EME1(SHA-1)"));
 
   SecureVector<byte> ct;
   ct = encryptor->encrypt(

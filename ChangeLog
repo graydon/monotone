@@ -1,12 +1,8 @@
-2005-07-08  Matt Johnston  <matt@ucc.asn.au>
+2005-07-11  Matt Johnston  <matt@ucc.asn.au>
 
-	* propagate mainline to botan branch
-
-	* constants.{cc,hh}: add sha1_digest_length as botan
-	doesn't provide a convenient definition.
-	* hmac.{cc,hh}: convert to use botan
-	* keys.cc (encrypt_rsa, decrypt_rsa): use botan
-	* transforms.{cc,hh}: use botan
+	* keys.cc (encrypt_rsa): fix typo
+	* hmac.{cc,hh}: store key as SymmetricKey, pass correctly to
+	MAC_Filter
 
 2005-07-10  Nathaniel Smith  <njs@pobox.com>
 
@@ -68,6 +64,16 @@
 	* monotone.texi (Generating Keys): Make it a little clearer that
 	we aren't necessarily recommending people store their passphrase
 	in plaintext.
+
+2005-07-08  Matt Johnston  <matt@ucc.asn.au>
+
+	* propagate mainline to botan branch
+
+	* constants.{cc,hh}: add sha1_digest_length as botan
+	doesn't provide a convenient definition.
+	* hmac.{cc,hh}: convert to use botan
+	* keys.cc (encrypt_rsa, decrypt_rsa): use botan
+	* transforms.{cc,hh}: use botan
 
 2005-07-08  Matt Johnston  <matt@ucc.asn.au>
 
