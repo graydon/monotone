@@ -10,7 +10,8 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include "cryptopp/sha.h"
+#include "botan/botan.h"
+#include "botan/sha160.h"
 
 #include "constants.hh"
 #include "merkle_tree.hh"
@@ -21,7 +22,6 @@
 
 using boost::dynamic_bitset;
 using namespace std;
-using namespace CryptoPP;
 
 void 
 netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
@@ -59,12 +59,12 @@ netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
 string 
 raw_sha1(string const & in)
 {
-  SHA hash;
-  hash.Update(reinterpret_cast<byte const *>(in.data()), 
-              static_cast<unsigned int>(in.size()));
-  char digest[SHA::DIGESTSIZE];
-  hash.Final(reinterpret_cast<byte *>(digest));
-  string out(digest, SHA::DIGESTSIZE);
+  Botan::SHA_160 hash;
+  hash.update(reinterpret_cast<Botan::byte const *>(in.data()), 
+	      static_cast<unsigned int>(in.size()));
+  char digest[hash.OUTPUT_LENGTH];
+  hash.final(reinterpret_cast<Botan::byte *>(digest));
+  string out(digest, hash.OUTPUT_LENGTH);
   return out;
 }
 
@@ -315,7 +315,7 @@ read_node(string const & inbuf, merkle_node & out)
   out.check_invariants();
   if (hash != checkhash)
     throw bad_decode(F("mismatched node hash value %s, expected %s") 
-                     % xform<HexEncoder>(checkhash) % xform<HexEncoder>(hash));
+		     % xform<Botan::Hex_Encoder>(checkhash) % xform<Botan::Hex_Encoder>(hash));
 }
 
 

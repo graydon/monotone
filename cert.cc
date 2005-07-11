@@ -394,7 +394,7 @@ calculate_cert(app_state & app, cert & t)
 
   load_priv_key(app, t.key, priv);
 
-  make_signature(app.lua, t.key, priv, signed_text, t.sig);
+  make_signature(app, t.key, priv, signed_text, t.sig);
 }
 
 cert_status 
@@ -422,7 +422,7 @@ check_cert(app_state & app, cert const & t)
 
   string signed_text;
   cert_signable_text(t, signed_text);
-  if (check_signature(app.lua, t.key, pub, signed_text, t.sig))
+  if (check_signature(app, t.key, pub, signed_text, t.sig))
     return cert_ok;
   else
     return cert_bad;

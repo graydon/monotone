@@ -284,6 +284,7 @@ AH_TEMPLATE([USE_DLOPEN], [For LUA: use dlopen for loadlib])
 AC_SEARCH_LIBS([inet_aton], [resolv])
 AC_SEARCH_LIBS([accept], [socket])
 AC_SEARCH_LIBS([inet_ntoa], [nsl])
+AC_CHECK_LIB([z], [deflate], , AC_MSG_FAILURE([zlib is required]))
 
 
 ##########

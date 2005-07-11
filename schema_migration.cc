@@ -15,9 +15,7 @@
 #include <sqlite3.h>
 
 #include "schema_migration.hh"
-#include "cryptopp/filters.h"
-#include "cryptopp/sha.h"
-#include "cryptopp/hex.h"
+#include "botan/botan.h"
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
@@ -73,14 +71,10 @@ static void
 calculate_id(string const & in,
              string & ident)
 {
-  CryptoPP::SHA hash;
-  unsigned int const sz = 2 * CryptoPP::SHA::DIGESTSIZE;
-  char buffer[sz];
-  CryptoPP::StringSource 
-    s(in, true, new CryptoPP::HashFilter
-      (hash, new CryptoPP::HexEncoder
-       (new CryptoPP::ArraySink(reinterpret_cast<byte *>(buffer), sz))));
-  ident = lowercase(string(buffer, sz));
+  Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
+  p.process_msg(in);
+
+  ident = lowercase(p.read_all_as_string());
 }
 
 
