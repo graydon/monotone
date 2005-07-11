@@ -1990,6 +1990,7 @@ process_netsync_args(std::string const & name,
                      bool use_defaults,
                      app_state & app)
 {
+  // handle host argument
   if (args.size() >= 1)
     {
       addr = idx(args, 0);
@@ -2010,15 +2011,24 @@ process_netsync_args(std::string const & name,
       addr = utf8(addr_value());
       L(F("using default server address: %s\n") % addr);
     }
-  if (args.size() >= 2)
+
+  // handle include/exclude args
+  if (args.size() >= 2 || !app.exclude_patterns.empty())
     {
       std::set<utf8> patterns(args.begin() + 1, args.end());
       combine_and_check_globish(patterns, include_pattern);
+      combine_and_check_globish(app.exclude_patterns, exclude_pattern);
       if (use_defaults &&
           (!app.db.var_exists(default_include_pattern_key) || app.set_default))
         {
-          P(F("setting default branch pattern to %s\n") % include_pattern);
+          P(F("setting default branch include pattern to '%s'\n") % include_pattern);
           app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
+        }
+      if (use_defaults &&
+          (!app.db.var_exists(default_exclude_pattern_key) || app.set_default))
+        {
+          P(F("setting default branch exclude pattern to '%s'\n") % exclude_pattern);
+          app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
         }
     }
   else
@@ -2029,15 +2039,21 @@ process_netsync_args(std::string const & name,
       var_value pattern_value;
       app.db.get_var(default_include_pattern_key, pattern_value);
       include_pattern = utf8(pattern_value());
-      L(F("using default branch pattern: %s\n") % include_pattern);
+      L(F("using default branch include pattern: '%s'\n") % include_pattern);
+      if (app.db.var_exists(default_exclude_pattern_key))
+        {
+          app.db.get_var(default_exclude_pattern_key, pattern_value);
+          exclude_pattern = utf8(pattern_value());
+        }
+      else
+        exclude_pattern = utf8("");
+      L(F("excluding: %s\n") % exclude_pattern);
     }
-
-  // For now, don't handle excludes.
-  exclude_pattern = utf8("");
 }
 
 CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "push branches matching PATTERN to netsync server at ADDRESS", OPT_SET_DEFAULT)
+    "push branches matching PATTERN to netsync server at ADDRESS",
+    OPT_SET_DEFAULT % OPT_EXCLUDE)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
@@ -2051,7 +2067,8 @@ CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
 }
 
 CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "pull branches matching PATTERN from netsync server at ADDRESS", OPT_SET_DEFAULT)
+    "pull branches matching PATTERN from netsync server at ADDRESS",
+    OPT_SET_DEFAULT % OPT_EXCLUDE)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
@@ -2064,7 +2081,8 @@ CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
 }
 
 CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "sync branches matching PATTERN with netsync server at ADDRESS", OPT_SET_DEFAULT)
+    "sync branches matching PATTERN with netsync server at ADDRESS",
+    OPT_SET_DEFAULT % OPT_EXCLUDE)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
@@ -2078,7 +2096,8 @@ CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
 }
 
 CMD(serve, "network", "ADDRESS[:PORTNUMBER] PATTERN ...",
-    "listen on ADDRESS and serve the specified branches to connecting clients", OPT_PIDFILE)
+    "listen on ADDRESS and serve the specified branches to connecting clients",
+    OPT_PIDFILE % OPT_EXCLUDE)
 {
   if (args.size() < 2)
     throw usage(name);

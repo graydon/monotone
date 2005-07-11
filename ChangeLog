@@ -1,3 +1,13 @@
+2005-07-11  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.{hh,cc} (exclude_patterns, add_exclude): 
+	* options.hh (OPT_EXCLUDE): 
+	* monotone.cc (coptions, cpp_main): New option --exclude.
+	* commands.cc (pull, push, sync, serve): Accept it.
+	(process_netsync_args): Implement it.
+	* tests/t_netsync_exclude.at: New test.
+	* testsuite.at: Add it.
+
 2005-07-10  Nathaniel Smith  <njs@pobox.com>
 
 	* ChangeLog, configure.ac: Re-remove mysteriously revived

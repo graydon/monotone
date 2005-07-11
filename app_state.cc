@@ -344,6 +344,12 @@ app_state::add_revision(utf8 const & selector)
 }
 
 void
+app_state::add_exclude(utf8 const & exclude_pattern)
+{
+  exclude_patterns.insert(exclude_pattern);
+}
+
+void
 app_state::set_stdhooks(bool b)
 {
   stdhooks = b;
