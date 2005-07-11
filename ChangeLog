@@ -1,5 +1,9 @@
 2005-07-11  Matt Johnston  <matt@ucc.asn.au>
 
+	* hmac.cc: <string> not <string.h>
+
+2005-07-11  Matt Johnston  <matt@ucc.asn.au>
+
 	* keys.cc (encrypt_rsa): fix typo
 	* hmac.{cc,hh}: store key as SymmetricKey, pass correctly to
 	MAC_Filter
