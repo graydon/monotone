@@ -1,5 +1,13 @@
 2005-07-11  Nathaniel Smith  <njs@pobox.com>
 
+	* crypto_tests.cc: New SHA1 correctness tests from Kaushik Veeraraghavan.
+	* unit_tests.cc (init_unit_test_suite): 
+	* unit_tests.hh (add_crypto_tests): 
+	* Makefile.am (unit_tests_SOURCES): Call them.
+	* AUTHORS: Add Kaushik Veeraraghavan.
+
+2005-07-11  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_netsync_exclude_default.at: New test.
 	* testsuite.at: Add it.
 	(NETSYNC_SERVE_N_START, NETSYNC_SERVE_START): Use '*' as pattern

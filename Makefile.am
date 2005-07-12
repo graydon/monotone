@@ -42,7 +42,7 @@ MOST_SOURCES =								\
          restrictions.cc restrictions.hh				\
          hmac.cc hmac.hh                  \
          globish.cc globish.hh                                          \
-									\
+                                                                        \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\
@@ -155,7 +155,7 @@ check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
 
 monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
-unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
+unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
 
 txt2c_SOURCES = txt2c.cc
 
