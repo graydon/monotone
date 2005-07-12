@@ -3656,7 +3656,7 @@ to date.
 @section Network
 
 @ftable @command
-@item monotone serve @var{address}[:@var{port}] @var{glob} [...]
+@item monotone serve @var{address}[:@var{port}] @var{glob} [...] [--exclude=@var{exclude-glob}]
 @itemx monotone pull [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
 @itemx monotone push [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
 @itemx monotone sync [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
@@ -3670,16 +3670,10 @@ server) and the other peer (the client) to connect to the server.
 The network @var{address} specified in each case should be the same: a
 host name to listen on, or connect to, optionally followed by a colon
 and a port number.  The default port number is 5253. The @var{glob}
-parameters indicate a set of branches to exchange; every branch which
+parameters indicate a set of branches to exchange.  Multiple @var{glob}
+and @option{--exclude} options can be specified; every branch which
 matches a @var{glob} exactly, and does not match an @var{exclude-glob},
 will be indexed and made available for synchronization.
-
-The @command{serve} command can take multiple globs, and it will make
-available all branches matching any of them.  Different permissions can
-be applied to each branch; see the hooks
-@code{get_netsync_read_permitted}, @code{get_netsync_write_permitted},
-and @code{get_netsync_anonymous_read_permitted} (see @ref{Hook
-Reference}).
 
 For example, perhaps Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
@@ -3722,6 +3716,11 @@ line; this will not affect his default affinity for Alice.  If you ever
 do want to change your defaults, simply pass the @option{--set-default}
 option when connecting to the server and branch pattern that you want to
 make the new default.
+
+In the server, different permissions can be applied to each branch; see
+the hooks @code{get_netsync_read_permitted},
+@code{get_netsync_write_permitted}, and
+@code{get_netsync_anonymous_read_permitted} (see @ref{Hook Reference}).
 
 If a @option{--pid-file} option is specified, the command
 @command{serve} will create the specified file and record the process

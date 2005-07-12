@@ -1,5 +1,10 @@
 2005-07-11  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.texi (Network): Tweak documentation for netsync
+	commands.
+
+2005-07-11  Nathaniel Smith  <njs@pobox.com>
+
 	* app_state.{hh,cc} (exclude_patterns, add_exclude): 
 	* options.hh (OPT_EXCLUDE): 
 	* monotone.cc (coptions, cpp_main): New option --exclude.
