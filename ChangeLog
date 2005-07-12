@@ -1,3 +1,8 @@
+2005-07-12  Nathaniel Smith  <njs@pobox.com>
+
+	* testsuite.at (NETSYNC_SERVE_START, NETSYNC_SERVE_N_START): Fixup
+	quoting.
+
 2005-07-11  Nathaniel Smith  <njs@pobox.com>
 
 	* crypto_tests.cc: New SHA1 correctness tests from Kaushik Veeraraghavan.

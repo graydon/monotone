@@ -380,14 +380,14 @@ rm -f monotone_at.pid 2>/dev/null
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-_FOO=$2
+_FOO="$2"
 MONOTONE --db=test$1.db --rcfile=netsync.lua --pid-file=monotone_at.pid serve localhost:$_PORT ${_FOO:-"*"} &
 sleep 4
 ])
 # run as NETSYNC_SERVE_START(pattern)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-FOO=$1
+_FOO="$1"
 MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve localhost:$_PORT ${_FOO:-"*"} &
 sleep 4
 ])
