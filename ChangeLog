@@ -1,5 +1,12 @@
 2005-07-11  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_netsync_exclude_default.at: New test.
+	* testsuite.at: Add it.
+	(NETSYNC_SERVE_N_START, NETSYNC_SERVE_START): Use '*' as pattern
+	when none is passed.
+
+2005-07-11  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi (Network): Tweak documentation for netsync
 	commands.
 
