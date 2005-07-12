@@ -1,5 +1,10 @@
 2005-07-12  Nathaniel Smith  <njs@pobox.com>
 
+	* contrib/ciabot_monotone.py (config.project_for_branch): Clarify
+	comment text for non-Python programmers.
+
+2005-07-12  Nathaniel Smith  <njs@pobox.com>
+
 	* testsuite.at (NETSYNC_SERVE_START, NETSYNC_SERVE_N_START): Fixup
 	quoting.
 
