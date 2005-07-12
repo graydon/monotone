@@ -1,5 +1,11 @@
 2005-07-12  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc (rebuild_merkle_trees): Reduce memory usage a bit,
+	and don't insert branch certs that the other side will just end up
+	throwing away (reduces network traffic).
+
+2005-07-12  Nathaniel Smith  <njs@pobox.com>
+
 	* testsuite.at (NETSYNC_SERVE_START, NETSYNC_SERVE_N_START):
 	Really, really really fix up quoting.  Really.
 	I hope.
