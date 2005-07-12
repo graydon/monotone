@@ -58,6 +58,7 @@ struct poptOption coptions[] =
     {"diffs", 0, POPT_ARG_NONE, NULL, OPT_DIFFS, "print diffs along with logs", NULL},
     {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, "skip merges when printing logs", NULL},
     {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, "use the current arguments as the future default", NULL},
+    {"exclude", 'e', POPT_ARG_STRING, &argstr, OPT_EXCLUDE, "exclude pattern", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -348,6 +349,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_REVISION:
               app.add_revision(string(argstr));
+              break;
+
+            case OPT_EXCLUDE:
+              app.add_exclude(string(argstr));
               break;
 
             case OPT_MESSAGE:

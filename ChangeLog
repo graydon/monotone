@@ -1,5 +1,14 @@
 2005-07-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* options.hh, app_state.{hh,cc}, monotone.cc: New command specific
+	option, "--exclude=x", puts arg into a vector app.excludes .
+	Used by the netsync commands.
+	* commands.cc (netsync commands): accept said option
+		(process_netsync_args): Handle excludes.
+	* monotone.texi: document it
+
+2005-07-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* interner.hh: make slightly faster
 
 2005-07-10  Nathaniel Smith  <njs@pobox.com>

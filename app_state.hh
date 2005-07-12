@@ -42,6 +42,7 @@ public:
   utf8 author;
   utf8 search_root;
   std::vector<utf8> revision_selectors;
+  std::vector<utf8> excludes;
   std::vector<utf8> extra_rcfiles;
   path_set restrictions;
   file_path relative_directory;
@@ -80,6 +81,7 @@ public:
   void set_last(long last);
   void set_pidfile(utf8 const & pidfile);
   void add_revision(utf8 const & selector);
+  void add_exclude(utf8 const & pattern);
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);
