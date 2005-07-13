@@ -7,7 +7,7 @@ AT_DATA(foo, [blah blah
 # the inner code directly.
 AT_DATA(MT/work, [add_file "."
 ])
-AT_CHECK(MONOTONE cat manifest, [3], [ignore], [ignore])
+AT_CHECK(MONOTONE cat manifest, [1], [ignore], [ignore])
 
 AT_DATA(MT/work, [add_file "./bar"
 ])

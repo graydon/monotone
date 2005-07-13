@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <stdarg.h>
+#include <string.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
@@ -68,7 +69,7 @@ database::database(fs::path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("e372b508bea9b991816d1c74680f7ae10d2a6d94"),
+  schema("1509fd75019aebef5ac3da3a5edf1312393b70e9"),
   __sql(NULL),
   transaction_level(0)
 
@@ -280,14 +281,27 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   I(vals[1] != NULL);
   I(vals[2] != NULL);
   I(n == 3);
-  if (string(vals[1]) == "table")
-    {
-      *(dump->out) << vals[2] << ";\n";
+  I(string(vals[1]) == "table");
+  *(dump->out) << vals[2] << ";\n";
+  dump->table_name = string(vals[0]);
       dump->table_name = string(vals[0]);
       string query = "SELECT * FROM " + string(vals[0]);
       int result = sqlite3_exec(dump->sql, query.c_str(), dump_row_cb, data, NULL);
+}
 
-    }
+static int 
+dump_index_cb(void *data, int n, char **vals, char **cols)
+{
+  dump_request *dump = reinterpret_cast<dump_request *>(data);
+  I(dump != NULL);
+  I(dump->sql != NULL);
+  I(vals != NULL);
+  I(vals[0] != NULL);
+  I(vals[1] != NULL);
+  I(vals[2] != NULL);
+  I(n == 3);
+  I(string(vals[1]) == "index");
+  *(dump->out) << vals[2] << ";\n";
   return 0;
 }
 
@@ -298,11 +312,18 @@ database::dump(ostream & out)
   req.out = &out;
   req.sql = sql();
   out << "BEGIN TRANSACTION;\n";
-  int res = sqlite3_exec(req.sql,
+  int res;
+  res = sqlite3_exec(req.sql,
                         "SELECT name, type, sql FROM sqlite_master "
                         "WHERE type='table' AND sql NOT NULL "
-                        "ORDER BY substr(type,2,1), name",
+                        "ORDER BY name",
                         dump_table_cb, &req, NULL);
+  I(res == SQLITE_OK);
+  res = sqlite3_exec(req.sql,
+                        "SELECT name, type, sql FROM sqlite_master "
+                        "WHERE type='index' AND sql NOT NULL "
+                        "ORDER BY name",
+                        dump_index_cb, &req, NULL);
   I(res == SQLITE_OK);
   out << "COMMIT;\n";
 }
@@ -321,11 +342,19 @@ database::load(istream & in)
   if (error)
     throw oops(string("could not open database: ") + filename.string() + 
                (string(sqlite3_errmsg(__sql))));
-  
+
   while(in)
     {
       in.read(buf, constants::bufsz);
       tmp.append(buf, in.gcount());
+
+      const char* last_statement = 0;
+      sqlite3_complete_last(tmp.c_str(), &last_statement);
+      if (last_statement == 0)
+        continue;
+      string::size_type len = last_statement + 1 - tmp.c_str();
+      execute(tmp.substr(0, len).c_str());
+      tmp.erase(0, len);
     }
 
   sqlite3_exec(__sql, tmp.c_str(), NULL, NULL, NULL);
@@ -521,6 +550,151 @@ database::~database()
     }
 }
 
+static void 
+assert_sqlite3_ok(int res, char const * errmsg, string const & ctx = "")
+{
+  if (res == SQLITE_OK && !errmsg)
+    {
+      // the only point of return
+      return;
+    }
+
+  bool internal_error = false;
+  string err_desc;
+
+  // first we handle "external" errors
+  switch (res)
+    {
+    case SQLITE_PERM:
+      err_desc = "Access permission denied";
+      break;
+
+    case SQLITE_READONLY:
+      err_desc = "Attempt to write a readonly database";
+      break;
+
+    case SQLITE_IOERR:
+      err_desc = "Some kind of disk I/O error occurred";
+      break;
+
+    case SQLITE_CORRUPT:
+      err_desc = "The database disk image is malformed";
+      break;
+
+    case SQLITE_FULL:
+      err_desc = "Insertion failed because database (or filesystem) is full";
+      break;
+
+    case SQLITE_CANTOPEN:
+      err_desc = "Unable to open the database file";
+      break;
+
+    // fallthrough for internal errors
+    default:
+      internal_error = true;
+    }
+
+  if (!internal_error)
+   {
+     if (errmsg)
+       err_desc = errmsg;
+
+     // ctx is ignored, since the error is most likely unrelated to the
+     // query
+     E(false, F("sqlite error: %s") % err_desc);
+   }
+
+  // ... and now we handle the internal errors
+  switch (res)
+   {
+
+    case SQLITE_OK:
+      I(errmsg);
+      err_desc = errmsg;
+      break;
+
+    case SQLITE_ERROR:
+      err_desc = "SQL error or missing database";
+      break;
+
+    case SQLITE_INTERNAL:
+      err_desc = "An internal logic error in SQLite";
+      break;
+
+    case SQLITE_ABORT:
+      err_desc = "Callback routine requested an abort";
+      break;
+
+    case SQLITE_BUSY:
+      // TODO: handle this more gracefully in calling functions,
+      // then perhaps it should be an external error?
+      err_desc = "The database file is locked";
+      break;
+
+    case SQLITE_LOCKED:
+      // TODO: see SQLITE_BUSY comment
+      err_desc = "A table in the database is locked";
+      break;
+
+    case SQLITE_NOMEM:
+      err_desc = "A malloc() failed";
+      break;
+
+    case SQLITE_INTERRUPT:
+      err_desc = "Operation terminated by sqlite3_interrupt()";
+      break;
+
+    case SQLITE_NOTFOUND:
+      err_desc = "(Internal Only) Table or record not found";
+      break;
+
+    case SQLITE_PROTOCOL:
+      err_desc = "database lock protocol error";
+      break;
+
+    case SQLITE_EMPTY:
+      err_desc = "(Internal Only) database table is empty";
+      break;
+
+    case SQLITE_SCHEMA:
+      err_desc = "The database schema changed";
+      break;
+
+    case SQLITE_TOOBIG:
+      err_desc = "Too much data for one row of a table";
+      break;
+
+    case SQLITE_CONSTRAINT:
+      err_desc = "Abort due to contraint violation";
+      break;
+
+    case SQLITE_MISMATCH:
+      err_desc = "Data type mismatch";
+      break;
+
+    case SQLITE_MISUSE:
+      err_desc = "Library used incorrectly";
+      break;
+
+    case SQLITE_NOLFS:
+      err_desc = "Uses OS features not supported on host";
+      break;
+
+    case SQLITE_AUTH:
+      err_desc = "Authorization denied";
+      break;
+
+    default:
+      err_desc = string("Unknown DB result code: ") + lexical_cast<string>(res);
+      break;
+    }
+
+   if (errmsg)
+      err_desc = errmsg;
+
+   throw oops(ctx + "sqlite error: " + err_desc);
+}
+
 void 
 database::execute(char const * query, ...)
 {
@@ -571,7 +745,8 @@ database::fetch(results & res,
       I(*tail == 0); // no support for multiple statements
     }
 
-  string ctx = string("db query [") + string(query) + "]: ";
+  // do it
+  rescode = sqlite3_get_table_vprintf(sql(), query, &result, &nrow, &ncol, &errmsg, ap);
 
   ncol = sqlite3_column_count(i->second.stmt);
 
@@ -1373,6 +1548,19 @@ database::delete_existing_rev_and_certs(revision_id const & rid){
   execute("DELETE from revisions WHERE id = ?",rid.inner()().c_str());
 }
 
+/// Deletes all certs referring to a particular branch. 
+void
+database::delete_branch_named(cert_value const & branch)
+{
+  base64<cert_value> encoded;
+  encode_base64(branch, encoded);
+  L(F("Deleting all references to branch %s\n") % branch);
+  execute("DELETE FROM revision_certs WHERE name='branch' AND value ='%s'",
+          encoded().c_str());
+  execute("DELETE FROM branch_epochs WHERE branch='%s'",
+          encoded().c_str());
+}
+
 // crypto key management
 
 void 
@@ -2016,6 +2204,30 @@ database::complete(string const & partial,
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(file_id(res[i][0]));  
+}
+
+void 
+database::complete(string const & partial,
+                   set< pair<key_id, utf8 > > & completions)
+{
+  results res;
+  completions.clear();
+
+  fetch(res, 2, any_rows,
+        "SELECT hash, id FROM public_keys WHERE hash GLOB '%q*'",
+        partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
+
+  res.clear();
+
+  fetch(res, 2, any_rows,
+        "SELECT hash, id FROM private_keys WHERE hash GLOB '%q*'",
+        partial.c_str());
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
 }
 
 using selectors::selector_type;

@@ -1,0 +1,36 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([update with pending add])
+
+MONOTONE_SETUP
+
+ADD_FILE(file, [file
+])
+
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE --branch testbranch co codir, [], [ignore], [ignore])
+
+ADD_FILE(file2, [file2
+])
+
+COMMIT(testbranch)
+
+AT_DATA(codir/file2, [file2
+])
+
+AT_CHECK(cd codir && MONOTONE add file2, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE update, [], [ignore], [ignore])
+
+# why doesn't an abbreviated revision id work
+
+AT_CHECK(cd codir && MONOTONE cat revision b482, [1], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE cat revision b482c907f27f160f7ff9259d353d5d5399fb9fc4, [], [ignore], [ignore])
+
+# make sure there are no changes in the working copy
+
+AT_CHECK(test ! -e codir/MT/work, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(grep 'no changes' stdout, [], [ignore], [ignore])
+
+AT_CLEANUP

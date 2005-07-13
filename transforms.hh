@@ -73,24 +73,22 @@ template <typename T>
 void decode_gzip(gzip<T> const & in, T & out)
 { out = xform<CryptoPP::Gunzip>(in()); }
 
+// string variant for netsync
+template <typename T>
+void encode_gzip(std::string const & in, gzip<T> & out)
+{ out = xform<CryptoPP::Gzip>(in); }
 
 // both at once (this is relatively common)
 
 template <typename T>
-void pack(T const & in, base64< gzip<T> > & out)
-{
-  gzip<T> tmp;
-  encode_gzip(in, tmp);
-  encode_base64(tmp, out);
-}
+void pack(T const & in, base64< gzip<T> > & out);
+extern template void pack<data>(data const &, base64< gzip<data> > &);
+extern template void pack<delta>(delta const &, base64< gzip<delta> > &);
 
 template <typename T>
-void unpack(base64< gzip<T> > const & in, T & out)
-{
-  gzip<T> tmp;
-  decode_base64(in, tmp);
-  decode_gzip(tmp, out);
-}
+void unpack(base64< gzip<T> > const & in, T & out);
+extern template void unpack<data>(base64< gzip<data> > const &, data &);
+extern template void unpack<delta>(base64< gzip<delta> > const &, delta &);
 
 
 // diffing and patching
@@ -194,7 +192,5 @@ void externalize_var_domain(var_domain const & d, external & ext);
 
 // line-ending conversion
 void line_end_convert(std::string const & linesep, std::string const & src, std::string & dst);
-
-
 
 #endif // __TRANSFORMS_HH__

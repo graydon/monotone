@@ -19,7 +19,6 @@ struct conflict {};
 // this file is to contain some stripped down, in-process implementations
 // of GNU-diffutils-like things (diff, diff3, maybe patch..)
 
-bool guess_binary(std::string const & s);
 
 enum diff_type
 {
@@ -81,6 +80,9 @@ struct merge_provider
   virtual std::string get_file_encoding(file_path const & path,
                                         manifest_map const & man);
 
+  virtual bool attribute_manual_merge(file_path const & path,
+                                        manifest_map const & man);
+
   virtual ~merge_provider() {}
 };
 
@@ -103,6 +105,9 @@ struct update_merge_provider : public merge_provider
                            file_data & dat);
 
   virtual std::string get_file_encoding(file_path const & path,
+                                        manifest_map const & man);
+
+  virtual bool attribute_manual_merge(file_path const & path,
                                         manifest_map const & man);
 
   virtual ~update_merge_provider() {}

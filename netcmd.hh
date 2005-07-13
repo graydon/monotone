@@ -12,6 +12,7 @@
 #include "merkle_tree.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
+#include "hmac.hh"
 
 typedef enum 
   { 
@@ -46,110 +47,105 @@ typedef enum
   }
 netcmd_code;
 
-struct netcmd
+class netcmd
 {
+private:
   u8 version;
   netcmd_code cmd_code;
   std::string payload;
+public:
   netcmd();
+  netcmd(u8 _version);
+  netcmd_code get_cmd_code() const {return cmd_code;}
+  u8 get_version() const {return version;}
   size_t encoded_size();
   bool operator==(netcmd const & other) const;
+
+
+  // basic cmd i/o (including checksums)
+  void write(std::string & out,
+             chained_hmac & hmac) const;
+  bool read(std::string & inbuf,
+            chained_hmac & hmac);
+
+  // i/o functions for each type of command payload
+  void read_error_cmd(std::string & errmsg) const;
+  void write_error_cmd(std::string const & errmsg);
+
+//void read_bye_cmd() {}
+  void write_bye_cmd() {cmd_code = bye_cmd;}
+
+  void read_hello_cmd(rsa_keypair_id & server_keyname,
+                      rsa_pub_key & server_key,
+                      id & nonce) const;
+  void write_hello_cmd(rsa_keypair_id const & server_keyname,
+                       rsa_pub_key const & server_key,
+                       id const & nonce);
+
+  void read_anonymous_cmd(protocol_role & role,
+                          utf8 & include_pattern,
+                          utf8 & exclude_pattern,
+                          rsa_oaep_sha_data & hmac_key_encrypted) const;
+  void write_anonymous_cmd(protocol_role role, 
+                           utf8 const & include_pattern,
+                           utf8 const & exclude_pattern,
+                           rsa_oaep_sha_data const & hmac_key_encrypted);
+
+  void read_auth_cmd(protocol_role & role, 
+                     utf8 & include_pattern,
+                     utf8 & exclude_pattern,
+                     id & client, 
+                     id & nonce1, 
+                     rsa_oaep_sha_data & hmac_key_encrypted,
+                     std::string & signature) const;
+  void write_auth_cmd(protocol_role role, 
+                      utf8 const & include_pattern, 
+                      utf8 const & exclude_pattern, 
+                      id const & client,
+                      id const & nonce1, 
+                      rsa_oaep_sha_data const & hmac_key_encrypted,
+                      std::string const & signature);
+
+  void read_confirm_cmd() const;
+  void write_confirm_cmd();
+
+  void read_refine_cmd(merkle_node & node) const;
+  void write_refine_cmd(merkle_node const & node);
+
+  void read_done_cmd(size_t & level, netcmd_item_type & type) const;
+  void write_done_cmd(size_t level, netcmd_item_type type);
+
+  void read_send_data_cmd(netcmd_item_type & type,
+                          id & item) const;
+  void write_send_data_cmd(netcmd_item_type type,
+                           id const & item);
+
+  void read_send_delta_cmd(netcmd_item_type & type,
+                           id & base,
+                           id & ident) const;
+  void write_send_delta_cmd(netcmd_item_type type,
+                            id const & base,
+                            id const & ident);
+
+  void read_data_cmd(netcmd_item_type & type,
+                     id & item,
+                     std::string & dat) const;
+  void write_data_cmd(netcmd_item_type type,
+                      id const & item,
+                      std::string const & dat);
+
+  void read_delta_cmd(netcmd_item_type & type,
+                      id & base, id & ident, 
+                      delta & del) const;
+  void write_delta_cmd(netcmd_item_type & type,
+                       id const & base, id const & ident, 
+                       delta const & del);
+
+  void read_nonexistant_cmd(netcmd_item_type & type,
+                            id & item) const;
+  void write_nonexistant_cmd(netcmd_item_type type,
+                             id const & item);
+
 };
-
-// basic cmd i/o (including checksums)
-void write_netcmd(netcmd const & in, std::string & out);
-bool read_netcmd(std::string & inbuf, netcmd & out);
-
-// i/o functions for each type of command payload
-void read_error_cmd_payload(std::string const & in, 
-                            std::string & errmsg);
-void write_error_cmd_payload(std::string const & errmsg, 
-                             std::string & out);
-
-void read_hello_cmd_payload(std::string const & in, 
-                            rsa_keypair_id & server_keyname,
-                            rsa_pub_key & server_key,
-                            id & nonce);
-void write_hello_cmd_payload(rsa_keypair_id const & server_keyname,
-                             rsa_pub_key const & server_key,
-                             id const & nonce, 
-                             std::string & out);
-
-void read_anonymous_cmd_payload(std::string const & in, 
-                                protocol_role & role, 
-                                std::string & collection,
-                                id & nonce2);
-void write_anonymous_cmd_payload(protocol_role role, 
-                                 std::string const & collection,
-                                 id const & nonce2,
-                                 std::string & out);
-
-void read_auth_cmd_payload(std::string const & in, 
-                           protocol_role & role, 
-                           std::string & collection,
-                           id & client, 
-                           id & nonce1, 
-                           id & nonce2,
-                           std::string & signature);
-void write_auth_cmd_payload(protocol_role role, 
-                            std::string const & collection, 
-                            id const & client,
-                            id const & nonce1, 
-                            id const & nonce2, 
-                            std::string const & signature, 
-                            std::string & out);
-
-void read_confirm_cmd_payload(std::string const & in, 
-                              std::string & signature);
-void write_confirm_cmd_payload(std::string const & signature, 
-                               std::string & out);
-
-void read_refine_cmd_payload(std::string const & in, merkle_node & node);
-void write_refine_cmd_payload(merkle_node const & node, std::string & out);
-
-void read_done_cmd_payload(std::string const & in, size_t & level, netcmd_item_type & type);
-void write_done_cmd_payload(size_t level, netcmd_item_type type, std::string & out);
-
-void read_send_data_cmd_payload(std::string const & in, 
-                                netcmd_item_type & type,
-                                id & item);
-void write_send_data_cmd_payload(netcmd_item_type type,
-                                 id const & item,
-                                 std::string & out);
-
-void read_send_delta_cmd_payload(std::string const & in, 
-                                 netcmd_item_type & type,
-                                 id & base,
-                                 id & ident);
-void write_send_delta_cmd_payload(netcmd_item_type type,
-                                  id const & base,
-                                  id const & ident,
-                                  std::string & out);
-
-void read_data_cmd_payload(std::string const & in,
-                           netcmd_item_type & type,
-                           id & item,
-                           std::string & dat);
-void write_data_cmd_payload(netcmd_item_type type,
-                            id const & item,
-                            std::string const & dat,
-                            std::string & out);
-
-void read_delta_cmd_payload(std::string const & in, 
-                            netcmd_item_type & type,
-                            id & base, id & ident, 
-                            delta & del);
-void write_delta_cmd_payload(netcmd_item_type & type,
-                             id const & base, id const & ident, 
-                             delta const & del,
-                             std::string & out);
-
-void read_nonexistant_cmd_payload(std::string const & in, 
-                                  netcmd_item_type & type,
-                                  id & item);
-void write_nonexistant_cmd_payload(netcmd_item_type type,
-                                   id const & item,
-                                   std::string & out);
-
 
 #endif // __NETCMD_HH__

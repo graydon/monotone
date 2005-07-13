@@ -157,9 +157,42 @@ uppercase(string const & in)
   return n;
 }
 
+template <typename T>
+void pack(T const & in, base64< gzip<T> > & out)
+{
+  string tmp;
+  tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
+
+  CryptoPP::StringSource 
+    str(in(), true, 
+        new CryptoPP::Gzip(
+          new CryptoPP::Base64Encoder(
+            new CryptoPP::StringSink(tmp))));
+  out = tmp;
+}
+
+template <typename T>
+void unpack(base64< gzip<T> > const & in, T & out)
+{
+  string tmp;
+  tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
+
+  CryptoPP::StringSource 
+    str(in(), true, 
+        new CryptoPP::Base64Decoder(
+          new CryptoPP::Gunzip(
+            new CryptoPP::StringSink(tmp))));
+
+  out = tmp;
+}
+
+// specialise them
+template void pack<data>(data const &, base64< gzip<data> > &);
+template void pack<delta>(delta const &, base64< gzip<delta> > &);
+template void unpack<data>(base64< gzip<data> > const &, data &);
+template void unpack<delta>(base64< gzip<delta> > const &, delta &);
 
 // diffing and patching
-
 
 void 
 diff(data const & olddata,
@@ -837,140 +870,6 @@ line_end_convert(string const & linesep, string const & src, string & dst)
     dst += linesep_str;
 }
 
-// glob_to_regexp converts a sh file glob to a regexp.  The regexp should
-// be usable by the Boost regexp library.
-//
-// Pattern tranformation:
-//
-// - Any character except those described below are copied as they are.
-// - The backslash (\) escapes the following character.  The escaping
-//   backslash is copied to the regexp along with the following character.
-// - * is transformed to .* in the regexp.
-// - ? is transformed to . in the regexp.
-// - { is transformed to ( in the regexp, unless within [ and ].
-// - } is transformed to ) in the regexp, unless within [ and ].
-// - , is transformed to | in the regexp, if within { and } and not
-//    within [ and ].
-// - ^ is escaped unless it comes directly after an unescaped [.
-// - ! is transformed to ^ in the regexp if it comes directly after an
-//   unescaped [.
-// - ] directly following an unescaped [ is escaped.
-string glob_to_regexp(const string & glob)
-{
-  int in_braces = 0;            // counter for levels if {}
-  bool in_brackets = false;     // flags if we're inside a [], which
-                                // has higher precedence than {}.
-                                // Also, [ is accepted inside [] unescaped.
-  bool this_was_opening_bracket = false;
-  string tmp;
-
-  tmp.reserve(glob.size() * 2);
-
-#ifdef BUILD_UNIT_TESTS
-  cerr << "DEBUG[glob_to_regexp]: input = \"" << glob << "\"" << endl;
-#endif
-
-  for (string::const_iterator i = glob.begin(); i != glob.end(); ++i)
-    {
-      char c = *i;
-      bool last_was_opening_bracket = this_was_opening_bracket;
-      this_was_opening_bracket = false;
-
-      // Special case ^ and ! at the beginning of a [] expression.
-      if (in_brackets && last_was_opening_bracket
-          && (c == '!' || c == '^'))
-        {
-          tmp += '^';
-          if (++i == glob.end())
-            break;
-          c = *i;
-        }
-
-      if (c == '\\')
-        {
-          tmp += c;
-          if (++i == glob.end())
-            break;
-          tmp += *i;
-        }
-      else if (in_brackets)
-        {
-          switch(c)
-            {
-            case ']':
-              if (!last_was_opening_bracket)
-                {
-                  in_brackets = false;
-                  tmp += c;
-                  break;
-                }
-              // Trickling through to the standard character conversion,
-              // because ] as the first character of a set is regarded as
-              // a normal character.
-            default:
-              if (!(isalnum(c) || c == '_'))
-                {
-                  tmp += '\\';
-                }
-              tmp += c;
-              break;
-            }
-        }
-      else
-        {
-          switch(c)
-            {
-            case '*':
-              tmp += ".*";
-              break;
-            case '?':
-              tmp += '.';
-              break;
-            case '{':
-              in_braces++;
-              tmp += '(';
-              break;
-            case '}':
-              N(in_braces != 0,
-                F("trying to end a brace expression in a glob when none is started"));
-              tmp += ')';
-              in_braces--;
-              break;
-            case '[':
-              in_brackets = true;
-              this_was_opening_bracket = true;
-              tmp += c;
-              break;
-            case ',':
-              if (in_braces > 0)
-                {
-                  tmp += '|';
-                  break;
-                }
-              // Trickling through to default: here, since a comma outside of
-              // brace notation is just a normal character.
-            default:
-              if (!(isalnum(c) || c == '_'))
-                {
-                  tmp += '\\';
-                }
-              tmp += c;
-              break;
-            }
-        }
-    }
-
-  N(!in_brackets,
-    F("run-away bracket expression in glob"));
-  N(in_braces == 0,
-    F("run-away brace expression in glob"));
-
-#ifdef BUILD_UNIT_TESTS
-  cerr << "DEBUG[glob_to_regexp]: output = \"" << tmp << "\"" << endl;
-#endif
-
-  return tmp;
-}
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
@@ -1250,15 +1149,6 @@ static void encode_test()
   check_idna_encoding();
 }
 
-static void glob_to_regexp_test()
-{
-  BOOST_CHECK(glob_to_regexp("abc,v") == "abc\\,v");
-  BOOST_CHECK(glob_to_regexp("foo[12m,]") == "foo[12m\\,]");
-  // A full fledged, use all damn features test...
-  BOOST_CHECK(glob_to_regexp("foo.{bar*,cookie?{haha,hehe[^\\123!,]}}[!]a^b]")
-              == "foo\\.(bar.*|cookie.(haha|hehe[^\\123\\!\\,]))[^\\]a\\^b]");
-}
-
 void 
 add_transform_tests(test_suite * suite)
 {
@@ -1270,7 +1160,6 @@ add_transform_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&join_lines_test));
   suite->add(BOOST_TEST_CASE(&strip_ws_test));
   suite->add(BOOST_TEST_CASE(&encode_test));
-  suite->add(BOOST_TEST_CASE(&glob_to_regexp_test));
 }
 
 #endif // BUILD_UNIT_TESTS

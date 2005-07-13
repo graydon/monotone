@@ -14,6 +14,7 @@ Arguments: [flags ...] [testname ...]
     --datadir x   Use x as base directory for files used, scratchwork, results
     --help        Print this message
     --setup       Set up most of the needed files (broken?)
+    --what x      x is one of (time, mem); what to profile (defaults to time)
     testname      Only run selected profile tests
 EOF
 }
@@ -53,6 +54,7 @@ APPEND=""
 RESTRICT=""
 OVERWRITE=false
 SETUP=false
+WHAT=""
 while ! [ $# -eq 0 ] ; do
 	case "$1" in
 		--build) BUILD=true;;
@@ -63,6 +65,7 @@ while ! [ $# -eq 0 ] ; do
 		--overwrite) OVERWRITE="true";;
 		--datadir) shift; DATADIR=$1;;
 		--setup) SETUP=true;;
+		--what) shift; WHAT=$1;;
 		--help) HELP="true";;
 		*) RESTRICT="${RESTRICT} $1";;
 	esac
@@ -89,6 +92,9 @@ MONOTONE=${BUILDDIR}/monotone
 #used to run opcontrol
 SUDO=/usr/bin/sudo
 
+#command line for valgrind
+VALGRIND="valgrind --tool=massif --depth=7"
+
 #Full path of the debug c++ library to use.
 #You probably have to build this yourself, since your distro's packaged
 #debug library probably isn't optimized (and so will give bogus profiles).
@@ -108,6 +114,66 @@ VERSION=""
 HOOKS=""
 [ -f ${DATADIR}/hooks.lua ] && HOOKS="--norc --rcfile=${DATADIR}/hooks.lua"
 
+server()
+{
+	TIME_SERVER=$(tempfile)
+	if [ "${WHAT}" = "mem" ] ; then
+		${TIME} -o ${TIME_SERVER} \
+		${VALGRIND} --log-file=srv-log \
+		${MONOTONE} ${HOOKS} "$@" &
+	else
+		${TIME} -o ${TIME_SERVER} \
+		${MONOTONE} ${HOOKS} "$@" &
+	fi
+	sleep 5
+}
+
+client()
+{
+	TIME_CLIENT=$(tempfile)
+	if [ "${WHAT}" = "mem" ] ; then
+		${TIME} -o ${TIME_CLIENT} \
+		${VALGRIND} --log-file=cli-log \
+		${MONOTONE} ${HOOKS} "$@"
+	else
+		${TIME} -o ${TIME_CLIENT} \
+		${MONOTONE} ${HOOKS} "$@"
+	fi
+}
+
+mtn()
+{
+	RUNTIME=$(tempfile)
+	if [ "${WHAT}" = "mem" ] ; then
+		${TIME} -o ${RUNTIME} \
+		${VALGRIND} --log-file=mtn-log \
+		${MONOTONE} ${HOOKS} "$@"
+	else
+		${TIME} -o ${RUNTIME} \
+		${MONOTONE} ${HOOKS} "$@"
+	fi
+}
+
+mtn_noprof()
+{
+	${MONOTONE} ${HOOKS} "$@"
+}
+
+getsrvpid()
+{
+	ps -Af|grep 'monotone.*serve\ localhost' | \
+		grep -v time | awk '{print $2}'
+}
+
+killsrv()
+{
+	kill -HUP $(getsrvpid)
+	while ! [ "$(getsrvpid)" = "" ] ; do
+		sleep 1
+	done
+}
+
+
 #This picks the top 20 functions for execution time in the function,
 #and the top 20 for execution time in children of the function.
 #Function and template arguments are replaced with "...".
@@ -125,19 +191,62 @@ hilights()
 profstart()
 {
 	echo "${TESTNAME}..."
-	${SUDO} opcontrol --reset
-	${SUDO} opcontrol --start
+	if [ "${WHAT}" = "time" ] ; then
+		${SUDO} opcontrol --reset
+		${SUDO} opcontrol --start
+	fi
 }
 
 profend()
 {
-	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
-	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-${SHORTNAME} > ${PDIR}/hilights-${SHORTNAME}
-	echo -e "\n${TESTNAME}:" >>${PDIR}/timing
-	cat ${RUNTIME} >>${PDIR}/timing
-	rm ${RUNTIME}
+	if [ "${WHAT}" = "time" ] ; then
+		opcontrol --dump
+		opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
+		${SUDO} opcontrol --shutdown
+		hilights ${PDIR}/profile-${SHORTNAME} > \
+			${PDIR}/hilights-${SHORTNAME}
+	fi
+	
+	local PID=""
+	
+	#Record standalone instance
+	if [ -f "${RUNTIME}" ] ; then
+		echo -e "\n${TESTNAME}:" >>${PDIR}/timing
+		cat ${RUNTIME} >>${PDIR}/timing
+		rm ${RUNTIME}
+		if [ "${WHAT}" = "mem" ] ; then
+			PID=$(echo mtn-log.pid*|sed 's/[^[:digit:]]//g')
+			rm mtn-log.pid*
+			mv massif.${PID}.txt ${PDIR}/memprof-${SHORTNAME}.txt
+			mv massif.${PID}.ps ${PDIR}/memprof-${SHORTNAME}.ps
+		fi
+	fi
+	
+	#Record server instance
+	if [ -f "${TIME_SERVER}" ] ; then
+		echo -e "\n${SERVER_NAME}:" >>${PDIR}/timing
+		cat ${TIME_SERVER} >>${PDIR}/timing
+		rm ${TIME_SERVER}
+		if [ "${WHAT}" = "mem" ] ; then
+			PID=$(echo srv-log.pid*|sed 's/[^[:digit:]]//g')
+			rm srv-log.pid*
+			mv massif.${PID}.txt ${PDIR}/memprof-${SRVNAME}.txt
+			mv massif.${PID}.ps ${PDIR}/memprof-${SRVNAME}.ps
+		fi
+	fi
+	
+	#Record client instance
+	if [ -f "${TIME_CLIENT}" ] ; then
+		echo -e "\n${CLIENT_NAME}:" >>${PDIR}/timing
+		cat ${TIME_CLIENT} >>${PDIR}/timing
+		rm ${TIME_CLIENT}
+		if [ "${WHAT}" = "mem" ] ; then
+			PID=$(echo cli-log.pid*|sed 's/[^[:digit:]]//g')
+			rm cli-log.pid*
+			mv massif.${PID}.txt ${PDIR}/memprof-${CLINAME}.txt
+			mv massif.${PID}.ps ${PDIR}/memprof-${CLINAME}.ps
+		fi
+	fi
 }
 
 #Individual tests to run.
@@ -148,32 +257,22 @@ profend()
 TESTS="${TESTS} test_netsync"
 test_netsync()
 {
-	local TIME_SERVER=$(tempfile);
-	local TIME_CLIENT=$(tempfile);
 	local SHORTNAME="netsync"
 	local TESTNAME="Pull (and serve) net.venge.monotone"
+	local SERVER_NAME="Serve net.venge.monotone"
+	local SRVNAME="serve"
+	local CLIENT_NAME="Pull net.venge.monotone"
+	local CLINAME="pull"
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
 	cp ${DATADIR}/${MTDB}    ${DATADIR}/test-serve.db
 	profstart 
-	${TIME} -o ${TIME_SERVER} ${MONOTONE} --db=${DATADIR}/test-serve.db \
-		${HOOKS} --ticker=none --quiet serve localhost \
-		net.venge.monotone &
-	sleep 5 #wait for server to be ready
-	${TIME} -o ${TIME_CLIENT} ${MONOTONE} --db=${DATADIR}/test.db \
-		${HOOKS} pull localhost net.venge.monotone
-	#If we kill the time process, we don't get our statistics.
-	kill $(ps -Af|grep 'monotone.*serve\ localhost' | \
-		grep -v time | awk '{print $2}')
-	#profend
-	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
-	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-${SHORTNAME} >${PDIR}/hilights-${SHORTNAME}
-	echo -e "\nServe net.venge.monotone :" >>${PDIR}/timing
-	cat ${TIME_SERVER} >>${PDIR}/timing
-	echo -e "\nPull net.venge.monotone :" >>${PDIR}/timing
-	cat ${TIME_CLIENT} >>${PDIR}/timing
-	rm ${TIME_SERVER} ${TIME_CLIENT}
+	server --db=${DATADIR}/test-serve.db \
+		--ticker=none --quiet serve localhost \
+		net.venge.monotone
+	client --db=${DATADIR}/test.db \
+		pull localhost net.venge.monotone
+	killsrv
+	profend
 	
 	rm ${DATADIR}/test.db ${DATADIR}/test-serve.db
 }
@@ -181,38 +280,34 @@ test_netsync()
 TESTS="${TESTS} test_commit"
 test_commit()
 {
-	local RUNTIME=$(tempfile)
 	local TESTNAME="Commit kernel ${KVER} to an empty database"
 	local SHORTNAME="commitfirst"
 	bzip2 -dc ${DATADIR}/linux-${KVER}.tar.bz2 | tar -C ${DATADIR} -xf -
 	pushd ${DATADIR}/${KVER}
-	${MONOTONE} ${HOOKS} setup .
-	${MONOTONE} ${HOOKS} --quiet add $(ls|grep -v '^MT')
+	mtn_noprof setup .
+	mtn_noprof --quiet add . # $(ls|grep -v '^MT')
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
 
 	profstart
-	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} --branch=linux-kernel \
-		--db=${DATADIR}/test.db commit \
+	mtn --branch=linux-kernel --db=${DATADIR}/test.db commit \
 		--message="Commit message."
 	profend
 	
-	RUNTIME=$(tempfile)
 	TESTNAME="Commit a small patch (${KPATCHVER}) to the kernel"
 	SHORTNAME="commitpatch"
 	
 	bzip2 -dc ${DATADIR}/patch-${KPATCHVER}.bz2 | patch -p1 >/dev/null
 	profstart
-	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} --branch=linux-kernel \
-		--db=${DATADIR}/test.db commit --message="Commit #2"
+	mtn --branch=linux-kernel --db=${DATADIR}/test.db commit \
+		--message="Commit #2"
 	profend
 	
-	RUNTIME=$(tempfile)
 	TESTNAME="Recommit the kernel without changes"
 	SHORTNAME="commitsame"
 	
 	profstart
-	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} --branch=linux-kernel \
-		--db=${DATADIR}/test.db commit --message="no change"
+	mtn --branch=linux-kernel --db=${DATADIR}/test.db commit \
+		--message="no change"
 	profend
 
 	popd
@@ -223,13 +318,12 @@ test_commit()
 TESTS="${TESTS} test_lcad"
 test_lcad()
 {
-	local RUNTIME=$(tempfile)
 	local TESTNAME="Find lcad of ebf14142 and 68fe12e6"
 	local SHORTNAME="lcad"
 
 	cp ${DATADIR}/${MTDB} ${DATADIR}/test.db
 	profstart
-	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} --db=${DATADIR}/test.db \
+	mtn --db=${DATADIR}/test.db \
 		lcad ebf14142331667146d7a3aabb406945648ea00de \
 		     68fe12e6f1de7d161eb9e27dd757e7d230049520
 	
@@ -237,55 +331,41 @@ test_lcad()
 	rm ${DATADIR}/test.db
 }
 
-#Based on tests/t_netsync_largish_file.at
 TESTS="${TESTS} test_bigfile"
 test_bigfile()
 {
-	local TIME_SERVER=$(tempfile);
-	local TIME_CLIENT=$(tempfile);
-	local RUNTIME=$(tempfile)
 	local TESTNAME=""#"Netsync a big file."
 	local SHORTNAME=""#"bigfile"
 #setup:
 	pushd ${DATADIR}
 	cp ${EMPTYDB} test.db
 	cp ${EMPTYDB} test2.db
-	${MONOTONE} ${HOOKS} --db=test.db setup testdir
+	mtn_noprof --db=test.db setup testdir
 	pushd testdir
-	awk -- 'BEGIN{srand(5253);for(a=0;a<32*1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish
-	${MONOTONE} add largish
+	dd if=/dev/urandom of=largish bs=1M count=32
+	mtn_noprof add largish
 	
 	TESTNAME="Commit a big file"
 	SHORTNAME="bigfile-commit"
 	profstart
-	${TIME} -o ${RUNTIME} ${MONOTONE} ${HOOKS} commit --branch=bigfile \
-		--message="log message" --db=${DATADIR}/test.db
+	mtn commit --branch=bigfile --db=${DATADIR}/test.db \
+		--message="log message"
 	profend
 	
 	TESTNAME="Netsync a big file"
 	SHORTNAME="bigfile-sync"
+	local SERVER_NAME="Serve a big file"
+	local SRVNAME="bigfile-serve"
+	local CLIENT_NAME="Pull a big file"
+	local CLINAME="bigfile-pull"
 	profstart
 #run:	
-	${TIME} -o ${TIME_SERVER} ${MONOTONE} ${HOOKS} --db=${DATADIR}/test.db \
-		--ticker=none --quiet serve localhost bigfile &
-	sleep 5 #wait for server to be ready
-	${TIME} -o ${TIME_CLIENT} ${MONOTONE} --db=${DATADIR}/test2.db \
-		${HOOKS} pull localhost bigfile
-	#If we kill the time process, we don't get our statistics.
-	kill $(ps -Af|grep 'monotone.*serve\ localhost' | \
-		grep -v time | awk '{print $2}')
+	server --db=${DATADIR}/test.db \
+		--ticker=none --quiet serve localhost bigfile
+	client --db=${DATADIR}/test2.db pull localhost bigfile
+	killsrv
 
-	#profend
-	opcontrol --dump
-	opstack ${MONOTONE} > ${PDIR}/profile-${SHORTNAME}
-	${SUDO} opcontrol --shutdown
-	hilights ${PDIR}/profile-${SHORTNAME} >${PDIR}/hilights-${SHORTNAME}
-	echo -e "\nServe an uncompressible 32MB file :" >>${PDIR}/timing
-	cat ${TIME_SERVER} >>${PDIR}/timing
-	echo -e "\nPull an uncompressible 32MB file :" >>${PDIR}/timing
-	cat ${TIME_CLIENT} >>${PDIR}/timing
-	
-	rm ${TIME_SERVER} ${TIME_CLIENT}
+	profend
 #cleanup:
 	popd
 	rm -rf testdir/
@@ -296,7 +376,6 @@ test_bigfile()
 #TESTS="${TESTS} test_name"
 #test_name()
 #{
-#	local RUNTIME=$(tempfile)
 #	local TESTNAME=""
 #	local SHORTNAME=""
 ##setup:
@@ -322,8 +401,10 @@ run_tests()
 	mkdir -p ${PDIR}
 	export LD_PRELOAD=${DBG_LIB}
 	echo "Profiling..."
-	${SUDO} opcontrol --separate=lib --callgraph=10 \
-		--image=${MONOTONE} --no-vmlinux
+	if [ "${WHAT}" = "time" ] ; then
+		${SUDO} opcontrol --separate=lib --callgraph=10 \
+			--image=${MONOTONE} --no-vmlinux
+	fi
 	for i in ${TESTS}; do
 		$i
 	done
@@ -364,7 +445,7 @@ if [ ${SETUP} = "true" ] ; then
 	exit 0
 fi
 
-pushd ${BUILDDIR}
+pushd ${BUILDDIR} >/dev/null
 if [ ${PULL} = "true" ] ; then
 	monotone pull
 fi
@@ -374,13 +455,51 @@ fi
 if [ ${BUILD} = "true" ] ; then
 	make || ( echo -e "Build failed.\nNot profiling." >&2 ; exit 1 )
 fi
-popd
+popd >/dev/null
 if ! [ "${RESTRICT}" = "" ] ; then
 	TESTS="${RESTRICT}"
 fi
 
 if ! [ -f ${MONOTONE} ] ; then
 	echo "Error: ${MONOTONE} does not exist." >&2
+	exit 1
+fi
+
+TIME_OK=false
+if which opcontrol >/dev/null && which opstack >/dev/null; then
+	TIME_OK=true
+fi
+
+MEM_OK=false
+if which valgrind >/dev/null; then
+	MEM_OK=true
+fi
+
+if [ "${WHAT}" = "time" ] ; then
+	if ! [ ${TIME_OK} = "true" ] ; then
+		echo "Error: cannot find oprofile." >&2
+		exit 1
+	fi
+fi
+
+if [ "${WHAT}" = "mem" ] ; then
+	if ! [ ${MEM_OK} = "true" ] ; then
+		echo "Error: cannot find valgrind." >&2
+		exit 1
+	fi
+fi
+
+if [ "${WHAT}" = "" ] ; then
+	if [ ${MEM_OK} = "true" ] ; then
+		WHAT="mem"
+	fi
+	if [ ${TIME_OK} = "true" ] ; then
+		WHAT="time"
+	fi
+fi
+
+if [ "${WHAT}" = "" ] ; then
+	echo "Error: cannot find a profiler." >&2
 	exit 1
 fi
 

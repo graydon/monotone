@@ -1,3 +1,17 @@
+monotone (0.20-1) unstable; urgency=low
+
+  * Rebuild in clean environment (pdebuild) for upload to debian archive.
+  * Added Build-Depends: texinfo; As suggested by "Matthew A. Nicholson"
+    <matt@matt-land.com>
+
+ -- Tomas Fasth <tomfa@debian.org>  Wed,  6 Jul 2005 20:12:37 +0000
+
+monotone (0.20-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- nathaniel smith <njs@pobox.com>  Tue,  5 Jul 2005 21:55:56 -0700
+
 monotone (0.19-1) unstable; urgency=low
 
   * New upstream release.

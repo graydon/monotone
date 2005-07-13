@@ -25,7 +25,7 @@ end
 -- bit, ACLs, various special flags) which we want to have set and
 -- re-set any time the files are modified. the attributes themselves
 -- are stored in a file .mt-attrs, in the working copy (and
--- manifest). each (f,k,v) triple in an atribute file turns into a
+-- manifest). each (f,k,v) triple in an attribute file turns into a
 -- call to attr_functions[k](f,v) in lua.
 
 if (attr_init_functions == nil) then
@@ -41,10 +41,18 @@ attr_init_functions["execute"] =
       end 
    end
 
+attr_init_functions["manual_merge"] = 
+   function(filename)
+      if (binary_file(filename)) then 
+        return "true" -- binary files must merged manually
+      else 
+        return nil
+      end 
+   end
+
 if (attr_functions == nil) then
    attr_functions = {}
 end
-
 
 attr_functions["execute"] = 
    function(filename, value) 
@@ -73,11 +81,21 @@ function ignore_file(name)
    if (string.find(name, "%.orig$")) then return true end
    if (string.find(name, "%.rej$")) then return true end
    if (string.find(name, "%~$")) then return true end
+   -- editor temp files
+   -- vim creates .foo.swp files
+   if (string.find(name, "%.[^/]*%.swp$")) then return true end
+   -- emacs creates #foo# files
+   if (string.find(name, "%#[^/]*%#$")) then return true end
    -- autotools detritus:
    if (string.find(name, "^autom4te.cache/")) then return true end
    if (string.find(name, "/autom4te.cache/")) then return true end
    if (string.find(name, "^.deps/")) then return true end
    if (string.find(name, "/.deps/")) then return true end
+   -- Cons/SCons detritus:
+   if (string.find(name, "^.consign$")) then return true end
+   if (string.find(name, "/.consign$")) then return true end
+   if (string.find(name, "^.sconsign$")) then return true end
+   if (string.find(name, "/.sconsign$")) then return true end
    -- other VCSes:
    if (string.find(name, "^CVS/")) then return true end
    if (string.find(name, "/CVS/")) then return true end
@@ -91,6 +109,32 @@ function ignore_file(name)
    return false;
 end
 
+-- return true means "binary", false means "text",
+-- nil means "unknown, try to guess"
+function binary_file(name)
+   local lowname=string.lower(name)
+   -- some known binaries, return true
+   if (string.find(lowname, "%.gif$")) then return true end
+   if (string.find(lowname, "%.jpe?g$")) then return true end
+   if (string.find(lowname, "%.png$")) then return true end
+   if (string.find(lowname, "%.bz2$")) then return true end
+   if (string.find(lowname, "%.gz$")) then return true end
+   if (string.find(lowname, "%.zip$")) then return true end
+   -- some known text, return false
+   if (string.find(lowname, "%.cc?$")) then return false end
+   if (string.find(lowname, "%.cxx$")) then return false end
+   if (string.find(lowname, "%.hh?$")) then return false end
+   if (string.find(lowname, "%.hxx$")) then return false end
+   if (string.find(lowname, "%.lua$")) then return false end
+   if (string.find(lowname, "%.texi$")) then return false end
+   if (string.find(lowname, "%.sql$")) then return false end
+   -- unknown - read file and use the guess-binary 
+   -- monotone built-in function
+   filedata=read_contents_of_file(name, "rb")
+   if (filedata ~= nil) then return guess_binary(filedata) end
+   -- still unknown (file empty or unreadable) - report it as nil
+   return nil
+end
 
 function edit_comment(basetext, user_log_message)
    local exe = "vi"
@@ -281,8 +325,8 @@ function write_to_temporary_file(data)
    return filename
 end
 
-function read_contents_of_file(filename)
-   tmp = io.open(filename, "r")
+function read_contents_of_file(filename, mode)
+   tmp = io.open(filename, mode) 
    if (tmp == nil) then
       return nil
    end
@@ -295,136 +339,181 @@ function program_exists_in_path(program)
    return existsonpath(program) == 0
 end
 
-function merge2(left_path, right_path, merged_path, left, right)
-   local lfile = nil
-   local rfile = nil
-   local outfile = nil
-   local data = nil
-   local meld_exists = false
+function get_preferred_merge2_command (tbl)
+   local cmd = nil
+   local left_path = tbl.left_path
+   local right_path = tbl.right_path
+   local merged_path = tbl.merged_path
+   local lfile = tbl.lfile
+   local rfile = tbl.rfile
+   local outfile = tbl.outfile 
 
-   lfile = write_to_temporary_file(left)
-   rfile = write_to_temporary_file(right)
-   outfile = write_to_temporary_file("")
+   local editor = os.getenv("EDITOR")
+   if editor ~= nil then editor = string.lower(editor) else editor = "" end
 
-   if lfile ~= nil and
-      rfile ~= nil and
-      outfile ~= nil 
-   then 
-      local cmd = nil
-      if program_exists_in_path("kdiff3") then
-         cmd = merge2_kdiff3_cmd(left_path, right_path, merged_path, 
-                                 lfile, rfile, outfile)
-      elseif program_exists_in_path("meld") then
-         meld_exists = true
-         io.write(string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n" .. 
-                                "You should merge all changes to *LEFT* file due to limitation of program\n" ..
-                                   "arguments.\n\n"))
-         cmd = merge2_meld_cmd(lfile, rfile) 
-      elseif program_exists_in_path("xxdiff") then
-         cmd = merge2_xxdiff_cmd(left_path, right_path, merged_path, 
-                                 lfile, rfile, outfile)
+   
+   if program_exists_in_path("kdiff3") then
+      cmd =   merge2_kdiff3_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
+   elseif program_exists_in_path ("xxdiff") then 
+      cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
+   elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
+      if string.find(editor, "xemacs") and program_exists_in_path("xemacs") then
+         cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
       elseif program_exists_in_path("emacs") then
-         cmd = merge2_emacs_cmd("emacs", lfile, rfile, outfile)
-      elseif program_exists_in_path("xemacs") then
-         cmd = merge2_emacs_cmd("xemacs", lfile, rfile, outfile)
-      elseif os.getenv("DISPLAY") ~=nil and program_exists_in_path("gvim") then
-         cmd = merge2_vim_cmd("gvim", lfile, rfile, outfile)
-      elseif program_exists_in_path("vim") then
-         cmd = merge2_vim_cmd("vim", lfile, rfile, outfile)
+         cmd = merge2_emacs_cmd ("emacs", lfile, rfile, outfile) 
       end
+   elseif string.find(editor, "vim") ~= nil then
+      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
+         cmd = merge2_vim_cmd ("gvim", lfile, rfile, outfile) 
+      elseif program_exists_in_path ("vim") then 
+         cmd = merge2_vim_cmd ("vim", lfile, rfile, outfile) 
+      end
+   elseif program_exists_in_path ("meld") then 
+      tbl.meld_exists = true 
+      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n"..
+          "You should merge all changes to *LEFT* file due to limitation of program\n"..
+          "arguments.\n\n")) 
+      cmd = merge2_meld_cmd (lfile, rfile) 
+   end 
+   return cmd 
+end 
 
-      if cmd ~= nil
-      then
-         io.write(string.format("executing external 2-way merge command\n"))
-         cmd()
-         if meld_exists then
-            data = read_contents_of_file(lfile)
-         else
-            data = read_contents_of_file(outfile)
-         end
-         if string.len(data) == 0 
+function merge2 (left_path, right_path, merged_path, left, right) 
+   local ret = nil 
+   local tbl = {}
+
+   tbl.lfile = nil 
+   tbl.rfile = nil 
+   tbl.outfile = nil 
+   tbl.meld_exists = false
+ 
+   tbl.lfile = write_to_temporary_file (left) 
+   tbl.rfile = write_to_temporary_file (right) 
+   tbl.outfile = write_to_temporary_file ("") 
+
+   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.outfile ~= nil 
+   then 
+      tbl.left_path = left_path 
+      tbl.right_path = right_path 
+      tbl.merged_path = merged_path 
+
+      local cmd = get_preferred_merge2_command (tbl) 
+
+      if cmd ~=nil 
+      then 
+         io.write (string.format("executing external 2-way merge command\n"))
+         cmd ()
+         if tbl.meld_exists 
          then 
-            data = nil
+            ret = read_contents_of_file (tbl.lfile, "r")
+         else
+            ret = read_contents_of_file (tbl.outfile, "r") 
+         end 
+         if string.len (ret) == 0 
+         then 
+            ret = nil 
          end
       else
-         io.write("no external 2-way merge command found\n")
+         io.write ("no external 2-way merge command found\n")
+      end
+   end
+
+   os.remove (tbl.lfile)
+   os.remove (tbl.rfile)
+   os.remove (tbl.outfile)
+   
+   return ret
+end
+
+function get_preferred_merge3_command (tbl)
+   local cmd = nil
+   local left_path = tbl.left_path
+   local anc_path = tbl.anc_path
+   local right_path = tbl.right_path
+   local merged_path = tbl.merged_path
+   local lfile = tbl.lfile
+   local afile = tbl.afile
+   local rfile = tbl.rfile
+   local outfile = tbl.outfile 
+
+   local editor = os.getenv("EDITOR")
+   if editor ~= nil then editor = string.lower(editor) else editor = "" end
+
+   if program_exists_in_path("kdiff3") then
+      cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
+   elseif program_exists_in_path ("xxdiff") then 
+      cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
+   elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
+      if string.find(editor, "xemacs") and program_exists_in_path ("xemacs") then 
+         cmd = merge3_emacs_cmd ("xemacs", lfile, afile, rfile, outfile) 
+      elseif program_exists_in_path ("emacs") then 
+         cmd = merge3_emacs_cmd ("emacs", lfile, afile, rfile, outfile) 
+      end
+   elseif string.find(editor, "vim") ~= nil then
+      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
+         cmd = merge3_vim_cmd ("gvim", lfile, afile, rfile, outfile) 
+      elseif program_exists_in_path ("vim") then 
+         cmd = merge3_vim_cmd ("vim", lfile, afile, rfile, outfile) 
+      end
+   elseif program_exists_in_path ("meld") then 
+      tbl.meld_exists = true 
+      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
+          "You should merge all changes to *CENTER* file due to limitation of program\n"..
+          "arguments.\n\n")) 
+      cmd = merge3_meld_cmd (lfile, afile, rfile) 
+   end 
+   
+   return cmd 
+end 
+
+function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, right) 
+   local ret 
+   local tbl = {}
+   
+   tbl.anc_path = anc_path 
+   tbl.left_path = left_path 
+   tbl.right_path = right_path 
+
+   tbl.merged_path = merged_path 
+   tbl.afile = nil 
+   tbl.lfile = nil 
+   tbl.rfile = nil 
+   tbl.outfile = nil 
+   tbl.meld_exists = false 
+   tbl.lfile = write_to_temporary_file (left) 
+   tbl.afile =   write_to_temporary_file (ancestor) 
+   tbl.rfile =   write_to_temporary_file (right) 
+   tbl.outfile = write_to_temporary_file ("") 
+   
+   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.afile ~= nil and tbl.outfile ~= nil 
+   then 
+      local cmd =   get_preferred_merge3_command (tbl) 
+      if cmd ~=nil 
+      then 
+         io.write (string.format("executing external 3-way merge command\n"))
+         cmd ()
+         if tbl.meld_exists 
+         then 
+            ret = read_contents_of_file (tbl.afile, "r")
+         else
+            ret = read_contents_of_file (tbl.outfile, "r") 
+         end 
+         if string.len (ret) == 0 
+         then 
+            ret = nil 
+         end
+      else
+         io.write ("no external 3-way merge command found\n")
       end
    end
    
-   os.remove(lfile)
-   os.remove(rfile)
-   os.remove(outfile)
-
-   return data
-end
-
-function merge3(anc_path, left_path, right_path, merged_path, ancestor, left, right)
-   local afile = nil
-   local lfile = nil
-   local rfile = nil
-   local outfile = nil
-   local data = nil
-   local meld_exists = false
-
-   lfile = write_to_temporary_file(left)
-   afile = write_to_temporary_file(ancestor)
-   rfile = write_to_temporary_file(right)
-   outfile = write_to_temporary_file("")
-
-   if lfile ~= nil and
-      rfile ~= nil and
-      afile ~= nil and
-      outfile ~= nil 
-   then 
-      local cmd = nil
-      if program_exists_in_path("kdiff3") then
-         cmd = merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path, 
-                                 lfile, afile, rfile, outfile)
-      elseif program_exists_in_path("meld") then
-         meld_exists = true
-         io.write(string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n" .. 
-                                "You should merge all changes to *CENTER* file due to limitation of program\n" ..
-                                   "arguments.\n\n"))
-         cmd = merge3_meld_cmd(lfile, afile, rfile)
-      elseif program_exists_in_path("xxdiff") then
-         cmd = merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path, 
-                                 lfile, afile, rfile, outfile)
-      elseif program_exists_in_path("emacs") then
-         cmd = merge3_emacs_cmd("emacs", lfile, afile, rfile, outfile)
-      elseif program_exists_in_path("xemacs") then
-         cmd = merge3_emacs_cmd("xemacs", lfile, afile, rfile, outfile)
-      elseif os.getenv("DISPLAY") ~=nil and program_exists_in_path("gvim") then
-         cmd = merge3_vim_cmd("gvim", lfile, afile, rfile, outfile)
-      elseif program_exists_in_path("vim") then
-         cmd = merge3_vim_cmd("vim", lfile, afile, rfile, outfile)
-      end
-      
-      if cmd ~= nil
-      then
-         io.write(string.format("executing external 3-way merge command\n"))
-         cmd()
-         if meld_exists then
-            data = read_contents_of_file(afile)
-         else
-            data = read_contents_of_file(outfile)
-         end
-         if string.len(data) == 0 
-         then 
-            data = nil
-         end
-      else
-         io.write("no external 3-way merge command found\n")
-      end
-   end
+   os.remove (tbl.lfile)
+   os.remove (tbl.rfile)
+   os.remove (tbl.afile)
+   os.remove (tbl.outfile)
    
-   os.remove(lfile)
-   os.remove(rfile)
-   os.remove(afile)
-   os.remove(outfile)
-   
-   return data
-end
-
+   return ret
+end 
 
 -- expansion of values used in selector completion
 
@@ -480,7 +569,7 @@ function expand_date(str)
       return os.date("%FT%T", t)
    end
    
-	 -- today don't uses the time
+         -- today don't uses the time
    if str == "today"
    then
       local t = os.time(os.date('!*t'))
@@ -510,7 +599,7 @@ function expand_date(str)
       if trans[type] <= 3600
       then
         return os.date("%FT%T", t - (n * trans[type]))
-      else	
+      else      
         return os.date("%F", t - (n * trans[type]))
       end
    end

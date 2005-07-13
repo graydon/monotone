@@ -1,0 +1,33 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([update with pending rename])
+
+MONOTONE_SETUP
+
+ADD_FILE(file, [test1
+])
+
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE --branch testbranch co codir, [], [ignore], [ignore])
+
+AT_CHECK(mv file file2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename file file2, [], [ignore], [ignore])
+
+COMMIT(testbranch)
+
+AT_CHECK(mv codir/file codir/file2, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE rename file file2, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE update, [], [ignore], [ignore])
+
+# why doesn't an abbreviated revision id work
+AT_CHECK(cd codir && MONOTONE cat revision 0cb6, [1], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE cat revision 0cb6da39a252816db091c515efa830840e77c4eb, [], [ignore], [ignore])
+
+# make sure there are no changes in the working copy
+
+AT_CHECK(test ! -e codir/MT/work, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(grep 'no changes' stdout, [], [ignore], [ignore])
+
+AT_CLEANUP

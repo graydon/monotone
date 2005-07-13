@@ -249,9 +249,9 @@ fi
 # After calling NEED_UNB64, you can use UNB64(infile, outfile) to
 # decode base64'ed text.
 m4_define([NEED_UNB64], [
-if which mimencode 2>/dev/null; then
+if test -n "`command -v mimencode`" 2>/dev/null; then
   UNB64_COMMAND="mimencode -u"
-elif which recode 2>/dev/null; then
+elif test -n "`command -v recode`" 2>/dev/null; then
   UNB64_COMMAND="recode /Base64"
 elif perl -MMIME::Base64 -e 1 2>/dev/null; then
   UNB64_COMMAND="perl -MMIME::Base64 -ne 'print decode_base64(\$_)'"
@@ -280,7 +280,7 @@ fi
 # After calling NEED_UNGZ, you can use UNGZ(infile, outfile) to
 # decode gzipped text.
 m4_define([NEED_UNGZ], [
-if which gunzip 2>/dev/null; then
+if test -n "`command -v gunzip`" 2>/dev/null; then
   # This is lame!  We should XFAIL the test so the user knows that
   # they're not, you know, actually testing the software.  But
   # Autotest runs XFAIL conditions in a completely different shell, so
@@ -323,11 +323,11 @@ m4_define([NETSYNC_SETUP], [
 AT_CHECK(cp test.db test2.db)
 AT_CHECK(cp test.db test3.db)
 AT_DATA(netsync.lua, [
-function get_netsync_read_permitted(collection, identity)
+function get_netsync_read_permitted(pattern, identity)
 	return true
 end
 
-function get_netsync_write_permitted(collection, identity)
+function get_netsync_write_permitted(identity)
 	return true
 end
 ])
@@ -376,17 +376,19 @@ fi
 rm -f monotone_at.pid 2>/dev/null
 ])
 
-# run as NETSYNC_SERVE_N_START(2|3, collection name)
+# run as NETSYNC_SERVE_N_START(2|3, pattern)
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MONOTONE --db=test$1.db --rcfile=netsync.lua --pid-file=monotone_at.pid serve localhost:$_PORT $2 &
+_FOO=$2
+MONOTONE --db=test$1.db --rcfile=netsync.lua --pid-file=monotone_at.pid serve localhost:$_PORT ${_FOO:-"*"} &
 sleep 4
 ])
-# run as NETSYNC_SERVE_START(collection name)
+# run as NETSYNC_SERVE_START(pattern)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve localhost:$_PORT $1 &
+FOO=$1
+MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve localhost:$_PORT ${_FOO:-"*"} &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
@@ -395,16 +397,16 @@ NETSYNC_KILL
 sleep 1
 NETSYNC_KILLHARD
 ])
-# run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, collection name[, expected result])
+# run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, pattern[, expected result])
 # first argument chooses whether to use the 2nd or 3rd database
 m4_define([NETSYNC_CLIENT_N_RUN], [
 AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 localhost:$_PORT $3, [$4], [ignore], [ignore])
 ])
-# run as NETSYNC_CLIENT_RUN(push|pull|sync, collection name[, expected result])
+# run as NETSYNC_CLIENT_RUN(push|pull|sync, pattern[, expected result])
 m4_define([NETSYNC_CLIENT_RUN], [
 NETSYNC_CLIENT_N_RUN(2, $1, $2, $3)
 ])
-# run as RUN_NETSYNC(push|pull|sync, collection name)
+# run as RUN_NETSYNC(push|pull|sync, pattern)
 # It is the second database that is always the client; take this into
 # account when choosing push|pull|sync.
 m4_define([RUN_NETSYNC], [
@@ -650,4 +652,22 @@ m4_include(tests/t_annotate_lineage_dependent.at)
 m4_include(tests/t_annotate_split_line.at)
 m4_include(tests/t_automate_certs.at)
 m4_include(tests/t_selector_later_earlier.at)
-m4_include(tests/t_merge_binary.at)
+m4_include(tests/t_automate_stdio.at)
+m4_include(tests/t_cvsimport_drepper.at)
+m4_include(tests/t_update_with_pending_drop.at)
+m4_include(tests/t_update_with_pending_add.at)
+m4_include(tests/t_update_with_pending_rename.at)
+m4_include(tests/t_restricted_commit_with_inodeprints.at)
+m4_include(tests/t_merge_manual.at)
+m4_include(tests/t_revert_restrict.at)
+m4_include(tests/t_status.at)
+m4_include(tests/t_cvsimport_drepper2.at)
+m4_include(tests/t_rcfile_dir.at)
+m4_include(tests/t_lua_includedir.at)
+m4_include(tests/t_existsonpath.at)
+m4_include(tests/t_db_kill_branch_locally.at)
+m4_include(tests/t_netsync_globs.at)
+m4_include(tests/t_set_default.at)
+m4_include(tests/t_netsync_read_permissions.at)
+m4_include(tests/t_netsync_exclude.at)
+m4_include(tests/t_netsync_exclude_default.at)

@@ -44,8 +44,11 @@ namespace constants
   // truncated.
   size_t const db_log_line_sz = 70;
 
-  // size in bytes of the database xdelta version reconstruction cache
-  size_t const db_version_cache_sz = 1 << 20;
+  // size in bytes of the database xdelta version reconstruction cache.
+  // the value of 7 MB was determined as the optimal point after timing
+  // various values with a pull of the monotone repository - it could
+  // be tweaked further.
+  size_t const db_version_cache_sz = 7 * (1 << 20);
 
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
@@ -145,7 +148,7 @@ namespace constants
   BOOST_STATIC_ASSERT(merkle_bitmap_length_in_bits > 0);
   BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
 
-  u8 const netcmd_current_protocol_version = 4;
+  u8 const netcmd_current_protocol_version = 5;
   size_t const netcmd_minsz = (1     // version
                                + 1   // cmd code
                                + 1   // smallest uleb possible
@@ -160,5 +163,9 @@ namespace constants
   size_t const netsync_default_port = 5253;
   size_t const netsync_connection_limit = 1024; 
   size_t const netsync_timeout_seconds = 21600; // 6 hours
+  size_t const netsync_session_key_length_in_bytes = 20;     // 160 bits
+  size_t const netsync_hmac_value_length_in_bytes = 20;      // 160 bits
+
+  std::string const & netsync_key_initializer = std::string(netsync_session_key_length_in_bytes, 0);
 
 }

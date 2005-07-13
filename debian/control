@@ -2,7 +2,7 @@ Source: monotone
 Section: devel
 Priority: optional
 Maintainer: Tomas Fasth <tomfa@debian.org>
-Build-Depends: debhelper (>= 4.0.0), autotools-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-regex-dev, libboost-test-dev, libboost-dev, g++, libpopt-dev, libsqlite3-dev
+Build-Depends: debhelper (>= 4.0.0), autotools-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-regex-dev, libboost-test-dev, libboost-dev, g++, texinfo
 Standards-Version: 3.6.1
 
 Package: monotone

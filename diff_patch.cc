@@ -21,18 +21,6 @@
 
 using namespace std;
 
-bool guess_binary(string const & s)
-{
-  // these do not occur in ASCII text files
-  // FIXME: this heuristic is (a) crap and (b) hardcoded. fix both these.
-  if (s.find_first_of('\x00') != string::npos ||
-      s.find_first_of("\x01\x02\x03\x04\x05\x06\x0e\x0f"
-                      "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
-                      "\x19\x1a\x1c\x1d\x1e\x1f") != string::npos)
-    return true;
-  return false;
-}
-
 //
 // a 3-way merge works like this:
 //
@@ -319,7 +307,7 @@ void merge_extents(vector<extent> const & a_b_map,
         }
 
       // mutual or single-edge deletes
-      else if ((i->type == deleted && j->len == deleted)
+      else if ((i->type == deleted && j->type == deleted)
                || (i->type == deleted && j->type == preserved)
                || (i->type == preserved && j->type == deleted))
         { 
@@ -510,6 +498,18 @@ std::string merge_provider::get_file_encoding(file_path const & path,
     return default_encoding;
 }
 
+bool merge_provider::attribute_manual_merge(file_path const & path,
+                                              manifest_map const & man)
+{
+  std::string mmf;
+  if (get_attribute_from_db(path, manual_merge_attribute, man, mmf, app))
+  {
+    return mmf == std::string("true");
+  }
+  else
+    return false; // default: enable auto merge
+}
+
 bool merge_provider::try_to_merge_files(file_path const & anc_path,
                                         file_path const & left_path,
                                         file_path const & right_path,
@@ -537,45 +537,53 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
 
   file_data left_data, right_data, ancestor_data;
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
-  string left_encoding, anc_encoding, right_encoding;
-  vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
 
   this->get_version(left_path, left_id, left_data);
   this->get_version(anc_path, ancestor_id, ancestor_data);
   this->get_version(right_path, right_id, right_data);
 
-  left_encoding = this->get_file_encoding(left_path, left_man);
-  anc_encoding = this->get_file_encoding(anc_path, anc_man);
-  right_encoding = this->get_file_encoding(right_path, right_man);
-    
   left_unpacked = left_data.inner();
   ancestor_unpacked = ancestor_data.inner();
   right_unpacked = right_data.inner();
 
-  split_into_lines(left_unpacked(), left_encoding, left_lines);
-  split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
-  split_into_lines(right_unpacked(), right_encoding, right_lines);
-    
-  if (merge3(ancestor_lines, 
-             left_lines, 
-             right_lines, 
-             merged_lines))
+  if (!attribute_manual_merge(left_path, left_man) && 
+      !attribute_manual_merge(right_path, right_man))
     {
-      hexenc<id> tmp_id;
-      file_data merge_data;
-      string tmp;
-      
-      L(F("internal 3-way merged ok\n"));
-      join_lines(merged_lines, tmp);
-      calculate_ident(data(tmp), tmp_id);
-      file_id merged_fid(tmp_id);
-      merge_data = file_data(tmp);
-
-      merged_id = merged_fid;
-      record_merge(left_id, right_id, merged_fid, 
-                   left_data, merge_data);
-
-      return true;
+      // both files mergeable by monotone internal algorithm, try to merge
+      // note: the ancestor is not considered for manual merging. Forcing the 
+      // user to merge manually just because of an ancestor mistakenly marked
+      // manual seems too harsh
+      string left_encoding, anc_encoding, right_encoding;
+      left_encoding = this->get_file_encoding(left_path, left_man);
+      anc_encoding = this->get_file_encoding(anc_path, anc_man);
+      right_encoding = this->get_file_encoding(right_path, right_man);
+        
+      vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
+      split_into_lines(left_unpacked(), left_encoding, left_lines);
+      split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
+      split_into_lines(right_unpacked(), right_encoding, right_lines);
+        
+      if (merge3(ancestor_lines, 
+                 left_lines, 
+                 right_lines, 
+                 merged_lines))
+        {
+          hexenc<id> tmp_id;
+          file_data merge_data;
+          string tmp;
+          
+          L(F("internal 3-way merged ok\n"));
+          join_lines(merged_lines, tmp);
+          calculate_ident(data(tmp), tmp_id);
+          file_id merged_fid(tmp_id);
+          merge_data = file_data(tmp);
+    
+          merged_id = merged_fid;
+          record_merge(left_id, right_id, merged_fid, 
+                       left_data, merge_data);
+    
+          return true;
+        }
     }
 
   P(F("help required for 3-way merge\n"));
@@ -715,7 +723,17 @@ std::string update_merge_provider::get_file_encoding(file_path const & path,
     return default_encoding;
 }
 
-
+bool update_merge_provider::attribute_manual_merge(file_path const & path,
+                                              manifest_map const & man)
+{
+  std::string mmf;
+  if (get_attribute_from_working_copy(path, manual_merge_attribute, mmf))
+    return mmf == std::string("true");
+  else if (get_attribute_from_db(path, manual_merge_attribute, man, mmf, app))
+    return mmf == std::string("true");
+  else
+    return false; // default: enable auto merge
+}
 
 // the remaining part of this file just handles printing out various
 // diff formats for the case where someone wants to *read* a diff
@@ -845,7 +863,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
       if (b_len == 0)
         ost << " +0,0";
       else
-	{
+        {
           ost << " +" << b_begin+1;
           if (b_len > 1)
             ost << "," << b_len;

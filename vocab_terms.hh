@@ -22,7 +22,7 @@ ATOMIC(file_path);            // non-absolute, non-bookeeping file
 ATOMIC(cert_name);            // symbol-of-your-choosing
 ATOMIC_NOVERIFY(cert_value);  // symbol-of-your-choosing
 
-// some domains: "database" (+ default_server, default_collection),
+// some domains: "database" (+ default_server, default_pattern),
 //   server_key (+ servername/key)
 //   branch_alias (+ short form/long form)
 //   trust_seed (+ branch/seed)
@@ -34,10 +34,15 @@ ATOMIC(rsa_keypair_id);              // keyname@domain.you.own
 ATOMIC_NOVERIFY(rsa_pub_key);        // some nice numbers
 ATOMIC_NOVERIFY(rsa_priv_key);       // some nice numbers
 ATOMIC_NOVERIFY(rsa_sha1_signature); // some other nice numbers
+ATOMIC_NOVERIFY(rsa_oaep_sha_data);
+
+ATOMIC(netsync_session_key);  // key for netsync session HMAC
+ATOMIC(netsync_hmac_value);   // 160-bit SHA-1 HMAC
 
 DECORATE(revision);           // thing associated with a revision
 DECORATE(manifest);           // thing associated with a manifest
 DECORATE(file);               // thing associated with a file
+DECORATE(key);               // thing associated with a key
 DECORATE(epoch);              // thing associated with an epoch
 
 ENCODING(gzip);               // thing which is gzipped
@@ -54,6 +59,7 @@ EXTERN template class           hexenc<id>;
 EXTERN template class revision< hexenc<id> >;
 EXTERN template class manifest< hexenc<id> >;
 EXTERN template class     file< hexenc<id> >;
+EXTERN template class      key< hexenc<id> >;
 EXTERN template class    epoch< hexenc<id> >;
 
 EXTERN template class     hexenc<inodeprint>;

@@ -47,6 +47,8 @@ AT_CHECK(MONOTONE complete manifest "", [], [stdout], [ignore])
 AT_CHECK(mv stdout old.manifests)
 AT_CHECK(MONOTONE complete revision "", [], [stdout], [ignore])
 AT_CHECK(mv stdout old.revisions)
+AT_CHECK(MONOTONE complete key "", [], [stdout], [ignore])
+AT_CHECK(mv stdout old.keys)
 
 # Rebuild
 AT_CHECK(MONOTONE db rebuild, [], [ignore], [ignore])
@@ -56,6 +58,8 @@ AT_CHECK(MONOTONE complete manifest "", [], [stdout], [ignore])
 AT_CHECK(cmp stdout old.manifests)
 AT_CHECK(MONOTONE complete revision "", [], [stdout], [ignore])
 AT_CHECK(test `wc -l <stdout` = `wc -l <old.revisions`)
+AT_CHECK(MONOTONE complete key "", [], [stdout], [ignore])
+AT_CHECK(cmp stdout old.keys)
 
 AT_CHECK(MONOTONE checkout --branch=testbranch tb, [], [ignore], [ignore])
 

@@ -32,5 +32,7 @@ void add_xdelta_tests(test_suite * suite);
 void add_packet_tests(test_suite * suite);
 void add_netcmd_tests(test_suite * suite);
 void add_path_component_tests(test_suite * suite);
+void add_globish_tests(test_suite * suite);
+void add_crypto_tests(test_suite * suite);
 
 #endif

@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <unistd.h>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -855,7 +856,7 @@ automate_certs(std::vector<utf8> args,
         
   // Make the output deterministic; this is useful for the test suite, in
   // particular.
-  sort(certs.begin(), certs.end());
+  std::sort(certs.begin(), certs.end());
 
   basic_io::printer pr(output);
 
@@ -915,11 +916,13 @@ automate_command(utf8 cmd, std::vector<utf8> args,
 //   of monotone.
 //
 // Input format: The input is a series of lines of the form
-//   <token> [<token> ...] newline, where <token> is
-//   <size> colon <string> .
+//   'l'<size>':'<string>[<size>':'<string>...]'e', with characters
+//   after the 'e' of one command, but before the 'l' of the next ignored.
+//   This space is reserved, and should not contain characters other
+//   than '\n'.
 //   Example:
-//     6:leaves
-//     7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378
+//     l6:leavese
+//     l7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378e
 //
 // Output format: <command number>:<err code>:<last?>:<size>:<output>
 //   <command number> is a decimal number specifying which command
@@ -970,9 +973,18 @@ public:
     written+=__n;
     while(written>=last_call+call_every)
       {
-        if(on_write) on_write(call_every);
+        if(on_write)
+          on_write(call_every);
         last_call+=call_every;
       }
+    return ret;
+  }
+  virtual int sync()
+  {
+    int ret=char_stringbuf::sync();
+    if(on_write)
+      on_write(-1);
+    last_call=written;
     return ret;
   }
   void set_on_write(boost::function1<void, int> x)
@@ -989,17 +1001,28 @@ void print_some_output(int cmdnum,
                        int & pos,
                        int size)
 {
-  s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
   if(size==-1)
     {
+      while(text.size()-pos > constants::automate_stdio_size)
+        {
+          s<<cmdnum<<':'<<err<<':'<<'m'<<':';
+          s<<constants::automate_stdio_size<<':'
+           <<text.substr(pos, constants::automate_stdio_size);
+          pos+=constants::automate_stdio_size;
+          s.flush();
+        }
+      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
       s<<(text.size()-pos)<<':'<<text.substr(pos);
       pos=text.size();
     }
   else
     {
+      I((unsigned int)(size) <= constants::automate_stdio_size);
+      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
       s<<size<<':'<<text.substr(pos, size);
       pos+=size;
     }
+  s.flush();
 }
 
 static void
@@ -1011,7 +1034,9 @@ automate_stdio(std::vector<utf8> args,
   if (args.size() != 0)
     throw usage(help_name);
   int cmdnum = 0;
-  while(!std::cin.eof())
+  char c;
+  ssize_t n=1;
+  while(n)//while(!EOF)
     {
       std::string x;
       utf8 cmd;
@@ -1019,9 +1044,9 @@ automate_stdio(std::vector<utf8> args,
       bool first=true;
       int toklen=0;
       bool firstchar=true;
-      for(char c=std::cin.get();c != 'l' && !std::cin.eof();c=std::cin.get())
+      for(n=read(0, &c, 1); c != 'l' && n; n=read(0, &c, 1))
         ;
-      for(char c=std::cin.get();c != 'e' && !std::cin.eof(); c=std::cin.get())
+      for(n=read(0, &c, 1); c!='e' && n; n=read(0, &c, 1))
         {
           if(c<='9' && c>='0')
             {
@@ -1029,8 +1054,10 @@ automate_stdio(std::vector<utf8> args,
             }
           else if(c == ':')
             {
-              char *tok=new char[toklen+1];
-              std::cin.get(tok, toklen+1);
+              char *tok=new char[toklen];
+              int count=0;
+              while(count<toklen)
+                count+=read(0, tok, toklen-count);
               if(first)
                 cmd=utf8(std::string(tok, toklen));
               else
@@ -1064,25 +1091,25 @@ automate_stdio(std::vector<utf8> args,
             {
               err=0;
               automate_command(cmd, args, help_name, app, s);
-              print_some_output(cmdnum, err, true, sb.str(),
-                                output, outpos, -1);
             }
           catch(usage & u)
             {
+              if(sb.str().size())
+                s.flush();
               err=1;
               commands::explain_usage(help_name, s);
-              print_some_output(cmdnum, err, true, sb.str(),
-                                output, outpos, -1);
             }
           catch(informative_failure & f)
             {
+              if(sb.str().size())
+                s.flush();
               err=2;
-              //Do this instead of using f.what directly so the output
+              //Do this instead of printing f.what directly so the output
               //will be split into properly-sized blocks automatically.
               s<<f.what;
-              print_some_output(cmdnum, err, true, sb.str(),
-                                output, outpos, -1);
             }
+            print_some_output(cmdnum, err, true, sb.str(),
+                              output, outpos, -1);
         }
       cmdnum++;
     }

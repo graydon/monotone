@@ -40,7 +40,9 @@ MOST_SOURCES =								\
          selectors.cc selectors.hh					\
          annotate.cc annotate.hh					\
          restrictions.cc restrictions.hh				\
-									\
+         hmac.cc hmac.hh                  \
+         globish.cc globish.hh                                          \
+                                                                        \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\
@@ -109,6 +111,7 @@ SQLITE_SOURCES = \
         sqlite/util.c sqlite/vacuum.c \
         sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c \
         sqlite/vdbemem.c sqlite/where.c \
+	sqlite/prepare.c sqlite/callback.c \
 	\
         sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
         sqlite/os_common.h sqlite/os_unix.h sqlite/os_win.h \
@@ -152,7 +155,7 @@ check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
 
 monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
-unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc
+unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
 
 txt2c_SOURCES = txt2c.cc
 
@@ -174,7 +177,7 @@ AM_LDFLAGS =
 lib3rdparty_a_CPPFLAGS =
 
 monotone_LDFLAGS = 
-monotone_CPPFLAGS = 
+monotone_CPPFLAGS =
 
 unit_tests_LDFLAGS = 
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
@@ -183,12 +186,14 @@ unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
 
 if BUNDLED_LUA
   lib3rdparty_a_SOURCES += $(LUA_SOURCES)
-  AM_CPPFLAGS += -I$(top_srcdir)/lua
+  monotone_CPPFLAGS += -I$(top_srcdir)/lua
+  unit_tests_CPPFLAGS += -I$(top_srcdir)/lua
 endif
 
 if BUNDLED_SQLITE
   lib3rdparty_a_SOURCES += $(SQLITE_SOURCES)
-  AM_CPPFLAGS += -I$(top_srcdir)/sqlite
+  monotone_CPPFLAGS += -I$(top_srcdir)/sqlite
+  unit_tests_CPPFLAGS += -I$(top_srcdir)/sqlite
 endif
 
 if STATIC_BOOST
@@ -292,14 +297,20 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/monotone.zsh_completion \
              contrib/monoprof.sh \
              contrib/mtbrowse.sh \
+             contrib/colorize \
+             contrib/color-logs.sh \
+             contrib/color-logs.conf \
+             contrib/get_stdio.pl \
              win32/monotone.iss \
              $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
-monotone.pdf: monotone.texi version.texi $(PDF_FIGURES)
+monotone.info: monotone.texi version.texi std_hooks.lua
 
-monotone.dvi: monotone.texi version.texi $(EPS_FIGURES)
+monotone.pdf: monotone.texi version.texi std_hooks.lua $(PDF_FIGURES)
+
+monotone.dvi: monotone.texi version.texi std_hooks.lua $(EPS_FIGURES)
 
 #%.eps: %.epsi
 #	mv $< $@
@@ -408,14 +419,14 @@ package_full_revision.c: package_full_revision.txt txt2c Makefile
 
 # automake doesn't build html docs
 
-monotone.html: monotone.texi texinfo.css
+monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
 	makeinfo --no-split --no-headers --output $@ --html $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
 	rm -f monotone.html.perlbak
 
 # The .perlbak thing is needed, otherwise the perl executions fails on MinGW
 
-html: monotone.texi texinfo.css
+html: monotone.texi version.texi std_hooks.lua texinfo.css
 	mkdir -p html
 	makeinfo --number-sections --html --output html $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html

@@ -27,6 +27,70 @@ developer needs to send our fixes upstream or wants to import new upstream
 versions into monotone.
 
 
+Dialect issues
+--------------
+
+C++ is a big language with a lot of dialects spoken in different
+projects.  monotone is no exception; we would prefer submissions
+continued to adhere to the dialect we write in. in particular:
+
+
+  - try to stick to simple functions and data types; don't make big
+    complicated class hierarchies with a lot of interdependencies.
+
+  - avoid pointers whenever possible. if you need to use a handle to a
+    heap allocated object, use a shared_ptr, scoped_ptr, weak_ptr, or
+    the like.
+
+  - if a value has a clearly defined well-formedness condition,
+    encapsulate the value in an object and make the constructors
+    and mutators check the condition. see vocab.hh for string-valued
+    examples.
+
+  - in general, try to express both issues and semantically rich 
+    names in the type system. use typedefs to make names more
+    meaningful. 
+
+  - avoid returning values, especially large ones. instead, pass a
+    value as a parameter, by reference, clear it and assign into
+    it. this style generally produces fewer invocations of copy
+    constructors, and makes it natural to add multiple, named output
+    parameters from a function.
+
+  - use invariants and logging liberally.
+
+  - make everything as const-correct as possible. make query methods
+    on objects const. make the input parameters to a function const.
+    the word "const" comes after the thing which is constant; for
+    example write "int const" rather than "const int".
+
+  - separate pointer and reference types with space. write "int * foo"
+    rather than "int *foo" or "int* foo".
+
+  - put the name of a function in the first column of the line it
+    occurs on. the visibility and return type go on the preceeding
+    line.
+
+  - use enums rather than magic constants, if you can.
+
+  - magic constants, when needed, go in constants.{cc,hh}.
+
+  - generally avoid the preprocessor unless you have a matter which is
+    very difficult to express using inlines, reference args,
+    templates, etc.
+
+  - avoid indexing into an array or vector with []. use idx(vec,i),
+    and you will get a nicely informative runtime error when you
+    overflow rather than a crash.
+
+  - avoid recursion, so that you will not overflow the stack on large
+    work sets. use a heap-allocated std::deque<> for breadth-first
+    recursion, std::stack<> for depth-first.
+
+  - generally avoid anything which can generate a SEGV, as it's an
+    uninformative error. prefer errors which say what went wrong.
+
+
 Test suites, and writing test cases
 ----------------------------------
 

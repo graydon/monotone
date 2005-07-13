@@ -59,6 +59,10 @@ contributing authors, including:
   Timothy Brownawell <tbrownaw@gmail.com>
   Matthew Gregan <kinetik@orcon.net.nz>
   Riccardo Ghetta <birrachiara@tin.it>
+  Brian Campbell <brian.p.campbell@dartmouth.edu>
+  Ethan Blanton <elb@elitists.net>
+  Eric Anderson <anderse-monotone@cello.hpl.hp.com>
+  Kaushik Veeraraghavan <kaushikv@gmail.com>
 
 supporting files:
 -----------------
@@ -208,6 +212,10 @@ Debian (their own version number is 1.7-5).  According to the README
 employee using the address ewt@redhat.com.  popt is licensed with the
 X Consortium public license, nowadays called the "X.Net, Inc. License".
 It's reproduced in popt/COPYING.
+
+
+The file contrib/colorize is a copy of a perl script written by Cédric
+Bouvier, which is released under the GNU GPL.
 
 
 copyright status:

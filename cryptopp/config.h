@@ -103,7 +103,7 @@ NAMESPACE_BEGIN(CryptoPP)
 typedef uint16_t word16;
 typedef uint32_t word32;
 
-#if defined(__GNUC__) || defined(__MWERKS__)
+#if defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC)
 	#define WORD64_AVAILABLE
 	typedef uint64_t word64;
 	#define W64LIT(x) x##LL
@@ -203,7 +203,7 @@ NAMESPACE_END
 #define CRYPTOPP_WIN32_AVAILABLE
 #endif
 
-#if defined(__unix__) || defined(__MACH__) || defined(__NetBSD__)
+#if defined(__unix__) || defined(__MACH__) || defined(__sun) || defined(__NetBSD__)
 #define CRYPTOPP_UNIX_AVAILABLE
 #endif
 
@@ -255,7 +255,7 @@ NAMESPACE_END
 #	define CRYPTOPP_MALLOC_ALIGNMENT_IS_16
 #endif
 
-#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
+#if defined(__linux__) || defined(__sun) || defined(__CYGWIN__)
 #	define CRYPTOPP_MEMALIGN_AVAILABLE
 #endif
 

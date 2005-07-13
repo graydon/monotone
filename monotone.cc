@@ -8,6 +8,7 @@
 
 #include "popt/popt.h"
 #include <cstdio>
+#include <strings.h>
 #include <iterator>
 #include <iostream>
 #include <fstream>
@@ -35,9 +36,12 @@ using namespace std;
 char * argstr = NULL;
 long arglong = 0;
 
-// Options are divide into two tables.  The first one is command-specific
+// Options are split between two tables.  The first one is command-specific
 // options (hence the `c' in `coptions').  The second is the global one
 // with options that aren't tied to specific commands.
+//
+// the intent is to ensure that any command specific options mean the same
+// thing to all commands that use them
 
 struct poptOption coptions[] =
   {
@@ -47,9 +51,14 @@ struct poptOption coptions[] =
     {"message-file", 0, POPT_ARG_STRING, &argstr, OPT_MSGFILE, "set filename containing commit changelog message", NULL},
     {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, "override date/time for commit", NULL},
     {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, "override author for commit", NULL},
-    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the log output to the given number of entries", NULL},
+    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, "limit the number of levels of directories to descend", NULL},
+    {"last", 0, POPT_ARG_LONG, &arglong, OPT_LAST, "limit the log output to the given number of entries", NULL},
     {"pid-file", 0, POPT_ARG_STRING, &argstr, OPT_PIDFILE, "record process id of server", NULL},
     {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, "print a brief version of the normal output", NULL},
+    {"diffs", 0, POPT_ARG_NONE, NULL, OPT_DIFFS, "print diffs along with logs", NULL},
+    {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, "skip merges when printing logs", NULL},
+    {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, "use the current arguments as the future default", NULL},
+    {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, "leave out branches matching a pattern", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -72,6 +81,7 @@ struct poptOption options[] =
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, "set key for signatures", NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, "set name of database", NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, "limit search for working copy to specified root", NULL},
+    {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, "verbose completion output", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -210,6 +220,7 @@ int
 cpp_main(int argc, char ** argv)
 {
   clean_shutdown = false;
+  int ret = 0;
 
   atexit(&dumper);
 
@@ -219,6 +230,12 @@ cpp_main(int argc, char ** argv)
   setlocale(LC_MESSAGES, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
+
+
+  // we want to catch any early informative_failures due to charset
+  // conversion etc
+  try
+  {
 
   {
     std::ostringstream cmdline_ss;
@@ -233,7 +250,7 @@ cpp_main(int argc, char ** argv)
 
   L(F("set locale: LC_CTYPE=%s, LC_MESSAGES=%s\n")
     % (setlocale(LC_CTYPE, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL))
-    % (setlocale(LC_MESSAGES, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL)));
+    % (setlocale(LC_MESSAGES, NULL) == NULL ? "n/a" : setlocale(LC_MESSAGES, NULL)));
 
   // decode all argv values into a UTF-8 array
 
@@ -252,7 +269,6 @@ cpp_main(int argc, char ** argv)
 
   // process main program options
 
-  int ret = 0;
   int opt;
   bool requested_help = false;
   set<int> used_local_options;
@@ -284,6 +300,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_NORC:
               app.set_rcfiles(false);
+              break;
+
+            case OPT_VERBOSE:
+              app.set_verbose(true);
               break;
 
             case OPT_RCFILE:
@@ -351,12 +371,32 @@ cpp_main(int argc, char ** argv)
               app.set_root(string(argstr));
               break;
 
+            case OPT_LAST:
+              app.set_last(arglong);
+              break;
+
             case OPT_DEPTH:
               app.set_depth(arglong);
               break;
 
             case OPT_BRIEF:
               global_sanity.set_brief();
+              break;
+
+            case OPT_DIFFS:
+              app.diffs = true;
+              break;
+
+            case OPT_NO_MERGES:
+              app.no_merges = true;
+              break;
+
+            case OPT_SET_DEFAULT:
+              app.set_default = true;
+              break;
+
+            case OPT_EXCLUDE:
+              app.add_exclude(utf8(string(argstr)));
               break;
 
             case OPT_PIDFILE:
@@ -464,12 +504,13 @@ cpp_main(int argc, char ** argv)
       clean_shutdown = true;
       return 0;
     }
+  }
   catch (informative_failure & inf)
-    {
-      ui.inform(inf.what);
-      clean_shutdown = true;
-      return 1;
-    }
+  {
+    ui.inform(inf.what);
+    clean_shutdown = true;
+    return 1;
+  }
 
   clean_shutdown = true;
   return ret;

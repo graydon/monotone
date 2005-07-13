@@ -7,11 +7,11 @@ MONOTONE_SETUP
 AT_CHECK(cp test.db test2.db)
 
 AT_DATA(netsync.lua, [
-function get_netsync_read_permitted(collection, identity)
+function get_netsync_read_permitted(pattern, identity)
 	return true
 end
 
-function get_netsync_write_permitted(collection, identity)
+function get_netsync_write_permitted(identity)
 	return true
 end
 ])

@@ -307,6 +307,8 @@ public:
   void delete_existing_revs_and_certs();
 
   void delete_existing_rev_and_certs(revision_id const & rid);
+  
+  void delete_branch_named(cert_value const & branch);
 
   // crypto key / cert operations
 
@@ -432,6 +434,9 @@ public:
   
   void complete(std::string const & partial,
                 std::set<file_id> & completions);
+
+  void complete(std::string const & partial,
+                std::set< std::pair<key_id, utf8 > > & completions);
 
   void complete(selectors::selector_type ty,
                 std::string const & partial,

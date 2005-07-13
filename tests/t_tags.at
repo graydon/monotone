@@ -11,6 +11,9 @@ AT_DATA(file2, [file 2
 AT_DATA(file3, [file 3
 ])
 
+# make sure a tag of a nonexistent revision fails
+AT_CHECK(MONOTONE tag af2f6c1f3b7892672357a1018124ee80c752475d foo, [1], [ignore], [ignore])
+
 # make and tag revision 1
 
 AT_CHECK(MONOTONE add file1, [], [ignore], [ignore])

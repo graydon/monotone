@@ -13,7 +13,7 @@ building and installation process for monotone
   * software prerequisites:
 
     - a supported C++ compiler: g++ 3.2 or later.
-    - an installed copy of boost 1.31.0 or later.
+    - an installed copy of boost 1.32.0 or later.
 
         on debian: 
 
@@ -49,9 +49,9 @@ building and installation process for monotone
   assembled this abbreviated bourne shell sequence for advanced users
   who do not need all the preamble:
 
-    wget http://aleron.dl.sourceforge.net/sourceforge/boost/boost_1_31_0.tar.gz
-    tar -xzf boost_1_31_0.tar.gz
-    cd boost_1_31_0
+    wget http://aleron.dl.sourceforge.net/sourceforge/boost/boost_1_32_0.tar.gz
+    tar -xzf boost_1_32_0.tar.gz
+    cd boost_1_32_0
     (cd tools/build/jam_src && ./build.sh)
     BJAM=`find tools/build/jam_src/ -name bjam -a -type f`
     $BJAM "-sBUILD=release <threading>single <optimization>speed <runtime-link>static"
@@ -63,13 +63,13 @@ building and installation process for monotone
     ranlib libs/*.a
 
   if this completes successfully, you will have a selection of boost
-  libraries in boost_1_31_0/libs and boost headers in
-  boost_1_31_0/boost. you can then either copy the .a files to your
-  standard library path and the directory "boost_1_31_0/boost" to your
+  libraries in boost_1_32_0/libs and boost headers in
+  boost_1_32_0/boost. you can then either copy the .a files to your
+  standard library path and the directory "boost_1_32_0/boost" to your
   standard include path, or you can pass additional configuration
   options to your monotone configure build, such as:
 
-    ./configure CPPFLAGS="-Iboost_1_31_2" LDFLAGS="-Lboost_1_31_0/libs"
+    ./configure CPPFLAGS="-Iboost_1_32_0" LDFLAGS="-Lboost_1_32_0/libs"
 
   monotone does not use all of boost -- for instance, people often
   have trouble building boost.python, which we do not use.  you don't

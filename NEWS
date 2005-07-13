@@ -1,3 +1,94 @@
+Tue Jul  5 23:57:10 PDT 2005
+
+        0.20 release.  features, ui improvements, performance
+        improvements, and bug fixes.
+
+        - major changes in netsync UI: serve/sync/push/pull now take a
+          list of globs; clients can request arbitrary sets of
+          branches, not just predefined "collections".  write
+          permissions are now granted on a per-db level (they were
+          before anyway).
+                - where you used to say, e.g., "monotone pull
+                  net.venge.monotone", you should instead say
+                  "monotone pull net.venge.monotone*".  This may
+                  require shell-quoting.
+                - 'get_netsync_write_permitted' hooks must be changed
+                  to take only one argument, the 'identity'.
+                  'get_netsync_{read,anonymous_read}_permitted' hooks
+                  now take a branch argument instead of a collection,
+                  and will be called for each branch that a client
+                  requests.
+                - 0.19 clients cannot talk to 0.20 servers, and vice-versa.
+                - special thanks to Timothy Brownawell
+                  <tbrownaw@gmail.com>, Richard Levitte
+                  <richard@levitte.org>.
+        - other major changes:
+                - cvs_import re-written; many bugs fixed.  now
+                  supports tags.
+        - many minor netsync changes:
+                - netsync traffic is now cryptographically authenticated
+                  against corruption and man-in-the-middle attacks.
+                  special thanks to Ethan Blanton <elb@elitists.net>,
+                  Matt Johnston <matt@ucc.asn.au>.
+                - new hooks that are called when server receives data:
+                  note_netsync_*_received.  special thanks to Timothy
+                  Brownawell <tbrownaw@gmail.com>.
+                - ancestry graphs that pass outside the given branch
+                  are now synchronized correctly.  special thanks to
+                  Timothy Brownawell <tbrownaw@gmail.com>.
+        - UI improvements:
+                - 'log' options changed: --depth has become --last;
+                  new options --no-merges, --diffs, --brief.
+                - 'status' has new option --brief.  special thanks to
+                  Derek Scherger <derek@echologic.com>.
+                - 'serve' has new option --pid-file.  special thanks
+                  to Matthew Gregan <kinetik@orcon.net.nz>.
+                - all commands taking restrictions now take option
+                  --depth, to limit recursion through subdirectories.
+                  special thanks to Joel Reed <joelwreed@comcast.com>.
+                - merge command all take --author, --date now.
+                - 'checkout', 'update' take --revision, instead of
+                  using positional arguments.  special thanks to Derek
+                  Scherger <derek@echologic.com>, Richard Levitte
+                  <richard@levitte.org>.
+                - 'commit' takes new --message-file option.
+        - new features:
+                - new commands: "db kill_branch_locally", "db
+                  kill_revision_locally", useful for correcting some
+                  mistakes.  special thanks to Brian Campbell
+                  <brian.p.campbell@dartmouth.edu>, Sebastian Spaeth
+                  <Sebastian@sspaeth.de>.
+                - new file attribute 'manual_merge', to prevent invocation of
+                  merger on binary files.  hook added to guess correct
+                  value at 'add' time.  special thanks to Riccardo
+                  Ghetta <birrachiara@tin.it>.
+                - new 'earlier than', 'later than' selectors.  special
+                  thanks to Riccardo Ghetta <birrachiara@tin.it>.
+        - new automate commands:
+                - 'stdio', for efficient use by
+                  front-ends.  special thanks to Timothy Brownawell
+                  <tbrownaw@gmail.com>.
+                - 'certs', for fetching certs on a revision in a
+                  parseable (basic io-based) format.  special thanks
+                  to Grahame Bowland <grahame@angrygoats.net>.
+                - 'inventory' output changed incompatibly; should be
+                  much more usable now, and stable.  special thanks to
+                  Derek Scherger <derek@echologic.com>.
+        - better memory/performance when handling large files.
+          special thanks to Eric Anderson
+          <anderse-monotone@cello.hpl.hp.com>, Timothy Brownawell
+          <tbrownaw@gmail.com>, Matt Johnston <matt@ucc.asn.au>,
+          Matthew Gregan <kinetik@orcon.net.nz>.
+        - new text mode browser in contrib/mtbrowse.sh, by Henry
+          Nestler <Henry@BigFoot.de>.
+        - improved zsh completion in contrib/monotone.zsh_completion,
+          by Joel Reed <joelwreed@comcast.com>.
+
+                - upgrading from 0.19: database and working copies are
+                  fully compatible.  netsync clients and servers need
+                  to be upgraded together, as described above.  the
+                  many ui changes may require script updates.
+
 Tue May  3 00:31:37 PDT 2005
 
         0.19 release.  performance improvements, features, ui

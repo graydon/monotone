@@ -22,6 +22,8 @@
 #include <cstring>
 #include <iostream>
 #include <ui.hh>
+#include <signal.h>
+#include <setjmp.h>
 
 // Microsoft + other compatible compilers such as Intel
 #if defined(_MSC_VER) || (defined(__MWERKS__) && __MWERKS__ >= 0x3000)
@@ -444,7 +446,7 @@ main_with_many_flavours_of_exception(int argc, char **argv)
 
     catch( ... )
       { 
-        report_error("unknown type" ); 
+        report_error("exception of unknown type" ); 
       }
     return 0;
 }

@@ -19,7 +19,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 
-using namespace boost;
+using boost::dynamic_bitset;
 using namespace std;
 using namespace CryptoPP;
 

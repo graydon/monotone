@@ -198,7 +198,7 @@ print "********** IMPORTANT NOTICE **********\n";
 print "If you want the changes that come with the import to appear in\n";
 print "another branch (like your development branch), do the following\n";
 print "\n";
-print "monotone$database propagate $branch {your-chosen-branch}\n";
+print "monotone$database propagate $user_branch {your-chosen-branch}\n";
 print "**************************************\n";
 
 ######################################################################

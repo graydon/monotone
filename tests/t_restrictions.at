@@ -12,6 +12,8 @@ end
 ])
 
 AT_CHECK(mkdir work, [], [ignore])
+AT_CHECK(mkdir work/A, [], [ignore])
+AT_CHECK(mkdir work/A/B, [], [ignore])
 
 AT_DATA(work/foo.o, [version 1 of foo.o
 ])
@@ -28,9 +30,32 @@ AT_DATA(work/file3, [version 1 of file3
 AT_DATA(work/file4, [version 1 of file4
 ])
 
+AT_DATA(work/A/fileA, [file in a subdirectory
+])
+
+AT_DATA(work/A/B/fileAB, [file in a deeper subdirectory
+])
+
 AT_CHECK(MONOTONE add work/fileX, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add work/file2, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add work/file3, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add work/A/fileA, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add work/A/B/fileAB, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls known --depth=0, [], [stdout], [ignore])
+AT_CHECK(grep fileX stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE ls known --depth=0 . , [], [stdout], [ignore])
+AT_CHECK(grep fileX stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE ls known --depth=1 . , [], [stdout], [ignore])
+AT_CHECK(grep fileX stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE ls known --depth=0 work/A , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE ls known --depth=1 work/A , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [0], [ignore])
 
 # test restriction of unknown, missing, ignored files
 
@@ -66,6 +91,12 @@ AT_CHECK(mv work/fileX work/file1)
 AT_CHECK(rm work/file2)
 
 AT_DATA(work/file3, [version 2 of file3 with some changes
+])
+
+AT_DATA(work/A/fileA, [version 2 of fileA with some changes
+])
+
+AT_DATA(work/A/B/fileAB, [version 2 of fileAB with some changes
 ])
 
 AT_CHECK(MONOTONE rename work/fileX work/file1, [], [ignore], [ignore])
@@ -132,6 +163,18 @@ AT_CHECK(EXCLUDED(X 1 2 3), [0], [ignore])
 
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
 AT_CHECK(INCLUDED(X 1 2 3 4), [0], [ignore])
+
+AT_CHECK(MONOTONE diff --depth=0 . , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE diff --depth=2 . , [], [stdout], [ignore])
+AT_CHECK(grep fileA stdout, [0], [ignore])
+
+AT_CHECK(MONOTONE cdiff --depth=0 . , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE cdiff --depth=2 . , [], [stdout], [ignore])
+AT_CHECK(grep fileA stdout, [0], [ignore])
 
 # include both source and target of rename
 

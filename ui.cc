@@ -120,6 +120,8 @@ void tick_write_count::write_ticks()
             div = 1024;
             suffix = "k";
           }
+          // we reset the mod to the divider, to avoid spurious screen updates
+          i->second->mod = static_cast<int>(div / 10.0);
           count = (F("%.1f%s") % (i->second->ticks / div) % suffix).str();
         }
       else

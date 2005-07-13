@@ -17,7 +17,7 @@ AT_DATA(otherfile, [some data
 AT_CHECK(MONOTONE2 add testfile, [], [ignore], [ignore])
 AT_CHECK(MONOTONE2 commit --message=foo --branch=testbranch.subbranch, [], [ignore], [ignore])
 
-RUN_NETSYNC(pull, testbranch)
+RUN_NETSYNC(pull, 'testbranch.*')
 
 CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
 
