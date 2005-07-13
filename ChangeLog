@@ -1,5 +1,10 @@
 2005-07-12  Nathaniel Smith  <njs@pobox.com>
 
+	* schema_migration.cc (migrator::migrate): When there is nothing
+	to be done, do nothing.
+
+2005-07-12  Nathaniel Smith  <njs@pobox.com>
+
 	* netsync.cc (rebuild_merkle_trees): Reduce memory usage a bit,
 	and don't insert branch certs that the other side will just end up
 	throwing away (reduces network traffic).
