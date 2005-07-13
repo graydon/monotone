@@ -59,7 +59,7 @@ int const any_cols = -1;
 extern "C" {
 // some wrappers to ease migration
   const char *sqlite3_value_text_s(sqlite3_value *v);
-  const char *sqlite3_column_text_s(sqlite3_stmt*, int iCol);
+  const char *sqlite3_column_text_s(sqlite3_stmt*, int col);
 }
 
 database::database(fs::path const & fn) :
@@ -72,7 +72,6 @@ database::database(fs::path const & fn) :
   schema("1509fd75019aebef5ac3da3a5edf1312393b70e9"),
   __sql(NULL),
   transaction_level(0)
-
 {}
 
 void 
@@ -168,10 +167,7 @@ assert_sqlite3_ok(sqlite3 *s)
   
   const char * errmsg = sqlite3_errmsg(s);
 
-  ostringstream oss;
-  oss << "sqlite error [" << errcode << "]: " << errmsg;
-  
-  throw oops(oss.str());
+  E(errcode == SQLITE_OK, F("sqlite error [%d]: %s") % errcode % errmsg);
 }
 
 struct sqlite3 * 
@@ -284,9 +280,10 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   I(string(vals[1]) == "table");
   *(dump->out) << vals[2] << ";\n";
   dump->table_name = string(vals[0]);
-      dump->table_name = string(vals[0]);
-      string query = "SELECT * FROM " + string(vals[0]);
-      int result = sqlite3_exec(dump->sql, query.c_str(), dump_row_cb, data, NULL);
+  string query = "SELECT * FROM " + string(vals[0]);
+  sqlite3_exec(dump->sql, query.c_str(), dump_row_cb, data, NULL);
+  assert_sqlite3_ok(dump->sql);
+  return 0;
 }
 
 static int 
@@ -318,13 +315,13 @@ database::dump(ostream & out)
                         "WHERE type='table' AND sql NOT NULL "
                         "ORDER BY name",
                         dump_table_cb, &req, NULL);
-  I(res == SQLITE_OK);
+  assert_sqlite3_ok(req.sql);
   res = sqlite3_exec(req.sql,
                         "SELECT name, type, sql FROM sqlite_master "
                         "WHERE type='index' AND sql NOT NULL "
                         "ORDER BY name",
                         dump_index_cb, &req, NULL);
-  I(res == SQLITE_OK);
+  assert_sqlite3_ok(req.sql);
   out << "COMMIT;\n";
 }
 
@@ -353,7 +350,7 @@ database::load(istream & in)
       if (last_statement == 0)
         continue;
       string::size_type len = last_statement + 1 - tmp.c_str();
-      execute(tmp.substr(0, len).c_str());
+      sqlite3_exec(__sql, tmp.substr(0, len).c_str(), NULL, NULL, NULL);
       tmp.erase(0, len);
     }
 
@@ -742,17 +739,16 @@ database::fetch(results & res,
       sqlite3_prepare(sql(), query, -1, &i->second.stmt, &tail);
       assert_sqlite3_ok(sql());
       L(F("prepared statement %s\n") % query);
-      I(*tail == 0); // no support for multiple statements
-    }
 
-  // do it
-  rescode = sqlite3_get_table_vprintf(sql(), query, &result, &nrow, &ncol, &errmsg, ap);
+      // no support for multiple statements here
+      E(*tail == 0, 
+        F("multiple statements in query: %s\n") % query);
+    }
 
   ncol = sqlite3_column_count(i->second.stmt);
 
-  if (want_cols != any_cols && ncol != want_cols)
-    throw oops((F("%s wanted %d columns, got %s")
-                % ctx % want_cols % ncol).str());
+  E(want_cols == any_cols || want_cols == ncol, 
+    F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query);
 
   // bind parameters for this execution
 
@@ -765,7 +761,15 @@ database::fetch(results & res,
       char *value = va_arg(args, char *);
       // nb: transient will not be good for inserts with large data blobs
       // however, it's no worse than the previous '%q' stuff in this regard
-      L(F("binding %d with value '%s'\n") % param % value);
+      // might want to wrap this logging with --debug or --verbose to limit it
+
+      string log = string(value);
+
+      if (log.size() > constants::log_line_sz)
+        log = log.substr(0, constants::log_line_sz);
+
+      L(F("binding %d with value '%s'\n") % param % log);
+
       sqlite3_bind_text(i->second.stmt, param, value, -1, SQLITE_TRANSIENT);
       assert_sqlite3_ok(sql());
     }
@@ -780,7 +784,7 @@ database::fetch(results & res,
       for (int col = 0; col < ncol; col++) 
         {
           const char * value = sqlite3_column_text_s(i->second.stmt, col);
-          if (!value) throw oops(ctx + "null result value");
+          E(value, F("null result in query: %s\n") % query);
           row.push_back(value);
           //L(F("row %d col %d value='%s'\n") % nrow % col % value);
         }
@@ -797,8 +801,8 @@ database::fetch(results & res,
 
   i->second.count++;
 
-  if (want_rows != any_rows && nrow != want_rows)
-    throw oops((F("%s wanted %d rows, got %s") % ctx % want_rows % nrow).str());
+  E(want_rows == any_rows || want_rows == nrow,
+    F("wanted %d rows got %s in query: %s\n") % want_rows % nrow % query);
 }
 
 // general application-level logic
@@ -877,7 +881,7 @@ unsigned long
 database::count(string const & table)
 {
   results res;
-  std::string query="SELECT COUNT(*) FROM "+table;
+  string query = "SELECT COUNT(*) FROM " + table;
   fetch(res, one_col, one_row, query.c_str());
   return lexical_cast<unsigned long>(res[0][0]);  
 }
@@ -886,8 +890,8 @@ unsigned long
 database::space_usage(string const & table, string const & concatenated_columns)
 {
   results res;
-  fetch(res, one_col, one_row,
-        ("SELECT SUM(LENGTH("+concatenated_columns+")) FROM "+table).c_str());
+  string query = "SELECT SUM(LENGTH(" + concatenated_columns + ")) FROM " + table;
+  fetch(res, one_col, one_row, query.c_str());
   return lexical_cast<unsigned long>(res[0][0]);
 }
 
@@ -895,8 +899,8 @@ void
 database::get_ids(string const & table, set< hexenc<id> > & ids) 
 {
   results res;
-
-  fetch(res, one_col, any_rows, ("SELECT id FROM "+table).c_str());
+  string query = "SELECT id FROM " + table;
+  fetch(res, one_col, any_rows, query.c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
     {
@@ -934,8 +938,8 @@ database::get_delta(hexenc<id> const & ident,
   I(ident() != "");
   I(base() != "");
   results res;
-  fetch(res, one_col, one_row,
-        ("SELECT delta FROM "+table+" WHERE id = ? AND base = ?").c_str(), 
+  string query = "SELECT delta FROM " + table + " WHERE id = ? AND base = ?";
+  fetch(res, one_col, one_row, query.c_str(), 
         ident().c_str(), base().c_str());
 
   base64<gzip<delta> > del_packed = res[0][0];
@@ -956,8 +960,8 @@ database::put(hexenc<id> const & ident,
   base64<gzip<data> > dat_packed;
   pack(dat, dat_packed);
   
-  execute(("INSERT INTO "+table+" VALUES(?, ?)").c_str(), 
-          ident().c_str(), dat_packed().c_str());
+  string insert = "INSERT INTO " + table + " VALUES(?, ?)";
+  execute(insert.c_str(),ident().c_str(), dat_packed().c_str());
 }
 void 
 database::put_delta(hexenc<id> const & ident,
@@ -972,8 +976,8 @@ database::put_delta(hexenc<id> const & ident,
   base64<gzip<delta> > del_packed;
   pack(del, del_packed);
   
-  execute(("INSERT INTO "+table+" VALUES(?, ?, ?)").c_str(), 
-          ident().c_str(), base().c_str(), del_packed().c_str());
+  string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
+  execute(insert.c_str(), ident().c_str(), base().c_str(), del_packed().c_str());
 }
 
 // static ticker cache_hits("vcache hits", "h", 1);
@@ -1543,8 +1547,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid){
   // perform the actual SQL transactions to kill rev rid here
   L(F("Killing revision %s locally\n") % rid);
   execute("DELETE from revision_certs WHERE id = ?",rid.inner()().c_str());
-  execute("DELETE from revision_ancestry WHERE child = ?",
-          rid.inner()().c_str());
+  execute("DELETE from revision_ancestry WHERE child = ?", rid.inner()().c_str());
   execute("DELETE from revisions WHERE id = ?",rid.inner()().c_str());
 }
 
@@ -1600,7 +1603,8 @@ database::get_keys(string const & table, vector<rsa_keypair_id> & keys)
 {
   keys.clear();
   results res;
-  fetch(res, one_col, any_rows,  ("SELECT id from "+table).c_str());
+  string query = "SELECT id FROM " + table;
+  fetch(res, one_col, any_rows, query.c_str());
   for (size_t i = 0; i < res.size(); ++i)
     keys.push_back(res[i][0]);
 }
@@ -1778,7 +1782,7 @@ database::put_cert(cert const & t,
   hexenc<id> thash;
   cert_hash_code(t, thash);
 
-  string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?) ";
+  string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?)";
 
   execute(insert.c_str(), 
           thash().c_str(),
@@ -1848,8 +1852,8 @@ database::get_certs(vector<cert> & certs,
                     string const & table)
 {
   results res;
-  fetch(res, 5, any_rows, 
-        ("SELECT id, name, value, keypair, signature FROM "+table).c_str());
+  string query = "SELECT id, name, value, keypair, signature FROM " + table; 
+  fetch(res, 5, any_rows, query.c_str());
   results_to_certs(res, certs);
 }
 

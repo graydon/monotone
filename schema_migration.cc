@@ -152,15 +152,15 @@ calculate_schema_id(sqlite3 *sql, string & id)
 {
   id.clear();
   string tmp, tmp2;
-  int res = sqlite3_exec_printf(sql, 
-                               "SELECT sql FROM sqlite_master "
-                               "WHERE type = 'table' OR type = 'index' "
-                                // filter out NULL sql statements, because
-                                // those are auto-generated indices (for
-                                // UNIQUE constraints, etc.).
-                               "AND sql IS NOT NULL "
-                               "ORDER BY name", 
-                               &append_sql_stmt, &tmp, NULL);
+  int res = sqlite3_exec(sql, 
+                         "SELECT sql FROM sqlite_master "
+                         "WHERE (type = 'table' OR type = 'index') "
+                         // filter out NULL sql statements, because
+                         // those are auto-generated indices (for
+                         // UNIQUE constraints, etc.).
+                         "AND sql IS NOT NULL "
+                         "ORDER BY name", 
+                         &append_sql_stmt, &tmp, NULL);
   if (res != SQLITE_OK)
     {
       sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
@@ -707,14 +707,14 @@ migrate_client_to_vars(sqlite3 * sql,
 {
   int res;
   
-  res = sqlite3_exec_printf(sql,
-                            "CREATE TABLE db_vars\n"
-                            "(\n"
-                            "domain not null,      -- scope of application of a var\n"
-                            "name not null,        -- var key\n"
-                            "value not null,       -- var value\n"
-                            "unique(domain, name)\n"
-                            ");", NULL, NULL, errmsg);
+  res = sqlite3_exec(sql,
+                     "CREATE TABLE db_vars\n"
+                     "(\n"
+                     "domain not null,      -- scope of application of a var\n"
+                     "name not null,        -- var key\n"
+                     "value not null,       -- var value\n"
+                     "unique(domain, name)\n"
+                     ");", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -727,24 +727,24 @@ migrate_client_to_add_indexes(sqlite3 * sql,
 {
   int res;
   
-  res = sqlite3_exec_printf(sql,
-                            "CREATE INDEX revision_ancestry__child "
-                            "ON revision_ancestry (child)",
-                            NULL, NULL, errmsg);
+  res = sqlite3_exec(sql,
+                     "CREATE INDEX revision_ancestry__child "
+                     "ON revision_ancestry (child)",
+                     NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite3_exec_printf(sql,
-                            "CREATE INDEX revision_certs__id "
-                            "ON revision_certs (id);",
-                            NULL, NULL, errmsg);
+  res = sqlite3_exec(sql,
+                     "CREATE INDEX revision_certs__id "
+                     "ON revision_certs (id);",
+                     NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite3_exec_printf(sql,
-                            "CREATE INDEX revision_certs__name_value "
-                            "ON revision_certs (name, value);",
-                            NULL, NULL, errmsg);
+  res = sqlite3_exec(sql,
+                     "CREATE INDEX revision_certs__name_value "
+                     "ON revision_certs (name, value);",
+                     NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
