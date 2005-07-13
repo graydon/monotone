@@ -1,3 +1,9 @@
+2005-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_kill_tag_locally.at, tests/t_ambiguous_tags.at: New
+	tests.
+	* testsuite.at: Add them.
+
 2005-07-11  graydon hoare  <graydon@pobox.com>
 
 	* AUTHORS: Add Jordan.
